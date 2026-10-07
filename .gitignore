@@ -2,3 +2,5 @@ node_modules/
 tests/test.html
 tests/*.png
 *.png
+anteprime/boss_nuovi.html
+tests/test_b2.html

@@ -72,6 +72,7 @@ Dopo ogni modifica: rifare almeno una partita automatica per capitolo, `meta2.js
   - Pavimento (`renderFloor`): lastre di misure diverse (1×1, 2×1, 1×2, 2×2) con rilievo, macchie, scheggiature e crepe; cornice incisa lungo i muri; al centro un medaglione con il teschio della bestia inciso (non nelle stanze con le rune del boss né negli eventi); 2–3 crepe che lasciano uscire la luce del capitolo. Luce viva in `drawFloorGlow` (`G.floorGlow`, `G.floorCracks`), spenta con `LOWFX`.
   - Schermata principale: nel paesaggio dell'accampamento (`campBg`) c'è il teschio con le corna della bestia dietro la collina della cripta, con le costole ai lati, velato dalla foschia. Gli occhi brillano del colore della modalità (in `drawCamp`).
   - Menu laterali (Eroe, Bottega, Cammino, Profilo): sotto i pannelli c'è la tela `#mbgCv` (`drawMenuBg`, `MBG`): abisso blu notte, costole che entrano dai bordi, teschio in alto con gli occhi accesi, nebbia che scorre e lucine che salgono. Con `LOWFX` resta ferma.
+- Anteprima (non ancora nel gioco, da valutare con Denis): boss più ricchi e animati in `anteprime/boss2.js`. Per costruire la pagina di prova `anteprime/boss_nuovi.html` (con una galleria e il bottone Prima/Dopo) si usa `python3 anteprime/mk_boss.py`. Se Denis approva, il contenuto di `boss2.js` va incollato in `index.html` prima dell'ultima riga (`newRun();...`).
 - Nota: in `meta2.js` i controlli «codice caricato» e «salvataggio dopo ricarica» falliscono anche sulla versione 41: problema del test, non del gioco.
 
 ## Da fare (annotato con Denis, non ancora fatto)
