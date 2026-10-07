@@ -1092,6 +1092,7 @@ html,body{height:100%;margin:0;background:var(--ink);color:var(--parch);overflow
 .pinfo2{display:flex;flex-direction:column;gap:2px;min-width:0}
 .pinfo2 b{font-family:var(--display);font-weight:400;font-size:18px;color:#fff;text-shadow:var(--tol-s,0 2px 0 #000)}.pinfo2 b em{font-style:normal;font-size:13px;color:#ffd84a}
 .pinfo2 span{font-size:13px;line-height:1.2;color:#d5e5ff}.pinfo2 small{font-size:12px;font-weight:800;color:#9cef5e}.pinfo2 small.how{color:#ffd84a;display:inline-flex;align-items:center;gap:4px}.pinfo2 .lk{width:14px;height:14px}
+.pslots{grid-column:1/-1;font-family:var(--display);font-size:15px;color:#e8f0ff;text-align:right;padding:0 4px}.pslots b{color:#9cef5e}
 .pbtn{display:flex;gap:6px;flex-wrap:wrap}.pbtn .btn{font-size:14px;padding:4px 10px}.pbtn .inuse{font-style:normal;font-family:var(--display);font-size:14px;color:#9cef5e;padding:4px 6px}
 .rpet{width:30px;height:30px;vertical-align:middle;margin-right:2px}.ppet{width:64px;height:64px}.pi img{width:24px;height:24px}
 .plvl{position:absolute;left:50%;top:-9px;transform:translateX(-50%);min-width:20px;padding:0 4px;border:2px solid var(--crInk);border-radius:8px;background:#7a3cff;color:#fff;font-family:var(--display);font-style:normal;font-size:11px;text-shadow:var(--tol-s)}
@@ -1265,7 +1266,7 @@ html,body{height:100%;margin:0;background:var(--ink);color:var(--parch);overflow
         <div id="vColl"><p class="sub" id="collCount"></p><div class="coll" id="coll"></div></div>
         <div id="vTal" hidden><p class="sub">Bonus permanenti che valgono in ogni partita, con ogni eroe.</p><div class="talents" id="talents"></div></div>
         <div id="vSet" hidden><p class="sub">Indossa due pezzi dello stesso set per sbloccare il bonus.</p><div class="sets" id="setBox"></div></div>
-        <div id="vPet" hidden><p class="sub">Il compagno ti segue in ogni stanza e combatte con te. Lo sblocchi con le sue carte, che trovi nelle casse, oppure con le gemme. Con carte e oro sale di livello e colpisce più forte.</p><div class="pets" id="petBox"></div></div>
+        <div id="vPet" hidden><p class="sub">Puoi portare fino a 2 compagni: ti seguono in ogni stanza e combattono con te. Lo sblocchi con le sue carte, che trovi nelle casse, oppure con le gemme. Con carte e oro sale di livello e colpisce più forte.</p><div class="pets" id="petBox"></div></div>
       </section>
       <section id="tabShop" hidden>
         <div class="spage" id="spDaily"><div class="cap"><h3>Negozio giornaliero</h3></div><p class="refresh" id="dealT"></p><div class="daily" id="daily"></div></div>
@@ -1461,7 +1462,7 @@ function newRun(){
   if(G.mode!=='inf'){const ai=arenaIdx(SAVE.trophies||0);G.arena=ai;G.chapter=ARENAS[ai].ch;G.diff=ARENAS[ai].diff}
   if(md==='daily'){const C=chalToday();G.daily=C;G.chapter=C.ch;G.diff=1.25;G.arena=0;for(const id of C.mods){const M=CHAL_MODS.find(m=>m.id===id);if(M)M.f()}}
   if(started&&!(SAVE.runs>0)&&!SAVE.welcomed){G.welcome=4.2;SAVE.welcomed=1;save()}
-  G.pet=makePet();G.petShots=[];P.ult=0;$('ultBtn').classList.remove('full');
+  G.pets=makePets();G.pet=G.pets[0]||null;G.petShots=[];P.ult=0;$('ultBtn').classList.remove('full');
   G.seq=makeSeqFor();G.ccRoom=pk([3,4,6,7,8,9]);buildRoom();
 }
 function makeP(){
@@ -1494,7 +1495,7 @@ function freeSpot(r,minY,maxY){let x,y,tries=0;
   return{x,y}}
 function buildRoom(){clearTimeout(bossDown.t);$('bossDown').hidden=true;
   Object.assign(G,{ultRain:[],petShots:[],goldRun:null,trial:null,dark:false,lobs:[],rollers:[],enemies:[],eproj:[],arrows:[],coins:[],gems:[],gemsRun:0,hearts:[],waves:[],fx:[],texts:[],decals:[],zones:[],bands:[],boulders:[],door:false,state:'play',clearT:0,orbs:[],prop:null,meteors:[],lines:[],lavaLights:[],bossDmg:false,cc:null,ccChosen:false});
-  P.x=AW/2;P.y=BOT-40;P.queue=[];P.inv=.6;P.face=-Math.PI/2;if(G.pet){G.pet.x=P.x-26;G.pet.y=P.y+8}
+  P.x=AW/2;P.y=BOT-40;P.queue=[];P.inv=.6;P.face=-Math.PI/2;for(const pt of G.pets||[]){pt.x=P.x+(pt.slot?26:-26);pt.y=P.y+8}
   const boss=!G.event&&isBossRoom(G.room);
   let lay=G.event?[[66,190,16],[294,190,16],[66,500,16],[294,500,16]]:boss?bossLayout(zoneOf(G.room)):LAYOUTS[randi(0,LAYOUTS.length-1)];
   const flip=Math.random()<.5;
@@ -3715,7 +3716,7 @@ function drawLighting(pass){
   for(const k of G.rocks){if(k.kind==='cauldron'||k.kind==='lavarock')Lt(k.x,k.y-14,100,.8);if(k.kind==='brazier')Lt(k.x,k.y-20,135*(1+Math.sin(G.t*2.7+k.seed)*.015),.95);else if(k.kind==='crystal')Lt(k.x,k.y-12,95,.75);else if(k.kind==='lantern')Lt(k.x,k.y-kH(k)*.7,115,.85)}
   for(const m of (G.shroomLights||[]))Lt(m.x,m.y,40,.45);for(const b of G.lobs)if(b.t>=0&&(b.kind==='poison'||b.kind==='bomb'))Lt(b.tx,b.ty,30,.4);
   for(const s of G.shafts)Lt(s.x+s.w/2+45,(TOP+BOT)/2,140,.5);
-  Lt(P.x,P.y-12,G.dark?95:110,G.dark?1:.8);if(G.pet){const lu=G.pet.id==='lucciola';Lt(G.pet.x,G.pet.y-(lu?26:12),lu?(G.dark?125:70):30,lu?.95:.4)}if(G.dark){Lt(P.x,P.y-12,48,1);for(const e of G.enemies)if(!e.hidden)Lt(e.x,e.y-14,20,.28);for(const a of G.arrows)Lt(a.x,a.y,18,.5)}
+  Lt(P.x,P.y-12,G.dark?95:110,G.dark?1:.8);for(const pt of G.pets||(G.pet?[G.pet]:[])){const lu=pt.id==='lucciola';Lt(pt.x,pt.y-(lu?26:12),lu?(G.dark?125:70):30,lu?.95:.4)}if(G.dark){Lt(P.x,P.y-12,48,1);for(const e of G.enemies)if(!e.hidden)Lt(e.x,e.y-14,20,.28);for(const a of G.arrows)Lt(a.x,a.y,18,.5)}
   for(const e of G.enemies){if(e.hidden)continue;if(e.type==='witch')Lt(e.x,e.y-20,90,.75);else if(e.type==='golem'&&e.p2)Lt(e.x,e.y-25,110,.7);else if(e.type==='wisp')Lt(e.x,e.y-14,55,.6*e.alpha);else if(e.type==='beetle'&&e.arm>0)Lt(e.x,e.y,55,.6);else if(e.type==='salamander')Lt(e.x,e.y-10,110,.8);else if(e.type==='smith')Lt(e.x,e.y-30,e.p2?140:100,.75);else if(e.type==='magmaslime'||e.type==='imp')Lt(e.x,e.y-8,48,.55);else if(ELIGHT[e.type])ELIGHT[e.type](e,Lt)}
   for(const m of G.meteors)if(m.t>=0)Lt(m.x,m.y,m.r*1.4,.5*m.t/m.dur);
   for(const l of G.lines)if(l.warn<=0)Lt(l.x+Math.cos(l.a)*l.len/2,l.y+Math.sin(l.a)*l.len/2,l.len*.6,.6);
@@ -5100,16 +5101,19 @@ const PETS=[
 const PET_BY={};PETS.forEach(p=>PET_BY[p.id]=p);
 const PETMAX=10,petCost=l=>Math.round(140*Math.pow(l,1.45));
 if(!SAVE.pets)SAVE.pets={owned:{},sel:null};if(!SAVE.pets.cards)SAVE.pets.cards={};for(const k in SAVE.pets.owned)if(SAVE.pets.owned[k].cards==null)SAVE.pets.owned[k].cards=0;
+// up to 2 companions equipped, only by hand (old saves: the single 'sel' becomes the first slot)
+const PET_SLOTS=2;function petEq(){const P0=SAVE.pets;if(!Array.isArray(P0.eq))P0.eq=P0.sel?[P0.sel]:[];delete P0.sel;P0.eq=P0.eq.filter((id,i,a)=>PET_BY[id]&&P0.owned[id]&&a.indexOf(id)===i).slice(0,PET_SLOTS);return P0.eq}petEq();
 if(SAVE.road&&SAVE.road[500]&&!SAVE.pets.owned.lucciola&&!SAVE.pets.l500){SAVE.pets.owned.lucciola={lvl:1,cards:0}}SAVE.pets.l500=1;
 const PET_NEED=[0,3,5,8,12,16,22,28,36,45],petNeed=l=>PET_NEED[Math.min(l,PET_NEED.length-1)];
 // add pet cards: a locked pet unlocks by itself once it has enough; returns true when it just unlocked
 function addPetCards(id,n){const P0=SAVE.pets,o=P0.owned[id];if(o){o.cards=(o.cards||0)+n;return false}const have=(P0.cards[id]||0)+n,need=PET_BY[id].unlock;
-  if(have>=need){P0.owned[id]={lvl:1,cards:have-need};delete P0.cards[id];if(!P0.sel)P0.sel=id;return true}P0.cards[id]=have;return false}// players who already took the 500-trophy prize
+  if(have>=need){P0.owned[id]={lvl:1,cards:have-need};delete P0.cards[id];return true}P0.cards[id]=have;return false}// players who already took the 500-trophy prize
 const petLvl=id=>(SAVE.pets.owned[id]||{lvl:1}).lvl;
 const petStat=(id,k)=>{const p=PET_BY[id];return (p.base[k]||0)+(p.per[k]||0)*(petLvl(id)-1)};
-function makePet(){let id=SAVE.pets&&SAVE.pets.sel;if(!id||!SAVE.pets.owned[id]){if(G&&G.daily&&G.daily.mods&&G.daily.mods.includes('pets'))id='muschietto';else return null}return{id,x:P.x-26,y:P.y+8,t:0,cd:1,hcd:petStat(id,'hcd')||0,face:-Math.PI/2,att:0,hop:0,happy:0,moving:false}}
-function updPet(dt){const pt=G.pet;if(!pt)return;pt.t+=dt;pt.att=Math.max(0,pt.att-dt);pt.happy=Math.max(0,pt.happy-dt);
-  if(Math.abs(Math.cos(P.face))>.2)pt.side=Math.cos(P.face)>=0?-1:1;const tx=P.x+(pt.side||-1)*26,ty=P.y+10,dx=tx-pt.x,dy=ty-pt.y,dd=Math.hypot(dx,dy);
+function makePets(){let ids=SAVE.pets?petEq().slice():[];if(!ids.length&&G&&G.daily&&G.daily.mods&&G.daily.mods.includes('pets'))ids=['muschietto'];return ids.map((id,i)=>({id,slot:i,x:P.x+(i?26:-26),y:P.y+8,t:i*.7,cd:1+i*.5,hcd:petStat(id,'hcd')||0,face:-Math.PI/2,att:0,hop:0,happy:0,moving:false}))}
+function updPet(dt){const list=G.pets||(G.pet?[G.pet]:[]);for(const pt of list)updOnePet(pt,dt);updPetShots(dt)}
+function updOnePet(pt,dt){pt.t+=dt;pt.att=Math.max(0,pt.att-dt);pt.happy=Math.max(0,pt.happy-dt);
+  if(Math.abs(Math.cos(P.face))>.2)pt.side=Math.cos(P.face)>=0?-1:1;const sd=(pt.side||-1)*(pt.slot?-1:1),tx=P.x+sd*26,ty=P.y+10+(pt.slot?6:0),dx=tx-pt.x,dy=ty-pt.y,dd=Math.hypot(dx,dy);
   if(dd>200){pt.x=tx;pt.y=ty}else if(dd>4){const sp=Math.min(dd*4,260);pt.x+=dx/dd*sp*dt;pt.y+=dy/dd*sp*dt;pt.moving=dd>8;pt.hop+=dt*12}else pt.moving=false;
   pt.x=clamp(pt.x,L+8,R-8);pt.y=clamp(pt.y,TOP+10,BOT-6);
   const tg=G.state==='play'?nearest(pt.x,pt.y,null,250):null;if(tg)pt.face=Math.atan2(tg.y-pt.y,tg.x-pt.x);else if(pt.moving)pt.face=Math.atan2(dy,dx);
@@ -5118,7 +5122,8 @@ function updPet(dt){const pt=G.pet;if(!pt)return;pt.t+=dt;pt.att=Math.max(0,pt.a
     if(pt.id==='draghetto'){const a=pt.face;for(let i=0;i<14;i++){const aa=a+rand(-.4,.4),s=rand(60,150);fxPush({k:'firep',x:pt.x+Math.cos(a)*10,y:pt.y-18+Math.sin(a)*10,vx:Math.cos(aa)*s,vy:Math.sin(aa)*s-15,t:rand(.3,.5),max:.5,r:rand(4,8)})}
       for(const e of G.enemies){if(!canHit(e))continue;const ex=e.x-pt.x,ey=e.y-pt.y,ed=Math.hypot(ex,ey);if(ed<90&&Math.abs(angDiff(a,Math.atan2(ey,ex)))<.55){hurtE(e,dmg,false);if(!e.dead){e.burn=Math.max(e.burn||0,2.2);e.burnTick=e.burnTick||.5}}}sfx('eshot','fire',pt.x)}
     else{G.petShots.push({x:pt.x,y:pt.y-(pt.id==='lucciola'?26:12),a:pt.face,v:pt.id==='lucciola'?280:380,kind:pt.id==='lucciola'?'spark':'leaf',dmg,life:1.3,hom:pt.id==='lucciola',vx:0,vy:0});sfx(pt.id==='lucciola'?'xp':'eshot',pt.id==='lucciola'?0:'thorn',pt.x)}}
-  if(pt.id==='lucciola'&&G.state!=='dead'){pt.hcd-=dt;if(pt.hcd<=0){pt.hcd=petStat('lucciola','hcd');if(P.hp<P.maxhp){const v=Math.max(1,Math.round(P.maxhp*petStat('lucciola','heal')));P.hp=Math.min(P.maxhp,P.hp+v);text(P.x,P.y-44,'+'+v,'#c8f04a',15);sfx('heal');pt.happy=.8;for(let i=0;i<12;i++)G.fx.push({k:'lvl',x:P.x+rand(-12,12),y:P.y-10,vx:rand(-50,50),vy:rand(-90,-20),t:.6})}}}
+  if(pt.id==='lucciola'&&G.state!=='dead'){pt.hcd-=dt;if(pt.hcd<=0){pt.hcd=petStat('lucciola','hcd');if(P.hp<P.maxhp){const v=Math.max(1,Math.round(P.maxhp*petStat('lucciola','heal')));P.hp=Math.min(P.maxhp,P.hp+v);text(P.x,P.y-44,'+'+v,'#c8f04a',15);sfx('heal');pt.happy=.8;for(let i=0;i<12;i++)G.fx.push({k:'lvl',x:P.x+rand(-12,12),y:P.y-10,vx:rand(-50,50),vy:rand(-90,-20),t:.6})}}}}
+function updPetShots(dt){if(!G.petShots)return;
   for(let i=G.petShots.length-1;i>=0;i--){const s=G.petShots[i];s.life-=dt;if(s.hom){const t2=nearest(s.x,s.y,null,220);if(t2){const da=angDiff(s.a,Math.atan2(t2.y-8-s.y,t2.x-s.x));s.a+=clamp(da,-7*dt,7*dt)}}
     s.vx=Math.cos(s.a)*s.v;s.vy=Math.sin(s.a)*s.v;s.x+=s.vx*dt;s.y+=s.vy*dt;let gone=s.life<=0||s.x<L||s.x>R||s.y<TOP||s.y>BOT||G.rocks.some(k=>Math.hypot(k.x-s.x,k.y-s.y)<k.r);
     if(!gone)for(const e of G.enemies){if(!canHit(e))continue;if(Math.hypot(e.x-s.x,e.y-e.z-8-s.y)<e.r+4){if(BLOCK[e.type]&&BLOCK[e.type](e,s)){gone=true;break}hurtE(e,s.dmg,false);gone=true;break}}
@@ -5153,24 +5158,25 @@ function drawPetSprite(id,x,y,o){const f=Math.cos(o.face)<0?-1:1;
     ctx.fillStyle='#ffd86b';for(const sx of [-2,3]){circ(sx,6.6,1.5);ctx.fill()}
     if(o.happy>0)for(let i=0;i<2;i++){ctx.fillStyle='#ff6a8a';const hy=-16-((o.t*20+i*8)%14);circ(i?4:-2,hy,1.4);ctx.fill()}
     ctx.restore()}}
-function drawPet(){const pt=G.pet;if(!pt)return;drawPetSprite(pt.id,pt.x,pt.y,pt)}
-function petShadow(){const pt=G.pet;if(!pt)return;if(pt.id==='muschietto')shadow(pt.x,pt.y+2,9,3.5,.3);else shadow(pt.x,pt.y+2,6,2.5,.2)}
+function drawPet(pt){pt=pt||G.pet;if(!pt)return;drawPetSprite(pt.id,pt.x,pt.y,pt)}
+function petShadow(){for(const pt of G.pets||(G.pet?[G.pet]:[])){if(pt.id==='muschietto')shadow(pt.x,pt.y+2,9,3.5,.3);else shadow(pt.x,pt.y+2,6,2.5,.2)}}
 // --- the companion page in the hero tab ---
 function renderPets(){const own=SAVE.pets.owned;
-  $('petBox').innerHTML=PETS.map(p=>{const o=own[p.id],sel=SAVE.pets.sel===p.id,l=o?o.lvl:1,c=petCost(l),need=petNeed(l),r=RAR[p.rar];
+  const eq=petEq();$('petBox').innerHTML=`<div class="pslots">Con te: <b>${eq.length}/${PET_SLOTS}</b></div>`+PETS.map(p=>{const o=own[p.id],sel=eq.includes(p.id),l=o?o.lvl:1,c=petCost(l),need=petNeed(l),r=RAR[p.rar];
     const stat=p.id==='lucciola'?`Danno ${Math.round(petStat(p.id,'dmg')*100)}% · Cura ${Math.round(petStat(p.id,'heal')*100)}% ogni 8s`:`Danno ${Math.round(petStat(p.id,'dmg')*100)}% del tuo attacco · ogni ${petStat(p.id,'cd').toFixed(1)}s`;
     const have=o?o.cards||0:SAVE.pets.cards[p.id]||0,goal=o?need:p.unlock,max=o&&l>=PETMAX,pct=max?100:Math.min(100,have/goal*100),full=!max&&have>=goal;
     const bar=`<div class="pbar${full?' full':''}"><i style="width:${pct}%"></i><span>${max?'MAX':`${have}/${goal}`}</span></div>`;
-    const btns=o?(sel?'<em class="inuse">Con te</em>':`<button class="btn" data-psel="${p.id}">Porta</button>`)+(max?'':`<button class="btn go" data-pup="${p.id}" ${full&&SAVE.gold>=c?'':'disabled'}>Migliora <i class="coin"></i>${c}</button>`)
+    const btns=o?(sel?`<em class="inuse">Con te</em><button class="btn" data-pdrop="${p.id}">Lascia</button>`:`<button class="btn" data-psel="${p.id}">Porta</button>`)+(max?'':`<button class="btn go" data-pup="${p.id}" ${full&&SAVE.gold>=c?'':'disabled'}>Migliora <i class="coin"></i>${c}</button>`)
       :`<button class="btn gem" data-pbuy="${p.id}" ${(SAVE.gems||0)>=p.gems?'':'disabled'}>Sblocca <i class="gemS"></i>${p.gems}</button>`;
     return `<div class="petc ${o?'':'locked'} ${sel?'sel':''}" style="--pc:${p.col}"><canvas width="120" height="120" data-pet="${p.id}"></canvas><div class="pinfo2"><b>${p.n}${o?` <em>Liv. ${l}</em>`:''} <u style="color:${r.c}">${r.n}</u></b><span>${p.d}</span>${o?`<small>${stat}</small>`:`<small class="how">${LOCK} ${p.how}</small>`}${bar}</div>
       <div class="pbtn">${btns}</div></div>`}).join('');
   $('petBox').querySelectorAll('canvas[data-pet]').forEach(cv=>{const c=cv.getContext('2d'),saved=ctx;ctx=c;c.setTransform(3,0,0,3,60,92);const id=cv.dataset.pet;ctx.fillStyle='rgba(0,0,0,.3)';ell(0,2,12,4);ctx.fill();drawPetSprite(id,0,0,{t:1.2,face:0,moving:false,att:0,happy:own[id]?.3:0,hop:0});ctx=saved;if(!own[id])cv.style.filter='brightness(0) opacity(.6)'})}
 document.addEventListener('click',e=>{const s=e.target.closest('[data-psel]'),u=e.target.closest('[data-pup]');
-  if(s){SAVE.pets.sel=s.dataset.psel;save();sfx('pick');renderPets();toast(PET_BY[s.dataset.psel].n+' viene con te!')}
+  if(s){const id=s.dataset.psel,eq=petEq();if(!SAVE.pets.owned[id]||eq.includes(id))return;let msg=PET_BY[id].n+' viene con te!';if(eq.length>=PET_SLOTS){const out=eq.shift();msg=`${PET_BY[out].n} resta a casa, ${PET_BY[id].n} viene con te!`}eq.push(id);save();sfx('pick');renderPets();toast(msg)}
+  const dr=e.target.closest('[data-pdrop]');if(dr){const id=dr.dataset.pdrop,eq=petEq(),i=eq.indexOf(id);if(i<0)return;eq.splice(i,1);save();sfx('pick');renderPets();toast(PET_BY[id].n+' resta a casa')}
   if(u&&!u.disabled){const id=u.dataset.pup,o=SAVE.pets.owned[id],l=o.lvl,c=petCost(l),need=petNeed(l);if(SAVE.gold<c||l>=PETMAX||(o.cards||0)<need)return;SAVE.gold-=c;o.cards-=need;o.lvl=l+1;save();renderGold();sfx('upgrade');vib(25);renderPets();toast(`${PET_BY[id].n} sale al livello ${l+1}!`)}
-  const bu=e.target.closest('[data-pbuy]');if(bu&&!bu.disabled){const p=PET_BY[bu.dataset.pbuy];if((SAVE.gems||0)<p.gems||SAVE.pets.owned[p.id])return;SAVE.gems-=p.gems;unlockPet(p.id);SAVE.pets.sel=p.id;save();renderGold();sfx('victory');vib([30,30,60]);renderPets();toast(`${p.n} viene con te!`)}});
-function unlockPet(id){if(SAVE.pets.owned[id])return false;SAVE.pets.owned[id]={lvl:1,cards:SAVE.pets.cards[id]||0};delete SAVE.pets.cards[id];if(!SAVE.pets.sel)SAVE.pets.sel=id;save();achPop('Nuovo compagno!',PET_BY[id].n+': trovalo nella scheda Eroe','unlock');return true}
+  const bu=e.target.closest('[data-pbuy]');if(bu&&!bu.disabled){const p=PET_BY[bu.dataset.pbuy];if((SAVE.gems||0)<p.gems||SAVE.pets.owned[p.id])return;SAVE.gems-=p.gems;unlockPet(p.id);save();renderGold();sfx('victory');vib([30,30,60]);renderPets();toast(`${p.n} sbloccato! Tocca «Porta» per portarlo con te`)}});
+function unlockPet(id){if(SAVE.pets.owned[id])return false;SAVE.pets.owned[id]={lvl:1,cards:SAVE.pets.cards[id]||0};delete SAVE.pets.cards[id];save();achPop('Nuovo compagno!',PET_BY[id].n+': trovalo nella scheda Eroe','unlock');return true}
 const PETIMG={};function petIcon(id){if(PETIMG[id])return PETIMG[id];const c=document.createElement('canvas');c.width=c.height=96;const x=c.getContext('2d'),saved=ctx;ctx=x;x.setTransform(2.4,0,0,2.4,48,74);drawPetSprite(id,0,0,{t:1.2,face:0,moving:false,att:0,happy:.3,hop:0});ctx=saved;return PETIMG[id]=c.toDataURL()}
 
 
@@ -5989,7 +5995,7 @@ function drawCamp(dt){campResize();const m=curMode(),open=modeOpen(m.id),Z=SCENE
   let hx=134,hy=240;
   if(CAMP.walk>0){const p=Math.min(1,(t-CAMP.walk)/1.5),q=Math.max(0,(p-.12)/.88),a1=Math.min(1,q/.6),a2=Math.max(0,(q-.6)/.4),ex=gx,ey=gb+2,px=hx+(gx-hx)*a1,py=hy+(190-hy)*a1+(ey-190)*a2,sc=2.05-(2.05-1.1)*a1-.35*a2;
     ctx.globalAlpha=a2>.4?Math.max(0,1-(a2-.4)/.6):1;ctx.save();ctx.translate(px,py);ctx.scale(sc,sc);noShadow=false;mossOn=1;drawRig(0,0,Math.atan2(ey-hy,ex-hx),t*10,q>0,heroStyle(),{});mossOn=0;ctx.restore();ctx.globalAlpha=1}
-  else{drawSeated(hx,hy,heroStyle(),t);if(SAVE.pets&&SAVE.pets.sel&&SAVE.pets.owned[SAVE.pets.sel]){ctx.save();ctx.translate(hx+74,hy+4);ctx.scale(1.8,1.8);ctx.fillStyle='rgba(0,0,0,.3)';ell(0,2,9,3);ctx.fill();drawPetSprite(SAVE.pets.sel,0,0,{t,face:0,moving:false,att:0,happy:0,hop:0});ctx.restore()}ctx.save();ctx.globalCompositeOperation='lighter';glow('255,140,60',hx+14,hy-30,30,.16+.03*Math.sin(t*7.3),40);ctx.restore()}
+  else{drawSeated(hx,hy,heroStyle(),t);if(SAVE.pets)petEq().forEach((id,i)=>{ctx.save();ctx.translate(i?hx-70:hx+74,hy+4);ctx.scale(1.8,1.8);ctx.fillStyle='rgba(0,0,0,.3)';ell(0,2,9,3);ctx.fill();drawPetSprite(id,0,0,{t:t+i*.7,face:i?Math.PI:0,moving:false,att:0,happy:0,hop:0});ctx.restore()});ctx.save();ctx.globalCompositeOperation='lighter';glow('255,140,60',hx+14,hy-30,30,.16+.03*Math.sin(t*7.3),40);ctx.restore()}
   for(let i=CAMP.embers.length-1;i>=0;i--){const e=CAMP.embers[i];e.l-=dt;e.x+=(e.vx+Math.sin(t*5+i)*14)*dt;e.y+=e.vy*dt;if(e.l<=0){CAMP.embers.splice(i,1);continue}ctx.fillStyle=`rgba(255,${170+(i*37)%80},90,${Math.min(1,e.l)})`;ctx.fillRect(e.x,e.y,1.6,1.6)}
   // ambient life
   if(CAMP.amb.length<30)CAMP.amb.push({x:rand(0,SW),y:rand(-60,SH+40),ph:rand(0,9),v:rand(-6,6)});
@@ -6094,7 +6100,7 @@ function drawHeroPreview(dt){pvT+=dt;const d=Math.floor(pvT/1.3)%8,saved=ctx;ctx
   for(let k=0;k<8;k++){const a=k/8*TAU+t*.4;ctx.fillStyle=`rgba(${col},.8)`;circ(Math.cos(a)*18.5,3+Math.sin(a)*5,.9);ctx.fill()}
   if(Math.random()<dt*10)SHOW.sp.push({x:rand(-24,24),y:rand(-5,6),l:rand(.8,1.6)});
   noShadow=false;if(!own)ctx.globalAlpha=.85;drawRig(0,0,d*Math.PI/4,t*9,true,heroStyle(heroView),{});ctx.globalAlpha=1;
-  if(SAVE.pets&&SAVE.pets.sel&&SAVE.pets.owned[SAVE.pets.sel]){ctx.fillStyle='rgba(0,0,0,.3)';ell(25,7,8,2.5);ctx.fill();drawPetSprite(SAVE.pets.sel,25,6,{t,face:Math.PI,moving:false,att:0,happy:0,hop:0})}
+  if(SAVE.pets)petEq().forEach((id,i)=>{const px=i?-25:25;ctx.fillStyle='rgba(0,0,0,.3)';ell(px,7,8,2.5);ctx.fill();drawPetSprite(id,px,6,{t:t+i*.7,face:i?0:Math.PI,moving:false,att:0,happy:0,hop:0})});
   ctx.save();ctx.globalCompositeOperation='lighter';for(let i=SHOW.sp.length-1;i>=0;i--){const p=SHOW.sp[i];p.l-=dt;p.y-=dt*14;if(p.l<=0){SHOW.sp.splice(i,1);continue}ctx.fillStyle=`rgba(${col},${Math.min(1,p.l)})`;circ(p.x,p.y,.7);ctx.fill()}ctx.restore();
   ctx=saved}
 
@@ -6161,7 +6167,7 @@ function renderPacks(){const L=packList();
   $('pdots').innerHTML=L.length>1?L.map((p,i)=>`<i class="${i===0?'on':''}"></i>`).join(''):''}
 $('packs').addEventListener('scroll',()=>{const el=$('packs'),i=Math.round(el.scrollLeft/Math.max(1,el.clientWidth));[...$('pdots').children].forEach((d,j)=>d.classList.toggle('on',j===i))},{passive:true});
 $('packs').addEventListener('click',e=>{const b=e.target.closest('[data-pack]');if(!b||b.disabled)return;const p=packList().find(x=>x.id===b.dataset.pack);if(!p||(SAVE.gems||0)<p.c)return;
-  SAVE.packs[p.id]=1;SAVE.gems-=p.c;SAVE.gold+=p.gold;save();renderGold();renderShop();sfx('coin');toast(`+${p.gold.toLocaleString('it-IT')} oro`);if(p.pet){unlockPet(p.pet);SAVE.pets.sel=p.pet;save()}else setTimeout(()=>openChest(p.chest),250)});
+  SAVE.packs[p.id]=1;SAVE.gems-=p.c;SAVE.gold+=p.gold;save();renderGold();renderShop();sfx('coin');toast(`+${p.gold.toLocaleString('it-IT')} oro`);if(p.pet){unlockPet(p.pet);save()}else setTimeout(()=>openChest(p.chest),250)});
 
 // ===================== TROPHY ROAD (its own tab, with arena previews) =====================
 function arenaThumb(i){const A=ARENAS[i],k='thumb'+i;if(CAMP.bg[k])return CAMP.bg[k];const src=campBg(modeOf(A.ch)),c=document.createElement('canvas');c.width=360;c.height=200;const x=c.getContext('2d');
@@ -6553,7 +6559,7 @@ function render(){
   if(G.cc)for(const c of G.cc)list.push({y:c.y,f:()=>drawTwinChest(c)});
   for(const st of G.stuck)list.push({y:st.k.y+(Math.sin(st.a)>0?-1:1),f:()=>drawStuck(st)});
   list.push({y:P.y,f:()=>{if(inDoor){ctx.save();ctx.beginPath();ctx.rect(0,TOP,AW,AH);doorPath();ctx.clip();drawHero();ctx.restore();doorDark(true);doorFrame()}else drawHero()}});
-  if(G.pet)list.push({y:G.pet.y+(G.pet.id==='muschietto'?0:6),f:drawPet});
+  for(const pt of G.pets||(G.pet?[G.pet]:[]))list.push({y:pt.y+(pt.id==='muschietto'?0:6),f:()=>drawPet(pt)});
   list.sort((a,b)=>a.y-b.y);for(const it of list)it.f();
   noShadow=false;
   for(let i=0;i<P.orbit;i++){const a=G.t*3.6+i*TAU/P.orbit,bx=P.x+Math.cos(a)*(P.storm?60:44),by=P.y-6+Math.sin(a)*(P.storm?60:44);ctx.save();ctx.translate(bx,by);ctx.rotate(a+G.t*8);if(P.storm)ctx.scale(1.45,1.45);ink(2);ctx.beginPath();ctx.moveTo(0,-9);ctx.lineTo(4,0);ctx.lineTo(0,9);ctx.lineTo(-4,0);ctx.closePath();fs('#dfe4ea');ctx.restore()}

@@ -16,7 +16,7 @@ await p.click('.harr.l');await p.waitForTimeout(300);await p.click('#hAct [data-
 // pets
 await E(`heroSeg='pet';renderHero()`);await p.waitForTimeout(300);await p.screenshot({path:'t_pet1.png'});
 await p.click('[data-pup="muschietto"]');await p.waitForTimeout(200);await p.click('[data-psel="lucciola"]');await p.waitForTimeout(300);
-s=JSON.parse(await E('JSON.stringify(SAVE)'));ok('compagno: migliora e scegli',s.pets.owned.muschietto.lvl===2&&s.pets.sel==='lucciola');await p.screenshot({path:'t_pet2.png'});
+s=JSON.parse(await E('JSON.stringify(SAVE)'));ok('compagno: migliora e scegli',s.pets.owned.muschietto.lvl===2&&s.pets.eq.includes('lucciola')&&s.pets.eq.includes('muschietto'));await p.screenshot({path:'t_pet2.png'});
 // talents
 await E(`heroSeg='tal';renderHero()`);await p.waitForTimeout(300);await p.click('.tbuy');await p.waitForTimeout(300);s=JSON.parse(await E('JSON.stringify(SAVE)'));ok('talento comprato',Object.keys(s.tal).length===1);await p.screenshot({path:'t_tal.png'});
 // item upgrade + equip
