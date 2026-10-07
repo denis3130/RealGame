@@ -3114,7 +3114,8 @@ function head(S,B){
   else if(v==='side'){ell(5,hy+2,4.5,6);fs(S.skin);eye(6.5,hy+1.5,E);ctx.fillStyle=S.skin;circ(9.6,hy+3.5,1.6);ctx.fill()}
   else if(v==='n34'){ell(8,hy+2,2,4.5);fs(S.skin)}
   ctx.shadowBlur=0;
-  if(S.hoodTip){ctx.beginPath();if(B.side){ctx.moveTo(-7,hy-6);ctx.lineTo(-15,hy+2);ctx.lineTo(-8,hy+5)}else if(B.back){ctx.moveTo(-4,hy+6);ctx.lineTo(0,hy+13);ctx.lineTo(4,hy+6)}else{ctx.moveTo(-3,hy-9);ctx.lineTo(0,hy-14);ctx.lineTo(3,hy-9)}ctx.closePath();fs(S.hood)}
+  // hood tip: always on top of the head, leaning a little backwards (away from where the hero looks)
+  if(S.hoodTip){const lean={s:0,s34:-2.5,side:-5,n34:-2.5,n:0}[v]||0;ctx.beginPath();ctx.moveTo(lean*.3-3.5,hy-8);ctx.lineTo(lean,hy-15);ctx.lineTo(lean*.3+3.5,hy-8);ctx.closePath();fs(S.hood)}
   heroBits(S,B,hy,true);
   if(mossOn&&!S.skull&&!S.ears)mossStick(B,hy);
 }

@@ -55,11 +55,11 @@ Dopo ogni modifica: rifare almeno una partita automatica per capitolo, `meta2.js
 - Boss: `bossLvl()` fa crescere la vita un po' a ogni arena e con le coppe, e li rende più rapidi (fino a ×1,38); dalle arene 5–8 anello di sfere con avviso rosa, dalle 9–12 anche un ventaglio mirato. La prima arena resta com'era.
 - Micro animazioni: nemici che si schiacciano, monete che volano al contatore e al portafoglio, saltello al livello nuovo, scia bianca sulla barra della vita, cancello che si alza con polvere, bottoni che si schiacciano, puntini che spuntano una volta.
 - Arene grandi: le stanze di combattimento normali sono 460×820 (`BIG`), lo schermo resta 360×640 (`VW`, `VH`); `AW`, `AH`, `R`, `BOT` ora cambiano per stanza con `setWorld()`. Telecamera morbida (`G.vx`, `G.vy`, `camStep`), paesaggio del capitolo oltre i muri (`bakeBackdrop`), frecce ai bordi per i nemici fuori schermo. Boss, eventi, tutorial e intro restano 360×640. Impostazioni → Stanze: Grandi / Piccole.
-- Nuovi test: `sk.js` (scheletri), `bossx.js` (crescita boss), `micro.js` (micro animazioni), `big.js` (arene grandi), `dirs.js` e `rig2sheet.js` (fogli delle direzioni dei personaggi).
+- Nuovi test: `sk.js` (scheletri), `bossx.js` (crescita boss), `micro.js` (micro animazioni), `big.js` (arene grandi), `dirs.js` (foglio dei personaggi in tutte le direzioni).
+- Personaggi: Denis preferisce lo stile attuale (proposta nuova scartata). Corretta la punta del cappuccio, che da dietro finiva sotto la testa: ora sta sempre in cima e si piega un po' all'indietro.
 - Nota: in `meta2.js` i controlli «codice caricato» e «salvataggio dopo ricarica» falliscono anche sulla versione 41: problema del test, non del gioco.
 
 ## Da fare (annotato con Denis, non ancora fatto)
 
-1. Rifare l'eroe e gli altri personaggi: proposta pronta in `tests/rig2.js` (ogni parte ha un punto fisso sul corpo e gira con lui), fogli in `anteprime/`. Aspetta l'approvazione di Denis sulle direzioni prima di entrare nel gioco.
-2. Possibile in futuro: dividere `index.html` in più file con uno script che li riunisce per la pubblicazione.
-3. Da regolare giocando: forza del Druida, crescita dei boss, misura delle arene grandi.
+1. Possibile in futuro: dividere `index.html` in più file con uno script che li riunisce per la pubblicazione.
+2. Da regolare giocando: forza del Druida, crescita dei boss, misura delle arene grandi.
