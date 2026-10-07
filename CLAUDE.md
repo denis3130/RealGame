@@ -79,3 +79,4 @@ Dopo ogni modifica: rifare almeno una partita automatica per capitolo, `meta2.js
 1. Possibile in futuro: dividere `index.html` in più file con uno script che li riunisce per la pubblicazione.
 2. Da regolare giocando: forza del Druida, crescita dei boss, misura delle arene grandi.
 3. Boss nuovo, molto più avanti nel gioco: la bestia scheletrica gigante che sta sotto l'arena (le costole ai lati, il teschio con le corna dietro la porta, la coda di vertebre in basso: `bakeBackdrop`). L'idea di Denis è che il paesaggio stesso si risvegli e diventi il boss.
+4. Linea sul cancello: sotto il teschio gigante, dove il teschio incontra la cima del muro sopra il cancello, si vede ancora una specie di linea. Va sfumata meglio (vedi la sfumatura in `bakeBackdrop` e la cornice del muro in `bakeWalls`).
