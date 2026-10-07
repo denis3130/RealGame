@@ -47,6 +47,12 @@ html,body{height:100%;margin:0;background:var(--ink);color:var(--parch);overflow
 .rules span:nth-child(odd){font-family:var(--display);color:var(--teal);font-size:15px}
 .btn{font-family:var(--display);font-size:22px;padding:12px 16px;border-radius:12px;border:3px solid var(--ink);background:var(--gold);color:var(--ink);cursor:pointer;box-shadow:0 5px 0 var(--ink)}
 .btn:active{transform:translateY(3px);box-shadow:0 2px 0 var(--ink)}
+.btn,.qbtn,#tabs button,.iconbtn,.plus{transition:transform .08s}.btn:active{transform:translateY(3px) scale(.97)}.qbtn:active,#tabs button:active,.iconbtn:active,.plus:active{transform:scale(.9)}
+.flyCoin{position:fixed;z-index:9999;width:16px;height:16px;border-radius:50%;background:radial-gradient(circle at 35% 30%,#fff6c0,#ffd23c 45%,#d99a1c);border:2px solid #1b1612;pointer-events:none;transform:translate(-50%,-50%)}
+.flyCoin.gem{border-radius:3px;background:linear-gradient(135deg,#bff4ff,#4ac6f0 55%,#2a7fd0);transform:translate(-50%,-50%) rotate(45deg)}
+.dot:not([hidden]),.bang:not([hidden]){animation:badgePop .5s cubic-bezier(.3,1.6,.5,1) 1}
+@keyframes badgePop{0%{transform:scale(0)}100%{transform:scale(1)}}
+@media (prefers-reduced-motion:reduce){.dot,.bang{animation:none!important}}
 .btn.alt{background:#5a4636;color:var(--parch)}
 .statsrow{display:flex;gap:10px;flex-wrap:wrap}
 .statsrow div{flex:1 1 80px;background:rgba(0,0,0,.25);border:2px solid var(--ink);border-radius:10px;padding:8px 10px}
@@ -3354,7 +3360,7 @@ function drawBars(){
   for(const e of G.enemies){if(isBoss(e.type)||(e.hp>=e.max&&!e.elite)||e.hidden||e.spawn>0||G.dark&&Math.hypot(e.x-P.x,e.y-P.y)>105)continue;
     const w=Math.max(22,e.r*2)*(e.elite?1.3:1),hy=e.y-e.r*2-e.z-14-(e.type==='bat'||e.type==='wisp'||e.type==='mosquito'||e.type==='snowspirit'?12:0);ctx.fillStyle=INK;ctx.fillRect(e.x-w/2-1,hy,w+2,5);ctx.fillStyle=e.elite?'#ffc93c':'#e5484d';ctx.fillRect(e.x-w/2,hy+1,w*Math.max(0,e.hp/e.max),3);if(e.elite){ctx.font='12px "Lilita One", sans-serif';ctx.textAlign='center';ctx.lineWidth=3;ctx.strokeStyle=INK;ctx.strokeText('★',e.x-w/2-7,hy+6);ctx.fillStyle='#ffc93c';ctx.fillText('★',e.x-w/2-7,hy+6)}}
   if(INTRO.on)return;const x=P.x,y=P.y,w=34,pct=P.hp/P.maxhp;ctx.fillStyle=INK;ctx.fillRect(x-w/2-2,y-48,w+4,8);ctx.fillStyle='#3a2a24';ctx.fillRect(x-w/2,y-46,w,4);
-  ctx.fillStyle=pct>.35?'#7bbf4a':'#e5484d';ctx.fillRect(x-w/2,y-46,w*pct,4);
+  {const tp=Math.min(1,(P.hpTrail==null?P.hp:P.hpTrail)/P.maxhp);if(tp>pct){ctx.fillStyle='#fff';ctx.fillRect(x-w/2,y-46,w*tp,4)}}ctx.fillStyle=pct>.35?'#7bbf4a':'#e5484d';ctx.fillRect(x-w/2,y-46,w*pct,4);
   ctx.font='11px "Lilita One", sans-serif';ctx.textAlign='center';ctx.lineWidth=3;ctx.strokeStyle=INK;ctx.strokeText(Math.ceil(P.hp),x,y-51);ctx.fillStyle='#fff';ctx.fillText(Math.ceil(P.hp),x,y-51);
 }
 function drawHero(){
@@ -3434,10 +3440,11 @@ function drawWallBack(){
   ctx.restore();
   if(G.door){ctx.save();doorPath();ctx.clip();const g=ctx.createRadialGradient(dx,10,2,dx,10,40);g.addColorStop(0,'rgba(255,201,60,.35)');g.addColorStop(1,'rgba(255,201,60,0)');ctx.fillStyle=g;ctx.fillRect(dx-DOORW,0,DOORW*2,TOP);ctx.restore()}
   doorDark(false);
-  if(!G.door){ctx.strokeStyle=INK;ctx.lineWidth=5;for(let x=dx-DOORW+7;x<dx+DOORW;x+=9){ctx.beginPath();ctx.moveTo(x,TOP+2);ctx.lineTo(x,4+Math.abs(x-dx)*.7);ctx.stroke()}
+  const gUp=G.door&&G.gateT>0?1-G.gateT/.6:G.door?1:0;if(gUp<1){ctx.save();if(gUp>0){doorPath();ctx.clip();ctx.translate(0,-gUp*gUp*70)}
+  {ctx.strokeStyle=INK;ctx.lineWidth=5;for(let x=dx-DOORW+7;x<dx+DOORW;x+=9){ctx.beginPath();ctx.moveTo(x,TOP+2);ctx.lineTo(x,4+Math.abs(x-dx)*.7);ctx.stroke()}
     ctx.strokeStyle='#6b6f78';ctx.lineWidth=3;for(let x=dx-DOORW+7;x<dx+DOORW;x+=9){ctx.beginPath();ctx.moveTo(x,TOP+2);ctx.lineTo(x,4+Math.abs(x-dx)*.7);ctx.stroke()}
     ctx.beginPath();ctx.moveTo(dx-DOORW+2,TOP-22);ctx.lineTo(dx+DOORW-2,TOP-22);ctx.stroke();
-    ctx.fillStyle='#6b6f78';for(let x=dx-DOORW+7;x<dx+DOORW;x+=9){ctx.beginPath();ctx.moveTo(x-2.5,TOP+2);ctx.lineTo(x,TOP+7);ctx.lineTo(x+2.5,TOP+2);ctx.fill()}}
+    ctx.fillStyle='#6b6f78';for(let x=dx-DOORW+7;x<dx+DOORW;x+=9){ctx.beginPath();ctx.moveTo(x-2.5,TOP+2);ctx.lineTo(x,TOP+7);ctx.lineTo(x+2.5,TOP+2);ctx.fill()}}ctx.restore()}
   doorFrame();
   if(G.door){ctx.fillStyle='#ffc93c';const by=TOP+24+Math.sin(G.t*6)*4;ctx.beginPath();ctx.moveTo(dx,by-12);ctx.lineTo(dx+11,by);ctx.lineTo(dx+4,by);ctx.lineTo(dx+4,by+10);ctx.lineTo(dx-4,by+10);ctx.lineTo(dx-4,by);ctx.lineTo(dx-11,by);ctx.closePath();ink(2.5);ctx.globalAlpha=P.y<TOP+60?.35:1;ctx.fill();ctx.stroke();ctx.globalAlpha=1}
   for(const t of G.torches)drawTorch(t);
@@ -6637,6 +6644,37 @@ function loop(now){const raw=(now-last)/1000,dt=Math.min(.033,raw);last=now;if(I
   if($('menu').hidden){render();hud();if(started)rpCapture(now)}
   if(RP.pending&&now>=RP.pending)rpStart();if(RP.on)rpFrame(raw);else if(!$('menu').hidden&&$('chestScr').hidden){if(!$('tabHero').hidden){G.t+=dt;drawHeroPreview(dt)}const home=!$('tabPlay').hidden;CAMP.fr=(CAMP.fr||0)+1;if(home?$('sheetScr').hidden:CAMP.fr%6===0)drawCamp(home?dt:dt*6)}
   requestAnimationFrame(loop)}
+
+// =====================================================================
+// MICRO ANIMATIONS: squash on hit, coins flying to the counter, level-up hop, HP trail, gate dust; menu buttons and badges
+// =====================================================================
+{const _h=hurtE;hurtE=function(e,dmg,crit,dot){if(!dot&&e&&!e.dead&&!(e.intro>0)&&!e.hidden)e.sq=.16;return _h.apply(this,arguments)}}
+{const _d=drawEnemy;drawEnemy=function(e){if(!(e.sq>0)||LOWFX)return _d(e);const k=Math.sin(e.sq/.16*Math.PI)*(isBoss(e.type)?.06:.18);
+  ctx.save();ctx.translate(e.x,e.y);ctx.scale(1+k,1-k);ctx.translate(-e.x,-e.y);_d(e);ctx.restore()}}
+{const _d=drawHero;drawHero=function(){const h=P&&P.hopT>0?Math.sin((1-P.hopT/.38)*Math.PI)*11:0;if(!h)return _d();ctx.save();ctx.translate(0,-h);_d();ctx.restore()}}
+{const _g=gainXp;gainXp=function(v){const l=P.lvl;_g(v);if(P.lvl>l&&G.state!=='dead')P.hopT=.38}}
+// screen position (CSS px) of a point of the room
+function roomToScreen(x,y){const r=cv.getBoundingClientRect(),dpr=cv.width/Math.max(1,r.width),cw=cv.width,ch=cv.height,s=Math.min(cw/AW,ch/AH),ox=(cw-AW*s)/2,oy=Math.max(0,(ch-AH*s)/2);return[r.left+(ox+x*s)/dpr,r.top+(oy+y*s)/dpr]}
+function bump(el){if(el&&el.animate)el.animate([{transform:'scale(1)'},{transform:'scale(1.25)'},{transform:'scale(1)'}],{duration:260,easing:'ease-out'})}
+// one little coin flying from (x,y) in CSS px to an element; the counter bumps when it lands
+let flyN=0;function flyCoin(x,y,to,done,gem){if(LOWFX||!to||!document.body.animate||flyN>7){done&&done();return}const b=to.getBoundingClientRect();if(!b.width){done&&done();return}flyN++;
+  const c=document.createElement('i');c.className='flyCoin'+(gem?' gem':'');c.style.left=x+'px';c.style.top=y+'px';document.body.appendChild(c);
+  const tx=b.left+b.width/2-x,ty=b.top+b.height/2-y,mx=tx*.3+(Math.random()-.5)*60,my=Math.min(ty*.3,-40-Math.random()*40);
+  c.animate([{transform:'translate(-50%,-50%) scale(.6)'},{transform:`translate(calc(${mx}px - 50%),calc(${my}px - 50%)) scale(1.15)`,offset:.35},{transform:`translate(calc(${tx}px - 50%),calc(${ty}px - 50%)) scale(.7)`}],{duration:520+Math.random()*120,easing:'cubic-bezier(.5,0,.6,1)'}).onfinish=()=>{c.remove();flyN--;bump(to);done&&done()}}
+{const _u=update;update=function(dt){
+  const hadDoor=G&&G.door,gold0=G?G.gold:0;_u(dt);if(!G||!P)return;
+  for(const e of G.enemies)if(e.sq>0)e.sq-=dt;if(P.hopT>0)P.hopT-=dt;
+  // HP trail: waits a moment, then slides down to the real value
+  if(P.hpTrail==null||P.hp>=P.hpTrail){P.hpTrail=P.hp;P.hpTD=.35}else{P.hpTD-=dt;if(P.hpTD<=0)P.hpTrail=Math.max(P.hp,P.hpTrail-P.maxhp*.9*dt)}
+  // gate: bars slide up with a puff of dust
+  if(G.door&&!hadDoor&&G.state!=='trans'){G.gateT=.6;if(!LOWFX)for(let i=0;i<16;i++)G.fx.push({k:'puff',x:AW/2+rand(-DOORW,DOORW),y:TOP+rand(-4,6),vx:rand(-40,40),vy:rand(-30,10),t:rand(.4,.8),r:rand(4,8)})}
+  if(G.gateT>0)G.gateT-=dt;
+  // coins picked up in battle fly to the gold counter
+  if(G.gold>gold0&&$('menu').hidden&&!INTRO.on&&!G.goldRun){const[sx,sy]=roomToScreen(P.x,P.y-10);flyCoin(sx,sy,$('goldTxt'))}}}
+// menu: coins fly from the last tap to the wallet when gold goes up
+let lastTap=[innerWidth/2,innerHeight/2];addEventListener('pointerdown',e=>{lastTap=[e.clientX,e.clientY]},true);
+{const _t=tweenNum;tweenNum=function(el,to){const from=el&&el.dataset.v!=null?+el.dataset.v:null;_t(el,to);
+  if(from!=null&&to>from&&!$('menu').hidden&&(el.id==='mGold'||el.id==='mGems')){const n=Math.min(6,2+Math.floor(Math.log10(to-from+1)));for(let i=0;i<n;i++)setTimeout(()=>flyCoin(lastTap[0]+rand(-14,14),lastTap[1]+rand(-14,14),el,null,el.id==='mGems'),i*70)}}}
 newRun();applySettings();if(!playIntro(false))showMenu();requestAnimationFrame(loop);
 })();
 </script>
