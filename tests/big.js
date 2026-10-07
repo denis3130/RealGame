@@ -9,6 +9,6 @@ await E(`for(const e of G.enemies)hurtE(e,1e6,false)`);await p.waitForTimeout(15
 ok('telecamera in alto',await E('G.vy<0'));
 for(const [ch,room] of [[2,3],[3,3],[4,3]]){await E(`G.chapter=${ch};G.room=${room};G.event=null;buildRoom();P.x=30;P.y=BOT-20`);await p.waitForTimeout(900);await p.screenshot({path:'big_ch'+ch+'.png'})}
 await E(`G.chapter=1;G.room=4;G.event=null;rollDark=()=>true;buildRoom()`);await p.waitForTimeout(900);await p.screenshot({path:'big_dark.png'});ok('stanza buia grande',await E('G.dark&&AW>VW'));
-await E(`G.room=5;buildRoom()`);await p.waitForTimeout(600);ok('boss: stanza normale',await E('AW===VW&&AH===VH&&G.vx===0'));
+await E(`G.room=5;buildRoom()`);await p.waitForTimeout(600);ok('boss: anche lui nell arena grande',await E('AW===BIG.w&&AH===BIG.h'));
 await E(`SAVE.set.big=false;G.room=6;buildRoom()`);await p.waitForTimeout(300);ok('impostazione stanze piccole',await E('AW===VW'));
 console.log(R.join('\n'),errs);await b.close()})();
