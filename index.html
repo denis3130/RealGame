@@ -2160,6 +2160,7 @@ const anyUnlocking=()=>SAVE.slots.some(s=>s&&slotState(s)==='unlocking');
 function fmtT(ms){const t=Math.max(0,Math.ceil(ms/1000));return t>=60?Math.floor(t/60)+'m '+String(t%60).padStart(2,'0')+'s':t+'s'}
 const skipCost=s=>Math.max(5,Math.ceil((s.end-Date.now())/6000)*5);
 const canUpgrade=id=>{const o=SAVE.items[id];return o&&o.lvl<MAXLV&&o.cards>=needCards(o.lvl)};
+const canAffordUp=id=>canUpgrade(id)&&SAVE.gold>=upCost(ITEM[id],SAVE.items[id].lvl);
 
 // ---------- SVG art for menu ----------
 const I_='#1b1612';
@@ -2444,7 +2445,7 @@ $('cdone').onclick=async()=>{duckMusic(1);const scr=$('chestScr');await canim(sc
 addEventListener('resize',()=>{if(FX.on)fxSize()});
 
 const hcv=$('heroCv'),hctx=hcv.getContext('2d');let pvT=0;
-function showMenu(){playMusic('menu');duckMusic(1);$('menu').hidden=false;$('endScr').hidden=true;$('pauseScr').hidden=true;$('wrap').classList.add('inmenu');started=false;paused=true;renderGold();renderWho();setTab('tabPlay');if(SAVE.arenaUp!=null){const ai=SAVE.arenaUp;SAVE.arenaUp=null;save();setTimeout(()=>showArenaUp(ai),450)}else if(loginReady()&&showMenu.lg!==today()){showMenu.lg=today();setTimeout(()=>{if(!$('menu').hidden&&$('sheetScr').hidden&&$('chestScr').hidden)openSheet('login')},700)}}
+function showMenu(){playMusic('menu');duckMusic(1);$('menu').hidden=false;$('endScr').hidden=true;$('pauseScr').hidden=true;$('wrap').classList.add('inmenu');started=false;paused=true;renderGold();renderWho();setTab('tabPlay');if(SAVE.arenaUp!=null){const ai=SAVE.arenaUp;SAVE.arenaUp=null;save();setTimeout(()=>showArenaUp(ai),450)}else if(loginReady()&&(SAVE.runs||0)>=1&&showMenu.lg!==today()){showMenu.lg=today();setTimeout(()=>{if(!$('menu').hidden&&$('sheetScr').hidden&&$('chestScr').hidden)openSheet('login')},700)}}
 function startRun(){if(!modeOpen(SAVE.sel||'c1')){toast('Modalità ancora bloccata');return}initAudio();duckMusic(1);$('menu').hidden=true;$('endScr').hidden=true;$('sheetScr').hidden=true;$('itemScr').hidden=true;SHEET=null;$('wrap').classList.remove('inmenu');started=true;paused=false;newRun()}
 $('playBtn').onclick=startRun;
 setInterval(()=>{if($('menu').hidden)return;if(!$('tabPlay').hidden)renderPlay();renderBadges();if(!$('tabShop').hidden&&!$('spDaily').hidden){const t=new Date(),mid=new Date(t.getFullYear(),t.getMonth(),t.getDate()+1);$('dealT').innerHTML=`Si aggiorna tra <b>${fmtH(mid-t)}</b>`}},500);
@@ -2480,6 +2481,8 @@ const CURSES=[
   {n:'Orda furiosa',d:'Nemici con il 25% di salute in più',f:()=>{G.curseHp=(G.curseHp||1)*1.25}},
   {n:'Mano tremante',d:"Velocità d'attacco -15%",f:()=>{P.aspd*=.85}}];
 function makeSeq(){const ev=shuffle(Object.keys(EVENTS)).slice(0,3),seq=[];
+  // beginners never meet the flawless trial right after room 2: move it to a later slot
+  if(ev[0]==='sfida'&&((SAVE.trBest||0)<400||(SAVE.runs||0)<8)){const j=1+((Math.random()*2)|0);[ev[0],ev[j]]=[ev[j],ev[0]]}
   for(let r=1;r<=ROOMS;r++){seq.push({c:r});if(r===2)seq.push({e:ev[0]});if(r===5)seq.push({e:ev[1]});if(r===7)seq.push({e:ev[2]})}return seq}
 function nextStep(){G.si++;if(P.roomHeal&&!G.event)P.hp=Math.min(P.maxhp,P.hp+Math.round(P.maxhp*P.roomHeal));const st=G.seq[G.si];if(st.c){G.room=st.c;G.event=null}else G.event=st.e;buildRoom()}
 function setupEvent(){
@@ -2778,10 +2781,18 @@ function updEnemy(e,dt){
     case 'plant':e.face=a;e.cd-=dt*sm*FR();if(e.cd<=0){{const n=e.elite?12:8;for(let i=0;i<n;i++)shootE(e.x,e.y-14,e.rot+i*TAU/n,125,6,10,'orb')};e.rot+=.39;e.cd=2.6}break;
     case 'skeleton':
       if(e.stun>0){e.stun-=dt;e.moving=false;break}
-      if(e.lunge>0){e.lunge-=dt;moveCircle(e,Math.cos(e.la)*175*sm*dt,Math.sin(e.la)*175*sm*dt);e.moving=true;e.walk+=dt*16;if(e.lunge<=0)e.cd=rand(2.2,3)}
-      else if(e.wind>0){e.moving=false;e.wind-=dt;if(e.wind<=0){e.lunge=.32;e.la=e.face}}
-      else{const na=navAngle(e);e.face+=clamp(angDiff(e.face,na),-3*dt,3*dt);moveCircle(e,Math.cos(e.face)*38*sm*dt,Math.sin(e.face)*38*sm*dt);e.moving=true;e.walk+=dt*8;
-        e.cd-=dt*FR();if(e.cd<=0&&d<130&&clearLine(e.x,e.y,P.x,P.y,e.r*.8)){e.face=a;e.wind=.45}}
+      // crossbow skeleton: keeps its distance and shoots while walking; every 5 s it can dash (sideways, or away when you get close)
+      if(e.dashCd==null){e.dashCd=rand(2,4);e.side=Math.random()<.5?-1:1;e.cd=rand(1,1.8)}
+      e.dashCd-=dt;
+      if(e.lunge>0){e.lunge-=dt;moveCircle(e,Math.cos(e.la)*230*sm*dt,Math.sin(e.la)*230*sm*dt);e.moving=true;e.walk+=dt*16;e.face=a;
+        if(!LOWFX&&Math.random()<.5)G.fx.push({k:'puff',x:e.x+rand(-5,5),y:e.y+4,vx:-Math.cos(e.la)*30,vy:-8,t:.3,r:4})}
+      else if(e.wind>0){e.moving=false;e.face=a;e.wind-=dt;if(e.wind<=0){e.lunge=.28;e.dashCd=5;sfx('dash')}}
+      else{e.face=a;
+        if(e.dashCd<=0&&(d<110||Math.random()<dt*.8)){e.la=d<110?a+Math.PI+rand(-.5,.5):a+Math.PI/2*e.side;e.wind=.3;e.side*=-1}
+        else{const mv=d<120?-1:d>210?1:0,ma=mv===0?a+Math.PI/2*e.side:mv>0?navAngle(e):a+Math.PI,sp=40*sm,ox=e.x,oy=e.y;
+          moveCircle(e,Math.cos(ma)*sp*dt,Math.sin(ma)*sp*dt);if(Math.hypot(e.x-ox,e.y-oy)<sp*dt*.35)e.side*=-1;e.moving=true;e.walk+=dt*8;if(Math.random()<dt*.35)e.side*=-1}
+        e.cd-=dt*FR();e.aim=e.cd<.5?e.cd:0;
+        if(e.cd<=0){if(clearLine(e.x,e.y,P.x,P.y,4)){shootE(e.x+Math.cos(a)*12,e.y-12+Math.sin(a)*8,a,165,5,12,'arrow');if(e.elite)for(const k of[-.2,.2])shootE(e.x,e.y-12,a+k,165,5,12,'arrow');e.cd=rand(1.7,2.3)}else e.cd=.4}}
       break;
     case 'mushroom':
       if(e.puff>0){e.face=a;e.moving=false;e.puff-=dt;if(e.puff<=0){addZone(e.x,e.y,e.elite?58:40,3.2);vfxBlast(e.x,e.y-6,'176,106,216',40,{sparks:0,spore:12,sporeRgb:'190,130,240',dust:0,ring2:false})}}
@@ -2943,7 +2954,7 @@ function basis(face){const d=Q8(face),[v,f]=VIEWS[d],qa=d*Math.PI/4,lx=Math.cos(
 // ---------- humanoid rig (hero, goblin, skeleton, witch) ----------
 const HERO={sc:1,body:'#2fb3a6',hood:'#23877d',skin:'#f2c9a0',foot:'#4a3626',foot2:'#3a2a1d',quiver:true,held:'bow',bowCol:'#a4703d',hoodTip:true,belt:'#8a5a20'};
 const GOBLIN={sc:.95,body:'#a8443a',hood:'#7e2f28',skin:'#7bbf4a',foot:'#3d2a1d',ears:true,held:'bow',bowCol:'#6b4a2a',eyeCol:'#e5484d',belt:'#4a3626'};
-const SKEL={sc:1,body:'#d9d2c0',skull:true,skin:'#e8e2d0',foot:'#cfc7b2',ribs:true,held:'sword',shield:true,eyeCol:'#e5484d'},SKEL_NS={...SKEL,shield:false};
+const SKEL={sc:1,body:'#d9d2c0',skull:true,skin:'#e8e2d0',foot:'#cfc7b2',ribs:true,held:'xbow',bowCol:'#6b4a2a',shield:true,eyeCol:'#e5484d'},SKEL_NS={...SKEL,shield:false};
 const MERCHANT={sc:1.08,body:'#5a3f7a',hood:'#3a2a52',skin:'#e8c0a0',foot:'#3a2a1d',held:'staff',eyeCol:'#ffc93c',belt:'#8a5a20',hoodTip:true};
 const WITCH={sc:1.35,body:'#3d2f4f',hood:'#2c3a24',skin:'#b7d9a8',float:true,robe:true,crown:true,held:'staff',eyeCol:'#7bf0c0'};
 function drawRig(x,y,face,walk,moving,S,o){
@@ -3242,7 +3253,7 @@ function drawTelegraphs(){
   for(const e of G.enemies){const x=e.x,y=e.y;drawEliteAura(e);if(ETELE[e.type]&&!(e.spawn>0))ETELE[e.type](e);
     if(e.spawn>0){const p=e.spawn/.8;ctx.strokeStyle=`rgba(229,72,77,${.4+.4*Math.sin(G.t*20)})`;ctx.lineWidth=3;circ(x,y,e.r+8*p);ctx.stroke();ctx.fillStyle='rgba(229,72,77,.18)';circ(x,y,e.r);ctx.fill()}
     if(e.type==='goblin'&&e.aim>0){ctx.strokeStyle=`rgba(229,72,77,${e.aim>.25?.35:.8})`;ctx.lineWidth=e.aim>.25?2:3;ctx.setLineDash([6,5]);ctx.beginPath();ctx.moveTo(x,y-8);ctx.lineTo(x+Math.cos(e.aimA)*420,y-8+Math.sin(e.aimA)*420);ctx.stroke();ctx.setLineDash([])}
-    if(e.type==='skeleton'&&e.wind>0){ctx.strokeStyle='rgba(229,72,77,.6)';ctx.lineWidth=2.5;ctx.beginPath();ctx.moveTo(x,y);ctx.lineTo(x+Math.cos(e.face)*60,y+Math.sin(e.face)*60);ctx.stroke()}
+    if(e.type==='skeleton'&&e.wind>0){ctx.strokeStyle='rgba(255,230,160,.7)';ctx.lineWidth=2.5;ctx.setLineDash([5,4]);ctx.beginPath();ctx.moveTo(x,y);ctx.lineTo(x+Math.cos(e.la)*60,y+Math.sin(e.la)*60);ctx.stroke();ctx.setLineDash([])}
     if(e.type==='wisp'){if(e.ph==='tele'){const p=1-e.phT/.55;ctx.strokeStyle=`rgba(138,91,196,${.4+.4*Math.sin(G.t*25)})`;ctx.lineWidth=3;circ(e.tx,e.ty,20-p*8);ctx.stroke();ctx.fillStyle='rgba(138,91,196,.2)';circ(e.tx,e.ty,10);ctx.fill()}}
     if(e.type==='beetle'){const armed=e.arm>0,blink=armed&&Math.floor(e.arm*14)%2===0;if(armed){ctx.strokeStyle=`rgba(229,72,77,${blink?.8:.35})`;ctx.lineWidth=2.5;ctx.setLineDash([5,5]);circ(x,y,e.elite?72:52);ctx.stroke();ctx.setLineDash([]);ctx.fillStyle='rgba(229,72,77,.12)';circ(x,y,e.elite?72:52);ctx.fill()}}
     if(e.type==='golem'){if(e.st==='leap'&&e.sub==='air'){const p=1-e.stT/.9;ctx.strokeStyle='rgba(229,72,77,.7)';ctx.lineWidth=3;circ(e.tx,e.ty,e.r+16);ctx.stroke();ctx.fillStyle=`rgba(229,72,77,${.1+p*.25})`;circ(e.tx,e.ty,(e.r+16)*p);ctx.fill()}if(e.st==='roll'&&e.sub==='a'){ctx.save();ctx.translate(x,y);ctx.rotate(e.ra);ctx.fillStyle='rgba(229,72,77,.22)';ctx.fillRect(0,-e.r,340,e.r*2);ctx.restore()}}
@@ -3291,7 +3302,7 @@ function drawEnemy0(e){
     case 'witch':drawWitch(e);break;
     case 'goblin':drawRig(x,y,e.face,e.walk,e.moving,e.slow>0?{...GOBLIN,skin:'#a8d8c0'}:GOBLIN,{pull:e.aim>0&&e.aim<.6?5:0});break;
     case 'skeleton':{const sh=skShield(e);if(e.shHit>0)e.shHit=Math.max(0,e.shHit-1/60);const S=sh<=0?SKEL_NS:sh<e.shMax||e.shHit>0?{...SKEL,shDmg:1-sh/e.shMax,shHit:e.shHit}:SKEL;
-      drawRig(x+(e.stun>0?Math.sin(G.t*40)*1.5:0),y,e.face,e.walk,e.moving,S,{wind:e.wind>0,lunge:e.lunge>0});break}
+      drawRig(x+(e.stun>0?Math.sin(G.t*40)*1.5:0),y,e.face,e.walk,e.moving,S,{pull:e.aim>0?5:0});break}
     default:if(EDRAW[e.type])EDRAW[e.type](e);
   }
   if(esc)ctx.restore();
@@ -5191,7 +5202,7 @@ const ULT={
 const ultGain=v=>{if(!P||G.state==='dead')return;const was=P.ult>=100;P.ult=Math.min(100,(P.ult||0)+v);if(!was&&P.ult>=100){sfx('shimmer',2);$('ultBtn').classList.add('full')}};
 function useUlt(){if(!started||paused||modal||!P||(P.ult||0)<100||G.state==='dead'||G.state==='trans')return;
   const id=P.hero||'arciere',U=ULT[id];P.ult=0;$('ultBtn').classList.remove('full');
-  G.ultFx={t:.9,max:.9,rgb:U.rgb};G.slowT=Math.max(G.slowT||0,.35);banner(U.n,'',1.1);vib([30,30,80]);shake(4);
+  G.ultFx={t:.9,max:.9,rgb:U.rgb};G.slowT=Math.max(G.slowT||0,.35);text(P.x,P.y-58,U.n,U.col||'#ffe27a',17);vib([30,30,80]);shake(4);
   fxPush({k:'ring2',x:P.x,y:P.y-10,rgb:U.rgb,r0:10,r1:160,t:.5,max:.5,w:10});fxPush({k:'flash',x:P.x,y:P.y-10,rgb:U.rgb,r:120,t:.3,max:.3});
   if(id==='arciere'){sfx('levelup');const tg=G.enemies.filter(canHit);
     for(let w=0;w<3;w++){const pts=tg.slice(0,8).map(e=>({x:e.x+rand(-14,14),y:e.y+rand(-10,10)}));while(pts.length<6)pts.push({x:rand(L+30,R-30),y:rand(TOP+40,BOT-60)});
@@ -5530,7 +5541,7 @@ const HEROES=[
     style:{body:'#8a3a5a',hood:'#d9962e',skin:'#f0c8a8',hair:'#e0a63a',bowCol:'#c94a6a',hoodTip:false,ponytail:true,belt:'#5e2440'},proj:'arrow',pcol:'#ff8ab8'},
   {id:'balestriere',n:'Balestriere',price:1500,d:'Lento e corazzato: ogni dardo è un macigno.',start:'Perforazione fin da subito',sk:'pierce',mods:{hp:1.3,atk:1.35,aspd:.8,spd:.9},
     style:{body:'#6b6f78',hood:'#4a3626',skin:'#e8b890',held:'xbow',bowCol:'#6b4a2a',helm:true,hoodTip:false,sc:1.05,belt:'#3a2a1d'},proj:'bolt',pcol:'#dfe4ea'},
-  {id:'druida',n:'Druida',price:2500,d:'Le radici lo proteggono e lo curano.',start:'Una lama rotante e rigenerazione',sk:'orbit',mods:{regen:.6},
+  {id:'druida',n:'Druida',price:2500,d:'Le radici lo proteggono e lo curano.',start:'Una lama rotante, più salute e rigenerazione',sk:'orbit',mods:{hp:1.2,atk:1.2,regen:1.5},
     style:{body:'#3f6a2a',hood:'#2c4a1e',skin:'#e8c8a0',held:'staff',eyeCol:'#9fff7a',hoodTip:true,antlers:true,quiver:false,belt:'#6b4a2a'},proj:'leaf',pcol:'#7bf0a8'}];
 const HERO_BY={};HEROES.forEach(h=>HERO_BY[h.id]=h);
 
@@ -5629,7 +5640,10 @@ const ACH=[
 function checkAch(){for(const a of ACH){if(SAVE.ach[a.id])continue;if(a.v(SAVE.stats)>=a.g){SAVE.ach[a.id]=Date.now();achPop('Traguardo sbloccato',a.n+(a.title?' · titolo «'+a.title+'»':''),'trophy')}}}
 const popQ=[];let popBusy=false,popCur=null,popGen=0;
 function achPop(tag,txt,kind){if(INTRO.on)return;popQ.push({tag,txt,kind});if(!popBusy)nextPop()}
-function nextPop(){if(RP.on||RP.pending){popBusy=false;return}const p=popQ.shift(),el=$('achPop');if(!p||!el){popBusy=false;popCur=null;return}popBusy=true;popCur=p;const g=++popGen;
+function nextPop(){if(RP.on||RP.pending){popBusy=false;return}
+  // never cover the boss bar: missions and trophies wait until the boss fight is over
+  if(popQ.length&&started&&$('menu').hidden&&!$('bossBar').hidden){popBusy=true;clearTimeout(nextPop.w);nextPop.w=setTimeout(nextPop,800);return}
+  const p=popQ.shift(),el=$('achPop');if(!p||!el){popBusy=false;popCur=null;return}popBusy=true;popCur=p;const g=++popGen;
   el.querySelector('.apI').innerHTML=kind2svg(p.kind);el.querySelector('.apT').textContent=p.tag;el.querySelector('.apX').textContent=p.txt;
   el.classList.remove('show');void el.offsetWidth;el.classList.add('show');if(p.kind==='trophy')vib([30,40,30]);
   setTimeout(()=>{if(g!==popGen)return;el.classList.remove('show');setTimeout(()=>{if(g===popGen){popCur=null;nextPop()}},350)},2600)}
@@ -5640,7 +5654,7 @@ function kind2svg(k){return k==='mission'?'<svg viewBox="0 0 40 40"><rect x="8" 
 // player creation shared by runs and the hero screen preview
 function applyMeta(p){const h=HERO_BY[SAVE.hero]||HEROES[0],m=h.mods;
   p.spd=150*(m.spd||1);if(m.hp){p.maxhp=Math.round(p.maxhp*m.hp);p.hp=p.maxhp}if(m.atk)p.atk*=m.atk;if(m.aspd)p.aspd*=m.aspd;if(m.dash)p.dashMax*=m.dash;if(m.regen)p.regen=(p.regen||0)+m.regen;
-  p.proj=h.proj;p.pcol=h.pcol;p.pspd=h.proj==='bolt'?720:h.proj==='leaf'?470:560;p.hero=h.id;
+  p.proj=h.proj;p.pcol=h.pcol;p.pspd=h.proj==='bolt'?720:h.proj==='leaf'?520:560;p.hero=h.id;
   {const W=SAVE.eq.arma&&WEAP[SAVE.eq.arma];p.wk=null;p.kbm=h.proj==='bolt'?1.6:1;p.trail=null;
    if(W&&h.proj==='arrow'){p.wk=SAVE.eq.arma;p.proj=W.proj;p.pspd=Math.round((W.proj==='bolt'?620:560)*W.spd);p.kbm=W.kb||1;p.trail=W.trail||null;if(W.fl&&!h.pcol)p.pcol=W.fl}}
   const s=SK.find(x=>x.id===h.sk);if(s){s.f();p.skills[s.id]=(p.skills[s.id]||0)+1}
@@ -6082,7 +6096,7 @@ function renderHero(){
   const order=ITEMS.slice().sort((a,b)=>SLOTS.indexOf(a.slot)-SLOTS.indexOf(b.slot)||b.rar-a.rar);
   $('coll').innerHTML=order.map(it=>icard(it.id)).join('');
   $('collCount').textContent=`${Object.keys(SAVE.items).length} di ${ITEMS.length} oggetti trovati`;
-  $('heroBadge').hidden=!ITEMS.some(i=>canUpgrade(i.id));
+  $('heroBadge').hidden=!ITEMS.some(i=>canAffordUp(i.id));
   for(const[k,id] of [['coll','vColl'],['tal','vTal'],['set','vSet'],['pet','vPet']])$(id).hidden=heroSeg!==k;if(heroSeg==='pet')renderPets();
   document.querySelectorAll('#heroSeg button').forEach(b=>b.classList.toggle('on',b.dataset.v===heroSeg));
   renderSets();renderTalents();checkAch();renderWho()}
@@ -6207,7 +6221,7 @@ document.addEventListener('click',e=>{const b=e.target.closest('[data-login]');i
   save();renderGold();toast('+'+loginLabel(r));if(r.k==='chest'){closeSheet();openChest(r.v)}else fillLogin();renderSide()});
 // --- side buttons on the home scene (Archero-style)
 function renderSide(){const lr=loginReady(),rr=roadReady(),pk=packList().some(p=>(SAVE.gems||0)>=p.c);
-  $('loginBtn').classList.toggle('hot',lr);$('loginBang').hidden=!lr;$('offerBang').hidden=!pk;$('roadSideBang').hidden=!rr;$('roadSide').classList.toggle('hot',!!rr);const pr=passReady();$('passBang').hidden=!pr;$('passBtn').classList.toggle('hot',!!pr);$('passLvl').textContent=passLvl()}
+  $('loginBtn').classList.toggle('hot',lr);$('loginBang').hidden=!lr;$('offerBang').hidden=true;$('roadSideBang').hidden=true;$('roadSide').classList.toggle('hot',!!rr);const pr=passReady();$('passBang').hidden=!pr;$('passBtn').classList.toggle('hot',!!pr);$('passLvl').textContent=passLvl()}
 $('passBtn').onclick=()=>openSheet('pass');
 $('loginBtn').onclick=()=>openSheet('login');
 $('offerBtn').onclick=()=>{sfx('ui');setTab('tabShop');setShopPage('spOffers');renderShop()};
@@ -6486,7 +6500,7 @@ function ingameHint(){}// one-time in-game hints removed
 // bestiary
 const BEST=[['slime','Slime','Salta verso di te. Il più debole della cripta.'],['bigslime','Slime gigante','Quando muore si divide in due slime.'],['bat','Pipistrello','Vola sopra gli ostacoli e ti gira intorno.'],
   ['goblin','Goblin arciere','Mira con una linea rossa, poi tira. Si sposta per avere la visuale.'],['plant','Pianta sputaspine','Ferma, spara una corona di spine che ruota.'],['eyeflower','Fiore occhio','Ti segue con lo sguardo e spara ventagli di spine.'],
-  ['skeleton','Scheletro','Para le frecce di fronte, ma lo scudo si spacca dopo qualche colpo. Oppure colpiscilo di lato.'],['mushroom','Fungo velenoso','Lascia nuvole di spore che fanno male.'],['wisp','Fuoco fatuo','Svanisce e ricompare vicino a te sparando.'],
+  ['skeleton','Scheletro','Tira con la balestra mentre cammina e ogni tanto scatta di lato. Lo scudo para le frecce di fronte, ma si spacca dopo qualche colpo; mentre scatta è scoperto.'],['mushroom','Fungo velenoso','Lascia nuvole di spore che fanno male.'],['wisp','Fuoco fatuo','Svanisce e ricompare vicino a te sparando.'],
   ['beetle','Scarabeo bomba','Ti corre addosso ed esplode.'],['shadoweye','Occhio d\'ombra','Passa attraverso i muri, ti fissa e spara un raggio.'],['magmaslime','Slime di magma','Lascia pozze di fuoco dove atterra.'],
   ['imp','Diavoletto','Vola e lancia palle di fuoco.'],['pyro','Piromante','Evoca meteore dove ti trovi.'],['obsidian','Golem d\'ossidiana','Carica in linea retta: spostati di lato.'],
   ['golem','Golem di Muschio','Boss. Salta, lancia massi e rotola rimbalzando.'],['witch','Strega delle Radici','Boss. Radici dal terreno, spirali di spine e teletrasporto.'],
