@@ -688,16 +688,7 @@ html,body{height:100%;margin:0;background:var(--ink);color:var(--parch);overflow
 .sheet>*{flex-shrink:0}
 @keyframes blink{50%{opacity:.35}}
 /* ===== first-time help ===== */
-#coach{position:absolute;inset:0;z-index:75;cursor:pointer}
-#coach[hidden]{display:none}
-#coach .spot{position:absolute;border-radius:14px;box-shadow:0 0 0 3px var(--gold),0 0 0 9999px rgba(6,4,10,.62);animation:spot 1.4s ease-in-out infinite;pointer-events:none}
 @keyframes spot{50%{box-shadow:0 0 0 6px var(--gold),0 0 0 9999px rgba(6,4,10,.62)}}
-#coach .cbub{position:absolute;width:260px;box-sizing:border-box;padding:12px 14px 10px;border:3px solid var(--ink);border-radius:var(--hewn2);background:linear-gradient(170deg,var(--parchA),var(--parchB));color:var(--ink);box-shadow:0 5px 0 var(--ink);animation:panelIn .3s cubic-bezier(.2,1.3,.4,1)}
-#coach .cbub::before{content:"";position:absolute;left:calc(var(--ax,130px) - 9px);width:16px;height:16px;background:var(--parchA);border:3px solid var(--ink);transform:rotate(45deg)}
-#coach .cbub.up::before{top:-11px;border-right:0;border-bottom:0}
-#coach .cbub.down::before{bottom:-11px;border-left:0;border-top:0;background:var(--parchB)}
-#coach p{margin:0;font-size:15px;font-weight:700;line-height:1.3}
-#coach small{display:block;margin-top:5px;font-size:12px;color:#8a5a20;font-weight:700}
 /* profile buttons */
 .pbtns{display:flex;flex-direction:column;gap:8px;align-self:start}
 .pcard .pbtns .gearBtn{width:44px;height:44px;margin:0;padding:0;justify-content:center;border-radius:var(--hewn2)}
@@ -1324,7 +1315,6 @@ html,body{height:100%;margin:0;background:var(--ink);color:var(--parch);overflow
   </div>
   <div id="toast" role="status"></div>
   <div class="screen crScr" id="arenaUpScr" hidden></div>
-  <div id="coach" hidden><div class="spot"></div><div class="cbub"><p></p><small>Tocca per continuare</small></div></div>
   <div id="achPop" aria-live="polite"><div class="apI"></div><div><b class="apT"></b><span class="apX"></span></div></div>
   <div class="screen" id="skScr" hidden>
     <div class="panel" style="max-width:480px">
@@ -1464,11 +1454,9 @@ const ICON={
 // ---------- setup ----------
 function newRun(){
   P=makeP();
-  const md=SAVE.sel||'c1';G={mode:md==='inf'?'inf':'camp',chapter:md==='c2'?2:1,room:1,gold:0,kills:0,t:0,fade:0,shake:0,state:'play',bannerT:0,seq:null,si:0,event:null,orbs:[],lvlT:0,curseHp:1,
-    tut:null};
+  const md=SAVE.sel||'c1';G={mode:md==='inf'?'inf':'camp',chapter:md==='c2'?2:1,room:1,gold:0,kills:0,t:0,fade:0,shake:0,state:'play',bannerT:0,seq:null,si:0,event:null,orbs:[],lvlT:0,curseHp:1,gemsRun:0};
   if(G.mode!=='inf'){const ai=arenaIdx(SAVE.trophies||0);G.arena=ai;G.chapter=ARENAS[ai].ch;G.diff=ARENAS[ai].diff}
   if(md==='daily'){const C=chalToday();G.daily=C;G.chapter=C.ch;G.diff=1.25;G.arena=0;for(const id of C.mods){const M=CHAL_MODS.find(m=>m.id===id);if(M)M.f()}}
-  if(started&&!(SAVE.runs>0)&&!SAVE.welcomed){G.welcome=4.2;SAVE.welcomed=1;save()}
   G.pets=makePets();G.pet=G.pets[0]||null;G.petShots=[];P.ult=0;$('ultBtn').classList.remove('full');
   G.seq=makeSeqFor();G.ccRoom=pk([3,4,6,7,8,9]);buildRoom();
 }
@@ -1482,11 +1470,11 @@ function hpMul(){return (1+(effRoom()-1)*.28)*(G.diff||1)}
 const FR=()=>Math.min(2.2,1+(effRoom()-1)*.06),DMG=()=>(1+(effRoom()-1)*.08)*(1+((G.diff||1)-1)*.6);
 // bosses grow little by little with trophies: inside each group of 4 arenas (tier) health climbs a step per arena and
 // smoothly with the trophies won inside the arena; higher tiers make them "smarter" (faster, fewer pauses, one extra move)
-function bossLvl(){if(G.mode==='inf'||G.daily||G.mode==='camp'&&G.tut)return{grow:1,spd:1,tier:0,pos:0};const ai=G.arena||0,A=ARENAS[ai],N=ARENAS[ai+1],tr=SAVE.trophies||0;if(!ai)return{grow:1,spd:1,tier:0,pos:0};
+function bossLvl(){if(G.mode==='inf'||G.daily)return{grow:1,spd:1,tier:0,pos:0};const ai=G.arena||0,A=ARENAS[ai],N=ARENAS[ai+1],tr=SAVE.trophies||0;if(!ai)return{grow:1,spd:1,tier:0,pos:0};
   const frac=N?clamp((tr-A.t)/(N.t-A.t),0,1):clamp((tr-A.t)/3000,0,1),tier=Math.floor(ai/4),pos=ai%4;
   return{grow:1+.08*pos+.08*frac,spd:Math.min(1.38,1+.05*pos+.12*tier+.03*frac),tier,pos}}
 const bossMul=()=>(G.mode==='inf'?1+Math.max(0,G.room-10)*.09:bossLvl().grow)*(G.diff||1);
-function makeE(type,x,y,spawn,elite){if(SAVE.seen)SAVE.seen[type]=1;if(elite&&started)ingameHint('elite','Nemico élite: più forte, ma lascia più premi');const e=makeE0(type,x,y,spawn);if(elite){e.elite=true;e.hp*=2.6;e.max=e.hp;e.r=Math.round(e.r*1.2);e.gold*=3;e.cdmg=Math.round(e.cdmg*1.3)}if(G.giant&&!isBoss(type))e.r=Math.round(e.r*1.2);return e}
+function makeE(type,x,y,spawn,elite){if(SAVE.seen)SAVE.seen[type]=1;const e=makeE0(type,x,y,spawn);if(elite){e.elite=true;e.hp*=2.6;e.max=e.hp;e.r=Math.round(e.r*1.2);e.gold*=3;e.cdmg=Math.round(e.cdmg*1.3)}if(G.giant&&!isBoss(type))e.r=Math.round(e.r*1.2);return e}
 const BOSS_INTRO={golem:3.1,witch:2.9,salamander:2.6,smith:2.6,mimic:1.6};
 function makeE0(type,x,y,spawn){const d=ET[type],m=isBoss(type)?bossMul():hpMul()*(G.curseHp||1);
   return{type,x,y,r:d.r,hp:d.hp*m,max:d.hp*m,cdmg:Math.round(d.cdmg*DMG()),gold:d.gold,spawn:spawn==null?.8:spawn,flash:0,burn:0,burnTick:0,slow:0,
@@ -1505,9 +1493,11 @@ function freeSpot(r,minY,maxY){let x,y,tries=0;
   do{x=rand(L+30,R-30);y=rand(minY,maxY);tries++}
   while(tries<60&&(G.rocks.some(k=>Math.hypot(k.x-x,k.y-y)<k.r+r+8)||G.enemies.some(e=>Math.hypot(e.x-x,e.y-y)<40)));
   return{x,y}}
-function buildRoom(){clearTimeout(bossDown.t);$('bossDown').hidden=true;
-  {const big=bigOn()&&!G.event&&!G.tut&&!INTRO.on;setWorld(big?BIG.w:VW,big?BIG.h:VH)}
-  Object.assign(G,{ultRain:[],petShots:[],goldRun:null,trial:null,dark:false,lobs:[],rollers:[],enemies:[],eproj:[],arrows:[],coins:[],gems:[],gemsRun:0,hearts:[],waves:[],fx:[],texts:[],decals:[],zones:[],bands:[],boulders:[],door:false,state:'play',clearT:0,orbs:[],prop:null,meteors:[],lines:[],lavaLights:[],bossDmg:false,cc:null,ccChosen:false});
+function buildRoom(){clearTimeout(bossDown.t);
+  // gems still lying on the floor when you leave a room are yours anyway; the run total is never reset between rooms
+  G.gemsRun=(G.gemsRun||0)+((G.gems&&G.gems.length)||0);$('bossDown').hidden=true;
+  {const big=bigOn()&&!G.event&&!INTRO.on;setWorld(big?BIG.w:VW,big?BIG.h:VH)}
+  Object.assign(G,{ultRain:[],petShots:[],goldRun:null,trial:null,dark:false,lobs:[],rollers:[],enemies:[],eproj:[],arrows:[],coins:[],gems:[],hearts:[],waves:[],fx:[],texts:[],decals:[],zones:[],bands:[],boulders:[],door:false,state:'play',clearT:0,orbs:[],prop:null,meteors:[],lines:[],lavaLights:[],bossDmg:false,cc:null,ccChosen:false});
   P.x=AW/2;P.y=BOT-40;P.queue=[];P.inv=.6;P.face=-Math.PI/2;for(const pt of G.pets||[]){pt.x=P.x+(pt.slot?26:-26);pt.y=P.y+8}
   const boss=!G.event&&isBossRoom(G.room);
   let lay=G.event?[[66,190,16],[294,190,16],[66,500,16],[294,500,16]]:boss?bossLayout(zoneOf(G.room)):LAYOUTS[randi(0,LAYOUTS.length-1)];
@@ -1523,7 +1513,7 @@ function buildRoom(){clearTimeout(bossDown.t);$('bossDown').hidden=true;
   const b=G.enemies.find(e=>isBoss(e.type));
   bossBarReset();$('bossBar').hidden=!b;$('bossBar').classList.remove('rage');if(b)$('bossName').textContent=ET[b.type].name;
   $('banner').classList.toggle('low',!!b&&!G.event);
-  if(G.event)banner(EVENTS[G.event].n,EVENTS[G.event].sub,2.2);else if(b){banner(ET[b.type].name,ET[b.type].title,2.6);ingameHint('boss','Boss! Guarda i segnali a terra e usa lo scatto per schivare')}else banner((G.mode==='inf'?'Abisso · Stanza ':'Stanza ')+G.room,G.dark?'Buio! Le torce sono spente: oro doppio':G.variant.n);
+  if(G.event)banner(EVENTS[G.event].n,EVENTS[G.event].sub,2.2);else if(b){banner(ET[b.type].name,ET[b.type].title,2.6);}else banner((G.mode==='inf'?'Abisso · Stanza ':'Stanza ')+G.room,G.dark?'Buio! Le torce sono spente: oro doppio':G.variant.n);
 }
 
 // ---------- input ----------
@@ -2025,7 +2015,7 @@ function pick(i){if(!modal||!offer[i])return;const s=offer[i];
 function endRun(win,quit){
   if(!G||G.ended)return;G.ended=true;
   started=false;paused=true;$('pauseScr').hidden=true;$('bossBar').hidden=true;
-  const gold=Math.round(G.gold*(P.goldMul||1)*(1+.25*(G.arena||0))),st=SAVE.stats;SAVE.gold+=gold;SAVE.gems=(SAVE.gems||0)+(G.gemsRun||0);SAVE.runs++;st.gold+=gold;st.runs++;st.maxLvl=Math.max(st.maxLvl,P.lvl);mprog('gold',null,gold);mprog('lvl',null,P.lvl,true);
+  const gold=Math.round(G.gold*(P.goldMul||1)*(1+.25*(G.arena||0))),st=SAVE.stats;SAVE.gold+=gold;G.gemsRun=(G.gemsRun||0)+((G.gems&&G.gems.length)||0);G.gems=[];SAVE.gems=(SAVE.gems||0)+G.gemsRun;SAVE.runs++;st.gold+=gold;st.runs++;st.maxLvl=Math.max(st.maxLvl,P.lvl);mprog('gold',null,gold);mprog('lvl',null,P.lvl,true);
   const inf=G.mode==='inf',chn=G.chapter||1,c2=!inf&&chn===2;let rec=false,unlock='';
   if(inf){rec=G.room>SAVE.inf.best&&!quit;if(!quit){SAVE.inf.best=Math.max(SAVE.inf.best,G.room);SAVE.inf.top.push({room:G.room,hero:SAVE.hero,kills:G.kills,d:Date.now()});SAVE.inf.top.sort((a,b)=>b.room-a.room||b.kills-a.kills);SAVE.inf.top=SAVE.inf.top.slice(0,5)}mprog('inf',null,G.room,true)}
   else{const B=chn>1?'best'+chn:'best';if(!SAVE[B])SAVE[B]={room:0,gold:0};if(G.room>SAVE[B].room||(G.room===SAVE[B].room&&gold>SAVE[B].gold))SAVE[B]={room:G.room,gold}}
@@ -2208,7 +2198,7 @@ $('topbar').addEventListener('click',e=>{const b=e.target.closest('.plus');if(!b
   else toast('Le gemme si trovano rompendo i cristalli nelle stanze')});
 let lastSlotsHTML='';
 function renderPlay(){
-  renderModes();renderFree();renderMissions();if(!$('menu').hidden)menuHints('tabPlay');
+  renderModes();renderFree();renderMissions();
   const html=SAVE.slots.map((s,i)=>{if(!s)return '<div class="slot empty"><span>Vuoto</span></div>';
     const st=slotState(s),c=CHESTS[s.type];let lab;
     if(st==='ready')lab='<b>Apri!</b><small>&nbsp;</small>';
@@ -2266,7 +2256,7 @@ function openItem(id){
 }
 $('shop').addEventListener('click',e=>{const b=e.target.closest('[data-buy]');if(!b||b.disabled)return;const c=CHESTS[b.dataset.buy];if(SAVE.gold<c.price)return;SAVE.gold-=c.price;save();renderGold();renderShop();openChest(b.dataset.buy)});
 function setTab(id){for(const t of ['tabHero','tabPlay','tabShop','tabRoad','tabProfile'])$(t).hidden=t!==id;$('shopTabs').hidden=id!=='tabShop';{const s=$(id);s.classList.remove('tabIn');void s.offsetWidth;s.classList.add('tabIn')}if(typeof coachOn!=='undefined'&&coachOn){$('coach').hidden=true;coachOn=false}$('menu').classList.toggle('home',id==='tabPlay');document.querySelectorAll('#tabs button').forEach(b=>b.classList.toggle('on',b.dataset.tab===id));
-  if(id==='tabHero')renderHero();if(id==='tabShop'){setShopPage(shopPage);renderShop()}if(id==='tabRoad')renderRoad();if(id==='tabProfile')renderProfile();if(id!=='tabPlay')setTimeout(()=>menuHints(id),400);if(id==='tabPlay')renderPlay();$('menuMain').scrollTop=0}
+  if(id==='tabHero')renderHero();if(id==='tabShop'){setShopPage(shopPage);renderShop()}if(id==='tabRoad')renderRoad();if(id==='tabProfile')renderProfile();if(id==='tabPlay')renderPlay();$('menuMain').scrollTop=0}
 document.querySelectorAll('#tabs button').forEach(b=>b.onclick=()=>{sfx('ui');setTab(b.dataset.tab)});
 // ---------- chest opening sequence ----------
 const TIER={
@@ -2463,7 +2453,7 @@ function startRun(){if(!modeOpen(SAVE.sel||'c1')){toast('Modalità ancora blocca
 $('playBtn').onclick=startRun;
 setInterval(()=>{if($('menu').hidden)return;if(!$('tabPlay').hidden)renderPlay();renderBadges();if(!$('tabShop').hidden&&!$('spDaily').hidden){const t=new Date(),mid=new Date(t.getFullYear(),t.getMonth(),t.getDate()+1);$('dealT').innerHTML=`Si aggiorna tra <b>${fmtH(mid-t)}</b>`}},500);
 
-// ---------- experience, event rooms, elites, tutorial ----------
+// ---------- experience, event rooms, elites ----------
 const XPV={slime:4,bigslime:8,bat:3,goblin:5,plant:6,skeleton:7,mushroom:5,wisp:6,beetle:4,golem:70,witch:0};
 const needXp=l=>Math.round(18+8*(l-1));
 function dropXp(e){const v=(XPV[e.type]||4)*(e.elite?3:1);if(!v)return;const n=Math.min(7,Math.ceil(v/3));
@@ -2499,7 +2489,7 @@ function makeSeq(){const ev=shuffle(Object.keys(EVENTS)).slice(0,3),seq=[];
   for(let r=1;r<=ROOMS;r++){seq.push({c:r});if(r===2)seq.push({e:ev[0]});if(r===5)seq.push({e:ev[1]});if(r===7)seq.push({e:ev[2]})}return seq}
 function nextStep(){G.si++;if(P.roomHeal&&!G.event)P.hp=Math.min(P.maxhp,P.hp+Math.round(P.maxhp*P.roomHeal));const st=G.seq[G.si];if(st.c){G.room=st.c;G.event=null}else G.event=st.e;buildRoom()}
 function setupEvent(){
-  const ev=G.event;if(ev==='oro'){setupGoldRoom();return}if(ev==='sfida'){setupTrial();return}G.state='cleared';G.clearT=0;G.door=true;ingameHint('event','Stanza speciale: avvicinati a quello che c\'è al centro');
+  const ev=G.event;if(ev==='oro'){setupGoldRoom();return}if(ev==='sfida'){setupTrial();return}G.state='cleared';G.clearT=0;G.door=true;
   G.prop={kind:ev,x:AW/2,y:TOP+(BOT-TOP)*.42,used:false,inside:false,r:ev==='mercante'?16:22};
   if(ev==='mercante'){G.shopOffer=null;G.shopSold={}}
   if(ev==='altare')G.curse=CURSES[randi(0,CURSES.length-1)];
@@ -2545,8 +2535,6 @@ function drawProp(p){
 function eliteRoll(t){const n=effRoom();if(isBoss(t)||n<3)return false;return Math.random()<Math.min(.6,(.12+(n-3)*.03)*(G.eliteBoost||1))}
 function drawEliteAura(e){if(!e.elite||e.spawn>0||e.hidden)return;const p=.5+.5*Math.sin(G.t*4+e.t);
   glow('255,200,60',e.x,e.y+2,e.r*2.2,.28+.15*p,e.r*1.1);ctx.strokeStyle=`rgba(255,201,60,${.5+.3*p})`;ctx.lineWidth=2;ell(e.x,e.y+3,e.r*1.5,e.r*.62);ctx.stroke()}
-// --- first-run tutorial hints ---
-function updTutorial(){}// tutorials removed
 
 // ---------- mechanics ----------
 // special-room objects are solid: each one has an elliptical footprint you bump into and walk around
@@ -2596,7 +2584,7 @@ function navAngle(e){
 function dash(){
   if(!started||paused||P.dashCd>0)return;
   const inp=input();let a=inp.m>.1?Math.atan2(inp.y,inp.x):P.face;
-  P.dashT=.16;P.dvx=Math.cos(a)*560;P.dvy=Math.sin(a)*560;P.dashCd=P.dashMax;P.inv=Math.max(P.inv,.28);P.face=a;if(G.tut)G.tut.dashed=true;sfx('dash');
+  P.dashT=.16;P.dvx=Math.cos(a)*560;P.dvy=Math.sin(a)*560;P.dashCd=P.dashMax;P.inv=Math.max(P.inv,.28);P.face=a;sfx('dash');
   for(let i=0;i<6;i++)G.fx.push({k:'puff',x:P.x,y:P.y+6,vx:rand(-40,40),vy:rand(-40,40),t:rand(.25,.45),r:rand(4,7)});
 }
 const canHit=e=>!e.dead&&!(e.spawn>0)&&!e.hidden&&!(e.intro>0)&&!(e.z>20)&&!(e.shell>0)&&!(e.rise>0);
@@ -2851,7 +2839,6 @@ function update(dt){
   if(G.bannerT>0){G.bannerT-=dt;if(G.bannerT<=0)bannerEl.classList.remove('show')}
   if(G.state==='trans'){G.fade+=dt*G.fadeDir*3.5;if(G.fadeDir>0&&G.fade>=1){G.fade=1;const ev=G.event;nextStep();G.prevState=G.state;G.state='trans';G.fadeDir=-1}else if(G.fadeDir<0&&G.fade<=0){G.fade=0;G.state=G.prevState||(G.event?'cleared':'play')}return}
   if(G.state==='dead'){deathTick(dt);return}
-  if(G.welcome>0){G.welcome-=dt;if(G.bannerT>0){G.bannerT=0;bannerEl.classList.remove('show')}return}
   // player
   if(P.regen&&P.hp<P.maxhp)P.hp=Math.min(P.maxhp,P.hp+P.regen*dt);
   P.inv=Math.max(0,P.inv-dt);P.dashCd=Math.max(0,P.dashCd-dt);if(P.shCd>0)P.shCd-=dt;P.poisonCd=Math.max(0,P.poisonCd-dt);
@@ -2884,7 +2871,7 @@ function update(dt){
       if(e.type==='skeleton'&&e.lunge<=0&&skShield(e)>0){const fx=Math.cos(e.face),fy=Math.sin(e.face);
         if(-(fx*ar.vx+fy*ar.vy)/560>(e.elite?.12:.55)){const hitv=(ar.big?2:1)+(Math.random()<P.crit?1:0);e.sh=Math.max(0,e.sh-hitv);e.shHit=.22;
           G.fx.push({k:'spark',x:e.x+fx*12,y:e.y-8+fy*12,t:.2});moveCircle(e,Math.cos(ar.a)*3,Math.sin(ar.a)*3);
-          if(e.sh>0){text(e.x,e.y-34,'PARATO','#c9cfd6',12);sfx('shieldHit',1-e.sh/e.shMax,e.x);ingameHint('skshield','Lo scudo dello scheletro si consuma: continua a colpirlo e si spacca!')}
+          if(e.sh>0){text(e.x,e.y-34,'PARATO','#c9cfd6',12);sfx('shieldHit',1-e.sh/e.shMax,e.x);}
           else breakShield(e,ar.a);
           gone=true;break}}
       if(BLOCK[e.type]&&BLOCK[e.type](e,ar)){gone=true;break}
@@ -2945,7 +2932,7 @@ function update(dt){
     if(d<16&&g.t>.6){G.gemsRun++;G.gems.splice(i,1);sfx('gem',0,g.x);text(P.x,P.y-44,'+1','#8fe8ff',15);for(let q=0;q<6;q++)G.fx.push({k:'spark',x:g.x+rand(-6,6),y:g.y-8+rand(-6,6),t:.25})}}
   for(let i=G.hearts.length-1;i>=0;i--){const h=G.hearts[i];h.t+=dt;if(Math.hypot(P.x-h.x,P.y-h.y)<18){const v=Math.round(P.maxhp*.15);P.hp=Math.min(P.maxhp,P.hp+v);text(P.x,P.y-40,'+'+v,'#7bbf4a',16);G.hearts.splice(i,1);sfx('heal')}}
   for(const f of G.fx){f.t-=dt;if(f.vx!==undefined){if(f.g)f.vy+=f.g*dt;f.x+=f.vx*dt;f.y+=f.vy*dt;const dk=f.g?.985:.92;f.vx*=dk;f.vy*=f.g?1:.92}}
-  updEnv(dt);updOrbs(dt);if(G.event)updEvent(dt);updTutorial(dt);
+  updEnv(dt);updOrbs(dt);if(G.event)updEvent(dt);
   G.fx=G.fx.filter(f=>f.t>0);
   for(const t of G.texts){t.life-=dt;t.y-=40*dt}G.texts=G.texts.filter(t=>t.life>0);
   G.shake=Math.max(0,G.shake-dt*30);
@@ -5264,7 +5251,7 @@ function drawRoots(e){const k=Math.min(1,(e.root||0)/.3),x=e.x,y=e.y;ctx.save();
     ctx.strokeStyle=INK;ctx.lineWidth=6;ctx.beginPath();ctx.moveTo(sx,sy);ctx.quadraticCurveTo(sx+Math.cos(a)*6,ty+6,tx,ty);ctx.stroke();ctx.strokeStyle='#6b4a2a';ctx.lineWidth=3;ctx.stroke();
     ctx.fillStyle='#7bd65a';ctx.beginPath();ctx.ellipse(tx,ty,3,1.6,a,0,TAU);ctx.fill()}ctx.restore()}
 function drawUltOverlay(){const u=G.ultFx;if(!u)return;const k=u.t/u.max;ctx.fillStyle=`rgba(6,8,16,${.32*Math.sin(k*Math.PI)})`;ctx.fillRect(-60,-60,AW+120,AH+120);ctx.save();ctx.globalCompositeOperation='lighter';glow(u.rgb,P.x,P.y-12,90,.5*k);ctx.restore()}
-function hudUlt(){const b=$('ultBtn');if(!b||!P)return;const hide=G.state==='dead'||!!G.welcome&&G.welcome>0;if(b.hidden!==hide)b.hidden=hide;const v=(P.ult||0)/100;b.style.setProperty('--u',v*360+'deg');b.style.setProperty('--uc',(ULT[P.hero]||ULT.arciere).col)}
+function hudUlt(){const b=$('ultBtn');if(!b||!P)return;const hide=G.state==='dead';if(b.hidden!==hide)b.hidden=hide;const v=(P.ult||0)/100;b.style.setProperty('--u',v*360+'deg');b.style.setProperty('--uc',(ULT[P.hero]||ULT.arciere).col)}
 
 
 // =====================================================================
@@ -5342,7 +5329,7 @@ function chalEnd(win,quit){const C=ensureChal(),score=quit?0:chalScore(win);C.tr
 
 // =====================================================================
 // KEY MOMENTS: the hero's fall in slow motion, the replay of the final blow on a boss,
-// the wordless welcome for a brand-new player, the save code
+// the save code
 // =====================================================================
 // --- falling in slow motion: the world keeps drifting, the hero topples, colour drains away
 function deathTick(dt){G.deathT=(G.deathT||0)+dt;const d=dt*.25;
@@ -5374,21 +5361,6 @@ function afterReplay(cb){if(RP.on||RP.pending){RP.after=cb}else cb()}
 $('replayScr').addEventListener('pointerdown',e=>{e.preventDefault();rpEnd()});
 
 // --- a brand-new player: three wordless seconds that show how to play
-function drawWelcome(){const w=G.welcome;if(!(w>0))return;const T=4.2-w,cx=AW/2,by=BOT-90;ctx.save();
-  const a=Math.min(1,T/.3)*Math.min(1,w/.4);ctx.globalAlpha=a;ctx.fillStyle='rgba(8,10,20,.55)';ctx.fillRect(0,0,AW,AH);
-  if(T<2.1){// a finger drags: the hero runs
-    const k=(T%2.1)/2.1,ang=k*TAU*.75,jx=cx+Math.cos(ang)*28,jy=by+Math.sin(ang)*20;
-    ctx.strokeStyle='rgba(246,234,210,.6)';ctx.lineWidth=3;circ(cx,by,40);ctx.stroke();ctx.fillStyle='rgba(246,234,210,.55)';circ(jx,jy,16);ctx.fill();
-    drawHand(jx+6,jy+10,1);
-    ctx.save();ctx.translate(cx,by-90);ctx.scale(1.6,1.6);drawRig(Math.cos(ang)*14,Math.sin(ang)*6,ang,T*14,true,P.style||HERO,{});ctx.restore();
-    ctx.strokeStyle='rgba(255,255,255,.7)';ctx.lineWidth=2;ctx.setLineDash([4,5]);ctx.beginPath();ctx.ellipse(cx,by-80,30,12,0,0,TAU);ctx.stroke();ctx.setLineDash([])}
-  else{// the finger lifts: standing still, the hero shoots by himself
-    const k=T-2.1;drawHand(cx+6,by+10-Math.min(1,k*3)*26,.6+.4*(1-Math.min(1,k*3)));
-    ctx.save();ctx.translate(cx,by-90);ctx.scale(1.6,1.6);drawRig(0,0,-Math.PI/2,0,false,P.style||HERO,{pull:5});ctx.restore();
-    for(let i=0;i<3;i++){const q=((k*1.6)+i/3)%1,ax=cx+(i-1)*40*q,ay=by-110-q*150;ctx.save();ctx.translate(ax,ay);ctx.rotate(-Math.PI/2+(i-1)*.25);ctx.globalAlpha=a*(1-q);ctx.strokeStyle=INK;ctx.lineWidth=4;ctx.beginPath();ctx.moveTo(-12,0);ctx.lineTo(4,0);ctx.stroke();ctx.strokeStyle='#d9b27a';ctx.lineWidth=2;ctx.stroke();ctx.fillStyle='#e8ecf0';ctx.beginPath();ctx.moveTo(9,0);ctx.lineTo(2,-3.5);ctx.lineTo(2,3.5);ctx.closePath();ctx.fill();ctx.restore()}
-    ctx.globalAlpha=a;ctx.save();ctx.translate(cx+56,by-100);ctx.strokeStyle='#9cef5e';ctx.lineWidth=5;ctx.lineCap='round';ctx.beginPath();ctx.moveTo(-8,0);ctx.lineTo(-2,7);ctx.lineTo(10,-8);ctx.stroke();ctx.restore()}
-  ctx.restore()}
-function drawHand(x,y,s){ctx.save();ctx.translate(x,y);ctx.scale(s,s);ink(2.2);ctx.beginPath();ctx.moveTo(-4,-18);ctx.quadraticCurveTo(-4,-23,0,-23);ctx.quadraticCurveTo(4,-23,4,-18);ctx.lineTo(4,-6);ctx.lineTo(10,-8);ctx.quadraticCurveTo(15,-7,14,-2);ctx.lineTo(13,10);ctx.quadraticCurveTo(10,18,0,18);ctx.quadraticCurveTo(-9,18,-11,9);ctx.lineTo(-13,-2);ctx.quadraticCurveTo(-12,-6,-8,-4);ctx.lineTo(-4,-2);ctx.closePath();fs('#ffe0c0');ctx.restore()}
 
 // --- the save code: copy it somewhere safe, paste it back on another phone
 const saveCode=()=>btoa(unescape(encodeURIComponent(JSON.stringify(SAVE))));
@@ -5416,7 +5388,7 @@ function iFoe(type,x,y,spawn,o){const e=makeE(type,x,y,spawn==null?0:spawn);e.hp
 function iHero(){P=makeP();
   Object.assign(P,{hero:'arciere',proj:'arrow',pcol:null,pspd:560,wk:null,trail:null,kbm:1,style:heroStyle0('arciere'),atk:40,aspd:2.6,multi:2,front:1,diag:1,side:0,rear:0,fan:0,giant:0,
     crit:.25,critMul:2,maxhp:320,hp:320,need:1e9,ric:0,pierce:0,orbit:0,storm:false,light:0,fire:false,ice:false,dashMax:.3,dashCd:0,revive:0,shield:0,vamp:0,regen:0,poison:0,ult:0,spd:150});
-  G={mode:'camp',chapter:1,room:2,gold:0,kills:0,t:4.9,fade:0,shake:0,state:'cine',bannerT:0,seq:[{c:2}],si:0,event:null,orbs:[],lvlT:0,curseHp:1,diff:1,arena:0,tut:null,welcome:0,darkN:9,wheelAt:-1};
+  G={mode:'camp',chapter:1,room:2,gold:0,kills:0,t:4.9,fade:0,shake:0,state:'cine',bannerT:0,seq:[{c:2}],si:0,event:null,orbs:[],lvlT:0,curseHp:1,diff:1,arena:0,darkN:9,wheelAt:-1};
   G.pet={id:'muschietto',x:P.x-26,y:P.y+8,t:0,cd:1,hcd:0,face:-Math.PI/2,att:0,hop:0,happy:0,moving:false}}
 function iRoom(ch,room,o){o=o||{};
   Object.assign(G,{chapter:ch,room,event:null,seq:[{c:room}],si:0,cam:null,slowT:0,hitstop:0,ultFx:null,meteorRain:false,kc:0});
@@ -6403,7 +6375,7 @@ function drawCoinProj(p){glow('255,210,90',p.x,p.y,12,.35);if(icoOk(ICO.coin)){c
 const ccIsRoom=()=>!G.event&&!isBossRoom(G.room)&&(G.mode==='inf'?G.room%10===7:G.room===G.ccRoom);
 function spawnTwinChests(){const y=TOP+(BOT-TOP)*.56,bad=Math.random()<.5?0:1;G.cc=[0,1].map(i=>({x:i?AW*.72:AW*.28,y,bad:i===bad,t:-i*.15,st:'drop',k:0}));G.ccDone=G.room;
   for(const c of G.cc)c.crush=G.rocks.filter(k=>!k.temp&&Math.hypot(k.x-c.x,k.y-c.y)<k.r+28);
-  banner('Due casse!','Una nasconde un tesoro, l\'altra un mostro',2.4);ingameHint('twin','Cammina verso una delle due casse per aprirla: scegli bene!');sfx('door')}
+  banner('Due casse!','Una nasconde un tesoro, l\'altra un mostro',2.4);sfx('door')}
 function updTwinChests(dt){if(!G.cc)return;
   for(const c of G.cc){c.t+=dt;
     if(c.st==='drop'&&c.t>=.55){c.st='idle';shake(4);sfx('boom');for(const k of c.crush)shatterRock(k);vfxBlast(c.x,c.y,'255,225,160',58,{sparks:10,debris:'stone',n:10,dust:16});stamp('crater',c.x,c.y+2,20)}
@@ -6526,12 +6498,8 @@ TRACKS.opening={bpm:150,roots:[40,36,38,35],chords:[[52,55,59],[48,52,55],[50,54
     if(s===0&&bar===0)vBell(tr,t,r+48,1.8,.06)}};
 function glowAt(c,x,y,r,rgb,a){const g=c.createRadialGradient(x,y,0,x,y,r);g.addColorStop(0,`rgba(${rgb},${a})`);g.addColorStop(1,`rgba(${rgb},0)`);c.fillStyle=g;c.fillRect(x-r,y-r,r*2,r*2)}
 
-// ---------- first-time help (shown once, never again) + the Guide with the bestiary ----------
-if(!SAVE.hints)SAVE.hints={};if(!SAVE.seen)SAVE.seen={};
-let coachOn=false;
-function coach(){return false}// menu coach marks removed
-function menuHints(){}
-function ingameHint(){}// one-time in-game hints removed
+// ---------- the Guide with the bestiary ----------
+if(!SAVE.seen)SAVE.seen={};
 // bestiary
 const BEST=[['slime','Slime','Salta verso di te. Il più debole della cripta.'],['bigslime','Slime gigante','Quando muore si divide in due slime.'],['bat','Pipistrello','Vola sopra gli ostacoli e ti gira intorno.'],
   ['goblin','Goblin arciere','Mira con una linea rossa, poi tira. Si sposta per avere la visuale.'],['plant','Pianta sputaspine','Ferma, spara una corona di spine che ruota.'],['eyeflower','Fiore occhio','Ti segue con lo sguardo e spara ventagli di spine.'],
@@ -6638,7 +6606,6 @@ function render(){
   ctx.textAlign='center';
   for(const t of G.texts){ctx.globalAlpha=Math.min(1,t.life*2.5);ctx.font=Math.round(t.size*(t.pop?1+1.2*Math.max(0,(t.life-.62)/.18):1))+'px "Lilita One", sans-serif';ctx.lineWidth=3.5;ctx.strokeStyle=INK;ctx.strokeText(t.t,t.x,t.y);ctx.fillStyle=t.col;ctx.fillText(t.t,t.x,t.y)}
   ctx.globalAlpha=1;
-  drawWelcome();
   if(G.fade>0){ctx.fillStyle=`rgba(12,9,7,${G.fade})`;ctx.fillRect(vx-60,vy-60,VW+120,VH+120)}
   ctx.setTransform(1,0,0,1,0,0);if(AW>VW||AH>VH)drawOffscreen(cw,ch,s,ox,oy,vx,vy);
   if(G.state==='dead')drawDeathFx(cw,ch);

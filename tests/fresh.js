@@ -8,7 +8,7 @@ p.on('console',m=>{if(m.type()==='error')errs.push('console: '+m.text())});
 const today=new Date();const ds=today.getFullYear()+'-'+(today.getMonth()+1)+'-'+today.getDate();
 await p.goto('file://'+__dirname+'/test.html');await p.waitForTimeout(1500);await p.screenshot({path:'fresh_a.png'});
 await p.mouse.click(195,600);await p.waitForTimeout(6000);await p.screenshot({path:'fresh_b.png'});await p.waitForTimeout(22000);await p.screenshot({path:'fresh_c.png'});
-console.log('afterIntro',await p.evaluate(()=>__E(`JSON.stringify({intro:INTRO.on,menu:!$('menu').hidden,coach:!$('coach').hidden,save:SAVE})`)));
+console.log('afterIntro',await p.evaluate(()=>__E(`JSON.stringify({intro:INTRO.on,menu:!$('menu').hidden,save:SAVE})`)));
 await p.waitForTimeout(1500);await p.screenshot({path:'fresh_d.png'});
 const boot=await p.evaluate(()=>__E(`({menu:!$('menu').hidden,intro:INTRO.on,sel:SAVE.sel,open:modeOpen(SAVE.sel||'arena')})`));
 console.log('boot',JSON.stringify(boot));
