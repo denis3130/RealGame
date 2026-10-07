@@ -1473,7 +1473,12 @@ function makeP(){
 }
 function hpMul(){return (1+(effRoom()-1)*.28)*(G.diff||1)}
 const FR=()=>Math.min(2.2,1+(effRoom()-1)*.06),DMG=()=>(1+(effRoom()-1)*.08)*(1+((G.diff||1)-1)*.6);
-const bossMul=()=>(G.mode==='inf'?1+Math.max(0,G.room-10)*.09:1)*(G.diff||1);
+// bosses grow little by little with trophies: inside each group of 4 arenas (tier) health climbs a step per arena and
+// smoothly with the trophies won inside the arena; higher tiers make them "smarter" (faster, fewer pauses, one extra move)
+function bossLvl(){if(G.mode==='inf'||G.daily||G.mode==='camp'&&G.tut)return{grow:1,spd:1,tier:0,pos:0};const ai=G.arena||0,A=ARENAS[ai],N=ARENAS[ai+1],tr=SAVE.trophies||0;if(!ai)return{grow:1,spd:1,tier:0,pos:0};
+  const frac=N?clamp((tr-A.t)/(N.t-A.t),0,1):clamp((tr-A.t)/3000,0,1),tier=Math.floor(ai/4),pos=ai%4;
+  return{grow:1+.08*pos+.08*frac,spd:Math.min(1.38,1+.05*pos+.12*tier+.03*frac),tier,pos}}
+const bossMul=()=>(G.mode==='inf'?1+Math.max(0,G.room-10)*.09:bossLvl().grow)*(G.diff||1);
 function makeE(type,x,y,spawn,elite){if(SAVE.seen)SAVE.seen[type]=1;if(elite&&started)ingameHint('elite','Nemico élite: più forte, ma lascia più premi');const e=makeE0(type,x,y,spawn);if(elite){e.elite=true;e.hp*=2.6;e.max=e.hp;e.r=Math.round(e.r*1.2);e.gold*=3;e.cdmg=Math.round(e.cdmg*1.3)}if(G.giant&&!isBoss(type))e.r=Math.round(e.r*1.2);return e}
 const BOSS_INTRO={golem:3.1,witch:2.9,salamander:2.6,smith:2.6,mimic:1.6};
 function makeE0(type,x,y,spawn){const d=ET[type],m=isBoss(type)?bossMul():hpMul()*(G.curseHp||1);
@@ -2748,6 +2753,12 @@ function bossIntro(e,dt,a){const T=BOSS_INTRO[e.type]||1.6;if(e.iT==null){e.iT=0
   else if(bossIntro3(e,t,t0,at,roar)){}
   else{if(t0===0)sfx('roar')}
   if(e.intro<=0){e.z=0;e.em=null;e.fa=null;e.hole=0;e.yy=null;e.wallY=null;if(e.type==='mimic'){shake(7);sfx('boom');dustRing(e.x,e.y);vib([60,40,90])}}}
+// the extra move of the high-tier bosses: a warned ring of orbs (and, in the top tier, an aimed fan too)
+function bossExtra(e,dt,bl){if(G.state!=='play'||e.hidden||e.z>10)return;e.xT=(e.xT==null?3.5:e.xT)-dt;
+  if(e.xWarn>0){e.xWarn-=dt;if(e.xWarn<=0){const n=bl.tier>1?14:10,o=rand(0,TAU);for(let i=0;i<n;i++)shootE(e.x,e.y-14,o+i*TAU/n,130,7,12,'orb');
+      if(bl.tier>1){const a=Math.atan2(P.y-e.y,P.x-e.x);for(const k of[-.25,0,.25])shootE(e.x,e.y-14,a+k,175,7,12,'orb')}
+      if(!LOWFX)fxPush({k:'ring2',x:e.x,y:e.y-10,rgb:'255,120,200',r0:10,r1:90,t:.4,max:.4,w:8});sfx('boom');shake(3)}return}
+  if(e.xT<=0){e.xT=bl.tier>1?4.5:6.5;e.xWarn=.7;sfx('shimmer',1)}}
 function updEnemy(e,dt){
   e.t+=dt;e.flash=Math.max(0,e.flash-dt);e.orbCd-=dt;
   if(e.spawn>0){e.spawn-=dt;return}
@@ -2883,7 +2894,7 @@ function update(dt){
     for(const e of G.enemies)if(!e.dead&&e.spawn<=0&&!e.hidden&&e.orbCd<=0&&Math.hypot(e.x-bx,e.y-e.z-by)<e.r+9){e.orbCd=.35;hurtE(e,P.atk*.6,false)}}
   updPet(dt);updUlt(dt);
   // enemies
-  for(const e of G.enemies)if(!e.dead)updEnemy(e,dt);
+  for(const e of G.enemies)if(!e.dead){if(isBoss(e.type)&&!(e.intro>0)&&e.type!=='mimic'){const bl=G.bossLvl||(G.bossLvl=bossLvl());updEnemy(e,dt*bl.spd);if(!e.dead&&bl.tier>0)bossExtra(e,dt,bl)}else updEnemy(e,dt)}
   for(let i=0;i<G.enemies.length;i++){const a=G.enemies[i];if(a.dead||a.z>4)continue;for(let j=i+1;j<G.enemies.length;j++){const b=G.enemies[j];if(b.dead||b.z>4)continue;
     const dx=b.x-a.x,dy=b.y-a.y,d=Math.hypot(dx,dy),m=a.r+b.r-4;if(d<m&&d>.01){const p=(m-d)/2,wa=isBoss(a.type)?0:1,wb=isBoss(b.type)?0:1;a.x-=dx/d*p*wa*(wb?1:2);a.y-=dy/d*p*wa*(wb?1:2);b.x+=dx/d*p*wb*(wa?1:2);b.y+=dy/d*p*wb*(wa?1:2)}}}
   G.enemies=G.enemies.filter(e=>!e.dead);
@@ -3253,6 +3264,7 @@ function drawTelegraphs(){
   for(const e of G.enemies){const x=e.x,y=e.y;drawEliteAura(e);if(ETELE[e.type]&&!(e.spawn>0))ETELE[e.type](e);
     if(e.spawn>0){const p=e.spawn/.8;ctx.strokeStyle=`rgba(229,72,77,${.4+.4*Math.sin(G.t*20)})`;ctx.lineWidth=3;circ(x,y,e.r+8*p);ctx.stroke();ctx.fillStyle='rgba(229,72,77,.18)';circ(x,y,e.r);ctx.fill()}
     if(e.type==='goblin'&&e.aim>0){ctx.strokeStyle=`rgba(229,72,77,${e.aim>.25?.35:.8})`;ctx.lineWidth=e.aim>.25?2:3;ctx.setLineDash([6,5]);ctx.beginPath();ctx.moveTo(x,y-8);ctx.lineTo(x+Math.cos(e.aimA)*420,y-8+Math.sin(e.aimA)*420);ctx.stroke();ctx.setLineDash([])}
+    if(e.xWarn>0){const p=1-e.xWarn/.7;ctx.strokeStyle=`rgba(255,120,200,${.45+.4*Math.sin(G.t*30)})`;ctx.lineWidth=4;circ(x,y,e.r+6+p*16);ctx.stroke()}
     if(e.type==='skeleton'&&e.wind>0){ctx.strokeStyle='rgba(255,230,160,.7)';ctx.lineWidth=2.5;ctx.setLineDash([5,4]);ctx.beginPath();ctx.moveTo(x,y);ctx.lineTo(x+Math.cos(e.la)*60,y+Math.sin(e.la)*60);ctx.stroke();ctx.setLineDash([])}
     if(e.type==='wisp'){if(e.ph==='tele'){const p=1-e.phT/.55;ctx.strokeStyle=`rgba(138,91,196,${.4+.4*Math.sin(G.t*25)})`;ctx.lineWidth=3;circ(e.tx,e.ty,20-p*8);ctx.stroke();ctx.fillStyle='rgba(138,91,196,.2)';circ(e.tx,e.ty,10);ctx.fill()}}
     if(e.type==='beetle'){const armed=e.arm>0,blink=armed&&Math.floor(e.arm*14)%2===0;if(armed){ctx.strokeStyle=`rgba(229,72,77,${blink?.8:.35})`;ctx.lineWidth=2.5;ctx.setLineDash([5,5]);circ(x,y,e.elite?72:52);ctx.stroke();ctx.setLineDash([]);ctx.fillStyle='rgba(229,72,77,.12)';circ(x,y,e.elite?72:52);ctx.fill()}}
