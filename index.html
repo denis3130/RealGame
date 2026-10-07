@@ -1385,7 +1385,8 @@ html,body{height:100%;margin:0;background:var(--ink);color:var(--parch);overflow
 <script>
 (()=>{
 const cv=document.getElementById('cv'),$=id=>document.getElementById(id);let ctx=cv.getContext('2d');
-const INK='#1b1612', AW=360, AH=640, L=24, R=AW-24, TOP=78, BOT=AH-26, DOORW=26, ROOMS=10;
+// VW×VH is what the screen shows; AW×AH is the room, which can be bigger (big arenas, the camera follows the hero)
+const INK='#1b1612', VW=360, VH=640, L=24, TOP=78, DOORW=26, ROOMS=10;let AW=VW, AH=VH, R=AW-24, BOT=AH-26;
 const rand=(a,b)=>a+Math.random()*(b-a), randi=(a,b)=>Math.floor(rand(a,b+1)), clamp=(v,a,b)=>v<a?a:v>b?b:v;
 const shuffle=a=>{for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]]}return a};
 const TAU=Math.PI*2;
@@ -1505,15 +1506,16 @@ function freeSpot(r,minY,maxY){let x,y,tries=0;
   while(tries<60&&(G.rocks.some(k=>Math.hypot(k.x-x,k.y-y)<k.r+r+8)||G.enemies.some(e=>Math.hypot(e.x-x,e.y-y)<40)));
   return{x,y}}
 function buildRoom(){clearTimeout(bossDown.t);$('bossDown').hidden=true;
+  {const big=bigOn()&&!G.event&&!isBossRoom(G.room)&&!G.tut&&!INTRO.on;setWorld(big?BIG.w:VW,big?BIG.h:VH)}
   Object.assign(G,{ultRain:[],petShots:[],goldRun:null,trial:null,dark:false,lobs:[],rollers:[],enemies:[],eproj:[],arrows:[],coins:[],gems:[],gemsRun:0,hearts:[],waves:[],fx:[],texts:[],decals:[],zones:[],bands:[],boulders:[],door:false,state:'play',clearT:0,orbs:[],prop:null,meteors:[],lines:[],lavaLights:[],bossDmg:false,cc:null,ccChosen:false});
   P.x=AW/2;P.y=BOT-40;P.queue=[];P.inv=.6;P.face=-Math.PI/2;for(const pt of G.pets||[]){pt.x=P.x+(pt.slot?26:-26);pt.y=P.y+8}
   const boss=!G.event&&isBossRoom(G.room);
   let lay=G.event?[[66,190,16],[294,190,16],[66,500,16],[294,500,16]]:boss?bossLayout(zoneOf(G.room)):LAYOUTS[randi(0,LAYOUTS.length-1)];
-  const flip=Math.random()<.5;
+  const flip=Math.random()<.5,kx=(R-L)/(VW-48),ky=(BOT-TOP)/(VH-26-TOP);if(AW>VW)lay=lay.map(([x,y,r])=>[L+(x-L)*kx,TOP+(y-TOP)*ky,r]);
   const th=themeOf(G.room);G.rocks=lay.map(([x,y,r])=>({x:flip?AW-x:x,y,r,seed:Math.random()*10,kind:pickKind(th,r)}));fields={};
   for(const t of (G.event?[]:compositionFor(G.room))){
     if(isBoss(t)){G.enemies.push(makeE(t,AW/2,240,0));continue}
-    const s=freeSpot(ET[t].r,TOP+40,TOP+320);G.enemies.push(makeE(t,s.x,s.y,undefined,eliteRoll(t)));
+    const s=freeSpot(ET[t].r,TOP+40,TOP+320*(AH/VH));G.enemies.push(makeE(t,s.x,s.y,undefined,eliteRoll(t)));
   }
   G.dark=rollDark(boss);
   if(G.event)setupEvent();
@@ -2561,7 +2563,7 @@ function moveCircle(o,dx,dy,ignoreRocks){
   else o.y=clamp(o.y,TOP+o.r,BOT-o.r);
 }
 // ---------- navigation: flow field toward the player + line of sight ----------
-const CELL=12,GC=Math.ceil((R-L)/CELL),GRW=Math.ceil((BOT-TOP)/CELL);
+const CELL=12;let GC=Math.ceil((R-L)/CELL),GRW=Math.ceil((BOT-TOP)/CELL);
 let fields={};
 const NB=[[1,0,10],[-1,0,10],[0,1,10],[0,-1,10],[1,1,14],[1,-1,14],[-1,1,14],[-1,-1,14]];
 function cellOf(x,y){return[clamp(Math.floor((x-L)/CELL),0,GC-1),clamp(Math.floor((y-TOP)/CELL),0,GRW-1)]}
@@ -3476,7 +3478,7 @@ const pk=a=>a[randi(0,a.length-1)];
 function buildEnv(){
   const th=themeOf(G.room),E=ENV[th];G.env=E;G.variant=pk(VARIANTS[th]);
   Object.assign(G,{amb:[],debris:[],stuck:[],ripples:[],puddles:[],embers:[],dripT:1,leafT:1.5,stepT:0,emberT:0,runeAt:null,icePatches:[],shroomLights:[],swampPool:null,bubT:.5});
-  G.torches=(BOSSZ[th]?[48,118,242,312]:[74,286]).map(x=>({x,y:38,ph:rand(0,9)}));
+  G.torches=(BOSSZ[th]?[48,118,242,312]:[74,286]).map(x=>({x:x*AW/VW,y:38,ph:rand(0,9)}));
   for(const k in E.amb)for(let i=0;i<E.amb[k];i++)G.amb.push({k,x:rand(L+10,R-10),y:rand(TOP+10,BOT-10),vx:rand(-6,6),vy:k==='spore'?rand(-14,-6):k==='ember'?rand(-24,-8):k==='ash'?rand(6,14):k==='snow'?rand(14,28):rand(-5,5),ph:rand(0,TAU),t:0});
   G.fogs=E.fog?Array.from({length:6},()=>({x:rand(L-40,R+40),y:rand(TOP,BOT),r:rand(80,140),vx:rand(4,10)*(Math.random()<.5?-1:1),a:rand(.05,.09)})):[];
   G.shafts=Array.from({length:G.variant.shafts||0},()=>({x:rand(L+30,R-90),w:rand(26,48),ph:rand(0,9)}));
@@ -3735,8 +3737,17 @@ function drawAmbient(){
   if(!LOWFX)for(const f of G.fogs)glow(G.env.fog,f.x,f.y,f.r,f.a*1.4,f.r*.55);
 }
 const lc=document.createElement('canvas');lc.width=AW/3;lc.height=AH/3;const lx=lc.getContext('2d');lx.scale(1/3,1/3);
+// resize the room: every canvas sized on the room follows it
+const BIG={w:460,h:820,m:48};
+function setWorld(w,h){if(w===AW&&h===AH)return;AW=w;AH=h;R=AW-24;BOT=AH-26;GC=Math.ceil((R-L)/CELL);GRW=Math.ceil((BOT-TOP)/CELL);fields={};
+  for(const c of [floorCv,wallCv,sideCv]){c.width=AW*2;c.height=AH*2}lc.width=Math.ceil(AW/3);lc.height=Math.ceil(AH/3);lx.setTransform(1/3,0,0,1/3,0,0)}
+const bigOn=()=>!SAVE.set||SAVE.set.big!==false;
+// camera: top-left corner of the view inside the room; a little margin lets the chapter landscape show past the walls
+function camTarget(){const m=BIG.m,ax=AW>VW?clamp(P.x-VW/2,-m,AW+m-VW):0,ay=AH>VH?clamp(P.y-VH*.55,-m,AH+m-VH):0;return[ax,ay]}
+function camSnap(){const[a,b]=camTarget();G.vx=a;G.vy=b}
+function camStep(dt){if(G.vx==null){camSnap();return}const[a,b]=camTarget(),k=1-Math.exp(-dt*6);G.vx+=(a-G.vx)*k;G.vy+=(b-G.vy)*k}
 function drawLighting(pass){
-  if(LOWFX&&!G.dark){ctx.drawImage(VIG,0,0,AW,AH);return}
+  if(LOWFX&&!G.dark){ctx.drawImage(VIG,G.vx||0,G.vy||0,VW,VH);return}
   if(pass==='out'){ctx.save();ctx.beginPath();ctx.rect(-20,-20,AW+40,AH+40);ctx.rect(L,TOP,R-L,BOT-TOP);ctx.clip('evenodd');ctx.drawImage(lc,0,0,AW,AH);ctx.restore();return}
   lx.globalCompositeOperation='source-over';lx.clearRect(0,0,AW,AH);lx.fillStyle=`rgba(8,5,14,${G.dark?.95:G.env.dark})`;lx.fillRect(0,0,AW,AH);
   lx.globalCompositeOperation='destination-out';
@@ -5248,7 +5259,7 @@ function drawRoots(e){const k=Math.min(1,(e.root||0)/.3),x=e.x,y=e.y;ctx.save();
   for(let i=0;i<5;i++){const a=i/5*TAU+e.x*.1,r=e.r*1.1,sx=x+Math.cos(a)*r,sy=y+Math.sin(a)*r*.45,tx=x+Math.cos(a+.6)*e.r*.4,ty=y-e.r*(.8+.3*Math.sin(i))*k;
     ctx.strokeStyle=INK;ctx.lineWidth=6;ctx.beginPath();ctx.moveTo(sx,sy);ctx.quadraticCurveTo(sx+Math.cos(a)*6,ty+6,tx,ty);ctx.stroke();ctx.strokeStyle='#6b4a2a';ctx.lineWidth=3;ctx.stroke();
     ctx.fillStyle='#7bd65a';ctx.beginPath();ctx.ellipse(tx,ty,3,1.6,a,0,TAU);ctx.fill()}ctx.restore()}
-function drawUltOverlay(){const u=G.ultFx;if(!u)return;const k=u.t/u.max;ctx.fillStyle=`rgba(6,8,16,${.32*Math.sin(k*Math.PI)})`;ctx.fillRect(0,0,AW,AH);ctx.save();ctx.globalCompositeOperation='lighter';glow(u.rgb,P.x,P.y-12,90,.5*k);ctx.restore()}
+function drawUltOverlay(){const u=G.ultFx;if(!u)return;const k=u.t/u.max;ctx.fillStyle=`rgba(6,8,16,${.32*Math.sin(k*Math.PI)})`;ctx.fillRect(-60,-60,AW+120,AH+120);ctx.save();ctx.globalCompositeOperation='lighter';glow(u.rgb,P.x,P.y-12,90,.5*k);ctx.restore()}
 function hudUlt(){const b=$('ultBtn');if(!b||!P)return;const hide=G.state==='dead'||!!G.welcome&&G.welcome>0;if(b.hidden!==hide)b.hidden=hide;const v=(P.ult||0)/100;b.style.setProperty('--u',v*360+'deg');b.style.setProperty('--uc',(ULT[P.hero]||ULT.arciere).col)}
 
 
@@ -5821,8 +5832,9 @@ function fillSettings(){const S=SAVE.set;lastSheetHTML='';$('sheet').innerHTML=`
   <label class="srow"><span>Effetti</span><input type="range" min="0" max="100" value="${Math.round(S.sv*100)}" data-set="sv" aria-label="Volume effetti"></label>
   <div class="srow"><span>Vibrazione</span><div class="seg"><button class="${S.vib?'on':''}" data-vib="1">Attiva</button><button class="${S.vib?'':'on'}" data-vib="0">Spenta</button></div></div>
   <div class="srow"><span>Scatto</span><div class="seg"><button class="${S.left?'on':''}" data-left="1">A sinistra</button><button class="${S.left?'':'on'}" data-left="0">A destra</button></div></div>
+  <div class="srow"><span>Stanze</span><div class="seg"><button class="${S.big!==false?'on':''}" data-big="1">Grandi</button><button class="${S.big===false?'on':''}" data-big="0">Piccole</button></div></div>
   <div class="srow"><span>Grafica</span><div class="seg"><button class="${S.q==='auto'?'on':''}" data-q="auto">Automatica</button><button class="${S.q==='alta'?'on':''}" data-q="alta">Alta</button><button class="${S.q==='bassa'?'on':''}" data-q="bassa">Bassa</button></div></div>
-  <p class="lead">Con la grafica bassa ci sono meno luci ed effetti: utile sui telefoni lenti. La vibrazione funziona sui telefoni Android che la supportano.</p>
+  <p class="lead">Con le stanze grandi la telecamera segue l'eroe; le stanze piccole stanno tutte nello schermo. Con la grafica bassa ci sono meno luci ed effetti: utile sui telefoni lenti. La vibrazione funziona sui telefoni Android che la supportano.</p>
   <div class="srow"><span>Salvataggio</span><div class="seg"><button data-code="out">Copia codice</button><button data-code="in">Carica codice</button></div></div><div id="codeBox"></div>
   <button class="btn alt" data-intro="1">Rivedi la intro</button>
   <button class="btn alt" data-guide="1">Apri la guida del gioco</button>
@@ -5837,7 +5849,7 @@ $('sheet').addEventListener('click',e=>{const b=e.target.closest('button');if(!b
   if(b.dataset.codeno){$('codeBox').innerHTML='';window.__pend=null;return}
   if(b.classList.contains('mclaim')){if(CHbusy)return;const m=SAVE.daily.list[+b.dataset.m];if(!m||!m.done||m.claimed)return;m.claimed=true;const R=MREW[m.r];passXP(25);
     if(R.gold){SAVE.gold+=R.gold;renderGold();toast(`+${R.gold} oro`);sfx('coin')}save();fillMissions();renderMissions();if(R.chest){closeSheet();openChest(R.chest)}return}
-  const S=SAVE.set;if(b.dataset.vib)S.vib=b.dataset.vib==='1';else if(b.dataset.left)S.left=b.dataset.left==='1';else if(b.dataset.q)S.q=b.dataset.q;else return;
+  const S=SAVE.set;if(b.dataset.big)S.big=b.dataset.big==='1';else if(b.dataset.vib)S.vib=b.dataset.vib==='1';else if(b.dataset.left)S.left=b.dataset.left==='1';else if(b.dataset.q)S.q=b.dataset.q;else return;
   save();applySettings();sfx('ui');if(S.vib&&b.dataset.vib)vib(40);fillSettings()});
 $('sheet').addEventListener('input',e=>{const r=e.target.closest('[data-set]');if(!r)return;SAVE.set[r.dataset.set]=r.value/100;applySettings()});
 $('sheet').addEventListener('change',e=>{save();if(e.target.dataset.set==='sv')sfx('coin')});
@@ -6558,13 +6570,15 @@ function fillGuide(){const T=(t,b)=>`<details class="gsec"><summary>${t}</summar
 
 // ---------- render ----------
 function render(){
-  const cw=cv.width,ch=cv.height,s=Math.min(cw/AW,ch/AH),ox=(cw-AW*s)/2,oy=Math.max(0,(ch-AH*s)/2);
+  const cw=cv.width,ch=cv.height,s=Math.min(cw/VW,ch/VH),ox=(cw-VW*s)/2,oy=Math.max(0,(ch-VH*s)/2);
   ctx.setTransform(1,0,0,1,0,0);ctx.fillStyle='#120e0b';ctx.fillRect(0,0,cw,ch);
   if(!G)return;
   const sx=(Math.random()-.5)*G.shake,sy=(Math.random()-.5)*G.shake;
-  if(G.state==='dead'&&G.deathT){const k=Math.min(1,G.deathT/.9),zs=1+.12*k,zx=(P.x-AW/2)*k*.5,zy=(P.y-AH/2)*k*.5;ctx.setTransform(s*zs,0,0,s*zs,ox+s*(AW/2)*(1-zs)-s*zs*zx+sx*s,oy+s*(AH/2)*(1-zs)-s*zs*zy+sy*s)}
-  else if(G.cam){const c=G.cam;ctx.setTransform(s*c.z,0,0,s*c.z,ox+s*(AW/2-c.z*c.x)+sx*s,oy+s*(AH/2-c.z*c.y)+sy*s)}
+  const vx=G.vx||0,vy=G.vy||0;
+  if(G.state==='dead'&&G.deathT){const k=Math.min(1,G.deathT/.9),zs=1+.12*k,zx=(P.x-vx-VW/2)*k*.5,zy=(P.y-vy-VH/2)*k*.5;ctx.setTransform(s*zs,0,0,s*zs,ox+s*(VW/2)*(1-zs)-s*zs*zx+sx*s,oy+s*(VH/2)*(1-zs)-s*zs*zy+sy*s)}
+  else if(G.cam){const c=G.cam;ctx.setTransform(s*c.z,0,0,s*c.z,ox+s*(VW/2-c.z*c.x)+sx*s,oy+s*(VH/2-c.z*c.y)+sy*s)}
   else ctx.setTransform(s,0,0,s,ox+sx*s,oy+sy*s);
+  ctx.translate(-vx,-vy);if(AW>VW||AH>VH)drawBackdrop(vx,vy);
   ctx.drawImage(floorCv,0,0,AW,AH);
   for(const d of G.decals){ctx.fillStyle=d.col;ctx.globalAlpha=.35;for(let i=0;i<4;i++){const a=d.seed+i*1.6;ell(d.x+Math.cos(a)*d.r*.5,d.y+Math.sin(a)*d.r*.3,d.r*.5,d.r*.3);ctx.fill()}ctx.globalAlpha=1}
   torchLight();lightPools();drawEnvGround();lavaGlowLive();drawTufts();
@@ -6616,13 +6630,13 @@ function render(){
   drawUltOverlay();
   if(!inDoor)drawBars();
   if(G.goldRun)drawGoldTimer();if(G.trial)drawTrialTag();
-  ctx.drawImage(VIG,0,0,AW,AH);
+  ctx.drawImage(VIG,vx,vy,VW,VH);
   ctx.textAlign='center';
   for(const t of G.texts){ctx.globalAlpha=Math.min(1,t.life*2.5);ctx.font=Math.round(t.size*(t.pop?1+1.2*Math.max(0,(t.life-.62)/.18):1))+'px "Lilita One", sans-serif';ctx.lineWidth=3.5;ctx.strokeStyle=INK;ctx.strokeText(t.t,t.x,t.y);ctx.fillStyle=t.col;ctx.fillText(t.t,t.x,t.y)}
   ctx.globalAlpha=1;
   drawWelcome();
-  if(G.fade>0){ctx.fillStyle=`rgba(12,9,7,${G.fade})`;ctx.fillRect(-10,-10,AW+20,AH+20)}
-  ctx.setTransform(1,0,0,1,0,0);
+  if(G.fade>0){ctx.fillStyle=`rgba(12,9,7,${G.fade})`;ctx.fillRect(vx-60,vy-60,VW+120,VH+120)}
+  ctx.setTransform(1,0,0,1,0,0);if(AW>VW||AH>VH)drawOffscreen(cw,ch,s,ox,oy,vx,vy);
   if(G.state==='dead')drawDeathFx(cw,ch);
   if(P.hp<P.maxhp*.3&&G.state!=='dead'){const a=.15+.08*Math.sin(G.t*6),g=ctx.createRadialGradient(cw/2,ch/2,Math.min(cw,ch)*.3,cw/2,ch/2,Math.max(cw,ch)*.7);g.addColorStop(0,'rgba(229,72,77,0)');g.addColorStop(1,`rgba(229,72,77,${a})`);ctx.fillStyle=g;ctx.fillRect(0,0,cw,ch)}
   if(joy.active){const rc=cv.getBoundingClientRect(),dpr=cw/rc.width,jx=(joy.ox-rc.left)*dpr,jy=(joy.oy-rc.top)*dpr;
@@ -6654,7 +6668,7 @@ function loop(now){const raw=(now-last)/1000,dt=Math.min(.033,raw);last=now;if(I
 {const _d=drawHero;drawHero=function(){const h=P&&P.hopT>0?Math.sin((1-P.hopT/.38)*Math.PI)*11:0;if(!h)return _d();ctx.save();ctx.translate(0,-h);_d();ctx.restore()}}
 {const _g=gainXp;gainXp=function(v){const l=P.lvl;_g(v);if(P.lvl>l&&G.state!=='dead')P.hopT=.38}}
 // screen position (CSS px) of a point of the room
-function roomToScreen(x,y){const r=cv.getBoundingClientRect(),dpr=cv.width/Math.max(1,r.width),cw=cv.width,ch=cv.height,s=Math.min(cw/AW,ch/AH),ox=(cw-AW*s)/2,oy=Math.max(0,(ch-AH*s)/2);return[r.left+(ox+x*s)/dpr,r.top+(oy+y*s)/dpr]}
+function roomToScreen(x,y){const r=cv.getBoundingClientRect(),dpr=cv.width/Math.max(1,r.width),cw=cv.width,ch=cv.height,s=Math.min(cw/VW,ch/VH),ox=(cw-VW*s)/2,oy=Math.max(0,(ch-VH*s)/2);x-=G.vx||0;y-=G.vy||0;return[r.left+(ox+x*s)/dpr,r.top+(oy+y*s)/dpr]}
 function bump(el){if(el&&el.animate)el.animate([{transform:'scale(1)'},{transform:'scale(1.25)'},{transform:'scale(1)'}],{duration:260,easing:'ease-out'})}
 // one little coin flying from (x,y) in CSS px to an element; the counter bumps when it lands
 let flyN=0;function flyCoin(x,y,to,done,gem){if(LOWFX||!to||!document.body.animate||flyN>7){done&&done();return}const b=to.getBoundingClientRect();if(!b.width){done&&done();return}flyN++;
@@ -6675,6 +6689,38 @@ let flyN=0;function flyCoin(x,y,to,done,gem){if(LOWFX||!to||!document.body.anima
 let lastTap=[innerWidth/2,innerHeight/2];addEventListener('pointerdown',e=>{lastTap=[e.clientX,e.clientY]},true);
 {const _t=tweenNum;tweenNum=function(el,to){const from=el&&el.dataset.v!=null?+el.dataset.v:null;_t(el,to);
   if(from!=null&&to>from&&!$('menu').hidden&&(el.id==='mGold'||el.id==='mGems')){const n=Math.min(6,2+Math.floor(Math.log10(to-from+1)));for(let i=0;i<n;i++)setTimeout(()=>flyCoin(lastTap[0]+rand(-14,14),lastTap[1]+rand(-14,14),el,null,el.id==='mGems'),i*70)}}}
+
+// =====================================================================
+// BIG ARENAS: camera that follows the hero, the chapter landscape past the walls, arrows for enemies out of view
+// =====================================================================
+const bdCv=document.createElement('canvas');let bdKey='';
+function bakeBackdrop(){const th=themeOf(G.room),m=BIG.m+20,W=AW+m*2,H=AH+m*2,key=th+W+'x'+H;if(key===bdKey)return;bdKey=key;
+  bdCv.width=W;bdCv.height=H;const c=bdCv.getContext('2d'),kind=LAVAZ.includes(th)?'lava':isSwamp(th)?'swamp':isIce(th)?'ice':'moss';
+  const P0={moss:['#0e2a22','#1d4a32','#2f6a3a','#4f8f3a','#7bbf4a'],lava:['#2a0d08','#4a1a10','#6b2416','#ff6a1a','#ffb04a'],swamp:['#0f2420','#1d3a2a','#2f5a34','#4a7a3a','#c8f04a'],ice:['#0f1a3a','#1e3a6a','#5a7ab0','#dfeeff','#ffffff']}[kind];
+  const g=c.createLinearGradient(0,0,0,H);g.addColorStop(0,P0[0]);g.addColorStop(1,P0[1]);c.fillStyle=g;c.fillRect(0,0,W,H);
+  let seed=7;const rn=()=>(seed=(seed*16807)%2147483647)/2147483647;
+  c.lineJoin='round';c.strokeStyle='#0b0806';c.lineWidth=3;
+  // distant shapes around the whole room (the room covers the middle, so only the ring outside shows)
+  const blob=(x,y,r,col)=>{c.beginPath();c.arc(x,y,r,0,TAU);c.fillStyle=col;c.fill();c.stroke()};
+  for(let i=0;i<160;i++){const side=i%4,t=rn(),x=side<2?t*W:side===2?rn()*m*1.3:W-rn()*m*1.3,y=side===0?rn()*m*1.3:side===1?H-rn()*m*1.3:t*H;
+    if(kind==='moss'){blob(x,y,10+rn()*16,rn()<.5?P0[2]:P0[3]);if(rn()<.3){c.fillStyle=P0[4];c.beginPath();c.arc(x-4,y-5,3,0,TAU);c.fill()}}
+    else if(kind==='lava'){if(rn()<.25){c.beginPath();c.ellipse(x,y,14+rn()*14,6+rn()*5,0,0,TAU);c.fillStyle=P0[3];c.fill();c.stroke();c.fillStyle=P0[4];c.beginPath();c.ellipse(x,y-1,6,2.5,0,0,TAU);c.fill()}else{c.beginPath();const r=10+rn()*14;c.moveTo(x-r,y+r*.6);c.lineTo(x-r*.3,y-r);c.lineTo(x+r*.4,y-r*.7);c.lineTo(x+r,y+r*.6);c.closePath();c.fillStyle=rn()<.5?P0[2]:P0[1];c.fill();c.stroke()}}
+    else if(kind==='swamp'){if(rn()<.45){c.beginPath();c.ellipse(x,y,16+rn()*14,7+rn()*5,0,0,TAU);c.fillStyle='#1d4a4a';c.fill();c.stroke();c.strokeStyle='rgba(200,240,74,.35)';c.lineWidth=1.5;c.beginPath();c.ellipse(x,y,8,3,0,0,TAU);c.stroke();c.strokeStyle='#0b0806';c.lineWidth=3}
+      else{for(let k=0;k<3;k++){c.beginPath();c.moveTo(x+k*4,y+8);c.quadraticCurveTo(x+k*4+3,y-6,x+k*4+1,y-16-rn()*8);c.strokeStyle='#0b0806';c.lineWidth=4;c.stroke();c.strokeStyle=P0[3];c.lineWidth=2;c.stroke()}c.lineWidth=3}}
+    else{c.beginPath();const r=12+rn()*16;c.moveTo(x-r,y+r*.7);c.lineTo(x,y-r);c.lineTo(x+r,y+r*.7);c.closePath();c.fillStyle=rn()<.5?P0[2]:'#3a5a8a';c.fill();c.stroke();c.fillStyle=P0[3];c.beginPath();c.moveTo(x-r*.35,y-r*.3);c.lineTo(x,y-r);c.lineTo(x+r*.35,y-r*.3);c.closePath();c.fill()}}
+  // soft fog so the landscape stays darker than the room
+  c.fillStyle='rgba(6,6,10,.28)';c.fillRect(0,0,W,H)}
+function drawBackdrop(vx,vy){if(!bdCv.width)return;const m=BIG.m+20;ctx.drawImage(bdCv,-m,-m);
+  if(!LOWFX&&G.amb){ctx.save();ctx.globalCompositeOperation='lighter';const col=bdKey.startsWith('lava')||LAVAZ.includes(themeOf(G.room))?'255,140,60':isIce(themeOf(G.room))?'220,240,255':'200,240,120';
+    for(let i=0;i<10;i++){const x=((i*97+G.t*(8+i))%(AW+2*m))-m,y=((i*173+Math.sin(G.t*.7+i)*20)%(AH+2*m))-m;if(x>L&&x<R&&y>0&&y<BOT)continue;glow(col,x,y,6,.35)}ctx.restore()}}
+// little arrows on the screen edge pointing at enemies the camera does not show
+function drawOffscreen(cw,ch,s,ox,oy,vx,vy){if(G.state!=='play')return;const pad=18*s;
+  for(const e of G.enemies){if(e.dead||e.hidden||e.spawn>0)continue;const sx=ox+(e.x-vx)*s,sy=oy+(e.y-vy)*s;if(sx>ox&&sx<ox+VW*s&&sy>oy&&sy<oy+VH*s)continue;
+    const cx=clamp(sx,ox+pad,ox+VW*s-pad),cy=clamp(sy,oy+pad+60*s,oy+VH*s-pad-40*s),a=Math.atan2(sy-cy,sx-cx);
+    ctx.save();ctx.translate(cx,cy);ctx.rotate(a);ctx.globalAlpha=.75+.25*Math.sin(G.t*6);ctx.beginPath();ctx.moveTo(10*s,0);ctx.lineTo(-6*s,-8*s);ctx.lineTo(-3*s,0);ctx.lineTo(-6*s,8*s);ctx.closePath();
+    ctx.fillStyle=isBoss(e.type)?'#ffc93c':'#e5484d';ctx.strokeStyle=INK;ctx.lineWidth=2.5*s;ctx.fill();ctx.stroke();ctx.restore()}}
+{const _b=buildRoom;buildRoom=function(){const r=_b.apply(this,arguments);if(AW>VW||AH>VH)bakeBackdrop();camSnap();return r}}
+{const _u=update;update=function(dt){_u(dt);if(G&&P)camStep(dt)}}
 newRun();applySettings();if(!playIntro(false))showMenu();requestAnimationFrame(loop);
 })();
 </script>

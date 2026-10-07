@@ -13,7 +13,7 @@ Roguelite in stile Archero per telefono, in un solo file HTML5 (`index.html`): c
 
 ## Mappa del file `index.html`
 
-Il file ha circa 6.600 righe. Le sezioni sono segnate da commenti `// ---------- nome ----------` o da blocchi `// =====`:
+Il file ha circa 6.700 righe. Le sezioni sono segnate da commenti `// ---------- nome ----------` o da blocchi `// =====`:
 
 - definizioni (nemici `ET`, layout, abilità `SK`), setup della partita (`newRun`, `buildRoom`), input, audio
 - UI e meta: oggetti, carte, casse (`rollChest`, `grant`, `openChest`, `revealCard`), salvataggio (`SAVE`, chiave `cripta_save_v1` in localStorage)
@@ -47,22 +47,19 @@ Servono Node e Python. Una volta sola: `npm install` e poi `npx playwright insta
 
 Dopo ogni modifica: rifare almeno una partita automatica per capitolo, `meta2.js` e `menu2.js`, e guardare le schermate.
 
-## Fatto di recente (versione 41)
+## Fatto di recente (versione 42)
 
-- Prova del coraggio: la porta non si apriva più (corretto). Ruota + scelta abilità: i tocchi venivano ignorati (corretto).
-- Barra del boss che si svuota, lampeggia e si rompe alla sconfitta.
-- Icone nuove di monete e gemme (SVG in `COIN_SVG`, `GEM_SVG`).
-- Aure delle 6 evoluzioni.
-- Compagni: si parte senza; carte compagno nelle casse (circa 35% legno, 60% argento, 90% oro); sblocco a 6/15/25 carte (Muschietto/Lucciola/Draghetto) o con 60/150/300 gemme; livelli con carte (`PET_NEED`) e oro. Premio delle 500 coppe: 10 carte Lucciola. Valori scelti da Claude, da regolare giocando.
-- Grafica: personaggi non scuriti dalla luce della stanza, colori più ricchi e luce al centro (`gradeRoom`), ciuffi d'erba che ondeggiano e si piegano al passaggio (`drawTufts`).
+- Compagni: fino a 2 insieme (`SAVE.pets.eq`, `PET_SLOTS`), solo a mano con «Porta» / «Lascia»; il terzo prende il posto del primo. I vecchi salvataggi con `sel` vengono convertiti da `petEq()`.
+- Collaudo: puntino Eroe solo se il miglioramento si può pagare; niente puntini doppi nella barra laterale; accesso giornaliero mai in automatico prima della prima partita; traguardi e missioni aspettano la fine del boss; niente Prova del coraggio dopo la stanza 2 per i principianti; nome dell'abilità speciale piccolo sopra l'eroe; Druida più forte (+20% vita e attacco, rigenerazione 1,5/s, foglie più veloci: da regolare giocando).
+- Scheletro: balestra, tira mentre cammina, scatto ogni 5 secondi (mentre scatta lo scudo non para).
+- Boss: `bossLvl()` fa crescere la vita un po' a ogni arena e con le coppe, e li rende più rapidi (fino a ×1,38); dalle arene 5–8 anello di sfere con avviso rosa, dalle 9–12 anche un ventaglio mirato. La prima arena resta com'era.
+- Micro animazioni: nemici che si schiacciano, monete che volano al contatore e al portafoglio, saltello al livello nuovo, scia bianca sulla barra della vita, cancello che si alza con polvere, bottoni che si schiacciano, puntini che spuntano una volta.
+- Arene grandi: le stanze di combattimento normali sono 460×820 (`BIG`), lo schermo resta 360×640 (`VW`, `VH`); `AW`, `AH`, `R`, `BOT` ora cambiano per stanza con `setWorld()`. Telecamera morbida (`G.vx`, `G.vy`, `camStep`), paesaggio del capitolo oltre i muri (`bakeBackdrop`), frecce ai bordi per i nemici fuori schermo. Boss, eventi, tutorial e intro restano 360×640. Impostazioni → Stanze: Grandi / Piccole.
+- Nuovi test: `sk.js` (scheletri), `bossx.js` (crescita boss), `micro.js` (micro animazioni), `big.js` (arene grandi), `dirs.js` e `rig2sheet.js` (fogli delle direzioni dei personaggi).
+- Nota: in `meta2.js` i controlli «codice caricato» e «salvataggio dopo ricarica» falliscono anche sulla versione 41: problema del test, non del gioco.
 
 ## Da fare (annotato con Denis, non ancora fatto)
 
-1. Compagni: massimo 2 equipaggiati insieme; equipaggiamento solo manuale (oggi il primo sbloccato viene messo in automatico: togliere).
-2. Scheletro con lo scudo: arma a distanza, si muove e spara insieme, scatto che si ricarica ogni 5 secondi.
-3. Boss più forti man mano che salgono le coppe: oggi crescono solo a scalini (arene 1–4 base, 5–8 circa ×1,8 vita, 9–12 da ×2,9 a ×4,3) e solo nei numeri. Idea: crescita graduale per arena e boss più "svegli" nelle arene alte (attacchi più rapidi, meno pause, una mossa in più).
-4. Arene più grandi dello schermo, con telecamera che segue l'eroe e paesaggio del capitolo visibile oltre i muri (stile Hades). È la modifica più profonda: tutto oggi presume una stanza grande come lo schermo.
-5. Rifare l'eroe e gli altri personaggi, coerenti in tutte le direzioni.
-6. Micro animazioni (idee da scegliere): bottoni che si schiacciano al tocco, monete che volano al portafoglio, contatore dell'oro che rimbalza, puntini rossi che pulsano una volta sola; in battaglia nemici che si schiacciano quando colpiti, monete raccolte che volano al contatore, cancello che si apre con polvere, saltello dell'eroe al livello nuovo, barra della vita con scia bianca.
-7. Dal collaudo: troppi avvisi insieme (puntini rossi ovunque, accesso giornaliero subito dopo la intro, riquadri missioni sopra la barra del boss); Prova del coraggio possibile già alla stanza 2 per i principianti; nome dell'abilità speciale gigante a metà schermo; Druida più debole degli altri eroi.
-8. Possibile in futuro: dividere `index.html` in più file con uno script che li riunisce per la pubblicazione.
+1. Rifare l'eroe e gli altri personaggi: proposta pronta in `tests/rig2.js` (ogni parte ha un punto fisso sul corpo e gira con lui), fogli in `anteprime/`. Aspetta l'approvazione di Denis sulle direzioni prima di entrare nel gioco.
+2. Possibile in futuro: dividere `index.html` in più file con uno script che li riunisce per la pubblicazione.
+3. Da regolare giocando: forza del Druida, crescita dei boss, misura delle arene grandi.
