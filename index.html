@@ -726,6 +726,9 @@ html,body{height:100%;margin:0;background:var(--ink);color:var(--parch);overflow
   repeating-linear-gradient(-45deg,rgba(255,255,255,.04) 0 2px,transparent 2px 28px),
   linear-gradient(#1f4787,#11285a)}
 #menu:not(.home) #campCv{display:none}
+#mbgCv{position:absolute;inset:0;width:100%;height:100%;display:none;z-index:0;pointer-events:none}
+#menu:not(.home) #mbgCv{display:block}
+#menu:not(.home){background:#050b1c}
 #menu:not(.home) #menuMain{background:none;padding-top:10px}
 #tabHero .altar,#tabShop .shopHead,#tabProfile .pcard,.showcase,.shopBanner,.pcard{margin-top:2px}
 #menu .sub,#menu .hinfo,#menu .showcase .hinfo{color:#d2e3ff}
@@ -1220,6 +1223,7 @@ html,body{height:100%;margin:0;background:var(--ink);color:var(--parch);overflow
 
   <div id="menu">
     <canvas id="campCv"></canvas>
+    <canvas id="mbgCv"></canvas>
     <div id="topbar">
       <button id="tbWho" aria-label="Profilo"><span class="av"><canvas id="tbAv" width="84" height="84"></canvas></span><span><b id="tbName">Arciere</b><small><svg viewBox="0 0 20 20" aria-hidden="true"><path d="M10 1l2.6 5.6 6 .7-4.5 4.1 1.2 6L10 14.4 4.7 17.4l1.2-6L1.4 7.3l6-.7z" fill="#ffd84a" stroke="#0b1326" stroke-width="1.6" stroke-linejoin="round"/></svg><i id="tbPow">0</i></small></span></button>
       <div class="res gold" aria-label="Oro"><i class="ic"></i><span id="mGold">0</span><button class="plus" data-plus="gold" aria-label="Compra oro">+</button></div>
@@ -3388,19 +3392,47 @@ function arenaTint(){const A=G.mode!=='inf'&&!G.daily&&ARENAS[G.arena||0];if(!A|
 function renderFloor(){
   const th0=themeOf(G.room),cool=th0==='cristalli'||th0==='radici',lava=LAVAZ.includes(th0),swamp=isSwamp(th0),icy=isIce(th0),pal=G.env.floor;
   fx.setTransform(2,0,0,2,0,0);fx.fillStyle=G.env.base;fx.fillRect(0,0,AW,AH);
-  const ts=34;
-  for(let y=TOP;y<BOT;y+=ts)for(let x=L;x<R;x+=ts){
-    fx.fillStyle=pal[randi(0,3)];fx.fillRect(x+1,y+1,ts-2,ts-2);
-    // each tile is a slab: lit top-left edge, shadowed bottom-right edge, a little worn and speckled
-    {const tg=fx.createLinearGradient(x,y,x+ts,y+ts);tg.addColorStop(0,'rgba(255,255,255,.05)');tg.addColorStop(1,'rgba(0,0,0,.12)');fx.fillStyle=tg;fx.fillRect(x+1,y+1,ts-2,ts-2)}
-    fx.fillStyle='rgba(255,255,255,.075)';fx.fillRect(x+1,y+1,ts-2,2);fx.fillRect(x+1,y+3,2,ts-4);
-    fx.fillStyle='rgba(0,0,0,.26)';fx.fillRect(x+1,y+ts-3,ts-2,2);fx.fillRect(x+ts-3,y+1,2,ts-4);
-    if(Math.random()<.22){const cx=Math.random()<.5?x+1:x+ts-1,cy=Math.random()<.5?y+1:y+ts-1,sx=cx===x+1?1:-1,sy=cy===y+1?1:-1,q=rand(3,6);fx.fillStyle=G.env.base;fx.beginPath();fx.moveTo(cx,cy);fx.lineTo(cx+sx*q,cy);fx.lineTo(cx,cy+sy*q*.8);fx.closePath();fx.fill()}
-    if(Math.random()<.05){fx.fillStyle='rgba(0,0,0,.16)';fx.fillRect(x+1,y+1,ts-2,ts-2);fx.fillStyle='rgba(0,0,0,.3)';fx.fillRect(x+1,y+1,ts-2,3)}
-    for(let q=0;q<5;q++){fx.fillStyle=Math.random()<.5?'rgba(0,0,0,.16)':'rgba(255,255,255,.06)';fx.fillRect(x+rand(3,ts-4),y+rand(3,ts-4),1.2,1.2)}
-    if(icy&&Math.random()<.3){fx.fillStyle='rgba(255,255,255,.18)';fx.beginPath();fx.moveTo(x+4,y+ts-6);fx.lineTo(x+ts-10,y+4);fx.lineTo(x+ts-6,y+4);fx.lineTo(x+8,y+ts-6);fx.closePath();fx.fill()}
-    if(Math.random()<.18){fx.strokeStyle=icy?'rgba(60,90,130,.3)':'rgba(0,0,0,.35)';fx.lineWidth=1.5;fx.beginPath();let cx=x+rand(6,ts-6),cy=y+rand(6,ts-6);fx.moveTo(cx,cy);for(let k=0;k<3;k++){cx+=rand(-9,9);cy+=rand(-9,9);fx.lineTo(cx,cy)}fx.stroke()}
-  }
+  // flagstones of different sizes (1x1, 2x1, 1x2, 2x2) instead of a plain grid: each one a slab with lit and shaded edges, texture, chips and cracks
+  const ts=34,nc=Math.ceil((R-L)/ts),nr=Math.ceil((BOT-TOP)/ts),used=new Uint8Array(nc*nr),U=(i,j)=>i>=nc||j>=nr||used[j*nc+i];
+  const slab=(x,y,w,h)=>{const x1=Math.min(x+w,R+2),y1=Math.min(y+h,BOT+2);w=x1-x;h=y1-y;
+    fx.fillStyle=pal[randi(0,3)];fx.fillRect(x+1,y+1,w-2,h-2);
+    fx.fillStyle=Math.random()<.5?`rgba(255,255,255,${rand(0,.045)})`:`rgba(0,0,0,${rand(0,.07)})`;fx.fillRect(x+1,y+1,w-2,h-2);
+    const tg=fx.createLinearGradient(x,y,x+w,y+h);tg.addColorStop(0,'rgba(255,255,255,.06)');tg.addColorStop(1,'rgba(0,0,0,.14)');fx.fillStyle=tg;fx.fillRect(x+1,y+1,w-2,h-2);
+    for(let q=0;q<(w*h)/500;q++){fx.fillStyle=Math.random()<.5?'rgba(0,0,0,.07)':'rgba(255,255,255,.035)';fx.beginPath();fx.ellipse(x+rand(6,w-6),y+rand(6,h-6),rand(3,9),rand(2,5),rand(0,3),0,TAU);fx.fill()}
+    for(let q=0;q<(w*h)/160;q++){fx.fillStyle=Math.random()<.5?'rgba(0,0,0,.18)':'rgba(255,255,255,.07)';fx.fillRect(x+rand(3,w-4),y+rand(3,h-4),1.2,1.2)}
+    fx.fillStyle='rgba(255,255,255,.085)';fx.fillRect(x+1,y+1,w-2,2);fx.fillRect(x+1,y+3,2,h-4);
+    fx.fillStyle='rgba(0,0,0,.3)';fx.fillRect(x+1,y+h-3.5,w-2,2.5);fx.fillRect(x+w-3.5,y+1,2.5,h-4);
+    for(let q=0;q<2;q++)if(Math.random()<.24){const cx=Math.random()<.5?x+1:x+w-1,cy=Math.random()<.5?y+1:y+h-1,sx=cx===x+1?1:-1,sy=cy===y+1?1:-1,k=rand(3,7);fx.fillStyle=G.env.base;fx.beginPath();fx.moveTo(cx,cy);fx.lineTo(cx+sx*k,cy);fx.lineTo(cx,cy+sy*k*.8);fx.closePath();fx.fill()}
+    if(icy&&Math.random()<.3){fx.fillStyle='rgba(255,255,255,.16)';fx.beginPath();fx.moveTo(x+4,y+h-6);fx.lineTo(x+w-10,y+4);fx.lineTo(x+w-6,y+4);fx.lineTo(x+8,y+h-6);fx.closePath();fx.fill()}
+    if(Math.random()<(w*h>ts*ts?.3:.12)){let cx=x+rand(6,w-6),cy=y+rand(6,h-6);const pts=[[cx,cy]];for(let k=0;k<4;k++){cx=clamp(cx+rand(-10,10),x+3,x+w-3);cy=clamp(cy+rand(-10,10),y+3,y+h-3);pts.push([cx,cy])}
+      fx.strokeStyle=icy?'rgba(60,90,130,.35)':'rgba(0,0,0,.42)';fx.lineWidth=1.4;fx.beginPath();pts.forEach((p,k)=>k?fx.lineTo(p[0],p[1]):fx.moveTo(p[0],p[1]));fx.stroke();
+      fx.strokeStyle='rgba(255,255,255,.07)';fx.lineWidth=1;fx.beginPath();pts.forEach((p,k)=>k?fx.lineTo(p[0]+.9,p[1]+.9):fx.moveTo(p[0]+.9,p[1]+.9));fx.stroke()}};
+  for(let j=0;j<nr;j++)for(let i=0;i<nc;i++){if(used[j*nc+i])continue;let w=1,h=1;const q=Math.random();
+    if(q<.14&&!U(i+1,j)&&!U(i,j+1)&&!U(i+1,j+1)){w=2;h=2}else if(q<.34&&!U(i+1,j))w=2;else if(q<.46&&!U(i,j+1))h=2;
+    for(let b=0;b<h;b++)for(let a=0;a<w;a++)used[(j+b)*nc+i+a]=1;slab(L+i*ts,TOP+j*ts,w*ts,h*ts)}
+  // a carved border runs round the room, a hand's width from the walls
+  for(const[o,al] of [[11,.38],[12.2,.07]]){fx.strokeStyle=al>.2?`rgba(0,0,0,${al})`:`rgba(255,255,255,${al})`;fx.lineWidth=al>.2?2.2:1;fx.strokeRect(L+o,TOP+o,R-L-o*2,BOT-TOP-o*2)}
+  // the beast's emblem engraved in the middle of the floor, its grooves glowing faintly with the chapter's light
+  {const kind=lava?'lava':swamp?'swamp':icy?'ice':'moss',rgb=BDPAL[kind].eye;G.floorGlow=null;
+    if(!G.variant.rune&&!G.event){const cx=AW/2,cy=TOP+(BOT-TOP)*.5,R0=Math.min(84,(R-L)*.3),ry=.62;G.floorGlow={x:cx,y:cy,r:R0,rgb};
+      const ring=(rr,lw,al)=>{fx.beginPath();fx.ellipse(cx,cy,rr,rr*ry,0,0,TAU);fx.strokeStyle=`rgba(0,0,0,${al})`;fx.lineWidth=lw;fx.stroke();fx.beginPath();fx.ellipse(cx,cy+1.2,rr,rr*ry,0,0,TAU);fx.strokeStyle='rgba(255,255,255,.06)';fx.lineWidth=1;fx.stroke()};
+      fx.fillStyle='rgba(0,0,0,.1)';fx.beginPath();fx.ellipse(cx,cy,R0,R0*ry,0,0,TAU);fx.fill();
+      ring(R0,3,.42);ring(R0*.8,2,.38);
+      fx.strokeStyle='rgba(0,0,0,.42)';fx.lineWidth=1.6;fx.lineCap='round';for(let k=0;k<18;k++){const a=k/18*TAU,rr=R0*.9,px=cx+Math.cos(a)*rr,py=cy+Math.sin(a)*rr*ry;fx.save();fx.translate(px,py);fx.scale(1,ry);fx.rotate(a+Math.PI/2);fx.beginPath();
+        const g=k%3;if(g===0){fx.moveTo(-3,-3);fx.lineTo(0,3);fx.lineTo(3,-3)}else if(g===1){fx.moveTo(-3,0);fx.lineTo(3,0);fx.moveTo(0,-3);fx.lineTo(0,3)}else{fx.arc(0,0,2.6,0,Math.PI*1.4)}fx.stroke();fx.restore()}
+      // horned skull, engraved
+      fx.save();fx.translate(cx,cy);fx.scale(1,ry);const s=R0*.42,eng=(f)=>{fx.beginPath();f();fx.strokeStyle='rgba(0,0,0,.45)';fx.lineWidth=2.4;fx.stroke();fx.save();fx.translate(0,1.4);fx.beginPath();f();fx.strokeStyle='rgba(255,255,255,.06)';fx.lineWidth=1;fx.stroke();fx.restore()};
+      eng(()=>{fx.ellipse(0,-s*.1,s*.78,s*.62,0,Math.PI*.82,Math.PI*2.18);fx.lineTo(s*.42,s*.62);fx.lineTo(-s*.42,s*.62);fx.closePath()});
+      for(const sd of [-1,1]){eng(()=>{fx.moveTo(sd*s*.62,-s*.42);fx.quadraticCurveTo(sd*s*1.25,-s*.55,sd*s*1.3,-s*1.15)});eng(()=>{fx.ellipse(sd*s*.32,-s*.05,s*.2,s*.17,0,0,TAU)})}
+      eng(()=>{fx.moveTo(0,s*.18);fx.lineTo(-s*.09,s*.34);fx.lineTo(s*.09,s*.34);fx.closePath()});
+      fx.restore();
+      fx.save();fx.globalCompositeOperation='lighter';fx.strokeStyle=`rgba(${rgb},.14)`;fx.lineWidth=1.2;fx.beginPath();fx.ellipse(cx,cy,R0*.8,R0*.8*ry,0,0,TAU);fx.stroke();fx.restore()}
+    // two or three cracks with the chapter's light seeping out of them
+    G.floorCracks=[];if(!lava)for(let i=0;i<3;i++){let x=rand(L+40,R-40),y=rand(TOP+60,BOT-60);if(G.rocks.some(k=>Math.hypot(k.x-x,k.y-y)<k.r+30))continue;const a0=rand(0,TAU),pts=[[x,y]];
+      for(let k=0;k<6;k++){x+=Math.cos(a0+rand(-.6,.6))*rand(8,15);y+=Math.sin(a0+rand(-.6,.6))*rand(6,12);pts.push([x,y])}
+      const path=()=>{fx.beginPath();pts.forEach((p,k)=>k?fx.lineTo(p[0],p[1]):fx.moveTo(p[0],p[1]))};
+      path();fx.strokeStyle='rgba(0,0,0,.6)';fx.lineWidth=3;fx.lineCap='round';fx.stroke();path();fx.save();fx.shadowColor=`rgb(${rgb})`;fx.shadowBlur=6;fx.strokeStyle=`rgba(${rgb},.55)`;fx.lineWidth=1.1;fx.stroke();fx.restore();
+      G.floorCracks.push({pts,rgb,ph:rand(0,9)})}}
   for(let i=0;i<14;i++){const x=Math.random()<.5?rand(L,L+60):rand(R-60,R),y=rand(TOP,BOT);
     for(let k=0;k<5;k++){fx.fillStyle=lava?`rgba(15,10,8,${rand(.25,.45)})`:icy?`rgba(245,250,255,${rand(.35,.6)})`:swamp?`rgba(70,80,40,${rand(.25,.45)})`:`rgba(${cool?'90,140,120':'110,150,60'},${rand(.2,.4)})`;fx.beginPath();fx.ellipse(x+rand(-14,14),y+rand(-10,10),rand(5,12),rand(4,8),0,0,TAU);fx.fill()}}
   for(let i=0;i<10;i++){fx.fillStyle='rgba(0,0,0,.25)';fx.beginPath();fx.arc(rand(L,R),rand(TOP,BOT),rand(1.5,3),0,TAU);fx.fill()}
@@ -3610,6 +3642,11 @@ function bakeWalls(){
   for(let x=rand(0,20);x<AW;x+=rand(26,40)){s.fillStyle='rgba(0,0,0,.4)';s.fillRect(x,BOT,1.4,AH-BOT)}
   s.fillStyle=INK;s.fillRect(L-2,TOP-6,2.4,BOT-TOP+8);s.fillRect(R-.4,TOP-6,2.4,BOT-TOP+8);s.fillRect(L-2,BOT-.4,R-L+4,2.4);
   s.fillStyle='rgba(255,255,255,.16)';s.fillRect(L-4.4,TOP-6,1.6,BOT-TOP+6);s.fillRect(R+2,TOP-6,1.6,BOT-TOP+6);s.fillRect(L-4,BOT+2,R-L+8,1.6)}}
+// the faint living light of the floor: the emblem's grooves breathe, the glowing cracks pulse
+function drawFloorGlow(){const f=G.floorGlow,t=G.t||0;ctx.save();ctx.globalCompositeOperation='lighter';
+  if(f){const a=.1+.06*Math.sin(t*1.3);glow(f.rgb,f.x,f.y,f.r*1.05,a,f.r*.66);for(let k=0;k<6;k++){const an=t*.25+k/6*TAU;glow(f.rgb,f.x+Math.cos(an)*f.r*.9,f.y+Math.sin(an)*f.r*.9*.62,10,.25+.15*Math.sin(t*2+k))}}
+  for(const c of G.floorCracks||[]){const a=.18+.12*Math.sin(t*1.8+c.ph);for(let k=1;k<c.pts.length;k+=2)glow(c.rgb,c.pts[k][0],c.pts[k][1],16,a)}
+  ctx.restore()}
 // ----- stamps applied to the floor during play -----
 function stamp(kind,x,y,r){const c=fx;c.setTransform(2,0,0,2,0,0);
   if(kind==='crater'){const g=c.createRadialGradient(x,y,2,x,y,r*1.3);g.addColorStop(0,'rgba(0,0,0,.45)');g.addColorStop(1,'rgba(0,0,0,0)');c.fillStyle=g;c.beginPath();c.ellipse(x,y,r*1.3,r*.75,0,0,TAU);c.fill();
@@ -5881,6 +5918,21 @@ function campBg(m){if(CAMP.bg[m.id])return CAMP.bg[m.id];const c=document.create
     const cg=x.createRadialGradient(68,62,1,68,62,16);cg.addColorStop(0,'rgba(255,200,90,.95)');cg.addColorStop(1,'rgba(255,90,20,0)');x.fillStyle=cg;x.fillRect(48,46,40,30);
     x.save();x.shadowColor='#ff6a1a';x.shadowBlur=8;x.lineCap='round';for(const[sx,c1x,ex,ey,w] of [[63,56,48,104,2.4],[70,74,82,96,1.8],[66,64,60,84,1.4]]){x.strokeStyle='#ff7a2e';x.lineWidth=w;x.beginPath();x.moveTo(sx,63);x.quadraticCurveTo(c1x,(63+ey)/2,ex,ey);x.stroke()}x.restore();x.restore()}
   ridge(126,22,Z.far2,4);
+  // the colossal beast: its horned skull looms behind the crypt hill and its ribs rise from the ground on both sides, lost in the night haze
+  {const b=document.createElement('canvas');b.width=SW*2;b.height=SH*2;const y=b.getContext('2d');y.scale(2,2);y.lineJoin='round';y.lineCap='round';
+    const bone='#cfc6ae',bs='#8f866f',K='#14100c';
+    for(const sd of [-1,1])for(let i=0;i<3;i++){const bx=sd<0?14+i*30:SW-14-i*30,top=40+i*16,path=()=>{y.beginPath();y.moveTo(bx,140);y.quadraticCurveTo(bx-sd*26,top-10,bx+sd*34,top)};
+      path();y.strokeStyle=K;y.lineWidth=13-i*2;y.stroke();path();y.strokeStyle=bs;y.lineWidth=9-i*2;y.stroke();y.save();y.translate(-sd*1.5,-1.5);path();y.strokeStyle=bone;y.lineWidth=4-i*.8;y.stroke();y.restore()}
+    const cx=180,cy=54;
+    for(const sd of [-1,1]){const hp=()=>{y.beginPath();y.moveTo(cx+sd*78,cy-18);y.bezierCurveTo(cx+sd*118,cy-26,cx+sd*150,cy-28,cx+sd*166,cy-50)};hp();y.strokeStyle=K;y.lineWidth=17;y.stroke();hp();y.strokeStyle=bs;y.lineWidth=12;y.stroke();y.save();y.translate(-sd*1.5,-2);hp();y.strokeStyle=bone;y.lineWidth=5;y.stroke();y.restore()}
+    y.beginPath();y.ellipse(cx,cy,94,50,0,0,TAU);y.fillStyle=bone;y.fill();y.strokeStyle=K;y.lineWidth=3;y.stroke();
+    y.beginPath();y.ellipse(cx,cy+10,94,40,0,0,Math.PI);y.fillStyle=bs;y.globalAlpha=.6;y.fill();y.globalAlpha=1;
+    y.beginPath();y.ellipse(cx-26,cy-30,34,10,-.12,Math.PI*1.05,Math.PI*1.85);y.strokeStyle='#f2ecd8';y.lineWidth=5;y.stroke();
+    y.strokeStyle=K;y.lineWidth=2;y.beginPath();y.moveTo(cx+14,cy-48);y.lineTo(cx+20,cy-34);y.lineTo(cx+14,cy-26);y.stroke();
+    for(const sd of [-1,1]){y.beginPath();y.ellipse(cx+sd*38,cy-2,22,16,sd*.25,0,TAU);y.fillStyle=K;y.fill();y.beginPath();y.moveTo(cx+sd*14,cy-18);y.quadraticCurveTo(cx+sd*38,cy-30,cx+sd*64,cy-12);y.strokeStyle=K;y.lineWidth=7;y.stroke();y.strokeStyle=bone;y.lineWidth=3.5;y.stroke()}
+    // haze: the beast sits far away, behind the night air
+    y.globalCompositeOperation='source-atop';const hz=y.createLinearGradient(0,0,0,150);hz.addColorStop(0,Z.sky[0]);hz.addColorStop(1,Z.sky[2]);y.globalAlpha=.5;y.fillStyle=hz;y.fillRect(0,0,SW,SH);y.globalAlpha=1;
+    x.drawImage(b,0,0,SW,SH)}
   // tree line / spires
   for(let i=0;i<26;i++){const tx=i<13?R(-6,120):R(240,366),ty=R(124,136),th=R(18,34);
     if(m.id==='c1'){x.fillStyle=Z.tree;for(let k=0;k<4;k++){const w=th*(.42-k*.07),y=ty-k*th*.24;poly([[tx-w,y],[tx,y-th*.42],[tx+w,y]],Z.tree)}x.fillRect(tx-1.5,ty-2,3,6)}
@@ -5984,6 +6036,7 @@ function drawCamp(dt){campResize();const m=curMode(),open=modeOpen(m.id),Z=SCENE
   const ox=campCv.width/2-180*u;CAMP.tf={u,ox,oy,dpr};ctx.setTransform(1,0,0,1,0,0);ctx.fillStyle=Z.sky[0];ctx.fillRect(0,0,campCv.width,campCv.height);ctx.setTransform(u,0,0,u,ox,oy);
   ctx.fillStyle=Z.ground[2];ctx.fillRect(-400,SH-2,SW+800,900);
   ctx.drawImage(tintBg(m),0,0,SW,SH);
+  if(!LOWFX){ctx.save();ctx.globalCompositeOperation='lighter';const ep=.65+.35*Math.sin(t*1.6);for(const sd of [-1,1]){glow(m.glow,180+sd*38,53,30,ep*.55);glow(m.glow,180+sd*38,53,10,ep);glow('255,255,255',180+sd*38,53,3.5,ep)}ctx.restore()}
   // living sky
   if(m.id==='inf'||m.id==='c4'){ctx.save();ctx.globalCompositeOperation='lighter';for(let k=0;k<3;k++){ctx.strokeStyle=m.id==='c4'?`rgba(${k%2?'120,255,200':'120,200,255'},${.09+.05*Math.sin(t*.7+k)})`:`rgba(${k%2?'120,220,255':'190,120,255'},${.10+.05*Math.sin(t*.7+k)})`;ctx.lineWidth=10-k*2;ctx.beginPath();for(let px=0;px<=SW;px+=12){const py=-170+k*22+Math.sin(px*.02+t*.5+k)*10;px?ctx.lineTo(px,py):ctx.moveTo(px,py)}ctx.stroke()}ctx.restore()}
   if(m.id==='c2'){glow('255,90,30',277,58,30+3*Math.sin(t*2),.5);for(let k=0;k<5;k++){const q=(t*.08+k/5)%1;ctx.fillStyle=`rgba(60,40,36,${.35*(1-q)})`;ctx.beginPath();ctx.arc(277-q*40+Math.sin(q*6+k)*6,54-q*90,6+q*18,0,TAU);ctx.fill()}}
@@ -6562,6 +6615,7 @@ function render(){
   else ctx.setTransform(s,0,0,s,ox+sx*s,oy+sy*s);
   ctx.translate(-vx,-vy);if(AW>VW||AH>VH)drawBackdrop(vx,vy);
   ctx.drawImage(floorCv,0,0,AW,AH);
+  if(!LOWFX)drawFloorGlow();
   for(const d of G.decals){ctx.fillStyle=d.col;ctx.globalAlpha=.35;for(let i=0;i<4;i++){const a=d.seed+i*1.6;ell(d.x+Math.cos(a)*d.r*.5,d.y+Math.sin(a)*d.r*.3,d.r*.5,d.r*.3);ctx.fill()}ctx.globalAlpha=1}
   torchLight();lightPools();drawEnvGround();lavaGlowLive();drawTufts();
   // the darkness falls on the room, not on the actors: characters, dangers and loot stay bright and readable
@@ -6637,7 +6691,7 @@ function loop(now){const raw=(now-last)/1000,dt=Math.min(.033,raw);last=now;if(I
   if(started&&!paused&&!INTRO.on&&raw<.2){frameEma+=(raw-frameEma)*.05;if(SAVE.set.q==='auto'&&!LOWFX&&frameEma>.026){slowT+=raw;if(slowT>2.5)LOWFX=true}else slowT=0}
   if(started&&!paused){if(G.hitstop>0)G.hitstop-=dt;else if(G.slowT>0){G.slowT-=dt;update(dt*(G.slowT>1?.22:.22+.78*(1-G.slowT)))}else update(dt)}
   if($('menu').hidden){render();hud();if(started)rpCapture(now)}
-  if(RP.pending&&now>=RP.pending)rpStart();if(RP.on)rpFrame(raw);else if(!$('menu').hidden&&$('chestScr').hidden){if(!$('tabHero').hidden){G.t+=dt;drawHeroPreview(dt)}const home=!$('tabPlay').hidden;CAMP.fr=(CAMP.fr||0)+1;if(home?$('sheetScr').hidden:CAMP.fr%6===0)drawCamp(home?dt:dt*6)}
+  if(RP.pending&&now>=RP.pending)rpStart();if(RP.on)rpFrame(raw);else if(!$('menu').hidden&&$('chestScr').hidden){if(!$('tabHero').hidden){G.t+=dt;drawHeroPreview(dt)}const home=!$('tabPlay').hidden;CAMP.fr=(CAMP.fr||0)+1;if(home){if($('sheetScr').hidden)drawCamp(dt)}else if(CAMP.fr%2===0||!MBG.drawn)drawMenuBg(dt*2)}
   requestAnimationFrame(loop)}
 
 // =====================================================================
@@ -6736,6 +6790,39 @@ const ROCK_LIVE={crystal:1,brazier:1,lavarock:1,cauldron:1,mudmound:1,reeds:1,la
   drawRock=function(k){if(k._raw||k.temp||ROCK_LIVE[k.kind]||ctx!==MAINCTX){_dr(k);return}
     const sp=rockSprite(k),dx=k.hit>0?Math.sin(G.t*90)*k.hit*14:0;ctx.drawImage(sp.c,sp.x0+dx,sp.y0,sp.w,sp.h);groundFront(k)}}
 
+// =====================================================================
+// MENU BACKDROP: the boards float over the abyss of the beast. Night-blue depth, its ribs curling in from both sides,
+// the skull watching from above with eyes of the current chapter's colour, mist drifting and lights rising
+// =====================================================================
+const MBG={t:0,st:null,key:'',drawn:false,motes:[]};
+function drawMenuBg(dt){const cvb=$('mbgCv');if(!cvb||!cvb.clientWidth)return;const dpr=Math.min(2,window.devicePixelRatio||1),W=cvb.clientWidth,H=cvb.clientHeight;
+  if(cvb.width!==Math.round(W*dpr)||cvb.height!==Math.round(H*dpr)){cvb.width=Math.round(W*dpr);cvb.height=Math.round(H*dpr)}
+  const m=curMode(),rgb=m.glow||'120,220,90',key=W+'x'+H+'|'+rgb;MBG.t+=dt;const t=MBG.t,c=cvb.getContext('2d');
+  if(MBG.key!==key){MBG.key=key;const st=document.createElement('canvas');st.width=cvb.width;st.height=cvb.height;const x=st.getContext('2d');x.scale(dpr,dpr);MBG.st=st;x.lineJoin='round';x.lineCap='round';
+    let g=x.createLinearGradient(0,0,0,H);g.addColorStop(0,'#0f2858');g.addColorStop(.45,'#0a1a3e');g.addColorStop(1,'#040a1a');x.fillStyle=g;x.fillRect(0,0,W,H);
+    g=x.createRadialGradient(W/2,H*.2,0,W/2,H*.2,W*.8);g.addColorStop(0,`rgba(${rgb},.16)`);g.addColorStop(1,`rgba(${rgb},0)`);x.fillStyle=g;x.fillRect(0,0,W,H);
+    const sil='#0b1b40',rim='rgba(130,180,255,.28)';
+    // ribs curling in from the edges
+    for(let y=H*.18;y<H+40;y+=Math.max(70,H/8))for(const sd of [-1,1]){const x0=sd<0?-18:W+18,path=()=>{x.beginPath();x.moveTo(x0,y);x.quadraticCurveTo(x0-sd*W*.2,y-26,x0-sd*W*.24,y+46)};
+      path();x.strokeStyle=sil;x.lineWidth=22;x.stroke();path();x.strokeStyle=rim;x.lineWidth=2;x.save();x.translate(0,-9);x.stroke();x.restore()}
+    // the skull, high and far
+    {const cx=W/2,cy=H*.24,s=Math.min(W,520)/360;x.save();x.translate(cx,cy);x.scale(s,s);
+      for(const sd of [-1,1]){x.beginPath();x.moveTo(sd*80,-10);x.bezierCurveTo(sd*130,-20,sd*165,-30,sd*178,-72);x.strokeStyle=sil;x.lineWidth=20;x.stroke();x.strokeStyle=rim;x.lineWidth=2;x.save();x.translate(0,-8);x.stroke();x.restore()}
+      x.beginPath();x.ellipse(0,0,100,60,0,0,TAU);x.fillStyle=sil;x.fill();x.strokeStyle=rim;x.lineWidth=2;x.beginPath();x.ellipse(0,0,100,60,0,Math.PI*1.08,Math.PI*1.92);x.stroke();
+      x.fillStyle='#030814';for(const sd of [-1,1]){x.beginPath();x.ellipse(sd*40,6,24,18,sd*.25,0,TAU);x.fill()}x.beginPath();x.moveTo(0,24);x.lineTo(-8,38);x.lineTo(8,38);x.closePath();x.fill();
+      x.restore()}
+    // vignette
+    g=x.createRadialGradient(W/2,H*.45,Math.min(W,H)*.35,W/2,H*.45,Math.max(W,H)*.75);g.addColorStop(0,'rgba(0,0,0,0)');g.addColorStop(1,'rgba(0,0,0,.55)');x.fillStyle=g;x.fillRect(0,0,W,H);
+    MBG.motes=[...Array(26)].map((_,i)=>({x:Math.random(),y:Math.random(),v:.012+Math.random()*.02,ph:Math.random()*9,r:1+Math.random()*1.6}))}
+  c.setTransform(1,0,0,1,0,0);c.drawImage(MBG.st,0,0);MBG.drawn=true;if(LOWFX)return;c.setTransform(dpr,0,0,dpr,0,0);
+  const keep=ctx;ctx=c;try{c.globalCompositeOperation='lighter';
+    // the skull's eyes
+    const s=Math.min(W,520)/360,ep=.6+.4*Math.sin(t*1.5);for(const sd of [-1,1]){const ex=W/2+sd*40*s,ey=H*.24+6*s;glow(rgb,ex,ey,34*s,ep*.5);glow(rgb,ex,ey,11*s,ep);glow('255,255,255',ex,ey,4*s,ep*.9)}
+    // mist drifting across
+    for(let k=0;k<4;k++){const fx=((t*(6+k*3)+k*W*.37)%(W+300))-150,fy=H*(.35+k*.17);glow('120,170,255',fx,fy,150,.05,40)}
+    // little lights rising out of the dark
+    for(const p of MBG.motes){p.y-=p.v*dt;if(p.y<-.05){p.y=1.05;p.x=Math.random()}const px=p.x*W+Math.sin(t*.8+p.ph)*12,py=p.y*H,a=.35+.35*Math.sin(t*2+p.ph);glow(rgb,px,py,p.r*6,a*.5);glow('255,255,255',px,py,p.r,a)}
+  }finally{ctx=keep;c.globalCompositeOperation='source-over'}}
 // =====================================================================
 // BIG ARENAS: camera that follows the hero, the chapter landscape past the walls, arrows for enemies out of view
 // =====================================================================
@@ -6855,6 +6942,9 @@ function bakeBackdrop(){const th=themeOf(G.room),M=BIG.m+20,W=AW+M*2,H=AH+M*2,ki
   // eyes watching from the abyss
   for(let i=0;i<9;i++){const sd=i%3,x=sd===0?-rr(52,M-6):sd===1?AW+rr(52,M-6):rr(20,AW-20),y=sd<2?rr(TOP,AH):AH+rr(66,M-4);bdFx.push({k:'ey',x,y,ph:rn()*20,s:rr(.8,1.2)})}
   for(let i=0;i<7;i++)bdFx.push({k:'wi',x:rn(),y:rn(),ph:rn()*9});
+  // the skull sinks into shadow and mist where it meets the top of the back wall: no hard line
+  {const gg=c.createLinearGradient(0,-52,0,2);gg.addColorStop(0,'rgba(0,0,0,0)');gg.addColorStop(.55,'rgba(4,3,8,.55)');gg.addColorStop(1,'rgba(4,3,8,.92)');c.fillStyle=gg;c.fillRect(-M,-52,W,54);
+    const mg=c.createLinearGradient(0,-26,0,0);mg.addColorStop(0,`rgba(${Q.mist},0)`);mg.addColorStop(1,`rgba(${Q.mist},.12)`);c.fillStyle=mg;c.fillRect(-M,-26,W,26)}
   // depth: the farther from the arena, the darker
   const edge=(x0,y0,x1,y1,rx,ry,rw,rh)=>{const gg=c.createLinearGradient(x0,y0,x1,y1);gg.addColorStop(0,'rgba(0,0,0,0)');gg.addColorStop(1,'rgba(0,0,0,.62)');c.fillStyle=gg;c.fillRect(rx,ry,rw,rh)};
   edge(-8,0,-M,0,-M,-M,M-8,H);edge(AW+8,0,AW+M,0,AW+8,-M,M-8,H);edge(0,-30,0,-M,-M,-M,W,M-30);edge(0,AH+30,0,AH+M,-M,AH+30,W,M-30);

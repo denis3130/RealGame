@@ -67,9 +67,15 @@ Dopo ogni modifica: rifare almeno una partita automatica per capitolo, `meta2.js
   - Pareti: cornice in cima, zoccolo alla base, pilastri sotto le torce e negli angoli, bordo pulito sui muri laterali.
   - La sfumatura scura ai bordi copre tutto lo schermo (prima si vedeva una riga sui telefoni alti).
   - Test `vetrina.js`: gli stessi ostacoli di ogni capitolo, sempre nella stessa posizione, visti da vicino.
+- Effetto WOW esteso:
+  - Arena: il teschio dietro il muro sfuma nel buio e nella nebbia, senza più la linea netta sopra il cancello.
+  - Pavimento (`renderFloor`): lastre di misure diverse (1×1, 2×1, 1×2, 2×2) con rilievo, macchie, scheggiature e crepe; cornice incisa lungo i muri; al centro un medaglione con il teschio della bestia inciso (non nelle stanze con le rune del boss né negli eventi); 2–3 crepe che lasciano uscire la luce del capitolo. Luce viva in `drawFloorGlow` (`G.floorGlow`, `G.floorCracks`), spenta con `LOWFX`.
+  - Schermata principale: nel paesaggio dell'accampamento (`campBg`) c'è il teschio con le corna della bestia dietro la collina della cripta, con le costole ai lati, velato dalla foschia. Gli occhi brillano del colore della modalità (in `drawCamp`).
+  - Menu laterali (Eroe, Bottega, Cammino, Profilo): sotto i pannelli c'è la tela `#mbgCv` (`drawMenuBg`, `MBG`): abisso blu notte, costole che entrano dai bordi, teschio in alto con gli occhi accesi, nebbia che scorre e lucine che salgono. Con `LOWFX` resta ferma.
 - Nota: in `meta2.js` i controlli «codice caricato» e «salvataggio dopo ricarica» falliscono anche sulla versione 41: problema del test, non del gioco.
 
 ## Da fare (annotato con Denis, non ancora fatto)
 
 1. Possibile in futuro: dividere `index.html` in più file con uno script che li riunisce per la pubblicazione.
 2. Da regolare giocando: forza del Druida, crescita dei boss, misura delle arene grandi.
+3. Boss nuovo, molto più avanti nel gioco: la bestia scheletrica gigante che sta sotto l'arena (le costole ai lati, il teschio con le corna dietro la porta, la coda di vertebre in basso: `bakeBackdrop`). L'idea di Denis è che il paesaggio stesso si risvegli e diventi il boss.
