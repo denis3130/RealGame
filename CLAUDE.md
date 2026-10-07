@@ -58,6 +58,15 @@ Dopo ogni modifica: rifare almeno una partita automatica per capitolo, `meta2.js
 - Fuori dall'arena (`bakeBackdrop`, `BDPAL`, `drawBackdrop`): l'arena è uno sperone sopra un abisso buio, dentro la cassa toracica di una bestia gigante. Ci sono costole ai lati, il teschio con le corna e gli occhi accesi dietro la porta, e la coda di vertebre in basso. Intorno: pali con teschi, mucchi di teschi con candele, occhi che sbattono nel buio e fuochi fatui. Nel fondo dell'abisso un fiume che brilla: lava, ghiaccio, palude o muschio a seconda del capitolo. Le cose più lontane dall'arena sono più scure. Con `LOWFX` niente animazioni, solo luci fisse.
 - Nuovi test: `sk.js` (scheletri), `bossx.js` (crescita boss), `micro.js` (micro animazioni), `big.js` (arene grandi), `bossbig.js` (tutti i boss nell'arena grande), `bd.js` (paesaggio fuori dall'arena nei 4 capitoli), `dirs.js` (foglio dei personaggi in tutte le direzioni).
 - Personaggi: Denis preferisce lo stile attuale (proposta nuova scartata). Corretta la punta del cappuccio, che da dietro finiva sotto la testa: ora sta sempre in cima e si piega un po' all'indietro.
+- Cristalli: prima il conteggio della partita (`G.gemsRun`) ripartiva da zero a ogni stanza e si perdevano. Ora si sommano per tutta la partita e anche quelli rimasti a terra vengono contati (test `gems.js`).
+- Tutorial tolto del tutto: niente schermata di benvenuto con il dito alla prima partita, niente suggerimenti in partita (`ingameHint`), niente indicazioni nel menu (`coach`). La intro/trailer resta (si rivede dalle impostazioni).
+- Grafica più "piantata":
+  - Ostacoli: ombre morbide (`castShadow` con `SHB`); sotto ogni ostacolo il pavimento si scurisce, si crepa e ci sono schegge (`groundPatch`); davanti alla base muschio, cenere, fango o neve con sassi in rilievo (`groundFront`, `footMat`).
+  - Gli ostacoli fermi sono disegnati una volta in un'immagine (`rockSprite`), più scuri alla base e illuminati dall'alto. Quelli animati (`ROCK_LIVE`: braciere, cristallo, calderone…) si disegnano ancora a ogni fotogramma.
+  - Pavimento: piastrelle a lastra con bordo chiaro e bordo scuro, angoli consumati e ombra lungo tutti i muri. Pozzanghere come acqua con bordo bagnato e riflesso; calcinacci senza contorno.
+  - Pareti: cornice in cima, zoccolo alla base, pilastri sotto le torce e negli angoli, bordo pulito sui muri laterali.
+  - La sfumatura scura ai bordi copre tutto lo schermo (prima si vedeva una riga sui telefoni alti).
+  - Test `vetrina.js`: gli stessi ostacoli di ogni capitolo, sempre nella stessa posizione, visti da vicino.
 - Nota: in `meta2.js` i controlli «codice caricato» e «salvataggio dopo ricarica» falliscono anche sulla versione 41: problema del test, non del gioco.
 
 ## Da fare (annotato con Denis, non ancora fatto)
