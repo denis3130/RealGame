@@ -1,0 +1,14 @@
+{
+  "name": "mossbound",
+  "private": true,
+  "description": "Mossbound: roguelite in stile Archero, un solo file HTML",
+  "scripts": {
+    "test:build": "cd tests && python3 mk.py",
+    "test:cap1": "cd tests && python3 mk.py && node run.js arena 0 1 c1 6",
+    "test:meta": "cd tests && python3 mk.py && node meta2.js",
+    "test:menu": "cd tests && python3 mk.py && node menu2.js",
+    "test:saves": "cd tests && python3 mk.py && node mig.js",
+    "test:pets": "cd tests && python3 mk.py && node pets.js"
+  },
+  "devDependencies": { "playwright": "^1.47.0" }
+}
