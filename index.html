@@ -1900,7 +1900,7 @@ let skMode='level',altarLeft=0;
 function openSkills(mode,quiet){
   mode=mode||'level';skMode=mode;modal=true;paused=true;if(!quiet)sfx('pick');
   const avail=SK.filter(s=>(P.skills[s.id]||0)<s.max&&(!s.cond||s.cond()));
-  if(mode==='shop'){if(!G.shopOffer)G.shopOffer=shuffle(avail.filter(s=>!s.evo)).slice(0,3).map(s=>({s,price:18+G.room*5+(s.max===1?8:0)}));offer=G.shopOffer.map(o=>o.s)}
+  if(mode==='shop'){if(!G.shopOffer)G.shopOffer=shuffle(avail.filter(s=>!s.evo)).slice(0,3).map(s=>({s,price:12+G.room*3+(s.max===1?5:0)}));offer=G.shopOffer.map(o=>o.s)}
   else{offer=shuffle(avail.filter(s=>!s.evo)).slice(0,3);const ev=avail.filter(s=>s.evo);if(ev.length)offer[0]=ev[0]}
   if(mode==='altar'&&altarLeft===0)altarLeft=2;
   const T={level:['Livello '+P.lvl,"Scegli un'abilità"],treasure:['Tesoro',"Scegli un'abilità"],shop:['Mercante · hai '+G.gold+' oro',"Compra con l'oro della partita"],
@@ -1923,7 +1923,7 @@ function openSkills(mode,quiet){
 const SKR={front:1,diag:1,side:1,rear:1,pierce:1,orbit:1,poison:1,wallb:1,shield:1,multi:2,ric:2,fire:2,ice:2,light:2,giant:2,vamp:2};
 const rerollCost=()=>!G.rerolls?0:Math.min(30,5*G.rerolls);
 // --- revive for gems (once per run)
-const REV_COST=15;let rvT=null;
+const REV_COST=25;let rvT=null;
 function canRevive(){return !G.revived&&G.mode&&!G.ended}
 function openRevive(){modal=true;paused=true;G.state='dead';const yes=$('rvYes'),ok=(SAVE.gems||0)>=REV_COST;
   yes.innerHTML=`Rinasci <i class="gemS"></i>${REV_COST}`;yes.disabled=!ok;$('revScr').hidden=false;sfx('death','hero',P.x);
@@ -1941,10 +1941,10 @@ const randSkill=(epic)=>{const av=SK.filter(s=>!s.evo&&(P.skills[s.id]||0)<s.max
 const WHEEL=[
   {n:'Abilità',ic:'skill',c:['#c98af7','#7a2fc0'],w:1,f:()=>{const s=randSkill();return s?s.n:'Abilità'}},
   {n:'Cura',ic:'heart',c:['#ff8a7a','#c22c2c'],w:1,f:()=>{P.hp=P.maxhp;return'Salute piena'}},
-  {n:'Oro',ic:'coin',c:['#ffe27a','#d98a00'],w:1,f:()=>{const g=40+G.room*8;G.gold+=g;return'+'+g+' oro'}},
+  {n:'Oro',ic:'coin',c:['#ffe27a','#d98a00'],w:1,f:()=>{const g=25+G.room*5;G.gold+=g;return'+'+g+' oro'}},
   {n:'Velocità',ic:'bolt',c:['#9ff0ff','#1f8fb8'],w:1,f:()=>{P.aspd*=1.15;return"Velocità d'attacco +15%"}},
-  {n:'JACKPOT',ic:'crown',c:['#fff2a8','#e0a000'],w:.45,jack:1,f:()=>{const s=randSkill(true);G.gemsRun=(G.gemsRun||0)+10;G.gold+=150;return(s?s.n+' + ':'')+'10 gemme + 150 oro'}},
-  {n:'Gemme',ic:'gem',c:['#8fe6ff','#2a6fd8'],w:1,f:()=>{G.gemsRun=(G.gemsRun||0)+4;return'+4 gemme'}},
+  {n:'JACKPOT',ic:'crown',c:['#fff2a8','#e0a000'],w:.45,jack:1,f:()=>{const s=randSkill(true);G.gemsRun=(G.gemsRun||0)+4;G.gold+=80;return(s?s.n+' + ':'')+'4 cristalli + 80 oro'}},
+  {n:'Cristalli',ic:'gem',c:['#8fe6ff','#2a6fd8'],w:1,f:()=>{G.gemsRun=(G.gemsRun||0)+2;return'+2 cristalli'}},
   {n:'Attacco',ic:'sword',c:['#ff9d6b','#c0401c'],w:1,f:()=>{P.atk*=1.15;return'Attacco +15%'}},
   {n:'Vigore',ic:'heartp',c:['#9df07a','#2f8f1c'],w:1,f:()=>{const a=Math.round(P.maxhp*.15);P.maxhp+=a;P.hp+=a;return'Salute massima +15%'}}];
 const WH={a:0,spin:false,win:-1,winT:0,flap:0,raf:0,parts:[],t0:0,lastPeg:0,speed:0};
@@ -2027,7 +2027,7 @@ function pick(i){if(!modal||!offer[i])return;const s=offer[i];
 function endRun(win,quit){
   if(!G||G.ended)return;G.ended=true;
   started=false;paused=true;$('pauseScr').hidden=true;$('bossBar').hidden=true;
-  const gold=Math.round(G.gold*(P.goldMul||1)*(1+.25*(G.arena||0))),st=SAVE.stats;SAVE.gold+=gold;G.gemsRun=(G.gemsRun||0)+((G.gems&&G.gems.length)||0);G.gems=[];SAVE.gems=(SAVE.gems||0)+G.gemsRun;SAVE.runs++;st.gold+=gold;st.runs++;st.maxLvl=Math.max(st.maxLvl,P.lvl);mprog('gold',null,gold);mprog('lvl',null,P.lvl,true);
+  const gold=Math.round(G.gold*(P.goldMul||1)*(1+.12*(G.arena||0))),st=SAVE.stats;SAVE.gold+=gold;G.gemsRun=(G.gemsRun||0)+((G.gems&&G.gems.length)||0);G.gems=[];SAVE.gems=(SAVE.gems||0)+G.gemsRun;SAVE.runs++;st.gold+=gold;st.runs++;st.maxLvl=Math.max(st.maxLvl,P.lvl);mprog('gold',null,gold);mprog('lvl',null,P.lvl,true);
   const inf=G.mode==='inf',chn=G.chapter||1,c2=!inf&&chn===2;let rec=false,unlock='';
   if(inf){rec=G.room>SAVE.inf.best&&!quit;if(!quit){SAVE.inf.best=Math.max(SAVE.inf.best,G.room);SAVE.inf.top.push({room:G.room,hero:SAVE.hero,kills:G.kills,d:Date.now()});SAVE.inf.top.sort((a,b)=>b.room-a.room||b.kills-a.kills);SAVE.inf.top=SAVE.inf.top.slice(0,5)}mprog('inf',null,G.room,true)}
   else{const B=chn>1?'best'+chn:'best';if(!SAVE[B])SAVE[B]={room:0,gold:0};if(G.room>SAVE[B].room||(G.room===SAVE[B].room&&gold>SAVE[B].gold))SAVE[B]={room:G.room,gold}}
@@ -2079,12 +2079,12 @@ const WEAP={
   balestra:{held:'xbow',proj:'bolt',spd:1.35,kb:2.3,trail:'205,218,235',d:'Dardi d\'acciaio rapidissimi che spingono via i nemici.'},
   arco_spine:{bow:'thorn',proj:'thorn',spd:.95,trail:'184,116,230',d:'Scaglia spine velenose che lasciano spore viola.'},
   arco_fenice:{bow:'phoenix',proj:'flame',spd:1.1,trail:'255,140,60',d:'Frecce di fuoco che lasciano una scia di braci.'}};
-const MAXLV=10,CARDS=[2,4,6,10,15,20,30,40,50],COST=[20,50,90,150,250,400,600,850,1200];
+const MAXLV=10,CARDS=[2,4,6,10,15,20,30,40,50],COST=[40,90,160,260,400,600,900,1300,1900];
 const needCards=l=>CARDS[l-1]||0,upCost=(it,l)=>Math.round((COST[l-1]||0)*(1+it.rar*.4));
 const CHESTS={
-  legno:{n:'Cassa di legno',cards:6,gold:[20,40],time:15,odds:[70,25,5,0,0],price:80},
-  argento:{n:"Cassa d'argento",cards:14,gold:[60,120],time:45,odds:[48,32,15,5,0],price:260},
-  oro:{n:"Cassa d'oro",cards:28,gold:[150,280],time:90,odds:[30,32,22,12,4],price:700}};
+  legno:{n:'Cassa di legno',cards:6,gold:[20,40],time:15,odds:[70,25,5,0,0],price:150},
+  argento:{n:"Cassa d'argento",cards:14,gold:[60,120],time:45,odds:[48,32,15,5,0],price:480},
+  oro:{n:"Cassa d'oro",cards:28,gold:[150,280],time:90,odds:[30,32,22,12,4],price:1300}};
 const CHC={legno:{body:'#9b6a3a',dark:'#6b4422',band:'#5a5f68',lock:'#c9cfd6'},argento:{body:'#8a96a3',dark:'#5d6874',band:'#e3eaf0',lock:'#4d97ff'},oro:{body:'#d0921f',dark:'#8a5a10',band:'#ffe08a',lock:'#e5484d'}};
 const SAVE_KEY='cripta_save_v1';
 function defSave(){return{gold:60,items:{arco_frassino:{lvl:1,cards:0},giubba:{lvl:1,cards:0}},eq:{arma:'arco_frassino',armatura:'giubba',anello:null,amuleto:null},
@@ -2117,7 +2117,7 @@ if(!SAVE.road)SAVE.road={};if(SAVE.sel!=='inf'&&SAVE.sel!=='daily')SAVE.sel='are
 const trWin=()=>32+Math.round(8*Math.max(0,P.hp)/Math.max(1,P.maxhp)),trLose=room=>Math.max(6,32-3*(room-1));
 // rewards along the trophy road, every 100 trophies; each arena gate gives a gold chest
 function roadList(){if(roadList.c)return roadList.c;const L=[];for(let t=100;t<=10000;t+=100){const ai=ARENAS.findIndex(a=>a.t===t);let r;
-  if(t===500)r={k:'petc',v:'lucciola',n:10};else if(ai>0)r={k:'chest',v:'oro',arena:ai};else{const k=(t/100)%3;r=k===1?{k:'gold',v:100+Math.floor(t/500)*100}:k===2?{k:'gems',v:10+Math.floor(t/600)*5}:{k:'chest',v:t<1000?'legno':t<3000?'argento':'oro'}}
+  if(t===500)r={k:'petc',v:'lucciola',n:10};else if(ai>0)r={k:'chest',v:'oro',arena:ai};else{const k=(t/100)%3;r=k===1?{k:'gold',v:80+Math.floor(t/500)*60}:k===2?{k:'gems',v:5+Math.floor(t/1500)*5}:{k:'chest',v:t<1000?'legno':t<3000?'argento':'oro'}}
   L.push({t,...r})}return roadList.c=L}
 const roadReady=()=>roadList().filter(n=>(SAVE.trBest||0)>=n.t&&!SAVE.road[n.t]).length;
 function rewardLabel(n){return n.k==='petc'?`<img class="rpet" src="${petIcon(n.v)}" alt="">${n.n} carte ${PET_BY[n.v].n}`:n.k==='pet'?`<img class="rpet" src="${petIcon(n.v)}" alt="">Compagno: ${PET_BY[n.v].n}`:n.k==='gold'?`<i class="coin"></i>${n.v} oro`:n.k==='gems'?`<i class="gemS"></i>${n.v} gemme`:CHESTS[n.v].n}
@@ -2935,7 +2935,7 @@ function update(dt){
   for(let i=G.coins.length-1;i>=0;i--){const c=G.coins[i];c.t+=dt;
     if(magnet&&c.t>.35){const dx=P.x-c.x,dy=P.y-c.y,d=Math.hypot(dx,dy)||1,sp=200+c.t*300;c.x+=dx/d*sp*dt;c.y+=dy/d*sp*dt}
     else{c.x+=c.vx*dt;c.y+=c.vy*dt;c.vx*=.9;c.vy*=.9;c.x=clamp(c.x,L+6,R-6);c.y=clamp(c.y,TOP+6,BOT-6)}
-    if(Math.hypot(P.x-c.x,P.y-c.y)<16&&c.t>.3){const v=c.gr?1:(1+Math.floor(effRoom()/3))*(G.dark?2:1);G.gold+=v;if(G.goldRun)G.goldRun.got+=v;G.coins.splice(i,1);sfx('coin')}}
+    if(Math.hypot(P.x-c.x,P.y-c.y)<16&&c.t>.3){const v=c.gr?1:(1+Math.floor(effRoom()/5))*(G.dark?2:1);G.gold+=v;if(G.goldRun)G.goldRun.got+=v;G.coins.splice(i,1);sfx('coin')}}
   for(let i=G.gems.length-1;i>=0;i--){const g=G.gems[i];g.t+=dt;
     if(g.z>0||g.vz>0){g.vz-=520*dt;g.z+=g.vz*dt;g.x+=g.vx*dt;g.y+=g.vy*dt;if(g.z<=0){g.z=0;if(Math.abs(g.vz)>70){g.vz=-g.vz*.38;g.vx*=.6;g.vy*=.6;sfx('click',0,g.x)}else g.vz=0}}
     g.x=clamp(g.x,L+8,R-8);g.y=clamp(g.y,TOP+8,BOT-8);
@@ -2970,7 +2970,7 @@ function basis(face){const d=Q8(face),[v,f]=VIEWS[d],qa=d*Math.PI/4,lx=Math.cos(
   return{d,v,f,qa,lx,ly,la:Math.atan2(ly,lx),back:v==='n'||v==='n34',side:v==='side',front:v==='s'||v==='s34'}}
 
 // ---------- humanoid rig (hero, goblin, skeleton, witch) ----------
-const HERO={sc:1,body:'#2fb3a6',hood:'#23877d',skin:'#f2c9a0',foot:'#4a3626',foot2:'#3a2a1d',quiver:true,held:'bow',bowCol:'#a4703d',hoodTip:false,belt:'#8a5a20'};
+const HERO={sc:1,body:'#2fb3a6',hood:'#23877d',skin:'#f2c9a0',foot:'#4a3626',foot2:'#3a2a1d',quiver:true,held:'bow',bowCol:'#a4703d',hoodTip:false,bighood:true,belt:'#8a5a20'};
 const GOBLIN={sc:.95,body:'#a8443a',hood:'#7e2f28',skin:'#7bbf4a',foot:'#3d2a1d',ears:true,held:'bow',bowCol:'#6b4a2a',eyeCol:'#e5484d',belt:'#4a3626'};
 const SKEL={sc:1,body:'#d9d2c0',skull:true,skin:'#e8e2d0',foot:'#cfc7b2',ribs:true,held:'xbow',bowCol:'#6b4a2a',shield:true,eyeCol:'#e5484d'},SKEL_NS={...SKEL,shield:false};
 const MERCHANT={sc:1.08,body:'#5a3f7a',hood:'#3a2a52',skin:'#e8c0a0',foot:'#3a2a1d',held:'staff',eyeCol:'#ffc93c',belt:'#8a5a20',hoodTip:true};
@@ -3092,6 +3092,7 @@ function shieldPart(B,S){
 }
 function eye(x,y,col,r){ctx.fillStyle=col;circ(x,y,r||1.7);ctx.fill()}
 function head(S,B){
+  if(S.bighood)return bigHood(S,B);
   const v=B.v,hy=-19,E=S.eyeCol||INK;ink(2.5);heroBits(S,B,hy,false);
   if(S.ears){ctx.fillStyle=S.skin;const ear=(s)=>{ctx.beginPath();ctx.moveTo(s*6,hy-2);ctx.lineTo(s*19,hy-8);ctx.lineTo(s*7,hy+4);ctx.closePath();ctx.fill();ctx.stroke()};
     if(B.side)ear(-1);else{ear(-1);ear(1)}}
@@ -3118,6 +3119,27 @@ function head(S,B){
   heroBits(S,B,hy,true);
   if(mossOn&&!S.skull&&!S.ears)mossStick(B,hy);
 }
+// the Arciere's hood (from Denis's picture): bigger and rounder, with a soft point that falls back behind the head;
+// the face stays the classic one, sitting in the dark opening of the hood. The same shape seen from every side
+function bigHood(S,B){const v=B.v,hy=-19;ink(2.5);heroBits(S,B,hy,false);
+  // the point: a wide flap of cloth falling back and down behind the head, away from where the hero looks
+  const C={s:[-15.5,-9],s34:[-18,-4],side:[-20,1],n34:[-17,-5],n:[-14,-9]}[v]||[-15.5,-9];
+  ctx.beginPath();ctx.moveTo(1.5,hy-12.8);ctx.quadraticCurveTo(-9,hy-19,C[0],hy+C[1]);ctx.quadraticCurveTo(-12,hy+C[1]*.35-1,-12.4,hy-2);ctx.closePath();fs(S.hood);
+  ctx.save();ctx.strokeStyle='rgba(0,0,0,.22)';ctx.lineWidth=1.4;ctx.beginPath();ctx.moveTo(-4,hy-13.2);ctx.quadraticCurveTo(-11,hy-14,C[0]*.85,hy+C[1]-1);ctx.stroke();ctx.restore();ink(2.5);
+  // the hood itself, flaring a little over the shoulders
+  const hood=()=>{ctx.beginPath();ctx.moveTo(-12,hy+6.5);ctx.bezierCurveTo(-14,hy-4.5,-9,hy-13.2,0,hy-13.2);ctx.bezierCurveTo(9,hy-13.2,14,hy-4.5,12,hy+6.5);ctx.quadraticCurveTo(0,hy+11,-12,hy+6.5);ctx.closePath()};
+  hood();fs(S.hood);
+  ctx.save();hood();ctx.clip();ctx.fillStyle='rgba(255,255,255,.15)';ell(-4.5,hy-8.5,7,3,-.45);ctx.fill();ctx.fillStyle='rgba(0,0,0,.17)';ell(8.5,hy+5.5,8.5,7);ctx.fill();ctx.restore();
+  hood();ink(2.5);ctx.stroke();
+  // the classic face, sitting in the dark opening of the hood
+  const E=S.eyeCol||INK,rim=(x,rx,ry)=>{ell(x,hy+2,rx,ry);ctx.fillStyle='rgba(10,26,24,.9)';ctx.fill()};
+  if(v==='s'){rim(0,8.4,7.9);ell(0,hy+2,7,6.5);fs(S.skin);eye(-3,hy+2,E);eye(3,hy+2,E)}
+  else if(v==='s34'){rim(3,7.4,7.7);ell(3,hy+2,6,6.3);fs(S.skin);eye(1,hy+2,E);eye(5.5,hy+2,E)}
+  else if(v==='side'){rim(5.2,5.8,7.4);ell(5,hy+2,4.5,6);fs(S.skin);eye(6.5,hy+1.5,E);ctx.fillStyle=S.skin;circ(9.6,hy+3.5,1.6);ctx.fill()}
+  else if(v==='n34'){ell(8,hy+2,2,4.5);fs(S.skin)}
+  else{ctx.strokeStyle='rgba(0,0,0,.26)';ctx.lineWidth=1.6;ctx.beginPath();ctx.moveTo(-1,hy-12.6);ctx.quadraticCurveTo(-2.5,hy-1,0,hy+9.5);ctx.stroke();ink(2.5)}
+  heroBits(S,B,hy,true);
+  if(mossOn)mossStick(B,hy)}
 // the hero's trademark (home screen only): a small rolled stick of moss, always lit.
 // mossOn is switched on only around the drawRig calls that should show it.
 let mossOn=0;
@@ -5159,7 +5181,7 @@ function updGoldRoom(dt){const g=G.goldRun;if(!g)return;g.t-=dt;g.spawnT-=dt;g.r
   if(g.t<=0){G.goldRun=null;G.lobs=G.lobs.filter(b=>b.kind==='rock');for(const c of G.coins)G.fx.push({k:'puff',x:c.x,y:c.y,vx:0,vy:-10,t:.35,r:4});G.coins=[];G.door=true;banner(`${g.got} oro raccolto!`,'La porta è aperta',2);sfx('victory');vib([40,30,80])}}
 function goldLand(b){if(b.kind==='rock'){vfxBlast(b.tx,b.ty,'230,210,180',40,{debris:'stone',n:10,sparks:6,dust:8,ring2:false});shake(3);sfx('rock','boulder',b.tx);if(Math.hypot(P.x-b.tx,P.y-b.ty)<b.r+P.r*.4)hurtP(Math.round(b.dmg*DMG()));return}
   const n=b.kind==='sack'?10:randi(3,5);for(let i=0;i<n;i++){const a=rand(0,TAU),s=rand(40,140);G.coins.push({x:b.tx,y:b.ty,vx:Math.cos(a)*s,vy:Math.sin(a)*s,t:0,gr:1})}
-  if(b.kind==='sack'&&Math.random()<.35){G.gems.push({x:b.tx,y:b.ty,z:10,vz:180,vx:rand(-60,60),vy:rand(-40,40),t:0,ph:rand(0,9)})}
+  if(b.kind==='sack'&&Math.random()<.2){G.gems.push({x:b.tx,y:b.ty,z:10,vz:180,vx:rand(-60,60),vy:rand(-40,40),t:0,ph:rand(0,9)})}
   G.fx.push({k:'puff',x:b.tx,y:b.ty,vx:0,vy:-8,t:.35,r:6});sfx('coin',0,b.tx)}
 function drawTrialTag(){const ok=!G.trial.hit,x=AW/2,y=TOP+14;ctx.font='13px "Lilita One", sans-serif';ctx.textAlign='center';ctx.lineWidth=3;ctx.strokeStyle=INK;const s=ok?'Prova: nessun colpo':'Prova: colpito';ctx.strokeText(s,x,y);ctx.fillStyle=ok?'#9cef5e':'#ff7a6a';ctx.fillText(s,x,y)}
 function drawGoldTimer(){const g=G.goldRun;if(!g)return;const k=Math.max(0,g.t/15),w=150,x=AW/2-w/2,y=TOP+10;
@@ -5171,9 +5193,9 @@ function setupTrial(){G.prop=null;G.door=false;G.state='play';G.trial={hit:false
   const pools={1:['skeleton','goblin','wisp','beetle'],2:['imp','pyro','obsidian','bomber'],3:['frog','mosquito','croc','snail'],4:['wolf','snowspirit','icesentinel','wolf']},pool=pools[ch]||pools[1];
   const n=3+Math.min(3,Math.floor(G.room/3));for(let i=0;i<n;i++){const t=pk(pool),s=freeSpot(ET[t].r,TOP+40,TOP+300);G.enemies.push(makeE(t,s.x,s.y,1.2+i*.12))}}
 function trialReward(){const ok=G.trial&&!G.trial.hit;G.trial=null;
-  setTimeout(()=>{if(!G||G.ended)return;if(ok){banner('Perfetto!','Nessun colpo subito: cassa d\'argento e 8 gemme',2.4);const c=earnChest('argento');G.gemsRun=(G.gemsRun||0)+8;sfx('victory');vib([40,30,40,30,120]);
+  setTimeout(()=>{if(!G||G.ended)return;if(ok){banner('Perfetto!','Nessun colpo subito: cassa d\'argento e 4 cristalli',2.4);const c=earnChest('argento');G.gemsRun=(G.gemsRun||0)+4;sfx('victory');vib([40,30,40,30,120]);
       for(let i=0;i<20;i++)G.fx.push({k:'lvl',x:P.x,y:P.y-10,vx:rand(-140,140),vy:rand(-160,-20),t:.7,gold:true});if(c&&c.full)toast('Slot pieni: cassa convertita in oro')}
-    else{banner('Prova superata','Ti hanno colpito: solo 40 oro',2);G.gold+=40;sfx('coin')}},650)}
+    else{banner('Prova superata','Ti hanno colpito: solo 25 oro',2);G.gold+=25;sfx('coin')}},650)}
 
 // the dark room: torches out, the enemies are only shadows; gold counts double
 function rollDark(boss){return false; // dark rooms removed for good (Denis)
@@ -5184,11 +5206,11 @@ function rollDark(boss){return false; // dark rooms removed for good (Denis)
 // COMPANIONS: a little friend that follows you through every room
 // =====================================================================
 const PETS=[
-  {id:'muschietto',n:'Muschietto',d:'Un batuffolo di muschio: lancia foglie taglienti al nemico più vicino.',rar:1,unlock:6,gems:60,how:'6 carte dalle casse o 60 gemme',col:'#7bbf4a',base:{dmg:.32,cd:1.25},per:{dmg:.06}},
-  {id:'lucciola',n:'Lucciola',d:'Fa luce intorno a te, lancia scintille che inseguono i nemici e ogni 8 secondi ti cura.',rar:2,unlock:15,gems:150,how:'15 carte dalle casse o 150 gemme',col:'#e8ff7a',base:{dmg:.16,cd:1.5,heal:.05,hcd:8},per:{dmg:.03,heal:.006}},
-  {id:'draghetto',n:'Draghetto',d:'Sputa fiammate che bruciano tutti i nemici davanti a lui.',rar:3,unlock:25,gems:300,how:'25 carte dalle casse o 300 gemme',col:'#ff7a3c',base:{dmg:.55,cd:2.6},per:{dmg:.08}}];
+  {id:'muschietto',n:'Muschietto',d:'Un batuffolo di muschio: lancia foglie taglienti al nemico più vicino.',rar:1,unlock:6,gems:120,how:'6 carte dalle casse o 120 cristalli',col:'#7bbf4a',base:{dmg:.32,cd:1.25},per:{dmg:.06}},
+  {id:'lucciola',n:'Lucciola',d:'Fa luce intorno a te, lancia scintille che inseguono i nemici e ogni 8 secondi ti cura.',rar:2,unlock:15,gems:320,how:'15 carte dalle casse o 320 cristalli',col:'#e8ff7a',base:{dmg:.16,cd:1.5,heal:.05,hcd:8},per:{dmg:.03,heal:.006}},
+  {id:'draghetto',n:'Draghetto',d:'Sputa fiammate che bruciano tutti i nemici davanti a lui.',rar:3,unlock:25,gems:650,how:'25 carte dalle casse o 650 cristalli',col:'#ff7a3c',base:{dmg:.55,cd:2.6},per:{dmg:.08}}];
 const PET_BY={};PETS.forEach(p=>PET_BY[p.id]=p);
-const PETMAX=10,petCost=l=>Math.round(140*Math.pow(l,1.45));
+const PETMAX=10,petCost=l=>Math.round(200*Math.pow(l,1.5));
 if(!SAVE.pets)SAVE.pets={owned:{},sel:null};if(!SAVE.pets.cards)SAVE.pets.cards={};for(const k in SAVE.pets.owned)if(SAVE.pets.owned[k].cards==null)SAVE.pets.owned[k].cards=0;
 // up to 2 companions equipped, only by hand (old saves: the single 'sel' becomes the first slot)
 const PET_SLOTS=2;function petEq(){const P0=SAVE.pets;if(!Array.isArray(P0.eq))P0.eq=P0.sel?[P0.sel]:[];delete P0.sel;P0.eq=P0.eq.filter((id,i,a)=>PET_BY[id]&&P0.owned[id]&&a.indexOf(id)===i).slice(0,PET_SLOTS);return P0.eq}petEq();
@@ -5317,12 +5339,12 @@ function hudUlt(){const b=$('ultBtn');if(!b||!P)return;const hide=G.state==='dea
 const SEASON_EPOCH=Date.UTC(2026,9,1),SEASON_MS=28*864e5,SEASON_N=['Lucciole','Brina','Braci','Radici'];
 const seasonIdx=()=>Math.max(0,Math.floor((Date.now()-SEASON_EPOCH)/SEASON_MS));
 const seasonEnd=()=>SEASON_EPOCH+(seasonIdx()+1)*SEASON_MS;
-const PASS_T=30,PASS_XP=100,PASS_COST=300;
+const PASS_T=30,PASS_XP=100,PASS_COST=500;
 const SKINS={lucciola:{n:'Manto delle lucciole',body:'#3f6a2a',hood:'#d8b030',belt:'#6a4a1a'},stellato:{n:'Manto stellato',body:'#1e2a5a',hood:'#5a6ac8',belt:'#c8a0ff'}};
 function passReward(i,prem){
   if(prem){if(i===10)return{k:'frame',v:'stagione'};if(i===15)return{k:'skin',v:'lucciola'};if(i===20)return{k:'title',v:'Campione di stagione'};if(i===30)return{k:'skin',v:'stellato'};
-    return i%5===0?{k:'chest',v:'oro'}:i%3===0?{k:'gems',v:15+i}:i%2===0?{k:'gold',v:300+i*30}:{k:'chest',v:'argento'}}
-  return i%5===0?{k:'chest',v:i>=15?'oro':'argento'}:i%3===0?{k:'gems',v:5+Math.floor(i/3)}:i%2===0?{k:'gold',v:120+i*15}:{k:'chest',v:'legno'}}
+    return i%5===0?{k:'chest',v:'oro'}:i%3===0?{k:'gems',v:10+Math.floor(i/2)}:i%2===0?{k:'gold',v:200+i*20}:{k:'chest',v:'argento'}}
+  return i%5===0?{k:'chest',v:i>=15?'oro':'argento'}:i%3===0?{k:'gems',v:3+Math.floor(i/5)}:i%2===0?{k:'gold',v:80+i*10}:{k:'chest',v:'legno'}}
 function ensurePass(){const s=seasonIdx();if(!SAVE.pass||SAVE.pass.s!==s)SAVE.pass={s,xp:0,f:{},p:{},gold:false};return SAVE.pass}
 const passLvl=()=>Math.min(PASS_T,Math.floor(ensurePass().xp/PASS_XP));
 function passXP(v){const P0=ensurePass(),l0=passLvl();P0.xp+=Math.max(0,Math.round(v));const l1=passLvl();save();if(l1>l0)achPop('Pass di stagione','Hai raggiunto il livello '+l1+'!','trophy');return l1-l0}
@@ -5378,8 +5400,8 @@ function fillChal(){const C=ensureChal(),T=chalToday(),L=chalBoard(),t=new Date(
     <div class="board">${L.map((x,i)=>`<div class="brow ${x.me?'me':''}"><span class="bpos">${i+1}</span><b>${x.me?(SAVE.pname||'Tu')+' (tu)':x.n}</b><span class="bsc">${x.s.toLocaleString('it-IT')}</span></div>`).join('')}</div>
     ${C.best?'':'<p class="lead small" style="text-align:center">Gioca la sfida per entrare in classifica!</p>'}<button class="btn alt close">Chiudi</button>`}
 function chalEnd(win,quit){const C=ensureChal(),score=quit?0:chalScore(win);C.tries++;let bonus='';
-  if(!quit){const first=!C.done;C.done=true;if(score>C.best)C.best=score;if(first){SAVE.gems=(SAVE.gems||0)+10;SAVE.gold+=150;passXP(60);bonus='Prima della giornata: +10 gemme, +150 oro'}
-    const L=chalBoard(),pos=L.findIndex(x=>x.me)+1;if(pos>0&&pos<=3&&!C.top){C.top=true;SAVE.gems+=15;bonus+=(bonus?' · ':'')+'Podio: +15 gemme'}
+  if(!quit){const first=!C.done;C.done=true;if(score>C.best)C.best=score;if(first){SAVE.gems=(SAVE.gems||0)+5;SAVE.gold+=100;passXP(60);bonus='Prima della giornata: +5 cristalli, +100 oro'}
+    const L=chalBoard(),pos=L.findIndex(x=>x.me)+1;if(pos>0&&pos<=3&&!C.top){C.top=true;SAVE.gems+=10;bonus+=(bonus?' · ':'')+'Podio: +10 cristalli'}
     return{score,pos,bonus}}return{score:0,pos:0,bonus:''}}
 
 
@@ -5599,22 +5621,22 @@ const vib=p=>{if(!SAVE.set.vib||INTRO.on)return;try{navigator.vibrate&&navigator
 // --- heroes ---
 const HEROES=[
   {id:'arciere',n:'Arciere',price:0,d:'Equilibrato in tutto, il veterano della cripta.',start:'Occhio di falco: +10% critico',sk:'crit',mods:{},style:{},proj:'arrow'},
-  {id:'cacciatrice',n:'Cacciatrice',price:800,d:'Rapidissima e sfuggente, ma fragile.',start:'Frecce diagonali fin da subito',sk:'diag',mods:{hp:.8,spd:1.25,dash:.75},
-    style:{body:'#8a3a5a',hood:'#d9962e',skin:'#f0c8a8',hair:'#e0a63a',bowCol:'#c94a6a',hoodTip:false,ponytail:true,belt:'#5e2440'},proj:'arrow',pcol:'#ff8ab8'},
-  {id:'balestriere',n:'Balestriere',price:1500,d:'Lento e corazzato: ogni dardo è un macigno.',start:'Perforazione fin da subito',sk:'pierce',mods:{hp:1.3,atk:1.35,aspd:.8,spd:.9},
-    style:{body:'#6b6f78',hood:'#4a3626',skin:'#e8b890',held:'xbow',bowCol:'#6b4a2a',helm:true,hoodTip:false,sc:1.05,belt:'#3a2a1d'},proj:'bolt',pcol:'#dfe4ea'},
-  {id:'druida',n:'Druida',price:2500,d:'Le radici lo proteggono e lo curano.',start:'Una lama rotante, più salute e rigenerazione',sk:'orbit',mods:{hp:1.2,atk:1.2,regen:1.5},
-    style:{body:'#3f6a2a',hood:'#2c4a1e',skin:'#e8c8a0',held:'staff',eyeCol:'#9fff7a',hoodTip:true,antlers:true,quiver:false,belt:'#6b4a2a'},proj:'leaf',pcol:'#7bf0a8'}];
+  {id:'cacciatrice',n:'Cacciatrice',price:3000,d:'Rapidissima e sfuggente, ma fragile.',start:'Frecce diagonali fin da subito',sk:'diag',mods:{hp:.8,spd:1.25,dash:.75},
+    style:{bighood:false,body:'#8a3a5a',hood:'#d9962e',skin:'#f0c8a8',hair:'#e0a63a',bowCol:'#c94a6a',hoodTip:false,ponytail:true,belt:'#5e2440'},proj:'arrow',pcol:'#ff8ab8'},
+  {id:'balestriere',n:'Balestriere',price:7000,d:'Lento e corazzato: ogni dardo è un macigno.',start:'Perforazione fin da subito',sk:'pierce',mods:{hp:1.3,atk:1.35,aspd:.8,spd:.9},
+    style:{bighood:false,body:'#6b6f78',hood:'#4a3626',skin:'#e8b890',held:'xbow',bowCol:'#6b4a2a',helm:true,hoodTip:false,sc:1.05,belt:'#3a2a1d'},proj:'bolt',pcol:'#dfe4ea'},
+  {id:'druida',n:'Druida',price:12000,d:'Le radici lo proteggono e lo curano.',start:'Una lama rotante, più salute e rigenerazione',sk:'orbit',mods:{hp:1.2,atk:1.2,regen:1.5},
+    style:{bighood:false,body:'#3f6a2a',hood:'#2c4a1e',skin:'#e8c8a0',held:'staff',eyeCol:'#9fff7a',hoodTip:true,antlers:true,quiver:false,belt:'#6b4a2a'},proj:'leaf',pcol:'#7bf0a8'}];
 const HERO_BY={};HEROES.forEach(h=>HERO_BY[h.id]=h);
 
 // --- talents ---
 const TAL=[
-  {id:'vig',n:'Vigore',d:l=>`+${12*l} salute`,max:10,base:60,ic:'hp',f:(p,l)=>{p.maxhp+=12*l;p.hp=p.maxhp}},
-  {id:'frz',n:'Forza',d:l=>`+${2*l} attacco`,max:10,base:70,ic:'atk',f:(p,l)=>{p.atk+=2*l}},
-  {id:'rip',n:'Ripresa',d:l=>`Cura del ${4*l}% a ogni stanza`,max:5,base:120,ic:'heal',f:(p,l)=>{p.roomHeal=.04*l}},
-  {id:'fort',n:'Fortuna',d:l=>`+${5*l}% oro raccolto`,max:8,base:90,ic:'gold',f:(p,l)=>{p.goldMul+=.05*l}},
-  {id:'agi',n:'Agilità',d:l=>`Scatto più rapido del ${5*l}%`,max:6,base:100,ic:'dash',f:(p,l)=>{p.dashMax*=1-.05*l}},
-  {id:'stu',n:'Studio',d:l=>`+${6*l}% esperienza`,max:8,base:80,ic:'xp',f:(p,l)=>{p.xpMul=1+.06*l}}];
+  {id:'vig',n:'Vigore',d:l=>`+${12*l} salute`,max:10,base:90,ic:'hp',f:(p,l)=>{p.maxhp+=12*l;p.hp=p.maxhp}},
+  {id:'frz',n:'Forza',d:l=>`+${2*l} attacco`,max:10,base:105,ic:'atk',f:(p,l)=>{p.atk+=2*l}},
+  {id:'rip',n:'Ripresa',d:l=>`Cura del ${4*l}% a ogni stanza`,max:5,base:180,ic:'heal',f:(p,l)=>{p.roomHeal=.04*l}},
+  {id:'fort',n:'Fortuna',d:l=>`+${5*l}% oro raccolto`,max:8,base:140,ic:'gold',f:(p,l)=>{p.goldMul+=.05*l}},
+  {id:'agi',n:'Agilità',d:l=>`Scatto più rapido del ${5*l}%`,max:6,base:150,ic:'dash',f:(p,l)=>{p.dashMax*=1-.05*l}},
+  {id:'stu',n:'Studio',d:l=>`+${6*l}% esperienza`,max:8,base:120,ic:'xp',f:(p,l)=>{p.xpMul=1+.06*l}}];
 const talCost=(t,l)=>Math.round(t.base*Math.pow(l+1,1.6));
 const TICON={hp:ICON.hp,atk:ICON.atk,heal:ICON.heal,dash:ICON.dash,
   gold:'<circle cx="20" cy="22" r="12" fill="#ffc93c" '+S2+'/><circle cx="20" cy="22" r="7" fill="none" stroke="#b07a10" stroke-width="2.5"/><path d="M16 9l4-6 4 6" fill="#ffc93c" '+S2+'/>',
@@ -5667,7 +5689,7 @@ const MPOOL=[
   {k:'dash',g:40,n:'Usa lo scatto 40 volte'},{k:'lvl',g:10,n:'Raggiungi il livello 10 in una partita'},{k:'evo',g:1,n:"Ottieni un'evoluzione"},
   {k:'kill',t:'fire',g:25,n:'Sconfiggi 25 creature di fuoco',req:'c2'},{k:'boss',t:'salamander',g:1,n:'Sconfiggi la Salamandra di Lava',req:'c2'},{k:'inf',g:12,n:"Raggiungi la stanza 12 dell'Abisso",req:'inf'},
   {k:'kill',t:'swamp',g:30,n:'Sconfiggi 30 creature della palude',req:'c3'},{k:'boss',t:'toad',g:1,n:'Sconfiggi il Re Rospo',req:'c3'},{k:'kill',t:'ice',g:25,n:'Sconfiggi 25 creature del gelo',req:'c4'},{k:'boss',t:'yeti',g:1,n:'Sconfiggi lo Yeti delle Vette',req:'c4'}];
-const MREW=[{gold:120},{gold:180},{chest:'legno'},{gold:250},{chest:'argento'}];
+const MREW=[{gold:80},{gold:120},{chest:'legno'},{gold:160},{chest:'argento'}];
 const today=()=>{const d=new Date();return d.getFullYear()+'-'+(d.getMonth()+1)+'-'+d.getDate()};
 const modeOpen=id=>id==='inf'?(!!SAVE.done.golem||(SAVE.trBest||0)>=ARENAS[1].t):id==='c2'?((SAVE.trBest||0)>=ARENAS[1].t||!!SAVE.done.c1):id==='daily'?(SAVE.runs||0)>=1:id==='c3'?(SAVE.trBest||0)>=ARENAS[2].t:id==='c4'?(SAVE.trBest||0)>=ARENAS[3].t:true;
 function ensureDaily(){const t=today();if(SAVE.daily.day===t)return;
@@ -6198,14 +6220,14 @@ function drawHeroPreview(dt){pvT+=dt;const d=Math.floor(pvT/1.3)%8,saved=ctx;ctx
   ctx=saved}
 
 // --- merchant: daily deals + chests ---
-const DEAL_N=[14,9,5,3,1],DEAL_P=[70,140,260,520,1400];
+const DEAL_N=[14,9,5,3,1],DEAL_P=[120,240,450,900,2200];
 function ensureDeals(){const t=today();if(SAVE.deals&&SAVE.deals.day===t)return;
   let h=7;for(const ch of t)h=(Math.imul(h,31)+ch.charCodeAt(0))>>>0;const rnd=()=>{h=(Math.imul(h,1103515245)+12345)>>>0;return h/4294967296};
   const pick=r=>{const pool=ITEMS.filter(i=>i.rar===r);return pool[Math.floor(rnd()*pool.length)]};const list=[];
   for(const r of [0,1,2+(rnd()<.35?1:0)+(rnd()<.08?1:0)]){let it=pick(Math.min(4,r));while(list.some(x=>x.id===it.id))it=pick(Math.min(4,r));list.push({id:it.id,n:DEAL_N[it.rar],p:DEAL_P[it.rar],sold:false})}
   SAVE.deals={day:t,list};save()}
 // gold for gems: what the crystals' gems are for
-const GOLD_PACKS=[{n:'Manciata',g:500,c:20},{n:'Sacchetto',g:1800,c:60,tag:'+20%'},{n:'Forziere',g:5000,c:150,tag:'Più conveniente'}];
+const GOLD_PACKS=[{n:'Manciata',g:300,c:25},{n:'Sacchetto',g:1000,c:70,tag:'+15%'},{n:'Forziere',g:3000,c:180,tag:'Più conveniente'}];
 function coinPile(k){const C=[[38,44],[30,46],[46,46],[24,48],[38,50],[52,48],[31,40],[45,40],[38,34],[18,50],[58,50],[24,42],[52,42],[38,26]],n=[4,8,14][k];let s='';
   for(let i=0;i<n;i++){const[x,y]=C[i];s+=`<ellipse cx="${x}" cy="${y}" rx="9" ry="4.5" fill="#b5620a" stroke="#1b1612" stroke-width="1.8"/><ellipse cx="${x}" cy="${y-2.2}" rx="9" ry="4.5" fill="#f5ad1c" stroke="#1b1612" stroke-width="1.8"/><ellipse cx="${x}" cy="${y-2.4}" rx="6" ry="2.8" fill="#ffd84a"/><ellipse cx="${x-2.5}" cy="${y-3.4}" rx="3" ry="1.1" fill="#fff6c0"/>`}
   const fx=[[50,28],[52,24],[54,18]][k];return `<svg viewBox="0 0 76 58" aria-hidden="true">${s}<image href="${svgURL(COIN_SVG)}" x="${fx[0]}" y="${fx[1]}" width="24" height="24" transform="rotate(12 ${fx[0]+12} ${fx[1]+12})"/></svg>`}
@@ -6219,7 +6241,7 @@ let shopPage='spDaily';
 function setShopPage(id){shopPage=id;for(const p of ['spDaily','spOffers','spChests','spGold'])$(p).hidden=p!==id;document.querySelectorAll('#shopTabs button').forEach(b=>b.classList.toggle('on',b.dataset.sp===id));$('menuMain').scrollTop=0}
 $('shopTabs').addEventListener('click',e=>{const b=e.target.closest('button[data-sp]');if(!b)return;sfx('ui');setShopPage(b.dataset.sp);renderShop()});
 const DISC=[10,20,30,30,40];
-function dailyGift(){return 60+40*arenaIdx(SAVE.trophies||0)}
+function dailyGift(){return 40+25*arenaIdx(SAVE.trophies||0)}
 const freeReady=()=>{ensureDeals();return !SAVE.deals.free};
 function renderShop(){ensureDeals();const D=SAVE.deals,t=new Date(),mid=new Date(t.getFullYear(),t.getMonth(),t.getDate()+1);
   $('dealT').innerHTML=`Si aggiorna tra <b>${fmtH(mid-t)}</b>`;
@@ -6229,7 +6251,7 @@ function renderShop(){ensureDeals();const D=SAVE.deals,t=new Date(),mid=new Date
     cell({t:'Regalo del giorno',icon:coinPile(0),n:'+'+dailyGift(),rc:'#ffd84a',rc2:'#6e4a0c',sold:D.free,btn:`<button class="btn go" data-dfree="1" ${D.free?'disabled':''}>${D.free?'Preso':'Gratis'}</button>${D.free?'':'<i class="bang">!</i>'}`}),
     ...D.list.map((d,i)=>{const it=ITEM[d.id],r=RAR[it.rar];return cell({t:it.n,icon:itemSVG(it),n:'x'+d.n,rc:r.c,rc2:r.d,disc:DISC[it.rar],sold:d.sold,btn:`<button class="btn go" data-deal="${i}" ${d.sold||SAVE.gold<d.p?'disabled':''}>${d.sold?'Venduto':COIN+d.p}</button>`})}),
     cell({t:ch.n,icon:chestSVG('argento',false),rc:'#c9e2ff',rc2:'#2e3a48',disc:30,sold:D.chest,btn:`<button class="btn go" data-dchest="1" ${D.chest||SAVE.gold<chP?'disabled':''}>${D.chest?'Venduto':COIN+chP}</button>`}),
-    cell({t:"Sacco d'oro",icon:coinPile(1),n:'1.800',rc:'#ffd84a',rc2:'#6e4a0c',disc:30,sold:D.gp,btn:`<button class="btn go" data-dgp="1" ${D.gp||(SAVE.gems||0)<42?'disabled':''}>${D.gp?'Venduto':'<i class="gemS"></i>42'}</button>`})];
+    cell({t:"Sacco d'oro",icon:coinPile(1),n:'1.000',rc:'#ffd84a',rc2:'#6e4a0c',disc:30,sold:D.gp,btn:`<button class="btn go" data-dgp="1" ${D.gp||(SAVE.gems||0)<50?'disabled':''}>${D.gp?'Venduto':'<i class="gemS"></i>50'}</button>`})];
   $('daily').innerHTML=cells.join('');
   $('shop').innerHTML=Object.entries(CHESTS).map(([k,c])=>{const best=k==='oro';
     return `<div class="crate c-${k}">${best?'<span class="flag">Il più ricco</span>':''}<div class="cpic">${chestSVG(k,false)}</div><b class="cn">${c.n}</b><span class="cc">${c.cards} carte<br>${c.gold[0]}-${c.gold[1]} oro</span>
@@ -6240,15 +6262,15 @@ function renderShop(){ensureDeals();const D=SAVE.deals,t=new Date(),mid=new Date
 $('daily').addEventListener('click',e=>{const b=e.target.closest('button');if(!b||b.disabled)return;const D=SAVE.deals;
   if(b.dataset.dfree){if(D.free)return;D.free=true;const g=dailyGift();SAVE.gold+=g;save();renderGold();renderShop();sfx('coin');setTimeout(()=>sfx('coin'),90);toast(`+${g} oro`);return}
   if(b.dataset.dchest){const p=Math.round(CHESTS.argento.price*.7);if(D.chest||SAVE.gold<p)return;D.chest=true;SAVE.gold-=p;save();renderGold();renderShop();openChest('argento');return}
-  if(b.dataset.dgp){if(D.gp||(SAVE.gems||0)<42)return;D.gp=true;SAVE.gems-=42;SAVE.gold+=1800;save();renderGold();renderShop();sfx('coin');toast('+1.800 oro');return}
+  if(b.dataset.dgp){if(D.gp||(SAVE.gems||0)<50)return;D.gp=true;SAVE.gems-=50;SAVE.gold+=1000;save();renderGold();renderShop();sfx('coin');toast('+1.000 oro');return}
   if(b.dataset.deal!=null){const d=D.list[+b.dataset.deal];if(!d||d.sold||SAVE.gold<d.p)return;
     SAVE.gold-=d.p;d.sold=true;const o=SAVE.items[d.id];if(!o){SAVE.items[d.id]={lvl:1,cards:d.n-1};const sl=ITEM[d.id].slot;if(!SAVE.eq[sl])SAVE.eq[sl]=d.id}else o.cards+=d.n;
     save();renderGold();renderShop();sfx('upgrade');vib(25);toast(`+${d.n} carte: ${ITEM[d.id].n}`)}});
 // one-time packs: one for every arena you reach, plus a starter pack
 function packList(){if(!SAVE.packs)SAVE.packs={};const L=[],ai=arenaIdx(SAVE.trBest||SAVE.trophies||0);
-  if(!SAVE.packs.start)L.push({id:'start',t:"Pacchetto dell'esploratore",sub:'Per iniziare alla grande',val:300,chest:'argento',gold:500,c:25,col:'#5fd0f0'});
-  if(!SAVE.pets.owned.draghetto&&!SAVE.packs.drago)L.push({id:'drago',t:'Compagno: Draghetto',sub:'Sputa fuoco al tuo fianco',val:500,pet:'draghetto',gold:300,c:150,col:'#ff7a3c'});
-  for(let i=0;i<=ai;i++)if(!SAVE.packs['arena'+i])L.push({id:'arena'+i,t:`Pacchetto Arena ${i+1}`,sub:ARENAS[i].n,val:400+50*i,chest:'oro',gold:600*(i+1),c:50+20*i,col:ARENAS[i].col,arena:i});
+  if(!SAVE.packs.start)L.push({id:'start',t:"Pacchetto dell'esploratore",sub:'Per iniziare alla grande',val:300,chest:'argento',gold:400,c:40,col:'#5fd0f0'});
+  if(!SAVE.pets.owned.draghetto&&!SAVE.packs.drago)L.push({id:'drago',t:'Compagno: Draghetto',sub:'Sputa fuoco al tuo fianco',val:200,pet:'draghetto',gold:300,c:500,col:'#ff7a3c'});
+  for(let i=0;i<=ai;i++)if(!SAVE.packs['arena'+i])L.push({id:'arena'+i,t:`Pacchetto Arena ${i+1}`,sub:ARENAS[i].n,val:300+25*i,chest:'oro',gold:400*(i+1),c:90+30*i,col:ARENAS[i].col,arena:i});
   return L}
 function renderPacks(){const L=packList();
   $('packs').innerHTML=L.length?L.map(p=>`<div class="pack" style="--pc:${p.col}"><span class="val">${p.val}%<br>Valore</span>
@@ -6286,7 +6308,7 @@ function renderBadges(){$('roadBadge').hidden=!roadReady();$('shopBadge').hidden
 
 // ===================== MENU POLISH =====================
 // --- daily login: 7 days, a gold chest on day 7, then it starts again
-const LOGIN=[{k:'gold',v:150},{k:'gems',v:5},{k:'chest',v:'legno'},{k:'gold',v:400},{k:'gems',v:10},{k:'chest',v:'argento'},{k:'chest',v:'oro'}];
+const LOGIN=[{k:'gold',v:100},{k:'gems',v:5},{k:'chest',v:'legno'},{k:'gold',v:200},{k:'gems',v:10},{k:'chest',v:'argento'},{k:'chest',v:'oro'}];
 if(!SAVE.login)SAVE.login={last:'',n:0};if(!SAVE.pname)SAVE.pname='Esploratore';
 const loginReady=()=>SAVE.login.last!==today();
 function loginIcon(r){return r.k==='gold'?coinPile(r.v>300?1:0):r.k==='gems'?'<span class="bigGem"></span>':chestSVG(r.v,false)}
@@ -6508,9 +6530,9 @@ function drawFx2(f){const p=1-f.t/(f.max||1);
   else if(f.k==='spore'){const a=Math.min(1,f.t/(f.max*.6));ctx.save();ctx.globalCompositeOperation='lighter';glow(f.rgb,f.x,f.y,f.r*1.8,a*.5);ctx.restore();ctx.fillStyle=`rgba(${f.rgb},${a*.8})`;circ(f.x,f.y,f.r*.35);ctx.fill()}
   else if(f.k==='pop'){const r=f.r*(1+p*.8);ctx.strokeStyle=f.col;ctx.globalAlpha=1-p;ctx.lineWidth=4*(1-p)+1;circ(f.x,f.y,r);ctx.stroke();ctx.globalAlpha=1}}
 // a crystal that has taken enough hits: it shatters and drops 1-2 gems
-function breakCrystal(k){k.breaking=true;const n=Math.random()<.4?2:1;sfx('crystalBreak',0,k.x);shatterRock(k);G.hitstop=Math.max(G.hitstop||0,.05);
+function breakCrystal(k){k.breaking=true;const n=Math.random()<.15?2:1;sfx('crystalBreak',0,k.x);shatterRock(k);G.hitstop=Math.max(G.hitstop||0,.05);
   for(let i=0;i<n;i++){const a=rand(-Math.PI*.9,-Math.PI*.1),s=rand(50,95);G.gems.push({x:k.x,y:k.y-4,vx:Math.cos(a)*s,vy:Math.sin(a)*s*.5,z:10,vz:rand(150,210),t:0,ph:rand(0,6)})}
-  text(k.x,k.y-kH(k)-8,n>1?'+2 GEMME':'+1 GEMMA','#8fe8ff',15);G.texts[G.texts.length-1].pop=1}
+  text(k.x,k.y-kH(k)-8,n>1?'+2 CRISTALLI':'+1 CRISTALLO','#8fe8ff',15);G.texts[G.texts.length-1].pop=1}
 function drawGem(x,y,s,a){if(icoOk(ICO.gem)){ctx.save();ctx.globalAlpha=a==null?1:a;const w=17*s;ctx.drawImage(ICO.gem,x-w/2,y-w*.6,w,w);if((G.t*1.3+x*.01)%3<.25){ctx.globalCompositeOperation='lighter';glow('200,240,255',x-2*s,y-4*s,7*s,.9)}ctx.restore();return}ctx.save();ctx.translate(x,y);ctx.scale(s,s);ctx.globalAlpha=a==null?1:a;
   ink(1.8);ctx.beginPath();ctx.moveTo(0,-6.5);ctx.lineTo(5.5,-1.5);ctx.lineTo(0,6.5);ctx.lineTo(-5.5,-1.5);ctx.closePath();
   const g=ctx.createLinearGradient(-5,-6,5,6);g.addColorStop(0,'#d9fbff');g.addColorStop(.45,'#5fd0f0');g.addColorStop(1,'#5a46c8');ctx.fillStyle=g;ctx.fill();ctx.stroke();
