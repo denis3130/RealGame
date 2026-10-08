@@ -13,18 +13,19 @@ Roguelite in stile Archero per telefono, in un solo file HTML5 (`index.html`): c
 
 ## Mappa del file `index.html`
 
-Il file ha circa 6.700 righe. Le sezioni sono segnate da commenti `// ---------- nome ----------` o da blocchi `// =====`:
+Il file ha circa 7.650 righe (versione 44). Le sezioni sono segnate da commenti `// ---------- nome ----------` o da blocchi `// =====`:
 
 - definizioni (nemici `ET`, layout, abilità `SK`), setup della partita (`newRun`, `buildRoom`), input, audio
 - UI e meta: oggetti, carte, casse (`rollChest`, `grant`, `openChest`, `revealCard`), salvataggio (`SAVE`, chiave `cripta_save_v1` in localStorage)
 - arene e coppe (`ARENAS`: soglia coppe, capitolo, difficoltà `diff`)
 - stanze evento, élite, tutorial; IA dei nemici; ingressi dei boss; `update(dt)` (logica a ogni fotogramma)
 - disegno: primitive, rig umanoide, creature, ambienti (`ENV`, temi per zona), luci (`drawLighting`), `render()` in fondo al file
-- capitoli 3 e 4, nemici nuovi, stanze speciali (oro, prova del coraggio, stanza buia)
+- capitoli 3 e 4, nemici nuovi, stanze speciali (oro, prova del coraggio; la stanza buia c'è ancora nel codice ma è spenta: `rollDark()` restituisce sempre `false`)
 - compagni (`PETS`, `SAVE.pets`), abilità speciali degli eroi (`ULT`), pass di stagione, sfida del giorno
 - momenti chiave (morte al rallentatore, replay del colpo finale), trailer/intro (`INTRO`, `playIntro`)
 - meta 2: eroi, talenti, set, evoluzioni, missioni, traguardi, impostazioni; aure delle evoluzioni (`AURA`, `startAura`)
 - negozio, cammino delle coppe, casse gemelle (Mimic), kit effetti, guida (`fillGuide`)
+- in fondo, prima dell'ultima riga (`newRun();...`): occhi del teschio (`drawBeastEyes`), blocco «BOSSES 2» (boss nuovi), nemici vivi (`ELIFE`), suoni nuovi (`SFX2`) e atmosfera (`AMB`), manina della prima partita (`showHand`)
 
 Dettagli utili:
 - Difficoltà: `hpMul()` (vita nemici), `DMG()` (danno), `bossMul()` (vita boss), moltiplicati per `G.diff` dell'arena.
@@ -47,7 +48,7 @@ Servono Node e Python. Una volta sola: `npm install` e poi `npx playwright insta
 
 Dopo ogni modifica: rifare almeno una partita automatica per capitolo, `meta2.js` e `menu2.js`, e guardare le schermate.
 
-## Fatto di recente (versione 42)
+## Fatto di recente (versioni 42–44)
 
 - Compagni: fino a 2 insieme (`SAVE.pets.eq`, `PET_SLOTS`), solo a mano con «Porta» / «Lascia»; il terzo prende il posto del primo. I vecchi salvataggi con `sel` vengono convertiti da `petEq()`.
 - Collaudo: puntino Eroe solo se il miglioramento si può pagare; niente puntini doppi nella barra laterale; accesso giornaliero mai in automatico prima della prima partita; traguardi e missioni aspettano la fine del boss; niente Prova del coraggio dopo la stanza 2 per i principianti; nome dell'abilità speciale piccolo sopra l'eroe; Druida più forte (+20% vita e attacco, rigenerazione 1,5/s, foglie più veloci: da regolare giocando).
@@ -90,8 +91,33 @@ Dopo ogni modifica: rifare almeno una partita automatica per capitolo, `meta2.js
 - Teschio sopra il cancello: nel capitolo 1 (muschio) è identico a quello della palude (stesse ossa, stesse colature, niente macchie di muschio), cambia solo il colore degli occhi (`BDPAL.moss.eye`). Gli occhi sono disegnati dopo le luci della stanza (`drawBeastEyes`), con un respiro leggero.
 - Nota: in `meta2.js` i controlli «codice caricato» e «salvataggio dopo ricarica» falliscono anche sulla versione 41: problema del test, non del gioco.
 
-- Eroe classico (Arciere): tolta la punta dal cappuccio (`HERO.hoodTip:false`, richiesta di Denis). L'eroe nuovo dall'immagine è stato scartato.
-- Stanza buia tolta per sempre (decisione di Denis, 8 ottobre): `rollDark()` restituisce sempre `false`, tolta la sfida del giorno «Notte fonda», tolta dalla guida, la Lucciola ora «fa luce intorno a te». Non riproporre stanze buie, nemmeno nella Discesa.
+- Versione 44 (8 ottobre), nel gioco:
+  - Stanza buia tolta per sempre (decisione di Denis): `rollDark()` restituisce sempre `false`, tolta la sfida del giorno «Notte fonda», tolta dalla guida, la Lucciola ora «fa luce intorno a te». Non riproporre stanze buie, nemmeno nella Discesa.
+  - Arciere (l'eroe classico): tolta la punta dal cappuccio (`HERO.hoodTip:false`, richiesta di Denis), in tutte le direzioni, anche nel menu e nella intro. Gli altri con la punta (Druida, Mercante e i nemici incappucciati) la tengono. L'eroe nuovo dall'immagine di Denis è stato scartato (vedi «Da fare» 7).
+  - Collaudo: una partita automatica per capitolo fino alla stanza 10 senza errori, `menu2.js` senza errori, `dirs.js` guardato.
+
+## Dove sta il lavoro
+
+- Ramo `lavori-in-sospeso` (tutto salvato e caricato su GitHub, non ancora unito a `main`).
+- Gioco pubblicato per provarlo sul telefono: https://claude.ai/artifact/7inhZ4hyu1MyjLE5TYFkSK (si aggiorna ripubblicando `index.html` allo stesso indirizzo).
+- Anteprime pubblicate (pagine di prova, il gioco vero non le contiene):
+  - La Discesa (mappa): https://claude.ai/artifact/QAocTWmJLvf97YuYQDc4Yk — file `anteprime/discesa.html` (pagina a sé).
+  - Epico (pavimento e battaglie): https://claude.ai/artifact/S8sZHqt9LbkDny8P78GYZU — `python3 anteprime/mk_epico.py`.
+  - La Bestia dell'Abisso: https://claude.ai/artifact/FPW7CX8vJst28tJzyr2pt2 — `python3 anteprime/mk_beast.py`.
+  - Eroe nuovo (scartato): https://claude.ai/artifact/VHZ9vBv2nhayWDQPWvHZNX — `python3 anteprime/mk_eroe.py`.
+  - Boss nuovi (già nel gioco dalla versione 43): https://claude.ai/artifact/7b7Vtw5eWZ45oF5gWqTHWE — `python3 anteprime/mk_boss.py`.
+- Le anteprime si costruiscono incollando un file `.js` dentro una copia di `index.html` (prima dell'ultima riga) con un pannellino di bottoni; i file `.html` costruiti non si salvano su GitHub (`.gitignore`). Se `index.html` cambia, vanno ricostruite.
+
+## Gusti di Denis (imparati lavorando)
+
+- Prima un'anteprima separata da provare sul telefono; nel gioco vero solo dopo il suo sì.
+- Colori sempre adatti al mondo o al boss, mai messi a caso.
+- Pavimento: niente cose sparse a caso; la vita (muschio, cenere, neve…) deve nascere dalle fughe e dalle crepe.
+- Telecamera: alle uccisioni normali un movimento leggerissimo; il rallentatore sull'ultimo nemico della stanza va bene; la scossa quando si apre uno strato della Discesa va bene.
+- Camminate: niente saltelli da un gradino all'altro; i vestiti non devono muoversi a caso.
+- Frecce: piccole e devono partire dall'arco, non dal centro del corpo; tirando in su la freccia non deve vedersi sopra il personaggio.
+- Niente stanze buie. Niente riferimenti alla Bestia nella progressione.
+- L'eroe resta nello stile classico del gioco: i personaggi presi da immagini esterne (ritagliati o ridisegnati) non lo hanno convinto.
 
 ## Da fare (annotato con Denis, non ancora fatto)
 
@@ -100,5 +126,14 @@ Dopo ogni modifica: rifare almeno una partita automatica per capitolo, `meta2.js
 3. Boss nuovo, molto più avanti nel gioco: la bestia scheletrica gigante che sta sotto l'arena (le costole ai lati, il teschio con le corna dietro la porta, la coda di vertebre in basso: `bakeBackdrop`). L'idea di Denis è che il paesaggio stesso si risvegli e diventi il boss. Anteprima pronta (non ancora nel gioco): `anteprime/beast.js`, pagina di prova con `python3 anteprime/mk_beast.py` → `anteprime/bestia.html` (bottoni Combatti, Fase 2, Fase 3, Vita ∞, Capitolo). La Bestia (`beast`): il teschio si affaccia sopra il muro con la mascella dentro l'arena (lì si colpisce), arena grande quanto lo schermo; fase 1 costole dai lati e ventaglio di ossa, fase 2 soffio dell'abisso e pioggia di ossa, fase 3 coda che spazza e pavimento che crolla in buchi permanenti. Pericoli in `G.beH`. Seconda versione (richiesta di Denis): entrata con la telecamera larga sull'abisso (`G.beCam`, `beCamNow`), le costole che cadono nel buio (`G.beRibs`, paesaggio ridisegnato senza costole/teschio con `G.bdNoRibs`/`G.bdNoSkull`), due mani d'osso che si aggrappano al muro ai lati del cancello, il teschio che sale e sfonda il cancello (`G.gateBroken`: finché non lo batti non passi). Mani (`G.beHands`, `HACT`): schiacciata con l'ombra che insegue, doppia schiacciata, spazzata a terra, artigli dall'alto che lasciano solchi, dito che pugnala a passi verso l'eroe. Combattimento nell'arena grande con la telecamera allontanata (zoom 0,74). Test `tests/beast.js`. Da decidere con Denis: in quale capitolo/arena, vita e danni.
 4. Teschio sopra il cancello nel capitolo 1: a Denis non piace ancora (ultima prova: identico a quello della palude con occhi verdi). Da rivedere più avanti insieme, partendo da una sua foto.
 5. Nuova progressione al posto delle coppe: «La Discesa» (seconda versione, la prima con la Bestia è stata scartata da Denis: niente riferimenti al boss). Anteprima (non nel gioco): `anteprime/discesa.html`. Mappa al contrario (richiesta di Denis): si parte in basso dall'ingresso con l'arco di pietra e si sale sullo schermo, ma la profondità cresce e il buio aumenta salendo (metri incisi sul muro a sinistra); luci del mondo in ogni strato (funghi, cascate di lava, baccelli, cristalli) che si vedono brillare anche nel buio più in alto, raggi caldi dall'ingresso, polvere nella luce della lanterna, esplosione di luce e scossa quando si apre uno strato, niente barra «Luce», niente fune; l'eroe scende a passi sui gradini (senza saltelli: richiesta di Denis; gambe, lanterna che dondola, si gira verso dove va, schiacciata all'arrivo), polvere e sassolini dai gradini, gradini che si accendono al passaggio, luci del mondo che si ravvivano quando passa; 12 strati (le 12 arene, alcune rinominate: Grotte di Brina, Forgia Sepolta, Gelo Senza Fondo) fino a «Il Fondo». Più scendi più è buio: la luce della lanterna dell'eroe si restringe, sotto lo strato raggiunto c'è il buio quasi totale, nomi e profondità nascosti (???) finché non ti avvicini. Più in basso: catene, gabbie, tacche sul muro, scritte («TORNA SU»…), occhi nel buio che si ritraggono dalla luce. 1–3 stelle per strato, non si perde mai niente; 9 lanterne da accendere con le stelle (premi, e quel tratto di pozzo resta illuminato per sempre); 13 pagine del diario di Ilda (3 stelle per strato), una esploratrice scesa prima; in fondo al pozzo una lucina sempre visibile. Da decidere con Denis.
-6. Anteprima «Epico» (non nel gioco): `anteprime/epico.js`, pagina di prova con `python3 anteprime/mk_epico.py` → `anteprime/epico.html` (bottoni Gioca, Prima/Dopo, Capitolo, Vita ∞). Pavimento: niente più ciuffi e macchie a caso; muschio (Cripta), muschio con cristallini (Cristalli), muschio e fango (Palude), cenere con braci (Vulcano) o neve e brina (Ghiacci) crescono nelle fughe tra le lastre e nelle crepe, a chiazze: di più negli angoli, lungo i muri e intorno agli ostacoli (`seamLife`, `G.slabs`, `G.slabCracks`); ciuffi d'erba e fiorellini dove si incontrano quattro lastre, e i ciuffi che ondeggiano nascono solo lì (`G.seamJ`). Lastre (`slabDetail`, prima di emblema e ombre dei muri): ombra morbida dentro ogni fuga, macchie diverse su ogni lastra, alcune un po' più alte o sprofondate, lastre spaccate (la crepa diventa una fuga dove cresce la vita) con a volte un angolo mancante riempito (muschio ed erba, cenere con brace, neve), un sentiero più consumato dal cancello in giù, mucchietti ai piedi dei muri (terra e muschio, cenere, fango, neve), riflessi sul ghiaccio e bruciature nel vulcano. Battaglie: lampo e scintille al tiro, colpo con raggiera, uccisione con anello d'urto, lampo e scintille, zoom della telecamera leggerissimo (`G.pz` 0,004; élite 0,012; richiesta di Denis); élite con pausa e scossa; l'ultimo nemico della stanza cade al rallentatore con un anello grande; scia allo scatto (`G.efx`, `epicDraw`). Da decidere con Denis.
+   Proposta di gameplay per i livelli (8 ottobre, scritta a Denis in chat, non ancora confermata):
+   - 12 strati × 5 piani = 60 livelli, più «Il Fondo»; ogni piano è una partita corta da 5 stanze (4–5 minuti). Sulla mappa lo strato resta il medaglione grande, i piani sono gradini più piccoli in mezzo.
+   - Schema di ogni strato: 1 Ingresso (partita normale, si conoscono i nemici), 2 Sorpresa (una stanza speciale sicura: oro, prova del coraggio o casse gemelle), 3 Primo guardiano (il primo boss del mondo: Golem, Salamandra, Re Rospo, Yeti), 4 Il mondo si muove (la regola dello strato), 5 Custode dello strato (il boss grande: Strega, Fabbro, Idra, Regina; batterlo apre lo strato sotto).
+   - Una regola per strato, senza buio: 1 Cripta di Muschio partita base; 2 Cuore del Vulcano crepe di lava che si accendono a ritmo; 3 Palude delle Lucciole pozzanghere che rallentano e ninfee come passaggio sicuro; 4 Grotte di Brina ghiaccioli dal soffitto con l'ombra che avvisa; 5 Cripta Risvegliata radici che spuntano dove stai fermo troppo e ti bloccano un secondo; 6 Vulcano Furioso meteore e pavimento che si spacca per qualche secondo; 7 Palude Avvelenata nubi di veleno che si spostano piano; 8 Ghiacciaio Eterno raffiche di vento avvisate dalla neve; 9 Cripta delle Ombre nemici che colpiti si dividono in due; 10 Forgia Sepolta lame che girano e presse a tempo; 11 Palude Maledetta un altare a ogni stanza con una scelta (es. più oro ma nemici più forti); 12 Gelo Senza Fondo pavimento che si ghiaccia e si rompe, buchi fino alla fine della stanza. Strati 1–4 «Le grotte» (si impara), 5–8 «I risvegliati» (élite in ogni piano, boss con una mossa in più), 9–12 «Il profondo».
+   - Il Fondo: partita speciale con i 4 mondi mescolati e un guardiano finale nuovo da inventare insieme (non la Bestia). Dopo: «Oltre il Fondo» potrebbe essere la modalità infinita di adesso, rinominata.
+   - Stelle per piano (non si perdono mai, si riprova lo stesso piano): ★ finisci, ★★ senza rinascere, ★★★ una piccola sfida diversa per piano scritta prima di entrare («non farti colpire dal boss», «finisci in meno di 4 minuti», «raccogli tutti i cristalli»); 180 stelle in tutto.
+   - Premi: 12 lanterne (una in cima a ogni strato, circa ogni 15 stelle) e 13 pagine del diario di Ilda (una per strato con almeno 12 stelle su 15, l'ultima sul Fondo). Nell'anteprima della mappa sono ancora 9 lanterne e le pagine a 3 stelle per strato: da allineare.
+   - Chi ha già le coppe parte dallo strato della sua arena, con i piani sopra già fatti a 1 stella.
+   - Domande aperte per Denis: 5 o 3 piani per strato? Piani da 5 stanze o le 10 di adesso? Le regole degli strati vanno bene? (La sua unica risposta finora: niente stanze buie.)
+6. Anteprima «Epico» (non nel gioco): `anteprime/epico.js`, pagina di prova con `python3 anteprime/mk_epico.py` → `anteprime/epico.html` (bottoni Gioca, Prima/Dopo, Capitolo, Vita ∞). Pavimento: niente più ciuffi e macchie a caso; muschio (Cripta), muschio con cristallini (Cristalli), muschio e fango (Palude), cenere con braci (Vulcano) o neve e brina (Ghiacci) crescono nelle fughe tra le lastre e nelle crepe, a chiazze: di più negli angoli, lungo i muri e intorno agli ostacoli (`seamLife`, `G.slabs`, `G.slabCracks`); ciuffi d'erba e fiorellini dove si incontrano quattro lastre, e i ciuffi che ondeggiano nascono solo lì (`G.seamJ`). Lastre (`slabDetail`, prima di emblema e ombre dei muri): ombra morbida dentro ogni fuga, macchie diverse su ogni lastra, alcune un po' più alte o sprofondate, lastre spaccate (la crepa diventa una fuga dove cresce la vita) con a volte un angolo mancante riempito (muschio ed erba, cenere con brace, neve), un sentiero più consumato dal cancello in giù, mucchietti ai piedi dei muri (terra e muschio, cenere, fango, neve), riflessi sul ghiaccio e bruciature nel vulcano. Battaglie: lampo e scintille al tiro, colpo con raggiera, uccisione con anello d'urto, lampo e scintille, zoom della telecamera leggerissimo (`G.pz` 0,004; élite 0,012; richiesta di Denis); élite con pausa e scossa; l'ultimo nemico della stanza cade al rallentatore con un anello grande; scia allo scatto (`G.efx`, `epicDraw`). Da decidere con Denis se metterlo nel gioco (ultime richieste fatte: zoom più leggero e pavimento migliore in tutte le arene, entrambe fatte nell'anteprima).
 7. Eroe nuovo: scartato da Denis (né le pose ritagliate dalla sua immagine né la versione ridisegnata lo ispirano). I file delle prove restano in `anteprime/` (`riferimento_eroe.jpg`, `cut_eroe.py`, `eroe_sprite/`, `eroe_sprite.js`, `eroe_stile.js`, `mk_eroe.py`).
