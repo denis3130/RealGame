@@ -95,3 +95,4 @@ Dopo ogni modifica: rifare almeno una partita automatica per capitolo, `meta2.js
 1. Possibile in futuro: dividere `index.html` in più file con uno script che li riunisce per la pubblicazione.
 2. Da regolare giocando: forza del Druida, crescita dei boss, misura delle arene grandi. Da provare sul telefono vero: fluidità con tutti gli effetti nuovi e volume dei suoni.
 3. Boss nuovo, molto più avanti nel gioco: la bestia scheletrica gigante che sta sotto l'arena (le costole ai lati, il teschio con le corna dietro la porta, la coda di vertebre in basso: `bakeBackdrop`). L'idea di Denis è che il paesaggio stesso si risvegli e diventi il boss.
+4. Teschio sopra il cancello nel capitolo 1: a Denis non piace ancora (ultima prova: identico a quello della palude con occhi verdi). Da rivedere più avanti insieme, partendo da una sua foto.
