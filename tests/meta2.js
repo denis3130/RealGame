@@ -10,20 +10,20 @@ await E(`document.querySelectorAll('#sheetScr,#arenaUpScr').forEach(e=>e.hidden=
 await p.click('#tabs button[data-tab="tabHero"]');await p.waitForTimeout(400);
 await p.click('.harr.r');await p.waitForTimeout(300);await p.screenshot({path:'t_hero1.png'});
 await p.click('#hAct [data-hact]');await p.waitForTimeout(200);await p.screenshot({path:'t_hero2.png'});await p.click('#hAct [data-hact]');await p.waitForTimeout(500);
-let s=JSON.parse(await E('JSON.stringify(SAVE)'));ok('compra Cacciatrice',s.heroes.cacciatrice&&s.hero==='cacciatrice'&&s.gold===29200);
+let s=JSON.parse(await E('JSON.stringify(SAVE)'));ok('compra Cacciatrice',s.heroes.cacciatrice&&s.hero==='cacciatrice'&&s.gold===27000);
 await p.screenshot({path:'t_hero3.png'});
 await p.click('.harr.l');await p.waitForTimeout(300);await p.click('#hAct [data-hact]');await p.waitForTimeout(300);s=JSON.parse(await E('JSON.stringify(SAVE)'));ok('torna ad Arciere',s.hero==='arciere');
 // pets
-await E(`heroSeg='pet';renderHero()`);await p.waitForTimeout(300);await p.screenshot({path:'t_pet1.png'});
+await E(`setTab('tabPets')`);await p.waitForTimeout(300);await p.screenshot({path:'t_pet1.png'});
 await p.click('[data-pup="muschietto"]');await p.waitForTimeout(200);await p.click('[data-psel="lucciola"]');await p.waitForTimeout(300);
 s=JSON.parse(await E('JSON.stringify(SAVE)'));ok('compagno: migliora e scegli',s.pets.owned.muschietto.lvl===2&&s.pets.eq.includes('lucciola')&&s.pets.eq.includes('muschietto'));await p.screenshot({path:'t_pet2.png'});
 // talents
-await E(`heroSeg='tal';renderHero()`);await p.waitForTimeout(300);await p.click('.tbuy');await p.waitForTimeout(300);s=JSON.parse(await E('JSON.stringify(SAVE)'));ok('talento comprato',Object.keys(s.tal).length===1);await p.screenshot({path:'t_tal.png'});
+await E(`setTab('tabHero')`);await p.waitForTimeout(300);await p.click('.tbuy');await p.waitForTimeout(300);s=JSON.parse(await E('JSON.stringify(SAVE)'));ok('talento comprato',Object.keys(s.tal).length===1);await p.screenshot({path:'t_tal.png'});
 // item upgrade + equip
-await E(`heroSeg='coll';renderHero();openItem('giubba')`);await p.waitForTimeout(300);await p.click('#itemPanel [data-act="up"]');await p.waitForTimeout(500);s=JSON.parse(await E('JSON.stringify(SAVE)'));ok('oggetto migliorato',s.items.giubba.lvl===4);await p.screenshot({path:'t_item.png'});
+await E(`setTab('tabGear');openItem('giubba')`);await p.waitForTimeout(300);await p.click('#itemPanel [data-act="up"]');await p.waitForTimeout(500);s=JSON.parse(await E('JSON.stringify(SAVE)'));ok('oggetto migliorato',s.items.giubba.lvl===4);await p.screenshot({path:'t_item.png'});
 await E(`closeItem();openItem('balestra')`);await p.waitForTimeout(200);await p.click('#itemPanel [data-act="equip"]');await p.waitForTimeout(300);s=JSON.parse(await E('JSON.stringify(SAVE)'));ok('equipaggia balestra',s.eq.arma==='balestra');await E(`closeItem()`);
 // name
-await p.click('#tabs button[data-tab="tabProfile"]');await p.waitForTimeout(400);await p.click('#pName');await p.waitForTimeout(200);await p.keyboard.press('Control+A');await p.keyboard.type('Denis');await p.keyboard.press('Enter');await p.waitForTimeout(300);
+await E(`setTab('tabProfile')`);await p.waitForTimeout(400);await p.click('#pName');await p.waitForTimeout(200);await p.keyboard.press('Control+A');await p.keyboard.type('Denis');await p.keyboard.press('Enter');await p.waitForTimeout(300);
 s=JSON.parse(await E('JSON.stringify(SAVE)'));ok('nome cambiato',s.pname==='Denis');
 // save code roundtrip
 await p.click('#gearBtn');await p.waitForTimeout(300);await p.click('[data-code="out"]');await p.waitForTimeout(300);const code=await p.$eval('#codeTa',t=>t.value);await p.screenshot({path:'t_code1.png'});

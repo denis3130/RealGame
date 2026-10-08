@@ -8,7 +8,7 @@ for(const [k,v] of Object.entries(cases)){const p=await b.newPage({viewport:{wid
  await p.goto('file://'+__dirname+'/test.html');await p.waitForTimeout(1500);await p.mouse.click(195,600);await p.waitForTimeout(800);
  const sk=await p.$('#iSkip');if(sk&&await sk.isVisible())await sk.click();await p.waitForTimeout(1200);
  await p.evaluate(()=>__E(`document.querySelectorAll('#sheetScr,#arenaUpScr').forEach(e=>e.hidden=true)`));
- for(const t of ['tabHero','tabShop','tabRoad','tabProfile','tabPlay']){await p.evaluate(t=>__E(`setTab('${t}')`),t);await p.waitForTimeout(300)}
+ for(const t of ['tabHero','tabGear','tabPets','tabShop','tabRoad','tabProfile','tabPlay']){await p.evaluate(t=>__E(`setTab('${t}')`),t);await p.waitForTimeout(300)}
  await p.screenshot({path:`mig_${k}.png`});
  await p.evaluate(()=>__E(`startRun()`));await p.waitForTimeout(3000);await p.evaluate(()=>__E(`endRun(false,true)`));await p.waitForTimeout(2500);
  console.log(k,'errors:',JSON.stringify(errs),await p.evaluate(()=>__E(`JSON.stringify({menu:!$('menu').hidden,end:!$('endScr').hidden,gold:SAVE.gold,gems:SAVE.gems})`)));await p.close()}

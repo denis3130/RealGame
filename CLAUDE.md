@@ -13,7 +13,7 @@ Roguelite in stile Archero per telefono, in un solo file HTML5 (`index.html`): c
 
 ## Mappa del file `index.html`
 
-Il file ha circa 7.650 righe (versione 44). Le sezioni sono segnate da commenti `// ---------- nome ----------` o da blocchi `// =====`:
+Il file ha circa 8.250 righe (versione 45). Le sezioni sono segnate da commenti `// ---------- nome ----------` o da blocchi `// =====`:
 
 - definizioni (nemici `ET`, layout, abilità `SK`), setup della partita (`newRun`, `buildRoom`), input, audio
 - UI e meta: oggetti, carte, casse (`rollChest`, `grant`, `openChest`, `revealCard`), salvataggio (`SAVE`, chiave `cripta_save_v1` in localStorage)
@@ -25,7 +25,7 @@ Il file ha circa 7.650 righe (versione 44). Le sezioni sono segnate da commenti 
 - momenti chiave (morte al rallentatore, replay del colpo finale), trailer/intro (`INTRO`, `playIntro`)
 - meta 2: eroi, talenti, set, evoluzioni, missioni, traguardi, impostazioni; aure delle evoluzioni (`AURA`, `startAura`)
 - negozio, cammino delle coppe, casse gemelle (Mimic), kit effetti, guida (`fillGuide`)
-- in fondo, prima dell'ultima riga (`newRun();...`): occhi del teschio (`drawBeastEyes`), blocco «BOSSES 2» (boss nuovi), nemici vivi (`ELIFE`), suoni nuovi (`SFX2`) e atmosfera (`AMB`), manina della prima partita (`showHand`)
+- in fondo, prima dell'ultima riga (`newRun();...`): occhi del teschio (`drawBeastEyes`), blocco «BOSSES 2» (boss nuovi), nemici vivi (`ELIFE`), suoni nuovi (`SFX2`) e atmosfera (`AMB`), manina della prima partita (`showHand`), poi i blocchi della versione 45: «MENU 2» (menu nuovo, livello esploratore, ruota nel menu, missioni della settimana, premi dei traguardi e della sfida), «SOUND 2» (ninna nanna del menu, atmosfera), «ANIMATIONS 2» (respiro e passi dei personaggi, animazioni del menu)
 
 Dettagli utili:
 - Difficoltà: `hpMul()` (vita nemici), `DMG()` (danno), `bossMul()` (vita boss), moltiplicati per `G.diff` dell'arena.
@@ -44,9 +44,10 @@ Servono Node e Python. Una volta sola: `npm install` e poi `npx playwright insta
 - `menu2.js`: tocca ogni bottone di ogni scheda e controlla che non ci siano errori.
 - `mig.js`: salvataggi vecchi o rovinati e schermi di misure diverse.
 - `pets.js`: sblocco e miglioramento dei compagni. `perf.js`: tempi di aggiornamento e disegno.
-- Altri: `boss1x.js` (sconfitta del boss a velocità reale), `wheelsk.js` (ruota + scelta abilità), `aura.js` (aure delle evoluzioni), `look.js` (schermate dei 4 capitoli), `fresh.js` (primo avvio).
+- `menu3.js`: foto di ogni scheda e ogni foglio del menu nuovo su due telefoni (390×844 e 360×640), poi tocca tutti i bottoni della schermata principale. `wheel.js`: ruota della fortuna nel menu (gratis, video, cristalli, casse).
+- Altri: `boss1x.js` (sconfitta del boss a velocità reale), `aura.js` (aure delle evoluzioni), `look.js` (schermate dei 4 capitoli), `fresh.js` (primo avvio).
 
-Dopo ogni modifica: rifare almeno una partita automatica per capitolo, `meta2.js` e `menu2.js`, e guardare le schermate.
+Dopo ogni modifica: rifare almeno una partita automatica per capitolo, `meta2.js`, `menu2.js` e `menu3.js`, e guardare le schermate.
 
 ## Fatto di recente (versioni 42–44)
 
@@ -89,13 +90,32 @@ Dopo ogni modifica: rifare almeno una partita automatica per capitolo, `meta2.js
   - Linea sul cancello: la cima del muro di fondo è ora una cresta di pietre rotte (con muschio, cenere o neve), il buio sopra è più profondo, niente linea nera sulla cornice.
   - Prima partita: una manina senza parole (`showHand`, `SAVE.handSeen`) che mostra il dito che trascina; sparisce al primo tocco e non torna più. Test `hand.js`.
 - Teschio sopra il cancello: nel capitolo 1 (muschio) è identico a quello della palude (stesse ossa, stesse colature, niente macchie di muschio), cambia solo il colore degli occhi (`BDPAL.moss.eye`). Gli occhi sono disegnati dopo le luci della stanza (`drawBeastEyes`), con un respiro leggero.
-- Nota: in `meta2.js` i controlli «codice caricato» e «salvataggio dopo ricarica» falliscono anche sulla versione 41: problema del test, non del gioco.
 
 - Versione 44 (8 ottobre), nel gioco:
   - Stanza buia tolta per sempre (decisione di Denis): `rollDark()` restituisce sempre `false`, tolta la sfida del giorno «Notte fonda», tolta dalla guida, la Lucciola ora «fa luce intorno a te». Non riproporre stanze buie, nemmeno nella Discesa.
   - Arciere (l'eroe classico): tolta la punta dal cappuccio (`HERO.hoodTip:false`, richiesta di Denis), in tutte le direzioni, anche nel menu e nella intro. Gli altri con la punta (Druida, Mercante e i nemici incappucciati) la tengono. L'eroe nuovo dall'immagine di Denis è stato scartato (vedi «Da fare» 7).
   - Teschio sopra il cancello (arene grandi, `bakeBackdrop`): ora si intravede appena, coperto da un velo scuro, e non ha più luce negli occhi (niente `drawBeastEyes` attivo: gli occhi `k:'big'` e la crepa di lava sul cranio non vengono più aggiunti a `bdFx`). Richiesta di Denis; lo ripenserà lui più avanti. Il teschio del menu e quello dei menu laterali non sono cambiati.
   - Collaudo: una partita automatica per capitolo fino alla stanza 10 senza errori, `menu2.js` senza errori, `dirs.js` guardato.
+
+## Versione 45 (8 ottobre): godibilità, tutto direttamente nel gioco (richiesta di Denis: «niente anteprima, ti voglio diretto»)
+
+- Menu rifatto come i giochi più famosi sul telefono, ispirato all'immagine di Denis:
+  - In alto: ritratto, «Liv. N» con la barra del **livello esploratore** (`SAVE.acct`, `acctXP`, `acctNeed`: sale con le stesse esperienze del pass, cioè partite, missioni e sfida; a ogni livello oro 60+40·livello fino a 1.500 e 3 cristalli, 15 ogni 5 livelli), oro, cristalli (il «+» apre il foglio «Cristalli»: dove si trovano), bottone ≡ (Profilo, Traguardi, Impostazioni, Guida).
+  - Schermata principale (`tabPlay`): l'eroe in piedi su una pietra con le rune del colore dell'arena (`drawRuneStone`, `drawHomeHero`, `HOME_Y`) davanti alla cripta; col bastoncino di muschio in bocca; ogni tanto fa un saltello. Accanto solo i compagni sbloccati e portati (`petEq()`), e cambiano subito. Colonna sinistra: Missioni, Accesso, Ruota, Traguardi. Colonna destra: Pass, Cammino, Casse (la cassa gratis e i 4 posti, in un foglio), Offerte. Sotto l'eroe: «Cambia ▲» e i 4 oggetti indossati con la cornice della rarità. Scheda dell'arena (`renderChap`): nome, coppe, barra per l'arena dopo, le 10 stanze con i teschi dei boss e il record (`SAVE.bestA`, per arena). In basso: Sfida (apre il foglio della sfida con «Gioca la sfida»), **Gioca** (sempre l'arena), Abisso (foglio con record e «Scendi nell'Abisso»). Tutto parte da `goPlay(modo)`.
+  - Barra in basso: Eroi (scelta eroe, statistiche, talenti), Armeria (`tabGear`: eroe al centro con l'equipaggiamento intorno, collezione, set), Gioca, Compagni (`tabPets`), Bottega (una sola pagina con offerte, negozio del giorno, casse, oro). Cammino e Profilo si aprono dalla schermata principale e hanno il bottone «‹» per tornare.
+- **Ruota della fortuna solo nel menu** (non più dopo il boss): un giro gratis al giorno, poi fino a 3 giri guardando un video e giri con i cristalli (20, 40, 60, 80, 100 nello stesso giorno). Premi: oro (100+40·arena), carte oggetto, 5 cristalli, cassa di legno, tesoro (300+100·arena), 3 carte di un compagno, cassa d'argento, jackpot (cassa d'oro + 25 cristalli). `SAVE.wheel`, `whSpin`, `WHEEL`. **Il video è un segnaposto** (5 secondi di attesa): quando il gioco sarà pubblicato va collegato a un vero servizio di pubblicità.
+- Missioni: 3 del giorno + 3 della settimana (`WPOOL`, `SAVE.weekly`); ogni missione ritirata dà punti (20 o 60) e a 100, 250, 450 punti si aprono i premi della settimana (cassa d'argento, cassa d'oro, 30 cristalli); ritirate tutte e 3 quelle del giorno c'è il forziere del giorno (+5 cristalli).
+- Traguardi: ognuno raggiunto si riscatta in cristalli (`ACH_R`, 5–40, `SAVE.achC`), dal Profilo o dal bottone Traguardi.
+- Sfida del giorno: tre medaglie a punti (`CHAL_T`: bronzo 4.000 = 150 oro, argento 8.000 = 5 cristalli, oro 14.000 = cassa d'argento), podio +10 cristalli. Foglio nuovo con regole, medaglie, classifica e bottone per giocare.
+- Economia ribilanciata (Denis: «non sia tutto facile, ci devi arrivare con lo sforzo»). Valori attuali:
+  - Monete in partita valgono 1+⌊stanza/5⌋; a fine partita l'oro raccolto vale ×(1+0,12·indice arena) (le descrizioni delle arene dicono +48% … +132%). Un boss lascia 2 cristalli.
+  - Prezzi: casse 150 / 480 / 1.300 oro; eroi 3.000 / 7.000 / 12.000; talenti base 90–180; miglioramento oggetti 40 → 1.900 (×1+0,4·rarità); compagni 120 / 320 / 650 cristalli, livelli 200·l^1,5 oro; rinascita 25 cristalli; Pass d'oro 500 cristalli; oro in bottega 300 per 25, 1.000 per 70, 3.000 per 180 cristalli.
+  - Premi: accesso 100 oro, 5 cristalli, legno, 200 oro, 10 cristalli, argento, oro; missioni del giorno 80/120/160 oro o casse; cammino oro 80+60 ogni 500 coppe e cristalli 5+5 ogni 1.500; pass gratis cristalli 3+i/5 e oro 80+10i, pass d'oro cristalli 10+i/2 e oro 200+20i; prova del coraggio perfetta cassa d'argento e 4 cristalli.
+  - Misurato con le partite automatiche: un'arena vinta vale circa 700 oro nell'arena 1 e 2.600 nell'arena 4 (prima 1.100 e 5.400).
+- Nel gioco si chiamano tutti **cristalli** (niente più «gemme»); le sfere verdi sono l'esperienza.
+- Eroe: provato il cappuccio grande come nell'immagine di Denis (`bigHood`), ma a Denis non è piaciuto: l'Arciere è tornato quello base (`HERO.bighood:false`, cappuccio classico senza punta). Il codice di `bigHood` resta, spento.
+- Audio un po' più inquietante ma piacevole: nel menu una ninna nanna da carillon in tre tempi in la minore (`TRACKS.menu`, strumento `vBox`), con un bordone che vibra piano e un coro lontano; atmosfera del menu con campanelli, rintocchi, ronzii, scricchiolii e sussurri (`SND2`, `AMBEV.menu`); nei sotterranei ogni tanto si sente da lontano lo stesso carillon e qualche sussurro. Bottoni con un colpetto di legno e una nota del carillon.
+- Animazioni: tutti i personaggi respirano quando stanno fermi e si schiacciano un poco a ogni passo; polvere ai piedi dell'eroe; nel menu le colonne e le schede entrano con un rimbalzo, i bottoni pronti dondolano, la ruota gira quando c'è il giro gratis, Gioca respira, le casse pronte saltellano, i fogli entrano riga per riga, la barra del livello brilla quando sali. Tutto rispetta `LOWFX` e «riduci movimento».
 
 ## Dove sta il lavoro
 
@@ -111,14 +131,15 @@ Dopo ogni modifica: rifare almeno una partita automatica per capitolo, `meta2.js
 
 ## Gusti di Denis (imparati lavorando)
 
-- Prima un'anteprima separata da provare sul telefono; nel gioco vero solo dopo il suo sì.
+- Di solito prima un'anteprima separata da provare sul telefono; per la godibilità (versione 45: menu, economia, missioni, audio, animazioni) ha chiesto invece di lavorare direttamente nel gioco.
+- Il menu deve somigliare ai giochi più famosi sul telefono (la sua immagine di riferimento: eroe al centro su una pedana, bottoni ai lati, oggetti sotto, scheda del capitolo, Gioca grande in basso).
 - Colori sempre adatti al mondo o al boss, mai messi a caso.
 - Pavimento: niente cose sparse a caso; la vita (muschio, cenere, neve…) deve nascere dalle fughe e dalle crepe.
 - Telecamera: alle uccisioni normali un movimento leggerissimo; il rallentatore sull'ultimo nemico della stanza va bene; la scossa quando si apre uno strato della Discesa va bene.
 - Camminate: niente saltelli da un gradino all'altro; i vestiti non devono muoversi a caso.
 - Frecce: piccole e devono partire dall'arco, non dal centro del corpo; tirando in su la freccia non deve vedersi sopra il personaggio.
 - Niente stanze buie. Niente riferimenti alla Bestia nella progressione.
-- L'eroe resta nello stile classico del gioco: i personaggi presi da immagini esterne (ritagliati o ridisegnati) non lo hanno convinto.
+- L'eroe resta quello base, nello stile classico del gioco: né i personaggi presi da immagini esterne né il cappuccio grande lo hanno convinto.
 
 ## Da fare (annotato con Denis, non ancora fatto)
 
@@ -138,3 +159,5 @@ Dopo ogni modifica: rifare almeno una partita automatica per capitolo, `meta2.js
    - Domande aperte per Denis: 5 o 3 piani per strato? Piani da 5 stanze o le 10 di adesso? Le regole degli strati vanno bene? (La sua unica risposta finora: niente stanze buie.)
 6. Anteprima «Epico» (non nel gioco): `anteprime/epico.js`, pagina di prova con `python3 anteprime/mk_epico.py` → `anteprime/epico.html` (bottoni Gioca, Prima/Dopo, Capitolo, Vita ∞). Pavimento: niente più ciuffi e macchie a caso; muschio (Cripta), muschio con cristallini (Cristalli), muschio e fango (Palude), cenere con braci (Vulcano) o neve e brina (Ghiacci) crescono nelle fughe tra le lastre e nelle crepe, a chiazze: di più negli angoli, lungo i muri e intorno agli ostacoli (`seamLife`, `G.slabs`, `G.slabCracks`); ciuffi d'erba e fiorellini dove si incontrano quattro lastre, e i ciuffi che ondeggiano nascono solo lì (`G.seamJ`). Lastre (`slabDetail`, prima di emblema e ombre dei muri): ombra morbida dentro ogni fuga, macchie diverse su ogni lastra, alcune un po' più alte o sprofondate, lastre spaccate (la crepa diventa una fuga dove cresce la vita) con a volte un angolo mancante riempito (muschio ed erba, cenere con brace, neve), un sentiero più consumato dal cancello in giù, mucchietti ai piedi dei muri (terra e muschio, cenere, fango, neve), riflessi sul ghiaccio e bruciature nel vulcano. Battaglie: lampo e scintille al tiro, colpo con raggiera, uccisione con anello d'urto, lampo e scintille, zoom della telecamera leggerissimo (`G.pz` 0,004; élite 0,012; richiesta di Denis); élite con pausa e scossa; l'ultimo nemico della stanza cade al rallentatore con un anello grande; scia allo scatto (`G.efx`, `epicDraw`). Da decidere con Denis se metterlo nel gioco (ultime richieste fatte: zoom più leggero e pavimento migliore in tutte le arene, entrambe fatte nell'anteprima).
 7. Eroe nuovo: scartato da Denis (né le pose ritagliate dalla sua immagine né la versione ridisegnata lo ispirano). I file delle prove restano in `anteprime/` (`riferimento_eroe.jpg`, `cut_eroe.py`, `eroe_sprite/`, `eroe_sprite.js`, `eroe_stile.js`, `mk_eroe.py`).
+8. Da chiedere a Denis: la sua immagine del menu ha l'**energia** (30/30, ogni partita costa 5): non è stata messa. Se la vuole, va decisa insieme (quanta, come si ricarica).
+9. Pubblicità vera per i giri della ruota (ora c'è un segnaposto di 5 secondi), da collegare quando il gioco sarà pubblicato.

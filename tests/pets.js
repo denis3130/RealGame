@@ -3,7 +3,7 @@ await p.addInitScript(()=>{if(sessionStorage.getItem('x'))return;sessionStorage.
 await p.goto('file://'+__dirname+'/test.html');await p.waitForTimeout(1200);
 const E=s=>p.evaluate(s=>__E(s),s);const R=[];const ok=(n,c)=>R.push((c?'OK   ':'FAIL ')+n);
 ok('nuovo giocatore senza compagno',await E(`SAVE.pets.eq.length===0&&Object.keys(SAVE.pets.owned).length===0`));
-await E(`document.querySelectorAll('#sheetScr,#arenaUpScr').forEach(e=>e.hidden=true);setTab('tabHero');heroSeg='pet';renderHero()`);await p.waitForTimeout(400);await p.screenshot({path:'pt_1.png'});
+await E(`document.querySelectorAll('#sheetScr,#arenaUpScr').forEach(e=>e.hidden=true);setTab('tabPets');renderHero()`);await p.waitForTimeout(400);await p.screenshot({path:'pt_1.png'});
 // roll many chests: how often pet cards appear
 const st=await E(`(()=>{const o={legno:0,argento:0,oro:0},n=2000;for(const t in o){for(let i=0;i<n;i++){const r=rollChest(t);if(r.cards.some(c=>c.id.startsWith('pet:')))o[t]++}o[t]=(o[t]/n*100).toFixed(0)+'%'}return JSON.stringify(o)})()`);console.log('pet cards per chest',st);
 // open a gold chest with forced pet cards close to unlock
@@ -13,7 +13,7 @@ for(let t=0;t<40;t++){await p.waitForTimeout(350);const st2=await E(`({h:$('ches
 let s=JSON.parse(await E('JSON.stringify(SAVE.pets)'));ok('sbloccato con le carte (4+3≥6, avanza 1), non equipaggiato da solo '+JSON.stringify(s),s.owned.muschietto&&s.owned.muschietto.cards===1&&s.eq.length===0);
 await E(`rollChest=window._r`);
 // gem unlock
-await E(`closeSheet&&0;$('chestScr').hidden=true;setTab('tabHero');heroSeg='pet';renderHero()`);await p.waitForTimeout(300);
+await E(`closeSheet&&0;$('chestScr').hidden=true;setTab('tabPets');renderHero()`);await p.waitForTimeout(300);
 await p.click('[data-pbuy="lucciola"]');await p.waitForTimeout(300);s=JSON.parse(await E('JSON.stringify({p:SAVE.pets,g:SAVE.gems})'));ok('sblocca Lucciola con gemme, non equipaggiata',s.p.owned.lucciola&&s.g===250&&s.p.eq.length===0);
 // manual equip: two at most, a third replaces the oldest
 await p.click('[data-psel="muschietto"]');await p.waitForTimeout(200);await p.click('[data-psel="lucciola"]');await p.waitForTimeout(200);s=JSON.parse(await E('JSON.stringify(SAVE.pets)'));ok('due compagni con te '+JSON.stringify(s.eq),s.eq.join()==='muschietto,lucciola');

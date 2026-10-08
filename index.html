@@ -1205,6 +1205,212 @@ html,body{height:100%;margin:0;background:var(--ink);color:var(--parch);overflow
 #menu .dcard,#menu .rnode,#menu .pcard,#menu .ach,#menu .chipb,#menu .tal,#menu .set,#menu .statChips div,#menu .pstats span,#menu .lb li,#menu .frm,#menu .secTitle,.sheet .mis{
   box-shadow:inset 0 0 0 2px rgba(216,207,178,.22),inset 0 3px 0 rgba(255,250,235,.12),0 3px 0 rgba(0,0,0,.35)!important}
 #menu #topbar,#menu #tabs{box-shadow:inset 0 -2px 0 rgba(216,207,178,.25),0 3px 0 rgba(0,0,0,.3)}
+
+/* ===================== MENU 2: organised like the big phone games ===================== */
+/* top bar: portrait with the explorer level, wallet, the ≡ menu */
+#topbar{gap:8px;padding:calc(6px + env(safe-area-inset-top,0px)) 8px 7px 8px}
+#menu.home #topbar{background:linear-gradient(rgba(12,10,9,.94),rgba(12,10,9,.62) 72%,rgba(12,10,9,0));border-bottom:0;box-shadow:none;padding-bottom:12px}
+#tbWho{position:relative;gap:0;flex:1 1 auto;min-width:0}
+#tbWho .av{width:44px;height:44px;border-radius:11px;box-shadow:inset 0 0 0 2px var(--f1,#c2b078),0 2px 0 var(--crInk)}
+#tbWho .tbLv{display:none;position:absolute;left:28px;top:27px;z-index:1;min-width:22px;height:22px;padding:0 4px;box-sizing:border-box;border:2px solid var(--crInk);border-radius:8px;background:linear-gradient(#8fe0ff,#2a7fd8);color:#fff;font-style:normal;font-family:var(--display);font-size:12px;line-height:18px;text-align:center;text-shadow:var(--tol-s);box-shadow:0 2px 0 var(--crInk)}
+#tbWho .tbInfo{display:flex;flex-direction:column;gap:3px;min-width:0;flex:1;margin-left:10px}
+#tbWho #tbName{font-size:15px;color:#fff}
+#tabPets .pslots{display:none}
+#tbWho .xpb{position:relative;display:block;width:100%;max-width:104px;height:13px;box-sizing:border-box;border:2px solid var(--crInk);border-radius:6px;background:#1e1b18;overflow:hidden;box-shadow:inset 0 2px 3px rgba(0,0,0,.55)}
+#tbWho .xpb i{display:block;height:100%;width:0;background:linear-gradient(#b4f57a,#4cb328);box-shadow:inset 0 2px 0 rgba(255,255,255,.45);transition:width .7s cubic-bezier(.2,1,.3,1)}
+#tbWho .xpb small{position:absolute;inset:0;display:block;margin:0;font-family:var(--display);font-size:8.5px;line-height:9px;text-align:center;color:#fff;text-shadow:var(--tol-s)}
+#topbar .res{margin-left:14px;min-width:46px}
+.tbMenu{position:relative;flex:none;width:36px;height:36px;padding:5px;margin-left:2px;border:2.5px solid var(--crInk);border-radius:10px;background:linear-gradient(#c2b078,#6a6357);color:#fff;box-shadow:inset 0 2px 0 rgba(255,255,255,.4),0 2px 0 var(--crInk);cursor:pointer}
+.tbMenu svg{width:100%;height:100%;display:block}
+.tbMenu:active{transform:translateY(2px)}
+@media (max-width:370px){#tbWho .xpb{max-width:80px}#topbar .res{margin-left:12px;min-width:40px}}
+
+/* home: the hero stands on the rune stone, buttons all around */
+#menu.home #menuMain{padding:0;overflow:hidden;display:flex}
+#menu.home #tabPlay{flex:1;width:100%;max-width:470px;margin:0 auto;display:flex;flex-direction:column;justify-content:flex-end;gap:8px;padding:0 9px 9px}
+#tabPlay .homeStage{position:relative;flex:1;min-height:0;display:flex;flex-direction:column;justify-content:flex-end}
+#tabPlay .sideBtns{position:absolute;top:2px;z-index:2;display:flex;flex-direction:column;gap:17px}
+#tabPlay .sideBtns.l{left:0}#tabPlay .sideBtns.r{right:0}
+#menu #tabPlay .sideBtns .qbtn{width:54px;height:54px;border-radius:14px;background:linear-gradient(#7d7568,#4a453c);box-shadow:inset 0 2px 0 rgba(255,255,255,.3),inset 0 -3px 0 rgba(0,0,0,.25),0 3px 0 var(--crInk)}
+#menu #tabPlay .sideBtns .qbtn svg{width:34px;height:34px}
+#menu #tabPlay .sideBtns .qbtn.hot{background:linear-gradient(#ffe46e,#f2a400)}
+#menu #tabPlay .sideBtns .qbtn small{bottom:-12px;font-size:11px;letter-spacing:.01em}
+#menu #tabPlay .sideBtns .qbtn .pip{top:-7px;right:-7px;left:auto}
+#tabPlay .homeFoot{position:relative;z-index:2;display:flex;flex-direction:column;align-items:center;gap:7px;margin:0 58px}
+.heroPill{display:inline-flex;align-items:center;gap:7px;max-width:100%;padding:3px 4px 3px 12px;border:2.5px solid var(--crInk);border-radius:999px;background:linear-gradient(rgba(36,32,28,.92),rgba(24,21,19,.88));color:#fff;font-family:var(--display);font-size:14px;text-shadow:var(--tol-s);box-shadow:0 3px 0 var(--crInk),inset 0 2px 0 rgba(255,255,255,.12);cursor:pointer}
+.heroPill span{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.heroPill i{flex:none;font-style:normal;padding:1px 9px 2px;border:2px solid var(--crInk);border-radius:999px;background:linear-gradient(#b4f57a,#4cb328);font-size:12px}
+.heroPill:active,.hgs:active,.modeBtn:active,.chapCard:active{transform:translateY(2px)}
+.homeGear{display:flex;gap:7px;justify-content:center}
+.hgs{position:relative;flex:none;width:50px;height:50px;padding:0;border:2.5px solid var(--crInk);border-radius:11px;background:linear-gradient(170deg,var(--rc2,#3a3630),#24211d 88%);box-shadow:inset 0 0 0 2px var(--rc,#6a6357),inset 0 12px 14px -8px rgba(255,255,255,.3),0 3px 0 var(--crInk);cursor:pointer}
+.hgs svg{display:block;width:36px;height:36px;margin:1px auto 0}
+.hgs b{position:absolute;left:0;right:0;bottom:-3px;font-family:var(--display);font-weight:400;font-size:10.5px;line-height:1.1;color:#fff;text-shadow:var(--tol-s)}
+.hgs.empty{background:rgba(30,27,24,.62);border:2px dashed rgba(221,212,184,.55);box-shadow:none;color:#e9e2ce;font-family:var(--display);font-size:20px}
+.hgs.empty small{position:absolute;left:0;right:0;bottom:3px;font-size:8.5px;font-family:var(--body);font-weight:800;color:#dbd0b0;text-shadow:none}
+.hgs .up{position:absolute;top:-8px;right:-8px;width:20px;height:20px;border:2px solid var(--crInk);border-radius:50%;background:linear-gradient(#b4f57a,#4cb328);color:#fff;font-style:normal;font-size:10px;line-height:16px;text-align:center;text-shadow:var(--tol-s);animation:bob 1s infinite}
+/* the arena card with the rooms to climb */
+.chapCard{--ac:#8fd14f;position:relative;display:grid;grid-template-columns:minmax(0,1fr) auto;gap:5px 10px;align-items:center;padding:8px 11px 9px;border:3px solid var(--crInk);border-radius:14px;overflow:hidden;cursor:pointer;
+  background:linear-gradient(100deg,rgba(16,14,12,.93) 30%,rgba(16,14,12,.5)),var(--thumb,none) center 40%/cover,#24211d;box-shadow:inset 0 0 0 2px color-mix(in srgb,var(--ac) 65%,transparent),0 4px 0 var(--crInk)}
+.chapCard::after{content:"";position:absolute;inset:0;background:linear-gradient(105deg,transparent 40%,rgba(255,255,255,.12) 50%,transparent 60%);transform:translateX(-120%);animation:shine 5s ease-in-out infinite;pointer-events:none}
+.chapCard .ck{display:block;font-family:var(--display);font-size:12px;line-height:1;color:var(--ac);text-shadow:var(--tol-s)}
+.chapCard h3{margin:2px 0 0;font-family:var(--display);font-weight:400;font-size:20px;line-height:1.05;color:#fff;text-shadow:var(--tol-s);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.chapCard .ctr{display:flex;flex-direction:column;align-items:flex-end;gap:3px;min-width:96px}
+.chapCard .ctr .trNow{font-size:16px!important}
+.chapCard .trBar{width:100%;height:15px;flex:none}
+.chapCard .trBar span{font-size:10px}
+.rtrack{grid-column:1/-1;display:flex;align-items:center;gap:0;padding:2px 2px 0}
+.rtrack .rn{position:relative;flex:none;width:11px;height:11px;box-sizing:border-box;border:2px solid var(--crInk);border-radius:3px;transform:rotate(45deg);background:#3a3630}
+.rtrack .rn.on{background:var(--ac);box-shadow:0 0 6px color-mix(in srgb,var(--ac) 70%,transparent)}
+.rtrack .rn.next{background:#fff;animation:nodePulse 1.2s ease-in-out infinite}
+.rtrack .rn.boss{width:auto;height:auto;border:0;background:none;transform:none;box-shadow:none}
+.rtrack .rn.boss svg{display:block;width:20px;height:20px}
+.rtrack .rn.boss.on svg{filter:drop-shadow(0 0 4px var(--ac))}
+.rtrack .rn.boss:not(.on) svg{filter:grayscale(1) brightness(.6)}
+.rtrack .rn.boss.next svg{animation:nodePulse 1.2s ease-in-out infinite}
+.rtrack .rl{flex:1;height:3px;margin:0 1px;border-radius:2px;background:rgba(0,0,0,.55)}
+.rtrack .rl.on{background:var(--ac)}
+.rtrack em{flex:none;margin-left:8px;font-style:normal;font-family:var(--display);font-size:11.5px;color:#fff;text-shadow:var(--tol-s);white-space:nowrap}
+@keyframes nodePulse{50%{transform:scale(1.3) rotate(45deg)}}
+.rtrack .rn.boss.next svg{transform-origin:50% 50%}
+/* bottom row: daily challenge, the big button, the abyss */
+.playRow{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.6fr) minmax(0,1fr);gap:8px;align-items:stretch}
+.modeBtn{position:relative;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:0;min-height:60px;padding:3px 3px 5px;border:2.5px solid var(--crInk);border-radius:13px;color:#fff;font-family:var(--display);cursor:pointer;box-shadow:inset 0 2px 0 rgba(255,255,255,.3),inset 0 -3px 0 rgba(0,0,0,.25),0 3px 0 var(--crInk)}
+.modeBtn svg{width:30px;height:30px;flex:none}
+.modeBtn b{font-weight:400;font-size:12.5px;line-height:1.05;text-shadow:var(--tol-s);white-space:nowrap}
+.modeBtn small{font-size:10.5px;line-height:1.1;color:#ffd84a;text-shadow:var(--tol-s);white-space:nowrap}
+#chalBtn{background:linear-gradient(#e8843f,#a3401c)}
+#abyssBtn{background:linear-gradient(#7a58b0,#34224f)}
+.modeBtn.lock{filter:grayscale(.85) brightness(.8)}
+.modeBtn .bang{top:-7px;right:-5px}
+#menu #tabPlay .enter{position:relative;overflow:hidden;min-width:0;width:100%;padding:6px 8px;font-size:32px;letter-spacing:.03em;border-radius:15px}
+#menu #tabPlay .enter span{position:relative;z-index:1}
+#menu #tabPlay .enter::after{content:"";position:absolute;inset:0;background:linear-gradient(105deg,transparent 35%,rgba(255,255,255,.55) 50%,transparent 65%);transform:translateX(-120%);animation:shine 3.2s ease-in-out infinite}
+@media (max-height:700px){#tabPlay .sideBtns{gap:14px}#menu #tabPlay .sideBtns .qbtn{width:48px;height:48px}#menu #tabPlay .sideBtns .qbtn svg{width:30px;height:30px}#tabPlay .homeFoot{margin:0 52px}.hgs{width:46px;height:46px}.hgs svg{width:32px;height:32px}.modeBtn{min-height:54px}.modeBtn svg{width:26px;height:26px}#menu #tabPlay .enter{font-size:28px}.chapCard h3{font-size:18px}}
+@media (max-width:350px){.hgs{width:42px;height:42px}.hgs svg{width:30px;height:30px}#tabPlay .homeFoot{margin:0 50px}.homeGear{gap:5px}}
+@media (prefers-reduced-motion:reduce){#menu #tabPlay .enter::after,.chapCard::after,.rtrack .rn.next,.rtrack .rn.boss.next svg{animation:none}}
+/* the wheel icon turns while a spin waits for you */
+#wheelBtn .spinG{transform-origin:20px 21px}
+#wheelBtn.hot .spinG{animation:spin 4s linear infinite}
+/* inner pages: a header, the top bar stays */
+#menu:not(.home) #menuMain{padding-top:8px}
+.pageHead{display:flex;align-items:baseline;justify-content:space-between;gap:10px;margin:0}
+.pageHead h2{margin:0;font-family:var(--display);font-weight:400;font-size:28px;line-height:1.05;color:#fff;text-shadow:var(--tol)}
+.pageHead small{font-family:var(--display);font-size:13px;color:#ffd84a;text-shadow:var(--tol-s);text-align:right}
+.pageHead small b{font-weight:400;color:#fff}
+.pageHead.back{justify-content:flex-start;align-items:center}
+.pageHead.back h2{font-size:24px}
+.backBtn{flex:none;width:40px;height:40px;padding:0 0 4px;border:2.5px solid var(--crInk);border-radius:11px;background:linear-gradient(#c2b078,#6a6357);color:#fff;font-family:var(--display);font-size:28px;line-height:1;text-shadow:var(--tol-s);box-shadow:inset 0 2px 0 rgba(255,255,255,.4),0 3px 0 var(--crInk);cursor:pointer}
+.backBtn:active{transform:translateY(2px)}
+#menuMain .showcase,#tabProfile .pcard,#tabShop .shopHead{margin-top:0}
+#tabShop .spage{display:flex;flex-direction:column;gap:10px}
+#tabShop .spage+.spage{margin-top:6px}
+/* heroes: the showcase without equipment */
+#tabHero .stage{display:block;position:relative;width:100%;max-width:330px;min-height:0;margin:0 auto}
+#tabHero .stage #heroCv{display:block;width:100%;max-width:none;margin:0 auto}
+#tabHero .stage .harr{position:absolute;top:50%;bottom:auto;margin-top:-20px;width:40px;height:40px;font-size:26px}
+#tabHero .stage .harr.l{left:0}#tabHero .stage .harr.r{right:0}
+/* armoury: the hero in the middle, equipment around */
+.gearStage{display:grid;grid-template-columns:78px minmax(0,1fr) 78px;align-items:center;gap:4px;padding:8px;border:3px solid var(--crInk);border-radius:16px;
+  background:radial-gradient(60% 55% at 50% 58%,rgba(255,200,110,.26),transparent 72%),linear-gradient(#4f493f,#2a2722);box-shadow:inset 0 2px 0 rgba(255,255,255,.16),0 4px 0 var(--crInk)}
+.gearStage .eqcol{display:flex;flex-direction:column;gap:14px}
+.gearStage .icard{padding:5px 4px}
+.gearStage .icard.empty{min-height:78px;font-size:24px;gap:0}
+.gearStage .icard.empty small{font-family:var(--body);font-size:10.5px;font-weight:700}
+#gearCv{display:block;width:100%;max-width:230px;aspect-ratio:1;margin:0 auto}
+/* sheets: chest slots, more, abyss, challenge, missions */
+.sheet .cslots{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+.sheet .cslots .slot{min-height:118px;border:2.5px solid var(--crInk);border-radius:12px;background:linear-gradient(#6a6357,#45403a);box-shadow:inset 0 2px 0 rgba(255,255,255,.25),0 3px 0 var(--crInk);color:#fff}
+.sheet .cslots .slot svg{max-width:64px}
+.sheet .cslots .slot b{font-family:var(--display);font-weight:400;font-size:15px;color:#fff;text-shadow:var(--tol-s)}
+.sheet .cslots .slot small{font-size:11.5px;color:#f0e8d4;text-shadow:var(--tol-s);font-weight:700}
+.sheet .cslots .slot.ready{background:linear-gradient(#ffd84a,#e89a0c)}
+.sheet .cslots .slot.unlocking{background:linear-gradient(#45c7b8,#1f7f88)}
+.sheet .cslots .slot.empty{background:rgba(30,27,24,.35);border:2px dashed rgba(240,232,212,.45);box-shadow:none;color:#e9e2ce;cursor:default;font-family:var(--display);font-size:13px}
+.sheet .freeRow{display:grid;grid-template-columns:64px minmax(0,1fr) auto;gap:10px;align-items:center;padding:8px 10px;border:2.5px solid var(--crInk);border-radius:12px;background:linear-gradient(#665f54,#514b42);box-shadow:inset 0 2px 0 rgba(255,255,255,.2)}
+.sheet .freeRow.hot{background:linear-gradient(#4cb328,#2f7f18);animation:ready 1.6s ease-in-out infinite}
+.sheet .freeRow svg{width:64px;height:auto;display:block}
+.sheet .freeRow b{display:block;font-family:var(--display);font-weight:400;font-size:17px;text-shadow:var(--tol-s)}
+.sheet .freeRow span{font-size:12.5px;font-weight:700;color:#f0e8d4}
+.sheet .freeRow .btn{font-size:15px;padding:6px 12px}
+.sheet .moreBtns{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+.sheet .moreBtns button{display:flex;flex-direction:column;align-items:center;gap:4px;padding:12px 6px;border:2.5px solid var(--crInk);border-radius:12px;background:linear-gradient(#8d8476,#5b554a);color:#fff;font-family:var(--display);font-size:16px;text-shadow:var(--tol-s);box-shadow:inset 0 2px 0 rgba(255,255,255,.35),0 3px 0 var(--crInk);cursor:pointer}
+.sheet .moreBtns svg{width:36px;height:36px}
+.sheet .gsrc{display:grid;grid-template-columns:36px minmax(0,1fr);gap:4px 10px;align-items:center}
+.sheet .gsrc svg{width:32px;height:32px}
+.sheet .gsrc b{font-family:var(--display);font-weight:400;font-size:15px;text-shadow:var(--tol-s)}
+.sheet .gsrc span{display:block;font-size:12.5px;color:#f0e8d4;font-weight:700}
+.sheet .tiers{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
+.sheet .tier{display:flex;flex-direction:column;align-items:center;gap:2px;padding:7px 4px;border:2.5px solid var(--crInk);border-radius:12px;background:linear-gradient(#665f54,#514b42);text-align:center}
+.sheet .tier i{width:30px;height:30px;border:2.5px solid var(--crInk);border-radius:50%;background:var(--tc);box-shadow:inset 0 3px 0 rgba(255,255,255,.5),0 2px 0 var(--crInk)}
+.sheet .tier b{font-family:var(--display);font-weight:400;font-size:14px;text-shadow:var(--tol-s)}
+.sheet .tier small{font-size:11px;font-weight:800;color:#f0e8d4;line-height:1.15}
+.sheet .tier.got{background:linear-gradient(#4cb328,#2f7f18)}
+.sheet .tier.got small{color:#fff}
+.sheet .bigPlay{font-size:22px;padding:10px}
+.sheet .wk{display:grid;grid-template-columns:minmax(0,1fr) repeat(3,auto);gap:8px;align-items:center;padding:8px 10px;border:2.5px solid var(--crInk);border-radius:12px;background:linear-gradient(#3e3a33,#2e2b26)}
+.sheet .wk .wkBar{grid-column:1/-1;position:relative;height:16px;border:2px solid var(--crInk);border-radius:7px;background:#1e1b18;overflow:visible}
+.sheet .wk .wkBar i{display:block;height:100%;border-radius:5px;background:linear-gradient(#ffe46e,#f2a400)}
+.sheet .wk .wkBar u{position:absolute;top:-4px;width:4px;height:20px;margin-left:-2px;background:var(--crInk);text-decoration:none}
+.sheet .wk b{font-family:var(--display);font-weight:400;font-size:15px;text-shadow:var(--tol-s)}
+.sheet .wkc{position:relative;display:flex;flex-direction:column;align-items:center;gap:1px;min-width:52px;padding:2px 2px 4px;border:2px solid var(--crInk);border-radius:10px;background:rgba(0,0,0,.25);cursor:default}
+.sheet .wkc svg{width:38px;height:auto}
+.sheet .wkc small{font-family:var(--display);font-size:11px;color:#ffd84a;text-shadow:var(--tol-s)}
+.sheet .wkc.ready{background:linear-gradient(#4cb328,#2f7f18);cursor:pointer;animation:ready 1.4s ease-in-out infinite}
+.sheet .wkc.got{opacity:.5}
+.sheet .wkc .bigGem{width:20px;height:20px;margin:6px 0 4px}
+.sheet .mbonus{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:10px;align-items:center;padding:8px 10px;border:2.5px dashed rgba(255,216,74,.7);border-radius:12px;background:rgba(255,216,74,.12)}
+.sheet .mbonus b{font-family:var(--display);font-weight:400;font-size:15px;text-shadow:var(--tol-s)}
+.sheet .mbonus span{display:block;font-size:12px;font-weight:700;color:#f0e8d4}
+.sheet .mbonus.ready{border-style:solid;background:linear-gradient(#4cb328,#2f7f18)}
+.sheet .mpts{font-style:normal;font-size:11px;font-weight:800;color:#bfe9ff;text-shadow:var(--tol-s)}
+.sheet .seg.mseg button{font-family:var(--display);font-weight:400;font-size:14px;padding:8px 4px}
+.sheet .abTop{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
+.sheet .abTop span{display:flex;flex-direction:column;align-items:center;padding:6px 4px;border:2.5px solid var(--crInk);border-radius:12px;background:linear-gradient(#5a3f86,#34224f);font-size:11.5px;font-weight:700;color:#e9e2ff;text-align:center}
+.sheet .abTop b{font-family:var(--display);font-weight:400;font-size:20px;color:#fff;text-shadow:var(--tol-s)}
+.sheet .achClaim{font-size:13px;padding:5px 10px}
+#menu .ach .achClaim{grid-column:1/-1;justify-self:start;margin-top:4px;font-size:13px;padding:4px 10px}
+/* wheel in the menu: free spin, video, crystals */
+#whScr{z-index:8}
+.whBox{position:relative}
+#whScr .whBox h2{font-size:30px!important;padding:0 30px}
+#whScr #whAd{background:linear-gradient(#8fd0ff 0%,#3f8fe0 48%,#2a74c8 52%,#3a86d8 100%);color:#fff}
+#whScr #whAd small{font-size:13px;opacity:.9}
+.whX{position:absolute;top:-2px;right:-6px;z-index:2;width:38px;height:38px;border:2.5px solid var(--crInk);border-radius:50%;background:linear-gradient(#ff7a6a,#c8342f);color:#fff;font-family:var(--display);font-size:18px;line-height:1;text-shadow:var(--tol-s);box-shadow:0 3px 0 var(--crInk);cursor:pointer}
+.whBtns{display:flex;flex-direction:column;align-items:center;gap:8px}
+.whBtns .btn{min-width:230px}
+.whBtns .btn .gemS{margin-left:6px}
+.whNote{margin:0;font-size:12px;font-weight:700;color:#e9e2ce}
+.whAd{position:absolute;inset:-8px;z-index:3;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;border:3px solid var(--crInk);border-radius:18px;background:radial-gradient(80% 60% at 50% 40%,#3a3a48,#14131a);color:#fff;text-align:center}
+.whAd b{font-family:var(--display);font-weight:400;font-size:26px;text-shadow:var(--tol)}
+.whAd span{font-family:var(--display);font-size:64px;line-height:1;color:#ffd84a;text-shadow:var(--tol)}
+.whAd small{max-width:240px;font-size:13px;font-weight:700;color:#d8d0e8}
+.whOdds{display:flex;flex-wrap:wrap;justify-content:center;gap:4px 10px;max-width:330px;font-size:11px;font-weight:700;color:#e9e2ce}
+/* ===== animations 2: the home comes alive ===== */
+#menu.home .sideBtns.l{animation:popL .5s cubic-bezier(.2,1.4,.4,1) backwards}
+#menu.home .sideBtns.r{animation:popR .5s cubic-bezier(.2,1.4,.4,1) backwards}
+@keyframes popL{from{transform:translateX(-80px);opacity:0}}
+@keyframes popR{from{transform:translateX(80px);opacity:0}}
+#menu.home .homeFoot{animation:riseIn .45s .05s cubic-bezier(.2,1.3,.4,1) backwards}
+#menu.home .chapCard{animation:riseIn .45s .1s cubic-bezier(.2,1.3,.4,1) backwards}
+#menu.home .playRow{animation:riseIn .45s .16s cubic-bezier(.2,1.3,.4,1) backwards}
+@keyframes riseIn{from{transform:translateY(34px);opacity:0}}
+#menu #tabPlay .sideBtns .qbtn.hot svg{animation:wiggle 2.6s ease-in-out infinite}
+@keyframes wiggle{0%,72%,100%{transform:rotate(0)}76%{transform:rotate(-12deg) scale(1.12)}81%{transform:rotate(10deg) scale(1.12)}86%{transform:rotate(-6deg)}91%{transform:rotate(3deg)}}
+#menu #tabPlay .enter span{display:inline-block;animation:goBreath 2.4s ease-in-out infinite}
+@keyframes goBreath{50%{transform:scale(1.06)}}
+#menu #tabs button.on svg{animation:navPop .42s cubic-bezier(.2,1.6,.4,1)}
+@keyframes navPop{from{transform:translateY(10px) scale(.55)}}
+.sheet.fresh>*{animation:rowIn .36s cubic-bezier(.2,1.2,.4,1) backwards}
+.sheet.fresh>*:nth-child(2){animation-delay:.03s}.sheet.fresh>*:nth-child(3){animation-delay:.06s}.sheet.fresh>*:nth-child(4){animation-delay:.09s}.sheet.fresh>*:nth-child(5){animation-delay:.12s}.sheet.fresh>*:nth-child(6){animation-delay:.15s}.sheet.fresh>*:nth-child(n+7){animation-delay:.18s}
+@keyframes rowIn{from{transform:translateY(18px);opacity:0}}
+.sheet .cslots .slot.ready svg,.sheet .freeRow.hot svg{animation:chestHop 1.5s ease-in-out infinite}
+@keyframes chestHop{0%,58%,100%{transform:translateY(0)}68%{transform:translateY(-7px) rotate(-5deg)}78%{transform:translateY(0) rotate(3deg)}88%{transform:translateY(-2px) rotate(-1deg)}}
+#tbWho.lvup .xpb{animation:lvGlow 1.2s ease-out 2}
+#tbWho.lvup #tbName{animation:lvPop .6s cubic-bezier(.2,1.8,.4,1)}
+@keyframes lvGlow{30%{box-shadow:0 0 0 3px #b4f57a,0 0 18px #b4f57a}}
+@keyframes lvPop{40%{transform:scale(1.35);color:#b4f57a}}
+#menu.home .homeGear .hgs .up{animation:bob 1s infinite}
+@media (prefers-reduced-motion:reduce){#menu.home .sideBtns,#menu.home .homeFoot,#menu.home .chapCard,#menu.home .playRow,#menu #tabPlay .enter span,#menu #tabs button.on svg,.sheet.fresh>*,.sheet .cslots .slot.ready svg,.sheet .freeRow.hot svg,#menu #tabPlay .sideBtns .qbtn.hot svg{animation:none}}
 </style>
 
 <div id="wrap">
@@ -1212,7 +1418,7 @@ html,body{height:100%;margin:0;background:var(--ink);color:var(--parch);overflow
   <div id="hud">
     <div class="chip" id="roomChip"><i></i><span id="roomTxt">1/10</span></div>
     <div class="chip" id="lvChip"><i></i><span id="lvTxt">Liv. 1</span></div>
-    <div id="wallet" aria-label="Oro e gemme"><i class="wG"></i><span id="goldTxt">0</span><i class="wD"></i><span id="gemTxt">0</span></div>
+    <div id="wallet" aria-label="Oro e cristalli"><i class="wG"></i><span id="goldTxt">0</span><i class="wD"></i><span id="gemTxt">0</span></div>
     <div id="hudBtns">
       <button class="iconbtn" id="sndBtn" aria-label="Audio">♪</button>
       <button class="iconbtn" id="pauseBtn" aria-label="Pausa">II</button>
@@ -1230,67 +1436,92 @@ html,body{height:100%;margin:0;background:var(--ink);color:var(--parch);overflow
     <canvas id="campCv"></canvas>
     <canvas id="mbgCv"></canvas>
     <div id="topbar">
-      <button id="tbWho" aria-label="Profilo"><span class="av"><canvas id="tbAv" width="84" height="84"></canvas></span><span><b id="tbName">Arciere</b><small><svg viewBox="0 0 20 20" aria-hidden="true"><path d="M10 1l2.6 5.6 6 .7-4.5 4.1 1.2 6L10 14.4 4.7 17.4l1.2-6L1.4 7.3l6-.7z" fill="#ffd84a" stroke="#0b1326" stroke-width="1.6" stroke-linejoin="round"/></svg><i id="tbPow">0</i></small></span></button>
+      <button id="tbWho" aria-label="Profilo"><span class="av"><canvas id="tbAv" width="84" height="84"></canvas></span><em class="tbLv" id="tbLv">1</em><span class="tbInfo"><b id="tbName">Esploratore</b><span class="xpb" aria-label="Livello esploratore"><i id="tbXp"></i><small id="tbXpT"></small></span></span></button>
       <div class="res gold" aria-label="Oro"><i class="ic"></i><span id="mGold">0</span><button class="plus" data-plus="gold" aria-label="Compra oro">+</button></div>
-      <div class="res gem" aria-label="Gemme"><i class="ic"></i><span id="mGems">0</span><button class="plus" data-plus="gem" aria-label="Gemme">+</button></div>
+      <div class="res gem" aria-label="Cristalli"><i class="ic"></i><span id="mGems">0</span><button class="plus" data-plus="gem" aria-label="Come trovare cristalli">+</button></div>
+      <button class="tbMenu" id="tbMenu" aria-label="Altro"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 7h14M5 12h14M5 17h14" stroke="#191714" stroke-width="5" stroke-linecap="round"/><path d="M5 7h14M5 12h14M5 17h14" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"/></svg></button>
     </div>
     <div id="menuMain">
       <section id="tabPlay">
-        <div class="plaque" id="modes"></div>
-        <div class="sideBtns l">
-          <button class="qbtn" id="loginBtn" aria-label="Accesso giornaliero"><svg viewBox="0 0 32 32" aria-hidden="true"><rect x="4" y="7" width="24" height="21" rx="3" fill="#f4f8ff" stroke="#0b1326" stroke-width="2.2"/><path d="M4 10a3 3 0 0 1 3-3h18a3 3 0 0 1 3 3v4H4z" fill="#e5484d" stroke="#0b1326" stroke-width="2.2" stroke-linejoin="round"/><path d="M10 4v6M22 4v6" stroke="#0b1326" stroke-width="2.6" stroke-linecap="round"/><text x="16" y="25.5" text-anchor="middle" font-family="Lilita One, sans-serif" font-size="10" fill="#0b1326">7</text></svg><small>Accesso</small><i class="bang" id="loginBang" hidden>!</i></button>
-          <button class="qbtn" id="misBtn" aria-label="Missioni del giorno"></button>
-          <button class="qbtn" id="freeBox" aria-label="Cassa gratuita"></button>
+        <div class="homeStage" id="homeStage">
+          <div class="sideBtns l">
+            <button class="qbtn" id="misBtn" aria-label="Missioni"></button>
+            <button class="qbtn" id="loginBtn" aria-label="Accesso giornaliero"><svg viewBox="0 0 32 32" aria-hidden="true"><rect x="4" y="7" width="24" height="21" rx="3" fill="#f4f8ff" stroke="#191714" stroke-width="2.2"/><path d="M4 10a3 3 0 0 1 3-3h18a3 3 0 0 1 3 3v4H4z" fill="#e5484d" stroke="#191714" stroke-width="2.2" stroke-linejoin="round"/><path d="M10 4v6M22 4v6" stroke="#191714" stroke-width="2.6" stroke-linecap="round"/><text x="16" y="25.5" text-anchor="middle" font-family="Lilita One, sans-serif" font-size="10" fill="#191714">7</text></svg><small>Accesso</small><i class="bang" id="loginBang" hidden>!</i></button>
+            <button class="qbtn" id="wheelBtn" aria-label="Ruota della fortuna"><svg viewBox="0 0 40 40" aria-hidden="true"><g class="spinG"><circle cx="20" cy="21" r="15" fill="#ffd84a"/><path d="M20 21V6a15 15 0 0 1 13 7.5z" fill="#e5484d"/><path d="M20 21l13-7.5a15 15 0 0 1 0 15z" fill="#5fd0f0"/><path d="M20 21l13 7.5A15 15 0 0 1 20 36z" fill="#7bd65a"/><path d="M20 21V36a15 15 0 0 1-13-7.5z" fill="#c98af7"/><path d="M20 21L7 28.5a15 15 0 0 1 0-15z" fill="#ff9d3c"/><path d="M20 6v30M7 13.5l26 15M33 13.5l-26 15" stroke="#191714" stroke-width="1.4"/></g><circle cx="20" cy="21" r="15" fill="none" stroke="#191714" stroke-width="2.6"/><circle cx="20" cy="21" r="4" fill="#fff6c8" stroke="#191714" stroke-width="2"/><path d="M16 2.5h8l-4 7.5z" fill="#e5484d" stroke="#191714" stroke-width="2" stroke-linejoin="round"/></svg><small>Ruota</small><i class="bang" id="wheelBang" hidden>!</i></button>
+            <button class="qbtn" id="achBtn" aria-label="Traguardi"><svg viewBox="0 0 40 40" aria-hidden="true"><path d="M11 3h7l4 13h-7zM29 3h-7l-4 13h7z" fill="#e5484d" stroke="#191714" stroke-width="2.2" stroke-linejoin="round"/><circle cx="20" cy="25.5" r="11" fill="#ffd84a" stroke="#191714" stroke-width="2.4"/><circle cx="20" cy="25.5" r="7" fill="#f2a400" stroke="#b07a10" stroke-width="1.6"/><path d="M20 20.6l1.6 3.2 3.5.5-2.5 2.4.6 3.5-3.2-1.7-3.2 1.7.6-3.5-2.5-2.4 3.5-.5z" fill="#fff6c8"/></svg><small>Traguardi</small><em class="pip" id="achPip" hidden></em></button>
+          </div>
+          <div class="sideBtns r">
+            <button class="qbtn" id="passBtn" aria-label="Pass di stagione"><svg viewBox="0 0 32 32" aria-hidden="true"><path d="M5 11l5 5 6-9 6 9 5-5-2 15H7z" fill="#ffd84a" stroke="#191714" stroke-width="2.2" stroke-linejoin="round"/><rect x="7" y="24" width="18" height="4" rx="1.5" fill="#c48ae8" stroke="#191714" stroke-width="2.2"/><circle cx="16" cy="6" r="2.2" fill="#e5484d" stroke="#191714" stroke-width="1.6"/></svg><small>Pass</small><em class="plvl" id="passLvl">0</em><i class="bang" id="passBang" hidden>!</i></button>
+            <button class="qbtn" id="roadSide" aria-label="Cammino delle coppe"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 5H3v1.2a4.3 4.3 0 0 0 4.3 4.1M18 5h3v1.2a4.3 4.3 0 0 1-4.3 4.1" fill="none" stroke="#191714" stroke-width="2"/><path d="M6 3h12v4.5a6 6 0 0 1-12 0z" fill="#ffd23c" stroke="#191714" stroke-width="1.8" stroke-linejoin="round"/><path d="M10 13.2h4l1 3.8H9z" fill="#e8a41c" stroke="#191714" stroke-width="1.8" stroke-linejoin="round"/><rect x="7" y="17" width="10" height="4.2" rx="1" fill="#8a5a20" stroke="#191714" stroke-width="1.8"/></svg><small>Cammino</small><i class="bang" id="roadSideBang" hidden>!</i></button>
+            <button class="qbtn" id="chestBtn" aria-label="Casse"></button>
+            <button class="qbtn" id="offerBtn" aria-label="Offerte"><svg viewBox="0 0 32 32" aria-hidden="true"><rect x="5" y="13" width="22" height="15" rx="2" fill="#a77ef0" stroke="#191714" stroke-width="2.2"/><rect x="3.5" y="9" width="25" height="6" rx="2" fill="#c9a4ff" stroke="#191714" stroke-width="2.2"/><path d="M16 9v19" stroke="#ffd84a" stroke-width="4"/><path d="M16 9c-3-6-9-5-8-1 1 2 5 1 8 1zM16 9c3-6 9-5 8-1-1 2-5 1-8 1z" fill="#ffd84a" stroke="#191714" stroke-width="2" stroke-linejoin="round"/></svg><small>Offerte</small><i class="bang" id="offerBang" hidden>!</i></button>
+          </div>
+          <div class="homeFoot">
+            <button class="heroPill" id="heroPill"><span id="heroPillN">Arciere</span><i>Cambia ▲</i></button>
+            <div class="homeGear" id="homeGear"></div>
+          </div>
         </div>
-        <div class="sideBtns r">
-          <button class="qbtn" id="offerBtn" aria-label="Offerte"><svg viewBox="0 0 32 32" aria-hidden="true"><rect x="5" y="13" width="22" height="15" rx="2" fill="#a77ef0" stroke="#0b1326" stroke-width="2.2"/><rect x="3.5" y="9" width="25" height="6" rx="2" fill="#c9a4ff" stroke="#0b1326" stroke-width="2.2"/><path d="M16 9v19" stroke="#ffd84a" stroke-width="4"/><path d="M16 9c-3-6-9-5-8-1 1 2 5 1 8 1zM16 9c3-6 9-5 8-1-1 2-5 1-8 1z" fill="#ffd84a" stroke="#0b1326" stroke-width="2" stroke-linejoin="round"/></svg><small>Offerte</small><i class="bang" id="offerBang" hidden>!</i></button>
-          <button class="qbtn" id="roadSide" aria-label="Cammino delle coppe"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 5H3v1.2a4.3 4.3 0 0 0 4.3 4.1M18 5h3v1.2a4.3 4.3 0 0 1-4.3 4.1" fill="none" stroke="#0b1326" stroke-width="2"/><path d="M6 3h12v4.5a6 6 0 0 1-12 0z" fill="#ffd23c" stroke="#0b1326" stroke-width="1.8" stroke-linejoin="round"/><path d="M10 13.2h4l1 3.8H9z" fill="#e8a41c" stroke="#0b1326" stroke-width="1.8" stroke-linejoin="round"/><rect x="7" y="17" width="10" height="4.2" rx="1" fill="#8a5a20" stroke="#0b1326" stroke-width="1.8"/></svg><small>Cammino</small><i class="bang" id="roadSideBang" hidden>!</i></button>
-          <button class="qbtn" id="passBtn" aria-label="Pass di stagione"><svg viewBox="0 0 32 32" aria-hidden="true"><path d="M5 11l5 5 6-9 6 9 5-5-2 15H7z" fill="#ffd84a" stroke="#0b1326" stroke-width="2.2" stroke-linejoin="round"/><rect x="7" y="24" width="18" height="4" rx="1.5" fill="#c48ae8" stroke="#0b1326" stroke-width="2.2"/><circle cx="16" cy="6" r="2.2" fill="#e5484d" stroke="#0b1326" stroke-width="1.6"/></svg><small>Pass</small><em class="plvl" id="passLvl">0</em><i class="bang" id="passBang" hidden>!</i></button>
-        </div>
-        <div class="homeBottom">
-          <button class="enter" id="playBtn">Entra</button>
-          <div class="quick"><div class="slots mini" id="slots"></div></div>
-          <small id="chestHint" hidden></small>
+        <div class="chapCard" id="chapCard" role="button" tabindex="0" aria-label="Cammino delle coppe"></div>
+        <div class="playRow">
+          <button class="modeBtn" id="chalBtn" aria-label="Sfida del giorno"></button>
+          <button class="enter" id="playBtn"><span>Gioca</span></button>
+          <button class="modeBtn" id="abyssBtn" aria-label="L'Abisso"></button>
         </div>
       </section>
       <section id="tabHero" hidden>
+        <div class="pageHead"><h2>Eroi</h2><small>Scegli chi scende nella cripta</small></div>
         <div class="showcase">
-          <div class="hBanner"><span class="ribbon" id="hName"></span><span class="power" title="Potenza"><svg viewBox="0 0 20 20" aria-hidden="true"><path d="M10 1l2.6 5.6 6 .7-4.5 4.1 1.2 6L10 14.4 4.7 17.4l1.2-6L1.4 7.3l6-.7z" fill="#ffc93c" stroke="#1b1612" stroke-width="1.6" stroke-linejoin="round"/></svg><b id="hPower">0</b></span></div>
+          <div class="hBanner"><span class="ribbon" id="hName"></span></div>
           <div class="stage" id="stage">
-            <div class="eqcol" id="eqL"></div>
             <canvas id="heroCv" width="360" height="360"></canvas>
-            <div class="eqcol" id="eqR"></div>
             <button class="harr l" data-h="-1" aria-label="Eroe precedente">‹</button>
             <button class="harr r" data-h="1" aria-label="Eroe successivo">›</button>
           </div>
           <div class="hdots" id="hDots"></div>
+          <span class="power" title="Potenza"><svg viewBox="0 0 20 20" aria-hidden="true"><path d="M10 1l2.6 5.6 6 .7-4.5 4.1 1.2 6L10 14.4 4.7 17.4l1.2-6L1.4 7.3l6-.7z" fill="#ffc93c" stroke="#1b1612" stroke-width="1.6" stroke-linejoin="round"/></svg><b id="hPower">0</b></span>
           <p class="hinfo" id="heroInfo"></p>
           <div id="hAct"></div>
         </div>
         <div class="statChips" id="stats"></div>
-        <div class="seg tabsSeg" id="heroSeg"><button data-v="coll" class="on">Collezione</button><button data-v="tal">Talenti</button><button data-v="set">Set</button><button data-v="pet">Compagni</button></div>
-        <div id="vColl"><p class="sub" id="collCount"></p><div class="coll" id="coll"></div></div>
-        <div id="vTal" hidden><p class="sub">Bonus permanenti che valgono in ogni partita, con ogni eroe.</p><div class="talents" id="talents"></div></div>
-        <div id="vSet" hidden><p class="sub">Indossa due pezzi dello stesso set per sbloccare il bonus.</p><div class="sets" id="setBox"></div></div>
-        <div id="vPet" hidden><p class="sub">Puoi portare fino a 2 compagni: ti seguono in ogni stanza e combattono con te. Lo sblocchi con le sue carte, che trovi nelle casse, oppure con le gemme. Con carte e oro sale di livello e colpisce più forte.</p><div class="pets" id="petBox"></div></div>
+        <div class="secTitle"><h3>Talenti</h3><small>Valgono per tutti gli eroi</small></div>
+        <div class="talents" id="talents"></div>
+      </section>
+      <section id="tabGear" hidden>
+        <div class="pageHead"><h2>Armeria</h2><small id="gearPow"></small></div>
+        <div class="gearStage" id="gearStage">
+          <div class="eqcol" id="eqL"></div>
+          <canvas id="gearCv" width="320" height="320"></canvas>
+          <div class="eqcol" id="eqR"></div>
+        </div>
+        <div class="secTitle"><h3>Collezione</h3><small id="collCount"></small></div>
+        <div class="coll" id="coll"></div>
+        <div class="secTitle"><h3>Set</h3><small>Indossa i due pezzi</small></div>
+        <div class="sets" id="setBox"></div>
+      </section>
+      <section id="tabPets" hidden>
+        <div class="pageHead"><h2>Compagni</h2><small id="petHead"></small></div>
+        <p class="sub">Ti seguono in ogni stanza e combattono con te. Li sblocchi con le loro carte, che trovi nelle casse e nella ruota, oppure con i cristalli. Con carte e oro salgono di livello.</p>
+        <div class="pets" id="petBox"></div>
       </section>
       <section id="tabShop" hidden>
-        <div class="spage" id="spDaily"><div class="cap"><h3>Negozio giornaliero</h3></div><p class="refresh" id="dealT"></p><div class="daily" id="daily"></div></div>
-        <div class="spage" id="spOffers" hidden><div class="cap"><h3>Offerte speciali</h3></div><p class="refresh">Ogni offerta si compra una volta sola</p><div class="packs" id="packs"></div><div class="pdots" id="pdots"></div></div>
-        <div class="spage" id="spChests" hidden><div class="cap"><h3>Casse</h3></div><p class="refresh">Si aprono subito</p><div class="shop" id="shop"></div></div>
-        <div class="spage" id="spGold" hidden><div class="cap" id="goldSec"><h3>Oro</h3></div><p class="refresh">Si paga con le gemme</p><div class="goldPacks" id="goldPacks"></div></div>
+        <div class="pageHead"><h2>Bottega</h2><small>Tutto per la tua avventura</small></div>
+        <div class="spage" id="spOffers"><div class="secTitle"><h3>Offerte speciali</h3><small>Una volta sola</small></div><div class="packs" id="packs"></div><div class="pdots" id="pdots"></div></div>
+        <div class="spage" id="spDaily"><div class="secTitle"><h3>Negozio del giorno</h3><small id="dealT"></small></div><div class="daily" id="daily"></div></div>
+        <div class="spage" id="spChests"><div class="secTitle"><h3>Casse</h3><small>Si aprono subito</small></div><div class="shop" id="shop"></div></div>
+        <div class="spage" id="spGold"><div class="secTitle" id="goldSec"><h3>Oro</h3><small>Si paga con i cristalli</small></div><div class="goldPacks" id="goldPacks"></div></div>
       </section>
       <section id="tabRoad" hidden>
-        <div class="cap"><h3>Cammino delle coppe</h3></div>
+        <div class="pageHead back"><button class="backBtn" data-back="1" aria-label="Indietro">‹</button><h2>Cammino delle coppe</h2></div>
         <div class="roadHead" id="roadHead"></div>
         <div class="road" id="road"></div>
       </section>
       <section id="tabProfile" hidden>
+        <div class="pageHead back"><button class="backBtn" data-back="1" aria-label="Indietro">‹</button><h2>Profilo</h2></div>
         <div class="pcard" id="pcard">
           <div class="avatar" id="avatar"><canvas id="avCv" width="200" height="200"></canvas></div>
           <div class="pmain"><h2 id="pName"></h2><span class="ptitle" id="pTitle"></span>
             <span class="power"><svg viewBox="0 0 20 20" aria-hidden="true"><path d="M10 1l2.6 5.6 6 .7-4.5 4.1 1.2 6L10 14.4 4.7 17.4l1.2-6L1.4 7.3l6-.7z" fill="#ffc93c" stroke="#1b1612" stroke-width="1.6" stroke-linejoin="round"/></svg><b id="pPower">0</b></span></div>
-          <div class="pbtns"><button class="gearBtn" id="gearBtn" aria-label="Impostazioni e guida"><svg viewBox="0 0 32 32" aria-hidden="true"><path d="M16 4l2.6 3.4 4.2-1.1.6 4.3 4 1.6-1.9 3.8 1.9 3.8-4 1.6-.6 4.3-4.2-1.1L16 28l-2.6-3.4-4.2 1.1-.6-4.3-4-1.6L6.5 16l-1.9-3.8 4-1.6.6-4.3 4.2 1.1z" fill="currentColor" stroke="#1b1612" stroke-width="2" stroke-linejoin="round"/><circle cx="16" cy="16" r="4.5" fill="#1b1612"/></svg></button><button class="gearBtn" id="guideBtn" aria-label="Guida del gioco"><svg viewBox="0 0 32 32" aria-hidden="true"><path d="M5 6c4-2 8-2 11 1 3-3 7-3 11-1v20c-4-2-8-2-11 1-3-3-7-3-11-1z" fill="currentColor" stroke="#1b1612" stroke-width="2.2" stroke-linejoin="round"/><path d="M16 7v20" stroke="#1b1612" stroke-width="2"/></svg></button></div>
+          <div class="pbtns"><button class="gearBtn" id="gearBtn" aria-label="Impostazioni"><svg viewBox="0 0 32 32" aria-hidden="true"><path d="M16 4l2.6 3.4 4.2-1.1.6 4.3 4 1.6-1.9 3.8 1.9 3.8-4 1.6-.6 4.3-4.2-1.1L16 28l-2.6-3.4-4.2 1.1-.6-4.3-4-1.6L6.5 16l-1.9-3.8 4-1.6.6-4.3 4.2 1.1z" fill="currentColor" stroke="#1b1612" stroke-width="2" stroke-linejoin="round"/><circle cx="16" cy="16" r="4.5" fill="#1b1612"/></svg></button><button class="gearBtn" id="guideBtn" aria-label="Guida del gioco"><svg viewBox="0 0 32 32" aria-hidden="true"><path d="M5 6c4-2 8-2 11 1 3-3 7-3 11-1v20c-4-2-8-2-11 1-3-3-7-3-11-1z" fill="currentColor" stroke="#1b1612" stroke-width="2.2" stroke-linejoin="round"/><path d="M16 7v20" stroke="#1b1612" stroke-width="2"/></svg></button></div>
           <div class="pstats" id="pStats"></div>
         </div>
         <div class="seg tabsSeg" id="profSeg"><button data-v="ach" class="on">Traguardi</button><button data-v="lb">Abisso</button><button data-v="look">Aspetto</button></div>
@@ -1299,13 +1530,12 @@ html,body{height:100%;margin:0;background:var(--ink);color:var(--parch);overflow
         <div id="vLook" hidden><h3 class="h3">Titolo</h3><div class="chips" id="titles"></div><h3 class="h3">Cornice</h3><div class="frames" id="frames"></div><h3 class="h3">Mantello</h3><div class="chips" id="skins"></div></div>
       </section>
     </div>
-    <nav id="shopTabs" hidden><button data-sp="spDaily" class="on">Giornaliero<i class="bang" id="spbDaily" hidden>!</i></button><button data-sp="spOffers">Offerte<i class="bang" id="spbOffers" hidden>!</i></button><button data-sp="spChests">Casse</button><button data-sp="spGold">Oro</button></nav>
     <nav id="tabs">
-      <button data-tab="tabShop"><svg viewBox="0 0 32 32" aria-hidden="true"><path d="M5 14h22v13H5z" fill="currentColor" stroke="#1b1612" stroke-width="2.2" stroke-linejoin="round"/><path d="M5 14c0-5 4-8 11-8s11 3 11 8" fill="currentColor" stroke="#1b1612" stroke-width="2.2"/><path d="M11 7v20M21 7v20" stroke="#1b1612" stroke-width="2.2"/><rect x="13.5" y="12" width="5" height="6" rx="1" fill="#1b1612"/></svg><span>Bottega</span><i id="shopBadge" class="dot" hidden></i></button>
-      <button data-tab="tabHero"><svg viewBox="0 0 32 32" aria-hidden="true"><path d="M6 17c0-7 4-12 10-12s10 5 10 12v6l-4 2v-7H10v7l-4-2z" fill="currentColor" stroke="#1b1612" stroke-width="2.2" stroke-linejoin="round"/><path d="M16 5v13M10 18h12" stroke="#1b1612" stroke-width="2.2"/></svg><span>Eroe</span><i id="heroBadge" class="dot" hidden></i></button>
-      <button data-tab="tabPlay" class="on"><svg viewBox="0 0 32 32" aria-hidden="true"><path d="M5 28V14a11 11 0 0 1 22 0v14z" fill="currentColor" stroke="#1b1612" stroke-width="2.2" stroke-linejoin="round"/><path d="M10 28V15a6 6 0 0 1 12 0v13z" fill="#1b1612"/><path d="M13 28v-6M19 28v-6M16 28v-9" stroke="currentColor" stroke-width="1.8"/></svg><span>Avventura</span></button>
-      <button data-tab="tabRoad"><svg viewBox="0 0 32 32" aria-hidden="true"><path d="M9 6H4v2a6 6 0 0 0 6 6M23 6h5v2a6 6 0 0 1-6 6" fill="none" stroke="#1b1612" stroke-width="2.4"/><path d="M9 4h14v7a7 7 0 0 1-14 0z" fill="currentColor" stroke="#1b1612" stroke-width="2.2" stroke-linejoin="round"/><path d="M14 18h4l1 5h-6z" fill="currentColor" stroke="#1b1612" stroke-width="2.2" stroke-linejoin="round"/><rect x="9" y="23" width="14" height="5" rx="1.5" fill="currentColor" stroke="#1b1612" stroke-width="2.2"/></svg><span>Cammino</span><i id="roadBadge" class="dot" hidden></i></button>
-      <button data-tab="tabProfile"><svg viewBox="0 0 32 32" aria-hidden="true"><path d="M8 4h16v20l-8-4-8 4z" fill="currentColor" stroke="#1b1612" stroke-width="2.2" stroke-linejoin="round"/><path d="M16 9l1.6 3.3 3.6.5-2.6 2.5.6 3.6-3.2-1.7-3.2 1.7.6-3.6-2.6-2.5 3.6-.5z" fill="#1b1612"/></svg><span>Profilo</span></button>
+      <button data-tab="tabHero"><svg viewBox="0 0 32 32" aria-hidden="true"><path d="M16 3c-6 0-10 5-10 11v4l-2 9h24l-2-9v-4c0-6-4-11-10-11z" fill="currentColor" stroke="#191714" stroke-width="2.2" stroke-linejoin="round"/><path d="M10 17c0-4 2.7-7.4 6-7.4s6 3.4 6 7.4v3H10z" fill="#191714"/><circle cx="13.4" cy="16.6" r="1.6" fill="#fff"/><circle cx="18.6" cy="16.6" r="1.6" fill="#fff"/></svg><span>Eroi</span><i id="heroBadge" class="dot" hidden></i></button>
+      <button data-tab="tabGear"><svg viewBox="0 0 32 32" aria-hidden="true"><path d="M16 3.5l10.5 3.2v8.2c0 7.2-4.6 11.4-10.5 13.6C10.1 26.3 5.5 22.1 5.5 14.9V6.7z" fill="currentColor" stroke="#191714" stroke-width="2.2" stroke-linejoin="round"/><path d="M16 8v16M10.5 13.5h11" stroke="#191714" stroke-width="2.4" stroke-linecap="round"/></svg><span>Armeria</span><i id="gearBadge" class="dot" hidden></i></button>
+      <button data-tab="tabPlay" class="on"><svg viewBox="0 0 32 32" aria-hidden="true"><path d="M5 28V14a11 11 0 0 1 22 0v14z" fill="currentColor" stroke="#191714" stroke-width="2.2" stroke-linejoin="round"/><path d="M10 28V15a6 6 0 0 1 12 0v13z" fill="#191714"/><path d="M13 28v-6M19 28v-6M16 28v-9" stroke="currentColor" stroke-width="1.8"/></svg><span>Gioca</span></button>
+      <button data-tab="tabPets"><svg viewBox="0 0 32 32" aria-hidden="true"><path d="M12.5 9.5C10.5 6 11.6 3.4 14 3c.4 2.6-.2 4.6-1.5 6.5zM19.5 9.5C21.5 6 20.4 3.4 18 3c-.4 2.6.2 4.6 1.5 6.5z" fill="currentColor" stroke="#191714" stroke-width="1.8" stroke-linejoin="round"/><path d="M16 8.5c-6.4 0-11 4.4-11 9.8S9.2 28 16 28s11-4.3 11-9.7-4.6-9.8-11-9.8z" fill="currentColor" stroke="#191714" stroke-width="2.2"/><circle cx="12.4" cy="17.4" r="2.1" fill="#191714"/><circle cx="19.6" cy="17.4" r="2.1" fill="#191714"/><path d="M14 22q2 1.7 4 0" fill="none" stroke="#191714" stroke-width="1.8" stroke-linecap="round"/></svg><span>Compagni</span><i id="petBadge" class="dot" hidden></i></button>
+      <button data-tab="tabShop"><svg viewBox="0 0 32 32" aria-hidden="true"><path d="M5 14h22v13H5z" fill="currentColor" stroke="#191714" stroke-width="2.2" stroke-linejoin="round"/><path d="M5 14c0-5 4-8 11-8s11 3 11 8" fill="currentColor" stroke="#191714" stroke-width="2.2"/><path d="M11 7v20M21 7v20" stroke="#191714" stroke-width="2.2"/><rect x="13.5" y="12" width="5" height="6" rx="1" fill="#191714"/></svg><span>Bottega</span><i id="shopBadge" class="dot" hidden></i></button>
     </nav>
   </div>
   <div class="screen sheetScr" id="sheetScr" hidden><div class="sheet" id="sheet" role="dialog" aria-modal="true"></div></div>
@@ -1348,7 +1578,9 @@ html,body{height:100%;margin:0;background:var(--ink);color:var(--parch);overflow
       <button class="btn go" id="rvYes"></button><button class="rvNo" id="rvNo">No, grazie</button></div>
   </div>
   <div class="screen" id="whScr" hidden>
-    <div class="whBox"><h2>Ruota della fortuna</h2><p>Il boss è caduto: tenta la sorte!</p><canvas id="whCv" width="560" height="600"></canvas><div class="whRes" id="whRes"></div><button class="btn go" id="whGo">Gira!</button></div>
+    <div class="whBox"><button class="whX" id="whX" aria-label="Chiudi">✕</button><h2>Ruota della fortuna</h2><p id="whSub">Un giro gratis ogni giorno!</p><canvas id="whCv" width="560" height="600"></canvas><div class="whRes" id="whRes"></div>
+      <div class="whBtns"><button class="btn go" id="whGo">Gira gratis!</button><button class="btn alt" id="whAd" hidden></button><button class="btn" id="whGem" hidden></button></div>
+      <div class="whAd" id="whAdScr" hidden><b>Pubblicità</b><span id="whAdT">5</span><small>Alla fine del video la ruota gira per te</small></div></div>
   </div>
 
   <div class="screen" id="pauseScr" hidden>
@@ -1371,7 +1603,7 @@ html,body{height:100%;margin:0;background:var(--ink);color:var(--parch);overflow
         <div><b id="eRoom">1</b><small>Stanza</small></div>
         <div><b id="eKills">0</b><small>Nemici</small></div>
         <div><b id="eGold">0</b><small>Oro</small></div>
-        <div><b id="eGems">0</b><small>Gemme</small></div>
+        <div><b id="eGems">0</b><small>Cristalli</small></div>
       </div>
       <div id="endReward"></div>
       <button class="btn" id="againBtn">Gioca ancora</button>
@@ -2008,16 +2240,6 @@ function drawWheel(now){const c=$('whCv'),x=c.getContext('2d'),W=c.width,H=c.hei
 function whLoop(now){if($('whScr').hidden){WH.raf=0;return}drawWheel(now);WH.raf=requestAnimationFrame(whLoop)}
 function whBurst(jack){const c=$('whCv'),cx=c.width/2,cy=c.height/2+22,cols=jack?['#fff6b0','#ffd84a','#ffffff','#ff8a3c']:['#ffd84a','#ff6a8a','#5fd0f0','#9df07a','#c98af7','#ffffff'];
   for(let i=0;i<(jack?140:80);i++){const a=rand(0,TAU),sp=rand(200,jack?760:560);WH.parts.push({x:cx,y:cy,vx:Math.cos(a)*sp,vy:Math.sin(a)*sp-200,g:900,t:rand(1,1.8),c:pk(cols),r:rand(0,6),vr:rand(-12,12),star:Math.random()<.35})}}
-function openWheel(){modal=true;paused=true;clearTimeout(bossDown.t);$('bossDown').hidden=true;WH.a=0;WH.spin=false;WH.win=-1;WH.parts=[];$('whRes').innerHTML='';$('whRes').className='whRes';$('whGo').disabled=false;$('whGo').textContent='Gira!';$('whGo').classList.add('pulse');$('whScr').hidden=false;sfx('shimmer',2);if(!WH.raf)WH.raf=requestAnimationFrame(whLoop)}
-$('whGo').onclick=()=>{if(WH.spin)return;if(WH.win>=0){$('whScr').hidden=true;const sk=!$('skScr').hidden;modal=sk;paused=sk;return}
-  WH.spin=true;$('whGo').disabled=true;$('whGo').classList.remove('pulse');sfx('dash');
-  const n=WHEEL.length,tot=WHEEL.reduce((a,w)=>a+w.w,0);let r=Math.random()*tot,k=0;for(;k<n;k++){r-=WHEEL[k].w;if(r<0)break}k=Math.min(k,n-1);
-  const start=WH.a,off=(Math.random()-.5)*TAU/n*.7,target=Math.ceil(start/TAU)*TAU+TAU*6-k/n*TAU+off,dur=4600,t0=performance.now();let last=Math.floor((start*n/TAU)+.5);
-  const step=now=>{const q=Math.min(1,(now-t0)/dur),e=q<.08?q*q/.16:1-Math.pow(1-(q-.04)/.96,3.2);WH.a=start+(target-start)*Math.max(0,Math.min(1,e));
-    const peg=Math.floor(WH.a*n/TAU+.5);if(peg!==last){last=peg;WH.flap=1;sfx('click')}
-    if(q<1)requestAnimationFrame(step);else{WH.spin=false;WH.win=k;const w=WHEEL[k],res=w.f();whBurst(w.jack);
-      $('whRes').innerHTML=`<span class="whPrize${w.jack?' jack':''}" style="--a:${w.c[0]};--b:${w.c[1]}"><b>${w.jack?'JACKPOT!':'Hai vinto'}</b>${res}</span>`;
-      sfx(w.jack?'levelup':'upgrade');if(w.jack){shake(4);setTimeout(()=>sfx('coin'),150);setTimeout(()=>sfx('gem'),300)}vib(w.jack?[60,40,60,40,160]:[30,30,60]);$('whGo').disabled=false;$('whGo').textContent='Continua'}};requestAnimationFrame(step)};
 function closeSkills(){$('skScr').hidden=true;const wh=!$('whScr').hidden;modal=wh;paused=wh;if(skMode==='altar'&&altarLeft===2)altarLeft=0;if(P.pendingLv>0)G.lvlT=.3}
 function pick(i){if(!modal||!offer[i])return;const s=offer[i];
   if(skMode==='shop'){const o=G.shopOffer[i];if(G.shopSold[s.id]||G.gold<o.price)return;G.gold-=o.price;G.shopSold[s.id]=1;s.f();P.skills[s.id]=(P.skills[s.id]||0)+1;sfx('upgrade');openSkills('shop',true);return}
@@ -2099,14 +2321,14 @@ const ARENAS=[
   {t:300, n:'Cuore del Vulcano',    ch:2,diff:1,   col:'#ff8a3c',tint:'',d:'La Salamandra di Lava e il Fabbro Infernale.'},
   {t:700, n:'Palude delle Lucciole',ch:3,diff:1,   col:'#c8f04a',tint:'',d:"Il Re Rospo e l'Idra della Palude."},
   {t:1200,n:'Picchi di Brina',      ch:4,diff:1,   col:'#9fe6ff',tint:'',d:'Lo Yeti delle Vette e la Regina dei Ghiacci.'},
-  {t:1800,n:'Cripta Risvegliata',   ch:1,diff:1.7, col:'#c48ae8',tint:'hue-rotate(235deg) saturate(1.15)',d:'Il Golem e la Strega, più forti. Oro +100%.'},
-  {t:2500,n:'Vulcano Furioso',      ch:2,diff:1.75,col:'#ff5a3c',tint:'saturate(1.5) hue-rotate(-12deg) brightness(1.05)',d:'Salamandra e Fabbro infuriati. Oro +125%.'},
-  {t:3300,n:'Palude Avvelenata',    ch:3,diff:1.8, col:'#b06ad8',tint:'hue-rotate(70deg) saturate(1.25)',d:'Il veleno ha preso tutta la palude. Oro +150%.'},
-  {t:4200,n:'Ghiacciaio Eterno',    ch:4,diff:1.85,col:'#7f9cff',tint:'hue-rotate(25deg) saturate(1.3) brightness(.95)',d:'Il ghiaccio che non si scioglie mai. Oro +175%.'},
-  {t:5200,n:'Cripta delle Ombre',   ch:1,diff:2.9, col:'#6a8cff',tint:'brightness(.78) contrast(1.2) saturate(.7) hue-rotate(200deg)',d:'Le ombre hanno occhi. Oro +200%.'},
-  {t:6400,n:'Forgia degli Dei',     ch:2,diff:3.2, col:'#7ff0c0',tint:'hue-rotate(110deg) saturate(1.5) brightness(1.08)',d:'Il metallo canta, gli dei osservano. Oro +225%.'},
-  {t:7800,n:'Palude Maledetta',     ch:3,diff:3.6, col:'#e07ae8',tint:'hue-rotate(250deg) saturate(1.3) brightness(.9)',d:'Nessuno torna da qui da cent’anni. Oro +250%.'},
-  {t:10000,n:'Vetta di Mossbound',  ch:4,diff:4.3, col:'#ffd84a',tint:'sepia(.35) saturate(1.6) brightness(1.08)',d:'La cima del mondo. Solo i migliori arrivano qui. Oro +275%.'}];
+  {t:1800,n:'Cripta Risvegliata',   ch:1,diff:1.7, col:'#c48ae8',tint:'hue-rotate(235deg) saturate(1.15)',d:'Il Golem e la Strega, più forti. Oro +48%.'},
+  {t:2500,n:'Vulcano Furioso',      ch:2,diff:1.75,col:'#ff5a3c',tint:'saturate(1.5) hue-rotate(-12deg) brightness(1.05)',d:'Salamandra e Fabbro infuriati. Oro +60%.'},
+  {t:3300,n:'Palude Avvelenata',    ch:3,diff:1.8, col:'#b06ad8',tint:'hue-rotate(70deg) saturate(1.25)',d:'Il veleno ha preso tutta la palude. Oro +72%.'},
+  {t:4200,n:'Ghiacciaio Eterno',    ch:4,diff:1.85,col:'#7f9cff',tint:'hue-rotate(25deg) saturate(1.3) brightness(.95)',d:'Il ghiaccio che non si scioglie mai. Oro +84%.'},
+  {t:5200,n:'Cripta delle Ombre',   ch:1,diff:2.9, col:'#6a8cff',tint:'brightness(.78) contrast(1.2) saturate(.7) hue-rotate(200deg)',d:'Le ombre hanno occhi. Oro +96%.'},
+  {t:6400,n:'Forgia degli Dei',     ch:2,diff:3.2, col:'#7ff0c0',tint:'hue-rotate(110deg) saturate(1.5) brightness(1.08)',d:'Il metallo canta, gli dei osservano. Oro +108%.'},
+  {t:7800,n:'Palude Maledetta',     ch:3,diff:3.6, col:'#e07ae8',tint:'hue-rotate(250deg) saturate(1.3) brightness(.9)',d:'Nessuno torna da qui da cent’anni. Oro +120%.'},
+  {t:10000,n:'Vetta di Mossbound',  ch:4,diff:4.3, col:'#ffd84a',tint:'sepia(.35) saturate(1.6) brightness(1.08)',d:'La cima del mondo. Solo i migliori arrivano qui. Oro +132%.'}];
 const TROPHY='<svg class="tro" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 5H3v1.2a4.3 4.3 0 0 0 4.3 4.1M18 5h3v1.2a4.3 4.3 0 0 1-4.3 4.1" fill="none" stroke="#0b1326" stroke-width="2"/><path d="M6 3h12v4.5a6 6 0 0 1-12 0z" fill="#ffd23c" stroke="#0b1326" stroke-width="1.8" stroke-linejoin="round"/><path d="M10 13.2h4l1 3.8H9z" fill="#e8a41c" stroke="#0b1326" stroke-width="1.8" stroke-linejoin="round"/><rect x="7" y="17" width="10" height="4.2" rx="1" fill="#8a5a20" stroke="#0b1326" stroke-width="1.8"/><path d="M8.8 5.2v2.2a3.4 3.4 0 0 0 1.8 2.9" stroke="#fff6c0" stroke-width="1.4" fill="none" stroke-linecap="round"/></svg>';
 const LOCK='<svg class="lk" viewBox="0 0 20 20" aria-hidden="true"><path d="M6 9V7a4 4 0 0 1 8 0v2" fill="none" stroke="#0b1326" stroke-width="2.4"/><rect x="4" y="9" width="12" height="9" rx="2" fill="#9aa6b8" stroke="#0b1326" stroke-width="1.8"/></svg>';
 function arenaIdx(t){let i=0;for(let k=0;k<ARENAS.length;k++)if(t>=ARENAS[k].t)i=k;return i}
@@ -2120,7 +2342,7 @@ function roadList(){if(roadList.c)return roadList.c;const L=[];for(let t=100;t<=
   if(t===500)r={k:'petc',v:'lucciola',n:10};else if(ai>0)r={k:'chest',v:'oro',arena:ai};else{const k=(t/100)%3;r=k===1?{k:'gold',v:80+Math.floor(t/500)*60}:k===2?{k:'gems',v:5+Math.floor(t/1500)*5}:{k:'chest',v:t<1000?'legno':t<3000?'argento':'oro'}}
   L.push({t,...r})}return roadList.c=L}
 const roadReady=()=>roadList().filter(n=>(SAVE.trBest||0)>=n.t&&!SAVE.road[n.t]).length;
-function rewardLabel(n){return n.k==='petc'?`<img class="rpet" src="${petIcon(n.v)}" alt="">${n.n} carte ${PET_BY[n.v].n}`:n.k==='pet'?`<img class="rpet" src="${petIcon(n.v)}" alt="">Compagno: ${PET_BY[n.v].n}`:n.k==='gold'?`<i class="coin"></i>${n.v} oro`:n.k==='gems'?`<i class="gemS"></i>${n.v} gemme`:CHESTS[n.v].n}
+function rewardLabel(n){return n.k==='petc'?`<img class="rpet" src="${petIcon(n.v)}" alt="">${n.n} carte ${PET_BY[n.v].n}`:n.k==='pet'?`<img class="rpet" src="${petIcon(n.v)}" alt="">Compagno: ${PET_BY[n.v].n}`:n.k==='gold'?`<i class="coin"></i>${n.v} oro`:n.k==='gems'?`<i class="gemS"></i>${n.v} cristalli`:CHESTS[n.v].n}
 function fillRoad(){const T=SAVE.trophies||0,B=SAVE.trBest||0,L=roadList().reverse();let html=`<h2>Cammino delle coppe</h2><p class="lead">Hai ${TROPHY}<b>${T}</b> coppe, record ${B}. I premi si sbloccano con il tuo record.</p><div class="road">`;
   let placed=false;
   for(const n of L){const st=SAVE.road[n.t]?'done':B>=n.t?'ready':'lock';
@@ -2202,28 +2424,14 @@ const toastEl=$('toast');let toastT=null;
 function toast(t){toastEl.textContent=t;toastEl.style.bottom=$('chestScr').hidden?'':'150px';toastEl.classList.add('show');clearTimeout(toastT);toastT=setTimeout(()=>toastEl.classList.remove('show'),1800)}
 function renderGold(){tweenNum($('mGold'),SAVE.gold);tweenNum($('mGems'),SAVE.gems||0);renderTop()}
 // top bar: the hero you play with, its power, the wallet
-function renderTop(){try{const h=HERO_BY[SAVE.hero]||HEROES[0];$('tbName').textContent=SAVE.pname||h.n;$('tbWho').querySelector('small').innerHTML=TROPHY+(SAVE.trophies||0).toLocaleString('it-IT');
-  const k=h.id+'|'+JSON.stringify(SAVE.eq);if(renderTop.k!==k){renderTop.k=k;drawPortrait($('tbAv'),heroStyle(),Math.PI*.55,2.4)}}catch(e){}}
+function renderTop(){try{const h=HERO_BY[SAVE.hero]||HEROES[0],A=acct(),N=acctNeed(A.lvl),F=FRAMES[SAVE.frame]||FRAMES.base;$('tbName').textContent='Liv. '+A.lvl;$('tbLv').textContent=A.lvl;
+  $('tbXp').style.width=Math.min(100,A.xp/N*100)+'%';$('tbXpT').textContent=A.xp+'/'+N;$('tbWho').style.setProperty('--f1',F.c[0]);
+  const k=h.id+'|'+JSON.stringify(SAVE.eq)+'|'+(SAVE.skin||'');if(renderTop.k!==k){renderTop.k=k;drawPortrait($('tbAv'),heroStyle(),Math.PI*.55,2.4)}}catch(e){}}
 $('tbWho').onclick=()=>{sfx('ui');setTab('tabProfile')};
 $('topbar').addEventListener('click',e=>{const b=e.target.closest('.plus');if(!b)return;sfx('ui');
   if(b.dataset.plus==='gold'){setTab('tabShop');setShopPage('spGold')}
-  else toast('Le gemme si trovano rompendo i cristalli nelle stanze')});
+  else openSheet('gems')});
 let lastSlotsHTML='';
-function renderPlay(){
-  renderModes();renderFree();renderMissions();
-  const html=SAVE.slots.map((s,i)=>{if(!s)return '<div class="slot empty"><span>Vuoto</span></div>';
-    const st=slotState(s),c=CHESTS[s.type];let lab;
-    if(st==='ready')lab='<b>Apri!</b><small>&nbsp;</small>';
-    else if(st==='unlocking')lab=`<b>${fmtT(s.end-Date.now())}</b><small>${s.confirm?'Tocca ancora: '+skipCost(s)+' oro':'Apri ora: '+skipCost(s)+' oro'}</small>`;
-    else lab=anyUnlocking()?`<b>In attesa</b><small>${fmtT(c.time*1000)}</small>`:`<b>Sblocca</b><small>${fmtT(c.time*1000)}</small>`;
-    return `<button class="slot ${st}" data-i="${i}" aria-label="${c.n}">${chestSVG(s.type,false)}${lab}</button>`}).join('');
-  if(html!==lastSlotsHTML){$('slots').innerHTML=html;lastSlotsHTML=html}
-}
-// tapping the crypt in the background opens the trophy road
-$('tabPlay').addEventListener('click',e=>{if(!$('menu').classList.contains('home')||SAVE.sel==='inf'||SAVE.sel==='daily'||!CAMP.tf)return;if(e.target.closest('button,.homeBottom,.marr'))return;
-  const r=campCv.getBoundingClientRect(),T=CAMP.tf,bx=((e.clientX-r.left)*T.dpr-T.ox)/T.u,by=((e.clientY-r.top)*T.dpr-T.oy)/T.u;
-  if(bx>60&&bx<300&&by>18&&by<178){sfx('ui');setTab('tabRoad')}});
-$('slots').addEventListener('pointerdown',e=>{const b=e.target.closest('.slot[data-i]');if(!b)return;e.preventDefault();tapSlot(+b.dataset.i)});
 function tapSlot(i){const s=SAVE.slots[i];if(!s)return;const st=slotState(s);
   if(st==='ready'){SAVE.slots[i]=null;save();renderPlay();openChest(s.type)}
   else if(st==='locked'){if(anyUnlocking()){toast('Puoi sbloccare una cassa alla volta');return}s.state='unlocking';s.end=Date.now()+CHESTS[s.type].time*1000;save();renderPlay()}
@@ -2267,8 +2475,6 @@ function openItem(id){
     else if(act==='up'){o.cards-=need;o.lvl++;SAVE.gold-=cost;save();renderGold();renderHero();openItem(id);toast(`${it.n}: livello ${o.lvl}!`);sfx('upgrade')}};
 }
 $('shop').addEventListener('click',e=>{const b=e.target.closest('[data-buy]');if(!b||b.disabled)return;const c=CHESTS[b.dataset.buy];if(SAVE.gold<c.price)return;SAVE.gold-=c.price;save();renderGold();renderShop();openChest(b.dataset.buy)});
-function setTab(id){for(const t of ['tabHero','tabPlay','tabShop','tabRoad','tabProfile'])$(t).hidden=t!==id;$('shopTabs').hidden=id!=='tabShop';{const s=$(id);s.classList.remove('tabIn');void s.offsetWidth;s.classList.add('tabIn')}if(typeof coachOn!=='undefined'&&coachOn){$('coach').hidden=true;coachOn=false}$('menu').classList.toggle('home',id==='tabPlay');document.querySelectorAll('#tabs button').forEach(b=>b.classList.toggle('on',b.dataset.tab===id));
-  if(id==='tabHero')renderHero();if(id==='tabShop'){setShopPage(shopPage);renderShop()}if(id==='tabRoad')renderRoad();if(id==='tabProfile')renderProfile();if(id==='tabPlay')renderPlay();$('menuMain').scrollTop=0}
 document.querySelectorAll('#tabs button').forEach(b=>b.onclick=()=>{sfx('ui');setTab(b.dataset.tab)});
 // ---------- chest opening sequence ----------
 const TIER={
@@ -2656,7 +2862,7 @@ function killE(e,noLoot){
   if(e.type==='mushroom')addZone(e.x,e.y,32,2.5);
   if(e.type==='magmaslime')addZone(e.x,e.y,18,1.4,'fire');
   if(!noLoot&&!isBoss(e.type)){const t=G.t||0;G.kc=t-(G.kcT??-9)<.9?(G.kc||1)+1:1;G.kcT=t;if(G.kc>=2)killStreak(G.kc)}
-  if(isBoss(e.type)){G.bossKills=(G.bossKills||0)+1;G.slowT=1.5;bossDown(ET[e.type].name);bossBarDie();rpArm();shake(10);sfx('boom');vfxBlast(e.x,e.y-20,'255,235,180',190,{sparks:44,debris:'stone',n:30,dust:24,cracks:70,fire:10});setTimeout(()=>{if(G&&G.fx)vfxBlast(e.x+rand(-30,30),e.y-30,'255,200,120',130,{sparks:26,dust:10})},260);G.eproj=[];G.bands=[];G.boulders=[];G.zones=[];G.meteors=[];G.lines=[];dustRing(e.x,e.y,24);
+  if(isBoss(e.type)){G.bossKills=(G.bossKills||0)+1;G.gemsRun=(G.gemsRun||0)+2;{const bx=e.x,by=e.y;setTimeout(()=>{if(G&&!G.ended&&G.texts)text(bx,by-70,'+2 cristalli','#9fe6ff',17)},900)}G.slowT=1.5;bossDown(ET[e.type].name);bossBarDie();rpArm();shake(10);sfx('boom');vfxBlast(e.x,e.y-20,'255,235,180',190,{sparks:44,debris:'stone',n:30,dust:24,cracks:70,fire:10});setTimeout(()=>{if(G&&G.fx)vfxBlast(e.x+rand(-30,30),e.y-30,'255,200,120',130,{sparks:26,dust:10})},260);G.eproj=[];G.bands=[];G.boulders=[];G.zones=[];G.meteors=[];G.lines=[];dustRing(e.x,e.y,24);
     for(const o of G.enemies)if(!o.dead&&o!==e)killE(o,true)}
 }
 function addZone(x,y,r,t,kind){G.zones.push({x,y,r,t,max:t,kind})}
@@ -2951,7 +3157,7 @@ function update(dt){
   // room flow
   AU.intT=INTRO.on||G.state==='play'&&G.enemies.length?1:.12;
   if(G.state==='play'&&G.enemies.length===0){const fin=G.mode!=='inf'&&G.room===ROOMS;if(!fin)sfx('clear');G.state='cleared';G.eproj=[];G.waves=[];G.bands=[];G.boulders=[];G.zones=[];G.meteors=[];G.lines=[];G.clearT=.9;onRoomClear();banner(fin?'Vittoria!':'Stanza ripulita')}
-  if(G.state==='cleared'&&G.clearT>0){G.clearT-=dt;if(G.clearT<=0){if(G.mode!=='inf'&&G.room===ROOMS&&!G.event)setTimeout(()=>afterReplay(()=>endRun(true)),400);else if(ccIsRoom()&&G.ccDone!==G.room)spawnTwinChests();else{if(isBossRoom(G.room)&&G.wheelAt!==G.room&&!G.event){G.wheelAt=G.room;setTimeout(()=>afterReplay(()=>{if(started&&!G.ended)openWheel()}),500)}G.door=true;banner('La porta è aperta');sfx('door');if(!$('bossBar').classList.contains('dying'))$('bossBar').hidden=true;if(AU.cur&&AU.cur.name==='golem'&&!isBossRoom(G.room))playMusic(musicFor(G.room))}}}
+  if(G.state==='cleared'&&G.clearT>0){G.clearT-=dt;if(G.clearT<=0){if(G.mode!=='inf'&&G.room===ROOMS&&!G.event)setTimeout(()=>afterReplay(()=>endRun(true)),400);else if(ccIsRoom()&&G.ccDone!==G.room)spawnTwinChests();else{G.door=true;banner('La porta è aperta');sfx('door');if(!$('bossBar').classList.contains('dying'))$('bossBar').hidden=true;if(AU.cur&&AU.cur.name==='golem'&&!isBossRoom(G.room))playMusic(musicFor(G.room))}}}
   if(G.door&&P.y<TOP-14&&G.state==='cleared'){G.state='trans';G.fadeDir=1;G.fade=0}
 }
 
@@ -2970,7 +3176,7 @@ function basis(face){const d=Q8(face),[v,f]=VIEWS[d],qa=d*Math.PI/4,lx=Math.cos(
   return{d,v,f,qa,lx,ly,la:Math.atan2(ly,lx),back:v==='n'||v==='n34',side:v==='side',front:v==='s'||v==='s34'}}
 
 // ---------- humanoid rig (hero, goblin, skeleton, witch) ----------
-const HERO={sc:1,body:'#2fb3a6',hood:'#23877d',skin:'#f2c9a0',foot:'#4a3626',foot2:'#3a2a1d',quiver:true,held:'bow',bowCol:'#a4703d',hoodTip:false,bighood:true,belt:'#8a5a20'};
+const HERO={sc:1,body:'#2fb3a6',hood:'#23877d',skin:'#f2c9a0',foot:'#4a3626',foot2:'#3a2a1d',quiver:true,held:'bow',bowCol:'#a4703d',hoodTip:false,bighood:false,belt:'#8a5a20'};
 const GOBLIN={sc:.95,body:'#a8443a',hood:'#7e2f28',skin:'#7bbf4a',foot:'#3d2a1d',ears:true,held:'bow',bowCol:'#6b4a2a',eyeCol:'#e5484d',belt:'#4a3626'};
 const SKEL={sc:1,body:'#d9d2c0',skull:true,skin:'#e8e2d0',foot:'#cfc7b2',ribs:true,held:'xbow',bowCol:'#6b4a2a',shield:true,eyeCol:'#e5484d'},SKEL_NS={...SKEL,shield:false};
 const MERCHANT={sc:1.08,body:'#5a3f7a',hood:'#3a2a52',skin:'#e8c0a0',foot:'#3a2a1d',held:'staff',eyeCol:'#ffc93c',belt:'#8a5a20',hoodTip:true};
@@ -3121,9 +3327,10 @@ function head(S,B){
 }
 // the Arciere's hood (from Denis's picture): bigger and rounder, with a soft point that falls back behind the head;
 // the face stays the classic one, sitting in the dark opening of the hood. The same shape seen from every side
+var RIGW={w:0,mv:false};
 function bigHood(S,B){const v=B.v,hy=-19;ink(2.5);heroBits(S,B,hy,false);
   // the point: a wide flap of cloth falling back and down behind the head, away from where the hero looks
-  const C={s:[-15.5,-9],s34:[-18,-4],side:[-20,1],n34:[-17,-5],n:[-14,-9]}[v]||[-15.5,-9];
+  const C0={s:[-15.5,-9],s34:[-18,-4],side:[-20,1],n34:[-17,-5],n:[-14,-9]}[v]||[-15.5,-9],R0=RIGW||{w:0,mv:false},sw=LOWFX?0:R0.mv?Math.sin(R0.w*2)*1.3:Math.sin(((G&&G.t)||0)*1.7)*.45,C=[C0[0]+sw*.7,C0[1]+Math.abs(sw)*.7];
   ctx.beginPath();ctx.moveTo(1.5,hy-12.8);ctx.quadraticCurveTo(-9,hy-19,C[0],hy+C[1]);ctx.quadraticCurveTo(-12,hy+C[1]*.35-1,-12.4,hy-2);ctx.closePath();fs(S.hood);
   ctx.save();ctx.strokeStyle='rgba(0,0,0,.22)';ctx.lineWidth=1.4;ctx.beginPath();ctx.moveTo(-4,hy-13.2);ctx.quadraticCurveTo(-11,hy-14,C[0]*.85,hy+C[1]-1);ctx.stroke();ctx.restore();ink(2.5);
   // the hood itself, flaring a little over the shoulders
@@ -5287,7 +5494,7 @@ document.addEventListener('click',e=>{const s=e.target.closest('[data-psel]'),u=
   const dr=e.target.closest('[data-pdrop]');if(dr){const id=dr.dataset.pdrop,eq=petEq(),i=eq.indexOf(id);if(i<0)return;eq.splice(i,1);save();sfx('pick');renderPets();toast(PET_BY[id].n+' resta a casa')}
   if(u&&!u.disabled){const id=u.dataset.pup,o=SAVE.pets.owned[id],l=o.lvl,c=petCost(l),need=petNeed(l);if(SAVE.gold<c||l>=PETMAX||(o.cards||0)<need)return;SAVE.gold-=c;o.cards-=need;o.lvl=l+1;save();renderGold();sfx('upgrade');vib(25);renderPets();toast(`${PET_BY[id].n} sale al livello ${l+1}!`)}
   const bu=e.target.closest('[data-pbuy]');if(bu&&!bu.disabled){const p=PET_BY[bu.dataset.pbuy];if((SAVE.gems||0)<p.gems||SAVE.pets.owned[p.id])return;SAVE.gems-=p.gems;unlockPet(p.id);save();renderGold();sfx('victory');vib([30,30,60]);renderPets();toast(`${p.n} sbloccato! Tocca «Porta» per portarlo con te`)}});
-function unlockPet(id){if(SAVE.pets.owned[id])return false;SAVE.pets.owned[id]={lvl:1,cards:SAVE.pets.cards[id]||0};delete SAVE.pets.cards[id];save();achPop('Nuovo compagno!',PET_BY[id].n+': trovalo nella scheda Eroe','unlock');return true}
+function unlockPet(id){if(SAVE.pets.owned[id])return false;SAVE.pets.owned[id]={lvl:1,cards:SAVE.pets.cards[id]||0};delete SAVE.pets.cards[id];save();achPop('Nuovo compagno!',PET_BY[id].n+': trovalo nella scheda Compagni','unlock');return true}
 const PETIMG={};function petIcon(id){if(PETIMG[id])return PETIMG[id];const c=document.createElement('canvas');c.width=c.height=96;const x=c.getContext('2d'),saved=ctx;ctx=x;x.setTransform(2.4,0,0,2.4,48,74);drawPetSprite(id,0,0,{t:1.2,face:0,moving:false,att:0,happy:.3,hop:0});ctx=saved;return PETIMG[id]=c.toDataURL()}
 
 
@@ -5349,7 +5556,7 @@ function ensurePass(){const s=seasonIdx();if(!SAVE.pass||SAVE.pass.s!==s)SAVE.pa
 const passLvl=()=>Math.min(PASS_T,Math.floor(ensurePass().xp/PASS_XP));
 function passXP(v){const P0=ensurePass(),l0=passLvl();P0.xp+=Math.max(0,Math.round(v));const l1=passLvl();save();if(l1>l0)achPop('Pass di stagione','Hai raggiunto il livello '+l1+'!','trophy');return l1-l0}
 const passReady=()=>{const P0=ensurePass(),l=passLvl();let n=0;for(let i=1;i<=l;i++){if(!P0.f[i])n++;if(P0.gold&&!P0.p[i])n++}return n};
-function passRewLabel(r){return r.k==='gold'?`${r.v} oro`:r.k==='gems'?`${r.v} gemme`:r.k==='chest'?CHESTS[r.v].n:r.k==='frame'?'Cornice '+FRAMES[r.v].n:r.k==='skin'?SKINS[r.v].n:'Titolo «'+r.v+'»'}
+function passRewLabel(r){return r.k==='gold'?`${r.v} oro`:r.k==='gems'?`${r.v} cristalli`:r.k==='chest'?CHESTS[r.v].n:r.k==='frame'?'Cornice '+FRAMES[r.v].n:r.k==='skin'?SKINS[r.v].n:'Titolo «'+r.v+'»'}
 function passIcon(r){if(r.k==='gold')return coinPile(r.v>400?1:0);if(r.k==='gems')return '<span class="bigGem"></span>';if(r.k==='chest')return chestSVG(r.v,false);
   if(r.k==='frame'){const f=FRAMES[r.v];return `<span class="pfrm" style="--f1:${f.c[0]};--f2:${f.c[1]}"></span>`}
   if(r.k==='skin'){const S=SKINS[r.v];return `<svg viewBox="0 0 40 40" aria-hidden="true"><path d="M20 5c-6 0-9 4-9 9v4l-5 17h28l-5-17v-4c0-5-3-9-9-9z" fill="${S.body}" stroke="#0b1326" stroke-width="2.4" stroke-linejoin="round"/><path d="M11 14c0-5 3-9 9-9s9 4 9 9l-9 3z" fill="${S.hood}" stroke="#0b1326" stroke-width="2.4" stroke-linejoin="round"/><circle cx="16" cy="25" r="1.4" fill="#fff"/><circle cx="24" cy="29" r="1.2" fill="#fff"/></svg>`}
@@ -5392,17 +5599,6 @@ function ensureChal(){if(!SAVE.chal||SAVE.chal.day!==today())SAVE.chal={day:toda
 function chalBoard(){const r=dayRng('board'),names=shuffle(RIVALS.slice()),C=ensureChal(),L=[];for(let i=0;i<9;i++){L.push({n:names[i],s:Math.round((2200+r()*11000)/10)*10})}
   if(C.best>0)L.push({n:SAVE.pname||'Tu',s:C.best,me:true});L.sort((a,b)=>b.s-a.s);return L}
 const chalScore=win=>G.room*1000+G.kills*10+(win?5000:0)+Math.round(100*Math.max(0,P.hp)/Math.max(1,P.maxhp))*10;
-function fillChal(){const C=ensureChal(),T=chalToday(),L=chalBoard(),t=new Date(),mid=new Date(t.getFullYear(),t.getMonth(),t.getDate()+1);lastSheetHTML='';
-  const mods=T.mods.map(id=>CHAL_MODS.find(m=>m.id===id));
-  $('sheet').innerHTML=`<h2>Sfida del giorno</h2><p class="lead">${modeOf(T.ch).n} · cambia tra <b>${fmtH(mid-t)}</b></p>
-    <div class="cmods">${mods.map(m=>`<div class="cmod ${m.good?'good':'bad'}"><b>${m.n}</b><span>${m.d}</span></div>`).join('')}</div>
-    <p class="lead small">Prima partita del giorno finita: <b>10 gemme e 150 oro</b>. Nei primi 3 in classifica: altre <b>15 gemme</b>. Le coppe non cambiano.</p>
-    <div class="board">${L.map((x,i)=>`<div class="brow ${x.me?'me':''}"><span class="bpos">${i+1}</span><b>${x.me?(SAVE.pname||'Tu')+' (tu)':x.n}</b><span class="bsc">${x.s.toLocaleString('it-IT')}</span></div>`).join('')}</div>
-    ${C.best?'':'<p class="lead small" style="text-align:center">Gioca la sfida per entrare in classifica!</p>'}<button class="btn alt close">Chiudi</button>`}
-function chalEnd(win,quit){const C=ensureChal(),score=quit?0:chalScore(win);C.tries++;let bonus='';
-  if(!quit){const first=!C.done;C.done=true;if(score>C.best)C.best=score;if(first){SAVE.gems=(SAVE.gems||0)+5;SAVE.gold+=100;passXP(60);bonus='Prima della giornata: +5 cristalli, +100 oro'}
-    const L=chalBoard(),pos=L.findIndex(x=>x.me)+1;if(pos>0&&pos<=3&&!C.top){C.top=true;SAVE.gems+=10;bonus+=(bonus?' · ':'')+'Podio: +10 cristalli'}
-    return{score,pos,bonus}}return{score:0,pos:0,bonus:''}}
 
 
 // =====================================================================
@@ -5846,31 +6042,11 @@ const MODES=[
 const modeOf=ch=>MODES.find(m=>m.id==='c'+ch)||MODES[0];
 function modeRecord(id){if(id==='inf')return SAVE.inf.best?`Record: stanza ${SAVE.inf.best}`:'Ancora nessun record';const b=SAVE[id==='c1'?'best':'best'+id.slice(1)]||{room:0,gold:0};return b.room?`Record: stanza ${b.room}, ${b.gold} oro`:'Ancora nessun record'}
 const curMode=()=>{if(SAVE.sel==='inf')return MODES.find(m=>m.id==='inf');if(SAVE.sel==='daily'){const T=chalToday(),M=modeOf(T.ch);return{...M,kind:'Sfida del giorno',n:M.n,d:T.mods.map(id=>CHAL_MODS.find(x=>x.id===id).n).join(' + '),mc:'#ffd84a'}}const i=arenaIdx(SAVE.trophies||0),A=ARENAS[i];return{...modeOf(A.ch),kind:'Arena '+(i+1),n:A.n,d:A.d,mc:A.col,arena:i}};
-let lastModeHTML='';
 const MODE_ORDER=['arena','daily','inf'];
-function renderModes(){const sel=SAVE.sel||'arena',m=curMode(),inf=sel==='inf',dly=sel==='daily',open=modeOpen(sel),T=SAVE.trophies||0,i=arenaIdx(T),A=ARENAS[i],N=ARENAS[i+1];let prog;
-  if(inf)prog=`<span class="rec ${open?'':'lock'}">${open?modeRecord('inf'):'Si apre a '+ARENAS[1].t+' coppe'}</span>`;
-  else if(dly){const C=ensureChal();prog=open?`<div class="trRow chalRow"><span class="rec">${C.best?'Record di oggi: '+C.best.toLocaleString('it-IT'):'Nessuna partita oggi'}</span><button class="roadBtn" id="chalLb">Classifica</button></div>`:'<span class="rec lock">Si apre dopo la prima partita</span>'}
-  else prog=`<div class="trRow" id="trRow" role="button" aria-label="Cammino delle coppe"><span class="trNow">${TROPHY}${T}</span><div class="trBar"><i style="width:${N?Math.max(0,Math.min(100,(T-A.t)/(N.t-A.t)*100)):100}%"></i><span>${N?`Arena ${i+2}: ${N.t}`:'Arena massima!'}</span></div></div>`;
-  const html=`<button class="marr" data-d="-1" aria-label="Cambia modalità">‹</button><div class="pl" style="--mc:${m.mc}"><span class="kind">${m.kind}</span><h2${m.n.length>17?' class="long"':''}>${m.n}</h2><p>${m.d}</p>${prog}<div class="mdots">${MODE_ORDER.map(k=>`<i class="${k===sel?'on':''}"></i>`).join('')}</div></div><button class="marr" data-d="1" aria-label="Cambia modalità">›</button>`;
-  if(html!==lastModeHTML){$('modes').innerHTML=html;lastModeHTML=html}
-  $('playBtn').disabled=!open;$('playBtn').textContent=open?'Entra':'Chiusa';
-  $('chestHint').textContent=inf?"Le guadagni alle stanze 5, 10 e 20":"Le guadagni dalla stanza 3 in poi"}
-function shiftMode(d){const k=Math.max(0,MODE_ORDER.indexOf(SAVE.sel||'arena'));SAVE.sel=MODE_ORDER[(k+(d>0?1:-1)+MODE_ORDER.length)%MODE_ORDER.length];save();sfx('ui');CAMP.swap=1;renderModes()}
-$('modes').addEventListener('click',e=>{if(e.target.closest('#chalLb')){openSheet('chal');return}if(e.target.closest('#trRow')){sfx('ui');setTab('tabRoad');return}const b=e.target.closest('.marr');if(b)shiftMode(+b.dataset.d)});
-{let sx=null;const c=$('campCv');c.addEventListener('pointerdown',e=>{sx=e.clientX});c.addEventListener('pointerup',e=>{if(sx!==null&&Math.abs(e.clientX-sx)>40)shiftMode(e.clientX<sx?1:-1);sx=null})}
 const fmtH=ms=>{const t=Math.max(0,Math.ceil(ms/1000)),h=Math.floor(t/3600),m=Math.floor(t%3600/60),s=t%60;const d=Math.floor(h/24);return d>=2?`${d} giorni`:d===1?`1 giorno ${h%24}h`:h?`${h}h ${String(m).padStart(2,'0')}m`:`${m}m ${String(s).padStart(2,'0')}s`};
 const SCROLL_SVG='<svg viewBox="0 0 44 44" aria-hidden="true"><path d="M10 8h22v26a4 4 0 0 1-4 4H12" fill="#f6ead2" stroke="#1b1612" stroke-width="2.4" stroke-linejoin="round"/><path d="M6 34a4 4 0 0 0 8 0V12a4 4 0 0 0-8 0z" fill="#dcc392" stroke="#1b1612" stroke-width="2.4"/><path d="M16 16h11M16 22h11M16 28h7" stroke="#8a5a20" stroke-width="2.4" stroke-linecap="round"/></svg>';
 let lastFreeHTML='',lastMisHTML='';
-function renderFree(){const ready=Date.now()>=SAVE.free.next,type=(SAVE.free.n+1)%3===0?'argento':'legno';
-  const html=`${chestSVG(type,false)}<small>${ready?'Gratis!':fmtH(SAVE.free.next-Date.now()).replace(/ \d+s$/,'')}</small>`;
-  const el=$('freeBox');el.classList.toggle('hot',ready);if(html!==lastFreeHTML){el.innerHTML=html;lastFreeHTML=html}}
-$('freeBox').onclick=()=>{if(Date.now()<SAVE.free.next){toast('Si riempie ogni 4 ore: torna più tardi');return}if(CHbusy)return;SAVE.free.n++;const type=SAVE.free.n%3===0?'argento':'legno';SAVE.free.next=Date.now()+4*3600e3;save();renderFree();openChest(type)};
 function rewTxt(r){const R=MREW[r];return R.gold?`${R.gold} oro`:CHESTS[R.chest].n}
-function renderMissions(){ensureDaily();const L=SAVE.daily.list,done=L.filter(m=>m.done).length,claim=L.filter(m=>m.done&&!m.claimed).length;
-  const html=`${SCROLL_SVG}<small>Missioni ${done}/${L.length}</small>${claim?`<em class="pip">${claim}</em>`:''}`;
-  const el=$('misBtn');el.classList.toggle('hot',!!claim);if(html!==lastMisHTML){el.innerHTML=html;lastMisHTML=html}
-  if(SHEET==='mis')fillMissions()}
 // bottom sheet
 let SHEET=null;
 function openSheet(kind){SHEET=kind;sfx('ui');if(kind==='mis')fillMissions();else if(kind==='guide')fillGuide();else if(kind==='road')fillRoad();else if(kind==='login')fillLogin();else if(kind==='pass')fillPass();else if(kind==='chal')fillChal();else fillSettings();$('sheetScr').hidden=false}
@@ -5878,9 +6054,6 @@ function closeSheet(){SHEET=null;$('sheetScr').hidden=true;renderPlay()}
 $('sheetScr').addEventListener('click',e=>{if(e.target===$('sheetScr')||e.target.closest('.close'))closeSheet()});
 $('misBtn').onclick=()=>openSheet('mis');$('guideBtn').onclick=()=>openSheet('guide');$('gearBtn').onclick=()=>openSheet('set');
 let lastSheetHTML='';
-function fillMissions(){const L=SAVE.daily.list,t=new Date(),mid=new Date(t.getFullYear(),t.getMonth(),t.getDate()+1);
-  const html=`<h2>Missioni del giorno</h2><p class="lead">Si rinnovano tra ${fmtH(mid-t)}.</p>`+L.map((m,j)=>{const M=MPOOL[m.i],p=Math.min(1,m.p/M.g);return `<div class="mis ${m.claimed?'claimed':m.done?'done':''}"><div><b>${M.n}</b><div class="bar ${m.done?'full':''}"><i style="width:${p*100}%"></i><span>${Math.floor(m.p)}/${M.g}</span></div></div>${m.claimed?'<em class="mok">Ritirata</em>':m.done?`<button class="btn mclaim" data-m="${j}">Ritira ${rewTxt(m.r)}</button>`:`<em class="mrew">${rewTxt(m.r)}</em>`}</div>`}).join('')+'<button class="btn alt close">Chiudi</button>';
-  if(html!==lastSheetHTML){$('sheet').innerHTML=html;lastSheetHTML=html}}
 function fillSettings(){const S=SAVE.set;lastSheetHTML='';$('sheet').innerHTML=`<h2>Impostazioni</h2>
   <label class="srow"><span>Musica</span><input type="range" min="0" max="100" value="${Math.round(S.mv*100)}" data-set="mv" aria-label="Volume musica"></label>
   <label class="srow"><span>Effetti</span><input type="range" min="0" max="100" value="${Math.round(S.sv*100)}" data-set="sv" aria-label="Volume effetti"></label>
@@ -5901,7 +6074,7 @@ $('sheet').addEventListener('click',e=>{const b=e.target.closest('button');if(!b
   if(b.dataset.codeload){const o=readCode($('codeTa').value);if(!o){toast('Codice non valido');sfx('ui');return}$('codeBox').querySelectorAll('.codeAsk').forEach(x=>x.remove());$('codeBox').insertAdjacentHTML('beforeend',`<div class="srow codeAsk" style="grid-template-columns:1fr;gap:6px"><span>Sostituire i progressi di questo telefono?</span><div class="seg"><button data-codeok="1">Sì</button><button data-codeno="1">No</button></div></div>`);window.__pend=o;return}
   if(b.dataset.codeok&&window.__pend){try{localStorage.setItem(SAVE_KEY,JSON.stringify(window.__pend))}catch(err){}location.reload();return}
   if(b.dataset.codeno){$('codeBox').innerHTML='';window.__pend=null;return}
-  if(b.classList.contains('mclaim')){if(CHbusy)return;const m=SAVE.daily.list[+b.dataset.m];if(!m||!m.done||m.claimed)return;m.claimed=true;const R=MREW[m.r];passXP(25);
+  if(b.classList.contains('mclaim')){if(CHbusy)return;const m=SAVE.daily.list[+b.dataset.m];if(!m||!m.done||m.claimed)return;m.claimed=true;const R=MREW[m.r];passXP(25);ensureWeekly().pts+=MPTS.d;
     if(R.gold){SAVE.gold+=R.gold;renderGold();toast(`+${R.gold} oro`);sfx('coin')}save();fillMissions();renderMissions();if(R.chest){closeSheet();openChest(R.chest)}return}
   const S=SAVE.set;if(b.dataset.big)S.big=b.dataset.big==='1';else if(b.dataset.vib)S.vib=b.dataset.vib==='1';else if(b.dataset.left)S.left=b.dataset.left==='1';else if(b.dataset.q)S.q=b.dataset.q;else return;
   save();applySettings();sfx('ui');if(S.vib&&b.dataset.vib)vib(40);fillSettings()});
@@ -5926,7 +6099,7 @@ const SCENE={
     ground:['#2a2436','#1d1828','#120e1a'],path:'#3e3450','torch':['#7a2fd0','#c07aff','#f4e6ff'],moss:null,moon:'#e8d8ff'}};
 const GATE={x:180,top:100,bot:166,w:20};
 // the arena's colour is applied to the scenery only (hill, crypt, ground), never to the hero or the fire
-function tintBg(m){const A=SAVE.sel==='inf'||SAVE.sel==='daily'?null:ARENAS[arenaIdx(SAVE.trophies||0)];if(!A||!A.tint)return campBg(m);const k=m.id+'|'+A.tint;if(CAMP.bg[k])return CAMP.bg[k];
+function tintBg(m){const A=m.id==='inf'?null:ARENAS[arenaIdx(SAVE.trophies||0)];if(!A||!A.tint)return campBg(m);const k=m.id+'|'+A.tint;if(CAMP.bg[k])return CAMP.bg[k];
   const src=campBg(m),c=document.createElement('canvas');c.width=src.width;c.height=src.height;const x=c.getContext('2d');
   const t=document.createElement('canvas');t.width=src.width;t.height=src.height;const y=t.getContext('2d');
   if(HASF){y.filter=A.tint;y.drawImage(src,0,0);y.filter='none'}else{y.drawImage(src,0,0);y.globalCompositeOperation='color';y.globalAlpha=.5;y.fillStyle=A.col;y.fillRect(0,0,t.width,t.height);y.globalAlpha=1}
@@ -6061,10 +6234,11 @@ function drawSeated(x,y,S,t){const sc=2.05,br=Math.sin(t*1.6)*.025;
   ctx.restore()}
 function campResize(){const dpr=Math.min(2,window.devicePixelRatio||1),w=Math.max(1,Math.round(campCv.clientWidth*dpr)),h=Math.max(1,Math.round(campCv.clientHeight*dpr));if(campCv.width!==w||campCv.height!==h){campCv.width=w;campCv.height=h}}
 const LO=300,LH=SH+600;const campL=document.createElement('canvas');campL.width=SW/3;campL.height=LH/3;const campLx=campL.getContext('2d');campLx.scale(1/3,1/3);
-function drawCamp(dt){campResize();const m=curMode(),open=modeOpen(m.id),Z=SCENE[m.id],saved=ctx;ctx=campX;CAMP.t+=dt;const t=CAMP.t;G.t=t;
-  const cr=campCv.getBoundingClientRect(),dpr=campCv.width/Math.max(1,cr.width),pr=$('modes').getBoundingClientRect(),hb=document.querySelector('.homeBottom').getBoundingClientRect();
-  const home=$('menu').classList.contains('home'),yTop=home?(pr.bottom-cr.top+8)*dpr:campCv.height*.2,yBot=home?(hb.top-cr.top-4)*dpr:campCv.height*.8;let u=Math.max(.1,Math.min((yBot-yTop)/198,campCv.width/285)),oy=yBot-252*u;if(SW*u<campCv.width){u=campCv.width/SW;oy=yBot-252*u}
-  const ox=campCv.width/2-180*u;CAMP.tf={u,ox,oy,dpr};ctx.setTransform(1,0,0,1,0,0);ctx.fillStyle=Z.sky[0];ctx.fillRect(0,0,campCv.width,campCv.height);ctx.setTransform(u,0,0,u,ox,oy);
+function drawCamp(dt){campResize();const m=homeMode(),open=true,Z=SCENE[m.id],saved=ctx;ctx=campX;CAMP.t+=dt;const t=CAMP.t;G.t=t;
+  // the hero's feet stand just above the «change hero» pill, the crypt fills the space behind him
+  const cr=campCv.getBoundingClientRect(),dpr=campCv.width/Math.max(1,cr.width),hp=$('heroPill').getBoundingClientRect(),tb=$('topbar').getBoundingClientRect();
+  const u=campCv.width/SW,top=(tb.bottom-cr.top)*dpr,feet0=(hp.top-cr.top)*dpr,room=Math.max(80*dpr,feet0-top),hs=clamp(Math.min(room*.56,215*dpr)/(46*u),1.4,3.6),feet=feet0-13*hs*u,oy=feet-HOME_Y*u,ox=campCv.width/2-180*u;
+  CAMP.tf={u,ox,oy,dpr,hs};ctx.setTransform(1,0,0,1,0,0);ctx.fillStyle=Z.sky[0];ctx.fillRect(0,0,campCv.width,campCv.height);ctx.setTransform(u,0,0,u,ox,oy);
   ctx.fillStyle=Z.ground[2];ctx.fillRect(-400,SH-2,SW+800,900);
   ctx.drawImage(tintBg(m),0,0,SW,SH);
   if(!LOWFX){ctx.save();ctx.globalCompositeOperation='lighter';const ep=.65+.35*Math.sin(t*1.6);for(const sd of [-1,1]){glow(m.glow,180+sd*38,53,30,ep*.55);glow(m.glow,180+sd*38,53,10,ep);glow('255,255,255',180+sd*38,53,3.5,ep)}ctx.restore()}
@@ -6094,24 +6268,16 @@ function drawCamp(dt){campResize();const m=curMode(),open=modeOpen(m.id),Z=SCENE
   glow(m.glow,180,72,16,open?.6*pul:.12);ctx.strokeStyle=`rgba(${m.glow},${open?.95:.3})`;ctx.lineWidth=1.4;ctx.beginPath();ctx.moveTo(180,66);ctx.lineTo(184.5,72);ctx.lineTo(180,78);ctx.lineTo(175.5,72);ctx.closePath();ctx.stroke();
   // torches: two on the columns, two on the posts by the steps
   for(const[tx,ty,ts] of [[131,103,.55],[229,103,.55],[120,160,.95],[240,160,.95]])campTorch(tx,ty,ts,Z.torch,tx*.1);
-  // the campfire
-  const fx0=232,fy0=220;
-  ctx.save();ctx.globalCompositeOperation='lighter';glow('255,140,50',fx0,fy0+2,70,.28+.04*Math.sin(t*7.3)+.02*Math.sin(t*13),24);ctx.restore();
-  for(let k=0;k<9;k++){const a=k/9*TAU;ink(1.4);ctx.fillStyle=k%2?'#5a5048':'#6b6058';ctx.beginPath();ctx.ellipse(fx0+Math.cos(a)*19,fy0+Math.sin(a)*6.5,4.6,3.2,0,0,TAU);ctx.fill();ctx.stroke()}
-  ctx.fillStyle='#1a1210';ctx.beginPath();ctx.ellipse(fx0,fy0,15,5,0,0,TAU);ctx.fill();
-  ctx.lineCap='round';for(const[a,b,c,d] of [[-14,4,10,-5],[14,3,-9,-6],[-2,6,3,-8]]){ctx.strokeStyle=INK;ctx.lineWidth=6.5;ctx.beginPath();ctx.moveTo(fx0+a,fy0+b);ctx.lineTo(fx0+c,fy0+d);ctx.stroke();ctx.strokeStyle='#6b4a2a';ctx.lineWidth=3.6;ctx.stroke()}
-  ctx.fillStyle='#ff6a1a';ctx.beginPath();ctx.ellipse(fx0,fy0-1,8,2.6,0,0,TAU);ctx.fill();
-  flame(fx0,fy0,1.5,['#ff5a14','#ffa632','#fff1c0'],2);
-  // smoke and sparks
-  if(Math.random()<dt*3)CAMP.smoke.push({x:fx0+rand(-3,3),y:fy0-30,r:3,l:3});
-  for(let i=CAMP.smoke.length-1;i>=0;i--){const p=CAMP.smoke[i];p.l-=dt;p.y-=dt*14;p.x+=Math.sin(t+p.l*2)*dt*6;p.r+=dt*4;if(p.l<=0){CAMP.smoke.splice(i,1);continue}ctx.fillStyle=`rgba(110,100,95,${.12*p.l/3})`;ctx.beginPath();ctx.arc(p.x,p.y,p.r,0,TAU);ctx.fill()}
-  if(Math.random()<dt*16)CAMP.embers.push({x:fx0+rand(-7,7),y:fy0-16,vx:rand(-12,12),vy:rand(-55,-28),l:rand(.8,1.8)});
-  // the hero
-  let hx=134,hy=240;
-  if(CAMP.walk>0){const p=Math.min(1,(t-CAMP.walk)/1.5),q=Math.max(0,(p-.12)/.88),a1=Math.min(1,q/.6),a2=Math.max(0,(q-.6)/.4),ex=gx,ey=gb+2,px=hx+(gx-hx)*a1,py=hy+(190-hy)*a1+(ey-190)*a2,sc=2.05-(2.05-1.1)*a1-.35*a2;
-    ctx.globalAlpha=a2>.4?Math.max(0,1-(a2-.4)/.6):1;ctx.save();ctx.translate(px,py);ctx.scale(sc,sc);noShadow=false;mossOn=1;drawRig(0,0,Math.atan2(ey-hy,ex-hx),t*10,q>0,heroStyle(),{});mossOn=0;ctx.restore();ctx.globalAlpha=1}
-  else{drawSeated(hx,hy,heroStyle(),t);if(SAVE.pets)petEq().forEach((id,i)=>{ctx.save();ctx.translate(i?hx-70:hx+74,hy+4);ctx.scale(1.8,1.8);ctx.fillStyle='rgba(0,0,0,.3)';ell(0,2,9,3);ctx.fill();drawPetSprite(id,0,0,{t:t+i*.7,face:i?Math.PI:0,moving:false,att:0,happy:0,hop:0});ctx.restore()});ctx.save();ctx.globalCompositeOperation='lighter';glow('255,140,60',hx+14,hy-30,30,.16+.03*Math.sin(t*7.3),40);ctx.restore()}
-  for(let i=CAMP.embers.length-1;i>=0;i--){const e=CAMP.embers[i];e.l-=dt;e.x+=(e.vx+Math.sin(t*5+i)*14)*dt;e.y+=e.vy*dt;if(e.l<=0){CAMP.embers.splice(i,1);continue}ctx.fillStyle=`rgba(255,${170+(i*37)%80},90,${Math.min(1,e.l)})`;ctx.fillRect(e.x,e.y,1.6,1.6)}
+  // sparks rising from the runes
+  const hx=180,hy=HOME_Y;
+  if(Math.random()<dt*(LOWFX?3:9))CAMP.embers.push({x:hx+rand(-19,19)*hs,y:hy+rand(-3,3)*hs,vx:rand(-3,3),vy:rand(-26,-12),l:rand(1.2,2.4),c:m.glow});
+  // the hero on the rune stone, the companions beside him (only the ones you own and took with you)
+  drawRuneStone(hx,hy,hs,m.glow,t);
+  if(CAMP.walk>0){const p=Math.min(1,(t-CAMP.walk)/1.5),q=Math.max(0,(p-.12)/.88),a1=Math.min(1,q/.6),a2=Math.max(0,(q-.6)/.4),ey=gb+2,py=hy+(190-hy)*a1+(ey-190)*a2,sc=hs-(hs-1.1)*a1-.35*a2;
+    ctx.globalAlpha=a2>.4?Math.max(0,1-(a2-.4)/.6):1;ctx.save();ctx.translate(hx,py);ctx.scale(sc,sc);noShadow=false;mossOn=1;drawRig(0,0,-Math.PI/2,t*10,q>0,heroStyle(),{});mossOn=0;ctx.restore();ctx.globalAlpha=1;CAMP.hero=null}
+  else{drawHomeHero(hx,hy,hs,t);CAMP.hero={x:ox+hx*u,y:oy+hy*u,w:20*hs*u,h:50*hs*u,dpr}}
+  if(SAVE.pets)petEq().forEach((id,i)=>{const px=hx+(i?-1:1)*20*hs,py=hy+3*hs,ps=hs*.5;ctx.save();ctx.translate(px,py);ctx.scale(ps,ps);ctx.fillStyle='rgba(0,0,0,.3)';ell(0,2,9,3);ctx.fill();const hb=Math.pow(Math.max(0,Math.sin((t+i*2.3)*.8)),14);ctx.translate(0,-hb*7);drawPetSprite(id,0,0,{t:t+i*.7,face:i?0:Math.PI,moving:false,att:0,happy:hb>.2?.5:0,hop:0});ctx.restore()});
+  for(let i=CAMP.embers.length-1;i>=0;i--){const e=CAMP.embers[i];e.l-=dt;e.x+=(e.vx+Math.sin(t*5+i)*14)*dt;e.y+=e.vy*dt;if(e.l<=0){CAMP.embers.splice(i,1);continue}if(e.c){ctx.save();ctx.globalCompositeOperation='lighter';ctx.fillStyle=`rgba(${e.c},${Math.min(1,e.l)*.9})`;ctx.fillRect(e.x-.9,e.y-.9,1.8,1.8);ctx.restore()}else{ctx.fillStyle=`rgba(255,${170+(i*37)%80},90,${Math.min(1,e.l)})`;ctx.fillRect(e.x,e.y,1.6,1.6)}}
   // ambient life
   if(CAMP.amb.length<30)CAMP.amb.push({x:rand(0,SW),y:rand(-60,SH+40),ph:rand(0,9),v:rand(-6,6)});
   ctx.save();ctx.globalCompositeOperation='lighter';
@@ -6123,34 +6289,21 @@ function drawCamp(dt){campResize();const m=curMode(),open=modeOpen(m.id),Z=SCENE
   // night: darkness with holes of light
   const lx=campLx;lx.globalCompositeOperation='source-over';lx.clearRect(0,0,SW,LH);lx.fillStyle=`rgba(6,4,14,${m.id==='c2'?.45:m.id==='c4'?.4:.55})`;lx.fillRect(0,0,SW,LH);
   lx.globalCompositeOperation='destination-out';const spr=glowSprite('0,0,0'),Lt=(x,y,r,a)=>{lx.globalAlpha=Math.min(1,a);lx.drawImage(spr,x-r,y+LO-r,r*2,r*2)};
-  const fl=1+.05*Math.sin(t*7.3)+.03*Math.sin(t*12.1);Lt(fx0,fy0-10,95*fl,1);Lt(fx0,fy0-10,50*fl,1);
+  const fl=1+.04*Math.sin(t*2.1);Lt(hx,hy-18*hs,(44+18*hs)*fl,1);Lt(hx,hy-6*hs,(18+10*hs)*fl,1);
   for(const[tx,ty,r] of [[131,100,34],[229,100,34],[120,154,52],[240,154,52]])Lt(tx,ty,r*(1+.04*Math.sin(t*5+tx)),.9);
   Lt(gx,gb-14,open?50:24,open?.9:.5);if(m.id!=='c2')Lt(246,-70,60,.7);else Lt(277,58,60,.7);
   lx.globalAlpha=1;ctx.drawImage(campL,0,-LO,SW,LH);
-  ctx.save();ctx.globalCompositeOperation='lighter';glow('255,150,60',fx0,fy0-14,46,.18+.03*Math.sin(t*9));glow(m.glow,gx,gb-12,30,open?.22*pul:.04);ctx.restore();
+  ctx.save();ctx.globalCompositeOperation='lighter';glow(m.glow,hx,hy-6,16*hs,.14+.04*Math.sin(t*2.1));glow(m.glow,gx,gb-12,30,open?.22*pul:.04);ctx.restore();
   const v=ctx.createRadialGradient(SW/2,SH*.6,SH*.4,SW/2,SH*.6,SH*1.3);v.addColorStop(0,'rgba(0,0,0,0)');v.addColorStop(1,'rgba(0,0,0,.5)');ctx.fillStyle=v;ctx.fillRect(-400,-LO,SW+800,LH);
-  // trophy medallion over the crypt: tap the crypt to open the trophy road
-  if(m.id!=='inf'&&SAVE.sel!=='inf'&&SAVE.sel!=='daily'){const rr=roadReady(),x=180,y=40+Math.sin(t*2.4)*2;
-    if(rr){ctx.save();ctx.globalCompositeOperation='lighter';glow('255,210,80',x,y,30,.35+.15*Math.sin(t*5));ctx.restore()}
-    ctx.save();ctx.translate(x,y);ctx.lineJoin='round';ctx.lineWidth=1.8;ctx.strokeStyle='#0b1326';
-    ctx.beginPath();ctx.arc(-7.5,-4,3.6,Math.PI*.5,Math.PI*1.5);ctx.moveTo(7.5,-7.6);ctx.arc(7.5,-4,3.6,-Math.PI*.5,Math.PI*.5);ctx.stroke();
-    ctx.fillStyle='#ffd23c';ctx.beginPath();ctx.moveTo(-7,-9);ctx.lineTo(7,-9);ctx.lineTo(6.5,-3);ctx.quadraticCurveTo(0,4,-6.5,-3);ctx.closePath();ctx.fill();ctx.stroke();
-    ctx.fillStyle='#e8a41c';ctx.fillRect(-1.6,1,3.2,3.4);ctx.strokeRect(-1.6,1,3.2,3.4);ctx.fillStyle='#8a5a20';ctx.fillRect(-5,4.4,10,3.4);ctx.strokeRect(-5,4.4,10,3.4);
-    ctx.strokeStyle='#fff6c0';ctx.lineWidth=1.1;ctx.beginPath();ctx.moveTo(-4,-7.5);ctx.lineTo(-3.4,-4);ctx.stroke();
-    if(rr){ctx.fillStyle='#e5484d';ctx.strokeStyle='#0b1326';ctx.lineWidth=1.6;ctx.beginPath();ctx.arc(9,-10,5.6,0,TAU);ctx.fill();ctx.stroke();
-      ctx.fillStyle='#fff';ctx.font='8px "Lilita One", sans-serif';ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillText(rr>99?'99':String(rr),9,-9.6)}
-    ctx.restore()}
   if(CAMP.swap>0){CAMP.swap=Math.max(0,CAMP.swap-dt*3);ctx.fillStyle=`rgba(6,4,10,${CAMP.swap})`;ctx.fillRect(-400,-LO,SW+800,LH)}
   if(CAMP.walk>0&&t-CAMP.walk>1.25){ctx.fillStyle=`rgba(6,4,10,${Math.min(1,(t-CAMP.walk-1.25)/.4)})`;ctx.fillRect(-400,-LO,SW+800,LH)}
   ctx.setTransform(1,0,0,1,0,0);ctx=saved}
-$('playBtn').onclick=()=>{if(!modeOpen(SAVE.sel||'c1')){toast('Questa porta è ancora chiusa');return}if(CAMP.walk>0)return;initAudio();sfx('door');CAMP.walk=CAMP.t;
-  if(RM||$('tabPlay').hidden){CAMP.walk=0;startRun();return}setTimeout(()=>{CAMP.walk=0;startRun()},1700)};
+$('playBtn').onclick=()=>goPlay('arena');
 
 // --- hero tab ---
 let heroView=SAVE.hero,heroConfirm=null,heroSeg='coll';
 function drawPortrait(cv,S,face,sc){const c=cv.getContext('2d'),saved=ctx;ctx=c;c.setTransform(1,0,0,1,0,0);c.clearRect(0,0,cv.width,cv.height);c.setTransform(sc,0,0,sc,cv.width/2,cv.height*.72);noShadow=false;drawRig(0,0,face,0,false,S,{});ctx=saved}
 document.querySelectorAll('.harr').forEach(b=>b.onclick=()=>{const i=HEROES.findIndex(h=>h.id===heroView);heroView=HEROES[(i+(+b.dataset.h)+HEROES.length)%HEROES.length].id;heroConfirm=null;pvT=1.1*2;sfx('ui');renderHero()});
-$('heroSeg').onclick=e=>{const b=e.target.closest('button');if(!b)return;heroSeg=b.dataset.v;sfx('ui');renderHero()};
 $('hAct').onclick=e=>{const b=e.target.closest('[data-hact]');if(!b)return;e.stopPropagation();const h=HERO_BY[heroView];
   if(b.dataset.hact==='use'){SAVE.hero=h.id;save();sfx('upgrade');renderHero();return}
   if(heroConfirm!==h.id){heroConfirm=h.id;renderHero();setTimeout(()=>{if(heroConfirm===h.id){heroConfirm=null;if(!$('tabHero').hidden)renderHero()}},3000);return}
@@ -6182,40 +6335,20 @@ const SI={atk:'<path d="M4 16L14 6M12 4l4 4M3 17l2-1-1-1z" stroke="#1b1612" stro
 const sico=k=>`<svg viewBox="0 0 20 20" aria-hidden="true">${SI[k]}</svg>`;
 const COIN='<i class="coin"></i>';
 const powerOf=q=>Math.round(q.atk*12+q.maxhp*2.2+q.aspd*120+q.crit*900+(q.regen||0)*80+(2.4-q.dashMax)*60);
-function renderHero(){
-  const h=HERO_BY[heroView]||HEROES[0],own=SAVE.heroes[h.id],sel=SAVE.hero===h.id;
-  $('hName').textContent=h.n;$('heroInfo').innerHTML=`${h.d}<br><span class="start">Inizia con: ${h.start}</span><br><span class="start ult">Abilità: <b>${ULT[h.id].n}</b>. ${ULT[h.id].d}</span>`;
-  $('hAct').innerHTML=sel?'<span class="using">In campo</span>':own?'<button class="btn bigGreen" data-hact="use">Porta in campo</button>':`<button class="btn" data-hact="buy">${heroConfirm===h.id?'Conferma':'Sblocca'} ${COIN}${h.price}</button>`;
-  $('hDots').innerHTML=HEROES.map(x=>`<i class="${x.id===h.id?'on':''} ${SAVE.heroes[x.id]?'':'lock'}"></i>`).join('');
-  $('stage').classList.toggle('locked',!own);
-  const eqHTML=s=>{const id=SAVE.eq[s];return id?`<div class="eqslot">${icard(id,`data-slot="${s}"`)}</div>`:`<div class="eqslot"><button class="icard empty" data-slot="${s}" aria-label="${SLOTN[s]}"><span>+</span><small>${SLOTN[s]}</small></button></div>`};
-  $('eqL').innerHTML=eqHTML('arma')+eqHTML('armatura');$('eqR').innerHTML=eqHTML('anello')+eqHTML('amuleto');
-  const keep=SAVE.hero;SAVE.hero=h.id;const q=previewStats();SAVE.hero=keep;
-  $('hPower').textContent=powerOf(q).toLocaleString('it-IT');
-  const rows=[['atk',Math.round(q.atk),'Attacco'],['hp',q.maxhp,'Salute'],['aspd',q.aspd.toFixed(2),'Colpi/s'],['crit',Math.round(q.crit*100)+'%','Critico'],['dash',q.dashMax.toFixed(1)+'s','Scatto'],['spd',Math.round(q.spd/1.5)+'%','Velocità'],['gold','+'+Math.round((q.goldMul-1)*100)+'%','Oro'],['regen',q.regen?q.regen.toFixed(1):'0','Rigenera']];
-  $('stats').innerHTML=rows.map(([k,v,l])=>`<div>${sico(k)}<b>${v}</b><small>${l}</small></div>`).join('');
-  const order=ITEMS.slice().sort((a,b)=>SLOTS.indexOf(a.slot)-SLOTS.indexOf(b.slot)||b.rar-a.rar);
-  $('coll').innerHTML=order.map(it=>icard(it.id)).join('');
-  $('collCount').textContent=`${Object.keys(SAVE.items).length} di ${ITEMS.length} oggetti trovati`;
-  $('heroBadge').hidden=!ITEMS.some(i=>canAffordUp(i.id));
-  for(const[k,id] of [['coll','vColl'],['tal','vTal'],['set','vSet'],['pet','vPet']])$(id).hidden=heroSeg!==k;if(heroSeg==='pet')renderPets();
-  document.querySelectorAll('#heroSeg button').forEach(b=>b.classList.toggle('on',b.dataset.v===heroSeg));
-  renderSets();renderTalents();checkAch();renderWho()}
 // the showcase: light rays, a glowing rune pedestal, the hero turning slowly
 const SHOW={sp:[]};
-function drawHeroPreview(dt){pvT+=dt;const d=Math.floor(pvT/1.3)%8,saved=ctx;ctx=hctx;const W=hcv.width,H=hcv.height,t=pvT;
-  hctx.setTransform(1,0,0,1,0,0);hctx.clearRect(0,0,W,H);
-  const own=SAVE.heroes[heroView],col=own?'255,200,110':'150,140,170';
-  hctx.save();hctx.translate(W/2,H*.5);hctx.globalCompositeOperation='lighter';
-  for(let i=0;i<12;i++){const a=i/12*TAU+t*.15;hctx.rotate(TAU/12);hctx.fillStyle=`rgba(${col},${.05+.025*Math.sin(t*1.3+i)})`;hctx.beginPath();hctx.moveTo(0,0);hctx.lineTo(W*.7,-26);hctx.lineTo(W*.7,26);hctx.closePath();hctx.fill()}
-  hctx.restore();
-  const g=hctx.createRadialGradient(W/2,H*.6,10,W/2,H*.6,W*.5);g.addColorStop(0,`rgba(${col},.35)`);g.addColorStop(1,`rgba(${col},0)`);hctx.fillStyle=g;hctx.fillRect(0,0,W,H);
-  hctx.setTransform(W/90,0,0,W/90,W/2,H*.76);
+function drawHeroPreview(dt,cvx,hid){pvT+=dt;const C=cvx||hcv,X=C.getContext('2d'),hv=hid||heroView,d=Math.floor(pvT/1.3)%8,saved=ctx;ctx=X;const W=C.width,H=C.height,t=pvT;
+  X.setTransform(1,0,0,1,0,0);X.clearRect(0,0,W,H);
+  const own=SAVE.heroes[hv],col=own?'255,200,110':'150,140,170';
+  X.save();X.translate(W/2,H*.5);X.globalCompositeOperation='lighter';
+  for(let i=0;i<12;i++){const a=i/12*TAU+t*.15;X.rotate(TAU/12);X.fillStyle=`rgba(${col},${.05+.025*Math.sin(t*1.3+i)})`;X.beginPath();X.moveTo(0,0);X.lineTo(W*.7,-26);X.lineTo(W*.7,26);X.closePath();X.fill()}
+  X.restore();
+  const g=X.createRadialGradient(W/2,H*.6,10,W/2,H*.6,W*.5);g.addColorStop(0,`rgba(${col},.35)`);g.addColorStop(1,`rgba(${col},0)`);X.fillStyle=g;X.fillRect(0,0,W,H);
+  X.setTransform(W/90,0,0,W/90,W/2,H*.76);
   ink(2.5);ell(0,6,30,9);fs('#2a221c');ell(0,3,28,8);fs('#4d4237');ctx.strokeStyle=`rgba(${col},${.55+.25*Math.sin(t*2)})`;ctx.lineWidth=1.2;ell(0,3,22,6);ctx.stroke();ell(0,3,15,4);ctx.stroke();
   for(let k=0;k<8;k++){const a=k/8*TAU+t*.4;ctx.fillStyle=`rgba(${col},.8)`;circ(Math.cos(a)*18.5,3+Math.sin(a)*5,.9);ctx.fill()}
   if(Math.random()<dt*10)SHOW.sp.push({x:rand(-24,24),y:rand(-5,6),l:rand(.8,1.6)});
-  noShadow=false;if(!own)ctx.globalAlpha=.85;drawRig(0,0,d*Math.PI/4,t*9,true,heroStyle(heroView),{});ctx.globalAlpha=1;
-  if(SAVE.pets)petEq().forEach((id,i)=>{const px=i?-25:25;ctx.fillStyle='rgba(0,0,0,.3)';ell(px,7,8,2.5);ctx.fill();drawPetSprite(id,px,6,{t:t+i*.7,face:i?0:Math.PI,moving:false,att:0,happy:0,hop:0})});
+  noShadow=false;if(!own)ctx.globalAlpha=.85;drawRig(0,0,d*Math.PI/4,t*9,true,heroStyle(hv),{});ctx.globalAlpha=1;
   ctx.save();ctx.globalCompositeOperation='lighter';for(let i=SHOW.sp.length-1;i>=0;i--){const p=SHOW.sp[i];p.l-=dt;p.y-=dt*14;if(p.l<=0){SHOW.sp.splice(i,1);continue}ctx.fillStyle=`rgba(${col},${Math.min(1,p.l)})`;circ(p.x,p.y,.7);ctx.fill()}ctx.restore();
   ctx=saved}
 
@@ -6238,8 +6371,6 @@ $('goldPacks').addEventListener('click',e=>{const b=e.target.closest('[data-gp]'
 
 // ===================== SHOP (sub-pages: daily, offers, chests, gold) =====================
 let shopPage='spDaily';
-function setShopPage(id){shopPage=id;for(const p of ['spDaily','spOffers','spChests','spGold'])$(p).hidden=p!==id;document.querySelectorAll('#shopTabs button').forEach(b=>b.classList.toggle('on',b.dataset.sp===id));$('menuMain').scrollTop=0}
-$('shopTabs').addEventListener('click',e=>{const b=e.target.closest('button[data-sp]');if(!b)return;sfx('ui');setShopPage(b.dataset.sp);renderShop()});
 const DISC=[10,20,30,30,40];
 function dailyGift(){return 40+25*arenaIdx(SAVE.trophies||0)}
 const freeReady=()=>{ensureDeals();return !SAVE.deals.free};
@@ -6257,8 +6388,7 @@ function renderShop(){ensureDeals();const D=SAVE.deals,t=new Date(),mid=new Date
     return `<div class="crate c-${k}">${best?'<span class="flag">Il più ricco</span>':''}<div class="cpic">${chestSVG(k,false)}</div><b class="cn">${c.n}</b><span class="cc">${c.cards} carte<br>${c.gold[0]}-${c.gold[1]} oro</span>
       <div class="odds">${c.odds.map((v,j)=>v?`<i style="--rc:${RAR[j].c}" title="${RAR[j].n}">${v}%</i>`:'').join('')}</div>
       <button class="btn" data-buy="${k}" ${SAVE.gold>=c.price?'':'disabled'}>${COIN}${c.price}</button></div>`}).join('');
-  renderGoldPacks();renderPacks();
-  $('spbDaily').hidden=!freeReady();$('spbOffers').hidden=!packList().some(p=>(SAVE.gems||0)>=p.c)}
+  renderGoldPacks();renderPacks()}
 $('daily').addEventListener('click',e=>{const b=e.target.closest('button');if(!b||b.disabled)return;const D=SAVE.deals;
   if(b.dataset.dfree){if(D.free)return;D.free=true;const g=dailyGift();SAVE.gold+=g;save();renderGold();renderShop();sfx('coin');setTimeout(()=>sfx('coin'),90);toast(`+${g} oro`);return}
   if(b.dataset.dchest){const p=Math.round(CHESTS.argento.price*.7);if(D.chest||SAVE.gold<p)return;D.chest=true;SAVE.gold-=p;save();renderGold();renderShop();openChest('argento');return}
@@ -6302,9 +6432,8 @@ function renderRoad(keep){const T=SAVE.trophies||0,B=SAVE.trBest||0,ai=arenaIdx(
   $('roadHead').innerHTML=`<span class="trNow">${TROPHY}${T.toLocaleString('it-IT')}</span><small>Record ${B.toLocaleString('it-IT')} · ${roadReady()?`<em>${roadReady()} premi da riscattare</em>`:'i premi si sbloccano con il record'}</small>`;
   $('road').innerHTML=html;if(!keep)setTimeout(()=>{const h=$('rHere');if(h&&!$('tabRoad').hidden)h.scrollIntoView({block:'center'})},40)}
 document.addEventListener('click',e=>{const b=e.target.closest('[data-road]');if(!b)return;const t=+b.dataset.road,n=roadList().find(x=>x.t===t);if(!n||SAVE.road[t]||(SAVE.trBest||0)<t)return;
-  SAVE.road[t]=1;if(n.k==='gold'){SAVE.gold+=n.v;toast(`+${n.v} oro`);sfx('coin')}else if(n.k==='gems'){SAVE.gems=(SAVE.gems||0)+n.v;toast(`+${n.v} gemme`);sfx('gem')}else if(n.k==='pet'){unlockPet(n.v);sfx('victory')}else if(n.k==='petc'){const u=addPetCards(n.v,n.n);save();sfx('victory');toast(u?`${PET_BY[n.v].n}: nuovo compagno!`:`+${n.n} carte ${PET_BY[n.v].n}`);if(u)achPop('Nuovo compagno!',PET_BY[n.v].n+': trovalo nella scheda Eroe','unlock')}
+  SAVE.road[t]=1;if(n.k==='gold'){SAVE.gold+=n.v;toast(`+${n.v} oro`);sfx('coin')}else if(n.k==='gems'){SAVE.gems=(SAVE.gems||0)+n.v;toast(`+${n.v} cristalli`);sfx('gem')}else if(n.k==='pet'){unlockPet(n.v);sfx('victory')}else if(n.k==='petc'){const u=addPetCards(n.v,n.n);save();sfx('victory');toast(u?`${PET_BY[n.v].n}: nuovo compagno!`:`+${n.n} carte ${PET_BY[n.v].n}`);if(u)achPop('Nuovo compagno!',PET_BY[n.v].n+': trovalo nella scheda Compagni','unlock')}
   save();renderGold();renderRoad(true);if(n.k==='chest')openChest(n.v)});
-function renderBadges(){$('roadBadge').hidden=!roadReady();$('shopBadge').hidden=!freeReady();if(!$('tabPlay').hidden)renderSide()}
 
 // ===================== MENU POLISH =====================
 // --- daily login: 7 days, a gold chest on day 7, then it starts again
@@ -6312,7 +6441,7 @@ const LOGIN=[{k:'gold',v:100},{k:'gems',v:5},{k:'chest',v:'legno'},{k:'gold',v:2
 if(!SAVE.login)SAVE.login={last:'',n:0};if(!SAVE.pname)SAVE.pname='Esploratore';
 const loginReady=()=>SAVE.login.last!==today();
 function loginIcon(r){return r.k==='gold'?coinPile(r.v>300?1:0):r.k==='gems'?'<span class="bigGem"></span>':chestSVG(r.v,false)}
-function loginLabel(r){return r.k==='gold'?r.v+' oro':r.k==='gems'?r.v+' gemme':CHESTS[r.v].n}
+function loginLabel(r){return r.k==='gold'?r.v+' oro':r.k==='gems'?r.v+' cristalli':CHESTS[r.v].n}
 function fillLogin(){const n=SAVE.login.n%7,ready=loginReady();
   $('sheet').innerHTML=`<h2>Accesso giornaliero</h2><p class="lead">Torna ogni giorno: al 7° giorno ti aspetta una <b>Cassa d'oro</b>!</p><div class="login">${LOGIN.map((r,i)=>{const st=i<n?'got':i===n&&ready?'today':i===n?'next':'later';
     return `<div class="lday ${st}${i===6?' big':''}"><span class="ld">Giorno ${i+1}</span><div class="lic">${loginIcon(r)}</div><span class="ll">${loginLabel(r)}</span>${st==='got'?'<i class="lok">✓</i>':''}${st==='today'?'<button class="btn go" data-login="1">Riscatta</button>':''}</div>`}).join('')}</div>
@@ -6321,8 +6450,6 @@ document.addEventListener('click',e=>{const b=e.target.closest('[data-login]');i
   if(r.k==='gold'){SAVE.gold+=r.v;sfx('coin');setTimeout(()=>sfx('coin'),90)}else if(r.k==='gems'){SAVE.gems=(SAVE.gems||0)+r.v;sfx('gem')}
   save();renderGold();toast('+'+loginLabel(r));if(r.k==='chest'){closeSheet();openChest(r.v)}else fillLogin();renderSide()});
 // --- side buttons on the home scene (Archero-style)
-function renderSide(){const lr=loginReady(),rr=roadReady(),pk=packList().some(p=>(SAVE.gems||0)>=p.c);
-  $('loginBtn').classList.toggle('hot',lr);$('loginBang').hidden=!lr;$('offerBang').hidden=true;$('roadSideBang').hidden=true;$('roadSide').classList.toggle('hot',!!rr);const pr=passReady();$('passBang').hidden=!pr;$('passBtn').classList.toggle('hot',!!pr);$('passLvl').textContent=passLvl()}
 $('passBtn').onclick=()=>openSheet('pass');
 $('loginBtn').onclick=()=>openSheet('login');
 $('offerBtn').onclick=()=>{sfx('ui');setTab('tabShop');setShopPage('spOffers');renderShop()};
@@ -6354,7 +6481,7 @@ function renderProfile(){const h=HERO_BY[SAVE.hero],F=FRAMES[SAVE.frame]||FRAMES
   $('skins').innerHTML=[['','Originale'],...Object.entries(SKINS).map(([k,v])=>[k,v.n])].map(([k,n])=>{const own=!k||(SAVE.skins&&SAVE.skins[k]);return `<button class="chipb ${(SAVE.skin||'')===k?'on':''} ${own?'':'lock'}" data-skin="${k}" ${own?'':'disabled'}>${n}${own?'':' · Pass d\'oro'}</button>`}).join('');
   $('frames').innerHTML=Object.keys(FRAMES).map(k=>{const own=fr.includes(k),f=FRAMES[k];return `<button class="frm ${SAVE.frame===k?'on':''} ${own?'':'lock'}" data-frame="${k}" style="--f1:${f.c[0]};--f2:${f.c[1]}" aria-label="Cornice ${f.n}"><i></i><small>${f.n}</small></button>`}).join('');
   const got=Object.keys(SAVE.ach).length;$('achCount').innerHTML=`<span><b>${got}</b> di ${ACH.length} traguardi ottenuti</span><div class="bar"><i style="width:${got/ACH.length*100}%"></i></div>`;
-  $('achs').innerHTML=ACH.map(a=>{const v=Math.min(a.g,a.v(SAVE.stats)),done=!!SAVE.ach[a.id],p=v/a.g;return `<div class="ach ${done?'done':''}"><div class="medal" style="--p:${p*360}deg">${kind2svg('trophy')}</div><b>${a.n}</b><span>${a.d}</span>${done?`<small>${a.title?'«'+a.title+'»':''}</small>`:`<small class="prog">${v}/${a.g}</small>`}</div>`}).join('');
+  $('achs').innerHTML=ACH.map(a=>{const v=Math.min(a.g,a.v(SAVE.stats)),done=!!SAVE.ach[a.id],p=v/a.g;return `<div class="ach ${done?'done':''}"><div class="medal" style="--p:${p*360}deg">${kind2svg('trophy')}</div><b>${a.n}</b><span>${a.d}</span>${done?`<small>${a.title?'«'+a.title+'»':''}</small>`:`<small class="prog">${v}/${a.g} · ${ACH_R[a.id]||5} cristalli</small>`}${done&&!SAVE.achC[a.id]?`<button class="btn go achClaim" data-achc="${a.id}">Riscatta +${ACH_R[a.id]||5} <i class="gemS"></i></button>`:''}</div>`}).join('');
   const T=SAVE.inf.top;
   $('lb').innerHTML=T.length?`<div class="podium">${[1,0,2].map(i=>T[i]?`<div class="pod p${i+1}"><b>Stanza ${T[i].room}</b><span>${HERO_BY[T[i].hero]?HERO_BY[T[i].hero].n:''}</span><div class="step">${i+1}</div></div>`:'<div class="pod empty"></div>').join('')}</div>`+T.slice(3).map((r,i)=>`<li><em>${i+4}</em><div><b>Stanza ${r.room}</b><span>${HERO_BY[r.hero]?HERO_BY[r.hero].n:''}, ${r.kills} nemici</span></div><small>${new Date(r.d).toLocaleDateString('it-IT')}</small></li>`).join('')
     :`<li class="empty">${modeOpen('inf')?"Scendi nell'Abisso per segnare il primo record.":"Sconfiggi il Golem di Muschio per aprire l'Abisso."}</li>`;
@@ -6617,17 +6744,18 @@ function fillGuide(){const T=(t,b)=>`<details class="gsec"><summary>${t}</summar
   const pets=PETS.map(q=>`<li><b>${q.n}</b>: ${q.d} <i>(${q.how})</i></li>`).join('');
   const chs=[1,2,3,4].map(c=>{const M=modeOf(c);return `<li><b>Capitolo ${c} · ${M.n}</b>: ${M.d}</li>`}).join('');
   $('sheet').innerHTML=`<h2>Guida</h2><p class="lead">Tutto quello che serve sapere su Mossbound.</p>`+
-  T('Come si gioca',`<ul><li><b>Muoviti</b> trascinando il dito sullo schermo. Quando ti fermi, l'eroe tira da solo al nemico più vicino.</li><li><b>Scatto</b>: un balzo veloce che ti rende intoccabile per un attimo. Usalo quando vedi i segnali rossi a terra.</li><li><b>Abilità speciale</b> (la stella): si carica colpendo e sconfiggendo i nemici. Quando brilla, toccala.</li><li>Raccogli i <b>cristalli verdi</b> per salire di livello, l'<b>oro</b> per migliorarti e le <b>gemme blu</b> che escono dai cristalli rotti.</li><li>Sul computer: frecce o WASD per muoverti, Spazio per lo scatto, Q o E per l'abilità, P per la pausa.</li></ul>`)+
-  T('Dove trovi le cose',`<ul><li><b>Avventura</b>: scegli la modalità con le frecce e premi Entra. A sinistra ci sono accesso giornaliero, missioni e cassa gratuita; a destra offerte, cammino delle coppe e pass di stagione. Sotto, i 4 posti per le casse vinte.</li><li><b>Eroe</b>: cambia eroe con le frecce e tocca gli oggetti per equipaggiarli e migliorarli. Sotto trovi Collezione, Talenti, Set e Compagni.</li><li><b>Bottega</b>: offerte che cambiano ogni giorno, casse, oro e gemme.</li><li><b>Cammino</b>: i premi delle coppe e le arene da raggiungere.</li><li><b>Profilo</b>: statistiche, traguardi, record dell'Abisso, titoli e cornici. L'ingranaggio apre le impostazioni.</li></ul>`)+
+  T('Come si gioca',`<ul><li><b>Muoviti</b> trascinando il dito sullo schermo. Quando ti fermi, l'eroe tira da solo al nemico più vicino.</li><li><b>Scatto</b>: un balzo veloce che ti rende intoccabile per un attimo. Usalo quando vedi i segnali rossi a terra.</li><li><b>Abilità speciale</b> (la stella): si carica colpendo e sconfiggendo i nemici. Quando brilla, toccala.</li><li>Raccogli le <b>sfere verdi</b> per salire di livello, l'<b>oro</b> per migliorarti e i <b>cristalli blu</b> che escono dalle rocce di cristallo, dai sacchi e dai boss.</li><li>Sul computer: frecce o WASD per muoverti, Spazio per lo scatto, Q o E per l'abilità, P per la pausa.</li></ul>`)+
+  T('Dove trovi le cose',`<ul><li><b>Gioca</b>: il tuo eroe sulla pietra delle rune. Premi <b>Gioca</b> per entrare nella tua arena; ai lati ci sono la <b>Sfida del giorno</b> e <b>l'Abisso</b>. La scheda dell'arena mostra le stanze e il tuo record: toccala per il cammino delle coppe.</li><li>A sinistra: missioni, accesso giornaliero, ruota della fortuna e traguardi. A destra: pass di stagione, cammino delle coppe, casse e offerte.</li><li>Sotto l'eroe: i 4 oggetti che indossi (toccali per migliorarli) e il bottone per cambiare eroe.</li><li><b>Eroi</b>: scegli e sblocca gli eroi, migliora i talenti. <b>Armeria</b>: equipaggiamento, collezione e set. <b>Compagni</b>: sbloccali e scegli chi porti con te. <b>Bottega</b>: offerte, negozio del giorno, casse e oro.</li><li>In alto: il tuo <b>livello esploratore</b> (sale giocando e a ogni livello ti regala oro e cristalli), l'oro e i cristalli. Il bottone ≡ apre profilo, traguardi, impostazioni e guida.</li></ul>`)+
+  T('Missioni e ruota',`<ul><li><b>Missioni</b>: 3 del giorno e 3 della settimana. Ogni missione ritirata dà punti: a 100, 250 e 450 punti si aprono i premi della settimana. Ritirate tutte e 3 le missioni del giorno, prendi anche il forziere del giorno.</li><li><b>Ruota della fortuna</b>: un giro gratis ogni giorno. Altri giri guardando un video (fino a 3 al giorno) oppure con i cristalli.</li><li><b>Traguardi</b>: ognuno raggiunto regala cristalli da riscattare.</li></ul>`)+
   T('Coppe, arene e capitoli',`<p>Ogni partita vinta ti dà coppe, ogni sconfitta te ne toglie un po', ma non scendi mai sotto l'inizio della tua arena. Le arene sono ${ARENAS.length}: più sali, più i mostri sono forti e più oro trovi. Ogni capitolo ha dieci stanze e due boss:</p><ul>${chs}</ul>`)+
-  T('Modalità',`<ul><li><b>Arena</b>: la partita normale. Vinci o perdi coppe.</li><li><b>Sfida del giorno</b>: la stessa per tutto il giorno, con un aiuto e un ostacolo. La prima partita finita vale 10 gemme e 150 oro; nei primi tre della classifica dei rivali altre 15 gemme. Le coppe non cambiano. Si apre dopo la prima partita.</li><li><b>L'Abisso</b>: stanze senza fine che attraversano tutti i mondi, con un boss ogni cinque stanze. Si apre a ${ARENAS[1].t} coppe oppure battendo il Golem.</li></ul>`)+
-  T('Livelli, abilità ed evoluzioni',`<p>A ogni livello scegli un'abilità tra tre. Se non ti piacciono puoi cambiarle: la prima volta è gratis, poi costa gemme. Due abilità giuste insieme sbloccano una carta dorata, l'evoluzione:</p><ul>${evos}</ul>`)+
-  T('Stanze speciali',`<ul><li><b>Élite</b>: nemici con la stella, più forti, lasciano più premi.</li><li><b>Eventi</b>: fontana della vita, mercante, altare maledetto, stanza del tesoro.</li><li><b>Stanza dell'oro</b>: per 15 secondi piovono monete. Prendine più che puoi, ma attento ai massi.</li><li><b>Prova del coraggio</b>: sconfiggi tutti senza farti colpire e vinci una cassa d'argento e 8 gemme.</li><li><b>Due casse</b>: una volta a partita. Una ha le monete, l'altra è il Mimic.</li><li><b>Boss</b>: alla stanza 5 e alla 10. Dopo il boss di metà capitolo gira la ruota della fortuna.</li></ul>`)+
-  T('Eroi e abilità speciali',`<p>Ogni eroe ha la sua abilità speciale:</p><ul>${ults}</ul><p>Gli eroi nuovi si comprano con l'oro nella scheda Eroe.</p>`)+
-  T('Compagni',`<p>Un compagno ti segue in ogni partita e combatte con te. All'inizio non ne hai: li sblocchi raccogliendo le loro carte nelle casse oppure con le gemme. Poi salgono di livello con carte e oro (fino al livello ${PETMAX}). Li trovi in Eroe → Compagni.</p><ul>${pets}</ul>`)+
-  T('Pass di stagione',`<p>Ogni stagione dura 28 giorni e ha ${PASS_T} livelli. Sali giocando le partite, la sfida del giorno e le missioni. La fila gratuita è per tutti; con il Pass d'oro (${PASS_COST} gemme) prendi anche i premi della fila dorata: aspetti per l'eroe, titoli e cornici.</p>`)+
+  T('Modalità',`<ul><li><b>Arena</b>: la partita normale. Vinci o perdi coppe.</li><li><b>Sfida del giorno</b>: la stessa per tutto il giorno, con un aiuto e un ostacolo. Tre medaglie a punti: bronzo (oro), argento (cristalli) e oro (una cassa d'argento); nei primi tre della classifica dei rivali altri 10 cristalli. Le coppe non cambiano. Si apre dopo la prima partita.</li><li><b>L'Abisso</b>: stanze senza fine che attraversano tutti i mondi, con un boss ogni cinque stanze. Si apre a ${ARENAS[1].t} coppe oppure battendo il Golem.</li></ul>`)+
+  T('Livelli, abilità ed evoluzioni',`<p>A ogni livello scegli un'abilità tra tre. Se non ti piacciono puoi cambiarle: la prima volta è gratis, poi costa cristalli. Due abilità giuste insieme sbloccano una carta dorata, l'evoluzione:</p><ul>${evos}</ul>`)+
+  T('Stanze speciali',`<ul><li><b>Élite</b>: nemici con la stella, più forti, lasciano più premi.</li><li><b>Eventi</b>: fontana della vita, mercante, altare maledetto, stanza del tesoro.</li><li><b>Stanza dell'oro</b>: per 15 secondi piovono monete. Prendine più che puoi, ma attento ai massi.</li><li><b>Prova del coraggio</b>: sconfiggi tutti senza farti colpire e vinci una cassa d'argento e 4 cristalli.</li><li><b>Due casse</b>: una volta a partita. Una ha le monete, l'altra è il Mimic.</li><li><b>Boss</b>: alla stanza 5 e alla 10. Ognuno lascia 2 cristalli.</li></ul>`)+
+  T('Eroi e abilità speciali',`<p>Ogni eroe ha la sua abilità speciale:</p><ul>${ults}</ul><p>Gli eroi nuovi si comprano con l'oro nella scheda Eroi.</p>`)+
+  T('Compagni',`<p>Un compagno ti segue in ogni partita e combatte con te. All'inizio non ne hai: li sblocchi raccogliendo le loro carte nelle casse e nella ruota, oppure con i cristalli. Poi salgono di livello con carte e oro (fino al livello ${PETMAX}). Li trovi nella scheda Compagni.</p><ul>${pets}</ul>`)+
+  T('Pass di stagione',`<p>Ogni stagione dura 28 giorni e ha ${PASS_T} livelli. Sali giocando le partite, la sfida del giorno e le missioni. La fila gratuita è per tutti; con il Pass d'oro (${PASS_COST} cristalli) prendi anche i premi della fila dorata: aspetti per l'eroe, titoli e cornici.</p>`)+
   T('Oggetti, set e talenti',`<ul><li>Le casse danno carte: con abbastanza carte e oro un oggetto sale di livello.</li><li>Due pezzi dello stesso set danno un bonus extra.</li><li>I talenti valgono per ogni eroe e ogni partita.</li></ul>`)+
-  T('Gemme e rinascita',`<ul><li>Le gemme escono dai cristalli che rompi, dalla ruota della fortuna, dall'accesso giornaliero, dalla sfida del giorno e dalla prova del coraggio.</li><li>Se cadi puoi rinascere una volta a partita con ${REV_COST} gemme.</li><li>Servono anche per cambiare le abilità, sbloccare i compagni, il Pass d'oro e le offerte speciali.</li></ul>`)+
+  T('Cristalli e rinascita',`<ul><li>I cristalli escono dalle rocce di cristallo che rompi, dai sacchi e dai boss; poi dalle missioni, dalla ruota della fortuna, dall'accesso giornaliero, dai traguardi, dal livello esploratore, dalla sfida del giorno e dalla prova del coraggio.</li><li>Se cadi puoi rinascere una volta a partita con ${REV_COST} cristalli.</li><li>Servono anche per cambiare le abilità, sbloccare i compagni, il Pass d'oro, le offerte speciali, l'oro della bottega e i giri in più della ruota.</li></ul>`)+
   T('Salvataggio',`<p>I progressi restano su questo dispositivo. Per portarli su un altro: Impostazioni → <b>Copia codice</b>, e sull'altro dispositivo <b>Carica codice</b>.</p>`)+
   
   `<details class="gsec" open><summary>Bestiario</summary><div class="best">${BEST.map(([t,n,d])=>{const s=SAVE.seen[t];return `<div class="beast ${s?'':'unk'}"><canvas width="90" height="90" data-beast="${t}"></canvas><b>${s?n:'???'}</b><span>${s?d:'Non ancora incontrato'}</span></div>`}).join('')}</div></details>
@@ -6722,7 +6850,7 @@ function loop(now){const raw=(now-last)/1000,dt=Math.min(.033,raw);last=now;if(I
   if(started&&!paused&&!INTRO.on&&raw<.2){frameEma+=(raw-frameEma)*.05;if(SAVE.set.q==='auto'&&!LOWFX&&frameEma>.026){slowT+=raw;if(slowT>2.5)LOWFX=true}else slowT=0}
   if(started&&!paused){if(G.hitstop>0)G.hitstop-=dt;else if(G.slowT>0){G.slowT-=dt;update(dt*(G.slowT>1?.22:.22+.78*(1-G.slowT)))}else update(dt)}
   if($('menu').hidden){render();hud();if(started)rpCapture(now)}
-  if(RP.pending&&now>=RP.pending)rpStart();if(RP.on)rpFrame(raw);else if(!$('menu').hidden&&$('chestScr').hidden){if(!$('tabHero').hidden){G.t+=dt;drawHeroPreview(dt)}const home=!$('tabPlay').hidden;CAMP.fr=(CAMP.fr||0)+1;if(home){if($('sheetScr').hidden)drawCamp(dt)}else if(CAMP.fr%2===0||!MBG.drawn)drawMenuBg(dt*2)}
+  if(RP.pending&&now>=RP.pending)rpStart();if(RP.on)rpFrame(raw);else if(!$('menu').hidden&&$('chestScr').hidden){if(!$('tabHero').hidden){G.t+=dt;drawHeroPreview(dt)}else if(!$('tabGear').hidden){G.t+=dt;drawHeroPreview(dt,$('gearCv'),SAVE.hero)}const home=!$('tabPlay').hidden;CAMP.fr=(CAMP.fr||0)+1;if(home){if($('sheetScr').hidden)drawCamp(dt)}else if(CAMP.fr%2===0||!MBG.drawn)drawMenuBg(dt*2)}
   requestAnimationFrame(loop)}
 
 // =====================================================================
@@ -7677,6 +7805,313 @@ function showHand(){if(SAVE.handSeen||(SAVE.runs||0)>0)return;SAVE.handSeen=1;sa
     h.innerHTML='<div class="ring"></div><div class="dot"></div><svg viewBox="0 0 40 50"><path d="M14 4c0-2.2 3.6-2.2 3.6 0v18l2-1.5V9c0-2.2 3.6-2.2 3.6 0v12l2-.5V12c0-2.2 3.6-2.2 3.6 0v11l1.6.5V17c0-2.2 3.4-2.2 3.4 0v15c0 9-5 15-13 15-6 0-9-3-12-8L4 30c-1.2-2 1.4-4 3.2-2.4L14 33z" fill="#f6ead2" stroke="#1b1612" stroke-width="2.4" stroke-linejoin="round"/></svg>';w.appendChild(h)}
   requestAnimationFrame(()=>h.classList.add('on'));const off=()=>{h.classList.remove('on');removeEventListener('pointerdown',off,true);clearTimeout(h._t)};h._t=setTimeout(off,4500);setTimeout(()=>addEventListener('pointerdown',off,true),300)}
 {const _sr=startRun;startRun=function(){const first=!(SAVE.runs>0)&&!SAVE.handSeen;_sr.apply(this,arguments);if(first&&started)setTimeout(showHand,900)}}
+// =====================================================================
+// MENU 2: the home like the big phone games (the hero on a rune stone, buttons on both sides,
+// equipment, the arena card, the play row), the explorer level, the wheel of fortune in the menu,
+// weekly missions with activity chests, rewards for achievements and for the daily challenge
+// =====================================================================
+// --- explorer level: runs, missions and challenges give experience, every level pays out
+if(!SAVE.acct||!(SAVE.acct.lvl>=1))SAVE.acct={lvl:1,xp:0};
+function acct(){return SAVE.acct}
+function acctNeed(l){return 100+40*(l-1)}
+function acctRew(l){return{gold:Math.min(1500,60+40*l),gems:l%5===0?15:3}}
+function acctXP(v){const A=SAVE.acct;A.xp+=Math.max(0,Math.round(v||0));let up=0;
+  while(A.xp>=acctNeed(A.lvl)){A.xp-=acctNeed(A.lvl);A.lvl++;up++;const r=acctRew(A.lvl);SAVE.gold+=r.gold;SAVE.gems=(SAVE.gems||0)+r.gems;achPop('Livello esploratore '+A.lvl+'!',`+${r.gold} oro e +${r.gems} cristalli`,'trophy')}
+  save();if(!$('menu').hidden)renderGold();return up}
+{const _px=passXP;passXP=function(v){const r=_px(v);acctXP(v);return r}}
+// --- the best room reached in every arena (shown on the arena card)
+if(!SAVE.bestA){SAVE.bestA={};[['best',0],['best2',1],['best3',2],['best4',3]].forEach(([k,i])=>{if(SAVE[k]&&SAVE[k].room)SAVE.bestA[i]=SAVE[k].room})}
+function bestRoom(i){return SAVE.bestA[i]||0}
+{const _e=endRun;endRun=function(win,quit){const g=G,was=g&&!g.ended;_e.apply(this,arguments);if(!was)return;
+  if(g.mode!=='inf'&&!g.daily){const i=g.arena||0;SAVE.bestA[i]=Math.max(bestRoom(i),g.room)}
+  if(win&&!g.daily&&g.mode!=='inf')mprog('win',null,1);save()}}
+// --- missions: daily and weekly, activity points open three chests every week
+const WPOOL=[
+  {k:'kill',t:'any',g:600,n:'Sconfiggi 600 nemici'},{k:'boss',t:'any',g:6,n:'Sconfiggi 6 boss'},{k:'win',g:3,n:'Conquista 3 volte la tua arena'},
+  {k:'chest',g:8,n:'Apri 8 casse'},{k:'elite',g:25,n:'Sconfiggi 25 nemici élite'},{k:'gold',g:3000,n:'Raccogli 3.000 oro nelle partite'},
+  {k:'dash',g:250,n:'Usa lo scatto 250 volte'},{k:'evo',g:4,n:'Ottieni 4 evoluzioni'},{k:'wheel',g:5,n:'Gira la ruota della fortuna 5 volte'},
+  {k:'chal',g:3,n:'Gioca 3 sfide del giorno',req:'daily'},{k:'inf',g:15,n:"Raggiungi la stanza 15 dell'Abisso",req:'inf'}];
+const WREW=[{chest:'argento'},{gold:400},{gems:10}];
+const WK_T=[100,250,450],WK_R=[{chest:'argento'},{chest:'oro'},{gems:30}],MPTS={d:20,w:60},MBONUS=5;
+function weekKey(){const d=new Date(),day=(d.getDay()+6)%7,m=new Date(d.getFullYear(),d.getMonth(),d.getDate()-day);return m.getFullYear()+'-'+(m.getMonth()+1)+'-'+m.getDate()}
+function weekEnd(){const d=new Date(),day=(d.getDay()+6)%7;return new Date(d.getFullYear(),d.getMonth(),d.getDate()-day+7)}
+function ensureWeekly(){const k=weekKey();if(SAVE.weekly&&SAVE.weekly.wk===k)return SAVE.weekly;
+  let h=0;for(const ch of k+'|sett')h=(h*31+ch.charCodeAt(0))>>>0;const rnd=()=>{h=(Math.imul(h,1103515245)+12345)>>>0;return h/4294967296};
+  const pool=WPOOL.map((m,i)=>i).filter(i=>!WPOOL[i].req||modeOpen(WPOOL[i].req)),list=[];
+  while(list.length<3&&pool.length){const i=pool.splice(Math.floor(rnd()*pool.length),1)[0];list.push({i,p:0,done:false,claimed:false,r:list.length})}
+  SAVE.weekly={wk:k,list,pts:0,got:{}};save();return SAVE.weekly}
+{const _mp=mprog;mprog=function(k,t,v,abs){_mp(k,t,v,abs);const W=ensureWeekly();
+  for(const m of W.list){const M=WPOOL[m.i];if(!M||M.k!==k||m.done)continue;if(M.t&&t!==undefined&&t!==null&&!inGrp(t,M.t))continue;if(M.t&&M.t!=='any'&&(t===undefined||t===null))continue;
+    m.p=abs?Math.max(m.p,v):m.p+v;if(m.p>=M.g){m.p=M.g;m.done=true;achPop('Missione della settimana',M.n,'mission');sfx('upgrade')}}}}
+const wrewTxt=r=>{const R=WREW[r];return R.gold?R.gold+' oro':R.gems?R.gems+' cristalli':CHESTS[R.chest].n};
+function misReady(){ensureDaily();const W=ensureWeekly(),D=SAVE.daily;let n=D.list.filter(m=>m.done&&!m.claimed).length+W.list.filter(m=>m.done&&!m.claimed).length;
+  if(D.list.length&&D.list.every(m=>m.claimed)&&!D.bonus)n++;WK_T.forEach((th,i)=>{if(W.pts>=th&&!W.got[i])n++});return n}
+function grantR(r){if(r.gold){SAVE.gold+=r.gold;sfx('coin');toast(`+${r.gold.toLocaleString('it-IT')} oro`)}if(r.gems){SAVE.gems=(SAVE.gems||0)+r.gems;sfx('gem');toast(`+${r.gems} cristalli`)}save();renderGold();if(r.chest){closeSheet();openChest(r.chest)}}
+let misSeg='d';
+function fillMissions(){ensureDaily();const W=ensureWeekly(),D=SAVE.daily,t=new Date(),mid=new Date(t.getFullYear(),t.getMonth(),t.getDate()+1);
+  const wk=`<div class="wk"><b>Punti della settimana: ${W.pts}</b>${WK_T.map((th,i)=>{const st=W.got[i]?'got':W.pts>=th?'ready':'',r=WK_R[i];return `<button class="wkc ${st}" data-wkc="${i}" aria-label="Premio a ${th} punti">${r.chest?chestSVG(r.chest,false):'<span class="bigGem"></span>'}<small>${st==='got'?'Preso':r.gems?th+' · '+r.gems:th}</small></button>`}).join('')}<div class="wkBar"><i style="width:${Math.min(100,W.pts/WK_T[2]*100)}%"></i>${WK_T.slice(0,2).map(th=>`<u style="left:${th/WK_T[2]*100}%"></u>`).join('')}</div></div>`;
+  const row=(M,m,j,kind,rew)=>`<div class="mis ${m.claimed?'claimed':m.done?'done':''}"><div><b>${M.n}</b><div class="bar ${m.done?'full':''}"><i style="width:${Math.min(1,m.p/M.g)*100}%"></i><span>${Math.floor(m.p).toLocaleString('it-IT')}/${M.g.toLocaleString('it-IT')}</span></div><em class="mpts">+${kind==='d'?MPTS.d:MPTS.w} punti</em></div>${m.claimed?'<em class="mok">Ritirata</em>':m.done?`<button class="btn mclaim" data-${kind==='d'?'m':'wm'}="${j}">Ritira ${rew}</button>`:`<em class="mrew">${rew}</em>`}</div>`;
+  let body;
+  if(misSeg==='d'){const all=D.list.length&&D.list.every(m=>m.claimed);
+    body=D.list.map((m,j)=>row(MPOOL[m.i],m,j,'d',rewTxt(m.r))).join('')+`<div class="mbonus ${all&&!D.bonus?'ready':''}"><div><b>Forziere del giorno</b><span>${D.bonus?'Preso! Torna domani.':'Ritira tutte e 3 le missioni'}</span></div>${D.bonus?'<em class="mok">Preso</em>':all?`<button class="btn mclaim" data-mbonus="1">Ritira +${MBONUS} <i class="gemS"></i></button>`:`<em class="mrew">+${MBONUS} cristalli</em>`}</div><p class="lead">Si rinnovano tra <b>${fmtH(mid-t)}</b>.</p>`}
+  else body=W.list.map((m,j)=>row(WPOOL[m.i],m,j,'w',wrewTxt(m.r))).join('')+`<p class="lead">Nuove missioni tra <b>${fmtH(weekEnd()-t)}</b>.</p>`;
+  const html=`<h2>Missioni</h2><div class="seg mseg"><button class="${misSeg==='d'?'on':''}" data-mseg="d">Del giorno</button><button class="${misSeg==='w'?'on':''}" data-mseg="w">Della settimana</button></div>${wk}${body}<button class="btn alt close">Chiudi</button>`;
+  if(html!==lastSheetHTML){$('sheet').innerHTML=html;lastSheetHTML=html}}
+function renderMissions(){const n=misReady(),html=`${SCROLL_SVG}<small>Missioni</small>${n?`<em class="pip">${n}</em>`:''}`;
+  const el=$('misBtn');el.classList.toggle('hot',!!n);if(html!==lastMisHTML){el.innerHTML=html;lastMisHTML=html}if(SHEET==='mis')fillMissions()}
+// --- achievements pay crystals
+const ACH_R={first:5,slime:10,k1000:20,golem:10,witch:15,salam:10,smith:20,toad:10,hydra:25,yeti:10,queen:30,nohit:15,elite:15,inf15:10,inf30:30,evo:15,heroes:30,chests:20,legend:40};
+if(!SAVE.achC)SAVE.achC={};
+function achReady(){return ACH.filter(a=>SAVE.ach[a.id]&&!SAVE.achC[a.id]).length}
+// --- daily challenge: three medals by score, the podium on top
+const CHAL_T=[{s:4000,n:'Bronzo',c:'#e0955a',r:{gold:150}},{s:8000,n:'Argento',c:'#eef3f7',r:{gems:5}},{s:14000,n:'Oro',c:'#ffd84a',r:{chest:'argento'}}];
+const tierTxt=r=>r.gold?r.gold+' oro':r.gems?r.gems+' cristalli':CHESTS[r.chest].n;
+function chalEnd(win,quit){const C=ensureChal(),score=quit?0:chalScore(win);C.tries++;const bonus=[];
+  if(!quit){const first=!C.done;C.done=true;if(score>C.best)C.best=score;if(first)passXP(60);mprog('chal',null,1);C.tiers=C.tiers||{};
+    CHAL_T.forEach((T,i)=>{if(C.best>=T.s&&!C.tiers[i]){C.tiers[i]=1;const r=T.r;if(r.gold)SAVE.gold+=r.gold;if(r.gems)SAVE.gems=(SAVE.gems||0)+r.gems;if(r.chest)earnChest(r.chest);bonus.push(`Medaglia ${T.n}: ${tierTxt(r)}`)}});
+    const L=chalBoard(),pos=L.findIndex(x=>x.me)+1;if(pos>0&&pos<=3&&!C.top){C.top=true;SAVE.gems=(SAVE.gems||0)+10;bonus.push('Podio: +10 cristalli')}
+    return{score,pos,bonus:bonus.join(' · ')}}return{score:0,pos:0,bonus:''}}
+function fillChal(){const C=ensureChal(),T=chalToday(),L=chalBoard(),t=new Date(),mid=new Date(t.getFullYear(),t.getMonth(),t.getDate()+1),open=modeOpen('daily'),tiers=C.tiers||{};lastSheetHTML='';
+  const mods=T.mods.map(id=>CHAL_MODS.find(m=>m.id===id));
+  $('sheet').innerHTML=`<h2>Sfida del giorno</h2><p class="lead">${modeOf(T.ch).n} · uguale per tutti, cambia tra <b>${fmtH(mid-t)}</b></p>
+    <div class="cmods">${mods.map(m=>`<div class="cmod ${m.good?'good':'bad'}"><b>${m.n}</b><span>${m.d}</span></div>`).join('')}</div>
+    <div class="tiers">${CHAL_T.map((x,i)=>`<div class="tier ${tiers[i]?'got':''}" style="--tc:${x.c}"><i></i><b>${x.n}</b><small>${x.s.toLocaleString('it-IT')} punti<br>${tiers[i]?'Preso!':tierTxt(x.r)}</small></div>`).join('')}</div>
+    <p class="lead small">Più vai avanti, più punti fai. Nei primi 3 della classifica: <b>+10 cristalli</b>. Le coppe non cambiano.</p>
+    <div class="board">${L.map((x,i)=>`<div class="brow ${x.me?'me':''}"><span class="bpos">${i+1}</span><b>${x.me?(SAVE.pname||'Tu')+' (tu)':x.n}</b><span class="bsc">${x.s.toLocaleString('it-IT')}</span></div>`).join('')}</div>
+    ${open?`<button class="btn go bigPlay" data-playmode="daily">${C.done?'Riprova la sfida':'Gioca la sfida'}</button>`:'<p class="lead" style="text-align:center">Si apre dopo la prima partita.</p>'}<button class="btn alt close">Chiudi</button>`}
+function fillAbyss(){const open=modeOpen('inf'),T=SAVE.inf.top||[];lastSheetHTML='';
+  $('sheet').innerHTML=`<h2>L'Abisso</h2><p class="lead">Stanze senza fine, sempre più dure, e le coppe non cambiano. Alla stanza 5, 10 e 20 ti aspettano casse sempre più ricche.</p>
+    <div class="abTop"><span><b>${SAVE.inf.best||0}</b>Record</span><span><b>${T.length}</b>Discese</span><span><b>${(T[0]&&T[0].kills)||0}</b>Nemici nel record</span></div>
+    ${T.length?`<div class="board">${T.map((r,i)=>`<div class="brow"><span class="bpos">${i+1}</span><b>Stanza ${r.room}</b><span class="bsc">${HERO_BY[r.hero]?HERO_BY[r.hero].n:''}</span></div>`).join('')}</div>`:''}
+    ${open?`<button class="btn go bigPlay" data-playmode="inf">Scendi nell'Abisso</button>`:'<p class="lead" style="text-align:center">Sconfiggi il Golem di Muschio per aprirlo.</p>'}<button class="btn alt close">Chiudi</button>`}
+// --- chests: the free one and the four slots, behind the «Casse» button
+function slotHTML(s,i){if(!s)return '<div class="slot empty"><span>Vuoto</span></div>';const st=slotState(s),c=CHESTS[s.type];let lab;
+  if(st==='ready')lab='<b>Apri!</b><small>&nbsp;</small>';
+  else if(st==='unlocking')lab=`<b>${fmtT(s.end-Date.now())}</b><small>${s.confirm?'Tocca ancora: '+skipCost(s)+' oro':'Apri ora: '+skipCost(s)+' oro'}</small>`;
+  else lab=anyUnlocking()?`<b>In attesa</b><small>${fmtT(c.time*1000)}</small>`:`<b>Sblocca</b><small>${fmtT(c.time*1000)}</small>`;
+  return `<button class="slot ${st}" data-i="${i}" aria-label="${c.n}">${chestSVG(s.type,false)}${lab}</button>`}
+function fillChests(){const ready=Date.now()>=SAVE.free.next,type=(SAVE.free.n+1)%3===0?'argento':'legno';
+  const html=`<h2>Casse</h2><div class="freeRow ${ready?'hot':''}">${chestSVG(type,false)}<div><b>${CHESTS[type].n} gratis</b><span>${ready?'Pronta da aprire!':'Si riempie tra '+fmtH(SAVE.free.next-Date.now())}</span></div>${ready?'<button class="btn go" data-free="1">Apri</button>':''}</div>
+    <p class="lead">Vinci casse giocando, dalla stanza 3 in poi: aspettano qui e si sbloccano una alla volta.</p><div class="slots cslots">${SAVE.slots.map(slotHTML).join('')}</div><button class="btn alt close">Chiudi</button>`;
+  if(html!==lastSheetHTML){$('sheet').innerHTML=html;lastSheetHTML=html}}
+function takeFree(){if(Date.now()<SAVE.free.next){toast('Si riempie ogni 4 ore: torna più tardi');return}if(CHbusy)return;SAVE.free.n++;const type=SAVE.free.n%3===0?'argento':'legno';SAVE.free.next=Date.now()+4*3600e3;save();closeSheet();openChest(type)}
+function renderChestBtn(){const fr=Date.now()>=SAVE.free.next,sl=SAVE.slots.filter(Boolean),rd=sl.filter(s=>slotState(s)==='ready'),un=sl.find(s=>slotState(s)==='unlocking'),lk=sl.find(s=>slotState(s)==='locked'),n=rd.length+(fr?1:0);
+  let ic,lab;if(n){ic=chestSVG(rd.length?rd[0].type:'legno',false);lab='Apri!'}else if(un){ic=chestSVG(un.type,false);lab=fmtT(un.end-Date.now()).replace(/ \d+s$/,'')}else if(lk){ic=chestSVG(lk.type,false);lab='Sblocca'}else{ic=chestSVG('legno',false);lab=fmtH(SAVE.free.next-Date.now()).replace(/ \d+s$/,'')}
+  const html=`${ic}<small>${lab}</small>${n?`<em class="pip">${n}</em>`:lk&&!un?'<i class="bang">!</i>':''}`,el=$('chestBtn');el.classList.toggle('hot',!!n);if(el._h!==html){el.innerHTML=html;el._h=html}}
+$('chestBtn').onclick=()=>openSheet('chests');
+// --- the ≡ menu and the crystals sheet
+const MORE_IC={prof:'<svg viewBox="0 0 32 32" aria-hidden="true"><path d="M16 3c-6 0-10 5-10 11v4l-2 9h24l-2-9v-4c0-6-4-11-10-11z" fill="#c2b078" stroke="#191714" stroke-width="2.2" stroke-linejoin="round"/><path d="M10 17c0-4 2.7-7.4 6-7.4s6 3.4 6 7.4v3H10z" fill="#191714"/><circle cx="13.4" cy="16.6" r="1.6" fill="#fff"/><circle cx="18.6" cy="16.6" r="1.6" fill="#fff"/></svg>',
+  ach:'<svg viewBox="0 0 40 40" aria-hidden="true"><path d="M11 3h7l4 13h-7zM29 3h-7l-4 13h7z" fill="#e5484d" stroke="#191714" stroke-width="2.2" stroke-linejoin="round"/><circle cx="20" cy="25.5" r="11" fill="#ffd84a" stroke="#191714" stroke-width="2.4"/><circle cx="20" cy="25.5" r="7" fill="#f2a400"/></svg>',
+  set:'<svg viewBox="0 0 32 32" aria-hidden="true"><path d="M16 4l2.6 3.4 4.2-1.1.6 4.3 4 1.6-1.9 3.8 1.9 3.8-4 1.6-.6 4.3-4.2-1.1L16 28l-2.6-3.4-4.2 1.1-.6-4.3-4-1.6L6.5 16l-1.9-3.8 4-1.6.6-4.3 4.2 1.1z" fill="#d9cdaa" stroke="#191714" stroke-width="2" stroke-linejoin="round"/><circle cx="16" cy="16" r="4.5" fill="#191714"/></svg>',
+  guide:'<svg viewBox="0 0 32 32" aria-hidden="true"><path d="M5 6c4-2 8-2 11 1 3-3 7-3 11-1v20c-4-2-8-2-11 1-3-3-7-3-11-1z" fill="#f4e7c8" stroke="#191714" stroke-width="2.2" stroke-linejoin="round"/><path d="M16 7v20" stroke="#191714" stroke-width="2"/></svg>'};
+function fillMore(){lastSheetHTML='';$('sheet').innerHTML=`<h2>Menu</h2><div class="moreBtns"><button data-more="prof">${MORE_IC.prof}Profilo</button><button data-more="ach">${MORE_IC.ach}Traguardi</button><button data-more="set">${MORE_IC.set}Impostazioni</button><button data-more="guide">${MORE_IC.guide}Guida</button></div><button class="btn alt close">Chiudi</button>`}
+function fillGems(){lastSheetHTML='';const src=[['Cristalli nelle stanze','Rompi i cristalli e i sacchi che trovi giocando'],['Boss','Ogni boss sconfitto ne lascia 2'],['Missioni','Il forziere del giorno e i premi della settimana'],['Ruota della fortuna','Un giro gratis ogni giorno'],['Accesso giornaliero','Il 2° e il 5° giorno'],['Traguardi','Ogni traguardo raggiunto'],['Cammino e Pass','Tanti premi lungo la strada'],['Livello esploratore','A ogni livello che sali'],['Sfida del giorno',"La medaglia d'argento e il podio"]];
+  $('sheet').innerHTML=`<h2>Cristalli</h2><p class="lead">Servono per i compagni, il Pass d'oro, le offerte, l'oro della bottega, la ruota e per rinascere in partita. Non si comprano: si guadagnano giocando!</p><div class="gsrc">${src.map(([b,s])=>`<span class="bigGem" style="width:17px;height:17px;margin:7px"></span><div><b>${b}</b><span>${s}</span></div>`).join('')}</div><button class="btn alt close">Chiudi</button>`}
+$('tbMenu').onclick=()=>openSheet('more');
+{const _os=openSheet;openSheet=function(kind){if(kind==='chests'||kind==='more'||kind==='gems'||kind==='abyss'){SHEET=kind;sfx('ui');lastSheetHTML='';({chests:fillChests,more:fillMore,gems:fillGems,abyss:fillAbyss})[kind]();$('sheetScr').hidden=false;return}return _os(kind)}}
+// clicks inside the sheets added by the new menu
+$('sheet').addEventListener('pointerdown',e=>{const b=e.target.closest('.slot[data-i]');if(!b)return;e.preventDefault();tapSlot(+b.dataset.i)});
+$('sheet').addEventListener('click',e=>{const b=e.target.closest('button');if(!b||b.disabled)return;
+  if(b.dataset.free){takeFree();return}
+  if(b.dataset.playmode){const m=b.dataset.playmode;closeSheet();goPlay(m);return}
+  if(b.dataset.more){const k=b.dataset.more;sfx('ui');if(k==='prof'){closeSheet();setTab('tabProfile')}else if(k==='ach'){closeSheet();profSeg='ach';setTab('tabProfile')}else openSheet(k);return}
+  if(b.dataset.mseg){misSeg=b.dataset.mseg;sfx('ui');fillMissions();return}
+  if(b.dataset.wm!=null){if(CHbusy)return;const W=ensureWeekly(),m=W.list[+b.dataset.wm];if(!m||!m.done||m.claimed)return;m.claimed=true;W.pts+=MPTS.w;passXP(40);const R=WREW[m.r];save();grantR(R);if(!R.chest){fillMissions();renderMissions()}return}
+  if(b.dataset.mbonus){const D=SAVE.daily;if(D.bonus||!D.list.every(m=>m.claimed))return;D.bonus=true;grantR({gems:MBONUS});fillMissions();renderMissions();return}
+  if(b.dataset.wkc!=null){if(CHbusy)return;const W=ensureWeekly(),i=+b.dataset.wkc;if(W.got[i]||W.pts<WK_T[i])return;W.got[i]=1;save();const R=WK_R[i];grantR(R);if(!R.chest){fillMissions();renderMissions()}return}});
+// --- achievements: claim the crystals from the profile or from the home button
+document.addEventListener('click',e=>{const b=e.target.closest('[data-achc]');if(!b||b.disabled)return;const id=b.dataset.achc;if(!SAVE.ach[id]||SAVE.achC[id])return;
+  SAVE.achC[id]=1;const v=ACH_R[id]||5;SAVE.gems=(SAVE.gems||0)+v;save();renderGold();sfx('gem');vib(25);toast(`+${v} cristalli`);renderProfile();renderSide()});
+$('achBtn').onclick=()=>{sfx('ui');profSeg='ach';setTab('tabProfile')};
+// --- the home: hero on the stone, equipment, arena card, play row
+function homeMode(){const i=arenaIdx(SAVE.trophies||0),A=ARENAS[i];return{...modeOf(A.ch),kind:'Arena '+(i+1),n:A.n,d:A.d,mc:A.col,arena:i}}
+const SKULL_SVG=k=>`<svg viewBox="0 0 20 20" aria-hidden="true">${k?'<path d="M5 5.5L6 1.8l2.2 2.4L10 1l1.8 3.2L14 1.8l1 3.7z" fill="#ffd84a" stroke="#191714" stroke-width="1.3" stroke-linejoin="round"/>':''}<path d="M10 ${k?4.6:2.4}C5.8 ${k?4.6:2.4} 3.2 ${k?7.2:5} 3.2 ${k?10.4:8.8}c0 2.1 1 3.4 2.3 4.2V18h9v-3.8c1.3-.8 2.3-2.1 2.3-4.2C16.8 ${k?7.2:5} 14.2 ${k?4.6:2.4} 10 ${k?4.6:2.4}z" fill="#f0e8d8" stroke="#191714" stroke-width="1.7" stroke-linejoin="round"/><circle cx="7.4" cy="${k?11:9.4}" r="1.9" fill="#191714"/><circle cx="12.6" cy="${k?11:9.4}" r="1.9" fill="#191714"/><path d="M8.3 18v-2M10 18v-2M11.7 18v-2" stroke="#191714" stroke-width="1.3"/></svg>`;
+function renderChap(){const T=SAVE.trophies||0,i=arenaIdx(T),A=ARENAS[i],N=ARENAS[i+1],b=bestRoom(i),pct=N?clamp((T-A.t)/(N.t-A.t),0,1)*100:100;
+  let tr='';for(let r=1;r<=ROOMS;r++){const boss=isBossRoom(r);tr+=(r>1?`<i class="rl ${r<=b?'on':''}"></i>`:'')+`<span class="rn ${boss?'boss':''} ${r<=b?'on':''} ${r===b+1?'next':''}">${boss?SKULL_SVG(r===ROOMS):''}</span>`}
+  const html=`<div><span class="ck">Arena ${i+1}</span><h3>${A.n}</h3></div><div class="ctr"><span class="trNow">${TROPHY}${T.toLocaleString('it-IT')}</span><div class="trBar"><i style="width:${pct}%"></i><span>${N?'Arena '+(i+2)+': '+N.t.toLocaleString('it-IT'):'Arena massima!'}</span></div></div><div class="rtrack">${tr}<em>${b>=ROOMS?'Conquistata!':'Record '+b+'/'+ROOMS}</em></div>`;
+  const el=$('chapCard');if(el._h!==html){el.innerHTML=html;el._h=html;el.style.setProperty('--ac',A.col);el.style.setProperty('--thumb',`url(${arenaThumb(i)})`)}}
+$('chapCard').onclick=()=>{sfx('ui');setTab('tabRoad')};
+function renderGearRow(){const html=SLOTS.map(s=>{const id=SAVE.eq[s];if(!id||!SAVE.items[id])return `<button class="hgs empty" data-slot="${s}" aria-label="${SLOTN[s]}">+<small>${SLOTN[s]}</small></button>`;
+    const it=ITEM[id],o=SAVE.items[id],r=RAR[it.rar];return `<button class="hgs" data-id="${id}" data-slot="${s}" style="--rc:${r.c};--rc2:${r.d}" aria-label="${it.n}">${canUpgrade(id)?'<em class="up">▲</em>':''}${itemSVG(it)}<b>Liv. ${o.lvl}</b></button>`}).join('');
+  const el=$('homeGear');if(el._h!==html){el.innerHTML=html;el._h=html}}
+$('homeGear').addEventListener('click',e=>{const b=e.target.closest('.hgs');if(!b)return;sfx('ui');if(b.dataset.id&&SAVE.items[b.dataset.id])openItem(b.dataset.id);else openPicker(b.dataset.slot)});
+const CHAL_SVG='<svg viewBox="0 0 40 40" aria-hidden="true"><path d="M20 2.5l3.3 5.8 6.5-1.4-1.4 6.5 5.8 3.3-5.8 3.3 1.4 6.5-6.5-1.4L20 30.9l-3.3-5.8-6.5 1.4 1.4-6.5-5.8-3.3 5.8-3.3-1.4-6.5 6.5 1.4z" fill="#ffd84a" stroke="#191714" stroke-width="2.2" stroke-linejoin="round"/><circle cx="20" cy="16.7" r="6.6" fill="#ff8a3c" stroke="#191714" stroke-width="2"/><path d="M17.5 16.8l2 2 3.5-4" fill="none" stroke="#fff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/><path d="M12 37l8-5 8 5" fill="none" stroke="#191714" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+const ABYSS_SVG='<svg viewBox="0 0 40 40" aria-hidden="true"><circle cx="20" cy="20" r="16.5" fill="#1d1230" stroke="#191714" stroke-width="2.4"/><path d="M9 20a11 11 0 1 1 11 11 8 8 0 1 1 8-8 5 5 0 1 1-5-5" fill="none" stroke="#c48ae8" stroke-width="2.8" stroke-linecap="round"/><circle cx="20.5" cy="20" r="2.6" fill="#f4e6ff"/></svg>';
+function renderModesRow(){const C=ensureChal(),dO=modeOpen('daily'),iO=modeOpen('inf');
+  const ch=`${CHAL_SVG}<b>Sfida</b><small>${!dO?'Dopo 1 partita':C.done?'Record '+C.best.toLocaleString('it-IT'):'Nuova!'}</small>${dO&&!C.done?'<i class="bang">!</i>':''}`,
+    ab=`${ABYSS_SVG}<b>Abisso</b><small>${iO?'Record '+(SAVE.inf.best||0):'Batti il Golem'}</small>`;
+  const c=$('chalBtn'),a=$('abyssBtn');if(c._h!==ch){c.innerHTML=ch;c._h=ch}if(a._h!==ab){a.innerHTML=ab;a._h=ab}c.classList.toggle('lock',!dO);a.classList.toggle('lock',!iO)}
+$('chalBtn').onclick=()=>openSheet('chal');$('abyssBtn').onclick=()=>openSheet('abyss');
+function renderPlay(){renderChap();renderGearRow();renderModesRow();renderMissions();renderChestBtn();renderSide();$('heroPillN').textContent=(HERO_BY[SAVE.hero]||HEROES[0]).n;if(SHEET==='chests')fillChests()}
+$('heroPill').onclick=()=>{sfx('ui');heroView=SAVE.hero;setTab('tabHero')};
+// tapping the hero on the stone opens the heroes
+$('homeStage').addEventListener('click',e=>{if(e.target.closest('button'))return;const H=CAMP.hero;if(!H)return;const r=campCv.getBoundingClientRect(),x=(e.clientX-r.left)*H.dpr,y=(e.clientY-r.top)*H.dpr;
+  if(Math.abs(x-H.x)<H.w&&y<H.y+H.w*.3&&y>H.y-H.h){sfx('ui');heroView=SAVE.hero;setTab('tabHero')}});
+function goPlay(mode){SAVE.sel=mode;save();if(!modeOpen(mode)){toast('Questa porta è ancora chiusa');return}if(CAMP.walk>0)return;initAudio();sfx('door');CAMP.walk=CAMP.t;
+  if(RM||$('tabPlay').hidden||$('menu').hidden){CAMP.walk=0;startRun();return}setTimeout(()=>{CAMP.walk=0;startRun()},1700)}
+// --- side buttons: login, missions, wheel, achievements | pass, road, chests, offers
+function renderSide(){const lr=loginReady(),rr=roadReady(),pr=passReady(),wf=wheelFree(),ar=achReady();
+  $('loginBtn').classList.toggle('hot',lr);$('loginBang').hidden=!lr;$('offerBang').hidden=true;$('roadSideBang').hidden=true;$('roadSide').classList.toggle('hot',!!rr);
+  $('passBang').hidden=!pr;$('passBtn').classList.toggle('hot',!!pr);$('passLvl').textContent=passLvl();
+  $('wheelBtn').classList.toggle('hot',wf);$('wheelBang').hidden=!wf;$('achPip').hidden=!ar;$('achPip').textContent=ar}
+function renderBadges(){const g=SAVE.gold;
+  $('heroBadge').hidden=!(HEROES.some(h=>!SAVE.heroes[h.id]&&g>=h.price)||TAL.some(t=>{const l=SAVE.tal[t.id]||0;return l<t.max&&g>=talCost(t,l)}));
+  $('gearBadge').hidden=!ITEMS.some(i=>canAffordUp(i.id));
+  $('petBadge').hidden=!PETS.some(p=>{const o=SAVE.pets.owned[p.id];if(!o)return (SAVE.gems||0)>=p.gems;return o.lvl<PETMAX&&(o.cards||0)>=petNeed(o.lvl)&&g>=petCost(o.lvl)});
+  $('shopBadge').hidden=!freeReady();if(!$('tabPlay').hidden)renderSide()}
+// --- tabs
+const TABS=['tabHero','tabGear','tabPlay','tabPets','tabShop','tabRoad','tabProfile'];
+function setTab(id){for(const t of TABS)$(t).hidden=t!==id;{const s=$(id);s.classList.remove('tabIn');void s.offsetWidth;s.classList.add('tabIn')}
+  $('menu').classList.toggle('home',id==='tabPlay');document.querySelectorAll('#tabs button').forEach(b=>b.classList.toggle('on',b.dataset.tab===id));
+  if(id==='tabHero')renderHero();if(id==='tabGear')renderGear();if(id==='tabPets'){renderPets();$('petHead').textContent=`Con te: ${petEq().length}/${PET_SLOTS}`}
+  if(id==='tabShop')renderShop();if(id==='tabRoad')renderRoad();if(id==='tabProfile')renderProfile();if(id==='tabPlay')renderPlay();$('menuMain').scrollTop=0;renderBadges()}
+function setShopPage(id){shopPage=id;const el=$(id);if(el&&!$('tabShop').hidden)setTimeout(()=>{const m=$('menuMain');m.scrollTop=Math.max(0,el.offsetTop-m.offsetTop-6)},0)}
+document.addEventListener('click',e=>{if(e.target.closest('[data-back]')){sfx('ui');setTab('tabPlay')}});
+// --- heroes: the showcase and the talents; armoury: equipment, collection and sets
+function renderHero(){
+  const h=HERO_BY[heroView]||HEROES[0],own=SAVE.heroes[h.id],sel=SAVE.hero===h.id;
+  $('hName').textContent=h.n;$('heroInfo').innerHTML=`${h.d}<br><span class="start">Inizia con: ${h.start}</span><br><span class="start ult">Abilità: <b>${ULT[h.id].n}</b>. ${ULT[h.id].d}</span>`;
+  $('hAct').innerHTML=sel?'<span class="using">In campo</span>':own?'<button class="btn bigGreen" data-hact="use">Porta in campo</button>':`<button class="btn" data-hact="buy">${heroConfirm===h.id?'Conferma':'Sblocca'} ${COIN}${h.price.toLocaleString('it-IT')}</button>`;
+  $('hDots').innerHTML=HEROES.map(x=>`<i class="${x.id===h.id?'on':''} ${SAVE.heroes[x.id]?'':'lock'}"></i>`).join('');
+  $('stage').classList.toggle('locked',!own);
+  const keep=SAVE.hero;SAVE.hero=h.id;const q=previewStats();SAVE.hero=keep;
+  $('hPower').textContent=powerOf(q).toLocaleString('it-IT');
+  const rows=[['atk',Math.round(q.atk),'Attacco'],['hp',q.maxhp,'Salute'],['aspd',q.aspd.toFixed(2),'Colpi/s'],['crit',Math.round(q.crit*100)+'%','Critico'],['dash',q.dashMax.toFixed(1)+'s','Scatto'],['spd',Math.round(q.spd/1.5)+'%','Velocità'],['gold','+'+Math.round((q.goldMul-1)*100)+'%','Oro'],['regen',q.regen?q.regen.toFixed(1):'0','Rigenera']];
+  $('stats').innerHTML=rows.map(([k,v,l])=>`<div>${sico(k)}<b>${v}</b><small>${l}</small></div>`).join('');
+  renderTalents();renderGear();checkAch();renderWho();renderBadges();if(!$('tabPets').hidden)renderPets();renderGearRow();$('heroPillN').textContent=(HERO_BY[SAVE.hero]||HEROES[0]).n}
+function renderGear(){
+  const eqHTML=s=>{const id=SAVE.eq[s];return id&&SAVE.items[id]?`<div class="eqslot">${icard(id,`data-slot="${s}"`)}</div>`:`<div class="eqslot"><button class="icard empty" data-slot="${s}" aria-label="${SLOTN[s]}"><span>+</span><small>${SLOTN[s]}</small></button></div>`};
+  $('eqL').innerHTML=eqHTML('arma')+eqHTML('armatura');$('eqR').innerHTML=eqHTML('anello')+eqHTML('amuleto');
+  const order=ITEMS.slice().sort((a,b)=>SLOTS.indexOf(a.slot)-SLOTS.indexOf(b.slot)||b.rar-a.rar);
+  $('coll').innerHTML=order.map(it=>icard(it.id)).join('');
+  $('collCount').textContent=`${Object.keys(SAVE.items).length} di ${ITEMS.length} trovati`;
+  $('gearPow').innerHTML=`Potenza <b>${powerOf(previewStats()).toLocaleString('it-IT')}</b>`;renderSets()}
+$('tabGear').addEventListener('click',onHeroTap);
+{const _ci=closeItem;closeItem=function(){_ci();if(!$('menu').hidden){if(!$('tabPlay').hidden)renderPlay();if(!$('tabGear').hidden)renderGear()}}}
+// --- the wheel of fortune lives in the menu: one free spin a day, then a video or crystals
+const WH_ADS=3,WH_COST=[20,40,60,80,100];
+function wheelState(){const t=today();if(!SAVE.wheel||SAVE.wheel.day!==t)SAVE.wheel={day:t,free:0,ads:0,paid:0};return SAVE.wheel}
+function wheelFree(){return wheelState().free<1}
+const WH_IMG={};
+function whImg(k){if(WH_IMG[k])return WH_IMG[k];const im=new Image();im.src=k.startsWith('pet:')?petIcon(k.slice(4)):svgURL(k==='card'?CARD_SVG:chestSVG(k,false).replace('<svg ','<svg xmlns="http://www.w3.org/2000/svg" '));return WH_IMG[k]=im}
+const CARD_SVG='<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 40 48"><rect x="7" y="4" width="28" height="38" rx="4" fill="#4d97ff" stroke="#191714" stroke-width="3" transform="rotate(10 21 23)"/><rect x="4" y="6" width="28" height="38" rx="4" fill="#f4e7c8" stroke="#191714" stroke-width="3"/><path d="M18 14l3 6 6.5.8-4.8 4.4 1.2 6.4-5.9-3.2-5.9 3.2 1.2-6.4-4.8-4.4 6.5-.8z" fill="#ffd84a" stroke="#191714" stroke-width="2" stroke-linejoin="round"/></svg>';
+function whCards(){const w=[[0,6],[1,4],[2,2],[3,.6]],tot=w.reduce((a,b)=>a+b[1],0);let r=Math.random()*tot,rar=0;for(const[k,v] of w){r-=v;if(r<0){rar=k;break}}
+  const pool=ITEMS.filter(i=>i.rar===rar),it=pool[randi(0,pool.length-1)],n=[8,5,3,2][rar],o=SAVE.items[it.id];
+  if(!o){SAVE.items[it.id]={lvl:1,cards:n-1};if(!SAVE.eq[it.slot])SAVE.eq[it.slot]=it.id}else o.cards+=n;return `+${n} carte: ${it.n}`}
+function whPet(){const w=[['muschietto',3],['lucciola',2],['draghetto',1]],tot=6;let r=Math.random()*tot,id='muschietto';for(const[k,v] of w){r-=v;if(r<0){id=k;break}}
+  const u=addPetCards(id,3);if(u)achPop('Nuovo compagno!',PET_BY[id].n+': trovalo nella scheda Compagni','unlock');return u?`${PET_BY[id].n}: nuovo compagno!`:`+3 carte ${PET_BY[id].n}`}
+const ai0=()=>arenaIdx(SAVE.trophies||0);
+WHEEL.length=0;WHEEL.push(
+  {n:'Oro',ic:'coin',c:['#ffe27a','#d98a00'],w:1.5,f:()=>{const v=100+40*ai0();SAVE.gold+=v;return `+${v} oro`}},
+  {n:'Carte',ic:'card',c:['#9fd0ff','#2a6fd8'],w:1.3,f:whCards},
+  {n:'Cristalli',ic:'gem',c:['#8fe6ff','#2a8fb8'],w:1,f:()=>{SAVE.gems=(SAVE.gems||0)+5;return '+5 cristalli'}},
+  {n:'Cassa',ic:'legno',c:['#e8b070','#8a5a20'],w:1,chest:'legno',f:()=>CHESTS.legno.n},
+  {n:'Tesoro',ic:'coin',c:['#fff2a8','#e0a000'],w:.6,f:()=>{const v=300+100*ai0();SAVE.gold+=v;return `+${v} oro`}},
+  {n:'Compagno',ic:'pet:muschietto',c:['#b8f08a','#3f8a2a'],w:.8,f:whPet},
+  {n:'Argento',ic:'argento',c:['#eef3f7','#6d7c8c'],w:.5,chest:'argento',f:()=>CHESTS.argento.n},
+  {n:'JACKPOT',ic:'crown',c:['#fff2a8','#e0a000'],w:.25,jack:1,chest:'oro',f:()=>{SAVE.gems=(SAVE.gems||0)+25;return "Cassa d'oro + 25 cristalli"}});
+{const _wi=whIcon;whIcon=function(x,k,s){if(k==='card'||k==='legno'||k==='argento'||k.startsWith('pet:')){const im=whImg(k);if(icoOk(im)){x.save();x.scale(s,s);const w=k==='card'?30:k.startsWith('pet:')?40:42;x.drawImage(im,-w/2,-w/2-(k==='card'?3:0),w,w*(k==='card'?1.2:1));x.restore()}return}return _wi(x,k,s)}}
+function whButtons(){const W=wheelState(),go=$('whGo'),ad=$('whAd'),gm=$('whGem'),fr=W.free<1,cost=WH_COST[W.paid];
+  go.hidden=!fr;go.textContent='Gira gratis!';go.disabled=false;go.classList.toggle('pulse',fr);
+  ad.hidden=fr||W.ads>=WH_ADS;ad.disabled=false;ad.innerHTML=`Guarda un video <small>(${WH_ADS-W.ads} oggi)</small>`;
+  gm.hidden=fr||cost==null;if(cost!=null){gm.innerHTML=`Gira · <i class="gemS"></i>${cost}`;gm.disabled=(SAVE.gems||0)<cost}
+  $('whSub').textContent=fr?'Un giro gratis ogni giorno!':cost==null&&W.ads>=WH_ADS?'Per oggi basta così: torna domani!':'Il giro gratis torna domani'}
+function openWheel(){if(!$('menu').hidden&&CHbusy)return;wheelState();WH.a=WH.a||0;WH.spin=false;WH.win=-1;WH.parts=[];WH.prize=null;$('whRes').innerHTML='';$('whRes').className='whRes';$('whAdScr').hidden=true;whButtons();$('whScr').hidden=false;sfx('shimmer',2);if(!WH.raf)WH.raf=requestAnimationFrame(whLoop)}
+$('wheelBtn').onclick=()=>{sfx('ui');openWheel()};
+function whClose(){if(WH.spin||!$('whAdScr').hidden)return;$('whScr').hidden=true;const pz=WH.prize;WH.prize=null;renderGold();if(!$('tabPlay').hidden)renderPlay();if(pz&&pz.chest)setTimeout(()=>openChest(pz.chest),200)}
+$('whX').onclick=()=>{sfx('ui');whClose()};
+function whSpin(kind){if(WH.spin)return;const W=wheelState();
+  if(kind==='free'){if(W.free>=1)return;W.free++}else if(kind==='ad'){if(W.ads>=WH_ADS)return;W.ads++}else{const c=WH_COST[W.paid];if(c==null||(SAVE.gems||0)<c)return;SAVE.gems-=c;W.paid++;renderGold()}
+  save();WH.spin=true;WH.win=-1;$('whRes').innerHTML='';['whGo','whAd','whGem'].forEach(id=>{$(id).disabled=true});$('whGo').classList.remove('pulse');sfx('dash');mprog('wheel',null,1);
+  const n=WHEEL.length,tot=WHEEL.reduce((a,w)=>a+w.w,0);let r=Math.random()*tot,k=0;for(;k<n;k++){r-=WHEEL[k].w;if(r<0)break}k=Math.min(k,n-1);
+  const start=WH.a,off=(Math.random()-.5)*TAU/n*.7,target=Math.ceil(start/TAU)*TAU+TAU*6-k/n*TAU+off,dur=4600,t0=performance.now();let last=Math.floor((start*n/TAU)+.5);
+  const step=now=>{const q=Math.min(1,(now-t0)/dur),e=q<.08?q*q/.16:1-Math.pow(1-(q-.04)/.96,3.2);WH.a=start+(target-start)*Math.max(0,Math.min(1,e));
+    const peg=Math.floor(WH.a*n/TAU+.5);if(peg!==last){last=peg;WH.flap=1;sfx('click')}
+    if(q<1){requestAnimationFrame(step);return}
+    WH.spin=false;WH.win=k;const w=WHEEL[k],res=w.f();WH.prize=w.chest?{chest:w.chest}:null;save();renderGold();whBurst(w.jack);
+    $('whRes').innerHTML=`<span class="whPrize${w.jack?' jack':''}" style="--a:${w.c[0]};--b:${w.c[1]}"><b>${w.jack?'JACKPOT!':'Hai vinto'}</b>${res}</span>`;
+    sfx(w.jack?'levelup':'upgrade');if(w.jack){setTimeout(()=>sfx('coin'),150);setTimeout(()=>sfx('gem'),300)}vib(w.jack?[60,40,60,40,160]:[30,30,60]);
+    whButtons();if(WH.prize){$('whGo').hidden=false;$('whGo').disabled=false;$('whGo').textContent='Apri la cassa!';['whAd','whGem'].forEach(id=>$(id).hidden=true)}};requestAnimationFrame(step)}
+$('whGo').onclick=()=>{if(WH.prize&&WH.prize.chest){const c=WH.prize.chest;WH.prize=null;$('whScr').hidden=true;if(!$('tabPlay').hidden)renderPlay();openChest(c);return}whSpin('free')};
+$('whGem').onclick=()=>whSpin('gem');
+// the video: a placeholder until the game has a real advertising service
+$('whAd').onclick=()=>{const W=wheelState();if(WH.spin||W.ads>=WH_ADS)return;sfx('ui');const sc=$('whAdScr');sc.hidden=false;let n=5;$('whAdT').textContent=n;
+  const iv=setInterval(()=>{n--;$('whAdT').textContent=n;if(n<=0){clearInterval(iv);sc.hidden=true;whSpin('ad')}},1000)};
+// --- the companions page: how many are with you
+{const _rp=renderPets;renderPets=function(){_rp();const h=$('petHead');if(h)h.textContent=`Con te: ${petEq().length}/${PET_SLOTS}`}}
+// --- the home scene: the hero standing on a rune stone in front of the crypt
+const HOME_Y=236;
+const RUNES=[[[0,-2,0,2],[0,-2,1.5,-.7]],[[0,-2,0,2],[0,0,1.5,-1.3],[0,0,1.5,1.3]],[[-1.2,-2,1.2,2],[1.2,-2,-1.2,2]],[[0,-2,0,2],[-1.3,-.4,1.3,-.4]],[[-1.2,2,0,-2],[0,-2,1.2,2]],[[0,-2,0,2],[0,-2,1.4,0],[1.4,0,0,.6]]];
+function drawRuneStone(x,y,s,col,t){ctx.save();ctx.translate(x,y);ctx.scale(s,s);const pul=.72+.28*Math.sin(t*2.1);
+  // light pooling on the ground, a soft beam rising from the runes
+  if(!LOWFX){ctx.save();ctx.globalCompositeOperation='lighter';glow(col,0,2,46,.2*pul);const g=ctx.createLinearGradient(0,-70,0,0);g.addColorStop(0,`rgba(${col},0)`);g.addColorStop(1,`rgba(${col},${.13*pul})`);ctx.fillStyle=g;ctx.beginPath();ctx.moveTo(-18,0);ctx.lineTo(-12,-70);ctx.lineTo(12,-70);ctx.lineTo(18,0);ctx.closePath();ctx.fill();ctx.restore()}
+  else{ctx.save();ctx.globalCompositeOperation='lighter';glow(col,0,2,40,.16);ctx.restore()}
+  // the slab: dark side, carved blocks, a lit top
+  ctx.fillStyle='rgba(0,0,0,.45)';ctx.beginPath();ctx.ellipse(1.5,6.5,27,8.6,0,0,TAU);ctx.fill();
+  ctx.fillStyle='#2a2521';ctx.beginPath();ctx.ellipse(0,4,25,7.4,0,0,TAU);ctx.fill();ctx.fillRect(-25,0,50,4);
+  ctx.strokeStyle=INK;ctx.lineWidth=2.3;ctx.lineJoin='round';ctx.beginPath();ctx.ellipse(0,4,25,7.4,0,0,Math.PI);ctx.stroke();ctx.beginPath();ctx.moveTo(-25,0);ctx.lineTo(-25,4);ctx.moveTo(25,0);ctx.lineTo(25,4);ctx.stroke();
+  ctx.strokeStyle='rgba(0,0,0,.5)';ctx.lineWidth=1;for(const a of [.3,.85,1.45,2.05,2.65]){const px=Math.cos(a)*25,py=Math.sin(a)*7.4;ctx.beginPath();ctx.moveTo(px,py);ctx.lineTo(px,py+4);ctx.stroke()}
+  const tg=ctx.createLinearGradient(0,-7.4,0,7.4);tg.addColorStop(0,'#7c7464');tg.addColorStop(1,'#4b453b');ctx.fillStyle=tg;ctx.beginPath();ctx.ellipse(0,0,25,7.4,0,0,TAU);ctx.fill();ctx.strokeStyle=INK;ctx.lineWidth=2.3;ctx.stroke();
+  ctx.strokeStyle='rgba(255,255,255,.2)';ctx.lineWidth=1.1;ctx.beginPath();ctx.ellipse(0,-.4,23.4,6.7,0,Math.PI*1.08,Math.PI*1.92);ctx.stroke();
+  // cracks and a few tufts on the rim
+  ctx.strokeStyle='rgba(20,16,12,.55)';ctx.lineWidth=.8;ctx.beginPath();ctx.moveTo(-21,-2.5);ctx.lineTo(-17,-1.2);ctx.lineTo(-15.5,-2.8);ctx.moveTo(14,3.6);ctx.lineTo(17.5,2.2);ctx.lineTo(20.5,3.4);ctx.moveTo(4,-6.4);ctx.lineTo(5.5,-4.8);ctx.stroke();
+  // the carved ring and its runes, glowing with the colour of the arena
+  ctx.strokeStyle='rgba(18,14,11,.75)';ctx.lineWidth=2.4;ctx.beginPath();ctx.ellipse(0,0,19,5.5,0,0,TAU);ctx.stroke();
+  ctx.save();ctx.globalCompositeOperation='lighter';ctx.strokeStyle=`rgba(${col},${.6*pul})`;ctx.lineWidth=1.1;ctx.beginPath();ctx.ellipse(0,0,19,5.5,0,0,TAU);ctx.stroke();
+  for(let k=0;k<10;k++){const a=k/10*TAU+t*.1,px=Math.cos(a)*15,py=Math.sin(a)*4.3,f=.35+.65*Math.max(0,Math.sin(t*1.5+k*1.7));ctx.strokeStyle=`rgba(${col},${f*pul})`;ctx.lineWidth=.85;ctx.beginPath();
+    for(const[x0,y0,x1,y1] of RUNES[k%RUNES.length]){ctx.moveTo(px+x0*.75,py+y0*.42);ctx.lineTo(px+x1*.75,py+y1*.42)}ctx.stroke()}
+  glow(col,0,0,7,.25*pul);ctx.restore();ctx.restore()}
+function drawHomeHero(x,y,s,t){const br=Math.sin(t*1.7)*.016,look=Math.sin(t*.37)*.42+Math.sin(t*.13)*.2,k=(t+2.1)%8,hop=k<.42?Math.sin(k/.42*Math.PI)*3.2:0,land=k>=.42&&k<.6?Math.sin((k-.42)/.18*Math.PI)*.06:0;
+  ctx.save();ctx.translate(x,y-hop*s);ctx.scale(s*(1+land),s*(1+br-land));noShadow=false;mossOn=1;drawRig(0,0,Math.PI/2-.2+look,0,false,heroStyle(),{});mossOn=0;ctx.restore()}
+// =====================================================================
+// SOUND 2: the crypt's lullaby in the menu (a music box in three, a drone that slowly beats, a choir sighing far away),
+// a menu ambience of far bells and whispers, and down in the dungeon the same music box heard from very far
+// =====================================================================
+function vBox(tr,t,m,dur,vel){const c=AU.ctx,f=mtof(m),g=c.createGain(),w=osc('sine',4.2+Math.random(),t,t+dur+.1),wg=c.createGain();wg.gain.value=f*.004;w.connect(wg);
+  for(const[r,a,d] of [[1,1,dur],[2,.3,dur*.5],[3.02,.1,dur*.22],[4.98,.05,.09]]){const o=osc('sine',f*r,t,t+d+.05),og=c.createGain();wg.connect(o.frequency);o.connect(og);og.gain.setValueAtTime(.0001,t);og.gain.linearRampToValueAtTime(vel*a,t+.002);og.gain.exponentialRampToValueAtTime(.0005,t+d);og.connect(g)}
+  const n=noiseSrc(t,.014),hp=filt('highpass',6000),ng=c.createGain();ng.gain.setValueAtTime(vel*.35,t);ng.gain.exponentialRampToValueAtTime(.0005,t+.014);n.connect(hp);hp.connect(ng);ng.connect(g);
+  route(g,tr,.6,.32)}
+TRACKS.menu={bpm:90,
+  ch:[[57,60,64],[53,57,60],[50,53,57],[52,56,59],[57,60,64],[53,57,60],[52,56,59],[57,60,64]],
+  bass:[45,41,38,40,45,41,40,45],
+  mel:[[[0,76,2],[2,81,2],[4,84,2],[6,83,2],[8,81,2],[10,76,2]],[[0,77,2],[2,81,2],[4,84,2],[6,81,2],[8,77,2],[10,76,2]],
+       [[0,74,2],[2,77,2],[4,81,2],[6,80,2],[8,81,2],[10,77,2]],[[0,76,2],[2,80,2],[4,83,2],[6,86,2],[8,84,2],[10,83,2]],
+       [[0,81,4],[4,84,2],[6,88,4],[10,86,2]],[[0,84,4],[4,81,2],[6,77,4],[10,76,2]],
+       [[0,75,2],[2,76,2],[4,80,2],[6,83,2],[8,80,2],[10,76,2]],[[0,81,10]]],
+  play(tr,step,t,spb){const s=step%12,bar=Math.floor(step/12)%8,cyc=Math.floor(step/96),C=this.ch[bar],pass=cyc%3;
+    if(s===0&&bar%2===0)vPad(tr,t,[C[0]-12,C[2]-12],spb*24,.075,380);
+    if(s===0)vBass(tr,t,this.bass[bar],spb*10,.15);
+    if(s===4||s===8)for(const m of C)vHarp(tr,t,m,.9,.026);
+    if(pass<2){for(const[ss,m,l] of this.mel[bar])if(ss===s)vBox(tr,t,m+(pass===1?-12:0),spb*l*2.2,pass===1?.05:.058)}
+    else if(s===0&&bar%2===0)vBox(tr,t,C[2]+12,spb*14,.03);
+    if(s===0&&bar%4===2)vChoir(tr,t,[C[0]+12,C[1]+12],spb*20,.045);
+    if(s===0&&bar===7&&cyc%2===1)dDrum(tr,t,.16,70,38,.6,300,.25)}};
+const SND2={
+  chime(t){const b=[91,93,96,98,100];for(let i=0;i<3;i++)vBell(null,t+i*rand(.12,.3),b[randi(0,4)]+rand(-.12,.12),1.6,.007)},
+  toll(t){vBell(null,t,VR(45,.01),5,.022);vBell(null,t+.01,57,3.5,.008);fNoise(t,1.2,'lowpass',300,.7,.03,{brown:true,att:.2,rev:.8})},
+  hum(t){const c=AU.ctx;for(const[f0,f1] of [[VR(330,.05),VR(300,.05)],[VR(341,.05),VR(296,.05)]]){const o=osc('sine',f0,t,t+3.2),g=c.createGain();o.frequency.linearRampToValueAtTime(f1,t+3);g.gain.setValueAtTime(.0001,t);g.gain.linearRampToValueAtTime(.007,t+1.2);g.gain.exponentialRampToValueAtTime(.0005,t+3.1);o.connect(g);route(g,null,.8)}},
+  creak(t){const c=AU.ctx,o=osc('sawtooth',VR(140,.15),t,t+.7),bp=filt('bandpass',VR(700,.15),9),g=c.createGain();o.frequency.linearRampToValueAtTime(VR(95,.1),t+.6);o.connect(bp);bp.connect(g);g.gain.setValueAtTime(.0001,t);g.gain.linearRampToValueAtTime(.03,t+.15);g.gain.exponentialRampToValueAtTime(.0005,t+.65);route(g,null,.5)},
+  whisper(t){fNoise(t,.32,'bandpass',VR(2600,.2),4,.016,{att:.12,rev:.7});fNoise(t+.28,.42,'bandpass',VR(1250,.2),5,.014,{att:.16,rev:.7});fNoise(t+.62,.25,'bandpass',VR(3400,.2),4,.01,{att:.08,rev:.7})},
+  ghostBox(t){const L=[[76,81,84,83,81],[77,81,84,81,77],[76,80,83,86,84]][randi(0,2)];L.forEach((m,i)=>vBox(null,t+i*.38+rand(0,.03),m+rand(-.15,.15)-12*(Math.random()<.5),1.4,.011))}};
+AMBEV.menu=[[3,6,t=>{if(!$('tabPlay').hidden)fNoise(t,.5,'bandpass',600,.8,.025,{brown:true,att:.1})}],[7,14,SND2.chime],[22,40,SND2.toll],[18,34,SND2.hum],[14,26,SND2.creak],[26,48,SND2.whisper]];
+for(const k of ['moss','lava','swamp','ice'])AMBEV[k].push([50,95,SND2.ghostBox],[30,60,SND2.whisper]);
+// buttons: a soft knock with a tiny note of the lullaby's scale
+{const _s=sfx;sfx=function(k,arg,x){if(k==='ui'&&AU.ctx&&AU.on.sfx){const now=performance.now();if(now-(AU.last.ui||0)<40)return;AU.last.ui=now;const t=AU.ctx.currentTime+.005;AU.pan=0;try{M.wood(t,.42,VR(520,.04));vBox(null,t+.004,[81,83,84,88][randi(0,3)],.35,.012)}catch(e){}return}return _s(k,arg,x)}}
+// =====================================================================
+// ANIMATIONS 2: every character breathes when still and squashes a little on each step, the hero's hood
+// sways, dust at the hero's feet; in the menu the companions hop now and then and the sheets slide in row by row
+// =====================================================================
+{const _dr=drawRig;drawRig=function(x,y,face,walk,moving,S,o){RIGW.w=walk;RIGW.mv=moving;
+  if(LOWFX||!S||S.float)return _dr.apply(this,arguments);
+  const t=(G&&G.t)||0,fy=y+8*(S.sc||1);let sx=1,sy=1;
+  if(moving){const c=Math.max(0,Math.cos(walk*2));sy=1-.04*c;sx=1+.035*c}else{const b=Math.sin(t*2.3+x*.05);sy=1+.02*b;sx=1-.012*b}
+  ctx.save();ctx.translate(x,fy);ctx.scale(sx,sy);ctx.translate(-x,-fy);_dr.apply(this,arguments);ctx.restore()}}
+{const _u=update;update=function(dt){_u(dt);if(!G||!P||LOWFX||G.state==='dead'||!P.moving)return;const ph=Math.floor((P.walk||0)/Math.PI);
+  if(ph!==P._stepPh){P._stepPh=ph;const sd=ph%2?1:-1;for(let i=0;i<2;i++)G.fx.push({k:'puff',x:P.x+sd*4+rand(-2,2),y:P.y+8,vx:rand(-12,12)-Math.cos(P.face)*16,vy:rand(-10,-3)-Math.sin(P.face)*6,t:rand(.2,.3),r:rand(1.5,2.5)})}}}
+// the sheets: rows slide in when a sheet opens (not when its timers tick)
+{const _os=openSheet;openSheet=function(kind){_os(kind);const s=$('sheet');s.classList.remove('fresh');void s.offsetWidth;s.classList.add('fresh');clearTimeout(s._fr);s._fr=setTimeout(()=>s.classList.remove('fresh'),900)}}
+// the explorer level: the bar shines when you come back with a new level
+{const _rt=renderTop;renderTop=function(){_rt();const A=SAVE.acct;if(!A)return;if(A.seen==null)A.seen=A.lvl;if(A.lvl>A.seen&&!$('menu').hidden){A.seen=A.lvl;save();const w=$('tbWho');w.classList.remove('lvup');void w.offsetWidth;w.classList.add('lvup');sfx('levelup')}}}
 newRun();applySettings();if(!playIntro(false))showMenu();requestAnimationFrame(loop);
 })();
 </script>
