@@ -32,7 +32,7 @@ function seamLife(){
     for(const [x,y,v] of all)if(Math.random()<.6)blob(x+rand(-1,1),y+rand(-1,1),.6+v*1.4,Math.random()<.5?C.md:C.lt);
     c.save();c.globalCompositeOperation='lighter';for(const [x,y,v] of all)if(v>.5&&Math.random()<.55){c.shadowColor='#ff6a1a';c.shadowBlur=5;blob(x,y,.5+v*.8,`rgba(255,${(110+v*90)|0},40,${.35+v*.4})`)}c.restore();
     // a few joints keep breathing with light
-    const hot=pts.filter(p=>p[2]>.62);G.floorCracks=G.floorCracks||[];for(let i=0;i<Math.min(4,hot.length);i++){const p=pk(hot);const vert=p[3],ln=[];for(let k=-3;k<=3;k++)ln.push(vert?[p[0],p[1]+k*5]:[p[0]+k*5,p[1]]);G.floorCracks.push({pts:ln,rgb:'255,120,40',ph:rand(0,9)})}
+    const hot=pts.filter(p=>p[2]>.62);G._hot=[];for(let i=0;i<Math.min(4,hot.length);i++){const p=pk(hot);const vert=p[3],ln=[];for(let k=-3;k<=3;k++)ln.push(vert?[p[0],p[1]+k*5]:[p[0]+k*5,p[1]]);G._hot.push({pts:ln,rgb:'255,120,40',ph:rand(0,9)})}
   }else if(kind==='ice'){
     // snow packed into the joints and frost feathers creeping onto the slabs
     for(const [x,y,v] of all)blob(x+.8,y+1.4,1.4+v*3.8,'rgba(60,90,135,.38)');
@@ -52,6 +52,8 @@ function seamLife(){
   }
   // junctions: where four slabs meet the plants push up the most
   const J=[];for(const [x,y] of G.slabs){if(x<=L+1||y<=TOP+1)continue;const v=I(x,y);if(v>.5&&!wet(x,y))J.push({x,y,v})}
+  for(const [hx,hy] of G.slabHoles||[]){if(kind==='ash'){blob(hx,hy,3.2,C.md);blob(hx-.6,hy-.8,1.8,C.lt);c.save();c.globalCompositeOperation='lighter';blob(hx+.5,hy,1.2,'rgba(255,140,50,.6)');c.restore()}
+    else if(kind==='ice'){blob(hx,hy,3.6,C.md);blob(hx-.6,hy-.8,2,C.lt)}else{blob(hx+.5,hy+.8,4,C.ink);blob(hx,hy,3.4,C.dk);blob(hx-.4,hy-.6,2.2,C.md);grassTuft(c,hx,hy+1,[C.md,C.lt,C.dk],.8)}}
   G.seamJ=J;
   if(kind!=='ash'&&kind!=='ice')for(const j of J){if(Math.random()<.55)grassTuft(c,j.x,j.y+1,[C.md,C.lt,C.dk],.7+j.v*.6);
     if(C.fl.length&&j.v>.72&&Math.random()<.35)for(let k=0;k<4;k++){const a=k*1.57+rand(-.3,.3),fx0=j.x+Math.cos(a)*3.2,fy0=j.y-2+Math.sin(a)*2.2;c.fillStyle=pk(C.fl);c.beginPath();c.arc(fx0,fy0,1.3,0,TAU);c.fill()}}
@@ -62,10 +64,52 @@ function seamLife(){
   // same floor for the same room, so Prima/Dopo compares the same slabs
   const key=(G.room||0)+'|'+(G.si||0)+'|'+(G.chapter||1);if(G._fsKey!==key){G._fsKey=key;G._fs=(Math.random()*1e9)|0}
   const mr=Math.random;let s=G._fs||1;Math.random=()=>((s=Math.imul(s^(s>>>15),2246822519)+0x9e3779b9|0)>>>0)/4294967296;
-  try{_rf.apply(this,arguments);seamLife()}finally{Math.random=mr}}}
+  G._hot=null;try{_rf.apply(this,arguments);if(G._hot)G.floorCracks=(G.floorCracks||[]).concat(G._hot)}finally{Math.random=mr}}}
 // the swaying tufts now only grow out of the joints
 {const _mt=makeTufts;makeTufts=function(){if(!window.SEAMS)return _mt();G.tufts=[];const th=themeOf(G.room),C=TUFT[th];if(!C||LOWFX||!G.seamJ)return;
   for(const j of G.seamJ.slice().sort((a,b)=>b.v-a.v)){if(G.tufts.length>=12)break;if(G.tufts.some(t=>Math.hypot(t.x-j.x,t.y-j.y)<30))continue;if(G.rocks.some(k=>Math.hypot(k.x-j.x,k.y-j.y)<k.r+10))continue;G.tufts.push({x:j.x+rand(-2,2),y:j.y+1,n:randi(4,7),h:rand(7,11),ph:rand(0,TAU),b:0,c:C})}}}
+
+// ---------- floor: every slab gets depth (joint shadow, raised or sunken, soft stains), some are broken,
+// a worn path runs down the middle and the walls collect moss, ash, mud or snow at their feet ----------
+const HOLE={moss:'#2e261c',teal:'#24302c',swamp:'#262816',ash:'#1e1816',ice:'#dfeaf4'};
+const DRIFT={moss:['#3a3324','#4a7a2c','#7db446'],teal:['#2c3632','#3f8a7e','#8fe0cc'],swamp:['#34341e','#5a6e1e','#9ab43c'],ash:['#2e2624','#4e443e','#7a6c62'],ice:['#c4d6e6','#eef6ff','#ffffff']};
+function slabDetail(){
+  const th=themeOf(G.room),kind=seamKind(th),c=fx,ice=kind==='ice';c.save();c.setTransform(2,0,0,2,0,0);G.slabHoles=[];
+  for(const s of G.slabs){const x=s[0],y=s[1],w=Math.min(s[0]+s[2],R+2)-x,h=Math.min(s[1]+s[3],BOT+2)-y;if(w<6||h<6)continue;
+    c.save();c.beginPath();c.rect(x+1,y+1,w-2,h-2);c.clip();
+    // soft stains so no two slabs look the same
+    for(let q=0;q<2+((w*h)/900|0);q++){const mx=x+rand(0,w),my=y+rand(0,h),r=rand(8,24),g=c.createRadialGradient(mx,my,0,mx,my,r),lite=Math.random()<.5;
+      g.addColorStop(0,lite?`rgba(255,248,230,${ice?.1:.055})`:`rgba(0,0,0,${ice?.05:.09})`);g.addColorStop(1,'rgba(0,0,0,0)');c.fillStyle=g;c.fillRect(mx-r,my-r,2*r,2*r)}
+    // the joint casts a soft shadow inside every slab
+    const ao=ice?.1:.2;for(const [gx0,gy0,gx1,gy1,rx,ry,rw,rh] of [[x,y,x,y+6,x,y,w,6],[x,y+h,x,y+h-5,x,y+h-5,w,5],[x,y,x+6,y,x,y,6,h],[x+w,y,x+w-5,y,x+w-5,y,5,h]]){
+      const g=c.createLinearGradient(gx0,gy0,gx1,gy1);g.addColorStop(0,`rgba(0,0,0,${ao})`);g.addColorStop(1,'rgba(0,0,0,0)');c.fillStyle=g;c.fillRect(rx,ry,rw,rh)}
+    // a few slabs stand a little higher, a few have sunk
+    const q=Math.random();
+    if(q<.16){c.fillStyle='rgba(255,248,230,.1)';c.fillRect(x+1,y+1,w-2,2.5);c.fillRect(x+1,y+1,2.5,h-2);c.fillStyle='rgba(0,0,0,.24)';c.fillRect(x+1,y+h-4,w-2,3);c.fillRect(x+w-4,y+1,3,h-2)}
+    else if(q<.27){c.fillStyle='rgba(0,0,0,.09)';c.fillRect(x,y,w,h);c.fillStyle='rgba(0,0,0,.26)';c.fillRect(x+1,y+1,w-2,3.5);c.fillRect(x+1,y+1,3.5,h-2);c.fillStyle='rgba(255,248,230,.07)';c.fillRect(x+1,y+h-3,w-2,2)}
+    // ice shines, ash scorches
+    if(ice&&Math.random()<.35){c.fillStyle='rgba(255,255,255,.14)';const o=rand(-4,w*.6);c.beginPath();c.moveTo(x+o,y+h);c.lineTo(x+o+h*.55,y);c.lineTo(x+o+h*.55+5,y);c.lineTo(x+o+5,y+h);c.fill()}
+    if(kind==='ash'&&Math.random()<.3){const mx=x+rand(0,w),my=y+rand(0,h),r=rand(10,20),g=c.createRadialGradient(mx,my,0,mx,my,r);g.addColorStop(0,'rgba(10,6,4,.3)');g.addColorStop(1,'rgba(10,6,4,0)');c.fillStyle=g;c.fillRect(mx-r,my-r,2*r,2*r)}
+    c.restore();
+    // broken slabs: a split (life grows in it) and sometimes a corner missing
+    if(w>=30&&h>=30&&Math.random()<.13&&!G.rocks.some(k=>Math.hypot(k.x-(x+w/2),k.y-(y+h/2))<k.r+22)){
+      const vert=Math.random()<.5,pts=[];for(let k=0;k<=4;k++){const t=k/4;pts.push(vert?[x+w*rand(.38,.62),y+1+t*(h-2)]:[x+1+t*(w-2),y+h*rand(.38,.62)])}
+      c.strokeStyle='rgba(0,0,0,.6)';c.lineWidth=1.9;c.lineJoin='round';c.beginPath();pts.forEach((p,i)=>i?c.lineTo(p[0],p[1]):c.moveTo(p[0],p[1]));c.stroke();
+      c.strokeStyle='rgba(255,248,230,.09)';c.lineWidth=1;c.beginPath();pts.forEach((p,i)=>i?c.lineTo(p[0]+1.1,p[1]+1.1):c.moveTo(p[0]+1.1,p[1]+1.1));c.stroke();
+      G.slabCracks.push(pts);
+      if(Math.random()<.5){const cx=Math.random()<.5?x+1:x+w-1,cy=Math.random()<.5?y+1:y+h-1,sx=cx<x+w/2?1:-1,sy=cy<y+h/2?1:-1,a=rand(8,13),b=rand(7,12);
+        const hole=()=>{c.beginPath();c.moveTo(cx,cy);c.lineTo(cx+sx*a,cy);c.lineTo(cx+sx*a*.55,cy+sy*b*.6);c.lineTo(cx,cy+sy*b);c.closePath()};
+        hole();c.fillStyle=HOLE[kind];c.fill();c.save();hole();c.clip();c.fillStyle='rgba(0,0,0,.3)';c.fillRect(Math.min(cx,cx+sx*a)-1,Math.min(cy,cy+sy*b)-1,a+2,3);c.restore();
+        hole();c.strokeStyle='rgba(0,0,0,.55)';c.lineWidth=1.3;c.stroke();G.slabHoles.push([cx+sx*a*.38,cy+sy*b*.38])}}}
+  // a path worn smooth from the door down to where the hero comes in
+  {c.save();c.translate(AW/2,(TOP+BOT)/2);c.scale(1,(BOT-TOP)/(R-L)*.95);const r=(R-L)*.3,g=c.createRadialGradient(0,0,0,0,0,r);g.addColorStop(0,`rgba(255,246,228,${ice?.06:.045})`);g.addColorStop(1,'rgba(255,246,228,0)');c.fillStyle=g;c.fillRect(-r,-r,2*r,2*r);c.restore()}
+  // what gathers at the foot of the walls
+  const D=DRIFT[kind],nz=(a)=>.5+.3*Math.sin(a*.13)+.2*Math.sin(a*.047+2);
+  const heap=(x,y,r)=>{c.fillStyle='rgba(0,0,0,.22)';c.beginPath();c.ellipse(x+1,y+1.5,r*1.2,r*.75,0,0,TAU);c.fill();c.fillStyle=D[0];c.beginPath();c.ellipse(x,y,r*1.15,r*.7,0,0,TAU);c.fill();
+    c.fillStyle=D[1];c.beginPath();c.ellipse(x-r*.15,y-r*.18,r*.85,r*.48,0,0,TAU);c.fill();if(Math.random()<.5){c.fillStyle=D[2];c.beginPath();c.ellipse(x-r*.3,y-r*.32,r*.35,r*.18,0,0,TAU);c.fill()}};
+  for(let x=L+4;x<R-4;x+=5){const v=nz(x);if(v>.62&&Math.abs(x-AW/2)>DOORW+10)heap(x,TOP+rand(2,5),2+(v-.62)*16);const v2=nz(x+300);if(v2>.6)heap(x,BOT-rand(2,5),2+(v2-.6)*16)}
+  for(let y=TOP+6;y<BOT-4;y+=5){const v=nz(y+120);if(v>.6)heap(L+rand(2,5),y,2+(v-.6)*15);const v2=nz(y+520);if(v2>.6)heap(R-rand(2,5),y,2+(v2-.6)*15)}
+  c.restore()}
 
 // ---------- battles: a little more weight on every hit and kill ----------
 const efx=f=>{if(!window.EPIC)return;if(!G.efx)G.efx=[];if(G.efx.length<160)G.efx.push(f)};
@@ -77,7 +121,7 @@ const efx=f=>{if(!window.EPIC)return;if(!G.efx)G.efx=[];if(G.efx.length<160)G.ef
   efx({k:'ring',x:e.x,y:e.y-(e.z||0),t:0,max:big?.6:.38,r:e.r*(big?4.2:2.6),rgb:big?'255,215,120':'255,245,225'});
   efx({k:'flash',x:e.x,y:e.y-e.r*.6-(e.z||0),t:0,max:big?.35:.2,r:e.r*(big?5:3),rgb:big?'255,200,110':'255,240,210'});
   if(!LOWFX)for(let i=0;i<(big?14:7);i++){const an=rand(0,TAU),sp=rand(140,big?420:300);efx({k:'spark',x:e.x,y:e.y-e.r*.6-(e.z||0),vx:Math.cos(an)*sp,vy:Math.sin(an)*sp*.7-60,t:0,max:rand(.25,.45),rgb:big?'255,215,120':'255,240,200'})}
-  G.pz=Math.max(G.pz||0,big?.055:.018);if(e.elite&&!boss){G.hitstop=Math.max(G.hitstop||0,.09);shake(3)}
+  G.pz=Math.max(G.pz||0,big?.012:.004);if(e.elite&&!boss){G.hitstop=Math.max(G.hitstop||0,.09);shake(3)}
   // the last enemy of a room goes down in slow motion
   if(!boss&&!G.event&&G.enemies&&!G.enemies.some(o=>!o.dead&&o!==e&&!o.ally)){G.slowT=Math.max(G.slowT||0,.75);G.pz=Math.max(G.pz,.07);efx({k:'ring',x:e.x,y:e.y,t:0,max:.8,r:150,rgb:'255,220,140',w:5})}}}
 {const _d=dash;dash=function(){const before=P.dashCd;_d();if(window.EPIC&&P.dashT>0&&before<=0)G.dashTrail=.2}}

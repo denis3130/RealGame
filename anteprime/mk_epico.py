@@ -30,6 +30,7 @@ for old,new in [
   ("const ts=34,nc=Math.ceil((R-L)/ts)","G.slabs=[];G.slabCracks=[];const ts=34,nc=Math.ceil((R-L)/ts)"),
   ("slab(L+i*ts,TOP+j*ts,w*ts,h*ts)}","slab(L+i*ts,TOP+j*ts,w*ts,h*ts);G.slabs.push([L+i*ts,TOP+j*ts,w*ts,h*ts])}"),
   ("fx.strokeStyle=icy?'rgba(60,90,130,.35)':'rgba(0,0,0,.42)';","G.slabCracks.push(pts);fx.strokeStyle=icy?'rgba(60,90,130,.35)':'rgba(0,0,0,.42)';"),
+  ("  // a carved border runs round the room","  if(window.SEAMS){slabDetail();seamLife()}\n  // a carved border runs round the room"),
   ("for(let i=0;i<14;i++){const x=Math.random()<.5?rand(L,L+60):rand(R-60,R),y=rand(TOP,BOT);","if(!window.SEAMS)for(let i=0;i<14;i++){const x=Math.random()<.5?rand(L,L+60):rand(R-60,R),y=rand(TOP,BOT);"),
   ("for(let i=0;i<(V.grass||0);i++){","if(!window.SEAMS)for(let i=0;i<(V.grass||0);i++){"),
   ("for(let i=0;i<(V.flowers||0);i++){","if(!window.SEAMS)for(let i=0;i<(V.flowers||0);i++){"),
