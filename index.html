@@ -5099,6 +5099,7 @@ function bossIntro3(e,t,t0,at,roar){
     if(e.em>0&&e.em<1&&Math.random()<.5)G.fx.push({k:'bub',x:e.x+rand(-30,30),y:e.y+rand(-10,10),t:.5,r:rand(2,4)});
     if(at(1.5)){sfx('croak',2,e.x);roar()}return true}
   if(e.type==='hydra'){// the pool boils, one head, then the others, then the body
+    if(!e.heads)e.heads=[-1,0,1].map((s,i)=>({s,t:1+i*.7,st:'idle',ext:0,open:0,tx:e.x,ty:e.y,k:0}));// the heads must exist during the entrance, or the hydra is not drawn at all
     e.em=Math.min(1,Math.max(0,(t-.6)/1.2));e.hole=Math.min(1,t/.5);if(t0===0){sfx('creep',1,e.x);shake(2)}
     if(Math.random()<.6&&t<1.8)G.fx.push({k:'bub',x:e.x+rand(-40,40),y:e.y+rand(-14,14),t:.6,r:rand(2,5)});
     if(at(.6)){shake(5);sfx('splash',2,e.x);vfxBlast(e.x,e.y,'120,200,140',110,{sparks:14,spcol:['#c8f0d8','#7bd6a0','#ffffff'],dust:0,debris:['#3f7a4a','#2a5a34','#8fd0a8'],n:22,ring2:false})}

@@ -77,11 +77,8 @@ const B2G={
   icequeen(e){if(e.hidden)return;const x=e.x,y=e.y+6,t=G.t||0,R=40,rgb=e.p2?'210,180,255':'200,235,255';ctx.save();ctx.globalCompositeOperation='lighter';glow(rgb,x,y,R*1.2,.25,R*.5);ctx.lineCap='round';
     for(let i=0;i<6;i++){const a=t*.2+i/6*TAU,c=Math.cos(a),s=Math.sin(a),P=(d)=>[x+c*d,y+s*d*.45],Q=(d,o)=>[x+Math.cos(a+o)*d,y+Math.sin(a+o)*d*.45];ctx.strokeStyle=`rgba(${rgb},.6)`;ctx.lineWidth=2;ctx.beginPath();ctx.moveTo(...P(6));ctx.lineTo(...P(R));
       for(const[d,w] of [[R*.45,.32],[R*.72,.22]]){ctx.moveTo(...P(d));ctx.lineTo(...Q(d+8,w));ctx.moveTo(...P(d));ctx.lineTo(...Q(d+8,-w))}ctx.stroke()}
-    ctx.strokeStyle=`rgba(${rgb},.35)`;ctx.lineWidth=1.4;ctx.beginPath();ctx.ellipse(x,y,R*1.08,R*1.08*.45,0,0,TAU);ctx.stroke();ctx.restore()},
-  // a little hoard: coins and a couple of jewels scattered round the chest
-  mimic(e){const rn=b2seed(e),x=e.x,y=e.y+6,t=G.t||0;ctx.save();ctx.globalCompositeOperation='lighter';glow('255,200,80',x,y,40,.18,14);ctx.restore();
-    for(let i=0;i<14;i++){const a=rn()*TAU,d=.7+rn()*.6,px=x+Math.cos(a)*34*d,py=y+Math.sin(a)*13*d;ink(1);ctx.beginPath();ctx.ellipse(px,py,3,1.5,0,0,TAU);fs(pk(['#ffd23c','#f2b800','#ffe46e']))}
-    for(let i=0;i<3;i++){const a=rn()*TAU,px=x+Math.cos(a)*30,py=y+Math.sin(a)*11;ink(1.2);ctx.beginPath();ctx.moveTo(px,py-3);ctx.lineTo(px+2.6,py);ctx.lineTo(px,py+2);ctx.lineTo(px-2.6,py);ctx.closePath();fs(['#e5484d','#3fa0ff','#5fd06a'][i]);if(Math.sin(t*3+i*2)>.85){ctx.save();ctx.globalCompositeOperation='lighter';glow('255,255,255',px,py-1,5,.8);ctx.restore()}}}};
+    ctx.strokeStyle=`rgba(${rgb},.35)`;ctx.lineWidth=1.4;ctx.beginPath();ctx.ellipse(x,y,R*1.08,R*1.08*.45,0,0,TAU);ctx.stroke();ctx.restore()}
+};
 // what floats up around each boss
 function b2aura(e,dt){const h=B2H[e.type]||50,ty=e.type;if(ty==='golem')return;
   if(ty==='golem'&&b2every(e,'au',.12,dt))b2emit(e,e.p2?{k:'ember',x:e.x+rand(-26,26),y:e.y-rand(10,50),vx:rand(-8,8),vy:-rand(20,40),life:1}:{k:'mote',e,a:rand(0,TAU),rad:e.r*rand(1,1.4),h0:rand(0,20),life:1.6,col:'200,230,120'});
@@ -89,8 +86,7 @@ function b2aura(e,dt){const h=B2H[e.type]||50,ty=e.type;if(ty==='golem')return;
   else if(ty==='salamander'||ty==='smith'){if(b2every(e,'au',.08,dt))b2emit(e,{k:'ember',x:e.x+rand(-24,24),y:e.y-rand(4,h*.6),vx:rand(-10,10),vy:-rand(30,55),life:rand(.7,1.1)});if(ty==='smith'&&b2every(e,'so',.3,dt))b2emit(e,{k:'smoke',x:e.x+rand(-14,14),y:e.y-h*.8,vy:-rand(14,22),life:1.3,r:3,col:'40,36,34'})}
   else if(ty==='hydra'&&b2every(e,'au',.18,dt))b2emit(e,{k:'bubble',x:e.x+rand(-46,46),y:e.y+rand(-6,8),vy:-rand(6,12),life:.9,r:rand(1.6,3.2),col:e.p2?'200,160,255':'170,255,120'});
   else if(ty==='yeti'&&b2every(e,'au',.05,dt))b2emit(e,{k:'mote',e,a:rand(0,TAU),rad:e.r*rand(1.3,1.9),h0:rand(-10,30),life:1.1,col:'240,250,255'});
-  else if(ty==='icequeen'&&b2every(e,'au',.14,dt))b2emit(e,{k:'glint',x:e.x+rand(-34,34),y:e.y-rand(10,60),life:.5,r:3.5,col:e.p2?'210,180,255':'200,235,255'});
-  else if(ty==='mimic'&&b2every(e,'au',.3,dt))b2emit(e,{k:'coin',x:e.x+rand(-24,24),y:e.y-e.z-rand(10,24),vy:-rand(16,26),life:.9,ph:rand(0,9)})}
+  else if(ty==='icequeen'&&b2every(e,'au',.14,dt))b2emit(e,{k:'glint',x:e.x+rand(-34,34),y:e.y-rand(10,60),life:.5,r:3.5,col:e.p2?'210,180,255':'200,235,255'});}
 function b2back(e,dt){if(e.type==='golem')return;const t=G.t||0,rgb=b2halo(e),h=B2H[e.type]||50,z=e.z||0;
   if(B2G[e.type])B2G[e.type](e);
   ctx.save();ctx.globalCompositeOperation='lighter';glow(rgb,e.x,e.y-z-h*.55,h*1.1,(.24+.06*Math.sin(t*1.7))*(e.intro>0?.6:1));ctx.restore();
@@ -98,9 +94,11 @@ function b2back(e,dt){if(e.type==='golem')return;const t=G.t||0,rgb=b2halo(e),h=
   if(e.p2&&(e.type==='golem'||e.type==='witch'||e.type==='smith'||e.type==='salamander'||e.type==='toad')&&!LOWFX&&b2every(e,'p2f',.06,dt)){const an=rand(0,TAU),r=e.r*rand(.8,1.25);b2emit(e,{k:'flame',x:e.x+Math.cos(an)*r,y:e.y+Math.sin(an)*r*.45,vy:-rand(30,55),life:rand(.4,.7),r:rand(3,6),col:'255,130,40'})}}
 function b2front(e,dt){const h=B2H[e.type]||50,c=B2T[e.type][1];b2aura(e,dt);
   if(e._b2st!==e.st){const prev=e._b2st;e._b2st=e.st;if(prev!==undefined&&!B2CALM.has(e.st)&&!(e.intro>0)){for(let i=0;i<16;i++)b2emit(e,{k:'conv',e,a:i/16*TAU,rad:rand(55,80),h:h*.5,life:.42,col:c});b2emit(e,{k:'ring',x:e.x,y:e.y,r0:e.r,r1:e.r*3.2,life:.5,col:c,w:5})}}
-  if(B2HEAVY[e.type]&&e.moving&&!(e.z>2)&&b2every(e,'st',.42,dt)){b2emit(e,{k:'ring',x:e.x,y:e.y+4,r0:e.r*.6,r1:e.r*1.9,life:.45,col:e.type==='yeti'?'240,250,255':e.type==='toad'?'200,240,210':'210,195,170',w:3});for(let i=0;i<3;i++)b2emit(e,{k:e.type==='yeti'?'snow':'dust',x:e.x+rand(-e.r,e.r),y:e.y+4,vx:rand(-25,25),vy:-rand(5,15),drag:3,life:.5,r:3,ph:0})}}
-{const _de=drawEnemy;drawEnemy=function(e){const S=B2[e.type];if(!BOSS2||!S||e.dead){_de(e);return}
-  const dt=b2tick(e),hide=e.hidden||(e.st==='burrow'&&e.sub==='under')||(e.spawn>0)||(e.type==='hydra'&&(e.sink||0)>.6);
+  if(B2HEAVY[e.type]&&e.moving&&!(e.z>2)&&b2every(e,'st',.42,dt)){b2emit(e,{k:'ring',x:e.x,y:e.y+4,r0:e.r*.6,r1:e.r*1.7,life:.35,col:e.type==='yeti'?'200,215,230':e.type==='toad'?'150,190,160':'150,135,115',w:2});for(let i=0;i<3;i++)b2emit(e,{k:e.type==='yeti'?'snow':'dust',x:e.x+rand(-e.r,e.r),y:e.y+4,vx:rand(-25,25),vy:-rand(5,15),drag:3,life:.5,r:3,ph:0})}}
+{const _de=drawEnemy;drawEnemy=function(e){const S=B2[e.type];if(!BOSS2||!S||S.plain||e.dead){_de(e);return}
+  // during an entrance the details appear only once the boss is really in the room (out of the ground, through the door, faded in, landed)
+  const entering=e.intro>0&&e.type!=='hydra'&&((e.em!=null&&e.em<1)||(e.fa!=null&&e.fa<1)||e.yy!=null||(e.z||0)>20||(e.hole>0&&e.em!=null));
+  const dt=b2tick(e),hide=entering||e.hidden||(e.st==='burrow'&&e.sub==='under')||(e.spawn>0)||(e.type==='hydra'&&(e.sink||0)>.6);
   if(!hide){b2back(e,dt);if(S.back)S.back(e,dt)}
   const br=e.intro>0||hide?0:Math.sin((G.t||0)*(S.br||2.2)+e.x*.013)*(S.bra||.02);
   ctx.save();ctx.translate(e.x,e.y);ctx.scale(1-br*.6,1+br);ctx.translate(-e.x,-e.y);_de(e);ctx.restore();
@@ -184,14 +182,8 @@ B2.yeti={br:1.7,bra:.022,front:(e,dt)=>{const B=basis(e.face),v=B.v,z=e.z||0,cr=
   B2.icequeen={br:1.4,bra:.012,back:e=>{if(e.hidden)return;const t=G.t||0;ctx.save();ctx.globalCompositeOperation='lighter';for(let i=0;i<3;i++)glow('200,235,255',e.x+Math.sin(t*.7+i*2)*16,e.y+8,26,.16,8);ctx.restore();shards(e,false)},
     front:(e,dt)=>{if(e.hidden)return;shards(e,true);if(b2every(e,'fr',.15,dt))b2emit(e,{k:'snow',x:e.x+rand(-28,28),y:e.y-rand(36,50),vy:rand(14,24),life:1.6,ph:rand(0,9),r:rand(.9,1.5)})}}}
 
-// --- MIMIC: gold glinting inside its mouth, drool from its tongue, a sly glint on the lock to lure you in, dust when it lands
-B2.mimic={br:2.6,bra:.03,front:(e,dt)=>{const t=e.t||0,B=basis(e.face),side=B.side,z=e.z||0,m=e.intro>0?1:(e.mouth||0),chew=e.st==='walk'?Math.abs(Math.sin(t*6))*.35:0,op=Math.max(m,chew),S=1.4,W=(lx,ly)=>[e.x+lx*S*B.f,e.y-z+ly*S],H=13,bw=side?17*.8:17;
-    if(!B.back&&op>=.05){const ex=side?bw*.35:0;
-      for(const dx of [-6,0,6]){const[cx,cy]=W(ex+dx,-H+1);ctx.fillStyle='#ffd23c';ink(1.2);ctx.beginPath();ctx.ellipse(cx,cy,2.4,1.4,0,0,TAU);ctx.fill();ctx.stroke()}
-      if(b2every(e,'gl',.5,dt)){const[cx,cy]=W(ex+rand(-8,8),-H);b2emit(e,{k:'glint',x:cx,y:cy,life:.4,r:3.5,col:'255,220,120'})}
-      const tg=Math.sin(t*8)*3,[tx,ty]=W(ex+(side?14:5)+tg,-H+10+op*8);if(b2every(e,'dr',.45,dt))b2emit(e,{k:'drip',x:tx,y:ty,vy:15,g:240,gy:e.y+4,life:2,col:'rgba(240,200,210,.95)'})}
-    else if(!B.back&&!z){if(b2every(e,'lu',1.4,dt)){const[lx,ly]=W(0,-H);b2emit(e,{k:'glint',x:lx,y:ly-2,life:.6,r:6,col:'255,230,140'})}if(b2every(e,'co',.5,dt)){const[lx,ly]=W(rand(-12,12),-H);b2emit(e,{k:'coin',x:lx,y:ly,vy:-rand(14,24),life:.9,ph:rand(0,9)})}}
-    if(e._b2z>6&&z<1)for(let i=0;i<8;i++){const a=i/8*TAU;b2emit(e,{k:'dust',x:e.x+Math.cos(a)*18,y:e.y+4+Math.sin(a)*6,vx:Math.cos(a)*30,vy:Math.sin(a)*10-5,drag:3,life:.5,r:3})}e._b2z=z}};
+// MIMIC: plain (redrawn below as the Dark Souls mimic), it only keeps the arena reactions
+B2.mimic={plain:1};
 
 // ===================== signature pieces =====================
 // GOLEM: a cluster of living crystals on his back, glowing veins running from the rune across his body
@@ -261,14 +253,6 @@ B2.mimic={br:2.6,bra:.03,front:(e,dt)=>{const t=e.t||0,B=basis(e.face),side=B.si
   for(let i=0;i<9;i++){const an=-Math.PI*(.1+.8*i/8),len=(i===4?34:i%2?20:26)*(1+.05*Math.sin(t*3+i));b2shard(cx+Math.cos(an)*12,cy+Math.sin(an)*12,i===4?5:3.6,len,an+Math.PI/2,fill,i%2?null:rgb,.35)}
   ob(e,dt)}}
 
-// MIMIC: a cursed purple aura, a ring of gold coins spinning around it, chains with a padlock floating
-{const mm=B2.mimic,of=mm.front;mm.back=(e,dt)=>{const t=G.t||0;ctx.save();ctx.globalCompositeOperation='lighter';glow('255,190,70',e.x,e.y-e.z-16,46,.3+.1*Math.sin(t*4));ctx.restore();
-  for(let i=0;i<8;i++){const a=t*1.6+i/8*TAU;if(Math.sin(a)>0)continue;const px=e.x+Math.cos(a)*38,py=e.y-e.z-16+Math.sin(a)*12;ctx.fillStyle='#ffd23c';ink(1.4);ctx.beginPath();ctx.ellipse(px,py,4*Math.abs(Math.cos(t*5+i))+.6,4,0,0,TAU);ctx.fill();ctx.stroke()}};
-  mm.front=(e,dt)=>{of(e,dt);const t=G.t||0;
-    for(let i=0;i<8;i++){const a=t*1.6+i/8*TAU;if(Math.sin(a)<=0)continue;const px=e.x+Math.cos(a)*38,py=e.y-e.z-16+Math.sin(a)*12;ctx.fillStyle='#ffd23c';ink(1.4);ctx.beginPath();ctx.ellipse(px,py,4*Math.abs(Math.cos(t*5+i))+.6,4,0,0,TAU);ctx.fill();ctx.stroke();ctx.save();ctx.globalCompositeOperation='lighter';glow('255,215,90',px,py,8,.5);ctx.restore()}
-    const cx=e.x+Math.sin(t*1.2)*6,cy=e.y-e.z-62+Math.sin(t*2)*4;ctx.strokeStyle=INK;ctx.lineWidth=1.4;for(let k=0;k<5;k++){const lx=cx-14+k*7,ly=cy-6+Math.sin(t*3+k)*2;ctx.fillStyle='#9aa3ad';ctx.beginPath();ctx.ellipse(lx,ly,3.6,2.2,k%2?.6:-.6,0,TAU);ctx.stroke()}
-    ink(1.8);ctx.beginPath();ctx.rect(cx-5,cy-2,10,9);fs('#d9a640');ctx.beginPath();ctx.arc(cx,cy-2,3.6,Math.PI,0);ctx.stroke();ctx.fillStyle=INK;circ(cx,cy+2,1.2);ctx.fill();
-    if(e.st==='chomp'||(e.mouth||0)>.5)if(b2every(e,'pf',.06,dt))b2emit(e,{k:'coin',x:e.x+rand(-10,10),y:e.y-e.z-22,vx:rand(-40,40),vy:-rand(40,70),g:260,life:.7,ph:rand(0,9)})}}
 
 // ===================== GOLEM: simple again, like the original, with just a few cracks in the stone =====================
 B2.golem={br:1.6,bra:.012,front:(e)=>{if(e.st==='roll')return;const B=basis(e.face),z=e.z||0,cr=(e.st==='leap'&&e.sub==='a')||(e.st==='roll'&&e.sub==='a')?7:0,v=B.v;
@@ -348,7 +332,10 @@ function b2react(e,ps,pb,ns,nb){const x=e.x,y=e.y,ice=isIce(themeOf(G.room)),S=s
       if(ns==='nova'&&nb==='b'||ps==='nova'){ENV2.mark('frost',x,y,90);ENV2.torches(['#1a62ff','#7fc8ff','#f0fbff'],ICE_L,2.5);ENV2.rocks(x,y,160,1)}
       if(ns==='blizzard'||ns==='storm'){ENV2.fall(8,true);ENV2.torches(['#5fb8ff','#bfe6ff','#ffffff'],ICE_L,3)}break;
     case 'mimic':
-      if(ns==='quake'||ps==='quake'&&pb==='a'){ENV2.rocks(x,y,180,2);ENV2.fall(8);ENV2.mark('cracks',x,y,44);ENV2.mark('coins',x,y,40);ENV2.chunks(x,y,12,['#ffd23c','#f2b800',S.mid],140)}
+      // the mouth now sits high on its legs: the tongue and the coins come out of it
+      if(ns==='tongue')for(const l of G.lines)if(l.col==='red'&&Math.abs(l.y-(y-8))<.5)l.y=y-30;
+      if(ps==='coins')for(const p of G.eproj)if(Math.abs(p.y-(y-14))<.5&&Math.hypot(p.x-x,p.y-y)<30)p.y=y-28;
+      if(ns==='quake'||ps==='quake'&&pb==='a'){ENV2.rocks(x,y,180,2);ENV2.fall(8);ENV2.mark('cracks',x,y,44);ENV2.chunks(x,y,12,[S.hi,S.mid,S.lo],140)}
       if(ps==='chomp'&&pb==='a'){for(const k of G.rocks)if(Math.hypot(k.x-x,k.y-y)<k.r+e.r+30&&!k.temp){k.hit=.3;k.dmg=(k.dmg||0)+3;ENV2.chunks(k.x,k.y,6,['#8a6038','#6b4a2a'],80)}}break}}
 {const _u=update;update=function(dt){_u(dt);if(!BOSS2||!G||!G.enemies)return;
   // torches go back to their colour
@@ -368,3 +355,173 @@ function b2react(e,ps,pb,ns,nb){const x=e.x,y=e.y,ice=isIce(themeOf(G.room)),S=s
 // burning wood: real flames on the obstacle
 {const _dr=drawRock;drawRock=function(k){_dr(k);if(BOSS2&&k.burn>0&&ctx===MAINCTX){const t=G.t||0,h=kH(k),f=Math.min(1,k.burn/1.2);ctx.save();ctx.globalCompositeOperation='lighter';glow('255,120,40',k.x,k.y-h*.6,k.r*2.2,.45*f);ctx.restore();
   for(let i=-1;i<=1;i++)b2fl(k.x+i*k.r*.45,k.y-h*(.55+.25*(i===0)),k.r*.32*f*(1+.2*Math.sin(t*12+i*2)),Math.sin(t*9+i)*2.4)}}}
+
+// =====================================================================
+// THE MIMIC, Dark Souls style: a rotten chest that stands up on long, thin, pale legs with backward knees,
+// long arms hanging to the floor with clawed fingers. The lid breathes, showing teeth; a tongue hangs out.
+// Front, side and back views; it unfolds out of the chest when it wakes up.
+// =====================================================================
+function drawMimicDS(e){const B=basis(e.face),side=B.side,back=B.back,f=B.f,t=G.t||0,ph=e.hopT||0,moving=e.st==='walk',x=e.x,gy=e.y+12;
+  const it=e.intro>0?(e.iT||0):9,legK=e.intro>0?clamp((it-.45)/.6,0,1):1,armK=e.intro>0?clamp((it-.7)/.55,0,1):1;
+  const wind=e.st==='chomp'&&e.sub==='a',lunge=e.st==='chomp'&&e.sub==='b',quake=e.st==='quake',spit=e.st==='coins'||e.st==='tongue';
+  const crouch=wind?.7:quake?.75:1,legs=legK*crouch,bob=moving?Math.abs(Math.sin(ph))*2.2:0,z=quake?(e.z||0):0;
+  const twitch=(t%3.3)<.16?Math.sin(t*90)*1.6:0,shake=e.intro>0&&it<.45?Math.sin(t*70)*2.2:0;
+  const breath=.1+.07*Math.sin(t*1.7),chew=moving?Math.abs(Math.sin(t*6))*.25:0,introOp=e.intro>0?clamp((it-1.05)/.35,0,1):0;
+  const op=Math.max(e.intro>0?introOp:(e.mouth||0),e.intro>0?0:Math.max(breath,chew));
+  const W=side?15:20,hip=22*legs,yb=-hip-2-bob,yt=yb-22,K='#1b1612';
+  const skin='#9d968a',skinD='#6a645b',wood='#5a3a22',woodD='#38220f',woodL='#76502e',band='#7a5a2a',bandL='#b08a40';
+  ctx.save();ctx.translate(x+twitch+shake,gy-z);ctx.scale(f,1);if(lunge&&side)ctx.rotate(.14);
+  const limb=(pts,w,col)=>{ctx.lineCap='round';ctx.lineJoin='round';ctx.beginPath();pts.forEach(([px,py],i)=>i?ctx.lineTo(px,py):ctx.moveTo(px,py));ctx.strokeStyle=K;ctx.lineWidth=w+3;ctx.stroke();ctx.strokeStyle=col;ctx.lineWidth=w;ctx.stroke();
+    ctx.fillStyle=col;ctx.strokeStyle=K;ctx.lineWidth=1.4;for(let i=1;i<pts.length-1;i++){ctx.beginPath();ctx.arc(pts[i][0],pts[i][1],w*.62,0,TAU);ctx.fill();ctx.stroke()}};
+  const claws=(hx,hy,dir,len,col,up)=>{ctx.lineCap='round';for(let k=-1;k<=1;k++){const a=dir+k*.42,mx=hx+Math.cos(a)*len*.55,my=hy+Math.sin(a)*len*.55,ex=hx+Math.cos(a+(up?-.5:.5)*.6)*len,ey=hy+Math.sin(a+(up?-.5:.5)*.6)*len;
+    ctx.strokeStyle=K;ctx.lineWidth=3.6;ctx.beginPath();ctx.moveTo(hx,hy);ctx.quadraticCurveTo(mx,my,ex,ey);ctx.stroke();ctx.strokeStyle=col;ctx.lineWidth=1.8;ctx.stroke();ctx.fillStyle='#e8e0cc';ctx.beginPath();ctx.arc(ex,ey,1.1,0,TAU);ctx.fill()}};
+  // --- arms: hanging to the floor, raised wide before the bite, reaching forward in the lunge
+  const arm=(s,far)=>{if(armK<.02)return;const sx=side?(far?-3:3):s*W,sy=yt+7,col=far?skinD:skin;let ex,ey,hx,hy,dir,up=false;
+    if(wind||quake){ex=sx+(side?8:s*16);ey=yt-8;hx=sx+(side?14:s*22);hy=yt-24;dir=-Math.PI/2+(side?.6:s*.5);up=true}
+    else if(lunge||spit){ex=sx+(side?14:s*12);ey=yb-4;hx=sx+(side?30:s*18);hy=yb-10;dir=side?0:(s>0?-.2:Math.PI+.2)}
+    else{const sw=Math.sin(t*2+s)*2.5+(moving?Math.sin(ph+(s>0?0:Math.PI))*5:0);ex=sx+(side?6+sw*.4:s*12);ey=yb+3;hx=sx+(side?9+sw:s*(9+sw*.4));hy=-4;dir=Math.PI/2+(side?-.3:s*-.25)}
+    ex=sx+(ex-sx)*armK;ey=sy+(ey-sy)*armK;hx=sx+(hx-sx)*armK;hy=sy+(hy-sy)*armK;limb([[sx,sy],[ex,ey],[hx,hy]],3.4,col);claws(hx,hy,dir,9*armK,col,up)};
+  // --- legs: thin, pale, the knees bent the wrong way
+  const leg=(hx,s,far,phase)=>{if(legs<.02)return;const lift=moving?Math.max(0,Math.sin(ph+phase))*7:0,col=far?skinD:skin;
+    const fx=side?hx+(moving?Math.sin(ph+phase)*10:0):hx*1.6,fy=-lift,hy=-hip-bob,kx=side?(hx+fx)/2-10*legs:hx*2.3+s*3,ky=hy*.45-lift*.4;
+    limb([[hx,hy],[kx,ky],[fx,fy]],3.6,col);claws(fx,fy,side?0:(s>0?.3:Math.PI-.3),6,col,false)};
+  // --- the chest
+  const chest=()=>{ctx.beginPath();ctx.rect(-W,yt,W*2,yb-yt);ctx.fillStyle=vGrad(-W,W,woodL,wood,woodD);ctx.fill();ctx.strokeStyle=K;ctx.lineWidth=2.6;ctx.stroke();
+    ctx.strokeStyle='rgba(0,0,0,.35)';ctx.lineWidth=1.2;for(const yy of [yt+7,yt+14]){ctx.beginPath();ctx.moveTo(-W+2,yy);ctx.lineTo(W-2,yy+(Math.sin(yy)*1));ctx.stroke()}
+    ctx.strokeStyle='rgba(0,0,0,.45)';ctx.beginPath();ctx.moveTo(-W*.3,yt+3);ctx.lineTo(-W*.15,yt+9);ctx.lineTo(-W*.35,yt+13);ctx.stroke();
+    for(const bx of side?[-W+3,W-6]:[-W+3,W-6]){ctx.fillStyle=band;ctx.fillRect(bx,yt,3.5,yb-yt);ctx.strokeStyle=K;ctx.lineWidth=1.6;ctx.strokeRect(bx,yt,3.5,yb-yt);ctx.fillStyle=bandL;for(const ry of [yt+4,yb-4]){ctx.beginPath();ctx.arc(bx+1.75,ry,1.2,0,TAU);ctx.fill()}}
+    ctx.fillStyle=band;ctx.fillRect(-W,yb-4,W*2,3);ctx.strokeStyle=K;ctx.lineWidth=1.6;ctx.strokeRect(-W,yb-4,W*2,3);
+    ctx.fillStyle='rgba(60,80,40,.55)';ctx.beginPath();ctx.ellipse(-W*.55,yb-2,4,1.6,0,0,TAU);ctx.ellipse(W*.4,yt+18,3,1.3,0,0,TAU);ctx.fill()};
+  const teethRow=(x0,x1,y0,dir,n,big)=>{ctx.fillStyle='#efe6c8';ctx.strokeStyle=K;ctx.lineWidth=1.1;for(let i=0;i<n;i++){const u=(i+.5)/n,tx=x0+(x1-x0)*u,h=(big?6:4)*(.7+.5*Math.abs(Math.sin(i*2.7)));ctx.beginPath();ctx.moveTo(tx-2.2,y0);ctx.lineTo(tx+Math.sin(i)*.8,y0+dir*h);ctx.lineTo(tx+2.2,y0);ctx.closePath();ctx.fill();ctx.stroke()}};
+  const tongue=(x0,y0,dx)=>{const len=(10+op*24)*(e.intro>0?introOp:1);if(len<3)return;const sw=Math.sin(t*3.4)*4,ex=x0+dx*len*.35+sw,ey=y0+len;ctx.lineCap='round';
+    for(const[c,w] of [[K,8],['#8a2a3a',5.4]]){ctx.strokeStyle=c;ctx.lineWidth=w;ctx.beginPath();ctx.moveTo(x0,y0);ctx.quadraticCurveTo(x0+dx*6,y0+len*.5,ex,ey);ctx.stroke()}
+    ctx.strokeStyle='rgba(230,140,150,.6)';ctx.lineWidth=1.3;ctx.beginPath();ctx.moveTo(x0-1,y0+2);ctx.quadraticCurveTo(x0+dx*5,y0+len*.5,ex-1,ey-2);ctx.stroke();
+    const d=(t*1.3)%1;ctx.fillStyle='rgba(220,230,200,.8)';ctx.beginPath();ctx.ellipse(ex,ey+3+d*12,1.3,2+d,0,0,TAU);ctx.fill()};
+  if(side){arm(0,true);leg(-5,0,true,Math.PI)}else{arm(-1,false);arm(1,false)}
+  if(!side){leg(-9,-1,false,0);leg(9,1,false,Math.PI)}
+  chest();
+  if(back){// the back of the lid and its hinges; no teeth from behind
+    const gp=op*10;ctx.fillStyle='#0d0806';ctx.fillRect(-W+1,yt-gp,W*2-2,gp);ctx.beginPath();ctx.moveTo(-W,yt-gp);ctx.quadraticCurveTo(0,yt-gp-12,W,yt-gp);ctx.lineTo(W,yt-gp+3);ctx.lineTo(-W,yt-gp+3);ctx.closePath();ctx.fillStyle=wood;ctx.fill();ctx.strokeStyle=K;ctx.lineWidth=2.6;ctx.stroke();
+    for(const hx of [-W*.5,W*.5]){ctx.fillStyle=band;ctx.fillRect(hx-3,yt-gp-3,6,8);ctx.strokeStyle=K;ctx.lineWidth=1.4;ctx.strokeRect(hx-3,yt-gp-3,6,8)}}
+  else if(side){// the lid hinges at the back and opens towards where it looks
+    const ang=-op*.95;ctx.save();ctx.beginPath();ctx.moveTo(-W,yt);ctx.lineTo(W+2,yt);ctx.lineTo(W+2+Math.cos(ang)*0,yt);ctx.lineTo(-W+Math.cos(ang)*(W*2+2),yt+Math.sin(ang)*(W*2+2));ctx.closePath();ctx.fillStyle='#2a0808';ctx.fill();
+    ctx.save();ctx.globalCompositeOperation='lighter';glow('150,60,30',W*.4,yt-op*8,14*op+2,.5*op);ctx.restore();ctx.restore();
+    teethRow(-W*.2,W,yt,-1,5,true);
+    ctx.save();ctx.translate(-W,yt);ctx.rotate(ang);ctx.beginPath();ctx.moveTo(0,0);ctx.quadraticCurveTo(W,-12,W*2+2,0);ctx.lineTo(W*2+2,3);ctx.lineTo(0,3);ctx.closePath();ctx.fillStyle=wood;ctx.fill();ctx.strokeStyle=K;ctx.lineWidth=2.6;ctx.stroke();
+    ctx.strokeStyle=band;ctx.lineWidth=2.6;ctx.beginPath();ctx.moveTo(0,0);ctx.quadraticCurveTo(W,-12,W*2+2,0);ctx.stroke();if(op>.08)teethRow(W*.8,W*2,3,1,4,false);ctx.restore();
+    if(op>.15)tongue(W*.75,yt-1,1);leg(5,0,false,0);arm(0,false)}
+  else{// front: the lid lifts, two rows of teeth, the dark throat, the tongue spilling over the edge
+    const gp=op*16;if(gp>1){ctx.beginPath();ctx.ellipse(0,yt-gp*.45,W-2,gp*.62+1,0,0,TAU);ctx.fillStyle='#2a0808';ctx.fill();ctx.strokeStyle=K;ctx.lineWidth=2;ctx.stroke();
+      ctx.save();ctx.globalCompositeOperation='lighter';glow('150,60,30',0,yt-gp*.4,W*.8,.45*op);ctx.restore();teethRow(-W+3,W-3,yt,-1,7,true);teethRow(-W+4,W-4,yt-gp,1,6,false)}
+    else teethRow(-W+5,W-5,yt+.5,-1,7,false);
+    ctx.beginPath();ctx.moveTo(-W,yt-gp);ctx.quadraticCurveTo(0,yt-gp-12,W,yt-gp);ctx.lineTo(W,yt-gp+3);ctx.lineTo(-W,yt-gp+3);ctx.closePath();ctx.fillStyle=woodL;ctx.fill();ctx.strokeStyle=K;ctx.lineWidth=2.6;ctx.stroke();
+    ctx.strokeStyle=band;ctx.lineWidth=2.6;ctx.beginPath();ctx.moveTo(-W,yt-gp);ctx.quadraticCurveTo(0,yt-gp-12,W,yt-gp);ctx.stroke();
+    ctx.fillStyle=band;ctx.fillRect(-3,yt-gp-2,6,6);ctx.strokeStyle=K;ctx.lineWidth=1.4;ctx.strokeRect(-3,yt-gp-2,6,6);ctx.fillStyle=K;ctx.fillRect(-.8,yt-gp,1.6,2.6);
+    if(op>.15)tongue(2,yt-1,.3)}
+  ctx.restore()}
+{const _dm=drawMimic;drawMimic=function(e){if(BOSS2)drawMimicDS(e);else _dm(e)}}
+
+// =====================================================================
+// THE WITCH'S SANCTUARY: an ancient floor swallowed by the forest. A ritual dais of stone in the middle with her sign
+// (three roots knotted together) carved and glowing; thick roots coming out of the walls and breaking the slabs;
+// glowing purple mushrooms, moss, flowers and fallen petals; the lights breathe while she lives
+// =====================================================================
+VARIANTS.radici.forEach(v=>{v.roots=0});
+function bakeWitchFloor(){const c=fx,cx=AW/2,cy=TOP+(BOT-TOP)*.45,R0=101,ry=.62,lights=[];G.witchLights=lights;c.save();c.setTransform(2,0,0,2,0,0);c.lineCap='round';c.lineJoin='round';
+  // the sanctuary is darker and violet at the edges
+  {const g=c.createRadialGradient(cx,cy,60,cx,cy,Math.max(AW,AH)*.75);g.addColorStop(0,'rgba(20,10,30,0)');g.addColorStop(1,'rgba(20,8,32,.5)');c.fillStyle=g;c.fillRect(0,0,AW,AH)}
+  // moss carpets in the corners and along the walls
+  for(let i=0;i<70;i++){const edge=Math.random()<.7,x=edge?(Math.random()<.5?rand(L,L+70):rand(R-70,R)):rand(L,R),y=rand(TOP,BOT),r=rand(5,14);c.fillStyle=pk(['rgba(63,106,42,.55)','rgba(79,138,52,.5)','rgba(47,82,32,.6)']);c.beginPath();c.ellipse(x,y,r,r*.55,0,0,TAU);c.fill();c.fillStyle='rgba(140,200,90,.18)';c.beginPath();c.ellipse(x-r*.2,y-r*.2,r*.5,r*.25,0,0,TAU);c.fill()}
+  // thick living roots: out of the walls, across the slabs, towards the dais
+  const rubble=(sx,sy,w)=>{for(let i=0;i<5;i++){const a=rand(0,TAU),px=sx+Math.cos(a)*w*rand(.7,1.3),py=sy+Math.sin(a)*w*.55,s=rand(3,6.5);c.fillStyle='rgba(0,0,0,.4)';c.beginPath();c.ellipse(px+1,py+2,s,s*.45,0,0,TAU);c.fill();c.fillStyle=pk(G.env.floor);c.beginPath();c.moveTo(px-s,py);c.lineTo(px-s*.3,py-s*.75);c.lineTo(px+s,py-s*.35);c.lineTo(px+s*.5,py+s*.45);c.closePath();c.fill();c.strokeStyle='#1b1612';c.lineWidth=1.1;c.stroke();c.fillStyle='rgba(255,255,255,.12)';c.beginPath();c.moveTo(px-s*.3,py-s*.75);c.lineTo(px+s,py-s*.35);c.lineTo(px,py-s*.2);c.closePath();c.fill()}
+    c.fillStyle='rgba(10,6,4,.75)';c.beginPath();c.ellipse(sx,sy+1,w*.75,w*.32,0,0,TAU);c.fill()};
+  const root=(x0,y0,x1,y1,w)=>{const mx=(x0+x1)/2+rand(-50,50),my=(y0+y1)/2+rand(-30,30),N=44,P=[],ph=rand(0,9),len=Math.hypot(x1-x0,y1-y0);
+    for(let i=0;i<=N;i++){const u=i/N,bx=(1-u)**2*x0+2*(1-u)*u*mx+u*u*x1,by=(1-u)**2*y0+2*(1-u)*u*my+u*u*y1,ux=(1-u)**2,dx=2*(1-u)*(mx-x0)+2*u*(x1-mx),dy=2*(1-u)*(my-y0)+2*u*(y1-my),dl=Math.hypot(dx,dy)||1,wig=Math.sin(u*len*.045+ph)*7*(1-u*.5);
+      P.push([bx-dy/dl*wig,by+dx/dl*wig,w*(1-u*.72)])}
+    // the root dives under the floor and comes back up: visible arcs
+    const vis=u=>!(u>.34&&u<.42)&&!(u>.66&&u<.72);
+    const seg=(from,to,fn)=>{for(let i=from+1;i<=to;i++)fn(P[i-1],P[i],i)};
+    const runs=[];let st=null;for(let i=0;i<=N;i++){const v=vis(i/N);if(v&&st===null)st=i;if((!v||i===N)&&st!==null){runs.push([st,v?i:i-1]);st=null}}
+    for(const[a0,a1] of runs){
+      seg(a0,a1,(p0,p1)=>{c.strokeStyle='rgba(0,0,0,.38)';c.lineWidth=p1[2]+5;c.beginPath();c.moveTo(p0[0]+4,p0[1]+6);c.lineTo(p1[0]+4,p1[1]+6);c.stroke()});
+      for(const[col,add,lift] of [['#1b1612',3.6,0],['#4a3424',0,0],['#5f4430',-.35,.12],['#7a5a3e',-.7,.24]])seg(a0,a1,(p0,p1)=>{c.strokeStyle=col;c.lineWidth=Math.max(1,p1[2]*(1+Math.min(0,add))+(add>0?add:0));c.beginPath();c.moveTo(p0[0],p0[1]-p0[2]*lift);c.lineTo(p1[0],p1[1]-p1[2]*lift);c.stroke()});
+      // bark: grooves running along the root
+      for(const off of [-.28,.05,.3]){c.strokeStyle='rgba(25,15,8,.5)';c.lineWidth=1;c.beginPath();seg(a0,a1,(p0,p1,i)=>{if(i===a0+1)c.moveTo(p0[0],p0[1]+p0[2]*off);if(i%3)c.lineTo(p1[0],p1[1]+p1[2]*off);else c.moveTo(p1[0],p1[1]+p1[2]*off)});c.stroke()}
+      // moss on its back, little rootlets
+      for(let i=a0+2;i<a1-1;i+=5){const[x,y,ww]=P[i];if(Math.random()<.7){c.fillStyle='#3f6a2a';c.beginPath();c.ellipse(x,y-ww*.3,ww*.5,ww*.2,0,0,TAU);c.fill();c.fillStyle='#6fa040';c.beginPath();c.ellipse(x-ww*.1,y-ww*.38,ww*.28,ww*.1,0,0,TAU);c.fill()}
+        if(Math.random()<.45){const a=rand(0,TAU),l=rand(12,22);for(const[col,lw] of [['#1b1612',3.6],['#4a3424',1.8]]){c.strokeStyle=col;c.lineWidth=lw;c.beginPath();c.moveTo(x,y);c.quadraticCurveTo(x+Math.cos(a)*l*.6,y+Math.sin(a)*l*.3+4,x+Math.cos(a)*l,y+Math.sin(a)*l*.5);c.stroke()}}}
+      // where it goes under or comes out, the slabs are broken
+      if(a0>0)rubble(P[a0][0],P[a0][1],P[a0][2]);if(a1<N)rubble(P[a1][0],P[a1][1],P[a1][2])}
+    rubble(P[2][0],P[2][1],P[2][2]*.9);return P};
+  const ends=[[L-4,rand(TOP+40,TOP+160)],[R+4,rand(TOP+60,TOP+200)],[L-4,rand(BOT-260,BOT-120)],[R+4,rand(BOT-240,BOT-100)],[rand(L+40,cx-60),TOP-2],[rand(cx+60,R-40),TOP-2],[rand(L+60,R-60),BOT+2]];
+  const roots=ends.map(([x,y])=>{const a=Math.atan2(cy-y,cx-x),d=Math.hypot(cx-x,(cy-y))-R0*1.05;return root(x,y,x+Math.cos(a)*d,y+Math.sin(a)*d*.9,rand(19,26))});
+  // the ritual dais
+  {c.fillStyle='rgba(0,0,0,.35)';c.beginPath();c.ellipse(cx+3,cy+5,R0+8,(R0+8)*ry,0,0,TAU);c.fill();
+    const g=c.createLinearGradient(0,cy-R0*ry,0,cy+R0*ry);g.addColorStop(0,'#6e7466');g.addColorStop(1,'#4a5046');c.fillStyle=g;c.beginPath();c.ellipse(cx,cy,R0+6,(R0+6)*ry,0,0,TAU);c.fill();c.strokeStyle='#1b1612';c.lineWidth=2.6;c.stroke();
+    c.strokeStyle='rgba(0,0,0,.3)';c.lineWidth=1.2;for(let k=0;k<16;k++){const a=k/16*TAU;c.beginPath();c.moveTo(cx+Math.cos(a)*(R0*.82),cy+Math.sin(a)*R0*.82*ry);c.lineTo(cx+Math.cos(a)*(R0+6),cy+Math.sin(a)*(R0+6)*ry);c.stroke()}
+    c.fillStyle='#3a4038';c.beginPath();c.ellipse(cx,cy,R0*.8,R0*.8*ry,0,0,TAU);c.fill();c.strokeStyle='#1b1612';c.lineWidth=2;c.stroke();
+    c.strokeStyle='rgba(255,255,255,.1)';c.lineWidth=1.4;c.beginPath();c.ellipse(cx,cy-1.5,R0+4,(R0+4)*ry,0,Math.PI*1.05,Math.PI*1.95);c.stroke();
+    // runes carved in the outer ring
+    c.strokeStyle='rgba(20,10,30,.7)';c.lineWidth=1.8;for(let k=0;k<16;k++){const a=k/16*TAU+TAU/32,px=cx+Math.cos(a)*R0*.91,py=cy+Math.sin(a)*R0*.91*ry;c.save();c.translate(px,py);c.scale(1,ry);c.rotate(a+Math.PI/2);c.beginPath();const g2=k%4;
+      if(g2===0){c.moveTo(-3,3);c.lineTo(0,-4);c.lineTo(3,3)}else if(g2===1){c.moveTo(0,-4);c.lineTo(0,4);c.moveTo(-3,-1);c.lineTo(3,1)}else if(g2===2){c.arc(0,0,3,0,Math.PI*1.5)}else{c.moveTo(-3,-3);c.lineTo(3,3);c.moveTo(3,-3);c.lineTo(-3,3)}c.stroke();c.restore();lights.push({x:px,y:py,r:7,rgb:'190,120,255',ph:k})}
+    // her sign: three roots knotted together
+    c.save();c.translate(cx,cy);c.scale(1,ry);for(let k=0;k<3;k++){const a=k/3*TAU-Math.PI/2;c.save();c.rotate(a);for(const[col,lw] of [['#1b1612',7],['#2a1f2e',4]]){c.strokeStyle=col;c.lineWidth=lw;c.beginPath();c.moveTo(0,0);c.bezierCurveTo(R0*.55,-R0*.2,R0*.55,R0*.35,R0*.1,R0*.42);c.stroke()}c.restore()}
+    c.strokeStyle='rgba(140,255,200,.55)';c.lineWidth=1.4;for(let k=0;k<3;k++){const a=k/3*TAU-Math.PI/2;c.save();c.rotate(a);c.beginPath();c.moveTo(0,0);c.bezierCurveTo(R0*.55,-R0*.2,R0*.55,R0*.35,R0*.1,R0*.42);c.stroke();c.restore()}
+    c.fillStyle='#1b1612';c.beginPath();c.arc(0,0,9,0,TAU);c.fill();c.fillStyle='#7bf0c0';c.beginPath();c.arc(0,0,4.5,0,TAU);c.fill();c.restore();lights.push({x:cx,y:cy,r:46,rgb:'120,240,190',ph:0,big:1})}
+  // glowing mushrooms where the roots meet the floor, purple flowers and petals
+  const shroom=(x,y,s)=>{for(let i=0;i<3;i++){const px=x+(i-1)*s*1.4+rand(-2,2),py=y+(i%2)*2,h=s*(1+(i===1)*.5);c.fillStyle='#e8dcc8';c.strokeStyle='#1b1612';c.lineWidth=1.2;c.beginPath();c.rect(px-1.2,py-h*1.2,2.4,h*1.2);c.fill();c.stroke();
+    c.beginPath();c.ellipse(px,py-h*1.2,h*.85,h*.55,0,Math.PI,0);c.closePath();c.fillStyle=i%2?'#7a3ab0':'#9a5ad0';c.fill();c.stroke();c.fillStyle='#e8c8ff';for(const[dx,dy] of [[-.35,-.25],[.3,-.4],[0,-.15]]){c.beginPath();c.arc(px+dx*h,py-h*1.2+dy*h,.9,0,TAU);c.fill()}lights.push({x:px,y:py-h*1.2,r:12+h,rgb:'190,110,255',ph:rand(0,9)})}};
+  for(const P of roots){const[x,y,w]=P[Math.floor(rand(8,20))];shroom(x+rand(-6,6),y+w*.6+4,rand(5,6.5))}
+  for(let i=0;i<4;i++)shroom(rand(L+20,R-20),Math.random()<.5?rand(TOP+20,TOP+80):rand(BOT-80,BOT-20),rand(4.5,6));
+  for(let i=0;i<26;i++){const x=rand(L+10,R-10),y=rand(TOP+10,BOT-10);if(Math.hypot(x-cx,(y-cy)/ry)<R0+10)continue;if(Math.random()<.5){c.fillStyle=pk(['#c48ae8','#e8a0d0','#a15ad0']);for(let k=0;k<5;k++){c.beginPath();c.arc(x+Math.cos(k*1.26)*2,y+Math.sin(k*1.26)*1.5,1.4,0,TAU);c.fill()}c.fillStyle='#ffd23c';c.beginPath();c.arc(x,y,.9,0,TAU);c.fill()}
+    else{c.fillStyle=pk(['rgba(196,138,232,.75)','rgba(232,160,208,.7)']);c.beginPath();c.ellipse(x,y,2.4,1.2,rand(0,3),0,TAU);c.fill()}}
+  c.restore()}
+{const _mt=makeTufts;makeTufts=function(){_mt();if(G.witchLights&&G.tufts){const cx=AW/2,cy=TOP+(BOT-TOP)*.45;G.tufts=G.tufts.filter(t=>Math.hypot(t.x-cx,(t.y-cy)/.62)>112)}}}
+{const _rf=renderFloor;renderFloor=function(){_rf();if(BOSS2&&themeOf(G.room)==='radici'&&G.variant&&G.variant.rune==='witch')bakeWitchFloor();else G.witchLights=null}}
+{const _fg=drawFloorGlow;drawFloorGlow=function(){_fg();const W=BOSS2&&G.witchLights;if(!W)return;const t=G.t||0,p2=G.enemies&&G.enemies.some(e=>e.p2);ctx.save();ctx.globalCompositeOperation='lighter';
+  for(const l of W){const a=l.big?.22+.1*Math.sin(t*1.4):.32+.22*Math.sin(t*2+l.ph);glow(p2&&!l.big?'255,140,60':l.rgb,l.x,l.y,l.r,a,l.big?l.r*.62:l.r*.7)}
+  for(let k=0;k<5;k++)glow('130,70,180',AW/2+Math.sin(t*.3+k*1.3)*(AW*.35),TOP+(BOT-TOP)*(.2+k*.15)+Math.cos(t*.25+k)*20,90,.07,40);ctx.restore()}}
+
+// =====================================================================
+// HYDRA: a creepier rise. The pool boils with a sick light, three pairs of yellow eyes circle under the water and stop
+// to stare at you; the heads breach one at a time, twitching, streaming water; the fins show, then the body heaves up.
+// The same staggered rise when it dives and comes back during the fight
+// =====================================================================
+Object.assign(BOSS_INTRO,{hydra:4.4});
+const HY_D={'0':1.5,'-1':2.0,'1':2.35},HY_UP={'0':0,'-1':.18,'1':.32};
+{const _hh=hydraHead;hydraHead=function(e,h){const p=_hh(e,h);if(BOSS2&&(h._dy||h._jx)){p.x+=h._jx||0;p.y+=h._dy||0;p.rx+=h._jx||0;p.ry+=h._dy||0}return p}}
+{const _bi3=bossIntro3;bossIntro3=function(e,t,t0,at,roar){if(!(BOSS2&&e.type==='hydra'))return _bi3(e,t,t0,at,roar);
+  e.em=null;e.hole=0;
+  // the heads exist from the very start of the entrance (in the game they were only made when the fight began, so the hydra was invisible during its entrance)
+  if(!e.heads)e.heads=[-1,0,1].map((s,i)=>({s,t:1+i*.7,st:'idle',ext:0,open:0,tx:e.x,ty:e.y,k:0}));
+  if(t0===0){sfx('creep',1,e.x);shake(2)}
+  if(t<3.2&&Math.random()<.7)G.fx.push({k:'bub',x:e.x+rand(-44,44),y:e.y+rand(-16,16),t:.6,r:rand(2,5)});
+  if(at(.6)||at(1.15)){shake(2.5);sfx('creep',1,e.x);G.ripples.push({x:e.x,y:e.y,r:6,max:70,a:.9})}
+  for(const s of ['0','-1','1'])if(at(HY_D[s])){sfx('splash',1,e.x);const hx=e.x+(+s)*36;G.ripples.push({x:hx,y:e.y,r:4,max:40,a:1});ENV2.splash(hx,e.y,8,'#cfe9d8')}
+  if(at(3.0)){shake(7);sfx('splash',2,e.x);ENV2.splash(e.x,e.y,22,'#cfe9d8');vfxBlast(e.x,e.y,'120,200,140',100,{sparks:10,spcol:['#c8f0d8','#7bd6a0','#ffffff'],dust:0,debris:['#3f7a4a','#2a5a34','#8fd0a8'],n:16,ring2:false})}
+  if(at(3.8)){roar();sfx('roar',0,e.x);G.ripples.push({x:e.x,y:e.y,r:10,max:110,a:1})}
+  for(const h of e.heads||[])h.open=t>3.75&&t<4.35?1:t>1.5&&t<3.7?.25+.25*Math.sin(t*7+h.s):0;
+  return true}}
+const hyEyes=(x,y,t,k,s,stare)=>{if(k<=0)return;const a=t*1.3+s*2.1,r=stare?0:26,ex=x+Math.cos(a)*r,ey=y+Math.sin(a)*r*.35,bl=(Math.sin(t*2.3+s*4)>.93)?.1:1;
+  ctx.fillStyle=`rgba(0,10,5,${.4*k})`;ctx.beginPath();ctx.ellipse(ex,ey+2,14,6,0,0,TAU);ctx.fill();k*=.85;
+  ctx.save();ctx.globalCompositeOperation='lighter';glow('255,200,60',ex,ey,16,.35*k*bl);for(const o of [-5,5]){glow('255,210,60',ex+o,ey,8,.8*k*bl);ctx.fillStyle=`rgba(255,240,150,${k*bl})`;ctx.beginPath();ctx.ellipse(ex+o,ey,2.6,1.6*bl+.3,o*.04,0,TAU);ctx.fill()}ctx.restore();
+  ctx.fillStyle=`rgba(0,0,0,${.8*k*bl})`;for(const o of [-5,5]){ctx.fillRect(ex+o-.5,ey-1.4,1,2.8)}};
+{const hy=B2.hydra,ob=hy.back,of=hy.front;
+  hy.pre=e=>{if(!e.heads)return;const t=G.t||0;
+    if(e.intro>0){const it=e.iT||0;for(const h of e.heads)h._q=clamp((it-HY_D[h.s])/.85,0,1);e.sink=1.6*(1-clamp((it-3)/.8,0,1))}
+    else if(e.st==='dive'&&e.sub==='up'){const u=1-(e.sink||0);for(const h of e.heads){const d=HY_UP[h.s];h._q=clamp((u-d)/(1-d),0,1)}}
+    else if(e.st==='dive'&&e.sub==='a'){const u=1-(e.sink||0);for(const h of e.heads)h._q=u}
+    else for(const h of e.heads)h._q=1;
+    for(const h of e.heads){const k=1-h._q;h._dy=k*95+(e.intro>0?Math.min(1.6,e.sink||0)*30:0);const n=Math.sin(Math.floor(t*9)*12.9898+h.s*78.233)*43758.5453;h._jx=k>0&&k<1?(Math.sin(t*37+h.s*5)*3+((n-Math.floor(n))-.5)*9)*k:0;
+      if(h._qp!=null&&h._qp<=0&&h._q>0)b2emit(e,{k:'ring',x:e.x+h.s*36,y:e.y,r0:4,r1:34,life:.5,col:'200,240,210',w:3});h._qp=h._q}};
+  hy.back=(e,dt)=>{const t=G.t||0;
+    // under the water: the eyes circle, then stop and stare
+    // the crests stay under the water line too
+    ctx.save();ctx.beginPath();ctx.rect(e.x-200,e.y-320,400,322);ctx.clip();ob(e,dt);ctx.restore()};
+  hy.front=(e,dt)=>{of(e,dt);if(!e.heads)return;for(const h of e.heads)if(h._q>.1&&h._q<1&&b2every(e,'wd'+h.s,.07,dt)){const p=hydraHead(e,h);b2emit(e,{k:'drip',x:p.x+rand(-7,7),y:p.y+4,vy:10,g:300,gy:e.y+rand(-2,4),life:1.5,col:'rgba(200,235,215,.9)'})}};
+  hy.post=e=>{if(!e.heads)return;const t=G.t||0;
+    if(e.intro>0){const it=e.iT||0;ctx.save();ctx.globalCompositeOperation='lighter';glow('120,220,90',e.x,e.y,70,.18+.1*Math.sin(t*5),26);ctx.restore();
+      for(const h of e.heads)if(!(clamp((it-HY_D[h.s])/.85,0,1)>0))hyEyes(e.x+h.s*30,e.y-2,t,clamp(it/.5,0,1),h.s,it>1.1)}
+    if(e.st==='dive'&&e.sub==='under'&&e.tx!=null){const k=clamp((1-(e.stT||0))/.3,0,1);for(const s of [-1,0,1])hyEyes(e.tx+s*30,e.ty-2,t,k,s,(e.stT||1)<.45)}
+  }}
+{const _de2=drawEnemy;drawEnemy=function(e){const S=BOSS2&&B2[e.type];if(S&&S.pre&&!e.dead)S.pre(e);_de2(e);if(S&&S.post&&!e.dead)S.post(e)}}
