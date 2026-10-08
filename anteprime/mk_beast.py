@@ -25,6 +25,13 @@ SAVE.introSeen=1;SAVE.runs=Math.max(SAVE.runs||0,9);SAVE.handSeen=1;
 """
 end="newRun();applySettings();if(!playIntro(false))showMenu();requestAnimationFrame(loop);"
 assert s.count(end)==1
+# backdrop without ribs / skull while the beast is awake; vignette and fade follow a zoomed camera
+for old,new in [("  for(let y=TOP+20,i=0;y<AH-30;y+=104,i++)for(const sd of [-1,1]){","  if(!G.bdNoRibs)for(let y=TOP+20,i=0;y<AH-30;y+=104,i++)for(const sd of [-1,1]){"),
+  ("  {const cx=AW/2,cy=6;","  if(!G.bdNoSkull){const cx=AW/2,cy=6;"),
+  ("key=kind+W+'x'+H+SC","key=kind+W+'x'+H+SC+(G.bdNoRibs?'r':'')+(G.bdNoSkull?'s':'')"),
+  ("{const ex=ox/s+2,ey=oy/s+2;ctx.drawImage(VIG,vx-ex,vy-ey,VW+ex*2,VH+ey*2)}","{const z=G.cam?G.cam.z:1,cx=G.cam?G.cam.x-VW/2/z:vx,cy=G.cam?G.cam.y-VH/2/z:vy,ex=(ox/s+2)/z,ey=(oy/s+2)/z;ctx.drawImage(VIG,cx-ex,cy-ey,VW/z+ex*2,VH/z+ey*2)}")]:
+  assert s.count(old)==1,old
+  s=s.replace(old,new)
 s=s.replace(end,patch+panel+end).replace('<title>','<title>Anteprima Bestia · ',1)
 (here/'bestia.html').write_text(s)
 print('ok',len(s))
