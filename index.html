@@ -6671,7 +6671,7 @@ function render(){
     else if(f.k==='boom'){const p=1-f.t/.35;ctx.fillStyle=`rgba(255,200,90,${.5*(1-p)})`;circ(f.x,f.y,f.r*p);ctx.fill();ctx.strokeStyle=`rgba(255,138,60,${1-p})`;ctx.lineWidth=5;circ(f.x,f.y,f.r*p);ctx.stroke()}
   }
   drawDebris('air');drawAmbient();
-  drawWallFront();if(split)drawLighting('out');else drawLighting();
+  drawWallFront();if(split)drawLighting('out');else drawLighting();if(AW>VW||AH>VH)drawBeastEyes();
   drawUltOverlay();
   if(!inDoor)drawBars();
   if(G.goldRun)drawGoldTimer();if(G.trial)drawTrialTag();
@@ -6839,8 +6839,8 @@ const bdCv=document.createElement('canvas');let bdKey='',bdFx=[],bdPal=null,bdSC
 // the land past the walls: the arena is a ledge over a dark abyss, inside the ribcage of a colossal dead beast whose skull rises behind the door.
 // Candles, skulls on pikes, eyes blinking in the dark and ghost lights; every chapter gives it its own colours and details
 const BDPAL={
-  moss:{a0:'#06110d',a1:'#0a0910',mist:'90,255,170',eye:'140,255,170',bone:'#cfc5a6',bs:'#9c9078',bh:'#f6eed6',st:['#3d443d','#272c29','#161a18'],acc:'#5f9a3a',acc2:'#8fd14f'},
-  lava:{a0:'#170604',a1:'#0b0303',mist:'255,90,30',eye:'255,170,60',bone:'#9c8a78',bs:'#5a463a',bh:'#c9b6a0',st:['#3e2c25','#281a12','#150c08'],acc:'#ff6a1a',acc2:'#ffc04a'},
+  moss:{a0:'#06110d',a1:'#0a0910',mist:'90,255,170',eye:'185,255,150',bone:'#cfc5a6',bs:'#9c9078',bh:'#f6eed6',st:['#3d443d','#272c29','#161a18'],acc:'#5f9a3a',acc2:'#8fd14f'},
+  lava:{a0:'#170604',a1:'#0b0303',mist:'255,90,30',eye:'255,200,90',bone:'#9c8a78',bs:'#5a463a',bh:'#c9b6a0',st:['#3e2c25','#281a12','#150c08'],acc:'#ff6a1a',acc2:'#ffc04a'},
   swamp:{a0:'#071311',a1:'#080f0a',mist:'170,240,60',eye:'210,255,90',bone:'#cbc69c',bs:'#7f7b58',bh:'#ece7be',st:['#344231','#222c20','#141a12'],acc:'#3f6e3a',acc2:'#c8f04a'},
   ice:{a0:'#071026',a1:'#0a0c1c',mist:'120,200,255',eye:'130,230,255',bone:'#e2ebf3',bs:'#8ea5bf',bh:'#ffffff',st:['#41516e','#2a3652','#171f38'],acc:'#9fdcff',acc2:'#e8f6ff'}};
 function bakeBackdrop(){const th=themeOf(G.room),M=BIG.m+20,W=AW+M*2,H=AH+M*2,kind=LAVAZ.includes(th)?'lava':isSwamp(th)?'swamp':isIce(th)?'ice':'moss',SC=LOWFX?1:2,key=kind+W+'x'+H+SC;if(key===bdKey)return;bdKey=key;
@@ -6956,8 +6956,8 @@ function bakeBackdrop(){const th=themeOf(G.room),M=BIG.m+20,W=AW+M*2,H=AH+M*2,ki
     const mg=c.createLinearGradient(0,-26,0,0);mg.addColorStop(0,`rgba(${Q.mist},0)`);mg.addColorStop(1,`rgba(${Q.mist},.12)`);c.fillStyle=mg;c.fillRect(-M,-26,W,26)}
   // the top of the back wall is a ruined crest of stones of different heights, with the chapter's moss, snow or ash on it
   {let x=-M;const st=Q.st;while(x<AW+M){const w=rr(14,30),h=rr(4,13),top=-h-(rn()<.2?rr(4,9):0),gap=rn()<.12;if(!gap){c.beginPath();c.moveTo(x,2);c.lineTo(x+rr(0,2),top+rr(0,3));c.lineTo(x+w*.5,top+rr(-2,1));c.lineTo(x+w-rr(0,2),top+rr(0,3));c.lineTo(x+w,2);c.closePath();
-      const gg=c.createLinearGradient(0,top,0,2);gg.addColorStop(0,st[0]);gg.addColorStop(1,st[2]);c.fillStyle=gg;c.fill();ink(2.2);c.stroke();
-      c.strokeStyle='rgba(255,255,255,.1)';c.lineWidth=1.2;c.beginPath();c.moveTo(x+2,top+2);c.lineTo(x+w-3,top+2);c.stroke();
+      const gg=c.createLinearGradient(0,top,0,2);gg.addColorStop(0,st[1]);gg.addColorStop(1,st[2]);c.fillStyle=gg;c.fill();c.fillStyle='rgba(6,4,8,.45)';c.fill();ink(2.2);c.stroke();
+      c.strokeStyle=`rgba(${Q.mist},.18)`;c.lineWidth=1.2;c.beginPath();c.moveTo(x+2,top+2);c.lineTo(x+w-3,top+2);c.stroke();
       if(rn()<.55){c.fillStyle=kind==='ice'?'#eef6ff':kind==='lava'?'#3a302b':Q.acc;c.beginPath();c.ellipse(x+w*rr(.3,.7),top+1,w*rr(.25,.45),2.6,0,0,TAU);c.fill()}
       if(kind==='lava'&&rn()<.3){c.strokeStyle=Q.acc;c.lineWidth=1.2;c.beginPath();c.moveTo(x+w*.4,top+3);c.lineTo(x+w*.5,0);c.stroke()}}x+=w+(gap?rr(4,10):rr(-1,1))}
     // a thin mist lying along the wall top
@@ -6976,10 +6976,15 @@ function drawBackdrop(vx,vy){if(!bdCv.width)return;const M=BIG.m+20,Q=bdPal;ctx.
       ctx.beginPath();ctx.moveTo(f.x,f.y-1);ctx.quadraticCurveTo(f.x-3.6*fl,f.y-5,f.x+Math.sin(t*9+f.ph),f.y-11*fl);ctx.quadraticCurveTo(f.x+3.6*fl,f.y-5,f.x,f.y-1);ctx.fillStyle='#ffb43a';ctx.fill();
       ctx.beginPath();ctx.ellipse(f.x,f.y-4,1.5,3,0,0,TAU);ctx.fillStyle='#fff6c8';ctx.fill();ctx.globalCompositeOperation='lighter'}
     else if(f.k==='sk'){const a=.55+.35*Math.sin(t*2.2+f.ph);for(const x of [f.x,f.x2]){glow(Q.eye,x,f.y,f.r*5,a*.6);glow('255,255,255',x,f.y,f.r*1.1,a)}}
-    else if(f.k==='big'){const a=.7+.3*Math.sin(t*1.7);glow(Q.eye,f.x,f.y,f.r*5,a*.55);glow(Q.eye,f.x,f.y,f.r*1.6,a);glow('255,255,255',f.x,f.y,f.r*.6,a)}
+    else if(f.k==='big'){}
     else if(f.k==='lv')glow('255,120,40',f.x,f.y,f.r,.22+.1*Math.sin(t*1.5+f.ph));
     else if(f.k==='ey'){const cyc=(t*.35+f.ph)%6,open=cyc<4.6?1:cyc<4.75?0:cyc<4.9?1:cyc<5.05?0:1;if(!open)continue;const a=.75+.2*Math.sin(t*2+f.ph),s=f.s;
       for(const o of [-1,1]){glow(Q.eye,f.x+o*5*s,f.y,10*s,a*.5);ctx.fillStyle=`rgba(${Q.eye},${a})`;ctx.beginPath();ctx.ellipse(f.x+o*5*s,f.y,2.6*s,1.5*s,o*.25,0,TAU);ctx.fill()}}}
+  ctx.restore()}
+// the beast's eyes over the gate: the whole socket glows from inside, drawn after the room lighting so every chapter looks the same
+function drawBeastEyes(){const Q=bdPal;if(!Q)return;const t=G.t||0,a=.9+.1*Math.sin(t*1.7);ctx.save();ctx.globalCompositeOperation='lighter';
+  for(const f of bdFx){if(f.k!=='big')continue;if(LOWFX){glow(Q.eye,f.x,f.y,f.r*2.2,.6);continue}
+    glow(Q.eye,f.x,f.y-2,f.r*2.4,a*.75,f.r*1.8);glow(Q.eye,f.x,f.y-2,f.r*2,a*.5,f.r*1.5);glow(Q.eye,f.x,f.y,f.r*1.2,a);glow('255,255,255',f.x,f.y,f.r*.45,a*.9);glow(Q.eye,f.x,f.y+6,f.r*4.5,a*.25,f.r*2.2)}
   ctx.restore()}
 // little arrows on the screen edge pointing at enemies the camera does not show
 function drawOffscreen(cw,ch,s,ox,oy,vx,vy){if(G.state!=='play')return;const pad=18*s;
