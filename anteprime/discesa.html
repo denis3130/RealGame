@@ -1,0 +1,194 @@
+<title>La Discesa</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Lilita+One&family=Baloo+2:wght@500;700&display=swap">
+<style>
+/* Layout: one tall map that scrolls down through the body of the Beast, a fixed top bar with depth and stars, a bottom sheet for the tapped stop */
+:root{
+  --abyss:#07050a; --stone:#4a443c; --stone2:#5f574c; --bone:#cbc69c; --boneHi:#ece7be; --ink:#16120e;
+  --gold:#ffd84a; --green:#6fd04a; --red:#e5484d; --muted:#b9ae98;
+  --display:"Lilita One","Arial Rounded MT Bold","Trebuchet MS",sans-serif; --body:"Baloo 2","Trebuchet MS",Arial,sans-serif;
+  color-scheme:dark;
+}
+html,body{height:100%}
+body{margin:0;background:var(--abyss);color:var(--boneHi);font-family:var(--body);-webkit-tap-highlight-color:transparent;overflow-x:hidden}
+#app{position:relative;max-width:440px;margin:0 auto;min-height:100%}
+#bar{position:sticky;top:env(safe-area-inset-top,0px);z-index:20;display:flex;align-items:center;gap:8px;padding:8px 12px;background:linear-gradient(#1d1915,#14110e);border-bottom:3px solid var(--ink);box-shadow:inset 0 -2px 0 rgba(216,207,178,.22),0 4px 10px rgba(0,0,0,.5)}
+#bar h1{margin:0;font:400 20px/1 var(--display);color:#fff;text-shadow:0 2px 0 var(--ink),1.5px 1.5px 0 var(--ink),-1.5px 1.5px 0 var(--ink);flex:1;min-width:0}
+#bar h1 small{display:block;font:500 11px/1.2 var(--body);color:var(--muted);text-shadow:none;margin-top:3px}
+.pill{display:flex;align-items:center;gap:5px;padding:3px 10px 3px 6px;border:2.5px solid var(--ink);border-radius:999px;background:linear-gradient(#2b2620,#1c1814);font:400 15px/1 var(--display);color:#fff;text-shadow:0 1px 0 var(--ink);font-variant-numeric:tabular-nums;white-space:nowrap}
+.pill i{font-style:normal;color:var(--gold);font-size:16px}
+.pill.depth i{color:#c48ae8}
+#map{position:relative;width:100%}
+#cv{position:absolute;left:0;top:0;width:100%;display:block}
+.node{position:absolute;transform:translate(-50%,-50%);border:0;padding:0;background:none;cursor:pointer;font-family:var(--display);color:#fff}
+.node:focus-visible{outline:3px solid var(--gold);outline-offset:4px;border-radius:50%}
+.piano{width:86px;height:86px;border-radius:50%;border:4px solid var(--ink);box-shadow:inset 0 4px 0 rgba(255,255,255,.25),inset 0 -6px 0 rgba(0,0,0,.25),0 5px 0 var(--ink),0 0 26px var(--glow,transparent);background:radial-gradient(circle at 35% 30%,var(--c1),var(--c2))}
+.piano .em{display:block;font-size:30px;line-height:1;text-shadow:0 2px 0 var(--ink)}
+.piano .lbl{position:absolute;left:50%;top:100%;transform:translate(-50%,8px);white-space:nowrap;font-size:15px;background:rgba(14,10,8,.82);padding:4px 10px 5px;border-radius:10px;box-shadow:0 0 0 2px rgba(0,0,0,.5);z-index:2;text-shadow:0 2px 0 var(--ink),1.5px 1.5px 0 var(--ink),-1.5px 1.5px 0 var(--ink)}
+.piano .lbl small{display:block;font:700 11px/1.1 var(--body);color:#cbbfa8;text-shadow:none;text-align:center}
+.stars{position:absolute;left:50%;top:-14px;transform:translateX(-50%);display:flex;gap:1px;font-size:19px;line-height:1}
+.stars b{color:#3a342c;text-shadow:0 2px 0 var(--ink),1px 1px 0 var(--ink),-1px 1px 0 var(--ink);font-weight:400}
+.stars b.on{color:var(--gold)}
+.piano.cur{animation:pulse 1.4s ease-in-out infinite}
+.piano.lock{filter:grayscale(.85) brightness(.45)}
+@keyframes pulse{50%{box-shadow:inset 0 4px 0 rgba(255,255,255,.25),inset 0 -6px 0 rgba(0,0,0,.25),0 5px 0 var(--ink),0 0 40px var(--glow,#fff)}}
+.seal{width:48px;height:48px;border-radius:12px;border:3px solid var(--ink);background:linear-gradient(#8a6038,#5a3c22);box-shadow:inset 0 3px 0 rgba(255,255,255,.2),0 4px 0 var(--ink);font-size:22px}
+.seal .req{position:absolute;left:50%;top:100%;transform:translate(-50%,5px);font:400 12px/1 var(--display);white-space:nowrap;padding:2px 7px;border-radius:999px;background:#1c1814;border:2px solid var(--ink)}
+.seal .req i{font-style:normal;color:var(--gold)}
+.seal.open{background:linear-gradient(#ffe46e,#e8a20c);animation:pop .6s ease-out}
+.seal.got{background:linear-gradient(#5f574c,#3b352e);filter:brightness(.8)}
+@keyframes pop{0%{transform:translate(-50%,-50%) scale(.6)}60%{transform:translate(-50%,-50%) scale(1.25)}100%{transform:translate(-50%,-50%) scale(1)}}
+.secret{width:52px;height:52px;border-radius:50%;border:3px dashed #7a6a58;background:rgba(20,14,26,.85);font-size:22px;box-shadow:0 0 0 3px var(--ink)}
+.secret.open{border:3px solid var(--ink);background:radial-gradient(circle,#c48ae8,#4a2a6a);box-shadow:0 4px 0 var(--ink),0 0 24px #c48ae8}
+.secret .req{position:absolute;left:50%;top:100%;transform:translate(-50%,5px);font:700 11px/1.1 var(--body);white-space:nowrap;color:var(--muted);text-align:center}
+#hero{position:absolute;width:44px;height:44px;transform:translate(-50%,-100%);transition:left 1.2s cubic-bezier(.5,0,.3,1),top 1.2s cubic-bezier(.5,0,.3,1);pointer-events:none;z-index:6}
+#hero::after{content:"";position:absolute;left:50%;top:50%;width:180px;height:180px;transform:translate(-50%,-50%);background:radial-gradient(circle,rgba(255,220,140,.22),transparent 65%);pointer-events:none}
+#actions{position:sticky;bottom:0;z-index:20;display:flex;gap:8px;padding:10px 12px calc(10px + env(safe-area-inset-bottom,0px));background:linear-gradient(rgba(7,5,10,0),rgba(7,5,10,.95) 35%)}
+.btn{flex:1;border:3px solid var(--ink);border-radius:12px;padding:10px 8px;font:400 17px/1 var(--display);color:#fff;text-shadow:0 2px 0 var(--ink);cursor:pointer;box-shadow:inset 0 3px 0 rgba(255,255,255,.5),inset 0 -4px 0 rgba(0,0,0,.18),0 4px 0 var(--ink)}
+.btn:active{transform:translateY(2px);box-shadow:inset 0 2px 0 rgba(255,255,255,.4),0 2px 0 var(--ink)}
+.btn:focus-visible{outline:3px solid var(--gold);outline-offset:2px}
+.btn.go{background:linear-gradient(#b4f57a,#68d13a 48%,#4cb328 52%,#5cc232)}
+.btn.alt{background:linear-gradient(#8a8276,#5a544c);flex:.55}
+#sheet{position:fixed;left:50%;bottom:0;transform:translate(-50%,110%);width:min(440px,100%);box-sizing:border-box;z-index:30;padding:16px 16px calc(18px + env(safe-area-inset-bottom,0px));background:linear-gradient(#2b2620,#1a1612);border:3px solid var(--ink);border-bottom:0;border-radius:18px 18px 0 0;box-shadow:inset 0 3px 0 rgba(216,207,178,.22),0 -8px 30px rgba(0,0,0,.6);transition:transform .3s cubic-bezier(.3,1.3,.5,1)}
+#sheet.show{transform:translate(-50%,0)}
+#sheet h2{margin:0 0 2px;font:400 24px/1.1 var(--display);color:#fff;text-shadow:0 2px 0 var(--ink);text-wrap:balance}
+#sheet .kind{font:700 12px/1 var(--body);letter-spacing:.06em;text-transform:uppercase;color:var(--gold)}
+#sheet p{margin:8px 0 0;font-size:15px;line-height:1.4;color:var(--boneHi);max-width:62ch}
+#sheet ul{margin:10px 0 0;padding:0;list-style:none;display:grid;gap:6px}
+#sheet li{display:flex;gap:8px;align-items:center;font-size:14px;padding:6px 10px;border-radius:10px;background:rgba(0,0,0,.25);border:2px solid rgba(0,0,0,.4)}
+#sheet li b{font:400 15px/1 var(--display);color:var(--gold);min-width:34px}
+#sheet .close{position:absolute;right:12px;top:10px;width:34px;height:34px;border-radius:50%;border:3px solid var(--ink);background:#5a544c;color:#fff;font:400 18px/1 var(--display);cursor:pointer}
+#toast{position:fixed;left:50%;top:calc(70px + env(safe-area-inset-top,0px));transform:translate(-50%,-20px);opacity:0;z-index:40;padding:10px 16px;border:3px solid var(--ink);border-radius:14px;background:linear-gradient(#ffe46e,#f2a400);font:400 17px/1.15 var(--display);color:#fff;text-shadow:0 2px 0 var(--ink);text-align:center;transition:all .3s;pointer-events:none;max-width:88%}
+#toast.show{opacity:1;transform:translate(-50%,0)}
+.fly{position:fixed;z-index:45;font:400 26px/1 var(--display);color:var(--gold);text-shadow:0 2px 0 var(--ink);pointer-events:none;transition:all .8s cubic-bezier(.5,0,.6,1)}
+#frag{display:flex;gap:4px;align-items:center}
+#frag span{width:12px;height:16px;border-radius:3px;border:2px solid var(--ink);background:#2b2620}
+#frag span.on{background:linear-gradient(#e0c0ff,#8a5ad0)}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+</style>
+
+<div id="app">
+  <div id="bar">
+    <h1>La Discesa<small>Dentro le ossa della Bestia</small></h1>
+    <div class="pill depth" title="Profondità"><i>▼</i><span id="depth">0 m</span></div>
+    <div class="pill" title="Stelle"><i>★</i><span id="stars">0</span></div>
+  </div>
+  <div id="map"><canvas id="cv"></canvas><div id="nodes"></div><div id="hero"></div></div>
+  <div id="actions"><button class="btn alt" id="reset">Da capo</button><button class="btn go" id="win">Vinci il piano ▼</button></div>
+</div>
+<div id="sheet" role="dialog" aria-modal="false" aria-labelledby="shT"><button class="close" id="shX" aria-label="Chiudi">✕</button><div class="kind" id="shK"></div><h2 id="shT"></h2><div id="shB"></div></div>
+<div id="toast"></div>
+
+<script>
+(()=>{
+// ---------- data: the descent through the body of the Beast (example progress) ----------
+const PIANI=[
+  {id:'cripta',n:'Cripta di Muschio',where:'La gola',depth:180,em:'💀',c1:'#9fe06a',c2:'#3f7a2a',glow:'120,235,80',boss:'Golem di Muschio e Strega delle Radici',
+   lore:'Il primo frammento: «Prima dei re, prima delle cripte, la Bestia dormiva già. Le sue costole sono diventate i nostri muri.»',secret:'La Cripta Sommersa',sreward:'Compagno: Muschietto dorato'},
+  {id:'vulcano',n:'Cuore del Vulcano',where:'Il petto',depth:420,em:'🔥',c1:'#ffb04a',c2:'#a8341a',glow:'255,120,40',boss:'Salamandra di Lava e Fabbro Infernale',
+   lore:'Secondo frammento: «Il suo cuore non si è mai spento. È diventato un vulcano, e il fuoco batte ancora.»',secret:'La Fucina Dimenticata',sreward:'Arco: Costola di Brace'},
+  {id:'palude',n:'Palude delle Lucciole',where:'Il ventre',depth:690,em:'🐸',c1:'#c8f04a',c2:'#3a6a2a',glow:'190,240,90',boss:'Re Rospo e Idra della Palude',
+   lore:'Terzo frammento: «Tutto quello che la Bestia ha inghiottito è marcito qui. Le lucciole sono le anime che non trovano l’uscita.»',secret:'Il Nido dell’Idra',sreward:'Eroe: Cacciatrice di Lucciole'},
+  {id:'ghiacci',n:'Picchi di Brina',where:'La coda',depth:960,em:'❄️',c1:'#bfe9ff',c2:'#3f6aa8',glow:'130,210,255',boss:'Yeti delle Vette e Regina dei Ghiacci',
+   lore:'Quarto frammento: «La coda è gelata da mille anni. Quando si muoverà, l’abisso intero tremerà.»',secret:'La Tomba di Ghiaccio',sreward:'Aspetto: Mantello di Brina'},
+  {id:'bestia',n:'Il Cuore dell’Abisso',where:'In fondo a tutto',depth:1300,em:'👁️',c1:'#c48ae8',c2:'#3a1a5a',glow:'190,110,255',boss:'La Bestia dell’Abisso',
+   lore:'Ultimo frammento: il vero nome della Bestia. Lo scopri solo battendola.',secret:null}];
+const SEALS=[{at:2,r:'Cassa di legno',em:'📦'},{at:4,r:'Cassa d’argento',em:'🎁'},{at:6,r:'10 carte Lucciola',em:'✨'},{at:8,r:'Cassa d’oro',em:'👑'},{at:10,r:'Eroe: Druido',em:'🌿'},{at:12,r:'Cassa dell’Abisso',em:'💜'}];
+const START=()=>({stars:[3,2,0,0,0],cur:2,opened:{2:1},deep:false});
+let S=START();
+// layout of the map in a 360-wide design space
+const Y={top:150,cripta:420,vulcano:880,palude:1340,ghiacci:1800,bestia:2300,deep:2700,end:2980};
+const POS=[[180,Y.cripta],[180,Y.vulcano],[180,Y.palude],[180,Y.ghiacci],[180,Y.bestia]];
+const SEALPOS=[[262,Y.cripta+190],[98,Y.vulcano-150],[262,Y.vulcano+200],[98,Y.palude+200],[262,Y.ghiacci-170],[98,Y.ghiacci+220]];
+const SECPOS=[[56,Y.cripta-60],[304,Y.vulcano-20],[56,Y.palude-40],[304,Y.ghiacci+40]];
+const $=id=>document.getElementById(id),map=$('map'),cv=$('cv'),nodesEl=$('nodes');
+let K=1;
+const total=()=>S.stars.reduce((a,b)=>a+b,0);
+const fragments=()=>S.stars.slice(0,4).filter(s=>s===3).length+(S.stars[4]>0?1:0);
+
+// ---------- the map, drawn on canvas in the game's style ----------
+function draw(t){const w=map.clientWidth,h=Y.end*K,dpr=Math.min(2,devicePixelRatio||1);if(cv.width!==Math.round(w*dpr)||cv.height!==Math.round(h*dpr)){cv.width=Math.round(w*dpr);cv.height=Math.round(h*dpr);cv.style.height=h+'px'}
+  const c=cv.getContext('2d');c.setTransform(dpr*K,0,0,dpr*K,0,0);c.lineJoin='round';c.lineCap='round';
+  const INK='#16120e',BONE='#cbc69c',BS='#7f7b58',BH='#ece7be';
+  // the abyss gets darker the deeper you go; each part of the body has its own light
+  let g=c.createLinearGradient(0,0,0,Y.end);g.addColorStop(0,'#141a12');g.addColorStop(.18,'#0e1410');g.addColorStop(.33,'#1a0c08');g.addColorStop(.5,'#0d140c');g.addColorStop(.66,'#0a1020');g.addColorStop(.82,'#100616');g.addColorStop(1,'#030205');c.fillStyle=g;c.fillRect(0,0,360,Y.end);
+  const glowAt=(x,y,r,rgb,a)=>{const q=c.createRadialGradient(x,y,0,x,y,r);q.addColorStop(0,`rgba(${rgb},${a})`);q.addColorStop(1,`rgba(${rgb},0)`);c.fillStyle=q;c.fillRect(x-r,y-r,r*2,r*2)};
+  PIANI.forEach((p,i)=>glowAt(180,POS[i][1],230,p.glow,.16+.04*Math.sin(t*1.3+i)));
+  // lava heart inside the chest, beating
+  {const b=1+.06*Math.max(0,Math.sin(t*3.2))**8;c.save();c.translate(180,Y.vulcano+40);c.scale(b,b);glowAt(0,0,120,'255,110,30',.35);c.restore()}
+  // the spine: a column of vertebrae from the skull down to the heart of the abyss
+  const spineX=y=>180+Math.sin(y*.006)*14;
+  for(let y=Y.top+90;y<Y.bestia-60;y+=30){const x=spineX(y);c.beginPath();c.ellipse(x,y,22,11,0,0,Math.PI*2);c.fillStyle=y<Y.ghiacci-200?BONE:'#d8eaf2';c.fill();c.strokeStyle=INK;c.lineWidth=3;c.stroke();
+    c.beginPath();c.moveTo(x-8,y-6);c.lineTo(x,y-17);c.lineTo(x+8,y-6);c.closePath();c.fill();c.stroke();c.fillStyle=BS;c.beginPath();c.ellipse(x,y+4,13,3.6,0,0,Math.PI*2);c.fill()}
+  // ribs around the chest and the belly
+  const rib=(y,sd,len,drop,w,col)=>{const p=()=>{c.beginPath();c.moveTo(spineX(y),y);c.quadraticCurveTo(180+sd*len*.95,y-30,180+sd*len,y+drop)};p();c.strokeStyle=INK;c.lineWidth=w+6;c.stroke();p();c.strokeStyle=col||BONE;c.lineWidth=w;c.stroke();c.save();c.translate(-sd*1.5,-2);p();c.strokeStyle=BH;c.lineWidth=w*.3;c.stroke();c.restore()};
+  for(let i=0;i<6;i++)for(const sd of[-1,1])rib(Y.vulcano-230+i*80,sd,150-Math.abs(i-2.5)*10,120,14);
+  for(let i=0;i<4;i++)for(const sd of[-1,1])rib(Y.palude-170+i*85,sd,120-i*8,90,11,'#bdb88e');
+  // moss on the neck, slime in the belly, frost on the tail
+  for(let i=0;i<40;i++){const y=Y.top+120+(i*37)%380,x=spineX(y)+((i*53)%120-60);c.fillStyle=i%2?'#3f6a2a':'#5f9a3a';c.beginPath();c.ellipse(x,y,9,4,0,0,Math.PI*2);c.fill()}
+  for(let i=0;i<10;i++){const x=40+(i*67)%280,y=Y.palude+150+(i*29)%90;c.fillStyle='rgba(120,200,60,.25)';c.beginPath();c.ellipse(x,y,30,9,0,0,Math.PI*2);c.fill()}
+  for(let i=0;i<30;i++){const y=Y.ghiacci-150+(i*41)%340,x=spineX(y)+((i*61)%140-70);c.fillStyle='rgba(235,248,255,.75)';c.beginPath();c.ellipse(x,y,6,2.4,0,0,Math.PI*2);c.fill()}
+  // the skull at the top: the way in
+  {const x=180,y=Y.top;for(const sd of[-1,1]){const p=()=>{c.beginPath();c.moveTo(x+sd*70,y-14);c.bezierCurveTo(x+sd*110,y-20,x+sd*140,y-26,x+sd*150,y-70)};p();c.strokeStyle=INK;c.lineWidth=22;c.stroke();p();c.strokeStyle=BS;c.lineWidth=16;c.stroke();c.save();c.translate(-sd*2,-3);p();c.strokeStyle=BONE;c.lineWidth=8;c.stroke();c.restore()}
+    c.beginPath();c.ellipse(x,y,96,58,0,0,Math.PI*2);const sg=c.createRadialGradient(x-24,y-30,6,x,y,110);sg.addColorStop(0,'#e9e2c4');sg.addColorStop(.6,BONE);sg.addColorStop(1,'#8f8a66');c.fillStyle=sg;c.fill();c.strokeStyle=INK;c.lineWidth=4;c.stroke();
+    for(const sd of[-1,1]){c.beginPath();c.ellipse(x+sd*40,y-12,25,19,sd*.25,0,Math.PI*2);c.fillStyle=INK;c.fill();glowAt(x+sd*40,y-12,26,'120,235,80',.55+.2*Math.sin(t*2))}
+    c.fillStyle=INK;c.beginPath();c.moveTo(x,y+16);c.lineTo(x-9,y+32);c.lineTo(x+9,y+32);c.closePath();c.fill();
+    c.fillStyle='#efe6c8';c.lineWidth=2;for(let i=0;i<8;i++){const tx=x-49+i*14;c.beginPath();c.moveTo(tx-5,y+42);c.lineTo(tx,y+55);c.lineTo(tx+5,y+42);c.closePath();c.fill();c.stroke()}
+    // the mouth is the entrance: a stair going down into the dark
+    c.fillStyle='#050308';c.beginPath();c.ellipse(x,y+70,30,14,0,0,Math.PI*2);c.fill();c.strokeStyle=INK;c.lineWidth=3;c.stroke();
+    c.font='400 13px "Lilita One",sans-serif';c.textAlign='center';c.fillStyle='#b9ae98';c.fillText('INGRESSO',x,y-78)}
+  // the heart of the abyss: where the Beast waits
+  {const x=180,y=Y.bestia,b=1+.08*Math.max(0,Math.sin(t*2.6))**6;glowAt(x,y,170*b,'190,110,255',.35);c.save();c.translate(x,y);c.scale(b,b);
+    for(let i=0;i<10;i++){const a=i/10*Math.PI*2+t*.15;c.beginPath();c.moveTo(Math.cos(a)*60,Math.sin(a)*60);c.quadraticCurveTo(Math.cos(a+.3)*100,Math.sin(a+.3)*100,Math.cos(a+.5)*125,Math.sin(a+.5)*125);c.strokeStyle=INK;c.lineWidth=12;c.stroke();c.strokeStyle=BS;c.lineWidth=7;c.stroke()}
+    c.restore()}
+  // below: the Deep Abyss, hidden in fog until the Beast falls
+  {const y=Y.deep;if(!S.deep){c.fillStyle='rgba(3,2,5,.92)';c.fillRect(0,y-120,360,Y.end-y+120);
+      c.globalAlpha=.25+.1*Math.sin(t*1.5);c.fillStyle='#c48ae8';c.font='400 64px "Lilita One",sans-serif';c.textAlign='center';c.fillText('?',180,y+40);c.globalAlpha=1;
+      c.fillStyle='#b9ae98';c.font='400 16px "Lilita One",sans-serif';c.fillText('L’ABISSO PROFONDO',180,y+90);c.font='500 13px "Baloo 2",sans-serif';c.fillText('Si apre solo quando la Bestia cade',180,y+110)}
+    else{glowAt(180,y+30,200,'255,215,90',.35);c.fillStyle='#ffd84a';c.font='400 22px "Lilita One",sans-serif';c.textAlign='center';c.fillText('L’ABISSO PROFONDO',180,y+20);c.font='500 14px "Baloo 2",sans-serif';c.fillStyle='#ece7be';c.fillText('Seconda discesa: gli stessi piani, più cupi.',180,y+45);c.fillText('La Bestia ti aspetta più forte. Premio: la Corona d’Ossa.',180,y+64)}}
+  // the darkness below your light: only shapes can be seen
+  const cy=POS[Math.min(S.cur,4)][1]+140;if(S.cur<5){const fog=c.createLinearGradient(0,cy,0,cy+260);fog.addColorStop(0,'rgba(3,2,5,0)');fog.addColorStop(1,'rgba(3,2,5,.86)');c.fillStyle=fog;c.fillRect(0,cy,360,260);c.fillStyle='rgba(3,2,5,.86)';c.fillRect(0,cy+260,360,Math.max(0,Y.deep-140-(cy+260)))}
+}
+// ---------- the stops on the map ----------
+function build(){nodesEl.innerHTML='';
+  PIANI.forEach((p,i)=>{const b=document.createElement('button');b.className='node piano'+(i===S.cur?' cur':'')+(i>S.cur?' lock':'');b.style.setProperty('--c1',p.c1);b.style.setProperty('--c2',p.c2);b.style.setProperty('--glow',`rgba(${p.glow},.8)`);
+    const st=S.stars[i];b.innerHTML=`<span class="stars">${[0,1,2].map(k=>`<b class="${k<st?'on':''}">★</b>`).join('')}</span><span class="em">${i>S.cur+1?'❔':p.em}</span><span class="lbl">${i>S.cur+1?'???':p.n}<small>${p.where} · ${p.depth} m</small></span>`;
+    place(b,POS[i]);b.setAttribute('aria-label',p.n);b.onclick=()=>openPiano(i);nodesEl.appendChild(b)});
+  SEALS.forEach((s,i)=>{const b=document.createElement('button');const ok=total()>=s.at;b.className='node seal'+(ok?(S.opened[s.at]?' got':' open'):'');b.innerHTML=`${ok?s.em:'🔒'}<span class="req"><i>★</i> ${s.at}</span>`;place(b,SEALPOS[i]);b.setAttribute('aria-label','Sigillo '+s.at+' stelle');b.onclick=()=>openSeal(s);nodesEl.appendChild(b)});
+  SECPOS.forEach((pos,i)=>{const p=PIANI[i],ok=S.stars[i]===3,b=document.createElement('button');b.className='node secret'+(ok?' open':'');b.innerHTML=`${ok?'📜':'🕯️'}<span class="req">${ok?p.secret:'3★ in '+p.n.split(' ')[0]}</span>`;place(b,pos);b.setAttribute('aria-label','Camera segreta');b.onclick=()=>openSecret(i);nodesEl.appendChild(b)});
+  const hp=POS[Math.min(S.cur,4)];const hero=$('hero');hero.style.left=hp[0]*K+'px';hero.style.top=(hp[1]-48)*K+'px';
+  $('stars').textContent=total();$('depth').textContent=(S.cur>0?PIANI[Math.min(S.cur,4)].depth:0).toLocaleString('it-IT')+' m';
+  $('win').textContent=S.cur>4?(S.deep?'Discesa completata':'La Bestia è caduta'):S.cur===4?'Sconfiggi la Bestia ▼':'Vinci il piano ▼';$('win').disabled=S.cur>4}
+function place(el,[x,y]){el.style.left=x*K+'px';el.style.top=y*K+'px'}
+// the hero token, drawn once
+{const hc=document.createElement('canvas');hc.width=88;hc.height=88;hc.style.width='44px';hc.style.height='44px';const c=hc.getContext('2d');c.scale(2,2);c.lineWidth=2.5;c.strokeStyle='#16120e';
+  c.fillStyle='rgba(0,0,0,.35)';c.beginPath();c.ellipse(22,40,11,3.5,0,0,Math.PI*2);c.fill();c.fillStyle='#2fb3a6';c.beginPath();c.ellipse(22,30,10,11,0,0,Math.PI*2);c.fill();c.stroke();
+  c.beginPath();c.arc(22,16,10,0,Math.PI*2);c.fillStyle='#2a8f84';c.fill();c.stroke();c.beginPath();c.moveTo(16,8);c.lineTo(22,0);c.lineTo(28,8);c.closePath();c.fill();c.stroke();
+  c.fillStyle='#f3d6b4';c.beginPath();c.arc(22,18,6,0,Math.PI*2);c.fill();c.fillStyle='#16120e';c.beginPath();c.arc(19.5,17.5,1.3,0,Math.PI*2);c.arc(24.5,17.5,1.3,0,Math.PI*2);c.fill();
+  c.fillStyle='#ffd27a';c.beginPath();c.arc(33,28,3.6,0,Math.PI*2);c.fill();c.stroke();$('hero').appendChild(hc)}
+// ---------- sheets ----------
+function sheet(kind,title,html){$('shK').textContent=kind;$('shT').textContent=title;$('shB').innerHTML=html;$('sheet').classList.add('show')}
+$('shX').onclick=()=>$('sheet').classList.remove('show');
+function openPiano(i){const p=PIANI[i];if(i>S.cur+1){sheet('Piano nascosto','???','<p>È ancora nel buio. Scendi più in fondo per vedere cosa ti aspetta.</p>');return}
+  const st=S.stars[i];sheet(i===4?'Il fondo dell’abisso':'Piano '+(i+1)+' · '+p.where,p.n,`<p>Boss: <b>${p.boss}</b>. Profondità ${p.depth} m.</p>
+   <ul><li><b>★</b>Finisci il piano</li><li><b>★★</b>Finiscilo con più di metà vita</li><li><b>★★★</b>Finiscilo senza rinascere${p.secret?' · apre la camera segreta':''}</li></ul>
+   <p>${st?'Hai '+st+' stell'+(st===1?'a':'e')+' su 3.':i===S.cur?'È il tuo prossimo piano.':'Ancora chiuso.'}</p>`)}
+function openSeal(s){const ok=total()>=s.at;sheet('Sigillo d’osso',s.r,`<p>${ok?'Aperto! Il premio è tuo.':'Si rompe quando raccogli <b>'+s.at+' stelle</b> lungo la discesa. Te ne mancano '+(s.at-total())+'.'}</p>`)}
+function openSecret(i){const p=PIANI[i],ok=S.stars[i]===3;sheet('Camera segreta',p.secret,ok?`<p>${p.lore}</p><ul><li><b>🎁</b>${p.sreward}</li><li><b>📜</b>Frammento ${i+1} di 5 della storia della Bestia</li></ul>`:`<p>Una porta chiusa tra le costole. Si apre con <b>3 stelle</b> in ${p.n}.</p><p>Dentro: un frammento della storia della Bestia e <b>${p.sreward}</b>.</p>`)}
+// ---------- simulate a victory: stars fly, seals break, the light goes down ----------
+function toast(t){const el=$('toast');el.innerHTML=t;el.classList.add('show');clearTimeout(toast.t);toast.t=setTimeout(()=>el.classList.remove('show'),2200)}
+function flyStars(n,from){const r=from.getBoundingClientRect(),to=$('stars').getBoundingClientRect();for(let k=0;k<n;k++){const f=document.createElement('div');f.className='fly';f.textContent='★';f.style.left=r.left+r.width/2-12+'px';f.style.top=r.top+'px';document.body.appendChild(f);
+  setTimeout(()=>{f.style.left=to.left+'px';f.style.top=to.top+'px';f.style.transform='scale(.6)';f.style.opacity='.4'},60+k*160);setTimeout(()=>f.remove(),1000+k*160)}}
+$('win').onclick=()=>{if(S.cur>4)return;const i=S.cur,before=total(),got=i===4?3:[2,3,3,3][i]||3;S.stars[i]=Math.max(S.stars[i],got);
+  const node=nodesEl.children[i];flyStars(got,node);
+  setTimeout(()=>{const after=total();const seal=SEALS.find(s=>s.at>before&&s.at<=after);S.cur=i+1;if(i===4)S.deep=true;build();
+    if(i===4)toast('La Bestia è caduta!<br>Si apre l’Abisso Profondo');else if(S.stars[i]===3&&PIANI[i].secret)toast('3 stelle! Si apre<br>'+PIANI[i].secret);else if(seal)toast('Sigillo rotto: '+seal.r);else toast('Scendi a '+PIANI[S.cur].depth+' m');
+    if(seal)S.opened[seal.at]=0;scrollTo({top:Math.max(0,POS[Math.min(S.cur,4)][1]*K-innerHeight*.45),behavior:'smooth'})},900)};
+$('reset').onclick=()=>{S=START();build();scrollTo({top:Math.max(0,POS[S.cur][1]*K-innerHeight*.45),behavior:'smooth'})};
+// ---------- size and loop ----------
+function resize(){K=map.clientWidth/360;map.style.height=Y.end*K+'px';build()}
+addEventListener('resize',resize);resize();
+let t0=performance.now();(function loop(now){draw((now-t0)/1000);requestAnimationFrame(loop)})(t0);
+setTimeout(()=>scrollTo({top:Math.max(0,POS[S.cur][1]*K-innerHeight*.45)}),50);
+})();
+</script>
