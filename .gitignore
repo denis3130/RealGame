@@ -4,3 +4,5 @@ tests/*.png
 *.png
 anteprime/boss_nuovi.html
 tests/test_b2.html
+anteprime/bestia.html
+tests/test_beast.html
