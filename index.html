@@ -6839,7 +6839,7 @@ const bdCv=document.createElement('canvas');let bdKey='',bdFx=[],bdPal=null,bdSC
 // the land past the walls: the arena is a ledge over a dark abyss, inside the ribcage of a colossal dead beast whose skull rises behind the door.
 // Candles, skulls on pikes, eyes blinking in the dark and ghost lights; every chapter gives it its own colours and details
 const BDPAL={
-  moss:{a0:'#06110d',a1:'#0a0910',mist:'90,255,170',eye:'185,255,150',bone:'#cfc5a6',bs:'#9c9078',bh:'#f6eed6',st:['#3d443d','#272c29','#161a18'],acc:'#5f9a3a',acc2:'#8fd14f'},
+  moss:{a0:'#06110d',a1:'#0a0910',mist:'90,255,170',eye:'120,235,80',bone:'#cbc69c',bs:'#7f7b58',bh:'#ece7be',st:['#3d443d','#272c29','#161a18'],acc:'#5f9a3a',acc2:'#8fd14f'},
   lava:{a0:'#170604',a1:'#0b0303',mist:'255,90,30',eye:'255,200,90',bone:'#9c8a78',bs:'#5a463a',bh:'#c9b6a0',st:['#3e2c25','#281a12','#150c08'],acc:'#ff6a1a',acc2:'#ffc04a'},
   swamp:{a0:'#071311',a1:'#080f0a',mist:'170,240,60',eye:'210,255,90',bone:'#cbc69c',bs:'#7f7b58',bh:'#ece7be',st:['#344231','#222c20','#141a12'],acc:'#3f6e3a',acc2:'#c8f04a'},
   ice:{a0:'#071026',a1:'#0a0c1c',mist:'120,200,255',eye:'130,230,255',bone:'#e2ebf3',bs:'#8ea5bf',bh:'#ffffff',st:['#41516e','#2a3652','#171f38'],acc:'#9fdcff',acc2:'#e8f6ff'}};
@@ -6921,10 +6921,10 @@ function bakeBackdrop(){const th=themeOf(G.room),M=BIG.m+20,W=AW+M*2,H=AH+M*2,ki
     // brow ridges and deep sockets
     for(const sd of [-1,1]){c.beginPath();c.ellipse(cx+sd*50,cy-20,30,23,sd*.25,0,TAU);c.fillStyle=K;c.fill();
       c.beginPath();c.moveTo(cx+sd*18,cy-42);c.quadraticCurveTo(cx+sd*50,cy-56,cx+sd*84,cy-34);ink(9);c.stroke();c.strokeStyle=Q.bone;c.lineWidth=5;c.stroke();bdFx.push({k:'big',x:cx+sd*50,y:cy-18,r:13})}
-    if(kind==='moss'){for(const [dx,dy] of [[-80,-40],[70,-52],[0,-66]]){c.fillStyle=Q.acc;c.beginPath();c.ellipse(cx+dx,cy+dy,16,7,0,0,TAU);c.fill();ink(2);c.stroke();c.fillStyle=Q.acc2;c.beginPath();c.ellipse(cx+dx-4,cy+dy-2,6,2.5,0,0,TAU);c.fill()}}
+    if(false){for(const [dx,dy] of [[-80,-40],[70,-52],[0,-66]]){c.fillStyle=Q.acc;c.beginPath();c.ellipse(cx+dx,cy+dy,16,7,0,0,TAU);c.fill();ink(2);c.stroke();c.fillStyle=Q.acc2;c.beginPath();c.ellipse(cx+dx-4,cy+dy-2,6,2.5,0,0,TAU);c.fill()}}
     if(kind==='ice'){c.fillStyle='#ffffff';c.beginPath();c.ellipse(cx,cy-62,70,10,0,Math.PI,0);c.fill();ink(2);c.stroke();for(const dx of [-40,-12,22,50]){c.beginPath();c.moveTo(cx+dx-4,cy-56);c.lineTo(cx+dx,cy-44);c.lineTo(cx+dx+4,cy-56);c.fillStyle=Q.acc2;c.fill()}}
     if(kind==='lava'){c.strokeStyle=Q.acc;c.lineWidth=2.4;c.beginPath();c.moveTo(cx-10,cy-70);c.lineTo(cx-4,cy-52);c.lineTo(cx-16,cy-40);c.stroke();bdFx.push({k:'lv',x:cx-8,y:cy-55,r:40,ph:1})}
-    if(kind==='swamp'){c.fillStyle=Q.acc;for(const dx of [-70,-30,40,80]){c.beginPath();c.moveTo(cx+dx,cy-48+Math.abs(dx)*.2);c.quadraticCurveTo(cx+dx+4,cy-30,cx+dx+1,cy-16);c.lineTo(cx+dx-3,cy-16);c.quadraticCurveTo(cx+dx-1,cy-30,cx+dx-4,cy-48+Math.abs(dx)*.2);c.fill()}}}
+    if(kind==='swamp'||kind==='moss'){c.fillStyle=kind==='moss'?'#3f6e3a':Q.acc;for(const dx of [-70,-30,40,80]){c.beginPath();c.moveTo(cx+dx,cy-48+Math.abs(dx)*.2);c.quadraticCurveTo(cx+dx+4,cy-30,cx+dx+1,cy-16);c.lineTo(cx+dx-3,cy-16);c.quadraticCurveTo(cx+dx-1,cy-30,cx+dx-4,cy-48+Math.abs(dx)*.2);c.fill()}}}
   // --- the tail of the beast along the bottom: a row of vertebrae sinking into the abyss
   for(let x=-30;x<AW+40;x+=30){const y=AH+46+Math.sin(x*.02)*8;c.beginPath();c.ellipse(x,y,13,9,0,0,TAU);c.fillStyle=Q.bone;c.fill();ink(2.8);c.stroke();
     c.beginPath();c.moveTo(x-4,y-6);c.lineTo(x,y-18);c.lineTo(x+4,y-6);c.closePath();c.fill();c.stroke();c.fillStyle=Q.bs;c.beginPath();c.ellipse(x,y+3,8,3,0,0,TAU);c.fill()}

@@ -87,6 +87,7 @@ Dopo ogni modifica: rifare almeno una partita automatica per capitolo, `meta2.js
   - Arene grandi: 2–3 ostacoli in più negli spazi vuoti (mai vicino al cancello, alla partenza o ad altri ostacoli; non nelle stanze dei boss né negli eventi).
   - Linea sul cancello: la cima del muro di fondo è ora una cresta di pietre rotte (con muschio, cenere o neve), il buio sopra è più profondo, niente linea nera sulla cornice.
   - Prima partita: una manina senza parole (`showHand`, `SAVE.handSeen`) che mostra il dito che trascina; sparisce al primo tocco e non torna più. Test `hand.js`.
+- Teschio sopra il cancello: nel capitolo 1 (muschio) è identico a quello della palude (stesse ossa, stesse colature, niente macchie di muschio), cambia solo il colore degli occhi (`BDPAL.moss.eye`). Gli occhi sono disegnati dopo le luci della stanza (`drawBeastEyes`), con un respiro leggero.
 - Nota: in `meta2.js` i controlli «codice caricato» e «salvataggio dopo ricarica» falliscono anche sulla versione 41: problema del test, non del gioco.
 
 ## Da fare (annotato con Denis, non ancora fatto)
