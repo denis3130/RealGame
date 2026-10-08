@@ -5176,7 +5176,8 @@ function trialReward(){const ok=G.trial&&!G.trial.hit;G.trial=null;
     else{banner('Prova superata','Ti hanno colpito: solo 40 oro',2);G.gold+=40;sfx('coin')}},650)}
 
 // the dark room: torches out, the enemies are only shadows; gold counts double
-function rollDark(boss){if(INTRO.on)return false;if(G.allDark)return !boss&&!G.event;if(boss||G.event||G.room<3||(G.darkN||0)>=2||G.daily&&G.daily.mod==='dark')return false;if(Math.random()<.16){G.darkN=(G.darkN||0)+1;return true}return false}
+function rollDark(boss){return false; // dark rooms removed for good (Denis)
+  if(INTRO.on)return false;if(G.allDark)return !boss&&!G.event;if(boss||G.event||G.room<3||(G.darkN||0)>=2||G.daily&&G.daily.mod==='dark')return false;if(Math.random()<.16){G.darkN=(G.darkN||0)+1;return true}return false}
 
 
 // =====================================================================
@@ -5184,7 +5185,7 @@ function rollDark(boss){if(INTRO.on)return false;if(G.allDark)return !boss&&!G.e
 // =====================================================================
 const PETS=[
   {id:'muschietto',n:'Muschietto',d:'Un batuffolo di muschio: lancia foglie taglienti al nemico più vicino.',rar:1,unlock:6,gems:60,how:'6 carte dalle casse o 60 gemme',col:'#7bbf4a',base:{dmg:.32,cd:1.25},per:{dmg:.06}},
-  {id:'lucciola',n:'Lucciola',d:'Fa luce nelle stanze buie, lancia scintille che inseguono i nemici e ogni 8 secondi ti cura.',rar:2,unlock:15,gems:150,how:'15 carte dalle casse o 150 gemme',col:'#e8ff7a',base:{dmg:.16,cd:1.5,heal:.05,hcd:8},per:{dmg:.03,heal:.006}},
+  {id:'lucciola',n:'Lucciola',d:'Fa luce intorno a te, lancia scintille che inseguono i nemici e ogni 8 secondi ti cura.',rar:2,unlock:15,gems:150,how:'15 carte dalle casse o 150 gemme',col:'#e8ff7a',base:{dmg:.16,cd:1.5,heal:.05,hcd:8},per:{dmg:.03,heal:.006}},
   {id:'draghetto',n:'Draghetto',d:'Sputa fiammate che bruciano tutti i nemici davanti a lui.',rar:3,unlock:25,gems:300,how:'25 carte dalle casse o 300 gemme',col:'#ff7a3c',base:{dmg:.55,cd:2.6},per:{dmg:.08}}];
 const PET_BY={};PETS.forEach(p=>PET_BY[p.id]=p);
 const PETMAX=10,petCost=l=>Math.round(140*Math.pow(l,1.45));
@@ -5359,7 +5360,6 @@ const CHAL_MODS=[
   {id:'pets',n:'Amici fedeli',d:'Il tuo compagno colpisce il doppio',good:1,f:()=>{G.petBoost=2}},
   {id:'glass',n:'Cuore di vetro',d:'Salute -40%, attacco +40%',f:()=>{P.maxhp=Math.round(P.maxhp*.6);P.hp=P.maxhp;P.atk*=1.4}},
   {id:'giant',n:'Nemici giganti',d:'Nemici più grossi e con il 40% di salute in più',f:()=>{G.curseHp=(G.curseHp||1)*1.4;G.giant=true}},
-  {id:'dark',n:'Notte fonda',d:'Ogni stanza è buia (oro doppio)',f:()=>{G.allDark=true}},
   {id:'meteor',n:'Pioggia di meteore',d:'Meteore cadono durante ogni stanza',f:()=>{G.meteorRain=true}},
   {id:'elite',n:"Caccia all'élite",d:'Molti più nemici élite',f:()=>{G.eliteBoost=2.5}}];
 const RIVALS=['Fungo Errante','Lucciola Lesta','Rana Furba','Arco di Quercia','Piuma Rossa','Brina Silente','Zanna di Lupo','Radice Antica','Sasso Ridente','Volpe del Muschio','Stella Cadente','Gufo di Brace','Pino Innevato','Sorriso di Lava'];
@@ -6600,7 +6600,7 @@ function fillGuide(){const T=(t,b)=>`<details class="gsec"><summary>${t}</summar
   T('Coppe, arene e capitoli',`<p>Ogni partita vinta ti dà coppe, ogni sconfitta te ne toglie un po', ma non scendi mai sotto l'inizio della tua arena. Le arene sono ${ARENAS.length}: più sali, più i mostri sono forti e più oro trovi. Ogni capitolo ha dieci stanze e due boss:</p><ul>${chs}</ul>`)+
   T('Modalità',`<ul><li><b>Arena</b>: la partita normale. Vinci o perdi coppe.</li><li><b>Sfida del giorno</b>: la stessa per tutto il giorno, con un aiuto e un ostacolo. La prima partita finita vale 10 gemme e 150 oro; nei primi tre della classifica dei rivali altre 15 gemme. Le coppe non cambiano. Si apre dopo la prima partita.</li><li><b>L'Abisso</b>: stanze senza fine che attraversano tutti i mondi, con un boss ogni cinque stanze. Si apre a ${ARENAS[1].t} coppe oppure battendo il Golem.</li></ul>`)+
   T('Livelli, abilità ed evoluzioni',`<p>A ogni livello scegli un'abilità tra tre. Se non ti piacciono puoi cambiarle: la prima volta è gratis, poi costa gemme. Due abilità giuste insieme sbloccano una carta dorata, l'evoluzione:</p><ul>${evos}</ul>`)+
-  T('Stanze speciali',`<ul><li><b>Élite</b>: nemici con la stella, più forti, lasciano più premi.</li><li><b>Eventi</b>: fontana della vita, mercante, altare maledetto, stanza del tesoro.</li><li><b>Stanza dell'oro</b>: per 15 secondi piovono monete. Prendine più che puoi, ma attento ai massi.</li><li><b>Prova del coraggio</b>: sconfiggi tutti senza farti colpire e vinci una cassa d'argento e 8 gemme.</li><li><b>Stanza buia</b>: le torce sono spente e vedi solo vicino a te, ma l'oro vale il doppio. La Lucciola fa luce.</li><li><b>Due casse</b>: una volta a partita. Una ha le monete, l'altra è il Mimic.</li><li><b>Boss</b>: alla stanza 5 e alla 10. Dopo il boss di metà capitolo gira la ruota della fortuna.</li></ul>`)+
+  T('Stanze speciali',`<ul><li><b>Élite</b>: nemici con la stella, più forti, lasciano più premi.</li><li><b>Eventi</b>: fontana della vita, mercante, altare maledetto, stanza del tesoro.</li><li><b>Stanza dell'oro</b>: per 15 secondi piovono monete. Prendine più che puoi, ma attento ai massi.</li><li><b>Prova del coraggio</b>: sconfiggi tutti senza farti colpire e vinci una cassa d'argento e 8 gemme.</li><li><b>Due casse</b>: una volta a partita. Una ha le monete, l'altra è il Mimic.</li><li><b>Boss</b>: alla stanza 5 e alla 10. Dopo il boss di metà capitolo gira la ruota della fortuna.</li></ul>`)+
   T('Eroi e abilità speciali',`<p>Ogni eroe ha la sua abilità speciale:</p><ul>${ults}</ul><p>Gli eroi nuovi si comprano con l'oro nella scheda Eroe.</p>`)+
   T('Compagni',`<p>Un compagno ti segue in ogni partita e combatte con te. All'inizio non ne hai: li sblocchi raccogliendo le loro carte nelle casse oppure con le gemme. Poi salgono di livello con carte e oro (fino al livello ${PETMAX}). Li trovi in Eroe → Compagni.</p><ul>${pets}</ul>`)+
   T('Pass di stagione',`<p>Ogni stagione dura 28 giorni e ha ${PASS_T} livelli. Sali giocando le partite, la sfida del giorno e le missioni. La fila gratuita è per tutti; con il Pass d'oro (${PASS_COST} gemme) prendi anche i premi della fila dorata: aspetti per l'eroe, titoli e cornici.</p>`)+

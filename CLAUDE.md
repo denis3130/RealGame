@@ -90,6 +90,8 @@ Dopo ogni modifica: rifare almeno una partita automatica per capitolo, `meta2.js
 - Teschio sopra il cancello: nel capitolo 1 (muschio) è identico a quello della palude (stesse ossa, stesse colature, niente macchie di muschio), cambia solo il colore degli occhi (`BDPAL.moss.eye`). Gli occhi sono disegnati dopo le luci della stanza (`drawBeastEyes`), con un respiro leggero.
 - Nota: in `meta2.js` i controlli «codice caricato» e «salvataggio dopo ricarica» falliscono anche sulla versione 41: problema del test, non del gioco.
 
+- Stanza buia tolta per sempre (decisione di Denis, 8 ottobre): `rollDark()` restituisce sempre `false`, tolta la sfida del giorno «Notte fonda», tolta dalla guida, la Lucciola ora «fa luce intorno a te». Non riproporre stanze buie, nemmeno nella Discesa.
+
 ## Da fare (annotato con Denis, non ancora fatto)
 
 1. Possibile in futuro: dividere `index.html` in più file con uno script che li riunisce per la pubblicazione.
