@@ -211,7 +211,7 @@ function puff(x,y,k){for(let j=0;j<k;j++){const a=Math.random()*Math.PI;DUSTP.pu
 function moveTick(dt){
   hop=0;
   if(mv){mv.t+=dt;const u=clamp(mv.t/mv.d,0,1),e=ease(u);heroS=mv.a+(mv.b-mv.a)*e;
-    const ph=e*mv.n,st=Math.floor(ph);hop=Math.abs(Math.sin(ph*Math.PI))*7;legPh=ph*Math.PI;
+    const ph=e*mv.n,st=Math.floor(ph);legPh=ph*Math.PI;
     if(st>mv.last){mv.last=st;const p=pathPt(heroS);puff(p.x,p.y,3);STEPG.push({x:p.x,y:p.y,t:0});if(Math.random()<.35)PEB.push({x:p.x+(Math.random()-.5)*14,y:p.y-4,vy:0,l:1.4,r:2+Math.random()*2.5})}
     if(u>=1){heroS=mv.b;mv=null;sq=1;const p=pathPt(heroS);puff(p.x,p.y,12);follow=40;if(S.cur<12)burst(S.cur);else{flash={x:W/2,y:FY(),t:0,c:[210,205,255]};shakeT=.5}}}
   const p=pathPt(heroS);
@@ -219,7 +219,7 @@ function moveTick(dt){
   lastX=p.x;sq=Math.max(0,sq-dt*4);
   const sqk=Math.sin(sq*Math.PI)*sq,breath=mv?0:Math.sin(T*2.6)*.025;
   drawHeroSprite({l:mv?legPh:0,lan});
-  $('hc').style.transform=`translateY(${-hop}px) scale(${face*(1+sqk*.18)},${1-sqk*.2+breath+(mv?Math.abs(Math.sin(legPh))*.04:0)})`;
+  $('hc').style.transform=`translateY(${-hop}px) scale(${face*(1+sqk*.18)},${1-sqk*.2+breath})`;
   HP=p;LC=LC?{x:LC.x+(p.x-LC.x)*Math.min(1,dt*3),y:LC.y+(p.y-LC.y)*Math.min(1,dt*3)}:{x:p.x,y:p.y};
   DUSTP=DUSTP.filter(d=>(d.l-=dt*1.4)>0);DUSTP.forEach(d=>{d.x+=d.vx;d.y+=d.vy;d.vx*=.95;d.r+=dt*6});
   PEB=PEB.filter(b=>(b.l-=dt)>0);PEB.forEach(b=>{b.vy-=dt*9;b.y+=b.vy});
