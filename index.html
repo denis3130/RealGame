@@ -2970,7 +2970,7 @@ function basis(face){const d=Q8(face),[v,f]=VIEWS[d],qa=d*Math.PI/4,lx=Math.cos(
   return{d,v,f,qa,lx,ly,la:Math.atan2(ly,lx),back:v==='n'||v==='n34',side:v==='side',front:v==='s'||v==='s34'}}
 
 // ---------- humanoid rig (hero, goblin, skeleton, witch) ----------
-const HERO={sc:1,body:'#2fb3a6',hood:'#23877d',skin:'#f2c9a0',foot:'#4a3626',foot2:'#3a2a1d',quiver:true,held:'bow',bowCol:'#a4703d',hoodTip:true,belt:'#8a5a20'};
+const HERO={sc:1,body:'#2fb3a6',hood:'#23877d',skin:'#f2c9a0',foot:'#4a3626',foot2:'#3a2a1d',quiver:true,held:'bow',bowCol:'#a4703d',hoodTip:false,belt:'#8a5a20'};
 const GOBLIN={sc:.95,body:'#a8443a',hood:'#7e2f28',skin:'#7bbf4a',foot:'#3d2a1d',ears:true,held:'bow',bowCol:'#6b4a2a',eyeCol:'#e5484d',belt:'#4a3626'};
 const SKEL={sc:1,body:'#d9d2c0',skull:true,skin:'#e8e2d0',foot:'#cfc7b2',ribs:true,held:'xbow',bowCol:'#6b4a2a',shield:true,eyeCol:'#e5484d'},SKEL_NS={...SKEL,shield:false};
 const MERCHANT={sc:1.08,body:'#5a3f7a',hood:'#3a2a52',skin:'#e8c0a0',foot:'#3a2a1d',held:'staff',eyeCol:'#ffc93c',belt:'#8a5a20',hoodTip:true};
