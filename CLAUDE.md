@@ -74,11 +74,23 @@ Dopo ogni modifica: rifare almeno una partita automatica per capitolo, `meta2.js
   - Menu laterali (Eroe, Bottega, Cammino, Profilo): sotto i pannelli c'è la tela `#mbgCv` (`drawMenuBg`, `MBG`): abisso blu notte, costole che entrano dai bordi, teschio in alto con gli occhi accesi, nebbia che scorre e lucine che salgono. Con `LOWFX` resta ferma.
 - Anteprima (non ancora nel gioco, da valutare con Denis): boss più ricchi e animati in `anteprime/boss2.js`. Per costruire la pagina di prova `anteprime/boss_nuovi.html` (con una galleria e il bottone Prima/Dopo) si usa `python3 anteprime/mk_boss.py`. Nell'anteprima: il Golem resta semplice (solo qualche crepa); ogni boss ha effetti presi dal suo mondo (`B2G`, `B2T`); le mosse cambiano l'arena (`ENV2`, `b2react`: ostacoli che tremano e si crepano, sassi o ghiaccioli dal soffitto, torce che cambiano colore, erba bruciata, legno che prende fuoco, segni sul pavimento che restano: radici, fiori, brina, veleno, pozzanghere nuove, monete). Test `tests/b2moves.js`. Poi (8 ottobre): Mimic rifatto in stile Dark Souls (`drawMimicDS`: cassa marcia su lunghe gambe pallide con le ginocchia al contrario, braccia lunghe con artigli, coperchio che respira, denti, lingua; si alza dalla cassa nell'entrata), senza più gli effetti dorati; pavimento della stanza della Strega rifatto (`bakeWitchFloor`: pedana rituale con il suo simbolo, radici grosse che si tuffano sotto le lastre, funghi viola luminosi); entrata dell'Idra più inquietante (occhi gialli sott'acqua, teste che escono una alla volta a scatti, poi il corpo; stessa cosa nel tuffo); dettagli dei boss nascosti mentre stanno ancora entrando. Test `tests/mimicsheet.js` (Mimic in 4 direzioni), `tests/witchroom.js`, `tests/hydrarise.js`, `tests/b2qa.js` (strisce di fotogrammi per ogni boss). Se Denis approva, il contenuto di `boss2.js` va incollato in `index.html` prima dell'ultima riga (`newRun();...`).
 - Corretto nel gioco: durante l'entrata l'Idra era invisibile (le teste venivano create solo all'inizio del combattimento).
+- Versione 43 (8 ottobre), tutto approvato da Denis:
+  - Boss nuovi nel gioco: il contenuto di `anteprime/boss2.js` è incollato in fondo a `index.html` (blocco «BOSSES 2»). `BOSS2` resta come interruttore. L'anteprima con la galleria si può ancora costruire con `anteprime/mk_boss.py`.
+  - Nemici normali vivi (`ELIFE`): respiro (gli slime tremolano), particelle del loro materiale, polvere ai passi, una stellina sopra la testa prima di sparare o caricare. Usa lo stesso motore di particelle dei boss (`b2tick`, `b2emit`, `b2draw`). Test `enemies.js`.
+  - Suoni (`SFX2`, `AMB`):
+    - Atmosfera continua: vento dell'abisso e respiro profondo della bestia, più suoni per capitolo (gocce e ossa, lava, bolle e rane, ghiaccio e vento) e un ringhio lontano ogni tanto. Nel menu un'atmosfera più leggera, con il fuoco dell'accampamento.
+    - Suoni per le reazioni dell'arena: crolli, ghiaccioli, incendi, torce magiche, brina, radici, fiori, ostacoli che si crepano.
+    - Voci: Mimic (risveglio, passi, respiro) e Idra (sibilo quando le teste escono, bolle sott'acqua).
+    - I suoni seguono la telecamera a sinistra e a destra.
+    - Volumi misurati con `audio.js` (picco e volume medio accanto ai suoni vecchi).
+  - Menu in pietra della cripta: tutti i blu dei pannelli convertiti in grigi caldi e color osso (stessa luminosità), inchiostro marrone scuro come nel gioco, bordo d'osso sui riquadri principali.
+  - Arene grandi: 2–3 ostacoli in più negli spazi vuoti (mai vicino al cancello, alla partenza o ad altri ostacoli; non nelle stanze dei boss né negli eventi).
+  - Linea sul cancello: la cima del muro di fondo è ora una cresta di pietre rotte (con muschio, cenere o neve), il buio sopra è più profondo, niente linea nera sulla cornice.
+  - Prima partita: una manina senza parole (`showHand`, `SAVE.handSeen`) che mostra il dito che trascina; sparisce al primo tocco e non torna più. Test `hand.js`.
 - Nota: in `meta2.js` i controlli «codice caricato» e «salvataggio dopo ricarica» falliscono anche sulla versione 41: problema del test, non del gioco.
 
 ## Da fare (annotato con Denis, non ancora fatto)
 
 1. Possibile in futuro: dividere `index.html` in più file con uno script che li riunisce per la pubblicazione.
-2. Da regolare giocando: forza del Druida, crescita dei boss, misura delle arene grandi.
+2. Da regolare giocando: forza del Druida, crescita dei boss, misura delle arene grandi. Da provare sul telefono vero: fluidità con tutti gli effetti nuovi e volume dei suoni.
 3. Boss nuovo, molto più avanti nel gioco: la bestia scheletrica gigante che sta sotto l'arena (le costole ai lati, il teschio con le corna dietro la porta, la coda di vertebre in basso: `bakeBackdrop`). L'idea di Denis è che il paesaggio stesso si risvegli e diventi il boss.
-4. Linea sul cancello: sotto il teschio gigante, dove il teschio incontra la cima del muro sopra il cancello, si vede ancora una specie di linea. Va sfumata meglio (vedi la sfumatura in `bakeBackdrop` e la cornice del muro in `bakeWalls`).
