@@ -20,6 +20,7 @@ def comps(w,h,ok):
                     if 0<=nx<w and 0<=ny<h and not seen[ny*w+nx] and ok(nx,ny):seen[ny*w+nx]=1;q.append((nx,ny))
             out.append(pts)
     return out
+STRING={4:((25,44),(25,106)),5:((25,46),(25,107)),7:((86,45),(86,104))}
 meta=[]
 for i in range(8):
     x0=round(i*W/8);x1=round((i+1)*W/8)
@@ -45,10 +46,26 @@ for i in range(8):
         for y in range(1,h-1):
             if pa[x,y]==255 and min(pa[x+1,y],pa[x-1,y],pa[x,y+1],pa[x,y-1])==0 and isbg(p[x,y]):pb[x,y]=110
     rgba=cell.convert('RGBA');rgba.putalpha(a2);rgba=rgba.crop(rgba.getbbox())
+    # side and back poses: the painted bowstring is removed, the game draws it (so it can be pulled)
+    if i in STRING:
+        (sx0,sy0),(sx1,sy1)=STRING[i];pr=rgba.load();ww,hh=rgba.size
+        for y in range(max(0,sy0+6),min(hh,sy1-5)):
+            for x in range(max(0,sx0-3),min(ww,sx0+4)):
+                r,g,b,al=pr[x,y]
+                if al and min(r,g,b)>58 and max(r,g,b)-min(r,g,b)<45:
+                    # take the colour beside the string, or make it see-through
+                    for dx in (-3,3,-4,4):
+                        if 0<=x+dx<ww:
+                            r2,g2,b2,a3=pr[x+dx,y]
+                            if not(a3 and min(r2,g2,b2)>58 and max(r2,g2,b2)-min(r2,g2,b2)<45):pr[x,y]=(r2,g2,b2,a3);break
     ww,hh=rgba.size;al=rgba.split()[3].load();sx=n=0
     for y in range(int(hh*.4)):
         for x in range(ww):
             if al[x,y]>200:sx+=x;n+=1
-    rgba.save(here/'eroe_sprite'/f'd{i}.png');meta.append({'w':ww,'h':hh,'cx':round(sx/max(1,n),1)})
+    fx=fn=0
+    for y in range(hh-12,hh):
+        for x in range(ww):
+            if al[x,y]>200:fx+=x;fn+=1
+    rgba.save(here/'eroe_sprite'/f'd{i}.png');meta.append({'w':ww,'h':hh,'cx':round(sx/max(1,n),1),'ft':hh-17,'fx':round(fx/max(1,fn),1)})
 (here/'eroe_sprite'/'meta.json').write_text(json.dumps(meta))
 print(meta)
