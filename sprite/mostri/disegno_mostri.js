@@ -194,5 +194,98 @@ function becchino(x,y,face,anim,p,sc){sc=sc||2;const t=G.t,{c,s,P,D,F}=V(face),p
     ctx.strokeStyle=`rgba(20,16,12,${.85*(1-k*.4)})`;ctx.lineWidth=2.2;ctx.beginPath();for(let i=0;i<6;i++){const an=i*1.05+.3,r=(10+i%2*5)*sc/2*(.6+k*.8);ctx.moveTo(ix,iy);ctx.lineTo(ix+Math.cos(an)*r*.6,iy+Math.sin(an)*r*.25+1);ctx.lineTo(ix+Math.cos(an+.15)*r,iy+Math.sin(an+.15)*r*.4)}ctx.stroke();
     if(!LOWFX){for(let i=0;i<6;i++){const an=i*1.05,r=k*16*sc/2;ctx.fillStyle=`rgba(150,255,110,${.7*(1-k)})`;circ(ix+Math.cos(an)*r,iy+Math.sin(an)*r*.4-Math.sin(k*Math.PI)*8,2);ctx.fill()}}ctx.restore()}
 }
-return {zombie,hound,becchino};
+
+// ------------------------------------------------------------------ ZOMBIE GONFIO (bloater): huge swollen belly full of toxic gas
+const GC={skin:'#8aa36a',skinD:'#5d7347',bruise:'#6a4a6e',pus:'#c8f06a',cloth:'#4a3a2a',gas:'150,230,90'};
+function gonfio(x,y,face,anim,p,sc){sc=sc||1.1;const t=G.t,{c,s,P,D,F}=V(face),ph=p*TAU,walk=anim==='walk',atk=anim==='attack';
+  // attack: .0-.5 swells up, .5-.65 bursts a cloud of gas, .65-1 shrinks back
+  let sw=0,burst=-1;if(atk){if(p<.5)sw=ez(p/.5);else if(p<.65){sw=1-ez((p-.5)/.15)*.7;burst=(p-.5)/.5}else{sw=.3*(1-ez((p-.65)/.35));burst=(p-.5)/.5}}
+  const roll=walk?Math.sin(ph)*2.2:Math.sin(t*1.4)*.5,bob=walk?Math.abs(Math.sin(ph))*1.2:Math.sin(ph)*.6,br=Math.sin(t*2)*.5,Rb=13+sw*4.5+br;
+  shadow(x,y+8*sc,(14+sw*4)*sc,5.4*sc,.34);
+  if(burst>=0&&burst<1){for(let i=0;i<9;i++){const a=i*TAU/9+.3,r=(10+burst*36)*sc,q=[x+Math.cos(a)*r,y-14*sc+Math.sin(a)*r*.5-burst*8*sc];ctx.fillStyle=`rgba(${GC.gas},${.45*(1-burst)})`;circ(q[0],q[1],(6+burst*10)*sc);ctx.fill()}}
+  ctx.save();ctx.translate(x,y-bob*sc);ctx.scale(sc,sc);const parts=[];
+  for(const sd of[-1,1]){const st=walk?Math.sin(ph+(sd>0?Math.PI:0))*3:0,fx=st,fy=sd*7;parts.push({d:D(fx,fy)-.5,f:()=>{const h=P(0,sd*6,7),f=P(fx,fy,walk?Math.max(0,Math.sin(ph+(sd>0?Math.PI:0)))*1.5:0);line(h,f,5,GC.cloth);ctx.save();ctx.translate(f[0],f[1]);ink(1.8);ell(c*1.4,0,4.6,2.8);fs('#1f1b18');ctx.restore()}})}
+  // belly: a big sphere, bruises and glowing pustules on the front, stretched stitches
+  parts.push({d:D(0,roll*.4),f:()=>{const m=P(0,roll*.4,17);ctx.beginPath();ctx.ellipse(m[0],m[1],Rb,Rb*.92,0,0,TAU);ctx.fillStyle=GC.skin;ctx.fill();ctx.stroke();
+    ctx.save();ctx.clip();ctx.fillStyle=GC.skinD;ell(m[0]+Rb*.35,m[1]+Rb*.35,Rb*.8,Rb*.6);ctx.fill();ctx.fillStyle='rgba(255,255,255,.18)';ell(m[0]-Rb*.35,m[1]-Rb*.45,Rb*.35,Rb*.2);ctx.fill();ctx.restore();
+    // tattered vest strips
+    ctx.strokeStyle=INK;ctx.lineWidth=1;ctx.fillStyle=GC.cloth;for(const sd of[-1,1]){const a=P(0,sd*Rb*.8,17+Rb*.5),b=P(0,sd*Rb*.95,17-2);if(F(0,sd,1)>-.6){ctx.beginPath();ctx.moveTo(a[0]-2,a[1]);ctx.lineTo(a[0]+2,a[1]);ctx.lineTo(b[0]+1.5,b[1]);ctx.lineTo(b[0]-1.5,b[1]+2);ctx.closePath();ctx.fill();ctx.stroke()}}
+    const spots=[[.85,-.3,.3,'b'],[.8,.4,-.1,'p'],[.6,-.7,-.4,'p'],[-.7,.5,.2,'b'],[.3,.85,.4,'p'],[-.5,-.75,-.3,'p'],[.9,.1,-.5,'p']];
+    for(const[fx,fy,fz,k] of spots){const v=F(fx,fy,1);if(v<.08)continue;const q=P(fx*Rb,fy*Rb+roll*.4,17+fz*Rb),a=cl(v*2,0,1);ctx.save();ctx.globalAlpha=a;
+      if(k==='b'){ctx.fillStyle=GC.bruise;ell(q[0],q[1],3.4*Math.max(.4,v),2.6);ctx.fill()}else{const pr=1.8+sw*1.4;shine(GC.gas,q[0],q[1],4+sw*3,.25+sw*.4);ink(1.1);ctx.fillStyle=GC.pus;circ(q[0],q[1],pr);ctx.fill();ctx.stroke();ctx.fillStyle='#fff';circ(q[0]-.5,q[1]-.6,.5);ctx.fill()}ctx.restore()}
+    const fv=F(1,0,1);if(fv>.1){ctx.save();ctx.globalAlpha=cl(fv*2,0,1);ctx.strokeStyle=INK;ctx.lineWidth=1.1;const a=P(Rb*.95,roll*.4,17+Rb*.5),b=P(Rb,roll*.4,17-Rb*.4);ctx.beginPath();ctx.moveTo(a[0],a[1]);ctx.quadraticCurveTo(a[0]+3*c,(a[1]+b[1])/2,b[0],b[1]);for(let i=0;i<4;i++){const k=i/3,xx=a[0]+(b[0]-a[0])*k+1.4*c,yy=a[1]+(b[1]-a[1])*k;ctx.moveTo(xx-1.6,yy-.6);ctx.lineTo(xx+1.6,yy+.6)}ctx.stroke();ctx.restore()}}});
+  // little arms sticking out of the sides
+  for(const sd of[-1,1]){const sh=[1,sd*(Rb-1),22],hd=[5+(atk?sw*-3:0),sd*(Rb+4+sw*3),16+(atk?sw*6:0)+(walk?Math.sin(ph+sd)*2:0)];parts.push({d:D(sh[0],sh[1])+.2,f:()=>{const a=P(...sh),b=P(...hd);line(a,b,3.6,F(0,sd,1)<0?GC.skinD:GC.skin);ink(1.6);circ(b[0],b[1],2.6);fs(GC.skin);claws(b,b[0]-a[0],b[1]-a[1],4,ZC.claw)}})}
+  // tiny head sunk into the shoulders
+  const H=[3,roll*.6,17+Rb*.9+4],R=6;parts.push({d:D(H[0],H[1])+.6,f:()=>{const h=P(...H);ctx.beginPath();ctx.arc(h[0],h[1],R,0,TAU);ctx.fillStyle=GC.skin;ctx.fill();ctx.stroke();
+    const at=(fx,fy,fz)=>({q:P(H[0]+fx,H[1]+fy,H[2]+fz),v:F(fx,fy,R)});
+    for(const sd of[-1,1]){const e=at(4.8,sd*2.4,1);if(e.v<.05)continue;const k=cl(e.v*1.8,0,1);shine('230,255,120',e.q[0],e.q[1],3.6,.5*k);ctx.save();ctx.globalAlpha=k;ctx.fillStyle=ZC.socket;ell(e.q[0],e.q[1],1.8*Math.max(.4,e.v),1.9);ctx.fill();ctx.fillStyle=ZC.eye;circ(e.q[0],e.q[1],.8);ctx.fill();ctx.restore()}
+    const m=at(4.8,0,-2.4);if(m.v>.05){const op=atk?.3+sw*.7:.35;ctx.save();ctx.globalAlpha=cl(m.v*1.8,0,1);ink(1.2);ctx.fillStyle=ZC.mouth;ell(m.q[0],m.q[1],2.6*Math.max(.4,m.v),1+op*2);ctx.fill();ctx.stroke();ctx.restore()}}});
+  run(parts);ctx.restore()}
+
+// ------------------------------------------------------------------ ZOMBIE STRISCIANTE (crawler): only the upper half, drags itself on its long arms
+function strisciante(x,y,face,anim,p,sc){sc=sc||1.1;const t=G.t,{c,s,P,D,F}=V(face),ph=p*TAU,walk=anim==='walk',atk=anim==='attack';
+  // attack: .0-.35 rears up on its arms, .35-.65 lunges forward low, .65-1 slumps back
+  let rear=0,lunge=0;if(atk){if(p<.35)rear=ez(p/.35);else if(p<.65){const k=ez((p-.35)/.3);rear=1-k;lunge=k*9}else lunge=9*(1-ez((p-.65)/.35))}
+  const pull=walk?Math.sin(ph):0,base=lunge+(walk?Math.max(0,-Math.cos(ph))*1.5:0);
+  shadow(x+c*base*sc,y+s*base*sc*.55,13*sc,4.6*sc,.36);
+  ctx.save();ctx.translate(x,y);ctx.scale(sc,sc);const parts=[];
+  // trailing spine and rags behind
+  parts.push({d:D(base-14,0)-.5,f:()=>{const a=P(base-4,0,5+rear*4),b=P(base-15,Math.sin(t*2)*1.2,1.4);quad(a,P(base-9,0,2.5),b,4,ZC.cloth);ctx.strokeStyle=ZC.bone;ctx.lineWidth=1.4;for(let i=1;i<4;i++){const k=i/4,q=[a[0]+(b[0]-a[0])*k,a[1]+(b[1]-a[1])*k];ctx.beginPath();ctx.moveTo(q[0]-1.4,q[1]-1);ctx.lineTo(q[0]+1.4,q[1]+1);ctx.stroke()}
+    ctx.fillStyle=ZC.clothD;ink(1);for(let i=0;i<3;i++){const q=P(base-13+i*2,(i-1)*3,1);ctx.beginPath();ctx.moveTo(q[0],q[1]-2);ctx.lineTo(q[0]-c*4+(i-1),q[1]+1.5);ctx.lineTo(q[0]+1.5,q[1]+1);ctx.closePath();ctx.fill();ctx.stroke()}}});
+  // torso, lying low, ribs on the back
+  parts.push({d:D(base,0),f:()=>{const m=P(base,0,6+rear*7),hw=Math.hypot(8.6*s,9*c);ctx.beginPath();ctx.ellipse(m[0],m[1],hw,6.4+rear*1.5,0,0,TAU);ctx.fillStyle=ZC.cloth;ctx.fill();ctx.stroke();
+    ctx.save();ctx.clip();ctx.fillStyle=ZC.clothD;ell(m[0]+hw*.4,m[1]+3,hw*.8,4);ctx.fill();const bk=Math.max(F(-1,0,1)+.6,0);if(bk>0){ctx.globalAlpha=cl(bk,0,1);ctx.strokeStyle=ZC.bone;ctx.lineWidth=1.3;for(let i=0;i<3;i++){const q=P(base-2.5+i*2.4,0,9+rear*7);ctx.beginPath();ctx.moveTo(q[0]-3.4,q[1]+1);ctx.quadraticCurveTo(q[0],q[1]-1.4,q[0]+3.4,q[1]+1);ctx.stroke()}}ctx.restore()}});
+  // long arms reaching and pulling, alternating
+  for(const sd of[-1,1]){const k=walk?(sd>0?pull:-pull):0,hx=base+9+k*6+lunge*.6,hz=rear*10+(walk?Math.max(0,k)*2.4:0),sh=[base+3,sd*7,8+rear*8],hd=[hx,sd*(9-rear*2),hz],el=[(sh[0]+hd[0])/2-1,sd*12,(sh[2]+hd[2])/2+5];
+    parts.push({d:D(hd[0],hd[1])+.1,f:()=>{const a=P(...sh),e=P(...el),b=P(...hd);line(a,e,4,ZC.skin);line(e,b,3.6,F(0,sd,1)<0?ZC.skinD:ZC.skin);ink(1.6);circ(b[0],b[1],2.8);fs(ZC.skin);claws(b,c,s*.55,5.2,ZC.claw)}})}
+  // head: low at the front, staring up, jaw hanging
+  const H=[base+9+lunge*.3,0,10+rear*9],R=7.4;parts.push({d:D(H[0],H[1])+.5,f:()=>{const h=P(...H);ctx.beginPath();ctx.arc(h[0],h[1],R,0,TAU);ctx.fillStyle=ZC.skin;ctx.fill();ctx.stroke();ctx.save();ctx.beginPath();ctx.arc(h[0],h[1],R-1.1,0,TAU);ctx.clip();ctx.fillStyle=ZC.skinD;ell(h[0],h[1]+4,R,3.6);ctx.fill();ctx.restore();
+    ctx.strokeStyle=INK;ctx.lineWidth=1.1;for(let i=-1;i<=1;i++){const q=P(H[0]-2,i*2,H[2]+R-.5);ctx.beginPath();ctx.moveTo(q[0],q[1]);ctx.lineTo(q[0]-c*3+i,q[1]-2.6);ctx.stroke()}
+    const at=(fx,fy,fz)=>({q:P(H[0]+fx,H[1]+fy,H[2]+fz),v:F(fx,fy,R)});
+    for(const sd of[-1,1]){const e=at(5.8,sd*2.8,2.2);if(e.v<.05)continue;const k=cl(e.v*1.8,0,1);shine('230,255,120',e.q[0],e.q[1],4.4,.6*k);ctx.save();ctx.globalAlpha=k;ink(1.2);ctx.fillStyle=ZC.socket;ctx.beginPath();ctx.ellipse(e.q[0],e.q[1],2.3*Math.max(.4,e.v),2.6,0,0,TAU);ctx.fill();ctx.stroke();ctx.fillStyle=ZC.eye;circ(e.q[0],e.q[1],.9);ctx.fill();ctx.restore()}
+    const m=at(5.6,0,-3.2);if(m.v>.05){const op=atk&&p>.25&&p<.7?1:.6+.2*Math.sin(t*4),w=3.6*Math.max(.35,m.v);ctx.save();ctx.globalAlpha=cl(m.v*1.8,0,1);ink(1.4);ctx.fillStyle=ZC.mouth;ctx.beginPath();ctx.ellipse(m.q[0],m.q[1]+op,w,1.6+op*2.4,0,0,TAU);ctx.fill();ctx.stroke();ctx.fillStyle=ZC.bone;ink(.8);for(let i=0;i<3;i++){const xx=m.q[0]-w*.6+i*w*.6,yy=m.q[1]-.6;ctx.beginPath();ctx.moveTo(xx-.7,yy);ctx.lineTo(xx,yy+1.8);ctx.lineTo(xx+.7,yy);ctx.closePath();ctx.fill();ctx.stroke()}ctx.restore()}}});
+  run(parts);ctx.restore()}
+
+// ------------------------------------------------------------------ ZOMBIE MINATORE: helmet with a lamp, overalls, rusty pickaxe
+const MC={helm:'#d9a628',helmD:'#9a7418',over:'#3e5a7a',overD:'#2a3e56',wood:'#6b4a2a',iron:'#7a8088'};
+function minatore(x,y,face,anim,p,sc){sc=sc||1.1;const t=G.t,{c,s,P,D,F}=V(face),ph=p*TAU,walk=anim==='walk',atk=anim==='attack';
+  // attack: .0-.4 pickaxe up behind the head, .4-.55 smash down, .55-1 pull it out of the ground
+  let a=-.9,hit=-1;if(atk){if(p<.4)a=-.9+ez(p/.4)*3;else if(p<.55)a=2.1-((p-.4)/.15)*3.4;else{a=-1.3+ez((p-.55)/.45)*.4;hit=(p-.55)/.45}}
+  const bob=walk?Math.abs(Math.sin(ph))*1.4:Math.sin(ph)*.4,roll=walk?Math.sin(ph)*1.2:Math.sin(t*1.3)*.5,lean=4+(atk&&p>.4&&p<.6?3:0);
+  shadow(x,y+8*sc,11*sc,4.4*sc,.34);
+  // the lamp's beam on the floor in front
+  if(!LOWFX){const q=V(face).P(26,0,0);ctx.save();ctx.globalCompositeOperation='lighter';glow('255,230,150',x+q[0]*sc,y+q[1]*sc+6*sc,16*sc,.22+.04*Math.sin(t*9),7*sc);ctx.restore()}
+  ctx.save();ctx.translate(x,y-bob*sc);ctx.scale(sc,sc);const parts=[];
+  for(const sd of[-1,1]){const st=walk?Math.sin(ph+(sd>0?Math.PI:0))*4.5:0,fx=st,fy=sd*4.2;parts.push({d:D(fx,fy)-.5,f:()=>{const h=P(0,sd*3.4,8),f=P(fx,fy,walk?Math.max(0,Math.sin(ph+(sd>0?Math.PI:0)))*2:0);line(h,f,4.4,MC.overD);ctx.save();ctx.translate(f[0],f[1]);ink(1.8);ell(c*1.4,0,4.6,2.8);fs('#3a2a1a');ctx.restore()}})}
+  // overalls with straps, a torn knee, coal dust
+  const T=[lean*.3,roll*.5];parts.push({d:D(T[0],T[1]),f:()=>{const m=P(T[0],T[1],15),hw=Math.hypot(9.4*s,6.2*c),top=m[1]-9,bot=m[1]+8;
+    ctx.beginPath();ctx.moveTo(m[0]-hw,bot);ctx.quadraticCurveTo(m[0]-hw-1.5,top+3,m[0]-hw*.4,top);ctx.quadraticCurveTo(m[0],top-1.5,m[0]+hw*.4,top);ctx.quadraticCurveTo(m[0]+hw+1.5,top+3,m[0]+hw,bot);ctx.quadraticCurveTo(m[0],bot+3,m[0]-hw,bot);ctx.closePath();ctx.fillStyle='#6a6458';ctx.fill();ctx.stroke();
+    ctx.save();ctx.clip();ctx.fillStyle=MC.over;ctx.fillRect(m[0]-hw-2,m[1]-2,hw*2+4,14);ctx.fillStyle=MC.overD;ell(m[0]+hw*.5,m[1]+4,hw*.6,5);ctx.fill();
+    for(const sd of[-1,1]){const a1=P(T[0]+(F(1,0,1)>0?5:-5),T[1]+sd*4.6,23),b1=P(T[0]+(F(1,0,1)>0?5.8:-5.8),T[1]+sd*4,14);ctx.strokeStyle=MC.over;ctx.lineWidth=2.4;ctx.beginPath();ctx.moveTo(a1[0],a1[1]);ctx.lineTo(b1[0],b1[1]);ctx.stroke();ctx.fillStyle='#c9a040';circ(b1[0],b1[1],.9);ctx.fill()}
+    ctx.fillStyle='rgba(20,18,16,.35)';for(let i=0;i<5;i++)circ(m[0]-hw*.6+i*hw*.3,m[1]-4+(i%2)*3,1.2),ctx.fill();ctx.restore()}});
+  // left arm hangs and swings; right arm holds the pickaxe
+  {const sh=[T[0],-8.4+T[1],20.5],hd=[T[0]+6,-9.6+T[1],12+(walk?Math.sin(ph)*2:0)];parts.push({d:(D(sh[0],sh[1])+D(hd[0],hd[1]))/2+.2,f:()=>{const a1=P(...sh),b=P(...hd);quad(a1,P(sh[0]+1,sh[1]-1.6,16),b,4.2,F(0,-1,1)<0?ZC.skinD:ZC.skin);ink(1.6);circ(b[0],b[1],2.7);fs(ZC.skin);claws(b,b[0]-a1[0],b[1]-a1[1],4.6,ZC.claw)}})}
+  {const hd=[T[0]+7,8+T[1],15+(atk?Math.max(0,Math.sin(a))*8:0)],dir=[Math.cos(a)*.95,.12,Math.sin(a)],pt=k=>[hd[0]+dir[0]*k,hd[1]+dir[1]*k,hd[2]+dir[2]*k],sh=[T[0],8.4+T[1],20.5];
+    parts.push({d:(D(hd[0],hd[1])+D(pt(16)[0],pt(16)[1]))/2+.4,f:()=>{const a1=P(...sh),b=P(...hd),h0=P(...pt(-4)),h1=P(...pt(17));line(h0,h1,2.4,MC.wood);
+      // pick head: two curved spikes across the top of the handle
+      const top=pt(16),u=[-dir[2],0,dir[0]],L=7.5,e1=P(top[0]+u[0]*L+dir[0]*1.5,top[1],top[2]+u[2]*L+dir[2]*1.5),e2=P(top[0]-u[0]*L+dir[0]*1.5,top[1],top[2]-u[2]*L+dir[2]*1.5),tc=P(...top),tc2=P(...pt(19));
+      ink(1.8);ctx.fillStyle=MC.iron;ctx.beginPath();ctx.moveTo(e1[0],e1[1]);ctx.quadraticCurveTo(tc2[0],tc2[1],e2[0],e2[1]);ctx.quadraticCurveTo(tc[0],tc[1],e1[0],e1[1]);ctx.closePath();ctx.fill();ctx.stroke();ctx.fillStyle='rgba(120,60,30,.6)';circ((e1[0]+tc[0])/2,(e1[1]+tc[1])/2,1);ctx.fill();
+      quad(a1,P(sh[0]+2,sh[1]+2,16),b,4.2,F(0,1,1)<0?ZC.skinD:ZC.skin);ink(1.6);circ(b[0],b[1],2.8);fs(ZC.skin)}})}
+  // head with a miner's helmet and a lit lamp
+  const H=[T[0]+lean*.5,T[1]*1.3+Math.sin(t*1.5)*.8,27.5],R=8.2;parts.push({d:D(H[0],H[1])+.4,f:()=>{const h=P(...H);ctx.beginPath();ctx.arc(h[0],h[1],R,0,TAU);ctx.fillStyle=ZC.skin;ctx.fill();ctx.stroke();ctx.save();ctx.beginPath();ctx.arc(h[0],h[1],R-1.1,0,TAU);ctx.clip();ctx.fillStyle=ZC.skinD;ell(h[0],h[1]+4.6,R,4);ctx.fill();ctx.restore();
+    const at=(fx,fy,fz)=>({q:P(H[0]+fx,H[1]+fy,H[2]+fz),v:F(fx,fy,R)});
+    for(const sd of[-1,1]){const e=at(6.6,sd*3.2,-.4);if(e.v<.05)continue;const k=cl(e.v*1.8,0,1);ctx.save();ctx.globalAlpha=k;ink(1.3);ctx.fillStyle=ZC.socket;ctx.beginPath();ctx.ellipse(e.q[0],e.q[1],2.4*Math.max(.4,e.v),2.4,0,0,TAU);ctx.fill();ctx.stroke();if(sd>0){shine('230,255,120',e.q[0],e.q[1],4,.5*k);ctx.fillStyle=ZC.eye;circ(e.q[0],e.q[1],.9);ctx.fill()}ctx.restore()}
+    const m=at(6.4,0,-4.4);if(m.v>.05){const op=atk&&p>.35&&p<.6?1:.4;ctx.save();ctx.globalAlpha=cl(m.v*1.8,0,1);ink(1.3);ctx.fillStyle=ZC.mouth;ell(m.q[0],m.q[1],3.4*Math.max(.4,m.v),1.2+op*1.8);ctx.fill();ctx.stroke();ctx.fillStyle=ZC.bone;ctx.fillRect(m.q[0]-1.4,m.q[1]-1,1.2,1.4);ctx.fillRect(m.q[0]+.6,m.q[1]-1,1.2,1.6);ctx.restore()}
+    // helmet: dome + brim, all around the head
+    const hb=P(H[0],H[1],H[2]+2.6),bw=R+2.6;ink(2);ctx.fillStyle=MC.helmD;ctx.beginPath();ctx.ellipse(hb[0],hb[1],bw,3,0,0,TAU);ctx.fill();ctx.stroke();
+    ctx.fillStyle=MC.helm;ctx.beginPath();ctx.ellipse(hb[0],hb[1]-.6,R+.4,R*.85,0,Math.PI,0);ctx.closePath();ctx.fill();ctx.stroke();ctx.strokeStyle=MC.helmD;ctx.lineWidth=1.4;ctx.beginPath();ctx.moveTo(hb[0]-s*0,hb[1]-R*.85);ctx.lineTo(hb[0],hb[1]-1);ctx.stroke();ctx.fillStyle='rgba(255,255,255,.3)';ell(hb[0]-3,hb[1]-R*.55,2.4,1.2);ctx.fill();
+    // lamp on the front of the helmet
+    const l=at(R*.8,0,5.4);if(l.v>-.35){const k=cl((l.v+.35)*1.6,0,1);ctx.save();ctx.globalAlpha=k;shine('255,230,150',l.q[0],l.q[1],8,.7*k);ink(1.3);ctx.fillStyle='#5a5f68';circ(l.q[0],l.q[1],2.6);ctx.fill();ctx.stroke();ctx.fillStyle='#fff6c8';circ(l.q[0],l.q[1],1.6*Math.max(.3,l.v));ctx.fill();ctx.restore()}}});
+  run(parts);ctx.restore();
+  // pickaxe hits the floor: sparks and chips of stone
+  if(hit>=0&&hit<.6){const q=V(face).P(T[0]+7+Math.cos(-1.3)*.95*17,8.6,0),ix=x+q[0]*sc,iy=y+q[1]*sc+6*sc,k=hit/.6;ctx.save();for(let i=0;i<7;i++){const an=-Math.PI*.15-i*.45,r=(4+k*16)*sc;ctx.strokeStyle=`rgba(255,${200+i*8},120,${1-k})`;ctx.lineWidth=1.4;ctx.beginPath();ctx.moveTo(ix+Math.cos(an)*r*.6,iy+Math.sin(an)*r*.6);ctx.lineTo(ix+Math.cos(an)*r,iy+Math.sin(an)*r);ctx.stroke()}
+    ctx.fillStyle=`rgba(90,80,70,${1-k})`;for(let i=0;i<4;i++)circ(ix+(i-1.5)*5*sc*k,iy-Math.sin(k*Math.PI)*8*sc+i,1.4*sc),ctx.fill();ctx.restore()}}
+
+return {zombie,hound,becchino,gonfio,strisciante,minatore};
 })();
