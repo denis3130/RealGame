@@ -15,7 +15,8 @@
 - Il busto è una capsula tra due sfere (bacino e petto), quindi si piega allo stesso modo da ogni lato.
 - Braccia e gambe sono due ossa risolte con la cinematica inversa: la spalla o l'anca sta ferma sul corpo, la mossa sposta mano o piede, gomito e ginocchio si trovano da soli. Gli arti non cambiano mai lunghezza e si piegano sempre dalla parte giusta.
 - L'ordine di disegno dipende solo da dove sono attaccati spalle e anche, mai dalla mano o dal piede che si muove: niente pezzi che saltano davanti o dietro al corpo a metà passo.
-- Le gambe stanno sempre sotto il corpo; maniche, colli e attaccature non hanno il contorno dove entrano nel corpo (quando la spalla è sul bordo del corpo).
+- Le gambe stanno sempre sotto il corpo; colli e attaccature non hanno il contorno dove entrano nel corpo (quando la spalla è sul bordo del corpo).
+- Le braccia dei quattro zombie sono magre e ossute (`bone`, `claw`, `rag`): ogni osso si stringe verso il polso, il gomito ha un nodo che sporge solo quando il braccio è piegato, le mani hanno un palmo piccolo e tre dita lunghe che finiscono in artigli neri a punta. La manica è un tubo stretto che finisce con lo strappo: dove sta sopra la camicia si fonde con lei (niente palla sulla spalla), sul bordo del corpo tiene il contorno. Il Becchino ha ancora le maniche larghe del cappotto.
 - Piccone, pala e bastone della lanterna girano in un piano di fianco alla testa (non tagliano mai la faccia) e si fermano sul pavimento.
 - Il cappuccio dello Zombie della lanterna è una palla di stoffa con il davanti tagliato: da ogni lato copre la testa dove deve e lascia vedere la faccia dall'apertura.
 - Ogni movimento dipende solo da `p`: l'ultimo fotogramma si collega al primo.
@@ -26,7 +27,7 @@
 
 | Mostro | Casella | Piedi (x, y) | Mosse (fotogrammi) |
 |---|---|---|---|
-| zombie | 204 px | 102, 175 | idle 6, walk 8, attack 8 |
+| zombie | 204 px | 102, 174 | idle 6, walk 8, attack 8 |
 | strisciante | 180 px | 90, 113 | idle 6, walk 8, attack 8 |
 | minatore | 270 px | 135, 199 | idle 8, walk 12, attack 14 |
 | hound | 198 px | 99, 167 | idle 8, walk 12, attack 14 |

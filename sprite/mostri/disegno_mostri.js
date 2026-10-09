@@ -1,4 +1,5 @@
-// Zombie-mode enemies for Mossbound: Zombie della cripta, Zombie strisciante, Zombie minatore, Segugio infernale, boss Il Becchino.
+// Zombie-mode enemies for Mossbound: Zombie della cripta, Zombie strisciante, Zombie minatore, Zombie della lanterna, Segugio infernale,
+// boss Il Becchino.
 // Every monster is a small 3D skeleton (x forward, y right, z up) projected with the facing angle, so it turns through
 // all 360 degrees and every piece stays attached to the same point of the body.
 //  - the trunk is a capsule (a hull around two balls, pelvis and chest), so it leans and bends the same way from every side
@@ -7,6 +8,8 @@
 //  - the draw order comes from the rest pose (where a shoulder or a hip sits on the body), never from a moving hand or foot,
 //    so nothing jumps in front of or behind the body halfway through a move
 //  - legs are always drawn under the body; limbs, sleeves and necks have no outline where they join the body
+//  - the four zombies have thin bony arms: tapering bones, a knobbly elbow when bent, tight torn sleeves that melt into the shirt,
+//    small palms with long fingers and dark claws (bone, claw, rag); the boss keeps the wide sleeves of his coat
 //  - held tools (pick, shovel) swing in a plane beside the head, so they never cut through the face, and stop at the floor
 //  - every motion depends only on the cycle progress p, so each animation loops without a jump
 // Drawn with the game's own primitives (ctx, ink, ell, shadow, glow, INK, LOWFX; G.t only for flickering lights).
@@ -73,6 +76,42 @@ function hand(V0,h,fd,r,col,nail,pd){const{P}=V0;pd=pd||[1,0,-1];let cv=sub(pd,m
   ctx.fillStyle=nail;for(const f of fg){ball(f[2],w*.62);ctx.fill()}}
 // a fist closed round a handle
 function fist(V0,h,r,col){const q=V0.P(h);ink(2.2);ball(q,r);ctx.fillStyle=col;ctx.fill();ctx.stroke();ctx.strokeStyle='rgba(20,16,14,.45)';ctx.lineWidth=1;ctx.beginPath();ctx.arc(q[0],q[1],r*.55,-.4,1.2);ctx.stroke()}
+// a thin bony limb: each bone tapers from joint to joint (rs = radius at each joint); knobs = bumps on the joints, [screen point, r].
+// Every outline first, then `end` (the hand), then every fill, so the joints have no seams
+function bone(pts,rs,col,end,knobs){knobs=knobs||[];ctx.fillStyle=INK;
+  for(let i=0;i<pts.length-1;i++){hull(pts[i],rs[i]+1.3,pts[i+1],rs[i+1]+1.3);ctx.fill()}
+  for(const[q,r] of knobs){ball(q,r+1.3);ctx.fill()}
+  if(end)end();ctx.fillStyle=col;
+  for(let i=0;i<pts.length-1;i++){hull(pts[i],rs[i],pts[i+1],rs[i+1]);ctx.fill()}
+  for(const[q,r] of knobs){ball(q,r);ctx.fill()}}
+// a bony hand: a small palm and three long thin fingers in 3D that hook toward the palm and end in dark pointed claws.
+// fd = where the fingers point, pd = where the palm faces, fl = finger length. The fingers foreshorten instead of spinning round
+function claw(V0,h,fd,r,col,nail,pd,fl){const{P}=V0;pd=pd||[1,0,-1];let cv=sub(pd,mul(fd,dot(pd,fd)));
+  if(len(cv)<.25){const alt=[0,0,-1];cv=sub(alt,mul(fd,dot(alt,fd)));if(len(cv)<.25)cv=[1,0,0]}
+  cv=nrm(cv);const sa=nrm(cross(fd,cv)),q=P(h),L=fl||r*3,w=Math.max(.9,r*.62),fg=[];
+  for(let k=-1;k<=1;k++){const d=nrm(add(fd,mul(sa,k*.5))),Lk=L*(k?.86:1);
+    fg.push([P(add(h,mul(d,r*.5))),P(add(add(h,mul(d,Lk*.75)),mul(cv,-Lk*.05))),P(add(add(h,mul(d,Lk*.97)),mul(cv,Lk*.36)))])}
+  const path=f=>{ctx.beginPath();ctx.moveTo(f[0][0],f[0][1]);ctx.quadraticCurveTo(f[1][0],f[1][1],f[2][0],f[2][1])};
+  ctx.lineCap='round';ctx.strokeStyle=INK;ctx.lineWidth=w+2;for(const f of fg){path(f);ctx.stroke()}ctx.fillStyle=INK;ball(q,r+1.2);ctx.fill();
+  ctx.fillStyle=col;ball(q,r);ctx.fill();ctx.strokeStyle=col;ctx.lineWidth=w;for(const f of fg){path(f);ctx.stroke()}
+  // the claws: the last part of each finger, dark, sharpened to a point a little past the fingertip
+  const bz=(f,t)=>[0,1].map(i=>(1-t)*(1-t)*f[0][i]+2*(1-t)*t*f[1][i]+t*t*f[2][i]),
+    nb=(f,t)=>{const x=(1-t)*(f[1][0]-f[0][0])+t*(f[2][0]-f[1][0]),y=(1-t)*(f[1][1]-f[0][1])+t*(f[2][1]-f[1][1]),l=Math.hypot(x,y)||1;return[x/l,y/l]};
+  ctx.fillStyle=nail;for(const f of fg){const hw=w*.5+.35,side=[];
+    for(const t of[.7,.86,1]){const c=bz(f,t),u=nb(f,t),s=hw*(t<1?1-(t-.7)*.6:.78);side.push([c[0]-u[1]*s,c[1]+u[0]*s,c[0]+u[1]*s,c[1]-u[0]*s])}
+    const u=nb(f,1),tp=[f[2][0]+u[0]*(w*.5+1.9),f[2][1]+u[1]*(w*.5+1.9)];ctx.beginPath();for(const s of side)ctx.lineTo(s[0],s[1]);ctx.lineTo(tp[0],tp[1]);
+    for(let i=side.length-1;i>=0;i--)ctx.lineTo(side[i][2],side[i][3]);ctx.closePath();ctx.fill()}}
+// a tight torn sleeve over the top of the arm: a tube from the shoulder s3 (radius r0) to e3 (radius r1) that ends in ragged teeth
+// hanging down the arm. Its root melts into the shirt wherever it lies over the body (`body` makes a path of the inside of the
+// body's outline), so the arm grows out of the shirt instead of wearing a ball on the shoulder; on the edge of the body the
+// outline stays. Without `body`, rk says how much of the root to melt (1 where the shoulder sits on the edge of the body)
+function rag(V0,s3,e3,r0,r1,col,body,rk){const{P}=V0,A=P(s3),B=P(e3);let ux=B[0]-A[0],uy=B[1]-A[1];const pl=Math.hypot(ux,uy),k=cl(pl/(len(sub(e3,s3))||1),0,1);
+  if(pl<.01){ux=0;uy=1}else{ux/=pl;uy/=pl}const th=Math.atan2(uy,ux),pts=[],TL=[0,1.1,0,1.6,0,.9,0],RR=[1,1,.78,1,.78,1,1];
+  for(let i=0;i<=10;i++){const an=th+Math.PI/2+i/10*Math.PI;pts.push([A[0]+Math.cos(an)*r0,A[1]+Math.sin(an)*r0])}
+  for(let j=0;j<=6;j++){const an=th-Math.PI/2+j/6*Math.PI,rr=r1*RR[j],tl=TL[j]*k*r1/2.1;pts.push([B[0]+Math.cos(an)*rr+ux*tl,B[1]+Math.sin(an)*rr+uy*tl])}
+  ctx.beginPath();for(const q of pts)ctx.lineTo(q[0],q[1]);ctx.closePath();ctx.lineJoin='round';ctx.strokeStyle=INK;ctx.lineWidth=2.6;ctx.stroke();ctx.fillStyle=col;ctx.fill();
+  if(body){ctx.save();body();ctx.clip();ctx.fillStyle=col;ball(A,r0+1.45);ctx.fill();ctx.restore()}
+  else if(rk>0){ctx.save();ctx.globalAlpha=rk;ctx.fillStyle=col;ball(A,r0+1.3);ctx.fill();ctx.restore()}}
 // a leg from the hip: IK knee, seamless thigh and shin, and a shoe that is a little 3D capsule from heel to toe
 function leg(V0,hip,foot,o){const{P}=V0,[kn,f]=ik(hip,add(foot,[0,0,o.ank||1.6]),o.L1,o.L2,o.pole||[1,0,.15]);
   limb([P(hip),P(kn),P(f)],[o.w1,o.w2],o.col,()=>{ink(2.4);ctx.fillStyle=o.shoe;hull(P(add(f,[-o.heel,0,-.4])),o.sr,P(add(f,[o.toe,0,-.6])),o.sr*1.08);ctx.fill();ctx.stroke()})}
@@ -89,9 +128,18 @@ function run(parts){parts.sort((a,b)=>a.d-b.d);for(const q of parts){ink(2.4);q.
 const ZC={skin:'#88a06c',skinD:'#647c50',skinF:'#55693f',cloth:'#3a454e',clothD:'#262e35',clothF:'#252c33',pants:'#2f2a26',pantsF:'#1c1816',shoe:'#1f1b18',
   bone:'#e6dcc0',socket:'#141010',eye:'#e9ff7a',mouth:'#2a0c0c',gum:'#6a1a1a',nail:'#1e1a14',rot:'#3f5233'};
 // an arm from its shoulder socket: IK elbow, seamless upper arm and forearm, a clawed hand, a torn sleeve over the root.
+// o.bony: a thin dead arm (w1 at the shoulder, we at the elbow, w2 at the wrist) with a knobbly elbow, a tight torn sleeve
+// (o.sleeve wide at the shoulder, down to o.sleeveK of the upper arm) and a bony hand (palm o.hand, fingers o.fl long);
+// o.body: the inside of the body's outline, where the sleeve's root melts into the shirt.
 // o.full: the sleeve covers the whole arm (a coat); o.noHand: the caller draws the hand (a fist on a tool)
-function zArm(V0,sh,hd,pole,o){const{P}=V0,[el,h]=ik(sh,hd,o.L1,o.L2,pole),a=P(sh),e=P(el),fd=o.fd||nrm(sub(h,el)),rk=cl(1-Math.abs(V0.F(0,o.side,0))*1.8,0,1),
-  end=o.noHand?null:()=>hand(V0,h,fd,o.hand,o.skin,o.nail||ZC.nail,o.pd);
+function zArm(V0,sh,hd,pole,o){const{P}=V0,[el,h]=ik(sh,hd,o.L1,o.L2,pole),a=P(sh),e=P(el),fd=o.fd||nrm(sub(h,el)),rk=cl(1-Math.abs(V0.F(0,o.side,0))*1.8,0,1);
+  if(o.bony){// the elbow knob grows with the bend and sits on the outside of it: a straight arm has no bump
+    const re=o.we/2,out=sub(el,lerp3(sh,h,.5)),ol=len(out),bend=cl(ol/(o.L1*.45),0,1),kq=P(ol>.05?add(el,mul(out,re*.4*bend/ol)):el),
+      end=o.noHand?null:()=>claw(V0,h,fd,o.hand,o.skin,o.nail||ZC.nail,o.pd,o.fl);
+    bone([a,e,P(h)],[o.w1/2,re,o.w2/2],o.skin,end,[[kq,re*(1+.16*bend)]]);
+    if(o.sleeve)rag(V0,sh,lerp3(sh,el,o.sleeveK||.6),o.sleeve/2,o.sleeve/2*.9,o.cloth,o.body,rk);
+    return{el,h}}
+  const end=o.noHand?null:()=>hand(V0,h,fd,o.hand,o.skin,o.nail||ZC.nail,o.pd);
   if(o.full){const w3=lerp3(el,h,.78);if(end)end();limb([a,e,P(w3)],[o.w1,o.w2],o.cloth);if(rk>0){ctx.save();ctx.globalAlpha=rk;ctx.fillStyle=o.cloth;ball(a,o.w1*.5+1.3);ctx.fill();ctx.restore()}if(o.cuff)cuff(V0,w3,el,o.w2+1,o.cloth)}
   else{limb([a,e,P(h)],[o.w1,o.w2],o.skin,end);if(o.sleeve){const s3=lerp3(sh,el,o.sleeveK||.6);sleeve(a,P(s3),o.sleeve,o.cloth,rk);if(o.cuff)cuff(V0,s3,sh,o.sleeve,o.cloth)}}
   return{el,h}}
@@ -136,7 +184,7 @@ function zombie(x,y,face,anim,p,sc){sc=sc||1.1;const V0=V(face),{P,D,F}=V0,ph=p*
   // arms reach forward; raised high and back over the head when it rears back (so they never cover the face), then they rake down
   for(const sd of[-1,1]){const sh=add(Ch,[0,sd*7,3]),sw=walk?Math.sin(ph+(sd>0?Math.PI:0))*1.1:Math.sin(ph+sd)*.4,
       hd=add(Ch,[10-upP*12+reach*5,sd*(10+upP*2-reach*2),-.5+up*15.5+sw]),k=farK(F(0,sd,0));
-    parts.push({d:D(add(sh,[7,0,0])),f:()=>zArm(V0,sh,hd,nrm([-.3*upP,sd*.6,-1+1.5*upP]),{side:sd,L1:5.8,L2:5.8,w1:4.4,w2:3.9,hand:2.7,skin:mix(ZC.skin,ZC.skinF,k),cloth:mix(ZC.cloth,ZC.clothF,k),sleeve:5.4,sleeveK:.55})})}
+    parts.push({d:D(add(sh,[7,0,0])),f:()=>zArm(V0,sh,hd,nrm([-.3*upP,sd*.6,-1+1.5*upP]),{side:sd,L1:5.8,L2:5.8,bony:1,w1:3.4,we:3,w2:2.2,hand:1.8,fl:5.6,skin:mix(ZC.skin,ZC.skinF,k),cloth:mix(ZC.cloth,ZC.clothF,k),sleeve:4.6,sleeveK:.36,body:()=>hull(P(Pv),5,P(Ch),7.2)})})}
   parts.push({d:D(Hc),f:()=>{neck(V0,add(Ch,[1.6,0,6.8]),3.8,add(Hc,[-.8,0,-5.6]),3.4,ZC.skin);zHead(V0,Hc,8.2,ph,{open:atk&&p>.25&&p<.7?1:.45+.2*Math.sin(ph*2)})}});
   run(parts);ctx.restore()}
 
@@ -159,7 +207,7 @@ function strisciante(x,y,face,anim,p,sc){sc=sc||1.1;const V0=V(face),{P,D,F}=V0,
       ctx.strokeStyle='rgba(230,220,192,.85)';ctx.lineWidth=1;for(let i=-.5;i<=.5;i++){const cx=q[0]+ux*i*1.6,cy=q[1]+uy*i*1.6;seg([cx+uy*1.5,cy-ux*1.5],[cx-uy*1.5,cy+ux*1.5]);ctx.stroke()}})}});
   // long arms: shoulders on the chest, hands planted on the floor ahead, elbows out to the sides
   for(const[sd,f] of[[-1,hL],[1,hR]]){const sh=add(Ch,[1.4,sd*6,1]),hd=[10.1+f.x*1.2+lunge*1.1,sd*8.8,f.z+(atk?lunge*.25:0)],k=farK(F(0,sd,0));
-    parts.push({d:D(add(sh,[4,0,0])),f:()=>zArm(V0,sh,hd,nrm([-.5,sd,.25]),{side:sd,L1:7.4,L2:7.8,w1:4.2,w2:3.7,hand:2.8,fd:nrm([1,sd*.3,-.25]),pd:[0,0,-1],skin:mix(ZC.skin,ZC.skinF,k),cloth:mix(ZC.cloth,ZC.clothF,k),sleeve:5.6,sleeveK:.45})})}
+    parts.push({d:D(add(sh,[4,0,0])),f:()=>zArm(V0,sh,hd,nrm([-.5,sd,.25]),{side:sd,L1:7.4,L2:7.8,bony:1,w1:3.4,we:3,w2:2.2,hand:1.9,fl:6,fd:nrm([1,sd*.3,-.25]),pd:[0,0,-1],skin:mix(ZC.skin,ZC.skinF,k),cloth:mix(ZC.cloth,ZC.clothF,k),sleeve:4.4,sleeveK:.32,body:()=>hull(P(Wb),3.8,P(Ch),6)})})}
   parts.push({d:D(Hc),f:()=>{neck(V0,add(Ch,[3,0,2.4]),3.4,add(Hc,[-2.6,0,-2.6]),3,ZC.skin);zHead(V0,Hc,6.8,ph,{open:atk&&p>.25&&p<.7?1:.55+.2*Math.sin(ph*2),noScar:true})}});
   run(parts);ctx.restore()}
 
@@ -222,11 +270,11 @@ function minatore(x,y,face,anim,p,sc){sc=sc||1.1;const V0=V(face),{P,D,F}=V0,ph=
   parts.push({d:dT,f:()=>{trunk(V0,Pv,6.3,Ch,8.2,MC.shirt,MC.shirtD,0);overalls(V0,Pv,6.3,Ch,8.2)}});
   // left arm hangs and swings
   {const sh=add(Ch,[0,-7.6,1.4]),sw=walk?Math.sin(ph)*2.4:Math.sin(ph)*.3,hd=add(sh,[2.5+sw,-1.6,-11.6+crouch*.5]),k=farK(F(0,-1,0));
-    parts.push({d:D(add(sh,[2,0,0])),f:()=>zArm(V0,sh,hd,[-1,0,-.1],{side:-1,L1:6,L2:6.2,w1:4.4,w2:3.9,hand:2.6,pd:[.5,1,0],skin:mix(ZC.skin,ZC.skinF,k),cloth:mix(MC.shirt,MC.shirtF,k),sleeve:5.8,sleeveK:.55})})}
+    parts.push({d:D(add(sh,[2,0,0])),f:()=>zArm(V0,sh,hd,[-1,0,-.1],{side:-1,L1:6,L2:6.2,bony:1,w1:3.4,we:3,w2:2.2,hand:1.8,fl:5.4,pd:[.5,1,0],skin:mix(ZC.skin,ZC.skinF,k),cloth:mix(MC.shirt,MC.shirtF,k),sleeve:4.6,sleeveK:.4,body:()=>hull(P(Pv),5.1,P(Ch),7)})})}
   // right arm holds the pick; arm and pick swing in a plane beside the head
   {const sh=add(Ch,[0,7.6,1.4]),k=farK(F(0,1,0)),skin=mix(ZC.skin,ZC.skinF,k);
-    parts.push({d:D(add(Ch,[2,9.6,1.4])),f:()=>{const tool=()=>pickaxe(V0,pk),arm=()=>zArm(V0,sh,pk.hd,nrm([-.4,.5,-1]),{side:1,L1:6,L2:6.2,w1:4.4,w2:3.9,noHand:true,skin,cloth:mix(MC.shirt,MC.shirtF,k),sleeve:5.8,sleeveK:.55});
-      if(F(0,1,0)>0){arm();tool()}else{tool();arm()}fist(V0,pk.hd,2.9,skin)}})}
+    parts.push({d:D(add(Ch,[2,9.6,1.4])),f:()=>{const tool=()=>pickaxe(V0,pk),arm=()=>zArm(V0,sh,pk.hd,nrm([-.4,.5,-1]),{side:1,L1:6,L2:6.2,bony:1,w1:3.4,we:3,w2:2.2,noHand:true,skin,cloth:mix(MC.shirt,MC.shirtF,k),sleeve:4.6,sleeveK:.4,body:()=>hull(P(Pv),5.1,P(Ch),7)});
+      if(F(0,1,0)>.2){arm();tool()}else{tool();arm()}fist(V0,pk.hd,2.3,skin)}})}
   parts.push({d:D(Hc),f:()=>{neck(V0,add(Ch,[1.6,0,6.6]),3.8,add(Hc,[-.8,0,-5.4]),3.4,ZC.skin);zHead(V0,Hc,8,ph,{open:atk&&p>.35&&p<.6?1:.35,helmet:true,deadEye:true,noDrool:true});helmet(V0,Hc,8,t)}});
   run(parts);ctx.restore();
   // the pick bites the floor: sparks and chips of stone where the point went in
@@ -514,12 +562,12 @@ function lanterna(x,y,face,anim,p,sc){sc=sc||1.55;const V0=V(face),{P,D,F}=V0,ph
   parts.push({d:dT,f:()=>lCloak(V0,Pv,7,Ch,8,Hm,10,ph)});
   // left arm hangs long in front of him and swings, big claws
   {const sh=add(Ch,[1.5,-8,3.5]),s=walk?Math.sin(ph)*2.4:Math.sin(ph)*.6,hd=add(Ch,[7+s-lean*3,-9.6,-11.5+lean*5]),k=farK(F(0,-1,0));
-    parts.push({d:Math.min(D(Ho)-.01,D(add(sh,[1.5,0,0]))),f:()=>zArm(V0,sh,hd,[-1,-.2,-.1],{side:-1,L1:7.6,L2:7.8,w1:5,w2:4.3,hand:3.3,skin:mix(LC.skin,LC.skinF,k),cloth:mix(LC.cloak,LC.cloakF,k),nail:LC.claw,pd:[.4,1,-.2],sleeve:6.4,sleeveK:.95})})}
+    parts.push({d:Math.min(D(Ho)-.01,D(add(sh,[1.5,0,0]))),f:()=>zArm(V0,sh,hd,[-1,-.2,-.1],{side:-1,L1:7.6,L2:7.8,bony:1,w1:3.8,we:3.4,w2:2.5,hand:2.2,fl:6.6,skin:mix(LC.skin,LC.skinF,k),cloth:mix(LC.cloak,LC.cloakF,k),nail:LC.claw,pd:[.4,1,-.2],sleeve:5.2,sleeveK:.8})})}
   // right arm holds the staff. The hood hangs over both shoulders, so the arms always go under it; the staff, the lantern and the fist
   // swing in a plane beside the head and go in front of the hood on the near side
   {const sh=add(Ch,[1.5,8,3.5]),k=farK(F(0,1,0)),skin=mix(LC.skin,LC.skinF,k),kA=Math.min(D(Ho)-.01,D(add(sh,[4,2.5,0])));
-    parts.push({d:kA,f:()=>zArm(V0,sh,sv.hd,nrm([-.4,.5,-1]),{side:1,L1:6.8,L2:6.8,w1:5,w2:4.3,noHand:true,skin,cloth:mix(LC.cloak,LC.cloakF,k),sleeve:6.4,sleeveK:.95})});
-    parts.push({d:Math.max(D(add(Ch,[4,10.5,0])),kA+.001),f:()=>{staffLantern(V0,sv,Lc,t,lit);fist(V0,sv.hd,3.2,skin)}})}
+    parts.push({d:kA,f:()=>zArm(V0,sh,sv.hd,nrm([-.4,.5,-1]),{side:1,L1:6.8,L2:6.8,bony:1,w1:3.8,we:3.4,w2:2.5,noHand:true,skin,cloth:mix(LC.cloak,LC.cloakF,k),sleeve:5.2,sleeveK:.8})});
+    parts.push({d:Math.max(D(add(Ch,[4,10.5,0])),kA+.001),f:()=>{staffLantern(V0,sv,Lc,t,lit);fist(V0,sv.hd,2.6,skin)}})}
   // the cape is the outer layer: always over the cloak, under the hood when the hood is in front, over the hood's base when seen from behind
   parts.push({d:Math.max(dT+.001,D(Ho)-.005),f:()=>lCape(V0,add(Ho,[-1.5,0,-4.5]),6,add(Ch,[-.5,0,3]),10.5,ph)});
   parts.push({d:D(Ho),f:()=>lHead(V0,Ho,8.6,Hf,7,ph,atk&&p>.3&&p<.75?1:.4+.15*Math.sin(ph*2),Math.sin(ph*2+1)*.6)});
