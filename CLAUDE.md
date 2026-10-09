@@ -8,6 +8,7 @@ Roguelite in stile Archero per telefono, in un solo file HTML5 (`index.html`): c
 - Il gioco deve piacere anche ai bambini: chiaro, colorato, mai frustrante all'inizio.
 - Stile grafico deciso: un mix tra Clash Royale (forme robuste, contorni scuri spessi, colori pieni, materiali "da giocattolo") e Archero 2 (leggibilità in battaglia, luci cinematografiche, effetti spettacolari). Il pavimento resta più spento; personaggi, pericoli e premi devono risaltare.
 - I personaggi devono essere coerenti in tutte le direzioni (davanti, lato, dietro): ogni parte resta attaccata al punto giusto del corpo. Prima di inserire un personaggio nuovo, mostrare a Denis le quattro direzioni affiancate.
+- Modello per l'aspetto grafico di tutto quello che si disegna d'ora in poi: lo Zombie della lanterna (`sprite/mostri/disegno_mostri.js`). Si copia solo come è disegnato (ombre e luci su ogni pezzo, pieghe e segni leggeri, bordi illuminati, colori ricchi, bagliori morbidi), mai i suoi pezzi: niente muschio, strappi o oggetti in più, i personaggi restano identici. La lanterna non si modifica.
 - Segno distintivo dell'eroe: un bastoncino di muschio verde acceso in bocca, solo nella schermata iniziale e nella intro, mai in battaglia.
 - Prima di cambiare qualcosa di grosso, chiedere a Denis. Quando dice "annota", si annota e basta.
 
@@ -65,7 +66,7 @@ Dopo ogni modifica: rifare almeno una partita automatica per capitolo, `meta2.js
 - La balestra in mano all'eroe è uguale alla sua carta: calcio di legno con gemma blu, flettenti d'acciaio, staffa davanti, dardo carico (sparisce solo mentre ricarica).
 - Anello del gelo eterno: alone di ghiaccio leggero e scia di ghiaccio che si scioglie camminando (`frostTick`, `drawFrostTrail`).
 - Sprite in `sprite/` (icone e fotogrammi dell'eroe), spiegati in `sprite/LEGGIMI.md`.
-- Nemici della modalità zombie, non ancora nel gioco: `sprite/mostri/disegno_mostri.js` (Zombie della cripta, Zombie strisciante, Zombie minatore, Zombie della lanterna più grosso, Segugio infernale, boss Il Becchino), scheletri 3D con arti a due ossa e ordine di disegno fisso, così niente si sovrappone male mentre si muovono. I quattro zombie hanno braccia magre e ossute (gomito sporgente, maniche strette e strappate, dita lunghe con artigli neri); il Becchino tiene le maniche larghe del cappotto. Fogli rifatti con `tests/mostri.js`; spiegazioni in `sprite/mostri/LEGGIMI.md`.
+- Nemici della modalità zombie, non ancora nel gioco: `sprite/mostri/disegno_mostri.js` (Zombie della cripta, Zombie strisciante, Zombie minatore, Zombie della lanterna più grosso, Segugio infernale, boss Il Becchino), scheletri 3D con arti a due ossa e ordine di disegno fisso, così niente si sovrappone male mentre si muovono. I quattro zombie hanno braccia magre e ossute (gomito sporgente, maniche strette e strappate, dita lunghe con artigli neri); il Becchino tiene le maniche larghe del cappotto. Tutti tranne la lanterna sono dipinti come la lanterna (luce calda, tre toni, bordi illuminati, pieghe, macchie, bagliori), con gli stessi pezzi di prima. Fogli rifatti con `tests/mostri.js`; spiegazioni in `sprite/mostri/LEGGIMI.md`.
 
 ## Da fare (annotato con Denis, non ancora fatto)
 

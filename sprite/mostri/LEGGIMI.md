@@ -21,6 +21,19 @@
 - Il cappuccio dello Zombie della lanterna è una palla di stoffa con il davanti tagliato: da ogni lato copre la testa dove deve e lascia vedere la faccia dall'apertura.
 - Ogni movimento dipende solo da `p`: l'ultimo fotogramma si collega al primo.
 
+## Come sono dipinti
+
+Lo Zombie della lanterna è il modello per l'aspetto grafico di tutti (regola di Denis): gli altri mostri restano identici nei pezzi e nelle mosse, ma sono dipinti come lui.
+
+- Luce calda dall'alto a sinistra: ogni pezzo ha tre toni, cioè il suo colore, un lato più scuro e una luce morbida (`rim`, `glowTop`).
+- Un filo di luce calda dentro il contorno, sul lato illuminato (`rim`).
+- Braccia, gambe, maniche, corna e code hanno il lato in ombra e una riga di luce (`shadeLimb`).
+- Pieghe sui vestiti (`folds`), macchie sulla pelle, segni del pelo sul segugio.
+- Bagliori morbidi su occhi e luci, con un puntino bianco negli occhi.
+- Colori un po' più ricchi; il segugio è un po' più chiaro di prima perché si leggano le forme.
+
+La lanterna ha le sue funzioni e non si tocca: dopo ogni modifica i suoi fogli devono restare identici al pixel (`git status` non deve mostrare `lanterna_*.png`).
+
 ## Fogli PNG
 
 8 righe (davanti, davanti-destra, destra, dietro-destra, dietro, dietro-sinistra, sinistra, davanti-sinistra) × un fotogramma per colonna, sfondo trasparente, nessuna direzione specchiata. Ogni fotogramma è disegnato da solo, quindi niente sbavature tra le caselle. Tutte le mosse di un mostro hanno la stessa casella e i piedi sempre nello stesso punto:

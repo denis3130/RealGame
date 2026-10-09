@@ -11,6 +11,8 @@
 //  - the four zombies have thin bony arms: tapering bones, a knobbly elbow when bent, tight torn sleeves that melt into the shirt,
 //    small palms with long fingers and dark claws (bone, claw, rag); the boss keeps the wide sleeves of his coat
 //  - held tools (pick, shovel) swing in a plane beside the head, so they never cut through the face, and stop at the floor
+//  - every monster is painted like the lantern zombie (the model): a warm light from the upper left, three tones on every piece,
+//    a warm rim inside the outline on the lit side, folds on cloth, blotches on skin, strokes on fur, soft glows (rim, shadeLimb, folds)
 //  - every motion depends only on the cycle progress p, so each animation loops without a jump
 // Drawn with the game's own primitives (ctx, ink, ell, shadow, glow, INK, LOWFX; G.t only for flickering lights).
 // anim: 'idle' | 'walk' | 'attack' (boss: 'idle' | 'walk' | 'slam' | 'summon'); p = 0..1 progress in the cycle.
@@ -63,7 +65,8 @@ function cuff(V0,e3,from3,w,col){const{P}=V0,e=P(e3),q=P(add(e3,nrm(sub(e3,from3
 // a mark on the surface of a ball (centre C, radius r) in direction n: fn(screen point, how much it faces us); it fades in as it turns toward us
 function on(V0,C,r,n,v0,fn){n=nrm(n);const v=V0.F(n);if(v<=v0)return;const q=V0.P(add(C,mul(n,r)));ctx.save();ctx.globalAlpha=cl((v-v0)*4,0,1);fn(q,v,n);ctx.restore()}
 // a neck: capsule from the body to the head; `blend` hides its outline where it enters a body of the same colour
-function neck(V0,a,ra,b,rb,col,blend){const A=V0.P(a),B=V0.P(b);ink(2.4);hull(A,ra,B,rb);ctx.fillStyle=col;ctx.fill();ctx.stroke();if(blend){ball(A,ra+1.3);ctx.fill()}}
+function neck(V0,a,ra,b,rb,col,blend){const A=V0.P(a),B=V0.P(b);ink(2.4);hull(A,ra,B,rb);ctx.fillStyle=col;ctx.fill();ctx.stroke();if(blend){ball(A,ra+1.3);ctx.fill()}
+  ctx.save();hull(A,ra-1.2,B,rb-1.2);ctx.clip();ctx.fillStyle='rgba(16,24,10,.3)';ell(B[0],B[1]+rb*.25,rb*1.3,rb*.95);ctx.fill();ctx.fillStyle='rgba(0,0,0,.14)';ell((A[0]+B[0])/2+ra*.75,(A[1]+B[1])/2,ra*.6,ra*1.7);ctx.fill();ctx.restore()}
 // a hand: palm + three hooked fingers in 3D; fd = where the fingers point, pd = where the palm faces.
 // The fingers foreshorten when they point at the camera instead of spinning round.
 function hand(V0,h,fd,r,col,nail,pd){const{P}=V0;pd=pd||[1,0,-1];let cv=sub(pd,mul(fd,dot(pd,fd)));
@@ -73,7 +76,7 @@ function hand(V0,h,fd,r,col,nail,pd){const{P}=V0;pd=pd||[1,0,-1];let cv=sub(pd,m
   const path=f=>{ctx.beginPath();ctx.moveTo(f[0][0],f[0][1]);ctx.quadraticCurveTo(f[1][0],f[1][1],f[2][0],f[2][1])};
   ctx.lineCap='round';ctx.strokeStyle=INK;ctx.lineWidth=w+2.4;for(const f of fg){path(f);ctx.stroke()}ctx.fillStyle=INK;ball(q,r+1.25);ctx.fill();
   ctx.fillStyle=col;ball(q,r);ctx.fill();ctx.strokeStyle=col;ctx.lineWidth=w;for(const f of fg){path(f);ctx.stroke()}
-  ctx.fillStyle=nail;for(const f of fg){ball(f[2],w*.62);ctx.fill()}}
+  ctx.fillStyle=nail;for(const f of fg){ball(f[2],w*.62);ctx.fill()}ctx.save();ball(q,r);ctx.clip();ctx.fillStyle='rgba(0,0,0,.2)';ell(q[0]+r*.45,q[1]+r*.45,r*.8,r*.6);ctx.fill();glowTop(q,r,.2);ctx.restore()}
 // a fist closed round a handle
 function fist(V0,h,r,col){const q=V0.P(h);ink(2.2);ball(q,r);ctx.fillStyle=col;ctx.fill();ctx.stroke();ctx.strokeStyle='rgba(20,16,14,.45)';ctx.lineWidth=1;ctx.beginPath();ctx.arc(q[0],q[1],r*.55,-.4,1.2);ctx.stroke()}
 // a thin bony limb: each bone tapers from joint to joint (rs = radius at each joint); knobs = bumps on the joints, [screen point, r].
@@ -105,27 +108,56 @@ function claw(V0,h,fd,r,col,nail,pd,fl){const{P}=V0;pd=pd||[1,0,-1];let cv=sub(p
 // hanging down the arm. Its root melts into the shirt wherever it lies over the body (`body` makes a path of the inside of the
 // body's outline), so the arm grows out of the shirt instead of wearing a ball on the shoulder; on the edge of the body the
 // outline stays. Without `body`, rk says how much of the root to melt (1 where the shoulder sits on the edge of the body)
-function rag(V0,s3,e3,r0,r1,col,body,rk){const{P}=V0,A=P(s3),B=P(e3);let ux=B[0]-A[0],uy=B[1]-A[1];const pl=Math.hypot(ux,uy),k=cl(pl/(len(sub(e3,s3))||1),0,1);
+function rag(V0,s3,e3,r0,r1,col,body,rk,shade){const{P}=V0,A=P(s3),B=P(e3);let ux=B[0]-A[0],uy=B[1]-A[1];const pl=Math.hypot(ux,uy),k=cl(pl/(len(sub(e3,s3))||1),0,1);
   if(pl<.01){ux=0;uy=1}else{ux/=pl;uy/=pl}const th=Math.atan2(uy,ux),pts=[],TL=[0,1.1,0,1.6,0,.9,0],RR=[1,1,.78,1,.78,1,1];
   for(let i=0;i<=10;i++){const an=th+Math.PI/2+i/10*Math.PI;pts.push([A[0]+Math.cos(an)*r0,A[1]+Math.sin(an)*r0])}
   for(let j=0;j<=6;j++){const an=th-Math.PI/2+j/6*Math.PI,rr=r1*RR[j],tl=TL[j]*k*r1/2.1;pts.push([B[0]+Math.cos(an)*rr+ux*tl,B[1]+Math.sin(an)*rr+uy*tl])}
   ctx.beginPath();for(const q of pts)ctx.lineTo(q[0],q[1]);ctx.closePath();ctx.lineJoin='round';ctx.strokeStyle=INK;ctx.lineWidth=2.6;ctx.stroke();ctx.fillStyle=col;ctx.fill();
+  if(shade){ctx.save();ctx.clip();let nx=-uy,ny=ux;if(nx+ny>0){nx=-nx;ny=-ny}ctx.lineCap='round';ctx.strokeStyle=shade;ctx.lineWidth=(r0+r1)*.5;seg([A[0]-nx*r0*.75,A[1]-ny*r0*.75],[B[0]-nx*r1*.75+ux*2,B[1]-ny*r1*.75+uy*2]);ctx.stroke();
+    ctx.strokeStyle=`rgba(${WARM},.16)`;ctx.lineWidth=(r0+r1)*.16;seg([A[0]+nx*r0*.55,A[1]+ny*r0*.55],[B[0]+nx*r1*.55,B[1]+ny*r1*.55]);ctx.stroke();ctx.restore()}
   if(body){ctx.save();body();ctx.clip();ctx.fillStyle=col;ball(A,r0+1.45);ctx.fill();ctx.restore()}
   else if(rk>0){ctx.save();ctx.globalAlpha=rk;ctx.fillStyle=col;ball(A,r0+1.3);ctx.fill();ctx.restore()}}
 // a leg from the hip: IK knee, seamless thigh and shin, and a shoe that is a little 3D capsule from heel to toe
-function leg(V0,hip,foot,o){const{P}=V0,[kn,f]=ik(hip,add(foot,[0,0,o.ank||1.6]),o.L1,o.L2,o.pole||[1,0,.15]);
-  limb([P(hip),P(kn),P(f)],[o.w1,o.w2],o.col,()=>{ink(2.4);ctx.fillStyle=o.shoe;hull(P(add(f,[-o.heel,0,-.4])),o.sr,P(add(f,[o.toe,0,-.6])),o.sr*1.08);ctx.fill();ctx.stroke()})}
+function leg(V0,hip,foot,o){const{P}=V0,[kn,f]=ik(hip,add(foot,[0,0,o.ank||1.6]),o.L1,o.L2,o.pole||[1,0,.15]),pts=[P(hip),P(kn),P(f)];
+  limb(pts,[o.w1,o.w2],o.col,()=>{const h0=P(add(f,[-o.heel,0,-.4])),t0=P(add(f,[o.toe,0,-.6]));ink(2.4);ctx.fillStyle=o.shoe;hull(h0,o.sr,t0,o.sr*1.08);ctx.fill();ctx.stroke();
+    ctx.save();hull(h0,o.sr-1.2,t0,o.sr*1.08-1.2);ctx.clip();ctx.fillStyle='rgba(0,0,0,.25)';ell((h0[0]+t0[0])/2+o.sr*.5,(h0[1]+t0[1])/2+o.sr*.6,o.sr*2,o.sr*.7);ctx.fill();ctx.restore();rim(h0,o.sr,t0,o.sr*1.08,.24)});
+  shadeLimb(pts,[o.w1/2,o.w2/2],o.colD||'rgba(0,0,0,.24)')}
 // a trunk: capsule from the pelvis ball to the chest ball, a ragged hem under the pelvis, soft shading inside
-function trunk(V0,Pv,rP,Ch,rC,col,colD,teeth){const{P}=V0,a=P(Pv),b=P(Ch);ink(2.4);
+// o.folds: angles of the folds down the cloth (painted like the lantern zombie's cloak)
+function trunk(V0,Pv,rP,Ch,rC,col,colD,teeth,o){o=o||{};const{P}=V0,a=P(Pv),b=P(Ch);ink(2.4);
   if(teeth){const n=teeth*2,pts=[];for(let i=0;i<=n;i++){const an=Math.PI*(.14+.72*i/n),r=rP+(i%2?1.9+(i%4===1?.9:0):-.2);pts.push([a[0]+Math.cos(an)*r,a[1]+Math.sin(an)*r])}
-    ctx.fillStyle=col;ctx.beginPath();for(const q of pts)ctx.lineTo(q[0],q[1]);ctx.lineTo(a[0],a[1]);ctx.closePath();ctx.fill();ctx.beginPath();for(const q of pts)ctx.lineTo(q[0],q[1]);ctx.stroke()}
+    const tp=()=>{ctx.beginPath();for(const q of pts)ctx.lineTo(q[0],q[1]);ctx.lineTo(a[0],a[1]);ctx.closePath()};ctx.fillStyle=col;tp();ctx.fill();
+    ctx.save();tp();ctx.clip();ctx.fillStyle=colD;ell(a[0]+rP*.55,a[1]+rP*.55,rP,rP*.75);ctx.fill();ctx.restore();ctx.beginPath();for(const q of pts)ctx.lineTo(q[0],q[1]);ctx.stroke()}
   hull(a,rP,b,rC);ctx.fillStyle=col;ctx.fill();ctx.stroke();
   ctx.save();hull(a,rP-1.3,b,rC-1.3);ctx.clip();ctx.fillStyle=colD;ell(a[0]+rP*.55,a[1]+rP*.55,rP,rP*.75);ctx.fill();ell(b[0]+rC*.78,b[1]+rC*.2,rC*.55,rC);ctx.fill();
-  ctx.fillStyle='rgba(255,255,255,.07)';ell(b[0]-rC*.38,b[1]-rC*.45,rC*.42,rC*.28);ctx.fill();ctx.restore()}
+  on(V0,lerp3(Pv,Ch,.6),lerp(rP,rC,.6),[-.75,0,.65],-.2,q=>{ctx.fillStyle=`rgba(${WARM},.13)`;ell(q[0],q[1],rC*.75,rC*.42);ctx.fill()});
+  ctx.fillStyle=`rgba(${WARM},.12)`;ell(b[0]-rC*.38,b[1]-rC*.45,rC*.48,rC*.3);ctx.fill();
+  if(o.folds)folds(V0,Ch,rC,Pv,rP,o.folds,.4,o.fz0,o.fz1);
+  if(o.neck){const q=P(add(Ch,[1,0,rC*.8]));ctx.fillStyle='rgba(8,12,16,.3)';ell(q[0],q[1]+1,rC*.55,rC*.32);ctx.fill()}
+  ctx.restore();if(!o.noRim)rim(a,rP,b,rC,.34)}
+// ------------------------------------------------------------------ the lantern zombie's way of painting, used by every other monster
+// The light comes from the upper left and is warm. Every piece gets three tones (its colour, a darker side away from the light, a soft
+// warm light toward it), a thin warm rim just inside its outline on the lit side, and fine marks (folds, blotches, strokes).
+// These change only how the pieces are painted, never what the pieces are. The lantern zombie keeps its own functions, untouched.
+const WARM='255,238,205';
+// a thin warm rim inside a capsule or ball outline (screen centres a,b and radii ra,rb), fading out away from the upper left
+function rim(a,ra,b,rb,al){const cx=(a[0]+b[0])/2,cy=(a[1]+b[1])/2,R=Math.max(ra,rb)+Math.hypot(b[0]-a[0],b[1]-a[1])/2,g=ctx.createLinearGradient(cx-R*.8,cy-R*.8,cx+R*.15,cy+R*.15);
+  g.addColorStop(0,`rgba(${WARM},${al||.3})`);g.addColorStop(1,`rgba(${WARM},0)`);ctx.save();ctx.strokeStyle=g;ctx.lineWidth=1.3;hull(a,Math.max(.4,ra-1.9),b,Math.max(.4,rb-1.9));ctx.stroke();ctx.restore()}
+// three tones on a limb that is already drawn (screen points, fill radii): a darker side away from the light, a thin warm light on the lit side
+function shadeLimb(pts,rs,colD,al){for(let i=0;i<pts.length-1;i++){const A=pts[i],B=pts[i+1],ra=rs[i],rb=rs[i+1];let dx=B[0]-A[0],dy=B[1]-A[1];const l=Math.hypot(dx,dy);if(l<.4)continue;dx/=l;dy/=l;
+    let nx=-dy,ny=dx;if(nx+ny>0){nx=-nx;ny=-ny}
+    ctx.save();hull(A,ra,B,rb);ctx.clip();ctx.lineCap='round';ctx.strokeStyle=colD;ctx.lineWidth=(ra+rb)*.44;seg([A[0]-nx*ra*.66,A[1]-ny*ra*.66],[B[0]-nx*rb*.66,B[1]-ny*rb*.66]);ctx.stroke();
+    ctx.strokeStyle=`rgba(${WARM},${al||.17})`;ctx.lineWidth=Math.max(.5,(ra+rb)*.17);seg([A[0]+nx*ra*.52,A[1]+ny*ra*.52],[B[0]+nx*rb*.52,B[1]+ny*rb*.52]);ctx.stroke();ctx.restore()}}
+// a soft warm light on the upper left of a ball (screen centre q, radius r)
+function glowTop(q,r,al){ctx.fillStyle=`rgba(${WARM},${al||.1})`;ell(q[0]-r*.32,q[1]-r*.42,r*.55,r*.36);ctx.fill()}
+// thin folds down a piece of cloth, from the chest ball to the lower ball, only on the side that faces us (angles round the body)
+function folds(V0,Ch,rC,Pv,rP,angs,al,z0,z1){const{P,F}=V0;ctx.strokeStyle=`rgba(20,14,10,${al||.4})`;ctx.lineWidth=1.1;ctx.lineCap='round';
+  for(const an of angs){const d=[Math.cos(an),Math.sin(an),0];if(F(d)<.12)continue;const p0=P(add(Ch,mul(nrm([d[0],d[1],z0===undefined?-.25:z0]),rC*.9))),p1=P(add(Pv,mul(nrm([d[0],d[1],z1===undefined?-.65:z1]),rP*.96)));
+    ctx.beginPath();ctx.moveTo(p0[0],p0[1]);ctx.quadraticCurveTo((p0[0]+p1[0])/2+1,(p0[1]+p1[1])/2,p1[0],p1[1]);ctx.stroke()}}
 function run(parts){parts.sort((a,b)=>a.d-b.d);for(const q of parts){ink(2.4);q.f()}}
 
 // ------------------------------------------------------------------ shared zombie parts
-const ZC={skin:'#88a06c',skinD:'#647c50',skinF:'#55693f',cloth:'#3a454e',clothD:'#262e35',clothF:'#252c33',pants:'#2f2a26',pantsF:'#1c1816',shoe:'#1f1b18',
+const ZC={skin:'#8dab6d',skinD:'#66814f',skinF:'#56703f',cloth:'#3f505e',clothD:'#28343f',clothF:'#252f38',pants:'#3a3029',pantsF:'#211b17',shoe:'#231d19',
   bone:'#e6dcc0',socket:'#141010',eye:'#e9ff7a',mouth:'#2a0c0c',gum:'#6a1a1a',nail:'#1e1a14',rot:'#3f5233'};
 // an arm from its shoulder socket: IK elbow, seamless upper arm and forearm, a clawed hand, a torn sleeve over the root.
 // o.bony: a thin dead arm (w1 at the shoulder, we at the elbow, w2 at the wrist) with a knobbly elbow, a tight torn sleeve
@@ -136,24 +168,26 @@ function zArm(V0,sh,hd,pole,o){const{P}=V0,[el,h]=ik(sh,hd,o.L1,o.L2,pole),a=P(s
   if(o.bony){// the elbow knob grows with the bend and sits on the outside of it: a straight arm has no bump
     const re=o.we/2,out=sub(el,lerp3(sh,h,.5)),ol=len(out),bend=cl(ol/(o.L1*.45),0,1),kq=P(ol>.05?add(el,mul(out,re*.4*bend/ol)):el),
       end=o.noHand?null:()=>claw(V0,h,fd,o.hand,o.skin,o.nail||ZC.nail,o.pd,o.fl);
-    bone([a,e,P(h)],[o.w1/2,re,o.w2/2],o.skin,end,[[kq,re*(1+.16*bend)]]);
-    if(o.sleeve)rag(V0,sh,lerp3(sh,el,o.sleeveK||.6),o.sleeve/2,o.sleeve/2*.9,o.cloth,o.body,rk);
+    bone([a,e,P(h)],[o.w1/2,re,o.w2/2],o.skin,end,[[kq,re*(1+.16*bend)]]);if(o.shade)shadeLimb([a,e,P(h)],[o.w1/2,re,o.w2/2],o.shade);
+    if(o.sleeve)rag(V0,sh,lerp3(sh,el,o.sleeveK||.6),o.sleeve/2,o.sleeve/2*.9,o.cloth,o.body,rk,o.clothD);
     return{el,h}}
   const end=o.noHand?null:()=>hand(V0,h,fd,o.hand,o.skin,o.nail||ZC.nail,o.pd);
-  if(o.full){const w3=lerp3(el,h,.78);if(end)end();limb([a,e,P(w3)],[o.w1,o.w2],o.cloth);if(rk>0){ctx.save();ctx.globalAlpha=rk;ctx.fillStyle=o.cloth;ball(a,o.w1*.5+1.3);ctx.fill();ctx.restore()}if(o.cuff)cuff(V0,w3,el,o.w2+1,o.cloth)}
+  if(o.full){const w3=lerp3(el,h,.78);if(end)end();limb([a,e,P(w3)],[o.w1,o.w2],o.cloth);if(o.clothD)shadeLimb([a,e,P(w3)],[o.w1/2,o.w2/2],o.clothD);if(rk>0){ctx.save();ctx.globalAlpha=rk;ctx.fillStyle=o.cloth;ball(a,o.w1*.5+1.3);ctx.fill();ctx.restore()}if(o.cuff)cuff(V0,w3,el,o.w2+1,o.cloth)}
   else{limb([a,e,P(h)],[o.w1,o.w2],o.skin,end);if(o.sleeve){const s3=lerp3(sh,el,o.sleeveK||.6);sleeve(a,P(s3),o.sleeve,o.cloth,rk);if(o.cuff)cuff(V0,s3,sh,o.sleeve,o.cloth)}}
   return{el,h}}
 // a zombie head: hollow sockets with pinpoint lights, hanging jaw with broken teeth, a few hairs, a stitched crack on the back, a scar
 function zHead(V0,Hc,R,ph,o){const{P,c}=V0,h=P(Hc),t=G.t,at=R*.95;o=o||{};
   ink(2.4);ball(h,R);ctx.fillStyle=o.skin||ZC.skin;ctx.fill();ctx.stroke();
   const lit=[];ctx.save();ball(h,R-1.1);ctx.clip();ctx.fillStyle=o.skinD||ZC.skinD;ell(h[0]+R*.3,h[1]+R*.74,R*1.15,R*.62);ctx.fill();
+  for(const[d,sz] of[[[-.45,-.6,.62],.22],[[-.85,.35,.38],.2],[[.15,.8,.55],.16],[[-.3,.15,.95],.15],[[.45,-.85,-.15],.17],[[-.6,-.25,-.75],.2]])on(V0,Hc,at,d,-.15,q=>{ctx.fillStyle=o.skinD||ZC.skinD;ell(q[0],q[1],R*sz,R*sz*.72);ctx.fill()});
+  glowTop(h,R,.17);
   if(!o.helmet)on(V0,Hc,at,[-.15,-.5,.85],-.3,q=>{ctx.fillStyle=ZC.rot;ell(q[0],q[1],R*.3,R*.19);ctx.fill()});
   on(V0,Hc,at,[-1,.1,.25],.05,q=>{ctx.strokeStyle=INK;ctx.lineWidth=1.2;ctx.beginPath();ctx.moveTo(q[0]-3,q[1]-2);ctx.lineTo(q[0],q[1]);ctx.lineTo(q[0]+2.6,q[1]-2.4);for(let i=0;i<3;i++){const xx=q[0]-2.4+i*2.2;ctx.moveTo(xx-.8,q[1]-2.6+i*.4);ctx.lineTo(xx+.8,q[1]-.4+i*.4)}ctx.stroke()});
   if(!o.noScar)on(V0,Hc,at,[.15,1,-.1],.05,q=>{ctx.strokeStyle=INK;ctx.lineWidth=1.1;ctx.beginPath();ctx.moveTo(q[0]-2,q[1]-2);ctx.lineTo(q[0]+2,q[1]+2);ctx.moveTo(q[0]-1.4,q[1]+.6);ctx.lineTo(q[0]-.2,q[1]-.8);ctx.moveTo(q[0]+.4,q[1]+1.8);ctx.lineTo(q[0]+1.6,q[1]+.4);ctx.stroke()});
   for(const sd of[-1,1])on(V0,Hc,at,[.8,sd*.4,.16],0,(q,v)=>{const big=sd>0?1.15:.9;ink(1.5);ctx.fillStyle=ZC.socket;ctx.beginPath();ctx.ellipse(q[0],q[1],R*.3*big*Math.max(.45,v),R*.34*big,0,0,TAU);ctx.fill();ctx.stroke();
     if(!(o.deadEye&&sd<0))lit.push([q,big,cl(v*4,0,1)])});
-  ctx.restore();
-  for(const[q,big,k] of lit){shine('230,255,120',q[0],q[1],R*.55,(.5+.1*Math.sin(t*5+big))*k);ctx.fillStyle=ZC.eye;ball([q[0]+c*.3,q[1]+.2],R*.12*big*k);ctx.fill()}
+  ctx.restore();rim(h,R,h,R);
+  for(const[q,big,k] of lit){const e=[q[0]+c*.3,q[1]+.2],er=R*.12*big*k;shine('230,255,120',q[0],q[1],R*.72,(.55+.1*Math.sin(t*5+big))*k);ctx.fillStyle=ZC.eye;ball(e,er);ctx.fill();ctx.fillStyle='#ffffff';ball([e[0]-er*.35,e[1]-er*.35],er*.42);ctx.fill()}
   {const n=nrm([.8,0,-.5]),hv=n[0]*V0.s,q=P(add(Hc,mul(n,at))),v=Math.max(0,V0.F(n));if(hv>-.15){ctx.save();ctx.globalAlpha=cl((hv+.15)*4,0,1);const op=o.open||0,w=R*.52*Math.max(.38,v,Math.abs(V0.c)*.3),hh=R*.22+op*R*.3;ink(1.6);ctx.fillStyle=ZC.mouth;ctx.beginPath();ctx.ellipse(q[0],q[1]+hh*.35,w,hh,0,0,TAU);ctx.fill();ctx.stroke();
     ctx.fillStyle=ZC.gum;ctx.fillRect(q[0]-w*.8,q[1]-hh*.6,w*1.6,1);ctx.fillStyle=ZC.bone;ink(.8);
     for(let i=0;i<4;i++){const xx=q[0]-w*.75+i*w*.5;tri(xx,q[1]-hh*.5,xx,q[1]-hh*.5+(i===1?2.4:1.5),.8)}
@@ -174,8 +208,8 @@ function zombie(x,y,face,anim,p,sc){sc=sc||1.1;const V0=V(face),{P,D,F}=V0,ph=p*
   {const q=P(L*.7+2,0,0);shadow(x+q[0]*sc,y+q[1]*sc,11*sc,4.4*sc,.34)}
   ctx.save();ctx.translate(x,y);ctx.scale(sc,sc);const parts=[],dT=D(Ch);
   for(const[sd,f] of[[-1,fL],[1,fR]]){const hip=add(Pv,[0,sd*3.4,-3.3]),foot=[L*.4+1+f.x,sd*4.4,f.z],k=farK(F(0,sd,0));
-    parts.push({d:dT-100+D(hip)*.01,f:()=>leg(V0,hip,foot,{L1:4.8,L2:4.8,w1:4.6,w2:4,col:mix(ZC.pants,ZC.pantsF,k),shoe:ZC.shoe,heel:1.3,toe:2.6,sr:2.2})})}
-  parts.push({d:dT,f:()=>{trunk(V0,Pv,6.2,Ch,8.4,ZC.cloth,ZC.clothD,5);
+    parts.push({d:dT-100+D(hip)*.01,f:()=>leg(V0,hip,foot,{L1:4.8,L2:4.8,w1:4.6,w2:4,col:mix(ZC.pants,ZC.pantsF,k),colD:'rgba(0,0,0,.3)',shoe:ZC.shoe,heel:1.3,toe:2.6,sr:2.2})})}
+  parts.push({d:dT,f:()=>{trunk(V0,Pv,6.2,Ch,8.4,ZC.cloth,ZC.clothD,5,{folds:[-1.1,-.45,.25,.95,2.5,3.15,3.8],neck:1});
     // a hole in the shirt over the ribs (front, left side); spine bumps and a tear on the back
     on(V0,Ch,8,[.82,-.55,-.1],.12,(q,v)=>{const w=Math.max(.4,v);ink(1.6);ctx.fillStyle=ZC.rot;ctx.beginPath();ctx.ellipse(q[0],q[1],4*w,3.3,0,0,TAU);ctx.fill();ctx.stroke();
       ctx.strokeStyle=ZC.bone;ctx.lineWidth=1.4;for(let i=0;i<2;i++){ctx.beginPath();ctx.moveTo(q[0]-3.2*w,q[1]-.6+i*2.2);ctx.quadraticCurveTo(q[0],q[1]-2.4+i*2.2,q[0]+3.2*w,q[1]-.6+i*2.2);ctx.stroke()}});
@@ -184,7 +218,7 @@ function zombie(x,y,face,anim,p,sc){sc=sc||1.1;const V0=V(face),{P,D,F}=V0,ph=p*
   // arms reach forward; raised high and back over the head when it rears back (so they never cover the face), then they rake down
   for(const sd of[-1,1]){const sh=add(Ch,[0,sd*7,3]),sw=walk?Math.sin(ph+(sd>0?Math.PI:0))*1.1:Math.sin(ph+sd)*.4,
       hd=add(Ch,[10-upP*12+reach*5,sd*(10+upP*2-reach*2),-.5+up*15.5+sw]),k=farK(F(0,sd,0));
-    parts.push({d:D(add(sh,[7,0,0])),f:()=>zArm(V0,sh,hd,nrm([-.3*upP,sd*.6,-1+1.5*upP]),{side:sd,L1:5.8,L2:5.8,bony:1,w1:3.4,we:3,w2:2.2,hand:1.8,fl:5.6,skin:mix(ZC.skin,ZC.skinF,k),cloth:mix(ZC.cloth,ZC.clothF,k),sleeve:4.6,sleeveK:.36,body:()=>hull(P(Pv),5,P(Ch),7.2)})})}
+    parts.push({d:D(add(sh,[7,0,0])),f:()=>zArm(V0,sh,hd,nrm([-.3*upP,sd*.6,-1+1.5*upP]),{side:sd,L1:5.8,L2:5.8,bony:1,w1:3.4,we:3,w2:2.2,hand:1.8,fl:5.6,skin:mix(ZC.skin,ZC.skinF,k),cloth:mix(ZC.cloth,ZC.clothF,k),shade:'rgba(40,58,26,.42)',clothD:'rgba(0,0,0,.28)',sleeve:4.6,sleeveK:.36,body:()=>hull(P(Pv),5,P(Ch),7.2)})})}
   parts.push({d:D(Hc),f:()=>{neck(V0,add(Ch,[1.6,0,6.8]),3.8,add(Hc,[-.8,0,-5.6]),3.4,ZC.skin);zHead(V0,Hc,8.2,ph,{open:atk&&p>.25&&p<.7?1:.45+.2*Math.sin(ph*2)})}});
   run(parts);ctx.restore()}
 
@@ -199,15 +233,16 @@ function strisciante(x,y,face,anim,p,sc){sc=sc||1.1;const V0=V(face),{P,D,F}=V0,
   ctx.save();ctx.translate(x,y);ctx.scale(sc,sc);const parts=[],dT=D(lerp3(Wb,Ch,.6));
   // the spine and the rags trail on the floor behind the waist: always under the body
   parts.push({d:dT-100,f:()=>{ctx.fillStyle=ZC.clothD;ink(1.3);for(let i=0;i<3;i++){const r=P(add(Wb,[-2,(i-1)*3.2,-2.5])),e=P(B-12.5+i*1.4,(i-1)*5.2+Math.sin(ph+i)*.8,.4);spike(r,e,2.2)}
-    for(let i=4;i>=0;i--){const k=i/4,q=P(add(Wb,[-3.5-k*8.5,Math.sin(ph+1+k*2)*1.6*k-wig*k,lerp(-1.6,-3.6,k)])),r=lerp(2.1,1.1,k);ink(1.3);ctx.fillStyle=ZC.bone;ctx.beginPath();ctx.ellipse(q[0],q[1],r*1.25,r,0,0,TAU);ctx.fill();ctx.stroke()}}});
-  parts.push({d:dT,f:()=>{trunk(V0,Wb,5,Ch,7.2,ZC.cloth,ZC.clothD,0);
+    for(let i=4;i>=0;i--){const k=i/4,q=P(add(Wb,[-3.5-k*8.5,Math.sin(ph+1+k*2)*1.6*k-wig*k,lerp(-1.6,-3.6,k)])),r=lerp(2.1,1.1,k);ink(1.3);ctx.fillStyle=ZC.bone;ctx.beginPath();ctx.ellipse(q[0],q[1],r*1.25,r,0,0,TAU);ctx.fill();ctx.stroke();
+      ctx.save();ctx.clip();ctx.fillStyle='rgba(110,86,52,.45)';ell(q[0]+r*.45,q[1]+r*.45,r*1.1,r*.8);ctx.fill();ctx.fillStyle=`rgba(${WARM},.5)`;ell(q[0]-r*.4,q[1]-r*.35,r*.42,r*.26);ctx.fill();ctx.restore()}}});
+  parts.push({d:dT,f:()=>{trunk(V0,Wb,5,Ch,7.2,ZC.cloth,ZC.clothD,0,{folds:[-1.3,-.7,.7,1.3],fz0:.55,fz1:.5});
     // the torn back of the shirt shows the spine and the ribs
     const A=P(Wb),Bq=P(Ch),ax=Bq[0]-A[0],ay=Bq[1]-A[1],al=Math.hypot(ax,ay)||1,ux=ax/al,uy=ay/al;
     on(V0,lerp3(Wb,Ch,.45),6.2,[-.1,0,1],-.6,q=>{ink(1.3);ctx.fillStyle=ZC.rot;ctx.beginPath();ctx.ellipse(q[0],q[1],3,2,Math.atan2(uy,ux),0,TAU);ctx.fill();ctx.stroke();
       ctx.strokeStyle='rgba(230,220,192,.85)';ctx.lineWidth=1;for(let i=-.5;i<=.5;i++){const cx=q[0]+ux*i*1.6,cy=q[1]+uy*i*1.6;seg([cx+uy*1.5,cy-ux*1.5],[cx-uy*1.5,cy+ux*1.5]);ctx.stroke()}})}});
   // long arms: shoulders on the chest, hands planted on the floor ahead, elbows out to the sides
   for(const[sd,f] of[[-1,hL],[1,hR]]){const sh=add(Ch,[1.4,sd*6,1]),hd=[10.1+f.x*1.2+lunge*1.1,sd*8.8,f.z+(atk?lunge*.25:0)],k=farK(F(0,sd,0));
-    parts.push({d:D(add(sh,[4,0,0])),f:()=>zArm(V0,sh,hd,nrm([-.5,sd,.25]),{side:sd,L1:7.4,L2:7.8,bony:1,w1:3.4,we:3,w2:2.2,hand:1.9,fl:6,fd:nrm([1,sd*.3,-.25]),pd:[0,0,-1],skin:mix(ZC.skin,ZC.skinF,k),cloth:mix(ZC.cloth,ZC.clothF,k),sleeve:4.4,sleeveK:.32,body:()=>hull(P(Wb),3.8,P(Ch),6)})})}
+    parts.push({d:D(add(sh,[4,0,0])),f:()=>zArm(V0,sh,hd,nrm([-.5,sd,.25]),{side:sd,L1:7.4,L2:7.8,bony:1,w1:3.4,we:3,w2:2.2,hand:1.9,fl:6,fd:nrm([1,sd*.3,-.25]),pd:[0,0,-1],skin:mix(ZC.skin,ZC.skinF,k),cloth:mix(ZC.cloth,ZC.clothF,k),shade:'rgba(40,58,26,.42)',clothD:'rgba(0,0,0,.28)',sleeve:4.4,sleeveK:.32,body:()=>hull(P(Wb),3.8,P(Ch),6)})})}
   parts.push({d:D(Hc),f:()=>{neck(V0,add(Ch,[3,0,2.4]),3.4,add(Hc,[-2.6,0,-2.6]),3,ZC.skin);zHead(V0,Hc,6.8,ph,{open:atk&&p>.25&&p<.7?1:.55+.2*Math.sin(ph*2),noScar:true})}});
   run(parts);ctx.restore()}
 
@@ -229,19 +264,26 @@ function overalls(V0,Pv,rP,Ch,rC){const{P,F}=V0,k=.45,W=lerp3(Pv,Ch,k),rw=lerp(r
     seg(S(d1),S(d2));ctx.lineCap='round';ctx.strokeStyle=pass?MC.over:INK;ctx.lineWidth=pass?2.4:4.6;ctx.stroke()}
   for(const sd of[-1,1])on(V0,Ch,rC,[1,sd*.36,.32],0,q=>{ink(1);ctx.fillStyle=MC.button;ball(q,1);ctx.fill();ctx.stroke()});
   ctx.fillStyle='rgba(20,18,16,.35)';for(const d of[[1,.5,-.3],[.6,-.8,.2],[.9,-.2,.6],[-.7,.6,-.2]])on(V0,Pv,rP*.95,d,.1,q=>{ball(q,1.2);ctx.fill()});
-  ctx.restore()}
+  on(V0,Pv,rP,[-.6,-.1,.3],-.2,q=>{ctx.fillStyle=`rgba(${WARM},.1)`;ell(q[0],q[1],rP*.7,rP*.4);ctx.fill()});
+  ctx.strokeStyle='rgba(12,20,32,.45)';ctx.lineWidth=1.1;ctx.lineCap='round';for(const[d,dx] of[[[.85,-.45,-.3],1],[[.95,.25,-.25],-1],[[.3,.95,-.25],1],[[-.2,-.95,-.3],-1]])on(V0,Pv,rP*.96,d,.1,q=>{ctx.beginPath();ctx.moveTo(q[0]-1.6,q[1]-1.2);ctx.quadraticCurveTo(q[0],q[1]-.2*dx,q[0]+1.4,q[1]+1.6);ctx.stroke()});
+  if(fv>-.1){ctx.save();ctx.globalAlpha=cl((fv+.1)*4,0,1);const bq=S([1,-.2,.1]);ctx.fillStyle=`rgba(${WARM},.12)`;ell(bq[0],bq[1]-1.4,2.6,1.4);ctx.fill();ctx.restore()}
+  ctx.restore();rim(a,rP,b,rC,.34)}
 // the pickaxe: handle and a curved iron head, from a pose made by pose()
 function pickaxe(V0,k){const{P}=V0,h0=P(add(k.hd,mul(k.dir,-4.5))),h1=P(k.top);
   ctx.lineCap='round';ctx.strokeStyle=INK;ctx.lineWidth=5.2;seg(h0,h1);ctx.stroke();ctx.strokeStyle=MC.wood;ctx.lineWidth=2.6;ctx.stroke();
+  {let dx=h1[0]-h0[0],dy=h1[1]-h0[1];const l=Math.hypot(dx,dy)||1;dx/=l;dy/=l;let nx=-dy,ny=dx;if(nx+ny>0){nx=-nx;ny=-ny}ctx.strokeStyle=MC.woodD;ctx.lineWidth=1;seg([h0[0]-nx*.7,h0[1]-ny*.7],[h1[0]-nx*.7,h1[1]-ny*.7]);ctx.stroke();
+    ctx.strokeStyle=`rgba(${WARM},.3)`;ctx.lineWidth=.6;seg([h0[0]+nx*.6,h0[1]+ny*.6],[h1[0]+nx*.6,h1[1]+ny*.6]);ctx.stroke();ctx.strokeStyle=MC.woodD;ctx.lineWidth=.9;for(const u of[.3,.62]){const m=[lerp(h0[0],h1[0],u),lerp(h0[1],h1[1],u)];seg([m[0]-nx*.9,m[1]-ny*.9],[m[0]+dx*1.1,m[1]+dy*1.1]);ctx.stroke()}}
   const A=P(k.tA),B=P(k.tB),T=P(add(k.top,mul(k.dir,-1))),M=P(add(k.top,mul(k.dir,5.6)));
   ctx.strokeStyle=INK;ctx.lineWidth=1.8;ctx.lineJoin='round';ctx.fillStyle=MC.iron;ctx.beginPath();ctx.moveTo(A[0],A[1]);ctx.quadraticCurveTo(M[0],M[1],B[0],B[1]);ctx.quadraticCurveTo(T[0],T[1],A[0],A[1]);ctx.closePath();ctx.fill();ctx.stroke();
+  ctx.save();ctx.clip();ctx.strokeStyle=`rgba(${WARM},.4)`;ctx.lineWidth=1;ctx.beginPath();ctx.moveTo(A[0],A[1]);ctx.quadraticCurveTo(T[0],T[1],B[0],B[1]);ctx.stroke();ctx.fillStyle='rgba(30,32,40,.3)';ctx.beginPath();ctx.moveTo(A[0],A[1]);ctx.quadraticCurveTo(M[0],M[1],B[0],B[1]);ctx.lineWidth=2.4;ctx.strokeStyle='rgba(30,32,40,.35)';ctx.stroke();ctx.restore();
   ctx.fillStyle=MC.ironD;ball(P(add(k.top,mul(k.dir,1))),1.7);ctx.fill();ctx.stroke();ctx.fillStyle='rgba(120,60,30,.6)';ball(P(add(add(k.top,mul(k.u,3.4)),mul(k.dir,1.6))),1);ctx.fill()}
 // the miner's helmet: brim, dome with a ridge, and the lamp on the front (lit only where it faces us)
 function helmet(V0,Hc,R,t){const{P,F}=V0,C0=add(Hc,[-.5,0,R*.5]),hb=P(C0),bw=R+1.2,rd=R*.92;ink(2);ctx.fillStyle=MC.helmD;ell(hb[0],hb[1],bw,bw*.55);ctx.fill();ctx.stroke();
   ctx.fillStyle=MC.helm;ctx.beginPath();ctx.arc(hb[0],hb[1],rd,Math.PI,0);ctx.ellipse(hb[0],hb[1],rd,rd*.55,0,0,Math.PI);ctx.closePath();ctx.fill();ctx.stroke();
   ctx.save();ctx.clip();ctx.fillStyle=MC.helmD;ell(hb[0]+rd*.55,hb[1]+rd*.2,rd*.6,rd*.9);ctx.fill();ctx.fillStyle='rgba(255,255,255,.3)';ell(hb[0]-rd*.4,hb[1]-rd*.55,rd*.3,rd*.15);ctx.fill();
+  ctx.strokeStyle='rgba(255,246,215,.45)';ctx.lineWidth=1.2;ctx.beginPath();ctx.arc(hb[0],hb[1],rd-1.5,Math.PI*1.08,Math.PI*1.55);ctx.stroke();
   ctx.strokeStyle=MC.helmD;ctx.lineWidth=1.6;ctx.beginPath();let first=true;for(let i=0;i<=12;i++){const th=.25+i*(Math.PI-.5)/12,d=[Math.cos(th),0,Math.sin(th)];if(F(d)<0){first=true;continue}const q=P(add(C0,mul(d,rd*.98)));if(first){ctx.moveTo(q[0],q[1]);first=false}else ctx.lineTo(q[0],q[1])}ctx.stroke();ctx.restore();
-  on(V0,C0,rd*.92,[1,0,.5],-.35,(q,v)=>{shine('255,230,150',q[0],q[1],8,.7*cl(v+.35,0,1));ink(1.3);ctx.fillStyle='#5a5f68';ball(q,2.6);ctx.fill();ctx.stroke();ctx.fillStyle='#fff6c8';ball(q,1.6*Math.max(.3,v));ctx.fill()})}
+  on(V0,C0,rd*.92,[1,0,.5],-.35,(q,v)=>{shine('255,230,150',q[0],q[1],11,.62*cl(v+.35,0,1));shine('255,245,200',q[0],q[1],5,.5*cl(v+.35,0,1));ink(1.3);ctx.fillStyle='#5a5f68';ball(q,2.6);ctx.fill();ctx.stroke();ctx.fillStyle='#fff6c8';ball(q,1.6*Math.max(.3,v));ctx.fill()})}
 function minatore(x,y,face,anim,p,sc){sc=sc||1.1;const V0=V(face),{P,D,F}=V0,ph=p*TAU,walk=anim==='walk',atk=anim==='attack',t=G.t;
   // the pick turns round the shoulder: a=0 points forward, π/2 straight up, more than π/2 behind the head.
   // attack: .0-.18 crouches and pulls the pick back, .18-.42 lifts it high over the head (with a small overshoot),
@@ -266,15 +308,15 @@ function minatore(x,y,face,anim,p,sc){sc=sc||1.1;const V0=V(face),{P,D,F}=V0,ph=
   if(!LOWFX){const q=P(Ch[0]+14,Ch[1],0);ctx.save();ctx.globalCompositeOperation='lighter';glow('255,230,150',x+q[0]*sc,y+q[1]*sc,10*sc,.2+.04*Math.sin(t*9),5*sc);ctx.restore()}
   ctx.save();ctx.translate(x,y);ctx.scale(sc,sc);const parts=[],dT=D(Ch);
   for(const[sd,f] of[[-1,fL],[1,fR]]){const hip=add(Pv,[0,sd*3.4,-3.3]),foot=[L*.4+1+f.x,sd*4.3,f.z],k=farK(F(0,sd,0));
-    parts.push({d:dT-100+D(hip)*.01,f:()=>leg(V0,hip,foot,{L1:4.4,L2:4.6,w1:4.8,w2:4.2,col:mix(MC.over,MC.overF,k),shoe:MC.boot,heel:1.4,toe:2.6,sr:2.4})})}
-  parts.push({d:dT,f:()=>{trunk(V0,Pv,6.3,Ch,8.2,MC.shirt,MC.shirtD,0);overalls(V0,Pv,6.3,Ch,8.2)}});
+    parts.push({d:dT-100+D(hip)*.01,f:()=>leg(V0,hip,foot,{L1:4.4,L2:4.6,w1:4.8,w2:4.2,col:mix(MC.over,MC.overF,k),colD:'rgba(0,0,0,.28)',shoe:MC.boot,heel:1.4,toe:2.6,sr:2.4})})}
+  parts.push({d:dT,f:()=>{trunk(V0,Pv,6.3,Ch,8.2,MC.shirt,MC.shirtD,0,{noRim:1,neck:1});overalls(V0,Pv,6.3,Ch,8.2)}});
   // left arm hangs and swings
   {const sh=add(Ch,[0,-7.6,1.4]),sw=walk?Math.sin(ph)*2.4:Math.sin(ph)*.3,hd=add(sh,[2.5+sw,-1.6,-11.6+crouch*.5]),k=farK(F(0,-1,0));
-    parts.push({d:D(add(sh,[2,0,0])),f:()=>zArm(V0,sh,hd,[-1,0,-.1],{side:-1,L1:6,L2:6.2,bony:1,w1:3.4,we:3,w2:2.2,hand:1.8,fl:5.4,pd:[.5,1,0],skin:mix(ZC.skin,ZC.skinF,k),cloth:mix(MC.shirt,MC.shirtF,k),sleeve:4.6,sleeveK:.4,body:()=>hull(P(Pv),5.1,P(Ch),7)})})}
+    parts.push({d:D(add(sh,[2,0,0])),f:()=>zArm(V0,sh,hd,[-1,0,-.1],{side:-1,L1:6,L2:6.2,bony:1,w1:3.4,we:3,w2:2.2,hand:1.8,fl:5.4,pd:[.5,1,0],skin:mix(ZC.skin,ZC.skinF,k),cloth:mix(MC.shirt,MC.shirtF,k),shade:'rgba(40,58,26,.42)',clothD:'rgba(0,0,0,.26)',sleeve:4.6,sleeveK:.4,body:()=>hull(P(Pv),5.1,P(Ch),7)})})}
   // right arm holds the pick; arm and pick swing in a plane beside the head
   {const sh=add(Ch,[0,7.6,1.4]),k=farK(F(0,1,0)),skin=mix(ZC.skin,ZC.skinF,k);
-    parts.push({d:D(add(Ch,[2,9.6,1.4])),f:()=>{const tool=()=>pickaxe(V0,pk),arm=()=>zArm(V0,sh,pk.hd,nrm([-.4,.5,-1]),{side:1,L1:6,L2:6.2,bony:1,w1:3.4,we:3,w2:2.2,noHand:true,skin,cloth:mix(MC.shirt,MC.shirtF,k),sleeve:4.6,sleeveK:.4,body:()=>hull(P(Pv),5.1,P(Ch),7)});
-      if(F(0,1,0)>.2){arm();tool()}else{tool();arm()}fist(V0,pk.hd,2.3,skin)}})}
+    parts.push({d:D(add(Ch,[2,9.6,1.4])),f:()=>{const tool=()=>pickaxe(V0,pk),arm=()=>zArm(V0,sh,pk.hd,nrm([-.4,.5,-1]),{side:1,L1:6,L2:6.2,bony:1,w1:3.4,we:3,w2:2.2,noHand:true,skin,cloth:mix(MC.shirt,MC.shirtF,k),shade:'rgba(40,58,26,.42)',clothD:'rgba(0,0,0,.26)',sleeve:4.6,sleeveK:.4,body:()=>hull(P(Pv),5.1,P(Ch),7)});
+      if(F(0,1,0)>.2){arm();tool()}else{tool();arm()}fist(V0,pk.hd,2.3,skin);const fq=P(pk.hd);ctx.save();ball(fq,1.2);ctx.clip();glowTop(fq,2.3,.22);ctx.restore()}})}
   parts.push({d:D(Hc),f:()=>{neck(V0,add(Ch,[1.6,0,6.6]),3.8,add(Hc,[-.8,0,-5.4]),3.4,ZC.skin);zHead(V0,Hc,8,ph,{open:atk&&p>.35&&p<.6?1:.35,helmet:true,deadEye:true,noDrool:true});helmet(V0,Hc,8,t)}});
   run(parts);ctx.restore();
   // the pick bites the floor: sparks and chips of stone where the point went in
@@ -283,24 +325,27 @@ function minatore(x,y,face,anim,p,sc){sc=sc||1.1;const V0=V(face),{P,D,F}=V0,ph=
     ctx.fillStyle=`rgba(90,80,70,${1-k})`;for(let i=0;i<4;i++){ball([ix+(i-1.5)*5*sc*k,iy-Math.sin(k*Math.PI)*8*sc+i],1.4*sc);ctx.fill()}ctx.restore()}}
 
 // ------------------------------------------------------------------ SEGUGIO INFERNALE
-const HC={fur:'#2b1f24',furD:'#1c1418',furF:'#150e11',hi:'#3d2c33',spike:'#9a2222',ember:'#ff7a2a',eye:'#ff3b2f',horn:'#c4b391',bone:'#e6dcc0',maw:'#4a0a0e',rib:'#5a4046'};
+const HC={fur:'#3a2a2f',furD:'#261b1f',furF:'#1c1316',hi:'#5a434a',spike:'#a42825',ember:'#ff7a2a',eye:'#ff3b2f',horn:'#c4b391',bone:'#e6dcc0',maw:'#4a0a0e',rib:'#6c5158'};
 function flame(e,t,s){s=s||1;shine('255,120,40',e[0],e[1]-2*s,8*s,.55+.12*Math.sin(t*14));ink(1.2);ctx.fillStyle=HC.ember;ctx.beginPath();ctx.moveTo(e[0]-2.4*s,e[1]+1);ctx.quadraticCurveTo(e[0]-1.8*s,e[1]-3.6*s,e[0]+Math.sin(t*12)*1.2*s,e[1]-6.4*s);ctx.quadraticCurveTo(e[0]+2*s,e[1]-3.4*s,e[0]+2.4*s,e[1]+1);ctx.closePath();ctx.fill();ctx.stroke();ctx.fillStyle='#ffe28a';ball([e[0],e[1]-1.3*s],s);ctx.fill()}
 function crack(q,t){const gl=.65+.35*Math.sin(t*4);ctx.strokeStyle=`rgba(255,${130+60*gl|0},50,${.7*gl+.3})`;ctx.lineWidth=1.3;ctx.beginPath();ctx.moveTo(q[0]-1.6,q[1]-2.6);ctx.lineTo(q[0]+.6,q[1]-.4);ctx.lineTo(q[0]-.8,q[1]+2.2);ctx.stroke();shine('255,110,40',q[0],q[1],5,.2*gl)}
 // head: skull, snout with fangs, eyes, ears and horns, each piece put in front of or behind the skull by where it faces
 function houndHead(V0,Hc,jaw,ph){const{P,F,c}=V0,t=G.t,h=P(Hc),R=5.6,items=[];
-  const skull=()=>{ink(2.4);ball(h,R);ctx.fillStyle=HC.fur;ctx.fill();ctx.stroke();ctx.save();ball(h,R-1);ctx.clip();ctx.fillStyle=HC.hi;ell(h[0]-1.6,h[1]-2.2,3,1.7);ctx.fill();ctx.restore();
-    for(const sd of[-1,1])on(V0,Hc,R*.92,[.62,sd*.5,.5],0,(q,v)=>{shine('255,60,40',q[0],q[1],4.6,.55+.1*Math.sin(t*5));ctx.fillStyle=HC.eye;ctx.beginPath();ctx.ellipse(q[0],q[1],1.9*Math.max(.5,v),1.05,sd*.35*c,0,TAU);ctx.fill();ctx.fillStyle='#ffe28a';ball(q,.55);ctx.fill()})};
+  const skull=()=>{ink(2.4);ball(h,R);ctx.fillStyle=HC.fur;ctx.fill();ctx.stroke();ctx.save();ball(h,R-1);ctx.clip();ctx.fillStyle=HC.furD;ell(h[0]+R*.35,h[1]+R*.7,R*1.1,R*.6);ctx.fill();
+    for(const d of[[-.6,.6,.5],[-.7,-.55,.45],[-.2,0,1]])on(V0,Hc,R*.95,d,-.1,q=>{ctx.fillStyle=HC.furD;ell(q[0],q[1],1.7,1.1);ctx.fill()});
+    ctx.fillStyle=HC.hi;ell(h[0]-1.6,h[1]-2.2,3,1.7);ctx.fill();glowTop(h,R,.12);ctx.restore();rim(h,R,h,R,.3);
+    for(const sd of[-1,1])on(V0,Hc,R*.92,[.62,sd*.5,.5],0,(q,v)=>{shine('255,60,40',q[0],q[1],6,.6+.1*Math.sin(t*5));ctx.fillStyle=HC.eye;ctx.beginPath();ctx.ellipse(q[0],q[1],1.9*Math.max(.5,v),1.05,sd*.35*c,0,TAU);ctx.fill();ctx.fillStyle='#ffe28a';ball(q,.55);ctx.fill();ctx.fillStyle='#ffffff';ball([q[0]-.55*Math.max(.5,v),q[1]-.35],.3);ctx.fill()})};
   const u0=add(Hc,[2.8,0,-1.6]),u1=add(Hc,[8.4,0,-2.6]),l0=add(Hc,[2.4,0,-3.2]),l1=add(Hc,[7.6,0,-3.8-jaw*3]),show=F(1,0,-.2)>-.25;
   const snout=()=>{const A=P(u0),B=P(u1),Cq=P(l0),E=P(l1);
     if(jaw>.25&&show){ctx.fillStyle=HC.maw;ctx.beginPath();for(const q of[A,B,E,Cq])ctx.lineTo(q[0],q[1]);ctx.closePath();ctx.fill()}
     ink(2.2);hull(Cq,2.2,E,1.5);ctx.fillStyle=HC.furD;ctx.fill();ctx.stroke();
     if(show){ctx.fillStyle=HC.bone;ink(.8);for(const sd of[-1,1])for(let i=0;i<3;i++){const b=lerp3(add(l0,[.4,sd*1.2,1.3]),add(l1,[0,sd*.7,1]),.3+i*.3),q=P(b),e=P(add(b,[0,0,1.4+jaw*.6]));tri(q[0],q[1],e[0],e[1],.7)}}
-    ink(2.2);hull(A,2.7,B,1.9);ctx.fillStyle=HC.fur;ctx.fill();ctx.stroke();
+    ink(2.2);hull(A,2.7,B,1.9);ctx.fillStyle=HC.fur;ctx.fill();ctx.stroke();ctx.save();hull(A,1.6,B,.9);ctx.clip();ctx.fillStyle=HC.furD;ell((A[0]+B[0])/2+1,(A[1]+B[1])/2+1.6,3.6,1.6);ctx.fill();ctx.restore();rim(A,2.7,B,1.9,.3);
     if(show){ctx.fillStyle=HC.bone;ink(.8);for(const sd of[-1,1])for(let i=0;i<4;i++){const b=lerp3(add(u0,[.6,sd*1.7,-1.8]),add(u1,[0,sd*1,-1.3]),i/3),q=P(b),e=P(add(b,[0,0,-(i===2?2.8:1.5)-jaw*.6]));tri(q[0],q[1],e[0],e[1],.8)}}
     ctx.fillStyle=INK;ball(P(add(u1,[.8,0,.9])),1.1);ctx.fill();
     if(jaw>.3&&show){const dr=(ph/TAU*2)%1,q=P(add(l1,[0,0,-.8]));ctx.strokeStyle='rgba(255,170,120,.6)';ctx.lineWidth=.9;seg(q,[q[0],q[1]+2+dr*4]);ctx.stroke()}};
-  const ear=sd=>{const b1=P(add(Hc,mul(nrm([-.3,sd*.55,.75]),R*.9))),b2=P(add(Hc,mul(nrm([-.7,sd*.35,.65]),R*.9))),tp=P(add(Hc,[-3.4,sd*4.2,7]));ink(1.6);ctx.fillStyle=HC.furD;ctx.beginPath();ctx.moveTo(b1[0],b1[1]);ctx.lineTo(tp[0],tp[1]);ctx.lineTo(b2[0],b2[1]);ctx.fill();ctx.stroke()};
-  const horn=sd=>{limb([add(Hc,mul(nrm([-.2,sd*.6,.8]),R*.85)),add(Hc,[-2.8,sd*4.3,6.4]),add(Hc,[-5.4,sd*4.7,6]),add(Hc,[-7.2,sd*4.3,4.4])].map(q=>P(q)),[2.2,1.5,.8],HC.horn)};
+  const ear=sd=>{const b1=P(add(Hc,mul(nrm([-.3,sd*.55,.75]),R*.9))),b2=P(add(Hc,mul(nrm([-.7,sd*.35,.65]),R*.9))),tp=P(add(Hc,[-3.4,sd*4.2,7]));ink(1.6);ctx.fillStyle=HC.furD;ctx.beginPath();ctx.moveTo(b1[0],b1[1]);ctx.lineTo(tp[0],tp[1]);ctx.lineTo(b2[0],b2[1]);ctx.fill();ctx.stroke();
+    const m=[(b1[0]+b2[0])/2,(b1[1]+b2[1])/2];ctx.fillStyle='rgba(120,40,46,.55)';ctx.beginPath();ctx.moveTo(lerp(m[0],b1[0],.45),lerp(m[1],b1[1],.45));ctx.lineTo(lerp(m[0],tp[0],.7),lerp(m[1],tp[1],.7));ctx.lineTo(lerp(m[0],b2[0],.45),lerp(m[1],b2[1],.45));ctx.closePath();ctx.fill()};
+  const horn=sd=>{const hp=[add(Hc,mul(nrm([-.2,sd*.6,.8]),R*.85)),add(Hc,[-2.8,sd*4.3,6.4]),add(Hc,[-5.4,sd*4.7,6]),add(Hc,[-7.2,sd*4.3,4.4])].map(q=>P(q));limb(hp,[2.2,1.5,.8],HC.horn);shadeLimb(hp,[1.1,.75,.4,.4],'rgba(120,96,60,.55)',.3)};
   items.push({d:0,f:skull},{d:F(1,0,-.3)*6,f:snout});
   for(const sd of[-1,1])items.push({d:F(-.4,sd*.75,.5)*6,f:()=>ear(sd)},{d:F(-.5,sd*.85,.4)*6+.01,f:()=>horn(sd)});
   items.sort((a,b)=>a.d-b.d);for(const i of items)i.f()}
@@ -324,11 +369,11 @@ function hound(x,y,face,anim,p,sc){sc=sc||1.05;const V0=V(face),{P,D,F}=V0,ph=p*
       base=fr?add(C,[1,sd*4.1,-4.2]):add(R,[-.5,sd*3.8,-3]),
       paw=fr?[6.5+fwd+f.x+air*4.5,sd*4.4,f.z+lift*.92+air*2]:[-9+fwd+f.x-air*4.5,sd*4.2,f.z+lift*.92+air*1.2],
       joint=fr?add(paw,[.6,0,2.2]):add(paw,[-1.6,0,3.4]),[kn,j2]=ik(base,joint,fr?4.6:4.4,fr?4.4:3.8,fr?[-1,0,-.1]:[1,0,.1]),pw=add(j2,sub(paw,joint));
-    parts.push({d:dB-100+D(base)*.01,f:()=>limb([P(base),P(kn),P(j2),P(pw)],fr?[3.8,2.8,2.2]:[4.6,3,2.2],col,()=>{const q=P(pw);ink(1.4);ctx.fillStyle=HC.furD;ctx.beginPath();ctx.ellipse(q[0],q[1],2.3,1.5,0,0,TAU);ctx.fill();ctx.stroke();
-      ctx.strokeStyle=HC.bone;ctx.lineWidth=1;for(let i=-1;i<=1;i++){seg(P(add(pw,[1.2,i*.8,-.2])),P(add(pw,[2.6,i*1.1,-.8])));ctx.stroke()}})})}
+    parts.push({d:dB-100+D(base)*.01,f:()=>{const lp=[P(base),P(kn),P(j2),P(pw)],lw=fr?[3.8,2.8,2.2]:[4.6,3,2.2];limb(lp,lw,col,()=>{const q=P(pw);ink(1.4);ctx.fillStyle=HC.furD;ctx.beginPath();ctx.ellipse(q[0],q[1],2.3,1.5,0,0,TAU);ctx.fill();ctx.stroke();
+      ctx.fillStyle=`rgba(${WARM},.18)`;ell(q[0]-.7,q[1]-.5,1,.5);ctx.fill();ctx.strokeStyle=HC.bone;ctx.lineWidth=1;for(let i=-1;i<=1;i++){seg(P(add(pw,[1.2,i*.8,-.2])),P(add(pw,[2.6,i*1.1,-.8])));ctx.stroke()}});shadeLimb(lp,lw.map(w=>w/2).concat([1.1]),'rgba(0,0,0,.3)',.16)}})}
   // tail: bony with spikes, ending in a flame; in front of the body only when it points at the camera
   {const w=gal?Math.sin(ph-1.2)*2.4:Math.sin(ph)*2+wig*3,r0=add(R,[-4.6,0,2.2]),r1=add(R,[-8.6,w*.45,2.2]),r2=add(R,[-11.4,w,.2]);
-    parts.push({d:dB+(F(-1,0,.3)>.3?50:-50),f:()=>{limb([P(r0),P(r1),P(r2)],[2.8,2],HC.fur);
+    parts.push({d:dB+(F(-1,0,.3)>.3?50:-50),f:()=>{limb([P(r0),P(r1),P(r2)],[2.8,2],HC.fur);shadeLimb([P(r0),P(r1),P(r2)],[1.4,1],'rgba(0,0,0,.3)',.16);
       for(let i=1;i<3;i++){const b=lerp3(r0,r1,i/2.5),q=P(b),e=P(add(b,[-.6,0,2]));ctx.fillStyle=HC.spike;ink(1);spike(q,e,1)}flame(P(r2),t,.8)}})}
   // body: rump + ribcage, ribs on the flank that faces us, glowing cracks, spikes along the spine, smoke
   parts.push({d:dB,f:()=>{const a=P(R),b=P(C);ink(2.4);hull(a,6,b,7.2);ctx.fillStyle=HC.fur;ctx.fill();ctx.stroke();
@@ -336,11 +381,14 @@ function hound(x,y,face,anim,p,sc){sc=sc||1.05;const V0=V(face),{P,D,F}=V0,ph=p*
     const rx=a[0]-b[0],ry=a[1]-b[1],rl=Math.hypot(rx,ry)||1;
     for(const sd of[-1,1])for(let i=0;i<4;i++)on(V0,C,6.9,[-.1-i*.24,sd,-.05],.12,q=>{ctx.strokeStyle=HC.rib;ctx.lineWidth=1.4;ctx.beginPath();ctx.moveTo(q[0],q[1]-4);ctx.quadraticCurveTo(q[0]+rx/rl*2.2,q[1],q[0],q[1]+3.8);ctx.stroke()});
     for(const sd of[-1,1]){on(V0,C,6.9,[.3,sd*.8,.4],.1,q=>crack(q,t));on(V0,R,5.9,[-.2,sd*.85,.35],.1,q=>crack(q,t))}
-    ctx.restore();
+    on(V0,lerp3(R,C,.5),6.6,[-.15,0,1],-.4,q=>{ctx.fillStyle=`rgba(${WARM},.1)`;ell(q[0],q[1]-1,8,3.2);ctx.fill()});
+    ctx.lineCap='round';for(const sd of[-1,1])for(const[C0,r0,d] of[[C,6.9,[.55,sd*.75,-.25]],[C,6.9,[.2,sd*.85,-.45]],[R,5.9,[-.5,sd*.8,-.2]],[R,5.9,[-.1,sd*.9,-.4]],[C,6.9,[.75,sd*.45,.45]]])on(V0,C0,r0,d,.1,q=>{ctx.strokeStyle=HC.furD;ctx.lineWidth=1;ctx.beginPath();ctx.moveTo(q[0]-1.4,q[1]-1.2);ctx.quadraticCurveTo(q[0]+.2,q[1]-.4,q[0]+.4,q[1]+1.4);ctx.moveTo(q[0]+.6,q[1]-1.4);ctx.quadraticCurveTo(q[0]+1.8,q[1]-.6,q[0]+2,q[1]+1);ctx.stroke()});
+    for(const d of[[-.35,.3,.9],[.25,-.3,.9],[-.8,-.2,.6]])on(V0,lerp3(R,C,.5),6.5,d,0,q=>{ctx.strokeStyle=HC.hi;ctx.lineWidth=.9;ctx.beginPath();ctx.moveTo(q[0]-1.2,q[1]+.6);ctx.quadraticCurveTo(q[0],q[1]-.6,q[0]+1.3,q[1]+.4);ctx.stroke()});
+    ctx.restore();rim(a,6,b,7.2,.3);
     for(let i=0;i<6;i++){const u=i/5,q3=add(lerp3(R,C,u),[0,0,lerp(5.2,6.4,u)]),tp=add(q3,[-1.2,0,2.8+(i%2)*1.2+(i===5?.6:0)]);ctx.fillStyle=HC.spike;ink(1.3);spike(P(q3),P(tp),1.7)}
     if(!LOWFX)for(let i=0;i<3;i++){const k=(p*(gal?2:1)+i/3)%1,sp=P(add(lerp3(R,C,i/2),[0,0,9]));ctx.fillStyle=`rgba(60,50,55,${.35*(1-k)})`;ball([sp[0]+Math.sin(ph+i*2)*2,sp[1]-k*12],1.6+k*3);ctx.fill()}}});
   // neck (with hackles) and head, drawn together: behind the body when the head is turned away
-  parts.push({d:D(Hc),f:()=>{const n0=add(C,[3.2,0,3.4]),n1=add(Hc,[-2.2,0,-1.8]),A=P(n0);ink(2.4);hull(A,4.4,P(n1),3.6);ctx.fillStyle=HC.fur;ctx.fill();ctx.stroke();ball(A,5.7);ctx.fill();
+  parts.push({d:D(Hc),f:()=>{const n0=add(C,[3.2,0,3.4]),n1=add(Hc,[-2.2,0,-1.8]),A=P(n0);ink(2.4);hull(A,4.4,P(n1),3.6);ctx.fillStyle=HC.fur;ctx.fill();ctx.stroke();ball(A,5.7);ctx.fill();rim(A,4.4,P(n1),3.6,.26);
     for(let i=0;i<2;i++){const q3=add(lerp3(n0,n1,.3+i*.35),[0,0,3.4]),tp=add(q3,[-1.6,0,3.8]);ctx.fillStyle=HC.spike;ink(1.3);spike(P(q3),P(tp),1.8)}
     houndHead(V0,Hc,jaw,ph)}});
   run(parts);ctx.restore()}
@@ -351,9 +399,12 @@ const BC={skin:'#7d9a62',skinD:'#5d7848',skinF:'#4e6639',coat:'#2e2638',coatD:'#
 // the gravedigger's shovel: wooden handle with a T grip, an iron blade whose face shades as it turns
 function shovel(V0,k){const{P,F}=V0,g=add(k.hd,mul(k.dir,-6)),gg=P(g),b0=P(k.b0);
   ctx.lineCap='round';ctx.strokeStyle=INK;ctx.lineWidth=5.8;seg(gg,b0);ctx.stroke();ctx.strokeStyle=BC.wood;ctx.lineWidth=3.2;ctx.stroke();
+  {let dx=b0[0]-gg[0],dy=b0[1]-gg[1];const l=Math.hypot(dx,dy)||1;dx/=l;dy/=l;let nx=-dy,ny=dx;if(nx+ny>0){nx=-nx;ny=-ny}ctx.strokeStyle=BC.woodD;ctx.lineWidth=1.2;seg([gg[0]-nx*.9,gg[1]-ny*.9],[b0[0]-nx*.9,b0[1]-ny*.9]);ctx.stroke();
+    ctx.strokeStyle=`rgba(${WARM},.3)`;ctx.lineWidth=.7;seg([gg[0]+nx*.8,gg[1]+ny*.8],[b0[0]+nx*.8,b0[1]+ny*.8]);ctx.stroke()}
   const t1=P(add(g,mul(k.w3,2.8))),t2=P(add(g,mul(k.w3,-2.8)));ctx.strokeStyle=INK;ctx.lineWidth=5.2;seg(t1,t2);ctx.stroke();ctx.strokeStyle=BC.woodD;ctx.lineWidth=2.6;ctx.stroke();
   const n=cross(k.dir,k.w3),col=mix(BC.metal,BC.metalD,cl(.5-F(n)*.9,0,1)),c=[add(k.b0,mul(k.w3,2.8)),add(k.b1,mul(k.w3,4.2)),add(k.b1,mul(k.dir,4.8)),add(k.b1,mul(k.w3,-4.2)),add(k.b0,mul(k.w3,-2.8))].map(q=>P(q));
   ink(2);ctx.fillStyle=col;ctx.beginPath();ctx.moveTo(c[0][0],c[0][1]);ctx.lineTo(c[1][0],c[1][1]);ctx.quadraticCurveTo(c[2][0],c[2][1],c[3][0],c[3][1]);ctx.lineTo(c[4][0],c[4][1]);ctx.closePath();ctx.fill();ctx.stroke();
+  ctx.save();ctx.clip();ctx.strokeStyle=`rgba(${WARM},.32)`;ctx.lineWidth=1.4;ctx.beginPath();ctx.moveTo(c[0][0],c[0][1]);ctx.lineTo(c[1][0],c[1][1]);ctx.quadraticCurveTo(c[2][0],c[2][1],c[3][0],c[3][1]);ctx.stroke();ctx.restore();
   const fv=cl(Math.abs(F(n))*3,0,1);if(fv>0){ctx.save();ctx.globalAlpha=fv;ctx.fillStyle='rgba(110,40,30,.6)';ball(P(add(add(k.b1,mul(k.w3,1.6)),mul(k.dir,-1.5))),1.6);ctx.fill();ball(P(add(add(k.b1,mul(k.w3,-1.8)),mul(k.dir,-4))),1.1);ctx.fill();
     ctx.fillStyle='rgba(255,255,255,.28)';ball(P(add(add(k.b0,mul(k.w3,1.2)),mul(k.dir,2.4))),1.2);ctx.fill();ctx.restore()}
   ink(1.6);ctx.fillStyle=BC.metalD;ball(b0,2.2);ctx.fill();ctx.stroke()}
@@ -361,13 +412,14 @@ function shovel(V0,k){const{P,F}=V0,g=add(k.hd,mul(k.dir,-6)),gg=P(g),b0=P(k.b0)
 function chain(V0,Pv,rP,Ch,rC){const{P,F}=V0;ctx.lineWidth=1.2;ctx.strokeStyle=INK;
   for(let i=0;i<=20;i++){const u=i/20,front=u<=.5,w=front?u*2:(u-.5)*2,m=front?0:.85-w*.85,C=lerp3(Ch,Pv,m),r=lerp(rC,rP,m),
     d=front?nrm([.8,lerp(-.8,.8,w),.5-Math.sin(w*Math.PI)*.22]):nrm([-.85,lerp(.8,-.85,w),.15]),v=F(d);if(v<.05)continue;const q=P(add(C,mul(d,r*1.01)));
-    ctx.save();ctx.globalAlpha=cl((v-.05)*4,0,1);ctx.fillStyle=BC.chain;ctx.beginPath();ctx.ellipse(q[0],q[1],1.9,1.2,.6,0,TAU);ctx.fill();ctx.stroke();ctx.restore()}}
+    ctx.save();ctx.globalAlpha=cl((v-.05)*4,0,1);ctx.fillStyle=BC.chain;ctx.beginPath();ctx.ellipse(q[0],q[1],1.9,1.2,.6,0,TAU);ctx.fill();ctx.stroke();ctx.fillStyle='rgba(255,250,235,.45)';ball([q[0]-.6,q[1]-.4],.45);ctx.fill();ctx.restore()}}
 // head: small for that body, one huge glowing eye, mouth stitched wide with jagged teeth, battered top hat tilted toward his left
 function bHead(V0,Hc,R,ph,op){const{P,c}=V0,h=P(Hc),t=G.t,at=R*.95;ink(2.4);ball(h,R);ctx.fillStyle=BC.skin;ctx.fill();ctx.stroke();
   const lit=[];ctx.save();ball(h,R-1.1);ctx.clip();ctx.fillStyle=BC.skinD;ell(h[0]+R*.3,h[1]+R*.74,R*1.15,R*.6);ctx.fill();
+  for(const[d,sz] of[[[-.5,-.6,.6],.2],[[-.85,.35,.38],.2],[[.2,.8,.5],.15],[[.45,-.85,-.15],.16]])on(V0,Hc,at,d,-.15,q=>{ctx.fillStyle=BC.skinD;ell(q[0],q[1],R*sz,R*sz*.72);ctx.fill()});glowTop(h,R,.15);
   for(const sd of[-1,1])on(V0,Hc,at,[.8,sd*.42,.12],0,(q,v)=>{const big=sd>0?1.35:.85;ink(1.4);ctx.fillStyle='#0c120a';ctx.beginPath();ctx.ellipse(q[0],q[1],R*.3*big*Math.max(.45,v),R*.32*big,0,0,TAU);ctx.fill();ctx.stroke();lit.push([q,big,cl(v*4,0,1)])});
-  ctx.restore();
-  for(const[q,big,k] of lit){shine(BC.glow,q[0],q[1],6*big,(.55+.15*Math.sin(t*4))*k);ctx.fillStyle='#d6ff9a';ball([q[0]+c*.3,q[1]],1.1*big*k);ctx.fill()}
+  ctx.restore();rim(h,R,h,R);
+  for(const[q,big,k] of lit){const e=[q[0]+c*.3,q[1]],er=1.1*big*k;shine(BC.glow,q[0],q[1],7.5*big,(.6+.15*Math.sin(t*4))*k);ctx.fillStyle='#d6ff9a';ball(e,er);ctx.fill();ctx.fillStyle='#ffffff';ball([e[0]-er*.35,e[1]-er*.35],er*.4);ctx.fill()}
   on(V0,Hc,at,[.8,0,-.45],.04,(q,v)=>{const w=R*.62*Math.max(.35,v),hh=1.4+op*2.6;ink(1.5);ctx.fillStyle='#200808';ctx.beginPath();ctx.ellipse(q[0],q[1]+hh*.3,w,hh,0,0,TAU);ctx.fill();ctx.stroke();
     ctx.fillStyle=BC.bone;ink(.8);for(let i=0;i<5;i++){const xx=q[0]-w*.8+i*w*.4;tri(xx,q[1]-hh*.6,xx,q[1]-hh*.6+(i%2?2.2:1.4),.8)}
     ctx.strokeStyle=INK;ctx.lineWidth=1;ctx.beginPath();for(let i=0;i<4;i++){const xx=q[0]-w*.7+i*w*.47;ctx.moveTo(xx,q[1]-hh-1.2);ctx.lineTo(xx+.4,q[1]+hh*1.2+1)}ctx.stroke()});
@@ -375,7 +427,9 @@ function bHead(V0,Hc,R,ph,op){const{P,c}=V0,h=P(Hc),t=G.t,at=R*.95;ink(2.4);ball
   ctx.save();ctx.translate(hb[0],hb[1]);ctx.rotate(tilt);ink(2.2);ctx.fillStyle=BC.hat;ell(0,0,10.5,3.1);ctx.fill();ctx.stroke();
   ctx.beginPath();ctx.moveTo(-6.4,-.6);ctx.lineTo(-5.6,-12);ctx.lineTo(1,-13.4);ctx.lineTo(6,-11.4);ctx.lineTo(6.4,-.6);ctx.closePath();ctx.fill();ctx.stroke();
   ctx.fillStyle=BC.band;ctx.beginPath();ctx.moveTo(-6.2,-4.4);ctx.lineTo(6.3,-4.4);ctx.lineTo(6.3,-1.6);ctx.lineTo(-6.3,-1.6);ctx.closePath();ctx.fill();ctx.stroke();
-  ctx.strokeStyle=INK;ctx.lineWidth=1.1;ctx.beginPath();ctx.moveTo(2,-13);ctx.lineTo(3.4,-9.6);ctx.lineTo(1.6,-7.4);ctx.stroke();ctx.fillStyle='rgba(255,255,255,.1)';ctx.fillRect(-4.6,-11,2,6);ctx.restore()}
+  ctx.strokeStyle=INK;ctx.lineWidth=1.1;ctx.beginPath();ctx.moveTo(2,-13);ctx.lineTo(3.4,-9.6);ctx.lineTo(1.6,-7.4);ctx.stroke();ctx.fillStyle='rgba(255,255,255,.1)';ctx.fillRect(-4.6,-11,2,6);
+  ctx.fillStyle='rgba(0,0,0,.25)';ctx.beginPath();ctx.moveTo(2.6,-.8);ctx.lineTo(3.2,-12.2);ctx.lineTo(6,-11.4);ctx.lineTo(6.4,-.6);ctx.closePath();ctx.fill();
+  ctx.strokeStyle=`rgba(${WARM},.3)`;ctx.lineWidth=1;ctx.beginPath();ctx.moveTo(-5,-1.2);ctx.lineTo(-4.4,-11);ctx.stroke();ctx.beginPath();ctx.ellipse(0,0,9.2,2.2,0,Math.PI*1.05,Math.PI*1.55);ctx.stroke();ctx.restore()}
 function becchino(x,y,face,anim,p,sc){sc=sc||2;const V0=V(face),{P,D,F}=V0,ph=p*TAU,walk=anim==='walk',slam=anim==='slam',sum=anim==='summon',t=G.t;
   // slam: .0-.45 lifts the shovel high over his shoulder and behind his head, .45-.6 smashes it flat on the ground, .6-1 lifts it a little and lets it rest
   let a=-.55+(walk?Math.sin(ph)*.1:Math.sin(ph)*.03),rise=0,squash=0,shake=0,hitK=-1;
@@ -400,8 +454,8 @@ function becchino(x,y,face,anim,p,sc){sc=sc||2;const V0=V(face),{P,D,F}=V0,ph=p*
   if(sum){ctx.save();shine(BC.glow,x,y+2*sc,34*sc*armUp,.35*armUp);ctx.strokeStyle=`rgba(150,255,110,${.6*armUp})`;ctx.lineWidth=2;ell(x,y+2*sc,26*sc*armUp,9*sc*armUp);ctx.stroke();ctx.restore();hands(false)}
   ctx.save();ctx.translate(x,y);ctx.scale(sc*(1+squash),sc*(1-squash));const parts=[],dT=D(Ch);
   for(const[sd,f] of[[-1,fL],[1,fR]]){const hip=add(Pv,[0,sd*6,-7.4]),foot=[1+f.x,sd*7.6,f.z],k=farK(F(0,sd,0));
-    parts.push({d:dT-100+D(hip)*.01,f:()=>leg(V0,hip,foot,{L1:4.4,L2:4.4,w1:7,w2:6.2,col:mix(BC.coatD,'#120e17',k),shoe:BC.boot,heel:2,toe:3.6,sr:3.2,ank:2.2})})}
-  parts.push({d:dT,f:()=>{trunk(V0,Pv,12.2,Ch,12.8,BC.coat,BC.coatD,11);
+    parts.push({d:dT-100+D(hip)*.01,f:()=>leg(V0,hip,foot,{L1:4.4,L2:4.4,w1:7,w2:6.2,col:mix(BC.coatD,'#120e17',k),colD:'rgba(0,0,0,.3)',shoe:BC.boot,heel:2,toe:3.6,sr:3.2,ank:2.2})})}
+  parts.push({d:dT,f:()=>{trunk(V0,Pv,12.2,Ch,12.8,BC.coat,BC.coatD,11,{folds:[-1.2,-.55,.55,1.2,2.3,3,3.7],neck:1});
     // the belly: the coat is open on a cage of ribs with a green glow inside
     on(V0,lerp3(Pv,Ch,.42),12.1,[1,0,-.05],.05,(q,v)=>{const bw=8*Math.max(.3,v),bh=7.2;ink(2);ctx.fillStyle=BC.skin;ctx.beginPath();ctx.ellipse(q[0],q[1],bw+2.2,bh+1.8,0,0,TAU);ctx.fill();ctx.stroke();
       ctx.fillStyle=BC.hole;ctx.beginPath();ctx.ellipse(q[0],q[1]+.4,bw,bh*.82,0,0,TAU);ctx.fill();shine(BC.glow,q[0],q[1]+1,10,.4+.12*Math.sin(t*3));
@@ -412,12 +466,12 @@ function becchino(x,y,face,anim,p,sc){sc=sc||2;const V0=V(face),{P,D,F}=V0,ph=p*
     on(V0,Ch,12.4,[-1,.35,.05],.1,q=>{ink(1.4);ctx.fillStyle=BC.patch;ctx.fillRect(q[0]-3.4,q[1]-3.2,6.8,6);ctx.strokeRect(q[0]-3.4,q[1]-3.2,6.8,6);ctx.beginPath();for(let i=0;i<4;i++){ctx.moveTo(q[0]-3.4+i*2.2,q[1]-4);ctx.lineTo(q[0]-3.4+i*2.2,q[1]-2.4)}ctx.stroke()})}});
   // free arm (left): hangs and swings; raised straight up at his side to call the dead (never in front of his face)
   {const sh=add(Ch,[0,-11.4,3]),swg=walk?Math.sin(ph)*2.2:0,hd=add(Ch,[6-armUp*8,-15+armUp*2.5,-9+armUp*35+swg]),k=farK(F(0,-1,0));
-    parts.push({d:D(add(sh,[6,0,0])),f:()=>{const r=zArm(V0,sh,hd,nrm([-.4,-.6,-1+armUp*1.4]),{side:-1,L1:8.6,L2:8.6,w1:7,w2:6,hand:3.8,full:true,skin:mix(BC.skin,BC.skinF,k),cloth:mix(BC.coat,BC.coatF,k),pd:nrm(lerp3([1,0,-1],[.2,0,1],armUp))});
+    parts.push({d:D(add(sh,[6,0,0])),f:()=>{const r=zArm(V0,sh,hd,nrm([-.4,-.6,-1+armUp*1.4]),{side:-1,L1:8.6,L2:8.6,w1:7,w2:6,hand:3.8,full:true,skin:mix(BC.skin,BC.skinF,k),cloth:mix(BC.coat,BC.coatF,k),clothD:'rgba(0,0,0,.32)',pd:nrm(lerp3([1,0,-1],[.2,0,1],armUp))});
       if(armUp>.3){const q=P(r.h);shine(BC.glow,q[0],q[1],10,.5*armUp)}}})}
   // shovel arm (right): arm and shovel swing in a plane beside the head
   {const sh=add(Ch,[0,11.4,3]),k=farK(F(0,1,0)),skin=mix(BC.skin,BC.skinF,k),cloth=mix(BC.coat,BC.coatF,k);
-    parts.push({d:D(add(Ch,[4,13.6,0])),f:()=>{const tool=()=>shovel(V0,sv),arm=()=>zArm(V0,sh,sv.hd,nrm([-.4,.5,-1]),{side:1,L1:8.6,L2:8.6,w1:7,w2:6,noHand:true,full:true,skin,cloth});
-      if(F(0,1,0)>0){arm();tool()}else{tool();arm()}fist(V0,sv.hd,3.8,skin)}})}
+    parts.push({d:D(add(Ch,[4,13.6,0])),f:()=>{const tool=()=>shovel(V0,sv),arm=()=>zArm(V0,sh,sv.hd,nrm([-.4,.5,-1]),{side:1,L1:8.6,L2:8.6,w1:7,w2:6,noHand:true,full:true,skin,cloth,clothD:'rgba(0,0,0,.32)'});
+      if(F(0,1,0)>0){arm();tool()}else{tool();arm()}fist(V0,sv.hd,3.8,skin);const fq=P(sv.hd);ctx.save();ball(fq,2.7);ctx.clip();glowTop(fq,3.8,.22);ctx.restore()}})}
   parts.push({d:D(Hc),f:()=>{neck(V0,add(Ch,[2,0,9.6]),5.6,add(Hc,[-1,0,-5.4]),4.8,BC.skin);bHead(V0,Hc,8.6,ph,(slam&&p>.4&&p<.68)||sum?1:.3+.15*Math.sin(ph*2))}});
   run(parts);
   if(!LOWFX){ctx.fillStyle=INK;const h=P(Hc);for(let i=0;i<4;i++){const an=ph*2+i*1.6;ball([h[0]+Math.cos(an)*14,h[1]-4+Math.sin(an*1.5)*5],.8);ctx.fill()}}
