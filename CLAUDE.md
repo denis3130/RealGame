@@ -43,7 +43,7 @@ Servono Node e Python. Una volta sola: `npm install` e poi `npx playwright insta
 - `menu2.js`: tocca ogni bottone di ogni scheda e controlla che non ci siano errori.
 - `mig.js`: salvataggi vecchi o rovinati e schermi di misure diverse.
 - `pets.js`: sblocco e miglioramento dei compagni. `perf.js`: tempi di aggiornamento e disegno.
-- Altri: `boss1x.js` (sconfitta del boss a velocità reale), `wheelsk.js` (ruota + scelta abilità), `aura.js` (aure delle evoluzioni), `look.js` (schermate dei 4 capitoli), `fresh.js` (primo avvio).
+- Altri: `boss1x.js` (sconfitta del boss a velocità reale), `wheelsk.js` (ruota + scelta abilità), `aura.js` (aure delle evoluzioni), `look.js` (schermate dei 4 capitoli), `fresh.js` (primo avvio), `mostri.js` (fogli dei nemici zombie in `sprite/mostri/`).
 
 Dopo ogni modifica: rifare almeno una partita automatica per capitolo, `meta2.js` e `menu2.js`, e guardare le schermate.
 
@@ -65,6 +65,7 @@ Dopo ogni modifica: rifare almeno una partita automatica per capitolo, `meta2.js
 - La balestra in mano all'eroe è uguale alla sua carta: calcio di legno con gemma blu, flettenti d'acciaio, staffa davanti, dardo carico (sparisce solo mentre ricarica).
 - Anello del gelo eterno: alone di ghiaccio leggero e scia di ghiaccio che si scioglie camminando (`frostTick`, `drawFrostTrail`).
 - Sprite in `sprite/` (icone e fotogrammi dell'eroe), spiegati in `sprite/LEGGIMI.md`.
+- Nemici della modalità zombie, non ancora nel gioco: `sprite/mostri/disegno_mostri.js` (Zombie della cripta, Zombie strisciante, Zombie minatore, Segugio infernale, boss Il Becchino), scheletri 3D con arti a due ossa e ordine di disegno fisso, così niente si sovrappone male mentre si muovono. Fogli rifatti con `tests/mostri.js`; spiegazioni in `sprite/mostri/LEGGIMI.md`.
 
 ## Da fare (annotato con Denis, non ancora fatto)
 
