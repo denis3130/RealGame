@@ -16,4 +16,11 @@ L'Arco delle spine non c'è più: al suo posto c'è l'**Arco del tuono** (`arco_
 
 - Presi dal codice del branch `nuovi-oggetti`: `drawRig` con `heroStyle('arciere')`, quindi identici al gioco. L'eroe non ha più la punta sul cappuccio (`hoodTip:false`).
 - 29 fogli, 12 colonne × 4 righe, caselle da 192 × 192 px, sfondo trasparente. Dettagli in `eroe/LEGGIMI.txt`.
-- Equipaggiamento addosso: `bowKind` (nuovo `thunder` per l'Arco del tuono), `armorBits` (spalline di cuoio sulla Giubba, funghetto sulla Corazza di muschio), `cape`, `ringOn`, `amulet`.
+- Equipaggiamento addosso: `bowKind` (nuovo `thunder` per l'Arco del tuono), `armorBits` (funghetto sulla Corazza di muschio), `cape`, `ringOn`, `amulet`. La Giubba di cuoio è il vestito base con i colori del cuoio (`tint.a`, `tint.b`, `tint.belt`).
+- Faretra sulla schiena, in diagonale come vuole Denis: `quiver(x,y,rot,S)` con lo stile preso da `QUIV[S.wk]`. Ogni arma ha la sua faretra e le sue munizioni:
+  - Arco di frassino: faretra di cuoio, frecce di legno con piume rosse
+  - Arco ricurvo: faretra rosso scuro con lacci verdi, frecce con impennaggio a foglia (anche in volo)
+  - Balestra leggera: astuccio d'acciaio più corto, dardi con alette blu
+  - Arco del tuono: faretra blu con fulmine giallo, frecce con piume azzurre e punta a fulmine (in volo), scintille
+  - Arco della fenice: faretra rossa e oro, frecce con piume di fuoco e bagliore
+- Anello del gelo eterno: alone di ghiaccio leggero ai piedi (`ringAura`) e scia di ghiaccio che si scioglie quando l'eroe cammina (`frostTick`, `drawFrostTrail`, lista `G.frost`). La scia è sul pavimento, quindi non è nei fogli dei fotogrammi.
