@@ -3,10 +3,10 @@
 `disegno_mostri.js` disegna i mostri con le funzioni del gioco (`ctx`, `ink`, `ell`, `shadow`, `glow`, `INK`, `LOWFX`, `G.t`). Va eseguito dentro la funzione principale di `index.html`; espone `CR.zombie`, `CR.strisciante`, `CR.minatore`, `CR.lanterna`, `CR.hound`, `CR.becchino` con firma `(x, y, face, anim, p, sc)`: `x, y` è il punto dei piedi, `face` la direzione in radianti, `p` va da 0 a 1 lungo la mossa, `sc` la grandezza.
 
 - **Zombie della cripta** (`zombie`): `idle`, `walk` (zoppica trascinando la gamba sinistra, braccia tese in avanti), `attack` (alza le braccia sopra e dietro la testa, poi graffia in avanti).
-- **Zombie strisciante** (`strisciante`): `idle`, `walk` (una mano avanza e tira mentre l'altra si appoggia), `attack` (si alza sulle braccia e scatta in avanti a bocca aperta).
+- **Zombie strisciante** (`strisciante`): `idle`, `walk` (una mano avanza e tira mentre l'altra si appoggia), `attack` (si alza sulle braccia e scatta in avanti a bocca aperta). Visto davanti il corpo dietro al petto è disegnato più lungo (passando piano da tre quarti a davanti), così la schiena e la spina dorsale non spariscono dietro la testa.
 - **Zombie minatore** (`minatore`): `idle`, `walk`, `attack` (piccone sopra la testa, colpo a terra con scintille, lo strattona e lo tira fuori). La lampada del casco illumina il pavimento davanti.
 - **Zombie della lanterna** (`lanterna`, più grosso degli altri zombie: grandezza 1,55 contro 1,1): `idle`, `walk` (passi lunghi e pesanti, la lanterna dondola), `attack` (alza il bastone dietro la testa, sbatte la lanterna a terra, esplosione di luce verde con scintille). Dai disegni di Denis: cappuccio con muschio e rametto secco, faccia verde con grandi occhi gialli e lingua di fuori, mantellina e mantello strappati, chiave arrugginita alla cintura, gambe fasciate e piedi con artigli, bastone con lanterna accesa che illumina il pavimento.
-- **Segugio infernale** (`hound`): `idle`, `walk` (galoppo), `attack` (si acquatta, salta a fauci aperte, atterra).
+- **Segugio infernale** (`hound`): `idle`, `walk` (galoppo), `attack` (si acquatta, salta a fauci aperte, atterra). Gli occhi hanno un posto loro nell'ordine di disegno della testa: visti davanti a destra o a sinistra le orecchie non li coprono più.
 - **Il Becchino** (`becchino`, boss): `idle`, `walk`, `slam` (pala dietro la testa e colpo a terra con crepa verde), `summon` (braccio dritto in alto, cerchio verde, mani dei morti che escono da terra).
 
 ## Perché si muovono senza fotogrammi brutti
@@ -31,6 +31,7 @@ Lo Zombie della lanterna è il modello per l'aspetto grafico di tutti (regola di
 - Pieghe sui vestiti (`folds`), macchie sulla pelle, segni del pelo sul segugio.
 - Bagliori morbidi su occhi e luci, con un puntino bianco negli occhi.
 - Colori un po' più ricchi; il segugio è un po' più chiaro di prima perché si leggano le forme.
+- Luminosità: tutte le luci calde passano da `wa()` e si regolano insieme con `LITK` (oggi 0,55, scelto con Denis perché all'inizio era troppo luminoso). I mostri restano chiari più o meno come prima del ridisegno.
 
 La lanterna ha le sue funzioni e non si tocca: dopo ogni modifica i suoi fogli devono restare identici al pixel (`git status` non deve mostrare `lanterna_*.png`).
 
