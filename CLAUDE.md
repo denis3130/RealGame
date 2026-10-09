@@ -117,6 +117,8 @@ Dopo ogni modifica: rifare almeno una partita automatica per capitolo, `meta2.js
 - Audio un po' più inquietante ma piacevole: nel menu una ninna nanna da carillon in tre tempi in la minore (`TRACKS.menu`, strumento `vBox`), con un bordone che vibra piano e un coro lontano; atmosfera del menu con campanelli, rintocchi, ronzii, scricchiolii e sussurri (`SND2`, `AMBEV.menu`); nei sotterranei ogni tanto si sente da lontano lo stesso carillon e qualche sussurro. Bottoni con un colpetto di legno e una nota del carillon.
 - Animazioni: tutti i personaggi respirano quando stanno fermi e si schiacciano un poco a ogni passo; polvere ai piedi dell'eroe; nel menu le colonne e le schede entrano con un rimbalzo, i bottoni pronti dondolano, la ruota gira quando c'è il giro gratis, Gioca respira, le casse pronte saltellano, i fogli entrano riga per riga, la barra del livello brilla quando sali. Tutto rispetta `LOWFX` e «riduci movimento».
 
+- Dopo (9 ottobre), richieste di Denis: il menu era «troppo normale», quindi è vestito da **cripta viva**: muschio che cola sotto la barra in alto, sopra la barra in basso, sui titoli delle sezioni e sui bottoni; bottoni laterali a forma di lapide che si accendono d'oro quando c'è qualcosa da prendere; la scheda dell'arena tenuta da due ossa con un teschio e due candele accese che tremolano; teschio davanti ai titoli delle pagine; ossa sugli angoli dell'Armeria. **Faretra** vista da dietro rifatta (`quiverBack`): a tracolla sulla schiena con la cinghia, le frecce con le penne che spuntano sopra la spalla destra (prima sembrava un cinturino marrone).
+
 ## Dove sta il lavoro
 
 - Ramo `lavori-in-sospeso` (tutto salvato e caricato su GitHub, non ancora unito a `main`).
