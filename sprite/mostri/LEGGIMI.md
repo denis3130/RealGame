@@ -10,7 +10,7 @@
 
 Ogni parte del corpo sta in un piccolo spazio 3D (avanti, destra, su) e viene proiettata con l'angolo di direzione: i mostri girano a 360 gradi e ogni pezzo resta attaccato allo stesso punto. Occhi, bocca e dettagli si vedono solo dal lato giusto.
 
-Fogli PNG: 8 righe (davanti, davanti-destra, destra, dietro-destra, dietro, dietro-sinistra, sinistra, davanti-sinistra) × un fotogramma per colonna; caselle 228 px (Becchino 340 px). Nessuna direzione è specchiata.
+Fogli PNG: 8 righe (davanti, davanti-destra, destra, dietro-destra, dietro, dietro-sinistra, sinistra, davanti-sinistra) × un fotogramma per colonna; caselle 228 px (Becchino 392 px). Nessuna direzione è specchiata.
 Da fare dopo l'ok di Denis: voci in `ET`, IA, danni, capitolo in cui compaiono, ingresso del boss.
 
 
