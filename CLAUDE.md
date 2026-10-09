@@ -65,7 +65,7 @@ Dopo ogni modifica: rifare almeno una partita automatica per capitolo, `meta2.js
 - La balestra in mano all'eroe è uguale alla sua carta: calcio di legno con gemma blu, flettenti d'acciaio, staffa davanti, dardo carico (sparisce solo mentre ricarica).
 - Anello del gelo eterno: alone di ghiaccio leggero e scia di ghiaccio che si scioglie camminando (`frostTick`, `drawFrostTrail`).
 - Sprite in `sprite/` (icone e fotogrammi dell'eroe), spiegati in `sprite/LEGGIMI.md`.
-- Nemici della modalità zombie, non ancora nel gioco: `sprite/mostri/disegno_mostri.js` (Zombie della cripta, Zombie strisciante, Zombie minatore, Segugio infernale, boss Il Becchino), scheletri 3D con arti a due ossa e ordine di disegno fisso, così niente si sovrappone male mentre si muovono. Fogli rifatti con `tests/mostri.js`; spiegazioni in `sprite/mostri/LEGGIMI.md`.
+- Nemici della modalità zombie, non ancora nel gioco: `sprite/mostri/disegno_mostri.js` (Zombie della cripta, Zombie strisciante, Zombie minatore, Zombie della lanterna più grosso, Segugio infernale, boss Il Becchino), scheletri 3D con arti a due ossa e ordine di disegno fisso, così niente si sovrappone male mentre si muovono. Fogli rifatti con `tests/mostri.js`; spiegazioni in `sprite/mostri/LEGGIMI.md`.
 
 ## Da fare (annotato con Denis, non ancora fatto)
 

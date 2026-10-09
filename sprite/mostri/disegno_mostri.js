@@ -381,5 +381,150 @@ function becchino(x,y,face,anim,p,sc){sc=sc||2;const V0=V(face),{P,D,F}=V0,ph=p*
     ctx.strokeStyle=`rgba(20,16,12,${.85*(1-k*.4)})`;ctx.lineWidth=2.2;ctx.beginPath();for(let i=0;i<6;i++){const an=i*1.05+.3,r=(10+i%2*5)*sc/2*(.6+k*.8);ctx.moveTo(ix,iy);ctx.lineTo(ix+Math.cos(an)*r*.6,iy+Math.sin(an)*r*.25+1);ctx.lineTo(ix+Math.cos(an+.15)*r,iy+Math.sin(an+.15)*r*.4)}ctx.stroke();
     if(!LOWFX){for(let i=0;i<6;i++){const an=i*1.05,r=k*16*sc/2;ctx.fillStyle=`rgba(150,255,110,${.7*(1-k)})`;ball([ix+Math.cos(an)*r,iy+Math.sin(an)*r*.4-Math.sin(k*Math.PI)*8],2);ctx.fill()}}ctx.restore()}}
 
-return {zombie,strisciante,minatore,hound,becchino};
+// ------------------------------------------------------------------ ZOMBIE DELLA LANTERNA: a big hunched ghoul in a mossy hooded cloak, swinging a lantern on a staff
+const LC={cloak:'#4b3a2b',cloakD:'#33271d',cloakF:'#2b2118',cloakL:'#6e5743',inside:'#1a130e',moss:'#6f8b3a',mossD:'#4c6427',mossL:'#9ab556',
+  skin:'#9fb87e',skinD:'#7a9460',skinF:'#66804f',eye:'#f6ff9c',mouth:'#2e0b0b',tongue:'#c0393f',tongueD:'#7d2026',tooth:'#efe6cc',
+  key:'#b07a40',wood:'#5e432a',woodD:'#3d2b19',iron:'#3c3c44',ironD:'#24242b',light:'#f2ff8a',glow:'225,255,120',
+  wrap:'#43362c',wrapF:'#29221b',band:'#6a5846',foot:'#2f2621',claw:'#1d1814',twig:'#4a3727',leaf:'#7d9c3c'};
+// 2D convex outline of a set of points (for the cloak: chest, pelvis and hem in one sack)
+function hull2(pts){pts=pts.slice().sort((a,b)=>a[0]-b[0]||a[1]-b[1]);const cr=(o,a,b)=>(a[0]-o[0])*(b[1]-o[1])-(a[1]-o[1])*(b[0]-o[0]),lo=[],up=[];
+  for(const q of pts){while(lo.length>1&&cr(lo[lo.length-2],lo[lo.length-1],q)<=0)lo.pop();lo.push(q)}
+  for(let i=pts.length-1;i>=0;i--){const q=pts[i];while(up.length>1&&cr(up[up.length-2],up[up.length-1],q)<=0)up.pop();up.push(q)}
+  lo.pop();up.pop();return lo.concat(up)}
+// a patch of moss with a few drips
+function mossBlob(q,s,ph){ctx.save();ctx.fillStyle=LC.mossD;for(const[dx,dy,r] of[[-1.5,.5,1.8],[1.2,.2,2],[0,1,1.6]]){ball([q[0]+dx*s,q[1]+dy*s],r*s);ctx.fill()}
+  ctx.fillStyle=LC.moss;for(const[dx,dy,r] of[[-1.5,0,1.7],[1.2,-.4,1.9],[0,.5,1.5]]){ball([q[0]+dx*s,q[1]+dy*s],r*s);ctx.fill()}
+  ctx.strokeStyle=LC.moss;ctx.lineCap='round';ctx.lineWidth=1.2*s;for(const[dx,l] of[[-1.1,2.4],[1.5,1.6],[.3,1.1]]){seg([q[0]+dx*s,q[1]+1.2*s],[q[0]+dx*s,q[1]+(1.2+l+Math.sin(ph+dx)*.3)*s]);ctx.stroke()}
+  ctx.fillStyle=LC.mossL;ball([q[0]-1.6*s,q[1]-.6*s],.7*s);ctx.fill();ball([q[0]+1*s,q[1]-1*s],.5*s);ctx.fill();ctx.restore()}
+// the cloak: one sack from the shoulders to the knees, torn strips under the hem, folds, holes showing the skin, moss, the rusty key.
+// Strips, folds, holes and moss sit at fixed places on the body in 3D, so they turn with it.
+function lCloak(V0,Pv,rP,Ch,rC,Hm,rH,ph){const{P,F}=V0,a=P(Pv),b=P(Ch),hm=P(Hm),pts=[],hem=an=>add(Hm,[Math.cos(an)*rH,Math.sin(an)*rH,Math.cos(an)*3.4]);
+  for(let i=0;i<24;i++){const an=i/24*TAU,c=Math.cos(an),s=Math.sin(an);pts.push([a[0]+c*rP,a[1]+s*rP],[b[0]+c*rC,b[1]+s*rC],P(hem(an)))}
+  const H=hull2(pts),path=()=>{ctx.beginPath();for(const q of H)ctx.lineTo(q[0],q[1]);ctx.closePath()};
+  for(let i=0;i<16;i++){const an=i/16*TAU+.15,d=[Math.cos(an),Math.sin(an),0],v=F(d);if(v<-.35)continue;const L=1.8+((i*5)%4)*.7+Math.sin(ph+i*1.3)*.3,
+    base=add(hem(an),mul(d,-rH*.06)),tp=add(base,[d[0]*.9,d[1]*.9,-L]);ctx.fillStyle=v<.1?LC.cloakD:LC.cloak;ink(1.8);spike(P(add(base,[0,0,1.4])),P(tp),1.6)}
+  ink(2.4);path();ctx.fillStyle=LC.cloak;ctx.fill();ctx.stroke();
+  ctx.save();path();ctx.clip();
+  ctx.fillStyle=LC.cloakD;ell(hm[0]+rH*.55,hm[1]+rH*.1,rH*.75,rH);ctx.fill();ell(b[0]+rC*.8,b[1]+rC*.3,rC*.55,rC*.9);ctx.fill();
+  ctx.fillStyle='rgba(255,240,210,.07)';ell(b[0]-rC*.4,b[1]-rC*.45,rC*.5,rC*.3);ctx.fill();
+  on(V0,lerp3(Pv,Ch,.6),lerp(rP,rC,.6),[-.75,0,.65],-.2,q=>{ctx.fillStyle='rgba(255,236,200,.1)';ell(q[0],q[1],rC*.75,rC*.42);ctx.fill()});
+  ctx.strokeStyle='rgba(20,14,10,.42)';ctx.lineWidth=1.2;for(const an of[-1,-.4,.2,.8,2.5,3.1,3.7]){const d=[Math.cos(an),Math.sin(an),0];if(F(d)<.12)continue;
+    const p0=P(add(Ch,mul(nrm([d[0],d[1],-.25]),rC*.9))),p1=P(add(hem(an),mul(d,-rH*.03)));ctx.beginPath();ctx.moveTo(p0[0],p0[1]);ctx.quadraticCurveTo((p0[0]+p1[0])/2+1,(p0[1]+p1[1])/2,p1[0],p1[1]);ctx.stroke()}
+  for(const[C0,r0,d] of[[Pv,rP,[.25,.97,-.05]],[Ch,rC,[-.35,-.9,-.3]]])on(V0,C0,r0,d,.12,(q,v)=>{const w=2.6*Math.max(.45,v);ink(1.4);ctx.fillStyle=LC.skin;ctx.beginPath();
+    for(let i=0;i<10;i++){const an=i/10*TAU,r=[1,.82,.95,.7,1,.84,.9,.74,1,.86][i];ctx.lineTo(q[0]+Math.cos(an)*w*r,q[1]+Math.sin(an)*3*r)}ctx.closePath();ctx.fill();ctx.stroke();ctx.fillStyle=LC.skinD;ell(q[0]+w*.3,q[1]+1,w*.5,1.2);ctx.fill()});
+  for(const[C0,r0,d,s] of[[Ch,rC,[.2,-.7,.7],1.2],[Ch,rC,[-.6,.55,.6],1],[Hm,rH,[.85,.45,.1],.9],[Hm,rH,[-.8,-.5,.1],.9]])on(V0,C0,r0,d,.05,q=>mossBlob(q,s,ph));
+  ctx.restore();
+  on(V0,Pv,rP,[.8,-.55,-.15],.05,q=>{const sw=Math.sin(ph*2)*.8,k=[q[0]+sw*1.3,q[1]+3];ctx.lineCap='round';ctx.strokeStyle=INK;ctx.lineWidth=1;seg(q,k);ctx.stroke();
+    for(const pass of[0,1]){ctx.strokeStyle=pass?LC.key:INK;ctx.lineWidth=pass?1.3:2.9;ctx.beginPath();ctx.arc(k[0],k[1]+1.4,1.4,0,TAU);ctx.stroke();seg([k[0],k[1]+2.8],[k[0]+sw*.2,k[1]+6.6]);ctx.stroke();seg([k[0]+sw*.2,k[1]+5.4],[k[0]+sw*.2+1.6,k[1]+5.4]);ctx.stroke();seg([k[0]+sw*.2,k[1]+6.4],[k[0]+sw*.2+1.2,k[1]+6.4]);ctx.stroke()}})}
+// the short cape over the shoulders, between the hood and the cloak: it gives him shoulders from every side and the arms come out under it
+function lCape(V0,top,rT,ring,rR,ph){const{P,F}=V0,a=P(top),pts=[],rp=an=>add(ring,[Math.cos(an)*rR,Math.sin(an)*rR,Math.cos(an)*1.4]);
+  for(let i=0;i<24;i++){const an=i/24*TAU;pts.push([a[0]+Math.cos(an)*rT,a[1]+Math.sin(an)*rT],P(rp(an)))}
+  for(let i=0;i<18;i++){const an=i/18*TAU+.1,d=[Math.cos(an),Math.sin(an),0],v=F(d);if(v<-.3)continue;const base=rp(an),tp=add(base,[d[0]*1.2,d[1]*1.2,-(1.6+((i*3)%3)*.8+Math.sin(ph+i)*.25)]);
+    ctx.fillStyle=v<.1?LC.cloakD:LC.cloak;ink(1.6);spike(P(add(base,[0,0,1])),P(tp),1.5)}
+  const H=hull2(pts),path=()=>{ctx.beginPath();for(const q of H)ctx.lineTo(q[0],q[1]);ctx.closePath()};ink(2.4);path();ctx.fillStyle=LC.cloak;ctx.fill();ctx.stroke();
+  ctx.save();path();ctx.clip();const r=P(ring);ctx.fillStyle=LC.cloakD;ell(r[0]+rR*.6,r[1]+rR*.25,rR*.6,rR*.5);ctx.fill();ctx.fillStyle='rgba(255,240,210,.08)';ell(r[0]-rR*.45,r[1]-rR*.35,rR*.5,rR*.25);ctx.fill();
+  for(const[d,sz] of[[[-.4,-.75,.5],1],[[.3,.85,.4],.9]])on(V0,ring,rR*.95,d,0,q=>mossBlob(q,sz,ph));ctx.restore()}
+// a dead twig sticking out of the point of the hood, two leaves hanging from it on threads
+function twig(V0,tp,ph){const{P}=V0,s1=add(tp,[-1,.3,3.4]),s2=add(s1,[1.1,.5,3.2]),f1=add(s1,[-2.4,-.4,2]),sw=Math.sin(ph*2)*.5;
+  limb([P(tp),P(s1),P(s2)],[1.6,1.2],LC.twig);limb([P(s1),P(f1)],[1],LC.twig);
+  for(const[e,l] of[[s2,2.2],[f1,1.8]]){const q=P(e),lf=[q[0]+sw,q[1]+l];ctx.strokeStyle=INK;ctx.lineWidth=.8;seg(q,lf);ctx.stroke();ink(1);ctx.fillStyle=LC.leaf;ctx.beginPath();ctx.ellipse(lf[0],lf[1]+1.4,1,1.7,sw*.3,0,TAU);ctx.fill();ctx.stroke()}}
+// the hood with the face inside. The hood is a ball of cloth with the front cut away (a cap around the direction n). From any angle:
+// the part of the hood whose front surface is cut away shows the dark lining, the face sits in front of the lining, and the rest
+// of the hood covers the top and the sides of the head. The lip of the opening goes behind the face on the far side and in front
+// on the near side; the point of the hood (with its twig) goes behind or in front of the ball by where it faces.
+function lHead(V0,Ho,Rh,Hf,Rf,ph,open,tsw){const{P,F,c,s}=V0,t=G.t,ho=P(Ho),n=nrm([1,0,-.2]),u=[0,1,0],w=nrm(cross(n,u)),CA=.47,SA=.883,
+    cam=nrm([s,c,.55]),e1=nrm(cross(cam,[0,0,1])),e2=cross(cam,e1);
+  const proj=d=>{const q=P(add(Ho,mul(d,Rh))),dx=q[0]-ho[0],dy=q[1]-ho[1],l=Math.hypot(dx,dy);return l>Rh?[ho[0]+dx/l*Rh,ho[1]+dy/l*Rh]:q};
+  const rim=[];for(let i=0;i<40;i++){const th=i/40*TAU,d=add(mul(n,CA),add(mul(u,Math.cos(th)*SA),mul(w,Math.sin(th)*SA)));rim.push({q:proj(d),v:F(d),th})}
+  const sil=[];for(let i=0;i<64;i++){const f=i/64*TAU,d=add(mul(e1,Math.cos(f)),mul(e2,Math.sin(f))),q=P(d),l=Math.hypot(q[0],q[1])||1;sil.push({q:[ho[0]+q[0]/l*Rh,ho[1]+q[1]/l*Rh],cap:dot(d,n)>CA})}
+  const cp=rim.filter(r=>r.v>0).map(r=>r.q).concat(sil.filter(q=>q.cap).map(q=>q.q)),hole=cp.length>2?hull2(cp):null,showFace=!!hole&&F(n)>-.45;
+  const lip=near=>{ctx.lineCap='round';for(const pass of[0,1])for(let i=0;i<rim.length;i++){const A=rim[i],B=rim[(i+1)%rim.length];if((A.v>0&&B.v>0)!==near||(near&&Math.sin(A.th)<-.45))continue;
+    ctx.strokeStyle=pass?(near&&Math.sin(A.th)>.35?LC.cloakL:LC.cloakD):INK;ctx.lineWidth=pass?1.7:3.6;seg(A.q,B.q);ctx.stroke()}};
+  const tb=add(Ho,mul(nrm([-.6,0,.8]),Rh*.7)),tp=add(Ho,[-Rh*1.25,Math.sin(ph)*.4,Rh*.62]),tipFront=F(-1,0,.3)>.2;
+  const tip=()=>{ink(2.4);hull(P(tb),Rh*.42,P(tp),1.4);ctx.fillStyle=LC.cloak;ctx.fill();ctx.stroke();if(tipFront){ball(P(tb),Rh*.42+1.3);ctx.fill()}twig(V0,tp,ph)};
+  if(!tipFront)tip();
+  const mn=nrm([.86,0,-.42]),hv=mn[0]*s;
+  if(showFace){ctx.fillStyle=LC.inside;ctx.beginPath();for(const q of hole)ctx.lineTo(q[0],q[1]);ctx.closePath();ctx.fill();lip(false);
+    const h=P(Hf);ink(2.4);ball(h,Rf);ctx.fillStyle=LC.skin;ctx.fill();ctx.stroke();
+    ctx.save();ball(h,Rf-1);ctx.clip();ctx.fillStyle=LC.skinD;ell(h[0]+Rf*.35,h[1]+Rf*.75,Rf*1.1,Rf*.6);ctx.fill();for(const[mx,my,mr] of[[-.45,.1,.22],[.4,-.2,.16],[-.1,.45,.13]]){ell(h[0]+Rf*mx,h[1]+Rf*my,Rf*mr,Rf*mr*.75);ctx.fill()}
+    ctx.fillStyle='rgba(26,18,12,.35)';ell(h[0]-Rf*.2,h[1]-Rf*.9,Rf*1.2,Rf*.55);ctx.fill();ctx.restore();
+    for(const sd of[-1,1])on(V0,Hf,Rf*.93,[.64,sd*.58,.24],0,(q,v)=>{const big=sd>0?1.18:.94,rx=Rf*.23*big*Math.max(.5,v),ry=Rf*.25*big;ctx.fillStyle=INK;ctx.beginPath();ctx.ellipse(q[0],q[1],rx+.9,ry+.9,0,0,TAU);ctx.fill();
+      shine(LC.glow,q[0],q[1],Rf*.75*big,.55+.1*Math.sin(t*5+sd));ctx.fillStyle=LC.eye;ctx.beginPath();ctx.ellipse(q[0],q[1],rx,ry,0,0,TAU);ctx.fill();ctx.fillStyle='#ffffff';ball([q[0]-rx*.3,q[1]-ry*.35],ry*.25);ctx.fill()});
+    if(hv>-.15){const q=P(add(Hf,mul(mn,Rf*.93))),v=Math.max(0,F(mn)),wd=Rf*.42*Math.max(.4,v,Math.abs(c)*.3),hh=Rf*.2+open*Rf*.22;ctx.save();ctx.globalAlpha=cl((hv+.15)*4,0,1);
+      ink(1.6);ctx.fillStyle=LC.mouth;ctx.beginPath();ctx.ellipse(q[0],q[1]+hh*.3,wd,hh,0,0,TAU);ctx.fill();ctx.stroke();ctx.fillStyle=LC.tooth;ink(.8);
+      for(let i=0;i<4;i++){const xx=q[0]-wd*.7+i*wd*.47;tri(xx,q[1]-hh*.55,xx,q[1]-hh*.55+1.6,.75)}ctx.restore()}}
+  ctx.save();ctx.beginPath();ctx.arc(ho[0],ho[1],Rh,0,TAU);if(showFace){ctx.moveTo(hole[0][0],hole[0][1]);for(let i=1;i<hole.length;i++)ctx.lineTo(hole[i][0],hole[i][1]);ctx.closePath()}
+  ctx.fillStyle=LC.cloak;ctx.fill('evenodd');ctx.clip('evenodd');ctx.fillStyle=LC.cloakD;ell(ho[0]+Rh*.45,ho[1]+Rh*.5,Rh*.9,Rh*.7);ctx.fill();ctx.fillStyle='rgba(255,240,210,.08)';ell(ho[0]-Rh*.4,ho[1]-Rh*.5,Rh*.45,Rh*.28);ctx.fill();
+  for(const[d,sz] of[[[.15,-.45,.88],1.2],[[-.35,.5,.8],1],[[.45,.55,.7],.8]])on(V0,Ho,Rh*.98,d,-.1,q=>mossBlob(q,sz,ph));
+  ctx.restore();ctx.strokeStyle=INK;ctx.lineWidth=2.4;ctx.lineCap='round';for(let i=0;i<sil.length;i++){const A=sil[i],B=sil[(i+1)%sil.length];if(showFace&&(A.cap||B.cap))continue;seg(A.q,B.q);ctx.stroke()}
+  if(showFace)lip(true);
+  if(tipFront)tip();
+  if(showFace&&hv>-.15){const m0=add(Hf,add(mul(mn,Rf*.95),[0,0,-Rf*.12])),m1=add(m0,[1.1+open*.7,tsw,-3.2-open*1.2]),A=P(m0),B=P(m1);ctx.save();ctx.globalAlpha=cl((hv+.15)*4,0,1);
+    ink(1.8);hull(A,1.3,B,1.9);ctx.fillStyle=LC.tongue;ctx.fill();ctx.stroke();ctx.strokeStyle=LC.tongueD;ctx.lineWidth=.9;seg([lerp(A[0],B[0],.2),lerp(A[1],B[1],.2)],[lerp(A[0],B[0],.85),lerp(A[1],B[1],.85)]);ctx.stroke();ctx.restore()}}
+// a leg wrapped in rags, knee forward, big dark foot with three claws
+function lLeg(V0,hip,foot,k){const{P}=V0,[kn,f]=ik(hip,add(foot,[0,0,2.1]),5.4,5.6,[1,0,.12]),col=mix(LC.wrap,LC.wrapF,k),Kq=P(kn),E=P(f);
+  limb([P(hip),Kq,E],[5.8,5],col,()=>{ink(2.4);ctx.fillStyle=mix(LC.foot,'#000000',k*.4);hull(P(add(f,[-1.8,0,-.8])),2.9,P(add(f,[2.8,0,-1.1])),3.1);ctx.fill();ctx.stroke();
+    ctx.lineCap='round';for(const pass of[0,1])for(let i=-1;i<=1;i++){ctx.strokeStyle=pass?LC.claw:INK;ctx.lineWidth=pass?1.3:3.1;seg(P(add(f,[3.6,i*1.5,-1.4])),P(add(f,[5.4,i*2,-2.2])));ctx.stroke()}});
+  ctx.strokeStyle=mix(LC.band,LC.wrapF,k);ctx.lineWidth=1.2;for(const u of[.35,.62]){const q=[lerp(Kq[0],E[0],u),lerp(Kq[1],E[1],u)],dx=E[0]-Kq[0],dy=E[1]-Kq[1],l=Math.hypot(dx,dy)||1,nx=-dy/l*2.3,ny=dx/l*2.3;seg([q[0]-nx,q[1]-ny-.5],[q[0]+nx,q[1]+ny+.5]);ctx.stroke()}}
+// the lantern: ring, roof, glowing glass with an iron cross, base; it hangs from the end of the staff and tilts with its chain
+function lanternBody(q,rot,t,lit){shine(LC.glow,q[0],q[1],9+lit*6,(.5+.08*Math.sin(t*9))*(1+lit));ctx.save();ctx.translate(q[0],q[1]);ctx.rotate(rot);const w=2.6,h=3.2;
+  ctx.lineJoin='round';ctx.strokeStyle=INK;ctx.lineWidth=1.7;ctx.beginPath();ctx.arc(0,-h-2.6,1.2,0,TAU);ctx.stroke();
+  ink(1.6);ctx.fillStyle=LC.ironD;ctx.beginPath();ctx.moveTo(-w-.8,-h+.4);ctx.lineTo(-w*.4,-h-1.6);ctx.lineTo(w*.4,-h-1.6);ctx.lineTo(w+.8,-h+.4);ctx.closePath();ctx.fill();ctx.stroke();
+  ctx.fillStyle=lit>.3?'#ffffff':LC.light;ctx.fillRect(-w,-h,w*2,h*2);ctx.strokeRect(-w,-h,w*2,h*2);
+  ctx.strokeStyle=INK;ctx.lineWidth=1.3;ctx.beginPath();ctx.moveTo(-w,-h);ctx.lineTo(w,h);ctx.moveTo(w,-h);ctx.lineTo(-w,h);ctx.stroke();
+  ink(1.4);ctx.fillStyle=LC.ironD;ctx.fillRect(-w-.8,h,w*2+1.6,1.5);ctx.strokeRect(-w-.8,h,w*2+1.6,1.5);ctx.restore()}
+// the staff: twisted wood with knots, the chain from its end to the lantern
+function staffLantern(V0,k,Lc,t,lit){const{P}=V0,b0=P(k.butt),b1=P(k.tip),q=P(Lc),dx=b1[0]-b0[0],dy=b1[1]-b0[1],l=Math.hypot(dx,dy)||1;
+  ctx.lineCap='round';ctx.strokeStyle=INK;ctx.lineWidth=5.6;seg(b0,b1);ctx.stroke();ctx.strokeStyle=LC.wood;ctx.lineWidth=3;ctx.stroke();
+  ctx.strokeStyle=LC.woodD;ctx.lineWidth=1;for(let i=1;i<5;i++){const m=[lerp(b0[0],b1[0],i/5),lerp(b0[1],b1[1],i/5)],nx=-dy/l*1.3,ny=dx/l*1.3;seg([m[0]-nx,m[1]-ny],[m[0]+nx+dx/l*1.2,m[1]+ny+dy/l*1.2]);ctx.stroke()}
+  const hx=q[0]-b1[0],hy=q[1]-b1[1],rot=Math.atan2(-hx,hy),ring=[q[0]+Math.sin(rot)*5.8,q[1]-Math.cos(rot)*5.8];ctx.strokeStyle=INK;ctx.lineWidth=1.3;seg(b1,ring);ctx.stroke();
+  lanternBody(q,rot,t,lit)}
+// the burst of light when the lantern hits the floor: a star, a ring on the floor, sparks
+function lBurst(x,y,k,sc){const r=(4.5+k*13)*sc*.5,a=1-k;ctx.save();if(!LOWFX)glow(LC.glow,x,y,r*1.7,.85*a);
+  ctx.strokeStyle=`rgba(200,255,120,${.7*a})`;ctx.lineWidth=2.4;ell(x,y+r*.5,r*1.3,r*.5);ctx.stroke();ctx.lineJoin='round';
+  const star=(R,col,ln)=>{ctx.beginPath();for(let i=0;i<22;i++){const an=i/22*TAU+k*.6,rr=i%2?R*.42:R*(1-((i*7)%4)*.1);ctx.lineTo(x+Math.cos(an)*rr,y+Math.sin(an)*rr*.8)}ctx.closePath();ctx.fillStyle=col;ctx.fill();if(ln){ctx.strokeStyle=ln;ctx.lineWidth=1.6;ctx.stroke()}};
+  star(r*1.25,`rgba(214,255,96,${.9*a})`,`rgba(110,160,30,${.8*a})`);star(r*.7,`rgba(255,255,220,${.95*a})`);
+  if(!LOWFX)for(let i=0;i<9;i++){const an=i/9*TAU+.3,d=r*(1.15+k*.6),px=x+Math.cos(an)*d,py=y+Math.sin(an)*d*.7-Math.sin(k*Math.PI)*6*sc;ctx.fillStyle=`rgba(232,255,140,${a})`;ctx.beginPath();ctx.moveTo(px,py-2);ctx.lineTo(px+1.2,py);ctx.lineTo(px,py+2);ctx.lineTo(px-1.2,py);ctx.closePath();ctx.fill()}
+  ctx.restore()}
+function lanterna(x,y,face,anim,p,sc){sc=sc||1.55;const V0=V(face),{P,D,F}=V0,ph=p*TAU,walk=anim==='walk',atk=anim==='attack',t=G.t;
+  // attack: .0-.24 leans back and swings the staff up behind his head, .24-.38 holds the lantern up high (it shakes),
+  // .38-.48 smashes it down in front of him, .48-.7 the lantern bursts in green light on the floor, .7-1 straightens up
+  let a=-.25+(walk?Math.sin(ph+.5)*.1:Math.sin(ph)*.04),lean=0,lunge=0,burst=-1,taut=0,shake=0;
+  if(atk){if(p<.24){const k=ez(p/.24);a=-.25+k*2.7;lean=k;taut=k*.5}
+    else if(p<.38){const k=(p-.24)/.14;a=2.45;lean=1;shake=Math.sin(k*Math.PI);taut=.5}
+    else if(p<.48){const k=(p-.38)/.1;a=2.45-ez(k)*3.45;lean=1-k*1.6;lunge=k*4;taut=.5+k*.5}
+    else if(p<.7){const k=(p-.48)/.22;a=-1;lean=-.6;lunge=4;burst=k;taut=1-k*.7}
+    else{const k=ez((p-.7)/.3);a=lerp(-1,-.25,k);lean=-.6*(1-k);lunge=4*(1-k);taut=.3*(1-k)}}
+  // walk: a heavy shamble with long strides; the body rocks, the lantern swings behind the staff
+  const st=stepper(p,.56),fL=walk?st(0,4.4,2.4):NOSTEP,fR=walk?st(.5,4.4,2.4):NOSTEP,spread=walk?Math.abs(fL.x-fR.x)/8.8:0;
+  const bob=walk?-spread*1.8:Math.sin(ph)*.5,roll=walk?-Math.sin(ph)*1.6:Math.sin(ph)*.4,L=lunge*.6,jit=shake*Math.sin(p*300)*.4;
+  const Pv=[L-lean*1.5+jit,roll*.5,12+bob],Ch=[L+7-lean*4+jit,roll,19+bob+lean*2.2],Ho=add(Ch,[5-lean*1.6,roll*.3,5+lean*.8]),
+    Hf=add(Ho,[5.2,Math.sin(ph*(walk?2:1)+.4)*.5,-2.4]),Hm=[L*.5-1.5-lean,roll*.3,8.4+bob*.5];
+  // hand, staff and lantern for a staff angle; the lantern is never pushed through the floor
+  const pose=a=>{const hd=add(Ch,[2.5+Math.cos(a)*4.6,10.2,-1+Math.sin(a)*7]),dir=nrm([Math.cos(a)*.95,.12,Math.sin(a)]);return{a,hd,dir,tip:add(hd,mul(dir,11.5)),butt:add(hd,mul(dir,-3.2))}};
+  const sw=walk?Math.sin(ph*2-1.4)*.32:Math.sin(ph-1)*.1,lant=k=>add(k.tip,mul(nrm(lerp3([sw,sw*.25,-1],k.dir,taut)),5.4)),low=k=>Math.min(lant(k)[2]-3.4,k.tip[2]-1);
+  let sv=pose(a);if(low(sv)<.2){let lo=a,hi=Math.PI/2;for(let i=0;i<22;i++){const m=(lo+hi)/2;if(low(pose(m))<.2)lo=m;else hi=m}sv=pose(hi)}
+  const Lc=lant(sv),lit=burst>=0?Math.max(0,1-burst*2.5):0;
+  {const q=P(L+1,0,0);shadow(x+q[0]*sc,y+q[1]*sc,14*sc,5.6*sc,.38)}
+  // the lantern lights the floor under it
+  if(!LOWFX){const q=P(Lc[0],Lc[1],0),k=cl(1-Lc[2]/30,0,1);ctx.save();ctx.globalCompositeOperation='lighter';glow(LC.glow,x+q[0]*sc,y+q[1]*sc,8*sc,(.24+.04*Math.sin(t*9))*k,3.8*sc);ctx.restore()}
+  ctx.save();ctx.translate(x,y);ctx.scale(sc,sc);const parts=[],dT=D(Ch);
+  for(const[sd,f] of[[-1,fL],[1,fR]]){const hip=add(Pv,[0,sd*4.4,-3.2]),foot=[L*.5+3+f.x,sd*5.4,f.z],k=farK(F(0,sd,0));
+    parts.push({d:dT-100+D(hip)*.01,f:()=>lLeg(V0,hip,foot,k)})}
+  parts.push({d:dT,f:()=>lCloak(V0,Pv,7,Ch,8,Hm,10,ph)});
+  // left arm hangs long in front of him and swings, big claws
+  {const sh=add(Ch,[1.5,-8,3.5]),s=walk?Math.sin(ph)*2.4:Math.sin(ph)*.6,hd=add(Ch,[7+s-lean*3,-9.6,-11.5+lean*5]),k=farK(F(0,-1,0));
+    parts.push({d:Math.min(D(Ho)-.01,D(add(sh,[1.5,0,0]))),f:()=>zArm(V0,sh,hd,[-1,-.2,-.1],{side:-1,L1:7.6,L2:7.8,w1:5,w2:4.3,hand:3.3,skin:mix(LC.skin,LC.skinF,k),cloth:mix(LC.cloak,LC.cloakF,k),nail:LC.claw,pd:[.4,1,-.2],sleeve:6.4,sleeveK:.95})})}
+  // right arm holds the staff. The hood hangs over both shoulders, so the arms always go under it; the staff, the lantern and the fist
+  // swing in a plane beside the head and go in front of the hood on the near side
+  {const sh=add(Ch,[1.5,8,3.5]),k=farK(F(0,1,0)),skin=mix(LC.skin,LC.skinF,k),kA=Math.min(D(Ho)-.01,D(add(sh,[4,2.5,0])));
+    parts.push({d:kA,f:()=>zArm(V0,sh,sv.hd,nrm([-.4,.5,-1]),{side:1,L1:6.8,L2:6.8,w1:5,w2:4.3,noHand:true,skin,cloth:mix(LC.cloak,LC.cloakF,k),sleeve:6.4,sleeveK:.95})});
+    parts.push({d:Math.max(D(add(Ch,[4,10.5,0])),kA+.001),f:()=>{staffLantern(V0,sv,Lc,t,lit);fist(V0,sv.hd,3.2,skin)}})}
+  // the cape is the outer layer: always over the cloak, under the hood when the hood is in front, over the hood's base when seen from behind
+  parts.push({d:Math.max(dT+.001,D(Ho)-.005),f:()=>lCape(V0,add(Ho,[-1.5,0,-4.5]),6,add(Ch,[-.5,0,3]),10.5,ph)});
+  parts.push({d:D(Ho),f:()=>lHead(V0,Ho,8.6,Hf,7,ph,atk&&p>.3&&p<.75?1:.4+.15*Math.sin(ph*2),Math.sin(ph*2+1)*.6)});
+  run(parts);ctx.restore();
+  if(burst>=0&&burst<1){const q=P(Lc[0],Lc[1],Math.max(1,Lc[2]));lBurst(x+q[0]*sc,y+q[1]*sc,burst,sc)}}
+
+return {zombie,strisciante,minatore,hound,becchino,lanterna};
 })();
