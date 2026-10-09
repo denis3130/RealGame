@@ -3018,12 +3018,18 @@ function held(S,o,B){
     ctx.rotate(o.wind?-1.3:o.lunge?.25:0);
     ink(2.5);ctx.beginPath();ctx.moveTo(2,-2);ctx.lineTo(22,-1.5);ctx.lineTo(25,0);ctx.lineTo(22,1.5);ctx.lineTo(2,2);ctx.closePath();fs('#cfd6de');
     ctx.fillStyle='#6b4a2a';ctx.fillRect(-2,-4,4,8);ctx.strokeRect(-2,-4,4,8);circ(0,0,3);fs(S.skin);
-  }else if(S.held==='xbow'){const pull=o.pull||0;
-    ctx.strokeStyle=INK;ctx.lineWidth=6;ctx.beginPath();ctx.moveTo(-6,0);ctx.lineTo(15,0);ctx.stroke();ctx.strokeStyle=S.bowCol||'#6b4a2a';ctx.lineWidth=3;ctx.stroke();
-    ctx.strokeStyle=INK;ctx.lineWidth=5;ctx.beginPath();ctx.moveTo(11,-11);ctx.quadraticCurveTo(6,0,11,11);ctx.stroke();ctx.strokeStyle='#a7b0ba';ctx.lineWidth=2.5;ctx.stroke();
-    ctx.strokeStyle='#f6ead2';ctx.lineWidth=1.2;ctx.beginPath();ctx.moveTo(11,-11);ctx.lineTo(5-pull*.5,0);ctx.lineTo(11,11);ctx.stroke();
-    if(pull>2){ctx.strokeStyle=INK;ctx.lineWidth=3;ctx.beginPath();ctx.moveTo(3,0);ctx.lineTo(18,0);ctx.stroke();ctx.strokeStyle='#dfe4ea';ctx.lineWidth=1.6;ctx.stroke()}
-    ink(2);circ(1,0,3);fs(S.skin);ringOn(S,1,0);
+  }else if(S.held==='xbow'){const pull=o.pull||0,loaded=pull<=0||pull>2;// same crossbow as its card: wooden stock, blue gem, steel limbs, stirrup, loaded bolt
+    ink(2);ctx.beginPath();ctx.moveTo(-9,-2.4);ctx.lineTo(-3,-2.4);ctx.lineTo(-1.5,-1.5);ctx.lineTo(15,-1.5);ctx.lineTo(15,1.5);ctx.lineTo(-1.5,1.5);ctx.lineTo(-3,3.6);ctx.lineTo(-9,3.6);ctx.quadraticCurveTo(-10.2,.6,-9,-2.4);ctx.closePath();ctx.fillStyle='#7a5230';ctx.fill();ctx.stroke();
+    ctx.strokeStyle='#a87a4c';ctx.lineWidth=.8;ctx.beginPath();ctx.moveTo(-8,-1.3);ctx.lineTo(-3.4,-1.3);ctx.moveTo(0,-.6);ctx.lineTo(14,-.6);ctx.stroke();
+    ink(1.2);ctx.fillStyle='#4d97ff';circ(-6.2,.6,1.9);ctx.fill();ctx.stroke();ctx.fillStyle='#fff';circ(-6.8,0,.6);ctx.fill();
+    ink(1.3);ctx.beginPath();ctx.moveTo(2,1.5);ctx.quadraticCurveTo(2.3,4.6,4.4,5);ctx.lineTo(4.6,4);ctx.quadraticCurveTo(3.4,3.6,3.4,1.5);ctx.fillStyle='#3e2a18';ctx.fill();ctx.stroke();
+    ctx.strokeStyle=INK;ctx.lineWidth=3.2;ctx.beginPath();ctx.moveTo(15,1.5);ctx.quadraticCurveTo(19.5,1.5,19.5,3.8);ctx.quadraticCurveTo(19.5,6,15.5,5.6);ctx.stroke();ctx.strokeStyle='#a7b0ba';ctx.lineWidth=1.3;ctx.stroke();
+    ctx.strokeStyle=INK;ctx.lineWidth=5;ctx.beginPath();ctx.moveTo(10,-11.5);ctx.quadraticCurveTo(16.5,0,10,11.5);ctx.stroke();ctx.strokeStyle='#a7b0ba';ctx.lineWidth=2.6;ctx.stroke();
+    ctx.strokeStyle='#eef2f6';ctx.lineWidth=.9;ctx.beginPath();ctx.moveTo(11.2,-8.5);ctx.quadraticCurveTo(14.6,0,11.2,8.5);ctx.stroke();
+    ctx.strokeStyle='#f6ead2';ctx.lineWidth=1.2;ctx.beginPath();ctx.moveTo(10,-11.5);ctx.lineTo(3-pull*.4,0);ctx.lineTo(10,11.5);ctx.stroke();
+    if(loaded){ctx.strokeStyle=INK;ctx.lineWidth=3.2;ctx.beginPath();ctx.moveTo(2.6,0);ctx.lineTo(18,0);ctx.stroke();ctx.strokeStyle='#8a6a4a';ctx.lineWidth=1.5;ctx.stroke();
+      ink(1.3);ctx.fillStyle='#dfe4ea';ctx.beginPath();ctx.moveTo(22.5,0);ctx.lineTo(17.4,-2.4);ctx.lineTo(17.4,2.4);ctx.closePath();ctx.fill();ctx.stroke();ctx.fillStyle='#4d97ff';ctx.fillRect(2.4,-1.8,2.4,3.6);ctx.strokeRect(2.4,-1.8,2.4,3.6)}
+    ink(2);circ(.5,0,3);fs(S.skin);ringOn(S,.5,0);
   }else if(S.held==='hammer'){
     ctx.rotate(o.wind?-1.7:o.slam?.6:0);
     ctx.strokeStyle=INK;ctx.lineWidth=6;ctx.beginPath();ctx.moveTo(-6,0);ctx.lineTo(19,0);ctx.stroke();ctx.strokeStyle='#6b4a2a';ctx.lineWidth=3;ctx.stroke();

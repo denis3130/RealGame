@@ -62,6 +62,7 @@ Dopo ogni modifica: rifare almeno una partita automatica per capitolo, `meta2.js
 - Arco delle spine tolto, al suo posto l'Arco del tuono (`arco_tuono`, epico): arco blu con un fulmine lungo i flettenti, frecce che richiamano fulmini (`P.light`). I salvataggi vecchi passano da `arco_spine` ad `arco_tuono` in `migrateItems`. Il Set della Foresta ora è Arco ricurvo + Corazza di muschio.
 - Icone disegnate a mano per ogni oggetto (`ICON_ART` dentro `itemSVG`). Sull'eroe: funghetto sulla Corazza di muschio. La Giubba di cuoio è il vestito base con i colori del cuoio.
 - Faretra in diagonale sulla schiena, diversa per ogni arma (`QUIV`), con munizioni diverse anche in volo (foglie per l'Arco ricurvo, punta a fulmine per l'Arco del tuono, alette blu per la Balestra).
+- La balestra in mano all'eroe è uguale alla sua carta: calcio di legno con gemma blu, flettenti d'acciaio, staffa davanti, dardo carico (sparisce solo mentre ricarica).
 - Anello del gelo eterno: alone di ghiaccio leggero e scia di ghiaccio che si scioglie camminando (`frostTick`, `drawFrostTrail`).
 - Sprite in `sprite/` (icone e fotogrammi dell'eroe), spiegati in `sprite/LEGGIMI.md`.
 
