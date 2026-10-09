@@ -1,8 +1,8 @@
 # Sprite di Mossbound
 
-Materiale grafico preparato fuori dal gioco. Non è ancora collegato a `index.html`.
+Materiale grafico dell'equipaggiamento. Sul branch `nuovi-oggetti` le icone sono già dentro `index.html` (`ICON_ART`, usato da `itemSVG`) e i fotogrammi dell'eroe escono dal codice di quel branch.
 
-## `oggetti/` — icone nuove dei 17 oggetti (bozza)
+## `oggetti/` — icone dei 17 oggetti (versione 2)
 
 - Un file per oggetto, con lo stesso `id` usato in `ITEMS` dentro `index.html` (per esempio `arco_fenice.svg`).
 - `.svg`: disegno originale, `viewBox="0 0 48 48"`, come le icone di oggi (`itemSVG(it)`). Il contenuto del tag `<svg>` si può incollare al posto del disegno generato da `itemSVG`.
@@ -10,10 +10,10 @@ Materiale grafico preparato fuori dal gioco. Non è ancora collegato a `index.ht
 - `_anteprima.png`: tutti gli oggetti con le cornici della rarità e alla grandezza vera del gioco (46 px).
 - Stile: contorno `#1b1612`, colori presi da `tint` di ogni oggetto.
 
-Da fare, se Denis approva: sostituire in `itemSVG(it)` il disegno unico per slot con un disegno per oggetto.
+L'Arco delle spine non c'è più: al suo posto c'è l'**Arco del tuono** (`arco_tuono`, epico, le frecce richiamano fulmini con `P.light`).
 
 ## `eroe/` — fotogrammi dell'arciere con l'equipaggiamento
 
-- Presi dal codice del gioco (versione 41): `drawRig` con `heroStyle('arciere')`, quindi identici al gioco.
+- Presi dal codice del branch `nuovi-oggetti`: `drawRig` con `heroStyle('arciere')`, quindi identici al gioco. L'eroe non ha più la punta sul cappuccio (`hoodTip:false`).
 - 29 fogli, 12 colonne × 4 righe, caselle da 192 × 192 px, sfondo trasparente. Dettagli in `eroe/LEGGIMI.txt`.
-- L'equipaggiamento addosso è quello disegnato oggi dal gioco (`armorBits`, `cape`, `bowKind`, `ringOn`, `amulet`), non quello delle icone nuove.
+- Equipaggiamento addosso: `bowKind` (nuovo `thunder` per l'Arco del tuono), `armorBits` (spalline di cuoio sulla Giubba, funghetto sulla Corazza di muschio), `cape`, `ringOn`, `amulet`.

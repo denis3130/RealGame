@@ -1,4 +1,4 @@
-Mossbound - fotogrammi dell'eroe (arciere), presi dal codice del gioco (versione 41).
+Mossbound - fotogrammi dell'eroe (arciere), presi dal codice del gioco (branch nuovi-oggetti, senza punta sul cappuccio).
 
 Ogni file e' un foglio di 12 colonne x 4 righe. Ogni casella e' 192 x 192 pixel, sfondo trasparente.
 

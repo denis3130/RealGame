@@ -56,6 +56,13 @@ Dopo ogni modifica: rifare almeno una partita automatica per capitolo, `meta2.js
 - Compagni: si parte senza; carte compagno nelle casse (circa 35% legno, 60% argento, 90% oro); sblocco a 6/15/25 carte (Muschietto/Lucciola/Draghetto) o con 60/150/300 gemme; livelli con carte (`PET_NEED`) e oro. Premio delle 500 coppe: 10 carte Lucciola. Valori scelti da Claude, da regolare giocando.
 - Grafica: personaggi non scuriti dalla luce della stanza, colori più ricchi e luce al centro (`gradeRoom`), ciuffi d'erba che ondeggiano e si piegano al passaggio (`drawTufts`).
 
+## Branch `nuovi-oggetti` (da approvare con Denis)
+
+- L'arciere non ha più la punta sul cappuccio (`HERO.hoodTip:false`).
+- Arco delle spine tolto, al suo posto l'Arco del tuono (`arco_tuono`, epico): arco blu con un fulmine lungo i flettenti, frecce che richiamano fulmini (`P.light`). I salvataggi vecchi passano da `arco_spine` ad `arco_tuono` in `migrateItems`. Il Set della Foresta ora è Arco ricurvo + Corazza di muschio.
+- Icone disegnate a mano per ogni oggetto (`ICON_ART` dentro `itemSVG`). Sull'eroe: spalline di cuoio per la Giubba, funghetto sulla Corazza di muschio.
+- Sprite in `sprite/` (icone e fotogrammi dell'eroe), spiegati in `sprite/LEGGIMI.md`.
+
 ## Da fare (annotato con Denis, non ancora fatto)
 
 1. Compagni: massimo 2 equipaggiati insieme; equipaggiamento solo manuale (oggi il primo sbloccato viene messo in automatico: togliere).
