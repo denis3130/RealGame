@@ -6,5 +6,7 @@
 - **Segugio infernale** (`hound`): mosse `idle`, `walk` (corsa), `attack` (si acquatta, salta, atterra).
 - **Il Becchino** (`becchino`, boss): mosse `idle`, `walk`, `slam` (pala sopra la testa e colpo a terra con crepa verde), `summon` (alza il braccio, cerchio verde, mani di zombie che escono da terra).
 
-Fogli PNG: 4 righe (davanti, tre quarti, lato, dietro) × un fotogramma per colonna; caselle 192 px (Becchino 300 px).
+Ogni parte del corpo sta in un piccolo spazio 3D (avanti, destra, su) e viene proiettata con l'angolo di direzione: i mostri girano a 360 gradi e ogni pezzo resta attaccato allo stesso punto. Occhi, bocca e dettagli si vedono solo dal lato giusto.
+
+Fogli PNG: 8 righe (davanti, davanti-destra, destra, dietro-destra, dietro, dietro-sinistra, sinistra, davanti-sinistra) × un fotogramma per colonna; caselle 228 px (Becchino 340 px). Nessuna direzione è specchiata.
 Da fare dopo l'ok di Denis: voci in `ET`, IA, danni, capitolo in cui compaiono, ingresso del boss.

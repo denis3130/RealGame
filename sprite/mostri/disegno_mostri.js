@@ -1,179 +1,198 @@
 // New chapter enemies for Mossbound: Zombie, Segugio infernale (demon hound), boss Il Becchino.
-// Drawn with the game's own primitives (ctx, ink, circ, ell, fs, glow, shadow, basis, INK, LOWFX).
+// Every body part sits in a small 3D frame (x forward, y right, z up) and is projected with the facing angle,
+// so the monsters turn smoothly through all 360 degrees and every piece stays attached to the same point of the body.
+// Drawn with the game's own primitives (ctx, ink, circ, ell, fs, glow, shadow, INK, LOWFX).
 // anim: 'idle' | 'walk' | 'attack' (boss: 'idle' | 'walk' | 'slam' | 'summon'); p = 0..1 progress in the cycle.
 window.CR=(()=>{
 const TAU=Math.PI*2,cl=(v,a,b)=>Math.max(a,Math.min(b,v)),ez=k=>k<.5?2*k*k:1-Math.pow(-2*k+2,2)/2;
-function line(x1,y1,x2,y2,w,col){ctx.strokeStyle=INK;ctx.lineWidth=w+2.6;ctx.lineCap='round';ctx.beginPath();ctx.moveTo(x1,y1);ctx.lineTo(x2,y2);ctx.stroke();ctx.strokeStyle=col;ctx.lineWidth=w;ctx.stroke()}
-function quad(x1,y1,cx,cy,x2,y2,w,col){ctx.strokeStyle=INK;ctx.lineWidth=w+2.6;ctx.lineCap='round';ctx.beginPath();ctx.moveTo(x1,y1);ctx.quadraticCurveTo(cx,cy,x2,y2);ctx.stroke();ctx.strokeStyle=col;ctx.lineWidth=w;ctx.stroke()}
+// projection: world floor = fwd*x + right*y, screen y squashed (top-down camera), depth = how close to the camera
+function V(face){const c=Math.cos(face),s=Math.sin(face);return{c,s,P:(x,y,z)=>[x*c-y*s,(x*s+y*c)*.55-z],D:(x,y)=>x*s+y*c,F:(x,y,r)=>(x*s+y*c)/r}}
+function line(a,b,w,col){ctx.strokeStyle=INK;ctx.lineWidth=w+2.6;ctx.lineCap='round';ctx.beginPath();ctx.moveTo(a[0],a[1]);ctx.lineTo(b[0],b[1]);ctx.stroke();ctx.strokeStyle=col;ctx.lineWidth=w;ctx.stroke()}
+function quad(a,m,b,w,col){ctx.strokeStyle=INK;ctx.lineWidth=w+2.6;ctx.lineCap='round';ctx.beginPath();ctx.moveTo(a[0],a[1]);ctx.quadraticCurveTo(m[0],m[1],b[0],b[1]);ctx.stroke();ctx.strokeStyle=col;ctx.lineWidth=w;ctx.stroke()}
+function shine(rgb,x,y,r,a){if(LOWFX||a<=0)return;ctx.save();ctx.globalCompositeOperation='lighter';glow(rgb,x,y,r,a);ctx.restore()}
+function run(parts){parts.sort((a,b)=>a.d-b.d);for(const q of parts){ink(2.4);q.f()}}
+// a claw: three dark hooked talons pointing along screen direction (dx,dy)
+function claws(h,dx,dy,len,col){const a=Math.atan2(dy,dx);ctx.strokeStyle=INK;ctx.lineCap='round';for(let k=-1;k<=1;k++){const b=a+k*.42;ctx.lineWidth=2.6;ctx.beginPath();ctx.moveTo(h[0]+Math.cos(b)*2.2,h[1]+Math.sin(b)*2.2);ctx.quadraticCurveTo(h[0]+Math.cos(b)*len,h[1]+Math.sin(b)*len,h[0]+Math.cos(b+.5)*len*1.15,h[1]+Math.sin(b+.5)*len*1.15);ctx.stroke();ctx.strokeStyle=col;ctx.lineWidth=1.1;ctx.stroke();ctx.strokeStyle=INK}}
 
-// ------------------------------------------------------------------ ZOMBIE
-const ZC={skin:'#9cbf72',skinD:'#6f9150',shirt:'#5d7a94',shirtD:'#41586c',patch:'#a0703f',shoe:'#3e3a34',mouth:'#3a1d1d'};
-function zombie(x,y,face,anim,p,sc){sc=sc||1.1;const B=basis(face),v=B.v,t=G.t;
-  const walk=anim==='walk',atk=anim==='attack';
-  const ph=p*TAU,w=walk?Math.sin(ph):0,bob=walk?Math.abs(Math.sin(ph))*1.4:Math.sin(ph)*.5;
-  // attack: 0-.35 wind up (arms up, lean back), .35-.6 swipe (lean in), .6-1 recover
-  let up=0,lean=0,reach=0;if(atk){if(p<.35){const k=ez(p/.35);up=k;lean=-k*.12}else if(p<.6){const k=ez((p-.35)/.25);up=1-k;lean=-.12+k*.3;reach=k}else{const k=ez((p-.6)/.4);lean=.18*(1-k);reach=1-k}}
-  const sway=walk?Math.sin(ph)*.09:Math.sin(ph)*.04;
-  shadow(x,y+8*sc,12*sc,4.6*sc,.32);
-  ctx.save();ctx.translate(x,y-bob);ctx.scale(B.f*sc,sc);ctx.rotate(sway*(B.side?.4:1)+(B.side?lean:0));ink(2.5);
-  // feet, dragging
-  let a,b;if(B.side){a=[w*5,7];b=[-w*4,7.5]}else if(v==='s34'||v==='n34'){a=[-4+w*3,7+w];b=[4-w*3,7-w]}else{a=[-5,7+w*2];b=[5,7-w*2]}
-  ell(b[0],b[1],4,3);fs('#2e2b26');ell(a[0],a[1],4,3);fs(ZC.shoe);
-  // arms reaching forward: hands follow the facing direction
-  const bw=B.side?8:v==='s'||v==='n'?11:9.5;
-  const reachL=13+reach*7,hy=-6+B.ly*4-up*12-(1-up)*Math.sin(t*3)*.6;
-  const arms=[];for(const s of[-1,1]){const sx=B.side?(s<0?-1:2):s*bw*.72,sy=-8;
-    const hx=B.lx*reachL+(B.side?(s<0?-2:0):s*(4.5-Math.abs(B.lx)*2)),hyy=hy+(B.side?(s<0?-2:0):0)+(walk?Math.sin(ph+s)*1.2:0);arms.push([sx,sy,hx,hyy,s])}
-  const drawArm=([sx,sy,hx,hy2,s])=>{line(sx,sy,hx,hy2,5.2,s<0&&B.side?ZC.skinD:ZC.skin);ctx.save();ctx.translate(hx,hy2);ink(1.6);circ(0,0,3.1);fs(ZC.skin);
-    ctx.strokeStyle=INK;ctx.lineWidth=1.2;const ang=Math.atan2(B.ly,B.lx||.0001)-(up>.5?Math.PI/2:0);for(let k=-1;k<=1;k++){ctx.beginPath();ctx.moveTo(Math.cos(ang+k*.5)*2.6,Math.sin(ang+k*.5)*2.6);ctx.lineTo(Math.cos(ang+k*.45)*4.6,Math.sin(ang+k*.45)*4.6);ctx.stroke()}ctx.restore()};
-  if(B.back)arms.forEach(drawArm);else if(B.side)drawArm(arms[0]);
-  // torn shirt
-  ink(2.5);ctx.beginPath();ctx.moveTo(-bw,4);ctx.quadraticCurveTo(-bw-2,-9,0,-11);ctx.quadraticCurveTo(bw+2,-9,bw,4);
-  for(let i=0;i<=6;i++){const xx=bw-i*bw*2/6;ctx.lineTo(xx,i%2?6.5:4)}ctx.closePath();ctx.fillStyle=ZC.shirt;ctx.fill();ctx.stroke();
-  ctx.fillStyle=ZC.shirtD;ctx.beginPath();ctx.ellipse(B.side?-3:bw*.35,0,bw*.45,4,0,0,TAU);ctx.fill();
-  if(!B.back){ink(1.2);ctx.fillStyle=ZC.patch;ctx.fillRect(B.side?0:-bw*.6,-5,4.4,4);ctx.strokeRect(B.side?0:-bw*.6,-5,4.4,4);ctx.beginPath();ctx.moveTo(B.side?.6:-bw*.6+.6,-4);ctx.lineTo(B.side?3.8:-bw*.6+3.8,-1.4);ctx.stroke();
-    ctx.strokeStyle='rgba(27,22,18,.5)';ctx.lineWidth=1;ctx.beginPath();ctx.moveTo(B.side?5:3,-9);ctx.lineTo(B.side?3:1,-3);ctx.lineTo(B.side?6:4,1);ctx.stroke()}
-  else{ctx.strokeStyle='rgba(27,22,18,.45)';ctx.lineWidth=1.2;ctx.beginPath();ctx.moveTo(-4,-8);ctx.lineTo(-1,-3);ctx.lineTo(-5,2);ctx.stroke()}
-  ink(2.5);
-  if(!B.back)arms.slice(B.side?1:0).forEach(drawArm);
-  // head: big, tilted, one huge eye
-  const hx=B.side?3:B.lx*2,hyH=-19+(walk?Math.sin(ph*2)*.6:0),tilt=.18+Math.sin(t*1.7)*.05;
-  ctx.save();ctx.translate(hx,hyH);ctx.rotate(B.side?.1:tilt);ink(2.5);
-  ctx.beginPath();ctx.ellipse(0,0,9.6,9,0,0,TAU);ctx.fillStyle=ZC.skin;ctx.fill();ctx.stroke();
-  ctx.fillStyle=ZC.skinD;ctx.beginPath();ctx.ellipse(B.side?-3:2.5,3.5,6,4,0,0,TAU);ctx.fill();
-  // hair tuft
-  ctx.strokeStyle=INK;ctx.lineWidth=1.8;ctx.beginPath();ctx.moveTo(-3,-8.4);ctx.lineTo(-4.4,-12);ctx.moveTo(0,-9);ctx.lineTo(.6,-12.6);ctx.moveTo(2.6,-8.6);ctx.lineTo(4.6,-11.4);ctx.stroke();
-  if(B.back){ctx.strokeStyle='rgba(27,22,18,.6)';ctx.lineWidth=1.1;ctx.beginPath();ctx.moveTo(-5,-2);ctx.lineTo(4,1);for(let i=0;i<4;i++){const xx=-4+i*2.6,yy=-1.6+i*.8;ctx.moveTo(xx,yy-1.4);ctx.lineTo(xx+.4,yy+1.4)}ctx.stroke()}
-  else{const ex=B.side?4:v==='s34'?2.4:0,big=B.side?[ex+1,-2]:[ex-3.4,-2],small=B.side?null:[ex+3.6,-1.4];
-    ink(1.6);circ(big[0],big[1],3.4);fs('#f4f1e0');ctx.fillStyle=INK;circ(big[0]+(B.side?1:.4),big[1]+.6,1.2);ctx.fill();
-    if(small){ctx.strokeStyle=INK;ctx.lineWidth=1.4;ctx.beginPath();ctx.moveTo(small[0]-1.6,small[1]-1.6);ctx.lineTo(small[0]+1.6,small[1]+1.6);ctx.moveTo(small[0]+1.6,small[1]-1.6);ctx.lineTo(small[0]-1.6,small[1]+1.6);ctx.stroke()}
-    const mo=atk&&p>.3&&p<.7?1:.55+.15*Math.sin(t*4),mx=B.side?6.2:ex;ink(1.5);ctx.beginPath();ctx.ellipse(mx,4.2,B.side?2:3.6,1.8+mo*1.6,0,0,TAU);ctx.fillStyle=ZC.mouth;ctx.fill();ctx.stroke();
-    ctx.fillStyle='#f4f1e0';ctx.fillRect(mx-1.6,2.8,1.3,1.6);ctx.fillRect(mx+.6,2.8,1.3,1.4);
-    ctx.strokeStyle='rgba(27,22,18,.7)';ctx.lineWidth=1;ctx.beginPath();ctx.moveTo(B.side?-4:-6,-5);ctx.lineTo(B.side?-1:-3,-7);for(let i=0;i<3;i++){const xx=(B.side?-3.6:-5.6)+i*1.1,yy=-5.4-i*.7;ctx.moveTo(xx-.6,yy-.9);ctx.lineTo(xx+.6,yy+.9)}ctx.stroke()}
-  ctx.restore();ctx.restore()}
+// ------------------------------------------------------------------ ZOMBIE DELLA CRIPTA
+const ZC={skin:'#88a06c',skinD:'#5a7048',rot:'#3f5233',cloth:'#3a454e',clothD:'#262e35',pants:'#2f2a26',bone:'#e6dcc0',socket:'#141010',eye:'#e9ff7a',mouth:'#2a0c0c',gum:'#6a1a1a',claw:'#2a2a22'};
+function zombie(x,y,face,anim,p,sc){sc=sc||1.1;const t=G.t,{c,s,P,D,F}=V(face),ph=p*TAU,walk=anim==='walk',atk=anim==='attack';
+  // attack: .0-.35 rear back with arms up, .35-.6 lunge and rake down, .6-1 recover
+  let up=0,reach=0,lunge=0;if(atk){if(p<.35){up=ez(p/.35);lunge=-up*2}else if(p<.6){const k=ez((p-.35)/.25);up=1-k*1.3;reach=k;lunge=-2+k*7}else{const k=ez((p-.6)/.4);up=-.3*(1-k);reach=1-k;lunge=5*(1-k)}}
+  const bob=walk?Math.abs(Math.sin(ph))*1.5:Math.sin(ph)*.4,roll=walk?Math.sin(ph)*1.4:Math.sin(t*1.3)*.6,hunch=5+lunge;
+  shadow(x+c*lunge*sc*.4,y+s*lunge*sc*.22,11*sc,4.4*sc,.34);
+  ctx.save();ctx.translate(x,y-bob*sc);ctx.scale(sc,sc);
+  const parts=[],L=lunge*.6;
+  // legs: the left one drags behind (limp)
+  for(const sd of[-1,1]){const st=walk?Math.sin(ph+(sd>0?Math.PI:0))*(sd<0?3:5.5):0,lift=walk&&sd>0?Math.max(0,Math.sin(ph+Math.PI))*2.4:0,fx=st+L*.5,fy=sd*4.4;
+    parts.push({d:D(fx,fy)-.5,f:()=>{const h=P(L*.4,sd*3.4,8),f=P(fx,fy,lift);line(h,f,4.2,ZC.pants);ctx.save();ctx.translate(f[0],f[1]);ctx.rotate(Math.atan2(s*.55,c));ink(1.8);ell(1.4,0,4.4,2.6);fs('#1f1b18');ctx.restore()}})}
+  // torso: hunched, ragged shirt, a hole showing the ribs on the chest, spine bumps on the back
+  const T=[L+hunch*.3,roll*.6];
+  parts.push({d:D(T[0],T[1]),f:()=>{const m=P(T[0],T[1],15),hw=Math.hypot(9.6*s,6.4*c),top=m[1]-9,bot=m[1]+8;
+    ctx.beginPath();ctx.moveTo(m[0]-hw,bot-2);ctx.quadraticCurveTo(m[0]-hw-1.6,top+3,m[0]-hw*.4,top);ctx.quadraticCurveTo(m[0],top-1.6,m[0]+hw*.4,top);ctx.quadraticCurveTo(m[0]+hw+1.6,top+3,m[0]+hw,bot-2);
+    for(let i=0;i<=7;i++){const xx=m[0]+hw-i*hw*2/7;ctx.lineTo(xx,bot+(i%2?2.6:-.4)+(i===3?2:0))}ctx.closePath();ctx.fillStyle=ZC.cloth;ctx.fill();ctx.stroke();
+    ctx.save();ctx.clip();ctx.fillStyle=ZC.clothD;ell(m[0]+hw*.45,m[1]+3,hw*.7,6);ctx.fill();ctx.restore();
+    const fr=F(6.4,-1.5,6.6);if(fr>.12){const q=P(T[0]+5.8,T[1]-1.5,14);ctx.save();ctx.globalAlpha=cl(fr*2,0,1);ink(1.6);ctx.fillStyle=ZC.rot;ctx.beginPath();ctx.ellipse(q[0],q[1],3.6*Math.max(.35,fr),4.6,0,0,TAU);ctx.fill();ctx.stroke();
+      ctx.strokeStyle=ZC.bone;ctx.lineWidth=1.3;for(let i=0;i<3;i++){ctx.beginPath();ctx.moveTo(q[0]-2.8*fr,q[1]-2.6+i*2.4);ctx.quadraticCurveTo(q[0],q[1]-3.4+i*2.4,q[0]+2.8*fr,q[1]-2.6+i*2.4);ctx.stroke()}ctx.restore()}
+    const bk=F(-6.4,0,6.4);if(bk>.12){ctx.save();ctx.globalAlpha=cl(bk*2,0,1);ctx.fillStyle=ZC.skinD;for(let i=0;i<3;i++){const q=P(T[0]-6,T[1],19-i*3.5);ink(1.3);circ(q[0],q[1],1.5);ctx.fill();ctx.stroke()}ctx.restore()}
+    // tears
+    ctx.strokeStyle='rgba(20,16,14,.65)';ctx.lineWidth=1;ctx.beginPath();const a=P(T[0]+3*s,T[1]-5*c,20),b=P(T[0]+2*s,T[1]-3*c,12);ctx.moveTo(a[0],a[1]);ctx.lineTo(b[0]+1.5,(a[1]+b[1])/2);ctx.lineTo(b[0],b[1]);ctx.stroke()}});
+  // arms: long, reaching, with dark claws; raised high when it rears back
+  for(const sd of[-1,1]){const sh=[T[0],sd*8.4+T[1],20.5],hd=[T[0]+11+reach*9,sd*(5.2-reach*1.4)+T[1],15.5+up*15-(walk?Math.sin(ph+sd)*1.4:0)+Math.sin(t*2+sd)*.4];
+    parts.push({d:(D(sh[0],sh[1])+D(hd[0],hd[1]))/2+.2,f:()=>{const a=P(...sh),b=P(...hd),m=P((sh[0]+hd[0])/2-1,(sh[1]+hd[1])/2+sd*1.2,(sh[2]+hd[2])/2-3);
+      quad(a,m,b,4.4,F(0,sd,1)<0?ZC.skinD:ZC.skin);ctx.strokeStyle='rgba(20,16,14,.5)';ctx.lineWidth=1;ctx.beginPath();ctx.moveTo((a[0]+m[0])/2,(a[1]+m[1])/2-1);ctx.lineTo((a[0]+m[0])/2+1.6,(a[1]+m[1])/2+1.4);ctx.stroke();
+      ink(1.8);circ(b[0],b[1],2.9);fs(ZC.skin);const dx=b[0]-m[0],dy=b[1]-m[1];claws(b,dx,dy,5.6,ZC.claw)}})}
+  // head: lolling, hollow sockets with pinpoint lights, hanging jaw full of broken teeth
+  const H=[T[0]+hunch*.55,T[1]*1.4+Math.sin(t*1.6)*1.3,27.5+(walk?Math.sin(ph*2)*.5:0)],R=8.4;
+  parts.push({d:D(H[0],H[1])+.4,f:()=>{const h=P(...H);ctx.beginPath();ctx.arc(h[0],h[1],R,0,TAU);ctx.fillStyle=ZC.skin;ctx.fill();ctx.stroke();
+    ctx.save();ctx.beginPath();ctx.arc(h[0],h[1],R-1.2,0,TAU);ctx.clip();ctx.fillStyle=ZC.skinD;ell(h[0]-s*2,h[1]+4.6,R,4.4);ctx.fill();ctx.fillStyle=ZC.rot;ell(h[0]+c*3.5,h[1]-3.5,2.6,1.8);ctx.fill();ctx.restore();
+    // thin hair
+    ctx.strokeStyle=INK;ctx.lineWidth=1.2;for(let i=-2;i<=2;i++){const q=P(H[0]-1+i*.6,H[1]+i*1.6,H[2]+R-.6);ctx.beginPath();ctx.moveTo(q[0],q[1]+1);ctx.quadraticCurveTo(q[0]+i*1.2,q[1]-3,q[0]+i*2.4+Math.sin(t*2+i),q[1]-4.4);ctx.stroke()}
+    const at=(fx,fy,fz)=>({q:P(H[0]+fx,H[1]+fy,H[2]+fz),v:F(fx,fy,R)});
+    // back of the skull: a stitched crack
+    {const b=at(-7.6,1,1.4);if(b.v>.1){ctx.save();ctx.globalAlpha=cl(b.v*2,0,1);ctx.strokeStyle=INK;ctx.lineWidth=1.2;ctx.beginPath();ctx.moveTo(b.q[0]-3,b.q[1]-2);ctx.lineTo(b.q[0],b.q[1]);ctx.lineTo(b.q[0]+2.6,b.q[1]-2.4);for(let i=0;i<3;i++){const xx=b.q[0]-2.4+i*2.2;ctx.moveTo(xx-.8,b.q[1]-2.6+i*.4);ctx.lineTo(xx+.8,b.q[1]-.4+i*.4)}ctx.stroke();ctx.restore()}}
+    // scar on the right cheek
+    {const b=at(1.5,7.4,-.6);if(b.v>.1){ctx.save();ctx.globalAlpha=cl(b.v*2.4,0,1);ctx.strokeStyle=INK;ctx.lineWidth=1.1;ctx.beginPath();ctx.moveTo(b.q[0]-2,b.q[1]-2);ctx.lineTo(b.q[0]+2,b.q[1]+2);ctx.moveTo(b.q[0]-1.4,b.q[1]+.6);ctx.lineTo(b.q[0]-.2,b.q[1]-.8);ctx.moveTo(b.q[0]+.4,b.q[1]+1.8);ctx.lineTo(b.q[0]+1.6,b.q[1]+.4);ctx.stroke();ctx.restore()}}
+    // sockets and eyes
+    for(const sd of[-1,1]){const e=at(6.6,sd*3.3,1.6);if(e.v<.05)continue;const k=cl(e.v*1.6,0,1),big=sd>0?1.15:.9;ctx.save();ctx.globalAlpha=k;ink(1.5);ctx.fillStyle=ZC.socket;ctx.beginPath();ctx.ellipse(e.q[0],e.q[1],2.6*big*Math.max(.4,e.v),2.9*big,0,0,TAU);ctx.fill();ctx.stroke();ctx.restore();
+      shine('230,255,120',e.q[0],e.q[1],4.6,.55*k+.12*Math.sin(t*5+sd));ctx.fillStyle=ZC.eye;circ(e.q[0]+c*.3,e.q[1]+.2,1*big*k);ctx.fill()}
+    // jaw
+    {const m=at(6.4,0,-3.8);if(m.v>.02){const k=cl(m.v*1.6,0,1),op=atk&&p>.25&&p<.7?1:.55+.2*Math.sin(t*3.2),w=4.4*Math.max(.35,m.v),hh=2+op*2.6;ctx.save();ctx.globalAlpha=k;ink(1.6);ctx.fillStyle=ZC.mouth;ctx.beginPath();ctx.ellipse(m.q[0],m.q[1]+hh*.35,w,hh,0,0,TAU);ctx.fill();ctx.stroke();
+      ctx.fillStyle=ZC.gum;ctx.fillRect(m.q[0]-w*.8,m.q[1]-hh*.6,w*1.6,1);ctx.fillStyle=ZC.bone;ink(.8);for(let i=0;i<4;i++){const xx=m.q[0]-w*.75+i*w*.5,yy=m.q[1]-hh*.5,hh2=i===1?2.4:1.5;ctx.beginPath();ctx.moveTo(xx-.8,yy);ctx.lineTo(xx,yy+hh2);ctx.lineTo(xx+.8,yy);ctx.closePath();ctx.fill();ctx.stroke()}
+      for(let i=0;i<3;i++){const xx=m.q[0]-w*.5+i*w*.5,yy=m.q[1]+hh*1.1;ctx.beginPath();ctx.moveTo(xx-.7,yy);ctx.lineTo(xx,yy-1.6);ctx.lineTo(xx+.7,yy);ctx.closePath();ctx.fill();ctx.stroke()}
+      const dr=(t*.9+.3)%1;ctx.strokeStyle='rgba(190,220,140,.7)';ctx.lineWidth=1;ctx.beginPath();ctx.moveTo(m.q[0]+w*.4,m.q[1]+hh*1.2);ctx.lineTo(m.q[0]+w*.4,m.q[1]+hh*1.2+2+dr*4);ctx.stroke();ctx.restore()}}}});
+  run(parts);ctx.restore()}
 
-// ------------------------------------------------------------------ SEGUGIO INFERNALE (demon hound)
-const HC={fur:'#3b2b30',furD:'#251a1e',belly:'#5a3a3a',spike:'#8a2020',ember:'#ff7a2a',eye:'#ff3b2f',horn:'#d9cbb0'};
-function hound(x,y,face,anim,p,sc){sc=sc||1.05;const B=basis(face),t=G.t,run=anim==='walk',atk=anim==='attack';
-  const ph=p*TAU,fx=Math.cos(face),fy=Math.sin(face)*.55,px=-fy,py=fx;// forward and sideways on screen
+// ------------------------------------------------------------------ SEGUGIO INFERNALE
+const HC={fur:'#2b1f24',furD:'#1a1216',hide:'#3d2a30',belly:'#4a2e30',spike:'#9a2222',ember:'#ff7a2a',eye:'#ff3b2f',horn:'#d8c9ac',bone:'#e6dcc0',maw:'#4a0a0e'};
+function hound(x,y,face,anim,p,sc){sc=sc||1.05;const t=G.t,{c,s,P,D,F}=V(face),ph=p*TAU,runA=anim==='walk',atk=anim==='attack';
   // pounce: .0-.3 crouch, .3-.75 leap, .75-1 land
-  let z=0,crouch=0,stretch=0,jaw=run?.25:.15;if(atk){if(p<.3){crouch=ez(p/.3);jaw=.3}else if(p<.75){const k=(p-.3)/.45;z=Math.sin(k*Math.PI)*16;stretch=Math.sin(k*Math.PI);crouch=0;jaw=1}else{const k=(p-.75)/.25;crouch=(1-k)*.6;jaw=.6*(1-k)}}
-  const bob=run?Math.abs(Math.sin(ph))*2:Math.sin(ph)*.5,breath=Math.sin(ph)*.6;
-  shadow(x,y+7*sc,14*sc*(1-z/40),5*sc*(1-z/40),.34);
-  ctx.save();ctx.translate(x,y-z*sc-bob*sc+crouch*2.5*sc);ctx.scale(sc,sc);ink(2.4);
-  const lead=atk&&p>.3&&p<.75?4:0,R=[-9-stretch*2,0],C=[6+stretch*3+lead*.3,-1],H=[14+stretch*4+lead,-7+crouch*3];
-  const at=(u,h)=>[fx*u+px*0,fy*u-h];// point along the body axis (u forward), h up
-  const P=(q)=>at(q[0],-q[1]);
+  let z=0,crouch=0,str=0,jaw=runA?.35:.2+.08*Math.sin(t*3);if(atk){if(p<.3){crouch=ez(p/.3);jaw=.4}else if(p<.75){const k=(p-.3)/.45;z=Math.sin(k*Math.PI)*16;str=Math.sin(k*Math.PI);jaw=1}else{const k=(p-.75)/.25;crouch=(1-k)*.6;jaw=.6*(1-k)}}
+  const bob=runA?Math.abs(Math.sin(ph))*2:Math.sin(ph)*.5,br=Math.sin(ph)*.5,fwd=atk&&p>.3&&p<.75?6*str:0;
+  shadow(x+c*fwd*sc,y+s*fwd*sc*.55,15*sc*(1-z/40),5.4*sc*(1-z/40),.36);
+  ctx.save();ctx.translate(x,y);ctx.scale(sc,sc);
+  const H0=7-crouch*3+bob*.3-z*0,lift=z+bob-crouch*2.4;// height of the body above the floor
+  const R=[-9-str*2+fwd,0],C=[6+str*3+fwd,0],Hd=[15+str*4+fwd,0];
   const parts=[];
-  // legs: 4, gallop phases
-  const leg=(u,side,phase)=>{const base=at(u,-1);const s=side*3.8,bx=base[0]+px*s,by=base[1]+py*s*.6;let swing=run?Math.sin(ph+phase)*5:0,lift=run?Math.max(0,Math.cos(ph+phase))*2.4:0;if(atk&&p>.3&&p<.75){swing=(u>0?7:-7)}
-    const fx2=bx+fx*swing,fy2=by+fy*swing+7-lift-crouch*2;parts.push({d:by+(side>0?.5:-.5)*Math.abs(py),f:()=>{line(bx,by,fx2,fy2,3.2,side<0?HC.furD:HC.fur);ink(1.2);ctx.fillStyle=HC.furD;circ(fx2,fy2,1.8);ctx.fill();ctx.stroke()}})};
-  leg(R[0],-1,0);leg(R[0],1,Math.PI*.5);leg(C[0],-1,Math.PI);leg(C[0],1,Math.PI*1.5);
-  // tail with a flame at the tip
-  {const r=P(R),tw=Math.sin(t*6)*3,tx=r[0]-fx*9+px*tw*.4,ty=r[1]-fy*9-6+(run?Math.sin(ph*2)*1.5:0);parts.push({d:r[1]-fy*6-.2,f:()=>{quad(r[0],r[1]-2,r[0]-fx*6,r[1]-fy*6-6,tx,ty,2.4,HC.fur);
-    if(!LOWFX){ctx.save();ctx.globalCompositeOperation='lighter';glow('255,120,40',tx,ty-2,7,.5+.1*Math.sin(t*14));ctx.restore()}
-    ink(1.2);ctx.fillStyle=HC.ember;ctx.beginPath();ctx.moveTo(tx-2.4,ty+1);ctx.quadraticCurveTo(tx-1.6,ty-4,tx+Math.sin(t*12)*1.2,ty-6.5);ctx.quadraticCurveTo(tx+1.8,ty-3.6,tx+2.4,ty+1);ctx.closePath();ctx.fill();ctx.stroke();ctx.fillStyle='#ffe28a';circ(tx,ty-1.2,1);ctx.fill()}})}
-  // body: rump + chest blobs with spikes and ember cracks
-  const body=()=>{const r=P(R),c=P(C);ink(2.4);ctx.fillStyle=HC.fur;
-    ctx.beginPath();ctx.ellipse(r[0],r[1],7.5,6.2,0,0,TAU);ctx.fill();ctx.stroke();
-    ctx.beginPath();ctx.ellipse(c[0],c[1]-.5,8.2+breath*.3,7+breath*.3,0,0,TAU);ctx.fill();ctx.stroke();
-    ctx.fillStyle=HC.fur;ctx.beginPath();ctx.moveTo(r[0],r[1]-6);ctx.lineTo(c[0],c[1]-7);ctx.lineTo(c[0],c[1]+6);ctx.lineTo(r[0],r[1]+6);ctx.closePath();ctx.fill();
-    ctx.fillStyle=HC.belly;ctx.beginPath();ctx.ellipse((r[0]+c[0])/2,(r[1]+c[1])/2+3.4,7,2.6,Math.atan2(c[1]-r[1],c[0]-r[0]),0,TAU);ctx.fill();
+  // legs: gallop, thin and bony, with claws
+  const leg=(u,sd,phase,front)=>{let sw=runA?Math.sin(ph+phase)*5.5:0,lf=runA?Math.max(0,Math.cos(ph+phase))*2.6:0;if(atk&&p>.3&&p<.75){sw=front?8:-8;lf=3}
+    const fx=u+sw,fy=sd*4.6;parts.push({d:D(u,fy)-.6,f:()=>{const top=P(u,sd*4,H0+lift+3),knee=P(u+(front?-2:2)+sw*.4,sd*4.4,H0*.5+lift+lf*.5),foot=P(fx,fy,Math.max(0,lift-H0*.6)+lf);
+      quad(top,knee,foot,3.2,F(0,sd,1)<0?HC.furD:HC.fur);ink(1.3);ctx.fillStyle=HC.furD;circ(foot[0],foot[1],1.9);ctx.fill();ctx.stroke();
+      ctx.strokeStyle=HC.bone;ctx.lineWidth=1;for(let k=-1;k<=1;k++){const a=Math.atan2(s*.55,c)+k*.5;ctx.beginPath();ctx.moveTo(foot[0]+Math.cos(a)*1.6,foot[1]+Math.sin(a)*1.6);ctx.lineTo(foot[0]+Math.cos(a)*3.2,foot[1]+Math.sin(a)*3.2+.6);ctx.stroke()}}})};
+  leg(R[0],-1,0,false);leg(R[0],1,Math.PI*.5,false);leg(C[0],-1,Math.PI,true);leg(C[0],1,Math.PI*1.5,true);
+  // tail: bony, ending in a flame
+  {const tw=Math.sin(t*6)*3,tip=[R[0]-11,tw,H0+lift+10+(runA?Math.sin(ph*2)*1.6:0)];parts.push({d:D(R[0]-6,tw*.5)-.2,f:()=>{const a=P(R[0]-5,0,H0+lift+6),m=P(R[0]-9,tw*.5,H0+lift+11),b=P(...tip);quad(a,m,b,2.2,HC.fur);
+    for(let i=1;i<4;i++){const k=i/4,q=[a[0]+(b[0]-a[0])*k,a[1]+(b[1]-a[1])*k-2];ink(1);ctx.fillStyle=HC.spike;ctx.beginPath();ctx.moveTo(q[0]-1.2,q[1]+1);ctx.lineTo(q[0],q[1]-2.4);ctx.lineTo(q[0]+1.2,q[1]+1);ctx.closePath();ctx.fill();ctx.stroke()}
+    shine('255,120,40',b[0],b[1]-2,8,.55+.12*Math.sin(t*14));ink(1.2);ctx.fillStyle=HC.ember;ctx.beginPath();ctx.moveTo(b[0]-2.6,b[1]+1);ctx.quadraticCurveTo(b[0]-1.8,b[1]-4,b[0]+Math.sin(t*12)*1.4,b[1]-7);ctx.quadraticCurveTo(b[0]+2,b[1]-3.8,b[0]+2.6,b[1]+1);ctx.closePath();ctx.fill();ctx.stroke();ctx.fillStyle='#ffe28a';circ(b[0],b[1]-1.4,1.1);ctx.fill()}})}
+  // body: rump + ribcage chest, visible ribs, spikes on the spine, glowing cracks
+  parts.push({d:D((R[0]+C[0])/2,0),f:()=>{const r=P(R[0],0,H0+lift+5.5),k=P(C[0],0,H0+lift+6.5),wr=Math.hypot(6.6*s,7.6*c),wk=Math.hypot(7.6*s,8.4*c);
+    ctx.fillStyle=HC.fur;ctx.beginPath();ctx.ellipse(r[0],r[1],wr,6.2,0,0,TAU);ctx.fill();ctx.stroke();
+    ctx.beginPath();ctx.ellipse(k[0],k[1]-.4,wk+br*.3,7.2+br*.3,0,0,TAU);ctx.fill();ctx.stroke();
+    ctx.beginPath();ctx.moveTo(r[0],r[1]-5.6);ctx.lineTo(k[0],k[1]-6.8);ctx.lineTo(k[0],k[1]+5.4);ctx.lineTo(r[0],r[1]+5);ctx.closePath();ctx.fill();
+    ctx.strokeStyle=INK;ctx.beginPath();ctx.moveTo(r[0],r[1]-6.2);ctx.lineTo(k[0],k[1]-7.4);ctx.stroke();
+    // ribs on the side facing the camera
+    const sideV=Math.abs(c);if(sideV>.25){ctx.save();ctx.globalAlpha=cl((sideV-.25)*2,0,1);ctx.strokeStyle='#5a4046';ctx.lineWidth=1.3;for(let i=0;i<4;i++){const q=P(C[0]-1-i*2.6,0,H0+lift+6.4);ctx.beginPath();ctx.moveTo(q[0]-.8,q[1]-4.4);ctx.quadraticCurveTo(q[0]+2*Math.sign(c),q[1],q[0]-.6,q[1]+4.2);ctx.stroke()}ctx.restore()}
     // spikes along the spine
-    for(let i=0;i<5;i++){const k=i/4,sx=r[0]+(c[0]-r[0])*k,sy=r[1]+(c[1]-r[1])*k-6.4-(i===4?.6:0);ink(1.3);ctx.fillStyle=HC.spike;ctx.beginPath();ctx.moveTo(sx-2,sy+1.5);ctx.lineTo(sx-fx*1.5,sy-4-(i%2)*1.2);ctx.lineTo(sx+2,sy+1.5);ctx.closePath();ctx.fill();ctx.stroke()}
-    // glowing cracks
-    const gl=.65+.35*Math.sin(t*4);ctx.strokeStyle=`rgba(255,${120+50*gl|0},40,${.75*gl+.25})`;ctx.lineWidth=1.2;ctx.lineCap='round';ctx.beginPath();ctx.moveTo(c[0]-2,c[1]-3);ctx.lineTo(c[0]+.5,c[1]);ctx.lineTo(c[0]-1,c[1]+2.5);ctx.moveTo(r[0]+1,r[1]-2);ctx.lineTo(r[0]-1.5,r[1]+1);ctx.stroke();ink(2.4)};
-  const c=P(C);parts.push({d:c[1]-.1,f:body});
-  // head: wolf skull-ish, horns, glowing eyes, jaw opens to bite
-  const head=()=>{const h=P(H),ang=Math.atan2(fy,fx||1e-4);ctx.save();ctx.translate(h[0],h[1]);ink(2.4);
-    // neck
-    ctx.restore();line(c[0],c[1]-3,h[0],h[1],6,HC.fur);ctx.save();ctx.translate(h[0],h[1]);
-    const back=B.back,sideF=Math.abs(fx)>.5;
-    // horns
-    for(const s of[-1,1]){const hx=-fx*2+px*s*3.4,hy=-fy*2-4.5+py*s*.6;ink(1.4);ctx.fillStyle=HC.horn;ctx.beginPath();ctx.moveTo(hx-1.6,hy+1);ctx.quadraticCurveTo(hx-fx*3+s*px*2,hy-5,hx-fx*5+s*px*3,hy-7.5);ctx.quadraticCurveTo(hx+1,hy-3,hx+1.6,hy+1);ctx.closePath();ctx.fill();ctx.stroke()}
+    for(let i=0;i<6;i++){const u=R[0]+(C[0]-R[0])*i/5,q=P(u,0,H0+lift+12.2+(i===5?1:0));ink(1.3);ctx.fillStyle=HC.spike;const h=3.6+(i%2)*1.6;ctx.beginPath();ctx.moveTo(q[0]-1.9,q[1]+1.4);ctx.lineTo(q[0]-c*1.6,q[1]-h);ctx.lineTo(q[0]+1.9,q[1]+1.4);ctx.closePath();ctx.fill();ctx.stroke()}
+    // ember cracks
+    const gl=.65+.35*Math.sin(t*4);ctx.strokeStyle=`rgba(255,${130+60*gl|0},50,${.7*gl+.3})`;ctx.lineWidth=1.3;ctx.beginPath();ctx.moveTo(k[0]-2,k[1]-3.4);ctx.lineTo(k[0]+.6,k[1]-.4);ctx.lineTo(k[0]-1,k[1]+2.6);ctx.moveTo(r[0]+1,r[1]-2.4);ctx.lineTo(r[0]-1.6,r[1]+1);ctx.stroke();shine('255,110,40',k[0],k[1],7,.18*gl);
+    // smoke rising from the back
+    if(!LOWFX){for(let i=0;i<3;i++){const q=(t*.6+i/3)%1,sp=P(R[0]+(C[0]-R[0])*(i/2),0,H0+lift+13);ctx.fillStyle=`rgba(60,50,55,${.35*(1-q)})`;circ(sp[0]+Math.sin(t+i)*2,sp[1]-q*12,1.6+q*3);ctx.fill()}}}});
+  // neck + head: horns, ears, glowing eyes, long snout, a maw full of fangs that opens to bite
+  const hz=H0+lift+11-crouch*2;
+  parts.push({d:D(Hd[0],0)+.3,f:()=>{const nk=P(C[0]+2,0,H0+lift+9),h=P(Hd[0],0,hz);line(nk,h,6.4,HC.fur);
+    const at=(fx,fy,fz)=>({q:P(Hd[0]+fx,fy,hz+fz),v:F(fx,fy,6.5)});
+    // horns (always visible), curved back
+    for(const sd of[-1,1]){const b=at(-1.5,sd*3.4,3.6),tp=at(-7,sd*5.8,9.5),m=at(-3,sd*5.4,8.4);ink(1.5);ctx.fillStyle=HC.horn;ctx.beginPath();ctx.moveTo(b.q[0]-1.8,b.q[1]+.8);ctx.quadraticCurveTo(m.q[0],m.q[1],tp.q[0],tp.q[1]);ctx.quadraticCurveTo(m.q[0]+1.6,m.q[1]+1.8,b.q[0]+1.8,b.q[1]+.8);ctx.closePath();ctx.fill();ctx.stroke()}
     // skull
-    ctx.fillStyle=HC.fur;ctx.beginPath();ctx.ellipse(0,0,6.6,5.8,0,0,TAU);ctx.fill();ctx.stroke();
-    // ears
-    for(const s of[-1,1]){const ex=-fx*1.5+px*s*4.2,ey=-fy*1.5-3.6;ctx.fillStyle=HC.furD;ctx.beginPath();ctx.moveTo(ex-1.8,ey+1.4);ctx.lineTo(ex-fx*.5+px*s,ey-4.6);ctx.lineTo(ex+1.8,ey+1.4);ctx.closePath();ctx.fill();ctx.stroke()}
-    if(!back){// snout + jaw toward facing
-      const sx=fx*6.5,sy=fy*6.5+1.4,op=jaw*3;ctx.fillStyle=HC.furD;ctx.beginPath();ctx.ellipse(sx,sy+op*.6,3.6,2.2,ang,0,TAU);ctx.fill();ctx.stroke();
-      ctx.fillStyle=HC.fur;ctx.beginPath();ctx.ellipse(sx*.9,sy-1.2,4,2.6,ang,0,TAU);ctx.fill();ctx.stroke();
-      if(op>.6){ctx.fillStyle='#5a0f12';ctx.beginPath();ctx.ellipse(sx*.95,sy+op*.2-.2,3,op*.45,ang,0,TAU);ctx.fill()}
-      ctx.fillStyle='#fff8e6';for(const s of[-1,1]){ctx.beginPath();const tx=sx*.95+px*s*1.8,ty=sy-.2+py*s*.4;ctx.moveTo(tx-.7,ty);ctx.lineTo(tx,ty+1.8+op*.3);ctx.lineTo(tx+.7,ty);ctx.closePath();ctx.fill()}
-      ctx.fillStyle=INK;circ(sx*1.25,sy-1.6,.9);ctx.fill();
-      // glowing eyes
-      const eyes=sideF?[[fx*2.4+px*0,-1.6]]:[[px*-2.4+fx*2,-1.6],[px*2.4+fx*2,-1.6]];
-      for(const[e1,e2] of eyes){if(!LOWFX){ctx.save();ctx.globalCompositeOperation='lighter';glow('255,60,40',e1,e2,5,.55+.15*Math.sin(t*5));ctx.restore()}ctx.fillStyle=HC.eye;ctx.beginPath();ctx.ellipse(e1,e2,1.6,1.1,ang*.3,0,TAU);ctx.fill();ctx.fillStyle='#ffe28a';circ(e1+.3,e2-.2,.45);ctx.fill()}}
-    ctx.restore()};
-  const h=P(H);parts.push({d:h[1]+(B.back?-30:30),f:head});
-  parts.sort((a,b)=>a.d-b.d).forEach(q=>q.f());
-  ctx.restore()}
+    ctx.fillStyle=HC.fur;ctx.beginPath();ctx.ellipse(h[0],h[1],Math.hypot(5.6*s,6.6*c)+.6,5.8,0,0,TAU);ctx.fill();ctx.stroke();
+    for(const sd of[-1,1]){const e=at(-2,sd*4.2,4.4);ctx.fillStyle=HC.furD;ctx.beginPath();ctx.moveTo(e.q[0]-1.8,e.q[1]+1.6);ctx.lineTo(e.q[0]-c*1.2,e.q[1]-4.4);ctx.lineTo(e.q[0]+1.8,e.q[1]+1.6);ctx.closePath();ctx.fill();ctx.stroke()}
+    // snout and jaw, pointing forward
+    const sn=at(6.4,0,-.6),jw=at(6,0,-2.8-jaw*2.6),fv=F(1,0,1);
+    const snoutBehind=fv<-.25;
+    const drawSnout=()=>{const w=Math.hypot(3*s,4.8*c)+.6;ctx.fillStyle=HC.furD;ctx.beginPath();ctx.ellipse(jw.q[0],jw.q[1],w,2,0,0,TAU);ctx.fill();ctx.stroke();
+      if(jaw>.3&&fv>-.2){ctx.fillStyle=HC.maw;ctx.beginPath();ctx.ellipse((sn.q[0]+jw.q[0])/2,(sn.q[1]+jw.q[1])/2,w*.8,Math.abs(jw.q[1]-sn.q[1])*.6+.6,0,0,TAU);ctx.fill()}
+      ctx.fillStyle=HC.hide;ctx.beginPath();ctx.ellipse(sn.q[0],sn.q[1],w+.4,2.6,0,0,TAU);ctx.fill();ctx.stroke();
+      if(fv>-.2){ctx.fillStyle=HC.bone;ink(.8);const n=5;for(let i=0;i<n;i++){const k=(i/(n-1))*2-1,xx=sn.q[0]+k*w*.8,yy=sn.q[1]+2,hh=i===0||i===n-1?3.2+jaw:1.8;ctx.beginPath();ctx.moveTo(xx-.8,yy);ctx.lineTo(xx,yy+hh);ctx.lineTo(xx+.8,yy);ctx.closePath();ctx.fill();ctx.stroke()}
+        for(let i=0;i<4;i++){const k=(i/3)*2-1,xx=jw.q[0]+k*w*.7,yy=jw.q[1]-1.4;ctx.beginPath();ctx.moveTo(xx-.7,yy);ctx.lineTo(xx,yy-1.8-jaw);ctx.lineTo(xx+.7,yy);ctx.closePath();ctx.fill();ctx.stroke()}}
+      ctx.fillStyle=INK;const ns=at(9,0,.6);circ(ns.q[0],ns.q[1],1);ctx.fill();
+      if(jaw>.3&&fv>-.2){const dr=(t*1.1)%1;ctx.strokeStyle='rgba(255,170,120,.6)';ctx.lineWidth=.9;ctx.beginPath();ctx.moveTo(jw.q[0]+1.6,jw.q[1]+1.6);ctx.lineTo(jw.q[0]+1.6,jw.q[1]+2+dr*4);ctx.stroke()}};
+    // eyes: two burning slits, only where the face is turned toward us
+    const eyes=()=>{for(const sd of[-1,1]){const e=at(3.6,sd*2.9,1.4);if(e.v<-.05)continue;const k=cl((e.v+.05)*2.4,0,1);shine('255,60,40',e.q[0],e.q[1],5.6,.6*k+.12*Math.sin(t*5));ctx.save();ctx.globalAlpha=k;ctx.fillStyle=HC.eye;ctx.beginPath();ctx.ellipse(e.q[0],e.q[1],1.9,1,sd*.35*c,0,TAU);ctx.fill();ctx.fillStyle='#ffe28a';circ(e.q[0],e.q[1],.5);ctx.fill();ctx.restore()}};
+    if(snoutBehind){drawSnout();ctx.fillStyle=HC.fur;ctx.beginPath();ctx.ellipse(h[0],h[1],Math.hypot(5.6*s,6.6*c)+.6,5.8,0,0,TAU);ctx.fill();ctx.stroke()}else{eyes();drawSnout()}
+    if(!snoutBehind)eyes()}});
+  run(parts);ctx.restore()}
 
-// ------------------------------------------------------------------ BOSS: IL BECCHINO (the gravedigger)
-const BC={skin:'#8fb06a',skinD:'#647f48',coat:'#4a3b5c',coatD:'#33284a',belly:'#a7c47e',hat:'#2a2230',band:'#7a2e3a',shovel:'#8a96a2',wood:'#7a5230',glow:'150,255,110'};
-function becchino(x,y,face,anim,p,sc){sc=sc||2.2;const B=basis(face),v=B.v,t=G.t,ph=p*TAU;
-  const walk=anim==='walk',slam=anim==='slam',sum=anim==='summon';
-  const w=walk?Math.sin(ph):0,bob=walk?Math.abs(Math.sin(ph))*1.6:Math.sin(ph)*.6;
-  // slam: .0-.45 raise shovel overhead, .45-.6 smash, .6-1 hold/recover ; summon: arms up + glow + hands from the ground
-  let raise=0,smash=0,lift=0,squash=0;
-  if(slam){if(p<.45){raise=ez(p/.45);lift=raise*2}else if(p<.6){const k=(p-.45)/.15;raise=1-k*1.6;smash=k;squash=Math.sin(k*Math.PI)*.12}else{const k=(p-.6)/.4;raise=-.6*(1-ez(k));smash=1-k}}
-  let arms=0;if(sum){arms=p<.25?ez(p/.25):p<.8?1:1-ez((p-.8)/.2)}
-  shadow(x,y+9*sc,15*sc,5.6*sc,.36);
-  // summon: green rune and hands breaking out of the ground (on the floor, under the boss)
-  if(sum){const k=cl((p-.15)/.6,0,1);ctx.save();if(!LOWFX){ctx.globalCompositeOperation='lighter';glow(BC.glow,x,y+9*sc,32*sc*arms,.35*arms,10*sc*arms);ctx.globalCompositeOperation='source-over'}
-    ctx.strokeStyle=`rgba(150,255,110,${.55*arms})`;ctx.lineWidth=2;ell(x,y+9*sc,26*sc*arms,8*sc*arms);ctx.stroke();
-    for(let i=0;i<3;i++){const a=i*TAU/3+.5,hx=x+Math.cos(a)*24*sc,hy=y+9*sc+Math.sin(a)*8*sc,e=cl(k*1.4-i*.15,0,1);if(e<=0)continue;
-      ctx.fillStyle='rgba(30,22,16,.7)';ell(hx,hy+2,5*sc,1.8*sc);ctx.fill();ctx.save();ctx.translate(hx,hy);ctx.scale(sc*.85,sc*.85);ink(1.8);
-      const up=e*9;ctx.fillStyle=ZC.skin;ctx.beginPath();ctx.rect(-2.2,-up,4.4,up);ctx.fill();ctx.stroke();circ(0,-up,3.2);fs(ZC.skin);
-      ctx.strokeStyle=INK;ctx.lineWidth=1.4;for(let f=-1;f<=1;f++){ctx.beginPath();ctx.moveTo(f*1.6,-up-2.4);ctx.lineTo(f*2.2,-up-5.4-Math.sin(t*8+i+f)*.6);ctx.stroke()}ctx.restore()}
+// ------------------------------------------------------------------ BOSS: IL BECCHINO
+const BC={skin:'#7d9a62',skinD:'#55703f',coat:'#2e2638',coatD:'#1e1826',coatL:'#463a56',hat:'#1f1a24',band:'#6a1e28',metal:'#8a96a2',wood:'#6b4a2a',bone:'#e6dcc0',hole:'#0e140c',glow:'150,255,110',chain:'#7a7f86'};
+function becchino(x,y,face,anim,p,sc){sc=sc||2;const t=G.t,{c,s,P,D,F}=V(face),ph=p*TAU,walk=anim==='walk',slam=anim==='slam',sum=anim==='summon';
+  const w=walk?Math.sin(ph):0,bob=walk?Math.abs(Math.sin(ph))*1.8:Math.sin(ph)*.6,sway=walk?Math.sin(ph)*1.2:0;
+  // slam: .0-.45 raise the shovel high behind the head, .45-.6 smash it down, .6-1 pull it out
+  let a=-1.05,lift=0,squash=0,shake=0;
+  if(slam){if(p<.45){const k=ez(p/.45);a=-1.05+k*3.05;lift=k*2}else if(p<.6){const k=(p-.45)/.15;a=2-k*3.35;squash=Math.sin(k*Math.PI)*.1}else{const k=ez((p-.6)/.4);a=-1.35+k*.3;shake=(1-k)*1.2}}
+  const armUp=sum?(p<.25?ez(p/.25):p<.8?1:1-ez((p-.8)/.2)):0;
+  shadow(x,y+2*sc,16*sc,6*sc,.38);
+  // summon: green ring on the floor and zombie hands clawing out of the ground around him
+  if(sum){const k=cl((p-.15)/.6,0,1);ctx.save();shine(BC.glow,x,y+2*sc,34*sc*armUp,.35*armUp);
+    ctx.strokeStyle=`rgba(150,255,110,${.6*armUp})`;ctx.lineWidth=2;ell(x,y+2*sc,26*sc*armUp,9*sc*armUp);ctx.stroke();
+    for(let i=0;i<4;i++){const an=i*TAU/4+.4,hx=x+Math.cos(an)*25*sc,hy=y+2*sc+Math.sin(an)*9*sc,e=cl(k*1.5-i*.14,0,1);if(e<=0)continue;
+      ctx.fillStyle='rgba(20,16,12,.75)';ell(hx,hy+1,4.6*sc,1.6*sc);ctx.fill();ctx.save();ctx.translate(hx,hy);ctx.scale(sc*.8,sc*.8);ink(1.8);
+      const up=e*9,wv=Math.sin(t*7+i)*1.2;ctx.fillStyle=ZC.skin;ctx.beginPath();ctx.moveTo(-2.2,0);ctx.lineTo(-2.2+wv*.3,-up);ctx.lineTo(2.2+wv*.3,-up);ctx.lineTo(2.2,0);ctx.closePath();ctx.fill();ctx.stroke();circ(wv*.3,-up,3.2);fs(ZC.skin);claws([wv*.3,-up],wv*.2,-1,5,ZC.claw);ctx.restore()}
     ctx.restore()}
-  ctx.save();ctx.translate(x,y-bob*sc-lift*sc);ctx.scale(B.f*sc*(1+squash),sc*(1-squash));ink(2.4);
-  // legs: short and stumpy
-  let a,b;if(B.side){a=[w*4,8];b=[-w*4,8]}else{a=[-6,8+w*1.6];b=[6,8-w*1.6]}
-  for(const q of[b,a]){ctx.fillStyle=BC.coatD;ctx.beginPath();ctx.rect(q[0]-3,q[1]-6,6,6);ctx.fill();ctx.stroke();ell(q[0]+(B.side?1.5:0),q[1]+.6,4.6,2.6);fs('#2a2420')}
-  const bw=B.side?12:v==='s'||v==='n'?16:14;
-  // shovel: held in one hand; behind the body when seen from the back
-  const shovel=()=>{let ang,hx,hy;
-    if(slam){ang=.35-raise*(Math.PI/2+.7);hx=B.side?7:B.lx*10+9;hy=-6-raise*8}else if(sum){ang=.9;hx=B.side?6:13;hy=2}else{ang=.5+Math.sin(t*1.5)*.05+(walk?w*.08:0);hx=B.side?7:B.lx*8+12;hy=-2}
-    ctx.save();ctx.translate(hx,hy);ctx.rotate(ang);
-    line(-6,0,20,0,2.8,BC.wood);ctx.fillStyle=BC.wood;ink(1.6);ctx.beginPath();ctx.rect(-9,-2.6,4,5.2);ctx.fill();ctx.stroke();
-    ink(2);ctx.beginPath();ctx.moveTo(19,-5.5);ctx.lineTo(29,-4);ctx.quadraticCurveTo(32,0,29,4);ctx.lineTo(19,5.5);ctx.closePath();ctx.fillStyle=BC.shovel;ctx.fill();ctx.stroke();
-    ctx.fillStyle='rgba(255,255,255,.35)';ctx.fillRect(20.5,-3.6,6,1.4);ctx.fillStyle='rgba(120,70,40,.55)';circ(26,2,1.4);ctx.fill();circ(23,3,.9);ctx.fill();
-    ink(2);circ(0,0,4);fs(BC.skin);ctx.restore()};
-  if(B.back)shovel();
-  // free arm
-  const armUp=sum?arms:0,ax=B.side?-4:-bw-1,ay=-8;
-  const freeArm=()=>{const hx=B.side?-6-armUp*2:-bw-6-armUp*2,hy=-2-armUp*22+(walk?w*2:0);line(ax,ay,hx,hy,6,BC.coat);ink(2);circ(hx,hy,4);fs(BC.skin)};
-  if(B.back||B.side)freeArm();
-  // coat + belly
-  ctx.beginPath();ctx.moveTo(-bw,6);ctx.quadraticCurveTo(-bw-5,-6,-bw*.55,-14);ctx.quadraticCurveTo(0,-17,bw*.55,-14);ctx.quadraticCurveTo(bw+5,-6,bw,6);ctx.quadraticCurveTo(0,12,-bw,6);ctx.closePath();ctx.fillStyle=BC.coat;ctx.fill();ctx.stroke();
-  if(!B.back){const bx=B.side?3:0,breath=Math.sin(t*2)*.6;ctx.fillStyle=BC.belly;ctx.beginPath();ctx.ellipse(bx,0,(B.side?7:10)+breath,8.6+breath,0,0,TAU);ctx.fill();ctx.stroke();
-    ctx.strokeStyle=INK;ctx.lineWidth=1.3;ctx.beginPath();ctx.moveTo(bx-4,-5);ctx.quadraticCurveTo(bx+1,0,bx-2,6);for(let i=0;i<4;i++){const yy=-4+i*3,xx=bx-3.4+Math.sin(i)*.6+i*.4;ctx.moveTo(xx-1.8,yy);ctx.lineTo(xx+1.8,yy+.6)}ctx.stroke();
-    if(!LOWFX){ctx.save();ctx.globalCompositeOperation='lighter';glow(BC.glow,bx+3,2,9,.22+.08*Math.sin(t*3));ctx.restore()}
-    // coat edges
-    ctx.strokeStyle=BC.coatD;ctx.lineWidth=2.4;ctx.beginPath();ctx.moveTo(bx-(B.side?7:10)-1,-6);ctx.lineTo(bx-(B.side?7:10)+1,7);ctx.stroke();ink(2.4);
-    ctx.fillStyle='#c9a040';for(const yy of[-9,-4])circ(bx-(B.side?6:9)-2,yy,1.1),ctx.fill()}
-  else{ctx.strokeStyle=BC.coatD;ctx.lineWidth=2;ctx.beginPath();ctx.moveTo(0,-14);ctx.lineTo(0,8);ctx.stroke();ctx.fillStyle='#8a6a4a';ctx.beginPath();ctx.rect(-4,-6,7,6);ctx.fill();ctx.strokeStyle=INK;ctx.lineWidth=1.3;ctx.stroke();ink(2.4)}
-  if(!B.back&&!B.side)freeArm();
-  if(!B.back)shovel();
-  // head: small for the body, top hat, one glowing eye, crooked smile
-  const hx=B.side?3:B.lx*2,hy=-21+(walk?Math.sin(ph*2)*.5:0)-(sum?arms*1.5:0);ctx.save();ctx.translate(hx,hy);ink(2.4);
-  ctx.beginPath();ctx.ellipse(0,0,8.4,7.6,0,0,TAU);ctx.fillStyle=BC.skin;ctx.fill();ctx.stroke();ctx.fillStyle=BC.skinD;ctx.beginPath();ctx.ellipse(B.side?-2:2,3,5,3,0,0,TAU);ctx.fill();
-  if(!B.back){const ex=B.side?3.6:v==='s34'?1.8:0,ge=sum?1:.5+.3*Math.sin(t*3);
-    if(!LOWFX){ctx.save();ctx.globalCompositeOperation='lighter';glow(BC.glow,ex-(B.side?-1:2.4),-1.6,6+ge*3,.4+ge*.3);ctx.restore()}
-    ink(1.4);circ(ex-(B.side?-1:2.4),-1.6,2.8);fs('#e9ffcf');ctx.fillStyle='#4fc23a';circ(ex-(B.side?-1.6:2),-1.2,1.3);ctx.fill();
-    if(!B.side){ctx.strokeStyle=INK;ctx.lineWidth=1.6;ctx.beginPath();ctx.moveTo(ex+1.6,-2.6);ctx.lineTo(ex+5,-1.2);ctx.stroke()}
-    const op=(slam&&p>.4&&p<.65)||sum?1:0;ctx.fillStyle='#3a1d1d';ctx.beginPath();ctx.ellipse(ex+(B.side?2.4:.6),3.4,B.side?2:3.8,1.2+op*1.6,-.08,0,TAU);ctx.fill();ctx.stroke();ctx.fillStyle='#f4f1e0';ctx.fillRect(ex-1+(B.side?2:0),2.6,1.4,1.4)}
-  // top hat
-  ctx.rotate(-.12);ink(2.2);ctx.fillStyle=BC.hat;ctx.beginPath();ctx.ellipse(0,-6,10,2.6,0,0,TAU);ctx.fill();ctx.stroke();ctx.beginPath();ctx.rect(-6,-17,12,11);ctx.fill();ctx.stroke();
-  ctx.fillStyle=BC.band;ctx.fillRect(-6,-9.6,12,2.6);ctx.strokeRect(-6,-9.6,12,2.6);
-  ctx.fillStyle='rgba(255,255,255,.12)';ctx.fillRect(-4.6,-16,2,6);ctx.restore();
-  // flies circling
-  if(!LOWFX){ctx.fillStyle=INK;for(let i=0;i<3;i++){const a=t*3+i*2.1;circ(hx+Math.cos(a)*13,hy-6+Math.sin(a*1.3)*4,.8);ctx.fill()}}
+  ctx.save();ctx.translate(x,y-(bob+lift)*sc+shake*Math.sin(t*60)*sc*.3);ctx.scale(sc*(1+squash),sc*(1-squash));
+  const parts=[];
+  // legs: stumpy, heavy boots
+  for(const sd of[-1,1]){const st=walk?w*sd*4:0,fx=st,fy=sd*7;parts.push({d:D(fx,fy)-1,f:()=>{const h=P(0,sd*6,8),f=P(fx,fy,0);line(h,f,6,BC.coatD);ctx.save();ctx.translate(f[0],f[1]);ink(2);ell(c*1.6,s*.9,5.2,3);fs('#1b1714');ctx.restore()}})}
+  // body: huge rotten belly opened like a cage, with ribs and a green glow inside; coat around it
+  const B0=[1,sway*.5];
+  parts.push({d:D(B0[0],B0[1]),f:()=>{const m=P(B0[0],B0[1],16),hw=Math.hypot(17*s,13*c),top=m[1]-14,bot=m[1]+9;
+    ctx.beginPath();ctx.moveTo(m[0]-hw,bot-2);ctx.quadraticCurveTo(m[0]-hw-5,top+6,m[0]-hw*.5,top);ctx.quadraticCurveTo(m[0],top-3,m[0]+hw*.5,top);ctx.quadraticCurveTo(m[0]+hw+5,top+6,m[0]+hw,bot-2);
+    for(let i=0;i<=8;i++){const xx=m[0]+hw-i*hw*2/8;ctx.lineTo(xx,bot+(i%2?3:0))}ctx.closePath();ctx.fillStyle=BC.coat;ctx.fill();ctx.stroke();
+    ctx.save();ctx.clip();ctx.fillStyle=BC.coatD;ell(m[0]+hw*.5,m[1]+4,hw*.7,12);ctx.fill();ctx.fillStyle=BC.coatL;ell(m[0]-hw*.6,top+4,hw*.3,3);ctx.fill();ctx.restore();
+    // the belly faces forward: open cage, ribs, glow
+    const fv=F(12,0,12);if(fv>.05){const k=cl(fv*1.8,0,1),q=P(B0[0]+10,B0[1],14),bw=9.6*Math.max(.3,fv),bh=9;ctx.save();ctx.globalAlpha=k;
+      ink(2);ctx.fillStyle=BC.skin;ctx.beginPath();ctx.ellipse(q[0],q[1],bw+2.4,bh+2,0,0,TAU);ctx.fill();ctx.stroke();
+      ctx.fillStyle=BC.hole;ctx.beginPath();ctx.ellipse(q[0],q[1]+.6,bw,bh*.8,0,0,TAU);ctx.fill();shine(BC.glow,q[0],q[1]+1,12,.45+.15*Math.sin(t*3));
+      ctx.fillStyle=`rgba(150,255,110,${.35+.15*Math.sin(t*3)})`;ell(q[0],q[1]+2,bw*.55,bh*.4);ctx.fill();
+      ctx.strokeStyle=BC.bone;ctx.lineWidth=2;for(let i=0;i<4;i++){const yy=q[1]-5+i*3.4,ww=bw*(1-Math.abs(i-1.5)*.18);ctx.beginPath();ctx.moveTo(q[0]-ww,yy+1);ctx.quadraticCurveTo(q[0],yy-1.6,q[0]+ww,yy+1);ctx.stroke()}
+      ctx.strokeStyle=INK;ctx.lineWidth=1.2;for(const sd of[-1,1])for(let i=0;i<4;i++){const yy=q[1]-6+i*3.6,xx=q[0]+sd*(bw+1.2);ctx.beginPath();ctx.moveTo(xx-1.6,yy);ctx.lineTo(xx+1.6,yy+1)}ctx.stroke();ctx.restore()}
+    // chains across the coat
+    ctx.strokeStyle=INK;ctx.lineWidth=1.2;for(let i=0;i<7;i++){const u=i/6,a1=P(B0[0]+(fv>0?5:-5),B0[1]-14+u*28,22-u*12);ctx.fillStyle=BC.chain;ctx.beginPath();ctx.ellipse(a1[0],a1[1],1.8,1.2,.6,0,TAU);ctx.fill();ctx.stroke()}
+    // patches on the back
+    const bk=F(-12,0,12);if(bk>.1){ctx.save();ctx.globalAlpha=cl(bk*2,0,1);const q=P(B0[0]-11,B0[1]+2,17);ink(1.4);ctx.fillStyle='#6b5a3a';ctx.fillRect(q[0]-3,q[1]-3,6,5.4);ctx.strokeRect(q[0]-3,q[1]-3,6,5.4);ctx.beginPath();ctx.moveTo(q[0]-2,q[1]-2);ctx.lineTo(q[0]+2,q[1]+1.6);ctx.stroke();ctx.restore()}}});
+  // free arm (left): raised to summon
+  {const sh=[2,-14,24],hd=[6+armUp*2,-17-armUp*2,14+armUp*24+(walk?w*2:0)];parts.push({d:(D(sh[0],sh[1])+D(hd[0],hd[1]))/2+.3,f:()=>{const a1=P(...sh),b=P(...hd),m=P((sh[0]+hd[0])/2-2,(sh[1]+hd[1])/2-2,(sh[2]+hd[2])/2-2);quad(a1,m,b,6.4,F(0,-1,1)<0?BC.coatD:BC.coat);ink(2);circ(b[0],b[1],3.8);fs(BC.skin);claws(b,b[0]-m[0],b[1]-m[1],6,ZC.claw);
+    if(armUp>.3)shine(BC.glow,b[0],b[1],10,.5*armUp)}})}
+  // shovel arm (right) and the shovel: one straight handle in 3D, so it turns with him
+  {const sh=[2,14,24],hd=[9,13,15+(slam?Math.max(0,Math.sin(a))*9:0)];const dir=[Math.cos(a)*.9,.18,Math.sin(a)],pt=k=>[hd[0]+dir[0]*k,hd[1]+dir[1]*k,hd[2]+dir[2]*k];
+    parts.push({d:(D(hd[0],hd[1])+D(pt(28)[0],pt(28)[1]))/2+.6,f:()=>{const a1=P(...sh),b=P(...hd),m=P((sh[0]+hd[0])/2-1,(sh[1]+hd[1])/2+2,(sh[2]+hd[2])/2-2);
+      const h0=P(...pt(-7)),h1=P(...pt(22)),b0=P(...pt(21)),b1=P(...pt(33));line(h0,h1,2.8,BC.wood);
+      const dx=b1[0]-b0[0],dy=b1[1]-b0[1],L=Math.hypot(dx,dy)||1,nx=-dy/L,ny=dx/L,bwid=6;ink(2);ctx.fillStyle=BC.metal;ctx.beginPath();ctx.moveTo(b0[0]+nx*bwid*.7,b0[1]+ny*bwid*.7);ctx.lineTo(b1[0]+nx*bwid,b1[1]+ny*bwid);ctx.quadraticCurveTo(b1[0]+dx/L*4,b1[1]+dy/L*4,b1[0]-nx*bwid,b1[1]-ny*bwid);ctx.lineTo(b0[0]-nx*bwid*.7,b0[1]-ny*bwid*.7);ctx.closePath();ctx.fill();ctx.stroke();
+      ctx.fillStyle='rgba(110,40,30,.6)';circ(b1[0]-dx/L*3+nx*2,b1[1]-dy/L*3+ny*2,1.6);ctx.fill();circ(b1[0]-dx/L*6-nx*2.4,b1[1]-dy/L*6-ny*2.4,1.1);ctx.fill();ctx.fillStyle='rgba(255,255,255,.3)';circ(b0[0]+dx/L*4+nx*3,b0[1]+dy/L*4+ny*3,1.2);ctx.fill();
+      quad(a1,m,b,6.4,F(0,1,1)<0?BC.coatD:BC.coat);ink(2);circ(b[0],b[1],3.8);fs(BC.skin)}})}
+  // head: small for that body, battered top hat, two glowing eyes (one huge), mouth stitched wide with jagged teeth
+  const Hh=[4,sway*.6,35+(walk?Math.sin(ph*2)*.5:0)-(slam&&p>.45&&p<.6?1.5:0)],R=8.6;
+  parts.push({d:D(Hh[0],Hh[1])+.5,f:()=>{const h=P(...Hh);ctx.beginPath();ctx.arc(h[0],h[1],R,0,TAU);ctx.fillStyle=BC.skin;ctx.fill();ctx.stroke();
+    ctx.save();ctx.beginPath();ctx.arc(h[0],h[1],R-1.2,0,TAU);ctx.clip();ctx.fillStyle=BC.skinD;ell(h[0]-s*2,h[1]+5,R,4);ctx.fill();ctx.restore();
+    const at=(fx,fy,fz)=>({q:P(Hh[0]+fx,Hh[1]+fy,Hh[2]+fz),v:F(fx,fy,R)});
+    for(const sd of[-1,1]){const e=at(6.8,sd*3.4,1.2);if(e.v<.04)continue;const k=cl(e.v*1.8,0,1),big=sd>0?1.35:.85;shine(BC.glow,e.q[0],e.q[1],6*big,.55*k+.15*Math.sin(t*4));ctx.save();ctx.globalAlpha=k;ink(1.4);ctx.fillStyle='#0c120a';ctx.beginPath();ctx.ellipse(e.q[0],e.q[1],2.6*big*Math.max(.4,e.v),2.8*big,0,0,TAU);ctx.fill();ctx.stroke();ctx.fillStyle='#d6ff9a';circ(e.q[0]+c*.3,e.q[1],1.1*big);ctx.fill();ctx.restore()}
+    {const m=at(6.8,0,-3.6);if(m.v>.04){const k=cl(m.v*1.8,0,1),op=(slam&&p>.4&&p<.68)||sum?1:.3+.15*Math.sin(t*2.4),w=5.4*Math.max(.35,m.v),hh=1.4+op*2.6;ctx.save();ctx.globalAlpha=k;ink(1.5);ctx.fillStyle='#200808';ctx.beginPath();ctx.ellipse(m.q[0],m.q[1]+hh*.3,w,hh,0,0,TAU);ctx.fill();ctx.stroke();
+      ctx.fillStyle=BC.bone;ink(.8);for(let i=0;i<5;i++){const xx=m.q[0]-w*.8+i*w*.4,yy=m.q[1]-hh*.6,h2=i%2?2.2:1.4;ctx.beginPath();ctx.moveTo(xx-.8,yy);ctx.lineTo(xx,yy+h2);ctx.lineTo(xx+.8,yy);ctx.closePath();ctx.fill();ctx.stroke()}
+      ctx.strokeStyle=INK;ctx.lineWidth=1;for(let i=0;i<4;i++){const xx=m.q[0]-w*.7+i*w*.47;ctx.beginPath();ctx.moveTo(xx,m.q[1]-hh-1.2);ctx.lineTo(xx+.4,m.q[1]+hh*1.2+1);ctx.stroke()}ctx.restore()}}
+    // battered top hat, tilted, sits on the skull in every direction
+    const hb=P(Hh[0]-.5,Hh[1],Hh[2]+R-2.2),tilt=-.16+.04*Math.sin(t*1.4),bw=Math.hypot(10.5*s,10.5*c);ctx.save();ctx.translate(hb[0],hb[1]);ctx.rotate(tilt);ink(2.2);ctx.fillStyle=BC.hat;ctx.beginPath();ctx.ellipse(0,0,bw,3,0,0,TAU);ctx.fill();ctx.stroke();
+    ctx.beginPath();ctx.moveTo(-6.4,-.6);ctx.lineTo(-5.6,-12);ctx.lineTo(1,-13.4);ctx.lineTo(6,-11.4);ctx.lineTo(6.4,-.6);ctx.closePath();ctx.fill();ctx.stroke();
+    ctx.fillStyle=BC.band;ctx.beginPath();ctx.moveTo(-6.2,-4.4);ctx.lineTo(6.3,-4.4);ctx.lineTo(6.3,-1.6);ctx.lineTo(-6.3,-1.6);ctx.closePath();ctx.fill();ctx.stroke();
+    ctx.strokeStyle=INK;ctx.lineWidth=1.1;ctx.beginPath();ctx.moveTo(2,-13);ctx.lineTo(3.4,-9.6);ctx.lineTo(1.6,-7.4);ctx.stroke();ctx.fillStyle='rgba(255,255,255,.1)';ctx.fillRect(-4.6,-11,2,6);ctx.restore()}});
+  run(parts);
+  // flies
+  if(!LOWFX){ctx.fillStyle=INK;const h=P(...Hh);for(let i=0;i<4;i++){const an=t*3+i*1.6;circ(h[0]+Math.cos(an)*14,h[1]-4+Math.sin(an*1.3)*5,.8);ctx.fill()}}
   ctx.restore();
-  // slam impact on the floor: crack ring and green splash
-  if(slam&&p>.55&&p<.95){const k=(p-.55)/.4,ix=x+(B.side?7:B.lx*10+9)*B.f*sc,iy=y+9*sc;ctx.save();ctx.strokeStyle=`rgba(150,255,110,${.7*(1-k)})`;ctx.lineWidth=3;ell(ix,iy,(8+k*30)*sc/2.2,(3+k*11)*sc/2.2);ctx.stroke();
-    ctx.strokeStyle=`rgba(27,22,18,${.8*(1-k*.5)})`;ctx.lineWidth=2;ctx.beginPath();for(let i=0;i<5;i++){const a=i*1.26+.3;ctx.moveTo(ix,iy);ctx.lineTo(ix+Math.cos(a)*14*sc/2.2*(.6+k),iy+Math.sin(a)*5*sc/2.2*(.6+k))}ctx.stroke();ctx.restore()}
+  // slam impact where the blade hits the floor: crack, green splash
+  if(slam&&p>.55&&p<.95){const k=(p-.55)/.4,{P:Pw}=V(face),q=Pw(9+Math.cos(-1.35)*.9*30,13+.18*30,0),ix=x+q[0]*sc,iy=y+q[1]*sc;ctx.save();
+    ctx.strokeStyle=`rgba(150,255,110,${.75*(1-k)})`;ctx.lineWidth=3;ell(ix,iy,(6+k*30)*sc/2,(2+k*11)*sc/2);ctx.stroke();
+    ctx.strokeStyle=`rgba(20,16,12,${.85*(1-k*.4)})`;ctx.lineWidth=2.2;ctx.beginPath();for(let i=0;i<6;i++){const an=i*1.05+.3,r=(10+i%2*5)*sc/2*(.6+k*.8);ctx.moveTo(ix,iy);ctx.lineTo(ix+Math.cos(an)*r*.6,iy+Math.sin(an)*r*.25+1);ctx.lineTo(ix+Math.cos(an+.15)*r,iy+Math.sin(an+.15)*r*.4)}ctx.stroke();
+    if(!LOWFX){for(let i=0;i<6;i++){const an=i*1.05,r=k*16*sc/2;ctx.fillStyle=`rgba(150,255,110,${.7*(1-k)})`;circ(ix+Math.cos(an)*r,iy+Math.sin(an)*r*.4-Math.sin(k*Math.PI)*8,2);ctx.fill()}}ctx.restore()}
 }
 return {zombie,hound,becchino};
 })();
