@@ -119,6 +119,8 @@ Dopo ogni modifica: rifare almeno una partita automatica per capitolo, `meta2.js
 
 - Dopo (9 ottobre), richieste di Denis: il menu era «troppo normale», quindi è vestito da **cripta viva**: muschio che cola sotto la barra in alto, sopra la barra in basso, sui titoli delle sezioni e sui bottoni; bottoni laterali a forma di lapide che si accendono d'oro quando c'è qualcosa da prendere; la scheda dell'arena tenuta da due ossa con un teschio e due candele accese che tremolano; teschio davanti ai titoli delle pagine; ossa sugli angoli dell'Armeria. **Faretra** vista da dietro rifatta (`quiverBack`): a tracolla sulla schiena con la cinghia, le frecce con le penne che spuntano sopra la spalla destra (prima sembrava un cinturino marrone).
 
+- Uscita dalla stanza (9 ottobre, Denis vedeva l'eroe finire dentro il pavimento): quando la porta è aperta e l'eroe arriva sulla soglia, cammina da solo dentro il passaggio e sfuma nel buio dai piedi in su (`exitK`), anche i compagni; continua a camminare mentre lo schermo diventa nero. Test `exit.js`.
+
 ## Dove sta il lavoro
 
 - Ramo `lavori-in-sospeso` (tutto salvato e caricato su GitHub, non ancora unito a `main`).

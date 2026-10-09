@@ -8164,6 +8164,20 @@ for(const k of ['moss','lava','swamp','ice'])AMBEV[k].push([50,95,SND2.ghostBox]
 {const _os=openSheet;openSheet=function(kind){_os(kind);const s=$('sheet');s.classList.remove('fresh');void s.offsetWidth;s.classList.add('fresh');clearTimeout(s._fr);s._fr=setTimeout(()=>s.classList.remove('fresh'),900)}}
 // the explorer level: the bar shines when you come back with a new level
 {const _rt=renderTop;renderTop=function(){_rt();const A=SAVE.acct;if(!A)return;if(A.seen==null)A.seen=A.lvl;if(A.lvl>A.seen&&!$('menu').hidden){A.seen=A.lvl;save();const w=$('tbWho');w.classList.remove('lvup');void w.offsetWidth;w.classList.add('lvup');sfx('levelup')}}}
+// =====================================================================
+// THE WAY OUT: when the door is open the hero walks into the doorway by himself and fades into the dark
+// beyond it (no more legs sinking into the floor), and keeps walking while the screen goes black
+// =====================================================================
+function exitK(){if(!G||!P||!G.door)return 0;return clamp((TOP+6-P.y)/30,0,1)}
+{const _u=update;update=function(dt){
+  if(G&&P&&G.door&&(G.state==='cleared'||(G.state==='trans'&&G.fadeDir>0))&&P.y<TOP+10&&Math.abs(P.x-AW/2)<DOORW+8){
+    if(G.state==='trans'){P.y-=46*dt;P.walk=(P.walk||0)+dt*9;P.moving=true;P.face=-Math.PI/2;for(const pt of G.pets||[]){pt.y-=46*dt}}
+    else{P.x+=(AW/2-P.x)*Math.min(1,dt*6);P.y-=70*dt;P.face=-Math.PI/2;P.moving=true;P.walk=(P.walk||0)+dt*10;P.queue=[]}}
+  _u(dt)}}
+{const _dh=drawHero;drawHero=function(){const k=exitK();if(k<=0)return _dh.apply(this,arguments);ctx.save();ctx.globalAlpha*=1-k*.97;_dh.apply(this,arguments);ctx.restore();
+  // the dark of the doorway swallows him from the feet up
+  ctx.save();ctx.globalAlpha=k*.9;const g=ctx.createLinearGradient(0,P.y+10,0,P.y-34);g.addColorStop(0,'rgba(8,6,10,.95)');g.addColorStop(1,'rgba(8,6,10,0)');ctx.fillStyle=g;ctx.fillRect(P.x-22,P.y-36,44,48);ctx.restore()}}
+{const _dp=drawPet;drawPet=function(pt){const k=exitK();if(k<=0)return _dp.apply(this,arguments);ctx.save();ctx.globalAlpha*=1-k;_dp.apply(this,arguments);ctx.restore()}}
 newRun();applySettings();if(!playIntro(false))showMenu();requestAnimationFrame(loop);
 })();
 </script>
