@@ -2,3 +2,4 @@ node_modules/
 tests/test.html
 tests/*.png
 *.png
+!sprite/**/*.png
