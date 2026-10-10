@@ -244,13 +244,16 @@ function arma(id,x,y,ang,o){o=o||{};const sc=o.sc||1,fl=Math.cos(ang)<-.02?-1:1;
 function punti(id,x,y,ang,o){o=o||{};const M=G[id],sc=o.sc||1,fl=Math.cos(ang)<-.02?-1:1,ca=Math.cos(ang),sa=Math.sin(ang),
     T=q=>{const p=pt(id,o,q);if(!p)return null;const lx=p[0]*sc,ly=p[1]*sc*fl;return[x+lx*ca-ly*sa,y+lx*sa+ly*ca]};
   return{muzzle:T(M.muzzle),eject:T(M.eject),back:T(M.back),mag:T(magPt(M)),fl,ang}}
-// in the hero's hand, for the game's held(S,o,B): in the hero's own frame (drawRig's, already turned and mirrored with B.f). The hand goes
-// round the body like the bow's, a little wider when the hero looks away so the gun shows beside the head; looking straight up the gun
-// is turned over (its top to the outside), for the same reason
-function manoPos(B){const v=B.v;if(v==='n')return[9,-11,true];if(v==='n34')return[B.lx*13,-8.5,false];return[B.lx*10,-5+B.ly*5,false]}
-function inMano(id,B,o){const[hx,hy,mir]=manoPos(B);ctx.save();ctx.translate(hx,hy);ctx.rotate(B.la);if(mir)ctx.scale(1,-1);held(id,o);ctx.restore()}
+// in the hero's hand, for the game's held(S,o,B): in the hero's own frame (drawRig's, already turned and mirrored with B.f). The body
+// turns in 8 directions, the gun turns all the way round: ang is the real direction it aims at on the screen (left out: the body's).
+// The hand goes round the body like the bow's, a little wider when the hero looks away so the gun shows beside the head. The gun is
+// turned over when it points to the left, so its top always stays up
+function manoPos(B){const v=B.v;if(v==='n')return[11,-11];if(v==='n34')return[B.lx*13,-8.5];return[B.lx*10,-5+B.ly*5]}
+// (looking straight away it is always turned over, its top to the outside, so it shows beside the head; it turns back when the body turns)
+function manoAng(B,ang){const a=ang==null?B.qa:ang,la=Math.atan2(Math.sin(a),Math.cos(a)*B.f);return[la,B.v==='n'||Math.cos(la)<-.02]}
+function inMano(id,B,o,ang){const[hx,hy]=manoPos(B),[la,flip]=manoAng(B,ang);ctx.save();ctx.translate(hx,hy);ctx.rotate(la);if(flip)ctx.scale(1,-1);held(id,o);ctx.restore()}
 // the same key points in the hero's frame: on the screen they are x*B.f*S.sc and y*S.sc from where drawRig put the hero
-function inManoPunti(id,B,o){o=o||{};const M=G[id],[hx,hy,mir]=manoPos(B),c=Math.cos(B.la),s=Math.sin(B.la),m=mir?-1:1,
+function inManoPunti(id,B,o,ang){o=o||{};const M=G[id],[hx,hy]=manoPos(B),[la,flip]=manoAng(B,ang),c=Math.cos(la),s=Math.sin(la),m=flip?-1:1,
   T=q=>{const p=pt(id,o,q);if(!p)return null;const lx=p[0],ly=p[1]*m;return[hx+lx*c-ly*s,hy+lx*s+ly*c]};
   return{muzzle:T(M.muzzle),eject:T(M.eject),back:T(M.back),mag:T(magPt(M)),grip:[hx,hy]}}
 
@@ -769,4 +772,4 @@ function suonoBara(w,x,dt){if(typeof AU==='undefined'||!AU.ctx||!AU.on.sfx)retur
   else if(w==='sprofonda'){fNoise(t,1.5,'lowpass',260,.7,.6,{brown:true,att:.2});for(let i=0;i<7;i++)M.stone(t+.1+i*.18+Math.random()*.08,.5);fNoise(t,.9,'bandpass',220,6,.15,{f2:90,att:.1});risata(t+.5,4,.08)}
   else if(w==='sale'){fNoise(t,1.1,'lowpass',260,.7,.5,{brown:true,att:.15});for(let i=0;i<5;i++)M.stone(t+.05+i*.17,.45);fNoise(t+.4,.6,'bandpass',300,7,.15,{f2:700});fThump(t+1,120,60,.15,.5);M.wood(t+1,1,160)}}catch(e){}
   AU.pan=0}
-return{G,DATI,ORDINE,RAR,held,arma,punti,inMano,inManoPunti,manoPos,pt,espelliCar,caricatore,vampa,nuova,colpo,razzo,fumo,bossolo,esplosione,scintille,FX,fxAdd,fxUpdate,fxDraw,espelli,munizione,cassaMun,suono,motore,mix,wa,C,paint,rp,rb,poly,ball,seg,shine,rnd,cl,lerp,ez,eo,TAU,BARA,nuovaBara,disegnaBara,suonoBara,moneta,teschio}})();
+return{G,DATI,ORDINE,RAR,held,arma,punti,inMano,inManoPunti,manoPos,manoAng,pt,espelliCar,caricatore,vampa,nuova,colpo,razzo,fumo,bossolo,esplosione,scintille,FX,fxAdd,fxUpdate,fxDraw,espelli,munizione,cassaMun,suono,motore,mix,wa,C,paint,rp,rb,poly,ball,seg,shine,rnd,cl,lerp,ez,eo,TAU,BARA,nuovaBara,disegnaBara,suonoBara,moneta,teschio}})();

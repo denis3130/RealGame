@@ -100,14 +100,36 @@ function heroBob(){return hero.moving?Math.abs(Math.sin(walkQ()))*1.6:0}
 const walkQ=()=>Math.floor(((hero.walk%(Math.PI*2))+Math.PI*2)%(Math.PI*2)/(Math.PI*2)*8)/8*Math.PI*2;
 // a point of the gun (from inManoPunti, the hero's frame) on the screen
 function rigPt(q){const B=heroB();return[hero.x+q[0]*B.f,hero.y-heroBob()+q[1]]}
-function fire(ev,g){const id=hero.gun,D=A.DATI[id],B=heroB(),P=A.inManoPunti(id,B,g.pose()),mz=rigPt(P.muzzle),ang=hero.aim;
-  if(id==='lanciarazzi'){ROCK.push({x:mz[0],y:mz[1],ang:ang+(ev.ang[0]||0),v:D.spd,t:0,d:0,smk:0});const bk=rigPt(P.back);
+// Bullets fly over the floor: each one lives at its spot on the floor (gx, gy) and is drawn h above it, at the height of the gun, so
+// zombies are hit where they stand, near or far. The hero's feet are 8 below its x,y; the hand's spot on the floor is under the hand.
+const FEET=8;
+// the aim is taken from the feet (it does not move when the body turns); the body turns in 8 directions and keeps its direction until
+// the aim is well past the middle between two, so it never flickers; the gun turns all the way and its shots go to the target
+function aimFrom(){return[hero.x,hero.y+FEET]}
+function setFace(){const q=Q8(hero.aim),cur=hero.d==null?q:hero.d,ca=cur*Math.PI/4,diff=Math.atan2(Math.sin(hero.aim-ca),Math.cos(hero.aim-ca));
+  hero.d=Math.abs(diff)>Math.PI/8+.12?q:cur;hero.face=hero.d*Math.PI/4}
+// what a shot meets along the floor from x0,y0 to x1,y1: zombies in order of distance, as many as it can go through.
+// Returns true when the bullet is used up
+function hitLine(b,x0,y0,x1,y1){const dx=x1-x0,dy=y1-y0,L2=dx*dx+dy*dy||1e-6,list=[];
+  for(const z of Z){if(z.st==='muore'||z.st==='sale'||b.hits.includes(z))continue;let k=((z.x-x0)*dx+(z.y-y0)*dy)/L2;k=Math.max(0,Math.min(1,k));
+    const px=x0+dx*k,py=y0+dy*k,r=z.D.r+4;if((z.x-px)**2+(z.y-py)**2<r*r)list.push([k,z,px,py])}
+  list.sort((a,b)=>a[0]-b[0]);for(const[k,z,px,py] of list){b.hits.push(z);if(b.rocket){b.gx=px;b.gy=py;return true}
+    hurt(z,b.dmg,b.vx,b.vy,b.kind==='pal'?22:b.kind==='p44'?30:12);if(b.hits.length>b.pierce)return true}
+  return false}
+function fire(ev,g){const id=hero.gun,D=A.DATI[id],B=heroB(),ang=hero.aim,P=A.inManoPunti(id,B,g.pose(),ang),mz=rigPt(P.muzzle),hd=rigPt(P.grip),
+    h=Math.max(4,(hero.y+FEET)-hd[1]+5*Math.abs(Math.cos(ang))),gx=mz[0],gy=mz[1]+h,from=aimFrom(),
+    t=hero.tgt,shot=t&&Math.hypot(t[0]-gx,t[1]-gy)>6&&Math.hypot(t[0]-from[0],t[1]-from[1])>Math.hypot(gx-from[0],gy-from[1])?Math.atan2(t[1]-gy,t[0]-gx):ang;
+  if(id==='lanciarazzi'){const r={gx,gy,h,ang:shot+(ev.ang[0]||0),v:D.spd,t:0,d:0,smk:0,hits:[],rocket:true};const bk=rigPt(P.back);
     for(let i=0;i<6;i++)A.fxAdd({k:'fumo',x:bk[0],y:bk[1],r:7+Math.random()*5,life:.9+Math.random()*.4,vx:-Math.cos(ang)*(40+Math.random()*40)+(Math.random()-.5)*30,vy:-Math.sin(ang)*(40+Math.random()*40)+(Math.random()-.5)*30,drag:3,dark:false});
-    ST.shake=Math.max(ST.shake,.25);return}
-  for(const da of ev.ang){const a=ang+da,sp=D.spd*(D.pel>1?(.85+Math.random()*.3):1);BUL.push({x:mz[0],y:mz[1],vx:Math.cos(a)*sp,vy:Math.sin(a)*sp,kind:D.colpo,dmg:D.dmg,pierce:D.pierce||0,hits:[],d:0,range:D.range*(D.pel>1?(.8+Math.random()*.35):1),id})}
+    ST.shake=Math.max(ST.shake,.25);
+    // a zombie right in front of the tube: the rocket goes off on it
+    if(hitLine(r,from[0],from[1],gx,gy)){esplodi(r.gx,r.gy);return}ROCK.push(r);return}
+  for(const da of ev.ang){const a=shot+da,sp=D.spd*(D.pel>1?(.85+Math.random()*.3):1),b={gx,gy,h,vx:Math.cos(a)*sp,vy:Math.sin(a)*sp,kind:D.colpo,dmg:D.dmg,pierce:D.pierce||0,hits:[],d:0,range:D.range*(D.pel>1?(.8+Math.random()*.35):1),id};
+    // point blank: a zombie between the hero and the muzzle is hit at once
+    if(!hitLine(b,from[0],from[1],gx,gy))BUL.push(b)}
   A.fxAdd({k:'fumo',x:mz[0]+Math.cos(ang)*4,y:mz[1]+Math.sin(ang)*4,r:D.pel>1?6:3.5,life:.45,vx:Math.cos(ang)*14,vy:Math.sin(ang)*14-6,drag:4});
   if(D.pel>1||id==='revolver')ST.shake=Math.max(ST.shake,.12)}
-function gunEvents(ev,g){const id=hero.gun,B=heroB(),P=A.inManoPunti(id,B,g.pose()),qa=B.qa,fl=Math.cos(qa)<-.02?-1:1,feet=hero.y+8;
+function gunEvents(ev,g){const id=hero.gun,B=heroB(),qa=hero.aim,P=A.inManoPunti(id,B,g.pose(),qa),fl=Math.cos(qa)<-.02?-1:1,feet=hero.y+FEET;
   for(const e of ev){if(e.k==='sparo')fire(e,g);
     else if(e.k==='suono')A.suono(id,e.w,hero.x);
     else if(e.k==='bossolo'){const q=rigPt(id==='revolver'?P.mag:P.eject||P.muzzle);A.espelli(id,q[0],q[1],qa,fl,Math.max(2,feet-q[1]),e.n)}
@@ -126,34 +148,33 @@ function update(dt){ST.t+=dt;G.t=ST.t;
     // the coffin is solid
     const dx=hero.x-bara.x,dy=(hero.y-bara.y)*2;if(bara.st!=='sotto'&&Math.abs(dx)<36&&Math.abs(dy)<26){if(Math.abs(dx)/36>Math.abs(dy)/26)hero.x=bara.x+Math.sign(dx)*36;else hero.y=bara.y+Math.sign(dy)*13}}
   // aim: the mouse, the finger, or the nearest zombie with the fire button; else where it walks
-  let aimSet=false;
-  if(ptr.down&&ptr.auto){let best=null,bd=1e9;for(const z of Z){if(z.st==='muore'||z.st==='sale')continue;const d=Math.hypot(z.x-hero.x,z.y-hero.y);if(d<bd){bd=d;best=z}}
-    if(best){hero.aim=Math.atan2(best.y-best.D.h*.5-(hero.y-10),best.x-hero.x);aimSet=true}}
-  if(!aimSet&&ptr.down&&!ptr.auto||!aimSet&&ptr.mouse){hero.aim=Math.atan2(ptr.y-(hero.y-8),ptr.x-hero.x);aimSet=true}
-  if(!aimSet&&hero.moving)hero.aim=Math.atan2(my,mx);
-  hero.face=hero.aim;
+  let aimSet=false;const from=aimFrom();
+  if(ptr.down&&ptr.auto){let best=null,bd=1e9;for(const z of Z){if(z.st==='muore'||z.st==='sale')continue;const d=Math.hypot(z.x-hero.x,z.y-hero.y-FEET);if(d<bd){bd=d;best=z}}
+    if(best){hero.aim=Math.atan2(best.y-from[1],best.x-from[0]);hero.tgt=[best.x,best.y];aimSet=true}}
+  if(!aimSet&&ptr.down&&!ptr.auto||!aimSet&&ptr.mouse){let tx=ptr.x,ty=ptr.y+14;for(const z of Z){if(z.st==='muore'||z.st==='sale')continue;if(Math.abs(ptr.x-z.x)<13&&ptr.y>z.y-z.D.h-4&&ptr.y<z.y+5){tx=z.x;ty=z.y;break}}
+    if(Math.hypot(tx-from[0],ty-from[1])>3){hero.aim=Math.atan2(ty-from[1],tx-from[0]);hero.tgt=[tx,ty]}aimSet=true}
+  if(!aimSet){hero.tgt=null;if(hero.moving)hero.aim=Math.atan2(my,mx)}
+  setFace();
   // the guns: the one in hand fires; holding the trigger keeps firing (each frame is a new press for the single-shot ones)
   const g=gunCtl(hero.gun),hold=ptr.down||!!keys[' '];if(hold&&!g.D.auto&&g.mag>0&&g.st!=='ricarica')g.prev=false;
   const ev=g.update(dt,hold);gunEvents(ev,g);A.motore(g,hero.x);
   for(const id in hero.guns)if(id!==hero.gun){const o=hero.guns[id];o.update(dt,false)}
   if(g.mag<=0&&g.res<=0&&hold&&!ST.msg)say('Munizioni finite: raccogli le casse!');
   // bullets
-  for(let i=BUL.length-1;i>=0;i--){const b=BUL[i],sx=b.vx*dt,sy=b.vy*dt;b.x+=sx;b.y+=sy;b.d+=Math.hypot(sx,sy);let dead=false;
-    for(const z of Z){if(z.st==='muore'||z.st==='sale'||b.hits.includes(z))continue;const cx=z.x,cy=z.y-z.D.h*.5,dx=cx-b.x,dy=cy-b.y;
-      if(dx*dx+dy*dy<(z.D.r+3)*(z.D.r+3)){b.hits.push(z);hurt(z,b.dmg,b.vx,b.vy,b.kind==='pal'?22:b.kind==='p44'?30:12);if(b.hits.length>b.pierce){dead=true;break}}}
-    if(!dead&&(b.x<L||b.x>R||b.y<TOP-10||b.y>BOT)){dead=true;A.fxAdd({k:'scintille',x:b.x,y:b.y,life:.25,seed:Math.random()*9})}
+  for(let i=BUL.length-1;i>=0;i--){const b=BUL[i],x0=b.gx,y0=b.gy,sx=b.vx*dt,sy=b.vy*dt;b.gx+=sx;b.gy+=sy;b.d+=Math.hypot(sx,sy);let dead=hitLine(b,x0,y0,b.gx,b.gy);
+    if(!dead&&(b.gx<L||b.gx>R||b.gy<TOP||b.gy>BOT+8)){dead=true;A.fxAdd({k:'scintille',x:b.gx,y:b.gy-b.h,life:.25,seed:Math.random()*9})}
     if(!dead&&b.d>b.range)dead=true;if(dead)BUL.splice(i,1)}
   // rockets
-  for(let i=ROCK.length-1;i>=0;i--){const r=ROCK[i],D=A.DATI.lanciarazzi;r.t+=dt;r.v+=D.acc*dt;const sx=Math.cos(r.ang)*r.v*dt,sy=Math.sin(r.ang)*r.v*dt;r.x+=sx;r.y+=sy;r.d+=Math.hypot(sx,sy);r.smk+=dt;
-    if(r.smk>(LOWFX?.06:.025)){r.smk=0;A.fxAdd({k:'fumo',x:r.x-Math.cos(r.ang)*12,y:r.y-Math.sin(r.ang)*12,r:3+Math.random()*2.5,life:.7,vx:(Math.random()-.5)*10,vy:-8,drag:2})}
-    let boom=r.x<L||r.x>R||r.y<TOP-10||r.y>BOT||r.d>D.range;for(const z of Z){if(z.st==='muore'||z.st==='sale')continue;if(Math.hypot(z.x-r.x,z.y-z.D.h*.5-r.y)<z.D.r+5){boom=true;break}}
-    if(boom){ROCK.splice(i,1);esplodi(r.x,r.y)}}
+  for(let i=ROCK.length-1;i>=0;i--){const r=ROCK[i],D=A.DATI.lanciarazzi,x0=r.gx,y0=r.gy;r.t+=dt;r.v+=D.acc*dt;const sx=Math.cos(r.ang)*r.v*dt,sy=Math.sin(r.ang)*r.v*dt;r.gx+=sx;r.gy+=sy;r.d+=Math.hypot(sx,sy);r.smk+=dt;
+    if(r.smk>(LOWFX?.06:.025)){r.smk=0;A.fxAdd({k:'fumo',x:r.gx-Math.cos(r.ang)*12,y:r.gy-r.h-Math.sin(r.ang)*12,r:3+Math.random()*2.5,life:.7,vx:(Math.random()-.5)*10,vy:-8,drag:2})}
+    const boom=hitLine(r,x0,y0,r.gx,r.gy)||r.gx<L||r.gx>R||r.gy<TOP||r.gy>BOT+8||r.d>D.range;
+    if(boom){ROCK.splice(i,1);esplodi(r.gx,r.gy)}}
   // zombies
   spawnT-=dt;const alive=Z.filter(z=>z.st!=='muore').length;if(spawnT<=0&&ST.started){spawnT=1.5+Math.random()*1.7;if(alive<6)spawn()}
   for(let i=Z.length-1;i>=0;i--){const z=Z[i];z.t+=dt;z.hit=Math.max(0,z.hit-dt*6);z.x+=z.vx*dt;z.y+=z.vy*dt;z.vx*=Math.pow(.004,dt);z.vy*=Math.pow(.004,dt);
     if(z.st==='sale'){if(z.t>=.9){z.st='walk';z.t=0}continue}
     if(z.st==='muore'){if(z.t>=.8)Z.splice(i,1);continue}
-    const dx=hero.x-z.x,dy=hero.y-z.y,d=Math.hypot(dx,dy);z.face=Math.atan2(dy,dx);
+    const dx=hero.x-z.x,dy=hero.y+FEET-z.y,d=Math.hypot(dx,dy);z.face=Math.atan2(dy,dx);
     if(d>18){const v=z.D.spd*(z.k==='hound'?1:1+.15*Math.sin(z.t*3+z.id*9));z.x+=dx/d*v*dt;z.y+=dy/d*v*dt;z.ft+=dt*z.D.walk.fps;if(z.st==='attack'){z.st='walk'}}
     else{if(z.st!=='attack'){z.st='attack';z.at=0}z.at=(z.at||0)+dt;if(z.D.attack)z.ft=z.at*z.D.attack.fps;else z.ft+=dt*z.D.walk.fps*1.6;
       if(Math.floor((z.at-dt)/.9)!==Math.floor(z.at/.9)){ST.shake=Math.max(ST.shake,.15);hero.ouch=.25;if(AU.ctx){M.flesh(AU.ctx.currentTime,.8)}}}
@@ -162,7 +183,7 @@ function update(dt){ST.t+=dt;G.t=ST.t;
     z.x=Math.max(L+8,Math.min(R-8,z.x));z.y=Math.max(TOP+10,Math.min(BOT-6,z.y))}
   hero.ouch=Math.max(0,(hero.ouch||0)-dt);
   // pickups
-  for(let i=PICK.length-1;i>=0;i--){const p=PICK[i];p.t+=dt;if(Math.hypot(p.x-hero.x,p.y-hero.y)<18){PICK.splice(i,1);let first=null;
+  for(let i=PICK.length-1;i>=0;i--){const p=PICK[i];p.t+=dt;if(Math.hypot(p.x-hero.x,p.y-hero.y-FEET)<18){PICK.splice(i,1);let first=null;
       for(const id of AMMO_OF[p.tipo]){const o=gunCtl(id),D=A.DATI[id];o.res=Math.min(D.res*2,o.res+(id==='lanciarazzi'?2:D.mag*2));first=first||id}
       A.suono(first,'presa',p.x);TXT.push({x:p.x,y:p.y-18,t:0,txt:{piccole:'Munizioni piccole',grosse:'Munizioni grosse',cartucce:'Cartucce',razzi:'Razzi'}[p.tipo],col:'#bff7a6'})}
     else if(p.t>25)PICK.splice(i,1)}
@@ -181,7 +202,7 @@ function update(dt){ST.t+=dt;G.t=ST.t;
   ST.shake=Math.max(0,ST.shake-dt*1.4)}
 function esplodi(x,y){const D=A.DATI.lanciarazzi;A.fxAdd({k:'esplosione',x,y,s:D.splash,seed:Math.random()*99,life:.95});A.fxAdd({k:'bruciatura',x,y,r:D.splash*.42,life:9});
   A.suono('lanciarazzi','esplosione',x);ST.shake=Math.max(ST.shake,.6);
-  for(const z of Z){if(z.st==='muore'||z.st==='sale')continue;const d=Math.hypot(z.x-x,z.y-z.D.h*.4-y);if(d<D.splash){hurt(z,D.dmg*(1-d/D.splash*.6),z.x-x,z.y-y+.01,80)}}}
+  for(const z of Z){if(z.st==='muore'||z.st==='sale')continue;const d=Math.hypot(z.x-x,z.y-y);if(d<D.splash+z.D.r){hurt(z,D.dmg*(1-Math.min(1,d/D.splash)*.6),z.x-x,z.y-y+.01,80)}}}
 // ---------------------------------------------------------------- drawing
 function drawZ(z){const D=z.D,an=z.st==='attack'&&D.attack?D.attack:D.walk,im=an.im;if(!im.complete||!im.naturalWidth)return;
   const n=an.n,fr=Math.floor(z.ft)%n,row=rowOf(z.face),cs=D.cell,sx=fr*cs,sy=row*cs,w=cs/2,h=cs/2,x=z.x-D.foot[0]/2,y=z.y-D.foot[1]/2;
@@ -203,7 +224,7 @@ function drawHero(){const B=heroB(),f=hero.moving?1+Math.floor(((hero.walk%(Math
   // basis d: E, SE, S, SW, W, NW, N, NE -> sheet rows: front, front-right, right, back-right, back, back-left, left, front-left
   const CW=36,CH=48,K=3,sx=f*CW*K,sy=row*CH*K,x=hero.x-18,y=hero.y-34;
   if(HERO_A.complete&&HERO_A.naturalWidth)ctx.drawImage(HERO_A,sx,sy,CW*K,CH*K,x,y,CW,CH);
-  ctx.save();ctx.translate(hero.x,hero.y-bob);ctx.scale(B.f,1);A.inMano(hero.gun,B,Object.assign({hands:true,skin:'#f2c9a0'},gunCtl(hero.gun).pose()));ctx.restore();
+  ctx.save();ctx.translate(hero.x,hero.y-bob);ctx.scale(B.f,1);A.inMano(hero.gun,B,Object.assign({hands:true,skin:'#f2c9a0'},gunCtl(hero.gun).pose()),hero.aim);ctx.restore();
   if(HERO_B.complete&&HERO_B.naturalWidth)ctx.drawImage(HERO_B,sx,sy,CW*K,CH*K,x,y,CW,CH);
   if(hero.ouch>0){ctx.save();ctx.globalAlpha=hero.ouch*1.6;ctx.globalCompositeOperation='lighter';glow('255,60,40',hero.x,hero.y-14,22,.5);ctx.restore()}}
 function render(){const g=C2;g.setTransform(DPR*SC,0,0,DPR*SC,0,0);ctx=g;
@@ -212,9 +233,9 @@ function render(){const g=C2;g.setTransform(DPR*SC,0,0,DPR*SC,0,0);ctx=g;
   A.fxDraw('suolo');
   for(const p of PICK)A.cassaMun(p.tipo,p.x,p.y,p.t+ST.t,1);
   // bodies by depth
-  const list=[...Z.map(z=>({y:z.y,f:()=>drawZ(z)})),{y:hero.y,f:drawHero},{y:bara.st==='sotto'?-1e9:bara.y+6,f:()=>bara.draw()}];list.sort((a,b)=>a.y-b.y);for(const o of list)o.f();
-  for(const b of BUL)A.colpo(b.kind,b.x,b.y,b.vx,b.vy,1);
-  for(const r of ROCK)A.razzo(r.x,r.y,r.ang,r.t);
+  const list=[...Z.map(z=>({y:z.y,f:()=>drawZ(z)})),{y:hero.y+FEET,f:drawHero},{y:bara.st==='sotto'?-1e9:bara.y+6,f:()=>bara.draw()}];list.sort((a,b)=>a.y-b.y);for(const o of list)o.f();
+  for(const b of BUL)A.colpo(b.kind,b.gx,b.gy-b.h,b.vx,b.vy,1);
+  for(const r of ROCK)A.razzo(r.gx,r.gy-r.h,r.ang,r.t);
   A.fxDraw('aria');
   // the gun flying from the coffin to the hero
   for(const f of FLY){const k=f.t/.45,e=k*k*(3-2*k),x=f.x0+(hero.x-f.x0)*e,y=f.y0+(hero.y-20-f.y0)*e-Math.sin(k*Math.PI)*40;A.arma(f.id,x,y,k*Math.PI*2,{sc:.9})}

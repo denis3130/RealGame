@@ -21,7 +21,7 @@ I numeri sono in `ARMI.DATI` (con descrizione, velocità dei colpi, gittata, dis
 
 - Ogni arma è un profilo di fianco che punta a destra, con la mano sull'impugnatura nel punto (0, 0), come la balestra in mano all'eroe. L'eroe la gira nella direzione in cui mira e la specchia quando mira a sinistra, così la parte di sopra resta sempre sopra.
 - Dipinte come lo Zombie della lanterna: ogni pezzo ha il suo colore, un lato più scuro, una luce calda in alto, il contorno scuro spesso intorno a tutta l'arma e righe sottili dove i pezzi si toccano (prima si disegna la sagoma scura di tutti i pezzi, poi ogni pezzo).
-- In mano all'eroe (`ARMI.inMano(id, B, posa)` dentro `held()`): la mano gira intorno al corpo come quella dell'arco. Quando l'eroe guarda indietro la mano si allarga un po', così l'arma si vede accanto alla testa invece di sparire dietro.
+- In mano all'eroe (`ARMI.inMano(id, B, posa, angolo)` dentro `held()`): il corpo si gira nelle 8 direzioni, l'arma invece gira tutto intorno e punta proprio dove mira l'eroe (l'angolo vero, verso lo zombie). La mano gira intorno al corpo come quella dell'arco; quando l'eroe guarda indietro si allarga un po', così l'arma si vede accanto alla testa. Quando punta a sinistra l'arma si capovolge, così la parte di sopra resta sopra.
 - Le armi a due mani hanno la seconda mano sotto la canna. Durante la ricarica le mani lavorano:
   - **Caricatori**: la mano toglie il caricatore, che cade a terra; ne prende uno nuovo, lo spinge dentro e tira il carrello o l'otturatore.
   - **Revolver**: si alza e apre il tamburo, che esce sotto l'arma con le sei camere. I bossoli cadono, la mano mette i colpi uno alla volta e poi richiude.
@@ -41,7 +41,11 @@ I numeri sono in `ARMI.DATI` (con descrizione, velocità dei colpi, gittata, dis
   - `suono`;
   - `pronta`, quando la ricarica è finita.
 - Quando il caricatore è vuoto ricarica da sola. Il clic a vuoto c'è solo se non restano munizioni.
-- `ARMI.inMano(id, B, posa)` disegna l'arma in mano all'eroe. `ARMI.inManoPunti(id, B, posa)` dice dove sono la bocca, l'espulsione dei bossoli, il caricatore e il retro del lanciarazzi, per farne partire colpi e bossoli. `ARMI.arma(id, x, y, angolo, posa)` disegna l'arma da sola (carte, icone).
+- `ARMI.inMano(id, B, posa, angolo)` disegna l'arma in mano all'eroe, puntata all'angolo (senza angolo punta dove guarda il corpo). `ARMI.inManoPunti(id, B, posa, angolo)` dice dove sono la bocca, l'espulsione dei bossoli, il caricatore e il retro del lanciarazzi, per farne partire colpi e bossoli.
+- Nella pagina di prova, e così andrà fatto nel gioco:
+  - **Colpi sul pavimento:** i colpi volano sul pavimento. Ognuno sta nel suo punto per terra ed è disegnato all'altezza dell'arma, e colpisce lo zombie dove ha i piedi.
+  - **A bruciapelo:** uno zombie tra l'eroe e la bocca dell'arma viene colpito subito.
+  - **Mira:** si mira dai piedi dell'eroe. Il corpo cambia direzione solo quando la mira è ben oltre la metà tra due direzioni, così non sfarfalla. `ARMI.arma(id, x, y, angolo, posa)` disegna l'arma da sola (carte, icone).
 - Suoni: `ARMI.suono(id, cosa, x)`, dove cosa è `sparo`, `ricarica`, `vuoto`, `pompa`, `cartuccia`, `giri`, `bossolo`, `esplosione` o `presa`. La ricarica è a tempo con l'animazione. `ARMI.motore(g, x)`, chiamato a ogni fotogramma, fa il ronzio delle canne della mitragliatrice.
 - Effetti: `ARMI.espelli`, `ARMI.espelliCar` e `ARMI.fxAdd` aggiungono bossoli, caricatori, fumo, scintille, esplosioni e bruciature. `ARMI.fxUpdate(dt)` li muove. `ARMI.fxDraw('suolo')` va chiamato prima dei personaggi e `ARMI.fxDraw('aria')` dopo. Con `LOWFX` gli effetti sono di meno.
 - Colpi in volo: `ARMI.colpo(tipo, x, y, dx, dy)` e `ARMI.razzo(x, y, angolo, t)`. Munizioni: `ARMI.munizione(tipo, x, y, grandezza, angolo)` e `ARMI.cassaMun(tipo, x, y, t)`.
