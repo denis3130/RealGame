@@ -44,7 +44,7 @@ Servono Node e Python. Una volta sola: `npm install` e poi `npx playwright insta
 - `menu2.js`: tocca ogni bottone di ogni scheda e controlla che non ci siano errori.
 - `mig.js`: salvataggi vecchi o rovinati e schermi di misure diverse.
 - `pets.js`: sblocco e miglioramento dei compagni. `perf.js`: tempi di aggiornamento e disegno.
-- Altri: `boss1x.js` (sconfitta del boss a velocità reale), `wheelsk.js` (ruota + scelta abilità), `aura.js` (aure delle evoluzioni), `look.js` (schermate dei 4 capitoli), `fresh.js` (primo avvio), `mostri.js` (fogli dei nemici zombie in `sprite/mostri/`).
+- Altri: `boss1x.js` (sconfitta del boss a velocità reale), `wheelsk.js` (ruota + scelta abilità), `aura.js` (aure delle evoluzioni), `look.js` (schermate dei 4 capitoli), `fresh.js` (primo avvio), `mostri.js` (fogli dei nemici zombie in `sprite/mostri/`), `armi.js` (armi zombie e Bara delle Sorprese: prova e anteprime in `sprite/armi/`), `poligono.js` (rifà le immagini e `shim.js` della pagina di prova delle armi).
 
 Dopo ogni modifica: rifare almeno una partita automatica per capitolo, `meta2.js` e `menu2.js`, e guardare le schermate.
 
@@ -67,6 +67,12 @@ Dopo ogni modifica: rifare almeno una partita automatica per capitolo, `meta2.js
 - Anello del gelo eterno: alone di ghiaccio leggero e scia di ghiaccio che si scioglie camminando (`frostTick`, `drawFrostTrail`).
 - Sprite in `sprite/` (icone e fotogrammi dell'eroe), spiegati in `sprite/LEGGIMI.md`.
 - Nemici della modalità zombie, non ancora nel gioco: `sprite/mostri/disegno_mostri.js` (Zombie della cripta, Zombie strisciante, Zombie minatore, Zombie della lanterna più grosso, Segugio infernale, boss Il Becchino), scheletri 3D con arti a due ossa e ordine di disegno fisso, così niente si sovrappone male mentre si muovono. I quattro zombie hanno braccia magre e ossute (gomito sporgente, maniche strette e strappate, dita lunghe con artigli neri); il Becchino tiene le maniche larghe del cappotto. Tutti tranne la lanterna sono dipinti come la lanterna (luce calda, tre toni, bordi illuminati, pieghe, macchie, bagliori), con gli stessi pezzi di prima. Fogli rifatti con `tests/mostri.js`; spiegazioni in `sprite/mostri/LEGGIMI.md`.
+- Armi della modalità zombie, non ancora nel gioco: `sprite/armi/disegno_armi.js` (`window.ARMI`).
+  - Le armi sono 8: Pistola, Revolver, Mitraglietta, Mitra, Mitragliatrice, Pompa da caccia, Pompa tattica, Lanciarazzi. Ognuna è un profilo di fianco come la balestra, dipinto come la lanterna, e l'eroe la tiene nelle 8 direzioni (`ARMI.inMano` nel suo `held()`).
+  - Ogni arma ha il suo sparo, la vampa, il rinculo, i bossoli e i caricatori che cadono. La ricarica è fatta con le mani (il revolver si apre, le cartucce entrano una alla volta, il razzo viene spinto nel tubo) e ci sono suoni diversi per sparo, ricarica, pompa e clic a vuoto.
+  - Ci sono anche le munizioni, le 4 casse di munizioni e l'esplosione del razzo.
+  - La Bara delle Sorprese è la cassa misteriosa ispirata a Black Ops, ma diversa. Un teschio-lucchetto mangia le monete e la catena cade. Una mano scheletrica fa girare le armi tra sbuffi verdi e note di xilofono d'ossa. A volte la mano saluta, il teschio ride e ridà le monete, e la bara sprofonda e ricompare altrove (mai alle prime due aperture).
+  - La pagina di prova è `sprite/armi/poligono/armi.html` (si spara agli zombie). Spiegazioni in `sprite/armi/LEGGIMI.md`. Numeri scelti da Claude, da regolare giocando.
 
 ## Da fare (annotato con Denis, non ancora fatto)
 

@@ -1,0 +1,94 @@
+<title>Armi zombie di Mossbound</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Lilita+One&family=Nunito:wght@600;800&display=swap">
+<style>
+/* the shooting range of the zombie mode: the game on top, the guns to pick under it, then how the coffin works and what each gun does */
+:root{--bg:#1d1a16;--panel:#2a241e;--floor:#4a3e32;--ink:#1b1612;--parch:#f6ead2;--muted:#c4b79c;--gold:#ffd86b;--rot:#9cbf72;--blood:#ff6a4a;--green:#7dffa0;
+--display:"Lilita One","Arial Rounded MT Bold",system-ui,sans-serif;--body:"Nunito","Segoe UI",system-ui,sans-serif;color-scheme:dark}
+body{background:var(--bg);color:var(--parch);font-family:var(--body);padding-inline:16px;padding-block:20px 48px}
+main{max-width:980px;margin:0 auto;display:flex;flex-direction:column;gap:22px}
+h1{font-family:var(--display);font-weight:400;font-size:clamp(28px,6vw,42px);margin:0;text-shadow:0 3px 0 var(--ink);text-wrap:balance}
+.lead{margin:.3em 0 0;color:var(--muted);line-height:1.5;max-width:64ch}
+h2{font-family:var(--display);font-weight:400;font-size:22px;margin:0;color:var(--gold);text-shadow:0 2px 0 var(--ink)}
+.panel{background:var(--panel);border:3px solid var(--ink);border-radius:16px;box-shadow:0 5px 0 var(--ink);padding:14px;display:flex;flex-direction:column;gap:12px;min-width:0}
+.schermo{position:relative;width:min(100%,480px,calc((100dvh - 40px)*.6));aspect-ratio:300/500;scroll-margin:8px;margin:0 auto;border:3px solid var(--ink);border-radius:14px;overflow:hidden;background:#3a3027}
+.schermo canvas{display:block;width:100%;height:100%;touch-action:none;cursor:none;-webkit-user-select:none;user-select:none}
+.start{position:absolute;inset:auto 50% 42% auto;transform:translate(50%,0);font:22px var(--display);color:var(--ink);background:var(--gold);border:3px solid var(--ink);border-radius:16px;padding:12px 22px;box-shadow:0 5px 0 var(--ink);cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:2px}
+.start small{font:800 12px var(--body)}
+.start[hidden]{display:none}
+.start:active{transform:translate(50%,3px);box-shadow:0 2px 0 var(--ink)}
+.armi{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px}
+.arma{display:flex;flex-direction:column;align-items:center;gap:1px;background:#3a3027;border:2px solid var(--ink);border-radius:12px;padding:4px 4px 6px;cursor:pointer;color:var(--parch);box-shadow:0 3px 0 var(--ink);min-width:0}
+.arma canvas{width:100%;max-width:110px;aspect-ratio:132/60}
+.arma span{font:15px var(--display);line-height:1.1;text-align:center}
+.arma small{font:800 11px var(--body);letter-spacing:.04em}
+.arma[aria-pressed="true"]{background:#55452f;border-color:var(--gold);box-shadow:0 3px 0 var(--ink),0 0 0 2px var(--gold) inset}
+.arma:active{transform:translateY(2px);box-shadow:0 1px 0 var(--ink)}
+.arma:focus-visible,.chip:focus-visible{outline:3px solid var(--gold);outline-offset:2px}
+.ctrl{display:flex;flex-wrap:wrap;gap:10px 18px;align-items:center}
+.ctrl label{display:flex;align-items:center;gap:8px;font-weight:800;font-size:14px;cursor:pointer}
+input[type=checkbox]{accent-color:var(--rot);width:18px;height:18px}
+.chip{font:16px var(--display);color:var(--ink);background:var(--gold);border:2px solid var(--ink);border-radius:999px;padding:7px 16px;cursor:pointer;box-shadow:0 3px 0 var(--ink)}
+.chip:active{transform:translateY(2px);box-shadow:0 1px 0 var(--ink)}
+.note{margin:0;font-size:14px;color:var(--muted);line-height:1.5;max-width:70ch}
+.note b{color:var(--parch)}
+.passi{margin:0;padding-left:1.3em;display:flex;flex-direction:column;gap:6px;line-height:1.5;max-width:70ch;color:var(--muted)}
+.passi b{color:var(--parch)}
+.lista{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+.voce{background:var(--floor);border:2px solid var(--ink);border-radius:12px;padding:10px 12px;display:flex;flex-direction:column;gap:4px;min-width:0}
+.voce h3{margin:0;font:18px var(--display);font-weight:400;display:flex;align-items:baseline;gap:8px;flex-wrap:wrap}
+.voce h3 small{font:800 11px var(--body);letter-spacing:.06em;text-transform:uppercase}
+.voce p{margin:0;font-size:14px;color:var(--muted);line-height:1.45}
+.voce dl{margin:2px 0 0;display:flex;flex-wrap:wrap;gap:4px 14px;font-size:13px}
+.voce dt{color:var(--muted)}.voce dd{margin:0 0 0 4px;font-weight:800;font-variant-numeric:tabular-nums}
+.voce dl div{display:flex}
+@media (max-width:620px){.lista{grid-template-columns:minmax(0,1fr)}}
+@media (max-width:420px){.armi{grid-template-columns:repeat(4,minmax(0,1fr));gap:5px}.arma span{font-size:12px}.arma small{font-size:9px}}
+@media (prefers-reduced-motion:reduce){.chip:active,.arma:active{transform:none}}
+</style>
+<main>
+  <div>
+    <h1>Armi zombie</h1>
+    <p class="lead">Il poligono di prova della modalità zombie. Gli zombie escono da terra e ti vengono incontro. Tu spari, ricarichi, raccogli le casse di munizioni e apri la Bara delle Sorprese. Le armi, i colpi e i suoni sono quelli del gioco.</p>
+  </div>
+  <section class="panel" aria-label="Poligono di prova">
+    <div class="schermo"><canvas id="cv" aria-label="Poligono di prova: l'eroe, gli zombie e la Bara delle Sorprese"></canvas>
+      <button id="start" class="start">Tocca per iniziare<small>meglio con i suoni accesi</small></button></div>
+    <div class="armi" id="armi" role="group" aria-label="Scegli l'arma"></div>
+    <div class="ctrl">
+      <button id="apri" class="chip">Apri la bara</button>
+      <label><input type="checkbox" id="fuga"> La prossima volta la bara scappa</label>
+      <label><input type="checkbox" id="suoni" checked> Suoni</label>
+    </div>
+    <p class="note" id="comandi"></p>
+  </section>
+  <section class="panel" aria-label="La Bara delle Sorprese">
+    <h2>La Bara delle Sorprese</h2>
+    <ol class="passi">
+      <li><b>Paghi 750 monete.</b> Le monete volano nella bocca del teschio che fa da lucchetto, e lui le mastica.</li>
+      <li><b>Il teschio ride e si apre.</b> La catena cade a terra e il coperchio si spalanca su una luce verde.</li>
+      <li><b>Una mano scheletrica esce</b> e fa girare le armi. Ogni cambio scoppia in uno sbuffo di fumo e suona come uno xilofono d'ossa, prima veloce, poi sempre più piano.</li>
+      <li><b>La mano ti offre un'arma.</b> La prendi toccando la bara, poi la mano ti saluta col pollice in su. Se aspetti troppo, la mano torna giù con l'arma.</li>
+      <li><b>A volte la mano esce vuota.</b> Ti saluta, il teschio ride e ti risputa le monete, poi il coperchio sbatte e la bara sprofonda nella terra. Poco dopo ricompare da un'altra parte. Nel gioco non succede mai alle prime due aperture.</li>
+    </ol>
+  </section>
+  <section class="panel" aria-label="Le armi">
+    <h2>Le otto armi</h2>
+    <div class="lista" id="lista"></div>
+  </section>
+</main>
+<script src="shim.js"></script>
+<script src="../disegno_armi.js"></script>
+<script src="prova.js"></script>
+<script>
+(()=>{const A=ARMI,box=document.getElementById('lista');
+  for(const id of A.ORDINE){const D=A.DATI[id],R=A.RAR[D.rar],v=document.createElement('article');v.className='voce';
+    const h=document.createElement('h3');h.textContent=D.n;const s=document.createElement('small');s.textContent=R.n;s.style.color=R.c;h.append(s);
+    const p=document.createElement('p');p.textContent=D.d;const dl=document.createElement('dl');
+    const st=[['Danno',D.pel>1?D.dmg+' × '+D.pel:String(D.dmg)],['Colpi al secondo',String(D.rate).replace('.',',')],['Caricatore',D.mag+' + '+D.res],['Ricarica',(id==='pompa'||id==='tattica'?String(D.rel).replace('.',',')+' s a cartuccia':String(D.rel).replace('.',',')+' s')]];
+    for(const[a,b] of st){const d=document.createElement('div'),dt=document.createElement('dt'),dd=document.createElement('dd');dt.textContent=a;dd.textContent=b;d.append(dt,dd);dl.append(d)}
+    v.append(h,p,dl);box.append(v)}
+  const touch=matchMedia('(pointer:coarse)').matches,c=document.getElementById('comandi');
+  c.innerHTML=touch?'<b>Telefono:</b> il cerchio a sinistra ti muove, <b>Spara</b> mira da solo allo zombie più vicino (oppure tieni il dito dove vuoi sparare), <b>Ricarica</b> cambia il caricatore, e <b>Bara</b> appare quando ci sei vicino. Le armi si cambiano dalle carte qui sopra.'
+    :'<b>Computer:</b> muoviti con <b>W A S D</b> o con le frecce e mira col mouse. Tieni premuto per sparare, <b>R</b> ricarica ed <b>E</b> apre la bara quando ci sei vicino. Le armi si cambiano con i tasti da <b>1</b> a <b>8</b>, con la rotella o con le carte qui sopra.'})();
+</script>

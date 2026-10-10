@@ -24,3 +24,8 @@ L'Arco delle spine non c'è più: al suo posto c'è l'**Arco del tuono** (`arco_
   - Arco del tuono: faretra blu con fulmine giallo, frecce con piume azzurre e punta a fulmine (in volo), scintille
   - Arco della fenice: faretra rossa e oro, frecce con piume di fuoco e bagliore
 - Anello del gelo eterno: alone di ghiaccio leggero ai piedi (`ringAura`) e scia di ghiaccio che si scioglie quando l'eroe cammina (`frostTick`, `drawFrostTrail`, lista `G.frost`). La scia è sul pavimento, quindi non è nei fogli dei fotogrammi.
+
+## `mostri/` e `armi/` — la modalità zombie (non ancora nel gioco)
+
+- `mostri/`: i nemici zombie (`disegno_mostri.js` e i loro fogli), spiegati in `mostri/LEGGIMI.md`.
+- `armi/`: le 8 armi, le munizioni e la Bara delle Sorprese (`disegno_armi.js`), le anteprime e la pagina di prova `poligono/armi.html`, spiegate in `armi/LEGGIMI.md`.
