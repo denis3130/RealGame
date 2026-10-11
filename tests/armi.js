@@ -1,7 +1,7 @@
 // Checks and draws the zombie-mode weapons (sprite/armi/disegno_armi.js). Run `python3 tests/mk.py` first. Usage: node tests/armi.js
 // - every gun: fires, throws its cases, reloads to full, in its own controller (prints what happened and any error)
 // - the coffin: a whole opening (pay, open, swaps, offer, take, close) and an escape (sink, come out again)
-// - previews in sprite/armi/: armi.png (the 8 guns with their rounds and boxes), eroe_armi.png (the hero holding them in 8 directions),
+// - previews in sprite/armi/: armi.png (the guns with their rounds and boxes), eroe_armi.png (the hero holding them in 8 directions),
 //   ricariche.png (each gun's shot and reload, frame by frame), bara.png (the coffin's show), bara_fuga.png (the escape)
 const {chromium}=require('playwright');const fs=require('fs'),path=require('path');
 const OUT=path.join(__dirname,'..','sprite','armi');
@@ -20,7 +20,7 @@ const chk=await p.evaluate(()=>__E(`(()=>{const A=ARMI,out=[];for(const id of A.
 console.log(chk.join('\n'));
 
 // 2. the board of the 8 guns
-save('armi.png',await p.evaluate(()=>__E(`(()=>{const A=ARMI,CW=800,CH=290,cols=2,PAD=24,W=CW*cols+PAD*3,H=CH*4+PAD*5+70;const cv=document.createElement('canvas');cv.width=W;cv.height=H;const g=cv.getContext('2d');
+save('armi.png',await p.evaluate(()=>__E(`(()=>{const A=ARMI,CW=800,CH=290,cols=2,PAD=24,W=CW*cols+PAD*3,H=CH*Math.ceil(A.ORDINE.length/cols)+PAD*(Math.ceil(A.ORDINE.length/cols)+1)+70;const cv=document.createElement('canvas');cv.width=W;cv.height=H;const g=cv.getContext('2d');
  g.fillStyle='#1d1814';g.fillRect(0,0,W,H);g.fillStyle='#f4e9d8';g.font='bold 40px sans-serif';g.fillText('Armi della modalità zombie',PAD,58);
  const saved=ctx;ctx=g;const MUN={pistola:'p9',revolver:'p44',mitraglietta:'smg',mitra:'rif',mitragliatrice:'lmg',pompa:'cart',tattica:'cartV',lanciarazzi:'razzo'};
  A.ORDINE.forEach((id,i)=>{const D=A.DATI[id],R=A.RAR[D.rar],x0=PAD+(i%cols)*(CW+PAD),y0=70+PAD+Math.floor(i/cols)*(CH+PAD);

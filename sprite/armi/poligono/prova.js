@@ -57,14 +57,14 @@ const up=e=>{if(joy.on&&e.pointerId===joy.id){joy.on=false;return}if(e.pointerId
 cv.addEventListener('pointerup',up);cv.addEventListener('pointercancel',up);cv.addEventListener('contextmenu',e=>e.preventDefault());
 window.addEventListener('keydown',e=>{if(e.target&&(e.target.tagName==='INPUT'||e.target.tagName==='BUTTON')&&e.key===' ')return;const k=e.key.toLowerCase();keys[k]=true;
   if(['arrowup','arrowdown','arrowleft','arrowright',' '].includes(k))e.preventDefault();start();
-  if(k==='r')reload();if(k==='e')useBara();const n=parseInt(k);if(n>=1&&n<=8)equip(A.ORDINE[n-1]);if(k==='q')cycle(-1)});
+  if(k==='r')reload();if(k==='e')useBara();const n=parseInt(k);if(n>=1&&n<=A.ORDINE.length)equip(A.ORDINE[n-1]);if(k==='q')cycle(-1)});
 window.addEventListener('keyup',e=>{keys[e.key.toLowerCase()]=false});
 cv.addEventListener('wheel',e=>{e.preventDefault();cycle(e.deltaY>0?1:-1)},{passive:false});
 function start(){initAudio();if(!ST.started){ST.started=true;$('start').hidden=true;const r=cv.getBoundingClientRect();if(r.top<0||r.bottom>innerHeight)cv.parentElement.scrollIntoView({block:'center',behavior:'smooth'})}}
 // ---------------------------------------------------------------- the guns in hand
 function equip(id){if(!id||hero.gun===id)return;const g0=hero.guns[hero.gun];if(g0){g0.annulla();if(g0.mot){g0.spinV=0;A.motore(g0,hero.x)}}hero.gun=id;gunCtl(id);
   A.suono(id,'presa',hero.x);chips();}
-function cycle(d){const i=A.ORDINE.indexOf(hero.gun);equip(A.ORDINE[(i+d+8)%8])}
+function cycle(d){const i=A.ORDINE.indexOf(hero.gun),N=A.ORDINE.length;equip(A.ORDINE[(i+d+N)%N])}
 function reload(){start();const g=gunCtl(hero.gun);g.ricarica()}
 // ---------------------------------------------------------------- the coffin
 function useBara(){start();if(bara.st==='offre'){bara.prendi();return}if(!bara.vicino(hero.x,hero.y)){say('Avvicinati alla bara');return}

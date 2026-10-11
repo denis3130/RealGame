@@ -288,10 +288,10 @@ function rnd(seed){let x=(Math.floor(seed*9301+49297)%233280+233280)%233280||1;r
 // the muzzle flash in the gun's own frame, pointing +x (the rocket's back-blast points -x): a star of fire with longer flames forward
 // (and to the sides for the rifles), a yellow middle, a white core, a warm glow. k: 1 when the shot leaves, down to 0
 function vampa(id,x,y,k,seed){if(k<=0)return;const back=id==='retro',V=DATI[id].vampa,r=rnd(seed||7),L=V.len*(.55+.45*k),W=V.w*(.6+.4*k),dir=back?-1:1;
-  shine('255,180,70',x+dir*L*.4,y,L*1.4+W,.7*k);shine('255,245,210',x+dir*L*.2,y,W*1.1,.55*k);
+  shine(V.g||'255,180,70',x+dir*L*.4,y,L*1.4+W,.7*k);shine('255,245,210',x+dir*L*.2,y,W*1.1,.55*k);
   const n=V.pts*2,ln=[];for(let i=0;i<n;i++){const a=i/n*TAU,c=Math.cos(a),side=V.lati&&Math.abs(Math.sin(a))>.97;ln.push(i%2?W*.3:(c>.9?L:W*(.42+.3*r())+(L-W*.45)*Math.pow(Math.max(0,c),3))*(side?1.45:1))}
   ctx.save();ctx.translate(x,y);ctx.scale(dir,1);ctx.globalAlpha*=Math.min(1,k*1.6);
-  for(const[s,col] of[[1,'#ff7d24'],[.7,'#ffd23f'],[.4,'#fffbea']]){ctx.beginPath();for(let i=0;i<n;i++){const a=i/n*TAU,rr=ln[i]*s;ctx.lineTo(L*.12+Math.cos(a)*rr,Math.sin(a)*rr*.8)}ctx.closePath();ctx.fillStyle=col;ctx.fill()}
+  for(const[s,col] of(V.c?[[1,V.c[0]],[.7,V.c[1]],[.4,V.c[2]]]:[[1,'#ff7d24'],[.7,'#ffd23f'],[.4,'#fffbea']])){ctx.beginPath();for(let i=0;i<n;i++){const a=i/n*TAU,rr=ln[i]*s;ctx.lineTo(L*.12+Math.cos(a)*rr,Math.sin(a)*rr*.8)}ctx.closePath();ctx.fillStyle=col;ctx.fill()}
   ctx.restore()}
 
 // ------------------------------------------------------------------ a gun in someone's hands
