@@ -10,12 +10,15 @@ prop + area; non si salva su git). Area predefinita `area_prova` (un angolo 10×
 - **Proiezione** `S(x,y,z)`: schermo = `(x + piega·z, y − z + piega·z)`, dove la piega cresce con la distanza dall'eroe (`CAM.lx=.0048`, `CAM.ly=.0016`)
   e satura piano verso 23° (`soft`), così le cose alte ai bordi dello schermo mostrano il fianco verso l'eroe senza sembrare cadute. Ogni prop può
   piegarsi meno con `lk` (1 case e muri; .65 alberi; .6 pozzo, pilastri, cancello; .5 lapidi e cartelli; .45 lampione): le sue fiamme e luci
-  portano lo stesso `lk`. **Ogni prop si piega come un blocco unico** (`REF`, `prop.ref`): la piega si calcola da un solo punto dell'oggetto
-  (il centro per case e cripta, il piede per il resto, preso da `REFOF` nel giro dei nomi in `prop.js`), così finestre, porta, tettoia,
-  lanterna, camino e fumo non scivolano sopra la casa; fiamme, luci, fumi e corvi posati prendono il punto del prop che li costruisce.
-  Muri, staccionate, pilastri e ante restano punto per punto (`ref:null`), perché sono lunghi e si toccano alle giunture.
-  Più prop che devono stare incollati si costruiscono dentro `ZM.group(punto, fn)`: tutti prendono lo stesso punto (nell'area di prova la casa,
-  il suo recinto e le zucche del cancelletto, dal centro della casa). Per i prop rigidi la sagoma dell'eroe controlla tutti e due i lati.
+  portano lo stesso `lk`. **Ogni prop si piega come un blocco unico** (`setRef`, `prop.ref`): `ref` è un punto `[x,y]` (tutto il prop si piega
+  uguale: lapidi, lampioni, casse, alberi…) o un riquadro `[x0,y0,x1,y1]` (case e cripta: la piega va dritta da un bordo all'altro, presa dalla
+  piega vera ai due bordi). Così finestre, porta, tettoia, lanterna, camino e fumo restano incollati alla casa, e quando l'eroe è dentro la casa
+  le pareti si aprono via da lui da tutti i lati, come guardare dentro una scatola (Denis: «se facessimo il contrario sarebbe più figo»; prima la
+  parete accanto all'eroe gli veniva addosso). Fiamme, luci, fumi e corvi posati prendono il `ref` del prop che li costruisce (`REFOF` in
+  `prop.js`). Muri, staccionate, pilastri e ante da soli restano punto per punto (`ref:null`), perché sono lunghi e si toccano alle giunture.
+  Più prop che devono stare incollati si costruiscono dentro `ZM.group(ref, fn)`: tutti prendono lo stesso `ref` (nell'area di prova la casa,
+  il suo recinto e le zucche del cancelletto, con il riquadro della casa: deve essere quello dell'oggetto più alto, perché ai bordi del riquadro
+  la piega è quella vera e le pareti si piegano sempre via dall'eroe; con un riquadro più largo l'eroe accanto alla casa se la trovava addosso). Per i prop rigidi la sagoma dell'eroe controlla tutti e due i lati.
 - **Facce**: `face(p0,p1,p2,p3,mat,key,o)` quattro angoli 3D in senso antiorario visti da fuori; visibile se la proiezione gira nel verso giusto.
   `key` è l'orientamento: `t` sopra, `s` sud, `e` est, `w` ovest, `n` nord, `r`/`rn` falde verso sud/nord, `rw`/`re` falde verso ovest/est. La luna sta a
   ovest, alta: `TONE` dà i toni (ovest e sopra chiari, est e nord scuri). Ogni faccia ha una texture dipinta una volta (`texture`: tono +
