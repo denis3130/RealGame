@@ -10,7 +10,8 @@ const CRE={
   minatore:{sc:1.1,K:3,W:150,anims:[['idle',8],['walk',12],['attack',14]]},
   hound:{sc:1.05,K:3,W:150,anims:[['idle',8],['walk',12],['attack',14]]},
   becchino:{sc:1.9,K:2,W:330,anims:[['idle',6],['walk',8],['slam',10],['summon',10]]},
-  lanterna:{sc:1.55,K:3,W:220,anims:[['idle',8],['walk',12],['attack',14]]}};
+  lanterna:{sc:1.55,K:3,W:220,anims:[['idle',8],['walk',12],['attack',14]]},
+  spaventapasseri:{sc:1.15,K:3,W:170,anims:[['idle',8],['walk',12],['attack',16]]}};
 (async()=>{const only=process.argv.slice(2),kinds=Object.keys(CRE).filter(k=>!only.length||only.includes(k));
 const b=await chromium.launch();const p=await b.newPage({viewport:{width:390,height:844}});const errs=[];p.on('pageerror',e=>errs.push(e.message));
 await p.addInitScript(()=>{localStorage.setItem('cripta_save_v1',JSON.stringify({gold:50,introSeen:1,runs:3,items:{arco_frassino:{lvl:1,cards:0},giubba:{lvl:1,cards:0}},eq:{arma:'arco_frassino',armatura:'giubba',anello:null,amuleto:null},slots:[null,null,null,null]}))});
