@@ -173,7 +173,8 @@ function drawPart(p){switch(p.k){case'face':return drawFace(p);case'facepoly':re
 const props=[],solids=[],shadows=[],lights=[],flames=[],holes=[],houses=[],smokes=[],perches=[],decals=[],fades=[];// fades: chiome che sfumano ({x,ky,rx,reach,a}), le parti 'roof' del prop con house:fade// decals: f() dipinte nel terreno dopo le ombre (pozze di luce fisse, macchie)
 // o.ky: profondità = la y del bordo davanti della parte alta (dove sta il solido); o.kyFn(x): profondità che dipende dalla x dell'eroe (cose
 // sottili in diagonale, come le ante aperte); o.floor: sta a terra (cumuli, pedane, gradini, tappeti) e si disegna prima di tutti gli esseri
-const NAMES={cur:null,ref:null};// il prop che si sta costruendo (serve ai test per dire chi copre l'eroe)
+const NAMES={cur:null,ref:null,grp:null};// grp: un gruppo di prop che si piegano tutti insieme (group)
+function group(ref,fn){const sv=NAMES.grp;NAMES.grp=ref;try{fn()}finally{NAMES.grp=sv}}// il prop che si sta costruendo (serve ai test per dire chi copre l'eroe)
 // fiamme, luci e corvi posati prendono il punto del prop che si sta costruendo: si piegano con lui
 for(const arr of[flames,lights,perches,smokes])arr.push=function(...a){for(const f of a)if(f.ref===undefined)f.ref=NAMES.ref;return Array.prototype.push.apply(this,a)};
 function prop(o){o.ky=o.ky==null?o.bx[3]:o.ky;if(o.ref===undefined)o.ref=NAMES.ref;o.parts=o.parts||[];o.name=o.name||NAMES.cur||'?';props.push(o);return o}
@@ -327,7 +328,7 @@ function obOf(p){if(p._ob)return p._ob;if(p.ob)return p._ob=p.ob;let x0=1e9,y0=1
 function occluders(list,hi){const out=[];if(hi<0)return out;let[bx0,by0,bx1,by1]=heroBox();bx0+=5;bx1-=5;// il riquadro della figura, un po' più stretto di quello per le misure
   for(let i=hi+1;i<list.length;i++){const e=list[i];if(!e.p)continue;const p=e.p;if(p.house&&p.house.inside&&p.parts[0]&&(p.parts[0].part==='front'||p.parts[0].part==='roof'))continue;// il muro davanti e il tetto sono già trasparenti
     // le cose alte si piegano sempre via dall'eroe: la tolleranza per la piega va solo dal lato opposto a lui
-    const o=obOf(p),hx=W.hero.x,padE=o[0]>hx?.37*o[4]*(p.lk==null?1:p.lk)+2:1,padW=o[2]<hx?.37*o[4]*(p.lk==null?1:p.lk)+2:1;if(o[2]+padE<bx0||o[0]-padW>bx1||o[3]+3<by0||o[1]-o[4]*1.37>by1)continue;out.push(e)}return out}
+    const o=obOf(p),hx=W.hero.x,pl=.37*o[4]*(p.lk==null?1:p.lk)+2,padE=o[0]>hx||p.ref?pl:1,padW=o[2]<hx||p.ref?pl:1;if(o[2]+padE<bx0||o[0]-padW>bx1||o[3]+3<by0||o[1]-o[4]*1.37>by1)continue;out.push(e)}return out}
 function silhouette(occ,h0a){if(!occ.length||W.dbg.noSil)return;const m=ctx.getTransform(),[bx0,by0,bx1,by1]=heroBox(),X0=Math.floor(m.a*bx0+m.e),Y0=Math.floor(m.d*by0+m.f),X1=Math.ceil(m.a*bx1+m.e),Y1=Math.ceil(m.d*by1+m.f),Q=.5,w=Math.ceil((X1-X0)*Q),hh=Math.ceil((Y1-Y0)*Q);if(w<=0||hh<=0)return;// a metà risoluzione: è un velo morbido
   if(!SIL)SIL={o:document.createElement('canvas'),h:document.createElement('canvas')};for(const c of[SIL.o,SIL.h]){if(c.width<w)c.width=w;if(c.height<hh)c.height=hh}
   // memoria: se l'eroe, la telecamera, chi lo copre e le trasparenze non sono cambiati, si riusa la sagoma del fotogramma prima
@@ -420,4 +421,4 @@ function boot(area){try{INTRO.on=false;paused=true}catch(e){}try{AU.on.music=fal
     nav:()=>NAV&&{cw:NAV.cw,ch:NAV.ch,free:NAV.bl.reduce((s,v)=>s+(v?0:1),0)},navRebuild:()=>{navBuild();NAV.hc=-1},
     addZombie:(kind,x,y,spd)=>{const k=KINDS.find(k=>k[0]===kind)||KINDS[0];const z={kind:k[0],sc:k[1],spd:spd||k[2],hp:99,x,y,face:0,p:0,anim:'walk',rise:1,die:0,flash:0};W.Z.push(z);return W.Z.length-1},
     sim:(n,dt)=>{for(let i=0;i<n;i++)updateBeings(dt,{x:0,y:0})}}}
-return{T,CAM,W,S,LS,decals,fades,NAMES,stand,stands,heightAt,add3,sub3,len3,rnd,rr,srand,ink,path,hull,material,MAT,MARKS,texture,tone,face,hullOf,ballAt,line3,poly3,fn3,box,prismX,prismY,plane,cyl,prop,solid,shade,shadeR,props,solids,shadows,lights,flames,holes,houses,smokes,perches,hit,bakeGround,boot,setLive:f=>{liveDraw=f},wa,mix,cl,ez,lerp,TAU,ball,seg}})();
+return{group,T,CAM,W,S,LS,decals,fades,NAMES,stand,stands,heightAt,add3,sub3,len3,rnd,rr,srand,ink,path,hull,material,MAT,MARKS,texture,tone,face,hullOf,ballAt,line3,poly3,fn3,box,prismX,prismY,plane,cyl,prop,solid,shade,shadeR,props,solids,shadows,lights,flames,holes,houses,smokes,perches,hit,bakeGround,boot,setLive:f=>{liveDraw=f},wa,mix,cl,ez,lerp,TAU,ball,seg}})();
