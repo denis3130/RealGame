@@ -15,7 +15,7 @@ let seed=1;const rnd=()=>{seed=(seed*16807)%2147483647;return(seed-1)/2147483646
 // un punto del mondo (x, y sul terreno, z in alto) sullo schermo: le cose alte scappano dal centro in orizzontale, e in verticale
 // quelle sotto l'eroe sembrano un po' più alte (sono più vicine), quelle sopra più basse
 let LEANK=1;// quanto si piega il prop che si sta disegnando (lk del prop: 1 case e muri, .5 pali e lapidi)
-const LK=.42,soft=k=>LK*Math.tanh(k/LK);// la piega satura piano verso 23°: lontano dall'eroe le cose alte non sembrano cadute
+const LK=.36,soft=k=>LK*Math.tanh(k/LK);// la piega satura piano verso 23°: lontano dall'eroe le cose alte non sembrano cadute
 const S=(x,y,z)=>{if(Array.isArray(x))return S(x[0],x[1],x[2]);z=z||0;return[x+soft((x-CAM.x)*CAM.lx)*z*LEANK,y-z+soft((CAM.y-y)*CAM.ly)*z*LEANK]};
 const add3=(a,b,k)=>[a[0]+b[0]*(k==null?1:k),a[1]+b[1]*(k==null?1:k),a[2]+b[2]*(k==null?1:k)];
 const sub3=(a,b)=>[a[0]-b[0],a[1]-b[1],a[2]-b[2]];
@@ -36,7 +36,7 @@ function affine3(sp,dp){const[x0,y0]=sp[0],[x1,y1]=sp[1],[x2,y2]=sp[2],[u0,v0]=d
 // e est, w ovest, n nord, r falda), misura e se tocca terra. La luna sta a ovest, alta: sopra e ovest chiari, est e nord scuri
 const MAT={};
 function material(name,c,marks,o){MAT[name]=Object.assign({c,marks},o||{});return name}
-const TONE={t:.55,w:.3,s:0,r:.3,rn:-.3,rw:.42,re:.04,e:-.45,n:-.6};const SKY=k=>k==='t'||k==='r'||k==='rn'||k==='rw'||k==='re';// rw/re: falde che guardano a ovest (luna) e a est
+const TONE={t:.55,w:.3,s:0,r:.38,rn:-.35,rw:.42,re:-.15,e:-.45,n:-.6};const SKY=k=>k==='t'||k==='r'||k==='rn'||k==='rw'||k==='re';// rw/re: falde che guardano a ovest (luna) e a est
 function tone(m,key){const k=TONE[key]||0;return k>=0?mix(m.c[0],m.c[2],k):mix(m.c[0],m.c[1],-k)}
 const TEX={},R=2;// risoluzione delle texture: 2 pixel per unità
 function texture(mat,key,w,h,foot,extra){w=Math.max(1,Math.round(w));h=Math.max(1,Math.round(h));const id=mat+'|'+key+'|'+w+'|'+h+'|'+(foot?1:0)+'|'+(extra||'');if(TEX[id])return TEX[id];
@@ -46,14 +46,14 @@ function texture(mat,key,w,h,foot,extra){w=Math.max(1,Math.round(w));h=Math.max(
       const gr=ctx.createLinearGradient(0,0,w*.7,h*.7);gr.addColorStop(0,wa(key==='t'?.26:.16));gr.addColorStop(1,'rgba(0,0,0,0)');ctx.fillStyle=gr;ctx.fillRect(0,0,w,h)}
     else{// le facce in piedi: più scure verso il basso, nere ai piedi se toccano terra; un filo di luce fredda in cima
       const gr=ctx.createLinearGradient(0,h,0,Math.max(0,h-Math.min(28,h)));gr.addColorStop(0,`rgba(0,0,0,${foot?.38:.14})`);gr.addColorStop(1,'rgba(0,0,0,0)');ctx.fillStyle=gr;ctx.fillRect(0,0,w,h);
-      ctx.fillStyle='rgba(200,215,255,.10)';ctx.fillRect(0,0,w,1.2)}
+      ctx.fillStyle='rgba(200,215,255,.22)';ctx.fillRect(0,0,w,1.5);if(key==='s'||key==='w'){const gw=ctx.createLinearGradient(0,0,2.5,0);gw.addColorStop(0,'rgba(200,215,255,.16)');gw.addColorStop(1,'rgba(200,215,255,0)');ctx.fillStyle=gw;ctx.fillRect(0,0,2.5,h)}}
   }finally{ctx=sv}return TEX[id]=c}
 const MARKS={};
 // i segni dei materiali disegnati nello spazio della texture (w×h, origine in alto a sinistra, l'alto della faccia in alto)
 MARKS.plank=(w,h,key)=>{// assi verticali con i chiodi e le venature
   ctx.strokeStyle='rgba(20,12,6,.55)';ctx.lineWidth=1.1;const st=9;for(let x=st;x<w;x+=st){ctx.beginPath();ctx.moveTo(x+.5,0);ctx.lineTo(x+.5,h);ctx.stroke()}
   ctx.fillStyle='rgba(10,8,6,.6)';for(let x=st/2;x<w;x+=st){for(const y of[h*.15,h*.85]){ctx.beginPath();ctx.arc(x,y,.75,0,TAU);ctx.fill()}}
-  ctx.strokeStyle='rgba(20,12,6,.3)';ctx.lineWidth=.8;for(let x=st/2;x<w;x+=st){for(let k=0;k<2;k++){const y=rr(h*.2,h*.8);ctx.beginPath();ctx.ellipse(x+rr(-2,2),y,1.2,2.6,0,0,TAU);ctx.stroke()}}
+  for(let x=st/2,i=0;x<w;x+=st,i++){if(i%2)continue;const y=rr(h*.2,h*.8),kx=x+rr(-2,2);ctx.fillStyle='#2a1a10';ctx.beginPath();ctx.ellipse(kx,y,1.2,2.1,0,0,TAU);ctx.fill();ctx.strokeStyle='rgba(255,230,200,.14)';ctx.lineWidth=.8;ctx.beginPath();ctx.ellipse(kx,y,2,3.2,0,0,TAU);ctx.stroke();ctx.strokeStyle='rgba(20,12,6,.3)';ctx.beginPath();ctx.moveTo(kx-2.6,y-6);ctx.quadraticCurveTo(kx-3.4,y,kx-2.6,y+6);ctx.stroke()}
   ctx.fillStyle=wa(.07);for(let x=1;x<w;x+=st)ctx.fillRect(x,0,2.2,h)};
 MARKS.siding=(w,h,key)=>{// assi orizzontali sovrapposte, con l'ombra sotto ogni asse
   const st=8;for(let y=st;y<h;y+=st){ctx.fillStyle='rgba(20,12,6,.5)';ctx.fillRect(0,y-1.2,w,1.6);ctx.fillStyle=wa(.09);ctx.fillRect(0,y+.6,w,1)}
@@ -64,9 +64,11 @@ MARKS.stone=(w,h,key,m)=>{// corsi di pietre sfalsate con il giunto scuro, qualc
   if(key!=='t')for(let i=0;i<w/14;i++){ctx.fillStyle='rgba(64,96,44,.45)';ctx.beginPath();ctx.ellipse(rr(0,w),h-rr(0,h*.35),rr(2,5),rr(1,2),0,0,TAU);ctx.fill()}};
 MARKS.brick=(w,h)=>{const ch=5;for(let r=0,y=0;y<h;r++,y+=ch){ctx.strokeStyle='rgba(30,10,8,.55)';ctx.lineWidth=.9;ctx.beginPath();ctx.moveTo(0,y+ch-.5);ctx.lineTo(w,y+ch-.5);ctx.stroke();for(let x=(r%2?4:9);x<w;x+=10){ctx.beginPath();ctx.moveTo(x+.5,y);ctx.lineTo(x+.5,y+ch);ctx.stroke()}
     for(let x=(r%2?4:9);x<w;x+=10)if(rnd()<.2){ctx.fillStyle=rnd()<.5?'rgba(255,200,160,.08)':'rgba(0,0,0,.12)';ctx.fillRect(x+1,y+.5,8,ch-1.5)}}};
-MARKS.shingle=(w,h,key)=>{// tegole a file sfalsate, bordo scuro sotto, luce sopra
-  const ch=7,cw=12;for(let r=0,y=0;y<h;r++,y+=ch){ctx.fillStyle='rgba(10,6,8,.55)';ctx.fillRect(0,y+ch-1.4,w,1.6);ctx.fillStyle=wa(.07);ctx.fillRect(0,y+.4,w,1);
-    for(let x=(r%2?cw/2:0);x<w;x+=cw){ctx.strokeStyle='rgba(10,6,8,.45)';ctx.lineWidth=.9;ctx.beginPath();ctx.moveTo(x+.5,y);ctx.lineTo(x+.5,y+ch-1);ctx.stroke();if(rnd()<.18){ctx.fillStyle=rnd()<.5?'rgba(255,255,255,.05)':'rgba(0,0,0,.14)';ctx.fillRect(x+1,y+1,cw-2,ch-3)}}}
+MARKS.shingle=(w,h,key)=>{// tegole a file sfalsate col bordo basso tondo, ombra sotto ogni fila, filo di luce in alto, qualche tegola rotta o mancante col listello
+  const ch=7,cw=12;for(let r=0,y=0;y<h;r++,y+=ch){ctx.fillStyle='rgba(10,6,8,.5)';ctx.fillRect(0,y+ch-1.6,w,1.8);
+    for(let x=(r%2?cw/2:0)-cw;x<w;x+=cw){const k=rnd();if(k<.05){ctx.fillStyle='#0a0608';ctx.fillRect(x+.5,y,cw-1,ch-1);ctx.fillStyle='#3e2c1c';ctx.fillRect(x+.5,y+ch*.45,cw-1,1.2);continue}
+      ctx.fillStyle=k<.12?'rgba(0,0,0,.14)':k<.2?'rgba(255,255,255,.05)':'rgba(0,0,0,0)';if(k<.2)ctx.fillRect(x+1,y+1,cw-2,ch-2);ctx.strokeStyle='rgba(10,6,8,.5)';ctx.lineWidth=.9;ctx.beginPath();ctx.moveTo(x+.5,y);ctx.lineTo(x+.5,y+ch-2);ctx.stroke();
+      ctx.fillStyle='rgba(10,6,8,.45)';ctx.beginPath();ctx.moveTo(x,y+ch-2.2);ctx.quadraticCurveTo(x+cw/2,y+ch+1.2,x+cw,y+ch-2.2);ctx.lineTo(x+cw,y+ch-.6);ctx.lineTo(x,y+ch-.6);ctx.closePath();ctx.fill();ctx.fillStyle=wa(.08);ctx.fillRect(x+1,y+.4,cw-2,.9)}}
   const rows=Math.ceil(h/ch);for(let i=0;i<w*h/900;i++){const r=Math.floor(Math.pow(rnd(),key==='rn'?2.2:.45)*rows),y=r*ch+ch-2;ctx.fillStyle='rgba(72,104,48,.5)';ctx.beginPath();ctx.ellipse(rr(0,w),y,rr(3,6),rr(.9,1.6),0,0,TAU);ctx.fill()}};
 MARKS.wood=(w,h,key)=>{ctx.strokeStyle='rgba(20,12,6,.3)';ctx.lineWidth=.8;const n=Math.max(1,Math.round(h/5));for(let i=0;i<n;i++){const y=(i+.5)*h/n;ctx.beginPath();ctx.moveTo(0,y);ctx.bezierCurveTo(w*.3,y+rr(-1.5,1.5),w*.7,y+rr(-1.5,1.5),w,y);ctx.stroke()}};
 MARKS.iron=(w,h)=>{ctx.fillStyle='rgba(255,255,255,.08)';ctx.fillRect(0,0,Math.max(1,w*.25),h);ctx.fillStyle='rgba(0,0,0,.2)';ctx.fillRect(w*.7,0,w*.3,h)};
@@ -81,18 +83,18 @@ MARKS.slab=(w,h)=>{// lastre di pietra grandi, sfalsate, con la fuga scura e il 
   const ch=12,cw=20;for(let r=0,y=0;y<h;r++,y+=ch){ctx.strokeStyle='rgba(10,10,14,.6)';ctx.lineWidth=1.2;ctx.beginPath();ctx.moveTo(0,y+ch-.5);ctx.lineTo(w,y+ch-.5);ctx.stroke();for(let x=(r%2?cw/2:0)+rr(-2,2);x<w;x+=cw){ctx.beginPath();ctx.moveTo(x+.5,y);ctx.lineTo(x+.5,y+ch);ctx.stroke();if(rnd()<.3){ctx.fillStyle=rnd()<.5?'rgba(255,255,255,.05)':'rgba(0,0,0,.1)';ctx.fillRect(x+1,y+1,cw-2,ch-2)}}}
   for(let i=0;i<w*h/500;i++){ctx.fillStyle='rgba(72,104,48,.45)';ctx.beginPath();ctx.ellipse(rr(0,w),rr(0,h),rr(2,5),rr(1,2),0,0,TAU);ctx.fill()}};
 MARKS.straw=(w,h,key)=>{// paglia: fili corti in due toni, tutti un po' inclinati, più fitti; ombra tra i fili
-  for(let i=0;i<w*h/9;i++){const xx=rr(0,w),yy=rr(0,h),k=rnd();ctx.strokeStyle=k<.35?'rgba(70,45,10,.5)':k<.75?'rgba(230,200,110,.55)':'rgba(140,100,40,.5)';ctx.lineWidth=.9;ctx.beginPath();ctx.moveTo(xx,yy);ctx.lineTo(xx+rr(2,5),yy+(key==='t'?rr(-1.5,1.5):rr(-3,-1)));ctx.stroke()}};
+  for(let i=0;i<w*h/9;i++){const xx=rr(0,w),yy=rr(0,h),k=rnd();ctx.strokeStyle=k<.35?'rgba(60,40,10,.5)':k<.75?'rgba(200,175,100,.4)':'rgba(120,90,36,.5)';ctx.lineWidth=.9;ctx.beginPath();ctx.moveTo(xx,yy);ctx.lineTo(xx+rr(2,5),yy+(key==='t'?rr(-1.5,1.5):rr(-3,-1)));ctx.stroke()}};
 MARKS.vgrain=(w,h)=>{ctx.strokeStyle='rgba(20,12,6,.35)';ctx.lineWidth=.9;const n=Math.max(1,Math.round(w/4));for(let i=0;i<n;i++){const x0=(i+.5)*w/n;ctx.beginPath();ctx.moveTo(x0+rr(-.8,.8),h);ctx.bezierCurveTo(x0+rr(-1.5,1.5),h*.6,x0+rr(-1.5,1.5),h*.3,x0+rr(-1,1),0);ctx.stroke()}};
 MARKS.plaster=(w,h)=>{ctx.strokeStyle='rgba(10,8,6,.5)';ctx.lineWidth=1;const x0=rr(w*.2,w*.8);ctx.beginPath();ctx.moveTo(x0,0);ctx.lineTo(x0+rr(-3,3),h*.3);ctx.lineTo(x0+rr(-5,5),h*.55);ctx.stroke();ctx.fillStyle='rgba(20,30,20,.25)';ctx.beginPath();ctx.ellipse(rr(0,w),h*.85,rr(8,18),rr(4,8),0,0,TAU);ctx.fill()};
 MARKS.flat=()=>{};
 material('plank',['#6e5236','#46321e','#93714c'],'plank');material('plankD',['#54402c','#34261a','#735a3e'],'plank');material('siding',['#6e5236','#46321e','#93714c'],'siding');
 material('stone',['#6d6a72','#45434b','#9a97a2'],'stone');material('stoneW',['#5c5f6a','#3c3e47','#80848f'],'stone');material('stoneWD',['#4a4c56','#30323a','#676a75'],'stone');material('stoneD',['#55535b','#36353b','#7c7a84'],'stone');material('brick',['#5a3a30','#3a2420','#7a5448'],'brick');
-material('shingle',['#5a3a46','#3a2430','#7d5464'],'shingle');material('slate',['#3c4552','#2b323c','#535f6e'],'shingle');material('tile',['#7a3527','#5a2519','#96503a'],'shingle');
+material('shingle',['#4e3b4a','#302232','#6a5466'],'shingle');material('slate',['#3c4552','#2b323c','#535f6e'],'shingle');material('tile',['#7a3527','#5a2519','#96503a'],'shingle');
 material('wood',['#5e4128','#3c2817','#7d5a38'],'wood');material('iron',['#34363e','#1d1e23','#6a6e7a'],'iron');material('soil',['#4a3a2a','#2e2419','#64503a'],'soil');material('soilD',['#3c3028','#241c16','#4e4034'],'soil');
 material('bone',['#d9cfb4','#a69a7c','#f0e8d2'],'bone');material('cloth',['#5a3a5e','#3a243e','#7a5a80'],'cloth');material('red',['#6a2e3a','#4a1e28','#8a4a56'],'cloth');
 material('glass',['#f0c070','#b87830','#fff0c0'],'flat');material('dark',['#0c0a0e','#06050a','#1a1620'],'flat');material('bark',['#4a3b2e','#2c231b','#6a5644'],'bark');
 material('pumpkin',['#d06e22','#8a4010','#f0a040'],'flat');material('leaf',['#365a2c','#22391b','#52803e'],'flat');material('grass',['#36452b','#26311e','#4d6338'],'flat');
-material('moss',['#4f6e35','#33491f','#6f9448'],'flat');material('copper',['#5d8a76','#3d5e50','#80b09a'],'iron');material('hay',['#a6833a','#6e5420','#c9a650'],'straw');
+material('moss',['#4f6e35','#33491f','#6f9448'],'flat');material('copper',['#5d8a76','#3d5e50','#80b09a'],'iron');material('hay',['#8a7a3a','#5e5228','#a89450'],'straw');
 material('slab',['#5a5f6c','#3a3e48','#7d8392'],'slab');material('leafZ',['#3a5234','#1f2e1c','#5a7a44'],'flat');material('oldwood',['#5a4a3a','#36291e','#8a7a62'],'plank');material('board',['#5a4a3a','#36291e','#8a7a62'],'wood');material('post',['#4e3f30','#30251a','#75644e'],'vgrain');material('stave',['#54402c','#34261a','#735a3e'],'vgrain');material('plaster',['#3a2c22','#2a1f18','#4e3d30'],'plaster');material('leafA',['#8a4a22','#52281a','#b86a2e'],'flat');
 // ------------------------------------------------------------------ pezzi (le cose di cui è fatto un prop)
 // face: quattro angoli 3D in senso antiorario visti da fuori, p0 = angolo in basso a sinistra della texture, p1 = +u, p3 = +v;
@@ -118,7 +120,7 @@ function box(x,y,z,w,d,h,mat,o){o=o||{};const v=[[x,y,z],[x+w,y,z],[x+w,y+d,z],[
 function prismX(x,y,t,prof,mat,o){o=o||{};const fr=prof.map(([u,z])=>[x+u,y+t,z]),bk=prof.map(([u,z])=>[x+u,y,z]),P=[],n=prof.length;
   for(let i=0;i<n;i++){const j=(i+1)%n,du=prof[j][0]-prof[i][0],dz=prof[j][1]-prof[i][1];if(Math.abs(du)<1e-6&&Math.abs(dz)<1e-6)continue;// normale (dz,0,-du)
     const key=Math.abs(dz)>Math.abs(du)?(dz>0?'e':'w'):(du<0?(dz>1e-6?'re':dz<-1e-6?'rw':'t'):'n');if(key==='n'&&Math.abs(dz)<1e-6)continue;// la faccia sotto non si vede mai
-    P.push(face(bk[i],bk[j],fr[j],fr[i],(o.m&&o.m[key])||mat,key,{foot:Math.min(prof[i][1],prof[j][1])<=0.01&&key!=='t',texId:o.texId}))}
+    P.push(face(bk[i],bk[j],fr[j],fr[i],(o.m&&o.m[key])||mat,key,{foot:Math.min(prof[i][1],prof[j][1])<=0.01&&key!=='t',texId:o.texId,ink:o.ink}))}
   P.push({k:'facepoly',c:fr,mat:(o.m&&o.m.s)||mat,key:'s',tex:o.texF});P.push({k:'facepoly',c:bk.slice().reverse(),mat:(o.m&&o.m.n)||mat,key:'n'});
   if(o.out==='profile'){P.unshift({k:'outline',pts:bk,w:o.ow});P.push({k:'outline',pts:fr,w:o.ow})}else if(!o.noOut)P.push(hullOf(fr.concat(bk),o.ow));return P}
 // un profilo [v,z] lungo y estruso lungo x da x a x+len (tetti a due falde con il colmo lungo x, tettoie)

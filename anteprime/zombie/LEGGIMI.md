@@ -51,8 +51,11 @@ rovesciata, scaffale, camino acceso, scia scura).
 
 ## Revisione «impeccabile» (11 ottobre)
 
-Vetrina: `node scratchpad/vetrina.js` (quattro viste per prop: eroe a sinistra, destra, sopra, sotto; effetti accesi) e `python3 tavole.py`
-→ `board1..4.jpg`. Sei critici in parallelo (lettura, coerenza 3D, pittura, horror, terreno, art director) con un workflow, poi le correzioni:
+Vetrina: `node anteprime/zombie/vetrina.js` (quattro viste per prop: eroe a sinistra, destra, sopra, sotto; effetti accesi; ritagli in
+`anteprime/zombie/vetrina/`, non su git) e `python3 anteprime/zombie/tavole.py` → `vetrina/board1..4.jpg`. Sei critici in parallelo (lettura, coerenza 3D, pittura, horror, terreno, art director) con un workflow, poi le correzioni:
 alberi rifatti (prima erano un pannello con un ventaglio di bastoni), lampione a gabbia, pozzo con l'argano, carriola vera, cartello con le scritte,
 piega ridotta per le cose sottili, ombre a strato unico, legno in tre famiglie, muschio marcio nelle fughe, terra e sentiero rifatti (bordo
-sbrecciato, lastre a lati dritti), interni horror, luci cotte nel terreno. Tema della prima area: `docs/tema-prima-area.md`.
+sbrecciato, lastre a lati dritti), interni horror, luci cotte nel terreno; poi, dalla sintesi: cerchi orizzontali tondi (sotto questa
+telecamera un cerchio a terra resta un cerchio: bocca del pozzo, cerchi delle botti), cancellate e picchetti lungo y in 3D invece del
+pannello di taglio, porta con l'anta vera lungo y e il pavimento che si vede dal vano, camino disegnato prima del tetto, tegole col bordo
+tondo e qualche tegola mancante, zucche con la faccia nel disco, pali ai giunti del recinto. Tema della prima area: `docs/tema-prima-area.md`.
