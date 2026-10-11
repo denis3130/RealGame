@@ -105,8 +105,8 @@ tondo e qualche tegola mancante, zucche con la faccia nel disco, pali ai giunti 
 
 ## Piega più dolce e colpi che non passano i muri (12 ottobre, Denis: «la casa si allunga o si accorcia a dipendenza di dove ti muovi»)
 
-- La piega in verticale (le cose alte più lunghe quando l'eroe sta sotto, più corte quando sta sopra) ora è al massimo ±7% dell'altezza
-  (`CAM.ly=.0006`, tetto `LKV=.07`); prima a 150 px dall'eroe arrivava a circa ±21%. Quella di lato, che fa vedere il fianco delle cose, è un
-  poco più leggera (`CAM.lx=.0042`, tetto `LK=.32`, circa 18°).
+- La piega in verticale (le cose alte più lunghe quando l'eroe sta sotto, più corte quando sta sopra) ora è al massimo ±2% dell'altezza
+  (`CAM.ly=.0002`, tetto `LKV=.02`); all'inizio a 150 px dall'eroe arrivava a circa ±21%, poi ±7%, poi Denis: «diminuisci di molto». Quella
+  di lato, che fa vedere il fianco delle cose, è più leggera (`CAM.lx=.003`, tetto `LK=.22`, circa 12°).
 - I colpi non passano attraverso muri, recinti, lapidi, casse e case: l'eroe mira solo allo zombie più vicino che vede davvero (linea libera sui
   solidi veri, `physClear`, ignorando la fossa in cui sta lo zombie), ricontrollato ogni 0,1 s.

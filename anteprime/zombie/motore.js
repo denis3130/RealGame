@@ -9,15 +9,15 @@
 const ZM=(()=>{
 const R0=CR._rig,{TAU,cl,ez,lerp,mix,ball,seg}=R0,wa=R0.wa;
 const T=64;                                   // una casella
-const CAM={x:0,y:0,z:1,lx:.0042,ly:.0006};    // centro inquadrato (coordinate del terreno), zoom, quanto si piegano le cose alte
+const CAM={x:0,y:0,z:1,lx:.003,ly:.0002};    // centro inquadrato (coordinate del terreno), zoom, quanto si piegano le cose alte
 let seed=1;const rnd=()=>{seed=(seed*16807)%2147483647;return(seed-1)/2147483646},rr=(a,b)=>a+(b-a)*rnd(),srand=s=>{seed=s||1};
 // ------------------------------------------------------------------ proiezione
 // un punto del mondo (x, y sul terreno, z in alto) sullo schermo: le cose alte scappano dal centro in orizzontale, e in verticale
 // quelle sotto l'eroe sembrano un po' più alte (sono più vicine), quelle sopra più basse
 let LEANK=1;// quanto si piega il prop che si sta disegnando (lk del prop: 1 case e muri, .5 pali e lapidi)
-// la piega di lato satura piano verso 19° (lontano dall'eroe le cose alte non sembrano cadute); quella in verticale, che allunga o accorcia
-// le case mentre l'eroe va su e giù, è tenuta piccola (al massimo ±7% dell'altezza): richiesta di Denis del 12 ottobre
-const LK=.32,soft=k=>LK*Math.tanh(k/LK),LKV=.07,softV=k=>LKV*Math.tanh(k/LKV);
+// la piega di lato satura piano verso 13° (lontano dall'eroe le cose alte non sembrano cadute); quella in verticale, che allunga o accorcia
+// le case mentre l'eroe va su e giù, quasi non c'è (al massimo ±2% dell'altezza): richieste di Denis del 12 ottobre («diminuisci di molto»)
+const LK=.22,soft=k=>LK*Math.tanh(k/LK),LKV=.02,softV=k=>LKV*Math.tanh(k/LKV);
 const S=(x,y,z)=>{if(Array.isArray(x))return S(x[0],x[1],x[2]);z=z||0;return[x+soft((x-CAM.x)*CAM.lx)*z*LEANK,y-z+softV((CAM.y-y)*CAM.ly)*z*LEANK]};
 const add3=(a,b,k)=>[a[0]+b[0]*(k==null?1:k),a[1]+b[1]*(k==null?1:k),a[2]+b[2]*(k==null?1:k)];
 const sub3=(a,b)=>[a[0]-b[0],a[1]-b[1],a[2]-b[2]];
