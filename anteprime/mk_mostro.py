@@ -5,12 +5,14 @@ import os,sys
 here=os.path.dirname(os.path.abspath(__file__));root=os.path.join(here,'..')
 game=open(os.path.join(root,'index.html'),encoding='utf-8').read()
 cr=open(os.path.join(root,'sprite','mostri','disegno_mostri.js'),encoding='utf-8').read()
+ne=open(os.path.join(root,'sprite','nemici','disegno_nemici.js'),encoding='utf-8').read()
 start=sys.argv[1] if len(sys.argv)>1 else 'spaventapasseri'
 ctrl=r'''
 // ---------- anteprima: i mostri zombie dal vivo ----------
 (()=>{const MOSTRI={spaventapasseri:{n:'Zombie spaventapasseri',sc:1.15,an:['idle','walk','attack']},lanterna:{n:'Zombie della lanterna',sc:1.55,an:['idle','walk','attack']},
   zombie:{n:'Zombie della cripta',sc:1.1,an:['idle','walk','attack']},strisciante:{n:'Zombie strisciante',sc:1.1,an:['idle','walk','attack']},minatore:{n:'Zombie minatore',sc:1.1,an:['idle','walk','attack']},
-  hound:{n:'Segugio infernale',sc:1.05,an:['idle','walk','attack']},becchino:{n:'Il Becchino',sc:1.9,an:['idle','walk','slam','summon']}};
+  hound:{n:'Segugio infernale',sc:1.05,an:['idle','walk','attack']},becchino:{n:'Il Becchino',sc:1.9,an:['idle','walk','slam','summon']},
+  goblin:{n:'Goblin (classico, rifatto)',sc:1,an:['idle','walk','attack'],ne:1},skeleton:{n:'Scheletro (classico, rifatto)',sc:1.1,an:['idle','walk','attack'],ne:1},slime:{n:'Slime (classico, rifatto)',sc:1,an:['idle','walk','attack'],ne:1},bat:{n:'Pipistrello (classico, rifatto)',sc:1,an:['idle','walk','attack'],ne:1}};
 const NOMI={idle:'Fermo',walk:'Cammina',attack:'Attacco',slam:'Palata',summon:'Evoca'},DUR={idle:1.8,walk:1.1,attack:1.6,slam:1.5,summon:1.8};
 let kind='__START__',anim='idle',face=Math.PI/2,spin=true,low=false,zoom=1.5,p=0,ms=0,last=performance.now();
 function boot(){try{INTRO.on=false;paused=true}catch(e){}try{AU.on.music=false;AU.on.sfx=false}catch(e){}
@@ -45,14 +47,14 @@ function boot(){try{INTRO.on=false;paused=true}catch(e){}try{AU.on.music=false;A
     const S=36;c.fillStyle='#15120f';c.fillRect(0,0,W,H);for(let y=0;y<H;y+=S)for(let x=((y/S)%2?-S/2:0);x<W;x+=S){c.fillStyle=((x/S+y/S)|0)%3?'#2a251f':'#26211c';c.fillRect(x+1.5,y+1.5,S-3,S-3)}
     const g=c.createRadialGradient(W/2,H*.55,H*.15,W/2,H*.55,H*.75);g.addColorStop(0,'rgba(0,0,0,0)');g.addColorStop(1,'rgba(0,0,0,.75)');c.fillStyle=g;c.fillRect(0,0,W,H);
     const saved=ctx,lf=LOWFX;ctx=c;LOWFX=low;G.t=now/1000;const t1=performance.now();const sc=Math.min(W,H)/210*zoom;
-    ctx.save();ctx.translate(W/2,H*.6);ctx.scale(sc,sc);try{CR[kind](0,0,face,anim,p,M.sc)}catch(e){}ctx.restore();
+    ctx.save();ctx.translate(W/2,H*.6);ctx.scale(sc,sc);try{(M.ne?NE:CR)[kind](0,0,face,anim,p,M.sc)}catch(e){}ctx.restore();
     ms=ms*.92+(performance.now()-t1)*.08;ctx=saved;LOWFX=lf;
     ov.querySelector('#spvMs').textContent=ms.toFixed(1)+' ms · '+NOMI[anim];requestAnimationFrame(frame)}
   requestAnimationFrame(frame)}
 if(document.readyState==='complete')setTimeout(boot,300);else window.addEventListener('load',()=>setTimeout(boot,300))})();
 '''.replace('__START__',start)
 i=game.rfind('})();')
-page=game[:i]+'\n'+cr+'\n'+ctrl+'\n'+game[i:]
+page=game[:i]+'\n'+cr+'\n'+ne+'\n'+ctrl+'\n'+game[i:]
 page=page.replace('<title>Mossbound</title>','<title>Mostri zombie dal vivo</title>',1)
 open(os.path.join(here,'mostro.html'),'w',encoding='utf-8').write(page)
 print('anteprime/mostro.html pronto (parte da %s)'%start)

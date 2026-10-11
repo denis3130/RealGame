@@ -860,5 +860,7 @@ function spaventapasseri(x,y,face,anim,p,sc){sc=sc||1.15;const ph=p*TAU,walk=ani
   if(dizzy>=0&&dizzy<.9){const k=dizzy/.9,c0=P(add(Hc,[0,0,R*.86+11.5]));for(let i=0;i<3;i++){const an=k*TAU*1.5+i*TAU/3;starS(c0[0]+Math.cos(an)*8,c0[1]+Math.sin(an)*2.6,1.9,Math.sin(k*Math.PI))}}
   ctx.restore()}
 
-return {zombie,strisciante,minatore,hound,becchino,lanterna,spaventapasseri};
+// the toolkit of the method (the 3D skeleton, the IK, the lantern's way of painting), for the enemies drawn in other files
+const _rig={TAU,cl,ez,lerp,add,sub,mul,len,nrm,dot,cross,lerp3,V,Vat,rz,angTo,mix,farK,ik,stepper,NOSTEP,shine,ball,seg,tri,spike,hull,limb,sleeve,cuff,on,neck,hand,fist,bone,claw,rag,leg,trunk,WARM,LITK,wa,rim,shadeLimb,glowTop,folds,run,ZC,zArm,zHead,strawTuft,disc,ropeRings,starS,flame,crack,hull2};
+return {zombie,strisciante,minatore,hound,becchino,lanterna,spaventapasseri,_rig};
 })();
