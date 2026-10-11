@@ -276,7 +276,10 @@ P.house=function(x,y,w,d,o){o=o||{};const H=o.H||74,th=10,door=x+(o.door==null?w
     
     prop({bx:[L-6,Y0-6,L+len+6,Y1+6,H+rh+40],ky:Y1+1,parts:tag(parts,'roof'),house:hs})}
   return hs};
-for(const k of Object.keys(P)){const f=P[k];P[k]=function(...a){const sv=ZM.NAMES.cur;ZM.NAMES.cur=k;try{return f.apply(this,a)}finally{ZM.NAMES.cur=sv}}}
+// il punto che decide la piega di tutto l'oggetto (vedi REF nel motore): il centro per case e cripta, null per muri, staccionate e
+// pilastri (sono lunghi e si toccano: ogni punto per conto suo, così le giunture restano chiuse), il piede per tutto il resto
+const REFOF={wall:()=>null,fence:()=>null,pillar:()=>null,gateLeaf:()=>null,house:a=>[a[0]+a[2]/2,a[1]+a[3]/2],crypt:a=>[a[0]+a[2]/2,a[1]+a[3]/2],crate:a=>[a[0]+11*(a[2]||1),a[1]+10*(a[2]||1)],hay:a=>[a[0]+17,a[1]+11]};
+for(const k of Object.keys(P)){const f=P[k],rf=REFOF[k]||(a=>typeof a[0]==='number'&&typeof a[1]==='number'?[a[0],a[1]]:null);P[k]=function(...a){const sv=ZM.NAMES.cur,sr=ZM.NAMES.ref;ZM.NAMES.cur=k;ZM.NAMES.ref=rf(a);try{return f.apply(this,a)}finally{ZM.NAMES.cur=sv;ZM.NAMES.ref=sr}}}
 // ------------------------------------------------------------------ pennelli del terreno (dentro bakeGround, in coordinate del mondo)
 const G={};ZM.G=G;
 G.grass=(w,h)=>{// erba notturna: fondo, chiazze morbide appena percettibili, fili d'erba fitti in tre toni, qualche radura di terra coi sassolini

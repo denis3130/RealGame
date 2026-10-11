@@ -14,11 +14,12 @@ let seed=1;const rnd=()=>{seed=(seed*16807)%2147483647;return(seed-1)/2147483646
 // ------------------------------------------------------------------ proiezione
 // un punto del mondo (x, y sul terreno, z in alto) sullo schermo: le cose alte scappano dal centro in orizzontale, e in verticale
 // quelle sotto l'eroe sembrano un po' più alte (sono più vicine), quelle sopra più basse
+let REF=null;// il punto del prop che decide la piega di tutti i suoi pezzi: così il prop si piega come un blocco unico e finestre, porta, lanterna… non scivolano sopra di lui (Denis, 12 ottobre); null = ogni punto per conto suo (muri e staccionate lunghe)
 let LEANK=1;// quanto si piega il prop che si sta disegnando (lk del prop: 1 case e muri, .5 pali e lapidi)
 // la piega di lato satura piano verso 13° (lontano dall'eroe le cose alte non sembrano cadute); quella in verticale, che allunga o accorcia
 // le case mentre l'eroe va su e giù, quasi non c'è (al massimo ±2% dell'altezza): richieste di Denis del 12 ottobre («diminuisci di molto»)
 const LK=.22,soft=k=>LK*Math.tanh(k/LK),LKV=.02,softV=k=>LKV*Math.tanh(k/LKV);
-const S=(x,y,z)=>{if(Array.isArray(x))return S(x[0],x[1],x[2]);z=z||0;return[x+soft((x-CAM.x)*CAM.lx)*z*LEANK,y-z+softV((CAM.y-y)*CAM.ly)*z*LEANK]};
+const S=(x,y,z)=>{if(Array.isArray(x))return S(x[0],x[1],x[2]);z=z||0;const rx=REF?REF[0]:x,ry=REF?REF[1]:y;return[x+soft((rx-CAM.x)*CAM.lx)*z*LEANK,y-z+softV((CAM.y-ry)*CAM.ly)*z*LEANK]};
 const add3=(a,b,k)=>[a[0]+b[0]*(k==null?1:k),a[1]+b[1]*(k==null?1:k),a[2]+b[2]*(k==null?1:k)];
 const sub3=(a,b)=>[a[0]-b[0],a[1]-b[1],a[2]-b[2]];
 const len3=a=>Math.hypot(a[0],a[1],a[2]);
@@ -172,8 +173,10 @@ function drawPart(p){switch(p.k){case'face':return drawFace(p);case'facepoly':re
 const props=[],solids=[],shadows=[],lights=[],flames=[],holes=[],houses=[],smokes=[],perches=[],decals=[],fades=[];// fades: chiome che sfumano ({x,ky,rx,reach,a}), le parti 'roof' del prop con house:fade// decals: f() dipinte nel terreno dopo le ombre (pozze di luce fisse, macchie)
 // o.ky: profondità = la y del bordo davanti della parte alta (dove sta il solido); o.kyFn(x): profondità che dipende dalla x dell'eroe (cose
 // sottili in diagonale, come le ante aperte); o.floor: sta a terra (cumuli, pedane, gradini, tappeti) e si disegna prima di tutti gli esseri
-const NAMES={cur:null};// il prop che si sta costruendo (serve ai test per dire chi copre l'eroe)
-function prop(o){o.ky=o.ky==null?o.bx[3]:o.ky;o.parts=o.parts||[];o.name=o.name||NAMES.cur||'?';props.push(o);return o}
+const NAMES={cur:null,ref:null};// il prop che si sta costruendo (serve ai test per dire chi copre l'eroe)
+// fiamme, luci e corvi posati prendono il punto del prop che si sta costruendo: si piegano con lui
+for(const arr of[flames,lights,perches,smokes])arr.push=function(...a){for(const f of a)if(f.ref===undefined)f.ref=NAMES.ref;return Array.prototype.push.apply(this,a)};
+function prop(o){o.ky=o.ky==null?o.bx[3]:o.ky;if(o.ref===undefined)o.ref=NAMES.ref;o.parts=o.parts||[];o.name=o.name||NAMES.cur||'?';props.push(o);return o}
 // pedane e gradini: chi ci sale sopra viene disegnato più in alto
 const stands=[];const stand=(x,y,w,d,h)=>stands.push({x,y,w,d,h});
 function heightAt(x,y){let h=0;for(const s of stands)if(x>=s.x&&x<=s.x+s.w&&y>=s.y&&y<=s.y+s.d&&s.h>h)h=s.h;return h}
@@ -251,7 +254,7 @@ function drawLights(h0a){if(LOWFX)return;ctx.save();ctx.globalCompositeOperation
 function drawDark(W0,H0,toScr0,h0a){if(LOWFX)return;const Q=3,Wd=Math.ceil(W0/Q),Hd=Math.ceil(H0/Q),toScr=(x,y,r)=>toScr0(x,y,r).map(v=>v/Q);if(!dark)dark=document.createElement('canvas');if(dark.width!==Wd||dark.height!==Hd){dark.width=Wd;dark.height=Hd}
   const g=dark.getContext('2d');g.setTransform(1,0,0,1,0,0);g.globalCompositeOperation='source-over';g.clearRect(0,0,Wd,Hd);g.fillStyle='rgba(10,14,34,.42)';g.fillRect(0,0,Wd,Hd);
   g.globalCompositeOperation='destination-out';const hole=(x,y,r,a)=>{const[sx,sy,sr0]=toScr(x,y,r),sr=Math.max(1,sr0||1);const gr=g.createRadialGradient(sx,sy,0,sx,sy,sr);gr.addColorStop(0,`rgba(0,0,0,${a})`);gr.addColorStop(1,'rgba(0,0,0,0)');g.fillStyle=gr;g.beginPath();g.arc(sx,sy,sr,0,TAU);g.fill()};
-  for(const L of lights){if(L.house&&L.house.a>.6)continue;LEANK=L.lk||1;const q=S(L.x,L.y,(L.z||0)*.5);LEANK=1;hole(q[0],q[1],L.r*1.2,.85*(L.house?1-L.house.a:1))}if(W.hero){const hq=S(W.hero.x,W.hero.y,10);hole(hq[0],hq[1],120,.6)}
+  for(const L of lights){if(L.house&&L.house.a>.6)continue;LEANK=L.lk||1;REF=L.ref||null;const q=S(L.x,L.y,(L.z||0)*.5);LEANK=1;REF=null;hole(q[0],q[1],L.r*1.2,.85*(L.house?1-L.house.a:1))}if(W.hero){const hq=S(W.hero.x,W.hero.y,10);hole(hq[0],hq[1],120,.6)}
   ctx.save();ctx.setTransform(1,0,0,1,0,0);ctx.drawImage(dark,0,0,W0,H0);ctx.restore()}
 function softImg(){if(mistImg)return mistImg;mistImg=document.createElement('canvas');mistImg.width=mistImg.height=64;const g=mistImg.getContext('2d'),gr=g.createRadialGradient(32,32,0,32,32,32);gr.addColorStop(0,'rgba(255,255,255,1)');gr.addColorStop(1,'rgba(255,255,255,0)');g.fillStyle=gr;g.fillRect(0,0,64,64);return mistImg}
 function drawMist(dt){if(LOWFX)return;const im=softImg();ctx.save();ctx.globalAlpha=.10;for(const m of W.mists){m.x+=m.v*dt;if(m.x>W.w+180)m.x=-180;ctx.drawImage(im,m.x-m.r,m.y-m.r*.42,m.r*2,m.r*.84)}ctx.restore()}
@@ -274,7 +277,7 @@ function drawPerched(){for(const p of perches){if(p.away)continue;const q=S(p.x,
     ctx.beginPath();ctx.ellipse(0,-5,5,4,0,0,TAU);ctx.fill();ctx.stroke();ctx.beginPath();ctx.moveTo(-3,-3);ctx.lineTo(-10,1);ctx.lineTo(-8,-3);ctx.closePath();ctx.fill();ctx.stroke();const hx=3*Math.cos(f),hy=-10;ctx.beginPath();ctx.arc(hx,hy,3.2,0,TAU);ctx.fill();ctx.stroke();
     ctx.fillStyle='#d8b040';ctx.beginPath();ctx.moveTo(hx+2.6*d,hy-1);ctx.lineTo(hx+7*d,hy+.5);ctx.lineTo(hx+2.6*d,hy+1);ctx.closePath();ctx.fill();ctx.fillStyle='#ff5040';ball([hx+1.2*d,hy-.8],.8);ctx.fill();ctx.restore()}}
 // fiamme e lumi: candele, vetri delle lanterne, zucche, camini, il respiro verde della cripta (disegnate nell'ordine di profondità)
-function drawFlame(f,h0a){if(f.house&&f.house.a>.9)return;LEANK=f.lk||1;const q=S(f.x,f.y,f.z);LEANK=1;const fl=.85+.15*Math.sin(W.t*11+f.x)*Math.sin(W.t*7.3+f.y);
+function drawFlame(f,h0a){if(f.house&&f.house.a>.9)return;LEANK=f.lk||1;REF=f.ref||null;const q=S(f.x,f.y,f.z);LEANK=1;REF=null;const fl=.85+.15*Math.sin(W.t*11+f.x)*Math.sin(W.t*7.3+f.y);
   if(f.fire){for(let i=0;i<5;i++){const a=W.t*6+i*1.3,h=10+4*Math.sin(a),xx=q[0]+(i-2)*3.2;ctx.fillStyle=i%2?'#ffb040':'#ff7a20';ctx.beginPath();ctx.moveTo(xx-3,q[1]);ctx.quadraticCurveTo(xx-2,q[1]-h*.6,xx+Math.sin(a)*1.5,q[1]-h);ctx.quadraticCurveTo(xx+2,q[1]-h*.6,xx+3,q[1]);ctx.closePath();ctx.fill()}}
   else if(f.r<2){ctx.fillStyle='#fff2c0';ctx.beginPath();ctx.ellipse(q[0],q[1]-2,f.r*1.1,f.r*2.4*fl,0,0,TAU);ctx.fill()}
   if(LOWFX)return;ctx.save();ctx.globalCompositeOperation='lighter';glow(f.rgb,q[0],q[1]-2,(f.crypt?26:f.fire?28:f.pump?16*f.pump:f.glass?22:12)*fl,(f.crypt?.5+.2*Math.sin(W.t*1.4):f.pump?.7:.6)*fl);ctx.restore()}
@@ -312,7 +315,7 @@ function drawZombie(z){const q=S(z.x,z.y,z.zh||0);
   CR[z.kind](q[0],q[1],z.face,z.anim,z.p,z.sc);if(z.flash>0){ctx.save();ctx.globalCompositeOperation='lighter';glow('255,255,255',q[0],q[1]-24*z.sc,22*z.sc,.5);ctx.restore()}}
 const alphaOf=(hs,part)=>part==='roof'?hs.a:part==='front'?.22+.78*hs.a:part==='in'?(hs.a>.95?0:1):1;
 function drawHero(){const h=W.hero,q=S(h.x,h.y,h.zh||0);drawRig(q[0],q[1]-8,h.face,h.walk,h.moving,HSTYLE,{gp:gunState?gunState.pose():{},aim:h.aim})}
-function drawEntry(e,h0a){if(e.p){LEANK=e.p.lk==null?1:e.p.lk;drawProp(e.p,e.p.house?part=>alphaOf(e.p.house,part):null);LEANK=1;return}if(e.hero){drawHero();return}if(e.fl){drawFlame(e.fl,h0a);return}drawZombie(e.z)}
+function drawEntry(e,h0a){if(e.p){LEANK=e.p.lk==null?1:e.p.lk;REF=e.p.ref||null;drawProp(e.p,e.p.house?part=>alphaOf(e.p.house,part):null);LEANK=1;REF=null;return}if(e.hero){drawHero();return}if(e.fl){drawFlame(e.fl,h0a);return}drawZombie(e.z)}
 // la sagoma dell'eroe dove è coperto (dietro la casa, la cripta, un albero): si ridisegnano in una tela piccola solo le cose davanti a lui che
 // toccano il suo riquadro, e lì sopra si stampa la sua sagoma chiara a metà trasparenza. Costa qualcosa solo quando è davvero coperto.
 let SIL=null,LASTOCC=[];
@@ -341,7 +344,7 @@ function drawWorld(dt,view){const h0=houses[0],h0a=h0?h0.a:1,D=W.dbg;
   ctx.drawImage(W.ground,0,0,W.ground.width,W.ground.height,0,0,W.w,W.h);
   const vis=p=>!(p.bx[2]<view.x0||p.bx[0]>view.x1||p.bx[3]<view.y0||p.bx[1]-p.bx[4]>view.y1);
   // il pavimento: cumuli, pedane, gradini, tappeti (stanno sotto i piedi di tutti)
-  for(const p of props)if(p.floor&&vis(p)){LEANK=p.lk==null?1:p.lk;drawProp(p,p.house?part=>alphaOf(p.house,part):null);LEANK=1}
+  for(const p of props)if(p.floor&&vis(p)){LEANK=p.lk==null?1:p.lk;REF=p.ref||null;drawProp(p,p.house?part=>alphaOf(p.house,part):null);LEANK=1;REF=null}
   drawClouds(dt);drawCrowShadows();drawLights(h0a);
   // tutto ciò che sta in piedi, dal fondo verso davanti; gli esseri e le fiamme in mezzo
   const hx=W.hero?W.hero.x:0,list=[];for(const p of props){if(p.floor||!vis(p))continue;list.push({k:p.kyFn?p.kyFn(hx):p.ky,p})}
@@ -351,14 +354,14 @@ function drawWorld(dt,view){const h0=houses[0],h0a=h0?h0.a:1,D=W.dbg;
   if(D.heroLast&&!D.noHero&&W.hero)drawHero();
   LASTOCC=occluders(list,hi);silhouette(LASTOCC,h0a);
   drawPerched();
-  if(!LOWFX){for(const p of W.puffs){const q=S(p.x,p.y,p.z);ctx.fillStyle=`rgba(150,150,165,${.28*(1-p.t/3.2)})`;ball(q,p.r);ctx.fill()}
+  if(!LOWFX){for(const p of W.puffs){REF=p.ref||null;const q=S(p.x,p.y,p.z);REF=null;ctx.fillStyle=`rgba(150,150,165,${.28*(1-p.t/3.2)})`;ball(q,p.r);ctx.fill()}
     for(const l of W.leaves){const q=S(l.x,l.y,l.z);ctx.save();ctx.translate(q[0],q[1]);ctx.rotate(l.t*4+l.ph);ctx.fillStyle=l.c;ctx.beginPath();ctx.ellipse(0,0,2.6,1.2,0,0,TAU);ctx.fill();ctx.restore()}
     ctx.save();ctx.globalCompositeOperation='lighter';for(const f of W.flies){const q=S(f.x,f.y,f.z),b=.5+.5*Math.sin(W.t*3+f.ph);glow('170,255,120',q[0],q[1],9,.5*b);ctx.fillStyle=`rgba(230,255,190,${.9*b})`;ctx.fillRect(q[0]-.8,q[1]-.8,1.6,1.6)}ctx.restore()}
   for(const f of W.FX){if(f.k==='shot'){ctx.strokeStyle='rgba(255,230,160,.9)';ctx.lineWidth=2;seg(f.a,f.b);ctx.stroke();if(!LOWFX){ctx.save();ctx.globalCompositeOperation='lighter';glow('255,210,120',f.a[0],f.a[1],14,.8);ctx.restore()}}else{ctx.fillStyle='#3a5a1e';ball([f.x,f.y],1.8);ctx.fill()}}
   if(liveDraw)liveDraw(dt);drawMist(dt);drawFlock()}
 function updateAmbient(dt){W.t+=dt;updateCrows(dt);if(LOWFX)return;
   for(const f of W.flies){f.a+=dt*(Math.sin(W.t*.7+f.ph)*1.6);f.x+=Math.cos(f.a)*14*dt;f.y+=Math.sin(f.a)*14*dt;f.z=cl(f.z+Math.sin(W.t*2+f.ph)*8*dt,4,50);if(f.x<0)f.x=W.w;if(f.x>W.w)f.x=0;if(f.y<0)f.y=W.h;if(f.y>W.h)f.y=0}
-  for(const s of smokes){s.t-=dt;if(s.t<=0){s.t=.22;W.puffs.push({x:s.x+rr(-3,3),y:s.y+rr(-3,3),z:s.z,t:0,r:rr(4,6)})}}
+  for(const s of smokes){s.t-=dt;if(s.t<=0){s.t=.22;W.puffs.push({x:s.x+rr(-3,3),y:s.y+rr(-3,3),z:s.z,t:0,r:rr(4,6),ref:s.ref})}}
   for(const p of W.puffs){p.t+=dt;p.z+=16*dt;p.x+=10*dt;p.r+=5*dt}for(let i=W.puffs.length-1;i>=0;i--)if(W.puffs[i].t>3.2)W.puffs.splice(i,1);
   for(const tr of W.leafTrees||[])if(Math.random()<dt*.8)W.leaves.push({x:tr[0]+rr(-40,40),y:tr[1]+rr(-40,40),z:rr(70,90),t:0,ph:rr(0,6),c:['#a8562a','#c87a2a','#d0a040'][Math.floor(Math.random()*3)]});
   for(const l of W.leaves){l.t+=dt;l.z-=14*dt;l.x+=Math.sin(l.t*3+l.ph)*20*dt+6*dt}for(let i=W.leaves.length-1;i>=0;i--)if(W.leaves[i].z<0)W.leaves.splice(i,1)}

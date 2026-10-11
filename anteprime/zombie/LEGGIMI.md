@@ -10,7 +10,10 @@ prop + area; non si salva su git). Area predefinita `area_prova` (un angolo 10×
 - **Proiezione** `S(x,y,z)`: schermo = `(x + piega·z, y − z + piega·z)`, dove la piega cresce con la distanza dall'eroe (`CAM.lx=.0048`, `CAM.ly=.0016`)
   e satura piano verso 23° (`soft`), così le cose alte ai bordi dello schermo mostrano il fianco verso l'eroe senza sembrare cadute. Ogni prop può
   piegarsi meno con `lk` (1 case e muri; .65 alberi; .6 pozzo, pilastri, cancello; .5 lapidi e cartelli; .45 lampione): le sue fiamme e luci
-  portano lo stesso `lk`.
+  portano lo stesso `lk`. **Ogni prop si piega come un blocco unico** (`REF`, `prop.ref`): la piega si calcola da un solo punto dell'oggetto
+  (il centro per case e cripta, il piede per il resto, preso da `REFOF` nel giro dei nomi in `prop.js`), così finestre, porta, tettoia,
+  lanterna, camino e fumo non scivolano sopra la casa; fiamme, luci, fumi e corvi posati prendono il punto del prop che li costruisce.
+  Muri, staccionate, pilastri e ante restano punto per punto (`ref:null`), perché sono lunghi e si toccano alle giunture.
 - **Facce**: `face(p0,p1,p2,p3,mat,key,o)` quattro angoli 3D in senso antiorario visti da fuori; visibile se la proiezione gira nel verso giusto.
   `key` è l'orientamento: `t` sopra, `s` sud, `e` est, `w` ovest, `n` nord, `r`/`rn` falde verso sud/nord, `rw`/`re` falde verso ovest/est. La luna sta a
   ovest, alta: `TONE` dà i toni (ovest e sopra chiari, est e nord scuri). Ogni faccia ha una texture dipinta una volta (`texture`: tono +
