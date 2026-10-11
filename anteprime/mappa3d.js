@@ -7,7 +7,8 @@
 // togliendo le barricate con le monete. Gli zombie escono da terra intorno all'eroe.
 (()=>{
 const R0=CR._rig,{TAU,cl,ez,lerp,mix,shine,ball,seg,tri,rim,glowTop,wa}=R0;
-const T=64,N=25,WW=T*N,K=.55,GS=1.5,SS=2,MARG=420;   // tile, tiles, world size, depth squash, ground and sprite resolution, outside margin
+const SMALL=true;// Denis: «fammi solo una piccola area» — un angolo di 10×10 caselle; false = la mappa intera di 25×25
+const T=64,N=SMALL?10:25,WW=T*N,K=.55,GS=1.5,SS=2,MARG=420;   // tile, tiles, world size, depth squash, ground and sprite resolution, outside margin
 const S=(x,y,z)=>[x,y*K-(z||0)];                       // world -> screen (the monsters' camera)
 let seed=1;const rnd=()=>{seed=(seed*16807)%2147483647;return(seed-1)/2147483646},rr=(a,b)=>a+(b-a)*rnd();
 // ------------------------------------------------------------------ palette: night, sick greens, cold greys, warm lamps
@@ -17,7 +18,7 @@ const PAL={grass:['#38432a','#2f3923','#46532f'],soil:['#353a2e','#2c3027','#414
   iron:'#2d2f36',ironL:'#5d616c',lamp:'255,196,110',candle:'255,170,80',sick:'150,255,110',moon:'#c9d4ff'};
 // ------------------------------------------------------------------ zones
 const ZN={cim:{n:'Cimitero',price:750},qua:{n:'Quartiere',price:1000},fat:{n:'Fattoria',price:1250},pia:{n:'Piazza',price:0}};
-const zoneAt=(x,y)=>y<10*T?(x<12*T?'cim':'qua'):y<14.2*T?'pia':'fat';
+const zoneAt=(x,y)=>SMALL?'pia':y<10*T?(x<12*T?'cim':'qua'):y<14.2*T?'pia':'fat';
 const open={pia:true,cim:false,qua:false,fat:false};
 // ------------------------------------------------------------------ painting helpers in screen space (inside sprites)
 function ink2(w){ctx.strokeStyle=INK;ctx.lineWidth=w||2.4;ctx.lineJoin='round';ctx.lineCap='round'}
@@ -127,7 +128,7 @@ const pew=(x,y)=>{box(x,y,0,56,10,10,PAL.wood);box(x,y-4,10,56,4,12,PAL.wood)};
 const hay=(x,y)=>{box(x,y,0,34,22,18,['#b8913a','#8a6a24','#d6b45a'],{tex:(x0,y0,x1,y1)=>{ctx.strokeStyle='rgba(90,60,20,.4)';ctx.lineWidth=1;for(let i=0;i<14;i++){const xx=x0+rnd()*(x1-x0),yy=y0+rnd()*(y1-y0);seg([xx,yy],[xx+3,yy-3]);ctx.stroke()}}})};
 
 // ------------------------------------------------------------------ build the map
-function build(){seed=7;
+function build(){seed=7;if(SMALL)return buildSmall();
   // CIMITERO: the chapel, rows of graves, dead trees, open graves, the iron fence with the gate
   const ch=house({x:3*T,y:1*T,w:4.5*T,d:3*T,H:84,rh:58,wall:'stone',roof:'slate',door:2.25*T,hole:true,furn:(x,y)=>{for(let r=0;r<3;r++){pew(x+30,y+50+r*36);pew(x+4.5*T-86,y+50+r*36)}
     box(x+2.25*T-30,y+14,0,60,22,26,PAL.stone,{tex:stoneTex});for(const cx of[-20,0,20]){const q=S(x+2.25*T+cx,y+25,26);ctx.fillStyle='#e6dcc0';ctx.fillRect(q[0]-2,q[1]-10,4,10);ink2(1);ctx.strokeRect(q[0]-2,q[1]-10,4,10)}}});
@@ -170,6 +171,19 @@ function build(){seed=7;
   // the outer border
   solid(-200,-200,WW+400,200);solid(-200,WW,WW+400,200);solid(-200,0,200,WW);solid(WW,0,200,WW);
   things.sort((a,b)=>a.ky-b.ky)}
+// the small corner: a piece of graveyard with its fence, a cobbled path, a house you can walk into, a lamp, trees, two open graves
+function buildSmall(){
+  for(let r=0;r<2;r++)for(let c=0;c<3;c++)grave(.7*T+c*1.05*T+(r%2)*18,1.6*T+r*1.4*T+rr(-5,5),c===1&&r===1?2:rnd()<.5?1:0);
+  grave(1.2*T,5.6*T,0);grave(2.6*T,6.1*T,2);
+  tree(.6*T,.6*T,true,1.1);fenceIron(0,3.7*T,7.4*T);
+  holes.push([2.1*T,4.6*T],[8.4*T,6.6*T]);
+  house({x:6*T,y:1*T,w:3.4*T,d:2.6*T,H:70,wall:'plank',roof:'tile',door:1.7*T,hole:true,chim:true,furn:(x,y)=>{table(x+40,y+50);bed(x+150,y+24);barrel(x+190,y+120)}});
+  fenceWood(5.6*T,7.25*T,4.2*T);fenceWood(8.15*T,9.8*T,4.2*T);
+  lamp(3.9*T,4.2*T);lamp(6.1*T,8.6*T);
+  for(const[x,y] of[[9*T,5*T]])thing(y+18,[x-30,y*K-30,x+40,(y+18)*K+12],()=>{crate(x,y);crate(x+22,y+4,.8);barrel(x-12,y+14)}),solid(x-20,y-4,60,26);
+  tree(8.8*T,7.2*T,false,.9);tree(.5*T,9.3*T,false,.8);
+  solid(-200,-200,WW+400,200);solid(-200,WW,WW+400,200);solid(-200,0,200,WW);solid(WW,0,200,WW);
+  things.sort((a,b)=>a.ky-b.ky)}
 function lamp(x,y){solid(x-5,y-4,10,8);shadowOval(x+14,y+6,12);lights.push([x,y,60,PAL.lamp,150]);
   thing(y+4,[x-30,y*K-110,x+30,y*K+12],()=>{cyl(x,y,0,7,10,PAL.stone);cyl(x,y,10,3,70,[PAL.iron,0,PAL.ironL]);box(x-1.5,y-1,78,18,3,3,[PAL.iron,PAL.iron,PAL.ironL],{lw:2});
     const c=S(x+16,y,62);ctx.fillStyle='#ffe2a0';ink2(2);ctx.beginPath();ctx.moveTo(c[0]-6,c[1]-2);ctx.lineTo(c[0]+6,c[1]-2);ctx.lineTo(c[0]+4,c[1]+10);ctx.lineTo(c[0]-4,c[1]+10);ctx.closePath();ctx.fill();ctx.stroke();ctx.fillStyle=PAL.iron;ctx.beginPath();ctx.moveTo(c[0]-8,c[1]-2);ctx.lineTo(c[0],c[1]-9);ctx.lineTo(c[0]+8,c[1]-2);ctx.closePath();ctx.fill();ctx.stroke()})}
@@ -188,7 +202,8 @@ function bakeGround(){const W=WW+MARG*2,H=WW*K+MARG*2,c=document.createElement('
       for(const[dx,dy] of[[-20,-40],[18,-46],[-10,-58],[14,-30]]){ctx.lineWidth=2.5*s;seg([x,y-(30+rnd()*14)*s],[x+dx*s,y+dy*s-10*s]);ctx.stroke()}}
     // tiles
     for(let j=0;j<N;j++)for(let i=0;i<N;i++){const x=i*T,y=j*T,z=zoneAt(x+T/2,y+T/2);let p=z==='cim'?PAL.soil:z==='pia'?PAL.cobble:PAL.grass;
-      if(z==='qua'&&i>=18&&i<20)p=PAL.cobble;if(z==='cim'&&i>=5&&i<7)p=PAL.dirt;if(z==='fat'&&i>=14&&i<24&&j>=16&&j<23)p=PAL.field;if(z==='fat'&&((i>=11&&i<14&&j<17)||(j>=17&&j<19&&i<14)))p=PAL.dirt;
+      if(SMALL){p=(i<4&&j<8)?PAL.soil:(i===4||i===5||j===8)?PAL.cobble:PAL.grass;if(i>=6&&i<10&&j===4)p=PAL.grass;if(i===7&&j>=4&&j<8)p=PAL.dirt}
+      else if(z==='qua'&&i>=18&&i<20)p=PAL.cobble;if(z==='cim'&&i>=5&&i<7)p=PAL.dirt;if(z==='fat'&&i>=14&&i<24&&j>=16&&j<23)p=PAL.field;if(z==='fat'&&((i>=11&&i<14&&j<17)||(j>=17&&j<19&&i<14)))p=PAL.dirt;
       const sy=y*K,th=T*K;ctx.fillStyle=p[0];ctx.fillRect(x,sy,T+.5,th+.5);
       if(p===PAL.cobble){for(let r=0;r<4;r++)for(let q=0;q<4;q++){const cx=x+q*16+(r%2)*8+rr(-2,2),cy=sy+r*th/4+th/8;ctx.fillStyle=mix(p[0],p[2],rnd()*.6);ctx.beginPath();ctx.ellipse(cx,cy,7,th/9,0,0,TAU);ctx.fill();ctx.strokeStyle='rgba(0,0,0,.45)';ctx.lineWidth=1.2;ctx.stroke();ctx.fillStyle=wa(.1);ctx.beginPath();ctx.ellipse(cx-2,cy-1.5,3.5,1.5,0,0,TAU);ctx.fill()}}
       else if(p===PAL.field){for(let r=0;r<5;r++){ctx.fillStyle=p[1];ctx.fillRect(x,sy+r*th/5+th/10,T+.5,2.5);ctx.fillStyle=p[2];ctx.fillRect(x,sy+r*th/5+th/10-2,T+.5,1.2)}}
@@ -210,13 +225,13 @@ function bakeGround(){const W=WW+MARG*2,H=WW*K+MARG*2,c=document.createElement('
   }finally{ctx=sv}ground=c}
 
 // ------------------------------------------------------------------ the living things: hero, zombies, bullets, the coffin
-const hero={x:10*T,y:12*T,face:0,walk:0,moving:false,aim:0,fireCd:0,gun:'pistola'},cam={x:0,y:0,z:1},Z=[],FX=[];let coins=5000,bara=null,zonePrev='pia',banner=null;
+const hero={x:SMALL?4.5*T:10*T,y:SMALL?8.5*T:12*T,face:0,walk:0,moving:false,aim:0,fireCd:0,gun:'pistola'},cam={x:0,y:0,z:1},Z=[],FX=[];let coins=5000,bara=null,zonePrev='pia',banner=null;
 const KINDS=[['zombie',1.1,32,4],['strisciante',1.1,26,3],['minatore',1.1,30,5],['lanterna',1.55,24,7],['hound',1.05,70,3]];
 function spawn(){const hz=zoneAt(hero.x,hero.y);let best=null;
   // a hole in an open zone at a good distance, otherwise a random spot near the hero
-  const cand=holes.filter(([x,y])=>open[zoneAt(x,y)]&&Math.hypot(x-hero.x,y-hero.y)>160&&Math.hypot(x-hero.x,y-hero.y)<520);
+  const cand=holes.filter(([x,y])=>open[zoneAt(x,y)]&&Math.hypot(x-hero.x,y-hero.y)>(SMALL?110:160)&&Math.hypot(x-hero.x,y-hero.y)<520);
   if(cand.length&&rnd()<.6)best=cand[Math.floor(rnd()*cand.length)];
-  for(let i=0;i<20&&!best;i++){const a=rnd()*TAU,d=rr(170,300),x=hero.x+Math.cos(a)*d,y=hero.y+Math.sin(a)*d;if(x<30||y<30||x>WW-30||y>WW-30)continue;if(!open[zoneAt(x,y)])continue;if(hit(x,y,14))continue;best=[x,y]}
+  for(let i=0;i<20&&!best;i++){const a=rnd()*TAU,d=SMALL?rr(120,230):rr(170,300),x=hero.x+Math.cos(a)*d,y=hero.y+Math.sin(a)*d;if(x<30||y<30||x>WW-30||y>WW-30)continue;if(!open[zoneAt(x,y)])continue;if(hit(x,y,14))continue;best=[x,y]}
   if(!best)return;const k=KINDS[Math.floor(rnd()*KINDS.length)];Z.push({kind:k[0],sc:k[1],spd:k[2],hp:k[3],x:best[0],y:best[1],face:Math.atan2(hero.y-best[1],hero.x-best[0]),p:rnd(),anim:'walk',rise:0,die:0,flash:0})}
 function hit(x,y,r){for(const s of solids){if(s.off)continue;const cx=cl(x,s.x,s.x+s.w),cy=cl(y,s.y,s.y+s.d);if((x-cx)**2+(y-cy)**2<r*r)return s}return null}
 function move(o,dx,dy,r){o.x+=dx;let s=hit(o.x,o.y,r);if(s)o.x-=dx;o.y+=dy;s=hit(o.x,o.y,r);if(s)o.y-=dy}
@@ -225,7 +240,7 @@ function move(o,dx,dy,r){o.x+=dx;let s=hit(o.x,o.y,r);if(s)o.x-=dx;o.y+=dy;s=hit
 const HSTYLE=Object.assign({},HERO,{held:null,quiver:false,gun:'pistola'});
 let gunState=null;
 // ------------------------------------------------------------------ update
-let spawnT=1.5,zOn=true;
+let spawnT=1,zOn=true;
 function update(dt,inp){G.t+=dt;
   // hero walks with the stick (world y squashed on the screen, so the stick's y is stretched back)
   const m=Math.hypot(inp.x,inp.y);hero.moving=m>.15;if(hero.moving){const sp=150*Math.min(1,m);move(hero,inp.x/m*sp*dt,inp.y/m*sp*dt/K,11);hero.face=Math.atan2(inp.y,inp.x);hero.walk+=dt*12}
@@ -282,7 +297,7 @@ function drawDark(W,H,toScr){if(LOWFX)return;if(!dark)dark=document.createElemen
 
 // ------------------------------------------------------------------ the page
 function boot(){try{INTRO.on=false;paused=true}catch(e){}try{AU.on.music=false;AU.on.sfx=false}catch(e){}
-  build();bakeGround();if(window.ARMI){try{gunState=ARMI.nuova('pistola')}catch(e){gunState=null}try{const q=S(12.6*T,12*T,0);bara=ARMI.nuovaBara(q[0],q[1]);bara.wy=12*T;solid(12.6*T-30,12*T-14,60,28)}catch(e){bara=null}}
+  build();bakeGround();if(window.ARMI){try{gunState=ARMI.nuova('pistola')}catch(e){gunState=null}try{if(SMALL)throw 0;const q=S(12.6*T,12*T,0);bara=ARMI.nuovaBara(q[0],q[1]);bara.wy=12*T;solid(12.6*T-30,12*T-14,60,28)}catch(e){bara=null}}
   const ov=document.createElement('div');ov.id='mz';ov.innerHTML=`<style>
   #mz{position:fixed;inset:0;z-index:99999;background:#0c0c10;font-family:"Baloo 2",system-ui,sans-serif;color:#efe6d0;touch-action:none;user-select:none;-webkit-user-select:none}
   #mz canvas{position:absolute;inset:0;width:100%;height:100%}
@@ -294,11 +309,11 @@ function boot(){try{INTRO.on=false;paused=true}catch(e){}try{AU.on.music=false;A
   #mz button{font:700 14px "Baloo 2",system-ui;color:#efe6d0;background:#33302e;border:2px solid #000;border-radius:12px;padding:8px 12px;box-shadow:0 3px 0 #000}
   #mz button.on{background:#4a6a2a;color:#eaffd0}#mz button.buy{background:#8a6a1e;color:#fff3c0}#mz button:active{transform:translateY(2px);box-shadow:0 1px 0 #000}
   #mz .hint{position:absolute;left:0;right:0;bottom:96px;text-align:center;font-size:13px;opacity:.7;pointer-events:none}
-  </style><canvas></canvas><div class="top"><h1>Mappa zombie · anteprima</h1><span class="cash" id="mzCash"></span></div><div class="zone" id="mzZone"></div>
+  </style><canvas></canvas><div class="top"><h1>Angolo zombie · prova</h1><span class="cash" id="mzCash"></span></div><div class="zone" id="mzZone"></div>
   <div class="hint" id="mzHint">Trascina per camminare · fermo spara</div><div class="bar" id="mzBar"></div>`;document.body.appendChild(ov);
   const cv=ov.querySelector('canvas'),barEl=ov.querySelector('#mzBar');let low=false,whole=false,buyB=null;
   const ui=()=>{barEl.innerHTML='';const mk=(t,on,f,cls)=>{const b=document.createElement('button');b.textContent=t;b.className=cls||(on?'on':'');b.onclick=()=>{f();ui()};barEl.appendChild(b);return b};
-    mk('Zombie',zOn,()=>{zOn=!zOn});mk('Effetti bassi',low,()=>{low=!low});mk('Mappa intera',whole,()=>{whole=!whole});
+    mk('Zombie',zOn,()=>{zOn=!zOn});mk('Effetti bassi',low,()=>{low=!low});mk('Vista intera',whole,()=>{whole=!whole});
     const nb=bars.find(b=>!b.open&&Math.hypot(hero.x-(b.x+b.w/2),hero.y-b.y)<120);buyB=nb;if(nb)mk('Apri '+ZN[nb.z].n+' · '+ZN[nb.z].price.toLocaleString('it-IT'),false,()=>{if(coins>=ZN[nb.z].price){coins-=ZN[nb.z].price;nb.open=true;nb.s.off=true;open[nb.z]=true}},'buy')};ui();
   // stick: drag anywhere on the map
   const stick={on:false,x0:0,y0:0,x:0,y:0};
