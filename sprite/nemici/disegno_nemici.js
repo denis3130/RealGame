@@ -210,47 +210,55 @@ function slime(x,y,face,anim,p,sc,o){sc=sc||1;o=o||{};const V0=V(face),{P,D,F,c,
     else{smile([fx,my],mw,my-1.4,3.2);fangs([fx,my],mw*.55,my-.2,1.6,LC2.fang)}ctx.restore()}
   ctx.restore()}
 
-// ------------------------------------------------------------------ BAT: a round purple ball of fur with big yellow eyes, pink ears and two fangs
-const BC2={fur:'#8a5bc4',furD:'#5d3a8f',furF:'#46296e',skin:'#c48ad8',memb:'#a77ad6',membD:'#7a52a8',membL:'#c9a4ea',eye:'#e8a020',mouth:'#3a1a3a',tongue:'#e07a8a',fang:'#fff6e0',ear:'#e9a0c0',nail:'#3a2a44'};
+// ------------------------------------------------------------------ BAT: a big round head with huge yellow eyes and tall pink ears on a little furry
+// body, hovering upright; wide wings with three long fingers and scalloped edges, held so the camera sees the membrane almost face on
+const BC2={fur:'#8a5bc4',furD:'#5d3a8f',furF:'#46296e',skin:'#c48ad8',memb:'#a77ad6',membD:'#7a52a8',membL:'#c9a4ea',eye:'#e8a020',mouth:'#3a1a3a',tongue:'#e07a8a',fang:'#fff6e0',ear:'#e9a0c0',nail:'#3a2a44',nose:'#5a2a66'};
 function bat(x,y,face,anim,p,sc,o){sc=sc||1;o=o||{};const V0=V(face),{P,D,F,c}=V0,ph=p*TAU,fly=anim==='walk',atk=anim==='attack',idle=!fly&&!atk;
-  // attack: .0-.3 climbs back and opens wide, .3-.55 dives forward and down with the wings swept back, bites, .55-1 climbs back up
-  let dive=0,climb=0,open=0,sweep=0;if(atk){if(p<.3){const k=ez(p/.3);climb=k;open=k}else if(p<.55){const k=(p-.3)/.25;dive=Math.sin(k*Math.PI);climb=1-k;open=k<.6?1:.3;sweep=Math.sin(k*Math.PI)}else{const k=ez((p-.55)/.45);dive=0;climb=0;open=.3*(1-k)}}
-  const flap=fly?Math.sin(ph*2):atk?Math.sin(ph*3)*.6:Math.sin(ph)*.45,bob=fly?Math.cos(ph*2)*1.2:idle?Math.sin(ph)*1.4:0,
-    hz=22+bob+climb*5-dive*11,hx=dive*10-climb*2,C=[hx,0,hz],Hc=add(C,[5-dive*.5,0,1.4+climb*.6]),Rb=4.8,Rh=4.3,hy=idle?look(p,.5):0;
-  {const q=P(hx,0,0);shadow(x+q[0]*sc,y+q[1]*sc,(7-dive*1.5)*sc,2.8*sc,.22+dive*.1)}
+  // attack: .0-.3 rears up and opens wide, .3-.55 dives forward and down with the wings swept back, bites, .55-1 climbs back
+  let dive=0,climb=0,open=0,sweep=0;if(atk){if(p<.3){const k=ez(p/.3);climb=k;open=k}else if(p<.55){const k=(p-.3)/.25;dive=Math.sin(k*Math.PI);climb=1-k;open=k<.6?1:.3;sweep=Math.sin(k*Math.PI)}else{const k=ez((p-.55)/.45);open=.3*(1-k)}}
+  // the flap beats the wings about the shoulders; hovering, the whole bat bobs up and down and pitches a little in the dive
+  const flap=fly?Math.sin(ph*2):atk?Math.sin(ph*3)*.6:Math.sin(ph)*.85,bob=fly?Math.cos(ph*2)*1.2:idle?Math.sin(ph)*1.4:0,lean=dive*.9-climb*.3,
+    Rb=3.9,Rh=5.4,C=[dive*9-climb*2,0,17+bob+climb*5-dive*9],Hc=add(C,[1+lean*4,0,Rb+Rh-1.4-Math.abs(lean)*1.5]),hy=idle?look(p,.5):0;
+  {const q=P(C[0],0,0);shadow(x+q[0]*sc,y+q[1]*sc,(8-dive*1.5)*sc,3.2*sc,.22+dive*.1)}
   ctx.save();ctx.translate(x,y);ctx.scale(sc,sc);const parts=[];
-  // wings: membranes between the shoulder, the elbow, the long finger and two trailing points; a lighter band along the fingers
-  const wing=sd=>{const S=add(C,[.5,sd*2.4,1.4]),E=add(S,[1.5-sweep*4,sd*7.5,flap*4.2+1]),T=add(E,[-1-sweep*5,sd*8.5,flap*6.5]),Q1=add(E,[-10-sweep*2,sd*4.5,flap*2.4-2.2]),Q2=add(S,[-10.5,sd*1.4,-2.6+flap*.5]),
-      pts=[S,E,T,Q1,Q2].map(P),k=farK(F(0,sd,-flap*.3)),col=mix(BC2.memb,BC2.membD,k);
-    return{d:D(lerp3(S,E,.5)),f:()=>{ctx.lineJoin='round';ink(2.4);ctx.fillStyle=col;ctx.beginPath();ctx.moveTo(pts[0][0],pts[0][1]);ctx.lineTo(pts[1][0],pts[1][1]);ctx.lineTo(pts[2][0],pts[2][1]);
-        // the trailing edge is scalloped
-        ctx.quadraticCurveTo((pts[2][0]+pts[3][0])/2+1,(pts[2][1]+pts[3][1])/2+2.5,pts[3][0],pts[3][1]);ctx.quadraticCurveTo((pts[3][0]+pts[4][0])/2,(pts[3][1]+pts[4][1])/2+2.5,pts[4][0],pts[4][1]);ctx.closePath();ctx.fill();ctx.stroke();
-        ctx.save();ctx.clip();ctx.fillStyle=BC2.membD;ctx.beginPath();ctx.moveTo(pts[1][0],pts[1][1]);ctx.lineTo(pts[2][0],pts[2][1]);ctx.lineTo(pts[3][0],pts[3][1]);ctx.closePath();ctx.fill();ctx.fillStyle=wa(.14);ctx.beginPath();ctx.moveTo(pts[0][0],pts[0][1]);ctx.lineTo(pts[1][0],pts[1][1]);ctx.lineTo(pts[4][0],pts[4][1]);ctx.closePath();ctx.fill();
-        ctx.strokeStyle='rgba(201,164,234,.45)';ctx.lineWidth=.9;for(const m of[lerp3(E,T,.5),lerp3(S,E,.5)]){const a=P(m),b=P(add(m,[-4,0,-1.2]));seg(a,b);ctx.stroke()}ctx.restore();
-        // the finger bones over the membrane
-        ctx.lineCap='round';ctx.strokeStyle=INK;ctx.lineWidth=3.2;ctx.beginPath();ctx.moveTo(pts[0][0],pts[0][1]);ctx.lineTo(pts[1][0],pts[1][1]);ctx.lineTo(pts[2][0],pts[2][1]);ctx.moveTo(pts[1][0],pts[1][1]);ctx.lineTo(pts[3][0],pts[3][1]);ctx.stroke();
-        ctx.strokeStyle=mix(BC2.skin,BC2.furF,k);ctx.lineWidth=1.5;ctx.stroke();ctx.fillStyle=BC2.furD;ball(pts[1],1.3);ctx.fill();const cl2=P(add(T,[.6,sd*.6,-.4]));ctx.fillStyle=BC2.nail;ink(.8);tri(pts[2][0],pts[2][1],cl2[0],cl2[1]+1.2,.7)}}};
+  // a wing lives in its own tilted plane: U runs along the span (turned up and down by the flap, swept back a little), Wc down
+  // the chord. The membrane hangs down from the arm toward the camera (V0.s, V0.c is the way to the camera in body space), so
+  // from the front and from behind the camera sees it wide, and it turns smoothly in between; in the dive the wings sweep back
+  const th=.68-sweep*.4,be=.2+sweep*.5,wing=sd=>{const phi=flap*.5+.25-sweep*.2,cb=Math.cos(be),U=[-Math.sin(be),sd*cb*Math.cos(phi),cb*Math.sin(phi)],W0=[V0.s*Math.cos(th),V0.c*Math.cos(th),-Math.sin(th)],Wc=nrm(sub(W0,mul(U,dot(U,W0)))),
+      S=add(C,[.6,sd*2.4,1.8]),pt=(u,w)=>add(add(S,mul(U,u)),mul(Wc,w)),E=pt(5.2,-2.6),W=pt(9.6,-1),T1=pt(14.6,1.6),T2=pt(12.8,6),T3=pt(9,9.2),H=pt(1.5,7.8),
+      ps=[S,E,W,T1,T2,T3,H].map(P),k=farK(F(0,sd,.3)),col=mix(BC2.membL,BC2.memb,k),scal=(a,b,pull)=>{const m=lerp3(a,b,.5),cq=P(add(m,mul(sub(W,m),pull))),q=P(b);ctx.quadraticCurveTo(cq[0],cq[1],q[0],q[1])};
+    return{d:D(C)+(D(add(C,[0,sd*3,0]))-D(C))*2-.01,f:()=>{ctx.lineJoin='round';ink(2.4);ctx.fillStyle=col;ctx.beginPath();ctx.moveTo(ps[0][0],ps[0][1]);ctx.lineTo(ps[1][0],ps[1][1]);ctx.lineTo(ps[2][0],ps[2][1]);ctx.lineTo(ps[3][0],ps[3][1]);
+        scal(T1,T2,.22);scal(T2,T3,.22);scal(T3,H,.16);ctx.closePath();ctx.fill();ctx.stroke();
+        ctx.save();ctx.clip();ctx.fillStyle=BC2.membD;ctx.beginPath();ctx.moveTo(ps[0][0],ps[0][1]);ctx.lineTo(ps[1][0],ps[1][1]);ctx.lineTo(ps[6][0],ps[6][1]);ctx.closePath();ctx.fill();
+        ctx.fillStyle=wa(.12);ctx.beginPath();ctx.moveTo(ps[2][0],ps[2][1]);ctx.lineTo(ps[3][0],ps[3][1]);ctx.lineTo(ps[4][0],ps[4][1]);ctx.closePath();ctx.fill();
+        ctx.restore();
+        // the arm and the three fingers over the membrane, a knob at the elbow, the little thumb claw at the wrist
+        ctx.lineCap='round';ctx.strokeStyle=INK;ctx.lineWidth=3.6;ctx.beginPath();ctx.moveTo(ps[0][0],ps[0][1]);ctx.lineTo(ps[1][0],ps[1][1]);ctx.lineTo(ps[2][0],ps[2][1]);ctx.stroke();ctx.strokeStyle=mix(BC2.fur,BC2.furF,k);ctx.lineWidth=2;ctx.stroke();
+        ctx.strokeStyle=INK;ctx.lineWidth=2.3;ctx.beginPath();for(const t of[T1,T2,T3]){const q=P(t);ctx.moveTo(ps[2][0],ps[2][1]);ctx.lineTo(q[0],q[1])}ctx.stroke();ctx.strokeStyle=mix(BC2.memb,BC2.membD,k);ctx.lineWidth=1;ctx.stroke();
+        ctx.fillStyle=mix(BC2.fur,BC2.furF,k);ball(ps[1],1.5);ctx.fill();const cw=P(add(W,mul(Wc,-1.8)));ctx.fillStyle=BC2.nail;ink(.8);tri(ps[2][0],ps[2][1],cw[0],cw[1],.7)}}};
   parts.push(wing(-1));parts.push(wing(1));
-  // the body: a furry ball with a lighter belly, two little feet tucked under
-  parts.push({d:D(C),f:()=>{const b=P(C);ink(2.4);ball(b,Rb);ctx.fillStyle=BC2.fur;ctx.fill();ctx.stroke();ctx.save();ball(b,Rb-1);ctx.clip();ctx.fillStyle=BC2.furD;ell(b[0]+Rb*.4,b[1]+Rb*.6,Rb,Rb*.7);ctx.fill();
-    on(V0,C,Rb,[.5,0,-.8],-.1,q=>{ctx.fillStyle=BC2.skin;ell(q[0],q[1],Rb*.6,Rb*.4);ctx.fill()});glowTop(b,Rb,.2);
-    ctx.strokeStyle='rgba(70,41,110,.5)';ctx.lineWidth=.8;for(let i=0;i<4;i++){const a=.6+i*1.5;seg([b[0]+Math.cos(a)*Rb*.65,b[1]+Math.sin(a)*Rb*.65],[b[0]+Math.cos(a)*Rb*1.05,b[1]+Math.sin(a)*Rb*1.05]);ctx.stroke()}ctx.restore();rim(b,Rb,b,Rb,.3);
-    for(const sd of[-1,1]){const f0=add(C,[-1,sd*1.6,-Rb]),f1=add(f0,[-1.5,sd*.4,-2.6]);ctx.strokeStyle=INK;ctx.lineWidth=2.6;seg(P(f0),P(f1));ctx.stroke();ctx.strokeStyle=BC2.skin;ctx.lineWidth=1.1;seg(P(f0),P(f1));ctx.stroke();const q=P(f1);ink(.8);ctx.fillStyle=BC2.nail;for(let i=-1;i<=1;i++){tri(q[0],q[1],q[0]+i*1.1,q[1]+1.3,.5)}}}});
-  // the head: big round ears with pink inside, a pink muzzle, huge yellow eyes, a little mouth with two fangs
-  parts.push({d:D(Hc),f:()=>{const Vh=Vat(face+hy,P(Hc),D(Hc)),H=[0,0,0],h=Vh.P(H);
-    for(const sd of[-1,1])if(Vh.F(0,sd,.5)<0)batEar(Vh,H,Rh,sd,ph);
-    ink(2.4);ball(h,Rh);ctx.fillStyle=BC2.fur;ctx.fill();ctx.stroke();ctx.save();ball(h,Rh-1);ctx.clip();ctx.fillStyle=BC2.furD;ell(h[0]+Rh*.4,h[1]+Rh*.65,Rh,Rh*.6);ctx.fill();glowTop(h,Rh,.22);ctx.restore();rim(h,Rh,h,Rh,.3);
-    on(Vh,H,Rh*.95,[1,0,-.05],-.05,(q,v)=>{const k=cl(v*1.6,0,1),w=Rh*.8*Math.max(.3,k),bl=blink(p,.55,.08);// the face
-      ctx.fillStyle=BC2.skin;ctx.beginPath();ctx.ellipse(q[0],q[1]+.6,w*.9,Rh*.62,0,0,TAU);ctx.fill();
-      for(const sd of[-1,1]){const ex=q[0]-sd*w*.5,ey=q[1]-Rh*.3;cEye([ex,ey],Rh*.3,BC2.eye,k,{dy:.15,dx:-Vh.c*.3,sq:atk?1:bl})}
-      // the nose: two tiny nostrils on a darker pad
-      ctx.fillStyle='#8a5a8a';ctx.beginPath();ctx.ellipse(q[0],q[1]+Rh*.18,w*.22,Rh*.13,0,0,TAU);ctx.fill();ctx.fillStyle='#3a1a3a';ball([q[0]-w*.08,q[1]+Rh*.18],.45);ctx.fill();ball([q[0]+w*.08,q[1]+Rh*.18],.45);ctx.fill();
-      const my=q[1]+Rh*.5,mw=w*.5;if(open>.2)openMouth([q[0],my+open*1.2],mw*(.7+open*.4),.8+open*3.6,BC2.mouth,BC2.tongue,BC2.fang);
-      else{smile([q[0],my],mw*.8,my-.6,1.8);fangs([q[0],my],mw*.5,my-.2,1.5,BC2.fang)}});
-    for(const sd of[-1,1])if(Vh.F(0,sd,.5)>=0)batEar(Vh,H,Rh,sd,ph)}});
+  // the body: fluffy tufts first (only their tips peek out), then a furry ball with a pale belly, two little feet tucked under
+  parts.push({d:D(C),f:()=>{const b=P(C);ctx.fillStyle=BC2.fur;ink(1.4);for(let i=-1;i<=1;i++)tri(b[0]+i*Rb*.5,b[1]+Rb*.5,b[0]+i*Rb*.65,b[1]+Rb*1.35,1.1);
+    ink(2.4);ball(b,Rb);ctx.fillStyle=BC2.fur;ctx.fill();ctx.stroke();ctx.save();ball(b,Rb-1);ctx.clip();ctx.fillStyle=BC2.furD;ell(b[0]+Rb*.4,b[1]+Rb*.6,Rb,Rb*.7);ctx.fill();
+    on(V0,C,Rb,[.7,0,-.3],-.1,q=>{ctx.fillStyle=BC2.skin;ell(q[0],q[1],Rb*.55,Rb*.5);ctx.fill()});glowTop(b,Rb,.2);ctx.restore();rim(b,Rb,b,Rb,.3);
+    for(const sd of[-1,1]){const f0=add(C,[.4,sd*1.5,-Rb+.4]),f1=add(f0,[1.3,sd*.3,-2.4]);ctx.strokeStyle=INK;ctx.lineWidth=2.6;seg(P(f0),P(f1));ctx.stroke();ctx.strokeStyle=BC2.skin;ctx.lineWidth=1.1;seg(P(f0),P(f1));ctx.stroke();const q=P(f1);ink(.8);ctx.fillStyle=BC2.nail;for(let i=-1;i<=1;i+=2)tri(q[0],q[1],q[0]+i*.9,q[1]+1.2,.45)}}});
+  // the head: tall ears, cheek tufts, the ball in three tones, then the face with its huge eyes, pink muzzle, little nose and two fangs
+  parts.push({d:D(Hc)+.01,f:()=>{const Vh=Vat(face+hy,P(Hc),D(Hc)),H=[0,0,0],h=Vh.P(H);
+    for(const sd of[-1,1])if(Vh.F(-.3,sd,.6)<0)batEar(Vh,H,Rh,sd,ph);
+    ctx.fillStyle=BC2.fur;ink(1.4);for(const sd of[-1,1]){tri(h[0]+sd*Rh*.55,h[1]+Rh*.2,h[0]+sd*Rh*1.35,h[1]+Rh*.45,1.4);tri(h[0]+sd*Rh*.6,h[1]+Rh*.5,h[0]+sd*Rh*1.2,h[1]+Rh*.95,1.2)}
+    ink(2.4);ball(h,Rh);ctx.fillStyle=BC2.fur;ctx.fill();ctx.stroke();ctx.save();ball(h,Rh-1);ctx.clip();ctx.fillStyle=BC2.furD;ell(h[0]+Rh*.4,h[1]+Rh*.7,Rh,Rh*.6);ctx.fill();ctx.fillStyle=BC2.furF;ell(h[0]+Rh*.9,h[1]+Rh*.1,Rh*.4,Rh);ctx.fill();glowTop(h,Rh,.22);ctx.restore();rim(h,Rh,h,Rh,.3);
+    on(Vh,H,Rh*.95,[1,0,-.1],-.05,(q,v)=>{const k=cl(v*1.6,0,1),w=Rh*.85*Math.max(.3,k),bl=blink(p,.55,.08);
+      ctx.fillStyle=BC2.skin;ctx.beginPath();ctx.ellipse(q[0],q[1]+Rh*.38,w*.62,Rh*.42,0,0,TAU);ctx.fill();
+      for(const sd of[-1,1]){const ex=q[0]-sd*w*.52,ey=q[1]-Rh*.22;cEye([ex,ey],Rh*.34,BC2.eye,k,{dy:.15,dx:-Vh.c*.3,sq:atk?1:bl})}
+      ctx.fillStyle=BC2.nose;ctx.beginPath();ctx.ellipse(q[0],q[1]+Rh*.22,w*.2,Rh*.12,0,0,TAU);ctx.fill();ctx.fillStyle='#2a1030';ball([q[0]-w*.07,q[1]+Rh*.24],.4);ctx.fill();ball([q[0]+w*.07,q[1]+Rh*.24],.4);ctx.fill();
+      const my=q[1]+Rh*.56,mw=w*.42;if(open>.2)openMouth([q[0],my+open*1.2],mw*(.8+open*.5),.8+open*3.4,BC2.mouth,BC2.tongue,BC2.fang);
+      else{smile([q[0],my],mw,my-.7,1.8);fangs([q[0],my],mw*.6,my-.2,1.6,BC2.fang)}});
+    for(const sd of[-1,1])if(Vh.F(-.3,sd,.6)>=0)batEar(Vh,H,Rh,sd,ph)}});
   run(parts);ctx.restore()}
-function batEar(Vh,H,Rh,sd,ph){const{P}=Vh,b=add(H,[-.5,sd*Rh*.7,Rh*.6]),tp=add(H,[-1.2,sd*Rh*1.25,Rh*2.3+Math.sin(ph*2+sd)*.3]),m=add(H,[-.6,sd*Rh*1.5,Rh*1.3]),B=P(b),T=P(tp),M=P(m),B2=P(add(H,[.4,sd*Rh*.25,Rh*.9]));
-  ink(1.8);ctx.fillStyle=BC2.fur;ctx.beginPath();ctx.moveTo(B[0],B[1]);ctx.quadraticCurveTo(M[0],M[1],T[0],T[1]);ctx.quadraticCurveTo((T[0]+B2[0])/2-1,(T[1]+B2[1])/2,B2[0],B2[1]);ctx.closePath();ctx.fill();ctx.stroke();
-  ctx.fillStyle=BC2.ear;ctx.beginPath();ctx.moveTo((B[0]*2+B2[0])/3,(B[1]*2+B2[1])/3);ctx.quadraticCurveTo(M[0]*.6+T[0]*.4,M[1]*.6+T[1]*.4,T[0]-(T[0]-B[0])*.25,T[1]-(T[1]-B[1])*.25);ctx.lineTo((B[0]+B2[0]*2)/3,(B[1]+B2[1]*2)/3);ctx.closePath();ctx.fill()}
+// a tall rounded ear on the top of the head, pink inside, wiggling a little
+function batEar(Vh,H,Rh,sd,ph){const{P}=Vh,wig=Math.sin(ph*2+sd)*.25,B=P(add(H,[-.4,sd*Rh*.9,Rh*.4])),B2=P(add(H,[.3,sd*Rh*.12,Rh*.98])),T=P(add(H,[-1.6,sd*(Rh*1.3+wig),Rh*2.2])),
+    Mo=P(add(H,[-1.2,sd*Rh*2.2,Rh*1.25])),Mi=P(add(H,[-.4,sd*Rh*.55,Rh*1.75])),mid=(a,b,k)=>[a[0]+(b[0]-a[0])*k,a[1]+(b[1]-a[1])*k];
+  ink(1.8);ctx.lineJoin='round';ctx.fillStyle=BC2.fur;ctx.beginPath();ctx.moveTo(B[0],B[1]);ctx.quadraticCurveTo(Mo[0],Mo[1],T[0],T[1]);ctx.quadraticCurveTo(Mi[0],Mi[1],B2[0],B2[1]);ctx.closePath();ctx.fill();ctx.stroke();
+  const b1=mid(B,B2,.3),b2=mid(B,B2,.8),ti=mid(T,mid(B,B2,.5),.3);ctx.fillStyle=BC2.ear;ctx.beginPath();ctx.moveTo(b1[0],b1[1]);ctx.quadraticCurveTo(mid(Mo,ti,.35)[0],mid(Mo,ti,.35)[1],ti[0],ti[1]);ctx.quadraticCurveTo(mid(Mi,b2,.4)[0],mid(Mi,b2,.4)[1],b2[0],b2[1]);ctx.closePath();ctx.fill()}
 
 return{goblin,skeleton,slime,bat,cEye,pip,brow,fangs,teethRow,smile,openMouth,look,blink};})();

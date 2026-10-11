@@ -23,9 +23,12 @@ intorno piano (`look`), senza scatti. Lo scheletro ha due lucine rosse ferme nel
 - **Slime** (`slime`, grandezza 1, `o.gel`/`o.gelD`/`o.gelF`/`o.gelL`/`o.eye` per i colori): gelatina verde brillante con un nucleo più
   chiaro e le bolle, gocce alla base; due occhioni che sbattono le ciglia e un sorriso con due zannette. `idle` respira e ride; `walk` salta
   (si schiaccia, si allunga in aria, si spiaccica); `attack` si tira indietro a bocca spalancata, con la lingua, e si lancia in avanti.
-- **Pipistrello** (`bat`, grandezza 1): vola. Pallina di pelo viola con la pancia chiara, ali di membrana con le dita in rilievo, orecchie
-  grandi rosa dentro, muso rosa, occhioni gialli, due zannette. `idle` plana sbattendo piano e si guarda intorno; `walk` vola; `attack` si
-  impenna, si tuffa a bocca aperta e risale.
+- **Pipistrello** (`bat`, grandezza 1, rifatto da zero l'11 ottobre su richiesta di Denis): sta in aria dritto, con una testa grande
+  (occhioni gialli, orecchie alte rosa dentro, muso rosa, nasino, due zannette, ciuffi sulle guance) sopra un corpicino di pelo con la
+  pancia chiara e due zampette. Le ali vivono in un piano loro (`U` lungo l'apertura, girato dal battito e un po' all'indietro, `Wc`
+  lungo la corda): braccio, tre dita lunghe e la membrana chiara smerlata, appesa dal braccio verso la telecamera, così si vede larga
+  davanti e dietro e gira piano nei tre quarti; di lato resta sottile e si legge col battito. `idle` plana sbattendo e si guarda
+  intorno; `walk` vola; `attack` si impenna a bocca aperta, si tuffa con le ali all'indietro e risale.
 
 Fogli: `python3 tests/mk.py` e poi `node tests/nemici.js [nome ...]` → `sprite/nemici/<nome>_<mossa>.png` e `fogli.json` (8 direzioni × fotogrammi,
 casella e piedi come per i mostri zombie). Pagina dal vivo: `python3 anteprime/mk_mostro.py goblin` → `anteprime/mostro.html`.

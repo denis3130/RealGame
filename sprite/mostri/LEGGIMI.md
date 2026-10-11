@@ -9,6 +9,10 @@
 - **Zombie spaventapasseri** (`spaventapasseri`, grandezza 1,15): `idle` (dondola piano; il corvo si guarda intorno, gracchia e becchetta), `walk` (saltella rigido e dondola come un burattino, il palo si inclina con lui, il corvo apre le ali per stare in equilibrio), `attack` (la trottola: si gira indietro per caricare, fa un giro completo con il palo che spazza tutto intorno e perde paglia, il corvo vola via e torna sul cappello; alla fine è stordito, con tre stelline sopra il cappello). Testa di juta legata al collo con la corda e la paglia che spunta, un occhio a bottone e uno strappato con la luce verde, bocca cucita; cappello di paglia con la fascia rossa, la tesa che si piega dietro e si alza davanti (non copre mai gli occhi) e il corvo sulla tesa; camicia a quadri con una toppa e uno strappo pieno di paglia, pantaloni blu rattoppati, cintura di corda, scarponi; il palo di legno passa nelle maniche, legato ai polsi, e le mani da zombie penzolano dai polsini.
 - **Segugio infernale** (`hound`): `idle`, `walk` (galoppo), `attack` (si acquatta, salta a fauci aperte, atterra). Gli occhi hanno un posto loro nell'ordine di disegno della testa: visti davanti a destra o a sinistra le orecchie non li coprono più.
 - **Il Becchino** (`becchino`, boss): `idle`, `walk`, `slam` (pala dietro la testa e colpo a terra con crepa verde), `summon` (braccio dritto in alto, cerchio verde, mani dei morti che escono da terra).
+  Mani (11 ottobre, richiesta di Denis): la mano libera ha dita vere (`bigHand`: palmo, quattro dita lunghe a due ossa che si piegano
+  verso il palmo, nocche, pollice, artigli neri a punta, messe in 3D così si accorciano e si coprono giuste da ogni lato), il pugno sulla
+  pala mostra le nocche e il pollice (`grip`), le mani dei morti che escono da terra sono le stesse dita su un moncone di braccio, tagliate
+  al livello del pavimento. `zArm` accetta `handFn` per disegnare una mano diversa; gli altri mostri e la lanterna non cambiano.
 
 ## Perché si muovono senza fotogrammi brutti
 

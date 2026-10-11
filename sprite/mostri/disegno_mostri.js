@@ -79,6 +79,36 @@ function hand(V0,h,fd,r,col,nail,pd){const{P}=V0;pd=pd||[1,0,-1];let cv=sub(pd,m
   ctx.fillStyle=nail;for(const f of fg){ball(f[2],w*.62);ctx.fill()}ctx.save();ball(q,r);ctx.clip();ctx.fillStyle='rgba(0,0,0,.2)';ell(q[0]+r*.45,q[1]+r*.45,r*.8,r*.6);ctx.fill();glowTop(q,r,.2);ctx.restore()}
 // a fist closed round a handle
 function fist(V0,h,r,col){const q=V0.P(h);ink(2.2);ball(q,r);ctx.fillStyle=col;ctx.fill();ctx.stroke();ctx.strokeStyle='rgba(20,16,14,.45)';ctx.lineWidth=1;ctx.beginPath();ctx.arc(q[0],q[1],r*.55,-.4,1.2);ctx.stroke()}
+// a big hand with real fingers (the Becchino): a palm, four long fingers in two bones that hook toward the palm with a knuckle at
+// the joint, a thumb, black pointed claws. fd = where the fingers point, pd = where the palm faces (both in 3D); o.curl = how much
+// they hook (0 open .. 1 clenched), o.spread = how wide they fan, o.fl = finger length, o.thumb = -1/1 = the side the thumb is on
+// (0 = none). The fingers are placed in 3D, so they foreshorten and overlap properly from every side (farthest drawn first)
+function bigHand(V0,h,fd,r,col,nail,pd,o){o=o||{};const{P,D}=V0;pd=pd||[1,0,-1];fd=nrm(fd);let cv=sub(pd,mul(fd,dot(pd,fd)));
+  if(len(cv)<.25){const alt=[0,0,-1];cv=sub(alt,mul(fd,dot(alt,fd)));if(len(cv)<.25)cv=[1,0,0]}
+  cv=nrm(cv);const sa=nrm(cross(fd,cv)),q=P(h),L=o.fl||r*2.4,curl=o.curl==null?.55:o.curl,sp=o.spread||1,w1=Math.max(1,r*.5),w2=Math.max(.8,r*.36),fg=[];
+  const bend=(b,d,Lk,cu)=>{const j=add(add(b,mul(d,Lk*.55)),mul(cv,Lk*.14*cu)),d2=nrm(add(mul(d,1-cu*.8),mul(cv,cu))),t=add(j,mul(d2,Lk*.48));return{b:P(b),j:P(j),t:P(t),d:D(t)}};
+  for(let k=-1.5;k<=1.5;k++){const d=nrm(add(fd,mul(sa,k*.3*sp))),b=add(add(h,mul(d,r*.5)),mul(sa,k*r*.28*sp));fg.push(bend(b,d,L*(1-Math.abs(k)*.08),curl))}
+  if(o.thumb){const sg=o.thumb,d=nrm(add(mul(sa,sg*.95),add(mul(fd,.5),mul(cv,.25))));fg.push(bend(add(h,mul(sa,sg*r*.75)),d,L*.6,Math.max(.3,curl)))}
+  fg.sort((a,b)=>a.d-b.d);const poly=f=>{ctx.beginPath();ctx.moveTo(f.b[0],f.b[1]);ctx.lineTo(f.j[0],f.j[1]);ctx.lineTo(f.t[0],f.t[1])};
+  ctx.lineCap='round';ctx.lineJoin='round';ctx.fillStyle=INK;ball(q,r+1.2);ctx.fill();
+  // every finger from the farthest: its own outline, first bone thick, second thinner, a knuckle on the joint, the claw past the tip
+  for(const f of fg){ctx.strokeStyle=INK;ctx.lineWidth=w1+2.4;poly(f);ctx.stroke();ctx.strokeStyle=col;ctx.lineWidth=w2;seg(f.j,f.t);ctx.stroke();ctx.lineWidth=w1;seg(f.b,f.j);ctx.stroke();ctx.fillStyle=col;ball(f.j,w1*.55);ctx.fill();
+    shadeLimb([f.b,f.j,f.t],[w1/2,w1/2,w2/2],'rgba(0,0,0,.26)');ctx.strokeStyle='rgba(0,0,0,.25)';ctx.lineWidth=.8;ctx.beginPath();ctx.arc(f.j[0],f.j[1],w1*.42,-.6,1.4);ctx.stroke();
+    const dx=f.t[0]-f.j[0],dy=f.t[1]-f.j[1],l=Math.hypot(dx,dy)||1,u=[dx/l,dy/l],n=[-u[1],u[0]],hw=w2*.55;ctx.fillStyle=nail;ctx.strokeStyle=INK;ctx.lineWidth=.8;ctx.beginPath();
+    ctx.moveTo(f.t[0]-u[0]*w2*.4+n[0]*hw,f.t[1]-u[1]*w2*.4+n[1]*hw);ctx.lineTo(f.t[0]+n[0]*hw*.8,f.t[1]+n[1]*hw*.8);ctx.lineTo(f.t[0]+u[0]*(w2*.5+1.9),f.t[1]+u[1]*(w2*.5+1.9));ctx.lineTo(f.t[0]-n[0]*hw*.8,f.t[1]-n[1]*hw*.8);ctx.lineTo(f.t[0]-u[0]*w2*.4-n[0]*hw,f.t[1]-u[1]*w2*.4-n[1]*hw);ctx.closePath();ctx.fill();ctx.stroke()}
+  // the palm last, so the fingers grow out of it without a seam: darker below, a warm light on top, the lit rim
+  ctx.fillStyle=col;ball(q,r);ctx.fill();ctx.save();ball(q,r);ctx.clip();ctx.fillStyle='rgba(0,0,0,.22)';ell(q[0]+r*.4,q[1]+r*.5,r*.85,r*.6);ctx.fill();glowTop(q,r,.2);ctx.restore();rim(q,r,q,r,.3)}
+// a fist closed round a handle with the fingers showing: four knuckles in a row along the handle (dir, in 3D) on the side that faces
+// down, black claws peeping out under them, the thumb lying across them
+function grip(V0,h,dir,r,col,nail){const{P}=V0,q=P(h),a=P(add(h,mul(nrm(dir),4))),ux=a[0]-q[0],uy=a[1]-q[1],ul=Math.hypot(ux,uy)||1,u=[ux/ul,uy/ul];let n=[-u[1],u[0]];if(n[1]<0)n=[-n[0],-n[1]];
+  const w=r*.5,kn=[0,1,2,3].map(i=>{const off=(i-1.5)*w*1.12;return[q[0]+u[0]*off+n[0]*r*.6,q[1]+u[1]*off+n[1]*r*.6]});
+  ctx.fillStyle=INK;ball(q,r+1.2);ctx.fill();for(const k of kn){ball(k,w*.72+1.2);ctx.fill()}
+  ctx.fillStyle=nail;ctx.strokeStyle=INK;ctx.lineWidth=.8;for(const k of kn)tri(k[0]+n[0]*w*.2,k[1]+n[1]*w*.2,k[0]+n[0]*(w*.72+1.7),k[1]+n[1]*(w*.72+1.7),w*.42);
+  ctx.fillStyle=col;ball(q,r);ctx.fill();for(const k of kn){ball(k,w*.72);ctx.fill()}
+  ctx.save();ball(q,r);ctx.clip();ctx.fillStyle='rgba(0,0,0,.2)';ell(q[0]+r*.4,q[1]+r*.45,r*.8,r*.6);ctx.fill();glowTop(q,r,.2);ctx.restore();
+  ctx.strokeStyle='rgba(0,0,0,.3)';ctx.lineWidth=.9;for(const k of kn){ctx.beginPath();ctx.arc(k[0],k[1],w*.5,.1,2.6);ctx.stroke()}
+  const t0=[q[0]-u[0]*w*1.5-n[0]*r*.3,q[1]-u[1]*w*1.5-n[1]*r*.3],t1=[q[0]+u[0]*w*.9+n[0]*r*.2,q[1]+u[1]*w*.9+n[1]*r*.2];ctx.lineCap='round';ctx.strokeStyle=INK;ctx.lineWidth=w+2.2;seg(t0,t1);ctx.stroke();ctx.strokeStyle=col;ctx.lineWidth=w;seg(t0,t1);ctx.stroke();
+  ctx.fillStyle=nail;ball([t1[0]+u[0]*w*.35,t1[1]+u[1]*w*.35],w*.3);ctx.fill();rim(q,r,q,r,.3)}
 // a thin bony limb: each bone tapers from joint to joint (rs = radius at each joint); knobs = bumps on the joints, [screen point, r].
 // Every outline first, then `end` (the hand), then every fill, so the joints have no seams
 function bone(pts,rs,col,end,knobs){knobs=knobs||[];ctx.fillStyle=INK;
@@ -171,7 +201,7 @@ function zArm(V0,sh,hd,pole,o){const{P}=V0,[el,h]=ik(sh,hd,o.L1,o.L2,pole),a=P(s
     bone([a,e,P(h)],[o.w1/2,re,o.w2/2],o.skin,end,[[kq,re*(1+.16*bend)]]);if(o.shade)shadeLimb([a,e,P(h)],[o.w1/2,re,o.w2/2],o.shade);
     if(o.sleeve)rag(V0,sh,lerp3(sh,el,o.sleeveK||.6),o.sleeve/2,o.sleeve/2*.9,o.cloth,o.body,rk,o.clothD);
     return{el,h}}
-  const end=o.noHand?null:()=>hand(V0,h,fd,o.hand,o.skin,o.nail||ZC.nail,o.pd);
+  const end=o.noHand?null:o.handFn?()=>o.handFn(V0,h,fd):()=>hand(V0,h,fd,o.hand,o.skin,o.nail||ZC.nail,o.pd);
   if(o.full){const w3=lerp3(el,h,.78);if(end)end();limb([a,e,P(w3)],[o.w1,o.w2],o.cloth);if(o.clothD)shadeLimb([a,e,P(w3)],[o.w1/2,o.w2/2],o.clothD);if(rk>0){ctx.save();ctx.globalAlpha=rk;ctx.fillStyle=o.cloth;ball(a,o.w1*.5+1.3);ctx.fill();ctx.restore()}if(o.cuff)cuff(V0,w3,el,o.w2+1,o.cloth)}
   else{limb([a,e,P(h)],[o.w1,o.w2],o.skin,end);if(o.sleeve){const s3=lerp3(sh,el,o.sleeveK||.6);sleeve(a,P(s3),o.sleeve,o.cloth,rk);if(o.cuff)cuff(V0,s3,sh,o.sleeve,o.cloth)}}
   return{el,h}}
@@ -448,11 +478,10 @@ function becchino(x,y,face,anim,p,sc){sc=sc||2;const V0=V(face),{P,D,F}=V0,ph=p*
   // summon: green ring on the floor and dead hands clawing out of the ground around him (the ones behind him first)
   const hands=front=>{const k=cl((p-.15)/.6,0,1);for(let i=0;i<4;i++){const an=i*TAU/4+.4,sn=Math.sin(an);if((sn>0)!==front)continue;const e=cl(k*1.5-i*.14,0,1)*armUp;if(e<=0)continue;
     const hx=x+Math.cos(an)*24*sc,hy=y+2*sc+sn*9*sc;ctx.fillStyle='rgba(20,16,12,.75)';ell(hx,hy+1,4.6*sc,1.6*sc);ctx.fill();ctx.save();ctx.translate(hx,hy);ctx.scale(sc*.8,sc*.8);
-    const up=e*9,wv=Math.sin(ph*3+i)*1.2,top=[wv*.3,-up];ink(1.8);ctx.fillStyle=ZC.skin;ctx.beginPath();ctx.moveTo(-2.2,0);ctx.lineTo(-2.2+wv*.3,-up);ctx.lineTo(2.2+wv*.3,-up);ctx.lineTo(2.2,0);ctx.closePath();ctx.fill();ctx.stroke();
-    ctx.lineCap='round';const fg=[-1,0,1].map(j=>[[top[0]+j*1.6,top[1]-1],[top[0]+j*2.2+wv*.4,top[1]-4.6],[top[0]+j*2.6+wv*.6+1.2,top[1]-6.4]]);
-    ctx.strokeStyle=INK;ctx.lineWidth=4;for(const f of fg){ctx.beginPath();ctx.moveTo(f[0][0],f[0][1]);ctx.quadraticCurveTo(f[1][0],f[1][1],f[2][0],f[2][1]);ctx.stroke()}ctx.fillStyle=INK;ball(top,4.2);ctx.fill();
-    ctx.fillStyle=ZC.skin;ball(top,3);ctx.fill();ctx.strokeStyle=ZC.skin;ctx.lineWidth=1.6;for(const f of fg){ctx.beginPath();ctx.moveTo(f[0][0],f[0][1]);ctx.quadraticCurveTo(f[1][0],f[1][1],f[2][0],f[2][1]);ctx.stroke()}
-    ctx.fillStyle=ZC.nail;for(const f of fg){ball(f[2],1);ctx.fill()}ctx.restore()}};
+    // only what is above the ground shows: a forearm stump rising, then a big open hand with long fingers clawing at the air
+    ctx.beginPath();ctx.rect(-40,-80,80,81.5);ctx.clip();const up=e*10,Vg=V(Math.PI/2+i*.8-1.2),W=[0,0,up],A=Vg.P(0,0,-6),B=Vg.P(W);
+    ink(1.8);ctx.fillStyle=ZC.skin;hull(A,2.6,B,2.2);ctx.fill();ctx.stroke();shadeLimb([A,B],[2.6,2.2],'rgba(40,58,26,.42)');
+    bigHand(Vg,W,nrm([Math.sin(ph*3+i)*.25,Math.cos(ph*2+i)*.2,1]),2.6,ZC.skin,ZC.nail,[1,0,.2],{curl:.45+.25*Math.sin(ph*3+i),spread:1.25,fl:7,thumb:i%2?1:-1});ctx.restore()}};
   shadow(x,y+2*sc,16*sc,6*sc,.38);
   if(sum){ctx.save();shine(BC.glow,x,y+2*sc,34*sc*armUp,.35*armUp);ctx.strokeStyle=`rgba(150,255,110,${.6*armUp})`;ctx.lineWidth=2;ell(x,y+2*sc,26*sc*armUp,9*sc*armUp);ctx.stroke();ctx.restore();hands(false)}
   ctx.save();ctx.translate(x,y);ctx.scale(sc*(1+squash),sc*(1-squash));const parts=[],dT=D(Ch);
@@ -469,12 +498,12 @@ function becchino(x,y,face,anim,p,sc){sc=sc||2;const V0=V(face),{P,D,F}=V0,ph=p*
     on(V0,Ch,12.4,[-1,.35,.05],.1,q=>{ink(1.4);ctx.fillStyle=BC.patch;ctx.fillRect(q[0]-3.4,q[1]-3.2,6.8,6);ctx.strokeRect(q[0]-3.4,q[1]-3.2,6.8,6);ctx.beginPath();for(let i=0;i<4;i++){ctx.moveTo(q[0]-3.4+i*2.2,q[1]-4);ctx.lineTo(q[0]-3.4+i*2.2,q[1]-2.4)}ctx.stroke()})}});
   // free arm (left): hangs and swings; raised straight up at his side to call the dead (never in front of his face)
   {const sh=add(Ch,[0,-11.4,3]),swg=walk?Math.sin(ph)*2.2:0,hd=add(Ch,[6-armUp*8,-15+armUp*2.5,-9+armUp*35+swg]),k=farK(F(0,-1,0));
-    parts.push({d:D(add(sh,[6,0,0])),f:()=>{const r=zArm(V0,sh,hd,nrm([-.4,-.6,-1+armUp*1.4]),{side:-1,L1:8.6,L2:8.6,w1:7,w2:6,hand:3.8,full:true,skin:mix(BC.skin,BC.skinF,k),cloth:mix(BC.coat,BC.coatF,k),clothD:'rgba(0,0,0,.32)',pd:nrm(lerp3([1,0,-1],[.2,0,1],armUp))});
+    parts.push({d:D(add(sh,[6,0,0])),f:()=>{const r=zArm(V0,sh,hd,nrm([-.4,-.6,-1+armUp*1.4]),{side:-1,L1:8.6,L2:8.6,w1:7,w2:6,hand:3.8,full:true,skin:mix(BC.skin,BC.skinF,k),cloth:mix(BC.coat,BC.coatF,k),clothD:'rgba(0,0,0,.32)',pd:nrm(lerp3([1,0,-1],[.2,0,1],armUp)),handFn:(V0,h,fd)=>bigHand(V0,h,fd,3.8,mix(BC.skin,BC.skinF,k),ZC.nail,nrm(lerp3([1,0,-1],[.2,0,1],armUp)),{curl:.6-armUp*.4,spread:1+armUp*.35,thumb:-1})});
       if(armUp>.3){const q=P(r.h);shine(BC.glow,q[0],q[1],10,.5*armUp)}}})}
   // shovel arm (right): arm and shovel swing in a plane beside the head
   {const sh=add(Ch,[0,11.4,3]),k=farK(F(0,1,0)),skin=mix(BC.skin,BC.skinF,k),cloth=mix(BC.coat,BC.coatF,k);
     parts.push({d:D(add(Ch,[4,13.6,0])),f:()=>{const tool=()=>shovel(V0,sv),arm=()=>zArm(V0,sh,sv.hd,nrm([-.4,.5,-1]),{side:1,L1:8.6,L2:8.6,w1:7,w2:6,noHand:true,full:true,skin,cloth,clothD:'rgba(0,0,0,.32)'});
-      if(F(0,1,0)>0){arm();tool()}else{tool();arm()}fist(V0,sv.hd,3.8,skin);const fq=P(sv.hd);ctx.save();ball(fq,2.7);ctx.clip();glowTop(fq,3.8,.22);ctx.restore()}})}
+      if(F(0,1,0)>0){arm();tool()}else{tool();arm()}grip(V0,sv.hd,sv.dir,3.8,skin,ZC.nail)}})}
   parts.push({d:D(Hc),f:()=>{neck(V0,add(Ch,[2,0,9.6]),5.6,add(Hc,[-1,0,-5.4]),4.8,BC.skin);bHead(V0,Hc,8.6,ph,(slam&&p>.4&&p<.68)||sum?1:.3+.15*Math.sin(ph*2))}});
   run(parts);
   if(!LOWFX){ctx.fillStyle=INK;const h=P(Hc);for(let i=0;i<4;i++){const an=ph*2+i*1.6;ball([h[0]+Math.cos(an)*14,h[1]-4+Math.sin(an*1.5)*5],.8);ctx.fill()}}
@@ -861,6 +890,6 @@ function spaventapasseri(x,y,face,anim,p,sc){sc=sc||1.15;const ph=p*TAU,walk=ani
   ctx.restore()}
 
 // the toolkit of the method (the 3D skeleton, the IK, the lantern's way of painting), for the enemies drawn in other files
-const _rig={TAU,cl,ez,lerp,add,sub,mul,len,nrm,dot,cross,lerp3,V,Vat,rz,angTo,mix,farK,ik,stepper,NOSTEP,shine,ball,seg,tri,spike,hull,limb,sleeve,cuff,on,neck,hand,fist,bone,claw,rag,leg,trunk,WARM,LITK,wa,rim,shadeLimb,glowTop,folds,run,ZC,zArm,zHead,strawTuft,disc,ropeRings,starS,flame,crack,hull2};
+const _rig={TAU,cl,ez,lerp,add,sub,mul,len,nrm,dot,cross,lerp3,V,Vat,rz,angTo,mix,farK,ik,stepper,NOSTEP,shine,ball,seg,tri,spike,hull,limb,sleeve,cuff,on,neck,hand,fist,bone,claw,rag,leg,trunk,WARM,LITK,wa,rim,shadeLimb,glowTop,folds,run,ZC,zArm,zHead,strawTuft,disc,ropeRings,starS,flame,crack,hull2,bigHand,grip};
 return {zombie,strisciante,minatore,hound,becchino,lanterna,spaventapasseri,_rig};
 })();
