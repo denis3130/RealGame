@@ -102,3 +102,11 @@ tondo e qualche tegola mancante, zucche con la faccia nel disco, pali ai giunti 
   solido, fuori dal mondo. Quattro giri da 6 minuti, circa 90 zombie ognuno: nessuno fermo, nessuno dentro un solido.
 - Tempi (questa macchina, senza scheda grafica, 5 zombie che inseguono): fotogramma 8,5 ms contro 8,0 prima delle modifiche; dietro la cripta
   6,4 contro 6,0; mentre l'eroe si muove dietro qualcosa la sagoma aggiunge circa 2 ms. Navigazione e percorsi: meno di 0,3 ms.
+
+## Piega più dolce e colpi che non passano i muri (12 ottobre, Denis: «la casa si allunga o si accorcia a dipendenza di dove ti muovi»)
+
+- La piega in verticale (le cose alte più lunghe quando l'eroe sta sotto, più corte quando sta sopra) ora è al massimo ±7% dell'altezza
+  (`CAM.ly=.0006`, tetto `LKV=.07`); prima a 150 px dall'eroe arrivava a circa ±21%. Quella di lato, che fa vedere il fianco delle cose, è un
+  poco più leggera (`CAM.lx=.0042`, tetto `LK=.32`, circa 18°).
+- I colpi non passano attraverso muri, recinti, lapidi, casse e case: l'eroe mira solo allo zombie più vicino che vede davvero (linea libera sui
+  solidi veri, `physClear`, ignorando la fossa in cui sta lo zombie), ricontrollato ogni 0,1 s.

@@ -9,14 +9,16 @@
 const ZM=(()=>{
 const R0=CR._rig,{TAU,cl,ez,lerp,mix,ball,seg}=R0,wa=R0.wa;
 const T=64;                                   // una casella
-const CAM={x:0,y:0,z:1,lx:.0048,ly:.0016};    // centro inquadrato (coordinate del terreno), zoom, quanto si piegano le cose alte
+const CAM={x:0,y:0,z:1,lx:.0042,ly:.0006};    // centro inquadrato (coordinate del terreno), zoom, quanto si piegano le cose alte
 let seed=1;const rnd=()=>{seed=(seed*16807)%2147483647;return(seed-1)/2147483646},rr=(a,b)=>a+(b-a)*rnd(),srand=s=>{seed=s||1};
 // ------------------------------------------------------------------ proiezione
 // un punto del mondo (x, y sul terreno, z in alto) sullo schermo: le cose alte scappano dal centro in orizzontale, e in verticale
 // quelle sotto l'eroe sembrano un po' più alte (sono più vicine), quelle sopra più basse
 let LEANK=1;// quanto si piega il prop che si sta disegnando (lk del prop: 1 case e muri, .5 pali e lapidi)
-const LK=.36,soft=k=>LK*Math.tanh(k/LK);// la piega satura piano verso 23°: lontano dall'eroe le cose alte non sembrano cadute
-const S=(x,y,z)=>{if(Array.isArray(x))return S(x[0],x[1],x[2]);z=z||0;return[x+soft((x-CAM.x)*CAM.lx)*z*LEANK,y-z+soft((CAM.y-y)*CAM.ly)*z*LEANK]};
+// la piega di lato satura piano verso 19° (lontano dall'eroe le cose alte non sembrano cadute); quella in verticale, che allunga o accorcia
+// le case mentre l'eroe va su e giù, è tenuta piccola (al massimo ±7% dell'altezza): richiesta di Denis del 12 ottobre
+const LK=.32,soft=k=>LK*Math.tanh(k/LK),LKV=.07,softV=k=>LKV*Math.tanh(k/LKV);
+const S=(x,y,z)=>{if(Array.isArray(x))return S(x[0],x[1],x[2]);z=z||0;return[x+soft((x-CAM.x)*CAM.lx)*z*LEANK,y-z+softV((CAM.y-y)*CAM.ly)*z*LEANK]};
 const add3=(a,b,k)=>[a[0]+b[0]*(k==null?1:k),a[1]+b[1]*(k==null?1:k),a[2]+b[2]*(k==null?1:k)];
 const sub3=(a,b)=>[a[0]-b[0],a[1]-b[1],a[2]-b[2]];
 const len3=a=>Math.hypot(a[0],a[1],a[2]);
@@ -285,7 +287,11 @@ function spawn(){const h=W.hero,c=holes.filter(([x,y])=>Math.hypot(x-h.x,y-h.y)>
   if(W.Z.some(z=>Math.hypot(z.x-p[0],z.y-p[1])<30))return;W.Z.push({kind:k[0],sc:k[1],spd:k[2],hp:k[3],x:p[0],y:p[1],face:0,p:Math.random(),anim:'walk',rise:0,die:0,flash:0})}
 function updateBeings(dt,inp){const h=W.hero;const m=Math.hypot(inp.x,inp.y);h.moving=m>.15;if(h.moving){const sp=150*Math.min(1,m);move(h,inp.x/m*sp*dt,inp.y/m*sp*dt,10);h.face=Math.atan2(inp.y,inp.x);h.walk+=dt*12}
   h.zh=(h.zh||0)+(heightAt(h.x,h.y)-(h.zh||0))*Math.min(1,dt*14);const noShoot=!!W.dbg.noShoot;
-  h.fireCd-=dt;let tgt=null,bd=230;for(const z of W.Z){if(z.rise<1||z.die)continue;const d=Math.hypot(z.x-h.x,z.y-h.y);if(d<bd){bd=d;tgt=z}}
+  // il bersaglio: lo zombie più vicino entro 230 px che l'eroe vede davvero (i colpi non passano attraverso muri, recinti, lapidi, casse…);
+  // la linea si controlla sui solidi veri, ignorando quello in cui sta lo zombie (la fossa da cui esce); ricontrollata ogni 0,1 s
+  h.fireCd-=dt;h.tgT=(h.tgT||0)-dt;let tgt=h.tgZ&&W.Z.includes(h.tgZ)&&!h.tgZ.die&&h.tgZ.rise>=1&&Math.hypot(h.tgZ.x-h.x,h.tgZ.y-h.y)<230?h.tgZ:null;
+  if(h.tgT<=0||!tgt){h.tgT=.1;tgt=null;const c=W.Z.filter(z=>z.rise>=1&&!z.die).map(z=>[Math.hypot(z.x-h.x,z.y-h.y),z]).filter(a=>a[0]<230).sort((a,b)=>a[0]-b[0]);
+    for(const[,z] of c)if(physClear(h.x,h.y,z.x,z.y,1.5,hit(z.x,z.y,2))){tgt=z;break}h.tgZ=tgt}
   if(gunState)gunState.update(dt,!h.moving&&!!tgt&&!noShoot);
   if(tgt){h.aim=Math.atan2(tgt.y-h.y,tgt.x-h.x);if(!h.moving)h.face=h.aim}
   if(!h.moving&&tgt&&h.fireCd<=0&&!noShoot){h.fireCd=.36;tgt.hp--;tgt.flash=.12;const hs=S(h.x,h.y,0),ts=S(tgt.x,tgt.y,24);W.FX.push({k:'shot',a:[hs[0]+Math.cos(h.aim)*16,hs[1]-14+Math.sin(h.aim)*16],b:ts,t:.08});
