@@ -16,6 +16,7 @@ Roguelite in stile Archero per telefono, pubblicato come un solo file HTML5 (`in
   - I pezzi che girano per conto loro, come il cappello e il corvo, hanno una telecamera loro (`Vat`).
   - Ogni mossa dipende solo da `p` (da 0 a 1), così l'ultimo fotogramma si collega al primo. Mosse chiare: preparazione, colpo, ritorno.
   - Controlli: rispettare `LOWFX` e confrontare i tempi di disegno con gli altri mostri. Prima di metterlo nel gioco mostrare a Denis le quattro direzioni affiancate e una pagina dove lo vede muovere e girare dal telefono. Poi i fogli con `node tests/mostri.js <nome>`, controllando che i fogli della lanterna non cambino (`git status` pulito su `lanterna_*.png`).
+- **Tutto si adegua allo stile dei nemici nuovi in 3D** (Denis, 11 ottobre): anche la mappa zombie, i menu e ogni cosa nuova si costruiscono come volumi 3D visti dalla stessa telecamera dei mostri (lo schermo è x, y·0,55 − z) e si dipingono come la lanterna. Prima prova: `anteprime/mappa3d.js` (`python3 anteprime/mk_mappa3d.py`, pubblicata su https://claude.ai/artifact/Sw43VFJjGvrtkUs2t18fek).
 - Segno distintivo dell'eroe: un bastoncino di muschio verde acceso in bocca, solo nella schermata iniziale e nella intro, mai in battaglia.
 - Prima di cambiare qualcosa di grosso, chiedere a Denis. Quando dice «annota», si annota e basta. Il piano maestro (sotto) è approvato: dentro il piano si procede un pezzo alla volta senza richiedere, ma i disegni nuovi passano sempre dalle quattro direzioni.
 
