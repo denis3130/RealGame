@@ -59,3 +59,46 @@ sbrecciato, lastre a lati dritti), interni horror, luci cotte nel terreno; poi, 
 telecamera un cerchio a terra resta un cerchio: bocca del pozzo, cerchi delle botti), cancellate e picchetti lungo y in 3D invece del
 pannello di taglio, porta con l'anta vera lungo y e il pavimento che si vede dal vano, camino disegnato prima del tetto, tegole col bordo
 tondo e qualche tegola mancante, zucche con la faccia nel disco, pali ai giunti del recinto. Tema della prima area: `docs/tema-prima-area.md`.
+
+## Profondità, pavimento, sagoma (12 ottobre, foto di Denis: l'eroe spariva davanti all'obelisco e sulla pedana del portico)
+
+- **Regola della profondità** (`ky` di ogni prop): la y del bordo davanti della sua parte alta, cioè del suo solido. Mai la y di cose basse che
+  stanno davanti (il cumulo della tomba, i gradini, le pagliuzze): prima la lapide aveva `ky` al bordo del cumulo (+25 px) e l'eroe, fermo
+  sul cumulo, veniva disegnato prima della lapide. Le cose lunghe e sottili lungo y (muri, recinti) usano il bordo nord: chi sta accanto viene
+  disegnato dopo, tanto il muro si piega via da lui. Le cose sottili in diagonale (ante aperte) hanno `kyFn(x)`: la y dell'anta alla x dell'eroe.
+- **Pavimento** (`floor:true`): cumuli, corone, gradini della cripta, pedana e gradini del portico, tappeto, lastre cadute. Si disegnano subito
+  dopo il terreno, prima di tutti gli esseri.
+- **Pedane** `stand(x,y,w,d,h)`: chi ci sta sopra (eroe e zombie) sale di `h` (pedana del portico 6, gradini 3 e 1,6, gradini della cripta 4 e 7).
+- **Sagoma**: quando l'eroe è davvero dietro qualcosa (casa, cripta, pozzo, pilastri, muri), la sua sagoma chiara si vede attraverso, solo
+  dove è coperto: le cose davanti che toccano il suo riquadro si ridisegnano in una tela piccola a metà risoluzione. Il riquadro di ogni prop
+  si calcola una volta dai suoi pezzi (`obOf`, o `o.ob` per i disegni liberi come gli alberi) e la tolleranza per la piega vale solo dal lato
+  opposto all'eroe (le cose alte si piegano sempre via da lui). Se niente cambia (eroe fermo) la sagoma del fotogramma prima si riusa. Non
+  dentro casa, dove il muro davanti è già trasparente.
+- **Chiome che sfumano** (`fades`): la chioma di un albero vivo diventa trasparente (35%) quando l'eroe le passa dietro, come il tetto della casa.
+- I bagliori (flames) non coprono: quello verde della cripta sta davanti alla facciata, non sopra chi è sui gradini.
+- Solidi aggiunti: mobili (letto, tavolo, sedie, scaffale, camino), colonne della cripta, ante del cancello, candela sulla tomba.
+- Test: `node anteprime/zombie/visibilita.js [passo] [sagoma 0/1]` → `vetrina/vis_mappa.png` (verde visibile, giallo mezzo coperto, rosso
+  coperto), `vis.json`, ritagli dei punti coperti `vis_<n>.png` con chi copre (`vis_punti.json`).
+
+## Navigazione degli zombie (12 ottobre, Denis: «se si bloccano su una collisione falli fare il giro fino a farli venire da me»)
+
+- Griglia di 8 px con gli ostacoli gonfiati del raggio dello zombie (11); campo di distanze verso l'eroe (Dijkstra a 8 vicini, senza tagliare gli
+  angoli), ricalcolato quando l'eroe cambia casella. Lo zombie va dritto se vede l'eroe; altrimenti segue il campo e punta al punto più lontano
+  del percorso che riesce a vedere (niente zig-zag). Se parte da un punto chiuso (la fossa da cui esce) va alla casella libera raggiungibile in
+  linea retta (controllo sui solidi veri). Se resta fermo 0,7 s prova di lato per mezzo secondo. Chi è già dentro un solido può uscirne
+  (`move`), ma non entrare in un altro.
+- **Regola per chi disegna le aree**: niente corridoi tra 18 e 34 px (ci passa l'eroe ma non uno zombie: diventano nascondigli). O larghi almeno
+  34, o chiusi. Nell'area di prova la cripta è stata messa contro il bordo e staccata dal muro, e il recinto a est spostato più in là.
+- Test: `node anteprime/zombie/navtest.js [passo]` → per 7 posizioni dell'eroe, uno zombie (e un segugio) da ogni punto libero e da ogni buca,
+  45 s simulati senza disegnare; più una folla di 8. `vetrina/nav_mappa.png` (verde arriva con i secondi, rosso no con la linea fino a dove si è
+  fermato) e `nav.json`. Risultato: arrivano tutti (1.598 su 1.598), tempo medio 8–14 s.
+- `node anteprime/zombie/ravvicinati.js` (scritta dal verificatore): zombie e segugi vicinissimi all'eroe ma con un ostacolo in mezzo, da 445
+  posizioni dell'eroe (5.401 prove). Aveva trovato segugi fermi contro il recinto: lo zombie schiacciato contro un solido sta in una casella
+  chiusa della griglia, e il ripiego sceglieva la casella più vicina all'eroe anche se dall'altra parte. Ora il ripiego cerca a cerchi crescenti
+  solo le caselle raggiungibili in linea retta. Risultato: 0 fermi, 0 attacchi attraverso i muri (l'attacco e la corsa finale vogliono la linea
+  libera, `physClear`).
+- `node anteprime/zombie/inseguimento.js [minuti]`: l'eroe scappa davvero (giro intorno al pozzo, dentro e fuori casa, cimitero, dietro la cripta)
+  mentre gli zombie escono dalle buche; chi lo raggiunge muore dopo 2,5 s così ne escono altri. Misura zombie fermi più di 3 s, dentro un
+  solido, fuori dal mondo. Quattro giri da 6 minuti, circa 90 zombie ognuno: nessuno fermo, nessuno dentro un solido.
+- Tempi (questa macchina, senza scheda grafica, 5 zombie che inseguono): fotogramma 8,5 ms contro 8,0 prima delle modifiche; dietro la cripta
+  6,4 contro 6,0; mentre l'eroe si muove dietro qualcosa la sagoma aggiunge circa 2 ms. Navigazione e percorsi: meno di 0,3 ms.

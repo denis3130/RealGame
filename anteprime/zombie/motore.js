@@ -167,16 +167,69 @@ function drawPart(p){switch(p.k){case'face':return drawFace(p);case'facepoly':re
   case'ball':return drawBall(p);case'line':return drawLine(p);case'poly':{const q=p.pts.map(S);path(q);ctx.fillStyle=p.col;ctx.fill();if(p.ink){ink(p.ink);ctx.stroke()}return}case'fn':return p.f(S,ctx)}}
 // un prop: parts (nell'ordine di disegno: prima il contorno, poi le facce, da dietro a davanti), bx [x0,y0,x1,y1,zTop] per il taglio a
 // schermo, ky la profondità (y del bordo davanti), solids per le collisioni, shadows per le ombre cotte nel terreno, lights/flames
-const props=[],solids=[],shadows=[],lights=[],flames=[],holes=[],houses=[],smokes=[],perches=[],decals=[];// decals: f() dipinte nel terreno dopo le ombre (pozze di luce fisse, macchie)
-function prop(o){o.ky=o.ky==null?o.bx[3]:o.ky;o.parts=o.parts||[];props.push(o);return o}
+const props=[],solids=[],shadows=[],lights=[],flames=[],holes=[],houses=[],smokes=[],perches=[],decals=[],fades=[];// fades: chiome che sfumano ({x,ky,rx,reach,a}), le parti 'roof' del prop con house:fade// decals: f() dipinte nel terreno dopo le ombre (pozze di luce fisse, macchie)
+// o.ky: profondità = la y del bordo davanti della parte alta (dove sta il solido); o.kyFn(x): profondità che dipende dalla x dell'eroe (cose
+// sottili in diagonale, come le ante aperte); o.floor: sta a terra (cumuli, pedane, gradini, tappeti) e si disegna prima di tutti gli esseri
+const NAMES={cur:null};// il prop che si sta costruendo (serve ai test per dire chi copre l'eroe)
+function prop(o){o.ky=o.ky==null?o.bx[3]:o.ky;o.parts=o.parts||[];o.name=o.name||NAMES.cur||'?';props.push(o);return o}
+// pedane e gradini: chi ci sale sopra viene disegnato più in alto
+const stands=[];const stand=(x,y,w,d,h)=>stands.push({x,y,w,d,h});
+function heightAt(x,y){let h=0;for(const s of stands)if(x>=s.x&&x<=s.x+s.w&&y>=s.y&&y<=s.y+s.d&&s.h>h)h=s.h;return h}
 const solid=(x,y,w,d,tag)=>{const s={x,y,w,d,tag};solids.push(s);return s};
 const shade=(x,y,w,d,h,a)=>shadows.push({x,y,w,d,h,a});const shadeR=(x,y,r,a)=>shadows.push({x,y,r,a});
 // per disegnare un prop le facce stanno in ordine: contorno (hull) prima di tutto, poi le facce
 function drawProp(p,alphaOf){const parts=p.parts;for(const part of parts){if(part.part&&alphaOf){const a=alphaOf(part.part);if(a<=0)continue;if(a<1){ctx.save();ctx.globalAlpha*=a;drawPart(part);ctx.restore();continue}}drawPart(part)}}
 // ------------------------------------------------------------------ il mondo
-const W={w:10*T,h:10*T,ground:null,hero:null,Z:[],FX:[],crows:[],flock:[],clouds:[],mists:[],flies:[],leaves:[],puffs:[],coins:0,t:0};
-function hit(x,y,r){for(const s of solids){if(s.off)continue;const cx=cl(x,s.x,s.x+s.w),cy=cl(y,s.y,s.y+s.d);if((x-cx)**2+(y-cy)**2<r*r)return s}return null}
-function move(o,dx,dy,r){o.x+=dx;if(hit(o.x,o.y,r))o.x-=dx;o.y+=dy;if(hit(o.x,o.y,r))o.y-=dy}
+const W={dbg:{},w:10*T,h:10*T,ground:null,hero:null,Z:[],FX:[],crows:[],flock:[],clouds:[],mists:[],flies:[],leaves:[],puffs:[],coins:0,t:0};
+function hit(x,y,r,ex){for(const s of solids){if(s.off||s===ex)continue;const cx=cl(x,s.x,s.x+s.w),cy=cl(y,s.y,s.y+s.d);if((x-cx)**2+(y-cy)**2<r*r)return s}return null}
+function move(o,dx,dy,r){const s0=hit(o.x,o.y,r);o.x+=dx;if(hit(o.x,o.y,r,s0))o.x-=dx;o.y+=dy;if(hit(o.x,o.y,r,s0))o.y-=dy}
+// ------------------------------------------------------------------ navigazione degli zombie
+// Griglia di 8 px con gli ostacoli gonfiati del raggio dello zombie; un campo di distanze verso l'eroe (Dijkstra a 8 vicini, senza tagliare gli
+// angoli) ricalcolato quando l'eroe cambia casella. Ogni zombie va dritto se vede l'eroe; altrimenti scende lungo il campo e punta al punto
+// più lontano del percorso che riesce a vedere, così gira intorno a muri, case e lapidi senza zig-zag. Se resta fermo (spinto, incastrato)
+// prova per mezzo secondo di lato.
+const NC=8,ZR=11;let NAV=null;
+function navBuild(){const cw=Math.ceil(W.w/NC),ch=Math.ceil(W.h/NC),n=cw*ch,bl=new Uint8Array(n),los=new Uint8Array(n);
+  const mark=(arr,R)=>{for(const s of solids){if(s.off)continue;const i0=Math.max(0,Math.floor((s.x-R)/NC)),i1=Math.min(cw-1,Math.floor((s.x+s.w+R)/NC)),j0=Math.max(0,Math.floor((s.y-R)/NC)),j1=Math.min(ch-1,Math.floor((s.y+s.d+R)/NC));
+    for(let j=j0;j<=j1;j++)for(let i=i0;i<=i1;i++){const cx=(i+.5)*NC,cy=(j+.5)*NC,dx=cx-cl(cx,s.x,s.x+s.w),dy=cy-cl(cy,s.y,s.y+s.d);if(dx*dx+dy*dy<R*R)arr[j*cw+i]=1}}};
+  mark(bl,ZR+.5);mark(los,ZR+3);
+  NAV={cw,ch,n,bl,los,dist:new Float32Array(n),hk:new Float32Array(n*8+64),hv:new Int32Array(n*8+64),hc:-1,t:0}}
+const cellOf=(x,y)=>cl(Math.floor(y/NC),0,NAV.ch-1)*NAV.cw+cl(Math.floor(x/NC),0,NAV.cw-1);
+const cen=c=>{const i=c%NAV.cw;return[(i+.5)*NC,((c-i)/NAV.cw+.5)*NC]};
+function navField(){const N=NAV,h=W.hero,cw=N.cw,ch=N.ch,D=N.dist,B=N.bl,hk=N.hk,hv=N.hv;D.fill(1e9);let hs=0;
+  const push=(k,v)=>{let i=hs++;while(i>0){const p=(i-1)>>1;if(hk[p]<=k)break;hk[i]=hk[p];hv[i]=hv[p];i=p}hk[i]=k;hv[i]=v};
+  const pop=()=>{const v=hv[0],lk=hk[--hs],lv=hv[hs];let i=0;for(;;){let c=2*i+1;if(c>=hs)break;if(c+1<hs&&hk[c+1]<hk[c])c++;if(hk[c]>=lk)break;hk[i]=hk[c];hv[i]=hv[c];i=c}hk[i]=lk;hv[i]=lv;return v};
+  // le caselle libere vicino all'eroe sono i punti di partenza (l'eroe può stare più vicino ai muri di uno zombie)
+  const hi=Math.floor(h.x/NC),hj=Math.floor(h.y/NC);let lim=30;for(let r=4;r<=16&&!hs;r+=4,lim+=32)for(let j=hj-r;j<=hj+r;j++)for(let i=hi-r;i<=hi+r;i++){if(i<0||j<0||i>=cw||j>=ch)continue;const c=j*cw+i;if(B[c])continue;const d=Math.hypot((i+.5)*NC-h.x,(j+.5)*NC-h.y);if(d>lim)continue;if(d<D[c]){D[c]=d;push(d,c)}}
+  while(hs){const k0=hk[0],c=pop();if(k0>D[c])continue;const i=c%cw,j=(c-i)/cw;
+    for(let dj=-1;dj<=1;dj++)for(let di=-1;di<=1;di++){if(!di&&!dj)continue;const ni=i+di,nj=j+dj;if(ni<0||nj<0||ni>=cw||nj>=ch)continue;const nc=nj*cw+ni;if(B[nc])continue;
+      if(di&&dj&&(B[j*cw+ni]||B[nj*cw+i]))continue;const nd=k0+(di&&dj?1.4142*NC:NC);if(nd<D[nc]){D[nc]=nd;push(nd,nc)}}}}
+function navUpdate(dt){if(!NAV)return;NAV.t-=dt;const c=cellOf(W.hero.x,W.hero.y);if(c!==NAV.hc&&NAV.t<=0){NAV.hc=c;NAV.t=.08;navField()}}
+// la linea tra due punti è libera? (sulla griglia più gonfia; i primi e gli ultimi 10 px non contano: chi sta vicino a un muro vede lo stesso)
+function losClear(x0,y0,x1,y1){const L=Math.hypot(x1-x0,y1-y0);if(L<1)return true;const n=Math.ceil(L/4);for(let k=1;k<n;k++){const s=k/n*L;if(s<10||L-s<10)continue;const t=k/n;if(NAV.los[cellOf(x0+(x1-x0)*t,y0+(y1-y0)*t)])return false}return true}
+// la linea è libera per un corpo di raggio r sui solidi veri (ex: il solido da cui sta uscendo)
+function physClear(x0,y0,x1,y1,r,ex){const L=Math.hypot(x1-x0,y1-y0),n=Math.max(1,Math.ceil(L/3));for(let k=1;k<=n;k++){const t=k/n;if(hit(x0+(x1-x0)*t,y0+(y1-y0)*t,r,ex))return false}return true}
+function steer(z){const h=W.hero,N=NAV;if(!N)return[h.x,h.y];const d=Math.hypot(h.x-z.x,h.y-z.y);if((d<34&&physClear(z.x,z.y,h.x,h.y,4))||losClear(z.x,z.y,h.x,h.y))return[h.x,h.y];
+  const D=N.dist,cw=N.cw,ch=N.ch,c=cellOf(z.x,z.y);
+  if(N.bl[c]||D[c]>=1e9){// dentro un ostacolo (la fossa da cui è uscito) o fuori dal campo: la casella libera vicina che porta prima all'eroe
+    // le caselle libere intorno, a cerchi crescenti: si tengono solo quelle raggiungibili davvero in linea retta (controllo sui solidi veri) e tra
+    // queste vince quella da cui il percorso è più corto; così uno zombie schiacciato contro un recinto non punta a una casella dall'altra parte
+    const i0=c%cw,j0=(c-i0)/cw,s0=hit(z.x,z.y,ZR-.5);let best=null,bv=1e9,tested=0;
+    for(let r=1;r<=18;r++){for(let j=j0-r;j<=j0+r;j++)for(let i=i0-r;i<=i0+r;i++){if(Math.max(Math.abs(i-i0),Math.abs(j-j0))!==r||i<0||j<0||i>=cw||j>=ch)continue;const cc=j*cw+i;if(N.bl[cc]||D[cc]>=1e9)continue;
+        const p=cen(cc),v=D[cc]+Math.hypot(p[0]-z.x,p[1]-z.y)*.5;if(v>=bv)continue;tested++;if(physClear(z.x,z.y,p[0],p[1],ZR-1,s0)){bv=v;best=p}}
+      if(best&&r>=3)break;if(tested>160)break}
+    return best||[h.x,h.y]}
+  let cur=c,tgt=null;for(let k=0;k<24;k++){const i=cur%cw,j=(cur-i)/cw;let nb=-1,nv=D[cur];
+    for(let dj=-1;dj<=1;dj++)for(let di=-1;di<=1;di++){if(!di&&!dj)continue;const ni=i+di,nj=j+dj;if(ni<0||nj<0||ni>=cw||nj>=ch)continue;const nc=nj*cw+ni;if(N.bl[nc])continue;if(di&&dj&&(N.bl[j*cw+ni]||N.bl[nj*cw+i]))continue;if(D[nc]<nv){nv=D[nc];nb=nc}}
+    if(nb<0)break;cur=nb;const p=cen(cur);if(losClear(z.x,z.y,p[0],p[1]))tgt=p;else{if(!tgt)tgt=p;break}}
+  return tgt||[h.x,h.y]}
+function zWalk(z,dt){z.st=(z.st||0)-dt;if(z.st<=0||!z.tg||Math.hypot(z.tg[0]-z.x,z.tg[1]-z.y)<5){z.tg=steer(z);z.st=.12}
+  let tx=z.tg[0]-z.x,ty=z.tg[1]-z.y;const tl=Math.hypot(tx,ty)||1;tx/=tl;ty/=tl;
+  if(z.det>0){z.det-=dt;tx=z.dvx;ty=z.dvy}
+  if(z.vx==null){z.vx=tx;z.vy=ty}const k=Math.min(1,dt*7);z.vx+=(tx-z.vx)*k;z.vy+=(ty-z.vy)*k;const vl=Math.hypot(z.vx,z.vy)||1;
+  move(z,z.vx/vl*z.spd*dt,z.vy/vl*z.spd*dt,ZR);z.face=Math.atan2(z.vy,z.vx);
+  z.chk=(z.chk||0)+dt;if(z.cx0==null){z.cx0=z.x;z.cy0=z.y}
+  if(z.chk>.7){if(Math.hypot(z.x-z.cx0,z.y-z.cy0)<z.spd*.7*.3&&!(z.det>0)){const sd=Math.random()<.5?-1:1;z.dvx=-ty*sd;z.dvy=tx*sd;z.det=.5;z.st=0}z.chk=0;z.cx0=z.x;z.cy0=z.y}}
 // ------------------------------------------------------------------ terreno cotto (chiamato dall'area dopo aver messo i prop)
 const GT=2;let groundDraw=null;
 function bakeGround(w,h,painter){W.w=w;W.h=h;const c=document.createElement('canvas');c.width=w*GT;c.height=h*GT;const g=c.getContext('2d'),sv=ctx;ctx=g;ctx.scale(GT,GT);srand(5);
@@ -231,36 +284,66 @@ const HSTYLE=Object.assign({},HERO,{held:null,quiver:false,gun:'pistola'});
 function spawn(){const h=W.hero,c=holes.filter(([x,y])=>Math.hypot(x-h.x,y-h.y)>110&&Math.hypot(x-h.x,y-h.y)<460);if(!c.length)return;const p=c[Math.floor(Math.random()*c.length)],k=KINDS[Math.floor(Math.random()*KINDS.length)];
   if(W.Z.some(z=>Math.hypot(z.x-p[0],z.y-p[1])<30))return;W.Z.push({kind:k[0],sc:k[1],spd:k[2],hp:k[3],x:p[0],y:p[1],face:0,p:Math.random(),anim:'walk',rise:0,die:0,flash:0})}
 function updateBeings(dt,inp){const h=W.hero;const m=Math.hypot(inp.x,inp.y);h.moving=m>.15;if(h.moving){const sp=150*Math.min(1,m);move(h,inp.x/m*sp*dt,inp.y/m*sp*dt,10);h.face=Math.atan2(inp.y,inp.x);h.walk+=dt*12}
+  h.zh=(h.zh||0)+(heightAt(h.x,h.y)-(h.zh||0))*Math.min(1,dt*14);const noShoot=!!W.dbg.noShoot;
   h.fireCd-=dt;let tgt=null,bd=230;for(const z of W.Z){if(z.rise<1||z.die)continue;const d=Math.hypot(z.x-h.x,z.y-h.y);if(d<bd){bd=d;tgt=z}}
-  if(gunState)gunState.update(dt,!h.moving&&!!tgt);
+  if(gunState)gunState.update(dt,!h.moving&&!!tgt&&!noShoot);
   if(tgt){h.aim=Math.atan2(tgt.y-h.y,tgt.x-h.x);if(!h.moving)h.face=h.aim}
-  if(!h.moving&&tgt&&h.fireCd<=0){h.fireCd=.36;tgt.hp--;tgt.flash=.12;const hs=S(h.x,h.y,0),ts=S(tgt.x,tgt.y,24);W.FX.push({k:'shot',a:[hs[0]+Math.cos(h.aim)*16,hs[1]-14+Math.sin(h.aim)*16],b:ts,t:.08});
+  if(!h.moving&&tgt&&h.fireCd<=0&&!noShoot){h.fireCd=.36;tgt.hp--;tgt.flash=.12;const hs=S(h.x,h.y,0),ts=S(tgt.x,tgt.y,24);W.FX.push({k:'shot',a:[hs[0]+Math.cos(h.aim)*16,hs[1]-14+Math.sin(h.aim)*16],b:ts,t:.08});
     for(let i=0;i<5;i++)W.FX.push({k:'drop',x:ts[0],y:ts[1],vx:rr(-40,40),vy:rr(-60,-10),t:.5});if(tgt.hp<=0){tgt.die=.001;W.coins+=60}}
-  spawnT-=dt;if(zOn&&spawnT<=0&&W.Z.length<5){spawn();spawnT=rr(2,3.5)}
-  for(const z of W.Z){if(z.flash>0)z.flash-=dt;if(z.die){z.die+=dt;continue}if(z.rise<1){z.rise=Math.min(1,z.rise+dt/1.3);z.face=Math.atan2(h.y-z.y,h.x-z.x);continue}
-    const dx=h.x-z.x,dy=h.y-z.y,d=Math.hypot(dx,dy);z.face=Math.atan2(dy,dx);
-    if(d<30){if(z.anim!=='attack'){z.anim='attack';z.p=0}z.p+=dt/1.4}else{if(z.anim!=='walk'){z.anim='walk';z.p=0}z.p+=dt/(z.kind==='hound'?.6:1.1);move(z,dx/d*z.spd*dt,dy/d*z.spd*dt,11)}
-    for(const o of W.Z)if(o!==z&&!o.die){const ex=z.x-o.x,ey=z.y-o.y,e=Math.hypot(ex,ey);if(e>0&&e<24)move(z,ex/e*(24-e)*.5,ey/e*(24-e)*.5,11)}z.p%=1}
+  spawnT-=dt;if(zOn&&spawnT<=0&&W.Z.length<5){spawn();spawnT=rr(2,3.5)}navUpdate(dt);
+  for(const z of W.Z){if(z.flash>0)z.flash-=dt;if(z.die){z.die+=dt;continue}z.zh=(z.zh||0)+(heightAt(z.x,z.y)-(z.zh||0))*Math.min(1,dt*14);if(z.rise<1){z.rise=Math.min(1,z.rise+dt/1.3);z.face=Math.atan2(h.y-z.y,h.x-z.x);continue}
+    const dx=h.x-z.x,dy=h.y-z.y,d=Math.hypot(dx,dy);
+    if(d<30&&physClear(z.x,z.y,h.x,h.y,2)){z.face=Math.atan2(dy,dx);if(z.anim!=='attack'){z.anim='attack';z.p=0}z.p+=dt/1.4;z.chk=0;z.cx0=null}else{if(z.anim!=='walk'){z.anim='walk';z.p=0}z.p+=dt/(z.kind==='hound'?.6:1.1);zWalk(z,dt)}
+    for(const o of W.Z)if(o!==z&&!o.die&&o.rise>=1){const ex=z.x-o.x,ey=z.y-o.y,e=Math.hypot(ex,ey);if(e>0&&e<24)move(z,ex/e*(24-e)*.5,ey/e*(24-e)*.5,ZR)}z.p%=1}
   for(let i=W.Z.length-1;i>=0;i--)if(W.Z[i].die>1.1||(!zOn&&W.Z[i].rise<1))W.Z.splice(i,1);
   for(const f of W.FX){f.t-=dt;if(f.k==='drop'){f.x+=f.vx*dt;f.y+=f.vy*dt;f.vy+=260*dt}}for(let i=W.FX.length-1;i>=0;i--)if(W.FX[i].t<=0)W.FX.splice(i,1);
-  for(const hs of houses){const{x,y,w,d}=hs,pc=hs.porch;hs.inside=(h.x>x&&h.x<x+w&&h.y>y&&h.y<y+d+4)||(pc&&h.x>pc[0]&&h.x<pc[2]&&h.y>pc[1]&&h.y<pc[3]);hs.a+=((hs.inside?0:1)-hs.a)*Math.min(1,dt*7)}}
-function drawZombie(z){const q=S(z.x,z.y,0);
+  for(const hs of houses){const{x,y,w,d}=hs,pc=hs.porch;hs.inside=(h.x>x&&h.x<x+w&&h.y>y&&h.y<y+d+4)||(pc&&h.x>pc[0]&&h.x<pc[2]&&h.y>pc[1]&&h.y<pc[3]);hs.a+=((hs.inside?0:1)-hs.a)*Math.min(1,dt*7)}
+  for(const f of fades){const b=h.y<f.ky&&h.y>f.ky-f.reach&&Math.abs(h.x-f.x)<f.rx;f.a+=((b?.35:1)-f.a)*Math.min(1,dt*6)}}
+function drawZombie(z){const q=S(z.x,z.y,z.zh||0);
   if(z.rise<1){const k=z.rise;ctx.fillStyle='#4a3a2a';ctx.beginPath();ctx.ellipse(q[0],q[1],18+k*8,8+k*3,0,0,TAU);ctx.fill();for(let i=0;i<6;i++){const a=i*1.05+z.x,r=10+k*16;ctx.fillStyle='#64503a';ball([q[0]+Math.cos(a)*r,q[1]+Math.sin(a)*r*.5-Math.sin(k*Math.PI)*6],2.4);ctx.fill()}
     if(k>.25){const u=ez((k-.25)/.75);ctx.save();ctx.beginPath();ctx.rect(q[0]-60,q[1]-150,120,151);ctx.clip();ctx.translate(0,(1-u)*60*z.sc);CR[z.kind](q[0],q[1],z.face,'idle',(W.t*.6)%1,z.sc);ctx.restore()}return}
   if(z.die){const k=Math.min(1,z.die/1.1);ctx.save();ctx.globalAlpha=1-k*k;ctx.beginPath();ctx.rect(q[0]-60,q[1]-150,120,151);ctx.clip();ctx.translate(0,ez(k)*50*z.sc);CR[z.kind](q[0],q[1],z.face,'idle',0,z.sc);ctx.restore();return}
   CR[z.kind](q[0],q[1],z.face,z.anim,z.p,z.sc);if(z.flash>0){ctx.save();ctx.globalCompositeOperation='lighter';glow('255,255,255',q[0],q[1]-24*z.sc,22*z.sc,.5);ctx.restore()}}
+const alphaOf=(hs,part)=>part==='roof'?hs.a:part==='front'?.22+.78*hs.a:part==='in'?(hs.a>.95?0:1):1;
+function drawHero(){const h=W.hero,q=S(h.x,h.y,h.zh||0);drawRig(q[0],q[1]-8,h.face,h.walk,h.moving,HSTYLE,{gp:gunState?gunState.pose():{},aim:h.aim})}
+function drawEntry(e,h0a){if(e.p){LEANK=e.p.lk==null?1:e.p.lk;drawProp(e.p,e.p.house?part=>alphaOf(e.p.house,part):null);LEANK=1;return}if(e.hero){drawHero();return}if(e.fl){drawFlame(e.fl,h0a);return}drawZombie(e.z)}
+// la sagoma dell'eroe dove è coperto (dietro la casa, la cripta, un albero): si ridisegnano in una tela piccola solo le cose davanti a lui che
+// toccano il suo riquadro, e lì sopra si stampa la sua sagoma chiara a metà trasparenza. Costa qualcosa solo quando è davvero coperto.
+let SIL=null,LASTOCC=[];
+function heroBox(){const h=W.hero,q=S(h.x,h.y,h.zh||0);return[q[0]-18,q[1]-58,q[0]+18,q[1]+6]}
+// il riquadro vero di un prop (dai punti 3D dei suoi pezzi; o.ob se lo dà chi lo costruisce): [x0,y0,x1,y1,zTop], calcolato una volta
+function obOf(p){if(p._ob)return p._ob;if(p.ob)return p._ob=p.ob;let x0=1e9,y0=1e9,x1=-1e9,y1=-1e9,z1=0,any=false;const add=(q,r)=>{r=r||0;any=true;x0=Math.min(x0,q[0]-r);x1=Math.max(x1,q[0]+r);y0=Math.min(y0,q[1]-r);y1=Math.max(y1,q[1]+r);z1=Math.max(z1,(q[2]||0)+r)};
+  for(const t of p.parts){if(t.c)t.c.forEach(q=>add(q));else if(t.pts)t.pts.forEach(q=>add(q));else if(t.a){add(t.a,t.w);add(t.b,t.w)}else if(t.p)add(t.p,t.r)}
+  return p._ob=any?[x0-3,y0-3,x1+3,y1+3,z1+4]:[p.bx[0],p.bx[1],p.bx[2],p.bx[3],p.bx[4]]}
+function occluders(list,hi){const out=[];if(hi<0)return out;let[bx0,by0,bx1,by1]=heroBox();bx0+=5;bx1-=5;// il riquadro della figura, un po' più stretto di quello per le misure
+  for(let i=hi+1;i<list.length;i++){const e=list[i];if(!e.p)continue;const p=e.p;if(p.house&&p.house.inside&&p.parts[0]&&(p.parts[0].part==='front'||p.parts[0].part==='roof'))continue;// il muro davanti e il tetto sono già trasparenti
+    // le cose alte si piegano sempre via dall'eroe: la tolleranza per la piega va solo dal lato opposto a lui
+    const o=obOf(p),hx=W.hero.x,padE=o[0]>hx?.37*o[4]*(p.lk==null?1:p.lk)+2:1,padW=o[2]<hx?.37*o[4]*(p.lk==null?1:p.lk)+2:1;if(o[2]+padE<bx0||o[0]-padW>bx1||o[3]+3<by0||o[1]-o[4]*1.37>by1)continue;out.push(e)}return out}
+function silhouette(occ,h0a){if(!occ.length||W.dbg.noSil)return;const m=ctx.getTransform(),[bx0,by0,bx1,by1]=heroBox(),X0=Math.floor(m.a*bx0+m.e),Y0=Math.floor(m.d*by0+m.f),X1=Math.ceil(m.a*bx1+m.e),Y1=Math.ceil(m.d*by1+m.f),Q=.5,w=Math.ceil((X1-X0)*Q),hh=Math.ceil((Y1-Y0)*Q);if(w<=0||hh<=0)return;// a metà risoluzione: è un velo morbido
+  if(!SIL)SIL={o:document.createElement('canvas'),h:document.createElement('canvas')};for(const c of[SIL.o,SIL.h]){if(c.width<w)c.width=w;if(c.height<hh)c.height=hh}
+  // memoria: se l'eroe, la telecamera, chi lo copre e le trasparenze non sono cambiati, si riusa la sagoma del fotogramma prima
+  const h=W.hero,key=[Math.round(h.x*2),Math.round(h.y*2),Math.round((h.zh||0)*2),Math.round(h.face*8),h.moving?Math.floor(h.walk*3):-1,Math.round(CAM.x*2),Math.round(CAM.y*2),Math.round(CAM.z*100),w,hh,occ.map(e=>props.indexOf(e.p)+':'+Math.round((e.p.house?e.p.house.a:1)*20)).join(',')].join('|');
+  if(SIL.key!==key){SIL.key=key;
+  const sv=ctx;try{let g=SIL.h.getContext('2d');g.setTransform(1,0,0,1,0,0);g.globalCompositeOperation='source-over';g.globalAlpha=1;g.clearRect(0,0,w,hh);g.setTransform(m.a*Q,0,0,m.d*Q,(m.e-X0)*Q,(m.f-Y0)*Q);ctx=g;drawHero();
+      g.setTransform(1,0,0,1,0,0);g.globalCompositeOperation='source-in';g.fillStyle='rgb(160,240,228)';g.fillRect(0,0,w,hh);g.globalCompositeOperation='source-over';
+      g=SIL.o.getContext('2d');g.setTransform(1,0,0,1,0,0);g.globalCompositeOperation='source-over';g.globalAlpha=1;g.clearRect(0,0,w,hh);g.setTransform(m.a*Q,0,0,m.d*Q,(m.e-X0)*Q,(m.f-Y0)*Q);ctx=g;for(const e of occ)drawEntry(e,h0a);
+      g.setTransform(1,0,0,1,0,0);g.globalCompositeOperation='source-in';g.globalAlpha=1;g.drawImage(SIL.h,0,0);g.globalCompositeOperation='source-over'}finally{ctx=sv}}
+  ctx.save();ctx.setTransform(1,0,0,1,0,0);ctx.globalAlpha=.55;ctx.imageSmoothingEnabled=true;ctx.drawImage(SIL.o,0,0,w,hh,X0,Y0,X1-X0,Y1-Y0);ctx.restore()}
 // ------------------------------------------------------------------ il fotogramma del mondo (in coordinate del mondo, già trasformate)
 let liveDraw=null;// l'area può aggiungere disegni dal vivo: liveDraw(dt)
-function drawWorld(dt,view){const h0=houses[0],h0a=h0?h0.a:1;
+function drawWorld(dt,view){const h0=houses[0],h0a=h0?h0.a:1,D=W.dbg;
   ctx.drawImage(W.ground,0,0,W.ground.width,W.ground.height,0,0,W.w,W.h);
+  const vis=p=>!(p.bx[2]<view.x0||p.bx[0]>view.x1||p.bx[3]<view.y0||p.bx[1]-p.bx[4]>view.y1);
+  // il pavimento: cumuli, pedane, gradini, tappeti (stanno sotto i piedi di tutti)
+  for(const p of props)if(p.floor&&vis(p)){LEANK=p.lk==null?1:p.lk;drawProp(p,p.house?part=>alphaOf(p.house,part):null);LEANK=1}
   drawClouds(dt);drawCrowShadows();drawLights(h0a);
   // tutto ciò che sta in piedi, dal fondo verso davanti; gli esseri e le fiamme in mezzo
-  const list=[];for(const p of props){if(p.bx[2]<view.x0||p.bx[0]>view.x1||p.bx[3]<view.y0||p.bx[1]-p.bx[4]>view.y1)continue;list.push({k:p.ky,p})}
-  for(const z of W.Z)list.push({k:z.y+.01,z});if(W.hero)list.push({k:W.hero.y+.01,hero:1});for(const f of flames)list.push({k:f.ky!=null?f.ky:f.y+.6,fl:f});
-  list.sort((a,b)=>a.k-b.k);
-  const alphaOf=(hs,part)=>part==='roof'?hs.a:part==='front'?.22+.78*hs.a:part==='in'?(hs.a>.95?0:1):1;
-  for(const e of list){if(e.p){LEANK=e.p.lk==null?1:e.p.lk;drawProp(e.p,e.p.house?part=>alphaOf(e.p.house,part):null);LEANK=1;continue}if(e.hero){const h=W.hero,q=S(h.x,h.y,0);drawRig(q[0],q[1]-8,h.face,h.walk,h.moving,HSTYLE,{gp:gunState?gunState.pose():{},aim:h.aim});continue}
-    if(e.fl){drawFlame(e.fl,h0a);continue}drawZombie(e.z)}
+  const hx=W.hero?W.hero.x:0,list=[];for(const p of props){if(p.floor||!vis(p))continue;list.push({k:p.kyFn?p.kyFn(hx):p.ky,p})}
+  for(const z of W.Z)list.push({k:z.y+.01,z});if(W.hero&&!D.noHero&&!D.heroLast)list.push({k:W.hero.y+.01,hero:1});if(!D.noFlames)for(const f of flames)list.push({k:f.ky!=null?f.ky:f.y+.6,fl:f});
+  list.sort((a,b)=>a.k-b.k);let hi=-1;
+  for(let i=0;i<list.length;i++){const e=list[i];if(e.hero)hi=i;drawEntry(e,h0a)}
+  if(D.heroLast&&!D.noHero&&W.hero)drawHero();
+  LASTOCC=occluders(list,hi);silhouette(LASTOCC,h0a);
   drawPerched();
   if(!LOWFX){for(const p of W.puffs){const q=S(p.x,p.y,p.z);ctx.fillStyle=`rgba(150,150,165,${.28*(1-p.t/3.2)})`;ball(q,p.r);ctx.fill()}
     for(const l of W.leaves){const q=S(l.x,l.y,l.z);ctx.save();ctx.translate(q[0],q[1]);ctx.rotate(l.t*4+l.ph);ctx.fillStyle=l.c;ctx.beginPath();ctx.ellipse(0,0,2.6,1.2,0,0,TAU);ctx.fill();ctx.restore()}
@@ -275,7 +358,7 @@ function updateAmbient(dt){W.t+=dt;updateCrows(dt);if(LOWFX)return;
   for(const l of W.leaves){l.t+=dt;l.z-=14*dt;l.x+=Math.sin(l.t*3+l.ph)*20*dt+6*dt}for(let i=W.leaves.length-1;i>=0;i--)if(W.leaves[i].z<0)W.leaves.splice(i,1)}
 // ------------------------------------------------------------------ la pagina: tela, levetta, telecamera, bottoni
 function boot(area){try{INTRO.on=false;paused=true}catch(e){}try{AU.on.music=false;AU.on.sfx=false}catch(e){}
-  area.build();if(window.ARMI){try{gunState=ARMI.nuova('pistola')}catch(e){gunState=null}}
+  area.build();navBuild();if(window.ARMI){try{gunState=ARMI.nuova('pistola')}catch(e){gunState=null}}
   for(let i=0;i<16;i++)W.flies.push({x:rr(0,W.w),y:rr(0,W.h),z:rr(6,40),a:rr(0,TAU),ph:rr(0,TAU)});for(let i=0;i<9;i++)W.mists.push({x:rr(-100,W.w+100),y:rr(0,W.h),r:rr(80,160),v:rr(6,14)});
   for(let i=0;i<4;i++)W.clouds.push({x:rr(-300,W.w),y:rr(-100,W.h),r:rr(220,360),v:rr(9,16)});
   const ov=document.createElement('div');ov.id='mz';ov.innerHTML=`<style>
@@ -298,9 +381,7 @@ function boot(area){try{INTRO.on=false;paused=true}catch(e){}try{AU.on.music=fal
   ov.addEventListener('pointermove',e=>{if(stick.on){stick.x=e.clientX;stick.y=e.clientY}});const up=()=>{stick.on=false};ov.addEventListener('pointerup',up);ov.addEventListener('pointercancel',up);
   const keys={};addEventListener('keydown',e=>keys[e.key]=1);addEventListener('keyup',e=>keys[e.key]=0);
   const dpr=Math.min(2,window.devicePixelRatio||1);let last=performance.now(),ms=0,zoomOv=0,camOv=null;
-  function frame(now){const dt=Math.min(.05,(now-last)/1000);last=now;const Wp=ov.clientWidth,Hp=ov.clientHeight;if(cv.width!==Math.round(Wp*dpr)||cv.height!==Math.round(Hp*dpr)){cv.width=Math.round(Wp*dpr);cv.height=Math.round(Hp*dpr)}
-    let ix=0,iy=0;if(stick.on){const dx=stick.x-stick.x0,dy=stick.y-stick.y0,l=Math.hypot(dx,dy);if(l>6){ix=dx/Math.max(l,50);iy=dy/Math.max(l,50)}}
-    if(keys.ArrowLeft||keys.a)ix=-1;if(keys.ArrowRight||keys.d)ix=1;if(keys.ArrowUp||keys.w)iy=-1;if(keys.ArrowDown||keys.s)iy=1;
+  function render(dt,ix,iy){const Wp=ov.clientWidth,Hp=ov.clientHeight;if(cv.width!==Math.round(Wp*dpr)||cv.height!==Math.round(Hp*dpr)){cv.width=Math.round(Wp*dpr);cv.height=Math.round(Hp*dpr)}
     const saved=ctx,lf=LOWFX;ctx=cv.getContext('2d');LOWFX=low;const t0=performance.now();
     try{updateBeings(dt,{x:ix,y:iy});updateAmbient(dt);if(area.update)area.update(dt);
       const h=W.hero,z=zoomOv||(whole?Math.min(Wp/(W.w+80),Hp/(W.h+160)):Wp/330),tx=camOv?camOv[0]:whole?W.w/2:h.x,ty=camOv?camOv[1]:whole?W.h/2+10:h.y-24;
@@ -312,8 +393,22 @@ function boot(area){try{INTRO.on=false;paused=true}catch(e){}try{AU.on.music=fal
       drawDark(cv.width,cv.height,(x,y,r)=>[dpr*(Wp/2+(x-CAM.x)*CAM.z),dpr*(Hp/2+(y-CAM.y)*CAM.z),r*CAM.z*dpr],houses[0]?houses[0].a:1);
       ctx.setTransform(dpr,0,0,dpr,0,0);if(stick.on){ctx.strokeStyle='rgba(255,255,255,.35)';ctx.lineWidth=3;ctx.beginPath();ctx.arc(stick.x0,stick.y0,42,0,TAU);ctx.stroke();const dx=stick.x-stick.x0,dy=stick.y-stick.y0,l=Math.min(42,Math.hypot(dx,dy)),a=Math.atan2(dy,dx);ctx.fillStyle='rgba(255,255,255,.4)';ball([stick.x0+Math.cos(a)*l,stick.y0+Math.sin(a)*l],18);ctx.fill()}
       const vg=ctx.createRadialGradient(Wp/2,Hp/2,Math.min(Wp,Hp)*.4,Wp/2,Hp/2,Math.max(Wp,Hp)*.75);vg.addColorStop(0,'rgba(0,0,0,0)');vg.addColorStop(1,'rgba(0,0,0,.45)');ctx.fillStyle=vg;ctx.fillRect(0,0,Wp,Hp)
-    }catch(e){console.error(e)}finally{ms=ms*.93+(performance.now()-t0)*.07;ctx=saved;LOWFX=lf}
-    ov.querySelector('#mzCash').textContent='● '+W.coins.toLocaleString('it-IT')+'  ·  '+ms.toFixed(1)+' ms';requestAnimationFrame(frame)}
+    }catch(e){console.error(e)}finally{ms=ms*.93+(performance.now()-t0)*.07;ctx=saved;LOWFX=lf}}
+  function frame(now){const dt=Math.min(.05,(now-last)/1000);last=now;let ix=0,iy=0;if(stick.on){const dx=stick.x-stick.x0,dy=stick.y-stick.y0,l=Math.hypot(dx,dy);if(l>6){ix=dx/Math.max(l,50);iy=dy/Math.max(l,50)}}
+    if(keys.ArrowLeft||keys.a)ix=-1;if(keys.ArrowRight||keys.d)ix=1;if(keys.ArrowUp||keys.w)iy=-1;if(keys.ArrowDown||keys.s)iy=1;
+    render(W.dbg.freeze?0:dt,ix,iy);ov.querySelector('#mzCash').textContent='● '+W.coins.toLocaleString('it-IT')+'  ·  '+ms.toFixed(1)+' ms';requestAnimationFrame(frame)}
   requestAnimationFrame(frame);
-  window.__MZ={W,CAM,props,houses,zoom:v=>{zoomOv=v},cam:(x,y)=>{camOv=x==null?null:[x,y]},setWhole:v=>{whole=v;ui()},tp:(x,y)=>{W.hero.x=x;W.hero.y=y},zombies:v=>{zOn=v;ui()},low:v=>{low=v;ui()}}}
-return{T,CAM,W,S,LS,decals,add3,sub3,len3,rnd,rr,srand,ink,path,hull,material,MAT,MARKS,texture,tone,face,hullOf,ballAt,line3,poly3,fn3,box,prismX,prismY,plane,cyl,prop,solid,shade,shadeR,props,solids,shadows,lights,flames,holes,houses,smokes,perches,hit,bakeGround,boot,setLive:f=>{liveDraw=f},wa,mix,cl,ez,lerp,TAU,ball,seg}})();
+  // ganci di prova (tests nella cartella anteprime/zombie): visibilità dell'eroe in un punto, simulazione degli zombie senza disegnare
+  const devBox=(x0,y0,x1,y1)=>{const Wp=ov.clientWidth,Hp=ov.clientHeight,f=(x,y)=>[dpr*(Wp/2+(x-CAM.x)*CAM.z),dpr*(Hp/2+(y-CAM.y)*CAM.z)],a=f(x0,y0),b=f(x1,y1);return[Math.max(0,Math.floor(a[0])),Math.max(0,Math.floor(a[1])),Math.min(cv.width,Math.ceil(b[0])),Math.min(cv.height,Math.ceil(b[1]))]};
+  function visAt(x,y,o){o=o||{};const h=W.hero,D=W.dbg;W.Z.length=0;h.x=x;h.y=y;h.moving=false;h.zh=heightAt(x,y);const zo=zOn;zOn=false;D.noShoot=true;updateBeings(1,{x:0,y:0});zOn=zo;
+    CAM.z=zoomOv||ov.clientWidth/330;CAM.x=x;CAM.y=y-24;camOv=[CAM.x,CAM.y];const g=cv.getContext('2d');
+    const shot=f=>{Object.assign(D,{noSil:!o.sil,heroLast:false,noHero:false},f);render(0,0,0);const[bx0,by0,bx1,by1]=heroBox(),B=devBox(bx0,by0,bx1,by1);return{B,px:g.getImageData(B[0],B[1],Math.max(1,B[2]-B[0]),Math.max(1,B[3]-B[1])).data,occ:LASTOCC.map(e=>e.p.name+'@'+Math.round(e.p.bx[0])+','+Math.round(e.p.bx[1]))}};
+    const A=shot({}),Bh=shot({heroLast:true}),C=shot({noHero:true});Object.assign(D,{noSil:false,heroLast:false,noHero:false});
+    let msk=0,v=0;const a=A.px,b=Bh.px,c=C.px;for(let i=0;i<a.length;i+=4){if(Math.abs(b[i]-c[i])+Math.abs(b[i+1]-c[i+1])+Math.abs(b[i+2]-c[i+2])<30)continue;msk++;if(Math.abs(a[i]-b[i])+Math.abs(a[i+1]-b[i+1])+Math.abs(a[i+2]-b[i+2])<30)v++}
+    return{vis:msk?v/msk:1,mask:msk,occ:A.occ,box:A.B}}
+  window.__MZ={W,CAM,props,houses,solids,holes,stands,zoom:v=>{zoomOv=v},cam:(x,y)=>{camOv=x==null?null:[x,y]},setWhole:v=>{whole=v;ui()},tp:(x,y)=>{W.hero.x=x;W.hero.y=y},zombies:v=>{zOn=v;ui()},low:v=>{low=v;ui()},
+    render:dt=>render(dt||0,0,0),vis:visAt,hit:(x,y,r)=>!!hit(x,y,r),heightAt,
+    nav:()=>NAV&&{cw:NAV.cw,ch:NAV.ch,free:NAV.bl.reduce((s,v)=>s+(v?0:1),0)},navRebuild:()=>{navBuild();NAV.hc=-1},
+    addZombie:(kind,x,y,spd)=>{const k=KINDS.find(k=>k[0]===kind)||KINDS[0];const z={kind:k[0],sc:k[1],spd:spd||k[2],hp:99,x,y,face:0,p:0,anim:'walk',rise:1,die:0,flash:0};W.Z.push(z);return W.Z.length-1},
+    sim:(n,dt)=>{for(let i=0;i<n;i++)updateBeings(dt,{x:0,y:0})}}}
+return{T,CAM,W,S,LS,decals,fades,NAMES,stand,stands,heightAt,add3,sub3,len3,rnd,rr,srand,ink,path,hull,material,MAT,MARKS,texture,tone,face,hullOf,ballAt,line3,poly3,fn3,box,prismX,prismY,plane,cyl,prop,solid,shade,shadeR,props,solids,shadows,lights,flames,holes,houses,smokes,perches,hit,bakeGround,boot,setLive:f=>{liveDraw=f},wa,mix,cl,ez,lerp,TAU,ball,seg}})();
