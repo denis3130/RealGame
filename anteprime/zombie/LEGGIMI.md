@@ -118,3 +118,14 @@ tondo e qualche tegola mancante, zucche con la faccia nel disco, pali ai giunti 
   di lato, che fa vedere il fianco delle cose, è più leggera (`CAM.lx=.003`, tetto `LK=.22`, circa 12°).
 - I colpi non passano attraverso muri, recinti, lapidi, casse e case: l'eroe mira solo allo zombie più vicino che vede davvero (linea libera sui
   solidi veri, `physClear`, ignorando la fossa in cui sta lo zombie), ricontrollato ogni 0,1 s.
+
+## Due comandi: cammina a sinistra, guarda a destra (12 ottobre, Denis: «un comando per controllare la visuale a destra ed il movimento a sinistra»)
+
+- Il dito appoggiato nella metà sinistra dello schermo è il comando per camminare; quello nella metà destra sposta la visuale (fino a 130 px
+  di lato e 210 px in alto o in basso), e quando si lascia la visuale torna piano sull'eroe. Ogni dito ha il suo comando (`pointerId`), così si
+  cammina e si guarda insieme. Sulla tastiera: frecce o WASD per camminare, IJKL per guardare. Da fermi due anelli appena visibili ricordano
+  dove stanno i comandi (quello della visuale ha l'occhio); `W.dbg.noSticks` li toglie. In «Vista intera» la visuale non si sposta.
+- La piega si calcola dal centro della visuale (`CAM`), quindi guardando intorno anche il 3D delle cose cambia; la tolleranza della sagoma
+  dell'eroe ora guarda `CAM.x` invece della x dell'eroe.
+- Prova con due dita vere: `Input.dispatchTouchEvent` di Chrome con `hasTouch` (senza `isMobile`, perché la pagina costruita non ha il meta
+  viewport e sarebbe larga 980 px; quella pubblicata sì). Gancio `__MZ.look()` per leggere lo stato, `__MZ.look(x,y)` per spostare la visuale.

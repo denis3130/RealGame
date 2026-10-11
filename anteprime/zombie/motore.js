@@ -333,8 +333,8 @@ function obOf(p){if(p._ob)return p._ob;if(p.ob)return p._ob=p.ob;let x0=1e9,y0=1
   return p._ob=any?[x0-3,y0-3,x1+3,y1+3,z1+4]:[p.bx[0],p.bx[1],p.bx[2],p.bx[3],p.bx[4]]}
 function occluders(list,hi){const out=[];if(hi<0)return out;let[bx0,by0,bx1,by1]=heroBox();bx0+=5;bx1-=5;// il riquadro della figura, un po' più stretto di quello per le misure
   for(let i=hi+1;i<list.length;i++){const e=list[i];if(!e.p)continue;const p=e.p;if(p.house&&p.house.inside&&p.parts[0]&&(p.parts[0].part==='front'||p.parts[0].part==='roof'))continue;// il muro davanti e il tetto sono già trasparenti
-    // le cose alte si piegano sempre via dall'eroe: la tolleranza per la piega va solo dal lato opposto a lui
-    const o=obOf(p),hx=W.hero.x,pl=.37*o[4]*(p.lk==null?1:p.lk)+2,padE=o[0]>hx||p.ref?pl:1,padW=o[2]<hx||p.ref?pl:1;if(o[2]+padE<bx0||o[0]-padW>bx1||o[3]+3<by0||o[1]-o[4]*1.37>by1)continue;out.push(e)}return out}
+    // le cose alte si piegano sempre via dal centro della visuale (l'eroe, o dove guarda il dito a destra): la tolleranza per la piega va solo dal lato opposto
+    const o=obOf(p),hx=CAM.x,pl=.37*o[4]*(p.lk==null?1:p.lk)+2,padE=o[0]>hx||p.ref?pl:1,padW=o[2]<hx||p.ref?pl:1;if(o[2]+padE<bx0||o[0]-padW>bx1||o[3]+3<by0||o[1]-o[4]*1.37>by1)continue;out.push(e)}return out}
 function silhouette(occ,h0a){if(!occ.length||W.dbg.noSil)return;const m=ctx.getTransform(),[bx0,by0,bx1,by1]=heroBox(),X0=Math.floor(m.a*bx0+m.e),Y0=Math.floor(m.d*by0+m.f),X1=Math.ceil(m.a*bx1+m.e),Y1=Math.ceil(m.d*by1+m.f),Q=.5,w=Math.ceil((X1-X0)*Q),hh=Math.ceil((Y1-Y0)*Q);if(w<=0||hh<=0)return;// a metà risoluzione: è un velo morbido
   if(!SIL)SIL={o:document.createElement('canvas'),h:document.createElement('canvas')};for(const c of[SIL.o,SIL.h]){if(c.width<w)c.width=w;if(c.height<hh)c.height=hh}
   // memoria: se l'eroe, la telecamera, chi lo copre e le trasparenze non sono cambiati, si riusa la sagoma del fotogramma prima
@@ -388,30 +388,42 @@ function boot(area){try{INTRO.on=false;paused=true}catch(e){}try{AU.on.music=fal
   #mz button.on{background:#4a6a2a;color:#eaffd0}#mz button:active{transform:translateY(2px);box-shadow:0 1px 0 #000}
   #mz .hint{position:absolute;left:0;right:0;bottom:100px;text-align:center;font-size:13px;opacity:.65;pointer-events:none}
   </style><canvas></canvas><div class="top"><h1>${area.title||'Mappa zombie'}</h1><span class="cash" id="mzCash"></span></div>
-  <div class="hint">Trascina per camminare · fermo spara</div><div class="bar" id="mzBar"></div>`;document.body.appendChild(ov);
+  <div class="hint">Sinistra: cammina · Destra: guardati intorno · fermo spara</div><div class="bar" id="mzBar"></div>`;document.body.appendChild(ov);
   const cv=ov.querySelector('canvas'),barEl=ov.querySelector('#mzBar');let low=false,whole=false;
   const ui=()=>{barEl.innerHTML='';const mk=(t,on,f)=>{const b=document.createElement('button');b.textContent=t;b.className=on?'on':'';b.onclick=()=>{f();ui()};barEl.appendChild(b)};
     mk('Zombie',zOn,()=>{zOn=!zOn});mk('Effetti bassi',low,()=>{low=!low});mk('Vista intera',whole,()=>{whole=!whole})};ui();
-  const stick={on:false,x0:0,y0:0,x:0,y:0};
-  ov.addEventListener('pointerdown',e=>{if(e.target.closest('.bar'))return;stick.on=true;stick.x0=stick.x=e.clientX;stick.y0=stick.y=e.clientY});
-  ov.addEventListener('pointermove',e=>{if(stick.on){stick.x=e.clientX;stick.y=e.clientY}});const up=()=>{stick.on=false};ov.addEventListener('pointerup',up);ov.addEventListener('pointercancel',up);
+  // due comandi (Denis, 12 ottobre): il dito a sinistra muove l'eroe, il dito a destra sposta la visuale per guardarsi intorno (lasciato, la
+  // visuale torna piano sull'eroe). Ogni dito ha il suo comando, così si cammina e si guarda insieme. Tastiera: frecce/WASD e IJKL
+  const stick={id:null,x0:0,y0:0,x:0,y:0},look={id:null,x0:0,y0:0,x:0,y:0},LOOK=[130,210];let lookX=0,lookY=0;
+  const vec=s=>{if(s.id==null)return[0,0];const dx=s.x-s.x0,dy=s.y-s.y0,l=Math.hypot(dx,dy);return l>6?[dx/Math.max(l,50),dy/Math.max(l,50)]:[0,0]};
+  ov.addEventListener('pointerdown',e=>{if(e.target.closest('.bar'))return;const s=e.clientX<ov.clientWidth/2?stick:look;if(s.id!=null)return;s.id=e.pointerId;s.x0=s.x=e.clientX;s.y0=s.y=e.clientY;try{ov.setPointerCapture(e.pointerId)}catch(_){}});
+  ov.addEventListener('pointermove',e=>{for(const s of[stick,look])if(s.id===e.pointerId){s.x=e.clientX;s.y=e.clientY}});const up=e=>{for(const s of[stick,look])if(s.id===e.pointerId)s.id=null};ov.addEventListener('pointerup',up);ov.addEventListener('pointercancel',up);
   const keys={};addEventListener('keydown',e=>keys[e.key]=1);addEventListener('keyup',e=>keys[e.key]=0);
+  // il comando sullo schermo: anello e pomello dove si è appoggiato il dito; da fermi due anelli appena visibili ricordano dove stanno
+  function drawStick(s,gx,gy,eye){const on=s.id!=null,x0=on?s.x0:gx,y0=on?s.y0:gy,a0=on?1:.32,dx=on?s.x-s.x0:0,dy=on?s.y-s.y0:0,l=Math.min(42,Math.hypot(dx,dy)),an=Math.atan2(dy,dx),kx=x0+Math.cos(an)*l,ky=y0+Math.sin(an)*l;
+    ctx.save();ctx.globalAlpha=a0;ctx.fillStyle='rgba(0,0,0,.18)';ball([x0,y0],44);ctx.fill();ctx.strokeStyle='rgba(255,255,255,.35)';ctx.lineWidth=3;ctx.beginPath();ctx.arc(x0,y0,42,0,TAU);ctx.stroke();
+    ctx.fillStyle=eye?'rgba(190,230,255,.42)':'rgba(255,255,255,.4)';ball([kx,ky],18);ctx.fill();ctx.strokeStyle='rgba(20,20,30,.55)';ctx.lineWidth=1.8;
+    if(eye){ctx.beginPath();ctx.moveTo(kx-9,ky);ctx.quadraticCurveTo(kx,ky-8,kx+9,ky);ctx.quadraticCurveTo(kx,ky+8,kx-9,ky);ctx.stroke();ctx.fillStyle='rgba(20,20,30,.6)';ball([kx,ky],2.8);ctx.fill()}
+    else{for(const r of[0,1,2,3]){const b=r*TAU/4,c=Math.cos(b),d=Math.sin(b);ctx.beginPath();ctx.moveTo(kx+c*11-d*3,ky+d*11+c*3);ctx.lineTo(kx+c*14,ky+d*14);ctx.lineTo(kx+c*11+d*3,ky+d*11-c*3);ctx.stroke()}}
+    ctx.restore()}
   const dpr=Math.min(2,window.devicePixelRatio||1);let last=performance.now(),ms=0,zoomOv=0,camOv=null;
   function render(dt,ix,iy){const Wp=ov.clientWidth,Hp=ov.clientHeight;if(cv.width!==Math.round(Wp*dpr)||cv.height!==Math.round(Hp*dpr)){cv.width=Math.round(Wp*dpr);cv.height=Math.round(Hp*dpr)}
     const saved=ctx,lf=LOWFX;ctx=cv.getContext('2d');LOWFX=low;const t0=performance.now();
     try{updateBeings(dt,{x:ix,y:iy});updateAmbient(dt);if(area.update)area.update(dt);
-      const h=W.hero,z=zoomOv||(whole?Math.min(Wp/(W.w+80),Hp/(W.h+160)):Wp/330),tx=camOv?camOv[0]:whole?W.w/2:h.x,ty=camOv?camOv[1]:whole?W.h/2+10:h.y-24;
+      const h=W.hero,z=zoomOv||(whole?Math.min(Wp/(W.w+80),Hp/(W.h+160)):Wp/330),tx=camOv?camOv[0]:whole?W.w/2:h.x+lookX,ty=camOv?camOv[1]:whole?W.h/2+10:h.y-24+lookY;
       CAM.z+=(z-CAM.z)*Math.min(1,dt*8);CAM.x+=(tx-CAM.x)*Math.min(1,dt*6);CAM.y+=(ty-CAM.y)*Math.min(1,dt*6);
       ctx.setTransform(dpr,0,0,dpr,0,0);ctx.fillStyle='#0b0c12';ctx.fillRect(0,0,Wp,Hp);if(area.backdrop)area.backdrop(Wp,Hp);
       ctx.setTransform(dpr*CAM.z,0,0,dpr*CAM.z,dpr*(Wp/2-CAM.x*CAM.z),dpr*(Hp/2-CAM.y*CAM.z));
       const view={x0:CAM.x-Wp/2/CAM.z-80,x1:CAM.x+Wp/2/CAM.z+80,y0:CAM.y-Hp/2/CAM.z-80,y1:CAM.y+Hp/2/CAM.z+80};
       drawWorld(dt,view);
       drawDark(cv.width,cv.height,(x,y,r)=>[dpr*(Wp/2+(x-CAM.x)*CAM.z),dpr*(Hp/2+(y-CAM.y)*CAM.z),r*CAM.z*dpr],houses[0]?houses[0].a:1);
-      ctx.setTransform(dpr,0,0,dpr,0,0);if(stick.on){ctx.strokeStyle='rgba(255,255,255,.35)';ctx.lineWidth=3;ctx.beginPath();ctx.arc(stick.x0,stick.y0,42,0,TAU);ctx.stroke();const dx=stick.x-stick.x0,dy=stick.y-stick.y0,l=Math.min(42,Math.hypot(dx,dy)),a=Math.atan2(dy,dx);ctx.fillStyle='rgba(255,255,255,.4)';ball([stick.x0+Math.cos(a)*l,stick.y0+Math.sin(a)*l],18);ctx.fill()}
+      ctx.setTransform(dpr,0,0,dpr,0,0);if(!W.dbg.noSticks&&!whole){drawStick(stick,64,Hp-196,false);drawStick(look,Wp-64,Hp-196,true)}
       const vg=ctx.createRadialGradient(Wp/2,Hp/2,Math.min(Wp,Hp)*.4,Wp/2,Hp/2,Math.max(Wp,Hp)*.75);vg.addColorStop(0,'rgba(0,0,0,0)');vg.addColorStop(1,'rgba(0,0,0,.45)');ctx.fillStyle=vg;ctx.fillRect(0,0,Wp,Hp)
     }catch(e){console.error(e)}finally{ms=ms*.93+(performance.now()-t0)*.07;ctx=saved;LOWFX=lf}}
-  function frame(now){const dt=Math.min(.05,(now-last)/1000);last=now;let ix=0,iy=0;if(stick.on){const dx=stick.x-stick.x0,dy=stick.y-stick.y0,l=Math.hypot(dx,dy);if(l>6){ix=dx/Math.max(l,50);iy=dy/Math.max(l,50)}}
+  function frame(now){const dt=Math.min(.05,(now-last)/1000);last=now;let[ix,iy]=vec(stick),[lx,ly]=vec(look);
     if(keys.ArrowLeft||keys.a)ix=-1;if(keys.ArrowRight||keys.d)ix=1;if(keys.ArrowUp||keys.w)iy=-1;if(keys.ArrowDown||keys.s)iy=1;
+    if(keys.j)lx=-1;if(keys.l)lx=1;if(keys.i)ly=-1;if(keys.k)ly=1;if(whole){lx=ly=0}
+    const kl=Math.min(1,dt*(lx||ly?5:2.5));lookX+=(lx*LOOK[0]-lookX)*kl;lookY+=(ly*LOOK[1]-lookY)*kl;// la visuale segue il dito; lasciato, torna piano sull'eroe
     render(W.dbg.freeze?0:dt,ix,iy);ov.querySelector('#mzCash').textContent='● '+W.coins.toLocaleString('it-IT')+'  ·  '+ms.toFixed(1)+' ms';requestAnimationFrame(frame)}
   requestAnimationFrame(frame);
   // ganci di prova (tests nella cartella anteprime/zombie): visibilità dell'eroe in un punto, simulazione degli zombie senza disegnare
@@ -422,7 +434,7 @@ function boot(area){try{INTRO.on=false;paused=true}catch(e){}try{AU.on.music=fal
     const A=shot({}),Bh=shot({heroLast:true}),C=shot({noHero:true});Object.assign(D,{noSil:false,heroLast:false,noHero:false});
     let msk=0,v=0;const a=A.px,b=Bh.px,c=C.px;for(let i=0;i<a.length;i+=4){if(Math.abs(b[i]-c[i])+Math.abs(b[i+1]-c[i+1])+Math.abs(b[i+2]-c[i+2])<30)continue;msk++;if(Math.abs(a[i]-b[i])+Math.abs(a[i+1]-b[i+1])+Math.abs(a[i+2]-b[i+2])<30)v++}
     return{vis:msk?v/msk:1,mask:msk,occ:A.occ,box:A.B}}
-  window.__MZ={W,CAM,props,houses,solids,holes,stands,zoom:v=>{zoomOv=v},cam:(x,y)=>{camOv=x==null?null:[x,y]},setWhole:v=>{whole=v;ui()},tp:(x,y)=>{W.hero.x=x;W.hero.y=y},zombies:v=>{zOn=v;ui()},low:v=>{low=v;ui()},
+  window.__MZ={W,CAM,props,houses,solids,holes,stands,zoom:v=>{zoomOv=v},cam:(x,y)=>{camOv=x==null?null:[x,y]},setWhole:v=>{whole=v;ui()},tp:(x,y)=>{W.hero.x=x;W.hero.y=y},zombies:v=>{zOn=v;ui()},look:(x,y)=>{if(x==null)return{stick,look,lookX,lookY};lookX=x;lookY=y},low:v=>{low=v;ui()},
     render:dt=>render(dt||0,0,0),vis:visAt,hit:(x,y,r)=>!!hit(x,y,r),heightAt,
     nav:()=>NAV&&{cw:NAV.cw,ch:NAV.ch,free:NAV.bl.reduce((s,v)=>s+(v?0:1),0)},navRebuild:()=>{navBuild();NAV.hc=-1},
     addZombie:(kind,x,y,spd)=>{const k=KINDS.find(k=>k[0]===kind)||KINDS[0];const z={kind:k[0],sc:k[1],spd:spd||k[2],hp:99,x,y,face:0,p:0,anim:'walk',rise:1,die:0,flash:0};W.Z.push(z);return W.Z.length-1},
