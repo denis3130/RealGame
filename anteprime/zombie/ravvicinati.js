@@ -21,4 +21,4 @@ const r=await p.evaluate(([P,process_kind])=>{const M=__MZ,W=M.W;const H0=[W.her
   W.Z.length=0;return{nh,tries,fail,thru}},[P,process.env.KIND||'hound']);
 console.log('posizioni eroe',r.nh,'prove',r.tries,'mai arrivati (40 s)',r.fail.length,'attacco con un solido in mezzo',r.thru.length);
 console.log('MAI:');for(const f of r.fail.slice(0,60))console.log(JSON.stringify(f));console.log('ATTRAVERSO:');for(const f of r.thru.slice(0,60))console.log(JSON.stringify(f));
-require('fs').writeFileSync(__dirname+'/t10_'+(process.env.KIND||'hound')+'_'+(process.env.PAGE||'zx')+'.json',JSON.stringify(r));console.log('ERR',errs);await b.close()})();
+require('fs').mkdirSync(__dirname+'/vetrina',{recursive:true});require('fs').writeFileSync(__dirname+'/vetrina/ravvicinati.json',JSON.stringify(r));console.log('ERR',errs);await b.close()})();
