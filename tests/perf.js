@@ -5,9 +5,9 @@ await p.addInitScript(([sel,tro,ds])=>{localStorage.setItem('cripta_save_v1',JSO
 await p.goto('file://'+__dirname+'/test.html');await p.waitForTimeout(1500);
 await p.evaluate((room)=>__E(`(()=>{document.querySelectorAll('#sheetScr,#arenaUpScr').forEach(e=>e.hidden=true);startRun();
  const idx=G.seq.findIndex(s=>s.c===${room});G.si=idx-1;for(let i=0;i<14;i++){P.lvl++;}nextStep();
- const T=window.__T={u:[],r:[],f:[]};const _u=update,_r=render,_c=rpCapture,_h=hud;T.c=[];T.h=[];rpCapture=function(n){const t=performance.now();_c(n);T.c.push(performance.now()-t)};hud=function(){const t=performance.now();_h();T.h.push(performance.now()-t)};update=function(dt){const t=performance.now();_u(dt);T.u.push(performance.now()-t)};render=function(){const t=performance.now();_r();T.r.push(performance.now()-t)};
+ const T=window.__T={u:[],r:[],f:[]};const _u=update,_r=render,_h=hud;T.c=[];T.h=[];hud=function(){const t=performance.now();_h();T.h.push(performance.now()-t)};update=function(dt){const t=performance.now();_u(dt);T.u.push(performance.now()-t)};render=function(){const t=performance.now();_r();T.r.push(performance.now()-t)};
  let lf=performance.now();(function fr(n){T.f.push(n-lf);lf=n;requestAnimationFrame(fr)})(lf);
- setInterval(()=>{try{P.hp=P.maxhp;if(!$('skScr').hidden)pick(0);if(!$('whScr').hidden&&!WH.spin)$('whGo').click();if(RP.on)rpEnd();
+ setInterval(()=>{try{P.hp=P.maxhp;if(!$('skScr').hidden)pick(0);if(!$('whScr').hidden&&!WH.spin)$('whGo').click();
    if(G.state==='cleared'&&G.door){P.x=AW/2;P.y=TOP-20}if(G.prop&&!G.prop.used){P.x=G.prop.x;P.y=G.prop.y+30}if(G.cc&&!G.ccChosen){P.x=G.cc[0].x;P.y=G.cc[0].y+4}
    if(G.state==='play'&&G.enemies.length===0){}if(Math.random()<.01&&P.ult>=100)useUlt()}catch(e){}},50)})()`),+room);
 await p.waitForTimeout(20000);
