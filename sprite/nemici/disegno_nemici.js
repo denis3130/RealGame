@@ -161,8 +161,10 @@ function skeleton(x,y,face,anim,p,sc,o){sc=sc||1.1;o=o||{};const V0=V(face),{P,D
   {const q=P(.8,0,0);shadow(x+q[0]*sc,y+q[1]*sc,10.5*sc,4.2*sc,.34)}
   ctx.save();ctx.translate(x,y);ctx.scale(sc,sc);const parts=[],dT=D(Ch);
   for(const[sd,f] of[[-1,fL],[1,fR]]){const hip=add(Pv,[0,sd*3.1,-2.4]),foot=[.8+f.x,sd*3.9,f.z],[kn,ft]=ik(hip,add(foot,[0,0,1.4]),5.2,5.2,[1,0,.12]),k=farK(F(0,sd,0)),col=mix(KC.bone,KC.boneF,k);
-    parts.push({d:dT-100+D(hip)*.01,f:()=>{const pts=[P(hip),P(kn),P(ft)];bone(pts,[1.9,1.6,1.4],col,()=>{const h0=P(add(ft,[-1.2,0,-.3])),t0=P(add(ft,[2.8,0,-.5]));ink(2);ctx.fillStyle=col;hull(h0,1.5,t0,1.3);ctx.fill();ctx.stroke();
-        ctx.fillStyle=col;for(let i=-1;i<=1;i++){const q=P(add(ft,[3.6,i*1.1,-.6]));ball(q,.8);ctx.fill()}},[[P(kn),2.1]]);shadeLimb(pts,[1.9,1.6,1.4],'rgba(40,30,20,.3)')}})}
+    parts.push({d:dT-100+D(hip)*.01,f:()=>{const pts=[P(hip),P(kn),P(ft)];bone(pts,[1.9,1.6,1.4],col,()=>{
+        // the foot: a heel knob, the arch bone down to the ball of the foot, then three toes of two little bones each, with their knuckles
+        const heel=add(ft,[-1.5,0,-.6]),bl=add(ft,[2.1,sd*.15,-1]);bone([P(add(ft,[0,0,.3])),P(heel),P(bl)],[1.3,1.45,1.25],col,null,[[P(heel),1.5]]);shadeLimb([P(heel),P(bl)],[1.45,1.25],'rgba(40,30,20,.3)');
+        for(const i of[-1,0,1]){const a=add(bl,[.3,i*1.1,.05]),m=add(bl,[1.6,i*1.35,-.05]),t=add(bl,[2.7,i*1.5,-.1]);bone([P(a),P(m),P(t)],[.8,.75,.65],col,null,[[P(m),.85]])}},[[P(kn),2.1]]);shadeLimb(pts,[1.9,1.6,1.4],'rgba(40,30,20,.3)')}})}
   parts.push({d:dT,f:()=>{ribcage(V0,Pv,5.2,Ch,7.2);
     // a blue pennant of cloth knotted on the shoulder, swinging
     on(V0,Ch,7,[-.2,-.9,.4],-.1,q=>{const sw=Math.sin(ph*(walk?2:1))*1.2;ink(1.4);ctx.fillStyle=KC.cloth;ctx.beginPath();ctx.moveTo(q[0]-2.5,q[1]-1);ctx.lineTo(q[0]+2.5,q[1]-1);ctx.lineTo(q[0]+.6+sw,q[1]+7.5);ctx.closePath();ctx.fill();ctx.stroke();
@@ -180,34 +182,27 @@ function skeleton(x,y,face,anim,p,sc,o){sc=sc||1.1;o=o||{};const V0=V(face),{P,D
     const Vh=Vat(face+hy,P(Hc),D(Hc));skull(Vh,[0,0,0],Rh,ph,{open:atk?aim*.7:idle?(p>.3&&p<.4?.9*Math.sin((p-.3)/.1*Math.PI):.15):.25+.2*Math.sin(ph*2)})}});
   run(parts);ctx.restore()}
 
-// ------------------------------------------------------------------ SLIME: a bright green jelly with big eyes and a happy mouth
-const LC2={gel:'#8fd14f',gelD:'#5aa33a',gelF:'#3e7a2a',gelL:'#c2f08a',eye:'#2a7a3a',mouth:'#2a4a1a',tongue:'#e07a8a',fang:'#fff6e0'};
-function slime(x,y,face,anim,p,sc,o){sc=sc||1;o=o||{};const V0=V(face),{P,D,F,c,s}=V0,ph=p*TAU,walk=anim==='walk',atk=anim==='attack',idle=!walk&&!atk,col=o.gel||LC2.gel,colD=o.gelD||LC2.gelD,colF=o.gelF||LC2.gelF,colL=o.gelL||LC2.gelL;
-  // hop: squashes to load, leaps stretched, splats; attack: rears back open-mouthed, lunges forward, pulls back trailing goo
+// ------------------------------------------------------------------ SLIME: the very same slime as the game (drawSlime in 16-creature.js): a plain
+// green blob with the white highlight, two round eyes with the pupils that look where it goes, a little smile, a dark patch on the back.
+// Only the moves come from the method (hop, lunge), and the eyes slide round the blob as it turns instead of jumping between views
+const LC2={gel:'#8fd14f'};
+function slime(x,y,face,anim,p,sc,o){sc=sc||1;o=o||{};const V0=V(face),{P,F,c,s}=V0,ph=p*TAU,walk=anim==='walk',atk=anim==='attack',col=o.gel||LC2.gel;
+  // hop: squashes to load, leaps stretched, splats; attack: rears back, lunges forward with the mouth open, settles
   let sq=1,hop=0,lean=0,open=0;
-  if(walk){if(p<.22){sq=1-.25*ez(p/.22)}else if(p<.6){const k=(p-.22)/.38;hop=Math.sin(k*Math.PI)*7;sq=1.22-.1*k;lean=1.5}else if(p<.72){const k=(p-.6)/.12;sq=.68+.1*k}else{const k=ez((p-.72)/.28);sq=.78+.22*k}}
-  else if(atk){if(p<.3){const k=ez(p/.3);lean=-2.6*k;sq=1-.14*k;open=k}else if(p<.45){const k=ez((p-.3)/.15);lean=-2.6+10.6*k;sq=.86+.3*k;open=1}else{const k=ez((p-.45)/.55);lean=8*(1-k);sq=1.16-.16*k;open=1-k}}
-  else{sq=1+.06*Math.sin(ph);open=p>.62&&p<.78?Math.sin((p-.62)/.16*Math.PI)*.5:0}
-  const r=11,rx=r/Math.sqrt(sq),rz=8*sq,C=[lean*.5,0,rz+hop],q=P(C),w=rx,h=rz*.72+rx*.3;
-  {const g=P(lean*.5,0,0);shadow(x+g[0]*sc,y+g[1]*sc,(rx+1)*sc*(1-hop*.03),4.4*sc*(1-hop*.03),.34*(1-hop*.04))}
-  ctx.save();ctx.translate(x,y);ctx.scale(sc,sc);
-  // the body: a wobbling blob (bumps round the outline), lit from the upper left, darker at the base
-  const path=(k)=>{ctx.beginPath();for(let i=0;i<=28;i++){const a=i/28*TAU,wob=1+.04*Math.sin(a*3+ph*2+1)+.025*Math.sin(a*5-ph);const px=q[0]+Math.cos(a)*(w+k)*wob,py=q[1]+Math.sin(a)*(h+k)*wob*(Math.sin(a)>0?1.12:.9);ctx.lineTo(px,py)}ctx.closePath()};
-  // drops hanging from the base (behind the body)
-  ctx.lineCap='round';for(let i=0;i<4;i++){const a=.3+i*.7,bx=q[0]+Math.cos(a)*w*.8,by=q[1]+h*.8,l=3+2*Math.sin(ph+i*1.7)+(hop>0?hop*.5:0);ctx.strokeStyle=INK;ctx.lineWidth=2.4;seg([bx,by],[bx,by+l]);ctx.stroke();ctx.strokeStyle=colD;ctx.lineWidth=1.1;seg([bx,by],[bx,by+l]);ctx.stroke();ctx.fillStyle=col;ink(1);ball([bx,by+l],1.1);ctx.fill();ctx.stroke()}
-  ink(2.4);path(0);ctx.fillStyle=col;ctx.fill();ctx.stroke();
-  ctx.save();path(-1.2);ctx.clip();ctx.fillStyle=colD;ell(q[0]+w*.35,q[1]+h*.6,w*1.1,h*.7);ctx.fill();ctx.fillStyle=colF;ell(q[0]+w*.8,q[1]+h*.15,w*.4,h*.8);ctx.fill();
-  // a lighter core drifting inside, and bubbles rising
-  {const ck=[q[0]-w*.1+Math.sin(ph*.5)*1.2+c*1.5,q[1]+h*.1+Math.cos(ph*.7)*.8];ctx.fillStyle='rgba(194,240,138,.45)';ell(ck[0],ck[1],r*.36,r*.28);ctx.fill()}
-  ctx.fillStyle=wa(.3);ell(q[0]-w*.4,q[1]-h*.45,w*.42,h*.25);ctx.fill();ctx.fillStyle=wa(.16);ell(q[0]-w*.15,q[1]-h*.7,w*.25,h*.12);ctx.fill();
-  for(let i=0;i<3;i++){const bb=(ph/TAU*.6+i*.33)%1;ctx.strokeStyle='rgba(220,255,180,.45)';ctx.lineWidth=.8;ball([q[0]+(i-1)*w*.35,q[1]+h*.6-bb*h*1.1],1+i*.3);ctx.stroke()}
-  ctx.restore();rim(q,Math.min(w,h),q,Math.min(w,h),.3);
-  // the face slides round the body as it turns: two big eyes high up, a wide smile low down
-  const fv=F(1,0,.1);if(fv>-.2){ctx.save();ctx.globalAlpha=cl((fv+.2)*2.5,0,1);const fx=q[0]+c*2,k=cl(fv*1.5,0,1),bl=blink(p,.5,.08);
-    for(const sd of[-1,1]){const ex=fx-sd*w*.4*Math.max(.35,fv),ey=q[1]-h*.22+Math.sin(ph+sd)*.4;cEye([ex,ey],r*.22,o.eye||LC2.eye,k,{dy:.2,dx:-c*.3,sq:atk?1:bl})}
-    // the mouth: a happy curve with two tiny fangs; open wide when it strikes, with the tongue
-    const my=q[1]+h*.3,mw=w*.55*Math.max(.3,fv);if(open>.2)openMouth([fx,my+open*1.5],mw*(.7+open*.3),1+open*4.5,LC2.mouth,LC2.tongue,LC2.fang);
-    else{smile([fx,my],mw,my-1.4,3.2);fangs([fx,my],mw*.55,my-.2,1.6,LC2.fang)}ctx.restore()}
+  if(walk){if(p<.22){sq=1-.2*ez(p/.22)}else if(p<.6){const k=(p-.22)/.38;hop=Math.sin(k*Math.PI)*7;sq=1.14-.06*k;lean=1.5}else if(p<.72){const k=(p-.6)/.12;sq=.78+.08*k}else{const k=ez((p-.72)/.28);sq=.86+.14*k}}
+  else if(atk){if(p<.3){const k=ez(p/.3);lean=-2.6*k;sq=1-.1*k;open=k}else if(p<.45){const k=ez((p-.3)/.15);lean=-2.6+10.6*k;sq=.9+.22*k;open=1}else{const k=ez((p-.45)/.55);lean=8*(1-k);sq=1.12-.12*k;open=1-k}}
+  else{sq=1-.06*Math.sin(ph)}
+  const r=13,sx=1/Math.sqrt(sq),sy=sq,g=P(lean*.5,0,0),qx=g[0],qy=g[1]-r*.2-hop,qa=Math.atan2(s*.55,c);// qa: where it faces, on the screen
+  shadow(x+qx*sc,y+(g[1]+r*.55)*sc,r*sc*(1-hop/40),r*.4*sc*(1-hop/40));
+  ctx.save();ctx.translate(x,y);ctx.scale(sc,sc);ink(2.5);
+  ell(qx,qy,r*1.08*sx,r*.92*sy);ctx.fillStyle=col;ctx.fill();ctx.stroke();
+  ctx.fillStyle='rgba(255,255,255,.4)';ell(qx-r*.35*sx,qy-r*.6*sy,r*.25,r*.15);ctx.fill();
+  // the face: each eye shows while its side of the blob faces the camera (the far one hides in the side view, like before)
+  const cx=qx+Math.cos(qa)*r*.42,cy=qy+Math.sin(qa)*r*.18-r*.25,sp=r*.32*Math.sqrt(Math.abs(Math.sin(qa)));
+  for(const k of[-1,1]){const v=F(1,k*.6,.3);if(v<=0)continue;ctx.save();ctx.globalAlpha=cl(v*4,0,1);ctx.fillStyle='#fff';ball([cx+k*sp,cy],r*.22);ctx.fill();ctx.fillStyle=INK;ball([cx+k*sp+Math.cos(qa)*r*.07,cy+Math.sin(qa)*r*.06],r*.11);ctx.fill();ctx.restore()}
+  {const v=F(1,0,-.1);if(v>0){ctx.save();ctx.globalAlpha=cl(v*3,0,1);if(open>.2){ctx.fillStyle=INK;ell(cx,cy+r*.3+open*r*.05,r*.15*(1+open*.5),r*.08+open*r*.16);ctx.fill()}
+    else{ctx.strokeStyle=INK;ctx.lineWidth=2;ctx.beginPath();ctx.arc(cx,cy+r*.3,r*.15,.2,Math.PI-.2);ctx.stroke()}ctx.restore()}}
+  {const v=-F(1,0,0);if(v>.1){ctx.save();ctx.globalAlpha=cl((v-.1)*3,0,1)*.12;ctx.fillStyle='#000';ell(qx,qy+r*.1,r*.6,r*.4);ctx.fill();ctx.restore()}}
   ctx.restore()}
 
 // ------------------------------------------------------------------ BAT: a big round head with huge yellow eyes and tall pink ears on a little furry

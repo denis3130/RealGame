@@ -85,7 +85,7 @@ function fist(V0,h,r,col){const q=V0.P(h);ink(2.2);ball(q,r);ctx.fillStyle=col;c
 // (0 = none). The fingers are placed in 3D, so they foreshorten and overlap properly from every side (farthest drawn first)
 function bigHand(V0,h,fd,r,col,nail,pd,o){o=o||{};const{P,D}=V0;pd=pd||[1,0,-1];fd=nrm(fd);let cv=sub(pd,mul(fd,dot(pd,fd)));
   if(len(cv)<.25){const alt=[0,0,-1];cv=sub(alt,mul(fd,dot(alt,fd)));if(len(cv)<.25)cv=[1,0,0]}
-  cv=nrm(cv);const sa=nrm(cross(fd,cv)),q=P(h),L=o.fl||r*2.4,curl=o.curl==null?.55:o.curl,sp=o.spread||1,w1=Math.max(1,r*.5),w2=Math.max(.8,r*.36),fg=[];
+  cv=nrm(cv);const sa=nrm(cross(fd,cv)),q=P(h),L=o.fl||r*1.6,curl=o.curl==null?.55:o.curl,sp=o.spread||1,w1=Math.max(1,r*.42),w2=Math.max(.8,r*.3),fg=[];
   const bend=(b,d,Lk,cu)=>{const j=add(add(b,mul(d,Lk*.55)),mul(cv,Lk*.14*cu)),d2=nrm(add(mul(d,1-cu*.8),mul(cv,cu))),t=add(j,mul(d2,Lk*.48));return{b:P(b),j:P(j),t:P(t),d:D(t)}};
   for(let k=-1.5;k<=1.5;k++){const d=nrm(add(fd,mul(sa,k*.3*sp))),b=add(add(h,mul(d,r*.5)),mul(sa,k*r*.28*sp));fg.push(bend(b,d,L*(1-Math.abs(k)*.08),curl))}
   if(o.thumb){const sg=o.thumb,d=nrm(add(mul(sa,sg*.95),add(mul(fd,.5),mul(cv,.25))));fg.push(bend(add(h,mul(sa,sg*r*.75)),d,L*.6,Math.max(.3,curl)))}
@@ -95,7 +95,7 @@ function bigHand(V0,h,fd,r,col,nail,pd,o){o=o||{};const{P,D}=V0;pd=pd||[1,0,-1];
   for(const f of fg){ctx.strokeStyle=INK;ctx.lineWidth=w1+2.4;poly(f);ctx.stroke();ctx.strokeStyle=col;ctx.lineWidth=w2;seg(f.j,f.t);ctx.stroke();ctx.lineWidth=w1;seg(f.b,f.j);ctx.stroke();ctx.fillStyle=col;ball(f.j,w1*.55);ctx.fill();
     shadeLimb([f.b,f.j,f.t],[w1/2,w1/2,w2/2],'rgba(0,0,0,.26)');ctx.strokeStyle='rgba(0,0,0,.25)';ctx.lineWidth=.8;ctx.beginPath();ctx.arc(f.j[0],f.j[1],w1*.42,-.6,1.4);ctx.stroke();
     const dx=f.t[0]-f.j[0],dy=f.t[1]-f.j[1],l=Math.hypot(dx,dy)||1,u=[dx/l,dy/l],n=[-u[1],u[0]],hw=w2*.55;ctx.fillStyle=nail;ctx.strokeStyle=INK;ctx.lineWidth=.8;ctx.beginPath();
-    ctx.moveTo(f.t[0]-u[0]*w2*.4+n[0]*hw,f.t[1]-u[1]*w2*.4+n[1]*hw);ctx.lineTo(f.t[0]+n[0]*hw*.8,f.t[1]+n[1]*hw*.8);ctx.lineTo(f.t[0]+u[0]*(w2*.5+1.9),f.t[1]+u[1]*(w2*.5+1.9));ctx.lineTo(f.t[0]-n[0]*hw*.8,f.t[1]-n[1]*hw*.8);ctx.lineTo(f.t[0]-u[0]*w2*.4-n[0]*hw,f.t[1]-u[1]*w2*.4-n[1]*hw);ctx.closePath();ctx.fill();ctx.stroke()}
+    ctx.moveTo(f.t[0]-u[0]*w2*.4+n[0]*hw,f.t[1]-u[1]*w2*.4+n[1]*hw);ctx.lineTo(f.t[0]+n[0]*hw*.8,f.t[1]+n[1]*hw*.8);ctx.lineTo(f.t[0]+u[0]*(w2*.5+1.4),f.t[1]+u[1]*(w2*.5+1.4));ctx.lineTo(f.t[0]-n[0]*hw*.8,f.t[1]-n[1]*hw*.8);ctx.lineTo(f.t[0]-u[0]*w2*.4-n[0]*hw,f.t[1]-u[1]*w2*.4-n[1]*hw);ctx.closePath();ctx.fill();ctx.stroke()}
   // the palm last, so the fingers grow out of it without a seam: darker below, a warm light on top, the lit rim
   ctx.fillStyle=col;ball(q,r);ctx.fill();ctx.save();ball(q,r);ctx.clip();ctx.fillStyle='rgba(0,0,0,.22)';ell(q[0]+r*.4,q[1]+r*.5,r*.85,r*.6);ctx.fill();glowTop(q,r,.2);ctx.restore();rim(q,r,q,r,.3)}
 // a fist closed round a handle with the fingers showing: four knuckles in a row along the handle (dir, in 3D) on the side that faces
@@ -481,7 +481,7 @@ function becchino(x,y,face,anim,p,sc){sc=sc||2;const V0=V(face),{P,D,F}=V0,ph=p*
     // only what is above the ground shows: a forearm stump rising, then a big open hand with long fingers clawing at the air
     ctx.beginPath();ctx.rect(-40,-80,80,81.5);ctx.clip();const up=e*10,Vg=V(Math.PI/2+i*.8-1.2),W=[0,0,up],A=Vg.P(0,0,-6),B=Vg.P(W);
     ink(1.8);ctx.fillStyle=ZC.skin;hull(A,2.6,B,2.2);ctx.fill();ctx.stroke();shadeLimb([A,B],[2.6,2.2],'rgba(40,58,26,.42)');
-    bigHand(Vg,W,nrm([Math.sin(ph*3+i)*.25,Math.cos(ph*2+i)*.2,1]),2.6,ZC.skin,ZC.nail,[1,0,.2],{curl:.45+.25*Math.sin(ph*3+i),spread:1.25,fl:7,thumb:i%2?1:-1});ctx.restore()}};
+    bigHand(Vg,W,nrm([Math.sin(ph*3+i)*.25,Math.cos(ph*2+i)*.2,1]),2.6,ZC.skin,ZC.nail,[1,0,.2],{curl:.45+.25*Math.sin(ph*3+i),spread:1.25,fl:4.8,thumb:i%2?1:-1});ctx.restore()}};
   shadow(x,y+2*sc,16*sc,6*sc,.38);
   if(sum){ctx.save();shine(BC.glow,x,y+2*sc,34*sc*armUp,.35*armUp);ctx.strokeStyle=`rgba(150,255,110,${.6*armUp})`;ctx.lineWidth=2;ell(x,y+2*sc,26*sc*armUp,9*sc*armUp);ctx.stroke();ctx.restore();hands(false)}
   ctx.save();ctx.translate(x,y);ctx.scale(sc*(1+squash),sc*(1-squash));const parts=[],dT=D(Ch);

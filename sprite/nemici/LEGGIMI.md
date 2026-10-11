@@ -16,13 +16,14 @@ intorno piano (`look`), senza scatti. Lo scheletro ha due lucine rosse ferme nel
   d'oro. `idle` respira, si guarda intorno e ride; `walk` corre curvo a passi corti; `attack` tende la corda alla guancia (l'arco gira in
   avanti), scocca, abbassa l'arco.
 - **Scheletro** (`skeleton`, grandezza 1,1, `o.shield` 0..1 = scudo e sua usura): teschio pulito con due luci rosse nelle orbite, la
-  mandibola che batte, gabbia toracica, spina dorsale, bacino; un gagliardetto blu annodato sulla spalla; balestra nella sinistra (dardo con le
+  mandibola che batte, gabbia toracica, spina dorsale, bacino, piedi d'osso con tallone, arco e tre dita di due ossicini con le nocche; un gagliardetto blu annodato sulla spalla; balestra nella sinistra (dardo con le
   penne blu), scudo di assi con cerchio di ferro e stemma rosso sull'avambraccio destro (si crepa solo con `o.shield` basso, sparisce a 0).
   `idle` piega la testa incuriosito e batte la mandibola; `walk` passi rigidi a scatti; `attack` alza la balestra all'occhio, tira (rinculo e
   lampo), riabbassa e ricarica.
-- **Slime** (`slime`, grandezza 1, `o.gel`/`o.gelD`/`o.gelF`/`o.gelL`/`o.eye` per i colori): gelatina verde brillante con un nucleo più
-  chiaro e le bolle, gocce alla base; due occhioni che sbattono le ciglia e un sorriso con due zannette. `idle` respira e ride; `walk` salta
-  (si schiaccia, si allunga in aria, si spiaccica); `attack` si tira indietro a bocca spalancata, con la lingua, e si lancia in avanti.
+- **Slime** (`slime`, grandezza 1, `o.gel` per il colore): **identico allo slime del gioco** (`drawSlime`), su richiesta di Denis: blob verde
+  liscio con il riflesso bianco, due occhi tondi con la pupilla che guarda dove va, il sorrisetto, la macchia scura sulla schiena. Dal metodo
+  prende solo le mosse: `idle` respira; `walk` salta (si schiaccia, si allunga in aria, si spiaccica); `attack` si tira indietro, si lancia
+  in avanti con la bocca a «o» e si rimette a posto. Gli occhi scivolano intorno al blob quando gira (di lato se ne vede uno, come prima).
 - **Pipistrello** (`bat`, grandezza 1, rifatto da zero l'11 ottobre su richiesta di Denis): sta in aria dritto, con una testa grande
   (occhioni gialli, orecchie alte rosa dentro, muso rosa, nasino, due zannette, ciuffi sulle guance) sopra un corpicino di pelo con la
   pancia chiara e due zampette. Le ali vivono in un piano loro (`U` lungo l'apertura, girato dal battito e un po' all'indietro, `Wc`
