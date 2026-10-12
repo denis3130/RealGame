@@ -270,12 +270,12 @@ const HOLD={one:{rest:[[10,8.6,9.4],-.26,-.2],aim:[[12.6,9.4,12.8],0,-.04],anc:[
 const FIRE={pistola:{n:3,off:.04},revolver:{n:2,off:.06},mitraglietta:{n:10,off:.02},mitra:{n:6,off:.03},mitragliatrice:{n:12,off:.02},
   pompa:{n:1,off:.08,pump:[.2,.56]},tattica:{n:2,off:.06,pump:[.3,.74]},lanciarazzi:{n:1,off:.12,rel:[.32,.78]},balestra:{n:1,off:.14,rel:[.36,.84]},bastone:{n:1,off:.3}};
 const KICK={pistola:[1.6,.12],revolver:[2.6,.32],mitraglietta:[.9,.05],mitra:[1.4,.07],mitragliatrice:[1.2,.04],pompa:[3,.2],tattica:[2.4,.18],lanciarazzi:[3.4,.14],balestra:[1.2,.08],bastone:[0,0]};
-function weaponOf(S0){if(S0.gun&&WCLS[S0.gun])return S0.gun;if(S0.held==='staff')return'bastone';if(S0.held==='xbow'||S0.weapon==='balestra')return'balestra';return'arco'}
+function weaponOf(S0){if(S0.gun&&WCLS[S0.gun])return S0.gun;if(S0.held==='staff')return'bastone';if(S0.held==='xbow'||S0.weapon==='balestra')return'balestra';if(S0.held===null)return null;return'arco'}
 const dirPY=(pitch,yaw)=>nrm([Math.cos(pitch)*Math.cos(yaw),Math.cos(pitch)*Math.sin(yaw),Math.sin(pitch)]);
 const bump=k=>k<=0||k>=1?0:Math.sin(k*Math.PI);
 // where the weapon is and what its moving parts do, for this move at p (only p: the cycle closes on itself). It reuses the body of the
 // bow's pose (A): breathing, steps, the dash, the knock back
-function wpose(A,anim,p,id){const cls=WCLS[id],H=HOLD[cls],dg=sub(A.grip,REST.grip),W={id,cls,s:WSZ[id],rec:0,flash:0,st:{},shots:[],ej:[],hL:[A.hR[0],-A.hR[1],A.hR[2]],kick:KICK[id]};
+function wpose(A,anim,p,id,o){o=o||{};const cls=WCLS[id],H=HOLD[cls],dg=sub(A.grip,REST.grip),W={id,cls,s:WSZ[id],rec:0,flash:0,st:{},shots:[],ej:[],hL:[A.hR[0],-A.hR[1],A.hR[2]],kick:KICK[id]};
   const staff=cls==='staff';
   const set=(h,extra)=>{W.grip=add(h[0],extra||[0,0,0]);if(staff){W.aim=nrm(h[1]);W.up=[1,0,0]}else{W.aim=dirPY(h[1],h[2]);W.up=[0,0,1]}};
   if(anim!=='shoot'&&anim!=='aim'){set(H.rest,dg);
@@ -286,7 +286,9 @@ function wpose(A,anim,p,id){const cls=WCLS[id],H=HOLD[cls],dg=sub(A.grip,REST.gr
     if(id==='bastone')W.st.glow=.6+.25*Math.sin(p*TAU);
     return W}
   // aiming and shooting: the aim hold, breathing a little
-  set(H.aim,[0,0,.15*Math.sin(p*TAU)]);if(anim==='aim'){if(id==='bastone')W.st.glow=.8;return W}
+  set(H.aim,[0,0,.15*Math.sin(p*TAU)]);if(anim==='aim'){if(id==='bastone')W.st.glow=.8;
+    // the crossbow follows the game's pull: the string goes back to the nut and the new bolt drops in before the next shot
+    if(id==='balestra'&&o.pull!=null){const k=cl(o.pull,0,1);W.st.draw=k;W.st.bolt=k>.45}return W}
   const F=FIRE[id],T=1/F.n,q=((p-F.off)%1+1)%1,k=Math.floor(q/T),u=q-k*T,un=u/T;W.k=k;W.u=u;W.T=T;W.q=q;
   // the recoil: back along the aim and the muzzle up, quick for the automatic guns; the flash
   const dec=F.n>=6?T*.42:F.n>=2?.07:.09;W.rec=Math.exp(-u/dec);W.flash=cl(1-u/Math.min(T*.55,.06),0,1);
@@ -368,14 +370,14 @@ const hexRgb=h=>{const n=parseInt(String(h).slice(1),16);return`${n>>16},${n>>8&
 // ------------------------------------------------------------------ the hero
 function arciere(x,y,face,anim,p,sc,o){sc=sc||1;o=o||{};const S0=o.style||{},arm=S0.armor&&ARM[S0.armor]?S0.armor:'giubba',wk=S0.weapon;
   const S={...S0,body:S0.body||ARM[arm][0],hood:S0.hood||ARM[arm][1],skin:S0.skin||HC.skin,belt:S0.belt||HC.belt};
-  const W3=typeof ARMI3D!=='undefined'?ARMI3D:null,wid=weaponOf(S0),isX=wid==='balestra',gunW=W3&&wid!=='arco';
+  const W3=typeof ARMI3D!=='undefined'?ARMI3D:null,wid=weaponOf(S0),isX=wid==='balestra',gunW=W3&&wid&&wid!=='arco';
   let bk=S0.bowKind!==undefined?S0.bowKind:(wk&&BOWS[wk]?BOWS[wk][1]:null);if(bk==='plain'||bk==='xbow')bk=null;
   S.bowKind=bk;S.bowCol=S0.bowCol||(wk&&BOWS[wk]?BOWS[wk][0]:HC.bow);
   const V0=V(face),{P,D,F}=V0,Rh=10;let A=pose(anim,p,o),Wp=null;
   // with a gun, the crossbow or the staff: the body of the bow's pose for standing, walking, the dash and the knock back; when it aims
   // or shoots, a firm stance that breathes, eyes narrowed, the body pushed back a little by each shot
   if(gunW){if(anim==='shoot'||anim==='aim'){A=pose('idle',p,o);A.fL=[2.2,-5.2,0];A.fR=[-1,5,0];A.hd=[.3,0,0];A.hp=.04;A.hy=0;A.squint=anim==='shoot'?.55:.35;A.inhale=A.exhale=0}
-    Wp=wpose(A,anim,p,wid);if(Wp.rec>0&&Wp.kick){const k=Wp.rec*Wp.kick[0]/3;A.lean=.02-.06*k;A.B=add(A.B,[-.7*k,0,0]);A.hd=add(A.hd,[-.4*k,0,.1*k])}}
+    Wp=wpose(A,anim,p,wid,o);if(Wp.rec>0&&Wp.kick){const k=Wp.rec*Wp.kick[0]/3;A.lean=.02-.06*k;A.B=add(A.B,[-.7*k,0,0]);A.hd=add(A.hd,[-.4*k,0,.1*k])}}
   const X=frame(A);
   // the shadow on the floor, smaller when the hero is up in the air
   {const lift=cl(A.B[2]/6,0,1),q=P(A.B[0]+.5,A.B[1],0);shadow(x+q[0]*sc,y+q[1]*sc,13.5*sc*(1-.2*lift),5.4*sc*KR()*(1-.2*lift),.3)}
@@ -424,6 +426,8 @@ function arciere(x,y,face,anim,p,sc,o){sc=sc||1;o=o||{};const S0=o.style||{},arm
   // the bow and the hand that holds it, in front of the belly; the string hand at the right side (or on the string). No arms, as in the game
   const grip=X.T(A.grip),aim=nrm(X.Rd(A.aim)),up=nrm(X.Rd(A.up)),hR=X.T(A.hR),Bw=bowPts(grip,aim,up,A.draw,LB,BK);
   if(gunW)weaponParts(parts,V0,X,S,Wp,wid,o);
+  else if(!wid){// no weapon (held: null): both hands at the sides
+    const hL=X.T([A.hR[0],-A.hR[1],A.hR[2]]);parts.push({d:D(X.T(REST.hR)),f:()=>fist(V0,hR,2.7,S.skin)});parts.push({d:D(X.T([-.6,-11.4,11.4])),f:()=>fist(V0,hL,2.7,S.skin)})}
   else if(W3){// the bow in 3D: the stave, its trims, the string and the arrow sort with the two hands
     const fr=W3.frame(grip,aim,up,1),strOn=anim==='shoot'||anim==='aim',loc=q=>{const d=sub(q,grip);return[dot(d,fr.X),dot(d,fr.Y),dot(d,fr.Z)]};
     parts.push({d:D(X.T([12,0,ZB+5])),f:()=>{let pinch=null;if(A.pinch)pinch=loc(hR);else if(A.twang>0)pinch=[-(BK+A.draw*1.6)+Math.sin(A.twang*22)*1.2*A.twang,0,0];

@@ -1,4 +1,5 @@
-# Riunisce i pezzi di src/ (nell'ordine di src/ordine.txt) in index.html, il file unico che si pubblica.
+# Riunisce i pezzi di src/ (nell'ordine di src/ordine.txt) in index.html, il file unico che si pubblica. Nell'elenco ci sono anche
+# file di sprite/ (con il percorso relativo a src/, es. ../sprite/eroe3d/disegno_eroe.js): così il codice dell'eroe 3D sta in un posto solo.
 # Uso: python3 build.py   (tests/mk.py lo chiama da solo prima di costruire tests/test.html)
 import os
 here=os.path.dirname(os.path.abspath(__file__))

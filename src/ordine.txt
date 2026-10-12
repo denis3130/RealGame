@@ -60,4 +60,8 @@ js/58-menu2.js
 js/59-suoni2-animazioni2-uscita.js
 js/60-morti-boss.js
 js/61-anteprime-arene.js
+../sprite/mostri/disegno_mostri.js
+../sprite/eroe3d/armi3d.js
+../sprite/eroe3d/disegno_eroe.js
+js/62-eroe-3d.js
 coda.html
