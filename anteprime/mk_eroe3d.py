@@ -15,7 +15,7 @@ const SLOTS=[['arma','Arma',['arco_frassino','arco_ricurvo','balestra','arco_spi
   ['anello','Anello',['','anello_rame','anello_falco','anello_vento','anello_gelo']],['amuleto','Amuleto',['','amuleto_osso','amuleto_luna','amuleto_lame','cuore_drago']]];
 const gear={arma:'arco_frassino',armatura:'giubba',anello:'',amuleto:''};
 const SHORT={arco_frassino:'Arco di frassino',arco_ricurvo:'Arco ricurvo',balestra:'Balestra',arco_spine:'Arco delle spine',arco_fenice:'Arco della fenice',giubba:'Giubba',cotta:'Cotta di maglia',mantello_ombra:"Mantello d'ombra",corazza_muschio:'Corazza di muschio',anello_rame:'Anello di rame',anello_falco:'Anello del falco',anello_vento:'Anello del vento',anello_gelo:'Anello del gelo',amuleto_osso:"Amuleto d'osso",amuleto_luna:'Amuleto lunare',amuleto_lame:'Amuleto delle lame',cuore_drago:'Cuore di drago'};
-let view='gira',anim='idle',face=Math.PI/2,spin=true,low=false,moss=false,zoom=1,el=45,p=0,ms=0,last=performance.now(),tAnim=0;
+let view='gira',anim='idle',face=Math.PI/2,spin=true,low=false,moss=false,eyeLight=false,zoom=1,el=45,p=0,ms=0,last=performance.now(),tAnim=0;
 // the style of the Arciere with this gear, as heroStyle() makes it in the game (for the hero of today and for the 3D one)
 function styleFor(){const a=gear.armatura&&ITEM[gear.armatura],w=gear.arma&&ITEM[gear.arma],W=gear.arma&&WEAP[gear.arma],h=HERO_BY&&HERO_BY.arciere;
   const base={...HERO,...(h&&h.style||{}),armor:gear.armatura||null,ring:gear.anello||null,amu:gear.amuleto||null};if(W&&base.held==='bow'){base.held=W.held||'bow';base.bowKind=W.bow}
@@ -27,7 +27,7 @@ function tilt(){const th=el*Math.PI/180,SP=Math.SQRT2*Math.sin(th),CP=Math.SQRT2
 function oldHero(x,y,f,sc,S){const ph=p*Math.PI*2,mv=anim==='walk',pull=anim==='shoot'?(p<.5?p/.5*5:0):0;
   ctx.save();ctx.translate(x,y);ctx.scale(sc,sc);if(anim==='hit'&&p<.5){ctx.globalAlpha=Math.floor(p*40)%2?.45:1}
   const lw=mossOn;mossOn=moss&&anim==='idle'?1:0;try{drawRig(0,-8,f,mv?ph:0,mv,S,{pull})}catch(e){}mossOn=lw;ctx.restore()}
-function newHero(x,y,f,sc,S){EROE.arciere(x,y,f,anim,p,sc,{style:S,moss})}
+function newHero(x,y,f,sc,S){EROE.arciere(x,y,f,anim,p,sc,{style:S,moss,eyeLight})}
 function boot(){try{INTRO.on=false;paused=true}catch(e){}try{AU.on.music=false;AU.on.sfx=false}catch(e){}
   const ov=document.createElement('div');ov.id='e3';ov.innerHTML=`<style>
   #e3{position:fixed;inset:0;z-index:99999;background:#1d1a16;font-family:"Baloo 2",system-ui,sans-serif;color:#f6ead2;touch-action:none;user-select:none;-webkit-user-select:none}
@@ -58,7 +58,7 @@ function boot(){try{INTRO.on=false;paused=true}catch(e){}try{AU.on.music=false;A
     $('e3Gear').innerHTML='';for(const[slot,n,ids] of SLOTS){const s=document.createElement('select');for(const id of ids){const o=document.createElement('option');o.value=id;o.textContent=id?(SHORT[id]||ITEM[id].n):(slot==='anello'?'Senza anello':'Senza amuleto');if(gear[slot]===id)o.selected=true;s.appendChild(o)}
       s.onchange=()=>{gear[slot]=s.value;build()};$('e3Gear').appendChild(s)}
     $('e3Opt').innerHTML='';$('e3Opt').appendChild(btn('Gira da solo',spin,()=>spin=!spin));$('e3Opt').appendChild(btn('Bastoncino',moss,()=>moss=!moss));
-    $('e3Opt').appendChild(btn('Effetti bassi',low,()=>low=!low));
+    $('e3Opt').appendChild(btn('Luce negli occhi',eyeLight,()=>eyeLight=!eyeLight));$('e3Opt').appendChild(btn('Effetti bassi',low,()=>low=!low));
     const lb=document.createElement('label');lb.innerHTML=`Telecamera <input type="range" min="35" max="62" step="1" value="${el}"> <b id="e3El">${el}°</b>`;
     const r=lb.querySelector('input');r.oninput=()=>{el=+r.value;lb.querySelector('#e3El').textContent=el+'°'};$('e3Opt').appendChild(lb);
     $('e3Sub').textContent=view==='gira'?'Trascina per girarlo':view==='quattro'?'Sopra in 3D, sotto quello di oggi':'A sinistra oggi, a destra in 3D'}

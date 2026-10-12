@@ -10,7 +10,7 @@
 //   anim: 'idle' (fermo) | 'walk' (cammina) | 'shoot' (tira di continuo) | 'aim' (arco teso di o.pull, come P.aiming nel gioco) |
 //         'dash' (scatto) | 'hit' (colpito); p: 0..1 lungo la mossa; sc: grandezza (1 = come oggi)
 //   o.style: colori ed equipaggiamento come heroStyle() del gioco (body, hood, skin, belt, bowCol, bowKind, held, armor, ring, amu, skinId)
-//   o.moss: il bastoncino di muschio in bocca (solo schermata iniziale e intro); o.pull: 0..1 con 'aim'
+//   o.moss: il bastoncino di muschio in bocca (solo schermata iniziale e intro); o.pull: 0..1 con 'aim'; o.eyeLight: puntino di luce negli occhi
 //   o.noFx: niente freccia che vola, scie e polvere (per i fogli, dove il gioco disegna i suoi effetti)
 window.EROE=(()=>{
 const R=CR._rig,{cam,KR,TAU,cl,ez,lerp,add,sub,mul,len,nrm,dot,cross,lerp3,V,Vat,mix,stepper,shine,ball,seg,tri,hull,on,fist,wa,rim,glowTop,run,starS}=R;
@@ -84,7 +84,6 @@ function head(Vh,Rh,S,A,o){const h=Vh.P(0,0,0),{F}=Vh,hood=S.hood,skin=S.skin,no
   const mouthD=nrm(nod(MOUTH)),mossD=nrm(nod([.66,-.72,-.22]));
   // the moss stick, when the mouth turns away: drawn before the hood, so only the part sticking out past the cheek shows
   const mossBack=o.moss&&F(mouthD)<.05;if(mossBack)mossStick(Vh,h,Rh,mouthD,mossD,o,false);
-  {const nq=sp(Vh,h,Rh+.5,nrm(nod([1,0,.1])));ink(2);ball(nq,1.7);ctx.fillStyle=skin;ctx.fill();ctx.stroke()}
   ink(2.5);ball(h,Rh);ctx.fillStyle=hood;ctx.fill();ctx.stroke();
   ctx.save();ball(h,Rh-.8);ctx.clip();
   ctx.fillStyle=dk(hood,.2);ell(h[0]+Rh*.42,h[1]+Rh*.62,Rh*1.08,Rh*.66);ctx.fill();ctx.fillStyle=dk(hood,.36);ctx.globalAlpha=.5;ell(h[0]+Rh*.95,h[1]+Rh*.1,Rh*.32,Rh*1.05);ctx.fill();ctx.globalAlpha=1;
@@ -107,14 +106,15 @@ function head(Vh,Rh,S,A,o){const h=Vh.P(0,0,0),{F}=Vh,hood=S.hood,skin=S.skin,no
     if(op.rim&&op.rim.length>1){ctx.lineCap='round';ctx.lineJoin='round';ctx.strokeStyle=INK;ctx.lineWidth=2.5;line(op.rim);if(op.full)ctx.closePath();ctx.stroke()}}
   ctx.restore();rim(h,Rh,h,Rh,.3);
   if(o.moss&&!mossBack)mossStick(Vh,h,Rh,mouthD,mossD,o,true)}
-// two big dark eyes with a small point of light (they close for a blink, squeeze shut when hit), a faint blush, a little mouth when needed
+// two big dark eyes, plain as in the game (a small point of light only with o.eyeLight); they close for a blink, squeeze shut when hit;
+// a faint blush, a little mouth when needed
 function face(Vh,h,Rh,nod,o,fd){const{F}=Vh,fq=sp(Vh,h,Rh*.97,fd);
   for(const sd of[-1,1]){const e=nrm(nod([EYE[0],sd*EYE[1],EYE[2]])),v=F(e);if(v<=.02)continue;const q=sp(Vh,h,Rh*.97,e),k=cl((v-.02)*5,0,1),rx=1.95*Math.max(.4,v),ry=2.3;
     ctx.save();ctx.globalAlpha=k;
     if(o.shut){const dir=fq[0]>=q[0]?1:-1;ctx.strokeStyle=HC.eye;ctx.lineWidth=1.3;ctx.lineCap='round';ctx.lineJoin='round';ctx.beginPath();
       ctx.moveTo(q[0]-dir*rx*.9,q[1]-1.5);ctx.lineTo(q[0]+dir*rx*.8,q[1]);ctx.lineTo(q[0]-dir*rx*.9,q[1]+1.5);ctx.stroke()}
     else{const sq=(o.blink==null?1:o.blink)*(1-.3*(o.squint||0)),sy=ry*Math.max(.12,sq);ctx.fillStyle=HC.eye;ctx.beginPath();ctx.ellipse(q[0],q[1],rx,sy,0,0,TAU);ctx.fill();
-      if(sq>.4){ctx.fillStyle='#fff';ball([q[0]-rx*.3,q[1]-sy*.42],.55);ctx.fill()}}
+      if(o.eyeLight&&sq>.4){ctx.fillStyle='#fff';ball([q[0]-rx*.3,q[1]-sy*.42],.55);ctx.fill()}}
     ctx.restore()}
   for(const sd of[-1,1]){const c=nrm(nod([CHEEK[0],sd*CHEEK[1],CHEEK[2]])),v=F(c);if(v<=.05)continue;const q=sp(Vh,h,Rh*.97,c);ctx.fillStyle=`rgba(255,120,110,${.2*cl(v*3,0,1)})`;ell(q[0],q[1],1.7*Math.max(.4,v),1);ctx.fill()}
   if(o.mouth>.05){const m=nrm(nod(MOUTH)),v=F(m);if(v>.05){const q=sp(Vh,h,Rh*.97,m),w=1.3*Math.max(.45,v),hh=.6+o.mouth*1.1;ink(1);ctx.fillStyle='#5a2020';ctx.beginPath();ctx.ellipse(q[0],q[1],w,hh,0,0,TAU);ctx.fill();ctx.stroke()}}}
@@ -299,7 +299,7 @@ function arciere(x,y,face,anim,p,sc,o){sc=sc||1;o=o||{};const S0=o.style||{},arm
   parts.push({d:anim==='shoot'||anim==='aim'?D(X.T([12,0,ZB+5]))+.01:D(X.T(REST.hR)),f:()=>fist(V0,hR,2.7,S.skin)});
   // the head turns on its own camera (the look), the face nods
   const dv=Math.atan2(Math.sin(Math.PI/2-face),Math.cos(Math.PI/2-face)),cheat=o.noCheat?0:.3*Math.sin(dv)*cl((Math.PI-Math.abs(dv))/(Math.PI/2),0,1);
-  parts.push({d:hDep,f:()=>{const Vh=Vat(face+A.hy+cheat,P(Hc),hDep);head(Vh,Rh,S,A,{blink:A.blink,squint:A.squint,shut:A.shut,mouth:A.mouth,moss:o.moss&&anim==='idle'||o.moss===2,inhale:A.inhale,exhale:A.exhale});
+  parts.push({d:hDep,f:()=>{const Vh=Vat(face+A.hy+cheat,P(Hc),hDep);head(Vh,Rh,S,A,{blink:A.blink,squint:A.squint,shut:A.shut,mouth:A.mouth,moss:o.moss&&anim==='idle'||o.moss===2,inhale:A.inhale,exhale:A.exhale,eyeLight:!!o.eyeLight});
     if(A.flash>0){ctx.save();ctx.globalAlpha=A.flash*.3;ball(P(Hc),Rh);ctx.fillStyle='#fff';ctx.fill();ctx.restore()}}});
   // the arrow flies off after the release, in front of the hero or behind him
   if(!o.noFx&&A.fly>=0&&A.fly<.5&&!isX){const k=A.fly/.5,a=add(sub(grip,mul(aim,BK+1)),mul(aim,k*44)),b=add(a,mul(aim,12));
