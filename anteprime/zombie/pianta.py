@@ -10,7 +10,7 @@ K = 2                      # disegno a 2× e poi rimpicciolisco (bordi morbidi)
 TS = 50 * K                # una casella
 MX, MY = 30 * K, 140 * K   # margini della mappa
 W_T, H_T = 16, 24
-LEG_H = 1060 * K
+LEG_H = 1225 * K
 IW, IH = MX * 2 + W_T * TS, MY + H_T * TS + 40 * K + LEG_H
 img = Image.new('RGB', (IW, IH), '#0d0f16')
 d = ImageDraw.Draw(img)
@@ -41,6 +41,17 @@ def text(x, y, s, size=15, col='#f2ead8', anchor='mm', b=True, stroke=3):
     d.text(P(x, y), s, font=f(size, b), fill=col, anchor=anchor, stroke_width=stroke * K, stroke_fill='#0b0a10')
 def num(x, y, n, col='#f2ead8', bg='#2a2430'):
     r = .2; circ(x, y, r, bg, '#0b0a10', 2); text(x, y + .01, str(n), 11, col, stroke=0)
+def bara(x, y, main=True):
+    pts = [(x - .11, y - .3), (x + .11, y - .3), (x + .2, y - .1), (x + .13, y + .3), (x - .13, y + .3), (x - .2, y - .1)]
+    if main: circ(x, y, .42, '#1f3a26')
+    poly(pts, '#3a2418' if main else None, '#7ae08a', 3 if main else 2)
+    text(x, y + .02, '?', 13 if main else 11, '#ffe28a', stroke=0 if main else 2)
+def arma(x, y, kind='rev'):
+    rect(x - .38, y - .2, x + .38, y + .2, '#1c1a1e', '#e8e4da', 2)      # il riquadro di gesso sul muro
+    if kind == 'rev':
+        line([(x - .2, y - .04), (x + .24, y - .04)], '#e8e4da', 4); line([(x - .18, y - .02), (x - .26, y + .14)], '#e8e4da', 4)
+    else:
+        line([(x - .3, y), (x + .3, y - .06)], '#e8e4da', 4); line([(x - .3, y), (x - .34, y + .12)], '#e8e4da', 4)
 def spawn(x, y, dx=0, dy=0):
     circ(x, y, .2, '#b8302a', '#2a0808', 2); text(x, y + .01, 'Z', 11, '#ffe8e0', stroke=0)
     if dx or dy:
@@ -119,6 +130,11 @@ for (x, y, r) in [(8.9, 8.6, .75), (.7, 9.1, .6)]: circ(*A1(x, y), r, '#2f4a2a',
 rect(*A1(5.0, 5.33), *A1(5.24, 5.43), '#5a4a3a', '#0b0a10', 1)
 # buche nel terreno
 for (x, y) in [(8.1, 7.9), (2.3, 9.2)]: circ(*A1(x, y), .2, '#0a0708', '#3a2a1a', 2); spawn(*A1(x + .38, y - .25))
+# la Bara delle Sorprese (la cassa delle armi): parte qui, nel cimitero accanto alla cripta
+bara(4.45, 16.6); text(3.85, 14.68, 'Bara delle Sorprese · 750', 11, '#9ff0a8')
+line([(4.42, 14.85), (4.44, 16.22)], '#7ae08a', 1, dash=3)
+# arma a muro dietro la casa: il revolver disegnato col gesso sul muro nord
+arma(9.6, 14.82, 'rev'); text(9.6, 14.32, 'Revolver · 500', 12, '#f2ead8')
 # partenza
 hx, hy = A1(4.4, 8.4); circ(hx, hy, .26, '#3fb27a', '#0b0a10', 3); text(hx, hy + .01, '★', 13, '#eafff2', stroke=0)
 text(hx + 1.25, hy, 'Partenza', 14, '#9ff0c4')
@@ -183,6 +199,8 @@ for (x, y) in [(6.0, 8.6), (9.3, 5.2), (8.9, 8.7)]:
 # fienile rosso (si entra), portone a ovest sull'aia, lanterna rossa sopra
 rect(11.0, 4.0, 15.4, 8.2, '#7b2e26', '#0b0a10', 3); line([(13.2, 4.0), (13.2, 8.2)], '#4c5866', 4)
 rect(10.85, 5.5, 11.15, 6.7, '#3a2a20', '#0b0a10', 2); circ(10.85, 5.3, .12, '#ff6a50', '#0b0a10', 2)
+arma(10.9, 7.45, 'pompa'); text(9.55, 7.0, 'Pompa da caccia · 1.500', 11, '#f2ead8')
+bara(14.0, 5.35, False)
 text(13.2, 5.6, 'Fienile', 16); text(13.2, 6.3, '(si entra)', 11, '#f0d8d0', b=False)
 for (x, y) in [(12.0, 7.6), (14.6, 7.5), (14.6, 4.6)]: rect(x - .25, y - .2, x + .25, y + .2, '#a8944a', '#0b0a10', 1)
 # rimessa con la mola (la gira il mulino con la cinghia: niente motori)
@@ -204,7 +222,8 @@ rect(.4, 10.9, 1.9, 11.8, '#5a4a3a', '#0b0a10', 2); text(1.15, 11.35, 'Pollaio',
 # tettoia con il carretto del Becchino, i sacchi col teschio e la bara
 rect(7.6, 10.1, 10.0, 11.5, '#4a3a2e', '#0b0a10', 3)
 rect(7.9, 10.4, 9.2, 11.1, '#7d5a38', '#0b0a10', 2); rect(9.35, 10.35, 9.8, 11.25, '#2a1a14', '#9a7a3a', 2)
-text(8.8, 9.75, 'Carretto e bara', 11)
+text(8.8, 9.75, 'Carretto del Becchino', 11)
+bara(9.57, 10.8, False)
 # lanterna sul palo lungo la strada
 circ(5.5, 11.35, .12, '#ffcf6a', '#0b0a10', 2)
 # confine della fattoria dove non c'è l'area di partenza (staccionata rustica) e cosa c'è oltre i bordi
@@ -244,6 +263,12 @@ def s_lamp(sx, sy):
     d.ellipse([sx - 7 * K, sy - 7 * K, sx + 7 * K, sy + 7 * K], fill='#ffcf6a', outline='#0b0a10', width=2 * K)
 def s_zomb(sx, sy):
     d.ellipse([sx - 8 * K, sy - 4 * K, sx + 8 * K, sy + 12 * K], fill='#5a8a6a', outline='#0b0a10', width=2 * K); d.ellipse([sx - 5 * K, sy - 14 * K, sx + 5 * K, sy - 4 * K], fill='#5a8a6a', outline='#0b0a10', width=2 * K)
+def s_bara(sx, sy):
+    pts = [(-5, -14), (5, -14), (9, -5), (6, 14), (-6, 14), (-9, -5)]
+    d.polygon([(sx + a * K, sy + b * K) for a, b in pts], fill='#3a2418', outline='#7ae08a', width=3 * K); d.text((sx, sy + 1 * K), '?', font=f(11), fill='#ffe28a', anchor='mm')
+def s_arma(sx, sy):
+    d.rectangle([sx - 16 * K, sy - 9 * K, sx + 16 * K, sy + 9 * K], fill='#1c1a1e', outline='#e8e4da', width=2 * K)
+    d.line([(sx - 9 * K, sy - 2 * K), (sx + 10 * K, sy - 2 * K)], fill='#e8e4da', width=4 * K); d.line([(sx - 8 * K, sy - 1 * K), (sx - 12 * K, sy + 6 * K)], fill='#e8e4da', width=4 * K)
 def s_wall(sx, sy):
     d.line([(sx - 14 * K, sy), (sx + 14 * K, sy)], fill=WC, width=7 * K)
 def s_fence(sx, sy):
@@ -256,6 +281,8 @@ items = [
     (s_view, 'Dal cancello si intravede la fattoria', 'tra le sbarre e oltre il muro: fienile, spaventapasseri, mulino e zombie nell\'aia, velati dalla nebbia'),
     (s_spawn, 'Da dove escono gli zombie', 'buche, fosse, la latrina, il margine del granturco, il fango dei maiali, la terra smossa dell\'orto'),
     (s_zomb, 'Zombie che girano nell\'aia', 'si vedono già prima di aprire il cancello'),
+    (s_bara, 'Bara delle Sorprese: la cassa che dà le armi', 'parte nel cimitero accanto alla cripta (750 monete); a volte scappa e ricompare sul carretto o nel fienile'),
+    (s_arma, 'Arma a muro disegnata col gesso, con il prezzo', 'Revolver 500 dietro la casa, Pompa da caccia 1.500 sul fienile; ricomprandola ridà le munizioni'),
     (s_wall, 'Muretti di pietra con la cancellata', 'il cimitero e il confine tra le due aree (si vede oltre)'),
     (s_fence, 'Staccionate e recinti di legno', ''),
     (s_lamp, 'Lanterne e lampioni a olio', 'mondo antico: lanterne, candele, mulino, pozzi, carretti; niente motori'),
@@ -268,7 +295,8 @@ nov = ['Due caselle in più a nord: la strada di ciottoli prosegue dal bivio fin
        'Dietro la cripta: un albero morto con i corvi e una fossa nuova da cui escono zombie.',
        'Dietro la casa: catasta di legna col ceppo e l\'accetta, stendibiancheria con le lenzuola strappate.',
        'Due caselle in più a est: la latrina (a volte uno zombie spalanca la porta), una lanterna sul palo,',
-       '   una buca, una quercia morta, una pila di legna.']
+       '   una buca, una quercia morta, una pila di legna.',
+       'La Bara delle Sorprese accanto alla cripta e il Revolver disegnato col gesso sul muro dietro la casa.']
 for i, s in enumerate(nov): d.text((MX + 22 * K, ly + (ny + 34 + i * 28) * K), s, font=f(13, False), fill='#d8cfc0')
 ny2 = ny + 34 + len(nov) * 28 + 22
 d.text((MX + 22 * K, ly + ny2 * K), 'La Fattoria dei Corvi', font=f(16), fill='#ffe28a')
@@ -279,7 +307,8 @@ fat = ['Granturco alto a nord (continua oltre il bordo) con due spaventapasseri 
        'Fienile rosso con il portone sull\'aia e la lanterna rossa (si entra).',
        'Mulino a vento sul poggio: le pale girano e muovono la mola nella rimessa con una cinghia.',
        'Orto delle zucche con i sacchi di terra del Becchino; recinto dei maiali col fango; cuccia; pollaio.',
-       'Tettoia con il carretto del Becchino, i sacchi col teschio e la bara, appena dopo il cancello.']
+       'Tettoia con il carretto del Becchino e i sacchi col teschio, appena dopo il cancello.',
+       'La Pompa da caccia disegnata col gesso sul muro del fienile che guarda l\'aia.']
 for i, s in enumerate(fat): d.text((MX + 22 * K, ly + (ny2 + 34 + i * 28) * K), s, font=f(13, False), fill='#d8cfc0')
 
 img = img.resize((IW // K, IH // K), Image.LANCZOS)
