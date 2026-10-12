@@ -256,13 +256,15 @@ const WCLS={pistola:'one',revolver:'one',mitraglietta:'long',mitra:'long',mitrag
 const WSZ={pistola:1.22,revolver:1.1,mitraglietta:1.12,mitra:1,mitragliatrice:.92,pompa:.92,tattica:1.02,lanciarazzi:.95,balestra:1,bastone:.95};
 // rest: [the right hand (on the grip), pitch (down < 0), yaw (toward the middle < 0)] for standing and walking; aim: the same when it
 // shoots; anc: a point of the weapon at rest, which gives it its place in the draw order (always the same, as for every part)
-const HOLD={one:{rest:[[10.4,4.8,9.6],-.24,-.28],aim:[[13.2,4,13.6],0,-.05],anc:[14,5,9.5]},
-  long:{rest:[[6.2,4.6,9.2],-.2,-.45],aim:[[7.4,5,12.6],0,-.03],anc:[11,4,9]},
+const HOLD={one:{rest:[[10,8.6,9.4],-.26,-.2],aim:[[12.6,9.4,12.8],0,-.04],anc:[14,8,9.5]},
+  long:{rest:[[6.4,8.8,9.2],-.2,-.36],aim:[[5.6,9.2,12.2],0,-.02],anc:[11,7,9]},
   shoulder:{rest:[[2.6,8.9,11.1],-.07,0],aim:[[3.6,8.9,11.2],0,0],anc:[3,8.9,17]},
-  xbow:{rest:[[8.4,4,9.2],-.2,-.3],aim:[[10.4,3.6,13.4],0,-.03],anc:[11.5,4,9.5]},
+  xbow:{rest:[[8,8,9.2],-.2,-.26],aim:[[9,8.4,12.8],0,-.02],anc:[11,7,9.5]},
   staff:{rest:[[-3,12.6,14.4],[-.12,.12,1]],aim:[[8,9.6,13.2],[1,-.08,.45]],anc:[-3,13,16]}};
-// (the anchors are chosen so that from every side the weapon goes in front of the body when it is on the side we see, behind it when
-// it is on the other side; the staff stands at the right side a little behind the middle, so its orb never covers the face)
+// (the guns are held at the right side of the body, so from behind they still show beside it, and from the front the gun pointing at
+// us is beside the belly, not over it; the anchors are chosen so that from every side the weapon goes in front of the body when it is
+// on the side we see, behind it when it is on the other side; the staff stands at the right side a little behind the middle, so its
+// orb never covers the face)
 // the shots of one 'shoot' cycle: n shots, the first at off; pump: when the pump goes back and forth after a shot (in parts of the time
 // between two shots); rel: the reload after a shot (rocket, crossbow)
 const FIRE={pistola:{n:3,off:.04},revolver:{n:2,off:.06},mitraglietta:{n:10,off:.02},mitra:{n:6,off:.03},mitragliatrice:{n:12,off:.02},

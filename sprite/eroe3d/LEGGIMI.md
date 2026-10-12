@@ -34,8 +34,9 @@
 
 ### Come le tiene l'eroe (`disegno_eroe.js`: `WCLS`, `HOLD`, `FIRE`, `wpose`, `weaponParts`)
 
+- Le armi stanno sul fianco destro del corpo, non davanti alla pancia: così da dietro se ne vede sempre un pezzo accanto al corpo (calcio, castello, il colore dell'arma) e da davanti l'arma puntata verso chi guarda sta accanto alla pancia, non sopra.
 - Armi corte (pistola, revolver): nella mano destra, puntate in basso e un po' verso il centro da fermo, dritte all'altezza del petto quando spara; la sinistra sul fianco.
-- Armi lunghe (mitraglietta, mitra, mitragliatrice, pompe) e balestra: mano destra sull'impugnatura, sinistra sull'astina; da fermo di traverso davanti al corpo con la bocca in giù («pronto»), quando spara dritte all'altezza della spalla.
+- Armi lunghe (mitraglietta, mitra, mitragliatrice, pompe) e balestra: mano destra sull'impugnatura, sinistra sull'astina; da fermo di traverso con la bocca in giù («pronto»), quando spara dritte all'altezza della spalla.
 - Lanciarazzi: sulla spalla destra, le due mani sotto.
 - Bastone: dritto nella mano destra, un po' dietro la linea del corpo, così la sfera non copre mai la faccia; la sinistra libera.
 - `shoot`: ogni arma ha i suoi colpi in un giro (`FIRE`: pistola 3, revolver 2, mitraglietta 10, mitra 6, mitragliatrice 12, pompa 1, tattica 2, razzo 1), con il rinculo indietro e in su (`KICK`, gli stessi numeri delle armi zombie), il corpo spinto un poco a ogni colpo, gli occhi socchiusi, la vampa (`ARMI.vampa` nel piano dell'arma) e, se non c'è `o.noFx`, i colpi che volano, i pallini delle pompe, il razzo, il fumo, i bossoli. Balestra: tira, poi la mano destra va alla corda, la tira fino alla noce e torna; il dardo nuovo compare. Bastone: lo alza in alto (la sfera si accende), colpisce in avanti, la sfera lampeggia e partono le foglie, poi torna su.
