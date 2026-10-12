@@ -1,4 +1,4 @@
-// Draws the Classic hero redone in 3D (sprite/eroe3d/disegno_eroe.js, the Arciere with the starting gear) into sheets:
+// Draws the Classic hero redone in 3D (sprite/eroe3d/disegno_eroe.js with the 3D bow of armi3d.js, the Arciere with the starting gear) into sheets:
 // sprite/eroe3d/arciere_<move>.png + fogli.json. Run `python3 tests/mk.py` first. Usage: node tests/eroe3d.js
 // Same format as the enemy sheets (tests/nemici.js): 8 rows (front, front-right, right, back-right, back, back-left, left, front-left),
 // one frame per column, every frame drawn on its own canvas, one square cell for all the moves with the feet always in the same place.
@@ -10,7 +10,8 @@ const HERO={sc:1,K:3,W:96,anims:[['idle',10],['walk',8],['shoot',12],['aim',6],[
 (async()=>{const b=await chromium.launch();const p=await b.newPage({viewport:{width:390,height:844}});const errs=[];p.on('pageerror',e=>errs.push(e.message));
 await p.addInitScript(()=>{localStorage.setItem('cripta_save_v1',JSON.stringify({gold:50,introSeen:1,runs:3,items:{arco_frassino:{lvl:1,cards:0},giubba:{lvl:1,cards:0}},eq:{arma:'arco_frassino',armatura:'giubba',anello:null,amuleto:null},slots:[null,null,null,null]}))});
 await p.goto('file://'+path.join(__dirname,'test.html'));await p.waitForTimeout(1000);
-await p.evaluate(c=>__E(c),fs.readFileSync(path.join(MOSTRI,'disegno_mostri.js'),'utf8'));await p.evaluate(c=>__E(c),fs.readFileSync(path.join(OUT,'disegno_eroe.js'),'utf8'));
+await p.evaluate(c=>__E(c),fs.readFileSync(path.join(MOSTRI,'disegno_mostri.js'),'utf8'));await p.evaluate(c=>__E(c),fs.readFileSync(path.join(OUT,'armi3d.js'),'utf8'));
+await p.evaluate(c=>__E(c),fs.readFileSync(path.join(OUT,'disegno_eroe.js'),'utf8'));
 await p.evaluate(()=>__E(`
 const DIRS=[Math.PI/2,Math.PI/4,0,-Math.PI/4,-Math.PI/2,-3*Math.PI/4,Math.PI,3*Math.PI/4];
 window.__frame=function(anim,k,n,r,o){const cv=document.createElement('canvas');cv.width=cv.height=o.W*o.K;const saved=ctx;ctx=cv.getContext('2d');ctx.scale(o.K,o.K);G.t=k*0.08+r*.37;ctx.save();

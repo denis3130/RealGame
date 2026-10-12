@@ -245,12 +245,136 @@ function pose(anim,p,o){const ph=p*TAU,A={B:[0,0,0],lean:.02,roll:0,s:0,sx:0,hd:
     A.grip=add(REST.grip,[-1.6*kb,0,2.2*kb]);A.aim=nrm([.8,0,-.6+.3*kb]);A.hR=add(REST.hR,[-1.4*kb,1.6*kb,3.4*kb]);A.jig=kb*1.4;A.sway=kb*2}
   return A}
 
+// ------------------------------------------------------------------ the weapon in the hands, in 3D (armi3d.js)
+// The bows of the cards, the crossbow, the Druid's staff and the eight guns of the zombie mode are volumes seen by the hero's camera
+// (ARMI3D). Which one: style.gun (a zombie gun: no quiver), held 'staff' (the staff: no quiver), held 'xbow' or the balestra card (the
+// crossbow), else the bow of the card. How it is held (cls): 'one' a hand gun in the right hand, the left hand free at the side; 'long'
+// the right hand on the grip and the left on the fore-grip (or on the pump, which it works); 'shoulder' the rocket launcher on the right
+// shoulder; 'xbow' the crossbow like a long gun; 'staff' upright in the right hand, its foot near the ground, the orb beside the head.
+const WCLS={pistola:'one',revolver:'one',mitraglietta:'long',mitra:'long',mitragliatrice:'long',pompa:'long',tattica:'long',lanciarazzi:'shoulder',balestra:'xbow',bastone:'staff'};
+// the size of each (1 = the units of the zombie guns' profiles, a little smaller than the game's 2D guns, which are drawn at 1.35)
+const WSZ={pistola:1.22,revolver:1.1,mitraglietta:1.12,mitra:1,mitragliatrice:.92,pompa:.92,tattica:1.02,lanciarazzi:.95,balestra:1,bastone:.95};
+// rest: [the right hand (on the grip), pitch (down < 0), yaw (toward the middle < 0)] for standing and walking; aim: the same when it
+// shoots; anc: a point of the weapon at rest, which gives it its place in the draw order (always the same, as for every part)
+const HOLD={one:{rest:[[10.4,4.8,9.6],-.24,-.28],aim:[[13.2,4,13.6],0,-.05],anc:[14,5,9.5]},
+  long:{rest:[[6.2,4.6,9.2],-.2,-.45],aim:[[7.4,5,12.6],0,-.03],anc:[11,4,9]},
+  shoulder:{rest:[[2.6,8.9,11.1],-.07,0],aim:[[3.6,8.9,11.2],0,0],anc:[3,8.9,17]},
+  xbow:{rest:[[8.4,4,9.2],-.2,-.3],aim:[[10.4,3.6,13.4],0,-.03],anc:[11.5,4,9.5]},
+  staff:{rest:[[-3,12.6,14.4],[-.12,.12,1]],aim:[[8,9.6,13.2],[1,-.08,.45]],anc:[-3,13,16]}};
+// (the anchors are chosen so that from every side the weapon goes in front of the body when it is on the side we see, behind it when
+// it is on the other side; the staff stands at the right side a little behind the middle, so its orb never covers the face)
+// the shots of one 'shoot' cycle: n shots, the first at off; pump: when the pump goes back and forth after a shot (in parts of the time
+// between two shots); rel: the reload after a shot (rocket, crossbow)
+const FIRE={pistola:{n:3,off:.04},revolver:{n:2,off:.06},mitraglietta:{n:10,off:.02},mitra:{n:6,off:.03},mitragliatrice:{n:12,off:.02},
+  pompa:{n:1,off:.08,pump:[.2,.56]},tattica:{n:2,off:.06,pump:[.3,.74]},lanciarazzi:{n:1,off:.12,rel:[.32,.78]},balestra:{n:1,off:.14,rel:[.36,.84]},bastone:{n:1,off:.3}};
+const KICK={pistola:[1.6,.12],revolver:[2.6,.32],mitraglietta:[.9,.05],mitra:[1.4,.07],mitragliatrice:[1.2,.04],pompa:[3,.2],tattica:[2.4,.18],lanciarazzi:[3.4,.14],balestra:[1.2,.08],bastone:[0,0]};
+function weaponOf(S0){if(S0.gun&&WCLS[S0.gun])return S0.gun;if(S0.held==='staff')return'bastone';if(S0.held==='xbow'||S0.weapon==='balestra')return'balestra';return'arco'}
+const dirPY=(pitch,yaw)=>nrm([Math.cos(pitch)*Math.cos(yaw),Math.cos(pitch)*Math.sin(yaw),Math.sin(pitch)]);
+const bump=k=>k<=0||k>=1?0:Math.sin(k*Math.PI);
+// where the weapon is and what its moving parts do, for this move at p (only p: the cycle closes on itself). It reuses the body of the
+// bow's pose (A): breathing, steps, the dash, the knock back
+function wpose(A,anim,p,id){const cls=WCLS[id],H=HOLD[cls],dg=sub(A.grip,REST.grip),W={id,cls,s:WSZ[id],rec:0,flash:0,st:{},shots:[],ej:[],hL:[A.hR[0],-A.hR[1],A.hR[2]],kick:KICK[id]};
+  const staff=cls==='staff';
+  const set=(h,extra)=>{W.grip=add(h[0],extra||[0,0,0]);if(staff){W.aim=nrm(h[1]);W.up=[1,0,0]}else{W.aim=dirPY(h[1],h[2]);W.up=[0,0,1]}};
+  if(anim!=='shoot'&&anim!=='aim'){set(H.rest,dg);
+    const tilt=v=>{if(staff)W.aim=nrm(add(nrm(H.rest[1]),[v,0,0]));else W.aim=dirPY(H.rest[1]+v,H.rest[2])};
+    if(anim==='walk')tilt(staff?.08*Math.sin(p*TAU):.05*Math.sin(p*TAU*2));
+    if(anim==='dash')tilt((staff?-.5:.34)*Math.sin(cl((p-.16)/.4,0,1)*Math.PI));
+    if(anim==='hit'){const kb=p<.12?ez(p/.12):Math.exp(-(p-.12)*6)*Math.cos((p-.12)*16);tilt((staff?-.4:.3)*kb)}
+    if(id==='bastone')W.st.glow=.6+.25*Math.sin(p*TAU);
+    return W}
+  // aiming and shooting: the aim hold, breathing a little
+  set(H.aim,[0,0,.15*Math.sin(p*TAU)]);if(anim==='aim'){if(id==='bastone')W.st.glow=.8;return W}
+  const F=FIRE[id],T=1/F.n,q=((p-F.off)%1+1)%1,k=Math.floor(q/T),u=q-k*T,un=u/T;W.k=k;W.u=u;W.T=T;W.q=q;
+  // the recoil: back along the aim and the muzzle up, quick for the automatic guns; the flash
+  const dec=F.n>=6?T*.42:F.n>=2?.07:.09;W.rec=Math.exp(-u/dec);W.flash=cl(1-u/Math.min(T*.55,.06),0,1);
+  if(id==='pistola'||id==='mitraglietta'||id==='mitra')W.st.slide=Math.exp(-u/(dec*.8));
+  if(id==='revolver'){W.st.hammer=cl(un*1.8-.2,0,1);W.st.cyl=(k+ez(cl(un/.35,0,1)))/6}
+  if(id==='mitragliatrice'){W.st.spin=p*TAU*3;W.st.feed=((k+ez(cl(un*3,0,1)))/3)%1}
+  if(F.pump){const[a,c]=F.pump;W.st.pump=bump((un-a)/(c-a))}
+  // the spent cases in the air (their age, from when they leave the gun): at the shot, or when the pump goes back
+  const ejAt=F.pump?(F.pump[0]+F.pump[1])/2*T:0,ejOn=id!=='revolver'&&id!=='lanciarazzi'&&id!=='balestra'&&id!=='bastone';
+  if(ejOn)for(let j=0;j<4;j++){const e=u+j*T-ejAt;if(e>=0&&e<.34)W.ej.push(e)}
+  // the shots still flying (their age), for the bullets, the smoke, the bolt, the leaves
+  for(let j=0;j<3;j++){const a=u+j*T;if(a<.5)W.shots.push(a)}
+  // reloads: the rocket pushed into the tube by the left hand; the crossbow's string pulled back to the nut by the right hand
+  const ph=(a,c,inn,out)=>q>=a-inn&&q<a?{ph:1,t:(q-a+inn)/inn}:q>=a&&q<c?{ph:2,t:(q-a)/(c-a)}:q>=c&&q<c+out?{ph:3,t:(q-c)/out}:null;
+  if(id==='lanciarazzi'){const[a,c]=F.rel;W.st.loaded=q<a?0:q<c?ez((q-a)/(c-a)):1;W.load=ph(a,c,.1,.1)}
+  if(id==='balestra'){const[a,c]=F.rel;W.st.draw=q<.02?1-q/.02:q<a?0:q<c?ez((q-a)/(c-a)):1;W.st.bolt=q>=c+.05||q<.004;W.pull=ph(a,c,.1,.12)}
+  if(id==='bastone'){// the cast: the staff goes up high (the orb above the head, brighter), strikes forward (the orb flares, leaves
+    // burst out), holds a moment, then goes back to the side
+    const r0=H.rest,r1=H.aim,UP=[[-.6,11.4,18.6],[0,.06,1]];let g,d;
+    if(q<.24){const k=ez(q/.24);g=lerp3(r0[0],UP[0],k);d=lerp3(nrm(r0[1]),nrm(UP[1]),k)}
+    else if(q<.32){const k=ez((q-.24)/.08);g=lerp3(UP[0],r1[0],k);d=lerp3(nrm(UP[1]),nrm(r1[1]),k)}
+    else if(q<.5){g=r1[0];d=r1[1]}
+    else if(q<.86){const k=ez((q-.5)/.36);g=lerp3(r1[0],r0[0],k);d=lerp3(nrm(r1[1]),nrm(r0[1]),k)}
+    else{g=r0[0];d=r0[1]}
+    W.grip=g;W.aim=nrm(d);W.up=[1,0,0];W.st.glow=q<.24?.7+.6*ez(q/.24):q<.32?1.3:q<.5?1.7-(q-.32)/.18*.8:.75;
+    W.flash=q>=.32?cl(1-(q-.32)/.1,0,1):0;W.cast=q>=.32?q-.32:-1;W.rec=0;W.shots=[]}
+  return W}
+// a muzzle flash of the zombie guns (ARMI.vampa, drawn in the gun's own plane) at the gun's point pt, k 1 .. 0
+function flashFx(K,id,pt,k,seed,back){if(k<=0||typeof ARMI==='undefined')return;K.fx(pt,q=>{const b=K.P(K.W(add(pt,[1,0,0]))),dx=b[0]-q[0],dy=b[1]-q[1],l=Math.hypot(dx,dy)/K.s;
+  ctx.save();ctx.translate(q[0],q[1]);ctx.rotate(Math.atan2(dy,dx));ctx.scale(K.s*Math.max(.5,l),K.s);try{ARMI.vampa(back?'retro':id,0,0,k,seed)}catch(e){}ctx.restore()},back?-.5:1.4)}
+// a crossbow bolt in flight (like arrow(), steel with blue vanes)
+function boltFx(V0,a3,b3,al){if(al<=.02)return;const{P}=V0,A=P(a3),B=P(b3),dx=B[0]-A[0],dy=B[1]-A[1],l=Math.hypot(dx,dy)||1,u=[dx/l,dy/l],n=[-u[1],u[0]];ctx.save();ctx.globalAlpha=al;
+  ctx.lineCap='round';ctx.strokeStyle=INK;ctx.lineWidth=2.6;seg(A,B);ctx.stroke();ctx.strokeStyle='#dfe4ea';ctx.lineWidth=1.2;seg(A,B);ctx.stroke();
+  ink(.9);ctx.fillStyle='#c9cfd6';ctx.beginPath();ctx.moveTo(B[0]+u[0]*3,B[1]+u[1]*3);ctx.lineTo(B[0]+n[0]*1.5,B[1]+n[1]*1.5);ctx.lineTo(B[0]-n[0]*1.5,B[1]-n[1]*1.5);ctx.closePath();ctx.fill();ctx.stroke();
+  for(const sd of[1,-1]){ctx.fillStyle='#4d97ff';ctx.beginPath();ctx.moveTo(A[0]+u[0],A[1]+u[1]);ctx.lineTo(A[0]+u[0]*3.4+n[0]*sd*.4,A[1]+u[1]*3.4+n[1]*sd*.4);ctx.lineTo(A[0]+n[0]*sd*2,A[1]+n[1]*sd*2);ctx.closePath();ctx.fill();ctx.stroke()}ctx.restore()}
+
+// the weapon (with its hands and its effects) as one part of the hero, and the free hand at the side
+function weaponParts(parts,V0,X,S,Wp,wid,o){const{D}=V0,cls=Wp.cls,r=Wp.rec,kk=Wp.kick||[0,0],fx=!o.noFx;
+  // the recoil: the weapon goes back along its aim and the muzzle goes up, round the hand
+  let aimB=Wp.aim,upB=Wp.up;if(r>0&&kk[1]){const th=kk[1]*r,c=Math.cos(th),sn=Math.sin(th);[aimB,upB]=[add(mul(aimB,c),mul(upB,sn)),sub(mul(upB,c),mul(aimB,sn))]}
+  const g3=X.T(sub(Wp.grip,mul(Wp.aim,kk[0]*r*.55))),fr=ARMI3D.frame(g3,nrm(X.Rd(aimB)),nrm(X.Rd(upB)),Wp.s);
+  parts.push({d:D(X.T(HOLD[cls].anc)),f:()=>{const st={...Wp.st};if(wid==='balestra')st.col=S.bowCol;if(wid==='bastone')st.orbCol=S.eyeCol||'#9fff7a';
+    ARMI3D.draw(wid,V0,fr,st,(K,kp)=>{
+      // the right hand on the grip, or pulling the crossbow's string back to the nut
+      let rh=[0,0,0];const pl=Wp.pull;
+      if(pl&&kp.nut){const at=[kp.nut[0]+.2,4.3,0],far=[10.4,4.3,0];rh=pl.ph===1?lerp3([0,0,0],far,ez(pl.t)):pl.ph===2?at:lerp3([-.4,4.3,0],[0,0,0],ez(pl.t))}
+      K.hand(rh,2.8,S.skin,1.2,S.ring?q=>ringOn(V0,q,S.ring):null);
+      // the left hand on the fore-grip or the pump; it pushes the new rocket into the tube
+      let lh=kp.sup;const ld=Wp.load;
+      if(ld&&lh){const off=(1-ez(Wp.st.loaded||0))*9,on=[16.6+off,4.2,0];lh=ld.ph===1?lerp3(kp.sup,[25.6,4.2,0],ez(ld.t)):ld.ph===2?on:lerp3([16.6,4.2,0],kp.sup,ez(ld.t))}
+      if(lh)K.hand(lh,2.7,S.skin,1.2);
+      // the flash at the muzzle (and the rocket's blast behind), the orb flaring
+      if(Wp.flash>0&&kp.muzzle&&ARMI3D.ZOMBIE.includes(wid))flashFx(K,wid,kp.muzzle,Wp.flash,(Wp.k||0)*7+3);
+      if(wid==='lanciarazzi'&&Wp.flash>0&&kp.back)flashFx(K,wid,kp.back,Wp.flash,11,true);
+      if(wid==='bastone'&&Wp.flash>0){const rgb=hexRgb(S.eyeCol||'#9fff7a');K.fx(kp.orb,q=>{shine(rgb,q[0],q[1],18*Wp.flash+6,.75*Wp.flash);ctx.strokeStyle=`rgba(234,255,214,${(.8*Wp.flash).toFixed(3)})`;ctx.lineWidth=1.4;ball(q,4+(1-Wp.flash)*9);ctx.stroke()},2)}
+      if(!fx)return;
+      // effects: the bullets, the shotgun's pellets, the rocket, the smoke, the spent cases, the bolt, the leaves
+      const D0=typeof ARMI!=='undefined'?ARMI.DATI[wid]:null,mz=kp.muzzle;
+      if(D0&&mz)for(const a of Wp.shots){const sp=wid==='lanciarazzi'?60+a*900:900,d=a*sp,al=cl(1-a/(wid==='lanciarazzi'?.25:.09),0,1);if(al<=0||d<1)continue;
+        if(wid==='lanciarazzi'){const c=add(mz,[d/K.s,0,0]);K.fx(c,q=>{const b=K.P(K.W(add(c,[1,0,0])));try{ARMI.razzo(q[0],q[1],Math.atan2(b[1]-q[1],b[0]-q[0]),G.t)}catch(e){}},0)}
+        else{const n=D0.pel||1;for(let i=0;i<n;i++){const an=n>1?(i/(n-1)-.5)*.42:0,c=add(mz,[d/K.s*Math.cos(an),0,d/K.s*Math.sin(an)]);
+          K.fx(c,q=>{const b=K.P(K.W(add(c,[Math.cos(an),0,Math.sin(an)])));try{ARMI.colpo(D0.colpo,q[0],q[1],b[0]-q[0],b[1]-q[1],al)}catch(e){}},0)}}}
+      if(typeof ARMI!=='undefined'&&mz&&!LOWFX&&ARMI3D.ZOMBIE.includes(wid))for(const a of Wp.shots){const k=a/.42;if(k>=1)continue;const c=add(mz,[1.5,1+k*5,0]);
+        K.fx(c,q=>ARMI.fumo(q[0],q[1],k,wid==='lanciarazzi'?6:wid==='pompa'||wid==='tattica'?4.2:3,false),-.2)}
+      if(wid==='lanciarazzi'&&kp.back&&!LOWFX&&typeof ARMI!=='undefined')for(const a of Wp.shots){const k=a/.5;if(k>=1)continue;const c=add(kp.back,[-2-k*8,1+k*3,0]);
+        K.fx(c,q=>ARMI.fumo(q[0],q[1],k,7,true),-.5)}
+      if(D0&&D0.bossolo&&kp.eject)for(const e of Wp.ej){const k=e/.34,c=add(kp.eject,[-2.5*k,6*k-11*k*k,8*k]);
+        K.fx(c,q=>{try{ARMI.bossolo(D0.bossolo,q[0],q[1],k*14,cl((1-k)*3,0,1))}catch(e){}},.5)}
+      if(wid==='balestra')for(const a of Wp.shots){const d=a*700,al=cl(1-a/.12,0,1);if(al<=0)continue;const c0=add(mz,[d/K.s-9,0,0]),c1=add(mz,[d/K.s,0,0]);
+        K.fx(c1,()=>boltFx(V0,K.W(c0),K.W(c1),al),0)}
+      if(wid==='bastone'&&Wp.cast>=0&&Wp.cast<.3)for(let i=0;i<5;i++){const k=Wp.cast/.3,an=(i-2)*.22,c=add(kp.orb,[3+k*34*Math.cos(an),Math.sin(i*2.1)*k*4,k*34*Math.sin(an)]);
+        K.fx(c,q=>{ctx.save();ctx.translate(q[0],q[1]);ctx.rotate(G.t*9+i*1.3);ctx.globalAlpha=cl((1-k)*2,0,1);ink(1);ctx.fillStyle='#7bf0a8';ctx.beginPath();ctx.ellipse(0,0,2.6,1.3,0,0,TAU);ctx.fill();ctx.stroke();
+          ctx.strokeStyle='rgba(30,90,40,.7)';ctx.lineWidth=.5;seg([-2,0],[2,0]);ctx.stroke();ctx.restore()},0)}
+    })}});
+  // the free hand: the left one, at the side (it swings when walking)
+  if(cls==='one'||cls==='staff')parts.push({d:D(X.T([-.6,-11.4,11.4])),f:()=>fist(V0,X.T(Wp.hL),2.7,S.skin)})}
+const hexRgb=h=>{const n=parseInt(String(h).slice(1),16);return`${n>>16},${n>>8&255},${n&255}`};
+
 // ------------------------------------------------------------------ the hero
 function arciere(x,y,face,anim,p,sc,o){sc=sc||1;o=o||{};const S0=o.style||{},arm=S0.armor&&ARM[S0.armor]?S0.armor:'giubba',wk=S0.weapon;
   const S={...S0,body:S0.body||ARM[arm][0],hood:S0.hood||ARM[arm][1],skin:S0.skin||HC.skin,belt:S0.belt||HC.belt};
-  const isX=S0.held==='xbow'||wk==='balestra';let bk=S0.bowKind!==undefined?S0.bowKind:(wk&&BOWS[wk]?BOWS[wk][1]:null);if(bk==='plain'||bk==='xbow')bk=null;
+  const W3=typeof ARMI3D!=='undefined'?ARMI3D:null,wid=weaponOf(S0),isX=wid==='balestra',gunW=W3&&wid!=='arco';
+  let bk=S0.bowKind!==undefined?S0.bowKind:(wk&&BOWS[wk]?BOWS[wk][1]:null);if(bk==='plain'||bk==='xbow')bk=null;
   S.bowKind=bk;S.bowCol=S0.bowCol||(wk&&BOWS[wk]?BOWS[wk][0]:HC.bow);
-  const V0=V(face),{P,D,F}=V0,A=pose(anim,p,o),X=frame(A),Rh=10;
+  const V0=V(face),{P,D,F}=V0,Rh=10;let A=pose(anim,p,o),Wp=null;
+  // with a gun, the crossbow or the staff: the body of the bow's pose for standing, walking, the dash and the knock back; when it aims
+  // or shoots, a firm stance that breathes, eyes narrowed, the body pushed back a little by each shot
+  if(gunW){if(anim==='shoot'||anim==='aim'){A=pose('idle',p,o);A.fL=[2.2,-5.2,0];A.fR=[-1,5,0];A.hd=[.3,0,0];A.hp=.04;A.hy=0;A.squint=anim==='shoot'?.55:.35;A.inhale=A.exhale=0}
+    Wp=wpose(A,anim,p,wid);if(Wp.rec>0&&Wp.kick){const k=Wp.rec*Wp.kick[0]/3;A.lean=.02-.06*k;A.B=add(A.B,[-.7*k,0,0]);A.hd=add(A.hd,[-.4*k,0,.1*k])}}
+  const X=frame(A);
   // the shadow on the floor, smaller when the hero is up in the air
   {const lift=cl(A.B[2]/6,0,1),q=P(A.B[0]+.5,A.B[1],0);shadow(x+q[0]*sc,y+q[1]*sc,13.5*sc*(1-.2*lift),5.4*sc*KR()*(1-.2*lift),.3)}
   ctx.save();ctx.translate(x,y);ctx.scale(sc,sc);
@@ -292,18 +416,23 @@ function arciere(x,y,face,anim,p,sc,o){sc=sc||1;o=o||{};const S0=o.style||{},arm
     ctx.restore();rimPoly(hp,.32);
     if(A.flash>0){ctx.save();ctx.globalAlpha=A.flash*.3;poly(hp);ctx.fillStyle='#ffffff';ctx.fill();ctx.restore()}}});
   // the quiver on the back (the balestriere keeps his bolts in it too)
-  parts.push({d:D(X.T([-11,0,ZB+6])),f:()=>quiverTube(V0,X)});
-  parts.push({d:D(X.T(QT)),f:()=>quiverArrows(V0,X,A.jig)});
+  if(S0.quiver!==false&&!S0.gun&&wid!=='bastone'){parts.push({d:D(X.T([-11,0,ZB+6])),f:()=>quiverTube(V0,X)});parts.push({d:D(X.T(QT)),f:()=>quiverArrows(V0,X,A.jig)})}
   // the armour on the shoulders
   if(arm==='cotta'||arm==='corazza_muschio')for(const sd of[-1,1]){const c3=X.T([.2,sd*8.4,ZB+11.2]);parts.push({d:D(c3)+.05,f:()=>arm==='cotta'?pauldron(V0,c3,3.7):mossClump(V0,c3,1)})}
   // the bow and the hand that holds it, in front of the belly; the string hand at the right side (or on the string). No arms, as in the game
   const grip=X.T(A.grip),aim=nrm(X.Rd(A.aim)),up=nrm(X.Rd(A.up)),hR=X.T(A.hR),Bw=bowPts(grip,aim,up,A.draw,LB,BK);
-  parts.push({d:D(X.T([12,0,ZB+5])),f:()=>{
+  if(gunW)weaponParts(parts,V0,X,S,Wp,wid,o);
+  else if(W3){// the bow in 3D: the stave, its trims, the string and the arrow sort with the two hands
+    const fr=W3.frame(grip,aim,up,1),strOn=anim==='shoot'||anim==='aim',loc=q=>{const d=sub(q,grip);return[dot(d,fr.X),dot(d,fr.Y),dot(d,fr.Z)]};
+    parts.push({d:D(X.T([12,0,ZB+5])),f:()=>{let pinch=null;if(A.pinch)pinch=loc(hR);else if(A.twang>0)pinch=[-(BK+A.draw*1.6)+Math.sin(A.twang*22)*1.2*A.twang,0,0];
+      W3.draw('arco',V0,fr,{kind:S.bowKind||'plain',col:S.bowCol,draw:A.draw,pinch,nock:A.nock},K=>{K.hand([0,0,0],2.8,S.skin,1.2,S.ring?q=>ringOn(V0,q,S.ring):null);if(strOn)K.hand(loc(hR),2.7,S.skin,.6)})}});
+    if(!strOn)parts.push({d:D(X.T(REST.hR)),f:()=>fist(V0,hR,2.7,S.skin)})}
+  else{parts.push({d:D(X.T([12,0,ZB+5])),f:()=>{
     if(isX){xbow(V0,grip,aim,up,A.draw,A.nock>.5)}
     else{let pinch=A.pinch?hR:null;if(!pinch&&A.twang>0){const m=Bw.mid;pinch=add(m,mul(aim,Math.sin(A.twang*22)*1.2*A.twang))}
       const nk=A.pinch?hR:Bw.mid,arrowOn=A.nock>.02?{a:nk,b:add(grip,mul(aim,4.6)),al:A.nock}:null;bow(V0,Bw,S,A.draw,pinch,arrowOn,grip,aim)}
     fist(V0,grip,2.8,S.skin);if(S.ring)ringOn(V0,grip,S.ring)}});
-  parts.push({d:anim==='shoot'||anim==='aim'?D(X.T([12,0,ZB+5]))+.01:D(X.T(REST.hR)),f:()=>fist(V0,hR,2.7,S.skin)});
+  parts.push({d:anim==='shoot'||anim==='aim'?D(X.T([12,0,ZB+5]))+.01:D(X.T(REST.hR)),f:()=>fist(V0,hR,2.7,S.skin)});}
   // the head turns on its own camera (the look), the face nods
   const dv=Math.atan2(Math.sin(Math.PI/2-face),Math.cos(Math.PI/2-face)),cheat=o.noCheat?0:.42*Math.sin(dv)*cl((Math.PI-Math.abs(dv))/(Math.PI/2),0,1);
   parts.push({d:hDep,f:()=>{const Vh=Vat(face+A.hy+cheat,P(Hc),hDep);head(Vh,Rh,S,A,{blink:A.blink,squint:A.squint,shut:A.shut,mouth:A.mouth,moss:o.moss&&anim==='idle'||o.moss===2,inhale:A.inhale,exhale:A.exhale,eyeLight:o.eyeLight!==false});
