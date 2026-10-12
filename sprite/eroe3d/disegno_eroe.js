@@ -214,7 +214,7 @@ function mossClump(V0,c3,k){const q=V0.P(c3);ink(1.6);ctx.fillStyle='#5f9e3c';fo
 const REST={grip:[13.8,-.4,5.5],aim:nrm([.8,0,-.6]),up:nrm([0,.98,.2]),hR:[-.6,11.4,11.4]},SHOOT={grip:[17.4,-.5,12.2],aim:[1,0,0],up:nrm([0,1,.06])},BK=5.6,LB=11.2,PULL=4;
 function pose(anim,p,o){const ph=p*TAU,A={B:[0,0,0],lean:.02,roll:0,s:0,sx:0,hd:[0,0,0],hy:0,hp:.06,grip:REST.grip,aim:REST.aim,up:REST.up,hR:REST.hR,draw:0,pinch:false,nock:0,
   fL:[.8,-5,0],fR:[.2,5,0],blink:1,squint:0,shut:0,mouth:0,fly:-1,rel:-1,inhale:0,exhale:0,speed:0,dust:-1,stars:0,flash:0,jig:0,sway:0,twang:0};
-  if(anim==='idle'){const b=Math.sin(ph);A.s=.018*b;A.B=[0,0,.22*b];A.hd=[0,0,.3*b];A.hy=look(p,.4);A.hp=.06+.03*Math.sin(ph+.6);A.blink=blink(p,.43,.08);
+  if(anim==='idle'){const b=Math.sin(ph);A.s=.018*b;A.B=[0,0,.22*b];A.hd=[0,0,.3*b];A.hy=look(p,.2);A.hp=.06+.015*Math.sin(ph+.6);A.blink=blink(p,.43,.08);
     A.grip=add(REST.grip,[0,0,.3*b+.15*Math.sin(ph*2)]);A.up=nrm([0,.98,.2+.03*Math.sin(ph)]);A.hR=add(REST.hR,[0,0,.3*b]);
     A.jig=Math.sin(ph)*.4;A.sway=Math.sin(ph);A.inhale=p<.22?Math.sin(p/.22*Math.PI):0;A.exhale=p>.24&&p<.62?(p-.24)/.38:0}
   else if(anim==='walk'){const st=stepper(p,.5),a=st(0,3.4,2.6),b=st(.5,3.4,2.6),up=Math.abs(Math.sin(ph));
