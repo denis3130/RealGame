@@ -49,7 +49,7 @@ function evaluate(o){o=o||{};const M=__MZ,E=M.entries().filter(e=>!e.floor&&e.ki
   for(let i=0;i<E.length;i++)for(let j=i+1;j<E.length;j++){const a=E[i],b=E[j],[na,nb,n]=overlap(R[i],R[j]);if(!n)continue;const first=pos.get(a.id)<pos.get(b.id)?i:j,wrong=first===i?na:nb;
     if(res.truth&&n>=3)res.truth.push([a.id<b.id?a.id:b.id,a.id<b.id?b.id:a.id,a.id<b.id?na:nb,a.id<b.id?nb:na,pos.get(a.id<b.id?a.id:b.id)<pos.get(a.id<b.id?b.id:a.id)?-1:1]);
     if(wrong<3)continue;const same=a.pi!=null&&a.pi===b.pi,ess=BEING(a.kind)||BEING(b.kind),crow=a.kind==='C'||b.kind==='C',house=a.prop==='house'||b.prop==='house';
-    if(same){res.stesso+=wrong;continue}res.tot+=wrong;if(ess)res.ess+=wrong;if(crow)res.corvi+=wrong;if(house)res.casa+=wrong;
+    if(same){res.stesso+=wrong;if(o.same)res.bad.push({a:a.id+(a.prop?'('+a.prop+')':''),b:b.id+(b.prop?'('+b.prop+')':''),first:E[first].id,wrong,other:first===i?nb:na,same:1});continue}res.tot+=wrong;if(ess)res.ess+=wrong;if(crow)res.corvi+=wrong;if(house)res.casa+=wrong;
     res.bad.push({a:a.id+(a.prop?'('+a.prop+')':''),b:b.id+(b.prop?'('+b.prop+')':''),first:E[first].id,wrong,other:first===i?nb:na})}
   res.bad.sort((p,q)=>q.wrong-p.wrong);res.bad=res.bad.slice(0,o.top||6);return res}
 return{raster,overlap,evaluate}})();`;

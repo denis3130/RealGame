@@ -3,7 +3,8 @@
 Richiesta di Denis (11 ottobre): telecamera dritta dall'alto come nel gioco, ma case e tutto ciò che è alto in 3D, che «si vede meglio
 quando ci passi accanto», come in Pokémon Bianco e Nero. Tutto dipinto come la lanterna (tre toni, bordo illuminato, buio ai piedi, luce in cima,
 contorno scuro spesso). Pagina di prova: `python3 anteprime/zombie/mk.py [area]` → `anteprime/zombie.html` (il gioco + mostri + armi + motore +
-prop + area; non si salva su git). Area predefinita `area_prova` (un angolo 10×10 con cimitero, cripta, casa, pozzo: serve a rivedere i prop).
+prop + area; non si salva su git). Area predefinita `area_prova` (un angolo 10×10 con cimitero, cripta, casa, pozzo: serve a rivedere i prop);
+la mappa intera è `area_mappa` (vedi in fondo, «La mappa intera»).
 
 ## Il motore (`motore.js`, globale `ZM`)
 
@@ -151,3 +152,52 @@ tondo e qualche tegola mancante, zucche con la faccia nel disco, pali ai giunti 
   gruppi, il comignolo parte dalla falda nord (`on`), la tettoia è in due pezzi (sotto la gronda e fuori), gli stipiti sono listelli veri.
 - Cose ancora da fare (piano in `docs`/audit): dettagli dei prop pensati solo da sud (muschio disegnato sullo schermo, cerchioni delle botti,
   retro dei cartelli), sagoma a ritaglio e modo leggero mentre si trascina, erba girata.
+
+## La mappa intera (12 ottobre): «Camposanto e Casa» + «Fattoria dei Corvi»
+
+Pianta approvata da Denis (`pianta.py`, coordinate in caselle). Pagina: `python3 anteprime/zombie/mk.py area_mappa` → `anteprime/zombie.html`,
+pubblicata su https://claude.ai/artifact/Sw43VFJjGvrtkUs2t18fek. File: `area_mappa.js` (la mappa), `prop_fattoria.js` (i prop nuovi).
+
+- **Area di partenza «Camposanto e Casa»** (12×12): l'anteprima di prima con due caselle in più a nord e due a est (`AX`, `AY` = coordinate
+  dell'anteprima, `X`, `Y` = coordinate della pianta). Novità: a nord il muretto con la cancellata e il cancello della fattoria; dietro la cripta
+  un albero morto e una fossa; dietro la casa la catasta col ceppo e l'accetta, lo stendibiancheria e il Revolver col gesso; a est la latrina
+  (una buca: gli zombie escono sbattendo la porta), la lanterna sul palo, la quercia morta, la legna. Sotto l'area tre caselle di nebbia, ai
+  lati nebbia che scende nel buio (non ci si va).
+- **Fattoria dei Corvi** (16×12) a nord: granturco a file fino al bordo e oltre (non si attraversa; si apre intorno al mulino e ai due
+  spaventapasseri sul palo), staccionata rotta in tre punti da cui escono gli zombie del campo; casa colonica (la casa dell'anteprima girata di
+  un quarto con `ZM.turn`, di pietra col tetto di coppi, porta e portico sull'aia); pompa con l'abbeveratoio, pozzo, fieno, botti; fienile rosso
+  (portone sull'aia, ci si entra) con la Pompa da caccia sul muro ovest; rimessa con la mola; orto delle zucche coi sacchi del Becchino; recinto
+  dei maiali col fango; cuccia; pollaio con la rampa; tettoia col carretto del Becchino; lanterna sul palo lungo la strada. Mondo antico:
+  lanterne, legno, ferro battuto, niente motori.
+- **Prop nuovi** (`prop_fattoria.js`, come quelli di `prop.js`): `farmGate` (cancello di ferro con catena, lucchetto e prezzo col gesso; si
+  apre a 75° perché di taglio sparirebbe), `wallGun` (arma appesa al muro col gesso e il prezzo, si piega col muro), `cornRow`, `scarecrowPole`,
+  `windmill`, `barn`, `pump`, `trough`, `kennel`, `coop`, `shelter` (pali a sé e tetto con travi e assi), `cart`, `shed`, `sack`, `woodpile`,
+  `chopBlock`, `clothesline`, `outhouse` (porta che sbatte, `bang()`), `lanternPole`, `fallenPickets`; pennelli del terreno `G.yard`, `cornSoil`,
+  `furrows`, `mud`, `feathers`, `chips`, `voidFog`, `voidFogV`. Le cose che si muovono da sole (ante, porte) stanno in `ZM.anim`.
+- **Girare i prop di un quarto**: `ZM.turn(cx, cy, q, fn)` costruisce i prop dentro `fn` girati di q quarti intorno a (cx, cy): punti, solidi,
+  ombre, luci, fiamme, fumi, buche, muri della casa (i tag `wN`… girano con `hs.R`) e i nomi delle texture (`keyR`: la faccia «s» diventa «e»…),
+  così la luce resta giusta. Si usa per la casa colonica.
+- **Il gioco della mappa** (nel motore): si parte con 500 monete, ogni zombie ne dà 60. Le cose da comprare (`ZM.buyable`) mostrano un bottone
+  quando l'eroe è vicino: si tiene premuto 0,65 s (un tocco breve non compra). Cancello 750: cade la catena, le ante si aprono, si apre la zona
+  2 (`W.zoneOpen`), gli zombie fermi nell'aia (`ZM.idleZombie`, che finché il cancello è chiuso si avvicinano alle sbarre quando c'è l'eroe)
+  partono, sparisce il velo di nebbia sulla fattoria. Armi a muro: Revolver 500 sul muro nord della casa (il gesso si vede girando la
+  telecamera), Pompa da caccia 1.500 sul fienile; ricomprare l'arma che si ha in mano dà i colpi a metà prezzo. Bara delle Sorprese 750
+  (`ZM.sorpresa`) vicino alla cripta: offre un'arma a caso, a volte scappa in un altro dei suoi tre posti (cripta, tettoia del carretto, dentro
+  il fienile). Le armi sono quelle di `sprite/armi` (`ZM.equip`, colpi a raggio, che passano, pallini, esplosione; quando finiscono si torna alla
+  pistola). Gli zombie escono solo dalle buche delle zone aperte (al massimo 6 insieme); le buche hanno un tipo (`mais`, `orto`, `fango`,
+  `porta`). In alto il nome della zona quando si entra, l'arma con i colpi e gli avvisi.
+- **Velo sulla fattoria**: finché il cancello è chiuso e la telecamera guarda a nord, l'ordine di disegno si divide lungo la linea del
+  cancello (`W.split`): prima tutto quello che sta oltre, poi la nebbia, poi il resto; così il velo copre la fattoria ma non il cancello né
+  l'eroe.
+- **Velocità**: le ombre e il buio ai piedi del terreno cotto si fanno su uno strato a parte senza `ctx.filter` (prima la sfocatura sulla mappa
+  grande bloccava il telefono per 20 secondi); erba e ciuffi con `Path2D` per colore; il campo delle distanze degli zombie si ferma a `NAVMAX`.
+  Caricamento circa 3 s. Opzione dei prop `noSplit` (staccionate, pozzo, carriola: un solo strato, niente parte alta separata).
+- **Test**: `gioco.js` (monete, bottone tenuto premuto col dito vero, cancello, velo, zombie fermi che partono, Revolver che uccide e dà
+  monete, Bara che si paga e offre), `navmappa.js` (6 punti × 8 zombie intorno al fienile, alla casa colonica, alla tettoia e dal cancello:
+  arrivano 48 su 48), `ordine_mappa.js` (verità a z-buffer nei punti dei prop nuovi, 8 angoli, cancello aperto e chiuso: 24.698 px fuori
+  ordine in 279 inquadrature, 148 sugli esseri; le soglie stampate sono quelle dell'area di prova), `ravvicinati.js` (ora va anche sulla mappa
+  intera: apre il cancello e prova tutta la mappa; con `24`: 1.362 punti dell'eroe, 18.739 prove, nessuno zombie o segugio che non arriva,
+  nessun attacco attraverso un solido).
+- Limiti noti: la Bara si disegna sempre vista da sud (non gira con la telecamera); il gesso del Revolver si vede solo girando la telecamera;
+  l'eroe accanto al tavolo della casa colonica resta tutto dietro il piano del tavolo (la testa dovrebbe stare davanti: 22–48 px, si vede la
+  sagoma).
