@@ -122,13 +122,32 @@ tondo e qualche tegola mancante, zucche con la faccia nel disco, pali ai giunti 
 - I colpi non passano attraverso muri, recinti, lapidi, casse e case: l'eroe mira solo allo zombie più vicino che vede davvero (linea libera sui
   solidi veri, `physClear`, ignorando la fossa in cui sta lo zombie), ricontrollato ogni 0,1 s.
 
-## Due comandi: cammina a sinistra, guarda a destra (12 ottobre, Denis: «un comando per controllare la visuale a destra ed il movimento a sinistra»)
+## Visuale 3D: girare e inclinare (12 ottobre, Denis: «girare e inclinare» col dito a destra)
 
-- Il dito appoggiato nella metà sinistra dello schermo è il comando per camminare; quello nella metà destra sposta la visuale (fino a 130 px
-  di lato e 210 px in alto o in basso), e quando si lascia la visuale torna piano sull'eroe. Ogni dito ha il suo comando (`pointerId`), così si
-  cammina e si guarda insieme. Sulla tastiera: frecce o WASD per camminare, IJKL per guardare. Da fermi due anelli appena visibili ricordano
-  dove stanno i comandi (quello della visuale ha l'occhio); `W.dbg.noSticks` li toglie. In «Vista intera» la visuale non si sposta.
-- La piega si calcola dal centro della visuale (`CAM`), quindi guardando intorno anche il 3D delle cose cambia; la tolleranza della sagoma
-  dell'eroe ora guarda `CAM.x` invece della x dell'eroe.
-- Prova con due dita vere: `Input.dispatchTouchEvent` di Chrome con `hasTouch` (senza `isMobile`, perché la pagina costruita non ha il meta
-  viewport e sarebbe larga 980 px; quella pubblicata sì). Gancio `__MZ.look()` per leggere lo stato, `__MZ.look(x,y)` per spostare la visuale.
+- **Comandi.** Dito a sinistra: levetta per camminare, relativa allo schermo (`stickToWorld`: spinta in su = l'eroe va in su sullo schermo,
+  comunque sia girata la telecamera). Dito a destra: trascinando in orizzontale la telecamera gira intorno all'eroe (circa 180° ogni 290 px),
+  in verticale si inclina tra 35° e 62° (45° = la vista di prima); resta dove la si lascia. La bussola in alto a destra riporta a nord in 0,45 s.
+  Tastiera: WASD/frecce camminano, Q/E girano, R/F inclinano, N torna a nord, V vista intera. Un comando per dito (`pointerId`). Ganci di prova:
+  `__MZ.view(gradi, gradi)` (subito), `viewTo` (morbido), `north`, `toScreen`, `hud(false)`. Test: `comandi.js` (due dita vere con
+  `Input.dispatchTouchEvent`, senza `isMobile`: la pagina costruita non ha il meta viewport).
+- **Proiezione.** `CAM.yaw` ψ e `CAM.el` θ; u = dx·cosψ − dy·sinψ, v = dx·sinψ + dy·cosψ; schermo = (u + piega·z, v·SP − z·CP + piega·z) con
+  SP = √2·sinθ, CP = √2·cosθ. A vista dritta (ψ = 0, θ = 45°) la strada è quella di prima, identica al pixel (`identico.js`). Il terreno cotto
+  si disegna con una trasformazione affine (`inGround`, anche nuvole e nebbia); girando, oltre il bordo il terreno prosegue specchiato e sfuma
+  nella nebbia (`ZM.edgeSnap()` nel pittore dell'area). La luce delle sfere (`LS`) gira con la telecamera, la luna (`MOON`) resta ferma nel mondo.
+  Personaggi: `face + ψ` per gli zombie (`CR.cam`), direzione sullo schermo con isteresi per l'eroe (`RIGCAM`); inclinando si schiacciano piano
+  (kr = √SP, zk = CP^¼).
+- **Ordine di disegno** (il cuore: girando non basta più la y del bordo davanti). Le voci sono gli strati dei prop (base e sporgenza), con
+  un'impronta = inviluppo convesso nel mondo, girato a ogni grado; gli esseri sono cartelloni. Regole a coppie: riquadri a schermo che non si
+  toccano → niente; impronte separate lungo la profondità → prima la più lontana; una tutta sopra l'altra → dopo; striscia in comune → la
+  profondità lungo quella striscia; affiancate → chi piega la cima verso l'altra va dopo; essere contro cosa → il bordo davanti della cosa
+  all'altezza dell'essere. Poi ordinamento topologico (Kahn, Tarjan per i cicli, archi forti prima), isteresi sotto i 2 px per non sfarfallare.
+  Dentro un prop i gruppi (ogni `box`, `prismX`, `prismY`, `cyl`, `grp(...)`, i pezzi sciolti) si ordinano con le stesse regole; un pezzo può
+  dire `on: parte` (poggia su: viene dopo) o `side`; l'albero ha un ordine a mano (`intra`). Prove: `ordine.js` (verità a z-buffer: 22 punti × 8
+  angoli), `giro.js` (sfarfallio), `tempi.js`; `W.dbg.ord='ky'` rimette l'ordine di prima.
+- **Regola per i prop** (girando si vedono da tutti i lati): niente pezzi dentro altri pezzi (un pezzo dentro l'altro non ha un ordine giusto:
+  muri che entrano nei pilastri, colonne dentro il muro, zucche dentro le casse), e un prop lungo con un pezzo che sporge va diviso.
+- **Casa divisa**: ogni muro è un prop a sé con il tag di dove guarda (`wN`, `wS`, `wE`, `wW`); con l'eroe dentro diventa trasparente il muro
+  rivolto verso la telecamera (a vista dritta i muri sud, come prima), il tetto sfuma, i mobili compaiono. Il tetto ha le due mezze falde come
+  gruppi, il comignolo parte dalla falda nord (`on`), la tettoia è in due pezzi (sotto la gronda e fuori), gli stipiti sono listelli veri.
+- Cose ancora da fare (piano in `docs`/audit): dettagli dei prop pensati solo da sud (muschio disegnato sullo schermo, cerchioni delle botti,
+  retro dei cartelli), sagoma a ritaglio e modo leggero mentre si trascina, erba girata.

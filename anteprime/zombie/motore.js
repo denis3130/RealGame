@@ -74,6 +74,19 @@ const S=(x,y,z)=>{if(Array.isArray(x))return S(x[0],x[1],x[2]);z=z||0;
 // (x,y) → (CAM.x+u, CAM.y+v·SP), cioè S(x,y,0); a vista dritta non fa niente
 const inGround=fn=>{if(!CAM.rot){fn();return}const c=CAM.c,s=CAM.s,SP=CAM.SP;ctx.save();ctx.transform(c,SP*s,-s,SP*c,CAM.x-(c*CAM.x-s*CAM.y),CAM.y-SP*(s*CAM.x+c*CAM.y));try{fn()}finally{ctx.restore()}};
 const add3=(a,b,k)=>[a[0]+b[0]*(k==null?1:k),a[1]+b[1]*(k==null?1:k),a[2]+b[2]*(k==null?1:k)];
+// quanto una direzione del mondo (nx, ny) guarda verso la telecamera (1: dritta verso chi guarda, 0: di taglio, <0: dall'altra parte) e quanto va
+// verso la destra dello schermo; a vista dritta facing(0,1)=1 (sud) e across(1,0)=1 (est)
+const facing=(nx,ny)=>nx*CAM.s+ny*CAM.c,across=(nx,ny)=>nx*CAM.c-ny*CAM.s;
+// aiuti per i dettagli disegnati a mano (prendono S2 come primo argomento, così la prova a vuoto vede i loro punti): il tracciato si costruisce
+// dentro la trasformazione, stroke e fill si fanno dopo (linee di spessore uniforme). onGround: le coordinate del terreno (x, y del mondo) a
+// quota z; onPlane: il piano per o3 con gli assi eu, ev del mondo (0 se si vede da dietro, a meno di two); onRound: un dettaglio sulla pancia di
+// una cosa tonda (centro c, raggio r) col lato (nx, ny), scorciato e sfumato quando gira via; ringNear: l'arco vicino di un cerchio a terra
+function onGround(S2,x,y,z,fn){const o=S2(x,y,z),a=S2(x+1,y,z),b=S2(x,y+1,z);ctx.save();ctx.transform(a[0]-o[0],a[1]-o[1],b[0]-o[0],b[1]-o[1],o[0],o[1]);try{fn()}finally{ctx.restore()}}
+function onPlane(S2,o3,eu,ev,fn,two){const o=S2(o3),A=S2(add3(o3,eu)),B=S2(add3(o3,ev)),a=[A[0]-o[0],A[1]-o[1]],b=[B[0]-o[0],B[1]-o[1]];
+  if(a[0]*b[1]-a[1]*b[0]<=0&&!two)return 0;ctx.save();ctx.transform(a[0],a[1],b[0],b[1],o[0],o[1]);try{fn()}finally{ctx.restore()}return 1}
+function onRound(S2,c,r,nx,ny,k,fn){const q=S2(c),f=facing(nx,ny);if(f<=.04)return;ctx.save();ctx.globalAlpha*=Math.min(1,f*4);
+  ctx.translate(q[0]+across(nx,ny)*r*k,q[1]+f*r*k*CAM.SP);ctx.scale(f,CAM.CP);try{fn()}finally{ctx.restore()}}
+function ringNear(S2,x,y,z,r,a0,a1){const c=Math.atan2(CAM.c,CAM.s);onGround(S2,x,y,z,()=>{ctx.beginPath();ctx.arc(0,0,r,a0??c-Math.PI/2,a1??c+Math.PI/2)})}
 const sub3=(a,b)=>[a[0]-b[0],a[1]-b[1],a[2]-b[2]];
 const len3=a=>Math.hypot(a[0],a[1],a[2]);
 // ------------------------------------------------------------------ disegno 2D
@@ -156,7 +169,7 @@ material('slab',['#5a5f6c','#3a3e48','#7d8392'],'slab');material('leafZ',['#3a52
 // face: quattro angoli 3D in senso antiorario visti da fuori, p0 = angolo in basso a sinistra della texture, p1 = +u, p3 = +v;
 // visibile se la proiezione gira nel verso giusto (shoelace < 0). mat: nome del materiale, key: orientamento; o.foot: tocca terra;
 // o.tex(w,h): segni in più sopra il materiale (nella texture); o.col: colore pieno senza materiale; o.alpha
-let UID=0;function face(p0,p1,p2,p3,mat,key,o){o=o||{};return{k:'face',c:[p0,p1,p2,p3],mat,key,w:len3(sub3(p1,p0)),h:len3(sub3(p3,p0)),foot:!!o.foot,tex:o.tex||null,texId:o.texId||(o.tex?'u'+(++UID):''),col:o.col||null,ink:o.ink==null?.9:o.ink,alpha:o.alpha==null?1:o.alpha}}
+let UID=0;function face(p0,p1,p2,p3,mat,key,o){o=o||{};return{k:'face',c:[p0,p1,p2,p3],mat,key,w:len3(sub3(p1,p0)),h:len3(sub3(p3,p0)),foot:!!o.foot,tex:o.tex||null,texId:o.texId||(o.tex?'u'+(++UID):''),col:o.col||null,ink:o.ink==null?.9:o.ink,alpha:o.alpha==null?1:o.alpha,over:o.over||null}}
 // hull: contorno scuro intorno a un insieme di punti 3D (il profilo di un solido convesso)
 const hullOf=(pts,w)=>({k:'hull',pts,w:w||2.6});
 // ball: una sfera a un punto 3D (chiome, zucche, pomelli): tre toni girati verso la luna; sq schiaccia in verticale
@@ -166,11 +179,15 @@ const ballAt=(p,r,mat,o)=>Object.assign({k:'ball',p,r,mat,sd:++FSD},o||{});// o.
 const line3=(a,b,col,w,o)=>Object.assign({k:'line',a,b,col,w:w||1},o||{});
 // poly: un poligono 3D piatto riempito (mucchi di terra, pezze), con contorno opzionale
 const poly3=(pts,col,o)=>Object.assign({k:'poly',pts,col},o||{});
-// fn: disegno libero con la proiezione (per i dettagli): f(S, ctx)
-const fn3=(f)=>({k:'fn',f,sd:++FSD});
-// un parallelepipedo: x,y,z angolo nord-ovest in basso; o.m = {t,s,e,w,n} materiali per faccia; o.tex per faccia; o.noOut; o.ow spessore contorno
+// fn: disegno libero con la proiezione (per i dettagli): f(S2, ctx). o (facoltativo, per l'ordine di disegno): r raggio a schermo da aggiungere ai
+// punti che il disegno tocca (la prova a vuoto all'avvio li registra), fp impronta [[x,y],…] data a mano, z [z0,z1], on (pezzi su cui poggia: dopo di
+// loro), side [nx,ny] (sta accanto: prima di chi tocca se il suo lato guarda via dalla telecamera, dopo se la guarda), host (una faccia: se non si
+// vede, non si disegna), it e tip (per o.intra del prop)
+const fn3=(f,o)=>({k:'fn',f,o:o||{},sd:++FSD});
+// un parallelepipedo: x,y,z angolo nord-ovest in basso; o.m = {t,s,e,w,n} materiali per faccia; o.tex per faccia; o.noOut; o.ow spessore contorno;
+// o.over = {s:fn,…}: disegni a vettori su una faccia, fatti solo se la faccia si vede e ritagliati sul suo contorno: fn(q, key)
 function box(x,y,z,w,d,h,mat,o){o=o||{};const v=[[x,y,z],[x+w,y,z],[x+w,y+d,z],[x,y+d,z],[x,y,z+h],[x+w,y,z+h],[x+w,y+d,z+h],[x,y+d,z+h]],P=[],M=o.m||{},TX=o.tex||{},foot=z<=0.01&&!o.noFoot;
-  const f=(a,b,c,d2,key)=>P.push(face(v[a],v[b],v[c],v[d2],M[key]||mat,key,{foot:key!=='t'&&foot,tex:TX[key],texId:o.texId,ink:o.ink}));
+  const f=(a,b,c,d2,key)=>P.push(face(v[a],v[b],v[c],v[d2],M[key]||mat,key,{foot:key!=='t'&&foot,tex:TX[key],texId:o.texId,ink:o.ink,over:o.over&&o.over[key]}));
   f(3,2,6,7,'s');f(2,1,5,6,'e');f(0,3,7,4,'w');f(1,0,4,5,'n');f(7,6,5,4,'t');
   if(!o.noOut)P.push(hullOf(v,o.ow));return P}
 // un profilo [u,z] estruso lungo y da y a y+t (lapidi, picchetti, frontoni): la faccia sud è il profilo, i fianchi seguono i lati
@@ -188,18 +205,26 @@ function prismY(x,y,len,prof,mat,o){o=o||{};const a=prof.map(([v,z])=>[x,y+v,z])
   P.push({k:'facepoly',c:b.slice().reverse(),mat:(o.m&&o.m.e)||mat,key:'e',tex:o.texE});P.push({k:'facepoly',c:a,mat:(o.m&&o.m.w)||mat,key:'w',tex:o.texW});
   if(!o.noOut)P.push(hullOf(a.concat(b),o.ow));return P}
 // un pannello verticale (recinti, cancellate, ringhiere, tronchi sottili): rivolto a sud se along==='x', a est se 'y'; la texture può avere buchi
-// (draw(w,h) la disegna nello spazio della texture, origine in alto a sinistra) e si vede da entrambi i lati
+// (draw(w,h) la disegna nello spazio della texture, origine in alto a sinistra) e si vede da entrambi i lati; o.host: la faccia su cui è appoggiato
+// (una finestra sul muro): se quella non si vede, il pannello non si disegna
 function plane(x,y,z,len,h,along,texId,draw,o){o=o||{};const p0=[x,y,z],p1=typeof along==='number'?[x+Math.cos(along)*len,y+Math.sin(along)*len,z]:along==='x'?[x+len,y,z]:[x,y+len,z],p3=[x,y,z+h],p2=add3(p1,[0,0,h]);// along: 'x', 'y' o un angolo in radianti
-  return{k:'plane',c:[p0,p1,p2,p3],w:len,h,texId,draw,ow:o.ow==null?0:o.ow,alpha:o.alpha==null?1:o.alpha,flip:along==='y'}}
+  return{k:'plane',c:[p0,p1,p2,p3],w:len,h,texId,draw,ow:o.ow==null?0:o.ow,alpha:o.alpha==null?1:o.alpha,flip:along==='y',host:o.host||null}}
 // un cilindro a facce (pozzo, botti, pilastri tondi): n lati, r in basso, r1 in alto
 function cyl(x,y,z,r,h,mat,o){o=o||{};const n=o.n||10,r1=o.r1==null?r:o.r1,P=[],lo=[],hi=[];for(let i=0;i<n;i++){const a=i/n*TAU-Math.PI/2;lo.push([x+Math.cos(a)*r,y+Math.sin(a)*r,z]);hi.push([x+Math.cos(a)*r1,y+Math.sin(a)*r1,z+h])}
   for(let i=0;i<n;i++){const j=(i+1)%n,a=(i+.5)/n*TAU-Math.PI/2,nx=Math.cos(a),ny=Math.sin(a),key=ny>.5?'s':ny<-.5?'n':nx>0?'e':'w';P.push(face(lo[j],lo[i],hi[i],hi[j],(o.m&&o.m.side)||mat,key,{foot:z<=0.01,ink:o.ink==null?.6:o.ink,tex:o.tex}))}
   if(o.top!==false)P.push({k:'facepoly',c:hi.slice().reverse(),mat:(o.m&&o.m.t)||mat,key:'t'});if(!o.noOut)P.push(hullOf(lo.concat(hi),o.ow));return P}
+// i gruppi (per l'ordine di disegno dentro un prop, fase 3): ogni chiamata a box, prismX, prismY o cyl è un gruppo (t.g uguale per tutti i suoi
+// pezzi, disegnati nell'ordine dell'autore: facce e poi contorno); ogni pezzo sciolto (line3, ballAt, plane, facepoly, poly, fn3) è un gruppo a sé,
+// e grp(...pezzi) ne unisce più d'uno (la piramide del lampione con il suo contorno)
+let GID=0;const wrapG=f=>function(...a){const P=f.apply(this,a),g=++GID;for(const t of P)t.g=g;return P};
+box=wrapG(box);prismX=wrapG(prismX);prismY=wrapG(prismY);cyl=wrapG(cyl);
+function grp(...a){const P=a.flat(Infinity),g=++GID;for(const t of P)t.g=g;return P}
 // ------------------------------------------------------------------ disegno dei pezzi (ogni fotogramma, con la piega del momento)
 const PLANES={};
 function drawFace(f){const q=f.c.map(S);if(shoelace(q)>=0)return;const tx=f.col?null:texture(f.mat,f.key,f.w,f.h,f.foot,f.texId);
   if(f.alpha<1){ctx.save();ctx.globalAlpha*=f.alpha}
   if(!tx){path(q);ctx.fillStyle=f.col;ctx.fill()}else{if(f.tex&&!tx._x){tx._x=1;const g=tx.getContext('2d'),sv=ctx,sd=seed;ctx=g;ctx.save();ctx.scale(R,R);srand(hashS(tx._id+'|x'));try{f.tex(f.w,f.h,f.key)}finally{ctx.restore();ctx=sv;seed=sd}}drawQuad(tx,q)}
+  if(f.over){ctx.save();path(q);ctx.clip();const sd=seed;srand(f.osd||(f.osd=hashS('o|'+f.c[0].join(',')+'|'+f.key)));try{f.over(q,f.key)}finally{seed=sd;ctx.restore()}}
   if(f.ink){path(q);ctx.strokeStyle=`rgba(15,12,10,${Math.min(.7,f.ink*.6)})`;ctx.lineWidth=f.ink;ctx.lineJoin='round';ctx.stroke()}
   if(f.alpha<1)ctx.restore()}
 // appoggia una texture su un quadrilatero: una sola trasformazione se è (quasi) un parallelogramma, altrimenti due triangoli esatti
@@ -213,14 +238,14 @@ function drawFacePoly(f){const q=f.c.map(S);if(shoelace(q)>=0)return;const m=MAT
   if(f.tex){ctx.save();ctx.clip();const sd=seed;srand(f.sd||(f.sd=hashS('fp|'+f.c[0].join(',')+'|'+f.c.length)));try{f.tex(q,f.key)}finally{seed=sd}ctx.restore()}
   if(SKY(f.key)){ctx.save();ctx.clip();let x0=1e9,y0=1e9,x1=-1e9,y1=-1e9;for(const p of q){x0=Math.min(x0,p[0]);x1=Math.max(x1,p[0]);y0=Math.min(y0,p[1]);y1=Math.max(y1,p[1])}const g=ctx.createLinearGradient(x0,y0,x0+(x1-x0)*.7,y0+(y1-y0)*.7);g.addColorStop(0,wa(.22));g.addColorStop(1,'rgba(0,0,0,0)');ctx.fillStyle=g;ctx.fillRect(x0,y0,x1-x0,y1-y0);ctx.restore()}
   path(q);ctx.strokeStyle='rgba(15,12,10,.5)';ctx.lineWidth=.9;ctx.stroke()}
-function drawPlane(p){const q=p.c.map(S),a=shoelace(q);if(Math.abs(a)<1)return;let tx=PLANES[p.texId];if(!tx){tx=PLANES[p.texId]=document.createElement('canvas');tx.width=Math.ceil(p.w*R);tx.height=Math.ceil(p.h*R);const g=tx.getContext('2d'),sv=ctx,sd=seed;ctx=g;ctx.scale(R,R);srand(hashS('P|'+p.texId));try{p.draw(p.w,p.h)}finally{ctx=sv;seed=sd}}
+function drawPlane(p){if(p.host&&shoelace(p.host.c.map(S))>=0)return;const q=p.c.map(S),a=shoelace(q);if(Math.abs(a)<1)return;let tx=PLANES[p.texId];if(!tx){tx=PLANES[p.texId]=document.createElement('canvas');tx.width=Math.ceil(p.w*R);tx.height=Math.ceil(p.h*R);const g=tx.getContext('2d'),sv=ctx,sd=seed;ctx=g;ctx.scale(R,R);srand(hashS('P|'+p.texId));try{p.draw(p.w,p.h)}finally{ctx=sv;seed=sd}}
   if(p.alpha<1){ctx.save();ctx.globalAlpha*=p.alpha}drawQuad(tx,q,a>0);if(p.alpha<1)ctx.restore()}
 function drawBall(b){const q=S(b.p),m=MAT[b.mat]||MAT.leaf,r=b.r;ctx.save();ctx.translate(q[0],q[1]);if(b.sq)ctx.scale(1,b.sq);const shape=()=>{if(!b.lobes){ball([0,0],r);return}ctx.beginPath();const n=b.lobes,am=b.amp||.14,N=n*6;for(let i=0;i<=N;i++){const a=i/N*TAU,k=Math.abs(Math.sin(a*n/2+(b.ph||0))),r2=r*(1-am*.5+am*k),px=Math.cos(a)*r2,py=Math.sin(a)*r2;i?ctx.lineTo(px,py):ctx.moveTo(px,py)}ctx.closePath()};shape();ctx.fillStyle=m.c[1];ctx.fill();ctx.save();ctx.clip();
   ctx.fillStyle=m.c[0];ctx.beginPath();ctx.ellipse(LS[0]*r*.25,LS[1]*r*.25,r*.88,r*.84,0,0,TAU);ctx.fill();ctx.fillStyle=m.c[2];ctx.beginPath();ctx.ellipse(LS[0]*r*.45,LS[1]*r*.45,r*.42,r*.34,-.4,0,TAU);ctx.fill();
   if(b.tex){const sd=seed;srand(hashS('b|'+b.sd));try{b.tex(r)}finally{seed=sd}}ctx.restore();if(b.noOut!==true){ink(b.ow||2.4);shape();ctx.stroke()}ctx.restore()}
 function drawLine(l){const a=S(l.a),b=S(l.b);ctx.lineCap='round';if(l.ink){ctx.strokeStyle=INK;ctx.lineWidth=l.w+2.2;ctx.beginPath();ctx.moveTo(a[0],a[1]);ctx.lineTo(b[0],b[1]);ctx.stroke()}ctx.strokeStyle=l.col;ctx.lineWidth=l.w;ctx.beginPath();ctx.moveTo(a[0],a[1]);ctx.lineTo(b[0],b[1]);ctx.stroke()}
 function drawPart(p){switch(p.k){case'face':return drawFace(p);case'facepoly':return drawFacePoly(p);case'plane':return drawPlane(p);case'hull':{const H=hull(p.pts.map(S));path(H);ink(p.w);ctx.stroke();return}case'outline':{path(p.pts.map(S));ink(p.w);ctx.stroke();return}
-  case'ball':return drawBall(p);case'line':return drawLine(p);case'poly':{const q=p.pts.map(S);path(q);ctx.fillStyle=p.col;ctx.fill();if(p.ink){ink(p.ink);ctx.stroke()}return}case'fn':{const sd=seed;srand(hashS('f|'+p.sd));try{return p.f(S,ctx)}finally{seed=sd}}}}
+  case'ball':return drawBall(p);case'line':return drawLine(p);case'poly':{const q=p.pts.map(S);path(q);ctx.fillStyle=p.col;ctx.fill();if(p.ink){ink(p.ink);ctx.stroke()}return}case'fn':{if(p.o.host&&shoelace(p.o.host.c.map(S))>=0)return;const sd=seed;srand(hashS('f|'+p.sd));try{return p.f(S,ctx)}finally{seed=sd}}}}
 // un prop: parts (nell'ordine di disegno: prima il contorno, poi le facce, da dietro a davanti), bx [x0,y0,x1,y1,zTop] per il taglio a
 // schermo, ky la profondità (y del bordo davanti), solids per le collisioni, shadows per le ombre cotte nel terreno, lights/flames
 const props=[],solids=[],shadows=[],lights=[],flames=[],holes=[],houses=[],smokes=[],perches=[],decals=[],fades=[];// fades: chiome che sfumano ({x,ky,rx,reach,a}), le parti 'roof' del prop con house:fade// decals: f() dipinte nel terreno dopo le ombre (pozze di luce fisse, macchie)
@@ -348,17 +373,19 @@ function drawPerch(p){{if(p.away)return;const ho=perchHost(p);LEANK=ho&&ho.lk!=n
     ctx.beginPath();ctx.ellipse(0,-5,5,4,0,0,TAU);ctx.fill();ctx.stroke();ctx.beginPath();ctx.moveTo(-3,-3);ctx.lineTo(-10,1);ctx.lineTo(-8,-3);ctx.closePath();ctx.fill();ctx.stroke();const hx=3*Math.cos(f),hy=-10;ctx.beginPath();ctx.arc(hx,hy,3.2,0,TAU);ctx.fill();ctx.stroke();
     ctx.fillStyle='#d8b040';ctx.beginPath();ctx.moveTo(hx+2.6*d,hy-1);ctx.lineTo(hx+7*d,hy+.5);ctx.lineTo(hx+2.6*d,hy+1);ctx.closePath();ctx.fill();ctx.fillStyle='#ff5040';ball([hx+1.2*d,hy-.8],.8);ctx.fill();ctx.restore()}}
 // fiamme e lumi: candele, vetri delle lanterne, zucche, camini, il respiro verde della cripta (disegnate nell'ordine di profondità)
-function drawFlame(f,h0a){if(f.house&&f.house.a>.9)return;LEANK=f.lk||1;setRef(f.ref);const q=S(f.x,f.y,f.z);LEANK=1;setRef(null);const fl=.85+.15*Math.sin(W.t*11+f.x)*Math.sin(W.t*7.3+f.y);
+// f.n (facoltativa): la normale della faccia da cui esce la luce (la porta della cripta): vista da dietro non si disegna, di taglio sfuma
+function drawFlame(f,h0a){if(f.house&&f.house.a>.9)return;if(f.n){const fc=facing(f.n[0],f.n[1]);if(fc<=0)return;if(fc<.25){ctx.save();ctx.globalAlpha*=fc/.25;try{drawFlame0(f)}finally{ctx.restore()}return}}drawFlame0(f)}
+function drawFlame0(f){LEANK=f.lk||1;setRef(f.ref);const q=S(f.x,f.y,f.z);LEANK=1;setRef(null);const fl=.85+.15*Math.sin(W.t*11+f.x)*Math.sin(W.t*7.3+f.y);
   if(f.fire){for(let i=0;i<5;i++){const a=W.t*6+i*1.3,h=10+4*Math.sin(a),xx=q[0]+(i-2)*3.2;ctx.fillStyle=i%2?'#ffb040':'#ff7a20';ctx.beginPath();ctx.moveTo(xx-3,q[1]);ctx.quadraticCurveTo(xx-2,q[1]-h*.6,xx+Math.sin(a)*1.5,q[1]-h);ctx.quadraticCurveTo(xx+2,q[1]-h*.6,xx+3,q[1]);ctx.closePath();ctx.fill()}}
   else if(f.r<2){ctx.fillStyle='#fff2c0';ctx.beginPath();ctx.ellipse(q[0],q[1]-2,f.r*1.1,f.r*2.4*fl,0,0,TAU);ctx.fill()}
   if(LOWFX)return;ctx.save();ctx.globalCompositeOperation='lighter';glow(f.rgb,q[0],q[1]-2,(f.crypt?26:f.fire?28:f.pump?16*f.pump:f.glass?22:12)*fl,(f.crypt?.5+.2*Math.sin(W.t*1.4):f.pump?.7:.6)*fl);ctx.restore()}
 // ------------------------------------------------------------------ gli esseri: eroe con la pistola, zombie dalle buche
 const KINDS=[['zombie',1.1,30,4],['strisciante',1.1,24,3],['minatore',1.1,28,5],['lanterna',1.55,22,7],['hound',1.05,64,3]];
-let gunState=null,zOn=true,spawnT=1.2;
+let gunState=null,zOn=true,spawnT=1.2,ZID=0;// ZID: numero di serie degli zombie (il loro id stabile per l'ordine di disegno)
 {const _h=held;held=function(St,o,B){if(St.gun&&window.ARMI)return ARMI.inMano(St.gun,B,o.gp||{},o.aim);return _h(St,o,B)}}
 const HSTYLE=Object.assign({},HERO,{held:null,quiver:false,gun:'pistola'});
 function spawn(){const h=W.hero,c=holes.filter(([x,y])=>Math.hypot(x-h.x,y-h.y)>110&&Math.hypot(x-h.x,y-h.y)<460);if(!c.length)return;const p=c[Math.floor(Math.random()*c.length)],k=KINDS[Math.floor(Math.random()*KINDS.length)];
-  if(W.Z.some(z=>Math.hypot(z.x-p[0],z.y-p[1])<30))return;W.Z.push({kind:k[0],sc:k[1],spd:k[2],hp:k[3],x:p[0],y:p[1],face:0,p:Math.random(),anim:'walk',rise:0,die:0,flash:0})}
+  if(W.Z.some(z=>Math.hypot(z.x-p[0],z.y-p[1])<30))return;W.Z.push({id:++ZID,kind:k[0],sc:k[1],spd:k[2],hp:k[3],x:p[0],y:p[1],face:0,p:Math.random(),anim:'walk',rise:0,die:0,flash:0})}
 function updateBeings(dt,inp){const h=W.hero;const m=Math.hypot(inp.x,inp.y);h.moving=m>.15;if(h.moving){const sp=150*Math.min(1,m);move(h,inp.x/m*sp*dt,inp.y/m*sp*dt,10);h.face=Math.atan2(inp.y,inp.x);h.walk+=dt*12}
   h.zh=(h.zh||0)+(heightAt(h.x,h.y)-(h.zh||0))*Math.min(1,dt*14);const noShoot=!!W.dbg.noShoot;
   // il bersaglio: lo zombie più vicino entro 230 px che l'eroe vede davvero (i colpi non passano attraverso muri, recinti, lapidi, casse…);
@@ -397,37 +424,42 @@ function drawZombie(z){const q=S(z.x,z.y,z.zh||0),zk=RIGK.mzk,fc=z.face+CAM.yaw;
       ctx.translate(0,(1-u)*60*z.sc*zk);CR[z.kind](q[0],q[1],fc,'idle',(W.t*.6)%1,z.sc);ctx.restore()}return}
   if(z.die){const k=Math.min(1,z.die/1.1);ctx.save();ctx.globalAlpha=1-k*k;ctx.beginPath();ctx.rect(q[0]-60,q[1]-150,120,151);ctx.clip();ctx.translate(0,ez(k)*50*z.sc*zk);CR[z.kind](q[0],q[1],fc,'idle',0,z.sc);ctx.restore();return}
   CR[z.kind](q[0],q[1],fc,z.anim,z.p,z.sc);if(z.flash>0){ctx.save();ctx.globalCompositeOperation='lighter';glow('255,255,255',q[0],q[1]-24*z.sc*zk,22*z.sc,.5);ctx.restore()}}
-const alphaOf=(hs,part)=>part==='roof'?hs.a:part==='front'?.22+.78*hs.a:part==='in'?(hs.a>.95?0:1):1;
+// le trasparenze della casa: il tetto sfuma quando l'eroe entra, i mobili compaiono; i muri (wN, wS, wE, wW: da che parte guardano) con l'eroe
+// dentro diventano trasparenti se sono rivolti verso la telecamera (a vista dritta i muri sud, come prima), piano piano mentre si gira
+const WALLN={wN:[0,-1],wS:[0,1],wE:[1,0],wW:[-1,0]};
+const alphaOf=(hs,part)=>{if(part==='roof')return hs.a;if(part==='in')return hs.a>.95?0:1;if(part==='front')return .22+.78*hs.a;const n=WALLN[part];
+  if(n){if(hs.a>=1)return 1;const f=n[0]*CAM.s+n[1]*CAM.c;return 1-(1-hs.a)*.78*cl((f-.1)/.3,0,1)}return 1};
 // l'eroe è disegnato in 8 direzioni: quella sullo schermo (scrAng) con l'isteresi di setFace (poligono/prova.js), così girando la telecamera
 // non sfarfalla tra due viste; l'arma prende l'angolo vero sullo schermo
 function heroDir(){const h=W.hero,sa=scrAng(h.face),d=Q8(sa),cur=h.dS==null?d:h.dS,df=Math.atan2(Math.sin(sa-cur*Math.PI/4),Math.cos(sa-cur*Math.PI/4));h.dS=Math.abs(df)>Math.PI/8+.12?d:cur;return h.dS}
 // (senza aim l'arma segue il corpo: null, non scrAng(undefined) = NaN)
 function drawHero(){const h=W.hero,q=S(h.x,h.y,h.zh||0);drawRig(q[0],q[1]-8,heroDir()*Math.PI/4,h.walk,h.moving,HSTYLE,{gp:gunState?gunState.pose():{},aim:h.aim==null?null:scrAng(h.aim)})}
-function drawEntry(e,h0a){if(e.p){LEANK=e.p.lk==null?1:e.p.lk;setRef(e.p.ref);drawProp(e.p,e.p.house?part=>alphaOf(e.p.house,part):null);LEANK=1;setRef(null);return}if(e.hero){drawHero();return}if(e.fl){drawFlame(e.fl,h0a);return}if(e.pc){drawPerch(e.pc);return}drawZombie(e.z)}
-// la sagoma dell'eroe dove è coperto (dietro la casa, la cripta, un albero): si ridisegnano in una tela piccola solo le cose davanti a lui che
-// toccano il suo riquadro, e lì sopra si stampa la sua sagoma chiara a metà trasparenza. Costa qualcosa solo quando è davvero coperto.
+// una voce della lista: uno strato di prop (L), un prop intero nell'ordine di prima (W, con W.dbg.ord='ky'), un essere (B: eroe, zombie, corvo
+// posato, fiamma libera)
+function drawEntry(e,h0a){switch(e.kind){case'L':return drawLayer(e);case'W':return drawWhole(e.prop);case'B':return e.hero?drawHero():e.z?drawZombie(e.z):e.pc?drawPerch(e.pc):e.fl?drawFlame(e.fl,h0a):null}}
+function drawWhole(p){LEANK=p.lk==null?1:p.lk;setRef(p.ref);drawProp(p,p.house?part=>alphaOf(p.house,part):null);LEANK=1;setRef(null)}
+// la sagoma dell'eroe dove è coperto (dietro la casa, la cripta, un albero): si ridisegnano in una tela piccola solo le cose disegnate dopo di lui
+// che toccano il suo riquadro, e lì sopra si stampa la sua sagoma chiara a metà trasparenza. Costa qualcosa solo quando è davvero coperto.
 let SIL=null,LASTOCC=[];
 function heroBox(){const h=W.hero,q=S(h.x,h.y,h.zh||0);return[q[0]-18,q[1]-58*RIGK.hzk,q[0]+18,q[1]+6]}
 // il riquadro vero di un prop (dai punti 3D dei suoi pezzi; o.ob se lo dà chi lo costruisce): [x0,y0,x1,y1,zTop], calcolato una volta
 function obOf(p){if(p._ob)return p._ob;if(p.ob)return p._ob=p.ob;let x0=1e9,y0=1e9,x1=-1e9,y1=-1e9,z1=0,any=false;const add=(q,r)=>{r=r||0;any=true;x0=Math.min(x0,q[0]-r);x1=Math.max(x1,q[0]+r);y0=Math.min(y0,q[1]-r);y1=Math.max(y1,q[1]+r);z1=Math.max(z1,(q[2]||0)+r)};
   for(const t of p.parts){if(t.c)t.c.forEach(q=>add(q));else if(t.pts)t.pts.forEach(q=>add(q));else if(t.a){add(t.a,t.w);add(t.b,t.w)}else if(t.p)add(t.p,t.r)}
   return p._ob=any?[x0-3,y0-3,x1+3,y1+3,z1+4]:[p.bx[0],p.bx[1],p.bx[2],p.bx[3],p.bx[4]]}
-function occluders(list,hi){const out=[];if(hi<0)return out;let[bx0,by0,bx1,by1]=heroBox();bx0+=5;bx1-=5;// il riquadro della figura, un po' più stretto di quello per le misure
-  for(let i=hi+1;i<list.length;i++){const e=list[i];if(!e.p)continue;const p=e.p;if(p.house&&p.house.inside&&p.parts[0]&&(p.parts[0].part==='front'||p.parts[0].part==='roof'))continue;// il muro davanti e il tetto sono già trasparenti
-    // le cose alte si piegano sempre via dal centro della visuale (l'eroe, o dove guarda il dito a destra): la tolleranza per la piega va solo dal lato opposto
-    // con la telecamera girata la stessa prova fatta in (u, v): il riquadro vero girato intorno al perno, schiacciato di SP, con la stessa
-    // tolleranza per la piega di lato e per l'altezza (·CP). A ψ=0 e θ=45° dà gli stessi numeri della strada dritta: niente salti della sagoma
-    const o=obOf(p),pl=.37*o[4]*(p.lk==null?1:p.lk)+2;let X0=o[0],X1=o[2],Y0=o[1],Y1=o[3],H=o[4];
-    if(CAM.rot){const c=CAM.c,s=CAM.s;let u0=1e9,u1=-1e9,v0=1e9,v1=-1e9;for(const X of[o[0],o[2]])for(const Y of[o[1],o[3]]){const dx=X-CAM.x,dy=Y-CAM.y,u=dx*c-dy*s,v=dx*s+dy*c;if(u<u0)u0=u;if(u>u1)u1=u;if(v<v0)v0=v;if(v>v1)v1=v}
-      X0=CAM.x+u0;X1=CAM.x+u1;Y0=CAM.y+v0*CAM.SP;Y1=CAM.y+v1*CAM.SP;H=o[4]*CAM.CP}
-    const hx=CAM.x,padE=X0>hx||p.ref?pl:1,padW=X1<hx||p.ref?pl:1;if(X1+padE<bx0||X0-padW>bx1||Y1+3<by0||Y0-H*1.37>by1)continue;out.push(e)}return out}
+// chi copre l'eroe: le voci disegnate dopo di lui il cui riquadro a schermo (quello della regola a, con la piega vera) tocca la figura; i muri
+// davanti e il tetto già trasparenti (alpha < .6) no
+function occluders(order,hi){const out=[];if(hi<0)return out;let[bx0,by0,bx1,by1]=heroBox();bx0+=5;bx1-=5;// il riquadro della figura, un po' più stretto di quello per le misure
+  for(let i=hi+1;i<order.length;i++){const e=order[i];if(e.kind!=='L'&&e.kind!=='W')continue;const p=e.prop,pt=e.kind==='L'?e.part:p.parts[0]&&p.parts[0].part;
+    if(p.house&&pt&&alphaOf(p.house,pt)<.6)continue;const b=e.sb;if(b[2]<bx0||b[0]>bx1||b[3]<by0||b[1]>by1)continue;out.push(e)}return out}
+// due memorie: l'immagine dell'eroe (chiave del piano, disaccordo 11: dove sta sullo schermo, verso, mira, passo, inclinazione, zoom: girando
+// resta ferma) e la sagoma composta con chi lo copre (in più la telecamera e le voci che coprono con la loro trasparenza)
 function silhouette(occ,h0a){if(!occ.length||W.dbg.noSil)return;const m=ctx.getTransform(),[bx0,by0,bx1,by1]=heroBox(),X0=Math.floor(m.a*bx0+m.e),Y0=Math.floor(m.d*by0+m.f),X1=Math.ceil(m.a*bx1+m.e),Y1=Math.ceil(m.d*by1+m.f),Q=.5,w=Math.ceil((X1-X0)*Q),hh=Math.ceil((Y1-Y0)*Q);if(w<=0||hh<=0)return;// a metà risoluzione: è un velo morbido
   if(!SIL)SIL={o:document.createElement('canvas'),h:document.createElement('canvas')};for(const c of[SIL.o,SIL.h]){if(c.width<w)c.width=w;if(c.height<hh)c.height=hh}
-  // memoria: se l'eroe, la telecamera, chi lo copre e le trasparenze non sono cambiati, si riusa la sagoma del fotogramma prima
-  const h=W.hero,key=[Math.round(h.x*2),Math.round(h.y*2),Math.round((h.zh||0)*2),Math.round(h.face*8),h.moving?Math.floor(h.walk*3):-1,Math.round(CAM.x*2),Math.round(CAM.y*2),Math.round(CAM.z*100),Math.round(CAM.yaw*200),Math.round(CAM.el*200),Math.round(CAM.oy*2),w,hh,occ.map(e=>props.indexOf(e.p)+':'+Math.round((e.p.house?e.p.house.a:1)*20)).join(',')].join('|');
-  if(SIL.key!==key){SIL.key=key;
-  const sv=ctx;try{let g=SIL.h.getContext('2d');g.setTransform(1,0,0,1,0,0);g.globalCompositeOperation='source-over';g.globalAlpha=1;g.clearRect(0,0,w,hh);g.setTransform(m.a*Q,0,0,m.d*Q,(m.e-X0)*Q,(m.f-Y0)*Q);ctx=g;drawHero();
-      g.setTransform(1,0,0,1,0,0);g.globalCompositeOperation='source-in';g.fillStyle='rgb(160,240,228)';g.fillRect(0,0,w,hh);g.globalCompositeOperation='source-over';
+  const h=W.hero,hq=S(h.x,h.y,h.zh||0),k1=[Math.round((m.a*hq[0]+m.e)*2),Math.round((m.d*hq[1]+m.f)*2),heroDir(),h.aim==null?'n':Math.round(scrAng(h.aim)*20),h.moving?Math.floor(h.walk*3):-1,Math.round(RIGK.hzk*100),Math.round(m.a*100),X0,Y0,w,hh].join('|'),
+    k2=k1+'|'+[Math.round(CAM.x*2),Math.round(CAM.y*2),Math.round(CAM.oy*2),Math.round(CAM.yaw*200),Math.round(CAM.el*200),occ.map(e=>e.sid+':'+Math.round((e.prop.house?e.prop.house.a:1)*20)).join(',')].join('|');
+  if(SIL.k2!==k2){SIL.k2=k2;const sv=ctx;
+    try{let g;if(SIL.k1!==k1){SIL.k1=k1;g=SIL.h.getContext('2d');g.setTransform(1,0,0,1,0,0);g.globalCompositeOperation='source-over';g.globalAlpha=1;g.clearRect(0,0,SIL.h.width,SIL.h.height);g.setTransform(m.a*Q,0,0,m.d*Q,(m.e-X0)*Q,(m.f-Y0)*Q);ctx=g;drawHero();
+        g.setTransform(1,0,0,1,0,0);g.globalCompositeOperation='source-in';g.fillStyle='rgb(160,240,228)';g.fillRect(0,0,w,hh);g.globalCompositeOperation='source-over'}
       g=SIL.o.getContext('2d');g.setTransform(1,0,0,1,0,0);g.globalCompositeOperation='source-over';g.globalAlpha=1;g.clearRect(0,0,w,hh);g.setTransform(m.a*Q,0,0,m.d*Q,(m.e-X0)*Q,(m.f-Y0)*Q);ctx=g;for(const e of occ)drawEntry(e,h0a);
       g.setTransform(1,0,0,1,0,0);g.globalCompositeOperation='source-in';g.globalAlpha=1;g.drawImage(SIL.h,0,0);g.globalCompositeOperation='source-over'}finally{ctx=sv}}
   ctx.save();ctx.setTransform(1,0,0,1,0,0);ctx.globalAlpha=.55;ctx.imageSmoothingEnabled=true;ctx.drawImage(SIL.o,0,0,w,hh,X0,Y0,X1-X0,Y1-Y0);ctx.restore()}
@@ -492,19 +524,271 @@ function drawRim(k){const w=W.w,h=W.h,B=28,c=`rgba(11,12,18,${EDGEF})`,z='rgba(1
     const g=ctx.createLinearGradient(x0,y0,x1,y1);g.addColorStop(0,z);g.addColorStop(1,c);ctx.fillStyle=g;path(P);ctx.fill()}}finally{ctx.restore()}}
 // il riquadro di un prop per la scelta dei visibili: quello dato da chi lo costruisce unito a quello vero dei suoi pezzi
 function fpOf(p){if(p._fp)return p._fp;const o=obOf(p),b=p.bx;return p._fp=[Math.min(o[0],b[0]),Math.min(o[1],b[1]),Math.max(o[2],b[2]),Math.max(o[3],b[3]),Math.max(o[4],b[4]||0)]}
-// la profondità per l'ordine di disegno: a vista dritta la y del bordo davanti (ky, come prima); con la telecamera girata, provvisoriamente
-// (finché non arriva il motore dell'ordine, fase 3), la profondità V = x·s + y·c del punto (centro x del riquadro, ky). Le cose con kyFn
-// (le ante aperte: un segmento in diagonale tra due angoli del riquadro, kyFn = la sua y alla x dell'eroe) prendono la V del punto del
-// segmento alla u dell'eroe: è kyFn rifatto in (u, v), uguale a kyFn quando ψ = 0 (anche solo inclinando), quindi nessun salto.
-// La parte con la x (x·s) entra piano: niente fino a KX0 = 0,5° di giro, tutta da 1,5°. Così uscendo da nord le cose con la stessa ky (i pezzi di
-// una corsa di muro) restano nell'ordine della strada dritta e i loro contorni non si scambiano di colpo al primo fotogramma girato (a destra
-// li avrebbe messi al contrario); si scambiano a mezzo grado, mentre la vista già si muove
-const KX0=.5*DEG,KX1=DEG;let KS=0;
-const KV=(x,y)=>x*KS+y*CAM.c;
-function kySeg(p){if(p._ks)return p._ks;const b=p.bx,xa=b[0]+4,xb=b[2]-4;return p._ks=xb-xa<1?[xa,b[1]+4,xa,b[3]-4]:[xa,p.kyFn(xa),xb,p.kyFn(xb)]}
-function keyOf(p,hx,hy){if(!CAM.rot)return p.kyFn?p.kyFn(hx):p.ky;if(!p.kyFn)return KV((p.bx[0]+p.bx[2])/2,p.ky);
-  const[x0,y0,x1,y1]=kySeg(p),c=CAM.c,s=CAM.s,ua=x0*c-y0*s,ub=x1*c-y1*s,va=KV(x0,y0),vb=KV(x1,y1);
-  return Math.abs(ub-ua)<1?Math.max(va,vb):va+(vb-va)*cl((hx*c-hy*s-ua)/(ub-ua),0,1)}
+// ================================================================== l'ordine di disegno (fase 3 del piano, §1.2–1.5)
+// Le voci della lista non sono i prop ma i loro STRATI: la base (i gruppi che toccano terra, o che restano dentro la sua impronta allargata di
+// 3 px) e la sporgenza (i gruppi che partono sopra 2 px e sopra un quarto dell'altezza del prop e ne escono di più: lanterna e braccio del
+// lampione, cornice e frontone della cripta, tetto e manovella del pozzo, assi del cartello, rami e chioma). Ogni strato ha un'impronta:
+// l'inviluppo convesso dei suoi punti nel mondo (facce, linee ± w/2, sfere ± r, i punti dei disegni a mano registrati da una prova a vuoto
+// all'avvio, allargati di o.r), calcolato una volta; a ogni cambio di ψ si girano solo i suoi vertici in (U, V) = (x·c − y·s, x·s + y·c). Gli
+// esseri (eroe, zombie, corvi posati) sono cartelloni larghi ±hw e alti H. I pavimenti (floor) vengono prima di tutto, ordinati tra loro con le
+// stesse regole.
+// Le regole a coppie (rel) danno un verso, una forza (2 forte, 1 debole) e un margine in px: a riquadri a schermo che si toccano; b impronte
+// separate lungo V; d^ uno sta tutto sopra l'altro (con tolleranza in z); c impronte separate o appena a contatto (≤3 px; una tutta dentro
+// l'altra non è un contatto) con una striscia di U in comune: decide la metà dei segmenti lungo U; d vera (si intersecano) = debole; e
+// affiancati: va dopo chi piega la cima verso l'altro, altrimenti la V del centro (debole); tra due esseri solo la V; essere contro cosa:
+// sporgenza sopra la testa, poi b, poi il bordo davanti della cosa alla U dell'essere. b, c, d^ dipendono solo da ψ e si tengono in memoria (a
+// passi di 1°, 2° col dito giù; la penetrazione SAT non cambia girando e si calcola una volta); a ed e si rifanno a ogni fotogramma. Due strati
+// dello stesso prop: se le regole non dicono niente, la base prima. Il contorno unico di una corsa di muro ha solo gli archi «prima di ogni pezzo».
+// Ordine: Kahn con la priorità del fotogramma prima (poi V); se ci sono cicli, componenti fortemente connesse (Tarjan) e dentro una componente
+// solo gli archi forti; se resta un ciclo forte (un ciclo vero nella geometria) si tengono gli archi dove le due voci si coprono di più sullo
+// schermo e si salta quello che lo chiuderebbe. Sotto i 2 px di margine una coppia tiene il verso di prima (isteresi, memoria per coppia di id
+// stabili).
+// Dentro uno strato i gruppi (le chiamate a box/prismX/prismY/cyl, i pezzi sciolti, grp) si ordinano con le stesse regole senza la a (le coppie
+// che non si possono coprire sullo schermo si saltano), ma le impronte che si sovrappongono restano nell'ordine dell'autore e i disegni a mano
+// senza impronta danno solo archi deboli; on (poggia su) e side (accanto) sono archi fissi; l'ordine si tiene in memoria per settore di ψ di 2°
+// (riempita anche in sottofondo); o.intra(G,V,facing) del prop lo dà a mano (l'albero).
+// W.dbg.ord='ky' rimette l'ordine di prima (ky, per le foto prima/dopo); W.dbg.prof misura i tempi (ord, sil) nel contatore.
+const LAYERS=[],FREEF=[],HE={kind:'B',hero:1,sid:'H',sk:999999},DIR8=[[1,0],[-1,0],[0,1],[0,-1],[.7071,.7071],[-.7071,.7071],[.7071,-.7071],[-.7071,-.7071]];
+const ORD={fast:0,slow:0,mm:{m:new Map()},fm:{m:new Map()},last:[],lastF:[],fr:0,cyc:0,tOrd:0,tSil:0,tIntra:0,pOrd:0,pSil:0,byId:new Map()};
+let PSIK=null,PC=1,PSN=0,UCAM=0,DRAG=false,NL=0,PVS=null,PVD=null,PVF=null,PVM=null;
+// inviluppo convesso senza doppioni, in senso antiorario (1 punto → [p], punti allineati → i 2 estremi)
+function hullW(P){const p=P.slice().sort((a,b)=>a[0]-b[0]||a[1]-b[1]),q=[];for(const a of p){const l=q[q.length-1];if(!l||Math.abs(l[0]-a[0])>1e-7||Math.abs(l[1]-a[1])>1e-7)q.push(a)}
+  if(q.length<3)return q.map(a=>[a[0],a[1]]);const cr=(o,a,b)=>(a[0]-o[0])*(b[1]-o[1])-(a[1]-o[1])*(b[0]-o[0]),lo=[],up=[];
+  for(const a of q){while(lo.length>1&&cr(lo[lo.length-2],lo[lo.length-1],a)<=1e-9)lo.pop();lo.push(a)}
+  for(let i=q.length-1;i>=0;i--){const a=q[i];while(up.length>1&&cr(up[up.length-2],up[up.length-1],a)<=1e-9)up.pop();up.push(a)}
+  up.pop();lo.pop();const r=lo.concat(up);return(r.length?r:[q[0]]).map(a=>[a[0],a[1]])}
+// q sta dentro l'inviluppo H allargato di d?
+function inHull(H,q,d){if(!H.length)return false;if(H.length===1)return Math.hypot(q[0]-H[0][0],q[1]-H[0][1])<=d;
+  if(H.length===2){const a=H[0],b=H[1],dx=b[0]-a[0],dy=b[1]-a[1],t=cl(((q[0]-a[0])*dx+(q[1]-a[1])*dy)/(dx*dx+dy*dy||1),0,1);return Math.hypot(q[0]-a[0]-dx*t,q[1]-a[1]-dy*t)<=d}
+  for(let k=0;k<H.length;k++){const a=H[k],b=H[(k+1)%H.length],nx=b[1]-a[1],ny=a[0]-b[0],l=Math.hypot(nx,ny)||1;if(((q[0]-a[0])*nx+(q[1]-a[1])*ny)/l>d)return false}return true}
+// SAT: penetrazione minima tra due impronte convesse (negativa: separate di tanto)
+function satPen(A,B){let best=1e9;const pr=(nx,ny)=>{let a0=1e9,a1=-1e9,b0=1e9,b1=-1e9;for(let k=0;k<A.length;k++){const d=A[k][0]*nx+A[k][1]*ny;if(d<a0)a0=d;if(d>a1)a1=d}
+    for(let k=0;k<B.length;k++){const d=B[k][0]*nx+B[k][1]*ny;if(d<b0)b0=d;if(d>b1)b1=d}const p=Math.min(a1-b0,b1-a0);if(p<best)best=p};
+  for(const P of[A,B]){if(P.length<2)continue;for(let k=0;k<P.length;k++){const p=P[k],q=P[(k+1)%P.length],nx=p[1]-q[1],ny=q[0]-p[0],l=Math.hypot(nx,ny);if(l>1e-9)pr(nx/l,ny/l)}}pr(1,0);pr(0,1);return best}
+// l'area in comune di due poligoni convessi (Sutherland–Hodgman)
+function clipArea(P,Q){if(P.length<3||Q.length<3)return 0;const sg=shoelace(Q)>0?1:-1;let out=P;
+  for(let i=0;i<Q.length&&out.length;i++){const a=Q[i],b=Q[(i+1)%Q.length],inp=out,side=p=>sg*((b[0]-a[0])*(p[1]-a[1])-(b[1]-a[1])*(p[0]-a[0]));out=[];
+    for(let k=0;k<inp.length;k++){const p=inp[k],q=inp[(k+1)%inp.length],sp=side(p),sq=side(q);if(sp>=0)out.push(p);if((sp>=0)!==(sq>=0)){const t=sp/(sp-sq);out.push([p[0]+(q[0]-p[0])*t,p[1]+(q[1]-p[1])*t])}}}
+  return out.length>2?Math.abs(shoelace(out))/2:0}
+const shOf=e=>{if(e.sh)return e.sh;if(e.kind==='B'){const x=e.qx,y=e.qy,h=e.Hh*e.zk,w=e.hw;return e.sh=[[x-w,y+2],[x+w,y+2],[x+w,y-h],[x-w,y-h]]}const p=e.prop;LEANK=p.lk==null?1:p.lk;setRef(p.ref);const P=[];for(const q of e.xy){P.push(S(q[0],q[1],e.z0),S(q[0],q[1],e.z1))}LEANK=1;setRef(null);return e.sh=hullW(P)};
+// l'intervallo [V dietro, V davanti] dell'impronta convessa sulla retta U = u (null se non la tocca)
+function segAlong(H,u){if(H.length===1)return Math.abs(H[0][0]-u)<1e-6?[H[0][1],H[0][1]]:null;let lo=1e9,hi=-1e9;
+  for(let k=0;k<H.length;k++){const p=H[k],q=H[(k+1)%H.length];if((p[0]-u)*(q[0]-u)<=0){if(Math.abs(q[0]-p[0])<1e-9){lo=Math.min(lo,p[1],q[1]);hi=Math.max(hi,p[1],q[1])}else{const v=p[1]+(u-p[0])/(q[0]-p[0])*(q[1]-p[1]);if(v<lo)lo=v;if(v>hi)hi=v}}}
+  return lo>hi?null:[lo,hi]}
+// gira l'impronta (o.xy, centro o.cx, o.cy) di ψ: o.H in (U, V), i suoi estremi e il centro
+function rotate(o,c,s){const n=o.xy.length;if(!o.H||o.H.length!==n){o.H=new Array(n);for(let k=0;k<n;k++)o.H[k]=[0,0]}let U0=1e9,U1=-1e9,V0=1e9,V1=-1e9;
+  for(let k=0;k<n;k++){const x=o.xy[k][0],y=o.xy[k][1],U=x*c-y*s,V=x*s+y*c,h=o.H[k];h[0]=U;h[1]=V;if(U<U0)U0=U;if(U>U1)U1=U;if(V<V0)V0=V;if(V>V1)V1=V}
+  o.U0=U0;o.U1=U1;o.V0=V0;o.V1=V1;o.cU=o.cx*c-o.cy*s;o.cV=o.cx*s+o.cy*c}
+// i punti del mondo che un pezzo può toccare, con i raggi (per le impronte e le quote)
+function partPts(t,out){const add=(x,y,z)=>out.push([x,y,z||0]);
+  switch(t.k){case'face':case'facepoly':case'plane':for(const q of t.c)add(q[0],q[1],q[2]);break;
+    case'poly':case'hull':case'outline':for(const q of t.pts)add(q[0],q[1],q[2]);break;
+    case'line':{const r=(t.w||1)/2+(t.ink?1.1:0);for(const q of[t.a,t.b])for(const[dx,dy] of DIR8)add(q[0]+dx*r,q[1]+dy*r,q[2]);break}
+    case'ball':{const r=t.r,p=t.p,h=r*(t.sq||1),z0=p[2]>=0?Math.max(0,p[2]-h):p[2]-h;for(const[dx,dy] of DIR8)add(p[0]+dx*r,p[1]+dy*r,p[2]);add(p[0],p[1],p[2]+h);add(p[0],p[1],z0);break}
+    case'fn':{const o=t.o,r=o.r||0;let P=t.rec||[];
+      if(o.fp){const zs=P.length?P.map(q=>q[2]):[0],za=Math.min(...zs),zb=Math.max(...zs);P=[];for(const q of o.fp){P.push([q[0],q[1],q[2]!=null?q[2]:za]);P.push([q[0],q[1],q[2]!=null?q[2]:zb])}}
+      for(const q of P){if(!r){add(q[0],q[1],q[2]);continue}for(const[dx,dy] of DIR8)add(q[0]+dx*r,q[1]+dy*r,q[2]);add(q[0],q[1],q[2]+r);add(q[0],q[1],q[2]>=0?Math.max(0,q[2]-r):q[2]-r)}
+      if(o.z&&P.length){const q=P[0];add(q[0],q[1],o.z[0]);add(q[0],q[1],o.z[1])}break}}}
+// impronta, quote e centro di un insieme di punti (o.z: [z0,z1] imposto da chi disegna)
+function finFP(o,pts,zr){const H=hullW(pts.length?pts:[[0,0,0]]);o.xy=H;let z0=1e9,z1=-1e9;for(const q of pts){if(q[2]<z0)z0=q[2];if(q[2]>z1)z1=q[2]}
+  if(!pts.length)z0=z1=0;if(zr){z0=zr[0];z1=zr[1]}o.z0=z0;o.z1=z1;let cx=0,cy=0;for(const q of H){cx+=q[0];cy+=q[1]}o.cx=cx/H.length;o.cy=cy/H.length;o.area=Math.abs(shoelace(H))/2}
+// la prova a vuoto di un disegno a mano (all'avvio, su una tela 1×1): S2 registra i punti 3D che tocca
+function dryRun(t){const rec=[],S2=(x,y,z)=>{if(Array.isArray(x)){z=x[2];y=x[1];x=x[0]}rec.push([x,y,z||0]);return S(x,y,z)};const sd=seed;srand(hashS('f|'+t.sd));
+  try{t.f(S2,ctx)}catch(e){t.err=String(e)}finally{seed=sd}t.rec=rec}
+// i gruppi e gli strati di un prop. Sporgenza: i gruppi che partono sopra 2 px e sopra un quarto dell'altezza del prop (i lobi di una zucca
+// no) ed escono di più di 3 px dall'impronta della base; chi poggia su un gruppo (on) sta nel suo strato
+function buildLayers(p){const G=new Map(),order=[],loose=[];
+  for(const t of p.parts){if((t.k==='hull'||t.k==='outline')&&!t.g){loose.push(t);continue}if(!t.g)t.g=++GID;let g=G.get(t.g);
+    if(!g){g={g:t.g,parts:[],gi:order.length};G.set(t.g,g);order.push(g)}g.parts.push(t)}
+  for(const g of order){const pts=[];let zr=null;g.dec=g.parts.every(t=>t.k==='fn'&&!t.o.r&&!t.o.fp&&!t.o.z&&!t.o.it);for(const t of g.parts){partPts(t,pts);const o=t.o||t;if(o.z&&t.k==='fn')zr=o.z;
+      if(o.on&&g.on==null)g.on=o.on;if(o.side&&!g.side)g.side=o.side;if(o.it&&!g.it)g.it=o.it;if(o.tip&&!g.tip)g.tip=o.tip}
+    if(!pts.length){const b=p.bx;pts.push([(b[0]+b[2])/2,(b[1]+b[3])/2,0]);g.dec=true}// un disegno a mano che la prova a vuoto non ha visto (girato di spalle all'avvio): il centro del prop, solo archi deboli
+    finFP(g,pts,zr)}
+  for(const g of order)if(g.on!=null){const h=Array.isArray(g.on)?g.on[0]:g.on;g.onG=h&&h.g}
+  const lp=loose.map(t=>{const o={t},pts=[];partPts(t,pts);finFP(o,pts);return o});
+  const mk=(gs,ls,suf,li)=>{const L={kind:'L',prop:p,li,sid:'P'+p.i+suf,groups:gs,loose:ls.map(o=>o.t),flames:[],memo:new Map(),floor:!!p.floor,outl:!gs.length,sb:[0,0,0,0],lean:0};
+    const pts=[];for(const g of gs)for(const q of g.xy)pts.push([q[0],q[1],g.z0],[q[0],q[1],g.z1]);for(const o of ls)for(const q of o.xy)pts.push([q[0],q[1],o.z0],[q[0],q[1],o.z1]);finFP(L,pts);
+    const tg=new Set();for(const g of gs)for(const t of g.parts)tg.add(t.part||'');for(const o of ls)tg.add(o.t.part||'');L.part=tg.size===1?[...tg][0]||null:null;
+    L.n=LAYERS.length;L.sk=L.n;LAYERS.push(L);ORD.byId.set(L.sid,L);return L};
+  let base=order.filter(g=>g.z0<=2),over=[],lb=lp,lo=[];
+  if(base.length&&base.length<order.length){const bh=hullW(base.flatMap(g=>g.xy)),zl=Math.max(2,.25*Math.max(...order.map(g=>g.z1))),out=o=>o.z0>zl&&!o.xy.every(q=>inHull(bh,q,3));over=order.filter(out);
+    if(over.length){const ov=new Set(over);for(const g of order)if(g.onG!=null){const h=G.get(g.onG);if(h&&ov.has(h)!==ov.has(g)){if(ov.has(h))ov.add(g);else ov.delete(g)}}// chi poggia su un gruppo sta nel suo strato
+      over=order.filter(g=>ov.has(g));base=order.filter(g=>!ov.has(g));lb=lp.filter(o=>!out(o));lo=lp.filter(out)}}
+  else base=order;
+  p.layers=over.length?[mk(base,lb,'b',0),mk(over,lo,'o',1)]:[mk(order,lp,'',0)];
+  // il prop intero (W.dbg.ord='ky' e le prove): la sua impronta e le quote
+  const w={kind:'W',prop:p,sid:'P'+p.i,sk:600000+p.i,sb:[0,0,0,0],lean:0},pts=[];for(const L of p.layers)for(const q of L.xy)pts.push([q[0],q[1],L.z0],[q[0],q[1],L.z1]);finFP(w,pts);p.whole=w;if(!ORD.byId.has(w.sid))ORD.byId.set(w.sid,w)}
+// dopo area.build(): prova a vuoto dei disegni a mano, gruppi, strati, contorni delle corse di muro, fiamme figlie, esseri fissi, memoria dei
+// verdetti. Non tocca il seme dei numeri a caso (lucciole, nebbia e corvi nascono dopo)
+function finalize(){if(LAYERS.length)return;const sv=ctx,sd=seed,dc=document.createElement('canvas');dc.width=dc.height=1;ctx=dc.getContext('2d');
+  try{for(const p of props)for(const t of p.parts)if(t.k==='fn')dryRun(t)}finally{ctx=sv;seed=sd}
+  props.forEach((p,i)=>{p.i=i});for(const p of props)buildLayers(p);
+  // un prop fatto solo di contorni (il contorno unico di una corsa di muro): prima di ogni pezzo della corsa (stesso nome, dentro la sua impronta)
+  for(const O of LAYERS)if(O.outl){O.kids=new Set();for(const L of LAYERS)if(!L.outl&&!L.floor&&L.prop.name===O.prop.name&&L.xy.every(q=>inHull(O.xy,q,3)))O.kids.add(L.n)}
+  // le fiamme sono figlie dello strato che contiene il loro punto (il più piccolo) e si disegnano subito dopo di lui; le altre sono voci libere
+  for(const f of flames){let best=null,ba=1e18;for(const L of LAYERS){if(L.floor||L.outl||f.z<L.z0-3||f.z>L.z1+8||!inHull(L.xy,[f.x,f.y],3))continue;if(L.area<ba){ba=L.area;best=L}}
+    if(best){best.flames.push(f);f.L=best}else FREEF.push(f)}
+  NL=LAYERS.length;PEN=new Float32Array(NL*NL).fill(NaN);PVS=new Int32Array(NL*NL).fill(-999999);PVD=new Int8Array(NL*NL);PVF=new Int8Array(NL*NL);PVM=new Float32Array(NL*NL);
+  perches.forEach((c,i)=>{c.E={kind:'B',pc:c,sid:'C'+i,sk:800000+i}});FREEF.forEach((f,i)=>{f.E={kind:'B',fl:f,sid:'F'+i,sk:700000+i}});
+  flames.forEach((f,i)=>{f.KE={kind:'B',fl:f,sid:'F*'+i,sk:650000+i}});PSIK=null}
+// ψ quantizzato per l'ordine: si rigirano le impronte di tutti gli strati
+function psiUpdate(){const st=DRAG?2:1,k=CAM.rot?Math.round(wrapA(CAM.yaw)/DEG/st)*st:0;if(k===PSIK)return;PSIK=k;if(k===0){PC=1;PSN=0}else{PC=Math.cos(k*DEG);PSN=Math.sin(k*DEG)}
+  for(const L of LAYERS)rotate(L,PC,PSN)}
+// il riquadro a schermo di uno strato (la regola a: con la piega vera, i raggi e 2 px di contorno) e quanto si piega di lato la sua cima
+// (la stessa proiezione di S, senza creare array: il risultato in PX, PY)
+let PX=0,PY=0;
+function projInto(x,y,z){if(CAM.rot){const dx=x-CAM.x,dy=y-CAM.y,u=dx*CAM.c-dy*CAM.s,v=dx*CAM.s+dy*CAM.c;let lu,lv;if(REF){lu=REF[0]+REF[1]*u;lv=REF[2]+REF[3]*v}else{lu=soft(u*CAM.lx);lv=softV((-CAM.oy/CAM.SP-v)*CAM.ly)}
+    PX=CAM.x+u+lu*z*LEANK;PY=CAM.y+v*CAM.SP-z*CAM.CP+lv*z*LEANK;return}
+  if(REF){PX=x+(REF[0]+REF[1]*x)*z*LEANK;PY=y-z+(REF[2]+REF[3]*y)*z*LEANK;return}PX=x+soft((x-CAM.x)*CAM.lx)*z*LEANK;PY=y-z+softV((CAM.cy-y)*CAM.ly)*z*LEANK}
+// (se la telecamera non si è mossa dall'ultima volta, il riquadro è ancora quello: CST è il numero della posizione della telecamera)
+let CST=0,CSK='';function camStamp(){const k=CAM.x+','+CAM.y+','+CAM.oy+','+CAM.yaw+','+CAM.el;if(k!==CSK){CSK=k;CST++}}
+function layerSB(L){if(L.cst===CST)return;L.cst=CST;const p=L.prop,lk=p.lk==null?1:p.lk;LEANK=lk;setRef(p.ref);let x0=1e9,y0=1e9,x1=-1e9,y1=-1e9;const xy=L.xy,z0=L.z0,z1=L.z1,rot=CAM.rot,c=CAM.c,s=CAM.s,SP=CAM.SP,CP=CAM.CP;
+  for(let k=0;k<xy.length;k++){const X=xy[k][0],Y=xy[k][1];let bx,by,lu,lv,kz;// la base del vertice e la sua piega (come in S), poi le due quote
+    if(rot){const dx=X-CAM.x,dy=Y-CAM.y,u=dx*c-dy*s,v=dx*s+dy*c;if(REF){lu=REF[0]+REF[1]*u;lv=REF[2]+REF[3]*v}else{lu=soft(u*CAM.lx);lv=softV((-CAM.oy/SP-v)*CAM.ly)}bx=CAM.x+u;by=CAM.y+v*SP;kz=CP}
+    else{if(REF){lu=REF[0]+REF[1]*X;lv=REF[2]+REF[3]*Y}else{lu=soft((X-CAM.x)*CAM.lx);lv=softV((CAM.cy-Y)*CAM.ly)}bx=X;by=Y;kz=1}
+    for(let m=0;m<2;m++){const z=m?z1:z0,px=bx+lu*z*lk,py=by-z*kz+lv*z*lk;if(px<x0)x0=px;if(px>x1)x1=px;if(py<y0)y0=py;if(py>y1)y1=py}}
+  projInto(L.cx,L.cy,z1);const lt=PX;projInto(L.cx,L.cy,0);L.lean=lt-PX;L.sh=null;LEANK=1;setRef(null);const b=L.sb;b[0]=x0-2;b[1]=y0-2;b[2]=x1+2;b[3]=y1+2}
+// un essere: cartellone nel punto (x, y), largo ±hw, da zh a zh+H; il riquadro a schermo con l'altezza vera della figura (zk)
+function beingE(e,x,y,zh,H,hw,zk){const U=x*PC-y*PSN,V=x*PSN+y*PC;e.cU=e.U0=e.U1=U;e.cV=e.V0=e.V1=V;e.z0=zh;e.z1=zh+H;e.hw=hw;e.H=[[U,V]];e.x=x;e.y=y;e.zh=zh;e.Hh=H;e.zk=zk;
+  projInto(x,y,zh);const w=Math.max(14,hw*1.8),b=e.sb||(e.sb=[0,0,0,0]);b[0]=PX-w;b[1]=PY-H*zk-6;b[2]=PX+w;b[3]=PY+5;e.qx=PX;e.qy=PY;e.sh=null;return e}
+// la penetrazione SAT tra due impronte non cambia girando (si girano insieme le forme e gli assi): si calcola una volta per coppia nel mondo.
+// Un'impronta tutta dentro l'altra non è un contatto ma un incrocio vero (il muschio disegnato dentro lo spessore di un muro): vale almeno 3,01
+function penW(A,B){let pen=satPen(A.xy,B.xy);if(pen>.25&&pen<=3&&(A.xy.every(q=>inHull(B.xy,q,.5))||B.xy.every(q=>inHull(A.xy,q,.5))))pen=3.01;return pen}
+let PEN=null;const penL=(A,B)=>{const i=A.n<B.n?A.n*NL+B.n:B.n*NL+A.n;let v=PEN[i];if(v!==v)v=PEN[i]=penW(A,B);return v};
+// verdetto geometrico tra due impronte (solo ψ): [verso di A (−1 prima, +1 dopo), forza, margine] o null (affiancati: decide e)
+function geom(A,B,intra,pen){const tie=intra?(A.gi<B.gi?-1:1):(A.sk<B.sk?-1:1);
+  if(A.V1<=B.V0)return[-1,2,B.V0-A.V1];if(B.V1<=A.V0)return[1,2,A.V0-B.V1];// b
+  const tz=Math.max(1.5,.08*Math.min(A.z1-A.z0,B.z1-B.z0));
+  // d^: sta tutto sopra (prima della c): il fondo sopra la cima dell'altro, con tolleranza, e la cima più in alto della sua (una linea a metà di
+  // un'asta non le sta sopra); tra voci deve anche partire più in alto (una cosa piatta a terra non sta «sotto» una cupola che parte da terra);
+  // dentro un prop non vale per i disegni a mano senza impronta (i loro punti non dicono l'altezza vera)
+  if(pen>.25&&!(intra&&(A.dec||B.dec))){const lift=intra?-1e9:.5;if(A.z0>=B.z1-tz&&A.z0>B.z0+lift&&A.z1>B.z1)return[1,2,A.z0-B.z1+tz];if(B.z0>=A.z1-tz&&B.z0>A.z0+lift&&B.z1>A.z1)return[-1,2,B.z0-A.z1+tz]}
+  const u0=Math.max(A.U0,B.U0),u1=Math.min(A.U1,B.U1);
+  if(pen>3||u1-u0>3||(u1>=u0&&(A.H.length===1||B.H.length===1))){if(pen>3&&intra)return[tie,1,9];// dentro un prop un incrocio vero resta nell'ordine dell'autore
+    const us=(u0+u1)/2,sa=segAlong(A.H,us),sb=segAlong(B.H,us);// c (contatto ≤3 px = separati), d vera = debole: la metà dei segmenti lungo U
+    if(sa&&sb){const ma=(sa[0]+sa[1])/2,mb=(sb[0]+sb[1])/2;return[Math.sign(ma-mb)||tie,pen>3?1:2,Math.abs(ma-mb)]}}
+  return null}
+// in memoria per il ψ di adesso (PSIK): i verdetti tra strati si calcolano solo quando servono. Due strati dello stesso prop (base e sporgenza):
+// se le regole non dicono niente (affiancati) la base va prima, come l'ha scritto l'autore; per i prop ordinati a mano (o.intra: l'albero) anche
+// quando le regole sono incerte (deboli)
+function pv(A,B){const lo=A.n<B.n?A:B,hi=lo===A?B:A,i=lo.n*NL+hi.n;
+  if(PVS[i]!==PSIK){let r=geom(lo,hi,false,penL(lo,hi));if(lo.prop===hi.prop&&(!r||(r[1]<2&&lo.prop.intra)))r=[lo.li<hi.li?-1:1,1,9];PVS[i]=PSIK;if(r){PVD[i]=r[0];PVF[i]=r[1];PVM[i]=r[2]}else PVD[i]=0}
+  const d=PVD[i];if(!d)return null;return[lo===A?d:-d,PVF[i],PVM[i]]}
+// e: affiancati, va dopo chi piega la cima verso l'altro; se nessuno si piega abbastanza, la V del centro (debole)
+function relE(A,B){const k=A.cU<B.cU?1:-1,inA=k*A.lean,inB=-k*B.lean;if(Math.max(inA,inB)>.75)return[inA>=inB?1:-1,1,Math.abs(inA-inB)];
+  return[Math.sign(A.cV-B.cV)||(A.sk<B.sk?-1:1),1,Math.abs(A.cV-B.cV)]}
+// un essere E contro uno strato P: sporgenza sopra la testa → prima; l'essere sta sopra la cosa (corvo posato) → dopo; b; il bordo davanti della cosa
+// alla U dell'essere (kyFn generalizzato) se la figura copre le sue colonne; accanto: chi è più vicino al centro della visuale va dopo (debole)
+function relEss(E,P){const tz=Math.max(1.5,.08*Math.min(E.z1-E.z0,P.z1-P.z0)),s=segAlong(P.H,Math.min(P.U1,Math.max(P.U0,E.cU))),
+    under=s&&E.cU>=P.U0-1&&E.cU<=P.U1+1&&E.cV>=s[0]-1&&E.cV<=s[1]+1;
+  if(under&&P.z0>=E.z1-tz&&P.z0>E.z0+.5&&P.z1>E.z1)return[-1,2,P.z0-E.z1+tz];if(under&&E.z0>=P.z1-tz&&E.z0>P.z0+.5&&E.z1>P.z1)return[1,2,E.z0-P.z1+tz];
+  if(E.cV>=P.V1)return[1,2,E.cV-P.V1];if(E.cV<=P.V0)return[-1,2,P.V0-E.cV];
+  if(E.cU+E.hw>P.U0&&E.cU-E.hw<P.U1){const vf=s?s[1]:P.V1;return[E.cV>=vf-1?1:-1,2,Math.abs(E.cV-vf+1)]}
+  const gap=Math.max(0,P.U0-UCAM,UCAM-P.U1),du=Math.abs(E.cU-UCAM);return[du<=gap?1:-1,1,Math.abs(gap-du)]}
+// il contorno unico di una corsa di muro ha solo gli archi verso i suoi pezzi (prima di tutti): con la sua impronta (tutta la corsa) contro le
+// altre voci chiudeva cicli con le ante e i pilastri; il suo posto lo dà la priorità, appena prima del primo pezzo
+function rel(A,B){const la=A.kind==='L',lb=B.kind==='L';
+  if(A.outl||B.outl){if(A.kids&&lb&&A.kids.has(B.n))return[-1,3,99];if(B.kids&&la&&B.kids.has(A.n))return[1,3,99];return null}
+  if(la&&lb)return pv(A,B)||relE(A,B);
+  if(!la&&!lb)return[Math.sign(A.cV-B.cV)||(A.sk<B.sk?-1:1),2,Math.abs(A.cV-B.cV)];// tra due esseri solo la profondità (mai e)
+  if(!la)return relEss(A,B);const r=relEss(B,A);return[-r[0],r[1],r[2]]}
+// Tarjan sui nodi dati (solo gli archi forti se strongOnly), poi Kahn sulle componenti con la priorità key (il più piccolo esce prima); una
+// componente con più nodi si riordina con i soli archi forti; se resta un ciclo forte (un ciclo vero nella geometria) si tengono gli archi dal più
+// importante (wf: l'area in cui le due voci si coprono davvero sullo schermo; poi il margine più grande) e si salta quello che chiuderebbe il
+// ciclo; a parità decide key. adj[v] = [w, forza, margine, w, forza, margine, …]
+function sccOrder(nodes,adj,key,strongOnly,wf){const N=adj.length,inS=new Uint8Array(N);for(const v of nodes)inS[v]=1;
+  if(!strongOnly&&nodes.length===N){// senza cicli Kahn basta (le componenti sarebbero tutte da un nodo): si prova prima così
+    const dg=new Int32Array(N);for(let v=0;v<N;v++){const a=adj[v];for(let k=0;k<a.length;k+=3)dg[a[k]]++}const rd=[],out=[];for(let v=0;v<N;v++)if(!dg[v])rd.push(v);
+    while(rd.length){let bi=0;for(let i=1;i<rd.length;i++)if(key[rd[i]]<key[rd[bi]])bi=i;const v=rd[bi];rd[bi]=rd[rd.length-1];rd.pop();out.push(v);const a=adj[v];for(let k=0;k<a.length;k+=3)if(--dg[a[k]]===0)rd.push(a[k])}
+    if(out.length===N){ORD.fast++;return out}ORD.slow++}
+  const I=new Int32Array(N).fill(-1),Lo=new Int32Array(N),on=new Uint8Array(N),comp=new Int32Array(N),st=[],comps=[];let idx=0;
+  const sc=v=>{I[v]=Lo[v]=idx++;st.push(v);on[v]=1;const a=adj[v];for(let k=0;k<a.length;k+=3){const w=a[k];if(!inS[w]||(strongOnly&&a[k+1]<2))continue;
+      if(I[w]<0){sc(w);if(Lo[w]<Lo[v])Lo[v]=Lo[w]}else if(on[w]&&I[w]<Lo[v])Lo[v]=I[w]}
+    if(Lo[v]===I[v]){const c=[];let w;do{w=st.pop();on[w]=0;comp[w]=comps.length;c.push(w)}while(w!==v);comps.push(c)}};
+  for(const v of nodes)if(I[v]<0)sc(v);
+  const C=comps.length,indeg=new Int32Array(C),out=new Array(C),ck=new Float64Array(C);
+  for(let c=0;c<C;c++){out[c]=[];let m=Infinity;for(const v of comps[c])if(key[v]<m)m=key[v];ck[c]=m}
+  for(const v of nodes){const a=adj[v],cv=comp[v];for(let k=0;k<a.length;k+=3){const w=a[k];if(!inS[w]||(strongOnly&&a[k+1]<2))continue;const cw=comp[w];if(cw!==cv){out[cv].push(cw);indeg[cw]++}}}
+  const ready=[],res=[];for(let c=0;c<C;c++)if(!indeg[c])ready.push(c);
+  while(ready.length){let bi=0;for(let i=1;i<ready.length;i++)if(ck[ready[i]]<ck[ready[bi]])bi=i;const c=ready[bi];ready[bi]=ready[ready.length-1];ready.pop();const mem=comps[c];
+    if(mem.length===1)res.push(mem[0]);else if(!strongOnly){for(const v of sccOrder(mem,adj,key,true,wf))res.push(v)}else{ORD.cyc++;for(const v of dagOrder(mem,adj,key,wf))res.push(v)}
+    for(const w of out[c])if(--indeg[w]===0)ready.push(w)}
+  return res}
+function dagOrder(mem,adj,key,wf){const n=mem.length,loc=new Map(mem.map((v,i)=>[v,i])),arcs=[],out=[];for(let i=0;i<n;i++)out.push([]);
+  for(const v of mem){const a=adj[v];for(let k=0;k<a.length;k+=3){const w=a[k];if(a[k+1]<2||!loc.has(w))continue;arcs.push([loc.get(v),loc.get(w),a[k+2],a[k+1]>2?1e9:wf?wf(v,w):0])}}
+  arcs.sort((p,q)=>q[3]-p[3]||q[2]-p[2]);const seen=new Int32Array(n);let mk=0;
+  const reach=(s,t)=>{mk++;const st=[s];seen[s]=mk;while(st.length){const x=st.pop();if(x===t)return true;for(const y of out[x])if(seen[y]!==mk){seen[y]=mk;st.push(y)}}return false};
+  for(const[a,b] of arcs)if(!reach(b,a))out[a].push(b);
+  const indeg=new Int32Array(n);for(const o of out)for(const y of o)indeg[y]++;const ready=[],res=[];for(let i=0;i<n;i++)if(!indeg[i])ready.push(i);
+  while(ready.length){let bi=0;for(let i=1;i<ready.length;i++)if(key[mem[ready[i]]]<key[mem[ready[bi]]])bi=i;const c=ready[bi];ready[bi]=ready[ready.length-1];ready.pop();res.push(mem[c]);for(const y of out[c])if(--indeg[y]===0)ready.push(y)}
+  return res}
+// l'ordine di una lista di voci: coppie con i riquadri a schermo che si toccano (spazzata su x0), regole, isteresi, componenti
+function orderList(ents,hold){const n=ents.length;if(n<2){for(const e of ents){e.rk=0;e.rf=ORD.fr}return ents.slice()}
+  for(let i=0;i<n;i++)ents[i]._i=i;const ix=new Array(n);for(let i=0;i<n;i++)ix[i]=i;ix.sort((a,b)=>ents[a].sb[0]-ents[b].sb[0]);
+  const adj=new Array(n);for(let i=0;i<n;i++)adj[i]=[];const mem=hold.m,next=new Map();
+  for(let a=0;a<n;a++){const A=ents[ix[a]],sa=A.sb;for(let b=a+1;b<n;b++){const B=ents[ix[b]],sbb=B.sb;if(sbb[0]>sa[2])break;if(sbb[1]>sa[3]||sbb[3]<sa[1])continue;
+      const r=rel(A,B);if(!r)continue;const lo=A.sk<B.sk,key=lo?A.sk*1e6+B.sk:B.sk*1e6+A.sk,sg=lo?1:-1,old=mem.get(key);let d=r[0];
+      if(old!==undefined&&r[2]<2&&old*sg!==d)d=old*sg;next.set(key,d*sg);// isteresi: sotto i 2 px si tiene il verso di prima
+      if(d<0)adj[A._i].push(B._i,r[1],r[2]);else adj[B._i].push(A._i,r[1],r[2])}}
+  hold.m=next;if(W.dbg.adj)hold.adj={ids:ents.map(e=>e.sid),adj};const fr=ORD.fr,key=new Float64Array(n);for(let i=0;i<n;i++){const e=ents[i];key[i]=e.rf===fr-1?e.rk:1e6+e.cV}
+  for(let i=0;i<n;i++){const e=ents[i];if(!e.outl)continue;let m=Infinity;const a=adj[i];for(let k=0;k<a.length;k+=3)if(key[a[k]]<m)m=key[a[k]];if(m<Infinity)key[i]=m-.5}// il contorno subito prima del primo pezzo
+  const nodes=new Array(n);for(let i=0;i<n;i++)nodes[i]=i;const res=sccOrder(nodes,adj,key,false,(a,b)=>clipArea(shOf(ents[a]),shOf(ents[b]))).map(i=>ents[i]);res.forEach((e,r)=>{e.rk=r;e.rf=fr});return res}
+// l'ordine dei gruppi dentro uno strato, in memoria per settore di ψ di 2°
+const secNow=()=>CAM.rot?Math.round(wrapA(CAM.yaw)/DEG/2):0;
+function intraOrder(L){const sec=secNow();if(W.dbg.forceIntra===L.sid){L.memo.delete(sec);W.dbg.forceIntra=null}return intraAt(L,sec)}
+function intraAt(L,sec){const G=L.groups;if(G.length<2)return G;let o=L.memo.get(sec);if(o)return o;
+  const t0=W.dbg.prof?performance.now():0,a=sec*2*DEG,c=sec?Math.cos(a):1,s=sec?Math.sin(a):0;for(const g of G)rotate(g,c,s);const p=L.prop;
+  if(p.intra){o=p.intra(G,(x,y)=>x*s+y*c,(nx,ny)=>nx*s+ny*c)||[];if(o.length!==G.length){const seen=new Set(o);o=o.concat(G.filter(g=>!seen.has(g)))}}
+  else{const n=G.length,adj=new Array(n);for(let i=0;i<n;i++)adj[i]=[];
+    // (la regola a dentro il prop, senza la telecamera: si saltano le coppie che non si possono coprire sullo schermo a nessuna inclinazione
+    // 35°–62°, cioè V − z·k con k tra 0,53 e 1,43, e con la piega di lato più grande, LK·z)
+    for(const g of G){const ex=LK*g.z1+3;g.a0=g.U0-ex;g.a1=g.U1+ex;g.b0=g.V0-g.z1*1.43-3;g.b1=g.V1-g.z0*.53+3;g.pj=null}const PN=L.pen||(L.pen=new Float32Array(n*n).fill(NaN));
+    for(let i=0;i<n;i++)for(let j=i+1;j<n;j++){const A=G[i],B=G[j];if(A.a1<B.a0||B.a1<A.a0||A.b1<B.b0||B.b1<A.b0)continue;let r=null;
+      if(A.onG===B.g&&A.onG!=null)r=[1,3,9];else if(B.onG===A.g&&B.onG!=null)r=[-1,3,9];// on: poggia su → dopo l'ospite
+      else if((A.side||B.side)&&(PN[i*n+j]!==PN[i*n+j]?PN[i*n+j]=penW(A,B):PN[i*n+j])>-1.5){const sd=A.side?A.side:B.side,f=sd[0]*s+sd[1]*c;r=[(f<0?-1:1)*(A.side?1:-1),3,9]}// side: accanto
+      if(!r){const pen=PN[i*n+j]!==PN[i*n+j]?PN[i*n+j]=penW(A,B):PN[i*n+j];r=geom(A,B,true,pen)||[Math.sign(A.cV-B.cV)||(A.gi<B.gi?-1:1),1,Math.abs(A.cV-B.cV)];if((A.dec||B.dec)&&r[1]>1)r=[r[0],1,r[2]]}// un disegno a mano senza impronta (segni, muschio, legature) non impone niente: archi deboli
+      if(r[0]<0)adj[i].push(j,r[1],r[2]);else adj[j].push(i,r[1],r[2]);if(W.dbg.intraArcs)W.dbg.intraArcs.push([A.gi,B.gi,r[0],r[1],+r[2].toFixed(2)])}
+    // per sciogliere un ciclo forte conta quanto due gruppi si coprono davvero: le loro sagome proiettate a 45° (U, V − z), senza piega
+    const pj=g=>{if(!g.pj){const P=[];for(const h of g.H){P.push([h[0],h[1]-g.z0],[h[0],h[1]-g.z1])}g.pj=hullW(P)}return g.pj};
+    const key=new Float64Array(n),nodes=[];for(let i=0;i<n;i++){key[i]=G[i].gi;nodes.push(i)}o=sccOrder(nodes,adj,key,false,(a,b)=>clipArea(pj(G[a]),pj(G[b]))).map(i=>G[i])}
+  L.memo.set(sec,o);if(W.dbg.prof)ORD.tIntra+=performance.now()-t0;return o}
+// le memorie per settore si riempiono anche in sottofondo (pochi ms alla volta, dai settori vicini a quello di adesso), così il primo giro della
+// telecamera non paga l'ordine dentro i prop di tutti gli strati a ogni settore nuovo (W.dbg.noWarm per le misure)
+function warmIntra(){if(W.dbg.noWarm){setTimeout(warmIntra,500);return}const t0=performance.now(),s0=secNow();let todo=false;
+  for(let d=0;d<=90&&performance.now()-t0<4;d++)for(const sg of d?[1,-1]:[1]){const sec=((s0+sg*d+90)%180+180)%180-90;for(const L of LAYERS){if(L.groups.length<2||L.memo.has(sec))continue;todo=true;intraAt(L,sec);if(performance.now()-t0>=4)break}}
+  if(todo)setTimeout(warmIntra,30)}
+// disegna uno strato: i contorni sciolti per primi, poi i gruppi nel loro ordine, poi le fiamme figlie
+function drawPartA(t,hs){if(hs&&t.part){const a=alphaOf(hs,t.part);if(a<=0)return;if(a<1){ctx.save();ctx.globalAlpha*=a;drawPart(t);ctx.restore();return}}drawPart(t)}
+function drawLayer(L){const p=L.prop,hs=p.house;LEANK=p.lk==null?1:p.lk;setRef(p.ref);for(const t of L.loose)drawPartA(t,hs);const G=intraOrder(L);for(const g of G)for(const t of g.parts)drawPartA(t,hs);
+  LEANK=1;setRef(null);if(!W.dbg.noFlames)for(const f of L.flames)drawFlame(f)}
+// il riquadro a schermo del segugio: lungo ±12 nel verso in cui guarda
+function houndSB(e,z){const c=Math.cos(z.face)*12,s=Math.sin(z.face)*12;for(const k of[-1,1]){const q=S(z.x+c*k,z.y+s*k,z.zh||0);e.sb[0]=Math.min(e.sb[0],q[0]-e.hw);e.sb[2]=Math.max(e.sb[2],q[0]+e.hw);e.sb[3]=Math.max(e.sb[3],q[1]+5)}}
+// le voci di questo fotogramma, in ordine: [pavimenti, tutto il resto]
+function buildOrder(vis){const D=W.dbg,fl=[],li=[];psiUpdate();camStamp();UCAM=CAM.x*PC-CAM.y*PSN;
+  if(D.ord==='ky'){// l'ordine di prima: prop interi per ky (kyFn), esseri per y, fiamme e corvi come voci; girando la V del punto (centro, ky)
+    const h=W.hero,hx=h?h.x:0,K=(x,y)=>x*PSN+y*PC,kp=p=>CAM.rot?K((p.bx[0]+p.bx[2])/2,p.ky):(p.kyFn?p.kyFn(hx):p.ky),L2=[];
+    for(const p of props){if(!vis(p))continue;layerSB(p.whole);if(p.floor)fl.push(p.whole);else L2.push({k:kp(p),e:p.whole})}
+    if(h&&!D.noHero&&!D.heroLast)L2.push({k:K(h.x,h.y+.01),e:beingE(HE,h.x,h.y,h.zh||0,56,10,RIGK.hzk)});
+    for(const z of W.Z){if(z.id==null)z.id=++ZID;const e=z.E||(z.E={kind:'B',z,sid:'Z'+z.id,sk:900000+(z.id%99999)});L2.push({k:K(z.x,z.y+.01),e:beingE(e,z.x,z.y,z.zh||0,46*z.sc,10*z.sc,RIGK.mzk)})}
+    if(!D.noFlames)for(const f of flames)L2.push({k:K(f.x,f.ky!=null?f.ky:f.y+.6),e:beingE(f.KE,f.x,f.y,f.z-4,10,4,CAM.CP)});
+    for(const c of perches){if(c.away)continue;const ho=perchHost(c);L2.push({k:ho?kp(ho)+.05:K(c.x,c.y+.6),e:beingE(c.E,c.x,c.y,c.z,14,6,CAM.CP)})}
+    L2.sort((a,b)=>a.k-b.k);return[fl,L2.map(o=>o.e)]}
+  for(const p of props){if(!vis(p))continue;for(const L of p.layers){layerSB(L);(L.floor?fl:li).push(L)}}
+  const h=W.hero;if(h&&!D.noHero&&!D.heroLast)li.push(beingE(HE,h.x,h.y,h.zh||0,56,10,RIGK.hzk));
+  for(const z of W.Z){if(z.id==null)z.id=++ZID;const e=z.E||(z.E={kind:'B',z,sid:'Z'+z.id,sk:900000+(z.id%99999)}),hd=z.kind==='hound';beingE(e,z.x,z.y,z.zh||0,(hd?30:46)*z.sc,(hd?16:10)*z.sc,RIGK.mzk);if(hd)houndSB(e,z);li.push(e)}
+  for(const c of perches){if(!c.away)li.push(beingE(c.E,c.x,c.y,c.z,14,6,CAM.CP))}
+  if(!D.noFlames)for(const f of FREEF)li.push(beingE(f.E,f.x,f.y,f.z-4,10,4,CAM.CP));
+  return[orderList(fl,ORD.fm),orderList(li,ORD.mm)]}
+// per le prove (ordine.js, giro.js): le voci con la loro geometria, i pezzi di uno strato nel mondo, la proiezione con la piega dello strato
+function entryInfo(e,fl){const o={id:e.sid,kind:e.kind==='L'?(e.outl?'O':'L'):e.kind==='W'?'W':e.hero?'H':e.z?'Z':e.pc?'C':'F',floor:!!fl,sb:e.sb.slice(),z0:e.z0,z1:e.z1,cU:e.cU,cV:e.cV,H:(e.H||[]).map(q=>[q[0],q[1]])};
+  if(e.kind==='L'||e.kind==='W'){const p=e.prop;o.prop=p.name;o.pi=p.i;o.li=e.li;o.xy=e.xy;o.part=e.part||null;o.alpha=p.house&&e.part?alphaOf(p.house,e.part):1}
+  else{o.x=e.x;o.y=e.y;o.zh=e.zh;o.Hh=e.Hh;o.hw=e.hw;o.zk=e.zk;if(e.z){o.zkind=e.z.kind;o.sc=e.z.sc;o.rise=e.z.rise}}return o}
+function primsOf(id){const L=ORD.byId.get(id);if(!L)return null;const out=[],hs=L.prop.house;
+  const add=t=>{const al=hs&&t.part?alphaOf(hs,t.part):1;switch(t.k){case'face':case'facepoly':out.push({t:'face',pts:t.c,al});break;case'plane':out.push({t:'poly',pts:t.c,al});break;case'poly':out.push({t:'poly',pts:t.pts,al});break;
+    case'line':out.push({t:'line',p0:t.a,p1:t.b,w:t.w||1,al});break;case'ball':out.push({t:'ball',p:t.p,r:t.r,sq:t.sq||1,al});break;case'fn':if(t.rec&&t.rec.length)out.push({t:'pts',pts:t.rec,rad:t.o.r||1.6,al});break}};
+  if(L.kind==='W')for(const t of L.prop.parts)add(t);else for(const g of L.groups)for(const t of g.parts)add(t);return out}
+function projOf(id,pts){const L=ORD.byId.get(id),p=L&&L.prop;LEANK=p&&p.lk!=null?p.lk:1;setRef(p?p.ref:null);const ce=Math.cos(CAM.el),se=Math.sin(CAM.el);
+  const r=pts.map(q=>{const z=q[2]||0,s=S(q[0],q[1],z),v=(q[0]-CAM.x)*CAM.s+(q[1]-CAM.y)*CAM.c;return[s[0],s[1],v*ce+z*se]});LEANK=1;setRef(null);return r}
 // il corvo posato si disegna subito dopo la cosa su cui sta (cercata una volta: il prop alto che lo contiene)
 function perchHost(c){if(c._host!==undefined)return c._host;let best=null;for(const p of props){if(p.floor)continue;const b=p.bx;if(c.x<b[0]-6||c.x>b[2]+6||c.y<b[1]-6||c.y>b[3]+6||(b[4]||0)<c.z-15)continue;if(!best||p.ky>best.ky)best=p}return c._host=best}
 function drawWorld(dt,view){const h0=houses[0],h0a=h0?h0.a:1,D=W.dbg;
@@ -513,7 +797,7 @@ function drawWorld(dt,view){const h0=houses[0],h0a=h0?h0.a:1,D=W.dbg;
   // sul telefono sfocherebbe per niente. Vale per tutte e due le strade, dritta e girata, così non c'è un salto quando si comincia a girare o
   // la bussola riporta a nord. La scala vera è √|det|/SP = dpr·zoom (la componente a della matrice è dpr·zoom·cos ψ: girando scende a 0 e poi
   // sotto, e accendeva 'medium' per niente)
-  const ek=CAM.rot?edgeK():0;KS=CAM.s*cl((Math.abs(wrapA(CAM.yaw))-KX0)/KX1,0,1);
+  const ek=CAM.rot?edgeK():0;
   inGround(()=>{if(ek>0&&!LOWFX)drawEdge(ek);const m=ctx.getTransform(),sq=ctx.imageSmoothingQuality;if(Math.sqrt(Math.abs(m.a*m.d-m.b*m.c)/CAM.SP)<GT/2)ctx.imageSmoothingQuality='medium';
     ctx.drawImage(W.ground,0,0,W.ground.width,W.ground.height,0,0,W.w,W.h);ctx.imageSmoothingQuality=sq;if(ek>0)drawRim(ek)});
   // chi si vede: l'impronta del prop girata intorno al perno (u, v), allargata della piega più grande che può avere (LK·altezza di lato,
@@ -522,17 +806,15 @@ function drawWorld(dt,view){const h0=houses[0],h0a=h0?h0.a:1,D=W.dbg;
   const vis=D.visAll?()=>true:p=>{const f=fpOf(p),z1=f[4],ex=LK*z1*(p.lk==null?1:p.lk);let u0=1e9,u1=-1e9,v0=1e9,v1=-1e9;
     for(const X of[f[0],f[2]])for(const Y of[f[1],f[3]]){const dx=X-CAM.x,dy=Y-CAM.y,u=dx*c-dy*s,v=dx*s+dy*c;if(u<u0)u0=u;if(u>u1)u1=u;if(v<v0)v0=v;if(v>v1)v1=v}
     return u0-ex<HW&&u1+ex>-HW&&v1*SP+oy>-HH&&v0*SP-z1*CP-LKV*z1+oy<HH};
-  // il pavimento: cumuli, pedane, gradini, tappeti (stanno sotto i piedi di tutti)
-  for(const p of props)if(p.floor&&vis(p)){LEANK=p.lk==null?1:p.lk;setRef(p.ref);drawProp(p,p.house?part=>alphaOf(p.house,part):null);LEANK=1;REF=null}
+  // l'ordine (fase 3): i pavimenti (cumuli, pedane, gradini, tappeti) sotto i piedi di tutti, poi tutto ciò che sta in piedi, dal fondo verso
+  // davanti, con gli esseri e i corvi posati in mezzo; le fiamme vengono subito dopo lo strato che le contiene
+  const t0=D.prof?performance.now():0;ORD.fr++;ORD.cyc=0;ORD.tIntra=0;ORD.vis=vis;const[floors,order]=buildOrder(vis),t1=D.prof?performance.now():0;
+  for(const L of floors)drawEntry(L,h0a);
   inGround(()=>drawClouds(dt));drawCrowShadows();drawLights(h0a);
-  // tutto ciò che sta in piedi, dal fondo verso davanti; gli esseri, le fiamme e i corvi posati in mezzo
-  const hx=W.hero?W.hero.x:0,hy=W.hero?W.hero.y:0,list=[];for(const p of props){if(p.floor||!vis(p))continue;list.push({k:keyOf(p,hx,hy),p})}
-  for(const z of W.Z)list.push({k:KV(z.x,z.y+.01),z});if(W.hero&&!D.noHero&&!D.heroLast)list.push({k:KV(W.hero.x,W.hero.y+.01),hero:1});if(!D.noFlames)for(const f of flames)list.push({k:KV(f.x,f.ky!=null?f.ky:f.y+.6),fl:f});
-  for(const c of perches){if(c.away)continue;const ho=perchHost(c);list.push({k:ho?keyOf(ho,hx,hy)+.05:KV(c.x,c.y+.6),pc:c})}
-  list.sort((a,b)=>a.k-b.k);let hi=-1;
-  for(let i=0;i<list.length;i++){const e=list[i];if(e.hero)hi=i;drawEntry(e,h0a)}
+  let hi=-1;for(let i=0;i<order.length;i++){const e=order[i];if(e.hero)hi=i;drawEntry(e,h0a)}
   if(D.heroLast&&!D.noHero&&W.hero)drawHero();
-  LASTOCC=occluders(list,hi);silhouette(LASTOCC,h0a);LASTLIST=list;
+  const t2=D.prof?performance.now():0;LASTOCC=occluders(order,hi);silhouette(LASTOCC,h0a);ORD.last=order;ORD.lastF=floors;LASTLIST=order;
+  if(D.prof){const a=.1;ORD.tOrd=t1-t0+ORD.tIntra;ORD.tSil=performance.now()-t2;ORD.pOrd+=(ORD.tOrd-ORD.pOrd)*a;ORD.pSil+=(ORD.tSil-ORD.pSil)*a}
   if(!LOWFX){for(const p of W.puffs){setRef(p.ref);const q=S(p.x,p.y,p.z);setRef(null);ctx.fillStyle=`rgba(150,150,165,${.28*(1-p.t/3.2)})`;ball(q,p.r);ctx.fill()}
     for(const l of W.leaves){const q=S(l.x,l.y,l.z);ctx.save();ctx.translate(q[0],q[1]);ctx.rotate(l.t*4+l.ph);ctx.fillStyle=l.c;ctx.beginPath();ctx.ellipse(0,0,2.6,1.2,0,0,TAU);ctx.fill();ctx.restore()}
     ctx.save();ctx.globalCompositeOperation='lighter';for(const f of W.flies){const q=S(f.x,f.y,f.z),b=.5+.5*Math.sin(W.t*3+f.ph);glow('170,255,120',q[0],q[1],9,.5*b);ctx.fillStyle=`rgba(230,255,190,${.9*b})`;ctx.fillRect(q[0]-.8,q[1]-.8,1.6,1.6)}ctx.restore()}
@@ -547,7 +829,7 @@ function updateAmbient(dt){W.t+=dt;updateCrows(dt);if(LOWFX)return;
   for(const l of W.leaves){l.t+=dt;l.z-=14*dt;l.x+=Math.sin(l.t*3+l.ph)*20*dt+6*dt}for(let i=W.leaves.length-1;i>=0;i--)if(W.leaves[i].z<0)W.leaves.splice(i,1)}
 // ------------------------------------------------------------------ la pagina: tela, levetta, telecamera, bussola, bottoni
 function boot(area){try{INTRO.on=false;paused=true}catch(e){}try{AU.on.music=false;AU.on.sfx=false}catch(e){}
-  area.build();navBuild();if(window.ARMI){try{gunState=ARMI.nuova('pistola')}catch(e){gunState=null}}
+  area.build();finalize();navBuild();setTimeout(warmIntra,800);if(window.ARMI){try{gunState=ARMI.nuova('pistola')}catch(e){gunState=null}}
   for(let i=0;i<16;i++)W.flies.push({x:rr(0,W.w),y:rr(0,W.h),z:rr(6,40),a:rr(0,TAU),ph:rr(0,TAU)});for(let i=0;i<9;i++)W.mists.push({x:rr(-100,W.w+100),y:rr(0,W.h),r:rr(80,160),v:rr(6,14)});
   for(let i=0;i<4;i++)W.clouds.push({x:rr(-300,W.w),y:rr(-100,W.h),r:rr(220,360),v:rr(9,16)});
   const ov=document.createElement('div');ov.id='mz';ov.innerHTML=`<style>
@@ -610,7 +892,7 @@ function boot(area){try{INTRO.on=false;paused=true}catch(e){}try{AU.on.music=fal
     if(Math.abs(cam.yawT)>Math.PI){const n=wrapA(cam.yawT);CAM.yaw+=n-cam.yawT;cam.yawT=n}// giri interi tolti a tutti e due: non si vede
     if(cam.ret){const r=cam.ret;r.t=Math.min(1,r.t+dt/.45);const k=ez(r.t);CAM.yaw=cam.yawT=r.y0*(1-k);CAM.el=cam.elT=cam.elRaw=r.e0+(EL0-r.e0)*k;if(r.t>=1)cam.ret=null}
     else{const k=1-Math.exp(-dt*22);CAM.yaw+=(cam.yawT-CAM.yaw)*k;CAM.el+=(cam.elT-CAM.el)*k;if(Math.abs(cam.yawT-CAM.yaw)<1e-4)CAM.yaw=cam.yawT;if(Math.abs(cam.elT-CAM.el)<1e-4)CAM.el=cam.elT}
-    if(look.id==null)look.t+=dt;camDerive()}
+    if(look.id==null)look.t+=dt;DRAG=look.on;camDerive()}
   // il comando della levetta (sinistra): anello e pomello dove si è appoggiato il dito
   function drawStick(s,gx,gy){const on=s.id!=null,x0=on?s.x0:gx,y0=on?s.y0:gy,a0=on?1:.32,dx=on?s.x-s.x0:0,dy=on?s.y-s.y0:0,l=Math.min(42,Math.hypot(dx,dy)),an=Math.atan2(dy,dx),kx=x0+Math.cos(an)*l,ky=y0+Math.sin(an)*l;
     ctx.save();ctx.globalAlpha=a0;ctx.fillStyle='rgba(0,0,0,.18)';ball([x0,y0],44);ctx.fill();ctx.strokeStyle='rgba(255,255,255,.35)';ctx.lineWidth=3;ctx.beginPath();ctx.arc(x0,y0,42,0,TAU);ctx.stroke();
@@ -683,15 +965,16 @@ function boot(area){try{INTRO.on=false;paused=true}catch(e){}try{AU.on.music=fal
       const vg=ctx.createRadialGradient(Wp/2,Hp/2,Math.min(Wp,Hp)*.4,Wp/2,Hp/2,Math.max(Wp,Hp)*.75);vg.addColorStop(0,'rgba(0,0,0,0)');vg.addColorStop(1,'rgba(0,0,0,.45)');ctx.fillStyle=vg;ctx.fillRect(0,0,Wp,Hp);
       const show=hudOn&&!W.dbg.noSticks;if(nordEl.hidden===show)nordEl.hidden=!show;if(show)drawNord()
     }catch(e){console.error(e)}finally{ms=ms*.93+(performance.now()-t0)*.07;ctx=saved;LOWFX=lf}}
-  function frame(now){const raw=(now-last)/1000,rdt=Math.min(.05,raw);last=now;camInput(Math.min(.1,raw));// la telecamera va col tempo vero anche a mondo fermo (W.dbg.freeze)
+  function frame(now){if(W.dbg.halt){last=now;requestAnimationFrame(frame);return}// W.dbg.halt: le prove ferme il ciclo dei fotogrammi (misure senza disturbi)
+    const raw=(now-last)/1000,rdt=Math.min(.05,raw);last=now;camInput(Math.min(.1,raw));// la telecamera va col tempo vero anche a mondo fermo (W.dbg.freeze)
     let[ix,iy]=vec(stick);if(K('ArrowLeft','KeyA'))ix=-1;if(K('ArrowRight','KeyD'))ix=1;if(K('ArrowUp','KeyW'))iy=-1;if(K('ArrowDown','KeyS'))iy=1;
-    const[wx,wy]=stickToWorld(ix,iy);render(W.dbg.freeze?0:rdt,wx,wy);cashEl.textContent='● '+W.coins.toLocaleString('it-IT')+'  ·  '+ms.toFixed(1)+' ms';requestAnimationFrame(frame)}
+    const[wx,wy]=stickToWorld(ix,iy);render(W.dbg.freeze?0:rdt,wx,wy);cashEl.textContent='● '+W.coins.toLocaleString('it-IT')+'  ·  '+ms.toFixed(1)+' ms'+(W.dbg.prof?'  ·  ord '+ORD.pOrd.toFixed(2)+' · sil '+ORD.pSil.toFixed(2):'');requestAnimationFrame(frame)}
   requestAnimationFrame(frame);
   // ganci di prova (tests nella cartella anteprime/zombie): visibilità dell'eroe in un punto, simulazione degli zombie senza disegnare
   const devBox=(x0,y0,x1,y1)=>{const a=scr(x0,y0),b=scr(x1,y1);return[Math.max(0,Math.floor(a[0])),Math.max(0,Math.floor(a[1])),Math.min(cv.width,Math.ceil(b[0])),Math.min(cv.height,Math.ceil(b[1]))]};
   function visAt(x,y,o){o=o||{};const h=W.hero,D=W.dbg;if(o.yaw!=null||o.el!=null)setView(o.yaw,o.el);W.Z.length=0;h.x=x;h.y=y;h.moving=false;h.zh=heightAt(x,y);const zo=zOn;zOn=false;D.noShoot=true;updateBeings(1,{x:0,y:0});zOn=zo;
     CAM.z=zoomOv||ov.clientWidth/330;if(CAM.rot){CAM.x=x;CAM.y=y;CAM.oy=24*CAM.CP}else{CAM.x=x;CAM.y=y-24;CAM.oy=0}camOv=[CAM.x,CAM.y];const g=cv.getContext('2d');
-    const shot=f=>{Object.assign(D,{noSil:!o.sil,heroLast:false,noHero:false},f);render(0,0,0);const[bx0,by0,bx1,by1]=heroBox(),B=devBox(bx0,by0,bx1,by1);return{B,px:g.getImageData(B[0],B[1],Math.max(1,B[2]-B[0]),Math.max(1,B[3]-B[1])).data,occ:LASTOCC.map(e=>e.p.name+'@'+Math.round(e.p.bx[0])+','+Math.round(e.p.bx[1]))}};
+    const shot=f=>{Object.assign(D,{noSil:!o.sil,heroLast:false,noHero:false},f);render(0,0,0);const[bx0,by0,bx1,by1]=heroBox(),B=devBox(bx0,by0,bx1,by1);return{B,px:g.getImageData(B[0],B[1],Math.max(1,B[2]-B[0]),Math.max(1,B[3]-B[1])).data,occ:LASTOCC.map(e=>e.prop.name+'@'+Math.round(e.prop.bx[0])+','+Math.round(e.prop.bx[1]))}};
     const A=shot({}),Bh=shot({heroLast:true}),C=shot({noHero:true});Object.assign(D,{noSil:false,heroLast:false,noHero:false});
     let msk=0,v=0;const a=A.px,b=Bh.px,c=C.px;for(let i=0;i<a.length;i+=4){if(Math.abs(b[i]-c[i])+Math.abs(b[i+1]-c[i+1])+Math.abs(b[i+2]-c[i+2])<30)continue;msk++;if(Math.abs(a[i]-b[i])+Math.abs(a[i+1]-b[i+1])+Math.abs(a[i+2]-b[i+2])<30)v++}
     return{vis:msk?v/msk:1,mask:msk,occ:A.occ,box:A.B}}
@@ -708,10 +991,28 @@ function boot(area){try{INTRO.on=false;paused=true}catch(e){}try{AU.on.music=fal
     toScreen:(x,y,z)=>{const q=S(x,y,z||0),p=scr(q[0],q[1]);return[p[0]/dpr,p[1]/dpr]},// un punto del mondo in px CSS (dopo un render)
     hud:v=>{hudOn=!!v;W.dbg.noSticks=!v;for(const s of['.top','.bar','.hint'])ov.querySelector(s).style.display=v?'':'none'},
     look:(x,y)=>{if(x==null)return ctl();console.warn('__MZ.look(x,y): la visuale non si sposta più in piano, usa __MZ.view(gradi, gradi)')},
-    order:()=>LASTLIST.map(e=>e.p?e.p.name+'@'+Math.round(e.p.bx[0])+','+Math.round(e.p.bx[1]):e.hero?'eroe':e.fl?'fiamma':e.pc?'corvo':'zombie:'+e.z.kind),
+    // l'ordine di disegno (fase 3): order() gli id delle voci dell'ultimo fotogramma nell'ordine in cui sono state disegnate (prima i pavimenti):
+    // P<indice del prop> (o P<i>b / P<i>o, base e sporgenza), H l'eroe, Z<serie> gli zombie, C<i> i corvi posati, F<i> le fiamme libere;
+    // entries() le stesse voci con impronta girata H [[U,V]…] (al ψ dell'ordine), quote, riquadro a schermo, centro; prims(id) i pezzi di uno strato
+    // nel mondo (per la verità a z-buffer di ordine.js) e proj(id,punti) i punti [x,y,z] sullo schermo con la piega dello strato più la
+    // profondità vista (v·cos θ + z·sin θ); orderReset() dimentica l'isteresi e il fotogramma prima; layers() tutti gli strati
+    order:()=>ORD.lastF.concat(ORD.last).map(e=>e.sid),
+    entries:()=>ORD.lastF.map(e=>entryInfo(e,1)).concat(ORD.last.map(e=>entryInfo(e,0))),
+    layers:()=>LAYERS.map(L=>({id:L.sid,prop:L.prop.name,pi:L.prop.i,li:L.li,floor:L.floor,outl:L.outl,groups:L.groups.length,xy:L.xy,z0:L.z0,z1:L.z1,part:L.part,flames:L.flames.length,kids:L.kids?[...L.kids].map(n=>LAYERS[n].sid):null})),
+    prims:id=>primsOf(id),proj:(id,pts)=>projOf(id,pts),// bench(n, nuovo, parte): il tempo medio (ms) di n calcoli dell'ordine con lo stato di adesso (parte='coppie': solo coppie, regole e componenti,
+    // senza i riquadri a schermo e i visibili); nuovo=1 come se ψ fosse appena cambiato (verdetti
+    // geometrici da rifare), nuovo=2 anche l'ordine dentro i prop (memorie per settore vuote) per gli strati visibili, nuovo='cam' la telecamera
+    // che si è appena mossa (riquadri a schermo da rifare)
+    bench:(n,fresh,part)=>{n=n||200;if(part==='coppie'){ORD.fr++;const r=buildOrder(ORD.vis),L=r[1].slice(),F=r[0].slice(),t0=performance.now();for(let i=0;i<n;i++){if(fresh)PVS.fill(-999999);ORD.fr++;orderList(F,ORD.fm);orderList(L,ORD.mm)}return(performance.now()-t0)/n}
+      const t0=performance.now();for(let i=0;i<n;i++){if(fresh)CSK='';if(fresh&&fresh!=='cam')PVS.fill(-999999);ORD.fr++;const r=buildOrder(ORD.vis);if(fresh===2)for(const e of r[0].concat(r[1]))if(e.kind==='L'){e.memo.clear();intraOrder(e)}}return(performance.now()-t0)/n},
+    memo:clear=>{if(clear)for(const L of LAYERS)L.memo.clear();let n=0;for(const L of LAYERS)n+=L.memo.size;return n},// memo(): quante memorie per settore ci sono (memo(1) le svuota)
+    prof:()=>({fast:ORD.fast,slow:ORD.slow,ord:ORD.tOrd,sil:ORD.tSil,intra:ORD.tIntra,cyc:ORD.cyc,n:ORD.last.length,nf:ORD.lastF.length}),// con W.dbg.prof: i tempi dell'ultimo fotogramma (ms)
+    adj:()=>ORD.mm.adj,rel:(a,b)=>{const f=id=>ORD.last.concat(ORD.lastF).find(e=>e.sid===id),A=f(a),B=f(b);return A&&B?rel(A,B):null},// rel(id,id): il verdetto tra due voci dell'ultimo fotogramma
+orderReset:()=>{ORD.mm.m=new Map();ORD.fm.m=new Map();ORD.fr+=5},
+    intra:id=>{const L=ORD.byId.get(id);return L?intraOrder(L).map(g=>({gi:g.gi,k:g.parts.map(t=>t.k).join(','),z0:g.z0,z1:g.z1})):null},
     render:dt=>render(dt||0,0,0),vis:visAt,hit:(x,y,r)=>!!hit(x,y,r),heightAt,
     nav:()=>NAV&&{cw:NAV.cw,ch:NAV.ch,free:NAV.bl.reduce((s,v)=>s+(v?0:1),0)},navRebuild:()=>{navBuild();NAV.hc=-1},
-    addZombie:(kind,x,y,spd)=>{const k=KINDS.find(k=>k[0]===kind)||KINDS[0];const z={kind:k[0],sc:k[1],spd:spd||k[2],hp:99,x,y,face:0,p:0,anim:'walk',rise:1,die:0,flash:0};W.Z.push(z);return W.Z.length-1},
+    addZombie:(kind,x,y,spd)=>{const k=KINDS.find(k=>k[0]===kind)||KINDS[0];const z={id:++ZID,kind:k[0],sc:k[1],spd:spd||k[2],hp:99,x,y,face:0,p:0,anim:'walk',rise:1,die:0,flash:0};W.Z.push(z);return W.Z.length-1},
     sim:(n,dt)=>{for(let i=0;i<n;i++)updateBeings(dt,{x:0,y:0})},
     walk:(ix,iy,n,dt)=>{const[wx,wy]=stickToWorld(ix,iy);for(let i=0;i<(n||1);i++)updateBeings(dt||1/60,{x:wx,y:wy})}}}
-return{group,T,CAM,W,S,LS,MOON,inGround,scrAng,decals,fades,NAMES,stand,stands,heightAt,add3,sub3,len3,rnd,rr,srand,ink,path,hull,material,MAT,MARKS,texture,tone,face,hullOf,ballAt,line3,poly3,fn3,box,prismX,prismY,plane,cyl,prop,solid,shade,shadeR,props,solids,shadows,lights,flames,holes,houses,smokes,perches,hit,bakeGround,edgeSnap,boot,setLive:f=>{liveDraw=f},wa,mix,cl,ez,lerp,TAU,ball,seg}})();
+return{group,grp,finalize,facing,across,onGround,onPlane,onRound,ringNear,T,CAM,W,S,LS,MOON,inGround,scrAng,decals,fades,NAMES,stand,stands,heightAt,add3,sub3,len3,rnd,rr,srand,ink,path,hull,material,MAT,MARKS,texture,tone,face,hullOf,ballAt,line3,poly3,fn3,box,prismX,prismY,plane,cyl,prop,solid,shade,shadeR,props,solids,shadows,lights,flames,holes,houses,smokes,perches,hit,bakeGround,edgeSnap,boot,setLive:f=>{liveDraw=f},wa,mix,cl,ez,lerp,TAU,ball,seg}})();

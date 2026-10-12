@@ -3,7 +3,7 @@
 const AREA={title:'Angolo zombie · revisione',
   build(){const w=10*T,h=10*T;srand(11);
     // cimitero a sinistra: muretto con la cancellata, cripta, lapidi, albero morto, fossa aperta
-    P.wall(0,.35*T,3.7*T,.35*T,true);P.wall(0,7.3*T,3.7*T,7.3*T,true);P.wall(3.7*T,.35*T,3.7*T,4.85*T,true);P.wall(3.7*T,6.15*T,3.7*T,7.3*T,true);
+    P.wall(0,.35*T,3.7*T+6,.35*T,true);P.wall(0,7.3*T,3.7*T+6,7.3*T,true);P.wall(3.7*T,.35*T+7.5,3.7*T,4.95*T-15,true);P.wall(3.7*T,6.05*T+15,3.7*T,7.3*T-7.5,true);// i muri non entrano nei pilastri né l'uno nell'altro: girando, un pezzo dentro l'altro non ha un ordine giusto (gli angoli li chiudono i muri est-ovest)
     P.pillar(3.7*T,4.95*T,2);P.pillar(3.7*T,6.05*T,0);P.gateLeaf(3.7*T,4.95*T,30,-2.1);P.gateLeaf(3.7*T,6.05*T,30,2.2);
     P.crypt(.12*T,1*T,1.9*T,1.35*T);// contro il bordo a ovest (chiuso), dietro un corridoio largo che gli zombie possono fare
     for(const[x,y,k,o] of[[2.9*T,1.4*T,1],[1*T,3.2*T,0,{wreath:1}],[1.9*T,3.3*T,2],[2.85*T,3.25*T,3],[.95*T,5*T,1,{lean:.12}],[2.9*T,5.1*T,0,{candle:1}],[1*T,6.5*T,2,{lean:-.15}],[2.85*T,6.55*T,0]])P.grave(x,y,k,o);
@@ -13,7 +13,7 @@ const AREA={title:'Angolo zombie · revisione',
     // pareti si piegano sempre via dall'eroe): niente si muove per conto suo (Denis, 12 ottobre)
     ZM.group([5.5*T,1*T,9.2*T,3.5*T],()=>{P.house(5.5*T,1*T,3.7*T,2.5*T,{wall:'siding',roof:'shingle',boards:[1]});
       P.fence(5.2*T,4.25*T,6.65*T,4.25*T);P.fence(8.05*T,4.25*T,9.85*T,4.25*T);P.fence(9.85*T,.9*T,9.85*T,4.25*T);
-      P.pumpkin(6.85*T,4.05*T,1,true);P.pumpkin(7.85*T,4.1*T,1.2,true)});P.pumpkin(9.25*T,4.7*T,.9,false);
+      P.pumpkin(6.85*T,4.05*T,1,true);P.pumpkin(7.85*T,4.1*T,1.2,true)});P.pumpkin(9.6*T,4.42*T,.9,false);
     P.lamp(4.2*T,4.3*T);P.lamp(5.35*T,8.6*T);P.well(8.4*T,6.2*T);P.barrow(6.3*T,5.75*T);
     P.crate(8.95*T,4.7*T);P.crate(9.32*T,4.74*T,.8);P.barrel(9.5*T,5.25*T);P.rock(6.3*T,7.45*T,11);P.bush(5.55*T,7.95*T,1);P.hay(6.75*T,6.95*T);P.bush(4.9*T,2.2*T,1);
     P.tree(8.9*T,8.6*T,false,1.05);P.tree(.7*T,9.1*T,false,.85);
