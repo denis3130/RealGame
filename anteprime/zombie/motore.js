@@ -440,16 +440,43 @@ function fireShot(ev){const h=W.hero,g=gunState,D=g.D,B=basis(heroDir()*Math.PI/
 // le cose da comprare (cancello, armi a muro, Bara): {id, x, y, r, show(), label(), price(), act()}; la pagina mostra il bottone da tenere
 // premuto quando l'eroe è vicino (il più vicino dei compratori entro r)
 const buys=[];function buyable(o){buys.push(o);return o}
-// la Bara delle Sorprese (ARMI.nuovaBara) in un punto del mondo: disegnata come un essere nell'ordine (il suo disegno ha la sua vista fissa),
-// si paga col bottone, si prende l'arma che offre col bottone; quando scappa ricompare in uno dei suoi posti di una zona aperta
+// la Bara delle Sorprese (ARMI.nuovaBara) in un punto del mondo, ferma come gli altri oggetti 3D (Denis, 12 ottobre: «che non ruoti ma che
+// rimanga ferma come il resto degli oggetti 3d»): si disegna con la telecamera della mappa (ARMI.vistaBara: la proiezione S con la piega
+// rigida del suo punto, come una cassa) e nell'ordine è una cosa con la sua impronta (voce 'T', sid 'X': il bordo della buca, le candele, il
+// coperchio aperto) e l'altezza della sua posa. Ogni posto dice dove guarda la testa (a, radianti; catena e teschio stanno sul fianco a +90°).
+// Si paga col bottone, si prende l'arma che offre col bottone; quando scappa ricompare in uno dei suoi posti di una zona aperta: [x, y, zona, a]
 let BOX=null;
-function sorpresa(x,y,spots){if(!window.ARMI||!ARMI.nuovaBara)return null;const b=ARMI.nuovaBara(0,0);BOX={x,y,b,spots:spots||[[x,y]],E:{kind:'B',box:1,sid:'X',sk:880000},sol:solid(x-30,y-11,60,22)};BOX.sol.noAO=true;
+function sorpresa(x,y,spots,a){if(!window.ARMI||!ARMI.nuovaBara||!ARMI.formaBara)return null;const b=ARMI.nuovaBara(0,0);spots=spots||[[x,y,null,a]];const s0=spots.find(q=>q[0]===x&&q[1]===y);
+  BOX={b,spots,F:ARMI.formaBara(),E:{kind:'T',box:1,sid:'X',sk:880000,prop:{name:'bara',lk:1,ref:null},sb:[0,0,0,0],lean:0},sol:solid(x,y,1,1)};BOX.sol.noAO=true;ORD.byId.set('X',BOX.E);
+  boxPlace(x,y,a!=null?a:s0&&s0[3]||0);
   buyable({id:'bara',r:64,get x(){return BOX.x},get y(){return BOX.y},show:()=>b.st==='ferma'||b.st==='offre',
     label:()=>b.st==='offre'?'Prendi: '+ARMI.DATI[b.gun].n:'Bara delle Sorprese',price:()=>b.st==='offre'?0:ARMI.BARA.prezzo,
     act(){if(b.st==='offre'){b.prendi();return true}if(W.coins<ARMI.BARA.prezzo)return false;W.coins-=ARMI.BARA.prezzo;const h=W.hero,q=S(h.x,h.y,30);b.paga(q[0],q[1],W.gunId);return true}});return BOX}
+// mette la Bara in (x, y) con la testa verso a: il solido (il riquadro del contorno girato) e l'impronta per l'ordine
+function boxPlace(x,y,a){const F=BOX.F,k=F.BS,c=Math.cos(a),s=Math.sin(a),w=(u,v)=>[x+k*(u*c-v*s),y+k*(u*s+v*c)];BOX.x=x;BOX.y=y;BOX.a=a;
+  let x0=1e9,y0=1e9,x1=-1e9,y1=-1e9;for(const p of F.BH){const q=w(p[0],p[1]);if(q[0]<x0)x0=q[0];if(q[0]>x1)x1=q[0];if(q[1]<y0)y0=q[1];if(q[1]>y1)y1=q[1]}
+  Object.assign(BOX.sol,{x:x0,y:y0,w:x1-x0,d:y1-y0});
+  const P=[];for(const p of F.BH)P.push(w(p[0]*1.12,p[1]*1.12));for(const q of F.cand)for(const[dx,dy] of DIR8)P.push(w(q[0]+dx*1.4,q[1]+dy*1.4));for(const q of F.lid)P.push(w(q[0],q[1]));
+  const E=BOX.E;finFP(E,P.map(q=>[q[0],q[1],0]));E.x=x;E.y=y;E.prop.ref=[x,y];E.zs=undefined;E.H=null}
 function boxUpdate(dt){if(!BOX)return;const b=BOX.b;for(const e of b.update(dt)){if(e.k==='presa')equip(e.id);else if(e.k==='rimborso'){W.coins+=e.n;W.toast=['La Bara scappa: monete restituite',2.4]}
-    else if(e.k==='via'){const c=BOX.spots.filter(s=>(s[2]==null||W.zoneOpen[s[2]])&&Math.hypot(s[0]-BOX.x,s[1]-BOX.y)>40),s=c.length?c[Math.floor(Math.random()*c.length)]:[BOX.x,BOX.y];BOX.x=s[0];BOX.y=s[1];BOX.sol.x=s[0]-30;BOX.sol.y=s[1]-11;navBuild();if(NAV)NAV.hc=-1}}}
-function drawBox(){const q=S(BOX.x,BOX.y,0);BOX.b.x=q[0];BOX.b.y=q[1];BOX.b.draw()}
+    else if(e.k==='via'){const c=BOX.spots.filter(s=>(s[2]==null||W.zoneOpen[s[2]])&&Math.hypot(s[0]-BOX.x,s[1]-BOX.y)>40),s=c.length?c[Math.floor(Math.random()*c.length)]:[BOX.x,BOX.y,null,BOX.a];boxPlace(s[0],s[1],s[3]||0);navBuild();if(NAV)NAV.hc=-1}}}
+// la voce della Bara in questo fotogramma: l'altezza della posa (chiusa 18 px, col coperchio aperto fino a 40, con la mano e l'arma 50, sotto
+// terra quasi niente), il riquadro a schermo e la piega come uno strato, l'impronta girata di ψ
+function boxEntry(){const E=BOX.E,F=BOX.F,a=BOX.b.posa();E.z0=0;E.z1=(a.sink||0)>=1?3:a.hand>0?50:F.BS*(F.HB+F.HL+2)+22*(a.lid||0)/F.LIDA;E.cst=-1;layerSB(E);rotate(E,PC,PSN);return E}
+// la Bara con la telecamera della mappa: un punto (u, v, z) della bara (in unità della bara, dal punto ai suoi piedi) passa nel mondo e da lì
+// sullo schermo con S; l'ombra cade a est e un po' a sud come quelle cotte nel terreno
+function drawBox(){const F=BOX.F,k=F.BS,c=Math.cos(BOX.a),s=Math.sin(BOX.a),X=BOX.x,Y=BOX.y;LEANK=BOX.E.prop.lk;setRef(BOX.E.prop.ref);
+  try{const o=S(X,Y,0),pj=(u,v,z)=>{const q=S(X+k*(u*c-v*s),Y+k*(u*s+v*c),k*z);return[(q[0]-o[0])/k,(q[1]-o[1])/k]},dx=6/k,dy=1.8/k;
+    BOX.b.x=o[0];BOX.b.y=o[1];BOX.b.draw(ARMI.vistaBara(pj,[dx*c+dy*s,-dx*s+dy*c]))}finally{LEANK=1;setRef(null)}}
+// per le prove (verita.js): le facce vere della Bara nella posa di adesso, nel mondo (sotto terra schiacciate a terra), con i punti in giro
+// come le facce del motore (la normale di Newell al contrario di quella verso fuori)
+function boxPrims(){const F=BOX.F,k=F.BS,c=Math.cos(BOX.a),s=Math.sin(BOX.a),X=BOX.x,Y=BOX.y,a=BOX.b.posa(),out=[];if((a.sink||0)>=1)return out;const dz=-(a.sink||0)*17,
+    w=q=>[X+k*(q[0]*c-q[1]*s),Y+k*(q[0]*s+q[1]*c),k*Math.max(0,q[2]+dz)],G=ARMI.facceBara(a);
+  for(const f of G.faces){let P=f.pts,nx=0,ny=0,nz=0;for(let i=0;i<P.length;i++){const p=P[i],q=P[(i+1)%P.length];nx+=(p[1]-q[1])*(p[2]+q[2]);ny+=(p[2]-q[2])*(p[0]+q[0]);nz+=(p[0]-q[0])*(p[1]+q[1])}
+    if(nx*f.n[0]+ny*f.n[1]+nz*f.n[2]>0)P=P.slice().reverse();out.push({t:'face',pts:P.map(w),al:1})}
+  for(const l of G.lines)out.push({t:'line',p0:w([l[0],l[1],l[2]]),p1:w([l[0],l[1],l[3]]),w:l[4]*k,al:1});
+  for(const q of G.pts)out.push({t:'pts',pts:[w(q)],rad:q[3]*k,al:1});
+  return out}
 function updateBeings(dt,inp){const h=W.hero;const m=Math.hypot(inp.x,inp.y);h.moving=m>.15;if(h.moving){const sp=150*Math.min(1,m);move(h,inp.x/m*sp*dt,inp.y/m*sp*dt,10);h.face=Math.atan2(inp.y,inp.x);h.walk+=dt*12}
   h.zh=(h.zh||0)+(heightAt(h.x,h.y)-(h.zh||0))*Math.min(1,dt*14);const noShoot=!!W.dbg.noShoot;
   // il bersaglio: lo zombie più vicino entro 230 px che l'eroe vede davvero (i colpi non passano attraverso muri, recinti, lapidi, casse…);
@@ -505,7 +532,7 @@ function heroDir(){const h=W.hero,sa=scrAng(h.face),d=Q8(sa),cur=h.dS==null?d:h.
 function drawHero(){const h=W.hero,q=S(h.x,h.y,h.zh||0);drawRig(q[0],q[1]-8,heroDir()*Math.PI/4,h.walk,h.moving,HSTYLE,{gp:gunState?gunState.pose():{},aim:h.aim==null?null:scrAng(h.aim)})}
 // una voce della lista: uno strato di prop (L), un prop intero nell'ordine di prima (W, con W.dbg.ord='ky'), un essere (B: eroe, zombie, corvo
 // posato, fiamma libera)
-function drawEntry(e,h0a){switch(e.kind){case'V':return drawVeil(e.k);case'L':return drawLayer(e);case'W':return drawWhole(e.prop);case'B':return e.box?drawBox():e.hero?drawHero():e.z?drawZombie(e.z):e.pc?drawPerch(e.pc):e.fl?drawFlame(e.fl,h0a):null}}
+function drawEntry(e,h0a){switch(e.kind){case'V':return drawVeil(e.k);case'L':return drawLayer(e);case'T':return drawBox();case'W':return drawWhole(e.prop);case'B':return e.box?drawBox():e.hero?drawHero():e.z?drawZombie(e.z):e.pc?drawPerch(e.pc):e.fl?drawFlame(e.fl,h0a):null}}
 function drawWhole(p){LEANK=p.lk==null?1:p.lk;setRef(p.ref);ROTP=p.rot||null;try{drawProp(p,p.house?part=>alphaOf(p.house,part):null)}finally{ROTP=null}LEANK=1;setRef(null)}
 // la sagoma dell'eroe dove è coperto (dietro la casa, la cripta, un albero): si ridisegnano in una tela piccola solo le cose disegnate dopo di lui
 // che toccano il suo riquadro, e lì sopra si stampa la sua sagoma chiara a metà trasparenza. Costa qualcosa solo quando è davvero coperto.
@@ -518,14 +545,14 @@ function obOf(p){if(p._ob)return p._ob;if(p.ob)return p._ob=p.ob;let x0=1e9,y0=1
 // chi copre l'eroe: le voci disegnate dopo di lui il cui riquadro a schermo (quello della regola a, con la piega vera) tocca la figura; i muri
 // davanti e il tetto già trasparenti (alpha < .6) no
 function occluders(order,hi){const out=[];if(hi<0)return out;let[bx0,by0,bx1,by1]=heroBox();bx0+=5;bx1-=5;// il riquadro della figura, un po' più stretto di quello per le misure
-  for(let i=hi+1;i<order.length;i++){const e=order[i];if(e.kind!=='L'&&e.kind!=='W')continue;const p=e.prop,pt=e.kind==='L'?e.part:p.parts[0]&&p.parts[0].part;
+  for(let i=hi+1;i<order.length;i++){const e=order[i];if(e.kind!=='L'&&e.kind!=='W'&&e.kind!=='T')continue;const p=e.prop,pt=e.kind==='L'?e.part:e.kind==='W'?p.parts[0]&&p.parts[0].part:null;
     if(p.house&&pt&&alphaOf(p.house,pt)<.6)continue;const b=e.sb;if(b[2]<bx0||b[0]>bx1||b[3]<by0||b[1]>by1)continue;out.push(e)}return out}
 // due memorie: l'immagine dell'eroe (chiave del piano, disaccordo 11: dove sta sullo schermo, verso, mira, passo, inclinazione, zoom: girando
 // resta ferma) e la sagoma composta con chi lo copre (in più la telecamera e le voci che coprono con la loro trasparenza)
 function silhouette(occ,h0a){if(!occ.length||W.dbg.noSil)return;const m=ctx.getTransform(),[bx0,by0,bx1,by1]=heroBox(),X0=Math.floor(m.a*bx0+m.e),Y0=Math.floor(m.d*by0+m.f),X1=Math.ceil(m.a*bx1+m.e),Y1=Math.ceil(m.d*by1+m.f),Q=.5,w=Math.ceil((X1-X0)*Q),hh=Math.ceil((Y1-Y0)*Q);if(w<=0||hh<=0)return;// a metà risoluzione: è un velo morbido
   if(!SIL)SIL={o:document.createElement('canvas'),h:document.createElement('canvas')};for(const c of[SIL.o,SIL.h]){if(c.width<w)c.width=w;if(c.height<hh)c.height=hh}
   const h=W.hero,hq=S(h.x,h.y,h.zh||0),k1=[Math.round((m.a*hq[0]+m.e)*2),Math.round((m.d*hq[1]+m.f)*2),heroDir(),h.aim==null?'n':Math.round(scrAng(h.aim)*20),h.moving?Math.floor(h.walk*3):-1,Math.round(RIGK.hzk*100),Math.round(m.a*100),X0,Y0,w,hh].join('|'),
-    k2=k1+'|'+[Math.round(CAM.x*2),Math.round(CAM.y*2),Math.round(CAM.oy*2),Math.round(CAM.yaw*200),Math.round(CAM.el*200),occ.map(e=>e.sid+':'+Math.round((e.prop.house?e.prop.house.a:1)*20)).join(',')].join('|');
+    k2=k1+'|'+[Math.round(CAM.x*2),Math.round(CAM.y*2),Math.round(CAM.oy*2),Math.round(CAM.yaw*200),Math.round(CAM.el*200),occ.map(e=>e.sid+':'+(e.kind==='T'?Math.round(BOX.b.T*30):Math.round((e.prop.house?e.prop.house.a:1)*20))).join(',')].join('|');
   if(SIL.k2!==k2){SIL.k2=k2;const sv=ctx;
     try{let g;if(SIL.k1!==k1){SIL.k1=k1;g=SIL.h.getContext('2d');g.setTransform(1,0,0,1,0,0);g.globalCompositeOperation='source-over';g.globalAlpha=1;g.clearRect(0,0,SIL.h.width,SIL.h.height);g.setTransform(m.a*Q,0,0,m.d*Q,(m.e-X0)*Q,(m.f-Y0)*Q);ctx=g;drawHero();
         g.setTransform(1,0,0,1,0,0);g.globalCompositeOperation='source-in';g.fillStyle='rgb(160,240,228)';g.fillRect(0,0,w,hh);g.globalCompositeOperation='source-over'}
@@ -760,6 +787,9 @@ function relEss(E,P){const tz=Math.max(1.5,.08*Math.min(E.z1-E.z0,P.z1-P.z0)),s=
 // altre voci chiudeva cicli con le ante e i pilastri; il suo posto lo dà la priorità, appena prima del primo pezzo
 function rel(A,B){const la=A.kind==='L',lb=B.kind==='L';
   if(A.outl||B.outl){if(A.kids&&lb&&A.kids.has(B.n))return[-1,3,99];if(B.kids&&la&&B.kids.has(A.n))return[1,3,99];return null}
+  // la Bara (T): contro uno strato le regole delle impronte (senza memoria: si sposta), contro un essere come una cosa
+  if(A.kind==='T'||B.kind==='T'){const ta=A.kind==='T',T=ta?A:B,O=ta?B:A;let r;if(O.kind==='L')r=geom(T,O,false,penW(T,O))||relE(T,O);else{r=relEss(O,T);r=[-r[0],r[1],r[2]]}
+    return ta?r:[-r[0],r[1],r[2]]}
   if(la&&lb)return pv(A,B)||relE(A,B);
   if(!la&&!lb)return[Math.sign(A.cV-B.cV)||(A.sk<B.sk?-1:1),2,Math.abs(A.cV-B.cV)];// tra due esseri solo la profondità (mai e)
   if(!la)return relEss(A,B);const r=relEss(B,A);return[-r[0],r[1],r[2]]}
@@ -843,13 +873,14 @@ function buildOrder(vis){const D=W.dbg,fl=[],li=[];psiUpdate();camStamp();UCAM=C
     for(const z of W.Z){if(z.id==null)z.id=++ZID;const e=z.E||(z.E={kind:'B',z,sid:'Z'+z.id,sk:900000+(z.id%99999)});L2.push({k:K(z.x,z.y+.01),e:beingE(e,z.x,z.y,z.zh||0,46*z.sc,10*z.sc,RIGK.mzk)})}
     if(!D.noFlames)for(const f of flames)L2.push({k:K(f.x,f.ky!=null?f.ky:f.y+.6),e:beingE(f.KE,f.x,f.y,f.z-4,10,4,CAM.CP)});
     for(const c of perches){if(c.away)continue;const ho=perchHost(c);L2.push({k:ho?kp(ho)+.05:K(c.x,c.y+.6),e:beingE(c.E,c.x,c.y,c.z,14,6,CAM.CP)})}
+    if(BOX)L2.push({k:K(BOX.x,BOX.y+.01),e:boxEntry()});
     L2.sort((a,b)=>a.k-b.k);return[fl,L2.map(o=>o.e)]}
   for(const p of props){if(p.hide||!vis(p))continue;for(const L of p.layers){layerSB(L);(L.floor?fl:li).push(L)}}
   const h=W.hero;if(h&&!D.noHero&&!D.heroLast)li.push(beingE(HE,h.x,h.y,h.zh||0,56,10,RIGK.hzk));
   for(const z of W.Z){if(z.id==null)z.id=++ZID;const e=z.E||(z.E={kind:'B',z,sid:'Z'+z.id,sk:900000+(z.id%99999)}),hd=z.kind==='hound';beingE(e,z.x,z.y,z.zh||0,(hd?30:46)*z.sc,(hd?16:10)*z.sc,RIGK.mzk);if(hd)houndSB(e,z);li.push(e)}
   for(const c of perches){if(!c.away)li.push(beingE(c.E,c.x,c.y,c.z,14,6,CAM.CP))}
   if(!D.noFlames)for(const f of FREEF)li.push(beingE(f.E,f.x,f.y,f.z-4,10,4,CAM.CP));
-  if(BOX)li.push(beingE(BOX.E,BOX.x,BOX.y,0,44,30,1));
+  if(BOX)li.push(boxEntry());
   // con la zona chiusa velata e la telecamera che guarda verso di lei: prima tutto quello che sta di là dalla linea del confine, poi il velo, poi
   // il resto (il confine è una retta: chi sta tutto di là non può coprire chi sta di qua, come in un albero BSP)
   const kv=veilK();if(kv>0){const far=[],rest=[];for(const e of li)(sideOf(e)<0?far:rest).push(e);VEIL.k=kv;return[orderList(fl,ORD.fm),orderList(far,ORD.mm).concat([VEIL],orderList(rest,ORD.mn))]}
@@ -860,15 +891,16 @@ function buildOrder(vis){const D=W.dbg,fl=[],li=[];psiUpdate();camStamp();UCAM=C
 // o all'indietro il velo copre solo il terreno (prima di tutte le voci)
 const VEIL={kind:'V',sid:'V',sk:870000,sb:[0,0,0,0],k:0};
 const veilK=()=>W.split&&!W.dbg.noSplit?W.split.k*cl(((CAM.rot?CAM.c:1)-.25)/.25,0,1):0;
-function sideOf(e){const y=W.split.y;if(e.kind==='L'){if(e.zs===undefined){let a=1e9,b=-1e9;for(const q of e.xy){if(q[1]<a)a=q[1];if(q[1]>b)b=q[1]}e.zs=b<y-1?-1:a>y+1?1:0}return e.zs}return e.y<y-7?-1:e.y>y+7?1:0}
+function sideOf(e){const y=W.split.y;if(e.kind==='L'||e.kind==='T'){if(e.zs===undefined){let a=1e9,b=-1e9;for(const q of e.xy){if(q[1]<a)a=q[1];if(q[1]>b)b=q[1]}e.zs=b<y-1?-1:a>y+1?1:0}return e.zs}return e.y<y-7?-1:e.y>y+7?1:0}
 function drawVeil(k){if(!W.split||k<=.001)return;const y=W.split.y,C='26,30,44';inGround(()=>{const g=ctx.createLinearGradient(0,y,0,y-7*T);
     g.addColorStop(0,`rgba(${C},0)`);g.addColorStop(.1,`rgba(${C},${.3*k})`);g.addColorStop(.4,`rgba(${C},${.58*k})`);g.addColorStop(1,`rgba(${C},${.8*k})`);ctx.fillStyle=g;ctx.fillRect(-W.w,y-60*T,W.w*3,60*T);
     if(!LOWFX&&W.split.wisps){const im=softImg();ctx.globalAlpha=.16*k;for(const m of W.split.wisps)ctx.drawImage(im,m.x-m.r,m.y-m.r*.5,m.r*2,m.r);ctx.globalAlpha=1}})}
 // per le prove (ordine.js, giro.js): le voci con la loro geometria, i pezzi di uno strato nel mondo, la proiezione con la piega dello strato
-function entryInfo(e,fl){const o={id:e.sid,kind:e.kind==='L'?(e.outl?'O':'L'):e.kind==='W'?'W':e.hero?'H':e.z?'Z':e.pc?'C':'F',floor:!!fl,sb:e.sb.slice(),z0:e.z0,z1:e.z1,cU:e.cU,cV:e.cV,H:(e.H||[]).map(q=>[q[0],q[1]])};
+function entryInfo(e,fl){const o={id:e.sid,kind:e.kind==='L'?(e.outl?'O':'L'):e.kind==='W'?'W':e.kind==='T'?'X':e.hero?'H':e.z?'Z':e.pc?'C':'F',floor:!!fl,sb:e.sb.slice(),z0:e.z0,z1:e.z1,cU:e.cU,cV:e.cV,H:(e.H||[]).map(q=>[q[0],q[1]])};
   if(e.kind==='L'||e.kind==='W'){const p=e.prop;o.prop=p.name;o.pi=p.i;o.li=e.li;o.xy=e.xy;o.part=e.part||null;o.alpha=p.house&&e.part?alphaOf(p.house,e.part):1}
+  else if(e.kind==='T'){o.prop='bara';o.xy=e.xy;o.x=e.x;o.y=e.y}
   else{o.x=e.x;o.y=e.y;o.zh=e.zh;o.Hh=e.Hh;o.hw=e.hw;o.zk=e.zk;if(e.z){o.zkind=e.z.kind;o.sc=e.z.sc;o.rise=e.z.rise}}return o}
-function primsOf(id){const L=ORD.byId.get(id);if(!L)return null;const out=[],hs=L.prop.house,R=L.prop.rot,w3=R?(q=>{const r=tP(R,q[0],q[1]);return[r[0],r[1],q[2]||0]}):(q=>q),wa=a=>R?a.map(w3):a;
+function primsOf(id){if(id==='X'&&BOX)return boxPrims();const L=ORD.byId.get(id);if(!L)return null;const out=[],hs=L.prop.house,R=L.prop.rot,w3=R?(q=>{const r=tP(R,q[0],q[1]);return[r[0],r[1],q[2]||0]}):(q=>q),wa=a=>R?a.map(w3):a;
   const P0=L.prop,hostOK=t=>{const hh=t.host||(t.o&&t.o.host);if(!hh)return true;LEANK=P0.lk==null?1:P0.lk;setRef(P0.ref);ROTP=P0.rot||null;const v=shoelace(hh.c.map(S))<0;ROTP=null;LEANK=1;setRef(null);return v};// (i pezzi appoggiati a una faccia girata di spalle non si disegnano)
   const add=t=>{if(!hostOK(t))return;const al=hs&&t.part?alphaOf(hs,t.part):1;switch(t.k){case'face':case'facepoly':out.push({t:'face',pts:wa(t.c),al});break;case'plane':out.push({t:'poly',pts:wa(t.c),al});break;case'poly':out.push({t:'poly',pts:wa(t.pts),al});break;
     case'line':out.push({t:'line',p0:w3(t.a),p1:w3(t.b),w:t.w||1,al});break;case'ball':out.push({t:'ball',p:w3(t.p),r:t.r,sq:t.sq||1,al});break;case'fn':if(t.rec&&t.rec.length)out.push({t:'pts',pts:wa(t.rec),rad:t.o.r||1.6,al});break}};
@@ -1136,5 +1168,5 @@ orderReset:()=>{ORD.mm.m=new Map();ORD.fm.m=new Map();ORD.fr+=5},
     walk:(ix,iy,n,dt)=>{const[wx,wy]=stickToWorld(ix,iy);for(let i=0;i<(n||1);i++)updateBeings(dt||1/60,{x:wx,y:wy})},
     // il gioco della mappa: le cose da comprare (buyNow(id) compra subito, come il bottone), l'arma, la Bara, le monete
     texStats:()=>{let n=0,px=0,np=0,pp=0;for(const k in TEX){n++;px+=TEX[k].width*TEX[k].height}for(const k in PLANES){np++;pp+=PLANES[k].width*PLANES[k].height}return{n,mpx:+(px/1e6).toFixed(2),np,mpp:+(pp/1e6).toFixed(2)}},
-    buys,equip,buyNow:id=>{const o=buys.find(b=>b.id===id);return o?o.act():null},box:()=>BOX,coins:v=>{if(v!=null)W.coins=v;return W.coins},gun:()=>gunState}}
+    buys,equip,buyNow:id=>{const o=buys.find(b=>b.id===id);return o?o.act():null},box:()=>BOX,boxTo:i=>{const q=BOX.spots[i];boxPlace(q[0],q[1],q[3]||0);navBuild();if(NAV)NAV.hc=-1;return[q[0],q[1]]},coins:v=>{if(v!=null)W.coins=v;return W.coins},gun:()=>gunState}}
 return{idleZombie,buyable,sorpresa,equip,hurt,navRebuild:()=>{navBuild();if(NAV)NAV.hc=-1},softImg,turn,group,grp,finalize,facing,across,onGround,onPlane,onRound,ringNear,T,CAM,W,S,LS,MOON,inGround,scrAng,decals,fades,NAMES,stand,stands,heightAt,add3,sub3,len3,rnd,rr,srand,ink,path,hull,material,MAT,MARKS,texture,tone,face,hullOf,ballAt,line3,poly3,fn3,box,prismX,prismY,plane,cyl,prop,solid,shade,shadeR,props,solids,shadows,lights,flames,holes,houses,smokes,perches,hit,bakeGround,edgeSnap,boot,setLive:f=>{liveDraw=f},wa,mix,cl,ez,lerp,TAU,ball,seg}})();

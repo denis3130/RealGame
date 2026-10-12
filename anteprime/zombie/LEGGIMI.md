@@ -183,7 +183,7 @@ pubblicata su https://claude.ai/artifact/Sw43VFJjGvrtkUs2t18fek. File: `area_map
   partono, sparisce il velo di nebbia sulla fattoria. Armi a muro: Revolver 500 sul muro nord della casa (il gesso si vede girando la
   telecamera), Pompa da caccia 1.500 sul fienile; ricomprare l'arma che si ha in mano dà i colpi a metà prezzo. Bara delle Sorprese 750
   (`ZM.sorpresa`) vicino alla cripta: offre un'arma a caso, a volte scappa in un altro dei suoi tre posti (cripta, tettoia del carretto, dentro
-  il fienile). Le armi sono quelle di `sprite/armi` (`ZM.equip`, colpi a raggio, che passano, pallini, esplosione; quando finiscono si torna alla
+  il fienile, vedi «La Bara ferma nel mondo»). Le armi sono quelle di `sprite/armi` (`ZM.equip`, colpi a raggio, che passano, pallini, esplosione; quando finiscono si torna alla
   pistola). Gli zombie escono solo dalle buche delle zone aperte (al massimo 6 insieme); le buche hanno un tipo (`mais`, `orto`, `fango`,
   `porta`). In alto il nome della zona quando si entra, l'arma con i colpi e gli avvisi.
 - **Velo sulla fattoria**: finché il cancello è chiuso e la telecamera guarda a nord, l'ordine di disegno si divide lungo la linea del
@@ -198,6 +198,24 @@ pubblicata su https://claude.ai/artifact/Sw43VFJjGvrtkUs2t18fek. File: `area_map
   ordine in 279 inquadrature, 148 sugli esseri; le soglie stampate sono quelle dell'area di prova), `ravvicinati.js` (ora va anche sulla mappa
   intera: apre il cancello e prova tutta la mappa; con `24`: 1.362 punti dell'eroe, 18.739 prove, nessuno zombie o segugio che non arriva,
   nessun attacco attraverso un solido).
-- Limiti noti: la Bara si disegna sempre vista da sud (non gira con la telecamera); il gesso del Revolver si vede solo girando la telecamera;
+- Limiti noti: il gesso del Revolver si vede solo girando la telecamera;
   l'eroe accanto al tavolo della casa colonica resta tutto dietro il piano del tavolo (la testa dovrebbe stare davanti: 22–48 px, si vede la
   sagoma).
+
+## La Bara ferma nel mondo (12 ottobre, Denis: «che non ruoti ma che rimanga ferma come il resto degli oggetti 3d»)
+
+- Prima la Bara si disegnava con la sua vista fissa (`sprite/armi`), come un essere: girando la telecamera girava con lei. Ora `drawBox` porta
+  ogni punto della bara (unità della bara, `BS` = 1,9 px) nel mondo con il verso della testa del posto (`BOX.a`) e da lì sullo schermo con `S`
+  (piega rigida del suo punto, come una cassa), e passa la vista a `b.draw(ARMI.vistaBara(pj, ombra))`; l'ombra cade a est e un po' a sud
+  come quelle cotte nel terreno. Il disegno dentro la bara si ordina da solo secondo il punto di vista (vedi `sprite/armi/LEGGIMI.md`).
+- Nell'ordine di disegno la Bara è una cosa che si sposta: voce `T` (sid `X`) con l'impronta del bordo della buca, delle candele e del
+  coperchio aperto, e l'altezza della posa (chiusa 18 px, coperchio aperto fino a 40, con la mano e l'arma 50). Contro gli strati valgono le
+  regole delle impronte (`geom`, poi `relE`, senza memoria), contro eroe e zombie quelle di una cosa (`relEss`). Può coprire l'eroe (sagoma).
+  Per le prove `__MZ.prims('X')` dà le sue facce vere (`ARMI.facceBara`) e `__MZ.boxTo(i)` la mette nel posto i.
+- I posti sono `[x, y, zona, verso della testa]`: nel cimitero girata di 0,3 (il teschio verso sud, come la si vedeva prima), sotto la tettoia
+  e dentro il fienile dritta. Quello del fienile è passato nell'angolo a nord-ovest: nella stalla restava un corridoio di 23 px tra la bara e
+  il primo tramezzo. Il solido è il riquadro del contorno girato e si sposta con lei.
+- Prove: `bara_ordine.js` (verità a z-buffer: tre posti, chiusa e aperta, eroe intorno, 8 angoli: 272 inquadrature, la Bara si copre con
+  qualcosa in 271, errori in 4 da 3–5 px con la cripta), `ordine_mappa.js` (sei casi con la Bara: nessun errore sugli esseri), `gioco.js`
+  (anche la fuga: rende le monete e ricompare in un altro posto, girata come il posto, col solido spostato), `ravvicinati.js` con `BARA=0/1/2`
+  (nessuno zombie o segugio fermo, nessun attacco attraverso un solido), e la vista predefinita confrontata al pixel con quella di prima.

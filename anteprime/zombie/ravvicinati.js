@@ -1,12 +1,14 @@
 // Zombie che partono VICINO all'eroe (34..90 px) ma con un solido in mezzo: arrivano? attaccano attraverso il solido? Per ogni punto dove può
 // stare l'eroe (griglia di P px) mette zombie e segugi tutto intorno, simula 40 s e conta chi non arriva e chi attacca con un ostacolo in mezzo.
 // Scritta durante la verifica del 12 ottobre. Uso: python3 anteprime/zombie/mk.py [area] && node anteprime/zombie/ravvicinati.js [P]
-// (KIND=zombie per gli zombie lenti; sulla mappa intera prima apre il cancello della fattoria, così prova anche la fattoria)
+// (KIND=zombie per gli zombie lenti; sulla mappa intera prima apre il cancello della fattoria, così prova anche la fattoria; BARA=1 o 2 mette
+// la Bara delle Sorprese in un altro dei suoi posti)
 const {chromium}=require('../../node_modules/playwright'),path=require('path');
 const open=async()=>{const b=await chromium.launch();const p=await b.newPage({viewport:{width:390,height:844},deviceScaleFactor:1});const errs=[];p.on('pageerror',e=>errs.push(e.message));p.on('console',m=>{if(m.type()==='error')errs.push(m.text())});
   await p.addInitScript(()=>{localStorage.setItem('cripta_save_v1',JSON.stringify({gold:900,gems:40,introSeen:1,handSeen:1,runs:3}))});
   await p.goto('file://'+path.resolve(__dirname,'..','zombie.html'));await p.waitForTimeout(2500);
   if(await p.evaluate(()=>{const M=__MZ;if(!M.W.gate||M.W.gate.open)return false;M.coins(1e4);return !!M.buyNow('cancello')}))await p.waitForTimeout(3500);// le ante si aprono col tempo vero
+  if(process.env.BARA)await p.evaluate(i=>{__MZ.boxTo(i)},+process.env.BARA);// la Bara in un altro dei suoi posti (BARA=0, 1, 2)
   await p.evaluate(()=>{const M=__MZ;M.zombies(false);M.W.dbg.freeze=true;M.W.dbg.noShoot=true;M.W.Z.length=0});return {b,p,errs}};
 const P=+(process.argv[2]||24);(async()=>{const {b,p,errs}=await open();
 const r=await p.evaluate(([P,process_kind])=>{const M=__MZ,W=M.W;const H0=[W.hero.x,W.hero.y];

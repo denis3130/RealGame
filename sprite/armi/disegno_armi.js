@@ -530,7 +530,8 @@ function motore(g,x){if(typeof AU==='undefined'||!AU.ctx)return;const c=AU.ctx,o
 // Drawn in the game's view (the floor squashed to .55, heights straight up), painted like the guns and the Zombie della lanterna.
 // nuovaBara(x,y) -> b: b.paga(px,py,current gun) starts it (the coins fly from px,py); b.prendi() takes the gun it offers;
 // b.update(dt) returns what happened: {k:'suono',w} {k:'offerta',id} {k:'presa',id,x,y} (the gun leaves from x,y) {k:'rimborso',n}
-// {k:'via'} (sunk) {k:'qui',x,y} (came out again at x,y); b.draw(); b.vicino(px,py).
+// {k:'via'} (sunk) {k:'qui',x,y} (came out again at x,y); b.draw(vista) (vista: a map's camera, see vistaBara; none: the coffin's own
+// view); b.vicino(px,py).
 // Times in seconds and how often each gun comes out (values to tune by playing). vuota: how often the hand comes out empty; never in
 // the first `prime` openings, so nobody loses their coins right away
 const BARA={prezzo:750,paga:.8,apre:.95,gira:3.4,offre:8,prende:.6,chiude:.8,scappa:3.5,sotto:1.8,sale:1.3,colpi:13,
@@ -539,12 +540,23 @@ const BS=1.9,BH=[[16,4.2],[9,6.6],[-17,3.8],[-17,-3.8],[9,-6.6],[16,-4.2]],HB=6,
 const bsc=(p,k)=>p.map(q=>[q[0]*k,q[1]*k]),BL=bsc(BH,1.05),BI=bsc(BH,.86),BP=bsc(BH,.72);
 const WOOD=['#3a1c13','#6b3524','#a35a3a'],WOODL=['#4a2416','#7d4129','#b86b45'],FERRO=['#22262c','#454c56','#7d8794'],FODERA=['#4a0f18','#7e1d2c','#b8414f'];
 const GREEN='125,255,160';
-// ---- the view: u along the coffin (its head at +u), v across (+ toward the camera), z up; the coffin is turned a little (YAW) so its
-// head shows too
-const PJ=(u,v,z)=>[u*CY-v*SY,(u*SY+v*CY)*.55-z];
+// ---- the view: u along the coffin (its head at +u), v across (the chain and the skull on the +v side), z up. By itself (the shooting range,
+// the sheets) it is seen from its +v side, turned a little (YAW) so its head shows too: VB0. A map gives its own camera with b.draw(vista):
+// in anteprime/zombie the coffin stays put in the world and the camera goes round it (Denis, 12 October: «che non ruoti ma che rimanga ferma
+// come il resto degli oggetti 3d»). vista = {pj(u,v,z) → [x,y] in coffin units from its foot point, to: the unit vector toward the camera in
+// the coffin's axes, ux: the screen step of one unit for what stays level on the screen (the hand holding a gun, the puffs), sh: where its
+// shadow falls (coffin units)}; vistaBara(pj, sh) makes one from a projection
+const PJ0=(u,v,z)=>[u*CY-v*SY,(u*SY+v*CY)*.55-z];let PJ=PJ0;
 const sub3=(a,b)=>[a[0]-b[0],a[1]-b[1],a[2]-b[2]],add3=(a,b)=>[a[0]+b[0],a[1]+b[1],a[2]+b[2]],mul3=(a,k)=>[a[0]*k,a[1]*k,a[2]*k],
   dot3=(a,b)=>a[0]*b[0]+a[1]*b[1]+a[2]*b[2],cross3=(a,b)=>[a[1]*b[2]-a[2]*b[1],a[2]*b[0]-a[0]*b[2],a[0]*b[1]-a[1]*b[0]],nrm3=a=>mul3(a,1/(Math.hypot(a[0],a[1],a[2])||1));
-const TOWARD=nrm3([SY,CY,.55]);
+const TOWARD0=nrm3([SY,CY,.55]),VB0={pj:PJ0,to:TOWARD0,ux:[CY,SY*.55],sh:[0,1]};let TOWARD=TOWARD0,VB=VB0;
+// a point moved by du along the screen's level (by itself exactly PJ(du,v,z), as before)
+const PJu=(du,v,z)=>{if(VB===VB0)return PJ(du,v,z);const q=PJ(0,v,z);return[q[0]+du*VB.ux[0],q[1]+du*VB.ux[1]]};
+// a camera from a projection: toward the camera is the way pj does not move (the cross of its two rows), the side that looks down
+function vistaBara(pj,sh){const o=pj(0,0,0),a=pj(1,0,0),b=pj(0,1,0),c=pj(0,0,1),r1=[a[0]-o[0],b[0]-o[0],c[0]-o[0]],r2=[a[1]-o[1],b[1]-o[1],c[1]-o[1]];
+  let n=cross3(r1,r2);if(n[2]<0)n=mul3(n,-1);return{pj,to:nrm3(n),ux:[1,0],sh:sh||[0,0]}}
+// the two long walls: +v (the chain, the skull, the handles) and −v (the lid's hinge)
+const NF=nrm3([-2.8,26,0]),NB=nrm3([-2.8,-26,0]);
 // turn p round the line through A along the unit axis k by angle f
 function rot3(p,A,k,f){const d=sub3(p,A),c=Math.cos(f),s=Math.sin(f);return add3(A,add3(add3(mul3(d,c),mul3(cross3(k,d),s)),mul3(k,dot3(k,d)*(1-c))))}
 const HA=[BL[3][0],BL[3][1],HB],HK=nrm3(sub3([BL[4][0],BL[4][1],HB],HA));
@@ -584,11 +596,12 @@ function baraMuri(dz){const F=slab(BH,0,HB);
       for(let i=0;i<3;i++){const h=.18+i*.34;for(const e of[.04,.96]){const p=L3(L3(b0,b1,e),L3(t0,t1,e),h);const q=PJ(p[0],p[1],p[2]+(dz||0));ctx.fillStyle='rgba(20,8,4,.7)';ball(q,.32);ctx.fill();ctx.fillStyle=wa(1);ball([q[0]-.1,q[1]-.1],.13);ctx.fill()}}
       // wood grain
       ctx.save();ppath(f.pts,dz);ctx.clip();for(let i=0;i<4;i++){const h=.12+i*.22;const p=L3(b0,t0,h),q=L3(b1,t1,h+.04);fline(L3(p,q,.1),L3(p,q,.45),'rgba(255,200,160,.08)',.3,dz)}ctx.restore()}}
-  // brass handles on the long wall: a plate and a ring hanging from it
-  for(const k of[.16,.8]){const p=L3([BH[1][0],BH[1][1],0],[BH[2][0],BH[2][1],0],k),q=PJ(p[0],p[1]+.12,HB*.55+(dz||0));
+  // brass handles on the long walls that face the camera: a plate and a ring hanging from it
+  for(const[f,a0,a1,sd] of[[F[3],BH[1],BH[2],1],[F[5],BH[4],BH[3],-1]]){if(!seen(f))continue;
+  for(const k of[.16,.8]){const p=L3([a0[0],a0[1],0],[a1[0],a1[1],0],k),q=PJ(p[0],p[1]+.12*sd,HB*.55+(dz||0));
     paint(()=>{ctx.beginPath();ctx.ellipse(q[0],q[1]-.4,1.1,.7,0,0,TAU)},[q[0]-1.1,q[1]-1.1,q[0]+1.1,q[1]+.3],'ottone',{hi:.4,lw:.9});
     const ring=()=>{ctx.beginPath();ctx.ellipse(q[0],q[1]+1.2,1.15,1.35,0,0,TAU)};if(OUT){ring();ctx.strokeStyle=INK;ctx.lineWidth=.55+LO*2;ctx.stroke()}else{ring();ctx.strokeStyle=INK;ctx.lineWidth=1.2;ctx.stroke();ring();ctx.strokeStyle=C.ottone[1];ctx.lineWidth=.55;ctx.stroke();
-      ctx.strokeStyle=C.ottone[2];ctx.lineWidth=.3;ctx.beginPath();ctx.ellipse(q[0],q[1]+1.2,1.15,1.35,0,3.4,4.6);ctx.stroke()}}}
+      ctx.strokeStyle=C.ottone[2];ctx.lineWidth=.3;ctx.beginPath();ctx.ellipse(q[0],q[1]+1.2,1.15,1.35,0,3.4,4.6);ctx.stroke()}}}}
 // the lid: a slab with a raised panel and iron studs on top, a quilted purple lining underneath; f: how far it is open (radians)
 function baraCoperchio(f,lift,dz){const T=p=>{const q=f?rot3(p,HA,HK,f):p;return[q[0],q[1],q[2]+lift]},F=slab(BL,HB,HB+HL,T),top=F[0],bot=F[1];
   for(const s of F){if(s.k==='top'||s.k==='bot'||!seen(s))continue;face(s.pts,WOODL,{dk:.55,hi:.5},dz)}
@@ -602,14 +615,15 @@ function baraCoperchio(f,lift,dz){const T=p=>{const q=f?rot3(p,HA,HK,f):p;return
       ctx.restore()}}
   return F}
 // the chain round the middle of the coffin: across the lid and down the front wall to the skull padlock and on to the ground.
-// fall: 0 on, up to 1 fallen to the ground and gone; links fall one after the other
-function catena(fall,lift,dz,seed){if(fall>=1)return;const u=-2,r=rnd(seed||11),pts=[],top=HB+HL+lift;
+// fall: 0 on, up to 1 fallen to the ground and gone; links fall one after the other. keep(i, d): which links to draw now (i: 0–5 across the
+// lid, then down the front wall; d: how far that one has fallen), for a camera behind the coffin
+function catena(fall,lift,dz,seed,keep){if(fall>=1)return;const u=-2,r=rnd(seed||11),pts=[],top=HB+HL+lift;
   const vF=lerp(BH[2][1],BH[1][1],(u-BH[2][0])/(BH[1][0]-BH[2][0])),vL=vF*1.05,vB=lerp(BL[3][1],BL[4][1],(u-BL[3][0])/(BL[4][0]-BL[3][0]));
   for(let i=0;i<=5;i++){const v=lerp(vB+.4,vL,i/5);pts.push([u,v,top+.15])}
   for(let i=1;i<=6;i++)pts.push([u-.12*i,vF+.2,lerp(top,0,i/6)]);
   const ground=PJ(u,vF+1.5,0)[1];
   for(let i=0;i<pts.length;i++){const p=pts[i],q=PJ(p[0],p[1],p[2]+(dz||0)),d=cl(fall*1.6-i*.04,0,1),gy=ground+(r()-.3)*2,yy=lerp(q[1],gy,d*d),xx=q[0]+(r()-.5)*3*d,a=1-cl((fall-.65)/.35,0,1);
-    if(a<=0)continue;ctx.save();ctx.globalAlpha*=a;const flat=i%2===0,vertical=i>5;
+    if(a<=0||(keep&&!keep(i,d)))continue;ctx.save();ctx.globalAlpha*=a;const flat=i%2===0,vertical=i>5;
     const lk=()=>{ctx.beginPath();if(flat)ctx.ellipse(xx,yy,vertical?.78:.95,vertical?.95:.62,0,0,TAU);else ctx.ellipse(xx,yy,vertical?.26:.95,vertical?.95:.26,0,0,TAU)};
     if(OUT){lk();ctx.strokeStyle=INK;ctx.lineWidth=(flat?.55:.5)+LO*.9;ctx.stroke()}else{lk();ctx.strokeStyle=C.acciaio[1];ctx.lineWidth=flat?.55:.5;ctx.stroke();if(flat){ctx.strokeStyle=C.acciaio[2];ctx.lineWidth=.24;ctx.beginPath();ctx.ellipse(xx,yy,.78,.5,0,3.5,4.9);ctx.stroke()}}
     ctx.restore()}}
@@ -651,32 +665,48 @@ function manoOssa(x,y,ang,kind){ctx.save();ctx.translate(x,y);ctx.rotate(ang);ct
   ink(1.1);ctx.fillStyle=C.osso[1];ctx.beginPath();ctx.ellipse(0,0,1.45,1.25,0,0,TAU);ctx.fill();ctx.stroke();ctx.fillStyle=wa(1);ball([-.45,-.4],.45);ctx.fill();ctx.restore()}
 
 const vFront=u=>lerp(BH[2][1],BH[1][1],(u-BH[2][0])/(BH[1][0]-BH[2][0])),TPOS=()=>PJ(-2,vFront(-2)+.3,HB-2.4);
+// the skull padlock's place when the coffin has sunk by dz (by itself as before: moved straight down on the screen)
+const skullAt=dz=>{if(VB===VB0){const q=TPOS();return[q[0],q[1]-dz]}return PJ(-2,vFront(-2)+.3,HB-2.4+dz)};
+// the two candles by its head (u, v, height, seed)
+const CANDS=[[18.4,-3.4,5.2,1],[17.6,5.6,4.4,2]];
+// the side of a convex outline on the screen that faces the camera (the lowest chain from the leftmost point to the rightmost)
+function frontChain(P){const n=P.length;let iL=0,iR=0;for(let i=1;i<n;i++){if(P[i][0]<P[iL][0])iL=i;if(P[i][0]>P[iR][0])iR=i}
+  const walk=d=>{const c=[P[iL]];for(let i=iL;i!==iR;){i=(i+d+n)%n;c.push(P[i])}return c},A=walk(1),B=walk(-1),my=c=>c.reduce((s,q)=>s+q[1],0)/c.length;
+  return my(A)>=my(B)?A:B}
 // ---- the whole coffin for a pose `a` at x,y (the middle of its foot on the floor)
 // a: {lid (open, radians), lift (the lid jumping), shake, sink 0..1, light 0..1, chain 0..1 (0 on, 1 fallen), skull {jaw,eyes,shackle,look,
 // laugh,blink}, hand 0..1 (how far out), gun (id or null), pop 0..1 (a swap), offer 0..1, wave (angle), thumb, candles 0..1, hole 0..1}
+// What comes first depends on where the camera is (VB): the candles behind the coffin, the chain and the skull when its front faces away,
+// the open lid when it stands on the far side; then the inside, the hand, the walls that face the camera, the lid on the near side, the
+// chain and the skull in front, the candles in front
 function disegnaBara(x,y,a,t){const sk=Math.sin(t*61)*(a.shake||0)*.5,sink=a.sink||0,dz=-sink*17,hole=a.hole||0,mound=a.mound||0;
   ctx.save();ctx.translate(x+sk*BS,y);ctx.scale(BS,BS);ctx.lineJoin='round';ctx.lineCap='round';
   // the ground: a patch of dark earth (a hole when it sinks), its shadow
-  const rim=bsc(BH,1.12);if(sink<1){ctx.fillStyle=`rgba(0,0,0,${.32*(1-sink)})`;ctx.beginPath();for(const p of bsc(BH,1.25)){const q=PJ(p[0],p[1]+1,0);ctx.lineTo(q[0],q[1])}ctx.closePath();ctx.fill()}
+  const rim=bsc(BH,1.12),sh=VB.sh;if(sink<1){ctx.fillStyle=`rgba(0,0,0,${.32*(1-sink)})`;ctx.beginPath();for(const p of bsc(BH,1.25)){const q=PJ(p[0]+sh[0],p[1]+sh[1],0);ctx.lineTo(q[0],q[1])}ctx.closePath();ctx.fill()}
   // the earth put back where it went down: a low mound with a few stones, fading away
   if(mound>0){ctx.save();ctx.globalAlpha*=mound;const mp=bsc(BH,1.05);two(()=>{paint(()=>{ctx.beginPath();for(const p of mp){const q=PJ(p[0],p[1],0);ctx.lineTo(q[0],q[1]-1.2*Math.cos(p[1]/7))}ctx.closePath()},pbox(mp.map(p=>[p[0],p[1],1.4])),'legno',{col:'#5b3f27',colD:'#3f2a18',colL:'#7d5a3a',dk:.6,hi:.3})});
     if(!OUT){const r=rnd(5);for(let i=0;i<9;i++){const p=PJ((r()-.5)*28,(r()-.5)*7,.8);ctx.fillStyle=INK;ball(p,.75);ctx.fill();ctx.fillStyle=r()<.5?'#8a7a68':'#6b5a48';ball(p,.5);ctx.fill()}}ctx.restore()}
   if(sink>=1){ctx.restore();return}
   if(hole>0){ctx.save();ctx.globalAlpha*=hole;ctx.fillStyle='#24180f';ctx.beginPath();for(const p of rim){const q=PJ(p[0],p[1],0);ctx.lineTo(q[0],q[1])}ctx.closePath();ctx.fill();ctx.strokeStyle='#4a3420';ctx.lineWidth=1.2;ctx.stroke();ctx.restore()}
-  // below the ground nothing shows: cut along the front of the hole
-  if(a.sink>0){ctx.save();ctx.beginPath();const fr=[rim[2],rim[1],rim[0]].map(p=>PJ(p[0],p[1],0));ctx.moveTo(fr[0][0]-30,fr[0][1]);for(const q of fr)ctx.lineTo(q[0],q[1]);ctx.lineTo(fr[2][0]+30,fr[2][1]);ctx.lineTo(fr[2][0]+30,-120);ctx.lineTo(fr[0][0]-30,-120);ctx.closePath();ctx.clip()}
+  // below the ground nothing shows: cut along the front of the hole (the side toward the camera)
+  if(a.sink>0){ctx.save();ctx.beginPath();const fr=VB===VB0?[rim[2],rim[1],rim[0]].map(p=>PJ(p[0],p[1],0)):frontChain(rim.map(p=>PJ(p[0],p[1],0))),e=fr[fr.length-1];
+    ctx.moveTo(fr[0][0]-30,fr[0][1]);for(const q of fr)ctx.lineTo(q[0],q[1]);ctx.lineTo(e[0]+30,e[1]);ctx.lineTo(e[0]+30,-120);ctx.lineTo(fr[0][0]-30,-120);ctx.closePath();ctx.clip()}
   else ctx.save();
-  const cand=a.candles==null?1:a.candles;
-  candela(PJ(18.4,-3.4,0)[0],PJ(18.4,-3.4,dz)[1],5.2,cand,t,1);
+  const cand=a.candles==null?1:a.candles,T=TOWARD,dep=p=>p[0]*T[0]+p[1]*T[1],front=dot3(NF,T)>.02,lidNear=dot3(NB,T)>0;
+  // the candles: behind the head of the coffin first (farthest first), in front of it last
+  const CN=CANDS.map(c=>({c,near:dep(c)>dep([16,0])})).sort((p,q)=>dep(p.c)-dep(q.c)),candle=c=>candela(PJ(c[0],c[1],0)[0],PJ(c[0],c[1],dz)[1],c[2],cand,t,c[3]);
+  for(const o of CN)if(!o.near)candle(o.c);
+  // seen from behind: the chain down the front wall (and the links falling there) and the skull padlock go behind the coffin
+  if(!front){catena(a.chain||0,a.lift||0,dz,7,(i,d)=>i>5||d>.3);const tl=skullAt(dz);teschio(tl[0],tl[1],a.skull||{},t,1)}
   const open=(a.lid||0)>.04;
   if(open){two(()=>baraDentro(a,dz));if(a.light>0&&!LOWFX&&!OUT){ctx.save();ctx.globalCompositeOperation='lighter';const c=PJ(0,-1,HB+dz);glow(GREEN,c[0],c[1]-4,26,.35*a.light,16);
       // soft rays fanning up out of the coffin, breathing
       for(let i=0;i<5;i++){const an=-Math.PI/2+(i-2)*.32+Math.sin(t*.9+i)*.05,L=22+6*Math.sin(t*1.7+i*1.3);ctx.fillStyle=`rgba(${GREEN},${.07*a.light})`;ctx.beginPath();ctx.moveTo(c[0]+(i-2)*2.6,c[1]);
         ctx.lineTo(c[0]+Math.cos(an-.07)*L,c[1]+Math.sin(an-.07)*L);ctx.lineTo(c[0]+Math.cos(an+.07)*L,c[1]+Math.sin(an+.07)*L);ctx.closePath();ctx.fill()}ctx.restore()}
-    two(()=>baraCoperchio(a.lid,a.lift||0,dz));two(()=>baraRim(dz))}
-  // the hand and what it holds, coming out of the coffin
+    if(!lidNear)two(()=>baraCoperchio(a.lid,a.lift||0,dz));two(()=>baraRim(dz))}
+  // the hand and what it holds, coming out of the coffin (the gun stays level on the screen, its middle over the coffin)
   if(open&&a.hand>0){const hz=lerp(-3,15,eo(a.hand)),bob=Math.sin(t*2.2)*.5*a.hand,M=a.gun?G[a.gun]:null,pk=a.pop||0,sc=(.62+.12*(a.offer||0))*(1-pk*.35),
-      mid=M?(M.len[0]+M.len[1])/2:0,wu=M?-mid*GS*sc:-1,w=PJ(wu,-.5,HB+hz+bob+dz),base=PJ(wu*.4-1.2,0,1+dz);
+      mid=M?(M.len[0]+M.len[1])/2:0,wu=M?-mid*GS*sc:-1,w=PJu(wu,-.5,HB+hz+bob+dz),base=PJu(wu*.4-1.2,0,1+dz);
     ctx.save();avambraccio(w[0]-1.1,w[1]+1.3,base[0],base[1]);
     if(a.gun){const g=a.gun;
       ctx.save();ctx.translate(w[0],w[1]);ctx.rotate(Math.sin(t*1.9)*.06-.05);ctx.scale(sc,sc);
@@ -684,14 +714,29 @@ function disegnaBara(x,y,a,t){const sk=Math.sin(t*61)*(a.shake||0)*.5,sink=a.sin
       held(g,{hands:'ossa',oneHand:true,glow:1});ctx.restore()}
     else{ctx.save();ctx.translate(w[0],w[1]-.8);ctx.scale(1.5,1.5);manoOssa(0,0,a.wave||0,a.thumb?'su':'aperta');ctx.restore()}
     ctx.restore()}
-  // the walls facing the camera, the closed lid, the chain, the padlock, the front candle
+  // the walls facing the camera, the lid (closed, or open on the camera's side), the chain, the padlock, the candles in front
   two(()=>baraMuri(dz));
-  if(!open)two(()=>baraCoperchio(0,a.lift||0,dz));
-  if(open&&a.pop>0&&!OUT){const w=PJ(-1,-.5,HB+15+dz);for(let i=0;i<6;i++){const an=i/6*TAU+t,d=3+a.pop*-2;fumo(w[0]+Math.cos(an)*d*1.6,w[1]+Math.sin(an)*d,1-a.pop,3.2,false)}}
-  catena(a.chain||0,a.lift||0,dz,7);
-  const tl=TPOS();teschio(tl[0],tl[1]-dz,a.skull||{},t,1);
-  candela(PJ(17.6,5.6,0)[0],PJ(17.6,5.6,dz)[1],4.4,cand,t,2);
+  if(!open)two(()=>baraCoperchio(0,a.lift||0,dz));else if(lidNear)two(()=>baraCoperchio(a.lid,a.lift||0,dz));
+  if(open&&a.pop>0&&!OUT){const w=PJu(-1,-.5,HB+15+dz);for(let i=0;i<6;i++){const an=i/6*TAU+t,d=3+a.pop*-2;fumo(w[0]+Math.cos(an)*d*1.6,w[1]+Math.sin(an)*d,1-a.pop,3.2,false)}}
+  if(front){catena(a.chain||0,a.lift||0,dz,7);const tl=skullAt(dz);teschio(tl[0],tl[1],a.skull||{},t,1)}
+  else catena(a.chain||0,a.lift||0,dz,7,(i,d)=>!(i>5||d>.3));
+  for(const o of CN)if(o.near)candle(o.c);
   ctx.restore();ctx.restore()}
+
+// the coffin's solid faces for a pose, for a map's tests of the drawing order (anteprime/zombie/verita.js): faces [{pts:[[u,v,z]…], n: outward
+// normal}] (closed: body, lid, panel; open: outer and inner walls, floor, rim, the lid on its hinge), the candles as lines [u,v,z0,z1,width],
+// the hand and the gun as points [u,v,z,radius]; heights without the sinking
+function facceBara(a){const faces=[],put=(F,keep,flip)=>{for(const f of F)if(!keep||keep(f))faces.push({pts:f.pts.map(p=>p.slice()),n:flip?mul3(f.n,-1):f.n.slice()})},lift=a.lift||0,f=a.lid||0;
+  if(f<=.04){const L=p=>[p[0],p[1],p[2]+lift];put(slab(BH,0,HB),g=>g.k!=='top');put(slab(BL,HB,HB+HL,L));put(slab(BP,HB+HL,HB+HL+.7,L),g=>g.k!=='bot')}
+  else{put(slab(BH,0,HB),g=>g.k!=='top'&&g.k!=='bot');const I=slab(BI,1,HB);put(I,g=>g.k!=='top'&&g.k!=='bot',true);faces.push({pts:I[1].pts.map(p=>p.slice()),n:[0,0,1]});
+    for(let i=0;i<BH.length;i++){const j=(i+1)%BH.length;faces.push({pts:[[BH[i][0],BH[i][1],HB],[BH[j][0],BH[j][1],HB],[BI[j][0],BI[j][1],HB],[BI[i][0],BI[i][1],HB]],n:[0,0,1]})}
+    put(slab(BL,HB,HB+HL,p=>{const q=rot3(p,HA,HK,f);return[q[0],q[1],q[2]+lift]}))}
+  const cand=a.candles==null?1:a.candles,lines=cand>0?CANDS.map(c=>[c[0],c[1],0,c[2]+2.2*cand,1.7]):[],pts=[];
+  if(f>.04&&a.hand>0){const hz=lerp(-3,15,eo(a.hand));pts.push([0,-.5,HB+hz,3.5]);if(a.gun)pts.push([0,-.5,HB+hz+1.5,5])}
+  return{faces,lines,pts}}
+// the shape, for a map (footprints, solids, the order of drawing): the scale, the outline, the heights, the candles (u, v, height), the open
+// lid's corners
+function formaBara(){const T=p=>rot3(p,HA,HK,LIDA),lid=slab(BL,HB,HB+HL,T).flatMap(f=>f.pts);return{BS,BH:BH.map(p=>p.slice()),HB,HL,LIDA,cand:CANDS.map(c=>c.slice(0,3)),lid:lid.map(p=>p.slice())}}
 
 // ---- what it does
 function scegliArma(not){const ids=ORDINE.filter(i=>i!==not);let tot=0;for(const i of ids)tot+=BARA.peso[i];let r=Math.random()*tot;for(const i of ids){r-=BARA.peso[i];if(r<=0)return i}return ids[0]}
@@ -736,7 +781,7 @@ function nuovaBara(x,y){const b={x,y,st:'ferma',t:0,T:0,usi:0,gun:null,fin:null,
     else if(b.st==='sotto'){a.sink=1;a.hole=1-cl(t/.35,0,1);a.mound=1-cl((t-BARA.sotto+.5)/.5,0,1);a.candles=0}
     else if(b.st==='sale'){a.sink=1-eo(t/1);a.hole=1-cl((t-.9)/.4,0,1);a.shake=t<1?.7:0;a.candles=cl((t-.9)/.3,0,1)}
     return a},
-  draw(){const a=b.posa();disegnaBara(b.x,b.y,a,b.T);
+  draw(v){VB=v||VB0;PJ=VB.pj;TOWARD=VB.to;try{const a=b.posa();disegnaBara(b.x,b.y,a,b.T);
     // the coins flying in an arc into the skull's mouth
     const tp=TPOS(),m=[b.x+tp[0]*BS,b.y+(tp[1]+1.2)*BS];
     if(b.st==='paga')for(const c of b.coins){const k=c.t/.42;if(k<0||k>1)continue;const e=ez(k),px=lerp(c.x0,m[0],e),py=lerp(c.y0,m[1],e)-Math.sin(k*Math.PI)*30;moneta(px,py,1-k*.4,b.T*12+c.x0)}
@@ -745,7 +790,7 @@ function nuovaBara(x,y){const b={x,y,st:'ferma',t:0,T:0,usi:0,gun:null,fin:null,
     // dirt flying when it sinks or comes out
     const dig=b.st==='scappa'&&b.t>2.05&&b.t<3.4?1:b.st==='sale'&&b.t<1.05?1:0;
     if(dig&&!LOWFX){const r=rnd(Math.floor(b.T*20));for(let i=0;i<5;i++){const u=(r()-.5)*34,px=b.x+u*BS,py=b.y+(r()*.5+.4)*7*BS,h=r()*14;ctx.fillStyle=INK;ctx.fillRect(px-1.4,py-h-1.4,2.8,2.8);ctx.fillStyle=r()<.5?'#6b4a2e':'#8a6440';ctx.fillRect(px-.9,py-h-.9,1.8,1.8)}
-      for(let i=0;i<3;i++)fumo(b.x+(r()-.5)*50*BS*.5,b.y+r()*6*BS,(b.T*2+i/3)%1,10,false)}}};
+      for(let i=0;i<3;i++)fumo(b.x+(r()-.5)*50*BS*.5,b.y+r()*6*BS,(b.T*2+i/3)%1,10,false)}}finally{VB=VB0;PJ=PJ0;TOWARD=TOWARD0}}};
   return b}
 // a gold coin seen from the front, spinning (s: size)
 function moneta(x,y,s,ph){const w=Math.abs(Math.cos(ph))*.85+.15;ctx.save();ctx.translate(x,y);ctx.scale(s*w,s);ctx.lineWidth=1.4/Math.max(.2,w);ctx.strokeStyle=INK;ctx.fillStyle=C.giallo[1];ctx.beginPath();ctx.arc(0,0,3.4,0,TAU);ctx.fill();ctx.stroke();
@@ -773,4 +818,4 @@ function suonoBara(w,x,dt){if(typeof AU==='undefined'||!AU.ctx||!AU.on.sfx)retur
   else if(w==='sprofonda'){fNoise(t,1.5,'lowpass',260,.7,.6,{brown:true,att:.2});for(let i=0;i<7;i++)M.stone(t+.1+i*.18+Math.random()*.08,.5);fNoise(t,.9,'bandpass',220,6,.15,{f2:90,att:.1});risata(t+.5,4,.08)}
   else if(w==='sale'){fNoise(t,1.1,'lowpass',260,.7,.5,{brown:true,att:.15});for(let i=0;i<5;i++)M.stone(t+.05+i*.17,.45);fNoise(t+.4,.6,'bandpass',300,7,.15,{f2:700});fThump(t+1,120,60,.15,.5);M.wood(t+1,1,160)}}catch(e){}
   AU.pan=0}
-return{G,DATI,ORDINE,RAR,held,arma,punti,inMano,inManoPunti,manoPos,manoAng,pt,espelliCar,caricatore,vampa,nuova,colpo,razzo,fumo,bossolo,esplosione,scintille,FX,fxAdd,fxUpdate,fxDraw,espelli,munizione,cassaMun,suono,motore,mix,wa,C,paint,rp,rb,poly,ball,seg,shine,rnd,cl,lerp,ez,eo,TAU,BARA,nuovaBara,disegnaBara,suonoBara,moneta,teschio}})();
+return{G,DATI,ORDINE,RAR,held,arma,punti,inMano,inManoPunti,manoPos,manoAng,pt,espelliCar,caricatore,vampa,nuova,colpo,razzo,fumo,bossolo,esplosione,scintille,FX,fxAdd,fxUpdate,fxDraw,espelli,munizione,cassaMun,suono,motore,mix,wa,C,paint,rp,rb,poly,ball,seg,shine,rnd,cl,lerp,ez,eo,TAU,BARA,nuovaBara,disegnaBara,suonoBara,moneta,teschio,vistaBara,formaBara,facceBara}})();

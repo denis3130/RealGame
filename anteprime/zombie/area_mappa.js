@@ -77,7 +77,9 @@ const AREA={title:'Camposanto',zoneName:h=>h.y<Y(12.3)?'Fattoria dei Corvi':'Cam
     for(const[id,pr,hx,hy,zone] of[['revolver',500,X(9.6),Y(15)-24,1],['pompa',1500,X(11.0)-26,Y(7.45),2]])
       ZM.buyable({id:'muro_'+id,x:hx,y:hy,r:56,show:()=>W.zoneOpen[zone],label:()=>(W.gunId===id?'Colpi: ':'')+(window.ARMI?ARMI.DATI[id].n:id),price:()=>W.gunId===id?Math.round(pr/2):pr,
         act(){const p=W.gunId===id?Math.round(pr/2):pr;if(W.coins<p)return false;W.coins-=p;ZM.equip(id);return true}});
-    ZM.sorpresa(X(4.45),Y(16.76),[[X(4.45),Y(16.76),1],[X(9.55),Y(10.85),2],[X(14.0),Y(5.4),2]]);
+    // la Bara delle Sorprese e i suoi tre posti [x, y, zona, verso della testa]: nel cimitero vicino alla cripta (girata un po', il teschio verso
+    // sud), sotto la tettoia accanto al carretto, dentro il fienile nell'angolo a nord-ovest (non nella stalla: lì restava un corridoio di 23 px)
+    ZM.sorpresa(X(4.45),Y(16.76),[[X(4.45),Y(16.76),1,.3],[X(9.55),Y(10.85),2,0],[X(12.2),Y(5.0),2,0]]);
     // i bordi del mondo e la nebbia ai lati dell'area di partenza
     solid(-200,-200,w+400,200,'edge');solid(-200,h,w+400,200,'edge');solid(-200,0,200,h,'edge');solid(w,0,200,h,'edge');
     solid(0,Y(12.3)+6,X(2),h-Y(12.3)-6,'edge');solid(X(14),Y(12.3)+6,X(2),h-Y(12.3)-6,'edge');solid(X(2),Y(24),X(12),h-Y(24),'edge');

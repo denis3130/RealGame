@@ -10,8 +10,12 @@ const SC={cancelloS:[...P(6.45,12.75),[Z(6.3,11.95),Z(6.55,11.7)]],cancelloN:[..
  tettoia:[...P(8.8,11.7),[Z(9.5,10.9)]],tettoiaDentro:[...P(9.2,10.8)],pollaio:[...P(2.25,11.6)],cuccia:[...P(4.6,10.95)],maiali:[...P(2.2,9.6),[Z(2.6,9.2)]],
  pompa:[...P(5.6,7.95)],pozzo:[...P(7.8,7.25)],rimessa:[...P(13.2,9.8)],orto:[...P(11.6,10.0),[Z(12.0,10.6)]],mais:[...P(8.0,3.55),[Z(8.0,3.1)]],
  latrina:[...P(12.3,15.7),[Z(12.4,15.3)]],legna:[...P(8.6,13.8)],stendi:[...P(10.9,13.95)],lanterna:[...P(12.5,17.6)],quercia:[...P(13.1,22.9)],
- casaN:[...P(9.6,14.65)],bara:[...P(4.45,17.4)]};
-const PSIS=[0,45,90,135,180,225,270,315],TABLE=['fienileDentro','colonicaDentro','tettoia','cancelloS','latrina'],INHOUSE=['fienileDentro','fienileStalle','colonicaDentro'];
+ casaN:[...P(9.6,14.65)],bara:[...P(4.45,17.4)],
+ // la Bara ferma nel mondo nei suoi tre posti, chiusa e aperta (con la mano e l'arma), con l'eroe e uno zombie accanto: [x, y, zombie, {bara:[posto, stato]}]
+ baraCim:[...P(4.92,17.66),[Z(4.92,15.86)],{bara:[0,'chiusa']}],baraCimA:[...P(4.92,17.66),[Z(4.92,15.86)],{bara:[0,'aperta']}],
+ baraTet:[...P(9.55,11.45),[Z(10.3,10.85)],{bara:[1,'chiusa']}],baraTetA:[...P(9.55,11.45),[Z(10.3,10.85)],{bara:[1,'aperta']}],
+ baraFie:[...P(12.2,5.6),[Z(12.95,5.0)],{bara:[2,'chiusa']}],baraFieA:[...P(12.2,5.6),[Z(12.95,5.0)],{bara:[2,'aperta']}]};
+const PSIS=[0,45,90,135,180,225,270,315],TABLE=['fienileDentro','colonicaDentro','tettoia','cancelloS','latrina','baraCimA','baraTetA','baraFieA'],INHOUSE=['fienileDentro','fienileStalle','colonicaDentro'];
 // la libreria della verità, iniettata nella pagina (verita.js)
 const LIB=require('./verita.js');
 (async()=>{const b=await chromium.launch();const p=await b.newPage({viewport:{width:390,height:844},deviceScaleFactor:1});const errs=[];p.on('pageerror',e=>errs.push(e.message));p.on('console',m=>{if(m.type()==='error')errs.push(m.text())});
@@ -20,13 +24,14 @@ const LIB=require('./verita.js');
   await p.evaluate(()=>{const M=__MZ,W=M.W;M.zombies(false);M.low(true);W.dbg.freeze=true;W.dbg.noShoot=true;M.hud(false);
     // un'inquadratura: eroe fermo in (x, y), zombie dati, telecamera ψ/θ sul perno dell'eroe; ritorna la valutazione
     // (prima un secondo di simulazione senza zombie: le trasparenze della casa e delle chiome arrivano al loro valore)
-    window.__shot=(x,y,zs,psi,th,o)=>{o=o||{};const h=W.hero,C=M.CAM;M.cam(null);h.x=x;h.y=y;h.zh=M.heightAt(x,y);h.moving=false;h.tgZ=null;W.Z.length=0;M.sim(30,1/30);h.face=-Math.PI/2;h.aim=0;
+    window.__shot=(x,y,zs,psi,th,o)=>{o=o||{};const h=W.hero,C=M.CAM;M.cam(null);h.x=x;h.y=y;h.zh=M.heightAt(x,y);h.moving=false;h.tgZ=null;W.Z.length=0;const B=M.box().b;M.boxTo(o.bara?o.bara[0]:0);B.st='ferma';B.t=0;M.sim(30,1/30);h.face=-Math.PI/2;h.aim=0;
+      if(o.bara&&o.bara[1]==='aperta'){B.st='offre';B.t=1.2;B.gun='pompa';B.T=3.3}
       (zs||[]).forEach((z,i)=>W.Z.push({id:5000+i,kind:z[2]||'zombie',sc:z[3]||1.1,spd:0,hp:99,x:z[0],y:z[1],zh:M.heightAt(z[0],z[1]),face:Math.atan2(y-z[1],x-z[0]),p:0,anim:'walk',rise:1,die:0,flash:0}));
       for(const q of M.perches){q.away=0;q.t=1.5}W.flock.length=0;W.dbg.ord=o.ky?'ky':undefined;if(o.reset!==false)M.orderReset();
       M.view(psi,th);C.x=x;C.y=y;C.oy=24*C.CP;M.render(0);M.render(0);return __TR.evaluate(o)}});
   const all=[],T0=Date.now();
-  for(const[name,[x,y,zs]] of Object.entries(SC))for(const psi of PSIS){const r=await p.evaluate(([x,y,zs,psi])=>__shot(x,y,zs,psi,45,{same:true,top:14}),[x,y,zs||[],psi]);all.push(Object.assign({name,psi},r))}
-  const ky=[];for(const[name,[x,y,zs]] of Object.entries(SC)){const r=await p.evaluate(([x,y,zs])=>__shot(x,y,zs,0,45,{ky:true}),[x,y,zs||[]]);ky.push(Object.assign({name,psi:0},r))}
+  for(const[name,[x,y,zs,o]] of Object.entries(SC))for(const psi of PSIS){const r=await p.evaluate(([x,y,zs,psi,o])=>__shot(x,y,zs,psi,45,Object.assign({same:true,top:14},o)),[x,y,zs||[],psi,o||{}]);all.push(Object.assign({name,psi},r))}
+  const ky=[];for(const[name,[x,y,zs,o]] of Object.entries(SC)){const r=await p.evaluate(([x,y,zs,o])=>__shot(x,y,zs,0,45,Object.assign({ky:true},o)),[x,y,zs||[],o||{}]);ky.push(Object.assign({name,psi:0},r))}
   await p.evaluate(()=>{__MZ.W.dbg.ord=undefined});
   const S=(arr,f)=>arr.reduce((s,r)=>s+(f?f(r):r.tot),0);
   console.log('caso       ψ:'+PSIS.map(a=>String(a).padStart(11)).join('')+'   (pixel nell\'ordine sbagliato; tra parentesi quelli sugli esseri)');

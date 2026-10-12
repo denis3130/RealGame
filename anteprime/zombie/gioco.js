@@ -45,4 +45,9 @@ const PAGE=path.resolve(process.argv[2]||path.join(__dirname,'..','zombie.html')
     if(st==='offre')M.buyNow('bara');for(let i=0;i<60;i++)M.sim(1,1/60);return{ok1,c,st,gun,now:W.gunId}},P(4.45,17.35));
   ok(bara.ok1&&bara.c===250,`la Bara si paga 750 (restano ${bara.c})`);
   ok(bara.st==='offre'?bara.now===bara.gun:bara.st==='scappa',`la Bara offre un'arma e la si prende (${bara.st}: ${bara.gun} → in mano ${bara.now})`);
+  // la Bara che scappa: rende le monete, sprofonda e ricompare in un altro dei suoi posti, girata come quel posto, col solido spostato
+  const fuga=await E(async([x,y])=>{const M=__MZ,W=M.W,B=M.box();for(let i=0;i<60*4&&B.b.st!=='ferma';i++)M.sim(1,1/60);W.Z.length=0;M.coins(1000);M.tp(x,y);const x0=B.x,y0=B.y;M.buyNow('bara');B.b.forza(true);
+    const c=M.coins();let back=0;for(let i=0;i<60*14&&!(B.b.st==='ferma'&&(B.x!==x0||B.y!==y0));i++){M.sim(1,1/60);if(!back&&M.coins()>c)back=M.coins()-c}
+    const s=B.spots.find(q=>q[0]===B.x&&q[1]===B.y),so=B.sol;return{moved:B.x!==x0||B.y!==y0,back,st:B.b.st,spot:!!s,ang:s?(s[3]||0)===B.a:false,sol:so.x<B.x&&so.x+so.w>B.x&&so.y<B.y&&so.y+so.d>B.y}},P(4.45,17.35));
+  ok(fuga.moved&&fuga.back===750&&fuga.st==='ferma'&&fuga.spot&&fuga.ang&&fuga.sol,`la Bara scappa: rende ${fuga.back} monete e ricompare in un altro posto (${fuga.spot?'girata come il posto':'?'}, solido ${fuga.sol?'spostato':'NO'})`);
   console.log('\nERR',JSON.stringify(errs.slice(0,5)));console.log(fails?`${fails} prove non passate`:'tutte le prove passate');await b.close();process.exit(fails?1:0)})();
