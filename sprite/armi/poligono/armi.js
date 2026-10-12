@@ -248,7 +248,8 @@ function punti(id,x,y,ang,o){o=o||{};const M=G[id],sc=o.sc||1,fl=Math.cos(ang)<-
 // turns in 8 directions, the gun turns all the way round: ang is the real direction it aims at on the screen (left out: the body's).
 // The hand goes round the body like the bow's, a little wider when the hero looks away so the gun shows beside the head. The gun is
 // turned over when it points to the left, so its top always stays up
-function manoPos(B){const v=B.v;if(v==='n')return[11,-11];if(v==='n34')return[B.lx*13,-8.5];return[B.lx*10,-5+B.ly*5]}
+// RIGCAM.kr (15-rig-umanoide.js): the hand follows the rig's squashed floor when the zombie map tilts (1 = as before; missing in the test page)
+function manoPos(B){const v=B.v;if(v==='n')return[11,-11];if(v==='n34')return[B.lx*13,-8.5];return[B.lx*10,-5+B.ly*5*(typeof RIGCAM!=='undefined'?RIGCAM.kr:1)]}
 // (looking straight away it is always turned over, its top to the outside, so it shows beside the head; it turns back when the body turns)
 function manoAng(B,ang){const a=ang==null?B.qa:ang,la=Math.atan2(Math.sin(a),Math.cos(a)*B.f);return[la,B.v==='n'||Math.cos(la)<-.02]}
 function inMano(id,B,o,ang){const[hx,hy]=manoPos(B),[la,flip]=manoAng(B,ang);ctx.save();ctx.translate(hx,hy);ctx.rotate(la);if(flip)ctx.scale(1,-1);held(id,o);ctx.restore()}

@@ -3235,14 +3235,19 @@ const GOBLIN={sc:.95,body:'#a8443a',hood:'#7e2f28',skin:'#7bbf4a',foot:'#3d2a1d'
 const SKEL={sc:1,body:'#d9d2c0',skull:true,skin:'#e8e2d0',foot:'#cfc7b2',ribs:true,held:'xbow',bowCol:'#6b4a2a',shield:true,eyeCol:'#e5484d'},SKEL_NS={...SKEL,shield:false};
 const MERCHANT={sc:1.08,body:'#5a3f7a',hood:'#3a2a52',skin:'#e8c0a0',foot:'#3a2a1d',held:'staff',eyeCol:'#ffc93c',belt:'#8a5a20',hoodTip:true};
 const WITCH={sc:1.35,body:'#3d2f4f',hood:'#2c3a24',skin:'#b7d9a8',float:true,robe:true,crown:true,held:'staff',eyeCol:'#7bf0c0'};
+// camera of the rig (the zombie map sets it when it tilts): kr = how much the floor is squashed compared with the default view (steps,
+// shadow, hand), zk = how tall the character is drawn (uniform scale from the feet, so the head stays round). With 1 and 1 every number
+// is the same as before: the Classic mode does not change by a pixel.
+const RIGCAM={kr:1,zk:1};
 function drawRig(x,y,face,walk,moving,S,o){
-  o=o||{};const B=basis(face),v=B.v;
+  o=o||{};const B=basis(face),v=B.v,kr=RIGCAM.kr,zk=RIGCAM.zk;
   const w=moving?Math.sin(walk):0,bob=moving&&!S.float?Math.abs(Math.sin(walk))*1.6:0,fl=S.float?8+Math.sin(G.t*2.5)*3:0;
-  shadow(x,y+8*S.sc,13*S.sc,5*S.sc,S.float?.22:.32);
-  ctx.save();ctx.translate(x,y-bob-fl);ctx.scale(B.f*S.sc,S.sc);ink(2.5);
+  shadow(x,y+8*S.sc,13*S.sc*zk,5*S.sc*kr*zk,S.float?.22:.32);
+  ctx.save();if(zk===1){ctx.translate(x,y-bob-fl);ctx.scale(B.f*S.sc,S.sc)}
+  else{ctx.translate(x,y+8*S.sc);ctx.scale(B.f*S.sc*zk,S.sc*zk);ctx.translate(0,-8-(bob+fl)/S.sc)}ink(2.5);
   if(S.ring)ringAura(S);
   if(!S.float){let a,b;
-    if(B.side){a=[w*5,7];b=[-w*5,7]}else if(v==='s34'||v==='n34'){a=[-4+w*3,7+w*1.2];b=[4-w*3,7-w*1.2]}else{a=[-5,7+w*2];b=[5,7-w*2]}
+    if(B.side){a=[w*5,7];b=[-w*5,7]}else if(v==='s34'||v==='n34'){a=[-4+w*3,7+w*1.2*kr];b=[4-w*3,7-w*1.2*kr]}else{a=[-5,7+w*2*kr];b=[5,7-w*2*kr]}
     circ(b[0],b[1],3.6);fs(S.foot2||S.foot);circ(a[0],a[1],3.6);fs(S.foot)}
   if(B.back){held(S,o,B);if(S.shield)shieldPart(B,S)}
   if(S.quiver&&(B.side||v==='s34'))quiver(B.side?-9:-8,-6,B.side?-.5:-.3);
@@ -3283,7 +3288,7 @@ function quiverBack(v){const n=v==='n';ctx.save();ink(2);
   ctx.fillStyle='#c9a040';ctx.fillRect(-4,3,8,1.6);ctx.restore();ink(2.5)}
 function held(S,o,B){
   if(!S.held)return;
-  const hx=B.lx*10,hy=-5+B.ly*5;
+  const hx=B.lx*10,hy=-5+B.ly*5*RIGCAM.kr;
   ctx.save();ctx.translate(hx,hy);ctx.rotate(B.la);
   if(S.held==='bow'){const pull=o.pull||0,bk=S.bowKind;
     if(bk==='phoenix'){ctx.save();ctx.globalCompositeOperation='lighter';glow('255,130,40',2,0,22,.3+.08*Math.sin(G.t*9));ctx.restore()}
