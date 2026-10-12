@@ -6,7 +6,7 @@
 - `face`: la direzione in radianti, come `P.face` (π/2 verso chi guarda, 0 verso destra);
 - `anim`: `idle` (respira, si guarda intorno piano, sbatte gli occhi), `walk` (piedi che fanno il passo, corpo che rimbalza, mano libera che dondola), `shoot` (alza l'arco in piano, tende la corda fino al petto, tira, la mano torna alla corda e incocca una freccia nuova), `aim` (la corda tesa di `o.pull` da 0 a 1, come `P.aiming` del gioco), `dash` (si accuccia, scatta in avanti allungato, piccolo salto, atterra), `hit` (spinto indietro, occhi strizzati, bocca aperta, stelline);
 - `p`: da 0 a 1 lungo la mossa (ogni mossa si richiude su se stessa); `sc`: grandezza (1 = come oggi);
-- `o.style`: colori ed equipaggiamento come `heroStyle()` del gioco (le 4 armature, i 5 archi con balestra compresa, anelli con l'aura del gioco, amuleti, manti del pass); `o.moss`: il bastoncino di muschio in bocca (solo schermata iniziale e intro); `o.eyeLight`: il puntino di luce negli occhi (spento: Denis ha chiesto di provarli senza, 12 ottobre); `o.noFx`: niente freccia che vola, polvere e scie (per i fogli).
+- `o.style`: colori ed equipaggiamento come `heroStyle()` del gioco (le 4 armature, i 5 archi con balestra compresa, anelli con l'aura del gioco, amuleti, manti del pass); `o.moss`: il bastoncino di muschio in bocca (solo schermata iniziale e intro); `o.eyeLight`: il puntino di luce negli occhi (acceso, piccolo e netto perché il personaggio non sembri troppo tenero; `false` lo spegne); `o.noFx`: niente freccia che vola, polvere e scie (per i fogli).
 
 ## Com'è fatto
 
@@ -14,9 +14,10 @@
 - L'arco a riposo sta davanti alla pancia, tenuto da una mano, quasi in piano e inclinato in giù davanti: così da davanti si vede come oggi (arco curvo sotto la cintura, corda dritta, mano in basso al centro) e da ogni lato resta un arco, mai una riga. Quando tira l'arco sta in piano all'altezza del petto (un arco in piano visto dall'alto si legge uguale da tutti i lati).
 - La faretra è a tracolla dalla spalla sinistra al fianco: la cinghia attraversa il petto, le penne rosse e bianche escono sopra la spalla destra. Tubo e frecce hanno due posti diversi nell'ordine di disegno, così da dietro le frecce stanno davanti alla testa e da davanti restano nascoste.
 - Il cappuccio è una palla con l'apertura tagliata (`capPath`): da ogni lato copre la testa dove deve. Niente naso: la pallina che sporgeva di profilo l'ha tolta Denis (12 ottobre).
-- Come gli sprite del gioco, la testa si gira un poco verso chi guarda (fino a 17°, mai da dietro): di lato si vedono la faccia e l'occhio. `o.noCheat` lo toglie.
+- Come gli sprite del gioco, la testa si gira un poco verso chi guarda (fino a 24°, mai da dietro): di lato si vedono la faccia e l'occhio. `o.noCheat` lo toglie.
+- Nessun occhio sta mai sul bordo della testa (richiesta di Denis del 12 ottobre: niente pezzi che sbordano): quando la testa gira, l'occhio lontano scivola verso il centro della faccia, si stringe accanto all'altro e sparisce; occhi, guance e bocca sono ritagliati dentro la pelle.
 - L'ordine di disegno viene dalla posa di riposo (`parts` + `run`); l'arco ha un posto fisso davanti alla pancia; la mano libera sta sul fianco e, solo nelle mosse in cui lavora la corda, passa subito dopo l'arco.
-- Dipinto come i nemici Classici rifatti: tre toni su ogni pezzo, luce calda dall'alto a sinistra (`rim`, `glowTop`, `wa`), ombra della testa sulle spalle, contorno spesso.
+- Dipinto come i nemici Classici rifatti ma con i tre toni sfumati (`soft`: un gradiente dalla luce in alto a sinistra al lato in ombra) su cappuccio, faccia e giubba, così non ci sono macchie con il bordo che sembrano pezzi staccati; bordo illuminato caldo (`rim`), ombra morbida della testa sulle spalle, contorno spesso.
 - Funziona con l'inclinazione della telecamera della mappa zombie (`CR.cam`, da 35° a 62°).
 
 ## Tempo di disegno

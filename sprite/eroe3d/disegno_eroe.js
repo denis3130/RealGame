@@ -30,6 +30,8 @@ function chull(pts){pts=pts.slice().sort((a,b)=>a[0]-b[0]||a[1]-b[1]);const cr=(
   for(let i=pts.length-1;i>=0;i--){const q=pts[i];while(up.length>1&&cr(up[up.length-2],up[up.length-1],q)<=0)up.pop();up.push(q)}
   lo.pop();up.pop();return lo.concat(up)}
 const poly=pts=>{ctx.beginPath();for(const q of pts)ctx.lineTo(q[0],q[1]);ctx.closePath()};
+// soft three-tone shading: a radial gradient from a light spot (x0, y0) to the dark side, the base colour in the middle
+function soft(x0,y0,x1,y1,R,col,kl,kd){const g=ctx.createRadialGradient(x0,y0,R*.06,x1,y1,R);g.addColorStop(0,lt(col,kl));g.addColorStop(.5,col);g.addColorStop(1,dk(col,kd));return g}
 const line=pts=>{ctx.beginPath();for(const q of pts)ctx.lineTo(q[0],q[1])};
 // when standing still the head looks gently one way and the other (period 1, smooth at the seam)
 const look=(p,a)=>a*Math.sin(p*TAU)*(.55+.45*Math.cos(p*TAU*2));
@@ -85,38 +87,44 @@ function head(Vh,Rh,S,A,o){const h=Vh.P(0,0,0),{F}=Vh,hood=S.hood,skin=S.skin,no
   // the moss stick, when the mouth turns away: drawn before the hood, so only the part sticking out past the cheek shows
   const mossBack=o.moss&&F(mouthD)<.05;if(mossBack)mossStick(Vh,h,Rh,mouthD,mossD,o,false);
   ink(2.5);ball(h,Rh);ctx.fillStyle=hood;ctx.fill();ctx.stroke();
-  ctx.save();ball(h,Rh-.8);ctx.clip();
-  ctx.fillStyle=dk(hood,.2);ell(h[0]+Rh*.42,h[1]+Rh*.62,Rh*1.08,Rh*.66);ctx.fill();ctx.fillStyle=dk(hood,.36);ctx.globalAlpha=.5;ell(h[0]+Rh*.95,h[1]+Rh*.1,Rh*.32,Rh*1.05);ctx.fill();ctx.globalAlpha=1;
-  ctx.fillStyle=lt(hood,.09);ell(h[0]-Rh*.3,h[1]-Rh*.42,Rh*.6,Rh*.38);ctx.fill();glowTop(h,Rh,.14);
-  // the seam over the top of the hood, from the opening to the back, and two soft folds at the back of the neck
+  // soft shading of a ball lit from the upper left: the three tones blend into each other, no patches with an edge
+  ctx.save();ball(h,Rh-.8);ctx.clip();ctx.fillStyle=soft(h[0]-Rh*.36,h[1]-Rh*.42,h[0]-Rh*.05,h[1]+Rh*.05,Rh*1.2,hood,.14,.3);ctx.fillRect(h[0]-Rh,h[1]-Rh,Rh*2,Rh*2);
+  // the seam over the top of the hood, from the opening to the back
   {const pts=[];for(let i=0;i<=16;i++){const a=.9+i/16*2.1,m=nod([Math.cos(a),0,Math.sin(a)]);if(F(m)>-.02)pts.push(sp(Vh,h,Rh*.99,m));else if(pts.length)break}
-    if(pts.length>1){ctx.strokeStyle=dk(hood,.3);ctx.lineWidth=1;ctx.lineCap='round';line(pts);ctx.stroke()}}
-  for(const sd of[-1,1])on(Vh,[0,0,0],Rh*.97,nod([-.75,sd*.42,-.5]),.05,q=>{ctx.strokeStyle=dk(hood,.3);ctx.lineWidth=1;ctx.beginPath();ctx.moveTo(q[0]-sd*1.6,q[1]-2.2);ctx.quadraticCurveTo(q[0]+sd*.6,q[1],q[0]-sd*.4,q[1]+2.4);ctx.stroke()});
+    if(pts.length>1){ctx.strokeStyle=dk(hood,.22);ctx.lineWidth=1;ctx.lineCap='round';line(pts);ctx.stroke()}}
   // the opening: a thin dark lining inside the hood, the face set in it
   const op=capPath(Vh,h,Rh,fd,.87);
   if(op){ctx.fillStyle=dk(hood,.55);ctx.fill();
     ctx.save();ctx.clip();const fc=capPath(Vh,h,Rh*.99,fd,.79);
-    if(fc){ctx.fillStyle=skin;ctx.fill();ctx.save();ctx.clip();const fq=sp(Vh,h,Rh,fd);
-      ctx.fillStyle=dk(skin,.09);ell(fq[0]+Rh*.55,fq[1]+Rh*.55,Rh*.6,Rh*.36);ctx.fill();
-      ctx.fillStyle='rgba(60,30,14,.12)';ell(fq[0],fq[1]-Rh*.78,Rh,Rh*.22);ctx.fill();
-      ctx.fillStyle=wa(.24);ell(fq[0]-Rh*.24,fq[1]-Rh*.1,Rh*.3,Rh*.22);ctx.fill();ctx.restore();
-      face(Vh,h,Rh,nod,o,fd)}
+    if(fc){const fq=sp(Vh,h,Rh,fd);ctx.fillStyle=soft(fq[0]-Rh*.28,fq[1]-Rh*.2,fq[0],fq[1],Rh*.95,skin,.12,.12);ctx.fill();
+      // eyes, blush and mouth stay inside the skin: near the edge of the face they fade, never over the rim
+      ctx.save();ctx.clip();{const g=ctx.createLinearGradient(0,fq[1]-Rh,0,fq[1]-Rh*.35);g.addColorStop(0,'rgba(60,30,14,.18)');g.addColorStop(1,'rgba(60,30,14,0)');ctx.fillStyle=g;ctx.fillRect(fq[0]-Rh,fq[1]-Rh,Rh*2,Rh)}
+      face(Vh,h,Rh,nod,o,fd);ctx.restore()}
     ctx.restore();
     // the edge of the hood round the opening: a thick dark ring, as in the game
     if(op.rim&&op.rim.length>1){ctx.lineCap='round';ctx.lineJoin='round';ctx.strokeStyle=INK;ctx.lineWidth=2.5;line(op.rim);if(op.full)ctx.closePath();ctx.stroke()}}
   ctx.restore();rim(h,Rh,h,Rh,.3);
   if(o.moss&&!mossBack)mossStick(Vh,h,Rh,mouthD,mossD,o,true)}
-// two big dark eyes, plain as in the game (a small point of light only with o.eyeLight); they close for a blink, squeeze shut when hit;
-// a faint blush, a little mouth when needed
+// two big dark eyes with a small, sharp point of light (o.eyeLight: false takes it away); they close for a blink, squeeze shut when hit;
+// a faint blush, a little mouth when needed. No eye ever sits on the outline of the head: when the head turns, the far eye slides in
+// toward the middle of the face (as the game draws it in three-quarter view) and gets narrower as it tucks in beside the near eye,
+// until it is gone; it is never drawn see-through
+const sstep=(a,b,x)=>{const t=cl((x-a)/(b-a),0,1);return t*t*(3-2*t)};
 function face(Vh,h,Rh,nod,o,fd){const{F}=Vh,fq=sp(Vh,h,Rh*.97,fd);
-  for(const sd of[-1,1]){const e=nrm(nod([EYE[0],sd*EYE[1],EYE[2]])),v=F(e);if(v<=.02)continue;const q=sp(Vh,h,Rh*.97,e),k=cl((v-.02)*5,0,1),rx=1.95*Math.max(.4,v),ry=2.3;
-    ctx.save();ctx.globalAlpha=k;
+  const edge=q=>1-sstep(.7,.84,Math.hypot(q[0]-h[0],q[1]-h[1])/Rh);
+  // a soft limit on how far from the middle of the head an eye may sit (a, b: where the limit starts and the most it reaches)
+  const inward=(q,a,b)=>{const dx=q[0]-h[0],dy=q[1]-h[1],d=Math.hypot(dx,dy)/Rh;if(d<=a)return q;const d2=a+(b-a)*(1-Math.exp(-(d-a)/(b-a)));return[h[0]+dx*d2/d,h[1]+dy*d2/d]};
+  const ry=2.3,E=[-1,1].map(sd=>{const e=nrm(nod([EYE[0],sd*EYE[1],EYE[2]])),v=F(e);return{v,q:sp(Vh,h,Rh*.97,e),rx:1.95*Math.pow(Math.max(0,v),.7)}}).filter(e=>e.v>.08).sort((a,b)=>b.v-a.v);
+  if(E.length){E[0].q=inward(E[0].q,.6,.74)}
+  if(E.length>1){const n=E[0],f=E[1];f.q=inward(f.q,.5,.66);const gap=Math.hypot(f.q[0]-n.q[0],f.q[1]-n.q[1])-n.rx-.8;f.rx=Math.min(f.rx,Math.max(0,gap))}
+  for(const{v,q,rx} of E){if(rx<.7)continue;
+    ctx.save();
     if(o.shut){const dir=fq[0]>=q[0]?1:-1;ctx.strokeStyle=HC.eye;ctx.lineWidth=1.3;ctx.lineCap='round';ctx.lineJoin='round';ctx.beginPath();
       ctx.moveTo(q[0]-dir*rx*.9,q[1]-1.5);ctx.lineTo(q[0]+dir*rx*.8,q[1]);ctx.lineTo(q[0]-dir*rx*.9,q[1]+1.5);ctx.stroke()}
     else{const sq=(o.blink==null?1:o.blink)*(1-.3*(o.squint||0)),sy=ry*Math.max(.12,sq);ctx.fillStyle=HC.eye;ctx.beginPath();ctx.ellipse(q[0],q[1],rx,sy,0,0,TAU);ctx.fill();
-      if(o.eyeLight&&sq>.4){ctx.fillStyle='#fff';ball([q[0]-rx*.3,q[1]-sy*.42],.55);ctx.fill()}}
+      if(o.eyeLight!==false&&sq>.45&&rx>1.2){ctx.fillStyle='#fdf6e8';ball([q[0]-rx*.34,q[1]-sy*.46],.36);ctx.fill()}}
     ctx.restore()}
-  for(const sd of[-1,1]){const c=nrm(nod([CHEEK[0],sd*CHEEK[1],CHEEK[2]])),v=F(c);if(v<=.05)continue;const q=sp(Vh,h,Rh*.97,c);ctx.fillStyle=`rgba(255,120,110,${.2*cl(v*3,0,1)})`;ell(q[0],q[1],1.7*Math.max(.4,v),1);ctx.fill()}
+  for(const sd of[-1,1]){const c=nrm(nod([CHEEK[0],sd*CHEEK[1],CHEEK[2]])),v=F(c),k=sstep(.15,.35,v);if(k<=0)continue;const q=sp(Vh,h,Rh*.97,c),kk=k*edge(q);ctx.fillStyle=`rgba(255,120,110,${.2*kk})`;ell(q[0],q[1],1.7*Math.pow(v,.7),1);ctx.fill()}
   if(o.mouth>.05){const m=nrm(nod(MOUTH)),v=F(m);if(v>.05){const q=sp(Vh,h,Rh*.97,m),w=1.3*Math.max(.45,v),hh=.6+o.mouth*1.1;ink(1);ctx.fillStyle='#5a2020';ctx.beginPath();ctx.ellipse(q[0],q[1],w,hh,0,0,TAU);ctx.fill();ctx.stroke()}}}
 // the moss stick from the mouth: green, a glowing tip that brightens on each drag, a puff of smoke after it
 function mossStick(Vh,h,Rh,md,dd,o,front){const a3=mul(md,Rh*.92),b3=add(a3,mul(dd,5.4)),A=sp(Vh,h,1,a3),B=sp(Vh,h,1,b3),t=G.t,inh=o.inhale||0,pulse=.72+.12*Math.sin(t*3.1)+.55*inh;
@@ -260,13 +268,12 @@ function arciere(x,y,face,anim,p,sc,o){sc=sc||1;o=o||{};const S0=o.style||{},arm
   parts.push({d:dT,f:()=>{const pts=[];for(const[dz,r] of PROF)for(let i=0;i<24;i++){const t=i/24*TAU;pts.push(P(X.T([Math.cos(t)*r*AX,Math.sin(t)*r,ZB+dz])))}
     const hp=chull(pts);let x0=1e9,y0=1e9,x1=-1e9,y1=-1e9;for(const q of hp){x0=Math.min(x0,q[0]);y0=Math.min(y0,q[1]);x1=Math.max(x1,q[0]);y1=Math.max(y1,q[1])}
     const w=x1-x0,h=y1-y0,cx=(x0+x1)/2,cy=(y0+y1)/2;
-    ctx.lineJoin='round';ink(2.5);poly(hp);ctx.fillStyle=S.body;ctx.fill();ctx.stroke();
+    // the tunic in three tones that blend (light from the upper left), so no patch shows an edge
+    ctx.lineJoin='round';ink(2.5);poly(hp);ctx.fillStyle=soft(cx-w*.24,cy-h*.26,cx-w*.04,cy+h*.04,Math.max(w,h)*.72,S.body,.15,.28);ctx.fill();ctx.stroke();
     ctx.save();poly(hp);ctx.clip();
-    ctx.fillStyle=dk(S.body,.2);ell(cx+w*.28,cy+h*.4,w*.64,h*.42);ctx.fill();
-    ctx.fillStyle=dk(S.body,.36);ctx.globalAlpha=.5;ell(cx+w*.52,cy+h*.04,w*.15,h*.56);ctx.fill();ctx.globalAlpha=1;
-    ctx.fillStyle=lt(S.body,.14);ell(cx-w*.2,cy-h*.18,w*.3,h*.22);ctx.fill();ctx.fillStyle=wa(.16);ell(cx-w*.24,cy-h*.25,w*.18,h*.11);ctx.fill();
-    // the shadow of the head on the shoulders
-    {const hq=P(Hc);ctx.fillStyle='rgba(0,0,0,.13)';ell(hq[0]+1.6,hq[1]+Rh*.98,Rh*.95,Rh*.32);ctx.fill()}
+    // the soft shadow of the head on the shoulders
+    {const hq=P(Hc),sy=hq[1]+Rh*.95,g=ctx.createRadialGradient(hq[0]+1.2,sy,1,hq[0]+1.2,sy,Rh*1.05);g.addColorStop(0,'rgba(0,0,0,.18)');g.addColorStop(1,'rgba(0,0,0,0)');
+      ctx.save();ctx.translate(0,sy);ctx.scale(1,.4);ctx.translate(0,-sy);ctx.fillStyle=g;ctx.fillRect(hq[0]-Rh*1.3,sy-Rh*1.1,Rh*2.6,Rh*2.2);ctx.restore()}
     // the hem: a darker band all round the bottom of the tunic, only where it faces us
     surfLine(V0,X,t=>surf(t,ZB+.9,.15),dk(S.body,.24),2.2,0);
     if(S.skinId)for(const[t,dz] of[[-.5,9.5],[.3,6.5],[-.1,3.6],[.75,11],[-.9,5.6],[2.6,8],[3.4,4.6],[-2.4,10]]){const s=surf(t,ZB+dz,.1),v=F(X.Rd(s.n));if(v>.1){const q=P(X.T(s.p));ctx.fillStyle=S.skinId==='stellato'?'#ffffff':'#f6ff9a';ball(q,.9);ctx.fill()}}
@@ -298,8 +305,8 @@ function arciere(x,y,face,anim,p,sc,o){sc=sc||1;o=o||{};const S0=o.style||{},arm
     fist(V0,grip,2.8,S.skin);if(S.ring)ringOn(V0,grip,S.ring)}});
   parts.push({d:anim==='shoot'||anim==='aim'?D(X.T([12,0,ZB+5]))+.01:D(X.T(REST.hR)),f:()=>fist(V0,hR,2.7,S.skin)});
   // the head turns on its own camera (the look), the face nods
-  const dv=Math.atan2(Math.sin(Math.PI/2-face),Math.cos(Math.PI/2-face)),cheat=o.noCheat?0:.3*Math.sin(dv)*cl((Math.PI-Math.abs(dv))/(Math.PI/2),0,1);
-  parts.push({d:hDep,f:()=>{const Vh=Vat(face+A.hy+cheat,P(Hc),hDep);head(Vh,Rh,S,A,{blink:A.blink,squint:A.squint,shut:A.shut,mouth:A.mouth,moss:o.moss&&anim==='idle'||o.moss===2,inhale:A.inhale,exhale:A.exhale,eyeLight:!!o.eyeLight});
+  const dv=Math.atan2(Math.sin(Math.PI/2-face),Math.cos(Math.PI/2-face)),cheat=o.noCheat?0:.42*Math.sin(dv)*cl((Math.PI-Math.abs(dv))/(Math.PI/2),0,1);
+  parts.push({d:hDep,f:()=>{const Vh=Vat(face+A.hy+cheat,P(Hc),hDep);head(Vh,Rh,S,A,{blink:A.blink,squint:A.squint,shut:A.shut,mouth:A.mouth,moss:o.moss&&anim==='idle'||o.moss===2,inhale:A.inhale,exhale:A.exhale,eyeLight:o.eyeLight!==false});
     if(A.flash>0){ctx.save();ctx.globalAlpha=A.flash*.3;ball(P(Hc),Rh);ctx.fillStyle='#fff';ctx.fill();ctx.restore()}}});
   // the arrow flies off after the release, in front of the hero or behind him
   if(!o.noFx&&A.fly>=0&&A.fly<.5&&!isX){const k=A.fly/.5,a=add(sub(grip,mul(aim,BK+1)),mul(aim,k*44)),b=add(a,mul(aim,12));

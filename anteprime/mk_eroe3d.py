@@ -15,7 +15,7 @@ const SLOTS=[['arma','Arma',['arco_frassino','arco_ricurvo','balestra','arco_spi
   ['anello','Anello',['','anello_rame','anello_falco','anello_vento','anello_gelo']],['amuleto','Amuleto',['','amuleto_osso','amuleto_luna','amuleto_lame','cuore_drago']]];
 const gear={arma:'arco_frassino',armatura:'giubba',anello:'',amuleto:''};
 const SHORT={arco_frassino:'Arco di frassino',arco_ricurvo:'Arco ricurvo',balestra:'Balestra',arco_spine:'Arco delle spine',arco_fenice:'Arco della fenice',giubba:'Giubba',cotta:'Cotta di maglia',mantello_ombra:"Mantello d'ombra",corazza_muschio:'Corazza di muschio',anello_rame:'Anello di rame',anello_falco:'Anello del falco',anello_vento:'Anello del vento',anello_gelo:'Anello del gelo',amuleto_osso:"Amuleto d'osso",amuleto_luna:'Amuleto lunare',amuleto_lame:'Amuleto delle lame',cuore_drago:'Cuore di drago'};
-let view='gira',anim='idle',face=Math.PI/2,spin=true,low=false,moss=false,eyeLight=false,zoom=1,el=45,p=0,ms=0,last=performance.now(),tAnim=0;
+let view='gira',anim='idle',face=Math.PI/2,spin=true,low=false,moss=false,eyeLight=true,zoom=1,el=45,p=0,ms=0,last=performance.now(),tAnim=0;
 // the style of the Arciere with this gear, as heroStyle() makes it in the game (for the hero of today and for the 3D one)
 function styleFor(){const a=gear.armatura&&ITEM[gear.armatura],w=gear.arma&&ITEM[gear.arma],W=gear.arma&&WEAP[gear.arma],h=HERO_BY&&HERO_BY.arciere;
   const base={...HERO,...(h&&h.style||{}),armor:gear.armatura||null,ring:gear.anello||null,amu:gear.amuleto||null};if(W&&base.held==='bow'){base.held=W.held||'bow';base.bowKind=W.bow}
