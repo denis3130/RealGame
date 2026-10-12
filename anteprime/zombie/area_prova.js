@@ -18,12 +18,13 @@ const AREA={title:'Angolo zombie · revisione',
     P.crate(8.95*T,4.7*T);P.crate(9.32*T,4.74*T,.8);P.barrel(9.5*T,5.25*T);P.rock(6.3*T,7.45*T,11);P.bush(5.55*T,7.95*T,1);P.hay(6.75*T,6.95*T);P.bush(4.9*T,2.2*T,1);
     P.tree(8.9*T,8.6*T,false,1.05);P.tree(.7*T,9.1*T,false,.85);
     holes.push([8.1*T,7.9*T],[2.3*T,9.2*T]);
-    perches.push({x:2*T,y:7.3*T,z:52,t:0},{x:2.85*T,y:3.2*T,z:58,t:2});
+    perches.push({x:2*T,y:7.3*T,z:52,t:0},{x:2.85*T,y:3.25*T,z:58,t:2});// sulle punte della cancellata e sulla punta dell'obelisco (x, y della punta)
     // i bordi del mondo
     solid(-200,-200,w+400,200,'edge');solid(-200,h,w+400,200,'edge');solid(-200,0,200,h,'edge');solid(w,0,200,h,'edge');
     W.hero={x:4.4*T,y:8.4*T,face:-Math.PI/2,walk:0,moving:false,aim:0,fireCd:0};
     const onPath=(x,y)=>(x>3.85*T&&x<4.95*T&&y>4.2*T)||(y>5.05*T&&y<6*T&&x>3.6*T&&x<5*T)||(y>4.2*T&&y<5.15*T&&x>3.85*T&&x<7.75*T)||(x>6.95*T&&x<7.75*T&&y>3.4*T&&y<5*T);
     bakeGround(w,h,()=>{G.grass(w,h);G.soil(0,.35*T,3.7*T,6.95*T);G.cobbles(w,h,onPath);G.tufts(w,h,(x,y)=>onPath(x,y)||(x<3.7*T&&y>.35*T&&y<7.3*T&&((x*7+y*13)%10)<7));
+      ZM.edgeSnap();// fuori dalla mappa prosegue solo il terreno fin qui (erba, terra, sentiero): non le fosse, le foglie, le pozzanghere
       G.leaves(8.9*T,8.6*T,90,120);G.twigs(3*T,2.25*T,50,40);G.floorPlanks(5.5*T,1*T,3.7*T,2.5*T);G.holes();for(const[x,y,r] of[[4.4*T,7.6*T,14],[5.6*T,4.7*T,11],[4.3*T,5.5*T,9]])G.puddle(x,y,r)});
     props.sort((a,b)=>a.ky-b.ky)}};
 const props=ZM.props;

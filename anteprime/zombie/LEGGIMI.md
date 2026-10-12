@@ -39,8 +39,11 @@ prop + area; non si salva su git). Area predefinita `area_prova` (un angolo 10×
   (candele, vetri, zucche, camini, il verde della cripta), `decals` (pozze di luce fisse e macchie cotte nel terreno), `holes` (fosse da cui
   escono gli zombie), `houses` (il tetto sfuma quando l'eroe entra o sta sul portico), `smokes`, `perches` (corvi appollaiati che volano via).
 - **Terreno** `bakeGround(w,h,painter)`: il painter dipinge con `ZM.G` (`grass`, `tufts`, `soil`, `cobbles(w,h,inside)`, `leaves`, `twigs`,
-  `floorPlanks`, `bloodTrail`, `holes`, `puddle`), poi ombre, buio di contatto e decalcomanie. Dal vivo: nuvole sulla luna, stormo di corvi con le
-  ombre, nebbia bassa, lucciole, foglie che cadono, fumo dei camini, velo di notte con i buchi delle luci (a 1/3 di risoluzione).
+  `floorPlanks`, `bloodTrail`, `holes`, `puddle`), poi ombre, buio di contatto e decalcomanie. `ZM.edgeSnap()` chiamato dentro il painter
+  fotografa il terreno di base per il fuori mappa (con la telecamera girata il bordo prosegue specchiato e si scioglie nell'erba e nella nebbia):
+  va chiamato dopo erba, terra e sentieri e prima di fosse, pozzanghere e foglie, che non devono comparire fuori. Dal vivo: nuvole sulla luna,
+  stormo di corvi con le ombre, nebbia bassa, lucciole, foglie che cadono, fumo dei camini, velo di notte con i buchi delle luci (a 1/3 di
+  risoluzione).
 - Esseri: eroe con la pistola (`ARMI.inMano` tramite `held`), zombie `CR.*` che escono dalle buche; `__MZ` espone `tp, cam, zoom, setWhole, zombies, low`
   per i test. Costo: 4–11 ms a fotogramma sull'area di prova.
 
