@@ -17,7 +17,9 @@ material('water',['#141a28','#0a0e18','#2a3448'],'flat');material('brass',['#8a7
 const bar=(a,b,wd,c)=>{ctx.strokeStyle=INK;ctx.lineWidth=wd+2;seg(a,b);ctx.stroke();ctx.strokeStyle=c;ctx.lineWidth=wd;seg(a,b);ctx.stroke()};
 const glassTex=(w2,h2)=>{const gr=ctx.createRadialGradient(w2/2,h2*.55,1,w2/2,h2*.55,w2*.7);gr.addColorStop(0,'rgba(255,245,210,.9)');gr.addColorStop(1,'rgba(255,200,120,0)');ctx.fillStyle=gr;ctx.fillRect(0,0,w2,h2);ctx.fillStyle='#1d1e23';ctx.fillRect(w2/2-.6,0,1.2,h2)};
 // una lanterna appesa (vetri accesi, cappello di ferro, anello): i pezzi, la fiamma e la luce. c: [x,y,z] del fondo; rgb del vetro
-function lantern(parts,x,y,z,o){o=o||{};const s=o.s||1,g=o.rgb||'255,200,120',gl=o.rgb?((w2,h2)=>{const gr=ctx.createRadialGradient(w2/2,h2*.55,1,w2/2,h2*.55,w2*.7);gr.addColorStop(0,`rgba(${g},.95)`);gr.addColorStop(1,`rgba(${g},0)`);ctx.fillStyle=gr;ctx.fillRect(0,0,w2,h2);ctx.fillStyle='#1d1e23';ctx.fillRect(w2/2-.6,0,1.2,h2)}):glassTex;
+// (o.glass==='dark': vetro scuro, la luce la danno solo la fiamma e il bagliore, che si possono spegnere: la Lanterna delle Anime)
+const darkGlass=(w2,h2)=>{ctx.fillStyle='rgba(18,30,26,.92)';ctx.fillRect(0,0,w2,h2);ctx.strokeStyle='rgba(200,255,225,.22)';ctx.lineWidth=.8;ctx.beginPath();ctx.moveTo(w2*.2,h2*.85);ctx.lineTo(w2*.45,h2*.15);ctx.stroke();ctx.fillStyle='#1d1e23';ctx.fillRect(w2/2-.6,0,1.2,h2)};
+function lantern(parts,x,y,z,o){o=o||{};const s=o.s||1,g=o.rgb||'255,200,120',gl=o.glass==='dark'?darkGlass:o.rgb?((w2,h2)=>{const gr=ctx.createRadialGradient(w2/2,h2*.55,1,w2/2,h2*.55,w2*.7);gr.addColorStop(0,`rgba(${g},.95)`);gr.addColorStop(1,`rgba(${g},0)`);ctx.fillStyle=gr;ctx.fillRect(0,0,w2,h2);ctx.fillStyle='#1d1e23';ctx.fillRect(w2/2-.6,0,1.2,h2)}):glassTex;
   E(parts,...box(x-4*s,y-4*s,z,8*s,8*s,11*s,o.rgb?'red':'glass',{noFoot:true,ink:1.2,tex:{s:gl,e:gl,w:gl,n:gl}}),...box(x-5*s,y-5*s,z+11*s,10*s,10*s,2*s,'iron',{noFoot:true,ow:1.4}),...box(x-5*s,y-5*s,z-2*s,10*s,10*s,2*s,'iron',{noFoot:true,ow:1.4}),ballAt([x,y,z+15*s],1.8*s,'iron',{ow:1.2}));
   flames.push({x,y,z:z+5*s,r:3*s,rgb:o.flame||g,glass:1,ky:y+5*s+1,lk:o.lk});lights.push({x,y:y+8,z:z+6,r:o.r||110,rgb:o.light||g,a:o.a||.45,fl:1,lk:o.lk,house:o.house||null})}
 
@@ -339,6 +341,24 @@ def('outhouse',function(x,y){const w=40,d=44,H=64,parts=[],st={t:9};solid(x,y,w,
 def('lanternPole',function(x,y,dir){dir=dir||1;solid(x-5,y-5,10,10).round=true;shade(x-4,y-4,8,8,80,.4);const parts=[...cyl(x,y,0,3.6,74,'post',{n:6,r1:2.8})];
   E(parts,line3([x,y,70],[x+16*dir,y,70],'#4e3f30',3.2,{ink:true}),line3([x,y,60],[x+10*dir,y,70],'#4e3f30',2.2,{ink:true}),line3([x+15*dir,y,70],[x+15*dir,y,64],'#1d1e23',1.2));
   lantern(parts,x+15*dir,y,48,{r:120,a:.48,lk:.5});prop({bx:[x-20,y-10,x+24,y+12,84],parts,lk:.5,noSplit:true})});
+// la Lanterna delle Anime (la rianimazione della partita a ondate): un altare basso di pietra con la lanterna di ferro e la fiamma verde
+// dell'anima, due candele, il prezzo scritto col gesso sul davanti. Ritorna {x, y, z, set(acceso)}: comprata, la fiamma esce e segue l'eroe e
+// la lanterna resta spenta finché l'anima non viene usata
+def('soulLantern',function(x,y,price){price=price||1500;solid(x-14,y-11,28,22);shade(x-13,y-10,26,20,30,.45);const parts=[];
+  const base=box(x-12,y-9,0,24,18,19,'stone',{ow:1.8}),top=box(x-14,y-11,19,28,22,3.5,'stone',{noFoot:true,ow:1.6});E(parts,...base,...top);
+  const front=base.find(t=>t.k==='face'&&t.key==='s');
+  // il gesso sul davanti: la fiammella, la scritta, il prezzo
+  const draw=(w,h)=>{const r=prng(price+7);ctx.strokeStyle='rgba(236,232,220,.85)';ctx.lineWidth=.9;ctx.lineJoin='round';ctx.lineCap='round';
+    ctx.beginPath();ctx.moveTo(w/2,2.5+r());ctx.quadraticCurveTo(w/2+4.2,6.5,w/2+2.6,9.2);ctx.quadraticCurveTo(w/2,11,w/2-2.6,9.2);ctx.quadraticCurveTo(w/2-4.2,6.5,w/2,2.5+r());ctx.stroke();
+    ctx.font='400 6.6px "Lilita One",system-ui';ctx.textAlign='center';ctx.fillStyle='rgba(236,232,220,.88)';const t=price.toLocaleString('it-IT');ctx.fillText(t,w/2+3,h-2.6);
+    ctx.beginPath();ctx.arc(w/2-ctx.measureText(t).width/2-.4,h-4.9,1.7,0,TAU);ctx.stroke()};
+  E(parts,plane(x-9,y+9,3,18,15,'x','anima_'+price,draw,{host:front}));
+  // due candele agli angoli davanti, sempre accese
+  for(const cx of[x-10,x+10]){E(parts,...cyl(cx,y+7,22.5,1.7,5,'bone',{n:6}));flames.push({x:cx,y:y+7,z:28.6,r:1.4,rgb:'255,215,140',ky:y+8.5})}
+  // la lanterna dell'anima
+  lantern(parts,x,y-1,22.5,{rgb:'120,255,160',glass:'dark',flame:'120,255,160',light:'110,255,150',r:95,a:.5,s:1.25});const fl=flames[flames.length-1],li=lights[lights.length-1];
+  prop({bx:[x-15,y-12,x+15,y+12,44],parts,noSplit:true});
+  return{x,y,z:30,set(v){fl.off=!v;li.off=!v}}});
 // i paletti caduti di una staccionata rotta (a terra, nei varchi)
 def('fallenPickets',function(x,y,n){prop({bx:[x-18,y-10,x+18,y+10,3],floor:true,parts:[fn3(S2=>{const r=prng(Math.round(x*3+y));for(let i=0;i<n;i++){const a=r()*TAU,cx=x+r()*24-12,cy=y+r()*12-6,L=18+r()*6,p0=S2(cx-Math.cos(a)*L/2,cy-Math.sin(a)*L/2,1),p1=S2(cx+Math.cos(a)*L/2,cy+Math.sin(a)*L/2,1);
     ctx.strokeStyle=INK;ctx.lineWidth=5.6;seg(p0,p1);ctx.stroke();ctx.strokeStyle=i%2?'#4a3d30':'#5a4a3a';ctx.lineWidth=3.6;seg(p0,p1);ctx.stroke()}},{fp:[[x-16,y-9],[x+16,y-9],[x+16,y+9],[x-16,y+9]]})]})});

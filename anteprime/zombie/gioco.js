@@ -9,6 +9,7 @@ const PAGE=path.resolve(process.argv[2]||path.join(__dirname,'..','zombie.html')
   await p.goto('file://'+PAGE);await p.waitForFunction(()=>window.__MZ&&__MZ.W.ground,null,{timeout:60000});await p.waitForTimeout(600);
   const E=(f,a)=>p.evaluate(f,a);const T=64,P=(x,y)=>[x*T,(y+2)*T];
   ok(await E(()=>__MZ.coins()===500),'si parte con 500 monete');
+  await E(()=>{__MZ.W.dbg.god=true});// qui si prova il comprare: l'eroe non muore (la morte e i round li prova ondate.js)
   ok(await E(()=>__MZ.W.gunId==='pistola'&&__MZ.gun().D.n==='Pistola'),'in mano la pistola');
   // nessuno zombie dalla fattoria chiusa: si simulano 60 s con l'eroe al cancello
   const sp=await E(([x,y])=>{const M=__MZ,W=M.W;M.zombies(true);W.dbg.noShoot=true;M.tp(x,y);let farm=0,area1=0;for(let i=0;i<1800;i++){M.sim(1,1/30);for(const z of W.Z)if(!z.idle&&!z._c){z._c=1;if(z.y<14.3*64)farm++;else area1++}}const idle=W.Z.filter(z=>z.idle).length;W.Z.length=0;return{farm,area1,idle}},P(6.45,12.8));
@@ -39,7 +40,7 @@ const PAGE=path.resolve(process.argv[2]||path.join(__dirname,'..','zombie.html')
   ok(await E(()=>__MZ.buyNow('muro_revolver')&&__MZ.W.gunId==='revolver'&&__MZ.coins()===100),'comprato il Revolver (500): in mano e monete tolte');
   // le armi vere uccidono: uno zombie davanti, l'eroe fermo spara finché muore e arrivano 60 monete
   const kill=await E(([x,y])=>{const M=__MZ,W=M.W;W.dbg.noShoot=false;M.tp(x,y);W.Z.length=0;const i=M.addZombie('zombie',x,y-90,1);W.Z[i].hp=80;const c0=M.coins();for(let k=0;k<240&&!W.Z[i].die;k++)M.sim(1,1/30);return{dead:!!W.Z[i].die,coins:M.coins()-c0}},P(6.45,17.5));
-  ok(kill.dead&&kill.coins===60,`il Revolver uccide lo zombie (+${kill.coins} monete)`);
+  ok(kill.dead&&kill.coins>=60&&(kill.coins-60)%10===0,`il Revolver uccide lo zombie (+${kill.coins} monete: 60 per lo zombie e 10 per ogni sparo a segno)`);
   // la Bara delle Sorprese: paga, gira, offre, si prende
   const bara=await E(async([x,y])=>{const M=__MZ,W=M.W;W.Z.length=0;M.coins(1000);M.tp(x,y);const B=M.box();if(!B)return{none:1};const ok1=M.buyNow('bara');const c=M.coins();for(let i=0;i<60*7&&B.b.st!=='offre'&&B.b.st!=='scappa';i++)M.sim(1,1/60);const st=B.b.st,gun=B.b.gun;
     if(st==='offre')M.buyNow('bara');for(let i=0;i<60;i++)M.sim(1,1/60);return{ok1,c,st,gun,now:W.gunId}},P(4.45,17.35));

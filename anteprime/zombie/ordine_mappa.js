@@ -14,7 +14,9 @@ const SC={cancelloS:[...P(6.45,12.75),[Z(6.3,11.95),Z(6.55,11.7)]],cancelloN:[..
  // la Bara ferma nel mondo nei suoi tre posti, chiusa e aperta (con la mano e l'arma), con l'eroe e uno zombie accanto: [x, y, zombie, {bara:[posto, stato]}]
  baraCim:[...P(4.92,17.66),[Z(4.92,15.86)],{bara:[0,'chiusa']}],baraCimA:[...P(4.92,17.66),[Z(4.92,15.86)],{bara:[0,'aperta']}],
  baraTet:[...P(9.55,11.45),[Z(10.3,10.85)],{bara:[1,'chiusa']}],baraTetA:[...P(9.55,11.45),[Z(10.3,10.85)],{bara:[1,'aperta']}],
- baraFie:[...P(12.2,5.6),[Z(12.95,5.0)],{bara:[2,'chiusa']}],baraFieA:[...P(12.2,5.6),[Z(12.95,5.0)],{bara:[2,'aperta']}]};
+ baraFie:[...P(12.2,5.6),[Z(12.95,5.0)],{bara:[2,'chiusa']}],baraFieA:[...P(12.2,5.6),[Z(12.95,5.0)],{bara:[2,'aperta']}],
+ // la Lanterna delle Anime (partita a ondate), con l'eroe davanti e uno zombie dietro
+ anime:[...P(4.55,22.95),[Z(4.0,21.75)]]};
 const PSIS=[0,45,90,135,180,225,270,315],TABLE=['fienileDentro','colonicaDentro','tettoia','cancelloS','latrina','baraCimA','baraTetA','baraFieA'],INHOUSE=['fienileDentro','fienileStalle','colonicaDentro'];
 // la libreria della verità, iniettata nella pagina (verita.js)
 const LIB=require('./verita.js');

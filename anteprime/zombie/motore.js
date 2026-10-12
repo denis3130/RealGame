@@ -366,7 +366,7 @@ function drawDark(W0,H0,toScr0,h0a){if(LOWFX)return;const Q=3,Wd=Math.ceil(W0/Q)
   // piega), cioè S(x,y,z/2) senza l'altezza e con lo scarto (0, −z/2) del mondo; la lanterna, che sullo schermo resta sopra la base, prende un
   // secondo buco piccolo alla sua altezza, acceso man mano che il primo se ne va (a vista dritta non c'è: niente salti). Più grande
   // schiarirebbe anche il terreno dietro, che girando cambierebbe di nuovo
-  for(const L of lights){if(L.house&&L.house.a>.6)continue;const hz=(L.z||0)*.5,ha=.85*(L.house?1-L.house.a:1);LEANK=L.lk||1;setRef(L.ref);const q=S(L.x,L.y,hz),qt=hz?S(L.x,L.y,L.z):q;LEANK=1;setRef(null);
+  for(const L of lights){if(L.off||(L.house&&L.house.a>.6))continue;const hz=(L.z||0)*.5,ha=.85*(L.house?1-L.house.a:1);LEANK=L.lk||1;setRef(L.ref);const q=S(L.x,L.y,hz),qt=hz?S(L.x,L.y,L.z):q;LEANK=1;setRef(null);
     if(CAM.rot&&hz){const dx=hz*CAM.s,dy=hz*(CAM.CP-CAM.c*SP),d=Math.hypot(dx,dy);hole(q[0]+dx,q[1]+dy,L.r*1.2,ha);if(d>.5)hole(qt[0],qt[1],L.z*.4,ha*.6*cl(d/30,0,1),true)}
     else hole(q[0],q[1],L.r*1.2,ha)}if(W.hero){const hq=S(W.hero.x,W.hero.y,10);hole(hq[0],hq[1],120,.6)}
   ctx.save();ctx.setTransform(1,0,0,1,0,0);ctx.drawImage(dark,0,0,W0,H0);ctx.restore()}
@@ -397,7 +397,7 @@ function drawPerch(p){{if(p.away)return;const ho=perchHost(p);LEANK=ho&&ho.lk!=n
 // fiamme e lumi: candele, vetri delle lanterne, zucche, camini, il respiro verde della cripta (disegnate nell'ordine di profondità)
 // f.n (facoltativa): la normale della faccia da cui esce la luce (la porta della cripta): vista da dietro non si disegna, di taglio sfuma
 function drawFlame(f,h0a){if(f.house&&f.house.a>.9)return;if(f.n){const fc=facing(f.n[0],f.n[1]);if(fc<=0)return;if(fc<.25){ctx.save();ctx.globalAlpha*=fc/.25;try{drawFlame0(f)}finally{ctx.restore()}return}}drawFlame0(f)}
-function drawFlame0(f){LEANK=f.lk||1;setRef(f.ref);const q=S(f.x,f.y,f.z);LEANK=1;setRef(null);const fl=.85+.15*Math.sin(W.t*11+f.x)*Math.sin(W.t*7.3+f.y);
+function drawFlame0(f){if(f.off)return;LEANK=f.lk||1;setRef(f.ref);const q=S(f.x,f.y,f.z);LEANK=1;setRef(null);const fl=.85+.15*Math.sin(W.t*11+f.x)*Math.sin(W.t*7.3+f.y);
   if(f.fire){for(let i=0;i<5;i++){const a=W.t*6+i*1.3,h=10+4*Math.sin(a),xx=q[0]+(i-2)*3.2;ctx.fillStyle=i%2?'#ffb040':'#ff7a20';ctx.beginPath();ctx.moveTo(xx-3,q[1]);ctx.quadraticCurveTo(xx-2,q[1]-h*.6,xx+Math.sin(a)*1.5,q[1]-h);ctx.quadraticCurveTo(xx+2,q[1]-h*.6,xx+3,q[1]);ctx.closePath();ctx.fill()}}
   else if(f.r<2){ctx.fillStyle='#fff2c0';ctx.beginPath();ctx.ellipse(q[0],q[1]-2,f.r*1.1,f.r*2.4*fl,0,0,TAU);ctx.fill()}
   if(LOWFX)return;ctx.save();ctx.globalCompositeOperation='lighter';glow(f.rgb,q[0],q[1]-2,(f.crypt?26:f.fire?28:f.pump?16*f.pump:f.glass?22:12)*fl,(f.crypt?.5+.2*Math.sin(W.t*1.4):f.pump?.7:.6)*fl);ctx.restore()}
@@ -407,10 +407,12 @@ let gunState=null,zOn=true,spawnT=1.2,ZID=0;// ZID: numero di serie degli zombie
 {const _h=held;held=function(St,o,B){if(St.gun&&window.ARMI)return ARMI.inMano(St.gun,B,o.gp||{},o.aim);return _h(St,o,B)}}
 const HSTYLE=Object.assign({},HERO,{held:null,quiver:false,gun:'pistola'});
 // le buche sono [x, y, zona, tipo, quando]: da una zona chiusa (W.zoneOpen) non esce nessuno; tipo 'mais' (escono camminando dal granturco) e
-// 'porta' (la latrina) non salgono da terra; quando() avvisa il prop (la porta che si spalanca)
-function spawn(){const h=W.hero,c=holes.filter(p=>(p[2]==null||W.zoneOpen[p[2]])&&Math.hypot(p[0]-h.x,p[1]-h.y)>110&&Math.hypot(p[0]-h.x,p[1]-h.y)<460);if(!c.length)return;const p=c[Math.floor(Math.random()*c.length)],k=KINDS[Math.floor(Math.random()*KINDS.length)];
-  if(W.Z.some(z=>Math.hypot(z.x-p[0],z.y-p[1])<30))return;const out=p[3]==='mais'||p[3]==='porta';if(p[4])p[4]();
-  W.Z.push({id:++ZID,kind:k[0],sc:k[1],spd:k[2],hp:k[3],x:p[0],y:p[1],face:Math.atan2(h.y-p[1],h.x-p[0]),p:Math.random(),anim:'walk',rise:out?1:0,die:0,flash:0})}
+// 'porta' (la latrina) non salgono da terra; quando() avvisa il prop (la porta che si spalanca). o (la partita a ondate): {kind, hp e spd
+// (moltiplicano quelli del tipo), q (conta per il round)}; restituisce lo zombie o null se la buca scelta era occupata
+function spawn(o){o=o||{};const h=W.hero,c=holes.filter(p=>(p[2]==null||W.zoneOpen[p[2]])&&Math.hypot(p[0]-h.x,p[1]-h.y)>110&&Math.hypot(p[0]-h.x,p[1]-h.y)<460);if(!c.length)return null;const p=c[Math.floor(Math.random()*c.length)],
+    k=o.kind?KINDS.find(q=>q[0]===o.kind)||KINDS[0]:KINDS[Math.floor(Math.random()*KINDS.length)];
+  if(W.Z.some(z=>Math.hypot(z.x-p[0],z.y-p[1])<30))return null;const out=p[3]==='mais'||p[3]==='porta';if(p[4])p[4]();
+  const z={id:++ZID,kind:k[0],sc:k[1],spd:k[2]*(o.spd||1),hp:k[3]*(o.hp||1),x:p[0],y:p[1],face:Math.atan2(h.y-p[1],h.x-p[0]),p:Math.random(),anim:'walk',rise:out?1:0,die:0,flash:0};z.spd0=z.spd;z.hp0=z.hp;if(o.q)z.q=1;W.Z.push(z);return z}
 // gli zombie fermi in una zona chiusa (la fattoria prima del cancello): girano piano intorno a casa loro; da fermi girano di colpo la testa
 // verso l'eroe quando si avvicina; se l'eroe va al cancello vengono alle sbarre e allungano le braccia. Quando la zona si apre partono
 function idleZombie(kind,x,y,zone){const k=KINDS.find(k=>k[0]===kind)||KINDS[0],z={id:++ZID,kind:k[0],sc:k[1],spd:k[2],hp:k[3],x,y,face:rr(0,TAU),p:Math.random(),anim:'idle',rise:1,die:0,flash:0,idle:{zone,home:[x,y],t:rr(0,3),tg:null}};W.Z.push(z);return z}
@@ -428,13 +430,13 @@ function sep(z){for(const o of W.Z)if(o!==z&&!o.die&&o.rise>=1){const ex=z.x-o.x
 // più, il razzo esplode largo D.splash. Uno zombie ucciso dà le monete della partita (W.killCoins, 60)
 function equip(id){if(!window.ARMI||!ARMI.DATI[id])return;W.gunId=id;gunState=ARMI.nuova(id);HSTYLE.gun=id;W.toast=[ARMI.DATI[id].n,1.8]}
 function hurt(z,n,fx){z.hp-=n;z.flash=.12;if(fx)for(let i=0;i<4;i++)W.FX.push({k:'drop',tw:[z.x,z.y,z.zh||0],x:0,y:-24*RIGK.mzk*z.sc/1.1,vx:rr(-40,40),vy:rr(-60,-10),t:.5});
-  if(z.hp<=0&&!z.die){z.die=.001;const n2=W.killCoins||60;W.coins+=n2;W.FX.push({k:'coin',tw:[z.x,z.y,(z.zh||0)+44*z.sc],n:n2,t:1.1,t0:1.1})}}
+  if(z.hp<=0&&!z.die){z.die=.001;W.kills=(W.kills||0)+1;const n2=z.reward||W.killCoins||60;W.coins+=n2;W.FX.push({k:'coin',tw:[z.x,z.y,(z.zh||0)+44*z.sc],n:n2,t:1.1,t0:1.1});if(W.director&&W.director.killed)W.director.killed(z)}}
 function fireShot(ev){const h=W.hero,g=gunState,D=g.D,B=basis(heroDir()*Math.PI/4),zk=RIGK.hzk,pp=window.ARMI&&ARMI.inManoPunti&&ARMI.inManoPunti(W.gunId,B,g.pose(),scrAng(h.aim)),m=pp&&pp.muzzle,
     hw=[h.x,h.y,h.zh||0],ao=m?[m[0]*B.f*zk,(m[1]-8)*zk]:[Math.cos(h.aim)*16,-14+Math.sin(h.aim)*16],ty=-24*RIGK.mzk;
   for(const da of ev.ang){const a=h.aim+da,dx=Math.cos(a),dy=Math.sin(a);let end=D.range,left=(D.pierce||0)+1;
     for(let s=12;s<D.range;s+=5){const s0=hit(h.x+dx*s,h.y+dy*s,1.5);if(s0&&s0.tag!=='hole'){end=s;break}}// il primo muro sulla linea
     const L=[];for(const z of W.Z){if(z.die||z.rise<1)continue;const rx=z.x-h.x,ry=z.y-h.y,al=rx*dx+ry*dy;if(al<0||al>end)continue;if(Math.abs(rx*dy-ry*dx)<11*z.sc)L.push([al,z])}L.sort((p,q)=>p[0]-q[0]);
-    for(const[al,z] of L){hurt(z,D.dmg*(D.pel>1?cl(1.25-al/D.range,.35,1):1),true);if(--left<=0){end=al;break}}
+    for(const[al,z] of L){hurt(z,D.dmg*(D.pel>1?cl(1.25-al/D.range,.35,1):1),true);if(!ev.paid&&W.director&&W.director.shotHit){ev.paid=1;W.director.shotHit()}if(--left<=0){end=al;break}}
     if(D.splash){const ex=h.x+dx*end,ey=h.y+dy*end;for(const z of W.Z)if(!z.die&&z.rise>=1&&Math.hypot(z.x-ex,z.y-ey)<D.splash+8)hurt(z,D.dmg*.6,false);W.FX.push({k:'boom',tw:[ex,ey,0],t:.45,t0:.45,r:D.splash})}
     W.FX.push({k:'shot',hw,ao,tw:[h.x+dx*end,h.y+dy*end,0],bo:[0,ty],t:D.pel>1?.06:.08,w:D.pel>1?1.2:2})}}
 // le cose da comprare (cancello, armi a muro, Bara): {id, x, y, r, show(), label(), price(), act()}; la pagina mostra il bottone da tenere
@@ -458,7 +460,7 @@ function boxPlace(x,y,a){const F=BOX.F,k=F.BS,c=Math.cos(a),s=Math.sin(a),w=(u,v
   Object.assign(BOX.sol,{x:x0,y:y0,w:x1-x0,d:y1-y0});
   const P=[];for(const p of F.BH)P.push(w(p[0]*1.12,p[1]*1.12));for(const q of F.cand)for(const[dx,dy] of DIR8)P.push(w(q[0]+dx*1.4,q[1]+dy*1.4));for(const q of F.lid)P.push(w(q[0],q[1]));
   const E=BOX.E;finFP(E,P.map(q=>[q[0],q[1],0]));E.x=x;E.y=y;E.prop.ref=[x,y];E.zs=undefined;E.H=null}
-function boxUpdate(dt){if(!BOX)return;const b=BOX.b;for(const e of b.update(dt)){if(e.k==='presa')equip(e.id);else if(e.k==='rimborso'){W.coins+=e.n;W.toast=['La Bara scappa: monete restituite',2.4]}
+function boxUpdate(dt){if(!BOX)return;const b=BOX.b;for(const e of b.update(dt)){if(e.k==='suono'){if(ARMI.suonoBara)ARMI.suonoBara(e.w,180)}else if(e.k==='presa')equip(e.id);else if(e.k==='rimborso'){W.coins+=e.n;W.toast=['La Bara scappa: monete restituite',2.4]}
     else if(e.k==='via'){const c=BOX.spots.filter(s=>(s[2]==null||W.zoneOpen[s[2]])&&Math.hypot(s[0]-BOX.x,s[1]-BOX.y)>40),s=c.length?c[Math.floor(Math.random()*c.length)]:[BOX.x,BOX.y,null,BOX.a];boxPlace(s[0],s[1],s[3]||0);navBuild();if(NAV)NAV.hc=-1}}}
 // la voce della Bara in questo fotogramma: l'altezza della posa (chiusa 18 px, col coperchio aperto fino a 40, con la mano e l'arma 50, sotto
 // terra quasi niente), il riquadro a schermo e la piega come uno strato, l'impronta girata di ψ
@@ -477,8 +479,8 @@ function boxPrims(){const F=BOX.F,k=F.BS,c=Math.cos(BOX.a),s=Math.sin(BOX.a),X=B
   for(const l of G.lines)out.push({t:'line',p0:w([l[0],l[1],l[2]]),p1:w([l[0],l[1],l[3]]),w:l[4]*k,al:1});
   for(const q of G.pts)out.push({t:'pts',pts:[w(q)],rad:q[3]*k,al:1});
   return out}
-function updateBeings(dt,inp){const h=W.hero;const m=Math.hypot(inp.x,inp.y);h.moving=m>.15;if(h.moving){const sp=150*Math.min(1,m);move(h,inp.x/m*sp*dt,inp.y/m*sp*dt,10);h.face=Math.atan2(inp.y,inp.x);h.walk+=dt*12}
-  h.zh=(h.zh||0)+(heightAt(h.x,h.y)-(h.zh||0))*Math.min(1,dt*14);const noShoot=!!W.dbg.noShoot;
+function updateBeings(dt,inp){const h=W.hero,DI=W.director;if(h.dead)inp={x:0,y:0};const m=Math.hypot(inp.x,inp.y);h.moving=m>.15;if(h.moving){const sp=150*Math.min(1,m);move(h,inp.x/m*sp*dt,inp.y/m*sp*dt,10);h.face=Math.atan2(inp.y,inp.x);h.walk+=dt*12}
+  h.zh=(h.zh||0)+(heightAt(h.x,h.y)-(h.zh||0))*Math.min(1,dt*14);const noShoot=!!W.dbg.noShoot||!!h.dead;
   // il bersaglio: lo zombie più vicino entro 230 px che l'eroe vede davvero (i colpi non passano attraverso muri, recinti, lapidi, casse…);
   // la linea si controlla sui solidi veri, ignorando quello in cui sta lo zombie (la fossa da cui esce); ricontrollata ogni 0,1 s
   const g=gunState,RG=g?Math.min(g.D.range,260):230;
@@ -487,7 +489,7 @@ function updateBeings(dt,inp){const h=W.hero;const m=Math.hypot(inp.x,inp.y);h.m
     for(const[,z] of c)if(physClear(h.x,h.y,z.x,z.y,1.5,hit(z.x,z.y,2))){tgt=z;break}h.tgZ=tgt}
   if(tgt){h.aim=Math.atan2(tgt.y-h.y,tgt.x-h.x);if(!h.moving)h.face=h.aim}
   // il grilletto: le armi automatiche lo tengono premuto, le altre lo premono di nuovo appena l'arma è pronta
-  if(g){const want=!h.moving&&!!tgt&&!noShoot,ev=g.update(dt,want&&(g.D.auto||(g.st==='pronta'&&g.cd<=0)));for(const e of ev)if(e.k==='sparo'&&!noShoot)fireShot(e);
+  if(g){const want=!h.moving&&!!tgt&&!noShoot,ev=g.update(dt,want&&(g.D.auto||(g.st==='pronta'&&g.cd<=0)));for(const e of ev){if(e.k==='sparo'&&!noShoot)fireShot(e);else if(e.k==='suono'&&ARMI.suono)ARMI.suono(W.gunId,e.w,180)}
     if(tgt||h.moving)h.rlT=0;else if((h.rlT=(h.rlT||0)+dt)>1.2&&g.st==='pronta'&&g.mag<g.D.mag&&g.res>0)g.ricarica();// ricarica da solo quando non c'è niente da colpire
     if(W.gunId==='pistola'){if(g.res<g.D.mag*2)g.res+=g.D.res}// la pistola non resta mai senza colpi
     else if(g.mag<=0&&g.res<=0&&g.st!=='ricarica')equip('pistola')}// finiti i colpi si torna alla pistola
@@ -495,11 +497,14 @@ function updateBeings(dt,inp){const h=W.hero;const m=Math.hypot(inp.x,inp.y);h.m
   boxUpdate(dt);
   // la scia e le gocce sono attaccate a punti del mondo (i piedi dell'eroe e dello zombie colpito, ripresi con S a ogni fotogramma) più uno
   // scarto sullo schermo (la bocca dell'arma, l'altezza del petto, il volo delle gocce): girando la telecamera restano dove sono successe
-  spawnT-=dt;if(zOn&&spawnT<=0&&W.Z.filter(z=>!z.idle&&!z.die).length<(W.maxZ||5)){spawn();spawnT=rr(2,3.5)}navUpdate(dt);
+  if(DI)DI.update(dt,zOn);else{spawnT-=dt;if(zOn&&spawnT<=0&&W.Z.filter(z=>!z.idle&&!z.die).length<(W.maxZ||5)){spawn();spawnT=rr(2,3.5)}}navUpdate(dt);
   for(const z of W.Z){if(z.flash>0)z.flash-=dt;if(z.die){z.die+=dt;continue}z.zh=(z.zh||0)+(heightAt(z.x,z.y)-(z.zh||0))*Math.min(1,dt*14);if(z.rise<1){z.rise=Math.min(1,z.rise+dt/1.3);z.face=Math.atan2(h.y-z.y,h.x-z.x);continue}
     if(z.idle){if(W.zoneOpen[z.idle.zone])z.idle=null;else{idleStep(z,dt);sep(z);continue}}
+    if(z.ai){z.ai(z,dt);sep(z);continue}// un boss della partita: si muove e colpisce da solo
+    if(z.stun>0){z.stun-=dt;if(z.anim!=='idle'){z.anim='idle';z.p=0}z.p=(z.p+dt/2.4)%1;sep(z);continue}// respinto dall'anima che rialza l'eroe
     const dx=h.x-z.x,dy=h.y-z.y,d=Math.hypot(dx,dy);
-    if(d<30&&physClear(z.x,z.y,h.x,h.y,2)){z.face=Math.atan2(dy,dx);if(z.anim!=='attack'){z.anim='attack';z.p=0}z.p+=dt/1.4;z.chk=0;z.cx0=null}else{if(z.anim!=='walk'){z.anim='walk';z.p=0}z.p+=dt/(z.kind==='hound'?.6:1.1);zWalk(z,dt)}
+    if(d<30&&physClear(z.x,z.y,h.x,h.y,2)){z.face=Math.atan2(dy,dx);if(z.anim!=='attack'){z.anim='attack';z.p=0}const p0=z.p;z.p+=dt/1.4;if(DI&&DI.zombieHit&&p0<.55&&z.p>=.55)DI.zombieHit(z,d);z.chk=0;z.cx0=null}// il colpo arriva a metà del gesto
+    else{if(z.anim!=='walk'){z.anim='walk';z.p=0}z.p+=dt/(z.kind==='hound'?.6:1.1);zWalk(z,dt)}
     sep(z);z.p%=1}
   for(let i=W.Z.length-1;i>=0;i--)if(W.Z[i].die>1.1||(!zOn&&W.Z[i].rise<1))W.Z.splice(i,1);
   for(const f of W.FX){f.t-=dt;if(f.k==='drop'){f.x+=f.vx*dt;f.y+=f.vy*dt;f.vy+=260*dt}}for(let i=W.FX.length-1;i>=0;i--)if(W.FX[i].t<=0)W.FX.splice(i,1);
@@ -516,9 +521,9 @@ function drawZombie(z){const q=S(z.x,z.y,z.zh||0),zk=RIGK.mzk,fc=z.face+CAM.yaw;
       G=(ox,oy)=>[q[0]+ox*c-oy*s,q[1]+(ox*s+oy*c)*SP];// un punto del terreno intorno ai piedi, (ox, oy) nel mondo
     ctx.fillStyle='#4a3a2a';ctx.save();ctx.translate(q[0],q[1]);ctx.transform(c,SP*s,-s,SP*c,0,0);ctx.beginPath();ctx.ellipse(0,0,mx,my,0,0,TAU);ctx.restore();ctx.fill();
     for(let i=0;i<6;i++){const a=i*1.05+z.x,r=10+k*16,g=G(Math.cos(a)*r,Math.sin(a)*r*.5);ctx.fillStyle='#64503a';ball([g[0],g[1]-Math.sin(k*Math.PI)*6*CAM.CP],2.4);ctx.fill()}
-    if(k>.25){const u=ez((k-.25)/.75);ctx.save();ctx.beginPath();ctx.rect(q[0]-60,q[1]-150,120,151);ctx.clip();
+    if(k>.25){const u=ez((k-.25)/.75),ck=Math.max(1,z.sc/1.1);ctx.save();ctx.beginPath();ctx.rect(q[0]-60*ck,q[1]-150*ck,120*ck,151);ctx.clip();
       ctx.translate(0,(1-u)*60*z.sc*zk);CR[z.kind](q[0],q[1],fc,'idle',(W.t*.6)%1,z.sc);ctx.restore()}return}
-  if(z.die){const k=Math.min(1,z.die/1.1);ctx.save();ctx.globalAlpha=1-k*k;ctx.beginPath();ctx.rect(q[0]-60,q[1]-150,120,151);ctx.clip();ctx.translate(0,ez(k)*50*z.sc*zk);CR[z.kind](q[0],q[1],fc,'idle',0,z.sc);ctx.restore();return}
+  if(z.die){const k=Math.min(1,z.die/1.1),ck=Math.max(1,z.sc/1.1);ctx.save();ctx.globalAlpha=1-k*k;ctx.beginPath();ctx.rect(q[0]-60*ck,q[1]-150*ck,120*ck,151);ctx.clip();ctx.translate(0,ez(k)*50*z.sc*zk);CR[z.kind](q[0],q[1],fc,'idle',0,z.sc);ctx.restore();return}
   CR[z.kind](q[0],q[1],fc,z.anim,z.p,z.sc);if(z.flash>0){ctx.save();ctx.globalCompositeOperation='lighter';glow('255,255,255',q[0],q[1]-24*z.sc*zk,22*z.sc,.5);ctx.restore()}}
 // le trasparenze della casa: il tetto sfuma quando l'eroe entra, i mobili compaiono; i muri (wN, wS, wE, wW: da che parte guardano) con l'eroe
 // dentro diventano trasparenti se sono rivolti verso la telecamera (a vista dritta i muri sud, come prima), piano piano mentre si gira
@@ -529,7 +534,8 @@ const alphaOf=(hs,part)=>{if(part==='roof')return hs.a;if(part==='in')return hs.
 // non sfarfalla tra due viste; l'arma prende l'angolo vero sullo schermo
 function heroDir(){const h=W.hero,sa=scrAng(h.face),d=Q8(sa),cur=h.dS==null?d:h.dS,df=Math.atan2(Math.sin(sa-cur*Math.PI/4),Math.cos(sa-cur*Math.PI/4));h.dS=Math.abs(df)>Math.PI/8+.12?d:cur;return h.dS}
 // (senza aim l'arma segue il corpo: null, non scrAng(undefined) = NaN)
-function drawHero(){const h=W.hero,q=S(h.x,h.y,h.zh||0);drawRig(q[0],q[1]-8,heroDir()*Math.PI/4,h.walk,h.moving,HSTYLE,{gp:gunState?gunState.pose():{},aim:h.aim==null?null:scrAng(h.aim)})}
+function drawHero(){const h=W.hero,q=S(h.x,h.y,h.zh||0),f=h.fall||0;if(f>0){ctx.save();ctx.translate(q[0],q[1]-6);ctx.rotate(-f*1.42);ctx.translate(-q[0],-(q[1]-6))}
+  drawRig(q[0],q[1]-8,heroDir()*Math.PI/4,h.walk,h.moving&&!f,HSTYLE,{gp:gunState?gunState.pose():{},aim:h.aim==null||f?null:scrAng(h.aim)});if(f>0)ctx.restore();if(W.director&&W.director.drawOnHero)W.director.drawOnHero(q)}
 // una voce della lista: uno strato di prop (L), un prop intero nell'ordine di prima (W, con W.dbg.ord='ky'), un essere (B: eroe, zombie, corvo
 // posato, fiamma libera)
 function drawEntry(e,h0a){switch(e.kind){case'V':return drawVeil(e.k);case'L':return drawLayer(e);case'T':return drawBox();case'W':return drawWhole(e.prop);case'B':return e.box?drawBox():e.hero?drawHero():e.z?drawZombie(e.z):e.pc?drawPerch(e.pc):e.fl?drawFlame(e.fl,h0a):null}}
@@ -930,7 +936,7 @@ function drawWorld(dt,view){const h0=houses[0],h0a=h0?h0.a:1,D=W.dbg;
   // davanti, con gli esseri e i corvi posati in mezzo; le fiamme vengono subito dopo lo strato che le contiene
   const t0=D.prof?performance.now():0;ORD.fr++;ORD.cyc=0;ORD.tIntra=0;ORD.vis=vis;const[floors,order]=buildOrder(vis),t1=D.prof?performance.now():0;
   for(const L of floors)drawEntry(L,h0a);
-  if(PH)PH('pavimenti');inGround(()=>drawClouds(dt));drawCrowShadows();drawLights(h0a);if(PH)PH('nuvole_luci');
+  if(PH)PH('pavimenti');inGround(()=>drawClouds(dt));drawCrowShadows();drawLights(h0a);if(W.director&&W.director.drawGround)W.director.drawGround(dt);if(PH)PH('nuvole_luci');
   let hi=-1;const CO=D.costs;// W.dbg.costs: il costo vero di ogni voce (con la scheda grafica aspettata dopo ognuna), in D.costs
   for(let i=0;i<order.length;i++){const e=order[i];if(e.hero)hi=i;if(CO){const t0=performance.now();drawEntry(e,h0a);ctx.getImageData(0,0,1,1);const k=e.prop?e.prop.name+'#'+e.prop.i+(e.part?':'+e.part:''):e.sid;CO[k]=(CO[k]||0)+performance.now()-t0}else drawEntry(e,h0a)}
   if(D.heroLast&&!D.noHero&&W.hero)drawHero();
@@ -943,7 +949,7 @@ function drawWorld(dt,view){const h0=houses[0],h0a=h0?h0.a:1,D=W.dbg;
     if(f.k==='boom'){const t=S(f.tw),k=1-f.t/f.t0;ctx.save();ctx.globalCompositeOperation='lighter';glow('255,170,70',t[0],t[1]-10,f.r*(.6+k),.9*(1-k));ctx.restore();ctx.strokeStyle=`rgba(255,220,160,${.7*(1-k)})`;ctx.lineWidth=3;ctx.beginPath();ctx.ellipse(t[0],t[1],f.r*(.4+k),f.r*(.4+k)*.6*CAM.SP,0,0,TAU);ctx.stroke();continue}
     if(f.k==='shot'){const g=S(f.hw),t=S(f.tw),a=[g[0]+f.ao[0],g[1]+f.ao[1]];ctx.strokeStyle='rgba(255,230,160,.9)';ctx.lineWidth=f.w||2;seg(a,[t[0]+f.bo[0],t[1]+f.bo[1]]);ctx.stroke();if(!LOWFX){ctx.save();ctx.globalCompositeOperation='lighter';glow('255,210,120',a[0],a[1],14,.8);ctx.restore()}}
     else{const t=S(f.tw);ctx.fillStyle='#3a5a1e';ball([t[0]+f.x,t[1]+f.y],1.8);ctx.fill()}}
-  if(liveDraw)liveDraw(dt);drawMist(dt);drawFlock();if(PH)PH('effetti_nebbia')}
+  if(W.director&&W.director.drawTop)W.director.drawTop(dt);if(liveDraw)liveDraw(dt);drawMist(dt);drawFlock();if(PH)PH('effetti_nebbia')}
 function updateAmbient(dt){W.t+=dt;updateCrows(dt);
   if(W.split){const sp=W.split;if(sp.fade){sp.k-=dt/2.5;if(sp.k<=0){W.split=null}}if(sp.wisps)for(const m of sp.wisps){m.x+=m.v*dt;if(m.x>W.w+m.r)m.x=-m.r}}
   if(LOWFX)return;
@@ -1000,7 +1006,8 @@ function boot(area){try{INTRO.on=false;paused=true}catch(e){}try{AU.on.music=fal
     if(W.toast){toastEl.textContent=W.toast[0];toastEl.classList.add('on');toastT=W.toast[1];W.toast=null}if(toastT>0&&(toastT-=dt)<=0)toastEl.classList.remove('on')}
   const cv=ov.querySelector('#mzCv'),barEl=ov.querySelector('#mzBar'),cashEl=ov.querySelector('#mzCash'),hintEl=ov.querySelector('#mzHint'),nordEl=ov.querySelector('#mzNord'),ncv=nordEl.querySelector('canvas');let low=false,whole=false;
   const ui=()=>{barEl.innerHTML='';const mk=(t,on,f)=>{const b=document.createElement('button');b.textContent=t;b.className=on?'on':'';b.onclick=()=>{f();ui()};barEl.appendChild(b)};
-    mk('Zombie',zOn,()=>{zOn=!zOn});mk('Effetti bassi',low,()=>{low=!low});mk('Vista intera',whole,()=>{whole=!whole})};ui();
+    mk('Zombie',zOn,()=>{zOn=!zOn});mk('Effetti bassi',low,()=>{low=!low});mk('Vista intera',whole,()=>{whole=!whole});
+    mk('Suono',(()=>{try{return AU.on.sfx&&!!AU.ctx}catch(e){return false}})(),()=>{try{if(!AU.ctx)initAudio();AU.on.sfx=!AU.on.sfx||!AU.ctx?true:false;if(AU.ctx&&AU.ctx.state==='suspended')AU.ctx.resume()}catch(e){}})};ui();
   const fine=!!(window.matchMedia&&matchMedia('(hover:hover) and (pointer:fine)').matches);
   hintEl.innerHTML=fine?'WASD: cammina · Q/E o trascina: gira · R/F: inclina<br>N o la bussola: torna a nord':'Sinistra: cammina · Destra: trascina per girare e inclinare<br>Bussola in alto: torna a nord';
   // due comandi (Denis, 12 ottobre): il dito a sinistra muove l'eroe (relativo allo schermo), il dito a destra tiene la telecamera: di lato la
@@ -1163,10 +1170,10 @@ orderReset:()=>{ORD.mm.m=new Map();ORD.fm.m=new Map();ORD.fr+=5},
     intra:id=>{const L=ORD.byId.get(id);return L?intraOrder(L).map(g=>({gi:g.gi,k:g.parts.map(t=>t.k).join(','),z0:g.z0,z1:g.z1})):null},
     render:dt=>render(dt||0,0,0),vis:visAt,hit:(x,y,r)=>!!hit(x,y,r),heightAt,
     nav:()=>NAV&&{cw:NAV.cw,ch:NAV.ch,free:NAV.bl.reduce((s,v)=>s+(v?0:1),0)},navRebuild:()=>{navBuild();NAV.hc=-1},
-    addZombie:(kind,x,y,spd)=>{const k=KINDS.find(k=>k[0]===kind)||KINDS[0];const z={id:++ZID,kind:k[0],sc:k[1],spd:spd||k[2],hp:99,x,y,face:0,p:0,anim:'walk',rise:1,die:0,flash:0};W.Z.push(z);return W.Z.length-1},
+    hurt:(z,n,fx)=>hurt(z,n,fx),addZombie:(kind,x,y,spd)=>{const k=KINDS.find(k=>k[0]===kind)||KINDS[0];const z={id:++ZID,kind:k[0],sc:k[1],spd:spd||k[2],hp:99,x,y,face:0,p:0,anim:'walk',rise:1,die:0,flash:0};W.Z.push(z);return W.Z.length-1},
     sim:(n,dt)=>{for(let i=0;i<n;i++)updateBeings(dt,{x:0,y:0})},
     walk:(ix,iy,n,dt)=>{const[wx,wy]=stickToWorld(ix,iy);for(let i=0;i<(n||1);i++)updateBeings(dt||1/60,{x:wx,y:wy})},
     // il gioco della mappa: le cose da comprare (buyNow(id) compra subito, come il bottone), l'arma, la Bara, le monete
     texStats:()=>{let n=0,px=0,np=0,pp=0;for(const k in TEX){n++;px+=TEX[k].width*TEX[k].height}for(const k in PLANES){np++;pp+=PLANES[k].width*PLANES[k].height}return{n,mpx:+(px/1e6).toFixed(2),np,mpp:+(pp/1e6).toFixed(2)}},
     buys,equip,buyNow:id=>{const o=buys.find(b=>b.id===id);return o?o.act():null},box:()=>BOX,boxTo:i=>{const q=BOX.spots[i];boxPlace(q[0],q[1],q[3]||0);navBuild();if(NAV)NAV.hc=-1;return[q[0],q[1]]},coins:v=>{if(v!=null)W.coins=v;return W.coins},gun:()=>gunState}}
-return{idleZombie,buyable,sorpresa,equip,hurt,navRebuild:()=>{navBuild();if(NAV)NAV.hc=-1},softImg,turn,group,grp,finalize,facing,across,onGround,onPlane,onRound,ringNear,T,CAM,W,S,LS,MOON,inGround,scrAng,decals,fades,NAMES,stand,stands,heightAt,add3,sub3,len3,rnd,rr,srand,ink,path,hull,material,MAT,MARKS,texture,tone,face,hullOf,ballAt,line3,poly3,fn3,box,prismX,prismY,plane,cyl,prop,solid,shade,shadeR,props,solids,shadows,lights,flames,holes,houses,smokes,perches,hit,bakeGround,edgeSnap,boot,setLive:f=>{liveDraw=f},wa,mix,cl,ez,lerp,TAU,ball,seg}})();
+return{idleZombie,buyable,sorpresa,equip,hurt,spawn,KINDS,move,zWalk,sep,physClear,gun:()=>gunState,navRebuild:()=>{navBuild();if(NAV)NAV.hc=-1},softImg,turn,group,grp,finalize,facing,across,onGround,onPlane,onRound,ringNear,T,CAM,W,S,LS,MOON,inGround,scrAng,decals,fades,NAMES,stand,stands,heightAt,add3,sub3,len3,rnd,rr,srand,ink,path,hull,material,MAT,MARKS,texture,tone,face,hullOf,ballAt,line3,poly3,fn3,box,prismX,prismY,plane,cyl,prop,solid,shade,shadeR,props,solids,shadows,lights,flames,holes,houses,smokes,perches,hit,bakeGround,edgeSnap,boot,setLive:f=>{liveDraw=f},wa,mix,cl,ez,lerp,TAU,ball,seg}})();

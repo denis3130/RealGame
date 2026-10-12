@@ -80,6 +80,9 @@ const AREA={title:'Camposanto',zoneName:h=>h.y<Y(12.3)?'Fattoria dei Corvi':'Cam
     // la Bara delle Sorprese e i suoi tre posti [x, y, zona, verso della testa]: nel cimitero vicino alla cripta (girata un po', il teschio verso
     // sud), sotto la tettoia accanto al carretto, dentro il fienile nell'angolo a nord-ovest (non nella stalla: lì restava un corridoio di 23 px)
     ZM.sorpresa(X(4.45),Y(16.76),[[X(4.45),Y(16.76),1,.3],[X(9.55),Y(10.85),2,0],[X(12.2),Y(5.0),2,0]]);
+    // la partita a ondate (partita.js): la Lanterna delle Anime nell'area di partenza, a ovest del sentiero dove si comincia, tra il muretto
+    // del cimitero e la buca
+    const anime=P.soulLantern(AX(2.55),AY(8.25),1500);ZM.partita({lanterna:anime});
     // i bordi del mondo e la nebbia ai lati dell'area di partenza
     solid(-200,-200,w+400,200,'edge');solid(-200,h,w+400,200,'edge');solid(-200,0,200,h,'edge');solid(w,0,200,h,'edge');
     solid(0,Y(12.3)+6,X(2),h-Y(12.3)-6,'edge');solid(X(14),Y(12.3)+6,X(2),h-Y(12.3)-6,'edge');solid(X(2),Y(24),X(12),h-Y(24),'edge');

@@ -219,3 +219,37 @@ pubblicata su https://claude.ai/artifact/Sw43VFJjGvrtkUs2t18fek. File: `area_map
   qualcosa in 271, errori in 4 da 3–5 px con la cripta), `ordine_mappa.js` (sei casi con la Bara: nessun errore sugli esseri), `gioco.js`
   (anche la fuga: rende le monete e ricompare in un altro posto, girata come il posto, col solido spostato), `ravvicinati.js` con `BARA=0/1/2`
   (nessuno zombie o segugio fermo, nessun attacco attraverso un solido), e la vista predefinita confrontata al pixel con quella di prima.
+
+## La partita a ondate (12 ottobre, decisioni di Denis: round come in CoD, un boss ogni 5 round, la rianimazione da comprare)
+
+- **File**: `partita.js` (`ZM.partita`, il direttore `W.director`). L'area lo accende con `ZM.partita({lanterna})`; il motore lo chiama in
+  `updateBeings` (al posto del vecchio contagocce degli zombie), al colpo degli zombie (a metà del gesto, `zombieHit`), alla morte di uno
+  zombie (`killed`), a ogni sparo che colpisce (`shotHit`) e nei disegni (`drawGround` a terra prima delle voci, `drawOnHero`, `drawTop`).
+  Tutti i numeri stanno in `PZ` e nelle funzioni in cima al file: da regolare giocando.
+- **Round**: quota 6, 8, 11, 14, 18… (6 + 2,2·(R−1) + 0,18·(R−1)²); vita ×(1 + 0,3·(R−1)) fino al round 9, poi ×1,1 a round; velocità
+  +10% a round fino a ×2,1 (i segugi fino a ×1,35); danno +3% a round fino a ×1,6; insieme al massimo 6 fino al round 5, 7 fino al 9, poi 8
+  (2 in meno con gli effetti bassi); uno ogni 2 s, che scende fino a 0,7. Dal round 3 anche gli striscianti, dal 5 minatori e lanterne, dal 10
+  i segugi. Dal round 4 gli zombie a volte scattano all'improvviso quando l'eroe è vicino (lenti e poi uno scatto). Tra un round e l'altro
+  9 s di pausa con la campana; la scritta grande «Round N» e in alto a destra le tacche di gesso rosso (fino a 5, poi il numero).
+- **Boss ogni 5 round**: il Becchino ai round 5, 15, 25… (vita 1.200·(R/5)^1,3; cammina piano; vicino colpisce con la pala: un cerchio
+  rosso avvisa 0,8 s prima, 62 di danno; ogni 13 s alza il braccio ed escono due morti intorno all'eroe, tre dal round 15); lo
+  Spaventapasseri ai round 10, 20… (vita 2.200·(R/10)^1,3; saltella; da vicino fa la trottola, che fa male tre volte al giro). Escono da
+  terra lontano dall'eroe; nel loro round esce un quarto degli zombie normali. La barra in alto col nome; sconfitti danno 500 e 700 monete
+  e le munizioni piene.
+- **L'eroe**: 100 di vita; un colpo toglie 28 (strisciante 22, minatore 32, lanterna 40, segugio 18, di più coi round); dopo 3 s senza colpi
+  torna piena. Quando lo colpiscono lo schermo si macchia di rosso ai bordi (e pulsa quando ha poca vita). Ogni sparo che colpisce dà 10
+  monete, ogni zombie 60 (il boss di più).
+- **La morte**: cade (ruota a terra intorno ai piedi) e la partita finisce: «Sei caduto», round raggiunto, zombie uccisi, oro per il menu
+  (10·R² + 30·R: nel gioco vero andrà nel tuo oro), monete a zero, «Riprova».
+- **La Lanterna delle Anime** (`P.soulLantern` in `prop_fattoria.js`: altare di pietra, lanterna di ferro col vetro scuro e la fiamma
+  verde, due candele, il prezzo col gesso sul davanti), nell'area di partenza a ovest del sentiero dove si comincia: 1.500 monete. La
+  fiammella vola dalla lanterna all'eroe, gli gira intorno e compare accanto alla barra della vita; quando l'eroe cade lo rialza (colonna di
+  luce verde, gli zombie vicini respinti e storditi, 2,5 s senza colpi) e la lanterna si riaccende; al massimo 3 anime per partita.
+- **Suoni** (il bottone Suono in basso: la prima volta accende l'audio): la campana dei round, la fine del round, il boss, i colpi, la
+  caduta, l'anima, la pala, la trottola, l'evocazione, la fine della partita; con lo stesso bottone si sentono anche le armi e la Bara.
+- **Prove**: `ondate.js` (quota e massimo insieme, pausa, crescita, colpi e vita che torna, colpo a metà del gesto, morte e schermata,
+  anima che rialza e lanterna che si riaccende, al massimo 3 anime, Becchino con barra, avviso, pala, evocazione e premio, Spaventapasseri
+  con la trottola); `giocatore.js [partite] [minuti]` (un giocatore automatico che fa partite vere: scappa quando gli zombie sono vicini,
+  tiene la direzione per un attimo e preferisce gli spazi aperti, spara da fermo, compra Revolver, cancello, anima e Pompa; con i numeri di
+  adesso arriva ai round 8–12 in 25 minuti di gioco, senza perdere vita nei primi 4 round). `gioco.js` ora tiene l'eroe invulnerabile
+  (`W.dbg.god`): prova il comprare.
