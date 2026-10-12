@@ -22,10 +22,14 @@ const add=(a,b)=>[a[0]+b[0],a[1]+b[1],a[2]+b[2]],sub=(a,b)=>[a[0]-b[0],a[1]-b[1]
   len=a=>Math.hypot(a[0],a[1],a[2]),nrm=a=>{const l=len(a)||1;return[a[0]/l,a[1]/l,a[2]/l]},dot=(a,b)=>a[0]*b[0]+a[1]*b[1]+a[2]*b[2],
   cross=(a,b)=>[a[1]*b[2]-a[2]*b[1],a[2]*b[0]-a[0]*b[2],a[0]*b[1]-a[1]*b[0]],lerp3=(a,b,k)=>[lerp(a[0],b[0],k),lerp(a[1],b[1],k),lerp(a[2],b[2],k)];
 // camera. P: body point -> screen; D: how close to the camera (draw order); F: how much a direction faces the camera (-1..1)
-function V(face){const c=Math.cos(face),s=Math.sin(face);
-  const P=(x,y,z)=>Array.isArray(x)?P(x[0],x[1],x[2]):[x*c-y*s,(x*s+y*c)*.55-z];
-  const D=(x,y,z)=>Array.isArray(x)?D(x[0],x[1],x[2]):x*s+y*c+.55*(z||0);
-  const F=(x,y,z)=>{if(Array.isArray(x))return F(x[0],x[1],x[2]);const l=Math.hypot(x,y,z||0)||1;return(x*s+y*c+.55*(z||0))/(l*1.141)};
+// cam (shared, change it with Object.assign(CR.cam,{k,zk})): k = how much the floor is squashed (.55), zk = how tall heights are (1).
+// With the defaults every number is the same as before, so the sheets (the lantern's too) stay identical to the pixel.
+// KR() = k/.55: the same squash for the ellipses drawn flat on the screen (shadows, rings round the body, glows on the floor)
+const cam={k:.55,zk:1},KR=()=>cam.k/.55;
+function V(face){const c=Math.cos(face),s=Math.sin(face),K=cam.k,Z=cam.zk,KZ=K/Z,NF=K===.55&&Z===1?1.141:Math.hypot(1,KZ);
+  const P=(x,y,z)=>Array.isArray(x)?P(x[0],x[1],x[2]):[x*c-y*s,(x*s+y*c)*K-z*Z];
+  const D=(x,y,z)=>Array.isArray(x)?D(x[0],x[1],x[2]):x*s+y*c+KZ*(z||0);
+  const F=(x,y,z)=>{if(Array.isArray(x))return F(x[0],x[1],x[2]);const l=Math.hypot(x,y,z||0)||1;return(x*s+y*c+KZ*(z||0))/(l*NF)};
   return{c,s,P,D,F}}
 // colours: mix two #rrggbb (cached); farK = how much a limb on the far side of the body is darkened
 const MX={};function mix(a,b,k){k=Math.round(cl(k,0,1)*16)/16;if(k<=0)return a;if(k>=1)return b;const id=a+b+k;if(MX[id])return MX[id];
@@ -235,7 +239,7 @@ function zombie(x,y,face,anim,p,sc){sc=sc||1.1;const V0=V(face),{P,D,F}=V0,ph=p*
   const bob=walk?-spread*1.4:Math.sin(ph)*.35,roll=walk?.3-Math.sin(ph)*1.3:Math.sin(ph)*.5,L=lunge*.6,upP=Math.max(0,up);
   const Pv=[L,roll*.5,13.4+bob],Ch=[L+4.2-upP*3+reach*2,roll,21.4+bob+upP*1.2],
     Hc=add(Ch,[2.8-upP*1.2,roll*.25+Math.sin(ph*(walk?2:1)+.6)*1.1,12+(walk?Math.cos(ph*2)*.4:0)]);
-  {const q=P(L*.7+2,0,0);shadow(x+q[0]*sc,y+q[1]*sc,11*sc,4.4*sc,.34)}
+  {const q=P(L*.7+2,0,0);shadow(x+q[0]*sc,y+q[1]*sc,11*sc,4.4*sc*KR(),.34)}
   ctx.save();ctx.translate(x,y);ctx.scale(sc,sc);const parts=[],dT=D(Ch);
   for(const[sd,f] of[[-1,fL],[1,fR]]){const hip=add(Pv,[0,sd*3.4,-3.3]),foot=[L*.4+1+f.x,sd*4.4,f.z],k=farK(F(0,sd,0));
     parts.push({d:dT-100+D(hip)*.01,f:()=>leg(V0,hip,foot,{L1:4.8,L2:4.8,w1:4.6,w2:4,col:mix(ZC.pants,ZC.pantsF,k),colD:'rgba(0,0,0,.3)',shoe:ZC.shoe,heel:1.3,toe:2.6,sr:2.2})})}
@@ -262,7 +266,7 @@ function strisciante(x,y,face,anim,p,sc){sc=sc||1.1;const V0=V(face),{P,D,F}=V0,
   // chest is drawn a little longer, so the back and the spine show
   const fr=cl((V0.s-.72)/.28,0,1),el=1+.85*fr*fr*(3-2*fr);
   const B=lunge+surge,Ch=[B+1.5,wig*.5,6.8+rear*5],Wb=[B+1.5-9*el,-wig*.4,4.4+rear*1],Hc=add(Ch,[6,wig*.3,4.6+rear*1.2]);
-  {const q=P(B-1-(el-1)*5,0,0);shadow(x+q[0]*sc,y+q[1]*sc,13*sc,4.6*sc*(1+(el-1)*.9),.36)}
+  {const q=P(B-1-(el-1)*5,0,0);shadow(x+q[0]*sc,y+q[1]*sc,13*sc,4.6*sc*(1+(el-1)*.9)*KR(),.36)}
   ctx.save();ctx.translate(x,y);ctx.scale(sc,sc);const parts=[],dT=D(lerp3(Wb,Ch,.6));
   // the spine and the rags trail on the floor behind the waist: always under the body
   parts.push({d:dT-100,f:()=>{ctx.fillStyle=ZC.clothD;ink(1.3);for(let i=0;i<3;i++){const r=P(add(Wb,[-2*el,(i-1)*3.2,-2.5])),e=P(Wb[0]-(5-i*1.4)*el,(i-1)*5.2+Math.sin(ph+i)*.8,.4);spike(r,e,2.2)}
@@ -285,9 +289,9 @@ const MC={helm:'#d9a628',helmD:'#9a7418',over:'#3e5a7a',overD:'#2a3e56',overF:'#
 // overalls: denim from the waist down (a horizontal cut through the trunk), a bib on the chest, straps over the shoulders, coal dust
 function overalls(V0,Pv,rP,Ch,rC){const{P,F}=V0,k=.45,W=lerp3(Pv,Ch,k),rw=lerp(rP,rC,k)+.3,q=P(W),a=P(Pv),b=P(Ch);
   ctx.save();hull(a,rP-.1,b,rC-.1);ctx.clip();
-  ctx.fillStyle=MC.over;ctx.beginPath();ctx.ellipse(q[0],q[1],rw,rw*.55,0,0,Math.PI);ctx.lineTo(q[0]-rw-30,q[1]+40);ctx.lineTo(q[0]+rw+30,q[1]+40);ctx.closePath();ctx.fill();
+  ctx.fillStyle=MC.over;ctx.beginPath();ctx.ellipse(q[0],q[1],rw,rw*.55*KR(),0,0,Math.PI);ctx.lineTo(q[0]-rw-30,q[1]+40);ctx.lineTo(q[0]+rw+30,q[1]+40);ctx.closePath();ctx.fill();
   ctx.fillStyle=MC.overD;ell(a[0]+rP*.6,a[1]+rP*.6,rP*.9,rP*.7);ctx.fill();
-  ctx.strokeStyle=INK;ctx.lineWidth=1.5;ctx.beginPath();ctx.ellipse(q[0],q[1],rw,rw*.55,0,0,Math.PI);ctx.stroke();
+  ctx.strokeStyle=INK;ctx.lineWidth=1.5;ctx.beginPath();ctx.ellipse(q[0],q[1],rw,rw*.55*KR(),0,0,Math.PI);ctx.stroke();
   // bib on the chest and the straps over the shoulders, all on the chest ball
   const S=d=>P(add(Ch,mul(nrm(d),rC))),fv=F(1,0,0);
   if(fv>-.1){ctx.save();ctx.globalAlpha=cl((fv+.1)*4,0,1);const cs=[[1,-.36,.32],[1,.36,.32],[1,.46,-.62],[1,-.46,-.62]].map(S);ink(1.5);ctx.fillStyle=MC.over;ctx.beginPath();cs.forEach(c=>ctx.lineTo(c[0],c[1]));ctx.closePath();ctx.fill();ctx.stroke();
@@ -311,8 +315,8 @@ function pickaxe(V0,k){const{P}=V0,h0=P(add(k.hd,mul(k.dir,-4.5))),h1=P(k.top);
   ctx.save();ctx.clip();ctx.strokeStyle=wa(.4);ctx.lineWidth=1;ctx.beginPath();ctx.moveTo(A[0],A[1]);ctx.quadraticCurveTo(T[0],T[1],B[0],B[1]);ctx.stroke();ctx.fillStyle='rgba(30,32,40,.3)';ctx.beginPath();ctx.moveTo(A[0],A[1]);ctx.quadraticCurveTo(M[0],M[1],B[0],B[1]);ctx.lineWidth=2.4;ctx.strokeStyle='rgba(30,32,40,.35)';ctx.stroke();ctx.restore();
   ctx.fillStyle=MC.ironD;ball(P(add(k.top,mul(k.dir,1))),1.7);ctx.fill();ctx.stroke();ctx.fillStyle='rgba(120,60,30,.6)';ball(P(add(add(k.top,mul(k.u,3.4)),mul(k.dir,1.6))),1);ctx.fill()}
 // the miner's helmet: brim, dome with a ridge, and the lamp on the front (lit only where it faces us)
-function helmet(V0,Hc,R,t){const{P,F}=V0,C0=add(Hc,[-.5,0,R*.5]),hb=P(C0),bw=R+1.2,rd=R*.92;ink(2);ctx.fillStyle=MC.helmD;ell(hb[0],hb[1],bw,bw*.55);ctx.fill();ctx.stroke();
-  ctx.fillStyle=MC.helm;ctx.beginPath();ctx.arc(hb[0],hb[1],rd,Math.PI,0);ctx.ellipse(hb[0],hb[1],rd,rd*.55,0,0,Math.PI);ctx.closePath();ctx.fill();ctx.stroke();
+function helmet(V0,Hc,R,t){const{P,F}=V0,C0=add(Hc,[-.5,0,R*.5]),hb=P(C0),bw=R+1.2,rd=R*.92;ink(2);ctx.fillStyle=MC.helmD;ell(hb[0],hb[1],bw,bw*.55*KR());ctx.fill();ctx.stroke();
+  ctx.fillStyle=MC.helm;ctx.beginPath();ctx.arc(hb[0],hb[1],rd,Math.PI,0);ctx.ellipse(hb[0],hb[1],rd,rd*.55*KR(),0,0,Math.PI);ctx.closePath();ctx.fill();ctx.stroke();
   ctx.save();ctx.clip();ctx.fillStyle=MC.helmD;ell(hb[0]+rd*.55,hb[1]+rd*.2,rd*.6,rd*.9);ctx.fill();ctx.fillStyle='rgba(255,255,255,.3)';ell(hb[0]-rd*.4,hb[1]-rd*.55,rd*.3,rd*.15);ctx.fill();
   ctx.strokeStyle='rgba(255,246,215,.28)';ctx.lineWidth=1.2;ctx.beginPath();ctx.arc(hb[0],hb[1],rd-1.5,Math.PI*1.08,Math.PI*1.55);ctx.stroke();
   ctx.strokeStyle=MC.helmD;ctx.lineWidth=1.6;ctx.beginPath();let first=true;for(let i=0;i<=12;i++){const th=.25+i*(Math.PI-.5)/12,d=[Math.cos(th),0,Math.sin(th)];if(F(d)<0){first=true;continue}const q=P(add(C0,mul(d,rd*.98)));if(first){ctx.moveTo(q[0],q[1]);first=false}else ctx.lineTo(q[0],q[1])}ctx.stroke();ctx.restore();
@@ -336,9 +340,9 @@ function minatore(x,y,face,anim,p,sc){sc=sc||1.1;const V0=V(face),{P,D,F}=V0,ph=
   const pose=a=>{const hd=add(Ch,[2.6+Math.cos(a)*6.8,10.6,1+Math.sin(a)*8.8]),dir=nrm([Math.cos(a)*.95,.14,Math.sin(a)]),top=add(hd,mul(dir,15)),u=nrm([-dir[2]*.75,.66,dir[0]*.75]);
     return{a,hd,dir,top,u,tA:add(add(top,mul(u,7.2)),mul(dir,2.2)),tB:add(add(top,mul(u,-7.2)),mul(dir,2.2))}},low=q=>Math.min(q.tA[2],q.tB[2],q.top[2]-1);
   let pk=pose(a);if(low(pk)<.3){let lo=a,hi=Math.PI/2;for(let i=0;i<20;i++){const m=(lo+hi)/2;if(low(pose(m))<.3)lo=m;else hi=m}pk=pose(hi)}
-  {const q=P(L+1,0,0);shadow(x+q[0]*sc,y+q[1]*sc,11*sc,4.4*sc,.34)}
+  {const q=P(L+1,0,0);shadow(x+q[0]*sc,y+q[1]*sc,11*sc,4.4*sc*KR(),.34)}
   // the lamp lights a small spot on the floor ahead
-  if(!LOWFX){const q=P(Ch[0]+14,Ch[1],0);ctx.save();ctx.globalCompositeOperation='lighter';glow('255,230,150',x+q[0]*sc,y+q[1]*sc,10*sc,.2+.04*Math.sin(t*9),5*sc);ctx.restore()}
+  if(!LOWFX){const q=P(Ch[0]+14,Ch[1],0);ctx.save();ctx.globalCompositeOperation='lighter';glow('255,230,150',x+q[0]*sc,y+q[1]*sc,10*sc,.2+.04*Math.sin(t*9),5*sc*KR());ctx.restore()}
   ctx.save();ctx.translate(x,y);ctx.scale(sc,sc);const parts=[],dT=D(Ch);
   for(const[sd,f] of[[-1,fL],[1,fR]]){const hip=add(Pv,[0,sd*3.4,-3.3]),foot=[L*.4+1+f.x,sd*4.3,f.z],k=farK(F(0,sd,0));
     parts.push({d:dT-100+D(hip)*.01,f:()=>leg(V0,hip,foot,{L1:4.4,L2:4.6,w1:4.8,w2:4.2,col:mix(MC.over,MC.overF,k),colD:'rgba(0,0,0,.28)',shoe:MC.boot,heel:1.4,toe:2.6,sr:2.4})})}
@@ -395,7 +399,7 @@ function hound(x,y,face,anim,p,sc){sc=sc||1.05;const V0=V(face),{P,D,F}=V0,ph=p*
   const pz=x0=>x0*pitch*.5;
   const R=[-8-flex*.5-str*1.5+fwd,yw*.4,13.4+lift+bounce-crouch*2.6+pz(-8)],C=[5+flex*.5+str*1.5+fwd,yw,14.4+lift+bounce-crouch*2.2+pz(5)];
   const Hc=[C[0]+7+str*1.5,yw*1.3,C[2]+7.6+pz(7)-crouch*2.4];
-  {const q=P(fwd-1.5,0,0),k=1-lift/40;shadow(x+q[0]*sc,y+q[1]*sc,15*sc*k,5.4*sc*k,.36)}
+  {const q=P(fwd-1.5,0,0),k=1-lift/40;shadow(x+q[0]*sc,y+q[1]*sc,15*sc*k,5.4*sc*k*KR(),.36)}
   ctx.save();ctx.translate(x,y);ctx.scale(sc,sc);const parts=[],dB=D(lerp3(R,C,.5));
   // legs: [side, front?, gallop phase]; always under the body, the far ones darker
   for(const[sd,fr,ps] of[[-1,0,0],[1,0,.1],[-1,1,.5],[1,1,.6]]){const f=gal?gp(ps,4.6,3):NOSTEP,k=farK(F(0,sd,0)),col=mix(HC.fur,HC.furF,k),
@@ -477,13 +481,13 @@ function becchino(x,y,face,anim,p,sc){sc=sc||2;const V0=V(face),{P,D,F}=V0,ph=p*
   let sv=pose(a);if(low(sv)<.3){let lo=a,hi=Math.PI/2;for(let i=0;i<20;i++){const m=(lo+hi)/2;if(low(pose(m))<.3)lo=m;else hi=m}sv=pose(hi)}
   // summon: green ring on the floor and dead hands clawing out of the ground around him (the ones behind him first)
   const hands=front=>{const k=cl((p-.15)/.6,0,1);for(let i=0;i<4;i++){const an=i*TAU/4+.4,sn=Math.sin(an);if((sn>0)!==front)continue;const e=cl(k*1.5-i*.14,0,1)*armUp;if(e<=0)continue;
-    const hx=x+Math.cos(an)*24*sc,hy=y+2*sc+sn*9*sc;ctx.fillStyle='rgba(20,16,12,.75)';ell(hx,hy+1,4.6*sc,1.6*sc);ctx.fill();ctx.save();ctx.translate(hx,hy);ctx.scale(sc*.8,sc*.8);
+    const hx=x+Math.cos(an)*24*sc,hy=y+2*sc+sn*9*sc*KR();ctx.fillStyle='rgba(20,16,12,.75)';ell(hx,hy+1,4.6*sc,1.6*sc*KR());ctx.fill();ctx.save();ctx.translate(hx,hy);ctx.scale(sc*.8,sc*.8);
     // only what is above the ground shows: a forearm stump rising, then a big open hand with long fingers clawing at the air
     ctx.beginPath();ctx.rect(-40,-80,80,81.5);ctx.clip();const up=e*10,Vg=V(Math.PI/2+i*.8-1.2),W=[0,0,up],A=Vg.P(0,0,-6),B=Vg.P(W);
     ink(1.8);ctx.fillStyle=ZC.skin;hull(A,2.6,B,2.2);ctx.fill();ctx.stroke();shadeLimb([A,B],[2.6,2.2],'rgba(40,58,26,.42)');
     bigHand(Vg,W,nrm([Math.sin(ph*3+i)*.25,Math.cos(ph*2+i)*.2,1]),2.6,ZC.skin,ZC.nail,[1,0,.2],{curl:.45+.25*Math.sin(ph*3+i),spread:1.25,fl:4.8,thumb:i%2?1:-1});ctx.restore()}};
-  shadow(x,y+2*sc,16*sc,6*sc,.38);
-  if(sum){ctx.save();shine(BC.glow,x,y+2*sc,34*sc*armUp,.35*armUp);ctx.strokeStyle=`rgba(150,255,110,${.6*armUp})`;ctx.lineWidth=2;ell(x,y+2*sc,26*sc*armUp,9*sc*armUp);ctx.stroke();ctx.restore();hands(false)}
+  shadow(x,y+2*sc,16*sc,6*sc*KR(),.38);
+  if(sum){ctx.save();shine(BC.glow,x,y+2*sc,34*sc*armUp,.35*armUp);ctx.strokeStyle=`rgba(150,255,110,${.6*armUp})`;ctx.lineWidth=2;ell(x,y+2*sc,26*sc*armUp,9*sc*armUp*KR());ctx.stroke();ctx.restore();hands(false)}
   ctx.save();ctx.translate(x,y);ctx.scale(sc*(1+squash),sc*(1-squash));const parts=[],dT=D(Ch);
   for(const[sd,f] of[[-1,fL],[1,fR]]){const hip=add(Pv,[0,sd*6,-7.4]),foot=[1+f.x,sd*7.6,f.z],k=farK(F(0,sd,0));
     parts.push({d:dT-100+D(hip)*.01,f:()=>leg(V0,hip,foot,{L1:4.4,L2:4.4,w1:7,w2:6.2,col:mix(BC.coatD,'#120e17',k),colD:'rgba(0,0,0,.3)',shoe:BC.boot,heel:2,toe:3.6,sr:3.2,ank:2.2})})}
@@ -615,10 +619,10 @@ function staffLantern(V0,k,Lc,t,lit){const{P}=V0,b0=P(k.butt),b1=P(k.tip),q=P(Lc
   lanternBody(q,rot,t,lit)}
 // the burst of light when the lantern hits the floor: a star, a ring on the floor, sparks
 function lBurst(x,y,k,sc){const r=(4.5+k*13)*sc*.5,a=1-k;ctx.save();if(!LOWFX)glow(LC.glow,x,y,r*1.7,.85*a);
-  ctx.strokeStyle=`rgba(200,255,120,${.7*a})`;ctx.lineWidth=2.4;ell(x,y+r*.5,r*1.3,r*.5);ctx.stroke();ctx.lineJoin='round';
+  ctx.strokeStyle=`rgba(200,255,120,${.7*a})`;ctx.lineWidth=2.4;ell(x,y+r*.5*KR(),r*1.3,r*.5*KR());ctx.stroke();ctx.lineJoin='round';
   const star=(R,col,ln)=>{ctx.beginPath();for(let i=0;i<22;i++){const an=i/22*TAU+k*.6,rr=i%2?R*.42:R*(1-((i*7)%4)*.1);ctx.lineTo(x+Math.cos(an)*rr,y+Math.sin(an)*rr*.8)}ctx.closePath();ctx.fillStyle=col;ctx.fill();if(ln){ctx.strokeStyle=ln;ctx.lineWidth=1.6;ctx.stroke()}};
   star(r*1.25,`rgba(214,255,96,${.9*a})`,`rgba(110,160,30,${.8*a})`);star(r*.7,`rgba(255,255,220,${.95*a})`);
-  if(!LOWFX)for(let i=0;i<9;i++){const an=i/9*TAU+.3,d=r*(1.15+k*.6),px=x+Math.cos(an)*d,py=y+Math.sin(an)*d*.7-Math.sin(k*Math.PI)*6*sc;ctx.fillStyle=`rgba(232,255,140,${a})`;ctx.beginPath();ctx.moveTo(px,py-2);ctx.lineTo(px+1.2,py);ctx.lineTo(px,py+2);ctx.lineTo(px-1.2,py);ctx.closePath();ctx.fill()}
+  if(!LOWFX)for(let i=0;i<9;i++){const an=i/9*TAU+.3,d=r*(1.15+k*.6),px=x+Math.cos(an)*d,py=y+Math.sin(an)*d*.7*KR()-Math.sin(k*Math.PI)*6*sc;ctx.fillStyle=`rgba(232,255,140,${a})`;ctx.beginPath();ctx.moveTo(px,py-2);ctx.lineTo(px+1.2,py);ctx.lineTo(px,py+2);ctx.lineTo(px-1.2,py);ctx.closePath();ctx.fill()}
   ctx.restore()}
 function lanterna(x,y,face,anim,p,sc){sc=sc||1.55;const V0=V(face),{P,D,F}=V0,ph=p*TAU,walk=anim==='walk',atk=anim==='attack',t=G.t;
   // attack: .0-.24 leans back and swings the staff up behind his head, .24-.38 holds the lantern up high (it shakes),
@@ -639,9 +643,9 @@ function lanterna(x,y,face,anim,p,sc){sc=sc||1.55;const V0=V(face),{P,D,F}=V0,ph
   const sw=walk?Math.sin(ph*2-1.4)*.32:Math.sin(ph-1)*.1,lant=k=>add(k.tip,mul(nrm(lerp3([sw,sw*.25,-1],k.dir,taut)),5.4)),low=k=>Math.min(lant(k)[2]-3.4,k.tip[2]-1);
   let sv=pose(a);if(low(sv)<.2){let lo=a,hi=Math.PI/2;for(let i=0;i<22;i++){const m=(lo+hi)/2;if(low(pose(m))<.2)lo=m;else hi=m}sv=pose(hi)}
   const Lc=lant(sv),lit=burst>=0?Math.max(0,1-burst*2.5):0;
-  {const q=P(L+1,0,0);shadow(x+q[0]*sc,y+q[1]*sc,14*sc,5.6*sc,.38)}
+  {const q=P(L+1,0,0);shadow(x+q[0]*sc,y+q[1]*sc,14*sc,5.6*sc*KR(),.38)}
   // the lantern lights the floor under it
-  if(!LOWFX){const q=P(Lc[0],Lc[1],0),k=cl(1-Lc[2]/30,0,1);ctx.save();ctx.globalCompositeOperation='lighter';glow(LC.glow,x+q[0]*sc,y+q[1]*sc,8*sc,(.24+.04*Math.sin(t*9))*k,3.8*sc);ctx.restore()}
+  if(!LOWFX){const q=P(Lc[0],Lc[1],0),k=cl(1-Lc[2]/30,0,1);ctx.save();ctx.globalCompositeOperation='lighter';glow(LC.glow,x+q[0]*sc,y+q[1]*sc,8*sc,(.24+.04*Math.sin(t*9))*k,3.8*sc*KR());ctx.restore()}
   ctx.save();ctx.translate(x,y);ctx.scale(sc,sc);const parts=[],dT=D(Ch);
   for(const[sd,f] of[[-1,fL],[1,fR]]){const hip=add(Pv,[0,sd*4.4,-3.2]),foot=[L*.5+3+f.x,sd*5.4,f.z],k=farK(F(0,sd,0));
     parts.push({d:dT-100+D(hip)*.01,f:()=>lLeg(V0,hip,foot,k)})}
@@ -705,13 +709,13 @@ function starS(x,y,r,a){if(a<=0)return;ctx.save();ctx.globalAlpha=a;ink(1);ctx.f
 // a patch on the back, the rope belt with its knot, straw poking out above the belt, the collar
 function scBody(V0,Pv,rP,Ch,rC,ph){const{P,F}=V0,a=P(Pv),b=P(Ch),kW=.34,W=lerp3(Pv,Ch,kW),rw=lerp(rP,rC,kW)+.3,q=P(W),dark='rgba(70,16,10,.4)',light='rgba(255,214,170,.3)';
   ctx.save();hull(a,rP-.1,b,rC-.1);ctx.clip();ctx.lineCap='round';
-  for(const k of[.45,.68,.9]){const Cz=lerp3(W,Ch,k),r=lerp(rw,rC,k),cq=P(Cz);ctx.strokeStyle=dark;ctx.lineWidth=2.1;ctx.beginPath();ctx.ellipse(cq[0],cq[1],r,r*.55,0,0,Math.PI);ctx.stroke();
-    if(!LOWFX){ctx.strokeStyle=light;ctx.lineWidth=.6;ctx.beginPath();ctx.ellipse(cq[0],cq[1]+1.7,r,r*.55,0,0,Math.PI);ctx.stroke()}}
+  for(const k of[.45,.68,.9]){const Cz=lerp3(W,Ch,k),r=lerp(rw,rC,k),cq=P(Cz);ctx.strokeStyle=dark;ctx.lineWidth=2.1;ctx.beginPath();ctx.ellipse(cq[0],cq[1],r,r*.55*KR(),0,0,Math.PI);ctx.stroke();
+    if(!LOWFX){ctx.strokeStyle=light;ctx.lineWidth=.6;ctx.beginPath();ctx.ellipse(cq[0],cq[1]+1.7,r,r*.55*KR(),0,0,Math.PI);ctx.stroke()}}
   for(let i=0;i<12;i++){const an=i/12*TAU+.25,d=[Math.cos(an),Math.sin(an),0],v=F(d);if(v<.05)continue;const dd=[Math.cos(an+.13),Math.sin(an+.13),0];ctx.globalAlpha=cl(v*3,0,1);
     ctx.strokeStyle=dark;ctx.lineWidth=2.1;seg(P(add(Ch,mul(nrm([d[0],d[1],.45]),rC*.97))),P(add(W,mul(d,rw))));ctx.stroke();
     if(!LOWFX){ctx.strokeStyle=light;ctx.lineWidth=.6;seg(P(add(Ch,mul(nrm([dd[0],dd[1],.45]),rC*.97))),P(add(W,mul(dd,rw))));ctx.stroke()}}
   ctx.globalAlpha=1;
-  ctx.fillStyle=SC.pants;ctx.beginPath();ctx.ellipse(q[0],q[1],rw,rw*.55,0,0,Math.PI);ctx.lineTo(q[0]-rw-30,q[1]+40);ctx.lineTo(q[0]+rw+30,q[1]+40);ctx.closePath();ctx.fill();
+  ctx.fillStyle=SC.pants;ctx.beginPath();ctx.ellipse(q[0],q[1],rw,rw*.55*KR(),0,0,Math.PI);ctx.lineTo(q[0]-rw-30,q[1]+40);ctx.lineTo(q[0]+rw+30,q[1]+40);ctx.closePath();ctx.fill();
   ctx.fillStyle=SC.pantsD;ell(a[0]+rP*.6,a[1]+rP*.6,rP*.9,rP*.7);ctx.fill();
   ctx.strokeStyle='rgba(12,22,36,.45)';ctx.lineWidth=1;for(const[d,dx] of[[[.85,-.45,-.45],1],[[.9,.3,-.4],-1]])on(V0,Pv,rP*.96,d,.1,k=>{ctx.beginPath();ctx.moveTo(k[0]-1.4,k[1]-1.4);ctx.quadraticCurveTo(k[0],k[1]-.2*dx,k[0]+1.2,k[1]+1.6);ctx.stroke()});
   on(V0,Pv,rP,[.62,.72,-.25],.08,(k,v)=>{const w=2.4*Math.max(.45,v);ink(1.1);ctx.fillStyle=SC.patch;ctx.fillRect(k[0]-w,k[1]-2,w*2,4);ctx.strokeRect(k[0]-w,k[1]-2,w*2,4);ctx.fillStyle=SC.patchD;ctx.fillRect(k[0]-w+.6,k[1]+.8,w*2-1.2,.7);
@@ -722,8 +726,8 @@ function scBody(V0,Pv,rP,Ch,rC,ph){const{P,F}=V0,a=P(Pv),b=P(Ch),kW=.34,W=lerp3(
     for(const[sx,sy] of[[-1,-1],[1,-1],[-1,1],[1,1]]){const cx=k[0]+sx*(w-.8),cy=k[1]+sy*1.8;seg([cx-.6,cy-.6],[cx+.6,cy+.6]);ctx.stroke();seg([cx+.6,cy-.6],[cx-.6,cy+.6]);ctx.stroke()}});
   ctx.restore();
   {const d=nrm([.72,.6,-.3]);if(F(d)>.15)strawTuft(V0,add(Ch,mul(d,rC*.98)),add(d,[0,0,-.4]),4,2.6,.6,11)}
-  ctx.lineCap='round';ctx.strokeStyle=INK;ctx.lineWidth=3.7;ctx.beginPath();ctx.ellipse(q[0],q[1],rw+.1,(rw+.1)*.55,0,.05,Math.PI-.05);ctx.stroke();ctx.strokeStyle=SC.rope;ctx.lineWidth=1.9;ctx.stroke();
-  ctx.strokeStyle=SC.ropeD;ctx.lineWidth=.7;for(let i=1;i<9;i++){const u=i/9*Math.PI,x0=q[0]+Math.cos(u)*rw,y0=q[1]+Math.sin(u)*rw*.55;seg([x0-.5,y0-.7],[x0+.5,y0+.7]);ctx.stroke()}
+  ctx.lineCap='round';ctx.strokeStyle=INK;ctx.lineWidth=3.7;ctx.beginPath();ctx.ellipse(q[0],q[1],rw+.1,(rw+.1)*.55*KR(),0,.05,Math.PI-.05);ctx.stroke();ctx.strokeStyle=SC.rope;ctx.lineWidth=1.9;ctx.stroke();
+  ctx.strokeStyle=SC.ropeD;ctx.lineWidth=.7;for(let i=1;i<9;i++){const u=i/9*Math.PI,x0=q[0]+Math.cos(u)*rw,y0=q[1]+Math.sin(u)*rw*.55*KR();seg([x0-.5,y0-.7],[x0+.5,y0+.7]);ctx.stroke()}
   for(const[d,s] of[[[.85,.45,0],13],[[.2,-.98,0],14],[[-.7,.7,0],15]]){if(F(d)<.08)continue;strawTuft(V0,add(W,mul(nrm(d),rw*.92)),add(d,[0,0,1]),3,2.4,.45,s)}
   on(V0,W,rw,[.85,-.5,0],.05,k=>{const sw=Math.sin(ph*2+.5)*.5;for(const pass of[0,1]){ctx.strokeStyle=pass?SC.rope:INK;ctx.lineWidth=pass?1.3:3;seg(k,[k[0]-.4+sw,k[1]+4.2]);ctx.stroke();seg(k,[k[0]+1.4+sw*.6,k[1]+3.6]);ctx.stroke()}
     ink(1.2);ctx.fillStyle=SC.rope;ball(k,1.5);ctx.fill();ctx.stroke();ctx.fillStyle=wa(.5);ball([k[0]-.4,k[1]-.5],.5);ctx.fill()});
@@ -738,8 +742,8 @@ function scHead(V0,Ch,Hc,R,ph,o){const{P,F,c}=V0,t=G.t,at=R*.95,lit=[],n0=add(Ch
   ruff(false);neck(V0,n0,3.6,n1,3.1,SC.sack);
   {const A=P(n0),B=P(n1);ctx.strokeStyle='rgba(90,60,25,.5)';ctx.lineWidth=.8;for(const o2 of[-1.6,0,1.6]){seg([lerp(A[0],B[0],.5)+o2,lerp(A[1],B[1],.5)],[B[0]+o2*1.15,B[1]+1]);ctx.stroke()}}
   ruff(true);
-  {const k=P(Nk),rr=3.5;ctx.lineCap='round';ctx.strokeStyle=INK;ctx.lineWidth=3.4;ctx.beginPath();ctx.ellipse(k[0],k[1],rr,rr*.55,0,.1,Math.PI-.1);ctx.stroke();ctx.strokeStyle=SC.rope;ctx.lineWidth=1.7;ctx.stroke();
-    ctx.strokeStyle=SC.ropeD;ctx.lineWidth=.7;for(let i=1;i<6;i++){const u=i/6*Math.PI,x0=k[0]+Math.cos(u)*rr,y0=k[1]+Math.sin(u)*rr*.55;seg([x0-.5,y0-.6],[x0+.5,y0+.6]);ctx.stroke()}
+  {const k=P(Nk),rr=3.5;ctx.lineCap='round';ctx.strokeStyle=INK;ctx.lineWidth=3.4;ctx.beginPath();ctx.ellipse(k[0],k[1],rr,rr*.55*KR(),0,.1,Math.PI-.1);ctx.stroke();ctx.strokeStyle=SC.rope;ctx.lineWidth=1.7;ctx.stroke();
+    ctx.strokeStyle=SC.ropeD;ctx.lineWidth=.7;for(let i=1;i<6;i++){const u=i/6*Math.PI,x0=k[0]+Math.cos(u)*rr,y0=k[1]+Math.sin(u)*rr*.55*KR();seg([x0-.5,y0-.6],[x0+.5,y0+.6]);ctx.stroke()}
     on(V0,Nk,rr,[.75,.66,0],0,kq=>{const sw=Math.sin(ph*2)*.6;for(const pass of[0,1]){ctx.strokeStyle=pass?SC.rope:INK;ctx.lineWidth=pass?1.3:3;seg(kq,[kq[0]+.6+sw,kq[1]+3.6]);ctx.stroke();seg(kq,[kq[0]+2.2+sw*.7,kq[1]+3]);ctx.stroke()}
       ink(1.2);ctx.fillStyle=SC.rope;ball(kq,1.4);ctx.fill();ctx.stroke()})}
   const h=P(Hc);ink(2.4);ball(h,R);ctx.fillStyle=SC.sack;ctx.fill();ctx.stroke();
@@ -782,13 +786,13 @@ function scHat(Vh,R,ph,crowFn){const{P}=Vh,b0=brimPt(R,0,0),c0=P(b0),N=40,rc=SH.
   if(crowFn&&crowFn.behind)crowFn();
   const ap=add(b0,[-.6,0,6.2]),A=P(ap),hb=c0[1]-1.5,tw=rc*.72;
   const crown=()=>{ctx.beginPath();ctx.moveTo(c0[0]-rc,c0[1]);ctx.quadraticCurveTo(c0[0]-rc*1.02,A[1]+2.6,A[0]-tw,A[1]+.7);ctx.quadraticCurveTo(A[0]-tw*.45,A[1]-.9,A[0],A[1]+1);
-    ctx.quadraticCurveTo(A[0]+tw*.45,A[1]-.9,A[0]+tw,A[1]+.7);ctx.quadraticCurveTo(c0[0]+rc*1.02,A[1]+2.6,c0[0]+rc,c0[1]);ctx.ellipse(c0[0],c0[1],rc,rc*.55,0,0,Math.PI);ctx.closePath()};
+    ctx.quadraticCurveTo(A[0]+tw*.45,A[1]-.9,A[0]+tw,A[1]+.7);ctx.quadraticCurveTo(c0[0]+rc*1.02,A[1]+2.6,c0[0]+rc,c0[1]);ctx.ellipse(c0[0],c0[1],rc,rc*.55*KR(),0,0,Math.PI);ctx.closePath()};
   ink(2.2);crown();ctx.fillStyle=SC.hat;ctx.fill();ctx.stroke();
   ctx.save();crown();ctx.clip();ctx.fillStyle=SC.hatD;ell(c0[0]+rc*.85,lerp(c0[1],A[1],.5),rc*.7,rc*1.4);ctx.fill();ctx.fillStyle=wa(.22);ell(c0[0]-rc*.5,lerp(c0[1],A[1],.55),rc*.3,rc*.75);ctx.fill();
-  ctx.strokeStyle=brimC;ctx.lineWidth=.8;for(const k of[.36,.7]){const rr=lerp(rc,tw,k);ctx.beginPath();ctx.ellipse(lerp(c0[0],A[0],k),lerp(c0[1],A[1]+1.2,k),rr,rr*.55,0,0,Math.PI);ctx.stroke()}
+  ctx.strokeStyle=brimC;ctx.lineWidth=.8;for(const k of[.36,.7]){const rr=lerp(rc,tw,k);ctx.beginPath();ctx.ellipse(lerp(c0[0],A[0],k),lerp(c0[1],A[1]+1.2,k),rr,rr*.55*KR(),0,0,Math.PI);ctx.stroke()}
   seg([A[0],A[1]+1],[A[0]+.3,A[1]+2.6]);ctx.stroke();
-  ctx.lineCap='butt';ctx.strokeStyle=INK;ctx.lineWidth=3.8;ctx.beginPath();ctx.ellipse(c0[0],hb,rc*.99,rc*.545,0,.06,Math.PI-.06);ctx.stroke();ctx.strokeStyle=SC.band;ctx.lineWidth=2.2;ctx.stroke();
-  ctx.strokeStyle=wa(.35);ctx.lineWidth=.6;ctx.beginPath();ctx.ellipse(c0[0],hb-.6,rc*.99,rc*.545,0,Math.PI*.55,Math.PI*.92);ctx.stroke();ctx.restore();ctx.lineCap='round';
+  ctx.lineCap='butt';ctx.strokeStyle=INK;ctx.lineWidth=3.8;ctx.beginPath();ctx.ellipse(c0[0],hb,rc*.99,rc*.545*KR(),0,.06,Math.PI-.06);ctx.stroke();ctx.strokeStyle=SC.band;ctx.lineWidth=2.2;ctx.stroke();
+  ctx.strokeStyle=wa(.35);ctx.lineWidth=.6;ctx.beginPath();ctx.ellipse(c0[0],hb-.6,rc*.99,rc*.545*KR(),0,Math.PI*.55,Math.PI*.92);ctx.stroke();ctx.restore();ctx.lineCap='round';
   {const C0=add(b0,[-.3,0,2.8]),d=nrm([.25,.95,.2]);on(Vh,C0,rc*.86,d,.08,(k,v)=>{ink(1.2);ctx.fillStyle=SC.hole;ctx.beginPath();for(let i=0;i<7;i++){const an=i/7*TAU,r=[1,.7,1,.8,.95,.65,.9][i]*1.5;ctx.lineTo(k[0]+Math.cos(an)*r*Math.max(.5,v),k[1]+Math.sin(an)*r)}ctx.closePath();ctx.fill();ctx.stroke()});
     if(Vh.F(d)>.1)strawTuft(Vh,add(C0,mul(d,rc*.86)),add(d,[0,0,.5]),3,2.4,.4,7)}
   if(crowFn&&!crowFn.behind)crowFn()}
@@ -837,7 +841,7 @@ function spaventapasseri(x,y,face,anim,p,sc){sc=sc||1.15;const ph=p*TAU,walk=ani
   if(atk){const sk=cl((p-.04)/.1,0,1)*(1-cl((p-.92)/.08,0,1));pose={wing:air>0?Math.max(air,.5):sk*.6,beat:air>0?.3+.7*Math.sin(p*TAU*8):sk*.3*Math.sin(p*60),look:.3*Math.sin(ph*3),open:p<.3?1:0,flick:sk}}
   else if(walk)pose={wing:.32+.12*Math.sin(ph*2),beat:Math.sin(ph*2)*.6,look:Math.sin(ph)*.35,flick:Math.max(0,Math.sin(ph*2))*.5};
   else pose={look:Math.sin(ph)*.9,open:p>.12&&p<.3?Math.sin((p-.12)/.18*Math.PI):0,peck:p>.55&&p<.8?Math.sin((p-.55)/.25*Math.PI):0,flick:p>.35&&p<.5?Math.sin((p-.35)/.15*Math.PI):0};
-  shadow(x,y,13*sc,4.8*sc,.34);
+  shadow(x,y,13*sc,4.8*sc*KR(),.34);
   ctx.save();ctx.translate(x,y);ctx.scale(sc,sc);const parts=[],dT=D(Ch);
   // legs: stiff, patched trousers, straw out of the cuffs (the tufts that point away go behind the leg), old boots
   for(const[sd,f] of[[-1,fL],[1,fR]]){const hip=add(Pv,[0,sd*3.3,-3.3]),foot=[1+f.x,sd*4.6,f.z],k=farK(F(0,sd,0));
@@ -886,10 +890,10 @@ function spaventapasseri(x,y,face,anim,p,sc){sc=sc||1.15;const ph=p*TAU,walk=ani
     const p3=[Math.cos(ea)*18.4+vx*age,Math.sin(ea)*18.4+vy*age,pz],vl=Math.hypot(vx,vy),A=Vw.P(p3),B=Vw.P(add(p3,[-vx/vl*2.4,-vy/vl*2.4,.6]));
     ctx.globalAlpha=1-age;ctx.lineCap='round';ctx.strokeStyle=INK;ctx.lineWidth=2.1;seg(A,B);ctx.stroke();ctx.strokeStyle=i%3?SC.straw:SC.strawL;ctx.lineWidth=1;ctx.stroke();ctx.globalAlpha=1}
   // dizzy: three little stars going round over the hat
-  if(dizzy>=0&&dizzy<.9){const k=dizzy/.9,c0=P(add(Hc,[0,0,R*.86+11.5]));for(let i=0;i<3;i++){const an=k*TAU*1.5+i*TAU/3;starS(c0[0]+Math.cos(an)*8,c0[1]+Math.sin(an)*2.6,1.9,Math.sin(k*Math.PI))}}
+  if(dizzy>=0&&dizzy<.9){const k=dizzy/.9,c0=P(add(Hc,[0,0,R*.86+11.5]));for(let i=0;i<3;i++){const an=k*TAU*1.5+i*TAU/3;starS(c0[0]+Math.cos(an)*8,c0[1]+Math.sin(an)*2.6*KR(),1.9,Math.sin(k*Math.PI))}}
   ctx.restore()}
 
 // the toolkit of the method (the 3D skeleton, the IK, the lantern's way of painting), for the enemies drawn in other files
-const _rig={TAU,cl,ez,lerp,add,sub,mul,len,nrm,dot,cross,lerp3,V,Vat,rz,angTo,mix,farK,ik,stepper,NOSTEP,shine,ball,seg,tri,spike,hull,limb,sleeve,cuff,on,neck,hand,fist,bone,claw,rag,leg,trunk,WARM,LITK,wa,rim,shadeLimb,glowTop,folds,run,ZC,zArm,zHead,strawTuft,disc,ropeRings,starS,flame,crack,hull2,bigHand,grip};
-return {zombie,strisciante,minatore,hound,becchino,lanterna,spaventapasseri,_rig};
+const _rig={cam,KR,TAU,cl,ez,lerp,add,sub,mul,len,nrm,dot,cross,lerp3,V,Vat,rz,angTo,mix,farK,ik,stepper,NOSTEP,shine,ball,seg,tri,spike,hull,limb,sleeve,cuff,on,neck,hand,fist,bone,claw,rag,leg,trunk,WARM,LITK,wa,rim,shadeLimb,glowTop,folds,run,ZC,zArm,zHead,strawTuft,disc,ropeRings,starS,flame,crack,hull2,bigHand,grip};
+return {zombie,strisciante,minatore,hound,becchino,lanterna,spaventapasseri,cam,_rig};
 })();
