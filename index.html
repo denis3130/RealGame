@@ -11030,6 +11030,8 @@ function arciere0(x,y,face,anim,p,sc,o){sc=sc||1;o=o||{};const S0=o.style||{},ar
     if(Wp.lean!=null){A.lean=Wp.lean;A.hd=add(A.hd,[Wp.lean*3,0,0]);if(Wp.body)A.B=add(A.B,Wp.body);if(Wp.sq)A.s=Wp.sq}}
   // the mages float in the air (style.float): a slow bob instead of the steps
   if(S0.float){const fl=7+2.4*Math.sin(p*TAU+.4);A.B=[A.B[0],A.B[1],A.B[2]*(anim==='walk'?.2:1)+fl];A.roll*=.4}
+  // o.tweak(A, p): a last touch to the pose from outside (the intro film's acting); without it nothing changes
+  if(o.tweak)o.tweak(A,p);
   const X=frame(A);
   // the shadow on the floor, smaller when the hero is up in the air
   {const lift=cl(A.B[2]/6,0,1),q=P(A.B[0]+.5,A.B[1],0);shadow(x+q[0]*sc,y+q[1]*sc,13.5*sc*(1-.2*lift),5.4*sc*KR()*(1-.2*lift),.3)}
