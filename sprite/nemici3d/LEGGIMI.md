@@ -23,6 +23,9 @@ File (si caricano in quest'ordine, dopo il gioco: servono `CR._rig`, `EROE` e, p
   di lava, scudo, bastone dei maghi, martello, bomba; l'Arciere resta identico al pixel): goblin, scheletro, scheletrino, negromante,
   piromante, nano bombarolo, la Strega, il Fabbro, la Regina dei Ghiacci e il suo riflesso.
 - `boss1.js`: Golem, Re Rospo, Yeti. `boss2.js`: Salamandra, Idra, Mimic.
+- `eroi.js` (gruppo «Eroi e compagni», richiesta di Denis «fammi anche i pg tutti in 3d»): l'Arciere, la Cacciatrice (coda di capelli),
+  il Balestriere (elmo, balestra) e il Druida (corna di legno, bastone, occhi verdi) sul corpo dell'Arciere 3D; i compagni Muschietto, Lucciola e
+  Draghetto; il Mercante col tappeto, le pozioni e la cassa. `N3.meta[nome].old` disegna quello di oggi per «Prima e dopo».
 
 Pagina di prova: `python3 anteprime/mk_nemici3d.py [nome]` → `anteprime/nemici3d.html` (viste «Gira», «4 direzioni», «Prima e dopo»,
 «Tutti»; mosse, ◀ ▶, «Fase 2» per i boss, effetti bassi, tempo di disegno), pubblicata su

@@ -10504,6 +10504,8 @@ return{draw,frame,M,MAT,kit,tones,nomi:DATI_N,ZOMBIE:['pistola','revolver','mitr
 // ghiaccio), helm e beard (elmo e barba), robe e float (veste lunga, sospesi in aria), cracks (crepe di lava), shield (scudo), eyeCol
 // (colore degli occhi), held 'scettro' / 'martello' / 'bomba' (bastone con la sfera, martello del Fabbro, bomba); armor 'none' (niente
 // giubba), quiver false, belt null, blush false. Senza queste opzioni l'eroe resta identico al pixel.
+// Anche gli altri tre eroi stanno su questo corpo, con i loro pezzi del gioco: ponytail e hair (la coda della Cacciatrice), helm (l'elmo
+// del Balestriere), antlers (le corna di legno del Druida, con hoodTip e il suo bastone) e eyes (il colore degli occhi, verdi nel Druida).
 window.EROE=(()=>{
 const R=CR._rig,{cam,KR,TAU,cl,ez,lerp,add,sub,mul,len,nrm,dot,cross,lerp3,V,Vat,mix,stepper,shine,ball,seg,tri,hull,on,fist,wa,rim,glowTop,run,starS}=R;
 // ------------------------------------------------------------------ colours (giubba di cuoio + arco di frassino, as in the game)
@@ -10584,6 +10586,7 @@ function head(Vh,Rh,S,A,o){const h=Vh.P(0,0,0),{F}=Vh,hood=S.hood,skin=S.skin,no
   const mossBack=o.moss&&F(mouthD)<.05;if(mossBack)mossStick(Vh,h,Rh,mouthD,mossD,o,false);
   // the enemies' bits behind the head: the antlers, an ear on the far side, the back spikes of the tiara
   if(S.crown)antlers(Vh,h,Rh,S,nod);if(S.ears)for(const sd of[-1,1])if(F(nod([0,sd,0]))<=.3)ear(Vh,h,Rh,S,nod,sd);if(S.tiara)tiara(Vh,h,Rh,S,nod,false);
+  if(S.antlers)deerAntlers(Vh,h,Rh,nod);const tailFront=S.ponytail&&F(nod([-1,0,-.2]))>.15;if(S.ponytail&&!tailFront)ponytail(Vh,h,Rh,S,nod,o.sway||0);
   ink(2.5);ball(h,Rh);ctx.fillStyle=hood;ctx.fill();ctx.stroke();
   // soft shading of a ball lit from the upper left: the three tones blend into each other, no patches with an edge
   ctx.save();ball(h,Rh-.8);ctx.clip();ctx.fillStyle=soft(h[0]-Rh*.36,h[1]-Rh*.42,h[0]-Rh*.05,h[1]+Rh*.05,Rh*1.2,hood,.14,.3);ctx.fillRect(h[0]-Rh,h[1]-Rh,Rh*2,Rh*2);
@@ -10603,7 +10606,7 @@ function head(Vh,Rh,S,A,o){const h=Vh.P(0,0,0),{F}=Vh,hood=S.hood,skin=S.skin,no
     if(op.rim&&op.rim.length>1){ctx.lineCap='round';ctx.lineJoin='round';ctx.strokeStyle=INK;ctx.lineWidth=2.5;line(op.rim);if(op.full)ctx.closePath();ctx.stroke()}}
   ctx.restore();rim(h,Rh,h,Rh,.3);
   // and in front of it: the helmet, the point of the hood, the beard, an ear on our side, the front spikes of the tiara
-  if(S.helm)helm(Vh,h,Rh,S,nod);if(S.hoodTip)hoodTip(Vh,h,Rh,S,nod);if(S.beard)beard(Vh,h,Rh,S,nod);if(S.ears)for(const sd of[-1,1])if(F(nod([0,sd,0]))>.3)ear(Vh,h,Rh,S,nod,sd);if(S.tiara)tiara(Vh,h,Rh,S,nod,true);
+  if(tailFront)ponytail(Vh,h,Rh,S,nod,o.sway||0);if(S.helm)helm(Vh,h,Rh,S,nod);if(S.hoodTip)hoodTip(Vh,h,Rh,S,nod);if(S.beard)beard(Vh,h,Rh,S,nod);if(S.ears)for(const sd of[-1,1])if(F(nod([0,sd,0]))>.3)ear(Vh,h,Rh,S,nod,sd);if(S.tiara)tiara(Vh,h,Rh,S,nod,true);
   if(o.moss&&!mossBack)mossStick(Vh,h,Rh,mouthD,mossD,o,true)}
 // two big dark eyes with a small, sharp point of light (o.eyeLight: false takes it away); they close for a blink, squeeze shut when hit;
 // a faint blush, a little mouth when needed. No eye ever sits on the outline of the head: when the head turns, the far eye slides in
@@ -10677,6 +10680,17 @@ function beard(Vh,h,Rh,S,nod){const f=Vh.F(nod([1,0,-.2]));if(f<-.1)return;const
   ctx.save();ctx.globalAlpha=cl((f+.1)*4,0,1);ink(2.4);poly(H);ctx.fillStyle=soft(bb[0]+(bb[2]-bb[0])*.3,bb[1]+(bb[3]-bb[1])*.3,bb[0]+(bb[2]-bb[0])*.5,bb[1]+(bb[3]-bb[1])*.55,Math.max(bb[2]-bb[0],bb[3]-bb[1])*.75,S.beard,.18,.3);ctx.fill();ctx.stroke();
   if(f>.25){ctx.strokeStyle='rgba(60,20,6,.38)';ctx.lineWidth=1;ctx.lineCap='round';for(const sd of[-.28,.28]){const a=hP(Vh,h,nod([Rh*.98,sd*Rh,-Rh*.62])),b=hP(Vh,h,nod([Rh*.94,sd*Rh*.7,-Rh*1.2]));seg(a,b);ctx.stroke()}}
   ctx.restore()}
+// the Cacciatrice's ponytail: a soft tapered lock of hair from the back of her head, hanging down behind the neck; it swings a little
+function ponytail(Vh,h,Rh,S,nod,sw){const col=S.hair||S.hood,pts=[[-.9*Rh,0,.2*Rh],[-1.25*Rh,sw*.6,-.25*Rh],[-1.42*Rh,sw*1.3,-.85*Rh],[-1.4*Rh,sw*2,-1.45*Rh]].map(v=>hP(Vh,h,nod(v))),rs=[3.3,3.1,2.4,1.2];
+  ctx.fillStyle=INK;for(let i=0;i<3;i++){hull(pts[i],rs[i]+1.3,pts[i+1],rs[i+1]+1.3);ctx.fill()}
+  const bb=[1e9,1e9,-1e9,-1e9];for(const q of pts){bb[0]=Math.min(bb[0],q[0]-3);bb[1]=Math.min(bb[1],q[1]-3);bb[2]=Math.max(bb[2],q[0]+3);bb[3]=Math.max(bb[3],q[1]+3)}
+  ctx.fillStyle=soft(bb[0]+(bb[2]-bb[0])*.3,bb[1]+(bb[3]-bb[1])*.2,(bb[0]+bb[2])/2,(bb[1]+bb[3])/2,Math.max(bb[2]-bb[0],bb[3]-bb[1])*.8,col,.2,.3);for(let i=0;i<3;i++){hull(pts[i],rs[i],pts[i+1],rs[i+1]);ctx.fill()}
+  ctx.strokeStyle='rgba(90,50,10,.35)';ctx.lineWidth=.8;ctx.lineCap='round';line([lerp3([...pts[0],0],[...pts[1],0],.5).slice(0,2),pts[2],pts[3]]);ctx.stroke()}
+// the Druid's antlers: two crooked branches of pale wood from the top of his head, each with two tines (as in the game, without buds)
+function deerAntlers(Vh,h,Rh,nod){for(const sd of[-1,1]){const b0=nod([-.1*Rh,sd*.48*Rh,.78*Rh]),p1=add(b0,nod([-.4,sd*3.8,10])),p2=add(p1,nod([-.4,sd*6,5])),t1=add(lerp3(b0,p1,.7),nod([.3,-sd*4.6,6.6])),t2=add(lerp3(p1,p2,.45),nod([-.2,sd*1.2,6.5]));
+  const L=[[b0,p1,p2],[lerp3(b0,p1,.7),t1],[lerp3(p1,p2,.45),t2]].map(l=>l.map(v=>hP(Vh,h,v)));ctx.lineCap='round';ctx.lineJoin='round';
+  ctx.strokeStyle=INK;ctx.lineWidth=4.6;for(const l of L){line(l);ctx.stroke()}ctx.strokeStyle='#c9a26a';ctx.lineWidth=2.3;for(const l of L){line(l);ctx.stroke()}
+  ctx.strokeStyle='rgba(255,240,210,.45)';ctx.lineWidth=.8;line(L[0]);ctx.stroke()}}
 // the Witch's crown of branches: two crooked antlers from the top of the head, each with a fork, green buds at the tips (orange in her
 // second phase). Drawn behind the head, so they grow out of it
 function antlers(Vh,h,Rh,S,nod){const bud=S.p2?'#ff8a3c':'#7bbf4a';
@@ -11080,7 +11094,7 @@ function arciere0(x,y,face,anim,p,sc,o){sc=sc||1;o=o||{};const S0=o.style||{},ar
   // the head turns on its own camera (the look), the face nods
   const dv=Math.atan2(Math.sin(Math.PI/2-face),Math.cos(Math.PI/2-face)),cheat=o.noCheat?0:.42*Math.sin(dv)*cl((Math.PI-Math.abs(dv))/(Math.PI/2),0,1);
   parts.push({d:hDep,f:()=>{const Vh=Vat(face+A.hy+cheat,P(Hc),hDep);head(Vh,Rh,S,A,{blink:A.blink,squint:A.squint,shut:A.shut,mouth:A.mouth,moss:o.moss&&anim==='idle'||o.moss===2,inhale:A.inhale,exhale:A.exhale,eyeLight:o.eyeLight!==false,
-      eyeCol:S0.eyes,glow:S0.glowEyes&&S0.eyes?hexRgb(S0.eyes):null,blush:S0.blush});
+      eyeCol:S0.eyes,glow:S0.glowEyes&&S0.eyes?hexRgb(S0.eyes):null,blush:S0.blush,sway:A.sway});
     if(A.flash>0){ctx.save();ctx.globalAlpha=A.flash*.3;ball(P(Hc),Rh);ctx.fillStyle='#fff';ctx.fill();ctx.restore()}}});
   // the arrow flies off after the release, in front of the hero or behind him
   if(!o.noFx&&A.fly>=0&&A.fly<.5&&!isX){const k=A.fly/.5,a=add(sub(grip,mul(aim,BK+1)),mul(aim,k*44)),b=add(a,mul(aim,12));

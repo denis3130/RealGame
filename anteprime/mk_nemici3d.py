@@ -16,13 +16,13 @@ src='\n'.join(open(os.path.join(d3,f),encoding='utf-8').read() for f in files)
 start=sys.argv[1] if len(sys.argv)>1 else ''
 ctrl=r'''
 // ---------- anteprima: nemici e boss della Classica in 3D, dal vivo ----------
-(()=>{const GROUPS=[[1,'Capitolo 1 · Muschio'],[2,'Capitolo 2 · Cenere'],[3,'Capitolo 3 · Palude'],[4,'Capitolo 4 · Ghiaccio'],['boss','Boss']];
+(()=>{const GROUPS=[['eroi','Eroi e compagni'],[1,'Capitolo 1 · Muschio'],[2,'Capitolo 2 · Cenere'],[3,'Capitolo 3 · Palude'],[4,'Capitolo 4 · Ghiaccio'],['boss','Boss']];
 const MOVE={idle:'Fermo',walk:'Cammina',attack:'Attacco',hit:'Colpito'};
 const cap=s=>s?s[0].toUpperCase()+s.slice(1):s,moveName=(id,a)=>{const M=N3.meta[id];return cap(M.lab&&M.lab[a]||MOVE[a]||a)};
 // the game's type for the drawing of today (when it is not the same name)
 const OLD={};
 // the order of the game (the chapters, then the bosses arena by arena)
-const ORDER=['slime','bigslime','bat','goblin','plant','skeleton','mushroom','wisp','beetle','eyeflower','shadoweye','necro','bonelet','imp','magmaslime','obsidian','pyro','bomber',
+const ORDER=['arciere','cacciatrice','balestriere','druida','muschietto','lucciola','draghetto','mercante','slime','bigslime','bat','goblin','plant','skeleton','mushroom','wisp','beetle','eyeflower','shadoweye','necro','bonelet','imp','magmaslime','obsidian','pyro','bomber',
   'frog','mosquito','croc','snail','tadpole','wolf','snowspirit','icesentinel','golem','salamander','toad','yeti','witch','smith','hydra','icequeen','qmirror','mimic'];
 const rank=id=>{const i=ORDER.indexOf(id);return i<0?999:i};
 const ids=()=>{const out=[];for(const[g] of GROUPS)for(const id of N3.order.slice().sort((a,b)=>rank(a)-rank(b)))if(N3.meta[id].g===g)out.push(id);for(const id of N3.order)if(!out.includes(id))out.push(id);return out};
@@ -36,7 +36,8 @@ function box(id,a0){const key=id+'|'+(a0||'');if(BOX[key])return BOX[key];const 
   ctx=saved;if(b[0]>b[2])b=[180,200,240,310];return BOX[key]={l:210-b[0],r:b[2]-210,t:300-b[1],bt:b[3]-300}}
 // the monster of today: the game's own drawing with a pretend enemy (kept, so its particles live on)
 const OE={};
-function oldDraw(id,x,y,f,sc){const t=OLD[id]!=null?OLD[id]:id;if(!t||!ET[t])return;let e=OE[id];
+function oldDraw(id,x,y,f,sc){const M=N3.meta[id];if(M.old){ctx.save();ctx.translate(x,y);ctx.scale(sc,sc);try{M.old(0,0,f,anim,p)}catch(e){console.error(e)}ctx.restore();ctx.globalAlpha=1;return}
+  const t=OLD[id]!=null?OLD[id]:id;if(!t||!ET[t])return;let e=OE[id];
   if(!e){e=OE[id]=makeE0(t,0,-8,0);e.spawn=0;e.intro=0;e.em=1;e.fa=1;e.z=0;e.hp=e.max;e.ph='show';e.hidden=false;e.alpha=1;e.st='walk';if(t==='hydra'){const g=G.enemies;G.enemies=[e];try{updEnemy(e,.001)}catch(er){}G.enemies=g}}
   e.x=0;e.y=-8;e.face=f;e.t=G.t;e.moving=anim==='walk';e.walk=G.t*9;e.flash=anim==='hit'&&p<.15?.1:0;
   ctx.save();ctx.translate(x,y);ctx.scale(sc,sc);try{shadowFor(e);drawEnemy(e)}catch(er){try{drawEnemy0(e)}catch(e2){}}ctx.restore();ctx.globalAlpha=1}

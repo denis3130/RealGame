@@ -112,7 +112,7 @@ function caps(V0,a,ra,b,rb,col,o){o=o||{};const A=V0.P(a),B=V0.P(b);ink(o.lw||2.
 // a chain of capsules (a bendy limb, a tail, a neck) drawn without seams: every outline first, then every fill
 function chain(V0,pts3,rs,col,o){o=o||{};const P2=pts3.map(q=>V0.P(q)),bb=bbox(P2.map((q,i)=>[q[0],q[1]]));bb[0]-=rs[0];bb[1]-=rs[0];bb[2]+=rs[0];bb[3]+=rs[0];
   ctx.fillStyle=INK;for(let i=0;i<P2.length-1;i++){hull(P2[i],rs[i]+(o.lw||2.5)/2+.1,P2[i+1],rs[i+1]+(o.lw||2.5)/2+.1);ctx.fill()}
-  if(o.end)o.end(P2);ctx.fillStyle=o.fill||softBox(bb,col,o.kl,o.kd);for(let i=0;i<P2.length-1;i++){hull(P2[i],rs[i]-(o.lw||2.5)/2+.1,P2[i+1],rs[i+1]-(o.lw||2.5)/2+.1);ctx.fill()}
+  if(o.end)o.end(P2);ctx.fillStyle=o.fill||softBox(bb,col,o.kl,o.kd);for(let i=0;i<P2.length-1;i++){hull(P2[i],Math.max(.25,rs[i]-(o.lw||2.5)/2+.1),P2[i+1],Math.max(.25,rs[i+1]-(o.lw||2.5)/2+.1));ctx.fill()}
   if(!o.noRim)for(let i=0;i<P2.length-1;i++)rim(P2[i],rs[i],P2[i+1],rs[i+1],o.rim||.18);return P2}
 // a flat disc in 3D (centre c, normal n, radius r): a projected circle; o.ink; returns the screen points
 function disc3(V0,c,n,r,o){o=o||{};n=nrm(n);let u=cross(n,[0,0,1]);if(len(u)<.2)u=cross(n,[0,1,0]);u=nrm(u);const v=cross(n,u),N=o.N||20,pts=[];
