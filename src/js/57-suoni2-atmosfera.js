@@ -48,7 +48,7 @@ const SFX2={
 const AMB={kind:null,bus:null,nodes:[],next:{}};
 const ambVol=()=>AU.on.sfx?.42*VOLS():0;
 function ambStop(){if(!AMB.bus)return;const c=AU.ctx,b=AMB.bus,ns=AMB.nodes;b.gain.setTargetAtTime(0,c.currentTime,.6);setTimeout(()=>{for(const n of ns)try{n.stop()}catch(e){}try{b.disconnect()}catch(e){}},3000);AMB.bus=null;AMB.nodes=[];AMB.kind=null}
-function ambStart(kind){if(!AU.ctx||AMB.kind===kind)return;ambStop();if(!kind)return;const c=AU.ctx,t=c.currentTime,far=t+36000,menu=kind==='menu';AMB.kind=kind;AMB.next={};
+function ambStart(kind){if(!AU.ctx||AMB.kind===kind)return;ambStop();if(!kind)return;const c=AU.ctx,t=c.currentTime,far=t+36000,menu=kind==='menu'||kind==='zmenu';AMB.kind=kind;AMB.next={};
   const bus=c.createGain();bus.gain.value=0;bus.connect(AU.master);bus.gain.setTargetAtTime(ambVol()*(menu?.6:1),t,1.5);AMB.bus=bus;const rs=c.createGain();rs.gain.value=.35;bus.connect(rs);rs.connect(AU.rev);
   // wind through the abyss: brown noise in a slowly moving band, in gusts
   const n=c.createBufferSource();n.buffer=AU.brown;n.loop=true;n.start(t);const bp=filt('bandpass',kind==='ice'?900:kind==='lava'?260:420,.8),wg=c.createGain();wg.gain.value=kind==='ice'?.55:.36;
@@ -66,11 +66,11 @@ const AMBEV={
   ice:[[5,12,t=>fModal(t,VR(420,.15),[1,2.3,3.7],[.6,.4,.25],.03,.6)],[9,18,t=>{const c=AU.ctx,o=osc('sine',VR(900,.1),t,t+2.2),g=c.createGain();o.frequency.linearRampToValueAtTime(VR(1300,.1),t+1.1);o.frequency.linearRampToValueAtTime(VR(1000,.1),t+2.1);g.gain.setValueAtTime(.0001,t);g.gain.linearRampToValueAtTime(.012,t+.8);g.gain.exponentialRampToValueAtTime(.0003,t+2.1);o.connect(g);route(g,null,.7)}]],
   menu:[[.12,.45,t=>{if(!$('tabPlay').hidden)fNoise(t,.012,'highpass',VR(3000,.3),.7,.03)}],[3,6,t=>{if(!$('tabPlay').hidden)fNoise(t,.5,'bandpass',600,.8,.03,{brown:true,att:.1})}]]};
 setInterval(()=>{const c=AU.ctx;if(!c||c.state!=='running')return;let want=null;
-  if(INTRO&&INTRO.on)want=null;else if(!$('menu').hidden)want='menu';else if(started&&G&&G.room){const th=themeOf(G.room);want=LAVAZ.includes(th)?'lava':isSwamp(th)?'swamp':isIce(th)?'ice':'moss'}
+  if(INTRO&&INTRO.on)want=null;else if(!$('menu').hidden)want=typeof zMode==='function'&&zMode()?'zmenu':'menu';else if(started&&G&&G.room){const th=themeOf(G.room);want=LAVAZ.includes(th)?'lava':isSwamp(th)?'swamp':isIce(th)?'ice':'moss'}
   if(want!==AMB.kind)ambStart(want);if(!AMB.bus)return;
-  const t=c.currentTime,evs=(AMBEV[AMB.kind]||[]).concat(AMB.kind==='menu'?[]:[[28,50,tt=>SFX2.farGrowl(tt)]]);if(paused&&AMB.kind!=='menu')return;
+  const t=c.currentTime,inMenu=AMB.kind==='menu'||AMB.kind==='zmenu',evs=(AMBEV[AMB.kind]||[]).concat(AMB.kind==='menu'?[]:[[28,50,tt=>SFX2.farGrowl(tt)]]);if(paused&&!inMenu)return;
   evs.forEach((ev,i)=>{if(AMB.next[i]==null)AMB.next[i]=t+rand(ev[0],ev[1]);if(t>=AMB.next[i]){AMB.next[i]=t+rand(ev[0],ev[1]);if(AU.on.sfx){AU.pan=rand(-.6,.6);try{ev[2](t+.02)}catch(e){}AU.pan=0}}})},250);
-{const _a=audioSettings;audioSettings=function(){_a();if(AU.ctx&&AMB.bus)AMB.bus.gain.setTargetAtTime(ambVol()*(AMB.kind==='menu'?.6:1),AU.ctx.currentTime,.3)}}
+{const _a=audioSettings;audioSettings=function(){_a();if(AU.ctx&&AMB.bus)AMB.bus.gain.setTargetAtTime(ambVol()*(AMB.kind==='menu'||AMB.kind==='zmenu'?.6:1),AU.ctx.currentTime,.3)}}
 // =====================================================================
 // FIRST RUN ONLY: a little hand, no words. It drags in a circle (move with your finger) and lifts (stand still and the hero
 // shoots by himself). It goes away the moment you touch the screen, or by itself after a few seconds, and never comes back

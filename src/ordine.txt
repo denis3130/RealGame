@@ -84,4 +84,6 @@ js/62-eroe-3d.js
 js/63-zombie.js
 js/64-nemici-3d.js
 js/65-caricamento.js
+js/66-falo.js
+js/67-menu-modi.js
 coda.html

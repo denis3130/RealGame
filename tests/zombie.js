@@ -1,5 +1,5 @@
-// La modalità zombie nel gioco vero (src/js/63-zombie.js): le linguette Classica | Zombie sopra la scheda dell'arena (la scelta resta dopo
-// aver riaperto il gioco), la scheda e il foglio del camposanto, «Gioca» che porta sulla mappa (il menu sparisce, la musica tace, l'eroe è
+// La modalità zombie nel gioco vero (src/js/63-zombie.js): il passaggio al menu Zombie scorrendo (la manina in alto a destra; la scelta
+// resta dopo aver riaperto il gioco, src/js/67-menu-modi.js), la scheda e il foglio del camposanto, «Gioca» che porta sulla mappa (il menu sparisce, la musica tace, l'eroe è
 // l'Arciere 3D con l'arma), la pausa (mondo fermo, Esc, effetti, esci con conferma), l'oro dato una volta sola a fine partita col record e il
 // conto delle partite, «Rigioca» che rimette tutto com'era (monete, cancello chiuso, Bara al suo posto, zombie dell'aia, lanterna, round), la
 // caduta e «Menu» (il menu torna con la sua musica, l'inclinazione dei personaggi torna quella di prima), e la Classica che parte ancora.
@@ -16,11 +16,13 @@ let fails=0;const ok=(c,m)=>{console.log((c?'  ok  ':'  NO  ')+m);if(!c)fails++}
   const E=c=>p.evaluate(c=>__E(c),c),shot=n=>p.screenshot({path:path.join(OUT,n+'.png')});
   const open=async()=>{await p.goto('http://127.0.0.1:'+srv.address().port+'/test.html');await p.waitForTimeout(1800);try{await p.click('#sheet .close',{timeout:1200});await p.waitForTimeout(500)}catch(e){}};
   await open();
-  // 1. le linguette: Classica scelta, «Nuovo!» sulla Zombie; si passa alla Zombie e la scelta resta riaprendo il gioco
-  ok(await p.evaluate(()=>{const t=document.getElementById('modeTabs');return!!t&&t.querySelector('[data-modo=classica]').classList.contains('on')&&!!t.querySelector('[data-modo=zombie] .nw')}),'le linguette sopra la scheda: Classica scelta, «Nuovo!» sulla Zombie');
-  await p.click('#modeTabs [data-modo=zombie]');await p.waitForTimeout(500);await shot('1_zombie');
-  ok(await E("SAVE.modo")==='zombie'&&/Camposanto dei Corvi/.test(await p.textContent('#chapCard')),'la scheda diventa il Camposanto dei Corvi');
-  await open();ok(await E("SAVE.modo")==='zombie'&&await p.evaluate(()=>document.querySelector('#modeTabs [data-modo=zombie]').classList.contains('on')),'riaprendo il gioco la Zombie resta scelta');
+  // 1. il passaggio tra i due menu (punto 44): nella Classica la manina zombie in alto a destra con «Nuovo!»; uno scorrimento in mezzo alla
+  // schermata porta al menu Zombie (il falò), la scelta resta riaprendo il gioco
+  ok(await p.evaluate(()=>{const h=document.getElementById('zHand');return!!h&&!h.hidden&&!!h.querySelector('.nw')&&document.getElementById('cSprout').hidden&&!document.getElementById('menu').classList.contains('zmode')}),'nella Classica la manina zombie in alto a destra, con «Nuovo!»');
+  await p.mouse.move(300,330);await p.mouse.down();for(let i=1;i<=8;i++)await p.mouse.move(300-i*20,332);await p.mouse.up();
+  await p.waitForFunction(()=>__E('!MM.tr'),null,{timeout:10000});await p.waitForTimeout(400);await shot('1_zombie');
+  ok(await E("SAVE.modo")==='zombie'&&/Camposanto dei Corvi/.test(await p.textContent('#chapCard'))&&await E("$('menu').classList.contains('zmode')&&!$('tabPlay').hidden"),'scorrendo si passa al menu Zombie: il falò, la scheda del Camposanto dei Corvi (resta la pagina Gioca)');
+  await open();ok(await E("SAVE.modo")==='zombie'&&await p.evaluate(()=>!document.getElementById('cSprout').hidden&&document.getElementById('zHand').hidden),'riaprendo il gioco la Zombie resta scelta (col germoglio per tornare alla Classica)');
   // 2. la scheda apre il foglio con le regole e il bottone per entrare
   await p.click('#chapCard');await p.waitForTimeout(700);ok(/Modalità Zombie/.test(await p.textContent('#sheet'))&&!!(await p.$('#sheet [data-zplay]')),'la scheda apre il foglio del camposanto');await shot('2_foglio');
   await p.click('#sheet .close');await p.waitForTimeout(400);
@@ -66,10 +68,11 @@ let fails=0;const ok=(c,m)=>{console.log((c?'  ok  ':'  NO  ')+m);if(!c)fails++}
   const g2=await E("SAVE.gold");ok(g2-g1===100&&await E("SAVE.zRec")===3&&await E("SAVE.zN")===2,`l'oro del round 2 (+${g2-g1}), il record resta 3, partite 2`);
   await p.click('#mzPartita .fine [data-a=menu]');await p.waitForTimeout(1500);await shot('8_menu');
   const s8=await p.evaluate(()=>({menu:!document.getElementById('menu').hidden,mz:document.getElementById('mz').hidden,on:__E('ZG.on'),music:__E('AU.cur?AU.cur.name:null')}));
-  ok(s8.menu&&s8.mz&&!s8.on&&s8.music==='menu','Menu: il menu torna con la sua musica, la mappa è spenta');
+  ok(s8.menu&&s8.mz&&!s8.on&&s8.music==='zmenu','Menu: si torna al menu Zombie con la sua musica (quella del falò), la mappa è spenta');
   ok(await E("JSON.stringify(CR.cam)")===crCam0,"l'inclinazione dei personaggi (CR.cam) è tornata quella del menu");
   ok(/Round\s*3/.test(await p.textContent('#chapCard')),'la scheda mostra il record: round 3');
   // 8. la Classica parte ancora come prima
-  await p.click('#modeTabs [data-modo=classica]');await p.waitForTimeout(400);await p.click('#playBtn');await p.waitForTimeout(2600);
+  await p.click('#cSprout',{force:true});await p.waitForFunction(()=>__E('!MM.tr'),null,{timeout:10000});await p.waitForTimeout(400);ok(await E("SAVE.modo")==='classica'&&!(await E("$('menu').classList.contains('zmode')")),'il germoglio riporta al menu Classico');
+  await p.click('#playBtn');await p.waitForTimeout(2600);
   ok(await E("started&&!paused&&G&&G.room===1&&$('menu').hidden")&&!(await E("ZG.on")),'con la Classica «Gioca» parte nella cripta come prima');await shot('9_classica');
   console.log('\nERR',JSON.stringify(errs.slice(0,6)));if(errs.length)fails++;console.log(fails?`${fails} prove non passate`:'tutte le prove passate');await b.close();srv.close();process.exit(fails?1:0)})();

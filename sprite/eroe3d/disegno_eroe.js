@@ -44,6 +44,8 @@ const line=pts=>{ctx.beginPath();for(const q of pts)ctx.lineTo(q[0],q[1])};
 // when standing still the head looks gently one way and the other (period 1, smooth at the seam)
 const look=(p,a)=>a*Math.sin(p*TAU)*(.55+.45*Math.cos(p*TAU*2));
 // a blink: 1 open, dips to 0 around p0 (the eyelid takes `w` of the cycle)
+// a smooth bump between a and b (0 outside, 1 in the middle, no corner at either end)
+const win=(p,a,b)=>{if(p<=a||p>=b)return 0;const k=Math.sin((p-a)/(b-a)*Math.PI);return k*k};
 const blink=(p,p0,w)=>{const d=Math.abs(((p-p0)%1+1.5)%1-.5);return d<w/2?d/(w/2):1};
 // keyframes on p: [[p, value or [values]], ...], eased between keys
 function keys(K,p){for(let i=0;i<K.length-1;i++){const a=K[i],b=K[i+1];if(p>=a[0]&&p<=b[0]){const k=ez((p-a[0])/Math.max(1e-6,b[0]-a[0]));
@@ -339,12 +341,24 @@ function pose(anim,p,o){const ph=p*TAU,A={B:[0,0,0],lean:.02,roll:0,s:0,sx:0,hd:
     const run=cl((p-.16)/.4,0,1),k=Math.sin(run*Math.PI);A.speed=p>.2&&p<.62?Math.sin((p-.2)/.42*Math.PI):0;A.dust=p>.14&&p<.5?(p-.14)/.36:-1;
     A.grip=add(REST.grip,[-2.6*k,0,1.2*k]);A.aim=nrm([.8,0,-.6+.35*k]);A.hR=add(REST.hR,[-5.5*k,.6*k,2.4*k]);
     A.fL=[.8+v[0]+lerp(0,-4,k),-5,k*3.4];A.fR=[.2+v[0]+lerp(0,3,k),5,k*1.6];A.jig=k*1.6;A.sway=-k*3;A.squint=k*.6}
+  else if(anim==='sit'){// sitting on a log by the fire (the zombie menu; o.seat = the height of the seat): the body down on the seat, a
+    // little back and leaning toward the fire, the feet on the ground in front, the hands on the knees. It breathes slowly and looks at the
+    // fire; around .3 it lifts the head to the night, around .55 it rubs its hands toward the fire, around .8 it turns the head to one side
+    // (the zombies far away) and back. One loop is long (the menu plays it in 9 s): every move fades in and out, so the loop has no jump
+    const b=Math.sin(ph),seat=o&&o.seat!=null?o.seat:7.4,lk=win(p,.24,.42),rub=win(p,.48,.66),sd=win(p,.72,.92);
+    A.B=[-1.6,0,seat-ZB+.14*b];A.lean=.15+.025*b-.08*lk;A.s=.016*b;A.roll=.02*Math.sin(ph+1);
+    A.fL=[6.4,-4.6,0];A.fR=[7,4.3,0];A.hd=[.5,0,.18*b];A.hp=.16-.24*lk+.05*rub;A.hy=.06*Math.sin(ph*2)+.55*sd;
+    const rb=Math.sin(p*TAU*14)*rub;A.hR=add(lerp3([6.6,5.2,8.2],[9.4,1.3,10.6],rub),[0,.9*rb,.2*b]);
+    A.blink=Math.min(blink(p,.12,.035),blink(p,.6,.035),blink(p,.86,.035));A.inhale=0;A.exhale=0;A.jig=.2*b;A.sway=.4*b}
   else if(anim==='hit'){// knocked back, eyes squeezed shut, a wobble back to standing
     const kb=p<.12?ez(p/.12):Math.exp(-(p-.12)*6)*Math.cos((p-.12)*16);A.lean=-.32*kb;A.B=[-2.6*kb,0,.4*kb];A.s=-.08*kb;A.roll=.05*kb;
     A.hd=[-.6*kb,0,.4*kb];A.hp=.06-.1*kb;A.shut=p<.5?1:0;A.mouth=p<.5?1:0;A.flash=p<.14?1-p/.14:0;A.stars=p<.75?1-p/.75:0;
     A.grip=add(REST.grip,[-1.6*kb,0,2.2*kb]);A.aim=nrm([.8,0,-.6+.3*kb]);A.hR=add(REST.hR,[-1.4*kb,1.6*kb,3.4*kb]);A.jig=kb*1.4;A.sway=kb*2}
   return A}
 
+function mixPose(A,B,k){const M={...(k<.5?A:B)};for(const key of Object.keys(A)){const a=A[key],b=B[key];
+    if(typeof a==='number'&&typeof b==='number'&&key!=='fly'&&key!=='rel')M[key]=lerp(a,b,k);else if(Array.isArray(a)&&Array.isArray(b)&&a.length===b.length&&typeof a[0]==='number')M[key]=a.map((v,i)=>lerp(v,b[i],k))}
+  M.aim=nrm(M.aim);M.up=nrm(M.up);return M}
 // ------------------------------------------------------------------ the weapon in the hands, in 3D (armi3d.js)
 // The bows of the cards, the crossbow, the Druid's staff and the eight guns of the zombie mode are volumes seen by the hero's camera
 // (ARMI3D). Which one: style.gun (a zombie gun: no quiver), held 'staff' (the staff: no quiver), held 'xbow' or the balestra card (the
@@ -532,6 +546,8 @@ function arciere0(x,y,face,anim,p,sc,o){sc=sc||1;o=o||{};const S0=o.style||{},ar
   let bk=S0.bowKind!==undefined?S0.bowKind:(wk&&BOWS[wk]?BOWS[wk][1]:null);if(bk==='plain'||bk==='xbow')bk=null;
   S.bowKind=bk;S.bowCol=S0.bowCol||(wk&&BOWS[wk]?BOWS[wk][0]:HC.bow);
   const V0=V(face),{P,D,F}=V0,Rh=10;let A=pose(anim,p,o),Wp=null;
+  // o.mix = [another move, its p, k 0..1]: the pose goes toward that one (sitting down by the fire and standing up again, without a jump)
+  if(o&&o.mix&&o.mix[2]>0)A=mixPose(A,pose(o.mix[0],o.mix[1],o),cl(o.mix[2],0,1));
   // with a gun, the crossbow or the staff: the body of the bow's pose for standing, walking, the dash and the knock back; when it aims
   // or shoots, a firm stance that breathes, eyes narrowed, the body pushed back a little by each shot
   if(gunW){if(anim==='shoot'||anim==='aim'){A=pose('idle',p,o);A.fL=[2.2,-5.2,0];A.fR=[-1,5,0];A.hd=[.3,0,0];A.hp=.04;A.hy=0;A.squint=anim==='shoot'?.55:.35;A.inhale=A.exhale=0}

@@ -127,15 +127,15 @@ const CAMP={t:0,swap:0,walk:0,bg:{},embers:[],smoke:[],amb:[]};
 const campCv=$('campCv'),campX=campCv.getContext('2d');
 const SW=360,SH=270;
 const SCENE={
-  c1:{sky:['#0b1230','#1c2547','#3a3d58'],far:'#1d2440',far2:'#151b30',tree:'#0b120e',hill:['#4a463c','#36332b','#25221d'],stone:['#8a8070','#6b6253','#4d463b'],door:'#120d0b',
+  c1:{sky:['#22305c','#5a4a86','#e0906a'],far:'#1d2440',far2:'#151b30',tree:'#0b120e',hill:['#4a463c','#36332b','#25221d'],stone:['#8a8070','#6b6253','#4d463b'],door:'#120d0b',
     ground:['#3d3a2c','#2a2820','#1a1814'],path:'#5a4f40',torch:['#ff5a14','#ffa632','#fff1c0'],moss:'#4f8a34',moon:'#f2ecd0'},
-  c2:{sky:['#140808','#3a1410','#7a2a12'],far:'#2a1210',far2:'#1c0c0a',tree:'#120a08',hill:['#3e3430','#2c2420','#1c1714'],stone:['#6e6058','#4d423c','#332b26'],door:'#140a08',
+  c2:{sky:['#2a0c10','#6a2016','#ff7a3c'],far:'#2a1210',far2:'#1c0c0a',tree:'#120a08',hill:['#3e3430','#2c2420','#1c1714'],stone:['#6e6058','#4d423c','#332b26'],door:'#140a08',
     ground:['#352a24','#251d19','#160f0c'],path:'#4a3a30',torch:['#ff3c10','#ff8a22','#ffe6a0'],moss:null,moon:'#ffb070'},
-  c3:{sky:['#081210','#13261f','#2a3a2a'],far:'#13221c',far2:'#0d1814',tree:'#08100c',hill:['#4a4a38','#36362a','#25251c'],stone:['#7d7f68','#5e604c','#3e4033'],door:'#0a0d0a',
+  c3:{sky:['#0e2a30','#2a5a4e','#a8c86a'],far:'#13221c',far2:'#0d1814',tree:'#08100c',hill:['#4a4a38','#36362a','#25251c'],stone:['#7d7f68','#5e604c','#3e4033'],door:'#0a0d0a',
     ground:['#2e3424','#20261a','#141810'],path:'#4a4a36',torch:['#3aa800','#b8f04a','#f4ffd0'],moss:null,moon:'#e8f0c0'},
-  c4:{sky:['#050c22','#11224a','#33507e'],far:'#26365a',far2:'#1a2846',tree:'#0e2224',hill:['#d8e4ee','#a8b8ca','#788aa0'],stone:['#a8b4c4','#7a8696','#4e5a68'],door:'#0a0e18',
+  c4:{sky:['#1c2c64','#5a6ab0','#f4b4cc'],far:'#26365a',far2:'#1a2846',tree:'#0e2224',hill:['#d8e4ee','#a8b8ca','#788aa0'],stone:['#a8b4c4','#7a8696','#4e5a68'],door:'#0a0e18',
     ground:['#c8d6e2','#9fb2c4','#6a7e94'],path:'#8a9aac',torch:['#1a62ff','#7fc8ff','#f0fbff'],moss:null,moon:'#f0f6ff'},
-  inf:{sky:['#07040f','#160b2a','#2a1440'],far:'#1a1030',far2:'#120a22',tree:'#0c0818',hill:['#3a3248','#2a2436','#1a1624'],stone:['#6e6280','#4e4460','#342c44'],door:'#0c0814',
+  inf:{sky:['#120826','#2e1450','#6a3a9a'],far:'#1a1030',far2:'#120a22',tree:'#0c0818',hill:['#3a3248','#2a2436','#1a1624'],stone:['#6e6280','#4e4460','#342c44'],door:'#0c0814',
     ground:['#2a2436','#1d1828','#120e1a'],path:'#3e3450','torch':['#7a2fd0','#c07aff','#f4e6ff'],moss:null,moon:'#e8d8ff'}};
 const GATE={x:180,top:100,bot:166,w:20};
 // the arena's colour is applied to the scenery only (hill, crypt, ground), never to the hero or the fire
@@ -144,15 +144,50 @@ function tintBg(m){const A=m.id==='inf'?null:ARENAS[arenaIdx(SAVE.trophies||0)];
   const t=document.createElement('canvas');t.width=src.width;t.height=src.height;const y=t.getContext('2d');
   if(HASF){y.filter=A.tint;y.drawImage(src,0,0);y.filter='none'}else{y.drawImage(src,0,0);y.globalCompositeOperation='color';y.globalAlpha=.5;y.fillStyle=A.col;y.fillRect(0,0,t.width,t.height);y.globalAlpha=1}
   // fade the tint in from the hill down, so the sky stays seamless with the one drawn above it
-  const g=y.createLinearGradient(0,0,0,t.height);g.addColorStop(0,'rgba(0,0,0,0)');g.addColorStop(.2,'rgba(0,0,0,0)');g.addColorStop(.42,'#000');g.addColorStop(1,'#000');
+  const k0=CBG_UP/(SH+CBG_UP),g=y.createLinearGradient(0,0,0,t.height);g.addColorStop(0,'rgba(0,0,0,0)');g.addColorStop(k0+.2*(1-k0),'rgba(0,0,0,0)');g.addColorStop(k0+.42*(1-k0),'#000');g.addColorStop(1,'#000');
   y.globalCompositeOperation='destination-in';y.fillStyle=g;y.fillRect(0,0,t.width,t.height);
   x.drawImage(src,0,0);x.drawImage(t,0,0);return CAMP.bg[k]=c}
-function campBg(m){if(CAMP.bg[m.id])return CAMP.bg[m.id];const c=document.createElement('canvas');c.width=SW*2;c.height=SH*2;const x=c.getContext('2d');x.scale(2,2);
+// the great tree of Mossbound, behind the crypt (the classic home: fantasy, colourful, alive; Denis: no giant skull any more). A wide old trunk
+// whose roots grip the hill, big branches, a crown of leaf clusters in three tones lit from the upper left, vines and glowing lights hanging
+// from it. Its colours follow the arena: green moss, the burnt tree with ember leaves of the volcano, the swamp's willow with hanging moss,
+// the frosted tree of the ice, the crystal tree of the Abyss. The lights in the crown breathe live (drawCamp: CAMP.treeL)
+const TREE={c1:{bark:['#3a2a1c','#5c4128','#86603c'],leaf:['#2f6a24','#4f9a3a','#8fd45e'],glow:'220,255,140',vine:'#3f7a2a'},
+  c2:{bark:['#1c1210','#3a2620','#5a3a2c'],leaf:['#8a2a12','#d9541e','#ffb03a'],glow:'255,170,70',vine:null},
+  c3:{bark:['#2a2a1c','#4a4a30','#6a6a44'],leaf:['#1f4a3a','#3a7a5a','#8ad08a'],glow:'200,255,120',vine:'#6a8a4a',willow:1},
+  c4:{bark:['#3a4250','#5a6474','#8a96a8'],leaf:['#9ab8d8','#d8e8f8','#ffffff'],glow:'170,220,255',vine:null,snow:1},
+  inf:{bark:['#241a34','#3e2c58','#5e4880'],leaf:['#5a2a8a','#9a5ad8','#e0b0ff'],glow:'210,150,255',vine:'#7a4ab8'}};
+function campTree(x,id,Z,R){const T=TREE[id]||TREE.c1,cx=180,P=a=>a[Math.floor(R(0,a.length))];x.lineJoin='round';x.lineCap='round';
+  const out=(w)=>{x.strokeStyle='#1b1612';x.lineWidth=w};
+  // branches first (they go behind the crown), then the trunk with its roots over the hill
+  const br=[[cx,8,cx-120,-70,9],[cx,2,cx+118,-78,9],[cx-4,-6,cx-60,-128,7],[cx+4,-10,cx+64,-132,7],[cx,-14,cx-6,-150,6]];
+  for(const[x0,y0,x1,y1,w] of br){x.beginPath();x.moveTo(x0,y0);x.quadraticCurveTo((x0+x1)/2+(x1-x0)*.1,(y0+y1)/2+18,x1,y1);out(w+3);x.stroke();x.strokeStyle=T.bark[1];x.lineWidth=w;x.stroke();x.strokeStyle=T.bark[2];x.lineWidth=w*.3;x.stroke()}
+  x.beginPath();x.moveTo(cx-34,96);x.bezierCurveTo(cx-24,60,cx-20,30,cx-14,-6);x.lineTo(cx+14,-6);x.bezierCurveTo(cx+20,30,cx+24,60,cx+34,96);x.closePath();
+  let g=x.createLinearGradient(cx-30,0,cx+30,0);g.addColorStop(0,T.bark[2]);g.addColorStop(.45,T.bark[1]);g.addColorStop(1,T.bark[0]);x.fillStyle=g;x.fill();out(3);x.stroke();
+  x.strokeStyle='rgba(0,0,0,.28)';x.lineWidth=1.3;for(let i=0;i<9;i++){const bx=cx-20+i*5+R(-2,2);x.beginPath();x.moveTo(bx,R(40,90));x.quadraticCurveTo(bx+R(-4,4),R(10,40),bx+R(-3,3),R(-6,10));x.stroke()}
+  for(const sd of[-1,1])for(let k=0;k<2;k++){x.beginPath();x.moveTo(cx+sd*(22+k*6),78+k*6);x.quadraticCurveTo(cx+sd*(52+k*18),86+k*8,cx+sd*(76+k*20),112+k*10);out(7-k*2);x.stroke();x.strokeStyle=T.bark[1];x.lineWidth=4-k;x.stroke()}
+  // the crown: clusters of leaves in three tones, the dark ones first (deeper inside), the light ones on top
+  const C=[];for(let i=0;i<70;i++){const a=R(-Math.PI,0),rr=Math.sqrt(R(0,1)),px=cx+Math.cos(a)*150*rr,py=-62+Math.sin(a)*92*rr+R(-14,14);C.push([px,py,R(16,30)])}
+  for(const sd of[-1,1])for(let i=0;i<6;i++)C.push([cx+sd*R(70,160),R(-60,-10),R(14,24)]);
+  C.sort((a,b)=>a[1]-b[1]);
+  for(const pass of[0,1,2])for(const[px,py,r] of C){const rr=r*(pass===0?1.08:pass===1?.92:.6),ox=pass===2?-r*.26:pass===1?-r*.06:0,oy=pass===2?-r*.3:pass===1?-r*.12:0;
+    x.beginPath();for(let k=0;k<9;k++){const an=k/9*TAU,q=rr*(.86+.14*Math.sin(an*3+px));x.lineTo(px+ox+Math.cos(an)*q,py+oy+Math.sin(an)*q*.82)}x.closePath();
+    if(pass===0){x.fillStyle=T.leaf[0];x.fill();out(2.6);x.stroke()}else{x.fillStyle=pass===1?T.leaf[1]:T.leaf[2];x.globalAlpha=pass===2?.75:1;x.fill();x.globalAlpha=1}}
+  if(T.snow){x.fillStyle='#ffffff';for(const[px,py,r] of C)if(R(0,1)<.6){x.beginPath();x.ellipse(px-r*.15,py-r*.62,r*.55,r*.2,0,0,TAU);x.fill()}}
+  // vines hanging from the crown (the willow's long strands)
+  if(T.vine){x.lineCap='round';for(let i=0;i<(T.willow?26:12);i++){const vx=R(40,320),vy=R(-40,10),len=T.willow?R(28,60):R(14,34);
+      x.beginPath();x.moveTo(vx,vy);x.quadraticCurveTo(vx+R(-6,6),vy+len*.5,vx+R(-4,4),vy+len);out(2.4);x.stroke();x.strokeStyle=T.vine;x.lineWidth=1.3;x.stroke()}}
+  // the lights in the crown: places for the live glow (fruits, lanterns, sparks)
+  CAMP.treeL=CAMP.treeL||{};CAMP.treeL[id]=[];for(let i=0;i<14;i++){const c=P(C);CAMP.treeL[id].push([c[0]+R(-10,10),c[1]+R(-6,10),R(0,TAU)])}
+  for(const[lx,ly] of CAMP.treeL[id]){x.fillStyle=`rgba(${T.glow},.9)`;x.beginPath();x.arc(lx,ly,2.2,0,TAU);x.fill();out(1);x.stroke()}}
+const CBG_UP=180;// the classic background starts this far above the scene (the great tree's crown)
+function campBg(m){if(CAMP.bg[m.id])return CAMP.bg[m.id];const c=document.createElement('canvas');c.width=SW*2;c.height=(SH+CBG_UP)*2;const x=c.getContext('2d');x.scale(2,2);x.translate(0,CBG_UP);
   const Z=SCENE[m.id],R=(a,b)=>a+Math.random()*(b-a),P=a=>a[Math.floor(Math.random()*a.length)];
   const poly=(pts,fill,stroke,lw)=>{x.beginPath();pts.forEach((p,i)=>i?x.lineTo(p[0],p[1]):x.moveTo(p[0],p[1]));x.closePath();if(fill){x.fillStyle=fill;x.fill()}if(stroke){x.strokeStyle=stroke;x.lineWidth=lw||2;x.lineJoin='round';x.stroke()}};
   // sky
-  let g=x.createLinearGradient(0,0,0,150);g.addColorStop(0,Z.sky[0]);g.addColorStop(.6,Z.sky[1]);g.addColorStop(1,Z.sky[2]);x.fillStyle=g;x.fillRect(0,0,SW,SH);
-  // moon
+  let g=x.createLinearGradient(0,-CBG_UP,0,150);g.addColorStop(0,Z.sky[0]);g.addColorStop(.55,Z.sky[1]);g.addColorStop(1,Z.sky[2]);x.fillStyle=g;x.fillRect(0,-CBG_UP,SW,SH+CBG_UP);
+  // the sun setting behind the far hills (the Abyss has its moon, the volcano its own glow)
+  if(m.id!=='c2'&&m.id!=='inf'){const sg=x.createRadialGradient(292,100,4,292,100,90);sg.addColorStop(0,'rgba(255,240,200,.85)');sg.addColorStop(.3,'rgba(255,190,130,.35)');sg.addColorStop(1,'rgba(255,160,120,0)');x.fillStyle=sg;x.fillRect(200,10,180,180);
+    x.fillStyle=m.id==='c4'?'#fff1e6':'#ffe6a8';x.beginPath();x.arc(292,104,24,0,TAU);x.fill();x.strokeStyle='rgba(255,255,255,.5)';x.lineWidth=1.5;x.beginPath();x.arc(292,104,20,Math.PI*1.1,Math.PI*1.6);x.stroke()}
   // far mountains
   const ridge=(y0,amp,col,seed)=>{x.beginPath();x.moveTo(0,SH);let px=0;x.lineTo(0,y0);while(px<SW){px+=R(14,30);x.lineTo(px,y0-Math.abs(Math.sin(px*.03+seed))*amp-R(0,amp*.3))}x.lineTo(SW,SH);x.closePath();x.fillStyle=col;x.fill()};
   if(m.id==='c4')for(const[px,ph,pw] of [[30,74,70],[118,96,92],[236,102,104],[330,80,84]]){poly([[px-pw,152],[px,152-ph],[px+pw,152]],'#2e4064');poly([[px-pw*.3,152-ph*.7],[px,152-ph],[px+pw*.3,152-ph*.7],[px+pw*.12,152-ph*.64],[px,152-ph*.73],[px-pw*.14,152-ph*.62]],'#e8f2ff')}
@@ -162,21 +197,8 @@ function campBg(m){if(CAMP.bg[m.id])return CAMP.bg[m.id];const c=document.create
     const cg=x.createRadialGradient(68,62,1,68,62,16);cg.addColorStop(0,'rgba(255,200,90,.95)');cg.addColorStop(1,'rgba(255,90,20,0)');x.fillStyle=cg;x.fillRect(48,46,40,30);
     x.save();x.shadowColor='#ff6a1a';x.shadowBlur=8;x.lineCap='round';for(const[sx,c1x,ex,ey,w] of [[63,56,48,104,2.4],[70,74,82,96,1.8],[66,64,60,84,1.4]]){x.strokeStyle='#ff7a2e';x.lineWidth=w;x.beginPath();x.moveTo(sx,63);x.quadraticCurveTo(c1x,(63+ey)/2,ex,ey);x.stroke()}x.restore();x.restore()}
   ridge(126,22,Z.far2,4);
-  // the colossal beast: its horned skull looms behind the crypt hill and its ribs rise from the ground on both sides, lost in the night haze
-  {const b=document.createElement('canvas');b.width=SW*2;b.height=SH*2;const y=b.getContext('2d');y.scale(2,2);y.lineJoin='round';y.lineCap='round';
-    const bone='#cfc6ae',bs='#8f866f',K='#14100c';
-    for(const sd of [-1,1])for(let i=0;i<3;i++){const bx=sd<0?14+i*30:SW-14-i*30,top=40+i*16,path=()=>{y.beginPath();y.moveTo(bx,140);y.quadraticCurveTo(bx-sd*26,top-10,bx+sd*34,top)};
-      path();y.strokeStyle=K;y.lineWidth=13-i*2;y.stroke();path();y.strokeStyle=bs;y.lineWidth=9-i*2;y.stroke();y.save();y.translate(-sd*1.5,-1.5);path();y.strokeStyle=bone;y.lineWidth=4-i*.8;y.stroke();y.restore()}
-    const cx=180,cy=54;
-    for(const sd of [-1,1]){const hp=()=>{y.beginPath();y.moveTo(cx+sd*78,cy-18);y.bezierCurveTo(cx+sd*118,cy-26,cx+sd*150,cy-28,cx+sd*166,cy-50)};hp();y.strokeStyle=K;y.lineWidth=17;y.stroke();hp();y.strokeStyle=bs;y.lineWidth=12;y.stroke();y.save();y.translate(-sd*1.5,-2);hp();y.strokeStyle=bone;y.lineWidth=5;y.stroke();y.restore()}
-    y.beginPath();y.ellipse(cx,cy,94,50,0,0,TAU);y.fillStyle=bone;y.fill();y.strokeStyle=K;y.lineWidth=3;y.stroke();
-    y.beginPath();y.ellipse(cx,cy+10,94,40,0,0,Math.PI);y.fillStyle=bs;y.globalAlpha=.6;y.fill();y.globalAlpha=1;
-    y.beginPath();y.ellipse(cx-26,cy-30,34,10,-.12,Math.PI*1.05,Math.PI*1.85);y.strokeStyle='#f2ecd8';y.lineWidth=5;y.stroke();
-    y.strokeStyle=K;y.lineWidth=2;y.beginPath();y.moveTo(cx+14,cy-48);y.lineTo(cx+20,cy-34);y.lineTo(cx+14,cy-26);y.stroke();
-    for(const sd of [-1,1]){y.beginPath();y.ellipse(cx+sd*38,cy-2,22,16,sd*.25,0,TAU);y.fillStyle=K;y.fill();y.beginPath();y.moveTo(cx+sd*14,cy-18);y.quadraticCurveTo(cx+sd*38,cy-30,cx+sd*64,cy-12);y.strokeStyle=K;y.lineWidth=7;y.stroke();y.strokeStyle=bone;y.lineWidth=3.5;y.stroke()}
-    // haze: the beast sits far away, behind the night air
-    y.globalCompositeOperation='source-atop';const hz=y.createLinearGradient(0,0,0,150);hz.addColorStop(0,Z.sky[0]);hz.addColorStop(1,Z.sky[2]);y.globalAlpha=.5;y.fillStyle=hz;y.fillRect(0,0,SW,SH);y.globalAlpha=1;
-    x.drawImage(b,0,0,SW,SH)}
+  // the great tree of Mossbound behind the crypt hill (punto 42: no giant skull any more), painted with the arena's colours
+  campTree(x,m.id,Z,R);
   // tree line / spires
   for(let i=0;i<26;i++){const tx=i<13?R(-6,120):R(240,366),ty=R(124,136),th=R(18,34);
     if(m.id==='c1'){x.fillStyle=Z.tree;for(let k=0;k<4;k++){const w=th*(.42-k*.07),y=ty-k*th*.24;poly([[tx-w,y],[tx,y-th*.42],[tx+w,y]],Z.tree)}x.fillRect(tx-1.5,ty-2,3,6)}
@@ -280,17 +302,18 @@ function drawCamp(dt){campResize();const m=homeMode(),open=true,Z=SCENE[m.id],sa
   const u=campCv.width/SW,top=(tb.bottom-cr.top)*dpr,feet0=(hp.top-cr.top)*dpr,room=Math.max(80*dpr,feet0-top),hs=clamp(Math.min(room*.56,215*dpr)/(46*u),1.4,3.6),feet=feet0-13*hs*u,oy=feet-HOME_Y*u,ox=campCv.width/2-180*u;
   CAMP.tf={u,ox,oy,dpr,hs};ctx.setTransform(1,0,0,1,0,0);ctx.fillStyle=Z.sky[0];ctx.fillRect(0,0,campCv.width,campCv.height);ctx.setTransform(u,0,0,u,ox,oy);
   ctx.fillStyle=Z.ground[2];ctx.fillRect(-400,SH-2,SW+800,900);
-  ctx.drawImage(tintBg(m),0,0,SW,SH);
-  if(!LOWFX){ctx.save();ctx.globalCompositeOperation='lighter';const ep=.65+.35*Math.sin(t*1.6);for(const sd of [-1,1]){glow(m.glow,180+sd*38,53,30,ep*.55);glow(m.glow,180+sd*38,53,10,ep);glow('255,255,255',180+sd*38,53,3.5,ep)}ctx.restore()}
+  ctx.drawImage(tintBg(m),0,-CBG_UP,SW,SH+CBG_UP);
+  if(!LOWFX&&CAMP.treeL&&CAMP.treeL[m.id]){const T=TREE[m.id]||TREE.c1;ctx.save();ctx.globalCompositeOperation='lighter';for(const[lx,ly,ph] of CAMP.treeL[m.id]){const k=.55+.45*Math.sin(t*1.7+ph);glow(T.glow,lx,ly,9+3*k,.45*k);glow('255,255,240',lx,ly,2.6,.6*k)}ctx.restore()}
   // living sky
   if(m.id==='inf'||m.id==='c4'){ctx.save();ctx.globalCompositeOperation='lighter';for(let k=0;k<3;k++){ctx.strokeStyle=m.id==='c4'?`rgba(${k%2?'120,255,200':'120,200,255'},${.09+.05*Math.sin(t*.7+k)})`:`rgba(${k%2?'120,220,255':'190,120,255'},${.10+.05*Math.sin(t*.7+k)})`;ctx.lineWidth=10-k*2;ctx.beginPath();for(let px=0;px<=SW;px+=12){const py=-170+k*22+Math.sin(px*.02+t*.5+k)*10;px?ctx.lineTo(px,py):ctx.moveTo(px,py)}ctx.stroke()}ctx.restore()}
   if(m.id==='c2'){glow('255,90,30',277,58,30+3*Math.sin(t*2),.5);for(let k=0;k<5;k++){const q=(t*.08+k/5)%1;ctx.fillStyle=`rgba(60,40,36,${.35*(1-q)})`;ctx.beginPath();ctx.arc(277-q*40+Math.sin(q*6+k)*6,54-q*90,6+q*18,0,TAU);ctx.fill()}}
-  if(m.id!=='c2'){const mx=246,my=-70;glow('240,235,210',mx,my,70,.22);ctx.fillStyle=Z.moon;circ(mx,my,17);ctx.fill();ctx.fillStyle='rgba(0,0,0,.12)';for(const[a,b,r] of [[-5,-4,4.5],[5,4,3],[-2,8,2.4]]){circ(mx+a,my+b,r);ctx.fill()}}
-  for(let k=0;k<5;k++){const cx=((k*91+t*(3+k))%460)-50,cy=-150+k*34+(k%2)*12,w=60+k*14;ctx.fillStyle=m.id==='c2'?'rgba(70,24,16,.55)':m.id==='c3'?'rgba(20,38,30,.55)':m.id==='c4'?'rgba(50,70,110,.45)':m.id==='inf'?'rgba(40,20,70,.5)':'rgba(24,30,58,.6)';
+  if(m.id==='inf'){const mx=246,my=-70;glow('240,235,210',mx,my,70,.22);ctx.fillStyle=Z.moon;circ(mx,my,17);ctx.fill();ctx.fillStyle='rgba(0,0,0,.12)';for(const[a,b,r] of [[-5,-4,4.5],[5,4,3],[-2,8,2.4]]){circ(mx+a,my+b,r);ctx.fill()}}
+  else if(m.id!=='c2'&&!LOWFX){ctx.save();ctx.globalCompositeOperation='lighter';glow('255,200,140',292,104,60+4*Math.sin(t*.8),.22);for(let k=0;k<6;k++){const an=-Math.PI*.95+k*.36+Math.sin(t*.2+k)*.04;ctx.fillStyle=`rgba(255,220,170,${(.05+.03*Math.sin(t*.6+k*1.3)).toFixed(3)})`;ctx.beginPath();ctx.moveTo(292,104);ctx.lineTo(292+Math.cos(an-.05)*360,104+Math.sin(an-.05)*360);ctx.lineTo(292+Math.cos(an+.05)*360,104+Math.sin(an+.05)*360);ctx.closePath();ctx.fill()}ctx.restore()}
+  for(let k=0;k<5;k++){const cx=((k*91+t*(3+k))%460)-50,cy=-150+k*34+(k%2)*12,w=60+k*14;ctx.fillStyle=m.id==='c2'?'rgba(70,24,16,.55)':m.id==='c3'?'rgba(40,74,64,.5)':m.id==='c4'?'rgba(120,118,180,.42)':m.id==='inf'?'rgba(40,20,70,.5)':'rgba(84,62,104,.5)';
     ctx.beginPath();ctx.ellipse(cx,cy,w,9,0,0,TAU);ctx.ellipse(cx-w*.3,cy-6,w*.45,8,0,0,TAU);ctx.ellipse(cx+w*.25,cy-5,w*.4,7,0,0,TAU);ctx.fill();
-    ctx.strokeStyle=m.id==='c2'?'rgba(255,120,60,.18)':'rgba(220,225,255,.14)';ctx.lineWidth=1.2;ctx.beginPath();ctx.ellipse(cx-w*.3,cy-6,w*.45,8,0,Math.PI*1.1,Math.PI*1.9);ctx.stroke()}
+    ctx.strokeStyle=m.id==='c2'?'rgba(255,120,60,.18)':m.id==='inf'?'rgba(220,225,255,.14)':'rgba(255,200,160,.3)';ctx.lineWidth=1.2;ctx.beginPath();ctx.ellipse(cx-w*.3,cy-6,w*.45,8,0,Math.PI*1.1,Math.PI*1.9);ctx.stroke()}
   if((t%9)<.6){const q=(t%9)/.6;ctx.strokeStyle=`rgba(255,255,240,${(1-q)*.8})`;ctx.lineWidth=1.2;ctx.beginPath();ctx.moveTo(40+q*120,-200+q*50);ctx.lineTo(28+q*120,-203+q*50);ctx.stroke()}
-  for(let i=0;i<90;i++){const sx=(i*97.3)%SW,sy=-260+(i*53.7)%330,tw=.4+.6*Math.abs(Math.sin(t*1.3+i*1.7));if(m.id==='c2'&&i%3)continue;ctx.fillStyle=`rgba(255,250,230,${tw*.7})`;ctx.fillRect(sx,sy,1.2,1.2)}
+  for(let i=0;i<90;i++){const sx=(i*97.3)%SW,sy=-260+(i*53.7)%330,tw=(.4+.6*Math.abs(Math.sin(t*1.3+i*1.7)))*(m.id==='inf'?1:.4);if(m.id==='c2'&&i%3)continue;ctx.fillStyle=`rgba(255,250,230,${tw*.7})`;ctx.fillRect(sx,sy,1.2,1.2)}
   // the realm beyond the door
   const gx=GATE.x,gw=GATE.w,gt=GATE.top,gb=GATE.bot,pul=.7+.3*Math.sin(t*1.8);
   ctx.save();ctx.beginPath();ctx.moveTo(gx-gw,gb);ctx.lineTo(gx-gw,gt+gw);ctx.arc(gx,gt+gw,gw,Math.PI,0);ctx.lineTo(gx+gw,gb);ctx.closePath();ctx.clip();
@@ -327,7 +350,7 @@ function drawCamp(dt){campResize();const m=homeMode(),open=true,Z=SCENE[m.id],sa
     else{a.y-=dt*6;if(a.y<60)a.y=SH;const b=(Math.sin(a.ph*2)+1)/2;glow('190,130,255',a.x,a.y,4,.5*b)}}
   ctx.restore();
   // night: darkness with holes of light
-  const lx=campLx;lx.globalCompositeOperation='source-over';lx.clearRect(0,0,SW,LH);lx.fillStyle=`rgba(6,4,14,${m.id==='c2'?.45:m.id==='c4'?.4:.55})`;lx.fillRect(0,0,SW,LH);
+  const lx=campLx;lx.globalCompositeOperation='source-over';lx.clearRect(0,0,SW,LH);lx.fillStyle=`rgba(6,4,14,${m.id==='inf'?.5:m.id==='c2'?.32:m.id==='c4'?.2:.26})`;lx.fillRect(0,0,SW,LH);
   lx.globalCompositeOperation='destination-out';const spr=glowSprite('0,0,0'),Lt=(x,y,r,a)=>{lx.globalAlpha=Math.min(1,a);lx.drawImage(spr,x-r,y+LO-r,r*2,r*2)};
   const fl=1+.04*Math.sin(t*2.1);Lt(hx,hy-18*hs,(44+18*hs)*fl,1);Lt(hx,hy-6*hs,(18+10*hs)*fl,1);
   for(const[tx,ty,r] of [[131,100,34],[229,100,34],[120,154,52],[240,154,52]])Lt(tx,ty,r*(1+.04*Math.sin(t*5+tx)),.9);
