@@ -64,6 +64,16 @@ js/61-anteprime-arene.js
 ../sprite/armi/disegno_armi.js
 ../sprite/eroe3d/armi3d.js
 ../sprite/eroe3d/disegno_eroe.js
+../sprite/nemici/disegno_nemici.js
+../sprite/nemici3d/base3d.js
+../sprite/nemici3d/cap1.js
+../sprite/nemici3d/cap1b.js
+../sprite/nemici3d/cap2.js
+../sprite/nemici3d/cap3.js
+../sprite/nemici3d/cap4.js
+../sprite/nemici3d/umanoidi.js
+../sprite/nemici3d/boss1.js
+../sprite/nemici3d/boss2.js
 js/62-eroe-3d.js
 ../anteprime/zombie/motore.js
 ../anteprime/zombie/prop.js
@@ -71,4 +81,5 @@ js/62-eroe-3d.js
 ../anteprime/zombie/partita.js
 ../anteprime/zombie/area_mappa.js
 js/63-zombie.js
+js/64-nemici-3d.js
 coda.html
