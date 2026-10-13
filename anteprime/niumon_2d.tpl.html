@@ -1,0 +1,414 @@
+<title>Il primo Niumon in 2D</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Pixelify+Sans:wght@400;500;600;700&display=swap">
+<style>
+/* Il primo Niumon (dal foglio di Denis) come sprite 2D in pixel art dentro un bosco 3D di notte, stile HD-2D: tre viste, Lotta, Mappa e
+   Sprite. Un solo aspetto scuro di proposito: è una scena notturna, qualunque sia il tema del telefono. */
+:root{
+  --night:#0a0f15; --panel:rgba(12,16,24,.9); --edge:#3a4560; --ink:#eef1f6; --dim:#a3adc0;
+  --ombra:#6a4db2; --fuoco:#c25a2c; --hp:#62d68d; --hp-mid:#e6bd4a; --hp-low:#e2604f;
+  --f-ui:"Pixelify Sans", ui-monospace, "Courier New", monospace;
+  color-scheme:dark;
+}
+html,body{height:100%;margin:0}
+body{background:var(--night);color:var(--ink);font-family:var(--f-ui);overflow:hidden}
+.app{position:relative;height:100%;overflow:hidden;-webkit-user-select:none;user-select:none;touch-action:none}
+#gl,#fx,#sheet{position:absolute;inset:0;width:100%;height:100%;display:block}
+#fx{pointer-events:none}
+#sheet{background:linear-gradient(#141a24,#0a0d13)}
+.vig{position:absolute;inset:0;pointer-events:none;background:radial-gradient(ellipse at 50% 55%,rgba(0,0,0,0) 45%,rgba(2,4,8,.62) 100%)}
+.tabs{position:absolute;top:12px;left:16px;z-index:6;display:flex;gap:6px}
+.tab{font:inherit;font-size:.95rem;font-weight:600;color:var(--dim);background:var(--panel);border:2px solid var(--edge);border-radius:.35rem;padding:.35rem .7rem;cursor:pointer;
+  touch-action:manipulation;min-height:2.4rem}
+.tab[aria-pressed="true"]{color:#fff;border-color:#8f78d6;background:#2a2147}
+.tab:focus-visible,.move:focus-visible{outline:3px solid #fff;outline-offset:2px}
+.plate{position:absolute;width:min(15rem,calc(100% - 32px));padding:.45rem .7rem .55rem;background:var(--panel);border:2px solid var(--edge);
+  border-radius:.35rem .35rem .35rem 1.2rem;box-shadow:0 3px 0 rgba(0,0,0,.4);display:grid;gap:.28rem;z-index:2}
+.plate .top{display:flex;align-items:baseline;justify-content:space-between;gap:.5rem}
+.name{font-size:1.1rem;font-weight:700;letter-spacing:.05em;text-transform:uppercase}
+.lv{font-size:.9rem;color:var(--dim)}
+.hp{display:flex;align-items:center;gap:.4rem}
+.hp b{font-size:.68rem;letter-spacing:.1em;color:var(--hp);font-weight:700}
+.track{flex:1;height:.55rem;background:#19202b;border:2px solid #070a0e;border-radius:999px;overflow:hidden}
+.fill{height:100%;width:100%;background:var(--hp);transition:width .7s steps(20,end),background-color .3s}
+.num{font-size:.85rem;text-align:right;color:var(--dim)}
+.foe{top:64px;right:16px}
+.mine{left:16px;bottom:calc(var(--dock,190px) + 10px);width:min(12.5rem,58%)}
+.dock{position:absolute;left:0;right:0;bottom:0;padding:.55rem 16px calc(.7rem + env(safe-area-inset-bottom,0px));display:grid;gap:.5rem;z-index:3}
+.msg{min-height:2.7rem;display:flex;align-items:center;padding:.4rem .8rem;background:var(--panel);border:2px solid var(--edge);border-radius:.35rem;font-size:1.05rem;line-height:1.25;text-wrap:balance}
+.moves{display:grid;grid-template-columns:1fr 1fr;gap:.45rem}
+.move{font:inherit;color:#fff;display:grid;grid-template-columns:1fr auto;align-items:center;column-gap:.4rem;text-align:left;padding:.42rem .6rem .45rem;
+  border:2px solid #070a0e;border-radius:.35rem;background:var(--c);box-shadow:inset 0 -3px 0 rgba(0,0,0,.28),0 3px 0 rgba(0,0,0,.45);cursor:pointer;min-height:2.9rem;touch-action:manipulation}
+.move[data-t="ombra"]{--c:var(--ombra)} .move[data-t="fuoco"]{--c:var(--fuoco)}
+.move .mn{font-weight:700;font-size:1rem;min-width:0}
+.move .pp{font-size:.85rem;opacity:.92}
+.move .ty{grid-column:1/-1;font-size:.62rem;letter-spacing:.12em;text-transform:uppercase;opacity:.85}
+.move:active{transform:translateY(2px)}
+.move:disabled{filter:saturate(.35) brightness(.65);cursor:default;transform:none}
+.hint{position:absolute;left:16px;right:16px;bottom:calc(1rem + env(safe-area-inset-bottom,0px));z-index:3;text-align:center;color:var(--dim);font-size:1rem;text-wrap:balance;pointer-events:none}
+.err{position:absolute;inset:auto 16px 40% 16px;text-align:center;font-size:1.05rem;color:var(--ink)}
+[hidden]{display:none!important}
+@media (min-aspect-ratio: 5/4){
+  .foe{top:12px}
+  .mine{bottom:12px;width:min(13rem,36%)}
+  .dock{left:auto;width:min(27rem,48%);padding-top:.4rem;gap:.4rem}
+  .msg{min-height:2.2rem;font-size:.95rem;padding:.3rem .7rem}
+  .move{min-height:2.3rem;padding:.3rem .55rem .32rem}
+}
+@media (min-aspect-ratio: 5/4) and (max-height: 520px){
+  .plate{padding:.35rem .6rem .4rem;gap:.18rem}
+  .name{font-size:1rem}
+  .move .ty{display:none}
+  .tab{min-height:2.1rem;padding:.25rem .6rem;font-size:.9rem}
+}
+</style>
+
+<div class="app" id="app">
+  <canvas id="gl" aria-label="Bosco di notte in 3D con il primo Niumon disegnato in pixel art"></canvas>
+  <canvas id="fx" aria-hidden="true"></canvas>
+  <div class="vig" id="vig"></div>
+  <canvas id="sheet" hidden aria-label="Gli sprite del primo Niumon da vicino"></canvas>
+  <nav class="tabs" aria-label="Vista">
+    <button type="button" class="tab" data-v="lotta" aria-pressed="true">Lotta</button>
+    <button type="button" class="tab" data-v="mappa" aria-pressed="false">Mappa</button>
+    <button type="button" class="tab" data-v="sprite" aria-pressed="false">Sprite</button>
+  </nav>
+  <section class="plate foe" id="plateFoe" aria-label="Lumbra selvatico">
+    <div class="top"><span class="name">Lumbra</span><span class="lv">Liv. 14</span></div>
+    <div class="hp"><b>PS</b><div class="track"><div class="fill" id="hpFoe"></div></div></div>
+  </section>
+  <section class="plate mine" id="plateMine" aria-label="Il tuo Lumbra">
+    <div class="top"><span class="name">Lumbra</span><span class="lv">Liv. 16</span></div>
+    <div class="hp"><b>PS</b><div class="track"><div class="fill" id="hpMine"></div></div></div>
+    <div class="num" id="hpNum">46/46</div>
+  </section>
+  <div class="dock" id="dock">
+    <div class="msg" id="msg" role="status" aria-live="polite">Un Lumbra selvatico esce dalla nebbia!</div>
+    <div class="moves" id="moves"></div>
+  </div>
+  <p class="hint" id="hint" hidden>Trascina il dito (o usa le frecce) per far camminare Lumbra nel bosco.</p>
+  <p class="err" id="err" hidden>Questo telefono non riesce a disegnare il bosco 3D (serve WebGL2).</p>
+</div>
+
+<script>
+(()=>{
+'use strict';
+// ================================================================= sprites: pixel art fatta dal foglio di Denis
+const SPR=__SPRITES__;
+const $=id=>document.getElementById(id);
+const cv=$('gl'),fxc=$('fx'),fx2=fxc.getContext('2d'),sheetCv=$('sheet');
+const reduce=matchMedia('(prefers-reduced-motion: reduce)').matches;
+const gl=cv.getContext('webgl2',{antialias:true,alpha:false,stencil:true,premultipliedAlpha:false});
+if(!gl){$('err').hidden=false;return}
+
+// ================================================================= matrici
+const M4={
+  persp(fy,a,n,f){const t=1/Math.tan(fy/2),r=new Float32Array(16);r[0]=t/a;r[5]=t;r[10]=(f+n)/(n-f);r[11]=-1;r[14]=2*f*n/(n-f);return r},
+  look(e,c,u){const z=nrm(sub(e,c)),x=nrm(cross(u,z)),y=cross(z,x);
+    return new Float32Array([x[0],y[0],z[0],0,x[1],y[1],z[1],0,x[2],y[2],z[2],0,-dot(x,e),-dot(y,e),-dot(z,e),1])},
+  mul(a,b){const r=new Float32Array(16);for(let i=0;i<4;i++)for(let j=0;j<4;j++){let s=0;for(let k=0;k<4;k++)s+=a[k*4+j]*b[i*4+k];r[i*4+j]=s}return r}};
+function sub(a,b){return[a[0]-b[0],a[1]-b[1],a[2]-b[2]]}function dot(a,b){return a[0]*b[0]+a[1]*b[1]+a[2]*b[2]}
+function cross(a,b){return[a[1]*b[2]-a[2]*b[1],a[2]*b[0]-a[0]*b[2],a[0]*b[1]-a[1]*b[0]]}function nrm(a){const l=Math.hypot(a[0],a[1],a[2])||1;return[a[0]/l,a[1]/l,a[2]/l]}
+const lerp=(a,b,k)=>a+(b-a)*k,ez=k=>k<.5?2*k*k:1-Math.pow(-2*k+2,2)/2,cl=(v,a,b)=>v<a?a:v>b?b:v;
+function rng(a){return()=>{a|=0;a=a+0x6D2B79F5|0;let t=Math.imul(a^a>>>15,1|a);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296}}
+
+// ================================================================= shader
+function prog(vs,fs){const s=(t,src)=>{const x=gl.createShader(t);gl.shaderSource(x,src);gl.compileShader(x);if(!gl.getShaderParameter(x,gl.COMPILE_STATUS))throw new Error(gl.getShaderInfoLog(x));return x};
+  const p=gl.createProgram();gl.attachShader(p,s(gl.VERTEX_SHADER,vs));gl.attachShader(p,s(gl.FRAGMENT_SHADER,fs));gl.linkProgram(p);
+  if(!gl.getProgramParameter(p,gl.LINK_STATUS))throw new Error(gl.getProgramInfoLog(p));
+  const U={},n=gl.getProgramParameter(p,gl.ACTIVE_UNIFORMS);for(let i=0;i<n;i++){const u=gl.getActiveUniform(p,i);U[u.name.replace('[0]','')]=gl.getUniformLocation(p,u.name)}return{p,U}}
+const FOG=`uniform vec3 uFog;uniform float uFogD,uFogH;uniform vec3 uEye;
+vec3 fog(vec3 c,vec3 w){float d=length(w-uEye);float f=1.0-exp(-pow(d*uFogD,2.0));f=max(f,(1.0-smoothstep(0.0,uFogH,w.y))*0.0);return mix(c,uFog,clamp(f,0.0,1.0));}`;
+// mondo: terreno, alberi, rocce (luce della luna + cielo, nebbia; con uShadow le facce schiacciate a terra diventano ombra)
+const PW=prog(`#version 300 es
+in vec3 aP;in vec3 aN;in vec2 aU;in vec3 aC;uniform mat4 uVP;uniform float uShadow;uniform vec3 uL;
+out vec3 vN;out vec2 vU;out vec3 vW;out vec3 vC;
+void main(){vec3 w=aP;if(uShadow>0.5){w=aP-uL*(aP.y/uL.y);w.y=0.015;}vW=w;vN=aN;vU=aU;vC=aC;gl_Position=uVP*vec4(w,1.0);}`,
+`#version 300 es
+precision highp float;in vec3 vN;in vec2 vU;in vec3 vW;in vec3 vC;uniform sampler2D uT;uniform vec3 uL,uLc,uAmb,uSky;uniform vec4 uSpot;uniform float uShadow;
+${FOG}
+out vec4 o;
+void main(){if(uShadow>0.5){o=vec4(0.01,0.015,0.04,0.5);return;}
+  vec4 t=texture(uT,vU);if(t.a<0.5)discard;vec3 n=normalize(vN);float d=max(dot(n,uL),0.0);float h=0.5+0.5*n.y;
+  vec3 c=t.rgb*vC*(uAmb*mix(0.55,1.0,h)+uSky*h*0.25+uLc*d);
+  float sp=uSpot.w*smoothstep(uSpot.z,0.0,length(vW.xz-uSpot.xy));c+=t.rgb*vec3(.42,.50,.62)*sp*(0.4+0.6*h);
+  o=vec4(fog(c,vW),1.0);}`);
+// sprite: un rettangolo dritto che guarda la telecamera, il fotogramma del foglio, niente sfumature; ombra schiacciata a terra
+const PS=prog(`#version 300 es
+in vec2 aQ;uniform mat4 uVP;uniform vec3 uPos,uRight,uL;uniform vec4 uRect;uniform vec2 uSize,uAnc;uniform float uShadow,uSink;
+out vec2 vU;out vec3 vW;
+void main(){vec3 w=uPos+uRight*((aQ.x*uSize.x-uAnc.x))+vec3(0,1,0)*((uAnc.y-aQ.y*uSize.y));
+  if(uShadow>0.5){w=w-uL*(w.y/uL.y);w.y=0.02;}
+  vU=vec2(mix(uRect.x,uRect.z,aQ.x),mix(uRect.y,uRect.w,aQ.y));vW=w;gl_Position=uVP*vec4(w,1.0);}`,
+`#version 300 es
+precision highp float;in vec2 vU;in vec3 vW;uniform sampler2D uT;uniform float uShadow,uFlash,uAlpha,uCut;uniform vec3 uTint;
+${FOG}
+out vec4 o;
+void main(){if(vU.y>uCut)discard;vec4 t=texture(uT,vU);if(t.a<0.5)discard;
+  if(uShadow>0.5){o=vec4(0.01,0.015,0.04,0.5*uAlpha);return;}
+  vec3 c=mix(t.rgb*uTint,vec3(1.0),uFlash);o=vec4(fog(c,vW),uAlpha);}`);
+// lucciole, fuochi fatui, raggi di luna: luce che si somma
+const PG=prog(`#version 300 es
+in vec3 aP;in vec4 aC;in float aS;uniform mat4 uVP;uniform float uPx;out vec4 vC;
+void main(){vec4 p=uVP*vec4(aP,1.0);gl_Position=p;gl_PointSize=max(1.0,aS*uPx/p.w);vC=aC;}`,
+`#version 300 es
+precision highp float;in vec4 vC;out vec4 o;void main(){vec2 d=gl_PointCoord-0.5;float r=length(d)*2.0;if(r>1.0)discard;float a=pow(1.0-r,2.2);o=vec4(vC.rgb*a*vC.a,0.0);}`);
+// cielo: sfumato, con la luna dietro gli alberi
+const PK=prog(`#version 300 es
+in vec2 aQ;out vec2 vQ;void main(){vQ=aQ;gl_Position=vec4(aQ*2.0-1.0,0.999,1.0);}`,
+`#version 300 es
+precision highp float;in vec2 vQ;uniform vec3 uTop,uHor;uniform vec2 uMoon;uniform float uAsp;out vec4 o;
+void main(){vec3 c=mix(uHor,uTop,smoothstep(0.25,1.0,vQ.y));vec2 d=(vQ-uMoon)*vec2(uAsp,1.0);float r=length(d);
+  c+=vec3(.55,.65,.78)*(0.30*exp(-r*r*14.0)+0.10*exp(-r*r*2.5));c+=vec3(.9,.95,1.0)*smoothstep(0.035,0.03,r);o=vec4(c,1.0);}`);
+
+// ================================================================= texture in pixel art fatte col codice
+function canvasTex(w,h,draw,o){const c=document.createElement('canvas');c.width=w;c.height=h;const g=c.getContext('2d');draw(g,w,h);return texFrom(c,o)}
+function texFrom(src,o){o=o||{};const t=gl.createTexture();gl.bindTexture(gl.TEXTURE_2D,t);gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL,false);
+  gl.texImage2D(gl.TEXTURE_2D,0,gl.RGBA,gl.RGBA,gl.UNSIGNED_BYTE,src);const f=o.smooth?gl.LINEAR:gl.NEAREST;
+  gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_MIN_FILTER,f);gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_MAG_FILTER,f);
+  const wr=o.clamp?gl.CLAMP_TO_EDGE:gl.REPEAT;gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_WRAP_S,wr);gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_WRAP_T,wr);return t}
+const R0=rng(13102026);
+function speck(g,w,h,n,cols,r,sz){for(let i=0;i<n;i++){g.fillStyle=cols[Math.floor(r()*cols.length)];const s=sz?sz[Math.floor(r()*sz.length)]:1;g.fillRect(Math.floor(r()*w),Math.floor(r()*h),s,s)}}
+// terra del bosco: muschio, foglie, sassolini (64 px per 2 unità)
+const T_GROUND=canvasTex(64,64,(g,w,h)=>{const r=rng(5);g.fillStyle='#2b3528';g.fillRect(0,0,w,h);
+  for(let i=0;i<46;i++){const x=r()*w,y=r()*h,s=3+r()*7;g.fillStyle=r()<.5?'#344230':'#26301f';for(let j=0;j<s*2;j++)g.fillRect(Math.floor(x+(r()-.5)*s*1.6)&63,Math.floor(y+(r()-.5)*s)&63,2,1)}
+  speck(g,w,h,220,['#3c4b34','#222b1d','#31402c','#463f2e'],r,[1,1,2]);
+  for(let i=0;i<10;i++){const x=Math.floor(r()*w),y=Math.floor(r()*h);g.fillStyle='#5b6062';g.fillRect(x,y,3,2);g.fillStyle='#7c8183';g.fillRect(x,y,2,1);g.fillStyle='#2a2d2e';g.fillRect(x,y+2,3,1)}
+  for(let i=0;i<16;i++){const x=Math.floor(r()*w),y=Math.floor(r()*h);g.fillStyle=r()<.5?'#5a4429':'#6d3f22';g.fillRect(x,y,2,1);g.fillRect(x+1,y+1,1,1)}});
+// la radura della lotta: terra battuta e pietre piatte, chiara sotto la luna
+const T_CLEAR=canvasTex(64,64,(g,w,h)=>{const r=rng(9);g.fillStyle='#3b4136';g.fillRect(0,0,w,h);speck(g,w,h,260,['#454c3f','#343a30','#4c4f43','#3f463a'],r,[1,2]);
+  for(let i=0;i<9;i++){const x=Math.floor(r()*w),y=Math.floor(r()*h),sw=6+Math.floor(r()*7),sh=3+Math.floor(r()*3);g.fillStyle='#5d625c';g.fillRect(x,y,sw,sh);g.fillStyle='#71766f';g.fillRect(x+1,y,sw-2,1);g.fillStyle='#2e322d';g.fillRect(x,y+sh,sw,1)}});
+const T_BARK=canvasTex(16,32,(g,w,h)=>{const r=rng(3);g.fillStyle='#3a2c24';g.fillRect(0,0,w,h);for(let x=0;x<w;x+=3){g.fillStyle='#2a1f1a';g.fillRect(x,0,1,h)}speck(g,w,h,60,['#4a3a2f','#241a15','#544235'],r)});
+const T_LEAF=canvasTex(32,32,(g,w,h)=>{const r=rng(4);g.fillStyle='#1f3a32';g.fillRect(0,0,w,h);speck(g,w,h,200,['#2a4a3f','#173029','#33574a','#122620'],r,[1,2,2]);
+  for(let i=0;i<20;i++){const x=Math.floor(r()*w),y=Math.floor(r()*h);g.fillStyle='#3f6b5a';g.fillRect(x,y,2,1)}});
+const T_WHITE=canvasTex(2,2,(g)=>{g.fillStyle='#fff';g.fillRect(0,0,2,2)});
+// cespugli, felci, funghi luminosi: piccoli sprite di bosco (stesso metodo dei Niumon)
+const DECO=[
+ {w:24,h:16,d:(g,r)=>{const P=['#183128','#22433a','#2f5a4b','#0f211b'];for(let i=0;i<70;i++){const a=r()*Math.PI,rr=Math.sqrt(r())*11,x=12+Math.cos(a)*rr,y=15-Math.sin(a)*rr*1.2;g.fillStyle=P[Math.floor(r()*4)];g.fillRect(Math.floor(x),Math.floor(y),2,2)}}},
+ {w:16,h:16,d:(g,r)=>{for(let i=0;i<5;i++){const x0=8,ang=-1.2+i*.6;g.fillStyle=i%2?'#2b5244':'#1d3a31';for(let s=0;s<9;s++){const x=x0+Math.sin(ang)*s,y=15-Math.cos(ang)*s*1.05;g.fillRect(Math.floor(x),Math.floor(y),2,1);if(s%2)g.fillRect(Math.floor(x+1),Math.floor(y-1),1,1)}}}},
+ {w:10,h:10,d:(g,r)=>{g.fillStyle='#d9d0e8';g.fillRect(4,5,2,4);g.fillStyle='#8d63d8';g.fillRect(2,3,6,2);g.fillRect(3,2,4,1);g.fillStyle='#c7a8f5';g.fillRect(3,3,2,1);g.fillStyle='#4b3086';g.fillRect(2,5,6,1)}},
+ {w:12,h:8,d:(g,r)=>{g.fillStyle='#55595b';g.fillRect(1,3,10,5);g.fillRect(3,2,6,1);g.fillStyle='#74797b';g.fillRect(3,2,5,2);g.fillStyle='#2c2f31';g.fillRect(1,7,10,1)}}];
+DECO.forEach((q,i)=>{const r=rng(40+i);const c=document.createElement('canvas');c.width=q.w;c.height=q.h;q.d(c.getContext('2d'),r);q.t=texFrom(c,{clamp:true})});
+
+// ================================================================= geometria
+function mesh(P,N,U,C){const vao=gl.createVertexArray();gl.bindVertexArray(vao);
+  [[P,3,'aP'],[N,3,'aN'],[U,2,'aU'],[C,3,'aC']].forEach(([d,n,name])=>{const loc=gl.getAttribLocation(PW.p,name);if(loc<0)return;const b=gl.createBuffer();gl.bindBuffer(gl.ARRAY_BUFFER,b);
+    gl.bufferData(gl.ARRAY_BUFFER,new Float32Array(d),gl.STATIC_DRAW);gl.enableVertexAttribArray(loc);gl.vertexAttribPointer(loc,n,gl.FLOAT,false,0,0)});
+  gl.bindVertexArray(null);return{vao,n:P.length/3}}
+function Geo(){this.P=[];this.N=[];this.U=[];this.C=[]}
+Geo.prototype.tri=function(a,b,c,ua,ub,uc,col,ctr){let n=nrm(cross(sub(b,a),sub(c,a)));if(ctr){const m=[(a[0]+b[0]+c[0])/3,(a[1]+b[1]+c[1])/3,(a[2]+b[2]+c[2])/3];if(dot(n,sub(m,ctr))<0)n=[-n[0],-n[1],-n[2]]}for(const[p,u]of[[a,ua],[b,ub],[c,uc]]){this.P.push(...p);this.N.push(...n);this.U.push(...u);this.C.push(...col)}};
+Geo.prototype.quad=function(a,b,c,d,ua,ub,uc,ud,col,ctr){this.tri(a,b,c,ua,ub,uc,col,ctr);this.tri(a,c,d,ua,uc,ud,col,ctr)};
+Geo.prototype.done=function(){return mesh(this.P,this.N,this.U,this.C)};
+// il terreno: un grande piano a quadrati (le texture si ripetono ogni 2 unità), la radura a parte
+function plane(x0,z0,x1,z1,tile,y){const g=new Geo(),c=[1,1,1];g.quad([x0,y,z1],[x1,y,z1],[x1,y,z0],[x0,y,z0],[x0/tile,z1/tile],[x1/tile,z1/tile],[x1/tile,z0/tile],[x0/tile,z0/tile],c);return g.done()}
+// alberi: tronco a sei facce, chioma a coni (abeti) o a palle sfaccettate (latifoglie)
+function buildTrees(list){const tr=new Geo(),cn=new Geo();
+  for(const t of list){const r=rng(t.seed),h=t.h,rb=.22+h*.03,sides=6,col=[.8+r()*.2,.8+r()*.2,.8+r()*.2];
+    for(let i=0;i<sides;i++){const a0=i/sides*6.283+r()*.1,a1=(i+1)/sides*6.283,top=t.kind?h*.55:h*.42,r1=rb*.55;
+      const p=(a,rr,y)=>[t.x+Math.cos(a)*rr,y,t.z+Math.sin(a)*rr];
+      tr.quad(p(a0,rb,0),p(a1,rb,0),p(a1,r1,top),p(a0,r1,top),[i/2,top*2],[(i+1)/2,top*2],[(i+1)/2,0],[i/2,0],col,[t.x,top*.5,t.z])}
+    const lc=[.75+r()*.35,.8+r()*.3,.8+r()*.3];
+    if(t.kind===0){// abete: tre coni
+      for(let k=0;k<3;k++){const y0=h*(.28+k*.2),y1=y0+h*(.42-k*.06),rr=h*(.30-k*.07),n=7,sh=r()*6;
+        for(let i=0;i<n;i++){const a0=i/n*6.283+sh,a1=(i+1)/n*6.283+sh;const b0=[t.x+Math.cos(a0)*rr,y0,t.z+Math.sin(a0)*rr],b1=[t.x+Math.cos(a1)*rr,y0,t.z+Math.sin(a1)*rr],tp=[t.x,y1,t.z];
+          cn.tri(b0,b1,tp,[0,2],[1.5,2],[.75,0],lc,[t.x,y0-.5,t.z]);cn.tri(b1,b0,[t.x,y0+.05,t.z],[0,0],[1,0],[.5,.5],[lc[0]*.5,lc[1]*.5,lc[2]*.5],[t.x,y0+5,t.z])}}}
+    else{// latifoglia: palle sfaccettate
+      for(let k=0;k<3;k++){const cx=t.x+(r()-.5)*h*.25,cy=h*(.62+r()*.18),cz=t.z+(r()-.5)*h*.25,rr=h*(.20+r()*.08);ico(cn,[cx,cy,cz],rr,lc,r)}}}
+  return{trunk:tr.done(),crown:cn.done()}}
+function ico(g,c,r,col,rr){const t=(1+Math.sqrt(5))/2;let V=[[-1,t,0],[1,t,0],[-1,-t,0],[1,-t,0],[0,-1,t],[0,1,t],[0,-1,-t],[0,1,-t],[t,0,-1],[t,0,1],[-t,0,-1],[-t,0,1]].map(nrm);
+  const F=[[0,11,5],[0,5,1],[0,1,7],[0,7,10],[0,10,11],[1,5,9],[5,11,4],[11,10,2],[10,7,6],[7,1,8],[3,9,4],[3,4,2],[3,2,6],[3,6,8],[3,8,9],[4,9,5],[2,4,11],[6,2,10],[8,6,7],[9,8,1]];
+  V=V.map(v=>{const k=1+(rr()-.5)*.25;return[c[0]+v[0]*r*k,c[1]+v[1]*r*k*.85,c[2]+v[2]*r*k]});
+  for(const f of F)g.tri(V[f[0]],V[f[1]],V[f[2]],[0,0],[1.4,0],[.7,1.2],col,c)}
+// un rettangolo 0..1 per sprite e cielo
+const QUAD=(()=>{const vao=gl.createVertexArray();gl.bindVertexArray(vao);const b=gl.createBuffer();gl.bindBuffer(gl.ARRAY_BUFFER,b);
+  gl.bufferData(gl.ARRAY_BUFFER,new Float32Array([0,0,1,0,0,1,1,1]),gl.STATIC_DRAW);for(const P of[PS,PK]){const l=gl.getAttribLocation(P.p,'aQ');gl.enableVertexAttribArray(l);gl.vertexAttribPointer(l,2,gl.FLOAT,false,0,0)}
+  gl.bindVertexArray(null);return vao})();
+
+// ================================================================= il bosco: alberi intorno alla radura, cespugli, funghi
+const RW=rng(777),TREES=[],DECOS=[];
+function addTree(x,z,h,kind){TREES.push({x,z,h,kind,seed:Math.floor(RW()*1e6)})}
+for(let i=0;i<70;i++){const a=RW()*6.283,d=7.5+Math.pow(RW(),.7)*18,x=Math.cos(a)*d,z=Math.sin(a)*d-2;if(z>9&&Math.abs(x)<6)continue;addTree(x,z,4.5+RW()*3.5,RW()<.6?0:1)}
+addTree(-7.2,3.6,6.8,0);addTree(6.8,4.2,6.2,1);addTree(-6.0,-4.5,7.4,0);addTree(5.6,-6.8,6.9,0);addTree(1.0,-11,7.8,0);addTree(-3.5,-9.6,6.2,1);
+for(let i=0;i<70;i++){const a=RW()*6.283,d=4.2+RW()*16,x=Math.cos(a)*d,z=Math.sin(a)*d-2;const k=RW()<.45?0:RW()<.6?1:RW()<.55?2:3;DECOS.push({x,z,k,s:(k===2?.9:1.6)*(.8+RW()*.5)})}
+const TM=buildTrees(TREES);
+const GROUND=plane(-60,-60,60,60,2,0);
+
+// lucciole e fuochi fatui viola sopra la radura
+const FLIES=[...Array(40)].map((_,i)=>({x:(RW()-.5)*22,y:.3+RW()*3.2,z:(RW()-.5)*20-2,p:RW()*6.3,s:.6+RW()*.8,v:i%5===0}));
+const GBUF=gl.createBuffer(),GVAO=gl.createVertexArray();
+gl.bindVertexArray(GVAO);gl.bindBuffer(gl.ARRAY_BUFFER,GBUF);
+[['aP',3,0],['aC',4,12],['aS',1,28]].forEach(([n,c,o])=>{const l=gl.getAttribLocation(PG.p,n);gl.enableVertexAttribArray(l);gl.vertexAttribPointer(l,c,gl.FLOAT,false,32,o)});gl.bindVertexArray(null);
+
+// ================================================================= luce e camera
+const LIGHT=nrm([-.55,.78,-.5]),LC=[.62,.7,.88],AMB=[.30,.36,.48],SKY=[.25,.32,.45],FOGC=[.11,.15,.21];
+let W=2,H=2,DPR=1,view='lotta',land=false,VP=null,EYE=[0,3,9],CAMR=[1,0,0],now=0;const T0=performance.now();
+function resize(){DPR=Math.min(2,window.devicePixelRatio||1);const r=cv.getBoundingClientRect();W=Math.max(2,Math.round(r.width*DPR));H=Math.max(2,Math.round(r.height*DPR));
+  cv.width=W;cv.height=H;fxc.width=W;fxc.height=H;land=r.width>r.height*1.15;const db=$('dock').getBoundingClientRect();if(db.height>0)document.documentElement.style.setProperty('--dock',Math.round(db.height)+'px');
+  if(view==='sprite')drawSheet()}
+addEventListener('resize',resize);
+function camera(eye,target,fov){const P=M4.persp(fov*Math.PI/180,W/H,.3,120),V=M4.look(eye,target,[0,1,0]);VP=M4.mul(P,V);EYE=eye;const f=nrm(sub(target,eye));CAMR=nrm([-f[2],0,f[0]])}
+function project(p){const x=VP[0]*p[0]+VP[4]*p[1]+VP[8]*p[2]+VP[12],y=VP[1]*p[0]+VP[5]*p[1]+VP[9]*p[2]+VP[13],w=VP[3]*p[0]+VP[7]*p[1]+VP[11]*p[2]+VP[15];
+  return{x:(x/w*.5+.5)*W,y:(1-(y/w*.5+.5))*H,w}}
+
+// ================================================================= disegno
+function setFog(P){gl.uniform3fv(P.U.uFog,FOGC);gl.uniform1f(P.U.uFogD,P.fogD||.034);gl.uniform1f(P.U.uFogH,1);gl.uniform3fv(P.U.uEye,EYE)}
+function drawWorld(spot,shadowsOf){gl.useProgram(PW.p);gl.uniformMatrix4fv(PW.U.uVP,false,VP);gl.uniform3fv(PW.U.uL,LIGHT);gl.uniform3fv(PW.U.uLc,LC);gl.uniform3fv(PW.U.uAmb,AMB);gl.uniform3fv(PW.U.uSky,SKY);
+  gl.uniform4fv(PW.U.uSpot,spot);setFog(PW);gl.uniform1f(PW.U.uShadow,0);gl.activeTexture(gl.TEXTURE0);gl.uniform1i(PW.U.uT,0);
+  const dm=(m,t)=>{gl.bindTexture(gl.TEXTURE_2D,t);gl.bindVertexArray(m.vao);gl.drawArrays(gl.TRIANGLES,0,m.n)};
+  dm(GROUND,T_GROUND);
+  // ombre: alberi e sprite schiacciati a terra lungo la luce, ognuna scurisce una volta sola (stencil)
+  gl.enable(gl.STENCIL_TEST);gl.clear(gl.STENCIL_BUFFER_BIT);gl.stencilFunc(gl.EQUAL,0,255);gl.stencilOp(gl.KEEP,gl.KEEP,gl.INCR);
+  gl.enable(gl.BLEND);gl.blendFunc(gl.SRC_ALPHA,gl.ONE_MINUS_SRC_ALPHA);gl.depthMask(false);
+  gl.uniform1f(PW.U.uShadow,1);dm(TM.trunk,T_BARK);dm(TM.crown,T_LEAF);
+  shadowsOf();
+  gl.useProgram(PW.p);gl.uniform1f(PW.U.uShadow,0);gl.depthMask(true);gl.disable(gl.BLEND);gl.disable(gl.STENCIL_TEST);
+  dm(TM.trunk,T_BARK);dm(TM.crown,T_LEAF);gl.bindVertexArray(null)}
+function sprite(s,shadow){const sh=SPR[s.sheet];if(!sh||!sh.tex)return;gl.useProgram(PS.p);gl.uniformMatrix4fv(PS.U.uVP,false,VP);gl.uniform3fv(PS.U.uL,LIGHT);setFog(PS);
+  const n=sh.n,f=s.frame%n,mir=s.mirror?1:0;gl.uniform4f(PS.U.uRect,(f+(mir?1:0))/n,0,(f+(mir?0:1))/n,1);
+  const ps=s.ps;gl.uniform2f(PS.U.uSize,sh.w*ps,sh.h*ps);gl.uniform2f(PS.U.uAnc,(mir?sh.w-sh.anchor[0]:sh.anchor[0])*ps,(sh.anchor[1]+1)*ps);
+  gl.uniform3f(PS.U.uPos,s.x+(s.dx||0),(s.dy||0)-(s.sink||0)*sh.h*ps,s.z+(s.dz||0));gl.uniform3fv(PS.U.uRight,CAMR);gl.uniform1f(PS.U.uShadow,shadow?1:0);
+  gl.uniform1f(PS.U.uFlash,s.flash||0);gl.uniform1f(PS.U.uAlpha,s.al==null?1:s.al);gl.uniform3fv(PS.U.uTint,s.tint||[.93,.95,1.04]);gl.uniform1f(PS.U.uCut,1-(s.sink||0));
+  gl.activeTexture(gl.TEXTURE0);gl.bindTexture(gl.TEXTURE_2D,sh.tex);gl.uniform1i(PS.U.uT,0);gl.bindVertexArray(QUAD);gl.drawArrays(gl.TRIANGLE_STRIP,0,4)}
+function deco(d,shadow){const q=DECO[d.k];gl.useProgram(PS.p);gl.uniformMatrix4fv(PS.U.uVP,false,VP);gl.uniform3fv(PS.U.uL,LIGHT);setFog(PS);gl.uniform4f(PS.U.uRect,0,0,1,1);
+  const ps=d.s/q.w;gl.uniform2f(PS.U.uSize,q.w*ps,q.h*ps);gl.uniform2f(PS.U.uAnc,q.w*ps/2,q.h*ps);gl.uniform3f(PS.U.uPos,d.x,0,d.z);gl.uniform3fv(PS.U.uRight,CAMR);
+  gl.uniform1f(PS.U.uShadow,shadow?1:0);gl.uniform1f(PS.U.uFlash,0);gl.uniform1f(PS.U.uAlpha,1);gl.uniform3fv(PS.U.uTint,d.k===2?[1.15,1.1,1.25]:[.62,.7,.82]);gl.uniform1f(PS.U.uCut,1);
+  gl.bindTexture(gl.TEXTURE_2D,q.t);gl.bindVertexArray(QUAD);gl.drawArrays(gl.TRIANGLE_STRIP,0,4)}
+function sky(){gl.useProgram(PK.p);gl.uniform3f(PK.U.uTop,.03,.05,.09);gl.uniform3fv(PK.U.uHor,FOGC);gl.uniform2f(PK.U.uMoon,land?.78:.72,.86);gl.uniform1f(PK.U.uAsp,W/H);
+  gl.disable(gl.DEPTH_TEST);gl.bindVertexArray(QUAD);gl.drawArrays(gl.TRIANGLE_STRIP,0,4);gl.enable(gl.DEPTH_TEST)}
+function glows(extra){const t=now/1000,d=[];
+  for(const f of FLIES){const x=f.x+Math.sin(t*.35*f.s+f.p)*.6,y=f.y+Math.sin(t*.6*f.s+f.p*2)*.25,z=f.z+Math.cos(t*.3*f.s+f.p)*.6,a=reduce?.5:.35+.35*Math.sin(t*2*f.s+f.p);
+    if(f.v)d.push(x,y,z,.62,.45,.98,a,.22);else d.push(x,y,z,.78,1,.55,a,.12)}
+  for(const dd of DECOS)if(dd.k===2)d.push(dd.x,.25,dd.z,.6,.4,1,.45,.5);
+  if(extra)d.push(...extra);
+  gl.useProgram(PG.p);gl.uniformMatrix4fv(PG.U.uVP,false,VP);gl.uniform1f(PG.U.uPx,H*1.6);gl.bindBuffer(gl.ARRAY_BUFFER,GBUF);gl.bufferData(gl.ARRAY_BUFFER,new Float32Array(d),gl.DYNAMIC_DRAW);
+  gl.enable(gl.BLEND);gl.blendFunc(gl.ONE,gl.ONE);gl.depthMask(false);gl.bindVertexArray(GVAO);gl.drawArrays(gl.POINTS,0,d.length/8);gl.depthMask(true);gl.disable(gl.BLEND);gl.bindVertexArray(null)}
+
+// ================================================================= la lotta
+const B={foe:{sheet:'foeIdle',x:1.9,z:-2.6,ps:.034,frame:0,al:0,dy:0,ph:5,hp:42,max:42},mine:{sheet:'mineBack',x:-1.45,z:2.7,ps:.034,frame:0,al:1,ph:0,hp:46,max:46}};
+function battleCam(){if(land){camera([-2.9,2.3,8.6],[.5,1.15,-.9],31)}else{camera([-1.6,3.2,11.8],[.2,1.45,-.6],44)}
+  if(land){B.foe.x=1.9;B.foe.z=-2.6;B.mine.x=-1.45;B.mine.z=2.7}else{B.foe.x=1.15;B.foe.z=-2.4;B.mine.x=-.95;B.mine.z=2.8}}
+function drawBattle(){battleCam();const t=now/1000;
+  for(const k of['foe','mine']){const s=B[k],sh=SPR[s.sheet];s.frame=Math.floor(t*sh.fps+s.ph)}
+  const order=[B.foe,B.mine];
+  drawWorld([.2,-.4,7.5,.9],()=>{for(const s of order)if(s.al>0)sprite(s,true);for(const d of DECOS)deco(d,true)});
+  const all=DECOS.map(d=>({d,z:d.z})).concat(order.map(s=>({s,z:s.z+(s.dz||0)}))).sort((a,b)=>a.z-b.z);
+  gl.enable(gl.BLEND);gl.blendFunc(gl.SRC_ALPHA,gl.ONE_MINUS_SRC_ALPHA);
+  for(const q of all){if(q.d)deco(q.d,false);else if(q.s.al>0)sprite(q.s,false)}
+  gl.disable(gl.BLEND);glows(EXTRA)}
+
+// ================================================================= la mappa
+const MAP={x:0,z:3,dir:'giu',moving:false,t:0,vx:0,vz:0};
+const COLL=TREES.map(t=>({x:t.x,z:t.z,r:.55+t.h*.04}));
+function drawMap(dt){const sp=2.4;let vx=MAP.vx,vz=MAP.vz;const m=Math.hypot(vx,vz);MAP.moving=m>.15;
+  if(MAP.moving){vx/=Math.max(1,m);vz/=Math.max(1,m);let nx=MAP.x+vx*sp*dt,nz=MAP.z+vz*sp*dt;
+    for(const c of COLL){const dx=nx-c.x,dz=nz-c.z,d=Math.hypot(dx,dz);if(d<c.r+.5){const k=(c.r+.5)/(d||1);nx=c.x+dx*k;nz=c.z+dz*k}}
+    const lim=17;MAP.x=cl(nx,-lim,lim);MAP.z=cl(nz,-lim-2,lim-2);MAP.t+=dt;
+    MAP.dir=Math.abs(vx)>Math.abs(vz)*1.1?(vx<0?'sinistra':'destra'):(vz>0?'giu':'su')}
+  camera([MAP.x,9.2,MAP.z+10.5],[MAP.x,.6,MAP.z-.6],36);
+  const t=now/1000,side=MAP.dir==='sinistra'||MAP.dir==='destra',step=MAP.moving?Math.floor(MAP.t*6)%2:0;
+  let sheet={giu:'mapGiu',su:'mapSu',sinistra:'mapSx',destra:'mapDx'}[MAP.dir],mirror=false;
+  if(side&&MAP.moving&&step){sheet='mapPasso';mirror=MAP.dir==='destra'}
+  const sh=SPR[sheet],me={sheet,x:MAP.x,z:MAP.z,ps:.05,frame:Math.floor(t*sh.fps),mirror,dy:MAP.moving&&!side?(step?.05:0):0};
+  drawWorld([MAP.x,MAP.z,6.5,.55],()=>{sprite(me,true);for(const d of DECOS)deco(d,true)});
+  const all=DECOS.map(d=>({d,z:d.z})).concat([{s:me,z:MAP.z}]).sort((a,b)=>a.z-b.z);
+  gl.enable(gl.BLEND);gl.blendFunc(gl.SRC_ALPHA,gl.ONE_MINUS_SRC_ALPHA);for(const q of all){if(q.d)deco(q.d,false);else sprite(q.s,false)}gl.disable(gl.BLEND);glows()}
+// dito e frecce: la levetta parte dove tocchi
+let joy=null;const keys={};
+cv.addEventListener('pointerdown',e=>{if(view!=='mappa')return;joy={id:e.pointerId,x:e.clientX,y:e.clientY,cx:e.clientX,cy:e.clientY};cv.setPointerCapture(e.pointerId)});
+cv.addEventListener('pointermove',e=>{if(!joy||e.pointerId!==joy.id)return;joy.cx=e.clientX;joy.cy=e.clientY});
+const endJoy=e=>{if(joy&&e.pointerId===joy.id)joy=null};cv.addEventListener('pointerup',endJoy);cv.addEventListener('pointercancel',endJoy);
+addEventListener('keydown',e=>{keys[e.key]=true});addEventListener('keyup',e=>{keys[e.key]=false});
+function readInput(){let vx=0,vz=0;if(joy){const dx=(joy.cx-joy.x),dy=(joy.cy-joy.y),m=Math.hypot(dx,dy);if(m>10){vx=dx/50;vz=dy/50}}
+  if(keys.ArrowLeft||keys.a)vx-=1;if(keys.ArrowRight||keys.d)vx+=1;if(keys.ArrowUp||keys.w)vz-=1;if(keys.ArrowDown||keys.s)vz+=1;MAP.vx=vx;MAP.vz=vz}
+
+// ================================================================= effetti delle mosse (in pixel, sopra la scena)
+let EXTRA=null;const FX=[],TW=[];
+function tween(d,f){return new Promise(ok=>TW.push({t0:now,d,f,ok}))}const wait=d=>tween(d,()=>{});
+function fx(d,draw){return new Promise(ok=>FX.push({t0:now,d,draw,ok}))}
+function center(k){const s=B[k],sh=SPR[s.sheet],p=project([s.x+(s.dx||0),(sh.h*.45)*s.ps,s.z+(s.dz||0)]),q=project([s.x,(sh.h*.45+1)*s.ps,s.z]);return{x:p.x,y:p.y,s:Math.max(1,Math.abs(p.y-q.y))}}
+function blob(cx,cy,r,col,ps){fx2.fillStyle=col;const n=Math.ceil(r/ps);for(let j=-n;j<=n;j++)for(let i=-n;i<=n;i++){if((i*i+j*j)*ps*ps<=r*r)fx2.fillRect(Math.round(cx+i*ps-ps/2),Math.round(cy+j*ps-ps/2),Math.ceil(ps),Math.ceil(ps))}}
+function pxline(x0,y0,x1,y1,col,ps,w){fx2.fillStyle=col;const n=Math.max(1,Math.round(Math.hypot(x1-x0,y1-y0)/ps));for(let i=0;i<=n;i++){const x=x0+(x1-x0)*i/n,y=y0+(y1-y0)*i/n;
+  for(let k=0;k<(w||1);k++)fx2.fillRect(Math.round(x-ps/2+k*ps*.6),Math.round(y-ps/2-k*ps*.6),Math.ceil(ps),Math.ceil(ps))}}
+const MOVES=[{n:'Fiamma fatua',t:'fuoco',pp:15,max:15,pow:[8,12],fx:'fiamma'},{n:"Morso d'ombra",t:'ombra',pp:20,max:20,pow:[6,10],fx:'morso'},
+  {n:'Agguato',t:'ombra',pp:10,max:10,pow:[9,14],fx:'agguato'},{n:'Fumo viola',t:'fuoco',pp:15,max:15,pow:[4,8],fx:'fumo'}];
+const RB=rng(99);let busy=true;
+function renderMoves(){const el=$('moves');el.innerHTML='';MOVES.forEach((m,i)=>{const b=document.createElement('button');b.type='button';b.className='move';b.dataset.t=m.t;b.disabled=busy||m.pp<=0;
+  b.innerHTML=`<span class="mn">${m.n}</span><span class="pp">${m.pp}/${m.max}</span><span class="ty">${m.t==='ombra'?'Ombra':'Fuoco'}</span>`;b.onclick=()=>turn(i);el.appendChild(b)})}
+function setHP(){const f=(k,el)=>{const c=B[k],r=Math.max(0,c.hp)/c.max;el.style.width=(r*100).toFixed(1)+'%';el.style.backgroundColor=r>.5?'var(--hp)':r>.2?'var(--hp-mid)':'var(--hp-low)'};
+  f('foe',$('hpFoe'));f('mine',$('hpMine'));$('hpNum').textContent=Math.max(0,B.mine.hp)+'/'+B.mine.max}
+async function say(t,d){$('msg').textContent=t;await wait(d||1100)}
+// slancio verso l'altro (nel mondo 3D): l'avversario passa al disegno d'attacco mentre salta
+function lunge(k,amt,d,pose){const s=B[k],o=k==='mine'?B.foe:B.mine,dx=o.x-s.x,dz=o.z-s.z,l=Math.hypot(dx,dz);if(pose)s.sheet=pose;
+  return tween(d,q=>{const e=q<.45?ez(q/.45):1-ez((q-.45)/.55);s.dx=dx/l*amt*e;s.dz=dz/l*amt*e;s.dy=Math.sin(Math.min(1,q/.45)*Math.PI)*amt*.12;if(q>=1){s.dx=s.dz=s.dy=0;if(k==='foe')s.sheet='foeIdle'}})}
+function hit(k,dmg){const s=B[k];s.hp=Math.max(0,s.hp-dmg);setHP();if(k==='foe')s.sheet='foeHit';
+  return tween(560,q=>{s.flash=(Math.floor(q*6)%2===0&&q<.85)?.85:0;s.dx=(reduce?0:1)*Math.sin(q*Math.PI*7)*(1-q)*.12;if(q>=1){s.flash=0;s.dx=0;if(k==='foe'&&s.hp>0)s.sheet='foeIdle'}})}
+async function doMove(a,d,m){const sa=B[a],dmg=Math.round(lerp(m.pow[0],m.pow[1],RB()));
+  if(m.fx==='morso'){await lunge(a,1.6,300,a==='foe'?'foeAtk':null);const c=center(d),ps=c.s,w=ps*17;
+    await fx(380,k=>{const cl_=k<.5?ez(k/.5):1,gap=(1-cl_)*w*.8+ps*2;fx2.globalAlpha=k<.75?1:1-(k-.75)/.25;
+      for(const sg of[-1,1]){const y=c.y+sg*gap;fx2.fillStyle='#3b2a6e';for(let b=1;b<=2;b++)fx2.fillRect(Math.round(c.x-w*.8),Math.round(y+sg*b*ps),Math.round(w*1.6),Math.ceil(ps));
+        fx2.fillStyle='#efe6ff';for(let i=-2;i<=2;i++){const x=c.x+i*w*.3;for(let j=0;j<4;j++){const ww=4-j;for(let q=0;q<ww;q++)fx2.fillRect(Math.round(x+(q-ww/2)*ps),Math.round(y-sg*j*ps),Math.ceil(ps),Math.ceil(ps))}}}
+      if(k>.45)for(let i=0;i<7;i++){const an=i/7*6.28,rr=(k-.45)*w*1.6;blob(c.x+Math.cos(an)*rr,c.y+Math.sin(an)*rr*.7,ps*1.6*(1-k),'rgba(165,139,214,.9)',ps)}});
+    await hit(d,dmg)}
+  else if(m.fx==='fiamma'){if(a==='foe')sa.sheet='foeAtk';await lunge(a,-.4,220);const s0=center(a),s1=center(d),ps=(s0.s+s1.s)/2;
+    await fx(560,k=>{const e=ez(k),x=lerp(s0.x,s1.x,e),y=lerp(s0.y,s1.y,e)-Math.sin(e*Math.PI)*H*.12,r=ps*(5+2*Math.sin(now/40));
+      blob(x,y,r*1.5,'rgba(100,70,180,.55)',ps);blob(x,y,r,'#9a78e0',ps);blob(x-ps,y-ps,r*.55,'#e4d8ff',ps);
+      for(let i=1;i<6;i++){const ee=Math.max(0,e-i*.04),tx=lerp(s0.x,s1.x,ee),ty=lerp(s0.y,s1.y,ee)-Math.sin(ee*Math.PI)*H*.12;blob(tx,ty,r*(1-i/6)*.8,'rgba(165,139,214,.6)',ps)}});
+    if(a==='foe')sa.sheet='foeIdle';
+    const hp_=hit(d,dmg);await fx(420,k=>{for(let i=0;i<12;i++){const an=i/12*6.28+.3,rr=k*s1.s*30;blob(s1.x+Math.cos(an)*rr,s1.y+Math.sin(an)*rr*.75,s1.s*2.4*(1-k),i%2?'#c6b2f4':'#7c5bc8',s1.s)}});await hp_}
+  else if(m.fx==='agguato'){await tween(260,q=>{sa.al=1-.75*q});await lunge(a,2.2,280,a==='foe'?'foeAtk':null);const c=center(d),ps=c.s,L=ps*26;
+    const hp_=hit(d,dmg);await fx(360,k=>{fx2.globalAlpha=k<.7?1:1-(k-.7)/.3;for(let i=-1;i<=1;i++){const o=i*ps*9,e=Math.min(1,k*2.2);
+      pxline(c.x-L/2+o,c.y-L/2,c.x-L/2+o+L*e,c.y-L/2+L*e,'#f1eaff',ps,2);pxline(c.x-L/2+o-ps,c.y-L/2+ps,c.x-L/2+o-ps+L*e,c.y-L/2+ps+L*e,'#6a4db2',ps,1)}});
+    await hp_;await tween(320,q=>{sa.al=.25+.75*q})}
+  else{const s0=center(a),s1=center(d),ps=(s0.s+s1.s)/2;if(a==='foe')sa.sheet='foeAtk';
+    const hp_=(async()=>{await wait(380);const sd=B[d];if(d==='foe')sd.sheet='foeHit';await tween(420,q=>{sd.al=(Math.floor(q*8)%2)?.45:1});sd.al=1;sd.hp=Math.max(0,sd.hp-dmg);setHP();if(d==='foe'&&sd.hp>0)sd.sheet='foeIdle'})();
+    await fx(900,k=>{for(let i=0;i<9;i++){const kk=Math.min(1,Math.max(0,k*1.6-i*.07)),x=lerp(s0.x,s1.x,ez(kk))+Math.sin(i*2.1)*s1.s*12,y=lerp(s0.y,s1.y,ez(kk))+Math.cos(i*1.7)*s1.s*9,
+      r=ps*(3+2*Math.sin(i+now/200))*(kk<1?1:Math.max(0,1-(k-.8)/.2));if(r>0)blob(x,y,r,i%2?'rgba(198,178,244,.85)':'rgba(124,91,200,.8)',ps)}});if(a==='foe')sa.sheet='foeIdle';await hp_}}
+async function faint(k){const s=B[k];await tween(900,q=>{s.sink=ez(q)*.98;s.al=1-q*.5});s.al=0;s.sink=0}
+async function rise(k){const s=B[k];s.sheet=k==='foe'?'foeIdle':'mineBack';s.dy=.6;await tween(900,q=>{s.al=ez(q);s.dy=.6*(1-ez(q))})}
+async function turn(i){if(busy)return;const m=MOVES[i];if(m.pp<=0)return;busy=true;m.pp--;renderMoves();
+  await say(`Lumbra usa ${m.n}!`,700);await doMove('mine','foe',m);
+  if(B.foe.hp<=0){await faint('foe');await say('Il Lumbra selvatico svanisce nella nebbia!',1600);B.foe.hp=B.foe.max;setHP();await say('Un altro Lumbra esce dalla nebbia!',300);await rise('foe');await wait(500)}
+  else{await wait(300);const em=MOVES[Math.floor(RB()*4)];await say(`Il Lumbra selvatico usa ${em.n}!`,700);await doMove('foe','mine',em);
+    if(B.mine.hp<=0){await faint('mine');await say('Lumbra è stanco e si ritira nel fumo.',1500);B.mine.hp=B.mine.max;MOVES.forEach(q=>q.pp=q.max);setHP();await rise('mine')}}
+  $('msg').textContent='Cosa farà Lumbra?';busy=false;renderMoves()}
+
+// ================================================================= gli sprite da vicino
+function drawSheet(){const r=sheetCv.getBoundingClientRect(),D=Math.min(2,window.devicePixelRatio||1),w=Math.round(r.width*D),h=Math.round(r.height*D);if(sheetCv.width!==w||sheetCv.height!==h){sheetCv.width=w;sheetCv.height=h}
+  const g=sheetCv.getContext('2d'),t=now/1000;g.clearRect(0,0,w,h);g.imageSmoothingEnabled=false;
+  const L=[['foeIdle','Lotta · avversario (fermo)'],['foeAtk','Lotta · attacco'],['foeHit','Lotta · colpito'],['mineBack','Lotta · il tuo, da dietro'],
+    ['mapGiu','Mappa · giù'],['mapSu','Mappa · su'],['mapSx','Mappa · sinistra'],['mapDx','Mappa · destra'],['mapPasso','Mappa · passo']];
+  const top=Math.round(64*D),cols=w>h?5:3,cw=w/cols,rows=Math.ceil(L.length/cols),ch=(h-top-16*D)/rows,fs=Math.round(13*D);
+  L.forEach(([k,lab],i)=>{const sh=SPR[k];if(!sh.img)return;const cx=(i%cols)*cw,cy=top+Math.floor(i/cols)*ch,S=Math.max(1,Math.floor(Math.min((cw-16*D)/sh.w,(ch-fs*2.6)/sh.h))),
+      f=Math.floor(t*sh.fps)%sh.n,x=Math.round(cx+(cw-sh.w*S)/2),y=Math.round(cy+fs*1.9+(ch-fs*2.6-sh.h*S));
+    g.fillStyle='#cfd6e3';g.font=`600 ${fs}px "Pixelify Sans", monospace`;g.textAlign='center';g.fillText(lab,cx+cw/2,cy+fs*1.2);
+    g.fillStyle='rgba(255,255,255,.035)';g.fillRect(x-S*2,y-S*2,(sh.w+4)*S,(sh.h+4)*S);g.drawImage(sh.img,f*sh.w,0,sh.w,sh.h,x,y,sh.w*S,sh.h*S);
+    g.fillStyle='#8f9ab0';g.font=`500 ${Math.round(11*D)}px "Pixelify Sans", monospace`;g.fillText(`${sh.w}×${sh.h} px · ${sh.n} fotogrammi`,cx+cw/2,y+sh.h*S+fs*1.1)})}
+
+// ================================================================= il giro
+let last=performance.now();
+function frame(){const tn=performance.now(),dt=Math.min(.05,(tn-last)/1000);last=tn;now=tn-T0;
+  for(let i=TW.length-1;i>=0;i--){const q=TW[i],k=Math.min(1,(now-q.t0)/q.d);q.f(k);if(k>=1){TW.splice(i,1);q.ok()}}
+  if(view==='sprite'){drawSheet();requestAnimationFrame(frame);return}
+  gl.viewport(0,0,W,H);gl.clearColor(FOGC[0],FOGC[1],FOGC[2],1);gl.clear(gl.COLOR_BUFFER_BIT|gl.DEPTH_BUFFER_BIT|gl.STENCIL_BUFFER_BIT);gl.enable(gl.DEPTH_TEST);
+  sky();fx2.setTransform(1,0,0,1,0,0);fx2.clearRect(0,0,W,H);fx2.globalAlpha=1;
+  if(view==='lotta'){drawBattle();for(let i=FX.length-1;i>=0;i--){const q=FX[i],k=Math.min(1,(now-q.t0)/q.d);fx2.save();q.draw(k);fx2.restore();if(k>=1){FX.splice(i,1);q.ok()}}}
+  else{readInput();drawMap(dt)}
+  requestAnimationFrame(frame)}
+
+// ================================================================= le viste
+function setView(v){view=v;document.querySelectorAll('.tab').forEach(b=>b.setAttribute('aria-pressed',String(b.dataset.v===v)));
+  const L=v==='lotta',M=v==='mappa',S=v==='sprite';for(const id of['plateFoe','plateMine','dock'])$(id).hidden=!L;$('hint').hidden=!M;sheetCv.hidden=!S;$('vig').hidden=S;cv.hidden=S;fxc.hidden=S;
+  resize()}
+document.querySelectorAll('.tab').forEach(b=>b.onclick=()=>setView(b.dataset.v));
+window.__niumon={setView,B,MAP,turn,state:()=>({view,busy})};
+
+// ================================================================= partenza: l'avversario esce dalla nebbia, poi entra il tuo
+function load(s){return new Promise((ok,ko)=>{const i=new Image();i.onload=()=>ok(i);i.onerror=ko;i.src=s})}
+Promise.all(Object.keys(SPR).map(k=>load(SPR[k].src).then(i=>{SPR[k].img=i;SPR[k].tex=texFrom(i,{clamp:true})}))).then(async()=>{
+  renderMoves();setHP();resize();requestAnimationFrame(frame);B.foe.dy=.6;
+  await tween(1100,q=>{B.foe.al=ez(q);B.foe.dy=.6*(1-ez(q))});await wait(600);
+  $('msg').textContent='Vai, Lumbra!';B.mine.dx=-2.4;await tween(520,q=>{B.mine.dx=-2.4*(1-ez(q))});B.mine.dx=0;await wait(400);
+  $('msg').textContent='Cosa farà Lumbra?';busy=false;renderMoves()}).catch(e=>{$('msg').textContent='Gli sprite non si sono caricati: ricarica la pagina.';console.error(e)});
+})();
+</script>
