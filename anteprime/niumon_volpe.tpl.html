@@ -1,0 +1,261 @@
+<title>Niumon di fuoco</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:wght@400;700&family=Pixelify+Sans:wght@500;600;700&display=swap">
+<style>
+/* Layout: foglio di controllo per uno sprite. In alto il confronto col disegno di Denis, poi la piattaforma che gira, le 8 direzioni
+   a grandezza di dettaglio e di gioco, il giro a 16 viste, la lotta, il metodo e le domande. Un solo aspetto scuro di proposito:
+   la pixel art e le fiamme si giudicano meglio su un fondo notte, qualunque sia il tema del telefono. */
+:root{
+  --bg:#121015; --panel:#1a171d; --line:#302a33; --fg:#f0eae5; --dim:#aaa098;
+  --ember:#f08a4c;   /* il colore delle sue fiamme: titoli e dettagli */
+  --mine:#7fc6d6;    /* bollino: la vista che si confronta col disegno di Denis */
+  --f-pix:"Pixelify Sans", ui-monospace, "Courier New", monospace;
+  --f-body:"Atkinson Hyperlegible", system-ui, -apple-system, "Segoe UI", sans-serif;
+  color-scheme:dark;
+}
+html,body{background:var(--bg)}
+body{color:var(--fg);font-family:var(--f-body);font-size:1rem;line-height:1.5}
+.wrap{max-width:68rem;margin:0 auto;padding-inline:16px;padding-block:20px 48px;display:grid;gap:30px}
+h1,h2{font-family:var(--f-pix);font-weight:700;letter-spacing:.02em;text-wrap:balance;margin:0}
+h1{font-size:clamp(1.6rem,4.6vw,2.5rem);line-height:1.1}
+h1 em{font-style:normal;color:var(--ember)}
+h2{font-size:1.25rem}
+.eyebrow{font-family:var(--f-pix);font-size:.82rem;letter-spacing:.14em;text-transform:uppercase;color:var(--dim);margin:0 0 6px}
+.lede{max-width:62ch;color:var(--dim);margin:10px 0 0}
+.sec{display:grid;gap:12px}
+.sec > p{margin:0;color:var(--dim);max-width:62ch}
+/* confronto col disegno */
+.cmp{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}
+.fig{margin:0;display:grid;gap:8px;align-content:start;background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:10px;min-width:0}
+.fig .pic{aspect-ratio:1/1;width:100%;max-width:100%;border-radius:6px;display:block;object-fit:contain}
+.fig .pic.paper{background:#fbfaf7}
+.fig canvas.pic,.fig .pic.dark{background:radial-gradient(ellipse at 50% 70%,#221d24 0%,#171419 70%)}
+.fig figcaption{font-size:.9rem;color:var(--dim)}
+.fig figcaption b{display:block;font-family:var(--f-pix);font-weight:600;color:var(--fg);font-size:.95rem}
+/* piattaforma */
+.chip{display:inline-flex;align-items:center;gap:6px;font-family:var(--f-pix);font-size:.78rem;letter-spacing:.06em;padding:2px 8px;border-radius:999px;border:1.5px solid currentColor;white-space:nowrap}
+.chip::before{content:"";width:7px;height:7px;border-radius:2px;background:currentColor}
+.chip.mine{color:var(--mine)} .chip.base{color:var(--ember)}
+.stage{display:grid;grid-template-columns:minmax(0,1fr) 15rem;gap:16px;align-items:stretch;background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:14px}
+#turn{width:100%;height:clamp(300px,54vh,480px);display:block;border-radius:6px;background:radial-gradient(ellipse at 50% 80%,#2a2026 0%,#18141a 55%,#121015 100%)}
+.side{display:grid;gap:14px;align-content:start;min-width:0}
+.compass{display:grid;grid-template-columns:repeat(3,1fr);gap:6px}
+.compass button{font:600 .82rem/1.15 var(--f-pix);color:var(--fg);background:#221e25;border:1.5px solid var(--line);border-radius:6px;padding:8px 4px;min-height:2.75rem;cursor:pointer;touch-action:manipulation}
+.compass button[aria-pressed="true"]{border-color:var(--fg);background:#2d2730}
+.compass button.mine{box-shadow:inset 0 -3px 0 var(--mine)}
+.compass .hub{display:grid;place-items:center;font:600 .7rem var(--f-pix);color:var(--dim);letter-spacing:.08em;text-transform:uppercase;text-align:center}
+.now{display:grid;gap:6px;min-width:0}
+.now b{font-family:var(--f-pix);font-size:1.3rem}
+.now p{margin:0;color:var(--dim);font-size:.92rem}
+.ctl{display:flex;flex-wrap:wrap;gap:6px}
+.ctl button{font:600 .9rem var(--f-pix);color:var(--fg);background:#221e25;border:1.5px solid var(--line);border-radius:6px;padding:7px 12px;min-height:2.6rem;cursor:pointer;touch-action:manipulation}
+.ctl button[aria-pressed="true"]{border-color:var(--fg)}
+button:focus-visible,.cell:focus-visible{outline:3px solid var(--fg);outline-offset:2px}
+/* file di direzioni */
+.row{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px}
+.row.small{grid-template-columns:repeat(4,minmax(0,1fr))}
+.cell{display:grid;gap:4px;justify-items:center;align-content:start;background:var(--panel);border:1px solid var(--line);border-radius:8px;padding:10px 6px;cursor:pointer;min-width:0;overflow:hidden}
+.cell canvas{width:100%;height:240px;display:block}
+.row.small .cell canvas{height:150px}
+.cell .lab{font:600 .85rem var(--f-pix);text-align:center}
+.cell .tag{display:inline-flex;align-items:center;gap:5px;font:600 .7rem var(--f-pix);letter-spacing:.04em;max-width:100%;color:var(--mine)}
+.cell .tag::before{content:"";flex:none;width:8px;height:8px;border-radius:2px;background:currentColor}
+.cell .tag.none{visibility:hidden}
+.giro{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:12px;align-items:stretch}
+.giro .cell{cursor:default}
+.giro canvas{height:280px}
+.battle{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+.battle .cell{cursor:default}
+.battle canvas{height:360px}
+ol.list{margin:0;padding-left:1.4rem;display:grid;gap:10px;max-width:64ch}
+ol.list li::marker{font-family:var(--f-pix);color:var(--ember)}
+ol.list b{font-weight:700}
+.note{font-size:.88rem;color:var(--dim);margin:0}
+@media (max-width:760px){
+  .cmp{grid-template-columns:repeat(3,minmax(0,1fr));gap:6px}
+  .fig{padding:6px}
+  .fig figcaption{font-size:.78rem}
+  .fig figcaption span{display:none}
+  .stage{grid-template-columns:1fr}
+  .row{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .row.small{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .cell canvas{height:200px}
+  .row.small .cell canvas{height:140px}
+  .giro{grid-template-columns:1fr}
+  .battle canvas{height:220px}
+}
+</style>
+
+<main class="wrap">
+  <header>
+    <p class="eyebrow">Niumon · controllo prima del gioco</p>
+    <h1>Il Niumon <em>di fuoco</em> in 8 direzioni</h1>
+    <p class="lede">Questa volta parto da una base solida: un modellino a volumi costruito sul tuo disegno, che giro in tutte le direzioni e ridipingo in pixel art. Così ogni direzione è la stessa creatura, con le stesse proporzioni e gli stessi colori. Il modellino serve solo a me: nel gioco vanno solo i PNG in pixel art. Niente entra nel gioco finché non mi dici dove sbaglio.</p>
+  </header>
+
+  <section class="sec" aria-labelledby="hCmp">
+    <h2 id="hCmp">Il tuo disegno e la stessa vista rifatta</h2>
+    <p>Prima di girarlo ho messo la base nella stessa posa e nella stessa vista del tuo disegno (testa girata verso di noi), per controllare che torni. La coda è proprio la sagoma della tua, gonfiata.</p>
+    <div class="cmp">
+      <figure class="fig"><img class="pic paper" id="imDraw" alt="Il disegno di Denis: volpe di fuoco di tre quarti"><figcaption><b>Il tuo disegno</b><span>La fonte: forme, colori, espressione.</span></figcaption></figure>
+      <figure class="fig"><img class="pic dark" id="imBase" alt="La base a volumi vista come nel disegno"><figcaption><b>La base solida</b><span>Il modellino a volumi, colorato coi tuoi colori.</span></figcaption></figure>
+      <figure class="fig"><canvas class="pic" id="cvPix" aria-label="La stessa vista in pixel art"></canvas><figcaption><b>In pixel art</b><span>160 px, tavolozza fissa e contorno di un pixel.</span></figcaption></figure>
+    </div>
+  </section>
+
+  <section class="stage" aria-label="Il Niumon di fuoco che gira">
+    <canvas id="turn" aria-label="Il Niumon di fuoco nella direzione scelta, animato"></canvas>
+    <div class="side">
+      <div class="compass" id="compass" role="group" aria-label="Scegli la direzione"></div>
+      <div class="now" aria-live="polite"><b id="nowName">giù</b><span id="nowChip"></span><p id="nowNote"></p></div>
+      <div class="ctl">
+        <button type="button" id="prev" aria-label="Direzione precedente">◀</button>
+        <button type="button" id="auto" aria-pressed="true">Gira da solo</button>
+        <button type="button" id="next" aria-label="Direzione successiva">▶</button>
+      </div>
+      <div class="ctl" role="group" aria-label="Grandezza">
+        <button type="button" id="szBig" aria-pressed="true">Dettaglio</button>
+        <button type="button" id="szMap" aria-pressed="false">Grandezza di gioco</button>
+      </div>
+    </div>
+  </section>
+
+  <section class="sec" aria-labelledby="hBig">
+    <h2 id="hBig">Le 8 direzioni a grandezza di dettaglio</h2>
+    <p>Riquadri da 192×192, la misura della lotta nel piano degli sprite, ingranditi senza sfumare. Fermo animato: 12 fotogrammi a 8 al secondo. Tocca una direzione per vederla in alto.</p>
+    <div class="row" id="rowBig"></div>
+  </section>
+
+  <section class="sec" aria-labelledby="hMap">
+    <h2 id="hMap">A grandezza di gioco sulla mappa</h2>
+    <p>Riquadri da 64×64 come nel piano, punto d'appoggio a terra in (32, 56); qui ogni pixel dello sprite è 2 pixel dello schermo. Gli occhi a questa misura sono fatti a mano pixel per pixel.</p>
+    <div class="row small" id="rowMap"></div>
+  </section>
+
+  <section class="sec" aria-labelledby="hGiro">
+    <h2 id="hGiro">Il giro completo in 16 viste</h2>
+    <p>Ogni 22,5 gradi, per vedere che niente si stacca o cambia mentre gira. Nel gioco bastano le 8 direzioni sopra.</p>
+    <div class="giro">
+      <div class="cell"><canvas id="gBig" aria-label="Giro a 16 viste, dettaglio"></canvas><span class="lab">Dettaglio</span></div>
+      <div class="cell"><canvas id="gMap" aria-label="Giro a 16 viste, grandezza di gioco"></canvas><span class="lab">Grandezza di gioco</span></div>
+    </div>
+  </section>
+
+  <section class="sec" aria-labelledby="hLotta">
+    <h2 id="hLotta">In lotta</h2>
+    <p>La lotta usa due viste da 192×192: l'avversario di tre quarti davanti, che è la vista del tuo disegno, e il tuo Niumon di tre quarti da dietro.</p>
+    <div class="battle">
+      <div class="cell"><canvas id="bFoe" aria-label="Avversario, tre quarti davanti"></canvas><span class="lab">Avversario · tre quarti davanti</span></div>
+      <div class="cell"><canvas id="bMine" aria-label="Il tuo, tre quarti da dietro"></canvas><span class="lab">Il tuo · tre quarti da dietro</span></div>
+    </div>
+  </section>
+
+  <section class="sec" aria-labelledby="hMet">
+    <h2 id="hMet">Come l'ho fatto, e come farei le prossime creature</h2>
+    <ol class="list">
+      <li><b>Base solida.</b> Dal tuo disegno costruisco un modellino a volumi: testa, muso, corpo, zampe, orecchie, gorgiera, cresta e ciuffi. La coda è la sagoma della tua coda portata nel piano del corpo e gonfiata.</li>
+      <li><b>Controllo sul disegno.</b> Metto la base nella stessa vista del tuo disegno e la confronto (il riquadro in alto). Se lì torna, torna in tutte le direzioni, perché è sempre lo stesso modellino.</li>
+      <li><b>Pixel art.</b> Giro la base nelle 8 direzioni e la ridipingo: una tavolozza fissa di 27 colori presa dal tuo disegno (pelo, fiamme dal giallo al rosso scuro, zampe rosse, dentro delle orecchie, occhi), toni a fasce pulite, contorno scuro di un pixel, pixel isolati tolti.</li>
+      <li><b>Occhi e muso.</b> A grandezza di gioco gli occhi sono timbri fatti a mano (davanti, tre quarti, di lato, chiusi), scelti da quanto l'occhio guarda verso di noi. Il muso (naso, bocca aperta con la lingua, guance rosse) segue la testa in ogni direzione.</li>
+      <li><b>Fermo animato.</b> La coda e la cresta fiammeggiano, respira, sbatte le palpebre una volta, tre braci salgono dalla coda. Ogni movimento dipende solo dal punto del giro, così l'ultimo fotogramma si collega al primo; i piedi non si muovono mai.</li>
+      <li><b>Le prossime creature.</b> Mi basta un disegno pulito come questo; se mi mandi anche il lato o il dietro, la base viene ancora più fedele. Prima ti faccio vedere la base nella vista del tuo disegno e le 8 direzioni, e solo dopo il tuo sì faccio camminata, attacco, colpito e KO.</li>
+    </ol>
+  </section>
+
+  <section class="sec" aria-labelledby="hDom">
+    <h2 id="hDom">Cosa mi serve sapere da te</h2>
+    <ol class="list">
+      <li>Nelle viste di tre quarti davanti e di lato la testa è girata un po' verso di noi, come nel tuo disegno. Ti piace così o la vuoi dritta?</li>
+      <li>Da dietro la coda copre quasi tutto il corpo, perché sta nel piano del corpo come nel disegno. Va bene o la piego un po' di lato?</li>
+      <li>Sulla mappa è in un riquadro da 64×64: per far stare la coda il corpo viene piccolo. Va bene o lo vuoi più grande?</li>
+      <li>Come si chiama? Per ora nei file è «volpefuoco».</li>
+    </ol>
+    <p class="note">Tutto quello che vedi qui è un'anteprima: i fogli PNG con i dati per il gioco ci sono già, ma restano fuori dal gioco finché non dici che vanno bene.</p>
+  </section>
+</main>
+
+<script>
+(()=>{
+'use strict';
+const S=__SHEETS__;
+const IM=__IMAGES__;
+const reduce=matchMedia('(prefers-reduced-motion: reduce)').matches;
+// le 8 direzioni nell'ordine in cui gira
+const DIRS=[
+  {k:'giu',n:'giù',note:'Davanti: tutti e due gli occhi, la bocca aperta, la gorgiera.'},
+  {k:'giu_sinistra',n:'giù-sinistra',mine:true,note:'È la vista del tuo disegno: confrontala con il riquadro in alto.'},
+  {k:'sinistra',n:'sinistra',note:'Di lato, con la testa girata un poco verso di noi.'},
+  {k:'su_sinistra',n:'su-sinistra',note:'Tre quarti da dietro: la coda davanti, la testa dietro.'},
+  {k:'su',n:'su',note:'Da dietro: la coda copre il corpo.'},
+  {k:'su_destra',n:'su-destra',note:'Tre quarti da dietro, dall\'altro lato.'},
+  {k:'destra',n:'destra',note:'Di lato, verso destra.'},
+  {k:'giu_destra',n:'giù-destra',note:'Tre quarti davanti, verso destra.'}];
+const POS={su_sinistra:0,su:1,su_destra:2,sinistra:3,destra:5,giu_sinistra:6,giu:7,giu_destra:8};
+let cur=1,auto=!reduce,size='grande',lastStep=0;
+const $=id=>document.getElementById(id);
+function chip(d){return d.mine?'<span class="chip mine">come il tuo disegno</span>':'<span class="chip base">dalla base</span>'}
+function load(src){return new Promise((ok,ko)=>{const i=new Image();i.onload=()=>ok(i);i.onerror=ko;i.src=src})}
+function fit(cv){const D=Math.min(2,window.devicePixelRatio||1),w=Math.round(cv.clientWidth*D),h=Math.round(cv.clientHeight*D);if(cv.width!==w||cv.height!==h){cv.width=w;cv.height=h}return D}
+// uno sprite nel suo riquadro: scala intera, punto d'appoggio sempre sulla stessa linea, ombra morbida sotto
+function drawSprite(cv,sh,t,opt){const D=fit(cv),g=cv.getContext('2d'),W=cv.width,H=cv.height;g.clearRect(0,0,W,H);if(!sh||!sh.img)return;
+  opt=opt||{};const pad=(opt.pad||10)*D,boxW=opt.boxW||sh.w,boxH=opt.boxH||sh.h;
+  // scala intera in pixel del dispositivo (al massimo maxS pixel dello schermo per pixel dello sprite); sotto 1 si rimpicciolisce
+  let sc=Math.min((W-pad*2)/boxW,(H-pad*2)/boxH);
+  const smooth=sc<1;sc=smooth?sc:Math.floor(Math.min(sc,(opt.maxS||99)*D));
+  const fx=opt.frame!=null?opt.frame:(reduce?0:Math.floor(t*sh.fps)%sh.n);
+  const ax=sh.anchor[0],cx=W/2,base=H-pad-(opt.lift||0)*D;
+  g.save();g.globalAlpha=.45;g.fillStyle='#050406';g.beginPath();g.ellipse(cx,base,boxW*sc*.2,Math.max(2,sc*3),0,0,Math.PI*2);g.fill();g.restore();
+  g.imageSmoothingEnabled=smooth;const x=Math.round(cx-(ax+.5)*sc),y=Math.round(base-(sh.anchor[1]+.5)*sc);
+  g.drawImage(sh.img,fx*sh.w,0,sh.w,sh.h,x,y,sh.w*sc,sh.h*sc);return sc}
+function drawStill(cv,img,bg){const D=fit(cv),g=cv.getContext('2d'),W=cv.width,H=cv.height;g.clearRect(0,0,W,H);if(!img)return;
+  const sc=Math.max(1,Math.floor(Math.min(W/img.width,H/img.height)));g.imageSmoothingEnabled=false;
+  g.drawImage(img,Math.round((W-img.width*sc)/2),Math.round((H-img.height*sc)/2),img.width*sc,img.height*sc)}
+// ---------------------------------------------------------------- comandi
+const comp=$('compass');const btns=[];
+for(let p=0;p<9;p++){if(p===4){const h=document.createElement('div');h.className='hub';h.textContent='dove guarda';comp.appendChild(h);continue}
+  const d=DIRS.find(q=>POS[q.k]===p),b=document.createElement('button');b.type='button';b.textContent=d.n;if(d.mine)b.className='mine';
+  b.onclick=()=>{cur=DIRS.indexOf(d);setAuto(false);show()};comp.appendChild(b);btns.push([b,d])}
+function setAuto(v){auto=v;$('auto').setAttribute('aria-pressed',String(v));$('auto').textContent=v?'Gira da solo':'Fermo qui'}
+$('auto').onclick=()=>setAuto(!auto);
+$('prev').onclick=()=>{cur=(cur+7)%8;setAuto(false);show()};$('next').onclick=()=>{cur=(cur+1)%8;setAuto(false);show()};
+function setSize(s){size=s;$('szBig').setAttribute('aria-pressed',String(s==='grande'));$('szMap').setAttribute('aria-pressed',String(s==='mappa'))}
+$('szBig').onclick=()=>setSize('grande');$('szMap').onclick=()=>setSize('mappa');
+function show(){const d=DIRS[cur];$('nowName').textContent=d.n;$('nowChip').innerHTML=chip(d);$('nowNote').textContent=d.note;
+  for(const[b,q]of btns)b.setAttribute('aria-pressed',String(q===d))}
+// ---------------------------------------------------------------- le due file
+function row(id,prefix,big){const el=$(id),cells=[];
+  for(const d of DIRS){const c=document.createElement('div');c.className='cell';c.tabIndex=0;c.setAttribute('role','button');c.setAttribute('aria-label',d.n);
+    const cv=document.createElement('canvas');c.appendChild(cv);
+    const l=document.createElement('span');l.className='lab';l.textContent=d.n;c.appendChild(l);
+    const tg=document.createElement('span');tg.className='tag'+(d.mine?'':' none');tg.textContent='come il tuo disegno';c.appendChild(tg);
+    c.onclick=()=>{cur=DIRS.indexOf(d);setAuto(false);setSize(big?'grande':'mappa');show();$('turn').scrollIntoView({behavior:reduce?'auto':'smooth',block:'center'})};
+    c.onkeydown=e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();c.onclick()}};
+    el.appendChild(c);cells.push({cv,sh:S[prefix+'_'+d.k]})}
+  return cells}
+let rowBig=[],rowMap=[];
+// ---------------------------------------------------------------- animazione
+const T0=performance.now();
+function frame(now){const t=(now-T0)/1000;
+  if(auto&&now-lastStep>1100){lastStep=now;cur=(cur+1)%8;show()}
+  const d=DIRS[cur],sh=S[size+'_'+d.k];
+  drawSprite($('turn'),sh,t,size==='grande'?{boxW:150,boxH:170,pad:14,lift:6}:{boxW:52,boxH:60,pad:14,lift:6});
+  for(const c of rowBig)drawSprite(c.cv,c.sh,t,{boxW:146,boxH:166,pad:3});
+  for(const c of rowMap)drawSprite(c.cv,c.sh,t,{boxW:58,boxH:62,pad:4,maxS:2});
+  const gi=reduce?2:Math.floor(t*4)%16;
+  drawSprite($('gBig'),S.giro_grande,t,{boxW:150,boxH:170,pad:8,frame:gi});
+  drawSprite($('gMap'),S.giro_mappa,t,{boxW:58,boxH:64,pad:8,frame:gi,maxS:3});
+  drawSprite($('bFoe'),S.grande_giu_sinistra,t,{boxW:146,boxH:166,pad:4});
+  drawSprite($('bMine'),S.grande_su_destra,t,{boxW:146,boxH:166,pad:4});
+  requestAnimationFrame(frame)}
+const stills={};
+Promise.all([...Object.keys(S).map(k=>load(S[k].src).then(i=>{S[k].img=i})),
+  ...Object.keys(IM).map(k=>load(IM[k]).then(i=>{stills[k]=i}))]).then(()=>{
+  if(stills.disegno)$('imDraw').src=IM.disegno;else $('imDraw').closest('figure').hidden=true;
+  $('imBase').src=IM.base;
+  const redrawStills=()=>drawStill($('cvPix'),stills.pixel);
+  redrawStills();addEventListener('resize',redrawStills);
+  rowBig=row('rowBig','grande',true);rowMap=row('rowMap','mappa',false);setAuto(auto);show();requestAnimationFrame(frame)
+}).catch(()=>{$('nowNote').textContent='Gli sprite non si sono caricati: ricarica la pagina.'});
+})();
+</script>

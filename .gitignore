@@ -28,3 +28,6 @@ anteprime/niumon_direzioni.html
 sprite/niumon/pixel/*.npy
 sprite/niumon/pixel/*.npz
 sprite/niumon/pixel/__pycache__/
+anteprime/niumon_volpe.html
+sprite/niumon/volpe_fuoco/fai/__pycache__/
+sprite/niumon/volpe_fuoco/fai/rs
