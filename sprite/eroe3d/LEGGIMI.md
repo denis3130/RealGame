@@ -57,4 +57,10 @@ Misurato in Chromium sul server: l'eroe con l'arco circa 0,45-0,65 ms a disegno 
 - La mossa viene da quello che fa: scatto (dall'orologio dello scatto, poi un breve atterraggio), colpito (appena perde vita, `P.hurtT`, non quando lo scudo para), cammina (`P.walk`), mira (`P.aiming`, la corda tesa dal `pull` del gioco; la balestra ricarica corda e dardo con lo stesso `pull`), fermo. Quando lampeggia dopo un colpo è disegnato intero su un piccolo strato e poi messo trasparente, così non si vedono i pezzi uno sotto l'altro. Polvere e scie dello scatto accese in battaglia; le frecce che volano le disegna il gioco.
 - `H3D.on=false` torna all'eroe di oggi.
 
-Da fare: la modalità zombie userà lo stesso eroe con `style.gun` (le armi zombie sono pronte, con rinculo, vampa e ricariche): collegare `wpose` allo stato vero dell'arma (`ARMI.nuova(id).pose()`) invece del giro di prova; poi le versioni 3D degli altri eroi.
+Nella modalità zombie (dal 13 ottobre, `anteprime/zombie/motore.js`, `drawHero`) lo stesso eroe tiene l'arma zombie (`style.gun`) con lo stato
+vero dell'arma della partita: `o.gp` = `ARMI.nuova(id).pose()` prende il posto del giro di prova di `shoot` (rinculo, vampa, carrello, cane e
+tamburo, canne e nastro, pompa, cartucce, razzo; in ricarica la bocca si alza di `g.tilt`, come le armi 2D: le armi 3D non hanno il caricatore
+che cade) e `o.out` riceve `muzzle`, dove sta la bocca dell'arma sullo schermo (in unità dell'eroe, dai piedi), da cui la mappa fa partire i
+colpi. Senza `o.gp` e `o.out` (gioco classico, fogli) niente cambia.
+
+Da fare: le versioni 3D degli altri eroi.

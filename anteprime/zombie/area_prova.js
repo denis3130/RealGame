@@ -28,4 +28,4 @@ const AREA={title:'Angolo zombie · revisione',
       G.leaves(8.9*T,8.6*T,90,120);G.twigs(3*T,2.25*T,50,40);G.floorPlanks(5.5*T,1*T,3.7*T,2.5*T);G.holes();for(const[x,y,r] of[[4.4*T,7.6*T,14],[5.6*T,4.7*T,11],[4.3*T,5.5*T,9]])G.puddle(x,y,r)});
     props.sort((a,b)=>a.ky-b.ky)}};
 const props=ZM.props;
-if(document.readyState==='complete')setTimeout(()=>boot(AREA),300);else window.addEventListener('load',()=>setTimeout(()=>boot(AREA),300))})();
+ZM.AREE.prova=AREA})();// la accende la pagina di prova (anteprime/zombie/mk.py area_prova)

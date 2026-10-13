@@ -405,7 +405,11 @@ function drawFlame0(f){if(f.off)return;LEANK=f.lk||1;setRef(f.ref);const q=S(f.x
 const KINDS=[['zombie',1.1,30,80],['strisciante',1.1,24,60],['minatore',1.1,28,110],['lanterna',1.55,22,160],['hound',1.05,64,60]];// la vita in punti di danno delle armi (la pistola fa 20)
 let gunState=null,zOn=true,spawnT=1.2,ZID=0;// ZID: numero di serie degli zombie (il loro id stabile per l'ordine di disegno)
 {const _h=held;held=function(St,o,B){if(St.gun&&window.ARMI)return ARMI.inMano(St.gun,B,o.gp||{},o.aim);return _h(St,o,B)}}
-const HSTYLE=Object.assign({},HERO,{held:null,quiver:false,gun:'pistola'});
+// l'eroe della mappa: l'Arciere in 3D (Denis, 13 ottobre: «Arciere 3D» anche nella modalità zombie) con l'arma zombie in mano; il gioco gli
+// mette l'equipaggiamento del menu (stile(heroStyle('arciere'))), l'anteprima quello di base
+const HSTYLE=Object.assign({},HERO,{hid:'arciere',held:null,quiver:false,gun:'pistola'});
+function stile(s){for(const k of Object.keys(HSTYLE))delete HSTYLE[k];Object.assign(HSTYLE,HERO,s||{},{hid:'arciere',held:null,quiver:false,gun:W.gunId||'pistola'})}
+const HERO3=()=>typeof EROE!=='undefined'&&!!EROE.arciere&&HSTYLE.hid==='arciere';
 // le buche sono [x, y, zona, tipo, quando]: da una zona chiusa (W.zoneOpen) non esce nessuno; tipo 'mais' (escono camminando dal granturco) e
 // 'porta' (la latrina) non salgono da terra; quando() avvisa il prop (la porta che si spalanca). o (la partita a ondate): {kind, hp e spd
 // (moltiplicano quelli del tipo), q (conta per il round)}; restituisce lo zombie o null se la buca scelta era occupata
@@ -432,7 +436,7 @@ function equip(id){if(!window.ARMI||!ARMI.DATI[id])return;W.gunId=id;gunState=AR
 function hurt(z,n,fx){z.hp-=n;z.flash=.12;if(fx)for(let i=0;i<4;i++)W.FX.push({k:'drop',tw:[z.x,z.y,z.zh||0],x:0,y:-24*RIGK.mzk*z.sc/1.1,vx:rr(-40,40),vy:rr(-60,-10),t:.5});
   if(z.hp<=0&&!z.die){z.die=.001;W.kills=(W.kills||0)+1;const n2=z.reward||W.killCoins||60;W.coins+=n2;W.FX.push({k:'coin',tw:[z.x,z.y,(z.zh||0)+44*z.sc],n:n2,t:1.1,t0:1.1});if(W.director&&W.director.killed)W.director.killed(z)}}
 function fireShot(ev){const h=W.hero,g=gunState,D=g.D,B=basis(heroDir()*Math.PI/4),zk=RIGK.hzk,pp=window.ARMI&&ARMI.inManoPunti&&ARMI.inManoPunti(W.gunId,B,g.pose(),scrAng(h.aim)),m=pp&&pp.muzzle,
-    hw=[h.x,h.y,h.zh||0],ao=m?[m[0]*B.f*zk,(m[1]-8)*zk]:[Math.cos(h.aim)*16,-14+Math.sin(h.aim)*16],ty=-24*RIGK.mzk;
+    hw=[h.x,h.y,h.zh||0],ao=HERO3()&&W.muzzle?W.muzzle.slice():m?[m[0]*B.f*zk,(m[1]-8)*zk]:[Math.cos(h.aim)*16,-14+Math.sin(h.aim)*16],ty=-24*RIGK.mzk;
   for(const da of ev.ang){const a=h.aim+da,dx=Math.cos(a),dy=Math.sin(a);let end=D.range,left=(D.pierce||0)+1;
     for(let s=12;s<D.range;s+=5){const s0=hit(h.x+dx*s,h.y+dy*s,1.5);if(s0&&s0.tag!=='hole'){end=s;break}}// il primo muro sulla linea
     const L=[];for(const z of W.Z){if(z.die||z.rise<1)continue;const rx=z.x-h.x,ry=z.y-h.y,al=rx*dx+ry*dy;if(al<0||al>end)continue;if(Math.abs(rx*dy-ry*dx)<11*z.sc)L.push([al,z])}L.sort((p,q)=>p[0]-q[0]);
@@ -451,9 +455,11 @@ let BOX=null;
 function sorpresa(x,y,spots,a){if(!window.ARMI||!ARMI.nuovaBara||!ARMI.formaBara)return null;const b=ARMI.nuovaBara(0,0);spots=spots||[[x,y,null,a]];const s0=spots.find(q=>q[0]===x&&q[1]===y);
   BOX={b,spots,F:ARMI.formaBara(),E:{kind:'T',box:1,sid:'X',sk:880000,prop:{name:'bara',lk:1,ref:null},sb:[0,0,0,0],lean:0},sol:solid(x,y,1,1)};BOX.sol.noAO=true;ORD.byId.set('X',BOX.E);
   boxPlace(x,y,a!=null?a:s0&&s0[3]||0);
-  buyable({id:'bara',r:64,get x(){return BOX.x},get y(){return BOX.y},show:()=>b.st==='ferma'||b.st==='offre',
-    label:()=>b.st==='offre'?'Prendi: '+ARMI.DATI[b.gun].n:'Bara delle Sorprese',price:()=>b.st==='offre'?0:ARMI.BARA.prezzo,
-    act(){if(b.st==='offre'){b.prendi();return true}if(W.coins<ARMI.BARA.prezzo)return false;W.coins-=ARMI.BARA.prezzo;const h=W.hero,q=S(h.x,h.y,30);b.paga(q[0],q[1],W.gunId);return true}});return BOX}
+  buyable({id:'bara',r:64,get x(){return BOX.x},get y(){return BOX.y},show:()=>BOX.b.st==='ferma'||BOX.b.st==='offre',
+    label:()=>BOX.b.st==='offre'?'Prendi: '+ARMI.DATI[BOX.b.gun].n:'Bara delle Sorprese',price:()=>BOX.b.st==='offre'?0:ARMI.BARA.prezzo,
+    act(){const b=BOX.b;if(b.st==='offre'){b.prendi();return true}if(W.coins<ARMI.BARA.prezzo)return false;W.coins-=ARMI.BARA.prezzo;const h=W.hero,q=S(h.x,h.y,30);b.paga(q[0],q[1],W.gunId);return true}});return BOX}
+// una partita nuova: la Bara chiusa (nuova, con le sue prime due aperture sicure) al suo primo posto
+function boxReset(){if(!BOX)return;BOX.b=ARMI.nuovaBara(0,0);const s=BOX.spots[0];boxPlace(s[0],s[1],s[3]||0)}
 // mette la Bara in (x, y) con la testa verso a: il solido (il riquadro del contorno girato) e l'impronta per l'ordine
 function boxPlace(x,y,a){const F=BOX.F,k=F.BS,c=Math.cos(a),s=Math.sin(a),w=(u,v)=>[x+k*(u*c-v*s),y+k*(u*s+v*c)];BOX.x=x;BOX.y=y;BOX.a=a;
   let x0=1e9,y0=1e9,x1=-1e9,y1=-1e9;for(const p of F.BH){const q=w(p[0],p[1]);if(q[0]<x0)x0=q[0];if(q[0]>x1)x1=q[0];if(q[1]<y0)y0=q[1];if(q[1]>y1)y1=q[1]}
@@ -488,6 +494,8 @@ function updateBeings(dt,inp){const h=W.hero,DI=W.director;if(h.dead)inp={x:0,y:
   if(h.tgT<=0||!tgt){h.tgT=.1;tgt=null;const c=W.Z.filter(z=>z.rise>=1&&!z.die&&!z.idle).map(z=>[Math.hypot(z.x-h.x,z.y-h.y),z]).filter(a=>a[0]<RG).sort((a,b)=>a[0]-b[0]);
     for(const[,z] of c)if(physClear(h.x,h.y,z.x,z.y,1.5,hit(z.x,z.y,2))){tgt=z;break}h.tgZ=tgt}
   if(tgt){h.aim=Math.atan2(tgt.y-h.y,tgt.x-h.x);if(!h.moving)h.face=h.aim}
+  // il verso disegnato dell'Arciere 3D (nel mondo): segue in fretta quello vero, senza le 8 direzioni del rig di prima
+  {const tf=h.face||0;if(h.f3==null||dt>=.5)h.f3=tf;else h.f3+=Math.atan2(Math.sin(tf-h.f3),Math.cos(tf-h.f3))*Math.min(1,dt*18)}
   // il grilletto: le armi automatiche lo tengono premuto, le altre lo premono di nuovo appena l'arma è pronta
   if(g){const want=!h.moving&&!!tgt&&!noShoot,ev=g.update(dt,want&&(g.D.auto||(g.st==='pronta'&&g.cd<=0)));for(const e of ev){if(e.k==='sparo'&&!noShoot)fireShot(e);else if(e.k==='suono'&&ARMI.suono)ARMI.suono(W.gunId,e.w,180)}
     if(tgt||h.moving)h.rlT=0;else if((h.rlT=(h.rlT||0)+dt)>1.2&&g.st==='pronta'&&g.mag<g.D.mag&&g.res>0)g.ricarica();// ricarica da solo quando non c'è niente da colpire
@@ -534,8 +542,15 @@ const alphaOf=(hs,part)=>{if(part==='roof')return hs.a;if(part==='in')return hs.
 // non sfarfalla tra due viste; l'arma prende l'angolo vero sullo schermo
 function heroDir(){const h=W.hero,sa=scrAng(h.face),d=Q8(sa),cur=h.dS==null?d:h.dS,df=Math.atan2(Math.sin(sa-cur*Math.PI/4),Math.cos(sa-cur*Math.PI/4));h.dS=Math.abs(df)>Math.PI/8+.12?d:cur;return h.dS}
 // (senza aim l'arma segue il corpo: null, non scrAng(undefined) = NaN)
+// l'Arciere 3D: girato con la telecamera della mappa come i mostri (verso nel mondo + ψ); cammina, sta fermo, mira e spara con lo stato vero
+// dell'arma (rinculo, vampa, carrello, pompa, ricarica), colpito e caduto con gli occhi strizzati; la bocca dell'arma (W.muzzle, dai piedi)
+// serve ai colpi. Senza l'eroe 3D, il rig di prima nelle 8 direzioni
 function drawHero(){const h=W.hero,q=S(h.x,h.y,h.zh||0),f=h.fall||0;if(f>0){ctx.save();ctx.translate(q[0],q[1]-6);ctx.rotate(-f*1.42);ctx.translate(-q[0],-(q[1]-6))}
-  drawRig(q[0],q[1]-8,heroDir()*Math.PI/4,h.walk,h.moving&&!f,HSTYLE,{gp:gunState?gunState.pose():{},aim:h.aim==null||f?null:scrAng(h.aim)});if(f>0)ctx.restore();if(W.director&&W.director.drawOnHero)W.director.drawOnHero(q)}
+  if(HERO3()){const DI=W.director,ht=DI&&DI.hurtT!=null?DI.hurtT:9,aimOn=!!h.tgZ&&!h.moving&&!f&&!h.dead;let anim='idle',p=((W.t/2.4)%1+1)%1;
+    if(f>0||h.dead){anim='hit';p=.16}else if(ht<.45){anim='hit';p=ht/.45*.5}else if(h.moving){anim='walk';p=(((h.walk||0)/TAU)%1+1)%1}else if(aimOn)anim='aim';
+    const out={};try{EROE.arciere(q[0],q[1],(h.f3==null?h.face||0:h.f3)+CAM.yaw,anim,p,1,{style:HSTYLE,gp:gunState?gunState.pose():null,noFx:true,out})}catch(e){console.error(e)}W.muzzle=out.muzzle||null}
+  else drawRig(q[0],q[1]-8,heroDir()*Math.PI/4,h.walk,h.moving&&!f,HSTYLE,{gp:gunState?gunState.pose():{},aim:h.aim==null||f?null:scrAng(h.aim)});
+  if(f>0)ctx.restore();if(W.director&&W.director.drawOnHero)W.director.drawOnHero(q)}
 // una voce della lista: uno strato di prop (L), un prop intero nell'ordine di prima (W, con W.dbg.ord='ky'), un essere (B: eroe, zombie, corvo
 // posato, fiamma libera)
 function drawEntry(e,h0a){switch(e.kind){case'V':return drawVeil(e.k);case'L':return drawLayer(e);case'T':return drawBox();case'W':return drawWhole(e.prop);case'B':return e.box?drawBox():e.hero?drawHero():e.z?drawZombie(e.z):e.pc?drawPerch(e.pc):e.fl?drawFlame(e.fl,h0a):null}}
@@ -543,7 +558,7 @@ function drawWhole(p){LEANK=p.lk==null?1:p.lk;setRef(p.ref);ROTP=p.rot||null;try
 // la sagoma dell'eroe dove è coperto (dietro la casa, la cripta, un albero): si ridisegnano in una tela piccola solo le cose disegnate dopo di lui
 // che toccano il suo riquadro, e lì sopra si stampa la sua sagoma chiara a metà trasparenza. Costa qualcosa solo quando è davvero coperto.
 let SIL=null,LASTOCC=[];
-function heroBox(){const h=W.hero,q=S(h.x,h.y,h.zh||0);return[q[0]-18,q[1]-58*RIGK.hzk,q[0]+18,q[1]+6]}
+function heroBox(){const h=W.hero,q=S(h.x,h.y,h.zh||0),w=HERO3()?27:18;return[q[0]-w,q[1]-58*(HERO3()?RIGK.mzk:RIGK.hzk),q[0]+w,q[1]+6]}// (l'Arciere 3D tiene l'arma più in fuori)
 // il riquadro vero di un prop (dai punti 3D dei suoi pezzi; o.ob se lo dà chi lo costruisce): [x0,y0,x1,y1,zTop], calcolato una volta
 function obOf(p){if(p._ob)return p._ob;if(p.ob)return p._ob=p.ob;let x0=1e9,y0=1e9,x1=-1e9,y1=-1e9,z1=0,any=false;const add=(q,r)=>{r=r||0;any=true;if(p.rot){const w=tP(p.rot,q[0],q[1]);q=[w[0],w[1],q[2]]}x0=Math.min(x0,q[0]-r);x1=Math.max(x1,q[0]+r);y0=Math.min(y0,q[1]-r);y1=Math.max(y1,q[1]+r);z1=Math.max(z1,(q[2]||0)+r)};
   for(const t of p.parts){if(t.c)t.c.forEach(q=>add(q));else if(t.pts)t.pts.forEach(q=>add(q));else if(t.a){add(t.a,t.w);add(t.b,t.w)}else if(t.p)add(t.p,t.r)}
@@ -958,10 +973,20 @@ function updateAmbient(dt){W.t+=dt;updateCrows(dt);
   for(const p of W.puffs){p.t+=dt;p.z+=16*dt;p.x+=10*dt;p.r+=5*dt}for(let i=W.puffs.length-1;i>=0;i--)if(W.puffs[i].t>3.2)W.puffs.splice(i,1);
   for(const tr of W.leafTrees||[])if(Math.random()<dt*.8)W.leaves.push({x:tr[0]+rr(-40,40),y:tr[1]+rr(-40,40),z:rr(70,90),t:0,ph:rr(0,6),c:['#a8562a','#c87a2a','#d0a040'][Math.floor(Math.random()*3)]});
   for(const l of W.leaves){l.t+=dt;l.z-=14*dt;l.x+=Math.sin(l.t*3+l.ph)*20*dt+6*dt}for(let i=W.leaves.length-1;i>=0;i--)if(W.leaves[i].z<0)W.leaves.splice(i,1)}
+// ------------------------------------------------------------------ le aree (area_mappa.js) si registrano in AREE; anteprima(id) costruisce e accende
+// quella della pagina di prova (anteprime/zombie/mk.py), il gioco vero la costruisce col menu (src/js/63-zombie.js)
+const AREE={};function anteprima(id){const go=()=>boot(AREE[id]);if(document.readyState==='complete')setTimeout(go,300);else addEventListener('load',()=>setTimeout(go,300))}
 // ------------------------------------------------------------------ la pagina: tela, levetta, telecamera, bussola, bottoni
-function boot(area){try{INTRO.on=false;paused=true}catch(e){}try{AU.on.music=false;AU.on.sfx=false}catch(e){}
-  // niente atmosfera del sotterraneo classico (vento dell'abisso, respiro della bestia) sulla mappa zombie: quella sua verrà con l'audio
-  try{const _s=ambStart;ambStart=function(k){_s(null);AMB.kind=k}}catch(e){}
+// boot(area, o): costruisce la mappa una volta e la pagina sopra il gioco. Per l'anteprima (o vuoto) parte subito, coi bottoni di prova; nel
+// gioco vero (o.game, src/js/63-zombie.js) resta spenta finché il menu non la accende e restituisce {start, stop, nuova, pausa}: o.fine(oro,
+// round, uccisi) avvisa il gioco a fine partita, o.esci() quando si torna al menu
+function boot(area,o){o=o||{};const GAME=!!o.game;let ACT=!GAME,RUN=false,PAUSE=false;W.gioco=GAME?o:null;
+  // la telecamera della mappa inclina anche i personaggi (CR.cam, RIGCAM, in camRig): nel gioco si tengono quelli del menu appena lo si lascia
+  // (prima di costruire o di rimettere a posto la mappa) e tornando al menu si rimettono
+  let crKeep=null,rgKeep=null;const keepCam=()=>{if(!GAME||crKeep||rgKeep)return;crKeep=window.CR&&CR.cam?Object.assign({},CR.cam):null;rgKeep=typeof RIGCAM!=='undefined'?Object.assign({},RIGCAM):null};keepCam();
+  if(!GAME){try{INTRO.on=false;paused=true}catch(e){}try{AU.on.music=false;AU.on.sfx=false}catch(e){}}
+  // niente atmosfera del sotterraneo classico (vento dell'abisso, respiro della bestia) mentre la mappa zombie è accesa: quella sua verrà con l'audio
+  try{const _s=ambStart;ambStart=function(k){if(!ACT)return _s(k);_s(null);AMB.kind=k}}catch(e){}
   const tb0=performance.now();W.dbg.tstart=tb0;area.build();const tb1=performance.now();finalize();const tb2=performance.now();navBuild();W.dbg.tb={build:tb1-tb0,bake:W.dbg.tbake||0,finalize:tb2-tb1,nav:performance.now()-tb2};setTimeout(warmIntra,800);if(window.ARMI){try{gunState=ARMI.nuova('pistola');HSTYLE.gun=W.gunId='pistola'}catch(e){gunState=null}}
   for(let i=0;i<16;i++)W.flies.push({x:rr(0,W.w),y:rr(0,W.h),z:rr(6,40),a:rr(0,TAU),ph:rr(0,TAU)});for(let i=0;i<9;i++)W.mists.push({x:rr(-100,W.w+100),y:rr(0,W.h),r:rr(80,160),v:rr(6,14)});
   for(let i=0;i<4;i++)W.clouds.push({x:rr(-300,W.w),y:rr(-100,W.h),r:rr(220,360),v:rr(9,16)});
@@ -987,9 +1012,22 @@ function boot(area){try{INTRO.on=false;paused=true}catch(e){}try{AU.on.music=fal
   #mz .buy .t2 b{color:#ffd65a}#mz .buy.poor .t2 b{color:#ff8a70}
   #mz .buy.no{animation:mzno .35s}@keyframes mzno{25%{transform:translateX(calc(-50% - 6px))}75%{transform:translateX(calc(-50% + 6px))}}
   #mz .hint{position:absolute;left:0;right:0;bottom:100px;text-align:center;font-size:13px;line-height:1.35;opacity:.65;pointer-events:none;transition:opacity 1s}
-  </style><canvas id="mzCv"></canvas><div class="top"><h1>${area.title||'Mappa zombie'}</h1><span class="cash" id="mzCash"></span></div>
+  #mz[hidden]{display:none!important}#mz.game .bar{display:none}#mz.game .hint{bottom:calc(64px + env(safe-area-inset-bottom,0px))}
+  #mz .tl{display:flex;align-items:center;gap:10px;min-width:0}#mz .tl h1{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  #mz .pz{pointer-events:auto;flex:none;width:38px;height:38px;padding:0;display:flex;align-items:center;justify-content:center;gap:5px;border-radius:12px;background:#3a332d;-webkit-tap-highlight-color:transparent}
+  #mz .pz i{display:block;width:5px;height:15px;border-radius:2px;background:#efe6d0;box-shadow:0 1px 0 #000}
+  #mz .pausa{position:absolute;inset:0;z-index:5;display:flex;align-items:center;justify-content:center;background:rgba(6,6,10,.72);touch-action:none}
+  #mz .pausa .mzbox{width:min(290px,82vw);box-sizing:border-box;padding:18px 18px 20px;border-radius:18px;background:linear-gradient(#3a332d,#26211d);border:3px solid #000;box-shadow:0 6px 0 #000,inset 0 2px 0 rgba(255,240,210,.14),0 0 0 2px #8a7a62;display:flex;flex-direction:column;gap:9px;text-align:center}
+  #mz .pausa h2{margin:0 0 2px;font:400 30px "Lilita One",system-ui;letter-spacing:.03em;color:#efe6d0;text-shadow:0 3px 0 #000}
+  #mz .pausa p{margin:0 0 4px;font:700 14px "Baloo 2",system-ui;opacity:.9}#mz .pausa p b{font:400 17px "Lilita One",system-ui;color:#ffd65a}
+  #mz .pausa button{font:400 18px "Lilita One",system-ui;letter-spacing:.02em;padding:9px 12px;border-radius:13px}
+  #mz .pausa button.mzgo{color:#1b120a;background:linear-gradient(#ffd65a,#d6982a)}#mz .pausa button.mzout{background:#5a2420;color:#ffd9cf}
+  #mz .pausa .mzsure{display:flex;flex-direction:column;gap:9px;margin-top:4px;padding-top:10px;border-top:2px dashed rgba(239,230,208,.25)}
+  </style><canvas id="mzCv"></canvas><div class="top"><div class="tl">${GAME?'<button class="pz" id="mzPz" aria-label="Pausa"><i></i><i></i></button>':''}<h1>${area.title||'Mappa zombie'}</h1></div><span class="cash" id="mzCash"></span></div>
   <div class="nord" id="mzNord" role="button" aria-label="Torna a nord" title="Torna a nord (N)"><canvas></canvas></div>
-  <div class="hint" id="mzHint"></div><div class="gun" id="mzGun"></div><div class="toast" id="mzToast"></div><div class="buy" id="mzBuy" hidden><div class="t1"></div><div class="t2"></div></div><div class="bar" id="mzBar"></div>`;document.body.appendChild(ov);
+  <div class="hint" id="mzHint"></div><div class="gun" id="mzGun"></div><div class="toast" id="mzToast"></div><div class="buy" id="mzBuy" hidden><div class="t1"></div><div class="t2"></div></div><div class="bar" id="mzBar"></div>
+  ${GAME?'<div class="pausa" id="mzPausa" hidden><div class="mzbox"><h2>Pausa</h2><p class="mzpi"></p><button class="mzgo" data-a="su">Riprendi</button><button data-a="sfx"></button><button class="mzout" data-a="esci">Esci dalla partita</button><div class="mzsure" hidden><p></p><button class="mzout" data-a="si">Esci</button><button data-a="no">Resta</button></div></div></div>':''}`;
+  document.body.appendChild(ov);if(GAME){ov.hidden=true;ov.classList.add('game')}
   // il bottone per comprare (cancello, armi a muro, Bara): compare quando l'eroe è vicino a qualcosa che si compra; si tiene premuto (dito,
   // mouse, Spazio o Invio) finché la barra d'oro è piena; senza monete abbastanza trema. Dopo un acquisto va staccato prima del prossimo
   const buyEl=ov.querySelector('#mzBuy'),gunEl=ov.querySelector('#mzGun'),toastEl=ov.querySelector('#mzToast');let buyHold=false,buyP=0,buyCur=null,buyKey='',buyLock=false,gunKey='',toastT=0,titleTxt=area.title;const titleEl=ov.querySelector('h1');
@@ -1007,7 +1045,7 @@ function boot(area){try{INTRO.on=false;paused=true}catch(e){}try{AU.on.music=fal
     if(area.zoneName){const n=area.zoneName(W.hero);if(n!==titleTxt){titleTxt=n;titleEl.textContent=n}}// il nome della zona dove sta l'eroe
     if(W.toast){toastEl.textContent=W.toast[0];toastEl.classList.add('on');toastT=W.toast[1];W.toast=null}if(toastT>0&&(toastT-=dt)<=0)toastEl.classList.remove('on')}
   const cv=ov.querySelector('#mzCv'),barEl=ov.querySelector('#mzBar'),cashEl=ov.querySelector('#mzCash'),hintEl=ov.querySelector('#mzHint'),nordEl=ov.querySelector('#mzNord'),ncv=nordEl.querySelector('canvas');let low=false,whole=false;
-  const ui=()=>{barEl.innerHTML='';const mk=(t,on,f)=>{const b=document.createElement('button');b.textContent=t;b.className=on?'on':'';b.onclick=()=>{f();ui()};barEl.appendChild(b)};
+  const ui=()=>{barEl.innerHTML='';if(GAME)return;const mk=(t,on,f)=>{const b=document.createElement('button');b.textContent=t;b.className=on?'on':'';b.onclick=()=>{f();ui()};barEl.appendChild(b)};
     mk('Zombie',zOn,()=>{zOn=!zOn});mk('Effetti bassi',low,()=>{low=!low});mk('Vista intera',whole,()=>{whole=!whole});
     mk('Suono',(()=>{try{return AU.on.sfx&&!!AU.ctx}catch(e){return false}})(),()=>{try{if(!AU.ctx){initAudio();AU.on.sfx=true}else AU.on.sfx=!AU.on.sfx;audioSettings();if(AU.ctx&&AU.ctx.state==='suspended')AU.ctx.resume()}catch(e){}})};ui();
   const fine=!!(window.matchMedia&&matchMedia('(hover:hover) and (pointer:fine)').matches);
@@ -1033,7 +1071,7 @@ function boot(area){try{INTRO.on=false;paused=true}catch(e){}try{AU.on.music=fal
   function goNorth(){if(look.id!=null&&look.on)return;const y0=wrapA(CAM.yaw);if(Math.abs(y0)<.003&&Math.abs(CAM.el-EL0)<.003){cam.ret=null;CAM.yaw=cam.yawT=0;CAM.el=cam.elT=cam.elRaw=EL0;camDerive();return}CAM.yaw=cam.yawT=y0;cam.ret={t:0,y0,e0:CAM.el}}
   const roleFor=e=>{if(e.pointerType==='mouse'&&e.button===2)return look.id==null?look:null;if(e.pointerType==='mouse'&&e.button!==0)return null;// col mouse: tasto destro = telecamera ovunque
     const pref=e.clientX<ov.clientWidth/2?stick:look,oth=pref===stick?look:stick;return pref.id==null?pref:oth.id==null?oth:null};
-  ov.addEventListener('pointerdown',e=>{if(e.target.closest('.bar,.nord,.buy'))return;const s=roleFor(e);if(!s)return;e.preventDefault();
+  ov.addEventListener('pointerdown',e=>{if(e.target.closest('.bar,.nord,.buy,.pz,.pausa,.fine'))return;const s=roleFor(e);if(!s)return;e.preventDefault();
     s.id=e.pointerId;s.x0=s.x=e.clientX;s.y0=s.y=e.clientY;if(s===look){look.on=false;look.ax=look.ay=0;look.sum=0;cam.ret=null}try{ov.setPointerCapture(e.pointerId)}catch(_){}});
   ov.addEventListener('pointermove',e=>{if(e.pointerId===stick.id){stick.x=e.clientX;stick.y=e.clientY;const dx=stick.x-stick.x0,dy=stick.y-stick.y0,l=Math.hypot(dx,dy);if(l>STR){stick.x0+=dx*(1-STR/l);stick.y0+=dy*(1-STR/l)}}
     else if(e.pointerId===look.id){look.x=e.clientX;look.y=e.clientY;// i primi 7 px non girano: un tocco fermo non sposta niente
@@ -1044,8 +1082,12 @@ function boot(area){try{INTRO.on=false;paused=true}catch(e){}try{AU.on.music=fal
   nordEl.addEventListener('click',()=>goNorth());
   // tastiera (computer): frecce/WASD camminano, Q/E (o J/L) girano, R/F (o I/K) inclinano, N o Home tornano a nord, V la vista intera
   const keys={},K=(...a)=>a.some(k=>keys[k]),KC=e=>e.code||e.key;
-  addEventListener('keydown',e=>{const k=KC(e);keys[k]=1;if(e.repeat)return;if(k==='KeyN'||k==='Home')goNorth();if(k==='KeyV'){whole=!whole;ui()}});addEventListener('keyup',e=>{const k=KC(e);keys[k]=0;if(k==='Space'||k==='Enter')buyLock=false});
-  const reset=()=>{stick.id=null;if(look.id!=null)lookEnd();for(const k in keys)keys[k]=0};addEventListener('blur',reset);document.addEventListener('visibilitychange',()=>{if(document.hidden)reset()});
+  // (nel gioco vero i tasti non arrivano al gioco classico sotto; Esc o P mettono in pausa)
+  addEventListener('keydown',e=>{if(!ACT)return;const k=KC(e);if(GAME){e.stopPropagation();if(['ArrowUp','ArrowDown','ArrowLeft','ArrowRight','Space'].includes(k))e.preventDefault()}
+    if(GAME&&(k==='Escape'||k==='KeyP')){if(!e.repeat&&matchOn())setPause(!PAUSE);return}if(PAUSE)return;
+    keys[k]=1;if(e.repeat)return;if(k==='KeyN'||k==='Home')goNorth();if(k==='KeyV'&&!GAME){whole=!whole;ui()}},true);
+  addEventListener('keyup',e=>{if(!ACT)return;if(GAME)e.stopPropagation();const k=KC(e);keys[k]=0;if(k==='Space'||k==='Enter')buyLock=false},true);
+  const reset=()=>{stick.id=null;if(look.id!=null)lookEnd();for(const k in keys)keys[k]=0};addEventListener('blur',reset);document.addEventListener('visibilitychange',()=>{if(document.hidden){reset();if(GAME&&ACT&&matchOn())setPause(true)}});
   // la telecamera: niente inerzia (resta dove la lasci), solo un ammortizzatore di ~0,1 s verso il punto voluto; la bussola fa il ritorno in 0,45 s
   function camInput(dt){const kr=(K('KeyQ','KeyJ')?1:0)-(K('KeyE','KeyL')?1:0),ke=(K('KeyF','KeyK')?1:0)-(K('KeyR','KeyI')?1:0);
     if(kr||ke){cam.ret=null;cam.yawT+=kr*150*DEG*dt;cam.elRaw=cam.elT=cl(cam.elT+ke*45*DEG*dt,ELMIN,ELMAX)}
@@ -1101,7 +1143,8 @@ function boot(area){try{INTRO.on=false;paused=true}catch(e){}try{AU.on.music=fal
     g.strokeStyle=INK;g.lineWidth=1.5;g.beginPath();g.moveTo(N[0],N[1]-1.2);g.lineTo(L[0],L[1]-1.2);g.lineTo(Sd[0],Sd[1]-1.2);g.lineTo(Rt[0],Rt[1]-1.2);g.closePath();g.stroke();
     g.fillStyle='#c9a24a';g.beginPath();g.arc(C[0],C[1],2.6,0,TAU);g.fill();g.strokeStyle=INK;g.lineWidth=1.1;g.stroke();g.fillStyle='rgba(255,240,200,.8)';g.beginPath();g.arc(C[0]-.8,C[1]-.9,.9,0,TAU);g.fill();
     const tp=P(an,R+7.5);g.font='400 13px "Lilita One",system-ui,sans-serif';g.textAlign='center';g.textBaseline='middle';g.strokeStyle=INK;g.lineWidth=3.2;g.strokeText('N',tp[0],tp[1]);g.fillStyle='#efe6d0';g.fillText('N',tp[0],tp[1])}
-  const dpr=Math.min(2,window.devicePixelRatio||1);let last=performance.now(),ms=0,zoomOv=0,camOv=null,wholeFit=null,hudOn=true;
+  // (nel gioco con la qualità «bassa» meno pixel, come la tela del gioco: resize() in 45-render.js)
+  const DPR=()=>Math.min(GAME&&typeof SAVE!=='undefined'&&SAVE.set&&SAVE.set.q==='bassa'?1.25:2,window.devicePixelRatio||1);let dpr=DPR(),hintT=0;let last=performance.now(),ms=0,zoomOv=0,camOv=null,wholeFit=null,hudOn=true;
   // da coordinate dello schermo-mondo (quelle che escono da S) a pixel della tela: il perno CAM sta oy sotto il centro
   const scr=(X,Y)=>[dpr*(ov.clientWidth/2+(X-CAM.x)*CAM.z),dpr*(ov.clientHeight/2+(Y-CAM.y+CAM.oy)*CAM.z)];
   // vista intera: la mappa con le cime (fino a 90) inquadrata per la telecamera di riposo (yawT, elT); mentre il dito gira resta ferma (niente
@@ -1110,7 +1153,7 @@ function boot(area){try{INTRO.on=false;paused=true}catch(e){}try{AU.on.music=fal
     for(const[x,y] of[[0,0],[W.w,0],[W.w,W.h],[0,W.h]]){const dx=x-cx,dy=y-cy,u=dx*c-dy*s,v=dx*s+dy*c;for(const z of[0,90]){const Y=v*SP-z*CP;X0=Math.min(X0,u);X1=Math.max(X1,u);Y0=Math.min(Y0,Y);Y1=Math.max(Y1,Y)}}
     return[Math.min(Wp/(X1-X0+60),(Hp-150)/(Y1-Y0+30)),-(Y0+Y1)/2-10]}
   function render(dt,ix,iy){const Wp=ov.clientWidth,Hp=ov.clientHeight;if(cv.width!==Math.round(Wp*dpr)||cv.height!==Math.round(Hp*dpr)){cv.width=Math.round(Wp*dpr);cv.height=Math.round(Hp*dpr)}
-    const saved=ctx,lf=LOWFX;ctx=cv.getContext('2d');LOWFX=low;const t0=performance.now();
+    const saved=ctx,lf=LOWFX;ctx=cv.getContext('2d');LOWFX=GAME?lf:low;const t0=performance.now();
     try{updateBeings(dt,{x:ix,y:iy});updateAmbient(dt);if(area.update)area.update(dt);
       const h=W.hero;let tx,ty,z,oyT;
       if(camOv){tx=camOv[0];ty=camOv[1];z=zoomOv||Wp/330;oyT=0}
@@ -1125,11 +1168,37 @@ function boot(area){try{INTRO.on=false;paused=true}catch(e){}try{AU.on.music=fal
       const vg=ctx.createRadialGradient(Wp/2,Hp/2,Math.min(Wp,Hp)*.4,Wp/2,Hp/2,Math.max(Wp,Hp)*.75);vg.addColorStop(0,'rgba(0,0,0,0)');vg.addColorStop(1,'rgba(0,0,0,.45)');ctx.fillStyle=vg;ctx.fillRect(0,0,Wp,Hp);
       const show=hudOn&&!W.dbg.noSticks;if(nordEl.hidden===show)nordEl.hidden=!show;if(show)drawNord()
     }catch(e){console.error(e)}finally{ms=ms*.93+(performance.now()-t0)*.07;ctx=saved;LOWFX=lf}}
-  function frame(now){if(W.dbg.halt){last=now;requestAnimationFrame(frame);return}// W.dbg.halt: le prove ferme il ciclo dei fotogrammi (misure senza disturbi)
+  let fEma=.016,slowZ=0;
+  function frame(now){if(!ACT){RUN=false;return}// la pagina spenta (nel gioco vero, col menu) non disegna niente
+    if(W.dbg.halt){last=now;requestAnimationFrame(frame);return}// W.dbg.halt: le prove ferme il ciclo dei fotogrammi (misure senza disturbi)
     const raw=Math.max(0,(now-last)/1000),rdt=Math.min(.05,raw);last=now;camInput(Math.min(.1,raw));// la telecamera va col tempo vero anche a mondo fermo (W.dbg.freeze)
+    // qualità automatica come nel gioco: se i fotogrammi restano lenti per 2,5 s gli effetti si abbassano (LOWFX)
+    if(GAME&&!PAUSE&&raw<.2){fEma+=(raw-fEma)*.05;if(typeof SAVE!=='undefined'&&SAVE.set&&SAVE.set.q==='auto'&&!LOWFX&&fEma>.026){slowZ+=raw;if(slowZ>2.5)LOWFX=true}else slowZ=0}
     let[ix,iy]=vec(stick);if(K('ArrowLeft','KeyA'))ix=-1;if(K('ArrowRight','KeyD'))ix=1;if(K('ArrowUp','KeyW'))iy=-1;if(K('ArrowDown','KeyS'))iy=1;
-    const[wx,wy]=stickToWorld(ix,iy);render(W.dbg.freeze?0:rdt,wx,wy);uiStep(W.dbg.freeze?0:rdt);cashEl.textContent='● '+W.coins.toLocaleString('it-IT')+'  ·  '+ms.toFixed(1)+' ms'+(W.dbg.prof?'  ·  ord '+ORD.pOrd.toFixed(2)+' · sil '+ORD.pSil.toFixed(2):'');requestAnimationFrame(frame)}
-  requestAnimationFrame(frame);
+    const st=W.dbg.freeze||PAUSE?0:rdt,[wx,wy]=stickToWorld(ix,iy);if(GAME&&hintT>0&&(hintT-=st)<=0)hintEl.style.opacity=0;render(st,wx,wy);uiStep(st);cashEl.textContent='● '+W.coins.toLocaleString('it-IT')+(GAME?'':'  ·  '+ms.toFixed(1)+' ms')+(W.dbg.prof?'  ·  ord '+ORD.pOrd.toFixed(2)+' · sil '+ORD.pSil.toFixed(2):'');requestAnimationFrame(frame)}
+  if(ACT){RUN=true;requestAnimationFrame(frame)}
+  // ------------------------------------------------------------------ nel gioco vero: accendere e spegnere col menu, la pausa, una partita nuova
+  const pzScr=ov.querySelector('#mzPausa'),matchOn=()=>!!(W.director&&W.director.st!=='fine');
+  function pzFill(){if(!pzScr)return;const D=W.director,R=D?D.R:0;pzScr.querySelector('.mzpi').innerHTML=R?`Round <b>${R}</b> · zombie uccisi <b>${W.kills||0}</b>`:'La partita sta per cominciare';
+    let on=false;try{on=!!AU.on.sfx}catch(e){}pzScr.querySelector('[data-a=sfx]').textContent='Effetti: '+(on?'sì':'no')}
+  function setPause(v){if(!GAME)return;PAUSE=!!v;if(PAUSE){reset();buyHold=false;pzFill()}pzScr.hidden=!PAUSE;pzScr.querySelector('.mzsure').hidden=true}
+  if(GAME){ov.querySelector('#mzPz').addEventListener('click',e=>{e.stopPropagation();try{sfx('ui')}catch(_){}if(matchOn())setPause(true)});
+    pzScr.addEventListener('click',e=>{const b=e.target.closest('button');if(!b)return;const a=b.dataset.a;try{sfx('ui')}catch(_){}
+      if(a==='su')setPause(false);
+      else if(a==='sfx'){try{if(!AU.ctx)initAudio();AU.on.sfx=!AU.on.sfx;audioSettings()}catch(_){}pzFill()}
+      else if(a==='esci'){const D=W.director,R=D?D.R:0,s=pzScr.querySelector('.mzsure');s.querySelector('p').textContent=R?`La partita finisce qui: prendi l'oro del round ${R}.`:'La partita finisce qui.';s.hidden=false}
+      else if(a==='no')pzScr.querySelector('.mzsure').hidden=true;
+      else if(a==='si'){setPause(false);if(W.director&&W.director.abbandona)W.director.abbandona()}})}
+  function start(){if(ACT)return;keepCam();ACT=true;PAUSE=false;if(pzScr)pzScr.hidden=true;ov.hidden=false;dpr=DPR();camRig();last=performance.now();if(!RUN){RUN=true;requestAnimationFrame(frame)}}
+  function stop(){if(!ACT)return;ACT=false;PAUSE=false;ov.hidden=true;reset();buyHold=false;if(crKeep)Object.assign(CR.cam,crKeep);if(rgKeep)Object.assign(RIGCAM,rgKeep);crKeep=rgKeep=null;cv.style.transform=''}
+  // una partita nuova: zombie, effetti, monete, arma, uccisioni; l'area rimette le sue cose (cancello chiuso, velo, zombie dell'aia, Bara al primo
+  // posto, eroe alla partenza); il round da capo; la telecamera a nord sull'eroe
+  function nuova(){if(!ACT)keepCam();W.Z.length=0;W.FX.length=0;W.puffs.length=0;W.toast=null;W.kills=0;if(area.reset)area.reset();
+    if(window.ARMI){try{gunState=ARMI.nuova('pistola');HSTYLE.gun=W.gunId='pistola'}catch(e){gunState=null}}
+    if(W.director&&W.director.reset)W.director.reset();navBuild();if(NAV)NAV.hc=-1;ORD.mm.m=new Map();ORD.fm.m=new Map();ORD.fr+=5;
+    buyP=0;buyCur=null;buyKey='';buyLock=false;buyHold=false;gunKey='';toastT=0;toastEl.classList.remove('on');buyEl.hidden=true;reset();
+    cam.ret=null;CAM.yaw=cam.yawT=0;CAM.el=cam.elT=cam.elRaw=EL0;camDerive();const h=W.hero;CAM.x=h.x;CAM.y=h.y;look.sum=0;hintEl.style.opacity='';hintT=10;if(GAME)setPause(false)}
+  const CTL={start,stop,nuova,pausa:setPause,get on(){return ACT},get paused(){return PAUSE}};ZM.ctl=CTL;
   // ganci di prova (tests nella cartella anteprime/zombie): visibilità dell'eroe in un punto, simulazione degli zombie senza disegnare
   const devBox=(x0,y0,x1,y1)=>{const a=scr(x0,y0),b=scr(x1,y1);return[Math.max(0,Math.floor(a[0])),Math.max(0,Math.floor(a[1])),Math.min(cv.width,Math.ceil(b[0])),Math.min(cv.height,Math.ceil(b[1]))]};
   function visAt(x,y,o){o=o||{};const h=W.hero,D=W.dbg;if(o.yaw!=null||o.el!=null)setView(o.yaw,o.el);W.Z.length=0;h.x=x;h.y=y;h.moving=false;h.zh=heightAt(x,y);const zo=zOn;zOn=false;D.noShoot=true;updateBeings(1,{x:0,y:0});zOn=zo;
@@ -1177,5 +1246,6 @@ orderReset:()=>{ORD.mm.m=new Map();ORD.fm.m=new Map();ORD.fr+=5},
     walk:(ix,iy,n,dt)=>{const[wx,wy]=stickToWorld(ix,iy);for(let i=0;i<(n||1);i++)updateBeings(dt||1/60,{x:wx,y:wy})},
     // il gioco della mappa: le cose da comprare (buyNow(id) compra subito, come il bottone), l'arma, la Bara, le monete
     texStats:()=>{let n=0,px=0,np=0,pp=0;for(const k in TEX){n++;px+=TEX[k].width*TEX[k].height}for(const k in PLANES){np++;pp+=PLANES[k].width*PLANES[k].height}return{n,mpx:+(px/1e6).toFixed(2),np,mpp:+(pp/1e6).toFixed(2)}},
-    buys,equip,buyNow:id=>{const o=buys.find(b=>b.id===id);return o?o.act():null},box:()=>BOX,boxTo:i=>{const q=BOX.spots[i];boxPlace(q[0],q[1],q[3]||0);navBuild();if(NAV)NAV.hc=-1;return[q[0],q[1]]},coins:v=>{if(v!=null)W.coins=v;return W.coins},gun:()=>gunState}}
-return{idleZombie,buyable,sorpresa,equip,hurt,spawn,KINDS,move,zWalk,sep,physClear,gun:()=>gunState,navRebuild:()=>{navBuild();if(NAV)NAV.hc=-1},softImg,turn,group,grp,finalize,facing,across,onGround,onPlane,onRound,ringNear,T,CAM,W,S,LS,MOON,inGround,scrAng,decals,fades,NAMES,stand,stands,heightAt,add3,sub3,len3,rnd,rr,srand,ink,path,hull,material,MAT,MARKS,texture,tone,face,hullOf,ballAt,line3,poly3,fn3,box,prismX,prismY,plane,cyl,prop,solid,shade,shadeR,props,solids,shadows,lights,flames,holes,houses,smokes,perches,hit,bakeGround,edgeSnap,boot,setLive:f=>{liveDraw=f},wa,mix,cl,ez,lerp,TAU,ball,seg}})();
+    buys,equip,buyNow:id=>{const o=buys.find(b=>b.id===id);return o?o.act():null},box:()=>BOX,boxTo:i=>{const q=BOX.spots[i];boxPlace(q[0],q[1],q[3]||0);navBuild();if(NAV)NAV.hc=-1;return[q[0],q[1]]},coins:v=>{if(v!=null)W.coins=v;return W.coins},gun:()=>gunState,nuova:()=>CTL.nuova()};
+  return CTL}
+return{AREE,anteprima,boxReset,stile,idleZombie,buyable,sorpresa,equip,hurt,spawn,KINDS,move,zWalk,sep,physClear,gun:()=>gunState,navRebuild:()=>{navBuild();if(NAV)NAV.hc=-1},softImg,turn,group,grp,finalize,facing,across,onGround,onPlane,onRound,ringNear,T,CAM,W,S,LS,MOON,inGround,scrAng,decals,fades,NAMES,stand,stands,heightAt,add3,sub3,len3,rnd,rr,srand,ink,path,hull,material,MAT,MARKS,texture,tone,face,hullOf,ballAt,line3,poly3,fn3,box,prismX,prismY,plane,cyl,prop,solid,shade,shadeR,props,solids,shadows,lights,flames,holes,houses,smokes,perches,hit,bakeGround,edgeSnap,boot,setLive:f=>{liveDraw=f},wa,mix,cl,ez,lerp,TAU,ball,seg}})();

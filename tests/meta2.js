@@ -1,9 +1,11 @@
-const {chromium}=require('playwright');
-(async()=>{const b=await chromium.launch();const ctx=await b.newContext({viewport:{width:390,height:844}});const p=await ctx.newPage();const errs=[];
+const {chromium}=require('playwright');const http=require('http'),fsS=require('fs');
+// the page comes from a small local http server: opened as file:// the test browser sometimes reloads it with an empty localStorage
+const srv=http.createServer((q,r)=>{r.writeHead(200,{'Content-Type':'text/html; charset=utf-8'});fsS.createReadStream(__dirname+'/test.html').pipe(r)});
+(async()=>{await new Promise(r=>srv.listen(0,'127.0.0.1',r));const b=await chromium.launch();const ctx=await b.newContext({viewport:{width:390,height:844}});const p=await ctx.newPage();const errs=[];
 p.on('pageerror',e=>errs.push(e.message+' @'+((e.stack||'').split('\n')[1]||'').trim().slice(-50)));
 const today=new Date();const ds=today.getFullYear()+'-'+(today.getMonth()+1)+'-'+today.getDate();
 await p.addInitScript(([ds])=>{if(localStorage.getItem('qa_once'))return;localStorage.setItem('qa_once',1);localStorage.setItem('cripta_save_v1',JSON.stringify({gold:30000,gems:3000,trophies:1300,trBest:1300,runs:12,introSeen:1,login:{last:ds,n:3},items:{arco_frassino:{lvl:3,cards:40},giubba:{lvl:3,cards:40},balestra:{lvl:1,cards:5}},eq:{arma:'arco_frassino',armatura:'giubba',anello:null,amuleto:null},slots:[null,null,null,null],best:{room:10,gold:100},inf:{best:12,top:[]},tutDone:1,pets:{owned:{muschietto:{lvl:1,cards:5},lucciola:{lvl:1}},sel:'muschietto'}}))},[ds]);
-await p.goto('file://'+__dirname+'/test.html');await p.waitForTimeout(1500);
+await p.goto('http://127.0.0.1:'+srv.address().port+'/test.html');await p.waitForTimeout(1500);
 const E=s=>p.evaluate(s=>__E(s),s);const R=[];const ok=(n,c)=>{R.push((c?'OK   ':'FAIL ')+n)};
 await E(`document.querySelectorAll('#sheetScr,#arenaUpScr').forEach(e=>e.hidden=true)`);
 // hero buy
@@ -61,4 +63,4 @@ const before=await E('JSON.stringify(SAVE)');await E(`document.querySelectorAll(
 ok('intro parte',await E('INTRO.on'));await p.waitForTimeout(25000);ok('intro finisce al menu',await E(`!INTRO.on&&!$('menu').hidden`));
 const after=await E('JSON.stringify(SAVE)');const a=JSON.parse(after),bb=JSON.parse(before);delete a.introSeen;delete bb.introSeen;ok('intro non tocca il salvataggio',JSON.stringify(a)===JSON.stringify(bb));
 await p.screenshot({path:'t_after_intro.png'});
-console.log(R.join('\n'));console.log('ERRORS',JSON.stringify(errs,null,1));await b.close()})();
+console.log(R.join('\n'));console.log('ERRORS',JSON.stringify(errs,null,1));await b.close();srv.close()})();

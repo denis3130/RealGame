@@ -5,7 +5,12 @@
 // premuto il bottone), il Revolver a muro dietro la casa 500, la Pompa da caccia sul fienile 1.500, la Bara delle Sorprese 750.
 (()=>{const{T,P,G,prop,solid,holes,perches,bakeGround,boot,W,rr,srand}=ZM;
 const X=v=>v*T,Y=v=>(v+2)*T,AX=v=>(v+2)*T,AY=v=>(v+16)*T;
+// le cose che una partita cambia e che una partita nuova rimette com'erano: l'eroe alla partenza, gli zombie fermi nell'aia, il velo sulla fattoria
+const HERO0=()=>({x:AX(4.4),y:AY(8.4),face:-Math.PI/2,walk:0,moving:false,aim:0,fireCd:0}),IDLE=[['zombie',6.0,8.6],['lanterna',9.3,5.3],['strisciante',8.9,8.7]],
+  veil=()=>({y:Y(12.3),k:1,wisps:Array.from({length:8},(_,i)=>({x:rr(0,16*T),y:rr(Y(1),Y(11.4)),r:rr(110,190),v:rr(5,11)}))});
 const AREA={title:'Camposanto',zoneName:h=>h.y<Y(12.3)?'Fattoria dei Corvi':'Camposanto',
+  // una partita nuova (ZM.ctl.nuova): 500 monete, la fattoria chiusa col cancello e il velo, gli zombie dell'aia, la Bara al cimitero, l'eroe alla partenza
+  reset(){W.coins=500;W.zoneOpen={1:true,2:false};W.gate.open=false;if(AREA.gate)AREA.gate.close();W.split=veil();for(const[k,x,y] of IDLE)ZM.idleZombie(k,X(x),Y(y),2);ZM.boxReset();W.hero=HERO0()},
   build(){const w=16*T,h=29*T;srand(11);W.coins=500;W.maxZ=6;W.zoneOpen={1:true,2:false};// sotto l'area di partenza tre caselle di nebbia (non ci si va)
     // ================================================================ AREA 1: Camposanto e Casa (l'anteprima di prima, spostata)
     P.wall(AX(0),AY(.35),AX(3.7)+6,AY(.35),true);P.wall(AX(0),AY(7.3),AX(3.7)+6,AY(7.3),true);P.wall(AX(3.7),AY(.35)+7.5,AX(3.7),AY(4.95)-15,true);P.wall(AX(3.7),AY(6.05)+15,AX(3.7),AY(7.3)-7.5,true);
@@ -26,7 +31,7 @@ const AREA={title:'Camposanto',zoneName:h=>h.y<Y(12.3)?'Fattoria dei Corvi':'Cam
     // dietro la casa la catasta col ceppo e lo stendibiancheria e il Revolver col gesso; a est la latrina, la lanterna sul palo, una buca, la
     // quercia morta e la legna; il cespuglio spostato dalla strada nuova
     P.wall(X(2),Y(12.3),X(5.7)-15,Y(12.3),true);P.wall(X(7.2)+15,Y(12.3),X(14),Y(12.3),true);
-    const gate=P.farmGate(X(5.7),X(7.2),Y(12.3),750,'Fattoria dei Corvi');
+    const gate=AREA.gate=P.farmGate(X(5.7),X(7.2),Y(12.3),750,'Fattoria dei Corvi');
     P.tree(X(2.75),Y(12.95),true,.95);P.openGrave(X(3.75),Y(13.4));
     P.woodpile(X(8.0),Y(13.05),X(9.25)-X(8.0),Y(13.55)-Y(13.05),20);P.chopBlock(X(9.6),Y(13.35));P.clothesline(X(10.05),X(11.75),Y(13.6));
     P.bush(X(7.28),Y(14.35),1);
@@ -52,7 +57,7 @@ const AREA={title:'Camposanto',zoneName:h=>h.y<Y(12.3)?'Fattoria dei Corvi':'Cam
     {const cx=X(2.32),cy=Y(5.95),wl=X(7.6)-X(4.3),dl=X(4.0)-X(.5);ZM.turn(cx,cy,1,()=>P.house(cx-wl/2,cy-dl/2,wl,dl,{wall:'stoneW',roof:'tile',boards:[0,1,2]}))}
     P.pump(X(5.15),Y(7.5));P.trough(X(5.15)+13,Y(7.36),44,18);P.well(X(7.8),Y(6.6));
     P.hay(X(10.0)-17,Y(4.6)-11);P.hay(X(10.0)-17,Y(7.7)-11);P.barrel(X(4.95),Y(4.65));P.barrel(X(5.25),Y(4.5),.85);P.crate(X(10.05),Y(5.35));
-    for(const[k,x,y] of[['zombie',6.0,8.6],['lanterna',9.3,5.3],['strisciante',8.9,8.7]])ZM.idleZombie(k,X(x),Y(y),2);
+    for(const[k,x,y] of IDLE)ZM.idleZombie(k,X(x),Y(y),2);
     // il fienile rosso col portone sull'aia; la Pompa da caccia col gesso sul muro ovest, a sud del portone
     const barn=P.barn(X(11.0),Y(4.12),X(15.4)-X(11.0),Y(8.32)-Y(4.12));// (36 px dalla staccionata: niente corridoi tra 18 e 34 px)
     const wWall=face('barn','wW','w',t=>Math.min(...t.c.map(q=>q[1]))>Y(6.5));ZM.group([X(11.0),Y(4.12),X(15.4),Y(8.32)],()=>P.wallGun(X(11.0)-.6,Y(7.45),22,'y','pompa',1500,wWall));
@@ -71,7 +76,7 @@ const AREA={title:'Camposanto',zoneName:h=>h.y<Y(12.3)?'Fattoria dei Corvi':'Cam
     P.fence(X(0),Y(11.95),X(2),Y(11.95));P.fence(X(14),Y(11.95),X(16),Y(11.95));
     // ================================================================ il gioco: il cancello, le armi a muro, la Bara, il velo sulla fattoria
     W.gate={x:X(6.45),y:Y(12.3),open:false,lure:4.2*T,slots:[[X(6.45)-20,Y(12.3)-21],[X(6.45)+3,Y(12.3)-19],[X(6.45)+22,Y(12.3)-22],[X(6.45)-40,Y(12.3)-30],[X(6.45)+40,Y(12.3)-29]]};
-    W.split={y:Y(12.3),k:1,wisps:Array.from({length:8},(_,i)=>({x:rr(0,w),y:rr(Y(1),Y(11.4)),r:rr(110,190),v:rr(5,11)}))};
+    W.split=veil();
     ZM.buyable({id:'cancello',x:X(6.45),y:Y(12.3)+28,r:74,show:()=>!gate.state.open,label:()=>'Cancello della Fattoria',price:()=>750,
       act(){if(W.coins<750)return false;W.coins-=750;gate.open();W.zoneOpen[2]=true;W.gate.open=true;if(W.split)W.split.fade=true;ZM.navRebuild();W.toast=['La Fattoria dei Corvi è aperta',2.6];return true}});
     for(const[id,pr,hx,hy,zone] of[['revolver',500,X(9.6),Y(15)-24,1],['pompa',1500,X(11.0)-26,Y(7.45),2]])
@@ -86,7 +91,7 @@ const AREA={title:'Camposanto',zoneName:h=>h.y<Y(12.3)?'Fattoria dei Corvi':'Cam
     // i bordi del mondo e la nebbia ai lati dell'area di partenza
     solid(-200,-200,w+400,200,'edge');solid(-200,h,w+400,200,'edge');solid(-200,0,200,h,'edge');solid(w,0,200,h,'edge');
     solid(0,Y(12.3)+6,X(2),h-Y(12.3)-6,'edge');solid(X(14),Y(12.3)+6,X(2),h-Y(12.3)-6,'edge');solid(X(2),Y(24),X(12),h-Y(24),'edge');
-    W.hero={x:AX(4.4),y:AY(8.4),face:-Math.PI/2,walk:0,moving:false,aim:0,fireCd:0};
+    W.hero=HERO0();
     // ================================================================ il terreno
     const onPath=(x,y)=>{const ax=x/T-2,ay=y/T-16;return(ax>3.85&&ax<4.95&&ay>4.2&&ay<10)||(ay>5.05&&ay<6&&ax>3.6&&ax<5)||(ay>4.2&&ay<5.15&&ax>3.85&&ax<7.75)||(ax>6.95&&ax<7.75&&ay>3.4&&ay<5)||(x>X(5.95)&&x<X(6.95)&&y>Y(12.35)&&y<Y(18.3))};
     const nz=(x,y)=>Math.sin(x*.05+y*.031)*7+Math.sin(y*.07-x*.02)*5;
@@ -109,4 +114,4 @@ const AREA={title:'Camposanto',zoneName:h=>h.y<Y(12.3)?'Fattoria dei Corvi':'Cam
       for(const[x,y] of[[X(11.6),Y(10.45)],[X(4.45),Y(16.76)]]){ctx.fillStyle='rgba(30,22,14,.75)';ctx.beginPath();ctx.ellipse(x,y,26,15,0,0,6.3);ctx.fill();for(let i=0;i<14;i++){ctx.fillStyle=i%2?'#5a4630':'#3a2c1e';ctx.beginPath();ctx.ellipse(x+rr(-24,24),y+rr(-13,13),rr(2,4),rr(1.4,2.6),rr(0,3),0,6.3);ctx.fill()}}});
     ZM.props.sort((a,b)=>a.ky-b.ky)},
   update(dt){for(const f of ZM.anim||[])f(dt)}};
-if(document.readyState==='complete')setTimeout(()=>boot(AREA),300);else window.addEventListener('load',()=>setTimeout(()=>boot(AREA),300))})();
+ZM.AREE.mappa=AREA})();// la costruisce il gioco col menu (src/js/63-zombie.js) o la pagina di prova (anteprime/zombie/mk.py area_mappa)

@@ -75,7 +75,7 @@ def('farmGate',function(x0,x1,y,price,name){const xm=(x0+x1)/2,L=xm-1-(x0+14),Hl
       ctx.strokeStyle='rgba(235,232,222,.85)';ctx.lineWidth=.9;ctx.beginPath();ctx.arc(w/2-ctx.measureText(s).width/2-1.5,h/2+.4,2.2,0,TAU);ctx.stroke();
       const r=prng(price);ctx.fillStyle='#2e2620';for(let i=0;i<26;i++)ctx.fillRect(4+r()*(w-8),2+r()*(h-4),.7,.7)};// il gesso ruvido
     const bp=plane(xm-12,y+5.5,38,24,12,'x','tavola'+price,board),wires=fn3(S2=>{if(st.t>=0)return;for(const dx of[-9,9]){const a=S2(xm+dx,y+5.5,50),b=S2(xm+dx*.5,y,58);ctx.strokeStyle='rgba(40,40,46,.9)';ctx.lineWidth=.8;seg(a,b);ctx.stroke()}});
-    prop({bx:[xm-14,y-6,xm+14,y+8,60],parts:[fn3(S2=>links(0,S2),{fp:[[xm-6,y-4],[xm+6,y-4],[xm+6,y-.6],[xm-6,y-.6]],z:[24,38]}),fn3(S2=>links(1,S2),{fp:[[xm-6,y+.6],[xm+6,y+.6],[xm+6,y+5],[xm-6,y+5]],z:[2,38]}),bp,wires],lk:.6,name:'catena'});leaves.board=bp});
+    prop({bx:[xm-14,y-6,xm+14,y+8,60],parts:[fn3(S2=>links(0,S2),{fp:[[xm-6,y-4],[xm+6,y-4],[xm+6,y-.6],[xm-6,y-.6]],z:[24,38]}),fn3(S2=>links(1,S2),{fp:[[xm-6,y+.6],[xm+6,y+.6],[xm+6,y+5],[xm-6,y+5]],z:[2,38]}),bp,wires],lk:.6,name:'catena'});leaves.board=bp;leaves.board0=bp.c.map(q=>q.slice())});
   // aperto: le ante girate verso nord, i solidi lungo le ante, catena, lucchetto e tavoletta a terra davanti al cancello
   mark('open',()=>{for(const[k,hx,a,east] of[['w',HW,-OPEN,0],['e',HE,Math.PI+OPEN,1]]){const c=leafPts(hx,a,east),pl=plane(0,0,0,L,Hl,'x','anta'+Math.round(L)+k,leafTex(east));pl.c=c;
       for(let s=4;s<=L;s+=6){const px=hx+Math.cos(a)*s,py=y+Math.sin(a)*s;solid(px-2.5,py-2.5,5,5).noAO=true}
@@ -86,6 +86,9 @@ def('farmGate',function(x0,x1,y,price,name){const xm=(x0+x1)/2,L=xm-1-(x0+14),Hl
   for(const p of sets.open)p.hide=true;for(const s of sol.open)s.off=true;
   // l'apertura: la catena cade (0–0,6 s), le ante si spalancano (0,5–1,6 s, i pannelli girati sul posto), poi restano gli aperti
   const ctl={state:st,open(){if(st.open)return;st.open=true;st.t=0;for(const s of sol.shut)s.off=true;for(const s of sol.open)s.off=false},
+    // di nuovo chiuso col lucchetto (una partita nuova): ante, catena, tavoletta e solidi come all'inizio
+    close(){st.open=false;st.t=-1;st.done=false;for(const s of sol.shut)s.off=false;for(const s of sol.open)s.off=true;for(const p of sets.shut)p.hide=false;for(const p of sets.open)p.hide=true;
+      for(const lf of[leaves.w,leaves.e])lf.pl.c=leafPts(lf.hx,lf.a,lf.east);if(leaves.board)leaves.board.c=leaves.board0.map(q=>q.slice())},
     update(dt){if(st.t<0||st.done)return;st.t+=dt;const k=ez(cl((st.t-.5)/1.1,0,1));for(const lf of[leaves.w,leaves.e]){const a=lf.east?Math.PI+OPEN*k:-OPEN*k;lf.pl.c=leafPts(lf.hx,a,lf.east)}
       if(leaves.board){const kb=cl(st.t/.5,0,1),zb=38-36*kb*kb;leaves.board.c=[[xm-12,y+5.5+kb*8,zb],[xm+12,y+5.5+kb*8,zb],[xm+12,y+5.5+kb*8,zb+12*(1-kb*.9)],[xm-12,y+5.5+kb*8,zb+12*(1-kb*.9)]]}
       if(st.t>=1.7){st.done=true;for(const p of sets.shut)p.hide=true;for(const p of sets.open)p.hide=false}}};

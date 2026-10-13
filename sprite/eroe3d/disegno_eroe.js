@@ -275,7 +275,7 @@ const dirPY=(pitch,yaw)=>nrm([Math.cos(pitch)*Math.cos(yaw),Math.cos(pitch)*Math
 const bump=k=>k<=0||k>=1?0:Math.sin(k*Math.PI);
 // where the weapon is and what its moving parts do, for this move at p (only p: the cycle closes on itself). It reuses the body of the
 // bow's pose (A): breathing, steps, the dash, the knock back
-function wpose(A,anim,p,id,o){o=o||{};const cls=WCLS[id],H=HOLD[cls],dg=sub(A.grip,REST.grip),W={id,cls,s:WSZ[id],rec:0,flash:0,st:{},shots:[],ej:[],hL:[A.hR[0],-A.hR[1],A.hR[2]],kick:KICK[id]};
+function wpose0(A,anim,p,id,o){o=o||{};const cls=WCLS[id],H=HOLD[cls],dg=sub(A.grip,REST.grip),W={id,cls,s:WSZ[id],rec:0,flash:0,st:{},shots:[],ej:[],hL:[A.hR[0],-A.hR[1],A.hR[2]],kick:KICK[id]};
   const staff=cls==='staff';
   const set=(h,extra)=>{W.grip=add(h[0],extra||[0,0,0]);if(staff){W.aim=nrm(h[1]);W.up=[1,0,0]}else{W.aim=dirPY(h[1],h[2]);W.up=[0,0,1]}};
   if(anim!=='shoot'&&anim!=='aim'){set(H.rest,dg);
@@ -316,6 +316,17 @@ function wpose(A,anim,p,id,o){o=o||{};const cls=WCLS[id],H=HOLD[cls],dg=sub(A.gr
     W.grip=g;W.aim=nrm(d);W.up=[1,0,0];W.st.glow=q<.24?.7+.6*ez(q/.24):q<.32?1.3:q<.5?1.7-(q-.32)/.18*.8:.75;
     W.flash=q>=.32?cl(1-(q-.32)/.1,0,1):0;W.cast=q>=.32?q-.32:-1;W.rec=0;W.shots=[]}
   return W}
+// the gun of a match (o.gp = ARMI.nuova(id).pose(), on the zombie map): its own recoil, flash and moving parts (slide, hammer and cylinder,
+// barrels and belt, pump, shells on the saddle, rocket) in place of the test cycle of 'shoot', and the reload: the muzzle tipped up by g.tilt,
+// as the 2D guns do (the 3D guns have no magazine to drop)
+function realGun(W,g,id){W.rec=cl(g.rec||0,0,1);W.flash=cl(g.flash||0,0,1);W.shots=[];W.ej=[];const s=W.st;
+  if(id==='pistola'||id==='mitraglietta'||id==='mitra')s.slide=g.slide||0;
+  if(id==='revolver'){s.hammer=g.hammer==null?1:cl(g.hammer,0,1);s.cyl=g.cyl||0}
+  if(id==='mitragliatrice'){s.spin=g.spin||0;s.feed=g.feed||0}
+  if(id==='pompa'||id==='tattica')s.pump=g.pump||0;if(id==='tattica'&&g.saddle!=null)s.saddle=g.saddle;
+  if(id==='lanciarazzi'){s.loaded=g.loaded==null?1:g.loaded;W.load=null}
+  if(g.tilt>0&&W.aim){const pt=Math.asin(cl(W.aim[2],-1,1)),yw=Math.atan2(W.aim[1],W.aim[0]);W.aim=dirPY(pt+g.tilt,yw)}}
+function wpose(A,anim,p,id,o){const W=wpose0(A,anim,p,id,o);if(o&&o.gp&&typeof ARMI3D!=='undefined'&&ARMI3D.ZOMBIE.includes(id))realGun(W,o.gp,id);return W}
 // a muzzle flash of the zombie guns (ARMI.vampa, drawn in the gun's own plane) at the gun's point pt, k 1 .. 0
 function flashFx(K,id,pt,k,seed,back){if(k<=0||typeof ARMI==='undefined')return;K.fx(pt,q=>{const b=K.P(K.W(add(pt,[1,0,0]))),dx=b[0]-q[0],dy=b[1]-q[1],l=Math.hypot(dx,dy)/K.s;
   ctx.save();ctx.translate(q[0],q[1]);ctx.rotate(Math.atan2(dy,dx));ctx.scale(K.s*Math.max(.5,l),K.s);try{ARMI.vampa(back?'retro':id,0,0,k,seed)}catch(e){}ctx.restore()},back?-.5:1.4)}
@@ -332,6 +343,8 @@ function weaponParts(parts,V0,X,S,Wp,wid,o){const{D}=V0,cls=Wp.cls,r=Wp.rec,kk=W
   const g3=X.T(sub(Wp.grip,mul(Wp.aim,kk[0]*r*.55))),fr=ARMI3D.frame(g3,nrm(X.Rd(aimB)),nrm(X.Rd(upB)),Wp.s);
   parts.push({d:D(X.T(HOLD[cls].anc)),f:()=>{const st={...Wp.st};if(wid==='balestra')st.col=S.bowCol;if(wid==='bastone')st.orbCol=S.eyeCol||'#9fff7a';
     ARMI3D.draw(wid,V0,fr,st,(K,kp)=>{
+      // where the muzzle is on the screen (o.out, in the hero's own units from his feet): the zombie map fires its shots from there
+      if(o.out&&kp.muzzle)o.out.muzzle=K.P(K.W(kp.muzzle));
       // the right hand on the grip, or pulling the crossbow's string back to the nut
       let rh=[0,0,0];const pl=Wp.pull;
       if(pl&&kp.nut){const at=[kp.nut[0]+.2,4.3,0],far=[10.4,4.3,0];rh=pl.ph===1?lerp3([0,0,0],far,ez(pl.t)):pl.ph===2?at:lerp3([-.4,4.3,0],[0,0,0],ez(pl.t))}

@@ -60,7 +60,10 @@ function mkUI(){const ov=document.getElementById('mz');if(!ov)return null;const 
   #mzPartita .fine h2{margin:0;font:400 46px "Lilita One",system-ui;letter-spacing:.03em;color:#c3231c;text-shadow:0 3px 0 #000}
   #mzPartita .fine p{margin:0;font:700 16px "Baloo 2",system-ui;text-shadow:0 2px 0 #000}#mzPartita .fine p b{font:400 19px "Lilita One",system-ui;color:#ffd65a}
   #mzPartita .fine small{opacity:.7;font-size:12px;margin-top:2px}
-  #mzPartita .fine button{margin-top:14px;font:400 19px "Lilita One",system-ui;color:#1b120a;background:linear-gradient(#ffd65a,#d6982a);border:2.5px solid #000;border-radius:14px;padding:9px 26px;box-shadow:0 4px 0 #000}
+  #mzPartita .fine button{font:400 19px "Lilita One",system-ui;color:#1b120a;background:linear-gradient(#ffd65a,#d6982a);border:2.5px solid #000;border-radius:14px;padding:9px 22px;box-shadow:0 4px 0 #000}
+  #mzPartita .fine button.b2{color:#efe6d0;background:#3a332d}#mzPartita .fine .bt{display:flex;gap:10px;margin-top:14px}
+  #mzPartita .fine .rec{font:400 20px "Lilita One",system-ui;letter-spacing:.03em;color:#7be08a;text-shadow:0 2px 0 #000;animation:mzrec 1.2s ease-in-out infinite alternate}
+  @keyframes mzrec{to{transform:scale(1.08)}}@media (prefers-reduced-motion:reduce){#mzPartita .fine .rec{animation:none}}
   </style><div class="sangue"></div><div class="vita"><div class="b"><i></i></div><canvas class="a" width="26" height="36"></canvas></div><canvas class="rnd" width="152" height="116"></canvas>
   <div class="boss" hidden><div class="n"></div><div class="v"><i></i></div></div><div class="ban"><div class="b1"></div><div class="b2"></div></div><div class="fine" hidden></div>`;ov.appendChild(el);
   const q=s=>el.querySelector(s),U={el,vita:q('.vita .b i'),ani:q('.vita .a'),rnd:q('.rnd'),boss:q('.boss'),bossN:q('.boss .n'),bossV:q('.boss .v i'),ban:q('.ban'),b1:q('.ban .b1'),b2:q('.ban .b2'),sangue:q('.sangue'),fine:q('.fine'),rk:'',banT:0,flash:0};
@@ -95,9 +98,20 @@ function down(){const h=W.hero;D.hp=0;h.dead=true;h.moving=false;D.prev=['inizio
 function revive(){const h=W.hero;D.anime=0;D.st='su';D.t=0;D.hp=PZ.vita;D.burst.push({x:h.x,y:h.y,t:0});suono('anima');W.toast=["L'anima ti rialza",2.2];
   for(const z of W.Z){if(z.die||z.idle||z.rise<1)continue;const dx=z.x-h.x,dy=z.y-h.y,d=Math.hypot(dx,dy)||1;if(d<120){const L=(130-d)*.7,n=Math.ceil(L/4);for(let i=0;i<n;i++)move(z,dx/d*L/n,dy/d*L/n,11);if(!z.ai)z.stun=1.6}}
   if(D.lant&&D.comprate<PZ.anima.max)D.lant.set(true)}
-function gameOver(){D.st='fine';D.t=0;const R=D.R,oro=PZ.oro(R),U=D.ui;suono('morte');W.coins=0;D.oro=oro;
-  if(U){U.fine.hidden=false;U.fine.innerHTML=`<h2>Sei caduto</h2><p>Round raggiunto: <b>${R}</b></p><p>Zombie uccisi: <b>${W.kills||0}</b></p><p>Oro per il menu: <b>● ${oro.toLocaleString('it-IT')}</b></p><small>(nel gioco vero andrà nel tuo oro)</small><button>Riprova</button>`;
-    U.fine.querySelector('button').onclick=()=>location.reload();requestAnimationFrame(()=>U.fine.classList.add('on'))}}
+// la fine: caduto senza anime, o uscito dalla pausa (via). Nel gioco vero (W.gioco) l'oro va nel salvataggio una volta sola (fine restituisce
+// {rec: nuovo record}); poi «Menu» torna al menu e «Rigioca» rimette la mappa com'era. Nell'anteprima «Riprova»
+function gameOver(via){D.st='fine';D.t=0;const R=D.R,oro=PZ.oro(R),U=D.ui,G2=W.gioco;suono('morte');W.coins=0;D.oro=oro;let r=null;
+  if(G2&&G2.fine){try{r=G2.fine(oro,R,W.kills||0)}catch(e){console.error(e)}}
+  if(U){U.fine.hidden=false;U.fine.innerHTML=`<h2>${via?'Partita finita':'Sei caduto'}</h2>${r&&r.rec&&R>0?'<div class="rec">Nuovo record!</div>':''}<p>Round raggiunto: <b>${R}</b></p><p>Zombie uccisi: <b>${W.kills||0}</b></p><p>${G2?'Oro guadagnato':'Oro per il menu'}: <b>● ${oro.toLocaleString('it-IT')}</b></p>
+      ${G2?'':'<small>(nel gioco vero va nel tuo oro)</small>'}<div class="bt">${G2?'<button class="b2" data-a="menu">Menu</button><button data-a="ancora">Rigioca</button>':'<button data-a="ancora">Riprova</button>'}</div>`;
+    U.fine.onclick=e=>{const b=e.target.closest('button');if(!b||!U.fine.classList.contains('on'))return;try{sfx('ui')}catch(_){}if(b.dataset.a==='menu'){if(G2&&G2.esci)G2.esci()}else if(ZM.ctl)ZM.ctl.nuova()};
+    requestAnimationFrame(()=>U.fine.classList.add('on'))}}
+// dalla pausa: la partita finisce qui, con l'oro del round raggiunto
+D.abbandona=()=>{if(D.st==='fine')return;W.hero.dead=true;W.hero.moving=false;gameOver(true)};
+// una partita nuova (ZM.ctl.nuova): tutto da capo, la lanterna riaccesa, le scritte pulite
+D.reset=()=>{Object.assign(D,{R:0,st:'inizio',t:0,left:0,sp:1,boss:null,bossT:0,bossK:null,hp:PZ.vita,hurtT:9,inv:0,red:0,anime:0,comprate:0,warn:[],cracks:[],burst:[],fly:null,prev:'round',kills0:0,shake:0,oro:0});
+  if(D.lant)D.lant.set(true);const U=D.ui;if(U){U.fine.classList.remove('on');U.fine.hidden=true;U.fine.innerHTML='';U.boss.hidden=true;U.ban.classList.remove('on');U.banT=0;U.flash=0;U.rk='';U.sangue.style.opacity=0;drawRound(U)}
+  const cv=document.getElementById('mzCv');if(cv)cv.style.transform=''};
 // ------------------------------------------------------------------ i boss: escono da terra lontano dall'eroe (una buca di una zona aperta)
 function spawnBoss(k){const h=W.hero,H=ZM.holes.filter(p=>(p[2]==null||W.zoneOpen[p[2]])&&p[3]!=='porta'&&Math.hypot(p[0]-h.x,p[1]-h.y)>150);let p=H.length?H[Math.floor(Math.random()*H.length)]:null;
   if(!p){for(let i=0;i<40&&!p;i++){const a=rr(0,TAU),r=rr(170,260),x=h.x+Math.cos(a)*r,y=h.y+Math.sin(a)*r;if(!hit(x,y,16))p=[x,y]}}if(!p)p=[h.x+150,h.y];

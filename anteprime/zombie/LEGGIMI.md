@@ -1,10 +1,14 @@
-# Mappa zombie: motore 3D «alla Pokémon» e prop (anteprima, non ancora nel gioco)
+# Mappa zombie: motore 3D «alla Pokémon» e prop (nel gioco dal 13 ottobre)
 
 Richiesta di Denis (11 ottobre): telecamera dritta dall'alto come nel gioco, ma case e tutto ciò che è alto in 3D, che «si vede meglio
 quando ci passi accanto», come in Pokémon Bianco e Nero. Tutto dipinto come la lanterna (tre toni, bordo illuminato, buio ai piedi, luce in cima,
-contorno scuro spesso). Pagina di prova: `python3 anteprime/zombie/mk.py [area]` → `anteprime/zombie.html` (il gioco + mostri + armi + motore +
-prop + area; non si salva su git). Area predefinita `area_prova` (un angolo 10×10 con cimitero, cripta, casa, pozzo: serve a rivedere i prop);
-la mappa intera è `area_mappa` (vedi in fondo, «La mappa intera»).
+contorno scuro spesso). Dal 13 ottobre questi file sono **dentro il gioco**: `src/ordine.txt` mette in `index.html` `sprite/armi/disegno_armi.js`
+e poi `motore.js`, `prop.js`, `prop_fattoria.js`, `partita.js`, `area_mappa.js` (dopo l'eroe 3D) e `src/js/63-zombie.js`, che li collega al
+menu (vedi in fondo, «Nel gioco vero»). Chi li cambia cambia il gioco: dopo, `python3 build.py` e le prove. Pagina di prova:
+`python3 anteprime/zombie/mk.py [area]` → `anteprime/zombie.html` (una copia di `index.html` che si apre subito sulla mappa coi bottoni di
+prova; non si salva su git). Area predefinita `area_prova` (un angolo 10×10 con cimitero, cripta, casa, pozzo: serve a rivedere i prop; non è
+nel gioco, `mk.py` la incolla), la mappa intera è `area_mappa` (vedi in fondo, «La mappa intera»). Le aree si registrano in `ZM.AREE`
+(`ZM.AREE.mappa`, `ZM.AREE.prova`); `ZM.anteprima(id)` costruisce e accende la pagina di prova.
 
 ## Il motore (`motore.js`, globale `ZM`)
 
@@ -240,7 +244,9 @@ pubblicata su https://claude.ai/artifact/Sw43VFJjGvrtkUs2t18fek. File: `area_map
   torna piena. Quando lo colpiscono lo schermo si macchia di rosso ai bordi (e pulsa quando ha poca vita). Ogni sparo che colpisce dà 10
   monete, ogni zombie 60 (il boss di più).
 - **La morte**: cade (ruota a terra intorno ai piedi) e la partita finisce: «Sei caduto», round raggiunto, zombie uccisi, oro per il menu
-  (10·R² + 30·R: nel gioco vero andrà nel tuo oro), monete a zero, «Riprova».
+  (10·R² + 30·R), monete a zero. Nel gioco vero l'oro va nel salvataggio (una volta sola, `W.gioco.fine`) e ci sono «Menu» e «Rigioca»;
+  nell'anteprima «Riprova» (anche questo rimette la mappa com'era, senza ricaricare la pagina). Dalla pausa «Esci dalla partita» (con
+  conferma) finisce allo stesso modo, con la scritta «Partita finita» (`D.abbandona`).
 - **La Lanterna delle Anime** (`P.soulLantern` in `prop_fattoria.js`: altare di pietra, lanterna di ferro col vetro scuro e la fiamma
   verde, due candele, il prezzo col gesso sul davanti), nell'area di partenza a ovest del sentiero dove si comincia: 1.500 monete. La
   fiammella vola dalla lanterna all'eroe, gli gira intorno e compare accanto alla barra della vita; quando l'eroe cade lo rialza (colonna di
@@ -253,3 +259,34 @@ pubblicata su https://claude.ai/artifact/Sw43VFJjGvrtkUs2t18fek. File: `area_map
   tiene la direzione per un attimo e preferisce gli spazi aperti, spara da fermo, compra Revolver, cancello, anima e Pompa; con i numeri di
   adesso arriva ai round 8–12 in 25 minuti di gioco, senza perdere vita nei primi 4 round). `gioco.js` ora tiene l'eroe invulnerabile
   (`W.dbg.god`): prova il comprare.
+
+## Nel gioco vero (13 ottobre, decisioni di Denis: «nel gioco vero appena ci sono le ondate», «Arciere 3D» anche qui)
+
+- **Dal menu** (`src/js/63-zombie.js`): due linguette sopra la scheda dell'arena, «Classica» e «Zombie» (`SAVE.modo`, resta scelta; «Nuovo!»
+  sulla Zombie finché non si gioca la prima volta). In Zombie la scheda è il «Camposanto dei Corvi» (un disegno della notte col muro di ferro,
+  uno zombie e uno della lanterna, fatto una volta con `CR`), il record di round (`SAVE.zRec`) e i dieci round coi boss al 5 e al 10; un tocco
+  apre il foglio con le regole, il record, le partite (`SAVE.zN`), gli zombie uccisi (`SAVE.zKills`) e «Entra nel camposanto». «Gioca» fa
+  entrare l'eroe nella cripta come nella Classica, poi la mappa. Sfida e Abisso restano della Classica.
+- **Prepara una volta, poi riparti**: `boot(area, {game:true, fine, esci})` costruisce la mappa la prima volta (circa 1 s qui, di più su un
+  telefono lento: c'è la schermata «Il camposanto si risveglia…») e restituisce `ZM.ctl` = `{start, stop, nuova, pausa}`. `start` accende la
+  pagina e il ciclo dei fotogrammi, `stop` la spegne (il ciclo si ferma, i tasti non fanno più niente) e rimette `CR.cam` e `RIGCAM` come
+  erano (la telecamera della mappa inclina anche i personaggi del menu). `nuova` rimette tutto com'era: zombie, effetti, monete, arma, uccisioni,
+  poi l'area (`AREA.reset`: 500 monete, fattoria chiusa col velo, cancello di nuovo chiuso col lucchetto (`gate.close()` in `farmGate`),
+  zombie fermi nell'aia, Bara nuova al primo posto (`ZM.boxReset`), eroe alla partenza) e il direttore (`D.reset`: round da capo, lanterna
+  accesa, scritte pulite), la navigazione e la telecamera a nord.
+- **Mentre si gioca**: il ciclo del gioco classico non disegna niente (`loop` avvolto), il menu è nascosto e la sua musica tace (quella della
+  modalità zombie verrà con l'audio, FASE 8); niente atmosfera del sotterraneo classico. I tasti non arrivano al gioco sotto. Niente bottoni di
+  prova: in alto a sinistra la pausa (Riprendi, Effetti sì/no, Esci dalla partita con conferma; si apre anche con Esc o P e da sola se il
+  telefono va in secondo piano). La scritta d'aiuto in basso sparisce dopo 10 s. Effetti bassi e pixel come le impostazioni del gioco
+  (`LOWFX`, qualità «bassa»), con la qualità automatica che abbassa gli effetti se i fotogrammi restano lenti.
+- **L'eroe** è l'Arciere in 3D (`EROE.arciere`, `sprite/eroe3d`) con l'equipaggiamento del menu (`ZM.stile(heroStyle('arciere'))`) e l'arma
+  zombie in mano: cammina, sta fermo, mira e spara con lo stato vero dell'arma (`o.gp`: rinculo, vampa, carrello, cane e tamburo, canne e
+  nastro, pompa, razzo; in ricarica la bocca si alza), colpito e caduto con gli occhi strizzati. Il verso è continuo (`h.f3`, segue quello vero
+  in fretta) e gira con la telecamera come i mostri (verso + ψ). I colpi partono dalla bocca dell'arma 3D (`o.out.muzzle` → `W.muzzle`).
+- **A fine partita** (`zFine`): l'oro (10·R² + 30·R) nel salvataggio e nelle statistiche, il record di round, le partite (anche `SAVE.runs`),
+  gli zombie uccisi, la missione dell'oro, l'esperienza del pass (8 a round, più gli zombie fino a 80, 25 a boss) e i traguardi. «Menu» torna
+  al menu (con «+N oro dal camposanto»).
+- **Prova**: `node tests/zombie.js` (dal menu: linguette, scheda, foglio, Gioca, pausa, esci, oro una volta sola, Rigioca con tutto da capo,
+  caduta, Menu con la musica e `CR.cam` di prima, la Classica che parte ancora). Le prove della mappa in questa cartella usano la pagina di
+  prova come prima.
+
