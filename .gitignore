@@ -22,3 +22,7 @@ anteprime/zombie/_*
 anteprime/zombie/vetrina/
 anteprime/eroe3d.html
 anteprime/nemici3d.html
+anteprime/lumbra_lotta.html
+sprite/niumon/pixel/*.npy
+sprite/niumon/pixel/*.npz
+sprite/niumon/pixel/__pycache__/

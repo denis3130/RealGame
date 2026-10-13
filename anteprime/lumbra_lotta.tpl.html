@@ -1,0 +1,253 @@
+<title>Lumbra in lotta</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Pixelify+Sans:wght@400;500;600;700&display=swap">
+<style>
+/* Layout: one night battle that fills the screen; the wild Lumbra's plate floats over the far side, the player's plate sits by its
+   Lumbra on the near side, the message and the four moves dock at the bottom (at the bottom right when the phone lies flat).
+   A single dark look on purpose: the scene is a night forest whatever the device theme. */
+:root{
+  --night:#0b1016; --panel:rgba(13,17,25,.9); --edge:#39435a; --ink:#eef1f6; --dim:#a1abbe;
+  --wisp:#a58bd6; --ombra:#6a4db2; --fuoco:#c25a2c;
+  --hp:#62d68d; --hp-mid:#e6bd4a; --hp-low:#e2604f;
+  --f-ui:"Pixelify Sans", ui-monospace, "Courier New", monospace;
+  color-scheme:dark;
+}
+html,body{height:100%}
+body{background:var(--night);color:var(--ink);font-family:var(--f-ui);overflow:hidden}
+.app{position:relative;height:100%;overflow:hidden;-webkit-user-select:none;user-select:none}
+#scene{position:absolute;inset:0;width:100%;height:100%;display:block}
+.plate{position:absolute;width:min(15.5rem,calc(100% - 32px));padding:.45rem .7rem .55rem;background:var(--panel);border:2px solid var(--edge);
+  border-radius:.35rem .35rem .35rem 1.2rem;box-shadow:0 3px 0 rgba(0,0,0,.4);display:grid;gap:.28rem;z-index:2}
+.plate .top{display:flex;align-items:baseline;justify-content:space-between;gap:.5rem}
+.name{font-size:1.1rem;font-weight:700;letter-spacing:.05em;text-transform:uppercase}
+.lv{font-size:.9rem;color:var(--dim)}
+.hp{display:flex;align-items:center;gap:.4rem}
+.hp b{font-size:.68rem;letter-spacing:.1em;color:var(--hp);font-weight:700}
+.track{flex:1;height:.55rem;background:#19202b;border:2px solid #070a0e;border-radius:999px;overflow:hidden}
+.fill{height:100%;width:100%;background:var(--hp);transition:width .7s steps(20,end),background-color .3s}
+.num{font-size:.85rem;text-align:right;color:var(--dim)}
+.foe{top:12px;left:16px}
+.mine{right:16px;bottom:calc(var(--dock,190px) + 10px);width:min(12.5rem,58%)}
+.dock{position:absolute;left:0;right:0;bottom:0;padding:.55rem 16px calc(.7rem + env(safe-area-inset-bottom,0px));display:grid;gap:.5rem;z-index:3}
+.msg{min-height:2.7rem;display:flex;align-items:center;padding:.4rem .8rem;background:var(--panel);border:2px solid var(--edge);border-radius:.35rem;
+  font-size:1.05rem;line-height:1.25;text-wrap:balance}
+.moves{display:grid;grid-template-columns:1fr 1fr;gap:.45rem}
+.move{font:inherit;color:#fff;display:grid;grid-template-columns:1fr auto;align-items:center;column-gap:.4rem;text-align:left;padding:.42rem .6rem .45rem;
+  border:2px solid #070a0e;border-radius:.35rem;background:var(--c);box-shadow:inset 0 -3px 0 rgba(0,0,0,.28),0 3px 0 rgba(0,0,0,.45);cursor:pointer;
+  min-height:2.9rem;touch-action:manipulation}
+.move[data-t="ombra"]{--c:var(--ombra)} .move[data-t="fuoco"]{--c:var(--fuoco)}
+.move .mn{font-weight:700;font-size:1rem;min-width:0}
+.move .pp{font-size:.85rem;opacity:.92}
+.move .ty{grid-column:1/-1;font-size:.62rem;letter-spacing:.12em;text-transform:uppercase;opacity:.85}
+.move:active{transform:translateY(2px);box-shadow:inset 0 -2px 0 rgba(0,0,0,.28),0 1px 0 rgba(0,0,0,.45)}
+.move:disabled{filter:saturate(.35) brightness(.65);cursor:default;transform:none}
+.move:focus-visible,.tog:focus-visible{outline:3px solid #fff;outline-offset:2px}
+.tog{position:absolute;top:12px;right:16px;z-index:4;font:inherit;font-size:.9rem;font-weight:600;color:var(--ink);background:var(--panel);border:2px solid var(--edge);
+  border-radius:.35rem;padding:.35rem .7rem;cursor:pointer;touch-action:manipulation}
+.sheetnote{position:absolute;left:16px;right:16px;bottom:calc(1rem + env(safe-area-inset-bottom,0px));z-index:2;text-align:center;color:var(--dim);font-size:.95rem;text-wrap:balance}
+/* phone lying flat, tablet, desktop: plates in the corners of their own sides, moves at the bottom right */
+@media (min-aspect-ratio: 5/4){
+  .foe{left:auto;right:16px;top:12px}
+  .tog{right:auto;left:16px}
+  .mine{left:16px;right:auto;bottom:12px;width:min(13rem,36%)}
+  .dock{left:auto;width:min(27rem,48%);padding-top:.4rem;gap:.4rem}
+  .msg{min-height:2.2rem;font-size:.95rem;padding:.3rem .7rem}
+  .move{min-height:2.3rem;padding:.3rem .55rem .32rem}
+  .move .mn{font-size:.95rem}
+}
+@media (min-aspect-ratio: 5/4) and (max-height: 520px){
+  .plate{padding:.35rem .6rem .4rem;gap:.18rem}
+  .name{font-size:1rem}
+  .move .ty{display:none}
+}
+</style>
+
+<div class="app" id="app">
+  <canvas id="scene" aria-label="Lotta di prova: il tuo Lumbra visto da dietro contro un Lumbra selvatico visto davanti"></canvas>
+  <section class="plate foe" id="plateFoe" aria-label="Lumbra selvatico">
+    <div class="top"><span class="name">Lumbra</span><span class="lv">Liv. 14</span></div>
+    <div class="hp"><b>PS</b><div class="track"><div class="fill" id="hpFoe"></div></div></div>
+  </section>
+  <section class="plate mine" id="plateMine" aria-label="Il tuo Lumbra">
+    <div class="top"><span class="name">Lumbra</span><span class="lv">Liv. 16</span></div>
+    <div class="hp"><b>PS</b><div class="track"><div class="fill" id="hpMine"></div></div></div>
+    <div class="num" id="hpNum">46/46</div>
+  </section>
+  <button type="button" class="tog" id="tog">Sprite</button>
+  <div class="dock" id="dock">
+    <div class="msg" id="msg" role="status" aria-live="polite">Un Lumbra selvatico esce dalla nebbia!</div>
+    <div class="moves" id="moves"></div>
+  </div>
+  <p class="sheetnote" id="sheetnote" hidden>Davanti: 87×95 px, dietro: 87×87 px. 24 fotogrammi a 10 al secondo, ingranditi senza sfumare.</p>
+</div>
+
+<script>
+(()=>{
+// ---------------------------------------------------------------- the sprites (pixel art made from Denis's drawings)
+const SP={front:Object.assign({src:'__FRONT__'},__FRONTMETA__),back:Object.assign({src:'__BACK__'},__BACKMETA__)};
+const cv=document.getElementById('scene'),ctx=cv.getContext('2d');
+const reduce=matchMedia('(prefers-reduced-motion: reduce)').matches;
+const HASF='filter' in CanvasRenderingContext2D.prototype;
+let DPR=1,CW=0,CH=0,bgc=null,vig=null,land=false,HZ=.4,view='lotta',now=0,T0=performance.now(),lastDock=190;
+const P={foe:{x:0,y:0},mine:{x:0,y:0}};let foeS=2,mineS=4;
+function rng(a){return()=>{a|=0;a=a+0x6D2B79F5|0;let t=Math.imul(a^a>>>15,1|a);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296}}
+const R=rng(20261013);
+function tint(img,col){const c=document.createElement('canvas');c.width=img.width;c.height=img.height;const x=c.getContext('2d');x.drawImage(img,0,0);
+  x.globalCompositeOperation='source-in';x.fillStyle=col;x.fillRect(0,0,c.width,c.height);return c}
+function load(s){return new Promise((ok,ko)=>{const i=new Image();i.onload=()=>ok(i);i.onerror=ko;i.src=s})}
+
+// ---------------------------------------------------------------- the forest at night, painted once per size (half resolution: soft)
+function tree(g,x,base,H,tw0,col,r){g.strokeStyle=col;g.lineCap='round';g.lineJoin='round';const tw=tw0*(.75+r()*.6),lean=(r()-.5)*.22;let px=x,py=base;
+  // roots
+  for(let i=0;i<3;i++){const s=i-1;g.lineWidth=tw*.5;g.beginPath();g.moveTo(px,py-tw);g.quadraticCurveTo(px+s*tw*1.2,py-tw*.2,px+s*tw*2.4+(r()-.5)*tw,py+tw*.3);g.stroke()}
+  const N=9;for(let i=0;i<N;i++){const nx=px+lean*H/N+(r()-.5)*H*.025,ny=py-H/N;g.lineWidth=tw*(1-i/N*.65);g.beginPath();g.moveTo(px,py);g.lineTo(nx,ny);g.stroke();
+    if(i>1&&r()<.75)branch(g,nx,ny,-Math.PI/2+(r()<.5?-1:1)*(.55+r()*.7),H*.2*(1-i/N*.45),g.lineWidth*.55,4,r);px=nx;py=ny}}
+function branch(g,x,y,a,len,lw,d,r){if(d<=0||len<1.5)return;const bend=(r()-.5)*.8,nx=x+Math.cos(a)*len,ny=y+Math.sin(a)*len;g.lineWidth=Math.max(.5,lw);g.beginPath();g.moveTo(x,y);
+  g.quadraticCurveTo(x+Math.cos(a+bend)*len*.55,y+Math.sin(a+bend)*len*.55,nx,ny);g.stroke();const k=1+(r()<.55?1:0);
+  for(let i=0;i<=k;i++)branch(g,nx,ny,a+(r()-.5)*1.15-(a+Math.PI/2)*.15,len*(.55+r()*.22),lw*.62,d-1,r)}
+function paintBG(){const w=Math.max(2,Math.round(CW/2)),h=Math.max(2,Math.round(CH/2)),g=(bgc=document.createElement('canvas')).getContext('2d');bgc.width=w;bgc.height=h;
+  const r=rng(77),hz=h*HZ;
+  let gr=g.createLinearGradient(0,0,0,h);gr.addColorStop(0,'#091017');gr.addColorStop(HZ*.6,'#132029');gr.addColorStop(HZ,'#2a3a46');gr.addColorStop(Math.min(1,HZ+.07),'#18222b');gr.addColorStop(1,'#070a0d');
+  g.fillStyle=gr;g.fillRect(0,0,w,h);
+  // moonlight through the branches, high on the far side
+  let mg=g.createRadialGradient(w*.72,h*.05,0,w*.72,h*.05,h*.7);mg.addColorStop(0,'rgba(150,180,205,.28)');mg.addColorStop(1,'rgba(150,180,205,0)');g.fillStyle=mg;g.fillRect(0,0,w,h);
+  const u=Math.min(w,h*1.5),rows=[{n:20,y:hz+h*.012,s:.55,col:'rgba(70,92,108,.5)'},{n:11,y:hz+h*.05,s:.8,col:'rgba(38,52,63,.82)'},{n:4,y:hz+h*.13,s:1.25,col:'#0b1015'}];
+  rows.forEach((Q,j)=>{const n=j===2?4:Math.max(3,Math.round(Q.n*Math.min(1.4,w/(h*1.6))));for(let i=0;i<n;i++){let x=(i+.15+r()*.7)/n*w*1.12-w*.06;
+      if(j===2)x=i%2?w-r()*w*.13:r()*w*.13;tree(g,x,Q.y+r()*h*.03,Q.y*(1.05+r()*.35),u*.028*Q.s,Q.col,r)}
+    const fg=g.createLinearGradient(0,hz-h*.3,0,hz+h*.12);fg.addColorStop(0,'rgba(84,106,122,0)');fg.addColorStop(.65,'rgba(84,106,122,.2)');fg.addColorStop(1,'rgba(84,106,122,0)');
+    g.fillStyle=fg;g.fillRect(0,0,w,h)});
+  // the ground: worn stones going away to the fog, a few leaves
+  const gy=hz+h*.015;g.fillStyle='#0d1318';g.fillRect(0,gy,w,h-gy);
+  const rows2=34;for(let i=0;i<rows2;i++){const t=(i+1)/rows2,y=gy+(h-gy)*Math.pow(t,1.75),sz=1.2+t*t*h*.055,step=sz*1.7,off=(i%2)*step*.5;
+    for(let x=-step+off;x<w+step;x+=step){const v=r(),c=Math.round(20+v*12),hl=Math.round(30+v*14);g.fillStyle=`rgb(${c},${c+6},${c+11})`;
+      g.beginPath();g.ellipse(x+(r()-.5)*sz*.4,y,sz*.78,sz*.32,0,0,Math.PI*2);g.fill();
+      g.fillStyle=`rgba(${hl+40},${hl+52},${hl+64},.22)`;g.beginPath();g.ellipse(x-sz*.12,y-sz*.1,sz*.5,sz*.14,0,0,Math.PI*2);g.fill()}}
+  for(let i=0;i<160;i++){const t=r(),y=gy+(h-gy)*Math.pow(t,.8),x=r()*w,s=.6+t*3.2;g.fillStyle=r()<.5?'rgba(48,40,34,.75)':'rgba(30,36,40,.8)';
+    g.save();g.translate(x,y);g.rotate(r()*Math.PI);g.beginPath();g.ellipse(0,0,s,s*.45,0,0,Math.PI*2);g.fill();g.restore()}
+  // the light on the battle ground, and the fog lying on it
+  const cx=w*.5,cy=land?h*.78:h*.62;let sg=g.createRadialGradient(cx,cy,0,cx,cy,w*.75);sg.addColorStop(0,'rgba(150,172,192,.2)');sg.addColorStop(1,'rgba(150,172,192,0)');
+  g.fillStyle=sg;g.fillRect(0,gy-h*.05,w,h);
+  let lf=g.createLinearGradient(0,gy-h*.04,0,gy+h*.1);lf.addColorStop(0,'rgba(90,112,128,0)');lf.addColorStop(.4,'rgba(90,112,128,.3)');lf.addColorStop(1,'rgba(90,112,128,0)');g.fillStyle=lf;g.fillRect(0,gy-h*.04,w,h*.14);
+  // the edges in the dark
+  const v=(vig=document.createElement('canvas')).getContext('2d');vig.width=w;vig.height=h;let vg=v.createRadialGradient(w/2,h*.55,Math.min(w,h)*.3,w/2,h*.55,Math.max(w,h)*.78);
+  vg.addColorStop(0,'rgba(0,0,0,0)');vg.addColorStop(1,'rgba(2,4,8,.7)');v.fillStyle=vg;v.fillRect(0,0,w,h)}
+
+// ---------------------------------------------------------------- where everything goes (device pixels; sprite scales are whole numbers)
+function layout(){DPR=Math.min(3,window.devicePixelRatio||1);const r=cv.getBoundingClientRect();CW=Math.max(2,Math.round(r.width*DPR));CH=Math.max(2,Math.round(r.height*DPR));
+  cv.width=CW;cv.height=CH;land=r.width>r.height*1.25;const db=document.getElementById('dock').getBoundingClientRect();if(db.height>0)lastDock=db.height;
+  document.documentElement.style.setProperty('--dock',Math.round(lastDock)+'px');
+  if(land){mineS=Math.max(2,Math.round(CH*.62/87));foeS=Math.max(1,Math.round(CH*.28/95));HZ=.42;
+    P.mine={x:Math.round(CW*.31),y:Math.round(CH*1.0)};P.foe={x:Math.round(CW*.6),y:Math.round(CH*.55)}}
+  else{const free=Math.max(r.height*.5,r.height-lastDock)*DPR;mineS=Math.max(2,Math.floor(Math.min(CW*.62/87,free*.44/87)));foeS=Math.max(1,Math.round(mineS*.55));HZ=free/CH*.36;
+    P.mine={x:Math.round(CW*.37),y:Math.round(free*.985)};P.foe={x:Math.round(CW*.63),y:Math.round(free*.5)}}
+  paintBG()}
+addEventListener('resize',()=>{layout()});if(document.fonts&&document.fonts.ready)document.fonts.ready.then(()=>{if(bgc)layout()});
+
+// ---------------------------------------------------------------- the two Lumbra, their state, how they are drawn
+const C={foe:{sp:'front',hp:42,max:42,dx:0,dy:0,al:0,flash:0,sink:0,ph:7},mine:{sp:'back',hp:46,max:46,dx:-40,dy:0,al:1,flash:0,sink:0,ph:0}};
+function frameOf(sp,ph){return Math.floor((now/1000)*sp.fps+ph)%sp.n}
+function center(k){const c=C[k],sp=SP[c.sp],s=k==='foe'?foeS:mineS,p=P[k];return{x:p.x+(sp.w/2-sp.foot[0]+c.dx)*s,y:p.y-(sp.h*.48-c.dy)*s,s}}
+function drawShadow(k){const c=C[k],sp=SP[c.sp],s=k==='foe'?foeS:mineS,p=P[k],f=frameOf(sp,c.ph),a=c.al*(1-c.sink);if(a<=0)return;
+  ctx.save();ctx.globalAlpha=.46*a;if(HASF)ctx.filter=`blur(${Math.max(1,Math.round(s*.7))}px)`;ctx.imageSmoothingEnabled=true;
+  ctx.setTransform(s,0,-s*.62,s*.3,p.x+c.dx*s*.6,p.y);ctx.drawImage(sp.black,f*sp.w,0,sp.w,sp.h,-sp.foot[0],-sp.foot[1]-1,sp.w,sp.h);ctx.restore();
+  ctx.save();ctx.globalAlpha=.55*a;ctx.fillStyle='#04060a';ctx.beginPath();ctx.ellipse(p.x+c.dx*s,p.y-s,sp.w*.36*s,s*3.2,0,0,Math.PI*2);ctx.fill();ctx.restore()}
+function drawMon(k){const c=C[k],sp=SP[c.sp],s=k==='foe'?foeS:mineS,p=P[k],f=frameOf(sp,c.ph);if(c.al<=0)return;
+  const X=Math.round(p.x-(sp.foot[0]-c.dx)*s),Y=Math.round(p.y-(sp.foot[1]+1-c.dy)*s),hcut=Math.round(sp.h*(1-c.sink));if(hcut<=0)return;
+  const Yc=Y+(sp.h-hcut)*s;ctx.imageSmoothingEnabled=false;ctx.globalAlpha=c.al;ctx.drawImage(sp.img,f*sp.w,0,sp.w,hcut,X,Yc,sp.w*s,hcut*s);
+  if(c.flash>0){ctx.globalAlpha=c.al*c.flash;ctx.drawImage(sp.white,f*sp.w,0,sp.w,hcut,X,Yc,sp.w*s,hcut*s)}ctx.globalAlpha=1}
+
+// ---------------------------------------------------------------- the air: fog drifting, fireflies, effects of the moves
+const FLY=[...Array(16)].map(()=>({x:R(),y:R(),p:R()*6.3,s:.4+R()*.6}));
+function drawAir(front){const t=now/1000;
+  if(!front){for(let i=0;i<3;i++){const x=((t*(.012+i*.006)+i*.37)%1.6-.3)*CW,y=CH*(HZ+.05+i*.11),rx=CW*(.5+i*.15),ry=CH*(.07+i*.03);
+      const g=ctx.createRadialGradient(x,y,0,x,y,rx);g.addColorStop(0,'rgba(120,140,158,.13)');g.addColorStop(1,'rgba(120,140,158,0)');ctx.save();ctx.translate(x,y);ctx.scale(1,ry/rx);ctx.translate(-x,-y);
+      ctx.fillStyle=g;ctx.beginPath();ctx.arc(x,y,rx,0,Math.PI*2);ctx.fill();ctx.restore()}}
+  ctx.save();ctx.globalCompositeOperation='lighter';
+  FLY.forEach((f,i)=>{if((i%3===0)!==front)return;const x=(f.x+.03*Math.sin(t*.4*f.s+f.p))*CW,y=(HZ*.7+f.y*(1-HZ*.7)*.8+.025*Math.sin(t*.7*f.s+f.p*2))*CH,
+    a=.35+.35*Math.sin(t*2*f.s+f.p),r=Math.max(1.5,DPR*1.6);const g=ctx.createRadialGradient(x,y,0,x,y,r*5);g.addColorStop(0,`rgba(214,255,150,${a})`);g.addColorStop(1,'rgba(214,255,150,0)');
+    ctx.fillStyle=g;ctx.fillRect(x-r*5,y-r*5,r*10,r*10)});ctx.restore()}
+const FX=[];
+function fx(d,draw){return new Promise(ok=>FX.push({t0:now,d,draw,ok}))}
+// a round blob of square pixels (ps = size of one pixel), the way the sprites are made
+function blob(cx,cy,r,col,ps){ctx.fillStyle=col;const n=Math.ceil(r/ps);for(let j=-n;j<=n;j++)for(let i=-n;i<=n;i++){if((i*i+j*j)*ps*ps<=r*r)ctx.fillRect(Math.round(cx+i*ps-ps/2),Math.round(cy+j*ps-ps/2),ps,ps)}}
+function pxline(x0,y0,x1,y1,col,ps,w){ctx.fillStyle=col;const n=Math.max(1,Math.round(Math.hypot(x1-x0,y1-y0)/ps));for(let i=0;i<=n;i++){const x=x0+(x1-x0)*i/n,y=y0+(y1-y0)*i/n;
+  for(let k=0;k<(w||1);k++)ctx.fillRect(Math.round(x-ps/2+k*ps*.6),Math.round(y-ps/2-k*ps*.6),ps,ps)}}
+
+// ---------------------------------------------------------------- the main loop
+function frame(){now=performance.now()-T0;ctx.setTransform(1,0,0,1,0,0);ctx.imageSmoothingEnabled=true;
+  for(let i=TW.length-1;i>=0;i--){const q=TW[i],k=Math.min(1,(now-q.t0)/q.d);q.f(k);if(k>=1){TW.splice(i,1);q.ok()}}
+  if(view==='lotta'){ctx.drawImage(bgc,0,0,CW,CH);if(!reduce)drawAir(false);drawShadow('foe');drawMon('foe');drawShadow('mine');drawMon('mine');
+    for(let i=FX.length-1;i>=0;i--){const q=FX[i],k=Math.min(1,(now-q.t0)/q.d);ctx.save();q.draw(k);ctx.restore();if(k>=1){FX.splice(i,1);q.ok()}}
+    if(!reduce)drawAir(true);ctx.imageSmoothingEnabled=true;ctx.drawImage(vig,0,0,CW,CH)}
+  else drawSheet();
+  requestAnimationFrame(frame)}
+const TW=[];function tween(d,f){return new Promise(ok=>TW.push({t0:now,d,f,ok}))}
+const wait=d=>tween(d,()=>{});const ez=k=>k<.5?2*k*k:1-Math.pow(-2*k+2,2)/2,lerp=(a,b,k)=>a+(b-a)*k;
+
+// ---------------------------------------------------------------- the sprites up close
+function drawSheet(){ctx.setTransform(1,0,0,1,0,0);const g=ctx.createLinearGradient(0,0,0,CH);g.addColorStop(0,'#141a24');g.addColorStop(1,'#0a0d13');ctx.fillStyle=g;ctx.fillRect(0,0,CW,CH);
+  ctx.imageSmoothingEnabled=false;const tall=CH>CW,s1=Math.max(1,Math.round(DPR)),fs=Math.round(15*DPR),note=CH*.11;
+  const cells=tall?[[0,CH*.07,CW,(CH-note)*.5-CH*.035],[0,(CH-note)*.5+CH*.035,CW,(CH-note)*.5-CH*.035]]:[[0,CH*.08,CW/2,CH-note-CH*.08],[CW/2,CH*.08,CW/2,CH-note-CH*.08]];
+  [['front','Davanti · avversario'],['back','Dietro · il tuo']].forEach(([k,lab],i)=>{const sp=SP[k],f=frameOf(sp,0),[cx,cy,cw,ch]=cells[i],
+      S=Math.max(1,Math.floor(Math.min(cw*.62/sp.w,(ch-fs*2.2)/sp.h))),x=Math.round(cx+cw*.42-sp.w*S/2),y=Math.round(cy+fs*1.8);
+    ctx.fillStyle='#cfd6e3';ctx.font=`600 ${fs}px "Pixelify Sans", monospace`;ctx.textAlign='left';ctx.fillText(lab,x,cy+fs*1.1);
+    ctx.fillStyle='rgba(255,255,255,.035)';ctx.fillRect(x-S*2,y-S*2,(sp.w+4)*S,(sp.h+4)*S);ctx.drawImage(sp.img,f*sp.w,0,sp.w,sp.h,x,y,sp.w*S,sp.h*S);
+    const x1=Math.round(x+(sp.w+8)*S),y1=Math.round(y+sp.h*S-sp.h*s1);if(x1+sp.w*s1<cx+cw){ctx.drawImage(sp.img,f*sp.w,0,sp.w,sp.h,x1,y1,sp.w*s1,sp.h*s1);
+      ctx.fillStyle='#8f9ab0';ctx.font=`500 ${Math.round(12*DPR)}px "Pixelify Sans", monospace`;ctx.textAlign='right';ctx.fillText('vera grandezza',cx+cw-16*DPR,y1-fs*.5)}})}
+
+// ---------------------------------------------------------------- the battle: messages, moves, hits
+const MOVES=[{n:'Fiamma fatua',t:'fuoco',pp:15,max:15,pow:[8,12],fx:'fiamma'},{n:"Morso d'ombra",t:'ombra',pp:20,max:20,pow:[6,10],fx:'morso'},
+  {n:'Agguato',t:'ombra',pp:10,max:10,pow:[9,14],fx:'agguato'},{n:'Fumo viola',t:'fuoco',pp:15,max:15,pow:[4,8],fx:'fumo'}];
+const $=id=>document.getElementById(id),movesEl=$('moves');let busy=true;
+function renderMoves(){movesEl.innerHTML='';MOVES.forEach((m,i)=>{const b=document.createElement('button');b.type='button';b.className='move';b.dataset.t=m.t;b.id='mv'+i;b.disabled=busy||m.pp<=0;
+  b.innerHTML=`<span class="mn">${m.n}</span><span class="pp">${m.pp}/${m.max}</span><span class="ty">${m.t==='ombra'?'Ombra':'Fuoco'}</span>`;b.onclick=()=>turn(i);movesEl.appendChild(b)})}
+function setHP(){const f=(k,el)=>{const c=C[k],r=Math.max(0,c.hp)/c.max;el.style.width=(r*100).toFixed(1)+'%';el.style.backgroundColor=r>.5?'var(--hp)':r>.2?'var(--hp-mid)':'var(--hp-low)'};
+  f('foe',$('hpFoe'));f('mine',$('hpMine'));$('hpNum').textContent=Math.max(0,C.mine.hp)+'/'+C.mine.max}
+async function say(t,d){$('msg').textContent=t;await wait(d||1100)}
+function lunge(k,amt,d){const c=C[k],dir=k==='mine'?[1,-.62]:[-1,.6];return tween(d,q=>{const e=q<.45?ez(q/.45):1-ez((q-.45)/.55);c.dx=dir[0]*amt*e;c.dy=dir[1]*amt*e})}
+function hit(k,dmg){const c=C[k],sh=reduce?0:1;c.hp=Math.max(0,c.hp-dmg);setHP();
+  return tween(520,q=>{c.flash=(Math.floor(q*6)%2===0&&q<.85)?.85:0;c.dx=sh*Math.sin(q*Math.PI*7)*(1-q)*2.2;if(q>=1){c.flash=0;c.dx=0}})}
+async function doMove(a,d,m){const ca=C[a],cd=C[d],sa=a==='foe'?foeS:mineS,sd=d==='foe'?foeS:mineS,dmg=Math.round(lerp(m.pow[0],m.pow[1],R()));
+  if(m.fx==='morso'){await lunge(a,7,260);const c=center(d),ps=Math.max(2,sd),w=sd*17;
+    await fx(380,k=>{const cl=k<.5?ez(k/.5):1,gap=(1-cl)*w*.8+ps*2;ctx.globalAlpha=k<.75?1:1-(k-.75)/.25;
+      for(const sg of[-1,1]){const y=c.y+sg*gap;ctx.fillStyle='#3b2a6e';for(let b=1;b<=2;b++)ctx.fillRect(Math.round(c.x-w*.8),Math.round(y+sg*b*ps),Math.round(w*1.6),ps);
+        ctx.fillStyle='#efe6ff';for(let i=-2;i<=2;i++){const x=c.x+i*w*.3;for(let j=0;j<4;j++){const ww=4-j;for(let q=0;q<ww;q++)ctx.fillRect(Math.round(x+(q-ww/2)*ps),Math.round(y-sg*j*ps),ps,ps)}}}
+      if(k>.45)for(let i=0;i<7;i++){const an=i/7*6.28,rr=(k-.45)*w*1.6;blob(c.x+Math.cos(an)*rr,c.y+Math.sin(an)*rr*.7,ps*1.6*(1-k),'rgba(165,139,214,.9)',ps)}});
+    await hit(d,dmg)}
+  else if(m.fx==='fiamma'){const s0=center(a),s1=center(d),ps=Math.max(2,Math.round((sa+sd)/2));await lunge(a,-2.5,200);
+    await fx(560,k=>{const e=ez(k),x=lerp(s0.x,s1.x,e),y=lerp(s0.y,s1.y,e)-Math.sin(e*Math.PI)*CH*.12,r=ps*(5+2*Math.sin(now/40));
+      blob(x,y,r*1.5,'rgba(100,70,180,.55)',ps);blob(x,y,r,'#9a78e0',ps);blob(x-ps,y-ps,r*.55,'#e4d8ff',ps);
+      for(let i=1;i<6;i++){const ee=Math.max(0,e-i*.04),tx=lerp(s0.x,s1.x,ee),ty=lerp(s0.y,s1.y,ee)-Math.sin(ee*Math.PI)*CH*.12;blob(tx,ty,r*(1-i/6)*.8,'rgba(165,139,214,.6)',ps)}});
+    const hp_=hit(d,dmg);await fx(420,k=>{for(let i=0;i<12;i++){const an=i/12*6.28+.3,rr=k*s1.s*30;blob(s1.x+Math.cos(an)*rr,s1.y+Math.sin(an)*rr*.75,ps*2.4*(1-k),i%2?'#c6b2f4':'#7c5bc8',ps)}});await hp_}
+  else if(m.fx==='agguato'){const dir=a==='mine'?[1,-.62]:[-1,.6];await tween(260,q=>{ca.al=1-.75*q});
+    await tween(170,q=>{const e=ez(q);ca.dx=dir[0]*12*e;ca.dy=dir[1]*12*e});const c=center(d),ps=Math.max(2,sd),L=sd*26;
+    const hp_=hit(d,dmg);await fx(360,k=>{ctx.globalAlpha=k<.7?1:1-(k-.7)/.3;for(let i=-1;i<=1;i++){const o=i*sd*9,e=Math.min(1,k*2.2);
+      pxline(c.x-L/2+o,c.y-L/2,c.x-L/2+o+L*e,c.y-L/2+L*e,'#f1eaff',ps,2);pxline(c.x-L/2+o-ps,c.y-L/2+ps,c.x-L/2+o-ps+L*e,c.y-L/2+ps+L*e,'#6a4db2',ps,1)}});
+    await hp_;await tween(320,q=>{const e=1-ez(q);ca.dx=dir[0]*12*e;ca.dy=dir[1]*12*e;ca.al=.25+.75*q})}
+  else{const s0=center(a),s1=center(d),ps=Math.max(2,Math.round((sa+sd)/2));
+    const hp_=(async()=>{await wait(380);await tween(420,q=>{cd.al=(Math.floor(q*8)%2)?.45:1});cd.al=1;cd.hp=Math.max(0,cd.hp-dmg);setHP()})();
+    await fx(900,k=>{for(let i=0;i<9;i++){const kk=Math.min(1,Math.max(0,k*1.6-i*.07)),x=lerp(s0.x,s1.x,ez(kk))+Math.sin(i*2.1)*s1.s*12,y=lerp(s0.y,s1.y,ez(kk))+Math.cos(i*1.7)*s1.s*9,
+      r=ps*(3+2*Math.sin(i+now/200))*(kk<1?1:Math.max(0,1-(k-.8)/.2));if(r>0)blob(x,y,r,i%2?'rgba(198,178,244,.85)':'rgba(124,91,200,.8)',ps)}});await hp_}}
+async function faint(k){const c=C[k];await tween(900,q=>{c.sink=ez(q);c.al=1-q*.6});c.al=0}
+async function rise(k){const c=C[k];c.sink=0;c.dy=8;await tween(900,q=>{c.al=ez(q);c.dy=8*(1-ez(q))})}
+async function turn(i){if(busy)return;const m=MOVES[i];if(m.pp<=0)return;busy=true;m.pp--;renderMoves();
+  await say(`Lumbra usa ${m.n}!`,700);await doMove('mine','foe',m);
+  if(C.foe.hp<=0){await faint('foe');await say('Il Lumbra selvatico svanisce nella nebbia!',1600);C.foe.hp=C.foe.max;setHP();
+    await say('Un altro Lumbra esce dalla nebbia!',300);await rise('foe');await wait(500)}
+  else{await wait(300);const em=MOVES[Math.floor(R()*4)];await say(`Il Lumbra selvatico usa ${em.n}!`,700);await doMove('foe','mine',em);
+    if(C.mine.hp<=0){await faint('mine');await say('Lumbra è stanco e si ritira nel fumo.',1500);C.mine.hp=C.mine.max;MOVES.forEach(q=>q.pp=q.max);setHP();await rise('mine')}}
+  $('msg').textContent='Cosa farà Lumbra?';busy=false;renderMoves()}
+
+// ---------------------------------------------------------------- the two views
+$('tog').onclick=()=>{view=view==='lotta'?'sprite':'lotta';const sp=view==='sprite';$('tog').textContent=sp?'Lotta':'Sprite';
+  for(const id of['plateFoe','plateMine','dock'])$(id).hidden=sp;$('sheetnote').hidden=!sp;if(!sp)layout()};
+
+// ---------------------------------------------------------------- start: the wild one rises out of the mist, then yours comes in
+Promise.all([load(SP.front.src),load(SP.back.src)]).then(async([a,b])=>{SP.front.img=a;SP.back.img=b;for(const k of['front','back']){SP[k].white=tint(SP[k].img,'#ffffff');SP[k].black=tint(SP[k].img,'#05070b')}
+  renderMoves();setHP();layout();requestAnimationFrame(frame);C.foe.dy=8;
+  await tween(1100,q=>{C.foe.al=ez(q);C.foe.dy=8*(1-ez(q))});await wait(700);
+  $('msg').textContent='Vai, Lumbra!';await tween(520,q=>{C.mine.dx=-40*(1-ez(q))});await wait(500);
+  $('msg').textContent='Cosa farà Lumbra?';busy=false;renderMoves()}).catch(()=>{$('msg').textContent='Gli sprite non si sono caricati: ricarica la pagina.'});
+})();
+</script>
