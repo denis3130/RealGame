@@ -28,7 +28,16 @@ HEAD='''<meta name="viewport" content="width=device-width,initial-scale=1,maximu
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="apple-touch-icon" href="icona-180.png">
 <link rel="icon" type="image/png" sizes="192x192" href="icona-192.png">
-<style>html,body{-webkit-touch-callout:none;overscroll-behavior:none}</style>
+<style>html,body{-webkit-touch-callout:none;overscroll-behavior:none}
+/* the whole screen, notch and home bar included: #wrap goes to the edges (the menu's top bar, tab bar, purse and the sheets already keep
+   their buttons clear of the notch and of the home bar with env(safe-area-inset-*): before, the margin was there twice); the battle HUD
+   and buttons move inward by the same amount; the hidden achievement popup goes all the way up, out of sight */
+#wrap{top:0!important;bottom:0!important}
+#hud,#bossBar,#xpBar,#hint,#csum{margin-top:env(safe-area-inset-top,0px)}
+#dashBtn,#ultBtn,#tray,#ctap,#cdone,#toast{margin-bottom:env(safe-area-inset-bottom,0px)}
+.sheet{padding-bottom:calc(22px + env(safe-area-inset-bottom,0px))}
+#achPop{top:calc(10px + env(safe-area-inset-top,0px));transform:translate(-50%,calc(-100% - 40px - env(safe-area-inset-top,0px)))}
+#achPop.show{transform:translate(-50%,0)}</style>
 '''
 # the service worker only on a real address (https) or on this computer for the tests; on claude.ai there is no app copy anyway
 TAIL='''<script>if('serviceWorker' in navigator&&(location.protocol==='https:'||/^(localhost|127\\.0\\.0\\.1)$/.test(location.hostname)))addEventListener('load',()=>navigator.serviceWorker.register('sw.js').catch(()=>{}));</script>
@@ -36,6 +45,7 @@ TAIL='''<script>if('serviceWorker' in navigator&&(location.protocol==='https:'||
 CH='<meta charset="utf-8">\n'
 assert html.startswith(CH),'index.html non comincia con il charset: controlla src/pagina.html'
 app=CH+HEAD+html[len(CH):]+TAIL
+ver=hashlib.sha1((ver+HEAD+TAIL).encode('utf-8')).hexdigest()[:10]  # the app's own lines count too
 
 MANIFEST={'name':'Mossbound','short_name':'Mossbound','lang':'it','start_url':'./','scope':'./','display':'standalone','orientation':'portrait',
   'background_color':'#1b1612','theme_color':'#1b1612','icons':[{'src':'icona-192.png','sizes':'192x192','type':'image/png'},
