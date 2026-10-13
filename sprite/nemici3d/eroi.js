@@ -147,7 +147,7 @@ function mercante(x,y,face,anim,p,sc,o){sc=sc||1;o=o||{};const k=sc*MST.sc,V0=V(
     {c:[-6,-17,7],f:V0=>{vol(V0,[[-11,-22,0],[-1,-22,0],[-11,-12,0],[-1,-12,0],[-11,-22,14],[-1,-22,14],[-11,-12,14],[-1,-12,14]],'#6b4a2a',{kl:.2,kd:.3});const a=V0.P([-11,-12,8]),b=V0.P([-1,-12,8]);ctx.strokeStyle='rgba(0,0,0,.3)';ctx.lineWidth=1.5;seg(a,b);ctx.stroke()}}];
   const d0=D(0,0,10),draw=list=>{ctx.save();ctx.translate(x,y);ctx.scale(k,k);for(const it of list)it.f(V0);ctx.restore()};
   draw(items.filter(it=>D(it.c)<d0).sort((a,b)=>D(a.c)-D(b.c)));
-  EROE.arciere(x,y,face,anim==='magic'?'shoot':anim,p,k,{style:MST,noFx:o.noFx,staffMove:'summon'});
+  EROE.arciere(x,y,face,anim==='magic'?'shoot':anim,p,k,{style:MST,noFx:o.noFx,staffMove:'summon',look:o.look||0});
   draw(items.filter(it=>D(it.c)>=d0).sort((a,b)=>D(a.c)-D(b.c)))}
 const oldMerchant=(x,y,face)=>{const s=1;ctx.save();ctx.fillStyle='#7a2f2a';ctx.beginPath();ctx.ellipse(x,y-2,40,14,0,0,TAU);ctx.fill();ctx.strokeStyle='#d9a64a';ctx.lineWidth=2;ctx.beginPath();ctx.ellipse(x,y-2,34,11,0,0,TAU);ctx.stroke();
   for(const[ox,col] of [[-24,'#e5484d'],[-14,'#4d97ff'],[22,'#6cc24a']]){ink(1.6);ctx.beginPath();ctx.rect(x+ox-3,y-6,6,8);fs(col);ctx.beginPath();ctx.rect(x+ox-1.5,y-9,3,3);fs('#c9cfd6')}
