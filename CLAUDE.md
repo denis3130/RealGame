@@ -19,6 +19,7 @@ Roguelite in stile Archero per telefono, pubblicato come un solo file HTML5 (`in
 - **Tutto si adegua allo stile dei nemici nuovi in 3D** (Denis, 11 ottobre): anche la mappa zombie, i menu e ogni cosa nuova si costruiscono come volumi 3D visti dalla stessa telecamera dei mostri (lo schermo è x, y·0,55 − z) e si dipingono come la lanterna. Prova attuale: un angolo di 10×10 caselle come plastico sospeso, con la telecamera girata di lato (`PSI`) così si vedono tetto, lato sud e lato est di ogni volume, facce illuminate dalla luna, segni dei materiali in 3D (la mappa 25×25 piatta della prima prova è nel commit a916cae): `anteprime/mappa3d.js` (`python3 anteprime/mk_mappa3d.py`, pubblicata su https://claude.ai/artifact/Sw43VFJjGvrtkUs2t18fek).
 - Segno distintivo dell'eroe: un bastoncino di muschio verde acceso in bocca, solo nella schermata iniziale e nella intro, mai in battaglia.
 - Prima di cambiare qualcosa di grosso, chiedere a Denis. Quando dice «annota», si annota e basta. Il piano maestro (sotto) è approvato: dentro il piano si procede un pezzo alla volta senza richiedere, ma i disegni nuovi passano sempre dalle quattro direzioni.
+- **Niente controlli extra senza il permesso di Denis** (13 ottobre: «non controllare mai più senza il mio permesso perché mi sprechi l'utilizzo»): mai avviare revisioni o controlli con altri assistenti (workflow, agenti in parallelo) se non li chiede lui, anche se la sessione è in modalità «ultracode».
 
 ## Struttura dei file
 
