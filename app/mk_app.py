@@ -37,7 +37,15 @@ HEAD='''<meta name="viewport" content="width=device-width,initial-scale=1,maximu
 #dashBtn,#ultBtn,#tray,#ctap,#cdone,#toast{margin-bottom:env(safe-area-inset-bottom,0px)}
 .sheet{padding-bottom:calc(22px + env(safe-area-inset-bottom,0px))}
 #achPop{top:calc(10px + env(safe-area-inset-top,0px));transform:translate(-50%,calc(-100% - 40px - env(safe-area-inset-top,0px)))}
-#achPop.show{transform:translate(-50%,0)}</style>
+#achPop.show{transform:translate(-50%,0)}
+/* installed on the iPhone (navigator.standalone): with the see-through status bar iOS gives the page a height shorter than the screen by
+   the status bar, so a band stays empty under the tab bar; the page takes the real height of the screen (--appH, set below) */
+html.app,html.app body{height:var(--appH,100%)!important;background:#403c34}
+html.app #wrap{bottom:auto!important;height:var(--appH,100%)}
+html.app #mz{bottom:auto!important;height:var(--appH,100%)}</style>
+<script>(function(){if(!navigator.standalone)return;var d=document.documentElement;d.classList.add('app');
+  function fit(){var a=Math.max(screen.width,screen.height),b=Math.min(screen.width,screen.height),h=innerHeight>innerWidth?a:b;d.style.setProperty('--appH',Math.max(h,innerHeight)+'px')}
+  fit();addEventListener('resize',fit);addEventListener('orientationchange',function(){setTimeout(fit,250)})})();</script>
 '''
 # the service worker only on a real address (https) or on this computer for the tests; on claude.ai there is no app copy anyway
 TAIL='''<script>if('serviceWorker' in navigator&&(location.protocol==='https:'||/^(localhost|127\\.0\\.0\\.1)$/.test(location.hostname)))addEventListener('load',()=>navigator.serviceWorker.register('sw.js').catch(()=>{}));</script>
