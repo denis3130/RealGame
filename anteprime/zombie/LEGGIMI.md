@@ -267,8 +267,9 @@ pubblicata su https://claude.ai/artifact/Sw43VFJjGvrtkUs2t18fek. File: `area_map
   uno zombie e uno della lanterna, fatto una volta con `CR`), il record di round (`SAVE.zRec`) e i dieci round coi boss al 5 e al 10; un tocco
   apre il foglio con le regole, il record, le partite (`SAVE.zN`), gli zombie uccisi (`SAVE.zKills`) e «Entra nel camposanto». «Gioca» fa
   entrare l'eroe nella cripta come nella Classica, poi la mappa. Sfida e Abisso restano della Classica.
-- **Prepara una volta, poi riparti**: `boot(area, {game:true, fine, esci})` costruisce la mappa la prima volta (circa 1 s qui, di più su un
-  telefono lento: c'è la schermata «Il camposanto si risveglia…») e restituisce `ZM.ctl` = `{start, stop, nuova, pausa}`. `start` accende la
+- **Prepara una volta, poi riparti**: il gioco costruisce la mappa la prima volta con `ZM.bootAsync(area, {game:true, fine, esci, passo})`
+  (sotto, «Costruzione a pezzi»), dietro la schermata di caricamento zombie («Il camposanto si risveglia…», `LOAD` in
+  `src/js/65-caricamento.js`), e ottiene `ZM.ctl` = `{start, stop, nuova, pausa}`; `boot(area, o)` resta la strada tutta insieme (l'anteprima). `start` accende la
   pagina e il ciclo dei fotogrammi, `stop` la spegne (il ciclo si ferma, i tasti non fanno più niente) e rimette `CR.cam` e `RIGCAM` come
   erano (la telecamera della mappa inclina anche i personaggi del menu). `nuova` rimette tutto com'era: zombie, effetti, monete, arma, uccisioni,
   poi l'area (`AREA.reset`: 500 monete, fattoria chiusa col velo, cancello di nuovo chiuso col lucchetto (`gate.close()` in `farmGate`),
@@ -290,3 +291,25 @@ pubblicata su https://claude.ai/artifact/Sw43VFJjGvrtkUs2t18fek. File: `area_map
   caduta, Menu con la musica e `CR.cam` di prima, la Classica che parte ancora). Le prove della mappa in questa cartella usano la pagina di
   prova come prima.
 
+## Costruzione a pezzi e memoria (13 ottobre, punti 52 e 53 del piano: «caricamento asincrono, progressivo, liberazione delle risorse»)
+
+- **Perché**: costruita tutta insieme la mappa teneva fermo il telefono per secondi (con la CPU rallentata 4× come un telefono: 6 s, di cui
+  5 s per cuocere il terreno; quasi tutto è il browser che dipinge davvero le migliaia di fili d'erba, al primo uso della foto).
+- **`bootAsync(area, o)`**: gli stessi passi di `boot` (`area.build`, la cottura del terreno, `finalize`, `navBuild`) nello stesso ordine e con
+  gli stessi semi, quindi la mappa viene identica, ma fatti circa 12 ms alla volta (`inPezzi`) con il telefono libero in mezzo. `o.passo(k)`
+  riceve l'avanzamento vero (da 0 a 1: le pause fatte su quelle di solito, `area.passi`). Alla fine chiama `boot(area, {...o, built:true})`,
+  che non ricostruisce. Con la CPU 4×: nessun blocco oltre ~190 ms durante il caricamento (prima uno da 6 s); l'unico più lungo è la prima
+  immagine della mappa, disegnata dietro la schermata prima che sparisca.
+- **La cottura a passi** (`bakeSteps`): con `BAKEQ` (la costruzione a pezzi) `bakeGround` mette solo da parte il lavoro, fatto dopo
+  `area.build()`. Il pittore dell'area può essere una `function*` che fa `yield` tra un pennello e l'altro; a ogni pausa si legge un pixel
+  della foto (`getImageData`), così il browser dipinge adesso quello che è stato disegnato fin lì invece di tutto insieme al primo fotogramma;
+  poi il gioco riprende il suo `ctx` e la cottura tiene da parte il suo seme. Anche ombre, buio di contatto e decalcomanie (12 alla volta)
+  hanno le loro pause, e `finalize` si ferma ogni 8 ms (`finalizeSteps`). Le pause più lente finiscono in `W.dbg.lenti` ([passo, ms, dove]).
+- **Pennelli lunghi a fasce**: `G.grass$`, `G.tufts$`, `G.cobbles$` sono le versioni a passi (una fascia di 128 righe alla volta: i fili
+  d'erba raccolti per colore e per fascia); `G.grass`, `G.tufts`, `G.cobbles` fanno tutto insieme per i pittori normali (`area_prova.js`).
+  I numeri a caso escono nello stesso ordine di prima; cambia solo, sul bordo tra due fasce, quale filo d'erba sta sopra all'altro.
+- **Memoria**: `ZM.libera()` butta la foto del terreno (2048×3712, 30 MB, la cosa più grande della mappa); il gioco lo fa quando l'app va in
+  secondo piano con la mappa spenta (iOS chiude per prime le app in secondo piano che usano più memoria). `ZM.ricuoci(o)` la rifà a pezzi
+  (stessi passi e stesso seme: identica al pixel, controllato da `tests/avvio.js`) dietro la schermata di caricamento al rientro.
+- **Regola per le aree nuove**: il pittore come `function*` con `yield` dopo ogni pennello pesante e `yield*` per i pennelli a fasce; un passo
+  non dovrebbe superare ~50 ms su un telefono (con la CPU 4× ~200 ms).

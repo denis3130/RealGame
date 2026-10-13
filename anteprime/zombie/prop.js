@@ -316,15 +316,24 @@ const REFOF={wall:()=>null,fence:()=>null,pillar:()=>null,gateLeaf:()=>null,hous
 for(const k of Object.keys(P)){const f=P[k],rf=REFOF[k]||(a=>typeof a[0]==='number'&&typeof a[1]==='number'?[a[0],a[1]]:null);P[k]=function(...a){const sv=ZM.NAMES.cur,sr=ZM.NAMES.ref;ZM.NAMES.cur=k;ZM.NAMES.ref=ZM.NAMES.grp||rf(a);try{return f.apply(this,a)}finally{ZM.NAMES.cur=sv;ZM.NAMES.ref=sr}}}
 // ------------------------------------------------------------------ pennelli del terreno (dentro bakeGround, in coordinate del mondo)
 const G={};ZM.G=G;
-G.grass=(w,h)=>{// erba notturna: fondo, chiazze morbide appena percettibili, fili d'erba fitti in tre toni, qualche radura di terra coi sassolini
+// i fili d'erba sono migliaia: raccolti per colore e per fascia di righe (BAND unità), così la costruzione a pezzi (bakeSteps) dipinge una
+// fascia alla volta (yield tra una fascia e l'altra). L'ordine dei numeri a caso è quello di prima; cambia solo, sul bordo tra due fasce,
+// quale filo sta sopra all'altro. G.grass e G.tufts fanno tutto insieme (le aree col pittore normale)
+const BAND=128,bands=(h,nc)=>Array.from({length:Math.max(1,Math.ceil(h/BAND))},()=>Array.from({length:nc},()=>new Path2D())),bandOf=(Q,y)=>Q[Math.max(0,Math.min(Q.length-1,Math.floor(y/BAND)))];
+function* strokeBands(Q,C,lw){for(const row of Q){ctx.lineWidth=lw;C.forEach((c,i)=>{ctx.strokeStyle=c;ctx.stroke(row[i])});yield}}
+const allSteps=it=>{while(!it.next().done);};
+G.grass$=function*(w,h){// erba notturna: fondo, chiazze morbide appena percettibili, fili d'erba fitti in tre toni, qualche radura di terra coi sassolini
   ctx.fillStyle='#33412a';ctx.fillRect(0,0,w,h);
-  for(let i=0;i<w*h/7000;i++){const px=rr(0,w),py=rr(0,h),r=rr(50,130),c=rnd()<.5?'36,50,29':'62,80,46',g=ctx.createRadialGradient(px,py,0,px,py,r);g.addColorStop(0,`rgba(${c},.4)`);g.addColorStop(1,`rgba(${c},0)`);ctx.fillStyle=g;ctx.fillRect(px-r,py-r,2*r,2*r)}
+  for(let i=0;i<w*h/7000;i++){const px=rr(0,w),py=rr(0,h),r=rr(50,130),c=rnd()<.5?'36,50,29':'62,80,46',g=ctx.createRadialGradient(px,py,0,px,py,r);g.addColorStop(0,`rgba(${c},.4)`);g.addColorStop(1,`rgba(${c},0)`);ctx.fillStyle=g;ctx.fillRect(px-r,py-r,2*r,2*r);if(i%24===23)yield}
+  yield;
   // i fili d'erba raccolti per colore in pochi tracciati (sulle mappe grandi erano centinaia di migliaia di disegni uno per uno: lenti da cuocere)
-  {const C=['#293520','#475c34','#5a7140'],Q=C.map(()=>new Path2D());for(let i=0;i<w*h/70;i++){const px=rr(0,w),py=rr(0,h),k=rnd(),p=Q[k<.4?0:k<.8?1:2];p.moveTo(px,py);p.lineTo(px+rr(-1.6,1.6),py-rr(2.5,5))}ctx.lineWidth=1.4;C.forEach((c,i)=>{ctx.strokeStyle=c;ctx.stroke(Q[i])})}
-  {const C=['#2a3a22','#4f6a3a'],Q=C.map(()=>new Path2D());for(let i=0;i<w*h/700;i++){const cx=rr(0,w),cy=rr(0,h),n=4+Math.floor(rnd()*4);for(let j=0;j<n;j++){const px=cx+rr(-12,12),py=cy+rr(-8,8),sc=rr(.7,1.3),p=Q[j%2];for(let k=0;k<3;k++){p.moveTo(px,py);p.lineTo(px+(k-1)*2*sc,py-rr(3,6)*sc)}}}ctx.lineWidth=1.2;C.forEach((c,i)=>{ctx.strokeStyle=c;ctx.stroke(Q[i])})}
+  {const C=['#293520','#475c34','#5a7140'],Q=bands(h,3);for(let i=0;i<w*h/70;i++){const px=rr(0,w),py=rr(0,h),k=rnd(),p=bandOf(Q,py)[k<.4?0:k<.8?1:2];p.moveTo(px,py);p.lineTo(px+rr(-1.6,1.6),py-rr(2.5,5))}yield* strokeBands(Q,C,1.4)}
+  {const C=['#2a3a22','#4f6a3a'],Q=bands(h,2);for(let i=0;i<w*h/700;i++){const cx=rr(0,w),cy=rr(0,h),n=4+Math.floor(rnd()*4);for(let j=0;j<n;j++){const px=cx+rr(-12,12),py=cy+rr(-8,8),sc=rr(.7,1.3),p=bandOf(Q,py)[j%2];for(let k=0;k<3;k++){p.moveTo(px,py);p.lineTo(px+(k-1)*2*sc,py-rr(3,6)*sc)}}}yield* strokeBands(Q,C,1.2)}
   for(let i=0;i<w*h/26000;i++){const px=rr(0,w),py=rr(0,h),r=rr(9,20);ctx.fillStyle='rgba(74,62,46,.4)';ctx.beginPath();ctx.ellipse(px,py,r,r*.6,rnd()*3,0,TAU);ctx.fill();for(let j=0;j<4;j++){ctx.fillStyle='rgba(120,110,90,.35)';ball([px+rr(-r,r)*.7,py+rr(-r,r)*.4],rr(.8,1.6));ctx.fill()}}};
-G.tufts=(w,h,skip)=>{const Q=[new Path2D(),new Path2D()];for(let i=0;i<w*h/70;i++){const x=rr(0,w),y=rr(0,h);if(skip&&skip(x,y))continue;const p=Q[rnd()<.5?0:1];for(let j=0;j<3;j++){p.moveTo(x,y);p.lineTo(x+(j-1)*2.2+rr(-.6,.6),y-rr(3,6))}}
-  ctx.lineWidth=1;ctx.strokeStyle='#5a7a3e';ctx.stroke(Q[0]);ctx.strokeStyle='#24301c';ctx.stroke(Q[1])};
+G.grass=(w,h)=>allSteps(G.grass$(w,h));
+G.tufts$=function*(w,h,skip){const Q=bands(h,2);for(let i=0;i<w*h/70;i++){const x=rr(0,w),y=rr(0,h);if(skip&&skip(x,y))continue;const p=bandOf(Q,y)[rnd()<.5?0:1];for(let j=0;j<3;j++){p.moveTo(x,y);p.lineTo(x+(j-1)*2.2+rr(-.6,.6),y-rr(3,6))}}
+  yield;yield* strokeBands(Q,['#5a7a3e','#24301c'],1)};
+G.tufts=(w,h,skip)=>allSteps(G.tufts$(w,h,skip));
 G.soil=(x,y,w,h)=>{// terra battuta fredda: fondo pieno, variazione solo a bassa frequenza, sassolini con l'ombra, righe di rastrello
   ctx.fillStyle='#38312a';ctx.fillRect(x,y,w,h);for(let i=0;i<Math.max(3,w*h/22000);i++){const px=x+rnd()*w,py=y+rnd()*h,r=rr(70,150),g=ctx.createRadialGradient(px,py,0,px,py,r),c=rnd()<.5?'18,16,14':'84,74,58';g.addColorStop(0,`rgba(${c},.22)`);g.addColorStop(1,`rgba(${c},0)`);ctx.fillStyle=g;ctx.fillRect(px-r,py-r,2*r,2*r)}
   for(let i=0;i<w*h/9000;i++){const px=x+rnd()*w,py=y+rnd()*h,r=rr(14,30),g=ctx.createRadialGradient(px,py,0,px,py,r);g.addColorStop(0,'rgba(52,70,42,.5)');g.addColorStop(1,'rgba(52,70,42,0)');ctx.fillStyle=g;ctx.beginPath();ctx.ellipse(px,py,r,r*.6,rnd()*3,0,TAU);ctx.fill();for(let j=0;j<8;j++){const qx=px+rr(-r,r)*.8,qy=py+rr(-r,r)*.45;ctx.strokeStyle=j%2?'#55703e':'#33462a';ctx.lineWidth=1;for(let k=0;k<3;k++){ctx.beginPath();ctx.moveTo(qx,qy);ctx.lineTo(qx+(k-1)*1.8,qy-rr(2.5,5));ctx.stroke()}}}// erba stentata a chiazze
@@ -333,17 +342,18 @@ G.soil=(x,y,w,h)=>{// terra battuta fredda: fondo pieno, variazione solo a bassa
   for(let i=0;i<w*h/260;i++){const px=x+rnd()*w,py=y+rnd()*h;ctx.strokeStyle=rnd()<.5?'#5a5a3e':'#3a3c2c';ctx.lineWidth=1;ctx.beginPath();ctx.moveTo(px,py);ctx.lineTo(px+rr(-2,2),py-rr(2,4));ctx.stroke()}};
 // sentiero di lastre: bordo sbrecciato (rumore sul perimetro) con un margine di terra che sfuma nell'erba e i ciuffi che entrano; lastre a 5–6 lati
 // con lati dritti, fuga scura solo un tono sotto la pietra, muschio nelle fughe (filetti), una lastra su otto sprofondata con l'acqua; inside(x,y) dice dove sta
-G.cobbles=(w,h,inside)=>{const nz=(x,y)=>[x+5*Math.sin(x*.11+y*.07)+3*Math.sin(y*.21-x*.04),y+4*Math.sin(y*.13+x*.05)+3*Math.cos(x*.17)];const inN=(x,y)=>{const p=nz(x,y);return inside(p[0],p[1])};
-  for(let y=0;y<h;y+=4)for(let x=0;x<w;x+=4){const c=inN(x+2,y+2);if(c){ctx.fillStyle='#3d3a3f';ctx.fillRect(x,y,4.5,4.5)}else if(inN(x+10,y+2)||inN(x-6,y+2)||inN(x+2,y+10)||inN(x+2,y-6)){ctx.fillStyle='rgba(58,53,48,.55)';ctx.fillRect(x,y,4.5,4.5)}}
-  const cw=15,ch=11;for(let gy=-ch,r=0;gy<h+ch;gy+=ch,r++){const jx=rr(-4,4);for(let gx=(r%2?cw/2:0)-cw+jx;gx<w+cw;gx+=cw){const dbl=rnd()<.12,W2=dbl?cw*2:cw,cx=gx+W2/2,cy=gy+ch/2;if(!inN(cx,cy)||rnd()<.08)continue;
+G.cobbles$=function*(w,h,inside){const nz=(x,y)=>[x+5*Math.sin(x*.11+y*.07)+3*Math.sin(y*.21-x*.04),y+4*Math.sin(y*.13+x*.05)+3*Math.cos(x*.17)];const inN=(x,y)=>{const p=nz(x,y);return inside(p[0],p[1])};
+  for(let y=0;y<h;y+=4){for(let x=0;x<w;x+=4){const c=inN(x+2,y+2);if(c){ctx.fillStyle='#3d3a3f';ctx.fillRect(x,y,4.5,4.5)}else if(inN(x+10,y+2)||inN(x-6,y+2)||inN(x+2,y+10)||inN(x+2,y-6)){ctx.fillStyle='rgba(58,53,48,.55)';ctx.fillRect(x,y,4.5,4.5)}}if(y%128===124)yield}
+  yield;const cw=15,ch=11;for(let gy=-ch,r=0;gy<h+ch;gy+=ch,r++){if(r%12===11)yield;const jx=rr(-4,4);for(let gx=(r%2?cw/2:0)-cw+jx;gx<w+cw;gx+=cw){const dbl=rnd()<.12,W2=dbl?cw*2:cw,cx=gx+W2/2,cy=gy+ch/2;if(!inN(cx,cy)||rnd()<.08)continue;
     const k=rnd(),sunk=rnd()<.12,base=mix(mix('#4c4a53','#6e6b75',k),'#515a48',rnd()<.15?.3:0),pts=[[gx+1.5,gy+1.4],[gx+W2*.5,gy+.8],[gx+W2-1.5,gy+1.4],[gx+W2-.9,gy+ch*.5],[gx+W2-1.5,gy+ch-1.4],[gx+1.5,gy+ch-1.4],[gx+.9,gy+ch*.5]].map(([px,py])=>[px+rr(-.9,.9),py+rr(-.7,.7)]);if(rnd()<.2)pts.splice(Math.floor(rnd()*pts.length),1);
     path(pts);ctx.fillStyle=sunk?mix(base,'#141a28',.55):base;ctx.fill();ctx.strokeStyle='rgba(0,0,0,.45)';ctx.lineWidth=1.4;ctx.stroke();
     ctx.strokeStyle='rgba(255,246,232,.14)';ctx.lineWidth=1;ctx.beginPath();ctx.moveTo(pts[5][0]+1.4,pts[5][1]-1.4);ctx.lineTo(pts[0][0]+1.4,pts[0][1]+1.4);ctx.lineTo(pts[2][0]-1.4,pts[2][1]+1.4);ctx.stroke();ctx.strokeStyle='rgba(0,0,0,.22)';ctx.beginPath();ctx.moveTo(pts[2][0]-1.4,pts[2][1]+1.6);ctx.lineTo(pts[4][0]-1.4,pts[4][1]-1.4);ctx.lineTo(pts[5][0]+1.6,pts[5][1]-1.4);ctx.stroke();
     if(sunk){ctx.fillStyle='rgba(200,215,255,.2)';ctx.beginPath();ctx.ellipse(cx-2,cy-1,3,1.2,-.2,0,TAU);ctx.fill()}
     if(rnd()<.3){ctx.strokeStyle='rgba(0,0,0,.25)';ctx.lineWidth=.8;ctx.beginPath();ctx.moveTo(cx+rr(-5,5),cy+rr(-4,4));ctx.lineTo(cx+rr(-5,5),cy+rr(-4,4));ctx.stroke()}
     if(rnd()<.45){ctx.strokeStyle=rnd()<.5?'rgba(64,96,44,.7)':'rgba(44,72,36,.7)';ctx.lineWidth=1.3;ctx.beginPath();const a0=rnd()<.5?pts[0]:pts[5],a1=rnd()<.5?pts[2]:pts[4];ctx.moveTo(a0[0]+rr(0,3),a0[1]-.4);ctx.lineTo(a0[0]+rr(4,9),a0[1]-.6);ctx.stroke()}}}
-  for(let i=0;i<w*h/300;i++){const x=rnd()*w,y=rnd()*h,inn=inN(x,y),edge=!inn&&(inN(x+8,y)||inN(x-8,y)||inN(x,y+8)||inN(x,y-8));if(!inn&&!edge)continue;
+  yield;for(let i=0;i<w*h/300;i++){if(i%1500===1499)yield;const x=rnd()*w,y=rnd()*h,inn=inN(x,y),edge=!inn&&(inN(x+8,y)||inN(x-8,y)||inN(x,y+8)||inN(x,y-8));if(!inn&&!edge)continue;
     if(inn){if(inN(x+6,y)&&inN(x-6,y)&&inN(x,y+6)&&inN(x,y-6))continue;ctx.strokeStyle=rnd()<.5?'#5a7a3e':'#24301c';ctx.lineWidth=1;for(let j=0;j<3;j++){ctx.beginPath();ctx.moveTo(x,y);ctx.lineTo(x+(j-1)*2+rr(-.5,.5),y-rr(2.5,5));ctx.stroke()}}else{ctx.fillStyle=rnd()<.5?'#5a5760':'#45424b';ball([x,y],rr(.9,1.8));ctx.fill()}}};
+G.cobbles=(w,h,inside)=>allSteps(G.cobbles$(w,h,inside));
 G.leaves=(cx,cy,r,n)=>{for(let i=0;i<n*.6;i++){const a=rnd()*TAU,d=Math.pow(rnd(),.7)*r;ctx.fillStyle=['#7a4a22','#8a5a2a','#5a3a1a','#9a6a30'][Math.floor(rnd()*4)];ctx.save();ctx.translate(cx+r*.25+Math.cos(a)*d,cy+r*.12+Math.sin(a)*d*.7);ctx.rotate(rnd()*TAU);ctx.beginPath();ctx.ellipse(0,0,2.6,1.3,0,0,TAU);ctx.fill();ctx.restore()}};
 G.floorPlanks=(x,y,w,h)=>{// assi lunghe a giunti sfalsati, tre toni, filo chiaro a nord, chiodi alle teste, qualche asse spaccata, buio lungo i muri e usura dalla porta
   ctx.fillStyle='#2a1c12';ctx.fillRect(x,y,w,h);const bw=9.5;let r=0;for(let yy=y;yy<y+h;yy+=bw,r++){let xx=x-rr(0,60);while(xx<x+w){const L=rr(60,120),x0=Math.max(x,xx),x1=Math.min(x+w,xx+L);if(x1>x0){const t=rnd();ctx.fillStyle=t<.33?'#4a3522':t<.66?'#5a4128':'#3e2c1c';ctx.fillRect(x0,yy,x1-x0,bw-1);ctx.fillStyle='rgba(255,240,220,.07)';ctx.fillRect(x0,yy,x1-x0,.8);

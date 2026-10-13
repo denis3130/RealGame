@@ -61,4 +61,5 @@ function exitK(){if(!G||!P||!G.door)return 0;return clamp((TOP+6-P.y)/30,0,1)}
   // the dark of the doorway swallows him from the feet up
   ctx.save();ctx.globalAlpha=k*.9;const g=ctx.createLinearGradient(0,P.y+10,0,P.y-34);g.addColorStop(0,'rgba(8,6,10,.95)');g.addColorStop(1,'rgba(8,6,10,0)');ctx.fillStyle=g;ctx.fillRect(P.x-22,P.y-36,44,48);ctx.restore()}}
 {const _dp=drawPet;drawPet=function(pt){const k=exitK();if(k<=0)return _dp.apply(this,arguments);ctx.save();ctx.globalAlpha*=1-k;_dp.apply(this,arguments);ctx.restore()}}
-newRun();applySettings();if(!playIntro(false))showMenu();requestAnimationFrame(loop);
+// the menu starts behind the start screen; the trailer, the first time, comes after its «Tocca per iniziare» (src/js/65-caricamento.js)
+newRun();applySettings();showMenu();requestAnimationFrame(loop);

@@ -1648,5 +1648,70 @@ html,body{height:100%;margin:0;background:var(--ink);color:var(--parch);overflow
 </div>
 
 <div id="rotHint" aria-hidden="true"><svg viewBox="0 0 64 64"><rect x="20" y="6" width="24" height="44" rx="5" fill="none" stroke="#ffd84a" stroke-width="4"/><path d="M12 40a22 22 0 0 0 18 18" fill="none" stroke="#7bbf4a" stroke-width="4" stroke-linecap="round"/><path d="M26 56l5 2-2 5" fill="none" stroke="#7bbf4a" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/></svg>Gira il telefono in verticale</div>
+<!-- the start of the app and the loading screens (src/js/65-caricamento.js): shown at once, before the game's code is read, so the
+     phone never shows a blank page; the icons are animated by CSS only, so they keep moving even while the phone is busy loading -->
+<style>
+#boot{position:fixed;inset:0;z-index:100000;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;padding:env(safe-area-inset-top,0px) 24px env(safe-area-inset-bottom,0px);
+  color:#f6ead2;font-family:"Lilita One","Arial Rounded MT Bold","Trebuchet MS",sans-serif;text-align:center;transition:opacity .45s ease;-webkit-user-select:none;user-select:none;touch-action:none;
+  background:radial-gradient(120% 70% at 50% 18%,#3f6d52 0%,#1d3a33 38%,#13202a 70%,#0c121a 100%)}
+#boot.zombie{background:radial-gradient(110% 70% at 50% 75%,#1a2a1c 0%,#0d1410 45%,#07090b 80%)}
+#boot.out{opacity:0;pointer-events:none}
+#boot[hidden]{display:none!important}
+#boot .bt-logo{font-size:44px;line-height:1;letter-spacing:.02em;color:#ffd86b;text-shadow:0 4px 0 #1b1612,0 0 22px rgba(255,216,107,.35);-webkit-text-stroke:2px #1b1612;paint-order:stroke fill}
+#boot.zombie .bt-logo{font-size:30px;color:#c9e6b4;text-shadow:0 3px 0 #000,0 0 18px rgba(120,255,140,.25)}
+#boot .bt-ico{position:relative;width:120px;height:120px;margin:6px 0}
+#boot .ic-c,#boot .ic-z{position:absolute;inset:0;display:none}
+#boot.classic .ic-c,#boot.zombie .ic-z{display:block}
+#boot .ring{position:absolute;inset:8px;border-radius:50%;border:4px dashed rgba(159,224,106,.85);box-shadow:0 0 18px rgba(123,191,74,.55),inset 0 0 12px rgba(123,191,74,.35);animation:btSpin 6s linear infinite}
+#boot .ring.r2{inset:22px;border:3px dotted rgba(255,216,107,.8);animation-duration:4s;animation-direction:reverse;box-shadow:none}
+#boot .stone{position:absolute;inset:30px;border-radius:50%;background:radial-gradient(circle at 38% 32%,#6f7f66,#3f4a3c 70%);border:3px solid #1b1612;box-shadow:inset 0 -5px 0 rgba(0,0,0,.25)}
+#boot .sprout{position:absolute;left:50%;top:26px;width:44px;height:56px;margin-left:-22px;transform-origin:50% 100%;animation:btSway 1.8s ease-in-out infinite alternate}
+#boot .sp{position:absolute;width:6px;height:6px;border-radius:50%;background:#ffe98a;box-shadow:0 0 8px #ffd86b;opacity:0;animation:btRise 2.4s ease-in infinite}
+#boot .sp.s1{left:24px;bottom:30px}#boot .sp.s2{left:86px;bottom:40px;animation-delay:.8s}#boot .sp.s3{left:58px;bottom:18px;animation-delay:1.6s}
+#boot .soil{position:absolute;left:8px;right:8px;bottom:10px;height:30px;border-radius:50% 50% 12px 12px/60% 60% 12px 12px;background:radial-gradient(ellipse at 50% 30%,#3b3326,#1e1a14 70%);border:3px solid #050505;z-index:2}
+#boot .hand{position:absolute;left:50%;bottom:24px;width:64px;height:84px;margin-left:-32px;transform-origin:50% 100%;animation:btHand 2.6s cubic-bezier(.3,.7,.3,1) infinite;z-index:1}
+#boot .hand .f{transform-origin:50% 90%;animation:btCurl 1.3s ease-in-out infinite alternate}
+#boot .crumb{position:absolute;width:6px;height:5px;border-radius:2px;background:#4a3d2c;bottom:36px;opacity:0;z-index:3;animation:btCrumb 2.6s ease-out infinite}
+#boot .crumb.c1{left:38px}#boot .crumb.c2{left:74px;animation-delay:.15s}#boot .crumb.c3{left:56px;animation-delay:.3s}
+#boot .bt-txt{font-family:"Baloo 2","Trebuchet MS",Arial,sans-serif;font-weight:700;font-size:15px;opacity:.9;min-height:20px}
+#boot .bt-bar{width:min(240px,64vw);height:12px;border-radius:999px;background:rgba(0,0,0,.45);border:2px solid #1b1612;overflow:hidden;box-shadow:0 0 0 1px rgba(255,255,255,.08)}
+#boot .bt-bar i{display:block;height:100%;width:0;border-radius:999px;background:linear-gradient(90deg,#7bbf4a,#c9f27a);transition:width .12s linear}
+#boot.zombie .bt-bar i{background:linear-gradient(90deg,#3f6b3a,#9be05a)}
+#boot.wait .bt-bar i{width:35%!important;animation:btWait 1.2s ease-in-out infinite alternate}
+#boot .bt-go{font-family:"Lilita One","Arial Rounded MT Bold",sans-serif;font-size:22px;color:#1b1612;background:linear-gradient(#ffe27a,#f2a400);border:3px solid #1b1612;border-radius:16px;padding:10px 22px;box-shadow:0 5px 0 #1b1612;animation:btPulse 1.1s ease-in-out infinite alternate}
+#boot .bt-tip{position:absolute;left:24px;right:24px;bottom:calc(22px + env(safe-area-inset-bottom,0px));font-family:"Baloo 2","Trebuchet MS",Arial,sans-serif;font-size:13px;opacity:.7}
+@keyframes btSpin{to{transform:rotate(360deg)}}
+@keyframes btSway{from{transform:rotate(-9deg)}to{transform:rotate(9deg)}}
+@keyframes btRise{0%{opacity:0;transform:translateY(0) scale(.6)}25%{opacity:1}100%{opacity:0;transform:translateY(-58px) scale(1.1)}}
+@keyframes btHand{0%{transform:translateY(46px) rotate(-4deg)}35%{transform:translateY(0) rotate(3deg)}70%{transform:translateY(-2px) rotate(-2deg)}100%{transform:translateY(46px) rotate(-4deg)}}
+@keyframes btCurl{from{transform:rotate(-6deg)}to{transform:rotate(14deg)}}
+@keyframes btCrumb{0%,20%{opacity:0;transform:translate(0,0)}30%{opacity:1}100%{opacity:0;transform:translate(var(--dx,8px),-26px) rotate(90deg)}}
+@keyframes btWait{from{transform:translateX(-20%)}to{transform:translateX(200%)}}
+@keyframes btPulse{from{transform:scale(1)}to{transform:scale(1.06)}}
+@media (prefers-reduced-motion:reduce){#boot *{animation:none!important}}
+</style>
+<div id="boot" class="classic wait" role="status" aria-live="polite">
+  <div class="bt-logo">Mossbound</div>
+  <div class="bt-ico">
+    <div class="ic-c"><div class="ring"></div><div class="ring r2"></div><div class="stone"></div>
+      <svg class="sprout" viewBox="0 0 44 56"><path d="M22 54C22 40 21 30 23 20" fill="none" stroke="#1b1612" stroke-width="7" stroke-linecap="round"/><path d="M22 54C22 40 21 30 23 20" fill="none" stroke="#7bbf4a" stroke-width="4" stroke-linecap="round"/>
+        <path d="M23 24C14 24 6 18 4 8c10-2 18 4 19 16z" fill="#7bbf4a" stroke="#1b1612" stroke-width="3" stroke-linejoin="round"/><path d="M23 22c8-1 15-8 17-18-11-1-17 7-17 18z" fill="#9fe06a" stroke="#1b1612" stroke-width="3" stroke-linejoin="round"/>
+        <path d="M8 10c5 4 9 8 13 12M37 6c-4 4-8 9-12 14" fill="none" stroke="rgba(255,255,255,.45)" stroke-width="1.6" stroke-linecap="round"/></svg>
+      <i class="sp s1"></i><i class="sp s2"></i><i class="sp s3"></i></div>
+    <div class="ic-z"><svg class="hand" viewBox="0 0 64 84"><path d="M20 84V58" stroke="#050505" stroke-width="22"/><path d="M20 84V58" stroke="#3a3f34" stroke-width="16"/>
+        <path d="M14 60c-4-8-3-18 2-24l26-2c6 6 7 16 3 26z" fill="#7f9a6a" stroke="#050505" stroke-width="3" stroke-linejoin="round"/>
+        <g class="f"><path d="M18 38C16 26 15 16 17 6c2-3 6-2 6 2l1 30" fill="#8aa676" stroke="#050505" stroke-width="3" stroke-linejoin="round"/><path d="M25 37C25 24 26 13 29 3c3-3 6-1 6 3l-3 31" fill="#8aa676" stroke="#050505" stroke-width="3" stroke-linejoin="round"/>
+        <path d="M33 37c1-11 4-20 8-27 3-2 6 0 5 4l-6 24" fill="#8aa676" stroke="#050505" stroke-width="3" stroke-linejoin="round"/><path d="M40 40c3-7 7-12 12-15 3 0 4 3 2 5l-8 14" fill="#7f9a6a" stroke="#050505" stroke-width="3" stroke-linejoin="round"/></g>
+        <path d="M14 48c-6-2-9-8-9-14 3-2 6 0 7 3l5 7" fill="#7f9a6a" stroke="#050505" stroke-width="3" stroke-linejoin="round"/>
+        <path d="M19 9l3-1M28 6l3 0M37 12l3 1" stroke="#2a2a22" stroke-width="2.5" stroke-linecap="round"/><path d="M22 50l6 3 5-2M27 44l-3 4" stroke="#56704a" stroke-width="2" fill="none" stroke-linecap="round"/><circle cx="35" cy="48" r="2.2" fill="#5a1a14"/></svg>
+      <div class="soil"></div><i class="crumb c1" style="--dx:-10px"></i><i class="crumb c2" style="--dx:12px"></i><i class="crumb c3" style="--dx:-4px"></i></div>
+  </div>
+  <div class="bt-txt">Caricamento…</div>
+  <div class="bt-bar"><i></i></div>
+  <button class="bt-go" type="button" hidden>Tocca per iniziare</button>
+  <div class="bt-tip"></div>
+</div>
 <script>
+// the whole game in one function, started by the loader at the end of the page after the first paint of #boot (src/coda.html)
+window.__mbGo=function(){window.__mbGo=null;
 (()=>{

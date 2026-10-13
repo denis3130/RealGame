@@ -16,7 +16,7 @@ const zMode=()=>SAVE.modo==='zombie';
 {const _l=loop;loop=function(now){if(ZG.on){last=now;requestAnimationFrame(loop);return}_l(now)}}
 // the menu music fades out on the map (the zombie mode's own music comes with the audio, phase 8); showMenu starts it again
 function zMusicOff(){if(!AU.ctx||!AU.cur)return;const old=AU.cur;old.bus.gain.setTargetAtTime(0,AU.ctx.currentTime,.5);setTimeout(()=>{try{old.bus.disconnect()}catch(e){}},4000);AU.cur=null}
-// ------------------------------------------------------------------ the look: the tabs, the zombie card, the waiting screen
+// ------------------------------------------------------------------ the look: the tabs, the zombie card
 {const st=document.createElement('style');st.textContent=`
 .modeTabs{position:relative;z-index:4;display:flex;justify-content:center;gap:5px;margin:0 0 -3px;pointer-events:none}
 .modeTabs button{pointer-events:auto;position:relative;min-width:84px;padding:5px 13px 6px;border:3px solid var(--crInk);border-bottom:0;border-radius:11px 11px 0 0;background:linear-gradient(#3a3630,#2a2622);
@@ -27,13 +27,8 @@ function zMusicOff(){if(!AU.ctx||!AU.cur)return;const old=AU.cur;old.bus.gain.se
 .chapCard.zmb{background:linear-gradient(100deg,rgba(16,14,12,.93) 32%,rgba(16,14,12,.2) 62%,rgba(16,14,12,.45)),var(--thumb,none) center/cover,#1b1f1a}.chapCard.zmb .ck{color:#a6e06a}.chapCard.zmb .zr{display:flex;flex-direction:column;align-items:flex-end;gap:1px;min-width:88px;font-family:var(--display);color:#fff;text-shadow:var(--tol-s)}
 .chapCard.zmb .zr small{font-size:11px;color:#cfc6b0}.chapCard.zmb .zr b{font-weight:400;font-size:19px;line-height:1}.chapCard.zmb .zr b i{font-style:normal;color:#ff6a58}
 .chapCard.zmb .rtrack .rn.on{background:#a6e06a;box-shadow:0 0 6px rgba(166,224,106,.7)}
-#zLoad{position:fixed;inset:0;z-index:99998;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;background:radial-gradient(ellipse at 50% 60%,#14201a,#07080b 70%);color:#e9f5dc;font-family:var(--display)}
-#zLoad[hidden]{display:none}#zLoad b{font-weight:400;font-size:22px;letter-spacing:.02em;text-shadow:0 3px 0 #000,0 0 16px rgba(110,255,150,.35)}
-#zLoad i{width:16px;height:24px;border-radius:50% 50% 45% 45%/60% 60% 40% 40%;background:radial-gradient(circle at 50% 70%,#e8fff0,#5dff8f 45%,rgba(93,255,143,0) 72%);animation:zfl 1.1s ease-in-out infinite alternate}
-@keyframes zfl{from{transform:scale(.85);opacity:.7}to{transform:scale(1.15);opacity:1}}
-@media (prefers-reduced-motion:reduce){#zLoad i,.modeTabs .nw{animation:none}}`;document.head.appendChild(st)}
-{const t=document.createElement('div');t.className='modeTabs';t.id='modeTabs';$('chapCard').before(t);
-  const l=document.createElement('div');l.id='zLoad';l.hidden=true;l.innerHTML='<i></i><b>Il camposanto si risveglia…</b>';document.body.appendChild(l)}
+@media (prefers-reduced-motion:reduce){.modeTabs .nw{animation:none}}`;document.head.appendChild(st)}
+{const t=document.createElement('div');t.className='modeTabs';t.id='modeTabs';$('chapCard').before(t);}
 function renderModeTabs(){const z=zMode(),html=`<button data-modo="classica" class="${z?'':'on'}">Classica</button><button data-modo="zombie" class="${z?'on':''}">Zombie${(SAVE.zN||0)===0&&(SAVE.runs||0)>=1&&!z?'<i class="nw">Nuovo!</i>':''}</button>`;
   const el=$('modeTabs');if(el._h!==html){el.innerHTML=html;el._h=html}}
 $('modeTabs').addEventListener('click',e=>{const b=e.target.closest('button[data-modo]');if(!b||ZG.wait)return;const m=b.dataset.modo;if(SAVE.modo===m)return;SAVE.modo=m;save();sfx('ui');vib(12);renderPlay()});
@@ -65,10 +60,13 @@ $('sheet').addEventListener('click',e=>{const b=e.target.closest('button[data-zp
 function zGo(){if(ZG.on||ZG.wait||CAMP.walk>0)return;initAudio();sfx('door');ZG.wait=true;
   if(RM||$('tabPlay').hidden||$('menu').hidden){zEnter();return}CAMP.walk=CAMP.t;setTimeout(()=>{CAMP.walk=0;zEnter()},1700)}
 function zEnter(){if(ZG.on){ZG.wait=false;return}
-  if(ZG.ctl){zStart();return}
-  // the first time: the map is built (about a second, more on a slow phone) behind the waiting screen
-  $('zLoad').hidden=false;setTimeout(()=>{try{ZG.ctl=ZM.boot(ZM.AREE.mappa,{game:true,fine:zFine,esci:zExit})}catch(e){console.error(e);ZG.ctl=null}
-    $('zLoad').hidden=true;if(ZG.ctl)zStart();else{ZG.wait=false;toast('Il camposanto non si apre: riprova')}},60)}
+  if(ZG.ctl&&ZM.W.ground){zStart();return}
+  // the first time the map is built in pieces behind the zombie loading screen (src/js/65-caricamento.js), with its real progress: the phone
+  // never freezes; after the app was in the background only its ground is baked again. The first frames of the map, the slow ones, are
+  // drawn behind the screen, which fades a moment later
+  LOAD.show('zombie','Il camposanto si risveglia…');const passo=k=>LOAD.prog(k);
+  (ZG.ctl?ZM.ricuoci({passo}).then(()=>ZG.ctl):ZM.bootAsync(ZM.AREE.mappa,{game:true,fine:zFine,esci:zExit,passo})).then(ctl=>{ZG.ctl=ctl;zStart();
+    requestAnimationFrame(()=>requestAnimationFrame(()=>LOAD.hide()))},e=>{console.error(e);LOAD.hide(true);ZG.wait=false;toast('Il camposanto non si apre: riprova')})}
 // the hero on the map is the Arciere in 3D with the equipment of the menu (armour, ring, amulet, skin) and a zombie gun in hand
 function zStart(){ZG.wait=false;ZG.on=true;ZG.last=null;if(SHEET)closeSheet();$('menu').hidden=true;$('wrap').classList.remove('inmenu');zMusicOff();
   try{ZM.stile(heroStyle('arciere'))}catch(e){}ZG.ctl.nuova();ZG.ctl.start()}

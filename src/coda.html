@@ -1,2 +1,7 @@
 })();
+};
 </script>
+<!-- the game starts after the first paint of the start screen (#boot), so the phone shows it at once instead of a blank page while it reads
+     the code; the test browser starts it at once, as before (the tests open the page and use the game right away) -->
+<script>(function(){function go(){if(window.__mbGo)window.__mbGo()}
+if(navigator.webdriver)go();else requestAnimationFrame(function(){requestAnimationFrame(function(){setTimeout(go,0)})})}())</script>

@@ -337,9 +337,20 @@ const GT=2;let groundDraw=null,BAKE=null;
 // edgeSnap(): chiamato dall'area dentro il suo pittore, fotografa il terreno di base per il fuori mappa (makeEdgeBands) prima delle cose che
 // non devono proseguire oltre il bordo (fosse, pozzanghere, foglie); se l'area non lo chiama si fotografa tutto il pittore, prima delle ombre
 function edgeSnap(){if(BAKE&&!BAKE.snap){BAKE.snap=1;W.edgeBands=makeEdgeBands(BAKE.c,BAKE.w,BAKE.h)}}
-function bakeGround(w,h,painter){const tk0=performance.now();W.w=w;W.h=h;const c=document.createElement('canvas');c.width=w*GT;c.height=h*GT;const g=c.getContext('2d'),sv=ctx;ctx=g;ctx.scale(GT,GT);srand(5);BAKE={c,w,h,snap:0};
-  try{painter(w,h);// l'area dipinge il suo terreno
-    edgeSnap();// le strisce di fuori mappa, se l'area non le ha già fatte: prima delle ombre (specchiate sembrerebbero muri fantasma)
+// La cottura è fatta a passi (bakeSteps): costruendo la mappa tutta insieme (l'anteprima) i passi vanno uno dopo l'altro; nel gioco la costruzione
+// a pezzi (bootAsync) ferma la cottura a ogni passo e lascia libero il telefono. Il pittore dell'area può essere una funzione* che fa yield tra
+// un pennello e l'altro (i pennelli lunghi, G.grass$ e G.tufts$, anche a metà, una fascia di righe alla volta): a ogni pausa il disegno fatto
+// fin lì viene dipinto davvero (la lettura di un pixel lo fa fare al browser adesso, invece che tutto insieme al primo fotogramma della mappa),
+// il gioco riprende il suo ctx e la cottura tiene da parte il suo seme. Con BAKEQ (la costruzione a pezzi) bakeGround mette solo da parte il
+// lavoro, che bootAsync fa dopo area.build(), prima di finalize(), come nella strada tutta insieme
+let BAKEQ=null,STEP=false;
+function bakeGround(w,h,painter){if(BAKEQ){W.w=w;W.h=h;BAKEQ.push([w,h,painter]);return}runSteps(bakeSteps(w,h,painter))}
+function runSteps(it){while(!it.next().done);}
+function* bakeSteps(w,h,painter){const tk0=performance.now();W.w=w;W.h=h;const c=document.createElement('canvas');c.width=w*GT;c.height=h*GT;const g=c.getContext('2d');let sv=ctx,sd=5;ctx=g;ctx.scale(GT,GT);srand(5);const job={c,w,h,snap:0};BAKE=job;
+  const pause=function*(lab){if(!STEP)return;g.getImageData(0,0,1,1);sd=seed;ctx=sv;BAKE=null;yield lab;sv=ctx;ctx=g;BAKE=job;seed=sd};
+  try{const it=painter(w,h);// l'area dipinge il suo terreno
+    if(it&&typeof it.next==='function')for(let k=0;;k++){if(it.next().done)break;yield* pause('pittore '+k)}
+    edgeSnap();yield* pause('bordo');// le strisce di fuori mappa, se l'area non le ha già fatte: prima delle ombre (specchiate sembrerebbero muri fantasma)
     // ombre: silhouette spinta a est e un po' a sud (luna a ovest, alta), disegnate su uno strato a parte e composte una volta sola, così dove si
     // sovrappongono non diventano nere; il piede è più scuro della punta. Poi il buio di contatto ai piedi di tutto (a ellisse per le cose tonde) e le decalcomanie
     // le ombre e il buio di contatto si disegnano su uno strato a 1 px per unità (metà della foto), senza filtri, e si appoggiano ingranditi: la
@@ -348,10 +359,10 @@ function bakeGround(w,h,painter){const tk0=performance.now();W.w=w;W.h=h;const c
     const LR=1,sh=document.createElement('canvas');sh.width=Math.ceil(w*LR);sh.height=Math.ceil(h*LR);const g2=sh.getContext('2d');g2.scale(LR,LR);
     const layer=(k)=>{g2.clearRect(0,0,w,h);g2.fillStyle='#000';for(const s of shadows){if(s.r){g2.beginPath();g2.ellipse(s.x,s.y,s.r*(k<1?.8:1),s.r*.6*(k<1?.8:1),0,0,TAU);g2.fill();continue}
         const ox=s.h*.5*k,oy=s.h*.15*k,P=[[s.x,s.y],[s.x+s.w,s.y],[s.x+s.w,s.y+s.d],[s.x,s.y+s.d]];g2.beginPath();hull(P.concat(P.map(p=>[p[0]+ox,p[1]+oy]))).forEach((q,i)=>i?g2.lineTo(q[0],q[1]):g2.moveTo(q[0],q[1]));g2.closePath();g2.fill()}};
-    ctx.save();ctx.imageSmoothingEnabled=true;layer(1);ctx.globalAlpha=.24;ctx.drawImage(sh,0,0,w,h);layer(.45);ctx.globalAlpha=.16;ctx.drawImage(sh,0,0,w,h);
+    ctx.save();ctx.imageSmoothingEnabled=true;layer(1);ctx.globalAlpha=.24;ctx.drawImage(sh,0,0,w,h);ctx.restore();yield* pause('ombre 1');ctx.save();ctx.imageSmoothingEnabled=true;layer(.45);ctx.globalAlpha=.16;ctx.drawImage(sh,0,0,w,h);ctx.restore();yield* pause('ombre 2');ctx.save();ctx.imageSmoothingEnabled=true;
     g2.clearRect(0,0,w,h);g2.fillStyle='#000';g2.beginPath();for(const s of solids){if(s.w>400||s.d>400||s.noAO)continue;if(s.round){g2.moveTo(s.x+s.w+1.5,s.y+s.d/2);g2.ellipse(s.x+s.w/2,s.y+s.d/2,s.w/2+1.5,s.d/2+1.5,0,0,TAU)}else g2.rect(s.x-1,s.y-1,s.w+2,s.d+2)}g2.fill();
-    ctx.globalAlpha=.3;ctx.drawImage(sh,0,0,w,h);ctx.restore();
-    for(const f of decals){ctx.save();f();ctx.restore()}
+    ctx.globalAlpha=.3;ctx.drawImage(sh,0,0,w,h);ctx.restore();yield* pause('buio di contatto');
+    for(let i=0;i<decals.length;i++){ctx.save();decals[i]();ctx.restore();if(i%12===11)yield* pause('decalcomanie')}yield* pause('decalcomanie');
   }finally{ctx=sv;BAKE=null}W.ground=c;W.dbg.tbake=performance.now()-tk0}
 // ------------------------------------------------------------------ luci, buio, nebbia, cielo
 let dark=null,mistImg=null,cloudImg=null;
@@ -739,15 +750,19 @@ function buildLayers(p){const G=new Map(),order=[],loose=[];
   const w={kind:'W',prop:p,sid:'P'+p.i,sk:600000+p.i,sb:[0,0,0,0],lean:0},pts=[];for(const L of p.layers)for(const q of L.xy)pts.push([q[0],q[1],L.z0],[q[0],q[1],L.z1]);finFP(w,pts);p.whole=w;if(!ORD.byId.has(w.sid))ORD.byId.set(w.sid,w)}
 // dopo area.build(): prova a vuoto dei disegni a mano, gruppi, strati, contorni delle corse di muro, fiamme figlie, esseri fissi, memoria dei
 // verdetti. Non tocca il seme dei numeri a caso (lucciole, nebbia e corvi nascono dopo)
-function finalize(){if(LAYERS.length)return;const sv=ctx,sd=seed,dc=document.createElement('canvas');dc.width=dc.height=1;ctx=dc.getContext('2d');
-  try{for(const p of props)for(const t of p.parts)if(t.k==='fn')dryRun(t)}finally{ctx=sv;seed=sd}
-  props.forEach((p,i)=>{p.i=i});for(const p of props)buildLayers(p);
+// (a passi come la cottura: nella costruzione a pezzi si ferma ogni 8 ms circa, ridando al gioco il suo ctx e il suo seme)
+function finalize(){runSteps(finalizeSteps())}
+function* finalizeSteps(){if(LAYERS.length)return;let t0=performance.now();const late=()=>STEP&&performance.now()-t0>8,again=()=>{t0=performance.now()};
+  {let sv=ctx,sd=seed;const dc=document.createElement('canvas');dc.width=dc.height=1;const dg=dc.getContext('2d');ctx=dg;
+    try{for(const p of props){for(const t of p.parts)if(t.k==='fn')dryRun(t);if(late()){ctx=sv;seed=sd;yield;sv=ctx;sd=seed;ctx=dg;again()}}}finally{ctx=sv;seed=sd}}
+  props.forEach((p,i)=>{p.i=i});for(const p of props){buildLayers(p);if(late()){yield;again()}}
   // un prop fatto solo di contorni (il contorno unico di una corsa di muro): prima di ogni pezzo della corsa (stesso nome, dentro la sua impronta)
-  for(const O of LAYERS)if(O.outl){O.kids=new Set();for(const L of LAYERS)if(!L.outl&&!L.floor&&L.prop.name===O.prop.name&&L.xy.every(q=>inHull(O.xy,q,3)))O.kids.add(L.n)}
+  for(const O of LAYERS)if(O.outl){O.kids=new Set();for(const L of LAYERS)if(!L.outl&&!L.floor&&L.prop.name===O.prop.name&&L.xy.every(q=>inHull(O.xy,q,3)))O.kids.add(L.n);if(late()){yield;again()}}
   // le fiamme sono figlie dello strato che contiene il loro punto (il più piccolo) e si disegnano subito dopo di lui; le altre sono voci libere
   for(const f of flames){let best=null,ba=1e18;for(const L of LAYERS){if(L.floor||L.outl||f.z<L.z0-3||f.z>L.z1+8||!inHull(L.xy,[f.x,f.y],3))continue;if(L.area<ba){ba=L.area;best=L}}
-    if(best){best.flames.push(f);f.L=best}else FREEF.push(f)}
-  NL=LAYERS.length;PEN=new Float32Array(NL*NL).fill(NaN);PVS=new Int32Array(NL*NL).fill(-999999);PVD=new Int8Array(NL*NL);PVF=new Int8Array(NL*NL);PVM=new Float32Array(NL*NL);
+    if(best){best.flames.push(f);f.L=best}else FREEF.push(f);if(late()){yield;again()}}
+  // le tabelle delle coppie di strati (NL² voci ciascuna: le più grandi della costruzione, una pausa tra l'una e l'altra)
+  NL=LAYERS.length;W.dbg.NL=NL;PEN=new Float32Array(NL*NL).fill(NaN);if(STEP){yield;again()}PVS=new Int32Array(NL*NL).fill(-999999);if(STEP){yield;again()}PVD=new Int8Array(NL*NL);PVF=new Int8Array(NL*NL);PVM=new Float32Array(NL*NL);
   perches.forEach((c,i)=>{c.E={kind:'B',pc:c,sid:'C'+i,sk:800000+i}});FREEF.forEach((f,i)=>{f.E={kind:'B',fl:f,sid:'F'+i,sk:700000+i}});
   flames.forEach((f,i)=>{f.KE={kind:'B',fl:f,sid:'F*'+i,sk:650000+i}});PSIK=null}
 // ψ quantizzato per l'ordine: si rigirano le impronte di tutti gli strati
@@ -975,11 +990,33 @@ function updateAmbient(dt){W.t+=dt;updateCrows(dt);
   for(const l of W.leaves){l.t+=dt;l.z-=14*dt;l.x+=Math.sin(l.t*3+l.ph)*20*dt+6*dt}for(let i=W.leaves.length-1;i>=0;i--)if(W.leaves[i].z<0)W.leaves.splice(i,1)}
 // ------------------------------------------------------------------ le aree (area_mappa.js) si registrano in AREE; anteprima(id) costruisce e accende
 // quella della pagina di prova (anteprime/zombie/mk.py), il gioco vero la costruisce col menu (src/js/63-zombie.js)
-const AREE={};function anteprima(id){const go=()=>boot(AREE[id]);if(document.readyState==='complete')setTimeout(go,300);else addEventListener('load',()=>setTimeout(go,300))}
+const AREE={};function anteprima(id){// (la pagina di prova si apre subito sulla mappa: niente schermata d'avvio del gioco)
+  try{if(typeof LOAD!=='undefined'){BOOTS.ready=BOOTS.gone=true;LOAD.hide(true)}}catch(e){}const go=()=>boot(AREE[id]);if(document.readyState==='complete')setTimeout(go,300);else addEventListener('load',()=>setTimeout(go,300))}
 // ------------------------------------------------------------------ la pagina: tela, levetta, telecamera, bussola, bottoni
 // boot(area, o): costruisce la mappa una volta e la pagina sopra il gioco. Per l'anteprima (o vuoto) parte subito, coi bottoni di prova; nel
 // gioco vero (o.game, src/js/63-zombie.js) resta spenta finché il menu non la accende e restituisce {start, stop, nuova, pausa}: o.fine(oro,
 // round, uccisi) avvisa il gioco a fine partita, o.esci() quando si torna al menu
+// bootAsync(area, o): la costruzione a pezzi del gioco vero (src/js/63-zombie.js). Gli stessi passi di boot (area.build, la cottura del
+// terreno, finalize, navBuild), nello stesso ordine e con gli stessi semi (la mappa viene uguale), fatti circa 12 ms alla volta con il
+// telefono libero in mezzo: la schermata di caricamento si muove e niente si blocca. o.passo(k) riceve a che punto è (da 0 a 1, contando le
+// pause: area.passi è quante sono di solito, poi quante erano davvero). Restituisce la promessa del controllo di boot (o.built: già costruita)
+function inPezzi(it,o,N){return new Promise((ok,ko)=>{let n=0;const run=()=>{const ts=performance.now();let done=false;STEP=true;
+    try{while(performance.now()-ts<12){const t1=performance.now(),r=it.next(),d=performance.now()-t1;if(d>60)(W.dbg.lenti=W.dbg.lenti||[]).push([n,Math.round(d),r.value]);if(r.done){done=true;break}n++}}catch(e){BAKEQ=null;ko(e);return}finally{STEP=false}
+    if(!done){if(o.passo)o.passo(Math.min(.97,n/N));setTimeout(run,0);return}ok(n)};setTimeout(run,0)})}
+let JOBS=null;// i lavori di cottura dell'area (per rifarli dopo libera)
+function bootAsync(area,o){o=o||{};const keep=[window.CR&&CR.cam?Object.assign({},CR.cam):null,typeof RIGCAM!=='undefined'?Object.assign({},RIGCAM):null];
+  const steps=function*(){const t0=performance.now();W.dbg.tstart=t0;BAKEQ=[];let q;try{area.build()}finally{q=BAKEQ;BAKEQ=null}JOBS=q;const t1=performance.now();yield;
+    for(const[w,h,p] of q)yield* bakeSteps(w,h,p);const t2=performance.now();yield* finalizeSteps();const t3=performance.now();yield;navBuild();
+    W.dbg.tb={build:t1-t0,bake:t2-t1,finalize:t3-t2,nav:performance.now()-t3,pezzi:1}};
+  return inPezzi(steps(),o,area.passi||60).then(n=>{area.passi=n;W.dbg.passi=n;
+    // i personaggi del menu restano come erano (boot li tiene da parte appena parte, per rimetterli tornando al menu)
+    if(keep[0])Object.assign(CR.cam,keep[0]);if(keep[1])Object.assign(RIGCAM,keep[1]);
+    const tb=performance.now(),ctl=boot(area,Object.assign({},o,{built:true}));W.dbg.tboot=performance.now()-tb;if(o.passo)o.passo(1);return ctl})}
+// la memoria (src/js/65-caricamento.js): con la mappa spenta e il gioco in secondo piano si butta la foto del terreno (30 MB, la cosa più
+// grande della mappa); ricuoci(o) la rifà a pezzi prima di riaccendere la mappa: gli stessi passi e lo stesso seme, viene uguale
+function libera(){if(!JOBS||!W.ground)return false;W.ground.width=W.ground.height=0;W.ground=null;return true}
+function ricuoci(o){o=o||{};if(W.ground||!JOBS)return Promise.resolve(0);const sd=seed;
+  return inPezzi((function*(){for(const[w,h,p] of JOBS)yield* bakeSteps(w,h,p)})(),o,JOBS.passi||40).then(n=>{JOBS.passi=n;seed=sd;if(o.passo)o.passo(1);return n})}
 function boot(area,o){o=o||{};const GAME=!!o.game;let ACT=!GAME,RUN=false,PAUSE=false;W.gioco=GAME?o:null;
   // la telecamera della mappa inclina anche i personaggi (CR.cam, RIGCAM, in camRig): nel gioco si tengono quelli del menu appena lo si lascia
   // (prima di costruire o di rimettere a posto la mappa) e tornando al menu si rimettono
@@ -987,7 +1024,7 @@ function boot(area,o){o=o||{};const GAME=!!o.game;let ACT=!GAME,RUN=false,PAUSE=
   if(!GAME){try{INTRO.on=false;paused=true}catch(e){}try{AU.on.music=false;AU.on.sfx=false}catch(e){}}
   // niente atmosfera del sotterraneo classico (vento dell'abisso, respiro della bestia) mentre la mappa zombie è accesa: quella sua verrà con l'audio
   try{const _s=ambStart;ambStart=function(k){if(!ACT)return _s(k);_s(null);AMB.kind=k}}catch(e){}
-  const tb0=performance.now();W.dbg.tstart=tb0;area.build();const tb1=performance.now();finalize();const tb2=performance.now();navBuild();W.dbg.tb={build:tb1-tb0,bake:W.dbg.tbake||0,finalize:tb2-tb1,nav:performance.now()-tb2};setTimeout(warmIntra,800);if(window.ARMI){try{gunState=ARMI.nuova('pistola');HSTYLE.gun=W.gunId='pistola'}catch(e){gunState=null}}
+  if(!o.built){const tb0=performance.now();W.dbg.tstart=tb0;area.build();const tb1=performance.now();finalize();const tb2=performance.now();navBuild();W.dbg.tb={build:tb1-tb0,bake:W.dbg.tbake||0,finalize:tb2-tb1,nav:performance.now()-tb2}}setTimeout(warmIntra,800);if(window.ARMI){try{gunState=ARMI.nuova('pistola');HSTYLE.gun=W.gunId='pistola'}catch(e){gunState=null}}
   for(let i=0;i<16;i++)W.flies.push({x:rr(0,W.w),y:rr(0,W.h),z:rr(6,40),a:rr(0,TAU),ph:rr(0,TAU)});for(let i=0;i<9;i++)W.mists.push({x:rr(-100,W.w+100),y:rr(0,W.h),r:rr(80,160),v:rr(6,14)});
   for(let i=0;i<4;i++)W.clouds.push({x:rr(-300,W.w),y:rr(-100,W.h),r:rr(220,360),v:rr(9,16)});
   const ov=document.createElement('div');ov.id='mz';ov.innerHTML=`<style>
@@ -1248,4 +1285,4 @@ orderReset:()=>{ORD.mm.m=new Map();ORD.fm.m=new Map();ORD.fr+=5},
     texStats:()=>{let n=0,px=0,np=0,pp=0;for(const k in TEX){n++;px+=TEX[k].width*TEX[k].height}for(const k in PLANES){np++;pp+=PLANES[k].width*PLANES[k].height}return{n,mpx:+(px/1e6).toFixed(2),np,mpp:+(pp/1e6).toFixed(2)}},
     buys,equip,buyNow:id=>{const o=buys.find(b=>b.id===id);return o?o.act():null},box:()=>BOX,boxTo:i=>{const q=BOX.spots[i];boxPlace(q[0],q[1],q[3]||0);navBuild();if(NAV)NAV.hc=-1;return[q[0],q[1]]},coins:v=>{if(v!=null)W.coins=v;return W.coins},gun:()=>gunState,nuova:()=>CTL.nuova()};
   return CTL}
-return{AREE,anteprima,boxReset,stile,idleZombie,buyable,sorpresa,equip,hurt,spawn,KINDS,move,zWalk,sep,physClear,gun:()=>gunState,navRebuild:()=>{navBuild();if(NAV)NAV.hc=-1},softImg,turn,group,grp,finalize,facing,across,onGround,onPlane,onRound,ringNear,T,CAM,W,S,LS,MOON,inGround,scrAng,decals,fades,NAMES,stand,stands,heightAt,add3,sub3,len3,rnd,rr,srand,ink,path,hull,material,MAT,MARKS,texture,tone,face,hullOf,ballAt,line3,poly3,fn3,box,prismX,prismY,plane,cyl,prop,solid,shade,shadeR,props,solids,shadows,lights,flames,holes,houses,smokes,perches,hit,bakeGround,edgeSnap,boot,setLive:f=>{liveDraw=f},wa,mix,cl,ez,lerp,TAU,ball,seg}})();
+return{AREE,anteprima,boxReset,stile,idleZombie,buyable,sorpresa,equip,hurt,spawn,KINDS,move,zWalk,sep,physClear,gun:()=>gunState,navRebuild:()=>{navBuild();if(NAV)NAV.hc=-1},softImg,turn,group,grp,finalize,facing,across,onGround,onPlane,onRound,ringNear,T,CAM,W,S,LS,MOON,inGround,scrAng,decals,fades,NAMES,stand,stands,heightAt,add3,sub3,len3,rnd,rr,srand,ink,path,hull,material,MAT,MARKS,texture,tone,face,hullOf,ballAt,line3,poly3,fn3,box,prismX,prismY,plane,cyl,prop,solid,shade,shadeR,props,solids,shadows,lights,flames,holes,houses,smokes,perches,hit,bakeGround,edgeSnap,boot,bootAsync,libera,ricuoci,setLive:f=>{liveDraw=f},wa,mix,cl,ez,lerp,TAU,ball,seg}})();

@@ -97,19 +97,19 @@ const AREA={title:'Camposanto',zoneName:h=>h.y<Y(12.3)?'Fattoria dei Corvi':'Cam
     const nz=(x,y)=>Math.sin(x*.05+y*.031)*7+Math.sin(y*.07-x*.02)*5;
     const inYard=(x,y)=>{const e=nz(x,y),a=x>X(4.7)+e&&x<X(10.8)+e&&y>Y(3.9)+e&&y<Y(9.8)+e,r=x>X(5.9)+e*.4&&x<X(7.0)+e*.4&&y>Y(9.6)&&y<Y(12.3),
       p=x>X(3.95)&&x<X(4.9)+e&&y>Y(5.4)&&y<Y(6.6);if(a||r||p)return 1;const e2=e+9;return(x>X(4.7)+e-9&&x<X(10.8)+e2&&y>Y(3.9)+e-9&&y<Y(9.8)+e2)||(x>X(5.9)-9&&x<X(7.0)+9&&y>Y(9.6)&&y<Y(12.3))?2:0};
-    bakeGround(w,h,()=>{G.grass(w,h);G.cornSoil(0,0,w,Y(3.3),rows.map(Y));
+    bakeGround(w,h,function*(){yield* G.grass$(w,h);G.cornSoil(0,0,w,Y(3.3),rows.map(Y));yield;
       G.yard(w,h,inYard,[[[X(6.45),Y(12.3),1,0],[X(6.45),Y(10.4),1,0],[X(7.1),Y(8.9),.9,.4],[X(8.6),Y(7.3),.5,.85],[X(10.6),Y(6.2),.2,1]]]);
-      G.furrows(X(10.4),Y(8.9),X(13.2),Y(11.7));G.mud(X(.85),Y(8.55),X(3.55),Y(10.45));
+      yield;G.furrows(X(10.4),Y(8.9),X(13.2),Y(11.7));G.mud(X(.85),Y(8.55),X(3.55),Y(10.45));yield;
       {const x0=X(11.0),y0=Y(4.12),bw=X(15.4)-x0,bd=Y(8.32)-y0;ctx.fillStyle='#3a2f22';ctx.fillRect(x0,y0,bw,bd);const Q=[new Path2D(),new Path2D()];for(let i=0;i<bw*bd/40;i++){const x=rr(x0,x0+bw),y=rr(y0,y0+bd),p=Q[rr(0,1)<.6?0:1],a=rr(0,6.3);p.moveTo(x,y);p.lineTo(x+Math.cos(a)*4,y+Math.sin(a)*4)}ctx.lineWidth=.9;ctx.strokeStyle='rgba(200,170,90,.5)';ctx.stroke(Q[0]);ctx.strokeStyle='rgba(140,110,50,.5)';ctx.stroke(Q[1])}
-      G.floorPlanks(X(2.32)-112,Y(5.95)-105.6,224,211.2);
-      G.soil(AX(0),AY(.35),3.7*T,6.95*T);G.cobbles(w,h,onPath);
-      G.tufts(w,h,(x,y)=>y<Y(3.3)||inYard(x,y)===1||onPath(x,y)||(x>X(10.4)&&x<X(13.2)&&y>Y(8.9)&&y<Y(11.7))||(x>X(.7)&&x<X(3.7)&&y>Y(8.4)&&y<Y(10.6))||(x>X(11)&&x<X(15.4)&&y>Y(4.12)&&y<Y(8.32))||(x>X(2.32)-112&&x<X(2.32)+112&&y>Y(4.3)&&y<Y(7.6))||(x<AX(3.7)&&x>AX(0)&&y>AY(.35)&&y<AY(7.3)&&((x*7+y*13)%10)<7));
-      G.voidFog(0,Y(12.3)+4,X(2),h,-1);G.voidFog(X(14),Y(12.3)+4,w,h,1);G.voidFogV(0,Y(24)-10,w,h);
-      ZM.edgeSnap();
-      G.leaves(AX(8.9),AY(8.6),90,120);G.twigs(AX(2.8),AY(2.25),50,40);G.twigs(X(2.75),Y(12.95),40,30);G.twigs(X(13.1),Y(22.4),50,40);
-      G.floorPlanks(AX(5.5),AY(1),3.7*T,2.5*T);G.holes();
+      yield;G.floorPlanks(X(2.32)-112,Y(5.95)-105.6,224,211.2);yield;
+      G.soil(AX(0),AY(.35),3.7*T,6.95*T);yield;yield* G.cobbles$(w,h,onPath);yield;
+      yield* G.tufts$(w,h,(x,y)=>y<Y(3.3)||inYard(x,y)===1||onPath(x,y)||(x>X(10.4)&&x<X(13.2)&&y>Y(8.9)&&y<Y(11.7))||(x>X(.7)&&x<X(3.7)&&y>Y(8.4)&&y<Y(10.6))||(x>X(11)&&x<X(15.4)&&y>Y(4.12)&&y<Y(8.32))||(x>X(2.32)-112&&x<X(2.32)+112&&y>Y(4.3)&&y<Y(7.6))||(x<AX(3.7)&&x>AX(0)&&y>AY(.35)&&y<AY(7.3)&&((x*7+y*13)%10)<7));
+      yield;G.voidFog(0,Y(12.3)+4,X(2),h,-1);yield;G.voidFog(X(14),Y(12.3)+4,w,h,1);yield;G.voidFogV(0,Y(24)-10,w,h);yield;
+      ZM.edgeSnap();yield;
+      G.leaves(AX(8.9),AY(8.6),90,120);G.twigs(AX(2.8),AY(2.25),50,40);G.twigs(X(2.75),Y(12.95),40,30);G.twigs(X(13.1),Y(22.4),50,40);yield;
+      G.floorPlanks(AX(5.5),AY(1),3.7*T,2.5*T);G.holes();yield;
       for(const[x,y,r] of[[AX(4.4),AY(7.6),14],[AX(5.6),AY(4.7),11],[AX(4.3),AY(5.5),9],[X(6.6),Y(10.9),12],[X(8.4),Y(8.2),10],[X(2.0),Y(9.9),13],[X(1.4),Y(9.1),9]])G.puddle(x,y,r);
-      G.feathers(X(2.5),Y(11.2),40,40);G.chips(X(9.6),Y(13.35),26,30);
+      yield;G.feathers(X(2.5),Y(11.2),40,40);G.chips(X(9.6),Y(13.35),26,30);
       // la terra smossa dell'orto da cui escono, e quella sotto la Bara
       for(const[x,y] of[[X(11.6),Y(10.45)],[X(4.45),Y(16.76)]]){ctx.fillStyle='rgba(30,22,14,.75)';ctx.beginPath();ctx.ellipse(x,y,26,15,0,0,6.3);ctx.fill();for(let i=0;i<14;i++){ctx.fillStyle=i%2?'#5a4630':'#3a2c1e';ctx.beginPath();ctx.ellipse(x+rr(-24,24),y+rr(-13,13),rr(2,4),rr(1.4,2.6),rr(0,3),0,6.3);ctx.fill()}}});
     ZM.props.sort((a,b)=>a.ky-b.ky)},
