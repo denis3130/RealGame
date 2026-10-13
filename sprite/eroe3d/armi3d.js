@@ -298,6 +298,29 @@ const M={
     for(const[o,d,u] of[[[12.4,1.2,.7],[.5,1,.55],[0,-.4,1]],[[11.2,-1.1,-.6],[.35,-1,-.45],[0,.3,1]]])
       K.frame(o,d,u).prism(LEAF,-.08,.08,'foglia',{hi:.35,dk:.55,det:L=>L.line(.3,0,4.2,0,'rgba(20,60,10,.55)',.32)});
     return{muzzle:C,orb:C,eject:null,sup:null}},
+  // the mages' staff (necromancer, pyromancer, the Witch, the Ice Queen; held 'staff' of the game's rig): a straight dark stick with an
+  // iron collar under a big glowing orb (the colour of their eyes, st.orbCol); x goes up the staff, the hand at 0,0,0; st.glow as the Druid's
+  scettro(K,st){const g=st.glow==null?1:st.glow,oc=st.orbCol||'#9fff7a',OT=[mix(oc,'#0d1418',.5),oc,mix(oc,'#ffffff',.72)],rgb=hexRgb(oc);
+    K.tube([[-15.5,0,0],[-6,.15,0],[4,-.1,0],[13.4,0,0]],[2.4,2.3,2.2,2.3],'noce');
+    K.cyl([-1.8,0,0],[1.8,0,0],1.45,['#2a2230','#463a52','#6e5f80'],{db:.02});K.cyl([12.6,0,0],[14.2,0,0],1.7,'brunito',{db:.03});
+    const C=[18.2,0,0],RR=4.1;K.fx(C,q=>shine(rgb,q[0],q[1],(7+3.2*g)*K.s,.25+.32*g),-5);
+    K.sph(C,RR,OT);K.fx(C,q=>{ctx.fillStyle=`rgba(255,255,255,${.5+.3*g})`;ball([q[0]-RR*.36*K.s,q[1]-RR*.42*K.s],RR*.24*K.s);ctx.fill()},.05);
+    return{muzzle:C,orb:C,eject:null,sup:null}},
+  // the Fabbro's hammer: a long walnut handle wrapped at the grip, an iron ring, a big iron head across its end (x along the handle, the
+  // head's long side along y); st.hot 0..1: the far end of the head glows like the forge (in his second phase, when he raises it)
+  martello(K,st){const hot=st.hot||0;
+    K.tube([[-7,0,0],[4,0,0],[16,0,0]],[2.7,2.6,2.5],'noce');K.cyl([-2,0,0],[2,0,0],1.6,'gomma',{db:.02});K.cyl([14.2,0,0],[15.8,0,0],1.75,'brunito',{db:.02});
+    K.box(15.6,-9,25.8,9,-5.4,5.4,['#2c3036','#5a5f68','#a3abb5'],{hi:.45,det:L=>{L.line(16.6,-8,16.6,8,'rgba(255,255,255,.3)',1.1);L.line(24.6,-8,24.6,8,'rgba(10,12,16,.4)',.8)}},1.4);
+    if(hot>.02){K.box(23.2,-9.15,25.95,9.15,-5.55,5.55,[mix('#5a5f68','#b8401a',hot),mix('#5a5f68','#ff7a2e',hot),mix('#a3abb5','#ffd86b',hot)],{hi:0,db:.04},1.2);
+      K.fx([25.8,0,0],q=>shine('255,140,50',q[0],q[1],14*K.s*hot,.55*hot),.2)}
+    return{muzzle:[20.7,0,0],face:[20.7,-9,0],eject:null,sup:[7,0,0]}},
+  // the dwarf's bomb: a round black iron bomb with a little neck, a short fuse and a spark at its tip, sitting in the hand (at 0,0,0);
+  // st.has 0..1: how much of it is there (a new one pops into the hand after a throw)
+  bomba(K,st){const k=st.has==null?1:st.has;if(k<=.02)return{muzzle:[0,0,0],eject:null,sup:null};
+    const R0=4.8*k,C=[1.6,R0*.75,0];K.sph(C,R0,['#141418','#2e2e36','#767684']);K.cyl([1.6,R0*1.55,0],[1.6,R0*1.95,0],1.5*k,'nero',{db:.02});
+    const f0=[1.6,R0*1.9,0],f1=[3.1,R0*1.9+2.4*k,.3];K.rod([f0,f1],.75,['#5a4228','#8a6a44','#b8956a'],{hi:0,db:.03});
+    K.fx(f1,q=>{const fl=.8+.2*Math.sin(G.t*30);shine('255,200,90',q[0],q[1],6*fl*K.s,.85);ctx.fillStyle='#fff3c0';ball(q,1.1*K.s*k);ctx.fill()},.05);
+    return{muzzle:C,eject:null,sup:null}},
   // the bows, bent in the plane of x (where the belly points, toward the target) and y (along the string), held at 0,0,0: a stave thick in
   // the middle and thin at the tips, the grip wrapped, the string from tip to tip (through st.pinch, the hand that draws it, a point in
   // this frame) and the arrow on it (st.nock). st.kind: 'plain' (frassino: horn tips), 'recurve' (tips that curl forward, green grip,
@@ -340,5 +363,5 @@ function draw(id,V0,fr,st,extra){const K=kit(V0,fr),f=M[id];if(!f)return null;st
   for(const k in pts){const v=pts[k];o[k]=v&&v.length===3&&typeof v[0]==='number'?K.W(v):null}return o}
 // the frame of a weapon held at O (a room point), pointing along aim, its top toward up (made square to aim); s: its size
 function frame(O,aim,up,s){const X=nrm(aim),Y=nrm(sub(up,mul(X,dot(up,X))));return{O,X,Y,Z:cross(Y,X),s:s||1}}
-const DATI_N={pistola:'Pistola',revolver:'Revolver',mitraglietta:'Mitraglietta',mitra:'Mitra',mitragliatrice:'Mitragliatrice',pompa:'Pompa da caccia',tattica:'Pompa tattica',lanciarazzi:'Lanciarazzi',balestra:'Balestra leggera',bastone:'Bastone del Druida',arco:'Arco'};
+const DATI_N={pistola:'Pistola',revolver:'Revolver',mitraglietta:'Mitraglietta',mitra:'Mitra',mitragliatrice:'Mitragliatrice',pompa:'Pompa da caccia',tattica:'Pompa tattica',lanciarazzi:'Lanciarazzi',balestra:'Balestra leggera',bastone:'Bastone del Druida',arco:'Arco',scettro:'Bastone dei maghi',martello:'Martello del Fabbro',bomba:'Bomba'};
 return{draw,frame,M,MAT,kit,tones,nomi:DATI_N,ZOMBIE:['pistola','revolver','mitraglietta','mitra','mitragliatrice','pompa','tattica','lanciarazzi']}})();
