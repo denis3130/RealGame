@@ -6,7 +6,8 @@
 // pull), idle. EROE.arciere's point is the feet, 8 px below drawRig's.
 // =====================================================================
 const H3D={on:true,st:null,prev:false};
-function is3D(S){return H3D.on&&typeof EROE!=='undefined'&&!!S&&(S.hid==='arciere'||S===HERO)}
+const H3IDS=['arciere','cacciatrice','balestriere','druida'];
+function is3D(S){return H3D.on&&typeof EROE!=='undefined'&&!!S&&(H3IDS.includes(S.hid)||S===HERO)}
 {const _dr=drawRig;drawRig=function(x,y,face,walk,moving,S,o){if(!is3D(S))return _dr.apply(this,arguments);o=o||{};
   const st=H3D.st||{},sc=S.sc||1,t=(G&&G.t)||0;let anim='idle',p=((t/2.4)%1+1)%1,pull=Math.min(1,Math.max(0,(o.pull||0)/5));
   if(H3D.prev)face=Math.PI/2-(typeof pvT!=='undefined'?pvT:t)*.7;
@@ -16,8 +17,8 @@ function is3D(S){return H3D.on&&typeof EROE!=='undefined'&&!!S&&(S.hid==='arcier
   else if(st.aim||pull>0)anim='aim';
   // seen through (the blink after a hit): drawn whole on a small layer, then laid down see-through, so the pieces under the others
   // do not show through
-  const a=ctx.globalAlpha;if(a<.99&&a>0&&!LOWFX&&heroLayer(x,y,sc,()=>EROE.arciere(x,y+8*sc,face,anim,p,sc,{style:S,moss:mossOn?2:false,pull,noFx:true}),a))return;
-  EROE.arciere(x,y+8*sc,face,anim,p,sc,{style:S,moss:mossOn?2:false,pull,noFx:!st.fx})}}
+  const a=ctx.globalAlpha;if(a<.99&&a>0&&!LOWFX&&heroLayer(x,y,sc,()=>EROE.arciere(x,y+8*sc,face,anim,p,sc,{style:S.hid==='druida'&&!S.eyes?{...S,eyes:S.eyeCol}:S,moss:mossOn?2:false,pull,noFx:true}),a))return;
+  EROE.arciere(x,y+8*sc,face,anim,p,sc,{style:S.hid==='druida'&&!S.eyes?{...S,eyes:S.eyeCol}:S,moss:mossOn?2:false,pull,noFx:!st.fx})}}
 // a small layer the size of the hero on the screen (in device pixels, with the canvas' own transform), for the see-through blink
 const HLAY={cv:null};
 function heroLayer(x,y,sc,draw,alpha){if(typeof document==='undefined')return false;const m=ctx.getTransform(),k=Math.hypot(m.a,m.b)||1;
