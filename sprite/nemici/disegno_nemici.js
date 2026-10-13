@@ -202,7 +202,7 @@ function slime(x,y,face,anim,p,sc,o){sc=sc||1;o=o||{};const V0=V(face),{P,D,F,c,
   // goo strings and drops hanging from the base (behind the body)
   ctx.lineCap='round';for(let i=0;i<4;i++){const a=.3+i*.7,bx=q[0]+Math.cos(a)*w*.8,by=q[1]+h*.8,l=3+2*Math.sin(ph+i*1.7)+(hop>0?hop*.5:0);ctx.strokeStyle=INK;ctx.lineWidth=2.4;seg([bx,by],[bx,by+l]);ctx.stroke();ctx.strokeStyle=colD;ctx.lineWidth=1.1;seg([bx,by],[bx,by+l]);ctx.stroke();ctx.fillStyle=col;ink(1);ball([bx,by+l],1.1);ctx.fill();ctx.stroke()}
   ink(2.4);path(0);ctx.fillStyle=col;ctx.fill();ctx.stroke();
-  ctx.save();path(-1.2);ctx.clip();ctx.fillStyle=colD;ell(q[0]+w*.35,q[1]+h*.6,w*1.1,h*.7);ctx.fill();ctx.fillStyle=LC2.gelF;ell(q[0]+w*.8,q[1]+h*.15,w*.4,h*.8);ctx.fill();
+  ctx.save();path(-1.2);ctx.clip();ctx.fillStyle=colD;ell(q[0]+w*.35,q[1]+h*.6,w*1.1,h*.7);ctx.fill();ctx.fillStyle=o.gelF||LC2.gelF;ell(q[0]+w*.8,q[1]+h*.15,w*.4,h*.8);ctx.fill();
   // something inside: a skull swallowed long ago, drifting
   {const sk=[q[0]-w*.15+Math.sin(ph*.5)*1.2+c*2,q[1]+h*.15+Math.cos(ph*.7)*.8];ctx.fillStyle=LC2.skull;ball(sk,r*.3);ctx.fill();ctx.fillStyle='rgba(20,12,8,.5)';ball([sk[0]-1.1,sk[1]-.4],.9);ctx.fill();ball([sk[0]+1.1,sk[1]-.4],.9);ctx.fill();ctx.fillRect(sk[0]-1.6,sk[1]+1.4,3.2,1)}
   ctx.fillStyle=wa(.22);ell(q[0]-w*.4,q[1]-h*.45,w*.42,h*.25);ctx.fill();ctx.fillStyle=wa(.12);ell(q[0]-w*.15,q[1]-h*.7,w*.25,h*.12);ctx.fill();

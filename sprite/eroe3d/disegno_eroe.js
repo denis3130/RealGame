@@ -12,6 +12,14 @@
 //   o.style: colori ed equipaggiamento come heroStyle() del gioco (body, hood, skin, belt, bowCol, bowKind, held, armor, ring, amu, skinId)
 //   o.moss: il bastoncino di muschio in bocca (solo schermata iniziale e intro); o.pull: 0..1 con 'aim'; o.eyeLight: puntino di luce negli occhi
 //   o.noFx: niente freccia che vola, scie e polvere (per i fogli, dove il gioco disegna i suoi effetti)
+// Lo stesso corpo fa anche i nemici e i boss che nel gioco usano il rig dell'eroe (goblin, scheletro, negromante, scheletrino, piromante,
+// nano bombarolo, Strega, Fabbro, Regina dei Ghiacci: sprite/nemici3d/umanoidi.js), con le opzioni di stile del gioco: skull e ribs
+// (teschio e costole), ears (orecchie a punta), hoodTip (punta del cappuccio), crown (corna di rami con i boccioli), tiara (corona di
+// ghiaccio), helm e beard (elmo e barba), robe e float (veste lunga, sospesi in aria), cracks (crepe di lava), shield (scudo), eyeCol
+// (colore degli occhi), held 'scettro' / 'martello' / 'bomba' (bastone con la sfera, martello del Fabbro, bomba); armor 'none' (niente
+// giubba), quiver false, belt null, blush false. Senza queste opzioni l'eroe resta identico al pixel.
+// Anche gli altri tre eroi stanno su questo corpo, con i loro pezzi del gioco: ponytail e hair (la coda della Cacciatrice), helm (l'elmo
+// del Balestriere), antlers (le corna di legno del Druida, con hoodTip e il suo bastone) e eyes (il colore degli occhi, verdi nel Druida).
 window.EROE=(()=>{
 const R=CR._rig,{cam,KR,TAU,cl,ez,lerp,add,sub,mul,len,nrm,dot,cross,lerp3,V,Vat,mix,stepper,shine,ball,seg,tri,hull,on,fist,wa,rim,glowTop,run,starS}=R;
 // ------------------------------------------------------------------ colours (giubba di cuoio + arco di frassino, as in the game)
@@ -50,10 +58,13 @@ function rimPoly(pts,al){let x0=1e9,y0=1e9,x1=-1e9,y1=-1e9;for(const q of pts){x
 // where the body is 22 px wide seen from the front and 16 seen from the side). The outline is the hull of the rings seen by the camera,
 // so it is right from every side and stays right when the body leans, squashes or stretches
 const ZB=4.4,AX=.76,PROF=[[0,8.6],[1.3,10.3],[3.1,11.3],[5.3,11.3],[7.8,10.2],[10.2,8.3],[12.3,6],[14.2,3.2]];
-function radAt(dz){if(dz<=PROF[0][0])return PROF[0][1];for(let i=0;i<PROF.length-1;i++){const a=PROF[i],b=PROF[i+1];if(dz<=b[0])return lerp(a[1],b[1],(dz-a[0])/(b[0]-a[0]))}return PROF[PROF.length-1][1]}
+// the long robe of the mages (style.robe): from the floor, wide at the hem, the same shoulders as the tunic. BP, BZ: the profile and its
+// base for the body being drawn (the tunic from ZB, the robe from the floor)
+const ROBE=[[0,14.6],[1.4,15.3],[3.6,14.8],[6.4,13.4],[9.2,11.7],[11.8,9.7],[14.4,7.4],[16.6,4.8],[18.4,2.8]];let BP=PROF,BZ=ZB;
+function radAt(dz){const P=BP;if(dz<=P[0][0])return P[0][1];for(let i=0;i<P.length-1;i++){const a=P[i],b=P[i+1];if(dz<=b[0])return lerp(a[1],b[1],(dz-a[0])/(b[0]-a[0]))}return P[P.length-1][1]}
 // a point on the surface of the tunic (angle t round the body, 0 = in front, π/2 = the hero's right; height z above the ground),
 // pushed out by `out`, and its normal
-function surf(t,z,out){const dz=z-ZB,r=radAt(dz)+(out||0),sl=(radAt(dz+.5)-radAt(dz-.5));return{p:[Math.cos(t)*r*AX,Math.sin(t)*r,z],n:nrm([Math.cos(t)/AX,Math.sin(t),-sl])}}
+function surf(t,z,out){const dz=z-BZ,r=radAt(dz)+(out||0),sl=(radAt(dz+.5)-radAt(dz-.5));return{p:[Math.cos(t)*r*AX,Math.sin(t)*r,z],n:nrm([Math.cos(t)/AX,Math.sin(t),-sl])}}
 // the body's frame: squash/stretch (s: taller > 0), stretch along x (sx, for the dash), lean (the top goes forward > 0) and roll
 // (the top goes to the right > 0), round the hem; then the root offset B. Rd turns a direction the same way (no squash)
 function frame(A){const ca=Math.cos(A.lean),sa=Math.sin(A.lean),cr=Math.cos(A.roll),sr=Math.sin(A.roll),sz=1+A.s,sxy=1/Math.sqrt(Math.max(.3,sz)),sx=sxy*(1+(A.sx||0));
@@ -83,9 +94,13 @@ function capPath(V0,q,Rr,n,al){n=nrm(n);let u=cross(n,[0,0,1]);if(len(u)<.2)u=cr
 const FACE=[1,0,.27],EYE=[1,.33,.25],CHEEK=[1,.54,.04],MOUTH=[1,-.13,-.06];
 // the hood and the face. Vh: the head's own camera (it turns with the look); A.hp: how much the head nods down; o: eyes, mouth, moss
 function head(Vh,Rh,S,A,o){const h=Vh.P(0,0,0),{F}=Vh,hood=S.hood,skin=S.skin,nod=v=>rotY(v,A.hp),fd=nrm(nod(FACE));
+  if(S.skull)return skullHead(Vh,Rh,S,A,o,h,nod);
   const mouthD=nrm(nod(MOUTH)),mossD=nrm(nod([.66,-.72,-.22]));
   // the moss stick, when the mouth turns away: drawn before the hood, so only the part sticking out past the cheek shows
   const mossBack=o.moss&&F(mouthD)<.05;if(mossBack)mossStick(Vh,h,Rh,mouthD,mossD,o,false);
+  // the enemies' bits behind the head: the antlers, an ear on the far side, the back spikes of the tiara
+  if(S.crown)antlers(Vh,h,Rh,S,nod);if(S.ears)for(const sd of[-1,1])if(F(nod([0,sd,0]))<=.3)ear(Vh,h,Rh,S,nod,sd);if(S.tiara)tiara(Vh,h,Rh,S,nod,false);
+  if(S.antlers)deerAntlers(Vh,h,Rh,nod);const tailFront=S.ponytail&&F(nod([-1,0,-.2]))>.15;if(S.ponytail&&!tailFront)ponytail(Vh,h,Rh,S,nod,o.sway||0);
   ink(2.5);ball(h,Rh);ctx.fillStyle=hood;ctx.fill();ctx.stroke();
   // soft shading of a ball lit from the upper left: the three tones blend into each other, no patches with an edge
   ctx.save();ball(h,Rh-.8);ctx.clip();ctx.fillStyle=soft(h[0]-Rh*.36,h[1]-Rh*.42,h[0]-Rh*.05,h[1]+Rh*.05,Rh*1.2,hood,.14,.3);ctx.fillRect(h[0]-Rh,h[1]-Rh,Rh*2,Rh*2);
@@ -104,6 +119,8 @@ function head(Vh,Rh,S,A,o){const h=Vh.P(0,0,0),{F}=Vh,hood=S.hood,skin=S.skin,no
     // the edge of the hood round the opening: a thick dark ring, as in the game
     if(op.rim&&op.rim.length>1){ctx.lineCap='round';ctx.lineJoin='round';ctx.strokeStyle=INK;ctx.lineWidth=2.5;line(op.rim);if(op.full)ctx.closePath();ctx.stroke()}}
   ctx.restore();rim(h,Rh,h,Rh,.3);
+  // and in front of it: the helmet, the point of the hood, the beard, an ear on our side, the front spikes of the tiara
+  if(tailFront)ponytail(Vh,h,Rh,S,nod,o.sway||0);if(S.helm)helm(Vh,h,Rh,S,nod);if(S.hoodTip)hoodTip(Vh,h,Rh,S,nod);if(S.beard)beard(Vh,h,Rh,S,nod);if(S.ears)for(const sd of[-1,1])if(F(nod([0,sd,0]))>.3)ear(Vh,h,Rh,S,nod,sd);if(S.tiara)tiara(Vh,h,Rh,S,nod,true);
   if(o.moss&&!mossBack)mossStick(Vh,h,Rh,mouthD,mossD,o,true)}
 // two big dark eyes with a small, sharp point of light (o.eyeLight: false takes it away); they close for a blink, squeeze shut when hit;
 // a faint blush, a little mouth when needed. No eye ever sits on the outline of the head: when the head turns, the far eye slides in
@@ -121,11 +138,91 @@ function face(Vh,h,Rh,nod,o,fd){const{F}=Vh,fq=sp(Vh,h,Rh*.97,fd);
     ctx.save();
     if(o.shut){const dir=fq[0]>=q[0]?1:-1;ctx.strokeStyle=HC.eye;ctx.lineWidth=1.3;ctx.lineCap='round';ctx.lineJoin='round';ctx.beginPath();
       ctx.moveTo(q[0]-dir*rx*.9,q[1]-1.5);ctx.lineTo(q[0]+dir*rx*.8,q[1]);ctx.lineTo(q[0]-dir*rx*.9,q[1]+1.5);ctx.stroke()}
-    else{const sq=(o.blink==null?1:o.blink)*(1-.3*(o.squint||0)),sy=ry*Math.max(.12,sq);ctx.fillStyle=HC.eye;ctx.beginPath();ctx.ellipse(q[0],q[1],rx,sy,0,0,TAU);ctx.fill();
+    else{const sq=(o.blink==null?1:o.blink)*(1-.3*(o.squint||0)),sy=ry*Math.max(.12,sq);if(o.glow&&sq>.3)shine(o.glow,q[0],q[1],ry*2.3,.3*Math.min(1,v*2));ctx.fillStyle=o.eyeCol||HC.eye;ctx.beginPath();ctx.ellipse(q[0],q[1],rx,sy,0,0,TAU);ctx.fill();
       if(o.eyeLight!==false&&sq>.45&&rx>1.2){ctx.fillStyle='#fdf6e8';ball([q[0]-rx*.34,q[1]-sy*.46],.36);ctx.fill()}}
     ctx.restore()}
-  for(const sd of[-1,1]){const c=nrm(nod([CHEEK[0],sd*CHEEK[1],CHEEK[2]])),v=F(c),k=sstep(.15,.35,v);if(k<=0)continue;const q=sp(Vh,h,Rh*.97,c),kk=k*edge(q);ctx.fillStyle=`rgba(255,120,110,${.2*kk})`;ell(q[0],q[1],1.7*Math.pow(v,.7),1);ctx.fill()}
+  if(o.blush!==false)for(const sd of[-1,1]){const c=nrm(nod([CHEEK[0],sd*CHEEK[1],CHEEK[2]])),v=F(c),k=sstep(.15,.35,v);if(k<=0)continue;const q=sp(Vh,h,Rh*.97,c),kk=k*edge(q);ctx.fillStyle=`rgba(255,120,110,${.2*kk})`;ell(q[0],q[1],1.7*Math.pow(v,.7),1);ctx.fill()}
   if(o.mouth>.05){const m=nrm(nod(MOUTH)),v=F(m);if(v>.05){const q=sp(Vh,h,Rh*.97,m),w=1.3*Math.max(.45,v),hh=.6+o.mouth*1.1;ink(1);ctx.fillStyle='#5a2020';ctx.beginPath();ctx.ellipse(q[0],q[1],w,hh,0,0,TAU);ctx.fill();ctx.stroke()}}}
+// ------------------------------------------------------------------ the enemies' heads and what they wear on them
+// a point of the head's own 3D space (an offset from its centre, in head units) on the screen, like the moss stick's points
+const hP=(Vh,h,v)=>sp(Vh,h,1,v);
+const inwardAt=(h,Rh,q,a,b)=>{const dx=q[0]-h[0],dy=q[1]-h[1],d=Math.hypot(dx,dy)/Rh;if(d<=a)return q;const d2=a+(b-a)*(1-Math.exp(-(d-a)/(b-a)));return[h[0]+dx*d2/d,h[1]+dy*d2/d]};
+// the skull of the skeletons: a clean bone ball, two dark sockets with a coloured light inside, a row of teeth, a crack at the back
+function skullHead(Vh,Rh,S,A,o,h,nod){const{F}=Vh,bone=S.skin;
+  ink(2.5);ball(h,Rh);ctx.fillStyle=bone;ctx.fill();ctx.stroke();
+  ctx.save();ball(h,Rh-.8);ctx.clip();ctx.fillStyle=soft(h[0]-Rh*.36,h[1]-Rh*.42,h[0]-Rh*.05,h[1]+Rh*.05,Rh*1.2,bone,.12,.3);ctx.fillRect(h[0]-Rh,h[1]-Rh,Rh*2,Rh*2);
+  {const pts=[];for(const m of[[-.82,-.2,.55],[-.97,.12,.24],[-.94,-.08,-.06]]){const d=nrm(nod(m));if(F(d)>.05)pts.push(sp(Vh,h,Rh*.97,d))}
+    if(pts.length>1){ctx.strokeStyle='rgba(27,22,18,.5)';ctx.lineWidth=1.5;ctx.lineCap='round';ctx.lineJoin='round';line(pts);ctx.stroke()}}
+  // the sockets, placed as the hero's eyes are: never on the outline, the far one slides in and narrows
+  const E=[-1,1].map(sd=>{const e=nrm(nod([1,sd*.36,.12])),v=F(e);return{v,q:sp(Vh,h,Rh*.97,e),rx:2.75*Math.pow(Math.max(0,v),.6)}}).filter(e=>e.v>.06).sort((a,b)=>b.v-a.v);
+  if(E.length)E[0].q=inwardAt(h,Rh,E[0].q,.58,.72);
+  if(E.length>1){const n=E[0],f=E[1];f.q=inwardAt(h,Rh,f.q,.48,.64);const gap=Math.hypot(f.q[0]-n.q[0],f.q[1]-n.q[1])-n.rx-.6;f.rx=Math.min(f.rx,Math.max(0,gap))}
+  const lit=!o.shut&&(o.blink==null||o.blink>.3),rgb=hexRgb(S.eyes||'#e5484d');
+  for(const{v,q,rx} of E){if(rx<.7)continue;const ry=3.1*(1-.25*(o.squint||0));ctx.fillStyle='#2a211c';ctx.beginPath();ctx.ellipse(q[0],q[1],rx,ry,0,0,TAU);ctx.fill();
+    if(lit){shine(rgb,q[0],q[1]+.3,6,.5*Math.min(1,v*2));ctx.fillStyle=S.eyes||'#e5484d';ball([q[0],q[1]+.4],Math.min(rx*.62,1.35));ctx.fill();ctx.fillStyle='#fff';ball([q[0]-.35,q[1]],.42);ctx.fill()}}
+  // the teeth: the line of the jaw with the gaps between the teeth
+  {const m=nrm(nod([1,0,-.44])),v=F(m);if(v>.08){const q=inwardAt(h,Rh,sp(Vh,h,Rh*.97,m),.62,.8),w=3.8*Math.max(.4,Math.pow(v,.6));ctx.save();ctx.globalAlpha=cl((v-.08)*4,0,1)*.85;ctx.strokeStyle=INK;ctx.lineWidth=1.1;ctx.lineCap='round';
+    ctx.beginPath();ctx.moveTo(q[0]-w,q[1]);ctx.lineTo(q[0]+w,q[1]);for(let i=-1;i<=1;i++){ctx.moveTo(q[0]+i*w*.5,q[1]-1.3);ctx.lineTo(q[0]+i*w*.5,q[1]+1.3)}ctx.stroke();ctx.restore()}}
+  ctx.restore();rim(h,Rh,h,Rh,.3)}
+// a goblin's ear: a long point of skin out of the side of the hood, a little up and back, lighter inside
+function ear(Vh,h,Rh,S,nod,sd){const b1=hP(Vh,h,nod(mul(nrm([.18,sd,.42]),Rh*.9))),b2=hP(Vh,h,nod(mul(nrm([-.3,sd,-.2]),Rh*.9))),t=hP(Vh,h,nod([-Rh*.95,sd*Rh*1.7,Rh*.6])),
+    m=hP(Vh,h,nod([-Rh*.4,sd*Rh*1.25,Rh*.25]));
+  const path=()=>{ctx.beginPath();ctx.moveTo(b1[0],b1[1]);ctx.quadraticCurveTo((b1[0]+t[0])/2+(m[0]-(b1[0]+b2[0])/2)*.2,(b1[1]+t[1])/2-1,t[0],t[1]);ctx.quadraticCurveTo((b2[0]+t[0])/2,(b2[1]+t[1])/2+1.2,b2[0],b2[1]);ctx.closePath()};
+  const bb=[Math.min(b1[0],b2[0],t[0]),Math.min(b1[1],b2[1],t[1]),Math.max(b1[0],b2[0],t[0]),Math.max(b1[1],b2[1],t[1])],w=bb[2]-bb[0],hh=bb[3]-bb[1];
+  ink(2.4);path();ctx.fillStyle=soft(bb[0]+w*.3,bb[1]+hh*.25,bb[0]+w*.5,bb[1]+hh*.5,Math.max(w,hh)*.8,S.skin,.16,.24);ctx.fill();ctx.stroke();
+  ctx.save();path();ctx.clip();ctx.fillStyle='rgba(60,30,20,.22)';ctx.beginPath();ctx.moveTo(lerp(b1[0],b2[0],.3),lerp(b1[1],b2[1],.3));ctx.lineTo(lerp(t[0],m[0],.25),lerp(t[1],m[1],.25));ctx.lineTo(lerp(b1[0],b2[0],.75),lerp(b1[1],b2[1],.75));ctx.closePath();ctx.fill();ctx.restore()}
+// the point of the hood (the mages): a soft cone on top of the head, leaning back; outlined only along its sides, so it grows out of the hood
+function hoodTip(Vh,h,Rh,S,nod){const c0=nod(mul(nrm([-.32,0,1]),Rh*.8)),ap=nod([-Rh*.64,0,Rh*1.66]),ax=nrm(sub(ap,c0));let e1=cross(ax,[0,1,0]);if(len(e1)<.2)e1=cross(ax,[1,0,0]);e1=nrm(e1);const e2=cross(ax,e1),rb=Rh*.44,pts=[];
+  for(let i=0;i<16;i++){const a=i/16*TAU;pts.push(hP(Vh,h,add(c0,add(mul(e1,Math.cos(a)*rb),mul(e2,Math.sin(a)*rb)))))}
+  const A=hP(Vh,h,ap);pts.push(A);const H=chull(pts),bb=[1e9,1e9,-1e9,-1e9];for(const q of H){bb[0]=Math.min(bb[0],q[0]);bb[1]=Math.min(bb[1],q[1]);bb[2]=Math.max(bb[2],q[0]);bb[3]=Math.max(bb[3],q[1])}
+  poly(H);ctx.fillStyle=soft(bb[0]+(bb[2]-bb[0])*.3,bb[1]+(bb[3]-bb[1])*.3,bb[0]+(bb[2]-bb[0])*.5,bb[1]+(bb[3]-bb[1])*.55,Math.max(bb[2]-bb[0],bb[3]-bb[1])*.8,S.hood,.14,.3);ctx.fill();
+  const i=H.indexOf(A);if(i>=0){const a=H[(i-1+H.length)%H.length],b=H[(i+1)%H.length];ctx.strokeStyle=INK;ctx.lineWidth=2.5;ctx.lineCap='round';ctx.lineJoin='round';ctx.beginPath();ctx.moveTo(a[0],a[1]);ctx.lineTo(A[0],A[1]);ctx.lineTo(b[0],b[1]);ctx.stroke()}}
+// the dwarf's helmet: a steel dome over the top of the head, a band round its brim, a nose guard down the front
+function helm(Vh,h,Rh,S,nod){const R2=Rh*1.05,up=nrm(nod([.1,0,1])),c=capPath(Vh,h,R2,up,1.02);if(!c)return;
+  ink(2.5);ctx.fillStyle=soft(h[0]-R2*.4,h[1]-R2*.6,h[0],h[1]-R2*.2,R2*1.1,'#a9b1ba',.35,.42);ctx.fill();ctx.stroke();
+  ctx.save();ctx.clip();ctx.fillStyle='rgba(255,255,255,.35)';ell(h[0]-R2*.35,h[1]-R2*.62,R2*.32,R2*.16);ctx.fill();ctx.restore();
+  // the band round the brim (only the part we see), then the nose guard
+  const pts=[];let on=[];for(let i=0;i<=36;i++){const a=i/36*TAU,e=.55,d=nrm(nod([Math.cos(a)*Math.cos(e),Math.sin(a)*Math.cos(e),Math.sin(e)]));if(F0(Vh,d)>.02)on.push(sp(Vh,h,R2*1.01,d));else if(on.length){pts.push(on);on=[]}}if(on.length)pts.push(on);
+  ctx.lineCap='round';ctx.lineJoin='round';for(const r of pts){if(r.length<2)continue;ctx.strokeStyle=INK;ctx.lineWidth=3.8;line(r);ctx.stroke();ctx.strokeStyle='#5a5f68';ctx.lineWidth=1.9;line(r);ctx.stroke()}
+  const nf=Vh.F(nod([1,0,0]));if(nf>.15){const a=sp(Vh,h,R2*1.02,nrm(nod([1,0,.6]))),b=sp(Vh,h,Rh*1.04,nrm(nod([1,0,.12])));ctx.save();ctx.globalAlpha=cl((nf-.15)*4,0,1);ctx.strokeStyle=INK;ctx.lineWidth=4.4;seg(a,b);ctx.stroke();ctx.strokeStyle='#6b727c';ctx.lineWidth=2.4;ctx.stroke();ctx.restore()}}
+const F0=(Vh,d)=>Vh.F(d);
+// the dwarf's beard: a soft orange tuft hanging from the jaw in front of the chest, with two strands
+function beard(Vh,h,Rh,S,nod){const f=Vh.F(nod([1,0,-.2]));if(f<-.1)return;const pts=[];
+  for(let i=0;i<=8;i++){const a=-1.05+i/8*2.1;pts.push(hP(Vh,h,nod(mul(nrm([Math.cos(a)*.86,Math.sin(a),-.6]),Rh*.98))))}
+  const tip=hP(Vh,h,nod([Rh*.86,0,-Rh*1.55])),mid=[hP(Vh,h,nod([Rh*.98,-Rh*.45,-Rh*1.1])),hP(Vh,h,nod([Rh*.98,Rh*.45,-Rh*1.1]))];
+  const H=chull(pts.concat([tip],mid)),bb=[1e9,1e9,-1e9,-1e9];for(const q of H){bb[0]=Math.min(bb[0],q[0]);bb[1]=Math.min(bb[1],q[1]);bb[2]=Math.max(bb[2],q[0]);bb[3]=Math.max(bb[3],q[1])}
+  ctx.save();ctx.globalAlpha=cl((f+.1)*4,0,1);ink(2.4);poly(H);ctx.fillStyle=soft(bb[0]+(bb[2]-bb[0])*.3,bb[1]+(bb[3]-bb[1])*.3,bb[0]+(bb[2]-bb[0])*.5,bb[1]+(bb[3]-bb[1])*.55,Math.max(bb[2]-bb[0],bb[3]-bb[1])*.75,S.beard,.18,.3);ctx.fill();ctx.stroke();
+  if(f>.25){ctx.strokeStyle='rgba(60,20,6,.38)';ctx.lineWidth=1;ctx.lineCap='round';for(const sd of[-.28,.28]){const a=hP(Vh,h,nod([Rh*.98,sd*Rh,-Rh*.62])),b=hP(Vh,h,nod([Rh*.94,sd*Rh*.7,-Rh*1.2]));seg(a,b);ctx.stroke()}}
+  ctx.restore()}
+// the Cacciatrice's ponytail: a soft tapered lock of hair from the back of her head, hanging down behind the neck; it swings a little
+function ponytail(Vh,h,Rh,S,nod,sw){const col=S.hair||S.hood,pts=[[-.9*Rh,0,.2*Rh],[-1.25*Rh,sw*.6,-.25*Rh],[-1.42*Rh,sw*1.3,-.85*Rh],[-1.4*Rh,sw*2,-1.45*Rh]].map(v=>hP(Vh,h,nod(v))),rs=[3.3,3.1,2.4,1.2];
+  ctx.fillStyle=INK;for(let i=0;i<3;i++){hull(pts[i],rs[i]+1.3,pts[i+1],rs[i+1]+1.3);ctx.fill()}
+  const bb=[1e9,1e9,-1e9,-1e9];for(const q of pts){bb[0]=Math.min(bb[0],q[0]-3);bb[1]=Math.min(bb[1],q[1]-3);bb[2]=Math.max(bb[2],q[0]+3);bb[3]=Math.max(bb[3],q[1]+3)}
+  ctx.fillStyle=soft(bb[0]+(bb[2]-bb[0])*.3,bb[1]+(bb[3]-bb[1])*.2,(bb[0]+bb[2])/2,(bb[1]+bb[3])/2,Math.max(bb[2]-bb[0],bb[3]-bb[1])*.8,col,.2,.3);for(let i=0;i<3;i++){hull(pts[i],rs[i],pts[i+1],rs[i+1]);ctx.fill()}
+  ctx.strokeStyle='rgba(90,50,10,.35)';ctx.lineWidth=.8;ctx.lineCap='round';line([lerp3([...pts[0],0],[...pts[1],0],.5).slice(0,2),pts[2],pts[3]]);ctx.stroke()}
+// the Druid's antlers: two crooked branches of pale wood from the top of his head, each with two tines (as in the game, without buds)
+function deerAntlers(Vh,h,Rh,nod){for(const sd of[-1,1]){const b0=nod([-.1*Rh,sd*.48*Rh,.78*Rh]),p1=add(b0,nod([-.4,sd*3.8,10])),p2=add(p1,nod([-.4,sd*6,5])),t1=add(lerp3(b0,p1,.7),nod([.3,-sd*4.6,6.6])),t2=add(lerp3(p1,p2,.45),nod([-.2,sd*1.2,6.5]));
+  const L=[[b0,p1,p2],[lerp3(b0,p1,.7),t1],[lerp3(p1,p2,.45),t2]].map(l=>l.map(v=>hP(Vh,h,v)));ctx.lineCap='round';ctx.lineJoin='round';
+  ctx.strokeStyle=INK;ctx.lineWidth=4.6;for(const l of L){line(l);ctx.stroke()}ctx.strokeStyle='#c9a26a';ctx.lineWidth=2.3;for(const l of L){line(l);ctx.stroke()}
+  ctx.strokeStyle='rgba(255,240,210,.45)';ctx.lineWidth=.8;line(L[0]);ctx.stroke()}}
+// the Witch's crown of branches: two crooked antlers from the top of the head, each with a fork, green buds at the tips (orange in her
+// second phase). Drawn behind the head, so they grow out of it
+function antlers(Vh,h,Rh,S,nod){const bud=S.p2?'#ff8a3c':'#7bbf4a';
+  for(const sd of[-1,1]){const b0=nod([-.1*Rh,sd*.36*Rh,.86*Rh]),p1=add(b0,nod([-.6,sd*4.6,12.5])),p2=add(p1,nod([-.4,sd*5.8,4.6])),pb=lerp3(b0,p1,.7),pc=add(pb,nod([.4,-sd*4.6,7.8]));
+    const L=[[b0,p1,p2],[pb,pc]].map(l=>l.map(v=>hP(Vh,h,v)));ctx.lineCap='round';ctx.lineJoin='round';
+    ctx.strokeStyle=INK;ctx.lineWidth=5.2;for(const l of L){line(l);ctx.stroke()}ctx.strokeStyle='#7a5a3a';ctx.lineWidth=2.6;for(const l of L){line(l);ctx.stroke()}
+    ctx.strokeStyle='rgba(255,230,190,.35)';ctx.lineWidth=.9;line(L[0]);ctx.stroke();
+    ink(1.4);for(const v of[p2,pc]){const q=hP(Vh,h,v);shine(S.p2?'255,138,60':'123,191,74',q[0],q[1],6,.35);ctx.fillStyle=bud;ball(q,2.4);ctx.fill();ctx.stroke();ctx.fillStyle='rgba(255,255,255,.55)';ball([q[0]-.7,q[1]-.8],.7);ctx.fill()}}}
+// the Ice Queen's tiara: five ice spikes on the front of the head (the middle one tallest), white to ice blue, a cold glow and a gem at
+// the foot of the middle one (purple in her second phase). front: draw the spikes on our side (after the head) or the far ones (before)
+function tiara(Vh,h,Rh,S,nod,front){const H=[7,10,14,10,7];
+  for(let i=0;i<5;i++){const a=(i-2)*.6,out=nod([Math.cos(a),Math.sin(a),0]);if((Vh.F(out)>=-.05)!==front)continue;
+    const b=nod(mul(nrm([Math.cos(a)*.6,Math.sin(a)*.6,.8]),Rh*.9)),up=nod([Math.cos(a)*.16,Math.sin(a)*.16,1]),sd=nod([-Math.sin(a),Math.cos(a),0]),hh=H[i];
+    const q0=hP(Vh,h,add(b,mul(sd,-2.4))),q1=hP(Vh,h,add(b,mul(up,hh))),q2=hP(Vh,h,add(b,mul(sd,2.4)));
+    shine('159,230,255',q1[0],(q1[1]+q0[1])/2,hh*.7,.22);const g=ctx.createLinearGradient(0,q1[1],0,Math.max(q0[1],q2[1]));g.addColorStop(0,'#ffffff');g.addColorStop(1,'#7fc8f0');
+    ink(1.8);ctx.beginPath();ctx.moveTo(q0[0],q0[1]);ctx.lineTo(q1[0],q1[1]);ctx.lineTo(q2[0],q2[1]);ctx.closePath();ctx.fillStyle=g;ctx.fill();ctx.stroke();
+    ctx.strokeStyle='rgba(255,255,255,.75)';ctx.lineWidth=.8;seg([lerp(q0[0],q1[0],.2),lerp(q0[1],q1[1],.2)],[lerp(q0[0],q1[0],.8),lerp(q0[1],q1[1],.8)]);ctx.stroke()}
+  if(front){const d=nod([.6,0,.8]),v=Vh.F(nrm(d));if(v>-.05){const q=hP(Vh,h,mul(nrm(d),Rh*.94)),c=S.p2?'#c48aff':'#5fd0ff';shine(S.p2?'196,138,255':'95,208,255',q[0],q[1],7,.5);ink(1.2);ball(q,2.2);ctx.fillStyle=c;ctx.fill();ctx.stroke();ctx.fillStyle='#fff';ball([q[0]-.6,q[1]-.7],.6);ctx.fill()}}}
 // the moss stick from the mouth: green, a glowing tip that brightens on each drag, a puff of smoke after it
 function mossStick(Vh,h,Rh,md,dd,o,front){const a3=mul(md,Rh*.92),b3=add(a3,mul(dd,5.4)),A=sp(Vh,h,1,a3),B=sp(Vh,h,1,b3),t=G.t,inh=o.inhale||0,pulse=.72+.12*Math.sin(t*3.1)+.55*inh;
   ctx.lineCap='round';ctx.strokeStyle=INK;ctx.lineWidth=3.1;seg(A,B);ctx.stroke();ctx.strokeStyle=HC.moss;ctx.lineWidth=1.8;seg(A,B);ctx.stroke();
@@ -251,16 +348,19 @@ function pose(anim,p,o){const ph=p*TAU,A={B:[0,0,0],lean:.02,roll:0,s:0,sx:0,hd:
 // crossbow), else the bow of the card. How it is held (cls): 'one' a hand gun in the right hand, the left hand free at the side; 'long'
 // the right hand on the grip and the left on the fore-grip (or on the pump, which it works); 'shoulder' the rocket launcher on the right
 // shoulder; 'xbow' the crossbow like a long gun; 'staff' upright in the right hand, its foot near the ground, the orb beside the head.
-const WCLS={pistola:'one',revolver:'one',mitraglietta:'long',mitra:'long',mitragliatrice:'long',pompa:'long',tattica:'long',lanciarazzi:'shoulder',balestra:'xbow',bastone:'staff'};
+const WCLS={pistola:'one',revolver:'one',mitraglietta:'long',mitra:'long',mitragliatrice:'long',pompa:'long',tattica:'long',lanciarazzi:'shoulder',balestra:'xbow',bastone:'staff',
+  scettro:'staff',martello:'hammer',bomba:'one'};
 // the size of each (1 = the units of the zombie guns' profiles, a little smaller than the game's 2D guns, which are drawn at 1.35)
-const WSZ={pistola:1.22,revolver:1.1,mitraglietta:1.12,mitra:1,mitragliatrice:.92,pompa:.92,tattica:1.02,lanciarazzi:.95,balestra:1,bastone:.95};
+const WSZ={pistola:1.22,revolver:1.1,mitraglietta:1.12,mitra:1,mitragliatrice:.92,pompa:.92,tattica:1.02,lanciarazzi:.95,balestra:1,bastone:.95,scettro:.95,martello:1,bomba:1};
 // rest: [the right hand (on the grip), pitch (down < 0), yaw (toward the middle < 0)] for standing and walking; aim: the same when it
 // shoots; anc: a point of the weapon at rest, which gives it its place in the draw order (always the same, as for every part)
 const HOLD={one:{rest:[[10,8.6,9.4],-.26,-.2],aim:[[12.6,9.4,12.8],0,-.04],anc:[14,8,9.5]},
   long:{rest:[[6.4,8.8,9.2],-.2,-.36],aim:[[5.6,9.2,12.2],0,-.02],anc:[11,7,9]},
   shoulder:{rest:[[2.6,8.9,11.1],-.07,0],aim:[[3.6,8.9,11.2],0,0],anc:[3,8.9,17]},
   xbow:{rest:[[8,8,9.2],-.2,-.26],aim:[[9,8.4,12.8],0,-.02],anc:[11,7,9.5]},
-  staff:{rest:[[-3,12.6,14.4],[-.12,.12,1]],aim:[[8,9.6,13.2],[1,-.08,.45]],anc:[-3,13,16]}};
+  staff:{rest:[[-3,12.6,14.4],[-.12,.12,1]],aim:[[8,9.6,13.2],[1,-.08,.45]],anc:[-3,13,16]},
+  // the Fabbro's hammer: both hands on the handle at the right side, the head forward and down
+  hammer:{rest:[[7.6,9.4,10.4],-.16,-.08],aim:[[9,9,12],0,-.04],anc:[13,9,10.5]}};
 // (the guns are held at the right side of the body, so from behind they still show beside it, and from the front the gun pointing at
 // us is beside the belly, not over it; the anchors are chosen so that from every side the weapon goes in front of the body when it is
 // on the side we see, behind it when it is on the other side; the staff stands at the right side a little behind the middle, so its
@@ -268,9 +368,11 @@ const HOLD={one:{rest:[[10,8.6,9.4],-.26,-.2],aim:[[12.6,9.4,12.8],0,-.04],anc:[
 // the shots of one 'shoot' cycle: n shots, the first at off; pump: when the pump goes back and forth after a shot (in parts of the time
 // between two shots); rel: the reload after a shot (rocket, crossbow)
 const FIRE={pistola:{n:3,off:.04},revolver:{n:2,off:.06},mitraglietta:{n:10,off:.02},mitra:{n:6,off:.03},mitragliatrice:{n:12,off:.02},
-  pompa:{n:1,off:.08,pump:[.2,.56]},tattica:{n:2,off:.06,pump:[.3,.74]},lanciarazzi:{n:1,off:.12,rel:[.32,.78]},balestra:{n:1,off:.14,rel:[.36,.84]},bastone:{n:1,off:.3}};
-const KICK={pistola:[1.6,.12],revolver:[2.6,.32],mitraglietta:[.9,.05],mitra:[1.4,.07],mitragliatrice:[1.2,.04],pompa:[3,.2],tattica:[2.4,.18],lanciarazzi:[3.4,.14],balestra:[1.2,.08],bastone:[0,0]};
-function weaponOf(S0){if(S0.gun&&WCLS[S0.gun])return S0.gun;if(S0.held==='staff')return'bastone';if(S0.held==='xbow'||S0.weapon==='balestra')return'balestra';if(S0.held===null)return null;return'arco'}
+  pompa:{n:1,off:.08,pump:[.2,.56]},tattica:{n:2,off:.06,pump:[.3,.74]},lanciarazzi:{n:1,off:.12,rel:[.32,.78]},balestra:{n:1,off:.14,rel:[.36,.84]},bastone:{n:1,off:.3},
+  scettro:{n:1,off:.3},martello:{n:1,off:.1},bomba:{n:1,off:.1}};
+const KICK={pistola:[1.6,.12],revolver:[2.6,.32],mitraglietta:[.9,.05],mitra:[1.4,.07],mitragliatrice:[1.2,.04],pompa:[3,.2],tattica:[2.4,.18],lanciarazzi:[3.4,.14],balestra:[1.2,.08],bastone:[0,0],
+  scettro:[0,0],martello:[0,0],bomba:[0,0]};
+function weaponOf(S0){if(S0.held==='scettro'||S0.held==='martello'||S0.held==='bomba')return S0.held;if(S0.gun&&WCLS[S0.gun])return S0.gun;if(S0.held==='staff')return'bastone';if(S0.held==='xbow'||S0.weapon==='balestra')return'balestra';if(S0.held===null)return null;return'arco'}
 const dirPY=(pitch,yaw)=>nrm([Math.cos(pitch)*Math.cos(yaw),Math.cos(pitch)*Math.sin(yaw),Math.sin(pitch)]);
 const bump=k=>k<=0||k>=1?0:Math.sin(k*Math.PI);
 // where the weapon is and what its moving parts do, for this move at p (only p: the cycle closes on itself). It reuses the body of the
@@ -283,7 +385,7 @@ function wpose0(A,anim,p,id,o){o=o||{};const cls=WCLS[id],H=HOLD[cls],dg=sub(A.g
     if(anim==='walk')tilt(staff?.08*Math.sin(p*TAU):.05*Math.sin(p*TAU*2));
     if(anim==='dash')tilt((staff?-.5:.34)*Math.sin(cl((p-.16)/.4,0,1)*Math.PI));
     if(anim==='hit'){const kb=p<.12?ez(p/.12):Math.exp(-(p-.12)*6)*Math.cos((p-.12)*16);tilt((staff?-.4:.3)*kb)}
-    if(id==='bastone')W.st.glow=.6+.25*Math.sin(p*TAU);
+    if(id==='bastone'||id==='scettro')W.st.glow=.6+.25*Math.sin(p*TAU);if(id==='martello')W.st.hot=o.hot||0;
     return W}
   // aiming and shooting: the aim hold, breathing a little
   set(H.aim,[0,0,.15*Math.sin(p*TAU)]);if(anim==='aim'){if(id==='bastone')W.st.glow=.8;
@@ -305,7 +407,31 @@ function wpose0(A,anim,p,id,o){o=o||{};const cls=WCLS[id],H=HOLD[cls],dg=sub(A.g
   const ph=(a,c,inn,out)=>q>=a-inn&&q<a?{ph:1,t:(q-a+inn)/inn}:q>=a&&q<c?{ph:2,t:(q-a)/(c-a)}:q>=c&&q<c+out?{ph:3,t:(q-c)/out}:null;
   if(id==='lanciarazzi'){const[a,c]=F.rel;W.st.loaded=q<a?0:q<c?ez((q-a)/(c-a)):1;W.load=ph(a,c,.1,.1)}
   if(id==='balestra'){const[a,c]=F.rel;W.st.draw=q<.02?1-q/.02:q<a?0:q<c?ez((q-a)/(c-a)):1;W.st.bolt=q>=c+.05||q<.004;W.pull=ph(a,c,.1,.12)}
-  if(id==='bastone'){// the cast: the staff goes up high (the orb above the head, brighter), strikes forward (the orb flares, leaves
+  if(id==='scettro'&&o.staffMove==='summon'){// the summoning: the staff goes up high and stays there while the orb flares, the free hand
+    // rises too, then both come down
+    const r0=H.rest,UP=[[1.2,10.6,21.5],[.1,.04,1]],k=q<.22?ez(q/.22):q<.78?1:1-ez((q-.78)/.22);
+    W.grip=lerp3(r0[0],UP[0],k);W.aim=nrm(lerp3(nrm(r0[1]),nrm(UP[1]),k));W.up=[1,0,0];W.st.glow=.75+1.1*k+(q>.22&&q<.78?.25*Math.sin(q*TAU*6):0);
+    W.hL=lerp3(W.hL,[2.5,-10.5,19.5],k);W.flash=0;W.cast=-1;W.summon=q>.18&&q<.82?(q-.18)/.64:-1;W.rec=0;W.shots=[];return W}
+  if(id==='martello'){const r0=H.rest,RG=r0[0],RA=dirPY(r0[1],r0[2]);W.rec=0;W.flash=0;W.shots=[];
+    if(o.hammerMove==='forge'){// raised high over the head, glowing like the forge, then down again
+      const k=q<.25?ez(q/.25):q<.75?1:1-ez((q-.75)/.25);W.grip=lerp3(RG,[1.5,7.5,25],k);W.aim=nrm(lerp3(RA,nrm([.18,-.05,1]),k));W.up=[1,0,0];
+      W.st.hot=Math.max(o.hot||0,k*(.75+.25*Math.sin(q*TAU*5)));W.lean=-.06*k;W.impact=-1;return W}
+    // the slam: .0-.38 winds up over the right shoulder, .38-.47 smashes down in front, .47 the blow, .47-.62 holds, .62-1 lifts it back
+    const WG=[-3,8.6,23.5],WA=nrm([-.42,.08,.9]),SG=[12.5,6,10.5],SA=nrm([.96,-.04,-.28]);let g,d,ln=0,bd=[0,0,0];
+    if(q<.38){const k=ez(q/.38);g=lerp3(RG,WG,k);d=nrm(lerp3(RA,WA,k));ln=-.12*k;bd=[-1*k,0,0]}
+    else if(q<.47){const k=(q-.38)/.09,kk=k*k;g=lerp3(WG,SG,kk);d=nrm(lerp3(WA,SA,kk));ln=lerp(-.12,.16,kk);bd=[lerp(-1,1.4,kk),0,0]}
+    else if(q<.62){g=SG;d=SA;ln=.16;bd=[1.4,0,-.4]}
+    else{const k=ez((q-.62)/.38);g=lerp3(SG,RG,k);d=nrm(lerp3(SA,RA,k));ln=.16*(1-k);bd=[1.4*(1-k),0,0]}
+    W.grip=g;W.aim=nrm(d);W.up=[0,0,1];W.st.hot=Math.max(o.hot||0,q<.47?ez(cl(q/.38,0,1))*.6:.6*(1-cl((q-.47)/.3,0,1)));
+    W.impact=q>=.47?q-.47:-1;W.lean=ln;W.body=bd;W.sq=q>=.47&&q<.56?-.06*Math.sin((q-.47)/.09*Math.PI):0;return W}
+  if(id==='bomba'){// the throw: .0-.36 the bomb goes back over the shoulder, .36-.46 the arm swings forward, .44 it leaves the hand and flies
+    // on in an arc; a new one pops into the hand at .8
+    const r0=H.rest,RG=r0[0],RA=dirPY(r0[1],r0[2]),BG=[-5,9.5,21],BA=nrm([-.3,0,1]),TG=[14,6.6,16.5],TA=nrm([1,0,.3]);let g,d,ln=0;
+    if(q<.36){const k=ez(q/.36);g=lerp3(RG,BG,k);d=nrm(lerp3(RA,BA,k));ln=-.1*k}
+    else if(q<.46){const k=(q-.36)/.1;g=lerp3(BG,TG,k);d=nrm(lerp3(BA,TA,k));ln=lerp(-.1,.12,k)}
+    else{const k=ez(cl((q-.46)/.4,0,1));g=lerp3(TG,RG,k);d=nrm(lerp3(TA,RA,k));ln=.12*(1-k)}
+    W.grip=g;W.aim=d;W.up=[0,0,1];W.st.has=q<.44?1:q<.8?0:ez(cl((q-.8)/.12,0,1));W.cast=q>=.44?q-.44:-1;W.rel=TG;W.lean=ln;W.rec=0;W.flash=0;W.shots=[];return W}
+  if(id==='bastone'||id==='scettro'){// the cast: the staff goes up high (the orb above the head, brighter), strikes forward (the orb flares, leaves
     // burst out), holds a moment, then goes back to the side
     const r0=H.rest,r1=H.aim,UP=[[-.6,11.4,18.6],[0,.06,1]];let g,d;
     if(q<.24){const k=ez(q/.24);g=lerp3(r0[0],UP[0],k);d=lerp3(nrm(r0[1]),nrm(UP[1]),k)}
@@ -341,7 +467,15 @@ function weaponParts(parts,V0,X,S,Wp,wid,o){const{D}=V0,cls=Wp.cls,r=Wp.rec,kk=W
   // the recoil: the weapon goes back along its aim and the muzzle goes up, round the hand
   let aimB=Wp.aim,upB=Wp.up;if(r>0&&kk[1]){const th=kk[1]*r,c=Math.cos(th),sn=Math.sin(th);[aimB,upB]=[add(mul(aimB,c),mul(upB,sn)),sub(mul(upB,c),mul(aimB,sn))]}
   const g3=X.T(sub(Wp.grip,mul(Wp.aim,kk[0]*r*.55))),fr=ARMI3D.frame(g3,nrm(X.Rd(aimB)),nrm(X.Rd(upB)),Wp.s);
-  parts.push({d:D(X.T(HOLD[cls].anc)),f:()=>{const st={...Wp.st};if(wid==='balestra')st.col=S.bowCol;if(wid==='bastone')st.orbCol=S.eyeCol||'#9fff7a';
+  // the hammer's blow: a ring of dust and a few sparks on the floor under its head; the bomb flying on after the throw
+  if(wid==='martello'&&fx&&Wp.impact>=0&&Wp.impact<.32&&!LOWFX){const fc=add(fr.O,mul(add(mul(fr.X,20.7),mul(fr.Y,-9)),fr.s)),gp=[fc[0],fc[1],0],k=Wp.impact/.32;
+    parts.push({d:D(gp)+3,f:()=>{const q=V0.P(gp);ctx.save();ctx.globalAlpha=(1-k)*.8;ctx.strokeStyle='rgba(220,205,175,.9)';ctx.lineWidth=2.4*(1-k)+.6;ctx.beginPath();ctx.ellipse(q[0],q[1],6+k*26,(6+k*26)*.45*KR(),0,0,TAU);ctx.stroke();
+      for(let i=0;i<6;i++){const a=i/6*TAU+.4,r=4+k*22;ctx.fillStyle=`rgba(225,210,180,${(.5*(1-k)).toFixed(3)})`;ball([q[0]+Math.cos(a)*r,q[1]+Math.sin(a)*r*.45-k*6],2+k*3.5);ctx.fill()}
+      for(let i=0;i<4;i++){const a=-Math.PI/2+(i-1.5)*.5,r=k*20;ctx.fillStyle=i%2?'#ffd86b':'#ff8a3c';ball([q[0]+Math.cos(a)*r,q[1]+Math.sin(a)*r-k*k*-8],1.3*(1-k)+.3);ctx.fill()}ctx.restore()}})}
+  if(wid==='bomba'&&fx&&Wp.cast>=0&&Wp.cast<.36){const k=Wp.cast/.36,a0=X.T(Wp.rel),fw=X.Rd([1,0,0]),c=add(add(a0,mul(fw,k*48)),[0,0,Math.sin(k*Math.PI)*14-k*9]);
+    parts.push({d:D(c),f:()=>{const q=V0.P(c),r=4.8;ink(2.2);ball(q,r);ctx.fillStyle=soft(q[0]-r*.36,q[1]-r*.42,q[0],q[1],r*1.2,'#2e2e36',.3,.4);ctx.fill();ctx.stroke();
+      const f=[q[0]+1.4,q[1]-r-1.6];ctx.strokeStyle='#8a6a44';ctx.lineWidth=1.4;seg([q[0],q[1]-r+.4],f);ctx.stroke();shine('255,200,90',f[0],f[1],6,.85);ctx.fillStyle='#fff3c0';ball(f,1.1);ctx.fill()}})}
+  parts.push({d:D(X.T(HOLD[cls].anc)),f:()=>{const st={...Wp.st};if(wid==='balestra')st.col=S.bowCol;if(wid==='bastone'||wid==='scettro')st.orbCol=S.eyeCol||'#9fff7a';
     ARMI3D.draw(wid,V0,fr,st,(K,kp)=>{
       // where the muzzle is on the screen (o.out, in the hero's own units from his feet): the zombie map fires its shots from there
       if(o.out&&kp.muzzle)o.out.muzzle=K.P(K.W(kp.muzzle));
@@ -356,7 +490,7 @@ function weaponParts(parts,V0,X,S,Wp,wid,o){const{D}=V0,cls=Wp.cls,r=Wp.rec,kk=W
       // the flash at the muzzle (and the rocket's blast behind), the orb flaring
       if(Wp.flash>0&&kp.muzzle&&ARMI3D.ZOMBIE.includes(wid))flashFx(K,wid,kp.muzzle,Wp.flash,(Wp.k||0)*7+3);
       if(wid==='lanciarazzi'&&Wp.flash>0&&kp.back)flashFx(K,wid,kp.back,Wp.flash,11,true);
-      if(wid==='bastone'&&Wp.flash>0){const rgb=hexRgb(S.eyeCol||'#9fff7a');K.fx(kp.orb,q=>{shine(rgb,q[0],q[1],18*Wp.flash+6,.75*Wp.flash);ctx.strokeStyle=`rgba(234,255,214,${(.8*Wp.flash).toFixed(3)})`;ctx.lineWidth=1.4;ball(q,4+(1-Wp.flash)*9);ctx.stroke()},2)}
+      if((wid==='bastone'||wid==='scettro')&&Wp.flash>0){const rgb=hexRgb(S.eyeCol||'#9fff7a');K.fx(kp.orb,q=>{shine(rgb,q[0],q[1],18*Wp.flash+6,.75*Wp.flash);ctx.strokeStyle=`rgba(234,255,214,${(.8*Wp.flash).toFixed(3)})`;ctx.lineWidth=1.4;ball(q,4+(1-Wp.flash)*9);ctx.stroke()},2)}
       if(!fx)return;
       // effects: the bullets, the shotgun's pellets, the rocket, the smoke, the spent cases, the bolt, the leaves
       const D0=typeof ARMI!=='undefined'?ARMI.DATI[wid]:null,mz=kp.muzzle;
@@ -372,6 +506,12 @@ function weaponParts(parts,V0,X,S,Wp,wid,o){const{D}=V0,cls=Wp.cls,r=Wp.rec,kk=W
         K.fx(c,q=>{try{ARMI.bossolo(D0.bossolo,q[0],q[1],k*14,cl((1-k)*3,0,1))}catch(e){}},.5)}
       if(wid==='balestra')for(const a of Wp.shots){const d=a*700,al=cl(1-a/.12,0,1);if(al<=0)continue;const c0=add(mz,[d/K.s-9,0,0]),c1=add(mz,[d/K.s,0,0]);
         K.fx(c1,()=>boltFx(V0,K.W(c0),K.W(c1),al),0)}
+      if(wid==='scettro'&&kp.orb){const rgb=hexRgb(S.eyeCol||'#9fff7a');
+        // the cast: sparks of the orb's colour burst forward; the summoning: three lights circle round the orb, wider and wider
+        if(Wp.cast>=0&&Wp.cast<.3)for(let i=0;i<6;i++){const k=Wp.cast/.3,an=(i-2.5)*.2,c=add(kp.orb,[2+k*30*Math.cos(an),Math.sin(i*2.1)*k*5,k*30*Math.sin(an)]);
+          K.fx(c,q=>{shine(rgb,q[0],q[1],5*(1-k)+2,.6*(1-k));ctx.fillStyle=`rgba(255,255,255,${(.9*(1-k)).toFixed(3)})`;ball(q,1.1*(1-k)+.3);ctx.fill()},0)}
+        if(Wp.summon>=0)K.fx(kp.orb,q=>{const k=Wp.summon,R0=(5+k*9)*K.s;shine(rgb,q[0],q[1],R0*1.6,.35+.25*Math.sin(k*Math.PI));
+          for(let i=0;i<3;i++){const a=G.t*4+i*2.1;ctx.fillStyle=`rgba(${rgb},.9)`;ball([q[0]+Math.cos(a)*R0,q[1]+Math.sin(a)*R0*.55],1.6);ctx.fill();ctx.fillStyle='rgba(255,255,255,.85)';ball([q[0]+Math.cos(a)*R0,q[1]+Math.sin(a)*R0*.55],.7);ctx.fill()}},1)}
       if(wid==='bastone'&&Wp.cast>=0&&Wp.cast<.3)for(let i=0;i<5;i++){const k=Wp.cast/.3,an=(i-2)*.22,c=add(kp.orb,[3+k*34*Math.cos(an),Math.sin(i*2.1)*k*4,k*34*Math.sin(an)]);
         K.fx(c,q=>{ctx.save();ctx.translate(q[0],q[1]);ctx.rotate(G.t*9+i*1.3);ctx.globalAlpha=cl((1-k)*2,0,1);ink(1);ctx.fillStyle='#7bf0a8';ctx.beginPath();ctx.ellipse(0,0,2.6,1.3,0,0,TAU);ctx.fill();ctx.stroke();
           ctx.strokeStyle='rgba(30,90,40,.7)';ctx.lineWidth=.5;seg([-2,0],[2,0]);ctx.stroke();ctx.restore()},0)}
@@ -381,8 +521,10 @@ function weaponParts(parts,V0,X,S,Wp,wid,o){const{D}=V0,cls=Wp.cls,r=Wp.rec,kk=W
 const hexRgb=h=>{const n=parseInt(String(h).slice(1),16);return`${n>>16},${n>>8&255},${n&255}`};
 
 // ------------------------------------------------------------------ the hero
-function arciere(x,y,face,anim,p,sc,o){sc=sc||1;o=o||{};const S0=o.style||{},arm=S0.armor&&ARM[S0.armor]?S0.armor:'giubba',wk=S0.weapon;
-  const S={...S0,body:S0.body||ARM[arm][0],hood:S0.hood||ARM[arm][1],skin:S0.skin||HC.skin,belt:S0.belt||HC.belt};
+// the body being drawn is the robe or the tunic: set for this one drawing, and always put back afterwards
+function arciere(x,y,face,anim,p,sc,o){const S0=(o&&o.style)||{};BP=S0.robe?ROBE:PROF;BZ=S0.robe?0:ZB;try{arciere0(x,y,face,anim,p,sc,o)}finally{BP=PROF;BZ=ZB}}
+function arciere0(x,y,face,anim,p,sc,o){sc=sc||1;o=o||{};const S0=o.style||{},arm=S0.armor==='none'?'none':S0.armor&&ARM[S0.armor]?S0.armor:'giubba',wk=S0.weapon,AR=ARM[arm]||ARM.giubba;
+  const S={...S0,body:S0.body||AR[0],hood:S0.hood||AR[1],skin:S0.skin||HC.skin,belt:S0.belt===null?null:S0.belt||HC.belt};
   const W3=typeof ARMI3D!=='undefined'?ARMI3D:null,wid=weaponOf(S0),isX=wid==='balestra',gunW=W3&&wid&&wid!=='arco';
   let bk=S0.bowKind!==undefined?S0.bowKind:(wk&&BOWS[wk]?BOWS[wk][1]:null);if(bk==='plain'||bk==='xbow')bk=null;
   S.bowKind=bk;S.bowCol=S0.bowCol||(wk&&BOWS[wk]?BOWS[wk][0]:HC.bow);
@@ -390,7 +532,11 @@ function arciere(x,y,face,anim,p,sc,o){sc=sc||1;o=o||{};const S0=o.style||{},arm
   // with a gun, the crossbow or the staff: the body of the bow's pose for standing, walking, the dash and the knock back; when it aims
   // or shoots, a firm stance that breathes, eyes narrowed, the body pushed back a little by each shot
   if(gunW){if(anim==='shoot'||anim==='aim'){A=pose('idle',p,o);A.fL=[2.2,-5.2,0];A.fR=[-1,5,0];A.hd=[.3,0,0];A.hp=.04;A.hy=0;A.squint=anim==='shoot'?.55:.35;A.inhale=A.exhale=0}
-    Wp=wpose(A,anim,p,wid,o);if(Wp.rec>0&&Wp.kick){const k=Wp.rec*Wp.kick[0]/3;A.lean=.02-.06*k;A.B=add(A.B,[-.7*k,0,0]);A.hd=add(A.hd,[-.4*k,0,.1*k])}}
+    Wp=wpose(A,anim,p,wid,o);if(Wp.rec>0&&Wp.kick){const k=Wp.rec*Wp.kick[0]/3;A.lean=.02-.06*k;A.B=add(A.B,[-.7*k,0,0]);A.hd=add(A.hd,[-.4*k,0,.1*k])}
+    // the hammer's blow and the bomb's throw move the whole body: back on the wind-up, forward on the strike
+    if(Wp.lean!=null){A.lean=Wp.lean;A.hd=add(A.hd,[Wp.lean*3,0,0]);if(Wp.body)A.B=add(A.B,Wp.body);if(Wp.sq)A.s=Wp.sq}}
+  // the mages float in the air (style.float): a slow bob instead of the steps
+  if(S0.float){const fl=7+2.4*Math.sin(p*TAU+.4);A.B=[A.B[0],A.B[1],A.B[2]*(anim==='walk'?.2:1)+fl];A.roll*=.4}
   const X=frame(A);
   // the shadow on the floor, smaller when the hero is up in the air
   {const lift=cl(A.B[2]/6,0,1),q=P(A.B[0]+.5,A.B[1],0);shadow(x+q[0]*sc,y+q[1]*sc,13.5*sc*(1-.2*lift),5.4*sc*KR()*(1-.2*lift),.3)}
@@ -401,12 +547,12 @@ function arciere(x,y,face,anim,p,sc,o){sc=sc||1;o=o||{};const S0=o.style||{},arm
   if(!o.noFx&&A.dust>=0&&!LOWFX)parts.push({d:D([-8,0,3]),f:()=>{for(let i=0;i<4;i++){const k=A.dust,q=P([-2-k*9-i*2.4,(i-1.5)*3.4,1+k*3+i*.4]);ctx.fillStyle=`rgba(220,205,170,${.42*(1-k)})`;ball(q,2+k*4.2+i*.6);ctx.fill()}}});
   if(!o.noFx&&A.speed>0&&!LOWFX)parts.push({d:D(X.T([-14,0,ZB+8])),f:()=>{for(let i=0;i<5;i++){const z=4+i*5,a=X.T([-12,(i-2)*3.6,z]),b=add(a,[-8-6*A.speed-(i%2)*3,0,0]),A2=P(a),B2=P(b);ctx.strokeStyle=`rgba(255,255,255,${.6*A.speed})`;ctx.lineWidth=1.6;ctx.lineCap='round';seg(A2,B2);ctx.stroke()}}});
   // the feet: always under the body, the far one darker
-  for(const[sd,f] of[[-1,A.fL],[1,A.fR]]){const far=F(0,sd,0)<0;parts.push({d:dT-100+D(f)*.01,f:()=>foot(V0,f,far?(S.foot2||HC.foot2):(S.foot||HC.foot))})}
+  if(!S0.robe&&!S0.float)for(const[sd,f] of[[-1,A.fL],[1,A.fR]]){const far=F(0,sd,0)<0;parts.push({d:dT-100+D(f)*.01,f:()=>foot(V0,f,far?(S.foot2||HC.foot2):(S.foot||HC.foot))})}
   // the mantello d'ombra hangs behind the back, over the quiver
   if(arm==='mantello_ombra')parts.push({d:D(X.T([-14,0,ZB+4])),f:()=>cape(V0,X,A.sway*.4)});
   // the tunic: the hull of the rings, three tones, the hem, the collar, seam and buttons, the strap of the quiver, the belt and its buckle
   const Hc=add(X.T([.5,0,ZB+15]),add(X.Rd([0,0,7.4]),A.hd)),hDep=D(Hc);
-  parts.push({d:dT,f:()=>{const pts=[];for(const[dz,r] of PROF)for(let i=0;i<24;i++){const t=i/24*TAU;pts.push(P(X.T([Math.cos(t)*r*AX,Math.sin(t)*r,ZB+dz])))}
+  parts.push({d:dT,f:()=>{const pts=[];for(const[dz,r] of BP)for(let i=0;i<24;i++){const t=i/24*TAU;pts.push(P(X.T([Math.cos(t)*r*AX,Math.sin(t)*r,BZ+dz])))}
     const hp=chull(pts);let x0=1e9,y0=1e9,x1=-1e9,y1=-1e9;for(const q of hp){x0=Math.min(x0,q[0]);y0=Math.min(y0,q[1]);x1=Math.max(x1,q[0]);y1=Math.max(y1,q[1])}
     const w=x1-x0,h=y1-y0,cx=(x0+x1)/2,cy=(y0+y1)/2;
     // the tunic in three tones that blend (light from the upper left), so no patch shows an edge
@@ -416,7 +562,12 @@ function arciere(x,y,face,anim,p,sc,o){sc=sc||1;o=o||{};const S0=o.style||{},arm
     {const hq=P(Hc),sy=hq[1]+Rh*.95,g=ctx.createRadialGradient(hq[0]+1.2,sy,1,hq[0]+1.2,sy,Rh*1.05);g.addColorStop(0,'rgba(0,0,0,.18)');g.addColorStop(1,'rgba(0,0,0,0)');
       ctx.save();ctx.translate(0,sy);ctx.scale(1,.4);ctx.translate(0,-sy);ctx.fillStyle=g;ctx.fillRect(hq[0]-Rh*1.3,sy-Rh*1.1,Rh*2.6,Rh*2.2);ctx.restore()}
     // the hem: a darker band all round the bottom of the tunic, only where it faces us
-    surfLine(V0,X,t=>surf(t,ZB+.9,.15),dk(S.body,.24),2.2,0);
+    surfLine(V0,X,t=>surf(t,BZ+.9,.15),dk(S.body,.24),2.2,0);
+    // the enemies' marks on the body: the ribs of the skeletons (and the spine at the back), the Fabbro's lava cracks, the green hem of the robes
+    if(S0.ribs){for(const z of[ZB+10.6,ZB+7.6,ZB+4.6])surfLine(V0,X,k=>surf(lerp(-1.05,1.05,k),z,.1),'rgba(27,22,18,.55)',1.6,1);surfLine(V0,X,k=>surf(Math.PI,lerp(ZB+12.8,ZB+2.6,k),.1),'rgba(27,22,18,.5)',2,1)}
+    if(S0.cracks){const cc=S0.p2?'#ffd86b':'#ff7a2e',rg=S0.p2?'255,216,107':'255,122,46';for(const cr of CRACKS){const at=k=>{const n=cr.length-1,i=Math.min(n-1,Math.floor(k*n)),u=k*n-i;return surf(lerp(cr[i][0],cr[i+1][0],u),lerp(cr[i][1],cr[i+1][1],u),.12)};
+        if(!LOWFX){const m=at(.5),v=F(X.Rd(m.n));if(v>.1){const q=P(X.T(m.p));shine(rg,q[0],q[1],7,.3*v)}}surfLine(V0,X,at,cc,1.6,1)}}
+    if(S0.robe)surfLine(V0,X,t=>surf(t,BZ+2.2,.15),'rgba(123,191,74,.55)',2,0);
     if(S.skinId)for(const[t,dz] of[[-.5,9.5],[.3,6.5],[-.1,3.6],[.75,11],[-.9,5.6],[2.6,8],[3.4,4.6],[-2.4,10]]){const s=surf(t,ZB+dz,.1),v=F(X.Rd(s.n));if(v>.1){const q=P(X.T(s.p));ctx.fillStyle=S.skinId==='stellato'?'#ffffff':'#f6ff9a';ball(q,.9);ctx.fill()}}
     if(arm==='cotta'){ctx.strokeStyle='rgba(20,26,34,.32)';ctx.lineWidth=.9;for(let r=0;r<6;r++)for(let c=0;c<16;c++){const s=surf(c/16*TAU+(r%2)*.2,ZB+2+r*2.1,.1),n=X.Rd(s.n);if(F(n)<.12)continue;const q=P(X.T(s.p));ctx.beginPath();ctx.arc(q[0],q[1],1.2,0,Math.PI);ctx.stroke()}}
     if(arm==='corazza_muschio')on(V0,X.T([0,0,ZB+5.5]),1,X.Rd([.76,-.3,.1]),.05,()=>{const s=surf(-.32,ZB+5.4,.2),q=P(X.T(s.p));ctx.fillStyle='rgba(95,158,60,.6)';ell(q[0],q[1],5,3);ctx.fill();ctx.fillStyle='rgba(159,224,106,.75)';for(const[a,b] of[[-3,1],[0,2.6],[2,0]]){ball([q[0]+a,q[1]+b],.9);ctx.fill()}});
@@ -425,15 +576,17 @@ function arciere(x,y,face,anim,p,sc,o){sc=sc||1;o=o||{};const S0=o.style||{},arm
       surfLine(V0,X,k=>surf(.04,lerp(ZB+10.8,ZB+6.8,k),.1),'rgba(27,22,18,.42)',1,1,[1.6,1.6]);
       for(const z of[ZB+9.9,ZB+8]){const s=surf(.17,z,.25),n=X.Rd(s.n);if(F(n)>.1){const q=P(X.T(s.p));ctx.fillStyle=HC.button;ink(.7);ball(q,.95);ctx.fill();ctx.stroke()}}}
     // the strap of the quiver: over the left shoulder, across the chest to the right hip and round the back
-    surfLine(V0,X,t=>surf(t,ZB+8.4-4.6*Math.sin(t),.35),HC.strap,1.4,0);
+    if(S0.strap!==false)surfLine(V0,X,t=>surf(t,ZB+8.4-4.6*Math.sin(t),.35),HC.strap,1.4,0);
     // the belt with the golden buckle
-    surfLine(V0,X,t=>surf(t,ZB+5.6,.3),S.belt,2.7,0,null,true);
-    {const s=surf(0,ZB+5.6,.55),n=X.Rd(s.n),v=F(n);if(v>.05){const q=P(X.T(s.p)),k=Math.max(.45,v);ctx.save();ctx.globalAlpha=cl(v*4,0,1);ink(1);ctx.fillStyle=HC.buckle;ctx.fillRect(q[0]-1.7*k,q[1]-2,3.4*k,4);ctx.strokeRect(q[0]-1.7*k,q[1]-2,3.4*k,4);ctx.fillStyle='#fff3c0';ctx.fillRect(q[0]-1.1*k,q[1]-1.4,1*k,1);ctx.fillStyle='#8a5a20';ctx.fillRect(q[0]-.5*k,q[1]-.4,1*k,1.6);ctx.restore()}}
+    if(S.belt)surfLine(V0,X,t=>surf(t,ZB+5.6,.3),S.belt,2.7,0,null,true);
+    if(S.belt){const s=surf(0,ZB+5.6,.55),n=X.Rd(s.n),v=F(n);if(v>.05){const q=P(X.T(s.p)),k=Math.max(.45,v);ctx.save();ctx.globalAlpha=cl(v*4,0,1);ink(1);ctx.fillStyle=HC.buckle;ctx.fillRect(q[0]-1.7*k,q[1]-2,3.4*k,4);ctx.strokeRect(q[0]-1.7*k,q[1]-2,3.4*k,4);ctx.fillStyle='#fff3c0';ctx.fillRect(q[0]-1.1*k,q[1]-1.4,1*k,1);ctx.fillStyle='#8a5a20';ctx.fillRect(q[0]-.5*k,q[1]-.4,1*k,1.6);ctx.restore()}}
     if(S.amu)amulet(V0,X,S.amu);
     ctx.restore();rimPoly(hp,.32);
     if(A.flash>0){ctx.save();ctx.globalAlpha=A.flash*.3;poly(hp);ctx.fillStyle='#ffffff';ctx.fill();ctx.restore()}}});
   // the quiver on the back (the balestriere keeps his bolts in it too)
-  if(S0.quiver!==false&&!S0.gun&&wid!=='bastone'){parts.push({d:D(X.T([-11,0,ZB+6])),f:()=>quiverTube(V0,X)});parts.push({d:D(X.T(QT)),f:()=>quiverArrows(V0,X,A.jig)})}
+  if(S0.quiver!==false&&!S0.gun&&wid!=='bastone'&&!NOQ[wid]){parts.push({d:D(X.T([-11,0,ZB+6])),f:()=>quiverTube(V0,X)});parts.push({d:D(X.T(QT)),f:()=>quiverArrows(V0,X,A.jig)})}
+  // the skeleton's round shield, strapped on the left side in front of the body (style.shield; style.shDmg 0..1 cracks it as it wears out)
+  if(S0.shield){const c3=X.T([7.6,-9.6,10.4]),n3=nrm(X.Rd([.78,-.62,.05]));parts.push({d:D(X.T([9,-10,10])),f:()=>shield(V0,c3,n3,9.2,S0)})}
   // the armour on the shoulders
   if(arm==='cotta'||arm==='corazza_muschio')for(const sd of[-1,1]){const c3=X.T([.2,sd*8.4,ZB+11.2]);parts.push({d:D(c3)+.05,f:()=>arm==='cotta'?pauldron(V0,c3,3.7):mossClump(V0,c3,1)})}
   // the bow and the hand that holds it, in front of the belly; the string hand at the right side (or on the string). No arms, as in the game
@@ -454,7 +607,8 @@ function arciere(x,y,face,anim,p,sc,o){sc=sc||1;o=o||{};const S0=o.style||{},arm
   parts.push({d:anim==='shoot'||anim==='aim'?D(X.T([12,0,ZB+5]))+.01:D(X.T(REST.hR)),f:()=>fist(V0,hR,2.7,S.skin)});}
   // the head turns on its own camera (the look), the face nods
   const dv=Math.atan2(Math.sin(Math.PI/2-face),Math.cos(Math.PI/2-face)),cheat=o.noCheat?0:.42*Math.sin(dv)*cl((Math.PI-Math.abs(dv))/(Math.PI/2),0,1);
-  parts.push({d:hDep,f:()=>{const Vh=Vat(face+A.hy+cheat,P(Hc),hDep);head(Vh,Rh,S,A,{blink:A.blink,squint:A.squint,shut:A.shut,mouth:A.mouth,moss:o.moss&&anim==='idle'||o.moss===2,inhale:A.inhale,exhale:A.exhale,eyeLight:o.eyeLight!==false});
+  parts.push({d:hDep,f:()=>{const Vh=Vat(face+A.hy+cheat,P(Hc),hDep);head(Vh,Rh,S,A,{blink:A.blink,squint:A.squint,shut:A.shut,mouth:A.mouth,moss:o.moss&&anim==='idle'||o.moss===2,inhale:A.inhale,exhale:A.exhale,eyeLight:o.eyeLight!==false,
+      eyeCol:S0.eyes,glow:S0.glowEyes&&S0.eyes?hexRgb(S0.eyes):null,blush:S0.blush,sway:A.sway});
     if(A.flash>0){ctx.save();ctx.globalAlpha=A.flash*.3;ball(P(Hc),Rh);ctx.fillStyle='#fff';ctx.fill();ctx.restore()}}});
   // the arrow flies off after the release, in front of the hero or behind him
   if(!o.noFx&&A.fly>=0&&A.fly<.5&&!isX){const k=A.fly/.5,a=add(sub(grip,mul(aim,BK+1)),mul(aim,k*44)),b=add(a,mul(aim,12));
@@ -463,6 +617,28 @@ function arciere(x,y,face,anim,p,sc,o){sc=sc||1;o=o||{};const S0=o.style||{},arm
   // dizzy stars when hit
   if(A.stars>0){const c0=P(add(Hc,[0,0,Rh+3.4]));for(let i=0;i<3;i++){const an=G.t*5+i*TAU/3;starS(c0[0]+Math.cos(an)*8,c0[1]+Math.sin(an)*2.6*KR(),1.9,A.stars)}}
   ctx.restore()}
+// the Fabbro's lava cracks: [angle round the body, height] along each one (two in front, two on the back)
+const CRACKS=[[[-.45,ZB+11.6],[-.2,ZB+7.4],[-.38,ZB+3]],[[.42,ZB+10],[.2,ZB+4.8]],[[2.6,ZB+11],[2.85,ZB+6.6],[2.7,ZB+3.2]],[[-2.75,ZB+9.4],[-2.95,ZB+4.4]]];
+const NOQ={scettro:1,martello:1,bomba:1};
+// the skeleton's shield: a round board of wood, thick, with an iron rim and an iron boss; seen from behind its back is darker; cracks
+// spread over it as it wears out (S.shDmg), a flash when it parries (S.shHit)
+function shield(V0,c,n,r,S){const{P,F}=V0;let u=cross(n,[0,0,1]);if(len(u)<.2)u=cross(n,[0,1,0]);u=nrm(u);const v=cross(n,u),N=22,f=F(n),th=1.1,fr=[],bk=[];
+  for(let i=0;i<N;i++){const t=i/N*TAU,d=add(mul(u,Math.cos(t)*r),mul(v,Math.sin(t)*r));fr.push(P(add(add(c,d),mul(n,th))));bk.push(P(add(add(c,d),mul(n,-th))))}
+  const H=chull(fr.concat(bk)),face=f>=0?fr:bk,q=P(add(c,mul(n,f>=0?th:-th)));
+  ink(2.6);poly(H);ctx.fillStyle='#5a3a20';ctx.fill();ctx.stroke();
+  const bb=[1e9,1e9,-1e9,-1e9];for(const p of face){bb[0]=Math.min(bb[0],p[0]);bb[1]=Math.min(bb[1],p[1]);bb[2]=Math.max(bb[2],p[0]);bb[3]=Math.max(bb[3],p[1])}
+  poly(face);ctx.fillStyle=soft(bb[0]+(bb[2]-bb[0])*.3,bb[1]+(bb[3]-bb[1])*.28,(bb[0]+bb[2])/2,(bb[1]+bb[3])/2,Math.max(bb[2]-bb[0],bb[3]-bb[1])*.7,f>=0?'#8a5a32':'#6b4a2a',.18,.3);ctx.fill();
+  if(f>=0){ctx.save();poly(face);ctx.clip();
+    // the planks, the iron rim, the boss in the middle
+    ctx.strokeStyle='rgba(40,22,10,.4)';ctx.lineWidth=.9;for(const k of[-.34,.34]){const a=P(add(add(c,mul(n,th)),add(mul(v,k*r),mul(u,-r)))),b=P(add(add(c,mul(n,th)),add(mul(v,k*r),mul(u,r))));seg(a,b);ctx.stroke()}
+    ctx.restore();const rim2=[];for(let i=0;i<N;i++){const t=i/N*TAU;rim2.push(P(add(add(c,mul(n,th+.05)),add(mul(u,Math.cos(t)*(r-1.4)),mul(v,Math.sin(t)*(r-1.4))))))}
+    ctx.strokeStyle='#9aa3ad';ctx.lineWidth=2;poly(rim2);ctx.stroke();ctx.strokeStyle='rgba(255,255,255,.35)';ctx.lineWidth=.7;ctx.stroke();
+    if(S.shDmg>0){ctx.save();poly(face);ctx.clip();ctx.strokeStyle=INK;ctx.lineWidth=1.3;ctx.lineCap='round';const nC=Math.ceil(S.shDmg*4);
+      for(let i=0;i<nC;i++){const a=-1.9+i*1.25,p0=P(add(add(c,mul(n,th)),add(mul(u,Math.cos(a)*2.4),mul(v,Math.sin(a)*2.4)))),p1=P(add(add(c,mul(n,th)),add(mul(u,Math.cos(a+.25)*r*.55),mul(v,Math.sin(a+.25)*r*.55)))),p2=P(add(add(c,mul(n,th)),add(mul(u,Math.cos(a-.1)*r*.95),mul(v,Math.sin(a-.1)*r*.95))));
+        ctx.beginPath();ctx.moveTo(p0[0],p0[1]);ctx.lineTo(p1[0],p1[1]);ctx.lineTo(p2[0],p2[1]);ctx.stroke()}ctx.restore()}
+    const bq=P(add(c,mul(n,th+.9)));ink(2);ball(bq,2.5);ctx.fillStyle=soft(bq[0]-1,bq[1]-1.2,bq[0],bq[1],3,'#c9cfd6',.4,.35);ctx.fill();ctx.stroke()}
+  if(S.shHit>0){ctx.save();ctx.globalAlpha=Math.min(1,S.shHit*3);poly(H);ctx.fillStyle='#fff';ctx.fill();ctx.restore()}
+  rimPoly(H,.25)}
 // a line drawn on the tunic: fn(k) gives a surface point for k in 0..1 (or t round the body for closed lines); only where it faces us
 function surfLine(V0,X,fn,col,w,open,dash,inked){const{P,F}=V0,N=open?14:44,runs=[];let cur=[];
   for(let i=0;i<=N;i++){const k=i/N,s=fn(open?k:k*TAU),v=F(X.Rd(s.n));if(v>.02)cur.push(P(X.T(s.p)));else if(cur.length){runs.push(cur);cur=[]}}if(cur.length)runs.push(cur);
@@ -483,4 +659,4 @@ function ringOn(V0,h3,id){const it=typeof ITEM!=='undefined'&&ITEM[id],r=it?[it.
   ink(1.1);ctx.fillStyle=r[0];ball([q[0]+1.2,q[1]+.6],1.7);ctx.fill();ctx.stroke();ctx.fillStyle=r[1];ball([q[0]+1.2,q[1]+.6],.8);ctx.fill();
   if(r[2]>=2)shine(id==='anello_gelo'?'160,220,255':id==='anello_vento'?'150,240,240':'120,170,255',q[0]+1.2,q[1]+.6,6,.32*(.5+.5*Math.sin(G.t*5)))}
 
-return{arciere,pose,ARM,BOWS,HC}})();
+return{arciere,pose,ARM,BOWS,HC,ROBE}})();
