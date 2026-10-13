@@ -677,8 +677,8 @@ function frontChain(P){const n=P.length;let iL=0,iR=0;for(let i=1;i<n;i++){if(P[
 // a: {lid (open, radians), lift (the lid jumping), shake, sink 0..1, light 0..1, chain 0..1 (0 on, 1 fallen), skull {jaw,eyes,shackle,look,
 // laugh,blink}, hand 0..1 (how far out), gun (id or null), pop 0..1 (a swap), offer 0..1, wave (angle), thumb, candles 0..1, hole 0..1}
 // What comes first depends on where the camera is (VB): the candles behind the coffin, the chain and the skull when its front faces away,
-// the open lid when it stands on the far side; then the inside, the hand, the walls that face the camera, the lid on the near side, the
-// chain and the skull in front, the candles in front
+// the open lid when it stands on the far side; then the inside, the hand, the walls that face the camera, the lid on the near side (the
+// hand when it is raised above that lid), the chain and the skull in front, the candles in front
 function disegnaBara(x,y,a,t){const sk=Math.sin(t*61)*(a.shake||0)*.5,sink=a.sink||0,dz=-sink*17,hole=a.hole||0,mound=a.mound||0;
   ctx.save();ctx.translate(x+sk*BS,y);ctx.scale(BS,BS);ctx.lineJoin='round';ctx.lineCap='round';
   // the ground: a patch of dark earth (a hole when it sinks), its shadow
@@ -704,19 +704,25 @@ function disegnaBara(x,y,a,t){const sk=Math.sin(t*61)*(a.shake||0)*.5,sink=a.sin
       for(let i=0;i<5;i++){const an=-Math.PI/2+(i-2)*.32+Math.sin(t*.9+i)*.05,L=22+6*Math.sin(t*1.7+i*1.3);ctx.fillStyle=`rgba(${GREEN},${.07*a.light})`;ctx.beginPath();ctx.moveTo(c[0]+(i-2)*2.6,c[1]);
         ctx.lineTo(c[0]+Math.cos(an-.07)*L,c[1]+Math.sin(an-.07)*L);ctx.lineTo(c[0]+Math.cos(an+.07)*L,c[1]+Math.sin(an+.07)*L);ctx.closePath();ctx.fill()}ctx.restore()}
     if(!lidNear)two(()=>baraCoperchio(a.lid,a.lift||0,dz));two(()=>baraRim(dz))}
-  // the hand and what it holds, coming out of the coffin (the gun stays level on the screen, its middle over the coffin)
+  // the hand and what it holds, coming out of the coffin (the gun stays level on the screen, its middle over the coffin). Raised higher than
+  // the top of the open lid (HB+13.6) it goes in front of that lid when the lid stands on the camera's side; the forearm stays behind
+  let late=null;
   if(open&&a.hand>0){const hz=lerp(-3,15,eo(a.hand)),bob=Math.sin(t*2.2)*.5*a.hand,M=a.gun?G[a.gun]:null,pk=a.pop||0,sc=(.62+.12*(a.offer||0))*(1-pk*.35),
       mid=M?(M.len[0]+M.len[1])/2:0,wu=M?-mid*GS*sc:-1,w=PJu(wu,-.5,HB+hz+bob+dz),base=PJu(wu*.4-1.2,0,1+dz);
     ctx.save();avambraccio(w[0]-1.1,w[1]+1.3,base[0],base[1]);
-    if(a.gun){const g=a.gun;
-      ctx.save();ctx.translate(w[0],w[1]);ctx.rotate(Math.sin(t*1.9)*.06-.05);ctx.scale(sc,sc);
-      if((a.offer||0)>0&&!OUT){ctx.save();ctx.globalCompositeOperation='lighter';glow('255,240,190',mid*GS,-3,18+4*Math.sin(t*5),.35*a.offer);ctx.restore()}
-      held(g,{hands:'ossa',oneHand:true,glow:1});ctx.restore()}
-    else{ctx.save();ctx.translate(w[0],w[1]-.8);ctx.scale(1.5,1.5);manoOssa(0,0,a.wave||0,a.thumb?'su':'aperta');ctx.restore()}
-    ctx.restore()}
-  // the walls facing the camera, the lid (closed, or open on the camera's side), the chain, the padlock, the candles in front
+    const up=lidNear&&hz+bob>13.6;if(up)ctx.restore();
+    const hand=()=>{if(up)ctx.save();
+      if(a.gun){const g=a.gun;
+        ctx.save();ctx.translate(w[0],w[1]);ctx.rotate(Math.sin(t*1.9)*.06-.05);ctx.scale(sc,sc);
+        if((a.offer||0)>0&&!OUT){ctx.save();ctx.globalCompositeOperation='lighter';glow('255,240,190',mid*GS,-3,18+4*Math.sin(t*5),.35*a.offer);ctx.restore()}
+        held(g,{hands:'ossa',oneHand:true,glow:1});ctx.restore()}
+      else{ctx.save();ctx.translate(w[0],w[1]-.8);ctx.scale(1.5,1.5);manoOssa(0,0,a.wave||0,a.thumb?'su':'aperta');ctx.restore()}
+      ctx.restore()};
+    if(up)late=hand;else hand()}
+  // the walls facing the camera, the lid (closed, or open on the camera's side), the raised hand, the chain, the padlock, the candles in front
   two(()=>baraMuri(dz));
   if(!open)two(()=>baraCoperchio(0,a.lift||0,dz));else if(lidNear)two(()=>baraCoperchio(a.lid,a.lift||0,dz));
+  if(late)late();
   if(open&&a.pop>0&&!OUT){const w=PJu(-1,-.5,HB+15+dz);for(let i=0;i<6;i++){const an=i/6*TAU+t,d=3+a.pop*-2;fumo(w[0]+Math.cos(an)*d*1.6,w[1]+Math.sin(an)*d,1-a.pop,3.2,false)}}
   if(front){catena(a.chain||0,a.lift||0,dz,7);const tl=skullAt(dz);teschio(tl[0],tl[1],a.skull||{},t,1)}
   else catena(a.chain||0,a.lift||0,dz,7,(i,d)=>!(i>5||d>.3));

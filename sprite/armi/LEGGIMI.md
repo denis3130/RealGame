@@ -70,7 +70,7 @@ Quando è chiusa, ogni tanto qualcosa bussa da dentro: il coperchio salta e il t
   `bara_fuga.png`). Una mappa le dà la sua telecamera con `ARMI.vistaBara(pj, ombra)`: `pj(u, v, z)` porta un punto della bara (u lungo la
   bara, testa a +u; v di traverso, catena e teschio sul lato +v; z in alto) sullo schermo, e il verso della telecamera si ricava da `pj`. Così la
   bara resta ferma nel mondo e la telecamera le gira intorno: si vedono le facce giuste, le maniglie su tutti e due i fianchi, e candele,
-  coperchio aperto (la cerniera è sul lato −v), catena e teschio vanno davanti o dietro secondo da dove la si guarda; quando sprofonda il taglio
+  coperchio aperto (la cerniera è sul lato −v), catena e teschio vanno davanti o dietro secondo da dove la si guarda (la mano alzata con l'arma, più alta della cima del coperchio aperto, va davanti al coperchio anche quando questo sta dalla parte della telecamera); quando sprofonda il taglio
   segue il bordo della buca verso la telecamera. La mano con l'arma resta dritta sullo schermo. `ARMI.formaBara()` dà le misure (scala, contorno,
   altezze, candele, coperchio aperto) e `ARMI.facceBara(posa)` le facce vere per i test dell'ordine di disegno.
 - Prezzo, tempi, probabilità di ogni arma e della fuga sono in `ARMI.BARA`.

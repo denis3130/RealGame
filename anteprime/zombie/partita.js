@@ -93,7 +93,7 @@ function hurtHero(n){const h=W.hero;if(h.dead||D.inv>0||D.st==='fine'||W.dbg.god
   for(let i=0;i<5;i++)W.FX.push({k:'drop',tw:[h.x,h.y,h.zh||0],x:0,y:-30,vx:rr(-50,50),vy:rr(-80,-20),t:.55});if(D.hp<=0)down()}
 function down(){const h=W.hero;D.hp=0;h.dead=true;h.moving=false;D.prev=['inizio','pausa','round'].includes(D.st)?D.st:'round';D.st='giu';D.t=0;suono('cade')}
 function revive(){const h=W.hero;D.anime=0;D.st='su';D.t=0;D.hp=PZ.vita;D.burst.push({x:h.x,y:h.y,t:0});suono('anima');W.toast=["L'anima ti rialza",2.2];
-  for(const z of W.Z){if(z.die||z.idle||z.rise<1)continue;const dx=z.x-h.x,dy=z.y-h.y,d=Math.hypot(dx,dy)||1;if(d<120){move(z,dx/d*(130-d)*.7,dy/d*(130-d)*.7,11);if(!z.ai)z.stun=1.6}}
+  for(const z of W.Z){if(z.die||z.idle||z.rise<1)continue;const dx=z.x-h.x,dy=z.y-h.y,d=Math.hypot(dx,dy)||1;if(d<120){const L=(130-d)*.7,n=Math.ceil(L/4);for(let i=0;i<n;i++)move(z,dx/d*L/n,dy/d*L/n,11);if(!z.ai)z.stun=1.6}}
   if(D.lant&&D.comprate<PZ.anima.max)D.lant.set(true)}
 function gameOver(){D.st='fine';D.t=0;const R=D.R,oro=PZ.oro(R),U=D.ui;suono('morte');W.coins=0;D.oro=oro;
   if(U){U.fine.hidden=false;U.fine.innerHTML=`<h2>Sei caduto</h2><p>Round raggiunto: <b>${R}</b></p><p>Zombie uccisi: <b>${W.kills||0}</b></p><p>Oro per il menu: <b>● ${oro.toLocaleString('it-IT')}</b></p><small>(nel gioco vero andrà nel tuo oro)</small><button>Riprova</button>`;

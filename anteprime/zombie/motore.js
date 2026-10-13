@@ -521,9 +521,9 @@ function drawZombie(z){const q=S(z.x,z.y,z.zh||0),zk=RIGK.mzk,fc=z.face+CAM.yaw;
       G=(ox,oy)=>[q[0]+ox*c-oy*s,q[1]+(ox*s+oy*c)*SP];// un punto del terreno intorno ai piedi, (ox, oy) nel mondo
     ctx.fillStyle='#4a3a2a';ctx.save();ctx.translate(q[0],q[1]);ctx.transform(c,SP*s,-s,SP*c,0,0);ctx.beginPath();ctx.ellipse(0,0,mx,my,0,0,TAU);ctx.restore();ctx.fill();
     for(let i=0;i<6;i++){const a=i*1.05+z.x,r=10+k*16,g=G(Math.cos(a)*r,Math.sin(a)*r*.5);ctx.fillStyle='#64503a';ball([g[0],g[1]-Math.sin(k*Math.PI)*6*CAM.CP],2.4);ctx.fill()}
-    if(k>.25){const u=ez((k-.25)/.75),ck=Math.max(1,z.sc/1.1);ctx.save();ctx.beginPath();ctx.rect(q[0]-60*ck,q[1]-150*ck,120*ck,151);ctx.clip();
+    if(k>.25){const u=ez((k-.25)/.75),ck=Math.max(1,z.sc/1.1);ctx.save();ctx.beginPath();ctx.rect(q[0]-60*ck,q[1]-150*ck,120*ck,150*ck+1);ctx.clip();
       ctx.translate(0,(1-u)*60*z.sc*zk);CR[z.kind](q[0],q[1],fc,'idle',(W.t*.6)%1,z.sc);ctx.restore()}return}
-  if(z.die){const k=Math.min(1,z.die/1.1),ck=Math.max(1,z.sc/1.1);ctx.save();ctx.globalAlpha=1-k*k;ctx.beginPath();ctx.rect(q[0]-60*ck,q[1]-150*ck,120*ck,151);ctx.clip();ctx.translate(0,ez(k)*50*z.sc*zk);CR[z.kind](q[0],q[1],fc,'idle',0,z.sc);ctx.restore();return}
+  if(z.die){const k=Math.min(1,z.die/1.1),ck=Math.max(1,z.sc/1.1);ctx.save();ctx.globalAlpha=1-k*k;ctx.beginPath();ctx.rect(q[0]-60*ck,q[1]-150*ck,120*ck,150*ck+1);ctx.clip();ctx.translate(0,ez(k)*50*z.sc*zk);CR[z.kind](q[0],q[1],fc,'idle',0,z.sc);ctx.restore();return}
   CR[z.kind](q[0],q[1],fc,z.anim,z.p,z.sc);if(z.flash>0){ctx.save();ctx.globalCompositeOperation='lighter';glow('255,255,255',q[0],q[1]-24*z.sc*zk,22*z.sc,.5);ctx.restore()}}
 // le trasparenze della casa: il tetto sfuma quando l'eroe entra, i mobili compaiono; i muri (wN, wS, wE, wW: da che parte guardano) con l'eroe
 // dentro diventano trasparenti se sono rivolti verso la telecamera (a vista dritta i muri sud, come prima), piano piano mentre si gira
@@ -960,6 +960,8 @@ function updateAmbient(dt){W.t+=dt;updateCrows(dt);
   for(const l of W.leaves){l.t+=dt;l.z-=14*dt;l.x+=Math.sin(l.t*3+l.ph)*20*dt+6*dt}for(let i=W.leaves.length-1;i>=0;i--)if(W.leaves[i].z<0)W.leaves.splice(i,1)}
 // ------------------------------------------------------------------ la pagina: tela, levetta, telecamera, bussola, bottoni
 function boot(area){try{INTRO.on=false;paused=true}catch(e){}try{AU.on.music=false;AU.on.sfx=false}catch(e){}
+  // niente atmosfera del sotterraneo classico (vento dell'abisso, respiro della bestia) sulla mappa zombie: quella sua verrà con l'audio
+  try{const _s=ambStart;ambStart=function(k){_s(null);AMB.kind=k}}catch(e){}
   const tb0=performance.now();W.dbg.tstart=tb0;area.build();const tb1=performance.now();finalize();const tb2=performance.now();navBuild();W.dbg.tb={build:tb1-tb0,bake:W.dbg.tbake||0,finalize:tb2-tb1,nav:performance.now()-tb2};setTimeout(warmIntra,800);if(window.ARMI){try{gunState=ARMI.nuova('pistola');HSTYLE.gun=W.gunId='pistola'}catch(e){gunState=null}}
   for(let i=0;i<16;i++)W.flies.push({x:rr(0,W.w),y:rr(0,W.h),z:rr(6,40),a:rr(0,TAU),ph:rr(0,TAU)});for(let i=0;i<9;i++)W.mists.push({x:rr(-100,W.w+100),y:rr(0,W.h),r:rr(80,160),v:rr(6,14)});
   for(let i=0;i<4;i++)W.clouds.push({x:rr(-300,W.w),y:rr(-100,W.h),r:rr(220,360),v:rr(9,16)});
@@ -1007,7 +1009,7 @@ function boot(area){try{INTRO.on=false;paused=true}catch(e){}try{AU.on.music=fal
   const cv=ov.querySelector('#mzCv'),barEl=ov.querySelector('#mzBar'),cashEl=ov.querySelector('#mzCash'),hintEl=ov.querySelector('#mzHint'),nordEl=ov.querySelector('#mzNord'),ncv=nordEl.querySelector('canvas');let low=false,whole=false;
   const ui=()=>{barEl.innerHTML='';const mk=(t,on,f)=>{const b=document.createElement('button');b.textContent=t;b.className=on?'on':'';b.onclick=()=>{f();ui()};barEl.appendChild(b)};
     mk('Zombie',zOn,()=>{zOn=!zOn});mk('Effetti bassi',low,()=>{low=!low});mk('Vista intera',whole,()=>{whole=!whole});
-    mk('Suono',(()=>{try{return AU.on.sfx&&!!AU.ctx}catch(e){return false}})(),()=>{try{if(!AU.ctx)initAudio();AU.on.sfx=!AU.on.sfx||!AU.ctx?true:false;if(AU.ctx&&AU.ctx.state==='suspended')AU.ctx.resume()}catch(e){}})};ui();
+    mk('Suono',(()=>{try{return AU.on.sfx&&!!AU.ctx}catch(e){return false}})(),()=>{try{if(!AU.ctx){initAudio();AU.on.sfx=true}else AU.on.sfx=!AU.on.sfx;audioSettings();if(AU.ctx&&AU.ctx.state==='suspended')AU.ctx.resume()}catch(e){}})};ui();
   const fine=!!(window.matchMedia&&matchMedia('(hover:hover) and (pointer:fine)').matches);
   hintEl.innerHTML=fine?'WASD: cammina · Q/E o trascina: gira · R/F: inclina<br>N o la bussola: torna a nord':'Sinistra: cammina · Destra: trascina per girare e inclinare<br>Bussola in alto: torna a nord';
   // due comandi (Denis, 12 ottobre): il dito a sinistra muove l'eroe (relativo allo schermo), il dito a destra tiene la telecamera: di lato la
@@ -1132,7 +1134,7 @@ function boot(area){try{INTRO.on=false;paused=true}catch(e){}try{AU.on.music=fal
   const devBox=(x0,y0,x1,y1)=>{const a=scr(x0,y0),b=scr(x1,y1);return[Math.max(0,Math.floor(a[0])),Math.max(0,Math.floor(a[1])),Math.min(cv.width,Math.ceil(b[0])),Math.min(cv.height,Math.ceil(b[1]))]};
   function visAt(x,y,o){o=o||{};const h=W.hero,D=W.dbg;if(o.yaw!=null||o.el!=null)setView(o.yaw,o.el);W.Z.length=0;h.x=x;h.y=y;h.moving=false;h.zh=heightAt(x,y);const zo=zOn;zOn=false;D.noShoot=true;updateBeings(1,{x:0,y:0});zOn=zo;
     CAM.z=zoomOv||ov.clientWidth/330;if(CAM.rot){CAM.x=x;CAM.y=y;CAM.oy=24*CAM.CP}else{CAM.x=x;CAM.y=y-24;CAM.oy=0}camOv=[CAM.x,CAM.y];const g=cv.getContext('2d');
-    const shot=f=>{Object.assign(D,{noSil:!o.sil,heroLast:false,noHero:false},f);render(0,0,0);const[bx0,by0,bx1,by1]=heroBox(),B=devBox(bx0,by0,bx1,by1);return{B,px:g.getImageData(B[0],B[1],Math.max(1,B[2]-B[0]),Math.max(1,B[3]-B[1])).data,occ:LASTOCC.map(e=>e.prop.name+'@'+Math.round(e.prop.bx[0])+','+Math.round(e.prop.bx[1]))}};
+    const shot=f=>{Object.assign(D,{noSil:!o.sil,heroLast:false,noHero:false},f);render(0,0,0);const[bx0,by0,bx1,by1]=heroBox(),B=devBox(bx0,by0,bx1,by1);return{B,px:g.getImageData(B[0],B[1],Math.max(1,B[2]-B[0]),Math.max(1,B[3]-B[1])).data,occ:LASTOCC.map(e=>{const b=e.prop.bx||e.prop.ref;return e.prop.name+'@'+Math.round(b[0])+','+Math.round(b[1])})}};
     const A=shot({}),Bh=shot({heroLast:true}),C=shot({noHero:true});Object.assign(D,{noSil:false,heroLast:false,noHero:false});
     let msk=0,v=0;const a=A.px,b=Bh.px,c=C.px;for(let i=0;i<a.length;i+=4){if(Math.abs(b[i]-c[i])+Math.abs(b[i+1]-c[i+1])+Math.abs(b[i+2]-c[i+2])<30)continue;msk++;if(Math.abs(a[i]-b[i])+Math.abs(a[i+1]-b[i+1])+Math.abs(a[i+2]-b[i+2])<30)v++}
     return{vis:msk?v/msk:1,mask:msk,occ:A.occ,box:A.B}}
