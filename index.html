@@ -16537,7 +16537,7 @@ function zExit(){if(!ZG.on)return;ZG.ctl.stop();ZG.on=false;showMenu();const L=Z
 // - when it loses health: 'hit'; when it moves: 'walk'; else 'idle'. p only grows with time, so every move loops without a jump.
 // The point of the models is the feet: 8 px below the game's point (as for the hero); e.z (jumps, flights) lifts the body.
 // =====================================================================
-const N3G={on:true,cur:null,bad:{},pf:{},
+const N3G={on:true,cur:null,bad:{},pf:{},zm:{golem:1,toad:1,yeti:1},
   // states of the game with another name among the models' moves
   alias:{aim:'attack',dash:'dash',dive:'dive',howl:'howl',mega:'attack',storm:'attack',spiral:'attack',rain:'attack',shards:'attack',roots:'summon',
     spawn:'summon',imps:'summon',mirror:'attack',blizzard:'nova',avalanche:'pound',anvil:'slam',walls:'forge',blink:'tele',under:'burrow',out:'burrow',rise:'rise'}};
@@ -16552,20 +16552,25 @@ function n3Move(e){const M=N3.meta[e.type],an=M.an,t=G.t||0,has=a=>an.includes(a
   // a state that is one of its moves
   let st=e.st&&e.st!=='walk'&&e.st!=='rest'?(has(e.st)?e.st:has(N3G.alias[e.st])?N3G.alias[e.st]:null):null;
   if(!st&&e.st&&e.st!=='walk'&&e.st!=='rest'&&isBoss(e.type)){st=an.find(a=>!['idle','walk','hit'].includes(a))||null}
-  if(st){if(e.s3!==e.st){e.s3=e.st;e.s3t=t}const k=(t-e.s3t)/dur(st);return[st,k<1?k:.5+(k-1)%1*.5]}
+  if(st){if(e.s3!==e.st){e.s3=e.st;e.s3t=t;e.w3=0}const k=(t-e.s3t)/dur(st);if(k<1)return[st,k];
+    const w=Math.floor((k-1)/.6);if(w>(e.w3||0)&&!LOWFX){e.b3a=st;e.b3p=e.a3p;e.b3t=t}e.w3=w;return[st,.35+((k-1)%.6)/.6*.3]}
   e.s3=null;
   // the shot: the blow at the middle of the move
-  if(e.a3!=null&&has('attack')){const k=.25+(t-e.a3)/dur('attack');if(k<1)return['attack',k]}
-  if((e.aim>0)&&has('attack'))return['attack',Math.min(.4,e.aim*.4)];
+  if(e.a3!=null&&has('attack')){const k=(e.aim3?.5:.25)+(t-e.a3)/dur('attack');if(k<1)return['attack',k]}
+  if(e.aim>0&&has('attack')){e.aim3=Math.max(e.aim3||0,e.aim);return['attack',.45*(1-e.aim/e.aim3)]}
+  if(e.a3==null||t-e.a3>dur('attack'))e.aim3=0;
   // walking (the game's flag, or the body moved since the last frame)
   if(e.moving||(e.x3!=null&&t>e.t3&&Math.hypot(e.x-e.x3,e.y-e.y3)/(t-e.t3)>5))e.mv3=t;if(e.t3==null||t-e.t3>=.05){e.x3=e.x;e.y3=e.y;e.t3=t}const mv=e.mv3!=null&&t-e.mv3<.22;
-  const off=(e.id||e.x*.37)%7;
-  if(mv&&has('walk'))return['walk',((t+off)/dur('walk'))%1];
+  if(e.o3==null)e.o3=Math.random()*7;const off=e.o3;
+  if(mv&&has('walk')){e.i3=null;return['walk',((t+off)/dur('walk'))%1]}
+  if(e.a3n&&e.a3n!=='idle'&&e.a3n!=='walk'){if(e.i3==null)e.i3=t;if(t-e.i3<.08)return[e.a3n,e.a3p]}e.i3=null;
   return['idle',((t+off)/dur('idle'))%1]}
 function n3Face0(e){if(typeof e.face==='number'&&isFinite(e.face))return e.face;if(typeof P!=='undefined'&&P)return Math.atan2(P.y-e.y,P.x-e.x);return Math.PI/2}
 // the direction turns toward the game's one at most ~9 rad/s and smoothly (the AI's direction jumps from a cell of the path to the next)
-function n3Turn(o,f,t){if(o.f3==null||o.f3t==null||t-o.f3t>.5){o.f3=f;o.f3t=t;return f}const dt=Math.max(0,t-o.f3t);o.f3t=t;
-  let d=f-o.f3;d=Math.atan2(Math.sin(d),Math.cos(d));const k=1-Math.exp(-dt*12),mx=9*dt;o.f3+=Math.max(-mx,Math.min(mx,d*k));return o.f3}
+function n3Turn(o,f,t){if(o.f3==null||o.f3t==null||t-o.f3t>.5){o.f3=f;o.f3t=t;o.fx3=Math.cos(f);o.fy3=Math.sin(f);return f}const dt=Math.max(0,t-o.f3t);o.f3t=t;
+  if(o.fx3==null){o.fx3=Math.cos(o.f3);o.fy3=Math.sin(o.f3)}const a=1-Math.exp(-dt/.15);o.fx3+=(Math.cos(f)-o.fx3)*a;o.fy3+=(Math.sin(f)-o.fy3)*a;
+  if(Math.hypot(o.fx3,o.fy3)<.35)return o.f3;
+  let d=Math.atan2(o.fy3,o.fx3)-o.f3;d=Math.atan2(Math.sin(d),Math.cos(d));const k=1-Math.exp(-dt*12),mx=9*dt;o.f3+=Math.max(-mx,Math.min(mx,d*k));return o.f3}
 function n3Face(e){return n3Turn(e,n3Face0(e),G.t||0)}
 {const _d0=drawEnemy0;drawEnemy0=function(e){if(!n3Has(e)||e.spawn>0)return _d0(e);const x=e.x,y=e.y;
   if(e.poisonT>0){for(let q=0;q<Math.min(3,e.poisonS);q++){const qq=(G.t*.9+q*.33)%1;ctx.fillStyle=`rgba(150,230,90,${.8*(1-qq)})`;circ(x+Math.sin(q*2.3+G.t*2)*e.r*.6,y-e.r*1.6-e.z-qq*14,2.2);ctx.fill()}}
@@ -16573,7 +16578,7 @@ function n3Face(e){return n3Turn(e,n3Face0(e),G.t||0)}
   const hf=e.flash>0;if(hf){ctx.save();if(HASF)ctx.filter='brightness(1.85) saturate(.6)'}
   const esc=(e.elite||G.giant&&!isBoss(e.type))&&!e.type.includes('slime');if(esc){ctx.save();ctx.translate(x,y);ctx.scale(1.22,1.22);ctx.translate(-x,-y)}
   const M=N3.meta[e.type],[anim,p]=n3Move(e),sx=0;
-  const fc=n3Face(e),pp=Math.min(.999,Math.max(0,p)),t=G.t||0,X=x+sx,Y=y+8-(e.z||0),o3={p2:!!e.p2,noFx:LOWFX};
+  const fc=n3Face(e),pp=Math.min(.999,Math.max(0,p)),t=G.t||0,X=x+sx,zg=N3G.zm[e.type],Y=y+8-(zg?0:(e.z||0)),o3={p2:!!e.p2,noFx:LOWFX};if(zg)o3.z=e.z||0;
   // a change of move fades over 0.12 s: the old pose (frozen) fades under the new one, so no pose ever pops into another
   if(e.a3n!==anim){if(e.a3n!=null&&!LOWFX){e.b3a=e.a3n;e.b3p=e.a3p;e.b3t=t}e.a3n=anim}e.a3p=pp;
   try{if(e.b3t!=null&&t-e.b3t<.12){const a0=ctx.globalAlpha;ctx.globalAlpha=a0*(1-(t-e.b3t)/.12);N3[e.type](X,Y,fc,e.b3a,e.b3p,M.sc||1,{...o3,noFx:true});ctx.globalAlpha=a0}
@@ -16583,7 +16588,10 @@ function n3Face(e){return n3Turn(e,n3Face0(e),G.t||0)}
 // the pets (Muschietto, the Lucciola, the Draghetto) in 3D wherever the game draws them: in battle, in the menu, in their tab and icons
 {const _ps=drawPetSprite;drawPetSprite=function(id,x,y,o){if(!N3G.on||typeof N3==='undefined'||!N3[id]||N3G.bad[id])return _ps.apply(this,arguments);o=o||{};
   const M=N3.meta[id],t=o.t!=null?o.t:(G.t||0),a=o.att?'attack':o.happy?'happy':o.moving?'walk':'idle',d=(M.dur&&M.dur[a])||2,
-    p=a==='walk'?(((o.hop||0)/(TAU*2))%1+1)%1:((t/d)%1+1)%1;
-  const fm=N3G.pf[id]=N3G.pf[id]||{};try{N3[id](x,y,n3Turn(fm,o.face==null?Math.PI/2:o.face,t),a,Math.min(.999,p),1,{noFx:LOWFX})}catch(er){console.error(er);N3G.bad[id]=1;_ps.apply(this,arguments)}}}
+    p=a==='walk'?(((o.hop||0)/(TAU*2))%1+1)%1:a==='attack'&&o.att>0&&o.att<=.3?1-o.att/.3:((t/d)%1+1)%1;
+  const fm=N3G.pf[id]=N3G.pf[id]||{},fc=n3Turn(fm,o.face==null?Math.PI/2:o.face,t),pp=Math.min(.999,Math.max(0,p));
+  if(fm.a!==a){if(fm.a!=null&&!LOWFX){fm.ba=fm.a;fm.bp=fm.p;fm.bt=t}fm.a=a}fm.p=pp;
+  try{if(fm.bt!=null&&t-fm.bt>=0&&t-fm.bt<.12){const a0=ctx.globalAlpha;ctx.globalAlpha=a0*(1-(t-fm.bt)/.12);N3[id](x,y,fc,fm.ba,fm.bp,1,{noFx:true});ctx.globalAlpha=a0}
+    N3[id](x,y,fc,a,pp,1,{noFx:LOWFX})}catch(er){console.error(er);N3G.bad[id]=1;_ps.apply(this,arguments)}}}
 })();
 </script>
