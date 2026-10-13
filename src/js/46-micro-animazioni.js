@@ -2,7 +2,7 @@
 // MICRO ANIMATIONS: squash on hit, coins flying to the counter, level-up hop, HP trail, gate dust; menu buttons and badges
 // =====================================================================
 {const _h=hurtE;hurtE=function(e,dmg,crit,dot){if(!dot&&e&&!e.dead&&!(e.intro>0)&&!e.hidden)e.sq=.16;return _h.apply(this,arguments)}}
-{const _d=drawEnemy;drawEnemy=function(e){if(!(e.sq>0)||LOWFX)return _d(e);const k=Math.sin(e.sq/.16*Math.PI)*(isBoss(e.type)?.06:.18);
+{const _d=drawEnemy;drawEnemy=function(e){if(!(e.sq>0)||LOWFX||(typeof n3Has==='function'&&n3Has(e)))return _d(e);const k=Math.sin(e.sq/.16*Math.PI)*(isBoss(e.type)?.06:.18);
   ctx.save();ctx.translate(e.x,e.y);ctx.scale(1+k,1-k);ctx.translate(-e.x,-e.y);_d(e);ctx.restore()}}
 {const _d=drawHero;drawHero=function(){const h=P&&P.hopT>0?Math.sin((1-P.hopT/.38)*Math.PI)*11:0;if(!h)return _d();ctx.save();ctx.translate(0,-h);_d();ctx.restore()}}
 {const _g=gainXp;gainXp=function(v){const l=P.lvl;_g(v);if(P.lvl>l&&G.state!=='dead')P.hopT=.38}}

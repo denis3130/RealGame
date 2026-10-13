@@ -26,7 +26,7 @@ function n3Move(e){const M=N3.meta[e.type],an=M.an,t=G.t||0,has=a=>an.includes(a
   if(st){if(e.s3!==e.st){e.s3=e.st;e.s3t=t}const k=(t-e.s3t)/dur(st);return[st,k<1?k:.5+(k-1)%1*.5]}
   e.s3=null;
   // the shot: the blow at the middle of the move
-  if(e.a3!=null&&has('attack')){const k=.42+(t-e.a3)/dur('attack');if(k<1)return['attack',k]}
+  if(e.a3!=null&&has('attack')){const k=.25+(t-e.a3)/dur('attack');if(k<1)return['attack',k]}
   if((e.aim>0)&&has('attack'))return['attack',Math.min(.4,e.aim*.4)];
   // walking (the game's flag, or the body moved since the last frame)
   if(e.moving||(e.x3!=null&&t>e.t3&&Math.hypot(e.x-e.x3,e.y-e.y3)/(t-e.t3)>5))e.mv3=t;if(e.t3==null||t-e.t3>=.05){e.x3=e.x;e.y3=e.y;e.t3=t}const mv=e.mv3!=null&&t-e.mv3<.22;
@@ -41,10 +41,14 @@ function n3Face(e){return n3Turn(e,n3Face0(e),G.t||0)}
 {const _d0=drawEnemy0;drawEnemy0=function(e){if(!n3Has(e)||e.spawn>0)return _d0(e);const x=e.x,y=e.y;
   if(e.poisonT>0){for(let q=0;q<Math.min(3,e.poisonS);q++){const qq=(G.t*.9+q*.33)%1;ctx.fillStyle=`rgba(150,230,90,${.8*(1-qq)})`;circ(x+Math.sin(q*2.3+G.t*2)*e.r*.6,y-e.r*1.6-e.z-qq*14,2.2);ctx.fill()}}
   if(e.burn>0){ctx.fillStyle='rgba(255,138,60,.6)';circ(x+rand(-5,5),y-e.r*2-e.z+rand(-3,3),3);ctx.fill()}
-  const hf=e.flash>0;if(hf){ctx.save();ctx.translate(Math.sin(G.t*130)*2.2,0);if(HASF)ctx.filter='brightness(1.85) saturate(.6)'}
+  const hf=e.flash>0;if(hf){ctx.save();if(HASF)ctx.filter='brightness(1.85) saturate(.6)'}
   const esc=(e.elite||G.giant&&!isBoss(e.type))&&!e.type.includes('slime');if(esc){ctx.save();ctx.translate(x,y);ctx.scale(1.22,1.22);ctx.translate(-x,-y)}
-  const M=N3.meta[e.type],[anim,p]=n3Move(e),sx=e.stun>0?Math.sin(G.t*40)*1.5:0;
-  try{N3[e.type](x+sx,y+8-(e.z||0),n3Face(e),anim,Math.min(.999,Math.max(0,p)),M.sc||1,{p2:!!e.p2,noFx:LOWFX})}catch(er){console.error(er);N3G.bad[e.type]=1}
+  const M=N3.meta[e.type],[anim,p]=n3Move(e),sx=0;
+  const fc=n3Face(e),pp=Math.min(.999,Math.max(0,p)),t=G.t||0,X=x+sx,Y=y+8-(e.z||0),o3={p2:!!e.p2,noFx:LOWFX};
+  // a change of move fades over 0.12 s: the old pose (frozen) fades under the new one, so no pose ever pops into another
+  if(e.a3n!==anim){if(e.a3n!=null&&!LOWFX){e.b3a=e.a3n;e.b3p=e.a3p;e.b3t=t}e.a3n=anim}e.a3p=pp;
+  try{if(e.b3t!=null&&t-e.b3t<.12){const a0=ctx.globalAlpha;ctx.globalAlpha=a0*(1-(t-e.b3t)/.12);N3[e.type](X,Y,fc,e.b3a,e.b3p,M.sc||1,{...o3,noFx:true});ctx.globalAlpha=a0}
+    N3[e.type](X,Y,fc,anim,pp,M.sc||1,o3)}catch(er){console.error(er);N3G.bad[e.type]=1}
   if(esc)ctx.restore();if(hf)ctx.restore();
   if(e.root>0)drawRoots(e);if(e.frozen>0)drawFrozen(e)}}
 // the pets (Muschietto, the Lucciola, the Draghetto) in 3D wherever the game draws them: in battle, in the menu, in their tab and icons

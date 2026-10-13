@@ -6915,7 +6915,7 @@ function loop(now){const raw=(now-last)/1000,dt=Math.min(.033,raw);last=now;if(I
 // MICRO ANIMATIONS: squash on hit, coins flying to the counter, level-up hop, HP trail, gate dust; menu buttons and badges
 // =====================================================================
 {const _h=hurtE;hurtE=function(e,dmg,crit,dot){if(!dot&&e&&!e.dead&&!(e.intro>0)&&!e.hidden)e.sq=.16;return _h.apply(this,arguments)}}
-{const _d=drawEnemy;drawEnemy=function(e){if(!(e.sq>0)||LOWFX)return _d(e);const k=Math.sin(e.sq/.16*Math.PI)*(isBoss(e.type)?.06:.18);
+{const _d=drawEnemy;drawEnemy=function(e){if(!(e.sq>0)||LOWFX||(typeof n3Has==='function'&&n3Has(e)))return _d(e);const k=Math.sin(e.sq/.16*Math.PI)*(isBoss(e.type)?.06:.18);
   ctx.save();ctx.translate(e.x,e.y);ctx.scale(1+k,1-k);ctx.translate(-e.x,-e.y);_d(e);ctx.restore()}}
 {const _d=drawHero;drawHero=function(){const h=P&&P.hopT>0?Math.sin((1-P.hopT/.38)*Math.PI)*11:0;if(!h)return _d();ctx.save();ctx.translate(0,-h);_d();ctx.restore()}}
 {const _g=gainXp;gainXp=function(v){const l=P.lvl;_g(v);if(P.lvl>l&&G.state!=='dead')P.hopT=.38}}
@@ -7311,7 +7311,7 @@ function b2front(e,dt){const h=B2H[e.type]||50,c=B2T[e.type][1];b2aura(e,dt);
   const entering=e.intro>0&&e.type!=='hydra'&&((e.em!=null&&e.em<1)||(e.fa!=null&&e.fa<1)||e.yy!=null||(e.z||0)>20||(e.hole>0&&e.em!=null));
   const dt=b2tick(e),hide=entering||e.hidden||(e.st==='burrow'&&e.sub==='under')||(e.spawn>0)||(e.type==='hydra'&&(e.sink||0)>.6);
   if(!hide){b2back(e,dt);if(S.back)S.back(e,dt)}
-  const br=e.intro>0||hide?0:Math.sin((G.t||0)*(S.br||2.2)+e.x*.013)*(S.bra||.02);
+  const br=e.intro>0||hide||(typeof n3Has==='function'&&n3Has(e))?0:Math.sin((G.t||0)*(S.br||2.2)+e.x*.013)*(S.bra||.02);
   ctx.save();ctx.translate(e.x,e.y);ctx.scale(1-br*.6,1+br);ctx.translate(-e.x,-e.y);_de(e);ctx.restore();
   if(!hide){if(S.front)S.front(e,dt);b2front(e,dt)}b2draw(e)}}
 // helpers for the signature pieces
@@ -7769,7 +7769,7 @@ const ELIFE={
   icesentinel:{walk:1,fx:(e,dt)=>EL_EMIT(e,dt,'g',.6,()=>({k:'glint',x:e.x+rand(-12,12),y:e.y-rand(10,34),life:.45,r:3.5,col:'200,240,255'}))},
   shadoweye:{fx:(e,dt)=>EL_EMIT(e,dt,'s',.12,()=>({k:'smoke',x:e.x+rand(-10,10),y:e.y-rand(10,24),vy:-rand(8,16),life:1,r:3,col:'40,20,60'}))}};
 {const _de=drawEnemy;drawEnemy=function(e){const Lf=ELIFE[e.type];if(!Lf||e.dead||(e.spawn>0)||isBoss(e.type)){_de(e);return}
-  const dt=b2tick(e),t=G.t||0,sq=e.hidden?0:Math.sin(t*(Lf.sp||3)+e.x*.031)*(Lf.sq||.015);
+  const dt=b2tick(e),t=G.t||0,sq=e.hidden||(typeof n3Has==='function'&&n3Has(e))?0:Math.sin(t*(Lf.sp||3)+e.x*.031)*(Lf.sq||.015);
   ctx.save();ctx.translate(e.x,e.y);ctx.scale(1-sq*.7,1+sq);ctx.translate(-e.x,-e.y);_de(e);ctx.restore();
   if(!e.hidden){if(Lf.fx)Lf.fx(e,dt);
     if(Lf.walk&&e.moving&&b2every(e,'st',.32,dt))b2emit(e,{k:'dust',x:e.x+rand(-4,4),y:e.y+e.r*.5,vx:rand(-10,10),vy:-rand(4,10),drag:3,life:.45,r:2.4});
@@ -16555,7 +16555,7 @@ function n3Move(e){const M=N3.meta[e.type],an=M.an,t=G.t||0,has=a=>an.includes(a
   if(st){if(e.s3!==e.st){e.s3=e.st;e.s3t=t}const k=(t-e.s3t)/dur(st);return[st,k<1?k:.5+(k-1)%1*.5]}
   e.s3=null;
   // the shot: the blow at the middle of the move
-  if(e.a3!=null&&has('attack')){const k=.42+(t-e.a3)/dur('attack');if(k<1)return['attack',k]}
+  if(e.a3!=null&&has('attack')){const k=.25+(t-e.a3)/dur('attack');if(k<1)return['attack',k]}
   if((e.aim>0)&&has('attack'))return['attack',Math.min(.4,e.aim*.4)];
   // walking (the game's flag, or the body moved since the last frame)
   if(e.moving||(e.x3!=null&&t>e.t3&&Math.hypot(e.x-e.x3,e.y-e.y3)/(t-e.t3)>5))e.mv3=t;if(e.t3==null||t-e.t3>=.05){e.x3=e.x;e.y3=e.y;e.t3=t}const mv=e.mv3!=null&&t-e.mv3<.22;
@@ -16570,10 +16570,14 @@ function n3Face(e){return n3Turn(e,n3Face0(e),G.t||0)}
 {const _d0=drawEnemy0;drawEnemy0=function(e){if(!n3Has(e)||e.spawn>0)return _d0(e);const x=e.x,y=e.y;
   if(e.poisonT>0){for(let q=0;q<Math.min(3,e.poisonS);q++){const qq=(G.t*.9+q*.33)%1;ctx.fillStyle=`rgba(150,230,90,${.8*(1-qq)})`;circ(x+Math.sin(q*2.3+G.t*2)*e.r*.6,y-e.r*1.6-e.z-qq*14,2.2);ctx.fill()}}
   if(e.burn>0){ctx.fillStyle='rgba(255,138,60,.6)';circ(x+rand(-5,5),y-e.r*2-e.z+rand(-3,3),3);ctx.fill()}
-  const hf=e.flash>0;if(hf){ctx.save();ctx.translate(Math.sin(G.t*130)*2.2,0);if(HASF)ctx.filter='brightness(1.85) saturate(.6)'}
+  const hf=e.flash>0;if(hf){ctx.save();if(HASF)ctx.filter='brightness(1.85) saturate(.6)'}
   const esc=(e.elite||G.giant&&!isBoss(e.type))&&!e.type.includes('slime');if(esc){ctx.save();ctx.translate(x,y);ctx.scale(1.22,1.22);ctx.translate(-x,-y)}
-  const M=N3.meta[e.type],[anim,p]=n3Move(e),sx=e.stun>0?Math.sin(G.t*40)*1.5:0;
-  try{N3[e.type](x+sx,y+8-(e.z||0),n3Face(e),anim,Math.min(.999,Math.max(0,p)),M.sc||1,{p2:!!e.p2,noFx:LOWFX})}catch(er){console.error(er);N3G.bad[e.type]=1}
+  const M=N3.meta[e.type],[anim,p]=n3Move(e),sx=0;
+  const fc=n3Face(e),pp=Math.min(.999,Math.max(0,p)),t=G.t||0,X=x+sx,Y=y+8-(e.z||0),o3={p2:!!e.p2,noFx:LOWFX};
+  // a change of move fades over 0.12 s: the old pose (frozen) fades under the new one, so no pose ever pops into another
+  if(e.a3n!==anim){if(e.a3n!=null&&!LOWFX){e.b3a=e.a3n;e.b3p=e.a3p;e.b3t=t}e.a3n=anim}e.a3p=pp;
+  try{if(e.b3t!=null&&t-e.b3t<.12){const a0=ctx.globalAlpha;ctx.globalAlpha=a0*(1-(t-e.b3t)/.12);N3[e.type](X,Y,fc,e.b3a,e.b3p,M.sc||1,{...o3,noFx:true});ctx.globalAlpha=a0}
+    N3[e.type](X,Y,fc,anim,pp,M.sc||1,o3)}catch(er){console.error(er);N3G.bad[e.type]=1}
   if(esc)ctx.restore();if(hf)ctx.restore();
   if(e.root>0)drawRoots(e);if(e.frozen>0)drawFrozen(e)}}
 // the pets (Muschietto, the Lucciola, the Draghetto) in 3D wherever the game draws them: in battle, in the menu, in their tab and icons

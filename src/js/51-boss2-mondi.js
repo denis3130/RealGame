@@ -65,7 +65,7 @@ function b2front(e,dt){const h=B2H[e.type]||50,c=B2T[e.type][1];b2aura(e,dt);
   const entering=e.intro>0&&e.type!=='hydra'&&((e.em!=null&&e.em<1)||(e.fa!=null&&e.fa<1)||e.yy!=null||(e.z||0)>20||(e.hole>0&&e.em!=null));
   const dt=b2tick(e),hide=entering||e.hidden||(e.st==='burrow'&&e.sub==='under')||(e.spawn>0)||(e.type==='hydra'&&(e.sink||0)>.6);
   if(!hide){b2back(e,dt);if(S.back)S.back(e,dt)}
-  const br=e.intro>0||hide?0:Math.sin((G.t||0)*(S.br||2.2)+e.x*.013)*(S.bra||.02);
+  const br=e.intro>0||hide||(typeof n3Has==='function'&&n3Has(e))?0:Math.sin((G.t||0)*(S.br||2.2)+e.x*.013)*(S.bra||.02);
   ctx.save();ctx.translate(e.x,e.y);ctx.scale(1-br*.6,1+br);ctx.translate(-e.x,-e.y);_de(e);ctx.restore();
   if(!hide){if(S.front)S.front(e,dt);b2front(e,dt)}b2draw(e)}}
 // helpers for the signature pieces

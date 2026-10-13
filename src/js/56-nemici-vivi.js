@@ -30,7 +30,7 @@ const ELIFE={
   icesentinel:{walk:1,fx:(e,dt)=>EL_EMIT(e,dt,'g',.6,()=>({k:'glint',x:e.x+rand(-12,12),y:e.y-rand(10,34),life:.45,r:3.5,col:'200,240,255'}))},
   shadoweye:{fx:(e,dt)=>EL_EMIT(e,dt,'s',.12,()=>({k:'smoke',x:e.x+rand(-10,10),y:e.y-rand(10,24),vy:-rand(8,16),life:1,r:3,col:'40,20,60'}))}};
 {const _de=drawEnemy;drawEnemy=function(e){const Lf=ELIFE[e.type];if(!Lf||e.dead||(e.spawn>0)||isBoss(e.type)){_de(e);return}
-  const dt=b2tick(e),t=G.t||0,sq=e.hidden?0:Math.sin(t*(Lf.sp||3)+e.x*.031)*(Lf.sq||.015);
+  const dt=b2tick(e),t=G.t||0,sq=e.hidden||(typeof n3Has==='function'&&n3Has(e))?0:Math.sin(t*(Lf.sp||3)+e.x*.031)*(Lf.sq||.015);
   ctx.save();ctx.translate(e.x,e.y);ctx.scale(1-sq*.7,1+sq);ctx.translate(-e.x,-e.y);_de(e);ctx.restore();
   if(!e.hidden){if(Lf.fx)Lf.fx(e,dt);
     if(Lf.walk&&e.moving&&b2every(e,'st',.32,dt))b2emit(e,{k:'dust',x:e.x+rand(-4,4),y:e.y+e.r*.5,vx:rand(-10,10),vy:-rand(4,10),drag:3,life:.45,r:2.4});
