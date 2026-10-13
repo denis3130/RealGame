@@ -1,0 +1,40 @@
+{
+ "asset_id": "creature_volpefuoco_idle_up_left",
+ "category": "creature_overworld",
+ "species": "volpefuoco (nome provvisorio)",
+ "animation": "idle",
+ "direction": "up_left",
+ "direzione": "su_sinistra",
+ "frame_width": 64,
+ "frame_height": 64,
+ "frames": 12,
+ "fps": 8,
+ "loop": true,
+ "pivot": [
+  32,
+  56
+ ],
+ "hitbox": [
+  15,
+  50,
+  26,
+  8
+ ],
+ "source": "disegno di Denis (13 ottobre) + base a volumi",
+ "version": "0.1-anteprima",
+ "status": "da approvare",
+ "review": {
+  "silhouette_constant": true,
+  "colors_constant": true,
+  "limb_count_constant": true,
+  "no_clipped_flames": true,
+  "feet_grounded": true
+ },
+ "w": 64,
+ "h": 64,
+ "n": 12,
+ "anchor": [
+  32,
+  56
+ ]
+}

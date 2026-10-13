@@ -19,8 +19,10 @@ def drawing_view(size=160, S=4, head_yaw=38, head_roll=15):
     lab, nl, g = colora.labels(m, info, b)
     dep = np.where(b['hit'], b['depth'], -1e9).astype(np.float32)
     big = colora.resolve(lab, nl, g)
-    sl, sn, sg, sd = pixel.down(lab, nl, g, dep, S)
-    small = pixel.finish(sl, sn, sg, sd)
+    gid = np.array([d['group'] for d in m.prims])[np.clip(b['prim'], 0, len(m.prims) - 1)]
+    gid = np.where(b['hit'], gid, -1).astype(np.int16)
+    sl, sn, sg, sd, sgr = pixel.down(lab, nl, g, dep, S, grp=gid)
+    small = pixel.finish2d(sl, sn, sg, sd, sgr, k=max(1, round(1.82 / upp)))
     return big, small
 
 if __name__ == '__main__':

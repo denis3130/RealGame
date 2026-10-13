@@ -43,10 +43,10 @@ EYE_LAB = (14, 15, 16, 17, 18, 19)
 
 def eye_points(info):
     """centro e normale dei due occhi nel mondo"""
-    h = info['head']; R = h['R']; c = h['c']; rx, ry, rz = h['r']
+    h = info['head']; R = h['R']; c = h['c']; rx, ry, rz = h['r']; hs = h.get('s', 1.0)
     out = []
     for s in (1, -1):
-        y, z = 9.2 * s, 0.6
+        y, z = 9.2 * s * hs, 0.6 * hs
         x = rx * np.sqrt(max(1 - (y / ry) ** 2 - (z / rz) ** 2, 0.05))
         p = np.array((x, y, z)); nrm = p / np.array((rx, ry, rz)) ** 2; nrm /= np.linalg.norm(nrm)
         out.append((R @ p + c, R @ nrm, s))

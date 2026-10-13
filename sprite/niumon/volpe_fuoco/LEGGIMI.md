@@ -9,6 +9,20 @@ Regola del piano degli sprite (versione 1.1): creature e personaggi solo in pixe
 attrezzo per tenere le forme uguali in tutte le direzioni: nel gioco vanno solo i PNG. Prima di metterli nel gioco Denis guarda tutte
 le direzioni (pagina `python3 anteprime/mk_niumon_volpe.py`, pubblicata su https://claude.ai/artifact/5c3n4qU6JekcfCQwHiD14q).
 
+## Versione 2D (14 ottobre, notte)
+
+Denis: «prova a farlo 2d facendolo più simile che ne so ad un evee va bene? mettici poco tempo». Fatto in fretta, sulla stessa base:
+- colori come uno sprite disegnato a mano (`pixel.finish2d`, `sprite.STILE = '2d'`): per ogni parte un colore pieno, un'ombra
+  semplice sotto (dalla luce ammorbidita) e un filo di luce sul bordo in alto; fiamme, cresta, gorgiera e bordo delle orecchie a
+  fasce contate in pixel dal bordo della loro zona (rosso, rosso arancio, arancio, giallo, cuore chiaro); contorno marrone vicino al
+  pelo e rosso scuro vicino alle fiamme, di due pixel nella misura grande; linee interne dello stesso colore;
+- proporzioni più tenere (in `volpe.py`): testa ×1,08 (`HS`), orecchie ×1,12, corpo più corto di 3 unità (`KB`: fianchi, zampe
+  dietro e coda vengono avanti), gorgiera più folta. Di Eevee si prende solo l'idea di creatura tenera, niente dei suoi pezzi né
+  dei suoi colori: la volpe resta quella del disegno;
+- per far stare testa e orecchie più grandi nel riquadro la scala è 1,82 unità per pixel a 64 px (1,82/3 a 192).
+La prima prova (toni presi dalla luce della base) è in `prima/`, con gli stessi nomi; si rifà con `sprite.STILE = 'base'` e il
+`volpe.py` del commit fc85cfc.
+
 ## Cosa c'è
 
 - `direzioni/`: le 8 direzioni (giu, giu_sinistra, sinistra, su_sinistra, su, su_destra, destra, giu_destra), tutte disegnate dalla

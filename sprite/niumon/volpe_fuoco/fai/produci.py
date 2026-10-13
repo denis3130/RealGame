@@ -9,7 +9,7 @@ OUT = sys.argv[1] if len(sys.argv) > 1 else 'uscita'
 N, FPS, BLINK = 12, 8, 9
 DIRS = [('giu', 'down', 0), ('giu_sinistra', 'down_left', 45), ('sinistra', 'left', 90), ('su_sinistra', 'up_left', 135),
         ('su', 'up', 180), ('su_destra', 'up_right', 225), ('destra', 'right', 270), ('giu_destra', 'down_right', 315)]
-SIZES = {'mappa': dict(size=64, upp=1.72, pivot=(32, 56), S=6), 'grande': dict(size=192, upp=1.72 / 3, pivot=(96, 168), S=3)}
+SIZES = {'mappa': dict(size=64, upp=1.82, pivot=(32, 56), S=6), 'grande': dict(size=192, upp=1.82 / 3, pivot=(96, 168), S=3)}
 
 def pose(k):
     t = k / N

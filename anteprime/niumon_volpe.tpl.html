@@ -91,16 +91,16 @@ ol.list b{font-weight:700}
   <header>
     <p class="eyebrow">Niumon · controllo prima del gioco</p>
     <h1>Il Niumon <em>di fuoco</em> in 8 direzioni</h1>
-    <p class="lede">Questa volta parto da una base solida: un modellino a volumi costruito sul tuo disegno, che giro in tutte le direzioni e ridipingo in pixel art. Così ogni direzione è la stessa creatura, con le stesse proporzioni e gli stessi colori. Il modellino serve solo a me: nel gioco vanno solo i PNG in pixel art. Niente entra nel gioco finché non mi dici dove sbaglio.</p>
+    <p class="lede">Rifatto in 2D, nello stile degli sprite classici delle creature tenere: colori pieni, un'ombra semplice sotto, un filo di luce in alto, fiamme a fasce dal bordo rosso al cuore giallo e contorno scuro. Proporzioni più tenere: testa e orecchie più grandi, corpo più corto, gorgiera più folta. La creatura resta la tua: stessi colori, stessa faccia, la tua coda. Le 8 direzioni restano coerenti perché sotto c'è sempre la stessa base. Niente entra nel gioco finché non mi dici dove sbaglio.</p>
   </header>
 
   <section class="sec" aria-labelledby="hCmp">
-    <h2 id="hCmp">Il tuo disegno e la stessa vista rifatta</h2>
-    <p>Prima di girarlo ho messo la base nella stessa posa e nella stessa vista del tuo disegno (testa girata verso di noi), per controllare che torni. La coda è proprio la sagoma della tua, gonfiata.</p>
+    <h2 id="hCmp">Il tuo disegno, prima e adesso</h2>
+    <p>La stessa vista del tuo disegno (testa girata verso di noi): a sinistra il tuo disegno, in mezzo la prova di prima, a destra quella nuova in 2D. La coda è sempre la sagoma della tua.</p>
     <div class="cmp">
       <figure class="fig"><img class="pic paper" id="imDraw" alt="Il disegno di Denis: volpe di fuoco di tre quarti"><figcaption><b>Il tuo disegno</b><span>La fonte: forme, colori, espressione.</span></figcaption></figure>
-      <figure class="fig"><img class="pic dark" id="imBase" alt="La base a volumi vista come nel disegno"><figcaption><b>La base solida</b><span>Il modellino a volumi, colorato coi tuoi colori.</span></figcaption></figure>
-      <figure class="fig"><canvas class="pic" id="cvPix" aria-label="La stessa vista in pixel art"></canvas><figcaption><b>In pixel art</b><span>160 px, tavolozza fissa e contorno di un pixel.</span></figcaption></figure>
+      <figure class="fig"><canvas class="pic" id="cvPrima" aria-label="La prova di prima, nella vista del disegno"></canvas><figcaption><b>Prima</b><span>Toni presi dalla luce della base: sembrava 3D.</span></figcaption></figure>
+      <figure class="fig"><canvas class="pic" id="cvPix" aria-label="La prova nuova in 2D, nella vista del disegno"></canvas><figcaption><b>Adesso, in 2D</b><span>Colori pieni, proporzioni più tenere.</span></figcaption></figure>
     </div>
   </section>
 
@@ -156,7 +156,7 @@ ol.list b{font-weight:700}
     <ol class="list">
       <li><b>Base solida.</b> Dal tuo disegno costruisco un modellino a volumi: testa, muso, corpo, zampe, orecchie, gorgiera, cresta e ciuffi. La coda è la sagoma della tua coda portata nel piano del corpo e gonfiata.</li>
       <li><b>Controllo sul disegno.</b> Metto la base nella stessa vista del tuo disegno e la confronto (il riquadro in alto). Se lì torna, torna in tutte le direzioni, perché è sempre lo stesso modellino.</li>
-      <li><b>Pixel art.</b> Giro la base nelle 8 direzioni e la ridipingo: una tavolozza fissa di 27 colori presa dal tuo disegno (pelo, fiamme dal giallo al rosso scuro, zampe rosse, dentro delle orecchie, occhi), toni a fasce pulite, contorno scuro di un pixel, pixel isolati tolti.</li>
+      <li><b>Pixel art in 2D.</b> Giro la base nelle 8 direzioni e la coloro come uno sprite disegnato a mano: per ogni parte un colore pieno, un'ombra semplice sotto e un filo di luce in alto; le fiamme a fasce dal bordo (rosso) al cuore (giallo), contate in pixel come farebbe un disegnatore; contorno scuro (marrone vicino al pelo, rosso scuro vicino alle fiamme), di due pixel nella misura grande. Colori presi dal tuo disegno.</li>
       <li><b>Occhi e muso.</b> A grandezza di gioco gli occhi sono timbri fatti a mano (davanti, tre quarti, di lato, chiusi), scelti da quanto l'occhio guarda verso di noi. Il muso (naso, bocca aperta con la lingua, guance rosse) segue la testa in ogni direzione.</li>
       <li><b>Fermo animato.</b> La coda e la cresta fiammeggiano, respira, sbatte le palpebre una volta, tre braci salgono dalla coda. Ogni movimento dipende solo dal punto del giro, così l'ultimo fotogramma si collega al primo; i piedi non si muovono mai.</li>
       <li><b>Le prossime creature.</b> Mi basta un disegno pulito come questo; se mi mandi anche il lato o il dietro, la base viene ancora più fedele. Prima ti faccio vedere la base nella vista del tuo disegno e le 8 direzioni, e solo dopo il tuo sì faccio camminata, attacco, colpito e KO.</li>
@@ -252,8 +252,7 @@ const stills={};
 Promise.all([...Object.keys(S).map(k=>load(S[k].src).then(i=>{S[k].img=i})),
   ...Object.keys(IM).map(k=>load(IM[k]).then(i=>{stills[k]=i}))]).then(()=>{
   if(stills.disegno)$('imDraw').src=IM.disegno;else $('imDraw').closest('figure').hidden=true;
-  $('imBase').src=IM.base;
-  const redrawStills=()=>drawStill($('cvPix'),stills.pixel);
+  const redrawStills=()=>{drawStill($('cvPrima'),stills.prima);drawStill($('cvPix'),stills.pixel)};
   redrawStills();addEventListener('resize',redrawStills);
   rowBig=row('rowBig','grande',true);rowMap=row('rowMap','mappa',false);setAuto(auto);show();requestAnimationFrame(frame)
 }).catch(()=>{$('nowNote').textContent='Gli sprite non si sono caricati: ricarica la pagina.'});

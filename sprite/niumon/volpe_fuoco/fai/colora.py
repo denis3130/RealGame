@@ -32,6 +32,8 @@ PAL = np.array([
     (176, 86, 52),      # 25 linea interna (pelo)
     (226, 122, 64),     # 26 pelo ombra profonda
     (156, 42, 40),      # 27 fiamma rosso scuro / linea interna fiamme
+    (92, 44, 32),       # 28 contorno del pelo (stile 2D)
+    (120, 30, 32),      # 29 contorno delle fiamme (stile 2D)
 ], np.uint8)
 
 # materiali ombreggiati (etichette >= 100)
@@ -62,7 +64,7 @@ PRIOR = {14: 3, 18: 3, 19: 3, 20: 3, 21: 3, 15: 2, 16: 2, 17: 2, 22: 2, 23: 1, 1
 
 def head_local(info, pos):
     h = info['head']
-    return (pos - h['c']) @ h['R']
+    return ((pos - h['c']) @ h['R']) / h.get('s', 1.0)
 
 def face(info, pos, open_mouth=True, blink=0.0):
     l = head_local(info, pos)
@@ -191,7 +193,7 @@ def labels(m, info, b, blink=0.0, open_mouth=True, light=(-0.3, 0.85, 0.45)):
             dlt = pos - Bw
             uu = dlt @ Uw / e['L']; vv = dlt @ Vw
             side = ear & (np.sign(dlt @ (Rh @ np.array((0, 1., 0)))) == e['s'])
-            half = 9.4 * np.clip(1 - uu, 0, 1) ** 0.7 + 0.25
+            half = 10.4 * np.clip(1 - uu, 0, 1) ** 0.7 + 0.25
             inner = side & (n @ Ww > 0.2) & (np.abs(vv) < half * 0.52) & (uu < 0.82)
             lab[inner] = EARIN
             lab[side & ~inner] = EAROUT

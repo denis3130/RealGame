@@ -11,8 +11,11 @@ def head_turn(theta):
     k = float(np.interp(abs(t), [0, 45, 90, 125, 180], [0, 20, 12, 0, 0]))
     return np.sign(t) * k
 
-def make(theta, phi=20, size=64, upp=1.72, pivot=(32, 56), S=6, pose=None, blink=0.0, open_mouth=True,
-         cover=0.5, thr=4.0, nsig=None, raw=False):
+STILE = '2d'      # '2d': colori piatti come gli sprite classici; 'base': toni dalla luce della base (prima versione)
+
+def make(theta, phi=20, size=64, upp=1.82, pivot=(32, 56), S=6, pose=None, blink=0.0, open_mouth=True,
+         cover=0.5, thr=4.0, nsig=None, raw=False, stile=None):
+    stile = stile or STILE
     pose = dict(pose or {})
     pose.setdefault('head_yaw', head_turn(theta))
     m, info = volpe.build(**pose)
@@ -26,11 +29,15 @@ def make(theta, phi=20, size=64, upp=1.72, pivot=(32, 56), S=6, pose=None, blink
     lab, nl, g = colora.labels(m, info, b, blink=blink, open_mouth=open_mouth)
     dep = np.where(b['hit'], b['depth'], -1e9).astype(np.float32)
     if raw: return lab, nl, g, dep, b, m, info
-    sl, sn, sg, sd = pixel.down(lab, nl, g, dep, S, cover=cover)
+    gid = np.array([d['group'] for d in m.prims])[np.clip(b['prim'], 0, len(m.prims) - 1)]
+    gid = np.where(b['hit'], gid, -1).astype(np.int16)
+    sl, sn, sg, sd, sgr = pixel.down(lab, nl, g, dep, S, cover=cover, grp=gid)
     post = None
     if size <= 96:
-        fill = colora.tone(colora.FUR, sn, sg)
+        fill = np.where(sn < -0.05, 3, 2) if stile == '2d' else colora.tone(colora.FUR, sn, sg)
         post = lambda idx: occhi64.apply(idx, sl, info, theta, phi, size, upp, pivot, ANCHOR, fill, blink=blink)
+    if stile == '2d':
+        return pixel.finish2d(sl, sn, sg, sd, sgr, k=max(1, round(1.82 / upp)), thr=thr, post=post)
     return pixel.finish(sl, sn, sg, sd, thr=thr, post=post)
 
 def sheet(tiles, k, bg=(120, 132, 110)):

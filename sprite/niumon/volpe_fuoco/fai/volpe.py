@@ -31,7 +31,9 @@ def flat_chain(m, pts, wr, tr, part, g, Vax=None, Wax=None):
 
 P0 = dict(head_yaw=0.0, head_pitch=0.0, head_roll=0.0, breath=0.0, tail_ph=0.0, ear_tw=0.0, anim=False)
 
-HEAD_C = np.array((21.5, 0, 51.5)); HEAD_R = (14.0, 16.0, 15.5)
+HS = 1.08                                   # testa più grande (stile tenero)
+KB = 3.0                                    # il dietro (anche zampe e coda) più vicino: corpo più corto
+HEAD_C = np.array((21.5, 0, 52.5)); HEAD_R = (14.0 * HS, 16.0 * HS, 15.5 * HS)
 
 def build(**kw):
     P = dict(P0); P.update(kw)
@@ -48,7 +50,7 @@ def build(**kw):
     sw = lambda i, a=1.0: a * np.sin(ph + i * 1.3)
     # ---- corpo
     m.ell((9, 0, 21.5 + 0.15 * br), (13, 8.0 + 0.25 * br, 8.8 + 0.25 * br), 'fur', gB)
-    m.ell((-11, 0, 20.5), (12, 7.6, 8.2), 'fur', gB)
+    m.push(np.eye(3), (KB, 0, 0)); m.ell((-11, 0, 20.5), (11, 7.6, 8.2), 'fur', gB); m.pop()
     m.ell((17, 0, 30), (6.5, 6.3, 8), 'fur', gB)
     for s in (1, -1):                       # zampe davanti
         y = 6.2 * s
@@ -56,6 +58,7 @@ def build(**kw):
         m.cone((13, y, 14), (14, y, 4.6), 3.0, 2.45, 'leg', gB)
         m.ell((15.4, y, 2.4), (4.2, 3.1, 2.4), 'paw', gB)
         tongue(m, (10.5, y + 0.9 * s, 13.5), (-1, 0.15 * s, -0.3), 4.2, 1.4, 'tuftfur', gK, curl=(-1, 0, 0.4), n=3)
+    m.push(np.eye(3), (KB, 0, 0))
     for s in (1, -1):                       # zampe dietro
         y = 6.0 * s
         m.ell((-12, y, 17), (7.5, 4.2, 8.5), 'fur', gB)
@@ -63,12 +66,13 @@ def build(**kw):
         m.cone((-16.5, y, 7), (-14.5, y, 4.2), 2.5, 2.4, 'leg', gB)
         m.ell((-13, y, 2.4), (4.1, 3.0, 2.4), 'paw', gB)
         tongue(m, (-18.5, y + 0.6 * s, 10.5), (-0.6, 0.1 * s, 0.8), 4.0, 1.3, 'tuftfur', gK, curl=(-0.3, 0, 1), n=3)
+    m.pop()
     # ---- gorgiera
-    m.ell((22, 0, 28), (6.0, 11.0, 8.0), 'ruff', gR)
+    m.ell((22, 0, 28), (6.6, 12.2, 8.8), 'ruff', gR)
     for a in np.radians([-78, -54, -30, -8, 14, 36, 58, 80]):
         b = np.array([22 + 5.0 * np.cos(a), 10.0 * np.sin(a), 23.0])
         d = np.array([0.5 * np.cos(a), 0.9 * np.sin(a), -1.0])
-        tongue(m, b, d, 8.0, 2.6, 'ruff', gR, curl=(0.4 * np.cos(a), 0.8 * np.sin(a), -1), bend=0.3, n=3)
+        tongue(m, b, d, 9.0, 2.9, 'ruff', gR, curl=(0.4 * np.cos(a), 0.8 * np.sin(a), -1), bend=0.3, n=3)
     for s in (1, -1):
         tongue(m, (18.5, 10.0 * s, 25.5), (-0.5, 0.75 * s, -0.45), 6.5, 2.4, 'ruff', gR, curl=(-1, 0.3 * s, -0.2), bend=0.3, n=3)
         tongue(m, (20, 11.5 * s, 31), (-0.1, 1.0 * s, -0.25), 6.5, 2.4, 'ruff', gR, curl=(-0.3, 1 * s, -0.6), bend=0.3, n=3)
@@ -80,6 +84,7 @@ def build(**kw):
     # ---- coda di fuoco: la sagoma del disegno portata nel piano del corpo e gonfiata
     import sagome
     d2, hh, u0, v0, cs = sagome.tail_grid(phase=P['tail_ph'] if P.get('anim') else None)
+    m.push(np.eye(3), (KB, 0, 0))
     m.infl((0, 0, 0), (1, 0, 0), (0, 0, 1), d2, hh, u0, v0, cs, 'flame', gT)
     tail_d2 = d2
     # braci che si staccano dalla coda e salgono (come nel disegno)
@@ -93,12 +98,13 @@ def build(**kw):
             p = np.array(p0) * (1 - k) + np.array(p1) * k + np.array((0.8 * np.sin(6.28 * k * 1.5), 0, 0))
             rr = 1.25 * (1 - k ** 2) + 0.3
             m.cone(p, p + np.array((0.3, 0, 2.2 * rr)), rr, 0.08, 'ember', gX)
+    m.pop()
     # ---- testa (gira sul collo)
     Rh = rotz(np.radians(P['head_yaw'])) @ rotx(np.radians(P['head_roll'])) @ roty(np.radians(-P['head_pitch']))
     m.push(Rh, (0, 0, 0.12 * br), pivot=(17, 0, 34))
     hc = HEAD_C
-    H = lambda p: hc + np.asarray(p, float)
-    head = dict(c=m.X(hc), R=m.XR().copy(), r=HEAD_R)
+    H = lambda p: hc + HS * np.asarray(p, float)
+    head = dict(c=m.X(hc), R=m.XR().copy(), r=HEAD_R, s=HS)
     m.ell(hc, HEAD_R, 'head', gH)
     m.ell(H((5.0, 0, -7.0)), (9.0, 12.5, 7.5), 'head', gH)            # guance e mento
     m.ell(H((12.0, 0, -8.6)), (4.6, 5.0, 3.8), 'head', gH)            # muso
@@ -124,7 +130,7 @@ def build(**kw):
     # orecchie: coni schiacciati (dentro rosso scuro), con due ciuffi di fiamma sul bordo esterno
     ears = []
     for s in (1, -1):
-        B = H((-2.5, 12.5 * s, 8.5)); T = H((-11.0, 25.5 * s, 30.5))
+        B = H((-2.5, 12.5 * s, 8.5)); T = B + 1.12 * (H((-11.0, 25.5 * s, 30.5)) - B)
         tw = P['ear_tw'] if s > 0 else 0
         T = T + np.array((-2.5 * tw, 0, -0.8 * tw))
         U = nrm(T - B); L = np.linalg.norm(T - B)
@@ -134,11 +140,11 @@ def build(**kw):
         n = 6
         us = np.linspace(0, 1, n)
         pts = [B + U * L * t for t in us]
-        wr = [9.4 * (1 - t) ** 0.7 + 0.25 for t in us]
+        wr = [10.4 * (1 - t) ** 0.7 + 0.25 for t in us]
         tr = [2.6 * (1 - t) ** 0.8 + 0.2 for t in us]
         prims = flat_chain(m, pts, wr, tr, 'ear', gE, Vax=Vo, Wax=Wf)
         for (t, L2, r0) in [(0.38, 4.6, 1.7), (0.62, 3.6, 1.3)]:
-            w = 9.4 * (1 - t) ** 0.7
+            w = 10.4 * (1 - t) ** 0.7
             b = B + U * L * t + Vo * (w * 0.75)
             tongue(m, b, nrm(Vo * 0.9 + U * 0.6), L2, r0, 'earfl', gE, curl=U, bend=0.5, n=3)
         ears.append(dict(B=m.X(B) if False else None, Bh=B, U=U, V=Vo, W=Wf, L=L, s=s))
