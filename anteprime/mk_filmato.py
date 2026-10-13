@@ -1,5 +1,6 @@
 # Costruisce anteprime/filmato.html: il filmato dell'intro (anteprime/filmato/*.js) dentro una copia del gioco, che parte subito.
-# Parametri dell'indirizzo: ?intro=A|B (le frasi brevi o i pensieri dell'eroe), ?trailer=1 (senza tasto Salta, resta sul logo),
+# Parametri dell'indirizzo: ?intro=A|B (solo le frasi brevi o solo i pensieri dell'eroe, per confrontare: di solito ci sono
+# tutti e due insieme), ?trailer=1 (senza tasto Salta, resta sul logo),
 # ?shot=3.2 (parte da quell'inquadratura e ne mostra il numero), ?t=12.5 (parte da quel secondo), ?foto=1 (fermo, per le foto di prova).
 # La pagina costruita non si salva su git.  Uso: python3 anteprime/mk_filmato.py
 import os,subprocess,sys,glob
@@ -29,7 +30,7 @@ async function audioOffline(dur,o){o=o||{};const sr=22050,off=new OfflineAudioCo
 window.__FE=s=>eval(s);
 return{play:fmPlay,end:fmEnd,render,foto,FM,SHOTS:()=>SHOTS,audioOffline}})();
 window.FILM=FILM;
-(()=>{const q=new URLSearchParams(location.search),ver=(q.get('intro')||'A').toUpperCase(),trailer=q.get('trailer')==='1',foto=q.get('foto')==='1';
+(()=>{const q=new URLSearchParams(location.search),ver=(q.get('intro')||'AB').toUpperCase(),trailer=q.get('trailer')==='1',foto=q.get('foto')==='1';
   let from=+(q.get('t')||0);const sid=q.get('shot');if(sid){const s=FILM.SHOTS().find(o=>o.id===sid);if(s)from=s.t0;FILM.FM.debug=true}
   FILM.FM.from=from;
   function panel(){let el=document.getElementById('fmEnd');if(!el){el=document.createElement('div');el.id='fmEnd';el.innerHTML=`<style>
@@ -38,10 +39,10 @@ window.FILM=FILM;
     #fmEnd p{margin:0 18px 8px;text-align:center;font-size:14px;color:#d9c9a6;max-width:300px}
     #fmEnd button{font:400 20px "Lilita One",system-ui;color:#fff;min-width:230px;padding:10px 18px 12px;border:3px solid #191714;border-radius:14px;background:linear-gradient(#ffe46e,#ffc61f 48%,#f2a400 52%,#ffb816);box-shadow:inset 0 3px 0 rgba(255,255,255,.6),0 5px 0 #191714;text-shadow:0 2px 0 #191714;cursor:pointer}
     #fmEnd button.b2{background:linear-gradient(#bff0ff,#6fc8f0 48%,#3a9ad0 52%,#5ab4e6)}#fmEnd button.b3{background:linear-gradient(#e6e0d0,#b8b0a0 48%,#958c7c 52%,#a9a090)}
-    </style><h2>Il filmato</h2><p>Versione A: frasi brevi al centro. Versione B: i pensieri dell'eroe.</p>
-    <button data-v="A">Guarda la versione A</button><button class="b2" data-v="B">Guarda la versione B</button><button class="b3" data-v="T">Trailer 9:16 (senza Salta)</button>`;
+    </style><h2>Il filmato</h2><p>Frasi brevi in alto e pensieri dell'eroe in basso, nella stessa versione.</p>
+    <button data-v="AB">Guarda di nuovo</button><button class="b2" data-v="T">Trailer 9:16 (senza Salta)</button>`;
     $('wrap').appendChild(el);el.addEventListener('click',e=>{const b=e.target.closest('button');if(!b)return;el.hidden=true;FILM.FM.from=0;
-      if(b.dataset.v==='T')go(FILM.FM.ver,true);else go(b.dataset.v,false)})}el.hidden=false}
+      if(b.dataset.v==='T')go('AB',true);else go(b.dataset.v,false)})}el.hidden=false}
   function go(v,tr){FILM.play({ver:v,trailer:tr,onEnd:()=>{panel()}})}
   try{AU.on.music=true;AU.on.sfx=true}catch(e){}
   if(foto){window.__FOTO=1;return}

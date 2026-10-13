@@ -140,5 +140,6 @@ const S74={id:'7.4',t0:37.5,d:1,set:'arenaPorta',
     for(let i=0;i<26;i++){const z=120+((i*37)%60),x=-90+((u*260+i*47)%200),y=-10-((i*29)%60);out.push({z,c:(c,s)=>{c.fillStyle=`rgba(170,150,130,${.35*(1-fz(z))})`;c.beginPath();c.ellipse(x,y,2.4,.6,0,0,FTAU);c.fill()}})}}};
 const S75={id:'7.5',t0:38.5,d:1.5,set:'nero'};
 SHOTS=[S11,S12,S13,S21,S22,S23,S31,S32,S33,S34,S41,S42,S43,S51,S52,S53,S61,S62,S63,S64,S65,S71,S72,S73,S74,S75];
-TXT.A=[[4.5,7.2,'Ti sei perso…',.17],[13.6,17.6,'Qualcosa ti aspettava.',.17],[24.6,27.4,'Non c\'è ritorno.',.17]];
-TXT.B=[[5.15,7.4,'Dove diavolo sono finito…?'],[8.75,10.3,'E questa…?'],[15.1,17.9,'Un arco… perché è qui?'],[20.6,22.4,'Cos\'era quel verso?!'],[24.7,27.2,'No… è chiuso!'],[31.1,33,'Va bene. Avanti.']];
+// the short lines (top) and the hero's thoughts (bottom) take turns: a line, then his answer to it
+TXT.A=[[2.5,5.1,'Ti sei perso…',.16],[12.15,14.85,'Qualcosa ti aspettava.',.16],[26,28.6,'Non c\'è ritorno.',.16]];
+TXT.B=[[5.3,7.4,'Dove diavolo sono finito…?'],[8.75,10.3,'E questa…?'],[15.05,17.5,'Un arco… perché è qui?'],[20.6,22.4,'Cos\'era quel verso?!'],[24.3,25.95,'No… è chiuso!'],[31.1,33,'Va bene. Avanti.']];

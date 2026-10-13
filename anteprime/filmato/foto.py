@@ -3,7 +3,7 @@
 import os,sys,asyncio
 from playwright.async_api import async_playwright
 here=os.path.dirname(os.path.abspath(__file__))
-args=sys.argv[1:];out=args.pop(0);ver='A';W=360;H=640;sheet=None;ts=[];lowfx=False
+args=sys.argv[1:];out=args.pop(0);ver='AB';W=360;H=640;sheet=None;ts=[];lowfx=False
 while args:
   a=args.pop(0)
   if a=='--ver':ver=args.pop(0)

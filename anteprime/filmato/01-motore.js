@@ -170,14 +170,15 @@ function fmPost(t,sh,lt){const px=PX(),W=FM.W,H=FM.H;X.save();X.setTransform(px,
   if(sh.flash){const a=sh.flash(lt);if(a>0){X.fillStyle=`rgba(255,250,235,${a})`;X.fillRect(0,0,W,H)}}
   fmWords(t);X.restore()}
 
-// ------------------------------------------------------------------ the words: version A (short lines in the middle) or B (the hero's thoughts)
-// [from, to, text]; set by 05 (TXT.A, TXT.B)
+// ------------------------------------------------------------------ the words: the short lines at the top (TXT.A) and the hero's thoughts
+// at the bottom (TXT.B), both in the same film (Denis, 14 October: «in un'unica versione»), staggered so they never meet.
+// [from, to, text, y]; set by 05. FM.ver 'AB' = both (the film), 'A' or 'B' = only one (for comparing, ?intro=A)
 const TXT={A:[],B:[]};
 function fmWrap(c,txt,maxW){const words=txt.split(' '),lines=[];let cur='';for(const w of words){const tr=cur?cur+' '+w:w;if(c.measureText(tr).width>maxW&&cur){lines.push(cur);cur=w}else cur=tr}if(cur)lines.push(cur);return lines}
-function fmWords(t){const W=FM.W,H=FM.H,list=TXT[FM.ver]||[];
-  for(const[a,b,txt,ty] of list){if(t<a||t>b)continue;const fi=seg01(t,a,a+.55),fo=1-seg01(t,b-.6,b),al=EZ.s(Math.min(fi,fo));if(al<=0)continue;
+function fmWords(t){const W=FM.W,H=FM.H,ver=FM.ver||'AB';
+  for(const kind of['A','B'])if(ver.includes(kind))for(const[a,b,txt,ty] of TXT[kind]){if(t<a||t>b)continue;const fi=seg01(t,a,a+.55),fo=1-seg01(t,b-.6,b),al=EZ.s(Math.min(fi,fo));if(al<=0)continue;
     X.save();X.textAlign='center';X.textBaseline='middle';
-    if(FM.ver==='A'){// a slow line in the middle: it comes in a little bigger and settles, then fades
+    if(kind==='A'){// a slow line: it comes in a little bigger and settles, then fades
       const sz=Math.min(30,W*.082),s=1+.05*(1-EZ.o(fi));X.font=`400 ${sz}px "Lilita One","Baloo 2",system-ui,sans-serif`;
       X.translate(W/2,H*(ty||.4));X.scale(s,s);X.globalAlpha=al;X.shadowColor='rgba(0,0,0,.85)';X.shadowBlur=18*PX();X.fillStyle='#f6ead2';
       const lines=fmWrap(X,txt,W*.84);lines.forEach((ln,i)=>X.fillText(ln,0,(i-(lines.length-1)/2)*sz*1.12));
@@ -209,7 +210,7 @@ function fmUnlock(cb){try{initAudio()}catch(e){}
   try{c.resume().then(go,go)}catch(e){go()}setTimeout(go,700)}
 function fmGo(){if(!FM.on)return;FM.splash=false;$('introScr').classList.remove('splash');try{initAudio()}catch(e){}
   FM.start=performance.now()+120-(FM.from||0)*1000;FM.last=performance.now();if(typeof AUD!=='undefined')AUD.start()}
-function fmPlay(o){o=o||{};const sc0=$('introScr');FM.ver=o.ver==='B'?'B':'A';FM.cheap=false;FM.ema=null;FM.nf=0;FM.prevF=0;FM.trailer=!!o.trailer;FM.onEnd=o.onEnd||null;FM.on=true;FM.ended=false;FM.logo=false;
+function fmPlay(o){o=o||{};const sc0=$('introScr');FM.ver=['A','B'].includes(o.ver)?o.ver:'AB';FM.cheap=false;FM.ema=null;FM.nf=0;FM.prevF=0;FM.trailer=!!o.trailer;FM.onEnd=o.onEnd||null;FM.on=true;FM.ended=false;FM.logo=false;
   sc0.hidden=false;sc0.className='';sc0.classList.toggle('film',true);sc0.classList.toggle('trailer',FM.trailer);fmSetup(sc0);
   if(!AU.ctx||AU.ctx.state!=='running'){FM.splash=true;sc0.classList.add('splash')}else fmGo();
   requestAnimationFrame(fmLoop)}
