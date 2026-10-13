@@ -21,7 +21,7 @@ function update(dt){
   // fire
   P.fireCd-=dt;
   const tgt=INTRO.on&&INTRO.hold?null:nearest(P.x,P.y);P.aiming=false;
-  if(!P.moving&&P.dashT<=0&&tgt){P.aiming=true;P.face=Math.atan2(tgt.y-P.y,tgt.x-P.x);
+  if(!P.moving&&P.dashT<=0&&tgt){P.aiming=true;if(Math.hypot(tgt.x-P.x,tgt.y-P.y)>P.r)P.face=Math.atan2(tgt.y-P.y,tgt.x-P.x);
     if(P.fireCd<=0){P.fireCd=1/P.aspd;for(let k=0;k<P.multi;k++)P.queue.push({t:k*.12})}}
   for(let i=P.queue.length-1;i>=0;i--){const q=P.queue[i];q.t-=dt;if(q.t<=0){const t2=nearest(P.x,P.y);volley(t2?Math.atan2(t2.y-P.y,t2.x-P.x):P.face);P.queue.splice(i,1)}}
   // arrows
@@ -42,7 +42,7 @@ function update(dt){
       if(BLOCK[e.type]&&BLOCK[e.type](e,ar)){gone=true;break}
       const crit=Math.random()<P.crit;hurtE(e,P.atk*ar.m*(crit?(P.critMul||2):1),crit);if(!ar.siege)ultGain(1.2);if(P.light&&!e.dead&&(G.lc=(G.lc||0)+1)%Math.max(3,7-P.light)===0)lightning(e);
       for(let q=0;q<(crit?7:4);q++)G.fx.push({k:'chunk',x:ar.x,y:ar.y,vx:rand(-90,90)-ar.vx*.12,vy:rand(-90,90)-ar.vy*.12,t:rand(.15,.32),r:rand(1.2,2.3),col:ECOL[e.type]});
-      if(!e.dead&&!isBoss(e.type)&&e.type!=='plant'&&e.type!=='eyeflower'){const kb=(crit?9:4)*(P.kbm||1);if(P.kbm>1.5)G.fx.push({k:'spark',x:ar.x,y:ar.y,t:.18});moveCircle(e,Math.cos(ar.a)*kb,Math.sin(ar.a)*kb,e.type==='bat'||e.type==='wisp')}
+      if(!e.dead&&!isBoss(e.type)&&e.type!=='plant'&&e.type!=='eyeflower'){const kb=(crit?9:4)*(P.kbm||1);if(P.kbm>1.5)G.fx.push({k:'spark',x:ar.x,y:ar.y,t:.18});(e.kbx=(e.kbx||0)+Math.cos(ar.a)*kb*14,e.kby=(e.kby||0)+Math.sin(ar.a)*kb*14,e.kbf=e.type==='bat'||e.type==='wisp')}
       if(ar.ric>0){const nx=nearest(ar.x,ar.y,ar.hit,200);if(nx){ar.ric--;ar.a=Math.atan2(nx.y-ar.y,nx.x-ar.x);ar.vx=Math.cos(ar.a)*(P.pspd||560);ar.vy=Math.sin(ar.a)*(P.pspd||560);ar.life=1;continue}}
       if(ar.pierce>0){ar.pierce--;continue}
       gone=true;break;
@@ -56,7 +56,7 @@ function update(dt){
   // enemies
   for(const e of G.enemies)if(!e.dead){if(isBoss(e.type)&&!(e.intro>0)&&e.type!=='mimic'){const bl=G.bossLvl||(G.bossLvl=bossLvl());updEnemy(e,dt*bl.spd);if(!e.dead&&bl.tier>0)bossExtra(e,dt,bl)}else updEnemy(e,dt)}
   for(let i=0;i<G.enemies.length;i++){const a=G.enemies[i];if(a.dead||a.z>4)continue;for(let j=i+1;j<G.enemies.length;j++){const b=G.enemies[j];if(b.dead||b.z>4)continue;
-    const dx=b.x-a.x,dy=b.y-a.y,d=Math.hypot(dx,dy),m=a.r+b.r-4;if(d<m&&d>.01){const p=(m-d)/2,wa=isBoss(a.type)?0:1,wb=isBoss(b.type)?0:1;a.x-=dx/d*p*wa*(wb?1:2);a.y-=dy/d*p*wa*(wb?1:2);b.x+=dx/d*p*wb*(wa?1:2);b.y+=dy/d*p*wb*(wa?1:2)}}}
+    const dx=b.x-a.x,dy=b.y-a.y,d=Math.hypot(dx,dy),m=a.r+b.r-4;if(d<m&&d>.01){const p=(m-d)/4,wa=isBoss(a.type)?0:1,wb=isBoss(b.type)?0:1;a.x-=dx/d*p*wa*(wb?1:2);a.y-=dy/d*p*wa*(wb?1:2);b.x+=dx/d*p*wb*(wa?1:2);b.y+=dy/d*p*wb*(wa?1:2)}}}
   G.enemies=G.enemies.filter(e=>!e.dead);
   // hazards
   for(let i=G.eproj.length-1;i>=0;i--){const p=G.eproj[i];trailOf(p);p.x+=p.vx*dt;p.y+=p.vy*dt;p.life-=dt;if(p.kind==='bubble'){p.x+=Math.cos(G.t*4+(p.ph||0))*24*dt;p.y+=Math.sin(G.t*3+(p.ph||0))*10*dt}

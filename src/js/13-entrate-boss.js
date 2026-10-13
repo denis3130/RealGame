@@ -40,7 +40,7 @@ function bossExtra(e,dt,bl){if(G.state!=='play'||e.hidden||e.z>10)return;e.xT=(e
       if(!LOWFX)fxPush({k:'ring2',x:e.x,y:e.y-10,rgb:'255,120,200',r0:10,r1:90,t:.4,max:.4,w:8});sfx('boom');shake(3)}return}
   if(e.xT<=0){e.xT=bl.tier>1?4.5:6.5;e.xWarn=.7;sfx('shimmer',1)}}
 function updEnemy(e,dt){
-  e.t+=dt;e.flash=Math.max(0,e.flash-dt);e.orbCd-=dt;
+  e.t+=dt;e.flash=Math.max(0,e.flash-dt);e.orbCd-=dt;if(e.kbx||e.kby){const f=Math.exp(-dt*14);moveCircle(e,e.kbx*(1-f)/14,e.kby*(1-f)/14,e.kbf);e.kbx*=f;e.kby*=f;if(Math.abs(e.kbx)+Math.abs(e.kby)<.5)e.kbx=e.kby=0}
   if(e.spawn>0){e.spawn-=dt;return}
   if(e.frozen>0){e.frozen-=dt;e.moving=false;return}
   if(e.root>0){e.root-=dt;e.moving=false;e.rootT=(e.rootT||0)-dt;if(e.rootT<=0){e.rootT=.5;hurtE(e,P.atk*.45,false,true);if(e.dead)return}if(!isBoss(e.type))return}
@@ -55,7 +55,7 @@ function updEnemy(e,dt){
       if(e.jump>0){e.jump-=dt*sm;moveCircle(e,e.vx*dt*sm,e.vy*dt*sm);e.z=Math.sin(clamp(1-e.jump/.5,0,1)*Math.PI)*12;if(e.jump<=0){e.z=0;e.cd=rand(.5,1.1);if(e.type==='magmaslime'){if(e.elite||(e.jn=(e.jn||0)+1)%3===0)addZone(e.x,e.y,e.elite?22:14,1.3,'fire');G.fx.push({k:'puff',x:e.x,y:e.y,vx:0,vy:-8,t:.3,r:6})}else if(e.elite)addZone(e.x,e.y,20,2.4,'acid')}}
       else{const na=navAngle(e);e.face=na;e.cd-=dt*sm*FR();if(e.cd<=0){e.jump=.5;const sp=e.type==='bigslime'?90:e.type==='magmaslime'?110:120;e.vx=Math.cos(na)*sp;e.vy=Math.sin(na)*sp}}
       break;
-    case 'bat':{if(e.elite){e.cd-=dt*FR();if(e.cd<=0){e.cd=2.4;shootE(e.x,e.y-14,a,150,6,10,'orb')}}const w=Math.sin(e.t*4)*.9,sp=88*sm;e.face=a+w*.6;moveCircle(e,Math.cos(a+w)*sp*dt,Math.sin(a+w)*sp*dt,true);break}
+    case 'bat':{if(e.elite){e.cd-=dt*FR();if(e.cd<=0){e.cd=2.4;shootE(e.x,e.y-14,a,150,6,10,'orb')}}const w=Math.sin(e.t*4)*.9,sp=88*sm;if(d>P.r){e.face=a+w*.6;moveCircle(e,Math.cos(a+w)*sp*dt,Math.sin(a+w)*sp*dt,true)}break}
     case 'goblin':
       if(e.aim>0){e.moving=false;e.aim-=dt;if(e.aim>.25)e.aimA=a;e.face=e.aimA;if(e.aim<=0){for(const off of (e.elite?[-.2,0,.2]:[0]))shootE(e.x,e.y-8,e.aimA+off,300,5,14,'arrow');e.cd=rand(1.6,2.4)}}
       else{
