@@ -85,8 +85,10 @@ function capPath(V0,q,Rr,n,al){n=nrm(n);let u=cross(n,[0,0,1]);if(len(u)<.2)u=cr
   const run=[];let i=s0;const cut=(a,c)=>{const fa=f[a],fc=f[c],k=fa/(fa-fc);return nrm(lerp3(b[a],b[c],k))};
   run.push(cut((s0-1+N)%N,s0));while(vis[i]){run.push(b[i]);i=(i+1)%N}run.push(cut((i-1+N)%N,i));
   const pts=run.map(m=>sp(V0,q,Rr,m)),a0=Math.atan2(pts[0][1]-q[1],pts[0][0]-q[0]),a1=Math.atan2(pts[pts.length-1][1]-q[1],pts[pts.length-1][0]-q[0]);
-  // close along the limb, going round on the side where the cap's middle shows
-  const nm=sp(V0,q,Rr,n),an=Math.atan2(nm[1]-q[1],nm[0]-q[0]),norm=a=>((a%TAU)+TAU)%TAU,ccw=norm(a0-a1),inC=norm(an-a1)<=ccw;
+  // close along the limb: the limb inside a cap smaller than half the ball is always the short way round (a bigger cap: the long way).
+  // Deciding it from the screen angle of the cap's middle went the wrong way when only a sliver of the cap showed or hid, and for a
+  // frame the whole head took the colour of the hood's lining
+  const norm=a=>((a%TAU)+TAU)%TAU,ccw=norm(a0-a1),inC=al<Math.PI/2?ccw<=Math.PI:ccw>Math.PI;
   ctx.beginPath();for(const s of pts)ctx.lineTo(s[0],s[1]);if(inC)ctx.arc(q[0],q[1],Rr,a1,a1+ccw,false);else ctx.arc(q[0],q[1],Rr,a1,a1-(TAU-ccw),true);ctx.closePath();
   return{full:false,rim:pts}}
 
@@ -157,9 +159,9 @@ function skullHead(Vh,Rh,S,A,o,h,nod){const{F}=Vh,bone=S.skin;
   const E=[-1,1].map(sd=>{const e=nrm(nod([1,sd*.36,.12])),v=F(e);return{v,q:sp(Vh,h,Rh*.97,e),rx:2.75*Math.pow(Math.max(0,v),.6)}}).filter(e=>e.v>.06).sort((a,b)=>b.v-a.v);
   if(E.length)E[0].q=inwardAt(h,Rh,E[0].q,.58,.72);
   if(E.length>1){const n=E[0],f=E[1];f.q=inwardAt(h,Rh,f.q,.48,.64);const gap=Math.hypot(f.q[0]-n.q[0],f.q[1]-n.q[1])-n.rx-.6;f.rx=Math.min(f.rx,Math.max(0,gap))}
-  const lit=!o.shut&&(o.blink==null||o.blink>.3),rgb=hexRgb(S.eyes||'#e5484d');
+  const lit=o.shut?0:o.blink==null?1:sstep(.05,.65,o.blink),rgb=hexRgb(S.eyes||'#e5484d');
   for(const{v,q,rx} of E){if(rx<.7)continue;const ry=3.1*(1-.25*(o.squint||0));ctx.fillStyle='#2a211c';ctx.beginPath();ctx.ellipse(q[0],q[1],rx,ry,0,0,TAU);ctx.fill();
-    if(lit){shine(rgb,q[0],q[1]+.3,6,.5*Math.min(1,v*2));ctx.fillStyle=S.eyes||'#e5484d';ball([q[0],q[1]+.4],Math.min(rx*.62,1.35));ctx.fill();ctx.fillStyle='#fff';ball([q[0]-.35,q[1]],.42);ctx.fill()}}
+    if(lit>0){shine(rgb,q[0],q[1]+.3,6,.5*Math.min(1,v*2)*lit);ctx.save();ctx.globalAlpha*=lit;ctx.fillStyle=S.eyes||'#e5484d';ball([q[0],q[1]+.4],Math.min(rx*.62,1.35));ctx.fill();ctx.fillStyle='#fff';ball([q[0]-.35,q[1]],.42);ctx.fill();ctx.restore()}}
   // the teeth: the line of the jaw with the gaps between the teeth
   {const m=nrm(nod([1,0,-.44])),v=F(m);if(v>.08){const q=inwardAt(h,Rh,sp(Vh,h,Rh*.97,m),.62,.8),w=3.8*Math.max(.4,Math.pow(v,.6));ctx.save();ctx.globalAlpha=cl((v-.08)*4,0,1)*.85;ctx.strokeStyle=INK;ctx.lineWidth=1.1;ctx.lineCap='round';
     ctx.beginPath();ctx.moveTo(q[0]-w,q[1]);ctx.lineTo(q[0]+w,q[1]);for(let i=-1;i<=1;i++){ctx.moveTo(q[0]+i*w*.5,q[1]-1.3);ctx.lineTo(q[0]+i*w*.5,q[1]+1.3)}ctx.stroke();ctx.restore()}}
@@ -324,12 +326,13 @@ function pose(anim,p,o){const ph=p*TAU,A={B:[0,0,0],lean:.02,roll:0,s:0,sx:0,hd:
     let draw=0,rel=-1,hand;const sh=SHOOT,S0=sub(sh.grip,mul(sh.aim,BK));
     if(anim==='aim'){draw=cl(o.pull==null?1:o.pull,0,1);A.nock=cl(draw*4+.25,0,1)}
     else if(p<.38){draw=ez(p/.38);A.nock=1}else if(p<.5){draw=1;A.nock=1}else{rel=p-.5;A.fly=rel/.5;A.nock=p>.86?(p-.86)/.14:0}
-    A.draw=draw;A.grip=add(sh.grip,mul(sh.aim,1.4*draw+(rel>=0?.9*Math.exp(-rel*30)*Math.sin(rel*60):0)));A.aim=sh.aim;A.up=sh.up;
+    // after the release the bow arm, the body and the eyes relax quickly (dr) instead of jumping back in one frame
+    const dr=rel<0?draw:Math.exp(-rel*25);A.draw=draw;A.grip=add(sh.grip,mul(sh.aim,1.4*dr+(rel>=0?.9*Math.exp(-rel*30)*Math.sin(rel*60):0)));A.aim=sh.aim;A.up=sh.up;
     const pin=k=>sub(sub(A.grip,mul(sh.aim,BK+1.6*k)),mul(sh.aim,PULL*k));
     if(rel<0)hand=pin(draw);else{const back=add(pin(1),[-.8,1.6,.9]);hand=rel<.1?lerp3(pin(1),back,ez(rel/.1)):rel<.36?lerp3(back,S0,ez((rel-.1)/.26)):S0}
     A.hR=hand;A.pinch=rel<0;A.twang=rel>=0&&rel<.16?1-rel/.16:0;A.rel=rel;
-    A.lean=-.05*draw+(rel>=0?.05*Math.exp(-rel*12):0);A.B=[-.3*draw,0,0];A.s=.012*draw;A.hd=[.3,0,0];A.hp=.04;A.squint=draw>.5?(draw-.5)/.5:0;
-    A.fL=[2.2,-5.2,0];A.fR=[-1,5,0];A.jig=rel>=0?.8*Math.exp(-rel*10):0}
+    A.lean=-.05*dr+(rel>=0?.13*(1-Math.exp(-rel*40))*Math.exp(-rel*12):0);A.B=[-.3*dr,0,0];A.s=.012*dr;A.hd=[.3,0,0];A.hp=.04;A.squint=dr>.5?(dr-.5)/.5:0;
+    A.fL=[2.2,-5.2,0];A.fR=[-1,5,0];A.jig=rel>=0?.8*(1-Math.exp(-rel*40))*Math.exp(-rel*10):0}
   else if(anim==='dash'){// crouch, burst forward with the body stretched, a little hop, land and settle
     const K=[[0,[0,0,0,.02,0,0]],[.16,[-.6,0,-1.4,-.08,-.12,0]],[.34,[6,0,2.4,.4,.1,.2]],[.56,[8.4,0,1,.28,.02,.1]],[.72,[5,0,-.8,.04,-.08,0]],[.86,[1.6,0,.3,-.02,.03,0]],[1,[0,0,0,.02,0,0]]];
     const v=keys(K,p);A.B=[v[0],v[1],v[2]];A.lean=v[3];A.s=v[4];A.sx=v[5];A.hp=.06+v[3]*.2;A.hd=[0,0,-v[3]*1.2];
@@ -421,7 +424,7 @@ function wpose0(A,anim,p,id,o){o=o||{};const cls=WCLS[id],H=HOLD[cls],dg=sub(A.g
     if(q<.38){const k=ez(q/.38);g=lerp3(RG,WG,k);d=nrm(lerp3(RA,WA,k));ln=-.12*k;bd=[-1*k,0,0]}
     else if(q<.47){const k=(q-.38)/.09,kk=k*k;g=lerp3(WG,SG,kk);d=nrm(lerp3(WA,SA,kk));ln=lerp(-.12,.16,kk);bd=[lerp(-1,1.4,kk),0,0]}
     else if(q<.62){g=SG;d=SA;ln=.16;bd=[1.4,0,-.4]}
-    else{const k=ez((q-.62)/.38);g=lerp3(SG,RG,k);d=nrm(lerp3(SA,RA,k));ln=.16*(1-k);bd=[1.4*(1-k),0,0]}
+    else{const k=ez((q-.62)/.38);g=lerp3(SG,RG,k);d=nrm(lerp3(SA,RA,k));ln=.16*(1-k);bd=[1.4*(1-k),0,-.4*(1-k)]}
     W.grip=g;W.aim=nrm(d);W.up=[0,0,1];W.st.hot=Math.max(o.hot||0,q<.47?ez(cl(q/.38,0,1))*.6:.6*(1-cl((q-.47)/.3,0,1)));
     W.impact=q>=.47?q-.47:-1;W.lean=ln;W.body=bd;W.sq=q>=.47&&q<.56?-.06*Math.sin((q-.47)/.09*Math.PI):0;return W}
   if(id==='bomba'){// the throw: .0-.36 the bomb goes back over the shoulder, .36-.46 the arm swings forward, .44 it leaves the hand and flies
@@ -440,7 +443,7 @@ function wpose0(A,anim,p,id,o){o=o||{};const cls=WCLS[id],H=HOLD[cls],dg=sub(A.g
     else if(q<.86){const k=ez((q-.5)/.36);g=lerp3(r1[0],r0[0],k);d=lerp3(nrm(r1[1]),nrm(r0[1]),k)}
     else{g=r0[0];d=r0[1]}
     W.grip=g;W.aim=nrm(d);W.up=[1,0,0];W.st.glow=q<.24?.7+.6*ez(q/.24):q<.32?1.3:q<.5?1.7-(q-.32)/.18*.8:.75;
-    W.flash=q>=.32?cl(1-(q-.32)/.1,0,1):0;W.cast=q>=.32?q-.32:-1;W.rec=0;W.shots=[]}
+    W.flash=q>=.3?cl(Math.min((q-.3)/.02,1-(q-.32)/.1),0,1):0;W.cast=q>=.32?q-.32:-1;W.rec=0;W.shots=[]}
   return W}
 // the gun of a match (o.gp = ARMI.nuova(id).pose(), on the zombie map): its own recoil, flash and moving parts (slide, hammer and cylinder,
 // barrels and belt, pump, shells on the saddle, rocket) in place of the test cycle of 'shoot', and the reload: the muzzle tipped up by g.tilt,

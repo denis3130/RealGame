@@ -30,12 +30,13 @@ const IW={lead:[8.8,-1.6],tip:[15.6,0],c1:[9.4,3.7],s1:[7.4,8.1],c2:[5.4,3.5],s2
 // (raised in a V, well above the camera's 29 degrees, so the arm never points straight at the camera while it beats)
 const impArm=(sd,sw,fl)=>rotX([-Math.sin(sw)*.64,sd*Math.cos(sw)*.64,.77],sd*fl);
 function impWing(V0,X,A,sd){const{P,F,s,c}=V0,R0=X.T(IWR(sd)),Ua=nrm(X.Rd(impArm(sd,A.sw,A.fl))),v=nrm([s,c,.55]);
-  let Wa=cross(v,Ua);Wa=len(Wa)<.15?nrm(sub([0,0,-1],mul(Ua,Ua[2]))):nrm(Wa);
-  // the side of the arm the membrane hangs on: down on the screen and out, away from the body
-  const o0=P(0,0,0),w2=P(Wa),ox=P(X.Rd([0,sd,0]))[0]-o0[0];if((w2[0]-o0[0])*.8*cl(ox*3,-1,1)+(w2[1]-o0[1])<0)Wa=mul(Wa,-1);
+  // the side of the arm the membrane hangs on: down and out from the arm, in the body's own frame; turned about the arm to face us (Wc)
+  // on that side, and back to the body's direction where facing us is ambiguous, so it never flips over (it used to, seen from the side)
+  const Dn=X.Rd([0,sd*.6,-1]),Dp=nrm(sub(Dn,mul(Ua,dot(Dn,Ua))));let Wc=cross(v,Ua);const lc=len(Wc);Wc=lc<1e-3?Dp:mul(Wc,1/lc);
+  const sg=dot(Wc,Dp),wk=sstep(0,.3,Math.abs(sg))*sstep(.05,.2,lc),Wa=nrm(add(mul(Dp,1-wk),mul(Wc,(sg<0?-1:1)*wk)));
   const at=q=>P(add(R0,add(mul(Ua,q[0]*1.08),mul(Wa,q[1]*1.08)))),r=at([0,0]),t=at(IW.tip),s1=at(IW.s1),s2=at(IW.s2),c1=at(IW.c1),c2=at(IW.c2),le=at(IW.lead);
   // the colour of the side we see (darker from behind, as in the game) and a little darker for the far wing
-  const col=C.cmix(C.cmix(IC.wing,IC.wingB,sstep(.15,-.35,F(X.Rd([1,0,0])))),'#3a0e0a',F(X.Rd([0,sd,0]))<0?.18:0);
+  const col=C.cmix(C.cmix(IC.wing,IC.wingB,sstep(.15,-.35,F(X.Rd([1,0,0])))),'#3a0e0a',.18*sstep(0,-.16,F(X.Rd([0,sd,0]))));
   const path=()=>{ctx.beginPath();ctx.moveTo(r[0],r[1]);ctx.quadraticCurveTo(le[0],le[1],t[0],t[1]);ctx.quadraticCurveTo(c1[0],c1[1],s1[0],s1[1]);ctx.quadraticCurveTo(c2[0],c2[1],s2[0],s2[1]);ctx.closePath()};
   ctx.lineJoin='round';path();ctx.fillStyle=softBox(bbox([r,t,s1,s2]),col,.16,.26);ctx.fill();ink(2.2);ctx.stroke();
   ctx.save();path();ctx.clip();
@@ -54,7 +55,7 @@ function imp(x,y,face,anim,p,sc,o){sc=sc||1;o=o||{};const V0=V(face),{P,D,F}=V0,
     A.fl=.1+.34*Math.sin(ph*3);A.B=[0,0,1.1*Math.sin(ph*3-1)];A.lean=.24;A.sw=.6;A.tw=Math.sin(ph)*.8;A.tc=.6;A.roll=.06*Math.sin(ph);A.s=.03*Math.sin(ph*3+.6);A.yaw=.05*Math.sin(ph)}
   else if(anim==='attack'){// .0-.36 it rears back and swells, the fire glowing through it, .36-.46 it lunges and spits, then it settles
     const v=keys([[0,[0,0,0,0,0]],[.36,[-.32,-2.4,2,.05,.07]],[.45,[.3,3,-1,-.12,-.02]],[.6,[.1,1,-.2,.03,0]],[.78,[-.05,-.3,.3,-.02,0]],[1,[0,0,0,0,0]]],p);
-    A.lean=v[0];A.B=[v[1],0,v[2]];A.s=v[3];A.big=v[4];A.fire=p<.44?sstep(.05,.34,p):0;A.squint=p<.42?ez(cl(p/.3,0,1)):0;
+    A.lean=v[0];A.B=[v[1],0,v[2]];A.s=v[3];A.big=v[4];A.fire=sstep(.05,.34,p)*(1-sstep(.4,.46,p));A.squint=ez(cl(p/.3,0,1))*(1-sstep(.38,.46,p));
     A.open=p<.37?0:p<.45?ez((p-.37)/.08):p<.62?1-ez((p-.45)/.17):0;A.burst=p>=.42&&p<.82?(p-.42)/.4:-1;
     const amp=keys([[0,.26],[.25,.12],[.36,.06],[.45,.36],[.7,.3],[1,.26]],p);A.fl=keys([[0,.12],[.36,.5],[.45,-.14],[.62,.1],[1,.12]],p)+amp*Math.sin(ph*4);
     A.sw=.42+.2*bump(cl((p-.25)/.3,0,1));A.tw=.4*Math.sin(ph*2);A.tc=-.6*v[0]}
@@ -86,8 +87,8 @@ function imp(x,y,face,anim,p,sc,o){sc=sc||1;o=o||{};const V0=V(face),{P,D,F}=V0,
     if(A.open>.05)mouth(null,fc.h,Rb,MD,{at:fc.at,kind:'open',open:A.open,w:2.8,h:2.3,dark:IC.mouth,tongue:'#ffb84a'});
     else mouth(null,fc.h,Rb,MD,{at:fc.at,kind:'smile',w:2.7-A.fire*.9,bow:3.2-A.fire*1.8,lw:1.4});
     ctx.restore()});
-  // the horns on top: in front of the ball wherever their root faces us
-  for(const sd of[-1,1]){const b=add(Cb,mul(nrm([.2,sd*.55,.8]),IR));L.add(D(Xh.T(b))+.01,()=>impHorn(V0,Xh,Cb,sd))}
+  // the horns on top: in front of the ball wherever their root faces us (decided at rest, so they never pop as the head looks round)
+  for(const sd of[-1,1]){const b=add(Cb,mul(nrm([.2,sd*.55,.8]),IR));L.add(dT+D(sub(b,Cb))+.01,()=>impHorn(V0,Xh,Cb,sd))}
   // the spit: a flash of flame out of the mouth, then a puff of smoke (the fireball itself is the game's); before it, smoke from the mouth
   if(!o.noFx&&(A.burst>=0||A.fire>.5)){const m0=Xh.T(add(Cb,mul(MD,Rb))),fw=Xh.Rd(nrm([1,0,-.15]));
     L.add(D(add(m0,mul(fw,3))),()=>{if(A.fire>.5&&A.burst<0){const k=(A.fire-.5)*2;for(let i=0;i<2;i++){const t=(p*7+i*.5)%1,q=P(add(m0,add(mul(fw,1+t*2),[0,(i?1:-1)*(1.5+t*2),1+t*6])));ctx.fillStyle=`rgba(110,96,92,${.4*k*(1-t)})`;ball(q,.8+t*2);ctx.fill()}}
@@ -95,7 +96,7 @@ function imp(x,y,face,anim,p,sc,o){sc=sc||1;o=o||{};const V0=V(face),{P,D,F}=V0,
       if(k<.4){const kk=k/.4,q=P(add(m0,mul(fw,2.5+kk*7)));shine('255,150,40',q[0],q[1],10+kk*10,.65*(1-kk));
         ctx.fillStyle=`rgba(255,${120+kk*60|0},40,${.9*(1-kk)})`;for(let i=0;i<6;i++){const a=i/6*TAU+.5,e=P(add(m0,add(mul(fw,3+kk*5),mul(X.Rd([0,Math.cos(a),Math.sin(a)]),2+kk*6))));ball(e,1.6*(1-kk)+.4);ctx.fill()}
         ctx.save();ctx.globalAlpha=1-kk*kk;orb(q,5.2*(1-kk*.4),'#ffcf4a',{glow:'255,140,40',halo:2.4,lw:1.4});ctx.restore()}
-      if(k>.25){const kk=(k-.25)/.75;for(let i=0;i<3;i++){const q=P(add(m0,add(mul(fw,2+kk*5+i*1.2),[0,(i-1)*1.6,1.5+kk*8+i])));ctx.fillStyle=`rgba(110,96,92,${.38*(1-kk)})`;ball(q,1.4+kk*3.4);ctx.fill()}}})}
+      if(k>.25){const kk=(k-.25)/.75;for(let i=0;i<3;i++){const q=P(add(m0,add(mul(fw,2+kk*5+i*1.2),[0,(i-1)*1.6,1.5+kk*8+i])));ctx.fillStyle=`rgba(110,96,92,${.38*(1-kk)*Math.min(1,kk*6)})`;ball(q,1.4+kk*3.4);ctx.fill()}}})}
   run(L);
   if(A.stars>0)stars(P(X.T([0,0,IZ+IR+8])),9,A.stars);
   ctx.restore()}

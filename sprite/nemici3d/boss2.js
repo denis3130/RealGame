@@ -276,7 +276,7 @@ function hydra(x,y,face,anim,p,sc,o){sc=sc||1;o=o||{};const V0=V(face),{P,D,F}=V
   else if(anim==='bite'){// one head (o.who, the middle one by default) rears back with its jaws wide open (.0-.45), strikes forward and down to the
     // ground (.45-.53), snaps shut and holds there (.53-.72), pulls back up (.72-1); the other two hiss and watch
     const Kb=[[0,[0,0,0,-.1,0,0]],[.45,[-12,0,10,.25,1,-5]],[.53,[50,0,-68,-.6,.25,12]],[.56,[47,0,-69,-.55,0,10]],[.72,[44,0,-66,-.5,0,9]],[1,[0,0,0,-.1,0,0]]];
-    H.forEach((h,i)=>{if(i===who){const v=keys(Kb,p);h.off=[v[0],v[1],v[2]];h.pitch=v[3];h.open=v[4];h.fw=v[5];h.squint=p>.4&&p<.75?.6:0;if(p>.53&&p<.72)h.yaw=.08*Math.sin((p-.53)*90)*(1-(p-.53)/.19)}
+    H.forEach((h,i)=>{if(i===who){const v=keys(Kb,p);h.off=[v[0],v[1],v[2]];h.pitch=v[3];h.open=v[4];h.fw=v[5];h.squint=p>.4&&p<.75?.6:0;if(p>.53&&p<.72)h.yaw=.08*Math.sin((p-.53)*70)*(1-(p-.53)/.19)}
       else{const k=bump(cl(p/.9,0,1));h.yaw=(HYN[who].rest[1]-HYN[i].rest[1])*.006*k;h.pitch=-.1-.15*k;h.open=.35*k;h.off=[-3*k,0,3*k];h.blink=blink(p,.15+i*.3,.07)}})}
   else if(anim==='spit'){// one head rears up and back (.0-.35), lobs a ball of venom forward and up (.35-.45), then settles
     const Ks=[[0,[0,0,-.1,0]],[.35,[-9,9,.45,.3]],[.45,[9,2,.2,1]],[.6,[4,1,0,.5]],[1,[0,0,-.1,0]]];
@@ -288,11 +288,11 @@ function hydra(x,y,face,anim,p,sc,o){sc=sc||1;o=o||{};const V0=V(face),{P,D,F}=V
     H.forEach((h,i)=>{let z=0,pi=0,op=0;if(p<.14){const k=ez(p/.14);z=9*k;pi=.35*k;op=.8*k}
       else if(p<.6){const k=ez(cl((p-.14-st[i])/.2,0,1));z=9-130*k;pi=.35-1.1*k;op=.8*(1-k)}
       else{const k=ez(cl((p-.6-up[i])/.16,0,1)),k2=ez(cl((p-.76-up[i])/.16,0,1));z=-130+140*k-10*k2;pi=-.75+1.3*k-.6*k2;op=k*(1-k2)+.25*k2*(1-cl((p-.9)/.1,0,1))}
-      h.off=[0,0,z];h.pitch=-.1+pi;h.open=op;h.sw=4*Math.sin(ph*3+i)*(p>.6&&p<.9?1:0);h.squint=op>.5?.5:0})}
+      h.off=[0,0,z];h.pitch=-.1+pi;h.open=op;h.sw=4*Math.sin(ph*3+i)*sstep(.6,.64,p)*(1-sstep(.86,.9,p));h.squint=op>.5?.5:0})}
   else if(anim==='breath'){// the three heads rear back and fill up (.0-.3), thrust forward with the jaws wide (.3-.4) and pour out the
     // poison breath (.4-.8, the game draws the beams), then settle
     const Kr=[[0,[0,0,-.1,0]],[.3,[-7,8,.4,.3]],[.4,[10,-8,-.25,1]],[.8,[8,-6,-.2,1]],[1,[0,0,-.1,0]]];
-    H.forEach((h,i)=>{const v=keys(Kr,cl(p-(i-1)*.02,0,1));h.off=[v[0],0,v[1]];h.pitch=v[2];h.open=v[3];h.yaw=(i-1)*.1*(p>.3&&p<.8?1:0);if(p>.4&&p<.8)h.off[2]+=.8*Math.sin(p*200+i*2);
+    H.forEach((h,i)=>{const v=keys(Kr,cl(p-(i-1)*.02,0,1));h.off=[v[0],0,v[1]];h.pitch=v[2];h.open=v[3];h.yaw=(i-1)*.1*sstep(.27,.33,p)*(1-sstep(.77,.83,p));if(p>.4&&p<.8)h.off[2]+=.8*sstep(.4,.43,p)*(1-sstep(.77,.8,p))*Math.sin((p-.4)*TAU*8*1.6+i*2);
       h.mist=p>.36&&p<.84?(p-.36)/.48:-1;h.squint=p>.3&&p<.8?.7:p<.3?.3:0})}
   else if(anim==='hit'){const kb=hitK(p);A.B=[-4*kb,0,0];A.lean=-.07*kb;A.s=-.04*kb;A.stars=p<.75?1-p/.75:0;
     H.forEach((h,i)=>{h.off=[-7*kb,(i-1)*3*kb,4*kb];h.pitch=-.1+.4*kb;h.open=.55*Math.max(0,kb);h.shut=p<.5?1:0;h.sw=-(i-1)*3*kb})}
@@ -391,7 +391,7 @@ function mimic(x,y,face,anim,p,sc,o){sc=sc||1;o=o||{};const V0=V(face),{P,D,F}=V
   else if(anim==='chomp'){// .0-.45 crouches with the arms raised wide and the lid wide open, .45-.75 lunges forward chomping three times
     // with the arms reaching, .75-1 settles back
     const K=[[0,[0,0,0,0,.1]],[.45,[-3,-6,-.12,1,1]],[.52,[12,1,.28,0,1]],[.75,[10,0,.18,0,.4]],[1,[0,0,0,0,.1]]],v=keys(K,p);
-    A.B=[v[0],0,v[1]];A.lean=v[2];A.hu=v[3];A.op=p<.45?.1+.9*ez(p/.45):p<.75?.25+.75*Math.abs(Math.cos((p-.45)/.3*Math.PI*3)):v[4];A.tl=.3;A.glow=p<.75?1:0;
+    A.B=[v[0],0,v[1]];A.lean=v[2];A.hu=v[3];A.op=p<.45?.1+.9*ez(p/.45):p<.75?.25+.75*Math.abs(Math.cos((p-.45)/.3*Math.PI*3)):lerp(1,v[4],ez(cl((p-.75)/.1,0,1)));A.tl=.3;A.glow=1-sstep(.72,.85,p);
     const up=v[3],reach=bump(cl((p-.45)/.4,0,1));A.hands=[-1,1].map(sd=>[lerp(lerp(5,4,up),26,reach),sd*lerp(lerp(31,30,up),17,reach),lerp(lerp(3,66,up),34,reach)]);
     A.feet=[[v[0]*.4,-14,0],[v[0]*.4,14,0]]}
   else if(anim==='tongue'){// .0-.3 opens wide and leans back, the tongue curled inside, .3-.48 the tongue lashes out along the floor,
@@ -405,7 +405,7 @@ function mimic(x,y,face,anim,p,sc,o){sc=sc||1;o=o||{};const V0=V(face),{P,D,F}=V
     // the lid bangs open), .62-1 shakes and settles
     const K=[[0,[0,0,.1,0]],[.25,[-8,.12,.2,.6]],[.4,[30,-.05,.5,1]],[.55,[18,0,.3,.8]],[.6,[-6,-.15,1,0]],[.72,[-1,.04,.6,0]],[1,[0,0,.1,0]]],v=keys(K,p);
     A.B=[0,0,v[0]];A.s=v[1];A.op=v[2];A.hu=v[3];const air=Math.max(0,v[0]);A.feet=[[0,-14,air*.75],[0,14,air*.75]];A.B[1]=p>.6&&p<.8?1.2*Math.sin((p-.6)*90)*(1-(p-.6)/.2):0;
-    A.hands=[-1,1].map(sd=>[lerp(5,6,v[3]),sd*lerp(lerp(31,36,cl((p-.56)/.06,0,1)*(p<.75?1:0)),30,v[3]),lerp(3+air*.7,64,v[3])]);A.glow=p>.55&&p<.8?1:0}
+    A.hands=[-1,1].map(sd=>[lerp(5,6,v[3]),sd*lerp(lerp(31,36,cl((p-.56)/.06,0,1)*(1-sstep(.7,.8,p))),30,v[3]),lerp(3+air*.7,64,v[3])]);A.glow=sstep(.53,.57,p)*(1-sstep(.76,.84,p))}
   else if(anim==='hit'){const kb=hitK(p);A.B=[-4*kb,0,1.2*kb];A.lean=-.18*kb;A.roll=.06*kb;A.op=p<.12?.02:.1+.5*Math.max(0,kb);A.stars=p<.75?1-p/.75:0;
     A.hands=[-1,1].map((sd,i)=>[5-6*kb,sd*(31+6*kb),3+16*Math.max(0,kb)+(i?4:0)*kb]);A.tl=.3}
   else{// idle: the lid breathes, the tongue sways, now and then the whole chest twitches

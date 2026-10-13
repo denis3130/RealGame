@@ -99,7 +99,7 @@ function frogPose(anim,p){const ph=p*TAU,A={B:[0,0,0],lean:0,roll:0,s:0,yaw:0,k:
     A.sac=keys([[0,.2],[.55,1],[.58,.92],[.64,.22],[1,.22]],p);A.s=keys([[0,0],[.5,-.07],[.58,.08],[.7,-.05],[.85,.02],[1,0]],p);
     A.lean=keys([[0,0],[.5,-.14],[.6,.2],[.72,.08],[1,0]],p);A.B=[keys([[0,0],[.5,-.8],[.6,1.2],[.75,.4],[1,0]],p),0,0];
     A.open=keys([[0,0],[.54,0],[.6,1],[.68,.9],[.78,0],[1,0]],p);A.squint=keys([[0,0],[.5,.6],[.6,.2],[.78,0],[1,0]],p);A.puff=p>=.58&&p<.95?(p-.58)/.37:-1;A.arm=keys([[0,0],[.5,.15],[.6,-.2],[1,0]],p)}
-  else if(anim==='hit'){const kb=hitK(p);A.lean=-.32*kb;A.B=[-2.6*kb,0,.5*kb];A.s=-.1*kb;A.roll=.07*kb;A.shut=p<.55?1:0;A.stars=p<.75?1-p/.75:0;A.k=.25*Math.max(0,kb);A.arm=-.4*kb;A.open=p<.4?.35:0;A.sac=0}
+  else if(anim==='hit'){const kb=hitK(p);A.lean=-.32*kb;A.B=[-2.6*kb,0,.5*kb];A.s=-.1*kb;A.roll=.07*kb;A.shut=p<.55?1:0;A.stars=p<.75?1-p/.75:0;A.k=.25*Math.max(0,kb);A.arm=-.4*kb;A.open=.35*(1-sstep(.34,.46,p));A.sac=0}
   else{const b=Math.sin(ph);A.s=.02*b;A.yaw=look(p,.35);A.blink=blink(p,.42,.07);A.lean=-.02*b}
   return A}
 function frog(x,y,face,anim,p,sc,o){sc=sc||1;o=o||{};const V0=V(face),{P,D,F}=V0,A=frogPose(anim,p),X=frame(A,0),body=o.slow?FC.slow:FC.body,legC=o.slow?dk(FC.slow,.25):cmix(FC.body,FC.dark,.8);
@@ -110,13 +110,13 @@ function frog(x,y,face,anim,p,sc,o){sc=sc||1;o=o||{};const V0=V(face),{P,D,F}=V0
   for(const i of[0,1]){const sd=i?1:-1,hip=X.T(F_HIP[i]),k=A.k,lift=A.B[2],
       rest=[-4.5+A.fold*1.6,sd*(14.5-A.fold*.8),1.8],ext=add(hip,mul(nrm([-.9,sd*.3,-.18-.4*Math.max(0,1-lift/7)]),15.4)),
       ank=lerp3(rest,ext,ez(k)),toe=lerp3([4,sd*16,.5],add(ext,[-4.8,sd*1,-2.4]),ez(k)),[kn,an]=ik(hip,ank,8.9,6.9,[.5+k*.2,sd*(.85-k*.6),k*.8]);
-    const far=F(0,sd,0)<0,col=far?dk(legC,.16):legC;L.add(dT-20+D(F_HIP[i])*.01,()=>{chain(V0,[hip,kn,an,toe],[4.4,lerp(3.7,3,k),lerp(2.3,2,k),1.5],col,{kl:.18,kd:.3,rim:.18});
+    const col=dk(legC,.16*sstep(0,-.12,F(0,sd,0)));L.add(dT-20+D(F_HIP[i])*.01,()=>{chain(V0,[hip,kn,an,toe],[4.4,lerp(3.7,3,k),lerp(2.3,2,k),1.5],col,{kl:.18,kd:.3,rim:.18});
       // three round toes fanned at the end of the foot
       const dd=nrm(sub(toe,an)),sw=nrm(cross([0,0,1],dd));ctx.fillStyle=col;ctx.strokeStyle=INK;ctx.lineWidth=1.1;
       for(const t of[-1,0,1]){const e=P(add(toe,add(mul(dd,1.5-Math.abs(t)*.3),mul(sw,t*1.5))));ball(e,1.15);ctx.fill();ctx.stroke()}ball(P(toe),1.5);ctx.fill()})}
   // the front legs: short and stubby, the elbows back, little round feet with three toes on the ground (reaching forward in the air)
   for(const i of[0,1]){const sd=i?1:-1,sh=X.T(F_SH[i]),a=A.arm,air=A.B[2]>.5,foot=air?X.T([10.4+a*3.4,sd*7,1.4-Math.max(0,-a)*1.5]):[10+A.B[0]+a*1.2,sd*7+A.B[1],1],
-      [el,ft]=ik(sh,foot,2.8,2.8,[-1,sd*.4,0]),far=F(0,sd,0)<0,col=far?dk(body,.2):body;
+      [el,ft]=ik(sh,foot,2.8,2.8,[-1,sd*.4,0]),col=dk(body,.2*sstep(0,-.12,F(0,sd,0)));
     L.add(dT-12+D([10,sd*7,1])*.01,()=>{chain(V0,[sh,el,ft],[2.8,2.4,2.2],col,{kl:.18,kd:.26,rim:.15});
       ctx.fillStyle=col;ctx.strokeStyle=INK;ctx.lineWidth=1.1;for(const t of[-1,0,1]){const e=P(add(ft,[1.7-Math.abs(t)*.4,t*1.5+sd*.2,-.6]));ball(e,1.1);ctx.fill();ctx.stroke()}ball(P(ft),1.9);ctx.fill()})}
   // the body: the hull of the rump and the head in three tones; each one's marks are hidden where the other one is in front of it: the
@@ -129,15 +129,16 @@ function frog(x,y,face,anim,p,sc,o){sc=sc||1;o=o||{};const V0=V(face),{P,D,F}=V0
     ctx.save();if(headFront)clipOut(oH);else{poly(hp);ctx.clip()}marks(Er,0);ctx.restore();
     ctx.save();if(!headFront)clipOut(oR);else{poly(hp);ctx.clip()}marks(Eh,1);
     const mth=k=>{const t=(k-.5)*2;return[Math.cos(t*1.45),Math.sin(t*1.45),-.2+.2*t*t]};
-    if(A.open>.05){const lo=k=>{const t=(k-.5)*2,m=mth(k);return[m[0],m[1],m[2]-A.open*.5*(1-t*t)]},rr=ellRuns(Eh,k=>k<.5?mth(k*2):lo(2-k*2),40,.0);
-      for(const r of rr){if(r.length<3)continue;ctx.fillStyle=FC.mouth;ctx.strokeStyle=INK;ctx.lineWidth=1.3;poly(r);ctx.fill();ctx.stroke();ctx.save();poly(r);ctx.clip();const tq=Eh.P(nrm([1,0,-.42-A.open*.15]));ctx.fillStyle=FC.tongue;ctx.beginPath();ctx.ellipse(tq[0],tq[1],3.4,1.9,0,0,TAU);ctx.fill();ctx.restore()}}
+    if(A.open>.02){ctx.save();ctx.globalAlpha*=sstep(.02,.15,A.open);const lo=k=>{const t=(k-.5)*2,m=mth(k);return[m[0],m[1],m[2]-A.open*.5*(1-t*t)]},rr=ellRuns(Eh,k=>k<.5?mth(k*2):lo(2-k*2),40,.0);
+      for(const r of rr){if(r.length<3)continue;ctx.fillStyle=FC.mouth;ctx.strokeStyle=INK;ctx.lineWidth=1.3;poly(r);ctx.fill();ctx.stroke();ctx.save();poly(r);ctx.clip();const tq=Eh.P(nrm([1,0,-.42-A.open*.15]));ctx.fillStyle=FC.tongue;ctx.beginPath();ctx.ellipse(tq[0],tq[1],3.4,1.9,0,0,TAU);ctx.fill();ctx.restore()}ctx.restore()}
     for(const r of ellRuns(Eh,mth,26)){if(r.length<2)continue;ctx.strokeStyle='#1b1612';ctx.lineWidth=1.5;ctx.lineCap='round';line(r);ctx.stroke()}
     ctx.restore()});
   // the throat sac: a cream ball under the chin that pulses as it breathes and swells up before the spit
-  // (a bulge of the cream throat: its outline only round the bottom while small, so it grows out of the chin)
-  {const r=1.4+A.sac*4.6,c3=add(F_CHIN,[r*.5-.4,0,-r*.3+.5]);L.add(F(X.Rd([1,0,-.3]))>-.1?dT+1:dT-1,()=>{if(A.sac<.12)return;const q=P(X.T(c3)),k=sstep(.3,.75,A.sac),a0=lerp(.25,-.6,k),a1=Math.PI-a0;
+  // (a bulge of the cream throat: its outline only round the bottom while small, so it grows out of the chin; it fades in and out with
+  // the breath instead of popping, and its place in the draw order is the body at rest)
+  {const r=1.4+A.sac*4.6,c3=add(F_CHIN,[r*.5-.4,0,-r*.3+.5]);L.add(F([1,0,-.3])>-.1?dT+1:dT-1,()=>{if(A.sac<.04)return;const q=P(X.T(c3)),k=sstep(.3,.75,A.sac),a0=lerp(.25,-.6,k),a1=Math.PI-a0;ctx.save();ctx.globalAlpha*=sstep(.04,.14,A.sac);
     ctx.fillStyle=softBall(q,r,FC.sac,.22,.18);ball(q,r);ctx.fill();ctx.strokeStyle=INK;ctx.lineWidth=lerp(1.3,1.9,k);ctx.lineCap='round';ctx.beginPath();ctx.arc(q[0],q[1],r,a0,a1);ctx.stroke();
-    if(k>.3)rim(q,r,q,r,.25*k)})}
+    if(k>.02)rim(q,r,q,r,.25*k);ctx.restore()})}
   // the eyes: two balls of skin on top of the head, the big yellow iris with the black bar, looking at whoever is in front
   for(const i of[0,1]){const sd=i?1:-1,fs=F(0,sd,0);L.add(fs<-.3?dT-1:dT+5+(fs>0?.5:0),()=>bulgeEye(V0,X,F_EYE[i],4.3,[1,sd*.26,.42],body,FC.iris,{pup:'bar',blink:A.blink,squint:A.squint,shut:A.shut,al:.74}))}
   // the spit: a puff of green poison from the mouth (the game shoots the drop)
@@ -163,7 +164,7 @@ function mozPose(anim,p){const ph=p*TAU,A={B:[0,0,0],lean:0,roll:0,s:0,yaw:0,bob
     // wings swept back, legs trailing; .75-1 brakes and hovers again
     A.aim=keys([[0,0],[.1,.6],[.45,1],[.5,1],[.75,.4],[1,0]],p);A.dive=keys([[0,0],[.44,0],[.52,1],[.72,1],[.86,0],[1,0]],p);
     A.lean=keys([[0,0],[.42,-.3],[.52,.62],[.72,.55],[.86,-.1],[1,0]],p);A.B=[keys([[0,0],[.44,-2.4],[.56,5],[.72,6],[.9,0],[1,0]],p),0,keys([[0,0],[.44,1.5],[.6,-2.5],[.74,-3],[.9,.5],[1,0]],p)];
-    A.sweep=A.dive;A.legT=Math.max(A.dive,.2);A.shake=p<.46?A.aim:0;A.bob*=1-A.aim;A.flap=36;A.trail=p>.48&&p<.8?(p-.48)/.32:-1}
+    A.sweep=A.dive;A.legT=Math.max(A.dive,.2);A.shake=A.aim*(1-sstep(.4,.47,p));A.bob*=1-A.aim;A.flap=36;A.trail=p>.48&&p<.8?(p-.48)/.32:-1}
   else if(anim==='hit'){const kb=hitK(p);A.lean=-.45*kb;A.roll=.4*kb;A.B=[-3*kb,0,1.5*kb];A.shut=p<.55?1:0;A.stars=p<.75?1-p/.75:0;A.legT=-.5*kb;A.flap=12}
   else{A.yaw=look(p,.4);A.blink=blink(p,.62,.07)}
   return A}
@@ -175,7 +176,8 @@ function mozWing(V0,root,U,Cd,L,W,al){const N=12,pts=[];for(let i=0;i<=N;i++){co
   const a=V0.P(add(root,mul(U,L*.1))),b=V0.P(add(root,mul(U,L*.85)));ctx.strokeStyle='rgba(27,22,18,.25)';ctx.lineWidth=.7;seg(a,b);ctx.stroke();ctx.restore()}
 function mosquito(x,y,face,anim,p,sc,o){sc=sc||1;o=o||{};const V0=V(face),{P,D,F}=V0,A=mozPose(anim,p),ph=p*TAU;
   // the whole insect turns round the thorax: lean (nose down > 0), roll, yaw; it bobs and trembles
-  const jit=A.shake>0?[Math.sin(p*TAU*53)*.9*A.shake,Math.cos(p*TAU*47)*.7*A.shake,0]:[0,0,0];A.B=add(add(A.B,[0,0,A.bob]),jit);const X=frame(A,MT[2]);
+  // (the tremble of the aim at 8 and 6 Hz: faster shakes turn into a random jitter on the frames of a phone)
+  const jit=A.shake>0?[Math.sin(p*TAU*11)*.9*A.shake,Math.sin(p*TAU*9)*.7*A.shake,0]:[0,0,0];A.B=add(add(A.B,[0,0,A.bob]),jit);const X=frame(A,MT[2]);
   const aim=A.aim,abd=o.slow?MQ.slow:cmix(MQ.abd,MQ.abdA,aim),eye=aim>.3?MQ.eyeA:MQ.eye;
   floor(V0,x,y,sc,[X.T(MT)[0],X.T(MT)[1],0],8,3.2,.22,X.T(MT)[2]*.5);
   ctx.save();ctx.translate(x,y);ctx.scale(sc,sc);const L=parts(),dT=D(MT),Tc=X.T(MT);

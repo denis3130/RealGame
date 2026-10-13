@@ -83,6 +83,9 @@ function fadeDraw(f,q,r,k){if(k>=.99){f();return}if(k<=.01)return;const T=ctx.ge
   if(!OC)OC=document.createElement('canvas');if(OC.width<W)OC.width=OC.height=W;const oc=OC.getContext('2d');oc.setTransform(1,0,0,1,0,0);oc.clearRect(0,0,W,W);
   oc.setTransform(T.a,T.b,T.c,T.d,T.e-(dx-R),T.f-(dy-R));const saved=ctx;ctx=oc;try{f()}finally{ctx=saved}
   ctx.save();ctx.setTransform(1,0,0,1,0,0);ctx.globalAlpha*=k;ctx.drawImage(OC,0,0,W,W,dx-R,dy-R,W,W);ctx.restore()}
+// a tremble of the window a..b of a move: hz shakes per second (at most ~8: faster ones turn into a random jitter on the frames of a phone)
+// for a move of dur seconds, easing in and out at the edges of the window so it never starts or stops with a jump
+const trem=(p,a,b,hz,dur)=>{const w=Math.min(.03,(b-a)/3);return sstep(a,a+w,p)*(1-sstep(b-w,b,p))*Math.sin((p-a)*TAU*hz*dur)};
 // built-in effects of a move (dust puffs...) only when the game does not draw its own and the phone is fast
 const fxOn=o=>!o.noFx&&!LOWFX;
 // as the hero's head: seen from the side the head turns a little toward the camera, so the face shows (none from the front or the back)
@@ -130,7 +133,7 @@ function gPose(anim,p,o){const ph=p*TAU,A={B:[0,0,0],lean:0,roll:0,s:0,sx:0,yaw:
       [.36,[.14,-.06,0,-.1,2, 10,28,54, .7]],[.48,[.05,-.14,0,-.16,1, 4,16,84, .5]],[.66,[.02,-.18,0,-.15,0, -2,14,88, .4]],[.76,[.06,.16,0,.08,0, 18,17,46, .3]],
       [.8,[-.24,.26,.1,.16,-2, 24,25,11, 0]],[.86,[.06,.14,-.02,.06,1, 20,26,14, 0]],[.93,[-.04,.05,0,.04,0, 12,30,22, 0]],[1,[0,0,0,.04,0, 8,33,27, 0]]];
     const v=keys(K,p);A.s=v[0];A.lean=v[1];A.sx=v[2];A.hp=v[3];A.hd=[0,0,v[4]];A.hL=[v[5],-v[6],v[7]];A.hR=[v[5],v[6],v[7]];A.charge=v[8];
-    if(p>.2&&p<.3)A.B=[0,.6*Math.sin(p*170),0];
+    if(p>.2&&p<.3)A.B=[0,.6*trem(p,.2,.3,8,1.6),0];
     const air=p>.31&&p<.8?Math.sin((p-.31)/.49*Math.PI):0;A.air=air;A.lift=34*air;
     if(air>0){A.fL=[GT[0]+2,-GT[1]+2,0];A.fR=[GT[0]+2,GT[1]-2,0]}
     A.dust=p>=.8&&p<.98?(p-.8)/.18:-1;A.dustAt='fists'}
@@ -142,14 +145,14 @@ function gPose(anim,p,o){const ph=p*TAU,A={B:[0,0,0],lean:0,roll:0,s:0,sx:0,yaw:
     const v=keys(K,p);A.lean=v[0];A.roll=v[1];A.s=v[2];A.yaw=v[3];A.hL=[v[4],v[5],v[6]];A.hR=[v[7],v[8],v[9]];A.hp=v[10];
     // the boulder: it bursts out of the floor in front of the fist (.1-.16), the fist takes it up (.16-.26), it rides on the fist till the throw
     A.rock=p<.1||p>=.54?0:p<.16?1:p<.26?2:3;A.rockK=p<.16?ez((p-.1)/.06):p<.26?ez((p-.16)/.1):1;A.fly=p>=.54&&p<.7?(p-.54)/.16:-1;A.dust=p>.09&&p<.3?(p-.09)/.21:-1;A.dustAt='scoop';
-    if(p>.44&&p<.5)A.B=[0,.5*Math.sin(p*190),0]}
+    if(p>.44&&p<.5)A.B=[0,.5*trem(p,.44,.5,8,1.2),0]}
   else if(anim==='roll'){// .0-.14 crouches, .14-.24 curls up into a ball, .24-.8 rolls (the game drives the spin with o.spin), .8-.9 unfolds
     // with a pop, .9-1 settles
     const c=p<.14?0:p<.24?ez((p-.14)/.1):p<.8?1:p<.9?1-ez((p-.8)/.1):0;A.curl=c;
     const pre=p<.14?ez(p/.14):p<.24?1:p<.8?1:p<.9?0:0;A.s=-.1*pre*(1-c)-.12*c+(p>.8&&p<.97?.08*Math.sin((p-.8)/.17*Math.PI):0);A.lean=.2*pre*(1-c);A.hp=.04+.25*pre*(1-c);A.charge=p<.24?pre:0;
     A.hL=lerp3([GF[0],-GF[1],GF[2]],[13,-27,16],pre);A.hR=lerp3(GF,[13,27,16],pre);A.hd=[0,0,-4*pre];
     const rk=p<.24?0:p<.8?(p-.24)/.56:1;A.spin=o.spin!=null?o.spin:ez(rk)*TAU*3;A.B=[0,0,c>.99?2.5*Math.abs(Math.sin(rk*Math.PI*6)):0];
-    if(p>.9)A.B=[0,.5*Math.sin(p*160)*(1-p)*10,0];A.dust=p>=.8&&p<.95?(p-.8)/.15:-1;A.dustAt='feet'}
+    if(p>.9)A.B=[0,.5*trem(p,.9,1,8,2.4)*(1-p)*10,0];A.dust=p>=.8&&p<.95?(p-.8)/.15:-1;A.dustAt='feet'}
   else if(anim==='hit'){const kb=hitK(p);A.lean=-.24*kb;A.B=[-3*kb,0,.5*kb];A.s=-.06*kb;A.roll=.05*kb;A.hp=.04-.22*kb;A.hd=[-1.5*kb,0,1.2*kb];
     A.hL=add([GF[0],-GF[1],GF[2]],[-5*kb,-4*kb,7*kb]);A.hR=add(GF,[-5*kb,4*kb,7*kb]);A.shut=p<.5?1:0;A.stars=p<.75?1-p/.75:0;A.glow=p<.5?.6:1}
   else{// idle: slow deep breaths, the head looks round, the eyes pulse and blink, the fists sway a little behind the breath
@@ -163,8 +166,8 @@ function golem(x,y,face,anim,p,sc,o){sc=sc||1;o=o||{};const K=o.p2?GO2:GO,lava=!
   floor(V0,x,y,sc,[A.B[0],A.B[1],0],40*(1-.1*cu),13,.4,A.B[2]);
   ctx.save();ctx.translate(x,y);ctx.scale(sc,sc);const L=parts(),dB=D(GB);
   // the feet: squat stones under the body, always behind it (tucked away inside the ball when it rolls)
-  if(cu<.6)for(const[sd,f] of[[-1,A.fL],[1,A.fR]]){const far=F(0,sd,0)<0,c=[f[0]+A.B[0],f[1]+A.B[1],6+f[2]+lift+cu*8];
-    L.add(dB-100+D(c)*.01,()=>svol(V0,ellPts(c,[9.5,8.5,6],null,6,18),far?dk(K.dark,.12):K.dark,{lw:2.6,kl:.12,kd:.25}))}
+  if(cu<.6)for(const[sd,f] of[[-1,A.fL],[1,A.fR]]){const fk=sstep(0,-.12,F(0,sd,0)),c=[f[0]+A.B[0],f[1]+A.B[1],6+f[2]+lift+cu*8];
+    L.add(dB-100+D([GT[0],sd*GT[1],6])*.01,()=>svol(V0,ellPts(c,[9.5,8.5,6],null,6,18),dk(K.dark,.12*fk),{lw:2.6,kl:.12,kd:.25}))}
   // the body: the round stone, its cracks, the rune, the moss on the shoulders
   L.add(dB,()=>{const hp=svol(V0,ellPts(Cb,Rb,Fr,8,22).map(X.T),K.stone,{lw:3,kl:.17,kd:.32});
     ctx.save();clipTo(hp);
@@ -249,19 +252,19 @@ function tPose(anim,p,o){const ph=p*TAU,A={B:[0,0,0],lean:0,roll:0,s:0,sx:0,yaw:
     // out (out by .69), holds and wobbles, .75-.97 it is pulled back in; a gulp
     const K=[[0,[0,0,0,0,0]],[.3,[-.1,-.03,0,.5,.05]],[.53,[-.17,-.04,0,.8,.07]],[.57,[.16,.04,0,.6,.08]],[.7,[.2,.03,0,.5,.06]],[.8,[.08,0,0,.3,.04]],[.93,[-.02,.03,0,0,.04]],[1,[0,0,0,0,0]]];
     const v=keys(K,p);A.lean=v[0];A.s=v[1];A.sac=v[2];A.squint=v[3];A.sx=v[4];A.open=p<.56?0:p<.6?ez((p-.56)/.04):p<.93?1:1-ez((p-.93)/.06);
-    A.tl=p<.57?0:p<.69?ez((p-.57)/.12):p<.75?1:p<.97?1-ez((p-.75)/.22):0;if(p>.48&&p<.56)A.B=[0,.5*Math.sin(p*180),0]}
+    A.tl=p<.57?0:p<.69?ez((p-.57)/.12):p<.75?1:p<.97?1-ez((p-.75)/.22):0;if(p>.48&&p<.56)A.B=[0,.5*trem(p,.48,.56,8,1.3),0]}
   else if(anim==='flop'){// .0-.3 squats down (it trembles at the end), .3 springs up, .36-.8 high in the air with the legs hanging and the belly
     // out, .8 lands flat on its belly with a splash, .8-1 the whole body wobbles and the crown bounces
     const K=[[0,[0,0,0,0, 1,0,0, 0]],[.25,[-.2,.12,.06,0, 1,0,0, .6]],[.3,[-.22,.13,.07,0, 1,0,0, .7]],[.36,[.24,-.2,-.06,0, 0,1,0, .3]],[.48,[.1,-.26,-.03,0, 0,.3,.7, 0]],
       [.7,[.06,-.18,0,0, 0,0,1, 0]],[.78,[.04,.04,0,0, 0,0,1, 0]],[.8,[-.33,.06,.12,0, 1,0,0, .5]],[.85,[.1,.02,-.03,0, 1,0,0, .2]],[.9,[-.08,0,.03,0, 1,0,0, 0]],[.95,[.03,0,0,0, 1,0,0, 0]],[1,[0,0,0,0, 1,0,0, 0]]];
-    const v=keys(K,p);A.s=v[0];A.lean=v[1];A.sx=v[2];A.leg=[v[4],v[5],v[6]];A.squint=v[7];if(p>.2&&p<.3)A.B=[0,.6*Math.sin(p*190),0];
+    const v=keys(K,p);A.s=v[0];A.lean=v[1];A.sx=v[2];A.leg=[v[4],v[5],v[6]];A.squint=v[7];if(p>.2&&p<.3)A.B=[0,.6*trem(p,.2,.3,8,1.6),0];
     const air=p>.31&&p<.8?Math.sin((p-.31)/.49*Math.PI):0;A.air=air;A.lift=40*air;A.hand=[4*air,6*air,-3*air];
     A.cz=p>.8&&p<.95?6*Math.sin((p-.8)/.15*Math.PI):-2*air;A.ctilt=p>.8&&p<.98?.15*Math.sin((p-.8)/.18*Math.PI*2):0;A.dust=p>=.8&&p<.98?(p-.8)/.18:-1}
   else if(anim==='bubbles'){// .0-.62 the throat swells into a great bubble, .62 it spits a spray of bubbles (the mouth opens, the throat empties),
     // .7-1 settles
     const K=[[0,[0,0,0,0]],[.55,[-.08,.04,.05,1]],[.62,[-.1,.05,.06,1]],[.67,[.12,-.03,-.02,.25]],[.8,[.04,0,0,.05]],[1,[0,0,0,0]]];
     const v=keys(K,p);A.lean=v[0];A.s=v[1];A.sx=v[2];A.sac=v[3];A.open=p>.61&&p<.82?Math.sin((p-.61)/.21*Math.PI)*.9:0;A.fx=p>=.62&&p<.9?(p-.62)/.28:-1;A.squint=p>.6&&p<.75?.5:0}
-  else if(anim==='hit'){const kb=hitK(p);A.lean=-.24*kb;A.B=[-3*kb,0,.6*kb];A.s=-.1*kb;A.roll=.06*kb;A.shut=p<.5?1:0;A.stars=p<.75?1-p/.75:0;A.cz=3*kb;A.ctilt=.2*kb;A.open=p<.4?.35:0}
+  else if(anim==='hit'){const kb=hitK(p);A.lean=-.24*kb;A.B=[-3*kb,0,.6*kb];A.s=-.1*kb;A.roll=.06*kb;A.shut=p<.5?1:0;A.stars=p<.75?1-p/.75:0;A.cz=3*kb;A.ctilt=.2*kb;A.open=.35*(1-sstep(.34,.46,p))}
   else{// idle: it breathes deep (the throat pulses), looks round, blinks; the crown sits a little loose
     const b=Math.sin(ph);A.s=.03*b;A.sx=.02*Math.sin(ph+1);A.yaw=look(p,.22);A.look=Math.sin(ph-1)*.5;A.blink=blink(p,.42,.07);A.cz=.4*Math.sin(ph-.6);A.ctilt=.03*Math.sin(ph-.3)}
   return A}
@@ -271,9 +274,9 @@ function toad(x,y,face,anim,p,sc,o){sc=sc||1;o=o||{};const K=o.p2?TD2:TD,V0=V(fa
   ctx.save();ctx.translate(x,y);ctx.scale(sc,sc);const L=parts();
   // the hind legs: thick folded haunches with a flat foot (stretched back when it pushes off, hanging when it flies), the far one darker
   for(const sd of[-1,1]){const w=A.leg,j=i=>{const a=TLF[i],b=TLP[i],c=TLH[i];return X.T([a[0]*w[0]+b[0]*w[1]+c[0]*w[2],sd*(a[1]*w[0]+b[1]*w[1]+c[1]*w[2]),a[2]*w[0]+b[2]*w[1]+c[2]*w[2]])};
-    const far=F(0,sd,0)<0,col=far?dk(K.dark,.12):K.dark;
+    const fk=sstep(0,-.12,F(0,sd,0)),col=dk(K.dark,.12*fk);
     L.add(D([-10,sd*27,Zc]),()=>{const pts=[j(0),j(1),j(2)],ft=j(3),fd=nrm(X.Rd([1,sd*.35,0]));
-      svol(V0,ellPts(ft,[8.5,5.2,2.6],{u:fd,v:nrm(cross([0,0,1],fd)),w:[0,0,1]},3,12),far?dk(K.body,.12):K.body,{lw:2.4,kl:.2,kd:.25});
+      svol(V0,ellPts(ft,[8.5,5.2,2.6],{u:fd,v:nrm(cross([0,0,1],fd)),w:[0,0,1]},3,12),dk(K.body,.12*fk),{lw:2.4,kl:.2,kd:.25});
       chain(V0,pts,[13,11,6.5],col,{lw:2.8,kl:.18,kd:.3})})}
   // the body (head and belly in one): the green ball with its spots, the cream belly, the wide mouth
   L.add(dB,()=>{const hp=svol(V0,ellPts(TB,TR,null,8,24).map(X.T),K.body,{lw,kl:.2,kd:.32});ctx.save();clipTo(hp);
@@ -281,7 +284,7 @@ function toad(x,y,face,anim,p,sc,o){sc=sc||1;o=o||{};const K=o.p2?TD2:TD,V0=V(fa
     if(ellCap(V0,X,TB,TR,null,dir(0,.2),.78,36,{alv:.5,u:[0,1,0]})){ctx.fillStyle=softBox(bbox([P(X.T([24,-26,10])),P(X.T([24,26,40]))]),K.belly,.25,.18);ctx.fill()}
     // the mouth: a wide line from cheek to cheek with the corners turned up; open, a dark hole in the middle
     const mo=[];for(let i=0;i<=12;i++){const t=-1.08+i/12*2.16,k=t/1.08;mo.push(dir(t,.56+.22*k*k))}
-    if(A.open>.02&&ellCap(V0,X,TB,TR,null,dir(0,.5),.34*A.open+.08,24,{alv:.12+.2*A.open,u:[0,1,0]})){ctx.fillStyle=K.mouth;ctx.fill();ctx.strokeStyle=INK;ctx.lineWidth=1.6;ctx.stroke()}
+    if(A.open>.02&&ellCap(V0,X,TB,TR,null,dir(0,.5),.34*A.open+.08,24,{alv:.12+.2*A.open,u:[0,1,0]})){ctx.save();ctx.globalAlpha*=sstep(.02,.12,A.open);ctx.fillStyle=K.mouth;ctx.fill();ctx.strokeStyle=INK;ctx.lineWidth=1.6;ctx.stroke();ctx.restore()}
     strokeRuns(ellLine(V0,X,TB,TR,null,mo,{v0:.06}),INK,2.6);
     ctx.restore()});
   // the front legs: short arms coming out from under the chin (behind the body, so only what shows below it is seen) and small flat hands
@@ -308,7 +311,7 @@ function toad(x,y,face,anim,p,sc,o){sc=sc||1;o=o||{};const K=o.p2?TD2:TD,V0=V(fa
   L.add(D([TC[0],0,Zc])+3.5,()=>crown(V0,X,add(TC,[0,0,A.cz]),(o.p2?.22:-.06)+A.ctilt,K));
   // the tongue: from the mouth out to its sticky tip (to o.tip on the screen when the game gives it)
   if(A.tl>.01){const m0=X.T(ellAt(TB,TR,null,dir(0,.52))),tip=o.tip?null:X.T([28+70*A.tl,0,30-6*A.tl]);
-    L.add(D(m0)+2,()=>{const a=P(m0),b=o.tip?[o.tip[0]/sc,o.tip[1]/sc]:P(tip),wob=Math.sin(p*90)*2*(A.tl>.95?1:0),mid=[(a[0]+b[0])/2-(b[1]-a[1])*.06+wob,(a[1]+b[1])/2+(b[0]-a[0])*.06];
+    L.add(D(m0)+2,()=>{const a=P(m0),b=o.tip?[o.tip[0]/sc,o.tip[1]/sc]:P(tip),wob=Math.sin(p*TAU*8*1.3)*2*sstep(.85,.97,A.tl),mid=[(a[0]+b[0])/2-(b[1]-a[1])*.06+wob,(a[1]+b[1])/2+(b[0]-a[0])*.06];
       ctx.lineCap='round';const path=()=>{ctx.beginPath();ctx.moveTo(a[0],a[1]);ctx.quadraticCurveTo(mid[0],mid[1],b[0],b[1])};
       path();ctx.strokeStyle=INK;ctx.lineWidth=10;ctx.stroke();ctx.strokeStyle=K.tongue;ctx.lineWidth=6.6;ctx.stroke();ctx.strokeStyle='rgba(255,220,230,.6)';ctx.lineWidth=1.8;ctx.save();ctx.translate(-.6,-1.2);path();ctx.stroke();ctx.restore();
       ink(2.5);ball(b,6.6);ctx.fillStyle=softBall(b,6.6,K.tongue,.3,.25);ctx.fill();ctx.stroke();ctx.fillStyle='rgba(255,255,255,.6)';ball([b[0]-2.2,b[1]-2.4],1.6);ctx.fill()})}
@@ -372,10 +375,10 @@ function yPose(anim,p,o){const ph=p*TAU,A={B:[0,0,0],lean:0,roll:0,s:0,sx:0,yaw:
     A.hR=[4+10*sw,29,15+3*Math.max(0,sw)];A.hL=[4-10*sw,-29,15+3*Math.max(0,-sw)];A.hd=[0,0,-1*Math.cos((p-.13)*TAU*2)];A.hy=-.07*Math.sin(ph);A.hp=.06}
   else if(anim==='pound'){// .0-.42 rears up with both fists over its head (it rises on its toes), .42-.5 slams them down on the floor in
     // front, .5-.62 holds the blow (snow bursts), .62-1 straightens up
-    const K=[[0,[0,0,0,.03, 4,28,14]],[.15,[.04,-.06,0,-.05, 0,24,52]],[.36,[.1,-.18,1.5,-.2, -6,13,92]],[.42,[.12,-.2,2,-.22, -8,12,94]],[.5,[-.26,.2,-1,.05, 26,15,4]],
+    const K=[[0,[0,0,0,.03, 4,28,14]],[.15,[.04,-.06,0,-.05, 4,28,50]],[.36,[.1,-.18,1.5,-.2, -6,13,92]],[.42,[.12,-.2,2,-.22, -8,12,94]],[.5,[-.26,.2,-1,.05, 26,15,4]],
       [.58,[-.2,.18,-1,.04, 27,16,3]],[.7,[.04,.08,0,.04, 18,22,10]],[.85,[-.02,.03,0,.04, 8,27,14]],[1,[0,0,0,.03, 4,28,14]]];
     const v=keys(K,p);A.s=v[0];A.lean=v[1];A.B=[0,0,v[2]];A.hp=v[3];A.hR=[v[4],v[5],v[6]];A.hL=[v[4],-v[5],v[6]];A.sx=p>.48&&p<.6?.06:0;A.brow=p<.5?1:.6;A.squint=p>.3&&p<.6?.4:0;
-    if(p>.38&&p<.43)A.B[1]=.6*Math.sin(p*200);A.dust=p>=.48&&p<.75?(p-.48)/.27:-1;A.dustAt='fists'}
+    if(p>.38&&p<.43)A.B[1]=.6*trem(p,.38,.43,8,1.2);A.dust=p>=.48&&p<.75?(p-.48)/.27:-1;A.dustAt='fists'}
   else if(anim==='snowball'){// .0-.16 scoops snow off the floor (a snowball grows between its hands), .16-.44 lifts it over its head,
     // .44-.54 winds up leaning back, .54-.62 heaves it forward and down (let go at .6), .62-1 follows through and comes back
     const K=[[0,[0,0,0,.03, 4,28,14]],[.14,[.25,-.04,0,.25, 22,10,8]],[.2,[.2,-.03,0,.15, 20,10,20]],[.44,[-.12,.02,.03,-.15, 2,10,88]],[.54,[-.22,.03,.04,-.2, -6,10,90]],
@@ -386,14 +389,14 @@ function yPose(anim,p,o){const ph=p*TAU,A={B:[0,0,0],lean:0,roll:0,s:0,sx:0,yaw:
     // .8 lands on its feet and fists, .8-1 straightens up. Built-in jump unless the game gives the height (o.z)
     const K=[[0,[0,0,0,.03, 4,28,14]],[.24,[-.2,.22,-.04,.15, -14,30,18]],[.28,[-.21,.24,-.03,.15, -15,30,17]],[.34,[.16,-.1,0,-.1, 6,26,74]],[.5,[.05,-.12,0,-.12, 6,36,62]],
       [.7,[.03,-.06,0,-.06, 10,34,52]],[.78,[.06,.12,0,.06, 22,26,28]],[.8,[-.26,.3,.1,.2, 24,22,3]],[.87,[.04,.16,-.02,.08, 20,24,8]],[.94,[-.03,.05,0,.04, 9,27,13]],[1,[0,0,0,.03, 4,28,14]]];
-    const v=keys(K,p);A.s=v[0];A.lean=v[1];A.sx=v[2];A.hp=v[3];A.hR=[v[4],v[5],v[6]];A.hL=[v[4],-v[5],v[6]];if(p>.18&&p<.28)A.B=[0,.6*Math.sin(p*180),0];
+    const v=keys(K,p);A.s=v[0];A.lean=v[1];A.sx=v[2];A.hp=v[3];A.hR=[v[4],v[5],v[6]];A.hL=[v[4],-v[5],v[6]];if(p>.18&&p<.28)A.B=[0,.6*trem(p,.18,.28,8,1.6),0];
     const air=p>.29&&p<.8?Math.sin((p-.29)/.51*Math.PI):0;A.air=air;A.lift=36*air;if(air>0){A.fL=[YF[0]-2,-YF[1]-2,0];A.fR=[YF[0]-2,YF[1]+2,0]}
     A.brow=1;A.dust=p>=.8&&p<.98?(p-.8)/.18:-1;A.dustAt='land'}
   else if(anim==='roar'){// .0-.25 fills its chest leaning back, the arms open; .25-.8 roars leaning forward, mouth wide open, arms spread with
     // the fists clenched, the whole body shaking, a cloud of frosty breath; .8-1 calms down
     const K=[[0,[0,0,0,.03, 4,28,14, 0]],[.22,[.06,-.16,0,-.3, -4,31,26, 0]],[.3,[-.04,.1,.04,-.32, 12,36,40, 1]],[.72,[-.03,.12,.04,-.3, 13,37,42, 1]],[.84,[0,.04,0,-.06, 8,30,20, .2]],[1,[0,0,0,.03, 4,28,14, 0]]];
     const v=keys(K,p);A.s=v[0];A.lean=v[1];A.sx=v[2];A.hp=v[3];A.hR=[v[4],v[5],v[6]];A.hL=[v[4],-v[5],v[6]];A.roar=v[7];A.hd=[3*v[7],0,-1*v[7]];A.brow=1;A.squint=.3*v[7];
-    if(p>.3&&p<.75){A.B=[0,.7*Math.sin(p*230),0];A.shake=1}A.breath=p>=.3&&p<.8?(p-.3)/.5:-1}
+    if(p>.3&&p<.75){A.B=[0,.7*trem(p,.3,.75,8,1.4),0];A.shake=1}A.breath=p>=.3&&p<.8?(p-.3)/.5:-1}
   else if(anim==='hit'){const kb=hitK(p);A.lean=-.26*kb;A.B=[-3*kb,0,.6*kb];A.s=-.08*kb;A.roll=.06*kb;A.hp=.03-.24*kb;A.hd=[-1.6*kb,0,1.2*kb];
     A.hR=[4-6*kb,30+4*kb,14+12*kb];A.hL=[4-6*kb,-30-4*kb,14+12*kb];A.shut=p<.5?1:0;A.stars=p<.75?1-p/.75:0}
   else{// idle: slow heavy breaths (the fur rises), the head looks round, a blink; the arms hang and sway a little
@@ -405,18 +408,18 @@ function yeti(x,y,face,anim,p,sc,o){sc=sc||1;o=o||{};const K=o.p2?YE2:YE,V0=V(fa
   floor(V0,x,y,sc,[A.B[0],A.B[1],0],38,12,.38,A.B[2]);
   ctx.save();ctx.translate(x,y);ctx.scale(sc,sc);const L=parts();
   // the feet: blue-grey pads under the fur, always behind the body
-  for(const[sd,f] of[[-1,A.fL],[1,A.fR]]){const far=F(0,sd,0)<0,c=[f[0]+A.B[0],f[1]+A.B[1],5+f[2]+lift];
-    L.add(dB-100+D(c)*.01,()=>svol(V0,ellPts(c,[10,7.5,5.5],null,6,18),far?dk(K.hand,.15):K.hand,{lw:2.6,kl:.2,kd:.28}))}
+  for(const[sd,f] of[[-1,A.fL],[1,A.fR]]){const fk=sstep(0,-.12,F(0,sd,0)),c=[f[0]+A.B[0],f[1]+A.B[1],5+f[2]+lift];
+    L.add(dB-100+D([YF[0],sd*YF[1],5])*.01,()=>svol(V0,ellPts(c,[10,7.5,5.5],null,6,18),dk(K.hand,.15*fk),{lw:2.6,kl:.2,kd:.28}))}
   // the body: a ball of fur with its curls and the bluish belly
   L.add(dB,()=>{const core=furBall(V0,X,YB,YR,YBC,K);ctx.save();clipTo(core);
     if(ellCap(V0,X,YB,YR,null,dir(0,-.1),.62,30,{alv:.58})){ctx.fillStyle=K.belly;ctx.fill()}
     for(const m of YMK)furMark(V0,X,YB,YR,m,1.1,K.mark);ctx.restore()});
   // the arms: long furry arms (two bones, the elbow bends out and back) ending in blue-grey hands; the far one darker
-  const arm=(sd,h)=>{const sh=X.T([YS[0],sd*YS[1],YS[2]]),hd=X.T(h),[el,hh]=C.ik(sh,hd,17,17,X.Rd([-.4,sd*.8,-.2])),far=F(0,sd,0)<0,cs=[],rs=[];
+  const arm=(sd,h)=>{const sh=X.T([YS[0],sd*YS[1],YS[2]]),hd=X.T(h),[el,hh]=C.ik(sh,hd,17,17,X.Rd([-.4,sd*.8,-.2])),fk=sstep(0,-.12,F(0,sd,0)),cs=[],rs=[];
     for(let i=0;i<=4;i++){const k=i/4;cs.push(i<=2?lerp3(sh,el,k*2):lerp3(el,hh,(k-.5)*2));rs.push(lerp(9,6.8,k)*[1,.9,1,.92,1][i])}
     const bl=blob(V0,cs,rs,K.fur,{lw:2.8,fill:(()=>{const bb=[1e9,1e9,-1e9,-1e9];for(const c of cs){const q=P(c);bb[0]=Math.min(bb[0],q[0]-9);bb[1]=Math.min(bb[1],q[1]-9);bb[2]=Math.max(bb[2],q[0]+9);bb[3]=Math.max(bb[3],q[1]+9)}
-      const g=ctx.createLinearGradient(bb[0],bb[1],bb[2],bb[3]);g.addColorStop(0,far?K.fur:K.furL);g.addColorStop(.55,far?C.cmix(K.fur,K.furD,.4):K.fur);g.addColorStop(1,K.furD);return g})()});
-    sball(V0,add(hh,X.Rd([0,0,-3])),7,far?dk(K.hand,.15):K.hand,{lw:2.6,kl:.2,kd:.28});return hh};
+      const g=ctx.createLinearGradient(bb[0],bb[1],bb[2],bb[3]);g.addColorStop(0,C.cmix(K.furL,K.fur,fk));g.addColorStop(.55,C.cmix(K.fur,C.cmix(K.fur,K.furD,.4),fk));g.addColorStop(1,K.furD);return g})()});
+    sball(V0,add(hh,X.Rd([0,0,-3])),7,dk(K.hand,.15*fk),{lw:2.6,kl:.2,kd:.28});return hh};
   for(const sd of[-1,1])L.add(D([4,sd*YS[1],Zc]),()=>{const hh=arm(sd,sd<0?A.hL:A.hR);if(sd>0&&A.ball>0&&A.ballAt!=='x')snowball()});
   // the snowball between the hands (scooped up, lifted, heaved)
   const snowball=()=>{const c=lerp3(X.T(A.hL),X.T(A.hR),.5),r=13*(.35+.65*A.ball),q=P(add(c,X.Rd([0,0,A.hL[2]>60?9:r*.7])));ink(2.6);ball(q,r);ctx.fillStyle=soft(q[0]-r*.35,q[1]-r*.4,q[0],q[1],r*1.2,'#f4f8ff',.6,.16);ctx.fill();ctx.stroke();
@@ -426,7 +429,7 @@ function yeti(x,y,face,anim,p,sc,o){sc=sc||1;o=o||{};const K=o.p2?YE2:YE,V0=V(fa
   const Hc=X.T(add(YH,A.hd)),hy=A.yaw+A.hy+cheat(face,.32),hp=A.hp+A.lean*.6,HR=v=>X.Rd(rotZ(rotY(v,hp),hy)),Xh={T:q=>add(Hc,HR(q)),Rd:HR},FD=dir(0,.22);
   L.add(D([YH[0],0,Zc])+4,()=>{
     const horn=sd=>{const pts=[[1,sd*9.5,5],[-2,sd*16.5,8.5],[-6,sd*20.5,14.5],[-7,sd*19.5,21],[-5,sd*16.5,26.5]].map(Xh.T);chain(V0,pts,[3.7,3.2,2.6,1.9,1.1],K.horn,{lw:2.4,kl:.3,kd:.3})};
-    const hornFar=sd=>F(HR([0,sd,0]))<-.25;for(const sd of[-1,1])if(hornFar(sd))horn(sd);
+    const hornFar=sd=>F(X.Rd([0,sd,0]))<-.25;for(const sd of[-1,1])if(hornFar(sd))horn(sd);
     const core=furBall(V0,Xh,[0,0,0],YHR,YHC,K,{skip:m=>dot(m,FD)>.62,lw:2.6});
     // the face: a blue-grey oval on the front of the head
     const fr=ellCap(V0,Xh,[0,0,0],YHR,null,FD,.76,32,{alv:.9,u:[0,0,1]});if(fr){const q=P(Xh.T([12,0,0]));ctx.fillStyle=soft(q[0]-5,q[1]-6,q[0],q[1],16,K.skin,.18,.22);ctx.fill();ctx.strokeStyle=INK;ctx.lineWidth=2.4;ctx.stroke()}

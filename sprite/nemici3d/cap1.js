@@ -22,7 +22,7 @@ function mushroom(x,y,face,anim,p,sc,o){sc=sc||1;o=o||{};const V0=V(face),{P,D,F
   floor(V0,x,y,sc,A.B,14,5.6,.3,A.B[2]);
   ctx.save();ctx.translate(x,y);ctx.scale(sc,sc);const L=parts(),Cb=[0,0,15],dT=D(Cb);
   // the feet: two round stumps under the stem, the far one darker
-  for(const[sd,f] of[[-1,A.fL],[1,A.fR]]){const far=F(0,sd,0)<0,c=add(f,[0,0,3.4]);L.add(dT-100+D(c)*.01,()=>sball(V0,add(c,[A.B[0],A.B[1],0]),3.4,far?MC.foot2:MC.foot,{rim:.2}))}
+  for(const[sd,f] of[[-1,A.fL],[1,A.fR]]){const fk=sstep(0,-.12,F(0,sd,0)),c=add(f,[0,0,3.4]);L.add(dT-100+D([0,sd*5,3.4])*.01,()=>sball(V0,add(c,[A.B[0],A.B[1],0]),3.4,C.cmix(MC.foot,MC.foot2,fk),{rim:.2}))}
   // the stem: a round cream body with the face
   const Rb=[7.2,9,13];L.add(dT,()=>{const hp=vol(V0,ellPts(Cb,Rb,null,6,18).map(X.T),MC.stem,{kl:.14,kd:.2});
     ctx.save();poly(hp);ctx.clip();
@@ -44,8 +44,8 @@ function mushroom(x,y,face,anim,p,sc,o){sc=sc||1;o=o||{};const V0=V(face),{P,D,F
     ctx.restore()});
   // the puff of spores: a ring of purple specks bursting out from under the cap and drifting up
   if(A.puff>=0&&!o.noFx)L.add(dT+50,()=>{const k=A.puff;for(let i=0;i<14;i++){const a=i/14*TAU+.3,r=14+k*26*(.7+.3*Math.sin(i*2.3)),q=P([Math.cos(a)*r,Math.sin(a)*r,16+k*10+Math.sin(i*1.7)*4*k]);
-      ctx.fillStyle=`rgba(${i%3?'190,130,240':'226,196,255'},${(1-k)*.85})`;ball(q,1.4+k*2.2);ctx.fill()}
-    if(!LOWFX){const q=P([0,0,14]);shine('176,106,216',q[0],q[1],20+k*26,.35*(1-k))}});
+      ctx.fillStyle=`rgba(${i%3?'190,130,240':'226,196,255'},${(1-k)*.85*Math.min(1,k*8)})`;ball(q,1.4+k*2.2);ctx.fill()}
+    if(!LOWFX){const q=P([0,0,14]);shine('176,106,216',q[0],q[1],20+k*26,.35*(1-k)*Math.min(1,k*8))}});
   run(L);
   if(A.stars>0)stars(P(X.T([0,0,43])),9,A.stars);
   ctx.restore()}
@@ -75,21 +75,22 @@ function bat(x,y,face,anim,p,sc,o){sc=sc||1;o=o||{};const V0=V(face),{P,D,F}=V0,
   if(anim==='walk'){const f=Math.sin(ph*3);A.flap=f;A.B=[0,0,1.4*Math.sin(ph*3+1.2)];A.lean=.24;A.roll=.1*Math.sin(ph);A.yaw=.12*Math.sin(ph)}
   else if(anim==='attack'){// .0-.35 rears up with the mouth open, .35-.52 dives forward with the wings swept back, .52-1 swings back up
     const v=keys([[0,[0,0,0]],[.35,[-3,4.5,-.4]],[.5,[11,-5,.7]],[.62,[8,-3,.45]],[1,[0,0,0]]],p);A.B=[v[0],0,v[1]];A.lean=v[2];
-    A.flap=p<.35?Math.sin(ph*4.5):p<.62?-.25:Math.sin(ph*3);A.fold=p>.36&&p<.64?Math.sin((p-.36)/.28*Math.PI):0;A.open=p>.18&&p<.66?1:0;A.squint=p>.3&&p<.6?.8:0}
+    {const w1=1-sstep(.3,.38,p),w3=sstep(.58,.66,p);A.flap=Math.sin(ph*4.5)*w1+Math.sin(ph*3)*w3-.25*(1-w1-w3)}A.fold=p>.36&&p<.64?Math.sin((p-.36)/.28*Math.PI):0;A.open=p>.18&&p<.66?1:0;A.squint=.8*sstep(.27,.33,p)*(1-sstep(.57,.63,p))}
   else if(anim==='hit'){const kb=hitK(p);A.B=[-3.5*kb,0,1.5*kb];A.lean=-.35*kb;A.roll=.16*kb;A.shut=p<.5?1:0;A.stars=p<.75?1-p/.75:0;A.flap=Math.sin(ph*2)*.4;A.fold=.5*Math.max(0,kb)}
   else{A.flap=Math.sin(ph*2);A.B=[0,0,1.6*Math.sin(ph)];A.yaw=look(p,.4);A.blink=blink(p,.55,.07)}
   const X=frame(A,Z0),Cb=[0,0,Z0],dT=D(Cb);
   floor(V0,x,y,sc,A.B,10.5,4.2,.25,Z0+A.B[2]);
   ctx.save();ctx.translate(x,y);ctx.scale(sc,sc);const L=parts();
-  // the wings: each a flat membrane through the shoulder, flapping round the body's forward axis, swept back when it dives
+  // the wings: each a flat membrane through the shoulder, flapping round the body's forward axis, swept back when it dives; their place
+  // in the draw order is the wing at rest, as for every part (the flapping wing used to pop in front of and behind the body)
   for(const sd of[-1,1]){const th=.55*A.flap,S0=[-.48-A.fold*.8,sd*Math.cos(th),Math.sin(th)],Sd=nrm(S0),U=nrm(sub([0,-sd*Math.sin(th),Math.cos(th)],mul(Sd,dot([0,-sd*Math.sin(th),Math.cos(th)],Sd)))),sh=[0,sd*6.5,Z0+1];
-    const at=(u,w)=>X.T(add(sh,add(mul(Sd,u*1.08),mul(U,w*1.08)))),mid=at(14,1),n=nrm(X.Rd(cross(Sd,U)));
-    L.add(D(mid)<dT+.5?dT-1:dT+1,()=>{const pts=WING.map(([u,w])=>P(at(u,w))),f=F(n)*sd;ctx.lineJoin='round';poly(pts);ctx.fillStyle=softBox(bbox(pts),f>=0?BTC.wing:BTC.wingB,.2,.25);ctx.fill();ink(2.2);ctx.stroke();
+    const at=(u,w)=>X.T(add(sh,add(mul(Sd,u*1.08),mul(U,w*1.08)))),n=nrm(X.Rd(cross(Sd,U)));
+    L.add(D(add(sh,add(mul(nrm([-.48,sd,0]),15.12),[0,0,1.08])))<dT+.5?dT-1:dT+1,()=>{const pts=WING.map(([u,w])=>P(at(u,w))),f=F(n)*sd;ctx.lineJoin='round';poly(pts);ctx.fillStyle=softBox(bbox(pts),f>=0?BTC.wing:BTC.wingB,.2,.25);ctx.fill();ink(2.2);ctx.stroke();
       // the long fingers that hold the membrane: from the shoulder to the points of the edge
       ctx.strokeStyle='rgba(28,14,48,.45)';ctx.lineWidth=1.1;ctx.lineCap='round';const s0=P(at(5,0));for(const i of[1,3,5]){seg(s0,pts[i]);ctx.stroke()}})}
   // the ears: two points on top, pink inside where they face us
   for(const sd of[-1,1]){const b=X.T(add(Cb,mul(nrm([-.05,sd*.46,.88]),r*.8))),d=nrm(X.Rd([-.1,sd*.38,1])),sv=nrm(X.Rd([0,1,0]));
-    L.add(dT+(F(X.Rd([-.3,sd,.2]))>.25?.6:-.6),()=>{leaf(V0,b,d,sv,8.2,4.4,BTC.body,{back:BTC.body,round:.62,tip:.1});const f=F(cross(sv,d));if(f>.05){ctx.save();ctx.globalAlpha=cl(f*3,0,1);leaf(V0,add(b,mul(d,1.2)),d,sv,5.6,2.6,BTC.earIn,{noInk:true,round:.62,tip:.1,flat:true});ctx.restore()}})}
+    L.add(dT+(F([-.3,sd,.2])>.25?.6:-.6),()=>{leaf(V0,b,d,sv,8.2,4.4,BTC.body,{back:BTC.body,round:.62,tip:.1});const f=F(cross(sv,d));if(f>.05){ctx.save();ctx.globalAlpha=cl(f*3,0,1);leaf(V0,add(b,mul(d,1.2)),d,sv,5.6,2.6,BTC.earIn,{noInk:true,round:.62,tip:.1,flat:true});ctx.restore()}})}
   // the body: a ball, the face on it
   L.add(dT,()=>{const q=sball(V0,X.T(Cb),r,BTC.body),at=m=>({q:P(X.T(add(Cb,mul(m,r*.97)))),v:F(X.Rd(m))});
     eyes(null,q,r,{at,dir:[1,.38,.14],kind:'dark',col:BTC.eye,rx:2.25,ry:2.5,blink:A.blink,squint:A.squint,shut:A.shut,lr:.55,glow:'255,201,60'});
@@ -106,7 +107,7 @@ function plant(x,y,face,anim,p,sc,o){sc=sc||1;o=o||{};const V0=V(face),{P,D,F}=V
   if(anim==='attack'){// .0-.42 the flower swells and leans back, the mouth opens wide; .42-.5 it spits (snaps forward); .5-1 settles
     const k1=ez(cl(p/.42,0,1)),k2=cl((p-.42)/.08,0,1),k3=ez(cl((p-.5)/.5,0,1));A.head=1+.18*k1*(1-k3);A.open=p<.42?.3+.7*k1:1-.7*k3;A.lean=p<.42?-.18*k1:p<.5?lerp(-.18,.2,k2):.2*(1-k3);
     A.flare=p<.5?k1:1-k3;A.spin=p*.5;A.sway=.04*Math.sin(ph)}
-  else if(anim==='hit'){const kb=hitK(p);A.lean=-.32*kb;A.sway=.12*kb;A.stars=p<.75?1-p/.75:0;A.open=p<.4?.8:.3;A.head=1-.06*kb}
+  else if(anim==='hit'){const kb=hitK(p);A.lean=-.32*kb;A.sway=.12*kb;A.stars=p<.75?1-p/.75:0;A.open=lerp(.8,.3,sstep(.34,.46,p));A.head=1-.06*kb}
   else{A.sway=.07*Math.sin(ph);A.lean=.03*Math.sin(ph*2);A.spin=p;A.open=.3+.12*Math.sin(ph*2);A.yaw=look(p,.25)}
   floor(V0,x,y,sc,[0,0,0],16,5.6,.3);
   ctx.save();ctx.translate(x,y);ctx.scale(sc,sc);const L=parts();
@@ -162,7 +163,7 @@ function wisp(x,y,face,anim,p,sc,o){sc=sc||1;o=o||{};const V0=V(face),{P,D,F}=V0
   {const q=P(X.T([0,-4,Z0+8]));ctx.fillStyle='rgba(255,255,255,.55)';ell(q[0]-1,q[1]-2,2.6,4.2);ctx.fill()}
   const Ce=[0,0,Z0+6.6],Re=[10.6,10.6,9.6],fc=ellFace(V0,X,Ce,Re);eyes(null,fc.h,10,{at:fc.at,dir:[1,.34,.1],kind:'dark',col:WSC.eye,rx:1.85,ry:2.9,blink:A.blink,squint:A.squint,shut:A.shut,lr:.5,a:.55,b:.7});
   ctx.restore();rimPoly(H,.35);
-  if(A.pulse>=0&&!o.noFx){const k=A.pulse,q=P(X.T([0,0,Z0+7]));ctx.strokeStyle=`rgba(199,179,242,${(.8*(1-k)).toFixed(3)})`;ctx.lineWidth=2.4*(1-k)+.5;ball(q,8+k*20);ctx.stroke();shine('160,140,240',q[0],q[1],14+k*10,.4*(1-k))}
+  if(A.pulse>=0&&!o.noFx){const k=A.pulse,fi=Math.min(1,k*8),q=P(X.T([0,0,Z0+7]));ctx.strokeStyle=`rgba(199,179,242,${(.8*(1-k)*fi).toFixed(3)})`;ctx.lineWidth=2.4*(1-k)+.5;ball(q,8+k*20);ctx.stroke();shine('160,140,240',q[0],q[1],14+k*10,.4*(1-k)*fi)}
   ctx.restore();if(A.stars>0)stars(P(X.T([0,0,Z0+27])).map((v,i)=>i?y+v*sc:x+v*sc),7*sc,A.stars)}
 reg('wisp',{n:'Fuoco fatuo',g:1,an:['idle','walk','attack','tele','hit'],dur:{idle:2.4,walk:1,attack:1.2,tele:1.4,hit:.6},lab:{walk:'Fluttua',attack:'Lampo',tele:'Sparisce'}},wisp);
 })();

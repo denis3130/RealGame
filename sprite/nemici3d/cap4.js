@@ -62,7 +62,7 @@ function wolf(x,y,face,anim,p,sc,o){sc=sc||1;o=o||{};const V0=V(face),{P,D,F}=V0
       hi=keys([[0,[0,0]],[.22,[0,0]],[.34,[-1.5,0]],[.44,[4,2.6]],[.54,[6,0]],[.7,[6,0]],[.86,[2,2]],[.96,[0,0]],[1,[0,0]]],p);
     WL.forEach((l,i)=>{const k=l.fr>0?fr:hi,dl=l.fr>0?(i===1?.4:0):(i===2?.4:0);A.pw[i]=[k[0]+dl,0,k[1]]});A.tl=keys([[0,0],[.2,-.4],[.36,.7],[.6,.3],[1,0]],p);A.squint=sstep(.1,.25,p)*(1-sstep(.55,.7,p))}
   else if(anim==='howl'){// the nose goes up to the sky, the mouth opens, the howl shakes the head and fogs the air, then it comes down
-    const k=sstep(0,.2,p)*(1-sstep(.8,1,p)),sh=p>.22&&p<.8?Math.sin(p*TAU*14)*.03:0;A.hp=.95*k+sh;A.H=[13.4-1.6*k,0,23.2+4.4*k];A.lean=-.1*k;A.B=[-1*k,0,0];
+    const k=sstep(0,.2,p)*(1-sstep(.8,1,p)),sh=Math.sin(p*TAU*7)*.03*sstep(.22,.3,p)*(1-sstep(.72,.8,p));A.hp=.95*k+sh;A.H=[13.4-1.6*k,0,23.2+4.4*k];A.lean=-.1*k;A.B=[-1*k,0,0];
     A.jaw=sstep(.15,.28,p)*(1-sstep(.74,.86,p));A.ears=.6*k;A.tl=-.25*k;A.tw=.2*k*Math.sin(ph*3);A.squint=k;A.puff=p>.25&&p<.95?(p-.25)/.7:-1}
   else if(anim==='hit'){const kb=hitK(p);A.lean=-.18*kb;A.B=[-2.6*kb,0,.4*kb];A.roll=.08*kb;A.s=-.06*kb;A.hp=.25*kb;A.H=[13.4,0,23.2+1.2*kb];A.ears=kb;A.tl=-.5*kb;
     A.shut=p<.5?1:0;A.stars=p<.75?1-p/.75:0}
@@ -75,9 +75,9 @@ function wolf(x,y,face,anim,p,sc,o){sc=sc||1;o=o||{};const V0=V(face),{P,D,F}=V0
   // the head's frame: rings and points of the head (nose up hp, look hy) placed at H in the body frame
   const hT=q=>X.T(add(A.H,rotZ(rotY(mul(q,1.1),-A.hp),A.hy))),hR=v=>X.Rd(rotZ(rotY(v,-A.hp),A.hy)),XH={T:hT,Rd:hR},hD=D(hT([0,0,0]));
   // the legs: two bones with ik, always under the body (the far ones darker), a round paw at the end
-  WL.forEach((l,i)=>{const hip=X.T(l.h),pw=add(add(l.f,A.pw[i]),[A.B[0],A.B[1],0]),far=F(0,l.h[1],0)<0,col=far?cmix(WC.fur,WC.dark,.6):WC.fur;
+  WL.forEach((l,i)=>{const hip=X.T(l.h),pw=add(add(l.f,A.pw[i]),[A.B[0],A.B[1],0]),fk=sstep(0,-.12,F(0,l.h[1],0)),col=cmix(WC.fur,WC.dark,.6*fk);
     L.add(dT-100+D(add(l.f,[0,0,6]))*.01,()=>{const an=add(pw,[0,0,1.7]),IK=ik(hip,an,5.8,5.6,X.Rd([l.fr,0,.1])),kn=IK[0],end=IK[1];
-      chain(V0,[hip,kn,end],[2.5,2.2,1.9],col,{lw:1.7,kl:.12,kd:.3,rim:.15});ovol(V0,IDF,add(end,[.9,0,-.5]),[2.5,2,1.5],far?cmix(WC.lite,WC.dark,.45):cmix(WC.lite,WC.fur,.3),{lw:1.7,noRim:true})})});
+      chain(V0,[hip,kn,end],[2.5,2.2,1.9],col,{lw:1.7,kl:.12,kd:.3,rim:.15});ovol(V0,IDF,add(end,[.9,0,-.5]),[2.5,2,1.5],cmix(cmix(WC.lite,WC.fur,.3),cmix(WC.lite,WC.dark,.45),fk),{lw:1.7,noRim:true})})});
   // the bushy tail with its white tip, from under the rump
   {const T=[[-16,0,18],[-21.4,0,17],[-26,0,13.8],[-28.6,0,10]],sw=[0,.6,1.4,2.2],pts=T.map((q,i)=>X.T(add(q,[0,A.tw*sw[i]*4,A.tl*i*2.4-(A.tl<0?A.tl*i*.6:0)]))),rs=[2.6,3.7,3.4,2.4];
     L.add(D(X.T(T[1]))-4,()=>{const Q=chain(V0,pts,rs,WC.fur,{lw:2.2,kl:.14,kd:.3}),a=lerp3(Q[2].concat(0),Q[3].concat(0),.4);
@@ -96,7 +96,7 @@ function wolf(x,y,face,anim,p,sc,o){sc=sc||1;o=o||{};const V0=V(face),{P,D,F}=V0
   // dark mouth, two little fangs, the black nose, the ice eyes, the ears; its own little list of parts in the order the camera sees them
   L.add(hD,()=>{const H=parts(),fc=ellFace(V0,XH,[0,0,0],WSK),op=A.jaw,fwd=F(hR([1,0,0]));
     for(const sd of[-1,1]){const b=[-1.6,sd*3.6,3.6],tp=[-3.3-2.6*A.ears,sd*4.3,11.2-2*A.ears],ax=nrm(sub(tp,b));
-      H.add(D(hT(b))-1.4,()=>{const u=nrm(cross(ax,[1,0,0])),w=nrm(cross(ax,u)),pts=[hT(tp)];for(let i=0;i<10;i++){const a=i/10*TAU;pts.push(hT(add(b,add(mul(u,Math.cos(a)*2.6),mul(w,Math.sin(a)*2.7)))))}
+      H.add(D(X.T(add(A.H,mul(b,1.1))))-1.4,()=>{const u=nrm(cross(ax,[1,0,0])),w=nrm(cross(ax,u)),pts=[hT(tp)];for(let i=0;i<10;i++){const a=i/10*TAU;pts.push(hT(add(b,add(mul(u,Math.cos(a)*2.6),mul(w,Math.sin(a)*2.7)))))}
         const hp=vol(V0,pts,WC.dark,{kl:.18,kd:.25,lw:2,rim:.25});
         // the inside of the ear, paler, where it faces us
         const f=F(hR(nrm([1,sd*.25,.15])));if(f>.05){ctx.save();ctx.globalAlpha=cl(f*3,0,1);const t=P(hT(lerp3(tp,b,.12))),b0=P(hT(add(b,mul(u,1.3)))),b1=P(hT(add(b,mul(u,-1.3))));
@@ -110,13 +110,13 @@ function wolf(x,y,face,anim,p,sc,o){sc=sc||1;o=o||{};const V0=V(face),{P,D,F}=V0
       // the pale cheeks and underside of the muzzle (the game's light band under the snout)
       if(below(V0,XH,[[[0,0,0],WSK],[[6.2,0,-.9],[5.6,3.4,2.7]]],-1.7,bbox(hp))){ctx.fillStyle=softBox(bbox(hp),WC.lite,.06,.16);ctx.fill()}
       const EY=eyes(null,fc.h,5.6,{at:fc.at,dir:[.8,.54,.42],kind:'glow',col:WC.eye,rx:2.1,ry:1.45,fall:.6,blink:A.blink,squint:A.squint,shut:A.shut,shutCol:'#2a3a50',a:.55,b:.7,lr:.45});
-      if(!A.shut)for(const e of EY)if(e.rx>.8)shine('159,230,255',e.q[0],e.q[1],3.6,.3*Math.min(1,e.v*2)*A.blink);
+      if(!A.shut)for(const e of EY)if(e.rx>.7)shine('159,230,255',e.q[0],e.q[1],3.6,.3*Math.min(1,e.v*2)*A.blink*sstep(.7,.9,e.rx));
       ctx.restore();
       if(op>.15)for(const sd of[-1,1]){const a=P(hT([9.2,sd*1.2,-2.5])),b=P(hT([9.2,sd*1.2,-2.5-1.8*op]));ctx.fillStyle=WC.fang;ink(.8);tri(a[0],a[1],b[0],b[1],.8)}
       if(fwd>-.5){const q=P(hT([11.9,0,-.4]));ctx.save();ctx.globalAlpha=cl((fwd+.5)*3,0,1);ink(1);ctx.fillStyle=WC.nose;ctx.beginPath();ctx.ellipse(q[0],q[1],1.8,1.35,0,0,TAU);ctx.fill();ctx.fillStyle='rgba(255,255,255,.5)';ball([q[0]-.6,q[1]-.5],.45);ctx.fill();ctx.restore()}});
     run(H)});
   // the howl fogs the cold air: puffs out of the mouth, rising and spreading
-  if(A.puff>=0&&!o.noFx)L.add(hD+20,()=>{for(let i=0;i<3;i++){const k=(A.puff*1.6+i/3)%1,q=P(hT([12+k*6,0,1+k*9]));ctx.fillStyle=`rgba(235,245,255,${.55*(1-k)*(A.puff<.85?1:(1-A.puff)/.15)})`;ball(q,1.2+k*3.2);ctx.fill()}});
+  if(A.puff>=0&&!o.noFx)L.add(hD+20,()=>{for(let i=0;i<3;i++){const k=(A.puff*1.6+i/3)%1,q=P(hT([12+k*6,0,1+k*9]));ctx.fillStyle=`rgba(235,245,255,${.55*(1-k)*Math.min(1,k*6,A.puff*8)*(A.puff<.85?1:(1-A.puff)/.15)})`;ball(q,1.2+k*3.2);ctx.fill()}});
   run(L);
   if(A.stars>0)stars(P(hT([0,0,9])),9,A.stars);
   ctx.restore()}
@@ -139,7 +139,7 @@ function snowspirit(x,y,face,anim,p,sc,o){sc=sc||1;o=o||{};const V0=V(face),{P,D
   else if(anim==='attack'){// .0-.4 it gathers: squeezes down, the hands come together in front, it glows; .4-.52 it bursts: stretches up, flings
     // the hands wide, a ring of snow bursts out of it; .52-1 it settles with a wobble
     const v=keys([[0,[0,0,0,0]],[.4,[-.14,.9,-.7,1]],[.48,[.16,-.5,1.1,0]],[.62,[-.05,-.2,.6,0]],[.8,[.03,0,.1,0]],[1,[0,0,0,0]]],p);
-    A.s=v[0];A.af=v[1];A.ar=v[2];A.glow=.35+.5*v[3]+(p>.4&&p<.6?.6*(1-(p-.4)/.2):0);A.squint=v[3];A.o=p>.42&&p<.7?1:0;A.B=[0,0,keys([[0,0],[.4,-1.5],[.48,2.5],[.7,0],[1,0]],p)];
+    A.s=v[0];A.af=v[1];A.ar=v[2];A.glow=.35+.5*v[3]+.6*sstep(.37,.41,p)*cl(1-(p-.41)/.19,0,1);A.squint=v[3];A.o=p>.42&&p<.7?1:0;A.B=[0,0,keys([[0,0],[.4,-1.5],[.48,2.5],[.7,0],[1,0]],p)];
     A.fa=keys([[0,0],[.4,TAU*.5],[.5,TAU*.9],[1,TAU]],p);A.sr=16-6*v[3];A.burst=p>=.44&&p<.9?(p-.44)/.46:-1}
   else if(anim==='tele'){// it spins and shrinks into a whirl of snowflakes and is gone (.0-.36); gone (.36-.62); the whirl comes back and it pops
     // out of it with a bounce (.62-1). The game moves it while it is gone
@@ -153,12 +153,12 @@ function snowspirit(x,y,face,anim,p,sc,o){sc=sc||1;o=o||{};const V0=V(face),{P,D
   ctx.save();ctx.translate(x,y);ctx.scale(sc,sc);const L=parts(),ga=A.al;
   if(!LOWFX&&ga>0)L.add(dT-200,()=>{const q=P(T(SFC));shine('200,235,255',q[0],q[1],(22+8*A.glow)*Math.max(.4,K),A.glow*ga)});
   // the three specks of snow going round it
-  if(!o.noFx)for(let i=0;i<3;i++){const an=A.sa+i*TAU/3,c=[Math.cos(an)*A.sr,Math.sin(an)*A.sr,SFC[2]+A.B[2]+Math.sin(an*2+i)*2];
+  if(!o.noFx)for(let i=0;i<3;i++){const an=A.sa+i*TAU/3,c=[Math.cos(an)*A.sr,Math.sin(an)*A.sr,SFC[2]+A.B[2]+Math.sin(an*2)*2];
     L.add(D(c),()=>{const q=P(c);ctx.fillStyle=`rgba(255,255,255,${.9*Math.max(ga,A.swirl>=0?.6:0)})`;ball(q,1.4);ctx.fill();ctx.strokeStyle=`rgba(30,58,106,${.35*ga})`;ctx.lineWidth=.6;ctx.stroke()})}
   if(K>0){
     // the little hands: round mittens on the sides, waving
     for(const sd of[-1,1]){const r0=[2.2,sd*10.4,SZ+11.4],r1=add(r0,[2.2*A.af+2.2,sd*(2.6-1.4*Math.max(0,A.af)+.6*A.ar),-2.2+4.2*A.ar+.9*A.aw]);
-      L.add(D(T([0,sd*11,SZ+11.6]))-.5,()=>{ctx.save();ctx.globalAlpha*=ga;const a=T(r0),b=T(r1),A2=P(a),B2=P(b),fs=cl(Math.hypot(B2[0]-A2[0],B2[1]-A2[1])/(len(sub(b,a))||1),0,1);
+      L.add(dT+D([0,sd*11,.6])-.5,()=>{ctx.save();ctx.globalAlpha*=ga;const a=T(r0),b=T(r1),A2=P(a),B2=P(b),fs=cl(Math.hypot(B2[0]-A2[0],B2[1]-A2[1])/(len(sub(b,a))||1),0,1);
         // seen end on, the mitten is a soft lump on the body: a thinner outline and a bluer shade, so it never reads as an open mouth
         C.caps(V0,a,2.8*K,b,2.9*K,cmix(SC.arm,'#b8dcf6',.6*(1-fs)),{kl:.25,kd:.32,lw:lerp(1,1.8,sstep(.3,.7,fs))*Math.max(.5,K),rim:.25});ctx.restore()})}
     // the body with the face
@@ -174,7 +174,7 @@ function snowspirit(x,y,face,anim,p,sc,o){sc=sc||1;o=o||{};const V0=V(face),{P,D
     L.add(dT+60,()=>{const q=P(T([0,0,SZ+28]));flake(q,5.6*K,A.fa,ga);if(!LOWFX)shine('220,240,255',q[0],q[1],8*K,.3*ga)})}
   // the burst of snow: a ring of puffs flying out round it (the snowballs themselves are the game's)
   if(A.burst>=0&&!o.noFx)L.add(dT+80,()=>{const k=A.burst,r=8+k*22;for(let i=0;i<10;i++){const a=i/10*TAU+.3,q=P([Math.cos(a)*r,Math.sin(a)*r,SFC[2]+A.B[2]-2+k*3]);
-      ctx.fillStyle=`rgba(240,250,255,${.8*(1-k)})`;ball(q,1.6+k*2.6);ctx.fill()}if(!LOWFX){const q=P(T(SFC));shine('210,240,255',q[0],q[1],18+k*20,.5*(1-k))}});
+      ctx.fillStyle=`rgba(240,250,255,${.8*(1-k)*Math.min(1,k*8)})`;ball(q,1.6+k*2.6);ctx.fill()}if(!LOWFX){const q=P(T(SFC));shine('210,240,255',q[0],q[1],18+k*20,.5*(1-k)*Math.min(1,k*8))}});
   // the whirl of the teleport: snowflakes spiralling round where it stands
   if(A.swirl>=0&&!o.noFx){const p2=A.swirl,act=bump(cl(p2/.62,0,1))*.6+bump(cl((p2-.3)/.7,0,1));for(let i=0;i<9;i++){const an=p2*TAU*2+i*TAU/9,rr=6+10*Math.abs(Math.sin(i*1.7+p2*3)),zz=SZ+2+((i*7.3+p2*30)%24);
       const c=[Math.cos(an)*rr,Math.sin(an)*rr,zz];L.add(D(c),()=>{const q=P(c);flake(q,1.6+(i%3)*.5,an*2,act*.9)})}}

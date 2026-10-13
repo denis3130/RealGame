@@ -200,11 +200,12 @@ function shadoweye(x,y,face,anim,p,sc,o){sc=sc||1;o=o||{};const V0=V(face),{P,D,
   else if(anim==='attack'){// .0-.7 the stare: the eye opens wide and glows, the tendrils bristle, the orbs draw in and spin faster;
     // .7 the beam (the game's), a flash and a kick back, then it settles
     const k=ez(cl(p/.7,0,1)),r=p<.7?0:p<.85?ez((p-.7)/.15):1-ez((p-.85)/.15);
-    A.open=p<.7?k:1-sstep(.7,.95,p);A.glow=p<.7?k:1-sstep(.7,1,p);A.bristle=p<.7?k:1-sstep(.7,1,p);A.pull=A.bristle*.1;A.spin=p*TAU*4/6*1.5;A.trem=p<.7?k:0;
+    A.open=p<.7?k:1-sstep(.7,.95,p);A.glow=p<.7?k:1-sstep(.7,1,p);A.bristle=p<.7?k:1-sstep(.7,1,p);A.pull=A.bristle*.1;A.spin=p*TAU*4/6*1.5;A.trem=k*(1-sstep(.64,.72,p));
     A.flash=p>=.7&&p<.9?1-(p-.7)/.2:0;A.B=[-3.5*r,0,0];A.lean=-.2*r;A.z=1.2*Math.sin(ph)}
   else if(anim==='hit'){const kb=hitK(p);A.B=[-4*kb,0,1*kb];A.lean=-.35*kb;A.roll=.1*kb;A.shut=p<.55?1:0;A.stars=p<.75?1-p/.75:0;A.sway=1.6;A.spin=p*TAU/6}
   else{A.z=2.4*Math.sin(ph);A.gy=look(p,.6);A.gx=.25*Math.sin(ph*2+1);A.blink=blink(p,.7,.08)}
-  if(A.trem)A.B=add(A.B,[Math.sin(p*131)*.4*A.trem,Math.cos(p*97)*.4*A.trem,0]);
+  // the tremble of the stare: 8 and 6 Hz (faster shakes turn into a random jitter on the frames of a phone)
+  if(A.trem)A.B=add(A.B,[Math.sin(p*TAU*9.6)*.4*A.trem,Math.sin(p*TAU*7.2)*.4*A.trem,0]);
   const Cz=26+A.z,X=frame(A,Cz),C0=[0,0,Cz],R0=12.5;
   floor(V0,x,y,sc,A.B,11.5,4.2,.24,8+A.z*3);
   ctx.save();ctx.translate(x,y);ctx.scale(sc,sc);const L=parts(),Cb=X.T(C0),dB=D(Cb);let eyeAt=null;

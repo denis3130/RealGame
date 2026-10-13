@@ -191,7 +191,9 @@ const LC2={gel:'#5f9a3a',gelD:'#3f6a2a',gelF:'#2f4f20',gelL:'#8fd05a',eye:'#e9ff
 function slime(x,y,face,anim,p,sc,o){sc=sc||1;o=o||{};const V0=V(face),{P,D,F,c,s}=V0,ph=p*TAU,walk=anim==='walk',atk=anim==='attack',idle=!walk&&!atk,t=G.t,col=o.gel||LC2.gel,colD=o.gelD||LC2.gelD;
   // hop: squashes to load, leaps stretched, splats; attack: rears back open-mouthed, lunges forward, pulls back trailing goo
   let sq=1,hop=0,lean=0,open=.2,lurch=0;
-  if(walk){if(p<.22){sq=1-.25*ez(p/.22)}else if(p<.6){const k=(p-.22)/.38;hop=Math.sin(k*Math.PI)*7;sq=1.22-.1*k;lean=1.5}else if(p<.72){const k=(p-.6)/.12;sq=.68+.1*k}else{const k=ez((p-.72)/.28);sq=.78+.22*k}}
+  if(walk){// the same squash, stretch and splat, but each change of shape takes .05 of the hop instead of one frame
+    const sm=(a,b,x)=>{const t=cl((x-a)/(b-a),0,1);return t*t*(3-2*t)},k=cl((p-.22)/.38,0,1),u1=sm(.2,.25,p),u2=sm(.58,.63,p),q0=p<.22?1-.25*ez(p/.22):.75,q2=p<.72?.68+.1*cl((p-.6)/.12,0,1):.78+.22*ez((p-.72)/.28);
+    sq=lerp(lerp(q0,1.22-.1*k,u1),q2,u2);hop=Math.sin(k*Math.PI)*7;lean=1.5*u1*(1-u2)}
   else if(atk){if(p<.3){const k=ez(p/.3);lean=-2.6*k;sq=1-.14*k;open=.2+.8*k}else if(p<.45){const k=ez((p-.3)/.15);lean=-2.6+10.6*k;sq=.86+.3*k;open=1}else{const k=ez((p-.45)/.55);lean=8*(1-k);sq=1.16-.16*k;open=1-k*.8}}
   else{sq=1+.05*Math.sin(ph);open=.15+.08*Math.sin(ph*2);lurch=p>.64&&p<.74?Math.sin((p-.64)/.1*Math.PI)*2.2:0;lean=lurch}
   const r=11,rx=r/Math.sqrt(sq),rz=8*sq,C=[lean*.5,0,rz+hop],q=P(C),w=rx,h=rz*.72+rx*.3;
@@ -204,10 +206,10 @@ function slime(x,y,face,anim,p,sc,o){sc=sc||1;o=o||{};const V0=V(face),{P,D,F,c,
   ink(2.4);path(0);ctx.fillStyle=col;ctx.fill();ctx.stroke();
   ctx.save();path(-1.2);ctx.clip();ctx.fillStyle=colD;ell(q[0]+w*.35,q[1]+h*.6,w*1.1,h*.7);ctx.fill();ctx.fillStyle=o.gelF||LC2.gelF;ell(q[0]+w*.8,q[1]+h*.15,w*.4,h*.8);ctx.fill();
   // something inside: a skull swallowed long ago, drifting
-  {const sk=[q[0]-w*.15+Math.sin(ph*.5)*1.2+c*2,q[1]+h*.15+Math.cos(ph*.7)*.8];ctx.fillStyle=LC2.skull;ball(sk,r*.3);ctx.fill();ctx.fillStyle='rgba(20,12,8,.5)';ball([sk[0]-1.1,sk[1]-.4],.9);ctx.fill();ball([sk[0]+1.1,sk[1]-.4],.9);ctx.fill();ctx.fillRect(sk[0]-1.6,sk[1]+1.4,3.2,1)}
+  {const sk=[q[0]-w*.15+Math.sin(ph*.5)*1.2+c*2,q[1]+h*.15+Math.cos(ph)*.8];ctx.fillStyle=LC2.skull;ball(sk,r*.3);ctx.fill();ctx.fillStyle='rgba(20,12,8,.5)';ball([sk[0]-1.1,sk[1]-.4],.9);ctx.fill();ball([sk[0]+1.1,sk[1]-.4],.9);ctx.fill();ctx.fillRect(sk[0]-1.6,sk[1]+1.4,3.2,1)}
   ctx.fillStyle=wa(.22);ell(q[0]-w*.4,q[1]-h*.45,w*.42,h*.25);ctx.fill();ctx.fillStyle=wa(.12);ell(q[0]-w*.15,q[1]-h*.7,w*.25,h*.12);ctx.fill();
   // bubbles rising inside
-  for(let i=0;i<3;i++){const bb=(ph/TAU*.6+i*.33)%1;ctx.strokeStyle='rgba(200,255,160,.35)';ctx.lineWidth=.8;ball([q[0]+(i-1)*w*.35,q[1]+h*.6-bb*h*1.1],1+i*.3);ctx.stroke()}
+  for(let i=0;i<3;i++){const bb=(p+i*.33)%1;ctx.strokeStyle='rgba(200,255,160,'+(.35*Math.sin(bb*Math.PI)).toFixed(3)+')';ctx.lineWidth=.8;ball([q[0]+(i-1)*w*.35,q[1]+h*.6-bb*h*1.1],1+i*.3);ctx.stroke()}
   ctx.restore();rim(q,Math.min(w,h),q,Math.min(w,h),.3);
   // the face slides round the body as it turns: eyes high and far apart, the mouth low and wide
   const fv=F(1,0,.1);if(fv>-.2){ctx.save();ctx.globalAlpha=cl((fv+.2)*2.5,0,1);const fx=q[0]+(-s)*0+V0.c*0;const ox=-s*w*.0;const cx=q[0]+(c*0)-(V0.s*0),sx=-V0.s;

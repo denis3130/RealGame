@@ -9,7 +9,10 @@
 // Va eseguito dopo disegno_mostri.js, dentro la funzione principale del gioco (usa ctx, ink, ell, shadow, glow, INK, LOWFX, G.t).
 window.N3=window.N3||{meta:{},order:[]};
 window.C3=(()=>{
-const R=CR._rig,{cam,KR,TAU,cl,ez,lerp,add,sub,mul,len,nrm,dot,cross,lerp3,V,Vat,stepper,NOSTEP,shine,ball,seg,tri,hull,on,wa,rim,glowTop,run,starS,ik}=R;
+const R=CR._rig,{cam,KR,TAU,cl,ez,lerp,add,sub,mul,len,nrm,dot,cross,lerp3,V,Vat,stepper,NOSTEP,shine:shine0,ball,seg,tri,hull,on,wa,rim,glowTop,run,starS,ik}=R;
+// a soft light that follows the alpha it is drawn with (the game's glow() sets its own alpha, so a fading part, or the old pose fading
+// under the new one, kept its glows at full strength); the zombies keep CR's own shine, so their sheets stay identical
+const shine=(rgb,x,y,r,a,ry)=>shine0(rgb,x,y,r,a*ctx.globalAlpha,ry);
 
 // ------------------------------------------------------------------ colours: '#rgb', '#rrggbb' or 'rgb(r,g,b)'; mixes are cached
 const RGB={};
@@ -53,7 +56,9 @@ function capPath(V0,q,Rr,n,al){n=nrm(n);let u=cross(n,[0,0,1]);if(len(u)<.2)u=cr
   const rn=[];let i=s0;const cut=(a,c)=>{const fa=f[a],fc=f[c],k=fa/(fa-fc);return nrm(lerp3(b[a],b[c],k))};
   rn.push(cut((s0-1+N)%N,s0));while(vis[i]){rn.push(b[i]);i=(i+1)%N}rn.push(cut((i-1+N)%N,i));
   const pts=rn.map(m=>sp(V0,q,Rr,m)),a0=Math.atan2(pts[0][1]-q[1],pts[0][0]-q[0]),a1=Math.atan2(pts[pts.length-1][1]-q[1],pts[pts.length-1][0]-q[0]);
-  const nm=sp(V0,q,Rr,n),an=Math.atan2(nm[1]-q[1],nm[0]-q[0]),norm=a=>((a%TAU)+TAU)%TAU,ccw=norm(a0-a1),inC=norm(an-a1)<=ccw;
+  // the limb inside a cap smaller than half the ball is the short way round, of a bigger one the long way (never decided from the
+  // screen angle of the cap's middle: that went the wrong way round when only a sliver showed or hid)
+  const norm=a=>((a%TAU)+TAU)%TAU,ccw=norm(a0-a1),inC=al<Math.PI/2?ccw<=Math.PI:ccw>Math.PI;
   ctx.beginPath();for(const s of pts)ctx.lineTo(s[0],s[1]);if(inC)ctx.arc(q[0],q[1],Rr,a1,a1+ccw,false);else ctx.arc(q[0],q[1],Rr,a1,a1-(TAU-ccw),true);ctx.closePath();
   return{full:false,rim:pts}}
 const rotY=(v,a)=>{const c=Math.cos(a),s=Math.sin(a);return[v[0]*c+v[2]*s,v[1],-v[0]*s+v[2]*c]};
@@ -72,8 +77,9 @@ const bump=k=>k<=0||k>=1?0:Math.sin(k*Math.PI);
 const sstep=(a,b,x)=>{const t=cl((x-a)/(b-a),0,1);return t*t*(3-2*t)};
 // the knock back of 'hit': out fast, then a wobble back to standing
 const hitK=p=>p<.12?ez(p/.12):Math.exp(-(p-.12)*6)*Math.cos((p-.12)*16);
-// a little hop cycle (0 on the floor, up to 1 in the air) with squash on landing: returns {z, s} (s>0 taller)
-function hop(p,air){const a=air||.55;if(p<a){const k=p/a;return{z:Math.sin(k*Math.PI),s:.12*Math.cos(k*Math.PI*2)*.5+.05}}const k=(p-a)/(1-a);return{z:0,s:-.16*Math.sin(k*Math.PI)}}
+// a little hop cycle (0 on the floor, up to 1 in the air) with squash on landing: returns {z, s} (s>0 taller); the stretch in the air
+// fades in at take-off and out at landing, so the body never jumps from one shape to another
+function hop(p,air){const a=air||.55;if(p<a){const k=p/a;return{z:Math.sin(k*Math.PI),s:(.06*Math.cos(k*TAU)+.05)*sstep(0,.15,k)*sstep(0,.15,1-k)}}const k=(p-a)/(1-a);return{z:0,s:-.16*Math.sin(k*Math.PI)}}
 
 // ------------------------------------------------------------------ the body's frame (as the hero's): squash/stretch (s: taller > 0),
 // stretch along x (sx), lean (the top goes forward > 0), roll (the top goes to the right > 0), turn (yaw, the front goes left > 0) round
@@ -165,9 +171,9 @@ function eyes(Vh,h,Rh,o){o=o||{};const nod=o.nod||(v=>v),dir=o.dir||[1,.33,.25],
 function eye1(q,rx,ry,o,v,sd,h){const kind=o.kind||'dark',sq=(o.blink==null?1:o.blink)*(1-.35*(o.squint||0)),sy=ry*Math.max(.12,sq),col=o.col||'#1b1612';
   if(o.shut){const dir=h&&h[0]>=q[0]?1:-1;ctx.strokeStyle=o.shutCol||'#1b1612';ctx.lineWidth=1.3;ctx.lineCap='round';ctx.lineJoin='round';ctx.beginPath();
     ctx.moveTo(q[0]-dir*rx*.9,q[1]-ry*.62);ctx.lineTo(q[0]+dir*rx*.8,q[1]);ctx.lineTo(q[0]-dir*rx*.9,q[1]+ry*.62);ctx.stroke();return}
-  if(kind==='dark'||kind==='glow'){if(kind==='glow'&&o.glow&&sq>.3)shine(o.glow,q[0],q[1],ry*3.2,.35*Math.min(1,v*2));
+  if(kind==='dark'||kind==='glow'){if(kind==='glow'&&o.glow&&sq>.22)shine(o.glow,q[0],q[1],ry*3.2,.35*Math.min(1,v*2)*sstep(.22,.38,sq));
     ctx.fillStyle=col;ctx.beginPath();ctx.ellipse(q[0],q[1],rx,sy,0,0,TAU);ctx.fill();if(o.lw){ctx.strokeStyle=INK;ctx.lineWidth=o.lw;ctx.stroke()}
-    if(o.light!==false&&sq>.45&&rx>1.1){ctx.fillStyle=o.lightCol||'#fdf6e8';ball([q[0]-rx*.34,q[1]-sy*.46],o.lr||Math.min(.36+rx*.06,.7));ctx.fill()}return}
+    if(o.light!==false&&sq>.4&&rx>1){ctx.save();ctx.globalAlpha*=sstep(.4,.5,sq)*sstep(1,1.2,rx);ctx.fillStyle=o.lightCol||'#fdf6e8';ball([q[0]-rx*.34,q[1]-sy*.46],o.lr||Math.min(.36+rx*.06,.7));ctx.fill();ctx.restore()}return}
   if(kind==='pip'){ctx.fillStyle=o.sock||'#2a211c';ctx.beginPath();ctx.ellipse(q[0],q[1],rx,sy,0,0,TAU);ctx.fill();if(o.lw){ctx.strokeStyle=INK;ctx.lineWidth=o.lw;ctx.stroke()}
     if(sq>.3){if(o.glow)shine(o.glow,q[0],q[1],ry*2.6,.4*Math.min(1,v*2));ctx.fillStyle=col;ball([q[0],q[1]+sy*.08],Math.min(rx,sy)*(o.pr||.48));ctx.fill();ctx.fillStyle='#fff';ball([q[0]-rx*.18,q[1]-sy*.14],Math.min(rx,sy)*.16+.1);ctx.fill()}return}
   // white or slit: a white (or coloured) eye with an outline, an iris or a slit, the pupil, a point of light, all clipped inside
