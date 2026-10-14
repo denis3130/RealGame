@@ -25,12 +25,13 @@ function suono(w,x,y){try{if(typeof AU==='undefined'||!AU.ctx||!AU.on.sfx||AU.ct
 // ------------------------------------------------------------------ i pezzi che volano: vetri, schegge, assi strappate, scintille (nel mondo, con la gravità)
 const FX=[];
 function burst(k,x,y,z,n,dir,sp){if(LOWFX)n=Math.ceil(n/3);for(let i=0;i<n;i++){const a=Math.atan2(dir[1],dir[0])+rr(-.9,.9),v=rr(.4,1)*(sp||70);
-  FX.push({k,x,y,z:z+rr(-6,6),vx:Math.cos(a)*v,vy:Math.sin(a)*v,vz:rr(20,90),r:k==='asse'?rr(10,14):k==='vetro'?rr(1.4,3.2):rr(.8,1.8),t:0,T:k==='scintilla'?rr(.25,.5):k==='asse'?1.6:rr(.7,1.2),rot:rr(0,TAU),vr:rr(-12,12),col:k==='asse'?(Math.random()<.5?'#6e5236':'#93714c'):null})}}
+  FX.push({k,x,y,z:z+rr(-6,6),vx:Math.cos(a)*v,vy:Math.sin(a)*v,vz:k==='gesso'?rr(-10,20):rr(20,90),r:k==='asse'?rr(10,14):k==='vetro'?rr(1.4,3.2):k==='gesso'?rr(2,4):rr(.8,1.8),t:0,T:k==='scintilla'?rr(.25,.5):k==='asse'?1.6:rr(.7,1.2),rot:rr(0,TAU),vr:rr(-12,12),col:k==='asse'?(Math.random()<.5?'#6e5236':'#93714c'):null})}}
 function fxStep(dt){for(const f of FX){f.t+=dt;f.vz-=320*dt;f.x+=f.vx*dt;f.y+=f.vy*dt;f.z+=f.vz*dt;f.rot+=f.vr*dt;if(f.z<0){f.z=0;f.vz*=-.3;f.vx*=.5;f.vy*=.5;f.vr*=.5}}for(let i=FX.length-1;i>=0;i--)if(FX[i].t>=FX[i].T)FX.splice(i,1)}
 function fxDraw(){for(const f of FX){const q=S(f.x,f.y,f.z),a=Math.min(1,(f.T-f.t)/.3);ctx.save();ctx.globalAlpha*=a;ctx.translate(q[0],q[1]);ctx.rotate(f.rot);
   if(f.k==='vetro'){ctx.fillStyle='rgba(200,220,250,.8)';ctx.strokeStyle='rgba(20,24,34,.7)';ctx.lineWidth=.6;ctx.beginPath();ctx.moveTo(-f.r,f.r*.6);ctx.lineTo(f.r*.3,-f.r);ctx.lineTo(f.r,f.r*.4);ctx.closePath();ctx.fill();ctx.stroke()}
   else if(f.k==='asse'){ctx.fillStyle=f.col;ctx.fillRect(-f.r/2,-1.8,f.r,3.6);ink(1.2);ctx.strokeRect(-f.r/2,-1.8,f.r,3.6)}
   else if(f.k==='scintilla'){ctx.globalCompositeOperation='lighter';ctx.fillStyle=`rgba(255,${190+Math.round(60*a)},90,1)`;ctx.fillRect(-f.r,-.5,f.r*2,1)}
+  else if(f.k==='gesso'){ctx.fillStyle='rgba(236,232,220,.55)';ctx.beginPath();ctx.arc(0,0,f.r*(1+f.t*3),0,TAU);ctx.fill()}
   else{ctx.fillStyle=f.k==='truciolo'?'#c8a06a':'#8a7a62';ctx.fillRect(-f.r,-f.r*.4,f.r*2,f.r*.8)}ctx.restore()}}
 // ------------------------------------------------------------------ una barriera: lo stato, i colpi degli zombie, la riparazione dell'eroe
 // o: {kind 'vetro'|'legno'|'ferro', x, y, nx, ny (fuori), half, th, reach, n0 (assi o sbarre all'inizio, vecchie), glass (vetro intatto all'inizio),
@@ -120,4 +121,4 @@ P.barricade=function(ax,ay,bx,by,o){const kind=o.kind||'legno',hor=Math.abs(by-a
   const _u=D.update;D.update=(dt,on)=>{_u(dt,on);try{fxStep(dt)}catch(e){console.error(e)}};
   const _t=D.drawTop;D.drawTop=dt=>{_t(dt);if(FX.length)try{fxDraw()}catch(e){}};
   const _r=D.reset;D.reset=()=>{_r();FX.length=0;TT.r=-1;TT.n=0};return D}}
-ZM.barriere={ALL,BZ,FX,mkBar}})();
+ZM.barriere={ALL,BZ,FX,mkBar,burst}})();

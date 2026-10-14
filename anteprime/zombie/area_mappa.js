@@ -88,7 +88,10 @@ const AREA={title:'Camposanto',zoneName:h=>h.y<Y(12.3)?'Fattoria dei Corvi':'Cam
       act(){if(W.coins<750)return false;W.coins-=750;gate.open();W.zoneOpen[2]=true;W.gate.open=true;if(W.split)W.split.fade=true;ZM.navRebuild();W.toast=['La Fattoria dei Corvi è aperta',2.6];return true}});
     for(const[id,pr,hx,hy,zone] of[['revolver',500,X(9.6),Y(15)-24,1],['pompa',1500,X(11.0)-26,Y(7.45),2]])
       ZM.buyable({id:'muro_'+id,x:hx,y:hy,r:56,show:()=>W.zoneOpen[zone],label:()=>(W.gunId===id?'Colpi: ':'')+(window.ARMI?ARMI.DATI[id].n:id),price:()=>W.gunId===id?Math.round(pr/2):pr,
-        act(){const p=W.gunId===id?Math.round(pr/2):pr;if(W.coins<p)return false;W.coins-=p;ZM.equip(id);return true}});
+        act(){const p=W.gunId===id?Math.round(pr/2):pr;if(W.coins<p)return false;W.coins-=p;
+          // (anteprima 48, punto 21) la stessa arma: solo i colpi, l'arma resta quella che hai (anche forgiata); un soffio di gesso e il suono dell'arma
+          if(W.gunId===id){const g=ZM.gun();g.mag=g.D.mag;g.res=Math.max(g.res,g.D.res*((g.pap||0)+1));if(g.st==='ricarica'&&g.annulla)g.annulla();W.toast=['Colpi: '+(g.nome||g.D.n),1.8]}else ZM.equip(id);
+          if(ZM.barriere)ZM.barriere.burst('gesso',hx,hy,26,8,[0,0],24);try{if(window.ARMI&&ARMI.suono)ARMI.suono(id,'ricarica',180);if(AU.ctx&&AU.on.sfx)coinClink(AU.ctx.currentTime+.01,.8)}catch(e){}return true}});
     // la Bara delle Sorprese e i suoi tre posti [x, y, zona, verso della testa]: nel cimitero vicino alla cripta (girata un po', il teschio verso
     // sud), sotto la tettoia accanto al carretto, dentro il fienile nell'angolo a nord-ovest (non nella stalla: lì restava un corridoio di 23 px)
     ZM.sorpresa(X(4.45),Y(16.76),[[X(4.45),Y(16.76),1,.3],[X(9.55),Y(10.85),2,0],[X(12.2),Y(5.0),2,0]]);
@@ -98,6 +101,9 @@ const AREA={title:'Camposanto',zoneName:h=>h.y<Y(12.3)?'Fattoria dei Corvi':'Cam
     // le due Macchine della Fortuna (fortuna.js): una a est della partenza, una nell'aia della fattoria appena oltre il cancello (posti larghi:
     // niente corridoi stretti intorno)
     P.fortuneMachine(X(9.2),Y(22.7),0);P.fortuneMachine(X(7.35),Y(8.3),1);
+    // (anteprima 48) la Credenza degli Elisir a est della casa, tra la latrina e la lanterna; la Forgia delle Anime e la valvola della caldaia per ora
+    // nell'area di partenza, a sud-est (con le zone nuove andranno nel borgo e nella segheria)
+    P.elisir(X(13.0),Y(16.0));ZM.turn(X(13.2),Y(23.0),3,()=>P.forgia(X(13.2),Y(23.0)));ZM.turn(X(12.9),Y(21.2),3,()=>P.valvola(X(12.9),Y(21.2)));
     // i bordi del mondo e la nebbia ai lati dell'area di partenza
     solid(-200,-200,w+400,200,'edge');solid(-200,h,w+400,200,'edge');solid(-200,0,200,h,'edge');solid(w,0,200,h,'edge');
     solid(0,Y(12.3)+6,X(2),h-Y(12.3)-6,'edge');solid(X(14),Y(12.3)+6,X(2),h-Y(12.3)-6,'edge');solid(X(2),Y(24),X(12),h-Y(24),'edge');

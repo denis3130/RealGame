@@ -102,7 +102,7 @@ function activate(id){const L=defOf(id),h=W.hero,D=W.director;if(!D||D.st==='fin
 function newCard(id,kind,T){const c={id,kind,t:0,T,burn:false,in:0,emb:[],cv:null,img:null};return c}
 function burnOut(a){if(a.burn)return;a.burn=true;a.kind='i';a.t=0;a.T=1.1}
 // W.mods: la base della partita (livelli e accessori: src/js/63-zombie.js mette LK.base) più le carte accese
-function applyMods(){const b=LK.base,on=id=>LK.act.some(a=>a.id===id&&!a.burn);W.mods={spd:b.spd||1,cash:b.cash||1,dmg:b.dmg||1,crit:on('fortuna')?.3:0,invis:on('invisibile')?1:0,shield:on('scudo')?1:0,regen:on('rigenera')?1:0,inf:on('raffica')?1:0}}
+function applyMods(){const b=LK.base,on=id=>LK.act.some(a=>a.id===id&&!a.burn);W.mods={spd:b.spd||1,cash:b.cash||1,dmg:b.dmg||1,crit:on('fortuna')?.3:0,invis:on('invisibile')?1:0,shield:on('scudo')?1:0,regen:on('rigenera')?1:0,inf:on('raffica')?1:0};if(ZM.modsHook)ZM.modsHook(W.mods)}// (gli elisir e la Forgia: macchine.js)
 // l'autorianimazione: quando l'eroe cade (partita.js D.luckRevive)
 function luckRevive(){const a=LK.act.find(a=>a.id==='rialzati'&&!a.burn);if(!a)return false;burnOut(a);suono('rialza');applyMods();return true}
 // la tua carta, portata dal menu (SAVE.lucky.pick): alla macchina, al massimo 2 dello stesso tipo, e si consuma dall'inventario
