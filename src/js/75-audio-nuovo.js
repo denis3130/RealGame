@@ -59,7 +59,7 @@ TRACKS.zmenu={bpm:60,ch:[[50,53,57],[46,50,53],[48,51,55],[45,49,52]],sc:[62,65,
     if(s===8&&bar===2)vChoir(tr,t,[C[0],C[2]],spb*14,.028)}};
 // the night round the fire: far moans (the zombies' own voice, far and with much room in it), wind that howls, a chain, an owl
 if(typeof AMBEV!=='undefined'&&AMBEV.zmenu){AMBEV.zmenu.push(
-  [8,18,t=>{if(typeof ZV==='undefined')return;const f=VR(85,.2);ZV.voice(t,f,f*VR(.75,.08),VR(1.6,.3),[[430,940],[380,820],[520,1050]][randi(0,2)],{vol:.028,att:.4,rasp:.5,breath:.5,rev:.9,fd:.85})}],
+  [8,18,t=>{if(typeof ZVB!=='undefined'&&ZVB.play('zombie','moan',t,.07,.85+Math.random()*.25,.95))return;if(typeof ZV==='undefined')return;const f=VR(85,.2);ZV.voice(t,f,f*VR(.75,.08),VR(1.6,.3),[[430,940],[380,820],[520,1050]][randi(0,2)],{vol:.028,att:.4,rasp:.5,breath:.5,rev:.9,fd:.85})}],
   [14,28,t=>{const c=AU.ctx,n=noiseSrc(t,3.2,true),bp=filt('bandpass',VR(520,.2),9),g=c.createGain();bp.frequency.linearRampToValueAtTime(VR(760,.15),t+1.4);bp.frequency.linearRampToValueAtTime(VR(480,.15),t+3);
     g.gain.setValueAtTime(.0001,t);g.gain.linearRampToValueAtTime(.05,t+1.2);g.gain.exponentialRampToValueAtTime(.0005,t+3.1);n.connect(bp);bp.connect(g);route(g,null,.6)}],
   [26,48,t=>{for(let i=0;i<3;i++)M.metal(t+i*.16+Math.random()*.05,.1,VR(1200,.1),.4)}],
@@ -120,4 +120,4 @@ function voxPlay(e,kind){const V=VOX[e.type];if(!V||!V[kind]||!AU.ctx||!AU.on.sf
 // the zombies on the path behind the campfire groan with the same voice as the ones on the map (far away: soft, with much room in it)
 if(typeof sndZGroan==='function'){const _g=sndZGroan;sndZGroan=function(z){if(typeof ZV==='undefined'||!AU.ctx||!AU.on.sfx||$('menu').hidden)return _g.apply(this,arguments);
   try{const K=(typeof ZM!=='undefined'&&ZM.audio&&ZM.audio.KV[z.kind])||{f:[78,112],fm:[[430,940]],rasp:.5,br:.4},f=K.f[0]+(K.f[1]-K.f[0])*Math.random(),t=AU.ctx.currentTime+.02;
-    AU.pan=Math.max(-.8,Math.min(.8,(z.x-180)/180*.8));ZV.voice(t,f,f*VR(.76,.06),VR(1.3,.2),K.fm[Math.floor(Math.random()*K.fm.length)],{vol:.05,att:.3,rasp:K.rasp,breath:K.br,rev:.75,fd:.85});AU.pan=0}catch(e){}}}
+    AU.pan=Math.max(-.8,Math.min(.8,(z.x-180)/180*.8));if(!(typeof ZVB!=='undefined'&&ZVB.play(z.kind||'zombie','moan',t,.12,.9+Math.random()*.2,.8)))ZV.voice(t,f,f*VR(.76,.06),VR(1.3,.2),K.fm[Math.floor(Math.random()*K.fm.length)],{vol:.05,att:.3,rasp:K.rasp,breath:K.br,rev:.75,fd:.85});AU.pan=0}catch(e){}}}
