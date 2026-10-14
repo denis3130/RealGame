@@ -10,13 +10,13 @@ async def main():
     b=await p.chromium.launch();pg=await b.new_page()
     errs=[];pg.on('pageerror',lambda e:errs.append(str(e)));pg.on('console',lambda m:errs.append(m.text) if m.type=='error' else None)
     await pg.goto('file://'+os.path.join(here,'..','filmato_b.html')+'?foto=1');await pg.wait_for_timeout(1000)
-    r=await pg.evaluate('FILM.audioOffline(40)');shots=await pg.evaluate('FILM.SHOTS().map(s=>[s.id,s.t0])')
+    r=await pg.evaluate('FILM.audioOffline(FILM.FM.DUR+1.2)');shots=await pg.evaluate('FILM.SHOTS().map(s=>[s.id,s.t0])')
     await b.close()
   print('peak',round(r['peak'],3),'errori nei suoni:',r['errs'][:5],[e for e in errs if 'TUNNEL' not in e][:5])
   raw=base64.b64decode(r['data']);sr=r['sr'];x=np.frombuffer(raw,dtype='<i2').astype(np.float32)/32768
   with wave.open(os.path.join(out,'filmato_b.wav'),'wb') as w:w.setnchannels(1);w.setsampwidth(2);w.setframerate(sr);w.writeframes(raw)
   hop=int(sr*.05);n=len(x)//hop;rms=np.array([np.sqrt(np.mean(x[i*hop:(i+1)*hop]**2)+1e-12) for i in range(n)]);db=20*np.log10(rms)
-  for s in range(0,40):print(f'{s:2d}s  {"#"*max(0,int((db[s*20:(s+1)*20].max()+60)/1.5))} {db[s*20:(s+1)*20].max():6.1f} dB')
+  for s in range(0,int(len(x)/sr)):print(f'{s:2d}s  {"#"*max(0,int((db[s*20:(s+1)*20].max()+60)/1.5))} {db[s*20:(s+1)*20].max():6.1f} dB')
   import matplotlib;matplotlib.use('Agg');import matplotlib.pyplot as plt
   fig,ax=plt.subplots(2,1,figsize=(18,7),sharex=True);t=np.arange(n)*.05;ax[0].plot(t,db,lw=.8);ax[0].set_ylim(-70,0);ax[0].set_ylabel('dB')
   ax[1].specgram(x,Fs=sr,NFFT=1024,noverlap=768,cmap='magma',vmin=-110);ax[1].set_ylim(0,8000)

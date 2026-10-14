@@ -32,7 +32,7 @@ function fmCuesB(tr){const Q=[],q=(t,f)=>Q.push([t,f]);const BEAT=60/112,E=BEAT/
   const birds=(a,b,dens,v)=>{for(let t=a;t<b;t+=dens*(.5+Math.random())){const f=VR(2600,.25),n=2+Math.floor(Math.random()*3),vv=v*(.6+Math.random()*.6);q(t,x=>fmBird(x,vv,f,n))}};
   // --- 1 · dawn: a warm chord, a harp, the first call of the flute, the breeze, the birds
   q(0,a=>{fmWind(a,9,.08);vPad(tr,a,[50,57,62,66],3.6,.09,1300);vBass(tr,a,38,3.2,.12)});
-  birds(.15,3.4,.42,.05);birds(8.9,10.6,.5,.04);birds(13.6,15.4,.6,.035);birds(27.7,36.4,.55,.04);
+  birds(.15,3.4,.42,.05);birds(8.9,10.6,.5,.04);birds(13.6,15.4,.6,.035);birds(30.9,39.6,.55,.04);
   for(let i=0;i<6;i++){const m=[62,66,69,74,78,74][i];q(.25+i*.27,a=>vHarp(tr,a,m,1.8,.045))}
   q(.45,a=>{vFlute(tr,a,74,.5,.07);vFlute(tr,a+.5,78,.35,.07);vFlute(tr,a+.85,81,.95,.075)});
   // --- 2 · the run: the tune starts running with them (frame drum, shaker, plucked bass, flute), their steps, the two dashes
@@ -72,24 +72,39 @@ function fmCuesB(tr){const Q=[],q=(t,f)=>Q.push([t,f]);const BEAT=60/112,E=BEAT/
   q(20.7,a=>{fmCrack(a,1);dDrum(tr,a,.8,95,30,1.2,250,.4);dTaiko(tr,a,.9);vChoir(tr,a+.02,[62,66,69,74],2.2,.12);vBrass(tr,a+.02,50,1.6,.12);vBrass(tr,a+.02,57,1.6,.1);
     vBell(tr,a,86,2.8,.06);vBell(tr,a,90,2.8,.04);harpRun(tr,a+.1,[74,78,81,86,90,93],.04,.05);fNoise(a,1.6,'highpass',5200,.6,.05,{att:.005})});
   q(21.45,a=>{const W=[[62,.32],[61,.32],[60,.32],[59,1.1]];let x=a;for(const[m,l] of W){vBrass(tr,x,m-12,l*.95,.1);x+=l+.04}});
+  // --- 4½ · their moment: the Balestriere (the crank and the click of the bolt, a breath; the heavy twang, the whip, the split, the two
+  // halves knocking on the ground, a little fanfare), then the Druida (the staff up with a choir; the strike: a soft boom, bells, a harp
+  // run up, the leaves rushing round him, a pluck for every flower that opens); a fill into the beat of the pine cones
+  q(23.4,a=>{vPad(tr,a,[45,52,57],1.6,.06,700);M.metal(a+.05,.12,VR(900,.05),.25);fmCreak(a+.08,.3,.08)});
+  q(23.62,a=>{M.metal(a,.08,1400,.3);fNoise(a,.03,'highpass',3000,.8,.06)});q(23.68,a=>fmBreath(a,.3,.6,1));
+  q(B_BOLT,a=>{twang(a,95,.2);fThump(a,120,50,.12,.3,.08);whoosh(a+.01,.2,3200,800,.16)});
+  q(B_BHIT,a=>{fmCrack(a,1.1);fmThunk(a,.9,true);dTaiko(tr,a,.9);dDrum(tr,a,.7,90,30,1,220,.35);vBrass(tr,a+.02,45,.9,.12);vBrass(tr,a+.02,52,.9,.1);fNoise(a,.9,'highpass',4800,.6,.04,{att:.005})});
+  for(const s of[-1,1])q(B_BHIT+halfAt(0,s).uL,a=>{M.wood(a,.6,s>0?300:360);fThump(a,140,60,.08,.18,.06)});
+  q(24.52,a=>{vBrass(tr,a,50,.25,.08);vBrass(tr,a+.27,57,.6,.09);vBass(tr,a,38,.8,.14)});
+  q(25.05,a=>{vPad(tr,a,[50,57,62,66],1.6,.06,1200);fmWind(a,1.6,.05)});
+  q(B_DRU,a=>{vChoir(tr,a,[62,66,69],.6,.06);whoosh(a,.42,400,1800,.08,.2)});
+  q(B_DCAST,a=>{fThump(a,110,48,.4,.28,.2);vBell(tr,a,86,2,.05);vBell(tr,a+.04,90,2,.035);harpRun(tr,a+.02,[74,78,81,86,90,93],.035,.05);vChoir(tr,a,[66,69,74],1.2,.08);
+    fmRustle(a,.9,1.4);whoosh(a+.05,.8,700,2600,.1,.3)});
+  DFL.forEach((f,i)=>q(B_DCAST+f.d+.08,a=>vHarp(tr,a,[86,88,90,93,95][i%5],.35,.018)));
+  q(26.35,a=>{for(let i=0;i<4;i++)dTom(tr,a+i*.06,.12+i*.05,170+i*15)});
   // --- 5 · dodge this! A bouncy beat; the basket, the throws, the cones flying at you, the dashes, the cones hitting the ground
   const DB=60/124,DE=DB/2;
-  for(let i=0;23.4+i*DE<28.6;i++){const t=23.4+i*DE,s=i%8,bar=Math.floor(i/8)%2;q(t,a=>{dShaker(tr,a,s%2?.03:.05);if(s===0||s===4)dFrame(tr,a,.4);if(s%2===0)vBass(tr,a,(bar?[43,47,50,47]:[38,45,42,45])[s/2],DE*.8,.18);
+  for(let i=0;26.6+i*DE<31.8;i++){const t=26.6+i*DE,s=i%8,bar=Math.floor(i/8)%2;q(t,a=>{dShaker(tr,a,s%2?.03:.05);if(s===0||s===4)dFrame(tr,a,.4);if(s%2===0)vBass(tr,a,(bar?[43,47,50,47]:[38,45,42,45])[s/2],DE*.8,.18);
     if(s===2||s===6)vBell(tr,a,[78,81][bar],.4,.025)})}
-  q(23.5,a=>fmRustle(a,.3,1.2));
+  q(26.7,a=>fmRustle(a,.3,1.2));
   for(const t of B_THROW)q(t,a=>{whoosh(a,.3,700,2200,.16,.05);fNoise(a,.05,'lowpass',500,1,.08,{brown:true})});
   for(let i=0;i<3;i++){const t0=B_CONE[i];q(t0,a=>fmCone(a,.48,1));q(B_DASH[i],a=>{fmDashW(a,1);harpRun(tr,a+.05,[74,78,81],.035,.04)});q(t0+.62,a=>fmConeThud(a,.9))}
   // laughing together: a happy run on the harp and the bells
-  q(27.75,a=>{harpRun(tr,a,[62,66,69,74,78,81,86,90],.05,.05);vBell(tr,a+.4,86,1.6,.04);vPad(tr,a,[50,57,62,66],1.6,.07,1600)});
+  q(30.95,a=>{harpRun(tr,a,[62,66,69,74,78,81,86,90],.05,.05);vBell(tr,a+.4,86,1.6,.04);vPad(tr,a,[50,57,62,66],1.6,.07,1600)});
   // --- 6 · the morning on the log: the tune, slow, on the flute; the crypt answers far away with the motif of Mossbound
-  q(28.9,a=>{vPad(tr,a,[43,50,55,59],2.8,.08,1100);vBass(tr,a,31,2.6,.13)});q(31.7,a=>{vPad(tr,a,[50,57,62,66],2.9,.08,1100);vBass(tr,a,38,2.7,.13)});
-  q(29.3,a=>{const M2=[[74,.6],[76,.6],[78,.9],[81,1.4],[79,.6],[78,.6],[76,.9],[74,1.8]];let x=a;for(const[m,l] of M2){vFlute(tr,x,m,l*.95,.065);x+=l}});
-  q(30.4,a=>{vBell(tr,a,69,2.6,.035);vBell(tr,a+.9,74,2.6,.032);vBell(tr,a+1.8,73,3,.035)});
-  q(28.9,a=>fmWind(a,7.5,.06));
+  q(32.1,a=>{vPad(tr,a,[43,50,55,59],2.8,.08,1100);vBass(tr,a,31,2.6,.13)});q(34.9,a=>{vPad(tr,a,[50,57,62,66],2.9,.08,1100);vBass(tr,a,38,2.7,.13)});
+  q(32.5,a=>{const M2=[[74,.6],[76,.6],[78,.9],[81,1.4],[79,.6],[78,.6],[76,.9],[74,1.8]];let x=a;for(const[m,l] of M2){vFlute(tr,x,m,l*.95,.065);x+=l}});
+  q(33.6,a=>{vBell(tr,a,69,2.6,.035);vBell(tr,a+.9,74,2.6,.032);vBell(tr,a+1.8,73,3,.035)});
+  q(32.1,a=>fmWind(a,7.5,.06));
   // the swell to the title
-  q(34.6,a=>{vChoir(tr,a,[62,66,69],2,.07);vPad(tr,a,[50,57,62,66,69],1.95,.09,2000);vBrass(tr,a+.6,62,1.3,.06);vBrass(tr,a+1.2,66,.8,.07)});
-  for(let i=0,t=35.2,iv=.4;t<36.5;i++,t+=iv,iv=Math.max(.12,iv*.8))q(t,a=>dTom(tr,a,.15+i*.06,150+i*12));
-  q(36.75,a=>{dDrum(tr,a,1,95,26,1.8,300,.6);dTaiko(tr,a,1);vChoir(tr,a,[62,66,69,74],3.4,.15);vBrass(tr,a,50,2.6,.13);vBrass(tr,a,57,2.6,.1);vBrass(tr,a,62,2.6,.08);vBass(tr,a,38,2.6,.3);
+  q(37.8,a=>{vChoir(tr,a,[62,66,69],2,.07);vPad(tr,a,[50,57,62,66,69],1.95,.09,2000);vBrass(tr,a+.6,62,1.3,.06);vBrass(tr,a+1.2,66,.8,.07)});
+  for(let i=0,t=38.4,iv=.4;t<39.7;i++,t+=iv,iv=Math.max(.12,iv*.8))q(t,a=>dTom(tr,a,.15+i*.06,150+i*12));
+  q(39.95,a=>{dDrum(tr,a,1,95,26,1.8,300,.6);dTaiko(tr,a,1);vChoir(tr,a,[62,66,69,74],3.4,.15);vBrass(tr,a,50,2.6,.13);vBrass(tr,a,57,2.6,.1);vBrass(tr,a,62,2.6,.08);vBass(tr,a,38,2.6,.3);
     vBell(tr,a,86,3.2,.06);vBell(tr,a,93,3.2,.04);fNoise(a,2.2,'highpass',3200,.6,.1,{att:.005});harpRun(tr,a+.85,[74,78,81,86],.2,.055)});
   return Q.sort((x,y)=>x[0]-y[0])}
-AUD.cues=fmCuesB;AUD.silent=[[36.55,36.74]];
+AUD.cues=fmCuesB;AUD.silent=[[39.75,39.94]];

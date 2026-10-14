@@ -4,7 +4,8 @@
 // a director only places the actors, moves the hero and the camera, and writes the big words.
 // It never touches the save: a copy is taken before and put back after.
 // The four heroes are in it (Denis, 14 October: «aggiungi anche gli altri pg nel filmato»): yours leads it (at the first launch, before
-// the making of the hero, the Arciere), each of the other three has a world, and at the end all four stand together under the title.
+// the making of the hero, the Arciere; later with his mantle), each of the other three has a world and uses his own Super there
+// («ognuno con la sua Super»), and at the end all four stand together under the title.
 // =====================================================================
 const iEase=k=>k<.5?4*k*k*k:1-Math.pow(-2*k+2,3)/2;
 const iLerp=(a,b,k)=>a+(b-a)*clamp(k,0,1);
@@ -21,8 +22,10 @@ function iFoe(type,x,y,spawn,o){const e=makeE(type,x,y,spawn==null?0:spawn);e.hp
 // the cast: yours first, then the others (the other of the first two, the Balestriere, the Druida)
 function iCast(){const main=SAVE.heroes&&SAVE.heroes[SAVE.hero]&&HERO_BY[SAVE.hero]?SAVE.hero:SAVE.starter==='cacciatrice'?'cacciatrice':'arciere';
   return[main,...['arciere','cacciatrice','balestriere','druida'].filter(i=>i!==main)]}
-// the hero of the shot: only the look and the shots change (the numbers of the trailer stay)
-function iAs(id){const h=HERO_BY[id];if(!h||!P)return;Object.assign(P,{hero:id,style:heroStyle0(id),proj:h.proj,pcol:h.pcol||null,pspd:h.proj==='bolt'?720:h.proj==='leaf'?520:560})}
+// the hero of the shot: only the look and the shots change (the numbers of the trailer stay); yours wears your mantle
+function iAs(id){const h=HERO_BY[id];if(!h||!P)return;Object.assign(P,{hero:id,style:id===iCast()[0]?heroStyle(id):heroStyle0(id),proj:h.proj,pcol:h.pcol||null,pspd:h.proj==='bolt'?720:h.proj==='leaf'?520:560})}
+// his Super, now (the bar is full for the trailer)
+function iUlt(){if(!P)return;P.ult=100;useUlt()}
 // the others standing beside him at the end (drawn with the room, in depth order: 45-render)
 function iDrawCast(a){drawRig(a.x,a.y,a.face,0,false,a.style,{})}
 function iHero(){P=makeP();
@@ -61,17 +64,17 @@ const SHOTS=[
     iFoe('imp',120,170,0,{cd:.15});iFoe('imp',250,150,0,{cd:.35});iFoe('imp',300,300,0,{cd:.55});iFoe('pyro',180,230,0,{cd:.3});iFoe('bomber',70,330,0,{cd:.2});iFoe('magmaslime',230,420,0);iFoe('magmaslime',140,360,0);
     meteor(150,505,0,30,0);meteor(225,470,.15,30,0)},
    tick(lt){if(lt<.75)iGoTo(1,-.45);else if(lt<1.0)iGoTo(.2,-1);else iStop();
-    if(lt>=.32&&iOnce('d1'))dash();if(lt>=.8&&iOnce('d2'))dash()}},
+    if(lt>=.32&&iOnce('d1'))dash();if(lt>=.8&&iOnce('d2'))dash();if(lt>=1.12&&iOnce('u2'))iUlt()}},
   // 3 · the swamp: arrows that bounce, lightning that jumps
   {at:8,setup(){iFlash('w');iRoom(3,2,{x:200,y:520,lay:[[66,260,16],[294,260,16]]});iAs(iCast()[2]);iSay('4 MONDI!','Cripta · Vulcano · Palude · Ghiaccio','#9cef5e',1.8);
     Object.assign(P,{ric:2,light:3,multi:2,front:2,diag:1});
     iFoe('frog',100,200);iFoe('frog',260,200);iFoe('frog',180,300);iFoe('mosquito',60,350);iFoe('mosquito',300,360);iFoe('mosquito',180,160);const c=iFoe('croc',120,400);c.st='out'},
-   tick(lt){if(lt<.45)iGoTo(-.6,-.8);else iStop()}},
+   tick(lt){if(lt<.45)iGoTo(-.6,-.8);else iStop();if(lt>=.62&&iOnce('u3'))iUlt()}},
   // 4 · the ice: a level up, spinning blades, a hero who walks into the wolves
   {at:10,setup(){iFlash('w');iRoom(4,2,{x:AW/2,y:490,lay:[[80,230,18],[280,230,18]]});iAs(iCast()[3]);iSay('PIÙ FORTE!','a ogni livello','#8fe8ff',1.7);
     Object.assign(P,{ric:0,light:0,orbit:3,storm:true,multi:2,front:2,diag:2});iLevelBurst();
     iFoe('wolf',60,210,0,{cd:.2});iFoe('wolf',300,210,0,{cd:.35});iFoe('wolf',70,340,0,{cd:.1});iFoe('wolf',290,340,0,{cd:.25});iFoe('snowspirit',140,150);iFoe('snowspirit',220,150)},
-   tick(lt){if(lt>.45&&lt<1.15)iGoTo(0,-1);else iStop()}},
+   tick(lt){if(lt>.45&&lt<1.15)iGoTo(0,-1);else iStop();if(lt>=.95&&iOnce('u4'))iUlt()}},
   // 5 · the Golem falls from the ceiling
   {at:12,setup(){iFlash('w');iRoom(1,5,{x:AW/2,y:530,hold:true});iAs(iCast()[0]);Object.assign(P,{orbit:0,storm:false,front:1,diag:1});iCam(1,AW/2,AH/2)},
    tick(lt){
