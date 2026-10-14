@@ -28,6 +28,7 @@ const HC={body:'#2fb3a6',hood:'#23877d',skin:'#f2c9a0',eye:'#1b1612',foot:'#4a36
   quiver:'#7a5232',quiverT:'#5a3a22',band:'#c9a040',strap:'#4a321e',moss:'#4f8a34',mossL:'#8fd14f'};
 const dk=(c,k)=>mix(c,'#0d1418',k),lt=(c,k)=>mix(c,'#ffffff',k);
 // the armours of the game: colours of the tunic (a) and of the hood (b), as in ITEMS[].tint; the bows: colour and shape
+const VESTITI={};// the outfits, filled in by sprite/eroe3d/vestiti3d.js
 const ARM={giubba:['#2fb3a6','#23877d'],cotta:['#8a97a2','#5d6872'],mantello_ombra:['#5a4682','#3a2c58'],corazza_muschio:['#5f9e3c','#3f7a2a']};
 const BOWS={arco_frassino:['#a4703d',null],arco_ricurvo:['#7a4a2a','recurve'],arco_spine:['#4f8a34','thorn'],arco_fenice:['#d9442e','phoenix'],balestra:['#6b4a2a','xbow']};
 
@@ -105,12 +106,14 @@ function head(Vh,Rh,S,A,o){const h=Vh.P(0,0,0),{F}=Vh,hood=S.hood,skin=S.skin,no
   // the enemies' bits behind the head: the antlers, an ear on the far side, the back spikes of the tiara
   if(S.crown)antlers(Vh,h,Rh,S,nod);if(S.ears)for(const sd of[-1,1])if(F(nod([0,sd,0]))<=.3)ear(Vh,h,Rh,S,nod,sd);if(S.tiara)tiara(Vh,h,Rh,S,nod,false);
   if(S.antlers)deerAntlers(Vh,h,Rh,nod);const tailFront=S.ponytail&&F(nod([-1,0,-.2]))>.15;if(S.ponytail&&!tailFront)ponytail(Vh,h,Rh,S,nod,o.sway||0);
+  const OH=S.of&&S.of.hoodFx?{Vh,h,Rh,nod,F,S,A,hood,sp,capPath}:null;if(OH)S.of.hoodFx(OH,'back');
   ink(2.5);ball(h,Rh);ctx.fillStyle=hood;ctx.fill();ctx.stroke();
   // soft shading of a ball lit from the upper left: the three tones blend into each other, no patches with an edge
   ctx.save();ball(h,Rh-.8);ctx.clip();ctx.fillStyle=soft(h[0]-Rh*.36,h[1]-Rh*.42,h[0]-Rh*.05,h[1]+Rh*.05,Rh*1.2,hood,.14,.3);ctx.fillRect(h[0]-Rh,h[1]-Rh,Rh*2,Rh*2);
   // the seam over the top of the hood, from the opening to the back
   {const pts=[];for(let i=0;i<=16;i++){const a=.9+i/16*2.1,m=nod([Math.cos(a),0,Math.sin(a)]);if(F(m)>-.02)pts.push(sp(Vh,h,Rh*.99,m));else if(pts.length)break}
     if(pts.length>1){ctx.strokeStyle=dk(hood,.22);ctx.lineWidth=1;ctx.lineCap='round';line(pts);ctx.stroke()}}
+  if(OH)S.of.hoodFx(OH,'in');
   // the opening: a thin dark lining inside the hood, the face set in it
   const op=capPath(Vh,h,Rh,fd,.87);
   if(op){ctx.fillStyle=dk(hood,.55);ctx.fill();
@@ -125,6 +128,7 @@ function head(Vh,Rh,S,A,o){const h=Vh.P(0,0,0),{F}=Vh,hood=S.hood,skin=S.skin,no
   ctx.restore();rim(h,Rh,h,Rh,.3);
   // and in front of it: the helmet, the point of the hood, the beard, an ear on our side, the front spikes of the tiara
   if(tailFront)ponytail(Vh,h,Rh,S,nod,o.sway||0);if(S.helm)helm(Vh,h,Rh,S,nod);if(S.hoodTip)hoodTip(Vh,h,Rh,S,nod);if(S.beard)beard(Vh,h,Rh,S,nod);if(S.ears)for(const sd of[-1,1])if(F(nod([0,sd,0]))>.3)ear(Vh,h,Rh,S,nod,sd);if(S.tiara)tiara(Vh,h,Rh,S,nod,true);
+  if(OH)S.of.hoodFx(OH,'front');
   if(o.moss&&!mossBack)mossStick(Vh,h,Rh,mouthD,mossD,o,true)}
 // two big dark eyes with a small, sharp point of light (o.eyeLight: false takes it away); they close for a blink, squeeze shut when hit;
 // a faint blush, a little mouth when needed. No eye ever sits on the outline of the head: when the head turns, the far eye slides in
@@ -499,11 +503,11 @@ function weaponParts(parts,V0,X,S,Wp,wid,o){const{D}=V0,cls=Wp.cls,r=Wp.rec,kk=W
       // the right hand on the grip, or pulling the crossbow's string back to the nut
       let rh=[0,0,0];const pl=Wp.pull;
       if(pl&&kp.nut){const at=[kp.nut[0]+.2,4.3,0],far=[10.4,4.3,0];rh=pl.ph===1?lerp3([0,0,0],far,ez(pl.t)):pl.ph===2?at:lerp3([-.4,4.3,0],[0,0,0],ez(pl.t))}
-      K.hand(rh,2.8,S.skin,1.2,S.ring?q=>ringOn(V0,q,S.ring):null);
+      K.hand(rh,2.8,S.hand,1.2,S.ring?q=>ringOn(V0,q,S.ring):null);
       // the left hand on the fore-grip or the pump; it pushes the new rocket into the tube
       let lh=kp.sup;const ld=Wp.load;
       if(ld&&lh){const off=(1-ez(Wp.st.loaded||0))*9,on=[16.6+off,4.2,0];lh=ld.ph===1?lerp3(kp.sup,[25.6,4.2,0],ez(ld.t)):ld.ph===2?on:lerp3([16.6,4.2,0],kp.sup,ez(ld.t))}
-      if(lh)K.hand(lh,2.7,S.skin,1.2);
+      if(lh)K.hand(lh,2.7,S.hand,1.2);
       // the flash at the muzzle (and the rocket's blast behind), the orb flaring
       if(Wp.flash>0&&kp.muzzle&&ARMI3D.ZOMBIE.includes(wid))flashFx(K,wid,kp.muzzle,Wp.flash,(Wp.k||0)*7+3);
       if(wid==='lanciarazzi'&&Wp.flash>0&&kp.back)flashFx(K,wid,kp.back,Wp.flash,11,true);
@@ -534,7 +538,7 @@ function weaponParts(parts,V0,X,S,Wp,wid,o){const{D}=V0,cls=Wp.cls,r=Wp.rec,kk=W
           ctx.strokeStyle='rgba(30,90,40,.7)';ctx.lineWidth=.5;seg([-2,0],[2,0]);ctx.stroke();ctx.restore()},0)}
     })}});
   // the free hand: the left one, at the side (it swings when walking)
-  if(cls==='one'||cls==='staff')parts.push({d:D(X.T([-.6,-11.4,11.4])),f:()=>fist(V0,X.T(Wp.hL),2.7,S.skin)})}
+  if(cls==='one'||cls==='staff')parts.push({d:D(X.T([-.6,-11.4,11.4])),f:()=>fist(V0,X.T(Wp.hL),2.7,S.hand)})}
 const hexRgb=h=>{const n=parseInt(String(h).slice(1),16);return`${n>>16},${n>>8&255},${n&255}`};
 
 // ------------------------------------------------------------------ the hero
@@ -542,6 +546,9 @@ const hexRgb=h=>{const n=parseInt(String(h).slice(1),16);return`${n>>16},${n>>8&
 function arciere(x,y,face,anim,p,sc,o){const S0=(o&&o.style)||{};BP=S0.robe?ROBE:PROF;BZ=S0.robe?0:ZB;try{arciere0(x,y,face,anim,p,sc,o)}finally{BP=PROF;BZ=ZB}}
 function arciere0(x,y,face,anim,p,sc,o){sc=sc||1;o=o||{};const S0=o.style||{},arm=S0.armor==='none'?'none':S0.armor&&ARM[S0.armor]?S0.armor:'giubba',wk=S0.weapon,AR=ARM[arm]||ARM.giubba;
   const S={...S0,body:S0.body||AR[0],hood:S0.hood||AR[1],skin:S0.skin||HC.skin,belt:S0.belt===null?null:S0.belt||HC.belt};
+  // the outfit (style.outfit, sprite/eroe3d/vestiti3d.js): its own boots, gloves, details on the tunic and the hood, pieces of its own;
+  // without it the hero stays identical to the pixel
+  const OF=VESTITI[S0.outfit||S0.skinId]||null;S.hand=(OF&&OF.glove)||S.skin;if(OF){S.of=OF;if(OF.foot)S.foot=OF.foot;if(OF.foot2)S.foot2=OF.foot2}
   const W3=typeof ARMI3D!=='undefined'?ARMI3D:null,wid=weaponOf(S0),isX=wid==='balestra',gunW=W3&&wid&&wid!=='arco';
   let bk=S0.bowKind!==undefined?S0.bowKind:(wk&&BOWS[wk]?BOWS[wk][1]:null);if(bk==='plain'||bk==='xbow')bk=null;
   S.bowKind=bk;S.bowCol=S0.bowCol||(wk&&BOWS[wk]?BOWS[wk][0]:HC.bow);
@@ -587,23 +594,26 @@ function arciere0(x,y,face,anim,p,sc,o){sc=sc||1;o=o||{};const S0=o.style||{},ar
     if(S0.cracks){const cc=S0.p2?'#ffd86b':'#ff7a2e',rg=S0.p2?'255,216,107':'255,122,46';for(const cr of CRACKS){const at=k=>{const n=cr.length-1,i=Math.min(n-1,Math.floor(k*n)),u=k*n-i;return surf(lerp(cr[i][0],cr[i+1][0],u),lerp(cr[i][1],cr[i+1][1],u),.12)};
         if(!LOWFX){const m=at(.5),v=F(X.Rd(m.n));if(v>.1){const q=P(X.T(m.p));shine(rg,q[0],q[1],7,.3*v)}}surfLine(V0,X,at,cc,1.6,1)}}
     if(S0.robe)surfLine(V0,X,t=>surf(t,BZ+2.2,.15),'rgba(123,191,74,.55)',2,0);
-    if(S.skinId)for(const[t,dz] of[[-.5,9.5],[.3,6.5],[-.1,3.6],[.75,11],[-.9,5.6],[2.6,8],[3.4,4.6],[-2.4,10]]){const s=surf(t,ZB+dz,.1),v=F(X.Rd(s.n));if(v>.1){const q=P(X.T(s.p));ctx.fillStyle=S.skinId==='stellato'?'#ffffff':'#f6ff9a';ball(q,.9);ctx.fill()}}
+    const KO=OF?{V0,X,P,F,D,S,A,anim,p,face,ZB,BZ,surf,surfLine}:null;if(OF&&OF.tunic)OF.tunic(KO);
+    if(S.skinId&&!OF)for(const[t,dz] of[[-.5,9.5],[.3,6.5],[-.1,3.6],[.75,11],[-.9,5.6],[2.6,8],[3.4,4.6],[-2.4,10]]){const s=surf(t,ZB+dz,.1),v=F(X.Rd(s.n));if(v>.1){const q=P(X.T(s.p));ctx.fillStyle=S.skinId==='stellato'?'#ffffff':'#f6ff9a';ball(q,.9);ctx.fill()}}
     if(arm==='cotta'){ctx.strokeStyle='rgba(20,26,34,.32)';ctx.lineWidth=.9;for(let r=0;r<6;r++)for(let c=0;c<16;c++){const s=surf(c/16*TAU+(r%2)*.2,ZB+2+r*2.1,.1),n=X.Rd(s.n);if(F(n)<.12)continue;const q=P(X.T(s.p));ctx.beginPath();ctx.arc(q[0],q[1],1.2,0,Math.PI);ctx.stroke()}}
     if(arm==='corazza_muschio')on(V0,X.T([0,0,ZB+5.5]),1,X.Rd([.76,-.3,.1]),.05,()=>{const s=surf(-.32,ZB+5.4,.2),q=P(X.T(s.p));ctx.fillStyle='rgba(95,158,60,.6)';ell(q[0],q[1],5,3);ctx.fill();ctx.fillStyle='rgba(159,224,106,.75)';for(const[a,b] of[[-3,1],[0,2.6],[2,0]]){ball([q[0]+a,q[1]+b],.9);ctx.fill()}});
-    if(arm==='giubba'){// the collar, the seam down the front and the buttons of the leather jacket
+    if(arm==='giubba'&&!(OF&&OF.noGiubba)){// the collar, the seam down the front and the buttons of the leather jacket
       for(const sd of[-1,1])surfLine(V0,X,k=>surf(sd*lerp(.62,.04,k),lerp(ZB+13.2,ZB+10.8,k),.1),'rgba(27,22,18,.5)',1.3,1);
       surfLine(V0,X,k=>surf(.04,lerp(ZB+10.8,ZB+6.8,k),.1),'rgba(27,22,18,.42)',1,1,[1.6,1.6]);
       for(const z of[ZB+9.9,ZB+8]){const s=surf(.17,z,.25),n=X.Rd(s.n);if(F(n)>.1){const q=P(X.T(s.p));ctx.fillStyle=HC.button;ink(.7);ball(q,.95);ctx.fill();ctx.stroke()}}}
     // the strap of the quiver: over the left shoulder, across the chest to the right hip and round the back
-    if(S0.strap!==false)surfLine(V0,X,t=>surf(t,ZB+8.4-4.6*Math.sin(t),.35),HC.strap,1.4,0);
+    if(S0.strap!==false)surfLine(V0,X,t=>surf(t,ZB+8.4-4.6*Math.sin(t),.35),OF&&OF.strap||HC.strap,1.4,0);
     // the belt with the golden buckle
     if(S.belt)surfLine(V0,X,t=>surf(t,ZB+5.6,.3),S.belt,2.7,0,null,true);
-    if(S.belt){const s=surf(0,ZB+5.6,.55),n=X.Rd(s.n),v=F(n);if(v>.05){const q=P(X.T(s.p)),k=Math.max(.45,v);ctx.save();ctx.globalAlpha=cl(v*4,0,1);ink(1);ctx.fillStyle=HC.buckle;ctx.fillRect(q[0]-1.7*k,q[1]-2,3.4*k,4);ctx.strokeRect(q[0]-1.7*k,q[1]-2,3.4*k,4);ctx.fillStyle='#fff3c0';ctx.fillRect(q[0]-1.1*k,q[1]-1.4,1*k,1);ctx.fillStyle='#8a5a20';ctx.fillRect(q[0]-.5*k,q[1]-.4,1*k,1.6);ctx.restore()}}
+    if(S.belt){const s=surf(0,ZB+5.6,.55),n=X.Rd(s.n),v=F(n);if(v>.05){const q=P(X.T(s.p)),k=Math.max(.45,v);ctx.save();ctx.globalAlpha=cl(v*4,0,1);ink(1);ctx.fillStyle=OF&&OF.buckle||HC.buckle;ctx.fillRect(q[0]-1.7*k,q[1]-2,3.4*k,4);ctx.strokeRect(q[0]-1.7*k,q[1]-2,3.4*k,4);ctx.fillStyle='#fff3c0';ctx.fillRect(q[0]-1.1*k,q[1]-1.4,1*k,1);ctx.fillStyle='#8a5a20';ctx.fillRect(q[0]-.5*k,q[1]-.4,1*k,1.6);ctx.restore()}}
+    if(OF&&OF.over)OF.over(KO);
     if(S.amu)amulet(V0,X,S.amu);
     ctx.restore();rimPoly(hp,.32);
     if(A.flash>0){ctx.save();ctx.globalAlpha=A.flash*.3;poly(hp);ctx.fillStyle='#ffffff';ctx.fill();ctx.restore()}}});
   // the quiver on the back (the balestriere keeps his bolts in it too)
   if(S0.quiver!==false&&!S0.gun&&wid!=='bastone'&&!NOQ[wid]){parts.push({d:D(X.T([-11,0,ZB+6])),f:()=>quiverTube(V0,X)});parts.push({d:D(X.T(QT)),f:()=>quiverArrows(V0,X,A.jig)})}
+  if(OF&&OF.parts)OF.parts({V0,X,P,F,D,S,A,anim,p,face,ZB,surf,surfLine,Hc,hDep,dT},parts);
   // the skeleton's round shield, strapped on the left side in front of the body (style.shield; style.shDmg 0..1 cracks it as it wears out)
   if(S0.shield){const c3=X.T([7.6,-9.6,10.4]),n3=nrm(X.Rd([.78,-.62,.05]));parts.push({d:D(X.T([9,-10,10])),f:()=>shield(V0,c3,n3,9.2,S0)})}
   // the armour on the shoulders
@@ -612,18 +622,18 @@ function arciere0(x,y,face,anim,p,sc,o){sc=sc||1;o=o||{};const S0=o.style||{},ar
   const grip=X.T(A.grip),aim=nrm(X.Rd(A.aim)),up=nrm(X.Rd(A.up)),hR=X.T(A.hR),Bw=bowPts(grip,aim,up,A.draw,LB,BK);
   if(gunW)weaponParts(parts,V0,X,S,Wp,wid,o);
   else if(!wid){// no weapon (held: null): both hands at the sides
-    const hL=X.T([A.hR[0],-A.hR[1],A.hR[2]]);parts.push({d:D(X.T(REST.hR)),f:()=>fist(V0,hR,2.7,S.skin)});parts.push({d:D(X.T([-.6,-11.4,11.4])),f:()=>fist(V0,hL,2.7,S.skin)})}
+    const hL=X.T([A.hR[0],-A.hR[1],A.hR[2]]);parts.push({d:D(X.T(REST.hR)),f:()=>fist(V0,hR,2.7,S.hand)});parts.push({d:D(X.T([-.6,-11.4,11.4])),f:()=>fist(V0,hL,2.7,S.hand)})}
   else if(W3){// the bow in 3D: the stave, its trims, the string and the arrow sort with the two hands
     const fr=W3.frame(grip,aim,up,1),strOn=anim==='shoot'||anim==='aim',loc=q=>{const d=sub(q,grip);return[dot(d,fr.X),dot(d,fr.Y),dot(d,fr.Z)]};
     parts.push({d:D(X.T([12,0,ZB+5])),f:()=>{let pinch=null;if(A.pinch)pinch=loc(hR);else if(A.twang>0)pinch=[-(BK+A.draw*1.6)+Math.sin(A.twang*22)*1.2*A.twang,0,0];
-      W3.draw('arco',V0,fr,{kind:S.bowKind||'plain',col:S.bowCol,draw:A.draw,pinch,nock:A.nock},K=>{K.hand([0,0,0],2.8,S.skin,1.2,S.ring?q=>ringOn(V0,q,S.ring):null);if(strOn)K.hand(loc(hR),2.7,S.skin,.6)})}});
-    if(!strOn)parts.push({d:D(X.T(REST.hR)),f:()=>fist(V0,hR,2.7,S.skin)})}
+      W3.draw('arco',V0,fr,{kind:S.bowKind||'plain',col:S.bowCol,draw:A.draw,pinch,nock:A.nock},K=>{K.hand([0,0,0],2.8,S.hand,1.2,S.ring?q=>ringOn(V0,q,S.ring):null);if(strOn)K.hand(loc(hR),2.7,S.hand,.6)})}});
+    if(!strOn)parts.push({d:D(X.T(REST.hR)),f:()=>fist(V0,hR,2.7,S.hand)})}
   else{parts.push({d:D(X.T([12,0,ZB+5])),f:()=>{
     if(isX){xbow(V0,grip,aim,up,A.draw,A.nock>.5)}
     else{let pinch=A.pinch?hR:null;if(!pinch&&A.twang>0){const m=Bw.mid;pinch=add(m,mul(aim,Math.sin(A.twang*22)*1.2*A.twang))}
       const nk=A.pinch?hR:Bw.mid,arrowOn=A.nock>.02?{a:nk,b:add(grip,mul(aim,4.6)),al:A.nock}:null;bow(V0,Bw,S,A.draw,pinch,arrowOn,grip,aim)}
-    fist(V0,grip,2.8,S.skin);if(S.ring)ringOn(V0,grip,S.ring)}});
-  parts.push({d:anim==='shoot'||anim==='aim'?D(X.T([12,0,ZB+5]))+.01:D(X.T(REST.hR)),f:()=>fist(V0,hR,2.7,S.skin)});}
+    fist(V0,grip,2.8,S.hand);if(S.ring)ringOn(V0,grip,S.ring)}});
+  parts.push({d:anim==='shoot'||anim==='aim'?D(X.T([12,0,ZB+5]))+.01:D(X.T(REST.hR)),f:()=>fist(V0,hR,2.7,S.hand)});}
   // the head turns on its own camera (the look), the face nods
   const dv=Math.atan2(Math.sin(Math.PI/2-face),Math.cos(Math.PI/2-face)),cheat=o.noCheat?0:.42*Math.sin(dv)*cl((Math.PI-Math.abs(dv))/(Math.PI/2),0,1);
   parts.push({d:hDep,f:()=>{const Vh=Vat(face+A.hy+cheat+(o.look||0),P(Hc),hDep);head(Vh,Rh,S,A,{blink:A.blink,squint:A.squint,shut:A.shut,mouth:A.mouth,moss:o.moss&&anim==='idle'||o.moss===2,inhale:A.inhale,exhale:A.exhale,eyeLight:o.eyeLight!==false,
@@ -678,4 +688,4 @@ function ringOn(V0,h3,id){const it=typeof ITEM!=='undefined'&&ITEM[id],r=it?[it.
   ink(1.1);ctx.fillStyle=r[0];ball([q[0]+1.2,q[1]+.6],1.7);ctx.fill();ctx.stroke();ctx.fillStyle=r[1];ball([q[0]+1.2,q[1]+.6],.8);ctx.fill();
   if(r[2]>=2)shine(id==='anello_gelo'?'160,220,255':id==='anello_vento'?'150,240,240':'120,170,255',q[0]+1.2,q[1]+.6,6,.32*(.5+.5*Math.sin(G.t*5)))}
 
-return{arciere,pose,ARM,BOWS,HC,ROBE}})();
+return{arciere,pose,ARM,BOWS,HC,ROBE,VESTITI,kit:{surf,surfLine,soft,dk,lt,line,poly,sp,capPath,rotY,keys,ZB,AX,HC}}})();

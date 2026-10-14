@@ -31,7 +31,7 @@ function luckyCardImg(id,w){const k=id+w;if(LKC[k])return LKC[k];const L=LUCKY_B
 // ------------------------------------------------------------------ the save of the Pass Zombie
 const ZPASS_T=30,ZPASS_XP=100,ZPASS_COST=500;
 // two dark outfits of the zombie pass (their drawings come with the new outfits; for now the colours of the coat)
-Object.assign(SKINS,{stracciato:{n:'Giaccone stracciato',body:'#2b2b30',hood:'#4a3f3a',belt:'#6a2a1a',rar:2},becchino:{n:'Abito del Becchino',body:'#1d1919',hood:'#3a3030',belt:'#9a7a3a',rar:3}});
+// (the outfits of the Zombie Pass, stracciato and becchino, are in sprite/eroe3d/vestiti3d.js: src/js/72-vestiti.js puts them in SKINS)
 function zpassReward(i,prem){
   if(prem){if(i===15)return{k:'skin',v:'stracciato'};if(i===30)return{k:'skin',v:'becchino'};if(i===10||i===25)return{k:'lpack',v:'l'};if(i===20)return{k:'zpack',v:'l'};
     return i%5===0?{k:'zpack',v:'e'}:i%3===0?{k:'gems',v:10+Math.floor(i/2)}:i%2===0?{k:'rot',v:20+2*i}:{k:'lpack',v:i>=15?'r':'c'}}
@@ -44,7 +44,7 @@ function zpassLabel(r){return r.k==='gold'?`${r.v} oro`:r.k==='gems'?`${r.v} cri
 function zpassIcon(r){if(r.k==='gold')return coinPile(r.v>400?1:0);if(r.k==='gems')return '<span class="bigGem"></span>';if(r.k==='rot')return MAT_SVG.rot;
   if(r.k==='zpack')return `<img class="pkI" src="${packImg('zombie',r.v,96)}" alt="">`;if(r.k==='lpack')return `<img class="pkI" src="${packImg('lucky',r.v,96)}" alt="">`;return skinIcon(r.v)}
 function grantZPass(r){if(r.k==='gold'){SAVE.gold+=r.v;sfx('coin')}else if(r.k==='gems'){SAVE.gems=(SAVE.gems||0)+r.v;sfx('gem')}else if(r.k==='rot'){SAVE.mat.rot+=r.v;sfx('upgrade')}
-  else if(r.k==='skin'){SAVE.skins=SAVE.skins||{};SAVE.skins[r.v]=1;SAVE.skinLv[r.v]=SAVE.skinLv[r.v]||1;sfx('victory');achPop('Nuovo vestito!',SKINS[r.v].n+': indossalo dal Profilo','unlock')}
+  else if(r.k==='skin'){SAVE.skins=SAVE.skins||{};SAVE.skins[r.v]=1;SAVE.skinLv[r.v]=SAVE.skinLv[r.v]||1;sfx('victory');achPop('Nuovo vestito!',SKINS[r.v].n+': indossalo dal Guardaroba','unlock')}
   toast('+'+zpassLabel(r));renderGold();save();if(r.k==='zpack'||r.k==='lpack'){closeSheet();openPack(r.k==='zpack'?'zombie':'lucky',r.v)}}
 function fillZPass(){const P0=ensureZPass(),l=zpassLvl(),into=P0.xp-l*ZPASS_XP,mx=l>=ZPASS_T;lastSheetHTML='';
   let rows='';for(let i=1;i<=ZPASS_T;i++){const fr=zpassReward(i,false),pr=zpassReward(i,true),reach=l>=i;

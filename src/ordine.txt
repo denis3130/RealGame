@@ -64,6 +64,7 @@ js/61-anteprime-arene.js
 ../sprite/armi/disegno_armi.js
 ../sprite/eroe3d/armi3d.js
 ../sprite/eroe3d/disegno_eroe.js
+../sprite/eroe3d/vestiti3d.js
 ../sprite/nemici/disegno_nemici.js
 ../sprite/nemici3d/base3d.js
 ../sprite/nemici3d/cap1.js
@@ -94,4 +95,5 @@ js/68-economia.js
 js/69-bustine.js
 js/70-casse-negozio.js
 js/71-menu-zombie.js
+js/72-vestiti.js
 coda.html

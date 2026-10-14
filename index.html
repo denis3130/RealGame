@@ -1563,7 +1563,7 @@ html,body{height:100%;margin:0;background:var(--ink);color:var(--parch);overflow
         <div class="seg tabsSeg" id="profSeg"><button data-v="ach" class="on">Traguardi</button><button data-v="lb">Abisso</button><button data-v="look">Aspetto</button></div>
         <div id="vAch"><div class="achHead" id="achCount"></div><div class="achs" id="achs"></div></div>
         <div id="vLb" hidden><p class="sub">Le tue cinque discese più profonde.</p><ol class="lb" id="lb"></ol></div>
-        <div id="vLook" hidden><h3 class="h3">Titolo</h3><div class="chips" id="titles"></div><h3 class="h3">Cornice</h3><div class="frames" id="frames"></div><h3 class="h3">Mantello</h3><div class="chips" id="skins"></div></div>
+        <div id="vLook" hidden><h3 class="h3">Titolo</h3><div class="chips" id="titles"></div><h3 class="h3">Cornice</h3><div class="frames" id="frames"></div><h3 class="h3">Vestito</h3><div id="skins"></div></div>
       </section>
     </div>
     <nav id="tabs">
@@ -5744,10 +5744,10 @@ const passReady=()=>{const P0=ensurePass(),l=passLvl();let n=0;for(let i=1;i<=l;
 function passRewLabel(r){return r.k==='gold'?`${r.v} oro`:r.k==='gems'?`${r.v} cristalli`:r.k==='chest'?rwName(r.v,'classica'):r.k==='frame'?'Cornice '+FRAMES[r.v].n:r.k==='skin'?SKINS[r.v].n:'Titolo «'+r.v+'»'}
 function passIcon(r){if(r.k==='gold')return coinPile(r.v>400?1:0);if(r.k==='gems')return '<span class="bigGem"></span>';if(r.k==='chest')return rwIcon(r.v,'classica');
   if(r.k==='frame'){const f=FRAMES[r.v];return `<span class="pfrm" style="--f1:${f.c[0]};--f2:${f.c[1]}"></span>`}
-  if(r.k==='skin'){const S=SKINS[r.v];return `<svg viewBox="0 0 40 40" aria-hidden="true"><path d="M20 5c-6 0-9 4-9 9v4l-5 17h28l-5-17v-4c0-5-3-9-9-9z" fill="${S.body}" stroke="#0b1326" stroke-width="2.4" stroke-linejoin="round"/><path d="M11 14c0-5 3-9 9-9s9 4 9 9l-9 3z" fill="${S.hood}" stroke="#0b1326" stroke-width="2.4" stroke-linejoin="round"/><circle cx="16" cy="25" r="1.4" fill="#fff"/><circle cx="24" cy="29" r="1.2" fill="#fff"/></svg>`}
+  if(r.k==='skin')return skinIcon(r.v).replace('class="cicon"','class="pkI"');
   return `<svg viewBox="0 0 40 40" aria-hidden="true"><rect x="5" y="13" width="30" height="14" rx="3" fill="#ffd84a" stroke="#0b1326" stroke-width="2.4"/><path d="M11 20h18" stroke="#8a5a20" stroke-width="3" stroke-linecap="round"/></svg>`}
 function grantPass(r){if(r.k==='gold'){SAVE.gold+=r.v;sfx('coin')}else if(r.k==='gems'){SAVE.gems=(SAVE.gems||0)+r.v;sfx('gem')}else if(r.k==='frame'){SAVE.xframes=SAVE.xframes||[];if(!SAVE.xframes.includes(r.v))SAVE.xframes.push(r.v);sfx('victory')}
-  else if(r.k==='title'){SAVE.xtitles=SAVE.xtitles||[];if(!SAVE.xtitles.includes(r.v))SAVE.xtitles.push(r.v);sfx('victory')}else if(r.k==='skin'){SAVE.skins=SAVE.skins||{};SAVE.skins[r.v]=1;sfx('victory');achPop('Nuovo mantello!',SKINS[r.v].n+': indossalo dal Profilo','unlock')}
+  else if(r.k==='title'){SAVE.xtitles=SAVE.xtitles||[];if(!SAVE.xtitles.includes(r.v))SAVE.xtitles.push(r.v);sfx('victory')}else if(r.k==='skin'){SAVE.skins=SAVE.skins||{};SAVE.skins[r.v]=1;sfx('victory');SAVE.skinLv=SAVE.skinLv||{};SAVE.skinLv[r.v]=SAVE.skinLv[r.v]||1;achPop('Nuovo vestito!',SKINS[r.v].n+': indossalo dal Guardaroba','unlock')}
   toast('+'+passRewLabel(r));renderGold();save();if(r.k==='chest'){closeSheet();openChest(r.v)}}
 function fillPass(){const P0=ensurePass(),l=passLvl(),into=P0.xp-l*PASS_XP,mx=l>=PASS_T;lastSheetHTML='';
   let rows='';for(let i=1;i<=PASS_T;i++){const fr=passReward(i,false),pr=passReward(i,true),reach=l>=i;
@@ -10807,6 +10807,7 @@ const HC={body:'#2fb3a6',hood:'#23877d',skin:'#f2c9a0',eye:'#1b1612',foot:'#4a36
   quiver:'#7a5232',quiverT:'#5a3a22',band:'#c9a040',strap:'#4a321e',moss:'#4f8a34',mossL:'#8fd14f'};
 const dk=(c,k)=>mix(c,'#0d1418',k),lt=(c,k)=>mix(c,'#ffffff',k);
 // the armours of the game: colours of the tunic (a) and of the hood (b), as in ITEMS[].tint; the bows: colour and shape
+const VESTITI={};// the outfits, filled in by sprite/eroe3d/vestiti3d.js
 const ARM={giubba:['#2fb3a6','#23877d'],cotta:['#8a97a2','#5d6872'],mantello_ombra:['#5a4682','#3a2c58'],corazza_muschio:['#5f9e3c','#3f7a2a']};
 const BOWS={arco_frassino:['#a4703d',null],arco_ricurvo:['#7a4a2a','recurve'],arco_spine:['#4f8a34','thorn'],arco_fenice:['#d9442e','phoenix'],balestra:['#6b4a2a','xbow']};
 
@@ -10884,12 +10885,14 @@ function head(Vh,Rh,S,A,o){const h=Vh.P(0,0,0),{F}=Vh,hood=S.hood,skin=S.skin,no
   // the enemies' bits behind the head: the antlers, an ear on the far side, the back spikes of the tiara
   if(S.crown)antlers(Vh,h,Rh,S,nod);if(S.ears)for(const sd of[-1,1])if(F(nod([0,sd,0]))<=.3)ear(Vh,h,Rh,S,nod,sd);if(S.tiara)tiara(Vh,h,Rh,S,nod,false);
   if(S.antlers)deerAntlers(Vh,h,Rh,nod);const tailFront=S.ponytail&&F(nod([-1,0,-.2]))>.15;if(S.ponytail&&!tailFront)ponytail(Vh,h,Rh,S,nod,o.sway||0);
+  const OH=S.of&&S.of.hoodFx?{Vh,h,Rh,nod,F,S,A,hood,sp,capPath}:null;if(OH)S.of.hoodFx(OH,'back');
   ink(2.5);ball(h,Rh);ctx.fillStyle=hood;ctx.fill();ctx.stroke();
   // soft shading of a ball lit from the upper left: the three tones blend into each other, no patches with an edge
   ctx.save();ball(h,Rh-.8);ctx.clip();ctx.fillStyle=soft(h[0]-Rh*.36,h[1]-Rh*.42,h[0]-Rh*.05,h[1]+Rh*.05,Rh*1.2,hood,.14,.3);ctx.fillRect(h[0]-Rh,h[1]-Rh,Rh*2,Rh*2);
   // the seam over the top of the hood, from the opening to the back
   {const pts=[];for(let i=0;i<=16;i++){const a=.9+i/16*2.1,m=nod([Math.cos(a),0,Math.sin(a)]);if(F(m)>-.02)pts.push(sp(Vh,h,Rh*.99,m));else if(pts.length)break}
     if(pts.length>1){ctx.strokeStyle=dk(hood,.22);ctx.lineWidth=1;ctx.lineCap='round';line(pts);ctx.stroke()}}
+  if(OH)S.of.hoodFx(OH,'in');
   // the opening: a thin dark lining inside the hood, the face set in it
   const op=capPath(Vh,h,Rh,fd,.87);
   if(op){ctx.fillStyle=dk(hood,.55);ctx.fill();
@@ -10904,6 +10907,7 @@ function head(Vh,Rh,S,A,o){const h=Vh.P(0,0,0),{F}=Vh,hood=S.hood,skin=S.skin,no
   ctx.restore();rim(h,Rh,h,Rh,.3);
   // and in front of it: the helmet, the point of the hood, the beard, an ear on our side, the front spikes of the tiara
   if(tailFront)ponytail(Vh,h,Rh,S,nod,o.sway||0);if(S.helm)helm(Vh,h,Rh,S,nod);if(S.hoodTip)hoodTip(Vh,h,Rh,S,nod);if(S.beard)beard(Vh,h,Rh,S,nod);if(S.ears)for(const sd of[-1,1])if(F(nod([0,sd,0]))>.3)ear(Vh,h,Rh,S,nod,sd);if(S.tiara)tiara(Vh,h,Rh,S,nod,true);
+  if(OH)S.of.hoodFx(OH,'front');
   if(o.moss&&!mossBack)mossStick(Vh,h,Rh,mouthD,mossD,o,true)}
 // two big dark eyes with a small, sharp point of light (o.eyeLight: false takes it away); they close for a blink, squeeze shut when hit;
 // a faint blush, a little mouth when needed. No eye ever sits on the outline of the head: when the head turns, the far eye slides in
@@ -11278,11 +11282,11 @@ function weaponParts(parts,V0,X,S,Wp,wid,o){const{D}=V0,cls=Wp.cls,r=Wp.rec,kk=W
       // the right hand on the grip, or pulling the crossbow's string back to the nut
       let rh=[0,0,0];const pl=Wp.pull;
       if(pl&&kp.nut){const at=[kp.nut[0]+.2,4.3,0],far=[10.4,4.3,0];rh=pl.ph===1?lerp3([0,0,0],far,ez(pl.t)):pl.ph===2?at:lerp3([-.4,4.3,0],[0,0,0],ez(pl.t))}
-      K.hand(rh,2.8,S.skin,1.2,S.ring?q=>ringOn(V0,q,S.ring):null);
+      K.hand(rh,2.8,S.hand,1.2,S.ring?q=>ringOn(V0,q,S.ring):null);
       // the left hand on the fore-grip or the pump; it pushes the new rocket into the tube
       let lh=kp.sup;const ld=Wp.load;
       if(ld&&lh){const off=(1-ez(Wp.st.loaded||0))*9,on=[16.6+off,4.2,0];lh=ld.ph===1?lerp3(kp.sup,[25.6,4.2,0],ez(ld.t)):ld.ph===2?on:lerp3([16.6,4.2,0],kp.sup,ez(ld.t))}
-      if(lh)K.hand(lh,2.7,S.skin,1.2);
+      if(lh)K.hand(lh,2.7,S.hand,1.2);
       // the flash at the muzzle (and the rocket's blast behind), the orb flaring
       if(Wp.flash>0&&kp.muzzle&&ARMI3D.ZOMBIE.includes(wid))flashFx(K,wid,kp.muzzle,Wp.flash,(Wp.k||0)*7+3);
       if(wid==='lanciarazzi'&&Wp.flash>0&&kp.back)flashFx(K,wid,kp.back,Wp.flash,11,true);
@@ -11313,7 +11317,7 @@ function weaponParts(parts,V0,X,S,Wp,wid,o){const{D}=V0,cls=Wp.cls,r=Wp.rec,kk=W
           ctx.strokeStyle='rgba(30,90,40,.7)';ctx.lineWidth=.5;seg([-2,0],[2,0]);ctx.stroke();ctx.restore()},0)}
     })}});
   // the free hand: the left one, at the side (it swings when walking)
-  if(cls==='one'||cls==='staff')parts.push({d:D(X.T([-.6,-11.4,11.4])),f:()=>fist(V0,X.T(Wp.hL),2.7,S.skin)})}
+  if(cls==='one'||cls==='staff')parts.push({d:D(X.T([-.6,-11.4,11.4])),f:()=>fist(V0,X.T(Wp.hL),2.7,S.hand)})}
 const hexRgb=h=>{const n=parseInt(String(h).slice(1),16);return`${n>>16},${n>>8&255},${n&255}`};
 
 // ------------------------------------------------------------------ the hero
@@ -11321,6 +11325,9 @@ const hexRgb=h=>{const n=parseInt(String(h).slice(1),16);return`${n>>16},${n>>8&
 function arciere(x,y,face,anim,p,sc,o){const S0=(o&&o.style)||{};BP=S0.robe?ROBE:PROF;BZ=S0.robe?0:ZB;try{arciere0(x,y,face,anim,p,sc,o)}finally{BP=PROF;BZ=ZB}}
 function arciere0(x,y,face,anim,p,sc,o){sc=sc||1;o=o||{};const S0=o.style||{},arm=S0.armor==='none'?'none':S0.armor&&ARM[S0.armor]?S0.armor:'giubba',wk=S0.weapon,AR=ARM[arm]||ARM.giubba;
   const S={...S0,body:S0.body||AR[0],hood:S0.hood||AR[1],skin:S0.skin||HC.skin,belt:S0.belt===null?null:S0.belt||HC.belt};
+  // the outfit (style.outfit, sprite/eroe3d/vestiti3d.js): its own boots, gloves, details on the tunic and the hood, pieces of its own;
+  // without it the hero stays identical to the pixel
+  const OF=VESTITI[S0.outfit||S0.skinId]||null;S.hand=(OF&&OF.glove)||S.skin;if(OF){S.of=OF;if(OF.foot)S.foot=OF.foot;if(OF.foot2)S.foot2=OF.foot2}
   const W3=typeof ARMI3D!=='undefined'?ARMI3D:null,wid=weaponOf(S0),isX=wid==='balestra',gunW=W3&&wid&&wid!=='arco';
   let bk=S0.bowKind!==undefined?S0.bowKind:(wk&&BOWS[wk]?BOWS[wk][1]:null);if(bk==='plain'||bk==='xbow')bk=null;
   S.bowKind=bk;S.bowCol=S0.bowCol||(wk&&BOWS[wk]?BOWS[wk][0]:HC.bow);
@@ -11366,23 +11373,26 @@ function arciere0(x,y,face,anim,p,sc,o){sc=sc||1;o=o||{};const S0=o.style||{},ar
     if(S0.cracks){const cc=S0.p2?'#ffd86b':'#ff7a2e',rg=S0.p2?'255,216,107':'255,122,46';for(const cr of CRACKS){const at=k=>{const n=cr.length-1,i=Math.min(n-1,Math.floor(k*n)),u=k*n-i;return surf(lerp(cr[i][0],cr[i+1][0],u),lerp(cr[i][1],cr[i+1][1],u),.12)};
         if(!LOWFX){const m=at(.5),v=F(X.Rd(m.n));if(v>.1){const q=P(X.T(m.p));shine(rg,q[0],q[1],7,.3*v)}}surfLine(V0,X,at,cc,1.6,1)}}
     if(S0.robe)surfLine(V0,X,t=>surf(t,BZ+2.2,.15),'rgba(123,191,74,.55)',2,0);
-    if(S.skinId)for(const[t,dz] of[[-.5,9.5],[.3,6.5],[-.1,3.6],[.75,11],[-.9,5.6],[2.6,8],[3.4,4.6],[-2.4,10]]){const s=surf(t,ZB+dz,.1),v=F(X.Rd(s.n));if(v>.1){const q=P(X.T(s.p));ctx.fillStyle=S.skinId==='stellato'?'#ffffff':'#f6ff9a';ball(q,.9);ctx.fill()}}
+    const KO=OF?{V0,X,P,F,D,S,A,anim,p,face,ZB,BZ,surf,surfLine}:null;if(OF&&OF.tunic)OF.tunic(KO);
+    if(S.skinId&&!OF)for(const[t,dz] of[[-.5,9.5],[.3,6.5],[-.1,3.6],[.75,11],[-.9,5.6],[2.6,8],[3.4,4.6],[-2.4,10]]){const s=surf(t,ZB+dz,.1),v=F(X.Rd(s.n));if(v>.1){const q=P(X.T(s.p));ctx.fillStyle=S.skinId==='stellato'?'#ffffff':'#f6ff9a';ball(q,.9);ctx.fill()}}
     if(arm==='cotta'){ctx.strokeStyle='rgba(20,26,34,.32)';ctx.lineWidth=.9;for(let r=0;r<6;r++)for(let c=0;c<16;c++){const s=surf(c/16*TAU+(r%2)*.2,ZB+2+r*2.1,.1),n=X.Rd(s.n);if(F(n)<.12)continue;const q=P(X.T(s.p));ctx.beginPath();ctx.arc(q[0],q[1],1.2,0,Math.PI);ctx.stroke()}}
     if(arm==='corazza_muschio')on(V0,X.T([0,0,ZB+5.5]),1,X.Rd([.76,-.3,.1]),.05,()=>{const s=surf(-.32,ZB+5.4,.2),q=P(X.T(s.p));ctx.fillStyle='rgba(95,158,60,.6)';ell(q[0],q[1],5,3);ctx.fill();ctx.fillStyle='rgba(159,224,106,.75)';for(const[a,b] of[[-3,1],[0,2.6],[2,0]]){ball([q[0]+a,q[1]+b],.9);ctx.fill()}});
-    if(arm==='giubba'){// the collar, the seam down the front and the buttons of the leather jacket
+    if(arm==='giubba'&&!(OF&&OF.noGiubba)){// the collar, the seam down the front and the buttons of the leather jacket
       for(const sd of[-1,1])surfLine(V0,X,k=>surf(sd*lerp(.62,.04,k),lerp(ZB+13.2,ZB+10.8,k),.1),'rgba(27,22,18,.5)',1.3,1);
       surfLine(V0,X,k=>surf(.04,lerp(ZB+10.8,ZB+6.8,k),.1),'rgba(27,22,18,.42)',1,1,[1.6,1.6]);
       for(const z of[ZB+9.9,ZB+8]){const s=surf(.17,z,.25),n=X.Rd(s.n);if(F(n)>.1){const q=P(X.T(s.p));ctx.fillStyle=HC.button;ink(.7);ball(q,.95);ctx.fill();ctx.stroke()}}}
     // the strap of the quiver: over the left shoulder, across the chest to the right hip and round the back
-    if(S0.strap!==false)surfLine(V0,X,t=>surf(t,ZB+8.4-4.6*Math.sin(t),.35),HC.strap,1.4,0);
+    if(S0.strap!==false)surfLine(V0,X,t=>surf(t,ZB+8.4-4.6*Math.sin(t),.35),OF&&OF.strap||HC.strap,1.4,0);
     // the belt with the golden buckle
     if(S.belt)surfLine(V0,X,t=>surf(t,ZB+5.6,.3),S.belt,2.7,0,null,true);
-    if(S.belt){const s=surf(0,ZB+5.6,.55),n=X.Rd(s.n),v=F(n);if(v>.05){const q=P(X.T(s.p)),k=Math.max(.45,v);ctx.save();ctx.globalAlpha=cl(v*4,0,1);ink(1);ctx.fillStyle=HC.buckle;ctx.fillRect(q[0]-1.7*k,q[1]-2,3.4*k,4);ctx.strokeRect(q[0]-1.7*k,q[1]-2,3.4*k,4);ctx.fillStyle='#fff3c0';ctx.fillRect(q[0]-1.1*k,q[1]-1.4,1*k,1);ctx.fillStyle='#8a5a20';ctx.fillRect(q[0]-.5*k,q[1]-.4,1*k,1.6);ctx.restore()}}
+    if(S.belt){const s=surf(0,ZB+5.6,.55),n=X.Rd(s.n),v=F(n);if(v>.05){const q=P(X.T(s.p)),k=Math.max(.45,v);ctx.save();ctx.globalAlpha=cl(v*4,0,1);ink(1);ctx.fillStyle=OF&&OF.buckle||HC.buckle;ctx.fillRect(q[0]-1.7*k,q[1]-2,3.4*k,4);ctx.strokeRect(q[0]-1.7*k,q[1]-2,3.4*k,4);ctx.fillStyle='#fff3c0';ctx.fillRect(q[0]-1.1*k,q[1]-1.4,1*k,1);ctx.fillStyle='#8a5a20';ctx.fillRect(q[0]-.5*k,q[1]-.4,1*k,1.6);ctx.restore()}}
+    if(OF&&OF.over)OF.over(KO);
     if(S.amu)amulet(V0,X,S.amu);
     ctx.restore();rimPoly(hp,.32);
     if(A.flash>0){ctx.save();ctx.globalAlpha=A.flash*.3;poly(hp);ctx.fillStyle='#ffffff';ctx.fill();ctx.restore()}}});
   // the quiver on the back (the balestriere keeps his bolts in it too)
   if(S0.quiver!==false&&!S0.gun&&wid!=='bastone'&&!NOQ[wid]){parts.push({d:D(X.T([-11,0,ZB+6])),f:()=>quiverTube(V0,X)});parts.push({d:D(X.T(QT)),f:()=>quiverArrows(V0,X,A.jig)})}
+  if(OF&&OF.parts)OF.parts({V0,X,P,F,D,S,A,anim,p,face,ZB,surf,surfLine,Hc,hDep,dT},parts);
   // the skeleton's round shield, strapped on the left side in front of the body (style.shield; style.shDmg 0..1 cracks it as it wears out)
   if(S0.shield){const c3=X.T([7.6,-9.6,10.4]),n3=nrm(X.Rd([.78,-.62,.05]));parts.push({d:D(X.T([9,-10,10])),f:()=>shield(V0,c3,n3,9.2,S0)})}
   // the armour on the shoulders
@@ -11391,18 +11401,18 @@ function arciere0(x,y,face,anim,p,sc,o){sc=sc||1;o=o||{};const S0=o.style||{},ar
   const grip=X.T(A.grip),aim=nrm(X.Rd(A.aim)),up=nrm(X.Rd(A.up)),hR=X.T(A.hR),Bw=bowPts(grip,aim,up,A.draw,LB,BK);
   if(gunW)weaponParts(parts,V0,X,S,Wp,wid,o);
   else if(!wid){// no weapon (held: null): both hands at the sides
-    const hL=X.T([A.hR[0],-A.hR[1],A.hR[2]]);parts.push({d:D(X.T(REST.hR)),f:()=>fist(V0,hR,2.7,S.skin)});parts.push({d:D(X.T([-.6,-11.4,11.4])),f:()=>fist(V0,hL,2.7,S.skin)})}
+    const hL=X.T([A.hR[0],-A.hR[1],A.hR[2]]);parts.push({d:D(X.T(REST.hR)),f:()=>fist(V0,hR,2.7,S.hand)});parts.push({d:D(X.T([-.6,-11.4,11.4])),f:()=>fist(V0,hL,2.7,S.hand)})}
   else if(W3){// the bow in 3D: the stave, its trims, the string and the arrow sort with the two hands
     const fr=W3.frame(grip,aim,up,1),strOn=anim==='shoot'||anim==='aim',loc=q=>{const d=sub(q,grip);return[dot(d,fr.X),dot(d,fr.Y),dot(d,fr.Z)]};
     parts.push({d:D(X.T([12,0,ZB+5])),f:()=>{let pinch=null;if(A.pinch)pinch=loc(hR);else if(A.twang>0)pinch=[-(BK+A.draw*1.6)+Math.sin(A.twang*22)*1.2*A.twang,0,0];
-      W3.draw('arco',V0,fr,{kind:S.bowKind||'plain',col:S.bowCol,draw:A.draw,pinch,nock:A.nock},K=>{K.hand([0,0,0],2.8,S.skin,1.2,S.ring?q=>ringOn(V0,q,S.ring):null);if(strOn)K.hand(loc(hR),2.7,S.skin,.6)})}});
-    if(!strOn)parts.push({d:D(X.T(REST.hR)),f:()=>fist(V0,hR,2.7,S.skin)})}
+      W3.draw('arco',V0,fr,{kind:S.bowKind||'plain',col:S.bowCol,draw:A.draw,pinch,nock:A.nock},K=>{K.hand([0,0,0],2.8,S.hand,1.2,S.ring?q=>ringOn(V0,q,S.ring):null);if(strOn)K.hand(loc(hR),2.7,S.hand,.6)})}});
+    if(!strOn)parts.push({d:D(X.T(REST.hR)),f:()=>fist(V0,hR,2.7,S.hand)})}
   else{parts.push({d:D(X.T([12,0,ZB+5])),f:()=>{
     if(isX){xbow(V0,grip,aim,up,A.draw,A.nock>.5)}
     else{let pinch=A.pinch?hR:null;if(!pinch&&A.twang>0){const m=Bw.mid;pinch=add(m,mul(aim,Math.sin(A.twang*22)*1.2*A.twang))}
       const nk=A.pinch?hR:Bw.mid,arrowOn=A.nock>.02?{a:nk,b:add(grip,mul(aim,4.6)),al:A.nock}:null;bow(V0,Bw,S,A.draw,pinch,arrowOn,grip,aim)}
-    fist(V0,grip,2.8,S.skin);if(S.ring)ringOn(V0,grip,S.ring)}});
-  parts.push({d:anim==='shoot'||anim==='aim'?D(X.T([12,0,ZB+5]))+.01:D(X.T(REST.hR)),f:()=>fist(V0,hR,2.7,S.skin)});}
+    fist(V0,grip,2.8,S.hand);if(S.ring)ringOn(V0,grip,S.ring)}});
+  parts.push({d:anim==='shoot'||anim==='aim'?D(X.T([12,0,ZB+5]))+.01:D(X.T(REST.hR)),f:()=>fist(V0,hR,2.7,S.hand)});}
   // the head turns on its own camera (the look), the face nods
   const dv=Math.atan2(Math.sin(Math.PI/2-face),Math.cos(Math.PI/2-face)),cheat=o.noCheat?0:.42*Math.sin(dv)*cl((Math.PI-Math.abs(dv))/(Math.PI/2),0,1);
   parts.push({d:hDep,f:()=>{const Vh=Vat(face+A.hy+cheat+(o.look||0),P(Hc),hDep);head(Vh,Rh,S,A,{blink:A.blink,squint:A.squint,shut:A.shut,mouth:A.mouth,moss:o.moss&&anim==='idle'||o.moss===2,inhale:A.inhale,exhale:A.exhale,eyeLight:o.eyeLight!==false,
@@ -11457,7 +11467,202 @@ function ringOn(V0,h3,id){const it=typeof ITEM!=='undefined'&&ITEM[id],r=it?[it.
   ink(1.1);ctx.fillStyle=r[0];ball([q[0]+1.2,q[1]+.6],1.7);ctx.fill();ctx.stroke();ctx.fillStyle=r[1];ball([q[0]+1.2,q[1]+.6],.8);ctx.fill();
   if(r[2]>=2)shine(id==='anello_gelo'?'160,220,255':id==='anello_vento'?'150,240,240':'120,170,255',q[0]+1.2,q[1]+.6,6,.32*(.5+.5*Math.sin(G.t*5)))}
 
-return{arciere,pose,ARM,BOWS,HC,ROBE}})();
+return{arciere,pose,ARM,BOWS,HC,ROBE,VESTITI,kit:{surf,surfLine,soft,dk,lt,line,poly,sp,capPath,rotY,keys,ZB,AX,HC}}})();
+// I vestiti nuovi dell'eroe (punti 39 e 40 del piano di Denis, anteprima 47): non variazioni di colore ma vestiti con una personalità, fatti
+// di pezzi veri sul corpo 3D dell'Arciere (sprite/eroe3d/disegno_eroe.js): toppe cucite, strappi con i fili, cuciture, cappucci con i
+// lacci, mantelli che ondeggiano, code del frac, fusciacche, catene, stampe che brillano. Cinque scuri e strappati (più adatti alla modalità
+// Zombie) e quattro swag; si usano in tutte e due le modalità. Ognuno dà al corpo i suoi colori (body, hood, belt), gli stivali (foot,
+// foot2), i guanti (glove), la cinghia della faretra (strap), la fibbia (buckle) e disegna i suoi pezzi in quattro momenti: tunic (sulla
+// tunica, sotto la cinghia e la cintura), over (sopra la cintura), parts (pezzi con la loro profondità: mantelli, code, nodi) e hood
+// (sul cappuccio: 'back' dietro, 'in' sulla stoffa, 'front' davanti). Tutto segue la mossa (A.sway, p), così il vestito resta attaccato
+// al corpo da fermo, mentre cammina, tira, scatta, viene colpito e seduto al falò. Lo stile li chiede con style.outfit = id.
+(()=>{if(typeof EROE==='undefined'||!EROE.VESTITI)return;
+const R=CR._rig,{TAU,cl,lerp,add,sub,mul,nrm,cross,ball,seg,shine}=R,{surf,surfLine,dk,lt,line,poly,sp,capPath,ZB}=EROE.kit;
+const fr=(s,i)=>{const v=Math.sin(s*12.9898+i*78.233)*43758.5453;return v-Math.floor(v)};// a fixed «random» number from a seed
+// a point of the tunic on the screen and how much it faces us
+const at=(K,t,z,out)=>{const s=surf(t,z,out==null?.14:out);return[K.P(K.X.T(s.p)),K.F(K.X.Rd(s.n))]};
+// a flat piece sewn on the tunic: corners [t, z]; it fades out softly as it turns away
+function piece(K,pts,fill,o){o=o||{};const q=[];let vm=1;for(const[t,z] of pts){const[a,v]=at(K,t,z,o.out);q.push(a);vm=Math.min(vm,v)}if(vm<.05)return null;
+  ctx.save();ctx.globalAlpha*=cl((vm-.05)*6,0,1);poly(q);ctx.fillStyle=fill;ctx.fill();if(o.lw){ctx.strokeStyle=o.ink||INK;ctx.lineWidth=o.lw;ctx.lineJoin='round';ctx.stroke()}
+  if(o.stitch){ctx.setLineDash([.9,1.1]);ctx.strokeStyle=o.stitch;ctx.lineWidth=.6;const c=q.reduce((a,b)=>[a[0]+b[0]/q.length,a[1]+b[1]/q.length],[0,0]);poly(q.map(p=>[lerp(p[0],c[0],.2),lerp(p[1],c[1],.2)]));ctx.stroke();ctx.setLineDash([])}
+  ctx.restore();return q}
+// a square patch with its stitches all round
+const patch=(K,t,z,w,h,col,th)=>piece(K,[[t-w,z-h],[t+w,z-h*.92],[t+w*.96,z+h],[t-w*1.04,z+h*1.05]],col,{lw:1,stitch:th||'rgba(240,226,190,.85)'});
+// a tear: a ragged hole that shows the dark under it, with loose threads round the edge
+function rip(K,t,z,w,h,seed,under,thread){const[c,v]=at(K,t,z);if(v<.12)return;const q=[];for(let i=0;i<10;i++){const a=i/10*TAU,k=.55+.45*fr(seed,i)*(i%2?1:.6);q.push(at(K,t+Math.cos(a)*w*k,z+Math.sin(a)*h*k)[0])}
+  ctx.save();ctx.globalAlpha*=cl((v-.12)*5,0,1);poly(q);ctx.fillStyle=under;ctx.fill();ctx.strokeStyle='rgba(20,16,14,.75)';ctx.lineWidth=.8;ctx.lineJoin='miter';ctx.stroke();
+  ctx.strokeStyle=thread;ctx.lineWidth=.55;ctx.lineCap='round';for(let i=0;i<q.length;i+=2){const p=q[i],d=[p[0]-c[0],p[1]-c[1]],l=Math.hypot(d[0],d[1])||1;ctx.beginPath();ctx.moveTo(p[0],p[1]);ctx.lineTo(p[0]+d[0]/l*1.3+fr(seed,i+3)-.5,p[1]+d[1]/l*1.3+.4);ctx.stroke()}ctx.restore()}
+// a short straight mark on the surface (two points only: fringes, ribs, threads), drawn where it faces us
+function tick(K,t0,z0,t1,z1,col,w,out){const[a,v]=at(K,t0,z0,out),[b,v2]=at(K,t1,z1,out);if(Math.min(v,v2)<.05)return;ctx.strokeStyle=col;ctx.lineWidth=w;ctx.lineCap='round';ctx.beginPath();ctx.moveTo(a[0],a[1]);ctx.lineTo(b[0],b[1]);ctx.stroke()}
+// a cord on the surface (open line from t0,z0 to t1,z1)
+const cord=(K,t0,z0,t1,z1,col,w,dash)=>surfLine(K.V0,K.X,k=>surf(lerp(t0,t1,k),lerp(z0,z1,k),.3),col,w,1,dash);
+// a soft light on the tunic (the neon print, the runes)
+function glowAt(K,t,z,rgb,r,a){if(LOWFX)return;const[q,v]=at(K,t,z);if(v>.1)shine(rgb,q[0],q[1],r,a*cl(v*2,0,1))}
+// a hanging piece of cloth with its own depth: from two points on the body down to a hem that follows the sway
+function flap(K,parts,top,len,w,col,o){o=o||{};const{V0,X,P,D,A}=K,sw=(A.sway||0),tt=K.X.T(top);
+  parts.push({d:D(tt)+(o.dd||0),f:()=>{const dn=nrm(X.Rd([-.25-.08*sw*(o.k||1),.05*sw*(o.k||1),-1])),side=nrm(X.Rd(o.side||[0,1,0])),N=o.n||3,pts=[];
+    const a=add(tt,mul(side,-w)),b=add(tt,mul(side,w));pts.push(P(a));
+    for(let i=0;i<=N*2;i++){const k=i/(N*2),pos=add(lerp3(a,b,k),mul(dn,len*(i%2?.82:1)*(o.taper?1-.5*Math.abs(k-.5):1)));pts.push(P(pos))}
+    pts.push(P(b));ink(1.8);poly(pts);let y0=1e9,y1=-1e9;for(const q of pts){y0=Math.min(y0,q[1]);y1=Math.max(y1,q[1])}const g=ctx.createLinearGradient(0,y0,0,y1);g.addColorStop(0,lt(col,.12));g.addColorStop(1,dk(col,.3));ctx.fillStyle=g;ctx.fill();ctx.stroke();
+    if(o.after)o.after(pts)}})}
+const lerp3=(a,b,k)=>[lerp(a[0],b[0],k),lerp(a[1],b[1],k),lerp(a[2],b[2],k)];
+// on the hood: a point of the hood's ball (direction m in the head's own frame) and how much it faces us
+const hAt=(H,m,r)=>{const n=H.nod(nrm(m));return[sp(H.Vh,H.h,H.Rh*(r||.99),n),H.F(n)]};
+function hRip(H,m,w,seed,under,thread){const[c,v]=hAt(H,m);if(v<.15)return;const q=[];for(let i=0;i<9;i++){const a=i/9*TAU,k=.5+.5*fr(seed,i);q.push([c[0]+Math.cos(a)*w*k*(.5+.5*v),c[1]+Math.sin(a)*w*k*.8])}
+  ctx.save();ctx.globalAlpha*=cl((v-.15)*5,0,1);poly(q);ctx.fillStyle=under;ctx.fill();ctx.strokeStyle='rgba(20,16,14,.7)';ctx.lineWidth=.7;ctx.stroke();ctx.strokeStyle=thread;ctx.lineWidth=.5;
+  for(let i=0;i<q.length;i+=3){const p=q[i];ctx.beginPath();ctx.moveTo(p[0],p[1]);ctx.lineTo(p[0]+(p[0]-c[0])*.35,p[1]+(p[1]-c[1])*.35+.4);ctx.stroke()}ctx.restore()}
+// a ring round the hood (a band, the goggles' strap, a stripe): the circle of directions round an axis, only where it faces us
+function hRing(H,ax,lat,col,w,dash){const a=nrm(ax);let u=cross(a,[0,1,0]);if(Math.hypot(...u)<.2)u=cross(a,[1,0,0]);u=nrm(u);const v=cross(a,u),c=Math.cos(lat),s=Math.sin(lat),runs=[];let cur=[];
+  for(let i=0;i<=40;i++){const th=i/40*TAU,m=add(mul(a,s),add(mul(u,c*Math.cos(th)),mul(v,c*Math.sin(th)))),[q,f]=hAt(H,m,1.01);if(f>.02)cur.push(q);else if(cur.length){runs.push(cur);cur=[]}}if(cur.length)runs.push(cur);
+  ctx.lineCap='round';if(dash)ctx.setLineDash(dash);for(const r of runs){if(r.length<2)continue;ctx.strokeStyle=INK;ctx.lineWidth=w+1.4;line(r);ctx.stroke();ctx.strokeStyle=col;ctx.lineWidth=w;line(r);ctx.stroke()}if(dash)ctx.setLineDash([])}
+
+const V=EROE.VESTITI;
+// ---------------------------------------------------------------- SCURI E STRAPPATI
+// LA GIACCA NERA STRACCIATA: pelle nera consumata sopra una felpa marrone (il cappuccio), la cerniera storta, due strappi con i fili, le
+// spille da balia che li tengono, le borchie sulle spalle, la cintura con la fibbia d'acciaio
+V.stracciato={n:'Giacca nera stracciata',rar:2,group:'scuro',body:'#34343c',hood:'#5a4636',belt:'#1a1a1e',foot:'#2a221c',foot2:'#1e1814',glove:'#2e2a2a',strap:'#4a3a2a',buckle:'#c8ccd2',noGiubba:true,
+  tunic(K){const{V0,X}=K;
+    // the leather: worn lighter on the edges of the front, two creases
+    surfLine(V0,X,k=>surf(lerp(-.9,-.3,k),ZB+11.8-k*.6,.12),'rgba(120,120,135,.35)',.8,1);surfLine(V0,X,k=>surf(lerp(.4,1,k),ZB+8.6+k*.5,.12),'rgba(120,120,135,.3)',.8,1);
+    // the jacket is open: the brown hoodie shows down the front, with the zip of the jacket on one edge
+    piece(K,[[-.3,ZB+13.9],[.3,ZB+13.9],[.22,ZB+.9],[-.2,ZB+.9]],'#5a4636',{lw:1});tick(K,-.12,ZB+12.6,-.1,ZB+2,'rgba(40,28,20,.35)',.6);
+    cord(K,.3,ZB+13.6,.24,ZB+1,'#a8acb4',.8,[1,.6]);
+    // the leather shines on the shoulders
+    surfLine(V0,X,k=>surf(lerp(-1.4,-.5,k),ZB+12.4-k*.8,.12),'rgba(150,150,170,.45)',1.1,1);
+    rip(K,-.75,ZB+7.6,.2,1.7,3,'#4a3828','rgba(200,200,210,.85)');rip(K,1.9,ZB+9.4,.2,1.4,7,'#4a3828','rgba(200,200,210,.85)');rip(K,2.9,ZB+4.4,.25,1.3,11,'#4a3828','rgba(200,200,210,.85)');
+    // the safety pins over the tears
+    for(const[t,z] of[[-.75,ZB+7.9],[1.9,ZB+9.6]]){const[q,v]=at(K,t,z,.3);if(v>.2){ctx.strokeStyle='#d8dce2';ctx.lineWidth=.7;ctx.beginPath();ctx.ellipse(q[0],q[1],1.6,.6,-.3,0,TAU);ctx.stroke();ctx.fillStyle='#e8ecf0';ball([q[0]+1.5,q[1]-.5],.45);ctx.fill()}}
+    // the studs on the shoulders
+    for(const sd of[-1,1])for(let i=0;i<4;i++){const[q,v]=at(K,sd*(.95+i*.22),ZB+12.6-i*.5,.3);if(v>.15){ctx.fillStyle='#d8dce2';ink(.5);ball(q,.55);ctx.fill();ctx.stroke()}}},
+  hoodFx(H,ph){if(ph==='in'){hRip(H,[-.2,-.8,.5],2.2,5,'#2a1e18','rgba(210,190,160,.8)');
+    // the hoodie's drawstring channel round the opening, a stitched seam
+    hRing(H,[1,0,.27],.62,'rgba(60,46,36,.9)',.7,[1,1])}}};
+// LA FELPA STRAPPATA: grigio antracite con le toppe nere, la tasca a marsupio davanti, i lacci del cappuccio coi puntali, il polsino a
+// costine in fondo, strappi che mostrano la maglia rossa sotto
+V.felpa={n:'Felpa strappata',rar:1,group:'scuro',body:'#3a3a44',hood:'#30303a',belt:null,foot:'#26262c',foot2:'#1c1c22',strap:'#2a2a30',noGiubba:true,
+  tunic(K){const{V0,X}=K;
+    // the ribbed band at the hem
+    surfLine(V0,X,t=>surf(t,ZB+1.2,.16),'#2c2c34',2.2,0);for(let i=0;i<20;i++){const t=i/20*TAU;tick(K,t,ZB+.5,t,ZB+1.9,'rgba(20,20,26,.5)',.5,.2)}
+    // the kangaroo pocket
+    piece(K,[[-.7,ZB+2.6],[.7,ZB+2.6],[.55,ZB+5.4],[-.55,ZB+5.4]],'#34343e',{lw:.9});cord(K,-.58,ZB+5.2,-.72,ZB+2.8,'rgba(0,0,0,.35)',.8);cord(K,.58,ZB+5.2,.72,ZB+2.8,'rgba(0,0,0,.35)',.8);
+    // the black patch on the side, the tears with the red shirt under them
+    patch(K,-1.55,ZB+8.4,.28,1.5,'#1e1e24','rgba(150,150,160,.8)');
+    rip(K,.55,ZB+9.2,.24,1.6,2,'#7a1e22','rgba(190,190,200,.85)');rip(K,-2.4,ZB+5.6,.2,1.2,9,'#7a1e22','rgba(190,190,200,.85)');rip(K,2.6,ZB+10.4,.22,1.3,13,'#7a1e22','rgba(190,190,200,.85)')},
+  over(K){// the hood's drawstrings with their metal tips, swinging a little
+    const sw=(K.A.sway||0)*.04;for(const sd of[-1,1]){const t0=sd*.2,t1=sd*.24+sw;cord(K,t0,ZB+13.2,t1,ZB+9.4,'#e8e8ee',.9);const[q,v]=at(K,t1,ZB+9.2,.3);if(v>.2){ctx.fillStyle='#b8bcc4';ink(.5);ctx.fillRect(q[0]-.45,q[1]-.3,.9,1.6);ctx.strokeRect(q[0]-.45,q[1]-.3,.9,1.6)}}},
+  hoodFx(H,ph){if(ph==='in'){hRip(H,[-.45,.75,.45],2.4,4,'#7a1e22','rgba(190,190,200,.8)');hRip(H,[-.9,-.2,.4],1.6,8,'#7a1e22','rgba(190,190,200,.8)')}}};
+// LA TENUTA DEL SOPRAVVISSUTO: giacca verde militare con le toppe cucite, la cartucciera a tracolla con le cartucce rosse, il fazzoletto al
+// collo annodato dietro, gli occhialoni sulla fronte, guanti senza dita e scarponi
+V.sopravvissuto={n:'Tenuta del Sopravvissuto',rar:2,group:'scuro',body:'#55603e',hood:'#46502f',belt:'#3a2c1c',foot:'#3a2c1e',foot2:'#2a2014',glove:'#4a3a2a',strap:'#3a3226',buckle:'#a8a090',noGiubba:true,
+  tunic(K){const{V0,X}=K;
+    // the pockets on the chest with their flaps, a darker patch on the belly, the frayed hem
+    for(const sd of[-1,1]){piece(K,[[sd*.25,ZB+8.6],[sd*.8,ZB+8.6],[sd*.78,ZB+10.8],[sd*.27,ZB+10.8]],'#4c5636',{lw:.8});piece(K,[[sd*.23,ZB+10.4],[sd*.82,ZB+10.4],[sd*.8,ZB+11.4],[sd*.25,ZB+11.4]],'#5e6a44',{lw:.8})}
+    patch(K,2.3,ZB+7,.3,1.6,'#6a5a3a');patch(K,-2.5,ZB+9.6,.24,1.2,'#3e4a2c');
+    for(let i=0;i<18;i++){const t=i/18*TAU+.1;tick(K,t,ZB+.7,t+.04,ZB-.1-fr(4,i)*.7,'rgba(70,80,50,.9)',.8,.05)}},
+  over(K){const{V0,X}=K;// the bandolier: from the right shoulder to the left hip, with the red shells in their loops
+    const bt=k=>surf(lerp(.95,-2.3,k),lerp(ZB+12.4,ZB+4.6,k)+1.2*Math.sin(k*Math.PI),.45);surfLine(V0,X,bt,'#5a4430',2.4,1,null,true);
+    for(let i=1;i<10;i++){const s=bt(i/10),v=K.F(K.X.Rd(s.n));if(v<.2)continue;const q=K.P(K.X.T(s.p));ctx.fillStyle='#b8322a';ink(.5);ctx.fillRect(q[0]-.7,q[1]-1.4,1.4,2.2);ctx.strokeRect(q[0]-.7,q[1]-1.4,1.4,2.2);ctx.fillStyle='#e0b050';ctx.fillRect(q[0]-.7,q[1]+.5,1.4,.6)}
+    // the scarf round the neck
+    surfLine(V0,X,t=>surf(t,ZB+13.1,.5),'#8a2a1e',2.4,0,null,true)},
+  parts(K,parts){flap(K,parts,[-3.2,0,ZB+13.4],4.6,.9,'#8a2a1e',{n:2,k:1.4,taper:1,dd:-.2})},
+  hoodFx(H,ph){if(ph==='in')hRing(H,[.32,0,1],.28,'#2a2a26',1.3);
+    if(ph==='front'){// the goggles on the forehead: two round lenses on the strap, above the face
+      for(const sd of[-1,1]){const[q,v]=hAt(H,[.62,sd*.34,.72],1.04);if(v<.15)continue;ctx.save();ctx.globalAlpha*=cl((v-.15)*5,0,1);ink(1);ctx.fillStyle='#6a5a40';ctx.beginPath();ctx.ellipse(q[0],q[1],2.5*(.5+.5*v),2.1,0,0,TAU);ctx.fill();ctx.stroke();
+        ctx.fillStyle='#7ab0b8';ctx.beginPath();ctx.ellipse(q[0],q[1],1.6*(.5+.5*v),1.3,0,0,TAU);ctx.fill();ctx.fillStyle='rgba(255,255,255,.7)';ball([q[0]-.5,q[1]-.5],.45);ctx.fill();ctx.restore()}}}};
+// IL MANTELLO LOGORO: un mantello lungo color ardesia, consumato e sfrangiato in fondo, con le toppe e i buchi, la mantellina sulle spalle
+// e il fermaglio a teschio di corvo; l'orlo del cappuccio sfilacciato
+V.mantello={n:'Mantello logoro',rar:3,group:'scuro',body:'#3e3c4a',hood:'#33313e',belt:'#4a3a2e',foot:'#2c2620',foot2:'#201c18',strap:'#2a2630',noGiubba:true,
+  tunic(K){const{V0,X}=K;// the capelet: a band over the shoulders with a ragged lower edge
+    const cl0=t=>ZB+10.6-.6*fr(2,Math.round(t*7))*(Math.abs(Math.cos(t))>.2?1:.5);
+    surfLine(V0,X,t=>surf(t,ZB+12.2,.32),'#46434f',3.4,0);for(let i=0;i<18;i++){const t=i/18*TAU;tick(K,t,ZB+11.4,t+.05,cl0(t),'#46434f',1.6,.3)}
+    surfLine(V0,X,t=>surf(t,ZB+13.3,.3),'rgba(20,18,24,.55)',.8,0)},
+  over(K){// the crow-skull clasp at the throat
+    const[q,v]=at(K,0,ZB+12.9,.6);if(v>.2){ctx.save();ctx.globalAlpha*=cl((v-.2)*4,0,1);ink(.9);ctx.fillStyle='#e8e0cc';ctx.beginPath();ctx.ellipse(q[0],q[1],1.9,1.5,0,0,TAU);ctx.fill();ctx.stroke();
+      ctx.beginPath();ctx.moveTo(q[0]-.6,q[1]+.9);ctx.lineTo(q[0],q[1]+3);ctx.lineTo(q[0]+.6,q[1]+.9);ctx.closePath();ctx.fill();ctx.stroke();ctx.fillStyle='#1a1418';ball([q[0]-.7,q[1]-.1],.45);ctx.fill();ball([q[0]+.7,q[1]-.1],.45);ctx.fill();ctx.restore()}},
+  parts(K,parts){const{V0,X,P,D,A}=K;
+    parts.push({d:D(X.T([-14,0,ZB+4])),f:()=>{const sw=A.sway||0,top=[],bot=[],N=12;
+      for(let i=0;i<=N;i++){const a=-1+2*i/N,t=Math.PI+a*1.75,ws=Math.sin(a*Math.PI*1.5+sw*2)*.8;top.push(P(X.T(surf(t,ZB+13-Math.abs(a)*1.4,.7).p)));
+        const s=surf(t,ZB+.2,1.4+(1-Math.abs(a))*1.8+ws*.4).p,rag=(i%2?1:0)*1.4+fr(6,i)*1.6;bot.push(P(X.T([s[0]-sw*.8,s[1],s[2]-2.4+rag+ws*.4])))}
+      const pts=top.concat(bot.reverse());ink(2.2);poly(pts);let y0=1e9,y1=-1e9;for(const q of pts){y0=Math.min(y0,q[1]);y1=Math.max(y1,q[1])}
+      const g=ctx.createLinearGradient(0,y0,0,y1);g.addColorStop(0,'#4e4a5c');g.addColorStop(.55,'#353240');g.addColorStop(1,'#24212c');ctx.fillStyle=g;ctx.fill();ctx.stroke();
+      // a patch and two holes in the cloth, and the light along the folds
+      const m=k=>[lerp(top[Math.round(k*N)][0],bot[N-Math.round(k*N)][0],.55),lerp(top[Math.round(k*N)][1],bot[N-Math.round(k*N)][1],.55)];
+      {const c=m(.3);ctx.fillStyle='#4a4656';ink(.8);ctx.fillRect(c[0]-2,c[1]-2,4,4);ctx.strokeRect(c[0]-2,c[1]-2,4,4);ctx.setLineDash([.8,.9]);ctx.strokeStyle='rgba(220,210,190,.7)';ctx.lineWidth=.5;ctx.strokeRect(c[0]-1.4,c[1]-1.4,2.8,2.8);ctx.setLineDash([])}
+      for(const k of[.62,.8]){const c=m(k);ctx.fillStyle='#16141a';ctx.beginPath();ctx.ellipse(c[0],c[1]+2,1.1,1.5,.3,0,TAU);ctx.fill()}
+      ctx.strokeStyle='rgba(120,114,140,.35)';ctx.lineWidth=.8;for(const k of[.25,.5,.75]){const a=top[Math.round(k*N)],b=bot[N-Math.round(k*N)];ctx.beginPath();ctx.moveTo(a[0],a[1]+2);ctx.lineTo(lerp(a[0],b[0],.85),lerp(a[1],b[1],.85));ctx.stroke()}}})},
+  hoodFx(H,ph){if(ph==='in'){// a darned tear and a patch on the hood
+    hRip(H,[-.5,.7,.5],2,6,'#1a181f','rgba(200,195,210,.75)');const[q,v]=hAt(H,[-.6,-.6,.55]);if(v>.25){ctx.save();ctx.globalAlpha*=cl((v-.25)*4,0,1);ctx.fillStyle='#4a4656';ink(.8);ctx.fillRect(q[0]-1.8,q[1]-1.6,3.6,3.2);ctx.strokeRect(q[0]-1.8,q[1]-1.6,3.6,3.2);
+      ctx.setLineDash([.8,.9]);ctx.strokeStyle='rgba(220,210,190,.7)';ctx.lineWidth=.5;ctx.strokeRect(q[0]-1.2,q[1]-1,2.4,2);ctx.setLineDash([]);ctx.restore()}}}};
+// L'ABITO DEL BECCHINO: il frac nero con le code lunghe, il panciotto rosso scuro coi bottoni d'ottone, la catena dell'orologio, i guanti
+// grigi e il cilindro con il nastro
+V.becchino={n:'Abito del Becchino',rar:3,group:'scuro',body:'#1e1a1c',hood:'#2c2628',belt:null,foot:'#141012',foot2:'#0e0b0c',glove:'#8a8a92',strap:'#141012',noGiubba:true,
+  tunic(K){// the waistcoat in a V, its brass buttons, the lapels of the coat
+    piece(K,[[-.5,ZB+13.4],[.5,ZB+13.4],[.42,ZB+3.4],[0,ZB+2.4],[-.42,ZB+3.4]],'#5a1a22',{lw:.9});
+    for(const z of[ZB+11.4,ZB+9,ZB+6.6,ZB+4.4]){const[q,v]=at(K,0,z,.3);if(v>.2){ctx.fillStyle='#d8a838';ink(.5);ball(q,.65);ctx.fill();ctx.stroke()}}
+    for(const sd of[-1,1])piece(K,[[sd*.48,ZB+13.4],[sd*.85,ZB+13],[sd*.6,ZB+8.2],[sd*.44,ZB+8.6]],'#121012',{lw:.8})},
+  over(K){// the watch chain from a button to the pocket
+    const{V0,X}=K;surfLine(V0,X,k=>surf(lerp(0,.52,k),ZB+6.6-1.6*Math.sin(k*Math.PI),.4),'#e8c050',.7,1,[.8,.6]);const[q,v]=at(K,.52,ZB+6.6,.4);if(v>.2){ctx.fillStyle='#e8c050';ink(.5);ball(q,.8);ctx.fill();ctx.stroke()}},
+  parts(K,parts){for(const sd of[-1,1])flap(K,parts,[-7.2,sd*3.4,ZB+5.4],7.6,2.3,'#1e1a1c',{n:1,k:1.1,side:[0,1,0],dd:-.4})},
+  hoodFx(H,ph){if(ph!=='front')return;// the top hat: brim, crown and band, sitting a little back on the hood
+    const up=H.nod(nrm([-.18,0,1])),c3=mul(up,H.Rh*.86),u0=nrm(cross(up,[0,1,0])),v0=cross(up,u0),ring=(r,h)=>{const q=[];for(let i=0;i<24;i++){const a=i/24*TAU;q.push(sp(H.Vh,H.h,1,add(add(c3,mul(up,h)),add(mul(u0,Math.cos(a)*r),mul(v0,Math.sin(a)*r)))))}return q},
+      hull2=(A,B)=>{const all=A.concat(B);all.sort((a,b)=>a[0]-b[0]||a[1]-b[1]);const cr=(o,a,b)=>(a[0]-o[0])*(b[1]-o[1])-(a[1]-o[1])*(b[0]-o[0]),lo=[],hi=[];for(const p of all){while(lo.length>1&&cr(lo[lo.length-2],lo[lo.length-1],p)<=0)lo.pop();lo.push(p)}for(let i=all.length-1;i>=0;i--){const p=all[i];while(hi.length>1&&cr(hi[hi.length-2],hi[hi.length-1],p)<=0)hi.pop();hi.push(p)}return lo.slice(0,-1).concat(hi.slice(0,-1))};
+    const brim=ring(H.Rh*.95,0),b0=ring(H.Rh*.55,.4),b1=ring(H.Rh*.6,H.Rh*1.05),top=ring(H.Rh*.6,H.Rh*1.05);
+    ink(1.8);poly(brim);ctx.fillStyle='#1a1618';ctx.fill();ctx.stroke();
+    const side=hull2(b0,b1);poly(side);let x0=1e9,x1=-1e9;for(const q of side){x0=Math.min(x0,q[0]);x1=Math.max(x1,q[0])}const g=ctx.createLinearGradient(x0,0,x1,0);g.addColorStop(0,'#3a3236');g.addColorStop(.45,'#221c1f');g.addColorStop(1,'#120e10');ctx.fillStyle=g;ctx.fill();ctx.stroke();
+    const band=hull2(ring(H.Rh*.56,H.Rh*.18),ring(H.Rh*.57,H.Rh*.42));poly(band);ctx.fillStyle='#6a1a22';ctx.fill();ctx.lineWidth=.8;ctx.stroke();
+    poly(top);ctx.fillStyle='#2a2427';ctx.fill();ink(1.6);ctx.stroke()}};
+// ---------------------------------------------------------------- SWAG
+// L'HOODIE NEON: nero con la grande foglia di muschio stampata che si accende verde, i lacci verdi, la riga neon sul polsino, le scarpe
+// bianche; sul cappuccio il bordo luminoso intorno all'apertura e il simbolo sul lato
+V.neon={n:'Hoodie Neon',rar:2,group:'swag',body:'#1e1e26',hood:'#18181f',belt:null,foot:'#eeeef2',foot2:'#c8c8d2',strap:'#2a2a34',noGiubba:true,
+  tunic(K){const{V0,X}=K;surfLine(V0,X,t=>surf(t,ZB+1.2,.16),'#2a2a34',2.2,0);surfLine(V0,X,t=>surf(t,ZB+1.9,.18),'#7dff6a',.7,0);
+    // the leaf print: an outline that glows, the midrib and veins
+    const lf=(k,s)=>surf(lerp(-.42,.42,k),ZB+8.6+s*1.9*Math.sin(k*Math.PI)+k*.6,.2);
+    glowAt(K,0,ZB+8.9,'125,255,106',9,.38);surfLine(V0,X,k=>lf(k,1),'#7dff6a',1,1);surfLine(V0,X,k=>lf(k,-1),'#7dff6a',1,1);surfLine(V0,X,k=>surf(lerp(-.42,.42,k),ZB+8.6+k*.6,.22),'#c8ffbc',.6,1);
+    for(const k of[.3,.5,.7])surfLine(V0,X,j=>surf(lerp(-.42,.42,k)+j*.08,ZB+8.6+k*.6+j*1.3,.22),'rgba(200,255,188,.8)',.45,1)},
+  over(K){const sw=(K.A.sway||0)*.04;for(const sd of[-1,1]){const t1=sd*.24+sw;cord(K,sd*.2,ZB+13.2,t1,ZB+9.8,'#7dff6a',.8);const[q,v]=at(K,t1,ZB+9.6,.3);if(v>.2){ctx.fillStyle='#e8ffe2';ball(q,.55);ctx.fill()}}},
+  hoodFx(H,ph){if(ph==='in'){const[q,v]=hAt(H,[-.25,-.9,.3]);if(v>.2){ctx.save();ctx.globalAlpha*=cl((v-.2)*4,0,1);ctx.strokeStyle='#7dff6a';ctx.lineWidth=.9;ctx.beginPath();ctx.moveTo(q[0]-1.6,q[1]+1);ctx.quadraticCurveTo(q[0],q[1]-2.6,q[0]+1.6,q[1]+1);ctx.quadraticCurveTo(q[0],q[1]+.2,q[0]-1.6,q[1]+1);ctx.stroke();ctx.restore()}}
+    if(ph==='front'){const fd=H.nod([1,0,.27]),fv=H.F(nrm(fd));if(fv<.15)return;const c=capPath(H.Vh,H.h,H.Rh*1.0,fd,.86);if(c&&c.rim&&c.rim.length>1){ctx.save();ctx.globalAlpha*=cl((fv-.15)*4,0,1);if(!LOWFX){ctx.globalCompositeOperation='lighter';ctx.strokeStyle='rgba(125,255,106,.22)';ctx.lineWidth=2;line(c.rim);if(c.full)ctx.closePath();ctx.stroke();ctx.globalCompositeOperation='source-over'}ctx.strokeStyle='#7dff6a';ctx.lineWidth=.75;ctx.lineCap='round';line(c.rim);if(c.full)ctx.closePath();ctx.stroke();ctx.restore()}}}};
+// LA GIACCA VARSITY: bordeaux col cappuccio color panna, la grande M di ciniglia sul petto, i bottoni a pressione, le righe sul polsino
+// a costine; scarpe bianche
+V.varsity={n:'Giacca Varsity',rar:2,group:'swag',body:'#7a1e2e',hood:'#efe3c8',belt:null,foot:'#f2f2f4',foot2:'#cfcfd6',glove:null,strap:'#efe3c8',noGiubba:true,
+  tunic(K){const{V0,X}=K;// the ribbed hem with two cream stripes, the snap buttons
+    surfLine(V0,X,t=>surf(t,ZB+1.1,.16),'#5a1622',2.4,0);surfLine(V0,X,t=>surf(t,ZB+.7,.2),'#efe3c8',.6,0);surfLine(V0,X,t=>surf(t,ZB+1.6,.2),'#efe3c8',.6,0);
+    surfLine(V0,X,t=>surf(t,ZB+13.4,.3),'#5a1622',1.6,0);surfLine(V0,X,t=>surf(t,ZB+13.1,.32),'#efe3c8',.5,0);
+    for(const z of[ZB+11.6,ZB+9.4,ZB+7.2,ZB+5,ZB+2.8]){const[q,v]=at(K,.06,z,.3);if(v>.2){ctx.fillStyle='#efe3c8';ink(.5);ball(q,.6);ctx.fill();ctx.stroke()}}
+    // the chenille M on the left of the chest: cream with a bordeaux and a cream edge
+    const M=[[-.95,ZB+7.6],[-.9,ZB+10.4],[-.68,ZB+8.6],[-.46,ZB+10.4],[-.41,ZB+7.6]];
+    for(const[w,c] of[[2.2,'#5a1622'],[1.4,'#efe3c8']])surfLine(V0,X,k=>{const n=M.length-1,i=Math.min(n-1,Math.floor(k*n)),u=k*n-i;return surf(lerp(M[i][0],M[i+1][0],u),lerp(M[i][1],M[i+1][1],u),.3)},c,w,1)},
+  hoodFx(H,ph){if(ph==='in')hRing(H,[-.2,0,1],.0,'#7a1e2e',1.1)}};
+// IL PIUMINO DELLE RUNE: un piumino viola con le trapuntature gonfie, le rune d'oro ricamate che si accendono piano, la catena d'oro con il
+// ciondolo a runa di muschio; scarpe nere col bordo d'oro
+V.rune={n:'Piumino delle Rune',rar:3,group:'swag',body:'#4e2c90',hood:'#3e2274',belt:null,foot:'#1c1824',foot2:'#141018',strap:'#2e1e4e',noGiubba:true,
+  tunic(K){const{V0,X}=K;// the quilting: puffed bands, a darker seam and a light over each band
+    for(let z=ZB+1.6;z<ZB+13.4;z+=2.3){surfLine(V0,X,t=>surf(t,z,.14),'rgba(24,10,50,.55)',.9,0);surfLine(V0,X,t=>surf(t,z+1.15,.2),'rgba(190,160,255,.22)',1.4,0)}
+    // the runes: little golden marks that breathe
+    const br=.55+.45*Math.sin(K.p*TAU);for(const[t,z,s] of[[-.75,ZB+9.4,1],[.9,ZB+5.2,2],[2.4,ZB+8.2,3],[-2.2,ZB+4.4,4],[3.3,ZB+10.6,5]]){const[q,v]=at(K,t,z,.3);if(v<.2)continue;
+      glowAt(K,t,z,'255,210,90',4,.35*br);ctx.save();ctx.globalAlpha*=cl((v-.2)*4,0,1);ctx.strokeStyle='#ffd25a';ctx.lineWidth=.7;ctx.lineCap='round';ctx.beginPath();
+      ctx.moveTo(q[0],q[1]-1.6);ctx.lineTo(q[0],q[1]+1.6);if(s%2){ctx.moveTo(q[0],q[1]-.6);ctx.lineTo(q[0]+1.1,q[1]-1.5)}else{ctx.moveTo(q[0]-1.1,q[1]+.4);ctx.lineTo(q[0]+1.1,q[1]-.6)}if(s>2){ctx.moveTo(q[0],q[1]+.5);ctx.lineTo(q[0]-1,q[1]+1.4)}ctx.stroke();ctx.restore()}},
+  over(K){const{V0,X}=K;// the gold chain and the pendant
+    surfLine(V0,X,k=>surf(lerp(-1.1,1.1,k),ZB+12.6-2.2*Math.sin(k*Math.PI),.55),'#f0c850',1,1,[1,.5],true);
+    const[q,v]=at(K,0,ZB+10.2,.8);if(v>.2){glowAt(K,0,ZB+10.2,'125,255,106',6,.4);ctx.fillStyle='#f0c850';ink(.8);ctx.beginPath();ctx.moveTo(q[0],q[1]-2);ctx.lineTo(q[0]+1.6,q[1]);ctx.lineTo(q[0],q[1]+2.2);ctx.lineTo(q[0]-1.6,q[1]);ctx.closePath();ctx.fill();ctx.stroke();ctx.fillStyle='#7dff6a';ball(q,.7);ctx.fill()}},
+  hoodFx(H,ph){if(ph==='in'){for(const lat of[.2,.55,.85])hRing(H,[-.15,0,1],lat,'rgba(30,12,60,.6)',.6);const[q,v]=hAt(H,[-.4,.7,.6]);if(v>.25){ctx.strokeStyle='#ffd25a';ctx.lineWidth=.7;ctx.beginPath();ctx.moveTo(q[0],q[1]-1.4);ctx.lineTo(q[0],q[1]+1.4);ctx.moveTo(q[0]-1,q[1]-.4);ctx.lineTo(q[0]+1,q[1]+.4);ctx.stroke()}}}};
+// IL KIMONO DEL DRAGO: cremisi, il colletto incrociato bianco e oro, le nuvole d'oro ricamate, la fusciacca nera larga col nodo dietro e le
+// due code che pendono; sandali di legno
+V.drago={n:'Kimono del Drago',rar:4,group:'swag',body:'#a8222c',hood:'#7a1820',belt:'#1a1a20',foot:'#6a4426',foot2:'#4a2e18',strap:'#3a1a1a',buckle:'#e8c050',noGiubba:true,
+  tunic(K){const{V0,X}=K;// the crossed collar: from the left shoulder down to the right of the belt (and the other under it)
+    surfLine(V0,X,k=>surf(lerp(-.55,.45,k),lerp(ZB+13.6,ZB+6.4,k),.3),'#f4ead8',2.2,1,null,true);surfLine(V0,X,k=>surf(lerp(-.55,.45,k)+.1,lerp(ZB+13.6,ZB+6.4,k),.34),'#e8c050',.6,1);
+    surfLine(V0,X,k=>surf(lerp(.55,.15,k),lerp(ZB+13.6,ZB+10.6,k),.26),'#f4ead8',2,1,null,true);
+    // the golden clouds: little spirals with a tail
+    for(const[t,z,s] of[[.9,ZB+10.4,1],[-1.2,ZB+3.4,-1],[2.2,ZB+11,1],[-2.6,ZB+8.6,-1],[3,ZB+3.6,1],[1.4,ZB+3,-1]]){const[q,v]=at(K,t,z,.3);if(v<.2)continue;ctx.save();ctx.globalAlpha*=cl((v-.2)*4,0,1);ctx.strokeStyle='#e8c050';ctx.lineWidth=.7;ctx.lineCap='round';ctx.beginPath();
+      for(let i=0;i<=16;i++){const a=i/16*TAU*1.3,r=.3+i*.1;ctx.lineTo(q[0]+s*Math.cos(a)*r,q[1]+Math.sin(a)*r*.8)}ctx.lineTo(q[0]+s*3.6,q[1]+.8);ctx.stroke();ctx.restore()}},
+  over(K){const{V0,X}=K;// the wide sash: a band wider than the belt, with the gold cord across it
+    surfLine(V0,X,t=>surf(t,ZB+5.6,.42),'#1a1a20',4.6,0,null,true);surfLine(V0,X,t=>surf(t,ZB+5.6,.5),'#e8c050',.7,0)},
+  parts(K,parts){const{X,P,D,A}=K,c3=X.T([-8.6,0,ZB+5.8]);// the knot behind and its two tails
+    parts.push({d:D(c3)-.3,f:()=>{const q=P(c3);ink(1.6);ctx.fillStyle='#24242a';ctx.beginPath();ctx.ellipse(q[0]-2.4,q[1],2.4,1.6,-.3,0,TAU);ctx.fill();ctx.stroke();ctx.beginPath();ctx.ellipse(q[0]+2.4,q[1],2.4,1.6,.3,0,TAU);ctx.fill();ctx.stroke();ctx.fillStyle='#1a1a20';ball(q,1.3);ctx.fill();ctx.stroke()}});
+    for(const sd of[-1,1])flap(K,parts,[-8.4,sd*1.2,ZB+5.2],6.4,.8,'#1e1e24',{n:1,k:1.3,taper:1,dd:-.5})},
+  hoodFx(H,ph){if(ph==='in'){const[q,v]=hAt(H,[-.3,.85,.4]);if(v>.25){ctx.strokeStyle='#e8c050';ctx.lineWidth=.7;ctx.beginPath();for(let i=0;i<=14;i++){const a=i/14*TAU*1.2,r=.3+i*.12;ctx.lineTo(q[0]+Math.cos(a)*r,q[1]+Math.sin(a)*r*.8)}ctx.stroke()}}}};
+})();
 // Nemici della modalità CLASSICA rifatti con il metodo dello Zombie spaventapasseri (sprite/mostri/disegno_mostri.js, da cui prende
 // la cassetta degli attrezzi CR._rig): scheletro 3D proiettato con V(face), arti a due ossa con la cinematica inversa, ordine di
 // disegno deciso dalla posa di riposo, pezzi che girano per conto loro con Vat, ogni mossa dipende solo da p (0..1).
@@ -18679,7 +18884,7 @@ function luckyCardImg(id,w){const k=id+w;if(LKC[k])return LKC[k];const L=LUCKY_B
 // ------------------------------------------------------------------ the save of the Pass Zombie
 const ZPASS_T=30,ZPASS_XP=100,ZPASS_COST=500;
 // two dark outfits of the zombie pass (their drawings come with the new outfits; for now the colours of the coat)
-Object.assign(SKINS,{stracciato:{n:'Giaccone stracciato',body:'#2b2b30',hood:'#4a3f3a',belt:'#6a2a1a',rar:2},becchino:{n:'Abito del Becchino',body:'#1d1919',hood:'#3a3030',belt:'#9a7a3a',rar:3}});
+// (the outfits of the Zombie Pass, stracciato and becchino, are in sprite/eroe3d/vestiti3d.js: src/js/72-vestiti.js puts them in SKINS)
 function zpassReward(i,prem){
   if(prem){if(i===15)return{k:'skin',v:'stracciato'};if(i===30)return{k:'skin',v:'becchino'};if(i===10||i===25)return{k:'lpack',v:'l'};if(i===20)return{k:'zpack',v:'l'};
     return i%5===0?{k:'zpack',v:'e'}:i%3===0?{k:'gems',v:10+Math.floor(i/2)}:i%2===0?{k:'rot',v:20+2*i}:{k:'lpack',v:i>=15?'r':'c'}}
@@ -18692,7 +18897,7 @@ function zpassLabel(r){return r.k==='gold'?`${r.v} oro`:r.k==='gems'?`${r.v} cri
 function zpassIcon(r){if(r.k==='gold')return coinPile(r.v>400?1:0);if(r.k==='gems')return '<span class="bigGem"></span>';if(r.k==='rot')return MAT_SVG.rot;
   if(r.k==='zpack')return `<img class="pkI" src="${packImg('zombie',r.v,96)}" alt="">`;if(r.k==='lpack')return `<img class="pkI" src="${packImg('lucky',r.v,96)}" alt="">`;return skinIcon(r.v)}
 function grantZPass(r){if(r.k==='gold'){SAVE.gold+=r.v;sfx('coin')}else if(r.k==='gems'){SAVE.gems=(SAVE.gems||0)+r.v;sfx('gem')}else if(r.k==='rot'){SAVE.mat.rot+=r.v;sfx('upgrade')}
-  else if(r.k==='skin'){SAVE.skins=SAVE.skins||{};SAVE.skins[r.v]=1;SAVE.skinLv[r.v]=SAVE.skinLv[r.v]||1;sfx('victory');achPop('Nuovo vestito!',SKINS[r.v].n+': indossalo dal Profilo','unlock')}
+  else if(r.k==='skin'){SAVE.skins=SAVE.skins||{};SAVE.skins[r.v]=1;SAVE.skinLv[r.v]=SAVE.skinLv[r.v]||1;sfx('victory');achPop('Nuovo vestito!',SKINS[r.v].n+': indossalo dal Guardaroba','unlock')}
   toast('+'+zpassLabel(r));renderGold();save();if(r.k==='zpack'||r.k==='lpack'){closeSheet();openPack(r.k==='zpack'?'zombie':'lucky',r.v)}}
 function fillZPass(){const P0=ensureZPass(),l=zpassLvl(),into=P0.xp-l*ZPASS_XP,mx=l>=ZPASS_T;lastSheetHTML='';
   let rows='';for(let i=1;i<=ZPASS_T;i++){const fr=zpassReward(i,false),pr=zpassReward(i,true),reach=l>=i;
@@ -18854,6 +19059,87 @@ function zRestoreBonus(){if(typeof ARMI==='undefined')return;for(const id in ZD0
 {const _m=makeP;makeP=function(){const q=_m.apply(this,arguments);const b=skinBonus();if(b>0&&q){q.maxhp=Math.round(q.maxhp*(1+b));q.hp=q.maxhp}return q}}
 // by the fire the gun beside the hero is the one he brings into the match
 Object.defineProperty(FALO,'gun',{get(){return SAVE.z&&zStartable(SAVE.z.gun)?SAVE.z.gun:'pistola'},configurable:true});
+// =====================================================================
+// I VESTITI (punti 39 e 40 del piano di Denis, anteprima 47): i nove vestiti di sprite/eroe3d/vestiti3d.js nel gioco, insieme ai due
+// mantelli del Pass. Si sbloccano con le loro carte (bustine dalla Rara in su) o dai pass, salgono di livello con le carte (+2% di vita a
+// livello, in tutte e due le modalità: skinBonus) e si scelgono dal Guardaroba, dove l'eroe 3D gira con il vestito addosso: si possono
+// provare anche quelli ancora chiusi. Si vedono ovunque ci sia l'eroe: battaglia, mappa zombie, menu, falò, passaggio tra le modalità.
+// =====================================================================
+const WARD_G={scuro:'Scuro e strappato',swag:'Swag',pass:'Dal Pass'},WARD_O={scuro:0,swag:1,pass:2};
+const WARD_D={stracciato:'Pelle nera consumata sopra la felpa, la cerniera storta, strappi tenuti dalle spille e borchie sulle spalle.',
+  felpa:'Felpa antracite col marsupio, i lacci coi puntali e gli strappi che mostrano la maglia rossa.',
+  sopravvissuto:'Giacca militare con le toppe, cartucciera a tracolla, fazzoletto al collo, occhialoni, guanti e scarponi.',
+  mantello:'Un mantello lungo e sfrangiato che ondeggia, la mantellina sulle spalle e il fermaglio a teschio di corvo.',
+  becchino:'Frac nero con le code, panciotto rosso, la catena dell\'orologio, guanti grigi e il cilindro.',
+  neon:'Nera, con la foglia di muschio stampata che si accende, i lacci verdi e il bordo luminoso sul cappuccio.',
+  varsity:'Bordeaux e panna, la M di ciniglia sul petto, i bottoni a pressione e i polsini a righe.',
+  rune:'Piumino viola trapuntato, le rune d\'oro che brillano piano e la catena col ciondolo.',
+  drago:'Kimono cremisi con le nuvole d\'oro, il colletto incrociato e la fusciacca annodata dietro.',
+  lucciola:'Il manto del Pass, punteggiato di lucciole.',stellato:'Il manto del Pass, pieno di stelle.'};
+{const VS=typeof EROE!=='undefined'&&EROE.VESTITI||{};for(const k in VS){const v=VS[k];SKINS[k]={n:v.n,rar:v.rar,body:v.body,hood:v.hood,belt:v.belt,group:v.group}}
+  for(const k of['lucciola','stellato'])if(SKINS[k]){SKINS[k].group='pass';if(SKINS[k].rar==null)SKINS[k].rar=k==='stellato'?3:2}}
+const wardList=()=>Object.keys(SKINS).sort((a,b)=>(WARD_O[SKINS[a].group]??3)-(WARD_O[SKINS[b].group]??3)||skinRar(a)-skinRar(b));
+const wardOwn=k=>!k||!!(SAVE.skins&&SAVE.skins[k]);
+// skinIcon gives an <img> (iconCv): here its picture alone
+const imgSrc=h=>{const m=/src="([^"]+)"/.exec(h||'');return m?m[1]:''};
+// the hero you play (any of the four) in an outfit: the colours of the outfit and its id (the 3D hero draws its pieces from the id)
+function wardStyle(k,o){const s0=heroStyle0(SAVE.hero),S=k&&SKINS[k];return{...s0,...(S?{body:S.body,hood:S.hood,belt:S.belt,skinId:k}:{}),...(o||{})}}
+// the outfits' pictures: the hero in 3D wearing it, three quarters, without the bow (cards, reveal, collections)
+{const _si=skinIcon;skinIcon=function(k){if(!SKINS[k]||typeof EROE==='undefined')return _si(k);return iconCv('s3:'+k,x=>{x.translate(48,72);x.scale(2.1,2.1);
+  const sv=noShadow;noShadow=false;try{drawRig(0,0,Math.PI/2-.42,0,false,wardStyle(k,{held:null,quiver:false}),{})}finally{noShadow=sv}})}}
+// ------------------------------------------------------------------ the Guardaroba
+const WD={sel:null,raf:0};
+function fillVestiti(){lastSheetHTML='';const cur=SAVE.skin&&wardOwn(SAVE.skin)?SAVE.skin:'';if(WD.sel==null||(WD.sel&&!SKINS[WD.sel]))WD.sel=cur;
+  const k=WD.sel,S=k&&SKINS[k],own=wardOwn(k),lv=k?(SAVE.skinLv[k]||(own?1:0)):0,cards=k?SAVE.skinCards[k]||0:0,need=k?(own?skinNeed(lv):SKIN_UNLOCK[skinRar(k)]):0,max=own&&lv>=SKIN_MAX,r=k?RAR[skinRar(k)]:null;
+  const bar=k?`<div class="pbar${!max&&cards>=need?' full':''}"><i style="width:${max?100:Math.min(100,cards/Math.max(1,need)*100)}%"></i><span>${max?'MAX':`${cards}/${need}`}</span></div>`:'';
+  const btns=!k?(cur?`<button class="btn go" data-wdwear="">Torna all'originale</button>`:`<em class="inuse">Indossato</em>`)
+    :own?(cur===k?`<em class="inuse">Indossato</em>`:`<button class="btn go" data-wdwear="${k}">Indossa</button>`)+(max?'':`<button class="btn" data-wdup="${k}" ${cards>=need?'':'disabled'}>Migliora</button>`)
+    :`<span class="wdLock">${LOCK} ${S.group==='pass'?'Si ottiene dal Pass':'Carte dalle bustine Rare, Epiche, Leggendarie e Immortali'}</span>`;
+  const card=id=>{const S2=id&&SKINS[id],o=wardOwn(id),l=id?(SAVE.skinLv[id]||1):0,c=id?SAVE.skinCards[id]||0:0,nd=id?(o?skinNeed(l):SKIN_UNLOCK[skinRar(id)]):0,ready=id&&c>=nd&&!(o&&l>=SKIN_MAX);
+    return `<button class="wdc ${o?'':'locked'} ${WD.sel===id?'sel':''} ${cur===id?'on':''}" data-wd="${id}" style="--rc:${id?RAR[skinRar(id)].c:'#cfc6b0'}">
+      <img src="${imgSrc(id?skinIcon(id):wardOrigIcon())}" alt=""><b>${id?S2.n:'Originale'}</b><small>${!id?'Il vestito di sempre':o?`Liv. ${l}`:`${LOCK} ${c}/${nd}`}</small>${cur===id?'<i class="wdOn">✓</i>':ready?'<i class="wdDot"></i>':''}</button>`};
+  $('sheet').innerHTML=`<h2>Guardaroba</h2><p class="lead">I vestiti valgono in tutte e due le modalità: ogni livello dà <b>+2% di vita</b>. Tocca un vestito per provarlo addosso.</p>
+    <div class="wdStage" style="--rc:${r?r.c:'#cfc6b0'}"><canvas id="wdCv"></canvas><div class="wdInfo"><b>${k?S.n:'Originale'}</b>${k?`<div class="wdTag"><u style="color:${r.c}">${r.n}</u> · <span>${WARD_G[S.group]||''}</span></div>`:''}
+      <p>${k?WARD_D[k]||'':'Il cappuccio verde acqua e la giubba di sempre.'}</p>${k&&own?`<small>Livello ${lv} · +${lv*2}% di vita</small>`:''}${bar}<div class="wdBtns">${btns}</div></div></div>
+    ${['scuro','swag','pass'].map(g=>{const ids=wardList().filter(id=>SKINS[id].group===g);return ids.length?`<h3 class="h3">${WARD_G[g]}</h3><div class="wdGrid">${(g==='scuro'?[''].concat(ids):ids).map(card).join('')}</div>`:''}).join('')}
+    <button class="btn alt close">Chiudi</button>`;
+  wardStart()}
+function wardOrigIcon(){return iconCv('s3:orig',x=>{x.translate(48,72);x.scale(2.1,2.1);const sv=noShadow;noShadow=false;try{drawRig(0,0,Math.PI/2-.42,0,false,{...heroStyle0(SAVE.hero),held:null,quiver:false},{})}finally{noShadow=sv}})}
+// the hero turning slowly in the outfit you are looking at (only while the Guardaroba is open)
+function wardStart(){const cv=$('wdCv');if(!cv)return;const d=Math.min(2,window.devicePixelRatio||1);cv.width=Math.round(150*d);cv.height=Math.round(170*d);if(!WD.raf)WD.raf=requestAnimationFrame(wardLoop)}
+function wardLoop(){WD.raf=0;const cv=$('wdCv');if(SHEET!=='vestiti'||!cv)return;const g=cv.getContext('2d'),sv=ctx,t=performance.now()/1000,k=cv.width/150;
+  g.setTransform(1,0,0,1,0,0);g.clearRect(0,0,cv.width,cv.height);ctx=g;const s0=noShadow;noShadow=false;
+  try{g.setTransform(k*3,0,0,k*3,cv.width/2,cv.height*.66);drawRig(0,0,Math.PI/2-t*.55,0,false,wardStyle(WD.sel),{})}catch(e){console.error(e)}finally{ctx=sv;noShadow=s0}
+  WD.raf=requestAnimationFrame(wardLoop)}
+{const _os=openSheet;openSheet=function(kind){if(kind==='vestiti'){SHEET=kind;sfx('ui');WD.sel=null;fillVestiti();$('sheetScr').hidden=false;return}return _os(kind)}}
+$('sheet').addEventListener('click',e=>{if(SHEET!=='vestiti')return;const b=e.target.closest('[data-wd],[data-wdwear],[data-wdup]');if(!b||b.disabled)return;
+  if(b.dataset.wd!=null){WD.sel=b.dataset.wd;sfx('ui');vib(10);fillVestiti();return}
+  if(b.dataset.wdwear!=null){const k=b.dataset.wdwear;if(k&&!wardOwn(k))return;SAVE.skin=k||null;save();sfx('upgrade');vib(20);renderTop.k=null;renderTop();fillVestiti();wardRefresh();toast(k?`Indossi ${SKINS[k].n}`:'Torni al vestito di sempre');return}
+  if(b.dataset.wdup!=null){const k=b.dataset.wdup;if(skinUp(k)){vib(25);toast(`${SKINS[k].n} sale al livello ${SAVE.skinLv[k]}!`);fillVestiti();wardRefresh()}}});
+// ------------------------------------------------------------------ where you open it: the Armeria (both modes) and the Profile
+function wardRow(){const k=SAVE.skin&&wardOwn(SAVE.skin)?SAVE.skin:'',up=wardList().some(id=>{const o=wardOwn(id),l=SAVE.skinLv[id]||1,c=SAVE.skinCards[id]||0;return o&&l<SKIN_MAX&&c>=skinNeed(l)});
+  return `<button class="wdRow" data-wdopen="1"><img src="${imgSrc(k?skinIcon(k):wardOrigIcon())}" alt=""><span><small>Vestito</small><b>${k?SKINS[k].n:'Originale'}</b></span><em>Guardaroba ›</em>${up?'<i class="wdDot"></i>':''}</button>`}
+function wardRefresh(){const a=$('wdArm');if(a)a.innerHTML=wardRow();const s=$('skins');if(s)s.innerHTML=wardRow()}
+{const tg=$('tabGear'),ph=tg&&tg.querySelector('.pageHead');if(ph){const d=document.createElement('div');d.id='wdArm';ph.after(d);d.innerHTML=wardRow()}}
+document.addEventListener('click',e=>{const b=e.target.closest('[data-wdopen]');if(!b)return;e.stopPropagation();openSheet('vestiti')},true);
+{const _rp=renderProfile;renderProfile=function(){_rp.apply(this,arguments);const s=$('skins');if(s)s.innerHTML=wardRow()}}
+{const _sh=setTab;setTab=function(t){const r=_sh.apply(this,arguments);if(t==='tabGear'){const a=$('wdArm');if(a)a.innerHTML=wardRow()}return r}}
+{const st=document.createElement('style');st.textContent=`
+#wdArm{margin:2px 0 10px}
+.wdRow{position:relative;display:flex;align-items:center;gap:10px;width:100%;padding:6px 12px 6px 6px;border:2.5px solid var(--ink,#0a0c0b);border-radius:12px;background:linear-gradient(100deg,rgba(80,64,44,.75),rgba(30,26,22,.75));color:var(--parch,#f2e8d0);font-family:var(--body);cursor:pointer;text-align:left}
+.wdRow img{width:46px;height:46px;flex:none;filter:drop-shadow(0 3px 0 rgba(0,0,0,.4))}.wdRow span{flex:1;min-width:0;display:flex;flex-direction:column}.wdRow small{font-size:11px;opacity:.8}
+.wdRow b{font-family:var(--display);font-weight:400;font-size:16px;color:#fff;text-shadow:var(--tol-s);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.wdRow em{font-style:normal;font-weight:700;font-size:13px;color:#ffd86b}
+.wdDot{position:absolute;top:4px;right:6px;width:11px;height:11px;border-radius:50%;background:#e5484d;border:2px solid #0a0c0b}
+.wdStage{position:sticky;top:-2px;z-index:3;box-shadow:0 6px 12px rgba(0,0,0,.35);display:flex;gap:10px;align-items:center;margin:2px 0 10px;padding:6px 10px 10px 4px;border:2.5px solid var(--ink,#0a0c0b);border-radius:14px;background:radial-gradient(60% 70% at 25% 60%,color-mix(in srgb,var(--rc) 30%,transparent),transparent 72%),linear-gradient(170deg,#3a3028,#1c1814)}
+.wdStage canvas{width:150px;height:170px;flex:none}.wdInfo{flex:1;min-width:0;display:flex;flex-direction:column;gap:4px}
+.wdTag{font-size:12px}.wdInfo b{font-family:var(--display);font-weight:400;font-size:19px;color:#fff;text-shadow:var(--tol-s);line-height:1.1}.wdInfo u{text-decoration:none;font-weight:800;font-size:12px}.wdInfo span{font-size:12px;opacity:.85}
+.wdInfo p{margin:0;font-size:12.5px;line-height:1.3}.wdInfo small{font-size:12px;color:#c8f04a;font-weight:700}.wdBtns{display:flex;flex-wrap:wrap;gap:6px;margin-top:2px}.wdBtns .btn{padding:6px 12px;font-size:14px}
+.wdLock{font-size:12px;color:#ffd86b;font-weight:700}.wdLock svg,.wdc small svg{width:12px;height:12px;vertical-align:-1px;display:inline-block}
+.wdGrid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;margin:4px 0 12px}
+.wdc{position:relative;display:flex;flex-direction:column;align-items:center;gap:1px;padding:6px 2px 7px;border:2.5px solid var(--ink,#0a0c0b);border-radius:12px;background:linear-gradient(170deg,color-mix(in srgb,var(--rc) 22%,#3a3028),#1e1a16);color:var(--parch,#f2e8d0);font-family:var(--body);cursor:pointer;-webkit-tap-highlight-color:transparent}
+.wdc img{width:64px;height:64px;filter:drop-shadow(0 3px 0 rgba(0,0,0,.4))}.wdc b{font-size:11.5px;line-height:1.15;text-align:center;font-weight:800}.wdc small{font-size:10.5px;opacity:.85}
+.wdc.locked img{filter:saturate(.75) brightness(.78) drop-shadow(0 3px 0 rgba(0,0,0,.4))}.wdc.sel{outline:3px solid #ffd86b;outline-offset:1px}
+.wdOn{position:absolute;top:3px;right:5px;width:18px;height:18px;border-radius:50%;background:#7bbf4a;border:2px solid #0a0c0b;color:#fff;font-style:normal;font-size:11px;line-height:14px;text-align:center;font-weight:900}`;document.head.appendChild(st)}
 })();
 };
 </script>

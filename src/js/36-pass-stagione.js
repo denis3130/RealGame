@@ -17,10 +17,10 @@ const passReady=()=>{const P0=ensurePass(),l=passLvl();let n=0;for(let i=1;i<=l;
 function passRewLabel(r){return r.k==='gold'?`${r.v} oro`:r.k==='gems'?`${r.v} cristalli`:r.k==='chest'?rwName(r.v,'classica'):r.k==='frame'?'Cornice '+FRAMES[r.v].n:r.k==='skin'?SKINS[r.v].n:'Titolo «'+r.v+'»'}
 function passIcon(r){if(r.k==='gold')return coinPile(r.v>400?1:0);if(r.k==='gems')return '<span class="bigGem"></span>';if(r.k==='chest')return rwIcon(r.v,'classica');
   if(r.k==='frame'){const f=FRAMES[r.v];return `<span class="pfrm" style="--f1:${f.c[0]};--f2:${f.c[1]}"></span>`}
-  if(r.k==='skin'){const S=SKINS[r.v];return `<svg viewBox="0 0 40 40" aria-hidden="true"><path d="M20 5c-6 0-9 4-9 9v4l-5 17h28l-5-17v-4c0-5-3-9-9-9z" fill="${S.body}" stroke="#0b1326" stroke-width="2.4" stroke-linejoin="round"/><path d="M11 14c0-5 3-9 9-9s9 4 9 9l-9 3z" fill="${S.hood}" stroke="#0b1326" stroke-width="2.4" stroke-linejoin="round"/><circle cx="16" cy="25" r="1.4" fill="#fff"/><circle cx="24" cy="29" r="1.2" fill="#fff"/></svg>`}
+  if(r.k==='skin')return skinIcon(r.v).replace('class="cicon"','class="pkI"');
   return `<svg viewBox="0 0 40 40" aria-hidden="true"><rect x="5" y="13" width="30" height="14" rx="3" fill="#ffd84a" stroke="#0b1326" stroke-width="2.4"/><path d="M11 20h18" stroke="#8a5a20" stroke-width="3" stroke-linecap="round"/></svg>`}
 function grantPass(r){if(r.k==='gold'){SAVE.gold+=r.v;sfx('coin')}else if(r.k==='gems'){SAVE.gems=(SAVE.gems||0)+r.v;sfx('gem')}else if(r.k==='frame'){SAVE.xframes=SAVE.xframes||[];if(!SAVE.xframes.includes(r.v))SAVE.xframes.push(r.v);sfx('victory')}
-  else if(r.k==='title'){SAVE.xtitles=SAVE.xtitles||[];if(!SAVE.xtitles.includes(r.v))SAVE.xtitles.push(r.v);sfx('victory')}else if(r.k==='skin'){SAVE.skins=SAVE.skins||{};SAVE.skins[r.v]=1;sfx('victory');achPop('Nuovo mantello!',SKINS[r.v].n+': indossalo dal Profilo','unlock')}
+  else if(r.k==='title'){SAVE.xtitles=SAVE.xtitles||[];if(!SAVE.xtitles.includes(r.v))SAVE.xtitles.push(r.v);sfx('victory')}else if(r.k==='skin'){SAVE.skins=SAVE.skins||{};SAVE.skins[r.v]=1;sfx('victory');SAVE.skinLv=SAVE.skinLv||{};SAVE.skinLv[r.v]=SAVE.skinLv[r.v]||1;achPop('Nuovo vestito!',SKINS[r.v].n+': indossalo dal Guardaroba','unlock')}
   toast('+'+passRewLabel(r));renderGold();save();if(r.k==='chest'){closeSheet();openChest(r.v)}}
 function fillPass(){const P0=ensurePass(),l=passLvl(),into=P0.xp-l*PASS_XP,mx=l>=PASS_T;lastSheetHTML='';
   let rows='';for(let i=1;i<=PASS_T;i++){const fr=passReward(i,false),pr=passReward(i,true),reach=l>=i;
