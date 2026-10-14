@@ -160,3 +160,5 @@ farsi fottere». L'edificio col Mitra a muro è la Segheria.
   arriva a 40): è la folla intorno all'eroe, non uno zombie bloccato, e capitava anche prima (in 9 giri della versione di prima una volta).
 - Tempi di disegno dentro la Locanda (le due versioni nello stesso browser, misurate a turno): 10,5 ms contro 9,1 senza zombie, 28,8 contro
   28,0 con 12 zombie. Scala, camino, banco e tavoli tolti uno alla volta costano meno di 1 ms ciascuno.
+- Prove del gioco vero: `zombie`, `avvio`, `meta2`, `menu2`, `menu3`, `salvataggio`, due partite Classiche (`run.js`) senza errori; `audio.js`
+  nessun errore dentro i suoni. Ripubblicata l'Anteprima 48 (versione 3 dell'artefatto).
