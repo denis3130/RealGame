@@ -51,11 +51,9 @@ function renderFloor(){
       ring(R0,3,.42);ring(R0*.8,2,.38);
       fx.strokeStyle='rgba(0,0,0,.42)';fx.lineWidth=1.6;fx.lineCap='round';for(let k=0;k<18;k++){const a=k/18*TAU,rr=R0*.9,px=cx+Math.cos(a)*rr,py=cy+Math.sin(a)*rr*ry;fx.save();fx.translate(px,py);fx.scale(1,ry);fx.rotate(a+Math.PI/2);fx.beginPath();
         const g=k%3;if(g===0){fx.moveTo(-3,-3);fx.lineTo(0,3);fx.lineTo(3,-3)}else if(g===1){fx.moveTo(-3,0);fx.lineTo(3,0);fx.moveTo(0,-3);fx.lineTo(0,3)}else{fx.arc(0,0,2.6,0,Math.PI*1.4)}fx.stroke();fx.restore()}
-      // horned skull, engraved
+      // the arena's own emblem, engraved (src/js/74-arene.js): the beast's skull is gone from the floors
       fx.save();fx.translate(cx,cy);fx.scale(1,ry);const s=R0*.42,eng=(f)=>{fx.beginPath();f();fx.strokeStyle='rgba(0,0,0,.45)';fx.lineWidth=2.4;fx.stroke();fx.save();fx.translate(0,1.4);fx.beginPath();f();fx.strokeStyle='rgba(255,255,255,.06)';fx.lineWidth=1;fx.stroke();fx.restore()};
-      eng(()=>{fx.ellipse(0,-s*.1,s*.78,s*.62,0,Math.PI*.82,Math.PI*2.18);fx.lineTo(s*.42,s*.62);fx.lineTo(-s*.42,s*.62);fx.closePath()});
-      for(const sd of [-1,1]){eng(()=>{fx.moveTo(sd*s*.62,-s*.42);fx.quadraticCurveTo(sd*s*1.25,-s*.55,sd*s*1.3,-s*1.15)});eng(()=>{fx.ellipse(sd*s*.32,-s*.05,s*.2,s*.17,0,0,TAU)})}
-      eng(()=>{fx.moveTo(0,s*.18);fx.lineTo(-s*.09,s*.34);fx.lineTo(s*.09,s*.34);fx.closePath()});
+      floorEmblem(eng,s);
       fx.restore();
       fx.save();fx.globalCompositeOperation='lighter';fx.strokeStyle=`rgba(${rgb},.14)`;fx.lineWidth=1.2;fx.beginPath();fx.ellipse(cx,cy,R0*.8,R0*.8*ry,0,0,TAU);fx.stroke();fx.restore()}
     // two or three cracks with the chapter's light seeping out of them

@@ -97,4 +97,5 @@ js/70-casse-negozio.js
 js/71-menu-zombie.js
 js/72-vestiti.js
 js/73-icone-oggetti.js
+js/74-arene.js
 coda.html
