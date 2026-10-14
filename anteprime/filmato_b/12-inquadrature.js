@@ -32,6 +32,11 @@ function coneItem(out,p,rot){if(!p)return;out.push({z:p[2],c:(c,s)=>drawCone(c,p
 function dustItem(out,x,z,u,n,seed){if(u<0||u>.9)return;out.push({z:z+.5,c:(c,s)=>{const r=frng(seed||1);for(let i=0;i<(n||5);i++){const a=Math.PI+r()*Math.PI,d=(4+r()*10)*(.3+u),px=x+Math.cos(a)*d,py=-2-u*6*r()+Math.sin(a)*2;
   c.fillStyle=`rgba(226,200,160,${.45*(1-u/.9)})`;c.beginPath();c.arc(px,py,2+u*6,0,FTAU);c.fill()}}})}
 
+// ---------- the other two: the Balestriere by the right-hand bales, the Druida by the left ones (BAL, DRU: where they stand)
+const BAL={x:62,z:118},DRU={x:-68,z:112};
+// o: {face, look, anim, p, el, tweak} for each (b: the Balestriere, d: the Druida), or a function of the hero
+function bTwo(lt,b,d){return[bHero('balestriere',{x:BAL.x,z:BAL.z,anim:'idle',p:walkP(lt+.7,2.7),el:16,...b}),bHero('druida',{x:DRU.x,z:DRU.z,anim:'idle',p:walkP(lt+1.3,3.1),el:16,...d})]}
+
 // ---------- 1 · dawn, the run
 const B11={id:'1.1',t0:0,d:1.9,set:'bAlba',fin:.9,
   // the sun rising over the sea of the treetops
@@ -60,7 +65,8 @@ const B31={id:'3.1',t0:8.9,d:1.7,set:'bCampo',flash:(lt)=>.9*(1-seg01(lt,0,.5)),
   heroes:(lt)=>{const go=(mark,del)=>{const u=fcl((lt-del)/.85,0,1),e=EZ.o(u);return{x:flp(-190,mark[0],e),z:mark[1],u}};const P=go(B_MARK.p,.12),Cm=go(B_MARK.c,0);
     const one=(id,q,ph)=>{const run=q.u<.82,turn=EZ.io(seg01(q.u,.7,1)),skid=q.u>.62&&q.u<1?Math.sin((q.u-.62)/.38*Math.PI):0;
       return bHero(id,{x:q.x,z:q.z,face:flp(.04,faceTo(q.x,q.z,CAMPO.t1.x,CAMPO.t1.z),turn),anim:run?'walk':'idle',p:run?runP(lt,ph):walkP(lt,2.4),el:18,tweak:A=>{if(run)runPose(A,1-seg01(q.u,.5,.82));A.lean-=.2*skid}})};
-    return[one(B_CO(),Cm,0),one(B_ID(),P,.2)]},
+    const runAt=faceTo(BAL.x,BAL.z,flp(-190,0,EZ.o(fcl(lt/.85,0,1))),4);
+    return[one(B_CO(),Cm,0),one(B_ID(),P,.2),...bTwo(lt,{face:runAt,look:-.2,tweak:A=>{A.mouth=talk(lt,.4,1.7);A.squint=.3}},{face:faceTo(DRU.x,DRU.z,0,4)+.3,look:.4*kf([[0,-1],[.6,1]],lt,EZ.io)})]},
   items:(t,out)=>{const lt=t-8.9;dustItem(out,B_MARK.c[0],B_MARK.c[1],lt-.62,6,3);dustItem(out,B_MARK.p[0],B_MARK.p[1],lt-.74,6,5)}};
 // the draw, seen from the front: the bow comes up, the string goes back, the arrow leaves past us (the target is behind the camera)
 const B32P={x:-230,z:60,face:Math.PI/2+.42};
@@ -82,14 +88,16 @@ const B34={id:'3.4',t0:13.6,d:1.9,set:'bCampo',campo:{t1hits:T1.hits,t1wob:T1.wo
   heroes:(lt)=>{const sh=Math.sin(seg01(lt,.15,.55)*Math.PI);
     return[bHero(B_CO(),{x:B_MARK.c[0],z:B_MARK.c[1],face:Math.PI-.55,anim:'idle',p:walkP(lt,2.4),el:13,look:-.15,
         tweak:A=>{A.mouth=talk(lt,.25,1.95);A.grip=add3(A.grip,[0,0,3*sh]);A.hR=add3(A.hR,[0,0,4*sh]);A.hd=add3(A.hd,[0,0,-1.2*sh]);A.roll=.06*sh;A.squint=.35}}),
-      bHero(B_ID(),{x:B_MARK.p[0],z:B_MARK.p[1],face:faceTo(B_MARK.p[0],B_MARK.p[1],CAMPO.t1.x,CAMPO.t1.z)+.5,anim:'idle',p:walkP(lt,2.6),el:13,look:kf([[.3,0],[.7,.9]],lt,EZ.io),tweak:A=>{A.squint=.2}})]}};
+      bHero(B_ID(),{x:B_MARK.p[0],z:B_MARK.p[1],face:faceTo(B_MARK.p[0],B_MARK.p[1],CAMPO.t1.x,CAMPO.t1.z)+.5,anim:'idle',p:walkP(lt,2.6),el:13,look:kf([[.3,0],[.7,.9]],lt,EZ.io),tweak:A=>{A.squint=.2}}),
+      ...bTwo(lt,{face:faceTo(BAL.x,BAL.z,0,4),el:13},{face:faceTo(DRU.x,DRU.z,0,4),el:13})]}};
 
 // ---------- 3 · the contest
 const hangFace=(x,z)=>faceTo(x,z,CAMPO.hang.x,CAMPO.hang.z);
 const B41={id:'4.1',t0:15.5,d:2.1,set:'bCampo',campo:{t1hits:T1.hits},
   cam:(k,lt)=>({x:12,y:-44,z:flp(-140,-128,EZ.sine(k)),hy:.42,...fogB(1100)}),
   heroes:(lt)=>[bHero(B_CO(),{x:B_MARK.c[0],z:B_MARK.c[1],face:hangFace(B_MARK.c[0],B_MARK.c[1]),anim:'aim',p:0,pull:.08+.8*EZ.io(seg01(lt,.6,1.9)),el:16,rim:BRIMB,tint:BBACK}),
-    bHero(B_ID(),{x:B_MARK.p[0],z:B_MARK.p[1],face:hangFace(B_MARK.p[0],B_MARK.p[1]),anim:'aim',p:0,pull:.08+.84*EZ.io(seg01(lt,.5,1.8)),el:16,rim:BRIMB,tint:BBACK})]};
+    bHero(B_ID(),{x:B_MARK.p[0],z:B_MARK.p[1],face:hangFace(B_MARK.p[0],B_MARK.p[1]),anim:'aim',p:0,pull:.08+.84*EZ.io(seg01(lt,.5,1.8)),el:16,rim:BRIMB,tint:BBACK}),
+    ...bTwo(lt,{face:hangFace(BAL.x,BAL.z),rim:BRIMB,tint:BBACK},{face:hangFace(DRU.x,DRU.z),rim:BRIMB,tint:BBACK})]};
 // the two close-ups (seen from the side: here they aim to the right and to the left)
 const B42={id:'4.2',t0:17.6,d:.8,set:'bCampo',
   cam:(k,lt)=>({x:-204,y:-27,z:flp(-6,-3,k),hy:.5,dof:3,bgZ:80,...fogB(1100)}),
@@ -139,26 +147,35 @@ const B52={id:'5.2',t0:25.1,d:2.6,set:'bCampo',
       if(p)coneItem(out,[p[0]+(p[3]>1?(p[3]-1)*20:0),p[1],p[2]+(p[3]>1?(p[3]-1)*160:0)],t*11+i)}
     for(let i=0;i<3;i++){const L2=[[-88,4],[-40,-2],[-70,22]][i];dustItem(out,L2[0],L2[1],t-B_DASH[i]-.36,6,11+i);dustItem(out,L[i][0],L[i][1],t-B_DASH[i],4,21+i)}}};
 const B53={id:'5.3',t0:27.7,d:1.2,set:'bCampo',fout:.5,
-  cam:(k,lt)=>({x:0,y:-30,z:flp(-104,-98,k),hy:.5,dof:2.5,bgZ:200,...fogB(1100)}),
+  cam:(k,lt)=>({x:0,y:-31,z:flp(-146,-136,k),hy:.5,dof:2.5,bgZ:200,...fogB(1100)}),
   heroes:(lt)=>{const laugh=A=>{A.squint=1;A.mouth=.5+.15*Math.sin(lt*17);A.s=(A.s||0)+.04*Math.sin(lt*16);A.hp=.14;A.lean=-.06};
-    return[bHero(B_CO(),{x:15,z:8,face:Math.PI/2+.32,anim:'idle',p:walkP(lt,2),el:13,tweak:laugh}),bHero(B_ID(),{x:-15,z:0,face:Math.PI/2-.3,anim:'idle',p:walkP(lt,2.2),el:13,tweak:laugh})]}};
+    return[bHero(B_CO(),{x:15,z:8,face:Math.PI/2+.32,anim:'idle',p:walkP(lt,2),el:13,tweak:laugh}),bHero(B_ID(),{x:-15,z:0,face:Math.PI/2-.3,anim:'idle',p:walkP(lt,2.2),el:13,tweak:laugh}),
+      bHero('balestriere',{x:44,z:24,face:Math.PI/2+.5,anim:'idle',p:walkP(lt+.4,2.4),el:13,tweak:laugh}),bHero('druida',{x:-44,z:20,face:Math.PI/2-.5,anim:'idle',p:walkP(lt+.9,2.6),el:13,tweak:laugh})]}};
 
 // ---------- 5 · tomorrow, the crypt
 const B61={id:'6.1',t0:28.9,d:5.7,set:'bTronco',fin:.6,
   cam:(k,lt)=>({x:4,y:-44,z:flp(-176,-150,EZ.sine(k)),hy:.56,...fogB(1600)}),
   heroes:(lt)=>{const lk=kf([[.6,0],[1,-.95],[3.1,-.95],[3.5,-.2]],lt,EZ.io),nod=lt>3.6&&lt<4.4?Math.sin((lt-3.6)/.8*Math.PI*2)*.14:0;
     return[bHero(B_CO(),{x:13,y:14,z:2,face:-Math.PI/2+.05,anim:'idle',p:walkP(lt,2.8),el:10,shadow:0,look:lk,tint:BBACK,rim:BRIMB,tweak:A=>{A.mouth=talk(lt,.7,3.2)}}),
-      bHero(B_ID(),{x:-13,y:14,z:2,face:-Math.PI/2-.05,anim:'idle',p:walkP(lt,3),el:10,shadow:0,look:kf([[1.2,0],[1.6,.5],[3.4,.5],[3.8,.1]],lt,EZ.io),tint:BBACK,rim:BRIMB,tweak:A=>{A.hp+=nod}})]}};
+      bHero(B_ID(),{x:-13,y:14,z:2,face:-Math.PI/2-.05,anim:'idle',p:walkP(lt,3),el:10,shadow:0,look:kf([[1.2,0],[1.6,.5],[3.4,.5],[3.8,.1]],lt,EZ.io),tint:BBACK,rim:BRIMB,tweak:A=>{A.hp+=nod}}),
+      ...bLog(lt,10)]}};
+// the other two at the log: the Druida sitting at its right end, the Balestriere standing at its left end, leaning a little on it
+function bLog(lt,el,o){o=o||{};return[bHero('druida',{x:40,y:14,z:2,face:-Math.PI/2+.12,anim:'idle',p:walkP(lt+.6,3.2),el,shadow:0,tint:BBACK,rim:BRIMB,look:o.dl||0,tweak:o.dt}),
+  bHero('balestriere',{x:-37,z:10,face:-Math.PI/2-.2,anim:'idle',p:walkP(lt+1.1,2.9),el,tint:BBACK,rim:BRIMB,look:o.bl||0,tweak:o.bt})]}
 const B62={id:'6.2',t0:34.6,d:2.15,set:'bTronco',fout:.9,
   cam:(k,lt)=>({x:4,y:kf([[0,-44],[2.15,-190]],lt,EZ.io),z:kf([[0,-150],[2.15,-260]],lt,EZ.io),hy:kf([[0,.56],[2.15,.66]],lt,EZ.io),...fogB(1600)}),
   heroes:(lt)=>[bHero(B_CO(),{x:13,y:14,z:2,face:-Math.PI/2+.05,anim:'idle',p:walkP(lt,2.8),el:18,shadow:0,tint:BBACK,rim:BRIMB}),
-    bHero(B_ID(),{x:-13,y:14,z:2,face:-Math.PI/2-.05,anim:'idle',p:walkP(lt,3),el:18,shadow:0,tint:BBACK,rim:BRIMB})]};
+    bHero(B_ID(),{x:-13,y:14,z:2,face:-Math.PI/2-.05,anim:'idle',p:walkP(lt,3),el:18,shadow:0,tint:BBACK,rim:BRIMB}),
+    ...bLog(lt,18,{dl:kf([[0,0],[.3,.8],[1.7,.8],[2,.2]],lt,EZ.io),dt:A=>{A.mouth=talk(lt,.15,1.75)}})]};
 const B71={id:'7.1',t0:36.75,d:1.85,set:'nero'};
 SHOTS=[B11,B21,B22,B23,B31,B32,B33,B34,B41,B42,B43,B44,B45,B46,B51,B52,B53,B61,B62,B71];
 FM.DUR=38.6;SHOT_LOGO=B_LOGO;
-// the words: the companion's lines at the top with his name (Denis's lines), the protagonist's thoughts at the bottom
+// the words: the companion's lines at the top with his name (Denis's lines), the protagonist's thoughts at the bottom; one line each
+// for the Balestriere and the Druida (to be confirmed by Denis)
 function bTexts(){const P=B_ID(),Co=B_CO(),n=BNAME[Co],col=BCOL[Co];
-  TXT.A=[[.7,3.1,'Prima della cripta…',.15],[4,6.3,`Tutto qui? Corri, ${P==='arciere'?'dormiglione':'dormigliona'}!`,.16,n,col],[13.8,15.8,'Bel colpo… sarà fortuna!',.16,n,col],
-    [21.2,23.4,'Cosa?! Mi hai spaccato la freccia!',.16,n,col],[23.6,25.6,'Schiva questa! E questa!',.16,n,col],[29.6,32.1,'Domani la cripta. Ci stai?',.16,n,col]];
+  TXT.A=[[.7,3.1,'Prima della cripta…',.15],[4,6.3,`Tutto qui? Corri, ${P==='arciere'?'dormiglione':'dormigliona'}!`,.16,n,col],
+    [9.3,11,'In ritardo, come sempre.',.16,BNAME.balestriere,BCOL.balestriere],[13.8,15.8,'Bel colpo… sarà fortuna!',.16,n,col],
+    [21.2,23.4,'Cosa?! Mi hai spaccato la freccia!',.16,n,col],[23.6,25.6,'Schiva questa! E questa!',.16,n,col],[29.6,32.1,'Domani la cripta. Ci stai?',.16,n,col],
+    [34.75,36.5,'Domani, tutti e quattro.',.16,BNAME.druida,BCOL.druida]];
   TXT.B=[[6.4,8,'Ah, sì? Ti prendo!'],[15.9,17.5,'Fortuna? Guarda bene.'],[17.7,19,'Respira… mira…'],[26.2,27.8,'Troppo facile!'],[32.4,34,'Ci sto.']]}
 bTexts();

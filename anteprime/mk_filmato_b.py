@@ -51,7 +51,7 @@ try{if(SCE.on)sceClose()}catch(e){}
     const P=FILM.FM.prot||'arciere',O=P==='arciere'?'cacciatrice':'arciere',N={arciere:"l'Arciere",cacciatrice:'la Cacciatrice'};
     el.innerHTML=css+(end?`<small>Filmato B</small><h2>L'allenamento</h2><p>Hai visto la storia con ${N[P]}. Con l'altro eroe cambiano il protagonista e le battute.</p>
       <button class="${O==='arciere'?'ar':'ca'}" data-e="${O}">Rivedi con ${N[O]}</button><button class="${P==='arciere'?'ar':'ca'}" data-e="${P}">Rivedi con ${N[P]}</button><button class="tr" data-e="${P}" data-t="1">Trailer 9:16 (senza Salta)</button>`
-      :`<small>Filmato B · all'alba</small><h2>Chi sei?</h2><p>Il protagonista è l'eroe che hai scelto: pensa, in basso. L'altro si allena con te e parla, in alto.</p>
+      :`<small>Filmato B · all'alba</small><h2>Chi sei?</h2><p>Il protagonista è l'eroe che hai scelto: pensa, in basso. Gli altri (anche il Balestriere e il Druida) si allenano con te e parlano, in alto.</p>
       <button class="ar" data-e="arciere">Sono l'Arciere</button><button class="ca" data-e="cacciatrice">Sono la Cacciatrice</button>`);
     el.hidden=false}
   function go(id,tr){FILM.setProt(id);FILM.unlock(()=>FILM.play({ver:'AB',trailer:tr,onEnd:()=>panel(true)}))}

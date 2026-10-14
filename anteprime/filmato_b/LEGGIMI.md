@@ -5,7 +5,12 @@ il tiro ai bersagli, la gara a chi colpisce prima (la tua freccia spacca la sua)
 i due seduti su un tronco con la cripta lontana. Dura circa 38 secondi, poi c'è il logo.
 
 - **Il protagonista è l'eroe che hai scelto** (`FM.prot`): ha solo i pensieri, in corsivo in basso, e il bastoncino di muschio.
-  L'altro eroe è il compagno: parla in alto, col suo nome nel suo colore (verde acqua l'Arciere, rosa la Cacciatrice).
+  L'altro eroe è il compagno: parla in alto, col suo nome nel suo colore (verde acqua l'Arciere, rosa la Cacciatrice). Se il filmato
+  va nel gioco prima della creazione dell'eroe, il protagonista è l'Arciere.
+- **Ci sono anche il Balestriere e il Druida** (Denis, 14 ottobre: «aggiungi anche gli altri pg nel filmato»): aspettano al campo
+  (`BAL`, `DRU`; il Balestriere: «In ritardo, come sempre.»), guardano la gara dai lati, ridono con gli altri due dopo le pigne
+  e alla fine stanno al tronco con loro (il Druida seduto all'altro capo, il Balestriere in piedi), e il Druida chiude con
+  «Domani, tutti e quattro.». Le due battute sono da confermare con Denis. Il Balestriere parla in azzurro acciaio, il Druida in verde.
 - **Battute del compagno** (scelte da Denis): «Tutto qui? Corri, dormiglione!» (dormigliona se la protagonista è la Cacciatrice),
   «Bel colpo… sarà fortuna!», «Cosa?! Mi hai spaccato la freccia!», «Schiva questa! E questa!», «Domani la cripta. Ci stai?».
   Pensieri del protagonista: «Ah, sì? Ti prendo!», «Fortuna? Guarda bene.», «Respira… mira…», «Troppo facile!», «Ci sto.»
@@ -17,9 +22,9 @@ i due seduti su un tronco con la cripta lontana. Dura circa 38 secondi, poi c'è
 - `10-alba.js`: la luce dell'alba (stessa tavolozza `NT` del bosco, scaldata), cielo col sole e le nuvole, uccelli; bersaglio di
   paglia sul cavalletto, bersaglio appeso al ramo, frecce in volo e piantate, balle di fieno, staccionata, stendardo, cesto di pigne,
   tronco col muschio, cripta lontana sulla collina (quella del filmato A).
-- `11-scene.js`: chi è chi (`B_ID`, `B_CO`), aspetto degli eroi (`BST`), corsa (`runPose`), i set `bAlba`, `bCorsa`, `bCorsa2`,
+- `11-scene.js`: chi è chi (`B_ID`, `B_CO`), aspetto dei quattro eroi (`BST`, `BNAME`, `BCOL`), corsa (`runPose`), i set `bAlba`, `bCorsa`, `bCorsa2`,
   `bCampo` (il campo di allenamento, `CAMPO`), `bTronco`.
-- `12-inquadrature.js`: le 19 inquadrature e i momenti chiave (`B_REL1`, `B_HIT1`, `B_SPLIT`…). `13-suoni.js`: suoni e musica
+- `12-inquadrature.js`: le 19 inquadrature e i momenti chiave (`B_REL1`, `B_HIT1`, `B_SPLIT`…), gli altri due (`bTwo`, `bLog`). `13-suoni.js`: suoni e musica
   (re maggiore, flauto, arpa, tamburi a cornice; il trombone buffo quando il compagno resta senza parole).
 - Anteprima: `python3 anteprime/mk_filmato_b.py` → `anteprime/filmato_b.html` (non va su git). All'inizio «Chi sei?» (Arciere o
   Cacciatrice), alla fine «Rivedi con l'altro eroe» e «Trailer 9:16». Indirizzo: `?eroe=cacciatrice`, `?trailer=1`, `?t=19`, `?shot=4.5`.

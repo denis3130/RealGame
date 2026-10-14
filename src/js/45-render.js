@@ -28,7 +28,7 @@ function render(){
   for(const k of G.rocks)castShadow(k);
   for(const e of G.enemies)if(e.spawn<=0){if(e.elite&&!e.type.includes('slime')){ctx.save();ctx.translate(e.x,e.y);ctx.scale(1.22,1.22);ctx.translate(-e.x,-e.y);shadowFor(e);ctx.restore()}else shadowFor(e)}
   if(G.prop)shadow(G.prop.x,G.prop.y+4,40,12,.35);
-  if(!(G.door&&P.y<TOP+2))shadow(P.x,P.y+8,13,5,.32);petShadow();
+  if(!(G.door&&P.y<TOP+2))shadow(P.x,P.y+8,13,5,.32);petShadow();if(INTRO.on&&INTRO.cast)for(const a of INTRO.cast)shadow(a.x,a.y+8,13,5,.32);
   noShadow=true;
   const inDoor=G.door&&P.y<TOP+2;
   const list=[];for(const k of G.rocks)list.push({y:k.y,f:()=>drawRock(k)});
@@ -39,6 +39,7 @@ function render(){
   for(const st of G.stuck)list.push({y:st.k.y+(Math.sin(st.a)>0?-1:1),f:()=>drawStuck(st)});
   list.push({y:P.y,f:()=>{if(inDoor){ctx.save();ctx.beginPath();ctx.rect(0,TOP,AW,AH);doorPath();ctx.clip();drawHero();ctx.restore();doorDark(true);doorFrame()}else drawHero()}});
   for(const pt of G.pets||(G.pet?[G.pet]:[]))list.push({y:pt.y+(pt.id==='muschietto'?0:6),f:()=>drawPet(pt)});
+  if(INTRO.on&&INTRO.cast)for(const a of INTRO.cast)list.push({y:a.y,f:()=>iDrawCast(a)});
   list.sort((a,b)=>a.y-b.y);for(const it of list)it.f();
   noShadow=false;
   for(let i=0;i<P.orbit;i++){const a=G.t*3.6+i*TAU/P.orbit,bx=P.x+Math.cos(a)*(P.storm?60:44),by=P.y-6+Math.sin(a)*(P.storm?60:44);ctx.save();ctx.translate(bx,by);ctx.rotate(a+G.t*8);if(P.storm)ctx.scale(1.45,1.45);ink(2);ctx.beginPath();ctx.moveTo(0,-9);ctx.lineTo(4,0);ctx.lineTo(0,9);ctx.lineTo(-4,0);ctx.closePath();fs('#dfe4ea');ctx.restore()}

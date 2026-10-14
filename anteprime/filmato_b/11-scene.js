@@ -1,10 +1,14 @@
 // ------------------------------------------------------------------ 11 · who's who, the sets of the training film and its shots
 // FM.prot: the hero you chose (the protagonist, who only thinks); the other one is the companion (who speaks). Their looks are the
 // game's: the Arciere with the leather jacket and the ash bow, the Cacciatrice with her golden hood, the ponytail and the pink bow.
+// The Balestriere (helmet, crossbow) and the Druida (antlers, staff) train with them (Denis, 14 October: «aggiungi anche gli altri pg
+// nel filmato»): they wait at the training ground, watch the contest, laugh with them and sit on the log at the end; one line each.
 const B_ID=()=>FM.prot==='cacciatrice'?'cacciatrice':'arciere',B_CO=()=>B_ID()==='arciere'?'cacciatrice':'arciere';
 const BST={arciere:{...HERO,armor:'giubba',ring:null,amu:null,held:'bow',quiver:true,bowCol:'#a4703d',bowKind:null},
-  cacciatrice:{...HERO,...HERO_BY.cacciatrice.style,hid:'cacciatrice',armor:'giubba',ring:null,amu:null,held:'bow',quiver:true,bowKind:null}};
-const BNAME={arciere:'Arciere',cacciatrice:'Cacciatrice'},BCOL={arciere:'#5cdec8',cacciatrice:'#ff8cbe'};
+  cacciatrice:{...HERO,...HERO_BY.cacciatrice.style,hid:'cacciatrice',armor:'giubba',ring:null,amu:null,held:'bow',quiver:true,bowKind:null},
+  balestriere:{...HERO,...HERO_BY.balestriere.style,hid:'balestriere',armor:'giubba',ring:null,amu:null},
+  druida:{...HERO,...HERO_BY.druida.style,hid:'druida',armor:'giubba',ring:null,amu:null,eyes:HERO_BY.druida.style.eyeCol}};
+const BNAME={arciere:'Arciere',cacciatrice:'Cacciatrice',balestriere:'Balestriere',druida:'Druida'},BCOL={arciere:'#5cdec8',cacciatrice:'#ff8cbe',balestriere:'#a9c8ff',druida:'#7bf0a8'};
 // the light of the morning on them: a warm tint, the sun's edge on the right; against the sun a darker tint and a golden outline
 const BTINT='#fff1df',BRIM=['#ffd08a',.6,1,-1,1.3],BBACK='#cdb7bf',BRIMB=[['#ffd590',.85,1,-1,1.5],['#ffe2b0',.5,-1,-.4,1.1]];
 function bHead(H,dy){return pr(H.x,-(dy==null?27:dy)-(H.y||0),H.z)}
