@@ -46,7 +46,8 @@ const SAVE={gold:900,gems:40,introSeen:1,handSeen:1,runs:3,trophies:120,items:{a
   await p.waitForTimeout(1500);ok(await p.evaluate(()=>document.getElementById('boot').hidden&&!document.getElementById('mz').hidden&&__E("$('menu').hidden")),'poi la mappa, con la schermata sparita');
   await p.screenshot({path:path.join(OUT,'4_mappa.png')});
   // 3. la memoria: con l'app in secondo piano e la mappa spenta la foto del terreno se ne va; rientrando torna uguale
-  const hash=()=>p.evaluate(()=>__E(`(()=>{const c=ZM.W.ground,d=c.getContext('2d').getImageData(0,0,c.width,c.height).data;let h=0;for(let i=0;i<d.length;i+=89)h=(h*31+d[i])|0;return c.width+'x'+c.height+':'+h})()`));
+  // (anteprima 48: la foto del terreno è a riquadri, W.ground.tiles)
+  const hash=()=>p.evaluate(()=>__E(`(()=>{const G=ZM.W.ground,cs=G.tiles?G.tiles.map(t=>t.c):[G];let h=0;for(const c of cs){const d=c.getContext('2d').getImageData(0,0,c.width,c.height).data;for(let i=0;i<d.length;i+=89)h=(h*31+d[i])|0}return G.width+'x'+G.height+':'+h})()`));
   const h1=await hash();await p.evaluate(()=>__E('zExit()'));await p.waitForTimeout(800);
   await p.evaluate(()=>__E("Object.defineProperty(document,'hidden',{get:()=>true,configurable:true});document.dispatchEvent(new Event('visibilitychange'));delete document.hidden"));
   ok(await p.evaluate(()=>__E('ZM.W.ground===null&&!!ZG.ctl')),'in secondo piano la foto del terreno zombie viene buttata (la mappa resta pronta)');

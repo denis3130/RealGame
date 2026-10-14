@@ -15102,6 +15102,8 @@ const W={dbg:{},w:10*T,h:10*T,ground:null,hero:null,Z:[],FX:[],crows:[],flock:[]
 // le barriere (finestre, varchi delle recinzioni: barriere.js) sono solidi con s.bar: fermano sempre l'eroe; BARM dice chi le passa in questo
 // controllo: 0 nessuno, 1 i colpi e la mira (si spara attraverso le finestre), 2 solo quelle aperte (lo zombie che colpisce da una finestra senza assi)
 let BARM=0;
+let VIEWR=1e9;/* (anteprima 48, punto 54) il mezzo lato del quadrato del mondo che può stare sullo schermo (anche girando): quello che è fuori non si aggiorna a vista, non si ordina e non si disegna (zombie, fiamme libere, corvi posati, luci, fumi) */
+const farV=(x,y,r)=>Math.abs(x-CAM.x)>VIEWR+r||Math.abs(y-CAM.y)>VIEWR+r;
 let LV=0;/* il piano dei solidi che contano (anteprima 48, punto 15): 0 a terra, 1 il piano di sopra di un edificio (i suoi solidi hanno lv:1) */
 function hit(x,y,r,ex){for(const s of solids){if(s.off||s===ex||(s.lv||0)!==LV||(s.bar&&BARM&&(BARM===1||s.bar.open())))continue;const cx=cl(x,s.x,s.x+s.w),cy=cl(y,s.y,s.y+s.d);if((x-cx)**2+(y-cy)**2<r*r)return s}return null}
 function move(o,dx,dy,r){const sv=LV;LV=o.lv||0;const s0=hit(o.x,o.y,r);o.x+=dx;if(hit(o.x,o.y,r,s0))o.x-=dx;o.y+=dy;if(hit(o.x,o.y,r,s0))o.y-=dy;LV=sv}
@@ -15260,12 +15262,18 @@ function* bakeSteps(w,h,painter){const tk0=performance.now();W.w=w;W.h=h;GT=w*h>
     g2.clearRect(0,0,w,h);g2.fillStyle='#000';g2.beginPath();for(const s of solids){if(s.w>400||s.d>400||s.noAO)continue;if(s.round){g2.moveTo(s.x+s.w+1.5,s.y+s.d/2);g2.ellipse(s.x+s.w/2,s.y+s.d/2,s.w/2+1.5,s.d/2+1.5,0,0,TAU)}else g2.rect(s.x-1,s.y-1,s.w+2,s.d+2)}g2.fill();
     ctx.globalAlpha=.3;ctx.drawImage(sh,0,0,w,h);ctx.restore();yield* pause('buio di contatto');
     for(let i=0;i<decals.length;i++){ctx.save();decals[i]();ctx.restore();if(i%12===11)yield* pause('decalcomanie')}yield* pause('decalcomanie');
-  }finally{ctx=sv;BAKE=null}W.ground=c;W.dbg.tbake=performance.now()-tk0}
+  }finally{ctx=sv;BAKE=null}W.ground=tileGround(c);c.width=c.height=0;W.dbg.tbake=performance.now()-tk0}
+// (anteprima 48, punto 54) la foto del terreno si taglia in riquadri di al più 1024 px, con 2 px in comune tra vicini (niente righe tra un
+// riquadro e l'altro): una foto sola di milioni di pixel (la mappa grande, 2880×2784) il browser la disegna per una strada lentissima (26 ms a
+// fotogramma invece di 8 sul computer di prova); a riquadri si disegnano solo quelli sullo schermo. W.ground: {width, height, tiles}
+function tileGround(c){const TS=1024,O=2,tiles=[];for(let sy=0;sy<c.height;sy+=TS)for(let sx=0;sx<c.width;sx+=TS){const x0=Math.max(0,sx-O),y0=Math.max(0,sy-O),x1=Math.min(c.width,sx+TS+O),y1=Math.min(c.height,sy+TS+O),t=document.createElement('canvas');
+    t.width=x1-x0;t.height=y1-y0;t.getContext('2d').drawImage(c,x0,y0,x1-x0,y1-y0,0,0,x1-x0,y1-y0);tiles.push({c:t,x:x0/GT,y:y0/GT,w:(x1-x0)/GT,h:(y1-y0)/GT})}
+  return{width:c.width,height:c.height,tiles,draw(g){for(const t of tiles)g.drawImage(t.c,0,0,t.c.width,t.c.height,t.x,t.y,t.w,t.h)}}}// (draw: tutta la foto, per le prove)
 // ------------------------------------------------------------------ luci, buio, nebbia, cielo
 let dark=null,mistImg=null,cloudImg=null;
 // le pozze di luce sono macchie del terreno: un'ellisse del mondo r × 0,62·r disegnata dentro inGround, così girando resta ferma sotto la luce
 // (a vista dritta S(x,y,0) è proprio (x,y) e inGround non fa niente: la stessa di prima)
-function drawLights(h0a){if(LOWFX)return;ctx.save();ctx.globalCompositeOperation='lighter';inGround(()=>{for(const L of lights){if(L.house&&(L.house.a>.6||(L.lvl!=null&&(L.lvl?(L.house.up||0)<.5:(L.house.up||0)>.5))))continue;const f=L.fl?(.9+.1*Math.sin(W.t*(L.fl===2?2:9)+L.x)*Math.sin(W.t*5.3+L.y)):1,a=L.a*(L.house?1-L.house.a:1)*.8;glow(L.rgb,L.x,L.y,L.r*f,a*f,L.r*f*.62)}});ctx.restore()}
+function drawLights(h0a){if(LOWFX)return;ctx.save();ctx.globalCompositeOperation='lighter';inGround(()=>{for(const L of lights){if(L.house&&(L.house.a>.6||(L.lvl!=null&&(L.lvl?(L.house.up||0)<.5:(L.house.up||0)>.5))))continue;if(farV(L.x,L.y,L.r+20))continue;const f=L.fl?(.9+.1*Math.sin(W.t*(L.fl===2?2:9)+L.x)*Math.sin(W.t*5.3+L.y)):1,a=L.a*(L.house?1-L.house.a:1)*.8;glow(L.rgb,L.x,L.y,L.r*f,a*f,L.r*f*.62)}});ctx.restore()}
 function drawDark(W0,H0,toScr0,h0a){if(LOWFX)return;const Q=3,Wd=Math.ceil(W0/Q),Hd=Math.ceil(H0/Q),toScr=(x,y,r)=>toScr0(x,y,r).map(v=>v/Q);if(!dark)dark=document.createElement('canvas');if(dark.width!==Wd||dark.height!==Hd){dark.width=Wd;dark.height=Hd}
   const g=dark.getContext('2d');g.setTransform(1,0,0,1,0,0);g.globalCompositeOperation='source-over';g.clearRect(0,0,Wd,Hd);g.fillStyle='rgba(10,14,34,.42)';g.fillRect(0,0,Wd,Hd);
   g.globalCompositeOperation='destination-out';const SP=CAM.SP,hole=(x,y,r,a,flat)=>{let[sx,sy,sr0]=toScr(x,y,r),sr=Math.max(1,sr0||1);const sq=SP!==1&&!flat;if(sq){g.save();g.translate(sx,sy);g.scale(1,SP);sx=sy=0}const gr=g.createRadialGradient(sx,sy,0,sx,sy,sr);gr.addColorStop(0,`rgba(0,0,0,${a})`);gr.addColorStop(1,'rgba(0,0,0,0)');g.fillStyle=gr;g.beginPath();g.arc(sx,sy,sr,0,TAU);g.fill();if(sq)g.restore()};
@@ -15274,7 +15282,7 @@ function drawDark(W0,H0,toScr0,h0a){if(LOWFX)return;const Q=3,Wd=Math.ceil(W0/Q)
   // piega), cioè S(x,y,z/2) senza l'altezza e con lo scarto (0, −z/2) del mondo; la lanterna, che sullo schermo resta sopra la base, prende un
   // secondo buco piccolo alla sua altezza, acceso man mano che il primo se ne va (a vista dritta non c'è: niente salti). Più grande
   // schiarirebbe anche il terreno dietro, che girando cambierebbe di nuovo
-  for(const L of lights){if(L.off||(L.house&&L.house.a>.6))continue;const hz=(L.z||0)*.5,ha=.85*(L.house?1-L.house.a:1);LEANK=L.lk||1;setRef(L.ref);const q=S(L.x,L.y,hz),qt=hz?S(L.x,L.y,L.z):q;LEANK=1;setRef(null);
+  for(const L of lights){if(L.off||(L.house&&L.house.a>.6)||farV(L.x,L.y,L.r*1.2+(L.z||0)))continue;const hz=(L.z||0)*.5,ha=.85*(L.house?1-L.house.a:1);LEANK=L.lk||1;setRef(L.ref);const q=S(L.x,L.y,hz),qt=hz?S(L.x,L.y,L.z):q;LEANK=1;setRef(null);
     if(CAM.rot&&hz){const dx=hz*CAM.s,dy=hz*(CAM.CP-CAM.c*SP),d=Math.hypot(dx,dy);hole(q[0]+dx,q[1]+dy,L.r*1.2,ha);if(d>.5)hole(qt[0],qt[1],L.z*.4,ha*.6*cl(d/30,0,1),true)}
     else hole(q[0],q[1],L.r*1.2,ha)}if(W.hero){const hq=S(W.hero.x,W.hero.y,10);hole(hq[0],hq[1],120,.6)}
   ctx.save();ctx.setTransform(1,0,0,1,0,0);ctx.drawImage(dark,0,0,W0,H0);ctx.restore()}
@@ -15851,12 +15859,12 @@ function buildOrder(vis){const D=W.dbg,fl=[],li=[];psiUpdate();camStamp();UCAM=C
     if(BOX)L2.push({k:K(BOX.x,BOX.y+.01),e:boxEntry()});
     L2.sort((a,b)=>a.k-b.k);return[fl,L2.map(o=>o.e)]}
   for(const p of props){if(p.hide||!vis(p))continue;for(const L of p.layers){layerSB(L);(L.floor?fl:li).push(L)}}
-  const h=W.hero;if(h&&!D.noHero&&!D.heroLast)li.push(beingE(HE,h.x,h.y,h.zh||0,56,10,RIGK.hzk));
-  for(const z of W.Z){if(z.id==null)z.id=++ZID;const e=z.E||(z.E={kind:'B',z,sid:'Z'+z.id,sk:900000+(z.id%99999)}),hd=z.kind==='hound';beingE(e,z.x,z.y,z.zh||0,(hd?30:46)*z.sc,(hd?16:10)*z.sc,RIGK.mzk);if(hd)houndSB(e,z);li.push(e)}
-  for(const c of perches){if(!c.away)li.push(beingE(c.E,c.x,c.y,c.z,14,6,CAM.CP))}
+  const h=W.hero,rA=(x,y,z)=>STAIRS.length&&z>0?refAt(x,y):null;if(h&&!D.noHero&&!D.heroLast)li.push(beingE(HE,h.x,h.y,h.zh||0,56,10,RIGK.hzk,rA(h.x,h.y,h.zh||0)));
+  for(const z of W.Z){if(z.id==null)z.id=++ZID;if(farV(z.x,z.y,90))continue;const e=z.E||(z.E={kind:'B',z,sid:'Z'+z.id,sk:900000+(z.id%99999)}),hd=z.kind==='hound';beingE(e,z.x,z.y,z.zh||0,(hd?30:46)*z.sc,(hd?16:10)*z.sc,RIGK.mzk,rA(z.x,z.y,z.zh||0));if(hd)houndSB(e,z);li.push(e)}
+  for(const c of perches){if(!c.away&&!farV(c.x,c.y,60))li.push(beingE(c.E,c.x,c.y,c.z,14,6,CAM.CP))}
   // i compagni dell'eroe (compagni.js): esseri come gli zombie
-  for(const pt of W.pets||[]){const e=pt.E||(pt.E={kind:'B',pet:pt,sid:'P'+pt.i,sk:600000+pt.i});li.push(beingE(e,pt.x,pt.y,pt.zh||0,30,8,RIGK.mzk))}
-  if(!D.noFlames)for(const f of FREEF)li.push(beingE(f.E,f.x,f.y,f.z-4,10,4,CAM.CP));
+  for(const pt of W.pets||[]){if(farV(pt.x,pt.y,60))continue;const e=pt.E||(pt.E={kind:'B',pet:pt,sid:'P'+pt.i,sk:600000+pt.i});li.push(beingE(e,pt.x,pt.y,pt.zh||0,30,8,RIGK.mzk,rA(pt.x,pt.y,pt.zh||0)))}
+  if(!D.noFlames)for(const f of FREEF)if(!farV(f.x,f.y,40))li.push(beingE(f.E,f.x,f.y,f.z-4,10,4,CAM.CP,f.lvl!=null?f.ref:null));
   if(BOX)li.push(boxEntry());
   // con la zona chiusa velata e la telecamera che guarda verso di lei: prima tutto quello che sta di là dalla linea del confine, poi il velo, poi
   // il resto (il confine è una retta: chi sta tutto di là non può coprire chi sta di qua, come in un albero BSP)
@@ -15893,27 +15901,29 @@ function drawWorld(dt,view){const h0=houses[0],h0a=h0?h0.a:1,D=W.dbg;
   // la bussola riporta a nord. La scala vera è √|det|/SP = dpr·zoom (la componente a della matrice è dpr·zoom·cos ψ: girando scende a 0 e poi
   // sotto, e accendeva 'medium' per niente)
   const PH=D.costs?(k=>{ctx.getImageData(0,0,1,1);const t=performance.now();D.costs['#'+k]=(D.costs['#'+k]||0)+t-(PH.t||t);PH.t=t}):null;if(PH){PH.t=0;PH('prima')}
+  const TM=D.tm,tk=TM?(k=>{ctx.getImageData(0,0,1,1);const t=performance.now();TM['w.'+k]=(TM['w.'+k]||0)+t-TM._w;TM._w=t}):null;if(TM)TM._w=performance.now();
   const ek=CAM.rot?edgeK():0;
   inGround(()=>{if(ek>0&&!LOWFX)drawEdge(ek);const m=ctx.getTransform(),sq=ctx.imageSmoothingQuality;if(Math.sqrt(Math.abs(m.a*m.d-m.b*m.c)/CAM.SP)<GT/2)ctx.imageSmoothingQuality='medium';
-    ctx.drawImage(W.ground,0,0,W.ground.width,W.ground.height,0,0,W.w,W.h);ctx.imageSmoothingQuality=sq;if(ek>0)drawRim(ek)});
-  if(PH)PH('terreno');if(W.split)drawVeil(W.split.k-veilK());// il velo sul terreno quando non copre anche le cose (guardando di lato o all'indietro)
+    const GR=W.ground;if(GR.tiles){const r=Math.hypot(view.Wp,view.Hp/CAM.SP)/2/CAM.z+96,cx=CAM.x,cy=CAM.y,oy=Math.abs(CAM.oy)/CAM.SP;for(const t of GR.tiles){if(t.x>cx+r||t.x+t.w<cx-r||t.y>cy+r+oy||t.y+t.h<cy-r-oy)continue;ctx.drawImage(t.c,0,0,t.c.width,t.c.height,t.x,t.y,t.w,t.h)}}
+    else ctx.drawImage(GR,0,0,GR.width,GR.height,0,0,W.w,W.h);ctx.imageSmoothingQuality=sq;if(ek>0)drawRim(ek)});
+  if(PH)PH('terreno');if(tk)tk('terreno');if(W.split)drawVeil(W.split.k-veilK());// il velo sul terreno quando non copre anche le cose (guardando di lato o all'indietro)
   // chi si vede: l'impronta del prop girata intorno al perno (u, v), allargata della piega più grande che può avere (LK·altezza di lato,
   // LKV in verticale) e di un margine; a vista dritta vale come prima (senza più il riquadro del mondo, che girando nasconderebbe cose)
-  const HW=view.Wp/2/CAM.z+24,HH=view.Hp/2/CAM.z+24,c=CAM.c,s=CAM.s,SP=CAM.SP,CP=CAM.CP,oy=CAM.oy;
+  const HW=view.Wp/2/CAM.z+24,HH=view.Hp/2/CAM.z+24,c=CAM.c,s=CAM.s,SP=CAM.SP,CP=CAM.CP,oy=CAM.oy;VIEWR=Math.hypot(view.Wp,view.Hp/SP)/2/CAM.z+64+Math.abs(oy)/SP;
   const vis=D.visAll?()=>true:p=>{const f=fpOf(p),z1=f[4],ex=LK*z1*(p.lk==null?1:p.lk);let u0=1e9,u1=-1e9,v0=1e9,v1=-1e9;
     for(const X of[f[0],f[2]])for(const Y of[f[1],f[3]]){const dx=X-CAM.x,dy=Y-CAM.y,u=dx*c-dy*s,v=dx*s+dy*c;if(u<u0)u0=u;if(u>u1)u1=u;if(v<v0)v0=v;if(v>v1)v1=v}
     return u0-ex<HW&&u1+ex>-HW&&v1*SP+oy>-HH&&v0*SP-z1*CP-LKV*z1+oy<HH};
   // l'ordine (fase 3): i pavimenti (cumuli, pedane, gradini, tappeti) sotto i piedi di tutti, poi tutto ciò che sta in piedi, dal fondo verso
   // davanti, con gli esseri e i corvi posati in mezzo; le fiamme vengono subito dopo lo strato che le contiene
-  const t0=D.prof?performance.now():0;ORD.fr++;ORD.cyc=0;ORD.tIntra=0;ORD.vis=vis;const[floors,order]=buildOrder(vis),t1=D.prof?performance.now():0;
-  for(const L of floors)drawEntry(L,h0a);
-  if(PH)PH('pavimenti');inGround(()=>drawClouds(dt));drawCrowShadows();drawLights(h0a);if(W.director&&W.director.drawGround)W.director.drawGround(dt);if(PH)PH('nuvole_luci');
+  const t0=D.prof?performance.now():0;ORD.fr++;ORD.cyc=0;ORD.tIntra=0;ORD.vis=vis;const[floors,order]=buildOrder(vis),t1=D.prof?performance.now():0;if(tk)tk('ordine');
+  for(const L of floors)drawEntry(L,h0a);if(tk)tk('pavimenti');
+  if(PH)PH('pavimenti');inGround(()=>drawClouds(dt));drawCrowShadows();drawLights(h0a);if(W.director&&W.director.drawGround)W.director.drawGround(dt);if(PH)PH('nuvole_luci');if(tk)tk('nuvole_luci');
   let hi=-1;const CO=D.costs;// W.dbg.costs: il costo vero di ogni voce (con la scheda grafica aspettata dopo ognuna), in D.costs
   for(let i=0;i<order.length;i++){const e=order[i];if(e.hero)hi=i;if(CO){const t0=performance.now();drawEntry(e,h0a);ctx.getImageData(0,0,1,1);const k=e.prop?e.prop.name+'#'+e.prop.i+(e.part?':'+e.part:''):e.sid;CO[k]=(CO[k]||0)+performance.now()-t0}else drawEntry(e,h0a)}
-  if(D.heroLast&&!D.noHero&&W.hero)drawHero();
-  if(PH)PH('voci');const t2=D.prof?performance.now():0;LASTOCC=occluders(order,hi);silhouette(LASTOCC,h0a);if(PH)PH('sagoma');ORD.last=order;ORD.lastF=floors;LASTLIST=order;
+  if(D.heroLast&&!D.noHero&&W.hero)drawHero();if(tk)tk('voci');
+  if(PH)PH('voci');const t2=D.prof?performance.now():0;LASTOCC=occluders(order,hi);silhouette(LASTOCC,h0a);if(PH)PH('sagoma');if(tk)tk('sagoma');ORD.last=order;ORD.lastF=floors;LASTLIST=order;
   if(D.prof){const a=.1;ORD.tOrd=t1-t0+ORD.tIntra;ORD.tSil=performance.now()-t2;ORD.pOrd+=(ORD.tOrd-ORD.pOrd)*a;ORD.pSil+=(ORD.tSil-ORD.pSil)*a}
-  if(!LOWFX){for(const p of W.puffs){setRef(p.ref);const q=S(p.x,p.y,p.z);setRef(null);ctx.fillStyle=`rgba(150,150,165,${.28*(1-p.t/3.2)})`;ball(q,p.r);ctx.fill()}
+  if(!LOWFX){for(const p of W.puffs){if(farV(p.x,p.y,40+p.z))continue;setRef(p.ref);const q=S(p.x,p.y,p.z);setRef(null);ctx.fillStyle=`rgba(150,150,165,${.28*(1-p.t/3.2)})`;ball(q,p.r);ctx.fill()}
     for(const l of W.leaves){const q=S(l.x,l.y,l.z);ctx.save();ctx.translate(q[0],q[1]);ctx.rotate(l.t*4+l.ph);ctx.fillStyle=l.c;ctx.beginPath();ctx.ellipse(0,0,2.6,1.2,0,0,TAU);ctx.fill();ctx.restore()}
     ctx.save();ctx.globalCompositeOperation='lighter';for(const f of W.flies){const q=S(f.x,f.y,f.z),b=.5+.5*Math.sin(W.t*3+f.ph);glow('170,255,120',q[0],q[1],9,.5*b);ctx.fillStyle=`rgba(230,255,190,${.9*b})`;ctx.fillRect(q[0]-.8,q[1]-.8,1.6,1.6)}ctx.restore()}
   for(const f of W.FX){if(f.k==='coin'){const t=SB(f.tw),k=1-f.t/f.t0,y=t[1]-k*26;ctx.save();ctx.globalAlpha=Math.min(1,f.t/.35);ctx.font='800 14px "Baloo 2",system-ui';ctx.textAlign='center';ctx.lineJoin='round';ctx.lineWidth=3.6;ctx.strokeStyle=INK;ctx.strokeText('+'+f.n,t[0],y);ctx.fillStyle='#ffd65a';ctx.fillText('+'+f.n,t[0],y);ctx.restore();continue}
@@ -15923,7 +15933,7 @@ function drawWorld(dt,view){const h0=houses[0],h0a=h0?h0.a:1,D=W.dbg;
       const r=26+((f.t0-f.t)*30)%40;ctx.strokeStyle=`rgba(150,255,180,${.5*al*(1-((f.t0-f.t)*30%40)/40)})`;ctx.lineWidth=2;ctx.beginPath();ctx.ellipse(q[0],q[1],r,r*.5*CAM.SP,0,0,TAU);ctx.stroke();ctx.restore();continue}
     if(f.k==='shot'){const g=SB(f.hw),t=SB(f.tw),a=[g[0]+f.ao[0],g[1]+f.ao[1]],pc=f.pap>=2?'212,139,255':f.pap?'143,230,255':null;ctx.strokeStyle=pc?`rgba(${pc},.95)`:'rgba(255,230,160,.9)';ctx.lineWidth=f.w||2;seg(a,[t[0]+f.bo[0],t[1]+f.bo[1]]);ctx.stroke();if(!LOWFX){ctx.save();ctx.globalCompositeOperation='lighter';glow(pc||'255,210,120',a[0],a[1],14,.8);if(pc)glow(pc,t[0]+f.bo[0],t[1]+f.bo[1],10,.6);ctx.restore()}}
     else{const t=SB(f.tw);ctx.fillStyle='#3a5a1e';ball([t[0]+f.x,t[1]+f.y],1.8);ctx.fill()}}
-  if(W.director&&W.director.drawTop)W.director.drawTop(dt);if(liveDraw)liveDraw(dt);drawMist(dt);drawFlock();if(PH)PH('effetti_nebbia')}
+  if(W.director&&W.director.drawTop)W.director.drawTop(dt);if(liveDraw)liveDraw(dt);drawMist(dt);drawFlock();if(PH)PH('effetti_nebbia');if(tk)tk('effetti')}
 function updateAmbient(dt){W.t+=dt;updateCrows(dt);
   if(W.split){const sp=W.split;if(sp.fade){sp.k-=dt/2.5;if(sp.k<=0){W.split=null}}if(sp.wisps)for(const m of sp.wisps){m.x+=m.v*dt;if(m.x>W.w+m.r)m.x=-m.r}}
   if(LOWFX)return;
@@ -15958,7 +15968,7 @@ function bootAsync(area,o){o=o||{};const keep=[window.CR&&CR.cam?Object.assign({
     const tb=performance.now(),ctl=boot(area,Object.assign({},o,{built:true}));W.dbg.tboot=performance.now()-tb;if(o.passo)o.passo(1);return ctl})}
 // la memoria (src/js/65-caricamento.js): con la mappa spenta e il gioco in secondo piano si butta la foto del terreno (30 MB, la cosa più
 // grande della mappa); ricuoci(o) la rifà a pezzi prima di riaccendere la mappa: gli stessi passi e lo stesso seme, viene uguale
-function libera(){if(!JOBS||!W.ground)return false;W.ground.width=W.ground.height=0;W.ground=null;return true}
+function libera(){if(!JOBS||!W.ground)return false;if(W.ground.tiles)for(const t of W.ground.tiles)t.c.width=t.c.height=0;else W.ground.width=W.ground.height=0;W.ground=null;return true}
 function ricuoci(o){o=o||{};if(W.ground||!JOBS)return Promise.resolve(0);const sd=seed;
   return inPezzi((function*(){for(const[w,h,p] of JOBS)yield* bakeSteps(w,h,p)})(),o,JOBS.passi||40).then(n=>{JOBS.passi=n;seed=sd;if(o.passo)o.passo(1);return n})}
 function boot(area,o){o=o||{};const GAME=!!o.game;let ACT=!GAME,RUN=false,PAUSE=false;W.gioco=GAME?o:null;W.zoneAt=(x,y)=>area.zoneName?area.zoneName({x,y}):'';
@@ -16138,7 +16148,7 @@ function boot(area,o){o=o||{};const GAME=!!o.game;let ACT=!GAME,RUN=false,PAUSE=
     return[Math.min(Wp/(X1-X0+60),(Hp-150)/(Y1-Y0+30)),-(Y0+Y1)/2-10]}
   function render(dt,ix,iy){const Wp=ov.clientWidth,Hp=ov.clientHeight;if(cv.width!==Math.round(Wp*dpr)||cv.height!==Math.round(Hp*dpr)){cv.width=Math.round(Wp*dpr);cv.height=Math.round(Hp*dpr)}
     const saved=ctx,lf=LOWFX;ctx=cv.getContext('2d');LOWFX=GAME?lf:low;const t0=performance.now();
-    try{updateBeings(dt,{x:ix,y:iy});updateAmbient(dt);if(area.update)area.update(dt);
+    try{/* W.dbg.tm={}: i tempi delle parti del fotogramma (tempi_grande.js e le misure del punto 54) */const TM=W.dbg.tm,tk=TM?(k=>{const t=performance.now();TM[k]=(TM[k]||0)+t-TM._;TM._=t}):null;if(TM)TM._=performance.now();updateBeings(dt,{x:ix,y:iy});if(tk)tk('beings');updateAmbient(dt);if(tk)tk('ambient');if(area.update)area.update(dt);if(tk)tk('area');
       const h=W.hero;let tx,ty,z,oyT;
       if(camOv){tx=camOv[0];ty=camOv[1];z=zoomOv||Wp/330;oyT=0}
       else if(whole){if(!wholeFit||look.id==null)wholeFit=fitWhole(Wp,Hp);tx=W.w/2;ty=W.h/2;z=zoomOv||wholeFit[0];oyT=wholeFit[1]}
@@ -16146,11 +16156,11 @@ function boot(area,o){o=o||{};const GAME=!!o.game;let ACT=!GAME,RUN=false,PAUSE=
       const k6=Math.min(1,dt*6);CAM.z+=(z-CAM.z)*Math.min(1,dt*8);CAM.x+=(tx-CAM.x)*k6;CAM.y+=(ty-CAM.y)*k6;CAM.oy+=(oyT-CAM.oy)*k6;camDerive();
       ctx.setTransform(dpr,0,0,dpr,0,0);ctx.fillStyle='#0b0c12';ctx.fillRect(0,0,Wp,Hp);if(area.backdrop)area.backdrop(Wp,Hp);
       ctx.setTransform(dpr*CAM.z,0,0,dpr*CAM.z,dpr*(Wp/2-CAM.x*CAM.z),dpr*(Hp/2+(CAM.oy-CAM.y)*CAM.z));
-      drawWorld(dt,{Wp,Hp});
-      drawDark(cv.width,cv.height,(x,y,r)=>{const p=scr(x,y);return[p[0],p[1],r*CAM.z*dpr]},houses[0]?houses[0].a:1);
+      if(tk){ctx.getImageData(0,0,1,1);tk('backdrop')}drawWorld(dt,{Wp,Hp});if(tk){ctx.getImageData(0,0,1,1);tk('world')}
+      drawDark(cv.width,cv.height,(x,y,r)=>{const p=scr(x,y);return[p[0],p[1],r*CAM.z*dpr]},houses[0]?houses[0].a:1);if(tk){ctx.getImageData(0,0,1,1);tk('dark')}
       ctx.setTransform(dpr,0,0,dpr,0,0);if(!W.dbg.noSticks&&!whole){drawStick(stick,64,Hp-196);drawLook(Wp-64,Hp-196)}
       const vg=ctx.createRadialGradient(Wp/2,Hp/2,Math.min(Wp,Hp)*.4,Wp/2,Hp/2,Math.max(Wp,Hp)*.75);vg.addColorStop(0,'rgba(0,0,0,0)');vg.addColorStop(1,'rgba(0,0,0,.45)');ctx.fillStyle=vg;ctx.fillRect(0,0,Wp,Hp);
-      const show=hudOn&&!W.dbg.noSticks;if(nordEl.hidden===show)nordEl.hidden=!show;if(show)drawNord()
+      const show=hudOn&&!W.dbg.noSticks;if(nordEl.hidden===show)nordEl.hidden=!show;if(show)drawNord();if(tk){ctx.getImageData(0,0,1,1);tk('hud')}
     }catch(e){console.error(e)}finally{ms=ms*.93+(performance.now()-t0)*.07;ctx=saved;LOWFX=lf}}
   let fEma=.016,slowZ=0;
   function frame(now){if(!ACT){RUN=false;return}// la pagina spenta (nel gioco vero, col menu) non disegna niente
@@ -16223,7 +16233,7 @@ function boot(area,o){o=o||{};const GAME=!!o.game;let ACT=!GAME,RUN=false,PAUSE=
     adj:()=>ORD.mm.adj,rel:(a,b)=>{const f=id=>ORD.last.concat(ORD.lastF).find(e=>e.sid===id),A=f(a),B=f(b);return A&&B?rel(A,B):null},// rel(id,id): il verdetto tra due voci dell'ultimo fotogramma
 orderReset:()=>{ORD.mm.m=new Map();ORD.fm.m=new Map();ORD.fr+=5},
     intra:id=>{const L=ORD.byId.get(id);return L?intraOrder(L).map(g=>({gi:g.gi,k:g.parts.map(t=>t.k).join(','),z0:g.z0,z1:g.z1})):null},
-    render:dt=>render(dt||0,0,0),vis:visAt,hit:(x,y,r)=>!!hit(x,y,r),heightAt,
+    render:dt=>render(dt||0,0,0),navField:()=>navField(),vis:visAt,hit:(x,y,r)=>!!hit(x,y,r),heightAt,
     nav:()=>NAV&&{cw:NAV.cw,ch:NAV.ch,free:NAV.bl.reduce((s,v)=>s+(v?0:1),0)},navRebuild:()=>{navBuild();NAV.hc=-1},
     hurt:(z,n,fx)=>hurt(z,n,fx),addZombie:(kind,x,y,spd)=>{const k=KINDS.find(k=>k[0]===kind)||KINDS[0];const z={id:++ZID,kind:k[0],sc:k[1],spd:spd||k[2],hp:99,x,y,face:0,p:0,anim:'walk',rise:1,die:0,flash:0};W.Z.push(z);return W.Z.length-1},
     sim:(n,dt)=>{for(let i=0;i<n;i++)updateBeings(dt,{x:0,y:0})},

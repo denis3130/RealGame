@@ -23,7 +23,7 @@ const PASSO=+(process.argv[2]||48);
     W.Z.length=0;return out},[HEROES,PASSO]);
   fs.writeFileSync(path.join(out,'nav.json'),JSON.stringify(res));
   const png=await p.evaluate(res=>{const W=__MZ.W,names=Object.keys(res),cols=4,rows=Math.ceil(names.length/cols),S=.75,c=document.createElement('canvas');c.width=cols*W.w*S;c.height=rows*(W.h*S+18);const g=c.getContext('2d');g.fillStyle='#111';g.fillRect(0,0,c.width,c.height);
-    names.forEach((n,k)=>{const ox=(k%cols)*W.w*S,oy=Math.floor(k/cols)*(W.h*S+18);g.save();g.translate(ox,oy+18);g.scale(S,S);g.drawImage(W.ground,0,0,W.w,W.h);g.fillStyle='rgba(0,0,0,.4)';g.fillRect(0,0,W.w,W.h);
+    names.forEach((n,k)=>{const ox=(k%cols)*W.w*S,oy=Math.floor(k/cols)*(W.h*S+18);g.save();g.translate(ox,oy+18);g.scale(S,S);(W.ground.draw?W.ground.draw(g):g.drawImage(W.ground,0,0,W.w,W.h));g.fillStyle='rgba(0,0,0,.4)';g.fillRect(0,0,W.w,W.h);
       g.strokeStyle='rgba(255,255,255,.55)';for(const s of __MZ.solids){if(s.w>400||s.d>400)continue;g.strokeRect(s.x,s.y,s.w,s.d)}
       const R=res[n];g.fillStyle='#4fd0ff';g.beginPath();g.arc(R.hero[0],R.hero[1],9,0,7);g.fill();g.font='bold 11px sans-serif';
       for(const r of R.rows){if(r.kind!=='zombie')continue;g.fillStyle=r.t==null?'#ff3b3b':'#3ad16a';g.beginPath();g.arc(r.x,r.y,5,0,7);g.fill();if(r.t==null){g.strokeStyle='#ff3b3b';g.beginPath();g.moveTo(r.x,r.y);g.lineTo(r.end[0],r.end[1]);g.stroke()}else{g.fillStyle='#fff';g.fillText(r.t,r.x+6,r.y+4)}}

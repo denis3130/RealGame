@@ -16,7 +16,7 @@ const PASSO=+(process.argv[2]||12),SIL=process.argv[3]==='1',PSI=process.argv[4]
   const res=await p.evaluate(([PASSO,SIL,PSI,TH])=>{const M=__MZ,W=M.W,r=[],o={sil:SIL};if(PSI!=null)o.yaw=PSI;if(TH!=null)o.el=TH;for(let y=PASSO/2;y<W.h;y+=PASSO)for(let x=PASSO/2;x<W.w;x+=PASSO){if(M.hit(x,y,10))continue;M.calma();const v=M.vis(x,y,o);r.push({x,y,vis:+v.vis.toFixed(3),mask:v.mask,occ:v.occ})}return r},[PASSO,SIL,PSI,TH]);
   fs.writeFileSync(path.join(out,'vis.json'),JSON.stringify(res));
   // la mappa: il terreno cotto, i solidi, un puntino per punto
-  const png=await p.evaluate(res=>{const W=__MZ.W,c=document.createElement('canvas');c.width=W.w*2;c.height=W.h*2;const g=c.getContext('2d');g.scale(2,2);g.drawImage(W.ground,0,0,W.w,W.h);g.fillStyle='rgba(0,0,0,.35)';g.fillRect(0,0,W.w,W.h);
+  const png=await p.evaluate(res=>{const W=__MZ.W,c=document.createElement('canvas');c.width=W.w*2;c.height=W.h*2;const g=c.getContext('2d');g.scale(2,2);if(W.ground.draw)W.ground.draw(g);else g.drawImage(W.ground,0,0,W.w,W.h);g.fillStyle='rgba(0,0,0,.35)';g.fillRect(0,0,W.w,W.h);
     g.strokeStyle='rgba(255,255,255,.5)';g.lineWidth=.8;for(const s of __MZ.solids){if(s.w>400||s.d>400)continue;g.strokeRect(s.x,s.y,s.w,s.d)}
     for(const q of res){g.fillStyle=q.vis>=.8?'#3ad16a':q.vis>=.5?'#f2c230':'#ff3b3b';g.beginPath();g.arc(q.x,q.y,q.vis>=.8?1.6:3,0,Math.PI*2);g.fill()}return c.toDataURL('image/png')},res);
   fs.writeFileSync(path.join(out,'vis_mappa.png'),Buffer.from(png.split(',')[1],'base64'));
