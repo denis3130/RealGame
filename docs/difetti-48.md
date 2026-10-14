@@ -162,3 +162,75 @@ farsi fottere». L'edificio col Mitra a muro è la Segheria.
   28,0 con 12 zombie. Scala, camino, banco e tavoli tolti uno alla volta costano meno di 1 ms ciascuno.
 - Prove del gioco vero: `zombie`, `avvio`, `meta2`, `menu2`, `menu3`, `salvataggio`, due partite Classiche (`run.js`) senza errori; `audio.js`
   nessun errore dentro i suoni. Ripubblicata l'Anteprima 48 (versione 3 dell'artefatto).
+
+## Terza richiesta (14 ottobre)
+
+Denis: «prima di tutto miglioriamo le animazioni delle pistole, cioè la ricarica ecc., poi l'audio delle medesime armi, e infine il verso
+degli zombie ora è fastidioso, lo vorrei molto più creepy. Un'altra cosa: se una zona non l'ho ancora sbloccata vorrei che i zombie non
+spawnassero da lì, solo in zone dove ho il via libera. E rendi i zombie più rapidi nell'attaccare.»
+
+### Le ricariche in 3D
+- **Prima**: l'arma 3D in mano all'eroe alzava solo la bocca durante la ricarica (le armi 3D non avevano un caricatore da togliere).
+- **Ora** (`sprite/eroe3d/armi3d.js`, `sprite/eroe3d/disegno_eroe.js`): il caricatore (la cassetta della mitragliatrice, il tamburo, la
+  bombola del lanciafiamme, la stecca di chiodi del fucile a vapore, il cristallo del Risonatore) è un pezzo suo. L'arma viene davanti al
+  petto, la bocca in su e girata verso la mano libera, e la testa guarda giù. La mano libera:
+  - toglie il caricatore, che cade: sulla mappa resta a terra qualche secondo e fa il suo rumore quando tocca;
+  - ne prende uno nuovo alla cintura, lo spinge dentro (scatta) e tira il carrello o l'otturatore. La pistola vuota resta col carrello
+    indietro finché la mano non lo lascia andare.
+  - Il revolver apre il tamburo di lato, butta fuori i sei bossoli, mette sei colpi uno a uno e si richiude con uno scatto.
+  - I fucili a pompa prendono una cartuccia alla volta (la Pompa tattica dalla sua fila sul fianco) e la spingono nella finestrella.
+  - Il razzo arriva dalla cintura, si porta davanti al tubo e si spinge dentro.
+- **Arma presa** (dalla Bara, dal muro, a inizio partita): sale dal fianco e si arma una volta (carrello, pompa, tamburo che gira).
+- I tempi della ricarica sono gli stessi per l'eroe 3D, per le armi 2D di prima e per i suoni (`ARMI.RLT` in `sprite/armi/disegno_armi.js`).
+- Corretto anche: con gli effetti sonori spenti bossoli e caricatori restavano in aria.
+- Fogli: `node tests/ricarica4.js [armi]` (otto momenti nelle quattro direzioni, uno per arma) e `node tests/ricarica_tutte.js` (le dodici
+  armi nel momento più chiaro, nelle quattro direzioni). Pagina dal vivo: `python3 anteprime/mk_armi3d.py` → `anteprime/armi3d.html`.
+- L'Arciere della Classica è rimasto identico al pixel (arco, balestra e bastone nelle quattro direzioni e nelle cinque mosse).
+
+### L'audio delle armi
+- **Misura**: gli spari di prima avevano il 60–98% dell'energia sotto i 150 Hz, dove le casse del telefono non suonano. Sul telefono
+  restava poco: un «pff».
+- **Ora** (`sprite/armi/suoni_armi.js`, nel gioco dopo `disegno_armi.js`): ogni arma ha un banco di suoni fatti col codice e preparati una
+  volta sola fuori tempo reale (`OfflineAudioContext`, 0,1–0,4 s al primo uso, 0,5–1,2 MB, al massimo sei armi in memoria). Dentro:
+  - tre spari un po' diversi e la coda dell'eco per le raffiche;
+  - i rumori della ricarica a tempo con la mossa (eventi `rl:`, `rv:`, `rz:` dalla macchina dell'arma);
+  - la presa, il colpo a vuoto e l'esplosione del razzo, che prima sulla mappa era muta.
+- **Lo sparo, a strati**: lo schiocco dell'aria, lo scoppio della polvere saturato, un «pugno» che anche il telefono suona, il rombo
+  profondo, la coda e l'eco del camposanto, la meccanica dell'arma. Il lanciafiamme è un ruggito continuo (`ARMI.fiamma`). Il motore delle
+  canne della mitragliatrice ora suona anche sulla mappa e si spegne da solo in pausa.
+- **Misure** (`node tests/suoni_armi.js`):
+  - nella banda che il telefono suona gli spari sono da 0,5 dB (mitraglietta) a 8 dB (pompa, revolver) più forti di prima;
+  - ogni suono è un nastro (tre nodi): in battaglia l'audio crea in media 181 nodi al secondo invece di 355, al massimo 466 invece di 817.
+
+### I versi degli zombie
+- **Prima**: un'onda a dente di sega che ronzava in due vocali con un vibrato: un kazoo, sempre uguale, e frequente.
+- **Ora** (`ZVB` in `anteprime/zombie/audio_zombie.js`): una gola fatta col codice.
+  - Colpi della glottide radi e storti: sotto i 55 Hz la voce gracchia come quella di un moribondo.
+  - Tre formanti che si muovono come una bocca, il respiro bagnato, il raschio del ringhio, gorgoglii, il sibilo tra i denti, i denti che
+    battono.
+  - 31 versi preparati una volta: lamenti che finiscono gracchiando, rantoli, gorgoglii, sussurri, ringhi, il rantolo della morte,
+    l'ansimo di chi esce dalla fossa. In più la tosse del minatore, la voce da fantasma della lanterna, il cane, la risata del Becchino,
+    la paglia e il legno dello spaventapasseri. Ogni zombie li dice con la sua gola, un po' più alta o più bassa.
+- **Più radi**: ogni zombie aspetta 6–14 s, al massimo due voci insieme. Più piano dei vecchi. Un ringhio quando ti vede arrivare, i denti
+  quando è vicino. Anche i lamenti lontani del menu Zombie usano le voci nuove.
+- **Misure**: le voci hanno le due formanti e i colpi radi della gola (spettrogrammi); con le voci nuove l'audio in battaglia crea in media
+  165 nodi al secondo.
+
+### Zombie solo dalle zone aperte
+- Le buche delle zone chiuse erano già escluse. Ma:
+  - chi usciva dalle buche della partenza accanto a una barriera chiusa sembrava venire dalla zona chiusa;
+  - i morti evocati dal Becchino nascevano in un punto a caso intorno all'eroe, quindi vicino a una barriera chiusa anche dall'altra parte.
+- **Ora**: una buca va bene solo se è in una zona aperta, sia per l'etichetta sia per dove sta davvero (`W.zoneIdAt`), e a più di 110 px
+  dalle barriere e dal cancello ancora chiusi. I morti evocati nascono solo in una zona aperta e dove si arriva a piedi.
+- Prova `anteprime/zombie/zone_prova.js`:
+  - 400 comparse con la sola partenza aperta, tutte nel Camposanto;
+  - 120 morti evocati con l'eroe alla barriera del Borgo, tutti di qua;
+  - aperto il Borgo, gli zombie escono anche lì.
+
+### Attacchi più rapidi
+- **Prima**: lo zombie arrivava, caricava quasi 0,8 s prima di colpire, un colpo ogni 1,4 s.
+- **Ora**: il colpo arriva dopo mezzo secondo, nell'affondo del gesto. L'attacco dura 1 s (strisciante 1,05, minatore e lanterna 1,1, il
+  cane 0,8).
+- Il danno di ogni colpo è un po' più basso (zombie 25, strisciante 19, minatore 28, lanterna 35, cane 16): in tutto circa un quinto di
+  male in più.
+- Il giocatore automatico arriva agli stessi round (9, 10, 5, 7), ma chi si fa prendere cade prima.

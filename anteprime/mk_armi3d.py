@@ -2,7 +2,8 @@
 # (ARMI.nuova(id), come sulla mappa): spara tenendo premuto, ricarica (caricatore che esce e cade, mano alla cintura, caricatore nuovo,
 # carrello; il tamburo del revolver; le cartucce una a una; il razzo), «Prendi» (l'arma che sale e si arma), i suoni del gioco, i bossoli e
 # i caricatori che cadono a terra. Viste «Gira» (una grande, si gira col dito) e «4 direzioni»; «Lento» rallenta tutto a un quarto,
-# «Da solo» spara e ricarica in ciclo. La pagina costruita non si salva su git.
+# «Da solo» spara e ricarica in ciclo. Sotto, «Versi»: le voci nuove degli zombie (anteprime/zombie/audio_zombie.js, ZVB), tipo per tipo.
+# La pagina costruita non si salva su git.
 # Uso: python3 tests/mk.py && python3 anteprime/mk_armi3d.py [arma]
 import os,sys
 here=os.path.dirname(os.path.abspath(__file__));root=os.path.join(here,'..')
@@ -19,32 +20,39 @@ function boot(){try{INTRO.on=false;paused=true}catch(e){}try{AU.on.music=false}c
   const ov=document.createElement('div');ov.id='a3';ov.innerHTML=`<style>
   #a3{position:fixed;inset:0;z-index:99999;background:#14171a;font-family:"Baloo 2",system-ui,sans-serif;color:#f6ead2;touch-action:none;user-select:none;-webkit-user-select:none}
   #a3 canvas{position:absolute;inset:0;width:100%;height:100%}
-  #a3 .top{position:absolute;left:0;right:0;top:0;padding:calc(10px + env(safe-area-inset-top,0px)) 14px 22px;display:flex;align-items:flex-start;justify-content:space-between;gap:8px;background:linear-gradient(rgba(10,12,14,.92),rgba(10,12,14,0));pointer-events:none}
+  #a3 .a3top{position:absolute;left:0;right:0;top:0;padding:calc(10px + env(safe-area-inset-top,0px)) 14px 22px;display:flex;align-items:flex-start;justify-content:space-between;gap:8px;background:linear-gradient(rgba(10,12,14,.92),rgba(10,12,14,0));pointer-events:none}
   #a3 h1{margin:0;font-family:"Lilita One",system-ui;font-weight:400;font-size:21px;color:#c8f08a;text-shadow:0 2px 0 #0b0d0f}
   #a3 h1 small{display:block;font-family:"Baloo 2",system-ui;font-size:12.5px;color:#c9d2c2;text-shadow:none;margin-top:-2px}
-  #a3 .ms{font-size:12px;color:#b9c2b4;white-space:nowrap;text-align:right}
-  #a3 .bar{position:absolute;left:0;right:0;bottom:0;padding:22px 8px calc(10px + env(safe-area-inset-bottom,0px));display:flex;flex-direction:column;gap:6px;background:linear-gradient(rgba(10,12,14,0),rgba(10,12,14,.95) 26px)}
-  #a3 .row{display:flex;gap:5px;justify-content:center;flex-wrap:wrap}
+  #a3 .a3ms{font-size:12px;color:#b9c2b4;white-space:nowrap;text-align:right}
+  #a3 .a3bar{position:absolute;left:0;right:0;bottom:0;padding:22px 8px calc(10px + env(safe-area-inset-bottom,0px));display:flex;flex-direction:column;gap:6px;background:linear-gradient(rgba(10,12,14,0),rgba(10,12,14,.95) 26px)}
+  #a3 .a3row{display:flex;gap:5px;justify-content:center;flex-wrap:wrap}
   #a3 button,#a3 select{font:700 13.5px "Baloo 2",system-ui;color:#eef3e6;background:#2c332c;border:2px solid #0b0d0f;border-radius:11px;padding:6px 10px;box-shadow:0 3px 0 #0b0d0f;min-height:36px}
   #a3 select{max-width:230px}
   #a3 button.on{background:#4f6b2a;color:#f2ffd8}#a3 button:active,#a3 button.press{transform:translateY(2px);box-shadow:0 1px 0 #0b0d0f}
-  #a3 button.big{font-size:16px;padding:8px 18px;background:#6b2a22;color:#ffe9de}
-  #a3 .seg{display:flex}#a3 .seg button{border-radius:0;margin-right:-2px}#a3 .seg button:first-child{border-radius:11px 0 0 11px}#a3 .seg button:last-child{border-radius:0 11px 11px 0;margin-right:0}
-  </style><canvas></canvas><div class="top"><h1>Armi zombie in 3D<small id="aSub"></small></h1><span class="ms" id="aMs"></span></div>
-  <div class="bar"><div class="row"><div class="seg" id="aView"></div><select id="aGun"></select></div><div class="row" id="aAct"></div><div class="row" id="aOpt"></div></div>`;
+  #a3 button.a3big{font-size:16px;padding:8px 18px;background:#6b2a22;color:#ffe9de}
+  #a3 .a3seg{display:flex}#a3 .a3seg button{border-radius:0;margin-right:-2px}#a3 .a3seg button:first-child{border-radius:11px 0 0 11px}#a3 .a3seg button:last-child{border-radius:0 11px 11px 0;margin-right:0}
+  #a3 .vt{font-size:12px;color:#b9c2b4;align-self:center}
+  </style><canvas></canvas><div class="a3top"><h1>Armi e versi zombie<small id="aSub"></small></h1><span class="a3ms" id="aMs"></span></div>
+  <div class="a3bar"><div class="a3row"><div class="a3seg" id="aView"></div><select id="aGun"></select></div><div class="a3row" id="aAct"></div><div class="a3row" id="aOpt"></div><div class="a3row" id="aVox"></div></div>`;
   document.body.appendChild(ov);const cvp=ov.querySelector('canvas'),$=id=>ov.querySelector('#'+id);
   const btn=(txt,on,f,cls)=>{const b=document.createElement('button');b.textContent=txt;b.className=(on?'on ':'')+(cls||'');b.onclick=()=>{sound();f();build()};return b};
   function sound(){if(au)return;au=true;try{initAudio();AU.on.sfx=true;AU.on.music=false}catch(e){}}
   window.build=function(){
     $('aView').innerHTML='';for(const[k,n] of[['gira','Gira'],['quattro','4 direzioni']])$('aView').appendChild(btn(n,view===k,()=>{view=k}));
     const s=$('aGun');if(!s.options.length){for(const id of IDS){const o=document.createElement('option');o.value=id;o.textContent=NAME(id);s.appendChild(o)}s.onchange=()=>{sound();take(s.value)}}s.value=cur;
-    $('aAct').innerHTML='';const sp=document.createElement('button');sp.textContent='Spara';sp.className='big';
+    $('aAct').innerHTML='';const sp=document.createElement('button');sp.textContent='Spara';sp.className='a3big';
     sp.onpointerdown=e=>{e.preventDefault();sound();fire=true;sp.classList.add('press')};const up=()=>{fire=false;sp.classList.remove('press')};sp.onpointerup=up;sp.onpointerleave=up;sp.onpointercancel=up;$('aAct').appendChild(sp);
     $('aAct').appendChild(btn('Ricarica',false,()=>{if(g.st==='ricarica')return;if(g.id!=='lanciarazzi'){g.mag=0;g.empty=true}else{g.mag=0;g.loaded=0}g.ricarica()}));
     $('aAct').appendChild(btn('Prendi',false,()=>{if(g.estrai)g.estrai()}));
     $('aOpt').innerHTML='';$('aOpt').appendChild(btn('Da solo',auto,()=>{auto=!auto;autoT=0}));$('aOpt').appendChild(btn('Lento',slow,()=>slow=!slow));
     $('aOpt').appendChild(btn('Gira da solo',spin,()=>spin=!spin));$('aOpt').appendChild(btn('Effetti bassi',low,()=>low=!low));
+    // the zombies' new voices: the kind, then what it says
+    $('aVox').innerHTML='';const vs=document.createElement('select');for(const[k,n] of VK){const o=document.createElement('option');o.value=k;o.textContent='Versi: '+n;if(k===vk)o.selected=true;vs.appendChild(o)}
+    vs.onchange=()=>{vk=vs.value;try{ZVB.prepara(vk)}catch(e){}};$('aVox').appendChild(vs);
+    for(const[t,n] of VT){const b=document.createElement('button');b.textContent=n;b.onclick=()=>{sound();try{ZVB.prepara(vk);const c=AU.ctx;AU.pan=0;if(!ZVB.play(vk,t,c.currentTime+.03,t==='moan'||t==='rise'?.6:.5,.92+Math.random()*.16,.35))setTimeout(()=>ZVB.play(vk,t,AU.ctx.currentTime+.03,.5,1,.35),400)}catch(e){}};$('aVox').appendChild(b)}
     $('aSub').textContent=NAME(cur)+(view==='gira'?' · trascina per girarlo':'')};
+  const VK=[['zombie','Zombie'],['strisciante','Strisciante'],['minatore','Minatore'],['lanterna','Lanterna'],['hound','Cane'],['becchino','Becchino'],['spaventapasseri','Spaventapasseri']],
+    VT=[['moan','Lamento'],['growl','Ringhio'],['pain','Colpito'],['death','Morte'],['rise','Dalla fossa'],['near','Vicino']];let vk='zombie';
   take(cur);
   let drag=null;cvp.addEventListener('pointerdown',e=>{drag={x:e.clientX,f:face,moved:false}});
   window.addEventListener('pointermove',e=>{if(!drag)return;if(Math.abs(e.clientX-drag.x)>6)drag.moved=true;if(drag.moved){if(spin){spin=false;build()}face=drag.f-(e.clientX-drag.x)*.012}});
@@ -67,7 +75,7 @@ function boot(){try{INTRO.on=false;paused=true}catch(e){}try{AU.on.music=false}c
     try{if(g.id==='mitragliatrice')ARMI.motore(g,W/2);else if(g.id==='lanciafiamme'&&ARMI.fiamma)ARMI.fiamma(g,W/2)}catch(er){}
     ARMI.fxUpdate(dt);if(spin)face-=dt0*.55;
     const c=cvp.getContext('2d');c.setTransform(dpr,0,0,dpr,0,0);floor(c,W,H);
-    const saved=ctx,lf=LOWFX;ctx=c;LOWFX=low;G.t=now/1000;let cost=0;const top=74,bot=(ov.querySelector('.bar').offsetHeight||150),room=H-top-bot,gp=g.pose();
+    const saved=ctx,lf=LOWFX;ctx=c;LOWFX=low;G.t=now/1000;let cost=0;const top=74,bot=(ov.querySelector('.a3bar').offsetHeight||150),room=H-top-bot,gp=g.pose();
     try{
       const hero=(x,y,f,sc,o2)=>{const o={style:HS(),noFx:true,gp,out:{}};const t1=performance.now();EROE.arciere(x,y,f,'idle',(now/2400)%1,sc,o);cost+=performance.now()-t1;return o.out};
       if(view==='gira'){const sc=Math.min(W/70,room/60)*zoom,fy=top+room*.5+20*sc,o=hero(W/2,fy,face,sc);
@@ -84,6 +92,6 @@ if(document.readyState==='complete')setTimeout(boot,300);else window.addEventLis
 '''.replace('__START__',start)
 i=game.rfind('})();')
 page=game[:i]+'\n'+ctrl+'\n'+game[i:]
-page=page.replace('<title>Mossbound</title>','<title>Armi zombie 3D</title>',1)
+page=page.replace('<title>Mossbound</title>','<title>Armi e versi zombie</title>',1)
 open(os.path.join(here,'armi3d.html'),'w',encoding='utf-8').write(page)
 print('anteprime/armi3d.html pronto')

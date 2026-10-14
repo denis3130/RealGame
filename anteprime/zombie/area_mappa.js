@@ -191,7 +191,7 @@ const AREA={title:'Camposanto',zoneName:h=>h.y<Y(12.3)?(h.x<X(16)?'Fattoria dei 
         act(){const p=W.gunId===id?Math.round(pr/2):pr;if(W.coins<p)return false;W.coins-=p;
           // (anteprima 48, punto 21) la stessa arma: solo i colpi, l'arma resta quella che hai (anche forgiata); un soffio di gesso e il suono dell'arma
           if(W.gunId===id){const g=ZM.gun();g.mag=g.D.mag;g.res=Math.max(g.res,g.D.res*((g.pap||0)+1));if(g.st==='ricarica'&&g.annulla)g.annulla();W.toast=['Colpi: '+(g.nome||g.D.n),1.8]}else ZM.equip(id);
-          if(ZM.barriere)ZM.barriere.burst('gesso',hx,hy,26,8,[0,0],24);try{if(window.ARMI&&ARMI.suono)ARMI.suono(id,'ricarica',180);if(AU.ctx&&AU.on.sfx)coinClink(AU.ctx.currentTime+.01,.8)}catch(e){}return true}});
+          if(ZM.barriere)ZM.barriere.burst('gesso',hx,hy,26,8,[0,0],24);try{if(window.ARMI&&ARMI.suono)ARMI.suono(id,'armata',180);if(AU.ctx&&AU.on.sfx)coinClink(AU.ctx.currentTime+.01,.8)}catch(e){}return true}});
     // la Bara delle Sorprese e i suoi tre posti [x, y, zona, verso della testa]: nel cimitero vicino alla cripta (girata un po', il teschio verso
     // sud), sotto la tettoia accanto al carretto, dentro il fienile nell'angolo a nord-ovest (non nella stalla: lì restava un corridoio di 23 px)
     ZM.sorpresa(X(4.45),Y(16.76),[[X(4.45),Y(16.76),1,.3],[X(9.55),Y(10.85),2,0],[X(12.2),Y(5.0),2,0],[EAST.bara3[0],EAST.bara3[1],3,Math.PI/2],[EAST.bara4[0],EAST.bara4[1],4,0]]);

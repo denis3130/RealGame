@@ -107,3 +107,24 @@ Da fare dopo l'ok di Denis:
 - dove sta la bara nella mappa;
 - quanto costa e quanti punti danno gli zombie;
 - se si tengono due armi insieme.
+
+## La ricarica e i suoni nuovi (anteprima 48, 14 ottobre, Denis: «miglioriamo le animazioni delle pistole, cioè la ricarica», «poi l'audio»)
+- **I tempi della ricarica** (`ARMI.RLT`, frazioni di `D.rel`), gli stessi per l'eroe 3D, per le armi 2D di qui e per i suoni:
+  - armi a caricatore (`mag`): `out` .1 il caricatore si sgancia ed esce, `drop` .18 cade (evento `caricatore`), `pouch` .3 la mano prende
+    quello nuovo alla cintura, `well` .42 è sotto il pozzetto, `push` .5 entra, `seat` .66 scatta, `rack` .72 la mano tira il carrello,
+    `fwd` .8 il carrello torna avanti, `done` .88 la mano torna;
+  - revolver (`rev`): `open` .04–.16 il tamburo si apre, `eject` .16–.2 i bossoli escono, `load` .3–.8 sei colpi uno a uno, `shut` .84–.92
+    si chiude, poi gira.
+- A ogni momento `nuova(id).update` manda `{k:'suono', w:'rl:out'|'rl:pouch'|'rl:seat'|'rl:rack'|'rl:fwd'}`, per il revolver `rv:open`,
+  `rv:eject`, `rv:round` (sei volte), `rv:shut`, `rv:spin`, per il razzo `rz:pouch`, `rz:in`, `rz:lock`; `coda` alla fine di una raffica (tre
+  colpi o più); `estrai` e `armata` quando l'arma presa sale (`g.estrai()`, `g.eq` da 0 a 1 in `ARMI.EQT` secondi, `ARMI.EQR` lo scatto).
+  `pose()` dà anche `n` (colpi nel caricatore), `empty` (ricarica partita a vuoto: la pistola tiene il carrello indietro), `eq`.
+- **I suoni** (`suoni_armi.js`, dopo questo file): ogni arma ha un banco preparato una volta sola fuori tempo reale (`ARMI.prepara(id)`, da
+  solo al primo suono; al massimo sei armi in memoria): tre spari, la coda, i rumori della ricarica, `estrai`, `armata`, `vuoto`,
+  l'esplosione del razzo. `ARMI.suono(id, what, x, dt)` suona dal banco (un nastro un po' più veloce o più lento ogni volta) o, finché non è
+  pronto, gli stessi strati dal vivo. Lo sparo: schiocco, scoppio saturato, pugno (un tono che scende reso ruvido: le casse del telefono
+  sotto i 150 Hz non suonano), rombo, coda ed eco del camposanto, meccanica (numeri in `SHOT`, da regolare a orecchio). Il lanciafiamme:
+  `ARMI.fiamma(g, x)` a ogni fotogramma (ruggito continuo finché spara, si spegne da solo); `ARMI.motore` si spegne da solo anche in
+  pausa; `ARMI.ferma(g)` quando si cambia arma. `ARMI.suonoVecchio` è il suono di prima (per le misure).
+- `caricatore(id, ...)` disegna anche il tamburo, la bombola, la stecca di chiodi e il cristallo (la mappa li lascia a terra).
+- Misure: `node tests/suoni_armi.js` (tempo e memoria del banco, picco, volume ed energia per banda, nuovo e vecchio).

@@ -43,7 +43,7 @@ function kit(c,out,live){const nb={},cv={};
       const g=c.createGain();env(g,t,o.att||.0015,vol,dur);n.connect(g);send(g,o)},
     // a struck piece of metal, wood or glass: partials not quite in tune that ring and die
     modal(t,f,ratios,decs,vol,o){o=o||{};if(vol<=0)return;const g=c.createGain();g.gain.value=vol;send(g,o);
-      ratios.forEach((r,i)=>{const d=decs[Math.min(i,decs.length-1)],s=c.createOscillator();s.frequency.value=f*r;s.start(t);s.stop(t+d+.05);const gg=c.createGain();env(gg,t,.0012,1/(1+i*.6),d);s.connect(gg);gg.connect(g)})}};
+      ratios.forEach((r,i)=>{if(f*r>c.sampleRate*.45)return;const d=decs[Math.min(i,decs.length-1)],s=c.createOscillator();s.frequency.value=f*r;s.start(t);s.stop(t+d+.05);const gg=c.createGain();env(gg,t,.0012,1/(1+i*.6),d);s.connect(gg);gg.connect(g)})}};
   return K}
 
 // ------------------------------------------------------------------ the layers

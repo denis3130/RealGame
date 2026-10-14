@@ -371,3 +371,15 @@ Tutto quello che c'è, con numeri e prove, sta in `docs/anteprima-48.md`; qui co
 - **Audio carico**: le armi automatiche (`disegno_armi.js`, `SN`) e i suoni degli zombie, dei bossoli e delle barriere guardano `audioLv()`
   (`src/js/05-audio.js`, circa i suoni partiti nell'ultimo mezzo secondo) e lasciano via gli strati in più; dettagli e misure in
   `docs/difetti-48.md`.
+
+## Terza richiesta dell'anteprima 48 (14 ottobre: versi, zone, attacchi; dettagli e misure in `docs/difetti-48.md`)
+- **Versi** (`audio_zombie.js`, `ZVB`): una gola fatta col codice (colpi della glottide radi e storti, tre formanti, respiro, raschio,
+  gorgoglii, sibilo, denti), 31 versi preparati una volta a pezzetti quando il browser ha un attimo (`ZVB.prepara(tipo)`), suonati come
+  nastri con la gola di ogni zombie (`ZVB.play(tipo, cosa, t, vol, gola, notte)`: `moan`, `growl`, `pain`, `death`, `rise`, `near`). Ogni
+  zombie aspetta 6–14 s tra un lamento e l'altro, al massimo due voci; ringhio quando arriva vicino (150 px), denti quando è attaccato (70).
+  Il caricatore che cade (`W.onMag`, evento `caricatore`) resta a terra 4 s. Bossoli e caricatori si muovono anche col suono spento.
+- **Zone** (`motore.js`): `zoneOk(x, y, etichetta)` (zona aperta per l'etichetta e per dove sta, `W.zoneIdAt` dall'area: `zoneId`),
+  `shutNear(x, y, r)` (vicino a una barriera o al cancello chiusi); `pickHole` usa entrambi (110 px), `spawn` scarta una buca scelta in una
+  zona chiusa, i morti del Becchino (`partita.js evoca`) solo in una zona aperta e raggiungibile. Prova `zone_prova.js`.
+- **Attacchi** (`motore.js ATKT`, `ATKH`): un attacco dura 1 s (strisciante 1,05, minatore e lanterna 1,1, cane 0,8), il colpo a metà;
+  danni in `partita.js PZ.danno`.

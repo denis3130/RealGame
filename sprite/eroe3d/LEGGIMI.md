@@ -64,3 +64,20 @@ che cade) e `o.out` riceve `muzzle`, dove sta la bocca dell'arma sullo schermo (
 colpi. Senza `o.gp` e `o.out` (gioco classico, fogli) niente cambia.
 
 Da fare: le versioni 3D degli altri eroi.
+
+## La ricarica in 3D (anteprima 48, 14 ottobre, Denis: «miglioriamo le animazioni delle pistole, cioè la ricarica ecc.»)
+- **Le armi** (`armi3d.js`): il caricatore è un pezzo suo (`magPart`): esce dal pozzetto con `st.mag` (0 dentro, 1 libero, `magLen` unità
+  lungo `magDir`), va dove lo porta la mano con `st.magAt`, `st.magOff` quando non c'è. Il revolver: `st.swing` (il tamburo si apre di lato,
+  100 gradi, intorno al perno sotto il telaio, che mostra la finestra vuota), `st.eject` (i bossoli escono dietro), `st.rounds`,
+  `st.roundIn`. I fucili a pompa: `st.shellAt`, `st.shellIn` (la cartuccia nella finestrella, un po' più grande del vero per vederla). Il
+  razzo: `st.rocketAt` (in mano, intero col motore e le alette). Il tamburo ha la chiave che gira (`st.key`), il fucile a vapore il volante
+  (`st.valve`) e la lancetta (`st.gauge`). Le armi restituiscono i punti per la mano (`magSeat`, `magDir`, `magLen`, `rack`, `cylSide`,
+  `rod`, `chs`, `port`, `sad`, `rocket`); `ARMI3D.keys(id, st)` li dà senza disegnare.
+- **L'eroe** (`disegno_eroe.js`: `realGun`, `reloadPose`, `reloadHand`, `drawPose`): durante la ricarica (`pose().rk`, o `shell` per i
+  fucili a pompa) l'arma va alla presa di ricarica (`RLP`: davanti al petto, bocca in su, girata verso la mano libera) e la testa guarda giù;
+  la mano libera segue i tempi di `ARMI.RLT` (sprite/armi/LEGGIMI.md): al caricatore, alla cintura (`POUCH`), di nuovo al pozzetto, al
+  carrello. Le armi a una mano portano la mano libera dal fianco. L'arma presa (`pose().eq`) sale dal fianco (`HOLST`) e si arma una volta.
+  `o.out.mag` / `o.out.magFloor` dicono dov'è il caricatore quando cade (la mappa lo butta a terra da lì), `o.out.eject` dove escono i
+  bossoli.
+- Fogli: `node tests/ricarica4.js [armi]`, `node tests/ricarica_tutte.js`; pagina dal vivo con suoni e versi: `python3 anteprime/mk_armi3d.py`.
+  L'Arciere della Classica resta identico al pixel.
