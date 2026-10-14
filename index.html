@@ -10083,7 +10083,10 @@ function motore(g,x){if(typeof AU==='undefined'||!AU.ctx)return;const c=AU.ctx,o
 // Times in seconds and how often each gun comes out (values to tune by playing). vuota: how often the hand comes out empty; never in
 // the first `prime` openings, so nobody loses their coins right away
 const BARA={prezzo:750,paga:.8,apre:.95,gira:3.4,offre:8,prende:.6,chiude:.8,scappa:3.5,sotto:1.8,sale:1.3,colpi:13,
-  peso:{pistola:14,revolver:13,mitraglietta:14,pompa:13,mitra:10,tattica:10,mitragliatrice:7,lanciarazzi:4,tamburo:9,lanciafiamme:5,vapore:5,risonatore:1.6},vuota:.12,prime:2};
+  peso:{pistola:14,revolver:13,mitraglietta:14,pompa:13,mitra:10,tattica:10,mitragliatrice:7,lanciarazzi:4,tamburo:9,lanciafiamme:5,vapore:5,risonatore:1.6},vuota:0,prime:2,usi:[3,5]};
+// (anteprima 48, punto 20 del piano: la Bara non scappa più a caso; si apre da usi[0] a usi[1] volte, quante lo decide il caso ogni volta che
+// compare, poi dopo l'ultima arma saluta con la mano, sprofonda e ricompare in un altro posto; vuota resta per le prove: forza(true))
+const usiBara=()=>BARA.usi[0]+Math.floor(Math.random()*(BARA.usi[1]-BARA.usi[0]+1));
 const BS=1.9,BH=[[16,4.2],[9,6.6],[-17,3.8],[-17,-3.8],[9,-6.6],[16,-4.2]],HB=6,HL=1.6,YAW=.3,CY=Math.cos(YAW),SY=Math.sin(YAW),LIDA=1.75;
 const bsc=(p,k)=>p.map(q=>[q[0]*k,q[1]*k]),BL=bsc(BH,1.05),BI=bsc(BH,.86),BP=bsc(BH,.72);
 const WOOD=['#3a1c13','#6b3524','#a35a3a'],WOODL=['#4a2416','#7d4129','#b86b45'],FERRO=['#22262c','#454c56','#7d8794'],FODERA=['#4a0f18','#7e1d2c','#b8414f'];
@@ -10296,7 +10299,7 @@ function formaBara(){const T=p=>rot3(p,HA,HK,LIDA),lid=slab(BL,HB,HB+HL,T).flatM
 function scegliArma(not){const ids=ORDINE.filter(i=>i!==not);let tot=0;for(const i of ids)tot+=BARA.peso[i];let r=Math.random()*tot;for(const i of ids){r-=BARA.peso[i];if(r<=0)return i}return ids[0]}
 // the times of the swaps: quick at first, slower and slower
 const scatto=i=>BARA.gira*(.12+.88*(.3*i/BARA.colpi+.7*Math.pow(i/BARA.colpi,2.2)));
-function nuovaBara(x,y){const b={x,y,st:'ferma',t:0,T:0,usi:0,gun:null,fin:null,vuota:false,coins:[],pk:0,tick:0,pay:null,next:null,
+function nuovaBara(x,y){const b={x,y,st:'ferma',t:0,T:0,usi:0,max:usiBara(),addio:0,gun:null,fin:null,vuota:false,coins:[],pk:0,tick:0,pay:null,next:null,
   vicino:(px,py)=>Math.hypot(px-b.x,(py-b.y)*1.3)<52,
   pronta:()=>b.st==='ferma',
   paga(px,py,cur){if(b.st!=='ferma')return false;b.st='paga';b.t=0;b.usi++;b.pay=[px,py];b.cur=cur;b.vuota=b.usi>BARA.prime&&Math.random()<BARA.vuota;b.fin=scegliArma(cur);b.tick=0;b.gun=null;
@@ -10311,11 +10314,11 @@ function nuovaBara(x,y){const b={x,y,st:'ferma',t:0,T:0,usi:0,gun:null,fin:null,
       if(t>=BARA.gira+.15){if(b.vuota){b.st='scappa';b.t=0;b.gun=null;S('risata')}else{b.st='offre';b.t=0;S('arma');ev.push({k:'offerta',id:b.gun})}}}
     else if(b.st==='offre'){if(t>=BARA.offre){b.st='chiude';b.t=0;b.gun=null;S('chiude')}}
     else if(b.st==='prende'){if(t<dt*1.5){ev.push({k:'presa',id:b.gun,x:b.x-2*BS,y:b.y-(HB+15)*BS});S('presa')}if(t>=BARA.prende){b.st='chiude';b.t=0;b.gun=null;S('chiude')}}
-    else if(b.st==='chiude'){if(t>=BARA.chiude){b.st='ferma';b.t=0}}
-    else if(b.st==='scappa'){if(t>=1.05&&!b.ref){b.ref=1;ev.push({k:'rimborso',n:BARA.prezzo});S('sputa')}if(t>=1.75&&!b.sl){b.sl=1;S('sbatte')}if(t>=2.05&&!b.sk){b.sk=1;S('sprofonda')}
+    else if(b.st==='chiude'){if(t>=BARA.chiude){if(b.usi>=b.max){b.st='scappa';b.t=0;b.gun=null;b.addio=1;S('risata')}else{b.st='ferma';b.t=0}}}// l'ultima: se ne va
+    else if(b.st==='scappa'){if(t>=1.05&&!b.ref){b.ref=1;if(!b.addio){ev.push({k:'rimborso',n:BARA.prezzo});S('sputa')}}if(t>=1.75&&!b.sl){b.sl=1;S('sbatte')}if(t>=2.05&&!b.sk){b.sk=1;S('sprofonda')}
       if(t>=BARA.scappa){b.st='sotto';b.t=0;b.ref=b.sl=b.sk=0;ev.push({k:'via'})}}
     else if(b.st==='sotto'){if(t>=BARA.sotto){b.st='sale';b.t=0;if(b.next){b.x=b.next[0];b.y=b.next[1]}S('sale');ev.push({k:'qui',x:b.x,y:b.y})}}
-    else if(b.st==='sale'){if(t>=BARA.sale){b.st='ferma';b.t=0}}
+    else if(b.st==='sale'){if(t>=BARA.sale){b.st='ferma';b.t=0;b.usi=0;b.max=usiBara();b.addio=0}}// nel posto nuovo si riparte da capo
     return ev},
   // everything that moves, from the state and the time in it
   posa(){const t=b.t,T=b.T,a={lid:0,lift:0,shake:0,sink:0,light:0,chain:0,hand:0,gun:null,pop:b.pk,offer:0,wave:0,thumb:false,candles:1,hole:0,
@@ -10340,7 +10343,7 @@ function nuovaBara(x,y){const b={x,y,st:'ferma',t:0,T:0,usi:0,gun:null,fin:null,
     const tp=TPOS(),m=[b.x+tp[0]*BS,b.y+(tp[1]+1.2)*BS];
     if(b.st==='paga')for(const c of b.coins){const k=c.t/.42;if(k<0||k>1)continue;const e=ez(k),px=lerp(c.x0,m[0],e),py=lerp(c.y0,m[1],e)-Math.sin(k*Math.PI)*30;moneta(px,py,1-k*.4,b.T*12+c.x0)}
     // the coins spat back
-    if(b.st==='scappa'&&b.t>1.05&&b.t<1.75){const k=(b.t-1.05)/.7;for(let i=0;i<5;i++){const an=-Math.PI/2+(i-2)*.45,d=k*30;moneta(m[0]+Math.cos(an)*d,m[1]+Math.sin(an)*d*.7-Math.sin(k*Math.PI)*12,1-k*.3,b.T*14+i)}}
+    if(b.st==='scappa'&&!b.addio&&b.t>1.05&&b.t<1.75){const k=(b.t-1.05)/.7;for(let i=0;i<5;i++){const an=-Math.PI/2+(i-2)*.45,d=k*30;moneta(m[0]+Math.cos(an)*d,m[1]+Math.sin(an)*d*.7-Math.sin(k*Math.PI)*12,1-k*.3,b.T*14+i)}}
     // dirt flying when it sinks or comes out
     const dig=b.st==='scappa'&&b.t>2.05&&b.t<3.4?1:b.st==='sale'&&b.t<1.05?1:0;
     if(dig&&!LOWFX){const r=rnd(Math.floor(b.T*20));for(let i=0;i<5;i++){const u=(r()-.5)*34,px=b.x+u*BS,py=b.y+(r()*.5+.4)*7*BS,h=r()*14;ctx.fillStyle=INK;ctx.fillRect(px-1.4,py-h-1.4,2.8,2.8);ctx.fillStyle=r()<.5?'#6b4a2e':'#8a6440';ctx.fillRect(px-.9,py-h-.9,1.8,1.8)}
@@ -11157,6 +11160,12 @@ function pose(anim,p,o){const ph=p*TAU,A={B:[0,0,0],lean:.02,roll:0,s:0,sx:0,hd:
     A.fL=[6.4,-4.6,0];A.fR=[7,4.3,0];A.hd=[.5,0,.18*b];A.hp=.16-.24*lk+.05*rub;A.hy=.06*Math.sin(ph*2)+.55*sd;
     const rb=Math.sin(p*TAU*14)*rub;A.hR=add(lerp3([6.6,5.2,8.2],[9.4,1.3,10.6],rub),[0,.9*rb,.2*b]);
     A.blink=Math.min(blink(p,.12,.035),blink(p,.6,.035),blink(p,.86,.035));A.inhale=0;A.exhale=0;A.jig=.2*b;A.sway=.4*b}
+  else if(anim==='ripara'){// repairing a barrier on the zombie map (boards on a window, bars on a fence): leaning toward it, the left hand holds
+    // the board against it, the right raises the hammer slowly and brings it down on the nail; one blow per loop (the game nails the board at
+    // p = 1, the blow lands at .8-.92), a little nod and a squint on the blow
+    const up=p<.8?ez(p/.8):p<.92?1-ez((p-.8)/.12):0,hit=p>=.86&&p<.98?1-Math.abs(p-.92)/.06:0,bb=Math.sin(ph);
+    A.lean=.17+.02*hit;A.B=[1.2,0,-.5+.1*bb];A.s=-.02;A.hd=[.6,0,0];A.hp=.14+.06*hit;A.hy=0;A.blink=blink(p,.35,.1);A.squint=.5*hit;
+    A.hL=[12.4,-3.6,14.4-.5*hit];A.hR=[9.4+2.4*(1-up),3.8,13.6+6.8*up];A.tool=lerp(-.55,1.6,up);A.fL=[2.4,-5.2,0];A.fR=[-.6,5,0];A.jig=.5*hit;A.sway=.3*hit}
   else if(anim==='hit'){// knocked back, eyes squeezed shut, a wobble back to standing
     const kb=p<.12?ez(p/.12):Math.exp(-(p-.12)*6)*Math.cos((p-.12)*16);A.lean=-.32*kb;A.B=[-2.6*kb,0,.4*kb];A.s=-.08*kb;A.roll=.05*kb;
     A.hd=[-.6*kb,0,.4*kb];A.hp=.06-.1*kb;A.shut=p<.5?1:0;A.mouth=p<.5?1:0;A.flash=p<.14?1-p/.14:0;A.stars=p<.75?1-p/.75:0;
@@ -11424,8 +11433,15 @@ function arciere0(x,y,face,anim,p,sc,o){sc=sc||1;o=o||{};const S0=o.style||{},ar
   // the bow and the hand that holds it, in front of the belly; the string hand at the right side (or on the string). No arms, as in the game
   const grip=X.T(A.grip),aim=nrm(X.Rd(A.aim)),up=nrm(X.Rd(A.up)),hR=X.T(A.hR),Bw=bowPts(grip,aim,up,A.draw,LB,BK);
   if(gunW)weaponParts(parts,V0,X,S,Wp,wid,o);
-  else if(!wid){// no weapon (held: null): both hands at the sides
-    const hL=X.T([A.hR[0],-A.hR[1],A.hR[2]]);parts.push({d:D(X.T(REST.hR)),f:()=>fist(V0,hR,2.7,S.hand)});parts.push({d:D(X.T([-.6,-11.4,11.4])),f:()=>fist(V0,hL,2.7,S.hand)})}
+  else if(!wid){// no weapon (held: null): both hands at the sides (A.hL: the left hand somewhere else, as in 'ripara'; o.tool 'martello': the
+    // hammer in the right hand, its handle along A.tool, an angle in the body's x-z plane, its head across it)
+    const hL=X.T(A.hL||[A.hR[0],-A.hR[1],A.hR[2]]);
+    if(o.tool==='martello'&&A.tool!=null){const a=A.tool,dir=X.Rd([Math.cos(a),0,Math.sin(a)]),crs=X.Rd([Math.sin(a),0,-Math.cos(a)]),hd=add(hR,mul(dir,6.4));
+      parts.push({d:D(X.T(A.hR))+.02,f:()=>{const H0=P(hR),H1=P(hd),K0=P(sub(hd,mul(crs,1.6))),K1=P(add(hd,mul(crs,2.6)));ctx.lineCap='round';
+        ctx.strokeStyle=INK;ctx.lineWidth=3.2;seg(H0,H1);ctx.stroke();ctx.strokeStyle='#8a6a42';ctx.lineWidth=1.5;seg(H0,H1);ctx.stroke();
+        ctx.strokeStyle=INK;ctx.lineWidth=4.6;seg(K0,K1);ctx.stroke();ctx.strokeStyle='#4a4c56';ctx.lineWidth=2.8;seg(K0,K1);ctx.stroke();ctx.strokeStyle='rgba(220,225,240,.55)';ctx.lineWidth=.8;seg(K0,K1);ctx.stroke();
+        fist(V0,hR,2.7,S.hand)}})}
+    else parts.push({d:D(X.T(REST.hR)),f:()=>fist(V0,hR,2.7,S.hand)});parts.push({d:A.hL?D(hL):D(X.T([-.6,-11.4,11.4])),f:()=>fist(V0,hL,2.7,S.hand)})}
   else if(W3){// the bow in 3D: the stave, its trims, the string and the arrow sort with the two hands
     const fr=W3.frame(grip,aim,up,1),strOn=anim==='shoot'||anim==='aim',loc=q=>{const d=sub(q,grip);return[dot(d,fr.X),dot(d,fr.Y),dot(d,fr.Z)]};
     parts.push({d:D(X.T([12,0,ZB+5])),f:()=>{let pinch=null;if(A.pinch)pinch=loc(hR);else if(A.twang>0)pinch=[-(BK+A.draw*1.6)+Math.sin(A.twang*22)*1.2*A.twang,0,0];
@@ -15078,11 +15094,15 @@ function heightAt(x,y){let h=0;for(const s of stands)if(x>=s.x&&x<=s.x+s.w&&y>=s
 const solid=(x,y,w,d,tag)=>{if(TURN)[x,y,w,d]=tR(TURN,x,y,w,d);const s={x,y,w,d,tag};solids.push(s);return s};
 const shade=(x,y,w,d,h,a)=>{if(TURN)[x,y,w,d]=tR(TURN,x,y,w,d);return shadows.push({x,y,w,d,h,a})};const shadeR=(x,y,r,a)=>{if(TURN)[x,y]=tP(TURN,x,y);return shadows.push({x,y,r,a})};
 // per disegnare un prop le facce stanno in ordine: contorno (hull) prima di tutto, poi le facce
-function drawProp(p,alphaOf){const parts=p.parts;for(const part of parts){if(part.part&&alphaOf){const a=alphaOf(part.part);if(a<=0)continue;if(a<1){ctx.save();ctx.globalAlpha*=a;drawPart(part);ctx.restore();continue}}drawPart(part)}}
+// (part.vis: un pezzo che c'è solo a volte, come le assi di una barriera: vis() dice se disegnarlo adesso)
+function drawProp(p,alphaOf){const parts=p.parts;for(const part of parts){if(part.vis&&!part.vis())continue;if(part.part&&alphaOf){const a=alphaOf(part.part);if(a<=0)continue;if(a<1){ctx.save();ctx.globalAlpha*=a;drawPart(part);ctx.restore();continue}}drawPart(part)}}
 // ------------------------------------------------------------------ il mondo
 const W={dbg:{},w:10*T,h:10*T,ground:null,hero:null,Z:[],FX:[],crows:[],flock:[],clouds:[],mists:[],flies:[],leaves:[],puffs:[],coins:0,t:0,
   zoneOpen:{},gunId:'pistola',split:null,gate:null,toast:null};// zone aperte, arma in mano, velo sulla zona chiusa, il cancello (l'area li prepara)
-function hit(x,y,r,ex){for(const s of solids){if(s.off||s===ex)continue;const cx=cl(x,s.x,s.x+s.w),cy=cl(y,s.y,s.y+s.d);if((x-cx)**2+(y-cy)**2<r*r)return s}return null}
+// le barriere (finestre, varchi delle recinzioni: barriere.js) sono solidi con s.bar: fermano sempre l'eroe; BARM dice chi le passa in questo
+// controllo: 0 nessuno, 1 i colpi e la mira (si spara attraverso le finestre), 2 solo quelle aperte (lo zombie che colpisce da una finestra senza assi)
+let BARM=0;
+function hit(x,y,r,ex){for(const s of solids){if(s.off||s===ex||(s.bar&&BARM&&(BARM===1||s.bar.open())))continue;const cx=cl(x,s.x,s.x+s.w),cy=cl(y,s.y,s.y+s.d);if((x-cx)**2+(y-cy)**2<r*r)return s}return null}
 function move(o,dx,dy,r){const s0=hit(o.x,o.y,r);o.x+=dx;if(hit(o.x,o.y,r,s0))o.x-=dx;o.y+=dy;if(hit(o.x,o.y,r,s0))o.y-=dy}
 // ------------------------------------------------------------------ navigazione degli zombie
 // Griglia di 8 px con gli ostacoli gonfiati del raggio dello zombie; un campo di distanze verso l'eroe (Dijkstra a 8 vicini, senza tagliare gli
@@ -15094,22 +15114,28 @@ function navBuild(){const cw=Math.ceil(W.w/NC),ch=Math.ceil(W.h/NC),n=cw*ch,bl=n
   const mark=(arr,R)=>{for(const s of solids){if(s.off)continue;const i0=Math.max(0,Math.floor((s.x-R)/NC)),i1=Math.min(cw-1,Math.floor((s.x+s.w+R)/NC)),j0=Math.max(0,Math.floor((s.y-R)/NC)),j1=Math.min(ch-1,Math.floor((s.y+s.d+R)/NC));
     for(let j=j0;j<=j1;j++)for(let i=i0;i<=i1;i++){const cx=(i+.5)*NC,cy=(j+.5)*NC,dx=cx-cl(cx,s.x,s.x+s.w),dy=cy-cl(cy,s.y,s.y+s.d);if(dx*dx+dy*dy<R*R)arr[j*cw+i]=1}}};
   mark(bl,ZR+.5);mark(los,ZR+3);
-  NAV={cw,ch,n,bl,los,dist:new Float32Array(n),hk:new Float32Array(n*8+64),hv:new Int32Array(n*8+64),hc:-1,t:0}}
+  // le barriere: un corridoio di caselle libere che attraversa il muro (bar: quale barriera, bs: da che parte della linea); la vista (los) resta chiusa
+  const bar=new Int16Array(n),bs=new Int8Array(n);BARS.forEach((B,bi)=>{const R0=B.reach,hw=Math.max(4,B.half-5),ex=R0+hw+NC;
+    const i0=Math.max(0,Math.floor((B.x-ex)/NC)),i1=Math.min(cw-1,Math.floor((B.x+ex)/NC)),j0=Math.max(0,Math.floor((B.y-ex)/NC)),j1=Math.min(ch-1,Math.floor((B.y+ex)/NC));
+    for(let j=j0;j<=j1;j++)for(let i=i0;i<=i1;i++){const dx=(i+.5)*NC-B.x,dy=(j+.5)*NC-B.y,v=dx*B.nx+dy*B.ny,u=-dx*B.ny+dy*B.nx;if(Math.abs(u)<=hw&&Math.abs(v)<=R0){const c=j*cw+i;bl[c]=0;bar[c]=bi+1;bs[c]=v>=0?1:-1}}});
+  NAV={cw,ch,n,bl,los,bar,bs,bc:new Float32Array(BARS.length+1),dist:new Float32Array(n),hk:new Float32Array(n*8+64),hv:new Int32Array(n*8+64),hc:-1,t:0}}
 const cellOf=(x,y)=>cl(Math.floor(y/NC),0,NAV.ch-1)*NAV.cw+cl(Math.floor(x/NC),0,NAV.cw-1);
 const cen=c=>{const i=c%NAV.cw;return[(i+.5)*NC,((c-i)/NAV.cw+.5)*NC]};
-function navField(){const N=NAV,h=W.hero,cw=N.cw,ch=N.ch,D=N.dist,B=N.bl,hk=N.hk,hv=N.hv;D.fill(1e9);let hs=0;
+function navField(){const N=NAV,h=W.hero,cw=N.cw,ch=N.ch,D=N.dist,B=N.bl,hk=N.hk,hv=N.hv,BR=N.bar,BS=N.bs,BC=N.bc;D.fill(1e9);let hs=0;
+  for(let i=0;i<BARS.length;i++)BC[i+1]=BARS[i].off?1e6:BARS[i].cost();// passare da una parte all'altra di una barriera costa (chiusa di più)
   const push=(k,v)=>{let i=hs++;while(i>0){const p=(i-1)>>1;if(hk[p]<=k)break;hk[i]=hk[p];hv[i]=hv[p];i=p}hk[i]=k;hv[i]=v};
   const pop=()=>{const v=hv[0],lk=hk[--hs],lv=hv[hs];let i=0;for(;;){let c=2*i+1;if(c>=hs)break;if(c+1<hs&&hk[c+1]<hk[c])c++;if(hk[c]>=lk)break;hk[i]=hk[c];hv[i]=hv[c];i=c}hk[i]=lk;hv[i]=lv;return v};
   // le caselle libere vicino all'eroe sono i punti di partenza (l'eroe può stare più vicino ai muri di uno zombie)
   const hi=Math.floor(h.x/NC),hj=Math.floor(h.y/NC);let lim=30;for(let r=4;r<=16&&!hs;r+=4,lim+=32)for(let j=hj-r;j<=hj+r;j++)for(let i=hi-r;i<=hi+r;i++){if(i<0||j<0||i>=cw||j>=ch)continue;const c=j*cw+i;if(B[c])continue;const d=Math.hypot((i+.5)*NC-h.x,(j+.5)*NC-h.y);if(d>lim)continue;if(d<D[c]){D[c]=d;push(d,c)}}
   while(hs){const k0=hk[0],c=pop();if(k0>D[c])continue;if(k0>NAVMAX)break;const i=c%cw,j=(c-i)/cw;// oltre NAVMAX px dall'eroe il campo non serve (mappe grandi)
     for(let dj=-1;dj<=1;dj++)for(let di=-1;di<=1;di++){if(!di&&!dj)continue;const ni=i+di,nj=j+dj;if(ni<0||nj<0||ni>=cw||nj>=ch)continue;const nc=nj*cw+ni;if(B[nc])continue;
-      if(di&&dj&&(B[j*cw+ni]||B[nj*cw+i]))continue;const nd=k0+(di&&dj?1.4142*NC:NC);if(nd<D[nc]){D[nc]=nd;push(nd,nc)}}}}
+      if(di&&dj&&(B[j*cw+ni]||B[nj*cw+i]))continue;const nd=k0+(di&&dj?1.4142*NC:NC)+(BR[nc]&&BR[nc]===BR[c]&&BS[nc]!==BS[c]?BC[BR[nc]]:0);if(nd<D[nc]){D[nc]=nd;push(nd,nc)}}}}
 function navUpdate(dt){if(!NAV)return;NAV.t-=dt;const c=cellOf(W.hero.x,W.hero.y);if(c!==NAV.hc&&NAV.t<=0){NAV.hc=c;NAV.t=.08;navField()}}
 // la linea tra due punti è libera? (sulla griglia più gonfia; i primi e gli ultimi 10 px non contano: chi sta vicino a un muro vede lo stesso)
 function losClear(x0,y0,x1,y1){const L=Math.hypot(x1-x0,y1-y0);if(L<1)return true;const n=Math.ceil(L/4);for(let k=1;k<n;k++){const s=k/n*L;if(s<10||L-s<10)continue;const t=k/n;if(NAV.los[cellOf(x0+(x1-x0)*t,y0+(y1-y0)*t)])return false}return true}
 // la linea è libera per un corpo di raggio r sui solidi veri (ex: il solido da cui sta uscendo)
-function physClear(x0,y0,x1,y1,r,ex){const L=Math.hypot(x1-x0,y1-y0),n=Math.max(1,Math.ceil(L/3));for(let k=1;k<=n;k++){const t=k/n;if(hit(x0+(x1-x0)*t,y0+(y1-y0)*t,r,ex))return false}return true}
+// (bm: come passano le barriere, vedi BARM)
+function physClear(x0,y0,x1,y1,r,ex,bm){const L=Math.hypot(x1-x0,y1-y0),n=Math.max(1,Math.ceil(L/3)),sv=BARM;BARM=bm||0;try{for(let k=1;k<=n;k++){const t=k/n;if(hit(x0+(x1-x0)*t,y0+(y1-y0)*t,r,ex))return false}return true}finally{BARM=sv}}
 function steer(z){const h=W.hero,N=NAV;
   // l'eroe invisibile (Lucky Card): gli zombie vagano qua e là senza trovarlo
   if(W.mods&&W.mods.invis>0){if(!z.wd||z.wdT<W.t||Math.hypot(z.wd[0]-z.x,z.wd[1]-z.y)<12){z.wd=[z.x+rr(-110,110),z.y+rr(-110,110)];z.wdT=W.t+rr(1.4,3)}return z.wd}
@@ -15127,13 +15153,37 @@ function steer(z){const h=W.hero,N=NAV;
     for(let dj=-1;dj<=1;dj++)for(let di=-1;di<=1;di++){if(!di&&!dj)continue;const ni=i+di,nj=j+dj;if(ni<0||nj<0||ni>=cw||nj>=ch)continue;const nc=nj*cw+ni;if(N.bl[nc])continue;if(di&&dj&&(N.bl[j*cw+ni]||N.bl[nj*cw+i]))continue;if(D[nc]<nv){nv=D[nc];nb=nc}}
     if(nb<0)break;cur=nb;const p=cen(cur);if(losClear(z.x,z.y,p[0],p[1]))tgt=p;else{if(!tgt)tgt=p;break}}
   return tgt||[h.x,h.y]}
-function zWalk(z,dt){z.st=(z.st||0)-dt;if(z.st<=0||!z.tg||Math.hypot(z.tg[0]-z.x,z.tg[1]-z.y)<5){z.tg=steer(z);z.st=.12}
+function zWalk(z,dt){if(z.ai&&BARS.length){if(!z.bx&&(z.bxT=(z.bxT||0)-dt)<=0){z.bxT=.15;z.bx=barCheck(z)}if(z.bx){barStep(z,dt);return}}// un boss la sfonda
+  z.st=(z.st||0)-dt;if(z.st<=0||!z.tg||Math.hypot(z.tg[0]-z.x,z.tg[1]-z.y)<5){z.tg=steer(z);z.st=.12}
   let tx=z.tg[0]-z.x,ty=z.tg[1]-z.y;const tl=Math.hypot(tx,ty)||1;tx/=tl;ty/=tl;
   if(z.det>0){z.det-=dt;tx=z.dvx;ty=z.dvy}
   if(z.vx==null){z.vx=tx;z.vy=ty}const k=Math.min(1,dt*7);z.vx+=(tx-z.vx)*k;z.vy+=(ty-z.vy)*k;const vl=Math.hypot(z.vx,z.vy)||1;
   move(z,z.vx/vl*z.spd*dt,z.vy/vl*z.spd*dt,ZR);z.face=Math.atan2(z.vy,z.vx);
   z.chk=(z.chk||0)+dt;if(z.cx0==null){z.cx0=z.x;z.cy0=z.y}
   if(z.chk>.7){if(Math.hypot(z.x-z.cx0,z.y-z.cy0)<z.spd*.7*.3&&!(z.det>0)){const sd=Math.random()<.5?-1:1;z.dvx=-ty*sd;z.dvy=tx*sd;z.det=.5;z.st=0}z.chk=0;z.cx0=z.x;z.cy0=z.y}}
+// ------------------------------------------------------------------ le barriere (barriere.js: finestre e varchi delle recinzioni)
+// Una barriera è {x, y (il centro sulla linea del muro), nx, ny (il verso «fuori»), half (mezza apertura), th (spessore), reach (mezzo corridoio),
+// open(), cost(), hit(z) (un colpo di zombie: il vetro o un'asse), smash(z) (un boss la sfonda), shot() (un colpo dell'eroe che la attraversa)}.
+// Nella griglia il corridoio è libero e passare la linea costa cost(): chiusa costa di più, così gli zombie prendono la porta se è poco più
+// lunga. Lo zombie che il campo manda di là (barCheck) va davanti alla barriera, la colpisce finché non è aperta e la scavalca in 0,75 s
+// con un saltello, senza urti; poi riprende a camminare. Se intanto l'eroe va altrove e la barriera non serve più, lascia perdere
+const BARS=[];
+function barrier(B){B.reach=B.reach||30;B.th=B.th||10;B.half=B.half||13;B.vault=0;BARS.push(B);return B}
+function barCheck(z){if(!NAV||!NAV.bar||!BARS.length)return null;const c=cellOf(z.x,z.y),b=NAV.bar[c];if(!b)return null;const B=BARS[b-1];if(B.off)return null;
+  const s=(z.x-B.x)*B.nx+(z.y-B.y)*B.ny>=0?1:-1,o=B.th/2+ZR+2,fx=B.x-s*B.nx*o,fy=B.y-s*B.ny*o,fc=cellOf(fx,fy),D=NAV.dist;
+  if(D[fc]>=1e9||D[c]>=1e9||D[fc]+NAV.bc[b]+Math.hypot(fx-z.x,fy-z.y)>D[c]+2)return null;return{B,s,st:'va',t:0,chk:0}}
+function barStep(z,dt){const X=z.bx,B=X.B,s=X.s,o=B.th/2+ZR+1,ax=B.x+s*B.nx*o,ay=B.y+s*B.ny*o,fa=Math.atan2(-s*B.ny,-s*B.nx);X.t+=dt;
+  const an=(a,per)=>{if(z.anim!==a){z.anim=a;z.p=0}const p0=z.p;z.p=(z.p+dt/per)%1;return p0};
+  const still=()=>{if((X.chk+=dt)<.5)return true;X.chk=0;const c2=barCheck(z);if(c2&&c2.B===B)return true;z.bx=null;return false};// serve ancora?
+  if(X.st==='va'){const dx=ax-z.x,dy=ay-z.y,d=Math.hypot(dx,dy);
+    if(d<4||(X.t>1.6&&d<22)){X.st=B.open()?'su':'colpo';X.t=0;z.p=0;return}if(X.t>2.4){z.bx=null;return}
+    const sp=Math.min(d,z.spd*dt);move(z,dx/d*sp,dy/d*sp,ZR);z.face=Math.atan2(dy,dx);an('walk',z.kind==='hound'?.6:1.1);still();return}
+  if(X.st==='colpo'){z.face=fa;if(B.open()){X.st='su';X.t=0;return}if(z.ai){B.smash(z);X.st='su';X.t=0;return}
+    const p0=an('attack',1.4);if(p0<.55&&z.p>=.55)B.hit(z);still();return}
+  // di là: dalla parte di qua a quella di là in 0,75 s, un saltello sul davanzale, senza urti
+  if(!X.from){X.from=[z.x,z.y];X.to=[B.x-s*B.nx*o,B.y-s*B.ny*o];B.vault++;if(B.onVault)B.onVault(z,s)}
+  const k=Math.min(1,X.t/.75),e=ez(k);z.x=lerp(X.from[0],X.to[0],e);z.y=lerp(X.from[1],X.to[1],e);z.zh=heightAt(z.x,z.y)+Math.sin(k*Math.PI)*(B.hop||12);z.face=fa;if(!z.ai)an('walk',.75);
+  if(k>=1){B.vault--;z.bx=null;z.tg=null;z.st=0;z.cx0=null}}
 // ------------------------------------------------------------------ terreno cotto (chiamato dall'area dopo aver messo i prop)
 const GT=2;let groundDraw=null,BAKE=null;
 // edgeSnap(): chiamato dall'area dentro il suo pittore, fotografa il terreno di base per il fuori mappa (makeEdgeBands) prima delle cose che
@@ -15231,8 +15281,8 @@ const HERO3=()=>typeof EROE!=='undefined'&&!!EROE.arciere&&HSTYLE.hid==='arciere
 // (moltiplicano quelli del tipo), q (conta per il round)}; restituisce lo zombie o null se la buca scelta era occupata
 function spawn(o){o=o||{};const h=W.hero,c=holes.filter(p=>(p[2]==null||W.zoneOpen[p[2]])&&Math.hypot(p[0]-h.x,p[1]-h.y)>110&&Math.hypot(p[0]-h.x,p[1]-h.y)<460);if(!c.length)return null;const p=c[Math.floor(Math.random()*c.length)],
     k=o.kind?KINDS.find(q=>q[0]===o.kind)||KINDS[0]:KINDS[Math.floor(Math.random()*KINDS.length)];
-  if(W.Z.some(z=>Math.hypot(z.x-p[0],z.y-p[1])<30))return null;const out=p[3]==='mais'||p[3]==='porta';if(p[4])p[4]();
-  const z={id:++ZID,kind:k[0],sc:k[1],spd:k[2]*(o.spd||1),hp:k[3]*(o.hp||1),x:p[0],y:p[1],face:Math.atan2(h.y-p[1],h.x-p[0]),p:Math.random(),anim:'walk',rise:out?1:0,die:0,flash:0};z.spd0=z.spd;z.hp0=z.hp;if(o.q)z.q=1;W.Z.push(z);return z}
+  if(W.Z.some(z=>Math.hypot(z.x-p[0],z.y-p[1])<30))return null;const out=p[3]==='mais'||p[3]==='porta'||p[3]==='fuori';if(p[4])p[4]();
+  const z={id:++ZID,kind:k[0],sc:k[1],spd:k[2]*(o.spd||1),hp:k[3]*(o.hp||1),x:p[0],y:p[1],face:Math.atan2(h.y-p[1],h.x-p[0]),p:Math.random(),anim:'walk',rise:out?1:0,die:0,flash:0};z.spd0=z.spd;z.hp0=z.hp;if(o.q)z.q=1;if(p[3]==='fuori')z.fin=.9;W.Z.push(z);return z}// ('fuori': esce dal buio oltre il bordo, piano piano)
 // gli zombie fermi in una zona chiusa (la fattoria prima del cancello): girano piano intorno a casa loro; da fermi girano di colpo la testa
 // verso l'eroe quando si avvicina; se l'eroe va al cancello vengono alle sbarre e allungano le braccia. Quando la zona si apre partono
 function idleZombie(kind,x,y,zone){const k=KINDS.find(k=>k[0]===kind)||KINDS[0],z={id:++ZID,kind:k[0],sc:k[1],spd:k[2],hp:k[3],x,y,face:rr(0,TAU),p:Math.random(),anim:'idle',rise:1,die:0,flash:0,idle:{zone,home:[x,y],t:rr(0,3),tg:null}};W.Z.push(z);return z}
@@ -15256,7 +15306,7 @@ function fireShot(ev){const h=W.hero,g=gunState,D=g.D,B=basis(heroDir()*Math.PI/
   // le armi speciali (armi_speciali.js: lanciafiamme, fucile a vapore, Risonatore) fanno il colpo a modo loro
   if(W.shotHook&&W.shotHook(ev,g,D,{hw,ao,ty}))return;
   for(const da of ev.ang){const a=h.aim+da,dx=Math.cos(a),dy=Math.sin(a);let end=D.range,left=(D.pierce||0)+1;
-    for(let s=12;s<D.range;s+=5){const s0=hit(h.x+dx*s,h.y+dy*s,1.5);if(s0&&s0.tag!=='hole'){end=s;break}}// il primo muro sulla linea
+    for(let s=12;s<D.range;s+=5){const s0=hit(h.x+dx*s,h.y+dy*s,1.5);if(s0&&s0.bar){if(s0.bar.shot)s0.bar.shot();continue}if(s0&&s0.tag!=='hole'){end=s;break}}// il primo muro sulla linea (le finestre e i varchi si passano)
     const L=[];for(const z of W.Z){if(z.die||z.rise<1)continue;const rx=z.x-h.x,ry=z.y-h.y,al=rx*dx+ry*dy;if(al<0||al>end)continue;if(Math.abs(rx*dy-ry*dx)<11*z.sc)L.push([al,z])}L.sort((p,q)=>p[0]-q[0]);
     const MD=W.mods||{};for(const[al,z] of L){const cr=MD.crit>0&&Math.random()<MD.crit;hurt(z,D.dmg*(D.pel>1?cl(1.25-al/D.range,.35,1):1)*(MD.dmg||1)*(cr?2:1),true);if(cr&&W.onCrit)W.onCrit(z);if(!ev.paid&&W.director&&W.director.shotHit){ev.paid=1;W.director.shotHit()}if(--left<=0){end=al;break}}
     if(D.splash){const ex=h.x+dx*end,ey=h.y+dy*end;for(const z of W.Z)if(!z.die&&z.rise>=1&&Math.hypot(z.x-ex,z.y-ey)<D.splash+8)hurt(z,D.dmg*.6,false);W.FX.push({k:'boom',tw:[ex,ey,0],t:.45,t0:.45,r:D.splash})}
@@ -15285,7 +15335,9 @@ function boxPlace(x,y,a){const F=BOX.F,k=F.BS,c=Math.cos(a),s=Math.sin(a),w=(u,v
   const P=[];for(const p of F.BH)P.push(w(p[0]*1.12,p[1]*1.12));for(const q of F.cand)for(const[dx,dy] of DIR8)P.push(w(q[0]+dx*1.4,q[1]+dy*1.4));for(const q of F.lid)P.push(w(q[0],q[1]));
   const E=BOX.E;finFP(E,P.map(q=>[q[0],q[1],0]));E.x=x;E.y=y;E.prop.ref=[x,y];E.zs=undefined;E.H=null}
 function boxUpdate(dt){if(!BOX)return;const b=BOX.b;for(const e of b.update(dt)){if(e.k==='suono'){if(ARMI.suonoBara)ARMI.suonoBara(e.w,180)}else if(e.k==='presa')equip(e.id);else if(e.k==='rimborso'){W.coins+=e.n;W.toast=['La Bara scappa: monete restituite',2.4]}
-    else if(e.k==='via'){const c=BOX.spots.filter(s=>(s[2]==null||W.zoneOpen[s[2]])&&Math.hypot(s[0]-BOX.x,s[1]-BOX.y)>40),s=c.length?c[Math.floor(Math.random()*c.length)]:[BOX.x,BOX.y,null,BOX.a];boxPlace(s[0],s[1],s[3]||0);navBuild();if(NAV)NAV.hc=-1}}}
+    else if(e.k==='via'){const c=BOX.spots.filter(s=>(s[2]==null||W.zoneOpen[s[2]])&&Math.hypot(s[0]-BOX.x,s[1]-BOX.y)>40),s=c.length?c[Math.floor(Math.random()*c.length)]:[BOX.x,BOX.y,null,BOX.a];boxPlace(s[0],s[1],s[3]||0);navBuild();if(NAV)NAV.hc=-1;if(b.addio)W.toast=['La Bara se ne va…',2.4]}
+    // ricomparsa: dove è andata (il nome della zona) e un fascio di luce verde che si vede da lontano per qualche secondo
+    else if(e.k==='qui'){const n=W.zoneAt?W.zoneAt(BOX.x,BOX.y):'';W.toast=['La Bara è ricomparsa'+(n?': '+n:''),3];W.FX.push({k:'faro',tw:[BOX.x,BOX.y,0],t:6,t0:6})}}}
 // la voce della Bara in questo fotogramma: l'altezza della posa (chiusa 18 px, col coperchio aperto fino a 40, con la mano e l'arma 50, sotto
 // terra quasi niente), il riquadro a schermo e la piega come uno strato, l'impronta girata di ψ
 function boxEntry(){const E=BOX.E,F=BOX.F,a=BOX.b.posa();E.z0=0;E.z1=(a.sink||0)>=1?3:a.hand>0?50:F.BS*(F.HB+F.HL+2)+22*(a.lid||0)/F.LIDA;E.cst=-1;layerSB(E);rotate(E,PC,PSN);return E}
@@ -15306,14 +15358,15 @@ function boxPrims(){const F=BOX.F,k=F.BS,c=Math.cos(BOX.a),s=Math.sin(BOX.a),X=B
 // W.mods (fortuna.js, il gioco): cose che la partita cambia per un po' o per tutta la partita: spd la corsa dell'eroe, dmg il danno, crit la
 // probabilità di un colpo doppio, cash le monete degli zombie, invis gli zombie che non lo vedono
 function updateBeings(dt,inp){const h=W.hero,DI=W.director,MD=W.mods||{};if(h.dead)inp={x:0,y:0};const m=Math.hypot(inp.x,inp.y);h.moving=m>.15;if(h.moving){const sp=150*Math.min(1,m)*(MD.spd||1);move(h,inp.x/m*sp*dt,inp.y/m*sp*dt,10);h.face=Math.atan2(inp.y,inp.x);h.walk+=dt*12}
-  h.zh=(h.zh||0)+(heightAt(h.x,h.y)-(h.zh||0))*Math.min(1,dt*14);const noShoot=!!W.dbg.noShoot||!!h.dead;
+  h.zh=(h.zh||0)+(heightAt(h.x,h.y)-(h.zh||0))*Math.min(1,dt*14);const noShoot=!!W.dbg.noShoot||!!h.dead||!!h.busy;// (mentre ripara una finestra non spara)
   // il bersaglio: lo zombie più vicino entro 230 px che l'eroe vede davvero (i colpi non passano attraverso muri, recinti, lapidi, casse…);
   // la linea si controlla sui solidi veri, ignorando quello in cui sta lo zombie (la fossa da cui esce); ricontrollata ogni 0,1 s
   const g=gunState,RG=g?Math.min(g.D.range,260):230;
   h.tgT=(h.tgT||0)-dt;let tgt=h.tgZ&&W.Z.includes(h.tgZ)&&!h.tgZ.die&&!h.tgZ.idle&&h.tgZ.rise>=1&&Math.hypot(h.tgZ.x-h.x,h.tgZ.y-h.y)<RG?h.tgZ:null;
   if(h.tgT<=0||!tgt){h.tgT=.1;tgt=null;const c=W.Z.filter(z=>z.rise>=1&&!z.die&&!z.idle).map(z=>[Math.hypot(z.x-h.x,z.y-h.y),z]).filter(a=>a[0]<RG).sort((a,b)=>a[0]-b[0]);
-    for(const[,z] of c)if(physClear(h.x,h.y,z.x,z.y,1.5,hit(z.x,z.y,2))){tgt=z;break}h.tgZ=tgt}
+    for(const[,z] of c)if(physClear(h.x,h.y,z.x,z.y,1.5,hit(z.x,z.y,2),1)){tgt=z;break}h.tgZ=tgt}
   if(tgt){h.aim=Math.atan2(tgt.y-h.y,tgt.x-h.x);if(!h.moving)h.face=h.aim}
+  if(h.busy&&!h.moving)h.face=Math.atan2(h.busy.y-h.y,h.busy.x-h.x);// guarda quello che ripara
   // il verso disegnato dell'Arciere 3D (nel mondo): segue in fretta quello vero, senza le 8 direzioni del rig di prima
   {const tf=h.face||0;if(h.f3==null||dt>=.5)h.f3=tf;else h.f3+=Math.atan2(Math.sin(tf-h.f3),Math.cos(tf-h.f3))*Math.min(1,dt*18)}
   // il grilletto: le armi automatiche lo tengono premuto, le altre lo premono di nuovo appena l'arma è pronta
@@ -15326,12 +15379,14 @@ function updateBeings(dt,inp){const h=W.hero,DI=W.director,MD=W.mods||{};if(h.de
   // la scia e le gocce sono attaccate a punti del mondo (i piedi dell'eroe e dello zombie colpito, ripresi con S a ogni fotogramma) più uno
   // scarto sullo schermo (la bocca dell'arma, l'altezza del petto, il volo delle gocce): girando la telecamera restano dove sono successe
   if(DI)DI.update(dt,zOn);else{spawnT-=dt;if(zOn&&spawnT<=0&&W.Z.filter(z=>!z.idle&&!z.die).length<(W.maxZ||5)){spawn();spawnT=rr(2,3.5)}}navUpdate(dt);
-  for(const z of W.Z){if(z.flash>0)z.flash-=dt;if(z.die){z.die+=dt;continue}z.zh=(z.zh||0)+(heightAt(z.x,z.y)-(z.zh||0))*Math.min(1,dt*14);if(z.rise<1){z.rise=Math.min(1,z.rise+dt/1.3);z.face=Math.atan2(h.y-z.y,h.x-z.x);continue}
+  for(const z of W.Z){if(z.flash>0)z.flash-=dt;if(z.fin>0)z.fin-=dt;if(z.die){z.die+=dt;continue}z.zh=(z.zh||0)+(heightAt(z.x,z.y)-(z.zh||0))*Math.min(1,dt*14);if(z.rise<1){z.rise=Math.min(1,z.rise+dt/1.3);z.face=Math.atan2(h.y-z.y,h.x-z.x);continue}
     if(z.idle){if(W.zoneOpen[z.idle.zone])z.idle=null;else{idleStep(z,dt);sep(z);continue}}
     if(z.ai){z.ai(z,dt);sep(z);continue}// un boss della partita: si muove e colpisce da solo
     if(z.stun>0){z.stun-=dt;if(z.anim!=='idle'){z.anim='idle';z.p=0}z.p=(z.p+dt/2.4)%1;sep(z);continue}// respinto dall'anima che rialza l'eroe
+    if(!z.bx&&BARS.length&&(z.bxT=(z.bxT||0)-dt)<=0){z.bxT=.15;z.bx=barCheck(z)}// una finestra o un varco da passare (barriere.js)
+    if(z.bx){barStep(z,dt);if(!(z.bx&&z.bx.from))sep(z);continue}
     const dx=h.x-z.x,dy=h.y-z.y,d=Math.hypot(dx,dy);
-    if(d<30&&physClear(z.x,z.y,h.x,h.y,2)){z.face=Math.atan2(dy,dx);if(z.anim!=='attack'){z.anim='attack';z.p=0}const p0=z.p;z.p+=dt/1.4;if(DI&&DI.zombieHit&&p0<.55&&z.p>=.55)DI.zombieHit(z,d);z.chk=0;z.cx0=null}// il colpo arriva a metà del gesto
+    if(d<30&&physClear(z.x,z.y,h.x,h.y,2,null,2)){z.face=Math.atan2(dy,dx);if(z.anim!=='attack'){z.anim='attack';z.p=0}const p0=z.p;z.p+=dt/1.4;if(DI&&DI.zombieHit&&p0<.55&&z.p>=.55)DI.zombieHit(z,d);z.chk=0;z.cx0=null}// il colpo arriva a metà del gesto
     else{if(z.anim!=='walk'){z.anim='walk';z.p=0}z.p+=dt/(z.kind==='hound'?.6:1.1);zWalk(z,dt)}
     sep(z);z.p%=1}
   for(let i=W.Z.length-1;i>=0;i--)if(W.Z[i].die>1.1||(!zOn&&W.Z[i].rise<1))W.Z.splice(i,1);
@@ -15352,7 +15407,7 @@ function drawZombie(z){const q=S(z.x,z.y,z.zh||0),zk=RIGK.mzk,fc=z.face+CAM.yaw;
     if(k>.25){const u=ez((k-.25)/.75),ck=Math.max(1,z.sc/1.1);ctx.save();ctx.beginPath();ctx.rect(q[0]-60*ck,q[1]-150*ck,120*ck,150*ck+1);ctx.clip();
       ctx.translate(0,(1-u)*60*z.sc*zk);CR[z.kind](q[0],q[1],fc,'idle',(W.t*.6)%1,z.sc);ctx.restore()}return}
   if(z.die){const k=Math.min(1,z.die/1.1),ck=Math.max(1,z.sc/1.1);ctx.save();ctx.globalAlpha=1-k*k;ctx.beginPath();ctx.rect(q[0]-60*ck,q[1]-150*ck,120*ck,150*ck+1);ctx.clip();ctx.translate(0,ez(k)*50*z.sc*zk);CR[z.kind](q[0],q[1],fc,'idle',0,z.sc);ctx.restore();return}
-  CR[z.kind](q[0],q[1],fc,z.anim,z.p,z.sc);if(z.flash>0){ctx.save();ctx.globalCompositeOperation='lighter';glow('255,255,255',q[0],q[1]-24*z.sc*zk,22*z.sc,.5);ctx.restore()}}
+  const fin=z.fin>0;if(fin){ctx.save();ctx.globalAlpha*=cl(1-z.fin/.9,0,1)}CR[z.kind](q[0],q[1],fc,z.anim,z.p,z.sc);if(fin)ctx.restore();if(z.flash>0){ctx.save();ctx.globalCompositeOperation='lighter';glow('255,255,255',q[0],q[1]-24*z.sc*zk,22*z.sc,.5);ctx.restore()}}
 // le trasparenze della casa: il tetto sfuma quando l'eroe entra, i mobili compaiono; i muri (wN, wS, wE, wW: da che parte guardano) con l'eroe
 // dentro diventano trasparenti se sono rivolti verso la telecamera (a vista dritta i muri sud, come prima), piano piano mentre si gira
 const WALLN={wN:[0,-1],wS:[0,1],wE:[1,0],wW:[-1,0]};
@@ -15367,8 +15422,9 @@ function heroDir(){const h=W.hero,sa=scrAng(h.face),d=Q8(sa),cur=h.dS==null?d:h.
 // serve ai colpi. Senza l'eroe 3D, il rig di prima nelle 8 direzioni
 function drawHero(){const h=W.hero,q=S(h.x,h.y,h.zh||0),f=h.fall||0,inv=W.mods&&W.mods.invis>0;if(inv){ctx.save();ctx.globalAlpha*=.32+.12*Math.sin(W.t*6)}if(f>0){ctx.save();ctx.translate(q[0],q[1]-6);ctx.rotate(-f*1.42);ctx.translate(-q[0],-(q[1]-6))}
   if(HERO3()){const DI=W.director,ht=DI&&DI.hurtT!=null?DI.hurtT:9,aimOn=!!h.tgZ&&!h.moving&&!f&&!h.dead;let anim='idle',p=((W.t/2.4)%1+1)%1;
-    if(f>0||h.dead){anim='hit';p=.16}else if(ht<.45){anim='hit';p=ht/.45*.5}else if(h.moving){anim='walk';p=(((h.walk||0)/TAU)%1+1)%1}else if(aimOn)anim='aim';
-    const out={};try{EROE.arciere(q[0],q[1],(h.f3==null?h.face||0:h.f3)+CAM.yaw,anim,p,1,{style:HSTYLE,gp:gunState?gunState.pose():null,noFx:true,out})}catch(e){console.error(e)}W.muzzle=out.muzzle||null}
+    const job=!f&&!h.dead&&!h.moving&&h.busy&&h.busy.anim?h.busy:null;// un lavoro con le mani (le assi sulla finestra): l'arma va via
+    if(f>0||h.dead){anim='hit';p=.16}else if(ht<.45){anim='hit';p=ht/.45*.5}else if(h.moving){anim='walk';p=(((h.walk||0)/TAU)%1+1)%1}else if(job){anim=job.anim;p=cl(h.busyP||0,0,.999)}else if(aimOn)anim='aim';
+    const out={};try{EROE.arciere(q[0],q[1],(h.f3==null?h.face||0:h.f3)+CAM.yaw,anim,p,1,{style:job?Object.assign({},HSTYLE,{gun:null}):HSTYLE,gp:gunState&&!job?gunState.pose():null,noFx:true,out,tool:job?job.tool:null})}catch(e){console.error(e)}W.muzzle=out.muzzle||null}
   else drawRig(q[0],q[1]-8,heroDir()*Math.PI/4,h.walk,h.moving&&!f,HSTYLE,{gp:gunState?gunState.pose():{},aim:h.aim==null||f?null:scrAng(h.aim)});
   if(f>0)ctx.restore();if(inv)ctx.restore();if(W.director&&W.director.drawOnHero)W.director.drawOnHero(q)}
 // una voce della lista: uno strato di prop (L), un prop intero nell'ordine di prima (W, con W.dbg.ord='ky'), un essere (B: eroe, zombie, corvo
@@ -15704,7 +15760,7 @@ function warmIntra(){if(W.dbg.noWarm){setTimeout(warmIntra,500);return}const t0=
   for(let d=0;d<=90&&performance.now()-t0<4;d++)for(const sg of d?[1,-1]:[1]){const sec=((s0+sg*d+90)%180+180)%180-90;for(const L of LAYERS){if(L.groups.length<2||L.memo.has(sec))continue;todo=true;intraAt(L,sec);if(performance.now()-t0>=4)break}}
   if(todo)setTimeout(warmIntra,30)}
 // disegna uno strato: i contorni sciolti per primi, poi i gruppi nel loro ordine, poi le fiamme figlie
-function drawPartA(t,hs){if(hs&&t.part){const a=alphaOf(hs,t.part);if(a<=0)return;if(a<1){ctx.save();ctx.globalAlpha*=a;drawPart(t);ctx.restore();return}}drawPart(t)}
+function drawPartA(t,hs){if(t.vis&&!t.vis())return;if(hs&&t.part){const a=alphaOf(hs,t.part);if(a<=0)return;if(a<1){ctx.save();ctx.globalAlpha*=a;drawPart(t);ctx.restore();return}}drawPart(t)}
 function drawLayer(L){const p=L.prop,hs=p.house;LEANK=p.lk==null?1:p.lk;setRef(p.ref);ROTP=p.rot||null;try{for(const t of L.loose)drawPartA(t,hs);const G=intraOrder(L);for(const g of G)for(const t of g.parts)drawPartA(t,hs)}finally{ROTP=null}
   LEANK=1;setRef(null);if(!W.dbg.noFlames)for(const f of L.flames)drawFlame(f)}
 // il riquadro a schermo del segugio: lungo ±12 nel verso in cui guarda
@@ -15789,6 +15845,9 @@ function drawWorld(dt,view){const h0=houses[0],h0a=h0?h0.a:1,D=W.dbg;
     ctx.save();ctx.globalCompositeOperation='lighter';for(const f of W.flies){const q=S(f.x,f.y,f.z),b=.5+.5*Math.sin(W.t*3+f.ph);glow('170,255,120',q[0],q[1],9,.5*b);ctx.fillStyle=`rgba(230,255,190,${.9*b})`;ctx.fillRect(q[0]-.8,q[1]-.8,1.6,1.6)}ctx.restore()}
   for(const f of W.FX){if(f.k==='coin'){const t=S(f.tw),k=1-f.t/f.t0,y=t[1]-k*26;ctx.save();ctx.globalAlpha=Math.min(1,f.t/.35);ctx.font='800 14px "Baloo 2",system-ui';ctx.textAlign='center';ctx.lineJoin='round';ctx.lineWidth=3.6;ctx.strokeStyle=INK;ctx.strokeText('+'+f.n,t[0],y);ctx.fillStyle='#ffd65a';ctx.fillText('+'+f.n,t[0],y);ctx.restore();continue}
     if(f.k==='boom'){const t=S(f.tw),k=1-f.t/f.t0;ctx.save();ctx.globalCompositeOperation='lighter';glow('255,170,70',t[0],t[1]-10,f.r*(.6+k),.9*(1-k));ctx.restore();ctx.strokeStyle=`rgba(255,220,160,${.7*(1-k)})`;ctx.lineWidth=3;ctx.beginPath();ctx.ellipse(t[0],t[1],f.r*(.4+k),f.r*(.4+k)*.6*CAM.SP,0,0,TAU);ctx.stroke();continue}
+    if(f.k==='faro'){const q=S(f.tw),al=Math.min(1,(f.t0-f.t)/.5)*Math.min(1,f.t/1.5),pu=.8+.2*Math.sin(W.t*6),H=190*CAM.CP;ctx.save();if(!LOWFX)ctx.globalCompositeOperation='lighter';
+      const g=ctx.createLinearGradient(0,q[1],0,q[1]-H);g.addColorStop(0,`rgba(120,255,160,${.42*al*pu})`);g.addColorStop(1,'rgba(120,255,160,0)');ctx.fillStyle=g;ctx.beginPath();ctx.moveTo(q[0]-15,q[1]);ctx.lineTo(q[0]+15,q[1]);ctx.lineTo(q[0]+6,q[1]-H);ctx.lineTo(q[0]-6,q[1]-H);ctx.closePath();ctx.fill();
+      const r=26+((f.t0-f.t)*30)%40;ctx.strokeStyle=`rgba(150,255,180,${.5*al*(1-((f.t0-f.t)*30%40)/40)})`;ctx.lineWidth=2;ctx.beginPath();ctx.ellipse(q[0],q[1],r,r*.5*CAM.SP,0,0,TAU);ctx.stroke();ctx.restore();continue}
     if(f.k==='shot'){const g=S(f.hw),t=S(f.tw),a=[g[0]+f.ao[0],g[1]+f.ao[1]];ctx.strokeStyle='rgba(255,230,160,.9)';ctx.lineWidth=f.w||2;seg(a,[t[0]+f.bo[0],t[1]+f.bo[1]]);ctx.stroke();if(!LOWFX){ctx.save();ctx.globalCompositeOperation='lighter';glow('255,210,120',a[0],a[1],14,.8);ctx.restore()}}
     else{const t=S(f.tw);ctx.fillStyle='#3a5a1e';ball([t[0]+f.x,t[1]+f.y],1.8);ctx.fill()}}
   if(W.director&&W.director.drawTop)W.director.drawTop(dt);if(liveDraw)liveDraw(dt);drawMist(dt);drawFlock();if(PH)PH('effetti_nebbia')}
@@ -15829,7 +15888,7 @@ function bootAsync(area,o){o=o||{};const keep=[window.CR&&CR.cam?Object.assign({
 function libera(){if(!JOBS||!W.ground)return false;W.ground.width=W.ground.height=0;W.ground=null;return true}
 function ricuoci(o){o=o||{};if(W.ground||!JOBS)return Promise.resolve(0);const sd=seed;
   return inPezzi((function*(){for(const[w,h,p] of JOBS)yield* bakeSteps(w,h,p)})(),o,JOBS.passi||40).then(n=>{JOBS.passi=n;seed=sd;if(o.passo)o.passo(1);return n})}
-function boot(area,o){o=o||{};const GAME=!!o.game;let ACT=!GAME,RUN=false,PAUSE=false;W.gioco=GAME?o:null;
+function boot(area,o){o=o||{};const GAME=!!o.game;let ACT=!GAME,RUN=false,PAUSE=false;W.gioco=GAME?o:null;W.zoneAt=(x,y)=>area.zoneName?area.zoneName({x,y}):'';
   // la telecamera della mappa inclina anche i personaggi (CR.cam, RIGCAM, in camRig): nel gioco si tengono quelli del menu appena lo si lascia
   // (prima di costruire o di rimettere a posto la mappa) e tornando al menu si rimettono
   let crKeep=null,rgKeep=null;const keepCam=()=>{if(!GAME||crKeep||rgKeep)return;crKeep=window.CR&&CR.cam?Object.assign({},CR.cam):null;rgKeep=typeof RIGCAM!=='undefined'?Object.assign({},RIGCAM):null};keepCam();
@@ -15884,9 +15943,12 @@ function boot(area,o){o=o||{};const GAME=!!o.game;let ACT=!GAME,RUN=false,PAUSE=
   for(const t of['pointerup','pointercancel','lostpointercapture'])buyEl.addEventListener(t,()=>{buyHold=false;buyLock=false});
   function uiStep(dt){const h=W.hero;let best=null,bd=1e9;for(const o of buys){if(o.show&&!o.show())continue;const d=Math.hypot(h.x-o.x,h.y-o.y);if(d<o.r&&d<bd){bd=d;best=o}}
     const kh=!!(keys.Space||keys.Enter),holding=(buyHold||kh)&&!buyLock;if(best!==buyCur){buyCur=best;buyP=0;if(buyHold||kh)buyLock=true}
-    if(best){const pr=best.price(),ok=W.coins>=pr;if(holding&&ok){buyP+=dt/.65;if(buyP>=1){buyP=0;buyLock=true;best.act();buyKey=''}}else buyP=Math.max(0,buyP-dt*3);
+    // (o.hold: i secondi da tenere premuto, 0,65 se manca; o.rep: si ripete finché si tiene premuto, come le assi della riparazione, e intanto
+    // l'eroe lavora: W.hero.busy; o.sub(): la riga sotto il nome)
+    W.hero.busy=null;W.hero.busyP=buyP;
+    if(best){const pr=best.price(),ok=W.coins>=pr;if(holding&&ok&&best.rep)W.hero.busy=best;if(holding&&ok){buyP+=dt/(best.hold||.65);if(buyP>=1){buyP=0;const r=best.act();if(!best.rep||r===false)buyLock=true;buyKey=''}}else buyP=Math.max(0,buyP-dt*3);
       if(holding&&!ok){if(!best.shk){best.shk=1;buyEl.classList.remove('no');void buyEl.offsetWidth;buyEl.classList.add('no')}}else best.shk=0;
-      const key=best.label()+'|'+pr+'|'+ok;if(key!==buyKey){buyKey=key;const n=pr.toLocaleString('it-IT');buyEl.querySelector('.t1').textContent=best.label();buyEl.querySelector('.t2').innerHTML=pr?(ok?'Tieni premuto · <b>● '+n+'</b>':'Servono <b>● '+n+'</b>'):'Tieni premuto';buyEl.classList.toggle('poor',!ok)}
+      const sub=best.sub?best.sub():null,key=best.label()+'|'+pr+'|'+ok+'|'+sub;if(key!==buyKey){buyKey=key;const n=pr.toLocaleString('it-IT');buyEl.querySelector('.t1').textContent=best.label();buyEl.querySelector('.t2').innerHTML=sub!=null?sub:pr?(ok?'Tieni premuto · <b>● '+n+'</b>':'Servono <b>● '+n+'</b>'):'Tieni premuto';buyEl.classList.toggle('poor',!ok)}
       buyEl.style.setProperty('--p',(buyP*100).toFixed(1)+'%')}
     const show=!!best&&hudOn&&!whole;if(buyEl.hidden===show)buyEl.hidden=!show;
     // l'arma in mano e i colpi; i messaggi brevi (W.toast = [testo, secondi])
@@ -16042,7 +16104,7 @@ function boot(area,o){o=o||{};const GAME=!!o.game;let ACT=!GAME,RUN=false,PAUSE=
   function stop(){if(!ACT)return;ACT=false;PAUSE=false;ov.hidden=true;reset();buyHold=false;if(crKeep)Object.assign(CR.cam,crKeep);if(rgKeep)Object.assign(RIGCAM,rgKeep);crKeep=rgKeep=null;cv.style.transform=''}
   // una partita nuova: zombie, effetti, monete, arma, uccisioni; l'area rimette le sue cose (cancello chiuso, velo, zombie dell'aia, Bara al primo
   // posto, eroe alla partenza); il round da capo; la telecamera a nord sull'eroe
-  function nuova(){if(!ACT)keepCam();W.Z.length=0;W.FX.length=0;W.puffs.length=0;W.toast=null;W.kills=0;if(area.reset)area.reset();
+  function nuova(){if(!ACT)keepCam();W.Z.length=0;W.FX.length=0;W.puffs.length=0;W.toast=null;W.kills=0;for(const B of BARS)if(B.reset)B.reset();W.hero.busy=null;if(area.reset)area.reset();
     if(window.ARMI){const sg=W.startGun&&ARMI.DATI[W.startGun]?W.startGun:'pistola';try{gunState=ARMI.nuova(sg);HSTYLE.gun=W.gunId=sg}catch(e){gunState=null}}
     if(W.director&&W.director.reset)W.director.reset();navBuild();if(NAV)NAV.hc=-1;ORD.mm.m=new Map();ORD.fm.m=new Map();ORD.fr+=5;
     buyP=0;buyCur=null;buyKey='';buyLock=false;buyHold=false;gunKey='';toastT=0;toastEl.classList.remove('on');buyEl.hidden=true;reset();
@@ -16058,7 +16120,7 @@ function boot(area,o){o=o||{};const GAME=!!o.game;let ACT=!GAME,RUN=false,PAUSE=
     return{vis:msk?v/msk:1,mask:msk,occ:A.occ,box:A.B}}
   const ctl=()=>({stick:Object.assign({},stick),look:Object.assign({},look),keys:Object.keys(keys).filter(k=>keys[k]),ret:!!cam.ret,yawT:cam.yawT/DEG,elT:cam.elT/DEG});
   const setView=(yd,ed)=>{cam.ret=null;if(yd!=null)CAM.yaw=cam.yawT=wrapA(yd*DEG);if(ed!=null)CAM.el=cam.elT=cam.elRaw=cl(ed*DEG,ELMIN,ELMAX);camDerive()};
-  window.__MZ={W,CAM,props,houses,solids,holes,stands,perches,zoom:v=>{zoomOv=v},cam:(x,y)=>{camOv=x==null?null:[x,y];if(x!=null)CAM.oy=0},// con la visuale fissata dai test il perno è il centro (oy=0), come prima
+  window.__MZ={ZM,W,CAM,props,houses,solids,holes,stands,perches,zoom:v=>{zoomOv=v},cam:(x,y)=>{camOv=x==null?null:[x,y];if(x!=null)CAM.oy=0},// con la visuale fissata dai test il perno è il centro (oy=0), come prima
     setWhole:v=>{whole=v;ui()},tp:(x,y)=>{W.hero.x=x;W.hero.y=y},zombies:v=>{zOn=v;ui()},low:v=>{low=v;ui()},
     // la telecamera, in gradi: view() legge, view(ψ,θ) mette subito (null = lascia com'è), viewTo come il dito (morbido), north() come la bussola
     view:(yd,ed)=>yd===undefined?{yaw:wrapA(CAM.yaw)/DEG,el:CAM.el/DEG,yawT:cam.yawT/DEG,elT:cam.elT/DEG,oy:CAM.oy}:setView(yd,ed),
@@ -16097,7 +16159,7 @@ orderReset:()=>{ORD.mm.m=new Map();ORD.fm.m=new Map();ORD.fr+=5},
     texStats:()=>{let n=0,px=0,np=0,pp=0;for(const k in TEX){n++;px+=TEX[k].width*TEX[k].height}for(const k in PLANES){np++;pp+=PLANES[k].width*PLANES[k].height}return{n,mpx:+(px/1e6).toFixed(2),np,mpp:+(pp/1e6).toFixed(2)}},
     buys,equip,buyNow:id=>{const o=buys.find(b=>b.id===id);return o?o.act():null},box:()=>BOX,boxTo:i=>{const q=BOX.spots[i];boxPlace(q[0],q[1],q[3]||0);navBuild();if(NAV)NAV.hc=-1;return[q[0],q[1]]},coins:v=>{if(v!=null)W.coins=v;return W.coins},gun:()=>gunState,nuova:()=>CTL.nuova()};
   return CTL}
-return{AREE,anteprima,boxReset,stile,idleZombie,buyable,sorpresa,equip,hurt,spawn,KINDS,move,zWalk,sep,physClear,gun:()=>gunState,navRebuild:()=>{navBuild();if(NAV)NAV.hc=-1},softImg,turn,group,grp,finalize,facing,across,onGround,onPlane,onRound,ringNear,T,CAM,W,S,LS,MOON,inGround,scrAng,decals,fades,NAMES,stand,stands,heightAt,add3,sub3,len3,rnd,rr,srand,ink,path,hull,material,MAT,MARKS,texture,tone,face,hullOf,ballAt,line3,poly3,fn3,box,prismX,prismY,plane,cyl,prop,solid,shade,shadeR,props,solids,shadows,lights,flames,holes,houses,smokes,perches,hit,bakeGround,edgeSnap,boot,bootAsync,libera,ricuoci,setLive:f=>{liveDraw=f},wa,mix,cl,ez,lerp,TAU,ball,seg}})();
+return{toWorld:(x,y)=>TURN?tP(TURN,x,y):[x,y],dirWorld:(x,y)=>TURN?tV(TURN,x,y):[x,y],AREE,anteprima,boxReset,stile,idleZombie,buyable,buys,barrier,BARS,barCheck,sorpresa,equip,hurt,spawn,KINDS,move,zWalk,sep,physClear,gun:()=>gunState,navRebuild:()=>{navBuild();if(NAV)NAV.hc=-1},softImg,turn,group,grp,finalize,facing,across,onGround,onPlane,onRound,ringNear,T,CAM,W,S,LS,MOON,inGround,scrAng,decals,fades,NAMES,stand,stands,heightAt,add3,sub3,len3,rnd,rr,srand,ink,path,hull,material,MAT,MARKS,texture,tone,face,hullOf,ballAt,line3,poly3,fn3,box,prismX,prismY,plane,cyl,prop,solid,shade,shadeR,props,solids,shadows,lights,flames,holes,houses,smokes,perches,hit,bakeGround,edgeSnap,boot,bootAsync,libera,ricuoci,setLive:f=>{liveDraw=f},wa,mix,cl,ez,lerp,TAU,ball,seg}})();
 // ---------- PROP della mappa zombie: tutto ciò che sta in piedi sul terreno, costruito sul motore (ZM) con volumi 3D che si piegano
 // via dall'eroe. Ogni prop registra i suoi pezzi (facce con texture, sfere, linee), i solidi per le collisioni, le ombre da cuocere nel
 // terreno, le luci e le fiamme. Misure in pixel del gioco (una casella = 64; l'eroe è alto circa 30).
@@ -16348,13 +16410,14 @@ P.house=function(x,y,w,d,o){o=o||{};const H=o.H||74,th=10,door=x+(o.door==null?w
   solid(x+80,y+76,40,26);inner([x+76,y+72,x+124,y+106,22],y+102,[...box(x+82,y+78,0,4,4,16,'wood',{noOut:true}),...box(x+114,y+78,0,4,4,16,'wood',{noOut:true}),...box(x+82,y+98,0,4,4,16,'wood',{noOut:true}),...box(x+114,y+98,0,4,4,16,'wood',{noOut:true}),...box(x+80,y+76,16,40,26,4,'wood',{noFoot:true}),...cyl(x+99,y+89,20,2.4,7,'bone',{n:6,r1:2})]);
   flames.push({x:x+99,y:y+89,z:27.5,r:2.2,rgb:'255,170,80',house:hs,indoor:1,ky:y+103});lights.push({x:x+99,y:y+89,z:27,r:55,rgb:'255,170,80',a:.4,fl:1,house:hs});
   solid(x+66,y+82,10,14);inner([x+64,y+80,x+80,y+96,24],y+96,[...box(x+66,y+82,0,10,14,10,'wood'),...box(x+66,y+82,10,3,14,14,'wood',{noFoot:true})]);shadeR(x+71,y+91,8,.35);shadeR(x+100,y+90,22,.3);shadeR(x+35,y+56,26,.3);
-  {const cx=x+168,cy=y+102;solid(cx,cy,22,15);inner([cx-4,cy-2,cx+26,cy+18,8],cy+16,[...box(cx,cy+2,0,22,12,3,'wood',{ow:1.6}),...box(cx,cy,3,22,2.5,8,'wood',{noFoot:true,ow:1.4}),line3([cx+4,cy+14,0],[cx+4,cy+14,9],'#3c2817',2,{ink:true}),line3([cx+18,cy+14,0],[cx+18,cy+14,9],'#3c2817',2,{ink:true})])}// una sedia rovesciata, a est della porta
+  {const cx=x+w*.62,cy=y+102;solid(cx,cy,22,15);inner([cx-4,cy-2,cx+26,cy+18,8],cy+16,[...box(cx,cy+2,0,22,12,3,'wood',{ow:1.6}),...box(cx,cy,3,22,2.5,8,'wood',{noFoot:true,ow:1.4}),line3([cx+4,cy+14,0],[cx+4,cy+14,9],'#3c2817',2,{ink:true}),line3([cx+18,cy+14,0],[cx+18,cy+14,9],'#3c2817',2,{ink:true})])}// una sedia rovesciata, a est della porta
   decals.push(()=>{const g=ctx.createRadialGradient(x+w*.6+22,y+30,2,x+w*.6+22,y+30,60);g.addColorStop(0,'rgba(255,140,50,.28)');g.addColorStop(1,'rgba(255,140,50,0)');ctx.fillStyle=g;ctx.beginPath();ctx.ellipse(x+w*.6+22,y+30,60,36,0,0,TAU);ctx.fill();G.bloodTrail([[door,y+d-2],[door-10,y+d-30],[x+60,y+d-60],[x+40,y+70]])});// la pozza del camino e la scia scura dalla porta al letto
   solid(x+18,y+26,34,56);inner([x+16,y+24,x+54,y+84,18],y+82,[...box(x+18,y+26,0,34,56,12,'wood'),...box(x+20,y+28,12,30,50,5,'cloth',{noFoot:true}),ballAt([x+35,y+60,17],9,'cloth',{sq:.45,ow:1.6}),...box(x+22,y+30,17,26,12,4,'bone',{noFoot:true,ow:1.4})]);
-  // lo scaffale aperto verso la stanza: fondo contro il muro est, fianchi, cappello, due ripiani e tre barattoli veri (cilindri: si vedono giusti da
-  // ogni lato; prima erano rettangoli disegnati sopra il mobile, che girando restavano davanti anche guardando il fondo)
-  {const sx=x+w-30,sy=y+70;solid(sx,sy,16,40);const parts=[...box(sx+12,sy,0,4,40,44,'plankD'),...box(sx,sy,0,12,2,44,'plankD'),...box(sx,sy+38,0,12,2,44,'plankD'),...box(sx,sy,44,16,40,2,'wood',{noFoot:true}),...box(sx,sy+2,14,12,36,2,'wood',{noFoot:true,noOut:true}),...box(sx,sy+2,28,12,36,2,'wood',{noFoot:true,noOut:true})];
-    ['#5a8a6a','#8a5a3a','#6a6a9a'].forEach((c,i)=>{const id='jar'+i;if(!ZM.MAT[id])ZM.material(id,[c,mix(c,'#000000',.35),mix(c,'#ffffff',.25)],'flat');E(parts,...cyl(sx+6,sy+8+i*12,30,3,8,id,{n:6,ink:.6}))});inner([sx-2,sy-2,sx+18,sy+42,46],sy+40,parts)}
+  // lo scaffale aperto verso la stanza: fondo contro il muro ovest (anteprima 48: prima stava contro il muro est, davanti alla finestra da cui ora
+  // entrano gli zombie e dove l'eroe sbarra), fianchi, cappello, due ripiani e tre barattoli veri (cilindri: si vedono giusti da ogni lato; prima
+  // erano rettangoli disegnati sopra il mobile, che girando restavano davanti anche guardando il fondo)
+  {const sx=x+th,sy=y+100;solid(sx,sy,16,40);const parts=[...box(sx,sy,0,4,40,44,'plankD'),...box(sx+4,sy,0,12,2,44,'plankD'),...box(sx+4,sy+38,0,12,2,44,'plankD'),...box(sx,sy,44,16,40,2,'wood',{noFoot:true}),...box(sx+4,sy+2,14,12,36,2,'wood',{noFoot:true,noOut:true}),...box(sx+4,sy+2,28,12,36,2,'wood',{noFoot:true,noOut:true})];
+    ['#5a8a6a','#8a5a3a','#6a6a9a'].forEach((c,i)=>{const id='jar'+i;if(!ZM.MAT[id])ZM.material(id,[c,mix(c,'#000000',.35),mix(c,'#ffffff',.25)],'flat');E(parts,...cyl(sx+10,sy+8+i*12,30,3,8,id,{n:6,ink:.6}))});inner([sx-2,sy-2,sx+18,sy+42,46],sy+40,parts)}
   // davanti: muro sud in due pezzi (ognuno con la sua finestra), l'architrave sopra la porta, il vano della porta e l'anta, il muro est con la
   // sua finestra: pannelli appena fuori dal muro (vetro acceso o sbarrato, davanzale, persiana storta), che girando restano dietro il muro
   const win=(cx,cy,fc,lit,boards,id)=>{const W2=40,H2=34,draw=(w2,h2)=>{const fx=7,fy=2,fw=26,fh=26;if(lit&&!boards){const ga=ctx.createRadialGradient(fx+13,fy+13,10,fx+13,fy+13,24);ga.addColorStop(0,'rgba(255,170,90,.28)');ga.addColorStop(1,'rgba(255,170,90,0)');ctx.fillStyle=ga;ctx.fillRect(0,0,w2,h2)}ctx.fillStyle=lit?'#ffcf7a':'#141018';ctx.fillRect(fx,fy,fw,fh);
@@ -16364,13 +16427,21 @@ P.house=function(x,y,w,d,o){o=o||{};const H=o.H||74,th=10,door=x+(o.door==null?w
       ctx.fillStyle='#93714c';ctx.fillRect(fx-3,fy+fh-1,fw+6,4);ink(1.6);ctx.strokeRect(fx-3,fy+fh-1,fw+6,4);
       if(boards){for(let j=0;j<2;j++){ctx.save();ctx.translate(fx+fw/2,fy+7+j*12);ctx.rotate(j?-.2:.14);ctx.fillStyle=j?'#6e5236':'#93714c';ctx.fillRect(-18,-3,36,6);ink(1.5);ctx.strokeRect(-18,-3,36,6);ctx.fillStyle='rgba(10,8,6,.7)';ctx.beginPath();ctx.arc(-14,0,.9,0,TAU);ctx.arc(14,0,.9,0,TAU);ctx.fill();ctx.restore()}}
       else{ctx.save();ctx.translate(fx-1,fy);ctx.transform(1,.08,0,1,0,0);ctx.fillStyle='#54402c';ctx.fillRect(-7,0,7,fh);ink(1.6);ctx.strokeRect(-7,0,7,fh);ctx.fillStyle='rgba(20,12,6,.5)';for(let yy=3;yy<fh;yy+=4)ctx.fillRect(-6,yy,5,1);ctx.restore()}};
-    if(fc==='s'){if(lit){lights.push({x:cx,y:y+d+24,r:70,rgb:'255,180,90',a:.4,fl:0,house:null});decals.push(()=>{const g=ctx.createLinearGradient(0,y+d,0,y+d+44);g.addColorStop(0,'rgba(255,170,90,.26)');g.addColorStop(1,'rgba(255,170,90,0)');ctx.fillStyle=g;ctx.beginPath();ctx.moveTo(cx-12,y+d);ctx.lineTo(cx+12,y+d);ctx.lineTo(cx+24,y+d+44);ctx.lineTo(cx-24,y+d+44);ctx.closePath();ctx.fill()})}return plane(cx-W2/2,y+d+.4,30,W2,H2,'x','win'+id,draw)}
-    if(lit)lights.push({x:x+w+22,y:cy,r:70,rgb:'255,180,90',a:.4,fl:0});return plane(x+w+.4,cy-W2/2,30,W2,H2,'y','win'+id,draw)};
+    // (ogni finestra è anche una barriera che gli zombie rompono e l'eroe sbarra: barriere.js, P.winBar; il vano nel muro è il suo solido)
+    const tx='win'+id+(lit?'L':'')+(boards?'B':'');
+    if(fc==='s'){if(lit){lights.push({x:cx,y:y+d+24,r:70,rgb:'255,180,90',a:.4,fl:0,house:null});decals.push(()=>{const g=ctx.createLinearGradient(0,y+d,0,y+d+44);g.addColorStop(0,'rgba(255,170,90,.26)');g.addColorStop(1,'rgba(255,170,90,0)');ctx.fillStyle=g;ctx.beginPath();ctx.moveTo(cx-12,y+d);ctx.lineTo(cx+12,y+d);ctx.lineTo(cx+24,y+d+44);ctx.lineTo(cx-24,y+d+44);ctx.closePath();ctx.fill()})}
+      const pl=plane(cx-W2/2,y+d+.4,30,W2,H2,'x',tx,draw);WINS.push({c:cx,along:'x',pl,lit,boards,draw,at:ZM.toWorld(cx,y+d-th/2),n:ZM.dirWorld(0,1),hs});return pl}
+    if(lit)lights.push({x:x+w+22,y:cy,r:70,rgb:'255,180,90',a:.4,fl:0});const pl=plane(x+w+.4,cy-W2/2,30,W2,H2,'y',tx,draw);WINS.push({c:cy,along:'y',pl,lit,boards,draw,at:ZM.toWorld(x+w-th/2,cy),n:ZM.dirWorld(1,0),hs});return pl};
+  // il muro con una finestra: due pezzi pieni e in mezzo il vano largo 26 (il solido della barriera); senza barriere un pezzo solo come prima
+  const WINS=[],wallSol=(sx,sy,sw,sd)=>{const wi=WINS.find(o=>!o.done&&(o.along==='x'?o.c>sx&&o.c<sx+sw&&Math.abs(sy+sd-(y+d))<1:o.c>sy&&o.c<sy+sd&&Math.abs(sx+sw-(x+w))<1));
+    if(!wi||!P.winBar){solid(sx,sy,sw,sd);return}wi.done=1;let b;
+    if(wi.along==='x'){solid(sx,sy,wi.c-13-sx,sd);b=solid(wi.c-13,sy,26,sd);solid(wi.c+13,sy,sx+sw-wi.c-13,sd)}else{solid(sx,sy,sw,wi.c-13-sy);b=solid(sx,wi.c-13,sw,26);solid(sx,wi.c+13,sw,sy+sd-wi.c-13)}
+    P.winBar(b,wi)};
   const B=o.boards||[1],a=door-dw/2,wl=a-x,wr=x+w-a-dw;
-  if(wl>0){const parts=wallBox(x,y+d-th,wl,th,{n:'plaster'});if(x+w*.2+20<=a)parts.push(win(x+w*.2,0,'s',!B.includes(0),B.includes(0),'a'));WALL([x,y+d-th,a,y+d+.5],'wS',parts);solid(x,y+d-th,wl,th)}
-  if(wr>0){const parts=wallBox(a+dw,y+d-th,wr,th,{n:'plaster'});if(x+w*.82-20>=a+dw)parts.push(win(x+w*.82,0,'s',!B.includes(1),B.includes(1),'b'));WALL([a+dw,y+d-th,x+w,y+d+.5],'wS',parts);solid(a+dw,y+d-th,wr,th)}
+  if(wl>0){const parts=wallBox(x,y+d-th,wl,th,{n:'plaster'});if(x+w*.2+20<=a)parts.push(win(x+w*.2,0,'s',!B.includes(0),B.includes(0),'a'));WALL([x,y+d-th,a,y+d+.5],'wS',parts);wallSol(x,y+d-th,wl,th)}
+  if(wr>0){const parts=wallBox(a+dw,y+d-th,wr,th,{n:'plaster'});if(x+w*.82-20>=a+dw)parts.push(win(x+w*.82,0,'s',!B.includes(1),B.includes(1),'b'));WALL([a+dw,y+d-th,x+w,y+d+.5],'wS',parts);wallSol(a+dw,y+d-th,wr,th)}
   WALL([a,y+d-th,a+dw,y+d],'wS',box(a,y+d-th,48,dw,th,H-48,wall,{noFoot:true,ow:2.2,tex:{s:eave,n:eave},m:{n:'plaster'}}));// l'architrave
-  {const parts=wallBox(x+w-th,y+th,th,d-2*th,{w:'plaster'});parts.push(win(0,y+d*.45,'e',!B.includes(2),B.includes(2),'c'));WALL([x+w-th,y+th,x+w+.5,y+d-th],'wE',parts);solid(x+w-th,y+th,th,d-2*th)}
+  {const parts=wallBox(x+w-th,y+th,th,d-2*th,{w:'plaster'});parts.push(win(0,y+d*.45,'e',!B.includes(2),B.includes(2),'c'));WALL([x+w-th,y+th,x+w+.5,y+d-th],'wE',parts);wallSol(x+w-th,y+th,th,d-2*th)}
   // il vano: lo stipite e l'architrave intorno all'apertura (dentro si vede il pavimento e la scia), con un'impronta scura; l'anta socchiusa
   {const yy=y+d+.2,hand=(w2,h2)=>{ctx.fillStyle='rgba(40,6,10,.7)';ctx.beginPath();ctx.ellipse(w2*.6,h2*.45,1.4,2.4,.2,0,TAU);ctx.fill();for(let i=0;i<4;i++){ctx.beginPath();ctx.ellipse(w2*.6-1.2+i*.9,h2*.45-3.2-(i%2),.6,1.2,0,0,TAU);ctx.fill()}};// l'impronta di una mano insanguinata
     WALL([a-4,yy,a,yy+1.6],'wS',box(a-4,yy,0,4,1.6,48,'wood',{ow:1.4}));// gli stipiti e la traversa del vano: listelli veri appena davanti al muro
@@ -17530,6 +17601,129 @@ function drawCase(c,a){const q=S(c.x,c.y,c.z);ctx.save();ctx.globalAlpha*=a;ctx.
   const _t=D.drawTop;D.drawTop=dt=>{_t(dt);if(!A.cases.length)return;try{for(const c of A.cases)drawCase(c,Math.min(1,c.life/.6))}catch(e){}};
   const _r=D.reset;D.reset=()=>{_r();A.cases.length=0;A.busy.length=0};return D}}
 ZM.audio={A,KV,moan,place}})();
+// ---------- LE BARRIERE della mappa zombie (punti 18 e 19 del piano di Denis, anteprima 48): le finestre delle case, che gli zombie rompono per
+// entrare (il vetro si rompe una volta sola, poi la finestra resta rotta) e che l'eroe sbarra con le assi; i varchi delle staccionate di legno
+// e della cancellata di ferro, che gli zombie sfondano e l'eroe ripara (assi inchiodate, sbarre di ferro ribattute). Il motore (barrier,
+// barCheck, barStep in motore.js) fa passare gli zombie: il campo della navigazione attraversa la barriera con un costo, lo zombie si ferma
+// davanti, colpisce (ogni colpo rompe il vetro o strappa un'asse; una sbarra di ferro regge due colpi) e scavalca quando è aperta.
+// L'eroe si avvicina e tiene premuto «Ripara»: a ogni asse il martello batte i chiodi (la mossa 'ripara' dell'Arciere 3D), il suono del legno
+// o del ferro, le schegge o le scintille, e 10 monete (al massimo 120 a round, come in CoD). I colpi passano le finestre e le assi (si spara a
+// chi sta rompendo), e un colpo rompe il vetro intatto. Tutti i numeri in BZ, da regolare giocando.
+(()=>{const{P,W,S,rr,srand,cl,lerp,ez,TAU,prop,solid,shade,prismX,prismY,line3,ballAt,material,holes,buyable,barrier,ink,seg,ball}=ZM;
+const BZ={vetro:{max:5,hold:.5,nome:'la finestra'},legno:{max:4,hold:.5,nome:'la staccionata'},ferro:{max:3,hold:.7,nome:'la cancellata',vita:2},
+  monete:10,tetto:120};// monete per ogni asse rimessa, al massimo a round
+material('plankN',['#a27c4e','#6e5232','#c8a06a'],'plank');// le assi nuove dell'eroe, più chiare di quelle vecchie
+material('ironR',['#5a4034','#3a2820','#7e5a46'],'iron');// il ferro arrugginito
+const ALL=[];
+// ------------------------------------------------------------------ i suoni (forti vicino, piano lontano, a destra o a sinistra: ZM.audio.place)
+function suono(w,x,y){try{if(typeof AU==='undefined'||!AU.ctx||!AU.on.sfx||AU.ctx.state!=='running')return;const P0=ZM.audio?ZM.audio.place(x,y):{k:1,rev:.2},k=P0.k,t=AU.ctx.currentTime+.01;if(k<.01)return;
+  if(w==='vetro'){fThump(t,320,110,.07,.22*k,.2);fNoise(t,.55,'highpass',4200,.7,.16*k,{rev:P0.rev});for(let i=0;i<11;i++)M.glass(t+.01+Math.random()*.42,(1-i*.06)*k,VR(1700+i*190,.18))}
+  else if(w==='asse'){fNoise(t,.13,'bandpass',VR(1100,.15),1.3,.3*k);M.wood(t,1.1*k,VR(230,.08));fNoise(t+.02,.3,'bandpass',VR(480,.2),2.2,.1*k,{f2:220});M.wood(t+.34,.45*k,VR(170,.1))}
+  else if(w==='ammacca'){M.metal(t,.9*k,VR(430,.06),.5);fThump(t,190,70,.1,.22*k)}
+  else if(w==='sbarra'){M.metal(t,1.2*k,VR(300,.05),.9);fNoise(t,.42,'bandpass',VR(2400,.1),3,.12*k,{f2:900});M.metal(t+.32,.5*k,VR(620,.08),.4);M.metal(t+.44,.3*k,VR(700,.08),.3)}
+  else if(w==='inchioda'){M.wood(t,.55*k,VR(260,.06));for(let i=0;i<3;i++){M.wood(t+.05+i*.11,.75*k,VR(430,.05));M.metal(t+.05+i*.11,.22*k,VR(1900,.05),.18)}}
+  else if(w==='ribatte'){for(let i=0;i<3;i++){M.metal(t+i*.13,.7*k,VR(720,.05),.6);fNoise(t+i*.13,.05,'highpass',5200,.7,.06*k)}}
+  else if(w==='sfonda'){fThump(t,120,40,.3,.5*k,.3);M.wood(t,1.2*k,VR(160,.08));fNoise(t,.5,'lowpass',900,.7,.3*k,{brown:true})}
+  else if(w==='moneta')coinClink(t,.8)}catch(e){}}
+// ------------------------------------------------------------------ i pezzi che volano: vetri, schegge, assi strappate, scintille (nel mondo, con la gravità)
+const FX=[];
+function burst(k,x,y,z,n,dir,sp){if(LOWFX)n=Math.ceil(n/3);for(let i=0;i<n;i++){const a=Math.atan2(dir[1],dir[0])+rr(-.9,.9),v=rr(.4,1)*(sp||70);
+  FX.push({k,x,y,z:z+rr(-6,6),vx:Math.cos(a)*v,vy:Math.sin(a)*v,vz:rr(20,90),r:k==='asse'?rr(10,14):k==='vetro'?rr(1.4,3.2):rr(.8,1.8),t:0,T:k==='scintilla'?rr(.25,.5):k==='asse'?1.6:rr(.7,1.2),rot:rr(0,TAU),vr:rr(-12,12),col:k==='asse'?(Math.random()<.5?'#6e5236':'#93714c'):null})}}
+function fxStep(dt){for(const f of FX){f.t+=dt;f.vz-=320*dt;f.x+=f.vx*dt;f.y+=f.vy*dt;f.z+=f.vz*dt;f.rot+=f.vr*dt;if(f.z<0){f.z=0;f.vz*=-.3;f.vx*=.5;f.vy*=.5;f.vr*=.5}}for(let i=FX.length-1;i>=0;i--)if(FX[i].t>=FX[i].T)FX.splice(i,1)}
+function fxDraw(){for(const f of FX){const q=S(f.x,f.y,f.z),a=Math.min(1,(f.T-f.t)/.3);ctx.save();ctx.globalAlpha*=a;ctx.translate(q[0],q[1]);ctx.rotate(f.rot);
+  if(f.k==='vetro'){ctx.fillStyle='rgba(200,220,250,.8)';ctx.strokeStyle='rgba(20,24,34,.7)';ctx.lineWidth=.6;ctx.beginPath();ctx.moveTo(-f.r,f.r*.6);ctx.lineTo(f.r*.3,-f.r);ctx.lineTo(f.r,f.r*.4);ctx.closePath();ctx.fill();ctx.stroke()}
+  else if(f.k==='asse'){ctx.fillStyle=f.col;ctx.fillRect(-f.r/2,-1.8,f.r,3.6);ink(1.2);ctx.strokeRect(-f.r/2,-1.8,f.r,3.6)}
+  else if(f.k==='scintilla'){ctx.globalCompositeOperation='lighter';ctx.fillStyle=`rgba(255,${190+Math.round(60*a)},90,1)`;ctx.fillRect(-f.r,-.5,f.r*2,1)}
+  else{ctx.fillStyle=f.k==='truciolo'?'#c8a06a':'#8a7a62';ctx.fillRect(-f.r,-f.r*.4,f.r*2,f.r*.8)}ctx.restore()}}
+// ------------------------------------------------------------------ una barriera: lo stato, i colpi degli zombie, la riparazione dell'eroe
+// o: {kind 'vetro'|'legno'|'ferro', x, y, nx, ny (fuori), half, th, reach, n0 (assi o sbarre all'inizio, vecchie), glass (vetro intatto all'inizio),
+// sol (il solido del vano), z (l'altezza dei pezzi che volano), onTex() (la finestra cambia faccia)}
+function mkBar(o){const D=BZ[o.kind];const B=barrier({x:o.x,y:o.y,nx:o.nx,ny:o.ny,half:o.half,th:o.th,reach:o.reach,hop:o.hop,
+  kind:o.kind,max:D.max,z:o.z||16,
+  reset(){this.glass=!!o.glass;this.pl=Array.from({length:o.n0||0},()=>1);this.n=this.pl.length;this.hp=D.vita||1;this.used=false;this.tex()},
+  tex(){if(o.onTex)o.onTex(this)},
+  open(){return!this.glass&&this.n<=0},
+  // passarla costa (in px di strada): aperta poco, col vetro o con le assi di più, il ferro ancora di più
+  cost(){return this.open()?16:40+(this.glass?60:0)+this.n*(this.kind==='ferro'?60:30)},
+  out(s){return[this.nx*s,this.ny*s]},
+  // un colpo di zombie (z: chi colpisce; da che parte sta dice dove volano i pezzi)
+  hit(z){const s=(z.x-this.x)*this.nx+(z.y-this.y)*this.ny>=0?-1:1,d=this.out(s);this.used=true;
+    if(this.glass){this.glass=false;suono('vetro',this.x,this.y);burst('vetro',this.x,this.y,this.z+8,14,d,80);this.tex();return}
+    if(this.n<=0)return;
+    if(this.kind==='ferro'){if(--this.hp>0){suono('ammacca',this.x,this.y);burst('scintilla',this.x,this.y,this.z,6,d,90);return}this.hp=D.vita;this.n--;this.pl.pop();suono('sbarra',this.x,this.y);burst('scintilla',this.x,this.y,this.z,10,d,110)}
+    else{this.n--;this.pl.pop();suono('asse',this.x,this.y);burst('asse',this.x,this.y,this.z+4,1,d,70);burst('scheggia',this.x,this.y,this.z,7,d,60)}
+    this.tex()},
+  // un boss la sfonda tutta in un colpo
+  smash(z){if(this.open())return;this.glass=false;this.n=0;this.pl=[];this.used=true;const s=(z.x-this.x)*this.nx+(z.y-this.y)*this.ny>=0?-1:1,d=this.out(s);suono('sfonda',this.x,this.y);
+    burst('asse',this.x,this.y,this.z,3,d,90);burst('scheggia',this.x,this.y,this.z,12,d,90);this.tex()},
+  // un colpo dell'eroe che passa: il vetro intatto si rompe
+  shot(){if(!this.glass)return;this.glass=false;suono('vetro',this.x,this.y);const h=W.hero,s=(h.x-this.x)*this.nx+(h.y-this.y)*this.ny>=0?-1:1;burst('vetro',this.x,this.y,this.z+8,12,this.out(s),70);this.tex()},
+  canFix(){return!this.glass&&this.n<this.max},
+  // l'eroe rimette un'asse (o una sbarra): le monete del round fino al tetto
+  fix(){if(!this.canFix())return false;this.pl.push(0);this.n++;this.hp=D.vita||1;const h=W.hero,s=(h.x-this.x)*this.nx+(h.y-this.y)*this.ny>=0?1:-1,d=this.out(s);
+    if(this.kind==='ferro'){suono('ribatte',this.x,this.y);burst('scintilla',this.x,this.y,this.z,8,d,70)}else{suono('inchioda',this.x,this.y);burst('truciolo',this.x,this.y,this.z,5,d,40)}
+    const R=W.director?W.director.R||0:0;if(TT.r!==R){TT.r=R;TT.n=0}if(TT.n<BZ.tetto){const m=Math.min(BZ.monete,BZ.tetto-TT.n);TT.n+=m;W.coins+=m;W.FX.push({k:'coin',tw:[h.x,h.y,(h.zh||0)+44],n:m,t:.9,t0:.9});suono('moneta',h.x,h.y)}
+    this.tex();return true}});
+  B.sol=o.sol;o.sol.bar=B;B.reset();ALL.push(B);
+  // il bottone «Ripara»: vicino alla barriera, quando c'è un'asse da mettere; si tiene premuto e le assi vanno una dopo l'altra
+  buyable({id:'ripara'+ALL.length,x:B.x,y:B.y,r:o.r||48,rep:true,hold:D.hold,anim:'ripara',tool:'martello',show:()=>B.canFix()&&!W.hero.dead&&(!W.director||W.director.st!=='fine'),
+    label:()=>'Ripara '+D.nome,price:()=>0,sub:()=>{const R=W.director?W.director.R||0:0,left=TT.r===R?BZ.tetto-TT.n:BZ.tetto;return'Tieni premuto · '+B.n+'/'+B.max+(left>0?' · <b>+'+BZ.monete+' ●</b>':'')},act:()=>B.fix()});
+  return B}
+const TT={r:-1,n:0};// le monete della riparazione in questo round
+// ------------------------------------------------------------------ le finestre delle case (prop.js P.house le passa qui col vano del muro)
+// la faccia della finestra cambia con lo stato: intatta è il disegno di prima; rotta, i vetri rimasti nel telaio, la croce spezzata, la
+// persiana più storta; sopra le assi (le vecchie scure, le nuove dell'eroe chiare), ognuna al suo posto e storta a modo suo
+const PL=[{y:6,a:.14,dx:0,l:37},{y:18,a:-.2,dx:1,l:36},{y:12,a:.06,dx:-1,l:35},{y:24,a:.27,dx:0,l:34},{y:9,a:-.36,dx:2,l:33}];
+function paintWin(w2,h2,lit,pl){const fx=7,fy=2,fw=26,fh=26;
+  ctx.fillStyle=lit?'#3a2414':'#0a090d';ctx.fillRect(fx,fy,fw,fh);
+  if(lit){const g=ctx.createRadialGradient(fx+13,fy+16,2,fx+13,fy+16,22);g.addColorStop(0,'rgba(255,170,90,.6)');g.addColorStop(1,'rgba(255,120,40,.06)');ctx.fillStyle=g;ctx.fillRect(fx,fy,fw,fh)}
+  else{const g=ctx.createLinearGradient(0,fy,0,fy+fh);g.addColorStop(0,'rgba(60,70,90,.25)');g.addColorStop(1,'rgba(0,0,0,0)');ctx.fillStyle=g;ctx.fillRect(fx,fy,fw,fh)}
+  // i vetri rimasti nel telaio: punte storte dai bordi
+  ctx.fillStyle='rgba(175,200,235,.42)';ctx.strokeStyle='rgba(20,24,34,.8)';ctx.lineWidth=.7;
+  for(const[a,b,c] of[[[fx,fy],[fx+9,fy],[fx+2,fy+8]],[[fx+fw,fy],[fx+fw-6,fy],[fx+fw-1,fy+11]],[[fx,fy+fh],[fx,fy+fh-9],[fx+7,fy+fh]],[[fx+fw,fy+fh],[fx+fw-11,fy+fh],[fx+fw-2,fy+fh-6]],[[fx+12,fy],[fx+17,fy],[fx+14,fy+6]],[[fx,fy+12],[fx+5,fy+14],[fx,fy+17]]]){ctx.beginPath();ctx.moveTo(a[0],a[1]);ctx.lineTo(b[0],b[1]);ctx.lineTo(c[0],c[1]);ctx.closePath();ctx.fill();ctx.stroke()}
+  // il telaio, la croce spezzata (il montante a metà, la traversa che pende)
+  ink(2.2);ctx.strokeRect(fx,fy,fw,fh);ctx.fillStyle='#46321e';ctx.fillRect(fx+12,fy,2.4,11);ctx.save();ctx.translate(fx+1,fy+12);ctx.rotate(.55);ctx.fillRect(0,0,13,2.4);ink(.8);ctx.strokeRect(0,0,13,2.4);ctx.restore();
+  ctx.fillStyle='#93714c';ctx.fillRect(fx-3,fy+fh-1,fw+6,4);ink(1.6);ctx.strokeRect(fx-3,fy+fh-1,fw+6,4);ctx.fillStyle='rgba(20,12,6,.55)';ctx.fillRect(fx+4,fy+fh,6,1.2);// il davanzale scheggiato
+  // la persiana che pende da un cardine solo
+  ctx.save();ctx.translate(fx-1,fy);ctx.transform(1,.18,0,1,0,0);ctx.rotate(.08);ctx.fillStyle='#54402c';ctx.fillRect(-7,0,7,fh-3);ink(1.6);ctx.strokeRect(-7,0,7,fh-3);ctx.fillStyle='rgba(20,12,6,.5)';for(let yy=3;yy<fh-3;yy+=4)ctx.fillRect(-6,yy,5,1);ctx.restore();
+  // le assi
+  pl.forEach((old,i)=>{const q=PL[i];ctx.save();ctx.translate(fx+fw/2+q.dx,fy+q.y);ctx.rotate(q.a);ctx.fillStyle=old?(i%2?'#6e5236':'#93714c'):(i%2?'#b08858':'#c69c66');ctx.fillRect(-q.l/2,-3,q.l,6);
+    ctx.fillStyle=old?'rgba(20,12,6,.3)':'rgba(255,240,200,.25)';ctx.fillRect(-q.l/2,-3,q.l,1.2);ctx.fillStyle='rgba(20,12,6,.35)';ctx.fillRect(-q.l/2+4,0,q.l*.4,.8);ink(1.5);ctx.strokeRect(-q.l/2,-3,q.l,6);
+    ctx.fillStyle='rgba(10,8,6,.75)';ctx.beginPath();ctx.arc(-q.l/2+3,0,.95,0,TAU);ctx.arc(q.l/2-3,0,.95,0,TAU);ctx.fill();if(!old){ctx.fillStyle='rgba(220,220,230,.8)';ctx.fillRect(-q.l/2+2.6,-.5,.8,.8);ctx.fillRect(q.l/2-3.4,-.5,.8,.8)}ctx.restore()})}
+P.winBar=function(sol,wi){const kind='vetro',pl=wi.pl,id0=pl.texId,d0=pl.draw;
+  mkBar({kind,x:wi.at[0],y:wi.at[1],nx:wi.n[0],ny:wi.n[1],half:13,th:10,reach:30,hop:14,z:44,glass:!wi.boards,n0:wi.boards?3:0,sol,
+    onTex(B){if(B.glass){pl.texId=id0;pl.draw=d0;return}const key=B.pl.map(o=>o?'o':'f').join('');pl.texId='winR'+(wi.lit?'L':'')+'|'+key;pl.draw=(w2,h2)=>paintWin(w2,h2,wi.lit,B.pl.slice())}})};
+// ------------------------------------------------------------------ i varchi delle recinzioni: assi di legno o sbarre di ferro tra due pali
+// (ax, ay)–(bx, by): il varco (lungo x o lungo y); o: {kind 'legno'|'ferro', out [nx, ny] (da dove vengono gli zombie), n0, z0 (la base),
+// reach (il corridoio: deve arrivare fino alla buca da cui escono), hop}. Le assi si vedono dalla parte dell'eroe; i pezzi ci sono tutti nel
+// prop e si accendono con vis() (vecchi e nuovi), così l'ordine di disegno resta quello calcolato una volta
+P.barricade=function(ax,ay,bx,by,o){const kind=o.kind||'legno',hor=Math.abs(by-ay)<1,L=hor?bx-ax:by-ay,cx=(ax+bx)/2,cy=(ay+by)/2,nx=o.out[0],ny=o.out[1],th=o.th||6;
+  const sol=hor?solid(ax,cy-th/2,L,th):solid(cx-th/2,ay,th,L);const B=mkBar({kind,x:cx,y:cy,nx,ny,half:L/2,th,reach:o.reach||32,hop:o.hop||10,z:o.zfx||16,n0:o.n0||0,sol});
+  const inS=-1,parts=[],add=(arr,i,old)=>{for(const t of arr){t.vis=()=>B.n>i&&!!B.pl[i]===old;parts.push(t)}};// le assi sul lato di dentro (verso l'eroe)
+  const z0=o.z0||0,mk=(u0,u1,za,zb,hh,t2,mat)=>{// un pezzo storto da u0 a u1 lungo il varco, alto hh, spesso t2, appena dentro la linea
+    const prof=[[u0,za],[u1,zb],[u1,zb+hh],[u0,za+hh]];
+    return hor?prismX(ax,cy+(inS*ny>0?th/2:-th/2-t2),t2,prof,mat,{ow:1.3}):prismY(cx+(inS*nx>0?th/2:-th/2-t2),ay,t2,prof,mat,{ow:1.3})};
+  if(kind==='legno'){const Z=[6,12.5,19,25.5],T=[[-1.2,1.6],[1.4,-1],[-.6,1.8],[1.2,-.8]];
+    for(let i=0;i<B.max;i++)for(const old of[true,false])add(mk(-2,L+2,z0+Z[i]+T[i][0],z0+Z[i]+T[i][1],4.6,2.2,old?'oldwood':'plankN'),i,old)}
+  else{// ferro: ogni pezzo è una sbarra della cancellata rimessa in piedi (un po' storta, con la punta a lancia) e una traversa che la tiene,
+    // ribattuta ai due capi; sono linee, così si vedono da ogni lato anche su un varco che va da nord a sud
+    const Z=[12,26,40],U=[.22,.52,.8],TL=[.6,-.9,.4];
+    for(let i=0;i<B.max;i++)for(const old of[true,false]){const col=old?'#5a4034':'#3a3c44',hi=old?'#8a5a3e':'#6a6e7a',at=(u,z)=>hor?[ax+u,cy+(inS*ny>0?th/2+1.5:-th/2-1.5),z]:[cx+(inS*nx>0?th/2+1.5:-th/2-1.5),ay+u,z];
+      const u=L*U[i],a=at(u,z0),b=at(u+TL[i]*3,z0+46),arr=[line3(a,b,col,1.7,{ink:true}),{k:'facepoly',c:[at(u+TL[i]*3-2.6,z0+44.5),at(u+TL[i]*3+2.6,z0+44.5),at(u+TL[i]*3,z0+50.5)],mat:old?'ironR':'iron',key:'s',col:hi},
+        line3(at(-1,z0+Z[i]+.6*TL[i]),at(L+1,z0+Z[i]-.6*TL[i]),col,2.4,{ink:true})];
+      for(const e of[-1,L+1])arr.push(ballAt(at(e,z0+Z[i]),1.4,old?'ironR':'iron',{ow:1}));add(arr,i,old)}}
+  prop({bx:hor?[ax-3,cy-th/2-4,bx+3,cy+th/2+4,z0+52]:[cx-th/2-4,ay-3,cx+th/2+4,by+3,z0+52],ky:hor?cy+th/2:by,parts,noSplit:true});
+  // il muro crollato (ferro): sassi del muretto e una sbarra piegata a terra, dalle due parti del varco (dipinti nel terreno)
+  if(kind==='ferro')ZM.decals.push(()=>{srand(Math.round(cx*7+cy*3));for(let i=0;i<16;i++){const u=rr(-4,L+4),v=rr(-22,22)*(i%2?1:.6),x=hor?ax+u:cx+v,y=hor?cy+v:ay+u,r=rr(2.2,4.6);
+      ctx.fillStyle='rgba(0,0,0,.35)';ctx.beginPath();ctx.ellipse(x+1.5,y+1.2,r,r*.7,0,0,TAU);ctx.fill();ctx.fillStyle=['#5c5f6a','#4a4c56','#6d6a72'][i%3];ctx.beginPath();ctx.ellipse(x,y,r,r*.7,rr(0,3),0,TAU);ctx.fill();ctx.strokeStyle='rgba(20,20,26,.8)';ctx.lineWidth=.8;ctx.stroke()}
+    const x0=hor?cx-8:cx-18,y0=hor?cy+14:cy+6;ctx.strokeStyle='rgba(20,18,20,.85)';ctx.lineWidth=3;ctx.lineCap='round';ctx.beginPath();ctx.moveTo(x0,y0);ctx.lineTo(x0+9,y0+4);ctx.lineTo(x0+20,y0+1);ctx.stroke();ctx.strokeStyle='#5a4034';ctx.lineWidth=1.5;ctx.stroke()});
+  return B};
+// ------------------------------------------------------------------ ogni fotogramma e i disegni (agganciati alla partita come fortuna.js)
+{const _p=ZM.partita;ZM.partita=function(o){const D=_p(o);if(D.__bar)return D;D.__bar=1;
+  const _u=D.update;D.update=(dt,on)=>{_u(dt,on);try{fxStep(dt)}catch(e){console.error(e)}};
+  const _t=D.drawTop;D.drawTop=dt=>{_t(dt);if(FX.length)try{fxDraw()}catch(e){}};
+  const _r=D.reset;D.reset=()=>{_r();FX.length=0;TT.r=-1;TT.n=0};return D}}
+ZM.barriere={ALL,BZ,FX,mkBar}})();
 // ---------- LA MAPPA della modalità zombie (pianta approvata da Denis il 12 ottobre, anteprime/zombie/pianta.py): a sud l'area di partenza
 // «Camposanto e Casa» (12×12 caselle: l'anteprima di prima con due caselle in più a nord e due a est), a nord oltre il cancello a pagamento la
 // «Fattoria dei Corvi» (16×12), e sopra la fattoria due caselle di granturco che continua oltre il bordo. Coordinate: X(), Y() dalla pianta (in
@@ -17548,6 +17742,10 @@ const AREA={title:'Camposanto',zoneName:h=>h.y<Y(12.3)?'Fattoria dei Corvi':'Cam
     P.wall(AX(0),AY(.35),AX(3.7)+6,AY(.35),true);P.wall(AX(0),AY(7.3),AX(3.7)+6,AY(7.3),true);P.wall(AX(3.7),AY(.35)+7.5,AX(3.7),AY(4.95)-15,true);P.wall(AX(3.7),AY(6.05)+15,AX(3.7),AY(7.3)-7.5,true);
     P.pillar(AX(3.7),AY(4.95),2);P.pillar(AX(3.7),AY(6.05),0);P.gateLeaf(AX(3.7),AY(4.95),30,-2.1);P.gateLeaf(AX(3.7),AY(6.05),30,2.2);
     P.crypt(AX(.12),AY(1),1.9*T,1.35*T);
+    // (anteprima 48) la cancellata a ovest del cimitero, sul bordo della mappa: un pezzo è crollato e restano solo sbarre di ferro ribattute
+    // (barriere.js); di là, dal buio oltre il bordo, escono gli zombie e le strappano
+    P.wall(AX(0),AY(.35)+6,AX(0),AY(3.9)-20,true);P.wall(AX(0),AY(3.9)+20,AX(0),AY(7.3)-6,true);
+    P.barricade(AX(0),AY(3.9)-20,AX(0),AY(3.9)+20,{kind:'ferro',out:[-1,0],n0:2,th:12,reach:42,hop:16,zfx:28});holes.push([AX(0)-34,AY(3.9),1,'fuori']);
     for(const[x,y,k,o] of[[2.9,1.4,1],[1,3.2,0,{wreath:1}],[1.9,3.3,2],[2.85,3.25,3],[.95,5,1,{lean:.12}],[2.9,5.1,0,{candle:1}],[1,6.5,2,{lean:-.15}],[2.85,6.55,0]])P.grave(AX(x),AY(y),k,o);
     // l'albero un po' più a ovest che nell'anteprima: tra l'albero e il muro ora passano gli zombie (prima 30 px)
     P.openGrave(AX(1.6),AY(4.95));P.tree(AX(2.8),AY(2.25),true,1.05);P.sign(AX(5.12),AY(5.38),'Cimitero','Casa');
@@ -17581,7 +17779,10 @@ const AREA={title:'Camposanto',zoneName:h=>h.y<Y(12.3)?'Fattoria dei Corvi':'Cam
     solid(0,0,w,Y(3.2),'corn');
     P.scarecrowPole(X(4.4),Y(1.7));P.scarecrowPole(X(11.3),Y(1.5));P.windmill(X(14.4),Y(1.6));
     // la staccionata tra il campo e l'aia, rotta dove escono gli zombie (tre varchi coi paletti a terra)
-    for(const[a,b] of[[.15,2.25],[2.95,7.3],[8.7,12.05],[12.75,15.85]])P.fence(X(a),Y(3.55),X(b),Y(3.55));
+    // (anteprima 48: i tre varchi sono barriere, barriere.js: due assi vecchie inchiodate di traverso che gli zombie strappano per entrare
+    // nell'aia e che l'eroe rimette; il varco di mezzo stretto come gli altri)
+    for(const[a,b] of[[.15,2.25],[2.95,7.6],[8.4,12.05],[12.75,15.85]])P.fence(X(a),Y(3.55),X(b),Y(3.55));
+    for(const[a,b] of[[2.25,2.95],[7.6,8.4],[12.05,12.75]])P.barricade(X(a),Y(3.55),X(b),Y(3.55),{kind:'legno',out:[0,-1],n0:2,reach:42});
     P.fallenPickets(X(2.6),Y(3.66),3);P.fallenPickets(X(8.0),Y(3.72),2);P.fallenPickets(X(12.4),Y(3.66),3);
     holes.push([X(2.6),Y(3.05),2,'mais'],[X(8.0),Y(3.0),2,'mais'],[X(12.4),Y(3.05),2,'mais']);
     // la casa colonica: la casa dell'anteprima girata di un quarto (porta e portico a est, sull'aia), di pietra col tetto di coppi e le

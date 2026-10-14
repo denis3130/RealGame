@@ -627,7 +627,10 @@ function motore(g,x){if(typeof AU==='undefined'||!AU.ctx)return;const c=AU.ctx,o
 // Times in seconds and how often each gun comes out (values to tune by playing). vuota: how often the hand comes out empty; never in
 // the first `prime` openings, so nobody loses their coins right away
 const BARA={prezzo:750,paga:.8,apre:.95,gira:3.4,offre:8,prende:.6,chiude:.8,scappa:3.5,sotto:1.8,sale:1.3,colpi:13,
-  peso:{pistola:14,revolver:13,mitraglietta:14,pompa:13,mitra:10,tattica:10,mitragliatrice:7,lanciarazzi:4,tamburo:9,lanciafiamme:5,vapore:5,risonatore:1.6},vuota:.12,prime:2};
+  peso:{pistola:14,revolver:13,mitraglietta:14,pompa:13,mitra:10,tattica:10,mitragliatrice:7,lanciarazzi:4,tamburo:9,lanciafiamme:5,vapore:5,risonatore:1.6},vuota:0,prime:2,usi:[3,5]};
+// (anteprima 48, punto 20 del piano: la Bara non scappa più a caso; si apre da usi[0] a usi[1] volte, quante lo decide il caso ogni volta che
+// compare, poi dopo l'ultima arma saluta con la mano, sprofonda e ricompare in un altro posto; vuota resta per le prove: forza(true))
+const usiBara=()=>BARA.usi[0]+Math.floor(Math.random()*(BARA.usi[1]-BARA.usi[0]+1));
 const BS=1.9,BH=[[16,4.2],[9,6.6],[-17,3.8],[-17,-3.8],[9,-6.6],[16,-4.2]],HB=6,HL=1.6,YAW=.3,CY=Math.cos(YAW),SY=Math.sin(YAW),LIDA=1.75;
 const bsc=(p,k)=>p.map(q=>[q[0]*k,q[1]*k]),BL=bsc(BH,1.05),BI=bsc(BH,.86),BP=bsc(BH,.72);
 const WOOD=['#3a1c13','#6b3524','#a35a3a'],WOODL=['#4a2416','#7d4129','#b86b45'],FERRO=['#22262c','#454c56','#7d8794'],FODERA=['#4a0f18','#7e1d2c','#b8414f'];
@@ -840,7 +843,7 @@ function formaBara(){const T=p=>rot3(p,HA,HK,LIDA),lid=slab(BL,HB,HB+HL,T).flatM
 function scegliArma(not){const ids=ORDINE.filter(i=>i!==not);let tot=0;for(const i of ids)tot+=BARA.peso[i];let r=Math.random()*tot;for(const i of ids){r-=BARA.peso[i];if(r<=0)return i}return ids[0]}
 // the times of the swaps: quick at first, slower and slower
 const scatto=i=>BARA.gira*(.12+.88*(.3*i/BARA.colpi+.7*Math.pow(i/BARA.colpi,2.2)));
-function nuovaBara(x,y){const b={x,y,st:'ferma',t:0,T:0,usi:0,gun:null,fin:null,vuota:false,coins:[],pk:0,tick:0,pay:null,next:null,
+function nuovaBara(x,y){const b={x,y,st:'ferma',t:0,T:0,usi:0,max:usiBara(),addio:0,gun:null,fin:null,vuota:false,coins:[],pk:0,tick:0,pay:null,next:null,
   vicino:(px,py)=>Math.hypot(px-b.x,(py-b.y)*1.3)<52,
   pronta:()=>b.st==='ferma',
   paga(px,py,cur){if(b.st!=='ferma')return false;b.st='paga';b.t=0;b.usi++;b.pay=[px,py];b.cur=cur;b.vuota=b.usi>BARA.prime&&Math.random()<BARA.vuota;b.fin=scegliArma(cur);b.tick=0;b.gun=null;
@@ -855,11 +858,11 @@ function nuovaBara(x,y){const b={x,y,st:'ferma',t:0,T:0,usi:0,gun:null,fin:null,
       if(t>=BARA.gira+.15){if(b.vuota){b.st='scappa';b.t=0;b.gun=null;S('risata')}else{b.st='offre';b.t=0;S('arma');ev.push({k:'offerta',id:b.gun})}}}
     else if(b.st==='offre'){if(t>=BARA.offre){b.st='chiude';b.t=0;b.gun=null;S('chiude')}}
     else if(b.st==='prende'){if(t<dt*1.5){ev.push({k:'presa',id:b.gun,x:b.x-2*BS,y:b.y-(HB+15)*BS});S('presa')}if(t>=BARA.prende){b.st='chiude';b.t=0;b.gun=null;S('chiude')}}
-    else if(b.st==='chiude'){if(t>=BARA.chiude){b.st='ferma';b.t=0}}
-    else if(b.st==='scappa'){if(t>=1.05&&!b.ref){b.ref=1;ev.push({k:'rimborso',n:BARA.prezzo});S('sputa')}if(t>=1.75&&!b.sl){b.sl=1;S('sbatte')}if(t>=2.05&&!b.sk){b.sk=1;S('sprofonda')}
+    else if(b.st==='chiude'){if(t>=BARA.chiude){if(b.usi>=b.max){b.st='scappa';b.t=0;b.gun=null;b.addio=1;S('risata')}else{b.st='ferma';b.t=0}}}// l'ultima: se ne va
+    else if(b.st==='scappa'){if(t>=1.05&&!b.ref){b.ref=1;if(!b.addio){ev.push({k:'rimborso',n:BARA.prezzo});S('sputa')}}if(t>=1.75&&!b.sl){b.sl=1;S('sbatte')}if(t>=2.05&&!b.sk){b.sk=1;S('sprofonda')}
       if(t>=BARA.scappa){b.st='sotto';b.t=0;b.ref=b.sl=b.sk=0;ev.push({k:'via'})}}
     else if(b.st==='sotto'){if(t>=BARA.sotto){b.st='sale';b.t=0;if(b.next){b.x=b.next[0];b.y=b.next[1]}S('sale');ev.push({k:'qui',x:b.x,y:b.y})}}
-    else if(b.st==='sale'){if(t>=BARA.sale){b.st='ferma';b.t=0}}
+    else if(b.st==='sale'){if(t>=BARA.sale){b.st='ferma';b.t=0;b.usi=0;b.max=usiBara();b.addio=0}}// nel posto nuovo si riparte da capo
     return ev},
   // everything that moves, from the state and the time in it
   posa(){const t=b.t,T=b.T,a={lid:0,lift:0,shake:0,sink:0,light:0,chain:0,hand:0,gun:null,pop:b.pk,offer:0,wave:0,thumb:false,candles:1,hole:0,
@@ -884,7 +887,7 @@ function nuovaBara(x,y){const b={x,y,st:'ferma',t:0,T:0,usi:0,gun:null,fin:null,
     const tp=TPOS(),m=[b.x+tp[0]*BS,b.y+(tp[1]+1.2)*BS];
     if(b.st==='paga')for(const c of b.coins){const k=c.t/.42;if(k<0||k>1)continue;const e=ez(k),px=lerp(c.x0,m[0],e),py=lerp(c.y0,m[1],e)-Math.sin(k*Math.PI)*30;moneta(px,py,1-k*.4,b.T*12+c.x0)}
     // the coins spat back
-    if(b.st==='scappa'&&b.t>1.05&&b.t<1.75){const k=(b.t-1.05)/.7;for(let i=0;i<5;i++){const an=-Math.PI/2+(i-2)*.45,d=k*30;moneta(m[0]+Math.cos(an)*d,m[1]+Math.sin(an)*d*.7-Math.sin(k*Math.PI)*12,1-k*.3,b.T*14+i)}}
+    if(b.st==='scappa'&&!b.addio&&b.t>1.05&&b.t<1.75){const k=(b.t-1.05)/.7;for(let i=0;i<5;i++){const an=-Math.PI/2+(i-2)*.45,d=k*30;moneta(m[0]+Math.cos(an)*d,m[1]+Math.sin(an)*d*.7-Math.sin(k*Math.PI)*12,1-k*.3,b.T*14+i)}}
     // dirt flying when it sinks or comes out
     const dig=b.st==='scappa'&&b.t>2.05&&b.t<3.4?1:b.st==='sale'&&b.t<1.05?1:0;
     if(dig&&!LOWFX){const r=rnd(Math.floor(b.T*20));for(let i=0;i<5;i++){const u=(r()-.5)*34,px=b.x+u*BS,py=b.y+(r()*.5+.4)*7*BS,h=r()*14;ctx.fillStyle=INK;ctx.fillRect(px-1.4,py-h-1.4,2.8,2.8);ctx.fillStyle=r()<.5?'#6b4a2e':'#8a6440';ctx.fillRect(px-.9,py-h-.9,1.8,1.8)}

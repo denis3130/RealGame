@@ -16,6 +16,10 @@ const AREA={title:'Camposanto',zoneName:h=>h.y<Y(12.3)?'Fattoria dei Corvi':'Cam
     P.wall(AX(0),AY(.35),AX(3.7)+6,AY(.35),true);P.wall(AX(0),AY(7.3),AX(3.7)+6,AY(7.3),true);P.wall(AX(3.7),AY(.35)+7.5,AX(3.7),AY(4.95)-15,true);P.wall(AX(3.7),AY(6.05)+15,AX(3.7),AY(7.3)-7.5,true);
     P.pillar(AX(3.7),AY(4.95),2);P.pillar(AX(3.7),AY(6.05),0);P.gateLeaf(AX(3.7),AY(4.95),30,-2.1);P.gateLeaf(AX(3.7),AY(6.05),30,2.2);
     P.crypt(AX(.12),AY(1),1.9*T,1.35*T);
+    // (anteprima 48) la cancellata a ovest del cimitero, sul bordo della mappa: un pezzo è crollato e restano solo sbarre di ferro ribattute
+    // (barriere.js); di là, dal buio oltre il bordo, escono gli zombie e le strappano
+    P.wall(AX(0),AY(.35)+6,AX(0),AY(3.9)-20,true);P.wall(AX(0),AY(3.9)+20,AX(0),AY(7.3)-6,true);
+    P.barricade(AX(0),AY(3.9)-20,AX(0),AY(3.9)+20,{kind:'ferro',out:[-1,0],n0:2,th:12,reach:42,hop:16,zfx:28});holes.push([AX(0)-34,AY(3.9),1,'fuori']);
     for(const[x,y,k,o] of[[2.9,1.4,1],[1,3.2,0,{wreath:1}],[1.9,3.3,2],[2.85,3.25,3],[.95,5,1,{lean:.12}],[2.9,5.1,0,{candle:1}],[1,6.5,2,{lean:-.15}],[2.85,6.55,0]])P.grave(AX(x),AY(y),k,o);
     // l'albero un po' più a ovest che nell'anteprima: tra l'albero e il muro ora passano gli zombie (prima 30 px)
     P.openGrave(AX(1.6),AY(4.95));P.tree(AX(2.8),AY(2.25),true,1.05);P.sign(AX(5.12),AY(5.38),'Cimitero','Casa');
@@ -49,7 +53,10 @@ const AREA={title:'Camposanto',zoneName:h=>h.y<Y(12.3)?'Fattoria dei Corvi':'Cam
     solid(0,0,w,Y(3.2),'corn');
     P.scarecrowPole(X(4.4),Y(1.7));P.scarecrowPole(X(11.3),Y(1.5));P.windmill(X(14.4),Y(1.6));
     // la staccionata tra il campo e l'aia, rotta dove escono gli zombie (tre varchi coi paletti a terra)
-    for(const[a,b] of[[.15,2.25],[2.95,7.3],[8.7,12.05],[12.75,15.85]])P.fence(X(a),Y(3.55),X(b),Y(3.55));
+    // (anteprima 48: i tre varchi sono barriere, barriere.js: due assi vecchie inchiodate di traverso che gli zombie strappano per entrare
+    // nell'aia e che l'eroe rimette; il varco di mezzo stretto come gli altri)
+    for(const[a,b] of[[.15,2.25],[2.95,7.6],[8.4,12.05],[12.75,15.85]])P.fence(X(a),Y(3.55),X(b),Y(3.55));
+    for(const[a,b] of[[2.25,2.95],[7.6,8.4],[12.05,12.75]])P.barricade(X(a),Y(3.55),X(b),Y(3.55),{kind:'legno',out:[0,-1],n0:2,reach:42});
     P.fallenPickets(X(2.6),Y(3.66),3);P.fallenPickets(X(8.0),Y(3.72),2);P.fallenPickets(X(12.4),Y(3.66),3);
     holes.push([X(2.6),Y(3.05),2,'mais'],[X(8.0),Y(3.0),2,'mais'],[X(12.4),Y(3.05),2,'mais']);
     // la casa colonica: la casa dell'anteprima girata di un quarto (porta e portico a est, sull'aia), di pietra col tetto di coppi e le

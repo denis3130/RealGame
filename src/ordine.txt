@@ -86,6 +86,7 @@ js/62-eroe-3d.js
 ../anteprime/zombie/armi_speciali.js
 ../anteprime/zombie/compagni.js
 ../anteprime/zombie/audio_zombie.js
+../anteprime/zombie/barriere.js
 ../anteprime/zombie/area_mappa.js
 js/63-zombie.js
 js/64-nemici-3d.js

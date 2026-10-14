@@ -355,6 +355,12 @@ function pose(anim,p,o){const ph=p*TAU,A={B:[0,0,0],lean:.02,roll:0,s:0,sx:0,hd:
     A.fL=[6.4,-4.6,0];A.fR=[7,4.3,0];A.hd=[.5,0,.18*b];A.hp=.16-.24*lk+.05*rub;A.hy=.06*Math.sin(ph*2)+.55*sd;
     const rb=Math.sin(p*TAU*14)*rub;A.hR=add(lerp3([6.6,5.2,8.2],[9.4,1.3,10.6],rub),[0,.9*rb,.2*b]);
     A.blink=Math.min(blink(p,.12,.035),blink(p,.6,.035),blink(p,.86,.035));A.inhale=0;A.exhale=0;A.jig=.2*b;A.sway=.4*b}
+  else if(anim==='ripara'){// repairing a barrier on the zombie map (boards on a window, bars on a fence): leaning toward it, the left hand holds
+    // the board against it, the right raises the hammer slowly and brings it down on the nail; one blow per loop (the game nails the board at
+    // p = 1, the blow lands at .8-.92), a little nod and a squint on the blow
+    const up=p<.8?ez(p/.8):p<.92?1-ez((p-.8)/.12):0,hit=p>=.86&&p<.98?1-Math.abs(p-.92)/.06:0,bb=Math.sin(ph);
+    A.lean=.17+.02*hit;A.B=[1.2,0,-.5+.1*bb];A.s=-.02;A.hd=[.6,0,0];A.hp=.14+.06*hit;A.hy=0;A.blink=blink(p,.35,.1);A.squint=.5*hit;
+    A.hL=[12.4,-3.6,14.4-.5*hit];A.hR=[9.4+2.4*(1-up),3.8,13.6+6.8*up];A.tool=lerp(-.55,1.6,up);A.fL=[2.4,-5.2,0];A.fR=[-.6,5,0];A.jig=.5*hit;A.sway=.3*hit}
   else if(anim==='hit'){// knocked back, eyes squeezed shut, a wobble back to standing
     const kb=p<.12?ez(p/.12):Math.exp(-(p-.12)*6)*Math.cos((p-.12)*16);A.lean=-.32*kb;A.B=[-2.6*kb,0,.4*kb];A.s=-.08*kb;A.roll=.05*kb;
     A.hd=[-.6*kb,0,.4*kb];A.hp=.06-.1*kb;A.shut=p<.5?1:0;A.mouth=p<.5?1:0;A.flash=p<.14?1-p/.14:0;A.stars=p<.75?1-p/.75:0;
@@ -622,8 +628,15 @@ function arciere0(x,y,face,anim,p,sc,o){sc=sc||1;o=o||{};const S0=o.style||{},ar
   // the bow and the hand that holds it, in front of the belly; the string hand at the right side (or on the string). No arms, as in the game
   const grip=X.T(A.grip),aim=nrm(X.Rd(A.aim)),up=nrm(X.Rd(A.up)),hR=X.T(A.hR),Bw=bowPts(grip,aim,up,A.draw,LB,BK);
   if(gunW)weaponParts(parts,V0,X,S,Wp,wid,o);
-  else if(!wid){// no weapon (held: null): both hands at the sides
-    const hL=X.T([A.hR[0],-A.hR[1],A.hR[2]]);parts.push({d:D(X.T(REST.hR)),f:()=>fist(V0,hR,2.7,S.hand)});parts.push({d:D(X.T([-.6,-11.4,11.4])),f:()=>fist(V0,hL,2.7,S.hand)})}
+  else if(!wid){// no weapon (held: null): both hands at the sides (A.hL: the left hand somewhere else, as in 'ripara'; o.tool 'martello': the
+    // hammer in the right hand, its handle along A.tool, an angle in the body's x-z plane, its head across it)
+    const hL=X.T(A.hL||[A.hR[0],-A.hR[1],A.hR[2]]);
+    if(o.tool==='martello'&&A.tool!=null){const a=A.tool,dir=X.Rd([Math.cos(a),0,Math.sin(a)]),crs=X.Rd([Math.sin(a),0,-Math.cos(a)]),hd=add(hR,mul(dir,6.4));
+      parts.push({d:D(X.T(A.hR))+.02,f:()=>{const H0=P(hR),H1=P(hd),K0=P(sub(hd,mul(crs,1.6))),K1=P(add(hd,mul(crs,2.6)));ctx.lineCap='round';
+        ctx.strokeStyle=INK;ctx.lineWidth=3.2;seg(H0,H1);ctx.stroke();ctx.strokeStyle='#8a6a42';ctx.lineWidth=1.5;seg(H0,H1);ctx.stroke();
+        ctx.strokeStyle=INK;ctx.lineWidth=4.6;seg(K0,K1);ctx.stroke();ctx.strokeStyle='#4a4c56';ctx.lineWidth=2.8;seg(K0,K1);ctx.stroke();ctx.strokeStyle='rgba(220,225,240,.55)';ctx.lineWidth=.8;seg(K0,K1);ctx.stroke();
+        fist(V0,hR,2.7,S.hand)}})}
+    else parts.push({d:D(X.T(REST.hR)),f:()=>fist(V0,hR,2.7,S.hand)});parts.push({d:A.hL?D(hL):D(X.T([-.6,-11.4,11.4])),f:()=>fist(V0,hL,2.7,S.hand)})}
   else if(W3){// the bow in 3D: the stave, its trims, the string and the arrow sort with the two hands
     const fr=W3.frame(grip,aim,up,1),strOn=anim==='shoot'||anim==='aim',loc=q=>{const d=sub(q,grip);return[dot(d,fr.X),dot(d,fr.Y),dot(d,fr.Z)]};
     parts.push({d:D(X.T([12,0,ZB+5])),f:()=>{let pinch=null;if(A.pinch)pinch=loc(hR);else if(A.twang>0)pinch=[-(BK+A.draw*1.6)+Math.sin(A.twang*22)*1.2*A.twang,0,0];

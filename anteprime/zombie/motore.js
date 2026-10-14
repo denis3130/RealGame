@@ -306,11 +306,15 @@ function heightAt(x,y){let h=0;for(const s of stands)if(x>=s.x&&x<=s.x+s.w&&y>=s
 const solid=(x,y,w,d,tag)=>{if(TURN)[x,y,w,d]=tR(TURN,x,y,w,d);const s={x,y,w,d,tag};solids.push(s);return s};
 const shade=(x,y,w,d,h,a)=>{if(TURN)[x,y,w,d]=tR(TURN,x,y,w,d);return shadows.push({x,y,w,d,h,a})};const shadeR=(x,y,r,a)=>{if(TURN)[x,y]=tP(TURN,x,y);return shadows.push({x,y,r,a})};
 // per disegnare un prop le facce stanno in ordine: contorno (hull) prima di tutto, poi le facce
-function drawProp(p,alphaOf){const parts=p.parts;for(const part of parts){if(part.part&&alphaOf){const a=alphaOf(part.part);if(a<=0)continue;if(a<1){ctx.save();ctx.globalAlpha*=a;drawPart(part);ctx.restore();continue}}drawPart(part)}}
+// (part.vis: un pezzo che c'è solo a volte, come le assi di una barriera: vis() dice se disegnarlo adesso)
+function drawProp(p,alphaOf){const parts=p.parts;for(const part of parts){if(part.vis&&!part.vis())continue;if(part.part&&alphaOf){const a=alphaOf(part.part);if(a<=0)continue;if(a<1){ctx.save();ctx.globalAlpha*=a;drawPart(part);ctx.restore();continue}}drawPart(part)}}
 // ------------------------------------------------------------------ il mondo
 const W={dbg:{},w:10*T,h:10*T,ground:null,hero:null,Z:[],FX:[],crows:[],flock:[],clouds:[],mists:[],flies:[],leaves:[],puffs:[],coins:0,t:0,
   zoneOpen:{},gunId:'pistola',split:null,gate:null,toast:null};// zone aperte, arma in mano, velo sulla zona chiusa, il cancello (l'area li prepara)
-function hit(x,y,r,ex){for(const s of solids){if(s.off||s===ex)continue;const cx=cl(x,s.x,s.x+s.w),cy=cl(y,s.y,s.y+s.d);if((x-cx)**2+(y-cy)**2<r*r)return s}return null}
+// le barriere (finestre, varchi delle recinzioni: barriere.js) sono solidi con s.bar: fermano sempre l'eroe; BARM dice chi le passa in questo
+// controllo: 0 nessuno, 1 i colpi e la mira (si spara attraverso le finestre), 2 solo quelle aperte (lo zombie che colpisce da una finestra senza assi)
+let BARM=0;
+function hit(x,y,r,ex){for(const s of solids){if(s.off||s===ex||(s.bar&&BARM&&(BARM===1||s.bar.open())))continue;const cx=cl(x,s.x,s.x+s.w),cy=cl(y,s.y,s.y+s.d);if((x-cx)**2+(y-cy)**2<r*r)return s}return null}
 function move(o,dx,dy,r){const s0=hit(o.x,o.y,r);o.x+=dx;if(hit(o.x,o.y,r,s0))o.x-=dx;o.y+=dy;if(hit(o.x,o.y,r,s0))o.y-=dy}
 // ------------------------------------------------------------------ navigazione degli zombie
 // Griglia di 8 px con gli ostacoli gonfiati del raggio dello zombie; un campo di distanze verso l'eroe (Dijkstra a 8 vicini, senza tagliare gli
@@ -322,22 +326,28 @@ function navBuild(){const cw=Math.ceil(W.w/NC),ch=Math.ceil(W.h/NC),n=cw*ch,bl=n
   const mark=(arr,R)=>{for(const s of solids){if(s.off)continue;const i0=Math.max(0,Math.floor((s.x-R)/NC)),i1=Math.min(cw-1,Math.floor((s.x+s.w+R)/NC)),j0=Math.max(0,Math.floor((s.y-R)/NC)),j1=Math.min(ch-1,Math.floor((s.y+s.d+R)/NC));
     for(let j=j0;j<=j1;j++)for(let i=i0;i<=i1;i++){const cx=(i+.5)*NC,cy=(j+.5)*NC,dx=cx-cl(cx,s.x,s.x+s.w),dy=cy-cl(cy,s.y,s.y+s.d);if(dx*dx+dy*dy<R*R)arr[j*cw+i]=1}}};
   mark(bl,ZR+.5);mark(los,ZR+3);
-  NAV={cw,ch,n,bl,los,dist:new Float32Array(n),hk:new Float32Array(n*8+64),hv:new Int32Array(n*8+64),hc:-1,t:0}}
+  // le barriere: un corridoio di caselle libere che attraversa il muro (bar: quale barriera, bs: da che parte della linea); la vista (los) resta chiusa
+  const bar=new Int16Array(n),bs=new Int8Array(n);BARS.forEach((B,bi)=>{const R0=B.reach,hw=Math.max(4,B.half-5),ex=R0+hw+NC;
+    const i0=Math.max(0,Math.floor((B.x-ex)/NC)),i1=Math.min(cw-1,Math.floor((B.x+ex)/NC)),j0=Math.max(0,Math.floor((B.y-ex)/NC)),j1=Math.min(ch-1,Math.floor((B.y+ex)/NC));
+    for(let j=j0;j<=j1;j++)for(let i=i0;i<=i1;i++){const dx=(i+.5)*NC-B.x,dy=(j+.5)*NC-B.y,v=dx*B.nx+dy*B.ny,u=-dx*B.ny+dy*B.nx;if(Math.abs(u)<=hw&&Math.abs(v)<=R0){const c=j*cw+i;bl[c]=0;bar[c]=bi+1;bs[c]=v>=0?1:-1}}});
+  NAV={cw,ch,n,bl,los,bar,bs,bc:new Float32Array(BARS.length+1),dist:new Float32Array(n),hk:new Float32Array(n*8+64),hv:new Int32Array(n*8+64),hc:-1,t:0}}
 const cellOf=(x,y)=>cl(Math.floor(y/NC),0,NAV.ch-1)*NAV.cw+cl(Math.floor(x/NC),0,NAV.cw-1);
 const cen=c=>{const i=c%NAV.cw;return[(i+.5)*NC,((c-i)/NAV.cw+.5)*NC]};
-function navField(){const N=NAV,h=W.hero,cw=N.cw,ch=N.ch,D=N.dist,B=N.bl,hk=N.hk,hv=N.hv;D.fill(1e9);let hs=0;
+function navField(){const N=NAV,h=W.hero,cw=N.cw,ch=N.ch,D=N.dist,B=N.bl,hk=N.hk,hv=N.hv,BR=N.bar,BS=N.bs,BC=N.bc;D.fill(1e9);let hs=0;
+  for(let i=0;i<BARS.length;i++)BC[i+1]=BARS[i].off?1e6:BARS[i].cost();// passare da una parte all'altra di una barriera costa (chiusa di più)
   const push=(k,v)=>{let i=hs++;while(i>0){const p=(i-1)>>1;if(hk[p]<=k)break;hk[i]=hk[p];hv[i]=hv[p];i=p}hk[i]=k;hv[i]=v};
   const pop=()=>{const v=hv[0],lk=hk[--hs],lv=hv[hs];let i=0;for(;;){let c=2*i+1;if(c>=hs)break;if(c+1<hs&&hk[c+1]<hk[c])c++;if(hk[c]>=lk)break;hk[i]=hk[c];hv[i]=hv[c];i=c}hk[i]=lk;hv[i]=lv;return v};
   // le caselle libere vicino all'eroe sono i punti di partenza (l'eroe può stare più vicino ai muri di uno zombie)
   const hi=Math.floor(h.x/NC),hj=Math.floor(h.y/NC);let lim=30;for(let r=4;r<=16&&!hs;r+=4,lim+=32)for(let j=hj-r;j<=hj+r;j++)for(let i=hi-r;i<=hi+r;i++){if(i<0||j<0||i>=cw||j>=ch)continue;const c=j*cw+i;if(B[c])continue;const d=Math.hypot((i+.5)*NC-h.x,(j+.5)*NC-h.y);if(d>lim)continue;if(d<D[c]){D[c]=d;push(d,c)}}
   while(hs){const k0=hk[0],c=pop();if(k0>D[c])continue;if(k0>NAVMAX)break;const i=c%cw,j=(c-i)/cw;// oltre NAVMAX px dall'eroe il campo non serve (mappe grandi)
     for(let dj=-1;dj<=1;dj++)for(let di=-1;di<=1;di++){if(!di&&!dj)continue;const ni=i+di,nj=j+dj;if(ni<0||nj<0||ni>=cw||nj>=ch)continue;const nc=nj*cw+ni;if(B[nc])continue;
-      if(di&&dj&&(B[j*cw+ni]||B[nj*cw+i]))continue;const nd=k0+(di&&dj?1.4142*NC:NC);if(nd<D[nc]){D[nc]=nd;push(nd,nc)}}}}
+      if(di&&dj&&(B[j*cw+ni]||B[nj*cw+i]))continue;const nd=k0+(di&&dj?1.4142*NC:NC)+(BR[nc]&&BR[nc]===BR[c]&&BS[nc]!==BS[c]?BC[BR[nc]]:0);if(nd<D[nc]){D[nc]=nd;push(nd,nc)}}}}
 function navUpdate(dt){if(!NAV)return;NAV.t-=dt;const c=cellOf(W.hero.x,W.hero.y);if(c!==NAV.hc&&NAV.t<=0){NAV.hc=c;NAV.t=.08;navField()}}
 // la linea tra due punti è libera? (sulla griglia più gonfia; i primi e gli ultimi 10 px non contano: chi sta vicino a un muro vede lo stesso)
 function losClear(x0,y0,x1,y1){const L=Math.hypot(x1-x0,y1-y0);if(L<1)return true;const n=Math.ceil(L/4);for(let k=1;k<n;k++){const s=k/n*L;if(s<10||L-s<10)continue;const t=k/n;if(NAV.los[cellOf(x0+(x1-x0)*t,y0+(y1-y0)*t)])return false}return true}
 // la linea è libera per un corpo di raggio r sui solidi veri (ex: il solido da cui sta uscendo)
-function physClear(x0,y0,x1,y1,r,ex){const L=Math.hypot(x1-x0,y1-y0),n=Math.max(1,Math.ceil(L/3));for(let k=1;k<=n;k++){const t=k/n;if(hit(x0+(x1-x0)*t,y0+(y1-y0)*t,r,ex))return false}return true}
+// (bm: come passano le barriere, vedi BARM)
+function physClear(x0,y0,x1,y1,r,ex,bm){const L=Math.hypot(x1-x0,y1-y0),n=Math.max(1,Math.ceil(L/3)),sv=BARM;BARM=bm||0;try{for(let k=1;k<=n;k++){const t=k/n;if(hit(x0+(x1-x0)*t,y0+(y1-y0)*t,r,ex))return false}return true}finally{BARM=sv}}
 function steer(z){const h=W.hero,N=NAV;
   // l'eroe invisibile (Lucky Card): gli zombie vagano qua e là senza trovarlo
   if(W.mods&&W.mods.invis>0){if(!z.wd||z.wdT<W.t||Math.hypot(z.wd[0]-z.x,z.wd[1]-z.y)<12){z.wd=[z.x+rr(-110,110),z.y+rr(-110,110)];z.wdT=W.t+rr(1.4,3)}return z.wd}
@@ -355,13 +365,37 @@ function steer(z){const h=W.hero,N=NAV;
     for(let dj=-1;dj<=1;dj++)for(let di=-1;di<=1;di++){if(!di&&!dj)continue;const ni=i+di,nj=j+dj;if(ni<0||nj<0||ni>=cw||nj>=ch)continue;const nc=nj*cw+ni;if(N.bl[nc])continue;if(di&&dj&&(N.bl[j*cw+ni]||N.bl[nj*cw+i]))continue;if(D[nc]<nv){nv=D[nc];nb=nc}}
     if(nb<0)break;cur=nb;const p=cen(cur);if(losClear(z.x,z.y,p[0],p[1]))tgt=p;else{if(!tgt)tgt=p;break}}
   return tgt||[h.x,h.y]}
-function zWalk(z,dt){z.st=(z.st||0)-dt;if(z.st<=0||!z.tg||Math.hypot(z.tg[0]-z.x,z.tg[1]-z.y)<5){z.tg=steer(z);z.st=.12}
+function zWalk(z,dt){if(z.ai&&BARS.length){if(!z.bx&&(z.bxT=(z.bxT||0)-dt)<=0){z.bxT=.15;z.bx=barCheck(z)}if(z.bx){barStep(z,dt);return}}// un boss la sfonda
+  z.st=(z.st||0)-dt;if(z.st<=0||!z.tg||Math.hypot(z.tg[0]-z.x,z.tg[1]-z.y)<5){z.tg=steer(z);z.st=.12}
   let tx=z.tg[0]-z.x,ty=z.tg[1]-z.y;const tl=Math.hypot(tx,ty)||1;tx/=tl;ty/=tl;
   if(z.det>0){z.det-=dt;tx=z.dvx;ty=z.dvy}
   if(z.vx==null){z.vx=tx;z.vy=ty}const k=Math.min(1,dt*7);z.vx+=(tx-z.vx)*k;z.vy+=(ty-z.vy)*k;const vl=Math.hypot(z.vx,z.vy)||1;
   move(z,z.vx/vl*z.spd*dt,z.vy/vl*z.spd*dt,ZR);z.face=Math.atan2(z.vy,z.vx);
   z.chk=(z.chk||0)+dt;if(z.cx0==null){z.cx0=z.x;z.cy0=z.y}
   if(z.chk>.7){if(Math.hypot(z.x-z.cx0,z.y-z.cy0)<z.spd*.7*.3&&!(z.det>0)){const sd=Math.random()<.5?-1:1;z.dvx=-ty*sd;z.dvy=tx*sd;z.det=.5;z.st=0}z.chk=0;z.cx0=z.x;z.cy0=z.y}}
+// ------------------------------------------------------------------ le barriere (barriere.js: finestre e varchi delle recinzioni)
+// Una barriera è {x, y (il centro sulla linea del muro), nx, ny (il verso «fuori»), half (mezza apertura), th (spessore), reach (mezzo corridoio),
+// open(), cost(), hit(z) (un colpo di zombie: il vetro o un'asse), smash(z) (un boss la sfonda), shot() (un colpo dell'eroe che la attraversa)}.
+// Nella griglia il corridoio è libero e passare la linea costa cost(): chiusa costa di più, così gli zombie prendono la porta se è poco più
+// lunga. Lo zombie che il campo manda di là (barCheck) va davanti alla barriera, la colpisce finché non è aperta e la scavalca in 0,75 s
+// con un saltello, senza urti; poi riprende a camminare. Se intanto l'eroe va altrove e la barriera non serve più, lascia perdere
+const BARS=[];
+function barrier(B){B.reach=B.reach||30;B.th=B.th||10;B.half=B.half||13;B.vault=0;BARS.push(B);return B}
+function barCheck(z){if(!NAV||!NAV.bar||!BARS.length)return null;const c=cellOf(z.x,z.y),b=NAV.bar[c];if(!b)return null;const B=BARS[b-1];if(B.off)return null;
+  const s=(z.x-B.x)*B.nx+(z.y-B.y)*B.ny>=0?1:-1,o=B.th/2+ZR+2,fx=B.x-s*B.nx*o,fy=B.y-s*B.ny*o,fc=cellOf(fx,fy),D=NAV.dist;
+  if(D[fc]>=1e9||D[c]>=1e9||D[fc]+NAV.bc[b]+Math.hypot(fx-z.x,fy-z.y)>D[c]+2)return null;return{B,s,st:'va',t:0,chk:0}}
+function barStep(z,dt){const X=z.bx,B=X.B,s=X.s,o=B.th/2+ZR+1,ax=B.x+s*B.nx*o,ay=B.y+s*B.ny*o,fa=Math.atan2(-s*B.ny,-s*B.nx);X.t+=dt;
+  const an=(a,per)=>{if(z.anim!==a){z.anim=a;z.p=0}const p0=z.p;z.p=(z.p+dt/per)%1;return p0};
+  const still=()=>{if((X.chk+=dt)<.5)return true;X.chk=0;const c2=barCheck(z);if(c2&&c2.B===B)return true;z.bx=null;return false};// serve ancora?
+  if(X.st==='va'){const dx=ax-z.x,dy=ay-z.y,d=Math.hypot(dx,dy);
+    if(d<4||(X.t>1.6&&d<22)){X.st=B.open()?'su':'colpo';X.t=0;z.p=0;return}if(X.t>2.4){z.bx=null;return}
+    const sp=Math.min(d,z.spd*dt);move(z,dx/d*sp,dy/d*sp,ZR);z.face=Math.atan2(dy,dx);an('walk',z.kind==='hound'?.6:1.1);still();return}
+  if(X.st==='colpo'){z.face=fa;if(B.open()){X.st='su';X.t=0;return}if(z.ai){B.smash(z);X.st='su';X.t=0;return}
+    const p0=an('attack',1.4);if(p0<.55&&z.p>=.55)B.hit(z);still();return}
+  // di là: dalla parte di qua a quella di là in 0,75 s, un saltello sul davanzale, senza urti
+  if(!X.from){X.from=[z.x,z.y];X.to=[B.x-s*B.nx*o,B.y-s*B.ny*o];B.vault++;if(B.onVault)B.onVault(z,s)}
+  const k=Math.min(1,X.t/.75),e=ez(k);z.x=lerp(X.from[0],X.to[0],e);z.y=lerp(X.from[1],X.to[1],e);z.zh=heightAt(z.x,z.y)+Math.sin(k*Math.PI)*(B.hop||12);z.face=fa;if(!z.ai)an('walk',.75);
+  if(k>=1){B.vault--;z.bx=null;z.tg=null;z.st=0;z.cx0=null}}
 // ------------------------------------------------------------------ terreno cotto (chiamato dall'area dopo aver messo i prop)
 const GT=2;let groundDraw=null,BAKE=null;
 // edgeSnap(): chiamato dall'area dentro il suo pittore, fotografa il terreno di base per il fuori mappa (makeEdgeBands) prima delle cose che
@@ -459,8 +493,8 @@ const HERO3=()=>typeof EROE!=='undefined'&&!!EROE.arciere&&HSTYLE.hid==='arciere
 // (moltiplicano quelli del tipo), q (conta per il round)}; restituisce lo zombie o null se la buca scelta era occupata
 function spawn(o){o=o||{};const h=W.hero,c=holes.filter(p=>(p[2]==null||W.zoneOpen[p[2]])&&Math.hypot(p[0]-h.x,p[1]-h.y)>110&&Math.hypot(p[0]-h.x,p[1]-h.y)<460);if(!c.length)return null;const p=c[Math.floor(Math.random()*c.length)],
     k=o.kind?KINDS.find(q=>q[0]===o.kind)||KINDS[0]:KINDS[Math.floor(Math.random()*KINDS.length)];
-  if(W.Z.some(z=>Math.hypot(z.x-p[0],z.y-p[1])<30))return null;const out=p[3]==='mais'||p[3]==='porta';if(p[4])p[4]();
-  const z={id:++ZID,kind:k[0],sc:k[1],spd:k[2]*(o.spd||1),hp:k[3]*(o.hp||1),x:p[0],y:p[1],face:Math.atan2(h.y-p[1],h.x-p[0]),p:Math.random(),anim:'walk',rise:out?1:0,die:0,flash:0};z.spd0=z.spd;z.hp0=z.hp;if(o.q)z.q=1;W.Z.push(z);return z}
+  if(W.Z.some(z=>Math.hypot(z.x-p[0],z.y-p[1])<30))return null;const out=p[3]==='mais'||p[3]==='porta'||p[3]==='fuori';if(p[4])p[4]();
+  const z={id:++ZID,kind:k[0],sc:k[1],spd:k[2]*(o.spd||1),hp:k[3]*(o.hp||1),x:p[0],y:p[1],face:Math.atan2(h.y-p[1],h.x-p[0]),p:Math.random(),anim:'walk',rise:out?1:0,die:0,flash:0};z.spd0=z.spd;z.hp0=z.hp;if(o.q)z.q=1;if(p[3]==='fuori')z.fin=.9;W.Z.push(z);return z}// ('fuori': esce dal buio oltre il bordo, piano piano)
 // gli zombie fermi in una zona chiusa (la fattoria prima del cancello): girano piano intorno a casa loro; da fermi girano di colpo la testa
 // verso l'eroe quando si avvicina; se l'eroe va al cancello vengono alle sbarre e allungano le braccia. Quando la zona si apre partono
 function idleZombie(kind,x,y,zone){const k=KINDS.find(k=>k[0]===kind)||KINDS[0],z={id:++ZID,kind:k[0],sc:k[1],spd:k[2],hp:k[3],x,y,face:rr(0,TAU),p:Math.random(),anim:'idle',rise:1,die:0,flash:0,idle:{zone,home:[x,y],t:rr(0,3),tg:null}};W.Z.push(z);return z}
@@ -484,7 +518,7 @@ function fireShot(ev){const h=W.hero,g=gunState,D=g.D,B=basis(heroDir()*Math.PI/
   // le armi speciali (armi_speciali.js: lanciafiamme, fucile a vapore, Risonatore) fanno il colpo a modo loro
   if(W.shotHook&&W.shotHook(ev,g,D,{hw,ao,ty}))return;
   for(const da of ev.ang){const a=h.aim+da,dx=Math.cos(a),dy=Math.sin(a);let end=D.range,left=(D.pierce||0)+1;
-    for(let s=12;s<D.range;s+=5){const s0=hit(h.x+dx*s,h.y+dy*s,1.5);if(s0&&s0.tag!=='hole'){end=s;break}}// il primo muro sulla linea
+    for(let s=12;s<D.range;s+=5){const s0=hit(h.x+dx*s,h.y+dy*s,1.5);if(s0&&s0.bar){if(s0.bar.shot)s0.bar.shot();continue}if(s0&&s0.tag!=='hole'){end=s;break}}// il primo muro sulla linea (le finestre e i varchi si passano)
     const L=[];for(const z of W.Z){if(z.die||z.rise<1)continue;const rx=z.x-h.x,ry=z.y-h.y,al=rx*dx+ry*dy;if(al<0||al>end)continue;if(Math.abs(rx*dy-ry*dx)<11*z.sc)L.push([al,z])}L.sort((p,q)=>p[0]-q[0]);
     const MD=W.mods||{};for(const[al,z] of L){const cr=MD.crit>0&&Math.random()<MD.crit;hurt(z,D.dmg*(D.pel>1?cl(1.25-al/D.range,.35,1):1)*(MD.dmg||1)*(cr?2:1),true);if(cr&&W.onCrit)W.onCrit(z);if(!ev.paid&&W.director&&W.director.shotHit){ev.paid=1;W.director.shotHit()}if(--left<=0){end=al;break}}
     if(D.splash){const ex=h.x+dx*end,ey=h.y+dy*end;for(const z of W.Z)if(!z.die&&z.rise>=1&&Math.hypot(z.x-ex,z.y-ey)<D.splash+8)hurt(z,D.dmg*.6,false);W.FX.push({k:'boom',tw:[ex,ey,0],t:.45,t0:.45,r:D.splash})}
@@ -513,7 +547,9 @@ function boxPlace(x,y,a){const F=BOX.F,k=F.BS,c=Math.cos(a),s=Math.sin(a),w=(u,v
   const P=[];for(const p of F.BH)P.push(w(p[0]*1.12,p[1]*1.12));for(const q of F.cand)for(const[dx,dy] of DIR8)P.push(w(q[0]+dx*1.4,q[1]+dy*1.4));for(const q of F.lid)P.push(w(q[0],q[1]));
   const E=BOX.E;finFP(E,P.map(q=>[q[0],q[1],0]));E.x=x;E.y=y;E.prop.ref=[x,y];E.zs=undefined;E.H=null}
 function boxUpdate(dt){if(!BOX)return;const b=BOX.b;for(const e of b.update(dt)){if(e.k==='suono'){if(ARMI.suonoBara)ARMI.suonoBara(e.w,180)}else if(e.k==='presa')equip(e.id);else if(e.k==='rimborso'){W.coins+=e.n;W.toast=['La Bara scappa: monete restituite',2.4]}
-    else if(e.k==='via'){const c=BOX.spots.filter(s=>(s[2]==null||W.zoneOpen[s[2]])&&Math.hypot(s[0]-BOX.x,s[1]-BOX.y)>40),s=c.length?c[Math.floor(Math.random()*c.length)]:[BOX.x,BOX.y,null,BOX.a];boxPlace(s[0],s[1],s[3]||0);navBuild();if(NAV)NAV.hc=-1}}}
+    else if(e.k==='via'){const c=BOX.spots.filter(s=>(s[2]==null||W.zoneOpen[s[2]])&&Math.hypot(s[0]-BOX.x,s[1]-BOX.y)>40),s=c.length?c[Math.floor(Math.random()*c.length)]:[BOX.x,BOX.y,null,BOX.a];boxPlace(s[0],s[1],s[3]||0);navBuild();if(NAV)NAV.hc=-1;if(b.addio)W.toast=['La Bara se ne va…',2.4]}
+    // ricomparsa: dove è andata (il nome della zona) e un fascio di luce verde che si vede da lontano per qualche secondo
+    else if(e.k==='qui'){const n=W.zoneAt?W.zoneAt(BOX.x,BOX.y):'';W.toast=['La Bara è ricomparsa'+(n?': '+n:''),3];W.FX.push({k:'faro',tw:[BOX.x,BOX.y,0],t:6,t0:6})}}}
 // la voce della Bara in questo fotogramma: l'altezza della posa (chiusa 18 px, col coperchio aperto fino a 40, con la mano e l'arma 50, sotto
 // terra quasi niente), il riquadro a schermo e la piega come uno strato, l'impronta girata di ψ
 function boxEntry(){const E=BOX.E,F=BOX.F,a=BOX.b.posa();E.z0=0;E.z1=(a.sink||0)>=1?3:a.hand>0?50:F.BS*(F.HB+F.HL+2)+22*(a.lid||0)/F.LIDA;E.cst=-1;layerSB(E);rotate(E,PC,PSN);return E}
@@ -534,14 +570,15 @@ function boxPrims(){const F=BOX.F,k=F.BS,c=Math.cos(BOX.a),s=Math.sin(BOX.a),X=B
 // W.mods (fortuna.js, il gioco): cose che la partita cambia per un po' o per tutta la partita: spd la corsa dell'eroe, dmg il danno, crit la
 // probabilità di un colpo doppio, cash le monete degli zombie, invis gli zombie che non lo vedono
 function updateBeings(dt,inp){const h=W.hero,DI=W.director,MD=W.mods||{};if(h.dead)inp={x:0,y:0};const m=Math.hypot(inp.x,inp.y);h.moving=m>.15;if(h.moving){const sp=150*Math.min(1,m)*(MD.spd||1);move(h,inp.x/m*sp*dt,inp.y/m*sp*dt,10);h.face=Math.atan2(inp.y,inp.x);h.walk+=dt*12}
-  h.zh=(h.zh||0)+(heightAt(h.x,h.y)-(h.zh||0))*Math.min(1,dt*14);const noShoot=!!W.dbg.noShoot||!!h.dead;
+  h.zh=(h.zh||0)+(heightAt(h.x,h.y)-(h.zh||0))*Math.min(1,dt*14);const noShoot=!!W.dbg.noShoot||!!h.dead||!!h.busy;// (mentre ripara una finestra non spara)
   // il bersaglio: lo zombie più vicino entro 230 px che l'eroe vede davvero (i colpi non passano attraverso muri, recinti, lapidi, casse…);
   // la linea si controlla sui solidi veri, ignorando quello in cui sta lo zombie (la fossa da cui esce); ricontrollata ogni 0,1 s
   const g=gunState,RG=g?Math.min(g.D.range,260):230;
   h.tgT=(h.tgT||0)-dt;let tgt=h.tgZ&&W.Z.includes(h.tgZ)&&!h.tgZ.die&&!h.tgZ.idle&&h.tgZ.rise>=1&&Math.hypot(h.tgZ.x-h.x,h.tgZ.y-h.y)<RG?h.tgZ:null;
   if(h.tgT<=0||!tgt){h.tgT=.1;tgt=null;const c=W.Z.filter(z=>z.rise>=1&&!z.die&&!z.idle).map(z=>[Math.hypot(z.x-h.x,z.y-h.y),z]).filter(a=>a[0]<RG).sort((a,b)=>a[0]-b[0]);
-    for(const[,z] of c)if(physClear(h.x,h.y,z.x,z.y,1.5,hit(z.x,z.y,2))){tgt=z;break}h.tgZ=tgt}
+    for(const[,z] of c)if(physClear(h.x,h.y,z.x,z.y,1.5,hit(z.x,z.y,2),1)){tgt=z;break}h.tgZ=tgt}
   if(tgt){h.aim=Math.atan2(tgt.y-h.y,tgt.x-h.x);if(!h.moving)h.face=h.aim}
+  if(h.busy&&!h.moving)h.face=Math.atan2(h.busy.y-h.y,h.busy.x-h.x);// guarda quello che ripara
   // il verso disegnato dell'Arciere 3D (nel mondo): segue in fretta quello vero, senza le 8 direzioni del rig di prima
   {const tf=h.face||0;if(h.f3==null||dt>=.5)h.f3=tf;else h.f3+=Math.atan2(Math.sin(tf-h.f3),Math.cos(tf-h.f3))*Math.min(1,dt*18)}
   // il grilletto: le armi automatiche lo tengono premuto, le altre lo premono di nuovo appena l'arma è pronta
@@ -554,12 +591,14 @@ function updateBeings(dt,inp){const h=W.hero,DI=W.director,MD=W.mods||{};if(h.de
   // la scia e le gocce sono attaccate a punti del mondo (i piedi dell'eroe e dello zombie colpito, ripresi con S a ogni fotogramma) più uno
   // scarto sullo schermo (la bocca dell'arma, l'altezza del petto, il volo delle gocce): girando la telecamera restano dove sono successe
   if(DI)DI.update(dt,zOn);else{spawnT-=dt;if(zOn&&spawnT<=0&&W.Z.filter(z=>!z.idle&&!z.die).length<(W.maxZ||5)){spawn();spawnT=rr(2,3.5)}}navUpdate(dt);
-  for(const z of W.Z){if(z.flash>0)z.flash-=dt;if(z.die){z.die+=dt;continue}z.zh=(z.zh||0)+(heightAt(z.x,z.y)-(z.zh||0))*Math.min(1,dt*14);if(z.rise<1){z.rise=Math.min(1,z.rise+dt/1.3);z.face=Math.atan2(h.y-z.y,h.x-z.x);continue}
+  for(const z of W.Z){if(z.flash>0)z.flash-=dt;if(z.fin>0)z.fin-=dt;if(z.die){z.die+=dt;continue}z.zh=(z.zh||0)+(heightAt(z.x,z.y)-(z.zh||0))*Math.min(1,dt*14);if(z.rise<1){z.rise=Math.min(1,z.rise+dt/1.3);z.face=Math.atan2(h.y-z.y,h.x-z.x);continue}
     if(z.idle){if(W.zoneOpen[z.idle.zone])z.idle=null;else{idleStep(z,dt);sep(z);continue}}
     if(z.ai){z.ai(z,dt);sep(z);continue}// un boss della partita: si muove e colpisce da solo
     if(z.stun>0){z.stun-=dt;if(z.anim!=='idle'){z.anim='idle';z.p=0}z.p=(z.p+dt/2.4)%1;sep(z);continue}// respinto dall'anima che rialza l'eroe
+    if(!z.bx&&BARS.length&&(z.bxT=(z.bxT||0)-dt)<=0){z.bxT=.15;z.bx=barCheck(z)}// una finestra o un varco da passare (barriere.js)
+    if(z.bx){barStep(z,dt);if(!(z.bx&&z.bx.from))sep(z);continue}
     const dx=h.x-z.x,dy=h.y-z.y,d=Math.hypot(dx,dy);
-    if(d<30&&physClear(z.x,z.y,h.x,h.y,2)){z.face=Math.atan2(dy,dx);if(z.anim!=='attack'){z.anim='attack';z.p=0}const p0=z.p;z.p+=dt/1.4;if(DI&&DI.zombieHit&&p0<.55&&z.p>=.55)DI.zombieHit(z,d);z.chk=0;z.cx0=null}// il colpo arriva a metà del gesto
+    if(d<30&&physClear(z.x,z.y,h.x,h.y,2,null,2)){z.face=Math.atan2(dy,dx);if(z.anim!=='attack'){z.anim='attack';z.p=0}const p0=z.p;z.p+=dt/1.4;if(DI&&DI.zombieHit&&p0<.55&&z.p>=.55)DI.zombieHit(z,d);z.chk=0;z.cx0=null}// il colpo arriva a metà del gesto
     else{if(z.anim!=='walk'){z.anim='walk';z.p=0}z.p+=dt/(z.kind==='hound'?.6:1.1);zWalk(z,dt)}
     sep(z);z.p%=1}
   for(let i=W.Z.length-1;i>=0;i--)if(W.Z[i].die>1.1||(!zOn&&W.Z[i].rise<1))W.Z.splice(i,1);
@@ -580,7 +619,7 @@ function drawZombie(z){const q=S(z.x,z.y,z.zh||0),zk=RIGK.mzk,fc=z.face+CAM.yaw;
     if(k>.25){const u=ez((k-.25)/.75),ck=Math.max(1,z.sc/1.1);ctx.save();ctx.beginPath();ctx.rect(q[0]-60*ck,q[1]-150*ck,120*ck,150*ck+1);ctx.clip();
       ctx.translate(0,(1-u)*60*z.sc*zk);CR[z.kind](q[0],q[1],fc,'idle',(W.t*.6)%1,z.sc);ctx.restore()}return}
   if(z.die){const k=Math.min(1,z.die/1.1),ck=Math.max(1,z.sc/1.1);ctx.save();ctx.globalAlpha=1-k*k;ctx.beginPath();ctx.rect(q[0]-60*ck,q[1]-150*ck,120*ck,150*ck+1);ctx.clip();ctx.translate(0,ez(k)*50*z.sc*zk);CR[z.kind](q[0],q[1],fc,'idle',0,z.sc);ctx.restore();return}
-  CR[z.kind](q[0],q[1],fc,z.anim,z.p,z.sc);if(z.flash>0){ctx.save();ctx.globalCompositeOperation='lighter';glow('255,255,255',q[0],q[1]-24*z.sc*zk,22*z.sc,.5);ctx.restore()}}
+  const fin=z.fin>0;if(fin){ctx.save();ctx.globalAlpha*=cl(1-z.fin/.9,0,1)}CR[z.kind](q[0],q[1],fc,z.anim,z.p,z.sc);if(fin)ctx.restore();if(z.flash>0){ctx.save();ctx.globalCompositeOperation='lighter';glow('255,255,255',q[0],q[1]-24*z.sc*zk,22*z.sc,.5);ctx.restore()}}
 // le trasparenze della casa: il tetto sfuma quando l'eroe entra, i mobili compaiono; i muri (wN, wS, wE, wW: da che parte guardano) con l'eroe
 // dentro diventano trasparenti se sono rivolti verso la telecamera (a vista dritta i muri sud, come prima), piano piano mentre si gira
 const WALLN={wN:[0,-1],wS:[0,1],wE:[1,0],wW:[-1,0]};
@@ -595,8 +634,9 @@ function heroDir(){const h=W.hero,sa=scrAng(h.face),d=Q8(sa),cur=h.dS==null?d:h.
 // serve ai colpi. Senza l'eroe 3D, il rig di prima nelle 8 direzioni
 function drawHero(){const h=W.hero,q=S(h.x,h.y,h.zh||0),f=h.fall||0,inv=W.mods&&W.mods.invis>0;if(inv){ctx.save();ctx.globalAlpha*=.32+.12*Math.sin(W.t*6)}if(f>0){ctx.save();ctx.translate(q[0],q[1]-6);ctx.rotate(-f*1.42);ctx.translate(-q[0],-(q[1]-6))}
   if(HERO3()){const DI=W.director,ht=DI&&DI.hurtT!=null?DI.hurtT:9,aimOn=!!h.tgZ&&!h.moving&&!f&&!h.dead;let anim='idle',p=((W.t/2.4)%1+1)%1;
-    if(f>0||h.dead){anim='hit';p=.16}else if(ht<.45){anim='hit';p=ht/.45*.5}else if(h.moving){anim='walk';p=(((h.walk||0)/TAU)%1+1)%1}else if(aimOn)anim='aim';
-    const out={};try{EROE.arciere(q[0],q[1],(h.f3==null?h.face||0:h.f3)+CAM.yaw,anim,p,1,{style:HSTYLE,gp:gunState?gunState.pose():null,noFx:true,out})}catch(e){console.error(e)}W.muzzle=out.muzzle||null}
+    const job=!f&&!h.dead&&!h.moving&&h.busy&&h.busy.anim?h.busy:null;// un lavoro con le mani (le assi sulla finestra): l'arma va via
+    if(f>0||h.dead){anim='hit';p=.16}else if(ht<.45){anim='hit';p=ht/.45*.5}else if(h.moving){anim='walk';p=(((h.walk||0)/TAU)%1+1)%1}else if(job){anim=job.anim;p=cl(h.busyP||0,0,.999)}else if(aimOn)anim='aim';
+    const out={};try{EROE.arciere(q[0],q[1],(h.f3==null?h.face||0:h.f3)+CAM.yaw,anim,p,1,{style:job?Object.assign({},HSTYLE,{gun:null}):HSTYLE,gp:gunState&&!job?gunState.pose():null,noFx:true,out,tool:job?job.tool:null})}catch(e){console.error(e)}W.muzzle=out.muzzle||null}
   else drawRig(q[0],q[1]-8,heroDir()*Math.PI/4,h.walk,h.moving&&!f,HSTYLE,{gp:gunState?gunState.pose():{},aim:h.aim==null||f?null:scrAng(h.aim)});
   if(f>0)ctx.restore();if(inv)ctx.restore();if(W.director&&W.director.drawOnHero)W.director.drawOnHero(q)}
 // una voce della lista: uno strato di prop (L), un prop intero nell'ordine di prima (W, con W.dbg.ord='ky'), un essere (B: eroe, zombie, corvo
@@ -932,7 +972,7 @@ function warmIntra(){if(W.dbg.noWarm){setTimeout(warmIntra,500);return}const t0=
   for(let d=0;d<=90&&performance.now()-t0<4;d++)for(const sg of d?[1,-1]:[1]){const sec=((s0+sg*d+90)%180+180)%180-90;for(const L of LAYERS){if(L.groups.length<2||L.memo.has(sec))continue;todo=true;intraAt(L,sec);if(performance.now()-t0>=4)break}}
   if(todo)setTimeout(warmIntra,30)}
 // disegna uno strato: i contorni sciolti per primi, poi i gruppi nel loro ordine, poi le fiamme figlie
-function drawPartA(t,hs){if(hs&&t.part){const a=alphaOf(hs,t.part);if(a<=0)return;if(a<1){ctx.save();ctx.globalAlpha*=a;drawPart(t);ctx.restore();return}}drawPart(t)}
+function drawPartA(t,hs){if(t.vis&&!t.vis())return;if(hs&&t.part){const a=alphaOf(hs,t.part);if(a<=0)return;if(a<1){ctx.save();ctx.globalAlpha*=a;drawPart(t);ctx.restore();return}}drawPart(t)}
 function drawLayer(L){const p=L.prop,hs=p.house;LEANK=p.lk==null?1:p.lk;setRef(p.ref);ROTP=p.rot||null;try{for(const t of L.loose)drawPartA(t,hs);const G=intraOrder(L);for(const g of G)for(const t of g.parts)drawPartA(t,hs)}finally{ROTP=null}
   LEANK=1;setRef(null);if(!W.dbg.noFlames)for(const f of L.flames)drawFlame(f)}
 // il riquadro a schermo del segugio: lungo ±12 nel verso in cui guarda
@@ -1017,6 +1057,9 @@ function drawWorld(dt,view){const h0=houses[0],h0a=h0?h0.a:1,D=W.dbg;
     ctx.save();ctx.globalCompositeOperation='lighter';for(const f of W.flies){const q=S(f.x,f.y,f.z),b=.5+.5*Math.sin(W.t*3+f.ph);glow('170,255,120',q[0],q[1],9,.5*b);ctx.fillStyle=`rgba(230,255,190,${.9*b})`;ctx.fillRect(q[0]-.8,q[1]-.8,1.6,1.6)}ctx.restore()}
   for(const f of W.FX){if(f.k==='coin'){const t=S(f.tw),k=1-f.t/f.t0,y=t[1]-k*26;ctx.save();ctx.globalAlpha=Math.min(1,f.t/.35);ctx.font='800 14px "Baloo 2",system-ui';ctx.textAlign='center';ctx.lineJoin='round';ctx.lineWidth=3.6;ctx.strokeStyle=INK;ctx.strokeText('+'+f.n,t[0],y);ctx.fillStyle='#ffd65a';ctx.fillText('+'+f.n,t[0],y);ctx.restore();continue}
     if(f.k==='boom'){const t=S(f.tw),k=1-f.t/f.t0;ctx.save();ctx.globalCompositeOperation='lighter';glow('255,170,70',t[0],t[1]-10,f.r*(.6+k),.9*(1-k));ctx.restore();ctx.strokeStyle=`rgba(255,220,160,${.7*(1-k)})`;ctx.lineWidth=3;ctx.beginPath();ctx.ellipse(t[0],t[1],f.r*(.4+k),f.r*(.4+k)*.6*CAM.SP,0,0,TAU);ctx.stroke();continue}
+    if(f.k==='faro'){const q=S(f.tw),al=Math.min(1,(f.t0-f.t)/.5)*Math.min(1,f.t/1.5),pu=.8+.2*Math.sin(W.t*6),H=190*CAM.CP;ctx.save();if(!LOWFX)ctx.globalCompositeOperation='lighter';
+      const g=ctx.createLinearGradient(0,q[1],0,q[1]-H);g.addColorStop(0,`rgba(120,255,160,${.42*al*pu})`);g.addColorStop(1,'rgba(120,255,160,0)');ctx.fillStyle=g;ctx.beginPath();ctx.moveTo(q[0]-15,q[1]);ctx.lineTo(q[0]+15,q[1]);ctx.lineTo(q[0]+6,q[1]-H);ctx.lineTo(q[0]-6,q[1]-H);ctx.closePath();ctx.fill();
+      const r=26+((f.t0-f.t)*30)%40;ctx.strokeStyle=`rgba(150,255,180,${.5*al*(1-((f.t0-f.t)*30%40)/40)})`;ctx.lineWidth=2;ctx.beginPath();ctx.ellipse(q[0],q[1],r,r*.5*CAM.SP,0,0,TAU);ctx.stroke();ctx.restore();continue}
     if(f.k==='shot'){const g=S(f.hw),t=S(f.tw),a=[g[0]+f.ao[0],g[1]+f.ao[1]];ctx.strokeStyle='rgba(255,230,160,.9)';ctx.lineWidth=f.w||2;seg(a,[t[0]+f.bo[0],t[1]+f.bo[1]]);ctx.stroke();if(!LOWFX){ctx.save();ctx.globalCompositeOperation='lighter';glow('255,210,120',a[0],a[1],14,.8);ctx.restore()}}
     else{const t=S(f.tw);ctx.fillStyle='#3a5a1e';ball([t[0]+f.x,t[1]+f.y],1.8);ctx.fill()}}
   if(W.director&&W.director.drawTop)W.director.drawTop(dt);if(liveDraw)liveDraw(dt);drawMist(dt);drawFlock();if(PH)PH('effetti_nebbia')}
@@ -1057,7 +1100,7 @@ function bootAsync(area,o){o=o||{};const keep=[window.CR&&CR.cam?Object.assign({
 function libera(){if(!JOBS||!W.ground)return false;W.ground.width=W.ground.height=0;W.ground=null;return true}
 function ricuoci(o){o=o||{};if(W.ground||!JOBS)return Promise.resolve(0);const sd=seed;
   return inPezzi((function*(){for(const[w,h,p] of JOBS)yield* bakeSteps(w,h,p)})(),o,JOBS.passi||40).then(n=>{JOBS.passi=n;seed=sd;if(o.passo)o.passo(1);return n})}
-function boot(area,o){o=o||{};const GAME=!!o.game;let ACT=!GAME,RUN=false,PAUSE=false;W.gioco=GAME?o:null;
+function boot(area,o){o=o||{};const GAME=!!o.game;let ACT=!GAME,RUN=false,PAUSE=false;W.gioco=GAME?o:null;W.zoneAt=(x,y)=>area.zoneName?area.zoneName({x,y}):'';
   // la telecamera della mappa inclina anche i personaggi (CR.cam, RIGCAM, in camRig): nel gioco si tengono quelli del menu appena lo si lascia
   // (prima di costruire o di rimettere a posto la mappa) e tornando al menu si rimettono
   let crKeep=null,rgKeep=null;const keepCam=()=>{if(!GAME||crKeep||rgKeep)return;crKeep=window.CR&&CR.cam?Object.assign({},CR.cam):null;rgKeep=typeof RIGCAM!=='undefined'?Object.assign({},RIGCAM):null};keepCam();
@@ -1112,9 +1155,12 @@ function boot(area,o){o=o||{};const GAME=!!o.game;let ACT=!GAME,RUN=false,PAUSE=
   for(const t of['pointerup','pointercancel','lostpointercapture'])buyEl.addEventListener(t,()=>{buyHold=false;buyLock=false});
   function uiStep(dt){const h=W.hero;let best=null,bd=1e9;for(const o of buys){if(o.show&&!o.show())continue;const d=Math.hypot(h.x-o.x,h.y-o.y);if(d<o.r&&d<bd){bd=d;best=o}}
     const kh=!!(keys.Space||keys.Enter),holding=(buyHold||kh)&&!buyLock;if(best!==buyCur){buyCur=best;buyP=0;if(buyHold||kh)buyLock=true}
-    if(best){const pr=best.price(),ok=W.coins>=pr;if(holding&&ok){buyP+=dt/.65;if(buyP>=1){buyP=0;buyLock=true;best.act();buyKey=''}}else buyP=Math.max(0,buyP-dt*3);
+    // (o.hold: i secondi da tenere premuto, 0,65 se manca; o.rep: si ripete finché si tiene premuto, come le assi della riparazione, e intanto
+    // l'eroe lavora: W.hero.busy; o.sub(): la riga sotto il nome)
+    W.hero.busy=null;W.hero.busyP=buyP;
+    if(best){const pr=best.price(),ok=W.coins>=pr;if(holding&&ok&&best.rep)W.hero.busy=best;if(holding&&ok){buyP+=dt/(best.hold||.65);if(buyP>=1){buyP=0;const r=best.act();if(!best.rep||r===false)buyLock=true;buyKey=''}}else buyP=Math.max(0,buyP-dt*3);
       if(holding&&!ok){if(!best.shk){best.shk=1;buyEl.classList.remove('no');void buyEl.offsetWidth;buyEl.classList.add('no')}}else best.shk=0;
-      const key=best.label()+'|'+pr+'|'+ok;if(key!==buyKey){buyKey=key;const n=pr.toLocaleString('it-IT');buyEl.querySelector('.t1').textContent=best.label();buyEl.querySelector('.t2').innerHTML=pr?(ok?'Tieni premuto · <b>● '+n+'</b>':'Servono <b>● '+n+'</b>'):'Tieni premuto';buyEl.classList.toggle('poor',!ok)}
+      const sub=best.sub?best.sub():null,key=best.label()+'|'+pr+'|'+ok+'|'+sub;if(key!==buyKey){buyKey=key;const n=pr.toLocaleString('it-IT');buyEl.querySelector('.t1').textContent=best.label();buyEl.querySelector('.t2').innerHTML=sub!=null?sub:pr?(ok?'Tieni premuto · <b>● '+n+'</b>':'Servono <b>● '+n+'</b>'):'Tieni premuto';buyEl.classList.toggle('poor',!ok)}
       buyEl.style.setProperty('--p',(buyP*100).toFixed(1)+'%')}
     const show=!!best&&hudOn&&!whole;if(buyEl.hidden===show)buyEl.hidden=!show;
     // l'arma in mano e i colpi; i messaggi brevi (W.toast = [testo, secondi])
@@ -1270,7 +1316,7 @@ function boot(area,o){o=o||{};const GAME=!!o.game;let ACT=!GAME,RUN=false,PAUSE=
   function stop(){if(!ACT)return;ACT=false;PAUSE=false;ov.hidden=true;reset();buyHold=false;if(crKeep)Object.assign(CR.cam,crKeep);if(rgKeep)Object.assign(RIGCAM,rgKeep);crKeep=rgKeep=null;cv.style.transform=''}
   // una partita nuova: zombie, effetti, monete, arma, uccisioni; l'area rimette le sue cose (cancello chiuso, velo, zombie dell'aia, Bara al primo
   // posto, eroe alla partenza); il round da capo; la telecamera a nord sull'eroe
-  function nuova(){if(!ACT)keepCam();W.Z.length=0;W.FX.length=0;W.puffs.length=0;W.toast=null;W.kills=0;if(area.reset)area.reset();
+  function nuova(){if(!ACT)keepCam();W.Z.length=0;W.FX.length=0;W.puffs.length=0;W.toast=null;W.kills=0;for(const B of BARS)if(B.reset)B.reset();W.hero.busy=null;if(area.reset)area.reset();
     if(window.ARMI){const sg=W.startGun&&ARMI.DATI[W.startGun]?W.startGun:'pistola';try{gunState=ARMI.nuova(sg);HSTYLE.gun=W.gunId=sg}catch(e){gunState=null}}
     if(W.director&&W.director.reset)W.director.reset();navBuild();if(NAV)NAV.hc=-1;ORD.mm.m=new Map();ORD.fm.m=new Map();ORD.fr+=5;
     buyP=0;buyCur=null;buyKey='';buyLock=false;buyHold=false;gunKey='';toastT=0;toastEl.classList.remove('on');buyEl.hidden=true;reset();
@@ -1286,7 +1332,7 @@ function boot(area,o){o=o||{};const GAME=!!o.game;let ACT=!GAME,RUN=false,PAUSE=
     return{vis:msk?v/msk:1,mask:msk,occ:A.occ,box:A.B}}
   const ctl=()=>({stick:Object.assign({},stick),look:Object.assign({},look),keys:Object.keys(keys).filter(k=>keys[k]),ret:!!cam.ret,yawT:cam.yawT/DEG,elT:cam.elT/DEG});
   const setView=(yd,ed)=>{cam.ret=null;if(yd!=null)CAM.yaw=cam.yawT=wrapA(yd*DEG);if(ed!=null)CAM.el=cam.elT=cam.elRaw=cl(ed*DEG,ELMIN,ELMAX);camDerive()};
-  window.__MZ={W,CAM,props,houses,solids,holes,stands,perches,zoom:v=>{zoomOv=v},cam:(x,y)=>{camOv=x==null?null:[x,y];if(x!=null)CAM.oy=0},// con la visuale fissata dai test il perno è il centro (oy=0), come prima
+  window.__MZ={ZM,W,CAM,props,houses,solids,holes,stands,perches,zoom:v=>{zoomOv=v},cam:(x,y)=>{camOv=x==null?null:[x,y];if(x!=null)CAM.oy=0},// con la visuale fissata dai test il perno è il centro (oy=0), come prima
     setWhole:v=>{whole=v;ui()},tp:(x,y)=>{W.hero.x=x;W.hero.y=y},zombies:v=>{zOn=v;ui()},low:v=>{low=v;ui()},
     // la telecamera, in gradi: view() legge, view(ψ,θ) mette subito (null = lascia com'è), viewTo come il dito (morbido), north() come la bussola
     view:(yd,ed)=>yd===undefined?{yaw:wrapA(CAM.yaw)/DEG,el:CAM.el/DEG,yawT:cam.yawT/DEG,elT:cam.elT/DEG,oy:CAM.oy}:setView(yd,ed),
@@ -1325,4 +1371,4 @@ orderReset:()=>{ORD.mm.m=new Map();ORD.fm.m=new Map();ORD.fr+=5},
     texStats:()=>{let n=0,px=0,np=0,pp=0;for(const k in TEX){n++;px+=TEX[k].width*TEX[k].height}for(const k in PLANES){np++;pp+=PLANES[k].width*PLANES[k].height}return{n,mpx:+(px/1e6).toFixed(2),np,mpp:+(pp/1e6).toFixed(2)}},
     buys,equip,buyNow:id=>{const o=buys.find(b=>b.id===id);return o?o.act():null},box:()=>BOX,boxTo:i=>{const q=BOX.spots[i];boxPlace(q[0],q[1],q[3]||0);navBuild();if(NAV)NAV.hc=-1;return[q[0],q[1]]},coins:v=>{if(v!=null)W.coins=v;return W.coins},gun:()=>gunState,nuova:()=>CTL.nuova()};
   return CTL}
-return{AREE,anteprima,boxReset,stile,idleZombie,buyable,sorpresa,equip,hurt,spawn,KINDS,move,zWalk,sep,physClear,gun:()=>gunState,navRebuild:()=>{navBuild();if(NAV)NAV.hc=-1},softImg,turn,group,grp,finalize,facing,across,onGround,onPlane,onRound,ringNear,T,CAM,W,S,LS,MOON,inGround,scrAng,decals,fades,NAMES,stand,stands,heightAt,add3,sub3,len3,rnd,rr,srand,ink,path,hull,material,MAT,MARKS,texture,tone,face,hullOf,ballAt,line3,poly3,fn3,box,prismX,prismY,plane,cyl,prop,solid,shade,shadeR,props,solids,shadows,lights,flames,holes,houses,smokes,perches,hit,bakeGround,edgeSnap,boot,bootAsync,libera,ricuoci,setLive:f=>{liveDraw=f},wa,mix,cl,ez,lerp,TAU,ball,seg}})();
+return{toWorld:(x,y)=>TURN?tP(TURN,x,y):[x,y],dirWorld:(x,y)=>TURN?tV(TURN,x,y):[x,y],AREE,anteprima,boxReset,stile,idleZombie,buyable,buys,barrier,BARS,barCheck,sorpresa,equip,hurt,spawn,KINDS,move,zWalk,sep,physClear,gun:()=>gunState,navRebuild:()=>{navBuild();if(NAV)NAV.hc=-1},softImg,turn,group,grp,finalize,facing,across,onGround,onPlane,onRound,ringNear,T,CAM,W,S,LS,MOON,inGround,scrAng,decals,fades,NAMES,stand,stands,heightAt,add3,sub3,len3,rnd,rr,srand,ink,path,hull,material,MAT,MARKS,texture,tone,face,hullOf,ballAt,line3,poly3,fn3,box,prismX,prismY,plane,cyl,prop,solid,shade,shadeR,props,solids,shadows,lights,flames,holes,houses,smokes,perches,hit,bakeGround,edgeSnap,boot,bootAsync,libera,ricuoci,setLive:f=>{liveDraw=f},wa,mix,cl,ez,lerp,TAU,ball,seg}})();
