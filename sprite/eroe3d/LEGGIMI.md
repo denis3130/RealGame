@@ -1,4 +1,4 @@
-# L'Arciere in 3D e le sue armi (prova, non ancora nel gioco)
+# L'Arciere in 3D e le sue armi (nel gioco dal 12 ottobre)
 
 `disegno_eroe.js` disegna l'eroe della modalità Classica (l'Arciere) con il metodo dei mostri nuovi: scheletro 3D proiettato con `V(face)` e la cassetta degli attrezzi `CR._rig` di `sprite/mostri/disegno_mostri.js`. `armi3d.js` fa tutte le armi in 3D, viste dalla stessa telecamera: i quattro archi delle carte, la balestra leggera, il bastone del Druida e le otto armi della modalità zombie. Ordine di caricamento, dentro la funzione principale di `index.html`: `disegno_mostri.js`, poi `sprite/armi/disegno_armi.js` (serve solo per vampe, colpi, bossoli, razzo e fumo delle armi zombie), poi `armi3d.js`, poi `disegno_eroe.js`. Senza `armi3d.js` l'eroe disegna ancora l'arco piatto di prima.
 
@@ -22,6 +22,21 @@
 - L'ordine di disegno viene dalla posa di riposo (`parts` + `run`); l'arco ha un posto fisso davanti alla pancia; la mano libera sta sul fianco e, solo nelle mosse in cui lavora la corda, passa subito dopo l'arco.
 - Dipinto come i nemici Classici rifatti ma con i tre toni sfumati (`soft`: un gradiente dalla luce in alto a sinistra al lato in ombra) su cappuccio, faccia e giubba, così non ci sono macchie con il bordo che sembrano pezzi staccati; bordo illuminato caldo (`rim`), ombra morbida della testa sulle spalle, contorno spesso.
 - Funziona con l'inclinazione della telecamera della mappa zombie (`CR.cam`, da 35° a 62°).
+
+## L'aspetto (`style.look`, 14 ottobre: la creazione dell'eroe e il barbiere)
+
+Richiesta di Denis: «nella creazione del pg si possa modificare a piacimento tra occhi cicatrici ecc.». `style.look` lo mette `sceLookStyle` di `src/js/65-scelta-eroe.js` (da `SAVE.look`, per tutti gli eroi); senza ritocchi non c'è e l'eroe è identico al pixel. I pezzi propri degli eroi restano: corna e occhi verdi del Druida (vincono sul colore scelto), elmo del Balestriere (niente fascia né ciocche sopra l'elmo), coda della Cacciatrice (prende il colore dei capelli, `style.hair`).
+
+- `eyes`: `tondi` (come sempre), `grandi` (più grandi, due luci), `decisi` (palpebra tagliata verso il naso), `assonnati` (palpebre a metà), `felini` (a mandorla, pupilla a fessura), `piccoli`; `iris`: un colore (occhio colorato con la pupilla scura e il contorno), `null` = scuri come sempre.
+- `brows`: `nessuna`, `sottili`, `folte`, `decise` (aggrottate), `alzate`, `spezzate`; colore `browCol` (i capelli scuriti). Seguono l'occhio quando la testa gira.
+- `mark`: `cicatrice` (una riga chiara rimarginata dalla fronte alla guancia, sopra l'occhio sinistro: niente sangue né punti, è la Classica), `graffio` (due graffi sulla guancia destra), `lentiggini`, `pittura` (due strisce blu per guancia), `cerotto` (guancia destra), `runa` (di muschio sulla guancia sinistra, brilla piano; la luce è spenta con `LOWFX`), `neo`.
+- `hair`: `nascosti` (come sempre), `ciuffo`, `frangia`, `spettinati` (anche tre ciocche che escono sopra l'apertura del cappuccio), `lunghi` (divisi in mezzo, una ciocca per lato fino alla mascella), `riccioli`; colore `hairCol`. Stanno dentro la faccia, sotto il bordo del cappuccio.
+- `acc`: `benda` (sull'occhio sinistro, con il laccio), `occhialetti` (tondi d'oro), `sciarpa` (a maglia intorno al collo, la coda davanti che dondola), `piuma` (infilata nel cappuccio), `fascia` (intorno al cappuccio, nodo e code dietro); `accCol`: il gioco sceglie tra rosso, panna, blu e oro quello che si stacca di più dal mantello.
+- `style.skin`: il colore della pelle (viso e mani).
+
+Come sono fatti: ogni pezzo del viso è un punto della faccia (`fp(x, y)`: x verso la sua destra, y in su, nelle unità di `EYE` e `MOUTH`) proiettato sulla palla della testa, quindi gira con lei, sfuma quando va verso il bordo (`seen`) e da dietro non attraversa mai la testa. Ordine nella faccia (`faceLook`): segni, occhi, sopracciglia, capelli, guance e bocca, cerotto, benda, occhialetti. Piuma, fascia e ciocche hanno un posto davanti o dietro la testa secondo la direzione (`featherFront`, `headband(…, front)`); la sciarpa è divisa in due pezzi nell'ordine del corpo (la metà dietro prima del busto, quella davanti dopo, `parts`).
+
+Fogli nelle quattro direzioni: `node tests/aspetto.js [eroe]` (dopo `python3 tests/mk.py`) → `tests/as_<parte>.png` (ogni scelta da sola, la testa da vicino; gli accessori con tutto il corpo), `tests/as_eroi.png` e `tests/as_eroi_viso.png` (due aspetti completi sui quattro eroi). La prova controlla anche ogni scelta su ogni eroe in tutte le mosse e 12 direzioni.
 
 ## Le armi in 3D (`armi3d.js`, 12 ottobre: «fai tutte le armi presenti in 3D come il pg»)
 
@@ -53,7 +68,7 @@ Misurato in Chromium sul server: l'eroe con l'arco circa 0,45-0,65 ms a disegno 
 
 ## Nel gioco (12 ottobre, richiesta di Denis: «sostituisci il pg e tutte le armi con le animazioni ed il resto nel gioco»)
 
-- `src/ordine.txt` mette nel gioco `../sprite/mostri/disegno_mostri.js` (la cassetta `CR._rig`), `../sprite/eroe3d/armi3d.js` e `../sprite/eroe3d/disegno_eroe.js`, poi `src/js/62-eroe-3d.js`, che avvolge `drawRig`: ogni stile dell'Arciere (`heroStyle0` ora mette `hid`, l'id dell'eroe) va all'eroe 3D, in battaglia, nella schermata iniziale (con il bastoncino), nella scheda Eroi e nell'Armeria (gira piano sul piedistallo invece di camminare nelle 8 direzioni), nei ritratti, nella intro, quando cade e quando entra nella cripta. Gli altri eroi (Cacciatrice, Balestriere, Druida) restano quelli di oggi finché Denis non approva la loro versione 3D (quattro direzioni prima).
+- `src/ordine.txt` mette nel gioco `../sprite/mostri/disegno_mostri.js` (la cassetta `CR._rig`), `../sprite/eroe3d/armi3d.js` e `../sprite/eroe3d/disegno_eroe.js`, poi `src/js/62-eroe-3d.js`, che avvolge `drawRig`: ogni stile dell'Arciere (`heroStyle0` ora mette `hid`, l'id dell'eroe) va all'eroe 3D, in battaglia, nella schermata iniziale (con il bastoncino), nella scheda Eroi e nell'Armeria (gira piano sul piedistallo invece di camminare nelle 8 direzioni), nei ritratti, nella intro, quando cade e quando entra nella cripta. Gli altri eroi (Cacciatrice, Balestriere, Druida) sono passati al 3D il 13 ottobre (in fondo).
 - La mossa viene da quello che fa: scatto (dall'orologio dello scatto, poi un breve atterraggio), colpito (appena perde vita, `P.hurtT`, non quando lo scudo para), cammina (`P.walk`), mira (`P.aiming`, la corda tesa dal `pull` del gioco; la balestra ricarica corda e dardo con lo stesso `pull`), fermo. Quando lampeggia dopo un colpo è disegnato intero su un piccolo strato e poi messo trasparente, così non si vedono i pezzi uno sotto l'altro. Polvere e scie dello scatto accese in battaglia; le frecce che volano le disegna il gioco.
 - `H3D.on=false` torna all'eroe di oggi.
 
@@ -63,4 +78,4 @@ tamburo, canne e nastro, pompa, cartucce, razzo; in ricarica la bocca si alza di
 che cade) e `o.out` riceve `muzzle`, dove sta la bocca dell'arma sullo schermo (in unità dell'eroe, dai piedi), da cui la mappa fa partire i
 colpi. Senza `o.gp` e `o.out` (gioco classico, fogli) niente cambia.
 
-Da fare: le versioni 3D degli altri eroi.
+Dal 13 ottobre anche gli altri tre eroi sono in 3D sullo stesso corpo (`H3IDS` in `src/js/62-eroe-3d.js`; opzioni `ponytail`, `hair`, `antlers`, `eyes`; disegni in `sprite/nemici3d/eroi.js`).

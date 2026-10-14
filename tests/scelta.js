@@ -66,15 +66,32 @@ const OLD={gold:900,gems:40,introSeen:1,handSeen:1,runs:4,trophies:120,items:{ar
     const y0=await E('SCE.yaw');await p.mouse.move(st.x-60,st.y);await p.mouse.down();for(let i=1;i<=6;i++)await p.mouse.move(st.x-60+i*20,st.y);await p.mouse.up();
     const y1=await E('SCE.yaw');ok(y1<y0-1,`trascinando il dito l'eroe gira (${(y0-y1).toFixed(2)} rad)`);
     await p.mouse.click(st.x,st.y);await p.waitForTimeout(1300);ok(await E('SCE.hero.shot'),'un tocco sull\'eroe: tende l\'arco e scocca');
-    // II · the mantle
+    // II · the look: the mantle first, then the parts of the face (the camera comes close), their colours, the accessories
     await p.tap('.sceGo',{force:true});await p.waitForTimeout(700);
     const m0=await rows(p);
-    ok(await E('SCE.step')===2&&/Il tuo mantello/.test(await title(p))&&m0.map(r=>r.id).join()===',brace,muschio,notte,strega,corvo','«Avanti»: il mantello, sei da scegliere');
-    ok(m0[0].on&&await p.isVisible('.sceBack')&&await E("SCE.el.querySelector('.sceStats').classList.contains('empty')"),'«Originale» già scelto, «Indietro», niente statistiche');
+    ok(await E('SCE.step')===2&&/Il tuo aspetto/.test(await title(p))&&m0.map(r=>r.id).join()===',brace,muschio,notte,strega,corvo','«Avanti»: l\'aspetto, prima il mantello (sei da scegliere)');
+    ok(m0[0].on&&await p.isVisible('.sceBack')&&await E("SCE.el.querySelector('.sceStats').classList.contains('empty')")&&(await p.$$eval('.sceTab',l=>l.length))===7,'«Originale» già scelto, «Indietro», sette parti in basso');
     await p.tap('.sceRow[data-id=brace]',{force:true});await p.waitForTimeout(500);
     ok(await E("sceStyle('cacciatrice').hood")==='#d4492f'&&/Mantello: Brace/.test(await p.textContent('.sceDesc h3')),'«Brace»: il cappuccio della Cacciatrice diventa rosso');
-    await shot('3_mantello_brace');await p.tap('.sceRow[data-id=notte]',{force:true});await p.waitForTimeout(450);await shot('3_mantello_notte');
-    await p.tap('.sceRow[data-id=brace]',{force:true});await p.waitForTimeout(300);
+    await shot('3_mantello_brace');
+    const k0=await E('SCE.kz');
+    await p.tap('.sceTab[data-cat=occhi]',{force:true});await p.waitForTimeout(1100);
+    const o0=await rows(p);
+    ok(o0.map(r=>r.id).join()==='tondi,grandi,decisi,assonnati,felini,piccoli'&&(await p.$$eval('.sceSw',l=>l.length))===7,'gli occhi: sei forme e sette colori');
+    ok(await E('SCE.kz')>k0*1.3&&await E("sceZoom()==='face'"),'la telecamera si avvicina alla faccia');
+    await p.tap('.sceRow[data-id=decisi]',{force:true});await p.tap('.sceSw[data-sw=verdi]',{force:true});await p.waitForTimeout(500);
+    const st1=await E("sceStyle('cacciatrice').look");ok(st1&&st1.eyes==='decisi'&&st1.iris==='#4fb04a'&&/Occhi: Decisi · Verdi/.test(await p.textContent('.sceDesc h3')),'occhi decisi e verdi, sull\'eroe');
+    await shot('3_occhi');
+    for(const[cat,id] of[['sopr','decise'],['segni','cicatrice'],['capelli','frangia'],['pelle','dorata'],['acc','sciarpa']]){await p.tap(`.sceTab[data-cat=${cat}]`,{force:true});await p.waitForTimeout(250);await p.tap(`.sceRow[data-id=${id}]`,{force:true});await p.waitForTimeout(300)}
+    await p.tap('.sceTab[data-cat=capelli]',{force:true});await p.waitForTimeout(250);await p.tap('.sceSw[data-sw=rossi]',{force:true});await p.waitForTimeout(500);
+    const st2=await E("sceStyle('cacciatrice')");
+    ok(st2.look.brows==='decise'&&st2.look.mark==='cicatrice'&&st2.look.hair==='frangia'&&st2.look.hairCol==='#c8582a'&&st2.hair==='#c8582a'&&st2.skin==='#e2b07c'&&st2.look.acc==='sciarpa','sopracciglia aggrottate, cicatrice, frangia rossa (anche la coda), pelle dorata, sciarpa');
+    ok((await p.$$eval('.sceTab.mod',l=>l.length))===7,'un puntino su ogni parte cambiata');
+    await shot('3_capelli');
+    // the keyboard in the look: left and right change the part, Q and E the colour
+    await p.keyboard.press('ArrowRight');await p.waitForTimeout(150);ok(await E('SCE.cat')==='acc','freccia a destra: la parte dopo (accessori)');
+    await p.keyboard.press('ArrowLeft');await p.keyboard.press('KeyE');await p.waitForTimeout(150);ok(await E("SCE.cat==='capelli'&&SCE.look.colCap")==='bianchi','freccia a sinistra ed E: i capelli, il colore dopo');
+    await p.keyboard.press('KeyQ');await p.waitForTimeout(100);await p.tap('.sceTab[data-cat=manto]',{force:true});await p.waitForTimeout(300);
     // III · the gift, alone on the stone in the hero's place
     await p.tap('.sceGo',{force:true});await p.waitForTimeout(900);
     const g=await rows(p);
@@ -84,7 +101,7 @@ const OLD={gold:900,gems:40,introSeen:1,handSeen:1,runs:4,trophies:120,items:{ar
     await shot('4_dono');
     for(const id of ['cristalli','cassa','anello','piuma']){await p.tap(`.sceRow[data-id=${id}]`,{force:true});await p.waitForTimeout(450);await shot('4_dono_'+id)}
     const lg=await lit(p);ok(/Rinascite/.test(await p.textContent('.sceStats'))&&lg>.2,`la piuma della fenice nella luce, con quello che dà (${(lg*100).toFixed(0)}%)`);
-    await p.tap('.sceBack',{force:true});await p.waitForTimeout(400);ok(await E("SCE.step===2&&SCE.manto==='brace'&&SCE.mode==='hero'"),'«Indietro»: di nuovo il mantello, «Brace» ancora scelto, l\'eroe torna sulla pietra');
+    await p.tap('.sceBack',{force:true});await p.waitForTimeout(400);ok(await E("SCE.step===2&&SCE.manto==='brace'&&SCE.look.segno==='cicatrice'&&SCE.mode==='hero'"),'«Indietro»: di nuovo l\'aspetto, tutto come l\'avevi lasciato, l\'eroe torna sulla pietra');
     await p.tap('.sceBack',{force:true});await p.waitForTimeout(400);ok(await E('SCE.step')===1&&(await rows(p))[1].on,'«Indietro»: gli eroi, la Cacciatrice ancora scelta');
     await p.tap('.sceGo',{force:true});await p.waitForTimeout(400);await p.tap('.sceGo',{force:true});await p.waitForTimeout(400);
     ok(await E("SCE.step===3&&SCE.gift==='piuma'"),'avanti di nuovo: il dono che avevi (la piuma)');
@@ -100,20 +117,22 @@ const OLD={gold:900,gems:40,introSeen:1,handSeen:1,runs:4,trophies:120,items:{ar
     await p.fill('#sceNameIn','Bartolomeo il Grande');await p.$eval('#sceNameIn',e=>e.blur());await p.waitForTimeout(100);ok((await p.inputValue('#sceNameIn')).length<=14&&(await E('SCE.name')).length<=14,'al massimo 14 lettere');
     await p.fill('#sceNameIn','Lupo Grigio');await p.waitForTimeout(100);
     const sum=await p.$$eval('.sceSum li',l=>l.map(x=>x.textContent.replace(/\s+/g,' ').trim()));
-    ok(sum.length===3&&/Cacciatrice/.test(sum[0])&&/Brace/.test(sum[1])&&/Cassa d'argento/.test(sum[2]),'riepilogo: Cacciatrice, Brace, Cassa d\'argento');
+    ok(sum.length===3&&/Cacciatrice/.test(sum[0])&&/Brace · 8 ritocchi/.test(sum[1])&&/Cassa d'argento/.test(sum[2]),'riepilogo: Cacciatrice, Brace con 8 ritocchi, Cassa d\'argento');
     await shot('5_nome');
-    await p.tap('.sceSum li[data-go="2"]',{force:true});await p.waitForTimeout(400);ok(await E('SCE.step')===2,'un tocco sul mantello del riepilogo: torna al mantello');
+    await p.tap('.sceSum li[data-go="2"]',{force:true});await p.waitForTimeout(400);ok(await E('SCE.step')===2,'un tocco sull\'aspetto nel riepilogo: torna all\'aspetto');
     await p.tap('.sceGo',{force:true});await p.waitForTimeout(300);await p.tap('.sceGo',{force:true});await p.waitForTimeout(400);
     ok(await E('SCE.step')===4&&await p.inputValue('#sceNameIn')==='Lupo Grigio','avanti fino al nome: «Lupo Grigio» è rimasto');
     // Inizia: the band with the name, then the menu with her, her mantle and the chest
     await p.tap('.sceGo',{force:true});await p.waitForTimeout(1800);
     ok(await E("SCE.el&&SCE.el.classList.contains('band')")&&/Lupo Grigio/.test(await p.textContent('.sceBand')),'«Inizia»: «Il viaggio ha inizio», col nome');await shot('6_fine');
     await p.waitForTimeout(3600);
-    const m=await E("({sce:SCE.on,el:!!document.getElementById('sceScr'),menu:!$('menu').hidden,music:AU.cur&&AU.cur.name,hero:SAVE.hero,heroes:SAVE.heroes,starter:SAVE.starter,dono:SAVE.dono,slots:SAVE.slots,pname:SAVE.pname,skin:SAVE.skin,hood:heroStyle().hood,pA:HERO_BY.arciere.price,pC:HERO_BY.cacciatrice.price,pB:HERO_BY.balestriere.price,ls:JSON.parse(localStorage.getItem(SAVE_KEY))})");
+    const m=await E("({sce:SCE.on,el:!!document.getElementById('sceScr'),menu:!$('menu').hidden,music:AU.cur&&AU.cur.name,hero:SAVE.hero,heroes:SAVE.heroes,starter:SAVE.starter,dono:SAVE.dono,slots:SAVE.slots,pname:SAVE.pname,skin:SAVE.skin,hood:heroStyle().hood,look:SAVE.look,lk:heroStyle().look,dr:heroStyle('druida'),pA:HERO_BY.arciere.price,pC:HERO_BY.cacciatrice.price,pB:HERO_BY.balestriere.price,ls:JSON.parse(localStorage.getItem(SAVE_KEY))})");
     ok(!m.sce&&!m.el&&m.menu&&m.music==='menu','poi il menu, con la sua musica');
     ok(m.hero==='cacciatrice'&&m.starter==='cacciatrice'&&JSON.stringify(m.heroes)==='{"cacciatrice":1}','la Cacciatrice in campo, ed è l\'unica eroina che hai');
     ok(m.dono==='cassa'&&m.slots.some(s=>s&&s.type==='argento'&&s.state==='ready')&&m.ls.starter==='cacciatrice'&&m.ls.dono==='cassa','la cassa d\'argento è tra le tue casse, pronta (e tutto è salvato)');
     ok(m.pname==='Lupo Grigio'&&m.skin==='brace'&&m.hood==='#d4492f'&&m.ls.pname==='Lupo Grigio'&&m.ls.skin==='brace'&&m.ls.skins&&m.ls.skins.brace,'il nome e il mantello «Brace» nel salvataggio, e l\'eroe del menu lo indossa');
+    ok(m.look&&m.look.occhi==='decisi'&&m.look.colCap==='rossi'&&m.ls.look&&m.ls.look.segno==='cicatrice'&&m.lk.mark==='cicatrice'&&m.lk.hair==='frangia','l\'aspetto nel salvataggio, e l\'eroe del menu lo porta');
+    ok(m.dr.look&&m.dr.look.mark==='cicatrice'&&m.dr.antlers&&m.dr.eyeCol==='#9fff7a','vale per tutti gli eroi: anche il Druida (con le sue corna e i suoi occhi verdi)');
     ok(m.pA===3000&&m.pC===0&&m.pB===7000,'prezzi: Arciere 3.000, Cacciatrice gratis, Balestriere 7.000');
     ok(/Dono: Cassa d'argento/.test(await E("$('toast').textContent")),'un avviso ricorda il dono');await shot('7_menu');
     await E("renderProfile()");await p.waitForTimeout(300);
@@ -129,6 +148,24 @@ const OLD={gold:900,gems:40,introSeen:1,handSeen:1,runs:4,trophies:120,items:{ar
     await E("SAVE.gold=3500;setTab('tabHero');heroView='arciere';renderHero()");await p.waitForTimeout(300);
     await p.click('#hAct [data-hact=buy]');await p.waitForTimeout(200);await p.click('#hAct [data-hact=buy]');await p.waitForTimeout(400);
     const k=await E("({heroes:SAVE.heroes,hero:SAVE.hero,gold:SAVE.gold})");ok(k.heroes.arciere===1&&k.hero==='arciere'&&k.gold===500,'l\'Arciere si compra per 3.000 oro');
+    // the barber in the Profile: the same screen without the steps, only the look; crystals only when something changes
+    await E("SAVE.gems=10;setTab('tabProfile');profSeg='look';renderProfile()");await p.waitForTimeout(400);
+    ok(await p.isVisible('#barberGo')&&/20/.test(await p.textContent('#barberGo'))&&/8 ritocchi/.test(await p.textContent('#barber')),'Profilo → Aspetto: «Barbiere · 20», «8 ritocchi»');
+    await p.click('#barberGo');await p.waitForTimeout(800);
+    ok(await E("SCE.on&&SCE.barber&&SCE.step===2&&SCE.cat==='pelle'&&SCE.sel==='arciere'")&&/Il barbiere/.test(await title(p))&&(await p.$$eval('.sceTab',l=>l.length))===6&&/Esci/.test(await p.textContent('.sceGo')),'il barbiere: l\'eroe in campo, niente passi né mantello, sei parti, «Esci»');
+    await shot('7b_barbiere');
+    await p.tap('.sceTab[data-cat=segni]',{force:true});await p.waitForTimeout(200);await p.tap('.sceRow[data-id=runa]',{force:true});await p.waitForTimeout(300);
+    ok(/Conferma/.test(await p.textContent('.sceGo')),'cambiato qualcosa: «Conferma · 20»');
+    await p.tap('.sceGo',{force:true});await p.waitForTimeout(500);
+    ok(await E("SCE.on&&SAVE.gems===10&&SAVE.look.segno==='cicatrice'")&&/Servono 20 cristalli: ne hai 10/.test(await p.textContent('.sceDesc')),'con 10 cristalli non basta: non cambia niente');
+    await p.tap('.sceBack',{force:true});await p.waitForTimeout(1300);
+    ok(await E("!SCE.on&&SAVE.gems===10&&SAVE.look.segno==='cicatrice'&&!$('menu').hidden"),'«Annulla»: tutto come prima, di nuovo il Profilo');
+    await E("SAVE.gems=50");await p.click('#barberGo');await p.waitForTimeout(700);await p.tap('.sceTab[data-cat=segni]',{force:true});await p.waitForTimeout(200);await p.tap('.sceRow[data-id=runa]',{force:true});await p.waitForTimeout(200);
+    await p.tap('.sceGo',{force:true});await p.waitForTimeout(2600);
+    const bb=await E("({on:SCE.on,gems:SAVE.gems,seg:SAVE.look.segno,lk:heroStyle().look.mark,ls:JSON.parse(localStorage.getItem(SAVE_KEY)).look,menu:!$('menu').hidden})");
+    ok(!bb.on&&bb.menu&&bb.gems===30&&bb.seg==='runa'&&bb.lk==='runa'&&bb.ls&&bb.ls.segno==='runa','«Conferma»: 20 cristalli, la runa sul viso (e nel salvataggio)');
+    await p.click('#barberGo');await p.waitForTimeout(700);await p.tap('.sceGo',{force:true});await p.waitForTimeout(1300);
+    ok(await E("!SCE.on&&SAVE.gems===30"),'senza cambiare niente, «Esci» non costa niente');
     await cx.close()}
 
   // 2. the keyboard: Esc skips the intro, the arrows move, Enter goes on, Esc goes back; writing the name, only Enter and Esc count
@@ -171,7 +208,14 @@ const OLD={gold:900,gems:40,introSeen:1,handSeen:1,runs:4,trophies:120,items:{ar
       const c1=await cut(p);if(c1.length)bad.push(`passo ${s}: tagliati ${c1.join(', ')}`);
       const out=await p.evaluate(()=>{const S=document.getElementById('sceScr').getBoundingClientRect();return[...document.querySelectorAll('#sceScr .sceRow,#sceScr dd,#sceScr .sceBtn,#sceScr .sceDesc,#sceScr .sceNameBox')].filter(e=>{if(!e.offsetWidth)return false;const r=e.getBoundingClientRect();return r.left<S.left-1||r.right>S.right+1||r.bottom>S.bottom+1}).length});
       if(out)bad.push(`passo ${s}: ${out} pezzi fuori dallo schermo`);
-      const sp=await E("(()=>{const S=sceSpot(),c=$('sceCv').getBoundingClientRect(),d=SCE.el.querySelector('.sceBot').getBoundingClientRect();return c.top+S.y+S.k*.58*11.4-d.top})()");if(sp>.5)bad.push(`passo ${s}: la pietra sotto il pannello di ${sp.toFixed(1)} px`)}
+      const sp=await E("(()=>{const S=sceSpot(),c=$('sceCv').getBoundingClientRect(),d=SCE.el.querySelector('.sceBot').getBoundingClientRect();return c.top+S.y+S.k*.58*11.4-d.top})()");if(sp>.5)bad.push(`passo ${s}: la pietra sotto il pannello di ${sp.toFixed(1)} px`);
+      // the look, part by part: the camera close to the face, the head whole between the list, the right edge and the panel underneath
+      if(s===2)for(const c of['pelle','occhi','sopr','segni','capelli','acc']){await E(`sceCatPick('${c}')`);await p.waitForTimeout(300);
+        const c2=await cut(p);if(c2.length)bad.push(`aspetto ${c}: tagliati ${c2.join(', ')}`);
+        const o2=await p.evaluate(()=>{const S=document.getElementById('sceScr').getBoundingClientRect();return[...document.querySelectorAll('#sceScr .sceRow,#sceScr .sceTab,#sceScr .sceSw,#sceScr .sceBtn,#sceScr .sceDesc')].filter(e=>{if(!e.offsetWidth)return false;const r=e.getBoundingClientRect();return r.left<S.left-1||r.right>S.right+1||r.bottom>S.bottom+1}).length});
+        if(o2)bad.push(`aspetto ${c}: ${o2} pezzi fuori dallo schermo`);
+        const fz=await E("(()=>{const S=sceSpot(),c=$('sceCv').getBoundingClientRect(),d=SCE.el.querySelector('.sceBot').getBoundingClientRect(),li=SCE.el.querySelector('.sceList').getBoundingClientRect(),hx=c.left+S.x,hy=c.top+S.y-26*S.k,r=6*S.k;return{z:S.zoom,l:hx-r-li.right,r:Math.min(c.right,innerWidth)-(hx+r),b:d.top-(hy+r),t:hy-r-c.top}})()");
+        if(!fz.z||fz.l<-1||fz.r<-1||fz.b<-1||fz.t<-1)bad.push(`aspetto ${c}: la testa non sta tra la lista e il pannello (${JSON.stringify(fz)})`)}}
     ok(!bad.length,`${w}×${h}: i quattro passi stanno nello schermo, niente tagliato`+(bad.length?' — '+bad.join('; '):''));
     if(w===390)await shot('8_390x763_nome');await cx.close()}
   {const {p,cx,E,shot}=await phone({gold:60,items:OLD.items,eq:OLD.eq,introSeen:1,set:{q:'bassa',vib:true,left:false,mv:.8,sv:.8}},360,640);
@@ -184,10 +228,13 @@ const OLD={gold:900,gems:40,introSeen:1,handSeen:1,runs:4,trophies:120,items:{ar
   // a phone that cannot keep up gets the light passes off by itself, SCE.low)
   {const {p,cx,E}=await phone({gold:60,items:OLD.items,eq:OLD.eq,introSeen:1});
     const T=(n)=>`(()=>{const c=document.getElementById('sceCv').getContext('2d');const t0=performance.now();for(let i=0;i<${n};i++){sceTick(1/60);c.getImageData(0,0,1,1)}return (performance.now()-t0)/${n}})()`;
-    await E("SCE.manual=true;scePick('cacciatrice')");const ms=await E(T(60));
+    await E("SCE.manual=true;scePick('cacciatrice');for(let i=0;i<90;i++)sceTick(1/60)");const ms=await E(T(60));
     await E("SCE.low=true");const lo=await E(T(60));await E("SCE.low=false");
     console.log(`        un fotogramma della creazione: ${ms.toFixed(1)} ms (leggero: ${lo.toFixed(1)} ms) sul computer di prova`);ok(ms<60&&lo<25,'un fotogramma sotto i 60 ms, quello leggero sotto i 25');
-    await E("sceToStep(2);sceToStep(3)");const ms2=await E(T(60));console.log(`        un fotogramma col dono: ${ms2.toFixed(1)} ms`);ok(ms2<60,'col dono, sotto i 60 ms');
+    await E("sceToStep(2);sceCatPick('occhi');for(let i=0;i<120;i++)sceTick(1/60)");const msz=await E(T(60));
+    await E("sceCatPick('acc');for(let i=0;i<120;i++)sceTick(1/60)");const msb=await E(T(60));
+    console.log(`        un fotogramma col viso da vicino: ${msz.toFixed(1)} ms (testa e spalle: ${msb.toFixed(1)} ms)`);ok(msz<60&&msb<60,'l\'aspetto da vicino, sotto i 60 ms');
+    await E("sceCatPick('manto');sceToStep(3);for(let i=0;i<120;i++)sceTick(1/60)");const ms2=await E(T(60));console.log(`        un fotogramma col dono: ${ms2.toFixed(1)} ms`);ok(ms2<60,'col dono, sotto i 60 ms');
     await E("for(const k of ['move','back','lock','ok','band','absorb'])sceSnd(k)");
     // a slow phone: the light passes go off by themselves
     await E("SCE.low=false;SCE.slow=0;SCE.ema=0;{const _d=sceDraw;sceDraw=function(){const t=performance.now();_d.apply(this,arguments);while(performance.now()-t<45);}}SCE.manual=false");
