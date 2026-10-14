@@ -44,7 +44,7 @@ function openItem(id){
       ${eq?(it.slot==='anello'||it.slot==='amuleto'?'<button class="btn alt" data-act="unequip">Togli</button>':'<button class="btn alt" disabled>Equipaggiato</button>'):'<button class="btn alt" data-act="equip">Equipaggia</button>'}
       ${o.lvl<MAXLV?`<button class="btn" data-act="up" ${canUp&&canPay?'':'disabled'}>Migliora · ${cost} oro${ess?` + ${ess} <i class="essI"></i>`:''}</button>`:''}
     </div>
-    ${o.lvl<MAXLV&&!canUp?`<small class="muted">Ti mancano ${need-o.cards} carte: le trovi nelle bustine e nelle casse.</small>`:o.lvl<MAXLV&&SAVE.gold<cost?`<small class="muted">Ti mancano ${cost-SAVE.gold} oro.</small>`:o.lvl<MAXLV&&!hasE?`<small class="muted">Ti mancano ${ess-((SAVE.mat&&SAVE.mat.ess)||0)} Essenze di muschio: le trovi nelle bustine Classiche.</small>`:''}
+    ${o.lvl<MAXLV&&!canUp?`<small class="muted">${need-o.cards===1?'Ti manca 1 carta':`Ti mancano ${need-o.cards} carte`}: le trovi nelle bustine e nelle casse.</small>`:o.lvl<MAXLV&&SAVE.gold<cost?`<small class="muted">Ti mancano ${cost-SAVE.gold} oro.</small>`:o.lvl<MAXLV&&!hasE?`<small class="muted">Ti mancano ${ess-((SAVE.mat&&SAVE.mat.ess)||0)} Essenze di muschio: le trovi nelle bustine Classiche.</small>`:''}
     <button class="btn alt" data-act="close">Chiudi</button>`;
   $('itemScr').hidden=false;
   $('itemPanel').onclick=e=>{const a=e.target.closest('[data-act]');if(!a||a.disabled)return;const act=a.dataset.act;

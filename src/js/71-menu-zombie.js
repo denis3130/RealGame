@@ -143,7 +143,7 @@ function openZItem(kind,id){const o=kind==='gun'?SAVE.z.guns[id]:SAVE.z.acc[id];
     <div><small class="muted">Carte per il prossimo livello</small>${zCardBar(o,needCards(o.lvl),o.lvl>=MAXLV)}</div>
     <div class="row">${gi?(inHand?'<button class="btn alt" disabled>In mano</button>':start?'<button class="btn alt" data-zact="hand">Porta in partita</button>':''):''}
       ${nx?`<button class="btn" data-zact="up" ${ok?'':'disabled'}>Migliora · ${U.gold} oro${U.rot?` + ${U.rot} ${MAT_SVG.rot.replace('<svg ','<svg class="mI" ')}`:''}</button>`:''}</div>
-    ${nx&&!ok?`<small class="muted">${o.cards<U.need?`Ti mancano ${U.need-o.cards} carte: le trovi nelle bustine Zombie.`:SAVE.gold<U.gold?`Ti mancano ${U.gold-SAVE.gold} oro.`:`Ti mancano ${U.rot-SAVE.mat.rot} Rottami.`}</small>`:''}
+    ${nx&&!ok?`<small class="muted">${o.cards<U.need?`${U.need-o.cards===1?'Ti manca 1 carta':`Ti mancano ${U.need-o.cards} carte`}: le trovi nelle bustine Zombie.`:SAVE.gold<U.gold?`Ti mancano ${U.gold-SAVE.gold} oro.`:`Ti mancano ${U.rot-SAVE.mat.rot} Rottami.`}</small>`:''}
     <button class="btn alt" data-zact="close">Chiudi</button>`;
   $('itemScr').hidden=false;
   $('itemPanel').onclick=e=>{const a=e.target.closest('[data-zact]');if(!a||a.disabled)return;const act=a.dataset.zact;
