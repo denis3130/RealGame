@@ -92,3 +92,7 @@ basta». Visto sull'**anteprima 48** (https://claude.ai/artifact/1PeXgrLWXwA3QGK
   anche 5 su 8): è una strettoia, non uno zombie bloccato.
 - Collaudo della navigazione dell'area di prova (`navtest.js`): arrivano tutti (226–232 su 226–232 per punto); nel caso «dietro la cripta» la
   folla arriva 6 su 8 in 60 s, identico alla versione prima delle correzioni (provata accanto, stesso numero).
+- Collaudo finale (14 ottobre) tutto passato: prove della mappa (`chiusi_prova`, `piani_prova`, `ondeggia_prova`, `gioco`, `ondate`,
+  `barriere_prova`, `macchine_prova`, `comparse_prova`, `bara_usi`, `navmappa`, `navtest`, `visibilita`, `ordine`, `ravvicinati`) e del gioco
+  (`zombie`, `menu2`, `menu3`, `salvataggio`, `avvio`, `meta2`, `mig`, `gems`, una partita per capitolo) senza errori. Visibilità
+  (1.524 punti visibili su 1.890) e ordine di disegno (12.055 px) dell'area di prova identici alla versione prima delle correzioni.
