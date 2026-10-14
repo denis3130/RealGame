@@ -1,0 +1,32 @@
+{
+ "asset_id": "creature_volpefuoco_attack_front",
+ "category": "creature_battle",
+ "animation": "attack",
+ "direction": "front",
+ "frame_width": 144,
+ "frame_height": 96,
+ "frames": 10,
+ "fps": 12,
+ "loop": false,
+ "pivot": [
+  94,
+  90
+ ],
+ "hitbox": [
+  60,
+  20,
+  76,
+  72
+ ],
+ "source": "disegno di Denis (13 ottobre), tutto in 2D",
+ "version": "0.4-anteprima-2d",
+ "status": "da approvare",
+ "w": 144,
+ "h": 96,
+ "n": 10,
+ "anchor": [
+  94,
+  90
+ ],
+ "nota": "da mostrare a 2 pixel per pixel; la fiammata esce a sinistra verso l'avversario"
+}

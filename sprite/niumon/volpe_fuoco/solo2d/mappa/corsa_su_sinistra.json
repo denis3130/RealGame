@@ -1,0 +1,32 @@
+{
+ "asset_id": "creature_volpefuoco_run_up_left",
+ "category": "creature_overworld",
+ "animation": "run",
+ "direction": "up_left",
+ "direzione": "su_sinistra",
+ "frame_width": 64,
+ "frame_height": 64,
+ "frames": 6,
+ "fps": 12,
+ "loop": true,
+ "pivot": [
+  32,
+  56
+ ],
+ "hitbox": [
+  20,
+  50,
+  24,
+  8
+ ],
+ "source": "burattino 2D dal disegno di Denis (13 ottobre)",
+ "version": "0.4-anteprima-2d",
+ "status": "da approvare",
+ "w": 64,
+ "h": 64,
+ "n": 6,
+ "anchor": [
+  32,
+  56
+ ]
+}

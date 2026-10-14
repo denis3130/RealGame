@@ -50,9 +50,9 @@ def source(tv=0.2):
     return _SRC
 
 _FULL = {}
-def full_labels(sm, m, contrast, sat, shift):
+def full_labels(sm, m, contrast, sat, shift, cache=True):
     key = (id(sm), contrast, sat, shift)
-    if key in _FULL: return _FULL[key]
+    if cache and key in _FULL: return _FULL[key]
     ys, xs = np.nonzero(m)
     L = rgb2lab(np.clip(sm[ys, xs][None], 0, 1))[0]
     L[:, 0] = 50 + (L[:, 0] - 50) * contrast - shift
@@ -67,7 +67,7 @@ def full_labels(sm, m, contrast, sat, shift):
     oh = np.stack([(idx == q).astype(np.float32) for q in range(len(BODY))], -1)
     oh = np.stack([nd.uniform_filter(oh[..., q], 9) for q in range(len(BODY))], -1)
     idx = np.where(m, oh.argmax(-1), -1).astype(np.int16)
-    _FULL[key] = idx
+    if cache: _FULL[key] = idx
     return idx
 
 def block_mode(idx, m, k, ox, oy, W, H):
@@ -99,7 +99,7 @@ def blocks(img, m, k, ox, oy, W, H):
     return out, cov
 
 def run(k, frame, pivot_src=(681, 1062), contrast=1.22, sat=1.3, shift=4, cov_t=0.42, ink_t=0.38, line_f=0.16,
-        warp=None, blink=False, embers=True):
+        warp=None, blink=False, embers=True, xf=None):
     a, sm, m, e = source()
     if warp is not None:
         sm, m, e, a = warp(sm, m, e, a)
@@ -110,7 +110,7 @@ def run(k, frame, pivot_src=(681, 1062), contrast=1.22, sat=1.3, shift=4, cov_t=
     _, cov = blocks(sm[..., :1], allm, k, ox, oy, W, H)
     op = cov >= cov_t
     op[:2, :] = False; op[-2:, :] = False; op[:, :2] = False; op[:, -2:] = False     # margine: niente tocca il bordo
-    full = full_labels(sm, allm, contrast, sat, shift)
+    full = full_labels(sm, allm, contrast, sat, shift, cache=(warp is None))
     lab = block_mode(full, allm, k, ox, oy, W, H).astype(object)
     lab[~op] = 'f1'
     # tratti scuri del disegno (contorni interni), ridotti a un pixel
@@ -127,8 +127,10 @@ def run(k, frame, pivot_src=(681, 1062), contrast=1.22, sat=1.3, shift=4, cov_t=
     lab = modefilter(lab, op)
     lab = np.where(line, 'il', lab); lab = np.where(edge, 'ol', lab)
     lab = despeckle(lab, op)
-    feat = features(lab, op, a, k, ox, oy, warp_shift=None)
+    feat = features(lab, op, a, k, ox, oy, warp_shift=None, xf=xf)
     for (cx, cy, ex, ey, far) in EYES:
+        if xf is not None:
+            cx, cy = xf[:, :2] @ np.array((cx, cy)) + xf[:, 2]; ex *= np.hypot(*xf[:, 0]); ey *= np.hypot(*xf[:, 1])
         clear_around(lab, op, (cx - ox) / k, (cy - oy) / k, ex / k * 1.35, ey / k * 1.25)
         if k >= 13: stamp(lab, op, (cx - ox) / k, (cy - oy) / k, far=far, closed=blink)
         else: eye(lab, op, (cx - ox) / k, (cy - oy) / k, ex / k, ey / k, far=far, closed=blink)
@@ -136,17 +138,19 @@ def run(k, frame, pivot_src=(681, 1062), contrast=1.22, sat=1.3, shift=4, cov_t=
 
 # riquadri nel disegno (pixel dell'immagine 1254x1254)
 # occhi: centro e mezze misure nel disegno; disegnati come occhi da sprite, sempre puliti
-EYES = [(307, 565, 26, 47, True), (466, 524, 44, 60, False)]
+EYES = [(304, 592, 21, 52, True), (472, 600, 50, 55, False)]      # misurati sul disegno (centro, mezze misure)
 FEAT = [
     ((334, 640, 358, 662), ['r2'], dict(r2=2.0)),                                              # naso
     ((352, 662, 428, 724), ['mo', 'to', 'ek'], dict(to=1.4, mo=1.2)),                          # bocca aperta
-    ((492, 580, 535, 600), ['bl'], dict(bl=1.4)),                                              # guancia
+    ((515, 612, 552, 650), ['bl'], dict(bl=1.4)),                                              # guancia
 ]
 
-def features(lab, op, a, k, ox, oy, warp_shift=None):
+def features(lab, op, a, k, ox, oy, warp_shift=None, xf=None):
     H, W = lab.shape; out = np.zeros((H, W), bool)
     fur = ['f0', 'f1', 'f2', 'y1', 'o1']
     for (x0, y0, x1, y1), keys, wt in FEAT:
+        if xf is not None:
+            (x0, y0), (x1, y1) = [xf[:, :2] @ np.array(q) + xf[:, 2] for q in ((x0, y0), (x1, y1))]
         j0, j1 = int((x0 - ox) // k), int((x1 - ox) // k) + 1; i0, i1 = int((y0 - oy) // k), int((y1 - oy) // k) + 1
         for i in range(max(i0, 0), min(i1, H)):
             for j in range(max(j0, 0), min(j1, W)):
@@ -161,7 +165,7 @@ def features(lab, op, a, k, ox, oy, warp_shift=None):
     return out
 
 # occhi fatti a mano per la grandezza di gioco (come i timbri della prova di prima)
-ST = {'vicino': [".KKK.", "KDWWK", "KDKWK", "KRKRK", "KRKRK", "KYYYK", ".KKK."],
+ST = {'vicino': [".KKK.", "KWWDK", "KWKDK", "KRKRK", "KRKRK", "KYYYK", ".KKK."],
       'lontano': [".KK", "KWK", "KKK", "KRK", "KYK", ".KK"],
       'chiuso': ["K...K", ".KKK."], 'chiuso_l': ["K.K", ".K."]}
 SC = {'K': 'ek', 'D': 'e1', 'R': 'e2', 'Y': 'e3', 'W': 'ew'}
@@ -214,8 +218,7 @@ def eye(lab, op, cx, cy, a, b, far=False, closed=False, ss=6):
                         else:
                             c = 'e1' if ey < -0.3 else ('e2' if ey < 0.38 else 'e3')
                             if (ex / 0.24) ** 2 + ((ey - 0.02) / 0.5) ** 2 < 1: c = 'ek'
-                            if ((ex - (0.08 if far else 0.2)) / 0.3) ** 2 + ((ey + 0.42) / 0.24) ** 2 < 1: c = 'ew'
-                            if not far and ((ex + 0.36) / 0.15) ** 2 + ((ey - 0.48) / 0.13) ** 2 < 1: c = 'ew'
+                            if ((ex - (0.05 if far else -0.2)) / 0.3) ** 2 + ((ey + 0.4) / 0.24) ** 2 < 1: c = 'ew'
                     votes[c] = votes.get(c, 0) + 1
             if not votes: continue
             tot = sum(votes.values())

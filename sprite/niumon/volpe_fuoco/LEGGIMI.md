@@ -21,6 +21,25 @@ cresta del disegno si piegano a onde con la base ferma, le braci salgono e al se
 `python3 anteprime/mk_niumon_volpe2d.py`, pubblicata su https://claude.ai/artifact/8HKD5hPW47LWkV5bwk2Ww9. È solo la vista del
 disegno (tre quarti davanti): in 2D le altre direzioni vanno disegnate, da Denis o da me nello stesso stile (chiesto a lui).
 
+### Poi (14 ottobre, notte): occhio, mossa in lotta, 8 direzioni per la mappa
+
+Denis: «l'occhio che hai aggiunto è messo troppo in su. e fammi uno sprite anche quando è in lotta. e tutte le 8 direzioni per
+quando correrà in giro».
+- Occhi misurati sul disegno (`pixel2d.EYES`: lontano (304, 592), vicino (472, 600)); la luce dell'occhio vicino in alto a
+  sinistra come nel disegno; corretto anche un errore della cache dei colori che con le deformazioni poteva mischiare i fotogrammi.
+- In lotta: `disegno2d/anima_lotta.py` → `solo2d/lotta_fiammata` (144×96, 10 fotogrammi a 12 al secondo, una volta sola): si
+  carica all'indietro, scatta in avanti e sputa una fiammata verso sinistra (l'avversario), poi torna. Tutto dal disegno, con
+  spostamenti e schiacciamenti piatti del disegno stesso; la fiammata è disegnata a gocce con le fasce di fuoco.
+- Mappa in 8 direzioni: `burattino2d/` (`burattino.py` gli attrezzi, `volpe2d.py` la volpe, `produci2d.py` i fogli in
+  `solo2d/mappa/`: `corsa_*` 6 fotogrammi a 12 al secondo, `fermo_*` 8 a 8 con le palpebre al 5). Il burattino è fatto di forme
+  piatte col loro contorno (marrone sul pelo, rosso scuro sulle fiamme) messe una sopra l'altra con regole da disegnatore (zampe
+  lontane dietro al corpo, vicine davanti; da dietro coda e corpo davanti alla testa); uno scheletro di punti dice solo dove va
+  ogni pezzo. Orecchie e coda non si vedono mai di taglio; nelle viste davanti e di lato la testa si gira un poco verso di noi.
+  Colori a grandezza di sprite: pelo con il filo di luce in alto e l'ombra in basso, fiamme a fasce dal bordo, occhi a timbro.
+  Corsa a balzi: zampe davanti e dietro alternate, corpo che sale e beccheggia, orecchie un po' indietro, coda e cresta che
+  fiammeggiano.
+- Pagina: la stessa (`python3 anteprime/mk_niumon_volpe2d.py`).
+
 ## Versione colorata in 2D sulla base 3D (14 ottobre, notte)
 
 Denis: «prova a farlo 2d facendolo più simile che ne so ad un evee va bene? mettici poco tempo». Fatto in fretta, sulla stessa base:
