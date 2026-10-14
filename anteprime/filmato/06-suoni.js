@@ -131,7 +131,8 @@ function fmCues(tr){const Q=[],q=(t,f)=>Q.push([t,f]);
 // the moments when the film is silent on purpose: [from, to] (the buses are pulled down and back up)
 const FM_SILENT=[[18,19.04],[38.5,38.74]];
 
-const AUD={on:false,a0:0,i:0,Q:null,B:null,
+// AUD.cues and AUD.silent: another film (the training film B) gives its own cues and silences; without them, this film's
+const AUD={on:false,a0:0,i:0,Q:null,B:null,cues:null,silent:null,
   // the film has its own echo and its own delay, so a silence (or Salta) cuts the tails too
   buses(){const c=AU.ctx,B={};B.out=c.createGain();B.out.connect(AU.master);B.sfx=c.createGain();B.sfx.connect(B.out);B.mus=c.createGain();B.mus.connect(B.out);B.drum=c.createGain();B.drum.gain.value=1;B.drum.connect(B.mus);
     if(!this.imp||this.impCtx!==c){this.imp=mkImpulse(c,3,2.4);this.impCtx=c}B.conv=c.createConvolver();B.conv.buffer=this.imp;const cg=c.createGain();cg.gain.value=.6;B.conv.connect(cg);cg.connect(B.out);B.cg=cg;
@@ -142,10 +143,10 @@ const AUD={on:false,a0:0,i:0,Q:null,B:null,
   start(){if(!AU.ctx)return;const c=AU.ctx;if(c.state==='suspended')c.resume();
     // the game's own music goes quiet while the film plays
     if(AU.cur){const o=AU.cur;o.bus.gain.setTargetAtTime(0,c.currentTime,.2);setTimeout(()=>{try{o.bus.disconnect()}catch(e){}},2000);AU.cur=null}
-    this.stop(true);this.B=this.buses();this.tr={bus:this.B.mus,drum:this.B.drum};this.Q=fmCues(this.tr);const from=FM.from||0;this.a0=c.currentTime+.12-from;this.i=0;
+    this.stop(true);this.B=this.buses();this.tr={bus:this.B.mus,drum:this.B.drum};this.Q=(this.cues||fmCues)(this.tr);const from=FM.from||0;this.a0=c.currentTime+.12-from;this.i=0;
     while(this.i<this.Q.length&&this.Q[this.i][0]<from-.02)this.i++;this.silences(from);this.on=true},
   // pull the film's output down for the silences (echoes included), from the film time `from` on
-  silences(from){const g=this.B.out,now=AU.ctx.currentTime;for(const[a,b] of FM_SILENT){if(b<from)continue;const ta=this.a0+a,tb=this.a0+b;
+  silences(from){const g=this.B.out,now=AU.ctx.currentTime;for(const[a,b] of(this.silent||FM_SILENT)){if(b<from)continue;const ta=this.a0+a,tb=this.a0+b;
       g.gain.setValueAtTime(1,Math.max(now,ta-.04));g.gain.linearRampToValueAtTime(0,Math.max(now,ta));g.gain.setValueAtTime(0,Math.max(now,tb-.01));g.gain.linearRampToValueAtTime(1,Math.max(now,tb))}},
   tick(t){if(!this.on||!AU.ctx)return;const c=AU.ctx;if(c.state!=='running')return;
     // keep the sound on the picture: if they drift apart (the tab slept), the sound follows the picture

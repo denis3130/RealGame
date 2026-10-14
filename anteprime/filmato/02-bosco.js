@@ -118,11 +118,11 @@ function drawSky(c,sh,t,o){o=o||{};const W=FM.W,H=FM.H,yh=H*C.hy;const g=c.creat
 function mkFlies(seed,n,x0,x1,y0,y1,z0,z1){const r=frng(seed),F=[];for(let i=0;i<n;i++)F.push({x:flp(x0,x1,r()),y:flp(y0,y1,r()),z:flp(z0,z1,r()),ph:r()*9,sp:.4+r()*.8,r:.6+r()*.6});return F}
 function flyItems(F,t,out,col){col=col||'215,255,140';for(const f of F){const x=f.x+Math.sin(t*f.sp+f.ph)*14,y=f.y+Math.sin(t*f.sp*1.3+f.ph*2)*8,z=f.z+Math.cos(t*f.sp*.7+f.ph)*10,
     bl=.5+.5*Math.sin(t*2.2*f.sp+f.ph*3);if(bl<.15)continue;out.push({z,c:(c,s)=>{const a=bl*(1-fz(z)*.7);glo(c,col,x,y,f.r*7,a*.55);c.fillStyle=`rgba(${col},${a})`;c.beginPath();c.arc(x,y,f.r*.9,0,FTAU);c.fill()}})}}
-function mistItem(z,x,y,w,h,a,t,sp,out){out.push({z,c:(c,s)=>{const dx=Math.sin(t*sp+z*.01)*w*.08+t*sp*8;const g=c.createRadialGradient(0,0,0,0,0,1);g.addColorStop(0,`rgba(150,180,210,${a})`);g.addColorStop(1,'rgba(150,180,210,0)');
+function mistItem(z,x,y,w,h,a,t,sp,out,col){col=col||'150,180,210';out.push({z,c:(c,s)=>{const dx=Math.sin(t*sp+z*.01)*w*.08+t*sp*8;const g=c.createRadialGradient(0,0,0,0,0,1);g.addColorStop(0,`rgba(${col},${a})`);g.addColorStop(1,`rgba(${col},0)`);
   c.save();c.translate(x+dx,y);c.scale(w,h);c.fillStyle=g;c.beginPath();c.arc(0,0,1,0,FTAU);c.fill();c.restore()}})}
 // god rays of moonlight through the leaves (screen units, additive)
-function moonRays(c,t,a,x0,ang){if(a<=0||LOWFX)return;const W=FM.W,H=FM.H;c.save();c.globalCompositeOperation='lighter';for(let i=0;i<4;i++){const x=W*(x0+i*.13)+Math.sin(t*.3+i)*6,w=W*(.05+.03*Math.sin(i*2.1)),al=a*(.5+.5*Math.sin(t*.5+i*1.7));
-    const g=c.createLinearGradient(x,-20,x-H*ang,H);g.addColorStop(0,`rgba(170,200,255,${al*.22})`);g.addColorStop(.6,`rgba(170,200,255,${al*.08})`);g.addColorStop(1,'rgba(170,200,255,0)');
+function moonRays(c,t,a,x0,ang,col){if(a<=0||LOWFX)return;col=col||'170,200,255';const W=FM.W,H=FM.H;c.save();c.globalCompositeOperation='lighter';for(let i=0;i<4;i++){const x=W*(x0+i*.13)+Math.sin(t*.3+i)*6,w=W*(.05+.03*Math.sin(i*2.1)),al=a*(.5+.5*Math.sin(t*.5+i*1.7));
+    const g=c.createLinearGradient(x,-20,x-H*ang,H);g.addColorStop(0,`rgba(${col},${al*.22})`);g.addColorStop(.6,`rgba(${col},${al*.08})`);g.addColorStop(1,`rgba(${col},0)`);
     c.fillStyle=g;c.beginPath();c.moveTo(x-w/2,-20);c.lineTo(x+w/2,-20);c.lineTo(x+w*1.8-H*ang,H+40);c.lineTo(x-w*1.8-H*ang,H+40);c.closePath();c.fill()}c.restore()}
 
 // ---------- the crypt from outside: a stone portal in a mossy hill, a green light breathing inside
@@ -178,10 +178,10 @@ function forestSet(cfg){const r=frng(cfg.seed),T=[];
   for(const q of cfg.trees||[])T.push(mkTree(q[0],q[1],q[2],q[3],(cfg.seed*31+T.length*17)|0,q[4]));
   if(cfg.scatter){const S=cfg.scatter;let tries=0;while(T.length<(cfg.trees||[]).length+S.n&&tries++<S.n*20){const x=flp(S.x0,S.x1,r()),z=flp(S.z0,S.z1,Math.pow(r(),S.pw||1.3));if(S.keep&&!S.keep(x,z))continue;
       if(T.some(o=>Math.hypot(o.x-x,(o.z-z)*.6)<o.w*2.2+12))continue;const big=(z<300?1:1.3)*(cfg.hMul||1);T.push(mkTree(x,z,flp(330,620,r())*big,flp(18,34,r())*(z<200?1:1.2),(cfg.seed*97+T.length*13)|0))}}
-  const lit=cfg.litter||mkLitter(cfg.seed+3,cfg.nLitter||260,cfg.lx0||-500,cfg.lx1||500,cfg.lz0||-40,cfg.lz1||700,[[NT.mossD,NT.moss],['#1a1e1c','#2c3330'],['#2a2418','#4a4030'],['#11201a',null]],1.5,6);
+  const lit=cfg.litter||mkLitter(cfg.seed+3,cfg.nLitter||260,cfg.lx0||-500,cfg.lx1||500,cfg.lz0||-40,cfg.lz1||700,cfg.litCols||[[NT.mossD,NT.moss],['#1a1e1c','#2c3330'],['#2a2418','#4a4030'],['#11201a',null]],1.5,6);
   const flies=mkFlies(cfg.seed+5,cfg.flies||16,cfg.fx0||-200,cfg.fx1||200,-60,-6,cfg.fz0||30,cfg.fz1||600);
   return{cfg,T,
-    sky(t,sh){drawSky(X,sh,t,{moon:cfg.moon});drawGround(X,NT.ground);
+    sky(t,sh){if(cfg.skyFn)cfg.skyFn(t,sh);else drawSky(X,sh,t,{moon:cfg.moon});drawGround(X,cfg.ground||NT.ground);
       if(cfg.path){X.save();if(gpoly(X,cfg.path.map(q=>[q[0]*1.25,q[1]]))){X.globalAlpha=.45;X.fillStyle=groundGrad(X,NT.path);X.fill()}X.restore();
         if(gpoly(X,cfg.path)){X.fillStyle=groundGrad(X,NT.path);X.fill()}
         // the moonlit middle of the path
@@ -193,8 +193,8 @@ function forestSet(cfg){const r=frng(cfg.seed),T=[];
       for(const[x,z,h,n] of cfg.tufts||[])out.push({z,c:(c,s)=>drawTuft(c,x,h,h*.9,n||6,fogc(NT.grass,z),fogc(NT.grassL,z),t,(x*7+z)|0)});
       for(const[x,z,h] of cfg.ferns||[])out.push({z,c:(c,s)=>drawFern(c,x,h,fogc(NT.grass,z),fogc(NT.grassL,z),t,(x*3+z)|0)});
       for(const[x,z,n,sz] of cfg.shrooms||[])out.push({z,c:(c,s)=>drawShrooms(c,x,n,t,(x+z)|0,sz)});
-      flyItems(flies,t,out);
-      for(const m of cfg.mist||[])mistItem(m[0],m[1],m[2],m[3],m[4],m[5],t,m[6]||1,out);
+      flyItems(flies,t,out,cfg.flyCol);
+      for(const m of cfg.mist||[])mistItem(m[0],m[1],m[2],m[3],m[4],m[5],t,m[6]||1,out,cfg.mistCol);
       if(cfg.portal){const P0=cfg.portal;out.push({z:P0.z+40,c:(c,s)=>drawHill(c,P0.x,t,P0.z+40,P0.hw||560,P0.hh||250)});out.push({z:P0.z,c:(c,s)=>drawPortal(c,P0.x,t,P0.z)})}
       // near things out of focus: big dark trunks, leaves and ferns passing in front of the lens
       for(const f of cfg.fore||[])out.push({z:f.z,c:(c,s)=>{const col=f.col||'#05080c';
@@ -202,9 +202,9 @@ function forestSet(cfg){const r=frng(cfg.seed),T=[];
         else if(f.k==='fern')drawFern(c,f.x,f.h,col,col,t,f.seed||3,f.blur);
         else if(f.k==='tuft')drawTuft(c,f.x,f.h,f.h*.9,f.n||7,col,col,t,f.seed||5,f.blur);
         else if(f.k==='leaves')drawSpray(c,f,t,col)}});
-      if(cfg.items)cfg.items(t,sh,lt,out);
+      if(cfg.items)cfg.items(t,sh,lt,out);if(sh.items)sh.items(t,out);
       return out},
-    over(t,sh){if(cfg.rays)moonRays(X,t,cfg.rays,cfg.rayX||.55,cfg.rayAng||.25)}}}
+    over(t,sh){if(cfg.rays)moonRays(X,t,cfg.rays,cfg.rayX||.55,cfg.rayAng||.25,cfg.rayCol);if(cfg.over)cfg.over(t,sh)}}}
 
 const keepPath=(hw)=>(x,z)=>Math.abs(x)>hw+20;
 SETS.bosco1=forestSet({seed:11,moon:[.72,.2,15],rays:.9,rayX:.42,hMul:.8,

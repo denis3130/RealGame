@@ -88,10 +88,11 @@ function blob(c,pts){// a closed smooth shape through points
 // ------------------------------------------------------------------ the hero in the scene
 // H: {x, z, face, anim, p, el (the tilt of his own camera, 12° = eye level, 45° = the game), st (style), moss, look, tweak,
 // pull, sc, tint (a colour over him), wash: [colour, a, x, y, r] (a light falling on him, screen units), rim: [colour, a, dx, dy, w]
-// (a light behind him: the edge toward (dx, dy) lights up), shadow: alpha of the shadow on the floor}
+// (a light behind him: the edge toward (dx, dy) lights up), shadow: alpha of the shadow on the floor, fx: the 3D hero's own
+// effects (speed lines and dust of the dash)}
 function camEl(el){const th=el*Math.PI/180,SP=Math.SQRT2*Math.sin(th),CP=Math.SQRT2*Math.cos(th),flat=Math.abs(el-45)<.01,kr=flat?1:Math.sqrt(SP),zk=flat?1:Math.pow(CP,.25);
   Object.assign(CR.cam,{k:flat?.55:.55*kr,zk});RIGCAM.kr=kr;RIGCAM.zk=zk}
-function heroPt(H){return pr(H.x,0,H.z)}
+function heroPt(H){return pr(H.x,-(H.y||0),H.z)}// H.y: how high his feet are (sitting on a log)
 // FM.cheap (slow phones, LOWFX, or measured during the film): the hero's light layer works at half size, with the tint only
 const fmCheap=()=>LOWFX||FM.cheap;
 function drawHero(H){const L=FM.lay,LX=L.getContext('2d'),px=PX(),cheap=fmCheap();LX.setTransform(1,0,0,1,0,0);LX.clearRect(0,0,cheap?L.width/2+2:L.width,cheap?L.height/2+2:L.height);base(LX,cheap?px/2:px);
@@ -100,7 +101,7 @@ function drawHero(H){const L=FM.lay,LX=L.getContext('2d'),px=PX(),cheap=fmCheap(
   if(H.shadow!==0){X.save();base(X,px);const g=X.createRadialGradient(q[0],q[1],1,q[0],q[1],15*s);g.addColorStop(0,`rgba(0,0,0,${H.shadow||.5})`);g.addColorStop(1,'rgba(0,0,0,0)');
     X.fillStyle=g;X.translate(q[0],q[1]);X.scale(1,Math.max(.12,.32*(H.el||20)/30));X.translate(-q[0],-q[1]);X.beginPath();X.arc(q[0],q[1],15*s,0,FTAU);X.fill();X.restore()}
   const saved=ctx,ns=noShadow;ctx=LX;noShadow=true;camEl(H.el==null?24:H.el);
-  try{EROE.arciere(q[0],q[1],H.face,H.anim||'idle',H.p||0,s,{style:H.st,moss:H.moss?2:false,eyeLight:H.eyeLight!==false,look:H.look||0,tweak:H.tweak,noFx:true,pull:H.pull,inhale:H.inhale,exhale:H.exhale})}
+  try{EROE.arciere(q[0],q[1],H.face,H.anim||'idle',H.p||0,s,{style:H.st,moss:H.moss?2:false,eyeLight:H.eyeLight!==false,look:H.look||0,tweak:H.tweak,noFx:!H.fx,pull:H.pull,inhale:H.inhale,exhale:H.exhale})}
   catch(e){if(!drawHero.err){drawHero.err=1;console.error(e)}}finally{camEl(45);ctx=saved;noShadow=ns}
   if(cheap){LX.setTransform(1,0,0,1,0,0);if(H.tint){LX.globalCompositeOperation='source-atop';LX.fillStyle=H.tint[0]==='#'?rgba(mc(H.tint,'#000000',.35),.5):H.tint;LX.fillRect(0,0,L.width/2+2,L.height/2+2);LX.globalCompositeOperation='source-over'}
     X.save();X.setTransform(1,0,0,1,0,0);X.globalAlpha=H.alpha==null?1:H.alpha;X.drawImage(L,0,0,L.width/2,L.height/2,0,0,L.width,L.height);X.restore();return}
@@ -137,8 +138,9 @@ function render(t){if(!X)return;FM.t=t;FM.frame++;const sh=shotAt(t),lt=t-sh.t0,
   FOGC=C.fog||'#000000';FOGD=C.fogD||1e9;
   const S=SETS[sh.set],px=PX();X.setTransform(1,0,0,1,0,0);X.globalCompositeOperation='source-over';X.globalAlpha=1;X.fillStyle='#000';X.fillRect(0,0,FM.cv.width,FM.cv.height);
   if(!S){fmPost(t,sh,lt);return}
-  const H=sh.hero?sh.hero(lt,k,t):null;sh.heroNow=H;
-  const items=S.items(t,sh,lt);if(H)items.push({z:H.z+(H.dz||0),hero:H});items.sort((a,b)=>b.z-a.z);
+  // one hero (sh.hero) or more (sh.heroes: the training film has two), each sorted by its depth with the rest of the scene
+  const HS=(sh.heroes?sh.heroes(lt,k,t):sh.hero?[sh.hero(lt,k,t)]:[]).filter(Boolean),H=HS[0]||null;sh.heroNow=H;sh.heroesNow=HS;
+  const items=S.items(t,sh,lt);for(const h of HS)items.push({z:h.z+(h.dz||0),hero:h});items.sort((a,b)=>b.z-a.z);
   // depth of field: the far part goes on a small canvas, drawn enlarged (soft). X is always the canvas being drawn on
   const MAIN=X,useBB=C.dof>0&&!fmCheap();let inBB=false;CPX=px;
   if(useBB){const div=1+C.dof,bw=Math.max(8,Math.round(FM.cv.width/div)),bh=Math.max(8,Math.round(FM.cv.height/div));if(FM.bb.width!==bw||FM.bb.height!==bh){FM.bb.width=bw;FM.bb.height=bh}
@@ -172,17 +174,20 @@ function fmPost(t,sh,lt){const px=PX(),W=FM.W,H=FM.H;X.save();X.setTransform(px,
 
 // ------------------------------------------------------------------ the words: the short lines at the top (TXT.A) and the hero's thoughts
 // at the bottom (TXT.B), both in the same film (Denis, 14 October: «in un'unica versione»), staggered so they never meet.
-// [from, to, text, y]; set by 05. FM.ver 'AB' = both (the film), 'A' or 'B' = only one (for comparing, ?intro=A)
+// [from, to, text, y, name, colour]; set by 05. FM.ver 'AB' = both (the film), 'A' or 'B' = only one (for comparing, ?intro=A).
+// With a name (the training film: the companion speaks), the name sits small above the line, in the speaker's colour
 const TXT={A:[],B:[]};
 function fmWrap(c,txt,maxW){const words=txt.split(' '),lines=[];let cur='';for(const w of words){const tr=cur?cur+' '+w:w;if(c.measureText(tr).width>maxW&&cur){lines.push(cur);cur=w}else cur=tr}if(cur)lines.push(cur);return lines}
 function fmWords(t){const W=FM.W,H=FM.H,ver=FM.ver||'AB';
-  for(const kind of['A','B'])if(ver.includes(kind))for(const[a,b,txt,ty] of TXT[kind]){if(t<a||t>b)continue;const fi=seg01(t,a,a+.55),fo=1-seg01(t,b-.6,b),al=EZ.s(Math.min(fi,fo));if(al<=0)continue;
+  for(const kind of['A','B'])if(ver.includes(kind))for(const[a,b,txt,ty,who,wcol] of TXT[kind]){if(t<a||t>b)continue;const fi=seg01(t,a,a+.55),fo=1-seg01(t,b-.6,b),al=EZ.s(Math.min(fi,fo));if(al<=0)continue;
     X.save();X.textAlign='center';X.textBaseline='middle';
     if(kind==='A'){// a slow line: it comes in a little bigger and settles, then fades
       const sz=Math.min(30,W*.082),s=1+.05*(1-EZ.o(fi));X.font=`400 ${sz}px "Lilita One","Baloo 2",system-ui,sans-serif`;
       X.translate(W/2,H*(ty||.4));X.scale(s,s);X.globalAlpha=al;X.shadowColor='rgba(0,0,0,.85)';X.shadowBlur=18*PX();X.fillStyle='#f6ead2';
       const lines=fmWrap(X,txt,W*.84);lines.forEach((ln,i)=>X.fillText(ln,0,(i-(lines.length-1)/2)*sz*1.12));
-      X.shadowBlur=0;X.globalCompositeOperation='lighter';X.globalAlpha=al*.18;X.fillStyle='#c9ff7a';lines.forEach((ln,i)=>X.fillText(ln,0,(i-(lines.length-1)/2)*sz*1.12))}
+      X.shadowBlur=0;X.globalCompositeOperation='lighter';X.globalAlpha=al*.18;X.fillStyle=wcol||'#c9ff7a';lines.forEach((ln,i)=>X.fillText(ln,0,(i-(lines.length-1)/2)*sz*1.12));
+      if(who){const nz=Math.min(15,W*.042),ny=-(lines.length-1)/2*sz*1.12-sz*.95;X.globalCompositeOperation='source-over';X.globalAlpha=al;X.font=`400 ${nz}px "Lilita One","Baloo 2",system-ui,sans-serif`;
+        if('letterSpacing' in X)X.letterSpacing='2px';X.lineJoin='round';X.lineWidth=4;X.strokeStyle='rgba(20,14,10,.85)';X.strokeText(who.toUpperCase(),0,ny);X.fillStyle=wcol||'#ffd84a';X.fillText(who.toUpperCase(),0,ny);if('letterSpacing' in X)X.letterSpacing='0px'}}
     else{// the hero's thought: written letter by letter at the bottom, in italic
       const n=Math.floor(fcl((t-a)*24,0,txt.length)),part=txt.slice(0,n),sz=Math.min(19,W*.053);X.font=`italic 600 ${sz}px "Baloo 2",system-ui,sans-serif`;
       const lines=fmWrap(X,txt,W*.86),y0=H*(1-.065)-sz*1.3*(lines.length)-10;let left=part.length;X.globalAlpha=al;X.lineJoin='round';

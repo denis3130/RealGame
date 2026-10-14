@@ -21,7 +21,7 @@ async function audioOffline(dur,o){o=o||{};const sr=22050,off=new OfflineAudioCo
     AU.rev=off.createConvolver();AU.rev.buffer=mkImpulse(off,3,2.4);const rv=off.createGain();rv.gain.value=.6;AU.rev.connect(rv);rv.connect(AU.master);AU.mRev=off.createGain();AU.mRev.connect(AU.rev);AU.sRev=off.createGain();AU.sRev.connect(AU.rev);
     AU.dly=off.createDelay(1.5);const fb=off.createGain(),dl=off.createBiquadFilter(),dOut=off.createGain();fb.gain.value=.36;dl.type='lowpass';dl.frequency.value=2400;dOut.gain.value=.42;AU.dly.connect(dl);dl.connect(fb);fb.connect(AU.dly);dl.connect(dOut);dOut.connect(AU.music);
     AU.white=mkNoise(off,2,'white');AU.brown=mkNoise(off,2,'brown');AU.cur=null;AU.on={music:true,sfx:true};AU.pan=0;
-    FM.offline=true;FM.from=0;AUD.B=AUD.buses();AUD.tr={bus:AUD.B.mus,drum:AUD.B.drum};AUD.Q=fmCues(AUD.tr);AUD.a0=.1;AUD.silences(0);
+    FM.offline=true;FM.from=0;AUD.B=AUD.buses();AUD.tr={bus:AUD.B.mus,drum:AUD.B.drum};AUD.Q=(AUD.cues||fmCues)(AUD.tr);AUD.a0=.1;AUD.silences(0);
     AU.sfxBus=AUD.B.sfx;AU.sRev=AUD.B.rev;AU.mRev=AUD.B.mrev;AU.dly=AUD.B.dly;const errs=[];if(o.mute){AUD.B.out.gain.cancelScheduledValues(0);AUD.B.out.gain.value=0}
     AUD.Q.forEach(([ct,fn],i)=>{if(o.only&&(i<o.only[0]||i>=o.only[1]))return;try{fn(AUD.a0+ct)}catch(e){errs.push(ct+': '+e)}});
     const buf=await off.startRendering(),d=buf.getChannelData(0),b=new Uint8Array(d.length*2);let peak=0;for(let i=0;i<d.length;i++){const v=Math.max(-1,Math.min(1,d[i]));peak=Math.max(peak,Math.abs(d[i]));const s=v<0?v*32768:v*32767;const x=Math.round(s);b[i*2]=x&255;b[i*2+1]=(x>>8)&255}
@@ -30,6 +30,8 @@ async function audioOffline(dur,o){o=o||{};const sr=22050,off=new OfflineAudioCo
 window.__FE=s=>eval(s);
 return{play:fmPlay,end:fmEnd,render,foto,FM,SHOTS:()=>SHOTS,audioOffline}})();
 window.FILM=FILM;
+// the game's first-launch choice of the hero (65) is not part of this page
+try{if(SCE.on)sceClose()}catch(e){}
 (()=>{const q=new URLSearchParams(location.search),ver=(q.get('intro')||'AB').toUpperCase(),trailer=q.get('trailer')==='1',foto=q.get('foto')==='1';
   let from=+(q.get('t')||0);const sid=q.get('shot');if(sid){const s=FILM.SHOTS().find(o=>o.id===sid);if(s)from=s.t0;FILM.FM.debug=true}
   FILM.FM.from=from;
