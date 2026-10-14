@@ -63,7 +63,7 @@ document.addEventListener('pointerdown',e=>{if(POP.i!=null&&!e.target.closest('#
 #menu .homeFoot{margin:0 10px}
 #homeGear.posti{position:relative;z-index:3;display:flex;justify-content:center;align-items:flex-end;gap:6px;flex-wrap:nowrap}
 .psl{position:relative;box-sizing:border-box;width:56px;height:66px;flex:none;display:flex;flex-direction:column;align-items:center;justify-content:flex-end;gap:0;padding:0 2px 4px;
-  border:2.5px solid var(--crInk);border-radius:12px;background:radial-gradient(80% 60% at 50% 30%,color-mix(in srgb,var(--rc,#8a8f96) 40%,transparent),transparent 72%),linear-gradient(#5d554a,#37312a);
+  border:2.5px solid var(--crInk);border-radius:12px;background:linear-gradient(#5d554a,#37312a);background:radial-gradient(80% 60% at 50% 30%,color-mix(in srgb,var(--rc,#8a8f96) 40%,transparent),transparent 72%),linear-gradient(#5d554a,#37312a);
   box-shadow:inset 0 2px 0 rgba(255,255,255,.28),inset 0 -3px 0 rgba(0,0,0,.3),0 3px 0 var(--crInk);color:#fff;font-family:var(--display);cursor:pointer;-webkit-tap-highlight-color:transparent}
 .psl:active{transform:translateY(2px)}
 .psl .pimg{position:absolute;left:3px;right:3px;top:2px;height:42px;display:flex;align-items:center;justify-content:center;pointer-events:none}
@@ -84,7 +84,7 @@ document.addEventListener('pointerdown',e=>{if(POP.i!=null&&!e.target.closest('#
 .psl.p5.empty .p5c{opacity:.6}
 @keyframes pslReady{0%,100%{box-shadow:inset 0 2px 0 rgba(255,255,255,.5),0 3px 0 var(--crInk),0 0 0 rgba(255,216,74,0)}50%{box-shadow:inset 0 2px 0 rgba(255,255,255,.5),0 3px 0 var(--crInk),0 0 16px rgba(255,216,74,.85)}}
 @keyframes pslHop{0%,70%,100%{transform:translateY(0)}80%{transform:translateY(-4px) rotate(-4deg)}90%{transform:translateY(0) rotate(3deg)}}
-#menu.zmode .psl{background:radial-gradient(80% 60% at 50% 30%,color-mix(in srgb,var(--rc,#8a8f96) 35%,transparent),transparent 72%),linear-gradient(#3a3f37,#1d201b);border-color:#0a0c0b;box-shadow:inset 0 2px 0 rgba(200,230,180,.14),inset 0 -3px 0 rgba(0,0,0,.45),0 3px 0 #0a0c0b}
+#menu.zmode .psl{background:linear-gradient(#3a3f37,#1d201b);background:radial-gradient(80% 60% at 50% 30%,color-mix(in srgb,var(--rc,#8a8f96) 35%,transparent),transparent 72%),linear-gradient(#3a3f37,#1d201b);border-color:#0a0c0b;box-shadow:inset 0 2px 0 rgba(200,230,180,.14),inset 0 -3px 0 rgba(0,0,0,.45),0 3px 0 #0a0c0b}
 #menu.zmode .psl.ready{background:radial-gradient(80% 60% at 50% 30%,rgba(220,255,170,.55),transparent 70%),linear-gradient(#a8d862,#4f8a27);animation-name:pslReadyZ}
 #menu.zmode .psl .pbar i{background:linear-gradient(#b5e46a,#4f8a27)}
 #menu.zmode .psl.empty{background:rgba(10,12,10,.5);border-color:rgba(160,200,140,.4)}
@@ -128,5 +128,9 @@ document.addEventListener('pointerdown',e=>{if(POP.i!=null&&!e.target.closest('#
 @media (max-width:350px){#topbar .res span{font-size:12.5px}#tbWho .av{width:38px;height:38px}}
 `;document.head.appendChild(st)}
 renderGearRow();
+// il bottone a destra «Casse» ora è quello della bustina gratis (le casse vinte si vedono già sotto l'eroe): pronta «Gratis!», se no il tempo che manca
+renderChestBtn=function(){const fr=Date.now()>=SAVE.free.next,rar=(SAVE.free.n+1)%3===0?'argento':'legno',lab=fr?'Gratis!':fmtH(SAVE.free.next-Date.now()).replace(/ \d+s$/,'');
+  const html=`${rwIcon(rar,'classica')}<small>${lab}</small>${fr?'<em class="pip">1</em>':''}`,el=$('chestBtn');el.classList.toggle('hot',fr);el.setAttribute('aria-label','Bustina gratis');if(el._h!==html){el.innerHTML=html;el._h=html}};
+renderChestBtn();
 // il nome lungo nel Profilo: un po' più piccolo (classe lungo) oltre gli 11 caratteri
 {const _rp=renderProfile;renderProfile=function(){const r=_rp.apply(this,arguments);try{const e=$('pName');if(e&&!e.querySelector('input'))e.classList.toggle('lungo',(e.textContent||'').trim().length>11)}catch(e){}return r}}

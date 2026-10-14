@@ -72,3 +72,18 @@ basta». Visto sull'**anteprima 48** (https://claude.ai/artifact/1PeXgrLWXwA3QGK
 - **Testi tagliati**: «Liv. 1» in alto diventava «Li…» sui telefoni stretti; un nome lungo nel Profilo finiva tagliato («Massimiliar…»): ora va a
   capo e rimpicciolisce. Controllo automatico di tutte le schermate e dei fogli nei due modi su tre telefoni (360, 390, 430 px): nessun altro
   testo tagliato (le offerte della Bottega che scorrono di lato sono volute).
+- **Il bottone a destra «Casse»** della Classica ora è quello della bustina gratis («Gratis!» o il tempo che manca): le casse vinte si vedono già
+  sotto l'eroe e prima le contava due volte.
+
+### Scatti sul telefono (tanti zombie e zone nuove)
+- **Misure** (computer di prova senza scheda grafica, come un iPhone 15 Pro Max: 430×932 a risoluzione 2; i tempi assoluti sono molto più alti del
+  telefono, contano le proporzioni): la parte che cresce con gli zombie è il loro disegno, rifatto da zero a vettori a ogni fotogramma, circa 2,8 ms
+  a zombie; l'aggiornamento degli zombie passava un terzo del tempo a provare le collisioni con tutti i solidi della mappa grande.
+- **Correzioni**: gli zombie da un'immagine pronta (ognuno tiene la sua figura e la ridisegna a turno, al massimo 6 figure nuove per fotogramma;
+  con pochi zombie tutte a ogni fotogramma come prima, subito se cambia mossa, direzione, inclinazione o zoom; a vista identici, controllato pixel
+  per pixel): con 16 zombie il disegno di uno zombie scende da 2,8 a 1 ms (Borgo da 116 a 78 ms a fotogramma, Cappella da 124 a 80, sul
+  computer di prova); la griglia dei solidi per le collisioni: aggiornamento di 16 zombie da 1,02 a 0,15 ms; risoluzione automatica (con
+  «Qualità automatica», quella di partenza): se per 2 s i fotogrammi non stanno nei 60 al secondo la mappa passa da 2 a 1,5 pixel per punto, e
+  solo se non basta abbassa gli effetti come prima.
+- I «picchi» di 300 ms ogni 6 fotogrammi visti sul computer di prova sono del browser senza scheda grafica (accumula i disegni e li colora tutti
+  insieme), non della mappa: sul telefono il lavoro è distribuito. Da riprovare sul telefono vero.

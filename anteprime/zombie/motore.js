@@ -314,7 +314,7 @@ const W={dbg:{},w:10*T,h:10*T,ground:null,hero:null,Z:[],FX:[],crows:[],flock:[]
 // le barriere (finestre, varchi delle recinzioni: barriere.js) sono solidi con s.bar: fermano sempre l'eroe; BARM dice chi le passa in questo
 // controllo: 0 nessuno, 1 i colpi e la mira (si spara attraverso le finestre), 2 solo quelle aperte (lo zombie che colpisce da una finestra senza assi)
 let BARM=0;
-let VIEWR=1e9;/* (anteprima 48, punto 54) il mezzo lato del quadrato del mondo che può stare sullo schermo (anche girando): quello che è fuori non si aggiorna a vista, non si ordina e non si disegna (zombie, fiamme libere, corvi posati, luci, fumi) */
+let DPRCUT=false;let VIEWR=1e9;/* (anteprima 48, punto 54) il mezzo lato del quadrato del mondo che può stare sullo schermo (anche girando): quello che è fuori non si aggiorna a vista, non si ordina e non si disegna (zombie, fiamme libere, corvi posati, luci, fumi) */
 const farV=(x,y,r)=>Math.abs(x-CAM.x)>VIEWR+r||Math.abs(y-CAM.y)>VIEWR+r;
 let LV=0;/* il piano dei solidi che contano (anteprima 48, punto 15): 0 a terra, 1 il piano di sopra di un edificio (i suoi solidi hanno lv:1) */
 /* (difetti 48) la griglia dei solidi: hit() guarda solo i solidi delle caselle di 64 px intorno (prima tutti, centinaia nella mappa grande: era un
@@ -1436,12 +1436,16 @@ function boot(area,o){o=o||{};const GAME=!!o.game;let ACT=!GAME,RUN=false,PAUSE=
       const vg=ctx.createRadialGradient(Wp/2,Hp/2,Math.min(Wp,Hp)*.4,Wp/2,Hp/2,Math.max(Wp,Hp)*.75);vg.addColorStop(0,'rgba(0,0,0,0)');vg.addColorStop(1,'rgba(0,0,0,.45)');ctx.fillStyle=vg;ctx.fillRect(0,0,Wp,Hp);
       const show=hudOn&&!W.dbg.noSticks;if(nordEl.hidden===show)nordEl.hidden=!show;if(show)drawNord();if(tk){ctx.getImageData(0,0,1,1);tk('hud')}
     }catch(e){console.error(e)}finally{ms=ms*.93+(performance.now()-t0)*.07;ctx=saved;LOWFX=lf}}
-  let fEma=.016,slowZ=0;
+  let fEma=.016,slowZ=0,slowR=0;/* DPRCUT: abbassata una volta, resta così per le partite dopo (niente 2 s di scatti a ogni partita) */
   function frame(now){if(!ACT){RUN=false;return}// la pagina spenta (nel gioco vero, col menu) non disegna niente
     if(W.dbg.halt){last=now;requestAnimationFrame(frame);return}// W.dbg.halt: le prove ferme il ciclo dei fotogrammi (misure senza disturbi)
     const raw=Math.max(0,(now-last)/1000),rdt=Math.min(.05,raw);last=now;camInput(Math.min(.1,raw));// la telecamera va col tempo vero anche a mondo fermo (W.dbg.freeze)
     // qualità automatica come nel gioco: se i fotogrammi restano lenti per 2,5 s gli effetti si abbassano (LOWFX)
-    if(GAME&&!PAUSE&&raw<.2){fEma+=(raw-fEma)*.05;if(typeof SAVE!=='undefined'&&SAVE.set&&SAVE.set.q==='auto'&&!LOWFX&&fEma>.026){slowZ+=raw;if(slowZ>2.5)LOWFX=true}else slowZ=0}
+    // (difetti 48) prima la risoluzione: se per 2 s i fotogrammi non stanno nei 60 al secondo la mappa passa da 2 a 1,5 pixel per punto (a vista
+    // quasi uguale, quasi la metà dei pixel da colorare); solo se non basta si abbassano anche gli effetti, come prima
+    if(GAME&&!PAUSE&&raw<.2){fEma+=(raw-fEma)*.05;const au=typeof SAVE!=='undefined'&&SAVE.set&&SAVE.set.q==='auto';
+      if(au&&dpr>1.5&&fEma>.0185){slowR+=raw;if(slowR>2){dpr=1.5;DPRCUT=true;slowR=0;fEma=.0167}}else slowR=0;
+      if(au&&!LOWFX&&dpr<=1.5&&fEma>.026){slowZ+=raw;if(slowZ>2.5)LOWFX=true}else slowZ=0}
     let[ix,iy]=vec(stick);if(K('ArrowLeft','KeyA'))ix=-1;if(K('ArrowRight','KeyD'))ix=1;if(K('ArrowUp','KeyW'))iy=-1;if(K('ArrowDown','KeyS'))iy=1;
     const st=W.dbg.freeze||PAUSE?0:rdt,[wx,wy]=stickToWorld(ix,iy);if(GAME&&hintT>0&&(hintT-=st)<=0)hintEl.style.opacity=0;render(st,wx,wy);uiStep(st);cashEl.textContent='● '+W.coins.toLocaleString('it-IT')+(GAME?'':'  ·  '+ms.toFixed(1)+' ms')+(W.dbg.prof?'  ·  ord '+ORD.pOrd.toFixed(2)+' · sil '+ORD.pSil.toFixed(2):'');requestAnimationFrame(frame)}
   if(ACT){RUN=true;requestAnimationFrame(frame)}
@@ -1457,7 +1461,7 @@ function boot(area,o){o=o||{};const GAME=!!o.game;let ACT=!GAME,RUN=false,PAUSE=
       else if(a==='esci'){const D=W.director,R=D?D.R:0,s=pzScr.querySelector('.mzsure');s.querySelector('p').textContent=R?`La partita finisce qui: prendi l'oro del round ${R}.`:'La partita finisce qui.';s.hidden=false}
       else if(a==='no')pzScr.querySelector('.mzsure').hidden=true;
       else if(a==='si'){setPause(false);if(W.director&&W.director.abbandona)W.director.abbandona()}})}
-  function start(){if(ACT)return;keepCam();ACT=true;PAUSE=false;if(pzScr)pzScr.hidden=true;ov.hidden=false;dpr=DPR();camRig();last=performance.now();if(!RUN){RUN=true;requestAnimationFrame(frame)}}
+  function start(){if(ACT)return;keepCam();ACT=true;PAUSE=false;if(pzScr)pzScr.hidden=true;ov.hidden=false;dpr=DPRCUT?Math.min(1.5,DPR()):DPR();camRig();last=performance.now();if(!RUN){RUN=true;requestAnimationFrame(frame)}}
   function stop(){if(!ACT)return;ACT=false;PAUSE=false;ov.hidden=true;reset();buyHold=false;if(crKeep)Object.assign(CR.cam,crKeep);if(rgKeep)Object.assign(RIGCAM,rgKeep);crKeep=rgKeep=null;cv.style.transform=''}
   // una partita nuova: zombie, effetti, monete, arma, uccisioni; l'area rimette le sue cose (cancello chiuso, velo, zombie dell'aia, Bara al primo
   // posto, eroe alla partenza); il round da capo; la telecamera a nord sull'eroe

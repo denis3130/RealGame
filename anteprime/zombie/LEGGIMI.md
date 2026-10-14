@@ -338,3 +338,24 @@ Tutto quello che c'è, con numeri e prove, sta in `docs/anteprima-48.md`; qui co
 - **Prove**: `piani_prova.js`, `comparse_prova.js`, `barriere_prova.js`, `macchine_prova.js`, `bara_usi.js`, `navmappa.js` (anche le zone
   nuove e di sopra), `tempi_grande.js`, `foto_grande.js`.
 
+
+## Difetti dell'anteprima 48 (14 ottobre, domande a Denis; risposte e cause in `docs/difetti-48.md`)
+
+- **Ordine di disegno e piani** (`relEss`): chi sta sopra o sotto una cosa (appoggiato al solaio, sotto una sporgenza) ha sempre almeno 3 px di
+  margine, così l'isteresi (che tiene il verso di prima sotto i 2 px) non lo lascia «dentro il pavimento» dopo la salita; sui gradini (`part==='st'`)
+  chi sale o scende sta sopra la scala. Prova: `piani_prova.js` (la salita coi fotogrammi veri).
+- **Quanto si piega un edificio** (`setRef`): il ref può portare `r.k` (proprietà dell'array), che moltiplica la piega di tutto ciò che lo usa
+  (pezzi, luci, fiamme, corvi posati, chi sta di sopra con `SB`). `prop_borgo.js`: gli edifici (`BLD`) sono un gruppo col ref nel mondo (`r.w`, i
+  pezzi girati con `turn` non lo girano) e `k = 155 / altezza` sopra i 155 px; chi li costruisce ritrova il ref in `.ref` per `ZM.group`. Prova:
+  `ondeggia_prova.js` (la cima di ogni edificio su un giro intero della visuale, e i ref dentro gli edifici nuovi).
+- **Navigazione su tutta la mappa**: `NAVMAX` 4.000 (circa 1 ms per campo); `holeDist` usa la casella libera più vicina alla buca (non la più piccola
+  dei dintorni, che poteva stare di là da una barriera chiusa); `pickHole` sceglie solo buche raggiungibili; `barCheck` con tolleranza 2·NC+4+15%
+  del salto; `bloccato`/`riposiziona`: uno zombie della partita che per 9 s non si avvicina (3 s se irraggiungibile), lontano dall'eroe e fuori
+  dallo schermo rinasce da una buca raggiungibile (`W.relocs` le conta). Zombie fermi: `lureOf` (il cancello della fattoria solo per quelli della
+  zona 2; `W.lures` per le barriere chiuse, `area_mappa.js`), `lureField`/`fieldStep` per girare intorno agli ostacoli verso le assi. Prova:
+  `chiusi_prova.js`. Prove nuove: `__MZ.navAt(x,y)`, `__MZ.lureF(L,x,y)`, `__MZ.zdraw(g,tipo,…)`.
+- **Leggerezza** (iPhone 15 Pro Max): gli zombie da un'immagine pronta (`zDraw`, `ZBOX` misurati in tutte le mosse, 16 direzioni e tre
+  inclinazioni): al massimo 6 figure ridisegnate per fotogramma, a turno (4 con gli effetti bassi), subito se cambia mossa, direzione oltre 5°,
+  inclinazione o zoom; `W.dbg.zLive` per disegnarli dal vivo. La griglia dei solidi (`SG`, caselle di 64 px) per `hit()`: vince il primo solido
+  creato come prima; `SGV` quando la Bara si sposta. Risoluzione automatica: con «Qualità automatica» se per 2 s i fotogrammi non stanno nei
+  60 al secondo la mappa passa da 2 a 1,5 pixel per punto (e resta così per le partite dopo), solo dopo gli effetti bassi.
