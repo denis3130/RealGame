@@ -12,15 +12,30 @@ const ANIM=ZM.anim=ZM.anim||[];
 // l'edificio interno di locanda e cappella) prende lo stesso ref, nel mondo (r.w), e chi li costruisce lo ritrova in .ref per attaccarci altre
 // cose (campanile, Forgia, armi a muro, Credenza) con ZM.group. KZ: un edificio più alto di KZ px si piega meno (r.k = KZ/altezza), così la cima
 // ondeggia girando la visuale quanto quella della casa e del fienile delle prime due zone (alte circa 150 px)
+// (Denis, 14 ottobre: «le pareti non devono essere storte») il ref di un edificio è il suo riquadro, come la casa e la cripta: la piega va dritta
+// da un muro all'altro, così il muro davanti all'eroe resta in piedi e gli altri si aprono via da lui come una scatola. Prima era il centro
+// (un punto): tutto l'edificio pendeva da una parte, anche il muro che l'eroe aveva davanti o accanto
 const BLD=new Set(['edificio','locanda','cappella','fucina','campanile']),KZ=155,kOf=(r,zt)=>{if(r)r.k=Math.min(r.k||1,KZ/Math.max(KZ,zt))};
+const BOXOF={edificio:a=>[a[0].x,a[0].y,a[0].x+a[0].w,a[0].y+a[0].d],campanile:a=>[a[0],a[1],a[0]+a[2],a[1]+a[2]]},boxOf=(name,a)=>(BOXOF[name]||(a=>[a[0],a[1],a[0]+a[2],a[1]+a[3]]))(a);
 const def=(name,f,rf)=>{rf=rf||(a=>typeof a[0]==='number'&&typeof a[1]==='number'?[a[0],a[1]]:a[0]&&typeof a[0]==='object'?[a[0].x+a[0].w/2,a[0].y+a[0].d/2]:null);P[name]=function(...a){const N=ZM.NAMES,sv=N.cur,sr=N.ref,sg=N.grp;N.cur=name;let r=N.grp||rf(a);
-    if(!N.grp&&r&&r.length<4&&BLD.has(name)){const q=ZM.toWorld(r[0],r[1]);r=[q[0],q[1]];r.w=true;N.grp=r}N.ref=r;
+    if(!N.grp&&r&&BLD.has(name)){const b=boxOf(name,a),p=ZM.toWorld(b[0],b[1]),q=ZM.toWorld(b[2],b[3]);r=[Math.min(p[0],q[0]),Math.min(p[1],q[1]),Math.max(p[0],q[0]),Math.max(p[1],q[1])];r.w=true;N.grp=r}N.ref=r;
     try{const out=f.apply(this,a);if(out&&typeof out==='object'&&!out.ref&&r)out.ref=r;return out}finally{N.cur=sv;N.ref=sr;N.grp=sg}}};
 const prng=s=>{s=(Math.abs(Math.round(s))%2147483646)+1;return()=>(s=(s*16807)%2147483647)/2147483647};
 material('sidingG',['#4b5446','#30372e','#66725e'],'siding');material('sidingR',['#5a3a32','#3a2420','#7a5246'],'siding');
 material('chapelStone',['#6a6870','#47464e','#8c8a94'],'stone');material('sawWood',['#6a5440','#463626','#8a7258'],'plank');
 material('charred',['#2a2220','#161210','#3e3430'],'plank');material('canvasR',['#7a3a32','#52241e','#9a5048'],'cloth');material('canvasB',['#3a4a6a','#262f46','#52648a'],'cloth');
 material('logEnd',['#8a6a44','#5e4428','#a8865a'],'flat');material('bark2',['#4a3a2a','#2c2218','#6a5640'],'bark');
+// (Denis, 14 ottobre: «migliora il design di tutto») la scala, il camino e il banco della Locanda: legno di noce caldo per pedate, mensole e
+// piani, legno scuro per i corpi, la passatoia rossa col bordo d'oro, la pietra del camino col focolare
+material('stairWood',['#7a5636','#4e3420','#a07a52'],'wood');material('stairDark',['#4a3424','#2e2016','#664a32'],'vgrain');material('runner',['#7a1e24','#4e1016','#a03a3a'],'cloth');
+material('hearth',['#5e5a58','#3c3836','#837d78'],'stone');
+// la passatoia: due righe d'oro lungo i bordi (lungo la salita: sulla pedata in x, sull'alzata in z) e i rombi scuri in mezzo
+const runnerT=(w,h,key)=>{const t=key==='t';ctx.fillStyle='rgba(214,170,86,.9)';if(t){ctx.fillRect(0,1.3,w,1);ctx.fillRect(0,h-2.3,w,1)}else{ctx.fillRect(1.3,0,1,h);ctx.fillRect(w-2.3,0,1,h)}
+  ctx.fillStyle='rgba(30,4,8,.4)';const cx=w/2,cy=h/2,L=t?w:h;for(let k=-1;k<=1;k++){const o=k*L*.34;ctx.beginPath();if(t){ctx.moveTo(cx+o-3,cy);ctx.lineTo(cx+o,cy-3.4);ctx.lineTo(cx+o+3,cy);ctx.lineTo(cx+o,cy+3.4)}else{ctx.moveTo(cx,cy+o-3);ctx.lineTo(cx+3.4,cy+o);ctx.lineTo(cx,cy+o+3);ctx.lineTo(cx-3.4,cy+o)}ctx.closePath();ctx.fill()}};
+// il fianco a pannelli sotto la scala (un triangolo, disegnato sullo schermo): assi verticali e una cornice chiara che segue la pendenza
+const panelT=q=>{const[a,b,c]=q,at=(p,r,t)=>[p[0]+(r[0]-p[0])*t,p[1]+(r[1]-p[1])*t];ctx.lineWidth=1;ctx.strokeStyle='rgba(20,12,6,.5)';
+  for(let t=.09;t<.93;t+=.09){const p=at(a,b,t),r=at(c,b,t);ctx.beginPath();ctx.moveTo(p[0],p[1]);ctx.lineTo(r[0],r[1]);ctx.stroke()}
+  const i0=at(c,a,.1),i1=at(b,a,.06);ctx.strokeStyle='rgba(255,226,180,.16)';ctx.lineWidth=1.2;ctx.beginPath();ctx.moveTo(i0[0],i0[1]);ctx.lineTo(i1[0],i1[1]);ctx.stroke()};
 // ------------------------------------------------------------------ le finestre degli edifici nuovi: la stessa finestra della casa (telaio a
 // croce, davanzale, persiana storta, vetro scuro o acceso, assi), solo più grande (44 × 42: con le porte alte di prima era piccola)
 const WW=44,WH=42,WZ=26;
@@ -107,31 +122,107 @@ def('edificio',function(o){const x=o.x,y=o.y,w=o.w,d=o.d,H=o.H||92,FL=o.fl||1,HT
 // ------------------------------------------------------------------ gli arredi (con B.in: compaiono quando l'eroe entra)
 const table=(B,x,y,w,d,z,round)=>{solid(x,y,w,d);const parts=[];for(const[dx,dy] of[[2,2],[w-5,2],[2,d-5],[w-5,d-5]])E(parts,...box(x+dx,y+dy,0,3,3,z-3,'wood',{noOut:true}));
   if(round)E(parts,...cyl(x+w/2,y+d/2,z-3,w/2,3,'wood',{n:12}));else E(parts,...box(x,y,z-3,w,d,3,'wood',{noFoot:true,ow:1.6}));B.in(parts,[x-2,y-2,x+w+2,y+d+2,z+12],y+d)};
+// il camino della Locanda: il fondo della bocca annerito dal fumo con la brace in basso, la cappa di pietra col fumo salito sopra la mensola
+const sootT=(w2,h2)=>{const g=ctx.createLinearGradient(0,0,0,h2);g.addColorStop(0,'rgba(6,3,2,.95)');g.addColorStop(.65,'rgba(18,8,4,.85)');g.addColorStop(1,'rgba(150,60,14,.55)');ctx.fillStyle=g;ctx.fillRect(0,0,w2,h2)};
+const breastT=(w2,h2)=>{const g=ctx.createRadialGradient(w2/2,h2,2,w2/2,h2*.75,w2*.55);g.addColorStop(0,'rgba(8,6,6,.55)');g.addColorStop(1,'rgba(8,6,6,0)');ctx.fillStyle=g;ctx.fillRect(0,0,w2,h2);
+  ctx.fillStyle='rgba(255,170,90,.07)';ctx.fillRect(0,h2-6,w2,6)};
+// la targa ovale di legno scuro col corvo di profilo, l'occhio rosso, il bordo d'ottone
+const crowPlaque=(w2,h2)=>{ctx.fillStyle='#2a1a12';ctx.beginPath();ctx.ellipse(w2/2,h2/2,w2/2-1,h2/2-1,0,0,TAU);ctx.fill();ctx.strokeStyle='#c8a050';ctx.lineWidth=1.4;ctx.stroke();ink(1.4);ctx.beginPath();ctx.ellipse(w2/2,h2/2,w2/2-.3,h2/2-.3,0,0,TAU);ctx.stroke();
+  ctx.fillStyle='#0c0a0c';ctx.beginPath();ctx.ellipse(w2/2+1,h2*.56,6.5,4.2,-.25,0,TAU);ctx.fill();ctx.beginPath();ctx.moveTo(w2/2+6,h2*.5);ctx.lineTo(w2/2+11,h2*.4);ctx.lineTo(w2/2+7,h2*.6);ctx.fill();
+  ctx.beginPath();ctx.arc(w2/2-5,h2*.42,3,0,TAU);ctx.fill();ctx.fillStyle='#b89448';ctx.beginPath();ctx.moveTo(w2/2-7.5,h2*.4);ctx.lineTo(w2/2-11,h2*.45);ctx.lineTo(w2/2-7.5,h2*.47);ctx.fill();ctx.fillStyle='#ff4a36';ctx.fillRect(w2/2-6,h2*.38,1.3,1.3)};
+// un tappeto tessuto (nel pavimento, coordinate del mondo): bordo scuro, il campo rosso con i rombi ocra, le frange ai lati corti
+function rug(x0,y0,w,h){ctx.save();ctx.fillStyle='rgba(0,0,0,.25)';ctx.fillRect(x0+1,y0+1.5,w,h);ctx.fillStyle='#4a2418';ctx.fillRect(x0,y0,w,h);ctx.fillStyle='#7a2a20';ctx.fillRect(x0+3,y0+3,w-6,h-6);
+  ctx.strokeStyle='#b8863c';ctx.lineWidth=1;ctx.strokeRect(x0+5,y0+5,w-10,h-10);ctx.fillStyle='rgba(184,134,60,.75)';
+  for(let i=0;i<3;i++){const cx=x0+w*(i+1)/4,cy=y0+h/2;ctx.beginPath();ctx.moveTo(cx-7,cy);ctx.lineTo(cx,cy-9);ctx.lineTo(cx+7,cy);ctx.lineTo(cx,cy+9);ctx.closePath();ctx.fill();ctx.fillStyle='#4a2418';ctx.fillRect(cx-1.5,cy-1.5,3,3);ctx.fillStyle='rgba(184,134,60,.75)'}
+  ctx.strokeStyle='rgba(220,200,160,.6)';ctx.lineWidth=.8;for(let yy=y0+2;yy<y0+h-1;yy+=2.4){ctx.beginPath();ctx.moveTo(x0,yy);ctx.lineTo(x0-3,yy+.4);ctx.moveTo(x0+w,yy);ctx.lineTo(x0+w+3,yy+.4);ctx.stroke()}
+  ctx.fillStyle='rgba(255,240,220,.05)';ctx.fillRect(x0+3,y0+3,w-6,(h-6)*.4);ctx.restore()}
+// un pilastrino di ringhiera: il fusto, il cappello e il pomolo (scala e ringhiera di sopra della Locanda)
+const newel=(x,y,z0,h)=>[...box(x-3,y-3,z0,6,6,h,'post',{ow:1.4}),...box(x-4,y-4,z0+h,8,8,2.4,'stairWood',{noFoot:true,ow:1.2}),ballAt([x,y,z0+h+5],3.3,'stairWood',{ow:2})];
 const stool=(B,x,y)=>{solid(x-4,y-4,8,8);B.in([...cyl(x,y,0,4,13,'wood',{n:7,r1:4.6})],[x-6,y-6,x+6,y+6,14],y+4)};
 const candle=(B,x,y,z)=>{const lvl=B.hs.upF?(z>=B.H-1?1:0):undefined;flames.push({x,y,z:z+7,r:1.6,rgb:'255,180,90',house:B.hs,indoor:1,ky:y+1,lvl,ref:ZM.NAMES.ref});lights.push({x,y,z:z+6,r:55,rgb:'255,170,80',a:.32,fl:1,house:B.hs,lvl});return cyl(x,y,z,1.5,6,'bone',{n:6})};
 const bottles=(x,y,z,n,along)=>{const out=[];const C=['#3a6a4a','#6a3a2a','#3a3a6a','#7a6a2a','#5a2a4a'];for(let i=0;i<n;i++){const id='bot'+(i%5);if(!MAT[id])material(id,[C[i%5],mix(C[i%5],'#000000',.35),mix(C[i%5],'#ffffff',.3)],'flat');
   const px=along==='y'?x:x+i*6,py=along==='y'?y+i*6:y;E(out,...cyl(px,py,z,2,6+(i%3),id,{n:6,r1:1.6,ink:.5}))}return out};
+// ------------------------------------------------------------------ (14 ottobre, Denis: «migliora il design di tutto») per gli interni:
+// una lanterna appesa a una catena sotto il tetto (si accende quando l'eroe entra) e gli attrezzi appesi alla faccia di dentro del muro nord
+const glowT=(w2,h2)=>{const gr=ctx.createRadialGradient(w2/2,h2*.55,1,w2/2,h2*.55,w2*.8);gr.addColorStop(0,'rgba(255,240,200,.95)');gr.addColorStop(1,'rgba(255,190,110,.15)');ctx.fillStyle=gr;ctx.fillRect(0,0,w2,h2);ctx.fillStyle='#1d1e23';ctx.fillRect(w2/2-.6,0,1.2,h2)};
+P.lumeAppeso=(B,x,y,z)=>{B.in([line3([x,y,B.HT-1],[x,y,z+15],'#2a2a30',1.4,{ink:true}),...box(x-4.5,y-4.5,z+12,9,9,2.4,'iron',{noFoot:true,ow:1.3}),...box(x-3.5,y-3.5,z,7,7,12,'glass',{noFoot:true,ink:1.1,tex:{s:glowT,e:glowT,w:glowT,n:glowT}}),
+    ...box(x-4.5,y-4.5,z-2.4,9,9,2.4,'iron',{noFoot:true,ow:1.3}),ballAt([x,y,z-4],1.4,'iron',{ow:1})],[x-6,y-6,x+6,y+6,B.HT],y+5);
+  flames.push({x,y,z:z+5,r:2.6,rgb:'255,200,120',glass:1,house:B.hs,indoor:1,ky:y+5,ref:B.ref});lights.push({x,y:y+6,z:z+4,r:150,rgb:'255,180,100',a:.42,fl:1,house:B.hs,ref:B.ref})};
+// la faccia di dentro del muro nord di un edificio alla x data (per appenderci qualcosa: se non si vede, non si disegna)
+const innerN=(B,x)=>{for(const p of ZM.props){if(p.house!==B.hs)continue;for(const t of p.parts)if(t.k==='face'&&t.key==='s'&&t.part==='wN'&&Math.abs(t.c[0][1]-(B.y+B.th))<1.5&&Math.min(t.c[0][0],t.c[1][0])<x&&Math.max(t.c[0][0],t.c[1][0])>x)return t}return null};
+// una lama circolare (r: raggio) e il segone a due manici, dipinti
+const bladeT=(w2,h2)=>{const c=w2/2,R=w2/2-1;ctx.fillStyle='#7d828c';ctx.beginPath();for(let i=0;i<40;i++){const a=i/40*TAU,r=i%2?R:R-2.4;ctx.lineTo(c+Math.cos(a)*r,c+Math.sin(a)*r)}ctx.closePath();ctx.fill();ink(1.2);ctx.stroke();
+  const g=ctx.createLinearGradient(0,0,w2,h2);g.addColorStop(0,'rgba(255,255,255,.35)');g.addColorStop(.5,'rgba(255,255,255,0)');g.addColorStop(1,'rgba(0,0,0,.25)');ctx.fillStyle=g;ctx.beginPath();ctx.arc(c,c,R-2.6,0,TAU);ctx.fill();
+  ctx.fillStyle='rgba(150,74,30,.55)';for(let i=0;i<4;i++){ctx.beginPath();ctx.arc(c+Math.cos(i*1.7)*R*.55,c+Math.sin(i*1.7)*R*.55,1.2+i%2,0,TAU);ctx.fill()}ctx.fillStyle='#2a2a30';ctx.beginPath();ctx.arc(c,c,R*.2,0,TAU);ctx.fill();ctx.fillStyle='#8a6a44';ctx.beginPath();ctx.arc(c,c,R*.09,0,TAU);ctx.fill()};
+const segoneT=(w2,h2)=>{ctx.fillStyle='#8a8e98';ctx.beginPath();ctx.moveTo(8,2);ctx.lineTo(w2-8,2);ctx.quadraticCurveTo(w2-8,h2*.55,w2-8,h2-3);for(let x=w2-8;x>8;x-=2.4)ctx.lineTo(x-1.2,x%4.8<2.4?h2:h2-3);ctx.lineTo(8,h2-3);ctx.closePath();ctx.fill();ink(1);ctx.stroke();
+  ctx.fillStyle='rgba(255,255,255,.3)';ctx.fillRect(9,3,w2-18,1.2);for(const hx of[0,w2-8]){ctx.fillStyle='#7d5a38';ctx.fillRect(hx,0,8,h2-2);ink(1);ctx.strokeRect(hx,0,8,h2-2)}};
+P.attrezziMuro=(B,x)=>{const y=B.y+B.th+.5,f=innerN(B,x),parts=[plane(x-16,y,44,30,30,'x','lamaG',bladeT,{host:f}),plane(x+20,y,50,20,20,'x','lamaP',bladeT,{host:innerN(B,x+30)}),plane(x+48,y,54,64,11,'x','segone',segoneT,{host:innerN(B,x+80)})];
+  B.in(parts,[x-18,y-1,x+114,y+1,80],y+1)};
 // ------------------------------------------------------------------ la LOCANDA DEL CORVO: due piani di assi grigio-verdi col tetto d'ardesia,
 // porta sulla strada, porta sul retro, porta a ovest; dentro il banco col bancone e gli scaffali delle bottiglie, i tavoli con gli sgabelli,
 // il camino acceso, la scala verso il piano di sopra lungo il muro nord. Sopra l'ingresso l'insegna col corvo e la lanterna
-def('locanda',function(x,y,w,d){const H=92,sx0=x+14,sy0=y+12,SL=118;// (la scala: dal muro ovest, lunga SL, larga 30)
-  const B=P.edificio({x,y,w,d,H,fl:2,up:1,hole:[sx0+12,y+10,sx0+SL+2,sy0+32],wall:'sidingG',roof:'slate',rh:76,name:'Locanda del Corvo',chim:[x+194,y+16],
-    op:[{s:'s',at:w*.5,k:'door',id:'strada'},{s:'s',at:62,k:'win',lit:1},{s:'s',at:w-64,k:'win'},{s:'n',at:w-42,k:'door',id:'retro'},{s:'n',at:w*.6,k:'win'},{s:'w',at:d*.62,k:'door',id:'ovest'},{s:'w',at:d*.26,k:'win'},{s:'e',at:d*.17,k:'win',lit:1},{s:'e',at:d*.83,k:'win'}]});
+def('locanda',function(x,y,w,d){const H=92,sx0=x+14,sy0=y+12,SL=118,SW=44;// (la scala: dal muro ovest, lunga SL, larga SW; prima 30)
+  const B=P.edificio({x,y,w,d,H,fl:2,up:1,hole:[sx0+12,y+10,sx0+SL+2,sy0+SW+2],wall:'sidingG',roof:'slate',rh:76,name:'Locanda del Corvo',chim:[x+204,y+16],
+    op:[{s:'s',at:w*.5,k:'door',id:'strada'},{s:'s',at:62,k:'win',lit:1},{s:'s',at:w-64,k:'win'},{s:'n',at:w-42,k:'door',id:'retro'},{s:'n',at:w*.6,k:'win'},{s:'w',at:d*.62,k:'door',id:'ovest'},{s:'w',at:d*.4,k:'win'},{s:'e',at:d*.17,k:'win',lit:1},{s:'e',at:d*.83,k:'win'}]});
   B.kind='locanda';const th=B.th;
   // il bancone (da nord a sud, a est) e dietro gli scaffali con le bottiglie contro il muro est
-  const bx=x+w-118;solid(bx,y+th+66,14,d-th*2-120);B.in([...box(bx,y+th+66,0,14,d-th*2-120,24,'plankD',{ow:1.8}),...box(bx-2,y+th+64,24,18,d-th*2-116,3,'wood',{noFoot:true,ow:1.4}),...bottles(bx+7,y+th+74,27,5,'y')],[bx-4,y+th+60,bx+20,y+d-th-50,40]);
+  // (14 ottobre) il banco: il fronte a doghe, il piano di noce lucido che sporge verso i clienti, il poggiapiedi d'ottone, i boccali e il
+  // barilotto con la spina
+  const bx=x+w-118,by=y+th+66,bl=d-th*2-120;solid(bx,by,14,bl);
+  B.in([...box(bx,by,0,14,bl,22,'plankD',{ow:1.8}),...box(bx-3,by-2,22,19,bl+4,3,'stairWood',{noFoot:true,ow:1.4}),...bottles(bx+9,by+8,25,4,'y'),
+    line3([bx-4,by+3,5],[bx-4,by+bl-3,5],'#c8a050',1.6,{ink:true}),line3([bx-4,by+3,5],[bx,by+3,5],'#8a6a30',1.2),line3([bx-4,by+bl-3,5],[bx,by+bl-3,5],'#8a6a30',1.2),
+    ...cyl(bx+4,by+42,25,2.3,5,'stairWood',{n:7}),ballAt([bx+4,by+42,30.6],1.8,'bone',{ow:1}),...cyl(bx+5,by+52,25,2.3,5,'stairWood',{n:7}),
+    ...cyl(bx+8,by+bl-12,25,5,9,'stave',{n:10,m:{t:'logEnd'},ink:.5}),line3([bx+3,by+bl-12,29],[bx-1,by+bl-12,28],'#c8a050',1.6,{ink:true})],[bx-6,by-4,bx+20,by+bl+4,38]);
   {const sx=x+w-th-12,sy=y+th+56,sl=d-th*2-112;solid(sx,sy,12,sl);B.in([...box(sx,sy,0,12,sl,52,'plankD',{ow:1.8}),...box(sx-1,sy+2,18,12,sl-4,2,'wood',{noFoot:true,noOut:true}),...box(sx-1,sy+2,34,12,sl-4,2,'wood',{noFoot:true,noOut:true}),...bottles(sx+6,sy+10,20,8,'y'),...bottles(sx+6,sy+10,36,8,'y')],[sx-4,sy-4,sx+14,sy+sl+4,56])}
-  // il camino contro il muro nord, acceso
-  {const fx=x+170;solid(fx,y+th,48,16);B.in([...box(fx,y+th,0,48,16,60,'brick',{tex:{s:(w2,h2)=>{ctx.fillStyle='#120804';ctx.fillRect(10,h2-24,28,24);ink(1.6);ctx.strokeRect(10,h2-24,28,24);const g2=ctx.createRadialGradient(w2/2,h2*.8,2,w2/2,h2*.8,w2*.5);g2.addColorStop(0,'rgba(255,140,50,.35)');g2.addColorStop(1,'rgba(255,140,50,0)');ctx.fillStyle=g2;ctx.fillRect(0,0,w2,h2)}}}),...box(fx-3,y+th,60,54,19,4,'plankD',{noFoot:true})],[fx-4,y+th,fx+52,y+th+20,66]);
-    flames.push({x:fx+24,y:y+th+17,z:4,r:9,rgb:'255,140,50',fire:1,house:B.hs,ky:y+th+18,n:[0,1],lvl:0});lights.push({x:fx+24,y:y+th+44,r:130,rgb:'255,140,60',a:.5,fl:1,house:B.hs,lvl:0})}
+  // il camino contro il muro nord, acceso. (Denis, 14 ottobre: «migliora il design di tutto, tipo del camino») Un focolare di pietra: due
+  // stipiti, la bocca incassata con il fondo annerito, i ciocchi sugli alari, la brace che pulsa, la trave di quercia per mensola con due
+  // candele e la brocca, sopra la cappa di pietra fino al soffitto con la targa del corvo, davanti la lastra del focolare e il tappeto
+  {const fx=x+180,cx=fx+24,y0=y+th,ZJ=40,ZM2=45;solid(fx-10,y0,68,28);// (a est del piede della scala restano 38 px: lì si preme «Sali», niente corridoi da 18–34)
+    const parts=[...box(cx-15,y0,0,30,8,ZJ,'brick',{noOut:true,tex:{s:sootT}}),// il fondo della bocca
+      ...box(fx-6,y0,0,15,20,ZJ,'hearth',{ow:1.8}),...box(cx+15,y0,0,15,20,ZJ,'hearth',{ow:1.8}),// gli stipiti
+      ...box(fx-10,y0+20,ZJ-1,68,6,ZM2-ZJ+1,'stairWood',{noFoot:true,ow:1.6}),// la mensola, davanti a stipiti e cappa (sopra di loro i pezzi si coprivano)
+      ...box(fx-6,y0,ZM2,60,20,H-ZM2,'hearth',{noFoot:true,ow:1.8,tex:{s:breastT}}),// la cappa
+      ...box(fx-10,y0+20,0,68,8,2,'hearth',{ow:1.2}),// la lastra del focolare
+      ...box(cx-14,y0+15,0,2,2,8,'iron',{ow:1}),...box(cx+12,y0+15,0,2,2,8,'iron',{ow:1})];// gli alari
+    // i ciocchi (sdraiati lungo x), la brace che pulsa sotto
+    const log=(yy,zz,r,x0,len)=>prismY(x0,yy,len,[[r,zz],[r*.7,zz+r*.7],[0,zz+r],[-r*.7,zz+r*.7],[-r,zz],[-r*.7,zz-r*.7],[0,zz-r],[r*.7,zz-r*.7]],'bark2',{m:{e:'logEnd',w:'logEnd'},ow:1.2});
+    E(parts,fn3(S2=>{const c=S2(cx,y0+12,1.5),f=LOWFX?1:.82+.18*Math.sin(W.t*7.3)*Math.sin(W.t*3.1+1),g=ctx.createRadialGradient(c[0],c[1],1,c[0],c[1],17);g.addColorStop(0,`rgba(255,${Math.round(150+60*f)},70,${.85*f})`);g.addColorStop(.55,`rgba(200,60,20,${.45*f})`);g.addColorStop(1,'rgba(120,30,10,0)');ctx.fillStyle=g;ctx.beginPath();ctx.ellipse(c[0],c[1],17,7,0,0,TAU);ctx.fill()},{fp:[[cx-14,y0+7],[cx+14,y0+7],[cx+14,y0+19],[cx-14,y0+19]],z:[0,3]}));
+    E(parts,...log(y0+10,3.2,3,cx-12,24),...log(y0+15,3.2,3,cx-11,22),...log(y0+12.5,8,2.6,cx-9,18));
+    // sulla mensola: le candele alle punte, la brocca di peltro, due boccali
+    E(parts,...candle(B,fx-5,y0+23,ZM2),...candle(B,fx+53,y0+23,ZM2),...cyl(cx-14,y0+23,ZM2,2.6,6,'iron',{n:8,r1:2}),...cyl(cx-14,y0+23,ZM2+6,1.4,2.2,'iron',{n:6}),...cyl(cx+10,y0+23,ZM2,2,4.5,'stairWood',{n:7}),...cyl(cx+16,y0+23,ZM2,2,4.5,'stairWood',{n:7}));
+    // la targa col corvo sulla cappa
+    parts.push(plane(cx-13,y0+20.4,55,26,22,'x','targaCorvo2',crowPlaque));
+    B.in(parts,[fx-12,y0,fx+60,y0+28,H+2],y0+28);
+    flames.push({x:cx,y:y0+13,z:5,r:9,rgb:'255,140,50',fire:1,house:B.hs,ky:y0+18,n:[0,1],lvl:0});lights.push({x:cx,y:y0+44,r:140,rgb:'255,140,60',a:.55,fl:1,house:B.hs,lvl:0});
+    // il tappeto davanti al focolare (dipinto nel pavimento)
+    decals.push(()=>rug(cx-38,y0+34,76,42))}
   // i tavoli con gli sgabelli e le candele
-  for(const[tx,ty] of[[x+150,y+120],[x+222,y+92],[x+120,y+175]]){table(B,tx-14,ty-14,28,28,22,true);B.in(candle(B,tx,ty,22),[tx-3,ty-3,tx+3,ty+3,30]);for(const a of[0,2.1,4.2]){const sx2=tx+Math.cos(a)*24,sy2=ty+Math.sin(a)*24;stool(B,sx2,sy2)}}
-  // la scala lungo il muro nord, da est verso ovest: dieci gradini fino al piano di sopra (il pianerottolo nell'angolo nord-ovest). Si vede anche
-  // da sopra, nel buco del solaio (tag st); al piede il bottone «Sali al piano di sopra», sul pianerottolo «Scendi» (motore.js, ZM.scala)
-  {const L=SL,n=10,parts=[];solid(sx0,sy0,L,30);for(let i=0;i<n;i++){const u=L-(i+1)*L/n,z=(i+1)*H/n;E(parts,...box(sx0+u,sy0,0,L/n+.5,30,z,'plankD',{noOut:i<n-1,ow:1.6}))}
-    E(parts,line3([sx0+L,sy0+31,0],[sx0+L,sy0+31,24],'#5e4128',2.4,{ink:true}),line3([sx0+L,sy0+31,24],[sx0+6,sy0+31,H+22],'#5e4128',2.2,{ink:true}),line3([sx0+6,sy0+31,H],[sx0+6,sy0+31,H+22],'#5e4128',2.4,{ink:true}));
-    prop({bx:[sx0-2,sy0-2,sx0+L+2,sy0+34,H+24],ky:sy0+32,parts:tag(parts,'st'),house:B.hs});B.stairs={x0:sx0,y0:sy0,L,w:30,bottom:[sx0+L+16,sy0+15],top:[sx0+14,sy0+15]};
-    B.scala=ZM.scala?ZM.scala({hs:B.hs,H,bot:[sx0+L+16,sy0+15],foot:[sx0+L,sy0+15],head:[sx0+6,sy0+15],land:[sx0+22,sy0+48]}):null}
+  for(const[tx,ty] of[[x+150,y+120],[x+222,y+92],[x+120,y+175]]){table(B,tx-14,ty-14,28,28,22,true);B.in(candle(B,tx,ty,22),[tx-3,ty-3,tx+3,ty+3,30]);
+    B.in([...cyl(tx+6,ty+5,22,4.4,.8,'bone',{n:10}),...cyl(tx-6,ty+6,22,2,4.4,'stairWood',{n:7})],[tx-9,ty,tx+11,ty+10,28],ty+10);// (14 ottobre) un piatto e un boccale
+   for(const a of[0,2.1,4.2]){const sx2=tx+Math.cos(a)*24,sy2=ty+Math.sin(a)*24;stool(B,sx2,sy2)}}
+  // la scala lungo il muro nord, da est verso ovest: dieci gradini fino al piano di sopra (il pianerottolo nell'angolo nord-ovest). (Denis,
+  // 14 ottobre: «falle più spaziose e belle») larga 44 (prima 30): ogni gradino col corpo scuro e la pedata chiara che sporge sul gradino
+  // sotto, la passatoia rossa col bordo d'oro che scende anche sulle alzate; sul lato aperto il fianco a pannelli, il cosciale lungo i nasi
+  // dei gradini, una colonnina per gradino, il corrimano e i due pilastrini col pomolo. Si vede anche da sopra, nel buco del solaio (tag st);
+  // al piede il bottone «Sali al piano di sopra», sul pianerottolo «Scendi» (motore.js, ZM.scala)
+  {const L=SL,n=10,run=L/n,rise=H/n,yo=sy0+SW,parts=[];solid(sx0,sy0,L,SW);
+    const nose=u=>rise+(L+1.6-u)*rise/run,ua=L-(n-1)*run+1.6;// la linea dei nasi (z alla distanza u dal piede del muro ovest), il naso più in alto
+    for(let i=0;i<n;i++){const x0=sx0+L-(i+1)*run,z=(i+1)*rise,ya=sy0+SW*.24,yb=sy0+SW*.76,X=x0+run+.6,z0=i*rise;
+      E(parts,...box(x0,sy0,0,run+.5,SW,z-2.4,'stairDark',{noOut:true}));// il corpo (alzata e fianco)
+      E(parts,...box(x0-.5,sy0,z-2.4,run+2.1,SW+1.2,2.4,'stairWood',{noFoot:true,ow:1.2}));// la pedata col naso
+      parts.push(face([x0,yb,z+.06],[x0+run+1.6,yb,z+.06],[x0+run+1.6,ya,z+.06],[x0,ya,z+.06],'runner','t',{tex:runnerT}));// la passatoia sulla pedata
+      if(z-2.4-z0>1)parts.push(face([X,yb,z0],[X,ya,z0],[X,ya,z-2.4],[X,yb,z-2.4],'runner','e',{tex:runnerT}))}// e sull'alzata
+    // il fianco a pannelli sotto la scala e il cosciale lungo i nasi
+    E(parts,...prismX(sx0,yo+.2,1.2,[[ua-1,0],[L+1,0],[ua-1,nose(ua-1)-8]],'plankD',{out:'profile',ow:1.4,texF:panelT}));
+    E(parts,...prismX(sx0,yo+.2,2.4,[[ua-1,nose(ua-1)+2.5],[ua-1,nose(ua-1)-8],[L+3,Math.max(.1,nose(L+3)-8)],[L+3,nose(L+3)+2.5]],'stairWood',{ow:1.4}));
+    // le colonnine (una per gradino, sul cosciale), il pilastrino col pomolo in fondo, il corrimano 28 sopra i nasi fino al pilastrino in cima
+    // (è quello della ringhiera di sopra, sul bordo del buco: in cima si esce verso sud, a ovest del pilastrino)
+    const yB=yo+1.4,rail=u=>nose(u)+28;
+    for(let i=0;i<n;i++){const u=L-(i+.5)*run;E(parts,line3([sx0+u,yB,nose(u)+2.5],[sx0+u,yB,rail(u)-1],'#4a3220',1.8,{ink:true}))}
+    E(parts,...newel(sx0+L+1.5,yB,0,34));
+    E(parts,line3([sx0+L+1.5,yB,rail(L+1.5)-2],[sx0+16,yB,H+28],'#6a4628',3.4,{ink:true}),line3([sx0+L+1.5,yB,rail(L+1.5)-.6],[sx0+16,yB,H+29.4],'#a07850',1));
+    prop({bx:[sx0-2,sy0-2,sx0+L+6,yo+4,H+40],ky:yo+2,parts:tag(parts,'st'),house:B.hs});B.stairs={x0:sx0,y0:sy0,L,w:SW,bottom:[sx0+L+16,sy0+SW/2],top:[sx0+14,sy0+SW/2]};
+    B.scala=ZM.scala?ZM.scala({hs:B.hs,H,bot:[sx0+L+16,sy0+SW/2],foot:[sx0+L,sy0+SW/2],head:[sx0+6,sy0+SW/2],land:[sx0+12,yo+18]}):null}
   // il piano di sopra: le camere della locanda (tre letti, l'armadio, il baule, lo scrittoio sotto la finestra con la candela, la Pompa tattica
   // col gesso sul muro nord) e la ringhiera intorno al buco della scala; i solidi sono di sopra (lv:1). Le cose alte stanno contro il muro nord
   // (dietro a tutto, per la telecamera), davanti al pianerottolo niente
@@ -143,16 +234,22 @@ def('locanda',function(x,y,w,d){const H=92,sx0=x+14,sy0=y+12,SL=118;// (la scala
     B.solidUp(x+152,y+th+62,30,16);B.up([...box(x+152,y+th+62,U,30,16,14,'plankD',{ow:1.6}),...box(x+151,y+th+61,U+14,32,18,3,'wood',{noFoot:true,ow:1.4})],[x+150,y+th+60,x+184,y+th+80,U+18]);
     {const dx=x+w*.6-18,dy=y+th+2;B.solidUp(dx,dy,36,20);B.up([...box(dx,dy,U+20,36,20,3,'wood',{noFoot:true,ow:1.6}),...box(dx+2,dy+2,U,3,3,20,'wood',{noOut:true}),...box(dx+31,dy+2,U,3,3,20,'wood',{noOut:true}),...box(dx+2,dy+15,U,3,3,20,'wood',{noOut:true}),...box(dx+31,dy+15,U,3,3,20,'wood',{noOut:true}),...candle(B,dx+8,dy+8,U+23)],[dx-2,dy-2,dx+38,dy+22,U+32]);
       B.solidUp(dx+14,dy+28,8,8);B.up([...cyl(dx+18,dy+32,U,4,13,'wood',{n:7,r1:4.6})],[dx+12,dy+26,dx+24,dy+38,U+14])}
-    {const yR=sy0+33,xR=sx0+SL+2,parts=[];for(const px of[sx0+16,sx0+52,sx0+88,xR])E(parts,line3([px,yR,U],[px,yR,U+24],'#5e4128',2.4,{ink:true}));
-      E(parts,line3([sx0+16,yR,U+24],[xR,yR,U+24],'#5e4128',2.2,{ink:true}),line3([sx0+16,yR,U+12],[xR,yR,U+12],'#5e4128',1.6,{ink:true}),line3([xR,yR,U+24],[xR,y+th+1,U+24],'#5e4128',2.2,{ink:true}),line3([xR,yR,U+12],[xR,y+th+1,U+12],'#5e4128',1.6,{ink:true}));
-      B.up(parts,[sx0+14,y+th,xR+2,yR+2,U+26],yR+1);B.solidUp(sx0+10,y+th,SL-8,yR-y-th+2)}
+    // la ringhiera intorno al buco della scala, come quella della scala: pilastrini agli angoli, una colonnina ogni 9, il corrimano e il
+    // listello basso; in cima alla scala si esce verso sud, a ovest del primo pilastrino
+    {const yR=sy0+SW+2.4,xR=sx0+SL+2,y1=y+th+1,parts=[];E(parts,...newel(sx0+16,yR,U,30),...newel(xR,yR,U,30));
+      for(let px=sx0+25;px<xR-4;px+=9)E(parts,line3([px,yR,U+3],[px,yR,U+27],'#4a3220',1.8,{ink:true}));
+      for(let py=yR-9;py>y1+3;py-=9)E(parts,line3([xR,py,U+3],[xR,py,U+27],'#4a3220',1.8,{ink:true}));
+      E(parts,line3([sx0+16,yR,U+28],[xR,yR,U+28],'#6a4628',3.2,{ink:true}),line3([sx0+16,yR,U+29.3],[xR,yR,U+29.3],'#a07850',1),line3([sx0+16,yR,U+3],[xR,yR,U+3],'#4a3220',2,{ink:true}),
+        line3([xR,yR,U+28],[xR,y1,U+28],'#6a4628',3.2,{ink:true}),line3([xR,yR,U+29.3],[xR,y1,U+29.3],'#a07850',1),line3([xR,yR,U+3],[xR,y1,U+3],'#4a3220',2,{ink:true}));
+      B.up(parts,[sx0+12,y+th,xR+5,yR+5,U+40],yR+1);B.solidUp(sx0+10,y+th,SL-8,yR-y-th+2)}
     {const gx=x+320,f=B.inN.find(q=>gx>q.a+30&&gx<q.b-2);if(P.wallGun)P.wallGun(gx,y+th+.6,U+34,'x','tattica',2000,f&&f.face,B.hs);B.gunUp=[gx,y+th+34]}}
   // fuori: l'insegna col corvo appesa sopra la porta sulla strada e la lanterna
   {const cx=x+w*.5,yy=y+d,parts=[line3([cx-30,yy+1,H+8],[cx-30,yy+16,H+8],'#34363e',2.4,{ink:true}),line3([cx-30,yy+16,H+8],[cx-30,yy+16,H-2],'#1d1e23',1.2),plane(cx-48,yy+16,H-28,36,26,'x','insegnaCorvo',(w2,h2)=>{ctx.fillStyle='#2e1e16';ctx.fillRect(0,0,w2,h2);ink(1.6);ctx.strokeRect(1,1,w2-2,h2-2);
       ctx.fillStyle='#14100c';ctx.beginPath();ctx.ellipse(w2/2,h2*.52,7,4.6,-.2,0,TAU);ctx.fill();ctx.beginPath();ctx.moveTo(w2/2+5,h2*.45);ctx.lineTo(w2/2+12,h2*.36);ctx.lineTo(w2/2+6,h2*.55);ctx.fill();ctx.beginPath();ctx.arc(w2/2-6,h2*.42,3.2,0,TAU);ctx.fill();
       ctx.fillStyle='#c8a850';ctx.beginPath();ctx.moveTo(w2/2-9,h2*.4);ctx.lineTo(w2/2-12.5,h2*.44);ctx.lineTo(w2/2-9,h2*.46);ctx.fill();ctx.fillStyle='#ff5040';ctx.fillRect(w2/2-7,h2*.38,1.2,1.2);
       ctx.font='400 5.5px "Lilita One",system-ui';ctx.textAlign='center';ctx.fillStyle='#c8a850';ctx.fillText('LOCANDA',w2/2,h2*.2);ctx.fillText('DEL CORVO',w2/2,h2*.92)})];
-    ZM.lanternParts(parts,cx+30,yy+12,H-20,{s:1,r:150,a:.5});E(parts,line3([cx+30,yy+1,H+2],[cx+30,yy+12,H+2],'#34363e',2.2,{ink:true}));prop({bx:[cx-52,yy,cx+40,yy+20,H+12],parts,noSplit:true})}
+    ZM.lanternParts(parts,cx+30,yy+12,H-20,{s:1,r:150,a:.5});E(parts,line3([cx+30,yy+1,H+2],[cx+30,yy+12,H+2],'#34363e',2.2,{ink:true}));
+    prop({bx:[cx-52,yy,cx+40,yy+20,H+12],parts:tag(parts,'wS'),noSplit:true,house:B.hs})}// (14 ottobre: con l'eroe dentro sfumano col muro, prima restavano sospese in mezzo alla sala)
   return B},a=>[a[0]+a[2]/2,a[1]+a[3]/2]);
 // ------------------------------------------------------------------ la CAPPELLA: navata di pietra alta col tetto d'ardesia, portale a ovest con
 // le ante, finestre a nord e a sud (barriere), il campanile staccato a nord-est con la campana che dondola; dentro le panche e l'altare

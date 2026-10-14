@@ -359,3 +359,15 @@ Tutto quello che c'è, con numeri e prove, sta in `docs/anteprima-48.md`; qui co
   inclinazione o zoom; `W.dbg.zLive` per disegnarli dal vivo. La griglia dei solidi (`SG`, caselle di 64 px) per `hit()`: vince il primo solido
   creato come prima; `SGV` quando la Bara si sposta. Risoluzione automatica: con «Qualità automatica» se per 2 s i fotogrammi non stanno nei
   60 al secondo la mappa passa da 2 a 1,5 pixel per punto (e resta così per le partite dopo), solo dopo gli effetti bassi.
+- **Pareti dritte** (seconda richiesta, 14 ottobre): il ref degli edifici nuovi (`BLD`) è il loro riquadro nel mondo (`BOXOF`), come la casa e
+  la cripta di `prop.js` (`REFOF`): la piega va dritta da un muro all'altro, il muro davanti all'eroe resta in piedi e gli altri si aprono via da
+  lui (prima, col centro, tutto l'edificio pendeva da una parte). `r.k` e il gruppo restano: tutto ciò che è attaccato all'edificio usa lo
+  stesso riquadro, anche fuori dai muri (il campanile prolunga la piega della Cappella).
+- **Locanda e Segheria più belle**: la scala larga 44 con passatoia, colonnine, corrimano e pilastrini (`newel`), la ringhiera di sopra
+  uguale; il camino di pietra (stipiti, bocca incassata, ciocchi `prismY` sugli alari, brace in `fn3` ferma con `LOWFX`, mensola davanti alla
+  cappa: messa sopra stipiti e cappa veniva coperta, vedi l'ordine dentro un prop), il tappeto (`rug`, nelle macchie del terreno), il banco;
+  `P.lumeAppeso(B,x,y,z)` (lanterna a catena: fiamma e luce con `house`, si accendono quando l'eroe entra) e `P.attrezziMuro(B,x)` (lame e
+  segone appesi alla faccia di dentro del muro nord, con `host`). L'insegna fuori dalla porta della Locanda ha il tag `wS` e sfuma col muro.
+- **Audio carico**: le armi automatiche (`disegno_armi.js`, `SN`) e i suoni degli zombie, dei bossoli e delle barriere guardano `audioLv()`
+  (`src/js/05-audio.js`, circa i suoni partiti nell'ultimo mezzo secondo) e lasciano via gli strati in più; dettagli e misure in
+  `docs/difetti-48.md`.

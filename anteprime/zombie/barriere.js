@@ -14,8 +14,10 @@ material('ironR',['#5a4034','#3a2820','#7e5a46'],'iron');// il ferro arrugginito
 const ALL=[];
 // ------------------------------------------------------------------ i suoni (forti vicino, piano lontano, a destra o a sinistra: ZM.audio.place)
 function suono(w,x,y){try{if(typeof AU==='undefined'||!AU.ctx||!AU.on.sfx||AU.ctx.state!=='running')return;const P0=ZM.audio?ZM.audio.place(x,y):{k:1,rev:.2},k=P0.k,t=AU.ctx.currentTime+.01;if(k<.01)return;
-  if(w==='vetro'){fThump(t,320,110,.07,.22*k,.2);fNoise(t,.55,'highpass',4200,.7,.16*k,{rev:P0.rev});for(let i=0;i<11;i++)M.glass(t+.01+Math.random()*.42,(1-i*.06)*k,VR(1700+i*190,.18))}
-  else if(w==='asse'){fNoise(t,.13,'bandpass',VR(1100,.15),1.3,.3*k);M.wood(t,1.1*k,VR(230,.08));fNoise(t+.02,.3,'bandpass',VR(480,.2),2.2,.1*k,{f2:220});M.wood(t+.34,.45*k,VR(170,.1))}
+  // (difetti 48) con l'audio carico (src/js/05-audio.js audioLv) meno schegge di vetro e il legno senza il secondo tonfo
+  const lv=typeof audioLv==='function'?audioLv():0;
+  if(w==='vetro'){fThump(t,320,110,.07,.22*k,.2);fNoise(t,.55,'highpass',4200,.7,.16*k,{rev:P0.rev});for(let i=0,n=lv>1?3:lv?5:11;i<n;i++)M.glass(t+.01+Math.random()*.42,(1-i*.06)*k,VR(1700+i*190,.18))}
+  else if(w==='asse'){fNoise(t,.13,'bandpass',VR(1100,.15),1.3,.3*k);M.wood(t,1.1*k,VR(230,.08));fNoise(t+.02,.3,'bandpass',VR(480,.2),2.2,.1*k,{f2:220});if(!lv)M.wood(t+.34,.45*k,VR(170,.1))}
   else if(w==='ammacca'){M.metal(t,.9*k,VR(430,.06),.5);fThump(t,190,70,.1,.22*k)}
   else if(w==='sbarra'){M.metal(t,1.2*k,VR(300,.05),.9);fNoise(t,.42,'bandpass',VR(2400,.1),3,.12*k,{f2:900});M.metal(t+.32,.5*k,VR(620,.08),.4);M.metal(t+.44,.3*k,VR(700,.08),.3)}
   else if(w==='inchioda'){M.wood(t,.55*k,VR(260,.06));for(let i=0;i<3;i++){M.wood(t+.05+i*.11,.75*k,VR(430,.05));M.metal(t+.05+i*.11,.22*k,VR(1900,.05),.18)}}

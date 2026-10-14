@@ -7,11 +7,15 @@ function mkNoise(c,sec,kind){const b=c.createBuffer(1,c.sampleRate*sec,c.sampleR
 function mkImpulse(c,sec,decay){const len=c.sampleRate*sec,b=c.createBuffer(2,len,c.sampleRate);
   for(let ch=0;ch<2;ch++){const d=b.getChannelData(ch);let lp=0;for(let i=0;i<len;i++){const w=Math.random()*2-1;lp+=(w-lp)*(.35-.25*i/len);d[i]=lp*Math.pow(1-i/len,decay)}}return b}
 function initAudio(){
-  if(AU.ctx){if(AU.ctx.state==='suspended')AU.ctx.resume();return}
+  // (difetti 48) on the phone the audio can stay 'interrupted' (a call, Siri, another app): the next tap starts it again, like when suspended
+  if(AU.ctx){if(AU.ctx.state!=='running'&&AU.ctx.state!=='closed'&&!document.hidden)AU.ctx.resume();return}
   try{
     const c=new(window.AudioContext||window.webkitAudioContext)();AU.ctx=c;actx=c;
     const comp=c.createDynamicsCompressor();comp.threshold.value=-18;comp.knee.value=14;comp.ratio.value=3.5;comp.attack.value=.004;comp.release.value=.25;comp.connect(c.destination);
-    AU.master=c.createGain();AU.master.gain.value=.9;AU.master.connect(comp);
+    // (difetti 48) a phone speaker plays nothing under 40 Hz, but those lows (the Becchino's steps and shovel, the blasts) filled the
+    // compressor and the speaker: a gentle high-pass before the compressor
+    const hp=c.createBiquadFilter();hp.type='highpass';hp.frequency.value=40;hp.Q.value=.6;hp.connect(comp);
+    AU.master=c.createGain();AU.master.gain.value=.9;AU.master.connect(hp);
     AU.music=c.createGain();AU.music.gain.value=AU.on.music?.38:0;AU.music.connect(AU.master);
     AU.sfxBus=c.createGain();AU.sfxBus.gain.value=AU.on.sfx?.8:0;AU.sfxBus.connect(AU.master);
     AU.rev=c.createConvolver();AU.rev.buffer=mkImpulse(c,3,2.4);const rv=c.createGain();rv.gain.value=.6;AU.rev.connect(rv);rv.connect(AU.master);
@@ -35,8 +39,15 @@ const VOLM=()=>SAVE&&SAVE.set?SAVE.set.mv*1.25:1,VOLS=()=>SAVE&&SAVE.set?SAVE.se
 function duckMusic(v){AU.duck=v;if(AU.ctx&&AU.on.music)AU.music.gain.setTargetAtTime(.38*v*VOLM(),AU.ctx.currentTime,.3)}
 document.addEventListener('visibilitychange',()=>{if(!AU.ctx)return;if(document.hidden)AU.ctx.suspend();else AU.ctx.resume()});
 
+// --- the load: about how many sound effects started in the last half second (every route without a track is one). (difetti 48, Denis:
+// «l'audio dopo il quinto round va a farsi fottere») On the zombie map, with the automatic guns (9–16 shots a second) and many zombies, up
+// to 800 audio nodes a second were made, more than a phone can play in time: the sounds that repeat look at audioLv() and leave out their
+// extra layers (the gun's mechanism, the tails, the casings, the second noises, the voices), 1 = dense, 2 = full
+AU.ld=0;AU.ldT=0;
+function audioLoad(){const c=AU.ctx;if(!c)return 0;const t=c.currentTime,d=t-AU.ldT;if(d>0){AU.ld*=Math.exp(-d/.5);AU.ldT=t}return AU.ld}
+function audioLv(){const l=audioLoad();return l>55?2:l>30?1:0}
 // --- routing: dest is a track (music) or null (sound effect) ---
-function route(node,tr,rev,dly){const c=AU.ctx;if(!tr&&AU.pan&&c.createStereoPanner){const p=c.createStereoPanner();p.pan.value=AU.pan;node.connect(p);p.connect(AU.sfxBus)}else node.connect(tr?tr.bus:AU.sfxBus);
+function route(node,tr,rev,dly){const c=AU.ctx;if(!tr){audioLoad();AU.ld++}if(!tr&&AU.pan&&c.createStereoPanner){const p=c.createStereoPanner();p.pan.value=AU.pan;node.connect(p);p.connect(AU.sfxBus)}else node.connect(tr?tr.bus:AU.sfxBus);
   if(rev){const s=c.createGain();s.gain.value=rev;node.connect(s);s.connect(tr?AU.mRev:AU.sRev)}
   if(dly&&tr){const s=c.createGain();s.gain.value=dly;node.connect(s);s.connect(AU.dly)}}
 function adsr(g,t,a,peak,dur,rel){g.gain.setValueAtTime(0,t);g.gain.linearRampToValueAtTime(peak,t+a);g.gain.setValueAtTime(peak,t+Math.max(a,dur));g.gain.exponentialRampToValueAtTime(.0005,t+Math.max(a,dur)+rel)}

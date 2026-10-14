@@ -96,3 +96,57 @@ basta». Visto sull'**anteprima 48** (https://claude.ai/artifact/1PeXgrLWXwA3QGK
   `barriere_prova`, `macchine_prova`, `comparse_prova`, `bara_usi`, `navmappa`, `navtest`, `visibilita`, `ordine`, `ravvicinati`) e del gioco
   (`zombie`, `menu2`, `menu3`, `salvataggio`, `avvio`, `meta2`, `mig`, `gems`, una partita per capitolo) senza errori. Visibilità
   (1.524 punti visibili su 1.890) e ordine di disegno (12.055 px) dell'area di prova identici alla versione prima delle correzioni.
+
+## Seconda richiesta (14 ottobre)
+
+Denis: «nell'edificio dove c'è il mitra a muro e nella locanda del corvo vorrei che le pareti di questi edifici non fossero storte. migliora
+anche le scale, falle più spaziose e belle. migliora il design di tutto, tipo del camino ecc.», poi «ah sì, l'audio dopo il quinto round va a
+farsi fottere». L'edificio col Mitra a muro è la Segheria.
+
+### Pareti storte
+- **Causa**: la piega (le cose alte si piegano via dall'eroe) degli edifici nuovi partiva dal centro dell'edificio (un punto): tutto
+  l'edificio pendeva da una parte sola, anche il muro che l'eroe aveva davanti o accanto. Con l'eroe dentro, vicino al muro est, il muro est
+  pendeva verso l'interno, sopra di lui (−11,8 px in cima alla Locanda, −17,9 alla Segheria); davanti al muro del Mitra la cima pendeva fino
+  a 17 px verso il centro dell'edificio.
+- **Correzione** (`prop_borgo.js`, `BOXOF`): il ref degli edifici nuovi è il loro riquadro, come la casa del camposanto e la cripta: la piega
+  va dritta da un muro all'altro, il muro davanti all'eroe resta in piedi e gli altri si aprono via da lui come una scatola (il muro est,
+  dall'interno: +5,8 px alla Locanda, +8,7 alla Segheria, verso fuori). Gli edifici continuano a ondeggiare girando la visuale quanto la casa e
+  il fienile (`ondeggia_prova.js`: Locanda 68 px, Segheria 69, Cappella 55, campanile 68, Fucina 36; casa 66, fienile 68).
+
+### Scala della Locanda
+- Larga 44 (prima 30, nella fascia 18–34 dei corridoi da evitare). Ogni gradino ha il corpo di legno scuro e la pedata di noce chiaro che
+  sporge sul gradino sotto; la passatoia rossa col bordo d'oro e i rombi scende sulle pedate e sulle alzate. Sul lato aperto ci sono il fianco a
+  pannelli, il cosciale lungo i nasi dei gradini, una colonnina per gradino, il corrimano e il pilastrino col pomolo in fondo. Di sopra la
+  ringhiera intorno al buco è fatta allo stesso modo, con un pilastrino agli angoli e una colonnina ogni 9 px. In cima si esce verso sud, a
+  ovest del primo pilastrino. Buco del solaio, solidi e percorso della salita (`ZM.scala`) seguono la larghezza nuova. La finestra ovest della
+  sala è più a sud (dava contro il fianco della scala larga: `barriere_prova.js` lo segnava) e il camino è 10 px più a est, così tra il piede
+  della scala e il camino restano 38 px (lì si preme «Sali», niente corridoi da 18–34).
+
+### Design (camino e il resto)
+- **Camino della Locanda**: focolare di pietra con due stipiti e la bocca incassata, il fondo annerito, i ciocchi sugli alari e la brace che
+  pulsa (ferma con `LOWFX`). Sopra c'è la trave di noce per mensola, con due candele accese, la brocca di peltro e due boccali. La cappa di
+  pietra sale fino al soffitto, annerita dal fumo, con la targa ovale del corvo. Davanti ci sono la lastra del focolare e il tappeto con le
+  frange, dipinto nel pavimento. Il comignolo sul tetto è allineato al camino. Sui tavoli, accanto alla candela, un piatto e un boccale.
+- **Banco**: piano di noce lucido che sporge verso i clienti, poggiapiedi d'ottone, boccali (uno con la schiuma) e il barilotto con la spina.
+- L'insegna e la lanterna fuori dalla porta sfumano col muro sud quando l'eroe è dentro: prima restavano sospese in mezzo alla sala.
+- **Segheria**: due lanterne appese sotto il tetto che si accendono quando l'eroe entra (prima dentro era quasi buio); sul muro nord, dentro,
+  due lame circolari un po' arrugginite e il segone a due manici.
+
+### Audio dopo il quinto round
+- **Misura** (prova nel gioco vero dal round 4 all'8 in tempo reale, eroe invincibile, e un profilo di chi crea i nodi audio): la partita
+  non cambia di colpo al round 5. Cambia l'arma: con la pistola dei primi round l'audio crea in media 158 nodi al secondo. Con le armi
+  automatiche, che verso il round 5 arrivano dalla Bara o dal muro, si sale a 350 col Mitra e a 352 con la Mitragliatrice, con picchi di 800.
+  Due terzi venivano dall'arma: il rumore del meccanismo a ogni colpo (una nota di metallo a quattro parziali), la coda dello sparo e i
+  bossoli, ognuno con tre rimbalzi a quattro note. Il resto veniva da colpi, lamenti, morti e passi degli zombie. Su un telefono è più di
+  quanto l'audio riesca a suonare in tempo: gracchia, salta o si ammutolisce.
+- **Correzione**: un misuratore di carico in `route` (`audioLoad`/`audioLv` in `src/js/05-audio.js`: circa i suoni partiti nell'ultimo mezzo
+  secondo).
+  - Nelle armi automatiche il meccanismo suona al massimo 4 volte al secondo e la coda 5. Il primo colpo di ogni raffica e i colpi singoli
+    suonano come prima.
+  - Con l'audio carico: bossoli al massimo uno ogni 50–160 ms e senza i rimbalzi dopo il primo; colpi sugli zombie più radi; lamenti di
+    dolore, voci della morte e voci di chi esce da terra più radi o leggeri; passi solo dei vicini; meno schegge di vetro.
+  - Un passa-alto a 40 Hz prima del compressore: quei bassi l'altoparlante del telefono non li suona, ma riempivano compressore e
+    altoparlante.
+  - L'audio rimasto «interrotto» sul telefono riparte al tocco.
+- **Risultato**: col Mitra da 350 a 198 nodi al secondo, con la Mitragliatrice da 352 a 192 (la pistola dei primi round: 158).
+  Da riprovare sul telefono vero.

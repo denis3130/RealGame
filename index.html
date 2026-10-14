@@ -1909,11 +1909,15 @@ function mkNoise(c,sec,kind){const b=c.createBuffer(1,c.sampleRate*sec,c.sampleR
 function mkImpulse(c,sec,decay){const len=c.sampleRate*sec,b=c.createBuffer(2,len,c.sampleRate);
   for(let ch=0;ch<2;ch++){const d=b.getChannelData(ch);let lp=0;for(let i=0;i<len;i++){const w=Math.random()*2-1;lp+=(w-lp)*(.35-.25*i/len);d[i]=lp*Math.pow(1-i/len,decay)}}return b}
 function initAudio(){
-  if(AU.ctx){if(AU.ctx.state==='suspended')AU.ctx.resume();return}
+  // (difetti 48) on the phone the audio can stay 'interrupted' (a call, Siri, another app): the next tap starts it again, like when suspended
+  if(AU.ctx){if(AU.ctx.state!=='running'&&AU.ctx.state!=='closed'&&!document.hidden)AU.ctx.resume();return}
   try{
     const c=new(window.AudioContext||window.webkitAudioContext)();AU.ctx=c;actx=c;
     const comp=c.createDynamicsCompressor();comp.threshold.value=-18;comp.knee.value=14;comp.ratio.value=3.5;comp.attack.value=.004;comp.release.value=.25;comp.connect(c.destination);
-    AU.master=c.createGain();AU.master.gain.value=.9;AU.master.connect(comp);
+    // (difetti 48) a phone speaker plays nothing under 40 Hz, but those lows (the Becchino's steps and shovel, the blasts) filled the
+    // compressor and the speaker: a gentle high-pass before the compressor
+    const hp=c.createBiquadFilter();hp.type='highpass';hp.frequency.value=40;hp.Q.value=.6;hp.connect(comp);
+    AU.master=c.createGain();AU.master.gain.value=.9;AU.master.connect(hp);
     AU.music=c.createGain();AU.music.gain.value=AU.on.music?.38:0;AU.music.connect(AU.master);
     AU.sfxBus=c.createGain();AU.sfxBus.gain.value=AU.on.sfx?.8:0;AU.sfxBus.connect(AU.master);
     AU.rev=c.createConvolver();AU.rev.buffer=mkImpulse(c,3,2.4);const rv=c.createGain();rv.gain.value=.6;AU.rev.connect(rv);rv.connect(AU.master);
@@ -1937,8 +1941,15 @@ const VOLM=()=>SAVE&&SAVE.set?SAVE.set.mv*1.25:1,VOLS=()=>SAVE&&SAVE.set?SAVE.se
 function duckMusic(v){AU.duck=v;if(AU.ctx&&AU.on.music)AU.music.gain.setTargetAtTime(.38*v*VOLM(),AU.ctx.currentTime,.3)}
 document.addEventListener('visibilitychange',()=>{if(!AU.ctx)return;if(document.hidden)AU.ctx.suspend();else AU.ctx.resume()});
 
+// --- the load: about how many sound effects started in the last half second (every route without a track is one). (difetti 48, Denis:
+// «l'audio dopo il quinto round va a farsi fottere») On the zombie map, with the automatic guns (9–16 shots a second) and many zombies, up
+// to 800 audio nodes a second were made, more than a phone can play in time: the sounds that repeat look at audioLv() and leave out their
+// extra layers (the gun's mechanism, the tails, the casings, the second noises, the voices), 1 = dense, 2 = full
+AU.ld=0;AU.ldT=0;
+function audioLoad(){const c=AU.ctx;if(!c)return 0;const t=c.currentTime,d=t-AU.ldT;if(d>0){AU.ld*=Math.exp(-d/.5);AU.ldT=t}return AU.ld}
+function audioLv(){const l=audioLoad();return l>55?2:l>30?1:0}
 // --- routing: dest is a track (music) or null (sound effect) ---
-function route(node,tr,rev,dly){const c=AU.ctx;if(!tr&&AU.pan&&c.createStereoPanner){const p=c.createStereoPanner();p.pan.value=AU.pan;node.connect(p);p.connect(AU.sfxBus)}else node.connect(tr?tr.bus:AU.sfxBus);
+function route(node,tr,rev,dly){const c=AU.ctx;if(!tr){audioLoad();AU.ld++}if(!tr&&AU.pan&&c.createStereoPanner){const p=c.createStereoPanner();p.pan.value=AU.pan;node.connect(p);p.connect(AU.sfxBus)}else node.connect(tr?tr.bus:AU.sfxBus);
   if(rev){const s=c.createGain();s.gain.value=rev;node.connect(s);s.connect(tr?AU.mRev:AU.sRev)}
   if(dly&&tr){const s=c.createGain();s.gain.value=dly;node.connect(s);s.connect(AU.dly)}}
 function adsr(g,t,a,peak,dur,rel){g.gain.setValueAtTime(0,t);g.gain.linearRampToValueAtTime(peak,t+a);g.gain.setValueAtTime(peak,t+Math.max(a,dur));g.gain.exponentialRampToValueAtTime(.0005,t+Math.max(a,dur)+rel)}
@@ -10030,7 +10041,7 @@ function cassaMun(tipo,x,y,t,sc){sc=sc||1;const M=MUNC[tipo],bob=Math.sin(t*3)*1
 // what: 'sparo' (shot), 'ricarica' (the reload, timed on the animation), 'vuoto' (empty click), 'pompa' (the pump), 'cartuccia' (one shell
 // pushed in), 'giri' (the machine gun spinning up), 'bossolo' (a case landing), 'esplosione' (the rocket's blast), 'presa' (ammo picked up).
 // x: where it happens (for the left-right pan), dt: start this many seconds later (scheduled on the audio clock)
-function crack(t,f,v){fNoise(t,.032,'bandpass',f,.7,v,{att:.0008});fNoise(t,.014,'highpass',5200,.7,v*.55,{att:.0005})}
+function crack(t,f,v,lv){fNoise(t,.032,'bandpass',f,.7,v,{att:.0008});if(!lv)fNoise(t,.014,'highpass',5200,.7,v*.55,{att:.0005})}
 function tail(t,d,v,rv){fNoise(t+.02,d,'lowpass',VR(900,.1),.7,v,{brown:true,f2:180,att:.012,rev:rv||.55})}
 // a spent case landing (punto 48): lighter and more natural than before, never over the shots: brass rings briefly in a few partials not
 // quite in tune with a dry click and a softer second bounce; the shotgun's plastic shell is a dull «toc»
@@ -10039,6 +10050,12 @@ function case_(t,n,v,shell){v*=.6;for(let i=0;i<n;i++){const tt=t+i*.06+Math.ran
   else{fModal(tt,VR(3900,.1),[1,VR(2.42,.03),VR(3.98,.03),VR(5.6,.04)],[.07,.05,.035,.025],v,.05);fNoise(tt,.008,'highpass',6500,.7,v*.8,{att:.0006});
     fModal(tt+VR(.11,.25),VR(4400,.1),[1,VR(2.42,.03)],[.05,.035],v*.45,.04)}}}
 function clack(t,f,v,len){M.metal(t,v,VR(Math.min(f,2300),.04),len||.2);fNoise(t,.02,'highpass',3800,.7,v*.25)}
+// (difetti 48, Denis: «l'audio dopo il quinto round va a farsi fottere») the automatic guns fire 9–16 shots a second: the mechanism and the
+// tail of every shot piled up by the dozen, with the casings and the zombies up to 800 audio nodes a second, and the phone's audio could
+// not keep up. The mechanism now plays at most 4 times a second and the tail 5 (the ear hears the burst, not each shot), half again when
+// the audio is full (audioLv, src/js/05-audio.js), and with the audio busy the crack loses its hiss. A single shot, and the first of every
+// burst, sounds as before
+const SN={};
 function suono(id,what,x,dt){if(typeof AU==='undefined'||!AU.ctx||!AU.on.sfx)return;const t=AU.ctx.currentTime+.005+(dt||0),D=DATI[id]||{},R=D.rel||1;AU.pan=x==null?0:cl((x-180)/200,-.7,.7);
   try{if(what==='vuoto'){clack(t,2600,.7,.07);fThump(t,300,200,.02,.18)}
   else if(what==='bossolo'){case_(t,1,id==='pompa'||id==='tattica'?.05:.04,id==='pompa'||id==='tattica')}
@@ -10063,16 +10080,16 @@ function suono(id,what,x,dt){if(typeof AU==='undefined'||!AU.ctx||!AU.on.sfx)ret
     else{clack(t+.02,1300,.32,.15);fNoise(t+.03,.07,'bandpass',VR(2500,.1),1.4,.12,{f2:1500});
       fThump(t+R*.38,VR(260,.05),140,.05,.2);M.metal(t+R*.38,.3,VR(id==='pistola'?900:700,.05),.3);
       fThump(t+R*.73,VR(220,.05),110,.04,.25);clack(t+R*.73,1000,.48,.2);clack(t+R*.86,id==='pistola'?2200:1800,.58,.25);fNoise(t+R*.86,.04,'highpass',3500,.7,.15)}}
-  else if(what==='sparo'){
+  else if(what==='sparo'){const lv=typeof audioLv==='function'?audioLv():0,sn=SN[id]||(SN[id]={n:0,t:-9});if(t-sn.t>.4)sn.n=0;sn.t=t;const n=sn.n++,ev=ps=>!D.auto||n%(Math.max(1,Math.round(D.rate/ps))*(lv>1?2:1))===0;// (the first shot of a burst always whole)
     if(id==='pistola'){crack(t,VR(2600,.08),.75);fThump(t,VR(170,.06),60,.1,.85,.15);fNoise(t,.14,'lowpass',2200,.8,.45,{brown:true,f2:400});tail(t,.35,.12);clack(t+.045,2300,.42,.18)}
     else if(id==='revolver'){crack(t,VR(1900,.06),.9);fThump(t,VR(118,.05),42,.3,1.1,.3);fNoise(t,.32,'lowpass',1400,.8,.62,{brown:true,f2:170,rev:.35});tail(t,.75,.2,.7);M.metal(t+.01,.28,VR(1500,.05),.6);clack(t+.26,2800,.22,.12)}
-    else if(id==='mitraglietta'){crack(t,VR(3600,.1),.5);fThump(t,VR(230,.08),95,.055,.55);fNoise(t,.06,'bandpass',VR(1200,.1),1,.3);clack(t+.02,3000,.2,.1)}
-    else if(id==='mitra'){crack(t,VR(2900,.08),.56);fThump(t,VR(150,.06),55,.11,.75,.2);fNoise(t,.12,'bandpass',VR(900,.08),.9,.45);tail(t,.28,.1);clack(t+.03,1700,.25,.15)}
-    else if(id==='mitragliatrice'){crack(t,VR(2400,.08),.6);fThump(t,VR(115,.05),40,.12,.9,.2);fNoise(t,.12,'lowpass',1500,.8,.5,{brown:true,f2:160});tail(t,.25,.08);fNoise(t+.02,.03,'bandpass',VR(4200,.2),2,.06);clack(t+.03,3400,.12,.08)}
+    else if(id==='mitraglietta'){crack(t,VR(3600,.1),.5,lv);fThump(t,VR(230,.08),95,.055,.55);fNoise(t,.06,'bandpass',VR(1200,.1),1,.3);if(ev(4))clack(t+.02,3000,.2,.1)}
+    else if(id==='mitra'){crack(t,VR(2900,.08),.56,lv);fThump(t,VR(150,.06),55,.11,.75,.2);fNoise(t,.12,'bandpass',VR(900,.08),.9,.45);if(ev(5))tail(t,.28,.1);if(ev(4))clack(t+.03,1700,.25,.15)}
+    else if(id==='mitragliatrice'){crack(t,VR(2400,.08),.6,lv);fThump(t,VR(115,.05),40,.12,.9,.2);fNoise(t,.12,'lowpass',1500,.8,.5,{brown:true,f2:160});if(ev(5)){tail(t,.25,.08);fNoise(t+.02,.03,'bandpass',VR(4200,.2),2,.06)}if(ev(4))clack(t+.03,3400,.12,.08)}
     else if(id==='pompa'||id==='tattica'){const f=id==='tattica';crack(t,VR(f?1800:1500,.06),.75);fThump(t,VR(f?110:95,.05),34,f?.3:.38,1,.35);fNoise(t,f?.36:.45,'lowpass',f?1500:1200,.8,.75,{brown:true,f2:110,rev:.4});
       fNoise(t,.08,'bandpass',600,.8,.4);tail(t,f?.7:.9,.22,.7)}
     else if(id==='lanciafiamme'){fNoise(t,.13,'bandpass',VR(650,.25),.7,.2,{brown:true,f2:VR(380,.2)});fNoise(t,.08,'highpass',VR(2600,.3),.8,.05);if(Math.random()<.3)fThump(t,VR(70,.1),40,.15,.25,.2)}
-    else if(id==='tamburo'){crack(t,VR(3300,.1),.55);fThump(t,VR(200,.08),80,.06,.6);fNoise(t,.07,'bandpass',VR(1050,.1),1,.32);clack(t+.02,2700,.2,.1)}
+    else if(id==='tamburo'){crack(t,VR(3300,.1),.55,lv);fThump(t,VR(200,.08),80,.06,.6);fNoise(t,.07,'bandpass',VR(1050,.1),1,.32);if(ev(4))clack(t+.02,2700,.2,.1)}
     else if(id==='vapore'){fNoise(t,.55,'highpass',2600,.8,.32,{f2:5200,att:.01});fThump(t,VR(140,.05),55,.18,.85,.25);M.metal(t+.005,.45,VR(620,.05),.6);clack(t+.02,1900,.4,.2);fNoise(t+.12,.6,'bandpass',4200,1.4,.08,{f2:2200,att:.1})}
     else if(id==='risonatore'){fThump(t,VR(66,.05),26,.7,1,.45);vBell(null,t,40,2.4,.22);vBell(null,t+.04,52,2,.12);vChoir(null,t+.05,[52,59,64],1.6,.07);whoosh(t,.6,260,4200,.35,.3);fNoise(t,.08,'bandpass',3200,1.4,.2)}
     else if(id==='lanciarazzi'){fThump(t,VR(80,.05),30,.4,.9,.3);whoosh(t,.35,500,3200,.45,.2);fNoise(t,.12,'bandpass',900,.8,.5);fNoise(t+.05,.9,'highpass',2500,.7,.18,{f2:6000,att:.05,rev:.3});
@@ -17118,15 +17135,30 @@ const ANIM=ZM.anim=ZM.anim||[];
 // l'edificio interno di locanda e cappella) prende lo stesso ref, nel mondo (r.w), e chi li costruisce lo ritrova in .ref per attaccarci altre
 // cose (campanile, Forgia, armi a muro, Credenza) con ZM.group. KZ: un edificio più alto di KZ px si piega meno (r.k = KZ/altezza), così la cima
 // ondeggia girando la visuale quanto quella della casa e del fienile delle prime due zone (alte circa 150 px)
+// (Denis, 14 ottobre: «le pareti non devono essere storte») il ref di un edificio è il suo riquadro, come la casa e la cripta: la piega va dritta
+// da un muro all'altro, così il muro davanti all'eroe resta in piedi e gli altri si aprono via da lui come una scatola. Prima era il centro
+// (un punto): tutto l'edificio pendeva da una parte, anche il muro che l'eroe aveva davanti o accanto
 const BLD=new Set(['edificio','locanda','cappella','fucina','campanile']),KZ=155,kOf=(r,zt)=>{if(r)r.k=Math.min(r.k||1,KZ/Math.max(KZ,zt))};
+const BOXOF={edificio:a=>[a[0].x,a[0].y,a[0].x+a[0].w,a[0].y+a[0].d],campanile:a=>[a[0],a[1],a[0]+a[2],a[1]+a[2]]},boxOf=(name,a)=>(BOXOF[name]||(a=>[a[0],a[1],a[0]+a[2],a[1]+a[3]]))(a);
 const def=(name,f,rf)=>{rf=rf||(a=>typeof a[0]==='number'&&typeof a[1]==='number'?[a[0],a[1]]:a[0]&&typeof a[0]==='object'?[a[0].x+a[0].w/2,a[0].y+a[0].d/2]:null);P[name]=function(...a){const N=ZM.NAMES,sv=N.cur,sr=N.ref,sg=N.grp;N.cur=name;let r=N.grp||rf(a);
-    if(!N.grp&&r&&r.length<4&&BLD.has(name)){const q=ZM.toWorld(r[0],r[1]);r=[q[0],q[1]];r.w=true;N.grp=r}N.ref=r;
+    if(!N.grp&&r&&BLD.has(name)){const b=boxOf(name,a),p=ZM.toWorld(b[0],b[1]),q=ZM.toWorld(b[2],b[3]);r=[Math.min(p[0],q[0]),Math.min(p[1],q[1]),Math.max(p[0],q[0]),Math.max(p[1],q[1])];r.w=true;N.grp=r}N.ref=r;
     try{const out=f.apply(this,a);if(out&&typeof out==='object'&&!out.ref&&r)out.ref=r;return out}finally{N.cur=sv;N.ref=sr;N.grp=sg}}};
 const prng=s=>{s=(Math.abs(Math.round(s))%2147483646)+1;return()=>(s=(s*16807)%2147483647)/2147483647};
 material('sidingG',['#4b5446','#30372e','#66725e'],'siding');material('sidingR',['#5a3a32','#3a2420','#7a5246'],'siding');
 material('chapelStone',['#6a6870','#47464e','#8c8a94'],'stone');material('sawWood',['#6a5440','#463626','#8a7258'],'plank');
 material('charred',['#2a2220','#161210','#3e3430'],'plank');material('canvasR',['#7a3a32','#52241e','#9a5048'],'cloth');material('canvasB',['#3a4a6a','#262f46','#52648a'],'cloth');
 material('logEnd',['#8a6a44','#5e4428','#a8865a'],'flat');material('bark2',['#4a3a2a','#2c2218','#6a5640'],'bark');
+// (Denis, 14 ottobre: «migliora il design di tutto») la scala, il camino e il banco della Locanda: legno di noce caldo per pedate, mensole e
+// piani, legno scuro per i corpi, la passatoia rossa col bordo d'oro, la pietra del camino col focolare
+material('stairWood',['#7a5636','#4e3420','#a07a52'],'wood');material('stairDark',['#4a3424','#2e2016','#664a32'],'vgrain');material('runner',['#7a1e24','#4e1016','#a03a3a'],'cloth');
+material('hearth',['#5e5a58','#3c3836','#837d78'],'stone');
+// la passatoia: due righe d'oro lungo i bordi (lungo la salita: sulla pedata in x, sull'alzata in z) e i rombi scuri in mezzo
+const runnerT=(w,h,key)=>{const t=key==='t';ctx.fillStyle='rgba(214,170,86,.9)';if(t){ctx.fillRect(0,1.3,w,1);ctx.fillRect(0,h-2.3,w,1)}else{ctx.fillRect(1.3,0,1,h);ctx.fillRect(w-2.3,0,1,h)}
+  ctx.fillStyle='rgba(30,4,8,.4)';const cx=w/2,cy=h/2,L=t?w:h;for(let k=-1;k<=1;k++){const o=k*L*.34;ctx.beginPath();if(t){ctx.moveTo(cx+o-3,cy);ctx.lineTo(cx+o,cy-3.4);ctx.lineTo(cx+o+3,cy);ctx.lineTo(cx+o,cy+3.4)}else{ctx.moveTo(cx,cy+o-3);ctx.lineTo(cx+3.4,cy+o);ctx.lineTo(cx,cy+o+3);ctx.lineTo(cx-3.4,cy+o)}ctx.closePath();ctx.fill()}};
+// il fianco a pannelli sotto la scala (un triangolo, disegnato sullo schermo): assi verticali e una cornice chiara che segue la pendenza
+const panelT=q=>{const[a,b,c]=q,at=(p,r,t)=>[p[0]+(r[0]-p[0])*t,p[1]+(r[1]-p[1])*t];ctx.lineWidth=1;ctx.strokeStyle='rgba(20,12,6,.5)';
+  for(let t=.09;t<.93;t+=.09){const p=at(a,b,t),r=at(c,b,t);ctx.beginPath();ctx.moveTo(p[0],p[1]);ctx.lineTo(r[0],r[1]);ctx.stroke()}
+  const i0=at(c,a,.1),i1=at(b,a,.06);ctx.strokeStyle='rgba(255,226,180,.16)';ctx.lineWidth=1.2;ctx.beginPath();ctx.moveTo(i0[0],i0[1]);ctx.lineTo(i1[0],i1[1]);ctx.stroke()};
 // ------------------------------------------------------------------ le finestre degli edifici nuovi: la stessa finestra della casa (telaio a
 // croce, davanzale, persiana storta, vetro scuro o acceso, assi), solo più grande (44 × 42: con le porte alte di prima era piccola)
 const WW=44,WH=42,WZ=26;
@@ -17213,31 +17245,107 @@ def('edificio',function(o){const x=o.x,y=o.y,w=o.w,d=o.d,H=o.H||92,FL=o.fl||1,HT
 // ------------------------------------------------------------------ gli arredi (con B.in: compaiono quando l'eroe entra)
 const table=(B,x,y,w,d,z,round)=>{solid(x,y,w,d);const parts=[];for(const[dx,dy] of[[2,2],[w-5,2],[2,d-5],[w-5,d-5]])E(parts,...box(x+dx,y+dy,0,3,3,z-3,'wood',{noOut:true}));
   if(round)E(parts,...cyl(x+w/2,y+d/2,z-3,w/2,3,'wood',{n:12}));else E(parts,...box(x,y,z-3,w,d,3,'wood',{noFoot:true,ow:1.6}));B.in(parts,[x-2,y-2,x+w+2,y+d+2,z+12],y+d)};
+// il camino della Locanda: il fondo della bocca annerito dal fumo con la brace in basso, la cappa di pietra col fumo salito sopra la mensola
+const sootT=(w2,h2)=>{const g=ctx.createLinearGradient(0,0,0,h2);g.addColorStop(0,'rgba(6,3,2,.95)');g.addColorStop(.65,'rgba(18,8,4,.85)');g.addColorStop(1,'rgba(150,60,14,.55)');ctx.fillStyle=g;ctx.fillRect(0,0,w2,h2)};
+const breastT=(w2,h2)=>{const g=ctx.createRadialGradient(w2/2,h2,2,w2/2,h2*.75,w2*.55);g.addColorStop(0,'rgba(8,6,6,.55)');g.addColorStop(1,'rgba(8,6,6,0)');ctx.fillStyle=g;ctx.fillRect(0,0,w2,h2);
+  ctx.fillStyle='rgba(255,170,90,.07)';ctx.fillRect(0,h2-6,w2,6)};
+// la targa ovale di legno scuro col corvo di profilo, l'occhio rosso, il bordo d'ottone
+const crowPlaque=(w2,h2)=>{ctx.fillStyle='#2a1a12';ctx.beginPath();ctx.ellipse(w2/2,h2/2,w2/2-1,h2/2-1,0,0,TAU);ctx.fill();ctx.strokeStyle='#c8a050';ctx.lineWidth=1.4;ctx.stroke();ink(1.4);ctx.beginPath();ctx.ellipse(w2/2,h2/2,w2/2-.3,h2/2-.3,0,0,TAU);ctx.stroke();
+  ctx.fillStyle='#0c0a0c';ctx.beginPath();ctx.ellipse(w2/2+1,h2*.56,6.5,4.2,-.25,0,TAU);ctx.fill();ctx.beginPath();ctx.moveTo(w2/2+6,h2*.5);ctx.lineTo(w2/2+11,h2*.4);ctx.lineTo(w2/2+7,h2*.6);ctx.fill();
+  ctx.beginPath();ctx.arc(w2/2-5,h2*.42,3,0,TAU);ctx.fill();ctx.fillStyle='#b89448';ctx.beginPath();ctx.moveTo(w2/2-7.5,h2*.4);ctx.lineTo(w2/2-11,h2*.45);ctx.lineTo(w2/2-7.5,h2*.47);ctx.fill();ctx.fillStyle='#ff4a36';ctx.fillRect(w2/2-6,h2*.38,1.3,1.3)};
+// un tappeto tessuto (nel pavimento, coordinate del mondo): bordo scuro, il campo rosso con i rombi ocra, le frange ai lati corti
+function rug(x0,y0,w,h){ctx.save();ctx.fillStyle='rgba(0,0,0,.25)';ctx.fillRect(x0+1,y0+1.5,w,h);ctx.fillStyle='#4a2418';ctx.fillRect(x0,y0,w,h);ctx.fillStyle='#7a2a20';ctx.fillRect(x0+3,y0+3,w-6,h-6);
+  ctx.strokeStyle='#b8863c';ctx.lineWidth=1;ctx.strokeRect(x0+5,y0+5,w-10,h-10);ctx.fillStyle='rgba(184,134,60,.75)';
+  for(let i=0;i<3;i++){const cx=x0+w*(i+1)/4,cy=y0+h/2;ctx.beginPath();ctx.moveTo(cx-7,cy);ctx.lineTo(cx,cy-9);ctx.lineTo(cx+7,cy);ctx.lineTo(cx,cy+9);ctx.closePath();ctx.fill();ctx.fillStyle='#4a2418';ctx.fillRect(cx-1.5,cy-1.5,3,3);ctx.fillStyle='rgba(184,134,60,.75)'}
+  ctx.strokeStyle='rgba(220,200,160,.6)';ctx.lineWidth=.8;for(let yy=y0+2;yy<y0+h-1;yy+=2.4){ctx.beginPath();ctx.moveTo(x0,yy);ctx.lineTo(x0-3,yy+.4);ctx.moveTo(x0+w,yy);ctx.lineTo(x0+w+3,yy+.4);ctx.stroke()}
+  ctx.fillStyle='rgba(255,240,220,.05)';ctx.fillRect(x0+3,y0+3,w-6,(h-6)*.4);ctx.restore()}
+// un pilastrino di ringhiera: il fusto, il cappello e il pomolo (scala e ringhiera di sopra della Locanda)
+const newel=(x,y,z0,h)=>[...box(x-3,y-3,z0,6,6,h,'post',{ow:1.4}),...box(x-4,y-4,z0+h,8,8,2.4,'stairWood',{noFoot:true,ow:1.2}),ballAt([x,y,z0+h+5],3.3,'stairWood',{ow:2})];
 const stool=(B,x,y)=>{solid(x-4,y-4,8,8);B.in([...cyl(x,y,0,4,13,'wood',{n:7,r1:4.6})],[x-6,y-6,x+6,y+6,14],y+4)};
 const candle=(B,x,y,z)=>{const lvl=B.hs.upF?(z>=B.H-1?1:0):undefined;flames.push({x,y,z:z+7,r:1.6,rgb:'255,180,90',house:B.hs,indoor:1,ky:y+1,lvl,ref:ZM.NAMES.ref});lights.push({x,y,z:z+6,r:55,rgb:'255,170,80',a:.32,fl:1,house:B.hs,lvl});return cyl(x,y,z,1.5,6,'bone',{n:6})};
 const bottles=(x,y,z,n,along)=>{const out=[];const C=['#3a6a4a','#6a3a2a','#3a3a6a','#7a6a2a','#5a2a4a'];for(let i=0;i<n;i++){const id='bot'+(i%5);if(!MAT[id])material(id,[C[i%5],mix(C[i%5],'#000000',.35),mix(C[i%5],'#ffffff',.3)],'flat');
   const px=along==='y'?x:x+i*6,py=along==='y'?y+i*6:y;E(out,...cyl(px,py,z,2,6+(i%3),id,{n:6,r1:1.6,ink:.5}))}return out};
+// ------------------------------------------------------------------ (14 ottobre, Denis: «migliora il design di tutto») per gli interni:
+// una lanterna appesa a una catena sotto il tetto (si accende quando l'eroe entra) e gli attrezzi appesi alla faccia di dentro del muro nord
+const glowT=(w2,h2)=>{const gr=ctx.createRadialGradient(w2/2,h2*.55,1,w2/2,h2*.55,w2*.8);gr.addColorStop(0,'rgba(255,240,200,.95)');gr.addColorStop(1,'rgba(255,190,110,.15)');ctx.fillStyle=gr;ctx.fillRect(0,0,w2,h2);ctx.fillStyle='#1d1e23';ctx.fillRect(w2/2-.6,0,1.2,h2)};
+P.lumeAppeso=(B,x,y,z)=>{B.in([line3([x,y,B.HT-1],[x,y,z+15],'#2a2a30',1.4,{ink:true}),...box(x-4.5,y-4.5,z+12,9,9,2.4,'iron',{noFoot:true,ow:1.3}),...box(x-3.5,y-3.5,z,7,7,12,'glass',{noFoot:true,ink:1.1,tex:{s:glowT,e:glowT,w:glowT,n:glowT}}),
+    ...box(x-4.5,y-4.5,z-2.4,9,9,2.4,'iron',{noFoot:true,ow:1.3}),ballAt([x,y,z-4],1.4,'iron',{ow:1})],[x-6,y-6,x+6,y+6,B.HT],y+5);
+  flames.push({x,y,z:z+5,r:2.6,rgb:'255,200,120',glass:1,house:B.hs,indoor:1,ky:y+5,ref:B.ref});lights.push({x,y:y+6,z:z+4,r:150,rgb:'255,180,100',a:.42,fl:1,house:B.hs,ref:B.ref})};
+// la faccia di dentro del muro nord di un edificio alla x data (per appenderci qualcosa: se non si vede, non si disegna)
+const innerN=(B,x)=>{for(const p of ZM.props){if(p.house!==B.hs)continue;for(const t of p.parts)if(t.k==='face'&&t.key==='s'&&t.part==='wN'&&Math.abs(t.c[0][1]-(B.y+B.th))<1.5&&Math.min(t.c[0][0],t.c[1][0])<x&&Math.max(t.c[0][0],t.c[1][0])>x)return t}return null};
+// una lama circolare (r: raggio) e il segone a due manici, dipinti
+const bladeT=(w2,h2)=>{const c=w2/2,R=w2/2-1;ctx.fillStyle='#7d828c';ctx.beginPath();for(let i=0;i<40;i++){const a=i/40*TAU,r=i%2?R:R-2.4;ctx.lineTo(c+Math.cos(a)*r,c+Math.sin(a)*r)}ctx.closePath();ctx.fill();ink(1.2);ctx.stroke();
+  const g=ctx.createLinearGradient(0,0,w2,h2);g.addColorStop(0,'rgba(255,255,255,.35)');g.addColorStop(.5,'rgba(255,255,255,0)');g.addColorStop(1,'rgba(0,0,0,.25)');ctx.fillStyle=g;ctx.beginPath();ctx.arc(c,c,R-2.6,0,TAU);ctx.fill();
+  ctx.fillStyle='rgba(150,74,30,.55)';for(let i=0;i<4;i++){ctx.beginPath();ctx.arc(c+Math.cos(i*1.7)*R*.55,c+Math.sin(i*1.7)*R*.55,1.2+i%2,0,TAU);ctx.fill()}ctx.fillStyle='#2a2a30';ctx.beginPath();ctx.arc(c,c,R*.2,0,TAU);ctx.fill();ctx.fillStyle='#8a6a44';ctx.beginPath();ctx.arc(c,c,R*.09,0,TAU);ctx.fill()};
+const segoneT=(w2,h2)=>{ctx.fillStyle='#8a8e98';ctx.beginPath();ctx.moveTo(8,2);ctx.lineTo(w2-8,2);ctx.quadraticCurveTo(w2-8,h2*.55,w2-8,h2-3);for(let x=w2-8;x>8;x-=2.4)ctx.lineTo(x-1.2,x%4.8<2.4?h2:h2-3);ctx.lineTo(8,h2-3);ctx.closePath();ctx.fill();ink(1);ctx.stroke();
+  ctx.fillStyle='rgba(255,255,255,.3)';ctx.fillRect(9,3,w2-18,1.2);for(const hx of[0,w2-8]){ctx.fillStyle='#7d5a38';ctx.fillRect(hx,0,8,h2-2);ink(1);ctx.strokeRect(hx,0,8,h2-2)}};
+P.attrezziMuro=(B,x)=>{const y=B.y+B.th+.5,f=innerN(B,x),parts=[plane(x-16,y,44,30,30,'x','lamaG',bladeT,{host:f}),plane(x+20,y,50,20,20,'x','lamaP',bladeT,{host:innerN(B,x+30)}),plane(x+48,y,54,64,11,'x','segone',segoneT,{host:innerN(B,x+80)})];
+  B.in(parts,[x-18,y-1,x+114,y+1,80],y+1)};
 // ------------------------------------------------------------------ la LOCANDA DEL CORVO: due piani di assi grigio-verdi col tetto d'ardesia,
 // porta sulla strada, porta sul retro, porta a ovest; dentro il banco col bancone e gli scaffali delle bottiglie, i tavoli con gli sgabelli,
 // il camino acceso, la scala verso il piano di sopra lungo il muro nord. Sopra l'ingresso l'insegna col corvo e la lanterna
-def('locanda',function(x,y,w,d){const H=92,sx0=x+14,sy0=y+12,SL=118;// (la scala: dal muro ovest, lunga SL, larga 30)
-  const B=P.edificio({x,y,w,d,H,fl:2,up:1,hole:[sx0+12,y+10,sx0+SL+2,sy0+32],wall:'sidingG',roof:'slate',rh:76,name:'Locanda del Corvo',chim:[x+194,y+16],
-    op:[{s:'s',at:w*.5,k:'door',id:'strada'},{s:'s',at:62,k:'win',lit:1},{s:'s',at:w-64,k:'win'},{s:'n',at:w-42,k:'door',id:'retro'},{s:'n',at:w*.6,k:'win'},{s:'w',at:d*.62,k:'door',id:'ovest'},{s:'w',at:d*.26,k:'win'},{s:'e',at:d*.17,k:'win',lit:1},{s:'e',at:d*.83,k:'win'}]});
+def('locanda',function(x,y,w,d){const H=92,sx0=x+14,sy0=y+12,SL=118,SW=44;// (la scala: dal muro ovest, lunga SL, larga SW; prima 30)
+  const B=P.edificio({x,y,w,d,H,fl:2,up:1,hole:[sx0+12,y+10,sx0+SL+2,sy0+SW+2],wall:'sidingG',roof:'slate',rh:76,name:'Locanda del Corvo',chim:[x+204,y+16],
+    op:[{s:'s',at:w*.5,k:'door',id:'strada'},{s:'s',at:62,k:'win',lit:1},{s:'s',at:w-64,k:'win'},{s:'n',at:w-42,k:'door',id:'retro'},{s:'n',at:w*.6,k:'win'},{s:'w',at:d*.62,k:'door',id:'ovest'},{s:'w',at:d*.4,k:'win'},{s:'e',at:d*.17,k:'win',lit:1},{s:'e',at:d*.83,k:'win'}]});
   B.kind='locanda';const th=B.th;
   // il bancone (da nord a sud, a est) e dietro gli scaffali con le bottiglie contro il muro est
-  const bx=x+w-118;solid(bx,y+th+66,14,d-th*2-120);B.in([...box(bx,y+th+66,0,14,d-th*2-120,24,'plankD',{ow:1.8}),...box(bx-2,y+th+64,24,18,d-th*2-116,3,'wood',{noFoot:true,ow:1.4}),...bottles(bx+7,y+th+74,27,5,'y')],[bx-4,y+th+60,bx+20,y+d-th-50,40]);
+  // (14 ottobre) il banco: il fronte a doghe, il piano di noce lucido che sporge verso i clienti, il poggiapiedi d'ottone, i boccali e il
+  // barilotto con la spina
+  const bx=x+w-118,by=y+th+66,bl=d-th*2-120;solid(bx,by,14,bl);
+  B.in([...box(bx,by,0,14,bl,22,'plankD',{ow:1.8}),...box(bx-3,by-2,22,19,bl+4,3,'stairWood',{noFoot:true,ow:1.4}),...bottles(bx+9,by+8,25,4,'y'),
+    line3([bx-4,by+3,5],[bx-4,by+bl-3,5],'#c8a050',1.6,{ink:true}),line3([bx-4,by+3,5],[bx,by+3,5],'#8a6a30',1.2),line3([bx-4,by+bl-3,5],[bx,by+bl-3,5],'#8a6a30',1.2),
+    ...cyl(bx+4,by+42,25,2.3,5,'stairWood',{n:7}),ballAt([bx+4,by+42,30.6],1.8,'bone',{ow:1}),...cyl(bx+5,by+52,25,2.3,5,'stairWood',{n:7}),
+    ...cyl(bx+8,by+bl-12,25,5,9,'stave',{n:10,m:{t:'logEnd'},ink:.5}),line3([bx+3,by+bl-12,29],[bx-1,by+bl-12,28],'#c8a050',1.6,{ink:true})],[bx-6,by-4,bx+20,by+bl+4,38]);
   {const sx=x+w-th-12,sy=y+th+56,sl=d-th*2-112;solid(sx,sy,12,sl);B.in([...box(sx,sy,0,12,sl,52,'plankD',{ow:1.8}),...box(sx-1,sy+2,18,12,sl-4,2,'wood',{noFoot:true,noOut:true}),...box(sx-1,sy+2,34,12,sl-4,2,'wood',{noFoot:true,noOut:true}),...bottles(sx+6,sy+10,20,8,'y'),...bottles(sx+6,sy+10,36,8,'y')],[sx-4,sy-4,sx+14,sy+sl+4,56])}
-  // il camino contro il muro nord, acceso
-  {const fx=x+170;solid(fx,y+th,48,16);B.in([...box(fx,y+th,0,48,16,60,'brick',{tex:{s:(w2,h2)=>{ctx.fillStyle='#120804';ctx.fillRect(10,h2-24,28,24);ink(1.6);ctx.strokeRect(10,h2-24,28,24);const g2=ctx.createRadialGradient(w2/2,h2*.8,2,w2/2,h2*.8,w2*.5);g2.addColorStop(0,'rgba(255,140,50,.35)');g2.addColorStop(1,'rgba(255,140,50,0)');ctx.fillStyle=g2;ctx.fillRect(0,0,w2,h2)}}}),...box(fx-3,y+th,60,54,19,4,'plankD',{noFoot:true})],[fx-4,y+th,fx+52,y+th+20,66]);
-    flames.push({x:fx+24,y:y+th+17,z:4,r:9,rgb:'255,140,50',fire:1,house:B.hs,ky:y+th+18,n:[0,1],lvl:0});lights.push({x:fx+24,y:y+th+44,r:130,rgb:'255,140,60',a:.5,fl:1,house:B.hs,lvl:0})}
+  // il camino contro il muro nord, acceso. (Denis, 14 ottobre: «migliora il design di tutto, tipo del camino») Un focolare di pietra: due
+  // stipiti, la bocca incassata con il fondo annerito, i ciocchi sugli alari, la brace che pulsa, la trave di quercia per mensola con due
+  // candele e la brocca, sopra la cappa di pietra fino al soffitto con la targa del corvo, davanti la lastra del focolare e il tappeto
+  {const fx=x+180,cx=fx+24,y0=y+th,ZJ=40,ZM2=45;solid(fx-10,y0,68,28);// (a est del piede della scala restano 38 px: lì si preme «Sali», niente corridoi da 18–34)
+    const parts=[...box(cx-15,y0,0,30,8,ZJ,'brick',{noOut:true,tex:{s:sootT}}),// il fondo della bocca
+      ...box(fx-6,y0,0,15,20,ZJ,'hearth',{ow:1.8}),...box(cx+15,y0,0,15,20,ZJ,'hearth',{ow:1.8}),// gli stipiti
+      ...box(fx-10,y0+20,ZJ-1,68,6,ZM2-ZJ+1,'stairWood',{noFoot:true,ow:1.6}),// la mensola, davanti a stipiti e cappa (sopra di loro i pezzi si coprivano)
+      ...box(fx-6,y0,ZM2,60,20,H-ZM2,'hearth',{noFoot:true,ow:1.8,tex:{s:breastT}}),// la cappa
+      ...box(fx-10,y0+20,0,68,8,2,'hearth',{ow:1.2}),// la lastra del focolare
+      ...box(cx-14,y0+15,0,2,2,8,'iron',{ow:1}),...box(cx+12,y0+15,0,2,2,8,'iron',{ow:1})];// gli alari
+    // i ciocchi (sdraiati lungo x), la brace che pulsa sotto
+    const log=(yy,zz,r,x0,len)=>prismY(x0,yy,len,[[r,zz],[r*.7,zz+r*.7],[0,zz+r],[-r*.7,zz+r*.7],[-r,zz],[-r*.7,zz-r*.7],[0,zz-r],[r*.7,zz-r*.7]],'bark2',{m:{e:'logEnd',w:'logEnd'},ow:1.2});
+    E(parts,fn3(S2=>{const c=S2(cx,y0+12,1.5),f=LOWFX?1:.82+.18*Math.sin(W.t*7.3)*Math.sin(W.t*3.1+1),g=ctx.createRadialGradient(c[0],c[1],1,c[0],c[1],17);g.addColorStop(0,`rgba(255,${Math.round(150+60*f)},70,${.85*f})`);g.addColorStop(.55,`rgba(200,60,20,${.45*f})`);g.addColorStop(1,'rgba(120,30,10,0)');ctx.fillStyle=g;ctx.beginPath();ctx.ellipse(c[0],c[1],17,7,0,0,TAU);ctx.fill()},{fp:[[cx-14,y0+7],[cx+14,y0+7],[cx+14,y0+19],[cx-14,y0+19]],z:[0,3]}));
+    E(parts,...log(y0+10,3.2,3,cx-12,24),...log(y0+15,3.2,3,cx-11,22),...log(y0+12.5,8,2.6,cx-9,18));
+    // sulla mensola: le candele alle punte, la brocca di peltro, due boccali
+    E(parts,...candle(B,fx-5,y0+23,ZM2),...candle(B,fx+53,y0+23,ZM2),...cyl(cx-14,y0+23,ZM2,2.6,6,'iron',{n:8,r1:2}),...cyl(cx-14,y0+23,ZM2+6,1.4,2.2,'iron',{n:6}),...cyl(cx+10,y0+23,ZM2,2,4.5,'stairWood',{n:7}),...cyl(cx+16,y0+23,ZM2,2,4.5,'stairWood',{n:7}));
+    // la targa col corvo sulla cappa
+    parts.push(plane(cx-13,y0+20.4,55,26,22,'x','targaCorvo2',crowPlaque));
+    B.in(parts,[fx-12,y0,fx+60,y0+28,H+2],y0+28);
+    flames.push({x:cx,y:y0+13,z:5,r:9,rgb:'255,140,50',fire:1,house:B.hs,ky:y0+18,n:[0,1],lvl:0});lights.push({x:cx,y:y0+44,r:140,rgb:'255,140,60',a:.55,fl:1,house:B.hs,lvl:0});
+    // il tappeto davanti al focolare (dipinto nel pavimento)
+    decals.push(()=>rug(cx-38,y0+34,76,42))}
   // i tavoli con gli sgabelli e le candele
-  for(const[tx,ty] of[[x+150,y+120],[x+222,y+92],[x+120,y+175]]){table(B,tx-14,ty-14,28,28,22,true);B.in(candle(B,tx,ty,22),[tx-3,ty-3,tx+3,ty+3,30]);for(const a of[0,2.1,4.2]){const sx2=tx+Math.cos(a)*24,sy2=ty+Math.sin(a)*24;stool(B,sx2,sy2)}}
-  // la scala lungo il muro nord, da est verso ovest: dieci gradini fino al piano di sopra (il pianerottolo nell'angolo nord-ovest). Si vede anche
-  // da sopra, nel buco del solaio (tag st); al piede il bottone «Sali al piano di sopra», sul pianerottolo «Scendi» (motore.js, ZM.scala)
-  {const L=SL,n=10,parts=[];solid(sx0,sy0,L,30);for(let i=0;i<n;i++){const u=L-(i+1)*L/n,z=(i+1)*H/n;E(parts,...box(sx0+u,sy0,0,L/n+.5,30,z,'plankD',{noOut:i<n-1,ow:1.6}))}
-    E(parts,line3([sx0+L,sy0+31,0],[sx0+L,sy0+31,24],'#5e4128',2.4,{ink:true}),line3([sx0+L,sy0+31,24],[sx0+6,sy0+31,H+22],'#5e4128',2.2,{ink:true}),line3([sx0+6,sy0+31,H],[sx0+6,sy0+31,H+22],'#5e4128',2.4,{ink:true}));
-    prop({bx:[sx0-2,sy0-2,sx0+L+2,sy0+34,H+24],ky:sy0+32,parts:tag(parts,'st'),house:B.hs});B.stairs={x0:sx0,y0:sy0,L,w:30,bottom:[sx0+L+16,sy0+15],top:[sx0+14,sy0+15]};
-    B.scala=ZM.scala?ZM.scala({hs:B.hs,H,bot:[sx0+L+16,sy0+15],foot:[sx0+L,sy0+15],head:[sx0+6,sy0+15],land:[sx0+22,sy0+48]}):null}
+  for(const[tx,ty] of[[x+150,y+120],[x+222,y+92],[x+120,y+175]]){table(B,tx-14,ty-14,28,28,22,true);B.in(candle(B,tx,ty,22),[tx-3,ty-3,tx+3,ty+3,30]);
+    B.in([...cyl(tx+6,ty+5,22,4.4,.8,'bone',{n:10}),...cyl(tx-6,ty+6,22,2,4.4,'stairWood',{n:7})],[tx-9,ty,tx+11,ty+10,28],ty+10);// (14 ottobre) un piatto e un boccale
+   for(const a of[0,2.1,4.2]){const sx2=tx+Math.cos(a)*24,sy2=ty+Math.sin(a)*24;stool(B,sx2,sy2)}}
+  // la scala lungo il muro nord, da est verso ovest: dieci gradini fino al piano di sopra (il pianerottolo nell'angolo nord-ovest). (Denis,
+  // 14 ottobre: «falle più spaziose e belle») larga 44 (prima 30): ogni gradino col corpo scuro e la pedata chiara che sporge sul gradino
+  // sotto, la passatoia rossa col bordo d'oro che scende anche sulle alzate; sul lato aperto il fianco a pannelli, il cosciale lungo i nasi
+  // dei gradini, una colonnina per gradino, il corrimano e i due pilastrini col pomolo. Si vede anche da sopra, nel buco del solaio (tag st);
+  // al piede il bottone «Sali al piano di sopra», sul pianerottolo «Scendi» (motore.js, ZM.scala)
+  {const L=SL,n=10,run=L/n,rise=H/n,yo=sy0+SW,parts=[];solid(sx0,sy0,L,SW);
+    const nose=u=>rise+(L+1.6-u)*rise/run,ua=L-(n-1)*run+1.6;// la linea dei nasi (z alla distanza u dal piede del muro ovest), il naso più in alto
+    for(let i=0;i<n;i++){const x0=sx0+L-(i+1)*run,z=(i+1)*rise,ya=sy0+SW*.24,yb=sy0+SW*.76,X=x0+run+.6,z0=i*rise;
+      E(parts,...box(x0,sy0,0,run+.5,SW,z-2.4,'stairDark',{noOut:true}));// il corpo (alzata e fianco)
+      E(parts,...box(x0-.5,sy0,z-2.4,run+2.1,SW+1.2,2.4,'stairWood',{noFoot:true,ow:1.2}));// la pedata col naso
+      parts.push(face([x0,yb,z+.06],[x0+run+1.6,yb,z+.06],[x0+run+1.6,ya,z+.06],[x0,ya,z+.06],'runner','t',{tex:runnerT}));// la passatoia sulla pedata
+      if(z-2.4-z0>1)parts.push(face([X,yb,z0],[X,ya,z0],[X,ya,z-2.4],[X,yb,z-2.4],'runner','e',{tex:runnerT}))}// e sull'alzata
+    // il fianco a pannelli sotto la scala e il cosciale lungo i nasi
+    E(parts,...prismX(sx0,yo+.2,1.2,[[ua-1,0],[L+1,0],[ua-1,nose(ua-1)-8]],'plankD',{out:'profile',ow:1.4,texF:panelT}));
+    E(parts,...prismX(sx0,yo+.2,2.4,[[ua-1,nose(ua-1)+2.5],[ua-1,nose(ua-1)-8],[L+3,Math.max(.1,nose(L+3)-8)],[L+3,nose(L+3)+2.5]],'stairWood',{ow:1.4}));
+    // le colonnine (una per gradino, sul cosciale), il pilastrino col pomolo in fondo, il corrimano 28 sopra i nasi fino al pilastrino in cima
+    // (è quello della ringhiera di sopra, sul bordo del buco: in cima si esce verso sud, a ovest del pilastrino)
+    const yB=yo+1.4,rail=u=>nose(u)+28;
+    for(let i=0;i<n;i++){const u=L-(i+.5)*run;E(parts,line3([sx0+u,yB,nose(u)+2.5],[sx0+u,yB,rail(u)-1],'#4a3220',1.8,{ink:true}))}
+    E(parts,...newel(sx0+L+1.5,yB,0,34));
+    E(parts,line3([sx0+L+1.5,yB,rail(L+1.5)-2],[sx0+16,yB,H+28],'#6a4628',3.4,{ink:true}),line3([sx0+L+1.5,yB,rail(L+1.5)-.6],[sx0+16,yB,H+29.4],'#a07850',1));
+    prop({bx:[sx0-2,sy0-2,sx0+L+6,yo+4,H+40],ky:yo+2,parts:tag(parts,'st'),house:B.hs});B.stairs={x0:sx0,y0:sy0,L,w:SW,bottom:[sx0+L+16,sy0+SW/2],top:[sx0+14,sy0+SW/2]};
+    B.scala=ZM.scala?ZM.scala({hs:B.hs,H,bot:[sx0+L+16,sy0+SW/2],foot:[sx0+L,sy0+SW/2],head:[sx0+6,sy0+SW/2],land:[sx0+12,yo+18]}):null}
   // il piano di sopra: le camere della locanda (tre letti, l'armadio, il baule, lo scrittoio sotto la finestra con la candela, la Pompa tattica
   // col gesso sul muro nord) e la ringhiera intorno al buco della scala; i solidi sono di sopra (lv:1). Le cose alte stanno contro il muro nord
   // (dietro a tutto, per la telecamera), davanti al pianerottolo niente
@@ -17249,16 +17357,22 @@ def('locanda',function(x,y,w,d){const H=92,sx0=x+14,sy0=y+12,SL=118;// (la scala
     B.solidUp(x+152,y+th+62,30,16);B.up([...box(x+152,y+th+62,U,30,16,14,'plankD',{ow:1.6}),...box(x+151,y+th+61,U+14,32,18,3,'wood',{noFoot:true,ow:1.4})],[x+150,y+th+60,x+184,y+th+80,U+18]);
     {const dx=x+w*.6-18,dy=y+th+2;B.solidUp(dx,dy,36,20);B.up([...box(dx,dy,U+20,36,20,3,'wood',{noFoot:true,ow:1.6}),...box(dx+2,dy+2,U,3,3,20,'wood',{noOut:true}),...box(dx+31,dy+2,U,3,3,20,'wood',{noOut:true}),...box(dx+2,dy+15,U,3,3,20,'wood',{noOut:true}),...box(dx+31,dy+15,U,3,3,20,'wood',{noOut:true}),...candle(B,dx+8,dy+8,U+23)],[dx-2,dy-2,dx+38,dy+22,U+32]);
       B.solidUp(dx+14,dy+28,8,8);B.up([...cyl(dx+18,dy+32,U,4,13,'wood',{n:7,r1:4.6})],[dx+12,dy+26,dx+24,dy+38,U+14])}
-    {const yR=sy0+33,xR=sx0+SL+2,parts=[];for(const px of[sx0+16,sx0+52,sx0+88,xR])E(parts,line3([px,yR,U],[px,yR,U+24],'#5e4128',2.4,{ink:true}));
-      E(parts,line3([sx0+16,yR,U+24],[xR,yR,U+24],'#5e4128',2.2,{ink:true}),line3([sx0+16,yR,U+12],[xR,yR,U+12],'#5e4128',1.6,{ink:true}),line3([xR,yR,U+24],[xR,y+th+1,U+24],'#5e4128',2.2,{ink:true}),line3([xR,yR,U+12],[xR,y+th+1,U+12],'#5e4128',1.6,{ink:true}));
-      B.up(parts,[sx0+14,y+th,xR+2,yR+2,U+26],yR+1);B.solidUp(sx0+10,y+th,SL-8,yR-y-th+2)}
+    // la ringhiera intorno al buco della scala, come quella della scala: pilastrini agli angoli, una colonnina ogni 9, il corrimano e il
+    // listello basso; in cima alla scala si esce verso sud, a ovest del primo pilastrino
+    {const yR=sy0+SW+2.4,xR=sx0+SL+2,y1=y+th+1,parts=[];E(parts,...newel(sx0+16,yR,U,30),...newel(xR,yR,U,30));
+      for(let px=sx0+25;px<xR-4;px+=9)E(parts,line3([px,yR,U+3],[px,yR,U+27],'#4a3220',1.8,{ink:true}));
+      for(let py=yR-9;py>y1+3;py-=9)E(parts,line3([xR,py,U+3],[xR,py,U+27],'#4a3220',1.8,{ink:true}));
+      E(parts,line3([sx0+16,yR,U+28],[xR,yR,U+28],'#6a4628',3.2,{ink:true}),line3([sx0+16,yR,U+29.3],[xR,yR,U+29.3],'#a07850',1),line3([sx0+16,yR,U+3],[xR,yR,U+3],'#4a3220',2,{ink:true}),
+        line3([xR,yR,U+28],[xR,y1,U+28],'#6a4628',3.2,{ink:true}),line3([xR,yR,U+29.3],[xR,y1,U+29.3],'#a07850',1),line3([xR,yR,U+3],[xR,y1,U+3],'#4a3220',2,{ink:true}));
+      B.up(parts,[sx0+12,y+th,xR+5,yR+5,U+40],yR+1);B.solidUp(sx0+10,y+th,SL-8,yR-y-th+2)}
     {const gx=x+320,f=B.inN.find(q=>gx>q.a+30&&gx<q.b-2);if(P.wallGun)P.wallGun(gx,y+th+.6,U+34,'x','tattica',2000,f&&f.face,B.hs);B.gunUp=[gx,y+th+34]}}
   // fuori: l'insegna col corvo appesa sopra la porta sulla strada e la lanterna
   {const cx=x+w*.5,yy=y+d,parts=[line3([cx-30,yy+1,H+8],[cx-30,yy+16,H+8],'#34363e',2.4,{ink:true}),line3([cx-30,yy+16,H+8],[cx-30,yy+16,H-2],'#1d1e23',1.2),plane(cx-48,yy+16,H-28,36,26,'x','insegnaCorvo',(w2,h2)=>{ctx.fillStyle='#2e1e16';ctx.fillRect(0,0,w2,h2);ink(1.6);ctx.strokeRect(1,1,w2-2,h2-2);
       ctx.fillStyle='#14100c';ctx.beginPath();ctx.ellipse(w2/2,h2*.52,7,4.6,-.2,0,TAU);ctx.fill();ctx.beginPath();ctx.moveTo(w2/2+5,h2*.45);ctx.lineTo(w2/2+12,h2*.36);ctx.lineTo(w2/2+6,h2*.55);ctx.fill();ctx.beginPath();ctx.arc(w2/2-6,h2*.42,3.2,0,TAU);ctx.fill();
       ctx.fillStyle='#c8a850';ctx.beginPath();ctx.moveTo(w2/2-9,h2*.4);ctx.lineTo(w2/2-12.5,h2*.44);ctx.lineTo(w2/2-9,h2*.46);ctx.fill();ctx.fillStyle='#ff5040';ctx.fillRect(w2/2-7,h2*.38,1.2,1.2);
       ctx.font='400 5.5px "Lilita One",system-ui';ctx.textAlign='center';ctx.fillStyle='#c8a850';ctx.fillText('LOCANDA',w2/2,h2*.2);ctx.fillText('DEL CORVO',w2/2,h2*.92)})];
-    ZM.lanternParts(parts,cx+30,yy+12,H-20,{s:1,r:150,a:.5});E(parts,line3([cx+30,yy+1,H+2],[cx+30,yy+12,H+2],'#34363e',2.2,{ink:true}));prop({bx:[cx-52,yy,cx+40,yy+20,H+12],parts,noSplit:true})}
+    ZM.lanternParts(parts,cx+30,yy+12,H-20,{s:1,r:150,a:.5});E(parts,line3([cx+30,yy+1,H+2],[cx+30,yy+12,H+2],'#34363e',2.2,{ink:true}));
+    prop({bx:[cx-52,yy,cx+40,yy+20,H+12],parts:tag(parts,'wS'),noSplit:true,house:B.hs})}// (14 ottobre: con l'eroe dentro sfumano col muro, prima restavano sospese in mezzo alla sala)
   return B},a=>[a[0]+a[2]/2,a[1]+a[3]/2]);
 // ------------------------------------------------------------------ la CAPPELLA: navata di pietra alta col tetto d'ardesia, portale a ovest con
 // le ante, finestre a nord e a sud (barriere), il campanile staccato a nord-est con la campana che dondola; dentro le panche e l'altare
@@ -18005,16 +18119,19 @@ const ZV=(()=>{let curve=null;
     route(g,null,o.rev||.2);
     if(o.breath)fNoise(t,dur*1.05,'bandpass',VR(1300,.2),1,vol*o.breath*.9,{brown:true,att:a,rev:o.rev||.2})}
   // a body falling on the ground (the death, the becchino's blow)
-  function body(t,vol,rev){fThump(t,VR(95,.1),38,.32,vol,rev||.15);fNoise(t,.22,'lowpass',VR(700,.15),.8,vol*.6,{brown:true});for(let i=0;i<3;i++)fNoise(t+.03+Math.random()*.12,.03,'bandpass',VR(1800,.3),1.5,vol*.15)}
+  function body(t,vol,rev,lite){fThump(t,VR(95,.1),38,.32,vol,rev||.15);fNoise(t,.22,'lowpass',VR(700,.15),.8,vol*.6,{brown:true});if(!lite)for(let i=0;i<3;i++)fNoise(t+.03+Math.random()*.12,.03,'bandpass',VR(1800,.3),1.5,vol*.15)}
   // the ground crumbling as something climbs out of it
-  function dirt(t,vol){for(let i=0;i<7;i++)fNoise(t+i*.07+Math.random()*.05,VR(.09,.3),'lowpass',VR(1100,.3),.8,vol*(.5+Math.random()*.5),{brown:true});fThump(t,VR(80,.1),45,.4,vol*.8,.2)}
+  function dirt(t,vol,n){for(let i=0;i<(n||7);i++)fNoise(t+i*.07+Math.random()*.05,VR(.09,.3),'lowpass',VR(1100,.3),.8,vol*(.5+Math.random()*.5),{brown:true});fThump(t,VR(80,.1),45,.4,vol*.8,.2)}
   return{voice,body,dirt}})();
 (()=>{if(typeof ZM==='undefined')return;const{W,S}=ZM;
 // the voices of each kind: fundamental range, the vowels, rasp and breath; the moans they can make
 const KV={zombie:{f:[78,112],fm:[[430,940],[380,820],[520,1050]],rasp:.55,br:.35},strisciante:{f:[115,150],fm:[[560,1250],[620,1400]],rasp:.85,br:.6,gurgle:1},
   minatore:{f:[64,86],fm:[[400,780],[360,700]],rasp:.5,br:.3,cough:1},lanterna:{f:[96,128],fm:[[480,1100],[540,1300]],rasp:.25,br:.55,ghost:1},hound:{f:[150,210],fm:[[700,1500]],rasp:.9,br:.5,dog:1},
   becchino:{f:[50,62],fm:[[360,700]],rasp:.7,br:.4,big:1},spaventapasseri:{f:[90,110],fm:[[520,1200]],rasp:.4,br:.7,straw:1}};
-const A={lastMoan:0,lastStep:0,lastHit:0,lastType:'',busy:[],cases:[]};
+const A={lastMoan:0,lastStep:0,lastHit:0,lastPain:0,lastDeath:0,lastAtk:0,lastTink:0,lastType:'',busy:[],cases:[]};
+// (difetti 48, Denis: «l'audio dopo il quinto round va a farsi fottere») how busy the audio is (src/js/05-audio.js: 0 calm, 1 dense, 2 full):
+// in the big fights of the later rounds the sounds that repeat (steps, hits, pains, deaths, risings, casings) come less often and lighter
+const lvA=()=>typeof audioLv==='function'?audioLv():0;
 const on=()=>typeof AU!=='undefined'&&AU.ctx&&AU.on.sfx&&AU.ctx.state==='running';
 // how loud from here (the hero) and where on the screen: near = present, far = soft and with more room in it
 function place(x,y){const h=W.hero,d=Math.hypot(x-h.x,y-h.y),k=Math.max(0,Math.min(1,1-(d-60)/400)),q=S(x,y,0),hq=S(h.x,h.y,0);AU.pan=Math.max(-.8,Math.min(.8,(q[0]-hq[0])/190));return{k:k*k,d,rev:.12+.5*(1-k)}}
@@ -18039,26 +18156,27 @@ function step(z,t,P){const v=vox(z),K=v.K,vol=P.k*(K.big?.32:.14);if(vol<.006)re
   if(K.dog){fThump(t,VR(240,.1),130,.03,vol*.6);fNoise(t,.02,'bandpass',VR(2600,.2),1.5,vol*.4);return}
   if(z.kind==='strisciante'){fNoise(t,.22,'bandpass',VR(700,.2),.9,vol*.7,{brown:true,att:.06,f2:400});return}
   if(K.straw){fNoise(t,.12,'bandpass',VR(3000,.2),1.1,vol*.5);M.wood(t,vol*1.2,VR(240,.1));return}
-  fThump(t,VR(K.big?75:118,.1),K.big?38:58,K.big?.18:.07,vol);fNoise(t,.08,'bandpass',VR(K.big?600:950,.2),1,vol*.5,{brown:true});if(Math.random()<.3)fNoise(t+.05,.12,'bandpass',VR(1800,.2),1.3,vol*.2)}
+  fThump(t,VR(K.big?75:118,.1),K.big?38:58,K.big?.18:.07,vol);fNoise(t,.08,'bandpass',VR(K.big?600:950,.2),1,vol*.5,{brown:true});if(!P.lv&&Math.random()<.3)fNoise(t+.05,.12,'bandpass',VR(1800,.2),1.3,vol*.2)}
 // hit, hurt, attack, death, rising
-function impact(z,t,P){const vol=P.k*.26;fThump(t,VR(150,.12),62,.08,vol);fNoise(t,.06,'lowpass',VR(1500,.15),.8,vol*.6);fNoise(t+.01,.05,'bandpass',VR(700,.2),2,vol*.4,{brown:true})}
+function impact(z,t,P){const vol=P.k*.26;fThump(t,VR(150,.12),62,.08,vol);fNoise(t,.06,'lowpass',VR(1500,.15),.8,vol*.6);if(!P.lv)fNoise(t+.01,.05,'bandpass',VR(700,.2),2,vol*.4,{brown:true})}
 function pain(z,t,P){const v=vox(z);if(v.K.dog){ZV.voice(t,v.f*1.8,v.f*1.2,.22,v.fm,{vol:.1*P.k,att:.01,rasp:.6,rev:P.rev});return}ZV.voice(t,v.f*1.45,v.f*1.05,VR(.2,.2),v.fm,{vol:.12*P.k,att:.012,rasp:v.K.rasp+.2,breath:.4,rev:P.rev})}
 function attack(z,t,P){const v=vox(z);if(v.K.dog){ZV.voice(t,v.f*1.2,v.f*1.6,.28,v.fm,{vol:.16*P.k,att:.01,rasp:1,trem:30,rev:P.rev});fThump(t+.12,VR(300,.1),120,.05,.15*P.k);return}
-  ZV.voice(t,v.f*1.25,v.f*1.5,.32,v.fm,{vol:.15*P.k,att:.02,rasp:1,breath:.6,rev:P.rev});whoosh(t+.08,.18,VR(900,.1),VR(2400,.1),.1*P.k);fThump(t+.2,VR(200,.1),90,.06,.14*P.k)}
-function death(z,t,P){const v=vox(z),K=v.K;if(K.dog){ZV.voice(t,v.f*1.6,v.f*.7,.6,v.fm,{vol:.13*P.k,att:.02,rasp:.5,rev:P.rev})}
-  else ZV.voice(t,v.f*1.05,v.f*.52,VR(1.15,.15),v.fm,{vol:.14*P.k,att:.05,rasp:K.rasp+.15,breath:K.br+.2,rev:P.rev,fd:.75});ZV.body(t+.62,.3*P.k,P.rev)}
-function rise(z,t,P){ZV.dirt(t,.18*P.k);const v=vox(z);ZV.voice(t+.3,v.f*.9,v.f*.75,1.1,v.fm,{vol:.08*P.k,att:.3,rasp:v.K.rasp,breath:.5,rev:P.rev})}
+  ZV.voice(t,v.f*1.25,v.f*1.5,.32,v.fm,{vol:.15*P.k,att:.02,rasp:1,breath:.6,rev:P.rev});if(P.lv<2)whoosh(t+.08,.18,VR(900,.1),VR(2400,.1),.1*P.k);fThump(t+.2,VR(200,.1),90,.06,.14*P.k)}
+function death(z,t,P){const v=vox(z),K=v.K,now=AU.ctx.currentTime,say=P.lv<2&&now-A.lastDeath>(P.lv?.45:.22);if(say)A.lastDeath=now;
+  if(say&&K.dog){ZV.voice(t,v.f*1.6,v.f*.7,.6,v.fm,{vol:.13*P.k,att:.02,rasp:.5,rev:P.rev})}
+  else if(say)ZV.voice(t,v.f*1.05,v.f*.52,VR(1.15,.15),v.fm,{vol:.14*P.k,att:.05,rasp:K.rasp+.15,breath:K.br+.2,rev:P.rev,fd:.75});ZV.body(t+(say?.62:.05),.3*P.k,P.rev,P.lv>0)}
+function rise(z,t,P){ZV.dirt(t,.18*P.k,P.lv?3:7);if(P.lv)return;const v=vox(z);ZV.voice(t+.3,v.f*.9,v.f*.75,1.1,v.fm,{vol:.08*P.k,att:.3,rasp:v.K.rasp,breath:.5,rev:P.rev})}
 // ------------------------------------------------------------------ every frame: who moans, who steps, who got hit, who died
-function update(dt,D){if(!on())return;const now=AU.ctx.currentTime,t=now+.02;A.busy=A.busy.filter(e=>e>now);
+function update(dt,D){if(!on())return;const now=AU.ctx.currentTime,t=now+.02,lv=lvA(),pl=(x,y)=>{const P=place(x,y);P.lv=lv;return P};A.busy=A.busy.filter(e=>e>now);
   for(const z of W.Z){const v=vox(z);if(z.idle&&!z.die)continue;
-    if(z.rise<1){if(!v.rose&&z.rise>0){v.rose=1;const P=place(z.x,z.y);if(P.k>.02)rise(z,t,P)}continue}v.rose=1;
-    if(z.die){if(!v.dead){v.dead=1;const P=place(z.x,z.y);if(P.k>.01)death(z,t,P)}continue}
-    // hit since the last frame
-    if(z.hp<v.hp-.4){const P=place(z.x,z.y);if(P.k>.01&&now-A.lastHit>.05){A.lastHit=now;impact(z,t,P);if(now>v.cd&&Math.random()<.45){v.cd=now+.7;pain(z,t+.03,P)}}}v.hp=z.hp;
-    // steps on the walk (two a cycle)
-    if(z.anim==='walk'&&z.p!=null){const p=z.p,w=v.wp;if((w<.5&&p>=.5)||p<w){if(now-A.lastStep>.045){const P=place(z.x,z.y);if(P.k>.03){A.lastStep=now;step(z,t,P)}}}v.wp=p}
-    // a moan now and then (never more than three voices, never two at the same moment)
-    if(now>v.next){const P=place(z.x,z.y);v.next=now+VR(4.5,.45)*(1+P.d/320);if(P.k>.04&&A.busy.length<3&&now-A.lastMoan>.4){A.lastMoan=now;A.busy.push(now+moan(z,t,P))}}}
+    if(z.rise<1){if(!v.rose&&z.rise>0){v.rose=1;const P=pl(z.x,z.y);if(P.k>.02)rise(z,t,P)}continue}v.rose=1;
+    if(z.die){if(!v.dead){v.dead=1;const P=pl(z.x,z.y);if(P.k>.01)death(z,t,P)}continue}
+    // hit since the last frame (one hit sound every 50 ms, 90 dense, 140 full; a pain every .18 s at most, .35 dense, none full)
+    if(z.hp<v.hp-.4){const P=pl(z.x,z.y);if(P.k>.01&&now-A.lastHit>(lv>1?.14:lv?.09:.05)){A.lastHit=now;impact(z,t,P);if(lv<2&&now>v.cd&&now-A.lastPain>(lv?.35:.18)&&Math.random()<.45){v.cd=now+.7;A.lastPain=now;pain(z,t+.03,P)}}}v.hp=z.hp;
+    // steps on the walk (two a cycle; with the audio full only the near ones)
+    if(z.anim==='walk'&&z.p!=null){const p=z.p,w=v.wp;if((w<.5&&p>=.5)||p<w){if(now-A.lastStep>(lv>1?.12:lv?.07:.045)){const P=pl(z.x,z.y);if(P.k>(lv>1?.35:.03)){A.lastStep=now;step(z,t,P)}}}v.wp=p}
+    // a moan now and then (never more than three voices, two dense, one full; never two at the same moment)
+    if(now>v.next){const P=pl(z.x,z.y);v.next=now+VR(4.5,.45)*(1+P.d/320);if(P.k>.04&&A.busy.length<3-lv&&now-A.lastMoan>.4){A.lastMoan=now;A.busy.push(now+moan(z,t,P))}}}
   stepCases(dt)}
 // ------------------------------------------------------------------ the casings: thrown out by the gun (motore.js passes the gun's 'bossolo'
 // events to W.onCase), they fly, bounce and ring only when they land
@@ -18066,10 +18184,11 @@ W.onCase=n=>{const h=W.hero,a=(h.aim!=null?h.aim:h.face)||0,id=W.gunId,sh=id==='
   for(let i=0;i<(n||1);i++){const many=n>1,sd=a+Math.PI/2+VR(0,.4)*(Math.random()<.5?1:-1)*.3,sp=many?VR(14,.5):VR(55,.25);
     A.cases.push({x:h.x+Math.cos(a)*6,y:h.y+Math.sin(a)*6,z:(h.zh||0)+(many?16:21),vx:Math.cos(sd)*sp-Math.cos(a)*VR(12,.5),vy:Math.sin(sd)*sp-Math.sin(a)*VR(12,.5),vz:many?VR(10,.6):VR(70,.25),r:Math.random()*6.3,vr:VR(18,.6)*(Math.random()<.5?-1:1),b:0,life:many?3.2:2.6,sh,ground:(h.zh||0)})}
   if(A.cases.length>max)A.cases.splice(0,A.cases.length-max)};
-function tink(c,first){if(!on())return;const P=place(c.x,c.y),t=AU.ctx.currentTime+.005,vol=(first?.026:.012)*Math.max(.25,P.k);
+function tink(c,first){if(!on())return;const lv=lvA(),now=AU.ctx.currentTime;if(!first&&lv)return;if(now-A.lastTink<(lv>1?.16:lv?.09:.05))return;A.lastTink=now;
+  const P=place(c.x,c.y),t=now+.005,vol=(first?.026:.012)*Math.max(.25,P.k);
   if(c.sh){fThump(t,VR(820,.1),460,.035,vol*1.6);fNoise(t,.025,'bandpass',VR(2400,.15),1.4,vol*.9);return}
   // brass on stone and earth: a short ring of a few partials not quite in tune, a dry click, no long electronic tail
-  const f=VR(first?3900:4300,.1);fModal(t,f,[1,VR(2.42,.03),VR(3.98,.03),VR(5.6,.04)],[.07,.05,.035,.025],vol,.05);fNoise(t,.008,'highpass',6500,.7,vol*.8,{att:.0006})}
+  const f=VR(first?3900:4300,.1);if(lv)fModal(t,f,[1,VR(2.42,.03)],[.07,.05],vol,.05);else{fModal(t,f,[1,VR(2.42,.03),VR(3.98,.03),VR(5.6,.04)],[.07,.05,.035,.025],vol,.05);fNoise(t,.008,'highpass',6500,.7,vol*.8,{att:.0006})}}
 function stepCases(dt){for(let i=A.cases.length-1;i>=0;i--){const c=A.cases[i];c.life-=dt;if(c.life<=0){A.cases.splice(i,1);continue}
   if(c.vz!==0||c.z>c.ground){c.vz-=300*dt;c.x+=c.vx*dt;c.y+=c.vy*dt;c.z+=c.vz*dt;c.r+=c.vr*dt;
     if(c.z<=c.ground){c.z=c.ground;if(c.vz<-28&&c.b<3){tink(c,c.b===0);c.vz=-c.vz*.34;c.vx*=.5;c.vy*=.5;c.vr*=.5;c.b++}else{c.vz=0;c.vx=c.vy=0;c.vr=0}}}}}
@@ -18079,7 +18198,7 @@ function drawCase(c,a){const q=ZM.SB(c.x,c.y,c.z);ctx.save();ctx.globalAlpha*=a;
 {const _p=ZM.partita;ZM.partita=function(o){const D=_p(o);if(D.__au)return D;D.__au=1;
   const _u=D.update;D.update=(dt,on2)=>{_u(dt,on2);try{update(dt,D)}catch(e){console.error(e)}};
   // the zombie's blow: its snarl and the claw, when it really hits
-  const _zh=D.zombieHit;D.zombieHit=(z,d)=>{const hp=D.hp;_zh(z,d);try{if(D.hp<hp&&on()){const P=place(z.x,z.y);attack(z,AU.ctx.currentTime+.01,P)}}catch(e){}};
+  const _zh=D.zombieHit;D.zombieHit=(z,d)=>{const hp=D.hp;_zh(z,d);try{const now=on()?AU.ctx.currentTime:0;if(D.hp<hp&&now&&now-A.lastAtk>.12){A.lastAtk=now;const P=place(z.x,z.y);P.lv=lvA();attack(z,now+.01,P)}}catch(e){}};
   const _t=D.drawTop;D.drawTop=dt=>{_t(dt);if(!A.cases.length)return;try{for(const c of A.cases)drawCase(c,Math.min(1,c.life/.6))}catch(e){}};
   const _r=D.reset;D.reset=()=>{_r();A.cases.length=0;A.busy.length=0};return D}}
 ZM.audio={A,KV,moan,place}})();
@@ -18099,8 +18218,10 @@ material('ironR',['#5a4034','#3a2820','#7e5a46'],'iron');// il ferro arrugginito
 const ALL=[];
 // ------------------------------------------------------------------ i suoni (forti vicino, piano lontano, a destra o a sinistra: ZM.audio.place)
 function suono(w,x,y){try{if(typeof AU==='undefined'||!AU.ctx||!AU.on.sfx||AU.ctx.state!=='running')return;const P0=ZM.audio?ZM.audio.place(x,y):{k:1,rev:.2},k=P0.k,t=AU.ctx.currentTime+.01;if(k<.01)return;
-  if(w==='vetro'){fThump(t,320,110,.07,.22*k,.2);fNoise(t,.55,'highpass',4200,.7,.16*k,{rev:P0.rev});for(let i=0;i<11;i++)M.glass(t+.01+Math.random()*.42,(1-i*.06)*k,VR(1700+i*190,.18))}
-  else if(w==='asse'){fNoise(t,.13,'bandpass',VR(1100,.15),1.3,.3*k);M.wood(t,1.1*k,VR(230,.08));fNoise(t+.02,.3,'bandpass',VR(480,.2),2.2,.1*k,{f2:220});M.wood(t+.34,.45*k,VR(170,.1))}
+  // (difetti 48) con l'audio carico (src/js/05-audio.js audioLv) meno schegge di vetro e il legno senza il secondo tonfo
+  const lv=typeof audioLv==='function'?audioLv():0;
+  if(w==='vetro'){fThump(t,320,110,.07,.22*k,.2);fNoise(t,.55,'highpass',4200,.7,.16*k,{rev:P0.rev});for(let i=0,n=lv>1?3:lv?5:11;i<n;i++)M.glass(t+.01+Math.random()*.42,(1-i*.06)*k,VR(1700+i*190,.18))}
+  else if(w==='asse'){fNoise(t,.13,'bandpass',VR(1100,.15),1.3,.3*k);M.wood(t,1.1*k,VR(230,.08));fNoise(t+.02,.3,'bandpass',VR(480,.2),2.2,.1*k,{f2:220});if(!lv)M.wood(t+.34,.45*k,VR(170,.1))}
   else if(w==='ammacca'){M.metal(t,.9*k,VR(430,.06),.5);fThump(t,190,70,.1,.22*k)}
   else if(w==='sbarra'){M.metal(t,1.2*k,VR(300,.05),.9);fNoise(t,.42,'bandpass',VR(2400,.1),3,.12*k,{f2:900});M.metal(t+.32,.5*k,VR(620,.08),.4);M.metal(t+.44,.3*k,VR(700,.08),.3)}
   else if(w==='inchioda'){M.wood(t,.55*k,VR(260,.06));for(let i=0;i<3;i++){M.wood(t+.05+i*.11,.75*k,VR(430,.05));M.metal(t+.05+i*.11,.22*k,VR(1900,.05),.18)}}
@@ -18493,6 +18614,8 @@ function buildEast(w,h){const E={};const hole=(x,y,z,k)=>holes.push([x,y,z,k||nu
   ZM.group(SG.ref,()=>P.bancoSega(SG,X(21.9),Y(5.25)));/* (difetti 48: le cose attaccate a un edificio si piegano con lui) */
   {const px=X(24.4),py=Y(4.0);solid(px,py,70,14);SG.in([...box(px,py,0,70,14,6,'plankN',{ow:1.4}),...box(px+2,py+1,6,66,12,6,'plank',{noFoot:true,ow:1.4}),...box(px+4,py+2,12,62,10,6,'plankN',{noFoot:true,ow:1.4})],[px-2,py-2,px+72,py+16,20])}// le assi tagliate
   {const tx=X(25.6),ty=Y(6.6);solid(tx,ty,44,22);SG.in([...box(tx,ty,0,44,22,24,'wood',{ow:1.8}),...box(tx-2,ty-2,24,48,26,3,'plankD',{noFoot:true,ow:1.4}),line3([tx+6,ty+8,27],[tx+30,ty+12,27],'#8a8e98',2,{ink:true})],[tx-4,ty-4,tx+48,ty+26,32])}// il banco degli attrezzi
+  // (14 ottobre: «migliora il design di tutto») due lanterne appese sotto il tetto e, sul muro nord, le lame circolari e il segone
+  P.lumeAppeso(SG,X(21.0),Y(4.5),64);P.lumeAppeso(SG,X(24.8),Y(6.2),64);P.attrezziMuro(SG,X(19.5)+150);
   P.shed(X(17.0),Y(5.4),1.8*T,2*T);
   P.shelter(X(27.2),Y(3.8),X(29.2)-X(27.2),Y(5.9)-Y(3.8));P.valvola(X(28.2),Y(4.55));
   P.gru(X(26.1),Y(10.9));P.carroTronchi(X(20.7),Y(10.0));hole(X(20.4),Y(10.4),4,'carro');

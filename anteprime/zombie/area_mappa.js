@@ -49,6 +49,8 @@ function buildEast(w,h){const E={};const hole=(x,y,z,k)=>holes.push([x,y,z,k||nu
   ZM.group(SG.ref,()=>P.bancoSega(SG,X(21.9),Y(5.25)));/* (difetti 48: le cose attaccate a un edificio si piegano con lui) */
   {const px=X(24.4),py=Y(4.0);solid(px,py,70,14);SG.in([...box(px,py,0,70,14,6,'plankN',{ow:1.4}),...box(px+2,py+1,6,66,12,6,'plank',{noFoot:true,ow:1.4}),...box(px+4,py+2,12,62,10,6,'plankN',{noFoot:true,ow:1.4})],[px-2,py-2,px+72,py+16,20])}// le assi tagliate
   {const tx=X(25.6),ty=Y(6.6);solid(tx,ty,44,22);SG.in([...box(tx,ty,0,44,22,24,'wood',{ow:1.8}),...box(tx-2,ty-2,24,48,26,3,'plankD',{noFoot:true,ow:1.4}),line3([tx+6,ty+8,27],[tx+30,ty+12,27],'#8a8e98',2,{ink:true})],[tx-4,ty-4,tx+48,ty+26,32])}// il banco degli attrezzi
+  // (14 ottobre: «migliora il design di tutto») due lanterne appese sotto il tetto e, sul muro nord, le lame circolari e il segone
+  P.lumeAppeso(SG,X(21.0),Y(4.5),64);P.lumeAppeso(SG,X(24.8),Y(6.2),64);P.attrezziMuro(SG,X(19.5)+150);
   P.shed(X(17.0),Y(5.4),1.8*T,2*T);
   P.shelter(X(27.2),Y(3.8),X(29.2)-X(27.2),Y(5.9)-Y(3.8));P.valvola(X(28.2),Y(4.55));
   P.gru(X(26.1),Y(10.9));P.carroTronchi(X(20.7),Y(10.0));hole(X(20.4),Y(10.4),4,'carro');

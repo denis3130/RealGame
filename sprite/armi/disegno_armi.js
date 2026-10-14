@@ -559,7 +559,7 @@ function cassaMun(tipo,x,y,t,sc){sc=sc||1;const M=MUNC[tipo],bob=Math.sin(t*3)*1
 // what: 'sparo' (shot), 'ricarica' (the reload, timed on the animation), 'vuoto' (empty click), 'pompa' (the pump), 'cartuccia' (one shell
 // pushed in), 'giri' (the machine gun spinning up), 'bossolo' (a case landing), 'esplosione' (the rocket's blast), 'presa' (ammo picked up).
 // x: where it happens (for the left-right pan), dt: start this many seconds later (scheduled on the audio clock)
-function crack(t,f,v){fNoise(t,.032,'bandpass',f,.7,v,{att:.0008});fNoise(t,.014,'highpass',5200,.7,v*.55,{att:.0005})}
+function crack(t,f,v,lv){fNoise(t,.032,'bandpass',f,.7,v,{att:.0008});if(!lv)fNoise(t,.014,'highpass',5200,.7,v*.55,{att:.0005})}
 function tail(t,d,v,rv){fNoise(t+.02,d,'lowpass',VR(900,.1),.7,v,{brown:true,f2:180,att:.012,rev:rv||.55})}
 // a spent case landing (punto 48): lighter and more natural than before, never over the shots: brass rings briefly in a few partials not
 // quite in tune with a dry click and a softer second bounce; the shotgun's plastic shell is a dull «toc»
@@ -568,6 +568,12 @@ function case_(t,n,v,shell){v*=.6;for(let i=0;i<n;i++){const tt=t+i*.06+Math.ran
   else{fModal(tt,VR(3900,.1),[1,VR(2.42,.03),VR(3.98,.03),VR(5.6,.04)],[.07,.05,.035,.025],v,.05);fNoise(tt,.008,'highpass',6500,.7,v*.8,{att:.0006});
     fModal(tt+VR(.11,.25),VR(4400,.1),[1,VR(2.42,.03)],[.05,.035],v*.45,.04)}}}
 function clack(t,f,v,len){M.metal(t,v,VR(Math.min(f,2300),.04),len||.2);fNoise(t,.02,'highpass',3800,.7,v*.25)}
+// (difetti 48, Denis: «l'audio dopo il quinto round va a farsi fottere») the automatic guns fire 9–16 shots a second: the mechanism and the
+// tail of every shot piled up by the dozen, with the casings and the zombies up to 800 audio nodes a second, and the phone's audio could
+// not keep up. The mechanism now plays at most 4 times a second and the tail 5 (the ear hears the burst, not each shot), half again when
+// the audio is full (audioLv, src/js/05-audio.js), and with the audio busy the crack loses its hiss. A single shot, and the first of every
+// burst, sounds as before
+const SN={};
 function suono(id,what,x,dt){if(typeof AU==='undefined'||!AU.ctx||!AU.on.sfx)return;const t=AU.ctx.currentTime+.005+(dt||0),D=DATI[id]||{},R=D.rel||1;AU.pan=x==null?0:cl((x-180)/200,-.7,.7);
   try{if(what==='vuoto'){clack(t,2600,.7,.07);fThump(t,300,200,.02,.18)}
   else if(what==='bossolo'){case_(t,1,id==='pompa'||id==='tattica'?.05:.04,id==='pompa'||id==='tattica')}
@@ -592,16 +598,16 @@ function suono(id,what,x,dt){if(typeof AU==='undefined'||!AU.ctx||!AU.on.sfx)ret
     else{clack(t+.02,1300,.32,.15);fNoise(t+.03,.07,'bandpass',VR(2500,.1),1.4,.12,{f2:1500});
       fThump(t+R*.38,VR(260,.05),140,.05,.2);M.metal(t+R*.38,.3,VR(id==='pistola'?900:700,.05),.3);
       fThump(t+R*.73,VR(220,.05),110,.04,.25);clack(t+R*.73,1000,.48,.2);clack(t+R*.86,id==='pistola'?2200:1800,.58,.25);fNoise(t+R*.86,.04,'highpass',3500,.7,.15)}}
-  else if(what==='sparo'){
+  else if(what==='sparo'){const lv=typeof audioLv==='function'?audioLv():0,sn=SN[id]||(SN[id]={n:0,t:-9});if(t-sn.t>.4)sn.n=0;sn.t=t;const n=sn.n++,ev=ps=>!D.auto||n%(Math.max(1,Math.round(D.rate/ps))*(lv>1?2:1))===0;// (the first shot of a burst always whole)
     if(id==='pistola'){crack(t,VR(2600,.08),.75);fThump(t,VR(170,.06),60,.1,.85,.15);fNoise(t,.14,'lowpass',2200,.8,.45,{brown:true,f2:400});tail(t,.35,.12);clack(t+.045,2300,.42,.18)}
     else if(id==='revolver'){crack(t,VR(1900,.06),.9);fThump(t,VR(118,.05),42,.3,1.1,.3);fNoise(t,.32,'lowpass',1400,.8,.62,{brown:true,f2:170,rev:.35});tail(t,.75,.2,.7);M.metal(t+.01,.28,VR(1500,.05),.6);clack(t+.26,2800,.22,.12)}
-    else if(id==='mitraglietta'){crack(t,VR(3600,.1),.5);fThump(t,VR(230,.08),95,.055,.55);fNoise(t,.06,'bandpass',VR(1200,.1),1,.3);clack(t+.02,3000,.2,.1)}
-    else if(id==='mitra'){crack(t,VR(2900,.08),.56);fThump(t,VR(150,.06),55,.11,.75,.2);fNoise(t,.12,'bandpass',VR(900,.08),.9,.45);tail(t,.28,.1);clack(t+.03,1700,.25,.15)}
-    else if(id==='mitragliatrice'){crack(t,VR(2400,.08),.6);fThump(t,VR(115,.05),40,.12,.9,.2);fNoise(t,.12,'lowpass',1500,.8,.5,{brown:true,f2:160});tail(t,.25,.08);fNoise(t+.02,.03,'bandpass',VR(4200,.2),2,.06);clack(t+.03,3400,.12,.08)}
+    else if(id==='mitraglietta'){crack(t,VR(3600,.1),.5,lv);fThump(t,VR(230,.08),95,.055,.55);fNoise(t,.06,'bandpass',VR(1200,.1),1,.3);if(ev(4))clack(t+.02,3000,.2,.1)}
+    else if(id==='mitra'){crack(t,VR(2900,.08),.56,lv);fThump(t,VR(150,.06),55,.11,.75,.2);fNoise(t,.12,'bandpass',VR(900,.08),.9,.45);if(ev(5))tail(t,.28,.1);if(ev(4))clack(t+.03,1700,.25,.15)}
+    else if(id==='mitragliatrice'){crack(t,VR(2400,.08),.6,lv);fThump(t,VR(115,.05),40,.12,.9,.2);fNoise(t,.12,'lowpass',1500,.8,.5,{brown:true,f2:160});if(ev(5)){tail(t,.25,.08);fNoise(t+.02,.03,'bandpass',VR(4200,.2),2,.06)}if(ev(4))clack(t+.03,3400,.12,.08)}
     else if(id==='pompa'||id==='tattica'){const f=id==='tattica';crack(t,VR(f?1800:1500,.06),.75);fThump(t,VR(f?110:95,.05),34,f?.3:.38,1,.35);fNoise(t,f?.36:.45,'lowpass',f?1500:1200,.8,.75,{brown:true,f2:110,rev:.4});
       fNoise(t,.08,'bandpass',600,.8,.4);tail(t,f?.7:.9,.22,.7)}
     else if(id==='lanciafiamme'){fNoise(t,.13,'bandpass',VR(650,.25),.7,.2,{brown:true,f2:VR(380,.2)});fNoise(t,.08,'highpass',VR(2600,.3),.8,.05);if(Math.random()<.3)fThump(t,VR(70,.1),40,.15,.25,.2)}
-    else if(id==='tamburo'){crack(t,VR(3300,.1),.55);fThump(t,VR(200,.08),80,.06,.6);fNoise(t,.07,'bandpass',VR(1050,.1),1,.32);clack(t+.02,2700,.2,.1)}
+    else if(id==='tamburo'){crack(t,VR(3300,.1),.55,lv);fThump(t,VR(200,.08),80,.06,.6);fNoise(t,.07,'bandpass',VR(1050,.1),1,.32);if(ev(4))clack(t+.02,2700,.2,.1)}
     else if(id==='vapore'){fNoise(t,.55,'highpass',2600,.8,.32,{f2:5200,att:.01});fThump(t,VR(140,.05),55,.18,.85,.25);M.metal(t+.005,.45,VR(620,.05),.6);clack(t+.02,1900,.4,.2);fNoise(t+.12,.6,'bandpass',4200,1.4,.08,{f2:2200,att:.1})}
     else if(id==='risonatore'){fThump(t,VR(66,.05),26,.7,1,.45);vBell(null,t,40,2.4,.22);vBell(null,t+.04,52,2,.12);vChoir(null,t+.05,[52,59,64],1.6,.07);whoosh(t,.6,260,4200,.35,.3);fNoise(t,.08,'bandpass',3200,1.4,.2)}
     else if(id==='lanciarazzi'){fThump(t,VR(80,.05),30,.4,.9,.3);whoosh(t,.35,500,3200,.45,.2);fNoise(t,.12,'bandpass',900,.8,.5);fNoise(t+.05,.9,'highpass',2500,.7,.18,{f2:6000,att:.05,rev:.3});
