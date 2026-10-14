@@ -127,4 +127,6 @@ Da fare dopo l'ok di Denis:
   `ARMI.fiamma(g, x)` a ogni fotogramma (ruggito continuo finché spara, si spegne da solo); `ARMI.motore` si spegne da solo anche in
   pausa; `ARMI.ferma(g)` quando si cambia arma. `ARMI.suonoVecchio` è il suono di prima (per le misure).
 - `caricatore(id, ...)` disegna anche il tamburo, la bombola, la stecca di chiodi e il cristallo (la mappa li lascia a terra).
-- Misure: `node tests/suoni_armi.js` (tempo e memoria del banco, picco, volume ed energia per banda, nuovo e vecchio).
+- Misure: `node tests/suoni_armi.js` (tempo e memoria del banco; lo sparo nuovo e quello vecchio, ognuno da solo in un
+  `OfflineAudioContext` con la strada del gioco: volume pesato come l'orecchio e come la cassa di un telefono, energia sotto i 150 Hz,
+  picco; la ricarica della pistola e l'esplosione del razzo). Il 14 ottobre: in cuffia come prima, sul telefono da 5,8 a 10,4 dB più forti.

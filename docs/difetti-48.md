@@ -188,8 +188,8 @@ spawnassero da lì, solo in zone dove ho il via libera. E rendi i zombie più ra
 - L'Arciere della Classica è rimasto identico al pixel (arco, balestra e bastone nelle quattro direzioni e nelle cinque mosse).
 
 ### L'audio delle armi
-- **Misura**: gli spari di prima avevano il 60–98% dell'energia sotto i 150 Hz, dove le casse del telefono non suonano. Sul telefono
-  restava poco: un «pff».
+- **Misura**: otto spari su undici avevano più di metà dell'energia sotto i 150 Hz (fino al 94%), dove le casse del telefono non suonano.
+  Sul telefono restava poco: un «pff».
 - **Ora** (`sprite/armi/suoni_armi.js`, nel gioco dopo `disegno_armi.js`): ogni arma ha un banco di suoni fatti col codice e preparati una
   volta sola fuori tempo reale (`OfflineAudioContext`, 0,1–0,4 s al primo uso, 0,5–1,2 MB, al massimo sei armi in memoria). Dentro:
   - tre spari un po' diversi e la coda dell'eco per le raffiche;
@@ -198,9 +198,14 @@ spawnassero da lì, solo in zone dove ho il via libera. E rendi i zombie più ra
 - **Lo sparo, a strati**: lo schiocco dell'aria, lo scoppio della polvere saturato, un «pugno» che anche il telefono suona, il rombo
   profondo, la coda e l'eco del camposanto, la meccanica dell'arma. Il lanciafiamme è un ruggito continuo (`ARMI.fiamma`). Il motore delle
   canne della mitragliatrice ora suona anche sulla mappa e si spegne da solo in pausa.
-- **Misure** (`node tests/suoni_armi.js`):
-  - nella banda che il telefono suona gli spari sono da 0,5 dB (mitraglietta) a 8 dB (pompa, revolver) più forti di prima;
+- **Misure** (`node tests/suoni_armi.js`, ogni sparo da solo, senza i rumori di fondo del menu):
+  - in cuffia forti come prima (da −1,3 a +2,8 dB), così il resto dell'audio resta in equilibrio;
+  - sulla cassa di un telefono da 5,8 dB (fucile a vapore) a 10,4 dB (pompa) più forti di prima;
+  - sotto i 150 Hz resta il 5–66% dell'energia invece del 14–94%, e i picchi sono più bassi (0,32–0,53 invece di 0,43–0,90);
   - ogni suono è un nastro (tre nodi): in battaglia l'audio crea in media 181 nodi al secondo invece di 355, al massimo 466 invece di 817.
+- La prima versione della prova misurava male: preparava i dodici banchi di fila (il gioco ne tiene sei, quindi per metà delle armi
+  ascoltava il suono di riserva, a metà volume) e sentiva anche i rumori di fondo del menu. Ora ogni banco si prepara subito prima della
+  misura e ogni suono si fa da solo in un `OfflineAudioContext` con la stessa strada del gioco.
 
 ### I versi degli zombie
 - **Prima**: un'onda a dente di sega che ronzava in due vocali con un vibrato: un kazoo, sempre uguale, e frequente.
