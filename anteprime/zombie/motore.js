@@ -165,12 +165,39 @@ MARKS.straw=(w,h,key)=>{// paglia: fili corti in due toni, tutti un po' inclinat
 MARKS.vgrain=(w,h)=>{ctx.strokeStyle='rgba(20,12,6,.35)';ctx.lineWidth=.9;const n=Math.max(1,Math.round(w/4));for(let i=0;i<n;i++){const x0=(i+.5)*w/n;ctx.beginPath();ctx.moveTo(x0+rr(-.8,.8),h);ctx.bezierCurveTo(x0+rr(-1.5,1.5),h*.6,x0+rr(-1.5,1.5),h*.3,x0+rr(-1,1),0);ctx.stroke()}};
 MARKS.plaster=(w,h)=>{ctx.strokeStyle='rgba(10,8,6,.5)';ctx.lineWidth=1;const x0=rr(w*.2,w*.8);ctx.beginPath();ctx.moveTo(x0,0);ctx.lineTo(x0+rr(-3,3),h*.3);ctx.lineTo(x0+rr(-5,5),h*.55);ctx.stroke();ctx.fillStyle='rgba(20,30,20,.25)';ctx.beginPath();ctx.ellipse(rr(0,w),h*.85,rr(8,18),rr(4,8),0,0,TAU);ctx.fill()};
 MARKS.flat=()=>{};
+// l'usura (punto 11 del piano di Denis): graffi, crepe, ruggine con le colature, vernice e intonaco che si staccano, schegge sui bordi,
+// polvere; sempre leggeri (si vedono da vicino, non sporcano la forma) e fissi per ogni texture (stesso seme)
+const WEAR={
+  scratch(w,h,n){ctx.lineWidth=.8;for(let i=0;i<n;i++){const x=rr(0,w),y=rr(0,h),a=rr(-.6,.6)+(rnd()<.5?0:Math.PI/2),l=rr(2.5,7);ctx.strokeStyle=rnd()<.6?'rgba(255,240,220,.24)':'rgba(10,8,6,.3)';ctx.beginPath();ctx.moveTo(x,y);ctx.lineTo(x+Math.cos(a)*l,y+Math.sin(a)*l);ctx.stroke()}},
+  crack(w,h,n,lite){for(let i=0;i<n;i++){let x=rr(w*.15,w*.85),y=rr(0,h*.4);const pts=[[x,y]];for(let k=0;k<4;k++){x+=rr(-2.5,2.5);y+=rr(2,h*.14+2);pts.push([x,y])}
+    ctx.strokeStyle='rgba(8,6,6,.7)';ctx.lineWidth=1.1;ctx.beginPath();pts.forEach((q,k)=>k?ctx.lineTo(q[0],q[1]):ctx.moveTo(q[0],q[1]));ctx.stroke();
+    if(lite){ctx.strokeStyle='rgba(255,245,230,.14)';ctx.lineWidth=.6;ctx.beginPath();pts.forEach((q,k)=>k?ctx.lineTo(q[0]+.8,q[1]+.4):ctx.moveTo(q[0]+.8,q[1]+.4));ctx.stroke()}}},
+  rust(w,h,n){for(let i=0;i<n;i++){const x=rr(0,w),y=rr(0,h*.8),r=rr(1,2.8);ctx.fillStyle='rgba(150,74,30,.55)';ctx.beginPath();ctx.ellipse(x,y,r*1.3,r,0,0,TAU);ctx.fill();ctx.fillStyle='rgba(205,115,55,.4)';ctx.beginPath();ctx.ellipse(x-.4,y-.3,r*.6,r*.45,0,0,TAU);ctx.fill();
+    const g=ctx.createLinearGradient(0,y,0,y+rr(4,10));g.addColorStop(0,'rgba(130,64,26,.3)');g.addColorStop(1,'rgba(130,64,26,0)');ctx.fillStyle=g;ctx.fillRect(x-.6,y,1.2,10)}},
+  peel(w,h,n,under){for(let i=0;i<n;i++){const x=rr(0,w),y=rr(0,h),r=rr(2,5);ctx.fillStyle=under;ctx.beginPath();for(let k=0;k<7;k++){const a=k/7*TAU,q=r*(.6+rnd()*.6);ctx.lineTo(x+Math.cos(a)*q*1.3,y+Math.sin(a)*q)}ctx.closePath();ctx.fill();ctx.strokeStyle='rgba(20,14,10,.3)';ctx.lineWidth=.5;ctx.stroke()}},
+  chip(w,h,n){ctx.fillStyle='rgba(8,6,6,.45)';for(let i=0;i<n;i++){const x=rr(0,w),s=rr(1,2.4);ctx.beginPath();ctx.moveTo(x-s,0);ctx.lineTo(x,s*1.2);ctx.lineTo(x+s,0);ctx.closePath();ctx.fill()}},
+  stain(w,h,n,col){for(let i=0;i<n;i++){ctx.fillStyle=col;ctx.beginPath();ctx.ellipse(rr(0,w),rr(h*.3,h),rr(2,6),rr(1.5,4),rr(0,3),0,TAU);ctx.fill()}},
+  dust(w,h){for(let i=0;i<w*h/90;i++){ctx.fillStyle=rnd()<.5?'rgba(200,190,170,.08)':'rgba(0,0,0,.08)';ctx.fillRect(rr(0,w),rr(0,h),.8,.8)}}};
+{const ad=(k,f)=>{const o=MARKS[k];MARKS[k]=(w,h,key,m)=>{o(w,h,key,m);if(key==='t'&&k!=='plank'&&k!=='wood')return;f(w,h,key,m)}};
+  ad('plank',(w,h,key)=>{WEAR.scratch(w,h,Math.round(w*h/260));WEAR.crack(w,h,Math.round(w*h/2400));if(key!=='t')WEAR.chip(w,h,Math.round(w/14));WEAR.dust(w,h)});
+  ad('siding',(w,h)=>{WEAR.scratch(w,h,Math.round(w*h/300));WEAR.crack(w,h,Math.round(w*h/2600));ctx.fillStyle='rgba(230,215,190,.06)';for(let i=0;i<w/18;i++)ctx.fillRect(rr(0,w),0,rr(2,5),h)});
+  ad('wood',(w,h)=>{WEAR.scratch(w,h,Math.round(w*h/220));WEAR.crack(w,h,w*h>300?1:0)});
+  ad('iron',(w,h)=>{WEAR.rust(w,h,Math.max(1,Math.round(w*h/160)));WEAR.scratch(w,h,Math.round(w*h/120))});
+  ad('stone',(w,h)=>{WEAR.crack(w,h,rnd()<Math.min(.9,w*h/1800)?1:0,true);WEAR.chip(w,h,Math.round(w/22));WEAR.dust(w,h)});
+  ad('brick',(w,h)=>{WEAR.crack(w,h,rnd()<.5?1:0,true);WEAR.stain(w,h,Math.round(w*h/1400),'rgba(20,30,20,.18)')});
+  ad('plaster',(w,h)=>{WEAR.peel(w,h,Math.max(1,Math.round(w*h/700)),'rgba(120,100,80,.45)');WEAR.stain(w,h,1,'rgba(40,30,20,.16)');WEAR.dust(w,h)});
+  ad('cloth',(w,h)=>{WEAR.stain(w,h,Math.max(1,Math.round(w*h/500)),'rgba(30,20,20,.2)')});
+  ad('bark',(w,h)=>{WEAR.scratch(w,h,Math.round(w*h/400))})}
+// i vetri delle finestre: lo sporco negli angoli, un riflesso di traverso, e su qualcuno una crepa a stella
+MARKS.pane=(w,h)=>{const g=ctx.createRadialGradient(w/2,h/2,Math.min(w,h)*.2,w/2,h/2,Math.max(w,h)*.7);g.addColorStop(0,'rgba(0,0,0,0)');g.addColorStop(1,'rgba(40,30,20,.35)');ctx.fillStyle=g;ctx.fillRect(0,0,w,h);
+  ctx.fillStyle='rgba(255,255,255,.16)';ctx.beginPath();ctx.moveTo(w*.15,0);ctx.lineTo(w*.4,0);ctx.lineTo(w*.1,h);ctx.lineTo(-w*.15,h);ctx.closePath();ctx.fill();
+  if(rnd()<.35){const x=rr(w*.3,w*.7),y=rr(h*.3,h*.7);ctx.strokeStyle='rgba(255,255,255,.55)';ctx.lineWidth=.6;for(let k=0;k<6;k++){const a=k/6*TAU+rr(-.3,.3),l=rr(3,Math.min(w,h)*.5);ctx.beginPath();ctx.moveTo(x,y);ctx.lineTo(x+Math.cos(a)*l*.5,y+Math.sin(a)*l*.5+rr(-1,1));ctx.lineTo(x+Math.cos(a)*l,y+Math.sin(a)*l);ctx.stroke()}}};
 material('plank',['#6e5236','#46321e','#93714c'],'plank');material('plankD',['#54402c','#34261a','#735a3e'],'plank');material('siding',['#6e5236','#46321e','#93714c'],'siding');
 material('stone',['#6d6a72','#45434b','#9a97a2'],'stone');material('stoneW',['#5c5f6a','#3c3e47','#80848f'],'stone');material('stoneWD',['#4a4c56','#30323a','#676a75'],'stone');material('stoneD',['#55535b','#36353b','#7c7a84'],'stone');material('brick',['#5a3a30','#3a2420','#7a5448'],'brick');
 material('shingle',['#4e3b4a','#302232','#6a5466'],'shingle');material('slate',['#3c4552','#2b323c','#535f6e'],'shingle');material('tile',['#7a3527','#5a2519','#96503a'],'shingle');
 material('wood',['#5e4128','#3c2817','#7d5a38'],'wood');material('iron',['#34363e','#1d1e23','#6a6e7a'],'iron');material('soil',['#4a3a2a','#2e2419','#64503a'],'soil');material('soilD',['#3c3028','#241c16','#4e4034'],'soil');
 material('bone',['#d9cfb4','#a69a7c','#f0e8d2'],'bone');material('cloth',['#5a3a5e','#3a243e','#7a5a80'],'cloth');material('red',['#6a2e3a','#4a1e28','#8a4a56'],'cloth');
-material('glass',['#f0c070','#b87830','#fff0c0'],'flat');material('dark',['#0c0a0e','#06050a','#1a1620'],'flat');material('bark',['#4a3b2e','#2c231b','#6a5644'],'bark');
+material('glass',['#f0c070','#b87830','#fff0c0'],'pane');material('dark',['#0c0a0e','#06050a','#1a1620'],'flat');material('bark',['#4a3b2e','#2c231b','#6a5644'],'bark');
 material('pumpkin',['#d06e22','#8a4010','#f0a040'],'flat');material('leaf',['#365a2c','#22391b','#52803e'],'flat');material('grass',['#36452b','#26311e','#4d6338'],'flat');
 material('moss',['#4f6e35','#33491f','#6f9448'],'flat');material('copper',['#5d8a76','#3d5e50','#80b09a'],'iron');material('hay',['#8a7a3a','#5e5228','#a89450'],'straw');
 material('slab',['#5a5f6c','#3a3e48','#7d8392'],'slab');material('leafZ',['#3a5234','#1f2e1c','#5a7a44'],'flat');material('oldwood',['#5a4a3a','#36291e','#8a7a62'],'plank');material('board',['#5a4a3a','#36291e','#8a7a62'],'wood');material('post',['#4e3f30','#30251a','#75644e'],'vgrain');material('stave',['#54402c','#34261a','#735a3e'],'vgrain');material('plaster',['#3a2c22','#2a1f18','#4e3d30'],'plaster');material('leafA',['#8a4a22','#52281a','#b86a2e'],'flat');
@@ -411,7 +438,10 @@ function drawPerch(p){{if(p.away)return;const ho=perchHost(p);LEANK=ho&&ho.lk!=n
 // fiamme e lumi: candele, vetri delle lanterne, zucche, camini, il respiro verde della cripta (disegnate nell'ordine di profondità)
 // f.n (facoltativa): la normale della faccia da cui esce la luce (la porta della cripta): vista da dietro non si disegna, di taglio sfuma
 function drawFlame(f,h0a){if(f.house&&f.house.a>.9)return;if(f.n){const fc=facing(f.n[0],f.n[1]);if(fc<=0)return;if(fc<.25){ctx.save();ctx.globalAlpha*=fc/.25;try{drawFlame0(f)}finally{ctx.restore()}return}}drawFlame0(f)}
-function drawFlame0(f){if(f.off)return;LEANK=f.lk||1;setRef(f.ref);const q=S(f.x,f.y,f.z);LEANK=1;setRef(null);const fl=.85+.15*Math.sin(W.t*11+f.x)*Math.sin(W.t*7.3+f.y);
+// le falene intorno ai vetri accesi dei lampioni e delle lanterne (punto 11: piccoli dettagli vivi): tre puntini che girano e sbattono
+function moths(q,f){if(LOWFX)return;const t=W.t||0;ctx.save();for(let i=0;i<3;i++){const a=t*(1.6+i*.5)+i*2.1+f.x*.01,r=9+4*Math.sin(t*1.3+i),x=q[0]+Math.cos(a)*r,y=q[1]-4+Math.sin(a*1.7)*r*.55,fl=Math.abs(Math.sin(t*28+i*3));
+  ctx.fillStyle='rgba(235,225,200,.85)';ctx.beginPath();ctx.ellipse(x-1.2,y,1.4,.6+fl*.9,-.5,0,TAU);ctx.ellipse(x+1.2,y,1.4,.6+fl*.9,.5,0,TAU);ctx.fill();ctx.fillStyle='rgba(60,50,40,.9)';ctx.fillRect(x-.4,y-.6,.8,1.4)}ctx.restore()}
+function drawFlame0(f){if(f.off)return;LEANK=f.lk||1;setRef(f.ref);const q=S(f.x,f.y,f.z);LEANK=1;setRef(null);if(f.glass)moths(q,f);const fl=.85+.15*Math.sin(W.t*11+f.x)*Math.sin(W.t*7.3+f.y);
   if(f.fire){for(let i=0;i<5;i++){const a=W.t*6+i*1.3,h=10+4*Math.sin(a),xx=q[0]+(i-2)*3.2;ctx.fillStyle=i%2?'#ffb040':'#ff7a20';ctx.beginPath();ctx.moveTo(xx-3,q[1]);ctx.quadraticCurveTo(xx-2,q[1]-h*.6,xx+Math.sin(a)*1.5,q[1]-h);ctx.quadraticCurveTo(xx+2,q[1]-h*.6,xx+3,q[1]);ctx.closePath();ctx.fill()}}
   else if(f.r<2){ctx.fillStyle='#fff2c0';ctx.beginPath();ctx.ellipse(q[0],q[1]-2,f.r*1.1,f.r*2.4*fl,0,0,TAU);ctx.fill()}
   if(LOWFX)return;ctx.save();ctx.globalCompositeOperation='lighter';glow(f.rgb,q[0],q[1]-2,(f.crypt?26:f.fire?28:f.pump?16*f.pump:f.glass?22:12)*fl,(f.crypt?.5+.2*Math.sin(W.t*1.4):f.pump?.7:.6)*fl);ctx.restore()}
