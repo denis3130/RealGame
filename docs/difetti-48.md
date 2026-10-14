@@ -87,3 +87,8 @@ basta». Visto sull'**anteprima 48** (https://claude.ai/artifact/1PeXgrLWXwA3QGK
   solo se non basta abbassa gli effetti come prima.
 - I «picchi» di 300 ms ogni 6 fotogrammi visti sul computer di prova sono del browser senza scheda grafica (accumula i disegni e li colora tutti
   insieme), non della mappa: sul telefono il lavoro è distribuito. Da riprovare sul telefono vero.
+- Collaudo della navigazione (`navmappa.js`): 94 su 96. Nel caso «dentro la Cappella» due zombie restano in coda nella navata tra le panche, a
+  50 px dall'eroe, dietro quelli che già mordono (la navata è larga per due zombie). Succedeva uguale prima di queste correzioni (in un giro
+  anche 5 su 8): è una strettoia, non uno zombie bloccato.
+- Collaudo della navigazione dell'area di prova (`navtest.js`): arrivano tutti (226–232 su 226–232 per punto); nel caso «dietro la cripta» la
+  folla arriva 6 su 8 in 60 s, identico alla versione prima delle correzioni (provata accanto, stesso numero).
