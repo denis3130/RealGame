@@ -313,3 +313,28 @@ pubblicata su https://claude.ai/artifact/Sw43VFJjGvrtkUs2t18fek. File: `area_map
   (stessi passi e stesso seme: identica al pixel, controllato da `tests/avvio.js`) dietro la schermata di caricamento al rientro.
 - **Regola per le aree nuove**: il pittore come `function*` con `yield` dopo ogni pennello pesante e `yield*` per i pennelli a fasce; un passo
   non dovrebbe superare ~50 ms su un telefono (con la CPU 4× ~200 ms).
+
+## La mappa grande (anteprima 48, 14 ottobre, punti 10–23 e 54 del piano)
+
+Tutto quello che c'è, con numeri e prove, sta in `docs/anteprima-48.md`; qui come è fatto.
+
+- **File**: `prop_borgo.js` (`P.edificio` edifici dove si entra, a uno o due piani; `P.locanda`, `P.cappella`, `P.campanile`, `P.fucina`,
+  `P.bancarella`, `P.bacheca`, `P.carrettoRovesciato`, `P.carrozzaScuola`, `P.ruotaMulino`, `P.cataste`, `P.gru`, `P.carroTronchi`,
+  `P.rovine`, `P.botola`, `P.barriera` le barriere a pagamento tra le zone; pennelli `G.river`, `G.bank`, `G.sawdust`, `G.ruts`),
+  `barriere.js` (finestre e varchi: `P.winBar`, `P.barricade`), `macchine.js` (Credenza degli Elisir, valvola, Forgia delle Anime),
+  `area_mappa.js` (`buildEast`: le due zone nuove, 30×29 caselle in tutto). Nell'ordine del gioco dopo `prop_fattoria.js`.
+- **Edifici**: ogni muro è un prop col suo tag (`wN`…, e `uN`… la parte di sopra negli edifici col piano di sopra); `hs.b` fa sfumare
+  tetto e muri davanti quando l'eroe è dietro l'edificio (la striscia che il tetto copre sullo schermo); finestre `deco` (vetrate solo
+  disegnate) dove non c'è posto davanti o dietro.
+- **Piani** (`motore.js`): `solid(...).lv=1` per i solidi di sopra; `LV` dice quali solidi contano in `hit` e `move` (quelli del proprio
+  piano); `ZM.scala(S)` registra una scala (bottoni `sali<i>` e `scendi<i>`); `climbStart`/`climbStep` la percorrono; `heroLv`, `sameLv`
+  (stesso piano, o stessa altezza a meno di 46 px sulla scala); `navGoal` (la meta del campo: il piede della scala se l'eroe è di sopra);
+  `upNav`/`upSteer` la griglia piccola di sopra; `hs.up` (0–1) e i tag `slab`, `inU`, `st` in `alphaOf`; `SB` è `S` con la piega
+  dell'edificio per chi sta dentro (eroe, zombie, compagni, effetti); `lvl` sulle fiamme e luci di un piano.
+- **Comparse**: `pickHole` e `holeDist` (campo di navigazione intorno alla buca); `spawn({hole})` per le prove; `z.sp` il tipo di comparsa
+  (`acqua`, `botola`, `carro` con la polvere; le altre come prima).
+- **Leggerezza**: `W.ground` è `{width, height, tiles, draw(g)}` (riquadri di 1024 px, `tileGround`); `VIEWR`/`farV` per saltare quello che è
+  lontano dallo schermo; `W.dbg.tm={}` dà i tempi delle parti di un fotogramma.
+- **Prove**: `piani_prova.js`, `comparse_prova.js`, `barriere_prova.js`, `macchine_prova.js`, `bara_usi.js`, `navmappa.js` (anche le zone
+  nuove e di sopra), `tempi_grande.js`, `foto_grande.js`.
+
