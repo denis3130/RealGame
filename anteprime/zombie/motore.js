@@ -620,7 +620,7 @@ function sep(z){if(z.cl)return;for(const o of W.Z)if(o!==z&&!o.die&&o.rise>=1&&!
 // le armi vere (sprite/armi: ARMI.DATI): l'eroe spara da solo allo zombie più vicino che vede quando sta fermo; ogni colpo (un pallino per i
 // fucili a pompa, che perdono forza con la distanza) va dritto fino al primo zombie sulla sua linea o al primo muro, passa D.pierce zombie in
 // più, il razzo esplode largo D.splash. Uno zombie ucciso dà le monete della partita (W.killCoins, 60)
-function equip(id){if(!window.ARMI||!ARMI.DATI[id])return;W.gunId=id;gunState=ARMI.nuova(id);if(gunState.estrai)gunState.estrai();HSTYLE.gun=id;W.toast=[ARMI.DATI[id].n,1.8]}
+function equip(id){if(!window.ARMI||!ARMI.DATI[id])return;if(gunState&&ARMI.ferma)ARMI.ferma(gunState);W.gunId=id;gunState=ARMI.nuova(id);if(ARMI.prepara)ARMI.prepara(id);if(gunState.estrai)gunState.estrai();HSTYLE.gun=id;W.toast=[ARMI.DATI[id].n,1.8]}
 function hurt(z,n,fx){z.hp-=n;z.flash=.12;if(fx)for(let i=0;i<4;i++)W.FX.push({k:'drop',tw:[z.x,z.y,z.zh||0],x:0,y:-24*RIGK.mzk*z.sc/1.1,vx:rr(-40,40),vy:rr(-60,-10),t:.5});
   if(z.hp<=0&&!z.die){z.die=.001;W.kills=(W.kills||0)+1;const n2=Math.round((z.reward||W.killCoins||60)*((W.mods&&W.mods.cash)||1));W.coins+=n2;W.FX.push({k:'coin',tw:[z.x,z.y,(z.zh||0)+44*z.sc],n:n2,t:1.1,t0:1.1});if(W.director&&W.director.killed)W.director.killed(z)}}
 function fireShot(ev){const h=W.hero,g=gunState,D=g.D,B=basis(heroDir()*Math.PI/4),zk=RIGK.hzk,pp=window.ARMI&&ARMI.inManoPunti&&ARMI.inManoPunti(W.gunId,B,g.pose(),scrAng(h.aim)),m=pp&&pp.muzzle,
@@ -632,7 +632,8 @@ function fireShot(ev){const h=W.hero,g=gunState,D=g.D,B=basis(heroDir()*Math.PI/
     for(let s=12;s<D.range;s+=5){const s0=hit(h.x+dx*s,h.y+dy*s,1.5);if(s0&&s0.bar){if(s0.bar.shot)s0.bar.shot();continue}if(s0&&s0.tag!=='hole'){end=s;break}}// il primo muro sulla linea (le finestre e i varchi si passano)
     const L=[];for(const z of W.Z){if(z.die||z.rise<1||!sameLv(z))continue;const rx=z.x-h.x,ry=z.y-h.y,al=rx*dx+ry*dy;if(al<0||al>end)continue;if(Math.abs(rx*dy-ry*dx)<11*z.sc)L.push([al,z])}L.sort((p,q)=>p[0]-q[0]);
     for(const[al,z] of L){const cr=MD.crit>0&&Math.random()<MD.crit,dm=D.dmg*(D.pel>1?cl(1.25-al/D.range,.35,1):1)*(MD.dmg||1)*(cr?2:1);hurt(z,dm,true);if(MD.kb&&!z.ai&&!z.die&&!z.bx)move(z,dx*MD.kb,dy*MD.kb,ZR);if(g.pap&&W.papHit)W.papHit(z,g,dm);if(cr&&W.onCrit)W.onCrit(z);if(!ev.paid&&W.director&&W.director.shotHit){ev.paid=1;W.director.shotHit()}if(--left<=0){end=al;break}}
-    if(D.splash){const ex=h.x+dx*end,ey=h.y+dy*end;for(const z of W.Z)if(!z.die&&z.rise>=1&&sameLv(z)&&Math.hypot(z.x-ex,z.y-ey)<D.splash+8)hurt(z,D.dmg*.6,false);W.FX.push({k:'boom',tw:[ex,ey,h.lvz||0],t:.45,t0:.45,r:D.splash})}
+    if(D.splash){const ex=h.x+dx*end,ey=h.y+dy*end;for(const z of W.Z)if(!z.die&&z.rise>=1&&sameLv(z)&&Math.hypot(z.x-ex,z.y-ey)<D.splash+8)hurt(z,D.dmg*.6,false);W.FX.push({k:'boom',tw:[ex,ey,h.lvz||0],t:.45,t0:.45,r:D.splash});
+      if(ARMI.suono){const q=S(ex,ey,0),hq=S(h.x,h.y,0);ARMI.suono(W.gunId,'esplosione',180+(q[0]-hq[0]),.04)}}
     W.FX.push({k:'shot',hw,ao,tw:[h.x+dx*end,h.y+dy*end,h.lvz||0],bo:[0,ty],t:D.pel>1?.06:.08,w:(D.pel>1?1.2:2)+(g.pap?.8:0),pap:g.pap||0})}}
 // le cose da comprare (cancello, armi a muro, Bara): {id, x, y, r, show(), label(), price(), act()}; la pagina mostra il bottone da tenere
 // premuto quando l'eroe è vicino (il più vicino dei compratori entro r)
@@ -697,6 +698,8 @@ function updateBeings(dt,inp){const h=W.hero,DI=W.director,MD=W.mods||{};if(h.de
   {const tf=h.face||0;if(h.f3==null||dt>=.5)h.f3=tf;else h.f3+=Math.atan2(Math.sin(tf-h.f3),Math.cos(tf-h.f3))*Math.min(1,dt*18)}
   // il grilletto: le armi automatiche lo tengono premuto, le altre lo premono di nuovo appena l'arma è pronta
   if(g){const want=!h.moving&&!!tgt&&!noShoot,ev=g.update(g.st==='ricarica'?dt*(MD.relK||1):dt,want&&(g.D.auto||(g.st==='pronta'&&g.cd<=0)));/* (MD.relK: l'elisir Mani Svelte) */for(const e of ev){if(e.k==='sparo'&&!noShoot)fireShot(e);else if(e.k==='suono'&&ARMI.suono)ARMI.suono(W.gunId,e.w,180);else if(e.k==='bossolo'&&W.onCase)W.onCase(e.n||1);else if(e.k==='caricatore'&&W.onMag)W.onMag()}
+    // le voci che durano finché l'arma lavora: il motore delle canne della mitragliatrice, il ruggito del lanciafiamme (si spengono da sole)
+    if(W.gunId==='mitragliatrice'&&ARMI.motore)ARMI.motore(g,180);else if(W.gunId==='lanciafiamme'&&ARMI.fiamma)ARMI.fiamma(g,180);
     if(tgt||h.moving)h.rlT=0;else if((h.rlT=(h.rlT||0)+dt)>1.2&&g.st==='pronta'&&g.mag<g.D.mag&&g.res>0)g.ricarica();// ricarica da solo quando non c'è niente da colpire
     if(W.gunId==='pistola'){if(g.res<g.D.mag*2)g.res+=g.D.res}// la pistola non resta mai senza colpi
     else if(g.mag<=0&&g.res<=0&&g.st!=='ricarica')equip('pistola')}// finiti i colpi si torna alla pistola

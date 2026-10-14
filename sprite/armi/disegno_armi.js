@@ -398,12 +398,14 @@ function nuova(id){const D=DATI[id],sh=id==='pompa'||id==='tattica';
     // bolt once (sound 'estrai' at the start, 'pronta' halfway through the gesture); it cannot fire until it is up
     estrai(){g.eq=0;g.cd=Math.max(g.cd,EQT*.8);g.q.push({k:'suono',w:'estrai'})},
     tot:()=>g.mag+g.res,
-    ricarica(){if(g.st==='ricarica'||g.mag>=D.mag||g.res<=0)return false;g.empty=g.mag<=0;g.st='ricarica';g.t=0;g.dropped=0;g.cnt=0;g.q.push({k:'suono',w:'ricarica'});return true},
+    ricarica(){if(g.st==='ricarica'||g.mag>=D.mag||g.res<=0)return false;g.empty=g.mag<=0;g.st='ricarica';g.t=0;g.dropped=0;g.cnt=0;g.k0=-1;g.q.push({k:'suono',w:'ricarica'});return true},
     annulla(){if(g.st!=='ricarica')return;g.st='pronta';g.t=0;g.magOut=0;g.magA=1;g.swing=0;g.slide=0;g.shell=-1;g.tilt=0;g.dropped=0;g.rounds=g.mag;g.loaded=g.mag>0?1:0},
     rk:()=>g.st==='ricarica'&&!sh&&g.t>=0?cl(g.t/D.rel,0,1):-1,
     pose(){return{rec:g.rec,flash:g.flash,slide:g.slide,pump:g.pump,mag:g.magOut,magA:g.magA,cyl:g.cyl,hammer:g.hammer,swing:g.swing,rounds:g.rounds,spin:g.spin,feed:g.feed,
       loaded:g.loaded,saddle:Math.min(4,g.res),seed:g.seed,glow:.8+.2*Math.sin(G_t()*3),tilt:g.tilt,rk:g.rk(),shell:g.shell,n:g.mag,empty:!!g.empty,eq:g.eq}},
-    update(dt,fire){const ev=g.q.splice(0);const press=fire&&!g.prev;g.prev=fire;g.t+=dt;g.cd=Math.max(0,g.cd-dt);
+    update(dt,fire){const ev=g.q.splice(0);const press=fire&&!g.prev;g.prev=fire;g.t+=dt;g.cd=Math.max(0,g.cd-dt);g.sh=(g.sh==null?9:g.sh)+dt;
+      // the end of a burst of an automatic gun: its echo rolls away (sound 'coda')
+      if(D.auto&&g.bn&&(!fire||g.mag<=0)&&g.sh>1.5/D.rate){if(g.bn>=3)ev.push({k:'suono',w:'coda'});g.bn=0}
       if(g.eq<1){const was=g.eq;g.eq=Math.min(1,g.eq+dt/EQT);if(was<EQR&&g.eq>=EQR)ev.push({k:'suono',w:'armata'})}
       g.rec=Math.max(0,g.rec-dt*(id==='lanciarazzi'?3:id==='revolver'||sh?5:9));g.flash=Math.max(0,g.flash-dt*(id==='mitragliatrice'?26:16));
       if(g.slide>0&&g.st!=='ricarica')g.slide=Math.max(0,g.slide-dt*(id==='pistola'?9:14));if(id==='revolver')g.hammer=g.st==='ricarica'?0:1-g.cd*D.rate;
@@ -417,7 +419,7 @@ function nuova(id){const D=DATI[id],sh=id==='pompa'||id==='tattica';
         if(can){if(g.mag<=0){if(g.res>0)g.ricarica();else if(press)ev.push({k:'suono',w:'vuoto'})}
           else if(id!=='mitragliatrice'||g.spinV>=1)shoot(ev)}}
       ev.push(...g.q.splice(0));return ev}};
-  function shoot(ev){g.mag--;g.cd=1/D.rate;g.rec=1;g.flash=1;g.seed=(g.seed*7+3)%997;const r=rnd(g.seed),sp=D.spread*Math.PI/180,a=[];
+  function shoot(ev){g.mag--;g.cd=1/D.rate;g.rec=1;g.flash=1;g.sh=0;g.bn=(g.bn||0)+1;g.seed=(g.seed*7+3)%997;const r=rnd(g.seed),sp=D.spread*Math.PI/180,a=[];
     for(let i=0;i<D.pel;i++)a.push((r()-.5)*sp*(D.pel>1?1:2*Math.min(1,.4+r())));
     ev.push({k:'sparo',ang:a,seed:g.seed},{k:'suono',w:'sparo'});
     if(id==='revolver'){g.cyl+=1/6;g.hammer=0;g.rounds=g.mag}else g.slide=1;
@@ -431,7 +433,11 @@ function nuova(id){const D=DATI[id],sh=id==='pompa'||id==='tattica';
     if(sh){if(press&&g.mag>0){g.st='pronta';g.shell=-1;return}g.tilt=Math.min(.16,g.tilt+dt*1.2);const f=g.t/R;g.shell=Math.min(f,.999);
       if(f>=.8&&!g.cnt){g.cnt=1;g.mag++;g.res--;ev.push({k:'suono',w:'cartuccia'})}
       if(f>=1){g.t-=R;g.cnt=0;if(g.mag>=D.mag||g.res<=0){g.shell=-1;ev.push({k:'pronta'});if(g.empty){g.st='pompa';g.t=-.12;g.ej=1;g.ps=0}else g.st='pronta'}}return}
-    if(g.t<0)return;const k=g.t/R;
+    if(g.t<0)return;const k=g.t/R,k0=g.k0==null?-1:g.k0,X=x=>k0<x&&k>=x,beat=w=>ev.push({k:'suono',w});g.k0=k;
+    if(id==='revolver'){const V=RLT.rev,st=(V.load[1]-V.load[0])/6;if(X(V.open[0]))beat('rv:open');if(X(V.eject[0]+.01))beat('rv:eject');
+      for(let i=0;i<6;i++)if(X(V.load[0]+(i+.6)*st))beat('rv:round');if(X(V.shut[1]-.005))beat('rv:shut');if(X(V.shut[1]+.02))beat('rv:spin')}
+    else if(id==='lanciarazzi'){if(X(.15))beat('rz:pouch');if(X(.3))beat('rz:in');if(X(.85))beat('rz:lock')}
+    else{const T=RLT.mag;for(const n of['out','pouch','seat','rack','fwd'])if(X(T[n]))beat('rl:'+n)}
     if(id==='revolver'){const V=RLT.rev;g.tilt=.55*tz(k,.02,.14,.82,.92);g.swing=k<V.open[1]?ez(cl((k-V.open[0])/(V.open[1]-V.open[0]),0,1)):k<V.shut[0]?1:k<V.shut[1]?1-ez((k-V.shut[0])/(V.shut[1]-V.shut[0])):0;g.hammer=0;
       if(k>=V.eject[1]&&!g.dropped){g.dropped=1;g.rounds=0;ev.push({k:'bossolo',n:6})}if(k>=V.load[0]&&k<V.shut[0])g.rounds=Math.min(Math.min(6,g.mag+g.res),Math.floor((k-V.load[0])/(V.load[1]-V.load[0])*6+.4));
       if(k>=V.shut[1])g.cyl+=dt*4}

@@ -62,6 +62,7 @@ js/60-morti-boss.js
 js/61-anteprime-arene.js
 ../sprite/mostri/disegno_mostri.js
 ../sprite/armi/disegno_armi.js
+../sprite/armi/suoni_armi.js
 ../sprite/eroe3d/armi3d.js
 ../sprite/eroe3d/disegno_eroe.js
 ../sprite/eroe3d/vestiti3d.js

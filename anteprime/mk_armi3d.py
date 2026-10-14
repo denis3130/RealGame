@@ -14,7 +14,7 @@ ctrl=r'''
 let view='gira',cur='__START__',face=Math.PI/2-.55,spin=false,low=false,slow=false,auto=false,zoom=1,ms=0,last=performance.now(),g=null,fire=false,autoT=0,au=false;
 if(!IDS.includes(cur))cur=IDS[0];
 const HS=()=>Object.assign({},HERO,{hid:'arciere',held:null,quiver:false,gun:cur});
-function take(id){cur=id;g=ARMI.nuova(id);g.res=9999;if(g.estrai)g.estrai();ARMI.FX.length=0;build()}
+function take(id){if(g&&ARMI.ferma)ARMI.ferma(g);cur=id;g=ARMI.nuova(id);if(ARMI.prepara)ARMI.prepara(id);g.res=9999;if(g.estrai)g.estrai();ARMI.FX.length=0;build()}
 function boot(){try{INTRO.on=false;paused=true}catch(e){}try{AU.on.music=false}catch(e){}
   const ov=document.createElement('div');ov.id='a3';ov.innerHTML=`<style>
   #a3{position:fixed;inset:0;z-index:99999;background:#14171a;font-family:"Baloo 2",system-ui,sans-serif;color:#f6ead2;touch-action:none;user-select:none;-webkit-user-select:none}
@@ -64,7 +64,7 @@ function boot(){try{INTRO.on=false;paused=true}catch(e){}try{AU.on.music=false}c
     for(const e of ev){if(e.k==='suono'){try{ARMI.suono(cur,e.w,W/2)}catch(er){}}
       else if(e.k==='bossolo'&&out.eject){try{ARMI.espelli(cur,out.eject[0],out.eject[1],0,1,Math.max(6,out.ejectZ||10)*out.sc,e.n||1)}catch(er){}}
       else if(e.k==='caricatore'&&out.mag){try{ARMI.espelliCar(cur,out.mag[0],out.mag[1]-0,0,1,Math.max(4,(out.magFloor[1]-out.mag[1])))}catch(er){}}}
-    if(g.id==='mitragliatrice')try{ARMI.motore(g,W/2)}catch(er){}
+    try{if(g.id==='mitragliatrice')ARMI.motore(g,W/2);else if(g.id==='lanciafiamme'&&ARMI.fiamma)ARMI.fiamma(g,W/2)}catch(er){}
     ARMI.fxUpdate(dt);if(spin)face-=dt0*.55;
     const c=cvp.getContext('2d');c.setTransform(dpr,0,0,dpr,0,0);floor(c,W,H);
     const saved=ctx,lf=LOWFX;ctx=c;LOWFX=low;G.t=now/1000;let cost=0;const top=74,bot=(ov.querySelector('.bar').offsetHeight||150),room=H-top-bot,gp=g.pose();
