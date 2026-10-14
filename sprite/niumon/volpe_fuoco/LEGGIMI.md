@@ -139,6 +139,16 @@ Denis: «togli quegli occhi che hai fatto tu, e migliora gli sprite e animalo di
   verticale la targa della tua volpe va in basso a destra, così la sua testa si vede. Da vicino i due sprite grandi con i bottoni
   Attacco e Colpito (ogni tanto partono da soli) e com'era prima (`solo2d/prima80/`, occhi fatti a mano).
 
+### Poi (14 ottobre): nel bosco a 360 gradi
+
+Denis: «diciamo che ci sta dai. dammi tutti gli sprite che hai usato per l'ambientazione della lotta ecc. creami un'anteprima con
+tutto a 360gradi». Gli stessi due fogli (`lotta_davanti`, `lotta_spalle`) stanno nel bosco in pixel art 3D
+(`anteprime/mk_niumon_bosco360.py`, https://claude.ai/artifact/DkjGkNBHoUGK8EVVscxr2c, bosco in `../ambiente/bosco_notte/`):
+in piedi verso la telecamera a 1/50 di unità per pixel (`unita_per_pixel`, `billboard` nel json), con l'ombra della luna. Ognuna
+prende la vista dal punto in cui la guarda la telecamera: davanti se la telecamera le sta davanti, di spalle se le sta dietro, e
+specchiata quando la telecamera passa dall'altra parte (con un margine, così non cambia avanti e indietro). Le mosse partono dai
+`punti` (bocca, corpo) con gli effetti di `../effetti/fuoco/`.
+
 ## Versione colorata in 2D sulla base 3D (14 ottobre, notte)
 
 Denis: «prova a farlo 2d facendolo più simile che ne so ad un evee va bene? mettici poco tempo». Fatto in fretta, sulla stessa base:

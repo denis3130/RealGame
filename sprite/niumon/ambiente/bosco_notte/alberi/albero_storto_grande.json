@@ -1,0 +1,25 @@
+{
+ "asset_id": "env_bosconotte_albero_storto_grande",
+ "nome": "albero_storto_grande",
+ "cartella": "alberi",
+ "file": "alberi/albero_storto_grande.png",
+ "frame_width": 204,
+ "frame_height": 229,
+ "category": "env_tree",
+ "pivot": [
+  107,
+  225
+ ],
+ "billboard": true,
+ "descrizione": "albero spoglio, si guarda sempre verso la telecamera",
+ "frames": 1,
+ "fps": 0,
+ "loop": false,
+ "blend": "normale",
+ "unita_per_pixel": 0.03846,
+ "source": "disegnato col codice (sprite/niumon/ambiente/bosco_notte/fai.py)",
+ "version": "0.1-bosco-di-notte",
+ "status": "da approvare",
+ "format": "PNG_RGBA",
+ "background": "transparent"
+}

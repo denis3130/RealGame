@@ -1,0 +1,25 @@
+{
+ "asset_id": "env_bosconotte_nebbia",
+ "nome": "nebbia",
+ "cartella": "luce",
+ "file": "luce/nebbia.png",
+ "frame_width": 128,
+ "frame_height": 48,
+ "category": "vfx_light",
+ "pivot": [
+  64,
+  24
+ ],
+ "billboard": true,
+ "blend": "alfa",
+ "morbido": true,
+ "frames": 1,
+ "fps": 0,
+ "loop": false,
+ "unita_per_pixel": 0.025,
+ "source": "disegnato col codice (sprite/niumon/ambiente/bosco_notte/fai.py)",
+ "version": "0.1-bosco-di-notte",
+ "status": "da approvare",
+ "format": "PNG_RGBA",
+ "background": "transparent"
+}

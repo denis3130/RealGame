@@ -1,0 +1,25 @@
+{
+ "asset_id": "env_bosconotte_erba_3",
+ "nome": "erba_3",
+ "cartella": "piante",
+ "file": "piante/erba_3.png",
+ "frame_width": 14,
+ "frame_height": 12,
+ "category": "env_prop",
+ "pivot": [
+  7,
+  11
+ ],
+ "billboard": true,
+ "descrizione": "in piedi, si guarda verso la telecamera",
+ "frames": 1,
+ "fps": 0,
+ "loop": false,
+ "blend": "normale",
+ "unita_per_pixel": 0.025,
+ "source": "disegnato col codice (sprite/niumon/ambiente/bosco_notte/fai.py)",
+ "version": "0.1-bosco-di-notte",
+ "status": "da approvare",
+ "format": "PNG_RGBA",
+ "background": "transparent"
+}

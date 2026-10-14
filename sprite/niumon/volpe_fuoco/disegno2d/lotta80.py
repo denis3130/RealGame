@@ -296,7 +296,9 @@ if __name__ == '__main__':
     comune = dict(category='creature_battle', frame_width=W, frame_height=H, pivot=piv, anchor=piv, w=W, h=H,
                   source='disegno di Denis (13 ottobre): pixel art pulita come lo screenshot della lotta, occhi e bocca del disegno',
                   version='0.7-occhi-del-disegno', status='da approvare',
-                  scala_consigliata='avversario 1x, il tuo 3x (pixel grossi come nello screenshot)')
+                  scala_consigliata='avversario 1x, il tuo 3x (pixel grossi come nello screenshot)',
+                  unita_per_pixel=0.02, billboard=True, blend='normale',     # nel bosco 3D: 96 px = 1,9 unità, guarda la telecamera
+                  format='PNG_RGBA', background='transparent')
     anim_davanti = {
         'fermo': dict(riga=0, n=N_FERMO, fps=FPS_FERMO, loop=True),
         'fermo_occhi_mezzi': dict(riga=1, n=N_FERMO, fps=FPS_FERMO, loop=True, nota='stesso fotogramma del fermo, occhi a metà'),

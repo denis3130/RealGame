@@ -1,0 +1,24 @@
+{
+ "asset_id": "env_bosconotte_cenere",
+ "nome": "cenere",
+ "cartella": "particelle",
+ "file": "particelle/cenere.png",
+ "frame_width": 3,
+ "frame_height": 3,
+ "category": "vfx_world",
+ "frames": 2,
+ "fps": 4,
+ "loop": true,
+ "pivot": [
+  1,
+  1
+ ],
+ "billboard": true,
+ "blend": "normale",
+ "unita_per_pixel": 0.02,
+ "source": "disegnato col codice (sprite/niumon/ambiente/bosco_notte/fai.py)",
+ "version": "0.1-bosco-di-notte",
+ "status": "da approvare",
+ "format": "PNG_RGBA",
+ "background": "transparent"
+}

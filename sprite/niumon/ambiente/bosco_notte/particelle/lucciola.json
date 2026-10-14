@@ -1,0 +1,24 @@
+{
+ "asset_id": "env_bosconotte_lucciola",
+ "nome": "lucciola",
+ "cartella": "particelle",
+ "file": "particelle/lucciola.png",
+ "frame_width": 5,
+ "frame_height": 5,
+ "category": "vfx_world",
+ "frames": 4,
+ "fps": 6,
+ "loop": true,
+ "pivot": [
+  2,
+  2
+ ],
+ "billboard": true,
+ "blend": "normale",
+ "unita_per_pixel": 0.02,
+ "source": "disegnato col codice (sprite/niumon/ambiente/bosco_notte/fai.py)",
+ "version": "0.1-bosco-di-notte",
+ "status": "da approvare",
+ "format": "PNG_RGBA",
+ "background": "transparent"
+}

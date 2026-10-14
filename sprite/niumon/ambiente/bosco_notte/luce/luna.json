@@ -1,0 +1,25 @@
+{
+ "asset_id": "env_bosconotte_luna",
+ "nome": "luna",
+ "cartella": "luce",
+ "file": "luce/luna.png",
+ "frame_width": 28,
+ "frame_height": 28,
+ "category": "vfx_light",
+ "pivot": [
+  14,
+  14
+ ],
+ "billboard": true,
+ "blend": "normale",
+ "morbido": false,
+ "frames": 1,
+ "fps": 0,
+ "loop": false,
+ "unita_per_pixel": 0.025,
+ "source": "disegnato col codice (sprite/niumon/ambiente/bosco_notte/fai.py)",
+ "version": "0.1-bosco-di-notte",
+ "status": "da approvare",
+ "format": "PNG_RGBA",
+ "background": "transparent"
+}

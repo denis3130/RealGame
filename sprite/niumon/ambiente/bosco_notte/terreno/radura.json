@@ -1,0 +1,22 @@
+{
+ "asset_id": "env_bosconotte_radura",
+ "nome": "radura",
+ "cartella": "terreno",
+ "file": "terreno/radura.png",
+ "frame_width": 64,
+ "frame_height": 64,
+ "category": "tileset",
+ "piastrella": true,
+ "ripetibile": true,
+ "descrizione": "piastrella 64x64 che si ripete senza cuciture",
+ "frames": 1,
+ "fps": 0,
+ "loop": false,
+ "blend": "normale",
+ "unita_per_pixel": 0.03125,
+ "source": "disegnato col codice (sprite/niumon/ambiente/bosco_notte/fai.py)",
+ "version": "0.1-bosco-di-notte",
+ "status": "da approvare",
+ "format": "PNG_RGBA",
+ "background": "transparent"
+}

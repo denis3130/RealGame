@@ -1,0 +1,65 @@
+{
+ "nome": "livelli della scena di lotta 2D",
+ "sprite": [
+  {
+   "asset_id": "bg_battle_bosconotte2d_cielo_e_bosco_lontano",
+   "nome": "cielo_e_bosco_lontano",
+   "file": "cielo_e_bosco_lontano.png",
+   "category": "background_battle",
+   "frame_width": 1280,
+   "frame_height": 720,
+   "livello": "far",
+   "uso": "scena 2D (anteprime/niumon_lotta.tpl.html): in fondo, si sposta poco",
+   "source": "disegnato col codice dalla pagina della lotta 2D",
+   "status": "in uso nella prova 2D"
+  },
+  {
+   "asset_id": "bg_battle_bosconotte2d_alberi_di_mezzo",
+   "nome": "alberi_di_mezzo",
+   "file": "alberi_di_mezzo.png",
+   "category": "background_battle",
+   "frame_width": 1280,
+   "frame_height": 720,
+   "livello": "mid",
+   "uso": "scena 2D (anteprime/niumon_lotta.tpl.html): alberi scuri a metà strada",
+   "source": "disegnato col codice dalla pagina della lotta 2D",
+   "status": "in uso nella prova 2D"
+  },
+  {
+   "asset_id": "bg_battle_bosconotte2d_terra",
+   "nome": "terra",
+   "file": "terra.png",
+   "category": "background_battle",
+   "frame_width": 1280,
+   "frame_height": 720,
+   "livello": "ground",
+   "uso": "scena 2D (anteprime/niumon_lotta.tpl.html): il suolo della radura",
+   "source": "disegnato col codice dalla pagina della lotta 2D",
+   "status": "in uso nella prova 2D"
+  },
+  {
+   "asset_id": "bg_battle_bosconotte2d_primo_piano",
+   "nome": "primo_piano",
+   "file": "primo_piano.png",
+   "category": "background_battle",
+   "frame_width": 1280,
+   "frame_height": 720,
+   "livello": "near",
+   "uso": "scena 2D (anteprime/niumon_lotta.tpl.html): tronchi sfocati davanti, ai bordi",
+   "source": "disegnato col codice dalla pagina della lotta 2D",
+   "status": "in uso nella prova 2D"
+  },
+  {
+   "asset_id": "bg_battle_bosconotte2d_nebbia_che_scorre",
+   "nome": "nebbia_che_scorre",
+   "file": "nebbia_che_scorre.png",
+   "category": "background_battle",
+   "frame_width": 512,
+   "frame_height": 128,
+   "livello": "fog",
+   "uso": "scena 2D (anteprime/niumon_lotta.tpl.html): striscia che si ripete in orizzontale",
+   "source": "disegnato col codice dalla pagina della lotta 2D",
+   "status": "in uso nella prova 2D"
+  }
+ ]
+}

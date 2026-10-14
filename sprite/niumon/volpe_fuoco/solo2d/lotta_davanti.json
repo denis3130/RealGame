@@ -82,5 +82,10 @@
  "source": "disegno di Denis (13 ottobre): pixel art pulita come lo screenshot della lotta, occhi e bocca del disegno",
  "version": "0.7-occhi-del-disegno",
  "status": "da approvare",
- "scala_consigliata": "avversario 1x, il tuo 3x (pixel grossi come nello screenshot)"
+ "scala_consigliata": "avversario 1x, il tuo 3x (pixel grossi come nello screenshot)",
+ "unita_per_pixel": 0.02,
+ "billboard": true,
+ "blend": "normale",
+ "format": "PNG_RGBA",
+ "background": "transparent"
 }

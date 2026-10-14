@@ -1,0 +1,566 @@
+<title>Bosco di notte 360°</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Pixelify+Sans:wght@500;600;700&family=Atkinson+Hyperlegible:wght@400;700&display=swap">
+<style>
+/* Una radura nel bosco di notte in 3D (stile HD-2D): tutto quello che c'è sono sprite in pixel art messi nel mondo, la telecamera
+   gira a 360 gradi col dito. Sopra: la lotta (targhe, messaggio, mosse) e i comandi della telecamera; seconda scheda: tutti gli
+   sprite da vicino. Un solo aspetto scuro di proposito: è una notte nel bosco, qualunque sia il tema del telefono. */
+:root{
+  --night:#0a0f14; --panel:rgba(12,17,23,.88); --panel2:rgba(20,27,35,.94); --edge:#2c3a46; --line:rgba(255,190,120,.30);
+  --ink:#eef1f4; --dim:#a7b2bc; --ember:#ff9b4d; --gold:#ffd27a; --moon:#c8d6df;
+  --hp:#83d66f; --hp-mid:#e9c24b; --hp-low:#e65a3e; --fire:#ff7b3a; --norm:#a3acb5;
+  --f-pix:"Pixelify Sans", ui-monospace, "Courier New", monospace;
+  --f-body:"Atkinson Hyperlegible", system-ui, -apple-system, "Segoe UI", sans-serif;
+  color-scheme:dark;
+}
+html,body{height:100%;margin:0;background:var(--night)}
+body{color:var(--ink);font-family:var(--f-body);overflow:hidden}
+.app{position:relative;height:100%;overflow:hidden;-webkit-user-select:none;user-select:none}
+#gl{position:absolute;inset:0;width:100%;height:100%;display:block;touch-action:none;cursor:grab}
+#gl:active{cursor:grabbing}
+.vig{position:absolute;inset:0;pointer-events:none;background:radial-gradient(ellipse at 50% 48%,rgba(0,0,0,0) 52%,rgba(2,5,9,.55) 100%)}
+/* in alto: schede e comandi della telecamera */
+.top{position:absolute;z-index:6;top:calc(10px + env(safe-area-inset-top,0px));left:max(12px,env(safe-area-inset-left,0px));display:flex;gap:6px;flex-wrap:wrap}
+.tab,.cam{font:600 .92rem/1 var(--f-pix);color:var(--dim);background:var(--panel);border:2px solid var(--edge);border-radius:6px;padding:.5rem .7rem;
+  cursor:pointer;touch-action:manipulation;min-height:2.4rem}
+.tab[aria-pressed="true"]{color:#fff;border-color:#8a6a4a;background:#2a2018}
+.cam[aria-pressed="true"]{color:var(--gold);border-color:#6b5a3a}
+.tab:focus-visible,.cam:focus-visible,.move:focus-visible,.anim:focus-visible{outline:3px solid var(--gold);outline-offset:2px}
+.camrow{position:absolute;z-index:5;left:max(12px,env(safe-area-inset-left,0px));top:calc(58px + env(safe-area-inset-top,0px));display:flex;gap:6px}
+/* targhe della lotta */
+.plate{position:absolute;z-index:3;width:min(15rem,calc(100% - 32px));padding:.45rem .7rem .55rem;background:var(--panel);border:1px solid var(--line);
+  font-family:var(--f-pix);display:grid;gap:.25rem;clip-path:polygon(0 0,100% 0,100% 74%,94% 100%,0 100%)}
+.plate .nm{display:flex;justify-content:space-between;align-items:baseline;gap:.6rem;white-space:nowrap}
+.plate b{font-size:1.02rem;letter-spacing:.03em;text-transform:uppercase}
+.plate span{font-size:.85rem;color:var(--dim)}
+.hp{display:flex;align-items:center;gap:.4rem}
+.hp small{font-size:.68rem;letter-spacing:.1em;color:var(--gold);font-weight:700}
+.track{flex:1;height:.55rem;background:#232a31;border:1px solid #0b0f13;border-radius:2px;overflow:hidden}
+.fill{height:100%;width:100%;background:var(--hp);transition:width .55s steps(18),background-color .2s}
+.num{font-size:.85rem;text-align:right;font-variant-numeric:tabular-nums}
+.foe{top:calc(10px + env(safe-area-inset-top,0px));right:max(12px,env(safe-area-inset-right,0px))}
+.mine{left:max(12px,env(safe-area-inset-left,0px));bottom:calc(var(--dock,200px) + 10px)}
+.dock{position:absolute;z-index:4;left:0;right:0;bottom:0;padding:.5rem max(12px,env(safe-area-inset-right,0px)) calc(.7rem + env(safe-area-inset-bottom,0px)) max(12px,env(safe-area-inset-left,0px));display:grid;gap:.45rem}
+.msg{min-height:2.5rem;display:flex;align-items:center;padding:.4rem .8rem;background:var(--panel);border:1px solid var(--line);font-family:var(--f-pix);font-size:1rem;line-height:1.25}
+.moves{display:grid;grid-template-columns:1fr 1fr;gap:.45rem}
+.move{font-family:var(--f-pix);color:var(--ink);background:var(--panel2);border:1px solid var(--edge);border-left:4px solid var(--norm);text-align:left;
+  padding:.4rem .6rem;cursor:pointer;display:grid;grid-template-columns:1fr auto;align-items:end;min-height:2.9rem;touch-action:manipulation}
+.move.fire{border-left-color:var(--fire)}
+.move b{font-size:1rem;font-weight:600;grid-column:1/-1}
+.move .ty{font-size:.7rem;letter-spacing:.08em;text-transform:uppercase;color:var(--dim)}
+.move.fire .ty{color:var(--ember)}
+.move .pp{font-size:.8rem;font-variant-numeric:tabular-nums}
+.move:disabled{opacity:.42;cursor:default}
+.hint{position:absolute;z-index:2;left:0;right:0;top:calc(104px + env(safe-area-inset-top,0px));text-align:center;color:var(--dim);font-size:.9rem;pointer-events:none;
+  text-shadow:0 1px 2px #000;transition:opacity .8s;padding-inline:16px}
+@media (max-aspect-ratio: 5/4){.mine{left:auto;right:max(12px,env(safe-area-inset-right,0px));width:min(13rem,56%)}
+  .foe{top:calc(58px + env(safe-area-inset-top,0px));width:min(13rem,56%)}.hint{top:calc(130px + env(safe-area-inset-top,0px))}
+  .camrow{top:auto;bottom:calc(var(--dock,200px) + 10px);flex-direction:column;align-items:flex-start}}
+.err{position:absolute;inset:auto 16px 40% 16px;text-align:center;font-size:1.05rem}
+/* telefono girato o schermo largo: le mosse a destra, le targhe in alto e in basso a sinistra */
+@media (min-aspect-ratio: 5/4){
+  .dock{left:auto;width:min(27rem,46%);padding-top:.3rem;gap:.35rem}
+  .mine{bottom:calc(12px + env(safe-area-inset-bottom,0px))}
+  .msg{min-height:2.1rem;font-size:.95rem;padding:.3rem .7rem}
+  .move{min-height:2.4rem;padding:.3rem .55rem}
+  .hint{top:calc(14px + env(safe-area-inset-top,0px));left:50%;right:auto;transform:translateX(-50%);width:min(30rem,34%);font-size:.85rem}
+}
+@media (min-aspect-ratio: 5/4) and (max-height: 520px){
+  .plate{padding:.3rem .55rem .4rem;gap:.15rem}.plate b{font-size:.92rem}
+  .move .ty{display:none}.tab,.cam{min-height:2.1rem;padding:.35rem .55rem;font-size:.85rem}
+  .camrow{top:calc(50px + env(safe-area-inset-top,0px))}.hint{display:none}
+}
+/* tutti gli sprite */
+.gal{position:absolute;inset:0;z-index:5;overflow-y:auto;background:var(--night);
+  padding:calc(66px + env(safe-area-inset-top,0px)) max(16px,env(safe-area-inset-right,0px)) calc(32px + env(safe-area-inset-bottom,0px)) max(16px,env(safe-area-inset-left,0px))}
+.galbar{position:absolute;z-index:5;left:0;right:0;top:0;height:calc(58px + env(safe-area-inset-top,0px));background:linear-gradient(var(--night) 78%,rgba(10,15,20,0))}
+.gal h2{font-family:var(--f-pix);font-size:1.25rem;margin:1.6rem 0 .3rem;font-weight:700}
+.gal h2:first-of-type{margin-top:.4rem}
+.gal p{margin:0 0 .8rem;color:var(--dim);max-width:64ch;line-height:1.45}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:10px}
+.card{margin:0;background:#121921;border:1px solid var(--edge);border-radius:8px;padding:8px;display:grid;gap:6px;min-width:0}
+.card canvas{width:100%;aspect-ratio:1/1;display:block;border-radius:4px;background:#1b252e;image-rendering:pixelated}
+.card.wide{grid-column:span 2}.card.wide canvas{aspect-ratio:2/1}
+.card figcaption{font-size:.82rem;color:var(--dim);line-height:1.3;overflow-wrap:anywhere}
+.card figcaption b{display:block;color:var(--ink);font-family:var(--f-pix);font-weight:600;font-size:.92rem}
+.anims{display:flex;gap:6px;flex-wrap:wrap;margin:-.2rem 0 .8rem}
+.anim{font:600 .85rem/1 var(--f-pix);color:var(--ink);background:var(--panel2);border:1px solid var(--edge);border-left:3px solid var(--fire);border-radius:4px;padding:.45rem .7rem;cursor:pointer;min-height:2.2rem}
+@media (max-width:420px){.grid{grid-template-columns:repeat(2,minmax(0,1fr))}.card.wide{grid-column:1/-1}}
+</style>
+
+<div class="app" id="app">
+  <canvas id="gl" aria-label="Radura nel bosco di notte in 3D: due volpi di fuoco in lotta; trascina per girare intorno"></canvas>
+  <div class="vig" id="vig"></div>
+  <nav class="top" aria-label="Viste">
+    <button type="button" class="tab" data-v="giro" aria-pressed="true">Bosco 360°</button>
+    <button type="button" class="tab" data-v="sprite" aria-pressed="false">Tutti gli sprite</button>
+  </nav>
+  <div class="camrow" id="camrow">
+    <button type="button" class="cam" id="bLotta">Vista lotta</button>
+    <button type="button" class="cam" id="bGira" aria-pressed="true">Gira da solo</button>
+  </div>
+  <p class="hint" id="hint">Trascina per girare intorno · due dita o rotella per avvicinarti</p>
+  <section class="plate foe" id="pFoe" aria-label="La volpe selvatica">
+    <div class="nm"><b>Volpe di fuoco</b><span>Liv. 12</span></div>
+    <div class="hp"><small>PS</small><div class="track"><div class="fill" id="hpFoe"></div></div></div>
+  </section>
+  <section class="plate mine" id="pMe" aria-label="La tua volpe">
+    <div class="nm"><b>Volpe di fuoco</b><span>Liv. 14</span></div>
+    <div class="hp"><small>PS</small><div class="track"><div class="fill" id="hpMe"></div></div></div>
+    <div class="num" id="numMe">46/46</div>
+  </section>
+  <div class="dock" id="dock">
+    <div class="msg" id="msg" role="status" aria-live="polite">Una volpe di fuoco selvatica ti sbarra la strada!</div>
+    <div class="moves" id="moves" role="group" aria-label="Mosse">
+      <button type="button" class="move fire" data-m="0"><b>Fiammata</b><span class="ty">Fuoco</span><span class="pp">15/15</span></button>
+      <button type="button" class="move" data-m="1"><b>Graffio</b><span class="ty">Normale</span><span class="pp">35/35</span></button>
+      <button type="button" class="move fire" data-m="2"><b>Braci</b><span class="ty">Fuoco</span><span class="pp">25/25</span></button>
+      <button type="button" class="move fire" data-m="3"><b>Coda ardente</b><span class="ty">Fuoco</span><span class="pp">10/10</span></button>
+    </div>
+  </div>
+  <section class="gal" id="gal" hidden aria-label="Tutti gli sprite"></section>
+  <div class="galbar" id="galbar" hidden></div>
+  <p class="err" id="err" hidden>Questo telefono non riesce a disegnare il bosco 3D (serve WebGL2). Gli sprite si vedono lo stesso nella seconda scheda.</p>
+</div>
+
+<script>
+(()=>{
+'use strict';
+const D=__DATA__;
+const $=id=>document.getElementById(id);
+const reduce=matchMedia('(prefers-reduced-motion: reduce)').matches;
+const lerp=(a,b,k)=>a+(b-a)*k,ez=k=>k<.5?2*k*k:1-Math.pow(-2*k+2,2)/2,cl=(v,a,b)=>v<a?a:v>b?b:v;
+function rng(a){return()=>{a|=0;a=a+0x6D2B79F5|0;let t=Math.imul(a^a>>>15,1|a);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296}}
+function sub(a,b){return[a[0]-b[0],a[1]-b[1],a[2]-b[2]]}function dot(a,b){return a[0]*b[0]+a[1]*b[1]+a[2]*b[2]}
+function cross(a,b){return[a[1]*b[2]-a[2]*b[1],a[2]*b[0]-a[0]*b[2],a[0]*b[1]-a[1]*b[0]]}function nrm(a){const l=Math.hypot(a[0],a[1],a[2])||1;return[a[0]/l,a[1]/l,a[2]/l]}
+const M4={persp(fy,a,n,f){const t=1/Math.tan(fy/2),r=new Float32Array(16);r[0]=t/a;r[5]=t;r[10]=(f+n)/(n-f);r[11]=-1;r[14]=2*f*n/(n-f);return r},
+  look(e,c,u){const z=nrm(sub(e,c)),x=nrm(cross(u,z)),y=cross(z,x);return new Float32Array([x[0],y[0],z[0],0,x[1],y[1],z[1],0,x[2],y[2],z[2],0,-dot(x,e),-dot(y,e),-dot(z,e),1])},
+  mul(a,b){const r=new Float32Array(16);for(let i=0;i<4;i++)for(let j=0;j<4;j++){let s=0;for(let k=0;k<4;k++)s+=a[k*4+j]*b[i*4+k];r[i*4+j]=s}return r}};
+function load(src){return new Promise((ok,ko)=>{const i=new Image();i.onload=()=>ok(i);i.onerror=ko;i.src=src})}
+
+// ================================================================= la galleria (funziona anche senza 3D)
+const galT=[];               // riquadri animati della galleria
+function galleria(imgs){const g=$('gal');let h='';
+  const sec=(t,p,items)=>{h+=`<h2>${t}</h2><p>${p}</p><div class="grid">`+items.map((it,i)=>`<figure class="card${it.wide?' wide':''}"><canvas data-k="${it.k}" aria-label="${it.nome}"></canvas><figcaption><b>${it.nome}</b>${it.info}</figcaption></figure>`).join('')+'</div>'};
+  const V=D.volpe,items=[];let k=0;const reg=it=>{it.k=k++;galT.push(it);return it};
+  for(const[vista,sh]of[['davanti',V.davanti],['spalle',V.spalle]])for(const[an,a]of Object.entries(sh.animazioni))
+    items.push(reg({src:'volpe_'+vista,riga:a.riga,n:a.n,fps:a.fps,w:sh.frame_width,h:sh.frame_height,nome:(vista==='davanti'?'Davanti · ':'Di spalle · ')+an.replace(/_/g,' '),
+      info:`${sh.frame_width}×${sh.frame_height} · ${a.n} fotogrammi a ${a.fps} al secondo`}));
+  sec('La volpe di fuoco in lotta','Due fogli, una riga per animazione: fermo, occhi a metà e chiusi (solo davanti), attacco, colpito. Nel bosco si sceglie la vista giusta da dove guarda la telecamera: davanti o di spalle, girata a destra o a sinistra.',items);
+  const E=D.env,grp={alberi:[],rocce:[],piante:[],a_terra:[],terreno:[],luce:[],particelle:[]};
+  for(const m of E.sprite){const it={nome:m.nome.replace(/_/g,' '),info:`${m.frame_width}×${m.frame_height}${m.frames>1?' · '+m.frames+' fotogrammi':''}`};
+    if(m.category==='tileset'){it.src='tile_'+m.nome;it.w=m.frame_width;it.h=m.frame_height;it.n=1;it.tile=true}
+    else if(m.morbido){it.src='soft_'+m.nome;it.w=m.frame_width;it.h=m.frame_height;it.n=1;it.soft=true}
+    else{const r=E.atlas.rect[m.nome];it.src='atlas';it.rect=r;it.w=m.frame_width;it.h=m.frame_height;it.n=m.frames||1;it.fps=m.fps||6}
+    if(m.category==='env_tree')it.wide=m.frame_width>m.frame_height*1.2;
+    grp[m.cartella].push(reg(it))}
+  const T={alberi:['Alberi','Alberi spogli in pixel art: corteccia blu grigia in quattro toni, un filo di luce della luna in alto a destra, rametti di un pixel. Nel bosco guardano sempre la telecamera e ondeggiano piano in cima.'],
+    rocce:['Sassi e ceppo','Sassi a faccette (ogni faccia un tono, muschio sopra) e un ceppo con gli anelli.'],
+    piante:['Piante','Ciuffi d\'erba, felci, funghi che brillano azzurri, un cespuglio secco.'],
+    a_terra:['A terra','Stese sul terreno, viste dall\'alto: radici e foglie secche.'],
+    terreno:['Terreno','Piastrelle 64×64 che si ripetono senza cuciture: terra, radura di pietre piatte, muschio. Nel bosco si mescolano tra loro.'],
+    luce:['Luna e luci','La luna in pixel art; le luci morbide che si sommano alla scena: alone, nebbia, raggio di luna, luce del fuoco, ombra.'],
+    particelle:['Particelle','Lucciola, cenere e brace, in fotogrammi.']};
+  for(const c of Object.keys(T))if(grp[c].length)sec(T[c][0],T[c][1],grp[c]);
+  const fx=[];for(const[n,m]of Object.entries(D.fx))fx.push(reg({src:'fx_'+n,w:m.frame_width,h:m.frame_height,n:m.frames,fps:m.fps,nome:n.replace(/_/g,' '),info:`${m.frame_width}×${m.frame_height} · ${m.frames} fotogrammi`,wide:m.frames>4&&m.frame_width>=40}));
+  sec('Effetti delle mosse','Palla di fuoco (Braci), sbuffi della Fiammata, esplosione (Coda ardente), graffio, scintilla del colpo.',fx);
+  g.innerHTML=h;
+  galT.forEach(it=>{it.cv=g.querySelector(`canvas[data-k="${it.k}"]`);it.g=it.cv.getContext('2d');it.img=imgs[it.src]})}
+function disegnaGal(t){if($('gal').hidden)return;for(const it of galT){const c=it.cv,r=c.getBoundingClientRect();if(r.bottom<0||r.top>innerHeight)continue;
+  const Dp=Math.min(2,devicePixelRatio||1),w=Math.round(r.width*Dp),h=Math.round(r.height*Dp);if(c.width!==w||c.height!==h){c.width=w;c.height=h}
+  const g=it.g;g.clearRect(0,0,w,h);g.imageSmoothingEnabled=!!it.soft;if(!it.img)continue;
+  const f=reduce?0:Math.floor(t*(it.fps||6))%Math.max(1,it.n);
+  if(it.tile){const k=Math.max(1,Math.floor(Math.min(w,h)/(it.w*2)));for(let a=0;a<Math.ceil(w/(it.w*k));a++)for(let b=0;b<Math.ceil(h/(it.h*k));b++)g.drawImage(it.img,a*it.w*k,b*it.h*k,it.w*k,it.h*k);continue}
+  let sx,sy;if(it.rect){sx=it.rect[0]+f*it.w;sy=it.rect[1]}else{sx=f*it.w;sy=(it.riga||0)*it.h}
+  let k=Math.min((w-8)/it.w,(h-8)/it.h);if(!it.soft)k=Math.max(1,Math.floor(k));
+  const dw=it.w*k,dh=it.h*k;g.drawImage(it.img,sx,sy,it.w,it.h,Math.round((w-dw)/2),Math.round((h-dh)/2),dw,dh)}}
+
+// ================================================================= WebGL2
+const cv=$('gl');
+const gl=cv.getContext('webgl2',{antialias:true,alpha:false,stencil:true,premultipliedAlpha:false});
+function prog(vs,fs){const s=(t,src)=>{const x=gl.createShader(t);gl.shaderSource(x,src);gl.compileShader(x);if(!gl.getShaderParameter(x,gl.COMPILE_STATUS))throw new Error(gl.getShaderInfoLog(x));return x};
+  const p=gl.createProgram();gl.attachShader(p,s(gl.VERTEX_SHADER,vs));gl.attachShader(p,s(gl.FRAGMENT_SHADER,fs));gl.linkProgram(p);
+  if(!gl.getProgramParameter(p,gl.LINK_STATUS))throw new Error(gl.getProgramInfoLog(p));
+  const U={},n=gl.getProgramParameter(p,gl.ACTIVE_UNIFORMS);for(let i=0;i<n;i++){const u=gl.getActiveUniform(p,i);U[u.name.replace('[0]','')]=gl.getUniformLocation(p,u.name)}return{p,U}}
+// pixel nitidi a qualunque grandezza: il pixel resta pieno, solo il bordo tra due pixel è sfumato di un pixel dello schermo
+const NIT=`vec4 nit(sampler2D t,vec2 uv,vec2 sz){vec2 p=uv*sz;vec2 c=floor(p+0.5);vec2 dd=max(fwidth(p),vec2(1e-4));p=c+clamp((p-c)/dd,-0.5,0.5);return textureGrad(t,p/sz,dFdx(uv),dFdy(uv));}`;
+const LUCI=`uniform vec3 uEye,uAmb,uFireC,uFogC;uniform vec4 uFire[2];uniform float uFogD;
+vec3 fuoco(vec3 w){vec3 L=vec3(0.0);for(int i=0;i<2;i++){vec3 d=w-uFire[i].xyz;L+=uFireC*uFire[i].w*exp(-dot(d,d)*0.32);}return L;}
+vec3 nebbia(vec3 c,vec3 w){float d=length(w-uEye);float f=1.0-exp(-pow(d*uFogD,1.7));f=max(f,0.0);return mix(c,uFogC,clamp(f,0.0,0.97));}`;
+let P={};
+function shaders(){
+  // cielo: dal blu notte in alto alla nebbia all'orizzonte, alone della luna, stelline sopra la nebbia
+  P.sky=prog(`#version 300 es
+in vec2 aQ;out vec2 vN;void main(){vN=aQ*2.0-1.0;gl_Position=vec4(vN,0.9999,1.0);}`,`#version 300 es
+precision highp float;in vec2 vN;out vec4 o;uniform vec3 uF,uR,uU,uMoon,uTop,uHor,uFogC;uniform vec2 uT;uniform float uTime;
+float h21(vec2 p){p=fract(p*vec2(123.34,456.21));p+=dot(p,p+45.32);return fract(p.x*p.y);}
+void main(){vec3 d=normalize(uF+uR*vN.x*uT.x+uU*vN.y*uT.y);float e=d.y;
+  vec3 c=mix(uHor,uTop,smoothstep(0.0,0.6,e));c=mix(uFogC,c,smoothstep(-0.08,0.10,e));
+  float m=max(dot(d,uMoon),0.0);c+=vec3(.42,.52,.64)*(0.10*pow(m,5.0)+0.16*pow(m,40.0));
+  vec2 sp=vec2(atan(d.z,d.x)*58.0,asin(clamp(e,-1.0,1.0))*58.0);vec2 ce=floor(sp);float s=h21(ce);
+  if(s>0.982&&e>0.10){vec2 f=fract(sp)-0.5;float tw=0.55+0.45*sin(uTime*1.7+s*60.0);c+=vec3(.72,.80,.9)*step(length(f),0.16)*tw*smoothstep(0.10,0.42,e)*(1.0-pow(m,6.0))*0.8;}
+  o=vec4(c,1.0);}`);
+  // terreno: piastrelle mescolate dal rumore, la radura al centro, luce della luna e del fuoco, nebbia
+  P.ground=prog(`#version 300 es
+in vec3 aP;uniform mat4 uVP;out vec3 vW;void main(){vW=aP;gl_Position=uVP*vec4(aP,1.0);}`,`#version 300 es
+precision highp float;in vec3 vW;out vec4 o;uniform sampler2D uTerra,uMus,uRad;uniform vec2 uClear;
+${LUCI}
+${NIT}
+float h(vec2 p){p=fract(p*vec2(127.1,311.7));p+=dot(p,p+19.19);return fract(p.x*p.y);}
+float vn(vec2 p){vec2 i=floor(p),f=fract(p);f=f*f*(3.0-2.0*f);return mix(mix(h(i),h(i+vec2(1,0)),f.x),mix(h(i+vec2(0,1)),h(i+vec2(1,1)),f.x),f.y);}
+void main(){vec2 uv=vW.xz*0.5;float n=vn(vW.xz*0.16)*0.65+vn(vW.xz*0.6)*0.35;
+  vec3 c=mix(nit(uTerra,uv,vec2(64)).rgb,nit(uMus,uv+vec2(.37,.11),vec2(64)).rgb,smoothstep(0.55,0.72,n));
+  float r=length(vW.xz-vec2(0.1,0.0))+(n-0.5)*2.4;c=mix(c,nit(uRad,uv,vec2(64)).rgb,1.0-smoothstep(uClear.x-uClear.y,uClear.x,r));
+  vec3 L=uAmb+fuoco(vW+vec3(0.0,0.5,0.0));o=vec4(nebbia(c*L,vW),1.0);}`);
+  // sprite in piedi (alberi, sassi, piante, volpi, effetti): guardano la telecamera girando solo in verticale; con uShadow si
+  // stendono a terra lungo la luce della luna (l'ombra non gira con la telecamera)
+  P.bb=prog(`#version 300 es
+layout(location=0) in vec2 aQ;layout(location=1) in vec3 aPos;layout(location=2) in vec4 aGeo;layout(location=3) in vec4 aRect;layout(location=4) in vec4 aInfo;
+uniform mat4 uVP;uniform vec3 uRight,uLight;uniform float uShadow,uTime;out vec2 vU;out vec3 vW;out vec4 vInfo;out float vTop;
+void main(){vec3 r=uRight;if(uShadow>0.5)r=normalize(vec3(-uLight.z,0.0,uLight.x));
+  float x=aQ.x*aGeo.x-aGeo.z,y=aGeo.w-aQ.y*aGeo.y;float k=clamp(y/max(aGeo.w,0.001),0.0,1.0);
+  x+=sin(uTime*0.7+aPos.x*1.7+aPos.z*1.3)*aInfo.w*k*k;
+  vec3 w=aPos+r*x+vec3(0.0,y,0.0);if(uShadow>0.5){w=w-uLight*(w.y/uLight.y);w.y=0.012;}
+  float u=aInfo.z>0.5?mix(aRect.z,aRect.x,aQ.x):mix(aRect.x,aRect.z,aQ.x);vU=vec2(u,mix(aRect.y,aRect.w,aQ.y));vW=w;vInfo=aInfo;vTop=k;gl_Position=uVP*vec4(w,1.0);}`,`#version 300 es
+precision highp float;in vec2 vU;in vec3 vW;in vec4 vInfo;in float vTop;out vec4 o;uniform sampler2D uT;uniform vec2 uTS;uniform float uShadow,uFlash,uAlpha,uSelf;uniform vec3 uTint;
+${LUCI}
+${NIT}
+float bayer(vec2 p){ivec2 i=ivec2(mod(p,4.0));int m[16]=int[16](0,8,2,10,12,4,14,6,3,11,1,9,15,7,13,5);return (float(m[i.y*4+i.x])+0.5)/16.0;}
+void main(){vec4 t=nit(uT,vU,uTS);if(t.a<0.5)discard;
+  float a=uAlpha;if(vInfo.y>0.5)a*=smoothstep(1.3,3.0,distance(vW,uEye));if(a<0.999&&bayer(gl_FragCoord.xy)>a)discard;
+  if(uShadow>0.5){o=vec4(0.0,0.008,0.025,0.42);return;}
+  vec3 L=mix(uAmb*mix(0.78,1.0,vTop),vec3(1.0),uSelf)+fuoco(vW)*(1.0-uSelf*0.6);
+  vec3 c=mix(t.rgb*L*vInfo.x*uTint,vec3(1.0),uFlash);o=vec4(nebbia(c,vW),1.0);}`);
+  // a terra (radici, foglie) e luci morbide: quadrati stesi sul terreno o in piedi verso la telecamera, che si sommano o velano
+  P.flat=prog(`#version 300 es
+layout(location=0) in vec2 aQ;layout(location=1) in vec4 aPR;layout(location=2) in vec4 aGeo;layout(location=3) in vec4 aRect;layout(location=4) in vec4 aCol;
+uniform mat4 uVP;uniform vec3 uRight;out vec2 vU;out vec3 vW;out vec4 vCol;
+void main(){vec3 w;if(aGeo.z>0.5){float c=cos(aPR.w),s=sin(aPR.w);vec2 l=vec2((aQ.x-0.5)*aGeo.x,(aQ.y-0.5)*aGeo.y);w=vec3(aPR.x+l.x*c-l.y*s,aPR.y,aPR.z+l.x*s+l.y*c);}
+  else{w=vec3(aPR.x,aPR.y,aPR.z)+uRight*((aQ.x-0.5)*aGeo.x+(1.0-aQ.y)*aGeo.w)+vec3(0.0,(0.5-aQ.y)*aGeo.y,0.0);}
+  vU=mix(aRect.xy,aRect.zw,aQ);vW=w;vCol=aCol;gl_Position=uVP*vec4(w,1.0);}`,`#version 300 es
+precision highp float;in vec2 vU;in vec3 vW;in vec4 vCol;out vec4 o;uniform sampler2D uT;uniform vec2 uTS;uniform float uMode;
+${LUCI}
+${NIT}
+void main(){if(uMode<0.5){vec4 t=nit(uT,vU,uTS);if(t.a<0.5)discard;o=vec4(nebbia(t.rgb*(uAmb+fuoco(vW+vec3(0.0,0.5,0.0)))*vCol.rgb,vW),1.0);return;}
+  vec4 t=texture(uT,vU);if(uMode<1.5){float f=1.0-clamp(length(vW-uEye)*uFogD*0.6,0.0,0.9);o=vec4(vCol.rgb*t.a*vCol.a*f,0.0);}
+  else{o=vec4(vCol.rgb,t.a*vCol.a);}}`);
+}
+
+// ---------------------------------------------------------------- texture
+function tex(img,o){o=o||{};const t=gl.createTexture();gl.bindTexture(gl.TEXTURE_2D,t);gl.pixelStorei(gl.UNPACK_PREMULTIPLY_ALPHA_WEBGL,false);
+  gl.texImage2D(gl.TEXTURE_2D,0,gl.RGBA,gl.RGBA,gl.UNSIGNED_BYTE,img);
+  if(o.mip){gl.generateMipmap(gl.TEXTURE_2D);gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_MIN_FILTER,gl.LINEAR_MIPMAP_LINEAR);gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_MAX_LEVEL,o.maxl==null?3:o.maxl)}
+  else gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_MIN_FILTER,gl.LINEAR);
+  gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_MAG_FILTER,gl.LINEAR);const wr=o.rep?gl.REPEAT:gl.CLAMP_TO_EDGE;
+  gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_WRAP_S,wr);gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_WRAP_T,wr);t.w=img.width;t.h=img.height;return t}
+
+// ---------------------------------------------------------------- lotti di quadrati (una chiamata per tanti sprite)
+const QUADBUF=(()=>{const b=gl&&gl.createBuffer();if(b){gl.bindBuffer(gl.ARRAY_BUFFER,b);gl.bufferData(gl.ARRAY_BUFFER,new Float32Array([0,0,1,0,0,1,1,1]),gl.STATIC_DRAW)}return b})();
+function Lotto(stride){this.stride=stride;this.n=0;this.data=new Float32Array(stride*64);this.vao=gl.createVertexArray();this.buf=gl.createBuffer();
+  gl.bindVertexArray(this.vao);gl.bindBuffer(gl.ARRAY_BUFFER,QUADBUF);gl.enableVertexAttribArray(0);gl.vertexAttribPointer(0,2,gl.FLOAT,false,0,0);
+  gl.bindBuffer(gl.ARRAY_BUFFER,this.buf);let off=0;
+  const lay=stride===15?[3,4,4,4]:[4,4,4,4];lay.forEach((n,i)=>{gl.enableVertexAttribArray(i+1);gl.vertexAttribPointer(i+1,n,gl.FLOAT,false,stride*4,off*4);gl.vertexAttribDivisor(i+1,1);off+=n});
+  gl.bindVertexArray(null)}
+Lotto.prototype.clear=function(){this.n=0};
+Lotto.prototype.push=function(...v){if((this.n+1)*this.stride>this.data.length){const d=new Float32Array(this.data.length*2);d.set(this.data);this.data=d}this.data.set(v,this.n*this.stride);this.n++};
+Lotto.prototype.upload=function(){gl.bindBuffer(gl.ARRAY_BUFFER,this.buf);gl.bufferData(gl.ARRAY_BUFFER,this.data.subarray(0,this.n*this.stride),gl.DYNAMIC_DRAW)};
+Lotto.prototype.draw=function(){if(!this.n)return;gl.bindVertexArray(this.vao);gl.drawArraysInstanced(gl.TRIANGLE_STRIP,0,4,this.n);gl.bindVertexArray(null)};
+
+// ================================================================= il mondo
+const FOE_P=[1.7,0,-2.1],ME_P=[-1.5,0,2.3];
+const MOON=nrm([0.42,0.52,-0.74]);                 // verso la luna: in alto a destra dalla vista della lotta
+const SKY_TOP=[.035,.06,.095],SKY_HOR=[.25,.32,.37],FOGC=[.20,.26,.31],AMB=[.80,.86,.97],FIREC=[1.0,.48,.16];
+const SPR={};                                        // sprite del bosco per nome: rect nell'atlante, misure, pivot
+let ATL,TILES={},SOFT,SOFTR={},FXT,FXR={},VOLPE={};
+const ENV=[],DECAL=[],WISP=[],FLIES=[],ASH=[];
+const flyPos=f=>[f.x+Math.sin(T*.35*f.s+f.p)*.6,f.y+Math.sin(T*.6*f.s+f.p*2)*.25,f.z+Math.cos(T*.3*f.s+f.p)*.6,
+  reduce?.5:.35+.35*Math.sin(T*2*f.s+f.p)];          // dove sta la lucciola adesso e quanto è accesa (0..0,7)
+function costruisci(){const r=rng(140926);
+  const A=D.env.atlas;for(const m of D.env.sprite){const rc=A.rect[m.nome];if(!rc)continue;SPR[m.nome]={m,ps:m.unita_per_pixel,w:m.frame_width,h:m.frame_height,
+    rect:[rc[0]/A.w,rc[1]/A.h,(rc[0]+m.frame_width)/A.w,(rc[1]+m.frame_height)/A.h],piv:m.pivot}}   // rect: il primo fotogramma
+  const put=(nome,x,z,s,o)=>{const q=SPR[nome];if(!q)return;o=o||{};ENV.push({q,x,z,s,mir:o.mir||0,vento:o.vento||0,luce:o.luce||1,svan:o.svan==null?1:o.svan})};
+  const vuoto=(x,z,rr)=>Math.hypot(x-FOE_P[0],z-FOE_P[2])>rr&&Math.hypot(x-ME_P[0],z-ME_P[2])>rr;
+  // alberi: un anello vicino alla radura (pochi) e il bosco fitto più lontano
+  const AL=['albero_spoglio_1','albero_spoglio_2','albero_spoglio_3','albero_spoglio_4','albero_storto_grande'];
+  const aCam=Math.atan2(5.7,-2.0);
+  for(let i=0;i<190;i++){const a=r()*6.283,d=6.8+Math.pow(r(),.85)*30,x=Math.cos(a)*d,z=Math.sin(a)*d;
+    if(d<14&&Math.abs(((a-aCam)%6.283+9.42)%6.283-3.14)<.42)continue;
+    const nome=r()<.12?'alberello_secco':AL[(r()*AL.length)|0];put(nome,x,z,.85+r()*.45,{mir:r()<.5,vento:.05+r()*.06})}
+  put('albero_storto_grande',6.6,-4.4,1.25,{vento:.05});put('albero_spoglio_3',-6.9,-3.2,1.15,{mir:1,vento:.05});put('albero_spoglio_1',3.2,-7.8,1.1,{vento:.05});
+  // sassi, ceppi, piante intorno alla radura e nel bosco
+  const PR=[['sasso_grande',.7],['sasso_medio',1],['sasso_piccolo',1],['sasso_piatto',1],['ceppo',.4],['erba_1',2.4],['erba_2',2],['erba_3',2.4],['felce_1',1.5],['felce_2',1.5],['funghi_1',.6],['funghi_2',.6],['cespuglio_secco',.9]];
+  const tot=PR.reduce((s,p)=>s+p[1],0);const pick=()=>{let v=r()*tot;for(const p of PR){v-=p[1];if(v<=0)return p[0]}return PR[0][0]};
+  for(let i=0;i<260;i++){const a=r()*6.283,d=2.6+Math.pow(r(),.7)*20,x=Math.cos(a)*d,z=Math.sin(a)*d;if(!vuoto(x,z,1.2))continue;const n=pick();
+    put(n,x,z,.85+r()*.4,{mir:r()<.5,vento:n.startsWith('erba')||n.startsWith('felce')?.03:0,svan:1})}
+  // a terra: radici ai piedi degli alberi vicini, foglie sparse
+  for(const e of ENV.slice(0,60)){if(Math.hypot(e.x,e.z)>13||!e.q.m.nome.startsWith('albero'))continue;const q=SPR[r()<.5?'radici_1':'radici_2'];
+    DECAL.push({q,x:e.x+(r()-.5)*.6,z:e.z+(r()-.5)*.6,rot:r()*6.28,s:1.2+r()*.5})}
+  for(let i=0;i<70;i++){const a=r()*6.283,d=1.5+r()*14;DECAL.push({q:SPR.foglie_secche,x:Math.cos(a)*d,z:Math.sin(a)*d,rot:r()*6.28,s:.8+r()*.6})}
+  for(let i=0;i<16;i++){const a=r()*6.283,d=5+r()*16;WISP.push({x:Math.cos(a)*d,z:Math.sin(a)*d,y:.25+r()*.7,w:5+r()*6,h:1.3+r()*1.1,p:r()*6.28,v:.08+r()*.12,a:.18+r()*.2})}
+  for(let i=0;i<46;i++){const a=r()*6.283,d=2.5+r()*16,o={x:Math.cos(a)*d,z:Math.sin(a)*d,y:.25+r()*2.6,p:r()*6.28,s:.6+r()*.8};
+    if(vuoto(o.x,o.z,1.8))FLIES.push(o)}     // non davanti alle volpi: da ferme sembrerebbero una macchia sul pelo
+  for(let i=0;i<170;i++)ASH.push({x:(r()-.5)*22,y:r()*8,z:(r()-.5)*22,v:.25+r()*.45,p:r()*6.28,sz:r()<.15?2:1})}
+
+// ================================================================= telecamera
+// la vista della lotta: dietro la tua volpe e un po' a destra, così lei sta in basso a sinistra e l'altra in alto a destra
+const LOTTA={th:-0.372,ph:0.069,d:6.5,fov:40,tgt:[0.4,0.75,-0.4]};
+const CAM={th:LOTTA.th,ph:LOTTA.ph,d:LOTTA.d,fov:LOTTA.fov,tgt:[0.4,0.75,-0.4],auto:!reduce,idle:0,tw:null,shift:0};
+let W=2,H=2,VP=null,EYE=[0,2,8],RIGHT=[1,0,0],FWD=[0,0,-1],UP=[0,1,0],T=0,now=0,last=performance.now(),land=false;
+function camera(){const c=Math.cos(CAM.ph);EYE=[CAM.tgt[0]+CAM.d*c*Math.sin(CAM.th),CAM.tgt[1]+CAM.d*Math.sin(CAM.ph),CAM.tgt[2]+CAM.d*c*Math.cos(CAM.th)];
+  const P=M4.persp(CAM.fov*Math.PI/180,W/H,.08,140),V=M4.look(EYE,CAM.tgt,[0,1,0]);P[9]=-CAM.shift;VP=M4.mul(P,V);
+  FWD=nrm(sub(CAM.tgt,EYE));RIGHT=nrm(cross(FWD,[0,1,0]));UP=cross(RIGHT,FWD)}
+let QUAL=1;          // scende se il telefono fatica (meno pixel da disegnare)
+function resize(){const Dp=Math.min(2,window.devicePixelRatio||1)*QUAL,r=cv.getBoundingClientRect();W=Math.max(2,Math.round(r.width*Dp));H=Math.max(2,Math.round(r.height*Dp));
+  cv.width=W;cv.height=H;land=r.width>r.height*1.25;const db=$('dock').getBoundingClientRect();if(db.height>0)document.documentElement.style.setProperty('--dock',Math.round(db.height)+'px');
+  // in verticale la lotta si vede da più lontano, così ci stanno tutte e due, e l'immagine sale sopra le mosse
+  Object.assign(LOTTA,land?{th:-0.372,ph:0.069,d:6.5,fov:40,tgt:[0.4,0.75,-0.4]}:{th:-0.12,ph:0.20,d:9.2,fov:52,tgt:[0.15,0.75,0.0]});
+  if(!CAM.moved){CAM.th=LOTTA.th;CAM.ph=LOTTA.ph;CAM.d=LOTTA.d;CAM.fov=LOTTA.fov;CAM.tgt=LOTTA.tgt.slice()}
+  CAM.shift=land?0:Math.min(.5,(db.height||0)/Math.max(1,r.height))}
+addEventListener('resize',resize);
+// dito: uno gira e inclina, due avvicinano; rotella avvicina
+const PTR=new Map();let pinch0=0,d0=0;
+function tocco(){CAM.idle=0;CAM.tw=null;CAM.moved=true;$('hint').style.opacity='0'}
+cv.addEventListener('pointerdown',e=>{cv.setPointerCapture(e.pointerId);PTR.set(e.pointerId,{x:e.clientX,y:e.clientY});tocco();
+  if(PTR.size===2){const[a,b]=[...PTR.values()];pinch0=Math.hypot(a.x-b.x,a.y-b.y);d0=CAM.d}});
+cv.addEventListener('pointermove',e=>{const p=PTR.get(e.pointerId);if(!p)return;const dx=e.clientX-p.x,dy=e.clientY-p.y;p.x=e.clientX;p.y=e.clientY;tocco();
+  if(PTR.size===1){CAM.th-=dx*0.0075;CAM.ph=cl(CAM.ph+dy*0.005,0.03,1.05)}
+  else if(PTR.size===2){const[a,b]=[...PTR.values()];const d=Math.hypot(a.x-b.x,a.y-b.y);if(pinch0>0)CAM.d=cl(d0*pinch0/d,3.6,17)}});
+const up=e=>{PTR.delete(e.pointerId);if(PTR.size<2)pinch0=0};cv.addEventListener('pointerup',up);cv.addEventListener('pointercancel',up);
+cv.addEventListener('wheel',e=>{e.preventDefault();tocco();CAM.d=cl(CAM.d*Math.exp(e.deltaY*0.0012),3.6,17)},{passive:false});
+addEventListener('keydown',e=>{if(e.target.closest&&e.target.closest('button'))return;const k=e.key;if(k==='ArrowLeft'){CAM.th+=.12;tocco()}else if(k==='ArrowRight'){CAM.th-=.12;tocco()}
+  else if(k==='ArrowUp'){CAM.ph=cl(CAM.ph+.06,.03,1.05);tocco()}else if(k==='ArrowDown'){CAM.ph=cl(CAM.ph-.06,.03,1.05);tocco()}});
+function vistaLotta(){const a0=CAM.th,ph0=CAM.ph,d0_=CAM.d,f0=CAM.fov,t0=CAM.tgt.slice();let dt=((LOTTA.th-a0)%(2*Math.PI)+3*Math.PI)%(2*Math.PI)-Math.PI;
+  CAM.tw={t0:T,d:1.2,f:k=>{k=ez(k);CAM.th=a0+dt*k;CAM.ph=lerp(ph0,LOTTA.ph,k);CAM.d=lerp(d0_,LOTTA.d,k);CAM.fov=lerp(f0,LOTTA.fov,k);CAM.tgt=t0.map((v,i)=>lerp(v,LOTTA.tgt[i],k))}};CAM.idle=0;CAM.moved=false}
+$('bLotta').addEventListener('click',vistaLotta);
+$('bGira').addEventListener('click',()=>{CAM.auto=!CAM.auto;$('bGira').setAttribute('aria-pressed',String(CAM.auto));CAM.idle=CAM.auto?99:0});
+
+// ================================================================= le volpi: la vista giusta da dove guarda la telecamera
+const reg=(key,pos,other)=>({key,pos,other,hp:0,max:0,lx:0,lz:0,dy:0,flash:0,shake:0,alpha:1,sink:0,anim:'fermo',animT0:0,blinkT:2+Math.random()*2,vista:'davanti',mir:false,ph:Math.random()*10});
+const FOE=reg('foe',FOE_P,ME_P),ME=reg('me',ME_P,FOE_P);FOE.hp=FOE.max=40;ME.hp=ME.max=46;
+const PSV=1/50;
+function sceglivista(c){const f=nrm([c.other[0]-c.pos[0],0,c.other[2]-c.pos[2]]),v=[EYE[0]-c.pos[0],0,EYE[2]-c.pos[2]];
+  const fr=dot(f,v)>0,dx=dot(f,RIGHT);
+  // un poco di isteresi ai confini, così non salta avanti e indietro
+  const fv=dot(f,nrm(v));if(Math.abs(fv)>.08)c.vista=fr?'davanti':'spalle';
+  if(Math.abs(dx)>.06)c.mir=c.vista==='davanti'?dx>0:dx<0}
+function cell(sh,name,i){const a=sh.animazioni[name]||sh.animazioni.fermo;return[a.riga,a.loop?i%a.n:Math.min(i,a.n-1)]}
+function pick(c){const sh=VOLPE[c.vista],A=sh.animazioni;if(reduce)return cell(sh,'fermo',0);
+  if(c.anim!=='fermo'){const a=A[c.anim];if(a){const i=Math.floor((T-c.animT0)*a.fps);if(i<a.n)return cell(sh,c.anim,i)}c.anim='fermo'}
+  const i=Math.floor((T+c.ph)*A.fermo.fps);
+  if(c.blinkT<=0&&A.fermo_occhi_chiusi){const bt=-c.blinkT;return cell(sh,(bt<.06||bt>.16)?'fermo_occhi_mezzi':'fermo_occhi_chiusi',i)}
+  return cell(sh,'fermo',i)}
+function play(c,name){c.anim=name;c.animT0=T}
+function base(c){const s=c.shake?Math.sin(T*90)*c.shake*.02:0;return[c.pos[0]+c.lx+RIGHT[0]*s,c.dy-c.sink,c.pos[2]+c.lz+RIGHT[2]*s]}
+// un punto dello sprite (pixel del foglio) nel mondo
+function at(c,p){const sh=VOLPE[c.vista],b=base(c),ax=c.mir?(sh.frame_width-sh.anchor[0]):sh.anchor[0],ay=sh.anchor[1];const px=c.mir?(sh.frame_width-1-p[0]):p[0];
+  const x=(px+.5-ax)*PSV,y=(ay-p[1])*PSV;return[b[0]+RIGHT[0]*x,b[1]+y,b[2]+RIGHT[2]*x]}
+function punti(c){const sh=VOLPE[c.vista];return sh.punti}
+
+// ================================================================= particelle ed effetti
+const PART=[];                 // {k:'brace'|'cenere'|'fx', ...}
+const FIRE=[[1,.94,.69],[1,.83,.41],[.98,.70,.29],[.96,.57,.24],[.93,.45,.25],[.88,.35,.22],[.78,.25,.18],[.6,.16,.17]];
+function brace(c){if(c.alpha<=0)return;const pts=punti(c).braci,p=pts[(Math.random()*pts.length)|0],w=at(c,[p[0]+(Math.random()-.5)*8,p[1]+(Math.random()-.5)*6]);
+  PART.push({k:'brace',x:w[0],y:w[1],z:w[2],vx:(Math.random()-.5)*.3,vy:.45+Math.random()*.5,vz:(Math.random()-.5)*.3,t:0,max:1.1+Math.random()*1.2,s:.45+Math.random()*.35})}
+function fxSprite(nome,x,y,z,o){o=o||{};PART.push(Object.assign({k:'fx',nome,x,y,z,vx:0,vy:0,vz:0,g:0,t:0,max:o.max||(D.fx[nome].frames/D.fx[nome].fps),s:o.s||1,loop:o.loop||false},o))}
+
+// ================================================================= disegno
+let groundVAO,ground_n=0;
+const LENV=[],LDEC=[],LSOFT=[],LADD=[],LVOL=[];let LBRACI,LFX;
+function preparaGL(){shaders();
+  const g=[];const R=70,N=24;for(let i=0;i<N;i++)for(let j=0;j<N;j++){const x0=-R+2*R*i/N,x1=-R+2*R*(i+1)/N,z0=-R+2*R*j/N,z1=-R+2*R*(j+1)/N;g.push(x0,0,z1,x1,0,z1,x1,0,z0,x0,0,z1,x1,0,z0,x0,0,z0)}
+  groundVAO=gl.createVertexArray();gl.bindVertexArray(groundVAO);const b=gl.createBuffer();gl.bindBuffer(gl.ARRAY_BUFFER,b);gl.bufferData(gl.ARRAY_BUFFER,new Float32Array(g),gl.STATIC_DRAW);
+  const l=gl.getAttribLocation(P.ground.p,'aP');gl.enableVertexAttribArray(l);gl.vertexAttribPointer(l,3,gl.FLOAT,false,0,0);gl.bindVertexArray(null);ground_n=g.length/3;
+  P.skyVAO=gl.createVertexArray();gl.bindVertexArray(P.skyVAO);gl.bindBuffer(gl.ARRAY_BUFFER,QUADBUF);const ls=gl.getAttribLocation(P.sky.p,'aQ');gl.enableVertexAttribArray(ls);gl.vertexAttribPointer(ls,2,gl.FLOAT,false,0,0);gl.bindVertexArray(null);
+  LENV.push(new Lotto(15));LVOL.push(new Lotto(15));LBRACI=new Lotto(15);LFX=new Lotto(15);LDEC.push(new Lotto(16));LSOFT.push(new Lotto(16));LADD.push(new Lotto(16));
+  // gli sprite fermi del bosco: una volta sola
+  const L=LENV[0];for(const e of ENV){const q=e.q,ps=q.ps*e.s;L.push(e.x,0,e.z,q.w*ps,q.h*ps,(q.piv[0]+.5)*ps,(q.piv[1]+1)*ps,...q.rect,e.luce,e.svan,e.mir?1:0,e.vento)}L.upload();
+  const Dl=LDEC[0];for(const d of DECAL){const q=d.q,ps=q.ps*d.s;Dl.push(d.x,.006,d.z,d.rot,q.w*ps,q.h*ps,1,0,...q.rect,1,1,1,1)}Dl.upload()}
+function setLuci(Pp){gl.uniform3fv(Pp.U.uEye,EYE);gl.uniform3fv(Pp.U.uAmb,AMB);gl.uniform3fv(Pp.U.uFireC,FIREC);gl.uniform3fv(Pp.U.uFogC,FOGC);gl.uniform1f(Pp.U.uFogD,0.042);
+  const f=[];for(const c of[FOE,ME]){const b=base(c),fl=reduce?1:(1+.10*Math.sin(T*9.3+c.ph)+.06*Math.sin(T*23+c.ph*2));f.push(b[0],.6+b[1],b[2],c.alpha*.95*fl)}gl.uniform4fv(Pp.U.uFire,new Float32Array(f))}
+function bindTex(Pp,name,t,unit){gl.activeTexture(gl.TEXTURE0+unit);gl.bindTexture(gl.TEXTURE_2D,t);gl.uniform1i(Pp.U[name],unit)}
+
+function render(){
+  gl.viewport(0,0,W,H);gl.enable(gl.DEPTH_TEST);gl.depthMask(true);gl.clearColor(FOGC[0],FOGC[1],FOGC[2],1);gl.clearStencil(0);gl.clear(gl.COLOR_BUFFER_BIT|gl.DEPTH_BUFFER_BIT|gl.STENCIL_BUFFER_BIT);
+  // cielo
+  gl.disable(gl.DEPTH_TEST);gl.useProgram(P.sky.p);const tY=Math.tan(CAM.fov*Math.PI/360);
+  gl.uniform3fv(P.sky.U.uF,FWD);gl.uniform3fv(P.sky.U.uR,RIGHT);gl.uniform3fv(P.sky.U.uU,UP);gl.uniform2f(P.sky.U.uT,tY*W/H,tY);gl.uniform3fv(P.sky.U.uMoon,MOON);
+  gl.uniform3fv(P.sky.U.uTop,SKY_TOP);gl.uniform3fv(P.sky.U.uHor,SKY_HOR);gl.uniform3fv(P.sky.U.uFogC,FOGC);gl.uniform1f(P.sky.U.uTime,T);
+  gl.bindVertexArray(P.skyVAO);gl.drawArrays(gl.TRIANGLE_STRIP,0,4);gl.bindVertexArray(null);
+  // la luna, lontana, dietro gli alberi
+  drawBB(volLuna(),ATL,{noFog:true,self:1});
+  gl.enable(gl.DEPTH_TEST);
+  // terreno
+  gl.useProgram(P.ground.p);gl.uniformMatrix4fv(P.ground.U.uVP,false,VP);setLuci(P.ground);gl.uniform2f(P.ground.U.uClear,5.6,2.2);
+  bindTex(P.ground,'uTerra',TILES.terra,0);bindTex(P.ground,'uMus',TILES.muschio,1);bindTex(P.ground,'uRad',TILES.radura,2);
+  gl.bindVertexArray(groundVAO);gl.drawArrays(gl.TRIANGLES,0,ground_n);gl.bindVertexArray(null);
+  // a terra: radici e foglie
+  gl.useProgram(P.flat.p);gl.uniformMatrix4fv(P.flat.U.uVP,false,VP);gl.uniform3fv(P.flat.U.uRight,RIGHT);setLuci(P.flat);gl.uniform1f(P.flat.U.uMode,0);
+  bindTex(P.flat,'uT',ATL,0);gl.uniform2f(P.flat.U.uTS,ATL.w,ATL.h);LDEC[0].draw();
+  // ombre della luna (ogni punto si scurisce una volta sola)
+  const vol=volpi();
+  gl.enable(gl.STENCIL_TEST);gl.stencilFunc(gl.EQUAL,0,255);gl.stencilOp(gl.KEEP,gl.KEEP,gl.INCR);gl.enable(gl.BLEND);gl.blendFunc(gl.SRC_ALPHA,gl.ONE_MINUS_SRC_ALPHA);gl.depthMask(false);
+  gl.useProgram(P.bb.p);gl.uniformMatrix4fv(P.bb.U.uVP,false,VP);gl.uniform3fv(P.bb.U.uLight,MOON);gl.uniform1f(P.bb.U.uShadow,1);gl.uniform1f(P.bb.U.uTime,T);setLuci(P.bb);
+  gl.uniform1f(P.bb.U.uAlpha,1);gl.uniform1f(P.bb.U.uFlash,0);gl.uniform1f(P.bb.U.uSelf,0);gl.uniform3f(P.bb.U.uTint,1,1,1);
+  bindTex(P.bb,'uT',ATL,0);gl.uniform2f(P.bb.U.uTS,ATL.w,ATL.h);LENV[0].draw();
+  for(const v of vol){if(v.alpha<=0)continue;bindTex(P.bb,'uT',v.tex,0);gl.uniform2f(P.bb.U.uTS,v.tex.w,v.tex.h);v.l.draw()}
+  gl.disable(gl.STENCIL_TEST);gl.depthMask(true);gl.disable(gl.BLEND);
+  // luce del fuoco a terra e ombre morbide sotto le volpi
+  soft();
+  // sprite in piedi: bosco e volpi
+  gl.useProgram(P.bb.p);gl.uniform1f(P.bb.U.uShadow,0);gl.uniform3fv(P.bb.U.uRight,RIGHT);bindTex(P.bb,'uT',ATL,0);gl.uniform2f(P.bb.U.uTS,ATL.w,ATL.h);LENV[0].draw();
+  for(const v of vol){if(v.alpha<=0)continue;bindTex(P.bb,'uT',v.tex,0);gl.uniform2f(P.bb.U.uTS,v.tex.w,v.tex.h);gl.uniform1f(P.bb.U.uAlpha,v.alpha);gl.uniform1f(P.bb.U.uFlash,v.flash);
+    gl.uniform1f(P.bb.U.uSelf,.55);v.l.draw()}
+  gl.uniform1f(P.bb.U.uAlpha,1);gl.uniform1f(P.bb.U.uFlash,0);gl.uniform1f(P.bb.U.uSelf,0);
+  // particelle in pixel (braci, cenere, effetti delle mosse)
+  particelle();
+  // nebbia bassa, bagliori, raggi di luna, lucciole
+  veli()}
+
+function drawBB(lot,t,o){gl.useProgram(P.bb.p);gl.uniformMatrix4fv(P.bb.U.uVP,false,VP);gl.uniform3fv(P.bb.U.uRight,RIGHT);gl.uniform1f(P.bb.U.uShadow,0);setLuci(P.bb);
+  if(o.noFog)gl.uniform1f(P.bb.U.uFogD,0);gl.uniform1f(P.bb.U.uSelf,o.self||0);gl.uniform1f(P.bb.U.uAlpha,1);gl.uniform1f(P.bb.U.uFlash,0);gl.uniform3f(P.bb.U.uTint,1,1,1);
+  bindTex(P.bb,'uT',t,0);gl.uniform2f(P.bb.U.uTS,t.w,t.h);lot.upload();lot.draw();gl.uniform1f(P.bb.U.uSelf,0)}
+function volLuna(){const L=LVOL[0];L.clear();const q=SPR.luna,d=90,s=d*.07;L.push(EYE[0]+MOON[0]*d,EYE[1]+MOON[1]*d-s/2,EYE[2]+MOON[2]*d,s,s,s/2,s,...q.rect,1.15,0,0,0);return L}
+// le volpi: un lotto ciascuna (il loro foglio è una texture a parte)
+function volpi(){const out=[];for(const c of[FOE,ME]){sceglivista(c);const sh=VOLPE[c.vista];if(!c.l)c.l=new Lotto(15);c.l.clear();
+    const[r_,f_]=pick(c),fw=sh.frame_width,fh=sh.frame_height,tw=sh.tex.w,th=sh.tex.h,b=base(c);
+    const ax=c.mir?(fw-sh.anchor[0]):sh.anchor[0]+0;
+    c.l.push(b[0],b[1],b[2],fw*PSV,fh*PSV,(ax)*PSV,(sh.anchor[1]+1)*PSV,f_*fw/tw,r_*fh/th,(f_+1)*fw/tw,(r_+1)*fh/th,1,0,c.mir?1:0,0);c.l.upload();
+    out.push({l:c.l,tex:sh.tex,alpha:c.alpha,flash:Math.min(.85,c.flash)})}
+  return out}
+function soft(){const L=LSOFT[0];L.clear();
+  for(const c of[FOE,ME]){if(c.alpha<=0)continue;const b=base(c),fl=reduce?1:1+.12*Math.sin(T*8.1+c.ph)+.07*Math.sin(T*21+c.ph);
+    const rr=SOFTR.luce_fuoco;L.push(b[0],.02,b[2],0,3.6*fl,2.6*fl,1,0,...rr,1,.55,.2,.55*c.alpha)}
+  gl.useProgram(P.flat.p);gl.uniformMatrix4fv(P.flat.U.uVP,false,VP);gl.uniform3fv(P.flat.U.uRight,RIGHT);setLuci(P.flat);
+  bindTex(P.flat,'uT',SOFT,0);gl.uniform2f(P.flat.U.uTS,SOFT.w,SOFT.h);
+  gl.enable(gl.BLEND);gl.depthMask(false);gl.blendFunc(gl.ONE,gl.ONE);gl.uniform1f(P.flat.U.uMode,1);L.upload();L.draw();
+  // ombre morbide sotto le volpi
+  L.clear();for(const c of[FOE,ME]){if(c.alpha<=0)continue;const b=base(c);L.push(b[0],.015,b[2],0,1.5,.55,1,0,...SOFTR.ombra,1,1,1,.75*c.alpha)}
+  gl.blendFunc(gl.SRC_ALPHA,gl.ONE_MINUS_SRC_ALPHA);gl.uniform1f(P.flat.U.uMode,2);L.upload();L.draw();gl.depthMask(true);gl.disable(gl.BLEND)}
+function particelle(){const Lb=LBRACI,Lf=LFX;Lb.clear();Lf.clear();
+  for(const p of PART){if(p.t<0)continue;
+    if(p.k==='brace'){const q=SPR.brace,k=p.t/p.max,f=Math.min(4,(k*5)|0),ps=q.ps*p.s,fw=q.w,r=q.rect,du=r[2]-r[0];
+      Lb.push(p.x,p.y,p.z,fw*ps,q.h*ps,fw*ps/2,q.h*ps/2,r[0]+du*f,r[1],r[0]+du*(f+1),r[3],1,0,0,0)}
+    else if(p.k==='fx'){const m=D.fx[p.nome],rr=FXR[p.nome],n=m.frames,nf=p.fuoco||n,f=p.loop?Math.floor(p.t*m.fps)%n:Math.min(nf-1,Math.floor(p.t/p.max*nf)),ps=PSV*p.s*(p.fuoco?1-.5*p.t/p.max:1),du=(rr[2]-rr[0])/n;
+      Lf.push(p.x,p.y,p.z,m.frame_width*ps,m.frame_height*ps,m.frame_width*ps/2,m.frame_height*ps/2,rr[0]+du*f,rr[1],rr[0]+du*(f+1),rr[3],1,0,p.mir?1:0,0)}}
+  // cenere fredda che scende (due fotogrammi che si alternano)
+  const q=SPR.cenere,r=q.rect,du=r[2]-r[0];   // rect = un fotogramma: si va avanti di un fotogramma intero
+  for(const a of ASH){const f=((T*3+a.p)|0)%2,s=.07*a.sz;Lb.push(a.x,a.y,a.z,s,s,s/2,s/2,r[0]+du*f,r[1],r[0]+du*(f+1),r[3],.9,0,0,0)}
+  // lucciole: il puntino in pixel art che si accende e si spegne (4 fotogrammi); il bagliore intorno si somma dopo, in veli()
+  const ql=SPR.lucciola,rl=ql.rect,dl=rl[2]-rl[0],sl=ql.h*ql.ps*1.3;
+  for(const fl of FLIES){const[x,y,z,a]=flyPos(fl),k=a/.7,f=k<.45?0:k<.65?3:k<.85?1:2;
+    Lb.push(x,y,z,sl,sl,sl/2,sl/2,rl[0]+dl*f,rl[1],rl[0]+dl*(f+1),rl[3],1,0,0,0)}
+  gl.useProgram(P.bb.p);gl.uniformMatrix4fv(P.bb.U.uVP,false,VP);gl.uniform3fv(P.bb.U.uRight,RIGHT);gl.uniform1f(P.bb.U.uShadow,0);setLuci(P.bb);gl.uniform1f(P.bb.U.uSelf,1);
+  gl.uniform1f(P.bb.U.uAlpha,1);gl.uniform1f(P.bb.U.uFlash,0);
+  bindTex(P.bb,'uT',ATL,0);gl.uniform2f(P.bb.U.uTS,ATL.w,ATL.h);Lb.upload();Lb.draw();
+  if(Lf.n){bindTex(P.bb,'uT',FXT,0);gl.uniform2f(P.bb.U.uTS,FXT.w,FXT.h);Lf.upload();Lf.draw()}
+  gl.uniform1f(P.bb.U.uSelf,0)}
+function veli(){const L=LADD[0];L.clear();
+  // nebbia bassa che scorre piano (vela, non somma)
+  const nb=SOFTR.nebbia;for(const w of WISP){const x=w.x+Math.sin(T*w.v+w.p)*1.2,z=w.z+Math.cos(T*w.v*.8+w.p)*1.2,a=w.a*(reduce?1:.75+.25*Math.sin(T*.3+w.p));
+    L.push(x,w.y+w.h/2,z,0,w.w,w.h,0,0,...nb,.62,.70,.76,a)}
+  WISP.sort((a,b)=>Math.hypot(b.x-EYE[0],b.z-EYE[2])-Math.hypot(a.x-EYE[0],a.z-EYE[2]));
+  gl.useProgram(P.flat.p);gl.uniformMatrix4fv(P.flat.U.uVP,false,VP);gl.uniform3fv(P.flat.U.uRight,RIGHT);setLuci(P.flat);bindTex(P.flat,'uT',SOFT,0);gl.uniform2f(P.flat.U.uTS,SOFT.w,SOFT.h);
+  gl.enable(gl.BLEND);gl.depthMask(false);gl.blendFunc(gl.SRC_ALPHA,gl.ONE_MINUS_SRC_ALPHA);gl.uniform1f(P.flat.U.uMode,2);L.upload();L.draw();
+  // luci che si sommano: bagliore delle volpi, funghi, braci, effetti, lucciole, raggi di luna
+  L.clear();const al=SOFTR.alone_luna,lf=SOFTR.luce_fuoco,rg=SOFTR.raggio_di_luna;
+  // il bagliore sta dietro la volpe (lontano dalla telecamera): la volpe lo copre e si vede solo intorno a lei
+  for(const c of[FOE,ME]){if(c.alpha<=0)continue;const p=at(c,punti(c).corpo),fl=reduce?1:1+.1*Math.sin(T*7.3+c.ph);
+    L.push(p[0]+FWD[0]*.45,p[1]+.15,p[2]+FWD[2]*.45,0,3.0*fl,2.8*fl,0,0,...lf,1,.5,.18,.34*c.alpha)}
+  for(const e of ENV){if(!e.q.m.brilla)continue;const d=Math.hypot(e.x-EYE[0],e.z-EYE[2]);if(d>26)continue;const fl=reduce?1:.8+.2*Math.sin(T*1.3+e.x);L.push(e.x,.18*e.s,e.z,0,.9,.9,0,0,...al,.35,.88,.92,.55*fl)}
+  for(const p of PART){if(p.t<0)continue;const k=p.t/p.max;if(p.k==='brace'){L.push(p.x,p.y,p.z,0,.22*p.s,.22*p.s,0,0,...lf,1,.6,.25,(1-k)*.8)}
+    else if(p.k==='fx'&&p.nome!=='graffio'){const s=(D.fx[p.nome].frame_width*PSV*p.s)*1.8;L.push(p.x,p.y,p.z,0,s,s,0,0,...lf,1,.55,.2,(1-k)*.6)}}
+  for(const f of FLIES){const[x,y,z,a]=flyPos(f);L.push(x,y,z,0,.32,.32,0,0,...al,.75,1,.5,a)}
+  for(let i=0;i<3;i++){const d=7+i*2.6,x=MOON[0]*-2+i*1.4-1.5,z=-3.2-i*1.8,a=.05+.02*Math.sin(T*.4+i*2);L.push(x,3.6,z,0,1.8,9,0,MOON[0]*3.2,...rg,.75,.85,.95,a)}
+  gl.blendFunc(gl.ONE,gl.ONE);gl.uniform1f(P.flat.U.uMode,1);L.upload();L.draw();gl.depthMask(true);gl.disable(gl.BLEND)}
+
+// ================================================================= tempo
+function tick(dt){T+=dt;
+  if(CAM.tw){const k=Math.min(1,(T-CAM.tw.t0)/CAM.tw.d);CAM.tw.f(k);if(k>=1)CAM.tw=null}
+  CAM.idle+=dt;if(CAM.auto&&!busy&&CAM.idle>5&&!CAM.tw&&!reduce)CAM.th+=dt*0.12;
+  for(const c of[FOE,ME]){c.flash=Math.max(0,c.flash-dt*3.2);c.shake=Math.max(0,c.shake-dt*10);c.blinkT-=dt;if(c.blinkT<-.22)c.blinkT=2+Math.random()*2.5;
+    if(!reduce&&Math.random()<dt*6*c.alpha)brace(c)}
+  for(let i=PART.length-1;i>=0;i--){const p=PART[i];p.t+=dt;if(p.t>p.max){PART.splice(i,1);continue}if(p.t<0)continue;
+    if(p.k==='brace'){p.x+=p.vx*dt+Math.sin(T*3+i)*.004;p.y+=p.vy*dt;p.z+=p.vz*dt}
+    else{p.vy-=(p.g||0)*dt;p.x+=p.vx*dt;p.y+=p.vy*dt;p.z+=p.vz*dt;if(p.drag){p.vx*=1-dt*p.drag;p.vz*=1-dt*p.drag}}}
+  if(!reduce)for(const a of ASH){a.y-=a.v*dt;a.x+=Math.sin(T*.7+a.p)*.12*dt+.05*dt;if(a.y<0){a.y=8;a.x=CAM.tgt[0]+(Math.random()-.5)*22;a.z=CAM.tgt[2]+(Math.random()-.5)*22}}}
+
+// ================================================================= la lotta
+let LENTO=1;     // per le prove: >1 rallenta tutto (la scena e la lotta)
+const sleep=ms=>new Promise(r=>setTimeout(r,(reduce?Math.min(ms,250):ms)*LENTO));
+function tween(ms,fn){return new Promise(r=>{const t0=performance.now();const st=()=>{const k=Math.min(1,(performance.now()-t0)/((reduce?Math.min(ms,120):ms)*LENTO));fn(k);k<1?requestAnimationFrame(st):r()};st()})}
+const MOVES=[{n:'Fiammata',pp:15,max:15,pow:13,fx:'stream'},{n:'Graffio',pp:35,max:35,pow:7,fx:'slash'},{n:'Braci',pp:25,max:25,pow:9,fx:'balls'},{n:'Coda ardente',pp:10,max:10,pow:17,fx:'burst'}];
+const FOE_MOVES=[{n:'Braci',pow:8,fx:'balls'},{n:'Fiammata',pow:11,fx:'stream'},{n:'Graffio',pow:6,fx:'slash'}];
+const btns=[...document.querySelectorAll('.move')];let busy=true;
+const say=t=>{$('msg').textContent=t};
+function hpUI(){const set=(el,c)=>{const r=c.hp/c.max;el.style.width=(r*100)+'%';el.style.backgroundColor=r>.5?'var(--hp)':(r>.2?'var(--hp-mid)':'var(--hp-low)')};
+  set($('hpFoe'),FOE);set($('hpMe'),ME);$('numMe').textContent=Math.max(0,Math.ceil(ME.hp))+'/'+ME.max}
+function lock(v){busy=v;btns.forEach((b,i)=>{b.disabled=v||MOVES[i].pp<=0})}
+function ppUI(){btns.forEach((b,i)=>{b.querySelector('.pp').textContent=MOVES[i].pp+'/'+MOVES[i].max})}
+async function lunge(c,amt){play(c,'attacco');await sleep(240);const dx=c.other[0]-c.pos[0],dz=c.other[2]-c.pos[2],l=Math.hypot(dx,dz);
+  await tween(120,k=>{c.lx=dx/l*amt*ez(k);c.lz=dz/l*amt*ez(k)})}
+async function back(c){const x0=c.lx,z0=c.lz;await tween(260,k=>{c.lx=x0*(1-ez(k));c.lz=z0*(1-ez(k))})}
+function fx(kind,a,b){const A=at(a,punti(a).bocca),B=at(b,punti(b).corpo);
+  if(kind==='stream')return new Promise(async r=>{for(let i=0;i<26;i++){const tt=.42+Math.random()*.12;
+      fxSprite('fiammata',A[0],A[1],A[2],{vx:(B[0]-A[0])/tt+(Math.random()-.5)*.6,vy:(B[1]-A[1])/tt+(Math.random()-.5)*.5+.6,vz:(B[2]-A[2])/tt+(Math.random()-.5)*.6,g:1.6,max:tt*1.1,s:.55+Math.random()*.45,fuoco:4});
+      if(i%3===0)await sleep(30)}await sleep(260);r()});
+  if(kind==='balls')return new Promise(async r=>{for(let j=0;j<3;j++){const tt=.5,o=(j-1)*.35;
+      fxSprite('palla_di_fuoco',A[0],A[1],A[2],{vx:(B[0]-A[0])/tt+RIGHT[0]*o,vy:(B[1]-A[1])/tt+tt*9.8/2,vz:(B[2]-A[2])/tt+RIGHT[2]*o,g:9.8,max:tt,loop:true,s:1.4});
+      await sleep(140)}await sleep(420);r()});
+  if(kind==='slash'){fxSprite('graffio',B[0],B[1]+.1,B[2],{s:1.6,mir:b.mir?1:0});return sleep(380)}
+  if(kind==='burst'){const f=base(b);fxSprite('esplosione',f[0],f[1]+.55,f[2],{s:1.5});
+    for(let i=0;i<14;i++){const a_=i/14*6.283;fxSprite('fiammata',f[0]+Math.cos(a_)*.4,f[1]+.2,f[2]+Math.sin(a_)*.4,{vx:Math.cos(a_)*.5,vy:1.2+Math.random()*1.2,vz:Math.sin(a_)*.5,max:.55+Math.random()*.3,s:.7,t:-Math.random()*.15})}
+    return sleep(620)}}
+async function hit(c,dmg){play(c,'colpito');c.flash=1;c.shake=4;const p=at(c,punti(c).corpo);fxSprite('scintilla',p[0],p[1],p[2],{s:2.2});
+  for(let i=0;i<10;i++)PART.push({k:'brace',x:p[0],y:p[1],z:p[2],vx:(Math.random()-.5)*2.2,vy:Math.random()*1.8,vz:(Math.random()-.5)*2.2,t:0,max:.5+Math.random()*.4,s:.7});
+  await sleep(160);c.flash=.7;await sleep(120);c.hp=Math.max(0,c.hp-dmg);hpUI();await sleep(620)}
+async function ko(c){await tween(900,k=>{c.sink=k*.5;c.alpha=1-k});for(let i=0;i<14;i++)brace(c)}
+async function reset(){FOE.hp=FOE.max;ME.hp=ME.max;MOVES.forEach(m=>m.pp=m.max);ppUI();FOE.sink=0;ME.sink=0;ME.alpha=1;hpUI();
+  await tween(700,k=>{FOE.alpha=k});say('Un\'altra volpe di fuoco esce dalla nebbia!');await sleep(1200);say('Che cosa fa la tua volpe?');lock(false)}
+async function turn(i){const m=MOVES[i];if(busy||m.pp<=0)return;lock(true);m.pp--;ppUI();
+  say('La tua volpe usa '+m.n+'!');await sleep(350);await lunge(ME,.55);await fx(m.fx,ME,FOE);await back(ME);
+  await hit(FOE,Math.round(m.pow*(.85+Math.random()*.15)));
+  if(FOE.hp<=0){say('La volpe di fuoco selvatica non ce la fa più!');await ko(FOE);await sleep(1300);await reset();return}
+  const e=FOE_MOVES[(Math.random()*FOE_MOVES.length)|0];say('La volpe selvatica usa '+e.n+'!');await sleep(450);
+  await lunge(FOE,.45);await fx(e.fx,FOE,ME);await back(FOE);await hit(ME,Math.round(e.pow*(.85+Math.random()*.15)));
+  if(ME.hp<=0){say('La tua volpe non ce la fa più! Si riposa e ci riprova.');await sleep(1500);FOE.alpha=0;await reset();return}
+  say('Che cosa fa la tua volpe?');lock(false)}
+btns.forEach((b,i)=>b.addEventListener('click',()=>turn(i)));
+window.__bosco={cam:CAM,lotta:LOTTA,volpi:()=>[FOE,ME].map(c=>({vista:c.vista,mir:c.mir,anim:c.anim})),lento:v=>{LENTO=v}};
+
+// ================================================================= schede
+let vista='giro';
+document.querySelectorAll('.tab').forEach(b=>b.addEventListener('click',()=>{vista=b.dataset.v;document.querySelectorAll('.tab').forEach(x=>x.setAttribute('aria-pressed',String(x===b)));
+  const g=vista==='sprite';$('gal').hidden=!g;$('galbar').hidden=!g;for(const id of['pFoe','pMe','dock','camrow','hint','vig'])$(id).hidden=g;cv.hidden=g}));
+
+// ================================================================= avvio
+(async()=>{
+  const imgs={};const add=async(k,src)=>{imgs[k]=await load(src)};const jobs=[];
+  jobs.push(add('atlas',D.env.atlas.src));for(const[k,v]of Object.entries(D.env.tiles))jobs.push(add('tile_'+k,v));
+  for(const[k,v]of Object.entries(D.env.soft))jobs.push(add('soft_'+k,v.src));for(const[k,v]of Object.entries(D.fx))jobs.push(add('fx_'+k,v.src));
+  jobs.push(add('volpe_davanti',D.volpe.davanti.src),add('volpe_spalle',D.volpe.spalle.src));await Promise.all(jobs);
+  galleria(imgs);
+  (function gl_(){disegnaGal(performance.now()/1000);requestAnimationFrame(gl_)})();
+  if(!gl){$('err').hidden=false;for(const id of['pFoe','pMe','dock','camrow','hint'])$(id).hidden=true;return}
+  try{
+    ATL=tex(imgs.atlas,{mip:true,maxl:2});for(const k of Object.keys(D.env.tiles))TILES[k]=tex(imgs['tile_'+k],{mip:true,rep:true,maxl:3});
+    // luci morbide in un'immagine sola
+    {const ks=Object.keys(D.env.soft),c=document.createElement('canvas');let w=0,h=0;for(const k of ks){w+=imgs['soft_'+k].width+4;h=Math.max(h,imgs['soft_'+k].height)}c.width=w;c.height=h;const g=c.getContext('2d');let x=0;
+      for(const k of ks){const im=imgs['soft_'+k];g.drawImage(im,x,0);SOFTR[k]=[(x+.5)/w,.5/h,(x+im.width-.5)/w,(im.height-.5)/h];x+=im.width+4}SOFT=tex(c,{})}
+    // effetti delle mosse in un'immagine sola
+    {const ks=Object.keys(D.fx),c=document.createElement('canvas');let w=0,h=0;for(const k of ks){w=Math.max(w,imgs['fx_'+k].width);h+=imgs['fx_'+k].height+4}c.width=w;c.height=h;const g=c.getContext('2d');let y=0;
+      for(const k of ks){const im=imgs['fx_'+k];g.drawImage(im,0,y);FXR[k]=[0,y/h,im.width/w,(y+im.height)/h];y+=im.height+4}FXT=tex(c,{})}
+    for(const k of['davanti','spalle']){VOLPE[k]=D.volpe[k];VOLPE[k].tex=tex(imgs['volpe_'+k],{})}
+    costruisci();preparaGL();resize();hpUI();ppUI();lock(true);FOE.alpha=0;
+    let nf=0,acc=0;
+    (function frame(){const tn=performance.now(),raw=(tn-last)/1000,dt=Math.min(.05,raw)/LENTO;last=tn;
+      if(vista==='giro'){tick(reduce?0:dt);camera();render();
+        // dopo un secondo e mezzo di prova: se i fotogrammi sono lenti, si disegna con meno pixel
+        if(QUAL>.6&&raw<.5){nf++;acc+=raw;if(nf>=90){if(acc/nf>1/38){QUAL=Math.max(.6,QUAL*.75);resize()}nf=0;acc=0}}}
+      requestAnimationFrame(frame)})();
+    tween(900,k=>{FOE.alpha=k}).then(()=>sleep(700)).then(()=>{say('Che cosa fa la tua volpe?');lock(false)});
+  }catch(e){console.error(e);$('err').hidden=false}
+})();
+})();
+</script>

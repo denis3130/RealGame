@@ -1,0 +1,110 @@
+{
+ "nome": "effetti di fuoco",
+ "sprite": [
+  {
+   "asset_id": "vfx_battle_fuoco_palla_di_fuoco",
+   "nome": "palla_di_fuoco",
+   "file": "palla_di_fuoco.png",
+   "category": "vfx_battle",
+   "frame_width": 16,
+   "frame_height": 16,
+   "frames": 4,
+   "fps": 14,
+   "loop": true,
+   "pivot": [
+    8,
+    8
+   ],
+   "blend": "normale",
+   "source": "disegnato col codice (sprite/niumon/effetti/fuoco/effetti.py)",
+   "version": "0.1-effetti-fuoco",
+   "status": "da approvare",
+   "format": "PNG_RGBA",
+   "background": "transparent"
+  },
+  {
+   "asset_id": "vfx_battle_fuoco_fiammata",
+   "nome": "fiammata",
+   "file": "fiammata.png",
+   "category": "vfx_battle",
+   "frame_width": 24,
+   "frame_height": 24,
+   "frames": 6,
+   "fps": 14,
+   "loop": false,
+   "pivot": [
+    12,
+    12
+   ],
+   "blend": "normale",
+   "source": "disegnato col codice (sprite/niumon/effetti/fuoco/effetti.py)",
+   "version": "0.1-effetti-fuoco",
+   "status": "da approvare",
+   "format": "PNG_RGBA",
+   "background": "transparent"
+  },
+  {
+   "asset_id": "vfx_battle_fuoco_esplosione",
+   "nome": "esplosione",
+   "file": "esplosione.png",
+   "category": "vfx_battle",
+   "frame_width": 48,
+   "frame_height": 48,
+   "frames": 6,
+   "fps": 14,
+   "loop": false,
+   "pivot": [
+    24,
+    24
+   ],
+   "blend": "normale",
+   "source": "disegnato col codice (sprite/niumon/effetti/fuoco/effetti.py)",
+   "version": "0.1-effetti-fuoco",
+   "status": "da approvare",
+   "format": "PNG_RGBA",
+   "background": "transparent"
+  },
+  {
+   "asset_id": "vfx_battle_fuoco_graffio",
+   "nome": "graffio",
+   "file": "graffio.png",
+   "category": "vfx_battle",
+   "frame_width": 32,
+   "frame_height": 32,
+   "frames": 4,
+   "fps": 16,
+   "loop": false,
+   "pivot": [
+    16,
+    16
+   ],
+   "blend": "normale",
+   "source": "disegnato col codice (sprite/niumon/effetti/fuoco/effetti.py)",
+   "version": "0.1-effetti-fuoco",
+   "status": "da approvare",
+   "format": "PNG_RGBA",
+   "background": "transparent"
+  },
+  {
+   "asset_id": "vfx_battle_fuoco_scintilla",
+   "nome": "scintilla",
+   "file": "scintilla.png",
+   "category": "vfx_battle",
+   "frame_width": 9,
+   "frame_height": 9,
+   "frames": 3,
+   "fps": 16,
+   "loop": false,
+   "pivot": [
+    4,
+    4
+   ],
+   "blend": "normale",
+   "source": "disegnato col codice (sprite/niumon/effetti/fuoco/effetti.py)",
+   "version": "0.1-effetti-fuoco",
+   "status": "da approvare",
+   "format": "PNG_RGBA",
+   "background": "transparent"
+  }
+ ]
+}

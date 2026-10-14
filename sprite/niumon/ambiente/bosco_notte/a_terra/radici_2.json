@@ -1,0 +1,25 @@
+{
+ "asset_id": "env_bosconotte_radici_2",
+ "nome": "radici_2",
+ "cartella": "a_terra",
+ "file": "a_terra/radici_2.png",
+ "frame_width": 56,
+ "frame_height": 40,
+ "category": "env_decal",
+ "pivot": [
+  4,
+  20
+ ],
+ "billboard": false,
+ "descrizione": "steso a terra, visto dall'alto",
+ "frames": 1,
+ "fps": 0,
+ "loop": false,
+ "blend": "normale",
+ "unita_per_pixel": 0.03125,
+ "source": "disegnato col codice (sprite/niumon/ambiente/bosco_notte/fai.py)",
+ "version": "0.1-bosco-di-notte",
+ "status": "da approvare",
+ "format": "PNG_RGBA",
+ "background": "transparent"
+}

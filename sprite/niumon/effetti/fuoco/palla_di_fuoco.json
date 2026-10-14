@@ -1,0 +1,21 @@
+{
+ "asset_id": "vfx_battle_fuoco_palla_di_fuoco",
+ "nome": "palla_di_fuoco",
+ "file": "palla_di_fuoco.png",
+ "category": "vfx_battle",
+ "frame_width": 16,
+ "frame_height": 16,
+ "frames": 4,
+ "fps": 14,
+ "loop": true,
+ "pivot": [
+  8,
+  8
+ ],
+ "blend": "normale",
+ "source": "disegnato col codice (sprite/niumon/effetti/fuoco/effetti.py)",
+ "version": "0.1-effetti-fuoco",
+ "status": "da approvare",
+ "format": "PNG_RGBA",
+ "background": "transparent"
+}

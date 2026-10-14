@@ -1,0 +1,21 @@
+{
+ "asset_id": "vfx_battle_fuoco_scintilla",
+ "nome": "scintilla",
+ "file": "scintilla.png",
+ "category": "vfx_battle",
+ "frame_width": 9,
+ "frame_height": 9,
+ "frames": 3,
+ "fps": 16,
+ "loop": false,
+ "pivot": [
+  4,
+  4
+ ],
+ "blend": "normale",
+ "source": "disegnato col codice (sprite/niumon/effetti/fuoco/effetti.py)",
+ "version": "0.1-effetti-fuoco",
+ "status": "da approvare",
+ "format": "PNG_RGBA",
+ "background": "transparent"
+}

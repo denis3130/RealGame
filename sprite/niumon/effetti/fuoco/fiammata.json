@@ -1,0 +1,21 @@
+{
+ "asset_id": "vfx_battle_fuoco_fiammata",
+ "nome": "fiammata",
+ "file": "fiammata.png",
+ "category": "vfx_battle",
+ "frame_width": 24,
+ "frame_height": 24,
+ "frames": 6,
+ "fps": 14,
+ "loop": false,
+ "pivot": [
+  12,
+  12
+ ],
+ "blend": "normale",
+ "source": "disegnato col codice (sprite/niumon/effetti/fuoco/effetti.py)",
+ "version": "0.1-effetti-fuoco",
+ "status": "da approvare",
+ "format": "PNG_RGBA",
+ "background": "transparent"
+}

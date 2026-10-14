@@ -380,7 +380,8 @@ let zlast=performance.now();
     if(z.auto!=null&&!reduce){z.auto-=dt;if(z.auto<=0){play(z,z.n++%2?'colpito':'attacco');z.auto=4+Math.random()*2}}}
   Z.forEach(f=>f());requestAnimationFrame(zl)})(performance.now());
 
-Promise.all(Object.keys(S).map(prep)).then(()=>{L=bake();hpUI();ppUI();lock(true);FOE.alpha=0;requestAnimationFrame(frame);
+Promise.all(Object.keys(S).map(prep)).then(()=>{L=bake();window.__strati=L;   // i livelli del bosco, per esportarli come immagini
+  hpUI();ppUI();lock(true);FOE.alpha=0;requestAnimationFrame(frame);
   tween(900,k=>{FOE.alpha=k}).then(()=>sleep(900)).then(()=>{say('Che cosa fa la tua volpe?');lock(false)})});
 })();
 </script>

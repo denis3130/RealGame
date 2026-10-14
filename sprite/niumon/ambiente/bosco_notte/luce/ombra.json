@@ -1,0 +1,25 @@
+{
+ "asset_id": "env_bosconotte_ombra",
+ "nome": "ombra",
+ "cartella": "luce",
+ "file": "luce/ombra.png",
+ "frame_width": 48,
+ "frame_height": 16,
+ "category": "vfx_light",
+ "pivot": [
+  24,
+  8
+ ],
+ "billboard": false,
+ "blend": "alfa",
+ "morbido": true,
+ "frames": 1,
+ "fps": 0,
+ "loop": false,
+ "unita_per_pixel": 0.025,
+ "source": "disegnato col codice (sprite/niumon/ambiente/bosco_notte/fai.py)",
+ "version": "0.1-bosco-di-notte",
+ "status": "da approvare",
+ "format": "PNG_RGBA",
+ "background": "transparent"
+}

@@ -1,0 +1,25 @@
+{
+ "asset_id": "env_bosconotte_felce_1",
+ "nome": "felce_1",
+ "cartella": "piante",
+ "file": "piante/felce_1.png",
+ "frame_width": 30,
+ "frame_height": 20,
+ "category": "env_prop",
+ "pivot": [
+  15,
+  19
+ ],
+ "billboard": true,
+ "descrizione": "in piedi, si guarda verso la telecamera",
+ "frames": 1,
+ "fps": 0,
+ "loop": false,
+ "blend": "normale",
+ "unita_per_pixel": 0.025,
+ "source": "disegnato col codice (sprite/niumon/ambiente/bosco_notte/fai.py)",
+ "version": "0.1-bosco-di-notte",
+ "status": "da approvare",
+ "format": "PNG_RGBA",
+ "background": "transparent"
+}

@@ -1,0 +1,25 @@
+{
+ "asset_id": "env_bosconotte_raggio_di_luna",
+ "nome": "raggio_di_luna",
+ "cartella": "luce",
+ "file": "luce/raggio_di_luna.png",
+ "frame_width": 48,
+ "frame_height": 192,
+ "category": "vfx_light",
+ "pivot": [
+  24,
+  96
+ ],
+ "billboard": true,
+ "blend": "somma",
+ "morbido": true,
+ "frames": 1,
+ "fps": 0,
+ "loop": false,
+ "unita_per_pixel": 0.025,
+ "source": "disegnato col codice (sprite/niumon/ambiente/bosco_notte/fai.py)",
+ "version": "0.1-bosco-di-notte",
+ "status": "da approvare",
+ "format": "PNG_RGBA",
+ "background": "transparent"
+}
