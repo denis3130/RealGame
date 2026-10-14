@@ -56,10 +56,10 @@ const OLD={gold:900,gems:40,introSeen:1,handSeen:1,runs:4,trophies:120,items:{ar
     ok((await rows(p))[1].on&&c[0]==='dn'&&c[3]==='up'&&/Cacciatrice/.test(await p.textContent('.sceDesc h3')),'la Cacciatrice: meno salute (rosso), più velocità (blu)');
     // a locked hero: shown, but «Bloccato»; Avanti does nothing
     await p.tap('.sceRow[data-id=balestriere]',{force:true});await p.waitForTimeout(700);
-    ok(await p.isDisabled('.sceGo')&&/Bloccato/.test(await p.textContent('.sceGo'))&&/Si sblocca nella scheda Eroi per 7\.000 oro/.test(await p.textContent('.sceDesc')),'il Balestriere si vede, ma è «Bloccato» (si sblocca nella scheda Eroi per 7.000 oro)');
+    ok(await p.isDisabled('.sceGo')&&/Bloccato/.test(await p.textContent('.sceGo'))&&/7\.000 oro nella scheda Eroi/.test(await p.textContent('.sceGo')),'il Balestriere si vede, ma è «Bloccato» (7.000 oro nella scheda Eroi)');
     await E('sceGo()');ok(await E('SCE.step')===1,'un eroe bloccato non si può prendere');
     const l1=await lit(p);ok(l1>.15,`anche l'eroe bloccato si vede (${(l1*100).toFixed(0)}%)`);await shot('2_bloccato');
-    await p.tap('.sceRow[data-id=druida]',{force:true});await p.waitForTimeout(500);ok(/12\.000/.test(await p.textContent('.sceDesc')),'il Druida: 12.000 oro');await shot('2b_druida');
+    await p.tap('.sceRow[data-id=druida]',{force:true});await p.waitForTimeout(500);ok(/12\.000/.test(await p.textContent('.sceGo')),'il Druida: 12.000 oro');await shot('2b_druida');
     // a finger on the hero: it turns him; a tap makes him shoot
     await p.tap('.sceRow[data-id=cacciatrice]',{force:true});await p.waitForTimeout(500);
     const st=await p.$eval('.sceStage',e=>{const r=e.getBoundingClientRect();return{x:r.left+r.width/2,y:r.top+r.height*.7}});
@@ -83,7 +83,7 @@ const OLD={gold:900,gems:40,introSeen:1,handSeen:1,runs:4,trophies:120,items:{ar
     ok(await E("SCE.mode==='gift'&&SCE.gcur&&SCE.gcur.id==='oro'"),'il dono sta da solo sulla pietra, al posto dell\'eroe');
     await shot('4_dono');
     for(const id of ['cristalli','cassa','anello','piuma']){await p.tap(`.sceRow[data-id=${id}]`,{force:true});await p.waitForTimeout(450);await shot('4_dono_'+id)}
-    const lg=await lit(p);ok(/Rinascite/.test(await p.textContent('.sceStats'))&&lg>.04,`la piuma della fenice nella luce, con quello che dà (${(lg*100).toFixed(0)}%)`);
+    const lg=await lit(p);ok(/Rinascite/.test(await p.textContent('.sceStats'))&&lg>.2,`la piuma della fenice nella luce, con quello che dà (${(lg*100).toFixed(0)}%)`);
     await p.tap('.sceBack',{force:true});await p.waitForTimeout(400);ok(await E("SCE.step===2&&SCE.manto==='brace'&&SCE.mode==='hero'"),'«Indietro»: di nuovo il mantello, «Brace» ancora scelto, l\'eroe torna sulla pietra');
     await p.tap('.sceBack',{force:true});await p.waitForTimeout(400);ok(await E('SCE.step')===1&&(await rows(p))[1].on,'«Indietro»: gli eroi, la Cacciatrice ancora scelta');
     await p.tap('.sceGo',{force:true});await p.waitForTimeout(400);await p.tap('.sceGo',{force:true});await p.waitForTimeout(400);

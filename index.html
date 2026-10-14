@@ -16744,7 +16744,7 @@ function sceCss(){if($('sceCss'))return;const s=document.createElement('style');
 #sceScr *,#sceScr *::before,#sceScr *::after{box-sizing:border-box}
 #sceCv{position:absolute;inset:0;width:100%;height:100%;z-index:0;pointer-events:none}
 #sceScr>:not(#sceCv){position:relative;z-index:1}
-.sceTop{flex:none;text-align:center;padding:clamp(10px,2.2vh,22px) 12px 0;animation:sceIn .9s .1s ease-out backwards}
+.sceTop{flex:none;text-align:center;padding:clamp(8px,1.6vh,22px) 12px 0;animation:sceIn .9s .1s ease-out backwards}
 .sceTop small{display:block;font:500 10px/1 var(--se);letter-spacing:.34em;text-transform:uppercase;color:var(--dim)}
 .sceTop h1{margin:6px 0 0;font:700 clamp(21px,6.3vw,30px)/1.08 var(--se);letter-spacing:.05em;color:var(--gh);text-shadow:0 0 18px rgba(255,196,110,.22),0 2px 0 #000;white-space:nowrap}
 .sceRule{display:flex;align-items:center;justify-content:center;gap:8px;margin:7px auto 0;width:min(78%,300px)}
@@ -16789,7 +16789,7 @@ function sceCss(){if($('sceCss'))return;const s=document.createElement('style');
 .sceNameRow input::placeholder{color:#7d725f}
 .sceDice{flex:none;width:46px;border:0;border-left:1px solid rgba(216,180,106,.35);background:none;color:var(--g);cursor:pointer;display:flex;align-items:center;justify-content:center}
 .sceDice svg{width:22px;height:22px}.sceDice:active svg{transform:rotate(25deg) scale(.92)}
-.sceBot{flex:none;width:100%;max-width:560px;margin:0 auto;padding:0 12px clamp(10px,2vh,20px);animation:sceIn .8s .35s ease-out backwards;transition:opacity .4s}
+.sceBot{flex:none;width:100%;max-width:560px;margin:0 auto;padding:0 12px clamp(8px,1.4vh,20px);animation:sceIn .8s .35s ease-out backwards;transition:opacity .4s}
 .sceDesc{position:relative;padding:clamp(7px,1.3vh,11px) 14px clamp(8px,1.4vh,12px);border:1px solid rgba(216,180,106,.34);background:linear-gradient(rgba(16,12,9,.9),rgba(7,5,4,.94));
   box-shadow:inset 0 0 0 1px rgba(0,0,0,.7),inset 0 0 22px rgba(0,0,0,.6),0 0 26px rgba(0,0,0,.7)}
 .sceDesc::before,.sceDesc::after{content:'';position:absolute;top:-4px;width:7px;height:7px;transform:rotate(45deg);background:#0a0806;border:1px solid rgba(216,180,106,.6)}
@@ -16799,7 +16799,6 @@ function sceCss(){if($('sceCss'))return;const s=document.createElement('style');
 .sceDesc ul{margin:5px 0 0;padding:0;list-style:none;font:500 clamp(12.5px,3.6vw,14px)/1.3 var(--bo);color:#cdbfa2}
 .sceDesc li{display:flex;gap:6px;align-items:baseline}.sceDesc li::before{content:'';flex:none;width:5px;height:5px;transform:rotate(45deg) translateY(-2px);background:var(--g);opacity:.8}
 .sceDesc li b{color:var(--c,var(--gh));font-weight:500}
-.sceDesc .sceLkNote{color:#e8c37a}
 .sceSum{display:grid!important;gap:2px}
 .sceSum li{cursor:pointer;justify-content:space-between;padding:3px 0;border-bottom:1px solid rgba(216,180,106,.12)}.sceSum li::before{display:none}
 .sceSum li span{font:500 10.5px var(--se);letter-spacing:.16em;text-transform:uppercase;color:var(--dim)}
@@ -16814,6 +16813,7 @@ function sceCss(){if($('sceCss'))return;const s=document.createElement('style');
 .sceGo:not([disabled]){animation:sceGlow 2.4s ease-in-out infinite}
 .sceGo[disabled]{cursor:default;color:#a39885;border-color:rgba(216,180,106,.3);background:linear-gradient(rgba(34,29,25,.95),rgba(16,13,11,.98));box-shadow:0 0 0 1px #000}
 .sceGo[disabled] .sceLk{margin-right:7px;vertical-align:-1px}
+.sceGo small{display:block;margin-top:3px;font:500 10px/1 var(--bo);letter-spacing:.04em;text-transform:none;color:#b8a988}.sceGo[disabled]{padding-top:7px;padding-bottom:7px}
 .sceBack{display:none}#sceScr:not(.s1) .sceBack{display:block}
 .sceBand{position:absolute!important;left:0;right:0;top:50%;height:110px;margin-top:-55px;z-index:4!important;display:flex;align-items:center;justify-content:center;opacity:0;pointer-events:none;
   background:linear-gradient(rgba(0,0,0,0),rgba(0,0,0,.82) 26%,rgba(0,0,0,.82) 74%,rgba(0,0,0,0))}
@@ -16833,7 +16833,7 @@ function sceCss(){if($('sceCss'))return;const s=document.createElement('style');
 @keyframes sceSpace{from{letter-spacing:.05em}to{letter-spacing:.12em}}
 @keyframes sceShake{20%{transform:translateX(-4px)}40%{transform:translateX(4px)}60%{transform:translateX(-3px)}80%{transform:translateX(2px)}}
 .sceNo{animation:sceShake .35s}
-@media (max-width:370px){.sceSteps li:not(.on) span{display:none}.sceSteps{gap:10px}}
+@media (max-width:370px){.sceSteps li:not(.on) span{display:none}.sceSteps{gap:10px}.sceRow.m b{gap:5px}.sceDot{width:12px;height:12px}}
 @media (max-height:800px){.sceTop small{display:none}.sceTop h1{margin-top:0}}
 @media (max-height:600px){.sceSteps{display:none}.sceDesc ul li:nth-child(n+2){display:none}.sceSum li:nth-child(n+2){display:flex!important}.sceBtn{min-height:42px}}
 @media (max-width:340px){.sceCol{padding:5px 4px 6px}.sceRow{padding-left:12px;font-size:12px}.sceRow::before{left:2px}.sceRow.m b{gap:5px}.sceStats dt{font-size:9.5px}}
@@ -16896,9 +16896,9 @@ function sceHeroText(id){const h=HERO_BY[id],I=SCE_INFO[id],U=typeof ULT!=='unde
   R.classList.remove('empty');R.innerHTML='<h2>Statistiche</h2><dl>'+SCE_ROWS.map(([k,n,f,dir])=>{if(!S)return'';const v=S[k],b=B?B[k]:v,d=id==='arciere'?0:Math.sign((v-b)*dir)*(Math.abs(v-b)>1e-6?1:0);
     return `<dt>${n}</dt><dd class="${d>0?'up':d<0?'dn':''}">${f(v)}${d?`<i>${d>0?'▲':'▼'}</i>`:''}</dd>`}).join('')+'</dl>';
   const D=SCE.el.querySelector('.sceDesc');D.style.setProperty('--c',I.hex);
-  D.innerHTML=`<h3>${h.n}</h3><p>${SCE_LORE[id]||h.d}</p><ul><li><span>${h.start}</span></li>${U?`<li><span>Super: <b>${U.n}</b></span></li>`:''}
-    ${lk?`<li class="sceLkNote"><span>Si sblocca nella scheda Eroi per ${sceNum(h.price)} oro.</span></li>`:''}</ul>`;
-  const go=SCE.el.querySelector('.sceGo');go.disabled=lk;go.innerHTML=lk?`${SCE_LOCK}Bloccato`:'Avanti ›'}
+  D.innerHTML=`<h3>${h.n}</h3><p>${SCE_LORE[id]||h.d}</p><ul><li><span>${h.start}</span></li>${U?`<li><span>Super: <b>${U.n}</b></span></li>`:''}</ul>`;
+  // a locked one: the button says so, and where he is unlocked
+  const go=SCE.el.querySelector('.sceGo');go.disabled=lk;go.innerHTML=lk?`<span>${SCE_LOCK}Bloccato</span><small>${sceNum(h.price)} oro nella scheda Eroi</small>`:'Avanti ›'}
 function sceMantoText(id){const m=SCE_MANTO[id]||SCE_MANTI[0];SCE.el.querySelector('.sceStats').classList.add('empty');
   const D=SCE.el.querySelector('.sceDesc');D.style.setProperty('--c',m.hood||SCE_INFO[SCE.sel||'arciere'].hex);
   D.innerHTML=`<h3>Mantello: ${m.n}</h3><p>${m.id?m.d:`I colori di sempre ${(SCE_INFO[SCE.sel]||SCE_INFO.arciere).the.replace(/^l'/,"dell'").replace(/^la /,'della ').replace(/^il /,'del ')}.`}</p><ul><li><span>Lo cambi quando vuoi nel Profilo.</span></li></ul>`;
@@ -17211,7 +17211,7 @@ function sceEmber(rgb,burst,gift){SCE.emb.push({rgb,gift:!!gift,x:(Math.random()
 function sceSpot(){const st=SCE.el&&SCE.el.querySelector('.sceStage'),cv=$('sceCv');if(!st||!cv)return null;const a=st.getBoundingClientRect(),b=cv.getBoundingClientRect(),cx=b.left+b.width/2,A=a.bottom-3;
   const lim=[];if(SCE.step===4){const nb=SCE.el.querySelector('.sceNameBox');if(nb&&nb.offsetHeight){const r=nb.getBoundingClientRect();lim.push({dx:-1,bot:r.bottom+8})}}
   else for(const c of SCE.el.querySelectorAll('.sceCol')){if(c.classList.contains('empty')||!c.offsetHeight)continue;const r=c.getBoundingClientRect();lim.push({dx:r.right<=cx?cx-r.right:r.left>=cx?r.left-cx:-1,bot:r.bottom})}
-  const ok=k=>{const f=A-6.9*k,cy=f-26*k,R=11.5*k;for(const l of lim){if(l.dx<0){if(f-44*k<l.bot)return false}else if(l.dx<R&&cy-Math.sqrt(R*R-l.dx*l.dx)<l.bot-.3*R)return false}return true};
+  const ok=k=>{const f=A-6.9*k,cy=f-26*k,R=11.5*k;for(const l of lim){if(l.dx<0){if(f-44*k<l.bot)return false}else if(l.dx<R&&cy-Math.sqrt(R*R-l.dx*l.dx)<l.bot-.42*R)return false}return true};
   let k=Math.min((A-a.top-6)/50.9,b.width*.94/32);while(k>1.6&&!ok(k))k-=.02;k=Math.max(1.6,k);
   return{x:b.width/2,y:A-6.9*k-b.top,k,top:a.top-b.top}}
 function sceDraw(t,dt){const cv=$('sceCv');if(!cv)return;const low=LOWFX||SCE.low,dpr=Math.min(window.devicePixelRatio||1,low?1.25:2),w=cv.clientWidth,h=cv.clientHeight;if(w<4||h<4)return;
