@@ -174,6 +174,9 @@ function drawArrow(a){if(a.tr)drawTrail(a,P.fire?'255,140,60':P.ice?'130,210,255
     ctx.fillStyle='#dfe4ea';ctx.beginPath();ctx.moveTo(11,0);ctx.lineTo(3,-4.5);ctx.lineTo(3,4.5);ctx.closePath();ink(1.6);ctx.fill();ctx.stroke();ctx.fillStyle=P.pcol||'#c9cfd6';ctx.fillRect(-11,-3.5,3,7);ctx.restore();return}
   ctx.strokeStyle=INK;ctx.lineWidth=4;ctx.beginPath();ctx.moveTo(-12,0);ctx.lineTo(4,0);ctx.stroke();
   ctx.strokeStyle=shaft;ctx.lineWidth=2;ctx.beginPath();ctx.moveTo(-12,0);ctx.lineTo(4,0);ctx.stroke();
+  if(P.wk==='arco_tuono'&&!P.fire&&!P.ice){if(!LOWFX){ctx.save();ctx.globalCompositeOperation='lighter';glow('150,210,255',6,0,9,.45);ctx.restore()}
+    ctx.fillStyle='#ffd84a';ctx.beginPath();ctx.moveTo(10,0);ctx.lineTo(4,-3.8);ctx.lineTo(5,-1.2);ctx.lineTo(1.4,-2.6);ctx.lineTo(3,0);ctx.lineTo(1.4,2.6);ctx.lineTo(5,1.2);ctx.lineTo(4,3.8);ctx.closePath();ink(1.4);ctx.fill();ctx.stroke();
+    ctx.fillStyle=P.pcol||'#9fd4ff';ctx.fillRect(-13,-3,4,2);ctx.fillRect(-13,1,4,2);ctx.restore();return}
   ctx.fillStyle='#e8ecf0';ctx.beginPath();ctx.moveTo(9,0);ctx.lineTo(2,-3.5);ctx.lineTo(2,3.5);ctx.closePath();ink(1.5);ctx.fill();ctx.stroke();
   ctx.fillStyle=P.pcol||'#f6ead2';ctx.fillRect(-13,-3,4,2);ctx.fillRect(-13,1,4,2);ctx.restore()}
 function drawEproj(p){if(p.tr)drawTrail(p,TRC[p.kind]||'229,72,77',p.r*1.5);

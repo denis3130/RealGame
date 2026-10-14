@@ -16,7 +16,7 @@ nuovo (16–17), finestre e recinzioni (18–19), casse 3–5 usi (20), armi a m
 | 5–7 | 4 boss nuovi del terzo giro «su carta» | fatto, da far approvare a Denis (`docs/boss-nuovi.md`) |
 | 51 | Musiche dei boss: entrata, tema, reazione alla morte, vittoria | fatto |
 | 4 | Nemici: morte propria per famiglia (preparazione e abilità c'erano già) | fatto |
-| — | Arco del tuono, faretre, scia di ghiaccio (`nuovi-oggetti`) | da fare |
+| — | Arco del tuono, faretre, scia di ghiaccio (`nuovi-oggetti`) | fatto |
 | 10–17, 54 | Mappa zombie grande | da fare |
 | 18–23 | Finestre, recinzioni, casse, armi a muro, potenziamento, perk | da fare |
 | 55, 57 | Salvataggi in tre blocchi, collaudo | da fare |
@@ -49,4 +49,17 @@ bestie che fanno un saltello e si rovesciano a pancia in su. Niente sangue; rest
 le schegge e i pezzetti dello scoppio di prima. Con `LOWFX` lo scoppio di prima. I corpi stanno in `G.ecorpses` (non ritardano la porta)
 e si disegnano nell'ordine della stanza. La preparazione (la prima metà dell'attacco mentre mira, la stellina) e le abilità (le mosse
 legate agli stati: evoca, scatto, tuffo…) c'erano già dal 13 ottobre. Prova `node tests/mortinemici.js` → `tests/mn_morti.png`.
+
+## Arco del tuono e scia del gelo (dal ramo `nuovi-oggetti`)
+
+- **Arco del tuono** al posto dell'Arco delle spine (richiesta di Denis sul ramo `nuovi-oggetti`, mai portata): blu notte con le
+  rifiniture d'oro, «Le frecce richiamano fulmini sui nemici» (`P.light`, il fulmine che c'era già), frecce con la punta a fulmine
+  e la luce azzurra (`drawArrow`), il suo suono, l'arco 3D `thunder` in `armi3d.js` (cappucci d'oro con le scintille, zig-zag d'oro sui
+  flettenti, luce azzurra), la carta dipinta in `73`. I salvataggi vecchi passano carte e livello (`migrateItems` in `07`, anche col
+  codice di salvataggio). Il Set della Foresta ora è Arco ricurvo + Corazza di muschio (come sul ramo vecchio).
+- **Faretra**: le penne delle frecce sulla schiena prendono i colori dell'arco in mano (ricurvo verde, tuono azzurro e oro, fenice
+  arancio); con l'Arco di frassino resta tutto com'era (l'Arciere identico).
+- **Scia dell'Anello del gelo eterno** (`src/js/78-gelo.js`): camminando restano piccole lastre di ghiaccio che si crepano e si
+  sciolgono. La balestra uguale alla carta c'è già (le carte sono disegnate dai modelli 3D); la Giubba resta del suo colore.
+- Prova `node tests/tuono.js`.
 

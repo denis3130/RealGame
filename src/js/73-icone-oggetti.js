@@ -43,7 +43,7 @@ function bow3d(x,id,st,rot){if(typeof ARMI3D==='undefined')return false;const c=
 const ITART={
   arco_frassino:x=>bow3d(x,'arco',{kind:'plain',col:'#a4703d',draw:0,nock:1},.62),
   arco_ricurvo:x=>bow3d(x,'arco',{kind:'recurve',col:'#7a4a2a',draw:0,nock:1},.62),
-  arco_spine:x=>{iglow(x,'184,116,230',48,48,40,.25);bow3d(x,'arco',{kind:'thorn',col:'#4f8a34',draw:0,nock:1},.62)},
+  arco_tuono:x=>{iglow(x,'120,180,255',48,48,40,.3);bow3d(x,'arco',{kind:'thunder',col:'#2b3f6b',draw:0,nock:1},.62)},
   arco_fenice:x=>{iglow(x,'255,140,40',48,48,42,.32);bow3d(x,'arco',{kind:'phoenix',col:'#d9442e',draw:0,nock:1},.62)},
   balestra:x=>bow3d(x,'balestra',{draw:1,bolt:true},-.5),
   // the obsidian bow: black glassy wood with embers in its cracks

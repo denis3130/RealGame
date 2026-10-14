@@ -7,7 +7,7 @@ const ITEMS=[
   {id:'arco_frassino',slot:'arma',rar:0,n:'Arco di frassino',base:{atk:4},per:{atk:2},tint:{a:'#a4703d',b:'#d9b27a'}},
   {id:'arco_ricurvo',slot:'arma',rar:1,n:'Arco ricurvo',base:{atk:6,aspd:.05},per:{atk:2.5,aspd:.02},tint:{a:'#7a4a2a',b:'#6cc24a'}},
   {id:'balestra',slot:'arma',rar:2,n:'Balestra leggera',base:{atk:10},per:{atk:3.5},tint:{a:'#6b4a2a',b:'#4d97ff'},perk:'Le frecce trapassano un nemico in più',perkf:p=>p.pierce++},
-  {id:'arco_spine',slot:'arma',rar:3,n:'Arco delle spine',base:{atk:9,aspd:.1},per:{atk:3,aspd:.02},tint:{a:'#4f8a34',b:'#b874e6'},perk:'Inizi con le frecce diagonali',perkf:p=>p.diag++},
+  {id:'arco_tuono',slot:'arma',rar:3,n:'Arco del tuono',base:{atk:9,aspd:.1},per:{atk:3,aspd:.02},tint:{a:'#2b3f6b',b:'#ffd84a'},perk:'Le frecce richiamano fulmini sui nemici',perkf:p=>p.light=(p.light||0)+1},
   {id:'arco_fenice',slot:'arma',rar:4,n:'Arco della fenice',base:{atk:14,aspd:.1},per:{atk:4,aspd:.03},tint:{a:'#d9442e',b:'#ffb020'},perk:'Le frecce sono infuocate',perkf:p=>p.fire=true},
   {id:'giubba',slot:'armatura',rar:0,n:'Giubba di cuoio',base:{hp:20},per:{hp:8},tint:{a:'#2fb3a6',b:'#23877d'}},
   {id:'cotta',slot:'armatura',rar:1,n:'Cotta di maglia',base:{hp:35},per:{hp:12},tint:{a:'#8a97a2',b:'#5d6872'}},
@@ -27,7 +27,7 @@ const WEAP={
   arco_frassino:{bow:'plain',proj:'arrow',spd:1,d:'Frecce di legno classiche, affidabili.'},
   arco_ricurvo:{bow:'recurve',proj:'arrow',spd:1.15,fl:'#6cc24a',trail:'190,240,160',d:'Punte ricurve: le frecce volano più veloci.'},
   balestra:{held:'xbow',proj:'bolt',spd:1.35,kb:2.3,trail:'205,218,235',d:'Dardi d\'acciaio rapidissimi che spingono via i nemici.'},
-  arco_spine:{bow:'thorn',proj:'thorn',spd:.95,trail:'184,116,230',d:'Scaglia spine velenose che lasciano spore viola.'},
+  arco_tuono:{bow:'thunder',proj:'arrow',spd:1.2,fl:'#9fd4ff',trail:'150,210,255',d:'Frecce cariche di tuono: ogni tanto un fulmine colpisce i nemici.'},
   arco_fenice:{bow:'phoenix',proj:'flame',spd:1.1,trail:'255,140,60',d:'Frecce di fuoco che lasciano una scia di braci.'}};
 const MAXLV=10,CARDS=[2,4,6,10,15,20,30,40,50],COST=[40,90,160,260,400,600,900,1300,1900];
 const needCards=l=>CARDS[l-1]||0,upCost=(it,l)=>Math.round((COST[l-1]||0)*(1+it.rar*.4));
@@ -42,7 +42,9 @@ const SAVE_KEY='cripta_save_v1';
 function defSave(){return{gold:60,items:{arco_frassino:{lvl:1,cards:0},giubba:{lvl:1,cards:0}},eq:{arma:'arco_frassino',armatura:'giubba',anello:null,amuleto:null},
   slots:[{type:'legno',state:'ready'},null,null,null],best:{room:0,gold:0},runs:0}}
 function loadSave(){try{const s=JSON.parse(localStorage.getItem(SAVE_KEY));if(s&&s.items)return Object.assign(defSave(),s)}catch(e){}return defSave()}
-let SAVE=loadSave();for(const k of ['gold','gems','runs'])if(typeof SAVE[k]!=='number'||!isFinite(SAVE[k]))SAVE[k]=k==='gold'?(defSave().gold):0;
+// items renamed between versions: old saves keep their cards and their level (the Arco delle spine became the Arco del tuono)
+function migrateItems(s){const R={arco_spine:'arco_tuono'};if(!s||!s.items)return s;for(const[o,n] of Object.entries(R)){if(s.items[o]){if(!s.items[n])s.items[n]=s.items[o];else{s.items[n].cards=(s.items[n].cards||0)+(s.items[o].cards||0);s.items[n].lvl=Math.max(s.items[n].lvl||1,s.items[o].lvl||1)}delete s.items[o]}if(s.eq&&s.eq.arma===o)s.eq.arma=n}return s}
+let SAVE=migrateItems(loadSave());for(const k of ['gold','gems','runs'])if(typeof SAVE[k]!=='number'||!isFinite(SAVE[k]))SAVE[k]=k==='gold'?(defSave().gold):0;
 
 // ===================== ARENAS & TROPHIES =====================
 // Edit freely: t = trophies needed, ch = which chapter's rooms/bosses it uses, diff = enemy strength, tint = colour shift of the camp scene.

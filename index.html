@@ -2129,9 +2129,9 @@ function sfx(k,arg,x){
   try{switch(k){
     case 'bow':{if(arg==='balestra'||arg==='bolt'){// crossbow: a hard latch clack and a fast hiss, no ringing string
         fThump(t,170,60,.07,.2);fModal(t+.004,VR(1900,.05),[1,2.6,4.1],[.05,.035,.02],.05,.12);fNoise(t,.04,'highpass',3200,1,.1,{att:.001});whoosh(t+.01,.11,3600,1400,.11);break}
-      const f=VR(arg==='arco_ricurvo'?285:arg==='arco_spine'?205:arg==='leaf'?170:240,.06);twang(t,f,.17);whoosh(t+.015,arg==='arco_ricurvo'?.12:.16,2400,700,.12);
+      const f=VR(arg==='arco_ricurvo'?285:arg==='arco_tuono'?205:arg==='leaf'?170:240,.06);twang(t,f,.17);whoosh(t+.015,arg==='arco_ricurvo'?.12:.16,2400,700,.12);
       if(arg==='arco_fenice'){fNoise(t+.02,.24,'bandpass',800,.8,.08,{f2:380,att:.02});fNoise(t+.03,.18,'highpass',4500,1,.025,{att:.01})}
-      if(arg==='arco_spine')fModal(t+.01,VR(430,.05),[1,2.3],[.09,.05],.035,.1);break}
+      if(arg==='arco_tuono')fModal(t+.01,VR(430,.05),[1,2.3],[.09,.05],.035,.1);break}
     case 'hit':{const crit=arg&&arg.c,m=mat(arg&&arg.t),v=crit?1.25:.85;
       fNoise(t,.018,'bandpass',VR(3200,.12),2,.22*v);// arrowhead biting in
       (M[m]||M.flesh)(t,v);
@@ -2393,7 +2393,7 @@ const ITEMS=[
   {id:'arco_frassino',slot:'arma',rar:0,n:'Arco di frassino',base:{atk:4},per:{atk:2},tint:{a:'#a4703d',b:'#d9b27a'}},
   {id:'arco_ricurvo',slot:'arma',rar:1,n:'Arco ricurvo',base:{atk:6,aspd:.05},per:{atk:2.5,aspd:.02},tint:{a:'#7a4a2a',b:'#6cc24a'}},
   {id:'balestra',slot:'arma',rar:2,n:'Balestra leggera',base:{atk:10},per:{atk:3.5},tint:{a:'#6b4a2a',b:'#4d97ff'},perk:'Le frecce trapassano un nemico in più',perkf:p=>p.pierce++},
-  {id:'arco_spine',slot:'arma',rar:3,n:'Arco delle spine',base:{atk:9,aspd:.1},per:{atk:3,aspd:.02},tint:{a:'#4f8a34',b:'#b874e6'},perk:'Inizi con le frecce diagonali',perkf:p=>p.diag++},
+  {id:'arco_tuono',slot:'arma',rar:3,n:'Arco del tuono',base:{atk:9,aspd:.1},per:{atk:3,aspd:.02},tint:{a:'#2b3f6b',b:'#ffd84a'},perk:'Le frecce richiamano fulmini sui nemici',perkf:p=>p.light=(p.light||0)+1},
   {id:'arco_fenice',slot:'arma',rar:4,n:'Arco della fenice',base:{atk:14,aspd:.1},per:{atk:4,aspd:.03},tint:{a:'#d9442e',b:'#ffb020'},perk:'Le frecce sono infuocate',perkf:p=>p.fire=true},
   {id:'giubba',slot:'armatura',rar:0,n:'Giubba di cuoio',base:{hp:20},per:{hp:8},tint:{a:'#2fb3a6',b:'#23877d'}},
   {id:'cotta',slot:'armatura',rar:1,n:'Cotta di maglia',base:{hp:35},per:{hp:12},tint:{a:'#8a97a2',b:'#5d6872'}},
@@ -2413,7 +2413,7 @@ const WEAP={
   arco_frassino:{bow:'plain',proj:'arrow',spd:1,d:'Frecce di legno classiche, affidabili.'},
   arco_ricurvo:{bow:'recurve',proj:'arrow',spd:1.15,fl:'#6cc24a',trail:'190,240,160',d:'Punte ricurve: le frecce volano più veloci.'},
   balestra:{held:'xbow',proj:'bolt',spd:1.35,kb:2.3,trail:'205,218,235',d:'Dardi d\'acciaio rapidissimi che spingono via i nemici.'},
-  arco_spine:{bow:'thorn',proj:'thorn',spd:.95,trail:'184,116,230',d:'Scaglia spine velenose che lasciano spore viola.'},
+  arco_tuono:{bow:'thunder',proj:'arrow',spd:1.2,fl:'#9fd4ff',trail:'150,210,255',d:'Frecce cariche di tuono: ogni tanto un fulmine colpisce i nemici.'},
   arco_fenice:{bow:'phoenix',proj:'flame',spd:1.1,trail:'255,140,60',d:'Frecce di fuoco che lasciano una scia di braci.'}};
 const MAXLV=10,CARDS=[2,4,6,10,15,20,30,40,50],COST=[40,90,160,260,400,600,900,1300,1900];
 const needCards=l=>CARDS[l-1]||0,upCost=(it,l)=>Math.round((COST[l-1]||0)*(1+it.rar*.4));
@@ -2428,7 +2428,9 @@ const SAVE_KEY='cripta_save_v1';
 function defSave(){return{gold:60,items:{arco_frassino:{lvl:1,cards:0},giubba:{lvl:1,cards:0}},eq:{arma:'arco_frassino',armatura:'giubba',anello:null,amuleto:null},
   slots:[{type:'legno',state:'ready'},null,null,null],best:{room:0,gold:0},runs:0}}
 function loadSave(){try{const s=JSON.parse(localStorage.getItem(SAVE_KEY));if(s&&s.items)return Object.assign(defSave(),s)}catch(e){}return defSave()}
-let SAVE=loadSave();for(const k of ['gold','gems','runs'])if(typeof SAVE[k]!=='number'||!isFinite(SAVE[k]))SAVE[k]=k==='gold'?(defSave().gold):0;
+// items renamed between versions: old saves keep their cards and their level (the Arco delle spine became the Arco del tuono)
+function migrateItems(s){const R={arco_spine:'arco_tuono'};if(!s||!s.items)return s;for(const[o,n] of Object.entries(R)){if(s.items[o]){if(!s.items[n])s.items[n]=s.items[o];else{s.items[n].cards=(s.items[n].cards||0)+(s.items[o].cards||0);s.items[n].lvl=Math.max(s.items[n].lvl||1,s.items[o].lvl||1)}delete s.items[o]}if(s.eq&&s.eq.arma===o)s.eq.arma=n}return s}
+let SAVE=migrateItems(loadSave());for(const k of ['gold','gems','runs'])if(typeof SAVE[k]!=='number'||!isFinite(SAVE[k]))SAVE[k]=k==='gold'?(defSave().gold):0;
 
 // ===================== ARENAS & TROPHIES =====================
 // Edit freely: t = trophies needed, ch = which chapter's rooms/bosses it uses, diff = enemy strength, tint = colour shift of the camp scene.
@@ -4374,6 +4376,9 @@ function drawArrow(a){if(a.tr)drawTrail(a,P.fire?'255,140,60':P.ice?'130,210,255
     ctx.fillStyle='#dfe4ea';ctx.beginPath();ctx.moveTo(11,0);ctx.lineTo(3,-4.5);ctx.lineTo(3,4.5);ctx.closePath();ink(1.6);ctx.fill();ctx.stroke();ctx.fillStyle=P.pcol||'#c9cfd6';ctx.fillRect(-11,-3.5,3,7);ctx.restore();return}
   ctx.strokeStyle=INK;ctx.lineWidth=4;ctx.beginPath();ctx.moveTo(-12,0);ctx.lineTo(4,0);ctx.stroke();
   ctx.strokeStyle=shaft;ctx.lineWidth=2;ctx.beginPath();ctx.moveTo(-12,0);ctx.lineTo(4,0);ctx.stroke();
+  if(P.wk==='arco_tuono'&&!P.fire&&!P.ice){if(!LOWFX){ctx.save();ctx.globalCompositeOperation='lighter';glow('150,210,255',6,0,9,.45);ctx.restore()}
+    ctx.fillStyle='#ffd84a';ctx.beginPath();ctx.moveTo(10,0);ctx.lineTo(4,-3.8);ctx.lineTo(5,-1.2);ctx.lineTo(1.4,-2.6);ctx.lineTo(3,0);ctx.lineTo(1.4,2.6);ctx.lineTo(5,1.2);ctx.lineTo(4,3.8);ctx.closePath();ink(1.4);ctx.fill();ctx.stroke();
+    ctx.fillStyle=P.pcol||'#9fd4ff';ctx.fillRect(-13,-3,4,2);ctx.fillRect(-13,1,4,2);ctx.restore();return}
   ctx.fillStyle='#e8ecf0';ctx.beginPath();ctx.moveTo(9,0);ctx.lineTo(2,-3.5);ctx.lineTo(2,3.5);ctx.closePath();ink(1.5);ctx.fill();ctx.stroke();
   ctx.fillStyle=P.pcol||'#f6ead2';ctx.fillRect(-13,-3,4,2);ctx.fillRect(-13,1,4,2);ctx.restore()}
 function drawEproj(p){if(p.tr)drawTrail(p,TRC[p.kind]||'229,72,77',p.r*1.5);
@@ -6010,7 +6015,7 @@ ITEMS.push(
   {id:'corazza_lava',slot:'armatura',rar:3,n:'Corazza di lava',base:{hp:50,atk:3},per:{hp:15,atk:1},tint:{a:'#6a2a1e',b:'#ff7a2e'},perk:'Inizi con le frecce laterali',perkf:p=>p.side=1});
 for(const it of ITEMS)ITEM[it.id]=it;
 const SETS=[
-  {id:'foresta',n:'Set della Foresta',items:['arco_spine','corazza_muschio'],d:'+15% salute e rigenerazione raddoppiata',f:p=>{const a=Math.round(p.maxhp*.15);p.maxhp+=a;p.hp+=a;p.regen=(p.regen||0)*2+.2}},
+  {id:'foresta',n:'Set della Foresta',items:['arco_ricurvo','corazza_muschio'],d:'+15% salute e rigenerazione raddoppiata',f:p=>{const a=Math.round(p.maxhp*.15);p.maxhp+=a;p.hp+=a;p.regen=(p.regen||0)*2+.2}},
   {id:'ombra',n:"Set dell'Ombra",items:['mantello_ombra','anello_falco'],d:'+12% critico e scatto più rapido del 15%',f:p=>{p.crit+=.12;p.dashMax*=.85}},
   {id:'drago',n:'Set del Drago',items:['arco_fenice','cuore_drago'],d:'+25% attacco e la rinascita ti cura del tutto',f:p=>{p.atk*=1.25;p.reviveFull=true}},
   {id:'viandante',n:'Set del Viandante',items:['arco_ricurvo','amuleto_luna'],d:'+25% oro e +10% velocità',f:p=>{p.goldMul+=.25;p.spd*=1.1}},
@@ -10756,13 +10761,18 @@ const M={
       tg=t=>nrm([2*(1-t)*(ctl[0]-top[0])+2*t*(bot[0]-ctl[0]),2*(1-t)*(ctl[1]-top[1])+2*t*(bot[1]-ctl[1]),0]);
     const N=17,pts=[],ws=[];for(let i=0;i<N;i++){const t=i/(N-1);pts.push(at(t));ws.push(1.4+1.9*Math.pow(Math.sin(t*Math.PI),.7))}
     if(kind==='phoenix')K.fx([0,0,0],q=>shine('255,130,40',q[0],q[1],18*K.s,.3+.08*Math.sin(G.t*9)),-6);
+    if(kind==='thunder')K.fx([0,0,0],q=>shine('110,170,255',q[0],q[1],17*K.s,.22+.07*Math.sin(G.t*11)),-6);
     K.tube(pts,ws,T);
     // the grip: a wrap round the middle (leather; green for the recurve, dark green for the thorn bow, gold for the phoenix)
-    const gc=kind==='recurve'?'#6cc24a':kind==='thorn'?'#2f5a22':kind==='phoenix'?'#ffb020':'#5a3a22',wrap=[];for(let i=0;i<=6;i++)wrap.push(at(.36+i/6*.28));
+    const gc=kind==='recurve'?'#6cc24a':kind==='thorn'?'#2f5a22':kind==='phoenix'?'#ffb020':kind==='thunder'?'#d9a520':'#5a3a22',wrap=[];for(let i=0;i<=6;i++)wrap.push(at(.36+i/6*.28));
     K.tube(wrap,wrap.map(_=>3.7),tones(gc),{db:.04});
-    if(kind==='recurve'||kind==='phoenix')for(const t of[.355,.645]){const c=at(t),d=tg(t);K.cyl(sub(c,mul(d,.38)),add(c,mul(d,.38)),2.2,'ottone',{db:.06})}
+    if(kind==='recurve'||kind==='phoenix'||kind==='thunder')for(const t of[.355,.645]){const c=at(t),d=tg(t);K.cyl(sub(c,mul(d,.38)),add(c,mul(d,.38)),2.2,'ottone',{db:.06})}
     if(kind==='plain'||kind==='thorn')for(const t of[0,1]){const c=at(t),d=tg(t);K.cyl(c,add(c,mul(d,t?1:-1)),.9,'cera',{r2:.55,db:.03})}
     if(kind==='recurve')for(const sg of[1,-1]){const h=qpts([-bk,sg*L,0],[-bk-.8,sg*(L+3.4),0],[-bk+3.4,sg*(L+4.4),0],6);K.tube(h,[1.4,1.3,1.25,1.15,1.05,.95],T);K.sph(h[5],.62,'ottone',{db:.02})}
+    // the thunder bow: golden caps on the tips with sparks that flicker, a golden zigzag on the belly of each limb
+    if(kind==='thunder'){for(const t of[0,1]){const c=at(t),d=tg(t);K.cyl(c,add(c,mul(d,t?1.2:-1.2)),1.05,'ottone',{r2:.5,db:.03});
+        K.fx(c,q=>{if(LOWFX)return;const k=Math.floor(G.t*12+t*3)%5;if(k<2){const s=t?1:-1;ctx.strokeStyle='#e8f6ff';ctx.lineWidth=1;ctx.lineCap='round';ctx.beginPath();ctx.moveTo(q[0],q[1]);ctx.lineTo(q[0]+2.4,q[1]+s*2.4);ctx.lineTo(q[0]+1,q[1]+s*3.4);ctx.lineTo(q[0]+3.4,q[1]+s*6);ctx.stroke()}},.5)}
+      for(const t of[.2,.8])K.fx(at(t),q=>{ctx.strokeStyle=INK;ctx.lineWidth=2.2;ctx.lineJoin='round';const z=()=>{ctx.beginPath();ctx.moveTo(q[0]-2.4,q[1]-1.6);ctx.lineTo(q[0]-.6,q[1]+.4);ctx.lineTo(q[0]+.6,q[1]-.8);ctx.lineTo(q[0]+2.4,q[1]+1.4)};z();ctx.stroke();ctx.strokeStyle='#ffd84a';ctx.lineWidth=1;z();ctx.stroke()},.3)}
     if(kind==='thorn'){for(const t of[.13,.27,.73,.87]){const c=at(t),d=tg(t),n=[-d[1],d[0],0];K.cyl(add(c,mul(n,.5)),add(c,mul(n,3.3)),.9,['#4a2766','#9a5ad0','#d6b0f6'],{r2:.06,db:.02})}
       K.fx(add(top,[-.4,1.2,0]),q=>{ink(1);for(let i=0;i<5;i++){const a=i*TAU/5+G.t*.6;ctx.fillStyle='#b874e6';ball([q[0]+Math.cos(a)*2,q[1]+Math.sin(a)*2],1.45);ctx.fill();ctx.stroke()}
         ctx.fillStyle='#ffe28a';ball(q,1.1);ctx.fill()},.4)}
@@ -10822,7 +10832,7 @@ const dk=(c,k)=>mix(c,'#0d1418',k),lt=(c,k)=>mix(c,'#ffffff',k);
 // the armours of the game: colours of the tunic (a) and of the hood (b), as in ITEMS[].tint; the bows: colour and shape
 const VESTITI={};// the outfits, filled in by sprite/eroe3d/vestiti3d.js
 const ARM={giubba:['#2fb3a6','#23877d'],cotta:['#8a97a2','#5d6872'],mantello_ombra:['#5a4682','#3a2c58'],corazza_muschio:['#5f9e3c','#3f7a2a']};
-const BOWS={arco_frassino:['#a4703d',null],arco_ricurvo:['#7a4a2a','recurve'],arco_spine:['#4f8a34','thorn'],arco_fenice:['#d9442e','phoenix'],balestra:['#6b4a2a','xbow']};
+const BOWS={arco_frassino:['#a4703d',null],arco_ricurvo:['#7a4a2a','recurve'],arco_tuono:['#2b3f6b','thunder'],arco_spine:['#4f8a34','thorn'],arco_fenice:['#d9442e','phoenix'],balestra:['#6b4a2a','xbow']};
 
 // ------------------------------------------------------------------ small helpers
 const rotY=(v,a)=>{const c=Math.cos(a),s=Math.sin(a);return[v[0]*c+v[2]*s,v[1],-v[0]*s+v[2]*c]};
@@ -11086,8 +11096,9 @@ function quiverTube(V0,X){const{P}=V0,b3=X.T(QB),t3=X.T(QT),ax=nrm(sub(t3,b3)),B
   // the open mouth of the tube where it faces up toward us
   ctx.fillStyle='#2a1a10';ink(1.4);const m=P(add(t3,mul(ax,.4)));ctx.beginPath();ctx.ellipse(m[0],m[1],r*.92,r*.42*KR()+.5,Math.atan2(dy,dx)+Math.PI/2,0,TAU);ctx.fill();ctx.stroke();
   rim(Bq,r,Tq,r,.24)}
-function quiverArrows(V0,X,jig){const{P}=V0,b3=X.T(QB),t3=X.T(QT),ax=nrm(sub(t3,b3)),sideV=nrm(cross(ax,[0,0,1])),mouth=add(t3,mul(ax,.4));
-  const out=nrm(add(ax,[0,.12,0]));for(const[o,h,c] of[[-1.5,4.2,HC.flW],[.2,5.4,HC.fl],[1.6,4,HC.flW]]){const a=add(mouth,mul(sideV,o)),tip=add(add(a,mul(out,h)),[0,0,jig*(o+2)*.15]),A=P(a),Tp=P(tip);
+const QFL={arco_ricurvo:['#6cc24a','#b8e890'],arco_tuono:['#9fd4ff','#ffd84a'],arco_fenice:['#ff7a2a','#ffd86b']};
+function quiverArrows(V0,X,jig,wid){const{P}=V0,b3=X.T(QB),t3=X.T(QT),ax=nrm(sub(t3,b3)),sideV=nrm(cross(ax,[0,0,1])),mouth=add(t3,mul(ax,.4)),QF=QFL[wid];
+  const out=nrm(add(ax,[0,.12,0]));for(const[o,h,c] of[[-1.5,4.2,QF?QF[1]:HC.flW],[.2,5.4,QF?QF[0]:HC.fl],[1.6,4,QF?QF[1]:HC.flW]]){const a=add(mouth,mul(sideV,o)),tip=add(add(a,mul(out,h)),[0,0,jig*(o+2)*.15]),A=P(a),Tp=P(tip);
     ctx.lineCap='round';ctx.strokeStyle=INK;ctx.lineWidth=2.4;seg(A,Tp);ctx.stroke();ctx.strokeStyle='#c9a26a';ctx.lineWidth=1;ctx.stroke();
     const dx=Tp[0]-A[0],dy=Tp[1]-A[1],l=Math.hypot(dx,dy)||1,u=[dx/l,dy/l],n=[-u[1],u[0]];ctx.fillStyle=c;ink(1.2);ctx.beginPath();ctx.moveTo(Tp[0]+u[0]*1.2,Tp[1]+u[1]*1.2);ctx.lineTo(Tp[0]-u[0]*3.8+n[0]*2.3,Tp[1]-u[1]*3.8+n[1]*2.3);ctx.lineTo(Tp[0]-u[0]*2.6,Tp[1]-u[1]*2.6);ctx.lineTo(Tp[0]-u[0]*3.8-n[0]*2.3,Tp[1]-u[1]*3.8-n[1]*2.3);ctx.closePath();ctx.fill();ctx.stroke()}}
 
@@ -11404,7 +11415,7 @@ function arciere0(x,y,face,anim,p,sc,o){sc=sc||1;o=o||{};const S0=o.style||{},ar
     ctx.restore();rimPoly(hp,.32);
     if(A.flash>0){ctx.save();ctx.globalAlpha=A.flash*.3;poly(hp);ctx.fillStyle='#ffffff';ctx.fill();ctx.restore()}}});
   // the quiver on the back (the balestriere keeps his bolts in it too)
-  if(S0.quiver!==false&&!S0.gun&&wid!=='bastone'&&!NOQ[wid]){parts.push({d:D(X.T([-11,0,ZB+6])),f:()=>quiverTube(V0,X)});parts.push({d:D(X.T(QT)),f:()=>quiverArrows(V0,X,A.jig)})}
+  if(S0.quiver!==false&&!S0.gun&&wid!=='bastone'&&!NOQ[wid]){parts.push({d:D(X.T([-11,0,ZB+6])),f:()=>quiverTube(V0,X)});parts.push({d:D(X.T(QT)),f:()=>quiverArrows(V0,X,A.jig,wid)})}
   if(OF&&OF.parts)OF.parts({V0,X,P,F,D,S,A,anim,p,face,ZB,surf,surfLine,Hc,hDep,dT},parts);
   // the skeleton's round shield, strapped on the left side in front of the body (style.shield; style.shDmg 0..1 cracks it as it wears out)
   if(S0.shield){const c3=X.T([7.6,-9.6,10.4]),n3=nrm(X.Rd([.78,-.62,.05]));parts.push({d:D(X.T([9,-10,10])),f:()=>shield(V0,c3,n3,9.2,S0)})}
@@ -19332,7 +19343,7 @@ function bow3d(x,id,st,rot){if(typeof ARMI3D==='undefined')return false;const c=
 const ITART={
   arco_frassino:x=>bow3d(x,'arco',{kind:'plain',col:'#a4703d',draw:0,nock:1},.62),
   arco_ricurvo:x=>bow3d(x,'arco',{kind:'recurve',col:'#7a4a2a',draw:0,nock:1},.62),
-  arco_spine:x=>{iglow(x,'184,116,230',48,48,40,.25);bow3d(x,'arco',{kind:'thorn',col:'#4f8a34',draw:0,nock:1},.62)},
+  arco_tuono:x=>{iglow(x,'120,180,255',48,48,40,.3);bow3d(x,'arco',{kind:'thunder',col:'#2b3f6b',draw:0,nock:1},.62)},
   arco_fenice:x=>{iglow(x,'255,140,40',48,48,42,.32);bow3d(x,'arco',{kind:'phoenix',col:'#d9442e',draw:0,nock:1},.62)},
   balestra:x=>bow3d(x,'balestra',{draw:1,bolt:true},-.5),
   // the obsidian bow: black glassy wood with embers in its cracks
@@ -19963,6 +19974,23 @@ function drawECorpse(c){const k=Math.min(1,c.t/c.dur),x=c.x,y=c.y+8,ez2=v=>EZ(Ma
 {const _dc=drawCorpse;drawCorpse=function(c){if(c.ec){try{drawECorpse(c)}catch(er){}return}return _dc.apply(this,arguments)}}
 // a new room: the bodies of the room before go
 {const _b=buildRoom;buildRoom=function(){const L=G&&G.ecorpses;if(L){for(const c of L)ESN.pool.push(c.cv);L.length=0}return _b.apply(this,arguments)}}
+// =====================================================================
+// LA SCIA DELL'ANELLO DEL GELO ETERNO (dal ramo nuovi-oggetti, rimasta a metà): chi porta l'anello lascia camminando piccole lastre di
+// ghiaccio a terra, un passo a destra e uno a sinistra; si crepano, poi si sciolgono in acqua e spariscono. Solo estetica (le frecce
+// che rallentano restano l'effetto dell'anello). Con LOWFX meno lastre e niente crepe. Insieme all'Arco del tuono (07, 19, armi3d.js,
+// 73), che ha preso il posto dell'Arco delle spine (i salvataggi vecchi passano carte e livello: migrateItems).
+// =====================================================================
+function frostTick(dt){const F=G.frost||(G.frost=[]);for(let i=F.length-1;i>=0;i--){F[i].t-=dt;if(F[i].t<=0)F.splice(i,1)}
+  if(!P||!P.style||P.style.ring!=='anello_gelo'||!P.moving||G.state==='dead')return;G.frostT=(G.frostT||0)-dt;
+  if(G.frostT<=0){G.frostT=LOWFX?.16:.09;const st=(G.frostS=(G.frostS||0)+1)%2?1:-1;F.push({x:P.x+Math.sin(P.face)*st*4+rand(-1.5,1.5),y:P.y+7+Math.cos(P.face)*st*-2,r:rand(4.5,6.5),t:1.7,max:1.7,rot:rand(0,TAU)});if(F.length>40)F.shift()}}
+function drawFrostTrail(){const F=G.frost;if(!F||!F.length)return;ctx.save();for(const f of F){const k=f.t/f.max,melt=k<.45?k/.45:1,r=f.r*(.55+.45*melt);
+  ctx.fillStyle=k<.45?`rgba(150,200,235,${.32*melt})`:`rgba(205,238,255,${.42*Math.min(1,(1-k)*8)})`;ell(f.x,f.y,r,r*.5,0);ctx.fill();
+  if(k>=.45&&!LOWFX){ctx.strokeStyle=`rgba(255,255,255,${.55*k})`;ctx.lineWidth=.8;ctx.beginPath();for(let i=0;i<3;i++){const a=f.rot+i*2.1;ctx.moveTo(f.x,f.y);ctx.lineTo(f.x+Math.cos(a)*r*.8,f.y+Math.sin(a)*r*.4)}ctx.stroke();ctx.fillStyle=`rgba(255,255,255,${.6*k})`;circ(f.x-r*.35,f.y-r*.12,.9);ctx.fill()}}
+  ctx.restore()}
+{const _uf=update;update=function(dt){_uf(dt);if(G&&started&&!INTRO.on)frostTick(dt)}}
+// on the floor, under the shadows and everybody (just before the back wall is drawn)
+{const _wb=drawWallBack;drawWallBack=function(){try{drawFrostTrail()}catch(e){}return _wb.apply(this,arguments)}}
+{const _b=buildRoom;buildRoom=function(){if(G)G.frost=[];return _b.apply(this,arguments)}}
 })();
 };
 </script>

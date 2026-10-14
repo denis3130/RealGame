@@ -227,9 +227,9 @@ function sfx(k,arg,x){
   try{switch(k){
     case 'bow':{if(arg==='balestra'||arg==='bolt'){// crossbow: a hard latch clack and a fast hiss, no ringing string
         fThump(t,170,60,.07,.2);fModal(t+.004,VR(1900,.05),[1,2.6,4.1],[.05,.035,.02],.05,.12);fNoise(t,.04,'highpass',3200,1,.1,{att:.001});whoosh(t+.01,.11,3600,1400,.11);break}
-      const f=VR(arg==='arco_ricurvo'?285:arg==='arco_spine'?205:arg==='leaf'?170:240,.06);twang(t,f,.17);whoosh(t+.015,arg==='arco_ricurvo'?.12:.16,2400,700,.12);
+      const f=VR(arg==='arco_ricurvo'?285:arg==='arco_tuono'?205:arg==='leaf'?170:240,.06);twang(t,f,.17);whoosh(t+.015,arg==='arco_ricurvo'?.12:.16,2400,700,.12);
       if(arg==='arco_fenice'){fNoise(t+.02,.24,'bandpass',800,.8,.08,{f2:380,att:.02});fNoise(t+.03,.18,'highpass',4500,1,.025,{att:.01})}
-      if(arg==='arco_spine')fModal(t+.01,VR(430,.05),[1,2.3],[.09,.05],.035,.1);break}
+      if(arg==='arco_tuono')fModal(t+.01,VR(430,.05),[1,2.3],[.09,.05],.035,.1);break}
     case 'hit':{const crit=arg&&arg.c,m=mat(arg&&arg.t),v=crit?1.25:.85;
       fNoise(t,.018,'bandpass',VR(3200,.12),2,.22*v);// arrowhead biting in
       (M[m]||M.flesh)(t,v);

@@ -386,13 +386,18 @@ const M={
       tg=t=>nrm([2*(1-t)*(ctl[0]-top[0])+2*t*(bot[0]-ctl[0]),2*(1-t)*(ctl[1]-top[1])+2*t*(bot[1]-ctl[1]),0]);
     const N=17,pts=[],ws=[];for(let i=0;i<N;i++){const t=i/(N-1);pts.push(at(t));ws.push(1.4+1.9*Math.pow(Math.sin(t*Math.PI),.7))}
     if(kind==='phoenix')K.fx([0,0,0],q=>shine('255,130,40',q[0],q[1],18*K.s,.3+.08*Math.sin(G.t*9)),-6);
+    if(kind==='thunder')K.fx([0,0,0],q=>shine('110,170,255',q[0],q[1],17*K.s,.22+.07*Math.sin(G.t*11)),-6);
     K.tube(pts,ws,T);
     // the grip: a wrap round the middle (leather; green for the recurve, dark green for the thorn bow, gold for the phoenix)
-    const gc=kind==='recurve'?'#6cc24a':kind==='thorn'?'#2f5a22':kind==='phoenix'?'#ffb020':'#5a3a22',wrap=[];for(let i=0;i<=6;i++)wrap.push(at(.36+i/6*.28));
+    const gc=kind==='recurve'?'#6cc24a':kind==='thorn'?'#2f5a22':kind==='phoenix'?'#ffb020':kind==='thunder'?'#d9a520':'#5a3a22',wrap=[];for(let i=0;i<=6;i++)wrap.push(at(.36+i/6*.28));
     K.tube(wrap,wrap.map(_=>3.7),tones(gc),{db:.04});
-    if(kind==='recurve'||kind==='phoenix')for(const t of[.355,.645]){const c=at(t),d=tg(t);K.cyl(sub(c,mul(d,.38)),add(c,mul(d,.38)),2.2,'ottone',{db:.06})}
+    if(kind==='recurve'||kind==='phoenix'||kind==='thunder')for(const t of[.355,.645]){const c=at(t),d=tg(t);K.cyl(sub(c,mul(d,.38)),add(c,mul(d,.38)),2.2,'ottone',{db:.06})}
     if(kind==='plain'||kind==='thorn')for(const t of[0,1]){const c=at(t),d=tg(t);K.cyl(c,add(c,mul(d,t?1:-1)),.9,'cera',{r2:.55,db:.03})}
     if(kind==='recurve')for(const sg of[1,-1]){const h=qpts([-bk,sg*L,0],[-bk-.8,sg*(L+3.4),0],[-bk+3.4,sg*(L+4.4),0],6);K.tube(h,[1.4,1.3,1.25,1.15,1.05,.95],T);K.sph(h[5],.62,'ottone',{db:.02})}
+    // the thunder bow: golden caps on the tips with sparks that flicker, a golden zigzag on the belly of each limb
+    if(kind==='thunder'){for(const t of[0,1]){const c=at(t),d=tg(t);K.cyl(c,add(c,mul(d,t?1.2:-1.2)),1.05,'ottone',{r2:.5,db:.03});
+        K.fx(c,q=>{if(LOWFX)return;const k=Math.floor(G.t*12+t*3)%5;if(k<2){const s=t?1:-1;ctx.strokeStyle='#e8f6ff';ctx.lineWidth=1;ctx.lineCap='round';ctx.beginPath();ctx.moveTo(q[0],q[1]);ctx.lineTo(q[0]+2.4,q[1]+s*2.4);ctx.lineTo(q[0]+1,q[1]+s*3.4);ctx.lineTo(q[0]+3.4,q[1]+s*6);ctx.stroke()}},.5)}
+      for(const t of[.2,.8])K.fx(at(t),q=>{ctx.strokeStyle=INK;ctx.lineWidth=2.2;ctx.lineJoin='round';const z=()=>{ctx.beginPath();ctx.moveTo(q[0]-2.4,q[1]-1.6);ctx.lineTo(q[0]-.6,q[1]+.4);ctx.lineTo(q[0]+.6,q[1]-.8);ctx.lineTo(q[0]+2.4,q[1]+1.4)};z();ctx.stroke();ctx.strokeStyle='#ffd84a';ctx.lineWidth=1;z();ctx.stroke()},.3)}
     if(kind==='thorn'){for(const t of[.13,.27,.73,.87]){const c=at(t),d=tg(t),n=[-d[1],d[0],0];K.cyl(add(c,mul(n,.5)),add(c,mul(n,3.3)),.9,['#4a2766','#9a5ad0','#d6b0f6'],{r2:.06,db:.02})}
       K.fx(add(top,[-.4,1.2,0]),q=>{ink(1);for(let i=0;i<5;i++){const a=i*TAU/5+G.t*.6;ctx.fillStyle='#b874e6';ball([q[0]+Math.cos(a)*2,q[1]+Math.sin(a)*2],1.45);ctx.fill();ctx.stroke()}
         ctx.fillStyle='#ffe28a';ball(q,1.1);ctx.fill()},.4)}

@@ -30,7 +30,7 @@ const dk=(c,k)=>mix(c,'#0d1418',k),lt=(c,k)=>mix(c,'#ffffff',k);
 // the armours of the game: colours of the tunic (a) and of the hood (b), as in ITEMS[].tint; the bows: colour and shape
 const VESTITI={};// the outfits, filled in by sprite/eroe3d/vestiti3d.js
 const ARM={giubba:['#2fb3a6','#23877d'],cotta:['#8a97a2','#5d6872'],mantello_ombra:['#5a4682','#3a2c58'],corazza_muschio:['#5f9e3c','#3f7a2a']};
-const BOWS={arco_frassino:['#a4703d',null],arco_ricurvo:['#7a4a2a','recurve'],arco_spine:['#4f8a34','thorn'],arco_fenice:['#d9442e','phoenix'],balestra:['#6b4a2a','xbow']};
+const BOWS={arco_frassino:['#a4703d',null],arco_ricurvo:['#7a4a2a','recurve'],arco_tuono:['#2b3f6b','thunder'],arco_spine:['#4f8a34','thorn'],arco_fenice:['#d9442e','phoenix'],balestra:['#6b4a2a','xbow']};
 
 // ------------------------------------------------------------------ small helpers
 const rotY=(v,a)=>{const c=Math.cos(a),s=Math.sin(a);return[v[0]*c+v[2]*s,v[1],-v[0]*s+v[2]*c]};
@@ -294,8 +294,9 @@ function quiverTube(V0,X){const{P}=V0,b3=X.T(QB),t3=X.T(QT),ax=nrm(sub(t3,b3)),B
   // the open mouth of the tube where it faces up toward us
   ctx.fillStyle='#2a1a10';ink(1.4);const m=P(add(t3,mul(ax,.4)));ctx.beginPath();ctx.ellipse(m[0],m[1],r*.92,r*.42*KR()+.5,Math.atan2(dy,dx)+Math.PI/2,0,TAU);ctx.fill();ctx.stroke();
   rim(Bq,r,Tq,r,.24)}
-function quiverArrows(V0,X,jig){const{P}=V0,b3=X.T(QB),t3=X.T(QT),ax=nrm(sub(t3,b3)),sideV=nrm(cross(ax,[0,0,1])),mouth=add(t3,mul(ax,.4));
-  const out=nrm(add(ax,[0,.12,0]));for(const[o,h,c] of[[-1.5,4.2,HC.flW],[.2,5.4,HC.fl],[1.6,4,HC.flW]]){const a=add(mouth,mul(sideV,o)),tip=add(add(a,mul(out,h)),[0,0,jig*(o+2)*.15]),A=P(a),Tp=P(tip);
+const QFL={arco_ricurvo:['#6cc24a','#b8e890'],arco_tuono:['#9fd4ff','#ffd84a'],arco_fenice:['#ff7a2a','#ffd86b']};
+function quiverArrows(V0,X,jig,wid){const{P}=V0,b3=X.T(QB),t3=X.T(QT),ax=nrm(sub(t3,b3)),sideV=nrm(cross(ax,[0,0,1])),mouth=add(t3,mul(ax,.4)),QF=QFL[wid];
+  const out=nrm(add(ax,[0,.12,0]));for(const[o,h,c] of[[-1.5,4.2,QF?QF[1]:HC.flW],[.2,5.4,QF?QF[0]:HC.fl],[1.6,4,QF?QF[1]:HC.flW]]){const a=add(mouth,mul(sideV,o)),tip=add(add(a,mul(out,h)),[0,0,jig*(o+2)*.15]),A=P(a),Tp=P(tip);
     ctx.lineCap='round';ctx.strokeStyle=INK;ctx.lineWidth=2.4;seg(A,Tp);ctx.stroke();ctx.strokeStyle='#c9a26a';ctx.lineWidth=1;ctx.stroke();
     const dx=Tp[0]-A[0],dy=Tp[1]-A[1],l=Math.hypot(dx,dy)||1,u=[dx/l,dy/l],n=[-u[1],u[0]];ctx.fillStyle=c;ink(1.2);ctx.beginPath();ctx.moveTo(Tp[0]+u[0]*1.2,Tp[1]+u[1]*1.2);ctx.lineTo(Tp[0]-u[0]*3.8+n[0]*2.3,Tp[1]-u[1]*3.8+n[1]*2.3);ctx.lineTo(Tp[0]-u[0]*2.6,Tp[1]-u[1]*2.6);ctx.lineTo(Tp[0]-u[0]*3.8-n[0]*2.3,Tp[1]-u[1]*3.8-n[1]*2.3);ctx.closePath();ctx.fill();ctx.stroke()}}
 
@@ -612,7 +613,7 @@ function arciere0(x,y,face,anim,p,sc,o){sc=sc||1;o=o||{};const S0=o.style||{},ar
     ctx.restore();rimPoly(hp,.32);
     if(A.flash>0){ctx.save();ctx.globalAlpha=A.flash*.3;poly(hp);ctx.fillStyle='#ffffff';ctx.fill();ctx.restore()}}});
   // the quiver on the back (the balestriere keeps his bolts in it too)
-  if(S0.quiver!==false&&!S0.gun&&wid!=='bastone'&&!NOQ[wid]){parts.push({d:D(X.T([-11,0,ZB+6])),f:()=>quiverTube(V0,X)});parts.push({d:D(X.T(QT)),f:()=>quiverArrows(V0,X,A.jig)})}
+  if(S0.quiver!==false&&!S0.gun&&wid!=='bastone'&&!NOQ[wid]){parts.push({d:D(X.T([-11,0,ZB+6])),f:()=>quiverTube(V0,X)});parts.push({d:D(X.T(QT)),f:()=>quiverArrows(V0,X,A.jig,wid)})}
   if(OF&&OF.parts)OF.parts({V0,X,P,F,D,S,A,anim,p,face,ZB,surf,surfLine,Hc,hDep,dT},parts);
   // the skeleton's round shield, strapped on the left side in front of the body (style.shield; style.shDmg 0..1 cracks it as it wears out)
   if(S0.shield){const c3=X.T([7.6,-9.6,10.4]),n3=nrm(X.Rd([.78,-.62,.05]));parts.push({d:D(X.T([9,-10,10])),f:()=>shield(V0,c3,n3,9.2,S0)})}

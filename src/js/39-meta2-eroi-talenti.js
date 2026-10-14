@@ -38,7 +38,7 @@ ITEMS.push(
   {id:'corazza_lava',slot:'armatura',rar:3,n:'Corazza di lava',base:{hp:50,atk:3},per:{hp:15,atk:1},tint:{a:'#6a2a1e',b:'#ff7a2e'},perk:'Inizi con le frecce laterali',perkf:p=>p.side=1});
 for(const it of ITEMS)ITEM[it.id]=it;
 const SETS=[
-  {id:'foresta',n:'Set della Foresta',items:['arco_spine','corazza_muschio'],d:'+15% salute e rigenerazione raddoppiata',f:p=>{const a=Math.round(p.maxhp*.15);p.maxhp+=a;p.hp+=a;p.regen=(p.regen||0)*2+.2}},
+  {id:'foresta',n:'Set della Foresta',items:['arco_ricurvo','corazza_muschio'],d:'+15% salute e rigenerazione raddoppiata',f:p=>{const a=Math.round(p.maxhp*.15);p.maxhp+=a;p.hp+=a;p.regen=(p.regen||0)*2+.2}},
   {id:'ombra',n:"Set dell'Ombra",items:['mantello_ombra','anello_falco'],d:'+12% critico e scatto più rapido del 15%',f:p=>{p.crit+=.12;p.dashMax*=.85}},
   {id:'drago',n:'Set del Drago',items:['arco_fenice','cuore_drago'],d:'+25% attacco e la rinascita ti cura del tutto',f:p=>{p.atk*=1.25;p.reviveFull=true}},
   {id:'viandante',n:'Set del Viandante',items:['arco_ricurvo','amuleto_luna'],d:'+25% oro e +10% velocità',f:p=>{p.goldMul+=.25;p.spd*=1.1}},
