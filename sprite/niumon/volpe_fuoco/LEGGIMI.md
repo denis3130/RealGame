@@ -64,6 +64,34 @@ Denis: «aggiungi più pixel e fallo sembrare più vero dai».
 - Pagina: la stessa, con «Prima | Adesso» (i fogli di prima presi da git, commit 3facba8, mostrati alla stessa grandezza) e le
   8 direzioni a rosa dei venti, con al centro la volpe che gira su se stessa.
 
+## Pixel art vera, come lo screenshot della lotta (14 ottobre)
+
+Denis: «c'è qualcosa che stiamo sbagliando bro». Riguardando il suo screenshot di riferimento (lotta HD-2D nel bosco di notte, il
+proprio mostro di spalle grande in primo piano, quello selvatico davanti più lontano) il difetto era il metodo: rimpicciolire il
+disegno a matita si porta dietro tratteggio e sfumature e sembra un disegno sgranato; più pixel lo allontanava ancora di più. Gli
+sprite dello screenshot hanno pochi pixel grossi, tre o quattro toni per colore e il contorno scuro, e metà dell'effetto lo fa la
+scena. Denis ha confermato («sì») che «più vero» vuol dire come quegli sprite.
+- `disegno2d/pulito.py`: pixel art pulita dal disegno, riquadro 80x80. Ogni pixel del disegno diventa un numero sulla scala di
+  fuoco del disegno (`SCALA`: r3, r2, r1, r0, o1, o0, y1, y0), il numero si liscia (il tratteggio sparisce, la luce del disegno
+  resta), si fa la media nel blocco e si arrotonda: zone piatte con bordi puliti; pixel soli tolti; contorno di un pixel (marrone
+  scuro sul pelo, rosso scurissimo vicino a fiamme e calze); linee interne solo dai tratti scuri più lunghi del disegno; i buchetti
+  bianchi degli occhi del disegno si chiudono; occhi, naso, bocca con la lingua e guancia sono timbri fatti a mano.
+- `disegno2d/lotta80.py` → `solo2d/lotta_davanti` (l'avversario: 4 fotogrammi a 6 al secondo più uno a occhi chiusi da mettere
+  ogni tanto; coda e cresta che fiammeggiano, testa e petto che scendono di un pixel col respiro, dita sulle zampe, braci che
+  salgono) e `solo2d/lotta_spalle` (il tuo, di spalle). Il disegno c'è solo davanti: vista dalla parte opposta la sagoma è la
+  stessa, specchiata, quindi lo sprite di spalle è la sagoma del disegno girata, ridipinta dentro: la nuca al posto del muso
+  (pelo con la luce in alto e la cresta che scende a punte rosse), il dietro delle orecchie, niente petto chiaro. Il burattino 2D
+  di spalle (provato) era meno leggibile. Scala consigliata: l'avversario a 1x, il tuo a 3x (pixel grossi come nello screenshot).
+- Pagina `python3 anteprime/mk_niumon_lotta.py` (`anteprime/niumon_lotta.tpl.html`), pubblicata su
+  https://claude.ai/artifact/YDzxScVHMophiGdL2Bi4r8: la scena di lotta in 640x360 logici (bosco di notte in tre piani sfocati,
+  luna velata, raggi, nebbia che scorre, cenere fredda, luce del fuoco a terra, bagliore intorno alle volpi, ombra), la tua volpe
+  di spalle in basso a sinistra tagliata dal bordo, quella selvatica davanti nella radura; nome, livello e PS; quattro mosse
+  (Fiammata, Graffio, Braci, Coda ardente) con gli effetti, lampo e scossa quando colpisce, turno dell'avversario, esausta e
+  un'altra che esce dalla nebbia. Sul telefono in verticale le mosse scendono sotto la scena; girato, la scena prende tutto lo
+  schermo. Sotto: i due sprite da vicino e quello di prima.
+- Da fare se Denis approva: un disegno suo da dietro renderebbe lo sprite di spalle esatto; poi la mappa in 4 direzioni a 64 px
+  (come il piano) da un turnaround della volpe, con le stesse regole.
+
 ## Versione colorata in 2D sulla base 3D (14 ottobre, notte)
 
 Denis: «prova a farlo 2d facendolo più simile che ne so ad un evee va bene? mettici poco tempo». Fatto in fretta, sulla stessa base:

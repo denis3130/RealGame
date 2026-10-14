@@ -1,0 +1,28 @@
+{
+ "asset_id": "creature_volpefuoco_battle_front_idle",
+ "animation": "idle",
+ "direction": "front",
+ "frames": 5,
+ "n": 5,
+ "giro": 4,
+ "occhi_chiusi": 4,
+ "category": "creature_battle",
+ "frame_width": 80,
+ "frame_height": 80,
+ "fps": 6,
+ "loop": true,
+ "pivot": [
+  40,
+  75
+ ],
+ "anchor": [
+  40,
+  75
+ ],
+ "w": 80,
+ "h": 80,
+ "source": "disegno di Denis (13 ottobre): pixel art pulita come lo screenshot della lotta",
+ "version": "0.6-pixel-pulita",
+ "status": "da approvare",
+ "scala_consigliata": "avversario 1x, il tuo 3x (pixel grossi come nello screenshot)"
+}

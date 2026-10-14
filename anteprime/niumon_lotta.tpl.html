@@ -1,0 +1,359 @@
+<title>Lotta nel bosco</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:wght@400;700&family=Pixelify+Sans:wght@500;600;700&display=swap">
+<style>
+/* Layout: la scena di lotta 16:9 in alto con l'interfaccia sopra (sul telefono in verticale le mosse scendono sotto la scena),
+   poi i due sprite da vicino e com'era prima. Un solo aspetto scuro: è una notte nel bosco, i colori sono tutti scelti qui. */
+:root{
+  --bg:#0b0f13; --panel:rgba(13,18,24,.82); --panel2:rgba(22,28,36,.9); --line:rgba(255,196,128,.28); --line2:#2b333c;
+  --fg:#f1eee8; --dim:#a9b3bc; --ember:#ff9b4d; --gold:#ffd27a;
+  --hp:#83d66f; --hp-mid:#e9c24b; --hp-low:#e65a3e; --fire:#ff7b3a; --norm:#a3acb5;
+  --f-pix:"Pixelify Sans", ui-monospace, "Courier New", monospace;
+  --f-body:"Atkinson Hyperlegible", system-ui, -apple-system, "Segoe UI", sans-serif;
+  color-scheme:dark;
+}
+html,body{background:var(--bg)}
+body{color:var(--fg);font-family:var(--f-body);font-size:1rem;line-height:1.5;
+  padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+.wrap{max-width:74rem;margin:0 auto;padding-block:14px 48px;display:grid;gap:26px}
+h1,h2{font-family:var(--f-pix);font-weight:700;margin:0;text-wrap:balance}
+h1{font-size:clamp(1.35rem,3.6vw,2rem);line-height:1.15}
+h1 em{font-style:normal;color:var(--ember)}
+h2{font-size:1.2rem}
+p{margin:0;max-width:64ch}
+.dim{color:var(--dim)}
+.eyebrow{font-family:var(--f-pix);font-size:.8rem;letter-spacing:.14em;text-transform:uppercase;color:var(--dim);margin:0 0 4px}
+/* ---- la scena */
+.arena{display:grid;gap:10px;justify-items:center}
+.box{position:relative;width:min(100%,calc((100svh - 40px) * 16 / 9));container-type:inline-size;display:grid;gap:10px}
+.stage{position:relative;width:100%;aspect-ratio:16/9;max-width:100%;border-radius:10px;overflow:hidden;background:#0d141a;box-shadow:0 0 0 1px var(--line2)}
+.stage canvas{position:absolute;inset:0;width:100%;height:100%;display:block}
+.plate{position:absolute;background:var(--panel);border:1px solid var(--line);font-family:var(--f-pix);color:var(--fg);
+  padding:.55cqw 1.1cqw .75cqw;width:27cqw;clip-path:polygon(0 0,100% 0,100% 72%,94% 100%,0 100%)}
+.plate .nm{display:flex;justify-content:space-between;align-items:baseline;gap:1cqw;font-size:max(9px,1.85cqw);line-height:1.25;white-space:nowrap}
+.plate .nm b{font-weight:700;letter-spacing:.02em;text-transform:uppercase}
+.plate .nm span{color:var(--dim);font-weight:500;font-size:.85em}
+.hpbar{display:flex;align-items:center;gap:.8cqw;margin-top:.45cqw}
+.hpbar small{font-size:max(8px,1.45cqw);color:var(--gold);font-weight:700;letter-spacing:.06em}
+.hpbar .tr{flex:1;height:max(5px,1.05cqw);background:#262c33;border:1px solid #11161b;border-radius:2px;overflow:hidden}
+.hpbar .tr i{display:block;height:100%;width:100%;background:var(--hp);transition:width .55s steps(18),background-color .2s}
+.plate .num{font-size:max(9px,1.7cqw);text-align:right;margin-top:.2cqw;font-variant-numeric:tabular-nums}
+.foe{top:3.2cqw;right:3cqw}
+.me{left:3cqw;bottom:3cqw}
+.ui{position:absolute;right:2.6cqw;bottom:2.6cqw;width:42cqw;display:grid;gap:.9cqw}
+.msg{background:var(--panel);border:1px solid var(--line);font-family:var(--f-pix);font-size:max(10px,1.8cqw);line-height:1.3;
+  padding:.7cqw 1.2cqw;min-height:1.9em;display:flex;align-items:center}
+.moves{display:grid;grid-template-columns:1fr 1fr;gap:.8cqw}
+.moves button{font-family:var(--f-pix);color:var(--fg);background:var(--panel2);border:1px solid var(--line2);border-left:.45cqw solid var(--norm);
+  text-align:left;padding:.7cqw 1cqw;cursor:pointer;display:grid;grid-template-columns:1fr auto;align-items:end;row-gap:.1cqw;
+  min-height:max(36px,5.4cqw);touch-action:manipulation}
+.moves button.fire{border-left-color:var(--fire)}
+.moves button b{font-size:max(10px,1.85cqw);font-weight:600;grid-column:1/-1}
+.moves button .ty{font-size:max(8px,1.2cqw);letter-spacing:.08em;text-transform:uppercase;color:var(--dim)}
+.moves button.fire .ty{color:var(--ember)}
+.moves button .pp{font-size:max(9px,1.45cqw);font-variant-numeric:tabular-nums;color:var(--fg)}
+.moves button:hover:not(:disabled){background:#2a323c;border-color:#4a535d}
+.moves button:disabled{opacity:.42;cursor:default}
+.moves button:focus-visible{outline:2px solid var(--gold);outline-offset:1px}
+.hint{font-size:.9rem;color:var(--dim);text-align:center}
+@media (orientation:landscape),(min-width:700px){.hint{display:none}}
+/* telefono in verticale: la scena è piccola, il pannello delle mosse scende sotto */
+@media (max-width:640px){
+  .ui{position:static;width:min(100%,520px);gap:8px}
+  .msg{font-size:.95rem;padding:10px 12px}
+  .moves{gap:8px}.moves button{padding:8px 10px;border-left-width:4px}.moves button b{font-size:1rem}
+  .moves button .ty{font-size:.72rem}.moves button .pp{font-size:.8rem}
+  .plate{width:42cqw;padding:3px 6px 4px}
+}
+/* telefono girato: la scena prende tutta l'altezza */
+@media (max-height:500px) and (orientation:landscape){.wrap{padding-block:6px 40px;gap:18px}header{display:none}}
+/* ---- da vicino */
+.row{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}
+.fig{margin:0;display:grid;gap:8px;align-content:start;background:#12181e;border:1px solid var(--line2);border-radius:10px;padding:10px;min-width:0}
+.fig canvas{width:100%;aspect-ratio:1/1;display:block;border-radius:6px;background:radial-gradient(ellipse at 50% 70%,#1f2a33 0%,#11171c 72%)}
+.fig figcaption{font-size:.9rem;color:var(--dim)}
+.fig figcaption b{display:block;font-family:var(--f-pix);font-weight:600;color:var(--fg);font-size:.98rem}
+@media (max-width:640px){.row{grid-template-columns:1fr 1fr}.row .old{grid-column:1/-1}}
+button:focus-visible{outline:3px solid var(--gold);outline-offset:2px}
+</style>
+<main class="wrap">
+  <header>
+    <p class="eyebrow">Niumon · prova di lotta</p>
+    <h1>La volpe di fuoco in <em>pixel art vera</em></h1>
+  </header>
+
+  <section class="arena" aria-label="Scena di lotta">
+    <div class="box" id="box"><div class="stage" id="stage">
+      <canvas id="cv" aria-label="Bosco di notte: la tua volpe di fuoco di spalle in primo piano e una volpe di fuoco selvatica più lontana"></canvas>
+      <div class="plate foe" id="pFoe">
+        <div class="nm"><b>Volpe di fuoco</b><span>Liv. 12</span></div>
+        <div class="hpbar"><small>PS</small><div class="tr"><i id="hpFoe"></i></div></div>
+      </div>
+      <div class="plate me" id="pMe">
+        <div class="nm"><b>Volpe di fuoco</b><span>Liv. 14</span></div>
+        <div class="hpbar"><small>PS</small><div class="tr"><i id="hpMe"></i></div></div>
+        <div class="num" id="numMe">46/46</div>
+      </div>
+    </div>
+      <div class="ui" id="ui">
+        <div class="msg" id="msg" role="status" aria-live="polite">Una volpe di fuoco selvatica ti sbarra la strada!</div>
+        <div class="moves" id="moves" role="group" aria-label="Mosse">
+          <button type="button" id="m0" class="fire" data-m="0"><b>Fiammata</b><span class="ty">Fuoco</span><span class="pp">15/15</span></button>
+          <button type="button" id="m1" data-m="1"><b>Graffio</b><span class="ty">Normale</span><span class="pp">35/35</span></button>
+          <button type="button" id="m2" class="fire" data-m="2"><b>Braci</b><span class="ty">Fuoco</span><span class="pp">25/25</span></button>
+          <button type="button" id="m3" class="fire" data-m="3"><b>Coda ardente</b><span class="ty">Fuoco</span><span class="pp">10/10</span></button>
+        </div>
+      </div>
+    </div>
+    <p class="hint">Gira il telefono per vedere la scena grande.</p>
+  </section>
+
+  <section class="sec" aria-labelledby="hVic" style="display:grid;gap:12px">
+    <h2 id="hVic">Gli sprite da vicino</h2>
+    <p class="dim">80×80 pixel, pochi toni piatti e il contorno scuro, come gli sprite del tuo screenshot. Nella scena quella selvatica è a un pixel per pixel, la tua a tre.</p>
+    <div class="row">
+      <figure class="fig"><canvas id="zDav" aria-label="Lo sprite davanti, animato"></canvas><figcaption><b>Davanti · l'avversario</b>Dal tuo disegno. Fermo di 4 fotogrammi, ogni tanto chiude gli occhi.</figcaption></figure>
+      <figure class="fig"><canvas id="zSpa" aria-label="Lo sprite di spalle, animato"></canvas><figcaption><b>Di spalle · la tua</b>Sagoma del tuo disegno vista dall'altra parte: nuca, cresta e orecchie da dietro.</figcaption></figure>
+      <figure class="fig old"><canvas id="zOld" aria-label="Lo sprite di prima"></canvas><figcaption><b>Prima</b>Il disegno rimpicciolito a 192×192: tanti colori e il tratteggio della matita.</figcaption></figure>
+    </div>
+  </section>
+</main>
+<script>
+(()=>{
+'use strict';
+const S=__SPRITES__;
+const $=id=>document.getElementById(id);
+const reduce=matchMedia('(prefers-reduced-motion: reduce)').matches;
+const LW=640,LH=360,HZ=166;
+const rng=a=>()=>{a|=0;a=a+0x6D2B79F5|0;let t=Math.imul(a^a>>>15,1|a);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296};
+const lerp=(a,b,k)=>a+(b-a)*k,cl=(v,a,b)=>v<a?a:v>b?b:v,ez=k=>k<.5?2*k*k:1-Math.pow(-2*k+2,2)/2;
+function cnv(w,h){const c=document.createElement('canvas');c.width=w;c.height=h;return c}
+function soft(src,k){const s=cnv(Math.max(1,Math.round(src.width/k)),Math.max(1,Math.round(src.height/k)));const g=s.getContext('2d');
+  g.imageSmoothingEnabled=true;g.imageSmoothingQuality='high';g.drawImage(src,0,0,s.width,s.height);
+  const o=cnv(src.width,src.height),h=o.getContext('2d');h.imageSmoothingEnabled=true;h.imageSmoothingQuality='high';h.drawImage(s,0,0,o.width,o.height);return o}
+
+// ------------------------------------------------------------------ il bosco (disegnato una volta, a 1280x720)
+const RW=1280,RH=720,K=RW/LW;
+function seg(g,x0,y0,x1,y1,w0,w1){const a=Math.atan2(y1-y0,x1-x0),nx=-Math.sin(a),ny=Math.cos(a);
+  g.beginPath();g.moveTo(x0+nx*w0,y0+ny*w0);g.lineTo(x1+nx*w1,y1+ny*w1);g.lineTo(x1-nx*w1,y1-ny*w1);g.lineTo(x0-nx*w0,y0-ny*w0);g.closePath();g.fill();
+  g.beginPath();g.arc(x1,y1,w1,0,Math.PI*2);g.fill()}
+function branch(g,r,x,y,ang,len,w,d,maxd){let px=x,py=y,a=ang;const n=4;
+  for(let i=0;i<n;i++){a+=(r()-.5)*.38+(d>0?.04:0);const l=len/n,nx=px+Math.cos(a)*l,ny=py+Math.sin(a)*l;
+    seg(g,px,py,nx,ny,w*(1-i/n*.38),w*(1-(i+1)/n*.38));
+    if(d>=1&&r()<.35&&len>14){const s=(r()<.5?-1:1)*(.7+r()*.5);branch(g,r,nx,ny,a+s,len*.32,w*.35,maxd,maxd)}
+    px=nx;py=ny}
+  if(d>=maxd||len<6)return;
+  const kids=d<1?2+(r()<.6?1:0):(r()<.65?2:1);
+  for(let k=0;k<kids;k++){const sp=(k-(kids-1)/2)*(.5+r()*.35)+(r()-.5)*.35;branch(g,r,px,py,a+sp,len*(.6+r()*.18),w*.6,d+1,maxd)}}
+function tree(g,r,x,y,h,w,lean,maxd){
+  for(let k=-2;k<=2;k++)seg(g,x+k*w*.28,y-w*.6,x+k*w*1.5+(r()-.5)*w,y+w*.22,w*.42,w*.1);
+  branch(g,r,x,y,-Math.PI/2+lean,h*.46,w,0,maxd)}
+
+function bake(){
+  const L={};
+  // cielo e bosco lontano, nella nebbia (molto sfocato)
+  {const c=cnv(RW,RH),g=c.getContext('2d'),r=rng(7);
+    const sky=g.createLinearGradient(0,0,0,HZ*K+40);sky.addColorStop(0,'#0c1620');sky.addColorStop(.55,'#1d2d39');sky.addColorStop(1,'#4a5d69');
+    g.fillStyle=sky;g.fillRect(0,0,RW,RH);
+    // luna velata in alto a destra
+    const mg=g.createRadialGradient(1010,92,4,1010,92,190);mg.addColorStop(0,'rgba(220,232,240,.55)');mg.addColorStop(.12,'rgba(190,210,224,.28)');mg.addColorStop(1,'rgba(120,150,170,0)');
+    g.fillStyle=mg;g.fillRect(0,0,RW,RH);
+    for(let pass=0;pass<3;pass++){
+      g.fillStyle=['#43535d','#37474f','#2c3a42'][pass];
+      for(let i=0;i<16;i++){const x=r()*RW,y=HZ*K+6+pass*10+r()*10,h=(150+r()*170)*(1+pass*.25);tree(g,r,x,y,h,3+r()*3+pass*2,(r()-.5)*.25,4)}
+      const f=g.createLinearGradient(0,HZ*K-260,0,HZ*K+60);f.addColorStop(0,'rgba(76,96,108,0)');f.addColorStop(.7,'rgba(86,108,120,.45)');f.addColorStop(1,'rgba(92,114,126,.7)');
+      g.fillStyle=f;g.fillRect(0,0,RW,HZ*K+60)}
+    L.far=soft(c,5)}
+  // alberi di mezzo: scuri, poco sfocati, lontani dal centro della lotta
+  {const c=cnv(RW,RH),g=c.getContext('2d'),r=rng(21);
+    const T=[[70,HZ*K+58,560,15,-.05],[250,HZ*K+30,520,11,.06],[1170,HZ*K+52,600,16,.04],[1010,HZ*K+26,470,10,-.07],[560,HZ*K+14,420,7,.03],[1240,HZ*K+20,380,8,-.1],[380,HZ*K+18,400,7,-.04]];
+    for(const[x,y,h,w,l]of T){g.fillStyle='#141c22';tree(g,r,x,y,h,w,l,5)}
+    L.mid=soft(c,1.6)}
+  // terra: radura, sassi in prospettiva, ciuffi, radici
+  {const c=cnv(RW,RH),g=c.getContext('2d'),r=rng(33),y0=HZ*K;
+    const gr=g.createLinearGradient(0,y0,0,RH);gr.addColorStop(0,'#33433f');gr.addColorStop(.18,'#212c29');gr.addColorStop(.6,'#151c1a');gr.addColorStop(1,'#0c100f');
+    g.fillStyle=gr;g.fillRect(0,y0,RW,RH-y0);
+    // radura chiara intorno all'avversario e verso di noi
+    const cl_=g.createRadialGradient(860,450,10,860,450,420);cl_.addColorStop(0,'rgba(120,132,124,.38)');cl_.addColorStop(.5,'rgba(90,102,96,.16)');cl_.addColorStop(1,'rgba(60,70,66,0)');
+    g.fillStyle=cl_;g.beginPath();g.ellipse(820,470,560,150,-.08,0,Math.PI*2);g.fill();
+    for(let i=0;i<520;i++){const t=r(),y=y0+(RH-y0)*t*t,s=(y-y0)/(RH-y0),x=r()*RW;
+      const w=(3+r()*9)*(.25+s*1.6),h=w*(.35+r()*.2);
+      g.fillStyle='rgba(10,14,13,.55)';g.beginPath();g.ellipse(x,y+h*.35,w*1.05,h*.7,0,0,Math.PI*2);g.fill();
+      g.fillStyle=r()<.5?'#3d4846':'#323c3b';g.beginPath();g.ellipse(x,y,w,h,0,0,Math.PI*2);g.fill();
+      g.fillStyle='rgba(170,190,198,'+(.18+.25*r())+')';g.beginPath();g.ellipse(x-w*.15,y-h*.35,w*.55,h*.35,0,0,Math.PI*2);g.fill()}
+    for(let i=0;i<260;i++){const t=r(),y=y0+(RH-y0)*(.15+.85*t),s=(y-y0)/(RH-y0),x=r()<.5?r()*RW*.42:RW*.62+r()*RW*.38;
+      g.strokeStyle=r()<.5?'#1f2d26':'#2a3b31';g.lineWidth=1+s*2.2;
+      for(let k=0;k<5;k++){const a=-Math.PI/2+(r()-.5)*1.1,l=(6+r()*14)*(.4+s*1.4);g.beginPath();g.moveTo(x,y);g.quadraticCurveTo(x+Math.cos(a)*l*.5+(r()-.5)*4,y+Math.sin(a)*l*.6,x+Math.cos(a)*l,y+Math.sin(a)*l);g.stroke()}}
+    g.strokeStyle='#121816';
+    for(let i=0;i<9;i++){const x=r()*RW,y=y0+40+r()*(RH-y0-40),l=60+r()*160;g.lineWidth=3+r()*5;g.beginPath();g.moveTo(x,y);g.bezierCurveTo(x+l*.3,y-12,x+l*.6,y+10,x+l,y-4);g.stroke()}
+    // nebbia bassa all'orizzonte
+    const f=g.createLinearGradient(0,y0-10,0,y0+150);f.addColorStop(0,'rgba(96,120,132,.75)');f.addColorStop(1,'rgba(96,120,132,0)');g.fillStyle=f;g.fillRect(0,y0-10,RW,160);
+    L.ground=c}
+  // primo piano: tronchi e rami scurissimi e molto sfocati ai bordi
+  {const c=cnv(RW,RH),g=c.getContext('2d'),r=rng(55);g.fillStyle='#06090b';
+    tree(g,r,-30,RH+40,1500,46,.16,3);tree(g,r,RW+40,RH+60,1400,40,-.2,3);
+    g.fillStyle='rgba(6,9,11,.9)';for(let i=0;i<10;i++){const x=r()<.5?r()*220:RW-r()*240,y=RH-r()*40;g.beginPath();g.ellipse(x,y,70+r()*80,30+r()*30,0,0,Math.PI*2);g.fill()}
+    L.near=soft(c,7)}
+  // nebbia che scorre (si ripete in orizzontale)
+  {const c=cnv(512,128),g=c.getContext('2d'),r=rng(77);
+    for(let i=0;i<70;i++){const x=r()*512,y=30+r()*70,rr=20+r()*50,gg=g.createRadialGradient(x,y,1,x,y,rr);gg.addColorStop(0,'rgba(160,184,196,.22)');gg.addColorStop(1,'rgba(160,184,196,0)');
+      for(const dx of[-512,0,512]){g.fillStyle=gg;g.save();g.translate(dx,0);g.beginPath();g.arc(x,y,rr,0,Math.PI*2);g.fill();g.restore()}}
+    L.fog=soft(c,2)}
+  return L}
+
+// ------------------------------------------------------------------ sprite
+const SP={};
+function prep(key){const s=S[key];return new Promise(ok=>{const im=new Image();im.onload=()=>{s.img=im;
+  s.glow=[];for(let f=0;f<s.n;f++){const p=8,c=cnv(s.w+2*p,s.h+2*p),g=c.getContext('2d');g.drawImage(im,f*s.w,0,s.w,s.h,p,p,s.w,s.h);
+    const b=soft(soft(c,3),2),h=b.getContext('2d');h.globalCompositeOperation='source-in';h.fillStyle='#ff7a2c';h.fillRect(0,0,b.width,b.height);b.pad=p;s.glow.push(b)}
+  ok()};im.src=s.src})}
+const tmp=cnv(96,96),tg=tmp.getContext('2d');
+
+// ------------------------------------------------------------------ stato della scena
+const FOE={key:'davanti',x:432,y:213,sc:1,hp:40,max:40,lx:0,ly:0,flash:0,shake:0,alpha:1,sink:0,blinkT:2.5,
+  mouth:[16,45],body:[38,50],emit:[[64,10],[26,5],[58,30]]};
+const ME={key:'spalle',x:214,y:377,sc:3,hp:46,max:46,lx:0,ly:0,flash:0,shake:0,alpha:1,sink:0,
+  mouth:[63,45],body:[40,48],emit:[[15,10],[53,5],[22,30]]};
+function at(c,p){const s=S[c.key];return[c.x+c.lx+(p[0]-s.anchor[0])*c.sc,c.y+c.ly+c.sink+(p[1]-s.anchor[1])*c.sc]}
+
+const P=[];          // particelle: braci, cenere, effetti
+const FIRE=['#fff0b0','#ffd468','#fbb24b','#f4913e','#ee7240','#e05a38','#c8402f','#992a2c'];
+function spawnEmber(c){const s=S[c.key],e=c.emit[(Math.random()*c.emit.length)|0],[x,y]=at(c,[e[0]+(Math.random()-.5)*6,e[1]+(Math.random()-.5)*4]);
+  P.push({k:'ember',x,y,vx:(Math.random()-.5)*6,vy:-(10+Math.random()*16)*Math.sqrt(c.sc),life:0,max:1.1+Math.random()*1.4,sz:c.sc,ph:Math.random()*6})}
+const ASH=[];{const r=rng(91);for(let i=0;i<70;i++)ASH.push({x:r()*LW,y:r()*LH,v:4+r()*9,sz:r()<.12?2.6:(r()<.5?1:1.5),ph:r()*6,near:r()<.12})}
+
+let L=null,cv=$('cv'),g=cv.getContext('2d'),W=0,H=0,s=1;
+function fit(){const D=Math.min(2,window.devicePixelRatio||1),w=Math.round(cv.clientWidth*D),h=Math.round(cv.clientHeight*D);
+  if(w&&h&&(w!==W||h!==H)){cv.width=W=w;cv.height=H=h}s=W/LW}
+
+function drawSprite(c,t){const sh=S[c.key];if(!sh.img||c.alpha<=0)return;
+  let f=reduce?0:Math.floor(t*sh.fps)%sh.giro;
+  if(c===FOE&&sh.occhi_chiusi!=null&&c.blinkT<=0)f=sh.occhi_chiusi;
+  const k=Math.max(1,Math.round(c.sc*s)),sx=c.shake?Math.round(Math.sin(t*90)*c.shake*s):0;
+  const X=Math.round((c.x+c.lx)*s)-sh.anchor[0]*k+sx,Y=Math.round((c.y+c.ly+c.sink)*s)-sh.anchor[1]*k;
+  // ombra a terra
+  g.save();g.globalAlpha=.55*c.alpha;g.fillStyle='#030505';g.beginPath();g.ellipse(Math.round((c.x+c.lx)*s),Math.round((c.y+c.ly)*s)+k,30*k,6.5*k,0,0,Math.PI*2);g.fill();g.restore();
+  // bagliore del fuoco
+  const gl=sh.glow[f];g.save();g.globalCompositeOperation='lighter';g.globalAlpha=(.42+.08*Math.sin(t*7.3+c.x))*c.alpha;g.imageSmoothingEnabled=true;
+  g.drawImage(gl,X-gl.pad*k,Y-gl.pad*k,gl.width*k,gl.height*k);g.restore();
+  // lo sprite con la luce della scena (fatta a pixel di sprite, così i pixel restano pieni)
+  tg.clearRect(0,0,96,96);tg.globalCompositeOperation='source-over';tg.drawImage(sh.img,f*sh.w,0,sh.w,sh.h,0,0,sh.w,sh.h);
+  tg.globalCompositeOperation='source-atop';
+  if(c===ME){const lg=tg.createLinearGradient(0,0,sh.w*.62,0);lg.addColorStop(0,'rgba(10,20,36,.5)');lg.addColorStop(1,'rgba(10,20,36,0)');tg.fillStyle=lg;tg.fillRect(0,0,sh.w,sh.h)}
+  else{tg.fillStyle='rgba(140,168,190,.12)';tg.fillRect(0,0,sh.w,sh.h)}
+  const bg_=tg.createLinearGradient(0,sh.h*.55,0,sh.h);bg_.addColorStop(0,'rgba(6,10,14,0)');bg_.addColorStop(1,'rgba(6,10,14,.5)');tg.fillStyle=bg_;tg.fillRect(0,0,sh.w,sh.h);
+  if(c.flash>0){tg.fillStyle='rgba(255,255,255,'+Math.min(.85,c.flash)+')';tg.fillRect(0,0,sh.w,sh.h)}
+  g.save();g.globalAlpha=c.alpha;g.imageSmoothingEnabled=false;g.drawImage(tmp,0,0,sh.w,sh.h,X,Y,sh.w*k,sh.h*k);g.restore()}
+
+function lightPool(c,t,r0,a){const[x,y]=[c.x+c.lx,c.y+c.ly];const R=r0*(1+.04*Math.sin(t*9+c.x)+.03*Math.sin(t*23));
+  const gg=g.createRadialGradient(x*s,y*s,0,x*s,y*s,R*s);gg.addColorStop(0,'rgba(255,140,60,'+a*c.alpha+')');gg.addColorStop(.45,'rgba(255,110,40,'+a*.4*c.alpha+')');gg.addColorStop(1,'rgba(255,90,30,0)');
+  g.save();g.globalCompositeOperation='lighter';g.fillStyle=gg;g.beginPath();g.ellipse(x*s,y*s,R*s,R*.42*s,0,0,Math.PI*2);g.fill();g.restore()}
+
+let last=performance.now(),T=0;
+function frame(now){const dt=Math.min(.05,(now-last)/1000);last=now;if(!reduce)T+=dt;fit();
+  if(!L||!W){requestAnimationFrame(frame);return}
+  const t=T,cam=reduce?0:Math.sin(t*.13)*2.2,camy=reduce?0:Math.sin(t*.09)*1.2;
+  g.setTransform(1,0,0,1,0,0);g.globalCompositeOperation='source-over';g.globalAlpha=1;g.imageSmoothingEnabled=true;
+  const par=(lay,f)=>g.drawImage(lay,(-8+cam*f)*s,(-6+camy*f)*s,(LW+16)*s,(LH+12)*s);
+  par(L.far,.25);
+  // raggi di luna
+  g.save();g.globalCompositeOperation='lighter';for(let i=0;i<3;i++){const x0=470+i*58+cam*.4,a=.035+.015*Math.sin(t*.4+i*2);
+    const lg=g.createLinearGradient(x0*s,0,(x0-170)*s,HZ*s+40*s);lg.addColorStop(0,'rgba(190,214,232,'+a+')');lg.addColorStop(1,'rgba(190,214,232,0)');
+    g.fillStyle=lg;g.beginPath();g.moveTo(x0*s,-5*s);g.lineTo((x0+26)*s,-5*s);g.lineTo((x0-130)*s,(HZ+60)*s);g.lineTo((x0-205)*s,(HZ+60)*s);g.closePath();g.fill()}g.restore();
+  // nebbia lontana che scorre
+  g.save();g.globalAlpha=.55;const fo=((t*6)%512);for(let k=-1;k<3;k++)g.drawImage(L.fog,(k*256-fo*.5+cam*.3)*s,(HZ-58)*s,256*s,64*s);g.restore();
+  par(L.mid,.5);par(L.ground,.75);
+  lightPool(FOE,t,70,.32);lightPool(ME,t,150,.26);
+  drawSprite(FOE,t);
+  // un velo di nebbia davanti all'avversario: è lontano
+  g.save();g.globalAlpha=.3;for(let k=-1;k<3;k++)g.drawImage(L.fog,(k*300-((t*9)%300)+cam*.6)*s,(HZ-8)*s,300*s,70*s);g.restore();
+  drawSprite(ME,t);
+  // particelle
+  if(!reduce){if(Math.random()<dt*5*FOE.alpha)spawnEmber(FOE);if(Math.random()<dt*7*ME.alpha)spawnEmber(ME)}
+  g.save();g.globalCompositeOperation='lighter';
+  for(let i=P.length-1;i>=0;i--){const p=P[i];p.life+=dt;if(p.life>p.max){P.splice(i,1);continue}if(p.life<0)continue;const k=p.life/p.max;
+    if(p.k==='ember'){p.x+=(p.vx+Math.sin(t*3+p.ph)*5)*dt;p.y+=p.vy*dt;const c=FIRE[Math.min(7,1+(k*6)|0)],sz=Math.max(1,Math.round(p.sz*s));
+      {const hx=p.x*s+sz/2,hy=p.y*s+sz/2,hr=sz*1.5,hg=g.createRadialGradient(hx,hy,0,hx,hy,hr);hg.addColorStop(0,'rgba(255,140,60,.35)');hg.addColorStop(1,'rgba(255,140,60,0)');
+       g.globalAlpha=1-k*k;g.fillStyle=hg;g.fillRect(hx-hr,hy-hr,hr*2,hr*2)}
+      g.globalAlpha=1-k*k;g.fillStyle=c;g.fillRect(Math.round(p.x*s),Math.round(p.y*s),sz,sz)}
+    else if(p.k==='fx'){p.x+=p.vx*dt;p.y+=p.vy*dt;p.vx*=(1-dt*1.2);p.vy+=p.g*dt;
+      const base=p.s0!=null?lerp(p.s0,p.s1,Math.min(1,k*1.15)):p.sz,c=FIRE[Math.min(7,((p.hot?k*.6:k)*7.5)|0)],sz=Math.max(1,Math.round(base*s*(1-k*.35)));
+      if(p.halo){const hr=sz*2.4,hg=g.createRadialGradient(p.x*s,p.y*s,0,p.x*s,p.y*s,hr);hg.addColorStop(0,'rgba(255,150,70,.5)');hg.addColorStop(1,'rgba(255,90,30,0)');
+        g.globalAlpha=1-k;g.fillStyle=hg;g.fillRect(p.x*s-hr,p.y*s-hr,hr*2,hr*2)}
+      g.globalAlpha=1-k*k;g.fillStyle=c;g.fillRect(Math.round(p.x*s-sz/2),Math.round(p.y*s-sz/2),sz,sz)}
+    else if(p.k==='boom'){const R=p.r*s*(.4+k*.8),bg=g.createRadialGradient(p.x*s,p.y*s,0,p.x*s,p.y*s,R);
+      bg.addColorStop(0,'rgba(255,244,210,'+(.85*(1-k))+')');bg.addColorStop(.35,'rgba(255,160,70,'+(.55*(1-k))+')');bg.addColorStop(1,'rgba(255,90,30,0)');
+      g.globalAlpha=1;g.fillStyle=bg;g.fillRect(p.x*s-R,p.y*s-R,R*2,R*2)}
+    else if(p.k==='slash'){g.globalAlpha=1-k;g.strokeStyle=k<.3?'#fff6dc':'#ffc06a';g.lineWidth=Math.max(2,(1.2+1.4*(p.dx/18))*s*(1-k));g.beginPath();
+      g.moveTo(p.x*s,p.y*s);g.lineTo((p.x+p.dx*Math.min(1,k*4))*s,(p.y+p.dy*Math.min(1,k*4))*s);g.stroke()}}
+  g.restore();
+  // cenere fredda che scende
+  g.save();for(const a of ASH){if(!reduce){a.y+=a.v*dt;a.x+=Math.sin(t*.7+a.ph)*4*dt+3*dt;if(a.y>LH+4){a.y=-4;a.x=Math.random()*LW}if(a.x>LW+4)a.x=-4}
+    if(a.near){g.globalAlpha=.16;g.fillStyle='#c9d6df';g.beginPath();g.arc(a.x*s,a.y*s,2.2*s,0,Math.PI*2);g.fill()}
+    else{const sz=Math.max(1,Math.round(a.sz*s*.7));g.globalAlpha=.5;g.fillStyle='#aebdc8';g.fillRect(Math.round(a.x*s),Math.round(a.y*s),sz,sz)}}g.restore();
+  par(L.near,1);
+  // vignetta e colore della notte
+  const vg=g.createRadialGradient(W*.52,H*.45,H*.25,W*.52,H*.5,W*.7);vg.addColorStop(0,'rgba(0,0,0,0)');vg.addColorStop(1,'rgba(2,5,9,.62)');g.fillStyle=vg;g.fillRect(0,0,W,H);
+  // tempi
+  for(const c of[FOE,ME]){c.flash=Math.max(0,c.flash-dt*3.2);c.shake=Math.max(0,c.shake-dt*10)}
+  FOE.blinkT-=dt;if(FOE.blinkT<-.18)FOE.blinkT=2.2+Math.random()*2.5;
+  requestAnimationFrame(frame)}
+
+// ------------------------------------------------------------------ la lotta
+const sleep=ms=>new Promise(r=>setTimeout(r,reduce?Math.min(ms,250):ms));
+function tween(ms,fn){return new Promise(r=>{const t0=performance.now();const st=()=>{const k=Math.min(1,(performance.now()-t0)/(reduce?Math.min(ms,120):ms));fn(k);k<1?requestAnimationFrame(st):r()};st()})}
+const MOVES=[{n:'Fiammata',pp:15,max:15,pow:13,fx:'stream'},{n:'Graffio',pp:35,max:35,pow:7,fx:'slash'},{n:'Braci',pp:25,max:25,pow:9,fx:'balls'},{n:'Coda ardente',pp:10,max:10,pow:17,fx:'burst'}];
+const FOE_MOVES=[{n:'Braci',pow:8,fx:'balls'},{n:'Fiammata',pow:11,fx:'stream'},{n:'Graffio',pow:6,fx:'slash'}];
+const msg=$('msg'),btns=[...document.querySelectorAll('.moves button')];
+function say(t){msg.textContent=t}
+function hpUI(){const set=(el,c)=>{const r=c.hp/c.max;el.style.width=(r*100)+'%';el.style.backgroundColor=r>.5?'var(--hp)':(r>.2?'var(--hp-mid)':'var(--hp-low)')};
+  set($('hpFoe'),FOE);set($('hpMe'),ME);$('numMe').textContent=Math.max(0,Math.ceil(ME.hp))+'/'+ME.max}
+function lock(v){btns.forEach((b,i)=>{b.disabled=v||MOVES[i].pp<=0})}
+function ppUI(){btns.forEach((b,i)=>{b.querySelector('.pp').textContent=MOVES[i].pp+'/'+MOVES[i].max})}
+
+async function lunge(c,dx,dy){await tween(160,k=>{c.lx=-dx*.25*ez(k);c.ly=-dy*.25*ez(k)});await tween(130,k=>{c.lx=lerp(-dx*.25,dx,ez(k));c.ly=lerp(-dy*.25,dy,ez(k))})}
+async function back(c){const x0=c.lx,y0=c.ly;await tween(260,k=>{c.lx=x0*(1-ez(k));c.ly=y0*(1-ez(k))})}
+function fx(kind,a,b){const[ax,ay]=at(a,a.mouth),[bx,by]=at(b,b.body);
+  const sA=a.sc*2.4+1.5,sB=b.sc*2.4+1.5;                    // grandezza vicino a chi attacca e vicino al bersaglio (prospettiva)
+  if(kind==='stream')return new Promise(async r=>{for(let i=0;i<78;i++){const tt=.30+Math.random()*.16;
+      P.push({k:'fx',x:ax+(Math.random()-.5)*5,y:ay+(Math.random()-.5)*5,vx:(bx-ax)/tt+(Math.random()-.5)*46,vy:(by-ay)/tt+(Math.random()-.5)*46-22,g:70,
+        life:0,max:tt*(1.05+Math.random()*.3),s0:sA*(.8+Math.random()*.8),s1:sB*(.8+Math.random()*.8),halo:i%2===0});
+      if(i%4===0)await sleep(16)}await sleep(160);r()});
+  if(kind==='balls')return new Promise(async r=>{for(let j=0;j<3;j++){const tt=.44,vx=(bx-ax)/tt+(j-1)*30,vy=(by-ay)/tt-110;
+      for(let q=0;q<16;q++)P.push({k:'fx',x:ax,y:ay,vx,vy,g:500,life:-q*.018,max:tt+q*.018,s0:sA*(q?1-q/22:1.7),s1:sB*(q?1-q/22:1.7),halo:q<3,hot:q===0});
+      await sleep(140)}await sleep(380);r()});
+  if(kind==='slash'){for(let j=0;j<3;j++){const ox=(j-1)*7*b.sc;P.push({k:'slash',x:bx-12*b.sc+ox,y:by-14*b.sc,dx:18*b.sc,dy:26*b.sc,life:-j*.07,max:.45})}return sleep(380)}
+  if(kind==='burst'){const[fx_,fy]=at(b,[b===ME?39:40,72]);for(let i=0;i<64;i++){const a_=i/64*Math.PI*2,v=(30+Math.random()*50)*Math.sqrt(b.sc);
+      P.push({k:'fx',x:fx_+Math.cos(a_)*18*b.sc*Math.random(),y:fy+Math.sin(a_)*5*b.sc,vx:Math.cos(a_)*v*.5,vy:-(60+Math.random()*120)*Math.sqrt(b.sc),g:-20,
+        life:-Math.random()*.15,max:.6+Math.random()*.35,s0:sB*1.2,s1:sB*.6,halo:i%2===0})}
+    P.push({k:'boom',x:bx,y:by,life:0,max:.35,r:34*b.sc});return sleep(560)}}
+async function hit(c,dmg){c.flash=1;c.shake=4;const[hx,hy]=at(c,c.body);P.push({k:'boom',x:hx,y:hy,life:0,max:.3,r:26*c.sc});
+  for(let i=0;i<18;i++)P.push({k:'fx',x:hx,y:hy,vx:(Math.random()-.5)*160*Math.sqrt(c.sc),vy:-Math.random()*130*Math.sqrt(c.sc),g:280,life:0,max:.4+Math.random()*.3,sz:c.sc*1.8+1,halo:i%3===0})
+  await sleep(160);c.flash=.7;await sleep(120);c.hp=Math.max(0,c.hp-dmg);hpUI();await sleep(620)}
+async function ko(c){await tween(900,k=>{c.sink=k*10*c.sc*.4;c.alpha=1-k});for(let i=0;i<20;i++)spawnEmber(c)}
+async function reset(){FOE.hp=FOE.max;ME.hp=ME.max;MOVES.forEach(m=>m.pp=m.max);ppUI();FOE.sink=0;ME.sink=0;ME.alpha=1;hpUI();
+  await tween(700,k=>{FOE.alpha=k});say('Un\'altra volpe di fuoco esce dalla nebbia!');await sleep(1200);say('Che cosa fa la tua volpe?');lock(false)}
+async function turn(i){const m=MOVES[i];if(m.pp<=0)return;lock(true);m.pp--;ppUI();
+  say('La tua volpe usa '+m.n+'!');await sleep(350);await lunge(ME,14,-7);await fx(m.fx,ME,FOE);await back(ME);
+  await hit(FOE,Math.round(m.pow*(.85+Math.random()*.15)));
+  if(FOE.hp<=0){say('La volpe di fuoco selvatica non ce la fa più!');await ko(FOE);await sleep(1300);await reset();return}
+  const e=FOE_MOVES[(Math.random()*FOE_MOVES.length)|0];say('La volpe selvatica usa '+e.n+'!');await sleep(450);
+  await lunge(FOE,-8,4);await fx(e.fx,FOE,ME);await back(FOE);await hit(ME,Math.round(e.pow*(.85+Math.random()*.15)));
+  if(ME.hp<=0){say('La tua volpe non ce la fa più! Si riposa e ci riprova.');await sleep(1500);FOE.alpha=0;await reset();return}
+  say('Che cosa fa la tua volpe?');lock(false)}
+btns.forEach((b,i)=>b.addEventListener('click',()=>turn(i)));
+
+// ------------------------------------------------------------------ da vicino
+function zoom(id,key,blink){const c=$(id),gg=c.getContext('2d');return t=>{const sh=S[key];if(!sh.img)return;const D=Math.min(2,devicePixelRatio||1),w=Math.round(c.clientWidth*D);
+  if(c.width!==w){c.width=c.height=w}gg.clearRect(0,0,w,w);let k=Math.floor((w-12*D)/sh.w);const smooth=k<1;if(smooth)k=(w-12*D)/sh.w;
+  let f=reduce?0:Math.floor(t*sh.fps)%(sh.giro||sh.n);if(blink&&sh.occhi_chiusi!=null&&(t%3.4)>3.2)f=sh.occhi_chiusi;
+  const x=Math.round((w-sh.w*k)/2),y=Math.round((w-sh.h*k)/2);gg.imageSmoothingEnabled=smooth;gg.drawImage(sh.img,f*sh.w,0,sh.w,sh.h,x,y,sh.w*k,sh.h*k)}}
+const Z=[zoom('zDav','davanti',true),zoom('zSpa','spalle'),zoom('zOld','prima')];
+(function zl(now){const t=reduce?0:now/1000;Z.forEach(z=>z(t));requestAnimationFrame(zl)})(performance.now());
+
+Promise.all(Object.keys(S).map(prep)).then(()=>{L=bake();hpUI();ppUI();lock(true);FOE.alpha=0;requestAnimationFrame(frame);
+  tween(900,k=>{FOE.alpha=k}).then(()=>sleep(900)).then(()=>{say('Che cosa fa la tua volpe?');lock(false)})});
+})();
+</script>
