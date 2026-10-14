@@ -70,10 +70,10 @@ const SCE_BOCCA=[{id:'nessuna',n:'Nessuna',d:'Come sempre: parla con gli occhi.'
   {id:'denti',n:'Denti',d:'Un sorriso con tutti i denti.'},{id:'sorpreso',n:'Sorpreso',d:'Oh! Un forziere!'},{id:'neutra',n:'Serio',d:'Concentrato sulla prossima stanza.'}];
 const SCE_SEGNI=[{id:'nessuno',n:'Nessuno',d:'Il viso pulito.'},{id:'cicatrice',n:'Cicatrice',d:'Un ricordo del primo Golem, chiuso da tempo.'},
   {id:'graffio',n:'Graffio',d:'Un pipistrello passato troppo vicino.'},{id:'lentiggini',n:'Lentiggini',d:'Un cielo di lentiggini sulle guance.'},
-  {id:'pittura',n:'Pittura',d:'Due strisce blu, come i guerrieri antichi.'},{id:'cerotto',n:'Cerotto',d:'Si è sbucciato e non l\'ha detto a nessuno.'},
-  {id:'runa',n:'Runa',d:'Una runa di muschio che brilla piano sulla guancia.'},{id:'neo',n:'Neo',d:'Un piccolo neo vicino alla bocca.'},
+  {id:'pittura',n:'Pittura',d:'Due strisce blu, come i guerrieri antichi.',dc:'Due strisce dipinte, come i guerrieri antichi.'},{id:'cerotto',n:'Cerotto',d:'Si è sbucciato e non l\'ha detto a nessuno.'},
+  {id:'runa',n:'Runa',d:'Una runa di muschio che brilla piano sulla guancia.',dc:'Una runa che brilla piano sulla guancia.'},{id:'neo',n:'Neo',d:'Un piccolo neo vicino alla bocca.'},
   {id:'croce',n:'Croce',d:'Una cicatrice a croce: lo Yeti graffia forte.'},{id:'lacrima',n:'Lacrima',d:'Una lacrima dipinta, come i giullari.'},
-  {id:'stella',n:'Stella',d:'Una stella d\'oro dipinta sulla guancia.'},{id:'baffi',n:'Baffi da gatto',d:'Tre baffi per guancia, dipinti col carbone.'},
+  {id:'stella',n:'Stella',d:'Una stella d\'oro dipinta sulla guancia.',dc:'Una stella dipinta sulla guancia.'},{id:'baffi',n:'Baffi da gatto',d:'Tre baffi per guancia, dipinti col carbone.',dc:'Tre baffi per guancia, dipinti col pennello.'},
   {id:'macchia',n:'Voglia',d:'Una macchia sulla tempia: ce l\'ha da quando è nato.'}];
 // (the first, «Corti», is the hero of always: under the hood nothing of them shows)
 const SCE_CAPELLI=[{id:'nascosti',n:'Corti',d:'Corti e in ordine: col cappuccio alzato restano tutti sotto.'},{id:'ciuffo',n:'Ciuffo',d:'Un ciuffo ribelle che scappa sempre fuori.'},
@@ -90,10 +90,27 @@ const SCE_BARBA=[{id:'nessuna',n:'Nessuna',d:'Il viso liscio di sempre.'},{id:'b
   {id:'baffoni',n:'Baffoni',d:'Baffoni arricciati, da vero esploratore.'},{id:'pizzetto',n:'Pizzetto',d:'Un pizzetto a punta sul mento.'},
   {id:'barbetta',n:'Barbetta',d:'Una barbetta corta lungo la mascella.'},{id:'barba',n:'Barba',d:'Una barba folta: tiene caldo nelle notti dei Picchi.'},
   {id:'lunga',n:'Barba lunga',d:'Lunga e morbida, come i vecchi saggi.'},{id:'intrecciata',n:'Intrecciata',d:'Lunga, con una treccia e un nastro in fondo.'}];
+// the colours of their own (Denis, 14 October: «oltre la grandezza si può selezionare il colore degli occhi, capelli ecc»): the first of each
+// list follows something else (sp: the hair's, the mark's own, the one the game picks so that it stands out from the mantle) and shows it
+const SCE_COLPEL=[{id:'capelli',n:'Come i capelli',sp:1},...SCE_COLCAP];
+const SCE_COLPIT=[{id:'naturale',n:'Naturale',sp:1},{id:'rosso',n:'Rosso',c:'#d8443a'},{id:'arancio',n:'Arancio',c:'#ee8a2a'},{id:'oro',n:'Oro',c:'#f2c23e'},
+  {id:'verde',n:'Verde',c:'#46b85a'},{id:'azzurro',n:'Azzurro',c:'#5fb4f0'},{id:'blu',n:'Blu',c:'#3f68d0'},{id:'viola',n:'Viola',c:'#9058d0'},{id:'rosa',n:'Rosa',c:'#ee7aa8'},
+  {id:'bianco',n:'Bianco',c:'#f2ede2'},{id:'nero',n:'Nero',c:'#2c2830'}];
+const SCE_COLBOC=[{id:'naturale',n:'Naturale',sp:1},{id:'rosso',n:'Rosso',c:'#c8323c'},{id:'rosa',n:'Rosa',c:'#e0708a'},{id:'corallo',n:'Corallo',c:'#e8684a'},
+  {id:'prugna',n:'Prugna',c:'#7a2e5a'},{id:'viola',n:'Viola',c:'#7a48b0'},{id:'blu',n:'Blu',c:'#3a58b0'},{id:'nero',n:'Nero',c:'#2a2026'}];
+const SCE_COLACC=[{id:'auto',n:'Automatico',sp:1},{id:'rosso',n:'Rosso',c:'#d24b3e'},{id:'arancio',n:'Arancio',c:'#e8862a'},{id:'oro',n:'Oro',c:'#f0c64a'},
+  {id:'verde',n:'Verde',c:'#4aa84e'},{id:'azzurro',n:'Azzurro',c:'#4fa8e0'},{id:'blu',n:'Blu',c:'#3f6ad0'},{id:'viola',n:'Viola',c:'#8a5ac8'},{id:'rosa',n:'Rosa',c:'#e87aa8'},
+  {id:'bianco',n:'Bianco',c:'#f0ebe0'},{id:'nero',n:'Nero',c:'#2e2a30'}];
+// the marks that take a colour, with their own (the scars, the freckles, the mole and the birthmark stay as they are)
+const SCE_MARKCOL={pittura:'#3f86d8',runa:'#5fe07c',lacrima:'#5fb4f0',stella:'#f6c94b',baffi:'#4a3020',cerotto:'#f6dcae'};
+// the accessories with a colour of their own when «Automatico» (the stones of the crown); the others take the one that stands out
+const SCE_ACCFIX={benda:'#2a211c',occhialetti:'#d4a84a',maschera:'#3a2f45',coroncina:'#e5484d'};
 const SCE_ORECCHIE=[{id:'tonde',n:'Tonde',d:'Orecchie tonde: col cappuccio alzato restano sotto.'},{id:'punta',n:'A punta',d:'Orecchie a punta da elfo: escono dal cappuccio.'},
   {id:'lunghe',n:'Lunghe',d:'Lunghe e a punta: sentono un goblin a cento passi.'},{id:'gatto',n:'Da gatto',d:'Orecchie da gatto: sul cappuccio, o tra i capelli.'},
   {id:'orso',n:'Da orso',d:'Due orecchie tonde da orsetto.'},{id:'coniglio',n:'Da coniglio',d:'Lunghe orecchie da coniglio, sempre all\'erta.'}];
-const SCE_CAPPUCCIO=[{id:'su',n:'Alzato',d:'Il cappuccio in testa, come sempre: pronto per la cripta.'},{id:'giu',n:'Abbassato',d:'Il cappuccio sulle spalle: si vedono i capelli e le orecchie.'}];
+// (Denis, 14 October: «se non si seleziona il cappuccio toglilo completamente dall'outfit»: without it nothing of the hood is left, not even
+// on the shoulders; an old «giu», the hood lowered, is read as «senza»)
+const SCE_CAPPUCCIO=[{id:'su',n:'Alzato',d:'Il cappuccio in testa, come sempre: pronto per la cripta.'},{id:'senza',n:'Senza',d:'Niente cappuccio: si vedono i capelli e le orecchie.'}];
 const SCE_ACC=[{id:'nessuno',n:'Nessuno',d:'Niente di più.'},{id:'benda',n:'Benda',d:'Un occhio coperto: l\'altro vede per due.'},
   {id:'occhialetti',n:'Occhialetti',d:'Tondi e d\'oro, per leggere le rune.'},{id:'sciarpa',n:'Sciarpa',d:'Fatta a maglia, per le notti fredde dei Picchi.'},
   {id:'piuma',n:'Piuma',d:'Una piuma infilata nel cappuccio, o tra i capelli.'},{id:'fascia',n:'Fascia',d:'Una fascia legata dietro la testa.'},
@@ -101,7 +118,7 @@ const SCE_ACC=[{id:'nessuno',n:'Nessuno',d:'Niente di più.'},{id:'benda',n:'Ben
   {id:'maschera',n:'Maschera',d:'Una maschera da bandito: nessuno ti riconoscerà.'},{id:'collana',n:'Collana',d:'Perline colorate e tre zanne di lupo.'},
   {id:'coroncina',n:'Coroncina',d:'Una piccola corona d\'oro: il re della cripta.'}];
 // the parts, in the order of the tabs (the camera goes from the whole hero to the head, to the face and back to the shoulders): key in the
-// look, the list, the colours (a second key; cshare: the hair's, shown here too), the size (a key of look.k), how the camera looks at him
+// look, the list, the colours (a second key; the first colour may follow something else, sp), the size (a key of look.k), how the camera looks at him
 // (face: close on the face; head: the whole head, turning; bust: head and shoulders; else the whole hero) and how its tiles are drawn (prev)
 const SCE_CATS=[{id:'manto',n:'Mantello',d:'Il colore del mantello: lo cambi quando vuoi nel Profilo.',prev:'body'},
   {id:'cappuccio',n:'Cappuccio',list:SCE_CAPPUCCIO,key:'cappuccio',cam:'bust',prev:'head'},
@@ -109,21 +126,26 @@ const SCE_CATS=[{id:'manto',n:'Mantello',d:'Il colore del mantello: lo cambi qua
   {id:'orecchie',n:'Orecchie',list:SCE_ORECCHIE,key:'orecchie',size:'orecchie',cam:'head',prev:'head'},
   {id:'pelle',n:'Pelle',list:SCE_PELLE,key:'pelle',cam:'face',prev:'face'},
   {id:'occhi',n:'Occhi',list:SCE_OCCHI,key:'occhi',cols:SCE_IRIDE,ckey:'iride',cn:'Colore',size:'occhi',cam:'face',prev:'eyes'},
-  {id:'sopr',n:'Sopracciglia',list:SCE_SOPR,key:'sopr',size:'sopr',cam:'face',prev:'brows'},
-  {id:'bocca',n:'Bocca',list:SCE_BOCCA,key:'bocca',size:'bocca',cam:'face',prev:'mouth'},
-  {id:'segni',n:'Segni',list:SCE_SEGNI,key:'segno',size:'segno',cam:'face',prev:'marks'},
-  {id:'barba',n:'Barba',list:SCE_BARBA,key:'barba',cols:SCE_COLCAP,ckey:'colCap',cshare:1,cn:'Colore',size:'barba',cam:'bust',prev:'chin'},
-  {id:'acc',n:'Accessori',list:SCE_ACC,key:'acc',cam:'bust',prev:'bust'}];
+  {id:'sopr',n:'Sopracciglia',list:SCE_SOPR,key:'sopr',cols:SCE_COLPEL,ckey:'colSopr',cn:'Colore',size:'sopr',cam:'face',prev:'brows'},
+  {id:'bocca',n:'Bocca',list:SCE_BOCCA,key:'bocca',cols:SCE_COLBOC,ckey:'colBocca',cn:'Colore',size:'bocca',cam:'face',prev:'mouth'},
+  {id:'segni',n:'Segni',list:SCE_SEGNI,key:'segno',cols:SCE_COLPIT,ckey:'colSegno',cn:'Colore',size:'segno',cam:'face',prev:'marks'},
+  {id:'barba',n:'Barba',list:SCE_BARBA,key:'barba',cols:SCE_COLPEL,ckey:'colBarba',cn:'Colore',size:'barba',cam:'bust',prev:'chin'},
+  {id:'acc',n:'Accessori',list:SCE_ACC,key:'acc',cols:SCE_COLACC,ckey:'colAcc',cn:'Colore',cam:'bust',prev:'bust'}];
 const SCE_CAT=Object.fromEntries(SCE_CATS.map(c=>[c.id,c]));
-const LOOK_DEF={pelle:'pesca',occhi:'tondi',iride:'scuri',sopr:'nessuna',bocca:'nessuna',segno:'nessuno',capelli:'nascosti',colCap:'castani',barba:'nessuna',orecchie:'tonde',cappuccio:'su',acc:'nessuno'};
+const LOOK_DEF={pelle:'pesca',occhi:'tondi',iride:'scuri',sopr:'nessuna',bocca:'nessuna',segno:'nessuno',capelli:'nascosti',colCap:'castani',barba:'nessuna',orecchie:'tonde',cappuccio:'su',acc:'nessuno',
+  colSopr:'capelli',colBocca:'naturale',colSegno:'naturale',colBarba:'capelli',colAcc:'auto'};
 // the sizes: from .7 to 1.3, 1 as drawn
 const LOOK_K=['capelli','occhi','sopr','bocca','segno','barba','orecchie'],LOOK_KMIN=.7,LOOK_KMAX=1.3;
 const lkFind=(L,id)=>L.find(o=>o.id===id)||L[0];
-const LOOK_LIST={pelle:SCE_PELLE,occhi:SCE_OCCHI,iride:SCE_IRIDE,sopr:SCE_SOPR,bocca:SCE_BOCCA,segno:SCE_SEGNI,capelli:SCE_CAPELLI,colCap:SCE_COLCAP,barba:SCE_BARBA,orecchie:SCE_ORECCHIE,cappuccio:SCE_CAPPUCCIO,acc:SCE_ACC};
+const LOOK_LIST={pelle:SCE_PELLE,occhi:SCE_OCCHI,iride:SCE_IRIDE,sopr:SCE_SOPR,bocca:SCE_BOCCA,segno:SCE_SEGNI,capelli:SCE_CAPELLI,colCap:SCE_COLCAP,barba:SCE_BARBA,orecchie:SCE_ORECCHIE,cappuccio:SCE_CAPPUCCIO,acc:SCE_ACC,
+  colSopr:SCE_COLPEL,colBocca:SCE_COLBOC,colSegno:SCE_COLPIT,colBarba:SCE_COLPEL,colAcc:SCE_COLACC};
 // a part that is not there has no size (no brows, no mouth, no mark, no beard)
 const LOOK_NONE={sopr:'nessuna',bocca:'nessuna',segno:'nessuno',barba:'nessuna'};
 // a look with only known choices (anything else, or missing, is the part as it was); the sizes in their range, 1 for a part that is not there
-const sceLook=lk=>{const o={};for(const k in LOOK_DEF){const v=lk&&lk[k];o[k]=v&&LOOK_LIST[k].some(x=>x.id===v)?v:LOOK_DEF[k]}
+// the colour of a part that is not there is the colour of always (so it is not a change)
+const LOOK_CPART={colSopr:['sopr','nessuna'],colBocca:['bocca','nessuna'],colBarba:['barba','nessuna'],colAcc:['acc','nessuno']};
+const sceLook=lk=>{const o={};for(const k in LOOK_DEF){let v=lk&&lk[k];if(k==='cappuccio'&&v==='giu')v='senza';o[k]=v&&LOOK_LIST[k].some(x=>x.id===v)?v:LOOK_DEF[k]}
+  for(const k in LOOK_CPART){const[p,none]=LOOK_CPART[k];if(o[p]===none)o[k]=LOOK_DEF[k]}if(!SCE_MARKCOL[o.segno])o.colSegno=LOOK_DEF.colSegno;
   const K=lk&&lk.k||{};o.k={};for(const k of LOOK_K){const v=+K[k];o.k[k]=isFinite(v)&&v>0&&o[k]!==LOOK_NONE[k]?Math.round(Math.min(LOOK_KMAX,Math.max(LOOK_KMIN,v))*100)/100:1}return o};
 // how many parts differ from the hero of always (a size counts as one more)
 const sceLookN=lk=>{if(!lk)return 0;const L=sceLook(lk);let n=0;for(const k in LOOK_DEF)if(L[k]!==LOOK_DEF[k])n++;for(const k of LOOK_K)if(L.k[k]!==1)n++;return n};
@@ -133,8 +155,11 @@ const hxDist=(a,b)=>{const A=parseInt(a.slice(1),16),B=parseInt(b.slice(1),16);l
 function accCol(S){let best='#d24b3e',bd=-1;for(const c of['#d24b3e','#e8d6a8','#3f7fd0','#f0c64a']){const d=Math.min(hxDist(c,S.hood||'#23877d'),hxDist(c,S.body||'#2fb3a6'));if(d>bd){bd=d;best=c}}return best}
 // a style with the look on it (the hero's own skin stays with «Pesca»; nothing changes when every part is as it was)
 function sceLookStyle(S,lk){if(!lk||!sceLookN(lk))return S;const L=sceLook(lk),P=lkFind(SCE_PELLE,L.pelle),I=lkFind(SCE_IRIDE,L.iride),C=lkFind(SCE_COLCAP,L.colCap),k=L.k;
-  const look={eyes:L.occhi,iris:I.c,brows:L.sopr,browCol:hxMix(C.c,'#1b1612',.42),mouth:L.bocca,mark:L.segno,hair:L.capelli,hairCol:C.c,beard:L.barba,ears:L.orecchie,hood:L.cappuccio,
-    acc:L.acc,accCol:accCol(S),eyeK:k.occhi,browK:k.sopr,mouthK:k.bocca,markK:k.segno,hairK:k.capelli,beardK:k.barba,earK:k.orecchie};
+  // a colour picked for the part (the first of its list is the colour of always: none of its own)
+  const own=(Ls,id)=>{const o=lkFind(Ls,id);return o.sp?undefined:o.c},ac=own(SCE_COLACC,L.colAcc);
+  const look={eyes:L.occhi,iris:I.c,brows:L.sopr,browCol:hxMix(own(SCE_COLPEL,L.colSopr)||C.c,'#1b1612',.42),mouth:L.bocca,lipCol:own(SCE_COLBOC,L.colBocca),mark:L.segno,markCol:own(SCE_COLPIT,L.colSegno),
+    hair:L.capelli,hairCol:C.c,beard:L.barba,beardCol:own(SCE_COLPEL,L.colBarba),ears:L.orecchie,hood:L.cappuccio,
+    acc:L.acc,accCol:ac||accCol(S),accFix:ac,eyeK:k.occhi,browK:k.sopr,mouthK:k.bocca,markK:k.segno,hairK:k.capelli,beardK:k.barba,earK:k.orecchie};
   const o={...S,look};if(P.c)o.skin=P.c;if(S.ponytail&&L.colCap!==LOOK_DEF.colCap)o.hair=C.c;return o}
 let heroStyleBase=heroStyle;
 {const _hs=heroStyle;heroStyleBase=function(){const K=SAVE.skin&&SKINS[SAVE.skin];if(K&&K.crea&&!(SAVE.skins&&SAVE.skins[SAVE.skin]))sceOwnSkins();return _hs.apply(this,arguments)};
@@ -303,7 +328,9 @@ function sceCss(){if($('sceCss'))return;const s=document.createElement('style');
 .sceSw{flex:none;width:clamp(17px,5.3vw,22px);height:clamp(17px,5.3vw,22px);margin:0;padding:0;border-radius:50%;border:2px solid #120e0b;background:radial-gradient(circle at 35% 30%,rgba(255,255,255,.35),rgba(255,255,255,0) 45%),var(--c);
   cursor:pointer;box-shadow:0 0 0 1px rgba(216,180,106,.3);transition:transform .15s,box-shadow .2s}
 .sceSw.on{transform:scale(1.18);box-shadow:0 0 0 2px var(--gh),0 0 10px rgba(255,205,130,.6)}.sceSw.no{background:radial-gradient(circle at 35% 30%,#6a5a50,#1b1612 70%)}
-.sceSws.off{opacity:.3;pointer-events:none}
+.sceSw.sp{position:relative}.sceSw.sp::after{content:'';position:absolute;inset:2px;border-radius:50%;border:1.5px dashed rgba(255,250,235,.9)}
+.sceSws.many .sceSw{width:clamp(15px,4.7vw,20px);height:clamp(15px,4.7vw,20px)}
+.sceSws.off,.sceRowC.off{opacity:.3;pointer-events:none}
 .sceK{-webkit-appearance:none;appearance:none;flex:1;min-width:0;height:28px;margin:0;padding:0;background:none;cursor:pointer}
 .sceK:focus{outline:none}
 .sceK::-webkit-slider-runnable-track{height:4px;border-radius:2px;background:linear-gradient(90deg,transparent calc(50% - 1px),rgba(255,240,200,.7) calc(50% - 1px) calc(50% + 1px),transparent calc(50% + 1px)),linear-gradient(90deg,var(--g) 0 var(--v,50%),rgba(216,180,106,.2) var(--v,50%) 100%)}
@@ -461,7 +488,7 @@ function sceLookUI(){const el=SCE.el,C=SCE_CAT[SCE.cat],D=el.querySelector('.sce
   const tabs=`<div class="sceTabs" role="tablist" aria-label="Le parti">${sceCats().map(c=>`<button class="sceTab" data-cat="${c.id}" role="tab" aria-label="${c.n}" title="${c.n}">${SCE_ICON[c.id]}</button>`).join('')}</div>`;
   const hd=`<div class="sceLkHd"><h3></h3><button class="sceIco" data-act="rnd" aria-label="Un aspetto a caso" title="Un aspetto a caso">${SCE_DICE}</button><button class="sceIco" data-act="reset" aria-label="Questa parte com'era" title="Questa parte com'era">${SCE_UNDO}</button></div><p class="sceLkP"></p>`;
   const tiles=`<div class="sceTiles" role="listbox" aria-label="${C.n}">${opts.map(o=>`<button class="sceTile" data-id="${o.id}" role="option" aria-label="${o.n}" title="${o.n}"><canvas aria-hidden="true"></canvas></button>`).join('')}</div>`;
-  const rc=C.cols?`<div class="sceRowC"><span>${C.cn}<em></em></span><div class="sceSws">${C.cols.map(o=>`<button class="sceSw${o.c?'':' no'}" data-sw="${o.id}" style="--c:${o.c||'#1b1612'}" aria-label="${o.n}" title="${o.n}"></button>`).join('')}</div></div>`:'';
+  const rc=C.cols?`<div class="sceRowC"><span>${C.cn}<em></em></span><div class="sceSws${C.cols.length>10?' many':''}">${C.cols.map(o=>`<button class="sceSw${o.sp?' sp':o.c?'':' no'}" data-sw="${o.id}" style="--c:${o.c||'#1b1612'}" aria-label="${o.n}" title="${o.n}"></button>`).join('')}</div></div>`:'';
   const rk=C.size?`<div class="sceRowK"><span>Grandezza</span><input class="sceK" type="range" min="${Math.round(LOOK_KMIN*100)}" max="${Math.round(LOOK_KMAX*100)}" step="1" value="100" aria-label="Grandezza"><button class="sceKv" data-act="k1" aria-label="Grandezza di sempre" title="Grandezza di sempre"></button></div>`:'';
   D.style.setProperty('--c','#f6e2a8');D.innerHTML=tabs+hd+tiles+rc+rk;
   const T=D.querySelector('.sceTiles');T.classList.remove('sceSwap');void T.offsetWidth;T.classList.add('sceSwap');
@@ -480,22 +507,31 @@ function sceLookSync(){const el=SCE.el;if(!el||SCE.step!==2)return;const C=SCE_C
   for(const t of D.querySelectorAll('.sceTile')){const on=t.dataset.id===o.id;t.classList.toggle('on',on);t.setAttribute('aria-selected',on?'true':'false')}
   D.querySelector('.sceLkHd h3').innerHTML=`<small>${C.n}</small>${o.n}`;
   // a line about it (the heroes' own pieces stay)
-  let p=o.d||C.d||'';const dr=SCE.sel==='druida';
+  let p=o.d||C.d||'';const dr=SCE.sel==='druida';if(o.dc&&C.cols&&!lkFind(C.cols,SCE.look[C.ckey]).sp)p=o.dc;
   if(C.id==='manto'&&!o.id)p=`I colori di sempre ${(SCE_INFO[SCE.sel]||SCE_INFO.arciere).the.replace(/^l'/,"dell'").replace(/^la /,'della ').replace(/^il /,'del ')}. Lo cambi quando vuoi nel Profilo.`;
   else if(C.id==='occhi'&&dr)p='Il Druida tiene i suoi occhi verdi: cambiano la forma e la grandezza.';
   else if(sceHides(SCE.sel,C.key,o.id))p=`Sotto l'elmo del Balestriere ${C.id==='sopr'?'le sopracciglia non si vedono':C.id==='orecchie'?'queste orecchie non si vedono':o.id==='fascia'?'la fascia non si vede':'la corona non si vede'}: sugli altri eroi sì.`;
   else if(C.id==='capelli'&&SCE.sel==='cacciatrice'&&o.id==='nascosti')p='Il colore va anche alla coda della Cacciatrice.';
-  else if(C.id==='barba'&&o.id!=='nessuna')p+=' Ha il colore dei capelli.';
   D.querySelector('.sceLkP').textContent=p;
-  if(C.cols){const S=D.querySelector('.sceSws'),off=C.id==='occhi'&&dr;S.classList.toggle('off',off);for(const w of S.children){const on=w.dataset.sw===SCE.look[C.ckey];w.classList.toggle('on',on);w.setAttribute('aria-pressed',on?'true':'false')}
-    D.querySelector('.sceRowC em').textContent=off?'Verdi':lkFind(C.cols,SCE.look[C.ckey]).n}
+  if(C.cols){const R=D.querySelector('.sceRowC'),S=R.querySelector('.sceSws'),sp=sceColSp(C);R.classList.toggle('off',sceColOff(C));
+    for(const w of S.children){const on=w.dataset.sw===SCE.look[C.ckey];w.classList.toggle('on',on);w.setAttribute('aria-pressed',on?'true':'false');if(w.classList.contains('sp'))w.style.setProperty('--c',sp)}
+    R.querySelector('em').textContent=C.id==='occhi'&&dr?'Verdi':lkFind(C.cols,SCE.look[C.ckey]).n}
   if(C.size){const R=D.querySelector('.sceRowK'),inp=R.querySelector('.sceK'),v=Math.round(sceSizeOf(C)*100);R.classList.toggle('off',SCE.look[C.key]===LOOK_NONE[C.key]||sceHides(SCE.sel,C.key,SCE.look[C.key]));if(+inp.value!==v)inp.value=v;sceKShow(R,v)}
   D.querySelector('[data-act="reset"]').disabled=!sceCatMod(C);
   sceBarberBtn();sceTilesQueue()}
+// a part whose colour cannot change now: the Druida's eyes, a part that is not there or does not show, a mark that takes no colour
+function sceColOff(C){if(!C.cols)return true;const v=SCE.look[C.key];if(C.id==='occhi')return SCE.sel==='druida';if(C.id==='segni')return!SCE_MARKCOL[v];
+  return v===LOOK_NONE[C.key]||v==='nessuno'||sceHides(SCE.sel,C.key,v)}
+// the colour shown by the first swatch (the one that follows something else)
+function sceColSp(C){const L=SCE.look,hair=lkFind(SCE_COLCAP,L.colCap).c;
+  if(C.ckey==='colSopr')return hxMix(hair,'#1b1612',.42);if(C.ckey==='colBarba')return hair;if(C.ckey==='colBocca')return'#8a3a2e';
+  if(C.ckey==='colSegno')return SCE_MARKCOL[L.segno]||SCE_MARKCOL.pittura;
+  if(C.ckey==='colAcc'){if(SCE_ACCFIX[L.acc])return SCE_ACCFIX[L.acc];try{return accCol(sceStyle(SCE.sel||'arciere'))}catch(e){return'#d24b3e'}}
+  return'#1b1612'}
 function sceKShow(R,v){const b=R.querySelector('.sceKv');b.textContent=v+'%';b.classList.toggle('n',v===100);R.querySelector('.sceK').style.setProperty('--v',((v-LOOK_KMIN*100)/((LOOK_KMAX-LOOK_KMIN)*100)*100).toFixed(1)+'%')}
 // how a tile looks at the hero: his head alone (testa) or the hero from the waist up (body); f: the face; s: the radius of the head in
 // tiles; (x, y): where the centre of the head goes; hood: the hood lowered (the hair shows whole)
-const SCE_TILE={head:{f:Math.PI/2-.45,s:.32,x:.5,y:.58},hair:{f:Math.PI/2-.75,s:.32,x:.47,y:.5,hood:'giu'},face:{f:Math.PI/2-.3,s:.58,x:.35,y:.36},
+const SCE_TILE={head:{f:Math.PI/2-.45,s:.32,x:.5,y:.58},hair:{f:Math.PI/2-.75,s:.32,x:.47,y:.5,hood:'senza'},face:{f:Math.PI/2-.3,s:.58,x:.35,y:.36},
   marks:{f:Math.PI/2,s:.74,x:.5,y:.3},eyes:{f:Math.PI/2-.3,s:.92,x:.24,y:.4},brows:{f:Math.PI/2-.3,s:.92,x:.24,y:.5},mouth:{f:Math.PI/2-.3,s:1.1,x:.18,y:-.1},
   chin:{f:Math.PI/2-.35,s:.42,x:.4,y:.22},bust:{body:1,f:Math.PI/2-.4,s:.34,x:.5,y:.43},body:{body:1,f:Math.PI/2-.4,s:.27,x:.5,y:.36}};
 // the hero's style with that choice in that part (the rest of the look as it is now)
@@ -522,7 +558,7 @@ const sceLookChanged=()=>JSON.stringify(sceLook(SCE.look))!==JSON.stringify(sceL
 function sceCatPick(id){if(SCE.done||!SCE.on||SCE.step!==2||!SCE_CAT[id]||(SCE.barber&&id==='manto'))return;initAudio();if(SCE.cat!==id){sceSnd('move');SCE.cat=id;sceLookUI()}}
 // a choice (col: a colour of the part)
 function sceLookPick(id,col){if(SCE.done||!SCE.on||SCE.step!==2)return;const C=SCE_CAT[SCE.cat];if(C.id==='manto'&&!col){sceMantoPick(id);return}
-  const key=col?C.ckey:C.key,L=col?C.cols:C.list;if(!key||!L||!L.some(o=>o.id===id)||(col&&C.id==='occhi'&&SCE.sel==='druida'))return;initAudio();sceSnd('move');
+  const key=col?C.ckey:C.key,L=col?C.cols:C.list;if(!key||!L||!L.some(o=>o.id===id)||(col&&sceColOff(C)))return;initAudio();sceSnd('move');
   if(SCE.look[key]!==id){SCE.look[key]=id;SCE.pulse=sceT();const o=lkFind(L,id),rgb=o.c?rgbStr(o.c):'255,226,180';for(let i=0;i<(LOWFX||SCE.low?4:10);i++)sceEmber(rgb,true);if(SCE.hero&&C.cam==='face')SCE.hero.blink=sceT()}
   sceLookSync()}
 // the size (v: .7 to 1.3). While the finger slides only the hero and the numbers follow; the tiles are drawn again when it lets go
@@ -542,7 +578,8 @@ function sceLookReset(){if(SCE.done||!SCE.on||SCE.step!==2)return;const C=SCE_CA
 function sceLookRandom(){if(SCE.done||!SCE.on||SCE.step!==2)return;initAudio();sceSnd('dice');
   const r=Math.random,any=L=>L[randi(0,L.length-1)].id,or=(L,none,p)=>r()<p?none:any(L.filter(o=>o.id!==none)),nat=['castani','neri','biondi','rossi','bianchi','cenere'];
   let L;do L={pelle:any(SCE_PELLE),occhi:any(SCE_OCCHI),iride:or(SCE_IRIDE,'scuri',.35),sopr:or(SCE_SOPR,'nessuna',.3),bocca:or(SCE_BOCCA,'nessuna',.3),segno:or(SCE_SEGNI,'nessuno',.45),
-    capelli:any(SCE_CAPELLI),colCap:r()<.72?nat[randi(0,nat.length-1)]:any(SCE_COLCAP),barba:or(SCE_BARBA,'nessuna',.65),orecchie:or(SCE_ORECCHIE,'tonde',.55),cappuccio:r()<.62?'su':'giu',acc:or(SCE_ACC,'nessuno',.45)};
+    capelli:any(SCE_CAPELLI),colCap:r()<.72?nat[randi(0,nat.length-1)]:any(SCE_COLCAP),barba:or(SCE_BARBA,'nessuna',.65),orecchie:or(SCE_ORECCHIE,'tonde',.55),cappuccio:r()<.62?'su':'senza',acc:or(SCE_ACC,'nessuno',.45),
+    colSopr:r()<.75?'capelli':any(SCE_COLPEL),colBocca:r()<.7?'naturale':any(SCE_COLBOC),colSegno:r()<.6?'naturale':any(SCE_COLPIT),colBarba:r()<.75?'capelli':any(SCE_COLPEL),colAcc:r()<.5?'auto':any(SCE_COLACC)};
   while(!sceLookN(L));
   SCE.look=sceLook(L);if(!SCE.barber&&r()<.6)SCE.manto=any(SCE_MANTI);
   const t=sceT();SCE.pulse=t;if(SCE.hero)SCE.hero.blink=t;for(let i=0;i<(LOWFX||SCE.low?6:16);i++)sceEmber(['255,226,180','255,190,120','190,220,255'][i%3],true);
@@ -645,7 +682,7 @@ addEventListener('keydown',e=>{if(!SCE.on)return;e.stopImmediatePropagation();
   const s=SCE.step,C2=s===2&&SCE_CAT[SCE.cat],ids=s===1?SCE_IDS:s===2?(C2.id==='manto'?SCE_MANTI:C2.list).map(o=>o.id):s===3?SCE_GIFTS.map(g=>g.id):[],cur=s===1?SCE.sel:s===2?sceLookCur():SCE.gift,i=Math.max(0,ids.indexOf(cur)),c=e.code;
   const mv=d=>{e.preventDefault();if(!ids.length)return;const j=Math.max(0,Math.min(ids.length-1,i+d));if(s===1)scePick(ids[j]);else if(s===2)sceLookPick(ids[j]);else sceGiftPick(ids[j])};
   const part=d=>{e.preventDefault();const L=sceCats(),j=(L.findIndex(o=>o.id===SCE.cat)+d+L.length)%L.length;sceCatPick(L[j].id)};
-  const colour=d=>{e.preventDefault();if(!C2||!C2.cols)return;const L=C2.cols,j=(L.findIndex(o=>o.id===SCE.look[C2.ckey])+d+L.length)%L.length;sceLookPick(L[j].id,true)};
+  const colour=d=>{e.preventDefault();if(!C2||!C2.cols||sceColOff(C2))return;const L=C2.cols,j=(L.findIndex(o=>o.id===SCE.look[C2.ckey])+d+L.length)%L.length;sceLookPick(L[j].id,true)};
   const size=d=>{e.preventDefault();if(C2&&C2.size)sceLookSize(sceSizeOf(C2)+d*.05,true)};
   if(s===2&&(c==='ArrowLeft'||c==='KeyA'))part(-1);else if(s===2&&(c==='ArrowRight'||c==='KeyD'))part(1);
   else if(s===2&&(c==='KeyQ'||c==='KeyE'))colour(c==='KeyQ'?-1:1);

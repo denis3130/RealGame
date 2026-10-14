@@ -7,9 +7,10 @@ p.on('pageerror',e=>errs.push(e.message+' @'+((e.stack||'').split('\n')[1]||'').
 p.on('console',m=>{if(m.type()==='error')errs.push('console: '+m.text())});
 const today=new Date();const ds=today.getFullYear()+'-'+(today.getMonth()+1)+'-'+today.getDate();
 await p.goto('file://'+__dirname+'/test.html');await p.waitForTimeout(1500);await p.screenshot({path:'fresh_a.png'});
-// the first launch: the intro (a tap starts it, it plays to the end), then the making of the hero (65-scelta-eroe.js) in four steps: the
-// Arciere, «Avanti» (his mantle), «Avanti» (the first gift), «Avanti» (the name offered), «Inizia», and the menu
-await p.mouse.click(195,600);await p.waitForTimeout(8000);await p.screenshot({path:'fresh_b.png'});await p.waitForTimeout(19000);
+// the first launch: the prologue (66-prologo.js: a tap starts it, it plays to the end), then the making of the hero (65-scelta-eroe.js)
+// in four steps: the Arciere, «Avanti» (his look), «Avanti» (the first gift), «Avanti» (the name offered), «Inizia», and the menu
+await p.mouse.click(195,600);await p.waitForTimeout(8000);await p.screenshot({path:'fresh_b.png'});
+for(let i=0;i<75&&await p.evaluate(()=>__E('INTRO.on'));i++)await p.waitForTimeout(1000);await p.waitForTimeout(2000);
 console.log('choice',await p.evaluate(()=>__E(`SCE.on`)));await p.screenshot({path:'fresh_c.png'});
 for(let i=0;i<3;i++){await p.click('.sceGo',{force:true});await p.waitForTimeout(700)}await p.click('.sceGo',{force:true});await p.waitForTimeout(5200);
 console.log('afterIntro',await p.evaluate(()=>__E(`JSON.stringify({intro:INTRO.on,menu:!$('menu').hidden,save:SAVE})`)));

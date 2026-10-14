@@ -84,4 +84,5 @@ js/62-eroe-3d.js
 js/63-zombie.js
 js/64-nemici-3d.js
 js/65-scelta-eroe.js
+js/66-prologo.js
 coda.html

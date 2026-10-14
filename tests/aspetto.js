@@ -1,8 +1,8 @@
 // L'aspetto dell'eroe (passo «Aspetto» della creazione e il barbiere: src/js/65-scelta-eroe.js; i pezzi in sprite/eroe3d/disegno_eroe.js):
 // ogni scelta di ogni parte nelle quattro direzioni, in fogli PNG da guardare (tests/as_<parte>.png; capelli, orecchie, barba e accessori
-// anche col cappuccio abbassato: as_<parte>_giu.png), i colori, le grandezze (as_grandezze.png), più due aspetti completi sui quattro eroi
-// (as_eroi.png, as_eroi_viso.png). Controlla che nessuna scelta (e nessuna grandezza) dia errori in nessuna direzione né in nessuna mossa,
-// che i pezzi si vedano davanti e non attraversino la testa da dietro, che i riquadri della schermata si disegnino tutti, e che senza
+// anche senza cappuccio: as_<parte>_senza.png), i colori di ogni parte, le grandezze (as_grandezze.png), più due aspetti completi sui quattro eroi
+// (as_eroi.png, as_eroi_viso.png). Controlla che nessuna scelta (né grandezza né colore) dia errori in nessuna direzione né in nessuna mossa,
+// che i pezzi si vedano davanti e non attraversino la testa da dietro, che ogni colore cambi il disegno, che i riquadri della schermata si disegnino tutti, e che senza
 // ritocchi lo stile dell'eroe resti lo stesso oggetto (eroe identico al pixel).
 // Uso: python3 tests/mk.py && node tests/aspetto.js [eroe]
 const {chromium}=require('playwright');const path=require('path'),fs=require('fs'),http=require('http');
@@ -33,18 +33,19 @@ let fails=0;const ok=(c,m)=>{console.log((c?'  ok  ':'  NO  ')+m);if(!c)fails++}
   const GS="(h,lk)=>{const s=sceLookStyle(heroStyle0(h),lk);return s.hid==='druida'&&!s.eyes?{...s,eyes:s.eyeCol}:s}";
   const MODE={cappuccio:'',capelli:'head',orecchie:'head',pelle:'head',occhi:'head',sopr:'head',bocca:'head',segni:'head',barba:'mid',acc:''};
   const DOWN={capelli:1,orecchie:1,barba:1,acc:1};
-  // every choice of every part, on its own (and with the hood lowered where it matters); the colours
+  // every choice of every part, on its own (and without the hood where it matters); the colours of the part, on a choice that shows them
+  const CB={occhi:{occhi:'grandi'},capelli:{capelli:'ciuffo',cappuccio:'senza'},sopr:{sopr:'folte'},bocca:{bocca:'sorrisone'},segni:{segno:'pittura'},barba:{barba:'barba',cappuccio:'senza'},acc:{acc:'sciarpa'}};
   for(const C of L.cats){const rows=C.list.map(o=>[`${C.n}:\n${o.n}`,lk({[C.key]:o.id})]);
-    if(C.cols&&!C.cshare){const base=C.id==='occhi'?{occhi:'grandi'}:{capelli:'ciuffo',cappuccio:'giu'};for(const o of C.cols)rows.push([`${C.cn||'Colore'}:\n${o.n}`,lk({...base,[C.ckey]:o.id})])}
+    if(C.cols)for(const o of C.cols)rows.push([`${C.cn||'Colore'}:\n${o.n}`,lk({...(CB[C.id]||{}),[C.ckey]:o.id})]);
     await sheet(`as_${C.id}.png`,rows,HERO,MODE[C.id]);
-    if(DOWN[C.id])await sheet(`as_${C.id}_giu.png`,C.list.map(o=>[`${C.n}:\n${o.n}\ncappuccio giù`,lk({[C.key]:o.id,cappuccio:'giu'})]),HERO,MODE[C.id])}
+    if(DOWN[C.id])await sheet(`as_${C.id}_senza.png`,C.list.map(o=>[`${C.n}:\n${o.n}\nsenza cappuccio`,lk({[C.key]:o.id,cappuccio:'senza'})]),HERO,MODE[C.id])}
   // the sizes: the smallest, as drawn, the biggest
-  const SZ={capelli:['riccioli',{cappuccio:'giu'}],occhi:['grandi'],sopr:['folte'],bocca:['sorrisone'],segno:['lentiggini'],barba:['barba',{cappuccio:'giu'}],orecchie:['lunghe']};
+  const SZ={capelli:['riccioli',{cappuccio:'senza'}],occhi:['grandi'],sopr:['folte'],bocca:['sorrisone'],segno:['lentiggini'],barba:['barba',{cappuccio:'senza'}],orecchie:['lunghe']};
   const szRows=[];for(const k of L.K){const C=L.cats.find(c=>c.size===k),[id,more]=SZ[k];for(const v of[L.kmin,1,L.kmax])szRows.push([`${C.n} (${C.list.find(o=>o.id===id).n}):\n${Math.round(v*100)}%`,{...lk({[C.key]:id,...(more||{})}),k:{[k]:v}}])}
   await sheet('as_grandezze.png',szRows,HERO,'mid');
   // two whole looks on the four heroes (their own pieces stay: the Druida's antlers and green eyes, the Balestriere's helmet, the Cacciatrice's tail)
-  const A={pelle:'dorata',occhi:'decisi',iride:'azzurri',sopr:'decise',bocca:'ghigno',segno:'cicatrice',capelli:'frangia',colCap:'rossi',barba:'barbetta',orecchie:'punta',acc:'sciarpa'},
-    B={pelle:'scura',occhi:'grandi',iride:'ambra',sopr:'alzate',bocca:'sorriso',segno:'lentiggini',capelli:'riccioli',colCap:'bianchi',orecchie:'gatto',cappuccio:'giu',acc:'piuma',k:{occhi:1.15,capelli:1.1}};
+  const A={pelle:'dorata',occhi:'decisi',iride:'azzurri',sopr:'decise',bocca:'ghigno',segno:'cicatrice',capelli:'frangia',colCap:'rossi',barba:'barbetta',orecchie:'punta',acc:'sciarpa',colAcc:'verde',colBarba:'neri'},
+    B={pelle:'scura',occhi:'grandi',iride:'ambra',sopr:'alzate',bocca:'sorriso',segno:'lentiggini',capelli:'riccioli',colCap:'bianchi',orecchie:'gatto',cappuccio:'senza',acc:'piuma',colSopr:'neri',colBocca:'rosso',k:{occhi:1.15,capelli:1.1}};
   const heroes=['arciere','cacciatrice','balestriere','druida'],names=await E("Object.fromEntries(HEROES.map(h=>[h.id,h.name]))");
   await sheet('as_eroi.png',heroes.flatMap(h=>[[`${names[h]||h}\nsenza ritocchi`,null,h],[`${names[h]||h}\naspetto A`,A,h],[`${names[h]||h}\naspetto B`,B,h]]),HERO,'');
   await sheet('as_eroi_viso.png',heroes.flatMap(h=>[[`${names[h]||h}\naspetto A`,A,h],[`${names[h]||h}\naspetto B`,B,h]]),HERO,'head');
@@ -55,18 +56,26 @@ let fails=0;const ok=(c,m)=>{console.log((c?'  ok  ':'  NO  ')+m);if(!c)fails++}
   const r=await E(`(()=>{const bad=[],moves=['idle','walk','aim','shoot','hit','dash'],c=document.createElement('canvas');c.width=160;c.height=200;const g=c.getContext('2d'),sv=ctx;ctx=g;G.t=.7;
     const draw=(st,f,a,p)=>{g.clearRect(0,0,160,200);EROE.arciere(80,186,f,a,p,3.4,{style:st,moss:false});return g.getImageData(0,0,160,200).data};
     const diff=(d1,d2)=>{let n=0;for(let i=3;i<d1.length;i+=4)if(Math.abs(d1[i-3]-d2[i-3])+Math.abs(d1[i-2]-d2[i-2])+Math.abs(d1[i-1]-d2[i-1])+Math.abs(d1[i]-d2[i])>8)n++;return n};
-    let n=0,fr=0,bk=0;try{const GS=${GS};for(const h of ${JSON.stringify(heroes)}){const S0=GS(h,null);
+    let n=0,fr=0,bk=0,cl=0;
+    // the colours a style really draws with (a colour picked equal to the one of always changes nothing)
+    const EF=st=>{const L=st.look||{};return JSON.stringify([L.iris,L.browCol,L.beardCol||L.hairCol,L.hairCol,L.lipCol,L.markCol,L.accCol,SCE_ACCFIX[L.acc]?L.accFix||null:null])};
+    try{const GS=${GS};for(const h of ${JSON.stringify(heroes)}){const S0=GS(h,null);
       {const B=heroStyle0(h);if(sceLookStyle(B,{...LOOK_DEF})!==B||sceLookStyle(B,null)!==B||sceLookStyle(B,{...LOOK_DEF,k:{occhi:1}})!==B)bad.push(h+': senza ritocchi lo stile cambia')}
       const tries=[];for(const C of SCE_CATS){if(!C.list)continue;for(const o of C.list)if(o.id!==LOOK_DEF[C.key])tries.push({C,id:o.id,look:{...LOOK_DEF,[C.key]:o.id}})}
       for(const k of LOOK_K){const C=SCE_CATS.find(c=>c.size===k),o=C.list.find(x=>x.id!==LOOK_NONE[k]&&x.id!==LOOK_DEF[C.key])||C.list[1];for(const v of[LOOK_KMIN,LOOK_KMAX])tries.push({C,id:o.id+'@'+v,look:{...LOOK_DEF,[C.key]:o.id,k:{[k]:v}},size:1})}
+      const CB=${JSON.stringify({occhi:{occhi:'grandi'},capelli:{capelli:'ciuffo',cappuccio:'senza'},sopr:{sopr:'folte'},bocca:{bocca:'sorrisone'},segni:{segno:'pittura'},barba:{barba:'barba',cappuccio:'senza'},acc:{acc:'sciarpa'}})};
+      for(const C of SCE_CATS){if(!C.cols||(C.id==='occhi'&&h==='druida'))continue;const base={...LOOK_DEF,...CB[C.id]};
+        for(const o of C.cols)if(o.id!==LOOK_DEF[C.ckey])tries.push({C,id:C.ckey+':'+o.id,look:{...base,[C.ckey]:o.id},base,size:1})}
       for(const T of tries){const st=GS(h,T.look);
         for(const a of moves)for(let k=0;k<12;k++){const f=k/12*Math.PI*2;try{EROE.arciere(80,186,f,a,(k*.37)%1,3.4,{style:st,moss:false});n++}catch(e){bad.push(h+' '+T.id+' '+a+': '+e.message)}}
+        // a colour must change the picture (unless the piece does not show on this hero, or the colour is the one it had anyway)
+        if(T.base){const sb=GS(h,T.base);if(!sceHides(h,T.C.key,T.base[T.C.key])&&EF(sb)!==EF(st)){const d=diff(draw(sb,Math.PI/2-.4,'idle',.3),draw(st,Math.PI/2-.4,'idle',.3));if(d<3)bad.push(h+' '+T.id+': il colore non si vede ('+d+' px)');else cl++}}
         if(T.size)continue;
         // seen from the front the piece changes the picture; seen from straight behind a face piece must not show through the head
         const front=diff(draw(S0,Math.PI/2,'idle',.3),draw(st,Math.PI/2,'idle',.3));if(sceHides(h,T.C.key,T.id)){if(front>12)bad.push(h+' '+T.id+': nascosto per la scheda, ma davanti si vede ('+front+' px)')}else if(front<6)bad.push(h+' '+T.id+': davanti non si vede ('+front+' px)');else fr++;
         if(T.C.cam==='face'&&T.C.id!=='pelle'){const back=diff(draw(S0,-Math.PI/2,'idle',.3),draw(st,-Math.PI/2,'idle',.3));if(back>4)bad.push(h+' '+T.id+': da dietro si vede attraverso la testa ('+back+' px)');else bk++}}}}
-    finally{ctx=sv}return{bad,n,fr,bk}})()`);
-  ok(!r.bad.length,`${r.n} disegni (4 eroi, ogni scelta e grandezza, 6 mosse, 12 direzioni) senza errori; ${r.fr} scelte che si vedono davanti, ${r.bk} del viso nascoste da dietro`+(r.bad.length?' — '+r.bad.slice(0,40).join('; '):''));
+    finally{ctx=sv}return{bad,n,fr,bk,cl}})()`);
+  ok(!r.bad.length,`${r.n} disegni (4 eroi, ogni scelta, grandezza e colore, 6 mosse, 12 direzioni) senza errori; ${r.fr} scelte che si vedono davanti, ${r.bk} del viso nascoste da dietro, ${r.cl} colori che cambiano il disegno`+(r.bad.length?' — '+r.bad.slice(0,40).join('; '):''));
   // the tiles of the screen: every choice of every part drawn, on every hero (a tile is never empty)
   const t2=await E(`(()=>{const bad=[];let n=0;const keep={sel:SCE.sel,look:SCE.look,manto:SCE.manto};try{for(const h of ${JSON.stringify(heroes)}){SCE.sel=h;SCE.look=sceLook(null);SCE.manto='';
       for(const C of SCE_CATS)for(const o of(C.id==='manto'?SCE_MANTI:C.list)){const cv=document.createElement('canvas');sceTileDraw(cv,C,o.id,48);const d=cv.getContext('2d').getImageData(0,0,cv.width,cv.height).data;let k=0;for(let i=3;i<d.length;i+=4)if(d[i]>40)k++;

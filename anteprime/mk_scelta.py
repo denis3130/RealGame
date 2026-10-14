@@ -1,8 +1,9 @@
 #!/usr/bin/env python3
 # Pagina di prova della creazione dell'eroe al primo avvio (src/js/65-scelta-eroe.js, in stile Dark Souls): è il gioco vero, ma ogni volta
-# che si apre parte da un salvataggio vuoto, come un giocatore nuovo: prima l'intro (con i quattro eroi), poi la creazione (classe, aspetto,
-# dono e nome), poi il menu. Il barbiere sta nel Profilo → Aspetto (20 cristalli: col dono «Cristalli» si prova subito). Il bottoncino «Rivedi la creazione» (nel cielo della schermata principale) cancella il salvataggio e riapre subito la
-# creazione, senza l'intro.
+# che si apre parte da un salvataggio vuoto, come un giocatore nuovo: prima il prologo alla Dark Souls (src/js/66-prologo.js; «Salta» in alto),
+# poi la creazione (classe, aspetto, dono e nome), poi il menu. Il barbiere sta nel Profilo → Aspetto (20 cristalli: col dono «Cristalli» si
+# prova subito). Il bottoncino «Rivedi la creazione» (nel cielo della schermata principale) cancella il salvataggio e riapre subito la
+# creazione, senza il prologo; il prologo si rivede dalle impostazioni («Rivedi il prologo»).
 # Uso: python3 anteprime/mk_scelta.py  ->  anteprime/scelta.html
 import os, subprocess, sys
 R = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))

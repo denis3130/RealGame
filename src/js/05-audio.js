@@ -171,7 +171,7 @@ Object.assign(TRACKS,{
       if([0,3,8,10,12,14].includes(s))dTaiko(tr,t,{0:.95,3:.55,8:.85,10:.5,12:.45,14:.65}[s]);if(s===6)dTom(tr,t,.28,150);dShaker(tr,t,s%2?.045:.025)}}});
 
 function playMusic(name){
-  if(INTRO.on&&name!=='trailer')return;if(!AU.ctx){AU.want=name;return}
+  if(INTRO.on&&name!==(INTRO.pro?'prologo':'trailer'))return;if(!AU.ctx){AU.want=name;return}
   if(AU.cur&&AU.cur.name===name)return;
   const c=AU.ctx,now=c.currentTime;
   if(AU.cur){const old=AU.cur;old.bus.gain.setTargetAtTime(0,now,.5);setTimeout(()=>{try{old.bus.disconnect()}catch(e){}},4000)}
