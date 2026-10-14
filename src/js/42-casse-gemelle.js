@@ -15,7 +15,7 @@ function updTwinChests(dt){if(!G.cc)return;
     if(c.st==='open'||c.st==='poof'||c.st==='shake')c.k+=dt;
     if(c.st==='shake'&&c.k>1.1){c.st='gone';const m=makeE('mimic',c.x,c.y+4,0);m.hp=m.max=Math.round(900*(1+(effRoom()-1)*.14));m.intro=1.3;G.enemies.push(m);G.state='play';G.door=false;
       shake(9);dustRing(c.x,c.y,22);for(let i=0;i<18;i++)G.fx.push({k:'chunk',x:c.x,y:c.y-10,vx:rand(-140,140),vy:rand(-160,40),t:rand(.3,.6),r:rand(2,4),col:'#7a4e2a'});
-      bossBarReset();$('bossBar').hidden=false;$('bossBar').classList.remove('rage');$('bossName').textContent=ET.mimic.name;banner(ET.mimic.name,ET.mimic.title,2);playMusic('golem')}}
+      bossBarReset();$('bossBar').hidden=false;$('bossBar').classList.remove('rage');$('bossName').textContent=ET.mimic.name;banner(ET.mimic.name,ET.mimic.title,2);bmIn('mimic')}}
   G.cc=G.cc.filter(c=>c.st!=='gone'&&!(c.st==='poof'&&c.k>.5))}
 function drawTwinChest(c){const drop=c.st==='drop'?Math.max(0,1-c.t/.55):0,h=drop*drop*260;if(c.t<0)return;
   const sh=c.st==='shake'?Math.sin(c.k*(30+c.k*30))*(1+c.k*3):0,sq=c.st==='poof'?Math.max(0,1-c.k/.5):1,open=c.st==='open'?Math.min(1,c.k/.35):0,grow=c.st==='shake'?1+c.k*.12:1;
