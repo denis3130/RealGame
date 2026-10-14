@@ -40,53 +40,101 @@ sceOwnSkins();
 // the portrait at the top was drawn before these mantles existed: drawn again
 try{renderTop.k=null;renderTop()}catch(e){}
 // ------------------------------------------------------------------ the hero's own look (Denis, 14 October: «nella creazione del pg si possa
-// modificare a piacimento tra occhi cicatrici ecc.»): ready-made choices for each part, a list like the mantles. It is you, whichever
-// hero you play (SAVE.look, applied by heroStyle); the heroes keep their own pieces (the Druida's antlers and green eyes, the
-// Balestriere's helmet, the Cacciatrice's ponytail, which takes the colour of the hair). Changed later at the barber, for crystals.
+// modificare a piacimento tra occhi cicatrici ecc.», then «migliora il design di tutto… aggiungi più cose… la grandezza delle cose tranne degli
+// accessori… i capelli che coprono tutta la testa sotto il cappuccio anche dove non si vede… fai anche senza cappuccio»): ready-made choices
+// for each part, shown as little drawn tiles, a colour where it makes sense, a size for every part but the accessories and the colours.
+// It is you, whichever hero you play (SAVE.look, applied by heroStyle); the heroes keep their own pieces (the Druida's antlers and green eyes,
+// the Balestriere's helmet, the Cacciatrice's ponytail, which takes the colour of the hair). Changed later at the barber, for crystals.
 // The drawing is in sprite/eroe3d/disegno_eroe.js (S.look); a look with every part as it was draws the hero as always
-const SCE_PELLE=[{id:'pesca',n:'Pesca',c:null},{id:'rosata',n:'Rosata',c:'#f6d3c2'},{id:'dorata',n:'Dorata',c:'#e2b07c'},{id:'ambrata',n:'Ambrata',c:'#c68a58'},
-  {id:'bruna',n:'Bruna',c:'#9a6440'},{id:'scura',n:'Scura',c:'#6e452c'}];
+const SCE_PELLE=[{id:'pesca',n:'Pesca',c:null,d:'La pelle di sempre.'},{id:'porcellana',n:'Porcellana',c:'#fbe2d4',d:'Chiara come la porcellana.'},{id:'rosata',n:'Rosata',c:'#f6d3c2',d:'Chiara, con un po\' di rosa.'},
+  {id:'dorata',n:'Dorata',c:'#e2b07c',d:'Scaldata dal sole delle strade.'},{id:'olivastra',n:'Olivastra',c:'#d2a676',d:'Calda come il legno d\'ulivo.'},{id:'ambrata',n:'Ambrata',c:'#c68a58',d:'Color miele scuro.'},
+  {id:'bruna',n:'Bruna',c:'#9a6440',d:'Bruna come la terra del bosco.'},{id:'scura',n:'Scura',c:'#6e452c',d:'Scura come il legno di noce.'},
+  {id:'lunare',n:'Lunare',c:'#d9e0ef',d:'Pallida come la luna sopra i Picchi.'},{id:'muschio',n:'Muschio',c:'#b9dca6',d:'Un velo verde: viene dalla cripta di muschio.'}];
 const SCE_OCCHI=[{id:'tondi',n:'Tondi',d:'Due occhi neri e lucidi: quelli di sempre.'},{id:'grandi',n:'Grandi',d:'Grandi e luccicanti: non gli sfugge niente.'},
   {id:'decisi',n:'Decisi',d:'Lo sguardo di chi non torna mai indietro.'},{id:'assonnati',n:'Assonnati',d:'Sembra annoiato. Sembra.'},
-  {id:'felini',n:'Felini',d:'Occhi da gatto: vedono anche nel buio della cripta.'},{id:'piccoli',n:'Piccoli',d:'Due puntini: piccoli ma attentissimi.'}];
+  {id:'felini',n:'Felini',d:'Occhi da gatto: vedono anche nel buio della cripta.'},{id:'piccoli',n:'Piccoli',d:'Due puntini: piccoli ma attentissimi.'},
+  {id:'ciglia',n:'Ciglia',d:'Ciglia lunghe che sbattono come ali di farfalla.'},{id:'tristi',n:'Malinconici',d:'Ha visto tante cripte. Ma non molla mai.'},
+  {id:'felici',n:'Felici',d:'Sorride anche con gli occhi.'},{id:'spalancati',n:'Spalancati',d:'Tutto lo stupisce: ogni stanza è una scoperta.'},
+  {id:'stellati',n:'Stellati',d:'Una stella in ogni occhio: sogna in grande.'}];
 const SCE_IRIDE=[{id:'scuri',n:'Scuri',c:null},{id:'nocciola',n:'Nocciola',c:'#8a5a2b'},{id:'azzurri',n:'Azzurri',c:'#4aa3e8'},{id:'verdi',n:'Verdi',c:'#4fb04a'},
-  {id:'ambra',n:'Ambra',c:'#e3a22e'},{id:'viola',n:'Viola',c:'#9a6ad8'},{id:'grigi',n:'Grigi',c:'#9ca8b4'}];
+  {id:'ambra',n:'Ambra',c:'#e3a22e'},{id:'viola',n:'Viola',c:'#9a6ad8'},{id:'grigi',n:'Grigi',c:'#9ca8b4'},{id:'rosa',n:'Rosa',c:'#e87fb0'},{id:'ghiaccio',n:'Ghiaccio',c:'#8fd6f2'}];
 const SCE_SOPR=[{id:'nessuna',n:'Nessuna',d:'Come sempre: tutto il viso agli occhi.'},{id:'sottili',n:'Sottili',d:'Sottili e ordinate.'},
   {id:'folte',n:'Folte',d:'Folte come il muschio sulle pietre.'},{id:'decise',n:'Aggrottate',d:'Guai a chi lo sfida.'},
-  {id:'alzate',n:'Alzate',d:'Sempre un po\' sorpreso da tutto.'},{id:'spezzate',n:'Spezzate',d:'Un vecchio graffio le ha divise in due.'}];
+  {id:'alzate',n:'Alzate',d:'Sempre un po\' sorpreso da tutto.'},{id:'spezzate',n:'Spezzate',d:'Un vecchio graffio le ha divise in due.'},
+  {id:'unite',n:'Unite',d:'Un sopracciglio solo, da un occhio all\'altro.'},{id:'arcuate',n:'Arcuate',d:'Alte e sottili, eleganti.'},
+  {id:'puntini',n:'Puntini',d:'Due puntini, come i nobili di una volta.'},{id:'cespugliose',n:'Cespugliose',d:'Un cespuglio di rovi sopra ogni occhio.'}];
+const SCE_BOCCA=[{id:'nessuna',n:'Nessuna',d:'Come sempre: parla con gli occhi.'},{id:'sorriso',n:'Sorriso',d:'Un sorriso tranquillo.'},
+  {id:'sorrisone',n:'Sorrisone',d:'Una risata pronta per ogni vittoria.'},{id:'ghigno',n:'Ghigno',d:'Ha già un piano. Forse due.'},
+  {id:'dentino',n:'Dentino',d:'Un dentino che spunta quando sorride.'},{id:'broncio',n:'Broncio',d:'Non gli piace perdere. Neanche a carte.'},
+  {id:'lingua',n:'Linguaccia',d:'Una linguaccia ai mostri della cripta.'},{id:'fischio',n:'Fischietto',d:'Fischietta mentre esplora.'},
+  {id:'denti',n:'Denti',d:'Un sorriso con tutti i denti.'},{id:'sorpreso',n:'Sorpreso',d:'Oh! Un forziere!'},{id:'neutra',n:'Serio',d:'Concentrato sulla prossima stanza.'}];
 const SCE_SEGNI=[{id:'nessuno',n:'Nessuno',d:'Il viso pulito.'},{id:'cicatrice',n:'Cicatrice',d:'Un ricordo del primo Golem, chiuso da tempo.'},
   {id:'graffio',n:'Graffio',d:'Un pipistrello passato troppo vicino.'},{id:'lentiggini',n:'Lentiggini',d:'Un cielo di lentiggini sulle guance.'},
   {id:'pittura',n:'Pittura',d:'Due strisce blu, come i guerrieri antichi.'},{id:'cerotto',n:'Cerotto',d:'Si è sbucciato e non l\'ha detto a nessuno.'},
-  {id:'runa',n:'Runa',d:'Una runa di muschio che brilla piano sulla guancia.'},{id:'neo',n:'Neo',d:'Un piccolo neo vicino alla bocca.'}];
-const SCE_CAPELLI=[{id:'nascosti',n:'Nascosti',d:'Tutti sotto il cappuccio.'},{id:'ciuffo',n:'Ciuffo',d:'Un ciuffo ribelle che scappa sempre fuori.'},
+  {id:'runa',n:'Runa',d:'Una runa di muschio che brilla piano sulla guancia.'},{id:'neo',n:'Neo',d:'Un piccolo neo vicino alla bocca.'},
+  {id:'croce',n:'Croce',d:'Una cicatrice a croce: lo Yeti graffia forte.'},{id:'lacrima',n:'Lacrima',d:'Una lacrima dipinta, come i giullari.'},
+  {id:'stella',n:'Stella',d:'Una stella d\'oro dipinta sulla guancia.'},{id:'baffi',n:'Baffi da gatto',d:'Tre baffi per guancia, dipinti col carbone.'},
+  {id:'macchia',n:'Voglia',d:'Una macchia sulla tempia: ce l\'ha da quando è nato.'}];
+// (the first, «Corti», is the hero of always: under the hood nothing of them shows)
+const SCE_CAPELLI=[{id:'nascosti',n:'Corti',d:'Corti e in ordine: col cappuccio alzato restano tutti sotto.'},{id:'ciuffo',n:'Ciuffo',d:'Un ciuffo ribelle che scappa sempre fuori.'},
   {id:'frangia',n:'Frangia',d:'Una frangia dritta sulla fronte.'},{id:'spettinati',n:'Spettinati',d:'Appena svegliato, o appena uscito da una battaglia.'},
-  {id:'lunghi',n:'Lunghi',d:'Due ciocche lunghe ai lati del viso.'},{id:'riccioli',n:'Riccioli',d:'Una fila di riccioli sotto il cappuccio.'}];
+  {id:'lunghi',n:'Lunghi',d:'Lunghi fino alle spalle: escono anche dal cappuccio.'},{id:'riccioli',n:'Riccioli',d:'Una nuvola di riccioli.'},
+  {id:'caschetto',n:'Caschetto',d:'Un caschetto tondo che copre le orecchie.'},{id:'treccine',n:'Treccine',d:'Due trecce legate con un nastro.'},
+  {id:'coda',n:'Coda',d:'Una coda tirata indietro: esce dal cappuccio.'},{id:'chignon',n:'Chignon',d:'Raccolti in uno chignon con lo spillone.'},
+  {id:'cresta',n:'Cresta',d:'Una cresta da guerriero, i lati rasati.'},{id:'rasati',n:'Rasati',d:'Cortissimi: niente può tirarglieli.'},
+  {id:'mossi',n:'Mossi',d:'Mossi come le onde della palude.'}];
 const SCE_COLCAP=[{id:'castani',n:'Castani',c:'#8a5a32'},{id:'neri',n:'Neri',c:'#3a2e2a'},{id:'biondi',n:'Biondi',c:'#e8c060'},{id:'rossi',n:'Rossi',c:'#c8582a'},
-  {id:'bianchi',n:'Bianchi',c:'#ece6dc'},{id:'muschio',n:'Muschio',c:'#5fae3c'},{id:'viola',n:'Viola',c:'#8a5ad0'}];
+  {id:'bianchi',n:'Bianchi',c:'#ece6dc'},{id:'cenere',n:'Cenere',c:'#a19c94'},{id:'muschio',n:'Muschio',c:'#5fae3c'},{id:'viola',n:'Viola',c:'#8a5ad0'},
+  {id:'blu',n:'Blu notte',c:'#3d5fa8'},{id:'rosa',n:'Rosa',c:'#e48fb2'}];
+const SCE_BARBA=[{id:'nessuna',n:'Nessuna',d:'Il viso liscio di sempre.'},{id:'baffetti',n:'Baffetti',d:'Due baffetti ben curati.'},
+  {id:'baffoni',n:'Baffoni',d:'Baffoni arricciati, da vero esploratore.'},{id:'pizzetto',n:'Pizzetto',d:'Un pizzetto a punta sul mento.'},
+  {id:'barbetta',n:'Barbetta',d:'Una barbetta corta lungo la mascella.'},{id:'barba',n:'Barba',d:'Una barba folta: tiene caldo nelle notti dei Picchi.'},
+  {id:'lunga',n:'Barba lunga',d:'Lunga e morbida, come i vecchi saggi.'},{id:'intrecciata',n:'Intrecciata',d:'Lunga, con una treccia e un nastro in fondo.'}];
+const SCE_ORECCHIE=[{id:'tonde',n:'Tonde',d:'Orecchie tonde: col cappuccio alzato restano sotto.'},{id:'punta',n:'A punta',d:'Orecchie a punta da elfo: escono dal cappuccio.'},
+  {id:'lunghe',n:'Lunghe',d:'Lunghe e a punta: sentono un goblin a cento passi.'},{id:'gatto',n:'Da gatto',d:'Orecchie da gatto: sul cappuccio, o tra i capelli.'},
+  {id:'orso',n:'Da orso',d:'Due orecchie tonde da orsetto.'},{id:'coniglio',n:'Da coniglio',d:'Lunghe orecchie da coniglio, sempre all\'erta.'}];
+const SCE_CAPPUCCIO=[{id:'su',n:'Alzato',d:'Il cappuccio in testa, come sempre: pronto per la cripta.'},{id:'giu',n:'Abbassato',d:'Il cappuccio sulle spalle: si vedono i capelli e le orecchie.'}];
 const SCE_ACC=[{id:'nessuno',n:'Nessuno',d:'Niente di più.'},{id:'benda',n:'Benda',d:'Un occhio coperto: l\'altro vede per due.'},
   {id:'occhialetti',n:'Occhialetti',d:'Tondi e d\'oro, per leggere le rune.'},{id:'sciarpa',n:'Sciarpa',d:'Fatta a maglia, per le notti fredde dei Picchi.'},
-  {id:'piuma',n:'Piuma',d:'Una piuma infilata nel cappuccio.'},{id:'fascia',n:'Fascia',d:'Una fascia legata dietro la testa.'}];
-// the parts: key in the look, the list, the colours (a second key) and how the camera looks at him (face: close on the face; bust: head and
-// shoulders; else the whole hero)
-const SCE_CATS=[{id:'manto',n:'Mantello',d:'Il colore del mantello: lo cambi quando vuoi nel Profilo.'},{id:'pelle',n:'Pelle',list:SCE_PELLE,key:'pelle',cam:'face',d:'Il colore della pelle, del viso e delle mani.'},
-  {id:'occhi',n:'Occhi',list:SCE_OCCHI,key:'occhi',cols:SCE_IRIDE,ckey:'iride',cn:'Colore',cam:'face'},{id:'sopr',n:'Sopracciglia',list:SCE_SOPR,key:'sopr',cam:'face'},
-  {id:'segni',n:'Segni',list:SCE_SEGNI,key:'segno',cam:'face'},{id:'capelli',n:'Capelli',list:SCE_CAPELLI,key:'capelli',cols:SCE_COLCAP,ckey:'colCap',cn:'Colore',cam:'face'},
-  {id:'acc',n:'Accessori',list:SCE_ACC,key:'acc',cam:'bust'}];
+  {id:'piuma',n:'Piuma',d:'Una piuma infilata nel cappuccio, o tra i capelli.'},{id:'fascia',n:'Fascia',d:'Una fascia legata dietro la testa.'},
+  {id:'orecchino',n:'Orecchino',d:'Un cerchietto d\'oro con una pietra.'},{id:'fiore',n:'Fiore',d:'Un fiore raccolto nel bosco, sopra l\'orecchio.'},
+  {id:'maschera',n:'Maschera',d:'Una maschera da bandito: nessuno ti riconoscerà.'},{id:'collana',n:'Collana',d:'Perline colorate e tre zanne di lupo.'},
+  {id:'coroncina',n:'Coroncina',d:'Una piccola corona d\'oro: il re della cripta.'}];
+// the parts, in the order of the tabs (the camera goes from the whole hero to the head, to the face and back to the shoulders): key in the
+// look, the list, the colours (a second key; cshare: the hair's, shown here too), the size (a key of look.k), how the camera looks at him
+// (face: close on the face; head: the whole head, turning; bust: head and shoulders; else the whole hero) and how its tiles are drawn (prev)
+const SCE_CATS=[{id:'manto',n:'Mantello',d:'Il colore del mantello: lo cambi quando vuoi nel Profilo.',prev:'body'},
+  {id:'cappuccio',n:'Cappuccio',list:SCE_CAPPUCCIO,key:'cappuccio',cam:'bust',prev:'head'},
+  {id:'capelli',n:'Capelli',list:SCE_CAPELLI,key:'capelli',cols:SCE_COLCAP,ckey:'colCap',cn:'Colore',size:'capelli',cam:'head',prev:'hair'},
+  {id:'orecchie',n:'Orecchie',list:SCE_ORECCHIE,key:'orecchie',size:'orecchie',cam:'head',prev:'head'},
+  {id:'pelle',n:'Pelle',list:SCE_PELLE,key:'pelle',cam:'face',prev:'face'},
+  {id:'occhi',n:'Occhi',list:SCE_OCCHI,key:'occhi',cols:SCE_IRIDE,ckey:'iride',cn:'Colore',size:'occhi',cam:'face',prev:'eyes'},
+  {id:'sopr',n:'Sopracciglia',list:SCE_SOPR,key:'sopr',size:'sopr',cam:'face',prev:'brows'},
+  {id:'bocca',n:'Bocca',list:SCE_BOCCA,key:'bocca',size:'bocca',cam:'face',prev:'mouth'},
+  {id:'segni',n:'Segni',list:SCE_SEGNI,key:'segno',size:'segno',cam:'face',prev:'marks'},
+  {id:'barba',n:'Barba',list:SCE_BARBA,key:'barba',cols:SCE_COLCAP,ckey:'colCap',cshare:1,cn:'Colore',size:'barba',cam:'bust',prev:'chin'},
+  {id:'acc',n:'Accessori',list:SCE_ACC,key:'acc',cam:'bust',prev:'bust'}];
 const SCE_CAT=Object.fromEntries(SCE_CATS.map(c=>[c.id,c]));
-const LOOK_DEF={pelle:'pesca',occhi:'tondi',iride:'scuri',sopr:'nessuna',segno:'nessuno',capelli:'nascosti',colCap:'castani',acc:'nessuno'};
+const LOOK_DEF={pelle:'pesca',occhi:'tondi',iride:'scuri',sopr:'nessuna',bocca:'nessuna',segno:'nessuno',capelli:'nascosti',colCap:'castani',barba:'nessuna',orecchie:'tonde',cappuccio:'su',acc:'nessuno'};
+// the sizes: from .7 to 1.3, 1 as drawn
+const LOOK_K=['capelli','occhi','sopr','bocca','segno','barba','orecchie'],LOOK_KMIN=.7,LOOK_KMAX=1.3;
 const lkFind=(L,id)=>L.find(o=>o.id===id)||L[0];
-const LOOK_LIST={pelle:SCE_PELLE,occhi:SCE_OCCHI,iride:SCE_IRIDE,sopr:SCE_SOPR,segno:SCE_SEGNI,capelli:SCE_CAPELLI,colCap:SCE_COLCAP,acc:SCE_ACC};
-// a look with only known choices (anything else, or missing, is the part as it was)
-const sceLook=lk=>{const o={};for(const k in LOOK_DEF){const v=lk&&lk[k];o[k]=v&&LOOK_LIST[k].some(x=>x.id===v)?v:LOOK_DEF[k]}return o};
-// how many parts differ from the hero of always
-const sceLookN=lk=>{if(!lk)return 0;const L=sceLook(lk);let n=0;for(const k in LOOK_DEF)if(L[k]!==LOOK_DEF[k])n++;return n};
+const LOOK_LIST={pelle:SCE_PELLE,occhi:SCE_OCCHI,iride:SCE_IRIDE,sopr:SCE_SOPR,bocca:SCE_BOCCA,segno:SCE_SEGNI,capelli:SCE_CAPELLI,colCap:SCE_COLCAP,barba:SCE_BARBA,orecchie:SCE_ORECCHIE,cappuccio:SCE_CAPPUCCIO,acc:SCE_ACC};
+// a part that is not there has no size (no brows, no mouth, no mark, no beard)
+const LOOK_NONE={sopr:'nessuna',bocca:'nessuna',segno:'nessuno',barba:'nessuna'};
+// a look with only known choices (anything else, or missing, is the part as it was); the sizes in their range, 1 for a part that is not there
+const sceLook=lk=>{const o={};for(const k in LOOK_DEF){const v=lk&&lk[k];o[k]=v&&LOOK_LIST[k].some(x=>x.id===v)?v:LOOK_DEF[k]}
+  const K=lk&&lk.k||{};o.k={};for(const k of LOOK_K){const v=+K[k];o.k[k]=isFinite(v)&&v>0&&o[k]!==LOOK_NONE[k]?Math.round(Math.min(LOOK_KMAX,Math.max(LOOK_KMIN,v))*100)/100:1}return o};
+// how many parts differ from the hero of always (a size counts as one more)
+const sceLookN=lk=>{if(!lk)return 0;const L=sceLook(lk);let n=0;for(const k in LOOK_DEF)if(L[k]!==LOOK_DEF[k])n++;for(const k of LOOK_K)if(L.k[k]!==1)n++;return n};
 const hxMix=(a,b,k)=>{const A=parseInt(a.slice(1),16),B=parseInt(b.slice(1),16),f=(s)=>Math.round(((A>>s)&255)*(1-k)+((B>>s)&255)*k);return'#'+((1<<24)|(f(16)<<16)|(f(8)<<8)|f(0)).toString(16).slice(1)};
 const hxDist=(a,b)=>{const A=parseInt(a.slice(1),16),B=parseInt(b.slice(1),16);let d=0;for(const s of[16,8,0])d+=Math.abs(((A>>s)&255)-((B>>s)&255));return d};
-// the colour of the scarf, the feather and the headband: the one that stands out most from the mantle
+// the colour of the scarf, the feather, the band, the flower, the stone of the earring: the one that stands out most from the mantle
 function accCol(S){let best='#d24b3e',bd=-1;for(const c of['#d24b3e','#e8d6a8','#3f7fd0','#f0c64a']){const d=Math.min(hxDist(c,S.hood||'#23877d'),hxDist(c,S.body||'#2fb3a6'));if(d>bd){bd=d;best=c}}return best}
 // a style with the look on it (the hero's own skin stays with «Pesca»; nothing changes when every part is as it was)
-function sceLookStyle(S,lk){if(!lk||!sceLookN(lk))return S;const L=sceLook(lk),P=lkFind(SCE_PELLE,L.pelle),I=lkFind(SCE_IRIDE,L.iride),C=lkFind(SCE_COLCAP,L.colCap);
-  const look={eyes:L.occhi,iris:I.c,brows:L.sopr,browCol:hxMix(C.c,'#1b1612',.42),mark:L.segno,hair:L.capelli,hairCol:C.c,acc:L.acc,accCol:accCol(S)};
+function sceLookStyle(S,lk){if(!lk||!sceLookN(lk))return S;const L=sceLook(lk),P=lkFind(SCE_PELLE,L.pelle),I=lkFind(SCE_IRIDE,L.iride),C=lkFind(SCE_COLCAP,L.colCap),k=L.k;
+  const look={eyes:L.occhi,iris:I.c,brows:L.sopr,browCol:hxMix(C.c,'#1b1612',.42),mouth:L.bocca,mark:L.segno,hair:L.capelli,hairCol:C.c,beard:L.barba,ears:L.orecchie,hood:L.cappuccio,
+    acc:L.acc,accCol:accCol(S),eyeK:k.occhi,browK:k.sopr,mouthK:k.bocca,markK:k.segno,hairK:k.capelli,beardK:k.barba,earK:k.orecchie};
   const o={...S,look};if(P.c)o.skin=P.c;if(S.ponytail&&L.colCap!==LOOK_DEF.colCap)o.hair=C.c;return o}
 let heroStyleBase=heroStyle;
 {const _hs=heroStyle;heroStyleBase=function(){const K=SAVE.skin&&SKINS[SAVE.skin];if(K&&K.crea&&!(SAVE.skins&&SAVE.skins[SAVE.skin]))sceOwnSkins();return _hs.apply(this,arguments)};
@@ -184,6 +232,7 @@ function sceCss(){if($('sceCss'))return;const s=document.createElement('style');
 .sceStats dl{margin:0;display:grid;grid-template-columns:minmax(0,1fr) auto;gap:clamp(3px,.9vh,7px) 6px;align-items:baseline}
 .sceStats dt{font:500 clamp(10px,3vw,12px) var(--se);color:#a2967f;letter-spacing:.02em;text-align:left;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .sceStats dd{margin:0;font:700 clamp(12.5px,3.8vw,15.5px) var(--se);color:#f2e7cd;font-variant-numeric:tabular-nums;white-space:nowrap}
+.sceStats dt{padding-bottom:3px;background:linear-gradient(90deg,rgba(226,190,118,.6) 0 calc(var(--v,0)*100%),rgba(216,180,106,.12) 0) left bottom/100% 2px no-repeat}
 .sceStats dd.up{color:#8cc4ff}.sceStats dd.dn{color:#ff9187}.sceStats dd i{font-style:normal;font-size:.62em;margin-left:2px;vertical-align:.15em}
 .sceStats dd .sceCoin,.sceStats dd .sceGem{width:13px;height:13px;margin-left:3px;vertical-align:-2px}
 .sceNameBox{position:absolute;left:50%;top:clamp(4px,1.4vh,14px);width:min(300px,86%);transform:translateX(-50%);z-index:2;display:none;text-align:center;animation:sceIn .5s ease-out backwards}
@@ -210,20 +259,64 @@ function sceCss(){if($('sceCss'))return;const s=document.createElement('style');
 .sceSum li span{font:500 10.5px var(--se);letter-spacing:.16em;text-transform:uppercase;color:var(--dim)}
 .sceSum li b{font:700 clamp(13px,3.8vw,15px) var(--se);color:#f2e6c8;letter-spacing:.03em;text-align:right}
 .sceSum li b::after{content:' ›';color:var(--g)}
-/* the look: the parts as icons on top of the panel underneath, the colours as little dots under the list */
-.sceTabs{display:flex;justify-content:space-between;gap:2px;margin:-2px -6px 6px;padding:0 0 6px;border-bottom:1px solid rgba(216,180,106,.22)}
-.sceTab{position:relative;flex:1 1 0;min-width:0;height:36px;margin:0;padding:0;border:0;background:none;color:#8d826c;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:color .2s}
-.sceTab svg{width:22px;height:22px;transition:transform .2s}.sceTab.on{color:var(--gh)}.sceTab.on svg{transform:scale(1.12);filter:drop-shadow(0 0 5px rgba(255,205,130,.55))}
-.sceTab.on::after{content:'';position:absolute;bottom:-5px;left:50%;width:6px;height:6px;margin-left:-3px;transform:rotate(45deg);background:var(--g);box-shadow:0 0 6px rgba(255,205,130,.8)}
-.sceTab.mod::before{content:'';position:absolute;top:3px;right:calc(50% - 15px);width:5px;height:5px;border-radius:50%;background:#e8c37a;opacity:.85}
-.sceCols{margin:6px 0 0;padding-top:5px;border-top:1px solid rgba(216,180,106,.2)}
-.sceCols h2{border:0;margin:0 0 4px;padding:0 0 0 2px}
-.sceSws{display:grid;grid-template-columns:repeat(4,1fr);gap:6px 4px;padding:0 2px 2px}
-.sceSw{justify-self:center;width:22px;height:22px;margin:0;padding:0;border-radius:50%;border:2px solid #120e0b;background:var(--c);cursor:pointer;box-shadow:0 0 0 1px rgba(216,180,106,.3);transition:transform .15s,box-shadow .2s}
-.sceSw.on{transform:scale(1.15);box-shadow:0 0 0 2px var(--gh),0 0 10px rgba(255,205,130,.6)}.sceSw.no{background:conic-gradient(#3a302a 0 25%,#1b1612 0 50%,#3a302a 0 75%,#1b1612 0)}
-.sceSws.off{opacity:.35;pointer-events:none}
-#sceScr.s2 .sceStage{grid-column:2/4}
+/* the panels of the steps are as high as their longest text (measured: --dh); the look has its own, always the same */
+#sceScr:not(.s2) .sceDesc{min-height:var(--dh,0px)}
+/* step I and III: a little picture in each row of the list (the hero's head, the gift) */
+.sceRow.p{display:flex;align-items:center;gap:6px;padding-left:12px}
+.sceRow.p::before{left:2px;top:50%}
+.scePic{flex:none;width:27px;height:27px;border-radius:50%;background:radial-gradient(circle at 50% 40%,#2e251d,#0e0b09 75%);box-shadow:0 0 0 1px rgba(216,180,106,.28);transition:box-shadow .2s}
+.sceRow.on .scePic{box-shadow:0 0 0 1.5px var(--gh),0 0 10px rgba(255,205,130,.45)}
+.sceRow.p>span{min-width:0;flex:1}
+.sceRow.p b{font:500 clamp(13.5px,3.9vw,16px)/1.05 var(--bo);letter-spacing:.01em}
+.sceRow.lock .scePic{opacity:.7}
+/* step II: the parts as icons on top, the choices as drawn tiles, the colour and the size underneath; the hero alone over the panel */
+#sceScr.s2 .sceList,#sceScr.s2 .sceStats{display:none}
+#sceScr.s2 .sceStage{grid-column:1/4}
+#sceScr.s2 .sceDesc{padding:clamp(5px,.9vh,8px) 12px clamp(7px,1.1vh,10px)}
+.sceTabs{display:flex;gap:1px;margin:0 -5px 4px;padding:0 0 5px;border-bottom:1px solid rgba(216,180,106,.22)}
+.sceTab{position:relative;flex:1 1 0;min-width:0;height:34px;margin:0;padding:0;border:0;border-radius:4px;background:none;color:#8d826c;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:color .2s,background .25s}
+.sceTab svg{width:21px;height:21px;transition:transform .2s}
+.sceTab.on{color:var(--gh);background:radial-gradient(closest-side,rgba(216,180,106,.2),rgba(216,180,106,0))}
+.sceTab.on svg{transform:scale(1.12);filter:drop-shadow(0 0 5px rgba(255,205,130,.55))}
+.sceTab.on::after{content:'';position:absolute;bottom:-9px;left:50%;width:6px;height:6px;margin-left:-3px;transform:rotate(45deg);background:var(--g);box-shadow:0 0 6px rgba(255,205,130,.8)}
+.sceTab.mod::before{content:'';position:absolute;top:3px;right:calc(50% - 13px);width:5px;height:5px;border-radius:50%;background:#e8c37a;box-shadow:0 0 4px rgba(255,205,130,.7)}
+.sceLkHd{display:flex;align-items:center;gap:7px;min-height:30px}
+.sceLkHd h3{flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.sceLkHd h3 small{font:500 10px var(--se);letter-spacing:.2em;text-transform:uppercase;color:var(--dim);margin-right:7px;vertical-align:.12em}
+.sceIco{flex:none;width:30px;height:30px;margin:0;padding:0;border:1px solid rgba(216,180,106,.4);border-radius:50%;background:radial-gradient(circle at 50% 35%,rgba(70,54,36,.9),rgba(16,12,9,.95));color:var(--gh);cursor:pointer;
+  display:flex;align-items:center;justify-content:center;box-shadow:0 0 0 1px #000;transition:opacity .2s,transform .1s}
+.sceIco svg{width:17px;height:17px}.sceIco:active{transform:scale(.9)}.sceIco[disabled]{opacity:.28;cursor:default}
+.sceIco.spin svg{animation:sceSpin .45s ease-out}
+#sceScr .sceLkP{margin:1px 0 0;height:2.5em;overflow:hidden;font:italic 500 clamp(12.5px,3.5vw,14px)/1.25 var(--bo);color:#d6c9ad}
+.sceTiles{display:grid;gap:5px;justify-content:center;align-content:center;margin:4px 0 0}
+.sceTile{position:relative;width:var(--ts);height:var(--ts);margin:0;padding:0;border:1px solid rgba(216,180,106,.2);border-radius:5px;overflow:hidden;cursor:pointer;
+  background:radial-gradient(circle at 50% 36%,#32281f,#130f0c 70%);box-shadow:inset 0 0 0 1px rgba(0,0,0,.6);transition:border-color .2s,box-shadow .2s,transform .12s}
+.sceTile canvas{display:block;width:100%;height:100%;opacity:0;transition:opacity .25s}.sceTile canvas.ok{opacity:1}
+.sceTile.on{border-color:var(--gh);box-shadow:inset 0 0 12px rgba(255,205,130,.22),0 0 0 1px rgba(246,226,168,.45),0 0 12px rgba(255,205,130,.4)}
+.sceTile.on::after{content:'';position:absolute;top:4px;right:4px;width:6px;height:6px;transform:rotate(45deg);background:var(--g);box-shadow:0 0 5px rgba(255,205,130,.9)}
+.sceTile:active{transform:scale(.94)}
+.sceTile.sw{background:none}.sceTile.sw canvas{opacity:1}
+.sceRowC,.sceRowK{display:flex;align-items:center;gap:8px;height:30px}
+.sceRowC>span,.sceRowK>span{flex:none;width:clamp(64px,19vw,84px);font:500 9.5px/1.15 var(--se);letter-spacing:.1em;text-transform:uppercase;color:var(--dim);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.sceRowC em{display:block;margin-top:1px;font:700 11.5px/1.15 var(--se);font-style:normal;letter-spacing:.03em;text-transform:none;color:#f2e7cd;overflow:hidden;text-overflow:ellipsis}
+.sceSws{display:flex;flex:1;min-width:0;justify-content:space-between;align-items:center}
+.sceSw{flex:none;width:clamp(17px,5.3vw,22px);height:clamp(17px,5.3vw,22px);margin:0;padding:0;border-radius:50%;border:2px solid #120e0b;background:radial-gradient(circle at 35% 30%,rgba(255,255,255,.35),rgba(255,255,255,0) 45%),var(--c);
+  cursor:pointer;box-shadow:0 0 0 1px rgba(216,180,106,.3);transition:transform .15s,box-shadow .2s}
+.sceSw.on{transform:scale(1.18);box-shadow:0 0 0 2px var(--gh),0 0 10px rgba(255,205,130,.6)}.sceSw.no{background:radial-gradient(circle at 35% 30%,#6a5a50,#1b1612 70%)}
+.sceSws.off{opacity:.3;pointer-events:none}
+.sceK{-webkit-appearance:none;appearance:none;flex:1;min-width:0;height:28px;margin:0;padding:0;background:none;cursor:pointer}
+.sceK:focus{outline:none}
+.sceK::-webkit-slider-runnable-track{height:4px;border-radius:2px;background:linear-gradient(90deg,transparent calc(50% - 1px),rgba(255,240,200,.7) calc(50% - 1px) calc(50% + 1px),transparent calc(50% + 1px)),linear-gradient(90deg,var(--g) 0 var(--v,50%),rgba(216,180,106,.2) var(--v,50%) 100%)}
+.sceK::-moz-range-track{height:4px;border-radius:2px;background:rgba(216,180,106,.2)}.sceK::-moz-range-progress{height:4px;border-radius:2px;background:var(--g)}
+.sceK::-webkit-slider-thumb{-webkit-appearance:none;width:18px;height:18px;margin-top:-7px;border:2px solid #120e0b;border-radius:50%;background:radial-gradient(circle at 40% 35%,#fff6da,#e2bf72 55%,#8a6a2a);box-shadow:0 0 0 1px rgba(246,226,168,.7),0 0 10px rgba(255,205,130,.55)}
+.sceK::-moz-range-thumb{width:14px;height:14px;border:2px solid #120e0b;border-radius:50%;background:radial-gradient(circle at 40% 35%,#fff6da,#e2bf72 55%,#8a6a2a);box-shadow:0 0 0 1px rgba(246,226,168,.7),0 0 10px rgba(255,205,130,.55)}
+.sceKv{flex:none;width:48px;height:26px;margin:0;padding:0;border:0;background:none;color:#f2e7cd;font:700 13px var(--se);font-variant-numeric:tabular-nums;text-align:right;cursor:pointer}
+.sceKv.n{color:#a8946a;font-weight:500}
+.sceRowK.off{opacity:.3;pointer-events:none}
 #sceScr.barber .sceSteps{visibility:hidden}
+/* step IV: the summary with its little pictures */
+#sceScr .sceSum li{gap:9px;align-items:center}.sceSum li span{flex:1}.sceSum .scePic{width:26px;height:26px}.sceSum .sceDot{width:20px;height:20px;margin:0 3px}
+@keyframes sceSpin{from{transform:rotate(-200deg) scale(.7)}to{transform:none}}
 .sceBtns{display:flex;gap:10px;justify-content:center;margin-top:clamp(7px,1.3vh,11px)}
 .sceBtn{min-width:118px;min-height:46px;padding:10px 16px 11px;border:1px solid rgba(216,180,106,.5);background:linear-gradient(rgba(42,33,25,.94),rgba(16,12,10,.97));color:#efdfbb;cursor:pointer;
   font:700 14px/1 var(--se);letter-spacing:.14em;text-transform:uppercase;box-shadow:inset 0 1px 0 rgba(255,232,186,.14),0 0 0 1px #000,0 6px 16px rgba(0,0,0,.6);transition:transform .08s,opacity .3s,filter .2s}
@@ -257,7 +350,10 @@ function sceCss(){if($('sceCss'))return;const s=document.createElement('style');
 @media (max-height:800px){.sceTop small{display:none}.sceTop h1{margin-top:0}}
 @media (max-height:600px){.sceSteps{display:none}.sceDesc ul li:nth-child(n+2){display:none}.sceSum li:nth-child(n+2){display:flex!important}.sceBtn{min-height:42px}}
 @media (max-width:340px){.sceCol{padding:5px 4px 6px}.sceRow{padding-left:12px;font-size:12px}.sceRow::before{left:2px}.sceRow.m b{gap:5px}.sceStats dt{font-size:9.5px}}
-@media (prefers-reduced-motion:reduce){.sceTop,.sceCol,.sceBot,.sceGo:not([disabled]),.sceSwap,.sceNameBox{animation:none}}
+@media (max-height:640px){#sceScr .sceLkP{display:none}}
+@media (max-width:370px){.sceRow.p{gap:4px;padding-left:10px}.sceRow.p::before{left:1px}.sceRow.p .scePic{width:22px;height:22px}.sceRow.p b{font-size:13px}.sceRowC>span,.sceRowK>span{letter-spacing:.04em}}
+@media (max-width:359px){.sceTab svg{width:18px;height:18px}.sceIco{width:27px;height:27px}.sceTabs{margin:0 -7px 4px}}
+@media (prefers-reduced-motion:reduce){.sceTop,.sceCol,.sceBot,.sceGo:not([disabled]),.sceSwap,.sceNameBox,.sceIco.spin svg{animation:none}}
 `;document.head.appendChild(s)}
 const SCE_LOCK='<svg class="sceLk" viewBox="0 0 10 11" aria-hidden="true"><path d="M2.6 5V3.4a2.4 2.4 0 0 1 4.8 0V5" fill="none" stroke="currentColor" stroke-width="1.5"/><rect x="1" y="4.6" width="8" height="6" rx="1.2" fill="currentColor"/><rect x="4.4" y="6.6" width="1.2" height="2.2" rx=".6" fill="#000" opacity=".55"/></svg>';
 const SCE_DICE='<svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3.5" y="3.5" width="17" height="17" rx="4" fill="none" stroke="currentColor" stroke-width="1.8"/><circle cx="8.5" cy="8.5" r="1.6" fill="currentColor"/><circle cx="15.5" cy="15.5" r="1.6" fill="currentColor"/><circle cx="12" cy="12" r="1.6" fill="currentColor"/><circle cx="15.5" cy="8.5" r="1.6" fill="currentColor"/><circle cx="8.5" cy="15.5" r="1.6" fill="currentColor"/></svg>';
@@ -287,9 +383,14 @@ function sceOpen(op){if(SCE.on)return;op=op||{};sceCss();sceFonts();
   inp.addEventListener('focus',()=>{initAudio();try{inp.select()}catch(e){}});
   inp.addEventListener('blur',()=>{const v=sceClean(inp.value);if(v!==inp.value)inp.value=v;SCE.name=v;sceNameShow()});
   el.querySelector('.sceDice').addEventListener('click',()=>{initAudio();sceSnd('move');SCE.name=sceRandName();inp.value=SCE.name;sceNameShow();if(SCE.hero)SCE.hero.act=sceT()});
-  el.querySelector('.sceList').addEventListener('click',e=>{const w=e.target.closest('.sceSw');if(w){if(SCE.step===2)sceLookPick(w.dataset.sw,true);return}const r=e.target.closest('.sceRow');if(!r)return;
-    if(SCE.step===1)scePick(r.dataset.id);else if(SCE.step===2)sceLookPick(r.dataset.id);else if(SCE.step===3)sceGiftPick(r.dataset.id)});
-  el.querySelector('.sceDesc').addEventListener('click',e=>{const c=e.target.closest('[data-cat]');if(c){sceCatPick(c.dataset.cat);return}const r=e.target.closest('[data-go]');if(r)sceToStep(+r.dataset.go)});
+  el.querySelector('.sceList').addEventListener('click',e=>{const r=e.target.closest('.sceRow');if(!r)return;if(SCE.step===1)scePick(r.dataset.id);else if(SCE.step===3)sceGiftPick(r.dataset.id)});
+  const D=el.querySelector('.sceDesc');
+  D.addEventListener('click',e=>{const T=e.target;let b;
+    if(b=T.closest('[data-cat]'))sceCatPick(b.dataset.cat);else if(b=T.closest('.sceTile'))sceLookPick(b.dataset.id);else if(b=T.closest('.sceSw'))sceLookPick(b.dataset.sw,true);
+    else if(b=T.closest('[data-act]')){const a=b.dataset.act;if(a==='rnd')sceLookRandom();else if(a==='reset')sceLookReset();else if(a==='k1')sceLookSize(1,true)}
+    else if(b=T.closest('[data-go]'))sceToStep(+b.dataset.go)});
+  D.addEventListener('input',e=>{if(e.target.classList.contains('sceK'))sceLookSize(+e.target.value/100,false)});
+  D.addEventListener('change',e=>{if(e.target.classList.contains('sceK'))sceLookSize(+e.target.value/100,true)});
   el.querySelector('.sceGo').addEventListener('click',()=>sceGo());
   el.querySelector('.sceBack').addEventListener('click',()=>sceBack());
   sceStageInput(el.querySelector('.sceStage'));
@@ -302,72 +403,151 @@ function sceOpen(op){if(SCE.on)return;op=op||{};sceCss();sceFonts();
 function sceClose(fade){SCE.on=false;cancelAnimationFrame(SCE.raf);if(SCE.menuWas){SCE.menuWas=false;$('menu').hidden=false}const el=SCE.el;SCE.el=null;if(!el)return;
   if(!fade){el.remove();return}el.classList.add('out');requestAnimationFrame(()=>requestAnimationFrame(()=>el.classList.add('clear')));setTimeout(()=>el.remove(),800)}
 const sceT=()=>SCE.time;
-// the left column of each step (the fourth has none: the name sits on top of the stage)
+// the left column of each step (the second has none: the hero alone over the panel; the fourth neither: the name sits on the stage)
 function sceList(){const L=SCE.el.querySelector('.sceList'),s=SCE.step;let h='';
   if(s===1)h='<h2>Classe</h2>'+SCE_IDS.map(id=>{const H=HERO_BY[id],lk=!sceFree(id);
-    return `<button class="sceRow${lk?' lock':''}" data-id="${id}" aria-pressed="false"><b>${H.n}</b>${lk?`<small>${SCE_LOCK}${sceNum(H.price)}<i class="sceCoin"></i></small>`:''}</button>`}).join('');
-  else if(s===2)h=sceLookList();
-  else if(s===3)h='<h2>Dono</h2>'+SCE_GIFTS.map(g=>`<button class="sceRow g" data-id="${g.id}" aria-pressed="false"><b>${g.n}</b></button>`).join('');
-  L.innerHTML=h;L.classList.toggle('empty',s===4);
-  L.classList.remove('sceSwap');void L.offsetWidth;if(s<4)L.classList.add('sceSwap');
-  sceMark(s===1?SCE.sel:s===2?sceLookCur():SCE.gift)}
-function sceMark(id){for(const r of SCE.el.querySelectorAll('.sceList .sceRow')){const on=r.dataset.id===id;r.classList.toggle('on',on);r.setAttribute('aria-pressed',on?'true':'false')}
-  const C=SCE.step===2&&SCE_CAT[SCE.cat];if(C&&C.cols)for(const w of SCE.el.querySelectorAll('.sceSw')){const on=w.dataset.sw===SCE.look[C.ckey];w.classList.toggle('on',on);w.setAttribute('aria-pressed',on?'true':'false')}}
+    return `<button class="sceRow p${lk?' lock':''}" data-id="${id}" aria-pressed="false"><canvas class="scePic" data-hero="${id}" aria-hidden="true"></canvas><span><b>${H.n}</b>${lk?`<small>${SCE_LOCK}${sceNum(H.price)}<i class="sceCoin"></i></small>`:''}</span></button>`}).join('');
+  else if(s===3)h='<h2>Dono</h2>'+SCE_GIFTS.map(g=>`<button class="sceRow g p" data-id="${g.id}" aria-pressed="false"><canvas class="scePic" data-gift="${g.id}" aria-hidden="true"></canvas><span><b>${g.n}</b></span></button>`).join('');
+  L.innerHTML=h;L.classList.toggle('empty',s===2||s===4);
+  L.classList.remove('sceSwap');void L.offsetWidth;if(s===1||s===3)L.classList.add('sceSwap');
+  scePics(L);if(s===1||s===3)sceMark(s===1?SCE.sel:SCE.gift)}
+function sceMark(id){for(const r of SCE.el.querySelectorAll('.sceList .sceRow')){const on=r.dataset.id===id;r.classList.toggle('on',on);r.setAttribute('aria-pressed',on?'true':'false')}}
+// the little pictures of the lists and of the summary: the hero's head (with his look and his mantle; darker when locked), the gift
+function scePic(cv,draw){const s=cv.clientWidth;if(!(s>4))return;const dpr=Math.min(window.devicePixelRatio||1,2.5),W=Math.round(s*dpr);if(cv.width!==W){cv.width=W;cv.height=W}
+  const g=cv.getContext('2d'),sv=ctx,gt=G.t;g.setTransform(1,0,0,1,0,0);g.clearRect(0,0,W,W);ctx=g;G.t=1.3;
+  try{g.setTransform(dpr,0,0,dpr,0,0);draw(s,g)}catch(e){}finally{ctx=sv;G.t=gt}}
+function scePics(root){for(const cv of root.querySelectorAll('canvas.scePic')){const h=cv.dataset.hero,gi=cv.dataset.gift;
+  if(h&&HERO_BY[h])scePic(cv,(s,g)=>{const dr=h==='druida',R=s*(dr?.25:.3);EROE.testa(s*.5,s*(dr?.64:.56),Math.PI/2-.4,R/10,{style:sceStyle(h),p:.3});
+    if(!sceFree(h)){g.globalCompositeOperation='source-atop';g.fillStyle='rgba(10,10,14,.5)';g.fillRect(0,0,s,s);g.globalCompositeOperation='source-over'}});
+  else if(gi&&window.C3&&SCE_G3[gi])scePic(cv,s=>{const flat=gi==='anello'||gi==='piuma',k=s/(gi==='piuma'?37:gi==='cassa'?27:gi==='cristalli'?27:31);
+    ctx.translate(s*.5,s*(gi==='piuma'?.92:.84));ctx.scale(k,k);SCE_G3[gi](C3.V(flat?Math.PI/2+.6:.75),1.3,C3)})}}
 // the texts of each step: the right column and the panel underneath
 function sceHeroText(id){const h=HERO_BY[id],I=SCE_INFO[id],U=typeof ULT!=='undefined'&&ULT[id],S=SCE.stats[id],B=SCE.stats.arciere,lk=!sceFree(id),R=SCE.el.querySelector('.sceStats');
-  R.classList.remove('empty');R.innerHTML='<h2>Statistiche</h2><dl>'+SCE_ROWS.map(([k,n,f,dir])=>{if(!S)return'';const v=S[k],b=B?B[k]:v,d=id==='arciere'?0:Math.sign((v-b)*dir)*(Math.abs(v-b)>1e-6?1:0);
-    return `<dt>${n}</dt><dd class="${d>0?'up':d<0?'dn':''}">${f(v)}${d?`<i>${d>0?'▲':'▼'}</i>`:''}</dd>`}).join('')+'</dl>';
+  // each number with a bar: how it stands against the best of the four (the dash: the shortest is the best)
+  const ex=k=>{const v=SCE_IDS.map(i=>SCE.stats[i]&&SCE.stats[i][k]).filter(v=>v>0);return v.length?[Math.min(...v),Math.max(...v)]:[1,1]};
+  R.classList.remove('empty');R.innerHTML='<h2>Statistiche</h2><dl>'+SCE_ROWS.map(([k,n,f,dir])=>{if(!S)return'';const v=S[k],b=B?B[k]:v,d=id==='arciere'?0:Math.sign((v-b)*dir)*(Math.abs(v-b)>1e-6?1:0),[lo,hi]=ex(k),fr=Math.max(.06,Math.min(1,dir>0?v/hi:lo/v));
+    return `<dt style="--v:${fr.toFixed(3)}">${n}</dt><dd class="${d>0?'up':d<0?'dn':''}">${f(v)}${d?`<i>${d>0?'▲':'▼'}</i>`:''}</dd>`}).join('')+'</dl>';
   const D=SCE.el.querySelector('.sceDesc');D.style.setProperty('--c',I.hex);
   D.innerHTML=`<h3>${h.n}</h3><p>${SCE_LORE[id]||h.d}</p><ul><li><span>${h.start}</span></li>${U?`<li><span>Super: <b>${U.n}</b></span></li>`:''}</ul>`;
   // a locked one: the button says so, and where he is unlocked
   const go=SCE.el.querySelector('.sceGo');go.disabled=lk;go.innerHTML=lk?`<span>${SCE_LOCK}Bloccato</span><small>${sceNum(h.price)} oro nella scheda Eroi</small>`:'Avanti ›'}
-// ------------------------------------------------------------------ step II: the look
-const SCE_ICON={manto:'<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3C7.6 3 5 6.4 5 11v8.5h14V11c0-4.6-2.6-8-7-8z" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"/><path d="M8.4 12.2c0-2.4 1.6-4.2 3.6-4.2s3.6 1.8 3.6 4.2v2.6H8.4z" fill="currentColor" opacity=".45"/></svg>',
+// ------------------------------------------------------------------ step II: the look. The hero alone over the panel (the camera on the part:
+// the whole hero for the mantle, the head turning for the hair and the ears, the face, the head and shoulders); in the panel the parts as
+// icons, the part and the choice with the dice (a whole look at random) and the arrow back (this part as it was), a line about it, the
+// choices as drawn tiles, the colour, the size
+const SCE_ICON={manto:'<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 3.6h6l1.3 2.6L20.2 20H3.8L7.7 6.2z" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"/><path d="M9.7 6.6L7.6 19.6M14.3 6.6l2.1 13" stroke="currentColor" stroke-width="1.1" opacity=".5"/><circle cx="12" cy="6.2" r="1.8" fill="currentColor"/></svg>',
+  cappuccio:'<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3C7.6 3 5 6.4 5 11v8.5h14V11c0-4.6-2.6-8-7-8z" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"/><path d="M8.4 12.2c0-2.4 1.6-4.2 3.6-4.2s3.6 1.8 3.6 4.2v2.6H8.4z" fill="currentColor" opacity=".45"/></svg>',
+  capelli:'<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 17c0-6 3-11 7.5-11 3.2 0 5.5 2.4 6 5.2M9 17c0-4 1.6-7 4.2-7.4M13 17c0-2.4 1-4.2 2.6-4.6" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>',
+  orecchie:'<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8.3 10.2C8.3 6.2 10.9 3.6 14.1 3.6s5.6 2.5 5.6 5.8c0 2.4-1.3 3.6-2.5 4.6-1.1 1-1.5 2-1.7 3.4-.3 2-1.7 3.1-3.5 3.1-1.6 0-2.8-.9-3.3-2.2" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/><path d="M11.7 10.1c0-1.8 1.1-3 2.5-3s2.3 1.1 2.3 2.4c0 1.2-.8 1.8-1.5 2.4-.6.5-.9 1.1-.9 1.9" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/></svg>',
   pelle:'<svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="7.5" fill="none" stroke="currentColor" stroke-width="1.7"/><path d="M12 4.5a7.5 7.5 0 0 1 0 15z" fill="currentColor" opacity=".6"/></svg>',
   occhi:'<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M2.5 12s3.6-6 9.5-6 9.5 6 9.5 6-3.6 6-9.5 6-9.5-6-9.5-6z" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"/><circle cx="12" cy="12" r="2.8" fill="currentColor"/></svg>',
   sopr:'<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3.5 9.5q4-3.4 7.5-.6M13 8.9q3.5-2.8 7.5.6" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><circle cx="7.5" cy="14.5" r="2" fill="currentColor"/><circle cx="16.5" cy="14.5" r="2" fill="currentColor"/></svg>',
+  bocca:'<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3.5 12c2.5-2.8 5.1-3.4 6.7-2.2.8.6 1.3.6 1.8.6s1 0 1.8-.6c1.6-1.2 4.2-.6 6.7 2.2-2.5 3.6-5.3 5.2-8.5 5.2s-6-1.6-8.5-5.2z" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/><path d="M3.5 12Q12 14.4 20.5 12C18 15.6 15.2 17.2 12 17.2S6 15.6 3.5 12z" fill="currentColor" opacity=".45"/></svg>',
   segni:'<svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="8" fill="none" stroke="currentColor" stroke-width="1.7"/><path d="M8.5 6.8l2.6 9.2" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"/><circle cx="14.6" cy="14.2" r="1" fill="currentColor"/><circle cx="16.4" cy="12.1" r="1" fill="currentColor"/></svg>',
-  capelli:'<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 17c0-6 3-11 7.5-11 3.2 0 5.5 2.4 6 5.2M9 17c0-4 1.6-7 4.2-7.4M13 17c0-2.4 1-4.2 2.6-4.6" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>',
+  barba:'<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 8c-.2 7.4 3 12.8 7 12.8S19.2 15.4 19 8c-1.5 2-3.2 2.9-4.6 2.2-.9-.5-1.5-.7-2.4-.7s-1.5.2-2.4.7C8.2 10.9 6.5 10 5 8z" fill="currentColor" fill-opacity=".4" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/><path d="M8.6 13.8q3.4 2 6.8 0" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>',
   acc:'<svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="7.5" cy="13" r="3.8" fill="none" stroke="currentColor" stroke-width="1.7"/><circle cx="16.5" cy="13" r="3.8" fill="none" stroke="currentColor" stroke-width="1.7"/><path d="M11.3 12.4q.7-.9 1.4 0M3.7 12.2L2.2 10.4M20.3 12.2l1.5-1.8" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>'};
+const SCE_UNDO='<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 9.2a7.2 7.2 0 1 1-.4 6.2" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><path d="M5.2 4.6v4.9h4.9" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>';
 // the parts on this screen (at the barber the mantle stays in the Profile, where it is free)
 const sceCats=()=>SCE.barber?SCE_CATS.filter(c=>c.id!=='manto'):SCE_CATS;
 const sceLookCur=()=>SCE.cat==='manto'?SCE.manto:SCE.look[SCE_CAT[SCE.cat].key];
-const sceCatMod=c=>c.id==='manto'?!!SCE.manto:SCE.look[c.key]!==LOOK_DEF[c.key]||(c.ckey&&SCE.look[c.ckey]!==LOOK_DEF[c.ckey]);
-function sceLookList(){const C=SCE_CAT[SCE.cat];
-  if(C.id==='manto')return'<h2>Mantello</h2>'+SCE_MANTI.map(m=>`<button class="sceRow m" data-id="${m.id}" aria-pressed="false"><b><i class="sceDot${m.id?'':' o'}" style="--a:${m.hood||'#fff'};--b:${m.body||'#000'}"></i>${m.n}</b></button>`).join('');
-  const own=(heroStyle0(SCE.sel||'arciere').skin)||'#f2c9a0';
-  let h=`<h2>${C.n}</h2>`+C.list.map(o=>`<button class="sceRow m" data-id="${o.id}" aria-pressed="false"><b>${o.c!==undefined?`<i class="sceDot" style="--a:${o.c||own};--b:${o.c||own}"></i>`:''}${o.n}</b></button>`).join('');
-  if(C.cols)h+=`<div class="sceCols"><h2>${C.cn}</h2><div class="sceSws${C.id==='occhi'&&SCE.sel==='druida'?' off':''}">${C.cols.map(o=>`<button class="sceSw${o.c?'':' no'}" data-sw="${o.id}" style="--c:${o.c||'#1b1612'}" aria-label="${o.n}" aria-pressed="false"></button>`).join('')}</div></div>`;
-  return h}
-// the panel underneath: the parts as icons, the choice, a line about it
-// what the heroes' own pieces hide: under the Balestriere's helmet the brows, the hair (only the long locks come out at the sides), the headband
-const sceHides=(id,k,v)=>id==='balestriere'&&(k==='sopr'&&v!=='nessuna'||k==='capelli'&&v!=='nascosti'&&v!=='lunghi'||k==='acc'&&v==='fascia');
-function sceLookText(){const C=SCE_CAT[SCE.cat],D=SCE.el.querySelector('.sceDesc');SCE.el.querySelector('.sceStats').classList.add('empty');
-  const tabs=`<div class="sceTabs" role="tablist">${sceCats().map(c=>`<button class="sceTab${c.id===SCE.cat?' on':''}${sceCatMod(c)?' mod':''}" data-cat="${c.id}" role="tab" aria-selected="${c.id===SCE.cat}" aria-label="${c.n}">${SCE_ICON[c.id]}</button>`).join('')}</div>`;
-  let h3,p;
-  if(C.id==='manto'){const m=SCE_MANTO[SCE.manto]||SCE_MANTI[0];h3=`Mantello: ${m.n}`;
-    p=m.id?m.d:`I colori di sempre ${(SCE_INFO[SCE.sel]||SCE_INFO.arciere).the.replace(/^l'/,"dell'").replace(/^la /,'della ').replace(/^il /,'del ')}. Lo cambi quando vuoi nel Profilo.`;D.style.setProperty('--c',m.hood||SCE_INFO[SCE.sel||'arciere'].hex)}
-  else{const o=lkFind(C.list,SCE.look[C.key]);h3=`${C.n}: ${o.n}`+(C.cols&&!(C.id==='occhi'&&SCE.sel==='druida')?` · ${lkFind(C.cols,SCE.look[C.ckey]).n}`:'');p=o.d||C.d||'';
-    // the heroes' own pieces stay
-    if(C.id==='occhi'&&SCE.sel==='druida')p='Il Druida tiene i suoi occhi verdi: cambia solo la forma.';
-    else if(sceHides(SCE.sel,C.key,SCE.look[C.key]))p=`Sotto l'elmo del Balestriere ${C.id==='sopr'?'le sopracciglia non si vedono':C.id==='capelli'?'si vedono solo i capelli lunghi':'la fascia non si vede'}: sugli altri eroi sì.`;
-    else if(C.id==='capelli'&&SCE.sel==='cacciatrice'&&SCE.look.capelli==='nascosti')p='Il colore va anche alla coda della Cacciatrice.';
-    D.style.setProperty('--c','#f6e2a8')}
-  D.innerHTML=tabs+`<h3>${h3}</h3><p>${p}</p>`;
-  sceBarberBtn()}
+// the size of a part (1 when it has none, or it is not there)
+const sceSizeOf=c=>{const K=SCE.look.k||{};return c.size&&SCE.look[c.key]!==LOOK_NONE[c.key]&&K[c.size]>0?K[c.size]:1};
+// a part changed from the hero of always: its choice, its own colour (not the hair's, shown with the beard), its size
+const sceCatMod=c=>c.id==='manto'?!!SCE.manto:SCE.look[c.key]!==LOOK_DEF[c.key]||!!(c.ckey&&!c.cshare&&SCE.look[c.ckey]!==LOOK_DEF[c.ckey])||sceSizeOf(c)!==1;
+// what the heroes' own pieces hide: under the Balestriere's helmet the brows, the ears on top of the head, the headband and the crown
+// (the hair shows round his face and under the helmet's rim)
+const sceHides=(id,k,v)=>id==='balestriere'&&(k==='sopr'&&v!=='nessuna'||k==='orecchie'&&(v==='gatto'||v==='orso'||v==='coniglio')||k==='acc'&&(v==='fascia'||v==='coroncina'));
+function sceLookUI(){const el=SCE.el,C=SCE_CAT[SCE.cat],D=el.querySelector('.sceDesc'),opts=C.id==='manto'?SCE_MANTI:C.list;el.querySelector('.sceStats').classList.add('empty');
+  const tabs=`<div class="sceTabs" role="tablist" aria-label="Le parti">${sceCats().map(c=>`<button class="sceTab" data-cat="${c.id}" role="tab" aria-label="${c.n}" title="${c.n}">${SCE_ICON[c.id]}</button>`).join('')}</div>`;
+  const hd=`<div class="sceLkHd"><h3></h3><button class="sceIco" data-act="rnd" aria-label="Un aspetto a caso" title="Un aspetto a caso">${SCE_DICE}</button><button class="sceIco" data-act="reset" aria-label="Questa parte com'era" title="Questa parte com'era">${SCE_UNDO}</button></div><p class="sceLkP"></p>`;
+  const tiles=`<div class="sceTiles" role="listbox" aria-label="${C.n}">${opts.map(o=>`<button class="sceTile" data-id="${o.id}" role="option" aria-label="${o.n}" title="${o.n}"><canvas aria-hidden="true"></canvas></button>`).join('')}</div>`;
+  const rc=C.cols?`<div class="sceRowC"><span>${C.cn}<em></em></span><div class="sceSws">${C.cols.map(o=>`<button class="sceSw${o.c?'':' no'}" data-sw="${o.id}" style="--c:${o.c||'#1b1612'}" aria-label="${o.n}" title="${o.n}"></button>`).join('')}</div></div>`:'';
+  const rk=C.size?`<div class="sceRowK"><span>Grandezza</span><input class="sceK" type="range" min="${Math.round(LOOK_KMIN*100)}" max="${Math.round(LOOK_KMAX*100)}" step="1" value="100" aria-label="Grandezza"><button class="sceKv" data-act="k1" aria-label="Grandezza di sempre" title="Grandezza di sempre"></button></div>`:'';
+  D.style.setProperty('--c','#f6e2a8');D.innerHTML=tabs+hd+tiles+rc+rk;
+  const T=D.querySelector('.sceTiles');T.classList.remove('sceSwap');void T.offsetWidth;T.classList.add('sceSwap');
+  sceTilesLayout();sceLookSync()}
+// the tiles fill the same room in every part (the panel never changes height): two rows of tiles plus the colour and the size underneath;
+// a part with fewer rows underneath or fewer choices gets bigger tiles
+function sceTilesLayout(){const D=SCE.el&&SCE.el.querySelector('.sceDesc'),T=D&&D.querySelector('.sceTiles');if(!T)return;const C=SCE_CAT[SCE.cat],n=T.children.length,cs=getComputedStyle(D);
+  const W=D.clientWidth-parseFloat(cs.paddingLeft)-parseFloat(cs.paddingRight),g=5,ROW=30,rows=(C.cols?1:0)+(C.size?1:0);if(!(W>40))return;
+  const ts0=Math.max(34,Math.min(54,Math.floor((W-6*g)/7))),av=2*ts0+g+(2-rows)*ROW;
+  let b=null;for(let r=1;r<=3;r++){const c=Math.ceil(n/r),ts=Math.min(n<4?92:66,(W-(c-1)*g)/c,(av-(r-1)*g)/r);if(!b||ts>b.ts+.5)b={c,ts}}
+  const ts=Math.floor(b.ts);T.style.setProperty('--ts',ts+'px');T.style.gridTemplateColumns=`repeat(${b.c},${ts}px)`;T.style.height=av+'px';SCE.ts=ts}
+// everything on the panel as the look is now (without building it again)
+function sceLookSync(){const el=SCE.el;if(!el||SCE.step!==2)return;const C=SCE_CAT[SCE.cat],D=el.querySelector('.sceDesc');if(!D.querySelector('.sceTiles'))return;
+  for(const b of D.querySelectorAll('.sceTab')){const c=SCE_CAT[b.dataset.cat],on=c.id===SCE.cat;b.classList.toggle('on',on);b.setAttribute('aria-selected',on?'true':'false');b.classList.toggle('mod',sceCatMod(c))}
+  const cur=sceLookCur(),opts=C.id==='manto'?SCE_MANTI:C.list,o=opts.find(x=>x.id===cur)||opts[0];
+  for(const t of D.querySelectorAll('.sceTile')){const on=t.dataset.id===o.id;t.classList.toggle('on',on);t.setAttribute('aria-selected',on?'true':'false')}
+  D.querySelector('.sceLkHd h3').innerHTML=`<small>${C.n}</small>${o.n}`;
+  // a line about it (the heroes' own pieces stay)
+  let p=o.d||C.d||'';const dr=SCE.sel==='druida';
+  if(C.id==='manto'&&!o.id)p=`I colori di sempre ${(SCE_INFO[SCE.sel]||SCE_INFO.arciere).the.replace(/^l'/,"dell'").replace(/^la /,'della ').replace(/^il /,'del ')}. Lo cambi quando vuoi nel Profilo.`;
+  else if(C.id==='occhi'&&dr)p='Il Druida tiene i suoi occhi verdi: cambiano la forma e la grandezza.';
+  else if(sceHides(SCE.sel,C.key,o.id))p=`Sotto l'elmo del Balestriere ${C.id==='sopr'?'le sopracciglia non si vedono':C.id==='orecchie'?'queste orecchie non si vedono':o.id==='fascia'?'la fascia non si vede':'la corona non si vede'}: sugli altri eroi sì.`;
+  else if(C.id==='capelli'&&SCE.sel==='cacciatrice'&&o.id==='nascosti')p='Il colore va anche alla coda della Cacciatrice.';
+  else if(C.id==='barba'&&o.id!=='nessuna')p+=' Ha il colore dei capelli.';
+  D.querySelector('.sceLkP').textContent=p;
+  if(C.cols){const S=D.querySelector('.sceSws'),off=C.id==='occhi'&&dr;S.classList.toggle('off',off);for(const w of S.children){const on=w.dataset.sw===SCE.look[C.ckey];w.classList.toggle('on',on);w.setAttribute('aria-pressed',on?'true':'false')}
+    D.querySelector('.sceRowC em').textContent=off?'Verdi':lkFind(C.cols,SCE.look[C.ckey]).n}
+  if(C.size){const R=D.querySelector('.sceRowK'),inp=R.querySelector('.sceK'),v=Math.round(sceSizeOf(C)*100);R.classList.toggle('off',SCE.look[C.key]===LOOK_NONE[C.key]||sceHides(SCE.sel,C.key,SCE.look[C.key]));if(+inp.value!==v)inp.value=v;sceKShow(R,v)}
+  D.querySelector('[data-act="reset"]').disabled=!sceCatMod(C);
+  sceBarberBtn();sceTilesQueue()}
+function sceKShow(R,v){const b=R.querySelector('.sceKv');b.textContent=v+'%';b.classList.toggle('n',v===100);R.querySelector('.sceK').style.setProperty('--v',((v-LOOK_KMIN*100)/((LOOK_KMAX-LOOK_KMIN)*100)*100).toFixed(1)+'%')}
+// how a tile looks at the hero: his head alone (testa) or the hero from the waist up (body); f: the face; s: the radius of the head in
+// tiles; (x, y): where the centre of the head goes; hood: the hood lowered (the hair shows whole)
+const SCE_TILE={head:{f:Math.PI/2-.45,s:.32,x:.5,y:.58},hair:{f:Math.PI/2-.75,s:.32,x:.47,y:.5,hood:'giu'},face:{f:Math.PI/2-.3,s:.58,x:.35,y:.36},
+  marks:{f:Math.PI/2,s:.74,x:.5,y:.3},eyes:{f:Math.PI/2-.3,s:.92,x:.24,y:.4},brows:{f:Math.PI/2-.3,s:.92,x:.24,y:.5},mouth:{f:Math.PI/2-.3,s:1.1,x:.18,y:-.1},
+  chin:{f:Math.PI/2-.35,s:.42,x:.4,y:.22},bust:{body:1,f:Math.PI/2-.4,s:.34,x:.5,y:.43},body:{body:1,f:Math.PI/2-.4,s:.27,x:.5,y:.36}};
+// the hero's style with that choice in that part (the rest of the look as it is now)
+function sceTileStyle(C,id,T){const kl=SCE.look,km=SCE.manto;
+  try{if(C.id==='manto')SCE.manto=id;else{SCE.look={...kl,[C.key]:id};if(T.hood)SCE.look.cappuccio=T.hood}return sceStyle(SCE.sel||'arciere')}finally{SCE.look=kl;SCE.manto=km}}
+function sceTileDraw(cv,C,id,ts){const T=SCE_TILE[C.prev]||SCE_TILE.head,dpr=Math.min(window.devicePixelRatio||1,LOWFX||SCE.low?1.5:2.5),W=Math.max(8,Math.round(ts*dpr));
+  if(cv.width!==W){cv.width=W;cv.height=W}const g=cv.getContext('2d'),st=sceTileStyle(C,id,T),sv=ctx,gt=G.t;g.setTransform(1,0,0,1,0,0);g.clearRect(0,0,W,W);ctx=g;G.t=1.3;
+  try{g.setTransform(dpr,0,0,dpr,0,0);const R=T.s*ts;
+    if(T.body)EROE.arciere(ts*T.x,ts*T.y+2.6*R,T.f,'idle',.3,R/10,{style:st,moss:false,noFx:true});else EROE.testa(ts*T.x,ts*T.y,T.f,R/10,{style:st,p:.3})}
+  catch(e){}finally{ctx=sv;G.t=gt}cv.classList.add('ok')}
+// a tile is drawn again only when what it shows has changed; the one picked first, then a few per frame
+function sceTilesQueue(){const T=SCE.el&&SCE.el.querySelector('.sceTiles');if(!T)return;const C=SCE_CAT[SCE.cat],ts=SCE.ts||48,key=JSON.stringify([SCE.sel,C.id==='manto'?'':SCE.manto,{...SCE.look,[C.key]:0},ts]),q=[];
+  for(const b of T.children){const cv=b.firstChild,k=key+'|'+b.dataset.id;if(cv.dataset.k!==k)q.push({cv,C,id:b.dataset.id,k,ts,on:b.classList.contains('on')?1:0})}
+  q.sort((a,b)=>b.on-a.on);SCE.tq=q}
+function sceTilesTick(){const q=SCE.tq;if(!q||!q.length)return;const t0=performance.now(),lim=LOWFX||SCE.low?3:6;
+  do{const it=q.shift();if(it.cv.isConnected){sceTileDraw(it.cv,it.C,it.id,it.ts);it.cv.dataset.k=it.k}}while(q.length&&performance.now()-t0<lim)}
 // the button of the barber (in the making of the hero it is just «Avanti»)
 function sceBarberBtn(){const go=SCE.el.querySelector('.sceGo');go.disabled=false;
   if(!SCE.barber){go.textContent='Avanti ›';return}
   const ch=sceLookChanged();go.innerHTML=ch?`Conferma · ${BARBER_PRICE}<i class="sceGem" style="margin-left:5px;width:14px;height:14px;vertical-align:-2px"></i>`:'Esci'}
 const BARBER_PRICE=20;
 const sceLookChanged=()=>JSON.stringify(sceLook(SCE.look))!==JSON.stringify(sceLook(SAVE.look));
-// a part: its options in the list, the camera on the face or on the whole hero
-function sceCatPick(id){if(SCE.done||!SCE.on||SCE.step!==2||!SCE_CAT[id]||(SCE.barber&&id==='manto'))return;initAudio();if(SCE.cat!==id){sceSnd('move');SCE.cat=id;sceList();sceLookText()}}
+// a part: its tiles, the camera on it
+function sceCatPick(id){if(SCE.done||!SCE.on||SCE.step!==2||!SCE_CAT[id]||(SCE.barber&&id==='manto'))return;initAudio();if(SCE.cat!==id){sceSnd('move');SCE.cat=id;sceLookUI()}}
 // a choice (col: a colour of the part)
-function sceLookPick(id,col){if(SCE.done||!SCE.on||SCE.step!==2)return;const C=SCE_CAT[SCE.cat];if(C.id==='manto'){sceMantoPick(id);return}
-  const key=col?C.ckey:C.key,L=col?C.cols:C.list;if(!key||!L.some(o=>o.id===id))return;initAudio();sceSnd('move');
+function sceLookPick(id,col){if(SCE.done||!SCE.on||SCE.step!==2)return;const C=SCE_CAT[SCE.cat];if(C.id==='manto'&&!col){sceMantoPick(id);return}
+  const key=col?C.ckey:C.key,L=col?C.cols:C.list;if(!key||!L||!L.some(o=>o.id===id)||(col&&C.id==='occhi'&&SCE.sel==='druida'))return;initAudio();sceSnd('move');
   if(SCE.look[key]!==id){SCE.look[key]=id;SCE.pulse=sceT();const o=lkFind(L,id),rgb=o.c?rgbStr(o.c):'255,226,180';for(let i=0;i<(LOWFX||SCE.low?4:10);i++)sceEmber(rgb,true);if(SCE.hero&&C.cam==='face')SCE.hero.blink=sceT()}
-  sceMark(sceLookCur());sceLookText()}
+  sceLookSync()}
+// the size (v: .7 to 1.3). While the finger slides only the hero and the numbers follow; the tiles are drawn again when it lets go
+function sceLookSize(v,done){if(SCE.done||!SCE.on||SCE.step!==2)return;const C=SCE_CAT[SCE.cat];if(!C.size||SCE.look[C.key]===LOOK_NONE[C.key])return;
+  v=Math.round(Math.min(LOOK_KMAX,Math.max(LOOK_KMIN,v))*100)/100;const was=sceSizeOf(C);
+  if(v!==was){SCE.look.k={...(SCE.look.k||{}),[C.size]:v};const a=Math.round(was*20),b=Math.round(v*20);if(a!==b||v===1){initAudio();sceSnd(v===1?'mid':'tick')}}
+  if(done){sceLookSync();return}
+  const D=SCE.el.querySelector('.sceDesc'),R=D.querySelector('.sceRowK');if(R)sceKShow(R,Math.round(v*100));
+  for(const b of D.querySelectorAll('.sceTab'))b.classList.toggle('mod',sceCatMod(SCE_CAT[b.dataset.cat]));D.querySelector('[data-act="reset"]').disabled=!sceCatMod(C);sceBarberBtn()}
+// this part as it was (its choice, its colour, its size)
+function sceLookReset(){if(SCE.done||!SCE.on||SCE.step!==2)return;const C=SCE_CAT[SCE.cat];if(!sceCatMod(C))return;initAudio();sceSnd('back');
+  const b=SCE.el.querySelector('[data-act="reset"]');if(b){b.classList.remove('spin');void b.offsetWidth;b.classList.add('spin')}
+  if(C.id==='manto'){sceMantoPick('',true);return}
+  SCE.look[C.key]=LOOK_DEF[C.key];if(C.ckey&&!C.cshare)SCE.look[C.ckey]=LOOK_DEF[C.ckey];if(C.size)SCE.look.k={...(SCE.look.k||{}),[C.size]:1};
+  SCE.pulse=sceT();if(SCE.hero&&C.cam==='face')SCE.hero.blink=sceT();sceLookSync()}
+// a whole look at random (and a mantle, while the hero is being made): most of the time the hood up, natural hair, no beard
+function sceLookRandom(){if(SCE.done||!SCE.on||SCE.step!==2)return;initAudio();sceSnd('dice');
+  const r=Math.random,any=L=>L[randi(0,L.length-1)].id,or=(L,none,p)=>r()<p?none:any(L.filter(o=>o.id!==none)),nat=['castani','neri','biondi','rossi','bianchi','cenere'];
+  let L;do L={pelle:any(SCE_PELLE),occhi:any(SCE_OCCHI),iride:or(SCE_IRIDE,'scuri',.35),sopr:or(SCE_SOPR,'nessuna',.3),bocca:or(SCE_BOCCA,'nessuna',.3),segno:or(SCE_SEGNI,'nessuno',.45),
+    capelli:any(SCE_CAPELLI),colCap:r()<.72?nat[randi(0,nat.length-1)]:any(SCE_COLCAP),barba:or(SCE_BARBA,'nessuna',.65),orecchie:or(SCE_ORECCHIE,'tonde',.55),cappuccio:r()<.62?'su':'giu',acc:or(SCE_ACC,'nessuno',.45)};
+  while(!sceLookN(L));
+  SCE.look=sceLook(L);if(!SCE.barber&&r()<.6)SCE.manto=any(SCE_MANTI);
+  const t=sceT();SCE.pulse=t;if(SCE.hero)SCE.hero.blink=t;for(let i=0;i<(LOWFX||SCE.low?6:16);i++)sceEmber(['255,226,180','255,190,120','190,220,255'][i%3],true);
+  const b=SCE.el.querySelector('[data-act="rnd"]');if(b){b.classList.remove('spin');void b.offsetWidth;b.classList.add('spin')}
+  sceLookSync()}
 function sceGiftText(id){const g=SCE_GIFT[id],R=SCE.el.querySelector('.sceStats');R.classList.remove('empty');
   R.innerHTML='<h2>Contenuto</h2><dl>'+g.rows.map(([n,v,ic])=>`<dt>${n}</dt><dd>${v}${ic==='coin'?'<i class="sceCoin"></i>':ic==='gem'?'<i class="sceGem"></i>':''}</dd>`).join('')+'</dl>';
   const D=SCE.el.querySelector('.sceDesc');D.style.setProperty('--c','#f6e2a8');D.innerHTML=`<h3>${g.n}</h3><p>${g.d}</p>`;
@@ -375,19 +555,21 @@ function sceGiftText(id){const g=SCE_GIFT[id],R=SCE.el.querySelector('.sceStats'
 // the summary of the last step (a tap on a line goes back to that step)
 function sceSummary(){if(!SCE.el||SCE.step!==4)return;SCE.el.querySelector('.sceStats').classList.add('empty');
   const D=SCE.el.querySelector('.sceDesc'),H=HERO_BY[SCE.sel],m=SCE_MANTO[SCE.manto]||SCE_MANTI[0],g=SCE_GIFT[SCE.gift],n=sceLookN(SCE.look);D.style.setProperty('--c',SCE_INFO[SCE.sel].hex);
-  D.innerHTML=`<h3>${SCE.name||'Il tuo eroe'}</h3><ul class="sceSum"><li data-go="1"><span>Classe</span><b>${H.n}</b></li><li data-go="2"><span>Aspetto</span><b>${m.n}${n?` · ${n} ritocch${n>1?'i':'o'}`:''}</b></li><li data-go="3"><span>Dono</span><b>${g?g.n:'—'}</b></li></ul>`;
-  const go=SCE.el.querySelector('.sceGo');go.disabled=false;go.textContent='Inizia'}
+  D.innerHTML=`<h3>${SCE.name||'Il tuo eroe'}</h3><ul class="sceSum"><li data-go="1"><canvas class="scePic" data-hero="${SCE.sel}" aria-hidden="true"></canvas><span>Classe</span><b>${H.n}</b></li>`+
+    `<li data-go="2"><i class="sceDot${m.id?'':' o'}" style="--a:${m.hood||'#fff'};--b:${m.body||'#000'}"></i><span>Aspetto</span><b>${m.n}${n?` · ${n} ritocch${n>1?'i':'o'}`:''}</b></li>`+
+    `<li data-go="3"><canvas class="scePic" data-gift="${g?g.id:''}" aria-hidden="true"></canvas><span>Dono</span><b>${g?g.n:'—'}</b></li></ul>`;
+  scePics(D);const go=SCE.el.querySelector('.sceGo');go.disabled=false;go.textContent='Inizia'}
 // while you write: only the name over the summary changes (rebuilding it would lose a tap on its lines when the keyboard closes)
 const sceNameShow=()=>{const h=SCE.el&&SCE.step===4&&SCE.el.querySelector('.sceDesc h3');if(h)h.textContent=SCE.name||'Il tuo eroe'};
-function sceText(){const s=SCE.step;if(s===1)sceHeroText(SCE.sel);else if(s===2)sceLookText();else if(s===3)sceGiftText(SCE.gift);else sceSummary()}
-// the panel is as high as its longest text, measured once (and again when the fonts arrive or the screen turns)
-function sceDescFit(){if(!SCE.el)return;const D=SCE.el.querySelector('.sceDesc'),keep=SCE.step;D.style.minHeight='0px';let mx=0;
-  if(!SCE.barber)for(const id of SCE_IDS){sceHeroText(id);mx=Math.max(mx,D.offsetHeight)}
-  // every choice of every part (put back afterwards)
-  {const kc=SCE.cat,km=SCE.manto,kl={...SCE.look};for(const c of sceCats()){SCE.cat=c.id;for(const o of c.id==='manto'?SCE_MANTI:c.list){if(c.id==='manto')SCE.manto=o.id;else SCE.look[c.key]=o.id;sceLookText();mx=Math.max(mx,D.offsetHeight)}SCE.look={...kl};SCE.manto=km}SCE.cat=kc}
-  if(!SCE.barber)for(const g of SCE_GIFTS){sceGiftText(g.id);mx=Math.max(mx,D.offsetHeight)}
-  if(!SCE.barber){SCE.step=4;const gk=SCE.gift;if(!SCE.gift)SCE.gift=SCE_GIFTS[4].id;sceSummary();mx=Math.max(mx,D.offsetHeight);SCE.gift=gk;SCE.step=keep}
-  sceText();D.style.minHeight=Math.ceil(mx)+'px'}
+function sceText(){const s=SCE.step;if(s===1)sceHeroText(SCE.sel);else if(s===2)sceLookUI();else if(s===3)sceGiftText(SCE.gift);else sceSummary()}
+// the panels of steps I, III and IV are as high as the longest of their texts (measured once, and again when the fonts arrive or the screen
+// turns), so the buttons never jump; the panel of the look has its own height, the same for every part
+function sceDescFit(){if(!SCE.el||SCE.fin||SCE.done)return;const el=SCE.el,D=el.querySelector('.sceDesc'),keep=SCE.step,cls=el.className;el.style.setProperty('--dh','0px');let mx=0;
+  if(!SCE.barber){const gk=SCE.gift;try{el.className='s1';for(const id of SCE_IDS){sceHeroText(id);mx=Math.max(mx,D.offsetHeight)}
+      el.className='s3';for(const g of SCE_GIFTS){sceGiftText(g.id);mx=Math.max(mx,D.offsetHeight)}
+      el.className='s4';SCE.step=4;if(!SCE.gift)SCE.gift=SCE_GIFTS[4].id;sceSummary();mx=Math.max(mx,D.offsetHeight)}
+    finally{SCE.gift=gk;SCE.step=keep;el.className=cls}}
+  el.style.setProperty('--dh',Math.ceil(mx)+'px');sceText()}
 // picking a hero: the old one sinks into the dark, the new one comes up into the light
 function scePick(id,quiet){if(SCE.done||!SCE.on||SCE.step!==1||!HERO_BY[id])return;const t=sceT();
   if(!quiet){initAudio();sceSnd(sceFree(id)?'move':'lock')}
@@ -399,7 +581,7 @@ function scePick(id,quiet){if(SCE.done||!SCE.on||SCE.step!==1||!HERO_BY[id])retu
 // a mantle: the cloth takes the colour in a flash of light
 function sceMantoPick(id,quiet){if(SCE.done||!SCE.on||SCE.step!==2||!SCE_MANTO[id])return;if(!quiet){initAudio();sceSnd('move')}
   if(SCE.manto!==id){SCE.manto=id;SCE.pulse=sceT();const m=SCE_MANTO[id],rgb=m.hood?rgbStr(m.hood):SCE_INFO[SCE.sel].rgb;for(let i=0;i<(LOWFX||SCE.low?6:16);i++)sceEmber(rgb,true)}
-  sceMark(id);sceLookText()}
+  sceLookSync()}
 const rgbStr=h=>{const n=parseInt(h.slice(1),16);return`${n>>16&255},${n>>8&255},${n&255}`};
 function sceGiftPick(id,quiet){if(SCE.done||!SCE.on||SCE.step!==3||!SCE_GIFT[id])return;const t=sceT();
   if(!quiet){initAudio();sceSnd('move')}
@@ -423,9 +605,9 @@ function sceBack(){if(SCE.done||!SCE.on||SCE.step<2)return;sceSnd('back');if(SCE
 // hair and the accessories, on the hero in the field with his mantle. Changing costs crystals (Denis: «a pagamento»), only when
 // something changed and only on «Conferma»; «Annulla» or Esc leave it as it was
 function sceBarberRow(){const el=$('barber');if(!el)return;const n=sceLookN(SAVE.look);
-  el.innerHTML=`<div class="barberRow"><p>${n?`${n} ritocch${n>1?'i':'o'} al tuo eroe.`:'Il tuo eroe è come il primo giorno.'} Occhi, segni, capelli e accessori si cambiano dal barbiere.</p><button class="btn" id="barberGo">✂ Barbiere · ${BARBER_PRICE}<i class="gemI"></i></button></div>`;
+  el.innerHTML=`<div class="barberRow"><p>${n?`${n} ritocch${n>1?'i':'o'} al tuo eroe.`:'Il tuo eroe è come il primo giorno.'} Viso, capelli, barba, orecchie e accessori si cambiano dal barbiere.</p><button class="btn" id="barberGo">✂ Barbiere · ${BARBER_PRICE}<i class="gemI"></i></button></div>`;
   $('barberGo').onclick=()=>{try{sfx('ui')}catch(e){}sceOpen({barber:true})}}
-function sceBarberSet(el){const id=HERO_BY[SAVE.hero]?SAVE.hero:'arciere',t=sceT();Object.assign(SCE,{barber:true,step:2,sel:id,manto:'',cat:'pelle',look:sceLook(SAVE.look),yaw:Math.PI/2-.35});
+function sceBarberSet(el){const id=HERO_BY[SAVE.hero]?SAVE.hero:'arciere',t=sceT();Object.assign(SCE,{barber:true,step:2,sel:id,manto:'',cat:'capelli',look:sceLook(SAVE.look),yaw:Math.PI/2-.35});
   SCE.hero={id,act:-1,in:t,anim:'idle',bl:null,lastA:null,shot:false};el.className='s2 barber';
   el.querySelector('.sceTop small').textContent='Cambia aspetto';el.querySelector('#sceTitle').textContent='Il barbiere';el.querySelector('.sceBack').textContent='‹ Annulla';
   for(let i=0;i<(LOWFX||SCE.low?6:14);i++)sceEmber(SCE_INFO[id].rgb,true);sceList();sceText()}
@@ -454,8 +636,8 @@ function sceDone(g){if(!SCE.on)return;sceClose(true);playMusic('menu');
   try{if(!INTRO.on){renderGold();renderPlay();renderWho();renderTop.k=null;renderTop()}}catch(e){}
   setTimeout(()=>{try{if(!INTRO.on)toast(`Dono: ${g.n}${g.id==='oro'?' (+500 oro)':g.id==='cristalli'?' (+30 cristalli)':g.id==='cassa'?' (tra le tue casse)':''}`)}catch(e){}},700)}
 // keys: up and down (or left and right, W/S, A/D) move in the list, Enter or Space go on, Esc goes back; in the look left and right
-// (A/D) change the part, Q and E its colour; while writing the name only
-// Enter (done) and Esc count
+// (A/D) change the part, up and down the choice, Q and E the colour, - and + the size, R a look at random, Delete the part as it was;
+// while writing the name only Enter (done) and Esc count
 addEventListener('resize',()=>{if(SCE.on)setTimeout(sceDescFit,60)});
 addEventListener('keydown',e=>{if(!SCE.on)return;e.stopImmediatePropagation();
   if(e.target&&e.target.id==='sceNameIn'){if(e.key==='Enter'){e.preventDefault();e.target.blur();sceGo()}else if(e.key==='Escape'){e.preventDefault();e.target.blur()}return}
@@ -464,8 +646,12 @@ addEventListener('keydown',e=>{if(!SCE.on)return;e.stopImmediatePropagation();
   const mv=d=>{e.preventDefault();if(!ids.length)return;const j=Math.max(0,Math.min(ids.length-1,i+d));if(s===1)scePick(ids[j]);else if(s===2)sceLookPick(ids[j]);else sceGiftPick(ids[j])};
   const part=d=>{e.preventDefault();const L=sceCats(),j=(L.findIndex(o=>o.id===SCE.cat)+d+L.length)%L.length;sceCatPick(L[j].id)};
   const colour=d=>{e.preventDefault();if(!C2||!C2.cols)return;const L=C2.cols,j=(L.findIndex(o=>o.id===SCE.look[C2.ckey])+d+L.length)%L.length;sceLookPick(L[j].id,true)};
+  const size=d=>{e.preventDefault();if(C2&&C2.size)sceLookSize(sceSizeOf(C2)+d*.05,true)};
   if(s===2&&(c==='ArrowLeft'||c==='KeyA'))part(-1);else if(s===2&&(c==='ArrowRight'||c==='KeyD'))part(1);
   else if(s===2&&(c==='KeyQ'||c==='KeyE'))colour(c==='KeyQ'?-1:1);
+  else if(s===2&&(c==='Minus'||c==='NumpadSubtract'||c==='Equal'||c==='NumpadAdd'||c==='BracketRight'))size(c==='Minus'||c==='NumpadSubtract'?-1:1);
+  else if(s===2&&c==='KeyR'){e.preventDefault();sceLookRandom()}
+  else if(s===2&&c==='Delete'){e.preventDefault();sceLookReset()}
   else if(c==='ArrowUp'||c==='KeyW'||c==='ArrowLeft'||c==='KeyA')mv(-1);
   else if(c==='ArrowDown'||c==='KeyS'||c==='ArrowRight'||c==='KeyD')mv(1);
   else if(c==='Enter'||c==='Space'||c==='NumpadEnter'){e.preventDefault();sceGo()}
@@ -486,7 +672,10 @@ function sceSnd(k){if(!AU.ctx||!AU.on.sfx)return;const t=AU.ctx.currentTime+.005
   else if(k==='lock'){M.metal(t,.22,VR(700,.05),.35);M.metal(t+.07,.16,VR(560,.05),.3);fThump(t,190,90,.07,.12)}
   else if(k==='ok'){fThump(t,130,46,.6,.34,.4);fNoise(t,.5,'lowpass',420,.7,.12,{brown:true,att:.02,rev:.6});vBell(null,t+.02,62,2.6,.03);vBell(null,t+.03,74,2.2,.018)}
   else if(k==='band'){fThump(t,90,36,1.2,.4,.6);vChoir(null,t,[50,57,62,66],3.2,.07);vBell(null,t+.05,74,4,.03);vBell(null,t+.06,81,3.5,.016);fNoise(t,1.6,'lowpass',260,.7,.1,{brown:true,att:.3,rev:.7})}
-  else if(k==='absorb'){whoosh(t,.45,500,2400,.16,.3);vBell(null,t+.36,86,1.4,.02);vBell(null,t+.4,93,1.2,.012)}}catch(e){}}
+  else if(k==='absorb'){whoosh(t,.45,500,2400,.16,.3);vBell(null,t+.36,86,1.4,.02);vBell(null,t+.4,93,1.2,.012)}
+  else if(k==='dice'){for(let i=0;i<4;i++)fNoise(t+i*.055+Math.random()*.02,.03,'bandpass',VR(2600,.15),2,.06,{att:.002});vBell(null,t+.26,[81,84,88][randi(0,2)],.9,.012)}
+  else if(k==='tick'){fNoise(t,.018,'highpass',3200,.8,.03,{att:.001})}
+  else if(k==='mid'){fNoise(t,.02,'highpass',2600,.8,.04,{att:.001});vBell(null,t,86,.5,.008)}}catch(e){}}
 // slow, warm and a little solemn: D minor, a pad that breathes, a low harp, a choir now and then, a bell, the crackle of a fire
 TRACKS.scelta={bpm:54,ch:[[50,53,57],[46,50,53],[53,57,60],[48,52,55]],
   play(tr,step,t,spb){const s=step%16,bar=Math.floor(step/16)%8,C=this.ch[bar%4];
@@ -705,9 +894,9 @@ function sceEmber(rgb,burst,gift){SCE.emb.push({rgb,gift:!!gift,x:(Math.random()
 // panel underneath, and as big as the screen allows: his hood (a circle 11.5k wide round a point 26k over his feet) may go behind the
 // bottom corners of the panels over the scene only a little, the whole of him (44k) under the name in the fourth step
 function sceSpot(){const st=SCE.el&&SCE.el.querySelector('.sceStage'),cv=$('sceCv');if(!st||!cv)return null;const a=st.getBoundingClientRect(),b=cv.getBoundingClientRect(),cx=b.left+b.width/2,A=a.bottom-3;
-  // the look: the camera comes close to the face (head and shoulders for the accessories), in the room right of the list
+  // the look: the camera comes close (the face; the whole head with its hair and ears; the head and shoulders), the hero alone on the stage
   const zm=sceZoom();if(zm){const li=SCE.el.querySelector('.sceList'),lr=li&&li.offsetHeight&&!li.classList.contains('empty')?li.getBoundingClientRect():null,L0=(lr?lr.right:b.left)+4,R0=b.right-4,W=R0-L0,H=A-a.top;
-    const face=zm==='face',k=face?Math.min(W*.92/16,H*.62/23):Math.min(W*.88/23,H*.62/30),hy=a.top+H*(face?.46:.38);
+    const Z=zm==='face'?[16,23,.62,.46]:zm==='head'?[25,28,.68,.53]:[24,31,.62,.38],k=Math.min(W*.9/Z[0],H*Z[2]/Z[1]),hy=a.top+H*Z[3];
     return{x:(L0+R0)/2-b.left,y:hy+26*k-b.top,k,top:a.top-b.top,zoom:zm}}
   const lim=[];if(SCE.step===4){const nb=SCE.el.querySelector('.sceNameBox');if(nb&&nb.offsetHeight){const r=nb.getBoundingClientRect();lim.push({dx:-1,bot:r.bottom+8})}}
   else for(const c of SCE.el.querySelectorAll('.sceCol')){if(c.classList.contains('empty')||!c.offsetHeight)continue;const r=c.getBoundingClientRect();lim.push({dx:r.right<=cx?cx-r.right:r.left>=cx?r.left-cx:-1,bot:r.bottom})}
@@ -772,9 +961,10 @@ function sceTick(dt){SCE.time+=dt;const t=SCE.time;
   // at the end he turns to face us and stays there; otherwise the turntable: slowly round, the finger's push fading back into it
   // (while you write his name he slows down and turns his face to you)
   if(SCE.fin){let d=(Math.PI/2-.35)-SCE.yaw;d=Math.atan2(Math.sin(d),Math.cos(d));SCE.yaw+=d*(1-Math.exp(-dt*5));SCE.vel=0}
-  else if(!SCE.drag){const front=SCE.step===4||!!sceZoom(),auto=front?0:.32;SCE.vel+=(auto-SCE.vel)*(1-Math.exp(-dt*(front?2.4:1.6)));SCE.yaw+=SCE.vel*dt;
+  // (close on the face or the shoulders he looks at you; the whole head turns slowly, so the hair and the ears are seen all round)
+  else if(!SCE.drag){const zm=sceZoom(),front=SCE.step===4||zm==='face'||zm==='bust',auto=front?0:zm==='head'?.42:.32;SCE.vel+=(auto-SCE.vel)*(1-Math.exp(-dt*(front?2.4:1.6)));SCE.yaw+=SCE.vel*dt;
     if(front&&Math.abs(SCE.vel)<.6){let d=(Math.PI/2-.35)-SCE.yaw;d=Math.atan2(Math.sin(d),Math.cos(d));SCE.yaw+=d*(1-Math.exp(-dt*2.2))}}
-  sceDraw(t,dt)}
+  sceDraw(t,dt);if(SCE.step===2)sceTilesTick()}
 // a slow phone (frames longer than 30 ms for a second and a half): smaller canvas, no fog, no dust, no light passes, like LOWFX
 function sceLoop(now){if(!SCE.on)return;const raw=Math.max(0,(now-SCE.last)/1000),dt=Math.min(.05,raw);SCE.last=now;
   if(!SCE.manual&&raw<.25&&SCE.time>.6){SCE.ema=(SCE.ema||raw)+(raw-(SCE.ema||raw))*.06;SCE.slow=SCE.ema>.03?(SCE.slow||0)+raw:0;if(SCE.slow>1.5)SCE.low=true}

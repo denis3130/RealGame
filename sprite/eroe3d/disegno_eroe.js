@@ -103,10 +103,11 @@ function head(Vh,Rh,S,A,o){const h=Vh.P(0,0,0),{F}=Vh,hood=S.hood,skin=S.skin,no
   // the enemies' bits behind the head: the antlers, an ear on the far side, the back spikes of the tiara
   if(S.crown)antlers(Vh,h,Rh,S,nod);if(S.ears)for(const sd of[-1,1])if(F(nod([0,sd,0]))<=.3)ear(Vh,h,Rh,S,nod,sd);if(S.tiara)tiara(Vh,h,Rh,S,nod,false);
   if(S.antlers)deerAntlers(Vh,h,Rh,nod);const tailFront=S.ponytail&&F(nod([-1,0,-.2]))>.15;if(S.ponytail&&!tailFront)ponytail(Vh,h,Rh,S,nod,o.sway||0);
-  // the hero's own look: the feather and the headband's tails behind the head
-  const L=S.look,acc=L&&L.acc,band=acc==='fascia'&&!S.helm;if(L)o.L=L;
-  if(acc==='piuma'&&!featherFront(Vh,nod))featherHood(Vh,h,Rh,nod,o.sway||0,L.accCol||'#e5484d');if(band)headband(Vh,h,Rh,nod,L.accCol||'#d24b3e',o.sway||0,false);
-  ink(2.5);ball(h,Rh);ctx.fillStyle=hood;ctx.fill();ctx.stroke();
+  // the hero's own look: what it needs, what goes behind the head (the feather, the band's tails, the hair's pieces, the far ear)
+  const lk=S.look?lookPrep(Vh,Rh,S,o,h,nod):null;if(lk)lookBehind(Vh,Rh,S,o,h,nod,lk);
+  // without the hood: the bare head with its hair
+  if(lk&&lk.bare)bareHead(Vh,Rh,S,A,o,h,nod,fd,lk);
+  else{ink(2.5);ball(h,Rh);ctx.fillStyle=hood;ctx.fill();ctx.stroke();
   // soft shading of a ball lit from the upper left: the three tones blend into each other, no patches with an edge
   ctx.save();ball(h,Rh-.8);ctx.clip();ctx.fillStyle=soft(h[0]-Rh*.36,h[1]-Rh*.42,h[0]-Rh*.05,h[1]+Rh*.05,Rh*1.2,hood,.14,.3);ctx.fillRect(h[0]-Rh,h[1]-Rh,Rh*2,Rh*2);
   // the seam over the top of the hood, from the opening to the back
@@ -116,18 +117,18 @@ function head(Vh,Rh,S,A,o){const h=Vh.P(0,0,0),{F}=Vh,hood=S.hood,skin=S.skin,no
   const op=capPath(Vh,h,Rh,fd,.87);
   if(op){ctx.fillStyle=dk(hood,.55);ctx.fill();
     ctx.save();ctx.clip();const fc=capPath(Vh,h,Rh*.99,fd,.79);
-    if(fc){const fq=sp(Vh,h,Rh,fd);ctx.fillStyle=soft(fq[0]-Rh*.28,fq[1]-Rh*.2,fq[0],fq[1],Rh*.95,skin,.12,.12);ctx.fill();
+    if(fc){const fq=sp(Vh,h,Rh,fd);ctx.fillStyle=soft(fq[0]-Rh*.28,fq[1]-Rh*.2,fq[0],fq[1],Rh*.95,skin,.12,.12);ctx.fill();if(lk){lk.fcRim=fc.rim;lk.fcFull=fc.full}
       // eyes, blush and mouth stay inside the skin: near the edge of the face they fade, never over the rim
       ctx.save();ctx.clip();{const g=ctx.createLinearGradient(0,fq[1]-Rh,0,fq[1]-Rh*.35);g.addColorStop(0,'rgba(60,30,14,.18)');g.addColorStop(1,'rgba(60,30,14,0)');ctx.fillStyle=g;ctx.fillRect(fq[0]-Rh,fq[1]-Rh,Rh*2,Rh)}
       face(Vh,h,Rh,nod,o,fd);ctx.restore()}
     ctx.restore();
     // the edge of the hood round the opening: a thick dark ring, as in the game
     if(op.rim&&op.rim.length>1){ctx.lineCap='round';ctx.lineJoin='round';ctx.strokeStyle=INK;ctx.lineWidth=2.5;line(op.rim);if(op.full)ctx.closePath();ctx.stroke()}}
-  ctx.restore();rim(h,Rh,h,Rh,.3);
-  // and in front of it: the helmet, the point of the hood, the beard, an ear on our side, the front spikes of the tiara
+  ctx.restore();rim(h,Rh,h,Rh,.3)}
+  // and in front of it: the look's pieces, the helmet, the point of the hood, the beard, an ear on our side, the front spikes of the tiara
   if(tailFront)ponytail(Vh,h,Rh,S,nod,o.sway||0);
-  if(L){if(L.hair==='spettinati'&&!S.helm)spikesHood(Vh,h,Rh,nod,L.hairCol||'#6b4226');if(band)headband(Vh,h,Rh,nod,L.accCol||'#d24b3e',o.sway||0,true);if(acc==='piuma'&&featherFront(Vh,nod))featherHood(Vh,h,Rh,nod,o.sway||0,L.accCol||'#e5484d')}
-  if(S.helm)helm(Vh,h,Rh,S,nod);if(S.hoodTip)hoodTip(Vh,h,Rh,S,nod);if(S.beard)beard(Vh,h,Rh,S,nod);if(S.ears)for(const sd of[-1,1])if(F(nod([0,sd,0]))>.3)ear(Vh,h,Rh,S,nod,sd);if(S.tiara)tiara(Vh,h,Rh,S,nod,true);
+  if(lk)lookFront(Vh,Rh,S,o,h,nod,lk);
+  if(S.helm)helm(Vh,h,Rh,S,nod);if(S.hoodTip&&!(lk&&lk.bare))hoodTip(Vh,h,Rh,S,nod);if(S.beard)beard(Vh,h,Rh,S,nod);if(S.ears)for(const sd of[-1,1])if(F(nod([0,sd,0]))>.3)ear(Vh,h,Rh,S,nod,sd);if(S.tiara)tiara(Vh,h,Rh,S,nod,true);
   if(o.moss&&!mossBack)mossStick(Vh,h,Rh,mouthD,mossD,o,true)}
 // two big dark eyes with a small, sharp point of light (o.eyeLight: false takes it away); they close for a blink, squeeze shut when hit;
 // a faint blush, a little mouth when needed. No eye ever sits on the outline of the head: when the head turns, the far eye slides in
@@ -135,7 +136,7 @@ function head(Vh,Rh,S,A,o){const h=Vh.P(0,0,0),{F}=Vh,hood=S.hood,skin=S.skin,no
 // until it is gone; it is never drawn see-through
 const sstep=(a,b,x)=>{const t=cl((x-a)/(b-a),0,1);return t*t*(3-2*t)};
 function face(Vh,h,Rh,nod,o,fd){const{F}=Vh,fq=sp(Vh,h,Rh*.97,fd);
-  const edge=q=>1-sstep(.7,.84,Math.hypot(q[0]-h[0],q[1]-h[1])/Rh);
+  const edge=o.bare?q=>1-sstep(.84,.97,Math.hypot(q[0]-h[0],q[1]-h[1])/Rh):q=>1-sstep(.7,.84,Math.hypot(q[0]-h[0],q[1]-h[1])/Rh);
   // a soft limit on how far from the middle of the head an eye may sit (a, b: where the limit starts and the most it reaches)
   const inward=(q,a,b)=>{const dx=q[0]-h[0],dy=q[1]-h[1],d=Math.hypot(dx,dy)/Rh;if(d<=a)return q;const d2=a+(b-a)*(1-Math.exp(-(d-a)/(b-a)));return[h[0]+dx*d2/d,h[1]+dy*d2/d]};
   const ry=2.3,E=[-1,1].map(sd=>{const e=nrm(nod([EYE[0],sd*EYE[1],EYE[2]])),v=F(e);return{sd,v,q:sp(Vh,h,Rh*.97,e),rx:1.95*Math.pow(Math.max(0,v),.7)}}).filter(e=>e.v>.08).sort((a,b)=>b.v-a.v);
@@ -154,81 +155,358 @@ function face(Vh,h,Rh,nod,o,fd){const{F}=Vh,fq=sp(Vh,h,Rh*.97,fd);
   if(o.mouth>.05){const m=nrm(nod(MOUTH)),v=F(m);if(v>.05){const q=sp(Vh,h,Rh*.97,m),w=1.3*Math.max(.45,v),hh=.6+o.mouth*1.1;ink(1);ctx.fillStyle='#5a2020';ctx.beginPath();ctx.ellipse(q[0],q[1],w,hh,0,0,TAU);ctx.fill();ctx.stroke()}}}
 
 // ------------------------------------------------------------------ the hero's own look (S.look, from the making of the hero)
-// eyes: tondi (as always) | grandi | decisi | assonnati | felini | piccoli; iris: a colour (a coloured eye with a pupil) or none (dark);
-// brows: nessuna | sottili | folte | decise | alzate | spezzate (browCol); mark: nessuno | cicatrice | graffio | lentiggini | pittura |
-// cerotto | runa | neo; hair: nascosti | ciuffo | frangia | spettinati | lunghi | riccioli (hairCol); acc: nessuno | benda | occhialetti |
-// sciarpa | piuma | fascia (accCol). Everything sits on the face and the hood in 3D, so it turns with the head and never slips off it;
-// the Classic style: no blood, scars are healed pale lines
+// Denis, 14 October: «nella creazione del pg si possa modificare a piacimento tra occhi cicatrici ecc.», then «migliora il design di
+// tutto… aggiungi più cose… la grandezza delle cose tranne degli accessori… i capelli che coprono tutta la testa sotto il cappuccio anche
+// dove non si vede… fai anche senza cappuccio». Everything sits on the ball of the head in 3D, so it turns with it and never slips off:
+// a point of the face is fp(x, y) (x toward his right, y up, in the units of EYE and MOUTH), a direction of the head is hdir(a, e)
+// (azimuth a: 0 in front, + toward his right; elevation e: 0 at the level of the ears). The Classic style: no blood, scars are healed
+// pale lines. The sizes (eyeK, browK, mouthK, markK, hairK, beardK, earK) go from about .7 to 1.35, 1 as drawn here.
+//   eyes   tondi (as always) | grandi | decisi | assonnati | felini | piccoli | ciglia | tristi | felici | spalancati | stellati;
+//          iris: a colour (a coloured eye with a pupil) or none (dark)
+//   brows  nessuna | sottili | folte | decise | alzate | spezzate | unite | arcuate | puntini | cespugliose (browCol)
+//   mouth  nessuna | sorriso | sorrisone | ghigno | dentino | broncio | lingua | fischio | denti | sorpreso | neutra
+//   mark   nessuno | cicatrice | graffio | lentiggini | pittura | cerotto | runa | neo | croce | lacrima | stella | baffi | macchia
+//   hair   nascosti (short: all under the hood) | ciuffo | frangia | spettinati | lunghi | riccioli | caschetto | treccine | coda |
+//          chignon | cresta | rasati | mossi (hairCol). A volume over the whole head: under the hood it frames the face, without the
+//          hood it is all there
+//   beard  nessuna | baffetti | baffoni | pizzetto | barbetta | barba | lunga | intrecciata (the colour of the hair)
+//   ears   tonde (under the hood) | punta | lunghe (out of the hood) | gatto | orso | coniglio (on top: of the hood, or of the hair)
+//   hood   su | giu (the bare head; the hood lies on the shoulders, drawn with the body)
+//   acc    nessuno | benda | occhialetti | sciarpa | piuma | fascia | orecchino | fiore | maschera | collana | coroncina (accCol)
 const LK_SCAR='#e3998a',LK_SCARL='#fbdccf';
+const hdir=(a,e)=>{const c=Math.cos(e);return[c*Math.cos(a),c*Math.sin(a),Math.sin(e)]};
+// ------------------------------------------------------------------ parts of the ball of the head (the hair, the beard, the mask)
+// the region between the heights eLo(a) and eHi(a), for the azimuth a from a0 to a1, seen by the head's camera: a mesh of points, each
+// one the offset on the screen from the centre of a ball of radius 1 (the ones behind brought to the outline, so the edge is exact) and
+// how much it faces us. One mesh gives the path at any radius (the volume of the hair, its outline, the hair on the skin)
+function regionMesh(Vh,nod,a0,a1,eLo,eHi,NA,NE){const{F}=Vh,w=[F(1,0,0),F(0,1,0),F(0,0,1)],o=Vh.P(0,0,0),nf=cam.zk*Math.hypot(1,cam.k/cam.zk),off=[],fac=[];
+  for(let i=0;i<=NA;i++){const a=a0+(a1-a0)*i/NA,lo=eLo(a),hi=eHi(a),ro=[],rf=[];
+    for(let j=0;j<=NE;j++){let n=nrm(nod(hdir(a,lo+(hi-lo)*j/NE)));const f=dot(n,w);if(f<0)n=nrm(sub(n,mul(w,f)));const pm=Vh.P(n);ro.push([pm[0]-o[0],(pm[1]-o[1])/nf]);rf.push(f)}
+    off.push(ro);fac.push(rf)}
+  return{NA,NE,off,fac,wrap:a1-a0>6.2}}
+// its path at radius R round the screen point h: every quad with a corner facing us, all in one path (no seams). A run of such quads in
+// a row is one strip (along its lower edge and back along the upper one): far fewer pieces to fill than one per quad. false: nothing shows
+function meshPath(M,h,R){ctx.beginPath();let any=false;const{off,fac}=M,X=h[0],Y=h[1],NA=M.NA,vis=(i,j)=>fac[i][j]>0||fac[i+1][j]>0||fac[i+1][j+1]>0||fac[i][j+1]>0;
+  for(let j=0;j<M.NE;j++){let i=0;while(i<NA){if(!vis(i,j)){i++;continue}let i1=i;while(i1+1<NA&&vis(i1+1,j))i1++;any=true;
+    ctx.moveTo(X+off[i][j][0]*R,Y+off[i][j][1]*R);for(let k=i+1;k<=i1+1;k++)ctx.lineTo(X+off[k][j][0]*R,Y+off[k][j][1]*R);
+    for(let k=i1+1;k>=i;k--)ctx.lineTo(X+off[k][j+1][0]*R,Y+off[k][j+1][1]*R);ctx.closePath();i=i1+1}}
+  return any}
+// an edge of the mesh (row j: 0 the lower one) where it faces us, as runs of screen points (one run across the seam at the back)
+function meshEdge(M,h,R,j,minF){const runs=[];let cur=[];
+  for(let i=0;i<=M.NA;i++){if(M.fac[i][j]>minF){const q=M.off[i][j];cur.push([h[0]+q[0]*R,h[1]+q[1]*R])}else if(cur.length){runs.push(cur);cur=[]}}if(cur.length)runs.push(cur);
+  if(M.wrap&&runs.length>1&&M.fac[0][j]>minF&&M.fac[M.NA][j]>minF){const l=runs.pop();runs[0]=l.concat(runs[0].slice(1))}return runs}
+// a ring of the head at the height e where it faces us (the shine of the hair)
+function ringRuns(Vh,h,R,nod,e,minF){const runs=[];let cur=[],first=null;
+  for(let i=0;i<=56;i++){const n=nrm(nod(hdir(-Math.PI+i/56*TAU,e)));if(Vh.F(n)>minF){cur.push(sp(Vh,h,R,n));if(i===0)first=true}else{if(cur.length)runs.push(cur);cur=[]}}
+  if(cur.length){if(first&&runs.length){runs[0]=cur.concat(runs[0].slice(1))}else runs.push(cur)}return runs}
+// how many quads: fewer when the head is small on the screen
+function meshRes(R){const t=ctx.getTransform(),px=Math.hypot(t.a,t.b)*R;return px>70?[52,8]:px>34?[40,6]:px>16?[30,5]:[22,4]}
+// ------------------------------------------------------------------ the hair
+// each style: its hairline (the fringe f(a) for |a| < fa; down the temples to the bottom of the sideburns s at |a| = ta; up round the
+// ear to `ear`, or covering the ears when ear is null; the nape n at the back), how far it stands off the head (v), and its pieces.
+// The eyes are at about e .24, the brows .59, the top of the hood's opening 1.05, the chin -.55
+const zig=x=>{const t=((x%1)+1)%1;return t<.5?t*4-1:3-t*4};
+const HAIRS={
+  nascosti:{v:.05,f:a=>.76+.016*Math.sin(a*15),fa:.4,s:.04,ta:.66,ear:.3,n:-.55},
+  ciuffo:{v:.06,f:a=>.92-.38*sstep(-.55,.5,a),fa:.52,s:.04,ta:.7,ear:.3,n:-.55,lock:1},
+  frangia:{v:.065,f:a=>.635+.014*Math.cos(a*38),fa:.47,s:0,ta:.66,ear:.3,n:-.55},
+  spettinati:{v:.07,f:a=>.68+.06*zig(a*4.4+.25),fa:.45,s:-.02,ta:.68,ear:.28,n:-.58,spikes:1},
+  lunghi:{v:.065,f:a=>.65+.24*Math.exp(-(a/.1)*(a/.1)),fa:.42,s:-.72,ta:.6,ear:null,n:-.95,locks:1},
+  riccioli:{v:.1,f:a=>.71-.05*Math.abs(Math.sin(a*9)),fa:.45,s:-.06,ta:.66,ear:.24,n:-.58,curls:1},
+  caschetto:{v:.12,f:a=>.625,fa:.49,s:-.4,ta:.63,ear:null,n:-.5},
+  treccine:{v:.05,f:a=>.72+.02*Math.sin(a*12),fa:.43,s:.02,ta:.66,ear:.3,n:-.55,braids:1},
+  coda:{v:.045,f:a=>.86,fa:.45,s:.1,ta:.72,ear:.34,n:-.4,tail:1,sw:.25},
+  chignon:{v:.045,f:a=>.85,fa:.45,s:.1,ta:.72,ear:.34,n:-.4,bun:1,sw:.25},
+  cresta:{v:0,f:a=>.86,fa:.45,s:.12,ta:.74,ear:.34,n:-.45,flat:1,fin:1},
+  rasati:{v:0,f:a=>.8,fa:.45,s:.12,ta:.74,ear:.34,n:-.45,flat:1},
+  mossi:{v:.12,f:a=>.66+.035*Math.sin(a*8),fa:.47,s:-.32,ta:.65,ear:null,n:-.52,waves:1}};
+// the hairline of a style; K (the size) makes the long hair longer, the fringe stays where it is
+function hairLine(H,K){const fa=H.fa,ta=H.ta,s=H.s-(H.s<-.1?(K-1)*.3:0),n=H.n-(K-1)*.14,ear=H.ear;
+  return a=>{const x=Math.abs(a);if(x<=fa)return H.f(a);const f0=H.f(a<0?-fa:fa);
+    if(x<=ta)return lerp(f0,s,sstep(fa,ta,x));
+    if(ear==null)return lerp(s,n,sstep(ta,2.5,x));
+    if(x<=1.36)return s;if(x<=1.62)return lerp(s,ear,sstep(1.36,1.62,x));if(x<=1.92)return ear;return lerp(ear,n,sstep(1.92,2.45,x))}}
+// the hair's colours: lit from the upper left like the hood, a shade deeper
+const hairGrad=(h,R,col)=>soft(h[0]-R*.4,h[1]-R*.52,h[0]-R*.04,h[1]+R*.06,R*1.32,col,.28,.44);
+const STRANDS=[-2.6,-1.75,-1.12,-.58,-.14,.32,.8,1.34,1.95,2.7];
+// the hair on a ball of radius R (mesh M): the colour, strands from the crown, the shine round the top, the hairline (inked when lw)
+function hairPaint(Vh,h,R,nod,M,H,hl,col,g,lw){if(!meshPath(M,h,R))return;
+  ctx.save();if(H.flat)ctx.globalAlpha*=.6;ctx.fillStyle=g;ctx.fill();ctx.restore();
+  ctx.save();meshPath(M,h,R);ctx.clip();ctx.lineCap='round';ctx.lineJoin='round';
+  if(H.flat){// stubble: a fine dark grain
+    ctx.fillStyle=dk(col,.35);ctx.globalAlpha=.32;for(let i=0;i<40;i++){const a=-Math.PI+(i*2.399)%TAU,e=.2+((i*.618)%1)*1.25,n=nrm(nod(hdir(a,e)));if(Vh.F(n)<.1)continue;const q=sp(Vh,h,R,n);ctx.fillRect(q[0]-.22,q[1]-.22,.44,.44)}}
+  else{// the strands, a little darker, from the crown down to the hairline (they lean the way the hair is combed)
+    ctx.strokeStyle=dk(col,.42);ctx.globalAlpha=.34;ctx.lineWidth=.6;
+    for(const a0 of STRANDS){const e1=hl(a0)+.08,e0=Math.min(1.08,e1+.62),pts=[];if(e0<=e1+.1)continue;for(let k=0;k<=7;k++){const n=nrm(nod(hdir(a0+(H.sw||0)*k/7+(H.waves?.07*Math.sin(k*1.1):0),lerp(e0,e1,k/7))));if(Vh.F(n)>.08)pts.push(sp(Vh,h,R,n));else if(pts.length)break}
+      if(pts.length>1){line(pts);ctx.stroke()}}
+    // a shade under the hair's edge, where it lies on the skin
+    ctx.globalAlpha=1;ctx.strokeStyle=dk(col,.32);ctx.lineWidth=2.2;ctx.globalAlpha=.28;for(const r of meshEdge(M,h,R,0,.04)){if(r.length<2)continue;line(r.map(q=>[q[0],q[1]-1]));ctx.stroke()}
+    // the shine: a soft band round the top of the head, brightest toward the light
+    const sg=ctx.createLinearGradient(h[0]-R*.95,h[1]-R*.95,h[0]+R*.3,h[1]+R*.25);sg.addColorStop(0,'rgba(255,255,255,.62)');sg.addColorStop(.6,'rgba(255,255,255,.12)');sg.addColorStop(1,'rgba(255,255,255,0)');
+    ctx.globalAlpha=1;ctx.strokeStyle=sg;for(const r of ringRuns(Vh,h,R,nod,1.0,.18)){if(r.length<2)continue;ctx.lineWidth=2.6;ctx.globalAlpha=.35;line(r);ctx.stroke();ctx.lineWidth=1;ctx.globalAlpha=.9;line(r);ctx.stroke()}}
+  ctx.restore();
+  if(lw){ctx.strokeStyle=INK;ctx.lineWidth=lw;ctx.lineCap='round';ctx.lineJoin='round';if(H.flat){ctx.save();ctx.globalAlpha*=.45}for(const r of meshEdge(M,h,R,0,.04)){if(r.length<2)continue;line(r);ctx.stroke()}if(H.flat)ctx.restore()}}
+// a lock of hair (or a braid's strand, a tail) through 3D points of the head with their widths: one outline round it all, the hair's colours
+function lock3(Vh,h,P3,W,col,g){const N=[],WW=[];for(let i=0;i<P3.length-1;i++)for(let k=0;k<3;k++){const t=k/3,a=P3[Math.max(0,i-1)],b=P3[i],c=P3[i+1],d=P3[Math.min(P3.length-1,i+2)];
+    N.push([0,1,2].map(m=>.5*((2*b[m])+(-a[m]+c[m])*t+(2*a[m]-5*b[m]+4*c[m]-d[m])*t*t+(-a[m]+3*b[m]-3*c[m]+d[m])*t*t*t)));WW.push(lerp(W[i],W[i+1],t))}
+  N.push(P3[P3.length-1]);WW.push(W[W.length-1]);const Q=N.map(v=>hP(Vh,h,v));g=pieceGrad(Q,col)||g;
+  ctx.fillStyle=INK;for(let i=0;i<Q.length-1;i++){hull(Q[i],WW[i]+1.1,Q[i+1],WW[i+1]+1.1);ctx.fill()}
+  ctx.fillStyle=g;for(let i=0;i<Q.length-1;i++){hull(Q[i],WW[i],Q[i+1],WW[i+1]);ctx.fill()}
+  ctx.save();ctx.strokeStyle=dk(col,.42);ctx.globalAlpha*=.5;ctx.lineWidth=.6;ctx.lineCap='round';for(const s of[-.35,.3]){line(Q.map((q,i)=>[q[0]+WW[i]*s,q[1]]));ctx.stroke()}
+  ctx.strokeStyle=lt(col,.4);ctx.globalAlpha=.55;ctx.lineWidth=.7;line(Q.slice(0,Math.ceil(Q.length*.6)).map((q,i)=>[q[0]-WW[i]*.45,q[1]-WW[i]*.2]));ctx.stroke();ctx.restore()}
+// the colours of a piece hanging from the head: its own light from the upper left
+function pieceGrad(Q,col){let x0=1e9,y0=1e9,x1=-1e9,y1=-1e9;for(const q of Q){x0=Math.min(x0,q[0]);y0=Math.min(y0,q[1]);x1=Math.max(x1,q[0]);y1=Math.max(y1,q[1])}if(!(x1>x0))return null;
+  const w=x1-x0+4,hh=y1-y0+4;return soft(x0-2+w*.3,y0-2+hh*.22,(x0+x1)/2,(y0+y1)/2,Math.max(w,hh)*.75,col,.24,.36)}
+// a spike of hair from the head (b3) to its point (t3): two curved sides, inked, the base melting into the hair
+function spike3(Vh,h,b3,t3,w,col,g){const B=hP(Vh,h,b3),T=hP(Vh,h,t3),dx=T[0]-B[0],dy=T[1]-B[1],l=Math.hypot(dx,dy)||1,nx=-dy/l*w,ny=dx/l*w;
+  const s1=[B[0]+dx*.5+nx*.55,B[1]+dy*.5+ny*.55],s2=[B[0]+dx*.5-nx*.45,B[1]+dy*.5-ny*.45];
+  ctx.beginPath();ctx.moveTo(B[0]+nx,B[1]+ny);ctx.quadraticCurveTo(s1[0],s1[1],T[0],T[1]);ctx.quadraticCurveTo(s2[0],s2[1],B[0]-nx,B[1]-ny);ctx.fillStyle=g;ctx.fill();
+  // the outline only from the middle to the point, so the spike grows out of the hair
+  ctx.strokeStyle=INK;ctx.lineWidth=1.15;ctx.lineJoin='round';ctx.lineCap='round';ctx.beginPath();const m1=[(B[0]+nx+s1[0])/2,(B[1]+ny+s1[1])/2],m2=[(B[0]-nx+s2[0])/2,(B[1]-ny+s2[1])/2];
+  ctx.moveTo(m1[0],m1[1]);ctx.quadraticCurveTo(s1[0],s1[1],T[0],T[1]);ctx.quadraticCurveTo(s2[0],s2[1],m2[0],m2[1]);ctx.stroke();
+  ctx.strokeStyle=lt(col,.35);ctx.lineWidth=.6;ctx.beginPath();ctx.moveTo(B[0]+dx*.35,B[1]+dy*.35);ctx.lineTo(B[0]+dx*.72,B[1]+dy*.72);ctx.stroke()}
+// a curl: a little ball of hair with its swirl and its light
+function curl3(Vh,h,c3,r,col,g){const q=hP(Vh,h,c3);ink(1.1);ball(q,r);ctx.fillStyle=g;ctx.fill();ctx.stroke();
+  ctx.strokeStyle=dk(col,.3);ctx.globalAlpha*=.55;ctx.lineWidth=.6;ctx.beginPath();ctx.arc(q[0]+r*.1,q[1]+r*.12,r*.52,.9,3.9);ctx.stroke();ctx.globalAlpha/=.55;ctx.fillStyle='rgba(255,255,255,.3)';ball([q[0]-r*.36,q[1]-r*.4],r*.3);ctx.fill()}
+// a braid: a chain of crossing knots along the 3D points, a band and a tuft at its end
+function braid3(Vh,h,P3,w,col,g,accC){const N=[];for(let i=0;i<P3.length-1;i++)for(let k=0;k<2;k++)N.push(lerp3(P3[i],P3[i+1],k/2));N.push(P3[P3.length-1]);const S=N.map(v=>hP(Vh,h,v));g=pieceGrad(S,col)||g;
+  const knots=[];for(let i=0;i<S.length-1;i++){const a=S[i],b=S[i+1];knots.push({m:[(a[0]+b[0])/2,(a[1]+b[1])/2],an:Math.atan2(b[1]-a[1],b[0]-a[0])+(i%2?.55:-.55),L0:Math.hypot(b[0]-a[0],b[1]-a[1])*.68+w*.3,ww:w*.78*(1-.25*i/S.length)})}
+  ctx.fillStyle=INK;for(const k of knots){ctx.beginPath();ctx.ellipse(k.m[0],k.m[1],k.L0+1.1,k.ww+1.1,k.an,0,TAU);ctx.fill()}
+  for(const k of knots){ctx.beginPath();ctx.ellipse(k.m[0],k.m[1],k.L0,k.ww,k.an,0,TAU);ctx.fillStyle=g;ctx.fill();ctx.strokeStyle=dk(col,.45);ctx.lineWidth=.7;ctx.stroke();
+    ctx.strokeStyle=lt(col,.4);ctx.lineWidth=.55;ctx.beginPath();ctx.ellipse(k.m[0]-.25,k.m[1]-.3,k.L0*.55,k.ww*.42,k.an,3.7,5.3);ctx.stroke()}
+  const e=S[S.length-1],p=S[S.length-2],an=Math.atan2(e[1]-p[1],e[0]-p[0]);
+  ctx.save();ctx.translate(e[0],e[1]);ctx.rotate(an);ctx.fillStyle=g;ctx.beginPath();ctx.moveTo(0,-w*.75);ctx.quadraticCurveTo(w*2.2,-w*.9,w*2.6,0);ctx.quadraticCurveTo(w*2.2,w*.9,0,w*.75);ctx.closePath();ctx.fill();ink(1);ctx.stroke();
+  ctx.fillStyle=accC||'#d24b3e';ctx.fillRect(-w*.35,-w*.85,w*.7,w*1.7);ctx.strokeRect(-w*.35,-w*.85,w*.7,w*1.7);ctx.restore()}
+// the pieces of a style that stand out of the head: behind it (front false) or in front of it. Under the hood (bare false) only what
+// comes out of it: the long locks and the braids from the bottom of the opening, the tail at the back, the tuft of the crest
+function hairPieces(Vh,h,R,nod,H,L,S,col,g,K,front,bare,sw){const{F}=Vh,fr=v=>F(nod(v))>.06;
+  if(H.spikes&&bare){for(const[a,e,l,b] of[[-.62,1.0,3,-.9],[.0,1.22,3.4,.5],[.62,1.0,3,1],[1.45,.72,2.8,1.1],[-1.45,.72,2.8,-1.1],[2.25,.62,2.9,1.3],[-2.25,.62,2.9,-1.3],[2.75,1.0,3,.7],[-2.75,1.0,3,-.7],[3.14,.4,3,0]]){
+    const d=nod(hdir(a,e)),t=nod([-Math.sin(a),Math.cos(a),0]);if(front||F(d)>.62)continue;spike3(Vh,h,mul(d,R*.9),add(mul(d,R+l*K),add(mul(t,b*K),[0,0,-.4*K])),2.3*K,col,g)}}
+  if(H.curls&&bare){const C=[];for(const[e,n,o] of[[.25,7,0],[.72,7,.5],[1.18,4,.2]])for(let i=0;i<n;i++){const a=-Math.PI+(i+o)/n*TAU;if(e<.5&&Math.abs(a)<1.05)continue;C.push(nod(hdir(a,e)))}
+    for(const a of[-.5,-.17,.17,.5])C.push(nod(hdir(a,HAIRS.riccioli.f(a)+.1)));
+    C.sort((p,q)=>F(p)-F(q));if(!front)for(const d of C){if(F(d)>.3)continue;curl3(Vh,h,mul(d,R+.1*K),2.3*K,col,g)}
+    else{ctx.save();ctx.strokeStyle=dk(col,.32);ctx.lineWidth=.7;ctx.lineCap='round';for(const d of C){const f=F(d);if(f<.35)continue;const q=hP(Vh,h,mul(d,R*.99)),r=1.5*K;ctx.globalAlpha=.55*cl((f-.35)*4,0,1);
+      ctx.beginPath();ctx.arc(q[0],q[1],r,.4,3.6);ctx.stroke();ctx.beginPath();ctx.arc(q[0]+r*.15,q[1]+r*.1,r*.48,3.2,6);ctx.stroke()}ctx.restore()}}
+  if(H.lock&&front&&bare){// the big lock: from the crown over to his right brow, its point curling out
+    const P=[[-.55,1.28,.2],[-.2,1.05,.75],[.18,.84,.95],[.48,.62,.7],[.62,.47,.25]].map(([a,e,o])=>mul(nod(hdir(a,e)),R+o*K)),W=[2.4,2.5,2.2,1.5,.45].map(v=>v*K);
+    if(F(nod(hdir(.1,.9)))>-.05)lock3(Vh,h,P,W,col,g)}
+  if(H.locks){// long hair: a curtain down each side (from under the hood's opening when it is up) and the mass of it down the back
+    const backV=F(nod([-1,0,-.1]))>.35,L0=9*K;
+    if(!front)for(const sd of[-1,1]){const b0=bare?mul(nod(hdir(sd*1.05,-.05)),R*.88):mul(nod(hdir(sd*.72,-.42)),R*.9),P=[b0,add(b0,nod([.6,sd*.9,-L0*.42])),add(b0,nod([.9,sd*.8,-L0*.8])),add(b0,nod([.8,sd*.9+sw*.4,-L0*1.05]))];
+      lock3(Vh,h,P,[3.4,3.1,2.4,.8].map(v=>v*Math.sqrt(K)),col,g)}
+    if(bare&&backV===front){const b0=mul(nod(hdir(Math.PI,-.2)),R*.9),P=[b0,add(b0,nod([-1.4,sw*.3,-4.8*K])),add(b0,nod([-1.8,sw*.6,-8.4*K]))];lock3(Vh,h,P,[7.4,7,5.6].map(v=>v*Math.sqrt(K)),col,g)}}
+  if(H.braids&&!front){for(const sd of[-1,1]){const d0=bare?nod(hdir(sd*1.25,-.25)):nod(hdir(sd*.74,-.44)),
+    b0=mul(d0,R*.92),P=[b0,add(b0,nod([1.3,sd*.6,-3.8*K])),add(b0,nod([2,sd*.5+sw*.3,-7.6*K])),add(b0,nod([2.2,sd*.6+sw*.6,-10.2*K]))];braid3(Vh,h,P,2.3*Math.sqrt(K),col,g,L.accCol)}}
+  if(H.tail&&!S.ponytail){const back=F(nod([-1,0,.2]))<=.15;if(back===!front){// the tail: from the back of the head (out of the hood) down behind the neck
+      const tie=mul(nod(hdir(Math.PI,bare?.3:.05)),R*(bare?1:.95)),P=[tie,add(tie,nod([-2.6,sw*.5,-2.4])),add(tie,nod([-3.4,sw*1.2,-6.8*K])),add(tie,nod([-2.8,sw*2,-10.8*K]))];
+      lock3(Vh,h,P,[2.9,3,2.4,.8].map(v=>v*Math.sqrt(K)),col,g);const q=hP(Vh,h,tie);ink(1.1);ctx.fillStyle=L.accCol||'#d24b3e';ball(q,1.6*Math.sqrt(K));ctx.fill();ctx.stroke()}}
+  if(H.bun&&bare){const d=nod(hdir(Math.PI,.82)),c=mul(d,R+2.1*K),fF=F(d)>-.25;if(fF===front){const q=hP(Vh,h,c),r=3.4*K;
+    {const s0=hP(Vh,h,add(c,nod([.3,-4.4*K,.9*K]))),s1=hP(Vh,h,add(c,nod([-.3,4.4*K,-.9*K])));ctx.lineCap='round';ctx.strokeStyle=INK;ctx.lineWidth=2.1;seg(s0,s1);ctx.stroke();ctx.strokeStyle='#c9a26a';ctx.lineWidth=1.1;ctx.stroke();ctx.fillStyle=L.accCol||'#d24b3e';ink(.8);ball(s0,.9);ctx.fill();ctx.stroke()}
+    ink(2);ball(q,r);ctx.fillStyle=g;ctx.fill();ctx.stroke();
+    ctx.strokeStyle=dk(col,.42);ctx.lineWidth=.7;ctx.beginPath();ctx.arc(q[0]+r*.1,q[1]+r*.05,r*.62,.6,4.9);ctx.stroke();ctx.fillStyle=lt(col,.4);ball([q[0]-r*.36,q[1]-r*.4],r*.24);ctx.fill();
+    void 0}}
+  if(H.fin&&bare&&front)crest3(Vh,h,R,nod,col,K)}
+// the crest: a fin of hair standing over the middle of the head from the forehead to the nape, its top in points; two faces, the one
+// turned to us lit, the other in the shade, one outline
+function crest3(Vh,h,R,nod,col,K){const lat=nod([0,1,0]),wd=1.9*K,N=16,top=[],bl=[],br=[];
+  for(let i=0;i<=N;i++){const t=.7+i/N*1.78,d=nod([Math.cos(t),0,Math.sin(t)]),tt=nod([-Math.sin(t),0,Math.cos(t)]),hh=(2+2.6*Math.sin((t-.6)/1.95*Math.PI))*K*(i%2?.7:1),b=mul(d,R*.97);
+    top.push(hP(Vh,h,add(mul(d,R+hh),mul(tt,-.7*K))));bl.push(hP(Vh,h,add(b,mul(lat,wd))));br.push(hP(Vh,h,add(b,mul(lat,-wd))))}
+  const fl=Vh.F(lat),face=(B,lit)=>{ctx.beginPath();for(const q of B)ctx.lineTo(q[0],q[1]);for(let i=top.length-1;i>=0;i--)ctx.lineTo(top[i][0],top[i][1]);ctx.closePath();
+    const Q=B.concat(top),gg=pieceGrad(Q,lit?col:hexMix(col,'#0d1418',.28));ctx.fillStyle=gg;ctx.fill();ink(1.25);ctx.stroke()};
+  if(fl>=0){face(br,false);face(bl,true)}else{face(bl,false);face(br,true)}
+  ctx.strokeStyle=lt(col,.35);ctx.lineWidth=.6;ctx.lineCap='round';line(top.map((q,i)=>[lerp(q[0],(fl>=0?bl:br)[i][0],.35),lerp(q[1],(fl>=0?bl:br)[i][1],.35)]).filter((q,i)=>i%2===0));ctx.stroke()}
+// ------------------------------------------------------------------ the beard
+// the part on the face (below the line: the height e over the azimuth), the moustache, the part that hangs under the chin
+// (seen from the camera, high above, the chin is short: the mouth is at e -.13, the bottom of the hood's opening at -.53)
+const BEARDS={baffetti:{must:1},baffoni:{must:2},pizzetto:{line:a=>-.21-1.3*sstep(.2,.32,Math.abs(a)),hang:.5,narrow:1},
+  barbetta:{line:a=>-.21+.37*sstep(.5,1.25,Math.abs(a))},barba:{line:a=>-.07+.24*sstep(.3,1.05,Math.abs(a)),must:1,hang:1},
+  lunga:{line:a=>-.07+.24*sstep(.3,1.05,Math.abs(a)),must:1,hang:2.1},intrecciata:{line:a=>-.08+.24*sstep(.3,1.05,Math.abs(a)),must:1,hang:1.9,braid:1}};
+// the moustache: two tufts over the mouth, in the face's units
+function moustache(kind,fp,seen,col,K){const al=seen(0,-.06);if(al<=.02)return;ctx.save();ctx.globalAlpha*=al;ctx.lineJoin='round';
+  for(const sd of[-1,1]){const P=(kind===2?[[.02,-.02],[.2,.03],[.4,-.01],[.56,.07],[.58,.12],[.5,.1],[.42,-.08],[.2,-.08],[.04,-.06]]:[[.02,-.025],[.17,.0],[.31,-.05],[.27,-.085],[.14,-.075],[.03,-.06]])
+      .map(([x,y])=>fp(sd*x*K,-.04+(y+.04)*K));
+    poly(P);const g=ctx.createLinearGradient(0,P[1][1]-1,0,P[P.length-2][1]+1);g.addColorStop(0,lt(col,.25));g.addColorStop(1,dk(col,.18));ctx.fillStyle=g;ctx.fill();ctx.strokeStyle=dk(col,.62);ctx.lineWidth=.8;ctx.stroke()}
+  ctx.restore()}
+// what hangs under the chin: a soft tuft (a long one for the long beard, a braid at the end of the braided one), only seen from the front
+function beardHang(Vh,h,R,nod,B,col,K,sw,accC){const{F}=Vh,f=F(nod([1,0,-.25]));if(f<-.12)return;const ex=B.hang*K,nar=B.narrow?.42:1;
+  // a teardrop from the chin down: widest under the jaw, a soft point at the end that swings a little
+  const Wt=R*.6*nar,N=9,pts=[],mid=[];for(let i=0;i<=8;i++){const a=(-1+i/4)*.6*nar;pts.push(hP(Vh,h,mul(nod(hdir(a,-.42)),R*.99)))}
+  for(let i=0;i<=N;i++){const u=i/N,z=lerp(-R*.52,-R*(.6+ex*.66),u),x=R*.88+ex*.95*u,w=Wt*Math.pow(Math.max(0,1-Math.pow(u,1.7)),.65),s=sw*.35*u*u;
+    pts.push(hP(Vh,h,nod([x,w+s,z])),hP(Vh,h,nod([x,-w+s,z])));mid.push(hP(Vh,h,nod([x+.3,s,z])))}
+  const ring=new Set(pts.slice(0,9)),Hh=chull(pts),bb=[1e9,1e9,-1e9,-1e9];for(const q of Hh){bb[0]=Math.min(bb[0],q[0]);bb[1]=Math.min(bb[1],q[1]);bb[2]=Math.max(bb[2],q[0]);bb[3]=Math.max(bb[3],q[1])}
+  ctx.save();ctx.globalAlpha*=cl((f+.12)*5,0,1);poly(Hh);ctx.fillStyle=soft(bb[0]+(bb[2]-bb[0])*.32,bb[1]+(bb[3]-bb[1])*.18,bb[0]+(bb[2]-bb[0])*.5,bb[1]+(bb[3]-bb[1])*.5,Math.max(bb[2]-bb[0],bb[3]-bb[1])*.8,col,.26,.3);ctx.fill();
+  // the outline round its sides and its point, not along the top, where it grows out of the beard on the face
+  ink(1.9);ctx.beginPath();for(let i=0;i<Hh.length;i++){const a=Hh[i],b=Hh[(i+1)%Hh.length];if(ring.has(a)&&ring.has(b))continue;ctx.moveTo(a[0],a[1]);ctx.lineTo(b[0],b[1])}ctx.stroke();
+  if(f>.15){ctx.save();poly(Hh);ctx.clip();ctx.lineCap='round';ctx.strokeStyle=hexMix(col,'#1b1210',.38);ctx.globalAlpha*=.55;ctx.lineWidth=.7;
+    for(const s of[-.42,0,.42]){line(mid.map((q,i)=>{const u=i/N,w=Wt*Math.pow(Math.max(0,1-Math.pow(u,1.7)),.65)*s,qq=hP(Vh,h,nod([R*.88+ex*.95*u,w+sw*.35*u*u,lerp(-R*.52,-R*(.6+ex*.66),u)]));return qq}).slice(1,N-1));ctx.stroke()}
+    ctx.strokeStyle=lt(col,.4);ctx.globalAlpha=.6;ctx.lineWidth=.8;line(mid.slice(1,Math.ceil(N*.6)).map(q=>[q[0]-(bb[2]-bb[0])*.16,q[1]]));ctx.stroke();ctx.restore()}
+  if(B.braid){const u=1,tip=nod([R*.88+ex*.95*u,sw*.35,-R*(.6+ex*.66)]);braid3(Vh,h,[add(tip,nod([0,0,1.2])),add(tip,nod([.3,sw*.2,-1.6*K])),add(tip,nod([.5,sw*.4,-3.4*K]))],1.5,col,null,accC)}
+  ctx.restore()}
+const hexMix=(a,b,k)=>{const A=parseInt(a.slice(1),16),B=parseInt(b.slice(1),16),f=s=>Math.round(((A>>s)&255)*(1-k)+((B>>s)&255)*k);return'#'+((1<<24)|(f(16)<<16)|(f(8)<<8)|f(0)).toString(16).slice(1)};
+// ------------------------------------------------------------------ the ears
+// at the sides (round ones only without the hood; pointed ones come out of the hood), on the side we see (front) or the far one
+function sideEar(Vh,h,R,nod,kind,sd,K,skin,col){const a=sd*(Math.PI/2+.1),b=nod(hdir(a,.06)),out=nod([0,sd,0]),up=nod([0,0,1]),fw=nod([1,0,0]);
+  if(kind==='tonde'){const tw=nrm(sub(mul(fw,Math.cos(EARB)),mul(out,Math.sin(EARB)))),nn=nrm(add(mul(out,Math.cos(EARB)),mul(fw,Math.sin(EARB)))),c=add(mul(b,R*.97),mul(out,1.1*K)),pts=[];
+    for(let i=0;i<20;i++){const t=i/20*TAU;pts.push(hP(Vh,h,add(c,add(mul(tw,Math.cos(t)*1.9*K),add(mul(up,Math.sin(t)*2.6*K),mul(nn,Math.max(0,Math.cos(t))*.5*K))))))}
+    const H=chull(pts);if(H.length<3)return;const bb=[1e9,1e9,-1e9,-1e9];for(const q of H){bb[0]=Math.min(bb[0],q[0]);bb[1]=Math.min(bb[1],q[1]);bb[2]=Math.max(bb[2],q[0]);bb[3]=Math.max(bb[3],q[1])}
+    ink(1.5);poly(H);ctx.fillStyle=soft(bb[0]+(bb[2]-bb[0])*.3,bb[1]+(bb[3]-bb[1])*.25,(bb[0]+bb[2])/2,(bb[1]+bb[3])/2,Math.max(bb[2]-bb[0],bb[3]-bb[1])*.75,skin,.12,.22);ctx.fill();ctx.stroke();
+    if(Vh.F(nn)>.15){const q0=hP(Vh,h,add(c,add(mul(up,1.3*K),mul(tw,.3*K)))),q1=hP(Vh,h,add(c,mul(tw,-.7*K))),q2=hP(Vh,h,add(c,add(mul(up,-1.2*K),mul(tw,.2*K))));
+      ctx.strokeStyle='rgba(120,60,40,.55)';ctx.lineWidth=.8;ctx.lineCap='round';ctx.beginPath();ctx.moveTo(q0[0],q0[1]);ctx.quadraticCurveTo(q1[0],q1[1],q2[0],q2[1]);ctx.stroke()}
+    return}
+  const lg=kind==='lunghe',L0=(lg?9.2:6.4)*K,UP=(lg?5:3.2)*K,base=mul(b,R*.95),tip=add(base,add(add(mul(out,L0),mul(up,UP)),mul(fw,-(lg?2.6:1.5)*K))),
+    b1=add(base,add(mul(up,3*K),mul(fw,1.1*K))),b2=add(base,add(mul(up,-2.5*K),mul(fw,-.7*K))),m1=add(lerp3(b1,tip,.5),mul(up,1.5*K)),m2=add(lerp3(b2,tip,.55),mul(up,-.2*K));
+  const B1=hP(Vh,h,b1),B2=hP(Vh,h,b2),T=hP(Vh,h,tip),M1=hP(Vh,h,m1),M2=hP(Vh,h,m2);
+  const path=()=>{ctx.beginPath();ctx.moveTo(B1[0],B1[1]);ctx.quadraticCurveTo(M1[0],M1[1],T[0],T[1]);ctx.quadraticCurveTo(M2[0],M2[1],B2[0],B2[1]);ctx.closePath()};
+  const bb=[Math.min(B1[0],B2[0],T[0]),Math.min(B1[1],B2[1],T[1]),Math.max(B1[0],B2[0],T[0]),Math.max(B1[1],B2[1],T[1])];
+  ink(1.4);path();ctx.fillStyle=soft(bb[0]+(bb[2]-bb[0])*.3,bb[1]+(bb[3]-bb[1])*.25,(bb[0]+bb[2])/2,(bb[1]+bb[3])/2,Math.max(bb[2]-bb[0],bb[3]-bb[1])*.8,skin,.14,.24);ctx.fill();ctx.stroke();
+  ctx.save();path();ctx.clip();const i0=hP(Vh,h,lerp3(b1,b2,.35)),i1=hP(Vh,h,lerp3(base,tip,.72)),i2=hP(Vh,h,lerp3(b1,b2,.8));ctx.fillStyle='rgba(150,70,60,.26)';ctx.beginPath();ctx.moveTo(i0[0],i0[1]);ctx.lineTo(i1[0],i1[1]);ctx.lineTo(i2[0],i2[1]);ctx.closePath();ctx.fill();ctx.restore();void col}
+// on top: a cat's, a bear's or a rabbit's (of the hood's cloth when it is up, of the hair when it is down), both drawn after the head
+function topEar(Vh,h,R,nod,kind,sd,K,col,inner){const a=sd*(kind==='coniglio'?.34:1.0),e=kind==='coniglio'?1.12:1.2,d=nrm(nod(hdir(a,e))),up=nod([0,0,1]),fw=nod([1,0,0]),side=nod([0,sd,0]);
+  const base=mul(d,R*.96);
+  if(kind==='orso'){const c=add(base,add(mul(d,1.8*K),mul(up,.5*K))),q=hP(Vh,h,c),r=2.6*K,fF=Vh.F(fw);
+    ink(1.6);ball(q,r);ctx.fillStyle=soft(q[0]-r*.4,q[1]-r*.45,q[0],q[1],r*1.3,col,.16,.3);ctx.fill();ctx.stroke();
+    if(fF>-.2){const qi=hP(Vh,h,add(c,mul(fw,.5)));ctx.fillStyle=inner;ball([qi[0],qi[1]+r*.1],r*.52*cl(fF+.6,.3,1));ctx.fill()}return}
+  const rab=kind==='coniglio',L0=(rab?9.5:5.6)*K,wb=(rab?2.3:3.1)*K,tip=add(base,add(mul(d,L0*.7),add(mul(up,L0*.55),mul(fw,(rab?-1.6:-.5)*K)))),
+    l1=add(base,mul(side,-wb)),l2=add(base,mul(side,wb));
+  const B1=hP(Vh,h,l1),B2=hP(Vh,h,l2),T=hP(Vh,h,tip),C1=hP(Vh,h,add(lerp3(l1,tip,.55),mul(side,-wb*(rab?.55:.2)))),C2=hP(Vh,h,add(lerp3(l2,tip,.55),mul(side,wb*(rab?.55:.2))));
+  const path=k=>{const m=[(B1[0]+B2[0])/2,(B1[1]+B2[1])/2],s=(q)=>[m[0]+(q[0]-m[0])*k,m[1]+(q[1]-m[1])*k],b1=s(B1),b2=s(B2),t=s(T),c1=s(C1),c2=s(C2);
+    ctx.beginPath();ctx.moveTo(b1[0],b1[1]);ctx.quadraticCurveTo(c1[0],c1[1],t[0],t[1]);ctx.quadraticCurveTo(c2[0],c2[1],b2[0],b2[1]);ctx.closePath()};
+  const bb=[Math.min(B1[0],B2[0],T[0]),Math.min(B1[1],B2[1],T[1]),Math.max(B1[0],B2[0],T[0]),Math.max(B1[1],B2[1],T[1])];
+  ink(1.6);path(1);ctx.fillStyle=soft(bb[0]+(bb[2]-bb[0])*.3,bb[1]+(bb[3]-bb[1])*.2,(bb[0]+bb[2])/2,(bb[1]+bb[3])/2,Math.max(bb[2]-bb[0],bb[3]-bb[1])*.8,col,.18,.3);ctx.fill();ctx.stroke();
+  if(Vh.F(fw)>-.25){path(.55);ctx.fillStyle=inner;ctx.fill()}}
+function earsDraw(Vh,h,R,nod,L,S,bare,front){const kind=L.ears||'tonde',K=L.earK||1;if(kind==='tonde'&&!bare)return;
+  if(kind==='gatto'||kind==='orso'||kind==='coniglio'){if(!front)return;const col=bare?(L.hairCol||'#8a5a32'):S.hood,inner=kind==='orso'?(bare?dk(col,.3):dk(S.hood,.35)):'#f6b7c8';
+    for(const sd of[-1,1].sort((p,q)=>Vh.F(nod([0,p,0]))-Vh.F(nod([0,q,0]))))topEar(Vh,h,R,nod,kind,sd,K,col,inner);return}
+  for(const sd of[-1,1]){const out=nod([0,sd,0]),tw=kind==='tonde'||bare,n=tw?add(mul(out,Math.cos(EARB)),mul(nod([1,0,0]),Math.sin(EARB))):out;if((Vh.F(n)>(tw?.05:.1))!==front)continue;sideEar(Vh,h,R,nod,kind,sd,K,S.skin,L.hairCol)}}
+const EARB=.62;
+// ------------------------------------------------------------------ the face
+// the hair, the beard and the mask on the face are drawn by the head (o.hairFn, o.beardFn, o.maskFn, o.mustFn), in their place between
+// the marks and the eyes
 function faceLook(Vh,h,Rh,nod,o,fq,E,ry,edge){const{F}=Vh,L=o.L,w=[F(1,0,0),F(0,1,0),F(0,0,1)],eyes=L.eyes||'tondi',mark=L.mark||'nessuno',acc=L.acc||'nessuno';
   // a point of the face (x to his right, y up, in the units of EYE and MOUTH) on the ball; one behind it goes to the outline
   const fp=(x,y,r)=>{let n=nrm(nod([1,x,y]));const f=dot(n,w);if(f<0)n=nrm(sub(n,mul(w,f)));return sp(Vh,h,Rh*(r||.97),n)},fv=(x,y)=>F(nrm(nod([1,x,y])));
   const seen=(x,y)=>{const q=fp(x,y);return sstep(.12,.32,fv(x,y))*edge(q)};
-  // under the eyes: the marks painted or grown on the skin
-  if(mark!=='nessuno'&&mark!=='cerotto')faceMark(mark,fp,seen);
+  const kE=L.eyeK||1,kB=L.browK||1,kM=L.mouthK||1,kS=L.markK||1;
+  // under the eyes: the marks painted or grown on the skin, then the hair, the beard on the cheeks, the mask
+  if(mark!=='nessuno'&&mark!=='cerotto')faceMark(mark,fp,seen,kS);
+  if(o.hairFn)o.hairFn();if(o.beardFn)o.beardFn();if(o.maskFn)o.maskFn();
   // the eyes (the one under the patch is not there)
   const sq=(o.blink==null?1:o.blink)*(1-.3*(o.squint||0));
   for(const e of E){if(e.rx<.7||(acc==='benda'&&e.sd<0))continue;const{v,q,rx}=e;ctx.save();
     if(o.shut){const dir=fq[0]>=q[0]?1:-1;ctx.strokeStyle=HC.eye;ctx.lineWidth=1.3;ctx.lineCap='round';ctx.lineJoin='round';ctx.beginPath();
       ctx.moveTo(q[0]-dir*rx*.9,q[1]-1.5);ctx.lineTo(q[0]+dir*rx*.8,q[1]);ctx.lineTo(q[0]-dir*rx*.9,q[1]+1.5);ctx.stroke()}
-    else eyeLook(eyes,L.iris,q,rx,ry,sq,v,o,fq);
+    else eyeLook(eyes,L.iris,q,rx,ry,sq,v,o,fq,kE);
     ctx.restore()}
-  // the brows, the hair over the forehead
-  const bw=L.brows||'nessuna';if(bw!=='nessuna')for(const e of E){if(e.rx<.7)continue;browLook(bw,e,ry,fq,L.browCol||'#3e2616',edge(e.q)*cl((e.v-.08)*5,0,1),eyes,o.shut)}
-  if(L.hair&&L.hair!=='nascosti')fringe(L.hair,L.hairCol||'#6b4226',fp,fv);
-  // the blush and the mouth, as always
+  // the brows (the joined ones also over the middle)
+  const bw=L.brows||'nessuna';if(bw!=='nessuna'){const Bs=[];for(const e of E){if(e.rx<.7)continue;const b=browLook(bw,e,ry,fq,L.browCol||'#3e2616',edge(e.q)*cl((e.v-.08)*5,0,1),eyes,o.shut,kB,kE);if(b)Bs.push(b)}
+    if(bw==='unite'&&Bs.length===2){const[a,b]=Bs,m=[(a.i[0]+b.i[0])/2,(a.i[1]+b.i[1])/2+.35*kB];ctx.save();ctx.globalAlpha*=Math.min(a.al,b.al);ctx.strokeStyle=L.browCol||'#3e2616';ctx.lineCap='round';ctx.lineWidth=1.1*kB;
+      ctx.beginPath();ctx.moveTo(a.i[0],a.i[1]);ctx.quadraticCurveTo(m[0],m[1],b.i[0],b.i[1]);ctx.stroke();ctx.restore()}}
+  // the blush, the mouth (open when he is hit, else the look's), the moustache over it
   if(o.blush!==false)for(const sd of[-1,1]){const c=nrm(nod([CHEEK[0],sd*CHEEK[1],CHEEK[2]])),v=F(c),k=sstep(.15,.35,v);if(k<=0)continue;const q=sp(Vh,h,Rh*.97,c),kk=k*edge(q);ctx.fillStyle=`rgba(255,120,110,${.2*kk})`;ell(q[0],q[1],1.7*Math.pow(v,.7),1);ctx.fill()}
   if(o.mouth>.05){const m=nrm(nod(MOUTH)),v=F(m);if(v>.05){const q=sp(Vh,h,Rh*.97,m),ww=1.3*Math.max(.45,v),hh=.6+o.mouth*1.1;ink(1);ctx.fillStyle='#5a2020';ctx.beginPath();ctx.ellipse(q[0],q[1],ww,hh,0,0,TAU);ctx.fill();ctx.stroke()}}
+  else if(L.mouth&&L.mouth!=='nessuna')mouthLook(L.mouth,fp,seen,kM);
+  if(o.mustFn)o.mustFn(fp,seen);
   // over everything: the band-aid, the eyepatch, the glasses
-  if(mark==='cerotto')bandAid(fp,seen);
+  if(mark==='cerotto')bandAid(fp,seen,kS);
   if(acc==='benda')eyePatch(E,ry,fq,fp,seen);
-  if(acc==='occhialetti')glasses(E,ry,fq,eyes,edge)}
-// one eye of a shape, with its colour (iris: a coloured eye with a dark pupil) or dark as always; the lids of the narrowed shapes
-function eyeLook(kind,iris,q,rx,ry,sq,v,o,fq){const dir=fq[0]>=q[0]?1:-1,x=q[0],y=q[1],big=kind==='grandi',small=kind==='piccoli',fel=kind==='felini',col=o.eyeCol||null;
-  const ex=rx*(big?1.14:small?.62:fel?1.04:1),ey=ry*(big?1.18:small?.64:fel?.9:1)*Math.max(.12,sq);
+  if(acc==='occhialetti')glasses(E,ry,fq,eyes,edge,kE)}
+// one eye of a shape, with its colour (iris: a coloured eye with a dark pupil) or dark as always; the lids of the narrowed shapes; kE: size
+function eyeLook(kind,iris,q,rx,ry,sq,v,o,fq,kE){kE=kE||1;const dir=fq[0]>=q[0]?1:-1,x=q[0],y=q[1],big=kind==='grandi'||kind==='stellati',small=kind==='piccoli',fel=kind==='felini',wide=kind==='spalancati',col=o.eyeCol||null;
+  if(kind==='felici'){// happy: closed into two little arches
+    const ex=rx*1.02*kE,ey=ry*.6*kE;ctx.strokeStyle=col||HC.eye;ctx.lineWidth=1.45*Math.sqrt(kE);ctx.lineCap='round';ctx.beginPath();ctx.moveTo(x-ex,y+ey*.4);ctx.quadraticCurveTo(x,y-ey*1.6,x+ex,y+ey*.4);ctx.stroke();return}
+  const ex=rx*(big?1.14:small?.62:fel?1.04:wide?1.12:1)*kE,ey=ry*(big?1.18:small?.64:fel?.9:wide?1.18:1)*kE*Math.max(.12,sq);
   const path=()=>{ctx.beginPath();if(fel){const t=ey*.32;ctx.moveTo(x-dir*ex*1.12,y-t);ctx.quadraticCurveTo(x+dir*ex*.1,y-ey*1.32,x+dir*ex*1.06,y+t*.3);ctx.quadraticCurveTo(x,y+ey*1.1,x-dir*ex*1.12,y-t);ctx.closePath()}else ctx.ellipse(x,y,ex,ey,0,0,TAU)};
-  // the cut of the lid: lower toward the nose (decisi), half closed (assonnati); a: the lid's height at the outer and the inner side
-  const lid=kind==='decisi'?[y-ey*.8,y-ey*.02]:kind==='assonnati'?[y-ey*.12,y-ey*.12]:null,lidY=t=>lid[0]+(lid[1]-lid[0])*(t+1.6)/3.2;
+  // the cut of the lid: lower toward the nose (decisi), lower toward the outside (tristi), half closed (assonnati)
+  const lid=kind==='decisi'?[y-ey*.8,y-ey*.02]:kind==='tristi'?[y-ey*.04,y-ey*.78]:kind==='assonnati'?[y-ey*.12,y-ey*.12]:null,lidY=t=>lid[0]+(lid[1]-lid[0])*(t+1.6)/3.2;
   if(lid){ctx.beginPath();ctx.moveTo(x-dir*ex*1.6,lid[0]);ctx.lineTo(x+dir*ex*1.6,lid[1]);ctx.lineTo(x+dir*ex*1.6,y+ey*2+2);ctx.lineTo(x-dir*ex*1.6,y+ey*2+2);ctx.closePath();ctx.clip()}
   if(o.glow&&sq>.3)shine(o.glow,x,y,ry*2.3,.3*Math.min(1,v*2));
   path();
-  if(iris&&!col&&ey>.8){const g=ctx.createLinearGradient(0,y-ey,0,y+ey);g.addColorStop(0,dk(iris,.55));g.addColorStop(.55,iris);g.addColorStop(1,lt(iris,.3));ctx.fillStyle=g;ctx.fill();
-    ctx.save();path();ctx.clip();ctx.fillStyle='#140e0b';ctx.beginPath();if(fel)ctx.ellipse(x,y,Math.max(.32,ex*.24),ey*.9,0,0,TAU);else ctx.ellipse(x+dir*ex*.05,y+ey*.06,ex*.52,ey*.56,0,0,TAU);ctx.fill();ctx.restore();
+  if(wide&&ey>.8){// wide open: the white, a small pupil in it
+    ctx.fillStyle='#fffaf0';ctx.fill();const pr=Math.min(ex,ey)*.5;ctx.save();path();ctx.clip();ctx.fillStyle=col||iris||HC.eye;ball([x+dir*ex*.1,y+ey*.06],pr);ctx.fill();
+    if(iris&&!col){ctx.fillStyle='#140e0b';ball([x+dir*ex*.1,y+ey*.06],pr*.5);ctx.fill()}ctx.restore();ctx.strokeStyle=INK;ctx.lineWidth=.95;path();ctx.stroke()}
+  else if(iris&&!col&&ey>.8){const g=ctx.createLinearGradient(0,y-ey,0,y+ey);g.addColorStop(0,dk(iris,.6));g.addColorStop(.5,iris);g.addColorStop(1,lt(iris,.32));ctx.fillStyle=g;ctx.fill();
+    ctx.save();path();ctx.clip();ctx.strokeStyle=dk(iris,.5);ctx.lineWidth=Math.max(.4,ex*.16);ctx.stroke();
+    ctx.fillStyle='#140e0b';ctx.beginPath();if(fel)ctx.ellipse(x,y,Math.max(.32,ex*.24),ey*.9,0,0,TAU);else ctx.ellipse(x+dir*ex*.05,y+ey*.06,ex*.5,ey*.54,0,0,TAU);ctx.fill();ctx.restore();
     ctx.strokeStyle='rgba(27,22,18,.9)';ctx.lineWidth=.75;path();ctx.stroke()}
   else{ctx.fillStyle=col||HC.eye;ctx.fill()}
-  if(o.eyeLight!==false&&sq>.45&&rx>1.2){ctx.fillStyle='#fdf6e8';ball([x-ex*.34,y-ey*.46],small?.24:big?.55:.36);ctx.fill();if(big){ball([x+ex*.34,y+ey*.36],.24);ctx.fill()}}
-  // the lid's line along the cut
-  if(lid&&ey>.7){ctx.strokeStyle=INK;ctx.lineWidth=.95;ctx.lineCap='round';ctx.beginPath();ctx.moveTo(x-dir*ex*1.12,lidY(-1.12));ctx.lineTo(x+dir*ex*1.02,lidY(1.02));ctx.stroke()}}
-// a brow over its eye (it narrows with it when the head turns); the far brow follows the far eye in
-function browLook(kind,e,ry,fq,col,al,eyes,shut){if(al<=.02)return;const{q,rx}=e,dir=fq[0]>=q[0]?1:-1,w=Math.max(.7,rx*1.15),x=q[0],
-    y=q[1]-ry*(eyes==='grandi'?1.78:eyes==='piccoli'?1.3:1.58)-.5+(shut?.5:0);
-  ctx.save();ctx.globalAlpha*=al;ctx.strokeStyle=col;ctx.lineCap='round';ctx.lineJoin='round';ctx.beginPath();
-  if(kind==='sottili'){ctx.lineWidth=.8;ctx.moveTo(x-w,y+.45);ctx.quadraticCurveTo(x,y-.75,x+w,y+.45)}
-  else if(kind==='folte'){ctx.lineWidth=1.9;ctx.moveTo(x-w*.92,y+.25);ctx.quadraticCurveTo(x,y-.55,x+w*.92,y+.25)}
-  else if(kind==='decise'){ctx.lineWidth=1.6;ctx.moveTo(x-dir*w*.95,y-.75);ctx.lineTo(x+dir*w*.9,y+.95)}
-  else if(kind==='alzate'){ctx.lineWidth=1.1;ctx.moveTo(x-w,y-.1);ctx.quadraticCurveTo(x,y-2.1,x+w,y-.1)}
-  else{ctx.lineWidth=1.8;const g=x+dir*w*.2;ctx.moveTo(x-dir*w*.92,y+.25);ctx.quadraticCurveTo(x-dir*w*.35,y-.5,g-dir*.4,y-.42);ctx.moveTo(g+dir*.5,y-.4);ctx.quadraticCurveTo(x+dir*w*.6,y-.3,x+dir*w*.92,y+.3)}
-  ctx.stroke();ctx.restore()}
-// the marks on the skin, in the face's own units (they turn with it and fade at its edge)
-function faceMark(kind,fp,seen){ctx.save();ctx.lineCap='round';ctx.lineJoin='round';
-  const stroke=(P,col,lw,al)=>{if(al<=.02)return;ctx.globalAlpha=al;ctx.strokeStyle=col;ctx.lineWidth=lw;ctx.beginPath();for(const p of P){const q=fp(p[0],p[1]);ctx.lineTo(q[0],q[1])}ctx.stroke();ctx.globalAlpha=1};
+  // the lights: the round one (a star for the starry eyes), a second small one in the big and the coloured eyes
+  if(o.eyeLight!==false&&sq>.45&&rx>1.2){ctx.fillStyle='#fdf6e8';const hq=[x-ex*.34,y-ey*.46];
+    if(kind==='stellati'){const s=.95*kE;ctx.beginPath();for(let i=0;i<8;i++){const r=i%2?s*.32:s,a=i/8*TAU-Math.PI/2;ctx.lineTo(hq[0]+Math.cos(a)*r,hq[1]+Math.sin(a)*r)}ctx.closePath();ctx.fill()}
+    else{ball(hq,(small?.24:big?.55:.36)*Math.sqrt(kE));ctx.fill()}
+    if(big||(iris&&!wide)){ball([x+ex*.34,y+ey*.36],.24*Math.sqrt(kE));ctx.fill()}}
+  // the lid's line along the cut; the lashes
+  if(lid&&ey>.7){ctx.strokeStyle=INK;ctx.lineWidth=.95;ctx.lineCap='round';ctx.beginPath();ctx.moveTo(x-dir*ex*1.12,lidY(-1.12));ctx.lineTo(x+dir*ex*1.02,lidY(1.02));ctx.stroke()}
+  if(kind==='ciglia'&&ey>.8){ctx.strokeStyle=INK;ctx.lineWidth=.55*Math.sqrt(kE);ctx.lineCap='round';for(let k=0;k<3;k++){const an=-Math.PI/2-dir*(.7+.36*k),px=x+Math.cos(an)*ex,py=y+Math.sin(an)*ey,l=(1.05-.18*k)*kE;
+    ctx.beginPath();ctx.moveTo(px,py);ctx.quadraticCurveTo(px+Math.cos(an)*l*.6,py+Math.sin(an)*l*.6-.15,px+Math.cos(an)*l-dir*.35,py+Math.sin(an)*l-.45);ctx.stroke()}}}
+// a brow over its eye, a little thicker in the middle (it narrows with the eye when the head turns); the far brow follows the far eye in.
+// Gives back where its inner end is (the joined brows meet over the middle)
+function browLook(kind,e,ry,fq,col,al,eyes,shut,kB,kE){if(al<=.02)return null;kB=kB||1;kE=kE||1;const{q,rx}=e,dir=fq[0]>=q[0]?1:-1,w=Math.max(.7,rx*1.15)*(.84+.16*kB),x=q[0],
+    y=q[1]-ry*kE*(eyes==='grandi'||eyes==='stellati'||eyes==='spalancati'?1.78:eyes==='piccoli'?1.3:1.58)-.5+(shut?.5:0);
+  ctx.save();ctx.globalAlpha*=al;ctx.fillStyle=col;ctx.strokeStyle=col;ctx.lineCap='round';ctx.lineJoin='round';
+  if(kind==='puntini'){ctx.beginPath();ctx.ellipse(x+dir*w*.28,y-.2,1*kB,.66*kB,dir*.35,0,TAU);ctx.fill();ctx.restore();return null}
+  // the centre line from the outer end (o) through c to the inner end (i), its thickness at the outer end, the middle, the inner end
+  const T=(a,b,c)=>[a*kB,b*kB,c*kB],D={sottili:[[-1,.45],[0,-.75],[1,.45],T(.3,.85,.5)],folte:[[-.95,.3],[0,-.62],[.92,.35],T(.8,2,1.6)],decise:[[-.95,-.85],[0,-.2],[.9,1],T(.6,1.65,1.45)],
+    alzate:[[-1,.15],[.05,-2.1],[1,-.05],T(.5,1.15,.85)],spezzate:[[-.92,.25],[-.05,-.55],[.92,.3],T(.75,1.8,1.4)],unite:[[-.95,.25],[0,-.55],[1.05,.38],T(.6,1.5,1.25)],
+    arcuate:[[-1.05,.75],[-.1,-1.55],[.85,.1],T(.3,.9,.5)],cespugliose:[[-1.05,.2],[0,-.95],[1,.45],T(1.1,2.6,2.1)]}[kind]||[[-1,.45],[0,-.75],[1,.45],T(.3,.85,.5)];
+  const a0=[x+dir*w*D[0][0],y+D[0][1]],c0=[x+dir*w*D[1][0],y+D[1][1]],b0=[x+dir*w*D[2][0],y+D[2][1]],
+    P=t=>[(1-t)*(1-t)*a0[0]+2*(1-t)*t*c0[0]+t*t*b0[0],(1-t)*(1-t)*a0[1]+2*(1-t)*t*c0[1]+t*t*b0[1]],th=t=>t<.5?lerp(D[3][0],D[3][1],t/.5):lerp(D[3][1],D[3][2],(t-.5)/.5);
+  const piece=(t0,t1)=>{const N=12,top=[],bot=[];for(let i=0;i<=N;i++){const t=t0+(t1-t0)*i/N,p=P(t),p2=P(Math.min(1,t+.01)),p1=P(Math.max(0,t-.01)),dx=p2[0]-p1[0],dy=p2[1]-p1[1],l=Math.hypot(dx,dy)||1,
+      nx=-dy/l,ny=dx/l,s=th(t)/2*(kind==='cespugliose'&&i%2?1.25:1),u=ny<0?1:-1;top.push([p[0]+nx*s*u,p[1]+ny*s*u]);bot.push([p[0]-nx*s*u*.8,p[1]-ny*s*u*.8])}
+    ctx.beginPath();for(const p of top)ctx.lineTo(p[0],p[1]);for(let i=bot.length-1;i>=0;i--)ctx.lineTo(bot[i][0],bot[i][1]);ctx.closePath();ctx.fill()};
+  if(kind==='spezzate'){piece(0,.5);piece(.64,1)}else piece(0,1);
+  ctx.restore();return{i:P(1),al}}
+// the mouth: its shape in the face's units round (0, -.13), sized by K; it turns with the face like the eyes
+function mouthLook(kind,fp,seen,K){const al=seen(0,-.13);if(al<=.02)return;const M=(x,y)=>fp(x*K,-.13+y*K),lw=Math.max(.7,1.05*Math.sqrt(K));
+  ctx.save();ctx.globalAlpha*=al;ctx.lineCap='round';ctx.lineJoin='round';const red='#7a2a22',lip='#5a2a1e';
+  const curve=(P)=>{const Q=P.map(p=>M(p[0],p[1]));ctx.beginPath();ctx.moveTo(Q[0][0],Q[0][1]);for(let i=1;i<Q.length-1;i+=2)ctx.quadraticCurveTo(Q[i][0],Q[i][1],Q[i+1][0],Q[i+1][1]);return Q};
+  const shape=(P,fill)=>{curve(P);ctx.closePath();ctx.fillStyle=fill;ctx.fill();ctx.strokeStyle=INK;ctx.lineWidth=lw*.85;ctx.stroke()};
+  if(kind==='sorriso'||kind==='dentino'||kind==='lingua'){if(kind==='lingua'){const T=curve([[.0,-.02],[.02,-.1],[.1,-.12],[.15,-.1],[.14,-.02]]);ctx.closePath();ctx.fillStyle='#f08a9a';ctx.fill();ctx.strokeStyle=INK;ctx.lineWidth=lw*.7;ctx.stroke();void T}
+    curve([[-.17,.02],[0,-.11],[.17,.02]]);ctx.strokeStyle=lip;ctx.lineWidth=lw;ctx.stroke();
+    if(kind==='dentino'){const Q=[M(.04,-.035),M(.1,-.025),M(.075,-.1)];ctx.beginPath();ctx.moveTo(Q[0][0],Q[0][1]);ctx.lineTo(Q[1][0],Q[1][1]);ctx.lineTo(Q[2][0],Q[2][1]);ctx.closePath();ctx.fillStyle='#fffaf0';ctx.fill();ctx.strokeStyle=INK;ctx.lineWidth=.6;ctx.stroke()}}
+  else if(kind==='sorrisone'||kind==='denti'){shape([[-.19,.03],[0,.05],[.19,.03],[0,-.27],[-.19,.03]],red);
+    ctx.save();curve([[-.19,.03],[0,.05],[.19,.03],[0,-.27],[-.19,.03]]);ctx.closePath();ctx.clip();
+    if(kind==='denti'){const a=M(-.2,.06),b=M(.2,-.04);ctx.fillStyle='#fffaf0';ctx.fillRect(Math.min(a[0],b[0]),a[1]-.2,Math.abs(b[0]-a[0]),Math.abs(b[1]-a[1])*.9+.4);ctx.strokeStyle='rgba(60,40,30,.5)';ctx.lineWidth=.4;for(const x of[-.07,.07]){const p=M(x,.04),p2=M(x,-.04);seg(p,p2);ctx.stroke()}}
+    else{const t=M(0,-.2);ctx.fillStyle='#f08a9a';ctx.beginPath();ctx.ellipse(t[0],t[1],2.1*K,1.2*K,0,0,TAU);ctx.fill()}ctx.restore()}
+  else if(kind==='ghigno'){curve([[-.15,-.01],[.03,-.07],[.18,.07]]);ctx.strokeStyle=lip;ctx.lineWidth=lw;ctx.stroke();const d=M(.19,.08),d2=M(.21,.04);seg(d,d2);ctx.lineWidth=lw*.6;ctx.stroke()}
+  else if(kind==='broncio'){curve([[-.12,-.05],[0,.05],[.12,-.05]]);ctx.strokeStyle=lip;ctx.lineWidth=lw;ctx.stroke()}
+  else if(kind==='fischio'){const c=M(0,-.02),r=1.05*K;ink(lw*.8);ctx.fillStyle=red;ctx.beginPath();ctx.ellipse(c[0],c[1],r*.75,r,0,0,TAU);ctx.fill();ctx.stroke()}
+  else if(kind==='sorpreso'){const c=M(0,-.05),r=1.6*K;ink(lw*.85);ctx.fillStyle=red;ctx.beginPath();ctx.ellipse(c[0],c[1],r*.78,r,0,0,TAU);ctx.fill();ctx.stroke();ctx.fillStyle='#f08a9a';ctx.beginPath();ctx.ellipse(c[0],c[1]+r*.45,r*.5,r*.35,0,0,TAU);ctx.fill()}
+  else{curve([[-.11,0],[0,-.01],[.11,0]]);ctx.strokeStyle=lip;ctx.lineWidth=lw;ctx.stroke()}
+  ctx.restore()}
+// the marks on the skin, in the face's own units (they turn with it and fade at its edge); each one grows from its own middle with K
+function faceMark(kind,fp,seen,K){K=K||1;ctx.save();ctx.lineCap='round';ctx.lineJoin='round';const sw=Math.sqrt(K);
+  const at=(cx,cy)=>(x,y)=>fp(cx+(x-cx)*K,cy+(y-cy)*K);
+  const stroke=(m,P,col,lw,al)=>{if(al<=.02)return;ctx.globalAlpha=al;ctx.strokeStyle=col;ctx.lineWidth=lw*sw;ctx.beginPath();for(const p of P){const q=m(p[0],p[1]);ctx.lineTo(q[0],q[1])}ctx.stroke();ctx.globalAlpha=1};
+  const fill=(m,P,col,al,lw)=>{if(al<=.02)return;ctx.globalAlpha=al;ctx.beginPath();for(const p of P){const q=m(p[0],p[1]);ctx.lineTo(q[0],q[1])}ctx.closePath();ctx.fillStyle=col;ctx.fill();if(lw){ctx.strokeStyle=INK;ctx.lineWidth=lw;ctx.stroke()}ctx.globalAlpha=1};
   if(kind==='cicatrice'){// a healed line through his left eye, from the brow to the cheek
-    const P=[[-.17,1.02],[-.25,.7],[-.32,.38],[-.38,.06],[-.44,-.26]],al=seen(-.33,.3);stroke(P,LK_SCAR,2.5,.9*al);stroke(P.map(p=>[p[0]-.025,p[1]]),LK_SCARL,.9,.95*al)}
-  else if(kind==='graffio'){const al=seen(.58,-.1);stroke([[.4,.06],[.78,-.18]],LK_SCAR,1.8,.92*al);stroke([[.47,-.1],[.75,-.28]],LK_SCAR,1.5,.85*al);stroke([[.41,.07],[.77,-.16]],LK_SCARL,.6,.85*al)}
+    const m=at(-.3,.38),P=[[-.17,1.02],[-.25,.7],[-.32,.38],[-.38,.06],[-.44,-.26]],al=seen(-.33,.3);stroke(m,P,LK_SCAR,2.5,.9*al);stroke(m,P.map(p=>[p[0]-.025,p[1]]),LK_SCARL,.9,.95*al)}
+  else if(kind==='graffio'){const m=at(.6,-.1),al=seen(.58,-.1);stroke(m,[[.4,.06],[.78,-.18]],LK_SCAR,1.8,.92*al);stroke(m,[[.47,-.1],[.75,-.28]],LK_SCAR,1.5,.85*al);stroke(m,[[.41,.07],[.77,-.16]],LK_SCARL,.6,.85*al)}
+  else if(kind==='croce'){const m=at(.52,-.1),al=seen(.52,-.1);for(const P of[[[.4,.02],[.64,-.22]],[[.4,-.22],[.64,.02]]]){stroke(m,P,LK_SCAR,1.9,.92*al);stroke(m,P.map(p=>[p[0]-.012,p[1]+.012]),LK_SCARL,.6,.8*al)}}
   else if(kind==='lentiggini'){const D=[[-.07,-.02],[.07,0],[0,-.08]];for(const sd of[-1,1])for(const[a,b] of[[.34,-.07],[.46,-.1],[.58,-.05],[.4,-.19],[.53,-.18],[.65,-.12],[.27,-.15]])D.push([sd*a,b]);
-    for(const[a,b] of D){const al=seen(a,b);if(al<=.02)continue;ctx.fillStyle=`rgba(160,86,44,${(.62*al).toFixed(3)})`;ball(fp(a,b),.5);ctx.fill()}}
-  else if(kind==='pittura'){for(const sd of[-1,1]){const al=seen(sd*.52,-.1);stroke([[sd*.32,-.05],[sd*.74,.0]],'#3f86d8',1.75,.92*al);stroke([[sd*.34,-.2],[sd*.7,-.15]],'#3f86d8',1.75,.92*al);stroke([[sd*.33,-.035],[sd*.72,.015]],'#a4ccf6',.55,.75*al)}}
+    for(const[a,b] of D){const al=seen(a,b);if(al<=.02)continue;ctx.fillStyle=`rgba(160,86,44,${(.62*al).toFixed(3)})`;ball(fp(a*(.8+.2*K),b),.5*sw);ctx.fill()}}
+  else if(kind==='pittura'){for(const sd of[-1,1]){const m=at(sd*.52,-.1),al=seen(sd*.52,-.1);
+    for(const yy of[0,-.155]){const P=[[sd*.3,-.04+yy],[sd*.52,-.02+yy],[sd*.76,.01+yy],[sd*.74,-.06+yy],[sd*.52,-.08+yy],[sd*.32,-.08+yy]];fill(m,P,'#3f86d8',.92*al);stroke(m,[[sd*.36,-.045+yy],[sd*.7,-.01+yy]],'#a4ccf6',.5,.7*al)}}}
   else if(kind==='runa'){// a rune of moss on his left cheek, glowing softly
-    const al=seen(-.5,-.12);if(al>.02){const c=fp(-.5,-.12);if(!LOWFX)shine('125,255,154',c[0],c[1],4.6,.42*al);const R1=[[-.5,.06],[-.5,-.3]],R2=[[-.61,-.03],[-.5,-.14],[-.39,-.03]];
-      for(const R of[R1,R2])stroke(R,'#2f8a46',2.4,al);for(const R of[R1,R2])stroke(R,'#5fe07c',1.3,al);stroke(R1,'#d8ffe0',.45,al)}}
-  else if(kind==='neo'){const al=seen(.24,-.18);if(al>.02){ctx.globalAlpha=al;ctx.fillStyle='#4a2a1a';ball(fp(.24,-.18),.62);ctx.fill();ctx.globalAlpha=1}}
+    const al=seen(-.5,-.12);if(al>.02){const m=at(-.5,-.12),c=fp(-.5,-.12);if(!LOWFX)shine('125,255,154',c[0],c[1],4.6*K,.42*al);const R1=[[-.5,.06],[-.5,-.3]],R2=[[-.61,-.03],[-.5,-.14],[-.39,-.03]];
+      for(const R of[R1,R2])stroke(m,R,'#2f8a46',2.4,al);for(const R of[R1,R2])stroke(m,R,'#5fe07c',1.3,al);stroke(m,R1,'#d8ffe0',.45,al)}}
+  else if(kind==='neo'){const al=seen(.24,-.18);if(al>.02){ctx.globalAlpha=al;ctx.fillStyle='#4a2a1a';ball(fp(.24,-.18),.62*sw);ctx.fill();ctx.globalAlpha=1}}
+  else if(kind==='lacrima'){// a painted tear under his left eye
+    const m=at(-.36,-.1),al=seen(-.36,-.1);fill(m,[[-.36,.0],[-.42,-.12],[-.405,-.195],[-.36,-.215],[-.315,-.195],[-.3,-.12]],'#5fb4f0',.95*al,.5);
+    const hq=m(-.38,-.14);ctx.globalAlpha=.8*al;ctx.fillStyle='#e6f6ff';ball(hq,.35*sw);ctx.fill();ctx.globalAlpha=1}
+  else if(kind==='stella'){// a painted golden star on his right cheek
+    const m=at(.5,-.08),al=seen(.5,-.08),P=[];for(let i=0;i<10;i++){const r=i%2?.07:.16,a=i/10*TAU-Math.PI/2;P.push([.5+Math.cos(a)*r,-.08-Math.sin(a)*r])}fill(m,P,'#f6c94b',.95*al,.45);
+    const hq=m(.47,-.04);ctx.globalAlpha=.8*al;ctx.fillStyle='#fff6c8';ball(hq,.3*sw);ctx.fill();ctx.globalAlpha=1}
+  else if(kind==='baffi'){// whiskers painted like a cat's
+    for(const sd of[-1,1]){const m=at(sd*.56,-.06),al=seen(sd*.56,-.06);for(const dy of[.05,-.02,-.09])stroke(m,[[sd*.4,-.04+dy*.5],[sd*.58,-.03+dy*.95],[sd*.76,-.02+dy*1.6]],'#4a3020',.42,.85*al)}}
+  else if(kind==='macchia'){// a birthmark by his left temple
+    const m=at(-.6,.12),al=seen(-.6,.12),P=[];for(let i=0;i<9;i++){const a=i/9*TAU,r=.085*(1+.28*Math.sin(i*2.7+1));P.push([-.6+Math.cos(a)*r*1.2,.12+Math.sin(a)*r])}fill(m,P,'rgba(140,80,52,.62)',al)}
   ctx.restore()}
 // a band-aid on his right cheek: four corners on the face, rounded, the pad in the middle, little holes
-function bandAid(fp,seen){const al=seen(.5,-.16);if(al<=.02)return;const C=[[.27,-.02],[.73,-.16],[.69,-.32],[.23,-.18]].map(p=>fp(p[0],p[1]));ctx.save();ctx.globalAlpha=al;ctx.lineJoin='round';
+function bandAid(fp,seen,K){K=K||1;const al=seen(.5,-.16);if(al<=.02)return;const m=(x,y)=>fp(.48+(x-.48)*K,-.17+(y+.17)*K),C=[[.27,-.02],[.73,-.16],[.69,-.32],[.23,-.18]].map(p=>m(p[0],p[1]));ctx.save();ctx.globalAlpha=al;ctx.lineJoin='round';
   ctx.beginPath();for(const q of C)ctx.lineTo(q[0],q[1]);ctx.closePath();ctx.fillStyle='#f6dcae';ctx.fill();ctx.strokeStyle='rgba(27,22,18,.85)';ctx.lineWidth=.7;ctx.stroke();
-  const m=(a,b,k)=>[a[0]+(b[0]-a[0])*k,a[1]+(b[1]-a[1])*k],p0=m(C[0],C[1],.36),p1=m(C[0],C[1],.64),p2=m(C[3],C[2],.64),p3=m(C[3],C[2],.36);
+  const mm=(a,b,k)=>[a[0]+(b[0]-a[0])*k,a[1]+(b[1]-a[1])*k],p0=mm(C[0],C[1],.36),p1=mm(C[0],C[1],.64),p2=mm(C[3],C[2],.64),p3=mm(C[3],C[2],.36);
   ctx.beginPath();for(const q of[p0,p1,p2,p3])ctx.lineTo(q[0],q[1]);ctx.closePath();ctx.fillStyle='#e2b880';ctx.fill();
-  ctx.fillStyle='rgba(150,100,50,.6)';for(const k of[.16,.84])for(const j of[.33,.67]){const a=m(C[0],C[1],k),b=m(C[3],C[2],k),q=m(a,b,j);ball(q,.26);ctx.fill()}ctx.restore()}
+  ctx.fillStyle='rgba(150,100,50,.6)';for(const k of[.16,.84])for(const j of[.33,.67]){const a=mm(C[0],C[1],k),b=mm(C[3],C[2],k),q=mm(a,b,j);ball(q,.26);ctx.fill()}ctx.restore()}
 // a dark patch over his left eye, the strap across the forehead and round to the ear
 function eyePatch(E,ry,fq,fp,seen){const al=seen(-.33,.25);ctx.save();ctx.lineCap='round';
   const s1=fp(-.12,.62),s2=fp(.75,1.25),s3=fp(-.56,.42),s4=fp(-1.05,.32);ctx.strokeStyle='#2a211c';ctx.lineWidth=1.25;ctx.beginPath();ctx.moveTo(s1[0],s1[1]);ctx.lineTo(s2[0],s2[1]);ctx.moveTo(s3[0],s3[1]);ctx.lineTo(s4[0],s4[1]);ctx.stroke();
@@ -237,7 +515,7 @@ function eyePatch(E,ry,fq,fp,seen){const al=seen(-.33,.25);ctx.save();ctx.lineCa
     ctx.fillStyle='rgba(255,255,255,.22)';ctx.beginPath();ctx.ellipse(q[0]-rx*.3,q[1]-ryp*.42,rx*.36,ryp*.2,-.3,0,TAU);ctx.fill()}
   ctx.restore()}
 // round glasses: a gold ring round each eye, the bridge over the nose, a little shine on the glass
-function glasses(E,ry,fq,eyes,edge){const R=E.filter(e=>e.rx>=.7),k=eyes==='grandi'?1.16:eyes==='piccoli'?.82:1;if(!R.length)return;ctx.save();ctx.lineCap='round';
+function glasses(E,ry,fq,eyes,edge,kE){const R=E.filter(e=>e.rx>=.7),k=(eyes==='grandi'||eyes==='stellati'||eyes==='spalancati'?1.16:eyes==='piccoli'?.82:1)*(.65+.35*(kE||1));if(!R.length)return;ctx.save();ctx.lineCap='round';
   const ring=e=>({x:e.q[0],y:e.q[1],rx:e.rx*1.42*k+.35,ry:ry*1.34*k});
   for(const e of R){const g=ring(e),al=edge(e.q);ctx.globalAlpha=al;ctx.fillStyle='rgba(214,236,255,.16)';ctx.beginPath();ctx.ellipse(g.x,g.y,g.rx,g.ry,0,0,TAU);ctx.fill();
     ctx.strokeStyle=INK;ctx.lineWidth=1.9;ctx.stroke();ctx.strokeStyle='#d4a84a';ctx.lineWidth=.95;ctx.stroke();
@@ -247,28 +525,8 @@ function glasses(E,ry,fq,eyes,edge){const R=E.filter(e=>e.rx>=.7),k=eyes==='gran
   if(R.length>1){const b=ring(R[1]),d=b.x>a.x?1:-1;p0=[a.x+d*a.rx,a.y-a.ry*.15];p1=[b.x-d*b.rx,b.y-b.ry*.15]}else{const d=fq[0]>=a.x?1:-1;p0=[a.x+d*a.rx,a.y-a.ry*.15];p1=[p0[0]+d*1.2,p0[1]+.2]}
   ctx.beginPath();ctx.moveTo(p0[0],p0[1]);ctx.quadraticCurveTo((p0[0]+p1[0])/2,Math.min(p0[1],p1[1])-.9,p1[0],p1[1]);ctx.strokeStyle=INK;ctx.lineWidth=1.8;ctx.stroke();ctx.strokeStyle='#d4a84a';ctx.lineWidth=.9;ctx.stroke();
   ctx.restore()}
-// the hair that shows under the hood, over the forehead (inside the face, so it never goes over the edge of the hood)
-function fringe(kind,col,fp,fv){ctx.save();ctx.lineJoin='round';ctx.lineCap='round';
-  const shape=P=>{ctx.beginPath();for(const p of P){const q=fp(p[0],p[1]);ctx.lineTo(q[0],q[1])}ctx.closePath()};
-  const paint=(P,inkFrom)=>{const S=P.map(p=>fp(p[0],p[1]));let y0=1e9,y1=-1e9;for(const q of S){y0=Math.min(y0,q[1]);y1=Math.max(y1,q[1])}
-    const g=ctx.createLinearGradient(0,y0,0,y1);g.addColorStop(0,dk(col,.42));g.addColorStop(.6,col);g.addColorStop(1,lt(col,.2));shape(P);ctx.fillStyle=g;ctx.fill();
-    // the outline only along the edge that lies on the skin (the rest is under the hood)
-    ctx.strokeStyle=INK;ctx.lineWidth=1.15;ctx.beginPath();for(let i=inkFrom;i<P.length;i++){const q=S[i];ctx.lineTo(q[0],q[1])}ctx.stroke()};
-  const strands=(xs,yTop,yBot)=>{ctx.strokeStyle=dk(col,.4);ctx.lineWidth=.6;for(const x of xs){const a=fp(x,yTop),b=fp(x*.94,yBot);ctx.beginPath();ctx.moveTo(a[0],a[1]);ctx.lineTo(b[0],b[1]);ctx.stroke()}};
-  const T=1.9;
-  if(kind==='frangia'){const B=[[1.3,.76],[1.05,.68],[.82,.8],[.57,.67],[.33,.79],[.09,.66],[-.16,.78],[-.4,.67],[-.63,.79],[-.87,.68],[-1.1,.78],[-1.32,.72]];paint([[1.5,T],...B,[-1.5,T]],1);strands([.7,.2,-.3,-.8],1.3,.78)}
-  else if(kind==='spettinati'){const B=[[1.3,.82],[1.08,.58],[.86,.9],[.62,.52],[.4,.88],[.14,.5],[-.1,.86],[-.36,.54],[-.6,.9],[-.85,.58],[-1.08,.88],[-1.32,.74]];paint([[1.5,T],...B,[-1.5,T]],1);strands([.62,.14,-.36,-.85],1.3,.62)}
-  else if(kind==='ciuffo'){// one big lock sweeping from the top over to his right, its point by the eye
-    const P=[[-1.5,T],[-1.3,1.02],[-.9,.92],[-.45,.86],[-.02,.78],[.36,.66],[.66,.46],[.5,.72],[.3,.95],[.12,1.18],[.1,T]];paint(P,1);strands([-.75,-.35,.05],1.3,.92)}
-  else if(kind==='lunghi'){// parted in the middle, a lock down each side of the face to the jaw
-    for(const sd of[-1,1]){const P=[[sd*.04,T],[sd*.06,1.12],[sd*.3,1],[sd*.55,.86],[sd*.7,.56],[sd*.76,.16],[sd*.76,-.26],[sd*.92,-.48],[sd*1.5,-.5],[sd*1.5,T]];paint(P,1)}
-    strands([.45,-.45],1.3,.9)}
-  else if(kind==='riccioli'){// a row of curls along the edge of the hood
-    paint([[1.5,T],[1.4,1.08],[-1.4,1.08],[-1.5,T]],1);for(const[x,y] of[[-1,.92],[-.6,.8],[-.2,.76],[.2,.76],[.6,.8],[1,.92]]){if(fv(x,y)<-.05)continue;const c=fp(x,y),e=fp(x+.2,y),r=Math.max(.5,Math.hypot(e[0]-c[0],e[1]-c[1]));
-      ctx.beginPath();ctx.arc(c[0],c[1],r,0,TAU);ctx.fillStyle=col;ctx.fill();ctx.strokeStyle=INK;ctx.lineWidth=1;ctx.stroke();ctx.fillStyle=lt(col,.3);ball([c[0]-r*.3,c[1]-r*.35],r*.32);ctx.fill()}}
-  ctx.restore()}
-// what is worn on the hood: the feather stuck in its side (before the hood when its root is on the far side), the headband round it
-// with its knot and tails at the back, a few spiky locks over the edge of the opening
+// ------------------------------------------------------------------ what is worn on the head (on the hood, or on the hair when the hood is down)
+// the feather stuck in its side (before the head when its root is on the far side); R: the radius it sits on
 function featherHood(Vh,h,Rh,nod,sw,col){const nb=nrm(nod([-.15,.85,.45])),d=nrm(nod([-.45,.25+sw*.04,1])),b3=mul(nb,Rh*.94),fw=nrm(cross(d,nb)),side=nrm(add(fw,mul(nb,.8))),L=11.5;
   const at=(k,o2)=>add(add(b3,mul(d,k*L)),add(mul(side,o2),mul(nb,k*k*2))),wid=k=>k<.1?0:Math.pow(Math.sin(Math.min(1,(k-.1)/.9)*Math.PI),.7)*3.1;
   const lft=[],rgt=[];for(let i=0;i<=14;i++){const k=.12+i/14*.88;lft.push(hP(Vh,h,at(k,wid(k))));rgt.push(hP(Vh,h,at(k,-wid(k)*.85)))}
@@ -277,7 +535,7 @@ function featherHood(Vh,h,Rh,nod,sw,col){const nb=nrm(nod([-.15,.85,.45])),d=nrm
   ctx.save();poly(vane);ctx.clip();ctx.strokeStyle='rgba(60,30,20,.3)';ctx.lineWidth=.6;ctx.beginPath();for(let k=.25;k<.95;k+=.12){const p=hP(Vh,h,at(k,0)),q=hP(Vh,h,at(k+.08,wid(k)));ctx.moveTo(p[0],p[1]);ctx.lineTo(q[0],q[1])}ctx.stroke();ctx.restore();
   ctx.strokeStyle='#fff1c4';ctx.lineWidth=.8;ctx.lineCap='round';ctx.beginPath();for(let i=0;i<=8;i++){const q=hP(Vh,h,at(i/8*.96,0));ctx.lineTo(q[0],q[1])}ctx.stroke()}
 const featherFront=(Vh,nod)=>Vh.F(nrm(nod([-.15,.85,.45])))>-.12;
-// the headband: a strip round the hood, over the opening in front and low at the back; front: the part on our side and the knot when
+// the headband: a strip round the head, over the forehead in front and low at the back; front: the part on our side and the knot when
 // the back of the head faces us, else the tails behind the head
 function headband(Vh,h,Rh,nod,col,sw,front){const{F}=Vh,at=(a,dz)=>nrm(nod([Math.cos(a),Math.sin(a),lerp(1.42,.42,(1-Math.cos(a))/2)+dz]));
   const kn=at(Math.PI,0),kv=F(kn),R1=Rh*1.03;
@@ -290,11 +548,124 @@ function headband(Vh,h,Rh,nod,col,sw,front){const{F}=Vh,at=(a,dz)=>nrm(nod([Math
   for(const sd of[-1,1]){const t1=add(k3,nod([-2.2,sd*1.6+sw*.3,-3.6])),t2=add(k3,nod([-3.4,sd*2.6+sw*.6,-8]));const A=hP(Vh,h,t1),B=hP(Vh,h,t2);
     ctx.fillStyle=INK;hull(q,2,A,1.9);ctx.fill();hull(A,1.9,B,1.5);ctx.fill();ctx.fillStyle=col;hull(q,1.1,A,1);ctx.fill();hull(A,1,B,.7);ctx.fill()}
   ink(1.2);ball(q,1.9);ctx.fillStyle=col;ctx.fill();ctx.stroke()}
-// the spiky locks over the edge of the opening (hair 'spettinati')
+// the spiky locks over the edge of the hood's opening (hair 'spettinati' under the hood)
 function spikesHood(Vh,h,Rh,nod,col){for(const x of[-.55,-.02,.52]){const v=Vh.F(nrm(nod([1,x,1.2])));if(v<.12)continue;
   const A=sp(Vh,h,Rh*.99,nrm(nod([1,x-.2,1.45]))),B=sp(Vh,h,Rh*.99,nrm(nod([1,x+.2,1.45]))),T=sp(Vh,h,Rh*1.12,nrm(nod([1,x+.12,2.6])));
   ctx.save();ctx.globalAlpha=cl((v-.12)*4,0,1);ctx.lineJoin='round';ctx.beginPath();ctx.moveTo(A[0],A[1]);ctx.quadraticCurveTo((A[0]+T[0])/2-.5,(A[1]+T[1])/2,T[0],T[1]);ctx.quadraticCurveTo((B[0]+T[0])/2+.4,(B[1]+T[1])/2,B[0],B[1]);ctx.closePath();
   ctx.fillStyle=col;ctx.fill();ctx.strokeStyle=INK;ctx.lineWidth=1.1;ctx.stroke();ctx.restore()}}
+// a little golden crown on top of the head: a band with five points and red stones, the far half first
+function crown(Vh,h,R,nod){const up=nrm(nod([0,0,1])),c0=mul(up,R*.9),u=nrm(nod([1,0,0])),v=nrm(nod([0,1,0])),r=4.6,H=2.8,N=20;
+  const ring=(z,rr)=>{const o=[];for(let i=0;i<N;i++){const t=i/N*TAU;o.push(add(add(c0,mul(up,z)),add(mul(u,Math.cos(t)*rr),mul(v,Math.sin(t)*rr))))}return o},B=ring(0,r),T=ring(H,r*1.06);
+  const Hh=chull(B.concat(T).map(q=>hP(Vh,h,q)).concat([0,4,8,12,16].map(i=>hP(Vh,h,add(T[i],mul(up,2.3)))))),bb=[1e9,1e9,-1e9,-1e9];for(const q of Hh){bb[0]=Math.min(bb[0],q[0]);bb[1]=Math.min(bb[1],q[1]);bb[2]=Math.max(bb[2],q[0]);bb[3]=Math.max(bb[3],q[1])}
+  // the inside (the far wall, darker), then the outside wall with its points
+  const g=ctx.createLinearGradient(bb[0],bb[1],bb[2],bb[3]);g.addColorStop(0,'#fff0a8');g.addColorStop(.45,'#f2c240');g.addColorStop(1,'#a8701a');
+  ink(1.15);ctx.beginPath();const top=T.map(q=>hP(Vh,h,q));for(const q of top)ctx.lineTo(q[0],q[1]);ctx.closePath();ctx.fillStyle='#8a5a14';ctx.fill();
+  const wall=[];for(let i=0;i<N;i++){const t=i/N*TAU,n=add(mul(u,Math.cos(t)),mul(v,Math.sin(t)));if(Vh.F(n)>-.05)wall.push(i)}
+  ctx.beginPath();for(const i of wall){const q=hP(Vh,h,B[i]);ctx.lineTo(q[0],q[1])}for(let k=wall.length-1;k>=0;k--){const i=wall[k],q=hP(Vh,h,i%4===0?add(T[i],mul(up,2.3)):T[i]);ctx.lineTo(q[0],q[1])}ctx.closePath();ctx.fillStyle=g;ctx.fill();ctx.stroke();
+  for(const i of wall)if(i%4===2){const q=hP(Vh,h,add(lerp3(B[i],T[i],.5),mul(add(mul(u,Math.cos(i/N*TAU)),mul(v,Math.sin(i/N*TAU))),.2)));ink(.6);ctx.fillStyle='#e5484d';ball(q,.95);ctx.fill();ctx.stroke();ctx.fillStyle='#fff';ball([q[0]-.25,q[1]-.25],.25);ctx.fill()}
+  for(const i of wall)if(i%4===0){const q=hP(Vh,h,add(T[i],mul(up,2.3)));ctx.fillStyle='#fff6c8';ink(.6);ball(q,.7);ctx.fill();ctx.stroke()}}
+// a flower tucked over his left ear: five petals and a golden middle, turned the way the head turns
+function flower(Vh,h,R,nod,col){const d=nrm(nod(hdir(-1.05,.5))),c=mul(d,R*1.02),u=nrm(cross(d,[0,0,1])),v=nrm(cross(u,d)),f=Vh.F(d);if(f<-.2)return;
+  ctx.save();ctx.globalAlpha*=cl((f+.2)*4,0,1);for(let i=0;i<5;i++){const t=i/5*TAU+.3,q=hP(Vh,h,add(c,add(mul(u,Math.cos(t)*1.7),mul(v,Math.sin(t)*1.7))));ink(.9);ball(q,1.45);ctx.fillStyle=lt(col,.25);ctx.fill();ctx.stroke();ctx.fillStyle='rgba(255,255,255,.45)';ball([q[0]-.4,q[1]-.4],.45);ctx.fill()}
+  const q=hP(Vh,h,add(c,mul(d,.3)));ink(.8);ball(q,1);ctx.fillStyle='#ffd84a';ctx.fill();ctx.stroke();ctx.restore()}
+// an earring: a gold hoop with a stone, hanging under his left ear (under the hood's edge when the ears are under the hood)
+function earring(Vh,h,R,nod,col,hidden){const d=nrm(nod(hidden?hdir(-.82,-.28):hdir(-1.62,-.22))),f=Vh.F(hidden?d:add(mul(nod([0,-1,0]),Math.cos(EARB)),mul(nod([1,0,0]),Math.sin(EARB))));if(f<.02)return;
+  const top=hidden?mul(d,R):add(mul(d,R*.97),mul(nod([0,-1,0]),1.3)),q=hP(Vh,h,top),b=hP(Vh,h,add(top,[0,0,-2.6]));
+  ctx.save();ctx.globalAlpha*=cl(f*5,0,1);ctx.strokeStyle=INK;ctx.lineWidth=1.6;ctx.beginPath();ctx.ellipse((q[0]+b[0])/2,(q[1]+b[1])/2,1,Math.abs(b[1]-q[1])/2+.3,0,0,TAU);ctx.stroke();ctx.strokeStyle='#f2c240';ctx.lineWidth=.8;ctx.stroke();
+  ink(.8);ctx.fillStyle=col;ball([b[0],b[1]+.6],.9);ctx.fill();ctx.stroke();ctx.fillStyle='#fff';ball([b[0]-.3,b[1]+.3],.3);ctx.fill();ctx.restore()}
+// the mask: a band round the head over the eyes (they look out through it), its knot at the back
+function maskMesh(Vh,nod,NA){return regionMesh(Vh,nod,-Math.PI,Math.PI,a=>.03+.13*Math.exp(-(a/.15)*(a/.15)),()=>.5,NA,2)}
+function maskPaint(Vh,h,R,M,col){if(!meshPath(M,h,R))return;const g=soft(h[0]-R*.4,h[1]-R*.4,h[0],h[1],R*1.3,col,.2,.35);ctx.fillStyle=g;ctx.fill();
+  ctx.strokeStyle=INK;ctx.lineWidth=.9;for(const j of[0,M.NE])for(const r of meshEdge(M,h,R,j,.05)){if(r.length<2)continue;line(r);ctx.stroke()}}
+// ------------------------------------------------------------------ the bare head (hood down): the ball of skin, the hair over it, the ears
+// Drawn in layers: the dark outline of everything, the volume of the hair (and of the beard) standing off the ball, the ball of skin,
+// the face with the hair on it (lk.hairFn, between the marks and the eyes), then what stands out in front
+function bareHead(Vh,Rh,S,A,o,h,nod,fd,lk){const{R0,Rc,Rb,H,M,MB,g,bg}=lk;
+  ctx.fillStyle=INK;if(!H.flat){meshPath(M,h,Rc+.95);ctx.fill()}if(MB){meshPath(MB,h,Rb+.95);ctx.fill()}ball(h,R0+1.25);ctx.fill();
+  if(!H.flat){meshPath(M,h,Rc);ctx.fillStyle=g;ctx.fill()}if(MB){meshPath(MB,h,Rb);ctx.fillStyle=bg;ctx.fill()}
+  ball(h,R0);ctx.fillStyle=soft(h[0]-R0*.36,h[1]-R0*.42,h[0]-R0*.05,h[1]+R0*.05,R0*1.2,S.skin,.14,.26);ctx.fill();
+  ctx.save();ball(h,R0);ctx.clip();
+  // a soft shade under the chin, where the head sits on the collar
+  {const gq=ctx.createLinearGradient(0,h[1]+R0*.35,0,h[1]+R0);gq.addColorStop(0,'rgba(60,30,14,0)');gq.addColorStop(1,'rgba(60,30,14,.24)');ctx.fillStyle=gq;ctx.fillRect(h[0]-R0,h[1]+R0*.35,R0*2,R0*.7)}
+  face(Vh,h,R0,nod,o,fd);ctx.restore();
+  rim(h,R0,h,R0,.22)}
+// the knot of the mask (or of a band) at the back of the head, its two tails swinging a little
+function bandKnot(Vh,h,k3,nod,col,sw){const q=hP(Vh,h,k3);
+  for(const sd of[-1,1]){const t1=add(k3,nod([-2,sd*1.5+sw*.3,-3.2])),t2=add(k3,nod([-3,sd*2.3+sw*.6,-7]));const A=hP(Vh,h,t1),B=hP(Vh,h,t2);
+    ctx.fillStyle=INK;hull(q,1.8,A,1.7);ctx.fill();hull(A,1.7,B,1.3);ctx.fill();ctx.fillStyle=col;hull(q,1,A,.9);ctx.fill();hull(A,.9,B,.6);ctx.fill()}
+  ink(1.1);ball(q,1.7);ctx.fillStyle=col;ctx.fill();ctx.stroke()}
+// ------------------------------------------------------------------ the look on the head: what is needed for this drawing (the meshes of
+// the hair, the beard and the mask, their colours), the hair and the beard on the face (o.hairFn, o.beardFn, o.mustFn, o.maskFn), what
+// goes behind the head and what in front of it
+function lookPrep(Vh,Rh,S,o,h,nod){const L=S.look;o.L=L;const bare=L.hood==='giu',K=L.hairK||1,H=HAIRS[L.hair]||HAIRS.nascosti,col=L.hairCol||'#8a5a32';
+  const R0=bare?Rh*.93:Rh,Rc=bare?R0*(1+H.v*K):Rh,hl=hairLine(H,K),res=meshRes(R0),NA=res[0],NE=res[1],sw=o.sway||0;
+  const lk={bare,K,H,col,R0,Rc,hl,sw};o.bare=bare;
+  if(bare||(L.hair&&L.hair!=='nascosti')){lk.M=bare?regionMesh(Vh,nod,-Math.PI,Math.PI,hl,()=>Math.PI/2,NA,NE):regionMesh(Vh,nod,-1.35,1.35,hl,()=>Math.PI/2,Math.round(NA*.7),NE);lk.g=hairGrad(h,bare?Rc:Rh,col)}
+  const B=BEARDS[L.beard];if(B){lk.B=B;lk.bcol=hexMix(col,'#1b1210',.1);lk.bK=L.beardK||1;
+    if(B.line){lk.MB=regionMesh(Vh,nod,-1.35,1.35,()=>-1.5,B.line,Math.round(NA*.6),4);lk.Rb=R0*(1+.05*lk.bK);lk.bg=hairGrad(h,bare?lk.Rb:Rh,lk.bcol)}
+    if(B.must)o.mustFn=(fp,seen)=>moustache(B.must,fp,seen,lk.bcol,lk.bK)}
+  // the hair on the face: under the hood the part in the opening, with the hood's shadow on it; on the bare head the part over the skin
+  if(lk.M)o.hairFn=()=>{const R=bare?R0:Rh*.99;hairPaint(Vh,h,R,nod,lk.M,H,hl,col,lk.g,bare?1.15:1.05);
+    if(!bare){if(H.lock){const P=[[-.55,1.28,.2],[-.2,1.05,.75],[.18,.84,.95],[.48,.62,.7],[.62,.47,.25]].map(([a,e,oo])=>mul(nod(hdir(a,e)),R+oo*K));lock3(Vh,h,P,[2.4,2.5,2.2,1.5,.45].map(v=>v*K),col,lk.g)}
+      if(H.curls)for(const a of[-.62,-.31,0,.31,.62])curl3(Vh,h,mul(nod(hdir(a,hl(a)+.04)),R+.3*K),1.5*K,col,lk.g);
+      if(lk.fcRim){ctx.save();ctx.strokeStyle='rgba(16,10,6,.34)';ctx.lineWidth=2.6;ctx.lineJoin='round';line(lk.fcRim);if(lk.fcFull)ctx.closePath();ctx.stroke();ctx.restore()}}};
+  if(lk.MB)o.beardFn=()=>{const R=bare?R0:Rh*.99;if(!meshPath(lk.MB,h,R))return;ctx.fillStyle=lk.bg;ctx.fill();
+    ctx.save();ctx.clip();ctx.strokeStyle=hexMix(lk.bcol,'#0d1418',.45);ctx.globalAlpha=.45;ctx.lineWidth=.6;ctx.lineCap='round';
+    for(const a0 of[-1.05,-.72,-.4,-.13,.13,.4,.72,1.05]){const pts=[];for(let k=0;k<=6;k++){const n=nrm(nod(hdir(a0*(1-k*.04),lerp(B.line(a0)-.04,-1.2,k/6))));if(Vh.F(n)>.05)pts.push(sp(Vh,h,R,n));else if(pts.length)break}if(pts.length>1){line(pts);ctx.stroke()}}
+    ctx.restore();ctx.strokeStyle=INK;ctx.lineWidth=.95;ctx.lineCap='round';ctx.lineJoin='round';for(const r of meshEdge(lk.MB,h,R,lk.MB.NE,.05)){if(r.length<2)continue;line(r);ctx.stroke()}};
+  if(L.acc==='maschera'){lk.MM=maskMesh(Vh,nod,Math.max(24,Math.round(NA*.8)));o.maskFn=()=>maskPaint(Vh,h,(bare?R0:Rh*.99)*1.006,lk.MM,'#3a2f45')}
+  return lk}
+function lookBehind(Vh,Rh,S,o,h,nod,lk){const L=S.look,acc=L.acc,Rw=lk.bare?lk.Rc:Rh;
+  if(acc==='piuma'&&!featherFront(Vh,nod))featherHood(Vh,h,Rw,nod,lk.sw,L.accCol||'#e5484d');
+  if(acc==='fascia'&&!S.helm)headband(Vh,h,Rw,nod,L.accCol||'#d24b3e',lk.sw,false);
+  if(lk.g)hairPieces(Vh,h,lk.bare?lk.Rc:Rh,nod,lk.H,L,S,lk.col,lk.g,lk.K,false,lk.bare,lk.sw);
+  earsDraw(Vh,h,lk.bare?lk.R0:Rh,nod,L,S,lk.bare,false)}
+function lookFront(Vh,Rh,S,o,h,nod,lk){const L=S.look,acc=L.acc,Rw=lk.bare?lk.Rc:Rh;
+  if(!lk.bare&&L.hair==='spettinati'&&!S.helm)spikesHood(Vh,h,Rh,nod,lk.col);
+  const top=L.ears==='gatto'||L.ears==='orso'||L.ears==='coniglio';if(!top)earsDraw(Vh,h,lk.bare?lk.R0:Rh,nod,L,S,lk.bare,true);
+  if(lk.g)hairPieces(Vh,h,lk.bare?lk.Rc:Rh,nod,lk.H,L,S,lk.col,lk.g,lk.K,true,lk.bare,lk.sw);
+  if(top&&!S.helm)earsDraw(Vh,h,lk.bare?lk.Rc*.98:Rh,nod,L,S,lk.bare,true);
+  if(lk.B&&lk.B.hang)beardHang(Vh,h,lk.bare?lk.R0:Rh,nod,lk.B,lk.bcol,lk.bK,lk.sw,L.accCol);
+  if(acc==='fascia'&&!S.helm)headband(Vh,h,Rw,nod,L.accCol||'#d24b3e',lk.sw,true);
+  if(acc==='piuma'&&featherFront(Vh,nod))featherHood(Vh,h,Rw,nod,lk.sw,L.accCol||'#e5484d');
+  if(acc==='coroncina'&&!S.helm)crown(Vh,h,lk.bare?lk.Rc:Rh,nod);
+  if(acc==='fiore')flower(Vh,h,Rw,nod,L.accCol||'#e5484d');
+  if(acc==='orecchino')earring(Vh,h,lk.bare?lk.R0:Rh,nod,L.accCol||'#e5484d',!lk.bare);
+  if(acc==='maschera'&&lk.bare){const d=nod(hdir(Math.PI,.27));if(Vh.F(d)>-.2)bandKnot(Vh,h,mul(d,lk.R0*1.04),nod,'#3a2f45',lk.sw)}}
+// ------------------------------------------------------------------ the hood lowered (look hood 'giu'), drawn with the body
+// the cloth gathered round the neck: a soft roll of the hood's colour (its far half before the tunic, the near half after it and
+// under the head), with folds
+const COWL_Z=12.4;
+function cowl(V0,X,col,near){const{P,F}=V0,z=ZB+COWL_Z,r=radAt(COWL_Z)+1.25,rt=1.75,N=36,pts=[];
+  for(let i=0;i<=N;i++){const t=i/N*TAU,n=X.Rd([Math.cos(t),Math.sin(t),0]);pts.push({t,q:P(X.T([Math.cos(t)*r*AX,Math.sin(t)*r,z])),f:F(n)})}
+  const runs=[];let cur=[];for(const p of pts){if((p.f>=0)===near)cur.push(p);else if(cur.length){runs.push(cur);cur=[]}}if(cur.length)runs.push(cur);
+  // a roll of the same thickness all along: a thick round line (the same shape as a chain of capsules, in one go)
+  ctx.lineCap='round';ctx.lineJoin='round';for(const[w,c] of[[rt+1.3,INK],[rt,near?col:dk(col,.25)]]){ctx.strokeStyle=c;ctx.lineWidth=w*2;for(const r of runs){if(r.length<2)continue;line(r.map(p=>p.q));ctx.stroke()}}
+  if(near){ctx.lineCap='round';for(const r of runs){ctx.strokeStyle=dk(col,.28);ctx.lineWidth=1.1;ctx.globalAlpha=.6;line(r.map(p=>[p.q[0],p.q[1]+rt*.5]));ctx.stroke();
+      ctx.strokeStyle=lt(col,.35);ctx.lineWidth=.8;ctx.globalAlpha=.8;line(r.map(p=>[p.q[0],p.q[1]-rt*.45]));ctx.stroke();ctx.globalAlpha=1;
+      // two soft folds where the cloth gathers in front
+      ctx.strokeStyle=dk(col,.3);ctx.lineWidth=.75;for(const p of r){const t=((p.t+Math.PI)%TAU)-Math.PI;if(Math.abs(Math.abs(t)-.45)<.06){const q=p.q;ctx.beginPath();ctx.moveTo(q[0],q[1]-rt*.55);ctx.quadraticCurveTo(q[0]+.5,q[1],q[0]-.1,q[1]+rt*.6);ctx.stroke()}}}}}
+// the hood itself lying on the upper back: a bag of cloth behind the neck, its opening toward the sky (the lining shows from behind), a
+// seam down the middle and two folds; the mages' point hangs down from it
+function hoodBack(V0,X,S,sw){const{P,F}=V0,col=S.hood,fb=F(X.Rd([-1,0,.4]));
+  const ring=(cx,z,ry,rx,n)=>{const o=[];for(let i=0;i<n;i++){const t=i/n*TAU;o.push(X.T([cx+Math.cos(t)*rx,Math.sin(t)*ry,z]))}return o};
+  const R3=[...ring(-6.4,ZB+14.6,6.6,2.4,16),...ring(-8.4,ZB+11.4,6.9,3.1,16),...ring(-9.1,ZB+8.3,5.7,2.7,14),...(S.hoodTip?[X.T([-9.8,sw*.5,ZB+2.4])]:ring(-8.9,ZB+6.1,3.2,1.8,10))];
+  const Hh=chull(R3.map(q=>P(q))),bb=[1e9,1e9,-1e9,-1e9];for(const q of Hh){bb[0]=Math.min(bb[0],q[0]);bb[1]=Math.min(bb[1],q[1]);bb[2]=Math.max(bb[2],q[0]);bb[3]=Math.max(bb[3],q[1])}
+  ctx.lineJoin='round';ink(2.3);poly(Hh);ctx.fillStyle=soft(bb[0]+(bb[2]-bb[0])*.3,bb[1]+(bb[3]-bb[1])*.22,(bb[0]+bb[2])/2,(bb[1]+bb[3])/2,Math.max(bb[2]-bb[0],bb[3]-bb[1])*.75,col,.14,.32);ctx.fill();ctx.stroke();
+  ctx.save();poly(Hh);ctx.clip();
+  // the opening: the dark lining, where we can look into it
+  if(fb>-.25){const op=chull(ring(-6.3,ZB+14.9,5.6,2.1,18).map(q=>P(q)));poly(op);ctx.fillStyle=dk(col,.58);ctx.fill();ctx.strokeStyle=INK;ctx.lineWidth=1.4;ctx.stroke()}
+  // the seam and the folds, only on the side we see
+  if(fb>0){ctx.strokeStyle=dk(col,.3);ctx.lineWidth=1;ctx.lineCap='round';line([X.T([-8.6,0,ZB+13.4]),X.T([-9.4,0,ZB+9.6]),X.T([-9.3,0,ZB+6.4])].map(q=>P(q)));ctx.stroke();
+    for(const sd of[-1,1]){line([X.T([-7.6,sd*4.6,ZB+12.8]),X.T([-8.9,sd*3.6,ZB+10.2]),X.T([-9,sd*2.2,ZB+7.6])].map(q=>P(q)));ctx.stroke()}}
+  // the shade of the head on it
+  {const g=ctx.createLinearGradient(0,bb[1],0,bb[3]);g.addColorStop(0,'rgba(0,0,0,.22)');g.addColorStop(.4,'rgba(0,0,0,0)');ctx.fillStyle=g;ctx.fillRect(bb[0],bb[1],bb[2]-bb[0],bb[3]-bb[1])}
+  ctx.restore();rimPoly(Hh,.25)}
+// the necklace (look acc 'collana'): a cord of beads round the neck, three white fangs in the middle
+function necklace(V0,X,col){const{P,F}=V0;for(let i=0;i<=22;i++){const k=i/22,sd=k<.5?-1:1,u=Math.abs(k-.5)*2,s=surf(sd*lerp(.02,.62,u),lerp(ZB+9.3,ZB+12.7,u*u),.45),n=X.Rd(s.n),v=F(n);if(v<=.06)continue;
+    const q=P(X.T(s.p));ctx.save();ctx.globalAlpha=cl(v*5,0,1);
+    if(u<.16&&i%2===1){ink(.8);ctx.fillStyle='#f6efe0';ctx.beginPath();ctx.moveTo(q[0]-.9,q[1]-.4);ctx.lineTo(q[0]+.9,q[1]-.4);ctx.lineTo(q[0]+.1,q[1]+2.6);ctx.closePath();ctx.fill();ctx.stroke()}
+    else{ink(.7);ctx.fillStyle=i%3?col:'#f2c240';ball(q,1.05);ctx.fill();ctx.stroke();ctx.fillStyle='rgba(255,255,255,.55)';ball([q[0]-.3,q[1]-.3],.28);ctx.fill()}ctx.restore()}}
 // ------------------------------------------------------------------ the enemies' heads and what they wear on them
 // a point of the head's own 3D space (an offset from its centre, in head units) on the screen, like the moss stick's points
 const hP=(Vh,h,v)=>sp(Vh,h,1,v);
@@ -389,10 +760,10 @@ const SCARF_Z=11.5,SCARF_T0=-.55;
 function scarf(V0,X,col,sw,near){const{P,F}=V0,z=ZB+SCARF_Z,r=radAt(SCARF_Z)+1.25,rt=1.75,N=36,pts=[];
   for(let i=0;i<=N;i++){const t=i/N*TAU,n=X.Rd([Math.cos(t),Math.sin(t),0]);pts.push({t,q:P(X.T([Math.cos(t)*r*AX,Math.sin(t)*r,z])),f:F(n)})}
   const runs=[];let cur=[];for(const p of pts){if((p.f>=0)===near)cur.push(p);else if(cur.length){runs.push(cur);cur=[]}}if(cur.length)runs.push(cur);
-  ctx.fillStyle=INK;for(const r of runs)for(let i=0;i<r.length-1;i++){hull(r[i].q,rt+1.3,r[i+1].q,rt+1.3);ctx.fill()}
-  ctx.fillStyle=col;for(const r of runs)for(let i=0;i<r.length-1;i++){hull(r[i].q,rt,r[i+1].q,rt);ctx.fill()}
-  if(near){// the knit: darker ribs across the roll, a light line along its top
-    ctx.lineCap='round';for(const r of runs){ctx.strokeStyle=dk(col,.28);ctx.lineWidth=.8;for(let i=1;i<r.length-1;i+=2){const q=r[i].q;ctx.beginPath();ctx.moveTo(q[0]-.3,q[1]-rt*.8);ctx.lineTo(q[0]+.3,q[1]+rt*.8);ctx.stroke()}
+  // the roll: a thick round line (the same shape as a chain of capsules, in one go)
+  ctx.lineCap='round';ctx.lineJoin='round';for(const[w,c] of[[rt+1.3,INK],[rt,col]]){ctx.strokeStyle=c;ctx.lineWidth=w*2;for(const r of runs){if(r.length<2)continue;line(r.map(p=>p.q));ctx.stroke()}}
+  if(near){// the knit: darker ribs across the roll (all in one path), a light line along its top
+    ctx.lineCap='round';for(const r of runs){ctx.strokeStyle=dk(col,.28);ctx.lineWidth=.8;ctx.beginPath();for(let i=1;i<r.length-1;i+=2){const q=r[i].q;ctx.moveTo(q[0]-.3,q[1]-rt*.8);ctx.lineTo(q[0]+.3,q[1]+rt*.8)}ctx.stroke();
       ctx.strokeStyle=lt(col,.35);ctx.lineWidth=.7;line(r.map(p=>[p.q[0],p.q[1]-rt*.55]));ctx.stroke()}
     // the end hanging down the front, when that side faces us
     const ft=F(X.Rd([Math.cos(SCARF_T0),Math.sin(SCARF_T0),0]));if(ft>.05){const t=SCARF_T0,b=[Math.cos(t)*r*AX+.4,Math.sin(t)*r,z-.6],
@@ -754,8 +1125,13 @@ function arciere0(x,y,face,anim,p,sc,o){sc=sc||1;o=o||{};const S0=o.style||{},ar
     if(S.belt)surfLine(V0,X,t=>surf(t,ZB+5.6,.3),S.belt,2.7,0,null,true);
     if(S.belt){const s=surf(0,ZB+5.6,.55),n=X.Rd(s.n),v=F(n);if(v>.05){const q=P(X.T(s.p)),k=Math.max(.45,v);ctx.save();ctx.globalAlpha=cl(v*4,0,1);ink(1);ctx.fillStyle=HC.buckle;ctx.fillRect(q[0]-1.7*k,q[1]-2,3.4*k,4);ctx.strokeRect(q[0]-1.7*k,q[1]-2,3.4*k,4);ctx.fillStyle='#fff3c0';ctx.fillRect(q[0]-1.1*k,q[1]-1.4,1*k,1);ctx.fillStyle='#8a5a20';ctx.fillRect(q[0]-.5*k,q[1]-.4,1*k,1.6);ctx.restore()}}
     if(S.amu)amulet(V0,X,S.amu);
+    if(S0.look&&S0.look.acc==='collana')necklace(V0,X,S0.look.accCol||'#d24b3e');
     ctx.restore();rimPoly(hp,.32);
     if(A.flash>0){ctx.save();ctx.globalAlpha=A.flash*.3;poly(hp);ctx.fillStyle='#ffffff';ctx.fill();ctx.restore()}}});
+  // the hood lowered (the hero's own look): on the upper back, and gathered round the neck unless the scarf is there
+  const LKS=S0.look;if(LKS&&LKS.hood==='giu'){parts.push({d:D(X.T([-9.2,0,ZB+10.6])),f:()=>hoodBack(V0,X,S,A.sway)});
+    if(LKS.acc!=='sciarpa'){const r=radAt(COWL_Z)+1.6;let dn=-1e9;for(let i=0;i<16;i++){const t=i/16*TAU;dn=Math.max(dn,D(X.T([Math.cos(t)*r*AX,Math.sin(t)*r,ZB+COWL_Z])))}
+      parts.push({d:dT-.03,f:()=>cowl(V0,X,S.hood,false)});parts.push({d:Math.max(dT+.012,Math.min(hDep-.015,dn)),f:()=>cowl(V0,X,S.hood,true)})}}
   // the scarf of the hero's own look: its far half before the tunic, the near half after it and under the head
   if(S0.look&&S0.look.acc==='sciarpa'){const col=S0.look.accCol||'#d24b3e',r=radAt(SCARF_Z)+1.25;let dn=-1e9;for(let i=0;i<16;i++){const t=i/16*TAU;dn=Math.max(dn,D(X.T([Math.cos(t)*r*AX,Math.sin(t)*r,ZB+SCARF_Z])))}
     parts.push({d:dT-.02,f:()=>scarf(V0,X,col,A.sway,false)});parts.push({d:Math.max(dT+.01,Math.min(hDep-.01,dn)),f:()=>scarf(V0,X,col,A.sway,true)})}
@@ -835,4 +1211,8 @@ function ringOn(V0,h3,id){const it=typeof ITEM!=='undefined'&&ITEM[id],r=it?[it.
   ink(1.1);ctx.fillStyle=r[0];ball([q[0]+1.2,q[1]+.6],1.7);ctx.fill();ctx.stroke();ctx.fillStyle=r[1];ball([q[0]+1.2,q[1]+.6],.8);ctx.fill();
   if(r[2]>=2)shine(id==='anello_gelo'?'160,220,255':id==='anello_vento'?'150,240,240':'120,170,255',q[0]+1.2,q[1]+.6,6,.32*(.5+.5*Math.sin(G.t*5)))}
 
-return{arciere,pose,ARM,BOWS,HC,ROBE}})();
+// only the head, its centre at x, y (the little portraits of the making of the hero): standing still, turned to `face`
+function testa(x,y,face,sc,o){o=o||{};const S0=o.style||{},AR=ARM[S0.armor]||ARM.giubba,S={...S0,body:S0.body||AR[0],hood:S0.hood||AR[1],skin:S0.skin||HC.skin};
+  const A=pose('idle',o.p==null?.25:o.p,o);A.hy=0;ctx.save();ctx.translate(x,y);ctx.scale(sc,sc);
+  try{head(Vat(face,[0,0],0),10,S,A,{blink:1,squint:0,shut:0,mouth:0,moss:false,eyeLight:true,eyeCol:S0.eyes,glow:S0.glowEyes&&S0.eyes?hexRgb(S0.eyes):null,blush:S0.blush,sway:0})}finally{ctx.restore()}}
+return{arciere,testa,pose,ARM,BOWS,HC,ROBE}})();
