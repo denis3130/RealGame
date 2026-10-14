@@ -1,30 +1,86 @@
 {
- "asset_id": "creature_volpefuoco_battle_front_idle",
- "animation": "idle",
+ "asset_id": "creature_volpefuoco_battle_front",
  "direction": "front",
- "frames": 6,
- "n": 6,
- "giro": 4,
- "occhi_chiusi": 4,
- "occhi_mezzi": 5,
+ "animazioni": {
+  "fermo": {
+   "riga": 0,
+   "n": 8,
+   "fps": 8,
+   "loop": true
+  },
+  "fermo_occhi_mezzi": {
+   "riga": 1,
+   "n": 8,
+   "fps": 8,
+   "loop": true,
+   "nota": "stesso fotogramma del fermo, occhi a metà"
+  },
+  "fermo_occhi_chiusi": {
+   "riga": 2,
+   "n": 8,
+   "fps": 8,
+   "loop": true,
+   "nota": "stesso fotogramma del fermo, occhi chiusi"
+  },
+  "attacco": {
+   "riga": 3,
+   "n": 8,
+   "fps": 12,
+   "loop": false,
+   "scatto": 3,
+   "nota": "0-2 si carica, 3-5 scatta, 6-7 torna"
+  },
+  "colpito": {
+   "riga": 4,
+   "n": 4,
+   "fps": 12,
+   "loop": false
+  }
+ },
+ "punti": {
+  "bocca": [
+   24,
+   56
+  ],
+  "corpo": [
+   45,
+   65
+  ],
+  "braci": [
+   [
+    36,
+    13
+   ],
+   [
+    73,
+    20
+   ],
+   [
+    84,
+    36
+   ],
+   [
+    27,
+    20
+   ]
+  ]
+ },
  "battito": "mezzi, chiusi, mezzi (0,06 s, 0,10 s, 0,06 s) ogni 2-5 s",
  "category": "creature_battle",
- "frame_width": 80,
- "frame_height": 80,
- "fps": 6,
- "loop": true,
+ "frame_width": 96,
+ "frame_height": 96,
  "pivot": [
-  40,
-  75
+  48,
+  87
  ],
  "anchor": [
-  40,
-  75
+  48,
+  87
  ],
- "w": 80,
- "h": 80,
- "source": "disegno di Denis (13 ottobre): pixel art pulita come lo screenshot della lotta",
- "version": "0.6-pixel-pulita",
+ "w": 96,
+ "h": 96,
+ "source": "disegno di Denis (13 ottobre): pixel art pulita come lo screenshot della lotta, occhi e bocca del disegno",
+ "version": "0.7-occhi-del-disegno",
  "status": "da approvare",
  "scala_consigliata": "avversario 1x, il tuo 3x (pixel grossi come nello screenshot)"
 }

@@ -100,6 +100,45 @@ scena. Denis ha confermato («sì») che «più vero» vuol dire come quegli spr
 - Da fare se Denis approva: un disegno suo da dietro renderebbe lo sprite di spalle esatto; poi la mappa in 4 direzioni a 64 px
   (come il piano) da un turnaround della volpe, con le stesse regole.
 
+### Poi (14 ottobre, sera): gli occhi del disegno, sprite migliori, più animazione
+
+Denis: «togli quegli occhi che hai fatto tu, e migliora gli sprite e animalo di più».
+- Occhi, bocca e naso sono quelli del disegno, niente più timbri (`pulito.volto_disegno`, `volto_px`). Nel disegno: il contorno a
+  matita di ogni occhio (il tratto scuro, anche la riga sottile sotto, che si trova perché è più scura di quello che ha intorno),
+  chiuso col suo involucro; dentro l'anello, la pupilla, la luce bianca e l'iride col colore del disegno più vicino (rosso scuro,
+  rosso, rosso arancio, arancio, giallo). La bocca aperta allo stesso modo (contorno, bocca, lingua) e il naso (il triangolino
+  rosso). Si riducono a pixel blocco per blocco con delle precedenze: la luce, poi il contorno (sotto più chiaro, dove il disegno ha
+  la riga sottile), la pupilla, la palpebra spessa in alto, poi il colore più presente. Le palpebre vengono dalla forma dell'occhio:
+  chiuse = la riga di sotto dell'ovale, a metà = la parte alta diventa pelo con la riga della palpebra. Il pelo intorno e sotto si
+  calcola senza occhi e bocca (`escludi`, con un secondo pelo più largo dove il primo non arriva): niente avanzi della matita e
+  niente macchie quando gli occhi si chiudono. Si calcolano una volta e si incollano a pixel interi dove sta la testa.
+- Riquadro 96×96 (la volpe grande come prima, 12,2 pixel del disegno per pixel), con spazio intorno per le braci e le mosse; punto
+  d'appoggio (48, 87), di spalle (47, 87).
+- Pulizie: il giallo chiarissimo solo nelle fiamme (sul pelo faceva una macchia di luce); dentro le orecchie il tratteggio della
+  matita non diventa più righe; i buchetti chiusi prendono la parte del corpo che hanno intorno.
+- Le parti del corpo (`ZAMPE, CORPO, CODA, TESTA, CRESTA`, poligoni sul disegno) si spostano a pixel interi (`pulito.componi`) e
+  il contorno si rifà sulla sagoma nuova (`colora`): nel fermo il respiro non fa più tremare il muso (prima un pixel su dieci della
+  testa cambiava tra un fotogramma e l'altro).
+- Animazioni (`lotta80.py`), un foglio per vista con una riga per animazione (`animazioni` nel json, più `punti`: bocca, corpo e
+  punte delle fiamme per la scena):
+  - fermo: 8 fotogrammi a 8 al secondo; il corpo scende di un pixel e la testa lo segue un fotogramma dopo; la coda oscilla
+    intorno alla base e un'onda corre verso la punta; la cresta trema e si allunga due volte per giro; nove braci nascono dalle
+    punte delle fiamme, salgono ondeggiando e si spengono (giallo, arancio, rosso). Davanti anche le righe con gli occhi a metà e
+    chiusi, stessi fotogrammi (battito: mezzi, chiusi, mezzi).
+  - attacco: 8 a 12 al secondo: si carica indietro e in basso con le fiamme che crescono e gli occhi che si stringono, scatta in
+    avanti col corpo piegato, la testa avanti, fiamme e orecchie tirate indietro, poi torna (`ATTACCO`).
+  - colpito: 4 a 12 al secondo: spinto indietro, occhi strizzati, fiamme più basse, si riprende (`COLPITO`).
+  Le pose grandi (attacco, colpito) sono deformazioni morbide del disegno (piega, schiaccia, testa, fiamme, vento) con i piedi
+  fermi; le fiamme e le orecchie si spostano insieme, così niente si strappa.
+- Di spalle: la nuca è pelo illuminato dall'alto che scende a fasce verso il collo (arancio chiaro, arancio, rosso arancio) col
+  bordo a dentini come ciuffi, un filo di luce in alto a destra e una riga dove la testa tocca il collo; si chiude solo la bocca
+  aperta del disegno, i ciuffi delle guance restano; il dietro delle orecchie è arancio alla base e diventa rosso in punta; le
+  zampe che davanti erano vicine sono un tono più scure.
+- Scena (`anteprime/niumon_lotta.tpl.html`): chi attacca fa la riga dell'attacco (si carica sul posto, poi scatta mentre si
+  sposta), chi è colpito la riga del colpito insieme al lampo; l'avversario sbatte le palpebre solo da fermo. Sul telefono in
+  verticale la targa della tua volpe va in basso a destra, così la sua testa si vede. Da vicino i due sprite grandi con i bottoni
+  Attacco e Colpito (ogni tanto partono da soli) e com'era prima (`solo2d/prima80/`, occhi fatti a mano).
+
 ## Versione colorata in 2D sulla base 3D (14 ottobre, notte)
 
 Denis: «prova a farlo 2d facendolo più simile che ne so ad un evee va bene? mettici poco tempo». Fatto in fretta, sulla stessa base:

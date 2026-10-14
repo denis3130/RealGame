@@ -1,27 +1,71 @@
 {
- "asset_id": "creature_volpefuoco_battle_back_idle",
- "animation": "idle",
+ "asset_id": "creature_volpefuoco_battle_back",
  "direction": "back",
- "frames": 4,
- "n": 4,
- "giro": 4,
+ "animazioni": {
+  "fermo": {
+   "riga": 0,
+   "n": 8,
+   "fps": 8,
+   "loop": true
+  },
+  "attacco": {
+   "riga": 1,
+   "n": 8,
+   "fps": 12,
+   "loop": false,
+   "scatto": 3,
+   "nota": "0-2 si carica, 3-5 scatta, 6-7 torna"
+  },
+  "colpito": {
+   "riga": 2,
+   "n": 4,
+   "fps": 12,
+   "loop": false
+  }
+ },
+ "punti": {
+  "bocca": [
+   71,
+   56
+  ],
+  "corpo": [
+   50,
+   65
+  ],
+  "braci": [
+   [
+    59,
+    13
+   ],
+   [
+    22,
+    20
+   ],
+   [
+    11,
+    36
+   ],
+   [
+    68,
+    20
+   ]
+  ]
+ },
  "category": "creature_battle",
- "frame_width": 80,
- "frame_height": 80,
- "fps": 6,
- "loop": true,
+ "frame_width": 96,
+ "frame_height": 96,
  "pivot": [
-  39,
-  75
+  47,
+  87
  ],
  "anchor": [
-  39,
-  75
+  47,
+  87
  ],
- "w": 80,
- "h": 80,
- "source": "disegno di Denis (13 ottobre): pixel art pulita come lo screenshot della lotta",
- "version": "0.6-pixel-pulita",
+ "w": 96,
+ "h": 96,
+ "source": "disegno di Denis (13 ottobre): pixel art pulita come lo screenshot della lotta, occhi e bocca del disegno",
+ "version": "0.7-occhi-del-disegno",
  "status": "da approvare",
  "scala_consigliata": "avversario 1x, il tuo 3x (pixel grossi come nello screenshot)"
 }
