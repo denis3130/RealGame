@@ -204,3 +204,5 @@ function zRestoreBonus(){if(typeof ARMI==='undefined')return;for(const id in ZD0
 {const _oz=openZItem;openZItem=function(kind,id){const keep=ZD0[id]&&typeof ARMI!=='undefined'?{...ARMI.DATI[id]}:null;if(keep)Object.assign(ARMI.DATI[id],ZD0[id]);try{return _oz(kind,id)}finally{if(keep)Object.assign(ARMI.DATI[id],keep)}}}
 // the outfit's level in the Classic: more health
 {const _m=makeP;makeP=function(){const q=_m.apply(this,arguments);const b=skinBonus();if(b>0&&q){q.maxhp=Math.round(q.maxhp*(1+b));q.hp=q.maxhp}return q}}
+// by the fire the gun beside the hero is the one he brings into the match
+Object.defineProperty(FALO,'gun',{get(){return SAVE.z&&zStartable(SAVE.z.gun)?SAVE.z.gun:'pistola'},configurable:true});

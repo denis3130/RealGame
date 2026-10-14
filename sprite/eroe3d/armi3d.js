@@ -18,7 +18,7 @@ const MAT={acciaio:['#3c4550','#66727f','#a3b0bd'],brunito:['#222c39','#3e4f64',
   oliva:['#46532a','#6c7f3c','#9db261'],ottone:['#9a6b1e','#d39a33','#f6cf6c'],rame:['#7d3a1c','#b8612f','#e48d58'],rosso:['#8a221b','#cf3b30','#f27566'],
   verde:['#1f5a2c','#33904a','#62c574'],giallo:['#a87d16','#e8b52a','#ffe07a'],teal:['#1a5a66','#2a8c9c','#5cc6d4'],arancio:['#9c4416','#e26a24','#ff9d55'],
   cera:['#b7a888','#e8dcbe','#fff6e2'],noce:['#4a2c17','#6b4a2a','#97693f'],corteccia:['#3b2817','#5c3f26','#86603c'],foglia:['#2f6a24','#4f9a3a','#8fd45e'],
-  sfera:['#3fae5a','#9fff7a','#eaffd6'],corda:['#a8987a','#e6dcc2','#fffaee'],stoffa:['#2c5a1e','#4f8a34','#7fbf52']};
+  sfera:['#3fae5a','#9fff7a','#eaffd6'],corda:['#a8987a','#e6dcc2','#fffaee'],stoffa:['#2c5a1e','#4f8a34','#7fbf52'],ossidiana:['#120e18','#2a2236','#4c4060'],cristallo:['#1f8a76','#4fe0c0','#c8fff0']};
 // a material: its name, or the three tones themselves; tones(c): dark, colour and light made from one colour (the bows, the cards' tints)
 const TT=m=>Array.isArray(m)?m:(MAT[m]||MAT.acciaio),tones=c=>[mix(c,'#1b1612',.42),c,mix(c,'#fff6e0',.36)];
 const LW=2.2,EDGE='rgba(27,22,18,.85)';
@@ -257,6 +257,61 @@ const M={
     K.rod(guardPts(1.3,3.9,-3.6,1.5),.75,'nero');
     K.prism(rp([[6.2,3.9],[8.2,3.9],[8.4,-2.2],[6.4,-2.4]],.6),-.9,.9,'gomma',{hi:.3});
     return{muzzle:[15.6,6.5,0],back:[-17.8,6.5,0],eject:null,sup:[7.3,-.8,0]}},
+  // ---------------------------------------------------------------- the four new guns (punto 24; profiles in sprite/armi/disegno_armi.js)
+  // the flamethrower: the red tank under the body with brass caps and the hose, the iron body with the gauge, the copper pipe in its
+  // perforated shield, the flared nozzle with the blue pilot flame
+  lanciafiamme(K,st){const tt=typeof G!=='undefined'&&G&&G.t!=null?G.t:performance.now()/1000;
+    K.cyl([-12.4,-4.1,0],[-1.6,-4.1,0],2.5,'rosso');K.cyl([-13,-4.1,0],[-11.4,-4.1,0],2.2,'ottone',{db:.05});K.cyl([-2.6,-4.1,0],[-1,-4.1,0],2.2,'ottone',{db:.05});
+    K.rod(qpts([-2,-2.4,1.3],[1.5,-1.2,1.7],[3.6,1.2,1.1],5),1.1,'gomma');
+    K.prism(rp([[-2.6,1.4],[.6,1.4],[1.4,-4.6],[-1.6,-5]],.5),-1,1,'legno',{dk:.66});K.rod(guardPts(.9,4.2,-1.3,2.2),.75,'nero');
+    K.box(-4,1.2,10.6,4.6,-1.4,1.4,'nero',{hi:.4},1);
+    K.cyl([-1.6,6,-.65],[-1.6,6,.65],1.9,'ottone',{capDet:c=>{ctx.fillStyle='#f4ecd0';ball(c,1.25*K.s);ctx.fill();const a=-2.6+(st.glow==null?.8:st.glow)*1.4;ctx.strokeStyle='#c0301e';ctx.lineWidth=.35*K.s;seg(c,[c[0]+Math.cos(a)*K.s,c[1]+Math.sin(a)*K.s]);ctx.stroke()}});
+    K.cyl([10,2.85,0],[24.4,2.85,0],.85,'rame');
+    K.cyl([11.6,2.85,0],[20.6,2.85,0],2.05,'acciaio',{det:t=>{for(let i=0;i<5;i++)for(let j=0;j<5;j++){const an=j/5*TAU+.3,n=add(mul(t.v,Math.cos(an)),mul(t.w,Math.sin(an)));if(t.F(n)<.25)continue;ctx.fillStyle='#14171b';ball(t.P(t.at(.12+i*.19,an,.05)),.38*K.s);ctx.fill()}}});
+    K.cyl([24,2.85,0],[27.4,2.85,0],1,'ottone',{r2:1.9,hole:1,holeK:.62});
+    K.prism(rp([[12.4,.8],[14.2,.8],[14.4,-3.6],[12.6,-3.8]],.6),-1,1,'legno',{dk:.6});
+    K.fx([26.4,-.3,0],q=>{const f=.8+.2*Math.sin(tt*31);shine('120,180,255',q[0],q[1],2.6*K.s,.7);ctx.fillStyle='#7ab8ff';ctx.beginPath();ctx.ellipse(q[0],q[1],.55*K.s,f*K.s,0,0,TAU);ctx.fill();ctx.fillStyle='#e8f4ff';ctx.beginPath();ctx.ellipse(q[0],q[1]+.2*K.s,.25*K.s,.5*f*K.s,0,0,TAU);ctx.fill()},.3);
+    return{muzzle:[27.6,2.85,0],eject:null,sup:[13.3,-1.6,0]}},
+  // the drum gun: the wire stock, the wooden grips, the big steel drum with its brass key, the finned barrel and the brake
+  tamburo(K,st){const bo=-(st.slide||0)*2;
+    K.box(-8.4,.2,-7.2,4.6,-1.3,1.3,'gomma',{hi:.2},.4);for(const z of[-.9,.9]){K.rod([[-7.4,4,z],[-3.6,4,z]],.6,'acciaio');K.rod([[-7.4,.7,z],[-3.6,.7,z]],.6,'acciaio')}
+    K.prism(rp([[-2.4,1.4],[.6,1.4],[1.3,-4.6],[-1.4,-5]],.5),-1,1,'legnoR',{dk:.66});K.rod(guardPts(.9,4,-1.3,2.2),.75,'nero');
+    K.cyl([4.4,-2.8,-1.7],[4.4,-2.8,1.7],3.7,'acciaio',{capDet:c=>{ctx.strokeStyle='rgba(20,24,30,.55)';ctx.lineWidth=.35*K.s;ctx.beginPath();ctx.arc(c[0],c[1],2.6*K.s,0,TAU);ctx.stroke();ctx.fillStyle=MAT.ottone[1];ball(c,1.1*K.s);ctx.fill();ctx.strokeStyle=MAT.ottone[0];seg([c[0]-.7*K.s,c[1]],[c[0]+.7*K.s,c[1]]);ctx.stroke()}});
+    K.box(-4,1.4,9.4,5.6,-1.3,1.3,'nero',{hi:.45,det:L=>L.rect(2+bo,4.5,4.6+bo,5.4,'#121417',.25)},.9);
+    K.box(1.2+bo,5.4,2.6+bo,6.6,-.5,.5,'acciaio',{hi:.4},.35);
+    K.prism(rp([[9.4,1.4],[11.2,1.4],[11.4,-3.4],[9.6,-3.6]],.6),-1,1,'legnoR',{dk:.6});
+    K.cyl([9.2,3.3,0],[17.2,3.3,0],1.1,'brunito',{det:t=>{for(let i=0;i<6;i++){const q=t.P(t.at(.12+i*.14,Math.PI*.5,.05));ctx.fillStyle='#14171b';ball(q,.34*K.s);ctx.fill()}}});
+    K.cyl([16.8,3.3,0],[19.4,3.3,0],1.6,'nero',{hole:1,holeK:.45});
+    return{muzzle:[19.6,3.3,0],eject:[3.2,5.4,1.3],sup:[10.3,-1.6,0]}},
+  // the steam rifle: the stock, the brass body with rivets, the clip of bolts, the copper tank with its bands, the barrel with the copper
+  // coils, the gauge (st.gauge: the pressure), the red valve wheel
+  vapore(K,st){const pr=st.gauge==null?.6:st.gauge;
+    K.prism(rp([[-4,5],[-11.8,4.4],[-12.8,3.6],[-12.8,-.8],[-12,-1.5],[-4,1.6]],[.3,.5,.6,.6,.5,.3]),-1.1,1.1,'legno',{dk:.62,det:L=>L.grain(-12.4,-.6,-4,4.4,4)});
+    K.box(-13.6,-1.6,-12.5,4,-1.15,1.15,'ottone',{hi:.3},.4);
+    K.box(-.8,-4.2,2,1.6,-.9,.9,'nero',{hi:.3},.4);
+    K.prism(rp([[-3.2,1.4],[-.6,1.4],[.4,-4.4],[-2.4,-4.8]],.5),-1,1,'legno',{dk:.66});K.rod(guardPts(-.4,3.2,-1.3,2),.75,'ottone');
+    K.box(-4.2,1.3,9,5.8,-1.4,1.4,'ottone',{det:L=>{for(const x of[-3,0,3,6,8])L.screw(x,5,.3,'#f6cf6c')}},1);
+    K.cyl([6,-.8,0],[19,-.8,0],2,'rame',{det:t=>{for(const k of[.2,.5,.8]){ctx.strokeStyle=MAT.ottone[1];ctx.lineWidth=.9*K.s;seg(t.P(t.at(k,Math.PI*.5,.05)),t.P(t.at(k,-Math.PI*.5,.05)));ctx.stroke()}}});
+    K.cyl([9,3.65,0],[28.2,3.65,0],.75,'brunito');
+    for(let i=0;i<6;i++){const x=12+i*1.4;K.rod(qpts([x,4.95,0],[x+.5,3.65,1.6],[x+.2,2.35,0],4),.45,'rame',{noOut:true,db:.2})}
+    K.cyl([26.8,3.65,0],[28.6,3.65,0],1.3,'ottone',{hole:1,holeK:.45});
+    K.cyl([2,8,-.7],[2,8,.7],2.3,'ottone',{capDet:c=>{ctx.fillStyle='#f4ecd0';ball(c,1.6*K.s);ctx.fill();const a=Math.PI*(.8+cl(pr,0,1)*1.4);ctx.strokeStyle='#c0301e';ctx.lineWidth=.32*K.s;seg(c,[c[0]+Math.cos(a)*1.3*K.s,c[1]+Math.sin(a)*1.3*K.s]);ctx.stroke();ctx.fillStyle=INK;ball(c,.3*K.s);ctx.fill()}});
+    K.box(1.6,5.6,2.4,6.1,-.3,.3,'ottone',{hi:0},.1);
+    K.cyl([5.4,-.6,1.4],[5.4,-.6,2],1.3,'rosso');
+    return{muzzle:[28.8,3.65,0],eject:null,sup:[15.4,-3.4,0]}},
+  // the resonator: the black stone body with the glowing veins, the crystal core, the brass rings, the leather grip, three prongs round
+  // the orb that pulses (st.glow) and flares
+  risonatore(K,st){const gl=st.glow==null?1:st.glow,tt=typeof G!=='undefined'&&G&&G.t!=null?G.t:performance.now()/1000;
+    K.prism(rp([[-3.4,4.6],[-1.8,2.6],[-3.4,-2.6],[-5,2.6]],.3),-.8,.8,'cristallo',{hi:.5});
+    const vein=(L,a,b,c,d,al)=>L.line(a,b,c,d,`rgba(120,255,210,${al})`,.45);
+    K.prism(rp([[-6.6,3.4],[-4,6.4],[4,7],[12,6],[16.4,4.6],[16.4,1.6],[12,.4],[4,-.2],[-4,.4]],[.6,.8,.8,.6,.4,.4,.6,.8,.6]),-1.6,1.6,'ossidiana',{det:L=>{const al=.5+.35*gl;
+      vein(L,-4,3.6,0,4.8,al);vein(L,0,4.8,4,3.8,al);vein(L,4,3.8,8,5,al);vein(L,8,5,14,3.4,al);vein(L,-3,1.6,2,2.2,al*.85);vein(L,2,2.2,7,1.4,al*.85);vein(L,7,1.4,13,2,al*.85)}});
+    K.prism(rp([[-2.2,.2],[.8,.2],[1.4,-4.8],[-1.4,-5.2]],.5),-1,1,'gomma',{dk:.6});K.rod(guardPts(.9,4,-.1,2),.75,'ottone');
+    K.cyl([2.7,3.4,0],[3.4,3.4,0],2.1,'ottone');K.cyl([11.3,3.2,0],[12.1,3.2,0],1.8,'ottone');
+    for(let i=0;i<3;i++){const a=i/3*TAU+Math.PI/2,c=Math.cos(a),s=Math.sin(a);K.tube([[15.6,3.2+c*1.4,s*1.4],[19,3.2+c*3.4,s*3.4],[21.6,3.2+c*2.4,s*2.4],[22.8,3.2+c*1.1,s*1.1]],[1.2,1,.8,.5],'ossidiana')}
+    K.cyl([15.2,3.2,0],[19.4,3.2,0],.6,'ottone');
+    K.fx([21,3.2,0],q=>{const p=.8+.2*Math.sin(tt*5);shine('140,255,220',q[0],q[1],(7*p*gl+2)*K.s,.75);ctx.fillStyle='#bfffe8';ball(q,1.5*p*K.s);ctx.fill();ctx.fillStyle='#fff';ball([q[0]-.4*K.s,q[1]-.4*K.s],.6*K.s);ctx.fill()},.2);
+    return{muzzle:[21.4,3.2,0],eject:null,sup:[8.6,-2,0]}},
 
 // ------------------------------------------------------------------ the weapons of the Classic mode: the crossbow, the Druid's staff, the bows
   // the light crossbow: a walnut tiller with a pistol grip and a groove for the bolt, a steel prod across the front, thick in the middle,
@@ -363,5 +418,5 @@ function draw(id,V0,fr,st,extra){const K=kit(V0,fr),f=M[id];if(!f)return null;st
   for(const k in pts){const v=pts[k];o[k]=v&&v.length===3&&typeof v[0]==='number'?K.W(v):null}return o}
 // the frame of a weapon held at O (a room point), pointing along aim, its top toward up (made square to aim); s: its size
 function frame(O,aim,up,s){const X=nrm(aim),Y=nrm(sub(up,mul(X,dot(up,X))));return{O,X,Y,Z:cross(Y,X),s:s||1}}
-const DATI_N={pistola:'Pistola',revolver:'Revolver',mitraglietta:'Mitraglietta',mitra:'Mitra',mitragliatrice:'Mitragliatrice',pompa:'Pompa da caccia',tattica:'Pompa tattica',lanciarazzi:'Lanciarazzi',balestra:'Balestra leggera',bastone:'Bastone del Druida',arco:'Arco',scettro:'Bastone dei maghi',martello:'Martello del Fabbro',bomba:'Bomba'};
-return{draw,frame,M,MAT,kit,tones,nomi:DATI_N,ZOMBIE:['pistola','revolver','mitraglietta','mitra','mitragliatrice','pompa','tattica','lanciarazzi']}})();
+const DATI_N={tamburo:'Mitraglietta a tamburo',lanciafiamme:'Lanciafiamme',vapore:'Fucile a vapore',risonatore:'Risonatore',pistola:'Pistola',revolver:'Revolver',mitraglietta:'Mitraglietta',mitra:'Mitra',mitragliatrice:'Mitragliatrice',pompa:'Pompa da caccia',tattica:'Pompa tattica',lanciarazzi:'Lanciarazzi',balestra:'Balestra leggera',bastone:'Bastone del Druida',arco:'Arco',scettro:'Bastone dei maghi',martello:'Martello del Fabbro',bomba:'Bomba'};
+return{draw,frame,M,MAT,kit,tones,nomi:DATI_N,ZOMBIE:['pistola','revolver','mitraglietta','mitra','mitragliatrice','pompa','tattica','lanciarazzi','tamburo','lanciafiamme','vapore','risonatore']}})();

@@ -35,7 +35,8 @@ const C={
   legno:['#71401f','#a86833','#d99a58'],legnoR:['#6a2817','#a5482b','#d77a55'],
   oliva:['#46532a','#6c7f3c','#9db261'],ottone:['#9a6b1e','#d39a33','#f6cf6c'],rame:['#7d3a1c','#b8612f','#e48d58'],
   rosso:['#8a221b','#cf3b30','#f27566'],verde:['#1f5a2c','#33904a','#62c574'],giallo:['#a87d16','#e8b52a','#ffe07a'],
-  teal:['#1a5a66','#2a8c9c','#5cc6d4'],arancio:['#9c4416','#e26a24','#ff9d55'],cera:['#b7a888','#e8dcbe','#fff6e2'],osso:['#a8986f','#dccda4','#f6edd2']};
+  teal:['#1a5a66','#2a8c9c','#5cc6d4'],arancio:['#9c4416','#e26a24','#ff9d55'],cera:['#b7a888','#e8dcbe','#fff6e2'],osso:['#a8986f','#dccda4','#f6edd2'],
+  ossidiana:['#120e18','#2a2236','#4c4060'],cristallo:['#1f8a76','#4fe0c0','#c8fff0']};
 // Every gun is drawn twice: first all its pieces as one dark silhouette with the thick outline (OUT), then every piece painted, with
 // thin lines where it meets the others: a crisp toy outline round the whole gun and no heavy black where pieces overlap.
 // GS: the guns are drawn at this size (units below are a little smaller than game pixels); LO/LI: outer and inner line widths
@@ -212,7 +213,79 @@ const G={
     lines([[11.6,-9.2,11.6,-3.8],[14.6,-9.2,14.6,-3.8]],INK,.5);for(const x of[-9,-3,3,9])screw(x,-8.35,.33,C.oliva[2]);
     PB(-3.2,-11.8,3.4,-9,.6,'nero',{hi:.5});const gl=o.glow==null?1:o.glow;shine('120,255,140',0,-10.4,4.2,.5*gl);PB(-1.8,-11.2,1.8,-9.6,.4,'verde',{col:'#7dffa0',colD:'#3fc06a',colL:'#d8ffe2',hi:0,lw:.9});
     PP([[-1.4,-3.8],[1.2,-3.8],[1.8,3.2],[-1,3.6]],.5,'gomma',{dk:.66,hi:.3});guard(1.3,3.9,-3.6,1.5,'nero');
-    PP([[6.2,-3.9],[8.2,-3.9],[8.4,2.2],[6.4,2.4]],.6,'gomma',{hi:.3})}}};
+    PP([[6.2,-3.9],[8.2,-3.9],[8.4,2.2],[6.4,2.4]],.6,'gomma',{hi:.3})}},
+  // ---------------------------------------------------------------- the four new guns (punto 24 del piano di Denis, anteprima 47)
+  // the flamethrower: a red fuel tank under the body with brass caps (it is its «magazine»: it drops out and a full one goes in), the
+  // hose, an iron body with a gauge, a copper pipe inside a perforated heat shield, a flared brass nozzle with the little blue pilot flame
+  lanciafiamme:{muzzle:[27.4,-2.9],eject:null,sup:[13.3,1.6],len:[-13,27.4],magP:[-7,4.1],magD:[0,7],
+    supR:(o,k,s)=>magHand(k,s,[-7,6.6],[0,7],[-1.6,-6]),
+    draw(o){const md=o.mag||0,ma=o.magA==null?1:o.magA;
+    if(ma>0){ctx.save();ctx.globalAlpha*=ma;const y=md*7;paint(()=>rb(-12.4,1.6+y,-1.6,6.6+y,2.4),[-12.4,1.6+y,-1.6,6.6+y],'rosso',{gl:2});
+      PB(-13,1.9+y,-11.4,6.3+y,.7,'ottone',{hi:.4});PB(-2.6,1.9+y,-1,6.3+y,.7,'ottone',{hi:.4});
+      if(!OUT){ctx.strokeStyle='rgba(255,236,200,.75)';ctx.lineWidth=.4;ctx.beginPath();ctx.moveTo(-8.6,3.2+y);ctx.lineTo(-7,5.2+y);ctx.lineTo(-5.4,3.2+y);ctx.stroke()}ctx.restore()}
+    if(!OUT&&md<.05){ctx.strokeStyle=INK;ctx.lineWidth=1.9;ctx.lineCap='round';ctx.beginPath();ctx.moveTo(-2,2.4);ctx.quadraticCurveTo(1.6,1.2,3.6,-1.2);ctx.stroke();ctx.strokeStyle='#4a443c';ctx.lineWidth=1.05;ctx.stroke()}
+    PP([[-2.6,-1.4],[.6,-1.4],[1.4,4.6],[-1.6,5]],.5,'legno',{dk:.66});guard(.9,4.2,-1.3,2.2,'nero');
+    PB(-4,-4.6,10.6,-1.2,1,'nero',{hi:.4});
+    paint(()=>ball([-1.6,-6],1.9),[-3.5,-7.9,.3,-4.1],'ottone',{hi:.3});
+    if(!OUT){ctx.fillStyle='#f4ecd0';ball([-1.6,-6],1.25);ctx.fill();const a=-2.6+(o.glow==null?.8:o.glow)*1.4;ctx.strokeStyle='#c0301e';ctx.lineWidth=.35;seg([-1.6,-6],[-1.6+Math.cos(a),-6+Math.sin(a)]);ctx.stroke();ctx.fillStyle=INK;ball([-1.6,-6],.25);ctx.fill()}
+    PB(10,-3.7,24.4,-2,.7,'rame',{gl:1});
+    PB(11.6,-4.9,20.6,-.8,1.2,'acciaio',{hi:.3});
+    if(!OUT){ctx.fillStyle='#14171b';for(let i=0;i<5;i++)for(let j=0;j<2;j++){ball([12.8+i*1.7,-3.8+j*1.9],.42);ctx.fill()}}
+    PP([[24,-3.9],[27.4,-4.8],[27.4,-.9],[24,-1.8]],.4,'ottone',{gl:1});
+    PP([[12.4,-.8],[14.2,-.8],[14.4,3.6],[12.6,3.8]],.6,'legno',{dk:.6});
+    if(!OUT){const f=.8+.2*Math.sin(G_t()*31);shine('120,180,255',26.4,.2,2.6,.7);ctx.fillStyle='#7ab8ff';ctx.beginPath();ctx.ellipse(26.4,.3,.55,f,0,0,TAU);ctx.fill();ctx.fillStyle='#e8f4ff';ctx.beginPath();ctx.ellipse(26.4,.5,.25,.5*f,0,0,TAU);ctx.fill()}}},
+  // the drum gun: short and fat, a big round drum under it with its brass winding key, a folding wire stock, a wooden fore grip, a finned
+  // barrel and a muzzle brake
+  tamburo:{muzzle:[19.4,-3.3],eject:[3.2,-5.4],sup:[10.3,1.6],len:[-8.4,19.4],magP:[4.4,2.8],magD:[0,7],
+    supR:(o,k,s)=>magHand(k,s,[4.4,6.4],[0,7],[-2-(o.slide||0)*2,-6]),
+    draw(o){const md=o.mag||0,ma=o.magA==null?1:o.magA,bo=-(o.slide||0)*2;
+    PB(-8.4,-4.6,-7.2,-.2,.4,'gomma',{hi:.2});PB(-7.6,-4.3,-3.6,-3.5,.3,'acciaio',{hi:.3});PB(-7.6,-1.1,-3.6,-.3,.3,'acciaio',{hi:.3});
+    PP([[-2.4,-1.4],[.6,-1.4],[1.3,4.6],[-1.4,5]],.5,'legnoR',{dk:.66});guard(.9,4,-1.3,2.2,'nero');
+    if(ma>0){ctx.save();ctx.globalAlpha*=ma;const y=md*7;paint(()=>ball([4.4,2.8+y],3.7),[.7,-.9+y,8.1,6.5+y],'acciaio',{gl:1});
+      if(!OUT){ctx.strokeStyle='rgba(20,24,30,.55)';ctx.lineWidth=.35;ctx.beginPath();ctx.arc(4.4,2.8+y,2.6,0,TAU);ctx.stroke()}
+      paint(()=>ball([4.4,2.8+y],1.1),[3.3,1.7+y,5.5,3.9+y],'ottone',{hi:.4});if(!OUT){ctx.strokeStyle=C.ottone[0];ctx.lineWidth=.35;seg([3.7,2.8+y],[5.1,2.8+y]);ctx.stroke()}ctx.restore()}
+    PB(-4,-5.6,9.4,-1.4,.9,'nero',{hi:.45});
+    if(!OUT){ctx.fillStyle='#121417';rb(2+bo,-5.4,4.6+bo,-4.5,.25);ctx.fill()}
+    PB(1.2+bo,-6.6,2.6+bo,-5.4,.35,'acciaio',{hi:.4});
+    PP([[9.4,-1.4],[11.2,-1.4],[11.4,3.4],[9.6,3.6]],.6,'legnoR',{dk:.6});
+    PB(9.2,-4.4,17.2,-2.2,.6,'brunito',{gl:1});
+    if(!OUT){ctx.fillStyle='#14171b';for(let i=0;i<6;i++)ctx.fillRect(10.4+i*1.1,-4.3,.45,2)}
+    PB(16.8,-4.9,19.4,-1.7,.5,'nero',{hi:.3});if(!OUT){ctx.fillStyle='#0e1012';ctx.fillRect(17.6,-3.6,1.4,.6)}}},
+  // the steam rifle: a wooden stock, a brass body with rivets, the gauge whose needle shows the pressure (o.gauge), a copper tank under
+  // the barrel with its bands, copper coils round the barrel, a red valve wheel, the clip of iron bolts under the body
+  vapore:{muzzle:[28.6,-3.7],eject:null,sup:[15.4,3.4],len:[-13.6,28.6],magP:[.6,1.4],magD:[0,6.5],
+    supR:(o,k,s)=>magHand(k,s,[.6,4.4],[0,6.5],[5.4,.6]),
+    draw(o){const md=o.mag||0,ma=o.magA==null?1:o.magA,pr=o.gauge==null?.6:o.gauge;
+    PP([[-4,-5],[-11.8,-4.4],[-12.8,-3.6],[-12.8,.8],[-12,1.5],[-4,-1.6]],[.3,.5,.6,.6,.5,.3],'legno',{dk:.62});
+    if(!OUT){ctx.save();rp([[-4,-5],[-11.8,-4.4],[-12.8,-3.6],[-12.8,.8],[-12,1.5],[-4,-1.6]],[.3,.5,.6,.6,.5,.3]);ctx.clip();grain(-12.6,-4.4,-4,1.2,4);ctx.restore()}
+    PB(-13.6,-4,-12.5,1.6,.4,'ottone',{hi:.3});
+    if(ma>0){ctx.save();ctx.globalAlpha*=ma;const y=md*6.5;PB(-.8,-1.6+y,2,4.2+y,.4,'nero',{hi:.3});if(!OUT){ctx.fillStyle=C.acciaio[2];for(let i=0;i<3;i++)ctx.fillRect(-.4+i*.8,-1.2+y,.38,4.6)}ctx.restore()}
+    PP([[-3.2,-1.4],[-.6,-1.4],[.4,4.4],[-2.4,4.8]],.5,'legno',{dk:.66});guard(-.4,3.2,-1.3,2,'ottone');
+    PB(-4.2,-5.8,9,-1.3,1,'ottone',{gl:1});
+    for(const x of[-3,0,3,6,8])screw(x,-5,.3,C.ottone[2]);
+    PB(6,-1.2,19,2.8,1.8,'rame',{gl:1});
+    if(!OUT){ctx.fillStyle=C.ottone[1];for(const x of[8.5,12.5,16.5])ctx.fillRect(x,-1.3,.9,4.2)}
+    PB(9,-4.4,28.2,-2.9,.5,'brunito',{gl:2});
+    if(!OUT){for(const[w,c] of[[.95,INK],[.45,C.rame[2]]]){ctx.strokeStyle=c;ctx.lineWidth=w;for(let i=0;i<6;i++){const x=12+i*1.4;ctx.beginPath();ctx.ellipse(x,-3.65,.5,1.4,.3,0,TAU);ctx.stroke()}}}
+    PB(26.8,-5,28.6,-2.3,.4,'ottone',{hi:.3});
+    paint(()=>ball([2,-8],2.3),[-.3,-10.3,4.3,-5.7],'ottone',{hi:.3});PB(1.6,-6.1,2.4,-5.6,.1,'ottone',{hi:0});
+    if(!OUT){ctx.fillStyle='#f4ecd0';ball([2,-8],1.6);ctx.fill();ctx.strokeStyle='rgba(40,30,20,.6)';ctx.lineWidth=.2;for(let i=0;i<5;i++){const a=Math.PI*(.8+i*.35);seg([2+Math.cos(a)*1.15,-8+Math.sin(a)*1.15],[2+Math.cos(a)*1.55,-8+Math.sin(a)*1.55]);ctx.stroke()}
+      const a=Math.PI*(.8+cl(pr,0,1)*1.4);ctx.strokeStyle='#c0301e';ctx.lineWidth=.32;seg([2,-8],[2+Math.cos(a)*1.3,-8+Math.sin(a)*1.3]);ctx.stroke();ctx.fillStyle=INK;ball([2,-8],.3);ctx.fill()}
+    paint(()=>ball([5.4,.6],1.3),[4.1,-.7,6.7,1.9],'rosso',{hi:.3});if(!OUT){ctx.strokeStyle='#5a1210';ctx.lineWidth=.3;seg([4.4,.6],[6.4,.6]);ctx.stroke();seg([5.4,-.4],[5.4,1.6]);ctx.stroke()}}},
+  // the resonator: it fell from a star into the graveyard. A body of black stone with green veins that glow, brass rings, a grip wrapped in
+  // leather, the crystal core at the back (its «magazine»), two curved prongs in front round a floating orb that pulses and flares
+  risonatore:{muzzle:[21.4,-3.2],eject:null,sup:[8.6,2],len:[-6.8,23],magP:[-3.4,1.4],magD:[0,6],
+    supR:(o,k,s)=>magHand(k,s,[-3.4,4],[0,6],[-3.4,-2]),
+    draw(o){const gl=o.glow==null?1:o.glow,md=o.mag||0,ma=o.magA==null?1:o.magA,t=G_t();
+    if(ma>0){ctx.save();ctx.globalAlpha*=ma;const y=md*6;PP([[-3.4,-4.6+y],[-1.8,-2.6+y],[-3.4,2.6+y],[-5,-2.6+y]],.3,'cristallo',{hi:.5});ctx.restore()}
+    PP([[-6.6,-3.4],[-4,-6.4],[4,-7],[12,-6],[16.4,-4.6],[16.4,-1.6],[12,-.4],[4,.2],[-4,-.4]],[.6,.8,.8,.6,.4,.4,.6,.8,.6],'ossidiana',{gl:1});
+    PP([[-2.2,-.2],[.8,-.2],[1.4,4.8],[-1.4,5.2]],.5,'gomma',{dk:.6});guard(.9,4,-.1,2,'ottone');
+    PB(2,-7.4,3.4,.4,.4,'ottone',{hi:.4});PB(11,-6.6,12.4,-.2,.4,'ottone',{hi:.4});
+    if(!OUT){ctx.save();ctx.globalCompositeOperation='lighter';ctx.strokeStyle=`rgba(120,255,210,${.45+.35*gl})`;ctx.lineWidth=.45;ctx.lineJoin='round';
+      for(const q of[[[-4,-3.6],[0,-4.8],[4,-3.8],[8,-5],[14,-3.4]],[[-3,-1.6],[2,-2.2],[7,-1.4],[13,-2]]]){ctx.beginPath();q.forEach(p=>ctx.lineTo(p[0],p[1]));ctx.stroke()}ctx.restore();shine('120,255,210',-3.4,-1,4,.45*gl)}
+    PP([[15.6,-5.6],[19.8,-8.2],[22.6,-6.2],[20,-5.6],[17,-4.2]],.4,'ossidiana',{hi:.3});PP([[15.6,-.6],[19.8,1.6],[22.6,-.4],[20,-1],[17,-2]],.4,'ossidiana',{hi:.3});
+    PB(15.4,-3.7,19.6,-2.7,.4,'ottone',{hi:.4});
+    if(!OUT){const p=.8+.2*Math.sin(t*5);shine('140,255,220',21,-3.2,7*p*gl+2,.75);ctx.fillStyle='#bfffe8';ball([21,-3.2],1.5*p);ctx.fill();ctx.fillStyle='#ffffff';ball([20.6,-3.6],.6);ctx.fill()}}}};
 // the shell going into a shotgun: from below in the other hand, under the loading port, up into it (cut where it enters the gun)
 function shellPos(P,f){if(f<.45){const q=LP(P.p0,P.p1,f/.45);return[q[0],q[1],lerp(-1,0,ez(f/.45))]}if(f<.8){const q=LP(P.p1,P.p2,(f-.45)/.35);return[q[0],q[1],-.35*ez((f-.45)/.35)]}return null}
 function shellIn(P,o){const f=o.shell;if(f==null||f<0)return;const q=shellPos(P,f);if(!q)return;ctx.save();ctx.beginPath();ctx.rect(-20,P.y,60,30);ctx.clip();munizione(P.k,q[0],q[1],.75,q[2]);ctx.restore()}
@@ -281,8 +354,16 @@ const DATI={
     colpo:'pal',bossolo:'cartucciaV',mun:'cartucce',kick:2.4,kickR:.18,vampa:{len:6.5,w:5.4,pts:6}},
   lanciarazzi:{n:'Lanciarazzi',rar:4,d:'Un razzo che esplode e lancia via tutti gli zombie intorno.',dmg:240,rate:.55,mag:1,res:8,rel:2.2,spread:0,pel:1,spd:150,acc:520,range:420,splash:46,slow:.15,
     colpo:'razzo',bossolo:null,mun:'razzi',kick:3.4,kickR:.14,vampa:{len:6,w:5.6,pts:6}},
+  lanciafiamme:{n:'Lanciafiamme',rar:3,d:'Una lingua di fuoco: brucia tutto quello che hai davanti, e chi prende fuoco continua a bruciare.',dmg:7,rate:12,mag:100,res:300,rel:2.4,spread:14,pel:1,spd:240,range:125,auto:true,flame:true,
+    colpo:'fiamma',bossolo:null,mun:'grosse',kick:.5,kickR:.02,vampa:{len:12,w:5,pts:5,c:['#ff5a1a','#ffb030','#fff0b0'],g:'255,140,40'}},
+  tamburo:{n:'Mitraglietta a tamburo',rar:2,d:'Corta, grassa e affamata: cinquanta colpi nel tamburo, sparati in un lampo.',dmg:10,rate:16,mag:50,res:250,rel:2,spread:7,pel:1,spd:500,range:230,auto:true,
+    colpo:'smg',bossolo:'ottone',mun:'piccole',kick:.8,kickR:.05,vampa:{len:4.5,w:2.8,pts:3}},
+  vapore:{n:'Fucile a vapore',rar:3,d:'Un chiodo di ferro spinto dal vapore: più aspetti tra un colpo e l\'altro, più pressione e più forte colpisce. Passa attraverso quattro zombie.',dmg:70,rate:1.1,mag:5,res:30,rel:2.6,spread:1,pel:1,spd:720,range:380,pierce:4,charge:1.6,
+    colpo:'chiodo',bossolo:null,mun:'grosse',kick:2.2,kickR:.12,vampa:{len:6,w:5,pts:6,c:['#aab8c4','#e2eaf0','#ffffff'],g:'220,230,240'}},
+  risonatore:{n:'Risonatore',rar:4,d:'È caduto da una stella sul camposanto. Libera un\'onda che travolge e respinge tutti gli zombie intorno.',dmg:160,rate:.7,mag:3,res:9,rel:3,spread:0,pel:1,spd:0,range:170,wave:true,slow:.1,
+    colpo:'onda',bossolo:null,mun:'razzi',kick:1.6,kickR:.1,vampa:{len:7,w:7,pts:8,c:['#3fe0b0','#a8ffe0','#ffffff'],g:'120,255,210'}},
   retro:{vampa:{len:9,w:6,pts:7}}};
-const ORDINE=['pistola','revolver','mitraglietta','mitra','mitragliatrice','pompa','tattica','lanciarazzi'];
+const ORDINE=['pistola','revolver','mitraglietta','mitra','mitragliatrice','pompa','tattica','lanciarazzi','tamburo','lanciafiamme','vapore','risonatore'];
 const RAR=[{n:'Comune',c:'#b5b8bb'},{n:'Non comune',c:'#6cc24a'},{n:'Raro',c:'#4d97ff'},{n:'Epico',c:'#b874e6'},{n:'Leggendario',c:'#ffb020'}];
 // a little random generator from a seed, so the same shot always looks the same
 function rnd(seed){let x=(Math.floor(seed*9301+49297)%233280+233280)%233280||1;return()=>{x=(x*9301+49297)%233280;return x/233280}}
@@ -355,7 +436,8 @@ const G_t=()=>typeof G!=='undefined'&&G.t!=null?G.t:performance.now()/1000;
 // ------------------------------------------------------------------ the bullets
 // a bullet in flight: a glowing streak with a dark edge (so it shows on every floor), its head at x,y, flying along dx,dy on the screen
 const COLPI={p9:{len:7,w:1.7,col:'255,214,74',glow:'255,200,80'},p44:{len:10,w:2.5,col:'255,170,70',glow:'255,150,60'},smg:{len:6,w:1.3,col:'255,230,130',glow:'255,215,120'},
-  rif:{len:10,w:1.8,col:'255,240,160',glow:'255,220,120'},lmg:{len:12,w:2.1,col:'255,130,60',glow:'255,110,50'},pal:{len:4.5,w:1.7,col:'255,236,170',glow:'255,220,140'}};
+  rif:{len:10,w:1.8,col:'255,240,160',glow:'255,220,120'},lmg:{len:12,w:2.1,col:'255,130,60',glow:'255,110,50'},pal:{len:4.5,w:1.7,col:'255,236,170',glow:'255,220,140'},
+  chiodo:{len:13,w:1.7,col:'215,228,240',glow:'200,220,255'}};
 function colpo(kind,x,y,dx,dy,a){const B=COLPI[kind]||COLPI.p9,l=Math.hypot(dx,dy)||1,ux=dx/l,uy=dy/l,tx=x-ux*B.len,ty=y-uy*B.len;a=a==null?1:a;
   shine(B.glow,x,y,B.w*3.2,.55*a);ctx.save();ctx.globalAlpha*=a;ctx.lineCap='round';
   ctx.strokeStyle='rgba(27,22,18,.6)';ctx.lineWidth=B.w+1.4;seg([x-ux*B.len*.55,y-uy*B.len*.55],[x,y]);ctx.stroke();
@@ -498,6 +580,9 @@ function suono(id,what,x,dt){if(typeof AU==='undefined'||!AU.ctx||!AU.on.sfx)ret
   else if(what==='ricarica'){
     if(id==='revolver'){clack(t+.05,2700,.34,.1);case_(t+.46,6,.03);for(let i=0;i<6;i++)clack(t+.7+i*.18,2100,.16,.06);clack(t+1.95,1500,.5,.25);for(let i=0;i<6;i++)clack(t+2.04+i*.03,2900,.09,.03)}
     else if(id==='pompa'||id==='tattica'){fNoise(t,.05,'bandpass',1400,1.2,.08)}
+    else if(id==='lanciafiamme'){fNoise(t+.05,.3,'highpass',3000,.8,.12,{f2:1200});fThump(t+R*.3,120,60,.12,.4);M.metal(t+R*.3,.5,300,.6);fThump(t+R*.72,140,70,.1,.4);M.metal(t+R*.72,.4,420,.5);fNoise(t+R*.8,.5,'bandpass',1800,1.2,.1,{f2:600,att:.05});clack(t+R*.95,2200,.4,.2)}
+    else if(id==='vapore'){for(let i=0;i<3;i++)fModal(t+.05+i*.09,VR(1700,.1),[1,2.6],[.06,.04],.05,.1);fNoise(t+R*.4,.6,'highpass',2800,.8,.14,{f2:5200,att:.05});clack(t+R*.75,1500,.5,.25);fThump(t+R*.75,180,90,.06,.3);clack(t+R*.9,2400,.4,.18)}
+    else if(id==='risonatore'){clack(t+.03,900,.4,.2);[60,64,67,72,76].forEach((m,i)=>vBell(null,t+R*.3+i*R*.1,m,1.2,.05));fNoise(t+R*.3,R*.6,'bandpass',800,2,.05,{f2:2600,att:R*.3});clack(t+R*.92,2000,.5,.25)}
     else if(id==='lanciarazzi'){const s=t+.35;fNoise(s+.6,1.1,'bandpass',600,1,.18,{f2:1300,att:.3});clack(s+1.85,500,.6,.4);fThump(s+1.85,120,60,.1,.4);clack(s+2.05,1800,.38,.15)}
     else if(id==='mitragliatrice'){clack(t+.05,700,.5,.4);fNoise(t+.1,.25,'bandpass',900,2,.1,{f2:600});fThump(t+R*.3,140,70,.1,.35);M.metal(t+R*.3,.4,420,.5);
       clack(t+R*.74,650,.6,.3);fThump(t+R*.74,150,70,.08,.35);for(let i=0;i<6;i++)clack(t+R*.8+i*.09,3200,.12,.05);clack(t+R*.98,1600,.55,.25);fNoise(t+R*.98,.05,'bandpass',2500,1.2,.15)}
@@ -512,6 +597,10 @@ function suono(id,what,x,dt){if(typeof AU==='undefined'||!AU.ctx||!AU.on.sfx)ret
     else if(id==='mitragliatrice'){crack(t,VR(2400,.08),.6);fThump(t,VR(115,.05),40,.12,.9,.2);fNoise(t,.12,'lowpass',1500,.8,.5,{brown:true,f2:160});tail(t,.25,.08);fNoise(t+.02,.03,'bandpass',VR(4200,.2),2,.06);clack(t+.03,3400,.12,.08)}
     else if(id==='pompa'||id==='tattica'){const f=id==='tattica';crack(t,VR(f?1800:1500,.06),.75);fThump(t,VR(f?110:95,.05),34,f?.3:.38,1,.35);fNoise(t,f?.36:.45,'lowpass',f?1500:1200,.8,.75,{brown:true,f2:110,rev:.4});
       fNoise(t,.08,'bandpass',600,.8,.4);tail(t,f?.7:.9,.22,.7)}
+    else if(id==='lanciafiamme'){fNoise(t,.13,'bandpass',VR(650,.25),.7,.2,{brown:true,f2:VR(380,.2)});fNoise(t,.08,'highpass',VR(2600,.3),.8,.05);if(Math.random()<.3)fThump(t,VR(70,.1),40,.15,.25,.2)}
+    else if(id==='tamburo'){crack(t,VR(3300,.1),.55);fThump(t,VR(200,.08),80,.06,.6);fNoise(t,.07,'bandpass',VR(1050,.1),1,.32);clack(t+.02,2700,.2,.1)}
+    else if(id==='vapore'){fNoise(t,.55,'highpass',2600,.8,.32,{f2:5200,att:.01});fThump(t,VR(140,.05),55,.18,.85,.25);M.metal(t+.005,.45,VR(620,.05),.6);clack(t+.02,1900,.4,.2);fNoise(t+.12,.6,'bandpass',4200,1.4,.08,{f2:2200,att:.1})}
+    else if(id==='risonatore'){fThump(t,VR(66,.05),26,.7,1,.45);vBell(null,t,40,2.4,.22);vBell(null,t+.04,52,2,.12);vChoir(null,t+.05,[52,59,64],1.6,.07);whoosh(t,.6,260,4200,.35,.3);fNoise(t,.08,'bandpass',3200,1.4,.2)}
     else if(id==='lanciarazzi'){fThump(t,VR(80,.05),30,.4,.9,.3);whoosh(t,.35,500,3200,.45,.2);fNoise(t,.12,'bandpass',900,.8,.5);fNoise(t+.05,.9,'highpass',2500,.7,.18,{f2:6000,att:.05,rev:.3});
       fNoise(t+.05,1,'lowpass',500,.8,.3,{brown:true,f2:200,att:.08})}}}catch(e){}
   AU.pan=0}
@@ -535,7 +624,7 @@ function motore(g,x){if(typeof AU==='undefined'||!AU.ctx)return;const c=AU.ctx,o
 // Times in seconds and how often each gun comes out (values to tune by playing). vuota: how often the hand comes out empty; never in
 // the first `prime` openings, so nobody loses their coins right away
 const BARA={prezzo:750,paga:.8,apre:.95,gira:3.4,offre:8,prende:.6,chiude:.8,scappa:3.5,sotto:1.8,sale:1.3,colpi:13,
-  peso:{pistola:14,revolver:13,mitraglietta:14,pompa:13,mitra:10,tattica:10,mitragliatrice:7,lanciarazzi:4},vuota:.12,prime:2};
+  peso:{pistola:14,revolver:13,mitraglietta:14,pompa:13,mitra:10,tattica:10,mitragliatrice:7,lanciarazzi:4,tamburo:9,lanciafiamme:5,vapore:5,risonatore:1.6},vuota:.12,prime:2};
 const BS=1.9,BH=[[16,4.2],[9,6.6],[-17,3.8],[-17,-3.8],[9,-6.6],[16,-4.2]],HB=6,HL=1.6,YAW=.3,CY=Math.cos(YAW),SY=Math.sin(YAW),LIDA=1.75;
 const bsc=(p,k)=>p.map(q=>[q[0]*k,q[1]*k]),BL=bsc(BH,1.05),BI=bsc(BH,.86),BP=bsc(BH,.72);
 const WOOD=['#3a1c13','#6b3524','#a35a3a'],WOODL=['#4a2416','#7d4129','#b86b45'],FERRO=['#22262c','#454c56','#7d8794'],FODERA=['#4a0f18','#7e1d2c','#b8414f'];

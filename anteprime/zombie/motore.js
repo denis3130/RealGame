@@ -451,6 +451,8 @@ function hurt(z,n,fx){z.hp-=n;z.flash=.12;if(fx)for(let i=0;i<4;i++)W.FX.push({k
   if(z.hp<=0&&!z.die){z.die=.001;W.kills=(W.kills||0)+1;const n2=Math.round((z.reward||W.killCoins||60)*((W.mods&&W.mods.cash)||1));W.coins+=n2;W.FX.push({k:'coin',tw:[z.x,z.y,(z.zh||0)+44*z.sc],n:n2,t:1.1,t0:1.1});if(W.director&&W.director.killed)W.director.killed(z)}}
 function fireShot(ev){const h=W.hero,g=gunState,D=g.D,B=basis(heroDir()*Math.PI/4),zk=RIGK.hzk,pp=window.ARMI&&ARMI.inManoPunti&&ARMI.inManoPunti(W.gunId,B,g.pose(),scrAng(h.aim)),m=pp&&pp.muzzle,
     hw=[h.x,h.y,h.zh||0],ao=HERO3()&&W.muzzle?W.muzzle.slice():m?[m[0]*B.f*zk,(m[1]-8)*zk]:[Math.cos(h.aim)*16,-14+Math.sin(h.aim)*16],ty=-24*RIGK.mzk;
+  // le armi speciali (armi_speciali.js: lanciafiamme, fucile a vapore, Risonatore) fanno il colpo a modo loro
+  if(W.shotHook&&W.shotHook(ev,g,D,{hw,ao,ty}))return;
   for(const da of ev.ang){const a=h.aim+da,dx=Math.cos(a),dy=Math.sin(a);let end=D.range,left=(D.pierce||0)+1;
     for(let s=12;s<D.range;s+=5){const s0=hit(h.x+dx*s,h.y+dy*s,1.5);if(s0&&s0.tag!=='hole'){end=s;break}}// il primo muro sulla linea
     const L=[];for(const z of W.Z){if(z.die||z.rise<1)continue;const rx=z.x-h.x,ry=z.y-h.y,al=rx*dx+ry*dy;if(al<0||al>end)continue;if(Math.abs(rx*dy-ry*dx)<11*z.sc)L.push([al,z])}L.sort((p,q)=>p[0]-q[0]);

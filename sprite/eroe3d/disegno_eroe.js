@@ -365,10 +365,10 @@ function mixPose(A,B,k){const M={...(k<.5?A:B)};for(const key of Object.keys(A))
 // crossbow), else the bow of the card. How it is held (cls): 'one' a hand gun in the right hand, the left hand free at the side; 'long'
 // the right hand on the grip and the left on the fore-grip (or on the pump, which it works); 'shoulder' the rocket launcher on the right
 // shoulder; 'xbow' the crossbow like a long gun; 'staff' upright in the right hand, its foot near the ground, the orb beside the head.
-const WCLS={pistola:'one',revolver:'one',mitraglietta:'long',mitra:'long',mitragliatrice:'long',pompa:'long',tattica:'long',lanciarazzi:'shoulder',balestra:'xbow',bastone:'staff',
+const WCLS={tamburo:'long',lanciafiamme:'long',vapore:'long',risonatore:'long',pistola:'one',revolver:'one',mitraglietta:'long',mitra:'long',mitragliatrice:'long',pompa:'long',tattica:'long',lanciarazzi:'shoulder',balestra:'xbow',bastone:'staff',
   scettro:'staff',martello:'hammer',bomba:'one'};
 // the size of each (1 = the units of the zombie guns' profiles, a little smaller than the game's 2D guns, which are drawn at 1.35)
-const WSZ={pistola:1.22,revolver:1.1,mitraglietta:1.12,mitra:1,mitragliatrice:.92,pompa:.92,tattica:1.02,lanciarazzi:.95,balestra:1,bastone:.95,scettro:.95,martello:1,bomba:1};
+const WSZ={tamburo:1.08,lanciafiamme:.9,vapore:.9,risonatore:1,pistola:1.22,revolver:1.1,mitraglietta:1.12,mitra:1,mitragliatrice:.92,pompa:.92,tattica:1.02,lanciarazzi:.95,balestra:1,bastone:.95,scettro:.95,martello:1,bomba:1};
 // rest: [the right hand (on the grip), pitch (down < 0), yaw (toward the middle < 0)] for standing and walking; aim: the same when it
 // shoots; anc: a point of the weapon at rest, which gives it its place in the draw order (always the same, as for every part)
 const HOLD={one:{rest:[[10,8.6,9.4],-.26,-.2],aim:[[12.6,9.4,12.8],0,-.04],anc:[14,8,9.5]},
@@ -384,10 +384,10 @@ const HOLD={one:{rest:[[10,8.6,9.4],-.26,-.2],aim:[[12.6,9.4,12.8],0,-.04],anc:[
 // orb never covers the face)
 // the shots of one 'shoot' cycle: n shots, the first at off; pump: when the pump goes back and forth after a shot (in parts of the time
 // between two shots); rel: the reload after a shot (rocket, crossbow)
-const FIRE={pistola:{n:3,off:.04},revolver:{n:2,off:.06},mitraglietta:{n:10,off:.02},mitra:{n:6,off:.03},mitragliatrice:{n:12,off:.02},
+const FIRE={tamburo:{n:12,off:.02},lanciafiamme:{n:12,off:.02},vapore:{n:1,off:.08},risonatore:{n:1,off:.1},pistola:{n:3,off:.04},revolver:{n:2,off:.06},mitraglietta:{n:10,off:.02},mitra:{n:6,off:.03},mitragliatrice:{n:12,off:.02},
   pompa:{n:1,off:.08,pump:[.2,.56]},tattica:{n:2,off:.06,pump:[.3,.74]},lanciarazzi:{n:1,off:.12,rel:[.32,.78]},balestra:{n:1,off:.14,rel:[.36,.84]},bastone:{n:1,off:.3},
   scettro:{n:1,off:.3},martello:{n:1,off:.1},bomba:{n:1,off:.1}};
-const KICK={pistola:[1.6,.12],revolver:[2.6,.32],mitraglietta:[.9,.05],mitra:[1.4,.07],mitragliatrice:[1.2,.04],pompa:[3,.2],tattica:[2.4,.18],lanciarazzi:[3.4,.14],balestra:[1.2,.08],bastone:[0,0],
+const KICK={tamburo:[.8,.05],lanciafiamme:[.5,.02],vapore:[2.2,.12],risonatore:[1.6,.1],pistola:[1.6,.12],revolver:[2.6,.32],mitraglietta:[.9,.05],mitra:[1.4,.07],mitragliatrice:[1.2,.04],pompa:[3,.2],tattica:[2.4,.18],lanciarazzi:[3.4,.14],balestra:[1.2,.08],bastone:[0,0],
   scettro:[0,0],martello:[0,0],bomba:[0,0]};
 function weaponOf(S0){if(S0.held==='scettro'||S0.held==='martello'||S0.held==='bomba')return S0.held;if(S0.gun&&WCLS[S0.gun])return S0.gun;if(S0.held==='staff')return'bastone';if(S0.held==='xbow'||S0.weapon==='balestra')return'balestra';if(S0.held===null)return null;return'arco'}
 const dirPY=(pitch,yaw)=>nrm([Math.cos(pitch)*Math.cos(yaw),Math.cos(pitch)*Math.sin(yaw),Math.sin(pitch)]);
