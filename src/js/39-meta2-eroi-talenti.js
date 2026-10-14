@@ -1,5 +1,6 @@
 // ---------- meta 2: heroes, talents, sets, evolutions, missions, achievements, settings ----------
-(function migrate(){const d={sel:'c1',done:{},inf:{best:0,top:[]},best2:{room:0,gold:0},best3:{room:0,gold:0},best4:{room:0,gold:0},hero:'arciere',heroes:{arciere:1},tal:{},
+(function migrate(){const st=SAVE.starter==='cacciatrice'?'cacciatrice':'arciere';// the first hero is the one picked at the first launch (65)
+  const d={sel:'c1',done:{},inf:{best:0,top:[]},best2:{room:0,gold:0},best3:{room:0,gold:0},best4:{room:0,gold:0},hero:st,heroes:{[st]:1},tal:{},
   stats:{kills:{},bosses:{},elites:0,rooms:0,chests:0,dash:0,maxLvl:0,evos:0,gold:0,runs:0,wins:0,nohitAny:0},daily:{day:'',list:[]},free:{next:0,n:0},ach:{},title:null,frame:'base',
   set:{vib:true,left:false,q:'auto',mv:.8,sv:.8}};
   for(const k in d){if(SAVE[k]==null)SAVE[k]=d[k];else if(typeof d[k]==='object'&&!Array.isArray(d[k])&&typeof SAVE[k]==='object')for(const j in d[k])if(SAVE[k][j]==null)SAVE[k][j]=d[k][j]}

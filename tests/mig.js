@@ -5,7 +5,9 @@ const cases={old:JSON.stringify({gold:120,items:{arco_frassino:{lvl:2,cards:3},g
 (async()=>{const b=await chromium.launch();
 for(const [k,v] of Object.entries(cases)){const p=await b.newPage({viewport:{width:390,height:844}});const errs=[];p.on('pageerror',e=>errs.push(e.message+' @'+((e.stack||'').split('\n')[1]||'').trim().slice(-50)));
  await p.addInitScript((v)=>{if(!sessionStorage.getItem('x')){sessionStorage.setItem('x',1);localStorage.setItem('cripta_save_v1',v)}},v);
- await p.goto('file://'+__dirname+'/test.html');await p.waitForTimeout(1500);await p.mouse.click(195,600);await p.waitForTimeout(800);
+ await p.goto('file://'+__dirname+'/test.html');await p.waitForTimeout(1500);
+ // a save that cannot be read is a new player: first the choice of the hero (65-scelta-eroe.js), then the intro
+ if(await p.isVisible('#sceScr')){await p.click('.sceCard[data-id=arciere]',{force:true});await p.waitForTimeout(300);await p.click('.sceGo',{force:true});await p.waitForTimeout(2300)}else{await p.mouse.click(195,600);await p.waitForTimeout(800)}
  const sk=await p.$('#iSkip');if(sk&&await sk.isVisible())await sk.click();await p.waitForTimeout(1200);
  await p.evaluate(()=>__E(`document.querySelectorAll('#sheetScr,#arenaUpScr').forEach(e=>e.hidden=true)`));
  for(const t of ['tabHero','tabGear','tabPets','tabShop','tabRoad','tabProfile','tabPlay']){await p.evaluate(t=>__E(`setTab('${t}')`),t);await p.waitForTimeout(300)}

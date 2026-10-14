@@ -7,7 +7,8 @@ p.on('pageerror',e=>errs.push(e.message+' @'+((e.stack||'').split('\n')[1]||'').
 p.on('console',m=>{if(m.type()==='error')errs.push('console: '+m.text())});
 const today=new Date();const ds=today.getFullYear()+'-'+(today.getMonth()+1)+'-'+today.getDate();
 await p.goto('file://'+__dirname+'/test.html');await p.waitForTimeout(1500);await p.screenshot({path:'fresh_a.png'});
-await p.mouse.click(195,600);await p.waitForTimeout(6000);await p.screenshot({path:'fresh_b.png'});await p.waitForTimeout(22000);await p.screenshot({path:'fresh_c.png'});
+// the first launch now opens on the choice of the hero (65-scelta-eroe.js): pick the Arciere and confirm, the intro starts by itself
+console.log('choice',await p.evaluate(()=>__E(`SCE.on`)));await p.click('.sceCard[data-id=arciere]',{force:true});await p.waitForTimeout(400);await p.click('.sceGo',{force:true});await p.waitForTimeout(8000);await p.screenshot({path:'fresh_b.png'});await p.waitForTimeout(22000);await p.screenshot({path:'fresh_c.png'});
 console.log('afterIntro',await p.evaluate(()=>__E(`JSON.stringify({intro:INTRO.on,menu:!$('menu').hidden,save:SAVE})`)));
 await p.waitForTimeout(1500);await p.screenshot({path:'fresh_d.png'});
 const boot=await p.evaluate(()=>__E(`({menu:!$('menu').hidden,intro:INTRO.on,sel:SAVE.sel,open:modeOpen(SAVE.sel||'arena')})`));
