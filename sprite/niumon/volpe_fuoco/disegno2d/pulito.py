@@ -127,40 +127,95 @@ def sprite(warp=None, key=None, shift=0.0, xf=None, blink=False, muso=True, full
         # contorno: rosso scurissimo vicino alle fiamme e alle calze, marrone scuro vicino al pelo
         nb = [idx[y + dy, x + dx] for dy, dx in ((-1, 0), (1, 0), (0, -1), (0, 1)) if 0 <= y + dy < H and 0 <= x + dx < W and op[y + dy, x + dx]]
         lab[y, x] = 'r4' if (nb and np.mean(nb) <= 3.2) else 'ol'
-    if muso: volto(lab, op, xf=xf, blink=blink)
+    if muso:
+        rifai_pelo(lab, op, idx, edge, xf)
+        volto(lab, op, xf=xf, blink=blink)
     if full: return lab, op, idx
     return lab, op
 
+# zone del muso nel disegno (centro, mezzi assi in pixel del disegno): lì il disegno ha occhi, bocca, naso e i loro tratti scuri.
+# Nello sprite queste zone tornano pelo (sfumato dai pixel intorno) e sopra si mettono i timbri: così niente avanzi del disegno
+# intorno agli occhi, che sembravano uscire dal muso.
+ZONE = [((471, 602), (66, 70)), ((303, 593), (36, 64)), ((372, 696), (52, 38)), ((346, 651), (20, 16))]
+
+def rifai_pelo(lab, op, idx, edge, xf=None):
+    yy, xx = np.mgrid[0:H, 0:W] + 0.5
+    zone = np.zeros((H, W), bool)
+    for (cx, cy), (rx, ry) in ZONE:
+        sx, sy = to_sprite(cx, cy, xf)
+        zone |= ((xx - sx) / (rx / K)) ** 2 + ((yy - sy) / (ry / K)) ** 2 <= 1
+    zone &= op & ~edge
+    have = op & ~zone
+    val = np.where(have, idx, 0).astype(float)
+    k3 = np.ones((3, 3))
+    for _ in range(30):
+        miss = zone & ~have
+        if not miss.any(): break
+        s_ = nd.convolve(val * have, k3, mode='constant'); c_ = nd.convolve(have.astype(float), k3, mode='constant')
+        new = miss & (c_ > 0)
+        val[new] = s_[new] / c_[new]; have |= new
+    # una passata di media dentro la zona, poi il tono più vicino
+    s_ = nd.convolve(val * op, k3, mode='constant'); c_ = nd.convolve(op.astype(float), k3, mode='constant')
+    sm = np.where(zone, s_ / np.maximum(c_, 1), val)
+    nz = np.clip(np.round(sm), 0, len(SCALA) - 1).astype(int)
+    idx[zone] = nz[zone]
+    for y, x in zip(*np.nonzero(zone)): lab[y, x] = SCALA[idx[y, x]]
+
 # ------------------------------------------------------------------ il muso, a mano (misurato sul disegno)
-OCCHIO_VICINO = [
+OCCHIO_VICINO = [          # 8x10, come l'occhio vicino del disegno
     "..KKKK..",
     ".KKKKKK.",
-    "KWWDKDDK",
-    "KWWDKKDK",
-    "KDRKKKRK",
+    "KKDDDWWK",
+    "KDDKKWWK",
+    "KDKKKDDK",
+    "KRKKKRRK",
     "KRRKKRRK",
-    "KRYRRYWK",
-    ".KYYYYK.",
+    "KORRRROK",
+    ".kOYYOk.",
+    "..kkkk..",
+]
+OCCHIO_LONTANO = [         # 4x8: l'occhio lontano, stretto perché il muso è girato
+    ".KK.",
+    "KKKK",
+    "KWKK",
+    "KKDK",
+    "KKRK",
+    "KRRK",
+    "KOOK",
+    ".kk.",
+]
+CHIUSO_VICINO = ["K......K", ".KKKKKK."]
+CHIUSO_LONTANO = ["K..K", ".KK."]
+MEZZO_VICINO = [           # a metà: la palpebra scende sull'occhio (per un battito di ciglia morbido)
+    "........",
+    "........",
+    "........",
     "..KKKK..",
+    ".KKKKKK.",
+    "KDKKKKDK",
+    "KRKKKRRK",
+    "KORRRROK",
+    ".kOYYOk.",
+    "..kkkk..",
 ]
-OCCHIO_LONTANO = [
-    ".K.",
-    "KKK",
-    "KWK",
-    "KKK",
-    "KRK",
-    "KYK",
-    ".K.",
+MEZZO_LONTANO = [
+    "....",
+    "....",
+    ".KK.",
+    "KKKK",
+    "KKRK",
+    "KRRK",
+    "KOOK",
+    ".kk.",
 ]
-CHIUSO_VICINO = ["K......K", ".KK..KK.", "...KK..."]
-CHIUSO_LONTANO = ["K..", ".KK"]
-BOCCA = [
-    "KKKKK",
-    "KMMMK",
-    ".KTTK",
-    "..KK.",
+BOCCA = [                  # bocca aperta col sorriso che sale a sinistra e la lingua in fondo
+    "KK....",
+    ".KKKKK",
+    ".KMMMK",
+    "..KTTK",
+    "...KK.",
 ]
-COL = {'K': 'ek', 'W': 'ew', 'D': 'e1', 'R': 'e2', 'Y': 'e3', 'M': 'mo', 'T': 'to', 'N': 'r3', 'B': 'bl'}
+COL = {'K': 'ek', 'k': 'e0', 'W': 'ew', 'D': 'e1', 'R': 'e2', 'O': 'e3', 'Y': 'e4', 'M': 'mo', 'T': 'to', 'N': 'r3', 'B': 'bl'}
 
 def timbro(lab, op, rows, cx, cy, mirror=False):
     h, w = len(rows), len(rows[0]); x0 = int(round(cx - w / 2)); y0 = int(round(cy - h / 2))
@@ -172,18 +227,20 @@ def timbro(lab, op, rows, cx, cy, mirror=False):
             if 0 <= y < H and 0 <= x < W and op[y, x]: lab[y, x] = COL[ch]
 
 def volto(lab, op, xf=None, blink=False):
-    fx, fy = to_sprite(472, 600, xf)            # occhio vicino
-    gx, gy = to_sprite(304, 592, xf)            # occhio lontano
-    if blink:
-        timbro(lab, op, CHIUSO_VICINO, fx, fy + 1.5); timbro(lab, op, CHIUSO_LONTANO, gx, gy + 1.5)
-    else:
-        timbro(lab, op, OCCHIO_VICINO, fx, fy); timbro(lab, op, OCCHIO_LONTANO, gx, gy)
+    bx, by = to_sprite(546, 636, xf)            # guancia (prima degli occhi: l'occhio vince sempre)
+    timbro(lab, op, ["BBB"], bx, by)
     nx, ny = to_sprite(346, 651, xf)            # naso
     timbro(lab, op, ["NN"], nx, ny)
-    mx, my = to_sprite(392, 694, xf)            # bocca aperta con la lingua
+    mx, my = to_sprite(375, 698, xf)            # bocca aperta con la lingua
     timbro(lab, op, BOCCA, mx, my)
-    bx, by = to_sprite(534, 632, xf)            # guancia
-    timbro(lab, op, ["BBB"], bx, by)
+    fx, fy = to_sprite(471, 602, xf)            # occhio vicino (centro misurato sul disegno)
+    gx, gy = to_sprite(303, 593, xf)            # occhio lontano
+    if blink == 'mezzo':
+        timbro(lab, op, MEZZO_VICINO, fx, fy); timbro(lab, op, MEZZO_LONTANO, gx, gy)
+    elif blink:
+        timbro(lab, op, CHIUSO_VICINO, fx, fy + 2.0); timbro(lab, op, CHIUSO_LONTANO, gx, gy + 2.0)
+    else:
+        timbro(lab, op, OCCHIO_VICINO, fx, fy); timbro(lab, op, OCCHIO_LONTANO, gx, gy)
 
 def render(lab, op, scale=1, bg=None):
     rgb = np.zeros((H, W, 4), np.uint8)

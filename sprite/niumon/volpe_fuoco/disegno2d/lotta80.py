@@ -1,9 +1,11 @@
 """Gli sprite della lotta in pixel art pulita, 80x80, come nello screenshot di riferimento di Denis (pixel grossi, pochi toni):
 - davanti (l'avversario): dal disegno (pulito.py), fermo di 4 fotogrammi a 6 al secondo (coda e cresta che fiammeggiano, la testa
-  e il petto che scendono di un pixel col respiro, braci che salgono) più un fotogramma a occhi chiusi da mettere ogni tanto;
+  e il petto che scendono di un pixel col respiro, braci che salgono) più due fotogrammi per il battito di ciglia (occhi chiusi e a
+  metà: mezzi, chiusi, mezzi, ogni tanto);
 - di spalle (il proprio Niumon, in primo piano): visto dalla parte opposta la sagoma è la stessa del disegno, specchiata; dentro
-  si ridipinge quello che cambia: la nuca al posto del muso (pelo con la luce in alto e le lingue della cresta che scendono), il
-  dietro delle orecchie, il petto chiaro che non si vede. Stessa animazione.
+  si ridipinge quello che cambia: la testa tonda da dietro (la bocca aperta del disegno si chiude; pelo a sfera con la luce in alto
+  a destra e l'ombra sotto le fiamme della cresta), il dietro delle orecchie (pelo col bordo rosso e una linea dove toccano
+  cresta e testa), il petto chiaro che non si vede. Stessa animazione.
 Uso: python3 lotta80.py [cartella]   -> lotta_davanti.png/.json e lotta_spalle.png/.json"""
 import numpy as np, cv2, os, sys, json
 from PIL import Image
@@ -84,61 +86,56 @@ MUSO = [(310, 470), (390, 485), (460, 492), (535, 482), (590, 470), (630, 530), 
 ORECCHIO_V = [(700, 255), (725, 390), (710, 470), (675, 560), (630, 590), (590, 475), (575, 420), (620, 340)]
 ORECCHIO_L = [(300, 240), (355, 370), (350, 470), (310, 475), (260, 520), (240, 490), (245, 390)]
 PETTO = [(345, 755), (495, 740), (510, 840), (460, 910), (380, 880), (340, 820)]
-# punte della cresta che scendono sulla nuca: (posizione lungo la testa 0..1, quanto scendono in pixel, larghezza 0..1)
-LINGUE = [(0.18, 5.0, 0.13), (0.42, 6.5, 0.14), (0.66, 4.5, 0.12)]
+DISCO = np.array([[0, 1, 1, 1, 0], [1, 1, 1, 1, 1], [1, 1, 1, 1, 1], [1, 1, 1, 1, 1], [0, 1, 1, 1, 0]], bool)
 
 def spalle(i):
     t = i / N; b = RESPIRO[i]
     lab, op, idx = Q.sprite(warp=warp_fermo(t, b), key=('f', i), muso=False, full=True)
     lab = lab[:, ::-1].copy(); op = op[:, ::-1].copy(); idx = idx[:, ::-1].copy()
+    yy, xx = np.mgrid[0:H, 0:W].astype(float)
+    head = poli(MUSO, b)
+    # da dietro la testa è tonda: si chiude la bocca aperta del disegno (la tacca tra il muso e il mento)
+    zona = nd.binary_dilation(head, iterations=3)
+    nuovi = nd.binary_closing(op, structure=DISCO) & zona & ~op
+    op = op | nuovi
     outer = op & ~nd.binary_erosion(op, structure=Q.N4)
     inner = op & ~outer
-    yy, xx = np.mgrid[0:H, 0:W].astype(float)
+    for y, x in zip(*np.nonzero(outer & (nuovi | nd.binary_dilation(nuovi, structure=Q.N4)))): lab[y, x] = 'ol'
     # la nuca: pelo con la luce in alto a destra (la luce del disegno, specchiata), più scuro verso il collo
-    mu = poli(MUSO, b) & inner
+    mu = (head | nuovi) & inner
     ys, xs = np.nonzero(mu)
     cx, cy = xs.mean(), ys.min() + 0.42 * np.ptp(ys); rx, ry = np.ptp(xs) / 2 + 1, np.ptp(ys) / 2 + 1
     u = (xx - cx) / rx; v = (yy - cy) / ry
     d = nd.distance_transform_edt(np.pad(op, 1))[1:-1, 1:-1]
-    sh = 0.52 + 0.20 * u - 0.30 * v - 0.10 * np.clip(v, 0, 1) ** 2
-    sh += 0.16 * (d <= 1.5) * (u > -0.2) * (v < 0.2)                   # filo di luce sul bordo in alto a destra
-    tono = np.where(sh < 0.26, 3, np.where(sh < 0.42, 4, np.where(sh < 0.64, 5, 6)))
+    # come una palla di pelo in pixel art: tono pieno, filo di luce sul bordo verso la luce (in alto a destra), ombra sul bordo
+    # opposto e in basso verso il collo; niente strisce
+    dm = nd.distance_transform_edt(np.pad(mu, 1))[1:-1, 1:-1]
+    gy_, gx_ = np.gradient(nd.gaussian_filter(dm, 0.8))
+    nn = np.hypot(gx_, gy_) + 1e-6; nx_, ny_ = -gx_ / nn, -gy_ / nn
+    lit = nx_ * 0.6 + ny_ * -0.8
+    # da dietro la testa è un po' più scura del muso (arancio pieno): luce a mezzaluna in alto a destra, ombra sul bordo opposto
+    tono = np.full((H, W), 4)
+    tono[(dm <= 4.0) & (lit > 0.05) & (v < 0.35)] = 5
+    tono[(dm <= 1.6) & (lit > 0.40) & (v < 0.25)] = 6
+    tono[((dm <= 2.4) & (lit < -0.30)) | (v > 0.82)] = 3
     for y, x in zip(ys, xs): lab[y, x] = Q.SCALA[tono[y, x]]; idx[y, x] = tono[y, x]
-    # la cresta vista da dietro copre la parte alta della testa e scende a lingue (all'indietro, verso di noi e a sinistra)
-    x_min, x_max = xs.min(), xs.max(); hh = np.ptp(ys) + 1
-    top = np.full(W, -1)
-    for x in range(x_min, x_max + 1):
-        c = np.nonzero(mu[:, x])[0]
-        if len(c): top[x] = c.min()
-    cover = np.zeros((H, W), bool)
-    for x in range(x_min, x_max + 1):
-        if top[x] < 0: continue
-        f = (x - x_min) / max(x_max - x_min, 1)
-        ln = hh * 0.30
-        for (fc, a_, wd) in LINGUE:                        # punte che scendono
-            ln += a_ * max(0.0, 1 - abs(f - fc) / wd) ** 1.6
-        ln -= 2.0 * f                                      # verso destra (il muso, lontano) la cresta copre meno
-        for y in range(top[x], min(H, int(top[x] + ln + 0.5))):
-            if mu[y, x]: cover[y, x] = True
-    # bordo in basso della cresta: rosso; dentro dal rosso arancio all'arancio
-    lower = cover & ~np.vstack([cover[1:], np.zeros((1, W), bool)])
-    dist = nd.distance_transform_edt(np.pad(cover, 1))[1:-1, 1:-1]
-    for y, x in zip(*np.nonzero(cover)):
-        dl = 0
-        while y - dl - 1 >= 0 and cover[y - dl - 1, x] and not lower[y, x] and dl < 9: dl += 1
-        # distanza dal bordo in basso (contando in su dalla punta)
-        db = 0
-        while y + db + 1 < H and cover[y + db + 1, x]: db += 1
-        lab[y, x] = 'r1' if db == 0 else ('r0' if db <= 2 else ('o1' if db <= 4 else 'o0'))
-    # il dietro delle orecchie: niente rosso scuro di dentro, pelo rosso arancio col bordo più scuro
+    # la cresta da dietro: le fiamme salgono dalla testa (la sagoma del disegno); sulla nuca solo l'ombra sotto la loro base
+    sopra = op & ~mu & (yy < cy)
+    ombra = mu & nd.binary_dilation(sopra, structure=Q.N4)
+    for y, x in zip(*np.nonzero(ombra)):
+        lab[y, x] = Q.SCALA[max(3, idx[y, x] - 1)]
+    # il dietro delle orecchie: pelo rosso arancio col bordo più scuro (niente rosso scuro di dentro), e una linea dove
+    # l'orecchio si attacca alla testa, così si stacca dalla cresta
+    dd = nd.distance_transform_edt(np.pad(op, 1))[1:-1, 1:-1]
     for P_ in (ORECCHIO_V, ORECCHIO_L):
-        em = poli(P_, b) & inner
-        de = nd.distance_transform_edt(np.pad(em | ~op, 1))[1:-1, 1:-1]
-        dd = nd.distance_transform_edt(np.pad(op, 1))[1:-1, 1:-1]
+        em = poli(P_, b) & inner & ~mu
+        if not em.any(): continue
+        de = nd.distance_transform_edt(np.pad(em, 1))[1:-1, 1:-1]          # dal bordo dell'orecchio
         for y, x in zip(*np.nonzero(em)):
-            if idx[y, x] <= 2 or lab[y, x] in ('r4', 'il', 'r3', 'r2'):
-                c = 'r1' if dd[y, x] <= 1.5 else ('r0' if dd[y, x] <= 3 else 'o1')
-                lab[y, x] = c
+            e = min(dd[y, x], de[y, x])
+            lab[y, x] = 'r1' if e <= 1.2 else ('r0' if e <= 2.4 else ('o1' if e <= 3.6 else 'o0'))
+        bordo = em & nd.binary_dilation(inner & ~em, structure=Q.N4)     # dove tocca cresta o testa: una linea
+        for y, x in zip(*np.nonzero(bordo)): lab[y, x] = 'r4'
     # il petto chiaro non si vede da dietro
     pe = poli(PETTO, b) & inner
     for y, x in zip(*np.nonzero(pe)):
@@ -163,9 +160,10 @@ if __name__ == '__main__':
     comune = dict(category='creature_battle', frame_width=W, frame_height=H, fps=FPS, loop=True, pivot=piv, anchor=piv, w=W, h=H,
                   source='disegno di Denis (13 ottobre): pixel art pulita come lo screenshot della lotta', version='0.6-pixel-pulita',
                   status='da approvare', scala_consigliata='avversario 1x, il tuo 3x (pixel grossi come nello screenshot)')
-    f = [fronte(i) for i in range(N)] + [fronte(0, blink=True)]
+    f = [fronte(i) for i in range(N)] + [fronte(0, blink=True), fronte(0, blink='mezzo')]
     e1 = foglio(f, 'lotta_davanti', dict(asset_id='creature_volpefuoco_battle_front_idle', animation='idle', direction='front',
-                                          frames=N + 1, n=N + 1, giro=N, occhi_chiusi=N, **comune))
+                                          frames=N + 2, n=N + 2, giro=N, occhi_chiusi=N, occhi_mezzi=N + 1,
+                                          battito='mezzi, chiusi, mezzi (0,06 s, 0,10 s, 0,06 s) ogni 2-5 s', **comune))
     piv_s = [W - 1 - piv[0], piv[1]]
     s = [spalle(i) for i in range(N)]
     c2 = dict(comune); c2.update(pivot=piv_s, anchor=piv_s)

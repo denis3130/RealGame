@@ -114,8 +114,8 @@ button:focus-visible{outline:3px solid var(--gold);outline-offset:2px}
     <h2 id="hVic">Gli sprite da vicino</h2>
     <p class="dim">80×80 pixel, pochi toni piatti e il contorno scuro, come gli sprite del tuo screenshot. Nella scena quella selvatica è a un pixel per pixel, la tua a tre.</p>
     <div class="row">
-      <figure class="fig"><canvas id="zDav" aria-label="Lo sprite davanti, animato"></canvas><figcaption><b>Davanti · l'avversario</b>Dal tuo disegno. Fermo di 4 fotogrammi, ogni tanto chiude gli occhi.</figcaption></figure>
-      <figure class="fig"><canvas id="zSpa" aria-label="Lo sprite di spalle, animato"></canvas><figcaption><b>Di spalle · la tua</b>Sagoma del tuo disegno vista dall'altra parte: nuca, cresta e orecchie da dietro.</figcaption></figure>
+      <figure class="fig"><canvas id="zDav" aria-label="Lo sprite davanti, animato"></canvas><figcaption><b>Davanti · l'avversario</b>Dal tuo disegno. Occhi rifatti a mano dentro il muso; ogni tanto sbatte le palpebre (a metà, chiuse, a metà).</figcaption></figure>
+      <figure class="fig"><canvas id="zSpa" aria-label="Lo sprite di spalle, animato"></canvas><figcaption><b>Di spalle · la tua</b>Sagoma del tuo disegno vista dall'altra parte: testa tonda da dietro, orecchie col bordo, cresta che sale.</figcaption></figure>
       <figure class="fig old"><canvas id="zOld" aria-label="Lo sprite di prima"></canvas><figcaption><b>Prima</b>Il disegno rimpicciolito a 192×192: tanti colori e il tratteggio della matita.</figcaption></figure>
     </div>
   </section>
@@ -230,7 +230,7 @@ function fit(){const D=Math.min(2,window.devicePixelRatio||1),w=Math.round(cv.cl
 
 function drawSprite(c,t){const sh=S[c.key];if(!sh.img||c.alpha<=0)return;
   let f=reduce?0:Math.floor(t*sh.fps)%sh.giro;
-  if(c===FOE&&sh.occhi_chiusi!=null&&c.blinkT<=0)f=sh.occhi_chiusi;
+  if(c===FOE&&sh.occhi_chiusi!=null&&c.blinkT<=0){const bt=-c.blinkT;f=(sh.occhi_mezzi!=null&&(bt<.06||bt>.16))?sh.occhi_mezzi:sh.occhi_chiusi}
   const k=Math.max(1,Math.round(c.sc*s)),sx=c.shake?Math.round(Math.sin(t*90)*c.shake*s):0;
   const X=Math.round((c.x+c.lx)*s)-sh.anchor[0]*k+sx,Y=Math.round((c.y+c.ly+c.sink)*s)-sh.anchor[1]*k;
   // ombra a terra
@@ -298,7 +298,7 @@ function frame(now){const dt=Math.min(.05,(now-last)/1000);last=now;if(!reduce)T
   const vg=g.createRadialGradient(W*.52,H*.45,H*.25,W*.52,H*.5,W*.7);vg.addColorStop(0,'rgba(0,0,0,0)');vg.addColorStop(1,'rgba(2,5,9,.62)');g.fillStyle=vg;g.fillRect(0,0,W,H);
   // tempi
   for(const c of[FOE,ME]){c.flash=Math.max(0,c.flash-dt*3.2);c.shake=Math.max(0,c.shake-dt*10)}
-  FOE.blinkT-=dt;if(FOE.blinkT<-.18)FOE.blinkT=2.2+Math.random()*2.5;
+  FOE.blinkT-=dt;if(FOE.blinkT<-.22)FOE.blinkT=2.2+Math.random()*2.5;
   requestAnimationFrame(frame)}
 
 // ------------------------------------------------------------------ la lotta
@@ -348,7 +348,8 @@ btns.forEach((b,i)=>b.addEventListener('click',()=>turn(i)));
 // ------------------------------------------------------------------ da vicino
 function zoom(id,key,blink){const c=$(id),gg=c.getContext('2d');return t=>{const sh=S[key];if(!sh.img)return;const D=Math.min(2,devicePixelRatio||1),w=Math.round(c.clientWidth*D);
   if(c.width!==w){c.width=c.height=w}gg.clearRect(0,0,w,w);let k=Math.floor((w-12*D)/sh.w);const smooth=k<1;if(smooth)k=(w-12*D)/sh.w;
-  let f=reduce?0:Math.floor(t*sh.fps)%(sh.giro||sh.n);if(blink&&sh.occhi_chiusi!=null&&(t%3.4)>3.2)f=sh.occhi_chiusi;
+  let f=reduce?0:Math.floor(t*sh.fps)%(sh.giro||sh.n);const bt=(t%3.4)-3.18;
+  if(blink&&sh.occhi_chiusi!=null&&bt>0)f=(sh.occhi_mezzi!=null&&(bt<.06||bt>.16))?sh.occhi_mezzi:sh.occhi_chiusi;
   const x=Math.round((w-sh.w*k)/2),y=Math.round((w-sh.h*k)/2);gg.imageSmoothingEnabled=smooth;gg.drawImage(sh.img,f*sh.w,0,sh.w,sh.h,x,y,sh.w*k,sh.h*k)}}
 const Z=[zoom('zDav','davanti',true),zoom('zSpa','spalle'),zoom('zOld','prima')];
 (function zl(now){const t=reduce?0:now/1000;Z.forEach(z=>z(t));requestAnimationFrame(zl)})(performance.now());

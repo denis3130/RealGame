@@ -76,8 +76,8 @@ scena. Denis ha confermato («sì») che «più vero» vuol dire come quegli spr
   resta), si fa la media nel blocco e si arrotonda: zone piatte con bordi puliti; pixel soli tolti; contorno di un pixel (marrone
   scuro sul pelo, rosso scurissimo vicino a fiamme e calze); linee interne solo dai tratti scuri più lunghi del disegno; i buchetti
   bianchi degli occhi del disegno si chiudono; occhi, naso, bocca con la lingua e guancia sono timbri fatti a mano.
-- `disegno2d/lotta80.py` → `solo2d/lotta_davanti` (l'avversario: 4 fotogrammi a 6 al secondo più uno a occhi chiusi da mettere
-  ogni tanto; coda e cresta che fiammeggiano, testa e petto che scendono di un pixel col respiro, dita sulle zampe, braci che
+- `disegno2d/lotta80.py` → `solo2d/lotta_davanti` (l'avversario: 4 fotogrammi a 6 al secondo più due per il battito di ciglia,
+  occhi chiusi e a metà; coda e cresta che fiammeggiano, testa e petto che scendono di un pixel col respiro, dita sulle zampe, braci che
   salgono) e `solo2d/lotta_spalle` (il tuo, di spalle). Il disegno c'è solo davanti: vista dalla parte opposta la sagoma è la
   stessa, specchiata, quindi lo sprite di spalle è la sagoma del disegno girata, ridipinta dentro: la nuca al posto del muso
   (pelo con la luce in alto e la cresta che scende a punte rosse), il dietro delle orecchie, niente petto chiaro. Il burattino 2D
@@ -89,6 +89,14 @@ scena. Denis ha confermato («sì») che «più vero» vuol dire come quegli spr
   (Fiammata, Graffio, Braci, Coda ardente) con gli effetti, lampo e scossa quando colpisce, turno dell'avversario, esausta e
   un'altra che esce dalla nebbia. Sul telefono in verticale le mosse scendono sotto la scena; girato, la scena prende tutto lo
   schermo. Sotto: i due sprite da vicino e quello di prima.
+- Poi Denis: «ci sei quasi miglioralo di schiena e quei cazzo di occhi rendili fluidi cioè in linea col niumon non che
+  strabordino». Gli occhi sembravano uscire dal muso perché intorno ai timbri restavano pezzi degli occhi del disegno (rossi e
+  scuri): ora le zone di occhi, bocca e naso tornano pelo prima dei timbri (`pulito.rifai_pelo`, sfumato dai pixel intorno) e gli
+  occhi sono rifatti a mano più tondi, come quelli del disegno (palpebra scura sopra, sotto un contorno rosso scuro più morbido,
+  iride dal rosso scuro al giallo, pupilla grande, luce in alto a destra; il lontano stretto); la guancia non tocca più l'occhio;
+  il battito di ciglia passa da metà (`MEZZO_*`): mezzi, chiusi, mezzi. Di spalle: la testa da dietro è tonda (si chiude la bocca
+  aperta del disegno), arancio pieno con la luce a mezzaluna in alto a destra e l'ombra sul bordo opposto e verso il collare,
+  l'ombra sotto le fiamme della cresta; le orecchie da dietro sono pelo col bordo rosso e una linea dove toccano cresta e testa.
 - Da fare se Denis approva: un disegno suo da dietro renderebbe lo sprite di spalle esatto; poi la mappa in 4 direzioni a 64 px
   (come il piano) da un turnaround della volpe, con le stesse regole.
 
