@@ -117,3 +117,7 @@ function voxPlay(e,kind){const V=VOX[e.type];if(!V||!V[kind]||!AU.ctx||!AU.on.sf
     if(V.s&&V.px){if(e.vxX==null){e.vxX=e.x;e.vxY=e.y;e.vxD=0}const d=Math.hypot(e.x-e.vxX,e.y-e.vxY);e.vxX=e.x;e.vxY=e.y;if(d<20){e.vxD+=d;if(e.vxD>=V.px){e.vxD=0;const ac=AU.ctx.currentTime;if(ac-EVA.lastS>.07&&(!P||Math.hypot(e.x-P.x,e.y-P.y)<300)){EVA.lastS=ac;const k=enemyAt(e);try{withVol(k,()=>V.s(ac+.01))}catch(er){}}}}}}}catch(er){}}}
 // the death cry over the material's sound (the bones, the goo and the stone keep theirs)
 {const _s=sfx;sfx=function(k,arg,x){const r=_s.apply(this,arguments);if(k==='death'&&arg&&VOX[arg]&&VOX[arg].d&&AU.ctx&&AU.on.sfx){try{const t=AU.ctx.currentTime+.02;withVol(.8,()=>VOX[arg].d(t))}catch(e){}}return r}}
+// the zombies on the path behind the campfire groan with the same voice as the ones on the map (far away: soft, with much room in it)
+if(typeof sndZGroan==='function'){const _g=sndZGroan;sndZGroan=function(z){if(typeof ZV==='undefined'||!AU.ctx||!AU.on.sfx||$('menu').hidden)return _g.apply(this,arguments);
+  try{const K=(typeof ZM!=='undefined'&&ZM.audio&&ZM.audio.KV[z.kind])||{f:[78,112],fm:[[430,940]],rasp:.5,br:.4},f=K.f[0]+(K.f[1]-K.f[0])*Math.random(),t=AU.ctx.currentTime+.02;
+    AU.pan=Math.max(-.8,Math.min(.8,(z.x-180)/180*.8));ZV.voice(t,f,f*VR(.76,.06),VR(1.3,.2),K.fm[Math.floor(Math.random()*K.fm.length)],{vol:.05,att:.3,rasp:K.rasp,breath:K.br,rev:.75,fd:.85});AU.pan=0}catch(e){}}}

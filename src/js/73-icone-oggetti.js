@@ -26,7 +26,7 @@ function gem(x,cx,cy,r,col,shape){const pts=shape==='round'?null:shape==='heart'
   x.strokeStyle='rgba(255,255,255,.3)';x.lineWidth=1;x.beginPath();x.moveTo(cx,cy-r);x.lineTo(cx-r*.3,cy+r);x.moveTo(cx,cy-r);x.lineTo(cx+r*.35,cy+r);x.stroke();x.restore();
   x.fillStyle='#fff';x.beginPath();x.arc(cx-r*.35,cy-r*.35,Math.max(1.2,r*.16),0,TAU);x.fill()}
 // a ring seen three quarters: the band (an ellipse with a hole), its metal in three tones, the inside darker
-function ring(x,cx,cy,rx,ry,w,col){const path=()=>{x.beginPath();x.ellipse(cx,cy,rx,ry,0,0,TAU);x.ellipse(cx,cy+1,rx-w,ry-w*.62,0,0,TAU,true)};
+function iRing(x,cx,cy,rx,ry,w,col){const path=()=>{x.beginPath();x.ellipse(cx,cy,rx,ry,0,0,TAU);x.ellipse(cx,cy+1,rx-w,ry-w*.62,0,0,TAU,true)};
   paint(x,path,col,{box:[cx-rx,cy-ry,cx+rx,cy+ry],kl:.5,kd:.5,lw:3,rim:false});x.fillStyle=idk(col,.55);x.beginPath();x.ellipse(cx,cy+1,rx-w,ry-w*.62,0,Math.PI*1.05,Math.PI*1.95);x.ellipse(cx,cy+1+w*.35,rx-w,ry-w*.62,0,Math.PI*1.95,Math.PI*1.05,true);x.fill();
   x.strokeStyle='rgba(255,252,240,.7)';x.lineWidth=1.6;x.beginPath();x.ellipse(cx,cy,rx-w*.45,ry-w*.3,0,Math.PI*.95,Math.PI*1.45);x.stroke()}
 // a cord or a chain hanging from the top of the square to the pendant
@@ -81,16 +81,16 @@ const ITART={
     for(const s of[-1,1])paint(x,()=>{x.beginPath();x.ellipse(48+s*20,23,10,7,s*.35,0,TAU)},'#4a2018',{lw:2.4,rim:false,box:[48+s*20-10,16,48+s*20+10,30]})},
   // the rings: copper with an engraved line; silver with the blue gem between two little wings; silver with the gem of the wind and its
   // streaks; gold with a cluster of ice
-  anello_rame:x=>{ishadow(x,48,82,24,4);ring(x,48,56,26,20,8,'#c87533');x.strokeStyle='rgba(90,40,10,.55)';x.lineWidth=1.2;x.setLineDash([3,2.4]);x.beginPath();x.ellipse(48,56,22,16.5,0,Math.PI*.15,Math.PI*.85);x.stroke();x.setLineDash([])},
-  anello_brace:x=>{ishadow(x,48,84,24,4);iglow(x,'255,122,46',48,36,28,.4);ring(x,48,60,25,18,7.5,'#c87533');paint(x,()=>{x.beginPath();x.ellipse(48,42,10,6,0,0,TAU)},'#8a4a20',{lw:2.4,rim:false});
+  anello_rame:x=>{ishadow(x,48,82,24,4);iRing(x,48,56,26,20,8,'#c87533');x.strokeStyle='rgba(90,40,10,.55)';x.lineWidth=1.2;x.setLineDash([3,2.4]);x.beginPath();x.ellipse(48,56,22,16.5,0,Math.PI*.15,Math.PI*.85);x.stroke();x.setLineDash([])},
+  anello_brace:x=>{ishadow(x,48,84,24,4);iglow(x,'255,122,46',48,36,28,.4);iRing(x,48,60,25,18,7.5,'#c87533');paint(x,()=>{x.beginPath();x.ellipse(48,42,10,6,0,0,TAU)},'#8a4a20',{lw:2.4,rim:false});
     gem(x,48,35,10,'#ff7a2e','round');iglow(x,'255,220,120',46,33,6,.7);for(const[cx,cy] of[[34,18],[60,14],[66,26],[30,30]]){x.fillStyle='#ffb04a';x.beginPath();x.arc(cx,cy,1.5,0,TAU);x.fill()}},
-  anello_falco:x=>{ishadow(x,48,84,24,4);ring(x,48,60,25,18,7.5,'#c9cfd6');
+  anello_falco:x=>{ishadow(x,48,84,24,4);iRing(x,48,60,25,18,7.5,'#c9cfd6');
     for(const s of[-1,1])paint(x,()=>{x.beginPath();x.moveTo(48+s*8,38);x.quadraticCurveTo(48+s*24,26,48+s*30,32);x.quadraticCurveTo(48+s*22,34,48+s*24,40);x.quadraticCurveTo(48+s*16,40,48+s*8,44);x.closePath()},'#e8ecf0',{lw:2.2,rim:false,box:[30,26,66,44]});
     paint(x,()=>{x.beginPath();x.ellipse(48,42,10,6,0,0,TAU)},'#9aa3ad',{lw:2.4,rim:false});gem(x,48,36,10,'#4d97ff')},
-  anello_vento:x=>{ishadow(x,48,84,24,4);iglow(x,'127,224,240',48,36,28,.3);ring(x,48,60,25,18,7.5,'#c9cfd6');paint(x,()=>{x.beginPath();x.ellipse(48,42,10,6,0,0,TAU)},'#9aa3ad',{lw:2.4,rim:false});
+  anello_vento:x=>{ishadow(x,48,84,24,4);iglow(x,'127,224,240',48,36,28,.3);iRing(x,48,60,25,18,7.5,'#c9cfd6');paint(x,()=>{x.beginPath();x.ellipse(48,42,10,6,0,0,TAU)},'#9aa3ad',{lw:2.4,rim:false});
     gem(x,48,35,11,'#7fe0f0','round');x.strokeStyle='#ffffff';x.lineWidth=1.6;x.beginPath();for(let i=0;i<=14;i++){const a=i/14*TAU*1.4,r=1+i*.48;x.lineTo(48+Math.cos(a)*r,35+Math.sin(a)*r)}x.stroke();
     x.strokeStyle='rgba(200,250,255,.85)';x.lineWidth=2;x.lineCap='round';for(const[y,l] of[[22,16],[30,22],[50,14]]){x.beginPath();x.moveTo(14,y);x.quadraticCurveTo(14+l/2,y-4,14+l,y);x.stroke();x.beginPath();x.moveTo(82,y+6);x.quadraticCurveTo(82-l/2,y+2,82-l,y+6);x.stroke()}},
-  anello_gelo:x=>{ishadow(x,48,84,24,4);iglow(x,'191,233,255',48,34,32,.42);ring(x,48,62,25,17,7.5,'#ffd86b');
+  anello_gelo:x=>{ishadow(x,48,84,24,4);iglow(x,'191,233,255',48,34,32,.42);iRing(x,48,62,25,17,7.5,'#ffd86b');
     for(const[dx,h,a] of[[-10,18,-.35],[10,18,.35],[0,26,0],[-4,14,-.12],[5,15,.15]])paint(x,()=>{x.save();x.translate(48+dx,48);x.rotate(a);x.beginPath();x.moveTo(-4,0);x.lineTo(0,-h);x.lineTo(4,0);x.closePath();x.restore()},'#bfe9ff',{lw:2.2,rim:false,kl:.6,box:[30,20,66,50]});
     x.fillStyle='#fff';for(const[cx,cy] of[[30,26],[68,22],[72,40],[24,42]]){x.save();x.translate(cx,cy);for(let i=0;i<3;i++){x.rotate(Math.PI/3);x.fillRect(-.5,-3,1,6)}x.restore()}},
   // the amulets: a bone fang on a cord with beads; the silver crescent with its pale light; the medallion with three blades round a red

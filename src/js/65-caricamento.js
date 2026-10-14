@@ -64,7 +64,8 @@ function bootReady(){if(BOOTS.ready)return;BOOTS.ready=true;LOAD.prog(1);if(BOOT
   const tap=e=>{if(e)e.preventDefault();LOAD.el.removeEventListener('click',tap);removeEventListener('keydown',key);bootGo()},key=e=>{if(e.key==='Enter'||e.key===' ')tap(e)};
   LOAD.el.addEventListener('click',tap);addEventListener('keydown',key)}
 (function startUp(){if(!LOAD.el)return;LOAD.on=true;LOAD.kind='classic';
-  if(BOOTS.auto){bootReady();return}
+  // the test browser goes on at once, but after the last file of the game has run (the trailer keeps a copy of the save: it must be the whole one)
+  if(BOOTS.auto){setTimeout(bootReady,0);return}
   LOAD.q('.bt-txt').textContent='Il muschio si risveglia…';LOAD.prog(.4);
   const T=TIPS.classic;LOAD.q('.bt-tip').textContent=T[Math.floor(Math.random()*T.length)];
   // the fonts of the game (canvas text needs them before drawing), at most 2 s (no network: the fonts of the system)
