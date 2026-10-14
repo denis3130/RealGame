@@ -3,7 +3,7 @@
 Richiesta di Denis del 13 ottobre: lavorare ora sui punti 3, 9, 11, 24–34, 38–50, 52 e 53 del piano maestro, poi mandargli «una piccola
 anteprima»: se gli piace, si aggiunge al gioco. Si lavora sul ramo `anteprima` (partito da `piano-maestro`); il gioco sul telefono e l'app
 non cambiano finché Denis non dice sì (`app/mk_app.py --pubblica` funziona solo dal ramo `piano-maestro`). L'anteprima si pubblica come un
-artefatto nuovo, separato dal gioco.
+artefatto nuovo, separato dal gioco: **https://claude.ai/artifact/VwGxMMndRAxBNrRRZj33Qh** (pubblicata il 14 ottobre).
 
 Decisioni già date a Denis (13 ottobre):
 - **Punto 29, progressione separata**: gli oggetti della Classica (armi, armature, anelli, amuleti) crescono solo con carte e materiali della
