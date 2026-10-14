@@ -4,6 +4,7 @@
 # un tocco ne apre uno). Bottoni per la mossa, ◀ ▶ per passare da un mostro all'altro, effetti bassi, zoom e il tempo di disegno.
 # La pagina costruita non si salva su git.
 # Uso: python3 anteprime/mk_nemici3d.py [nome]   (nome del mostro da cui parte; senza nome il primo)
+#      python3 anteprime/mk_nemici3d.py --nuovi   solo i 4 boss nuovi del terzo giro (sprite/nemici3d/boss3.js) → anteprime/boss3.html
 import os,sys,glob
 here=os.path.dirname(os.path.abspath(__file__));root=os.path.join(here,'..')
 game=open(os.path.join(root,'index.html'),encoding='utf-8').read()
@@ -13,19 +14,23 @@ d3=os.path.join(root,'sprite','nemici3d')
 order=['base3d.js','cap1.js','cap1b.js','cap2.js','cap3.js','cap4.js','umanoidi.js','boss1.js','boss2.js','boss3.js']
 files=[f for f in order if os.path.exists(os.path.join(d3,f))]+sorted(os.path.basename(f) for f in glob.glob(os.path.join(d3,'*.js')) if os.path.basename(f) not in order)
 src='\n'.join(open(os.path.join(d3,f),encoding='utf-8').read() for f in files)
-start=sys.argv[1] if len(sys.argv)>1 else ''
+nuovi='--nuovi' in sys.argv
+args=[a for a in sys.argv[1:] if not a.startswith('--')]
+start=args[0] if args else ('puppeteer' if nuovi else '')
 ctrl=r'''
 // ---------- anteprima: nemici e boss della Classica in 3D, dal vivo ----------
-(()=>{const GROUPS=[['eroi','Eroi e compagni'],[1,'Capitolo 1 · Muschio'],[2,'Capitolo 2 · Cenere'],[3,'Capitolo 3 · Palude'],[4,'Capitolo 4 · Ghiaccio'],['boss','Boss']];
+(()=>{const GROUPS=[['eroi','Eroi e compagni'],[1,'Capitolo 1 · Muschio'],[2,'Capitolo 2 · Cenere'],[3,'Capitolo 3 · Palude'],[4,'Capitolo 4 · Ghiaccio'],['boss','Boss'],['boss3','Boss nuovi · terzo giro']];
+const SOLO=__SOLO__;
 const MOVE={idle:'Fermo',walk:'Cammina',attack:'Attacco',hit:'Colpito'};
 const cap=s=>s?s[0].toUpperCase()+s.slice(1):s,moveName=(id,a)=>{const M=N3.meta[id];return cap(M.lab&&M.lab[a]||MOVE[a]||a)};
 // the game's type for the drawing of today (when it is not the same name)
 const OLD={};
 // the order of the game (the chapters, then the bosses arena by arena)
 const ORDER=['arciere','cacciatrice','balestriere','druida','muschietto','lucciola','draghetto','mercante','slime','bigslime','bat','goblin','plant','skeleton','mushroom','wisp','beetle','eyeflower','shadoweye','necro','bonelet','imp','magmaslime','obsidian','pyro','bomber',
-  'frog','mosquito','croc','snail','tadpole','wolf','snowspirit','icesentinel','golem','salamander','toad','yeti','witch','smith','hydra','icequeen','qmirror','mimic'];
+  'frog','mosquito','croc','snail','tadpole','wolf','snowspirit','icesentinel','golem','salamander','toad','yeti','witch','smith','hydra','icequeen','qmirror','mimic','puppeteer','phoenix','octopus','stag'];
 const rank=id=>{const i=ORDER.indexOf(id);return i<0?999:i};
-const ids=()=>{const out=[];for(const[g] of GROUPS)for(const id of N3.order.slice().sort((a,b)=>rank(a)-rank(b)))if(N3.meta[id].g===g)out.push(id);for(const id of N3.order)if(!out.includes(id))out.push(id);return out};
+const ids=()=>{const out=[];for(const[g] of GROUPS)for(const id of N3.order.slice().sort((a,b)=>rank(a)-rank(b)))if(N3.meta[id].g===g)out.push(id);for(const id of N3.order)if(!out.includes(id))out.push(id);return SOLO?out.filter(id=>N3.meta[id].g===SOLO):out};
+const isBoss=id=>/^boss/.test(N3.meta[id].g);
 let view='__VIEW__',cur='__START__',anim='idle',face=Math.PI/2-.5,spin=true,low=false,p2=false,zoom=1,p=0,ms=0,last=performance.now(),tAnim=0;
 if(!N3[cur])cur=ids()[0];
 // how big each monster is (screen box round its ground point at scale 1, over four directions and all its moves), measured once
@@ -42,7 +47,7 @@ function oldDraw(id,x,y,f,sc){const M=N3.meta[id];if(M.old){ctx.save();ctx.trans
   e.x=0;e.y=-8;e.face=f;e.t=G.t;e.moving=anim==='walk';e.walk=G.t*9;e.flash=anim==='hit'&&p<.15?.1:0;
   ctx.save();ctx.translate(x,y);ctx.scale(sc,sc);try{shadowFor(e);drawEnemy(e)}catch(er){try{drawEnemy0(e)}catch(e2){}}ctx.restore();ctx.globalAlpha=1}
 function newDraw(id,x,y,f,sc,pp){const M=N3.meta[id],fl=anim==='hit'&&(pp==null?p:pp)<.14&&HASF;if(fl){ctx.save();ctx.filter='brightness(1.85) saturate(.6)'}
-  try{N3[id](x,y,f,anim,pp==null?p:pp,sc*(M.sc||1),{p2:p2&&M.g==='boss'})}finally{if(fl)ctx.restore()}}
+  try{N3[id](x,y,f,anim,pp==null?p:pp,sc*(M.sc||1),{p2:p2&&isBoss(id)})}finally{if(fl)ctx.restore()}}
 function boot(){try{INTRO.on=false;paused=true}catch(e){}try{AU.on.music=false;AU.on.sfx=false}catch(e){}
   const ov=document.createElement('div');ov.id='n3';ov.innerHTML=`<style>
   #n3{position:fixed;inset:0;z-index:99999;background:#1d1a16;font-family:"Baloo 2",system-ui,sans-serif;color:#f6ead2;touch-action:none;user-select:none;-webkit-user-select:none}
@@ -71,9 +76,9 @@ function boot(){try{INTRO.on=false;paused=true}catch(e){}try{AU.on.music=false;A
     const s=document.createElement('select');for(const[g,gn] of GROUPS){const og=document.createElement('optgroup');og.label=gn;for(const id of L)if(N3.meta[id].g===g){const o=document.createElement('option');o.value=id;o.textContent=N3.meta[id].n;if(id===cur)o.selected=true;og.appendChild(o)}if(og.children.length)s.appendChild(og)}
     s.onchange=()=>{pick(s.value);build()};$('n3Pick').appendChild(s);$('n3Pick').appendChild(btn('▶',false,()=>pick(L[(i+1)%L.length])));
     $('n3Anim').innerHTML='';for(const a of M.an)$('n3Anim').appendChild(btn(moveName(cur,a),anim===a,()=>{anim=a;tAnim=0}));
-    $('n3Opt').innerHTML='';$('n3Opt').appendChild(btn('Gira da solo',spin,()=>spin=!spin));if(M.g==='boss')$('n3Opt').appendChild(btn('Fase 2',p2,()=>p2=!p2));$('n3Opt').appendChild(btn('Effetti bassi',low,()=>low=!low));
+    $('n3Opt').innerHTML='';$('n3Opt').appendChild(btn('Gira da solo',spin,()=>spin=!spin));if(isBoss(cur))$('n3Opt').appendChild(btn('Fase 2',p2,()=>p2=!p2));$('n3Opt').appendChild(btn('Effetti bassi',low,()=>low=!low));
     $('n3Opt').appendChild(btn('−',false,()=>zoom=Math.max(.5,zoom/1.2)));$('n3Opt').appendChild(btn('+',false,()=>zoom=Math.min(3,zoom*1.2)));
-    $('n3Name').innerHTML=(view==='tutti'?(grp?grp[1]:'Tutti'):M.n)+'<small>'+(view==='gira'?(grp?grp[1]+' · ':'')+'trascina per girarlo':view==='quattro'?'sopra in 3D, sotto come è oggi':view==='prima'?'a sinistra oggi, a destra in 3D':'tocca un mostro per vederlo da vicino')+'</small>'}
+    $('n3Name').innerHTML=(view==='tutti'?(grp?grp[1]:'Tutti'):M.n)+'<small>'+(view==='gira'?(grp?grp[1]+' · ':'')+'trascina per girarlo':view==='quattro'?(M.g==='boss3'?'sopra la prima fase, sotto la seconda':'sopra in 3D, sotto come è oggi'):view==='prima'?'a sinistra oggi, a destra in 3D':'tocca un mostro per vederlo da vicino')+'</small>'}
   pick(cur);build();
   // drag to turn; in «Tutti» a tap on a monster opens it in «Gira»
   let drag=null,cells=null;cvp.addEventListener('pointerdown',e=>{drag={x:e.clientX,f:face,moved:false}});
@@ -109,16 +114,17 @@ function boot(){try{INTRO.on=false;paused=true}catch(e){}try{AU.on.music=false;A
           const a0=anim,M2=N3.meta[id];if(!M2.an.includes(anim))anim='idle';t1=performance.now();try{newDraw(id,cx,cy+ch*.06+F.gy,face,sc,(tAnim/dur(id,anim))%1)}finally{anim=a0}cost+=(performance.now()-t1)/n;
           label(c,M2.n,cx,cy+ch*.97,11)}}
       else{const D4=[[Math.PI/2,'Davanti'],[0,'Lato'],[-Math.PI/2,'Dietro'],[Math.PI,'Altro lato']],cw=W/4,F=fit(cur,cw*.95,(room-34)/2*.9,anim),sc=F.s*zoom,y1=top+22,h2=(room-34)/2;
-        for(let i=0;i<4;i++){const x=cw*(i+.5);t1=performance.now();newDraw(cur,x,y1+F.gy,D4[i][0],sc);cost+=(performance.now()-t1)/4;oldDraw(cur,x,y1+h2+12+F.gy,D4[i][0],sc);label(c,D4[i][1],x,y1-4)}
-        label(c,'In 3D',W/2,y1+h2+2);label(c,'Oggi',W/2,y1+2*h2+20)}
+        const nb=M.g==='boss3';for(let i=0;i<4;i++){const x=cw*(i+.5);t1=performance.now();const sp2=p2;if(nb)p2=false;newDraw(cur,x,y1+F.gy,D4[i][0],sc);cost+=(performance.now()-t1)/4;if(nb){p2=true;newDraw(cur,x,y1+h2+12+F.gy,D4[i][0],sc);p2=sp2}else oldDraw(cur,x,y1+h2+12+F.gy,D4[i][0],sc);label(c,D4[i][1],x,y1-4)}
+        label(c,nb?'Fase 1':'In 3D',W/2,y1+h2+2);label(c,nb?'Fase 2':'Oggi',W/2,y1+2*h2+20)}
     }catch(e){console.error(e)}
     ctx=saved;LOWFX=lf;ms=ms*.93+cost*.07;$('n3Ms').innerHTML=ms.toFixed(2)+' ms<br>'+moveName(cur,anim);
     requestAnimationFrame(frame)}
   requestAnimationFrame(frame)}
 if(document.readyState==='complete')setTimeout(boot,300);else window.addEventListener('load',()=>setTimeout(boot,300))})();
-'''.replace('__START__',start).replace('__VIEW__','gira' if start else 'tutti')
+'''.replace('__START__',start).replace('__VIEW__','gira' if start and not nuovi else 'tutti').replace('__SOLO__',"'boss3'" if nuovi else 'null')
 i=game.rfind('})();')
 page=game[:i]+'\n'+ne+'\n'+src+'\n'+ctrl+'\n'+game[i:]
-page=page.replace('<title>Mossbound</title>','<title>Nemici e boss 3D</title>',1)
-open(os.path.join(here,'nemici3d.html'),'w',encoding='utf-8').write(page)
-print('anteprime/nemici3d.html pronto (%d file di mostri)'%len(files))
+page=page.replace('<title>Mossbound</title>','<title>'+('Boss nuovi 3D' if nuovi else 'Nemici e boss 3D')+'</title>',1)
+out='boss3.html' if nuovi else 'nemici3d.html'
+open(os.path.join(here,out),'w',encoding='utf-8').write(page)
+print('anteprime/%s pronto (%d file di mostri)'%(out,len(files)))
