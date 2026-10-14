@@ -14853,15 +14853,15 @@ const hashS=s=>{let h=2166136261;for(let i=0;i<s.length;i++){h^=s.charCodeAt(i);
 // quando l'eroe è dentro la casa le pareti si aprono via da lui da tutti i lati, come guardare dentro una scatola. null = ogni punto per conto suo
 let REF=null;// [a0,a1,b0,b1]: piega di lato a0+a1·x, in verticale b0+b1·y
 // con la telecamera girata la piega si calcola in (u, v) intorno al perno (la piega in verticale dal centro dello schermo, v = −oy/SP)
-function setRef(r){if(!r){REF=null;return}
+function setRef(r){if(!r){REF=null;return}const K=r.k||1;/* (difetti 48) r.k: quanto si piega tutto l'edificio (gli edifici alti delle zone nuove meno, come il mulino a vento) */
   if(CAM.rot){const fu=u=>soft(u*CAM.lx),fv=v=>softV((-CAM.oy/CAM.SP-v)*CAM.ly),UV=(x,y)=>{const dx=x-CAM.x,dy=y-CAM.y;return[dx*CAM.c-dy*CAM.s,dx*CAM.s+dy*CAM.c]};
-    if(r.length<4){const[u,v]=UV(r[0],r[1]);REF=[fu(u),0,fv(v),0];return}
+    if(r.length<4){const[u,v]=UV(r[0],r[1]);REF=[fu(u)*K,0,fv(v)*K,0];return}
     let u0=1e9,u1=-1e9,v0=1e9,v1=-1e9;for(const[X,Y] of[[r[0],r[1]],[r[2],r[1]],[r[2],r[3]],[r[0],r[3]]]){const[u,v]=UV(X,Y);if(u<u0)u0=u;if(u>u1)u1=u;if(v<v0)v0=v;if(v>v1)v1=v}
     const a1=u1-u0>1?(fu(u1)-fu(u0))/(u1-u0):0,b1=v1-v0>1?(fv(v1)-fv(v0))/(v1-v0):0;
-    REF=[u1-u0>1?fu(u0)-a1*u0:fu((u0+u1)/2),a1,v1-v0>1?fv(v0)-b1*v0:fv((v0+v1)/2),b1];return}
+    REF=[(u1-u0>1?fu(u0)-a1*u0:fu((u0+u1)/2))*K,a1*K,(v1-v0>1?fv(v0)-b1*v0:fv((v0+v1)/2))*K,b1*K];return}
   const fx=x=>soft((x-CAM.x)*CAM.lx),fy=y=>softV((CAM.cy-y)*CAM.ly);
-  if(r.length<4){REF=[fx(r[0]),0,fy(r[1]),0];return}const[x0,y0,x1,y1]=r,a1=x1-x0>1?(fx(x1)-fx(x0))/(x1-x0):0,b1=y1-y0>1?(fy(y1)-fy(y0))/(y1-y0):0;
-  REF=[x1-x0>1?fx(x0)-a1*x0:fx((x0+x1)/2),a1,y1-y0>1?fy(y0)-b1*y0:fy((y0+y1)/2),b1]}
+  if(r.length<4){REF=[fx(r[0])*K,0,fy(r[1])*K,0];return}const[x0,y0,x1,y1]=r,a1=x1-x0>1?(fx(x1)-fx(x0))/(x1-x0):0,b1=y1-y0>1?(fy(y1)-fy(y0))/(y1-y0):0;
+  REF=[(x1-x0>1?fx(x0)-a1*x0:fx((x0+x1)/2))*K,a1*K,(y1-y0>1?fy(y0)-b1*y0:fy((y0+y1)/2))*K,b1*K]}
 let LEANK=1;// quanto si piega il prop che si sta disegnando (lk del prop: 1 case e muri, .5 pali e lapidi)
 // la piega di lato satura piano verso 13° (lontano dall'eroe le cose alte non sembrano cadute); quella in verticale, che allunga o accorcia
 // le case mentre l'eroe va su e giù, quasi non c'è (al massimo ±2% dell'altezza): richieste di Denis del 12 ottobre («diminuisci di molto»)
@@ -15101,7 +15101,7 @@ decals.push=function(...a){if(TURN){const R=TURN;a=a.map(f=>()=>{ctx.save();ctx.
 houses.push=function(...a){if(TURN)for(const hs of a){[hs.x,hs.y,hs.w,hs.d]=tR(TURN,hs.x,hs.y,hs.w,hs.d);if(hs.porch){const r=tR(TURN,hs.porch[0],hs.porch[1],hs.porch[2]-hs.porch[0],hs.porch[3]-hs.porch[1]);hs.porch=[r[0],r[1],r[0]+r[2],r[1]+r[3]]}hs.q=TURN.q;hs.R=mkTurn(0,0,TURN.q)}return Array.prototype.push.apply(this,a)};
 function prop(o){o.ky=o.ky==null?o.bx[3]:o.ky;if(o.ref===undefined)o.ref=NAMES.ref;o.parts=o.parts||[];o.name=o.name||NAMES.cur||'?';
   if(TURN){const R=TURN,bb=b=>{const r=tR(R,b[0],b[1],b[2]-b[0],b[3]-b[1]);return[r[0],r[1],r[0]+r[2],r[1]+r[3],b[4]]};o.rot=R;o.bx=bb(o.bx);if(o.ob)o.ob=bb(o.ob);o.ky=o.bx[3];o.kyFn=null;
-    if(o.ref){const r=o.ref;o.ref=r.length>=4?bb(r).slice(0,4):tP(R,r[0],r[1])}}
+    if(o.ref&&!o.ref.w){const r=o.ref;o.ref=r.length>=4?bb(r).slice(0,4):tP(R,r[0],r[1]);if(r.k)o.ref.k=r.k}}// (r.w: il ref di un edificio, già nel mondo: i pezzi girati che gli stanno attaccati, come la Forgia, non lo girano)
   props.push(o);return o}
 // pedane e gradini: chi ci sale sopra viene disegnato più in alto
 const stands=[];const stand=(x,y,w,d,h)=>{if(TURN)[x,y,w,d]=tR(TURN,x,y,w,d);return stands.push({x,y,w,d,h})};
@@ -15120,14 +15120,21 @@ let BARM=0;
 let VIEWR=1e9;/* (anteprima 48, punto 54) il mezzo lato del quadrato del mondo che può stare sullo schermo (anche girando): quello che è fuori non si aggiorna a vista, non si ordina e non si disegna (zombie, fiamme libere, corvi posati, luci, fumi) */
 const farV=(x,y,r)=>Math.abs(x-CAM.x)>VIEWR+r||Math.abs(y-CAM.y)>VIEWR+r;
 let LV=0;/* il piano dei solidi che contano (anteprima 48, punto 15): 0 a terra, 1 il piano di sopra di un edificio (i suoi solidi hanno lv:1) */
-function hit(x,y,r,ex){for(const s of solids){if(s.off||s===ex||(s.lv||0)!==LV||(s.bar&&BARM&&(BARM===1||s.bar.open())))continue;const cx=cl(x,s.x,s.x+s.w),cy=cl(y,s.y,s.y+s.d);if((x-cx)**2+(y-cy)**2<r*r)return s}return null}
+/* (difetti 48) la griglia dei solidi: hit() guarda solo i solidi delle caselle di 64 px intorno (prima tutti, centinaia nella mappa grande: era un
+   terzo del tempo degli zombie); tra quelli toccati vince il primo creato, come prima. Si rifà quando nascono solidi nuovi o la Bara si sposta (SGV) */
+const SGC=64;let SG=null,SGV=0;
+function sgBuild(){const cells=new Map();solids.forEach((s,n)=>{s._i=n;const i0=Math.floor(s.x/SGC),i1=Math.floor((s.x+s.w)/SGC),j0=Math.floor(s.y/SGC),j1=Math.floor((s.y+s.d)/SGC);
+    for(let j=j0;j<=j1;j++)for(let i=i0;i<=i1;i++){const k=j*8192+i;let a=cells.get(k);if(!a)cells.set(k,a=[]);a.push(s)}});SG={n:solids.length,v:SGV,cells}}
+function hit(x,y,r,ex){if(!SG||SG.n!==solids.length||SG.v!==SGV)sgBuild();let best=null;const i0=Math.floor((x-r)/SGC),i1=Math.floor((x+r)/SGC),j0=Math.floor((y-r)/SGC),j1=Math.floor((y+r)/SGC);
+  for(let j=j0;j<=j1;j++)for(let i=i0;i<=i1;i++){const a=SG.cells.get(j*8192+i);if(!a)continue;for(const s of a){if(best&&s._i>=best._i)continue;if(s.off||s===ex||(s.lv||0)!==LV||(s.bar&&BARM&&(BARM===1||s.bar.open())))continue;
+      const cx=cl(x,s.x,s.x+s.w),cy=cl(y,s.y,s.y+s.d);if((x-cx)**2+(y-cy)**2<r*r)best=s}}return best}
 function move(o,dx,dy,r){const sv=LV;LV=o.lv||0;const s0=hit(o.x,o.y,r);o.x+=dx;if(hit(o.x,o.y,r,s0))o.x-=dx;o.y+=dy;if(hit(o.x,o.y,r,s0))o.y-=dy;LV=sv}
 // ------------------------------------------------------------------ navigazione degli zombie
 // Griglia di 8 px con gli ostacoli gonfiati del raggio dello zombie; un campo di distanze verso l'eroe (Dijkstra a 8 vicini, senza tagliare gli
 // angoli) ricalcolato quando l'eroe cambia casella. Ogni zombie va dritto se vede l'eroe; altrimenti scende lungo il campo e punta al punto
 // più lontano del percorso che riesce a vedere, così gira intorno a muri, case e lapidi senza zig-zag. Se resta fermo (spinto, incastrato)
 // prova per mezzo secondo di lato.
-const NC=8,ZR=11,NAVMAX=1100;let NAV=null;
+const NC=8,ZR=11,NAVMAX=4000;/* (difetti 48) tutta la mappa grande: con 1.100 px chi restava più lontano andava dritto verso l'eroe e si incastrava contro staccionate e barriere (costa circa 1 ms) */let NAV=null;
 function navBuild(){const cw=Math.ceil(W.w/NC),ch=Math.ceil(W.h/NC),n=cw*ch,bl=new Uint8Array(n),los=new Uint8Array(n);
   const mark=(arr,R)=>{for(const s of solids){if(s.off||s.lv)continue;const i0=Math.max(0,Math.floor((s.x-R)/NC)),i1=Math.min(cw-1,Math.floor((s.x+s.w+R)/NC)),j0=Math.max(0,Math.floor((s.y-R)/NC)),j1=Math.min(ch-1,Math.floor((s.y+s.d+R)/NC));
     for(let j=j0;j<=j1;j++)for(let i=i0;i<=i1;i++){const cx=(i+.5)*NC,cy=(j+.5)*NC,dx=cx-cl(cx,s.x,s.x+s.w),dy=cy-cl(cy,s.y,s.y+s.d);if(dx*dx+dy*dy<R*R)arr[j*cw+i]=1}}};
@@ -15231,7 +15238,7 @@ const BARS=[];
 function barrier(B){B.reach=B.reach||30;B.th=B.th||10;B.half=B.half||13;B.vault=0;BARS.push(B);return B}
 function barCheck(z){if(!NAV||!NAV.bar||!BARS.length)return null;const c=cellOf(z.x,z.y),b=NAV.bar[c];if(!b)return null;const B=BARS[b-1];if(B.off)return null;
   const s=(z.x-B.x)*B.nx+(z.y-B.y)*B.ny>=0?1:-1,o=B.th/2+ZR+2,fx=B.x-s*B.nx*o,fy=B.y-s*B.ny*o,fc=cellOf(fx,fy),D=NAV.dist;
-  if(D[fc]>=1e9||D[c]>=1e9||D[fc]+NAV.bc[b]+Math.hypot(fx-z.x,fy-z.y)>D[c]+NC+2)return null;return{B,s,st:'va',t:0,chk:0}}// (una casella di tolleranza: il salto dritto è un poco più lungo del percorso sulla griglia, e uno zombie messo di lato davanti alla finestra restava lì)
+  const df=Math.hypot(fx-z.x,fy-z.y);if(D[fc]>=1e9||D[c]>=1e9||D[fc]+NAV.bc[b]+df>D[c]+2*NC+4+.15*df)return null;return{B,s,st:'va',t:0,chk:0}}/* (difetti 48) più tolleranza: arrivando di lato (al varco del bordo est) il salto dritto è più lungo del percorso sulla griglia di una ventina di px e lo zombie restava a spingere contro le assi */// (una casella di tolleranza: il salto dritto è un poco più lungo del percorso sulla griglia, e uno zombie messo di lato davanti alla finestra restava lì)
 function barStep(z,dt){const X=z.bx,B=X.B,s=X.s,o=B.th/2+ZR+1,ax=B.x+s*B.nx*o,ay=B.y+s*B.ny*o,fa=Math.atan2(-s*B.ny,-s*B.nx);X.t+=dt;
   const an=(a,per)=>{if(z.anim!==a){z.anim=a;z.p=0}const p0=z.p;z.p=(z.p+dt/per)%1;return p0};
   const still=()=>{if((X.chk+=dt)<.5)return true;X.chk=0;const c2=barCheck(z);if(c2&&c2.B===B)return true;z.bx=null;return false};// serve ancora?
@@ -15351,12 +15358,24 @@ const HERO3=()=>typeof EROE!=='undefined'&&!!EROE.arciere&&HSTYLE.hid==='arciere
 // navigazione intorno alla buca: niente buche dietro ostacoli invalicabili, in stanze chiuse o oltre una barriera mai aperta; con l'eroe di
 // sopra conta la strada fino al piede della scala) e a una distanza a piedi tra 130 e 700 px; di queste una a caso tra le sei più vicine, mai la
 // stessa due volte di fila. Senza griglia, o se non ce n'è nessuna, come prima: in linea d'aria tra 110 e 460 px
-function holeDist(p){const N=NAV;if(!N)return null;const cw=N.cw,ch=N.ch,D=N.dist,i0=Math.floor(p[0]/NC),j0=Math.floor(p[1]/NC);let best=1e9;
-  for(let j=j0-4;j<=j0+4;j++)for(let i=i0-4;i<=i0+4;i++){if(i<0||j<0||i>=cw||j>=ch)continue;const v=D[j*cw+i];if(v<best)best=v}return best}
-function pickHole(){const h=W.hero,open=holes.filter(p=>(p[2]==null||W.zoneOpen[p[2]])&&!W.Z.some(z=>Math.hypot(z.x-p[0],z.y-p[1])<30));
-  if(NAV){const c=[];for(const p of open){if(Math.hypot(p[0]-h.x,p[1]-h.y)<110)continue;const d=holeDist(p);if(d==null||d>=1e9||d<130||d>700)continue;c.push([d,p])}
-    if(c.length){c.sort((a,b)=>a[0]-b[0]);let k=c.slice(0,6);if(k.length>1)k=k.filter(a=>a[1]!==W.lastHole);const p=k[Math.floor(Math.random()*k.length)][1];W.lastHole=p;return p}}
+function holeDist(p){const N=NAV;if(!N)return null;const cw=N.cw,ch=N.ch,D=N.dist,i0=Math.floor(p[0]/NC),j0=Math.floor(p[1]/NC);
+  // (difetti 48) la distanza della casella libera più vicina alla buca (non la più piccola dei dintorni: dall'altra parte di una barriera chiusa
+  // c'era una casella raggiungibile e la buca sembrava buona, ma lo zombie nasceva chiuso di là)
+  for(let r=0;r<=5;r++){let best=1e9,bd=1e9;for(let j=j0-r;j<=j0+r;j++)for(let i=i0-r;i<=i0+r;i++){if(Math.max(Math.abs(i-i0),Math.abs(j-j0))!==r||i<0||j<0||i>=cw||j>=ch)continue;const c=j*cw+i;if(N.bl[c])continue;
+      const e=Math.hypot((i+.5)*NC-p[0],(j+.5)*NC-p[1]);if(e<bd){bd=e;best=D[c]}}if(bd<1e9)return best}return 1e9}
+function pickHole(o){const h=W.hero,open=holes.filter(p=>(p[2]==null||W.zoneOpen[p[2]])&&!W.Z.some(z=>Math.hypot(z.x-p[0],z.y-p[1])<30));
+  if(NAV){const c=[],far=[];for(const p of open){if(Math.hypot(p[0]-h.x,p[1]-h.y)<110)continue;const d=holeDist(p);if(d==null||d>=1e9||d<130)continue;(d>700?far:c).push([d,p])}
+    // (difetti 48) senza buche a giusta distanza le più vicine tra quelle raggiungibili, mai una buca a caso che magari sta dietro una barriera chiusa
+    if(!c.length&&far.length){far.sort((a,b)=>a[0]-b[0]);c.push(...far.slice(0,3))}
+    if(c.length){c.sort((a,b)=>a[0]-b[0]);let k=c.slice(0,6);if(k.length>1)k=k.filter(a=>a[1]!==W.lastHole);const p=k[Math.floor(Math.random()*k.length)][1];W.lastHole=p;return p}
+    return null}
   const c=open.filter(p=>{const e=Math.hypot(p[0]-h.x,p[1]-h.y);return e>110&&e<460});return c.length?c[Math.floor(Math.random()*c.length)]:null}
+// (difetti 48) uno zombie della partita che non si avvicina più all'eroe (chiuso di là da una barriera, incastrato) e non si vede sullo schermo
+// rinasce da una buca raggiungibile, come in CoD; se nessuna buca va bene riprova dopo
+function riposiziona(z){const p=pickHole();if(!p){z.bT=6;return false}const out=p[3]==='mais'||p[3]==='porta'||p[3]==='fuori'||p[3]==='carro';if(p[4])p[4]();
+  Object.assign(z,{x:p[0],y:p[1],rise:out?1:0,sp:p[3]||null,fin:p[3]==='fuori'||p[3]==='carro'?.9:0,tg:null,vx:null,vy:null,bx:null,bD:null,bT:0,chk:0,cx0:null,det:0,face:Math.atan2(W.hero.y-p[1],W.hero.x-p[0])});W.relocs=(W.relocs||0)+1;return true}
+function bloccato(z,dt){if(!z.q||z.boss||!NAV||z.lv||z.cl||(W.mods&&W.mods.invis>0)){z.bT=0;z.bD=null;return}const Dz=NAV.dist[cellOf(z.x,z.y)];
+  if(z.bD==null||Dz<z.bD-24){z.bD=Dz;z.bT=0}else z.bT=(z.bT||0)+dt;if((Dz>=1e9?z.bT>3:z.bT>9&&Dz>160)&&farV(z.x,z.y,60))riposiziona(z)}/* (mai chi è già vicino all'eroe, in mezzo alla calca) */
 // la comparsa secondo il posto (p[3]): dalla fossa e dalla terra esce dal suolo (rise); dal granturco, dalla porta della latrina e dal buio oltre
 // il bordo cammina fuori ('fuori' sfumando); da sotto i carri e la carrozza bruciata striscia fuori sfumando in una nuvola di polvere e cenere;
 // dal fiume esce dall'acqua con i cerchi (sp 'acqua'); dalla botola della cantina sale dal buco nero (sp 'botola')
@@ -15369,11 +15388,34 @@ function spawn(o){o=o||{};const h=W.hero,p=o.hole||pickHole();if(!p)return null;
 // gli zombie fermi in una zona chiusa (la fattoria prima del cancello): girano piano intorno a casa loro; da fermi girano di colpo la testa
 // verso l'eroe quando si avvicina; se l'eroe va al cancello vengono alle sbarre e allungano le braccia. Quando la zona si apre partono
 function idleZombie(kind,x,y,zone){const k=KINDS.find(k=>k[0]===kind)||KINDS[0],z={id:++ZID,kind:k[0],sc:k[1],spd:k[2],hp:k[3],x,y,face:rr(0,TAU),p:Math.random(),anim:'idle',rise:1,die:0,flash:0,idle:{zone,home:[x,y],t:rr(0,3),tg:null}};W.Z.push(z);return z}
+// (difetti 48) chi attira gli zombie fermi: il cancello della fattoria solo quelli della fattoria (prima tutti, e quelli del borgo e della segheria
+// si schiacciavano contro le staccionate per arrivarci); le barriere chiuse (W.lures, area_mappa.js) quelli della zona che sta di là
+function lureOf(z){const h=W.hero,G=W.gate,I=z.idle;if(G&&!G.open&&(I.zone==null||I.zone===2)&&Math.hypot(h.x-G.x,h.y-G.y)<G.lure)return G;
+  for(const L of W.lures||[])if(L.zone===I.zone&&!L.isOpen()&&Math.hypot(h.x-L.x,h.y-L.y)<L.lure)return L;return null}
+// il campo di distanze verso una barriera chiusa, dalla parte della zona chiusa (L.gx, L.gy): come navField ma una volta sola per griglia (la zona
+// chiusa non cambia finché la barriera non si compra), senza passare dalle finestre; serve agli zombie fermi attirati alle assi per girare
+// intorno a carri e cataste
+function lureField(L){const N=NAV;if(L.F&&L.FN===N)return L.F;const cw=N.cw,ch=N.ch,D=new Float32Array(N.n).fill(1e9),B=N.bl,BR=N.bar,BS=N.bs,hk=N.hk,hv=N.hv;let hs=0;
+  const push=(k,v)=>{let i=hs++;while(i>0){const p=(i-1)>>1;if(hk[p]<=k)break;hk[i]=hk[p];hv[i]=hv[p];i=p}hk[i]=k;hv[i]=v};
+  const pop=()=>{const v=hv[0],lk=hk[--hs],lv=hv[hs];let i=0;for(;;){let c=2*i+1;if(c>=hs)break;if(c+1<hs&&hk[c+1]<hk[c])c++;if(hk[c]>=lk)break;hk[i]=hk[c];hv[i]=hv[c];i=c}hk[i]=lk;hv[i]=lv;return v};
+  const gi=Math.floor(L.gx/NC),gj=Math.floor(L.gy/NC);for(let j=gj-3;j<=gj+3;j++)for(let i=gi-3;i<=gi+3;i++){if(i<0||j<0||i>=cw||j>=ch)continue;const c=j*cw+i;if(B[c])continue;const d=Math.hypot((i+.5)*NC-L.gx,(j+.5)*NC-L.gy);if(d<D[c]){D[c]=d;push(d,c)}}
+  while(hs){const k0=hk[0],c=pop();if(k0>D[c])continue;const i=c%cw,j=(c-i)/cw;
+    for(let dj=-1;dj<=1;dj++)for(let di=-1;di<=1;di++){if(!di&&!dj)continue;const ni=i+di,nj=j+dj;if(ni<0||nj<0||ni>=cw||nj>=ch)continue;const nc=nj*cw+ni;if(B[nc])continue;if(di&&dj&&(B[j*cw+ni]||B[nj*cw+i]))continue;
+      if(BR[nc]&&BR[nc]===BR[c]&&BS[nc]!==BS[c])continue;const nd=k0+(di&&dj?1.4142*NC:NC);if(nd<D[nc]){D[nc]=nd;push(nd,nc)}}}
+  L.F=D;L.FN=N;return D}
+// il punto verso cui camminare scendendo il campo F (come steer: la casella più lontana che si vede lungo la discesa)
+function fieldStep(z,F){const N=NAV,cw=N.cw,ch=N.ch;let cur=cellOf(z.x,z.y),tgt=null;if(N.bl[cur]||F[cur]>=1e9)return null;
+  for(let k=0;k<16;k++){const i=cur%cw,j=(cur-i)/cw;let nb=-1,nv=F[cur];for(let dj=-1;dj<=1;dj++)for(let di=-1;di<=1;di++){if(!di&&!dj)continue;const ni=i+di,nj=j+dj;if(ni<0||nj<0||ni>=cw||nj>=ch)continue;const nc=nj*cw+ni;if(N.bl[nc])continue;if(di&&dj&&(N.bl[j*cw+ni]||N.bl[nj*cw+i]))continue;if(F[nc]<nv){nv=F[nc];nb=nc}}
+    if(nb<0)break;cur=nb;const p=cen(cur);if(losClear(z.x,z.y,p[0],p[1]))tgt=p;else{if(!tgt)tgt=p;break}}return tgt}
 function idleStep(z,dt){const I=z.idle,h=W.hero,G=W.gate,dh=Math.hypot(h.x-z.x,h.y-z.y);I.t-=dt;let tg=null;
-  if(G&&!G.open&&Math.hypot(h.x-G.x,h.y-G.y)<G.lure){if(!I.slot)I.slot=G.slots[z.id%G.slots.length];tg=I.slot}
+  const L=lureOf(z);if(L){if(!I.slot||I.lu!==L){I.slot=L.slots[z.id%L.slots.length];I.lu=L}tg=I.slot;
+    if(L.gx!=null&&NAV&&Math.hypot(I.slot[0]-z.x,I.slot[1]-z.y)>46&&!physClear(z.x,z.y,I.slot[0],I.slot[1],ZR-1)){if(!(I.fT>0)){I.fT=.15;I.fp=fieldStep(z,lureField(L))}else I.fT-=dt;if(I.fp)tg=I.fp}}
   else{I.slot=null;if(I.t<=0){I.t=rr(2.5,6);I.tg=Math.random()<.4?null:[I.home[0]+rr(-60,60),I.home[1]+rr(-40,40)]}tg=I.tg}
   const step=(an,per)=>{if(z.anim!==an){z.anim=an;z.p=Math.random()}z.p=(z.p+dt/per)%1};
-  if(tg&&Math.hypot(tg[0]-z.x,tg[1]-z.y)>6){const dx=tg[0]-z.x,dy=tg[1]-z.y,d=Math.hypot(dx,dy),sp=z.spd*(I.slot?.8:.35);move(z,dx/d*sp*dt,dy/d*sp*dt,ZR);z.face=Math.atan2(dy,dx);step('walk',I.slot?1.2:1.8)}
+  if(tg&&Math.hypot(tg[0]-z.x,tg[1]-z.y)>6){const dx=tg[0]-z.x,dy=tg[1]-z.y,d=Math.hypot(dx,dy),sp=z.spd*(I.slot?.8:.35);let ux=dx/d,uy=dy/d;
+    // (difetti 48) contro un ostacolo (una lapide, un carro) un passo di lato per mezzo secondo, come zWalk: prima restava fermo lì
+    if(I.det>0){I.det-=dt;ux=I.dvx;uy=I.dvy}move(z,ux*sp*dt,uy*sp*dt,ZR);z.face=Math.atan2(uy,ux);step('walk',I.slot?1.2:1.8);
+    I.ck=(I.ck||0)+dt;if(I.ck>.8){if(I.cx!=null&&Math.hypot(z.x-I.cx,z.y-I.cy)<sp*.8*.25&&!(I.det>0)){const sd=z.id%2?-1:1;I.dvx=-dy/d*sd;I.dvy=dx/d*sd;I.det=.6}I.ck=0;I.cx=z.x;I.cy=z.y}}
   else if(I.slot){z.face=Math.atan2(h.y-z.y,h.x-z.x);step('attack',1.6)}// alle sbarre
   else{if(dh<300&&!I.look){I.look=1;z.face=Math.atan2(h.y-z.y,h.x-z.x)}else if(dh>=330)I.look=0;step('idle',2.4)}}
 // gli zombie non si sovrappongono
@@ -15415,9 +15457,11 @@ function boxReset(){if(!BOX)return;BOX.b=ARMI.nuovaBara(0,0);const s=BOX.spots[0
 // mette la Bara in (x, y) con la testa verso a: il solido (il riquadro del contorno girato) e l'impronta per l'ordine
 function boxPlace(x,y,a){const F=BOX.F,k=F.BS,c=Math.cos(a),s=Math.sin(a),w=(u,v)=>[x+k*(u*c-v*s),y+k*(u*s+v*c)];BOX.x=x;BOX.y=y;BOX.a=a;
   let x0=1e9,y0=1e9,x1=-1e9,y1=-1e9;for(const p of F.BH){const q=w(p[0],p[1]);if(q[0]<x0)x0=q[0];if(q[0]>x1)x1=q[0];if(q[1]<y0)y0=q[1];if(q[1]>y1)y1=q[1]}
-  Object.assign(BOX.sol,{x:x0,y:y0,w:x1-x0,d:y1-y0});
+  Object.assign(BOX.sol,{x:x0,y:y0,w:x1-x0,d:y1-y0});SGV++;
   const P=[];for(const p of F.BH)P.push(w(p[0]*1.12,p[1]*1.12));for(const q of F.cand)for(const[dx,dy] of DIR8)P.push(w(q[0]+dx*1.4,q[1]+dy*1.4));for(const q of F.lid)P.push(w(q[0],q[1]));
-  const E=BOX.E;finFP(E,P.map(q=>[q[0],q[1],0]));E.x=x;E.y=y;E.prop.ref=[x,y];E.zs=undefined;E.H=null}
+  const E=BOX.E;finFP(E,P.map(q=>[q[0],q[1],0]));E.x=x;E.y=y;E.prop.ref=houseRefAt(x,y)||[x,y];E.zs=undefined;E.H=null}
+// (difetti 48) dentro un edificio la Bara si piega con lui (il ref del primo pezzo della casa), così non scivola sul pavimento girando la visuale
+function houseRefAt(x,y){for(const hs of houses)if(x>hs.x&&x<hs.x+hs.w&&y>hs.y&&y<hs.y+hs.d){const p=props.find(q=>q.house===hs&&q.ref);if(p)return p.ref}return null}
 function boxUpdate(dt){if(!BOX)return;const b=BOX.b;for(const e of b.update(dt)){if(e.k==='suono'){if(ARMI.suonoBara)ARMI.suonoBara(e.w,180)}else if(e.k==='presa')equip(e.id);else if(e.k==='rimborso'){W.coins+=e.n;W.toast=['La Bara scappa: monete restituite',2.4]}
     else if(e.k==='via'){const c=BOX.spots.filter(s=>(s[2]==null||W.zoneOpen[s[2]])&&Math.hypot(s[0]-BOX.x,s[1]-BOX.y)>40),s=c.length?c[Math.floor(Math.random()*c.length)]:[BOX.x,BOX.y,null,BOX.a];boxPlace(s[0],s[1],s[3]||0);navBuild();if(NAV)NAV.hc=-1;if(b.addio)W.toast=['La Bara se ne va…',2.4]}
     // ricomparsa: dove è andata (il nome della zona) e un fascio di luce verde che si vede da lontano per qualche secondo
@@ -15469,10 +15513,10 @@ function updateBeings(dt,inp){const h=W.hero,DI=W.director,MD=W.mods||{};if(h.de
     if(z.ai){z.ai(z,dt);sep(z);continue}// un boss della partita: si muove e colpisce da solo
     if(z.stun>0){z.stun-=dt;if(z.anim!=='idle'){z.anim='idle';z.p=0}z.p=(z.p+dt/2.4)%1;sep(z);continue}// respinto dall'anima che rialza l'eroe
     if(!z.bx&&BARS.length&&!z.lv&&!z.cl&&(z.bxT=(z.bxT||0)-dt)<=0){z.bxT=.15;z.bx=barCheck(z)}// una finestra o un varco da passare (barriere.js)
-    if(z.bx){barStep(z,dt);if(!(z.bx&&z.bx.from))sep(z);continue}
+    if(z.bx){barStep(z,dt);z.bT=0;if(!(z.bx&&z.bx.from))sep(z);continue}
     const dx=h.x-z.x,dy=h.y-z.y,d=Math.hypot(dx,dy);
     if(d<30&&!z.cl&&!h.cl&&sameLv(z)&&physClear(z.x,z.y,h.x,h.y,2,null,2)){z.face=Math.atan2(dy,dx);if(z.anim!=='attack'){z.anim='attack';z.p=0}const p0=z.p;z.p+=dt/1.4;if(DI&&DI.zombieHit&&p0<.55&&z.p>=.55)DI.zombieHit(z,d);z.chk=0;z.cx0=null}// il colpo arriva a metà del gesto
-    else{if(z.anim!=='walk'){z.anim='walk';z.p=0}z.p+=dt/(z.kind==='hound'?.6:1.1);zWalk(z,dt)}
+    else{if(z.anim!=='walk'){z.anim='walk';z.p=0}z.p+=dt/(z.kind==='hound'?.6:1.1);zWalk(z,dt);bloccato(z,dt)}
     sep(z);z.p%=1}
   LV=h.lv||0;for(let i=W.Z.length-1;i>=0;i--)if(W.Z[i].die>1.1||(!zOn&&W.Z[i].rise<1))W.Z.splice(i,1);
   for(const f of W.FX){f.t-=dt;if(f.k==='drop'){f.x+=f.vx*dt;f.y+=f.vy*dt;f.vy+=260*dt}}for(let i=W.FX.length-1;i>=0;i--)if(W.FX[i].t<=0)W.FX.splice(i,1);
@@ -15489,6 +15533,20 @@ function updateBeings(dt,inp){const h=W.hero,DI=W.director,MD=W.mods||{};if(h.de
 // identico al pixel). Il salto dei sassi è un'altezza (CP); la discesa nella buca segue la misura della figura (mzk); il ritaglio è il
 // rettangolo sopra la linea dei piedi, come prima. (Un mucchio allungato come la fossa, che la riempie, è una proposta da mostrare a Denis)
 const MOUND=k=>[18+8*k,8+3*k];// i raggi del mucchio a terra (x, y del mondo) mentre lo zombie esce (k = rise)
+// (difetti 48: «va a scatti, di più quando ci sono tanti zombie») gli zombie da un'immagine pronta: ognuno tiene la sua figura (z.spr, una tela
+// piccola alla risoluzione dello schermo) e la ridisegna a turno, al massimo ZBUD figure nuove per fotogramma: con pochi zombie tutte a ogni
+// fotogramma come prima, con tanti ognuna ogni 2 o 3 fotogrammi; subito se cambia la mossa, la direzione (più di 5°), l'inclinazione o lo zoom.
+// Lo zombie si sposta comunque a ogni fotogramma. ZBOX: il riquadro dipinto di ogni tipo attorno ai piedi (misurato in tutte le mosse, 16
+// direzioni e tre inclinazioni, più 4 px) alla sua grandezza; i boss, i tipi senza riquadro e le tele diverse da quella della mappa dal vivo
+const ZBOX={zombie:[-34,-61,34,14,1.1],strisciante:[-34,-39,34,26,1.1],minatore:[-46,-63,44,25,1.1],lanterna:[-78,-87,78,52,1.55],hound:[-34,-60,34,14,1.05]},ZS={f:0,n:0,need:1,cv:null,bud:6};
+function zDraw(z,x,y,fc,an,ph,sc){const B=ZBOX[z.kind],m=ctx.getTransform();
+  if(!B||z.boss||W.dbg.zLive||ctx.canvas!==ZS.cv||Math.abs(m.b)>1e-6||Math.abs(m.c)>1e-6||m.a<=0){CR[z.kind](x,y,fc,an,ph,sc);return}
+  const k=m.a,s=sc/B[4],x0=B[0]*s,y0=B[1]*s,pw=Math.ceil((B[2]-B[0])*s*k),pH=Math.ceil((B[3]-B[1])*s*k),cam=CR.cam?CR.cam.k*1e4+CR.cam.zk:0;ZS.n++;
+  let S=z.spr;const fresh=!S||S.k!==k||S.cam!==cam||S.an!==an||S.sc!==sc||Math.abs(Math.atan2(Math.sin(fc-S.fc),Math.cos(fc-S.fc)))>.09;
+  if(fresh||(S.f!==ZS.f&&(ZS.f+z.id)%ZS.need===0)){if(!S)S=z.spr={cv:document.createElement('canvas')};const C=S.cv;if(C.width!==pw||C.height!==pH){C.width=pw;C.height=pH}
+    const g=C.getContext('2d');g.setTransform(1,0,0,1,0,0);g.clearRect(0,0,pw,pH);g.setTransform(k,0,0,k,-x0*k,-y0*k);const sv=ctx;ctx=g;try{CR[z.kind](0,0,fc,an,ph,sc)}finally{ctx=sv}
+    S.k=k;S.cam=cam;S.an=an;S.sc=sc;S.fc=fc;S.f=ZS.f}
+  ctx.save();ctx.setTransform(1,0,0,1,0,0);ctx.drawImage(S.cv,Math.round(m.a*(x+x0)+m.e),Math.round(m.d*(y+y0)+m.f));ctx.restore()}
 function drawZombie(z){const q=SB(z.x,z.y,z.zh||0),zk=RIGK.mzk,fc=z.face+CAM.yaw;
   if(z.rise<1){const k=z.rise,c=CAM.c,s=CAM.s,SP=CAM.SP,[mx,my]=MOUND(k),
       G=(ox,oy)=>[q[0]+ox*c-oy*s,q[1]+(ox*s+oy*c)*SP];// un punto del terreno intorno ai piedi, (ox, oy) nel mondo
@@ -15499,9 +15557,9 @@ function drawZombie(z){const q=SB(z.x,z.y,z.zh||0),zk=RIGK.mzk,fc=z.face+CAM.yaw
     else{ctx.fillStyle='#4a3a2a';ctx.save();ctx.translate(q[0],q[1]);ctx.transform(c,SP*s,-s,SP*c,0,0);ctx.beginPath();ctx.ellipse(0,0,mx,my,0,0,TAU);ctx.restore();ctx.fill();
     for(let i=0;i<6;i++){const a=i*1.05+z.x,r=10+k*16,g=G(Math.cos(a)*r,Math.sin(a)*r*.5);ctx.fillStyle='#64503a';ball([g[0],g[1]-Math.sin(k*Math.PI)*6*CAM.CP],2.4);ctx.fill()}}
     if(k>.25){const u=ez((k-.25)/.75),ck=Math.max(1,z.sc/1.1);ctx.save();ctx.beginPath();ctx.rect(q[0]-60*ck,q[1]-150*ck,120*ck,150*ck+1);ctx.clip();
-      ctx.translate(0,(1-u)*60*z.sc*zk);CR[z.kind](q[0],q[1],fc,'idle',(W.t*.6)%1,z.sc);ctx.restore()}return}
-  if(z.die){const k=Math.min(1,z.die/1.1),ck=Math.max(1,z.sc/1.1);ctx.save();ctx.globalAlpha=1-k*k;ctx.beginPath();ctx.rect(q[0]-60*ck,q[1]-150*ck,120*ck,150*ck+1);ctx.clip();ctx.translate(0,ez(k)*50*z.sc*zk);CR[z.kind](q[0],q[1],fc,'idle',0,z.sc);ctx.restore();return}
-  const fin=z.fin>0;if(fin){ctx.save();ctx.globalAlpha*=cl(1-z.fin/.9,0,1)}CR[z.kind](q[0],q[1],fc,z.anim,z.p,z.sc);if(fin)ctx.restore();if(z.flash>0){ctx.save();ctx.globalCompositeOperation='lighter';glow('255,255,255',q[0],q[1]-24*z.sc*zk,22*z.sc,.5);ctx.restore()}}
+      ctx.translate(0,(1-u)*60*z.sc*zk);zDraw(z,q[0],q[1],fc,'idle',(W.t*.6)%1,z.sc);ctx.restore()}return}
+  if(z.die){const k=Math.min(1,z.die/1.1),ck=Math.max(1,z.sc/1.1);ctx.save();ctx.globalAlpha=1-k*k;ctx.beginPath();ctx.rect(q[0]-60*ck,q[1]-150*ck,120*ck,150*ck+1);ctx.clip();ctx.translate(0,ez(k)*50*z.sc*zk);zDraw(z,q[0],q[1],fc,'idle',0,z.sc);ctx.restore();return}
+  const fin=z.fin>0;if(fin){ctx.save();ctx.globalAlpha*=cl(1-z.fin/.9,0,1)}zDraw(z,q[0],q[1],fc,z.anim,z.p,z.sc);if(fin)ctx.restore();if(z.flash>0){ctx.save();ctx.globalCompositeOperation='lighter';glow('255,255,255',q[0],q[1]-24*z.sc*zk,22*z.sc,.5);ctx.restore()}}
 // le trasparenze della casa: il tetto sfuma quando l'eroe entra, i mobili compaiono; i muri (wN, wS, wE, wW: da che parte guardano) con l'eroe
 // dentro diventano trasparenti se sono rivolti verso la telecamera (a vista dritta i muri sud, come prima), piano piano mentre si gira
 const WALLN={wN:[0,-1],wS:[0,1],wE:[1,0],wW:[-1,0],uN:[0,-1],uS:[0,1],uE:[1,0],uW:[-1,0]};
@@ -15776,7 +15834,11 @@ function relE(A,B){const k=A.cU<B.cU?1:-1,inA=k*A.lean,inB=-k*B.lean;if(Math.max
 // alla U dell'essere (kyFn generalizzato) se la figura copre le sue colonne; accanto: chi è più vicino al centro della visuale va dopo (debole)
 function relEss(E,P){const tz=Math.max(1.5,.08*Math.min(E.z1-E.z0,P.z1-P.z0)),s=segAlong(P.H,Math.min(P.U1,Math.max(P.U0,E.cU))),
     under=s&&E.cU>=P.U0-1&&E.cU<=P.U1+1&&E.cV>=s[0]-1&&E.cV<=s[1]+1;
-  if(under&&P.z0>=E.z1-tz&&P.z0>E.z0+.5&&P.z1>E.z1)return[-1,2,P.z0-E.z1+tz];if(under&&E.z0>=P.z1-tz&&E.z0>P.z0+.5&&E.z1>P.z1)return[1,2,E.z0-P.z1+tz];
+  if(under&&P.z0>=E.z1-tz&&P.z0>E.z0+.5&&P.z1>E.z1)return[-1,2,P.z0-E.z1+tz+3];if(under&&E.z0>=P.z1-tz&&E.z0>P.z0+.5&&E.z1>P.z1)return[1,2,E.z0-P.z1+tz+3];
+  // (difetti 48) chi sta sopra o sotto una cosa ha sempre un margine di almeno 3 px: chi sta appoggiato sul solaio ha 1,5 px (tz) e sotto i 2 px
+  // l'isteresi teneva il verso di quando stava ancora di sotto (l'eroe e gli zombie di sopra restavano «dentro il pavimento»). Sui gradini (st)
+  // chi sale o scende sta sopra la scala
+  if(under&&P.part==='st'&&E.z0>.5)return[1,2,9];
   if(E.cV>=P.V1)return[1,2,E.cV-P.V1];if(E.cV<=P.V0)return[-1,2,P.V0-E.cV];
   if(E.cU+E.hw>P.U0&&E.cU-E.hw<P.U1){const vf=s?s[1]:P.V1;return[E.cV>=vf-1?1:-1,2,Math.abs(E.cV-vf+1)]}
   const gap=Math.max(0,P.U0-UCAM,UCAM-P.U1),du=Math.abs(E.cU-UCAM);return[du<=gap?1:-1,1,Math.abs(gap-du)]}
@@ -15909,7 +15971,7 @@ function projOf(id,pts){const L=ORD.byId.get(id),p=L&&L.prop;LEANK=p&&p.lk!=null
   const r=pts.map(q=>{const z=q[2]||0,s=S(q[0],q[1],z),v=(q[0]-CAM.x)*CAM.s+(q[1]-CAM.y)*CAM.c;return[s[0],s[1],v*ce+z*se]});LEANK=1;setRef(null);return r}
 // il corvo posato si disegna subito dopo la cosa su cui sta (cercata una volta: il prop alto che lo contiene)
 function perchHost(c){if(c._host!==undefined)return c._host;let best=null;for(const p of props){if(p.floor)continue;const b=p.bx;if(c.x<b[0]-6||c.x>b[2]+6||c.y<b[1]-6||c.y>b[3]+6||(b[4]||0)<c.z-15)continue;if(!best||p.ky>best.ky)best=p}return c._host=best}
-function drawWorld(dt,view){const h0=houses[0],h0a=h0?h0.a:1,D=W.dbg;
+function drawWorld(dt,view){const h0=houses[0],h0a=h0?h0.a:1,D=W.dbg;ZS.f++;ZS.need=Math.max(1,Math.ceil(ZS.n/(LOWFX?4:ZS.bud)));ZS.n=0;ZS.cv=ctx.canvas;
   // il terreno: quando è rimpicciolito più della metà (dpr·zoom < GT/2: un pixel copre più di due punti della foto, come nella vista intera su
   // uno schermo a 1×) la levigatura 'medium' (con le mipmap) evita lo sfarfallio girando; sopra la metà la levigatura normale basta e 'medium'
   // sul telefono sfocherebbe per niente. Vale per tutte e due le strade, dritta e girata, così non c'è un salto quando si comincia a girare o
@@ -16249,7 +16311,8 @@ function boot(area,o){o=o||{};const GAME=!!o.game;let ACT=!GAME,RUN=false,PAUSE=
 orderReset:()=>{ORD.mm.m=new Map();ORD.fm.m=new Map();ORD.fr+=5},
     intra:id=>{const L=ORD.byId.get(id);return L?intraOrder(L).map(g=>({gi:g.gi,k:g.parts.map(t=>t.k).join(','),z0:g.z0,z1:g.z1})):null},
     render:dt=>render(dt||0,0,0),navField:()=>navField(),vis:visAt,hit:(x,y,r)=>!!hit(x,y,r),heightAt,
-    nav:()=>NAV&&{cw:NAV.cw,ch:NAV.ch,free:NAV.bl.reduce((s,v)=>s+(v?0:1),0)},navRebuild:()=>{navBuild();NAV.hc=-1},
+    nav:()=>NAV&&{cw:NAV.cw,ch:NAV.ch,free:NAV.bl.reduce((s,v)=>s+(v?0:1),0)},navAt:(x,y)=>{if(!NAV)return null;const c=cellOf(x,y);return{bl:NAV.bl[c],bar:NAV.bar[c],bs:NAV.bs[c],D:NAV.dist[c]}},lureF:(L,x,y)=>{const F=lureField(L);return F[cellOf(x,y)]},/* la casella della griglia in (x, y): bloccata, barriera, lato, distanza dall'eroe; lureF: il campo verso una barriera chiusa */navRebuild:()=>{navBuild();NAV.hc=-1},
+    zdraw:(g,k,x,y,fc,an,ph,sc)=>{const sv=ctx;ctx=g;try{CR[k](x,y,fc,an,ph,sc)}finally{ctx=sv}},/* un mostro disegnato in una tela qualunque (prove) */
     hurt:(z,n,fx)=>hurt(z,n,fx),addZombie:(kind,x,y,spd)=>{const k=KINDS.find(k=>k[0]===kind)||KINDS[0];const z={id:++ZID,kind:k[0],sc:k[1],spd:spd||k[2],hp:99,x,y,face:0,p:0,anim:'walk',rise:1,die:0,flash:0};W.Z.push(z);return W.Z.length-1},
     sim:(n,dt)=>{for(let i=0;i<n;i++)updateBeings(dt,{x:0,y:0})},
     walk:(ix,iy,n,dt)=>{const[wx,wy]=stickToWorld(ix,iy);for(let i=0;i<(n||1);i++)updateBeings(dt||1/60,{x:wx,y:wy})},
@@ -16257,7 +16320,7 @@ orderReset:()=>{ORD.mm.m=new Map();ORD.fm.m=new Map();ORD.fr+=5},
     texStats:()=>{let n=0,px=0,np=0,pp=0;for(const k in TEX){n++;px+=TEX[k].width*TEX[k].height}for(const k in PLANES){np++;pp+=PLANES[k].width*PLANES[k].height}return{n,mpx:+(px/1e6).toFixed(2),np,mpp:+(pp/1e6).toFixed(2)}},
     buys,equip,buyNow:id=>{const o=buys.find(b=>b.id===id);return o?o.act():null},box:()=>BOX,boxTo:i=>{const q=BOX.spots[i];boxPlace(q[0],q[1],q[3]||0);navBuild();if(NAV)NAV.hc=-1;return[q[0],q[1]]},coins:v=>{if(v!=null)W.coins=v;return W.coins},gun:()=>gunState,nuova:()=>CTL.nuova()};
   return CTL}
-return{scala,STAIRS,sameLv,heroLv,climbStart,SB,pickHole,holeDist,toWorld:(x,y)=>TURN?tP(TURN,x,y):[x,y],dirWorld:(x,y)=>TURN?tV(TURN,x,y):[x,y],AREE,anteprima,boxReset,stile,idleZombie,buyable,buys,barrier,BARS,barCheck,sorpresa,equip,hurt,spawn,KINDS,move,zWalk,sep,physClear,gun:()=>gunState,navRebuild:()=>{navBuild();if(NAV)NAV.hc=-1},softImg,turn,group,grp,finalize,facing,across,onGround,onPlane,onRound,ringNear,T,CAM,W,S,LS,MOON,inGround,scrAng,decals,fades,NAMES,stand,stands,heightAt,add3,sub3,len3,rnd,rr,srand,ink,path,hull,material,MAT,MARKS,texture,tone,face,hullOf,ballAt,line3,poly3,fn3,box,prismX,prismY,plane,cyl,prop,solid,shade,shadeR,props,solids,shadows,lights,flames,holes,houses,smokes,perches,hit,bakeGround,edgeSnap,boot,bootAsync,libera,ricuoci,setLive:f=>{liveDraw=f},wa,mix,cl,ez,lerp,TAU,ball,seg}})();
+return{scala,STAIRS,sameLv,heroLv,climbStart,SB,pickHole,holeDist,riposiziona,toWorld:(x,y)=>TURN?tP(TURN,x,y):[x,y],dirWorld:(x,y)=>TURN?tV(TURN,x,y):[x,y],AREE,anteprima,boxReset,stile,idleZombie,buyable,buys,barrier,BARS,barCheck,sorpresa,equip,hurt,spawn,KINDS,move,zWalk,sep,physClear,gun:()=>gunState,navRebuild:()=>{navBuild();if(NAV)NAV.hc=-1},softImg,turn,group,grp,finalize,facing,across,onGround,onPlane,onRound,ringNear,T,CAM,W,S,LS,MOON,inGround,scrAng,decals,fades,NAMES,stand,stands,heightAt,add3,sub3,len3,rnd,rr,srand,ink,path,hull,material,MAT,MARKS,texture,tone,face,hullOf,ballAt,line3,poly3,fn3,box,prismX,prismY,plane,cyl,prop,solid,shade,shadeR,props,solids,shadows,lights,flames,holes,houses,smokes,perches,hit,bakeGround,edgeSnap,boot,bootAsync,libera,ricuoci,setLive:f=>{liveDraw=f},wa,mix,cl,ez,lerp,TAU,ball,seg}})();
 // ---------- PROP della mappa zombie: tutto ciò che sta in piedi sul terreno, costruito sul motore (ZM) con volumi 3D che si piegano
 // via dall'eroe. Ogni prop registra i suoi pezzi (facce con texture, sfere, linee), i solidi per le collisioni, le ombre da cuocere nel
 // terreno, le luci e le fiamme. Misure in pixel del gioco (una casella = 64; l'eroe è alto circa 30).
@@ -17047,7 +17110,14 @@ ZM.lanternParts=lantern;ZM.cartWheel=wheel;// (per prop_borgo.js)
 (()=>{const{T,S,decals,stand,rr,srand,ink,path,face,hullOf,ballAt,line3,poly3,fn3,box,prismX,prismY,plane,cyl,prop,solid,shade,shadeR,lights,flames,holes,houses,smokes,perches,MAT,material,wa,mix,cl,lerp,ez,TAU,ball,seg,facing,onGround,W}=ZM,P=ZM.P,G=ZM.G;
 const E=(a,...b)=>a.push(...b),tag=(parts,t)=>{for(const p of parts)p.part=t;return parts};
 const ANIM=ZM.anim=ZM.anim||[];
-const def=(name,f,rf)=>{rf=rf||(a=>typeof a[0]==='number'&&typeof a[1]==='number'?[a[0],a[1]]:a[0]&&typeof a[0]==='object'?[a[0].x+a[0].w/2,a[0].y+a[0].d/2]:null);P[name]=function(...a){const N=ZM.NAMES,sv=N.cur,sr=N.ref;N.cur=name;N.ref=N.grp||rf(a);try{return f.apply(this,a)}finally{N.cur=sv;N.ref=sr}}};
+// (difetti 48) gli edifici (BLD) sono un gruppo: tutto quello che si costruisce dentro (muri, tetto, interni, scala, candele, il piano di sopra,
+// l'edificio interno di locanda e cappella) prende lo stesso ref, nel mondo (r.w), e chi li costruisce lo ritrova in .ref per attaccarci altre
+// cose (campanile, Forgia, armi a muro, Credenza) con ZM.group. KZ: un edificio più alto di KZ px si piega meno (r.k = KZ/altezza), così la cima
+// ondeggia girando la visuale quanto quella della casa e del fienile delle prime due zone (alte circa 150 px)
+const BLD=new Set(['edificio','locanda','cappella','fucina','campanile']),KZ=155,kOf=(r,zt)=>{if(r)r.k=Math.min(r.k||1,KZ/Math.max(KZ,zt))};
+const def=(name,f,rf)=>{rf=rf||(a=>typeof a[0]==='number'&&typeof a[1]==='number'?[a[0],a[1]]:a[0]&&typeof a[0]==='object'?[a[0].x+a[0].w/2,a[0].y+a[0].d/2]:null);P[name]=function(...a){const N=ZM.NAMES,sv=N.cur,sr=N.ref,sg=N.grp;N.cur=name;let r=N.grp||rf(a);
+    if(!N.grp&&r&&r.length<4&&BLD.has(name)){const q=ZM.toWorld(r[0],r[1]);r=[q[0],q[1]];r.w=true;N.grp=r}N.ref=r;
+    try{const out=f.apply(this,a);if(out&&typeof out==='object'&&!out.ref&&r)out.ref=r;return out}finally{N.cur=sv;N.ref=sr;N.grp=sg}}};
 const prng=s=>{s=(Math.abs(Math.round(s))%2147483646)+1;return()=>(s=(s*16807)%2147483647)/2147483647};
 material('sidingG',['#4b5446','#30372e','#66725e'],'siding');material('sidingR',['#5a3a32','#3a2420','#7a5246'],'siding');
 material('chapelStone',['#6a6870','#47464e','#8c8a94'],'stone');material('sawWood',['#6a5440','#463626','#8a7258'],'plank');
@@ -17087,7 +17157,7 @@ def('edificio',function(o){const x=o.x,y=o.y,w=o.w,d=o.d,H=o.H||92,FL=o.fl||1,HT
   const LOW={tex:{s:beamL,e:beamL,n:beamL,w:beamL},texId:'pt'},HIGH={tex:{s:beamU,e:beamU,n:beamU,w:beamU},texId:'pu'};
   const WALL=(r,t,parts,zt)=>prop({bx:[r[0]-1,r[1]-1,r[2]+1,r[3]+1,(zt||HT)+6],ky:r[3],parts:tag(parts,t),house:hs});
   const SD={s:{hz:1,fix:y+d-th,a0:x,a1:x+w,t:'wS',n:[0,1],m:{n:inner}},n:{hz:1,fix:y,a0:x,a1:x+w,t:'wN',n:[0,-1],m:{s:inner}},e:{hz:0,fix:x+w-th,a0:y+th,a1:y+d-th,t:'wE',n:[1,0],m:{w:inner}},w:{hz:0,fix:x,a0:y+th,a1:y+d-th,t:'wW',n:[-1,0],m:{e:inner}}};
-  const B={hs,x,y,w,d,H,HT,th,doors:{},wins:[],inN:[]},INW=[];
+  const B={hs,x,y,w,d,H,HT,th,doors:{},wins:[],inN:[],ref:ZM.NAMES.ref},INW=[];
   const WB=(Sd,a,b,z0,z1,extra)=>Sd.hz?box(a,Sd.fix,z0,b-a,th,z1-z0,wall,Object.assign({ow:2.2,tex:EAV,m:Sd.m,noFoot:z0>0},extra)):box(Sd.fix,a,z0,th,b-a,z1-z0,wall,Object.assign({ow:2.2,tex:EAV,m:Sd.m,noFoot:z0>0},extra));
   const R=(Sd,a,b)=>Sd.hz?[a,Sd.fix,b,Sd.fix+th]:[Sd.fix,a,Sd.fix+th,b];
   const wpt=(Sd,c)=>Sd.hz?[c,Sd.fix+th/2]:[Sd.fix+th/2,c];
@@ -17133,8 +17203,8 @@ def('edificio',function(o){const x=o.x,y=o.y,w=o.w,d=o.d,H=o.H||92,FL=o.fl||1,HT
     E(parts,...north,...south,line3([L,ym,HT+rh+1],[L+len,ym,HT+rh+1],'#2a2630',3,{ink:true}));
     if(o.chim){const[cx0,cy0]=o.chim,zr=HT+rh-Math.abs(cy0-ym)*rh/hl;E(parts,...box(cx0-7,cy0-7,zr-12,14,14,34,'brick',{noFoot:true,ow:1.8}),...box(cx0-9,cy0-9,zr+22,18,18,4,'stoneWD',{noFoot:true,ow:1.4}));smokes.push({x:cx0,y:cy0,z:zr+28,t:0})}
     prop({bx:[L-4,Y0-4,L+len+4,Y1+4,HT+rh+40],ky:Y1,parts:tag(parts,'roof'),house:hs})}
-  B.in=(parts,bx,ky)=>prop({bx,ky:ky==null?bx[3]:ky,parts:tag(parts,'in'),house:hs});
-  B.up=(parts,bx,ky)=>prop({bx,ky:ky==null?bx[3]:ky,parts:tag(parts,'inU'),house:hs});B.solidUp=(a,b,c,e)=>{const so=solid(a,b,c,e);so.lv=1;return so};
+  B.in=(parts,bx,ky)=>prop({bx,ky:ky==null?bx[3]:ky,parts:tag(parts,'in'),house:hs,ref:B.ref});/* (anche chiamati da fuori, come gli interni della segheria: col ref dell'edificio) */
+  B.up=(parts,bx,ky)=>prop({bx,ky:ky==null?bx[3]:ky,parts:tag(parts,'inU'),house:hs,ref:B.ref});kOf(B.ref,HT+rh);B.solidUp=(a,b,c,e)=>{const so=solid(a,b,c,e);so.lv=1;return so};
   return B});
 // ------------------------------------------------------------------ gli arredi (con B.in: compaiono quando l'eroe entra)
 const table=(B,x,y,w,d,z,round)=>{solid(x,y,w,d);const parts=[];for(const[dx,dy] of[[2,2],[w-5,2],[2,d-5],[w-5,d-5]])E(parts,...box(x+dx,y+dy,0,3,3,z-3,'wood',{noOut:true}));
@@ -17203,7 +17273,7 @@ def('campanile',function(x,y,s){const H=196,parts=[];solid(x,y,s,s);shade(x,y,s,
   E(parts,fn3(S2=>{const sw=Math.sin(W.t*1.3)*.35,c=S2(x+s/2,y+s/2,H-10),b=S2(x+s/2+Math.sin(sw)*9,y+s/2,H-10-Math.cos(sw)*14);ctx.fillStyle='#8a7030';ink(2);ctx.beginPath();ctx.moveTo(c[0]-3,c[1]);ctx.lineTo(c[0]+3,c[1]);ctx.lineTo(b[0]+8,b[1]);ctx.quadraticCurveTo(b[0],b[1]+3,b[0]-8,b[1]);ctx.closePath();ctx.fill();ctx.stroke();ctx.fillStyle='rgba(255,236,170,.4)';ctx.fillRect(c[0]-2,c[1]+2,1.5,(b[1]-c[1])*.7)},{fp:[[x+4,y+4],[x+s-4,y+4],[x+s-4,y+s-4],[x+4,y+s-4]],z:[H-30,H-6]}));
   E(parts,...box(x-3,y-3,H-6,s+6,s+6,4,'stoneWD',{noFoot:true,ow:1.6}),poly3([[x-4,y-4,H-2],[x+s+4,y-4,H-2],[x+s/2,y+s/2,H+40]],'#3c4552',{ink:2}),poly3([[x+s+4,y-4,H-2],[x+s+4,y+s+4,H-2],[x+s/2,y+s/2,H+40]],'#2b323c',{ink:2}),poly3([[x-4,y+s+4,H-2],[x+s+4,y+s+4,H-2],[x+s/2,y+s/2,H+40]],'#535f6e',{ink:2}),poly3([[x-4,y-4,H-2],[x-4,y+s+4,H-2],[x+s/2,y+s/2,H+40]],'#3c4552',{ink:2}));
   E(parts,line3([x+s/2,y+s/2,H+40],[x+s/2,y+s/2,H+56],'#34363e',2,{ink:true}),line3([x+s/2-6,y+s/2,H+50],[x+s/2+6,y+s/2,H+50],'#34363e',2,{ink:true}));
-  prop({bx:[x-6,y-6,x+s+6,y+s+6,H+60],parts,noSplit:true});perches.push({x:x+s/2,y:y+s/2,z:H+42,t:1})});
+  prop({bx:[x-6,y-6,x+s+6,y+s+6,H+60],parts,noSplit:true});perches.push({x:x+s/2,y:y+s/2,z:H+42,t:1});kOf(ZM.NAMES.ref,H+56)});
 // ------------------------------------------------------------------ la FUCINA: una tettoia di travi aperta sulla strada (nord), il muro di mattoni
 // in fondo (sud) e mezzi muri ai lati; dentro gli attrezzi appesi, il barile dell'acqua, il mucchio di carbone, i ferri di cavallo
 // (la Forgia delle Anime ci va sotto, macchine.js)
@@ -17213,8 +17283,8 @@ def('fucina',function(x,y,w,d){const H=82,th=10,parts=[];shade(x,y,w,d,H,.45);
   // il muro in fondo e i due fianchi bassi (a metà)
   for(const[r,t] of[[[x,y+d-th,w,th,H],'wS'],[[x,y+28,th,d-28-th,46],'wW'],[[x+w-th,y+28,th,d-28-th,46],'wE']]){solid(r[0],r[1],r[2],r[3]);prop({bx:[r[0]-1,r[1]-1,r[0]+r[2]+1,r[1]+r[3]+1,r[4]+4],parts:tag(box(r[0],r[1],0,r[2],r[3],r[4],'brick',{ow:2.2}),t),house:hs})}
   // i pali davanti e la tettoia a una falda che scende verso la strada
-  for(const px of[x,x+w/2-3,x+w-6]){solid(px,y,6,6);prop({bx:[px-1,y-1,px+7,y+7,H-8],parts:box(px,y,0,6,6,H-14,'post',{ow:1.6}),lk:.8})}
-  const zt=v=>H-18*v/d;prop({bx:[x-10,y-10,x+w+10,y+d+4,H+6],parts:[...prismY(x-10,y-12,w+20,[[0,zt(0)-14],[d+12,zt(d+12)+4],[d+12,zt(d+12)+9],[0,zt(0)-9]],'shingle',{m:{e:'plankD',w:'plankD'},ow:1.8})].map(t=>{t.part='roof';return t}),lk:.8,house:hs});
+  for(const px of[x,x+w/2-3,x+w-6]){solid(px,y,6,6);prop({bx:[px-1,y-1,px+7,y+7,H-8],parts:box(px,y,0,6,6,H-14,'post',{ow:1.6})})}/* (difetti 48) pali e tettoia si piegano come i muri: con lk .8 scivolavano sui muri girando */
+  const zt=v=>H-18*v/d;prop({bx:[x-10,y-10,x+w+10,y+d+4,H+6],parts:[...prismY(x-10,y-12,w+20,[[0,zt(0)-14],[d+12,zt(d+12)+4],[d+12,zt(d+12)+9],[0,zt(0)-9]],'shingle',{m:{e:'plankD',w:'plankD'},ow:1.8})].map(t=>{t.part='roof';return t}),house:hs});
   // gli attrezzi sul muro in fondo (tenaglie, martelli, ferri di cavallo) e il barile, il carbone
   const wy=y+d-th-.4;E(parts,fn3(S2=>{for(let i=0;i<6;i++){const ax=x+40+i*26,a=S2(ax,wy,58),b=S2(ax+(i%2?3:-3),wy,30+(i%3)*4);ctx.lineCap='round';ctx.strokeStyle=INK;ctx.lineWidth=3;seg(a,b);ctx.stroke();ctx.strokeStyle=i%2?'#5a5c66':'#7d5a38';ctx.lineWidth=1.4;seg(a,b);ctx.stroke();
       if(i%2){ctx.fillStyle='#4a4c56';ink(1.2);ctx.fillRect(b[0]-4,b[1]-2,8,4);ctx.strokeRect(b[0]-4,b[1]-2,8,4)}}
@@ -18321,7 +18391,7 @@ function take(f){const it=f.item;if(!it)return;W.hero.unarmed=false;ZM.equip(it.
 // i colpi delle armi forgiate: una scintilla azzurra sullo zombie (livello 1), viola e un arco che salta allo zombie più vicino (livello 2)
 const ARCS=[];
 W.papHit=(z,g,dmg)=>{const lv=g.pap||0;if(!lv)return;PK.rings.push({x:z.x,y:z.y,z0:z.zh||0,t:.35,col:lv>=2?'#d48bff':'#8fe6ff',small:1});if(lv<2)return;
-  let best=null,bd=80;for(const o of W.Z){if(o===z||o.die||o.rise<1||o.idle)continue;const d=Math.hypot(o.x-z.x,o.y-z.y);if(d<bd){bd=d;best=o}}
+  let best=null,bd=80;for(const o of W.Z){if(o===z||o.die||o.rise<1||o.idle||!ZM.sameLv(o,z))continue;/* (difetti 48) l'arco non salta tra i piani */const d=Math.hypot(o.x-z.x,o.y-z.y);if(d<bd){bd=d;best=o}}
   if(best){ZM.hurt(best,dmg*FG.catena,false);ARCS.push({a:[z.x,z.y,(z.zh||0)+22],b:[best.x,best.y,(best.zh||0)+22],t:0,sd:Math.random()*99})}};
 // lo sparo delle armi forgiate squilla (livello 1) o crepita (livello 2)
 if(window.ARMI&&ARMI.suono){const _s=ARMI.suono;ARMI.suono=function(id,w){const r=_s.apply(this,arguments);try{const g=ZM.gun();if(w==='sparo'&&g&&g.pap&&AU.ctx&&AU.on.sfx){const t=AU.ctx.currentTime+.005;
@@ -18364,6 +18434,9 @@ function drawTop(){const h=W.hero;
   const _r=D.reset;D.reset=()=>{_r();if(PK.vbase!=null&&D.PZ.vita===PK.boost){D.PZ.vita=PK.vbase;D.hp=PK.vbase}Object.assign(PK,{own:[],vbase:null,boost:null,lastHp:null,pushCd:0,fly:[],rings:[],uk:null});ARCS.length=0;
     POWER=false;for(const v of VALVES){v.t=-1;v.rot=0;if(v.smk){const i=smokes.indexOf(v.smk);if(i>=0)smokes.splice(i,1);v.smk=null}}
     for(const f of FORGE){f.st='fredda';f.t=0;f.item=null;f.open=false;f.rot=0;f.hit=0;if(f.smk){const i=smokes.indexOf(f.smk);if(i>=0)smokes.splice(i,1);f.smk=null}}W.hero.unarmed=false;for(const m of ELI){m.use=0;m.spin=0;m.wait=null}if(PK.ui)drawUI()};return D}}
+// (difetti 48) Credenza, valvola e Forgia sono oggetti interi: si piegano tutti insieme da un punto (prima ogni punto per conto suo, e girando la
+// visuale si deformavano), o col loro edificio quando sono dentro un gruppo (ZM.group: la Credenza della Locanda, la Forgia della Fucina)
+for(const k of['elisir','valvola','forgia']){const f=P[k];P[k]=function(x,y,...r){const N=ZM.NAMES,sr=N.ref;N.ref=N.grp||[x,y];try{return f.call(this,x,y,...r)}finally{N.ref=sr}}}
 ZM.macchine={PERK,PK,EL,FG,ELI,FORGE,VALVES,power:()=>POWER,setPower:v=>{if(v&&!POWER&&VALVES[0])power(VALVES[0]);else POWER=!!v},drink,has,nomeF,bottle}})();
 // ---------- LA MAPPA della modalità zombie (pianta approvata da Denis il 12 ottobre, anteprime/zombie/pianta.py): a sud l'area di partenza
 // «Camposanto e Casa» (12×12 caselle: l'anteprima di prima con due caselle in più a nord e due a est), a nord oltre il cancello a pagamento la
@@ -18379,7 +18452,7 @@ ZM.macchine={PERK,PK,EL,FG,ELI,FORGE,VALVES,power:()=>POWER,setPower:v=>{if(v&&!
 (()=>{const{T,P,G,prop,solid,holes,perches,bakeGround,boot,W,rr,srand,box,shade,prismY,line3,TAU}=ZM;
 const X=v=>v*T,Y=v=>(v+2)*T,AX=v=>(v+2)*T,AY=v=>(v+16)*T;
 // le cose che una partita cambia e che una partita nuova rimette com'erano: l'eroe alla partenza, gli zombie fermi nell'aia, il velo sulla fattoria
-const HERO0=()=>({x:AX(4.4),y:AY(8.4),face:-Math.PI/2,walk:0,moving:false,aim:0,fireCd:0}),IDLE=[['zombie',6.0,8.6,2],['lanterna',9.3,5.3,2],['strisciante',8.9,8.7,2],['zombie',19.4,18.6,3],['minatore',23.4,16.7,3],['strisciante',27.2,19.0,3],['zombie',22.6,9.4,4],['hound',18.3,8.8,4],['lanterna',27.9,7.7,4]],
+const HERO0=()=>({x:AX(4.4),y:AY(8.4),face:-Math.PI/2,walk:0,moving:false,aim:0,fireCd:0}),IDLE=[['zombie',6.0,8.6,2],['lanterna',9.3,5.3,2],['strisciante',8.9,8.7,2],['zombie',19.4,18.6,3],['minatore',23.4,16.7,3],['strisciante',27.2,19.0,3],['zombie',22.6,9.4,4],['hound',19.0,9.8,4],['lanterna',27.9,7.7,4]],
   veil=()=>({y:Y(12.3),k:1,wisps:Array.from({length:8},(_,i)=>({x:rr(0,16*T),y:rr(Y(1),Y(11.4)),r:rr(110,190),v:rr(5,11)}))});
 // ---------- le ZONE NUOVE (anteprima 48): il Borgo dei Lumi (3) e la Segheria del Fiume (4), coi confini, le barriere a pagamento, le uscite
 // degli zombie e il terreno. Coordinate in caselle della pianta (pianta_grande.py). Regole: niente corridoi tra 18 e 34 px; davanti a porte,
@@ -18410,10 +18483,10 @@ function buildEast(w,h){const E={};const hole=(x,y,z,k)=>holes.push([x,y,z,k||nu
   solid(X(16),0,w-X(16),Y(1.6),'water');
   // ---------------------------------------------------------------- AREA 4: la Segheria del Fiume
   P.ruotaMulino(X(18.7),Y(1.55));
-  P.cataste(X(16.6),Y(1.7),X(18.4)-X(16.6),Y(3.0)-Y(1.7));P.cataste(X(27.0),Y(8.6),X(29.3)-X(27.0)-3,Y(10.0)-Y(8.6));
+  P.cataste(X(16.6),Y(1.7),X(18.4)-X(16.6),Y(3.0)-Y(1.7));P.cataste(X(27.2),Y(8.6),X(29.3)-X(27.2)-3,Y(10.0)-Y(8.6));/* (difetti 48: 45 px dal muro della segheria, prima 32: un corridoio da 18–34 px che la griglia chiudeva) */
   const SG=P.edificio({x:X(19.5),y:Y(3.4),w:7*T,d:5*T,H:96,fl:1,wall:'sawWood',roof:'barnRoof',rh:84,name:'Segheria',
     op:[{s:'s',at:3.75*T,k:'big',id:'portone'},{s:'w',at:2.2*T,k:'door',id:'ovest'},{s:'n',at:5.1*T,k:'door',id:'fiume'},{s:'s',at:.9*T,k:'win'},{s:'e',at:2.6*T,k:'win'},{s:'n',at:1.6*T,k:'win'}]});
-  P.bancoSega(SG,X(21.9),Y(5.25));
+  ZM.group(SG.ref,()=>P.bancoSega(SG,X(21.9),Y(5.25)));/* (difetti 48: le cose attaccate a un edificio si piegano con lui) */
   {const px=X(24.4),py=Y(4.0);solid(px,py,70,14);SG.in([...box(px,py,0,70,14,6,'plankN',{ow:1.4}),...box(px+2,py+1,6,66,12,6,'plank',{noFoot:true,ow:1.4}),...box(px+4,py+2,12,62,10,6,'plankN',{noFoot:true,ow:1.4})],[px-2,py-2,px+72,py+16,20])}// le assi tagliate
   {const tx=X(25.6),ty=Y(6.6);solid(tx,ty,44,22);SG.in([...box(tx,ty,0,44,22,24,'wood',{ow:1.8}),...box(tx-2,ty-2,24,48,26,3,'plankD',{noFoot:true,ow:1.4}),line3([tx+6,ty+8,27],[tx+30,ty+12,27],'#8a8e98',2,{ink:true})],[tx-4,ty-4,tx+48,ty+26,32])}// il banco degli attrezzi
   P.shed(X(17.0),Y(5.4),1.8*T,2*T);
@@ -18421,27 +18494,27 @@ function buildEast(w,h){const E={};const hole=(x,y,z,k)=>holes.push([x,y,z,k||nu
   P.gru(X(26.1),Y(10.9));P.carroTronchi(X(20.7),Y(10.0));hole(X(20.4),Y(10.4),4,'carro');
   for(const[x,y] of[[X(24.4),Y(9.7)],[X(18.0),Y(8.6)]])grave(x,y,4);
   hole(X(21.4),Y(1.45),4,'acqua');hole(X(25.6),Y(1.45),4,'acqua');// (nell'acqua: escono dal fiume e salgono sulla riva)
-  P.lanternPole(X(19.1),Y(9.0),1);P.lanternPole(X(26.8),Y(8.9),-1);
+  P.lanternPole(X(19.1),Y(9.0),1);P.lanternPole(X(27.7),Y(10.65),-1);/* (difetti 48: il secondo lampione chiudeva il passaggio tra la segheria e le cataste: la caldaia si raggiungeva solo girando dal fiume) */
   E.bara4=[X(20.45),Y(4.35)];E.gun4=[X(21.6),Y(8.4)+24];
-  {const hostS=SG_FACE(X(21.6),Y(8.4),'s');P.wallGun(X(21.6),Y(8.4)+.6,30,'x','mitra',1250,hostS)}
+  {const hostS=SG_FACE(X(21.6),Y(8.4),'s');ZM.group(SG.ref,()=>P.wallGun(X(21.6),Y(8.4)+.6,30,'x','mitra',1250,hostS))}
   // ---------------------------------------------------------------- AREA 3: il Borgo dei Lumi
   const LC=P.locanda(X(15.2),Y(13.3),6.4*T,3.6*T);E.locanda=LC;
   // la Credenza degli Elisir dietro il bancone, contro il muro nord
-  P.elisir(X(15.2)+306,Y(13.3)+22);
+  ZM.group(LC.ref,()=>P.elisir(X(15.2)+306,Y(13.3)+22));
   {const bt=P.botola(X(14.6),Y(13.75));holes.push([X(14.6),Y(13.75),3,'botola',()=>bt.bang()])}// la botola della cantina nel vicolo a ovest della locanda (dietro, la Locanda alta la nascondeva)
   for(const[x,y,c] of[[X(22.9),Y(13.6),'R'],[X(24.65),Y(13.6),'B'],[X(23.75),Y(15.25),'R']])P.bancarella(x,y,c);
   P.bacheca(X(26.6),Y(13.75));P.carrettoRovesciato(X(25.7),Y(15.4));hole(X(25.55),Y(16.75),3,'carro');
   for(const[x,y] of[[X(22.7),Y(16.6)],[X(27.4),Y(15.0)]])P.crate(x,y);P.barrel(X(26.9),Y(16.7));P.barrel(X(22.8),Y(14.9),.85);
   P.carrozzaScuola(X(25.55),Y(17.55));hole(X(25.25),Y(18.0),3,'carro');
   for(const[x,y,d] of[[X(17.4),Y(19.75),1],[X(21.2),Y(17.25),-1],[X(24.6),Y(19.75),1],[X(28.7),Y(17.25),-1]])P.lanternPole(x,y,d);
-  const FU=P.fucina(X(15.0),Y(20.3),4.5*T,3.1*T);ZM.turn(X(17.0),Y(22.35),2,()=>P.forgia(X(17.0),Y(22.35)));
-  E.gun3=[X(18.75),FU.wallY-24];{const hostF=FU_FACE(FU);P.wallGun(X(18.75),FU.wallY-.6,34,'x','mitraglietta',1000,hostF)}
+  const FU=P.fucina(X(15.0),Y(20.3),4.5*T,3.1*T);ZM.group(FU.ref,()=>ZM.turn(X(17.0),Y(22.35),2,()=>P.forgia(X(17.0),Y(22.35))));
+  E.gun3=[X(18.75),FU.wallY-24];{const hostF=FU_FACE(FU);ZM.group(FU.ref,()=>P.wallGun(X(18.75),FU.wallY-.6,34,'x','mitraglietta',1000,hostF))}
   // l'orto del parroco: muretti con la cancellata, l'ingresso a nord, le tombe (due fosse aperte), l'albero morto
   P.wall(X(20.4),Y(20.4),X(21.8),Y(20.4),true);P.wall(X(22.8),Y(20.4),X(24.2),Y(20.4),true);P.wall(X(20.4),Y(20.4),X(20.4),Y(24),true);P.wall(X(24.2),Y(20.4),X(24.2),Y(24),true);
   P.grave(X(21.0),Y(21.4),1);P.grave(X(23.5),Y(21.5),2,{lean:.1});grave(X(21.4),Y(22.7),3);grave(X(23.3),Y(22.9),3);P.tree(X(22.4),Y(23.4),true,.85);
   // la Cappella col campanile e la sagrestia nell'angolo
-  const CP=P.cappella(X(24.9),Y(20.0),3.5*T,3.9*T);P.campanile(X(28.4),Y(20.0),X(29.3)-X(28.4));
-  {const sx=X(28.4),sy=Y(20.9),sw=X(29.3)-sx,sd=Y(24)-6-sy;solid(sx,sy,sw,sd);shade(sx,sy,sw,sd,60,.45);prop({bx:[sx-1,sy-1,sx+sw+1,sy+sd+1,70],parts:[...box(sx,sy,0,sw,sd,52,'chapelStone',{ow:2.2}),...prismY(sx-4,sy-4,sw+8,[[0,52],[sd+8,52],[sd+8,58],[0,64]],'slate',{m:{e:'chapelStone',w:'chapelStone'},ow:1.8})]})}
+  const CP=P.cappella(X(24.9),Y(20.0),3.5*T,3.9*T);ZM.group(CP.ref,()=>P.campanile(X(28.4),Y(20.0),X(29.3)-X(28.4)));
+  {const sx=X(28.4),sy=Y(20.9),sw=X(29.3)-sx,sd=Y(24)-6-sy;solid(sx,sy,sw,sd);shade(sx,sy,sw,sd,60,.45);prop({bx:[sx-1,sy-1,sx+sw+1,sy+sd+1,70],ref:CP.ref,parts:[...box(sx,sy,0,sw,sd,52,'chapelStone',{ow:2.2}),...prismY(sx-4,sy-4,sw+8,[[0,52],[sd+8,52],[sd+8,58],[0,64]],'slate',{m:{e:'chapelStone',w:'chapelStone'},ow:1.8})]})}
   E.bara3=[X(24.9)+3.5*T-10-36-22,Y(20.0)+3.9*T/2];
   // fuori, oltre il bordo: le rovine a sud del borgo, il bosco oltre il fiume
   for(const[x,y,ww,dd] of[[X(15.4),Y(24.6),110,70],[X(19.6),Y(24.9),90,60],[X(25.6),Y(24.7),120,70]])P.rovine(x,y,ww,dd);
@@ -18545,6 +18618,10 @@ const AREA={title:'Camposanto',zoneName:h=>h.y<Y(12.3)?(h.x<X(16)?'Fattoria dei 
       ZM.buyable({id:'zona'+zs.join(''),x:b.x,y:b.y,r:78,show:()=>!b.state.open,label:()=>nm||(zs.map(z=>W.zoneOpen[z]).every(Boolean)?'Passaggio':W.zoneOpen[zs[0]]?NOMI[zs[1]]:NOMI[zs[0]]),price:()=>b.price,
         act(){if(b.state.open||W.coins<b.price)return false;W.coins-=b.price;b.open();const nu=zs.filter(z=>!W.zoneOpen[z]);for(const z of zs)W.zoneOpen[z]=true;if(W.split&&(W.zoneOpen[2]||W.zoneOpen[4]))W.split.fade=true;ZM.navRebuild();
           W.toast=[nu.length?NOMI[nu[0]]+': aperta':'Il passaggio è aperto',2.6];try{if(AU.ctx&&AU.on.sfx){const t=AU.ctx.currentTime+.01;M.wood(t,1.2,VR(180,.05));fThump(t,90,40,.4,.5,.3);fNoise(t,.6,'lowpass',700,.7,.25,{brown:true})}}catch(e){}return true}});
+    // (difetti 48) gli zombie fermi di una zona chiusa, con l'eroe vicino a una sua barriera, vengono alle assi e allungano le braccia come al cancello
+    // della fattoria: si vede che sono chiusi di là e aspettano (prima restavano a girare e sembravano bloccati)
+    W.lures=[];const lure=(b,zone,nx,ny)=>{const sl=[];for(const k of[0,-1,1,-2,2]){const a=k*19,o=26+Math.abs(k)*6;sl.push(ny?[b.x+a,b.y+ny*o]:[b.x+nx*o,b.y+a])}W.lures.push({x:b.x,y:b.y,gx:b.x+nx*30,gy:b.y+ny*30,zone,lure:3.6*T,slots:sl,isOpen:()=>b.state.open})};
+    lure(EAST.b13,3,1,0);lure(EAST.b24,4,1,0);lure(EAST.b24,2,-1,0);lure(EAST.b34,4,0,-1);lure(EAST.b34,3,0,1);
     // (anteprima 48) la Pompa tattica è al piano di sopra della Locanda (lv 1: il bottone c'è solo di sopra)
     for(const[id,pr,hx,hy,zone,lv] of[['revolver',500,X(9.6),Y(15)-24,1],['pompa',1500,X(11.0)-26,Y(7.45),2],['mitraglietta',1000,EAST.gun3[0],EAST.gun3[1],3],['mitra',1250,EAST.gun4[0],EAST.gun4[1],4],['tattica',2000,EAST.locanda.gunUp[0],EAST.locanda.gunUp[1],3,1]])
       ZM.buyable({id:'muro_'+id,x:hx,y:hy,r:56,lv:lv||0,show:()=>W.zoneOpen[zone],label:()=>(W.gunId===id?'Colpi: ':'')+(window.ARMI?ARMI.DATI[id].n:id),price:()=>W.gunId===id?Math.round(pr/2):pr,
@@ -20956,6 +21033,138 @@ function saveCheck(S){if(!S||typeof S!=='object')return S;
     if(Array.isArray(P0.eq))P0.eq=P0.eq.filter((id,i,a)=>P0.owned&&P0.owned[id]&&a.indexOf(id)===i).slice(0,PET_SLOTS)}
   return S}
 saveCheck(SAVE);
+// =====================================================================
+// I 5 POSTI SOTTO L'EROE (difetti dell'anteprima 48; Denis: «fai in modo che i 5 pacchetti li vedi da sotto il player, non dentro un menu
+// apposito», «al posto degli oggetti»). Nella Classica le quattro casse vinte e la quinta, nella Zombie le quattro Lucky Cards vinte e la
+// quinta: gli oggetti indossati si cambiano dall'Armeria, l'arma zombie e la Lucky Card in tasca dall'Arsenale. Toccando un posto si apre un
+// riquadro piccolo sopra di lui, come in Clash Royale: Sblocca, Apri subito con l'oro, Apri!; una cassa pronta si apre subito al primo tocco.
+// Insieme («migliora tutto, rendi visibilmente più bello e riconoscibile», «testi tagliati»): i nomi sotto tutti i bottoni della Zombie (la
+// lamiera storta era un ritaglio, clip-path, che tagliava via nomi e bollini), i nomi sotto tutte le linguette della barra in basso, «Liv. N»
+// intero anche sui telefoni stretti.
+// =====================================================================
+const PSKIP=t=>Math.max(5,Math.ceil(t*1000/6000)*5);// aprire subito una cassa ancora chiusa costa come se si sbloccasse adesso
+const POSTI={
+  classica:{list:()=>SAVE.slots.concat([SAVE.slot5]),st:slotState,busy:i=>i<4&&anyUnlocking(),time:s=>CHESTS[s.type].time,
+    skip:s=>s.state==='unlocking'?skipCost(s):PSKIP(CHESTS[s.type].time),img:(s,i)=>i===4?chestSVG5(s.type):chestSVG(s.type,false),
+    name:s=>CHESTS[s.type].n,rar:s=>rwRar(s.type),what:(s,i)=>{const C=CHESTS[s.type];return `${Math.round(C.cards*(i===4?1.3:1))} carte e ${C.gold[0]}–${C.gold[1]} oro`},
+    set:(i,v)=>{if(i===4)SAVE.slot5=v;else SAVE.slots[i]=v},open:(s,i)=>openChest(s.type,i===4?{slot:true,fifth:true}:{slot:true}),next5:()=>SAVE.next5||0,
+    none:'Vinci le casse giocando, dalla stanza 3 in poi',none5:'Quando i quattro posti sono pieni, la prossima cassa vinta arriva qui: Epica o Leggendaria'},
+  zombie:{list:()=>SAVE.lucky.slots.concat([SAVE.lucky.slot5]),st:lslotState,busy:i=>i<4&&lUnlocking(),time:s=>LTIME[s.rar],
+    skip:s=>s.state==='unlocking'?lSkip(s):PSKIP(LTIME[s.rar]),img:(s,i)=>`<img class="pkI" src="${packImg('lucky',s.rar,i===4?128:96)}" alt="">`,
+    name:()=>'Lucky Cards',rar:s=>s.rar,what:s=>`${LBUSTE[s.rar].cards} Lucky Cards da portare in partita`,
+    set:(i,v)=>{if(i===4)SAVE.lucky.slot5=v;else SAVE.lucky.slots[i]=v},open:s=>openPack('lucky',s.rar),next5:()=>SAVE.lucky.next5||0,
+    none:'Le vinci finendo le partite Zombie, dal round 3 in poi',none5:'Quando i quattro posti sono pieni, la prossima bustina vinta arriva qui: Epica o Leggendaria'}};
+const postiOf=()=>POSTI[zMode()?'zombie':'classica'];
+const tShort=ms=>fmtT(ms).replace(/^(\d+m) 00s$/,'$1');
+function postoHTML(P,s,i){const five=i===4,cls='psl'+(five?' p5':'');
+  if(!s){const w=five&&P.next5()>Date.now();return `<button class="${cls} empty" data-pe="${i}" aria-label="${five?'Quinta: vuota':'Posto vuoto'}">${five?'<i class="p5c"></i>':''}<span class="pimg"></span><b>${five?(w?fmtH(P.next5()-Date.now()).replace(/ \d+s$/,''):'Quinta'):'Vuoto'}</b></button>`}
+  const st=P.st(s),r=P.rar(s);let lab,bar='';
+  if(st==='ready')lab='<b>Apri!</b>';
+  else if(st==='unlocking'){const T=P.time(s)*1000,left=s.end-Date.now();lab=`<b class="tm">${fmtT(left)}</b>`;bar=`<i class="pbar"><i style="width:${Math.max(4,Math.round((1-left/T)*100))}%"></i></i>`}
+  else lab=P.busy(i)?'<b class="wt">In attesa</b>':'<b>Sblocca</b>';
+  return `<button class="${cls} ${st}" data-ps="${i}" style="--rc:${PRC[r][0]};--rc2:${PRC[r][1]}" aria-label="${(five?'Quinta: ':'')+P.name(s)} ${PRN[r]}">${five?'<i class="p5c"></i>':''}<span class="pimg">${P.img(s,i)}</span>${lab}${bar}</button>`}
+// la fila sotto l'eroe (prende il posto degli oggetti in tutte e due le modalità)
+renderGearRow=function(){const P=postiOf(),html=P.list().map((s,i)=>postoHTML(P,s,i)).join(''),el=$('homeGear');el.classList.add('posti');el._z=false;if(el._h!==html){el.innerHTML=html;el._h=html}if(POP.i!=null)popFill()};
+// ------------------------------------------------------------------ il riquadro sopra il posto
+const POP={i:null,el:null};
+function popOpen(i){POP.i=i;if(!POP.el){const d=document.createElement('div');d.id='postoPop';d.className='pPop';d.setAttribute('role','dialog');document.body.appendChild(d);POP.el=d;
+    d.addEventListener('click',e=>{const b=e.target.closest('[data-pa]');if(b&&!b.disabled)popAct(b.dataset.pa)})}
+  POP.el._h='';POP.el.classList.toggle('z',zMode());popFill();POP.el.hidden=false;POP.el.classList.remove('in');void POP.el.offsetWidth;POP.el.classList.add('in');sfx('ui')}
+function popClose(){POP.i=null;if(POP.el)POP.el.hidden=true}
+function popFill(){const P=postiOf(),i=POP.i,s=P.list()[i],tile=$('homeGear').querySelector(`[data-ps="${i}"]`);
+  if(!s||!tile||$('menu').hidden||$('tabPlay').hidden||!$('sheetScr').hidden){popClose();return}
+  const st=P.st(s),r=P.rar(s),c=P.skip(s),coin='<i class="coin"></i>';let body;
+  if(st==='ready')body='<button class="btn go" data-pa="open">Apri!</button>';
+  else if(st==='unlocking')body=`<p class="pt">Pronta tra <b>${fmtT(s.end-Date.now())}</b></p><button class="btn go" data-pa="skip">Apri subito · ${c} ${coin}</button>`;
+  else body=(P.busy(i)?`<p class="pt">Si sblocca una alla volta: prima finisce quella che si sta aprendo</p>`:`<button class="btn go" data-pa="unlock">Sblocca · ${tShort(P.time(s)*1000)}</button>`)+`<button class="btn alt" data-pa="skip">Apri subito · ${c} ${coin}</button>`;
+  const html=`<div class="ph"><b>${i===4?'Quinta · ':''}${P.name(s)}</b><span class="pr" style="--rc:${PRC[r][0]}">${PRN[r]}</span></div>
+    <div class="pbody"><span class="pimg">${P.img(s,i)}</span><div><p class="pw">${P.what(s,i)}</p>${i===4?'<p class="pt">Si sblocca da sola, anche insieme alle altre</p>':''}</div></div><div class="pbtns">${body}</div>`;
+  if(POP.el._h!==html){POP.el.innerHTML=html;POP.el._h=html}
+  // sopra il posto e dentro lo schermo, con la punta verso il posto
+  const R=tile.getBoundingClientRect(),W0=Math.min(272,innerWidth-20),x=Math.max(10,Math.min(innerWidth-10-W0,R.left+R.width/2-W0/2));
+  POP.el.style.width=W0+'px';POP.el.style.left=x+'px';POP.el.style.bottom=Math.round(innerHeight-R.top+10)+'px';POP.el.style.setProperty('--ax',Math.round(R.left+R.width/2-x)+'px')}
+function popAct(a){const P=postiOf(),i=POP.i,s=P.list()[i];if(!s||CHbusy)return;const st=P.st(s);
+  if(a==='open'&&st==='ready'){popClose();P.set(i,null);save();renderPlay();P.open(s,i);return}
+  if(a==='unlock'&&st==='locked'&&!P.busy(i)){s.state='unlocking';s.end=Date.now()+P.time(s)*1000;save();sfx('ui');vib(12);renderPlay();return}
+  if(a==='skip'&&st!=='ready'){const c=P.skip(s);if(SAVE.gold<c){toast(`Ti servono ${c} oro`);return}SAVE.gold-=c;s.state='ready';s.confirm=false;save();renderGold();sfx('upgrade');vib(25);renderPlay()}}
+$('homeGear').addEventListener('click',e=>{const b=e.target.closest('[data-ps],[data-pe]');if(!b)return;e.stopPropagation();if(CHbusy)return;const P=postiOf();
+  if(b.dataset.pe!=null){sfx('ui');toast(+b.dataset.pe===4?P.none5:P.none);return}
+  const i=+b.dataset.ps,s=P.list()[i];if(!s)return;if(P.st(s)==='ready'){POP.i=i;popAct('open');return}if(POP.i===i){popClose();return}popOpen(i)},true);
+document.addEventListener('pointerdown',e=>{if(POP.i!=null&&!e.target.closest('#postoPop,[data-ps]'))popClose()},true);
+{const _st=setTab;setTab=function(){popClose();return _st.apply(this,arguments)}}
+{const _os=openSheet;openSheet=function(){popClose();return _os.apply(this,arguments)}}
+// ------------------------------------------------------------------ l'aspetto
+{const st=document.createElement('style');st.textContent=`
+#menu .homeFoot{margin:0 10px}
+#homeGear.posti{position:relative;z-index:3;display:flex;justify-content:center;align-items:flex-end;gap:6px;flex-wrap:nowrap}
+.psl{position:relative;box-sizing:border-box;width:56px;height:66px;flex:none;display:flex;flex-direction:column;align-items:center;justify-content:flex-end;gap:0;padding:0 2px 4px;
+  border:2.5px solid var(--crInk);border-radius:12px;background:radial-gradient(80% 60% at 50% 30%,color-mix(in srgb,var(--rc,#8a8f96) 40%,transparent),transparent 72%),linear-gradient(#5d554a,#37312a);
+  box-shadow:inset 0 2px 0 rgba(255,255,255,.28),inset 0 -3px 0 rgba(0,0,0,.3),0 3px 0 var(--crInk);color:#fff;font-family:var(--display);cursor:pointer;-webkit-tap-highlight-color:transparent}
+.psl:active{transform:translateY(2px)}
+.psl .pimg{position:absolute;left:3px;right:3px;top:2px;height:42px;display:flex;align-items:center;justify-content:center;pointer-events:none}
+.psl .pimg svg{width:46px;height:auto;max-width:none;filter:drop-shadow(0 2px 0 rgba(0,0,0,.45))}
+.psl .pimg .pkI{height:40px;width:auto;max-width:none;filter:drop-shadow(0 2px 0 rgba(0,0,0,.45))}
+.psl b{position:relative;z-index:1;font-weight:400;font-size:12px;line-height:1.05;white-space:nowrap;text-shadow:var(--tol-s);letter-spacing:.01em}
+.psl b.tm{font-size:11px;font-variant-numeric:tabular-nums}.psl b.wt{font-size:9.5px;color:#d9d0b8}
+.psl .pbar{position:absolute;left:6px;right:6px;bottom:-6px;height:6px;border:2px solid var(--crInk);border-radius:4px;background:#1e1b18;overflow:hidden;box-sizing:content-box}
+.psl .pbar i{display:block;height:100%;background:linear-gradient(#ffe46e,#e09a10)}
+.psl.ready{background:radial-gradient(80% 60% at 50% 30%,rgba(255,250,200,.65),transparent 70%),linear-gradient(#ffe46e,#f2a400);animation:pslReady 1.3s ease-in-out infinite}
+.psl.ready b{font-size:13.5px}
+.psl.ready .pimg{animation:pslHop 1.3s ease-in-out infinite}
+.psl.empty{background:rgba(24,21,18,.5);border:2px dashed rgba(221,212,184,.5);box-shadow:none;cursor:pointer}.psl.empty b{font-size:10.5px;color:#cfc6b0}
+.psl.p5{width:62px;height:72px;border-color:#1b1612;box-shadow:inset 0 0 0 2px #ffd84a,inset 0 2px 0 rgba(255,255,255,.3),0 3px 0 var(--crInk),0 0 14px rgba(255,216,74,.35)}
+.psl.p5 .pimg{height:48px}.psl.p5 .pimg svg{width:60px}.psl.p5 .pimg .pkI{height:46px}
+.psl.p5.empty{box-shadow:inset 0 0 0 2px rgba(255,216,74,.35);border-style:dashed;border-color:rgba(255,216,74,.55)}
+.psl .p5c{position:absolute;top:-9px;left:50%;width:22px;height:13px;margin-left:-11px;z-index:2;background:url("data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%2022%2013%22%3E%3Cpath%20d%3D%22M2%2012l1-9%204%204%204-6%204%206%204-4%201%209z%22%20fill%3D%22%23ffd84a%22%20stroke%3D%22%231b1612%22%20stroke-width%3D%221.8%22%20stroke-linejoin%3D%22round%22%2F%3E%3C%2Fsvg%3E") no-repeat center/contain}
+.psl.p5.empty .p5c{opacity:.6}
+@keyframes pslReady{0%,100%{box-shadow:inset 0 2px 0 rgba(255,255,255,.5),0 3px 0 var(--crInk),0 0 0 rgba(255,216,74,0)}50%{box-shadow:inset 0 2px 0 rgba(255,255,255,.5),0 3px 0 var(--crInk),0 0 16px rgba(255,216,74,.85)}}
+@keyframes pslHop{0%,70%,100%{transform:translateY(0)}80%{transform:translateY(-4px) rotate(-4deg)}90%{transform:translateY(0) rotate(3deg)}}
+#menu.zmode .psl{background:radial-gradient(80% 60% at 50% 30%,color-mix(in srgb,var(--rc,#8a8f96) 35%,transparent),transparent 72%),linear-gradient(#3a3f37,#1d201b);border-color:#0a0c0b;box-shadow:inset 0 2px 0 rgba(200,230,180,.14),inset 0 -3px 0 rgba(0,0,0,.45),0 3px 0 #0a0c0b}
+#menu.zmode .psl.ready{background:radial-gradient(80% 60% at 50% 30%,rgba(220,255,170,.55),transparent 70%),linear-gradient(#a8d862,#4f8a27);animation-name:pslReadyZ}
+#menu.zmode .psl .pbar i{background:linear-gradient(#b5e46a,#4f8a27)}
+#menu.zmode .psl.empty{background:rgba(10,12,10,.5);border-color:rgba(160,200,140,.4)}
+#menu.zmode .psl.p5{box-shadow:inset 0 0 0 2px #9dff6a,inset 0 2px 0 rgba(255,255,255,.2),0 3px 0 #0a0c0b,0 0 14px rgba(140,255,110,.3)}
+@keyframes pslReadyZ{0%,100%{box-shadow:inset 0 2px 0 rgba(255,255,255,.4),0 3px 0 #0a0c0b,0 0 0 rgba(150,255,110,0)}50%{box-shadow:inset 0 2px 0 rgba(255,255,255,.4),0 3px 0 #0a0c0b,0 0 16px rgba(150,255,110,.8)}}
+@media (max-width:370px){#homeGear.posti{gap:4px}.psl{width:52px;height:62px}.psl.p5{width:58px;height:68px}.psl .pimg svg{width:42px}.psl.p5 .pimg svg{width:54px}}
+@media (prefers-reduced-motion:reduce){.psl.ready,.psl.ready .pimg{animation:none}}
+.pPop{position:fixed;z-index:60;box-sizing:border-box;padding:10px 12px 12px;border:3px solid var(--crInk,#1b1612);border-radius:16px;background:linear-gradient(#f3e7c6,#d9c597);color:#2a2018;
+  box-shadow:inset 0 2px 0 rgba(255,255,255,.6),0 5px 0 var(--crInk,#1b1612),0 10px 24px rgba(0,0,0,.45);font-family:var(--body)}
+.pPop.in{animation:popIn .22s cubic-bezier(.2,1.5,.4,1)}
+@keyframes popIn{from{transform:translateY(8px) scale(.9);opacity:0}to{transform:none;opacity:1}}
+.pPop::after{content:'';position:absolute;left:calc(var(--ax,50%) - 10px);bottom:-13px;width:18px;height:18px;background:#d9c597;border-right:3px solid var(--crInk,#1b1612);border-bottom:3px solid var(--crInk,#1b1612);transform:rotate(45deg);border-bottom-right-radius:4px}
+.pPop .ph{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:6px}
+.pPop .ph b{font-family:var(--display);font-weight:400;font-size:17px;line-height:1.1;color:#2a2018}
+.pPop .pr{flex:none;padding:2px 8px;border:2px solid var(--crInk,#1b1612);border-radius:8px;background:var(--rc);color:#fff;font-family:var(--display);font-size:12px;text-shadow:var(--tol-s)}
+.pPop .pbody{display:flex;align-items:center;gap:10px;margin-bottom:8px}
+.pPop .pimg{flex:none;width:64px;display:flex;justify-content:center}.pPop .pimg svg{width:64px;height:auto;max-width:none}.pPop .pimg .pkI{height:60px;width:auto;max-width:none}
+.pPop .pw{margin:0;font-weight:800;font-size:14px;line-height:1.25}.pPop .pt{margin:4px 0 0;font-size:12.5px;line-height:1.3;color:#5a4a36}
+.pPop .pbtns{display:flex;flex-direction:column;gap:7px}.pPop .pbtns .pt{margin:0 0 2px}
+.pPop .btn{width:100%;margin:0}.pPop .btn .coin{display:inline-block;width:15px;height:15px;vertical-align:-2px}
+.pPop.z{background:linear-gradient(#2f342d,#1a1d19);color:#e2ead8;border-color:#0a0c0b;box-shadow:inset 0 2px 0 rgba(200,230,180,.18),0 5px 0 #0a0c0b,0 10px 24px rgba(0,0,0,.6)}
+.pPop.z::after{background:#1a1d19;border-color:#0a0c0b}.pPop.z .ph b{color:#fff;text-shadow:var(--tol-s)}.pPop.z .pt{color:#b9c6ae}
+/* --- la Zombie: niente ritaglio sui bottoni (tagliava nomi e bollini), un po' d'aria sotto la barra in alto; la fila delle Lucky Cards vinte
+   ora sta sotto l'eroe, il suo bottone non serve più --- */
+#menu.zmode .qbtn{clip-path:none!important}
+#menu.zmode #tabPlay .sideBtns{padding-top:8px}
+#menu.zmode #luckSlotBtn{display:none!important}
+/* --- la barra in basso: il nome sotto ogni linguetta, non solo sotto quella aperta --- */
+#menu #tabs button{flex-direction:column;gap:1px}
+#menu #tabs button svg{width:27px;height:27px}
+#menu #tabs button span{display:block;margin:0;font-family:var(--display);font-weight:400;font-size:11px;line-height:1;color:#efe7d2;text-shadow:var(--tol-s);white-space:nowrap}
+#menu #tabs button.on svg{width:38px;height:38px;transform:translateY(-4px)}
+#menu #tabs button.on span{font-size:13.5px;margin-top:-5px;color:#fff}
+#menu.zmode #tabs button span{color:#c9d4c0}#menu.zmode #tabs button.on span{color:#d8ff9e}
+/* --- il nome nel Profilo: un nome lungo va a capo e rimpicciolisce invece di finire tagliato («Massimiliar…») --- */
+.pmain{flex:1 1 auto}.pmain h2#pName{max-width:100%;font-size:clamp(19px,6.4vw,28px);line-height:1.02;overflow-wrap:anywhere}
+.pmain h2#pName.lungo{font-size:clamp(17px,5.2vw,23px)}
+/* --- «Liv. N» sempre intero: il riquadro del nome non scende sotto i 56 px, oro e cristalli più stretti sui telefoni piccoli --- */
+#tbWho .tbInfo{min-width:56px}#tbWho #tbName{overflow:visible;text-overflow:clip}
+@media (max-width:400px){#topbar{gap:6px}#topbar .res{margin-left:10px;min-width:0;padding-right:22px}#topbar .res span{font-size:14px}#tbWho .tbInfo{margin-left:7px}}
+@media (max-width:350px){#topbar .res span{font-size:12.5px}#tbWho .av{width:38px;height:38px}}
+`;document.head.appendChild(st)}
+renderGearRow();
+// il nome lungo nel Profilo: un po' più piccolo (classe lungo) oltre gli 11 caratteri
+{const _rp=renderProfile;renderProfile=function(){const r=_rp.apply(this,arguments);try{const e=$('pName');if(e&&!e.querySelector('input'))e.classList.toggle('lungo',(e.textContent||'').trim().length>11)}catch(e){}return r}}
 })();
 };
 </script>

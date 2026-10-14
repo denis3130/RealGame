@@ -60,6 +60,19 @@ const PAGE=path.resolve(process.argv[2]||path.join(__dirname,'..','zombie.html')
   // (la pagina va avanti da sola: per la foto a metà la salita si rallenta)
   await E(()=>{const M=__MZ,W=M.W;M.tp(S0.bot[0],S0.bot[1]);M.sim(2,1/60);M.buyNow('sali0');M.sim(40,1/60);W.hero.cl.T=600;mkZ(S0.bot[0]+6,S0.bot[1]+4,0).spd=0});await p.waitForTimeout(900);await p.screenshot({path:path.join(__dirname,'_piano_scala.png')});
   await E(()=>{const W=__MZ.W;W.hero.cl.T=1.1;W.Z.length=0;__MZ.sim(80,1/60)});
+  // ---- 7b. (difetti 48) la salita vera, coi fotogrammi disegnati: l'eroe sui gradini e poi di sopra sta sopra la scala e sopra il solaio, e
+  // anche uno zombie di sopra (prima l'isteresi dell'ordine teneva il verso di quando era sotto il solaio: si vedeva solo la testa)
+  await E(()=>{const M=__MZ,W=M.W;W.Z.length=0;M.tp(S0.bot[0],S0.bot[1]);M.sim(2,1/60);M.buyNow('sali0')});await p.waitForTimeout(450);
+  const onSt=await E(()=>{const M=__MZ,o=M.order(),L=M.layers().filter(l=>l.part==='st'&&l.z0<2).map(l=>l.id).filter(id=>o.includes(id));return{cl:!!__MZ.W.hero.cl,ok:L.length>0&&L.every(id=>o.indexOf('H')>o.indexOf(id))}});
+  await p.waitForTimeout(2200);
+  const top=await E(()=>{const M=__MZ,W=M.W,h=W.hero;const z=mkZ(h.x+40,h.y+26,1);z.spd=0;return 1});await p.waitForTimeout(900);
+  const ord=await E(()=>{const M=__MZ,W=M.W,o=M.order(),z=W.Z[W.Z.length-1],zid='Z'+z.id,sl=M.layers().filter(l=>l.part==='slab'&&o.includes(l.id));
+    const under=(id,who)=>{const r=M.rel(who,id);return r&&r[0]>0};const bad=[];for(const l of sl){if(under(l.id,'H')&&o.indexOf('H')<o.indexOf(l.id))bad.push('H<'+l.id);if(o.includes(zid)&&under(l.id,zid)&&o.indexOf(zid)<o.indexOf(l.id))bad.push(zid+'<'+l.id)}
+    W.Z.length=0;return{lv:W.hero.lv,n:sl.length,bad,z:o.includes(zid)}});
+  await p.screenshot({path:path.join(__dirname,'_piano_salita_vera.png')});
+  ok(onSt.ok&&onSt.cl,`salendo coi fotogrammi l'eroe è disegnato sopra i gradini (sulla scala: ${onSt.cl})`);
+  ok(ord.lv===1&&ord.n>0&&ord.z&&!ord.bad.length,`arrivato di sopra, l'eroe e lo zombie di sopra sono disegnati sopra il solaio (${ord.n} pezzi di solaio, fuori posto: ${ord.bad.join(', ')||'nessuno'})`);
+  await E(()=>{const M=__MZ;M.tp(S0.land[0],S0.land[1]);M.sim(2,1/60);M.buyNow('scendi0');M.sim(80,1/60)});
   // ---- 8. una partita nuova: tutto di sotto
   const fresh=await E(()=>{const M=__MZ,W=M.W;ZM.ctl.nuova();M.sim(2,1/60);return{lv:W.hero.lv||0,cl:!!W.hero.cl,up:HS.up||0}});
   ok(fresh.lv===0&&!fresh.cl&&fresh.up===0,'una partita nuova rimette l\'eroe di sotto (e il solaio sparisce)');

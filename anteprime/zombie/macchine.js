@@ -184,7 +184,7 @@ function take(f){const it=f.item;if(!it)return;W.hero.unarmed=false;ZM.equip(it.
 // i colpi delle armi forgiate: una scintilla azzurra sullo zombie (livello 1), viola e un arco che salta allo zombie più vicino (livello 2)
 const ARCS=[];
 W.papHit=(z,g,dmg)=>{const lv=g.pap||0;if(!lv)return;PK.rings.push({x:z.x,y:z.y,z0:z.zh||0,t:.35,col:lv>=2?'#d48bff':'#8fe6ff',small:1});if(lv<2)return;
-  let best=null,bd=80;for(const o of W.Z){if(o===z||o.die||o.rise<1||o.idle)continue;const d=Math.hypot(o.x-z.x,o.y-z.y);if(d<bd){bd=d;best=o}}
+  let best=null,bd=80;for(const o of W.Z){if(o===z||o.die||o.rise<1||o.idle||!ZM.sameLv(o,z))continue;/* (difetti 48) l'arco non salta tra i piani */const d=Math.hypot(o.x-z.x,o.y-z.y);if(d<bd){bd=d;best=o}}
   if(best){ZM.hurt(best,dmg*FG.catena,false);ARCS.push({a:[z.x,z.y,(z.zh||0)+22],b:[best.x,best.y,(best.zh||0)+22],t:0,sd:Math.random()*99})}};
 // lo sparo delle armi forgiate squilla (livello 1) o crepita (livello 2)
 if(window.ARMI&&ARMI.suono){const _s=ARMI.suono;ARMI.suono=function(id,w){const r=_s.apply(this,arguments);try{const g=ZM.gun();if(w==='sparo'&&g&&g.pap&&AU.ctx&&AU.on.sfx){const t=AU.ctx.currentTime+.005;
@@ -227,4 +227,7 @@ function drawTop(){const h=W.hero;
   const _r=D.reset;D.reset=()=>{_r();if(PK.vbase!=null&&D.PZ.vita===PK.boost){D.PZ.vita=PK.vbase;D.hp=PK.vbase}Object.assign(PK,{own:[],vbase:null,boost:null,lastHp:null,pushCd:0,fly:[],rings:[],uk:null});ARCS.length=0;
     POWER=false;for(const v of VALVES){v.t=-1;v.rot=0;if(v.smk){const i=smokes.indexOf(v.smk);if(i>=0)smokes.splice(i,1);v.smk=null}}
     for(const f of FORGE){f.st='fredda';f.t=0;f.item=null;f.open=false;f.rot=0;f.hit=0;if(f.smk){const i=smokes.indexOf(f.smk);if(i>=0)smokes.splice(i,1);f.smk=null}}W.hero.unarmed=false;for(const m of ELI){m.use=0;m.spin=0;m.wait=null}if(PK.ui)drawUI()};return D}}
+// (difetti 48) Credenza, valvola e Forgia sono oggetti interi: si piegano tutti insieme da un punto (prima ogni punto per conto suo, e girando la
+// visuale si deformavano), o col loro edificio quando sono dentro un gruppo (ZM.group: la Credenza della Locanda, la Forgia della Fucina)
+for(const k of['elisir','valvola','forgia']){const f=P[k];P[k]=function(x,y,...r){const N=ZM.NAMES,sr=N.ref;N.ref=N.grp||[x,y];try{return f.call(this,x,y,...r)}finally{N.ref=sr}}}
 ZM.macchine={PERK,PK,EL,FG,ELI,FORGE,VALVES,power:()=>POWER,setPower:v=>{if(v&&!POWER&&VALVES[0])power(VALVES[0]);else POWER=!!v},drink,has,nomeF,bottle}})();

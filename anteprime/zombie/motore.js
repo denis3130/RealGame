@@ -50,15 +50,15 @@ const hashS=s=>{let h=2166136261;for(let i=0;i<s.length;i++){h^=s.charCodeAt(i);
 // quando l'eroe è dentro la casa le pareti si aprono via da lui da tutti i lati, come guardare dentro una scatola. null = ogni punto per conto suo
 let REF=null;// [a0,a1,b0,b1]: piega di lato a0+a1·x, in verticale b0+b1·y
 // con la telecamera girata la piega si calcola in (u, v) intorno al perno (la piega in verticale dal centro dello schermo, v = −oy/SP)
-function setRef(r){if(!r){REF=null;return}
+function setRef(r){if(!r){REF=null;return}const K=r.k||1;/* (difetti 48) r.k: quanto si piega tutto l'edificio (gli edifici alti delle zone nuove meno, come il mulino a vento) */
   if(CAM.rot){const fu=u=>soft(u*CAM.lx),fv=v=>softV((-CAM.oy/CAM.SP-v)*CAM.ly),UV=(x,y)=>{const dx=x-CAM.x,dy=y-CAM.y;return[dx*CAM.c-dy*CAM.s,dx*CAM.s+dy*CAM.c]};
-    if(r.length<4){const[u,v]=UV(r[0],r[1]);REF=[fu(u),0,fv(v),0];return}
+    if(r.length<4){const[u,v]=UV(r[0],r[1]);REF=[fu(u)*K,0,fv(v)*K,0];return}
     let u0=1e9,u1=-1e9,v0=1e9,v1=-1e9;for(const[X,Y] of[[r[0],r[1]],[r[2],r[1]],[r[2],r[3]],[r[0],r[3]]]){const[u,v]=UV(X,Y);if(u<u0)u0=u;if(u>u1)u1=u;if(v<v0)v0=v;if(v>v1)v1=v}
     const a1=u1-u0>1?(fu(u1)-fu(u0))/(u1-u0):0,b1=v1-v0>1?(fv(v1)-fv(v0))/(v1-v0):0;
-    REF=[u1-u0>1?fu(u0)-a1*u0:fu((u0+u1)/2),a1,v1-v0>1?fv(v0)-b1*v0:fv((v0+v1)/2),b1];return}
+    REF=[(u1-u0>1?fu(u0)-a1*u0:fu((u0+u1)/2))*K,a1*K,(v1-v0>1?fv(v0)-b1*v0:fv((v0+v1)/2))*K,b1*K];return}
   const fx=x=>soft((x-CAM.x)*CAM.lx),fy=y=>softV((CAM.cy-y)*CAM.ly);
-  if(r.length<4){REF=[fx(r[0]),0,fy(r[1]),0];return}const[x0,y0,x1,y1]=r,a1=x1-x0>1?(fx(x1)-fx(x0))/(x1-x0):0,b1=y1-y0>1?(fy(y1)-fy(y0))/(y1-y0):0;
-  REF=[x1-x0>1?fx(x0)-a1*x0:fx((x0+x1)/2),a1,y1-y0>1?fy(y0)-b1*y0:fy((y0+y1)/2),b1]}
+  if(r.length<4){REF=[fx(r[0])*K,0,fy(r[1])*K,0];return}const[x0,y0,x1,y1]=r,a1=x1-x0>1?(fx(x1)-fx(x0))/(x1-x0):0,b1=y1-y0>1?(fy(y1)-fy(y0))/(y1-y0):0;
+  REF=[(x1-x0>1?fx(x0)-a1*x0:fx((x0+x1)/2))*K,a1*K,(y1-y0>1?fy(y0)-b1*y0:fy((y0+y1)/2))*K,b1*K]}
 let LEANK=1;// quanto si piega il prop che si sta disegnando (lk del prop: 1 case e muri, .5 pali e lapidi)
 // la piega di lato satura piano verso 13° (lontano dall'eroe le cose alte non sembrano cadute); quella in verticale, che allunga o accorcia
 // le case mentre l'eroe va su e giù, quasi non c'è (al massimo ±2% dell'altezza): richieste di Denis del 12 ottobre («diminuisci di molto»)
@@ -298,7 +298,7 @@ decals.push=function(...a){if(TURN){const R=TURN;a=a.map(f=>()=>{ctx.save();ctx.
 houses.push=function(...a){if(TURN)for(const hs of a){[hs.x,hs.y,hs.w,hs.d]=tR(TURN,hs.x,hs.y,hs.w,hs.d);if(hs.porch){const r=tR(TURN,hs.porch[0],hs.porch[1],hs.porch[2]-hs.porch[0],hs.porch[3]-hs.porch[1]);hs.porch=[r[0],r[1],r[0]+r[2],r[1]+r[3]]}hs.q=TURN.q;hs.R=mkTurn(0,0,TURN.q)}return Array.prototype.push.apply(this,a)};
 function prop(o){o.ky=o.ky==null?o.bx[3]:o.ky;if(o.ref===undefined)o.ref=NAMES.ref;o.parts=o.parts||[];o.name=o.name||NAMES.cur||'?';
   if(TURN){const R=TURN,bb=b=>{const r=tR(R,b[0],b[1],b[2]-b[0],b[3]-b[1]);return[r[0],r[1],r[0]+r[2],r[1]+r[3],b[4]]};o.rot=R;o.bx=bb(o.bx);if(o.ob)o.ob=bb(o.ob);o.ky=o.bx[3];o.kyFn=null;
-    if(o.ref){const r=o.ref;o.ref=r.length>=4?bb(r).slice(0,4):tP(R,r[0],r[1])}}
+    if(o.ref&&!o.ref.w){const r=o.ref;o.ref=r.length>=4?bb(r).slice(0,4):tP(R,r[0],r[1]);if(r.k)o.ref.k=r.k}}// (r.w: il ref di un edificio, già nel mondo: i pezzi girati che gli stanno attaccati, come la Forgia, non lo girano)
   props.push(o);return o}
 // pedane e gradini: chi ci sale sopra viene disegnato più in alto
 const stands=[];const stand=(x,y,w,d,h)=>{if(TURN)[x,y,w,d]=tR(TURN,x,y,w,d);return stands.push({x,y,w,d,h})};
@@ -317,14 +317,21 @@ let BARM=0;
 let VIEWR=1e9;/* (anteprima 48, punto 54) il mezzo lato del quadrato del mondo che può stare sullo schermo (anche girando): quello che è fuori non si aggiorna a vista, non si ordina e non si disegna (zombie, fiamme libere, corvi posati, luci, fumi) */
 const farV=(x,y,r)=>Math.abs(x-CAM.x)>VIEWR+r||Math.abs(y-CAM.y)>VIEWR+r;
 let LV=0;/* il piano dei solidi che contano (anteprima 48, punto 15): 0 a terra, 1 il piano di sopra di un edificio (i suoi solidi hanno lv:1) */
-function hit(x,y,r,ex){for(const s of solids){if(s.off||s===ex||(s.lv||0)!==LV||(s.bar&&BARM&&(BARM===1||s.bar.open())))continue;const cx=cl(x,s.x,s.x+s.w),cy=cl(y,s.y,s.y+s.d);if((x-cx)**2+(y-cy)**2<r*r)return s}return null}
+/* (difetti 48) la griglia dei solidi: hit() guarda solo i solidi delle caselle di 64 px intorno (prima tutti, centinaia nella mappa grande: era un
+   terzo del tempo degli zombie); tra quelli toccati vince il primo creato, come prima. Si rifà quando nascono solidi nuovi o la Bara si sposta (SGV) */
+const SGC=64;let SG=null,SGV=0;
+function sgBuild(){const cells=new Map();solids.forEach((s,n)=>{s._i=n;const i0=Math.floor(s.x/SGC),i1=Math.floor((s.x+s.w)/SGC),j0=Math.floor(s.y/SGC),j1=Math.floor((s.y+s.d)/SGC);
+    for(let j=j0;j<=j1;j++)for(let i=i0;i<=i1;i++){const k=j*8192+i;let a=cells.get(k);if(!a)cells.set(k,a=[]);a.push(s)}});SG={n:solids.length,v:SGV,cells}}
+function hit(x,y,r,ex){if(!SG||SG.n!==solids.length||SG.v!==SGV)sgBuild();let best=null;const i0=Math.floor((x-r)/SGC),i1=Math.floor((x+r)/SGC),j0=Math.floor((y-r)/SGC),j1=Math.floor((y+r)/SGC);
+  for(let j=j0;j<=j1;j++)for(let i=i0;i<=i1;i++){const a=SG.cells.get(j*8192+i);if(!a)continue;for(const s of a){if(best&&s._i>=best._i)continue;if(s.off||s===ex||(s.lv||0)!==LV||(s.bar&&BARM&&(BARM===1||s.bar.open())))continue;
+      const cx=cl(x,s.x,s.x+s.w),cy=cl(y,s.y,s.y+s.d);if((x-cx)**2+(y-cy)**2<r*r)best=s}}return best}
 function move(o,dx,dy,r){const sv=LV;LV=o.lv||0;const s0=hit(o.x,o.y,r);o.x+=dx;if(hit(o.x,o.y,r,s0))o.x-=dx;o.y+=dy;if(hit(o.x,o.y,r,s0))o.y-=dy;LV=sv}
 // ------------------------------------------------------------------ navigazione degli zombie
 // Griglia di 8 px con gli ostacoli gonfiati del raggio dello zombie; un campo di distanze verso l'eroe (Dijkstra a 8 vicini, senza tagliare gli
 // angoli) ricalcolato quando l'eroe cambia casella. Ogni zombie va dritto se vede l'eroe; altrimenti scende lungo il campo e punta al punto
 // più lontano del percorso che riesce a vedere, così gira intorno a muri, case e lapidi senza zig-zag. Se resta fermo (spinto, incastrato)
 // prova per mezzo secondo di lato.
-const NC=8,ZR=11,NAVMAX=1100;let NAV=null;
+const NC=8,ZR=11,NAVMAX=4000;/* (difetti 48) tutta la mappa grande: con 1.100 px chi restava più lontano andava dritto verso l'eroe e si incastrava contro staccionate e barriere (costa circa 1 ms) */let NAV=null;
 function navBuild(){const cw=Math.ceil(W.w/NC),ch=Math.ceil(W.h/NC),n=cw*ch,bl=new Uint8Array(n),los=new Uint8Array(n);
   const mark=(arr,R)=>{for(const s of solids){if(s.off||s.lv)continue;const i0=Math.max(0,Math.floor((s.x-R)/NC)),i1=Math.min(cw-1,Math.floor((s.x+s.w+R)/NC)),j0=Math.max(0,Math.floor((s.y-R)/NC)),j1=Math.min(ch-1,Math.floor((s.y+s.d+R)/NC));
     for(let j=j0;j<=j1;j++)for(let i=i0;i<=i1;i++){const cx=(i+.5)*NC,cy=(j+.5)*NC,dx=cx-cl(cx,s.x,s.x+s.w),dy=cy-cl(cy,s.y,s.y+s.d);if(dx*dx+dy*dy<R*R)arr[j*cw+i]=1}}};
@@ -428,7 +435,7 @@ const BARS=[];
 function barrier(B){B.reach=B.reach||30;B.th=B.th||10;B.half=B.half||13;B.vault=0;BARS.push(B);return B}
 function barCheck(z){if(!NAV||!NAV.bar||!BARS.length)return null;const c=cellOf(z.x,z.y),b=NAV.bar[c];if(!b)return null;const B=BARS[b-1];if(B.off)return null;
   const s=(z.x-B.x)*B.nx+(z.y-B.y)*B.ny>=0?1:-1,o=B.th/2+ZR+2,fx=B.x-s*B.nx*o,fy=B.y-s*B.ny*o,fc=cellOf(fx,fy),D=NAV.dist;
-  if(D[fc]>=1e9||D[c]>=1e9||D[fc]+NAV.bc[b]+Math.hypot(fx-z.x,fy-z.y)>D[c]+NC+2)return null;return{B,s,st:'va',t:0,chk:0}}// (una casella di tolleranza: il salto dritto è un poco più lungo del percorso sulla griglia, e uno zombie messo di lato davanti alla finestra restava lì)
+  const df=Math.hypot(fx-z.x,fy-z.y);if(D[fc]>=1e9||D[c]>=1e9||D[fc]+NAV.bc[b]+df>D[c]+2*NC+4+.15*df)return null;return{B,s,st:'va',t:0,chk:0}}/* (difetti 48) più tolleranza: arrivando di lato (al varco del bordo est) il salto dritto è più lungo del percorso sulla griglia di una ventina di px e lo zombie restava a spingere contro le assi */// (una casella di tolleranza: il salto dritto è un poco più lungo del percorso sulla griglia, e uno zombie messo di lato davanti alla finestra restava lì)
 function barStep(z,dt){const X=z.bx,B=X.B,s=X.s,o=B.th/2+ZR+1,ax=B.x+s*B.nx*o,ay=B.y+s*B.ny*o,fa=Math.atan2(-s*B.ny,-s*B.nx);X.t+=dt;
   const an=(a,per)=>{if(z.anim!==a){z.anim=a;z.p=0}const p0=z.p;z.p=(z.p+dt/per)%1;return p0};
   const still=()=>{if((X.chk+=dt)<.5)return true;X.chk=0;const c2=barCheck(z);if(c2&&c2.B===B)return true;z.bx=null;return false};// serve ancora?
@@ -548,12 +555,24 @@ const HERO3=()=>typeof EROE!=='undefined'&&!!EROE.arciere&&HSTYLE.hid==='arciere
 // navigazione intorno alla buca: niente buche dietro ostacoli invalicabili, in stanze chiuse o oltre una barriera mai aperta; con l'eroe di
 // sopra conta la strada fino al piede della scala) e a una distanza a piedi tra 130 e 700 px; di queste una a caso tra le sei più vicine, mai la
 // stessa due volte di fila. Senza griglia, o se non ce n'è nessuna, come prima: in linea d'aria tra 110 e 460 px
-function holeDist(p){const N=NAV;if(!N)return null;const cw=N.cw,ch=N.ch,D=N.dist,i0=Math.floor(p[0]/NC),j0=Math.floor(p[1]/NC);let best=1e9;
-  for(let j=j0-4;j<=j0+4;j++)for(let i=i0-4;i<=i0+4;i++){if(i<0||j<0||i>=cw||j>=ch)continue;const v=D[j*cw+i];if(v<best)best=v}return best}
-function pickHole(){const h=W.hero,open=holes.filter(p=>(p[2]==null||W.zoneOpen[p[2]])&&!W.Z.some(z=>Math.hypot(z.x-p[0],z.y-p[1])<30));
-  if(NAV){const c=[];for(const p of open){if(Math.hypot(p[0]-h.x,p[1]-h.y)<110)continue;const d=holeDist(p);if(d==null||d>=1e9||d<130||d>700)continue;c.push([d,p])}
-    if(c.length){c.sort((a,b)=>a[0]-b[0]);let k=c.slice(0,6);if(k.length>1)k=k.filter(a=>a[1]!==W.lastHole);const p=k[Math.floor(Math.random()*k.length)][1];W.lastHole=p;return p}}
+function holeDist(p){const N=NAV;if(!N)return null;const cw=N.cw,ch=N.ch,D=N.dist,i0=Math.floor(p[0]/NC),j0=Math.floor(p[1]/NC);
+  // (difetti 48) la distanza della casella libera più vicina alla buca (non la più piccola dei dintorni: dall'altra parte di una barriera chiusa
+  // c'era una casella raggiungibile e la buca sembrava buona, ma lo zombie nasceva chiuso di là)
+  for(let r=0;r<=5;r++){let best=1e9,bd=1e9;for(let j=j0-r;j<=j0+r;j++)for(let i=i0-r;i<=i0+r;i++){if(Math.max(Math.abs(i-i0),Math.abs(j-j0))!==r||i<0||j<0||i>=cw||j>=ch)continue;const c=j*cw+i;if(N.bl[c])continue;
+      const e=Math.hypot((i+.5)*NC-p[0],(j+.5)*NC-p[1]);if(e<bd){bd=e;best=D[c]}}if(bd<1e9)return best}return 1e9}
+function pickHole(o){const h=W.hero,open=holes.filter(p=>(p[2]==null||W.zoneOpen[p[2]])&&!W.Z.some(z=>Math.hypot(z.x-p[0],z.y-p[1])<30));
+  if(NAV){const c=[],far=[];for(const p of open){if(Math.hypot(p[0]-h.x,p[1]-h.y)<110)continue;const d=holeDist(p);if(d==null||d>=1e9||d<130)continue;(d>700?far:c).push([d,p])}
+    // (difetti 48) senza buche a giusta distanza le più vicine tra quelle raggiungibili, mai una buca a caso che magari sta dietro una barriera chiusa
+    if(!c.length&&far.length){far.sort((a,b)=>a[0]-b[0]);c.push(...far.slice(0,3))}
+    if(c.length){c.sort((a,b)=>a[0]-b[0]);let k=c.slice(0,6);if(k.length>1)k=k.filter(a=>a[1]!==W.lastHole);const p=k[Math.floor(Math.random()*k.length)][1];W.lastHole=p;return p}
+    return null}
   const c=open.filter(p=>{const e=Math.hypot(p[0]-h.x,p[1]-h.y);return e>110&&e<460});return c.length?c[Math.floor(Math.random()*c.length)]:null}
+// (difetti 48) uno zombie della partita che non si avvicina più all'eroe (chiuso di là da una barriera, incastrato) e non si vede sullo schermo
+// rinasce da una buca raggiungibile, come in CoD; se nessuna buca va bene riprova dopo
+function riposiziona(z){const p=pickHole();if(!p){z.bT=6;return false}const out=p[3]==='mais'||p[3]==='porta'||p[3]==='fuori'||p[3]==='carro';if(p[4])p[4]();
+  Object.assign(z,{x:p[0],y:p[1],rise:out?1:0,sp:p[3]||null,fin:p[3]==='fuori'||p[3]==='carro'?.9:0,tg:null,vx:null,vy:null,bx:null,bD:null,bT:0,chk:0,cx0:null,det:0,face:Math.atan2(W.hero.y-p[1],W.hero.x-p[0])});W.relocs=(W.relocs||0)+1;return true}
+function bloccato(z,dt){if(!z.q||z.boss||!NAV||z.lv||z.cl||(W.mods&&W.mods.invis>0)){z.bT=0;z.bD=null;return}const Dz=NAV.dist[cellOf(z.x,z.y)];
+  if(z.bD==null||Dz<z.bD-24){z.bD=Dz;z.bT=0}else z.bT=(z.bT||0)+dt;if((Dz>=1e9?z.bT>3:z.bT>9&&Dz>160)&&farV(z.x,z.y,60))riposiziona(z)}/* (mai chi è già vicino all'eroe, in mezzo alla calca) */
 // la comparsa secondo il posto (p[3]): dalla fossa e dalla terra esce dal suolo (rise); dal granturco, dalla porta della latrina e dal buio oltre
 // il bordo cammina fuori ('fuori' sfumando); da sotto i carri e la carrozza bruciata striscia fuori sfumando in una nuvola di polvere e cenere;
 // dal fiume esce dall'acqua con i cerchi (sp 'acqua'); dalla botola della cantina sale dal buco nero (sp 'botola')
@@ -566,11 +585,34 @@ function spawn(o){o=o||{};const h=W.hero,p=o.hole||pickHole();if(!p)return null;
 // gli zombie fermi in una zona chiusa (la fattoria prima del cancello): girano piano intorno a casa loro; da fermi girano di colpo la testa
 // verso l'eroe quando si avvicina; se l'eroe va al cancello vengono alle sbarre e allungano le braccia. Quando la zona si apre partono
 function idleZombie(kind,x,y,zone){const k=KINDS.find(k=>k[0]===kind)||KINDS[0],z={id:++ZID,kind:k[0],sc:k[1],spd:k[2],hp:k[3],x,y,face:rr(0,TAU),p:Math.random(),anim:'idle',rise:1,die:0,flash:0,idle:{zone,home:[x,y],t:rr(0,3),tg:null}};W.Z.push(z);return z}
+// (difetti 48) chi attira gli zombie fermi: il cancello della fattoria solo quelli della fattoria (prima tutti, e quelli del borgo e della segheria
+// si schiacciavano contro le staccionate per arrivarci); le barriere chiuse (W.lures, area_mappa.js) quelli della zona che sta di là
+function lureOf(z){const h=W.hero,G=W.gate,I=z.idle;if(G&&!G.open&&(I.zone==null||I.zone===2)&&Math.hypot(h.x-G.x,h.y-G.y)<G.lure)return G;
+  for(const L of W.lures||[])if(L.zone===I.zone&&!L.isOpen()&&Math.hypot(h.x-L.x,h.y-L.y)<L.lure)return L;return null}
+// il campo di distanze verso una barriera chiusa, dalla parte della zona chiusa (L.gx, L.gy): come navField ma una volta sola per griglia (la zona
+// chiusa non cambia finché la barriera non si compra), senza passare dalle finestre; serve agli zombie fermi attirati alle assi per girare
+// intorno a carri e cataste
+function lureField(L){const N=NAV;if(L.F&&L.FN===N)return L.F;const cw=N.cw,ch=N.ch,D=new Float32Array(N.n).fill(1e9),B=N.bl,BR=N.bar,BS=N.bs,hk=N.hk,hv=N.hv;let hs=0;
+  const push=(k,v)=>{let i=hs++;while(i>0){const p=(i-1)>>1;if(hk[p]<=k)break;hk[i]=hk[p];hv[i]=hv[p];i=p}hk[i]=k;hv[i]=v};
+  const pop=()=>{const v=hv[0],lk=hk[--hs],lv=hv[hs];let i=0;for(;;){let c=2*i+1;if(c>=hs)break;if(c+1<hs&&hk[c+1]<hk[c])c++;if(hk[c]>=lk)break;hk[i]=hk[c];hv[i]=hv[c];i=c}hk[i]=lk;hv[i]=lv;return v};
+  const gi=Math.floor(L.gx/NC),gj=Math.floor(L.gy/NC);for(let j=gj-3;j<=gj+3;j++)for(let i=gi-3;i<=gi+3;i++){if(i<0||j<0||i>=cw||j>=ch)continue;const c=j*cw+i;if(B[c])continue;const d=Math.hypot((i+.5)*NC-L.gx,(j+.5)*NC-L.gy);if(d<D[c]){D[c]=d;push(d,c)}}
+  while(hs){const k0=hk[0],c=pop();if(k0>D[c])continue;const i=c%cw,j=(c-i)/cw;
+    for(let dj=-1;dj<=1;dj++)for(let di=-1;di<=1;di++){if(!di&&!dj)continue;const ni=i+di,nj=j+dj;if(ni<0||nj<0||ni>=cw||nj>=ch)continue;const nc=nj*cw+ni;if(B[nc])continue;if(di&&dj&&(B[j*cw+ni]||B[nj*cw+i]))continue;
+      if(BR[nc]&&BR[nc]===BR[c]&&BS[nc]!==BS[c])continue;const nd=k0+(di&&dj?1.4142*NC:NC);if(nd<D[nc]){D[nc]=nd;push(nd,nc)}}}
+  L.F=D;L.FN=N;return D}
+// il punto verso cui camminare scendendo il campo F (come steer: la casella più lontana che si vede lungo la discesa)
+function fieldStep(z,F){const N=NAV,cw=N.cw,ch=N.ch;let cur=cellOf(z.x,z.y),tgt=null;if(N.bl[cur]||F[cur]>=1e9)return null;
+  for(let k=0;k<16;k++){const i=cur%cw,j=(cur-i)/cw;let nb=-1,nv=F[cur];for(let dj=-1;dj<=1;dj++)for(let di=-1;di<=1;di++){if(!di&&!dj)continue;const ni=i+di,nj=j+dj;if(ni<0||nj<0||ni>=cw||nj>=ch)continue;const nc=nj*cw+ni;if(N.bl[nc])continue;if(di&&dj&&(N.bl[j*cw+ni]||N.bl[nj*cw+i]))continue;if(F[nc]<nv){nv=F[nc];nb=nc}}
+    if(nb<0)break;cur=nb;const p=cen(cur);if(losClear(z.x,z.y,p[0],p[1]))tgt=p;else{if(!tgt)tgt=p;break}}return tgt}
 function idleStep(z,dt){const I=z.idle,h=W.hero,G=W.gate,dh=Math.hypot(h.x-z.x,h.y-z.y);I.t-=dt;let tg=null;
-  if(G&&!G.open&&Math.hypot(h.x-G.x,h.y-G.y)<G.lure){if(!I.slot)I.slot=G.slots[z.id%G.slots.length];tg=I.slot}
+  const L=lureOf(z);if(L){if(!I.slot||I.lu!==L){I.slot=L.slots[z.id%L.slots.length];I.lu=L}tg=I.slot;
+    if(L.gx!=null&&NAV&&Math.hypot(I.slot[0]-z.x,I.slot[1]-z.y)>46&&!physClear(z.x,z.y,I.slot[0],I.slot[1],ZR-1)){if(!(I.fT>0)){I.fT=.15;I.fp=fieldStep(z,lureField(L))}else I.fT-=dt;if(I.fp)tg=I.fp}}
   else{I.slot=null;if(I.t<=0){I.t=rr(2.5,6);I.tg=Math.random()<.4?null:[I.home[0]+rr(-60,60),I.home[1]+rr(-40,40)]}tg=I.tg}
   const step=(an,per)=>{if(z.anim!==an){z.anim=an;z.p=Math.random()}z.p=(z.p+dt/per)%1};
-  if(tg&&Math.hypot(tg[0]-z.x,tg[1]-z.y)>6){const dx=tg[0]-z.x,dy=tg[1]-z.y,d=Math.hypot(dx,dy),sp=z.spd*(I.slot?.8:.35);move(z,dx/d*sp*dt,dy/d*sp*dt,ZR);z.face=Math.atan2(dy,dx);step('walk',I.slot?1.2:1.8)}
+  if(tg&&Math.hypot(tg[0]-z.x,tg[1]-z.y)>6){const dx=tg[0]-z.x,dy=tg[1]-z.y,d=Math.hypot(dx,dy),sp=z.spd*(I.slot?.8:.35);let ux=dx/d,uy=dy/d;
+    // (difetti 48) contro un ostacolo (una lapide, un carro) un passo di lato per mezzo secondo, come zWalk: prima restava fermo lì
+    if(I.det>0){I.det-=dt;ux=I.dvx;uy=I.dvy}move(z,ux*sp*dt,uy*sp*dt,ZR);z.face=Math.atan2(uy,ux);step('walk',I.slot?1.2:1.8);
+    I.ck=(I.ck||0)+dt;if(I.ck>.8){if(I.cx!=null&&Math.hypot(z.x-I.cx,z.y-I.cy)<sp*.8*.25&&!(I.det>0)){const sd=z.id%2?-1:1;I.dvx=-dy/d*sd;I.dvy=dx/d*sd;I.det=.6}I.ck=0;I.cx=z.x;I.cy=z.y}}
   else if(I.slot){z.face=Math.atan2(h.y-z.y,h.x-z.x);step('attack',1.6)}// alle sbarre
   else{if(dh<300&&!I.look){I.look=1;z.face=Math.atan2(h.y-z.y,h.x-z.x)}else if(dh>=330)I.look=0;step('idle',2.4)}}
 // gli zombie non si sovrappongono
@@ -612,9 +654,11 @@ function boxReset(){if(!BOX)return;BOX.b=ARMI.nuovaBara(0,0);const s=BOX.spots[0
 // mette la Bara in (x, y) con la testa verso a: il solido (il riquadro del contorno girato) e l'impronta per l'ordine
 function boxPlace(x,y,a){const F=BOX.F,k=F.BS,c=Math.cos(a),s=Math.sin(a),w=(u,v)=>[x+k*(u*c-v*s),y+k*(u*s+v*c)];BOX.x=x;BOX.y=y;BOX.a=a;
   let x0=1e9,y0=1e9,x1=-1e9,y1=-1e9;for(const p of F.BH){const q=w(p[0],p[1]);if(q[0]<x0)x0=q[0];if(q[0]>x1)x1=q[0];if(q[1]<y0)y0=q[1];if(q[1]>y1)y1=q[1]}
-  Object.assign(BOX.sol,{x:x0,y:y0,w:x1-x0,d:y1-y0});
+  Object.assign(BOX.sol,{x:x0,y:y0,w:x1-x0,d:y1-y0});SGV++;
   const P=[];for(const p of F.BH)P.push(w(p[0]*1.12,p[1]*1.12));for(const q of F.cand)for(const[dx,dy] of DIR8)P.push(w(q[0]+dx*1.4,q[1]+dy*1.4));for(const q of F.lid)P.push(w(q[0],q[1]));
-  const E=BOX.E;finFP(E,P.map(q=>[q[0],q[1],0]));E.x=x;E.y=y;E.prop.ref=[x,y];E.zs=undefined;E.H=null}
+  const E=BOX.E;finFP(E,P.map(q=>[q[0],q[1],0]));E.x=x;E.y=y;E.prop.ref=houseRefAt(x,y)||[x,y];E.zs=undefined;E.H=null}
+// (difetti 48) dentro un edificio la Bara si piega con lui (il ref del primo pezzo della casa), così non scivola sul pavimento girando la visuale
+function houseRefAt(x,y){for(const hs of houses)if(x>hs.x&&x<hs.x+hs.w&&y>hs.y&&y<hs.y+hs.d){const p=props.find(q=>q.house===hs&&q.ref);if(p)return p.ref}return null}
 function boxUpdate(dt){if(!BOX)return;const b=BOX.b;for(const e of b.update(dt)){if(e.k==='suono'){if(ARMI.suonoBara)ARMI.suonoBara(e.w,180)}else if(e.k==='presa')equip(e.id);else if(e.k==='rimborso'){W.coins+=e.n;W.toast=['La Bara scappa: monete restituite',2.4]}
     else if(e.k==='via'){const c=BOX.spots.filter(s=>(s[2]==null||W.zoneOpen[s[2]])&&Math.hypot(s[0]-BOX.x,s[1]-BOX.y)>40),s=c.length?c[Math.floor(Math.random()*c.length)]:[BOX.x,BOX.y,null,BOX.a];boxPlace(s[0],s[1],s[3]||0);navBuild();if(NAV)NAV.hc=-1;if(b.addio)W.toast=['La Bara se ne va…',2.4]}
     // ricomparsa: dove è andata (il nome della zona) e un fascio di luce verde che si vede da lontano per qualche secondo
@@ -666,10 +710,10 @@ function updateBeings(dt,inp){const h=W.hero,DI=W.director,MD=W.mods||{};if(h.de
     if(z.ai){z.ai(z,dt);sep(z);continue}// un boss della partita: si muove e colpisce da solo
     if(z.stun>0){z.stun-=dt;if(z.anim!=='idle'){z.anim='idle';z.p=0}z.p=(z.p+dt/2.4)%1;sep(z);continue}// respinto dall'anima che rialza l'eroe
     if(!z.bx&&BARS.length&&!z.lv&&!z.cl&&(z.bxT=(z.bxT||0)-dt)<=0){z.bxT=.15;z.bx=barCheck(z)}// una finestra o un varco da passare (barriere.js)
-    if(z.bx){barStep(z,dt);if(!(z.bx&&z.bx.from))sep(z);continue}
+    if(z.bx){barStep(z,dt);z.bT=0;if(!(z.bx&&z.bx.from))sep(z);continue}
     const dx=h.x-z.x,dy=h.y-z.y,d=Math.hypot(dx,dy);
     if(d<30&&!z.cl&&!h.cl&&sameLv(z)&&physClear(z.x,z.y,h.x,h.y,2,null,2)){z.face=Math.atan2(dy,dx);if(z.anim!=='attack'){z.anim='attack';z.p=0}const p0=z.p;z.p+=dt/1.4;if(DI&&DI.zombieHit&&p0<.55&&z.p>=.55)DI.zombieHit(z,d);z.chk=0;z.cx0=null}// il colpo arriva a metà del gesto
-    else{if(z.anim!=='walk'){z.anim='walk';z.p=0}z.p+=dt/(z.kind==='hound'?.6:1.1);zWalk(z,dt)}
+    else{if(z.anim!=='walk'){z.anim='walk';z.p=0}z.p+=dt/(z.kind==='hound'?.6:1.1);zWalk(z,dt);bloccato(z,dt)}
     sep(z);z.p%=1}
   LV=h.lv||0;for(let i=W.Z.length-1;i>=0;i--)if(W.Z[i].die>1.1||(!zOn&&W.Z[i].rise<1))W.Z.splice(i,1);
   for(const f of W.FX){f.t-=dt;if(f.k==='drop'){f.x+=f.vx*dt;f.y+=f.vy*dt;f.vy+=260*dt}}for(let i=W.FX.length-1;i>=0;i--)if(W.FX[i].t<=0)W.FX.splice(i,1);
@@ -686,6 +730,20 @@ function updateBeings(dt,inp){const h=W.hero,DI=W.director,MD=W.mods||{};if(h.de
 // identico al pixel). Il salto dei sassi è un'altezza (CP); la discesa nella buca segue la misura della figura (mzk); il ritaglio è il
 // rettangolo sopra la linea dei piedi, come prima. (Un mucchio allungato come la fossa, che la riempie, è una proposta da mostrare a Denis)
 const MOUND=k=>[18+8*k,8+3*k];// i raggi del mucchio a terra (x, y del mondo) mentre lo zombie esce (k = rise)
+// (difetti 48: «va a scatti, di più quando ci sono tanti zombie») gli zombie da un'immagine pronta: ognuno tiene la sua figura (z.spr, una tela
+// piccola alla risoluzione dello schermo) e la ridisegna a turno, al massimo ZBUD figure nuove per fotogramma: con pochi zombie tutte a ogni
+// fotogramma come prima, con tanti ognuna ogni 2 o 3 fotogrammi; subito se cambia la mossa, la direzione (più di 5°), l'inclinazione o lo zoom.
+// Lo zombie si sposta comunque a ogni fotogramma. ZBOX: il riquadro dipinto di ogni tipo attorno ai piedi (misurato in tutte le mosse, 16
+// direzioni e tre inclinazioni, più 4 px) alla sua grandezza; i boss, i tipi senza riquadro e le tele diverse da quella della mappa dal vivo
+const ZBOX={zombie:[-34,-61,34,14,1.1],strisciante:[-34,-39,34,26,1.1],minatore:[-46,-63,44,25,1.1],lanterna:[-78,-87,78,52,1.55],hound:[-34,-60,34,14,1.05]},ZS={f:0,n:0,need:1,cv:null,bud:6};
+function zDraw(z,x,y,fc,an,ph,sc){const B=ZBOX[z.kind],m=ctx.getTransform();
+  if(!B||z.boss||W.dbg.zLive||ctx.canvas!==ZS.cv||Math.abs(m.b)>1e-6||Math.abs(m.c)>1e-6||m.a<=0){CR[z.kind](x,y,fc,an,ph,sc);return}
+  const k=m.a,s=sc/B[4],x0=B[0]*s,y0=B[1]*s,pw=Math.ceil((B[2]-B[0])*s*k),pH=Math.ceil((B[3]-B[1])*s*k),cam=CR.cam?CR.cam.k*1e4+CR.cam.zk:0;ZS.n++;
+  let S=z.spr;const fresh=!S||S.k!==k||S.cam!==cam||S.an!==an||S.sc!==sc||Math.abs(Math.atan2(Math.sin(fc-S.fc),Math.cos(fc-S.fc)))>.09;
+  if(fresh||(S.f!==ZS.f&&(ZS.f+z.id)%ZS.need===0)){if(!S)S=z.spr={cv:document.createElement('canvas')};const C=S.cv;if(C.width!==pw||C.height!==pH){C.width=pw;C.height=pH}
+    const g=C.getContext('2d');g.setTransform(1,0,0,1,0,0);g.clearRect(0,0,pw,pH);g.setTransform(k,0,0,k,-x0*k,-y0*k);const sv=ctx;ctx=g;try{CR[z.kind](0,0,fc,an,ph,sc)}finally{ctx=sv}
+    S.k=k;S.cam=cam;S.an=an;S.sc=sc;S.fc=fc;S.f=ZS.f}
+  ctx.save();ctx.setTransform(1,0,0,1,0,0);ctx.drawImage(S.cv,Math.round(m.a*(x+x0)+m.e),Math.round(m.d*(y+y0)+m.f));ctx.restore()}
 function drawZombie(z){const q=SB(z.x,z.y,z.zh||0),zk=RIGK.mzk,fc=z.face+CAM.yaw;
   if(z.rise<1){const k=z.rise,c=CAM.c,s=CAM.s,SP=CAM.SP,[mx,my]=MOUND(k),
       G=(ox,oy)=>[q[0]+ox*c-oy*s,q[1]+(ox*s+oy*c)*SP];// un punto del terreno intorno ai piedi, (ox, oy) nel mondo
@@ -696,9 +754,9 @@ function drawZombie(z){const q=SB(z.x,z.y,z.zh||0),zk=RIGK.mzk,fc=z.face+CAM.yaw
     else{ctx.fillStyle='#4a3a2a';ctx.save();ctx.translate(q[0],q[1]);ctx.transform(c,SP*s,-s,SP*c,0,0);ctx.beginPath();ctx.ellipse(0,0,mx,my,0,0,TAU);ctx.restore();ctx.fill();
     for(let i=0;i<6;i++){const a=i*1.05+z.x,r=10+k*16,g=G(Math.cos(a)*r,Math.sin(a)*r*.5);ctx.fillStyle='#64503a';ball([g[0],g[1]-Math.sin(k*Math.PI)*6*CAM.CP],2.4);ctx.fill()}}
     if(k>.25){const u=ez((k-.25)/.75),ck=Math.max(1,z.sc/1.1);ctx.save();ctx.beginPath();ctx.rect(q[0]-60*ck,q[1]-150*ck,120*ck,150*ck+1);ctx.clip();
-      ctx.translate(0,(1-u)*60*z.sc*zk);CR[z.kind](q[0],q[1],fc,'idle',(W.t*.6)%1,z.sc);ctx.restore()}return}
-  if(z.die){const k=Math.min(1,z.die/1.1),ck=Math.max(1,z.sc/1.1);ctx.save();ctx.globalAlpha=1-k*k;ctx.beginPath();ctx.rect(q[0]-60*ck,q[1]-150*ck,120*ck,150*ck+1);ctx.clip();ctx.translate(0,ez(k)*50*z.sc*zk);CR[z.kind](q[0],q[1],fc,'idle',0,z.sc);ctx.restore();return}
-  const fin=z.fin>0;if(fin){ctx.save();ctx.globalAlpha*=cl(1-z.fin/.9,0,1)}CR[z.kind](q[0],q[1],fc,z.anim,z.p,z.sc);if(fin)ctx.restore();if(z.flash>0){ctx.save();ctx.globalCompositeOperation='lighter';glow('255,255,255',q[0],q[1]-24*z.sc*zk,22*z.sc,.5);ctx.restore()}}
+      ctx.translate(0,(1-u)*60*z.sc*zk);zDraw(z,q[0],q[1],fc,'idle',(W.t*.6)%1,z.sc);ctx.restore()}return}
+  if(z.die){const k=Math.min(1,z.die/1.1),ck=Math.max(1,z.sc/1.1);ctx.save();ctx.globalAlpha=1-k*k;ctx.beginPath();ctx.rect(q[0]-60*ck,q[1]-150*ck,120*ck,150*ck+1);ctx.clip();ctx.translate(0,ez(k)*50*z.sc*zk);zDraw(z,q[0],q[1],fc,'idle',0,z.sc);ctx.restore();return}
+  const fin=z.fin>0;if(fin){ctx.save();ctx.globalAlpha*=cl(1-z.fin/.9,0,1)}zDraw(z,q[0],q[1],fc,z.anim,z.p,z.sc);if(fin)ctx.restore();if(z.flash>0){ctx.save();ctx.globalCompositeOperation='lighter';glow('255,255,255',q[0],q[1]-24*z.sc*zk,22*z.sc,.5);ctx.restore()}}
 // le trasparenze della casa: il tetto sfuma quando l'eroe entra, i mobili compaiono; i muri (wN, wS, wE, wW: da che parte guardano) con l'eroe
 // dentro diventano trasparenti se sono rivolti verso la telecamera (a vista dritta i muri sud, come prima), piano piano mentre si gira
 const WALLN={wN:[0,-1],wS:[0,1],wE:[1,0],wW:[-1,0],uN:[0,-1],uS:[0,1],uE:[1,0],uW:[-1,0]};
@@ -973,7 +1031,11 @@ function relE(A,B){const k=A.cU<B.cU?1:-1,inA=k*A.lean,inB=-k*B.lean;if(Math.max
 // alla U dell'essere (kyFn generalizzato) se la figura copre le sue colonne; accanto: chi è più vicino al centro della visuale va dopo (debole)
 function relEss(E,P){const tz=Math.max(1.5,.08*Math.min(E.z1-E.z0,P.z1-P.z0)),s=segAlong(P.H,Math.min(P.U1,Math.max(P.U0,E.cU))),
     under=s&&E.cU>=P.U0-1&&E.cU<=P.U1+1&&E.cV>=s[0]-1&&E.cV<=s[1]+1;
-  if(under&&P.z0>=E.z1-tz&&P.z0>E.z0+.5&&P.z1>E.z1)return[-1,2,P.z0-E.z1+tz];if(under&&E.z0>=P.z1-tz&&E.z0>P.z0+.5&&E.z1>P.z1)return[1,2,E.z0-P.z1+tz];
+  if(under&&P.z0>=E.z1-tz&&P.z0>E.z0+.5&&P.z1>E.z1)return[-1,2,P.z0-E.z1+tz+3];if(under&&E.z0>=P.z1-tz&&E.z0>P.z0+.5&&E.z1>P.z1)return[1,2,E.z0-P.z1+tz+3];
+  // (difetti 48) chi sta sopra o sotto una cosa ha sempre un margine di almeno 3 px: chi sta appoggiato sul solaio ha 1,5 px (tz) e sotto i 2 px
+  // l'isteresi teneva il verso di quando stava ancora di sotto (l'eroe e gli zombie di sopra restavano «dentro il pavimento»). Sui gradini (st)
+  // chi sale o scende sta sopra la scala
+  if(under&&P.part==='st'&&E.z0>.5)return[1,2,9];
   if(E.cV>=P.V1)return[1,2,E.cV-P.V1];if(E.cV<=P.V0)return[-1,2,P.V0-E.cV];
   if(E.cU+E.hw>P.U0&&E.cU-E.hw<P.U1){const vf=s?s[1]:P.V1;return[E.cV>=vf-1?1:-1,2,Math.abs(E.cV-vf+1)]}
   const gap=Math.max(0,P.U0-UCAM,UCAM-P.U1),du=Math.abs(E.cU-UCAM);return[du<=gap?1:-1,1,Math.abs(gap-du)]}
@@ -1106,7 +1168,7 @@ function projOf(id,pts){const L=ORD.byId.get(id),p=L&&L.prop;LEANK=p&&p.lk!=null
   const r=pts.map(q=>{const z=q[2]||0,s=S(q[0],q[1],z),v=(q[0]-CAM.x)*CAM.s+(q[1]-CAM.y)*CAM.c;return[s[0],s[1],v*ce+z*se]});LEANK=1;setRef(null);return r}
 // il corvo posato si disegna subito dopo la cosa su cui sta (cercata una volta: il prop alto che lo contiene)
 function perchHost(c){if(c._host!==undefined)return c._host;let best=null;for(const p of props){if(p.floor)continue;const b=p.bx;if(c.x<b[0]-6||c.x>b[2]+6||c.y<b[1]-6||c.y>b[3]+6||(b[4]||0)<c.z-15)continue;if(!best||p.ky>best.ky)best=p}return c._host=best}
-function drawWorld(dt,view){const h0=houses[0],h0a=h0?h0.a:1,D=W.dbg;
+function drawWorld(dt,view){const h0=houses[0],h0a=h0?h0.a:1,D=W.dbg;ZS.f++;ZS.need=Math.max(1,Math.ceil(ZS.n/(LOWFX?4:ZS.bud)));ZS.n=0;ZS.cv=ctx.canvas;
   // il terreno: quando è rimpicciolito più della metà (dpr·zoom < GT/2: un pixel copre più di due punti della foto, come nella vista intera su
   // uno schermo a 1×) la levigatura 'medium' (con le mipmap) evita lo sfarfallio girando; sopra la metà la levigatura normale basta e 'medium'
   // sul telefono sfocherebbe per niente. Vale per tutte e due le strade, dritta e girata, così non c'è un salto quando si comincia a girare o
@@ -1446,7 +1508,8 @@ function boot(area,o){o=o||{};const GAME=!!o.game;let ACT=!GAME,RUN=false,PAUSE=
 orderReset:()=>{ORD.mm.m=new Map();ORD.fm.m=new Map();ORD.fr+=5},
     intra:id=>{const L=ORD.byId.get(id);return L?intraOrder(L).map(g=>({gi:g.gi,k:g.parts.map(t=>t.k).join(','),z0:g.z0,z1:g.z1})):null},
     render:dt=>render(dt||0,0,0),navField:()=>navField(),vis:visAt,hit:(x,y,r)=>!!hit(x,y,r),heightAt,
-    nav:()=>NAV&&{cw:NAV.cw,ch:NAV.ch,free:NAV.bl.reduce((s,v)=>s+(v?0:1),0)},navRebuild:()=>{navBuild();NAV.hc=-1},
+    nav:()=>NAV&&{cw:NAV.cw,ch:NAV.ch,free:NAV.bl.reduce((s,v)=>s+(v?0:1),0)},navAt:(x,y)=>{if(!NAV)return null;const c=cellOf(x,y);return{bl:NAV.bl[c],bar:NAV.bar[c],bs:NAV.bs[c],D:NAV.dist[c]}},lureF:(L,x,y)=>{const F=lureField(L);return F[cellOf(x,y)]},/* la casella della griglia in (x, y): bloccata, barriera, lato, distanza dall'eroe; lureF: il campo verso una barriera chiusa */navRebuild:()=>{navBuild();NAV.hc=-1},
+    zdraw:(g,k,x,y,fc,an,ph,sc)=>{const sv=ctx;ctx=g;try{CR[k](x,y,fc,an,ph,sc)}finally{ctx=sv}},/* un mostro disegnato in una tela qualunque (prove) */
     hurt:(z,n,fx)=>hurt(z,n,fx),addZombie:(kind,x,y,spd)=>{const k=KINDS.find(k=>k[0]===kind)||KINDS[0];const z={id:++ZID,kind:k[0],sc:k[1],spd:spd||k[2],hp:99,x,y,face:0,p:0,anim:'walk',rise:1,die:0,flash:0};W.Z.push(z);return W.Z.length-1},
     sim:(n,dt)=>{for(let i=0;i<n;i++)updateBeings(dt,{x:0,y:0})},
     walk:(ix,iy,n,dt)=>{const[wx,wy]=stickToWorld(ix,iy);for(let i=0;i<(n||1);i++)updateBeings(dt||1/60,{x:wx,y:wy})},
@@ -1454,4 +1517,4 @@ orderReset:()=>{ORD.mm.m=new Map();ORD.fm.m=new Map();ORD.fr+=5},
     texStats:()=>{let n=0,px=0,np=0,pp=0;for(const k in TEX){n++;px+=TEX[k].width*TEX[k].height}for(const k in PLANES){np++;pp+=PLANES[k].width*PLANES[k].height}return{n,mpx:+(px/1e6).toFixed(2),np,mpp:+(pp/1e6).toFixed(2)}},
     buys,equip,buyNow:id=>{const o=buys.find(b=>b.id===id);return o?o.act():null},box:()=>BOX,boxTo:i=>{const q=BOX.spots[i];boxPlace(q[0],q[1],q[3]||0);navBuild();if(NAV)NAV.hc=-1;return[q[0],q[1]]},coins:v=>{if(v!=null)W.coins=v;return W.coins},gun:()=>gunState,nuova:()=>CTL.nuova()};
   return CTL}
-return{scala,STAIRS,sameLv,heroLv,climbStart,SB,pickHole,holeDist,toWorld:(x,y)=>TURN?tP(TURN,x,y):[x,y],dirWorld:(x,y)=>TURN?tV(TURN,x,y):[x,y],AREE,anteprima,boxReset,stile,idleZombie,buyable,buys,barrier,BARS,barCheck,sorpresa,equip,hurt,spawn,KINDS,move,zWalk,sep,physClear,gun:()=>gunState,navRebuild:()=>{navBuild();if(NAV)NAV.hc=-1},softImg,turn,group,grp,finalize,facing,across,onGround,onPlane,onRound,ringNear,T,CAM,W,S,LS,MOON,inGround,scrAng,decals,fades,NAMES,stand,stands,heightAt,add3,sub3,len3,rnd,rr,srand,ink,path,hull,material,MAT,MARKS,texture,tone,face,hullOf,ballAt,line3,poly3,fn3,box,prismX,prismY,plane,cyl,prop,solid,shade,shadeR,props,solids,shadows,lights,flames,holes,houses,smokes,perches,hit,bakeGround,edgeSnap,boot,bootAsync,libera,ricuoci,setLive:f=>{liveDraw=f},wa,mix,cl,ez,lerp,TAU,ball,seg}})();
+return{scala,STAIRS,sameLv,heroLv,climbStart,SB,pickHole,holeDist,riposiziona,toWorld:(x,y)=>TURN?tP(TURN,x,y):[x,y],dirWorld:(x,y)=>TURN?tV(TURN,x,y):[x,y],AREE,anteprima,boxReset,stile,idleZombie,buyable,buys,barrier,BARS,barCheck,sorpresa,equip,hurt,spawn,KINDS,move,zWalk,sep,physClear,gun:()=>gunState,navRebuild:()=>{navBuild();if(NAV)NAV.hc=-1},softImg,turn,group,grp,finalize,facing,across,onGround,onPlane,onRound,ringNear,T,CAM,W,S,LS,MOON,inGround,scrAng,decals,fades,NAMES,stand,stands,heightAt,add3,sub3,len3,rnd,rr,srand,ink,path,hull,material,MAT,MARKS,texture,tone,face,hullOf,ballAt,line3,poly3,fn3,box,prismX,prismY,plane,cyl,prop,solid,shade,shadeR,props,solids,shadows,lights,flames,holes,houses,smokes,perches,hit,bakeGround,edgeSnap,boot,bootAsync,libera,ricuoci,setLive:f=>{liveDraw=f},wa,mix,cl,ez,lerp,TAU,ball,seg}})();

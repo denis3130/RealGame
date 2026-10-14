@@ -8,7 +8,14 @@
 (()=>{const{T,S,decals,stand,rr,srand,ink,path,face,hullOf,ballAt,line3,poly3,fn3,box,prismX,prismY,plane,cyl,prop,solid,shade,shadeR,lights,flames,holes,houses,smokes,perches,MAT,material,wa,mix,cl,lerp,ez,TAU,ball,seg,facing,onGround,W}=ZM,P=ZM.P,G=ZM.G;
 const E=(a,...b)=>a.push(...b),tag=(parts,t)=>{for(const p of parts)p.part=t;return parts};
 const ANIM=ZM.anim=ZM.anim||[];
-const def=(name,f,rf)=>{rf=rf||(a=>typeof a[0]==='number'&&typeof a[1]==='number'?[a[0],a[1]]:a[0]&&typeof a[0]==='object'?[a[0].x+a[0].w/2,a[0].y+a[0].d/2]:null);P[name]=function(...a){const N=ZM.NAMES,sv=N.cur,sr=N.ref;N.cur=name;N.ref=N.grp||rf(a);try{return f.apply(this,a)}finally{N.cur=sv;N.ref=sr}}};
+// (difetti 48) gli edifici (BLD) sono un gruppo: tutto quello che si costruisce dentro (muri, tetto, interni, scala, candele, il piano di sopra,
+// l'edificio interno di locanda e cappella) prende lo stesso ref, nel mondo (r.w), e chi li costruisce lo ritrova in .ref per attaccarci altre
+// cose (campanile, Forgia, armi a muro, Credenza) con ZM.group. KZ: un edificio più alto di KZ px si piega meno (r.k = KZ/altezza), così la cima
+// ondeggia girando la visuale quanto quella della casa e del fienile delle prime due zone (alte circa 150 px)
+const BLD=new Set(['edificio','locanda','cappella','fucina','campanile']),KZ=155,kOf=(r,zt)=>{if(r)r.k=Math.min(r.k||1,KZ/Math.max(KZ,zt))};
+const def=(name,f,rf)=>{rf=rf||(a=>typeof a[0]==='number'&&typeof a[1]==='number'?[a[0],a[1]]:a[0]&&typeof a[0]==='object'?[a[0].x+a[0].w/2,a[0].y+a[0].d/2]:null);P[name]=function(...a){const N=ZM.NAMES,sv=N.cur,sr=N.ref,sg=N.grp;N.cur=name;let r=N.grp||rf(a);
+    if(!N.grp&&r&&r.length<4&&BLD.has(name)){const q=ZM.toWorld(r[0],r[1]);r=[q[0],q[1]];r.w=true;N.grp=r}N.ref=r;
+    try{const out=f.apply(this,a);if(out&&typeof out==='object'&&!out.ref&&r)out.ref=r;return out}finally{N.cur=sv;N.ref=sr;N.grp=sg}}};
 const prng=s=>{s=(Math.abs(Math.round(s))%2147483646)+1;return()=>(s=(s*16807)%2147483647)/2147483647};
 material('sidingG',['#4b5446','#30372e','#66725e'],'siding');material('sidingR',['#5a3a32','#3a2420','#7a5246'],'siding');
 material('chapelStone',['#6a6870','#47464e','#8c8a94'],'stone');material('sawWood',['#6a5440','#463626','#8a7258'],'plank');
@@ -48,7 +55,7 @@ def('edificio',function(o){const x=o.x,y=o.y,w=o.w,d=o.d,H=o.H||92,FL=o.fl||1,HT
   const LOW={tex:{s:beamL,e:beamL,n:beamL,w:beamL},texId:'pt'},HIGH={tex:{s:beamU,e:beamU,n:beamU,w:beamU},texId:'pu'};
   const WALL=(r,t,parts,zt)=>prop({bx:[r[0]-1,r[1]-1,r[2]+1,r[3]+1,(zt||HT)+6],ky:r[3],parts:tag(parts,t),house:hs});
   const SD={s:{hz:1,fix:y+d-th,a0:x,a1:x+w,t:'wS',n:[0,1],m:{n:inner}},n:{hz:1,fix:y,a0:x,a1:x+w,t:'wN',n:[0,-1],m:{s:inner}},e:{hz:0,fix:x+w-th,a0:y+th,a1:y+d-th,t:'wE',n:[1,0],m:{w:inner}},w:{hz:0,fix:x,a0:y+th,a1:y+d-th,t:'wW',n:[-1,0],m:{e:inner}}};
-  const B={hs,x,y,w,d,H,HT,th,doors:{},wins:[],inN:[]},INW=[];
+  const B={hs,x,y,w,d,H,HT,th,doors:{},wins:[],inN:[],ref:ZM.NAMES.ref},INW=[];
   const WB=(Sd,a,b,z0,z1,extra)=>Sd.hz?box(a,Sd.fix,z0,b-a,th,z1-z0,wall,Object.assign({ow:2.2,tex:EAV,m:Sd.m,noFoot:z0>0},extra)):box(Sd.fix,a,z0,th,b-a,z1-z0,wall,Object.assign({ow:2.2,tex:EAV,m:Sd.m,noFoot:z0>0},extra));
   const R=(Sd,a,b)=>Sd.hz?[a,Sd.fix,b,Sd.fix+th]:[Sd.fix,a,Sd.fix+th,b];
   const wpt=(Sd,c)=>Sd.hz?[c,Sd.fix+th/2]:[Sd.fix+th/2,c];
@@ -94,8 +101,8 @@ def('edificio',function(o){const x=o.x,y=o.y,w=o.w,d=o.d,H=o.H||92,FL=o.fl||1,HT
     E(parts,...north,...south,line3([L,ym,HT+rh+1],[L+len,ym,HT+rh+1],'#2a2630',3,{ink:true}));
     if(o.chim){const[cx0,cy0]=o.chim,zr=HT+rh-Math.abs(cy0-ym)*rh/hl;E(parts,...box(cx0-7,cy0-7,zr-12,14,14,34,'brick',{noFoot:true,ow:1.8}),...box(cx0-9,cy0-9,zr+22,18,18,4,'stoneWD',{noFoot:true,ow:1.4}));smokes.push({x:cx0,y:cy0,z:zr+28,t:0})}
     prop({bx:[L-4,Y0-4,L+len+4,Y1+4,HT+rh+40],ky:Y1,parts:tag(parts,'roof'),house:hs})}
-  B.in=(parts,bx,ky)=>prop({bx,ky:ky==null?bx[3]:ky,parts:tag(parts,'in'),house:hs});
-  B.up=(parts,bx,ky)=>prop({bx,ky:ky==null?bx[3]:ky,parts:tag(parts,'inU'),house:hs});B.solidUp=(a,b,c,e)=>{const so=solid(a,b,c,e);so.lv=1;return so};
+  B.in=(parts,bx,ky)=>prop({bx,ky:ky==null?bx[3]:ky,parts:tag(parts,'in'),house:hs,ref:B.ref});/* (anche chiamati da fuori, come gli interni della segheria: col ref dell'edificio) */
+  B.up=(parts,bx,ky)=>prop({bx,ky:ky==null?bx[3]:ky,parts:tag(parts,'inU'),house:hs,ref:B.ref});kOf(B.ref,HT+rh);B.solidUp=(a,b,c,e)=>{const so=solid(a,b,c,e);so.lv=1;return so};
   return B});
 // ------------------------------------------------------------------ gli arredi (con B.in: compaiono quando l'eroe entra)
 const table=(B,x,y,w,d,z,round)=>{solid(x,y,w,d);const parts=[];for(const[dx,dy] of[[2,2],[w-5,2],[2,d-5],[w-5,d-5]])E(parts,...box(x+dx,y+dy,0,3,3,z-3,'wood',{noOut:true}));
@@ -164,7 +171,7 @@ def('campanile',function(x,y,s){const H=196,parts=[];solid(x,y,s,s);shade(x,y,s,
   E(parts,fn3(S2=>{const sw=Math.sin(W.t*1.3)*.35,c=S2(x+s/2,y+s/2,H-10),b=S2(x+s/2+Math.sin(sw)*9,y+s/2,H-10-Math.cos(sw)*14);ctx.fillStyle='#8a7030';ink(2);ctx.beginPath();ctx.moveTo(c[0]-3,c[1]);ctx.lineTo(c[0]+3,c[1]);ctx.lineTo(b[0]+8,b[1]);ctx.quadraticCurveTo(b[0],b[1]+3,b[0]-8,b[1]);ctx.closePath();ctx.fill();ctx.stroke();ctx.fillStyle='rgba(255,236,170,.4)';ctx.fillRect(c[0]-2,c[1]+2,1.5,(b[1]-c[1])*.7)},{fp:[[x+4,y+4],[x+s-4,y+4],[x+s-4,y+s-4],[x+4,y+s-4]],z:[H-30,H-6]}));
   E(parts,...box(x-3,y-3,H-6,s+6,s+6,4,'stoneWD',{noFoot:true,ow:1.6}),poly3([[x-4,y-4,H-2],[x+s+4,y-4,H-2],[x+s/2,y+s/2,H+40]],'#3c4552',{ink:2}),poly3([[x+s+4,y-4,H-2],[x+s+4,y+s+4,H-2],[x+s/2,y+s/2,H+40]],'#2b323c',{ink:2}),poly3([[x-4,y+s+4,H-2],[x+s+4,y+s+4,H-2],[x+s/2,y+s/2,H+40]],'#535f6e',{ink:2}),poly3([[x-4,y-4,H-2],[x-4,y+s+4,H-2],[x+s/2,y+s/2,H+40]],'#3c4552',{ink:2}));
   E(parts,line3([x+s/2,y+s/2,H+40],[x+s/2,y+s/2,H+56],'#34363e',2,{ink:true}),line3([x+s/2-6,y+s/2,H+50],[x+s/2+6,y+s/2,H+50],'#34363e',2,{ink:true}));
-  prop({bx:[x-6,y-6,x+s+6,y+s+6,H+60],parts,noSplit:true});perches.push({x:x+s/2,y:y+s/2,z:H+42,t:1})});
+  prop({bx:[x-6,y-6,x+s+6,y+s+6,H+60],parts,noSplit:true});perches.push({x:x+s/2,y:y+s/2,z:H+42,t:1});kOf(ZM.NAMES.ref,H+56)});
 // ------------------------------------------------------------------ la FUCINA: una tettoia di travi aperta sulla strada (nord), il muro di mattoni
 // in fondo (sud) e mezzi muri ai lati; dentro gli attrezzi appesi, il barile dell'acqua, il mucchio di carbone, i ferri di cavallo
 // (la Forgia delle Anime ci va sotto, macchine.js)
@@ -174,8 +181,8 @@ def('fucina',function(x,y,w,d){const H=82,th=10,parts=[];shade(x,y,w,d,H,.45);
   // il muro in fondo e i due fianchi bassi (a metà)
   for(const[r,t] of[[[x,y+d-th,w,th,H],'wS'],[[x,y+28,th,d-28-th,46],'wW'],[[x+w-th,y+28,th,d-28-th,46],'wE']]){solid(r[0],r[1],r[2],r[3]);prop({bx:[r[0]-1,r[1]-1,r[0]+r[2]+1,r[1]+r[3]+1,r[4]+4],parts:tag(box(r[0],r[1],0,r[2],r[3],r[4],'brick',{ow:2.2}),t),house:hs})}
   // i pali davanti e la tettoia a una falda che scende verso la strada
-  for(const px of[x,x+w/2-3,x+w-6]){solid(px,y,6,6);prop({bx:[px-1,y-1,px+7,y+7,H-8],parts:box(px,y,0,6,6,H-14,'post',{ow:1.6}),lk:.8})}
-  const zt=v=>H-18*v/d;prop({bx:[x-10,y-10,x+w+10,y+d+4,H+6],parts:[...prismY(x-10,y-12,w+20,[[0,zt(0)-14],[d+12,zt(d+12)+4],[d+12,zt(d+12)+9],[0,zt(0)-9]],'shingle',{m:{e:'plankD',w:'plankD'},ow:1.8})].map(t=>{t.part='roof';return t}),lk:.8,house:hs});
+  for(const px of[x,x+w/2-3,x+w-6]){solid(px,y,6,6);prop({bx:[px-1,y-1,px+7,y+7,H-8],parts:box(px,y,0,6,6,H-14,'post',{ow:1.6})})}/* (difetti 48) pali e tettoia si piegano come i muri: con lk .8 scivolavano sui muri girando */
+  const zt=v=>H-18*v/d;prop({bx:[x-10,y-10,x+w+10,y+d+4,H+6],parts:[...prismY(x-10,y-12,w+20,[[0,zt(0)-14],[d+12,zt(d+12)+4],[d+12,zt(d+12)+9],[0,zt(0)-9]],'shingle',{m:{e:'plankD',w:'plankD'},ow:1.8})].map(t=>{t.part='roof';return t}),house:hs});
   // gli attrezzi sul muro in fondo (tenaglie, martelli, ferri di cavallo) e il barile, il carbone
   const wy=y+d-th-.4;E(parts,fn3(S2=>{for(let i=0;i<6;i++){const ax=x+40+i*26,a=S2(ax,wy,58),b=S2(ax+(i%2?3:-3),wy,30+(i%3)*4);ctx.lineCap='round';ctx.strokeStyle=INK;ctx.lineWidth=3;seg(a,b);ctx.stroke();ctx.strokeStyle=i%2?'#5a5c66':'#7d5a38';ctx.lineWidth=1.4;seg(a,b);ctx.stroke();
       if(i%2){ctx.fillStyle='#4a4c56';ink(1.2);ctx.fillRect(b[0]-4,b[1]-2,8,4);ctx.strokeRect(b[0]-4,b[1]-2,8,4)}}

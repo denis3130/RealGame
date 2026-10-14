@@ -107,4 +107,5 @@ js/76-musiche-boss.js
 js/77-morti-nemici.js
 js/78-gelo.js
 js/79-salvataggio.js
+js/80-posti-casse.js
 coda.html

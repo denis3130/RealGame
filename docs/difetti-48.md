@@ -21,3 +21,54 @@ basta». Visto sull'**anteprima 48** (https://claude.ai/artifact/1PeXgrLWXwA3QGK
 - **Edifici nuovi**: tutto l'edificio ondeggia, soprattutto **girando la visuale** (più di quelli del camposanto e della fattoria).
 - **Zombie chiusi**: **dietro una barriera** non ancora comprata.
 - **Telefono**: iPhone 15 Pro Max.
+
+## Correzioni (14 ottobre)
+
+### Piano di sopra
+- **Causa**: il motore dell'ordine di disegno tiene il verso di prima tra due voci quando la differenza è sotto i 2 px (isteresi, contro lo
+  sfarfallio). L'eroe (e gli zombie) appoggiati sul solaio hanno una differenza di 1,5 px: salendo la scala restava il verso di quando erano
+  ancora sotto il solaio, e il pavimento di sopra veniva disegnato sopra di loro (si vedeva solo la testa con la sagoma azzurra). Gli zombie di
+  sopra «dentro il pavimento» sembravano di sotto: da lì «spara a chi è di sotto» e «quelli di sotto mordono». Nella pagina di prova non si
+  vedeva perché la prova saliva senza disegnare i fotogrammi.
+- **Correzione** (`relEss` in `motore.js`): chi sta sopra o sotto una cosa ha sempre un margine di almeno 3 px (l'isteresi non lo tocca più);
+  sui gradini (`st`) chi sale o scende sta sopra la scala. In più l'arco elettrico delle armi forgiate (livello 2) non salta più tra i piani.
+- **Prova**: `piani_prova.js` sale coi fotogrammi veri e controlla che eroe e zombie di sopra siano disegnati sopra il solaio (senza la
+  correzione fallisce).
+
+### Edifici delle zone nuove che ondeggiano girando la visuale
+- **Causa**: la «piega» (le cose alte si piegano via dall'eroe, stile Pokémon) sposta la cima di un edificio in proporzione all'altezza. La
+  Locanda è alta 261 px, il campanile 252, la Cappella 203 (la casa del camposanto 151, il fienile 155): girando la visuale la cima oscillava fino a
+  115 px contro i 66 della casa. In più campanile, sagrestia, Forgia, armi a muro, Credenza e interni della Segheria si piegavano ognuno da un
+  punto suo (o punto per punto) e scivolavano sull'edificio.
+- **Correzione**: il ref di un edificio porta quanto si piega (`r.k`, in `setRef`): sopra i 155 px si piega di meno (Locanda ×0,6, Cappella col
+  campanile ×0,62, Segheria ×0,86), così la cima ondeggia quanto la casa e il fienile. Tutto quello che sta dentro o è attaccato a un edificio
+  prende lo stesso ref (gruppi in `prop_borgo.js`, `ZM.group` in `area_mappa.js`, Credenza, valvola e Forgia in `macchine.js`, la Bara dentro un
+  edificio); i pali e la tettoia della Fucina si piegano come i muri. L'eroe di sopra resta appoggiato al pavimento (usa lo stesso ref).
+- **Misura** (cima, giro intero della visuale): Locanda 115 → 68 px, campanile 111 → 68, Cappella 89 → 55, Segheria 80 → 69 (casa 66, fienile 68).
+
+### Zombie chiusi dietro le barriere
+- **Cause**: (1) la mappa delle distanze per gli zombie arrivava solo a 1.100 px dall'eroe: nella mappa grande chi restava più lontano andava
+  dritto verso l'eroe e si incastrava contro staccionate e barriere chiuse; (2) al varco del bordo est il controllo «devo rompere le assi?» era
+  troppo severo e lo zombie restava fuori a spingere; (3) senza buche a giusta distanza ne veniva scelta una a caso, anche dietro una barriera
+  chiusa; (4) il cancello della fattoria attirava tutti gli zombie fermi, anche quelli del borgo e della segheria, che si schiacciavano contro le
+  staccionate; (5) un lampione chiudeva per gli zombie il passaggio tra la Segheria e la caldaia.
+- **Correzioni**: mappa delle distanze su tutta la mappa (costa circa 1 ms); controllo delle assi con più tolleranza; buche solo raggiungibili
+  (la distanza della casella libera più vicina, non la più piccola dei dintorni); uno zombie della partita che non si avvicina più e non si vede
+  rinasce da una buca raggiungibile (mai chi è già vicino all'eroe); gli zombie fermi di una zona chiusa vengono alle assi della loro barriera
+  quando l'eroe è vicino (come al cancello della fattoria), girando intorno a carri e cataste; lampione spostato, cataste a 45 px dal muro.
+- **Prova**: `chiusi_prova.js` (da ogni buca attiva, in quattro combinazioni di zone aperte, lo zombie arriva; il varco est; nessuna buca dietro
+  una barriera chiusa; la rinascita; gli zombie fermi alle assi).
+
+### Menu: i 5 posti sotto l'eroe, nomi e testi interi
+- **I 5 posti** (`src/js/80-posti-casse.js`): sotto l'eroe, al posto degli oggetti indossati, nella Classica le quattro casse vinte e la quinta
+  (con la corona), nella Zombie le quattro Lucky Cards vinte e la quinta. Ogni posto mostra la cassa o la bustina e il suo stato: «Apri!» che
+  brilla e saltella, il tempo che manca con la barretta, «Sblocca», «In attesa», «Vuoto». Toccando un posto si apre un riquadro sopra di lui come in
+  Clash Royale (nome, rarità, cosa contiene, «Sblocca · tempo», «Apri subito · oro»); una cassa pronta si apre al primo tocco; toccando fuori il
+  riquadro si chiude. Gli oggetti si cambiano dall'Armeria, l'arma zombie e la Lucky Card in tasca dall'Arsenale e dal bottone Lucky. Nella
+  Zombie il bottone «Lucky Cards vinte» non serve più.
+- **Nomi**: nella Zombie i bottoni ai lati non avevano il nome e i bollini (livello del Pass, carte da aprire) erano tagliati: la lamiera storta era
+  un ritaglio (clip-path) che tagliava tutto quello che sporge dal bottone. Ora i nomi si vedono come nella Classica. Nella barra in basso c'è il
+  nome sotto ogni linguetta (prima solo sotto quella aperta).
+- **Testi tagliati**: «Liv. 1» in alto diventava «Li…» sui telefoni stretti; un nome lungo nel Profilo finiva tagliato («Massimiliar…»): ora va a
+  capo e rimpicciolisce. Controllo automatico di tutte le schermate e dei fogli nei due modi su tre telefoni (360, 390, 430 px): nessun altro
+  testo tagliato (le offerte della Bottega che scorrono di lato sono volute).

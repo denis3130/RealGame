@@ -12,7 +12,7 @@
 (()=>{const{T,P,G,prop,solid,holes,perches,bakeGround,boot,W,rr,srand,box,shade,prismY,line3,TAU}=ZM;
 const X=v=>v*T,Y=v=>(v+2)*T,AX=v=>(v+2)*T,AY=v=>(v+16)*T;
 // le cose che una partita cambia e che una partita nuova rimette com'erano: l'eroe alla partenza, gli zombie fermi nell'aia, il velo sulla fattoria
-const HERO0=()=>({x:AX(4.4),y:AY(8.4),face:-Math.PI/2,walk:0,moving:false,aim:0,fireCd:0}),IDLE=[['zombie',6.0,8.6,2],['lanterna',9.3,5.3,2],['strisciante',8.9,8.7,2],['zombie',19.4,18.6,3],['minatore',23.4,16.7,3],['strisciante',27.2,19.0,3],['zombie',22.6,9.4,4],['hound',18.3,8.8,4],['lanterna',27.9,7.7,4]],
+const HERO0=()=>({x:AX(4.4),y:AY(8.4),face:-Math.PI/2,walk:0,moving:false,aim:0,fireCd:0}),IDLE=[['zombie',6.0,8.6,2],['lanterna',9.3,5.3,2],['strisciante',8.9,8.7,2],['zombie',19.4,18.6,3],['minatore',23.4,16.7,3],['strisciante',27.2,19.0,3],['zombie',22.6,9.4,4],['hound',19.0,9.8,4],['lanterna',27.9,7.7,4]],
   veil=()=>({y:Y(12.3),k:1,wisps:Array.from({length:8},(_,i)=>({x:rr(0,16*T),y:rr(Y(1),Y(11.4)),r:rr(110,190),v:rr(5,11)}))});
 // ---------- le ZONE NUOVE (anteprima 48): il Borgo dei Lumi (3) e la Segheria del Fiume (4), coi confini, le barriere a pagamento, le uscite
 // degli zombie e il terreno. Coordinate in caselle della pianta (pianta_grande.py). Regole: niente corridoi tra 18 e 34 px; davanti a porte,
@@ -43,10 +43,10 @@ function buildEast(w,h){const E={};const hole=(x,y,z,k)=>holes.push([x,y,z,k||nu
   solid(X(16),0,w-X(16),Y(1.6),'water');
   // ---------------------------------------------------------------- AREA 4: la Segheria del Fiume
   P.ruotaMulino(X(18.7),Y(1.55));
-  P.cataste(X(16.6),Y(1.7),X(18.4)-X(16.6),Y(3.0)-Y(1.7));P.cataste(X(27.0),Y(8.6),X(29.3)-X(27.0)-3,Y(10.0)-Y(8.6));
+  P.cataste(X(16.6),Y(1.7),X(18.4)-X(16.6),Y(3.0)-Y(1.7));P.cataste(X(27.2),Y(8.6),X(29.3)-X(27.2)-3,Y(10.0)-Y(8.6));/* (difetti 48: 45 px dal muro della segheria, prima 32: un corridoio da 18–34 px che la griglia chiudeva) */
   const SG=P.edificio({x:X(19.5),y:Y(3.4),w:7*T,d:5*T,H:96,fl:1,wall:'sawWood',roof:'barnRoof',rh:84,name:'Segheria',
     op:[{s:'s',at:3.75*T,k:'big',id:'portone'},{s:'w',at:2.2*T,k:'door',id:'ovest'},{s:'n',at:5.1*T,k:'door',id:'fiume'},{s:'s',at:.9*T,k:'win'},{s:'e',at:2.6*T,k:'win'},{s:'n',at:1.6*T,k:'win'}]});
-  P.bancoSega(SG,X(21.9),Y(5.25));
+  ZM.group(SG.ref,()=>P.bancoSega(SG,X(21.9),Y(5.25)));/* (difetti 48: le cose attaccate a un edificio si piegano con lui) */
   {const px=X(24.4),py=Y(4.0);solid(px,py,70,14);SG.in([...box(px,py,0,70,14,6,'plankN',{ow:1.4}),...box(px+2,py+1,6,66,12,6,'plank',{noFoot:true,ow:1.4}),...box(px+4,py+2,12,62,10,6,'plankN',{noFoot:true,ow:1.4})],[px-2,py-2,px+72,py+16,20])}// le assi tagliate
   {const tx=X(25.6),ty=Y(6.6);solid(tx,ty,44,22);SG.in([...box(tx,ty,0,44,22,24,'wood',{ow:1.8}),...box(tx-2,ty-2,24,48,26,3,'plankD',{noFoot:true,ow:1.4}),line3([tx+6,ty+8,27],[tx+30,ty+12,27],'#8a8e98',2,{ink:true})],[tx-4,ty-4,tx+48,ty+26,32])}// il banco degli attrezzi
   P.shed(X(17.0),Y(5.4),1.8*T,2*T);
@@ -54,27 +54,27 @@ function buildEast(w,h){const E={};const hole=(x,y,z,k)=>holes.push([x,y,z,k||nu
   P.gru(X(26.1),Y(10.9));P.carroTronchi(X(20.7),Y(10.0));hole(X(20.4),Y(10.4),4,'carro');
   for(const[x,y] of[[X(24.4),Y(9.7)],[X(18.0),Y(8.6)]])grave(x,y,4);
   hole(X(21.4),Y(1.45),4,'acqua');hole(X(25.6),Y(1.45),4,'acqua');// (nell'acqua: escono dal fiume e salgono sulla riva)
-  P.lanternPole(X(19.1),Y(9.0),1);P.lanternPole(X(26.8),Y(8.9),-1);
+  P.lanternPole(X(19.1),Y(9.0),1);P.lanternPole(X(27.7),Y(10.65),-1);/* (difetti 48: il secondo lampione chiudeva il passaggio tra la segheria e le cataste: la caldaia si raggiungeva solo girando dal fiume) */
   E.bara4=[X(20.45),Y(4.35)];E.gun4=[X(21.6),Y(8.4)+24];
-  {const hostS=SG_FACE(X(21.6),Y(8.4),'s');P.wallGun(X(21.6),Y(8.4)+.6,30,'x','mitra',1250,hostS)}
+  {const hostS=SG_FACE(X(21.6),Y(8.4),'s');ZM.group(SG.ref,()=>P.wallGun(X(21.6),Y(8.4)+.6,30,'x','mitra',1250,hostS))}
   // ---------------------------------------------------------------- AREA 3: il Borgo dei Lumi
   const LC=P.locanda(X(15.2),Y(13.3),6.4*T,3.6*T);E.locanda=LC;
   // la Credenza degli Elisir dietro il bancone, contro il muro nord
-  P.elisir(X(15.2)+306,Y(13.3)+22);
+  ZM.group(LC.ref,()=>P.elisir(X(15.2)+306,Y(13.3)+22));
   {const bt=P.botola(X(14.6),Y(13.75));holes.push([X(14.6),Y(13.75),3,'botola',()=>bt.bang()])}// la botola della cantina nel vicolo a ovest della locanda (dietro, la Locanda alta la nascondeva)
   for(const[x,y,c] of[[X(22.9),Y(13.6),'R'],[X(24.65),Y(13.6),'B'],[X(23.75),Y(15.25),'R']])P.bancarella(x,y,c);
   P.bacheca(X(26.6),Y(13.75));P.carrettoRovesciato(X(25.7),Y(15.4));hole(X(25.55),Y(16.75),3,'carro');
   for(const[x,y] of[[X(22.7),Y(16.6)],[X(27.4),Y(15.0)]])P.crate(x,y);P.barrel(X(26.9),Y(16.7));P.barrel(X(22.8),Y(14.9),.85);
   P.carrozzaScuola(X(25.55),Y(17.55));hole(X(25.25),Y(18.0),3,'carro');
   for(const[x,y,d] of[[X(17.4),Y(19.75),1],[X(21.2),Y(17.25),-1],[X(24.6),Y(19.75),1],[X(28.7),Y(17.25),-1]])P.lanternPole(x,y,d);
-  const FU=P.fucina(X(15.0),Y(20.3),4.5*T,3.1*T);ZM.turn(X(17.0),Y(22.35),2,()=>P.forgia(X(17.0),Y(22.35)));
-  E.gun3=[X(18.75),FU.wallY-24];{const hostF=FU_FACE(FU);P.wallGun(X(18.75),FU.wallY-.6,34,'x','mitraglietta',1000,hostF)}
+  const FU=P.fucina(X(15.0),Y(20.3),4.5*T,3.1*T);ZM.group(FU.ref,()=>ZM.turn(X(17.0),Y(22.35),2,()=>P.forgia(X(17.0),Y(22.35))));
+  E.gun3=[X(18.75),FU.wallY-24];{const hostF=FU_FACE(FU);ZM.group(FU.ref,()=>P.wallGun(X(18.75),FU.wallY-.6,34,'x','mitraglietta',1000,hostF))}
   // l'orto del parroco: muretti con la cancellata, l'ingresso a nord, le tombe (due fosse aperte), l'albero morto
   P.wall(X(20.4),Y(20.4),X(21.8),Y(20.4),true);P.wall(X(22.8),Y(20.4),X(24.2),Y(20.4),true);P.wall(X(20.4),Y(20.4),X(20.4),Y(24),true);P.wall(X(24.2),Y(20.4),X(24.2),Y(24),true);
   P.grave(X(21.0),Y(21.4),1);P.grave(X(23.5),Y(21.5),2,{lean:.1});grave(X(21.4),Y(22.7),3);grave(X(23.3),Y(22.9),3);P.tree(X(22.4),Y(23.4),true,.85);
   // la Cappella col campanile e la sagrestia nell'angolo
-  const CP=P.cappella(X(24.9),Y(20.0),3.5*T,3.9*T);P.campanile(X(28.4),Y(20.0),X(29.3)-X(28.4));
-  {const sx=X(28.4),sy=Y(20.9),sw=X(29.3)-sx,sd=Y(24)-6-sy;solid(sx,sy,sw,sd);shade(sx,sy,sw,sd,60,.45);prop({bx:[sx-1,sy-1,sx+sw+1,sy+sd+1,70],parts:[...box(sx,sy,0,sw,sd,52,'chapelStone',{ow:2.2}),...prismY(sx-4,sy-4,sw+8,[[0,52],[sd+8,52],[sd+8,58],[0,64]],'slate',{m:{e:'chapelStone',w:'chapelStone'},ow:1.8})]})}
+  const CP=P.cappella(X(24.9),Y(20.0),3.5*T,3.9*T);ZM.group(CP.ref,()=>P.campanile(X(28.4),Y(20.0),X(29.3)-X(28.4)));
+  {const sx=X(28.4),sy=Y(20.9),sw=X(29.3)-sx,sd=Y(24)-6-sy;solid(sx,sy,sw,sd);shade(sx,sy,sw,sd,60,.45);prop({bx:[sx-1,sy-1,sx+sw+1,sy+sd+1,70],ref:CP.ref,parts:[...box(sx,sy,0,sw,sd,52,'chapelStone',{ow:2.2}),...prismY(sx-4,sy-4,sw+8,[[0,52],[sd+8,52],[sd+8,58],[0,64]],'slate',{m:{e:'chapelStone',w:'chapelStone'},ow:1.8})]})}
   E.bara3=[X(24.9)+3.5*T-10-36-22,Y(20.0)+3.9*T/2];
   // fuori, oltre il bordo: le rovine a sud del borgo, il bosco oltre il fiume
   for(const[x,y,ww,dd] of[[X(15.4),Y(24.6),110,70],[X(19.6),Y(24.9),90,60],[X(25.6),Y(24.7),120,70]])P.rovine(x,y,ww,dd);
@@ -178,6 +178,10 @@ const AREA={title:'Camposanto',zoneName:h=>h.y<Y(12.3)?(h.x<X(16)?'Fattoria dei 
       ZM.buyable({id:'zona'+zs.join(''),x:b.x,y:b.y,r:78,show:()=>!b.state.open,label:()=>nm||(zs.map(z=>W.zoneOpen[z]).every(Boolean)?'Passaggio':W.zoneOpen[zs[0]]?NOMI[zs[1]]:NOMI[zs[0]]),price:()=>b.price,
         act(){if(b.state.open||W.coins<b.price)return false;W.coins-=b.price;b.open();const nu=zs.filter(z=>!W.zoneOpen[z]);for(const z of zs)W.zoneOpen[z]=true;if(W.split&&(W.zoneOpen[2]||W.zoneOpen[4]))W.split.fade=true;ZM.navRebuild();
           W.toast=[nu.length?NOMI[nu[0]]+': aperta':'Il passaggio è aperto',2.6];try{if(AU.ctx&&AU.on.sfx){const t=AU.ctx.currentTime+.01;M.wood(t,1.2,VR(180,.05));fThump(t,90,40,.4,.5,.3);fNoise(t,.6,'lowpass',700,.7,.25,{brown:true})}}catch(e){}return true}});
+    // (difetti 48) gli zombie fermi di una zona chiusa, con l'eroe vicino a una sua barriera, vengono alle assi e allungano le braccia come al cancello
+    // della fattoria: si vede che sono chiusi di là e aspettano (prima restavano a girare e sembravano bloccati)
+    W.lures=[];const lure=(b,zone,nx,ny)=>{const sl=[];for(const k of[0,-1,1,-2,2]){const a=k*19,o=26+Math.abs(k)*6;sl.push(ny?[b.x+a,b.y+ny*o]:[b.x+nx*o,b.y+a])}W.lures.push({x:b.x,y:b.y,gx:b.x+nx*30,gy:b.y+ny*30,zone,lure:3.6*T,slots:sl,isOpen:()=>b.state.open})};
+    lure(EAST.b13,3,1,0);lure(EAST.b24,4,1,0);lure(EAST.b24,2,-1,0);lure(EAST.b34,4,0,-1);lure(EAST.b34,3,0,1);
     // (anteprima 48) la Pompa tattica è al piano di sopra della Locanda (lv 1: il bottone c'è solo di sopra)
     for(const[id,pr,hx,hy,zone,lv] of[['revolver',500,X(9.6),Y(15)-24,1],['pompa',1500,X(11.0)-26,Y(7.45),2],['mitraglietta',1000,EAST.gun3[0],EAST.gun3[1],3],['mitra',1250,EAST.gun4[0],EAST.gun4[1],4],['tattica',2000,EAST.locanda.gunUp[0],EAST.locanda.gunUp[1],3,1]])
       ZM.buyable({id:'muro_'+id,x:hx,y:hy,r:56,lv:lv||0,show:()=>W.zoneOpen[zone],label:()=>(W.gunId===id?'Colpi: ':'')+(window.ARMI?ARMI.DATI[id].n:id),price:()=>W.gunId===id?Math.round(pr/2):pr,
