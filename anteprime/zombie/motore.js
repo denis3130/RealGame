@@ -405,8 +405,9 @@ function drawFlame0(f){if(f.off)return;LEANK=f.lk||1;setRef(f.ref);const q=S(f.x
 const KINDS=[['zombie',1.1,30,80],['strisciante',1.1,24,60],['minatore',1.1,28,110],['lanterna',1.55,22,160],['hound',1.05,64,60]];// la vita in punti di danno delle armi (la pistola fa 20)
 let gunState=null,zOn=true,spawnT=1.2,ZID=0;// ZID: numero di serie degli zombie (il loro id stabile per l'ordine di disegno)
 {const _h=held;held=function(St,o,B){if(St.gun&&window.ARMI)return ARMI.inMano(St.gun,B,o.gp||{},o.aim);return _h(St,o,B)}}
-// l'eroe della mappa: l'Arciere in 3D (Denis, 13 ottobre: «Arciere 3D» anche nella modalità zombie) con l'arma zombie in mano; il gioco gli
-// mette l'equipaggiamento del menu (stile(heroStyle('arciere'))), l'anteprima quello di base
+// l'eroe della mappa: l'eroe 3D con l'arma zombie in mano; il gioco gli mette l'eroe in campo con l'equipaggiamento del menu (dal 14 ottobre,
+// Denis: «l'eroe scelto» anche nella modalità zombie; prima era sempre l'Arciere), l'anteprima l'Arciere di base. hid resta 'arciere' perché
+// tutti gli eroi stanno sullo stesso corpo 3D (EROE.arciere)
 const HSTYLE=Object.assign({},HERO,{hid:'arciere',held:null,quiver:false,gun:'pistola'});
 function stile(s){for(const k of Object.keys(HSTYLE))delete HSTYLE[k];Object.assign(HSTYLE,HERO,s||{},{hid:'arciere',held:null,quiver:false,gun:W.gunId||'pistola'})}
 const HERO3=()=>typeof EROE!=='undefined'&&!!EROE.arciere&&HSTYLE.hid==='arciere';
