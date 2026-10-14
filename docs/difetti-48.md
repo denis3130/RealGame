@@ -119,8 +119,9 @@ farsi fottere». L'edificio col Mitra a muro è la Segheria.
   pannelli, il cosciale lungo i nasi dei gradini, una colonnina per gradino, il corrimano e il pilastrino col pomolo in fondo. Di sopra la
   ringhiera intorno al buco è fatta allo stesso modo, con un pilastrino agli angoli e una colonnina ogni 9 px. In cima si esce verso sud, a
   ovest del primo pilastrino. Buco del solaio, solidi e percorso della salita (`ZM.scala`) seguono la larghezza nuova. La finestra ovest della
-  sala è più a sud (dava contro il fianco della scala larga: `barriere_prova.js` lo segnava) e il camino è 10 px più a est, così tra il piede
-  della scala e il camino restano 38 px (lì si preme «Sali», niente corridoi da 18–34).
+  sala è più a sud (dava contro il fianco della scala larga: `barriere_prova.js` lo segnava) e il camino è 10 px più a est, col solido solo
+  sulla cappa e gli stipiti: tra il piede della scala e il camino restano 42 px (lì si preme «Sali», niente corridoi da 18–34) e dentro la
+  finestra nord c'è posto per uno zombie.
 
 ### Design (camino e il resto)
 - **Camino della Locanda**: focolare di pietra con due stipiti e la bocca incassata, il fondo annerito, i ciocchi sugli alari e la brace che
@@ -150,3 +151,12 @@ farsi fottere». L'edificio col Mitra a muro è la Segheria.
   - L'audio rimasto «interrotto» sul telefono riparte al tocco.
 - **Risultato**: col Mitra da 350 a 198 nodi al secondo, con la Mitragliatrice da 352 a 192 (la pistola dei primi round: 158).
   Da riprovare sul telefono vero.
+
+### Collaudo della seconda richiesta
+- Prove della mappa: `piani_prova`, `ondeggia_prova`, `chiusi_prova`, `gioco`, `ondate`, `barriere_prova` (dopo aver spostato la finestra
+  ovest e ristretto il solido del camino), `macchine_prova`, `comparse_prova`, `bara_usi` tutte passate; ordine di disegno della mappa
+  invariato (66.987 px contro 67.003, esseri 425). Navigazione 93–94 su 96: la Locanda di sotto e di sopra 8 su 8 con la scala nuova; dentro
+  la Cappella i due di sempre in coda; vicino alla casa colonica a volte uno zombie resta a 42 px dietro gli altri sette (la prova conta chi
+  arriva a 40): è la folla intorno all'eroe, non uno zombie bloccato, e capitava anche prima (in 9 giri della versione di prima una volta).
+- Tempi di disegno dentro la Locanda (le due versioni nello stesso browser, misurate a turno): 10,5 ms contro 9,1 senza zombie, 28,8 contro
+  28,0 con 12 zombie. Scala, camino, banco e tavoli tolti uno alla volta costano meno di 1 ms ciascuno.

@@ -177,12 +177,12 @@ def('locanda',function(x,y,w,d){const H=92,sx0=x+14,sy0=y+12,SL=118,SW=44;// (la
   // il camino contro il muro nord, acceso. (Denis, 14 ottobre: «migliora il design di tutto, tipo del camino») Un focolare di pietra: due
   // stipiti, la bocca incassata con il fondo annerito, i ciocchi sugli alari, la brace che pulsa, la trave di quercia per mensola con due
   // candele e la brocca, sopra la cappa di pietra fino al soffitto con la targa del corvo, davanti la lastra del focolare e il tappeto
-  {const fx=x+180,cx=fx+24,y0=y+th,ZJ=40,ZM2=45;solid(fx-10,y0,68,28);// (a est del piede della scala restano 38 px: lì si preme «Sali», niente corridoi da 18–34)
+  {const fx=x+180,cx=fx+24,y0=y+th,ZJ=40,ZM2=45;solid(fx-6,y0,60,28);// (tra il piede della scala e il camino 42 px: lì si preme «Sali», niente corridoi da 18–34; dentro la finestra nord resta posto)
     const parts=[...box(cx-15,y0,0,30,8,ZJ,'brick',{noOut:true,tex:{s:sootT}}),// il fondo della bocca
       ...box(fx-6,y0,0,15,20,ZJ,'hearth',{ow:1.8}),...box(cx+15,y0,0,15,20,ZJ,'hearth',{ow:1.8}),// gli stipiti
       ...box(fx-10,y0+20,ZJ-1,68,6,ZM2-ZJ+1,'stairWood',{noFoot:true,ow:1.6}),// la mensola, davanti a stipiti e cappa (sopra di loro i pezzi si coprivano)
       ...box(fx-6,y0,ZM2,60,20,H-ZM2,'hearth',{noFoot:true,ow:1.8,tex:{s:breastT}}),// la cappa
-      ...box(fx-10,y0+20,0,68,8,2,'hearth',{ow:1.2}),// la lastra del focolare
+      ...box(fx-6,y0+20,0,60,8,2,'hearth',{ow:1.2}),// la lastra del focolare
       ...box(cx-14,y0+15,0,2,2,8,'iron',{ow:1}),...box(cx+12,y0+15,0,2,2,8,'iron',{ow:1})];// gli alari
     // i ciocchi (sdraiati lungo x), la brace che pulsa sotto
     const log=(yy,zz,r,x0,len)=>prismY(x0,yy,len,[[r,zz],[r*.7,zz+r*.7],[0,zz+r],[-r*.7,zz+r*.7],[-r,zz],[-r*.7,zz-r*.7],[0,zz-r],[r*.7,zz-r*.7]],'bark2',{m:{e:'logEnd',w:'logEnd'},ow:1.2});
