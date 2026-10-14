@@ -389,4 +389,5 @@ G.voidFog=(x0,y0,x1,y1,dir)=>{const g=ctx.createLinearGradient(dir>0?x0:x1,0,dir
 G.voidFogV=(x0,y0,x1,y1)=>{const g=ctx.createLinearGradient(0,y0,0,y1);g.addColorStop(0,'rgba(11,12,18,0)');g.addColorStop(.3,'rgba(11,12,18,.55)');g.addColorStop(.7,'rgba(11,12,18,.93)');g.addColorStop(1,'rgba(11,12,18,1)');ctx.fillStyle=g;ctx.fillRect(x0,y0,x1-x0,y1-y0)};
 G.feathers=(x,y,r,n)=>{for(let i=0;i<n;i++){const a=rnd()*TAU,d=rnd()*r,px=x+Math.cos(a)*d,py=y+Math.sin(a)*d*.7;ctx.save();ctx.translate(px,py);ctx.rotate(rnd()*TAU);ctx.fillStyle=rnd()<.6?'rgba(220,214,200,.8)':'rgba(120,90,60,.8)';ctx.beginPath();ctx.ellipse(0,0,2.4,.9,0,0,TAU);ctx.fill();ctx.restore()}};
 G.chips=(x,y,r,n)=>{for(let i=0;i<n;i++){const a=rnd()*TAU,d=rnd()*r,px=x+Math.cos(a)*d,py=y+Math.sin(a)*d*.7;ctx.save();ctx.translate(px,py);ctx.rotate(rnd()*TAU);ctx.fillStyle=rnd()<.5?'#a08060':'#c8a878';ctx.fillRect(-1.6,-.6,3.2,1.2);ctx.restore()}};
+ZM.lanternParts=lantern;ZM.cartWheel=wheel;// (per prop_borgo.js)
 })();

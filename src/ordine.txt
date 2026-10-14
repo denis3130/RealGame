@@ -81,6 +81,7 @@ js/62-eroe-3d.js
 ../anteprime/zombie/motore.js
 ../anteprime/zombie/prop.js
 ../anteprime/zombie/prop_fattoria.js
+../anteprime/zombie/prop_borgo.js
 ../anteprime/zombie/partita.js
 ../anteprime/zombie/fortuna.js
 ../anteprime/zombie/armi_speciali.js

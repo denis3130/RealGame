@@ -10,7 +10,7 @@ const PAGE=path.resolve(process.argv[2]||path.join(__dirname,'..','zombie.html')
   await p.goto('file://'+PAGE);await p.waitForFunction(()=>window.__MZ&&__MZ.W.ground,null,{timeout:60000});await p.waitForTimeout(500);
   const E=(f,a)=>p.evaluate(f,a);await E(()=>{window.ZM=__MZ.ZM;const W=__MZ.W;W.dbg.god=true;W.dbg.noSpawn=true;W.dbg.noShoot=true;__MZ.zombies(true)});
   const run=s=>E(n=>{for(let i=0;i<n;i++)__MZ.sim(1,1/30)},Math.round(s*30));
-  const M0=await E(()=>({e:ZM.macchine.ELI.length,f:ZM.macchine.FORGE.length,v:ZM.macchine.VALVES.length}));ok(M0.e===1&&M0.f===1&&M0.v===1,'sulla mappa: una Credenza, una Forgia, una valvola ('+JSON.stringify(M0)+')');
+  const M0=await E(()=>({e:ZM.macchine.ELI.length,f:ZM.macchine.FORGE.length,v:ZM.macchine.VALVES.length}));ok(M0.e===2&&M0.f===1&&M0.v===1,'sulla mappa: due Credenze (cimitero e Locanda), una Forgia, una valvola ('+JSON.stringify(M0)+')');
   // ---- la Credenza: quattro elisir diversi, prezzi 1.500, 2.000, 2.500, 3.000; il quinto no
   const e1=await E(async()=>{const M=__MZ,W=M.W,K=ZM.macchine,o=ZM.buys.find(b=>b.id==='elisir0');M.tp(o.x,o.y);const out=[];
     for(let i=0;i<5;i++){M.coins(20000);const c0=W.coins,r=o.act();for(let k=0;k<60;k++)M.sim(1,1/30);out.push({r,paid:c0-W.coins,own:K.PK.own.slice()})}return out});

@@ -397,7 +397,9 @@ function barStep(z,dt){const X=z.bx,B=X.B,s=X.s,o=B.th/2+ZR+1,ax=B.x+s*B.nx*o,ay
   const k=Math.min(1,X.t/.75),e=ez(k);z.x=lerp(X.from[0],X.to[0],e);z.y=lerp(X.from[1],X.to[1],e);z.zh=heightAt(z.x,z.y)+Math.sin(k*Math.PI)*(B.hop||12);z.face=fa;if(!z.ai)an('walk',.75);
   if(k>=1){B.vault--;z.bx=null;z.tg=null;z.st=0;z.cx0=null}}
 // ------------------------------------------------------------------ terreno cotto (chiamato dall'area dopo aver messo i prop)
-const GT=2;let groundDraw=null,BAKE=null;
+// GT: quanti punti della foto per pixel del mondo: 2 sulla mappa di prima, 1,5 sulla mappa grande (anteprima 48, 30 × 29 caselle: a 2 la foto
+// sarebbe 3840 × 3712, troppa memoria per un telefono; a 1,5 è come quella di prima)
+let GT=2;let groundDraw=null,BAKE=null;
 // edgeSnap(): chiamato dall'area dentro il suo pittore, fotografa il terreno di base per il fuori mappa (makeEdgeBands) prima delle cose che
 // non devono proseguire oltre il bordo (fosse, pozzanghere, foglie); se l'area non lo chiama si fotografa tutto il pittore, prima delle ombre
 function edgeSnap(){if(BAKE&&!BAKE.snap){BAKE.snap=1;W.edgeBands=makeEdgeBands(BAKE.c,BAKE.w,BAKE.h)}}
@@ -410,7 +412,7 @@ function edgeSnap(){if(BAKE&&!BAKE.snap){BAKE.snap=1;W.edgeBands=makeEdgeBands(B
 let BAKEQ=null,STEP=false;
 function bakeGround(w,h,painter){if(BAKEQ){W.w=w;W.h=h;BAKEQ.push([w,h,painter]);return}runSteps(bakeSteps(w,h,painter))}
 function runSteps(it){while(!it.next().done);}
-function* bakeSteps(w,h,painter){const tk0=performance.now();W.w=w;W.h=h;const c=document.createElement('canvas');c.width=w*GT;c.height=h*GT;const g=c.getContext('2d');let sv=ctx,sd=5;ctx=g;ctx.scale(GT,GT);srand(5);const job={c,w,h,snap:0};BAKE=job;
+function* bakeSteps(w,h,painter){const tk0=performance.now();W.w=w;W.h=h;GT=w*h>16*29*T*T*1.1?1.5:2;const c=document.createElement('canvas');c.width=w*GT;c.height=h*GT;const g=c.getContext('2d');let sv=ctx,sd=5;ctx=g;ctx.scale(GT,GT);srand(5);const job={c,w,h,snap:0};BAKE=job;
   const pause=function*(lab){if(!STEP)return;g.getImageData(0,0,1,1);sd=seed;ctx=sv;BAKE=null;yield lab;sv=ctx;ctx=g;BAKE=job;seed=sd};
   try{const it=painter(w,h);// l'area dipinge il suo terreno
     if(it&&typeof it.next==='function')for(let k=0;;k++){if(it.next().done)break;yield* pause('pittore '+k)}
@@ -604,7 +606,11 @@ function updateBeings(dt,inp){const h=W.hero,DI=W.director,MD=W.mods||{};if(h.de
     sep(z);z.p%=1}
   for(let i=W.Z.length-1;i>=0;i--)if(W.Z[i].die>1.1||(!zOn&&W.Z[i].rise<1))W.Z.splice(i,1);
   for(const f of W.FX){f.t-=dt;if(f.k==='drop'){f.x+=f.vx*dt;f.y+=f.vy*dt;f.vy+=260*dt}}for(let i=W.FX.length-1;i>=0;i--)if(W.FX[i].t<=0)W.FX.splice(i,1);
-  for(const hs of houses){const{x,y,w,d}=hs,pc=hs.porch;hs.inside=(h.x>x&&h.x<x+w&&h.y>y&&h.y<y+d+4)||(pc&&h.x>pc[0]&&h.x<pc[2]&&h.y>pc[1]&&h.y<pc[3]);hs.a+=((hs.inside?0:1)-hs.a)*Math.min(1,dt*7)}
+  for(const hs of houses){const{x,y,w,d}=hs,pc=hs.porch;hs.inside=(h.x>x&&h.x<x+w&&h.y>y&&h.y<y+d+4)||(pc&&h.x>pc[0]&&h.x<pc[2]&&h.y>pc[1]&&h.y<pc[3]);hs.a+=((hs.inside?0:1)-hs.a)*Math.min(1,dt*7);
+    // (anteprima 48) dietro l'edificio: se l'eroe sta nella striscia che il tetto copre sullo schermo (oltre il lato lontano, fino all'altezza del
+    // tetto per l'inclinazione), tetto e muro davanti si fanno trasparenti (hs.b), come le chiome: con gli edifici a due piani gli zombie lì dietro si vedono
+    let u0=1e9,u1=-1e9,v0=1e9;for(const[cx,cy] of[[x,y],[x+w,y],[x+w,y+d],[x,y+d]]){const dx=cx-h.x,dy=cy-h.y,U=dx*CAM.c-dy*CAM.s,V=dx*CAM.s+dy*CAM.c;if(U<u0)u0=U;if(U>u1)u1=U;if(V<v0)v0=V}
+    const Z=(hs.H||74)+(hs.rh==null?56:hs.rh),bh=!hs.inside&&u0-14<0&&u1+14>0&&v0>-2&&v0<Z*CAM.CP/CAM.SP+20;hs.b=(hs.b==null?1:hs.b)+((bh?.32:1)-(hs.b==null?1:hs.b))*Math.min(1,dt*6)}
   for(const f of fades){const dx=h.x-f.x,dy=h.y-f.ky,U=dx*CAM.c-dy*CAM.s,V=dx*CAM.s+dy*CAM.c,reach=f.reach*CAM.CP/CAM.SP,b=V<0&&V>-reach&&Math.abs(U)<f.rx;f.a+=((b?.35:1)-f.a)*Math.min(1,dt*6)}}
 // gli zombie (CR.*) hanno il loro scheletro 3D: basta girarli di ψ (face+ψ) e passare l'inclinazione con camRig. La terra smossa e i sassi
 // stanno a terra intorno ai piedi: hanno le misure di prima (la barra di terra larga 18+8k × 8+3k, i sassi su un'ellisse r × r/2), ma sono
@@ -624,8 +630,8 @@ function drawZombie(z){const q=S(z.x,z.y,z.zh||0),zk=RIGK.mzk,fc=z.face+CAM.yaw;
 // le trasparenze della casa: il tetto sfuma quando l'eroe entra, i mobili compaiono; i muri (wN, wS, wE, wW: da che parte guardano) con l'eroe
 // dentro diventano trasparenti se sono rivolti verso la telecamera (a vista dritta i muri sud, come prima), piano piano mentre si gira
 const WALLN={wN:[0,-1],wS:[0,1],wE:[1,0],wW:[-1,0]};
-const alphaOf=(hs,part)=>{if(part==='roof')return hs.a;if(part==='in')return hs.a>.95?0:1;if(part==='front')return .22+.78*hs.a;let n=WALLN[part];if(n&&hs.R)n=tV(hs.R,n[0],n[1]);
-  if(n){if(hs.a>=1)return 1;const f=n[0]*CAM.s+n[1]*CAM.c;return 1-(1-hs.a)*.78*cl((f-.1)/.3,0,1)}return 1};
+const alphaOf=(hs,part)=>{const B=hs.b==null?1:hs.b;if(part==='roof')return Math.min(hs.a,B);if(part==='in')return hs.a>.95?0:1;if(part==='front')return .22+.78*hs.a;let n=WALLN[part];if(n&&hs.R)n=tV(hs.R,n[0],n[1]);
+  if(n){const a=Math.min(hs.a,B<1?.45+.55*B:1);if(a>=1)return 1;const f=n[0]*CAM.s+n[1]*CAM.c;return 1-(1-a)*.78*cl((f-.1)/.3,0,1)}return 1};// (B: l'eroe dietro l'edificio)
 // l'eroe è disegnato in 8 direzioni: quella sullo schermo (scrAng) con l'isteresi di setFace (poligono/prova.js), così girando la telecamera
 // non sfarfalla tra due viste; l'arma prende l'angolo vero sullo schermo
 function heroDir(){const h=W.hero,sa=scrAng(h.face),d=Q8(sa),cur=h.dS==null?d:h.dS,df=Math.atan2(Math.sin(sa-cur*Math.PI/4),Math.cos(sa-cur*Math.PI/4));h.dS=Math.abs(df)>Math.PI/8+.12?d:cur;return h.dS}
@@ -974,8 +980,8 @@ function warmIntra(){if(W.dbg.noWarm){setTimeout(warmIntra,500);return}const t0=
   if(todo)setTimeout(warmIntra,30)}
 // disegna uno strato: i contorni sciolti per primi, poi i gruppi nel loro ordine, poi le fiamme figlie
 function drawPartA(t,hs){if(t.vis&&!t.vis())return;if(hs&&t.part){const a=alphaOf(hs,t.part);if(a<=0)return;if(a<1){ctx.save();ctx.globalAlpha*=a;drawPart(t);ctx.restore();return}}drawPart(t)}
-function drawLayer(L){const p=L.prop,hs=p.house;LEANK=p.lk==null?1:p.lk;setRef(p.ref);ROTP=p.rot||null;try{for(const t of L.loose)drawPartA(t,hs);const G=intraOrder(L);for(const g of G)for(const t of g.parts)drawPartA(t,hs)}finally{ROTP=null}
-  LEANK=1;setRef(null);if(!W.dbg.noFlames)for(const f of L.flames)drawFlame(f)}
+function drawLayer(L){const p=L.prop,hs=p.house,fd=p.fade!=null&&p.fade<1;if(fd){if(p.fade<=0)return;ctx.save();ctx.globalAlpha*=p.fade}LEANK=p.lk==null?1:p.lk;setRef(p.ref);ROTP=p.rot||null;try{for(const t of L.loose)drawPartA(t,hs);const G=intraOrder(L);for(const g of G)for(const t of g.parts)drawPartA(t,hs)}finally{ROTP=null}
+  LEANK=1;setRef(null);if(!W.dbg.noFlames)for(const f of L.flames)drawFlame(f);if(fd)ctx.restore()}// (p.fade: un prop che sparisce piano, le barriere a pagamento che si aprono)
 // il riquadro a schermo del segugio: lungo ±12 nel verso in cui guarda
 function houndSB(e,z){const c=Math.cos(z.face)*12,s=Math.sin(z.face)*12;for(const k of[-1,1]){const q=S(z.x+c*k,z.y+s*k,z.zh||0);e.sb[0]=Math.min(e.sb[0],q[0]-e.hw);e.sb[2]=Math.max(e.sb[2],q[0]+e.hw);e.sb[3]=Math.max(e.sb[3],q[1]+5)}}
 // le voci di questo fotogramma, in ordine: [pavimenti, tutto il resto]

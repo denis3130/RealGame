@@ -13,7 +13,8 @@ const PAGE=path.resolve(process.argv[2]||path.join(__dirname,'..','zombie.html')
   await E(()=>{const W=__MZ.W;W.dbg.god=true;W.dbg.noSpawn=true;__MZ.zombies(true)});
   const info=await E(()=>ZM.BARS.map(B=>({k:B.kind,x:Math.round(B.x),y:Math.round(B.y),nx:B.nx,ny:B.ny,n:B.n,glass:B.glass})));
   console.log(JSON.stringify(info));
-  ok(info.filter(b=>b.k==='vetro').length===6&&info.filter(b=>b.k==='legno').length===3&&info.filter(b=>b.k==='ferro').length===1,'10 barriere: 6 finestre, 3 varchi di legno, 1 cancellata di ferro');
+  {const nv=info.filter(b=>b.k==='vetro').length,nl=info.filter(b=>b.k==='legno').length,nf=info.filter(b=>b.k==='ferro').length;// (anteprima 48: con il Borgo e la Segheria)
+    ok(nv===17&&nl===5&&nf===2,`24 barriere: 17 finestre, 5 varchi di legno, 2 cancellate di ferro (${nv}, ${nl}, ${nf})`)}
   // davanti e dietro ogni barriera c'è posto per uno zombie
   const room=await E(()=>ZM.BARS.map(B=>{const o=B.th/2+12;return[1,-1].map(s=>{const q=ZM.hit(B.x+s*B.nx*o,B.y+s*B.ny*o,10.5);return!q||q.tag==='edge'||q.tag==='corn'}).every(Boolean)}));
   ok(room.every(Boolean),'davanti e dietro ogni barriera c\'è posto ('+room.map(r=>r?'·':'X').join('')+')');

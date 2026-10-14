@@ -88,9 +88,11 @@ function paintWin(w2,h2,lit,pl){const fx=7,fy=2,fw=26,fh=26;
   pl.forEach((old,i)=>{const q=PL[i];ctx.save();ctx.translate(fx+fw/2+q.dx,fy+q.y);ctx.rotate(q.a);ctx.fillStyle=old?(i%2?'#6e5236':'#93714c'):(i%2?'#b08858':'#c69c66');ctx.fillRect(-q.l/2,-3,q.l,6);
     ctx.fillStyle=old?'rgba(20,12,6,.3)':'rgba(255,240,200,.25)';ctx.fillRect(-q.l/2,-3,q.l,1.2);ctx.fillStyle='rgba(20,12,6,.35)';ctx.fillRect(-q.l/2+4,0,q.l*.4,.8);ink(1.5);ctx.strokeRect(-q.l/2,-3,q.l,6);
     ctx.fillStyle='rgba(10,8,6,.75)';ctx.beginPath();ctx.arc(-q.l/2+3,0,.95,0,TAU);ctx.arc(q.l/2-3,0,.95,0,TAU);ctx.fill();if(!old){ctx.fillStyle='rgba(220,220,230,.8)';ctx.fillRect(-q.l/2+2.6,-.5,.8,.8);ctx.fillRect(q.l/2-3.4,-.5,.8,.8)}ctx.restore()})}
-P.winBar=function(sol,wi){const kind='vetro',pl=wi.pl,id0=pl.texId,d0=pl.draw;
-  mkBar({kind,x:wi.at[0],y:wi.at[1],nx:wi.n[0],ny:wi.n[1],half:13,th:10,reach:30,hop:14,z:44,glass:!wi.boards,n0:wi.boards?3:0,sol,
-    onTex(B){if(B.glass){pl.texId=id0;pl.draw=d0;return}const key=B.pl.map(o=>o?'o':'f').join('');pl.texId='winR'+(wi.lit?'L':'')+'|'+key;pl.draw=(w2,h2)=>paintWin(w2,h2,wi.lit,B.pl.slice())}})};
+P.winBar=function(sol,wi){const kind='vetro',pl=wi.pl,id0=pl.texId,d0=pl.draw,sx=wi.sx||1,sy=wi.sy||1;
+  mkBar({kind,x:wi.at[0],y:wi.at[1],nx:wi.n[0],ny:wi.n[1],half:wi.half||13,th:10,reach:30,hop:14,z:wi.zfx||44,glass:!wi.boards,n0:wi.boards?3:0,sol,
+    // (le finestre più grandi degli edifici nuovi, prop_borgo.js: la stessa finestra disegnata più grande, sx × sy)
+    onTex(B){if(B.glass){pl.texId=id0;pl.draw=d0;return}const key=B.pl.map(o=>o?'o':'f').join('');pl.texId='winR'+(wi.lit?'L':'')+'|'+key+'|'+Math.round(pl.w)+'x'+Math.round(pl.h);
+      pl.draw=(w2,h2)=>{ctx.save();ctx.scale(sx,sy);paintWin(w2/sx,h2/sy,wi.lit,B.pl.slice());ctx.restore()}}})};
 // ------------------------------------------------------------------ i varchi delle recinzioni: assi di legno o sbarre di ferro tra due pali
 // (ax, ay)–(bx, by): il varco (lungo x o lungo y); o: {kind 'legno'|'ferro', out [nx, ny] (da dove vengono gli zombie), n0, z0 (la base),
 // reach (il corridoio: deve arrivare fino alla buca da cui escono), hop}. Le assi si vedono dalla parte dell'eroe; i pezzi ci sono tutti nel
