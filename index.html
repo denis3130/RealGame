@@ -10012,9 +10012,12 @@ function cassaMun(tipo,x,y,t,sc){sc=sc||1;const M=MUNC[tipo],bob=Math.sin(t*3)*1
 // x: where it happens (for the left-right pan), dt: start this many seconds later (scheduled on the audio clock)
 function crack(t,f,v){fNoise(t,.032,'bandpass',f,.7,v,{att:.0008});fNoise(t,.014,'highpass',5200,.7,v*.55,{att:.0005})}
 function tail(t,d,v,rv){fNoise(t+.02,d,'lowpass',VR(900,.1),.7,v,{brown:true,f2:180,att:.012,rev:rv||.55})}
-function case_(t,n,v,shell){for(let i=0;i<n;i++){const tt=t+i*.06+Math.random()*.05;
-  if(shell){fThump(tt,VR(560,.12),300,.035,v*2.2);fNoise(tt,.03,'bandpass',VR(2000,.15),1.5,v*1.2);fThump(tt+VR(.13,.2),VR(640,.12),330,.025,v*1.2)}
-  else{fModal(tt,VR(4300,.08),[1,2.71,4.05],[.13,.08,.05],v,.15);fModal(tt+VR(.11,.25),VR(4600,.08),[1,2.71],[.07,.05],v*.6,.1)}}}
+// a spent case landing (punto 48): lighter and more natural than before, never over the shots: brass rings briefly in a few partials not
+// quite in tune with a dry click and a softer second bounce; the shotgun's plastic shell is a dull «toc»
+function case_(t,n,v,shell){v*=.6;for(let i=0;i<n;i++){const tt=t+i*.06+Math.random()*.05;
+  if(shell){fThump(tt,VR(820,.1),460,.035,v*1.6);fNoise(tt,.025,'bandpass',VR(2400,.15),1.4,v*.9);fThump(tt+VR(.13,.2),VR(900,.1),500,.025,v*.7)}
+  else{fModal(tt,VR(3900,.1),[1,VR(2.42,.03),VR(3.98,.03),VR(5.6,.04)],[.07,.05,.035,.025],v,.05);fNoise(tt,.008,'highpass',6500,.7,v*.8,{att:.0006});
+    fModal(tt+VR(.11,.25),VR(4400,.1),[1,VR(2.42,.03)],[.05,.035],v*.45,.04)}}}
 function clack(t,f,v,len){M.metal(t,v,VR(Math.min(f,2300),.04),len||.2);fNoise(t,.02,'highpass',3800,.7,v*.25)}
 function suono(id,what,x,dt){if(typeof AU==='undefined'||!AU.ctx||!AU.on.sfx)return;const t=AU.ctx.currentTime+.005+(dt||0),D=DATI[id]||{},R=D.rel||1;AU.pan=x==null?0:cl((x-180)/200,-.7,.7);
   try{if(what==='vuoto'){clack(t,2600,.7,.07);fThump(t,300,200,.02,.18)}
@@ -15303,7 +15306,7 @@ function updateBeings(dt,inp){const h=W.hero,DI=W.director,MD=W.mods||{};if(h.de
   // il verso disegnato dell'Arciere 3D (nel mondo): segue in fretta quello vero, senza le 8 direzioni del rig di prima
   {const tf=h.face||0;if(h.f3==null||dt>=.5)h.f3=tf;else h.f3+=Math.atan2(Math.sin(tf-h.f3),Math.cos(tf-h.f3))*Math.min(1,dt*18)}
   // il grilletto: le armi automatiche lo tengono premuto, le altre lo premono di nuovo appena l'arma è pronta
-  if(g){const want=!h.moving&&!!tgt&&!noShoot,ev=g.update(dt,want&&(g.D.auto||(g.st==='pronta'&&g.cd<=0)));for(const e of ev){if(e.k==='sparo'&&!noShoot)fireShot(e);else if(e.k==='suono'&&ARMI.suono)ARMI.suono(W.gunId,e.w,180)}
+  if(g){const want=!h.moving&&!!tgt&&!noShoot,ev=g.update(dt,want&&(g.D.auto||(g.st==='pronta'&&g.cd<=0)));for(const e of ev){if(e.k==='sparo'&&!noShoot)fireShot(e);else if(e.k==='suono'&&ARMI.suono)ARMI.suono(W.gunId,e.w,180);else if(e.k==='bossolo'&&W.onCase)W.onCase(e.n||1)}
     if(tgt||h.moving)h.rlT=0;else if((h.rlT=(h.rlT||0)+dt)>1.2&&g.st==='pronta'&&g.mag<g.D.mag&&g.res>0)g.ricarica();// ricarica da solo quando non c'è niente da colpire
     if(W.gunId==='pistola'){if(g.res<g.D.mag*2)g.res+=g.D.res}// la pistola non resta mai senza colpi
     else if(g.mag<=0&&g.res<=0&&g.st!=='ricarica')equip('pistola')}// finiti i colpi si torna alla pistola
@@ -17413,6 +17416,109 @@ function drawTop(){if(!ZC.shots.length&&!ZC.fx.length)return;
   const _t=D.drawTop;D.drawTop=dt=>{_t(dt);try{drawTop()}catch(e){console.error(e)}};
   const _r=D.reset;D.reset=()=>{_r();W.pets=null;ZC.shots.length=0;ZC.fx.length=0;ZC.st=null};return D}}
 ZM.compagni=ZC})();
+// ---------- L'AUDIO DEGLI ZOMBIE e i BOSSOLI (punti 46 e 48 del piano di Denis, anteprima 47). Prima sulla mappa gli zombie erano muti.
+// Ora ognuno ha una voce sua (una gola che vibra, fatta passare per due formanti che fanno la vocale, il respiro, il raschio), diversa per
+// tipo (lo zombie, lo strisciante che gorgoglia, il minatore che tossisce, la lanterna che sussurra, il cane che ringhia, il Becchino
+// profondissimo) e un po' anche da zombie a zombie: gemiti, rantoli e respiri quando cammina, passi a tempo con il suo passo, il ringhio e
+// l'artiglio quando colpisce, l'impatto bagnato e il lamento quando viene colpito, il verso e il corpo che cade quando muore, la terra che si
+// sgretola quando esce dalla fossa. Più forte se è vicino, più piano e più lontano (riverbero) se è lontano, a destra o a sinistra secondo
+// lo schermo; mai due versi uguali di fila e mai troppe voci insieme. I bossoli: espulsi dall'arma, volano, rimbalzano e tintinnano solo
+// quando toccano terra (un ottone leggero, naturale, molto più basso degli spari; la cartuccia del fucile fa un «toc» di plastica).
+// La voce ZV serve anche al falò del menu Zombie (src/js/75-audio-nuovo.js).
+const ZV=(()=>{let curve=null;
+  const rasp=()=>{if(curve)return curve;const n=1024;curve=new Float32Array(n);for(let i=0;i<n;i++){const x=i/(n-1)*2-1;curve[i]=Math.tanh(x*3.2)*.9+.1*Math.sin(x*9)}return curve};
+  // a voice: f0 → f1 (Hz) in dur seconds, through the formants form [F1, F2]; o: vol, att, rasp (0..1), breath (0..1), trem (Hz of a
+  // shaking, for the gurgle), rev (how far), jit (how irregular)
+  function voice(t,f0,f1,dur,form,o){if(!AU.ctx)return;o=o||{};const c=AU.ctx,vol=o.vol||.1,end=t+dur;
+    const src=osc('sawtooth',f0,t,end+.1);src.frequency.exponentialRampToValueAtTime(Math.max(20,f1),t+dur*.92);
+    const j1=osc('sine',VR(6.2,.2),t,end+.1),j2=osc('sine',VR(1.7,.3),t,end+.1),jg=c.createGain(),jg2=c.createGain();jg.gain.value=f0*(o.jit==null?.035:o.jit);jg2.gain.value=f0*.05;j1.connect(jg);j2.connect(jg2);jg.connect(src.frequency);jg2.connect(src.frequency);
+    const sh=c.createWaveShaper();sh.curve=rasp();const pre=c.createGain();pre.gain.value=.4+(o.rasp||0)*2.4;src.connect(pre);pre.connect(sh);
+    const f1n=filt('bandpass',form[0],6),f2n=filt('bandpass',form[1],8),lp=filt('lowpass',o.lp||2600,.7),mix=c.createGain();mix.gain.value=1.8;sh.connect(f1n);sh.connect(f2n);
+    if(o.fd){f1n.frequency.exponentialRampToValueAtTime(form[0]*o.fd,t+dur);f2n.frequency.exponentialRampToValueAtTime(form[1]*o.fd,t+dur)}
+    f1n.connect(mix);f2n.connect(mix);mix.connect(lp);
+    const g=c.createGain(),a=o.att||.12;g.gain.setValueAtTime(.0001,t);g.gain.linearRampToValueAtTime(vol,t+a);g.gain.setValueAtTime(vol*.85,t+Math.max(a,dur*.6));g.gain.exponentialRampToValueAtTime(.0005,end);
+    if(o.trem){const tr=osc('sine',o.trem,t,end+.1),tg=c.createGain(),am=c.createGain();tg.gain.value=.5;am.gain.value=.5;tr.connect(tg);tg.connect(am.gain);lp.connect(am);am.connect(g)}else lp.connect(g);
+    route(g,null,o.rev||.2);
+    if(o.breath)fNoise(t,dur*1.05,'bandpass',VR(1300,.2),1,vol*o.breath*.9,{brown:true,att:a,rev:o.rev||.2})}
+  // a body falling on the ground (the death, the becchino's blow)
+  function body(t,vol,rev){fThump(t,VR(95,.1),38,.32,vol,rev||.15);fNoise(t,.22,'lowpass',VR(700,.15),.8,vol*.6,{brown:true});for(let i=0;i<3;i++)fNoise(t+.03+Math.random()*.12,.03,'bandpass',VR(1800,.3),1.5,vol*.15)}
+  // the ground crumbling as something climbs out of it
+  function dirt(t,vol){for(let i=0;i<7;i++)fNoise(t+i*.07+Math.random()*.05,VR(.09,.3),'lowpass',VR(1100,.3),.8,vol*(.5+Math.random()*.5),{brown:true});fThump(t,VR(80,.1),45,.4,vol*.8,.2)}
+  return{voice,body,dirt}})();
+(()=>{if(typeof ZM==='undefined')return;const{W,S}=ZM;
+// the voices of each kind: fundamental range, the vowels, rasp and breath; the moans they can make
+const KV={zombie:{f:[78,112],fm:[[430,940],[380,820],[520,1050]],rasp:.55,br:.35},strisciante:{f:[115,150],fm:[[560,1250],[620,1400]],rasp:.85,br:.6,gurgle:1},
+  minatore:{f:[64,86],fm:[[400,780],[360,700]],rasp:.5,br:.3,cough:1},lanterna:{f:[96,128],fm:[[480,1100],[540,1300]],rasp:.25,br:.55,ghost:1},hound:{f:[150,210],fm:[[700,1500]],rasp:.9,br:.5,dog:1},
+  becchino:{f:[50,62],fm:[[360,700]],rasp:.7,br:.4,big:1},spaventapasseri:{f:[90,110],fm:[[520,1200]],rasp:.4,br:.7,straw:1}};
+const A={lastMoan:0,lastStep:0,lastHit:0,lastType:'',busy:[],cases:[]};
+const on=()=>typeof AU!=='undefined'&&AU.ctx&&AU.on.sfx&&AU.ctx.state==='running';
+// how loud from here (the hero) and where on the screen: near = present, far = soft and with more room in it
+function place(x,y){const h=W.hero,d=Math.hypot(x-h.x,y-h.y),k=Math.max(0,Math.min(1,1-(d-60)/400)),q=S(x,y,0),hq=S(h.x,h.y,0);AU.pan=Math.max(-.8,Math.min(.8,(q[0]-hq[0])/190));return{k:k*k,d,rev:.12+.5*(1-k)}}
+function vox(z){if(!z.au){const K=KV[z.kind]||KV.zombie,u=Math.random();z.au={K,f:K.f[0]+(K.f[1]-K.f[0])*u,fm:K.fm[Math.floor(Math.random()*K.fm.length)],next:0,hp:z.hp,wp:z.p||0,cd:0,rose:z.rise>=1}}return z.au}
+// one moan, chosen so that the same kind does not come twice in a row
+function moan(z,t,P){const v=vox(z),K=v.K,vol=.11*P.k,o={vol,rasp:K.rasp,breath:K.br,rev:P.rev};
+  let kinds=K.dog?['snarl','huff']:K.ghost?['moan','whisper']:K.gurgle?['gurgle','hiss','moan']:K.cough?['moan','groan','cough']:K.straw?['rustle','moan']:['moan','groan','breath','moan'];
+  let k=kinds[Math.floor(Math.random()*kinds.length)];if(k===A.lastType&&kinds.length>1)k=kinds[(kinds.indexOf(k)+1)%kinds.length];A.lastType=k;
+  if(k==='moan'){const d=VR(1.25,.25);ZV.voice(t,v.f,v.f*VR(.78,.08),d,v.fm,{...o,att:.25,fd:.85});return d}
+  if(k==='groan'){const d=VR(.6,.2);ZV.voice(t,v.f*1.1,v.f*.8,d,v.fm,{...o,vol:vol*1.1,rasp:K.rasp+.25,att:.06});return d}
+  if(k==='breath'){fNoise(t,.5,'bandpass',VR(900,.2),1.2,vol*.55,{brown:true,att:.2,rev:P.rev});fNoise(t+.6,.7,'bandpass',VR(650,.2),1.2,vol*.65,{brown:true,att:.12,f2:420,rev:P.rev});return 1.3}
+  if(k==='gurgle'){const d=VR(.75,.2);ZV.voice(t,v.f,v.f*.9,d,v.fm,{...o,trem:VR(18,.2),breath:K.br+.3});return d}
+  if(k==='hiss'){fNoise(t,.6,'highpass',VR(2400,.2),.8,vol*.5,{att:.15,rev:P.rev});ZV.voice(t,v.f*.7,v.f*.6,.6,v.fm,{...o,vol:vol*.4});return .6}
+  if(k==='cough'){for(let i=0;i<2;i++){ZV.voice(t+i*.28,v.f*1.4,v.f,.16,v.fm,{...o,att:.01,rasp:.9,vol:vol*1.2});fNoise(t+i*.28,.14,'bandpass',900,1,vol*.7,{brown:true})}return .7}
+  if(k==='whisper'){fNoise(t,.5,'bandpass',VR(2800,.2),4,vol*.4,{att:.18,rev:.7});fNoise(t+.4,.6,'bandpass',VR(1500,.2),5,vol*.35,{att:.2,rev:.7});vBell(null,t+.1,VR(86,.01),1.4,vol*.12);return 1.1}
+  if(k==='rustle'){for(let i=0;i<5;i++)fNoise(t+i*.08,.1,'bandpass',VR(3200,.2),1.2,vol*.35);return .5}
+  if(k==='snarl'){ZV.voice(t,v.f,v.f*1.2,.45,v.fm,{...o,trem:VR(32,.2),rasp:1,breath:.8});return .45}
+  if(k==='huff'){for(let i=0;i<3;i++)fNoise(t+i*.16,.1,'bandpass',VR(1100,.2),1.2,vol*.6,{brown:true});return .5}
+  return .5}
+// a step of each kind, in time with its walk
+function step(z,t,P){const v=vox(z),K=v.K,vol=P.k*(K.big?.32:.14);if(vol<.006)return;
+  if(K.dog){fThump(t,VR(240,.1),130,.03,vol*.6);fNoise(t,.02,'bandpass',VR(2600,.2),1.5,vol*.4);return}
+  if(z.kind==='strisciante'){fNoise(t,.22,'bandpass',VR(700,.2),.9,vol*.7,{brown:true,att:.06,f2:400});return}
+  if(K.straw){fNoise(t,.12,'bandpass',VR(3000,.2),1.1,vol*.5);M.wood(t,vol*1.2,VR(240,.1));return}
+  fThump(t,VR(K.big?75:118,.1),K.big?38:58,K.big?.18:.07,vol);fNoise(t,.08,'bandpass',VR(K.big?600:950,.2),1,vol*.5,{brown:true});if(Math.random()<.3)fNoise(t+.05,.12,'bandpass',VR(1800,.2),1.3,vol*.2)}
+// hit, hurt, attack, death, rising
+function impact(z,t,P){const vol=P.k*.26;fThump(t,VR(150,.12),62,.08,vol);fNoise(t,.06,'lowpass',VR(1500,.15),.8,vol*.6);fNoise(t+.01,.05,'bandpass',VR(700,.2),2,vol*.4,{brown:true})}
+function pain(z,t,P){const v=vox(z);if(v.K.dog){ZV.voice(t,v.f*1.8,v.f*1.2,.22,v.fm,{vol:.1*P.k,att:.01,rasp:.6,rev:P.rev});return}ZV.voice(t,v.f*1.45,v.f*1.05,VR(.2,.2),v.fm,{vol:.12*P.k,att:.012,rasp:v.K.rasp+.2,breath:.4,rev:P.rev})}
+function attack(z,t,P){const v=vox(z);if(v.K.dog){ZV.voice(t,v.f*1.2,v.f*1.6,.28,v.fm,{vol:.16*P.k,att:.01,rasp:1,trem:30,rev:P.rev});fThump(t+.12,VR(300,.1),120,.05,.15*P.k);return}
+  ZV.voice(t,v.f*1.25,v.f*1.5,.32,v.fm,{vol:.15*P.k,att:.02,rasp:1,breath:.6,rev:P.rev});whoosh(t+.08,.18,VR(900,.1),VR(2400,.1),.1*P.k);fThump(t+.2,VR(200,.1),90,.06,.14*P.k)}
+function death(z,t,P){const v=vox(z),K=v.K;if(K.dog){ZV.voice(t,v.f*1.6,v.f*.7,.6,v.fm,{vol:.13*P.k,att:.02,rasp:.5,rev:P.rev})}
+  else ZV.voice(t,v.f*1.05,v.f*.52,VR(1.15,.15),v.fm,{vol:.14*P.k,att:.05,rasp:K.rasp+.15,breath:K.br+.2,rev:P.rev,fd:.75});ZV.body(t+.62,.3*P.k,P.rev)}
+function rise(z,t,P){ZV.dirt(t,.18*P.k);const v=vox(z);ZV.voice(t+.3,v.f*.9,v.f*.75,1.1,v.fm,{vol:.08*P.k,att:.3,rasp:v.K.rasp,breath:.5,rev:P.rev})}
+// ------------------------------------------------------------------ every frame: who moans, who steps, who got hit, who died
+function update(dt,D){if(!on())return;const now=AU.ctx.currentTime,t=now+.02;A.busy=A.busy.filter(e=>e>now);
+  for(const z of W.Z){const v=vox(z);if(z.idle&&!z.die)continue;
+    if(z.rise<1){if(!v.rose&&z.rise>0){v.rose=1;const P=place(z.x,z.y);if(P.k>.02)rise(z,t,P)}continue}v.rose=1;
+    if(z.die){if(!v.dead){v.dead=1;const P=place(z.x,z.y);if(P.k>.01)death(z,t,P)}continue}
+    // hit since the last frame
+    if(z.hp<v.hp-.4){const P=place(z.x,z.y);if(P.k>.01&&now-A.lastHit>.05){A.lastHit=now;impact(z,t,P);if(now>v.cd&&Math.random()<.45){v.cd=now+.7;pain(z,t+.03,P)}}}v.hp=z.hp;
+    // steps on the walk (two a cycle)
+    if(z.anim==='walk'&&z.p!=null){const p=z.p,w=v.wp;if((w<.5&&p>=.5)||p<w){if(now-A.lastStep>.045){const P=place(z.x,z.y);if(P.k>.03){A.lastStep=now;step(z,t,P)}}}v.wp=p}
+    // a moan now and then (never more than three voices, never two at the same moment)
+    if(now>v.next){const P=place(z.x,z.y);v.next=now+VR(4.5,.45)*(1+P.d/320);if(P.k>.04&&A.busy.length<3&&now-A.lastMoan>.4){A.lastMoan=now;A.busy.push(now+moan(z,t,P))}}}
+  stepCases(dt)}
+// ------------------------------------------------------------------ the casings: thrown out by the gun (motore.js passes the gun's 'bossolo'
+// events to W.onCase), they fly, bounce and ring only when they land
+W.onCase=n=>{const h=W.hero,a=(h.aim!=null?h.aim:h.face)||0,id=W.gunId,sh=id==='pompa'||id==='tattica',max=LOWFX?10:30;
+  for(let i=0;i<(n||1);i++){const many=n>1,sd=a+Math.PI/2+VR(0,.4)*(Math.random()<.5?1:-1)*.3,sp=many?VR(14,.5):VR(55,.25);
+    A.cases.push({x:h.x+Math.cos(a)*6,y:h.y+Math.sin(a)*6,z:(h.zh||0)+(many?16:21),vx:Math.cos(sd)*sp-Math.cos(a)*VR(12,.5),vy:Math.sin(sd)*sp-Math.sin(a)*VR(12,.5),vz:many?VR(10,.6):VR(70,.25),r:Math.random()*6.3,vr:VR(18,.6)*(Math.random()<.5?-1:1),b:0,life:many?3.2:2.6,sh,ground:(h.zh||0)})}
+  if(A.cases.length>max)A.cases.splice(0,A.cases.length-max)};
+function tink(c,first){if(!on())return;const P=place(c.x,c.y),t=AU.ctx.currentTime+.005,vol=(first?.026:.012)*Math.max(.25,P.k);
+  if(c.sh){fThump(t,VR(820,.1),460,.035,vol*1.6);fNoise(t,.025,'bandpass',VR(2400,.15),1.4,vol*.9);return}
+  // brass on stone and earth: a short ring of a few partials not quite in tune, a dry click, no long electronic tail
+  const f=VR(first?3900:4300,.1);fModal(t,f,[1,VR(2.42,.03),VR(3.98,.03),VR(5.6,.04)],[.07,.05,.035,.025],vol,.05);fNoise(t,.008,'highpass',6500,.7,vol*.8,{att:.0006})}
+function stepCases(dt){for(let i=A.cases.length-1;i>=0;i--){const c=A.cases[i];c.life-=dt;if(c.life<=0){A.cases.splice(i,1);continue}
+  if(c.vz!==0||c.z>c.ground){c.vz-=300*dt;c.x+=c.vx*dt;c.y+=c.vy*dt;c.z+=c.vz*dt;c.r+=c.vr*dt;
+    if(c.z<=c.ground){c.z=c.ground;if(c.vz<-28&&c.b<3){tink(c,c.b===0);c.vz=-c.vz*.34;c.vx*=.5;c.vy*=.5;c.vr*=.5;c.b++}else{c.vz=0;c.vx=c.vy=0;c.vr=0}}}}}
+function drawCase(c,a){const q=S(c.x,c.y,c.z);ctx.save();ctx.globalAlpha*=a;ctx.translate(q[0],q[1]);ctx.rotate(c.r);ctx.fillStyle='rgba(27,22,18,.85)';ctx.fillRect(-2,-1.1,4,2.2);ctx.fillStyle=c.sh?'#c8322a':'#d8a838';ctx.fillRect(-1.6,-.7,3.2,1.4);
+  ctx.fillStyle=c.sh?'#e8c050':'#fff0b0';ctx.fillRect(c.sh?.6:-1.3,-.6,c.sh?1:1.4,.5);ctx.restore()}
+// hooked to the match (like fortuna.js, armi_speciali.js, compagni.js)
+{const _p=ZM.partita;ZM.partita=function(o){const D=_p(o);if(D.__au)return D;D.__au=1;
+  const _u=D.update;D.update=(dt,on2)=>{_u(dt,on2);try{update(dt,D)}catch(e){console.error(e)}};
+  // the zombie's blow: its snarl and the claw, when it really hits
+  const _zh=D.zombieHit;D.zombieHit=(z,d)=>{const hp=D.hp;_zh(z,d);try{if(D.hp<hp&&on()){const P=place(z.x,z.y);attack(z,AU.ctx.currentTime+.01,P)}}catch(e){}};
+  const _t=D.drawTop;D.drawTop=dt=>{_t(dt);if(!A.cases.length)return;try{for(const c of A.cases)drawCase(c,Math.min(1,c.life/.6))}catch(e){}};
+  const _r=D.reset;D.reset=()=>{_r();A.cases.length=0;A.busy.length=0};return D}}
+ZM.audio={A,KV,moan,place}})();
 // ---------- LA MAPPA della modalità zombie (pianta approvata da Denis il 12 ottobre, anteprime/zombie/pianta.py): a sud l'area di partenza
 // «Camposanto e Casa» (12×12 caselle: l'anteprima di prima con due caselle in più a nord e due a est), a nord oltre il cancello a pagamento la
 // «Fattoria dei Corvi» (16×12), e sopra la fattoria due caselle di granturco che continua oltre il bordo. Coordinate: X(), Y() dalla pianta (in
@@ -19565,6 +19671,125 @@ showArenaUp=function(i){const A=ARENAS[i],el=$('arenaUpScr'),z=A.boss||'radici';
 @keyframes auFade{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
 @keyframes auPop{from{opacity:0;transform:scale(.85)}to{opacity:1;transform:none}}
 @media (prefers-reduced-motion:reduce){.auSeq .ribbon,.auSeq>p,.auSeq #auOk,.auSeq .auPic{animation:none}}`;document.head.appendChild(st)}
+// =====================================================================
+// AUDIO NUOVO (punti 47, 49 e 50 del piano di Denis, anteprima 47; gli zombie e i bossoli stanno in anteprime/zombie/audio_zombie.js).
+// - La musica del menu Classico: un pezzo da gioco moderno per il telefono, energico e orecchiabile, allegro ma non da bambini (re maggiore,
+//   112 battiti: marimba che canta il ritornello, accordi pizzicati in levare, basso sincopato, cassa, battito di mani e charleston), con
+//   una seconda parte e variazioni a ogni giro così si ascolta volentieri tante volte; i bottoni suonano con lei (una nota di marimba).
+// - Il menu Zombie: un bordone scuro, il cuore che batte piano, un violoncello lontano, il carillon stonato, il coro, e intorno al falò il
+//   fuoco, il vento, i corvi, gli zombie che gemono lontano (con la loro voce vera), una catena; i bottoni fanno un colpo sordo di legno.
+// - Il passaggio tra le modalità: la musica di prima si abbassa mentre la mano trascina, quella nuova entra quando arriva l'altro menu.
+// - I nemici Classici: ognuno con i suoi versi quando attacca, quando viene colpito e quando muore, e i suoi passi (il goblin che ride, lo
+//   scheletro che sbatte le ossa, lo slime che fa ciaf, il pipistrello che squittisce, il golem che macina pietra, il lupo che ringhia…),
+//   più piano se è lontano e mai troppi insieme.
+// =====================================================================
+// ------------------------------------------------------------------ instruments of the new menu music
+function vMallet(tr,t,m,dur,vel){const c=AU.ctx,f=mtof(m),g=c.createGain();
+  for(const[r,a,d] of[[1,1,Math.min(dur,1.1)],[3.99,.32,.12],[9.8,.12,.05]]){const o=osc('sine',f*r,t,t+d+.05),og=c.createGain();og.gain.setValueAtTime(.0001,t);og.gain.linearRampToValueAtTime(vel*a,t+.003);og.gain.exponentialRampToValueAtTime(.0005,t+d);o.connect(og);og.connect(g)}
+  const n=noiseSrc(t,.012),bp=filt('bandpass',3200,1.2),ng=c.createGain();ng.gain.setValueAtTime(vel*.5,t);ng.gain.exponentialRampToValueAtTime(.0005,t+.012);n.connect(bp);bp.connect(ng);ng.connect(g);route(g,tr,.22,.18)}
+function vPluck(tr,t,ms,dur,vel){const c=AU.ctx,g=c.createGain(),lp=filt('lowpass',3600,1.2);lp.frequency.setValueAtTime(3600,t);lp.frequency.exponentialRampToValueAtTime(520,t+.16);
+  for(const m of ms)for(const[ty,det] of[['sawtooth',-6],['square',6]]){const o=osc(ty,mtof(m),t,t+dur+.05);o.detune.value=det;const og=c.createGain();og.gain.value=ty==='square'?.5:1;o.connect(og);og.connect(lp)}
+  lp.connect(g);g.gain.setValueAtTime(.0001,t);g.gain.linearRampToValueAtTime(vel/ms.length,t+.004);g.gain.exponentialRampToValueAtTime(.0005,t+dur);route(g,tr,.15,.12)}
+function vCello(tr,t,m,dur,vel){const c=AU.ctx,f=mtof(m),g=c.createGain(),lp=filt('lowpass',900,.8),v=osc('sine',5,t,t+dur+.6),vg=c.createGain();vg.gain.value=f*.006;v.connect(vg);
+  for(const[ty,k] of[['sawtooth',1],['triangle',.6]]){const o=osc(ty,f,t,t+dur+.6);vg.connect(o.frequency);const og=c.createGain();og.gain.value=k;o.connect(og);og.connect(lp)}
+  lp.connect(g);adsr(g,t,.45,vel,dur*.7,.8);route(g,tr,.55,0)}
+function dKick(tr,t,v){const c=AU.ctx,o=osc('sine',150,t,t+.3),g=c.createGain();o.frequency.exponentialRampToValueAtTime(46,t+.12);g.gain.setValueAtTime(.0001,t);g.gain.linearRampToValueAtTime(v,t+.003);g.gain.exponentialRampToValueAtTime(.0005,t+.28);o.connect(g);route(g,tr,0,0);
+  const n=noiseSrc(t,.01),hp=filt('highpass',2500),ng=c.createGain();ng.gain.setValueAtTime(v*.25,t);ng.gain.exponentialRampToValueAtTime(.0005,t+.01);n.connect(hp);hp.connect(ng);route(ng,tr,0,0)}
+function dClap(tr,t,v){const c=AU.ctx;for(const[d,k] of[[0,1],[.011,.8],[.022,.9]]){const n=noiseSrc(t+d,.14),bp=filt('bandpass',1500,.9),g=c.createGain();g.gain.setValueAtTime(.0001,t+d);g.gain.linearRampToValueAtTime(v*k,t+d+.002);g.gain.exponentialRampToValueAtTime(.0005,t+d+(k===.9?.13:.02));n.connect(bp);bp.connect(g);route(g,tr,.25,0)}}
+function dHat(tr,t,v,open){const c=AU.ctx,n=noiseSrc(t,open?.2:.04),hp=filt('highpass',8200),g=c.createGain();g.gain.setValueAtTime(v,t);g.gain.exponentialRampToValueAtTime(.0005,t+(open?.18:.035));n.connect(hp);hp.connect(g);route(g,tr,.05,0)}
+// ------------------------------------------------------------------ 49. the Classic menu: «Mossbound», bright and catchy
+TRACKS.menu={bpm:112,
+  // I-V-vi-IV, then a lift in the second half; chords as voiced for the plucks, roots for the bass
+  ch:[[62,66,69],[61,64,69],[62,66,71],[62,67,71],[62,66,69],[61,64,69],[62,67,71],[61,64,69],[62,67,71],[61,64,69],[61,66,69],[62,66,71],[62,67,71],[61,64,69],[62,66,69],[62,67,69]],
+  root:[38,33,35,31,38,33,31,33,31,33,30,35,31,33,38,38],
+  mel:[[[0,78,2],[2,76,2],[4,74,2],[6,76,4],[10,81,2],[12,78,4]],[[0,76,2],[2,74,2],[4,73,2],[6,74,6],[12,69,4]],[[0,74,2],[2,76,2],[4,78,2],[6,81,4],[10,83,2],[12,81,4]],[[0,79,4],[4,78,2],[6,76,6],[12,74,4]],
+       [[0,78,2],[2,76,2],[4,74,2],[6,76,4],[10,81,2],[12,78,4]],[[0,76,2],[2,78,2],[4,81,2],[6,85,4],[10,83,2],[12,81,4]],[[0,83,4],[4,81,2],[6,79,2],[8,78,4],[12,76,4]],[[0,76,6],[6,73,2],[8,76,4],[12,69,4]],
+       [[0,83,6],[6,81,2],[8,79,8]],[[0,81,6],[6,79,2],[8,78,8]],[[0,78,4],[4,81,4],[8,85,8]],[[0,83,12],[12,81,4]],[[0,79,4],[4,83,4],[8,86,8]],[[0,85,4],[4,83,4],[8,81,8]],[[0,78,4],[4,81,4],[8,86,6],[14,85,2]],[[0,86,12]]],
+  play(tr,step,t,spb){const s=step%16,bar=Math.floor(step/16)%16,cyc=Math.floor(step/256),C=this.ch[bar],B=bar>=8,brk=cyc%3===2&&!B,intro=cyc===0&&bar<2;
+    // the pad under the second half and the breakdown
+    if(s===0&&(B||brk))vPad(tr,t,[C[0]-12,C[1]-12,C[2]-12],spb*16,.06,1500);
+    // the bass: root, octave, push into the next bar
+    if(!intro){const r=this.root[bar];if(s===0)vBass(tr,t,r,spb*5,.17);if(s===6)vBass(tr,t,r+12,spb*2,.12);if(s===8)vBass(tr,t,r,spb*3,.15);if(s===11)vBass(tr,t,r+7,spb*2,.12);if(s===14&&!brk)vBass(tr,t,this.root[(bar+1)%16]-1,spb*2,.12)}
+    // chords plucked on the off-beats
+    if(s%4===2)vPluck(tr,t,C,spb*1.6,brk?.05:.075);
+    // drums: kick, clap on 2 and 4, hats; a fill at the end of each half
+    if(!intro&&!brk){if(s===0||s===8||(B&&(s===6||s===11)))dKick(tr,t,.42);if(s===4||s===12)dClap(tr,t,.13);if(s%2===1)dHat(tr,t,s%4===3?.032:.02);if(s===14&&bar%4===3)dHat(tr,t,.04,true);
+      if(bar%8===7&&s>=12)dTom(tr,t,.16,[220,190,165,140][s-12])}
+    else if(brk&&(s===0||s===8))dKick(tr,t,.22);
+    // the hook: marimba in the first half (an octave down on the odd rounds), bells in the second (with a third above on the odd rounds)
+    if(!(brk&&bar<4))for(const[ss,m,l] of this.mel[bar])if(ss===s){if(!B)vMallet(tr,t,m-(cyc%2===1?12:0),spb*l*1.6,.075);else{vBell(tr,t,m,spb*l*1.8,.045);if(cyc%2===1)vBell(tr,t,m+4,spb*l*1.6,.02)}}}};
+// ------------------------------------------------------------------ 50. the Zombie menu: dark and quiet, the fire and the night around it
+TRACKS.zmenu={bpm:60,ch:[[50,53,57],[46,50,53],[48,51,55],[45,49,52]],sc:[62,65,67,69,70,72,74],cel:[[0,62,10],[16,60,6],[24,58,8],[40,57,14],[56,58,8]],
+  play(tr,step,t,spb){const s=step%16,bar=Math.floor(step/16)%4,C=this.ch[bar],cyc=Math.floor(step/64),loop=step%64;
+    if(s===0){vPad(tr,t,[C[0]-12,C[1]-12],spb*16,.075,280);vBass(tr,t,C[0]-24,spb*12,.13)}
+    // a heart beating slowly under everything
+    if(s===0||s===3)dDrum(tr,t,s?.07:.1,s?54:62,36,.4,180,.05);
+    if(s===0&&bar===0)vBell(tr,t,C[0]-12,spb*20,.03);
+    // a cello far away, every other round
+    if(cyc%2===0)for(const[ss,m,l] of this.cel)if(ss===loop)vCello(tr,t,m-12,spb*l*.9,.045);
+    // the music box out of tune: a few notes, then it stops
+    if(cyc%2===1&&(s===4||s===10||s===13)&&Math.random()<.65)vBox(tr,t,this.sc[Math.floor(Math.random()*this.sc.length)]-(Math.random()<.5?12:0)+(Math.random()-.5)*.35,spb*3,.02);
+    if(s===8&&bar===2)vChoir(tr,t,[C[0],C[2]],spb*14,.028)}};
+// the night round the fire: far moans (the zombies' own voice, far and with much room in it), wind that howls, a chain, an owl
+if(typeof AMBEV!=='undefined'&&AMBEV.zmenu){AMBEV.zmenu.push(
+  [8,18,t=>{if(typeof ZV==='undefined')return;const f=VR(85,.2);ZV.voice(t,f,f*VR(.75,.08),VR(1.6,.3),[[430,940],[380,820],[520,1050]][randi(0,2)],{vol:.028,att:.4,rasp:.5,breath:.5,rev:.9,fd:.85})}],
+  [14,28,t=>{const c=AU.ctx,n=noiseSrc(t,3.2,true),bp=filt('bandpass',VR(520,.2),9),g=c.createGain();bp.frequency.linearRampToValueAtTime(VR(760,.15),t+1.4);bp.frequency.linearRampToValueAtTime(VR(480,.15),t+3);
+    g.gain.setValueAtTime(.0001,t);g.gain.linearRampToValueAtTime(.05,t+1.2);g.gain.exponentialRampToValueAtTime(.0005,t+3.1);n.connect(bp);bp.connect(g);route(g,null,.6)}],
+  [26,48,t=>{for(let i=0;i<3;i++)M.metal(t+i*.16+Math.random()*.05,.1,VR(1200,.1),.4)}],
+  [35,70,t=>{const c=AU.ctx;for(const[d,f0] of[[0,420],[.45,400]]){const o=osc('sine',VR(f0,.02),t+d,t+d+.5),g=c.createGain();o.frequency.linearRampToValueAtTime(f0*.9,t+d+.4);g.gain.setValueAtTime(.0001,t+d);g.gain.linearRampToValueAtTime(.018,t+d+.08);g.gain.exponentialRampToValueAtTime(.0005,t+d+.45);o.connect(g);route(g,null,.7)}}])}
+// ------------------------------------------------------------------ the buttons, in tune with the mode
+{const _s=sfx;sfx=function(k,arg,x){if(k==='ui'&&AU.ctx&&AU.on.sfx){const now=performance.now();if(now-(AU.last.ui||0)<40)return;AU.last.ui=now;const t=AU.ctx.currentTime+.005;AU.pan=0;
+    try{if(typeof zMode==='function'&&zMode()){M.wood(t,.32,VR(250,.05));fThump(t,VR(120,.05),70,.06,.12);if(Math.random()<.25)M.metal(t+.03,.06,VR(900,.1),.3)}
+      else{vMallet(null,t,[74,76,78,81,83,86][randi(0,5)],.35,.05);fNoise(t,.01,'highpass',5000,.7,.04)}}catch(e){}return}
+  return _s.apply(this,arguments)}}
+// ------------------------------------------------------------------ the music follows the swipe between the modes: the old one goes down while
+// the hand drags, the new one comes in when the other menu arrives
+{const _pm=playMusic;playMusic=function(name){const T=typeof MM!=='undefined'&&MM.tr;if(T&&!T.mid&&(name==='zmenu'||name==='menu')&&AU.ctx){T.music=name;if(AU.cur&&AU.cur.name!==name)AU.cur.bus.gain.setTargetAtTime(0,AU.ctx.currentTime,.2);return}return _pm.call(this,name)}}
+if(typeof modeMid==='function'){const _mm=modeMid;modeMid=function(){const T=MM.tr,pend=T&&!T.mid&&T.music;_mm.apply(this,arguments);if(pend){T.music=null;playMusic(pend)}}}
+// ------------------------------------------------------------------ 47. the Classic enemies' own voices and steps
+const ev=(t,f0,f1,dur,vol,form,o)=>{if(typeof ZV!=='undefined')ZV.voice(t,f0,f1,dur,form,{rasp:.15,breath:.15,att:.01,rev:.15,...(o||{}),vol})};
+const squeak=(t,f0,f1,dur,vol)=>{const c=AU.ctx,o=osc('sine',f0,t,t+dur+.05),tr=osc('sine',VR(38,.2),t,t+dur+.05),tg=c.createGain(),g=c.createGain();tg.gain.value=f0*.06;tr.connect(tg);tg.connect(o.frequency);o.frequency.exponentialRampToValueAtTime(f1,t+dur);
+  g.gain.setValueAtTime(.0001,t);g.gain.linearRampToValueAtTime(vol,t+.01);g.gain.exponentialRampToValueAtTime(.0005,t+dur);o.connect(g);route(g,null,.15)};
+const rattle=(t,n,v,f)=>{for(let i=0;i<n;i++)M.bone(t+i*.035+Math.random()*.02,v*(1-i/(n+2)),VR(f||1100,.15))};
+const chitter=(t,n,v)=>{for(let i=0;i<n;i++)fNoise(t+i*.03,.012,'bandpass',VR(3400,.15),3,v)};
+const rustle=(t,v,d)=>{fNoise(t,d||.22,'bandpass',VR(2800,.15),.9,v,{att:.03})};
+// [attack, hurt, death, step (and every how many px)]
+const VOX={
+  goblin:{a:t=>{for(let i=0;i<3;i++)ev(t+i*.09,VR(330,.08),290,.07,.11,[750,1700])},h:t=>ev(t,460,320,.12,.12,[800,1800]),d:t=>ev(t,400,170,.42,.13,[700,1500],{att:.02}),s:t=>{fThump(t,VR(260,.1),140,.03,.05);fNoise(t,.02,'bandpass',2600,1.5,.03)},px:26},
+  imp:{a:t=>{for(let i=0;i<4;i++)ev(t+i*.07,VR(560,.08),500,.05,.08,[1000,2400])},h:t=>ev(t,700,500,.1,.09,[1100,2600]),d:t=>{ev(t,620,300,.3,.1,[1000,2200]);fNoise(t+.05,.2,'highpass',3000,.7,.05)},px:0},
+  bomber:{a:t=>{fNoise(t,.5,'highpass',VR(4200,.1),1,.05,{att:.02});ev(t+.1,VR(240,.08),210,.09,.09,[650,1500]);ev(t+.2,230,200,.09,.08,[650,1500])},h:t=>ev(t,300,220,.14,.12,[650,1400]),d:t=>ev(t,280,140,.4,.12,[600,1300]),s:t=>fThump(t,VR(200,.1),110,.04,.05),px:28},
+  skeleton:{a:t=>{M.bone(t,.6,VR(900,.1));rattle(t+.05,3,.35)},h:t=>rattle(t,4,.45,1250),d:null,s:t=>M.bone(t,.18,VR(1300,.15)),px:24},
+  necro:{a:t=>{fNoise(t,.5,'bandpass',VR(2600,.2),4,.05,{att:.15,rev:.6});vChoir(null,t,[50,53],.6,.03)},h:t=>ev(t,170,130,.2,.11,[500,1100],{rasp:.4}),d:t=>{fNoise(t,.9,'bandpass',1800,3,.05,{att:.2,rev:.7});rattle(t+.3,6,.4)},s:t=>fNoise(t,.08,'bandpass',900,1,.03,{brown:true}),px:30},
+  slime:{a:t=>{M.goo(t,.5);fThump(t+.05,VR(320,.1),VR(700,.1),.08,.08)},h:t=>{fThump(t,VR(380,.1),180,.07,.12);fNoise(t,.06,'lowpass',900,1.4,.08,{brown:true})},d:null,s:t=>fThump(t,VR(260,.15),140,.05,.05),px:34},
+  bat:{a:t=>squeak(t,VR(2300,.1),3300,.16,.05),h:t=>squeak(t,3000,2200,.1,.06),d:t=>squeak(t,2800,900,.35,.06),s:t=>fNoise(t,.05,'bandpass',VR(700,.2),1.5,.03),px:22},
+  mosquito:{a:t=>squeak(t,VR(900,.1),1300,.3,.03),h:t=>squeak(t,1400,900,.1,.04),d:t=>squeak(t,1200,300,.3,.04),px:0},
+  plant:{a:t=>{rustle(t,.1);fNoise(t+.12,.18,'highpass',3500,.8,.06)},h:t=>rustle(t,.08,.12),d:null,px:0},
+  wisp:{a:t=>{vBell(null,t,VR(91,.01),.8,.03);whoosh(t,.3,1800,4200,.05,.3)},h:t=>M.glass(t,.5,VR(2200,.1)),d:null,px:0},
+  beetle:{a:t=>chitter(t,6,.15),h:t=>{M.shell(t,.6);chitter(t+.04,3,.09)},d:t=>{M.shell(t,1);fThump(t+.05,VR(240,.1),120,.08,.1)},s:t=>chitter(t,2,.05),px:18},
+  golem:{a:t=>{fNoise(t,.6,'lowpass',VR(320,.1),.8,.2,{brown:true,att:.15});fThump(t,VR(70,.1),40,.5,.25,.2)},h:t=>{M.stone(t,.6);fNoise(t,.12,'bandpass',VR(2000,.2),2,.06)},d:null,s:t=>{fThump(t,VR(70,.1),38,.2,.22);fNoise(t,.12,'lowpass',500,.7,.08,{brown:true})},px:40},
+  frog:{a:t=>sfx('croak'),h:t=>ev(t,220,160,.12,.1,[500,1200],{trem:30}),d:t=>{ev(t,200,90,.35,.1,[480,1100],{trem:24});fThump(t+.2,VR(300,.1),120,.08,.08)},s:t=>{fThump(t,VR(300,.15),150,.05,.05);fNoise(t,.05,'lowpass',900,1.4,.03,{brown:true})},px:36},
+  croc:{a:t=>{fThump(t,VR(180,.1),70,.12,.25);M.bone(t+.02,.8,VR(700,.1))},h:t=>ev(t,120,90,.2,.12,[400,900],{rasp:.6}),d:t=>ev(t,110,60,.6,.12,[380,850],{rasp:.6}),s:t=>fNoise(t,.15,'lowpass',600,1,.05,{brown:true}),px:40},
+  wolf:{a:t=>{ev(t,VR(190,.08),240,.28,.14,[700,1500],{rasp:.9,trem:30});fThump(t+.15,VR(320,.1),140,.05,.1)},h:t=>ev(t,520,380,.18,.12,[900,2000],{rasp:.3}),d:t=>ev(t,480,200,.7,.12,[850,1900],{rasp:.2}),s:t=>{fThump(t,VR(260,.1),150,.025,.05);fNoise(t,.02,'bandpass',2400,1.5,.03)},px:22},
+  snowspirit:{a:t=>{vBell(null,t,VR(93,.01),.9,.03);fNoise(t,.4,'highpass',5000,.8,.04,{att:.1,rev:.5})},h:t=>M.ice(t,.5),d:null,px:0},
+  icesentinel:{a:t=>{M.ice(t,.8);fThump(t,VR(90,.1),50,.3,.2)},h:t=>M.ice(t,.6),d:null,s:t=>{fThump(t,VR(80,.1),40,.18,.18);M.ice(t,.2)},px:40},
+  mimic:{a:t=>{M.wood(t,.9,VR(200,.1));ev(t+.05,90,70,.5,.14,[420,900],{rasp:.8})},h:t=>{M.wood(t,.7,VR(260,.1));ev(t,120,90,.2,.1,[420,900],{rasp:.7})},d:null,px:0}};
+for(const[k,s] of[['bigslime','slime'],['magmaslime','slime'],['tadpole','slime'],['snail','beetle'],['bonelet','skeleton'],['pyro','imp'],['mushroom','plant'],['eyeflower','plant'],['shadoweye','wisp'],['qmirror','wisp'],['obsidian','golem'],['toad','frog']])VOX[k]=VOX[s];
+const EVA={lastV:0,lastS:0};
+function enemyAt(e){const d=P?Math.hypot(e.x-P.x,e.y-P.y):0;AU.pan=Math.max(-.7,Math.min(.7,(e.x-(G.vx||0)-VW/2)/200));return Math.max(.3,1-d/520)}
+// a sound played softer: for the time of the call the effects go through a gain of k on their way to the effects' bus (farther = softer)
+function withVol(k,fn){const real=AU.sfxBus,g=AU.ctx.createGain();g.gain.value=k;g.connect(real);AU.sfxBus=g;try{fn()}finally{AU.sfxBus=real}}
+function voxPlay(e,kind){const V=VOX[e.type];if(!V||!V[kind]||!AU.ctx||!AU.on.sfx)return;const now=AU.ctx.currentTime;if(now-EVA.lastV<.11)return;EVA.lastV=now;const k=enemyAt(e);
+  try{withVol(k,()=>V[kind](now+.01))}catch(er){}}
+// the attack: when it shoots (shootE during its update) or when its state turns into a move (a charge, a leap, a bite)
+{const _s=shootE;shootE=function(){const e=typeof N3G!=='undefined'?N3G.cur:null;if(e&&!isBoss(e.type)){const now=G.t||0;if(!e.vxA||now-e.vxA>1.1){e.vxA=now;voxPlay(e,'a')}}return _s.apply(this,arguments)}}
+// hurt and steps: watched every frame
+{const _u=update;update=function(dt){_u(dt);if(!G||G.state!=='play'||!AU.ctx||!AU.on.sfx)return;try{const now=G.t||0;
+  for(const e of G.enemies){if(e.dead||e.spawn>0)continue;const V=VOX[e.type];if(!V)continue;
+    if(e.vxH==null)e.vxH=e.hp;else if(e.hp<e.vxH-.5){if(!isBoss(e.type)&&(!e.vxHt||now-e.vxHt>.5)&&Math.random()<.6){e.vxHt=now;voxPlay(e,'h')}e.vxH=e.hp}
+    if(e.st&&e.st!==e.vxSt){e.vxSt=e.st;if(!['walk','rest','idle'].includes(e.st)&&!isBoss(e.type)&&(!e.vxA||now-e.vxA>1.1)){e.vxA=now;voxPlay(e,'a')}}
+    if(V.s&&V.px){if(e.vxX==null){e.vxX=e.x;e.vxY=e.y;e.vxD=0}const d=Math.hypot(e.x-e.vxX,e.y-e.vxY);e.vxX=e.x;e.vxY=e.y;if(d<20){e.vxD+=d;if(e.vxD>=V.px){e.vxD=0;const ac=AU.ctx.currentTime;if(ac-EVA.lastS>.07&&(!P||Math.hypot(e.x-P.x,e.y-P.y)<300)){EVA.lastS=ac;const k=enemyAt(e);try{withVol(k,()=>V.s(ac+.01))}catch(er){}}}}}}}catch(er){}}}
+// the death cry over the material's sound (the bones, the goo and the stone keep theirs)
+{const _s=sfx;sfx=function(k,arg,x){const r=_s.apply(this,arguments);if(k==='death'&&arg&&VOX[arg]&&VOX[arg].d&&AU.ctx&&AU.on.sfx){try{const t=AU.ctx.currentTime+.02;withVol(.8,()=>VOX[arg].d(t))}catch(e){}}return r}}
 })();
 };
 </script>

@@ -545,7 +545,7 @@ function updateBeings(dt,inp){const h=W.hero,DI=W.director,MD=W.mods||{};if(h.de
   // il verso disegnato dell'Arciere 3D (nel mondo): segue in fretta quello vero, senza le 8 direzioni del rig di prima
   {const tf=h.face||0;if(h.f3==null||dt>=.5)h.f3=tf;else h.f3+=Math.atan2(Math.sin(tf-h.f3),Math.cos(tf-h.f3))*Math.min(1,dt*18)}
   // il grilletto: le armi automatiche lo tengono premuto, le altre lo premono di nuovo appena l'arma è pronta
-  if(g){const want=!h.moving&&!!tgt&&!noShoot,ev=g.update(dt,want&&(g.D.auto||(g.st==='pronta'&&g.cd<=0)));for(const e of ev){if(e.k==='sparo'&&!noShoot)fireShot(e);else if(e.k==='suono'&&ARMI.suono)ARMI.suono(W.gunId,e.w,180)}
+  if(g){const want=!h.moving&&!!tgt&&!noShoot,ev=g.update(dt,want&&(g.D.auto||(g.st==='pronta'&&g.cd<=0)));for(const e of ev){if(e.k==='sparo'&&!noShoot)fireShot(e);else if(e.k==='suono'&&ARMI.suono)ARMI.suono(W.gunId,e.w,180);else if(e.k==='bossolo'&&W.onCase)W.onCase(e.n||1)}
     if(tgt||h.moving)h.rlT=0;else if((h.rlT=(h.rlT||0)+dt)>1.2&&g.st==='pronta'&&g.mag<g.D.mag&&g.res>0)g.ricarica();// ricarica da solo quando non c'è niente da colpire
     if(W.gunId==='pistola'){if(g.res<g.D.mag*2)g.res+=g.D.res}// la pistola non resta mai senza colpi
     else if(g.mag<=0&&g.res<=0&&g.st!=='ricarica')equip('pistola')}// finiti i colpi si torna alla pistola

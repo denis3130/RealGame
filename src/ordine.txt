@@ -85,6 +85,7 @@ js/62-eroe-3d.js
 ../anteprime/zombie/fortuna.js
 ../anteprime/zombie/armi_speciali.js
 ../anteprime/zombie/compagni.js
+../anteprime/zombie/audio_zombie.js
 ../anteprime/zombie/area_mappa.js
 js/63-zombie.js
 js/64-nemici-3d.js
@@ -98,4 +99,5 @@ js/71-menu-zombie.js
 js/72-vestiti.js
 js/73-icone-oggetti.js
 js/74-arene.js
+js/75-audio-nuovo.js
 coda.html

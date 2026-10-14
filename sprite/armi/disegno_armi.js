@@ -561,9 +561,12 @@ function cassaMun(tipo,x,y,t,sc){sc=sc||1;const M=MUNC[tipo],bob=Math.sin(t*3)*1
 // x: where it happens (for the left-right pan), dt: start this many seconds later (scheduled on the audio clock)
 function crack(t,f,v){fNoise(t,.032,'bandpass',f,.7,v,{att:.0008});fNoise(t,.014,'highpass',5200,.7,v*.55,{att:.0005})}
 function tail(t,d,v,rv){fNoise(t+.02,d,'lowpass',VR(900,.1),.7,v,{brown:true,f2:180,att:.012,rev:rv||.55})}
-function case_(t,n,v,shell){for(let i=0;i<n;i++){const tt=t+i*.06+Math.random()*.05;
-  if(shell){fThump(tt,VR(560,.12),300,.035,v*2.2);fNoise(tt,.03,'bandpass',VR(2000,.15),1.5,v*1.2);fThump(tt+VR(.13,.2),VR(640,.12),330,.025,v*1.2)}
-  else{fModal(tt,VR(4300,.08),[1,2.71,4.05],[.13,.08,.05],v,.15);fModal(tt+VR(.11,.25),VR(4600,.08),[1,2.71],[.07,.05],v*.6,.1)}}}
+// a spent case landing (punto 48): lighter and more natural than before, never over the shots: brass rings briefly in a few partials not
+// quite in tune with a dry click and a softer second bounce; the shotgun's plastic shell is a dull «toc»
+function case_(t,n,v,shell){v*=.6;for(let i=0;i<n;i++){const tt=t+i*.06+Math.random()*.05;
+  if(shell){fThump(tt,VR(820,.1),460,.035,v*1.6);fNoise(tt,.025,'bandpass',VR(2400,.15),1.4,v*.9);fThump(tt+VR(.13,.2),VR(900,.1),500,.025,v*.7)}
+  else{fModal(tt,VR(3900,.1),[1,VR(2.42,.03),VR(3.98,.03),VR(5.6,.04)],[.07,.05,.035,.025],v,.05);fNoise(tt,.008,'highpass',6500,.7,v*.8,{att:.0006});
+    fModal(tt+VR(.11,.25),VR(4400,.1),[1,VR(2.42,.03)],[.05,.035],v*.45,.04)}}}
 function clack(t,f,v,len){M.metal(t,v,VR(Math.min(f,2300),.04),len||.2);fNoise(t,.02,'highpass',3800,.7,v*.25)}
 function suono(id,what,x,dt){if(typeof AU==='undefined'||!AU.ctx||!AU.on.sfx)return;const t=AU.ctx.currentTime+.005+(dt||0),D=DATI[id]||{},R=D.rel||1;AU.pan=x==null?0:cl((x-180)/200,-.7,.7);
   try{if(what==='vuoto'){clack(t,2600,.7,.07);fThump(t,300,200,.02,.18)}
