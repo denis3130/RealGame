@@ -61,7 +61,7 @@ function fxFrame(now){
   const sc=$('cscene');sc.style.transform=FX.shake>0&&!RM?`translate(${rand(-1,1)*FX.shake}px,${rand(-1,1)*FX.shake}px)`:'';
   requestAnimationFrame(fxFrame);
 }
-let tapRes=null,CHbusy=false;
+let tapRes=null,CHbusy=false,CHgest=false;// CHgest: a pack waits for the finger to tear it (src/js/69-bustine.js)
 // a tap during an animation finishes only the current step (landing, charge, opening, one card, summary), never the whole sequence
 let CHskip=false,CHwait=[];
 const canim=(el,kf,opt)=>anim(el,kf,CHskip?Object.assign({},opt,{duration:1,delay:0}):opt);
@@ -70,7 +70,7 @@ function chestSkip(){if(CHskip)return;CHskip=true;FX.shake=0;
   for(const a of document.getAnimations()){const t=a.effect&&a.effect.target;try{if(t&&$('chestScr').contains(t)&&a.playState==='running'&&isFinite(a.effect.getComputedTiming().iterations))a.finish()}catch(e){}}
   const w=CHwait;CHwait=[];w.forEach(f=>f())}
 function waitTap(txt){CHskip=false;$('ctap').textContent=txt;$('ctap').classList.add('show');return new Promise(r=>tapRes=()=>{$('ctap').classList.remove('show');CHskip=false;r()})}
-$('chestScr').addEventListener('pointerdown',e=>{if(e.target.closest('button'))return;if(tapRes){const r=tapRes;tapRes=null;r()}else if(CHbusy)chestSkip()});
+$('chestScr').addEventListener('pointerdown',e=>{if(CHgest||e.target.closest('button'))return;if(tapRes){const r=tapRes;tapRes=null;r()}else if(CHbusy)chestSkip()});
 function chestParts(type){const c=CHC[type];
   const body=`<svg viewBox="0 0 80 84" aria-hidden="true"><ellipse cx="40" cy="80" rx="32" ry="4" fill="#000" opacity=".35"/><rect x="10" y="46" width="60" height="32" rx="4" fill="${c.body}" stroke="${I_}" stroke-width="3"/><rect x="13" y="49" width="54" height="6" fill="#fff" opacity=".12"/><path d="M22 46 V78 M58 46 V78" stroke="${c.band}" stroke-width="5"/><path d="M10 62 H70" stroke="${I_}" stroke-opacity=".25" stroke-width="2"/><rect x="34" y="42" width="12" height="14" rx="2" fill="${c.lock}" stroke="${I_}" stroke-width="2.5"/><circle cx="40" cy="48" r="2" fill="${I_}"/></svg>`;
   const lid=`<svg viewBox="0 0 80 84" aria-hidden="true"><path d="M10 46 V36 Q40 18 70 36 V46 Z" fill="${c.dark}" stroke="${I_}" stroke-width="3" stroke-linejoin="round"/><path d="M22 45 V26 M58 45 V26" stroke="${c.band}" stroke-width="5"/><path d="M16 34 Q40 22 64 34" stroke="#fff" stroke-opacity=".25" stroke-width="2" fill="none"/></svg>`;

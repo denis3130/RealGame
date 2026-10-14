@@ -31,6 +31,8 @@ const WEAP={
   arco_fenice:{bow:'phoenix',proj:'flame',spd:1.1,trail:'255,140,60',d:'Frecce di fuoco che lasciano una scia di braci.'}};
 const MAXLV=10,CARDS=[2,4,6,10,15,20,30,40,50],COST=[40,90,160,260,400,600,900,1300,1900];
 const needCards=l=>CARDS[l-1]||0,upCost=(it,l)=>Math.round((COST[l-1]||0)*(1+it.rar*.4));
+// from level 5 on an upgrade also asks the mode's material (Classic items: «Essenza di muschio», zombie things: «Rottami»; src/js/68-economia.js)
+const MATCOST=[0,0,0,0,10,20,35,55,80],matCost=l=>MATCOST[l-1]||0;
 const CHESTS={
   legno:{n:'Cassa di legno',cards:6,gold:[20,40],time:15,odds:[70,25,5,0,0],price:150},
   argento:{n:"Cassa d'argento",cards:14,gold:[60,120],time:45,odds:[48,32,15,5,0],price:480},
@@ -60,6 +62,13 @@ const ARENAS=[
   {t:10000,n:'Vetta di Mossbound',  ch:4,diff:2.5,boss:'regina', col:'#ffd84a',tint:'sepia(.35) saturate(1.6) brightness(1.08)',d:'La cima del mondo. Solo i migliori arrivano qui. Oro +132%.'}];
 const TROPHY='<svg class="tro" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 5H3v1.2a4.3 4.3 0 0 0 4.3 4.1M18 5h3v1.2a4.3 4.3 0 0 1-4.3 4.1" fill="none" stroke="#0b1326" stroke-width="2"/><path d="M6 3h12v4.5a6 6 0 0 1-12 0z" fill="#ffd23c" stroke="#0b1326" stroke-width="1.8" stroke-linejoin="round"/><path d="M10 13.2h4l1 3.8H9z" fill="#e8a41c" stroke="#0b1326" stroke-width="1.8" stroke-linejoin="round"/><rect x="7" y="17" width="10" height="4.2" rx="1" fill="#8a5a20" stroke="#0b1326" stroke-width="1.8"/><path d="M8.8 5.2v2.2a3.4 3.4 0 0 0 1.8 2.9" stroke="#fff6c0" stroke-width="1.4" fill="none" stroke-linecap="round"/></svg>';
 const LOCK='<svg class="lk" viewBox="0 0 20 20" aria-hidden="true"><path d="M6 9V7a4 4 0 0 1 8 0v2" fill="none" stroke="#0b1326" stroke-width="2.4"/><rect x="4" y="9" width="12" height="9" rx="2" fill="#9aa6b8" stroke="#0b1326" stroke-width="1.8"/></svg>';
+// the rewards outside a match that used to be chests are packs now (punto 30: the chests come only from the matches): a reward written as a
+// chest type gives the pack of that rarity, of the mode you are in (src/js/69-bustine.js); these names and pictures are for the reward lists
+function rwRar(type){return{legno:'c',argento:'r',oro:'e',cristallo:'l'}[type]||'c'}
+function rwMode(){return SAVE.modo==='zombie'?'zombie':'classica'}
+function rwName(type,mode){const r=rwRar(type),m=mode||rwMode();return(m==='zombie'?'Bustina Zombie ':'Bustina ')+{c:'Comune',r:'Rara',e:'Epica',l:'Leggendaria',i:'Implacabile'}[r]}
+function rwImgSrc(type,mode){try{return packImg(mode||rwMode(),rwRar(type),96)}catch(e){return''}}
+function rwIcon(type,mode){const s=rwImgSrc(type,mode);return s?`<img class="pkI" src="${s}" alt="">`:chestSVG(type,false)}
 function arenaIdx(t){let i=0;for(let k=0;k<ARENAS.length;k++)if(t>=ARENAS[k].t)i=k;return i}
 // save migration: old players who already beat chapter 1 start at the volcano
 if(SAVE.trophies==null){SAVE.trophies=SAVE.done&&SAVE.done.c1?ARENAS[1].t:0;SAVE.trBest=SAVE.trophies}
@@ -71,13 +80,13 @@ function roadList(){if(roadList.c)return roadList.c;const L=[];for(let t=100;t<=
   if(t===500)r={k:'petc',v:'lucciola',n:10};else if(ai>0)r={k:'chest',v:'oro',arena:ai};else{const k=(t/100)%3;r=k===1?{k:'gold',v:80+Math.floor(t/500)*60}:k===2?{k:'gems',v:5+Math.floor(t/1500)*5}:{k:'chest',v:t<1000?'legno':t<3000?'argento':'oro'}}
   L.push({t,...r})}return roadList.c=L}
 const roadReady=()=>roadList().filter(n=>(SAVE.trBest||0)>=n.t&&!SAVE.road[n.t]).length;
-function rewardLabel(n){return n.k==='petc'?`<img class="rpet" src="${petIcon(n.v)}" alt="">${n.n} carte ${PET_BY[n.v].n}`:n.k==='pet'?`<img class="rpet" src="${petIcon(n.v)}" alt="">Compagno: ${PET_BY[n.v].n}`:n.k==='gold'?`<i class="coin"></i>${n.v} oro`:n.k==='gems'?`<i class="gemS"></i>${n.v} cristalli`:CHESTS[n.v].n}
+function rewardLabel(n){return n.k==='petc'?`<img class="rpet" src="${petIcon(n.v)}" alt="">${n.n} carte ${PET_BY[n.v].n}`:n.k==='pet'?`<img class="rpet" src="${petIcon(n.v)}" alt="">Compagno: ${PET_BY[n.v].n}`:n.k==='gold'?`<i class="coin"></i>${n.v} oro`:n.k==='gems'?`<i class="gemS"></i>${n.v} cristalli`:rwName(n.v,'classica')}
 function fillRoad(){const T=SAVE.trophies||0,B=SAVE.trBest||0,L=roadList().reverse();let html=`<h2>Cammino delle coppe</h2><p class="lead">Hai ${TROPHY}<b>${T}</b> coppe, record ${B}. I premi si sbloccano con il tuo record.</p><div class="road">`;
   let placed=false;
   for(const n of L){const st=SAVE.road[n.t]?'done':B>=n.t?'ready':'lock';
     if(!placed&&T>=n.t){placed=true;html+=`<div class="rhere">Sei qui ${TROPHY}${T}</div>`}
     if(n.arena)html+=`<div class="rarena" style="--ac:${ARENAS[n.arena].col}"><span>Arena ${n.arena+1}</span><b>${ARENAS[n.arena].n}</b></div>`;
-    html+=`<div class="rnode ${st}${n.arena?' big':''}"><span class="rt">${TROPHY}${n.t}</span><span class="rr">${n.k==='chest'?`<span class="rch">${chestSVG(n.v,false)}</span>`:''}${rewardLabel(n)}</span>${st==='ready'?`<button class="btn go" data-road="${n.t}">Riscatta</button>`:st==='done'?'<em class="ok">Preso</em>':LOCK}</div>`}
+    html+=`<div class="rnode ${st}${n.arena?' big':''}"><span class="rt">${TROPHY}${n.t}</span><span class="rr">${n.k==='chest'?`<span class="rch">${rwIcon(n.v,'classica')}</span>`:''}${rewardLabel(n)}</span>${st==='ready'?`<button class="btn go" data-road="${n.t}">Riscatta</button>`:st==='done'?'<em class="ok">Preso</em>':LOCK}</div>`}
   if(!placed)html+=`<div class="rhere">Sei qui ${TROPHY}${T}</div>`;
   html+=`<div class="rarena" style="--ac:${ARENAS[0].col}"><span>Arena 1</span><b>${ARENAS[0].n}</b></div></div><button class="btn alt close">Chiudi</button>`;
   $('sheet').innerHTML=html;setTimeout(()=>{const h=$('sheet').querySelector('.rhere');if(h)h.scrollIntoView({block:'center'})},30)}
@@ -126,7 +135,7 @@ const anyUnlocking=()=>SAVE.slots.some(s=>s&&slotState(s)==='unlocking');
 function fmtT(ms){const t=Math.max(0,Math.ceil(ms/1000));return t>=60?Math.floor(t/60)+'m '+String(t%60).padStart(2,'0')+'s':t+'s'}
 const skipCost=s=>Math.max(5,Math.ceil((s.end-Date.now())/6000)*5);
 const canUpgrade=id=>{const o=SAVE.items[id];return o&&o.lvl<MAXLV&&o.cards>=needCards(o.lvl)};
-const canAffordUp=id=>canUpgrade(id)&&SAVE.gold>=upCost(ITEM[id],SAVE.items[id].lvl);
+const canAffordUp=id=>canUpgrade(id)&&SAVE.gold>=upCost(ITEM[id],SAVE.items[id].lvl)&&((SAVE.mat&&SAVE.mat.ess)||0)>=matCost(SAVE.items[id].lvl);
 
 // ---------- SVG art for menu ----------
 const I_='#1b1612';

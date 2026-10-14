@@ -86,7 +86,7 @@ const MODE_ORDER=['arena','daily','inf'];
 const fmtH=ms=>{const t=Math.max(0,Math.ceil(ms/1000)),h=Math.floor(t/3600),m=Math.floor(t%3600/60),s=t%60;const d=Math.floor(h/24);return d>=2?`${d} giorni`:d===1?`1 giorno ${h%24}h`:h?`${h}h ${String(m).padStart(2,'0')}m`:`${m}m ${String(s).padStart(2,'0')}s`};
 const SCROLL_SVG='<svg viewBox="0 0 44 44" aria-hidden="true"><path d="M10 8h22v26a4 4 0 0 1-4 4H12" fill="#f6ead2" stroke="#1b1612" stroke-width="2.4" stroke-linejoin="round"/><path d="M6 34a4 4 0 0 0 8 0V12a4 4 0 0 0-8 0z" fill="#dcc392" stroke="#1b1612" stroke-width="2.4"/><path d="M16 16h11M16 22h11M16 28h7" stroke="#8a5a20" stroke-width="2.4" stroke-linecap="round"/></svg>';
 let lastFreeHTML='',lastMisHTML='';
-function rewTxt(r){const R=MREW[r];return R.gold?`${R.gold} oro`:CHESTS[R.chest].n}
+function rewTxt(r){const R=MREW[r];return R.gold?`${R.gold} oro`:rwName(R.chest)}
 // bottom sheet
 let SHEET=null;
 function openSheet(kind){SHEET=kind;sfx('ui');if(kind==='mis')fillMissions();else if(kind==='guide')fillGuide();else if(kind==='road')fillRoad();else if(kind==='login')fillLogin();else if(kind==='pass')fillPass();else if(kind==='chal')fillChal();else fillSettings();$('sheetScr').hidden=false}
@@ -444,7 +444,7 @@ function renderShop(){ensureDeals();const D=SAVE.deals,t=new Date(),mid=new Date
   const ch=CHESTS.argento,chP=Math.round(ch.price*.7),cells=[
     cell({t:'Regalo del giorno',icon:coinPile(0),n:'+'+dailyGift(),rc:'#ffd84a',rc2:'#6e4a0c',sold:D.free,btn:`<button class="btn go" data-dfree="1" ${D.free?'disabled':''}>${D.free?'Preso':'Gratis'}</button>${D.free?'':'<i class="bang">!</i>'}`}),
     ...D.list.map((d,i)=>{const it=ITEM[d.id],r=RAR[it.rar];return cell({t:it.n,icon:itemSVG(it),n:'x'+d.n,rc:r.c,rc2:r.d,disc:DISC[it.rar],sold:d.sold,btn:`<button class="btn go" data-deal="${i}" ${d.sold||SAVE.gold<d.p?'disabled':''}>${d.sold?'Venduto':COIN+d.p}</button>`})}),
-    cell({t:ch.n,icon:chestSVG('argento',false),rc:'#c9e2ff',rc2:'#2e3a48',disc:30,sold:D.chest,btn:`<button class="btn go" data-dchest="1" ${D.chest||SAVE.gold<chP?'disabled':''}>${D.chest?'Venduto':COIN+chP}</button>`}),
+    cell({t:rwName('argento','classica'),icon:rwIcon('argento','classica'),rc:'#c9e2ff',rc2:'#2e3a48',disc:30,sold:D.chest,btn:`<button class="btn go" data-dchest="1" ${D.chest||SAVE.gold<chP?'disabled':''}>${D.chest?'Venduto':COIN+chP}</button>`}),
     cell({t:"Sacco d'oro",icon:coinPile(1),n:'1.000',rc:'#ffd84a',rc2:'#6e4a0c',disc:30,sold:D.gp,btn:`<button class="btn go" data-dgp="1" ${D.gp||(SAVE.gems||0)<50?'disabled':''}>${D.gp?'Venduto':'<i class="gemS"></i>50'}</button>`})];
   $('daily').innerHTML=cells.join('');
   $('shop').innerHTML=Object.entries(CHESTS).map(([k,c])=>{const best=k==='oro';
@@ -467,9 +467,9 @@ function packList(){if(!SAVE.packs)SAVE.packs={};const L=[],ai=arenaIdx(SAVE.trB
   return L}
 function renderPacks(){const L=packList();
   $('packs').innerHTML=L.length?L.map(p=>`<div class="pack" style="--pc:${p.col}"><span class="val">${p.val}%<br>Valore</span>
-    <div class="part">${p.arena!=null?`<img class="pthumb" src="${arenaThumb(p.arena)}" alt="">`:''}<div class="pchest">${p.pet?`<img class="ppet" src="${petIcon(p.pet)}" alt="">`:chestSVG(p.chest,false)}</div><div class="pcoins">${coinPile(2)}</div></div>
+    <div class="part">${p.arena!=null?`<img class="pthumb" src="${arenaThumb(p.arena)}" alt="">`:''}<div class="pchest">${p.pet?`<img class="ppet" src="${petIcon(p.pet)}" alt="">`:rwIcon(p.chest,'classica')}</div><div class="pcoins">${coinPile(2)}</div></div>
     <div class="pinfo"><b>${p.t}</b><small>${p.sub}</small><span class="once">Solo una volta</span>
-      <div class="pitems"><span class="pi">${p.pet?`<img src="${petIcon(p.pet)}" alt="">`:chestSVG(p.chest,false)}<em>1</em></span><span class="pi"><i class="coin"></i><em>${p.gold.toLocaleString('it-IT')}</em></span></div>
+      <div class="pitems"><span class="pi">${p.pet?`<img src="${petIcon(p.pet)}" alt="">`:rwIcon(p.chest,'classica')}<em>1</em></span><span class="pi"><i class="coin"></i><em>${p.gold.toLocaleString('it-IT')}</em></span></div>
       <button class="btn go" data-pack="${p.id}" ${(SAVE.gems||0)>=p.c?'':'disabled'}><i class="gemS"></i>${p.c}</button></div></div>`).join('')
     :`<div class="pempty">Hai preso tutte le offerte!<br><small>Ne arriva una nuova a ogni arena che sblocchi.</small></div>`;
   $('pdots').innerHTML=L.length>1?L.map((p,i)=>`<i class="${i===0?'on':''}"></i>`).join(''):''}
@@ -489,7 +489,7 @@ function renderRoad(keep){const T=SAVE.trophies||0,B=SAVE.trBest||0,ai=arenaIdx(
   for(const n of L){const st=SAVE.road[n.t]?'done':B>=n.t?'ready':'lock';
     if(!placed&&T>=n.t){placed=true;html+=`<div class="rhere" id="rHere">Sei qui ${TROPHY}${T.toLocaleString('it-IT')}</div>`}
     if(n.arena)html+=arenaCard(n.arena);
-    html+=`<div class="rnode ${st}${n.arena?' big':''}"><span class="rt">${TROPHY}${n.t.toLocaleString('it-IT')}</span><span class="rr">${n.k==='chest'?`<span class="rch">${chestSVG(n.v,false)}</span>`:''}${rewardLabel(n)}</span>${st==='ready'?`<button class="btn go" data-road="${n.t}">Riscatta</button>`:st==='done'?'<em class="ok">Preso</em>':LOCK}</div>`}
+    html+=`<div class="rnode ${st}${n.arena?' big':''}"><span class="rt">${TROPHY}${n.t.toLocaleString('it-IT')}</span><span class="rr">${n.k==='chest'?`<span class="rch">${rwIcon(n.v,'classica')}</span>`:''}${rewardLabel(n)}</span>${st==='ready'?`<button class="btn go" data-road="${n.t}">Riscatta</button>`:st==='done'?'<em class="ok">Preso</em>':LOCK}</div>`}
   if(!placed)html+=`<div class="rhere" id="rHere">Sei qui ${TROPHY}${T}</div>`;
   html+=arenaCard(0);
   $('roadHead').innerHTML=`<span class="trNow">${TROPHY}${T.toLocaleString('it-IT')}</span><small>Record ${B.toLocaleString('it-IT')} · ${roadReady()?`<em>${roadReady()} premi da riscattare</em>`:'i premi si sbloccano con il record'}</small>`;
@@ -503,10 +503,10 @@ document.addEventListener('click',e=>{const b=e.target.closest('[data-road]');if
 const LOGIN=[{k:'gold',v:100},{k:'gems',v:5},{k:'chest',v:'legno'},{k:'gold',v:200},{k:'gems',v:10},{k:'chest',v:'argento'},{k:'chest',v:'oro'}];
 if(!SAVE.login)SAVE.login={last:'',n:0};if(!SAVE.pname)SAVE.pname='Esploratore';
 const loginReady=()=>SAVE.login.last!==today();
-function loginIcon(r){return r.k==='gold'?coinPile(r.v>300?1:0):r.k==='gems'?'<span class="bigGem"></span>':chestSVG(r.v,false)}
-function loginLabel(r){return r.k==='gold'?r.v+' oro':r.k==='gems'?r.v+' cristalli':CHESTS[r.v].n}
+function loginIcon(r){return r.k==='gold'?coinPile(r.v>300?1:0):r.k==='gems'?'<span class="bigGem"></span>':rwIcon(r.v)}
+function loginLabel(r){return r.k==='gold'?r.v+' oro':r.k==='gems'?r.v+' cristalli':rwName(r.v)}
 function fillLogin(){const n=SAVE.login.n%7,ready=loginReady();
-  $('sheet').innerHTML=`<h2>Accesso giornaliero</h2><p class="lead">Torna ogni giorno: al 7° giorno ti aspetta una <b>Cassa d'oro</b>!</p><div class="login">${LOGIN.map((r,i)=>{const st=i<n?'got':i===n&&ready?'today':i===n?'next':'later';
+  $('sheet').innerHTML=`<h2>Accesso giornaliero</h2><p class="lead">Torna ogni giorno: al 7° giorno ti aspetta una <b>${rwName('oro')}</b>!</p><div class="login">${LOGIN.map((r,i)=>{const st=i<n?'got':i===n&&ready?'today':i===n?'next':'later';
     return `<div class="lday ${st}${i===6?' big':''}"><span class="ld">Giorno ${i+1}</span><div class="lic">${loginIcon(r)}</div><span class="ll">${loginLabel(r)}</span>${st==='got'?'<i class="lok">✓</i>':''}${st==='today'?'<button class="btn go" data-login="1">Riscatta</button>':''}</div>`}).join('')}</div>
     ${ready?'':`<p class="lead" style="text-align:center">Prossimo premio tra <b>${fmtH(new Date(new Date().setHours(24,0,0,0))-new Date())}</b></p>`}<button class="btn alt close">Chiudi</button>`}
 document.addEventListener('click',e=>{const b=e.target.closest('[data-login]');if(!b||!loginReady())return;const r=LOGIN[SAVE.login.n%7];SAVE.login={last:today(),n:SAVE.login.n+1};

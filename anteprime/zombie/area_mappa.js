@@ -88,6 +88,9 @@ const AREA={title:'Camposanto',zoneName:h=>h.y<Y(12.3)?'Fattoria dei Corvi':'Cam
     // la partita a ondate (partita.js): la Lanterna delle Anime nell'area di partenza, a ovest del sentiero dove si comincia, tra il muretto
     // del cimitero e la buca
     const anime=P.soulLantern(AX(2.55),AY(8.25),1500);ZM.partita({lanterna:anime});
+    // le due Macchine della Fortuna (fortuna.js): una a est della partenza, una nell'aia della fattoria appena oltre il cancello (posti larghi:
+    // niente corridoi stretti intorno)
+    P.fortuneMachine(X(9.2),Y(22.7),0);P.fortuneMachine(X(7.35),Y(8.3),1);
     // i bordi del mondo e la nebbia ai lati dell'area di partenza
     solid(-200,-200,w+400,200,'edge');solid(-200,h,w+400,200,'edge');solid(-200,0,200,h,'edge');solid(w,0,200,h,'edge');
     solid(0,Y(12.3)+6,X(2),h-Y(12.3)-6,'edge');solid(X(14),Y(12.3)+6,X(2),h-Y(12.3)-6,'edge');solid(X(2),Y(24),X(12),h-Y(24),'edge');

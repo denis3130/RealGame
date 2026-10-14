@@ -73,6 +73,6 @@ function zStart(){ZG.wait=false;ZG.on=true;ZG.last=null;if(SHEET)closeSheet();$(
 // the end of a match (from partita.js, once): the gold, the record, the counts, the pass; returns {rec} for «Nuovo record!»
 function zFine(oro,R,kills){const rec=R>(SAVE.zRec||0),st=SAVE.stats;SAVE.gold=(SAVE.gold||0)+oro;if(st){st.gold+=oro;st.runs++}SAVE.runs=(SAVE.runs||0)+1;
   SAVE.zRec=Math.max(SAVE.zRec||0,R);SAVE.zN=(SAVE.zN||0)+1;SAVE.zKills=(SAVE.zKills||0)+kills;mprog('gold',null,oro);
-  passXP(R*8+Math.min(80,kills*.6)+Math.floor(R/5)*25);checkAch();save();ZG.last={oro,R,kills,rec};return{rec}}
+  passXP(R*8+Math.min(80,kills*.6)+Math.floor(R/5)*25);const extra=zLuckyEnd(R);checkAch();save();ZG.last={oro,R,kills,rec};return{rec,extra}}
 // back to the menu
 function zExit(){if(!ZG.on)return;ZG.ctl.stop();ZG.on=false;showMenu();const L=ZG.last;if(L&&L.oro>0)setTimeout(()=>toast(`+${L.oro.toLocaleString('it-IT')} oro dal camposanto`),350)}

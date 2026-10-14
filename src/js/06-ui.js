@@ -141,7 +141,7 @@ function endRun(win,quit){
   const DR=G.daily?chalEnd(win,quit):null;passXP(quit?0:G.room*8+Math.min(80,G.kills*.6)+(win?40:0)+(G.bossKills||0)*25);
   let trD=0,arenaUp=-1;if(!inf&&!G.daily){const T0=SAVE.trophies||0,a0=arenaIdx(T0),gate=ARENAS[a0].t,T1=Math.max(gate,T0+(win?trWin():-trLose(G.room)));trD=T1-T0;SAVE.trophies=T1;
     if(T1>(SAVE.trBest||0))SAVE.trBest=T1;const a1=arenaIdx(T1);if(a1>a0){arenaUp=a1;SAVE.arenaUp=a1}}
-  const ct=quit?null:inf?(G.room>=20?'oro':G.room>=10?'argento':G.room>=5?'legno':null):win?'oro':G.room>=6?'argento':G.room>=3?'legno':null,ch=ct?earnChest(ct):null;
+  const ct0=quit?null:inf?(G.room>=20?'oro':G.room>=10?'argento':G.room>=5?'legno':null):win?'oro':G.room>=6?'argento':G.room>=3?'legno':null,ch=ct0?earnChest(matchChest(ct0,win),true):null,ct=ch&&ch.type||ct0;
   checkAch();save();
   $('endTag').textContent=G.daily?'Sfida del giorno':inf?"L'Abisso":win?ARENAS[G.arena||0].n+': arena conquistata':quit?'Incursione abbandonata':'Sconfitta';
   $('eTr').innerHTML=G.daily?(DR&&DR.score?`<div class="trd up">${DR.score.toLocaleString('it-IT')}</div><div class="trline">Punteggio · ${DR.pos}° in classifica${DR.bonus?' · <em>'+DR.bonus+'</em>':''}</div>`:''):inf?'':`<div class="trd ${trD>=0?'up':'down'}">${TROPHY}${trD>0?'+':''}${trD}</div><div class="trline">${SAVE.trophies} coppe${arenaUp>=0?` · <em>Nuova arena: ${ARENAS[arenaUp].n}!</em>`:trD===0&&!win?' · <em>La soglia dell’arena ti protegge</em>':''}</div>`;
@@ -149,7 +149,7 @@ function endRun(win,quit){
   $('endText').textContent=inf?(quit?`Ti sei ritirato alla stanza ${G.room} dell'Abisso.`:`Sei arrivato alla stanza ${G.room} dell'Abisso.${rec?' Mai così in fondo!':` Il tuo record è la stanza ${SAVE.inf.best}.`}`)
     :win?(['La Strega delle Radici è caduta. La cripta è tua.','Il Fabbro Infernale è caduto. Il vulcano tace.',"L'Idra della Palude è sconfitta. Le lucciole tornano a brillare.",'La Regina dei Ghiacci è caduta. La vetta è tua.'][chn-1]||'Vittoria!'):quit?`Ti sei ritirato alla stanza ${G.room}. L'oro raccolto resta tuo.`:`Ti sei fermato alla stanza ${G.room}. Migliora l'equipaggiamento e riprova.`;
   $('eRoom').textContent=G.room;$('eKills').textContent=G.kills;$('eGold').textContent=gold;$('eGems').textContent=G.gemsRun||0;
-  $('endReward').innerHTML=ch?`<div class="rew"><div class="rewc">${chestSVG(ct,false)}</div><div><b>${CHESTS[ct].n}</b><span>${ch.full?`Slot pieni: convertita in ${ch.gold} oro`:'Ti aspetta negli slot delle casse'}</span></div></div>`
+  $('endReward').innerHTML=ch?`<div class="rew${ch.fifth?' fifth':''}"><div class="rewc">${chestSVG(ct,false)}</div><div><b>${ch.fifth?'Quinta cassa: ':''}${CHESTS[ct].n}</b><span>${ch.full?`Posti delle casse pieni: hai preso ${ch.gold} oro al suo posto`:ch.fifth?'I quattro posti erano pieni: è nel posto speciale':'Ti aspetta nei posti delle casse'}</span></div></div>`
     :`<p class="hint">${quit?'Abbandonando non si guadagnano casse.':inf?'Arriva alla stanza 5 per guadagnare una cassa.':'Arriva alla stanza 3 per guadagnare una cassa.'}</p>`;
   $('endScr').hidden=false;sfx(win||rec?'victory':quit?'ui':'defeat');if(!win&&!rec)duckMusic(.45);if(win||rec)vib([60,40,60,40,140]);
 }

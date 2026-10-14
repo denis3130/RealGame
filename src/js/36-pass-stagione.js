@@ -14,8 +14,8 @@ function ensurePass(){const s=seasonIdx();if(!SAVE.pass||SAVE.pass.s!==s)SAVE.pa
 const passLvl=()=>Math.min(PASS_T,Math.floor(ensurePass().xp/PASS_XP));
 function passXP(v){const P0=ensurePass(),l0=passLvl();P0.xp+=Math.max(0,Math.round(v));const l1=passLvl();save();if(l1>l0)achPop('Pass di stagione','Hai raggiunto il livello '+l1+'!','trophy');return l1-l0}
 const passReady=()=>{const P0=ensurePass(),l=passLvl();let n=0;for(let i=1;i<=l;i++){if(!P0.f[i])n++;if(P0.gold&&!P0.p[i])n++}return n};
-function passRewLabel(r){return r.k==='gold'?`${r.v} oro`:r.k==='gems'?`${r.v} cristalli`:r.k==='chest'?CHESTS[r.v].n:r.k==='frame'?'Cornice '+FRAMES[r.v].n:r.k==='skin'?SKINS[r.v].n:'Titolo «'+r.v+'»'}
-function passIcon(r){if(r.k==='gold')return coinPile(r.v>400?1:0);if(r.k==='gems')return '<span class="bigGem"></span>';if(r.k==='chest')return chestSVG(r.v,false);
+function passRewLabel(r){return r.k==='gold'?`${r.v} oro`:r.k==='gems'?`${r.v} cristalli`:r.k==='chest'?rwName(r.v,'classica'):r.k==='frame'?'Cornice '+FRAMES[r.v].n:r.k==='skin'?SKINS[r.v].n:'Titolo «'+r.v+'»'}
+function passIcon(r){if(r.k==='gold')return coinPile(r.v>400?1:0);if(r.k==='gems')return '<span class="bigGem"></span>';if(r.k==='chest')return rwIcon(r.v,'classica');
   if(r.k==='frame'){const f=FRAMES[r.v];return `<span class="pfrm" style="--f1:${f.c[0]};--f2:${f.c[1]}"></span>`}
   if(r.k==='skin'){const S=SKINS[r.v];return `<svg viewBox="0 0 40 40" aria-hidden="true"><path d="M20 5c-6 0-9 4-9 9v4l-5 17h28l-5-17v-4c0-5-3-9-9-9z" fill="${S.body}" stroke="#0b1326" stroke-width="2.4" stroke-linejoin="round"/><path d="M11 14c0-5 3-9 9-9s9 4 9 9l-9 3z" fill="${S.hood}" stroke="#0b1326" stroke-width="2.4" stroke-linejoin="round"/><circle cx="16" cy="25" r="1.4" fill="#fff"/><circle cx="24" cy="29" r="1.2" fill="#fff"/></svg>`}
   return `<svg viewBox="0 0 40 40" aria-hidden="true"><rect x="5" y="13" width="30" height="14" rx="3" fill="#ffd84a" stroke="#0b1326" stroke-width="2.4"/><path d="M11 20h18" stroke="#8a5a20" stroke-width="3" stroke-linecap="round"/></svg>`}

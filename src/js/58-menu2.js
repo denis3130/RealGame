@@ -36,13 +36,13 @@ function ensureWeekly(){const k=weekKey();if(SAVE.weekly&&SAVE.weekly.wk===k)ret
 {const _mp=mprog;mprog=function(k,t,v,abs){_mp(k,t,v,abs);const W=ensureWeekly();
   for(const m of W.list){const M=WPOOL[m.i];if(!M||M.k!==k||m.done)continue;if(M.t&&t!==undefined&&t!==null&&!inGrp(t,M.t))continue;if(M.t&&M.t!=='any'&&(t===undefined||t===null))continue;
     m.p=abs?Math.max(m.p,v):m.p+v;if(m.p>=M.g){m.p=M.g;m.done=true;achPop('Missione della settimana',M.n,'mission');sfx('upgrade')}}}}
-const wrewTxt=r=>{const R=WREW[r];return R.gold?R.gold+' oro':R.gems?R.gems+' cristalli':CHESTS[R.chest].n};
+const wrewTxt=r=>{const R=WREW[r];return R.gold?R.gold+' oro':R.gems?R.gems+' cristalli':rwName(R.chest)};
 function misReady(){ensureDaily();const W=ensureWeekly(),D=SAVE.daily;let n=D.list.filter(m=>m.done&&!m.claimed).length+W.list.filter(m=>m.done&&!m.claimed).length;
   if(D.list.length&&D.list.every(m=>m.claimed)&&!D.bonus)n++;WK_T.forEach((th,i)=>{if(W.pts>=th&&!W.got[i])n++});return n}
 function grantR(r){if(r.gold){SAVE.gold+=r.gold;sfx('coin');toast(`+${r.gold.toLocaleString('it-IT')} oro`)}if(r.gems){SAVE.gems=(SAVE.gems||0)+r.gems;sfx('gem');toast(`+${r.gems} cristalli`)}save();renderGold();if(r.chest){closeSheet();openChest(r.chest)}}
 let misSeg='d';
 function fillMissions(){ensureDaily();const W=ensureWeekly(),D=SAVE.daily,t=new Date(),mid=new Date(t.getFullYear(),t.getMonth(),t.getDate()+1);
-  const wk=`<div class="wk"><b>Punti della settimana: ${W.pts}</b>${WK_T.map((th,i)=>{const st=W.got[i]?'got':W.pts>=th?'ready':'',r=WK_R[i];return `<button class="wkc ${st}" data-wkc="${i}" aria-label="Premio a ${th} punti">${r.chest?chestSVG(r.chest,false):'<span class="bigGem"></span>'}<small>${st==='got'?'Preso':r.gems?th+' · '+r.gems:th}</small></button>`}).join('')}<div class="wkBar"><i style="width:${Math.min(100,W.pts/WK_T[2]*100)}%"></i>${WK_T.slice(0,2).map(th=>`<u style="left:${th/WK_T[2]*100}%"></u>`).join('')}</div></div>`;
+  const wk=`<div class="wk"><b>Punti della settimana: ${W.pts}</b>${WK_T.map((th,i)=>{const st=W.got[i]?'got':W.pts>=th?'ready':'',r=WK_R[i];return `<button class="wkc ${st}" data-wkc="${i}" aria-label="Premio a ${th} punti">${r.chest?rwIcon(r.chest):'<span class="bigGem"></span>'}<small>${st==='got'?'Preso':r.gems?th+' · '+r.gems:th}</small></button>`}).join('')}<div class="wkBar"><i style="width:${Math.min(100,W.pts/WK_T[2]*100)}%"></i>${WK_T.slice(0,2).map(th=>`<u style="left:${th/WK_T[2]*100}%"></u>`).join('')}</div></div>`;
   const row=(M,m,j,kind,rew)=>`<div class="mis ${m.claimed?'claimed':m.done?'done':''}"><div><b>${M.n}</b><div class="bar ${m.done?'full':''}"><i style="width:${Math.min(1,m.p/M.g)*100}%"></i><span>${Math.floor(m.p).toLocaleString('it-IT')}/${M.g.toLocaleString('it-IT')}</span></div><em class="mpts">+${kind==='d'?MPTS.d:MPTS.w} punti</em></div>${m.claimed?'<em class="mok">Ritirata</em>':m.done?`<button class="btn mclaim" data-${kind==='d'?'m':'wm'}="${j}">Ritira ${rew}</button>`:`<em class="mrew">${rew}</em>`}</div>`;
   let body;
   if(misSeg==='d'){const all=D.list.length&&D.list.every(m=>m.claimed);
@@ -186,7 +186,7 @@ const WH_ADS=3,WH_COST=[20,40,60,80,100];
 function wheelState(){const t=today();if(!SAVE.wheel||SAVE.wheel.day!==t)SAVE.wheel={day:t,free:0,ads:0,paid:0};return SAVE.wheel}
 function wheelFree(){return wheelState().free<1}
 const WH_IMG={};
-function whImg(k){if(WH_IMG[k])return WH_IMG[k];const im=new Image();im.src=k.startsWith('pet:')?petIcon(k.slice(4)):svgURL(k==='card'?CARD_SVG:chestSVG(k,false).replace('<svg ','<svg xmlns="http://www.w3.org/2000/svg" '));return WH_IMG[k]=im}
+function whImg(k){if(WH_IMG[k])return WH_IMG[k];const im=new Image();im.src=k.startsWith('pet:')?petIcon(k.slice(4)):k==='card'?svgURL(CARD_SVG):CHC[k]?rwImgSrc(k,'classica'):svgURL(chestSVG(k,false).replace('<svg ','<svg xmlns="http://www.w3.org/2000/svg" '));return WH_IMG[k]=im}
 const CARD_SVG='<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 40 48"><rect x="7" y="4" width="28" height="38" rx="4" fill="#4d97ff" stroke="#191714" stroke-width="3" transform="rotate(10 21 23)"/><rect x="4" y="6" width="28" height="38" rx="4" fill="#f4e7c8" stroke="#191714" stroke-width="3"/><path d="M18 14l3 6 6.5.8-4.8 4.4 1.2 6.4-5.9-3.2-5.9 3.2 1.2-6.4-4.8-4.4 6.5-.8z" fill="#ffd84a" stroke="#191714" stroke-width="2" stroke-linejoin="round"/></svg>';
 function whCards(){const w=[[0,6],[1,4],[2,2],[3,.6]],tot=w.reduce((a,b)=>a+b[1],0);let r=Math.random()*tot,rar=0;for(const[k,v] of w){r-=v;if(r<0){rar=k;break}}
   const pool=ITEMS.filter(i=>i.rar===rar),it=pool[randi(0,pool.length-1)],n=[8,5,3,2][rar],o=SAVE.items[it.id];
@@ -198,12 +198,12 @@ WHEEL.length=0;WHEEL.push(
   {n:'Oro',ic:'coin',c:['#ffe27a','#d98a00'],w:1.5,f:()=>{const v=100+40*ai0();SAVE.gold+=v;return `+${v} oro`}},
   {n:'Carte',ic:'card',c:['#9fd0ff','#2a6fd8'],w:1.3,f:whCards},
   {n:'Cristalli',ic:'gem',c:['#8fe6ff','#2a8fb8'],w:1,f:()=>{SAVE.gems=(SAVE.gems||0)+5;return '+5 cristalli'}},
-  {n:'Cassa',ic:'legno',c:['#e8b070','#8a5a20'],w:1,chest:'legno',f:()=>CHESTS.legno.n},
+  {n:'Bustina',ic:'legno',c:['#c8f08a','#4c8a2c'],w:1,chest:'legno',f:()=>rwName('legno','classica')},
   {n:'Tesoro',ic:'coin',c:['#fff2a8','#e0a000'],w:.6,f:()=>{const v=300+100*ai0();SAVE.gold+=v;return `+${v} oro`}},
   {n:'Compagno',ic:'pet:muschietto',c:['#b8f08a','#3f8a2a'],w:.8,f:whPet},
-  {n:'Argento',ic:'argento',c:['#eef3f7','#6d7c8c'],w:.5,chest:'argento',f:()=>CHESTS.argento.n},
-  {n:'JACKPOT',ic:'crown',c:['#fff2a8','#e0a000'],w:.25,jack:1,chest:'oro',f:()=>{SAVE.gems=(SAVE.gems||0)+25;return "Cassa d'oro + 25 cristalli"}});
-{const _wi=whIcon;whIcon=function(x,k,s){if(k==='card'||k==='legno'||k==='argento'||k.startsWith('pet:')){const im=whImg(k);if(icoOk(im)){x.save();x.scale(s,s);const w=k==='card'?30:k.startsWith('pet:')?40:42;x.drawImage(im,-w/2,-w/2-(k==='card'?3:0),w,w*(k==='card'?1.2:1));x.restore()}return}return _wi(x,k,s)}}
+  {n:'Rara',ic:'argento',c:['#cfe2ff','#3f74d0'],w:.5,chest:'argento',f:()=>rwName('argento','classica')},
+  {n:'JACKPOT',ic:'crown',c:['#fff2a8','#e0a000'],w:.25,jack:1,chest:'oro',f:()=>{SAVE.gems=(SAVE.gems||0)+25;return rwName('oro','classica')+' + 25 cristalli'}});
+{const _wi=whIcon;whIcon=function(x,k,s){if(k==='card'||k==='legno'||k==='argento'||k.startsWith('pet:')){const im=whImg(k);if(icoOk(im)){x.save();x.scale(s,s);const w=k==='card'?30:k.startsWith('pet:')?40:28,h=k==='card'?36:k.startsWith('pet:')?40:42;x.drawImage(im,-w/2,-h/2-(k==='card'?3:0),w,h);x.restore()}return}return _wi(x,k,s)}}
 function whButtons(){const W=wheelState(),go=$('whGo'),ad=$('whAd'),gm=$('whGem'),fr=W.free<1,cost=WH_COST[W.paid];
   go.hidden=!fr;go.textContent='Gira gratis!';go.disabled=false;go.classList.toggle('pulse',fr);
   ad.hidden=fr||W.ads>=WH_ADS;ad.disabled=false;ad.innerHTML=`Guarda un video <small>(${WH_ADS-W.ads} oggi)</small>`;

@@ -12,7 +12,7 @@ $('topbar').addEventListener('click',e=>{const b=e.target.closest('.plus');if(!b
   else openSheet('gems')});
 let lastSlotsHTML='';
 function tapSlot(i){const s=SAVE.slots[i];if(!s)return;const st=slotState(s);
-  if(st==='ready'){SAVE.slots[i]=null;save();renderPlay();openChest(s.type)}
+  if(st==='ready'){SAVE.slots[i]=null;save();renderPlay();openChest(s.type,{slot:true})}
   else if(st==='locked'){if(anyUnlocking()){toast('Puoi sbloccare una cassa alla volta');return}s.state='unlocking';s.end=Date.now()+CHESTS[s.type].time*1000;save();renderPlay()}
   else{const c=skipCost(s);
     if(!s.confirm){s.confirm=true;renderPlay();setTimeout(()=>{s.confirm=false;renderPlay()},3000);return}
@@ -32,7 +32,7 @@ function openPicker(slot){
 }
 function openItem(id){
   const it=ITEM[id],o=SAVE.items[id],r=RAR[it.rar],st=itemStats(it,o.lvl),nx=o.lvl<MAXLV?itemStats(it,o.lvl+1):null,need=needCards(o.lvl),cost=upCost(it,o.lvl);
-  const eq=SAVE.eq[it.slot]===id,canUp=o.lvl<MAXLV&&o.cards>=need,canPay=SAVE.gold>=cost;
+  const ess=matCost(o.lvl),hasE=((SAVE.mat&&SAVE.mat.ess)||0)>=ess,eq=SAVE.eq[it.slot]===id,canUp=o.lvl<MAXLV&&o.cards>=need,canPay=SAVE.gold>=cost&&hasE;
   const stats=Object.keys(st).map(k=>`<div><span>${STATN[k][0]}</span><b>${STATN[k][1](st[k])}${nx?` <i>→ ${STATN[k][1](nx[k])}</i>`:''}</b></div>`).join('');
   $('itemPanel').innerHTML=`
     <div class="ihead" style="--rc:${r.c};--rc2:${r.d}"><div class="iicon">${itemSVG(it)}</div><div><span class="tag" style="color:${r.c}">${r.n} · ${SLOTN[it.slot]}</span><h2>${it.n}</h2><span class="lvbig">Livello ${o.lvl}${o.lvl>=MAXLV?' (massimo)':''}</span></div></div>
@@ -42,16 +42,16 @@ function openItem(id){
     <div><small class="muted">Carte per il prossimo livello</small>${cardBar(id)}</div>
     <div class="row">
       ${eq?(it.slot==='anello'||it.slot==='amuleto'?'<button class="btn alt" data-act="unequip">Togli</button>':'<button class="btn alt" disabled>Equipaggiato</button>'):'<button class="btn alt" data-act="equip">Equipaggia</button>'}
-      ${o.lvl<MAXLV?`<button class="btn" data-act="up" ${canUp&&canPay?'':'disabled'}>Migliora · ${cost} oro</button>`:''}
+      ${o.lvl<MAXLV?`<button class="btn" data-act="up" ${canUp&&canPay?'':'disabled'}>Migliora · ${cost} oro${ess?` + ${ess} <i class="essI"></i>`:''}</button>`:''}
     </div>
-    ${o.lvl<MAXLV&&!canUp?`<small class="muted">Ti mancano ${need-o.cards} carte: le trovi nelle casse.</small>`:o.lvl<MAXLV&&!canPay?`<small class="muted">Ti mancano ${cost-SAVE.gold} oro.</small>`:''}
+    ${o.lvl<MAXLV&&!canUp?`<small class="muted">Ti mancano ${need-o.cards} carte: le trovi nelle bustine e nelle casse.</small>`:o.lvl<MAXLV&&SAVE.gold<cost?`<small class="muted">Ti mancano ${cost-SAVE.gold} oro.</small>`:o.lvl<MAXLV&&!hasE?`<small class="muted">Ti mancano ${ess-((SAVE.mat&&SAVE.mat.ess)||0)} Essenze di muschio: le trovi nelle bustine Classiche.</small>`:''}
     <button class="btn alt" data-act="close">Chiudi</button>`;
   $('itemScr').hidden=false;
   $('itemPanel').onclick=e=>{const a=e.target.closest('[data-act]');if(!a||a.disabled)return;const act=a.dataset.act;
     if(act==='close')closeItem();
     else if(act==='equip'){SAVE.eq[it.slot]=id;save();renderHero();openItem(id);toast(it.n+' equipaggiato')}
     else if(act==='unequip'){SAVE.eq[it.slot]=null;save();renderHero();openItem(id)}
-    else if(act==='up'){o.cards-=need;o.lvl++;SAVE.gold-=cost;save();renderGold();renderHero();openItem(id);toast(`${it.n}: livello ${o.lvl}!`);sfx('upgrade')}};
+    else if(act==='up'){if(!canUp||!canPay)return;o.cards-=need;o.lvl++;SAVE.gold-=cost;SAVE.mat.ess-=ess;save();renderGold();renderHero();openItem(id);toast(`${it.n}: livello ${o.lvl}!`);sfx('upgrade')}};
 }
 $('shop').addEventListener('click',e=>{const b=e.target.closest('[data-buy]');if(!b||b.disabled)return;const c=CHESTS[b.dataset.buy];if(SAVE.gold<c.price)return;SAVE.gold-=c.price;save();renderGold();renderShop();openChest(b.dataset.buy)});
 document.querySelectorAll('#tabs button').forEach(b=>b.onclick=()=>{sfx('ui');setTab(b.dataset.tab)});

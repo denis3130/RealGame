@@ -80,10 +80,15 @@ js/62-eroe-3d.js
 ../anteprime/zombie/prop.js
 ../anteprime/zombie/prop_fattoria.js
 ../anteprime/zombie/partita.js
+../anteprime/zombie/fortuna.js
 ../anteprime/zombie/area_mappa.js
 js/63-zombie.js
 js/64-nemici-3d.js
 js/65-caricamento.js
 js/66-falo.js
 js/67-menu-modi.js
+js/68-economia.js
+js/69-bustine.js
+js/70-casse-negozio.js
+js/71-menu-zombie.js
 coda.html

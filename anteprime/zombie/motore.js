@@ -311,7 +311,10 @@ function navUpdate(dt){if(!NAV)return;NAV.t-=dt;const c=cellOf(W.hero.x,W.hero.y
 function losClear(x0,y0,x1,y1){const L=Math.hypot(x1-x0,y1-y0);if(L<1)return true;const n=Math.ceil(L/4);for(let k=1;k<n;k++){const s=k/n*L;if(s<10||L-s<10)continue;const t=k/n;if(NAV.los[cellOf(x0+(x1-x0)*t,y0+(y1-y0)*t)])return false}return true}
 // la linea è libera per un corpo di raggio r sui solidi veri (ex: il solido da cui sta uscendo)
 function physClear(x0,y0,x1,y1,r,ex){const L=Math.hypot(x1-x0,y1-y0),n=Math.max(1,Math.ceil(L/3));for(let k=1;k<=n;k++){const t=k/n;if(hit(x0+(x1-x0)*t,y0+(y1-y0)*t,r,ex))return false}return true}
-function steer(z){const h=W.hero,N=NAV;if(!N)return[h.x,h.y];const d=Math.hypot(h.x-z.x,h.y-z.y);if((d<34&&physClear(z.x,z.y,h.x,h.y,4))||losClear(z.x,z.y,h.x,h.y))return[h.x,h.y];
+function steer(z){const h=W.hero,N=NAV;
+  // l'eroe invisibile (Lucky Card): gli zombie vagano qua e là senza trovarlo
+  if(W.mods&&W.mods.invis>0){if(!z.wd||z.wdT<W.t||Math.hypot(z.wd[0]-z.x,z.wd[1]-z.y)<12){z.wd=[z.x+rr(-110,110),z.y+rr(-110,110)];z.wdT=W.t+rr(1.4,3)}return z.wd}
+  if(!N)return[h.x,h.y];const d=Math.hypot(h.x-z.x,h.y-z.y);if((d<34&&physClear(z.x,z.y,h.x,h.y,4))||losClear(z.x,z.y,h.x,h.y))return[h.x,h.y];
   const D=N.dist,cw=N.cw,ch=N.ch,c=cellOf(z.x,z.y);
   if(N.bl[c]||D[c]>=1e9){// dentro un ostacolo (la fossa da cui è uscito) o fuori dal campo: la casella libera vicina che porta prima all'eroe
     // le caselle libere intorno, a cerchi crescenti: si tengono solo quelle raggiungibili davvero in linea retta (controllo sui solidi veri) e tra
@@ -445,13 +448,13 @@ function sep(z){for(const o of W.Z)if(o!==z&&!o.die&&o.rise>=1){const ex=z.x-o.x
 // più, il razzo esplode largo D.splash. Uno zombie ucciso dà le monete della partita (W.killCoins, 60)
 function equip(id){if(!window.ARMI||!ARMI.DATI[id])return;W.gunId=id;gunState=ARMI.nuova(id);HSTYLE.gun=id;W.toast=[ARMI.DATI[id].n,1.8]}
 function hurt(z,n,fx){z.hp-=n;z.flash=.12;if(fx)for(let i=0;i<4;i++)W.FX.push({k:'drop',tw:[z.x,z.y,z.zh||0],x:0,y:-24*RIGK.mzk*z.sc/1.1,vx:rr(-40,40),vy:rr(-60,-10),t:.5});
-  if(z.hp<=0&&!z.die){z.die=.001;W.kills=(W.kills||0)+1;const n2=z.reward||W.killCoins||60;W.coins+=n2;W.FX.push({k:'coin',tw:[z.x,z.y,(z.zh||0)+44*z.sc],n:n2,t:1.1,t0:1.1});if(W.director&&W.director.killed)W.director.killed(z)}}
+  if(z.hp<=0&&!z.die){z.die=.001;W.kills=(W.kills||0)+1;const n2=Math.round((z.reward||W.killCoins||60)*((W.mods&&W.mods.cash)||1));W.coins+=n2;W.FX.push({k:'coin',tw:[z.x,z.y,(z.zh||0)+44*z.sc],n:n2,t:1.1,t0:1.1});if(W.director&&W.director.killed)W.director.killed(z)}}
 function fireShot(ev){const h=W.hero,g=gunState,D=g.D,B=basis(heroDir()*Math.PI/4),zk=RIGK.hzk,pp=window.ARMI&&ARMI.inManoPunti&&ARMI.inManoPunti(W.gunId,B,g.pose(),scrAng(h.aim)),m=pp&&pp.muzzle,
     hw=[h.x,h.y,h.zh||0],ao=HERO3()&&W.muzzle?W.muzzle.slice():m?[m[0]*B.f*zk,(m[1]-8)*zk]:[Math.cos(h.aim)*16,-14+Math.sin(h.aim)*16],ty=-24*RIGK.mzk;
   for(const da of ev.ang){const a=h.aim+da,dx=Math.cos(a),dy=Math.sin(a);let end=D.range,left=(D.pierce||0)+1;
     for(let s=12;s<D.range;s+=5){const s0=hit(h.x+dx*s,h.y+dy*s,1.5);if(s0&&s0.tag!=='hole'){end=s;break}}// il primo muro sulla linea
     const L=[];for(const z of W.Z){if(z.die||z.rise<1)continue;const rx=z.x-h.x,ry=z.y-h.y,al=rx*dx+ry*dy;if(al<0||al>end)continue;if(Math.abs(rx*dy-ry*dx)<11*z.sc)L.push([al,z])}L.sort((p,q)=>p[0]-q[0]);
-    for(const[al,z] of L){hurt(z,D.dmg*(D.pel>1?cl(1.25-al/D.range,.35,1):1),true);if(!ev.paid&&W.director&&W.director.shotHit){ev.paid=1;W.director.shotHit()}if(--left<=0){end=al;break}}
+    const MD=W.mods||{};for(const[al,z] of L){const cr=MD.crit>0&&Math.random()<MD.crit;hurt(z,D.dmg*(D.pel>1?cl(1.25-al/D.range,.35,1):1)*(MD.dmg||1)*(cr?2:1),true);if(cr&&W.onCrit)W.onCrit(z);if(!ev.paid&&W.director&&W.director.shotHit){ev.paid=1;W.director.shotHit()}if(--left<=0){end=al;break}}
     if(D.splash){const ex=h.x+dx*end,ey=h.y+dy*end;for(const z of W.Z)if(!z.die&&z.rise>=1&&Math.hypot(z.x-ex,z.y-ey)<D.splash+8)hurt(z,D.dmg*.6,false);W.FX.push({k:'boom',tw:[ex,ey,0],t:.45,t0:.45,r:D.splash})}
     W.FX.push({k:'shot',hw,ao,tw:[h.x+dx*end,h.y+dy*end,0],bo:[0,ty],t:D.pel>1?.06:.08,w:D.pel>1?1.2:2})}}
 // le cose da comprare (cancello, armi a muro, Bara): {id, x, y, r, show(), label(), price(), act()}; la pagina mostra il bottone da tenere
@@ -496,7 +499,9 @@ function boxPrims(){const F=BOX.F,k=F.BS,c=Math.cos(BOX.a),s=Math.sin(BOX.a),X=B
   for(const l of G.lines)out.push({t:'line',p0:w([l[0],l[1],l[2]]),p1:w([l[0],l[1],l[3]]),w:l[4]*k,al:1});
   for(const q of G.pts)out.push({t:'pts',pts:[w(q)],rad:q[3]*k,al:1});
   return out}
-function updateBeings(dt,inp){const h=W.hero,DI=W.director;if(h.dead)inp={x:0,y:0};const m=Math.hypot(inp.x,inp.y);h.moving=m>.15;if(h.moving){const sp=150*Math.min(1,m);move(h,inp.x/m*sp*dt,inp.y/m*sp*dt,10);h.face=Math.atan2(inp.y,inp.x);h.walk+=dt*12}
+// W.mods (fortuna.js, il gioco): cose che la partita cambia per un po' o per tutta la partita: spd la corsa dell'eroe, dmg il danno, crit la
+// probabilità di un colpo doppio, cash le monete degli zombie, invis gli zombie che non lo vedono
+function updateBeings(dt,inp){const h=W.hero,DI=W.director,MD=W.mods||{};if(h.dead)inp={x:0,y:0};const m=Math.hypot(inp.x,inp.y);h.moving=m>.15;if(h.moving){const sp=150*Math.min(1,m)*(MD.spd||1);move(h,inp.x/m*sp*dt,inp.y/m*sp*dt,10);h.face=Math.atan2(inp.y,inp.x);h.walk+=dt*12}
   h.zh=(h.zh||0)+(heightAt(h.x,h.y)-(h.zh||0))*Math.min(1,dt*14);const noShoot=!!W.dbg.noShoot||!!h.dead;
   // il bersaglio: lo zombie più vicino entro 230 px che l'eroe vede davvero (i colpi non passano attraverso muri, recinti, lapidi, casse…);
   // la linea si controlla sui solidi veri, ignorando quello in cui sta lo zombie (la fossa da cui esce); ricontrollata ogni 0,1 s
@@ -556,12 +561,12 @@ function heroDir(){const h=W.hero,sa=scrAng(h.face),d=Q8(sa),cur=h.dS==null?d:h.
 // l'Arciere 3D: girato con la telecamera della mappa come i mostri (verso nel mondo + ψ); cammina, sta fermo, mira e spara con lo stato vero
 // dell'arma (rinculo, vampa, carrello, pompa, ricarica), colpito e caduto con gli occhi strizzati; la bocca dell'arma (W.muzzle, dai piedi)
 // serve ai colpi. Senza l'eroe 3D, il rig di prima nelle 8 direzioni
-function drawHero(){const h=W.hero,q=S(h.x,h.y,h.zh||0),f=h.fall||0;if(f>0){ctx.save();ctx.translate(q[0],q[1]-6);ctx.rotate(-f*1.42);ctx.translate(-q[0],-(q[1]-6))}
+function drawHero(){const h=W.hero,q=S(h.x,h.y,h.zh||0),f=h.fall||0,inv=W.mods&&W.mods.invis>0;if(inv){ctx.save();ctx.globalAlpha*=.32+.12*Math.sin(W.t*6)}if(f>0){ctx.save();ctx.translate(q[0],q[1]-6);ctx.rotate(-f*1.42);ctx.translate(-q[0],-(q[1]-6))}
   if(HERO3()){const DI=W.director,ht=DI&&DI.hurtT!=null?DI.hurtT:9,aimOn=!!h.tgZ&&!h.moving&&!f&&!h.dead;let anim='idle',p=((W.t/2.4)%1+1)%1;
     if(f>0||h.dead){anim='hit';p=.16}else if(ht<.45){anim='hit';p=ht/.45*.5}else if(h.moving){anim='walk';p=(((h.walk||0)/TAU)%1+1)%1}else if(aimOn)anim='aim';
     const out={};try{EROE.arciere(q[0],q[1],(h.f3==null?h.face||0:h.f3)+CAM.yaw,anim,p,1,{style:HSTYLE,gp:gunState?gunState.pose():null,noFx:true,out})}catch(e){console.error(e)}W.muzzle=out.muzzle||null}
   else drawRig(q[0],q[1]-8,heroDir()*Math.PI/4,h.walk,h.moving&&!f,HSTYLE,{gp:gunState?gunState.pose():{},aim:h.aim==null||f?null:scrAng(h.aim)});
-  if(f>0)ctx.restore();if(W.director&&W.director.drawOnHero)W.director.drawOnHero(q)}
+  if(f>0)ctx.restore();if(inv)ctx.restore();if(W.director&&W.director.drawOnHero)W.director.drawOnHero(q)}
 // una voce della lista: uno strato di prop (L), un prop intero nell'ordine di prima (W, con W.dbg.ord='ky'), un essere (B: eroe, zombie, corvo
 // posato, fiamma libera)
 function drawEntry(e,h0a){switch(e.kind){case'V':return drawVeil(e.k);case'L':return drawLayer(e);case'T':return drawBox();case'W':return drawWhole(e.prop);case'B':return e.box?drawBox():e.hero?drawHero():e.z?drawZombie(e.z):e.pc?drawPerch(e.pc):e.fl?drawFlame(e.fl,h0a):null}}
@@ -1231,7 +1236,7 @@ function boot(area,o){o=o||{};const GAME=!!o.game;let ACT=!GAME,RUN=false,PAUSE=
   // una partita nuova: zombie, effetti, monete, arma, uccisioni; l'area rimette le sue cose (cancello chiuso, velo, zombie dell'aia, Bara al primo
   // posto, eroe alla partenza); il round da capo; la telecamera a nord sull'eroe
   function nuova(){if(!ACT)keepCam();W.Z.length=0;W.FX.length=0;W.puffs.length=0;W.toast=null;W.kills=0;if(area.reset)area.reset();
-    if(window.ARMI){try{gunState=ARMI.nuova('pistola');HSTYLE.gun=W.gunId='pistola'}catch(e){gunState=null}}
+    if(window.ARMI){const sg=W.startGun&&ARMI.DATI[W.startGun]?W.startGun:'pistola';try{gunState=ARMI.nuova(sg);HSTYLE.gun=W.gunId=sg}catch(e){gunState=null}}
     if(W.director&&W.director.reset)W.director.reset();navBuild();if(NAV)NAV.hc=-1;ORD.mm.m=new Map();ORD.fm.m=new Map();ORD.fr+=5;
     buyP=0;buyCur=null;buyKey='';buyLock=false;buyHold=false;gunKey='';toastT=0;toastEl.classList.remove('on');buyEl.hidden=true;reset();
     cam.ret=null;CAM.yaw=cam.yawT=0;CAM.el=cam.elT=cam.elRaw=EL0;camDerive();const h=W.hero;CAM.x=h.x;CAM.y=h.y;look.sum=0;hintEl.style.opacity='';hintT=10;if(GAME)setPause(false)}

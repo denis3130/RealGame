@@ -92,7 +92,7 @@ function spawnOne(){const k=tipo(D.R),z=spawn({kind:k,hp:hpMul(D.R)*(k==='hound'
 const vivi=()=>W.Z.filter(z=>z.q&&!z.die).length;
 // ------------------------------------------------------------------ l'eroe: colpi, caduta, l'anima che lo rialza, la fine
 // (con gli zombie spenti, o W.dbg.god nelle prove, nessuno fa male)
-function hurtHero(n){const h=W.hero;if(h.dead||D.inv>0||D.st==='fine'||W.dbg.god||!D.on)return;D.hp-=n;D.hurtT=0;D.inv=PZ.inv;D.red=1;D.shake=Math.max(D.shake,.25);suono('colpito');
+function hurtHero(n){const h=W.hero,MD=W.mods||{};if(h.dead||D.inv>0||D.st==='fine'||W.dbg.god||!D.on||MD.invis>0)return;if(MD.shield>0)n*=.5;D.hp-=n;D.hurtT=0;D.inv=PZ.inv;D.red=1;D.shake=Math.max(D.shake,.25);suono('colpito');
   for(let i=0;i<5;i++)W.FX.push({k:'drop',tw:[h.x,h.y,h.zh||0],x:0,y:-30,vx:rr(-50,50),vy:rr(-80,-20),t:.55});if(D.hp<=0)down()}
 function down(){const h=W.hero;D.hp=0;h.dead=true;h.moving=false;D.prev=['inizio','pausa','round'].includes(D.st)?D.st:'round';D.st='giu';D.t=0;suono('cade')}
 function revive(){const h=W.hero;D.anime=0;D.st='su';D.t=0;D.hp=PZ.vita;D.burst.push({x:h.x,y:h.y,t:0});suono('anima');W.toast=["L'anima ti rialza",2.2];
@@ -102,7 +102,7 @@ function revive(){const h=W.hero;D.anime=0;D.st='su';D.t=0;D.hp=PZ.vita;D.burst.
 // {rec: nuovo record}); poi «Menu» torna al menu e «Rigioca» rimette la mappa com'era. Nell'anteprima «Riprova»
 function gameOver(via){D.st='fine';D.t=0;const R=D.R,oro=PZ.oro(R),U=D.ui,G2=W.gioco;suono('morte');W.coins=0;D.oro=oro;let r=null;
   if(G2&&G2.fine){try{r=G2.fine(oro,R,W.kills||0)}catch(e){console.error(e)}}
-  if(U){U.fine.hidden=false;U.fine.innerHTML=`<h2>${via?'Partita finita':'Sei caduto'}</h2>${r&&r.rec&&R>0?'<div class="rec">Nuovo record!</div>':''}<p>Round raggiunto: <b>${R}</b></p><p>Zombie uccisi: <b>${W.kills||0}</b></p><p>${G2?'Oro guadagnato':'Oro per il menu'}: <b>● ${oro.toLocaleString('it-IT')}</b></p>
+  if(U){U.fine.hidden=false;U.fine.innerHTML=`<h2>${via?'Partita finita':'Sei caduto'}</h2>${r&&r.rec&&R>0?'<div class="rec">Nuovo record!</div>':''}<p>Round raggiunto: <b>${R}</b></p><p>Zombie uccisi: <b>${W.kills||0}</b></p><p>${G2?'Oro guadagnato':'Oro per il menu'}: <b>● ${oro.toLocaleString('it-IT')}</b></p>${r&&r.extra?r.extra:''}
       ${G2?'':'<small>(nel gioco vero va nel tuo oro)</small>'}<div class="bt">${G2?'<button class="b2" data-a="menu">Menu</button><button data-a="ancora">Rigioca</button>':'<button data-a="ancora">Riprova</button>'}</div>`;
     U.fine.onclick=e=>{const b=e.target.closest('button');if(!b||!U.fine.classList.contains('on'))return;try{sfx('ui')}catch(_){}if(b.dataset.a==='menu'){if(G2&&G2.esci)G2.esci()}else if(ZM.ctl)ZM.ctl.nuova()};
     requestAnimationFrame(()=>U.fine.classList.add('on'))}}
@@ -120,13 +120,15 @@ function spawnBoss(k){const h=W.hero,H=ZM.holes.filter(p=>(p[2]==null||W.zoneOpe
     reward:Math.round(B.premio*(1+.2*(n-1))),ai:k==='becchino'?becchinoAI:spaventaAI};z.spd0=z.spd;W.Z.push(z);D.boss=z;D.shake=.5;suono('boss');
   if(D.ui){D.ui.boss.hidden=false;D.ui.bossN.textContent=NOMI[k]}banner(NOMI[k],'',2.2)}
 const setA=(z,an)=>{if(z.anim!==an){z.anim=an;z.p=0}};
+// l'eroe si vede (non è caduto e non è invisibile: Lucky Card)
+const vis=()=>!W.hero.dead&&!(W.mods&&W.mods.invis>0);
 // il Becchino: cammina piano verso l'eroe; vicino alza la pala dietro la testa e la sbatte a terra davanti a sé (un cerchio verde avvisa dove
 // colpirà); ogni 13 s alza il braccio e dal cerchio verde escono due morti intorno all'eroe (tre dal round 15)
 function becchinoAI(z,dt){const h=W.hero,dx=h.x-z.x,dy=h.y-z.y,d=Math.hypot(dx,dy),A=z.A||(z.A={st:'cammina',t:0,ev:5});A.t+=dt;A.ev-=dt;
-  if(A.st==='cammina'){setA(z,'walk');z.p=(z.p+dt/1.7)%1;if(!h.dead)z.face=Math.atan2(dy,dx);
-    if(A.ev<=0&&!h.dead&&d<330){A.st='evoca';A.t=0;A.sum=0;setA(z,'summon');A.ev=PZ.becchino.evoca;suono('evoca')}// (quando è pronta l'evocazione viene prima: lo scontro cambia)
-    else if(!h.dead&&d<70&&physClear(z.x,z.y,h.x,h.y,2)){A.st='colpo';A.t=0;A.hit=0;setA(z,'slam');const a=Math.atan2(dy,dx);A.tx=z.x+Math.cos(a)*42;A.ty=z.y+Math.sin(a)*42;z.face=a;D.warn.push({x:A.tx,y:A.ty,r:46,t:0,T:.8})}
-    else if(!h.dead&&d>40)zWalk(z,dt)}
+  if(A.st==='cammina'){setA(z,'walk');z.p=(z.p+dt/1.7)%1;if(vis())z.face=Math.atan2(dy,dx);
+    if(A.ev<=0&&vis()&&d<330){A.st='evoca';A.t=0;A.sum=0;setA(z,'summon');A.ev=PZ.becchino.evoca;suono('evoca')}// (quando è pronta l'evocazione viene prima: lo scontro cambia)
+    else if(vis()&&d<70&&physClear(z.x,z.y,h.x,h.y,2)){A.st='colpo';A.t=0;A.hit=0;setA(z,'slam');const a=Math.atan2(dy,dx);A.tx=z.x+Math.cos(a)*42;A.ty=z.y+Math.sin(a)*42;z.face=a;D.warn.push({x:A.tx,y:A.ty,r:46,t:0,T:.8})}
+    else if(vis()&&d>40)zWalk(z,dt)}
   else if(A.st==='colpo'){z.p=Math.min(.999,A.t/1.45);if(!A.hit&&A.t>=.8){A.hit=1;D.cracks.push({x:A.tx,y:A.ty,a:z.face,t:0,s:Math.random()*99});D.shake=Math.max(D.shake,.45);suono('colpo');
       if(Math.hypot(h.x-A.tx,h.y-A.ty)<46+8)hurtHero(PZ.becchino.colpo*dmgMul(D.R))}if(A.t>=1.45)A.st='cammina'}
   else if(A.st==='evoca'){z.p=Math.min(.999,A.t/1.8);if(!A.sum&&A.t>=.85){A.sum=1;evoca(D.R>=15?3:2)}if(A.t>=1.8)A.st='cammina'}}
@@ -137,10 +139,10 @@ function evoca(n){const h=W.hero;for(let i=0;i<n;i++){let p=null;for(let k=0;k<2
 // lo Spaventapasseri: saltella come un burattino verso l'eroe; vicino fa la trottola (gira su se stesso col palo: fa male a chi gli sta
 // attaccato, tre volte al giro) e intanto scivola verso l'eroe
 function spaventaAI(z,dt){const h=W.hero,dx=h.x-z.x,dy=h.y-z.y,d=Math.hypot(dx,dy),A=z.A||(z.A={st:'cammina',t:0});A.t+=dt;
-  if(A.st==='cammina'){setA(z,'walk');z.p=(z.p+dt/1.1)%1;if(!h.dead)z.face=Math.atan2(dy,dx);
-    if(!h.dead&&d<52&&physClear(z.x,z.y,h.x,h.y,2)){A.st='giro';A.t=0;A.tick=0;setA(z,'attack');D.warn.push({x:z.x,y:z.y,r:44,t:0,T:.45,follow:z});suono('trottola')}
-    else if(!h.dead&&d>30)zWalk(z,dt)}
-  else if(A.st==='giro'){z.p=(A.t/1.8)%1;if(A.t>.45&&!h.dead&&d>18){const sp=34*dt;move(z,dx/d*sp,dy/d*sp,11)}
+  if(A.st==='cammina'){setA(z,'walk');z.p=(z.p+dt/1.1)%1;if(vis())z.face=Math.atan2(dy,dx);
+    if(vis()&&d<52&&physClear(z.x,z.y,h.x,h.y,2)){A.st='giro';A.t=0;A.tick=0;setA(z,'attack');D.warn.push({x:z.x,y:z.y,r:44,t:0,T:.45,follow:z});suono('trottola')}
+    else if(vis()&&d>30)zWalk(z,dt)}
+  else if(A.st==='giro'){z.p=(A.t/1.8)%1;if(A.t>.45&&vis()&&d>18){const sp=34*dt;move(z,dx/d*sp,dy/d*sp,11)}
     const k=Math.floor(Math.max(0,A.t-.45)/.38);if(A.t>.45&&k>=A.tick){A.tick=k+1;if(d<46)hurtHero(PZ.spaventa.giro*dmgMul(D.R))}if(A.t>=1.8+.45){A.st='cammina';A.t=0}}}
 // ------------------------------------------------------------------ ogni fotogramma
 D.update=(dt,on)=>{const h=W.hero;D.on=on;if(!D.ui)D.ui=mkUI();D.t+=dt;D.inv-=dt;D.red=Math.max(0,D.red-dt*1.6);D.shake=Math.max(0,D.shake-dt);
@@ -149,7 +151,7 @@ D.update=(dt,on)=>{const h=W.hero;D.on=on;if(!D.ui)D.ui=mkUI();D.t+=dt;D.inv-=dt
     if(on&&!W.dbg.noSpawn&&D.left>0&&(D.sp-=dt)<=0){if(vivi()<maxVivi(D.R)&&spawnOne()){D.left--;D.sp=intervallo(D.R)}else D.sp=.35}
     if(D.left<=0&&D.bossT<=0&&vivi()===0)endRound()}
   else if(D.st==='pausa'){if(D.t>=PZ.pausa)startRound(D.R+1)}
-  else if(D.st==='giu'){h.fall=ez(Math.min(1,D.t/.55));if(D.t>=1.5){if(D.anime>0)revive();else gameOver()}}
+  else if(D.st==='giu'){h.fall=ez(Math.min(1,D.t/.55));if(D.t>=1.5){if(D.anime>0)revive();else if(D.luckRevive&&D.luckRevive()){revive();W.toast=['La Lucky Card ti rialza',2.4]}else gameOver()}}
   else if(D.st==='su'){h.fall=1-ez(Math.min(1,D.t/.8));if(D.t>=.9){h.dead=false;h.fall=0;D.inv=2.5;D.st=D.prev;D.t=0}}
   // la vita torna dopo qualche secondo senza colpi
   if(!h.dead&&D.st!=='fine'){D.hurtT+=dt;if(D.hurtT>PZ.ricarica)D.hp=Math.min(PZ.vita,D.hp+PZ.rigenera*dt)}
@@ -166,7 +168,7 @@ D.update=(dt,on)=>{const h=W.hero;D.on=on;if(!D.ui)D.ui=mkUI();D.t+=dt;D.inv-=dt
     const cv=document.getElementById('mzCv');if(cv)cv.style.transform=D.shake>0&&!LOWFX?`translate(${(Math.random()-.5)*10*D.shake}px,${(Math.random()-.5)*10*D.shake}px)`:''}};
 // ogni colpo che va a segno dà qualche moneta (come in CoD), una volta per sparo anche se i pallini sono tanti
 D.shotHit=()=>{W.coins+=PZ.colpo};
-D.zombieHit=(z,d)=>{if(d>36)return;hurtHero(z.dmg||(PZ.danno[z.kind]||30)*dmgMul(Math.max(1,D.R)))};
+D.zombieHit=(z,d)=>{if(d>36||(W.mods&&W.mods.invis>0))return;hurtHero(z.dmg||(PZ.danno[z.kind]||30)*dmgMul(Math.max(1,D.R)))};
 D.killed=z=>{if(z!==D.boss)return;suono('boss_giu');const g=ZM.gun();if(g){g.mag=g.D.mag;g.res=Math.max(g.res,g.D.res)}W.toast=[NOMI[z.kind]+' è sconfitto! Munizioni piene',3];D.shake=.6;D.burst.push({x:z.x,y:z.y,t:0,boss:1})};
 // ------------------------------------------------------------------ i disegni: a terra (avvisi, crepe, cerchi), sull'eroe (l'anima), in aria
 D.drawGround=()=>{if(!D.warn.length&&!D.cracks.length&&!D.burst.length)return;inGround(()=>{
