@@ -15,7 +15,7 @@ nuovo (16–17), finestre e recinzioni (18–19), casse 3–5 usi (20), armi a m
 |---|---|---|
 | 5–7 | 4 boss nuovi del terzo giro «su carta» | fatto, da far approvare a Denis (`docs/boss-nuovi.md`) |
 | 51 | Musiche dei boss: entrata, tema, reazione alla morte, vittoria | fatto |
-| 4 | Nemici: preparazione, morte, abilità | da fare |
+| 4 | Nemici: morte propria per famiglia (preparazione e abilità c'erano già) | fatto |
 | — | Arco del tuono, faretre, scia di ghiaccio (`nuovi-oggetti`) | da fare |
 | 10–17, 54 | Mappa zombie grande | da fare |
 | 18–23 | Finestre, recinzioni, casse, armi a muro, potenziamento, perk | da fare |
@@ -38,3 +38,15 @@ tema, il colore del mondo: campane, incudine, fuoco, acqua, ghiaccio, cristallo,
 finale la musica passa in un filtro che la chiude «sott'acqua» e cala; nel clou della morte unica l'accordo di vittoria suo, poi la
 musica calma «vittoria» (dopo il Mimic torna quella di prima). Tema nuovo del Mimic (`TRACKS.mimic`). Volumi misurati: i colpi hanno il
 picco a 0,34 contro 0,15 del tema. Prova `node tests/bossmusica.js`.
+
+## 4: le morti dei nemici
+
+`src/js/77-morti-nemici.js` (`EDF`, `ESN`): ogni nemico in 3D colpito a morte viene fotografato una volta nella posa di «colpito» (tele
+riusate) e il suo corpo muore secondo la famiglia: gelatine che si afflosciano in una pozza che bolle, nemici in piedi che cadono
+all'indietro lontano dall'eroe con la nuvoletta e le stelline, scheletri che si sfasciano in pezzi, volanti che girano cadendo e
+svaniscono in scintille, piante e funghi che appassiscono lasciando petali o spore, pietra e ghiaccio che si crepano e cadono in pezzi,
+bestie che fanno un saltello e si rovesciano a pancia in su. Niente sangue; restano il colpo ad anello, monete, esperienza e cuori; via
+le schegge e i pezzetti dello scoppio di prima. Con `LOWFX` lo scoppio di prima. I corpi stanno in `G.ecorpses` (non ritardano la porta)
+e si disegnano nell'ordine della stanza. La preparazione (la prima metà dell'attacco mentre mira, la stellina) e le abilità (le mosse
+legate agli stati: evoca, scatto, tuffo…) c'erano già dal 13 ottobre. Prova `node tests/mortinemici.js` → `tests/mn_morti.png`.
+

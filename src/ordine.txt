@@ -101,4 +101,5 @@ js/73-icone-oggetti.js
 js/74-arene.js
 js/75-audio-nuovo.js
 js/76-musiche-boss.js
+js/77-morti-nemici.js
 coda.html
