@@ -576,6 +576,10 @@ function pickHole(o){const h=W.hero,open=holes.filter(p=>zoneOk(p[0],p[1],p[2])&
 // rinasce da una buca raggiungibile, come in CoD; se nessuna buca va bene riprova dopo
 function riposiziona(z){const p=pickHole();if(!p){z.bT=6;return false}const out=p[3]==='mais'||p[3]==='porta'||p[3]==='fuori'||p[3]==='carro';if(p[4])p[4]();
   Object.assign(z,{x:p[0],y:p[1],rise:out?1:0,sp:p[3]||null,fin:p[3]==='fuori'||p[3]==='carro'?.9:0,tg:null,vx:null,vy:null,bx:null,bD:null,bT:0,chk:0,cx0:null,det:0,face:Math.atan2(W.hero.y-p[1],W.hero.x-p[0])});W.relocs=(W.relocs||0)+1;return true}
+// (Denis, 14 ottobre: «rendi i zombie più rapidi nell'attaccare») quanto dura un attacco, in secondi (prima 1,4 per tutti: arrivavano e
+// caricavano quasi 0,8 s prima di colpire); il colpo arriva a metà, nell'affondo del gesto (ATKH: la mossa va indietro fino a .35, affonda
+// fino a .6). Il danno di ogni colpo è un po' più basso (partita.js PZ.danno): in tutto fanno circa un quinto di male in più
+const ATKT={zombie:1,strisciante:1.05,minatore:1.1,lanterna:1.1,hound:.8},ATKH=.5;
 function bloccato(z,dt){if(!z.q||z.boss||!NAV||z.lv||z.cl||(W.mods&&W.mods.invis>0)){z.bT=0;z.bD=null;return}const Dz=NAV.dist[cellOf(z.x,z.y)];
   if(z.bD==null||Dz<z.bD-24){z.bD=Dz;z.bT=0}else z.bT=(z.bT||0)+dt;if((Dz>=1e9?z.bT>3:z.bT>9&&Dz>160)&&farV(z.x,z.y,60))riposiziona(z)}/* (mai chi è già vicino all'eroe, in mezzo alla calca) */
 // la comparsa secondo il posto (p[3]): dalla fossa e dalla terra esce dal suolo (rise); dal granturco, dalla porta della latrina e dal buio oltre
@@ -720,7 +724,7 @@ function updateBeings(dt,inp){const h=W.hero,DI=W.director,MD=W.mods||{};if(h.de
     if(!z.bx&&BARS.length&&!z.lv&&!z.cl&&(z.bxT=(z.bxT||0)-dt)<=0){z.bxT=.15;z.bx=barCheck(z)}// una finestra o un varco da passare (barriere.js)
     if(z.bx){barStep(z,dt);z.bT=0;if(!(z.bx&&z.bx.from))sep(z);continue}
     const dx=h.x-z.x,dy=h.y-z.y,d=Math.hypot(dx,dy);
-    if(d<30&&!z.cl&&!h.cl&&sameLv(z)&&physClear(z.x,z.y,h.x,h.y,2,null,2)){z.face=Math.atan2(dy,dx);if(z.anim!=='attack'){z.anim='attack';z.p=0}const p0=z.p;z.p+=dt/1.4;if(DI&&DI.zombieHit&&p0<.55&&z.p>=.55)DI.zombieHit(z,d);z.chk=0;z.cx0=null}// il colpo arriva a metà del gesto
+    if(d<30&&!z.cl&&!h.cl&&sameLv(z)&&physClear(z.x,z.y,h.x,h.y,2,null,2)){z.face=Math.atan2(dy,dx);if(z.anim!=='attack'){z.anim='attack';z.p=0}const p0=z.p;z.p+=dt/(ATKT[z.kind]||ATKT.zombie);if(DI&&DI.zombieHit&&p0<ATKH&&z.p>=ATKH)DI.zombieHit(z,d);z.chk=0;z.cx0=null}// il colpo arriva a metà del gesto
     else{if(z.anim!=='walk'){z.anim='walk';z.p=0}z.p+=dt/(z.kind==='hound'?.6:1.1);zWalk(z,dt);bloccato(z,dt)}
     sep(z);z.p%=1}
   LV=h.lv||0;for(let i=W.Z.length-1;i>=0;i--)if(W.Z[i].die>1.1||(!zOn&&W.Z[i].rise<1))W.Z.splice(i,1);

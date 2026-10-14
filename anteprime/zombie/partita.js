@@ -6,7 +6,7 @@
 // (update, zombieHit, killed, drawGround, drawOnHero, drawTop). Tutti i numeri stanno in PZ e nelle funzioni qui sotto: da regolare giocando.
 (()=>{const{W,S,CAM,rr,cl,lerp,ez,TAU,inGround,move,zWalk,physClear,hit,heightAt,spawn,KINDS}=ZM;
 const PZ={vita:100,ricarica:3,rigenera:45,inv:.5,pausa:9,inizio:3,
-  danno:{zombie:28,strisciante:22,minatore:32,lanterna:40,hound:18},colpo:10,
+  danno:{zombie:25,strisciante:19,minatore:28,lanterna:35,hound:16},colpo:10,
   anima:{prezzo:1500,max:3},
   becchino:{vita:1200,passo:24,colpo:62,premio:500,evoca:13},spaventa:{vita:2200,passo:46,giro:16,premio:700},
   oro:R=>10*R*R+30*R};
