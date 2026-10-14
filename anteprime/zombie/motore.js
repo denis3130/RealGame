@@ -560,7 +560,12 @@ function holeDist(p){const N=NAV;if(!N)return null;const cw=N.cw,ch=N.ch,D=N.dis
   // c'era una casella raggiungibile e la buca sembrava buona, ma lo zombie nasceva chiuso di là)
   for(let r=0;r<=5;r++){let best=1e9,bd=1e9;for(let j=j0-r;j<=j0+r;j++)for(let i=i0-r;i<=i0+r;i++){if(Math.max(Math.abs(i-i0),Math.abs(j-j0))!==r||i<0||j<0||i>=cw||j>=ch)continue;const c=j*cw+i;if(N.bl[c])continue;
       const e=Math.hypot((i+.5)*NC-p[0],(j+.5)*NC-p[1]);if(e<bd){bd=e;best=D[c]}}if(bd<1e9)return best}return 1e9}
-function pickHole(o){const h=W.hero,open=holes.filter(p=>(p[2]==null||W.zoneOpen[p[2]])&&!W.Z.some(z=>Math.hypot(z.x-p[0],z.y-p[1])<30));
+// (Denis, 14 ottobre: «se una zona non l'ho ancora sbloccata vorrei che i zombie non spawnassero da lì, solo in zone dove ho il via libera»)
+// una buca va bene solo se è in una zona aperta, anche dove sta davvero (W.zoneIdAt), e lontana dalle barriere e dal cancello ancora chiusi:
+// chi esce lì accanto sembrava venire dalla zona chiusa
+function shutNear(x,y,r){const G=W.gate;if(G&&!G.open&&Math.hypot(x-G.x,y-G.y)<r)return true;for(const L of W.lures||[])if(!L.isOpen()&&Math.hypot(x-L.x,y-L.y)<r)return true;return false}
+const zoneOk=(x,y,tag)=>(tag==null||W.zoneOpen[tag])&&(!W.zoneIdAt||W.zoneOpen[W.zoneIdAt(x,y)]!==false);
+function pickHole(o){const h=W.hero,open=holes.filter(p=>zoneOk(p[0],p[1],p[2])&&!shutNear(p[0],p[1],110)&&!W.Z.some(z=>Math.hypot(z.x-p[0],z.y-p[1])<30));
   if(NAV){const c=[],far=[];for(const p of open){if(Math.hypot(p[0]-h.x,p[1]-h.y)<110)continue;const d=holeDist(p);if(d==null||d>=1e9||d<130)continue;(d>700?far:c).push([d,p])}
     // (difetti 48) senza buche a giusta distanza le più vicine tra quelle raggiungibili, mai una buca a caso che magari sta dietro una barriera chiusa
     if(!c.length&&far.length){far.sort((a,b)=>a[0]-b[0]);c.push(...far.slice(0,3))}
@@ -576,7 +581,7 @@ function bloccato(z,dt){if(!z.q||z.boss||!NAV||z.lv||z.cl||(W.mods&&W.mods.invis
 // la comparsa secondo il posto (p[3]): dalla fossa e dalla terra esce dal suolo (rise); dal granturco, dalla porta della latrina e dal buio oltre
 // il bordo cammina fuori ('fuori' sfumando); da sotto i carri e la carrozza bruciata striscia fuori sfumando in una nuvola di polvere e cenere;
 // dal fiume esce dall'acqua con i cerchi (sp 'acqua'); dalla botola della cantina sale dal buco nero (sp 'botola')
-function spawn(o){o=o||{};const h=W.hero,p=o.hole||pickHole();if(!p)return null;
+function spawn(o){o=o||{};const h=W.hero,p=o.hole||pickHole();if(!p||(!o.hole&&!zoneOk(p[0],p[1],p[2])))return null;// (una buca data apposta: le prove)
   const k=o.kind?KINDS.find(q=>q[0]===o.kind)||KINDS[0]:KINDS[Math.floor(Math.random()*KINDS.length)];
   const out=p[3]==='mais'||p[3]==='porta'||p[3]==='fuori'||p[3]==='carro';if(p[4])p[4]();
   const z={id:++ZID,kind:k[0],sc:k[1],spd:k[2]*(o.spd||1),hp:k[3]*(o.hp||1),x:p[0],y:p[1],face:Math.atan2(h.y-p[1],h.x-p[0]),p:Math.random(),anim:'walk',rise:out?1:0,die:0,flash:0,sp:p[3]||null};z.spd0=z.spd;z.hp0=z.hp;if(o.q)z.q=1;if(p[3]==='fuori'||p[3]==='carro')z.fin=.9;
@@ -1248,7 +1253,7 @@ function bootAsync(area,o){o=o||{};const keep=[window.CR&&CR.cam?Object.assign({
 function libera(){if(!JOBS||!W.ground)return false;if(W.ground.tiles)for(const t of W.ground.tiles)t.c.width=t.c.height=0;else W.ground.width=W.ground.height=0;W.ground=null;return true}
 function ricuoci(o){o=o||{};if(W.ground||!JOBS)return Promise.resolve(0);const sd=seed;
   return inPezzi((function*(){for(const[w,h,p] of JOBS)yield* bakeSteps(w,h,p)})(),o,JOBS.passi||40).then(n=>{JOBS.passi=n;seed=sd;if(o.passo)o.passo(1);return n})}
-function boot(area,o){o=o||{};const GAME=!!o.game;let ACT=!GAME,RUN=false,PAUSE=false;W.gioco=GAME?o:null;W.zoneAt=(x,y)=>area.zoneName?area.zoneName({x,y}):'';
+function boot(area,o){o=o||{};const GAME=!!o.game;let ACT=!GAME,RUN=false,PAUSE=false;W.gioco=GAME?o:null;W.zoneAt=(x,y)=>area.zoneName?area.zoneName({x,y}):'';W.zoneIdAt=(x,y)=>area.zoneId?area.zoneId({x,y}):null;
   // la telecamera della mappa inclina anche i personaggi (CR.cam, RIGCAM, in camRig): nel gioco si tengono quelli del menu appena lo si lascia
   // (prima di costruire o di rimettere a posto la mappa) e tornando al menu si rimettono
   let crKeep=null,rgKeep=null;const keepCam=()=>{if(!GAME||crKeep||rgKeep)return;crKeep=window.CR&&CR.cam?Object.assign({},CR.cam):null;rgKeep=typeof RIGCAM!=='undefined'?Object.assign({},RIGCAM):null};keepCam();
@@ -1524,4 +1529,4 @@ orderReset:()=>{ORD.mm.m=new Map();ORD.fm.m=new Map();ORD.fr+=5},
     texStats:()=>{let n=0,px=0,np=0,pp=0;for(const k in TEX){n++;px+=TEX[k].width*TEX[k].height}for(const k in PLANES){np++;pp+=PLANES[k].width*PLANES[k].height}return{n,mpx:+(px/1e6).toFixed(2),np,mpp:+(pp/1e6).toFixed(2)}},
     buys,equip,buyNow:id=>{const o=buys.find(b=>b.id===id);return o?o.act():null},box:()=>BOX,boxTo:i=>{const q=BOX.spots[i];boxPlace(q[0],q[1],q[3]||0);navBuild();if(NAV)NAV.hc=-1;return[q[0],q[1]]},coins:v=>{if(v!=null)W.coins=v;return W.coins},gun:()=>gunState,nuova:()=>CTL.nuova()};
   return CTL}
-return{scala,STAIRS,sameLv,heroLv,climbStart,SB,pickHole,holeDist,riposiziona,toWorld:(x,y)=>TURN?tP(TURN,x,y):[x,y],dirWorld:(x,y)=>TURN?tV(TURN,x,y):[x,y],AREE,anteprima,boxReset,stile,idleZombie,buyable,buys,barrier,BARS,barCheck,sorpresa,equip,hurt,spawn,KINDS,move,zWalk,sep,physClear,gun:()=>gunState,navRebuild:()=>{navBuild();if(NAV)NAV.hc=-1},softImg,turn,group,grp,finalize,facing,across,onGround,onPlane,onRound,ringNear,T,CAM,W,S,LS,MOON,inGround,scrAng,decals,fades,NAMES,stand,stands,heightAt,add3,sub3,len3,rnd,rr,srand,ink,path,hull,material,MAT,MARKS,texture,tone,face,hullOf,ballAt,line3,poly3,fn3,box,prismX,prismY,plane,cyl,prop,solid,shade,shadeR,props,solids,shadows,lights,flames,holes,houses,smokes,perches,hit,bakeGround,edgeSnap,boot,bootAsync,libera,ricuoci,setLive:f=>{liveDraw=f},wa,mix,cl,ez,lerp,TAU,ball,seg}})();
+return{scala,STAIRS,sameLv,heroLv,climbStart,SB,pickHole,holeDist,zoneOk,shutNear,riposiziona,toWorld:(x,y)=>TURN?tP(TURN,x,y):[x,y],dirWorld:(x,y)=>TURN?tV(TURN,x,y):[x,y],AREE,anteprima,boxReset,stile,idleZombie,buyable,buys,barrier,BARS,barCheck,sorpresa,equip,hurt,spawn,KINDS,move,zWalk,sep,physClear,gun:()=>gunState,navRebuild:()=>{navBuild();if(NAV)NAV.hc=-1},softImg,turn,group,grp,finalize,facing,across,onGround,onPlane,onRound,ringNear,T,CAM,W,S,LS,MOON,inGround,scrAng,decals,fades,NAMES,stand,stands,heightAt,add3,sub3,len3,rnd,rr,srand,ink,path,hull,material,MAT,MARKS,texture,tone,face,hullOf,ballAt,line3,poly3,fn3,box,prismX,prismY,plane,cyl,prop,solid,shade,shadeR,props,solids,shadows,lights,flames,holes,houses,smokes,perches,hit,bakeGround,edgeSnap,boot,bootAsync,libera,ricuoci,setLive:f=>{liveDraw=f},wa,mix,cl,ez,lerp,TAU,ball,seg}})();

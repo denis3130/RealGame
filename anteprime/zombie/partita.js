@@ -133,7 +133,9 @@ function becchinoAI(z,dt){const h=W.hero,dx=h.x-z.x,dy=h.y-z.y,d=Math.hypot(dx,d
       if(Math.hypot(h.x-A.tx,h.y-A.ty)<46+8&&ZM.sameLv(z))hurtHero(PZ.becchino.colpo*dmgMul(D.R))}if(A.t>=1.45)A.st='cammina'}
   else if(A.st==='evoca'){z.p=Math.min(.999,A.t/1.8);if(!A.sum&&A.t>=.85){A.sum=1;evoca(D.R>=15?3:2)}if(A.t>=1.8)A.st='cammina'}}
 // tre morti escono da terra intorno all'eroe (contano per il round)
-function evoca(n){const h=W.hero;for(let i=0;i<n;i++){let p=null;for(let k=0;k<25&&!p;k++){const a=rr(0,TAU),r=rr(80,150),x=h.x+Math.cos(a)*r,y=h.y+Math.sin(a)*r;if(!hit(x,y,14)&&physClear(h.x,h.y,x,y,1))p=[x,y]}
+// (i morti evocati escono solo dove si può arrivare a piedi e in una zona aperta: vicino a una barriera chiusa uscivano dall'altra parte)
+function evoca(n){const h=W.hero;for(let i=0;i<n;i++){let p=null;for(let k=0;k<25&&!p;k++){const a=rr(0,TAU),r=rr(80,150),x=h.x+Math.cos(a)*r,y=h.y+Math.sin(a)*r;
+    if(!hit(x,y,14)&&physClear(h.x,h.y,x,y,1)&&(!ZM.zoneOk||ZM.zoneOk(x,y,null)&&!ZM.shutNear(x,y,60))&&(!ZM.holeDist||ZM.holeDist([x,y])<1e9))p=[x,y]}
   if(!p)continue;const kd=KINDS[0],z={kind:kd[0],sc:kd[1],spd:kd[2]*spdMul(D.R,'zombie'),hp:kd[3]*hpMul(D.R),x:p[0],y:p[1],face:Math.atan2(h.y-p[1],h.x-p[0]),p:Math.random(),anim:'walk',rise:0,die:0,flash:0,q:1};
   z.spd0=z.spd;z.dmg=PZ.danno.zombie*dmgMul(D.R);W.Z.push(z);D.warn.push({x:p[0],y:p[1],r:20,t:0,T:1.3,sum:1})}}
 // lo Spaventapasseri: saltella come un burattino verso l'eroe; vicino fa la trottola (gira su se stesso col palo: fa male a chi gli sta
@@ -193,5 +195,5 @@ ZM.partita=function(o){o=o||{};W.director=D;W.kills=0;D.lant=o.lanterna||null;
     act(){if(W.coins<PZ.anima.prezzo)return false;W.coins-=PZ.anima.prezzo;D.anime=1;D.comprate++;D.lant.set(false);D.fly={t:0,x:D.lant.x,y:D.lant.y,z:D.lant.z};suono('compra');W.toast=["Un'anima ti segue: ti rialzerà una volta",2.6];return true}});
   return D};
 // per le prove: le funzioni del round
-D.PZ=PZ;D.quota=quota;D.hpMul=hpMul;D.spdMul=spdMul;D.startRound=startRound;D.hurtHero=hurtHero;D.spawnBoss=spawnBoss;
+D.PZ=PZ;D.quota=quota;D.hpMul=hpMul;D.spdMul=spdMul;D.startRound=startRound;D.hurtHero=hurtHero;D.spawnBoss=spawnBoss;D.evoca=evoca;
 })();

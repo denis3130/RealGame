@@ -97,6 +97,7 @@ function buildEast(w,h){const E={};const hole=(x,y,z,k)=>holes.push([x,y,z,k||nu
 function SG_FACE(x,y,key){for(const p of ZM.props){for(const t of p.parts)if(t.k==='face'&&t.key===key&&t.part==='wS'&&Math.abs(t.c[0][1]-y)<1.5&&Math.min(t.c[0][0],t.c[1][0])<x&&Math.max(t.c[0][0],t.c[1][0])>x)return t}return null}
 function FU_FACE(F){for(const p of ZM.props){if(p.name!=='fucina')continue;for(const t of p.parts)if(t.k==='face'&&t.key==='n'&&Math.abs(t.c[0][1]-F.wallY)<1.5)return t}return null}
 const AREA={title:'Camposanto',zoneName:h=>h.y<Y(12.3)?(h.x<X(16)?'Fattoria dei Corvi':'Segheria del Fiume'):(h.x<X(14)?'Camposanto':'Borgo dei Lumi'),
+  zoneId:h=>h.y<Y(12.3)?(h.x<X(16)?2:4):(h.x<X(14)?1:3),
   // una partita nuova (ZM.ctl.nuova): 500 monete, la fattoria chiusa col cancello e il velo, gli zombie dell'aia, la Bara al cimitero, l'eroe alla partenza
   reset(){W.coins=500;W.zoneOpen={1:true,2:false,3:false,4:false};W.gate.open=false;if(AREA.gate)AREA.gate.close();for(const b of AREA.bars||[])b.close();W.split=veil();for(const[k,x,y,z] of IDLE)ZM.idleZombie(k,X(x),Y(y),z);ZM.boxReset();W.hero=HERO0()},
   build(){const w=30*T,h=29*T;srand(11);W.coins=500;W.maxZ=6;W.zoneOpen={1:true,2:false,3:false,4:false};// sotto l'area di partenza tre caselle di nebbia (non ci si va)
