@@ -239,3 +239,12 @@ spawnassero da lì, solo in zone dove ho il via libera. E rendi i zombie più ra
 - Il danno di ogni colpo è un po' più basso (zombie 25, strisciante 19, minatore 28, lanterna 35, cane 16): in tutto circa un quinto di
   male in più.
 - Il giocatore automatico arriva agli stessi round (9, 10, 5, 7), ma chi si fa prendere cade prima.
+
+### Collaudo
+- Gioco vero: `zombie`, `avvio`, `meta2`, `menu2`, `menu3`, `salvataggio` senza un «NO»; quattro partite Classiche (`run.js`, capitoli
+  1–4) fino al boss della stanza 10 senza errori; `audio.js` nessun errore dentro i suoni; `suoni_armi.js` (sopra), nessun avviso del
+  browser nel preparare i dodici banchi.
+- Mappa zombie: `zone_prova`, `piani_prova`, `ondeggia_prova`, `chiusi_prova`, `gioco`, `ondate`, `barriere_prova`, `macchine_prova`,
+  `comparse_prova`, `bara_usi`, `navmappa`, `ordine_mappa` tutte passate.
+- Pagina «Armi e versi zombie»: le dodici armi da sole (sparano e ricaricano) senza errori, circa 1 ms a fotogramma per l'eroe con l'arma.
+- Ripubblicate l'Anteprima 48 (versione 4 dell'artefatto) e la pagina «Armi e versi zombie» (versione 2).
