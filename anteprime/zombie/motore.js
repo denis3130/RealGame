@@ -571,7 +571,7 @@ function drawHero(){const h=W.hero,q=S(h.x,h.y,h.zh||0),f=h.fall||0,inv=W.mods&&
   if(f>0)ctx.restore();if(inv)ctx.restore();if(W.director&&W.director.drawOnHero)W.director.drawOnHero(q)}
 // una voce della lista: uno strato di prop (L), un prop intero nell'ordine di prima (W, con W.dbg.ord='ky'), un essere (B: eroe, zombie, corvo
 // posato, fiamma libera)
-function drawEntry(e,h0a){switch(e.kind){case'V':return drawVeil(e.k);case'L':return drawLayer(e);case'T':return drawBox();case'W':return drawWhole(e.prop);case'B':return e.box?drawBox():e.hero?drawHero():e.z?drawZombie(e.z):e.pc?drawPerch(e.pc):e.fl?drawFlame(e.fl,h0a):null}}
+function drawEntry(e,h0a){switch(e.kind){case'V':return drawVeil(e.k);case'L':return drawLayer(e);case'T':return drawBox();case'W':return drawWhole(e.prop);case'B':return e.box?drawBox():e.pet?(W.drawPet&&W.drawPet(e.pet)):e.hero?drawHero():e.z?drawZombie(e.z):e.pc?drawPerch(e.pc):e.fl?drawFlame(e.fl,h0a):null}}
 function drawWhole(p){LEANK=p.lk==null?1:p.lk;setRef(p.ref);ROTP=p.rot||null;try{drawProp(p,p.house?part=>alphaOf(p.house,part):null)}finally{ROTP=null}LEANK=1;setRef(null)}
 // la sagoma dell'eroe dove è coperto (dietro la casa, la cripta, un albero): si ridisegnano in una tela piccola solo le cose disegnate dopo di lui
 // che toccano il suo riquadro, e lì sopra si stampa la sua sagoma chiara a metà trasparenza. Costa qualcosa solo quando è davvero coperto.
@@ -916,12 +916,15 @@ function buildOrder(vis){const D=W.dbg,fl=[],li=[];psiUpdate();camStamp();UCAM=C
     for(const z of W.Z){if(z.id==null)z.id=++ZID;const e=z.E||(z.E={kind:'B',z,sid:'Z'+z.id,sk:900000+(z.id%99999)});L2.push({k:K(z.x,z.y+.01),e:beingE(e,z.x,z.y,z.zh||0,46*z.sc,10*z.sc,RIGK.mzk)})}
     if(!D.noFlames)for(const f of flames)L2.push({k:K(f.x,f.ky!=null?f.ky:f.y+.6),e:beingE(f.KE,f.x,f.y,f.z-4,10,4,CAM.CP)});
     for(const c of perches){if(c.away)continue;const ho=perchHost(c);L2.push({k:ho?kp(ho)+.05:K(c.x,c.y+.6),e:beingE(c.E,c.x,c.y,c.z,14,6,CAM.CP)})}
+    for(const pt of W.pets||[]){const e=pt.E||(pt.E={kind:'B',pet:pt,sid:'P'+pt.i,sk:600000+pt.i});L2.push({k:K(pt.x,pt.y+.01),e:beingE(e,pt.x,pt.y,pt.zh||0,30,8,RIGK.mzk)})}
     if(BOX)L2.push({k:K(BOX.x,BOX.y+.01),e:boxEntry()});
     L2.sort((a,b)=>a.k-b.k);return[fl,L2.map(o=>o.e)]}
   for(const p of props){if(p.hide||!vis(p))continue;for(const L of p.layers){layerSB(L);(L.floor?fl:li).push(L)}}
   const h=W.hero;if(h&&!D.noHero&&!D.heroLast)li.push(beingE(HE,h.x,h.y,h.zh||0,56,10,RIGK.hzk));
   for(const z of W.Z){if(z.id==null)z.id=++ZID;const e=z.E||(z.E={kind:'B',z,sid:'Z'+z.id,sk:900000+(z.id%99999)}),hd=z.kind==='hound';beingE(e,z.x,z.y,z.zh||0,(hd?30:46)*z.sc,(hd?16:10)*z.sc,RIGK.mzk);if(hd)houndSB(e,z);li.push(e)}
   for(const c of perches){if(!c.away)li.push(beingE(c.E,c.x,c.y,c.z,14,6,CAM.CP))}
+  // i compagni dell'eroe (compagni.js): esseri come gli zombie
+  for(const pt of W.pets||[]){const e=pt.E||(pt.E={kind:'B',pet:pt,sid:'P'+pt.i,sk:600000+pt.i});li.push(beingE(e,pt.x,pt.y,pt.zh||0,30,8,RIGK.mzk))}
   if(!D.noFlames)for(const f of FREEF)li.push(beingE(f.E,f.x,f.y,f.z-4,10,4,CAM.CP));
   if(BOX)li.push(boxEntry());
   // con la zona chiusa velata e la telecamera che guarda verso di lei: prima tutto quello che sta di là dalla linea del confine, poi il velo, poi

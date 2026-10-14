@@ -20,7 +20,7 @@ function iHero(){P=makeP();
   Object.assign(P,{hero:'arciere',proj:'arrow',pcol:null,pspd:560,wk:null,trail:null,kbm:1,style:heroStyle0('arciere'),atk:40,aspd:2.6,multi:2,front:1,diag:1,side:0,rear:0,fan:0,giant:0,
     crit:.25,critMul:2,maxhp:320,hp:320,need:1e9,ric:0,pierce:0,orbit:0,storm:false,light:0,fire:false,ice:false,dashMax:.3,dashCd:0,revive:0,shield:0,vamp:0,regen:0,poison:0,ult:0,spd:150});
   G={mode:'camp',chapter:1,room:2,gold:0,kills:0,t:4.9,fade:0,shake:0,state:'cine',bannerT:0,seq:[{c:2}],si:0,event:null,orbs:[],lvlT:0,curseHp:1,diff:1,arena:0,darkN:9,wheelAt:-1};
-  G.pet={id:'muschietto',x:P.x-26,y:P.y+8,t:0,cd:1,hcd:0,face:-Math.PI/2,att:0,hop:0,happy:0,moving:false}}
+  G.pet={id:'spiritello',x:P.x-26,y:P.y+8,t:0,cd:1,hcd:0,face:-Math.PI/2,att:0,hop:0,happy:0,moving:false}}
 function iRoom(ch,room,o){o=o||{};
   Object.assign(G,{chapter:ch,room,event:null,seq:[{c:room}],si:0,cam:null,slowT:0,hitstop:0,ultFx:null,meteorRain:false,kc:0});
   buildRoom();G.state='cine';G.door=false;document.querySelectorAll('.kcPop').forEach(o=>o.remove());

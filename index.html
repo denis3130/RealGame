@@ -5562,13 +5562,24 @@ function rollDark(boss){return false; // dark rooms removed for good (Denis)
 // =====================================================================
 // COMPANIONS: a little friend that follows you through every room
 // =====================================================================
+// Muschietto non c'è più (punto 41 del piano di Denis): al suo posto tre creature nuove che stanno bene in tutte e due le modalità, con le
+// stesse carte e gli stessi livelli (in Zombie le porta anteprime/zombie/compagni.js)
 const PETS=[
-  {id:'muschietto',n:'Muschietto',d:'Un batuffolo di muschio: lancia foglie taglienti al nemico più vicino.',rar:1,unlock:6,gems:120,how:'6 carte dalle casse o 120 cristalli',col:'#7bbf4a',base:{dmg:.32,cd:1.25},per:{dmg:.06}},
+  {id:'spiritello',n:'Spiritello',d:'Uno spiritello con la sua lanterna: lancia fiammelle verdi che inseguono il nemico più vicino.',rar:1,unlock:6,gems:120,how:'6 carte dalle casse o 120 cristalli',col:'#9ff0cc',base:{dmg:.3,cd:1.3},per:{dmg:.06}},
+  {id:'funghetto',n:'Funghetto',d:'Saltella al tuo fianco e soffia nuvole di spore che avvelenano il nemico colpito e quelli vicini.',rar:1,unlock:6,gems:120,how:'6 carte dalle casse o 120 cristalli',col:'#e04a3a',base:{dmg:.2,cd:1.7},per:{dmg:.04}},
   {id:'lucciola',n:'Lucciola',d:'Fa luce intorno a te, lancia scintille che inseguono i nemici e ogni 8 secondi ti cura.',rar:2,unlock:15,gems:320,how:'15 carte dalle casse o 320 cristalli',col:'#e8ff7a',base:{dmg:.16,cd:1.5,heal:.05,hcd:8},per:{dmg:.03,heal:.006}},
+  {id:'corvetto',n:"Corvetto d'ossa",d:"Vola sopra di te e lancia piume d'osso velocissime che passano attraverso due nemici.",rar:2,unlock:15,gems:320,how:'15 carte dalle casse o 320 cristalli',col:'#b8ab8c',base:{dmg:.28,cd:1.15},per:{dmg:.05}},
   {id:'draghetto',n:'Draghetto',d:'Sputa fiammate che bruciano tutti i nemici davanti a lui.',rar:3,unlock:25,gems:650,how:'25 carte dalle casse o 650 cristalli',col:'#ff7a3c',base:{dmg:.55,cd:2.6},per:{dmg:.08}}];
+// how each one attacks: the kind of shot, its speed, the height it leaves from, homing, how many enemies it passes, the cloud's radius
+const PSHOT={spiritello:{k:'wisp',v:260,h:24,hom:1,s:['xp',0]},funghetto:{k:'spore',v:200,h:12,splash:30,s:['eshot','thorn']},lucciola:{k:'spark',v:280,h:26,hom:1,s:['xp',0]},corvetto:{k:'feather',v:440,h:22,pierce:2,s:['eshot','thorn']}};
 const PET_BY={};PETS.forEach(p=>PET_BY[p.id]=p);
 const PETMAX=10,petCost=l=>Math.round(200*Math.pow(l,1.5));
 if(!SAVE.pets)SAVE.pets={owned:{},sel:null};if(!SAVE.pets.cards)SAVE.pets.cards={};for(const k in SAVE.pets.owned)if(SAVE.pets.owned[k].cards==null)SAVE.pets.owned[k].cards=0;
+// old saves: whoever had Muschietto finds the Spiritello in its place, with the same level and cards
+{const P0=SAVE.pets,o=P0.owned.muschietto;if(o){const n=P0.owned.spiritello;if(!n)P0.owned.spiritello=o;else{n.cards=(n.cards||0)+(o.cards||0);n.lvl=Math.max(n.lvl||1,o.lvl||1)}delete P0.owned.muschietto}
+  if(P0.cards.muschietto){if(P0.owned.spiritello)P0.owned.spiritello.cards=(P0.owned.spiritello.cards||0)+P0.cards.muschietto;else P0.cards.spiritello=(P0.cards.spiritello||0)+P0.cards.muschietto;delete P0.cards.muschietto}
+  if(!P0.owned.spiritello&&(P0.cards.spiritello||0)>=6){P0.owned.spiritello={lvl:1,cards:P0.cards.spiritello-6};delete P0.cards.spiritello}
+  if(Array.isArray(P0.eq))P0.eq=P0.eq.map(id=>id==='muschietto'?'spiritello':id);if(P0.sel==='muschietto')P0.sel='spiritello'}
 // up to 2 companions equipped, only by hand (old saves: the single 'sel' becomes the first slot)
 const PET_SLOTS=2;function petEq(){const P0=SAVE.pets;if(!Array.isArray(P0.eq))P0.eq=P0.sel?[P0.sel]:[];delete P0.sel;P0.eq=P0.eq.filter((id,i,a)=>PET_BY[id]&&P0.owned[id]&&a.indexOf(id)===i).slice(0,PET_SLOTS);return P0.eq}petEq();
 if(SAVE.road&&SAVE.road[500]&&!SAVE.pets.owned.lucciola&&!SAVE.pets.l500){SAVE.pets.owned.lucciola={lvl:1,cards:0}}SAVE.pets.l500=1;
@@ -5578,7 +5589,7 @@ function addPetCards(id,n){const P0=SAVE.pets,o=P0.owned[id];if(o){o.cards=(o.ca
   if(have>=need){P0.owned[id]={lvl:1,cards:have-need};delete P0.cards[id];return true}P0.cards[id]=have;return false}// players who already took the 500-trophy prize
 const petLvl=id=>(SAVE.pets.owned[id]||{lvl:1}).lvl;
 const petStat=(id,k)=>{const p=PET_BY[id];return (p.base[k]||0)+(p.per[k]||0)*(petLvl(id)-1)};
-function makePets(){let ids=SAVE.pets?petEq().slice():[];if(!ids.length&&G&&G.daily&&G.daily.mods&&G.daily.mods.includes('pets'))ids=['muschietto'];return ids.map((id,i)=>({id,slot:i,x:P.x+(i?26:-26),y:P.y+8,t:i*.7,cd:1+i*.5,hcd:petStat(id,'hcd')||0,face:-Math.PI/2,att:0,hop:0,happy:0,moving:false}))}
+function makePets(){let ids=SAVE.pets?petEq().slice():[];if(!ids.length&&G&&G.daily&&G.daily.mods&&G.daily.mods.includes('pets'))ids=['spiritello'];return ids.map((id,i)=>({id,slot:i,x:P.x+(i?26:-26),y:P.y+8,t:i*.7,cd:1+i*.5,hcd:petStat(id,'hcd')||0,face:-Math.PI/2,att:0,hop:0,happy:0,moving:false}))}
 function updPet(dt){const list=G.pets||(G.pet?[G.pet]:[]);for(const pt of list)updOnePet(pt,dt);updPetShots(dt)}
 function updOnePet(pt,dt){pt.t+=dt;pt.att=Math.max(0,pt.att-dt);pt.happy=Math.max(0,pt.happy-dt);
   if(Math.abs(Math.cos(P.face))>.2)pt.side=Math.cos(P.face)>=0?-1:1;const sd=(pt.side||-1)*(pt.slot?-1:1),tx=P.x+sd*26,ty=P.y+10+(pt.slot?6:0),dx=tx-pt.x,dy=ty-pt.y,dd=Math.hypot(dx,dy);
@@ -5589,25 +5600,45 @@ function updOnePet(pt,dt){pt.t+=dt;pt.att=Math.max(0,pt.att-dt);pt.happy=Math.ma
   if(tg&&pt.cd<=0){pt.cd=petStat(pt.id,'cd');pt.att=.3;const dmg=P.atk*petStat(pt.id,'dmg')*(G.petBoost||1);
     if(pt.id==='draghetto'){const a=pt.face;for(let i=0;i<14;i++){const aa=a+rand(-.4,.4),s=rand(60,150);fxPush({k:'firep',x:pt.x+Math.cos(a)*10,y:pt.y-18+Math.sin(a)*10,vx:Math.cos(aa)*s,vy:Math.sin(aa)*s-15,t:rand(.3,.5),max:.5,r:rand(4,8)})}
       for(const e of G.enemies){if(!canHit(e))continue;const ex=e.x-pt.x,ey=e.y-pt.y,ed=Math.hypot(ex,ey);if(ed<90&&Math.abs(angDiff(a,Math.atan2(ey,ex)))<.55){hurtE(e,dmg,false);if(!e.dead){e.burn=Math.max(e.burn||0,2.2);e.burnTick=e.burnTick||.5}}}sfx('eshot','fire',pt.x)}
-    else{G.petShots.push({x:pt.x,y:pt.y-(pt.id==='lucciola'?26:12),a:pt.face,v:pt.id==='lucciola'?280:380,kind:pt.id==='lucciola'?'spark':'leaf',dmg,life:1.3,hom:pt.id==='lucciola',vx:0,vy:0});sfx(pt.id==='lucciola'?'xp':'eshot',pt.id==='lucciola'?0:'thorn',pt.x)}}
+    else{const K=PSHOT[pt.id]||PSHOT.spiritello;G.petShots.push({x:pt.x,y:pt.y-K.h,a:pt.face,v:K.v,kind:K.k,dmg,life:1.3,hom:!!K.hom,pierce:K.pierce||0,splash:K.splash||0,hit:[],t:0,vx:0,vy:0});sfx(K.s[0],K.s[1],pt.x)}}
   if(pt.id==='lucciola'&&G.state!=='dead'){pt.hcd-=dt;if(pt.hcd<=0){pt.hcd=petStat('lucciola','hcd');if(P.hp<P.maxhp){const v=Math.max(1,Math.round(P.maxhp*petStat('lucciola','heal')));P.hp=Math.min(P.maxhp,P.hp+v);text(P.x,P.y-44,'+'+v,'#c8f04a',15);sfx('heal');pt.happy=.8;for(let i=0;i<12;i++)G.fx.push({k:'lvl',x:P.x+rand(-12,12),y:P.y-10,vx:rand(-50,50),vy:rand(-90,-20),t:.6})}}}}
+// the spores poison without stacking (one dose, refreshed): the player's poison skill keeps its own stacks
+function sporePoison(e){e.poisonS=Math.max(e.poisonS||0,1);e.poisonT=Math.max(e.poisonT||0,2.5)}
 function updPetShots(dt){if(!G.petShots)return;
-  for(let i=G.petShots.length-1;i>=0;i--){const s=G.petShots[i];s.life-=dt;if(s.hom){const t2=nearest(s.x,s.y,null,220);if(t2){const da=angDiff(s.a,Math.atan2(t2.y-8-s.y,t2.x-s.x));s.a+=clamp(da,-7*dt,7*dt)}}
+  for(let i=G.petShots.length-1;i>=0;i--){const s=G.petShots[i];s.life-=dt;s.t=(s.t||0)+dt;if(s.hom){const t2=nearest(s.x,s.y,null,220);if(t2){const da=angDiff(s.a,Math.atan2(t2.y-8-s.y,t2.x-s.x));s.a+=clamp(da,-7*dt,7*dt)}}
     s.vx=Math.cos(s.a)*s.v;s.vy=Math.sin(s.a)*s.v;s.x+=s.vx*dt;s.y+=s.vy*dt;let gone=s.life<=0||s.x<L||s.x>R||s.y<TOP||s.y>BOT||G.rocks.some(k=>Math.hypot(k.x-s.x,k.y-s.y)<k.r);
-    if(!gone)for(const e of G.enemies){if(!canHit(e))continue;if(Math.hypot(e.x-s.x,e.y-e.z-8-s.y)<e.r+4){if(BLOCK[e.type]&&BLOCK[e.type](e,s)){gone=true;break}hurtE(e,s.dmg,false);gone=true;break}}
+    if(!gone)for(const e of G.enemies){if(!canHit(e)||s.hit&&s.hit.includes(e))continue;if(Math.hypot(e.x-s.x,e.y-e.z-8-s.y)<e.r+4){if(BLOCK[e.type]&&BLOCK[e.type](e,s)){gone=true;break}
+      if(s.splash){// the cloud of spores: the one hit and those around it
+        for(const e2 of G.enemies){if(!canHit(e2)||Math.hypot(e2.x-s.x,e2.y-e2.z-8-s.y)>s.splash+e2.r)continue;hurtE(e2,e2===e?s.dmg:s.dmg*.6,false);if(!e2.dead)sporePoison(e2)}
+        for(let k=0;k<(LOWFX?5:12);k++){const a=rand(0,TAU),v=rand(20,70);G.fx.push({k:'lvl',x:s.x,y:s.y,vx:Math.cos(a)*v,vy:Math.sin(a)*v-20,t:.5})}gone=true;break}
+      hurtE(e,s.dmg,false);if(s.pierce>0&&s.hit){s.hit.push(e);s.pierce--;s.dmg*=.8;continue}gone=true;break}}
     if(gone){G.fx.push({k:'spark',x:s.x,y:s.y,t:.15});G.petShots.splice(i,1)}}}
 function drawPetShots(){for(const s of G.petShots){if(s.kind==='spark'){ctx.save();ctx.globalCompositeOperation='lighter';glow('220,255,110',s.x,s.y,9,.8);ctx.restore();ctx.fillStyle='#fbffd8';circ(s.x,s.y,1.8);ctx.fill()}
+  else if(s.kind==='wisp'){// a little green flame with its tail
+    ctx.save();ctx.globalCompositeOperation='lighter';glow('150,255,190',s.x,s.y,11,.75);ctx.translate(s.x,s.y);ctx.rotate(s.a);ctx.fillStyle='#eafff2';ctx.beginPath();ctx.moveTo(4,0);ctx.quadraticCurveTo(0,-3.4,-9,Math.sin(G.t*30)*1.2);ctx.quadraticCurveTo(0,3.4,4,0);ctx.fill();ctx.restore()}
+  else if(s.kind==='spore'){// a puff of glowing spores that spin
+    ctx.save();ctx.globalCompositeOperation='lighter';if(!LOWFX)glow('190,255,140',s.x,s.y,10,.55);for(let i=0;i<4;i++){const a=(s.t||0)*7+i*1.6;ctx.fillStyle='rgba(190,255,140,.9)';circ(s.x+Math.cos(a)*2.6,s.y+Math.sin(a)*2,1.6);ctx.fill()}ctx.restore()}
+  else if(s.kind==='feather'){// a bone feather, straight on its way
+    ctx.save();ctx.translate(s.x,s.y);ctx.rotate(s.a);ctx.strokeStyle=INK;ctx.lineWidth=1.2;ctx.fillStyle='#efe6d2';ctx.beginPath();ctx.moveTo(7,0);ctx.quadraticCurveTo(0,-3.2,-7,-1.2);ctx.lineTo(-5,0);ctx.lineTo(-7,1.2);ctx.quadraticCurveTo(0,3.2,7,0);ctx.closePath();ctx.fill();ctx.stroke();
+    ctx.strokeStyle='rgba(120,100,70,.7)';ctx.lineWidth=.7;ctx.beginPath();ctx.moveTo(7,0);ctx.lineTo(-6,0);ctx.stroke();if(!LOWFX){ctx.globalAlpha=.35;ctx.fillStyle='#fff';ctx.fillRect(-18,-.6,10,1.2)}ctx.restore()}
   else{ctx.save();ctx.translate(s.x,s.y);ctx.rotate(G.t*18);ink(1.4);ctx.beginPath();ctx.moveTo(-5,0);ctx.quadraticCurveTo(0,-4,5,0);ctx.quadraticCurveTo(0,4,-5,0);fs('#7bd65a');ctx.restore()}}}
 // one drawing per companion, with idle, walk/fly, attack and happy frames
 function drawPetSprite(id,x,y,o){const f=Math.cos(o.face)<0?-1:1;
-  if(id==='muschietto'){const bob=o.moving?Math.abs(Math.sin(o.hop))*4:Math.abs(Math.sin(o.t*3))*1,sq=o.moving?1+Math.cos(o.hop*2)*.06:1;ctx.save();ctx.translate(x,y-bob);ctx.scale(f*sq,2-sq);ink(2);
-    circ(-4,1,2.6);fs('#4a6a2a');circ(4,1,2.6);fs('#4a6a2a');
-    ctx.beginPath();for(let i=0;i<=18;i++){const a=i/18*TAU,r=9+(i%2?1.5:0);ctx.lineTo(Math.cos(a)*r,-9+Math.sin(a)*r)}ctx.closePath();fs('#6fb04a');
-    ctx.fillStyle='rgba(255,255,255,.25)';ell(-3,-14,4,2.2);ctx.fill();
-    for(const s of [-1,1]){ctx.save();ctx.translate(s*5,-17);ctx.rotate(s*(.45+(o.att>0?.5:0)+Math.sin(o.t*4)*.08));ink(1.6);ctx.beginPath();ctx.moveTo(0,0);ctx.quadraticCurveTo(4,-6,0,-12);ctx.quadraticCurveTo(-4,-6,0,0);fs('#9fe06a');ctx.restore()}
-    const blink=Math.sin(o.t*1.7)>.97;ctx.fillStyle=INK;if(blink){ctx.fillRect(1,-10,3,1.2);ctx.fillRect(5.5,-10,3,1.2)}else{circ(2.6,-10,1.9);ctx.fill();circ(7,-10,1.9);ctx.fill();ctx.fillStyle='#fff';circ(3.1,-10.7,.7);ctx.fill();circ(7.5,-10.7,.7);ctx.fill()}
-    ctx.fillStyle='#ff9ab0';ell(0.6,-6.5,1.6,1);ctx.fill();ell(8.8,-6.5,1.6,1);ctx.fill();
-    if(o.att>0||o.happy>0){ctx.fillStyle='#3a1a1a';ell(5,-5.6,1.9,1.5);ctx.fill()}else{ctx.strokeStyle=INK;ctx.lineWidth=1;ctx.beginPath();ctx.arc(5,-6.6,1.6,.2,Math.PI-.2);ctx.stroke()}
+  // the 2D drawings stay only as a spare when a 3D model fails (src/js/64-nemici-3d.js)
+  if(id==='spiritello'){const by=y-20+Math.sin(o.t*3)*2.5;ctx.save();ctx.translate(x,by);ctx.scale(f,1);
+    ctx.save();ctx.globalCompositeOperation='lighter';glow('120,255,170',10,4,12,.45);ctx.restore();
+    ink(1.6);ctx.beginPath();ctx.arc(0,-2,7.5,Math.PI,0);for(let i=0;i<=8;i++){const k=i/8;ctx.lineTo(7.5-15*k,8+Math.sin(k*Math.PI*4+o.t*6)*1.6)}ctx.closePath();fs('#d6fbe8');
+    ctx.fillStyle=INK;ell(1.5,-3,1.6,2.1);ctx.fill();ell(5.5,-3,1.6,2.1);ctx.fill();ctx.fillStyle='#fff';circ(2,-3.8,.6);ctx.fill();circ(6,-3.8,.6);ctx.fill();
+    ctx.strokeStyle=INK;ctx.lineWidth=.9;ctx.beginPath();ctx.moveTo(10,-1);ctx.lineTo(10,2);ctx.stroke();ink(1.2);ctx.beginPath();ctx.roundRect(7.8,2,4.4,5.6,1);fs('#2e4a3c');ctx.fillStyle='#bfffd6';ell(10,4.8,1,1.7);ctx.fill();
+    ctx.restore()}
+  else if(id==='funghetto'){const bob=o.moving?Math.abs(Math.sin(o.hop))*4:0;ctx.save();ctx.translate(x,y-bob);ctx.scale(f,1);ink(1.8);
+    ctx.beginPath();ctx.roundRect(-4.5,-11,9,11,3.5);fs('#f4e8d0');ctx.fillStyle=INK;circ(1,-6.5,1.1);ctx.fill();circ(3.8,-6.5,1.1);ctx.fill();
+    ctx.beginPath();ctx.ellipse(0,-12,10,7,0,Math.PI,0);ctx.closePath();ink(1.8);fs('#e04a3a');ctx.fillStyle='#fff6ea';for(const[dx,dy,r] of[[-5,-14,1.6],[1,-16.5,1.9],[5.5,-13.5,1.4],[-1.5,-13,1.1]]){circ(dx,dy,r);ctx.fill()}
+    ctx.restore()}
+  else if(id==='corvetto'){const by=y-18+Math.sin(o.t*3)*2.5,fl=Math.sin(o.t*12);ctx.save();ctx.translate(x,by);ctx.scale(f,1);ink(1.6);
+    for(const s of[-1,1]){ctx.save();ctx.translate(-1,-2);ctx.rotate(-.6*s+fl*.35);ctx.beginPath();ctx.moveTo(0,0);ctx.lineTo(-11,-7);ctx.lineTo(-8,-1);ctx.lineTo(-12,1);ctx.closePath();fs(s<0?'#1a1820':'#24222a');ctx.restore()}
+    ell(-1,0,7,5.5);fs('#24222a');circ(5,-5,4.6);fs('#24222a');circ(6.2,-5,3.4);fs('#e8e0cc');ctx.fillStyle='#120e14';circ(7,-5.6,1.2);ctx.fill();ctx.fillStyle='#ffb03c';circ(7,-5.6,.6);ctx.fill();
+    ctx.beginPath();ctx.moveTo(9,-6);ctx.lineTo(14.5,-3.6);ctx.lineTo(9,-3);ctx.closePath();ink(1.1);fs('#e8e0cc');
     ctx.restore()}
   else if(id==='lucciola'){const by=y-26+Math.sin(o.t*3.2)*3,pulse=.6+.4*Math.sin(o.t*4)+(o.happy>0?.7:0);ctx.save();ctx.translate(x,by);ctx.scale(f,1);
     ctx.save();ctx.globalCompositeOperation='lighter';glow('220,255,110',-5,3,14+pulse*6,.45*Math.min(1.3,pulse));ctx.restore();
@@ -5627,8 +5658,12 @@ function drawPetSprite(id,x,y,o){const f=Math.cos(o.face)<0?-1:1;
     if(o.happy>0)for(let i=0;i<2;i++){ctx.fillStyle='#ff6a8a';const hy=-16-((o.t*20+i*8)%14);circ(i?4:-2,hy,1.4);ctx.fill()}
     ctx.restore()}}
 function drawPet(pt){pt=pt||G.pet;if(!pt)return;drawPetSprite(pt.id,pt.x,pt.y,pt)}
-function petShadow(){for(const pt of G.pets||(G.pet?[G.pet]:[])){if(pt.id==='muschietto')shadow(pt.x,pt.y+2,9,3.5,.3);else shadow(pt.x,pt.y+2,6,2.5,.2)}}
+function petShadow(){for(const pt of G.pets||(G.pet?[G.pet]:[])){if(pt.id==='funghetto')shadow(pt.x,pt.y+2,9,3.5,.3);else shadow(pt.x,pt.y+2,6,2.5,.2)}}
 // --- the companion page in the hero tab ---
+// how each companion sits in its little square (a 120 px canvas): the scale and where the ground is, so the ones that fly stay in the middle
+const PET_VIEW={spiritello:[2.8,110],funghetto:[3,92],lucciola:[2.2,118],corvetto:[2.8,112],draghetto:[2.7,108]},petFrame=id=>PET_VIEW[id]||[3,92];
+// the light some of them make (the Lucciola's, the lantern's) fades out before the edge of the square instead of being cut by it
+function petVignette(c,w){c.setTransform(1,0,0,1,0,0);c.globalCompositeOperation='destination-in';const g=c.createRadialGradient(w/2,w/2,w*.34,w/2,w/2,w*.5);g.addColorStop(0,'#000');g.addColorStop(1,'rgba(0,0,0,0)');c.fillStyle=g;c.fillRect(0,0,w,w);c.globalCompositeOperation='source-over'}
 function renderPets(){const own=SAVE.pets.owned;
   const eq=petEq();$('petBox').innerHTML=`<div class="pslots">Con te: <b>${eq.length}/${PET_SLOTS}</b></div>`+PETS.map(p=>{const o=own[p.id],sel=eq.includes(p.id),l=o?o.lvl:1,c=petCost(l),need=petNeed(l),r=RAR[p.rar];
     const stat=p.id==='lucciola'?`Danno ${Math.round(petStat(p.id,'dmg')*100)}% · Cura ${Math.round(petStat(p.id,'heal')*100)}% ogni 8s`:`Danno ${Math.round(petStat(p.id,'dmg')*100)}% del tuo attacco · ogni ${petStat(p.id,'cd').toFixed(1)}s`;
@@ -5638,14 +5673,14 @@ function renderPets(){const own=SAVE.pets.owned;
       :`<button class="btn gem" data-pbuy="${p.id}" ${(SAVE.gems||0)>=p.gems?'':'disabled'}>Sblocca <i class="gemS"></i>${p.gems}</button>`;
     return `<div class="petc ${o?'':'locked'} ${sel?'sel':''}" style="--pc:${p.col}"><canvas width="120" height="120" data-pet="${p.id}"></canvas><div class="pinfo2"><b>${p.n}${o?` <em>Liv. ${l}</em>`:''} <u style="color:${r.c}">${r.n}</u></b><span>${p.d}</span>${o?`<small>${stat}</small>`:`<small class="how">${LOCK} ${p.how}</small>`}${bar}</div>
       <div class="pbtn">${btns}</div></div>`}).join('');
-  $('petBox').querySelectorAll('canvas[data-pet]').forEach(cv=>{const c=cv.getContext('2d'),saved=ctx;ctx=c;c.setTransform(3,0,0,3,60,92);const id=cv.dataset.pet;ctx.fillStyle='rgba(0,0,0,.3)';ell(0,2,12,4);ctx.fill();drawPetSprite(id,0,0,{t:1.2,face:0,moving:false,att:0,happy:own[id]?.3:0,hop:0});ctx=saved;if(!own[id])cv.style.filter='brightness(0) opacity(.6)'})}
+  $('petBox').querySelectorAll('canvas[data-pet]').forEach(cv=>{const c=cv.getContext('2d'),saved=ctx,fr=petFrame(cv.dataset.pet);ctx=c;c.setTransform(fr[0],0,0,fr[0],60,fr[1]);const id=cv.dataset.pet;ctx.fillStyle='rgba(0,0,0,.3)';ell(0,2,12,4);ctx.fill();drawPetSprite(id,0,0,{t:1.2,face:0,moving:false,att:0,happy:own[id]?.3:0,hop:0});petVignette(c,cv.width);ctx=saved;if(!own[id])cv.style.filter='brightness(0) opacity(.6)'})}
 document.addEventListener('click',e=>{const s=e.target.closest('[data-psel]'),u=e.target.closest('[data-pup]');
   if(s){const id=s.dataset.psel,eq=petEq();if(!SAVE.pets.owned[id]||eq.includes(id))return;let msg=PET_BY[id].n+' viene con te!';if(eq.length>=PET_SLOTS){const out=eq.shift();msg=`${PET_BY[out].n} resta a casa, ${PET_BY[id].n} viene con te!`}eq.push(id);save();sfx('pick');renderPets();toast(msg)}
   const dr=e.target.closest('[data-pdrop]');if(dr){const id=dr.dataset.pdrop,eq=petEq(),i=eq.indexOf(id);if(i<0)return;eq.splice(i,1);save();sfx('pick');renderPets();toast(PET_BY[id].n+' resta a casa')}
   if(u&&!u.disabled){const id=u.dataset.pup,o=SAVE.pets.owned[id],l=o.lvl,c=petCost(l),need=petNeed(l);if(SAVE.gold<c||l>=PETMAX||(o.cards||0)<need)return;SAVE.gold-=c;o.cards-=need;o.lvl=l+1;save();renderGold();sfx('upgrade');vib(25);renderPets();toast(`${PET_BY[id].n} sale al livello ${l+1}!`)}
   const bu=e.target.closest('[data-pbuy]');if(bu&&!bu.disabled){const p=PET_BY[bu.dataset.pbuy];if((SAVE.gems||0)<p.gems||SAVE.pets.owned[p.id])return;SAVE.gems-=p.gems;unlockPet(p.id);save();renderGold();sfx('victory');vib([30,30,60]);renderPets();toast(`${p.n} sbloccato! Tocca «Porta» per portarlo con te`)}});
 function unlockPet(id){if(SAVE.pets.owned[id])return false;SAVE.pets.owned[id]={lvl:1,cards:SAVE.pets.cards[id]||0};delete SAVE.pets.cards[id];save();achPop('Nuovo compagno!',PET_BY[id].n+': trovalo nella scheda Compagni','unlock');return true}
-const PETIMG={};function petIcon(id){if(PETIMG[id])return PETIMG[id];const c=document.createElement('canvas');c.width=c.height=96;const x=c.getContext('2d'),saved=ctx;ctx=x;x.setTransform(2.4,0,0,2.4,48,74);drawPetSprite(id,0,0,{t:1.2,face:0,moving:false,att:0,happy:.3,hop:0});ctx=saved;return PETIMG[id]=c.toDataURL()}
+const PETIMG={};function petIcon(id){if(PETIMG[id])return PETIMG[id];const c=document.createElement('canvas');c.width=c.height=96;const x=c.getContext('2d'),saved=ctx,fr=petFrame(id),k=fr[0]*.8;ctx=x;x.setTransform(k,0,0,k,48,48+(fr[1]-60)*.8);drawPetSprite(id,0,0,{t:1.2,face:0,moving:false,att:0,happy:.3,hop:0});petVignette(x,96);ctx=saved;return PETIMG[id]=c.toDataURL()}
 
 
 // =====================================================================
@@ -5795,7 +5830,7 @@ function iHero(){P=makeP();
   Object.assign(P,{hero:'arciere',proj:'arrow',pcol:null,pspd:560,wk:null,trail:null,kbm:1,style:heroStyle0('arciere'),atk:40,aspd:2.6,multi:2,front:1,diag:1,side:0,rear:0,fan:0,giant:0,
     crit:.25,critMul:2,maxhp:320,hp:320,need:1e9,ric:0,pierce:0,orbit:0,storm:false,light:0,fire:false,ice:false,dashMax:.3,dashCd:0,revive:0,shield:0,vamp:0,regen:0,poison:0,ult:0,spd:150});
   G={mode:'camp',chapter:1,room:2,gold:0,kills:0,t:4.9,fade:0,shake:0,state:'cine',bannerT:0,seq:[{c:2}],si:0,event:null,orbs:[],lvlT:0,curseHp:1,diff:1,arena:0,darkN:9,wheelAt:-1};
-  G.pet={id:'muschietto',x:P.x-26,y:P.y+8,t:0,cd:1,hcd:0,face:-Math.PI/2,att:0,hop:0,happy:0,moving:false}}
+  G.pet={id:'spiritello',x:P.x-26,y:P.y+8,t:0,cd:1,hcd:0,face:-Math.PI/2,att:0,hop:0,happy:0,moving:false}}
 function iRoom(ch,room,o){o=o||{};
   Object.assign(G,{chapter:ch,room,event:null,seq:[{c:room}],si:0,cam:null,slowT:0,hitstop:0,ultFx:null,meteorRain:false,kc:0});
   buildRoom();G.state='cine';G.door=false;document.querySelectorAll('.kcPop').forEach(o=>o.remove());
@@ -6957,7 +6992,7 @@ function render(){
   if(G.cc)for(const c of G.cc)list.push({y:c.y,f:()=>drawTwinChest(c)});
   for(const st of G.stuck)list.push({y:st.k.y+(Math.sin(st.a)>0?-1:1),f:()=>drawStuck(st)});
   list.push({y:P.y,f:()=>{if(inDoor){ctx.save();ctx.beginPath();ctx.rect(0,TOP,AW,AH);doorPath();ctx.clip();drawHero();ctx.restore();doorDark(true);doorFrame()}else drawHero()}});
-  for(const pt of G.pets||(G.pet?[G.pet]:[]))list.push({y:pt.y+(pt.id==='muschietto'?0:6),f:()=>drawPet(pt)});
+  for(const pt of G.pets||(G.pet?[G.pet]:[]))list.push({y:pt.y+(pt.id==='funghetto'?0:6),f:()=>drawPet(pt)});
   list.sort((a,b)=>a.y-b.y);for(const it of list)it.f();
   noShadow=false;
   for(let i=0;i<P.orbit;i++){const a=G.t*3.6+i*TAU/P.orbit,bx=P.x+Math.cos(a)*(P.storm?60:44),by=P.y-6+Math.sin(a)*(P.storm?60:44);ctx.save();ctx.translate(bx,by);ctx.rotate(a+G.t*8);if(P.storm)ctx.scale(1.45,1.45);ink(2);ctx.beginPath();ctx.moveTo(0,-9);ctx.lineTo(4,0);ctx.lineTo(0,9);ctx.lineTo(-4,0);ctx.closePath();fs('#dfe4ea');ctx.restore()}
@@ -8166,7 +8201,7 @@ const CARD_SVG='<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 40 48"><rec
 function whCards(){const w=[[0,6],[1,4],[2,2],[3,.6]],tot=w.reduce((a,b)=>a+b[1],0);let r=Math.random()*tot,rar=0;for(const[k,v] of w){r-=v;if(r<0){rar=k;break}}
   const pool=ITEMS.filter(i=>i.rar===rar),it=pool[randi(0,pool.length-1)],n=[8,5,3,2][rar],o=SAVE.items[it.id];
   if(!o){SAVE.items[it.id]={lvl:1,cards:n-1};if(!SAVE.eq[it.slot])SAVE.eq[it.slot]=it.id}else o.cards+=n;return `+${n} carte: ${it.n}`}
-function whPet(){const w=[['muschietto',3],['lucciola',2],['draghetto',1]],tot=6;let r=Math.random()*tot,id='muschietto';for(const[k,v] of w){r-=v;if(r<0){id=k;break}}
+function whPet(){const w=[['spiritello',2],['funghetto',2],['lucciola',1.5],['corvetto',1.5],['draghetto',1]],tot=8;let r=Math.random()*tot,id='spiritello';for(const[k,v] of w){r-=v;if(r<0){id=k;break}}
   const u=addPetCards(id,3);if(u)achPop('Nuovo compagno!',PET_BY[id].n+': trovalo nella scheda Compagni','unlock');return u?`${PET_BY[id].n}: nuovo compagno!`:`+3 carte ${PET_BY[id].n}`}
 const ai0=()=>arenaIdx(SAVE.trophies||0);
 WHEEL.length=0;WHEEL.push(
@@ -8175,7 +8210,7 @@ WHEEL.length=0;WHEEL.push(
   {n:'Cristalli',ic:'gem',c:['#8fe6ff','#2a8fb8'],w:1,f:()=>{SAVE.gems=(SAVE.gems||0)+5;return '+5 cristalli'}},
   {n:'Bustina',ic:'legno',c:['#c8f08a','#4c8a2c'],w:1,chest:'legno',f:()=>rwName('legno','classica')},
   {n:'Tesoro',ic:'coin',c:['#fff2a8','#e0a000'],w:.6,f:()=>{const v=300+100*ai0();SAVE.gold+=v;return `+${v} oro`}},
-  {n:'Compagno',ic:'pet:muschietto',c:['#b8f08a','#3f8a2a'],w:.8,f:whPet},
+  {n:'Compagno',ic:'pet:spiritello',c:['#c8f8e0','#3f8a6a'],w:.8,f:whPet},
   {n:'Rara',ic:'argento',c:['#cfe2ff','#3f74d0'],w:.5,chest:'argento',f:()=>rwName('argento','classica')},
   {n:'JACKPOT',ic:'crown',c:['#fff2a8','#e0a000'],w:.25,jack:1,chest:'oro',f:()=>{SAVE.gems=(SAVE.gems||0)+25;return rwName('oro','classica')+' + 25 cristalli'}});
 {const _wi=whIcon;whIcon=function(x,k,s){if(k==='card'||k==='legno'||k==='argento'||k.startsWith('pet:')){const im=whImg(k);if(icoOk(im)){x.save();x.scale(s,s);const w=k==='card'?30:k.startsWith('pet:')?40:28,h=k==='card'?36:k.startsWith('pet:')?40:42;x.drawImage(im,-w/2,-h/2-(k==='card'?3:0),w,h);x.restore()}return}return _wi(x,k,s)}}
@@ -14220,8 +14255,8 @@ reg('mimic',{n:'Il Mimic',g:'boss',sc:1,an:['idle','walk','chomp','tongue','coin
 // Eroi: l'Arciere (già nel gioco), la Cacciatrice (coda di capelli, arco rosa), il Balestriere (elmo, balestra) e il Druida (corna di legno,
 // punta del cappuccio, bastone con la sfera verde, occhi verdi), tutti sullo stesso corpo 3D (EROE.arciere) con i colori del gioco
 // (HEROES in src/js/39-meta2-eroi-talenti.js), mosse: fermo, cammina, tira, scatto, colpito. Compagni (drawPetSprite in
-// src/js/34-compagni.js): Muschietto (un batuffolo di muschio con due germogli), la Lucciola (la coda che brilla, ali di velo) e il
-// Draghetto (corna gialle, ali, coda a punta, sputa fuoco). Il Mercante del gioco (MERCHANT) col suo tappeto, le pozioni e la cassa.
+// src/js/34-compagni.js): la Lucciola (la coda che brilla, ali di velo) e il Draghetto (corna gialle, ali, coda a punta, sputa fuoco); Muschietto
+// non c'è più (punto 41 del piano di Denis), le creature nuove stanno in creature.js. Il Mercante del gioco (MERCHANT) col suo tappeto, le pozioni e la cassa.
 (()=>{const C=C3,{TAU,cl,ez,lerp,add,sub,mul,len,nrm,dot,cross,lerp3,V,ball,seg,run,dk,lt,rgba,poly,bbox,softBox,softBall,rimPoly,look,blink,keys,hitK,hop,frame,
   vol,ellPts,ellAt,ellN,sball,caps,chain,leaf,spot,eyes,mouth,cheeks,ellFace,floor,stars,parts,reg,shine}=C;
 
@@ -14240,39 +14275,6 @@ reg('druida',{n:'Druida',g:'eroi',an:['idle','walk','shoot','dash','hit'],dur:{.
 // the companions of today (drawPetSprite of the game, with a pretend state)
 const oldPet=id=>(x,y,face,anim,p)=>{const t=G.t;drawPetSprite(id,x,y,{face,moving:anim==='walk',hop:p*TAU*2,t,att:anim==='attack'&&p>.3&&p<.7?1:0,happy:anim==='happy'?1:0})};
 const PD={idle:2.4,walk:.6,attack:1,happy:1.2};
-
-// ------------------------------------------------------------------ MUSCHIETTO: a fluffy ball of moss on two little dark feet, two leaf sprouts on
-// top, black eyes with a point of light, pink cheeks, a smile. It hops after you; the attack spreads the sprouts and opens its mouth (the
-// leaf it throws is the game's); happy: a hop of joy
-const MC={moss:'#6fb04a',mossL:'#9fe06a',mossD:'#4a8030',foot:'#4a6a2a',sprout:'#9fe06a',blush:'255,154,176'};
-function muschietto(x,y,face,anim,p,sc,o){sc=sc||1;o=o||{};const V0=V(face),{P,D,F}=V0,ph=p*TAU,r=9.4;
-  const A={B:[0,0,0],lean:0,roll:0,s:0,yaw:0,spread:0,wig:0,blink:1,shut:0,open:0,stars:0};
-  if(anim==='walk'){const h=hop(p,.6);A.B=[0,0,h.z*5];A.s=h.s*1.4;A.lean=.08;A.wig=Math.sin(ph*2)*.25}
-  else if(anim==='attack'){const k=p<.3?ez(p/.3):p<.7?1:1-ez((p-.7)/.3);A.spread=k;A.open=p>.3&&p<.75?1:0;A.s=keys([[0,0],[.3,-.1],[.36,.12],[.46,0],[1,0]],p);A.lean=keys([[0,0],[.3,0],[.36,.14],[.5,.14],[.6,0],[1,0]],p)}
-  else if(anim==='happy'){const h=hop(p,.5);A.B=[0,0,h.z*7];A.s=h.s*1.6;A.open=1;A.spread=.6*Math.sin(p*Math.PI);A.yaw=.25*Math.sin(ph*2)}
-  else if(anim==='hit'){const kb=hitK(p);A.B=[-3*kb,0,.5*kb];A.lean=-.3*kb;A.s=-.12*kb;A.shut=p<.5?1:0;A.stars=p<.75?1-p/.75:0}
-  else{A.s=.03*Math.sin(ph);A.yaw=look(p,.4);A.blink=blink(p,.6,.07);A.wig=Math.sin(ph*2)*.12}
-  const X=frame(A,0),Cb=[0,0,r+1.6],dT=D(Cb);
-  floor(V0,x,y,sc,A.B,9.5,3.8,.3,A.B[2]);
-  ctx.save();ctx.translate(x,y);ctx.scale(sc,sc);const L=parts();
-  for(const sd of[-1,1]){const f=[1.6,sd*4.2,2.4];L.add(dT-50+D(f)*.01,()=>sball(V0,add(f,[A.B[0],A.B[1],0]),2.7,dk(MC.foot,.15*C.sstep(0,-.12,F(0,sd,0))),{rim:.15}))}
-  // the sprouts: two leaves out of the top, a little apart, wiggling; wide open when it attacks
-  for(const sd of[-1,1]){const b=X.T(add(Cb,mul(nrm([0,sd*.42,.9]),r*.9))),d=nrm(X.Rd([.05,sd*(.42+.55*A.spread+A.wig*sd),1])),sv=nrm(X.Rd([1,0,0]));
-    L.add(dT+(F([0,0,1])>0?.4:-.4)+(F(0,sd,0)>.3?.05:-.05),()=>leaf(V0,b,d,sv,11.5,4.2,MC.sprout,{back:dk(MC.sprout,.12),round:.7,vein:'rgba(40,90,20,.5)',bend:.4}))}
-  // the body: a ball of moss with a tufted outline, lighter tufts on top, the face
-  L.add(dT,()=>{const c=X.T(Cb),q=P(c),sx=Math.sqrt(1/Math.max(.5,1+A.s)),R0=r,ph0=face*2.3,pts=[];
-    for(let i=0;i<18;i++){const a=i/18*TAU,rr=R0+(i%2?1.7:-.2)+Math.sin(a*3+ph0)*.3;pts.push([q[0]+Math.cos(a)*rr*sx,q[1]+Math.sin(a)*rr*(1+A.s)])}
-    // the outline: soft round tufts (a smooth curve through the points), like the moss of the game
-    ctx.lineJoin='round';C.smooth(pts);ctx.fillStyle=softBall(q,R0+1,MC.moss,.18,.32);ctx.fill();ink(2.2);ctx.stroke();
-    ctx.save();C.smooth(pts);ctx.clip();
-    for(const[a,e,s0] of[[.6,.9,2.6],[-.8,.7,2.2],[2.5,.6,2.4],[-2.4,.5,2.3],[0,1.25,2.4],[1.6,.2,1.8],[-1.7,.15,1.9],[3.1,1,2]]){const m=[Math.cos(a)*Math.cos(e),Math.sin(a)*Math.cos(e),Math.sin(e)];spot(V0,X.T(add(Cb,mul(m,r*.93))),X.Rd(m),s0,'rgba(159,224,106,.55)',{v0:.1})}
-    const at=m=>({q:P(X.T(add(Cb,mul(m,r*.97)))),v:F(X.Rd(m))});
-    eyes(null,q,r,{at,dir:[1,.36,.12],kind:'dark',rx:2.2,ry:2.6,blink:A.blink,shut:A.shut,lr:.6});
-    cheeks(null,q,r,null,{at,dir:[1,.6,-.12],rgb:MC.blush,al:.7,rx:1.7,ry:1});
-    if(A.open)mouth(null,q,r,[1,0,-.14],{at,kind:'open',w:2,h:1.5,open:1,dark:'#3a1a1a',tongue:'#e07a8a'});else mouth(null,q,r,[1,0,-.12],{at,kind:'smile',w:1.6,bow:1.3});
-    ctx.restore();rimPoly(pts,.28)});
-  run(L);if(A.stars>0)stars(P(X.T([0,0,2*r+6])),7,A.stars);ctx.restore()}
-reg('muschietto',{n:'Muschietto',g:'eroi',an:['idle','walk','attack','happy','hit'],dur:{...PD,hit:.6},lab:{walk:'Saltella',attack:'Foglia',happy:'Felice'},old:oldPet('muschietto')},muschietto);
 
 // ------------------------------------------------------------------ LUCCIOLA: a firefly: a round tail that glows yellow-green and pulses, a dark
 // head and chest, big eyes, two antennae with lit tips, two wings of veil that beat fast. It hovers beside the hero; the attack lights the
@@ -14371,6 +14373,127 @@ const oldMerchant=(x,y,face)=>{const s=1;ctx.save();ctx.fillStyle='#7a2f2a';ctx.
   for(const[ox,col] of [[-24,'#e5484d'],[-14,'#4d97ff'],[22,'#6cc24a']]){ink(1.6);ctx.beginPath();ctx.rect(x+ox-3,y-6,6,8);fs(col);ctx.beginPath();ctx.rect(x+ox-1.5,y-9,3,3);fs('#c9cfd6')}
   ink(2.5);ctx.beginPath();ctx.rect(x-22,y-38,16,26);fs('#6b4a2a');ctx.restore();drawRig(x,y-8,face,0,false,MERCHANT,{})};
 reg('mercante',{n:'Il Mercante',g:'eroi',an:['idle','magic'],dur:{idle:2.6,magic:1.9},lab:{magic:'Magia'},old:oldMerchant},mercante);
+})();
+// Le creature nuove (punto 41 del piano di Denis, anteprima 47): al posto di Muschietto, che il piano toglie del tutto, tre compagni nuovi
+// che stanno bene in tutte e due le modalità. Lo Spiritello della lanterna (un fantasmino di velo verde chiaro, misterioso, con la sua
+// lanterna che fa luce), il Corvetto d'ossa (un corvo nero con la maschera di teschio e gli occhi d'ambra: cupo, per il camposanto) e il
+// Funghetto (un fungo dal cappello rosso a pois che saltella e soffia spore: fantasy, per la Classica). Fatti col metodo dei compagni di
+// eroi.js (C3): uno scheletro 3D, ogni pezzo attaccato al suo punto, mosse che dipendono solo da p: fermo, cammina o vola, attacca,
+// felice, colpito. Si disegnano da drawPetSprite (src/js/64-nemici-3d.js) come gli altri compagni.
+(()=>{const C=C3,{TAU,cl,ez,lerp,add,sub,mul,len,nrm,dot,cross,V,ball,seg,run,dk,lt,poly,bbox,softBox,softBall,rimPoly,look,blink,keys,hitK,hop,frame,
+  vol,ellPts,ellAt,ellN,sball,chain,leaf,spot,eyes,mouth,cheeks,floor,stars,orb,parts,reg,shine}=C;
+const PD={idle:2.4,walk:.6,attack:1,happy:1.2,hit:.6},AN=['idle','walk','attack','happy','hit'];
+const now=()=>typeof G!=='undefined'&&G&&G.t!=null?G.t:performance.now()/1000;
+// ------------------------------------------------------------------ LO SPIRITELLO DELLA LANTERNA: a little ghost of pale green veil that
+// floats; its hem flutters in four soft points; big dark eyes with a point of light, a small round mouth; beside it hangs its iron lantern
+// with a green flame. The attack lifts the lantern and the flame flares (the spectral bolt it throws is the game's); happy: it twirls
+const SC={veil:'#d6fbe8',veilD:'#8fd8bc',lant:'#3a3d44',flame:'120,255,170'};
+function spiritello(x,y,face,anim,p,sc,o){sc=sc||1;o=o||{};const V0=V(face),{P,D,F}=V0,ph=p*TAU,Z0=18,r=7.6;
+  const A={B:[0,0,2*Math.sin(ph)],lean:0,roll:0,s:0,yaw:0,flut:Math.sin(ph*2),lift:0,flare:0,blink:1,shut:0,open:0,stars:0,spin:0};
+  if(anim==='walk'){A.B=[0,0,1.6*Math.sin(ph*2)];A.lean=.22;A.flut=Math.sin(ph*4)}
+  else if(anim==='attack'){const k=p<.3?ez(p/.3):p<.6?1:1-ez((p-.6)/.4);A.lift=k;A.flare=p>.28&&p<.7?Math.sin((p-.28)/.42*Math.PI):0;A.lean=keys([[0,0],[.3,-.12],[.4,.12],[1,0]],p);A.open=A.flare>.2?1:0}
+  else if(anim==='happy'){A.spin=ez(p)*TAU;A.B=[0,0,2.6*Math.sin(p*Math.PI)];A.open=1;A.flut=Math.sin(ph*3)}
+  else if(anim==='hit'){const kb=hitK(p);A.B=[-3*kb,0,1.2*kb];A.lean=-.3*kb;A.shut=p<.5?1:0;A.stars=p<.75?1-p/.75:0}
+  else{A.yaw=look(p,.4);A.blink=blink(p,.55,.07)}
+  const X=frame({...A,yaw:A.yaw+A.spin},Z0),Cb=[0,0,Z0+r*.35],dT=D(X.T(Cb));
+  floor(V0,x,y,sc,A.B,7,2.8,.18,Z0);
+  ctx.save();ctx.translate(x,y);ctx.scale(sc,sc);const L=parts();
+  // the soft green light under it
+  if(!LOWFX){const q=P(X.T([0,0,Z0-4]));shine(SC.flame,q[0],q[1],14,.22)}
+  // the body: a dome of veil and its hem in four soft points that flutter (a body of revolution: the outline is the same from every side)
+  L.add(dT,()=>{const q=P(X.T(Cb)),sx=Math.sqrt(1/Math.max(.5,1+A.s)),pts=[];
+    for(let i=0;i<=12;i++){const a=Math.PI+i/12*Math.PI;pts.push([q[0]+Math.cos(a)*r*sx,q[1]+Math.sin(a)*r])}
+    const by=q[1]+r*1.35;for(let i=0;i<=16;i++){const k=i/16,xx=q[0]+r*sx*(1-2*k),w=Math.sin(k*Math.PI*4+A.flut*1.2+face);pts.push([xx,by+(w>0?w*2.4:w*.8)-Math.sin(k*Math.PI)*1.2])}
+    ctx.lineJoin='round';C.smooth(pts);ctx.fillStyle=softBall(q,r*1.3,SC.veil,.12,.34);ctx.fill();ink(2.2);ctx.stroke();
+    ctx.save();C.smooth(pts);ctx.clip();const g=ctx.createLinearGradient(0,q[1],0,by+3);g.addColorStop(0,'rgba(143,216,188,0)');g.addColorStop(1,'rgba(110,190,160,.55)');ctx.fillStyle=g;ctx.fillRect(q[0]-r*2,q[1],r*4,r*2);
+    const at=m=>({q:P(X.T(add(Cb,mul(m,r*.97)))),v:F(X.Rd(m))});
+    eyes(null,q,r,{at,dir:[1,.36,.12],kind:'dark',rx:2.1,ry:2.7,blink:A.blink,shut:A.shut,lr:.65});
+    if(A.open)mouth(null,q,r,[1,0,-.28],{at,kind:'open',w:1.3,h:1.5,open:1,dark:'#2a3a34',tongue:'#2a3a34'});else mouth(null,q,r,[1,0,-.26],{at,kind:'o',w:.9,h:.9});
+    ctx.restore();rimPoly(pts,.32)});
+  // the lantern on its right, hanging from a wisp of veil; lifted when it attacks
+  {const hk=X.T([1.4,10.4,Z0+1.5+A.lift*6]),lc=add(hk,[0,0,-4.6]),sd=F(X.Rd([0,1,0]))>0?1:-1;
+    L.add(dT+D(sub(X.T([1.4,10.4,Z0]),X.T(Cb)))+(sd>0?.3:-.3),()=>{const a=P(X.T([0,6.4,Z0+2.6])),b=P(hk),c=P(lc);ctx.strokeStyle='rgba(214,251,232,.85)';ctx.lineWidth=1.6;ctx.lineCap='round';ctx.beginPath();ctx.moveTo(a[0],a[1]);ctx.quadraticCurveTo((a[0]+b[0])/2,b[1]-2,b[0],b[1]);ctx.stroke();
+      ctx.strokeStyle=INK;ctx.lineWidth=.9;seg(b,[c[0],c[1]-4.2]);ctx.stroke();
+      const fl=.85+.15*Math.sin(now()*13)+A.flare*.8;if(!LOWFX)shine(SC.flame,c[0],c[1],8+7*fl,.5+.3*A.flare);
+      ink(1.4);ctx.fillStyle='rgba(30,60,44,.7)';ctx.beginPath();ctx.roundRect(c[0]-2.4,c[1]-3.4,4.8,6.4,1.2);ctx.fill();ctx.stroke();
+      ctx.fillStyle=`rgba(190,255,210,${.75})`;ctx.beginPath();ctx.ellipse(c[0],c[1]+.3,1.1,1.9*fl,0,0,TAU);ctx.fill();
+      ctx.fillStyle=SC.lant;ctx.beginPath();ctx.moveTo(c[0]-3,c[1]-3.4);ctx.lineTo(c[0]+3,c[1]-3.4);ctx.lineTo(c[0],c[1]-5.6);ctx.closePath();ctx.fill();ctx.stroke();ctx.fillRect(c[0]-2.8,c[1]+3,5.6,1.2)})}
+  run(L);if(A.stars>0)stars(P(X.T([0,0,Z0+r*2+4])),6,A.stars);ctx.restore()}
+reg('spiritello',{n:'Spiritello',g:'eroi',an:AN,dur:PD,lab:{walk:'Fluttua',attack:'Fiamma verde',happy:'Piroetta'}},spiritello);
+// ------------------------------------------------------------------ IL CORVETTO D'OSSA: a little black crow with a mask of bone (the skull with
+// the long beak), amber eyes that glow in the sockets, dark wings with ragged feathers, a fan of tail feathers, bony claws. It flies beside
+// the hero, now and then it tilts its head too far (as the zombies do); the attack dives and pecks; happy: it caws with the beak open
+const KC={body:'#24222a',bodyL:'#3a3846',bone:'#e8e0cc',boneD:'#b8ab8c',eye:'255,176,60',claw:'#d8ccb0'};
+function corvetto(x,y,face,anim,p,sc,o){sc=sc||1;o=o||{};const V0=V(face),{P,D,F}=V0,ph=p*TAU,Z0=17;
+  const A={B:[0,0,2*Math.sin(ph)],lean:0,roll:0,s:0,yaw:0,flap:Math.sin(ph*3),tilt:0,open:0,glow:.7+.3*Math.sin(ph*2),stars:0};
+  if(anim==='walk'){A.B=[0,0,1.8*Math.sin(ph*2)];A.lean=.25;A.flap=Math.sin(ph*6)}
+  else if(anim==='attack'){A.lean=keys([[0,0],[.3,-.2],[.45,.55],[.6,.55],[.8,0],[1,0]],p);A.B=[keys([[0,0],[.3,-2],[.45,5],[.6,5],[.8,0],[1,0]],p),0,keys([[0,0],[.3,2],[.45,-3],[.6,-3],[1,0]],p)];A.flap=Math.sin(ph*4);A.open=p>.4&&p<.62?1:0;A.glow=1.2}
+  else if(anim==='happy'){A.open=Math.sin(ph*3)>0?1:0;A.B=[0,0,2.4*Math.abs(Math.sin(ph*2))];A.flap=Math.sin(ph*5);A.tilt=.25*Math.sin(ph)}
+  else if(anim==='hit'){const kb=hitK(p);A.B=[-3*kb,0,1.5*kb];A.lean=-.4*kb;A.stars=p<.75?1-p/.75:0}
+  else{A.yaw=look(p,.35);const k=p>.55&&p<.8?Math.sin((p-.55)/.25*Math.PI):0;A.tilt=.55*k;A.flap=.35*Math.sin(ph*2)}
+  const X=frame(A,Z0),Cb=[0,0,Z0],Rb=[6.4,4.6,4.8],Hc=[5,0,Z0+4.8],Rh=4.4,dT=D(X.T(Cb));
+  floor(V0,x,y,sc,A.B,7,2.8,.2,Z0);
+  ctx.save();ctx.translate(x,y);ctx.scale(sc,sc);const L=parts();
+  // the tail: a fan of three ragged feathers
+  for(let i=-1;i<=1;i++){const b=X.T([-4.6,i*1,Z0-.4]),d=nrm(X.Rd([-1,i*.35,.1])),sv=nrm(X.Rd([0,1,0]));L.add(dT-1+i*.01,()=>leaf(V0,b,d,sv,7.4,1.7,i?KC.body:KC.bodyL,{back:KC.body,round:.6,tip:.3,lw:1.6}))}
+  // the wings: dark, with feather points, beating
+  for(const sd of[-1,1]){const th=.75*A.flap,b=X.T([.4,sd*3.6,Z0+1.6]),d=nrm(X.Rd([-.45,sd*Math.cos(th),Math.sin(th)+.2])),sv=nrm(X.Rd([1,0,.1]));
+    L.add(dT+(F(0,sd,0)>.2?1.2:-1.2),()=>{const pts=leaf(V0,b,d,sv,10.5,3.6,KC.body,{back:'#1a1820',round:.55,tip:.4,lw:1.8});
+      if(pts&&pts.length>8){ctx.strokeStyle='rgba(120,116,140,.45)';ctx.lineWidth=.7;for(const k of[.4,.6,.8]){const i0=Math.round(k*10),q=pts[i0];if(q){ctx.beginPath();ctx.moveTo(P(b)[0],P(b)[1]);ctx.lineTo(q[0],q[1]);ctx.stroke()}}}})}
+  // the claws under the body
+  for(const sd of[-1,1]){const a=X.T([1,sd*1.6,Z0-4]),b=X.T([1.6,sd*1.8,Z0-7]);L.add(dT-.6,()=>{const A2=P(a),B2=P(b);ctx.strokeStyle=INK;ctx.lineWidth=2.2;ctx.lineCap='round';seg(A2,B2);ctx.stroke();ctx.strokeStyle=KC.claw;ctx.lineWidth=1;seg(A2,B2);ctx.stroke()})}
+  // the body
+  L.add(dT,()=>{const hp=vol(V0,ellPts(Cb,Rb,null,6,16).map(X.T),KC.body,{kl:.22,kd:.3});ctx.save();poly(hp);ctx.clip();
+    spot(V0,X.T(ellAt(Cb,Rb,null,nrm([.8,0,-.3]))),X.Rd(ellN(Rb,null,nrm([.8,0,-.3]))),3.4,'rgba(80,76,96,.5)',{v0:-.1});ctx.restore()});
+  // the head: the dark crown behind, the bone mask in front with the beak, the amber eyes in the sockets; it tilts too far now and then
+  const hX={T:q=>X.T(add(Hc,rotT(sub(q,Hc),A.tilt))),Rd:v=>X.Rd(rotT(v,A.tilt))};
+  L.add(dT+D(sub(X.T(Hc),X.T(Cb)))+.1,()=>{const q=sball(V0,hX.T(Hc),Rh,KC.body,{rim:.2}),at=m=>({q:P(hX.T(add(Hc,mul(m,Rh*.98)))),v:F(hX.Rd(m))});
+    // the mask: a pale disc on the front of the head
+    const mf=at(nrm([1,0,.05]));if(mf.v>.05){ctx.save();ctx.globalAlpha*=cl(mf.v*3,0,1);ball(mf.q,Rh*.95*Math.max(.55,mf.v));ctx.fillStyle=softBall(mf.q,Rh*.95,KC.bone,.2,.25);ctx.fill();ink(1.2);ctx.stroke();ctx.restore()}
+    for(const sd of[-1,1]){const e=at(nrm([1,sd*.42,.18]));if(e.v<.1)continue;ctx.fillStyle='#120e14';ball(e.q,1.45);ctx.fill();if(!LOWFX)shine(KC.eye,e.q[0],e.q[1],3.4,.6*A.glow);ctx.fillStyle=`rgb(255,${(150+40*A.glow)|0},60)`;ball(e.q,.7);ctx.fill()}});
+  // the beak: two bone halves, open when it pecks or caws
+  {const bA=hX.T(add(Hc,[Rh*.9,0,-.4])),dir=nrm(hX.Rd([1,0,-.25])),up=nrm(hX.Rd([0,0,1])),sdv=nrm(hX.Rd([0,1,0]));
+    L.add(dT+D(sub(add(X.T(Hc),mul(dir,5)),X.T(Cb)))+.2,()=>{const tip=add(bA,mul(dir,6.2)),op=A.open*.9;
+      for(const s of[1,-1]){const t2=add(tip,mul(up,s*op*1.2)),a=P(add(bA,mul(up,s*1.1))),b=P(add(bA,mul(sdv,1.3))),c=P(add(bA,mul(sdv,-1.3))),T2=P(t2);
+        ctx.beginPath();ctx.moveTo(a[0],a[1]);ctx.lineTo(b[0],b[1]);ctx.lineTo(T2[0],T2[1]);ctx.lineTo(c[0],c[1]);ctx.closePath();ctx.fillStyle=s>0?KC.bone:KC.boneD;ctx.fill();ink(1.2);ctx.stroke()}})}
+  run(L);if(A.stars>0)stars(P(X.T(add(Hc,[0,0,6]))),6,A.stars);ctx.restore()}
+function rotT(v,a){const c=Math.cos(a),s=Math.sin(a);return[v[0],v[1]*c-v[2]*s,v[1]*s+v[2]*c]}
+reg('corvetto',{n:"Corvetto d'ossa",g:'eroi',an:AN,dur:PD,lab:{walk:'Vola',attack:'Beccata',happy:'Gracchia'}},corvetto);
+// ------------------------------------------------------------------ IL FUNGHETTO: a mushroom that hops: a cream stem with the face, a big round red
+// cap with white spots that sits a little crooked, two little feet. The attack squashes it and the cap puffs a cloud of glowing spores (the
+// spore it throws is the game's); happy: it spins and the spots sparkle
+const FC={stem:'#f4e8d0',stemD:'#d8c8a8',cap:'#e04a3a',capD:'#a82a20',dot:'#fff6ea',foot:'#c8b090',spore:'190,255,140'};
+function funghetto(x,y,face,anim,p,sc,o){sc=sc||1;o=o||{};const V0=V(face),{P,D,F}=V0,ph=p*TAU;
+  const A={B:[0,0,0],lean:0,roll:0,s:0,yaw:0,capZ:0,capT:.12,blink:1,shut:0,open:0,puff:-1,stars:0,spin:0};
+  if(anim==='walk'){const h=hop(p,.55);A.B=[0,0,h.z*5];A.s=h.s*1.5;A.lean=.1;A.capT=.12+.08*Math.sin(ph)}
+  else if(anim==='attack'){A.s=keys([[0,0],[.3,-.22],[.4,.15],[.55,0],[1,0]],p);A.capZ=keys([[0,0],[.3,-1.4],[.4,2.6],[.6,1],[1,0]],p);A.puff=p>.35?(p-.35)/.65:-1;A.open=p>.35&&p<.7?1:0}
+  else if(anim==='happy'){const h=hop(p,.5);A.B=[0,0,h.z*6];A.spin=ez(p)*TAU;A.open=1}
+  else if(anim==='hit'){const kb=hitK(p);A.B=[-3*kb,0,.4*kb];A.lean=-.3*kb;A.s=-.14*kb;A.shut=p<.5?1:0;A.stars=p<.75?1-p/.75:0;A.capT=.12+.2*kb}
+  else{A.s=.035*Math.sin(ph);A.yaw=look(p,.4);A.blink=blink(p,.6,.07);A.capZ=.4*Math.sin(ph)}
+  const X=frame({...A,yaw:A.yaw+A.spin},0),Cs=[0,0,6],Rs=[4.6,4.6,6],Cc=[0,0,13+A.capZ],Rc=[9.4,9.4,5.4],dT=D(X.T(Cs));
+  floor(V0,x,y,sc,A.B,9,3.6,.28,A.B[2]);
+  ctx.save();ctx.translate(x,y);ctx.scale(sc,sc);const L=parts();
+  for(const sd of[-1,1]){const f=[1.2,sd*2.8,1.4];L.add(dT-50+D(X.T(f))*.01,()=>sball(V0,add(X.T(f),[0,0,0]),2.2,FC.foot,{rim:.15,lw:2}))}
+  // the stem with the face
+  L.add(dT,()=>{const hp=vol(V0,ellPts(Cs,Rs,null,6,16).map(X.T),FC.stem,{kl:.15,kd:.26});ctx.save();poly(hp);ctx.clip();
+    const q=P(X.T(Cs)),at=m=>({q:P(X.T(ellAt(Cs,Rs,null,m))),v:F(X.Rd(ellN(Rs,null,m)))});
+    eyes(null,q,4.6,{at,dir:[1,.38,.18],kind:'dark',rx:1.6,ry:2,blink:A.blink,shut:A.shut,lr:.6});
+    cheeks(null,q,4.6,null,{at,dir:[1,.62,-.12],rgb:'255,140,150',al:.6,rx:1.3,ry:.8});
+    if(A.open)mouth(null,q,4.6,[1,0,-.2],{at,kind:'open',w:1.4,h:1.2,open:1,dark:'#5a2a1a',tongue:'#e07a8a'});else mouth(null,q,4.6,[1,0,-.18],{at,kind:'smile',w:1.2,bow:.9});
+    ctx.restore()});
+  // the cap: a round dome, a little crooked, with white spots; it lifts and puffs when it attacks
+  {const capF={u:nrm([Math.cos(A.capT*0),0,0]),v:[0,1,0],w:nrm([-Math.sin(A.capT),0,Math.cos(A.capT)])};capF.u=nrm(cross(capF.v,capF.w));
+    L.add(dT+1,()=>{const pts=ellPts(Cc,Rc,capF,6,20,-.15).map(X.T),hp=vol(V0,pts,FC.cap,{kl:.22,kd:.3});ctx.save();poly(hp);ctx.clip();
+      // the underside (gills) where it turns toward us, darker
+      for(const[a,e,r0] of[[0,.55,1.9],[1.2,.5,1.5],[-1.3,.45,1.6],[2.5,.4,1.6],[-2.4,.6,1.7],[.6,.95,1.4],[-.7,.9,1.2],[3.14,.85,1.3],[1.9,.85,1.1],[-1.9,.85,1.2]]){
+        const m=[Math.cos(a)*Math.cos(e),Math.sin(a)*Math.cos(e),Math.sin(e)];spot(V0,X.T(ellAt(Cc,Rc,capF,m)),X.Rd(ellN(Rc,capF,m)),r0,FC.dot,{v0:.05,lw:.6,ink:'rgba(120,40,30,.5)'})}
+      ctx.restore()})}
+  // the spores: a cloud of glowing dots that rises from the cap
+  if(A.puff>=0)L.add(dT+5,()=>{const k=A.puff;for(let i=0;i<9;i++){const u=(k+i/9)%1,a=i*2.3+k*3,c=X.T([Math.cos(a)*(4+u*9),Math.sin(a)*(4+u*9),16+u*10]),q=P(c);
+    ctx.fillStyle=`rgba(${FC.spore},${(1-u)*.85})`;ball(q,1.1+u*1.4);ctx.fill();if(!LOWFX)shine(FC.spore,q[0],q[1],4,.3*(1-u))}});
+  if(anim==='happy'&&!LOWFX)L.add(dT+5,()=>{for(let i=0;i<4;i++){const a=i*TAU/4+p*6,q=P(X.T([Math.cos(a)*8,Math.sin(a)*8,15+3*Math.sin(p*9+i)]));shine('255,250,200',q[0],q[1],3,.7)}});
+  run(L);if(A.stars>0)stars(P(X.T([0,0,22])),7,A.stars);ctx.restore()}
+reg('funghetto',{n:'Funghetto',g:'eroi',an:AN,dur:PD,lab:{walk:'Saltella',attack:'Spore',happy:'Giravolta'}},funghetto);
 })();
 // =====================================================================
 // THE HERO IN 3D: the Arciere is drawn by EROE.arciere (sprite/eroe3d/disegno_eroe.js) with his weapons in 3D (sprite/eroe3d/armi3d.js):
@@ -14991,7 +15114,7 @@ function drawHero(){const h=W.hero,q=S(h.x,h.y,h.zh||0),f=h.fall||0,inv=W.mods&&
   if(f>0)ctx.restore();if(inv)ctx.restore();if(W.director&&W.director.drawOnHero)W.director.drawOnHero(q)}
 // una voce della lista: uno strato di prop (L), un prop intero nell'ordine di prima (W, con W.dbg.ord='ky'), un essere (B: eroe, zombie, corvo
 // posato, fiamma libera)
-function drawEntry(e,h0a){switch(e.kind){case'V':return drawVeil(e.k);case'L':return drawLayer(e);case'T':return drawBox();case'W':return drawWhole(e.prop);case'B':return e.box?drawBox():e.hero?drawHero():e.z?drawZombie(e.z):e.pc?drawPerch(e.pc):e.fl?drawFlame(e.fl,h0a):null}}
+function drawEntry(e,h0a){switch(e.kind){case'V':return drawVeil(e.k);case'L':return drawLayer(e);case'T':return drawBox();case'W':return drawWhole(e.prop);case'B':return e.box?drawBox():e.pet?(W.drawPet&&W.drawPet(e.pet)):e.hero?drawHero():e.z?drawZombie(e.z):e.pc?drawPerch(e.pc):e.fl?drawFlame(e.fl,h0a):null}}
 function drawWhole(p){LEANK=p.lk==null?1:p.lk;setRef(p.ref);ROTP=p.rot||null;try{drawProp(p,p.house?part=>alphaOf(p.house,part):null)}finally{ROTP=null}LEANK=1;setRef(null)}
 // la sagoma dell'eroe dove è coperto (dietro la casa, la cripta, un albero): si ridisegnano in una tela piccola solo le cose disegnate dopo di lui
 // che toccano il suo riquadro, e lì sopra si stampa la sua sagoma chiara a metà trasparenza. Costa qualcosa solo quando è davvero coperto.
@@ -15336,12 +15459,15 @@ function buildOrder(vis){const D=W.dbg,fl=[],li=[];psiUpdate();camStamp();UCAM=C
     for(const z of W.Z){if(z.id==null)z.id=++ZID;const e=z.E||(z.E={kind:'B',z,sid:'Z'+z.id,sk:900000+(z.id%99999)});L2.push({k:K(z.x,z.y+.01),e:beingE(e,z.x,z.y,z.zh||0,46*z.sc,10*z.sc,RIGK.mzk)})}
     if(!D.noFlames)for(const f of flames)L2.push({k:K(f.x,f.ky!=null?f.ky:f.y+.6),e:beingE(f.KE,f.x,f.y,f.z-4,10,4,CAM.CP)});
     for(const c of perches){if(c.away)continue;const ho=perchHost(c);L2.push({k:ho?kp(ho)+.05:K(c.x,c.y+.6),e:beingE(c.E,c.x,c.y,c.z,14,6,CAM.CP)})}
+    for(const pt of W.pets||[]){const e=pt.E||(pt.E={kind:'B',pet:pt,sid:'P'+pt.i,sk:600000+pt.i});L2.push({k:K(pt.x,pt.y+.01),e:beingE(e,pt.x,pt.y,pt.zh||0,30,8,RIGK.mzk)})}
     if(BOX)L2.push({k:K(BOX.x,BOX.y+.01),e:boxEntry()});
     L2.sort((a,b)=>a.k-b.k);return[fl,L2.map(o=>o.e)]}
   for(const p of props){if(p.hide||!vis(p))continue;for(const L of p.layers){layerSB(L);(L.floor?fl:li).push(L)}}
   const h=W.hero;if(h&&!D.noHero&&!D.heroLast)li.push(beingE(HE,h.x,h.y,h.zh||0,56,10,RIGK.hzk));
   for(const z of W.Z){if(z.id==null)z.id=++ZID;const e=z.E||(z.E={kind:'B',z,sid:'Z'+z.id,sk:900000+(z.id%99999)}),hd=z.kind==='hound';beingE(e,z.x,z.y,z.zh||0,(hd?30:46)*z.sc,(hd?16:10)*z.sc,RIGK.mzk);if(hd)houndSB(e,z);li.push(e)}
   for(const c of perches){if(!c.away)li.push(beingE(c.E,c.x,c.y,c.z,14,6,CAM.CP))}
+  // i compagni dell'eroe (compagni.js): esseri come gli zombie
+  for(const pt of W.pets||[]){const e=pt.E||(pt.E={kind:'B',pet:pt,sid:'P'+pt.i,sk:600000+pt.i});li.push(beingE(e,pt.x,pt.y,pt.zh||0,30,8,RIGK.mzk))}
   if(!D.noFlames)for(const f of FREEF)li.push(beingE(f.E,f.x,f.y,f.z-4,10,4,CAM.CP));
   if(BOX)li.push(boxEntry());
   // con la zona chiusa velata e la telecamera che guarda verso di lei: prima tutto quello che sta di là dalla linea del confine, poi il velo, poi
@@ -16942,6 +17068,106 @@ function drawTop(){
   const _g=D.drawGround;D.drawGround=dt=>{_g(dt);drawGround()};const _t=D.drawTop;D.drawTop=dt=>{_t(dt);drawTop()};
   const _r=D.reset;D.reset=()=>{_r();SP.fl.length=0;SP.waves.length=0;SP.steam.length=0;SP.sparks.length=0;for(const z of W.Z)z.burn=0};return D}}
 ZM.speciali=SP})();
+// ---------- I COMPAGNI sulla mappa zombie (punto 41 del piano di Denis, anteprima 47): le creature si usano in tutte e due le modalità, con le
+// stesse carte e gli stessi livelli (SAVE.pets, src/js/34-compagni.js). Seguono l'eroe un passo dietro di lui, girano con la telecamera come gli
+// zombie e attaccano lo zombie più vicino che vedono: lo Spiritello lancia fiammelle verdi che lo inseguono, il Funghetto soffia una nuvola di
+// spore che colpisce tutti quelli intorno, la Lucciola scintille che inseguono e ogni 8 secondi rimette un po' di vita all'eroe, il Corvetto
+// piume d'osso velocissime che passano attraverso due zombie, il Draghetto fiammate che li fanno bruciare (il fuoco di armi_speciali.js).
+// I compagni si disegnano coi modelli 3D (N3) nell'ordine degli esseri (motore.js: W.pets e W.drawPet). Numeri in ZP, da regolare giocando.
+(()=>{const{W,S,CAM,rr,cl,TAU,hurt,hit,move,physClear,heightAt}=ZM;
+// cd: secondi tra un attacco e l'altro; dmg: danno (la pistola fa 20 a colpo); v: velocità del colpo; hom: insegue; pierce: zombie in più
+// che passa; splash: raggio della nuvola; cone: portata della fiammata; heal: vita rimessa ogni hcd secondi. Il livello del compagno aggiunge
+// il 10% a livello, il round il 5% a round
+const ZP={spiritello:{cd:1.4,dmg:16,shot:'wisp',v:250,hom:1},funghetto:{cd:1.8,dmg:12,shot:'spore',v:190,splash:34},
+  lucciola:{cd:1.6,dmg:9,shot:'spark',v:280,hom:1,heal:8,hcd:8},corvetto:{cd:1.2,dmg:15,shot:'feather',v:430,pierce:2},draghetto:{cd:2.6,dmg:22,cone:84,burn:1.6}};
+const ZC={ids:null,shots:[],fx:[],ZP};
+const lvlK=id=>1+.1*((typeof petLvl==='function'&&typeof SAVE!=='undefined'&&SAVE.pets?petLvl(id):1)-1),
+  roundK=()=>1+.05*Math.max(0,((W.director&&W.director.R)||1)-1);
+// chi viene: nel gioco quelli portati dal menu (gli stessi della Classica), nelle pagine di prova quelli di ZM.compagni.ids
+function wanted(){if(ZC.ids)return ZC.ids.slice();if(W.gioco&&typeof petEq==='function')try{return petEq().slice()}catch(e){}return[]}
+function make(){const h=W.hero;return wanted().filter(id=>typeof N3!=='undefined'&&N3[id]&&ZP[id]).map((id,i)=>{const s=i?1:-1;
+  return{id,i,slot:i,x:h.x+s*26,y:h.y+10,zh:0,face:-Math.PI/2,fs:-Math.PI/2,t:i*.7,cd:1+i*.5,hcd:(ZP[id].hcd||0),att:0,happy:0,hop:0,moving:false,scan:0,tg:null,anim:'idle'}})}
+const alive=z=>z&&!z.die&&!(z.rise<1)&&!z.idle&&z.hp>0;
+const wall=(x,y)=>{const s=hit(x,y,1.5);return!!s&&s.tag!=='hole'};
+// ------------------------------------------------------------------ i suoni (col bottone Suono acceso)
+function suono(w,x){try{if(typeof AU==='undefined'||!AU.ctx||!AU.on.sfx)return;const t=AU.ctx.currentTime+.01;AU.pan=0;
+  if(w==='wisp'){whoosh(t,.35,600,2200,.08,.12);vBell(null,t+.02,88,.5,.03)}
+  else if(w==='spore')fNoise(t,.3,'bandpass',VR(1400,.3),1.1,.06,{f2:500})
+  else if(w==='spark')vBell(null,t,91,.35,.035)
+  else if(w==='feather')whoosh(t,.18,1800,4200,.07,.08)
+  else if(w==='fire')fNoise(t,.5,'lowpass',VR(900,.2),.8,.12,{brown:true,att:.05})
+  else if(w==='heal'){vBell(null,t,84,.8,.05);vBell(null,t+.1,88,.8,.04)}}catch(e){}}
+// ------------------------------------------------------------------ ogni fotogramma
+function update(dt,on,D){const h=W.hero;if(!h)return;if(W.pets==null)W.pets=make();const P=W.pets;if(!P.length&&!ZC.shots.length)return;
+  const play=on&&!h.dead&&D.st!=='fine'&&D.st!=='giu';
+  // contenti alla fine di un round
+  if(D.st!==ZC.st){if(ZC.st==='round'&&D.st==='pausa')for(const pt of P)pt.happy=.8;ZC.st=D.st}
+  for(const pt of P){pt.t+=dt;pt.att=Math.max(0,pt.att-dt);pt.happy=Math.max(0,pt.happy-dt);
+    // il posto, come nella Classica: accanto all'eroe sullo schermo (dalla parte opposta a dove guarda) e un poco verso di noi, così non gli
+    // vola mai sulla testa; con la telecamera girata il posto gira con lei
+    const cy=Math.cos(CAM.yaw),sy0=Math.sin(CAM.yaw),fx=Math.cos((h.face||0)+CAM.yaw);if(Math.abs(fx)>.2)ZC.side=fx>=0?-1:1;
+    const sd=(ZC.side||-1)*(pt.slot?-1:1),ox=sd*26,oy=10+(pt.slot?6:0);
+    let tx=h.x+ox*cy+oy*sy0,ty=h.y-ox*sy0+oy*cy;if(wall(tx,ty)){tx=h.x+(ox*cy+oy*sy0)*.45;ty=h.y+(-ox*sy0+oy*cy)*.45}
+    const dx=tx-pt.x,dy=ty-pt.y,dd=Math.hypot(dx,dy);
+    // rimasto indietro (troppo lontano, o fermo contro un muro per più di un secondo): ricompare accanto all'eroe in uno sbuffo
+    if(dd>170||pt.stuck>1){pt.x=tx;pt.y=ty;pt.puff=.4;pt.stuck=0}
+    else if(dd>4){const sp=Math.min(dd*4,230)*dt,x0=pt.x,y0=pt.y;move(pt,dx/dd*sp,dy/dd*sp,5);pt.moving=dd>8;pt.hop+=dt*12;
+      pt.stuck=dd>50&&Math.hypot(pt.x-x0,pt.y-y0)<sp*.3?(pt.stuck||0)+dt:0}else{pt.moving=false;pt.stuck=0}
+    pt.zh=heightAt?heightAt(pt.x,pt.y):0;pt.puff=Math.max(0,(pt.puff||0)-dt);
+    // il bersaglio: lo zombie più vicino che vede, cercato cinque volte al secondo
+    if((pt.scan-=dt)<=0){pt.scan=.2;let best=null,bd=200;if(play)for(const z of W.Z){if(!alive(z))continue;const d=Math.hypot(z.x-pt.x,z.y-pt.y);if(d<bd&&physClear(pt.x,pt.y,z.x,z.y,2)){bd=d;best=z}}pt.tg=best}
+    if(!alive(pt.tg))pt.tg=null;const tg=pt.tg;
+    const fw=tg?Math.atan2(tg.y-pt.y,tg.x-pt.x):pt.moving?Math.atan2(dy,dx):(h.face!=null?h.face:pt.face);pt.face=fw;
+    const df=Math.atan2(Math.sin(pt.face-pt.fs),Math.cos(pt.face-pt.fs));pt.fs+=df*Math.min(1,dt*10);
+    pt.cd-=dt;if(!tg)pt.cd=Math.max(pt.cd,.35);
+    if(play&&tg&&pt.cd<=0){const Z=ZP[pt.id],dmg=Z.dmg*lvlK(pt.id)*roundK()*((W.mods&&W.mods.dmg)||1);pt.cd=Z.cd;pt.att=.3;attack(pt,tg,Z,dmg)}
+    if(ZP[pt.id].heal&&play){pt.hcd-=dt;if(pt.hcd<=0){pt.hcd=ZP[pt.id].hcd;const vita=(D.PZ&&D.PZ.vita)||100;if(D.hp<vita){D.hp=Math.min(vita,D.hp+ZP[pt.id].heal*lvlK(pt.id));pt.happy=.8;suono('heal');
+      for(let i=0;i<10;i++)ZC.fx.push({k:'heal',x:h.x+rr(-10,10),y:h.y+rr(-6,6),z:(h.zh||0)+rr(6,30),vz:rr(20,50),t:0,T:rr(.5,.8)})}}}
+    pt.anim=pt.att>0?'attack':pt.happy>0?'happy':pt.moving?'walk':'idle'}
+  // i colpi: volano, inseguono (fiammelle e scintille), si fermano ai muri, colpiscono
+  for(let i=ZC.shots.length-1;i>=0;i--){const s=ZC.shots[i];s.life-=dt;s.t+=dt;
+    if(s.hom&&alive(s.tg)){const da=Math.atan2(Math.sin(Math.atan2(s.tg.y-s.y,s.tg.x-s.x)-s.a),Math.cos(Math.atan2(s.tg.y-s.y,s.tg.x-s.x)-s.a));s.a+=cl(da,-7*dt,7*dt)}
+    s.x+=Math.cos(s.a)*s.v*dt;s.y+=Math.sin(s.a)*s.v*dt;let gone=s.life<=0||wall(s.x,s.y);
+    if(!gone)for(const z of W.Z){if(!alive(z)||s.hit.has(z))continue;if(Math.hypot(z.x-s.x,z.y-s.y)<10*z.sc+3){s.hit.add(z);
+      if(s.splash){for(const z2 of W.Z)if(alive(z2)&&Math.hypot(z2.x-s.x,z2.y-s.y)<s.splash)hurt(z2,z2===z?s.dmg:s.dmg*.6,z2===z);for(let k=0;k<(LOWFX?6:14);k++){const a=rr(0,TAU),r=rr(4,s.splash);ZC.fx.push({k:'spore',x:s.x+Math.cos(a)*r*.4,y:s.y+Math.sin(a)*r*.4,vx:Math.cos(a)*r*1.6,vy:Math.sin(a)*r*1.6,z:rr(4,20),vz:rr(6,22),t:0,T:rr(.6,1)})}gone=true;break}
+      hurt(z,s.dmg,true);if(s.pierce>0){s.pierce--;s.dmg*=.8}else{gone=true;break}}}
+    if(gone){ZC.shots.splice(i,1);if(!s.splash)for(let k=0;k<(LOWFX?2:5);k++)ZC.fx.push({k:'hit',kind:s.kind,x:s.x,y:s.y,z:s.z,vx:rr(-50,50),vy:rr(-50,50),vz:rr(-10,40),t:0,T:rr(.2,.35)})}}
+  for(const f of ZC.fx){f.t+=dt;if(f.vx){f.x+=f.vx*dt;f.y+=f.vy*dt;f.vx*=Math.exp(-4*dt);f.vy*=Math.exp(-4*dt)}if(f.vz)f.z+=f.vz*dt}ZC.fx=ZC.fx.filter(f=>f.t<f.T)}
+function attack(pt,tg,Z,dmg){const a=Math.atan2(tg.y-pt.y,tg.x-pt.x),fly=pt.id!=='funghetto';
+  if(Z.cone){// la fiammata del Draghetto: tutti quelli davanti a lui prendono fuoco (il fuoco e le fiamme di armi_speciali.js)
+    for(const z of W.Z){if(!alive(z))continue;const ex=z.x-pt.x,ey=z.y-pt.y,ed=Math.hypot(ex,ey);let d2=Math.atan2(ey,ex)-a;d2=Math.atan2(Math.sin(d2),Math.cos(d2));
+      if(ed<Z.cone&&Math.abs(d2)<.55&&physClear(pt.x,pt.y,z.x,z.y,2)){hurt(z,dmg,false);if(!z.die)z.burn=Math.max(z.burn||0,Z.burn)}}
+    const SP=ZM.speciali;if(SP)for(let i=0;i<(LOWFX?3:7);i++){const aa=a+rr(-.4,.4),sp=rr(.7,1)*Z.cone;SP.fl.push({x:pt.x+Math.cos(a)*8,y:pt.y+Math.sin(a)*8,vx:Math.cos(aa)*sp*2.3,vy:Math.sin(aa)*sp*2.3,z:(pt.zh||0)+18,t:0,T:rr(.3,.42),r:rr(2.5,4)})}
+    suono('fire',pt.x);return}
+  ZC.shots.push({x:pt.x+Math.cos(a)*6,y:pt.y+Math.sin(a)*6,z:(pt.zh||0)+(fly?22:14),a,v:Z.v,kind:Z.shot,dmg,life:1.4,hom:!!Z.hom,tg,pierce:Z.pierce||0,splash:Z.splash||0,hit:new Set(),t:0});suono(Z.shot,pt.x)}
+// ------------------------------------------------------------------ i disegni: i compagni nel loro posto nell'ordine degli esseri (motore.js),
+// i colpi e le scintille sopra
+W.drawPet=pt=>{if(typeof N3==='undefined'||!N3[pt.id])return;const q=S(pt.x,pt.y,pt.zh||0),t=W.t||0,a=pt.anim,M=N3.meta&&N3.meta[pt.id]||{},d=(M.dur&&M.dur[a])||2;
+  const p=Math.min(.999,Math.max(0,a==='walk'?((pt.hop/(TAU*2))%1+1)%1:a==='attack'?1-pt.att/.3:a==='happy'?1-Math.min(1,pt.happy/.8):(((t+pt.i*.37)/d)%1+1)%1)),fc=pt.fs+CAM.yaw;
+  if(pt.a3!==a){if(pt.a3!=null){pt.b3=pt.a3;pt.b3p=pt.p3;pt.b3t=t}pt.a3=a}pt.p3=p;
+  try{if(pt.b3&&t-pt.b3t>=0&&t-pt.b3t<.12){const a0=ctx.globalAlpha;ctx.globalAlpha=a0*.6*(1-(t-pt.b3t)/.12);N3[pt.id](q[0],q[1],fc,pt.b3,pt.b3p,1,{noFx:true});ctx.globalAlpha=a0}
+    N3[pt.id](q[0],q[1],fc,a,p,1,{noFx:LOWFX})}catch(e){console.error(e)}
+  if(pt.puff>0){const k=1-pt.puff/.4;ctx.save();ctx.globalAlpha=.6*(1-k);ctx.fillStyle='#e8f0e4';for(let i=0;i<6;i++){const aa=i*TAU/6;ctx.beginPath();ctx.arc(q[0]+Math.cos(aa)*(6+k*12),q[1]-12+Math.sin(aa)*(4+k*7),3+k*3,0,TAU);ctx.fill()}ctx.restore()}};
+const COL={wisp:'150,255,190',spark:'220,255,110',feather:'240,232,214',spore:'190,255,140'};
+function glowAt(rgb,x,y,r,a){const g=ctx.createRadialGradient(x,y,0,x,y,r);g.addColorStop(0,`rgba(${rgb},${a})`);g.addColorStop(1,`rgba(${rgb},0)`);ctx.fillStyle=g;ctx.fillRect(x-r,y-r,2*r,2*r)}
+function drawTop(){if(!ZC.shots.length&&!ZC.fx.length)return;
+  for(const s of ZC.shots){const q=S(s.x,s.y,s.z),sa=Math.atan2(CAM.SP*Math.sin(s.a+CAM.yaw),Math.cos(s.a+CAM.yaw));ctx.save();
+    if(s.kind==='feather'){ctx.translate(q[0],q[1]);ctx.rotate(sa);ctx.strokeStyle='rgba(27,22,18,.9)';ctx.lineWidth=1.2;ctx.fillStyle='#efe6d2';ctx.beginPath();ctx.moveTo(7,0);ctx.quadraticCurveTo(0,-3.2,-7,-1.2);ctx.lineTo(-5,0);ctx.lineTo(-7,1.2);ctx.quadraticCurveTo(0,3.2,7,0);ctx.closePath();ctx.fill();ctx.stroke();
+      ctx.strokeStyle='rgba(120,100,70,.7)';ctx.lineWidth=.7;ctx.beginPath();ctx.moveTo(7,0);ctx.lineTo(-6,0);ctx.stroke();if(!LOWFX){ctx.globalAlpha=.35;ctx.fillStyle='#fff';ctx.fillRect(-18,-.6,10,1.2)}}
+    else if(s.kind==='spore'){ctx.globalCompositeOperation='lighter';if(!LOWFX)glowAt(COL.spore,q[0],q[1],10,.55);for(let i=0;i<4;i++){const a=s.t*7+i*1.6;ctx.fillStyle=`rgba(${COL.spore},.9)`;ctx.beginPath();ctx.arc(q[0]+Math.cos(a)*2.6,q[1]+Math.sin(a)*2,1.6,0,TAU);ctx.fill()}}
+    else{ctx.globalCompositeOperation='lighter';const rgb=COL[s.kind]||COL.wisp;glowAt(rgb,q[0],q[1],s.kind==='wisp'?11:9,.75);ctx.fillStyle=s.kind==='wisp'?'#eafff2':'#fbffd8';ctx.beginPath();
+      if(s.kind==='wisp'){ctx.translate(q[0],q[1]);ctx.rotate(sa);ctx.moveTo(4,0);ctx.quadraticCurveTo(0,-3.4,-8,0);ctx.quadraticCurveTo(0,3.4,4,0);ctx.fill()}else{ctx.arc(q[0],q[1],1.9,0,TAU);ctx.fill()}}
+    ctx.restore()}
+  ctx.save();for(const f of ZC.fx){const k=f.t/f.T,q=S(f.x,f.y,f.z);
+    if(f.k==='spore'){ctx.globalAlpha=.8*(1-k);ctx.fillStyle=`rgb(${COL.spore})`;ctx.beginPath();ctx.arc(q[0],q[1],1.4+k*2,0,TAU);ctx.fill()}
+    else if(f.k==='heal'){ctx.globalAlpha=1-k;ctx.fillStyle='#c8f04a';ctx.fillRect(q[0]-.8,q[1]-3,1.6,6);ctx.fillRect(q[0]-3,q[1]-.8,6,1.6)}
+    else{ctx.globalAlpha=1-k;ctx.fillStyle=`rgb(${COL[f.kind]||COL.wisp})`;ctx.beginPath();ctx.arc(q[0],q[1],1.6*(1-k*.5),0,TAU);ctx.fill()}}ctx.restore()}
+// agganciati alla partita (come fortuna.js e armi_speciali.js)
+{const _p=ZM.partita;ZM.partita=function(o){const D=_p(o);if(D.__pt)return D;D.__pt=1;
+  const _u=D.update;D.update=(dt,on)=>{_u(dt,on);try{update(dt,on,D)}catch(e){console.error(e)}};
+  const _t=D.drawTop;D.drawTop=dt=>{_t(dt);try{drawTop()}catch(e){console.error(e)}};
+  const _r=D.reset;D.reset=()=>{_r();W.pets=null;ZC.shots.length=0;ZC.fx.length=0;ZC.st=null};return D}}
+ZM.compagni=ZC})();
 // ---------- LA MAPPA della modalità zombie (pianta approvata da Denis il 12 ottobre, anteprime/zombie/pianta.py): a sud l'area di partenza
 // «Camposanto e Casa» (12×12 caselle: l'anteprima di prima con due caselle in più a nord e due a est), a nord oltre il cancello a pagamento la
 // «Fattoria dei Corvi» (16×12), e sopra la fattoria due caselle di granturco che continua oltre il bordo. Coordinate: X(), Y() dalla pianta (in
@@ -17205,7 +17431,7 @@ function n3Face(e){return n3Turn(e,n3Face0(e),G.t||0)}
   ctx.globalAlpha=aE;
   if(esc)ctx.restore();if(hf){ctx.restore();ctx.save();ctx.globalCompositeOperation='lighter';glow('255,255,255',x,y-e.r-(e.z||0),e.r*1.8,.55*Math.min(1,e.flash/.08));ctx.restore()}
   if(e.root>0)drawRoots(e);if(e.frozen>0)drawFrozen(e)}}
-// the pets (Muschietto, the Lucciola, the Draghetto) in 3D wherever the game draws them: in battle, in the menu, in their tab and icons
+// the pets (Spiritello, Funghetto, Lucciola, Corvetto, Draghetto) in 3D wherever the game draws them: in battle, in the menu, in their tab and icons
 {const _ps=drawPetSprite;drawPetSprite=function(id,x,y,o){if(!N3G.on||typeof N3==='undefined'||!N3[id]||N3G.bad[id])return _ps.apply(this,arguments);o=o||{};
   const M=N3.meta[id],t=o.t!=null?o.t:(G.t||0),a=o.att?'attack':o.happy?'happy':o.moving?'walk':'idle',d=(M.dur&&M.dur[a])||2,
     p=a==='walk'?(((o.hop||0)/(TAU*2))%1+1)%1:a==='attack'&&o.att>0&&o.att<=.3?1-o.att/.3:a==='happy'&&o.happy>0?1-Math.min(1,o.happy/.8):((t/d)%1+1)%1;

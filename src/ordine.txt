@@ -75,6 +75,7 @@ js/61-anteprime-arene.js
 ../sprite/nemici3d/boss1.js
 ../sprite/nemici3d/boss2.js
 ../sprite/nemici3d/eroi.js
+../sprite/nemici3d/creature.js
 js/62-eroe-3d.js
 ../anteprime/zombie/motore.js
 ../anteprime/zombie/prop.js
@@ -82,6 +83,7 @@ js/62-eroe-3d.js
 ../anteprime/zombie/partita.js
 ../anteprime/zombie/fortuna.js
 ../anteprime/zombie/armi_speciali.js
+../anteprime/zombie/compagni.js
 ../anteprime/zombie/area_mappa.js
 js/63-zombie.js
 js/64-nemici-3d.js

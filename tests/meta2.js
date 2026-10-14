@@ -17,8 +17,8 @@ await p.screenshot({path:'t_hero3.png'});
 await p.click('.harr.l');await p.waitForTimeout(300);await p.click('#hAct [data-hact]');await p.waitForTimeout(300);s=JSON.parse(await E('JSON.stringify(SAVE)'));ok('torna ad Arciere',s.hero==='arciere');
 // pets
 await E(`setTab('tabPets')`);await p.waitForTimeout(300);await p.screenshot({path:'t_pet1.png'});
-await p.click('[data-pup="muschietto"]');await p.waitForTimeout(200);await p.click('[data-psel="lucciola"]');await p.waitForTimeout(300);
-s=JSON.parse(await E('JSON.stringify(SAVE)'));ok('compagno: migliora e scegli',s.pets.owned.muschietto.lvl===2&&s.pets.eq.includes('lucciola')&&s.pets.eq.includes('muschietto'));await p.screenshot({path:'t_pet2.png'});
+await p.click('[data-pup="spiritello"]');await p.waitForTimeout(200);await p.click('[data-psel="lucciola"]');await p.waitForTimeout(300);
+s=JSON.parse(await E('JSON.stringify(SAVE)'));ok('compagno: migliora e scegli',s.pets.owned.spiritello.lvl===2&&s.pets.eq.includes('lucciola')&&s.pets.eq.includes('spiritello'));await p.screenshot({path:'t_pet2.png'});
 // talents
 await E(`setTab('tabHero')`);await p.waitForTimeout(300);await p.click('.tbuy');await p.waitForTimeout(300);s=JSON.parse(await E('JSON.stringify(SAVE)'));ok('talento comprato',Object.keys(s.tal).length===1);await p.screenshot({path:'t_tal.png'});
 // item upgrade + equip

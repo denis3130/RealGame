@@ -63,7 +63,7 @@ function n3Face(e){return n3Turn(e,n3Face0(e),G.t||0)}
   ctx.globalAlpha=aE;
   if(esc)ctx.restore();if(hf){ctx.restore();ctx.save();ctx.globalCompositeOperation='lighter';glow('255,255,255',x,y-e.r-(e.z||0),e.r*1.8,.55*Math.min(1,e.flash/.08));ctx.restore()}
   if(e.root>0)drawRoots(e);if(e.frozen>0)drawFrozen(e)}}
-// the pets (Muschietto, the Lucciola, the Draghetto) in 3D wherever the game draws them: in battle, in the menu, in their tab and icons
+// the pets (Spiritello, Funghetto, Lucciola, Corvetto, Draghetto) in 3D wherever the game draws them: in battle, in the menu, in their tab and icons
 {const _ps=drawPetSprite;drawPetSprite=function(id,x,y,o){if(!N3G.on||typeof N3==='undefined'||!N3[id]||N3G.bad[id])return _ps.apply(this,arguments);o=o||{};
   const M=N3.meta[id],t=o.t!=null?o.t:(G.t||0),a=o.att?'attack':o.happy?'happy':o.moving?'walk':'idle',d=(M.dur&&M.dur[a])||2,
     p=a==='walk'?(((o.hop||0)/(TAU*2))%1+1)%1:a==='attack'&&o.att>0&&o.att<=.3?1-o.att/.3:a==='happy'&&o.happy>0?1-Math.min(1,o.happy/.8):((t/d)%1+1)%1;

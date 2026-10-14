@@ -2,8 +2,8 @@
 // Eroi: l'Arciere (già nel gioco), la Cacciatrice (coda di capelli, arco rosa), il Balestriere (elmo, balestra) e il Druida (corna di legno,
 // punta del cappuccio, bastone con la sfera verde, occhi verdi), tutti sullo stesso corpo 3D (EROE.arciere) con i colori del gioco
 // (HEROES in src/js/39-meta2-eroi-talenti.js), mosse: fermo, cammina, tira, scatto, colpito. Compagni (drawPetSprite in
-// src/js/34-compagni.js): Muschietto (un batuffolo di muschio con due germogli), la Lucciola (la coda che brilla, ali di velo) e il
-// Draghetto (corna gialle, ali, coda a punta, sputa fuoco). Il Mercante del gioco (MERCHANT) col suo tappeto, le pozioni e la cassa.
+// src/js/34-compagni.js): la Lucciola (la coda che brilla, ali di velo) e il Draghetto (corna gialle, ali, coda a punta, sputa fuoco); Muschietto
+// non c'è più (punto 41 del piano di Denis), le creature nuove stanno in creature.js. Il Mercante del gioco (MERCHANT) col suo tappeto, le pozioni e la cassa.
 (()=>{const C=C3,{TAU,cl,ez,lerp,add,sub,mul,len,nrm,dot,cross,lerp3,V,ball,seg,run,dk,lt,rgba,poly,bbox,softBox,softBall,rimPoly,look,blink,keys,hitK,hop,frame,
   vol,ellPts,ellAt,ellN,sball,caps,chain,leaf,spot,eyes,mouth,cheeks,ellFace,floor,stars,parts,reg,shine}=C;
 
@@ -22,39 +22,6 @@ reg('druida',{n:'Druida',g:'eroi',an:['idle','walk','shoot','dash','hit'],dur:{.
 // the companions of today (drawPetSprite of the game, with a pretend state)
 const oldPet=id=>(x,y,face,anim,p)=>{const t=G.t;drawPetSprite(id,x,y,{face,moving:anim==='walk',hop:p*TAU*2,t,att:anim==='attack'&&p>.3&&p<.7?1:0,happy:anim==='happy'?1:0})};
 const PD={idle:2.4,walk:.6,attack:1,happy:1.2};
-
-// ------------------------------------------------------------------ MUSCHIETTO: a fluffy ball of moss on two little dark feet, two leaf sprouts on
-// top, black eyes with a point of light, pink cheeks, a smile. It hops after you; the attack spreads the sprouts and opens its mouth (the
-// leaf it throws is the game's); happy: a hop of joy
-const MC={moss:'#6fb04a',mossL:'#9fe06a',mossD:'#4a8030',foot:'#4a6a2a',sprout:'#9fe06a',blush:'255,154,176'};
-function muschietto(x,y,face,anim,p,sc,o){sc=sc||1;o=o||{};const V0=V(face),{P,D,F}=V0,ph=p*TAU,r=9.4;
-  const A={B:[0,0,0],lean:0,roll:0,s:0,yaw:0,spread:0,wig:0,blink:1,shut:0,open:0,stars:0};
-  if(anim==='walk'){const h=hop(p,.6);A.B=[0,0,h.z*5];A.s=h.s*1.4;A.lean=.08;A.wig=Math.sin(ph*2)*.25}
-  else if(anim==='attack'){const k=p<.3?ez(p/.3):p<.7?1:1-ez((p-.7)/.3);A.spread=k;A.open=p>.3&&p<.75?1:0;A.s=keys([[0,0],[.3,-.1],[.36,.12],[.46,0],[1,0]],p);A.lean=keys([[0,0],[.3,0],[.36,.14],[.5,.14],[.6,0],[1,0]],p)}
-  else if(anim==='happy'){const h=hop(p,.5);A.B=[0,0,h.z*7];A.s=h.s*1.6;A.open=1;A.spread=.6*Math.sin(p*Math.PI);A.yaw=.25*Math.sin(ph*2)}
-  else if(anim==='hit'){const kb=hitK(p);A.B=[-3*kb,0,.5*kb];A.lean=-.3*kb;A.s=-.12*kb;A.shut=p<.5?1:0;A.stars=p<.75?1-p/.75:0}
-  else{A.s=.03*Math.sin(ph);A.yaw=look(p,.4);A.blink=blink(p,.6,.07);A.wig=Math.sin(ph*2)*.12}
-  const X=frame(A,0),Cb=[0,0,r+1.6],dT=D(Cb);
-  floor(V0,x,y,sc,A.B,9.5,3.8,.3,A.B[2]);
-  ctx.save();ctx.translate(x,y);ctx.scale(sc,sc);const L=parts();
-  for(const sd of[-1,1]){const f=[1.6,sd*4.2,2.4];L.add(dT-50+D(f)*.01,()=>sball(V0,add(f,[A.B[0],A.B[1],0]),2.7,dk(MC.foot,.15*C.sstep(0,-.12,F(0,sd,0))),{rim:.15}))}
-  // the sprouts: two leaves out of the top, a little apart, wiggling; wide open when it attacks
-  for(const sd of[-1,1]){const b=X.T(add(Cb,mul(nrm([0,sd*.42,.9]),r*.9))),d=nrm(X.Rd([.05,sd*(.42+.55*A.spread+A.wig*sd),1])),sv=nrm(X.Rd([1,0,0]));
-    L.add(dT+(F([0,0,1])>0?.4:-.4)+(F(0,sd,0)>.3?.05:-.05),()=>leaf(V0,b,d,sv,11.5,4.2,MC.sprout,{back:dk(MC.sprout,.12),round:.7,vein:'rgba(40,90,20,.5)',bend:.4}))}
-  // the body: a ball of moss with a tufted outline, lighter tufts on top, the face
-  L.add(dT,()=>{const c=X.T(Cb),q=P(c),sx=Math.sqrt(1/Math.max(.5,1+A.s)),R0=r,ph0=face*2.3,pts=[];
-    for(let i=0;i<18;i++){const a=i/18*TAU,rr=R0+(i%2?1.7:-.2)+Math.sin(a*3+ph0)*.3;pts.push([q[0]+Math.cos(a)*rr*sx,q[1]+Math.sin(a)*rr*(1+A.s)])}
-    // the outline: soft round tufts (a smooth curve through the points), like the moss of the game
-    ctx.lineJoin='round';C.smooth(pts);ctx.fillStyle=softBall(q,R0+1,MC.moss,.18,.32);ctx.fill();ink(2.2);ctx.stroke();
-    ctx.save();C.smooth(pts);ctx.clip();
-    for(const[a,e,s0] of[[.6,.9,2.6],[-.8,.7,2.2],[2.5,.6,2.4],[-2.4,.5,2.3],[0,1.25,2.4],[1.6,.2,1.8],[-1.7,.15,1.9],[3.1,1,2]]){const m=[Math.cos(a)*Math.cos(e),Math.sin(a)*Math.cos(e),Math.sin(e)];spot(V0,X.T(add(Cb,mul(m,r*.93))),X.Rd(m),s0,'rgba(159,224,106,.55)',{v0:.1})}
-    const at=m=>({q:P(X.T(add(Cb,mul(m,r*.97)))),v:F(X.Rd(m))});
-    eyes(null,q,r,{at,dir:[1,.36,.12],kind:'dark',rx:2.2,ry:2.6,blink:A.blink,shut:A.shut,lr:.6});
-    cheeks(null,q,r,null,{at,dir:[1,.6,-.12],rgb:MC.blush,al:.7,rx:1.7,ry:1});
-    if(A.open)mouth(null,q,r,[1,0,-.14],{at,kind:'open',w:2,h:1.5,open:1,dark:'#3a1a1a',tongue:'#e07a8a'});else mouth(null,q,r,[1,0,-.12],{at,kind:'smile',w:1.6,bow:1.3});
-    ctx.restore();rimPoly(pts,.28)});
-  run(L);if(A.stars>0)stars(P(X.T([0,0,2*r+6])),7,A.stars);ctx.restore()}
-reg('muschietto',{n:'Muschietto',g:'eroi',an:['idle','walk','attack','happy','hit'],dur:{...PD,hit:.6},lab:{walk:'Saltella',attack:'Foglia',happy:'Felice'},old:oldPet('muschietto')},muschietto);
 
 // ------------------------------------------------------------------ LUCCIOLA: a firefly: a round tail that glows yellow-green and pulses, a dark
 // head and chest, big eyes, two antennae with lit tips, two wings of veil that beat fast. It hovers beside the hero; the attack lights the

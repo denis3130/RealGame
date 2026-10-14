@@ -191,7 +191,7 @@ const CARD_SVG='<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 40 48"><rec
 function whCards(){const w=[[0,6],[1,4],[2,2],[3,.6]],tot=w.reduce((a,b)=>a+b[1],0);let r=Math.random()*tot,rar=0;for(const[k,v] of w){r-=v;if(r<0){rar=k;break}}
   const pool=ITEMS.filter(i=>i.rar===rar),it=pool[randi(0,pool.length-1)],n=[8,5,3,2][rar],o=SAVE.items[it.id];
   if(!o){SAVE.items[it.id]={lvl:1,cards:n-1};if(!SAVE.eq[it.slot])SAVE.eq[it.slot]=it.id}else o.cards+=n;return `+${n} carte: ${it.n}`}
-function whPet(){const w=[['muschietto',3],['lucciola',2],['draghetto',1]],tot=6;let r=Math.random()*tot,id='muschietto';for(const[k,v] of w){r-=v;if(r<0){id=k;break}}
+function whPet(){const w=[['spiritello',2],['funghetto',2],['lucciola',1.5],['corvetto',1.5],['draghetto',1]],tot=8;let r=Math.random()*tot,id='spiritello';for(const[k,v] of w){r-=v;if(r<0){id=k;break}}
   const u=addPetCards(id,3);if(u)achPop('Nuovo compagno!',PET_BY[id].n+': trovalo nella scheda Compagni','unlock');return u?`${PET_BY[id].n}: nuovo compagno!`:`+3 carte ${PET_BY[id].n}`}
 const ai0=()=>arenaIdx(SAVE.trophies||0);
 WHEEL.length=0;WHEEL.push(
@@ -200,7 +200,7 @@ WHEEL.length=0;WHEEL.push(
   {n:'Cristalli',ic:'gem',c:['#8fe6ff','#2a8fb8'],w:1,f:()=>{SAVE.gems=(SAVE.gems||0)+5;return '+5 cristalli'}},
   {n:'Bustina',ic:'legno',c:['#c8f08a','#4c8a2c'],w:1,chest:'legno',f:()=>rwName('legno','classica')},
   {n:'Tesoro',ic:'coin',c:['#fff2a8','#e0a000'],w:.6,f:()=>{const v=300+100*ai0();SAVE.gold+=v;return `+${v} oro`}},
-  {n:'Compagno',ic:'pet:muschietto',c:['#b8f08a','#3f8a2a'],w:.8,f:whPet},
+  {n:'Compagno',ic:'pet:spiritello',c:['#c8f8e0','#3f8a6a'],w:.8,f:whPet},
   {n:'Rara',ic:'argento',c:['#cfe2ff','#3f74d0'],w:.5,chest:'argento',f:()=>rwName('argento','classica')},
   {n:'JACKPOT',ic:'crown',c:['#fff2a8','#e0a000'],w:.25,jack:1,chest:'oro',f:()=>{SAVE.gems=(SAVE.gems||0)+25;return rwName('oro','classica')+' + 25 cristalli'}});
 {const _wi=whIcon;whIcon=function(x,k,s){if(k==='card'||k==='legno'||k==='argento'||k.startsWith('pet:')){const im=whImg(k);if(icoOk(im)){x.save();x.scale(s,s);const w=k==='card'?30:k.startsWith('pet:')?40:28,h=k==='card'?36:k.startsWith('pet:')?40:42;x.drawImage(im,-w/2,-h/2-(k==='card'?3:0),w,h);x.restore()}return}return _wi(x,k,s)}}
