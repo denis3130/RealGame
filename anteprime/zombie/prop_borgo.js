@@ -35,14 +35,20 @@ const leafPaint=col=>(W2,H2)=>{ctx.fillStyle=col||'#46321e';ctx.fillRect(0,0,W2,
 // k:'door'|'big'|'win', w, lit, boards, deco (una vetrata: solo disegnata, non è una barriera)}], chim (camino: [x, y]), name}. Ogni muro è un prop a sé col suo tag (wN, wS, wE, wW: con l'eroe dentro
 // si fanno trasparenti quelli verso la telecamera), il tetto ha il tag roof, gli arredi (B.in) il tag in. Le finestre del pianterreno sono
 // barriere (barriere.js, P.winBar); quelle del piano di sopra sono disegnate. Restituisce B: {hs, x, y, w, d, H, HT, in(parts, bx), door(k)}
+// (anteprima 48, punto 15) o.up: il piano di sopra si visita. I muri si dividono in due (sotto wN…, sopra uN…: con l'eroe dentro al pianterreno la
+// parte alta sparisce come il tetto); il solaio (tag slab) col buco della scala o.hole [x0, y0, x1, y1]; i solidi di sopra hanno lv:1 (i quattro
+// muri pieni; i mobili con B.solidUp); B.up(parts, bx) i mobili di sopra (tag inU); le finestre di sopra si vedono anche da dentro
 def('edificio',function(o){const x=o.x,y=o.y,w=o.w,d=o.d,H=o.H||92,FL=o.fl||1,HT=H*FL,th=o.th||10,ov=12,rh=o.rh||Math.min(72,d*.34),wall=o.wall||'siding',inner=o.inner||'plaster',roof=o.roof||'shingle',DW=o.dw||40,DH=o.dh||72;
-  const hs={x,y,w,d,H:HT,rh,a:1,inside:false,porch:null,fl:FL,Hf:H,name:o.name||''};houses.push(hs);shade(x,y,w,d,HT+rh*.6,.55);
+  const UP=!!o.up&&FL>1,hs={x,y,w,d,H:HT,rh,a:1,inside:false,porch:null,fl:FL,Hf:H,name:o.name||'',upF:UP,up:0};houses.push(hs);shade(x,y,w,d,HT+rh*.6,.55);
   const eave=(w2,h2)=>{const g=ctx.createLinearGradient(0,0,0,9);g.addColorStop(0,'rgba(0,0,0,.5)');g.addColorStop(1,'rgba(0,0,0,0)');ctx.fillStyle=g;ctx.fillRect(0,0,w2,9);
     if(FL>1&&h2>H+6){const yy=h2-H;ctx.fillStyle='rgba(0,0,0,.4)';ctx.fillRect(0,yy-1,w2,4);ctx.fillStyle='rgba(255,240,220,.1)';ctx.fillRect(0,yy-2.2,w2,1.2)}};// la trave tra i piani
   const EAV={s:eave,e:eave,n:eave,w:eave};
-  const WALL=(r,t,parts)=>prop({bx:[r[0]-1,r[1]-1,r[2]+1,r[3]+1,HT+6],ky:r[3],parts:tag(parts,t),house:hs});
+  // con il piano di sopra: la trave tra i piani divisa tra la cima del pezzo di sotto e il fondo di quello di sopra
+  const beamL=(w2,h2)=>{ctx.fillStyle='rgba(0,0,0,.4)';ctx.fillRect(0,0,w2,3)},beamU=(w2,h2)=>{eave(w2,h2);ctx.fillStyle='rgba(0,0,0,.4)';ctx.fillRect(0,h2-1,w2,1);ctx.fillStyle='rgba(255,240,220,.1)';ctx.fillRect(0,h2-2.2,w2,1.2)};
+  const LOW={tex:{s:beamL,e:beamL,n:beamL,w:beamL},texId:'pt'},HIGH={tex:{s:beamU,e:beamU,n:beamU,w:beamU},texId:'pu'};
+  const WALL=(r,t,parts,zt)=>prop({bx:[r[0]-1,r[1]-1,r[2]+1,r[3]+1,(zt||HT)+6],ky:r[3],parts:tag(parts,t),house:hs});
   const SD={s:{hz:1,fix:y+d-th,a0:x,a1:x+w,t:'wS',n:[0,1],m:{n:inner}},n:{hz:1,fix:y,a0:x,a1:x+w,t:'wN',n:[0,-1],m:{s:inner}},e:{hz:0,fix:x+w-th,a0:y+th,a1:y+d-th,t:'wE',n:[1,0],m:{w:inner}},w:{hz:0,fix:x,a0:y+th,a1:y+d-th,t:'wW',n:[-1,0],m:{e:inner}}};
-  const B={hs,x,y,w,d,H,HT,th,doors:{},wins:[]};
+  const B={hs,x,y,w,d,H,HT,th,doors:{},wins:[],inN:[]},INW=[];
   const WB=(Sd,a,b,z0,z1,extra)=>Sd.hz?box(a,Sd.fix,z0,b-a,th,z1-z0,wall,Object.assign({ow:2.2,tex:EAV,m:Sd.m,noFoot:z0>0},extra)):box(Sd.fix,a,z0,th,b-a,z1-z0,wall,Object.assign({ow:2.2,tex:EAV,m:Sd.m,noFoot:z0>0},extra));
   const R=(Sd,a,b)=>Sd.hz?[a,Sd.fix,b,Sd.fix+th]:[Sd.fix,a,Sd.fix+th,b];
   const wpt=(Sd,c)=>Sd.hz?[c,Sd.fix+th/2]:[Sd.fix+th/2,c];
@@ -54,16 +60,17 @@ def('edificio',function(o){const x=o.x,y=o.y,w=o.w,d=o.d,H=o.H||92,FL=o.fl||1,HT
     const doors=ops.filter(q=>q.k==='door'||q.k==='big'),wins=ops.filter(q=>q.k==='win');let cur=Sd.a0;const spans=[];
     for(const q of doors){const hw=(q.w||(q.k==='big'?DW*1.8:DW))/2;spans.push([cur,q.c-hw]);q.hw=hw;cur=q.c+hw}spans.push([cur,Sd.a1]);
     // i pezzi pieni: dal pavimento al tetto, con le finestre (barriere) nei loro vani; per ogni pezzo il solido spezzato dalle finestre
-    for(const[a,b] of spans){if(b-a<1)continue;const parts=WB(Sd,a,b,0,HT);const ws=wins.filter(q=>q.c>a+18&&q.c<b-18);let sc=a;
+    for(const[a,b] of spans){if(b-a<1)continue;const parts=UP?WB(Sd,a,b,0,H,LOW):WB(Sd,a,b,0,HT),upP=UP?WB(Sd,a,b,H,HT,HIGH):parts;const ws=wins.filter(q=>q.c>a+18&&q.c<b-18);let sc=a;
+      if(UP&&k==='n')for(const t of upP)if(t.k==='face'&&t.key==='s')B.inN.push({a,b,face:t});// (la faccia di dentro del muro nord, di sopra: ci va l'arma col gesso)
       for(const q of ws){const pl=winPlane(k,q.c,WZ,!!q.lit,!!q.boards,'g'+Math.round(q.c)+k);parts.push(pl);if(q.deco){B.wins.push(q);continue}const hw=WW/2-7;const r1=R(Sd,sc,q.c-hw);solid(r1[0],r1[1],r1[2]-r1[0],r1[3]-r1[1]);
         const rb=R(Sd,q.c-hw,q.c+hw),sol=solid(rb[0],rb[1],rb[2]-rb[0],rb[3]-rb[1]);sc=q.c+hw;
         if(P.winBar)P.winBar(sol,{c:q.c,along:Sd.hz?'x':'y',pl,lit:!!q.lit,boards:!!q.boards,draw:pl.draw,at:ZM.toWorld(...wpt(Sd,q.c)),n:ZM.dirWorld(...Sd.n),hs,half:hw,zfx:WZ+20,sx:WW/40,sy:WH/34});B.wins.push(q)}
       const rl=R(Sd,sc,b);solid(rl[0],rl[1],rl[2]-rl[0],rl[3]-rl[1]);
       // le finestre del piano di sopra (disegnate), sopra quelle di sotto e a metà dei pezzi lunghi senza finestre
-      if(FL>1){const up=ws.length?ws.map(q=>q.c):b-a>120?[(a+b)/2]:[];for(const c of up)parts.push(winPlane(k,c,H+WZ,((c*7+k.charCodeAt(0))%5)<2,false,'u'+Math.round(c)+k))}
-      WALL(R(Sd,a,b),Sd.t,parts)}
+      if(FL>1){const ups=ws.length?ws.map(q=>q.c):b-a>120?[(a+b)/2]:[];for(const c of ups){upP.push(winPlane(k,c,H+WZ,((c*7+k.charCodeAt(0))%5)<2,false,'u'+Math.round(c)+k));if(UP)INW.push([k,c])}}
+      WALL(R(Sd,a,b),Sd.t,parts,UP?H:HT);if(UP)WALL(R(Sd,a,b),'u'+k.toUpperCase(),upP)}
     // le porte: l'architrave sopra il vano, gli stipiti e la traversa appena fuori dal muro, l'anta aperta verso fuori
-    for(const q of doors){const a=q.c-q.hw,b=q.c+q.hw,parts=WB(Sd,a,b,DH,HT);WALL(R(Sd,a,b),Sd.t,parts);B.doors[q.id||k]={c:q.c,s:k,hw:q.hw,at:ZM.toWorld(...wpt(Sd,q.c))};
+    for(const q of doors){const a=q.c-q.hw,b=q.c+q.hw,parts=WB(Sd,a,b,DH,UP?H:HT,UP?LOW:null);WALL(R(Sd,a,b),Sd.t,parts,UP?H:HT);if(UP)WALL(R(Sd,a,b),'u'+k.toUpperCase(),WB(Sd,a,b,H,HT,HIGH));B.doors[q.id||k]={c:q.c,s:k,hw:q.hw,at:ZM.toWorld(...wpt(Sd,q.c))};
       const nn=Sd.n,ox=Sd.hz?0:nn[0]*(th/2+.2),oy=Sd.hz?nn[1]*(th/2+.2):0,fx=Sd.hz?null:Sd.fix+th/2+ox,fy=Sd.hz?Sd.fix+th/2+oy:null;
       const post=u=>Sd.hz?box(u-2,fy-.8,0,4,1.6,DH,'wood',{ow:1.4}):box(fx-.8,u-2,0,1.6,4,DH,'wood',{ow:1.4});
       WALL(Sd.hz?[a-4,fy-.8,b+4,fy+.8]:[fx-.8,a-4,fx+.8,b+4],Sd.t,[...post(a-2),...post(b+2),...(Sd.hz?box(a-4,fy-.8,DH,b-a+8,1.6,4,'wood',{noFoot:true,ow:1.4}):box(fx-.8,a-4,DH,1.6,b-a+8,4,'wood',{noFoot:true,ow:1.4}))]);
@@ -71,6 +78,14 @@ def('edificio',function(o){const x=o.x,y=o.y,w=o.w,d=o.d,H=o.H||92,FL=o.fl||1,HT
       const LW=q.k==='big'?q.hw-2:Math.min(q.hw*2-6,30),dir=Sd.hz?nn[1]:nn[0];
       for(const side of q.k==='big'?[-1,1]:[-1]){const hu=side<0?a+1:b-1,pl=Sd.hz?plane(hu,fy+dir*1.2,0,LW,DH-2,dir>0?Math.PI/2:-Math.PI/2,'antaE'+Math.round(LW)+(q.k==='big'?'B':''),leafPaint(q.col)):plane(fx+dir*1.2,hu,0,LW,DH-2,dir>0?0:Math.PI,'antaE'+Math.round(LW)+(q.k==='big'?'B':''),leafPaint(q.col));
         const ex=Sd.hz?[hu-2,fy+(dir>0?0:-LW),hu+2,fy+(dir>0?LW:0)]:[fx+(dir>0?0:-LW),hu-2,fx+(dir>0?LW:0),hu+2];WALL(ex,Sd.t,[pl])}}}
+  if(UP){const ix0=x+th,iy0=y+th,ix1=x+w-th,iy1=y+d-th,[hx0,hy0,hx1,hy1]=o.hole||[ix0,iy0,ix0,iy0];
+    // il solaio: assi spesse 5 px intorno al buco della scala, un prop per pezzo (ognuno con la sua impronta)
+    for(const[a0,b0,a1,b1] of[[ix0,iy0,ix1,hy0],[ix0,hy1,ix1,iy1],[ix0,hy0,hx0,hy1],[hx1,hy0,ix1,hy1]])if(a1-a0>1&&b1-b0>1)prop({bx:[a0,b0,a1,b1,H+2],parts:tag(box(a0,b0,H-5,a1-a0,b1-b0,5,'plank',{noFoot:true,ow:1.2}),'slab'),house:hs});
+    for(const r of[[x,y,w,th],[x,y+d-th,w,th],[x,y,th,d],[x+w-th,y,th,d]])solid(...r).lv=1;
+    for(const[k,c] of INW){const draw=winPaint(false,false),tid='winI'+Math.round(c)+k,z=H+WZ;let pl,bx;
+      if(k==='n'){pl=plane(c-WW/2,y+th+.4,z,WW,WH,'x',tid,draw);bx=[c-WW/2,y+th,c+WW/2,y+th+1]}else if(k==='s'){pl=plane(c+WW/2,y+d-th-.4,z,WW,WH,Math.PI,tid,draw);bx=[c-WW/2,y+d-th-1,c+WW/2,y+d-th]}
+      else if(k==='w'){pl=plane(x+th+.4,c-WW/2,z,WW,WH,'y',tid,draw);bx=[x+th,c-WW/2,x+th+1,c+WW/2]}else{pl=plane(x+w-th-.4,c+WW/2,z,WW,WH,-Math.PI/2,tid,draw);bx=[x+w-th-1,c-WW/2,x+w-th,c+WW/2]}
+      prop({bx:[...bx,z+WH+2],parts:tag([pl],'inU'),house:hs})}}
   // il tetto: due mezze falde (come la casa), il colmo; il camino che fuma
   {const L=x-ov,len=w+ov*2,Y0=y-ov,Y1=y+d+ov,ym=y+d/2,hl=(Y1-Y0)/2,parts=[];
     E(parts,hullOf([[L,Y0,HT],[L+len,Y0,HT],[L+len,Y1,HT],[L,Y1,HT],[L,ym,HT+rh],[L+len,ym,HT+rh]],2.6));
@@ -80,33 +95,51 @@ def('edificio',function(o){const x=o.x,y=o.y,w=o.w,d=o.d,H=o.H||92,FL=o.fl||1,HT
     if(o.chim){const[cx0,cy0]=o.chim,zr=HT+rh-Math.abs(cy0-ym)*rh/hl;E(parts,...box(cx0-7,cy0-7,zr-12,14,14,34,'brick',{noFoot:true,ow:1.8}),...box(cx0-9,cy0-9,zr+22,18,18,4,'stoneWD',{noFoot:true,ow:1.4}));smokes.push({x:cx0,y:cy0,z:zr+28,t:0})}
     prop({bx:[L-4,Y0-4,L+len+4,Y1+4,HT+rh+40],ky:Y1,parts:tag(parts,'roof'),house:hs})}
   B.in=(parts,bx,ky)=>prop({bx,ky:ky==null?bx[3]:ky,parts:tag(parts,'in'),house:hs});
+  B.up=(parts,bx,ky)=>prop({bx,ky:ky==null?bx[3]:ky,parts:tag(parts,'inU'),house:hs});B.solidUp=(a,b,c,e)=>{const so=solid(a,b,c,e);so.lv=1;return so};
   return B});
 // ------------------------------------------------------------------ gli arredi (con B.in: compaiono quando l'eroe entra)
 const table=(B,x,y,w,d,z,round)=>{solid(x,y,w,d);const parts=[];for(const[dx,dy] of[[2,2],[w-5,2],[2,d-5],[w-5,d-5]])E(parts,...box(x+dx,y+dy,0,3,3,z-3,'wood',{noOut:true}));
   if(round)E(parts,...cyl(x+w/2,y+d/2,z-3,w/2,3,'wood',{n:12}));else E(parts,...box(x,y,z-3,w,d,3,'wood',{noFoot:true,ow:1.6}));B.in(parts,[x-2,y-2,x+w+2,y+d+2,z+12],y+d)};
 const stool=(B,x,y)=>{solid(x-4,y-4,8,8);B.in([...cyl(x,y,0,4,13,'wood',{n:7,r1:4.6})],[x-6,y-6,x+6,y+6,14],y+4)};
-const candle=(B,x,y,z)=>{flames.push({x,y,z:z+7,r:1.6,rgb:'255,180,90',house:B.hs,indoor:1,ky:y+1});lights.push({x,y,z:z+6,r:55,rgb:'255,170,80',a:.32,fl:1,house:B.hs});return cyl(x,y,z,1.5,6,'bone',{n:6})};
+const candle=(B,x,y,z)=>{const lvl=B.hs.upF?(z>=B.H-1?1:0):undefined;flames.push({x,y,z:z+7,r:1.6,rgb:'255,180,90',house:B.hs,indoor:1,ky:y+1,lvl,ref:ZM.NAMES.ref});lights.push({x,y,z:z+6,r:55,rgb:'255,170,80',a:.32,fl:1,house:B.hs,lvl});return cyl(x,y,z,1.5,6,'bone',{n:6})};
 const bottles=(x,y,z,n,along)=>{const out=[];const C=['#3a6a4a','#6a3a2a','#3a3a6a','#7a6a2a','#5a2a4a'];for(let i=0;i<n;i++){const id='bot'+(i%5);if(!MAT[id])material(id,[C[i%5],mix(C[i%5],'#000000',.35),mix(C[i%5],'#ffffff',.3)],'flat');
   const px=along==='y'?x:x+i*6,py=along==='y'?y+i*6:y;E(out,...cyl(px,py,z,2,6+(i%3),id,{n:6,r1:1.6,ink:.5}))}return out};
 // ------------------------------------------------------------------ la LOCANDA DEL CORVO: due piani di assi grigio-verdi col tetto d'ardesia,
 // porta sulla strada, porta sul retro, porta a ovest; dentro il banco col bancone e gli scaffali delle bottiglie, i tavoli con gli sgabelli,
 // il camino acceso, la scala verso il piano di sopra lungo il muro nord. Sopra l'ingresso l'insegna col corvo e la lanterna
-def('locanda',function(x,y,w,d){const H=92;
-  const B=P.edificio({x,y,w,d,H,fl:2,wall:'sidingG',roof:'slate',rh:76,name:'Locanda del Corvo',chim:[x+184,y+16],
+def('locanda',function(x,y,w,d){const H=92,sx0=x+14,sy0=y+12,SL=118;// (la scala: dal muro ovest, lunga SL, larga 30)
+  const B=P.edificio({x,y,w,d,H,fl:2,up:1,hole:[sx0+12,y+10,sx0+SL+2,sy0+32],wall:'sidingG',roof:'slate',rh:76,name:'Locanda del Corvo',chim:[x+194,y+16],
     op:[{s:'s',at:w*.5,k:'door',id:'strada'},{s:'s',at:62,k:'win',lit:1},{s:'s',at:w-64,k:'win'},{s:'n',at:w-42,k:'door',id:'retro'},{s:'n',at:w*.6,k:'win'},{s:'w',at:d*.62,k:'door',id:'ovest'},{s:'w',at:d*.26,k:'win'},{s:'e',at:d*.17,k:'win',lit:1},{s:'e',at:d*.83,k:'win'}]});
   B.kind='locanda';const th=B.th;
   // il bancone (da nord a sud, a est) e dietro gli scaffali con le bottiglie contro il muro est
   const bx=x+w-118;solid(bx,y+th+66,14,d-th*2-120);B.in([...box(bx,y+th+66,0,14,d-th*2-120,24,'plankD',{ow:1.8}),...box(bx-2,y+th+64,24,18,d-th*2-116,3,'wood',{noFoot:true,ow:1.4}),...bottles(bx+7,y+th+74,27,5,'y')],[bx-4,y+th+60,bx+20,y+d-th-50,40]);
   {const sx=x+w-th-12,sy=y+th+56,sl=d-th*2-112;solid(sx,sy,12,sl);B.in([...box(sx,sy,0,12,sl,52,'plankD',{ow:1.8}),...box(sx-1,sy+2,18,12,sl-4,2,'wood',{noFoot:true,noOut:true}),...box(sx-1,sy+2,34,12,sl-4,2,'wood',{noFoot:true,noOut:true}),...bottles(sx+6,sy+10,20,8,'y'),...bottles(sx+6,sy+10,36,8,'y')],[sx-4,sy-4,sx+14,sy+sl+4,56])}
   // il camino contro il muro nord, acceso
-  {const fx=x+160;solid(fx,y+th,48,16);B.in([...box(fx,y+th,0,48,16,60,'brick',{tex:{s:(w2,h2)=>{ctx.fillStyle='#120804';ctx.fillRect(10,h2-24,28,24);ink(1.6);ctx.strokeRect(10,h2-24,28,24);const g2=ctx.createRadialGradient(w2/2,h2*.8,2,w2/2,h2*.8,w2*.5);g2.addColorStop(0,'rgba(255,140,50,.35)');g2.addColorStop(1,'rgba(255,140,50,0)');ctx.fillStyle=g2;ctx.fillRect(0,0,w2,h2)}}}),...box(fx-3,y+th,60,54,19,4,'plankD',{noFoot:true})],[fx-4,y+th,fx+52,y+th+20,66]);
-    flames.push({x:fx+24,y:y+th+17,z:4,r:9,rgb:'255,140,50',fire:1,house:B.hs,ky:y+th+18,n:[0,1]});lights.push({x:fx+24,y:y+th+44,r:130,rgb:'255,140,60',a:.5,fl:1,house:B.hs})}
+  {const fx=x+170;solid(fx,y+th,48,16);B.in([...box(fx,y+th,0,48,16,60,'brick',{tex:{s:(w2,h2)=>{ctx.fillStyle='#120804';ctx.fillRect(10,h2-24,28,24);ink(1.6);ctx.strokeRect(10,h2-24,28,24);const g2=ctx.createRadialGradient(w2/2,h2*.8,2,w2/2,h2*.8,w2*.5);g2.addColorStop(0,'rgba(255,140,50,.35)');g2.addColorStop(1,'rgba(255,140,50,0)');ctx.fillStyle=g2;ctx.fillRect(0,0,w2,h2)}}}),...box(fx-3,y+th,60,54,19,4,'plankD',{noFoot:true})],[fx-4,y+th,fx+52,y+th+20,66]);
+    flames.push({x:fx+24,y:y+th+17,z:4,r:9,rgb:'255,140,50',fire:1,house:B.hs,ky:y+th+18,n:[0,1],lvl:0});lights.push({x:fx+24,y:y+th+44,r:130,rgb:'255,140,60',a:.5,fl:1,house:B.hs,lvl:0})}
   // i tavoli con gli sgabelli e le candele
   for(const[tx,ty] of[[x+150,y+120],[x+222,y+92],[x+120,y+175]]){table(B,tx-14,ty-14,28,28,22,true);B.in(candle(B,tx,ty,22),[tx-3,ty-3,tx+3,ty+3,30]);for(const a of[0,2.1,4.2]){const sx2=tx+Math.cos(a)*24,sy2=ty+Math.sin(a)*24;stool(B,sx2,sy2)}}
-  // la scala lungo il muro nord, da est verso ovest: dieci gradini fino al piano di sopra (il pianerottolo nell'angolo nord-ovest)
-  {const sx0=x+th+4,sy0=y+th+2,L=118,n=10,parts=[];solid(sx0,sy0,L,30);for(let i=0;i<n;i++){const u=L-(i+1)*L/n,z=(i+1)*H/n;E(parts,...box(sx0+u,sy0,0,L/n+.5,30,z,'plankD',{noOut:i<n-1,ow:1.6}))}
+  // la scala lungo il muro nord, da est verso ovest: dieci gradini fino al piano di sopra (il pianerottolo nell'angolo nord-ovest). Si vede anche
+  // da sopra, nel buco del solaio (tag st); al piede il bottone «Sali al piano di sopra», sul pianerottolo «Scendi» (motore.js, ZM.scala)
+  {const L=SL,n=10,parts=[];solid(sx0,sy0,L,30);for(let i=0;i<n;i++){const u=L-(i+1)*L/n,z=(i+1)*H/n;E(parts,...box(sx0+u,sy0,0,L/n+.5,30,z,'plankD',{noOut:i<n-1,ow:1.6}))}
     E(parts,line3([sx0+L,sy0+31,0],[sx0+L,sy0+31,24],'#5e4128',2.4,{ink:true}),line3([sx0+L,sy0+31,24],[sx0+6,sy0+31,H+22],'#5e4128',2.2,{ink:true}),line3([sx0+6,sy0+31,H],[sx0+6,sy0+31,H+22],'#5e4128',2.4,{ink:true}));
-    B.in(parts,[sx0-2,sy0-2,sx0+L+2,sy0+34,H+24],sy0+32);B.stairs={x0:sx0,y0:sy0,L,w:30,bottom:[sx0+L+16,sy0+15],top:[sx0+14,sy0+15]}}
+    prop({bx:[sx0-2,sy0-2,sx0+L+2,sy0+34,H+24],ky:sy0+32,parts:tag(parts,'st'),house:B.hs});B.stairs={x0:sx0,y0:sy0,L,w:30,bottom:[sx0+L+16,sy0+15],top:[sx0+14,sy0+15]};
+    B.scala=ZM.scala?ZM.scala({hs:B.hs,H,bot:[sx0+L+16,sy0+15],foot:[sx0+L,sy0+15],head:[sx0+6,sy0+15],land:[sx0+22,sy0+48]}):null}
+  // il piano di sopra: le camere della locanda (tre letti, l'armadio, il baule, lo scrittoio sotto la finestra con la candela, la Pompa tattica
+  // col gesso sul muro nord) e la ringhiera intorno al buco della scala; i solidi sono di sopra (lv:1). Le cose alte stanno contro il muro nord
+  // (dietro a tutto, per la telecamera), davanti al pianerottolo niente
+  {const U=H;
+    const bed=(bx,by,flip)=>{B.solidUp(bx,by,34,58);B.up([...box(bx,by,U,34,58,12,'wood',{ow:1.8}),...box(bx+2,by+2,U+12,30,54,5,'canvas',{noFoot:true,ow:1.4}),...box(bx+5,flip?by+46:by+5,U+17,24,8,4,'bone',{noFoot:true,ow:1.2}),
+      ...box(bx+2,flip?by+2:by+20,U+17,30,36,2.5,'red',{noFoot:true,ow:1.2}),...box(bx,flip?by+54:by,U,34,4,28,'wood',{ow:1.6})],[bx-2,by-2,bx+36,by+60,U+30])};
+    bed(x+150,y+th);bed(x+352,y+th);bed(x+300,y+d-th-58,true);
+    {const ax=x+190,ay=y+th;B.solidUp(ax,ay,32,20);B.up([...box(ax,ay,U,32,20,66,'wood',{ow:1.8}),...box(ax+1,ay+20,U+4,14.5,.8,58,'plankD',{noFoot:true,noOut:true}),...box(ax+16.5,ay+20,U+4,14.5,.8,58,'plankD',{noFoot:true,noOut:true})],[ax-2,ay-2,ax+34,ay+22,U+68])}// (l'armadio contro il muro nord: dietro a tutto, non copre mai l'eroe)
+    B.solidUp(x+152,y+th+62,30,16);B.up([...box(x+152,y+th+62,U,30,16,14,'plankD',{ow:1.6}),...box(x+151,y+th+61,U+14,32,18,3,'wood',{noFoot:true,ow:1.4})],[x+150,y+th+60,x+184,y+th+80,U+18]);
+    {const dx=x+w*.6-18,dy=y+th+2;B.solidUp(dx,dy,36,20);B.up([...box(dx,dy,U+20,36,20,3,'wood',{noFoot:true,ow:1.6}),...box(dx+2,dy+2,U,3,3,20,'wood',{noOut:true}),...box(dx+31,dy+2,U,3,3,20,'wood',{noOut:true}),...box(dx+2,dy+15,U,3,3,20,'wood',{noOut:true}),...box(dx+31,dy+15,U,3,3,20,'wood',{noOut:true}),...candle(B,dx+8,dy+8,U+23)],[dx-2,dy-2,dx+38,dy+22,U+32]);
+      B.solidUp(dx+14,dy+28,8,8);B.up([...cyl(dx+18,dy+32,U,4,13,'wood',{n:7,r1:4.6})],[dx+12,dy+26,dx+24,dy+38,U+14])}
+    {const yR=sy0+33,xR=sx0+SL+2,parts=[];for(const px of[sx0+16,sx0+52,sx0+88,xR])E(parts,line3([px,yR,U],[px,yR,U+24],'#5e4128',2.4,{ink:true}));
+      E(parts,line3([sx0+16,yR,U+24],[xR,yR,U+24],'#5e4128',2.2,{ink:true}),line3([sx0+16,yR,U+12],[xR,yR,U+12],'#5e4128',1.6,{ink:true}),line3([xR,yR,U+24],[xR,y+th+1,U+24],'#5e4128',2.2,{ink:true}),line3([xR,yR,U+12],[xR,y+th+1,U+12],'#5e4128',1.6,{ink:true}));
+      B.up(parts,[sx0+14,y+th,xR+2,yR+2,U+26],yR+1);B.solidUp(sx0+10,y+th,SL-8,yR-y-th+2)}
+    {const gx=x+320,f=B.inN.find(q=>gx>q.a+30&&gx<q.b-2);if(P.wallGun)P.wallGun(gx,y+th+.6,U+34,'x','tattica',2000,f&&f.face,B.hs);B.gunUp=[gx,y+th+34]}}
   // fuori: l'insegna col corvo appesa sopra la porta sulla strada e la lanterna
   {const cx=x+w*.5,yy=y+d,parts=[line3([cx-30,yy+1,H+8],[cx-30,yy+16,H+8],'#34363e',2.4,{ink:true}),line3([cx-30,yy+16,H+8],[cx-30,yy+16,H-2],'#1d1e23',1.2),plane(cx-48,yy+16,H-28,36,26,'x','insegnaCorvo',(w2,h2)=>{ctx.fillStyle='#2e1e16';ctx.fillRect(0,0,w2,h2);ink(1.6);ctx.strokeRect(1,1,w2-2,h2-2);
       ctx.fillStyle='#14100c';ctx.beginPath();ctx.ellipse(w2/2,h2*.52,7,4.6,-.2,0,TAU);ctx.fill();ctx.beginPath();ctx.moveTo(w2/2+5,h2*.45);ctx.lineTo(w2/2+12,h2*.36);ctx.lineTo(w2/2+6,h2*.55);ctx.fill();ctx.beginPath();ctx.arc(w2/2-6,h2*.42,3.2,0,TAU);ctx.fill();

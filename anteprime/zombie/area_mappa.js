@@ -178,8 +178,9 @@ const AREA={title:'Camposanto',zoneName:h=>h.y<Y(12.3)?(h.x<X(16)?'Fattoria dei 
       ZM.buyable({id:'zona'+zs.join(''),x:b.x,y:b.y,r:78,show:()=>!b.state.open,label:()=>nm||(zs.map(z=>W.zoneOpen[z]).every(Boolean)?'Passaggio':W.zoneOpen[zs[0]]?NOMI[zs[1]]:NOMI[zs[0]]),price:()=>b.price,
         act(){if(b.state.open||W.coins<b.price)return false;W.coins-=b.price;b.open();const nu=zs.filter(z=>!W.zoneOpen[z]);for(const z of zs)W.zoneOpen[z]=true;if(W.split&&(W.zoneOpen[2]||W.zoneOpen[4]))W.split.fade=true;ZM.navRebuild();
           W.toast=[nu.length?NOMI[nu[0]]+': aperta':'Il passaggio è aperto',2.6];try{if(AU.ctx&&AU.on.sfx){const t=AU.ctx.currentTime+.01;M.wood(t,1.2,VR(180,.05));fThump(t,90,40,.4,.5,.3);fNoise(t,.6,'lowpass',700,.7,.25,{brown:true})}}catch(e){}return true}});
-    for(const[id,pr,hx,hy,zone] of[['revolver',500,X(9.6),Y(15)-24,1],['pompa',1500,X(11.0)-26,Y(7.45),2],['mitraglietta',1000,EAST.gun3[0],EAST.gun3[1],3],['mitra',1250,EAST.gun4[0],EAST.gun4[1],4]])
-      ZM.buyable({id:'muro_'+id,x:hx,y:hy,r:56,show:()=>W.zoneOpen[zone],label:()=>(W.gunId===id?'Colpi: ':'')+(window.ARMI?ARMI.DATI[id].n:id),price:()=>W.gunId===id?Math.round(pr/2):pr,
+    // (anteprima 48) la Pompa tattica è al piano di sopra della Locanda (lv 1: il bottone c'è solo di sopra)
+    for(const[id,pr,hx,hy,zone,lv] of[['revolver',500,X(9.6),Y(15)-24,1],['pompa',1500,X(11.0)-26,Y(7.45),2],['mitraglietta',1000,EAST.gun3[0],EAST.gun3[1],3],['mitra',1250,EAST.gun4[0],EAST.gun4[1],4],['tattica',2000,EAST.locanda.gunUp[0],EAST.locanda.gunUp[1],3,1]])
+      ZM.buyable({id:'muro_'+id,x:hx,y:hy,r:56,lv:lv||0,show:()=>W.zoneOpen[zone],label:()=>(W.gunId===id?'Colpi: ':'')+(window.ARMI?ARMI.DATI[id].n:id),price:()=>W.gunId===id?Math.round(pr/2):pr,
         act(){const p=W.gunId===id?Math.round(pr/2):pr;if(W.coins<p)return false;W.coins-=p;
           // (anteprima 48, punto 21) la stessa arma: solo i colpi, l'arma resta quella che hai (anche forgiata); un soffio di gesso e il suono dell'arma
           if(W.gunId===id){const g=ZM.gun();g.mag=g.D.mag;g.res=Math.max(g.res,g.D.res*((g.pap||0)+1));if(g.st==='ricarica'&&g.annulla)g.annulla();W.toast=['Colpi: '+(g.nome||g.D.n),1.8]}else ZM.equip(id);

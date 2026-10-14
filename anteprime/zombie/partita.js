@@ -96,7 +96,7 @@ function hurtHero(n){const h=W.hero,MD=W.mods||{};if(h.dead||D.inv>0||D.st==='fi
   for(let i=0;i<5;i++)W.FX.push({k:'drop',tw:[h.x,h.y,h.zh||0],x:0,y:-30,vx:rr(-50,50),vy:rr(-80,-20),t:.55});if(D.hp<=0)down()}
 function down(){const h=W.hero;D.hp=0;h.dead=true;h.moving=false;D.prev=['inizio','pausa','round'].includes(D.st)?D.st:'round';D.st='giu';D.t=0;suono('cade')}
 function revive(){const h=W.hero;D.anime=0;D.st='su';D.t=0;D.hp=PZ.vita;D.burst.push({x:h.x,y:h.y,t:0});suono('anima');W.toast=["L'anima ti rialza",2.2];
-  for(const z of W.Z){if(z.die||z.idle||z.rise<1)continue;const dx=z.x-h.x,dy=z.y-h.y,d=Math.hypot(dx,dy)||1;if(d<120){const L=(130-d)*.7,n=Math.ceil(L/4);for(let i=0;i<n;i++)move(z,dx/d*L/n,dy/d*L/n,11);if(!z.ai)z.stun=1.6}}
+  for(const z of W.Z){if(z.die||z.idle||z.rise<1||!ZM.sameLv(z))continue;const dx=z.x-h.x,dy=z.y-h.y,d=Math.hypot(dx,dy)||1;if(d<120){const L=(130-d)*.7,n=Math.ceil(L/4);for(let i=0;i<n;i++)move(z,dx/d*L/n,dy/d*L/n,11);if(!z.ai)z.stun=1.6}}
   if(D.lant&&D.comprate<PZ.anima.max)D.lant.set(true)}
 // la fine: caduto senza anime, o uscito dalla pausa (via). Nel gioco vero (W.gioco) l'oro va nel salvataggio una volta sola (fine restituisce
 // {rec: nuovo record}); poi «Menu» torna al menu e «Rigioca» rimette la mappa com'era. Nell'anteprima «Riprova»
@@ -127,10 +127,10 @@ const vis=()=>!W.hero.dead&&!(W.mods&&W.mods.invis>0);
 function becchinoAI(z,dt){const h=W.hero,dx=h.x-z.x,dy=h.y-z.y,d=Math.hypot(dx,dy),A=z.A||(z.A={st:'cammina',t:0,ev:5});A.t+=dt;A.ev-=dt;
   if(A.st==='cammina'){setA(z,'walk');z.p=(z.p+dt/1.7)%1;if(vis())z.face=Math.atan2(dy,dx);
     if(A.ev<=0&&vis()&&d<330){A.st='evoca';A.t=0;A.sum=0;setA(z,'summon');A.ev=PZ.becchino.evoca;suono('evoca')}// (quando è pronta l'evocazione viene prima: lo scontro cambia)
-    else if(vis()&&d<70&&physClear(z.x,z.y,h.x,h.y,2)){A.st='colpo';A.t=0;A.hit=0;setA(z,'slam');const a=Math.atan2(dy,dx);A.tx=z.x+Math.cos(a)*42;A.ty=z.y+Math.sin(a)*42;z.face=a;D.warn.push({x:A.tx,y:A.ty,r:46,t:0,T:.8})}
-    else if(vis()&&d>40)zWalk(z,dt)}
+    else if(vis()&&d<70&&ZM.sameLv(z)&&physClear(z.x,z.y,h.x,h.y,2)){A.st='colpo';A.t=0;A.hit=0;setA(z,'slam');const a=Math.atan2(dy,dx);A.tx=z.x+Math.cos(a)*42;A.ty=z.y+Math.sin(a)*42;z.face=a;D.warn.push({x:A.tx,y:A.ty,r:46,t:0,T:.8})}
+    else if(vis()&&(d>40||!ZM.sameLv(z)))zWalk(z,dt)}// (con l'eroe al piano di sopra va alla scala, motore.js)
   else if(A.st==='colpo'){z.p=Math.min(.999,A.t/1.45);if(!A.hit&&A.t>=.8){A.hit=1;D.cracks.push({x:A.tx,y:A.ty,a:z.face,t:0,s:Math.random()*99});D.shake=Math.max(D.shake,.45);suono('colpo');
-      if(Math.hypot(h.x-A.tx,h.y-A.ty)<46+8)hurtHero(PZ.becchino.colpo*dmgMul(D.R))}if(A.t>=1.45)A.st='cammina'}
+      if(Math.hypot(h.x-A.tx,h.y-A.ty)<46+8&&ZM.sameLv(z))hurtHero(PZ.becchino.colpo*dmgMul(D.R))}if(A.t>=1.45)A.st='cammina'}
   else if(A.st==='evoca'){z.p=Math.min(.999,A.t/1.8);if(!A.sum&&A.t>=.85){A.sum=1;evoca(D.R>=15?3:2)}if(A.t>=1.8)A.st='cammina'}}
 // tre morti escono da terra intorno all'eroe (contano per il round)
 function evoca(n){const h=W.hero;for(let i=0;i<n;i++){let p=null;for(let k=0;k<25&&!p;k++){const a=rr(0,TAU),r=rr(80,150),x=h.x+Math.cos(a)*r,y=h.y+Math.sin(a)*r;if(!hit(x,y,14)&&physClear(h.x,h.y,x,y,1))p=[x,y]}
@@ -140,10 +140,10 @@ function evoca(n){const h=W.hero;for(let i=0;i<n;i++){let p=null;for(let k=0;k<2
 // attaccato, tre volte al giro) e intanto scivola verso l'eroe
 function spaventaAI(z,dt){const h=W.hero,dx=h.x-z.x,dy=h.y-z.y,d=Math.hypot(dx,dy),A=z.A||(z.A={st:'cammina',t:0});A.t+=dt;
   if(A.st==='cammina'){setA(z,'walk');z.p=(z.p+dt/1.1)%1;if(vis())z.face=Math.atan2(dy,dx);
-    if(vis()&&d<52&&physClear(z.x,z.y,h.x,h.y,2)){A.st='giro';A.t=0;A.tick=0;setA(z,'attack');D.warn.push({x:z.x,y:z.y,r:44,t:0,T:.45,follow:z});suono('trottola')}
-    else if(vis()&&d>30)zWalk(z,dt)}
+    if(vis()&&d<52&&ZM.sameLv(z)&&physClear(z.x,z.y,h.x,h.y,2)){A.st='giro';A.t=0;A.tick=0;setA(z,'attack');D.warn.push({x:z.x,y:z.y,r:44,t:0,T:.45,follow:z});suono('trottola')}
+    else if(vis()&&(d>30||!ZM.sameLv(z)))zWalk(z,dt)}
   else if(A.st==='giro'){z.p=(A.t/1.8)%1;if(A.t>.45&&vis()&&d>18){const sp=34*dt;move(z,dx/d*sp,dy/d*sp,11)}
-    const k=Math.floor(Math.max(0,A.t-.45)/.38);if(A.t>.45&&k>=A.tick){A.tick=k+1;if(d<46)hurtHero(PZ.spaventa.giro*dmgMul(D.R))}if(A.t>=1.8+.45){A.st='cammina';A.t=0}}}
+    const k=Math.floor(Math.max(0,A.t-.45)/.38);if(A.t>.45&&k>=A.tick){A.tick=k+1;if(d<46&&ZM.sameLv(z))hurtHero(PZ.spaventa.giro*dmgMul(D.R))}if(A.t>=1.8+.45){A.st='cammina';A.t=0}}}
 // ------------------------------------------------------------------ ogni fotogramma
 D.update=(dt,on)=>{const h=W.hero;D.on=on;if(!D.ui)D.ui=mkUI();D.t+=dt;D.inv-=dt;D.red=Math.max(0,D.red-dt*1.6);D.shake=Math.max(0,D.shake-dt);
   if(D.st==='inizio'){if(D.t>=PZ.inizio)startRound(1)}
@@ -183,7 +183,7 @@ D.drawGround=()=>{if(!D.warn.length&&!D.cracks.length&&!D.burst.length)return;in
 D.drawOnHero=q=>{if(D.anime>0&&!D.fly){const a=W.t*2.3,x=q[0]+Math.cos(a)*15,y=q[1]-38+Math.sin(a)*5,fl=1+.08*Math.sin(W.t*13);if(!LOWFX){ctx.save();ctx.globalCompositeOperation='lighter';glow('110,255,150',x,y-3,16,.55);ctx.restore()}fiamma(ctx,x,y+4,.62*fl,1)}};
 D.drawTop=()=>{const h=W.hero;
   // l'anima che vola dalla lanterna all'eroe
-  if(D.fly){const k=ez(D.fly.t/.9),a=S(D.fly.x,D.fly.y,D.fly.z),b=S(h.x,h.y,(h.zh||0)+38),x=lerp(a[0],b[0],k),y=lerp(a[1],b[1],k)-Math.sin(k*Math.PI)*40;if(!LOWFX){ctx.save();ctx.globalCompositeOperation='lighter';glow('110,255,150',x,y-3,22,.7);ctx.restore()}fiamma(ctx,x,y+4,.8,1)}
+  if(D.fly){const k=ez(D.fly.t/.9),a=S(D.fly.x,D.fly.y,D.fly.z),b=ZM.SB(h.x,h.y,(h.zh||0)+38),x=lerp(a[0],b[0],k),y=lerp(a[1],b[1],k)-Math.sin(k*Math.PI)*40;if(!LOWFX){ctx.save();ctx.globalCompositeOperation='lighter';glow('110,255,150',x,y-3,22,.7);ctx.restore()}fiamma(ctx,x,y+4,.8,1)}
   // l'anima che rialza: una colonna di luce verde
   for(const b of D.burst){if(b.boss||LOWFX)continue;const k=b.t/1.2,q=S(b.x,b.y,0);ctx.save();ctx.globalCompositeOperation='lighter';const g=ctx.createLinearGradient(q[0],q[1],q[0],q[1]-120);g.addColorStop(0,`rgba(110,255,150,${.5*(1-k)})`);g.addColorStop(1,'rgba(110,255,150,0)');
     ctx.fillStyle=g;ctx.fillRect(q[0]-18*(1-k*.5),q[1]-120,36*(1-k*.5),120);ctx.restore()}};

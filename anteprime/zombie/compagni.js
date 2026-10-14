@@ -38,14 +38,15 @@ function update(dt,on,D){const h=W.hero;if(!h)return;if(W.pets==null)W.pets=make
     const cy=Math.cos(CAM.yaw),sy0=Math.sin(CAM.yaw),fx=Math.cos((h.face||0)+CAM.yaw);if(Math.abs(fx)>.2)ZC.side=fx>=0?-1:1;
     const sd=(ZC.side||-1)*(pt.slot?-1:1),ox=sd*26,oy=10+(pt.slot?6:0);
     let tx=h.x+ox*cy+oy*sy0,ty=h.y-ox*sy0+oy*cy;if(wall(tx,ty)){tx=h.x+(ox*cy+oy*sy0)*.45;ty=h.y+(-ox*sy0+oy*cy)*.45}
+    if((pt.lv||0)!==(h.lv||0)&&!h.cl){pt.x=tx;pt.y=ty;pt.puff=.4;pt.stuck=0;pt.lv=h.lv||0}// (l'eroe è salito o sceso: il compagno lo raggiunge in uno sbuffo)
     const dx=tx-pt.x,dy=ty-pt.y,dd=Math.hypot(dx,dy);
     // rimasto indietro (troppo lontano, o fermo contro un muro per più di un secondo): ricompare accanto all'eroe in uno sbuffo
     if(dd>170||pt.stuck>1){pt.x=tx;pt.y=ty;pt.puff=.4;pt.stuck=0}
     else if(dd>4){const sp=Math.min(dd*4,230)*dt,x0=pt.x,y0=pt.y;move(pt,dx/dd*sp,dy/dd*sp,5);pt.moving=dd>8;pt.hop+=dt*12;
       pt.stuck=dd>50&&Math.hypot(pt.x-x0,pt.y-y0)<sp*.3?(pt.stuck||0)+dt:0}else{pt.moving=false;pt.stuck=0}
-    pt.zh=heightAt?heightAt(pt.x,pt.y):0;pt.puff=Math.max(0,(pt.puff||0)-dt);
+    pt.zh=pt.lv?(h.lvH||0):heightAt?heightAt(pt.x,pt.y):0;pt.puff=Math.max(0,(pt.puff||0)-dt);
     // il bersaglio: lo zombie più vicino che vede, cercato cinque volte al secondo
-    if((pt.scan-=dt)<=0){pt.scan=.2;let best=null,bd=200;if(play)for(const z of W.Z){if(!alive(z))continue;const d=Math.hypot(z.x-pt.x,z.y-pt.y);if(d<bd&&physClear(pt.x,pt.y,z.x,z.y,2)){bd=d;best=z}}pt.tg=best}
+    if((pt.scan-=dt)<=0){pt.scan=.2;let best=null,bd=200;if(play)for(const z of W.Z){if(!alive(z))continue;const d=Math.hypot(z.x-pt.x,z.y-pt.y);if(d<bd&&ZM.sameLv(z,pt)&&physClear(pt.x,pt.y,z.x,z.y,2)){bd=d;best=z}}pt.tg=best}
     if(!alive(pt.tg))pt.tg=null;const tg=pt.tg;
     const fw=tg?Math.atan2(tg.y-pt.y,tg.x-pt.x):pt.moving?Math.atan2(dy,dx):(h.face!=null?h.face:pt.face);pt.face=fw;
     const df=Math.atan2(Math.sin(pt.face-pt.fs),Math.cos(pt.face-pt.fs));pt.fs+=df*Math.min(1,dt*10);
@@ -58,21 +59,21 @@ function update(dt,on,D){const h=W.hero;if(!h)return;if(W.pets==null)W.pets=make
   for(let i=ZC.shots.length-1;i>=0;i--){const s=ZC.shots[i];s.life-=dt;s.t+=dt;
     if(s.hom&&alive(s.tg)){const da=Math.atan2(Math.sin(Math.atan2(s.tg.y-s.y,s.tg.x-s.x)-s.a),Math.cos(Math.atan2(s.tg.y-s.y,s.tg.x-s.x)-s.a));s.a+=cl(da,-7*dt,7*dt)}
     s.x+=Math.cos(s.a)*s.v*dt;s.y+=Math.sin(s.a)*s.v*dt;let gone=s.life<=0||wall(s.x,s.y);
-    if(!gone)for(const z of W.Z){if(!alive(z)||s.hit.has(z))continue;if(Math.hypot(z.x-s.x,z.y-s.y)<10*z.sc+3){s.hit.add(z);
-      if(s.splash){for(const z2 of W.Z)if(alive(z2)&&Math.hypot(z2.x-s.x,z2.y-s.y)<s.splash)hurt(z2,z2===z?s.dmg:s.dmg*.6,z2===z);for(let k=0;k<(LOWFX?6:14);k++){const a=rr(0,TAU),r=rr(4,s.splash);ZC.fx.push({k:'spore',x:s.x+Math.cos(a)*r*.4,y:s.y+Math.sin(a)*r*.4,vx:Math.cos(a)*r*1.6,vy:Math.sin(a)*r*1.6,z:rr(4,20),vz:rr(6,22),t:0,T:rr(.6,1)})}gone=true;break}
+    if(!gone)for(const z of W.Z){if(!alive(z)||s.hit.has(z)||!ZM.sameLv(z,s))continue;if(Math.hypot(z.x-s.x,z.y-s.y)<10*z.sc+3){s.hit.add(z);
+      if(s.splash){for(const z2 of W.Z)if(alive(z2)&&ZM.sameLv(z2,s)&&Math.hypot(z2.x-s.x,z2.y-s.y)<s.splash)hurt(z2,z2===z?s.dmg:s.dmg*.6,z2===z);for(let k=0;k<(LOWFX?6:14);k++){const a=rr(0,TAU),r=rr(4,s.splash);ZC.fx.push({k:'spore',x:s.x+Math.cos(a)*r*.4,y:s.y+Math.sin(a)*r*.4,vx:Math.cos(a)*r*1.6,vy:Math.sin(a)*r*1.6,z:rr(4,20),vz:rr(6,22),t:0,T:rr(.6,1)})}gone=true;break}
       hurt(z,s.dmg,true);if(s.pierce>0){s.pierce--;s.dmg*=.8}else{gone=true;break}}}
     if(gone){ZC.shots.splice(i,1);if(!s.splash)for(let k=0;k<(LOWFX?2:5);k++)ZC.fx.push({k:'hit',kind:s.kind,x:s.x,y:s.y,z:s.z,vx:rr(-50,50),vy:rr(-50,50),vz:rr(-10,40),t:0,T:rr(.2,.35)})}}
   for(const f of ZC.fx){f.t+=dt;if(f.vx){f.x+=f.vx*dt;f.y+=f.vy*dt;f.vx*=Math.exp(-4*dt);f.vy*=Math.exp(-4*dt)}if(f.vz)f.z+=f.vz*dt}ZC.fx=ZC.fx.filter(f=>f.t<f.T)}
 function attack(pt,tg,Z,dmg){const a=Math.atan2(tg.y-pt.y,tg.x-pt.x),fly=pt.id!=='funghetto';
   if(Z.cone){// la fiammata del Draghetto: tutti quelli davanti a lui prendono fuoco (il fuoco e le fiamme di armi_speciali.js)
     for(const z of W.Z){if(!alive(z))continue;const ex=z.x-pt.x,ey=z.y-pt.y,ed=Math.hypot(ex,ey);let d2=Math.atan2(ey,ex)-a;d2=Math.atan2(Math.sin(d2),Math.cos(d2));
-      if(ed<Z.cone&&Math.abs(d2)<.55&&physClear(pt.x,pt.y,z.x,z.y,2)){hurt(z,dmg,false);if(!z.die)z.burn=Math.max(z.burn||0,Z.burn)}}
+      if(ed<Z.cone&&Math.abs(d2)<.55&&ZM.sameLv(z,pt)&&physClear(pt.x,pt.y,z.x,z.y,2)){hurt(z,dmg,false);if(!z.die)z.burn=Math.max(z.burn||0,Z.burn)}}
     const SP=ZM.speciali;if(SP)for(let i=0;i<(LOWFX?3:7);i++){const aa=a+rr(-.4,.4),sp=rr(.7,1)*Z.cone;SP.fl.push({x:pt.x+Math.cos(a)*8,y:pt.y+Math.sin(a)*8,vx:Math.cos(aa)*sp*2.3,vy:Math.sin(aa)*sp*2.3,z:(pt.zh||0)+18,t:0,T:rr(.3,.42),r:rr(2.5,4)})}
     suono('fire',pt.x);return}
-  ZC.shots.push({x:pt.x+Math.cos(a)*6,y:pt.y+Math.sin(a)*6,z:(pt.zh||0)+(fly?22:14),a,v:Z.v,kind:Z.shot,dmg,life:1.4,hom:!!Z.hom,tg,pierce:Z.pierce||0,splash:Z.splash||0,hit:new Set(),t:0});suono(Z.shot,pt.x)}
+  ZC.shots.push({x:pt.x+Math.cos(a)*6,y:pt.y+Math.sin(a)*6,z:(pt.zh||0)+(fly?22:14),a,v:Z.v,kind:Z.shot,dmg,lv:pt.lv||0,zh:pt.zh||0,life:1.4,hom:!!Z.hom,tg,pierce:Z.pierce||0,splash:Z.splash||0,hit:new Set(),t:0});suono(Z.shot,pt.x)}
 // ------------------------------------------------------------------ i disegni: i compagni nel loro posto nell'ordine degli esseri (motore.js),
 // i colpi e le scintille sopra
-W.drawPet=pt=>{if(typeof N3==='undefined'||!N3[pt.id])return;const q=S(pt.x,pt.y,pt.zh||0),t=W.t||0,a=pt.anim,M=N3.meta&&N3.meta[pt.id]||{},d=(M.dur&&M.dur[a])||2;
+W.drawPet=pt=>{if(typeof N3==='undefined'||!N3[pt.id])return;const q=ZM.SB(pt.x,pt.y,pt.zh||0),t=W.t||0,a=pt.anim,M=N3.meta&&N3.meta[pt.id]||{},d=(M.dur&&M.dur[a])||2;
   const p=Math.min(.999,Math.max(0,a==='walk'?((pt.hop/(TAU*2))%1+1)%1:a==='attack'?1-pt.att/.3:a==='happy'?1-Math.min(1,pt.happy/.8):(((t+pt.i*.37)/d)%1+1)%1)),fc=pt.fs+CAM.yaw;
   if(pt.a3!==a){if(pt.a3!=null){pt.b3=pt.a3;pt.b3p=pt.p3;pt.b3t=t}pt.a3=a}pt.p3=p;
   try{if(pt.b3&&t-pt.b3t>=0&&t-pt.b3t<.12){const a0=ctx.globalAlpha;ctx.globalAlpha=a0*.6*(1-(t-pt.b3t)/.12);N3[pt.id](q[0],q[1],fc,pt.b3,pt.b3p,1,{noFx:true});ctx.globalAlpha=a0}
@@ -81,14 +82,14 @@ W.drawPet=pt=>{if(typeof N3==='undefined'||!N3[pt.id])return;const q=S(pt.x,pt.y
 const COL={wisp:'150,255,190',spark:'220,255,110',feather:'240,232,214',spore:'190,255,140'};
 function glowAt(rgb,x,y,r,a){const g=ctx.createRadialGradient(x,y,0,x,y,r);g.addColorStop(0,`rgba(${rgb},${a})`);g.addColorStop(1,`rgba(${rgb},0)`);ctx.fillStyle=g;ctx.fillRect(x-r,y-r,2*r,2*r)}
 function drawTop(){if(!ZC.shots.length&&!ZC.fx.length)return;
-  for(const s of ZC.shots){const q=S(s.x,s.y,s.z),sa=Math.atan2(CAM.SP*Math.sin(s.a+CAM.yaw),Math.cos(s.a+CAM.yaw));ctx.save();
+  for(const s of ZC.shots){const q=ZM.SB(s.x,s.y,s.z),sa=Math.atan2(CAM.SP*Math.sin(s.a+CAM.yaw),Math.cos(s.a+CAM.yaw));ctx.save();
     if(s.kind==='feather'){ctx.translate(q[0],q[1]);ctx.rotate(sa);ctx.strokeStyle='rgba(27,22,18,.9)';ctx.lineWidth=1.2;ctx.fillStyle='#efe6d2';ctx.beginPath();ctx.moveTo(7,0);ctx.quadraticCurveTo(0,-3.2,-7,-1.2);ctx.lineTo(-5,0);ctx.lineTo(-7,1.2);ctx.quadraticCurveTo(0,3.2,7,0);ctx.closePath();ctx.fill();ctx.stroke();
       ctx.strokeStyle='rgba(120,100,70,.7)';ctx.lineWidth=.7;ctx.beginPath();ctx.moveTo(7,0);ctx.lineTo(-6,0);ctx.stroke();if(!LOWFX){ctx.globalAlpha=.35;ctx.fillStyle='#fff';ctx.fillRect(-18,-.6,10,1.2)}}
     else if(s.kind==='spore'){ctx.globalCompositeOperation='lighter';if(!LOWFX)glowAt(COL.spore,q[0],q[1],10,.55);for(let i=0;i<4;i++){const a=s.t*7+i*1.6;ctx.fillStyle=`rgba(${COL.spore},.9)`;ctx.beginPath();ctx.arc(q[0]+Math.cos(a)*2.6,q[1]+Math.sin(a)*2,1.6,0,TAU);ctx.fill()}}
     else{ctx.globalCompositeOperation='lighter';const rgb=COL[s.kind]||COL.wisp;glowAt(rgb,q[0],q[1],s.kind==='wisp'?11:9,.75);ctx.fillStyle=s.kind==='wisp'?'#eafff2':'#fbffd8';ctx.beginPath();
       if(s.kind==='wisp'){ctx.translate(q[0],q[1]);ctx.rotate(sa);ctx.moveTo(4,0);ctx.quadraticCurveTo(0,-3.4,-8,0);ctx.quadraticCurveTo(0,3.4,4,0);ctx.fill()}else{ctx.arc(q[0],q[1],1.9,0,TAU);ctx.fill()}}
     ctx.restore()}
-  ctx.save();for(const f of ZC.fx){const k=f.t/f.T,q=S(f.x,f.y,f.z);
+  ctx.save();for(const f of ZC.fx){const k=f.t/f.T,q=ZM.SB(f.x,f.y,f.z);
     if(f.k==='spore'){ctx.globalAlpha=.8*(1-k);ctx.fillStyle=`rgb(${COL.spore})`;ctx.beginPath();ctx.arc(q[0],q[1],1.4+k*2,0,TAU);ctx.fill()}
     else if(f.k==='heal'){ctx.globalAlpha=1-k;ctx.fillStyle='#c8f04a';ctx.fillRect(q[0]-.8,q[1]-3,1.6,6);ctx.fillRect(q[0]-3,q[1]-.8,6,1.6)}
     else{ctx.globalAlpha=1-k;ctx.fillStyle=`rgb(${COL[f.kind]||COL.wisp})`;ctx.beginPath();ctx.arc(q[0],q[1],1.6*(1-k*.5),0,TAU);ctx.fill()}}ctx.restore()}

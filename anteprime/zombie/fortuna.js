@@ -95,7 +95,7 @@ function activate(id){const L=defOf(id),h=W.hero,D=W.director;if(!D||D.st==='fin
   else if(L.k==='p'){if(!ex)LK.act.push(newCard(id,'p',0))}
   else{const a=newCard(id,'i',1.3);a.burn=true;LK.act.push(a);
     if(id==='munizioni'){const g=ZM.gun();if(g){g.mag=g.D.mag;g.res=Math.max(g.res,g.D.res);if(g.st==='ricarica')g.annulla()}W.toast=['Munizioni piene',2]}
-    else if(id==='impulso'){suono('impulso');LK.rings.push({x:h.x,y:h.y,t:0});for(const z of W.Z){if(z.die||z.idle||z.rise<1)continue;const dx=z.x-h.x,dy=z.y-h.y,d=Math.hypot(dx,dy)||1;
+    else if(id==='impulso'){suono('impulso');LK.rings.push({x:h.x,y:h.y,z0:h.lvz||0,t:0});for(const z of W.Z){if(z.die||z.idle||z.rise<1||!ZM.sameLv(z))continue;const dx=z.x-h.x,dy=z.y-h.y,d=Math.hypot(dx,dy)||1;
       if(d<170){const Lp=(185-d)*.85,n=Math.ceil(Lp/4);for(let i=0;i<n;i++)move(z,dx/d*Lp/n,dy/d*Lp/n,11);if(!z.ai)z.stun=1.4}}}
     else if(id==='cassa'){W.coins+=2000;suono('cassa');W.FX.push({k:'coin',tw:[h.x,h.y,(h.zh||0)+46],n:2000,t:1.6,t0:1.6})}}
   if(id==='scudo')suono('scudo');applyMods()}
@@ -163,10 +163,10 @@ function drawTop(){
     if(!LOWFX){ctx.globalCompositeOperation='lighter';glow('125,255,170',0,0,16,.6*(1-k));ctx.globalCompositeOperation='source-over'}
     ctx.fillStyle='#f4ecd0';ctx.strokeStyle=INK;ctx.lineWidth=1.4;ctx.fillRect(-4.5,-6.5,9,13);ctx.strokeRect(-4.5,-6.5,9,13);ctx.fillStyle=RCOL[defOf(f.id).rar]||'#7dffa0';ctx.fillRect(-3,-5,6,7);ctx.restore()}
   // the lucky shots: a golden star
-  for(const c of LK.crits){const k=c.t/.6,q=S(c.x,c.y,c.z+k*16);ctx.save();ctx.globalAlpha=1-k;ctx.translate(q[0],q[1]);ctx.rotate(k*2);ctx.fillStyle='#ffd84a';ctx.strokeStyle=INK;ctx.lineWidth=1.2;ctx.beginPath();
+  for(const c of LK.crits){const k=c.t/.6,q=ZM.SB(c.x,c.y,c.z+k*16);ctx.save();ctx.globalAlpha=1-k;ctx.translate(q[0],q[1]);ctx.rotate(k*2);ctx.fillStyle='#ffd84a';ctx.strokeStyle=INK;ctx.lineWidth=1.2;ctx.beginPath();
     for(let i=0;i<10;i++){const r=i%2?2.6:6.4,a=i*TAU/10-Math.PI/2;ctx.lineTo(Math.cos(a)*r,Math.sin(a)*r)}ctx.closePath();ctx.fill();ctx.stroke();ctx.restore()}
   // the push of the impulse
-  for(const r of LK.rings){const k=r.t/.7,q=S(r.x,r.y,4);ctx.save();ctx.globalAlpha=1-k;ctx.strokeStyle='rgba(127,224,255,.95)';ctx.lineWidth=3*(1-k)+1;ctx.beginPath();ctx.ellipse(q[0],q[1],20+k*170,(20+k*170)*.55,0,0,TAU);ctx.stroke();ctx.restore()}}
+  for(const r of LK.rings){const k=r.t/.7,q=ZM.SB(r.x,r.y,(r.z0||0)+4);ctx.save();ctx.globalAlpha=1-k;ctx.strokeStyle='rgba(127,224,255,.95)';ctx.lineWidth=3*(1-k)+1;ctx.beginPath();ctx.ellipse(q[0],q[1],20+k*170,(20+k*170)*.55,0,0,TAU);ctx.stroke();ctx.restore()}}
 function drawOnHero(q){const MD=W.mods||{},t=W.t;
   if(MD.shield){ctx.save();ctx.globalAlpha=.55+.15*Math.sin(t*4);ctx.strokeStyle='rgba(120,190,255,.9)';ctx.lineWidth=1.8;ctx.beginPath();ctx.ellipse(q[0],q[1]-20,17,25,0,0,TAU);ctx.stroke();
     if(!LOWFX){ctx.globalCompositeOperation='lighter';glow('110,170,255',q[0],q[1]-20,24,.25)}ctx.restore()}

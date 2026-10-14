@@ -105,12 +105,12 @@ function chalkGun(id){if(CHALK[id])return CHALK[id];const A=document.createEleme
   const O=document.createElement('canvas');O.width=w;O.height=h;const o=O.getContext('2d');for(let k=0;k<10;k++){const a=k/10*TAU;o.drawImage(Sil,Math.cos(a)*2.2,Math.sin(a)*2.2)}o.globalCompositeOperation='destination-out';o.drawImage(Sil,0,0);
   o.globalCompositeOperation='source-over';o.globalAlpha=.3;o.drawImage(Sil,0,0);o.globalAlpha=1;o.globalCompositeOperation='destination-out';const r=prng(id.length*97+w);for(let i=0;i<w*h/14;i++){o.globalAlpha=r()*.8;o.fillRect(r()*w,r()*h,1.4,1.4)}
   return CHALK[id]=O}
-def('wallGun',function(x,y,z,along,id,price,host){const W2=58,H2=34,draw=(w,h)=>{const r=prng(price+w);ctx.strokeStyle='rgba(236,232,220,.8)';ctx.lineWidth=1;ctx.lineJoin='round';
+def('wallGun',function(x,y,z,along,id,price,host,hs){/* (hs: al piano di sopra di un edificio, prop_borgo.js: si vede solo di sopra) */const W2=58,H2=34,draw=(w,h)=>{const r=prng(price+w);ctx.strokeStyle='rgba(236,232,220,.8)';ctx.lineWidth=1;ctx.lineJoin='round';
     for(let k=0;k<2;k++){ctx.beginPath();ctx.moveTo(2+r()*1.5,2+r());ctx.lineTo(w-2-r()*1.5,2+r()*1.5);ctx.lineTo(w-2-r(),h-2-r());ctx.lineTo(2+r(),h-2-r()*1.5);ctx.closePath();ctx.stroke()}// la cornice ripassata due volte
     const im=chalkGun(id),k=Math.min((w-10)/im.width,(h-15)/im.height);ctx.drawImage(im,w/2-im.width*k/2,3+(h-15-im.height*k)/2,im.width*k,im.height*k);
     ctx.font='400 7.4px "Lilita One",system-ui';ctx.textAlign='center';ctx.textBaseline='alphabetic';const t=price.toLocaleString('it-IT');ctx.fillStyle='rgba(236,232,220,.88)';ctx.fillText(t,w/2+3.4,h-3.6);
     ctx.lineWidth=.8;ctx.beginPath();ctx.arc(w/2-ctx.measureText(t).width/2-.6,h-6.1,2,0,TAU);ctx.stroke()};
-  const p0=along==='x'?[x-W2/2,y]:[x,y-W2/2];prop({bx:[x-W2/2-2,y-W2/2-2,x+W2/2+2,y+W2/2+2,z+H2+2],ob:along==='x'?[x-W2/2,y-1,x+W2/2,y+1,z+H2]:[x-1,y-W2/2,x+1,y+W2/2,z+H2],parts:[plane(p0[0],p0[1],z,W2,H2,along,'arma_'+id,draw,{host})]})});
+  const p0=along==='x'?[x-W2/2,y]:[x,y-W2/2];prop({bx:[x-W2/2-2,y-W2/2-2,x+W2/2+2,y+W2/2+2,z+H2+2],ob:along==='x'?[x-W2/2,y-1,x+W2/2,y+1,z+H2]:[x-1,y-W2/2,x+1,y+W2/2,z+H2],parts:[Object.assign(plane(p0[0],p0[1],z,W2,H2,along,'arma_'+id,draw,{host}),hs?{part:'inU'}:{})],house:hs||undefined})});
 
 // ------------------------------------------------------------------ granturco: cespi di tre piante dipinti una volta (sei varianti: verdi,
 // ingialliti, secchi, con la pannocchia, uno spezzato che pende), appoggiati come cartelloni sul loro piede e piegati come le cose alte; in cima

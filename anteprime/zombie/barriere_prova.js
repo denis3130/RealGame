@@ -40,7 +40,7 @@ const PAGE=path.resolve(process.argv[2]||path.join(__dirname,'..','zombie.html')
     await p.screenshot({path:path.join(__dirname,'_bar_ripara.png')});await p.waitForTimeout(1500);await p.mouse.up()}
   const r4=await E(()=>__B.n);ok(r4>=2,`tenendo premuto 1,9 s le assi salgono a ${r4}`);
   // ---- 5. i colpi passano la finestra: l'eroe dentro spara allo zombie fuori
-  const r5=await E(()=>{const M=__MZ,W=M.W,B=__B,h=M.houses[0];W.dbg.noShoot=false;M.tp(B.x-30,B.y);const z={id:997,kind:'zombie',sc:1.1,spd:0,hp:60,x:B.x+28,y:B.y+14,face:Math.PI,p:0,anim:'idle',rise:1,die:0,flash:0};W.Z.push(z);
+  const r5=await E(()=>{const M=__MZ,W=M.W,B=__B,h=M.houses[0];W.dbg.noShoot=false;W.hero.busy=null;M.tp(B.x-30,B.y);/* (busy: con le prove in parallelo il bottone appena lasciato poteva tenerlo ancora al lavoro) */const z={id:997,kind:'zombie',sc:1.1,spd:0,hp:60,x:B.x+28,y:B.y+14,face:Math.PI,p:0,anim:'idle',rise:1,die:0,flash:0};W.Z.push(z);
     for(let i=0;i<30*4;i++)M.sim(1,1/30);return{hp:Math.round(z.hp),die:!!z.die}});
   ok(r5.die||r5.hp<60,`si spara attraverso la finestra sbarrata (vita ${r5.hp}${r5.die?', morto':''})`);
   await E(()=>{__MZ.W.dbg.noShoot=true;__MZ.W.Z.length=0});

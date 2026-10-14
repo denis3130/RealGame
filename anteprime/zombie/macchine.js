@@ -104,13 +104,13 @@ function pour(m){const busy=PK.fly.map(f=>f.pk.id).concat(ELI.filter(e=>e.wait).
   m.use=1.6;m.spin=14;m.col=pk.col;m.pk=pk;m.wait={pk,t:.7};suono('manovella',m.x,m.y)}
 function drink(pk){const D=W.director;if(!D||D.st==='fine'||has(pk.id)||PK.own.length>=EL.max)return;PK.own.push(pk.id);
   if(pk.id==='cuore'){PK.vbase=D.PZ.vita;PK.boost=Math.round(D.PZ.vita*2.5);D.PZ.vita=PK.boost;D.hp=PK.boost}
-  suono('beve',null,null,[60,62,64,65,67,69,71,72][PERK.indexOf(pk)]);W.toast=[pk.n+': '+pk.d,2.8];PK.rings.push({x:W.hero.x,y:W.hero.y,t:0,col:pk.col});PK.uk=''}
+  suono('beve',null,null,[60,62,64,65,67,69,71,72][PERK.indexOf(pk)]);W.toast=[pk.n+': '+pk.d,2.8];PK.rings.push({x:W.hero.x,y:W.hero.y,z0:W.hero.lvz||0,t:0,col:pk.col});PK.uk=''}
 // ------------------------------------------------------------------ gli effetti degli elisir e della Forgia nel motore: W.mods (fortuna.js li
 // ricalcola ogni fotogramma e poi chiama questo), il vampiro sui colpi a segno, l'impulso quando la vita scende
 ZM.modsHook=M=>{if(has('furia'))M.dmg=(M.dmg||1)*2;if(has('impatto')){M.dmg=(M.dmg||1)*1.2;M.pierce=(M.pierce||0)+1;M.kb=7}if(has('istinto'))M.crit=Math.min(.6,(M.crit||0)+.22);
   if(has('passo'))M.spd=(M.spd||1)*1.25;if(has('mani'))M.relK=2;const g=ZM.gun();if(g&&g.pap)M.dmg=(M.dmg||1)*FG.mul[g.pap]};
-function impulse(){const h=W.hero;PK.rings.push({x:h.x,y:h.y,t:0,col:'#7fd0ff',big:1});suono('impulso',h.x,h.y);
-  for(const z of W.Z){if(z.die||z.idle||z.rise<1)continue;const dx=z.x-h.x,dy=z.y-h.y,d=Math.hypot(dx,dy)||1;if(d>EL.pushR)continue;const L=(EL.pushR+20-d)*.8,n=Math.ceil(L/4);for(let i=0;i<n;i++)move(z,dx/d*L/n,dy/d*L/n,11);if(!z.ai)z.stun=1.1}}
+function impulse(){const h=W.hero;PK.rings.push({x:h.x,y:h.y,z0:h.lvz||0,t:0,col:'#7fd0ff',big:1});suono('impulso',h.x,h.y);
+  for(const z of W.Z){if(z.die||z.idle||z.rise<1||!ZM.sameLv(z))continue;const dx=z.x-h.x,dy=z.y-h.y,d=Math.hypot(dx,dy)||1;if(d>EL.pushR)continue;const L=(EL.pushR+20-d)*.8,n=Math.ceil(L/4);for(let i=0;i<n;i++)move(z,dx/d*L/n,dy/d*L/n,11);if(!z.ai)z.stun=1.1}}
 // ------------------------------------------------------------------ la valvola della caldaia (il vapore per la Forgia)
 // una caldaia di ferro chiodata su un focolare di mattoni, il manometro, la ruota rossa della valvola sul tubo, il fischietto in cima
 P.valvola=function(x,y){solid(x-17,y-17,34,34).round=true;shadeR(x+10,y+5,24,.45);const v={x,y,rot:0,t:-1,i:VALVES.length,smkAt:ZM.toWorld(x+4,y-2)};VALVES.push(v);const parts=[];
@@ -183,7 +183,7 @@ function forge(f,g,lvl){const id=W.gunId;f.item={id,lvl,nome:nomeF(id,lvl)};f.st
 function take(f){const it=f.item;if(!it)return;W.hero.unarmed=false;ZM.equip(it.id);const g=ZM.gun();if(g){g.pap=it.lvl;g.nome=it.nome;g.mag=g.D.mag;g.res=g.D.res*(it.lvl+1)}W.toast=[it.nome,2.6];suono('prendi',f.x,f.y);f.item=null;f.st='calda';f.t=0;PK.rings.push({x:W.hero.x,y:W.hero.y,t:0,col:it.lvl>=2?'#d48bff':'#8fe6ff'})}
 // i colpi delle armi forgiate: una scintilla azzurra sullo zombie (livello 1), viola e un arco che salta allo zombie più vicino (livello 2)
 const ARCS=[];
-W.papHit=(z,g,dmg)=>{const lv=g.pap||0;if(!lv)return;PK.rings.push({x:z.x,y:z.y,t:.35,col:lv>=2?'#d48bff':'#8fe6ff',small:1});if(lv<2)return;
+W.papHit=(z,g,dmg)=>{const lv=g.pap||0;if(!lv)return;PK.rings.push({x:z.x,y:z.y,z0:z.zh||0,t:.35,col:lv>=2?'#d48bff':'#8fe6ff',small:1});if(lv<2)return;
   let best=null,bd=80;for(const o of W.Z){if(o===z||o.die||o.rise<1||o.idle)continue;const d=Math.hypot(o.x-z.x,o.y-z.y);if(d<bd){bd=d;best=o}}
   if(best){ZM.hurt(best,dmg*FG.catena,false);ARCS.push({a:[z.x,z.y,(z.zh||0)+22],b:[best.x,best.y,(best.zh||0)+22],t:0,sd:Math.random()*99})}};
 // lo sparo delle armi forgiate squilla (livello 1) o crepita (livello 2)
@@ -211,12 +211,12 @@ function update(dt){const D=W.director,h=W.hero;
 function burstSparks(f){const B=ZM.barriere;if(!B||!B.FX)return;for(let i=0;i<(LOWFX?3:9);i++){const a=rr(-Math.PI,0),v=rr(40,110);B.FX.push({k:'scintilla',x:f.anvil[0],y:f.anvil[1],z:14,vx:Math.cos(a)*v,vy:rr(-20,30),vz:rr(40,120),r:rr(.8,1.8),t:0,T:rr(.3,.6),rot:rr(0,TAU),vr:rr(-10,10)})}}
 function drawTop(){const h=W.hero;
   // la boccetta che vola dallo scivolo all'eroe
-  for(const fl of PK.fly){const k=ez(Math.min(1,fl.t/.9)),a=S(fl.m.chute[0],fl.m.chute[1],24),b=S(h.x,h.y,(h.zh||0)+40),x=lerp(a[0],b[0],k),y=lerp(a[1],b[1],k)-Math.sin(k*Math.PI)*36;
+  for(const fl of PK.fly){const k=ez(Math.min(1,fl.t/.9)),a=S(fl.m.chute[0],fl.m.chute[1],24),b=ZM.SB(h.x,h.y,(h.zh||0)+40),x=lerp(a[0],b[0],k),y=lerp(a[1],b[1],k)-Math.sin(k*Math.PI)*36;
     if(!LOWFX){ctx.save();ctx.globalCompositeOperation='lighter';glow(hexRgb(fl.pk.col),x,y,14,.5);ctx.restore()}bottle(ctx,x,y,.62,fl.pk.col,fl.pk.sym,1-Math.max(0,fl.t-.85)*6)}
   // gli anelli (elisir bevuto, arma forgiata, impulso, colpi delle armi forgiate)
-  for(const r of PK.rings){const k=r.t/.7,q=S(r.x,r.y,r.small?20:4),R=r.small?4+k*12:r.big?20+k*120:14+k*40;ctx.save();ctx.globalAlpha=(1-k)*(r.small?.9:.8);ctx.strokeStyle=r.col;ctx.lineWidth=r.small?1.6:2.6;ctx.beginPath();ctx.ellipse(q[0],q[1],R,R*(r.small?.8:.55),0,0,TAU);ctx.stroke();ctx.restore()}
+  for(const r of PK.rings){const k=r.t/.7,q=ZM.SB(r.x,r.y,(r.z0||0)+(r.small?20:4)),R=r.small?4+k*12:r.big?20+k*120:14+k*40;ctx.save();ctx.globalAlpha=(1-k)*(r.small?.9:.8);ctx.strokeStyle=r.col;ctx.lineWidth=r.small?1.6:2.6;ctx.beginPath();ctx.ellipse(q[0],q[1],R,R*(r.small?.8:.55),0,0,TAU);ctx.stroke();ctx.restore()}
   // gli archi viola che saltano tra gli zombie (livello 2)
-  for(const a of ARCS){const p=S(a.a),q=S(a.b),n=6;let s=a.sd;const r=()=>{s=(s*16807+7)%2147483647;return s/2147483647};ctx.save();if(!LOWFX)ctx.globalCompositeOperation='lighter';ctx.strokeStyle=`rgba(212,139,255,${1-a.t/.18})`;ctx.lineWidth=2;ctx.beginPath();ctx.moveTo(p[0],p[1]);
+  for(const a of ARCS){const p=ZM.SB(a.a),q=ZM.SB(a.b),n=6;let s=a.sd;const r=()=>{s=(s*16807+7)%2147483647;return s/2147483647};ctx.save();if(!LOWFX)ctx.globalCompositeOperation='lighter';ctx.strokeStyle=`rgba(212,139,255,${1-a.t/.18})`;ctx.lineWidth=2;ctx.beginPath();ctx.moveTo(p[0],p[1]);
     for(let i=1;i<n;i++){const k=i/n;ctx.lineTo(lerp(p[0],q[0],k)+(r()-.5)*10,lerp(p[1],q[1],k)+(r()-.5)*10)}ctx.lineTo(q[0],q[1]);ctx.stroke();ctx.restore()}}
 {const _p=ZM.partita;ZM.partita=function(o){const D=_p(o);if(D.__mac)return D;D.__mac=1;
   const _u=D.update;D.update=(dt,on)=>{_u(dt,on);try{update(dt)}catch(e){console.error(e)}};
