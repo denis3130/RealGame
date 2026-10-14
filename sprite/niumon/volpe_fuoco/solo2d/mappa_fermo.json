@@ -1,0 +1,23 @@
+{
+ "asset_id": "creature_volpefuoco_mappa_fermo",
+ "w": 64,
+ "h": 64,
+ "n": 8,
+ "fps": 8,
+ "loop": true,
+ "anchor": [
+  32,
+  58
+ ],
+ "frame_width": 64,
+ "frame_height": 64,
+ "frames": 8,
+ "pivot": [
+  32,
+  58
+ ],
+ "direction": "down_left",
+ "source": "disegno di Denis (13 ottobre), tutto in 2D",
+ "version": "0.3-anteprima-2d",
+ "status": "da approvare"
+}

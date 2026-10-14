@@ -1,0 +1,67 @@
+<title>Niumon di fuoco 2D</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:wght@400;700&family=Pixelify+Sans:wght@500;600;700&display=swap">
+<style>
+/* Layout: una sola fila di confronto (il disegno, lo sprite della lotta, lo sprite della mappa), poi due righe di testo.
+   Un solo aspetto scuro di proposito: la pixel art si giudica su un fondo notte. */
+:root{
+  --bg:#121015; --panel:#1a171d; --line:#302a33; --fg:#f0eae5; --dim:#aaa098; --ember:#f08a4c;
+  --f-pix:"Pixelify Sans", ui-monospace, "Courier New", monospace;
+  --f-body:"Atkinson Hyperlegible", system-ui, -apple-system, "Segoe UI", sans-serif;
+  color-scheme:dark;
+}
+html,body{background:var(--bg)}
+body{color:var(--fg);font-family:var(--f-body);font-size:1rem;line-height:1.5}
+.wrap{max-width:64rem;margin:0 auto;padding-inline:16px;padding-block:20px 48px;display:grid;gap:24px}
+h1{font-family:var(--f-pix);font-weight:700;font-size:clamp(1.6rem,4.6vw,2.4rem);line-height:1.1;margin:0;text-wrap:balance}
+h1 em{font-style:normal;color:var(--ember)}
+.eyebrow{font-family:var(--f-pix);font-size:.82rem;letter-spacing:.14em;text-transform:uppercase;color:var(--dim);margin:0 0 6px}
+p{margin:0;max-width:62ch}
+.dim{color:var(--dim)}
+.row{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}
+.fig{margin:0;display:grid;gap:8px;align-content:start;background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:10px;min-width:0}
+.pic{width:100%;max-width:100%;aspect-ratio:1/1;display:block;border-radius:6px}
+img.pic{object-fit:contain;background:#fbfaf7}
+canvas.pic{background:radial-gradient(ellipse at 50% 72%,#251e25 0%,#18141a 70%)}
+.fig figcaption{font-size:.9rem;color:var(--dim)}
+.fig figcaption b{display:block;font-family:var(--f-pix);font-weight:600;color:var(--fg);font-size:.95rem}
+.ask{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:14px;display:grid;gap:8px}
+.ask b{font-family:var(--f-pix);font-weight:600}
+@media (max-width:760px){.row{grid-template-columns:1fr}.pic{max-height:62vh}}
+</style>
+<main class="wrap">
+  <header>
+    <p class="eyebrow">Niumon · prova solo in 2D</p>
+    <h1>Il Niumon <em>di fuoco</em> in 2D</h1>
+    <p class="dim" style="margin-top:10px">Questa volta niente modellino 3D: è il tuo disegno ridotto a pixel. Ogni pixel prende il colore più presente in quel pezzo del tuo disegno, con una tavolozza fissa di fuoco, il contorno scuro e gli occhi da sprite. La coda e la cresta si muovono piegando il disegno stesso; una volta sbatte le palpebre.</p>
+  </header>
+  <div class="row">
+    <figure class="fig"><img class="pic" id="imDraw" alt="Il disegno di Denis"><figcaption><b>Il tuo disegno</b>La fonte di tutto.</figcaption></figure>
+    <figure class="fig"><canvas class="pic" id="cvLotta" aria-label="Sprite della lotta, animato"></canvas><figcaption><b>In lotta · 96×96</b>Da mostrare a due pixel per pixel (192×192, la misura del piano).</figcaption></figure>
+    <figure class="fig"><canvas class="pic" id="cvMappa" aria-label="Sprite della mappa, animato"></canvas><figcaption><b>Sulla mappa · 64×64</b>Occhi fatti a mano pixel per pixel.</figcaption></figure>
+  </div>
+  <section class="ask" aria-label="Cosa mi serve sapere">
+    <b>In 2D ogni direzione va disegnata</b>
+    <p class="dim">Questa è la vista del tuo disegno (tre quarti davanti). Davanti, di lato e da dietro non si possono ricavare senza un modellino: vanno disegnati. Due strade: me li mandi tu, come il foglio del primo Niumon, oppure li disegno io in 2D partendo da questa, nello stesso stile.</p>
+  </section>
+</main>
+<script>
+(()=>{
+'use strict';
+const S=__SHEETS__,IM=__IMAGES__;
+const reduce=matchMedia('(prefers-reduced-motion: reduce)').matches;
+const $=id=>document.getElementById(id);
+function load(src){return new Promise((ok,ko)=>{const i=new Image();i.onload=()=>ok(i);i.onerror=ko;i.src=src})}
+function fit(cv){const D=Math.min(2,window.devicePixelRatio||1),w=Math.round(cv.clientWidth*D),h=Math.round(cv.clientHeight*D);if(cv.width!==w||cv.height!==h){cv.width=w;cv.height=h}return D}
+function draw(cv,sh,t){const D=fit(cv),g=cv.getContext('2d'),W=cv.width,H=cv.height;g.clearRect(0,0,W,H);if(!sh.img)return;
+  let sc=Math.min((W-8*D)/sh.w,(H-8*D)/sh.h);const smooth=sc<1;if(!smooth)sc=Math.floor(sc);
+  const f=reduce?0:Math.floor(t*sh.fps)%sh.n,x=Math.round((W-sh.w*sc)/2),y=Math.round((H-sh.h*sc)/2);
+  g.save();g.globalAlpha=.45;g.fillStyle='#050406';g.beginPath();g.ellipse(x+sh.anchor[0]*sc,y+(sh.anchor[1]+.5)*sc,sh.w*sc*.3,Math.max(2,sc*2.5),0,0,Math.PI*2);g.fill();g.restore();
+  g.imageSmoothingEnabled=smooth;g.drawImage(sh.img,f*sh.w,0,sh.w,sh.h,x,y,sh.w*sc,sh.h*sc)}
+const T0=performance.now();
+function frame(now){const t=(now-T0)/1000;draw($('cvLotta'),S.lotta,t);draw($('cvMappa'),S.mappa,t);requestAnimationFrame(frame)}
+Promise.all(Object.keys(S).map(k=>load(S[k].src).then(i=>{S[k].img=i}))).then(()=>{
+  if(IM.disegno)$('imDraw').src=IM.disegno;else $('imDraw').closest('figure').hidden=true;requestAnimationFrame(frame)});
+})();
+</script>

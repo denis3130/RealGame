@@ -1,0 +1,23 @@
+{
+ "asset_id": "creature_volpefuoco_lotta_fermo",
+ "w": 96,
+ "h": 96,
+ "n": 8,
+ "fps": 8,
+ "loop": true,
+ "anchor": [
+  48,
+  90
+ ],
+ "frame_width": 96,
+ "frame_height": 96,
+ "frames": 8,
+ "pivot": [
+  48,
+  90
+ ],
+ "direction": "down_left",
+ "source": "disegno di Denis (13 ottobre), tutto in 2D",
+ "version": "0.3-anteprima-2d",
+ "status": "da approvare"
+}

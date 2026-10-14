@@ -9,7 +9,19 @@ Regola del piano degli sprite (versione 1.1): creature e personaggi solo in pixe
 attrezzo per tenere le forme uguali in tutte le direzioni: nel gioco vanno solo i PNG. Prima di metterli nel gioco Denis guarda tutte
 le direzioni (pagina `python3 anteprime/mk_niumon_volpe.py`, pubblicata su https://claude.ai/artifact/5c3n4qU6JekcfCQwHiD14q).
 
-## Versione 2D (14 ottobre, notte)
+## Solo 2D, senza base 3D (14 ottobre, notte)
+
+Denis sulla versione colorata in 2D: «ma è in 3d questo bro». Allora una prova tutta in 2D, senza modellino: `disegno2d/`
+riduce a pixel il suo disegno (`maschera.py`: la sagoma senza carta né ombra a terra, braci a parte; `pixel2d.py`: matita
+lisciata, tavolozza fissa di fuoco scelta pixel per pixel sul disegno intero e poi il colore più votato in ogni blocco,
+contorno scuro, linee interne dai tratti scuri, occhi da sprite al posto di quelli del disegno: disegnati a 96 px, timbri a
+mano a 64 px; naso, bocca con la lingua e guancia presi dal disegno; `anima2d.py`: 8 fotogrammi a 8 al secondo in cui coda e
+cresta del disegno si piegano a onde con la base ferma, le braci salgono e al sesto fotogramma chiude gli occhi). Fogli in
+`solo2d/`: `lotta_fermo` (96×96, da mostrare a 2× nel riquadro 192×192 del piano) e `mappa_fermo` (64×64). Pagina
+`python3 anteprime/mk_niumon_volpe2d.py`, pubblicata su https://claude.ai/artifact/8HKD5hPW47LWkV5bwk2Ww9. È solo la vista del
+disegno (tre quarti davanti): in 2D le altre direzioni vanno disegnate, da Denis o da me nello stesso stile (chiesto a lui).
+
+## Versione colorata in 2D sulla base 3D (14 ottobre, notte)
 
 Denis: «prova a farlo 2d facendolo più simile che ne so ad un evee va bene? mettici poco tempo». Fatto in fretta, sulla stessa base:
 - colori come uno sprite disegnato a mano (`pixel.finish2d`, `sprite.STILE = '2d'`): per ogni parte un colore pieno, un'ombra
