@@ -9559,10 +9559,17 @@ const LP=(p,q,t)=>{t=ez(cl(t,0,1));return[lerp(p[0],q[0],t),lerp(p[1],q[1],t)]};
 // the other hand during a magazine change (k 0..1 along the reload, the same timeline as nuova()): it goes to the magazine, takes the old
 // one down, fetches a new one, pushes it in, then pulls the bolt or the slide and lets it go. s: where it rests (null: it is only seen
 // during the reload), m: the bottom of the seated magazine, d: how far the magazine slides out, b: the bolt or slide handle
-function magHand(k,s,m,d,b){const md=f=>[m[0]+d[0]*f,m[1]+d[1]*f+1.6],rest=s||[m[0]-1.5,m[1]+9],away=[m[0]-3.5,m[1]+d[1]*1.6+5];
-  if(k<.1)return LP(rest,md(0),k/.1);if(k<.2)return md(ez((k-.1)/.1)*.6);if(k<.32)return LP(md(.6),away,(k-.2)/.12);if(k<.45)return LP(away,md(1),(k-.32)/.13);
-  if(k<.55)return md(1);if(k<.75)return md(1-ez((k-.55)/.2));if(k<.8)return LP(md(0),b,(k-.75)/.05);if(k<.97)return b;return s?LP(b,s,(k-.97)/.03):null}
+function magHand(k,s,m,d,b){const T=RLT.mag,md=f=>[m[0]+d[0]*f,m[1]+d[1]*f+1.6],rest=s||[m[0]-1.5,m[1]+9],away=[m[0]-3.5,m[1]+d[1]*1.6+5];
+  if(k<T.out)return LP(rest,md(0),k/T.out);if(k<T.drop)return md(ez((k-T.out)/(T.drop-T.out))*.6);if(k<T.pouch)return LP(md(.6),away,(k-T.drop)/(T.pouch-T.drop));
+  if(k<T.well)return LP(away,md(1),(k-T.pouch)/(T.well-T.pouch));if(k<T.push)return md(1);if(k<T.seat)return md(1-ez((k-T.push)/(T.seat-T.push)));
+  if(k<T.rack)return LP(md(0),b,(k-T.seat)/(T.rack-T.seat));if(k<T.done)return b;return s?LP(b,s,(k-T.done)/(1-T.done)):null}
 
+// The moments of a reload (k = 0..1 of D.rel), the same for the guns in 3D (sprite/eroe3d/disegno_eroe.js), the 2D ones and the sounds.
+// mag: the magazine guns: out the release and the magazine coming out, drop it falls, pouch the hand at the belt takes a new one, well
+// it is under the well, push it goes in, seat it clicks home, rack the hand on the slide or the bolt pulls it back, fwd it slams forward,
+// done the hand goes back. rev: the revolver: the cylinder swings out (open), the cases are pushed out and fall (eject), six rounds go in
+// one by one (load), it swings shut (shut), then it spins
+const EQT=.6,EQR=.74,RLT={mag:{out:.1,drop:.18,pouch:.3,well:.42,push:.5,seat:.66,rack:.72,fwd:.8,done:.88},rev:{open:[.04,.16],eject:[.16,.2],load:[.3,.8],shut:[.84,.92]}};
 // ------------------------------------------------------------------ the guns
 // draw(o): the profile for a state o {slide 0..1 (slide or bolt back), pump 0..1 (forend back), mag 0..1 (magazine out), cyl (cylinder
 // turn), hammer 0..1 (cocked), swing 0..1 (cylinder swung out), rounds (rounds in the open cylinder), spin (barrels' turn), feed (belt
@@ -9868,14 +9875,18 @@ function vampa(id,x,y,k,seed){if(k<=0)return;const back=id==='retro',V=DATI[id].
 // out, .2 it falls (and vanishes from the gun), .45 the hand brings the new one, .55-.75 it goes in, .8-.97 the bolt or slide is pulled.
 function nuova(id){const D=DATI[id],sh=id==='pompa'||id==='tattica';
   const g={id,D,mag:D.mag,res:D.res,st:'pronta',t:0,cd:0,rec:0,flash:0,slide:0,pump:0,magOut:0,magA:1,cyl:0,hammer:0,swing:0,rounds:D.mag,spin:0,spinV:0,feed:0,loaded:1,shell:-1,tilt:0,
-    prev:false,seed:1,q:[],
+    prev:false,seed:1,q:[],eq:1,
+    // the gun just taken (the map's equip): it comes up from the side in EQT seconds and the free hand works the slide, the pump or the
+    // bolt once (sound 'estrai' at the start, 'pronta' halfway through the gesture); it cannot fire until it is up
+    estrai(){g.eq=0;g.cd=Math.max(g.cd,EQT*.8);g.q.push({k:'suono',w:'estrai'})},
     tot:()=>g.mag+g.res,
     ricarica(){if(g.st==='ricarica'||g.mag>=D.mag||g.res<=0)return false;g.empty=g.mag<=0;g.st='ricarica';g.t=0;g.dropped=0;g.cnt=0;g.q.push({k:'suono',w:'ricarica'});return true},
     annulla(){if(g.st!=='ricarica')return;g.st='pronta';g.t=0;g.magOut=0;g.magA=1;g.swing=0;g.slide=0;g.shell=-1;g.tilt=0;g.dropped=0;g.rounds=g.mag;g.loaded=g.mag>0?1:0},
     rk:()=>g.st==='ricarica'&&!sh&&g.t>=0?cl(g.t/D.rel,0,1):-1,
     pose(){return{rec:g.rec,flash:g.flash,slide:g.slide,pump:g.pump,mag:g.magOut,magA:g.magA,cyl:g.cyl,hammer:g.hammer,swing:g.swing,rounds:g.rounds,spin:g.spin,feed:g.feed,
-      loaded:g.loaded,saddle:Math.min(4,g.res),seed:g.seed,glow:.8+.2*Math.sin(G_t()*3),tilt:g.tilt,rk:g.rk(),shell:g.shell}},
+      loaded:g.loaded,saddle:Math.min(4,g.res),seed:g.seed,glow:.8+.2*Math.sin(G_t()*3),tilt:g.tilt,rk:g.rk(),shell:g.shell,n:g.mag,empty:!!g.empty,eq:g.eq}},
     update(dt,fire){const ev=g.q.splice(0);const press=fire&&!g.prev;g.prev=fire;g.t+=dt;g.cd=Math.max(0,g.cd-dt);
+      if(g.eq<1){const was=g.eq;g.eq=Math.min(1,g.eq+dt/EQT);if(was<EQR&&g.eq>=EQR)ev.push({k:'suono',w:'armata'})}
       g.rec=Math.max(0,g.rec-dt*(id==='lanciarazzi'?3:id==='revolver'||sh?5:9));g.flash=Math.max(0,g.flash-dt*(id==='mitragliatrice'?26:16));
       if(g.slide>0&&g.st!=='ricarica')g.slide=Math.max(0,g.slide-dt*(id==='pistola'?9:14));if(id==='revolver')g.hammer=g.st==='ricarica'?0:1-g.cd*D.rate;
       // the machine gun's barrels spin up while the trigger is held, and keep turning a little after
@@ -9883,7 +9894,7 @@ function nuova(id){const D=DATI[id],sh=id==='pompa'||id==='tattica';
         if(want&&was===0)ev.push({k:'suono',w:'giri'})}
       if(g.st==='pompa'&&g.t>=0){if(!g.ps){g.ps=1;ev.push({k:'suono',w:'pompa'})}const k=g.t/D.pump;g.pump=bump(k);if(k>=.5&&!g.ej){g.ej=1;ev.push({k:'bossolo',n:1})}if(k>=1){g.st='pronta';g.pump=0}}
       if(g.st==='ricarica')rel(dt,ev,fire,press);
-      if(g.st!=='ricarica'){g.tilt=Math.max(0,g.tilt-dt*3);g.shell=-1}
+      if(g.st!=='ricarica'){g.tilt=Math.max(0,g.tilt-dt*(sh?.9:3));g.shell=-1}
       if(g.st==='pronta'&&fire&&g.cd<=0){const can=D.auto?fire:press;
         if(can){if(g.mag<=0){if(g.res>0)g.ricarica();else if(press)ev.push({k:'suono',w:'vuoto'})}
           else if(id!=='mitragliatrice'||g.spinV>=1)shoot(ev)}}
@@ -9903,14 +9914,14 @@ function nuova(id){const D=DATI[id],sh=id==='pompa'||id==='tattica';
       if(f>=.8&&!g.cnt){g.cnt=1;g.mag++;g.res--;ev.push({k:'suono',w:'cartuccia'})}
       if(f>=1){g.t-=R;g.cnt=0;if(g.mag>=D.mag||g.res<=0){g.shell=-1;ev.push({k:'pronta'});if(g.empty){g.st='pompa';g.t=-.12;g.ej=1;g.ps=0}else g.st='pronta'}}return}
     if(g.t<0)return;const k=g.t/R;
-    if(id==='revolver'){g.tilt=.55*tz(k,.02,.14,.82,.92);g.swing=k<.16?ez((k-.02)/.14):k<.82?1:1-ez((k-.82)/.1);g.hammer=0;
-      if(k>=.2&&!g.dropped){g.dropped=1;g.rounds=0;ev.push({k:'bossolo',n:6})}if(k>=.3&&k<.82)g.rounds=Math.min(Math.min(6,g.mag+g.res),Math.floor((k-.3)/.5*6.99));
-      if(k>=.92)g.cyl+=dt*4}
+    if(id==='revolver'){const V=RLT.rev;g.tilt=.55*tz(k,.02,.14,.82,.92);g.swing=k<V.open[1]?ez(cl((k-V.open[0])/(V.open[1]-V.open[0]),0,1)):k<V.shut[0]?1:k<V.shut[1]?1-ez((k-V.shut[0])/(V.shut[1]-V.shut[0])):0;g.hammer=0;
+      if(k>=V.eject[1]&&!g.dropped){g.dropped=1;g.rounds=0;ev.push({k:'bossolo',n:6})}if(k>=V.load[0]&&k<V.shut[0])g.rounds=Math.min(Math.min(6,g.mag+g.res),Math.floor((k-V.load[0])/(V.load[1]-V.load[0])*6+.4));
+      if(k>=V.shut[1])g.cyl+=dt*4}
     else if(id==='lanciarazzi'){g.tilt=.1*tz(k,0,.15,.8,.95);g.loaded=k<.3?0:Math.min(1,(k-.3)/.55)}
-    else{g.tilt=(id==='mitragliatrice'?.1:.2)*tz(k,0,.1,.72,.84);
-      g.magOut=k<.1?0:k<.2?ez((k-.1)/.1)*.6:k<.55?1:k<.75?1-ez((k-.55)/.2):0;g.magA=k<.2||k>=.55?1:k<.45?0:(k-.45)/.1;
-      if(k>=.2&&!g.dropped){g.dropped=1;ev.push({k:'caricatore'})}
-      g.slide=k>=.8?bump((k-.8)/.17):0;if(id==='mitragliatrice'&&k>.8)g.feed=(k-.8)*5%1}
+    else{const T=RLT.mag;g.tilt=(id==='mitragliatrice'?.1:.2)*tz(k,0,.1,T.done-.04,1);
+      g.magOut=k<T.out?0:k<T.drop?ez((k-T.out)/(T.drop-T.out))*.6:k<T.push?1:k<T.seat?1-ez((k-T.push)/(T.seat-T.push)):0;g.magA=k<T.drop||k>=T.push?1:k<T.well?0:(k-T.well)/(T.push-T.well);
+      if(k>=T.drop&&!g.dropped){g.dropped=1;ev.push({k:'caricatore'})}
+      g.slide=k>=T.rack&&k<T.done?bump((k-T.rack)/(T.done-T.rack)):0;if(id==='mitragliatrice'&&k>T.rack)g.feed=(k-T.rack)*5%1}
     if(k>=1){const n=Math.min(D.mag-g.mag,g.res);g.mag+=n;g.res-=n;g.st='pronta';g.dropped=0;g.magOut=0;g.magA=1;g.swing=0;g.slide=0;g.rounds=g.mag;g.loaded=g.mag>0?1:0;ev.push({k:'pronta'})}}
   return g}
 const G_t=()=>typeof G!=='undefined'&&G.t!=null?G.t:performance.now()/1000;
@@ -9982,6 +9993,11 @@ function caricatore(id,x,y,ang,a,fl){if(a<=0)return;ctx.save();ctx.globalAlpha*=
   two(()=>{if(id==='pistola'){PB(-1.4,-2.7,1.4,2.2,.3,'nero',{hi:.25});PB(-1.7,1.9,1.7,3.1,.4,'nero',{col:'#4a5058'})}
     else if(id==='mitraglietta'){PP([[-1.5,-4.2],[1.5,-4.2],[1.15,3.6],[-1.85,3.6]],.4,'nero',{dk:.75,hi:.25});PB(-2.25,3.2,1.55,4.2,.4,'nero',{col:'#4a5058'})}
     else if(id==='mitra'){paint(()=>{ctx.beginPath();ctx.moveTo(-3,-4.3);ctx.lineTo(.2,-4.3);ctx.quadraticCurveTo(.8,-.2,3.2,3.4);ctx.lineTo(.6,4.4);ctx.quadraticCurveTo(-1.8,.6,-3,-4.3);ctx.closePath()},[-3,-4.3,3.2,4.4],'rame',{dk:.7})}
+    else if(id==='tamburo'){paint(()=>ball([0,0],3.6),[-3.6,-3.6,3.6,3.6],'acciaio',{gl:1});if(!OUT){ctx.strokeStyle='rgba(20,24,30,.55)';ctx.lineWidth=.35;ctx.beginPath();ctx.arc(0,0,2.5,0,TAU);ctx.stroke()}
+      paint(()=>ball([0,0],1.05),[-1.05,-1.05,1.05,1.05],'ottone',{hi:.4})}
+    else if(id==='lanciafiamme'){PB(-5.2,-2.4,5.2,2.4,2.3,'rosso',{gl:2});PB(-5.8,-2.1,-4.3,2.1,.7,'ottone',{hi:.4});PB(4.3,-2.1,5.8,2.1,.7,'ottone',{hi:.4})}
+    else if(id==='vapore'){PB(-1.4,-2.9,1.4,2.9,.4,'nero',{hi:.3});if(!OUT){ctx.fillStyle=C.acciaio[2];for(let i=0;i<3;i++)ctx.fillRect(-.9+i*.75,-2.6,.36,5.2)}}
+    else if(id==='risonatore'){PP([[0,-3.6],[1.6,-1.2],[0,3.6],[-1.6,-1.2]],.3,'cristallo',{hi:.2,col:'#4f8c80',colD:'#2c5a52',colL:'#8fc4b8'})}
     else{PB(-3.2,-3,3.2,3,.8,'oliva',{dk:.62});lines([[-3,-1.4,3,-1.4]],'rgba(20,26,8,.55)',.4);PB(-2.2,.3,2.2,1.3,.2,'giallo',{hi:0,lw:.8})}});
   ctx.restore()}
 function fxUpdate(dt){for(let i=FX.length-1;i>=0;i--){const p=FX[i];p.t+=dt;if(p.t>=p.life){FX.splice(i,1);continue}
@@ -10407,7 +10423,7 @@ function suonoBara(w,x,dt){if(typeof AU==='undefined'||!AU.ctx||!AU.on.sfx)retur
   else if(w==='sprofonda'){fNoise(t,1.5,'lowpass',260,.7,.6,{brown:true,att:.2});for(let i=0;i<7;i++)M.stone(t+.1+i*.18+Math.random()*.08,.5);fNoise(t,.9,'bandpass',220,6,.15,{f2:90,att:.1});risata(t+.5,4,.08)}
   else if(w==='sale'){fNoise(t,1.1,'lowpass',260,.7,.5,{brown:true,att:.15});for(let i=0;i<5;i++)M.stone(t+.05+i*.17,.45);fNoise(t+.4,.6,'bandpass',300,7,.15,{f2:700});fThump(t+1,120,60,.15,.5);M.wood(t+1,1,160)}}catch(e){}
   AU.pan=0}
-return{G,DATI,ORDINE,RAR,held,arma,punti,inMano,inManoPunti,manoPos,manoAng,pt,espelliCar,caricatore,vampa,nuova,colpo,razzo,fumo,bossolo,esplosione,scintille,FX,fxAdd,fxUpdate,fxDraw,espelli,munizione,cassaMun,suono,motore,mix,wa,C,paint,rp,rb,poly,ball,seg,shine,rnd,cl,lerp,ez,eo,TAU,BARA,nuovaBara,disegnaBara,suonoBara,moneta,teschio,vistaBara,formaBara,facceBara}})();
+return{RLT,EQT,EQR,G,DATI,ORDINE,RAR,held,arma,punti,inMano,inManoPunti,manoPos,manoAng,pt,espelliCar,caricatore,vampa,nuova,colpo,razzo,fumo,bossolo,esplosione,scintille,FX,fxAdd,fxUpdate,fxDraw,espelli,munizione,cassaMun,suono,motore,mix,wa,C,paint,rp,rb,poly,ball,seg,shine,rnd,cl,lerp,ez,eo,TAU,BARA,nuovaBara,disegnaBara,suonoBara,moneta,teschio,vistaBara,formaBara,facceBara}})();
 // Armi in 3D per l'eroe 3D (prova, non ancora nel gioco): le otto armi della modalità zombie (rifatte dai profili di
 // sprite/armi/disegno_armi.js, stessi pezzi, colori e misure), la balestra leggera e il bastone del Druida. Ogni arma è fatta di volumi
 // veri (prismi estrusi, cilindri, sfere, aste) visti dalla stessa telecamera dell'eroe (CR._rig: V(face)), quindi gira a 360 gradi e da
@@ -10552,8 +10568,25 @@ function kit(V0,fr,parts){const{P,D,F}=V0,O=fr.O,X=fr.X,Y=fr.Y,Z=fr.Z,s=fr.s,LO=
 // on the grip is at 0,0,0. Each returns its key points: muzzle, eject (where the cases fly out), sup (the other hand, or null), back
 // (the rocket's back-blast). st: slide 0..1 (slide or bolt back), pump 0..1, spin (barrels' turn), cyl (cylinder turn), hammer 0..1,
 // loaded 0..1 (the rocket), feed (the belt), glow
+// The reload (Denis, 14 ottobre: «miglioriamo le animazioni delle pistole, cioè la ricarica»): the magazine (the box of the machine gun,
+// the drum, the fuel tank, the clip of bolts, the crystal) is a piece of its own. It slides out of its well along dir by st.mag (0 seated ..
+// 1 free, len units), then goes where the hand carries it (st.magAt, added); st.magOff: there is none in the gun (the old one fell, the
+// hand is fetching a new one). draw(k, b) draws it in its own frame k; b goes from -1 (seated) to 0 (out of the well, or in the hand): a
+// nudge back in the order so the gun covers the part still in its well. The gun returns magSeat (where the hand holds the seated magazine), magDir, magLen and rack (the slide,
+// the bolt or the handle the hand pulls, where it is now), so the hero's hand can follow them.
+function magPart(K,st,dir,len,grab,draw){if(st.magOff)return null;const m=st.mag||0,a=st.magAt,o=[dir[0]*len*m+(a?a[0]:0),dir[1]*len*m+(a?a[1]:0),dir[2]*len*m+(a?a[2]:0)],mv=m>0||!!a;
+  draw(mv?K.frame(o,[1,0,0],[0,1,0]):K,a?0:-(1-m));return add(grab,o)}
+// the shell the hand pushes into a shotgun's loading port: st.shellAt where its brass base is (it points forward, nose first), st.shellIn
+// 0..1 how much of it is already inside (only the rest is drawn)
+// (a little bigger than true, like the toys of the game, so it shows in the hand)
+function shellPart(K,st,col){const b=st.shellAt;if(!b)return;const L=5.2*(1-cl(st.shellIn||0,0,1));if(L<.2)return;
+  K.cyl(b,[b[0]+Math.min(1.4,L),b[1],b[2]],1.22,'ottone',{db:.3,hi:0});if(L>1.4)K.cyl([b[0]+1.4,b[1],b[2]],[b[0]+L,b[1],b[2]],1.14,col,{db:.3})}
+const PMD=nrm([.9,-5.8,0]),DN=[0,-1,0],magKeys=(o,dir,len,grab)=>Object.assign(o,{magSeat:grab,magDir:nrm(dir),magLen:len});
 const M={
   pistola(K,st){const sl=-(st.slide||0)*2.6;
+    // the magazine in the grip (raked like it): only its base plate shows under the grip when it is in
+    const mg=magPart(K,st,PMD,6.4,[.1,-7.2,-.8],(k,b)=>{k.prism([[-2.5,1],[.4,1],[1.24,-4.4],[-1.66,-4.4]],-.8,.8,'brunito',{hi:.35,db:2*b});
+      k.box(-2.05,-5.5,1.6,-4.3,-1.12,1.12,'nero',{col:'#4a5058',hi:.2,db:.4*b},.4)});
     K.prism(rp([[-3.3,1.6],[.9,1.6],[1.8,-4.2],[1.5,-4.9],[-2.3,-5.2],[-2.8,-4.6]],.6),-1.25,1.25,'legno',{dk:.66,det:L=>{L.checker(-3,-3.8,1.6,.6);L.screw(-.7,-1.7,.5,'#e8b52a')}});
     K.rod(guardPts(1.1,4.6,-1.2,2.6),.75,'nero');K.rod([[2.6,1.1,0],[3.2,.1,0],[2.7,-.7,0]],.42,'nero',{db:.02});
     K.box(-3.1,1.1,8.6,2.7,-1.05,1.05,'nero',{hi:.3},.5);
@@ -10561,25 +10594,43 @@ const M={
     K.box(-3.9+sl,2.5,9.4+sl,5.3,-1.2,1.2,'acciaio',{det:L=>{for(const x of[-3.1,-2.4,-1.7])L.line(x+sl,3,x+sl,4.9,'rgba(20,24,30,.6)',.35);L.rect(2.6+sl,4.25,5+sl,5.15,'#14171b',.25)}},.9);
     K.box(8.2+sl,5.1,9+sl,5.85,-.4,.4,'nero',{hi:0},.2);K.box(-3.4+sl,5.1,-2.3+sl,5.85,-.75,.75,'nero',{hi:0},.2);
     K.disc([8.6+sl,5.5,.42],[0,0,1],.22,'#ffe07a');K.disc([8.6+sl,5.5,-.42],[0,0,-1],.22,'#ffe07a');
-    return{muzzle:[9.9,3.75,0],eject:[3.8,5.3,1.2],sup:null}},
+    return magKeys({muzzle:[9.9,3.75,0],eject:[3.8,5.3,1.2],sup:null,mag:mg,rack:[-2.6+sl,4.4,-1.7],rackDir:[-1,0,0]},PMD,6.4,[.1,-7.2,-.8])},
   revolver(K,st){const hm=st.hammer==null?1:st.hammer,cy=st.cyl||0;
     K.prism(rp([[-2.6,1.6],[.8,1.6],...qpts([1.05,-.5],[1.3,-2.6],[.3,-4.6],4),[-2.5,-4.9],...qpts([-3.3,-4.7],[-4.2,-4.4],[-3.9,-2.6],4),[-3.4,-.2]],.4),-1.3,1.3,'legnoR',{dk:.62,
       det:L=>{L.grain(-3.8,-4.4,1,1,3);L.screw(-1.5,-1.7,.7,'#e8b52a')}});
     K.rod(guardPts(.8,4.4,-1.2,2.2),.75,'lucido');K.rod([[2.2,1.1,0],[2.8,.1,0],[2.3,-.6,0]],.42,'lucido',{db:.02});
     {const a=-hm*.55,c=Math.cos(a),sn=Math.sin(a),T=p=>[-2.4+p[0]*c-(-p[1])*sn,4.3-(p[0]*sn+(-p[1])*c)];K.prism(rp([[.5,.3],[-.9,-2.5],[-2.3,-2.1],[-1.2,.7]].map(T),.3),-.45,.45,'brunito',{hi:.3})}
-    K.prism(rp([[-3.4,4.1],[-2.3,5.4],[4.8,5.4],[4.8,1.4],[-3,1.4]],.5),-1.2,1.2,'lucido',{det:L=>L.screw(.5,2.3,.4,'#cfd6de')});
-    K.cyl([4.8,2.78,0],[10.6,2.78,0],.48,'lucido');
+    // the frame: solid with the cylinder in; with the cylinder swung out the window where it sits shows (the shield at the back, the top
+    // strap, the bottom, the front post, dark inside)
+    const sw=cl(st.swing||0,0,1),ej=st.eject||0,nr=st.rounds==null?6:st.rounds;
+    if(sw<.02)K.prism(rp([[-3.4,4.1],[-2.3,5.4],[4.8,5.4],[4.8,1.4],[-3,1.4]],.5),-1.2,1.2,'lucido',{det:L=>L.screw(.5,2.3,.4,'#cfd6de')});
+    else{K.prism(rp([[-3.4,4.1],[-2.3,5.4],[-1.25,5.4],[-1.25,1.4],[-3,1.4]],[.5,.5,0,0,.5]),-1.2,1.2,'lucido',{det:L=>L.screw(-2.3,2.3,.4,'#cfd6de')});
+      K.box(-1.4,4.95,4.8,5.4,-1.2,1.2,'lucido',{hi:.4},.15);K.box(-1.4,1.4,4.8,1.9,-1.2,1.2,'lucido',{hi:.2},.15);K.box(4.25,1.4,4.8,5.4,-1.2,1.2,'lucido',{hi:.3},.15);
+      K.box(-1.25,1.9,4.25,4.95,-.35,.35,['#0e1013','#1a1d22','#2a2f36'],{hi:0,db:-.4},.1)}
     K.cyl([4.5,4.15,0],[15.5,4.15,0],1.02,'lucido',{hole:1,holeK:.42});
     K.prism([[14.1,5.1],[14.6,6.3],[15.15,6.3],[15.15,5.1]],-.3,.3,'rosso',{hi:0});
-    // the cylinder: six chambers seen from the back, three flutes that turn with each shot
-    K.cyl([-1.25,3.65,0],[4.25,3.65,0],2.05,'lucido',{db:.05,det:t=>{for(let i=0;i<3;i++){const an=(cy+i/3)*TAU;const n=add(mul(t.v,Math.cos(an)),mul(t.w,Math.sin(an)));if(t.F(n)<.15)continue;
+    // the crane: the cylinder and its ejector rod swing out to the left (-z) round a pivot under the frame (st.swing 0..1: 100 degrees);
+    // C is their frame, the cylinder's axis at y=ax[0], z=ax[1] in it
+    const PV=[0,1.6,-1.3],ph=-sw*1.75,k2=sw>.002?K.frame(PV,[1,0,0],[0,Math.cos(ph),Math.sin(ph)]):null,C=k2||K,ax=k2?[2.05,1.3]:[3.65,0],
+      ch=(i,x)=>{const an=i/6*TAU+cy*TAU;return[x,ax[0]+Math.cos(an)*1.2,ax[1]+Math.sin(an)*1.2]},PT=q=>k2?K.loc(k2.W(q)):q;
+    C.cyl([4.8-ej*2.6,ax[0]-.87,ax[1]],[10.6-ej*2.6,ax[0]-.87,ax[1]],.48,'lucido');if(k2)C.rod([[4.5,.05,0],[4.5,ax[0]-.7,ax[1]*.8]],.9,'lucido',{db:-.05});
+    // the cylinder: six chambers seen from the back (brass and the primer where a round is in, when it is open), three flutes that turn
+    // with each shot
+    C.cyl([-1.25,ax[0],ax[1]],[4.25,ax[0],ax[1]],2.05,'lucido',{db:.05,det:t=>{for(let i=0;i<3;i++){const an=(cy+i/3)*TAU;const n=add(mul(t.v,Math.cos(an)),mul(t.w,Math.sin(an)));if(t.F(n)<.15)continue;
         const p0=t.P(t.at(.12,an,.02)),p1=t.P(t.at(.88,an,.02));ctx.strokeStyle='rgba(30,36,44,.6)';ctx.lineWidth=.9;ctx.lineCap='round';seg(p0,p1);ctx.stroke()}},
-      capDet:(c,e)=>{if(e[0]>0)return;for(let i=0;i<6;i++){const an=i/6*TAU+cy*TAU;const q=K.P(K.W([e[0],3.65+Math.cos(an)*1.2,Math.sin(an)*1.2]));ctx.fillStyle='#16191d';ball(q,.62*K.s);ctx.fill()}}});
-    return{muzzle:[15.7,4.15,0],eject:null,sup:null}},
+      capDet:(c,e)=>{if(e[0]>0)return;for(let i=0;i<6;i++){const q=C.P(C.W(ch(i,e[0])));ctx.fillStyle='#16191d';ball(q,.62*K.s);ctx.fill();
+        if(sw>.3&&i<nr&&ej<=0){ctx.fillStyle=MAT.ottone[1];ball(q,.5*K.s);ctx.fill();ctx.fillStyle=MAT.ottone[2];ball([q[0]-.12*K.s,q[1]-.12*K.s],.2*K.s);ctx.fill()}}}});
+    // the six spent cases pushed out at the back by the ejector (st.eject 0..1), the round the hand is pushing in (st.roundIn 0..1, into
+    // chamber nr)
+    if(ej>.02)for(let i=0;i<6;i++){const a=ch(i,-1.25-ej*2.6),b=ch(i,-1.15);C.cyl(a,b,.52,'ottone',{db:.07,hi:0})}
+    if(st.roundIn!=null&&nr<6){const x0=-1.25-(1-st.roundIn)*3.2-.5,a=ch(nr,x0),b=ch(nr,Math.min(x0+2.5,-1.15));C.cyl(a,b,.52,'ottone',{db:.08});
+      if(x0+2.5<-1.2)C.sph(ch(nr,x0+2.6),.48,'rame',{db:.08})}
+    return{muzzle:[15.7,4.15,0],eject:null,sup:null,cylSide:PT([1.6,ax[0],ax[1]-2.9]),rod:PT([12.2-ej*2.6,ax[0]-.87,ax[1]]),chs:[0,1,2,3,4,5].map(i=>PT(ch(i,-1.25)))}},
   mitraglietta(K,st){const bo=-(st.slide||0)*2;
     for(const z of[-.9,.9])K.rod([[-4.4,5,z],[-9.4,5.2,z],[-9.8,1.8,z],[-4.4,2.3,z]],.85,'teal');
     K.box(-10.6,1.1,-9.1,5.9,-1.4,1.4,'teal',{hi:.4},.5);
-    K.prism(rp([[-2.4,1.8],[.6,1.8],[.25,-6.6],[-2.75,-6.6]],.4),-.9,.9,'nero',{dk:.75,hi:.25});K.box(-3.15,-7.2,.65,-6.2,-1.1,1.1,'nero',{col:'#4a5058'},.4);
+    const UMD=nrm([.3,-7,0]),mg=magPart(K,st,UMD,6.8,[-1.15,-8.9,-.8],(k,b)=>{k.prism(rp([[-2.4,1.8],[.6,1.8],[.25,-6.6],[-2.75,-6.6]],.4),-.9,.9,'nero',{dk:.75,hi:.25,db:1.5*b});
+      k.box(-3.15,-7.2,.65,-6.2,-1.1,1.1,'nero',{col:'#4a5058',db:.2*b},.4)});
     K.box(-2.7,-2.3,.85,1.9,-1.15,1.15,'teal',{},.6);
     K.rod(guardPts(.9,4.2,-1.6,1.9),.75,'nero');K.rod([[2.2,1.5,0],[2.8,.5,0],[2.3,-.3,0]],.42,'nero',{db:.02});
     K.box(6,-2.2,7.8,2,-1,1,'gomma',{hi:.3,det:L=>L.line(6.1,-.3,7.7,-.3,'#2a8c9c',.45)},.6);
@@ -10587,14 +10638,14 @@ const M={
     K.box(-3.8,2.55,6.9,4.7,-1.38,1.38,'teal',{dk:.62,db:.03},.5);
     K.box(1.2+bo,6.15,2.9+bo,7.3,-.5,.5,'nero',{hi:.4},.4);
     K.cyl([8.7,3.9,0],[11.4,3.9,0],.9,'acciaio');K.cyl([10.8,3.9,0],[12.3,3.9,0],1.35,'nero',{hole:1,holeK:.45});
-    return{muzzle:[12.4,3.9,0],eject:[3.8,6.2,1.3],sup:[6.9,-.6,0]}},
+    return magKeys({muzzle:[12.4,3.9,0],eject:[3.8,6.2,1.3],sup:[6.9,-.6,0],mag:mg,rack:[2.05+bo,8.6,-1.1],rackDir:[-1,0,0]},UMD,6.8,[-1.15,-8.9,-.8])},
   mitra(K,st){const bo=-(st.slide||0)*2.2;
     K.prism(rp([[-4,5.2],[-11.8,4.6],[-12.6,3.9],[-12.6,-.6],[-11.9,-1.25],[-4,1.6]],[.3,.5,.6,.6,.5,.3]),-1.1,1.1,'legno',{dk:.62,det:L=>L.grain(-12.4,0,-4,4.6,4)});
     K.box(-13.3,-1.45,-12.3,4.9,-1.15,1.15,'gomma',{hi:.2},.4);
     K.prism(rp([[-3,1.7],[-.4,1.7],[.8,-3.8],[-1.8,-4.2]],.5),-1,1,'legno',{dk:.66});
     K.rod(guardPts(-.6,2.1,-1.5,1.6),.75,'nero');K.rod([[.5,1.4,0],[1,.5,0],[.6,-.2,0]],.42,'nero',{db:.02});
-    K.prism(rp([[2.4,1.7],[5.6,1.7],...qpts([5.75,.6],[6.2,-2.4],[8.6,-6],4),[6,-7],...qpts([5.2,-5.6],[3.6,-3.2],[2.6,.6],4)],.4),-.9,.9,'rame',{dk:.7,concave:1,
-      det:L=>{for(const k of[.35,.65])L.line(lerp(2.4,6,k)+.3,-lerp(-1.7,7,k)*.95,lerp(5.6,8.6,k),-lerp(-1.7,6,k),'rgba(60,20,6,.55)',.4)}});
+    const RMD=nrm([1.2,-8,0]),mg=magPart(K,st,RMD,6.6,[7.6,-8.3,-.8],(k,b)=>k.prism(rp([[2.4,1.7],[5.6,1.7],...qpts([5.75,.6],[6.2,-2.4],[8.6,-6],4),[6,-7],...qpts([5.2,-5.6],[3.6,-3.2],[2.6,.6],4)],.4),-.9,.9,'rame',{dk:.7,concave:1,db:.8*b,
+      det:L=>{for(const k of[.35,.65])L.line(lerp(2.4,6,k)+.3,-lerp(-1.7,7,k)*.95,lerp(5.6,8.6,k),-lerp(-1.7,6,k),'rgba(60,20,6,.55)',.4)}}));
     K.box(-4.2,1.6,8.1,5.6,-1.2,1.2,'brunito',{det:L=>{L.rect(2.4,4.1,5.2,4.95,'#10141a',.25);L.screw(-3,2.7,.33,'#8494a6');L.screw(6.9,2.7,.33,'#8494a6')}},.7);
     K.box(-3.8,5.35,7.2,6.45,-1,1,'brunito',{hi:.8},.5);
     K.sph([5.7+bo,3.6,1.75],.75,'acciaio');
@@ -10606,22 +10657,23 @@ const M={
     // the red dot sight on top
     K.box(-.4,6.2,4,7.15,-.7,.7,'nero',{hi:.2},.3);
     K.cyl([0,8.2,0],[3.6,8.2,0],1.4,'nero',{capDet:(c,e)=>{const g=st.glow==null?1:st.glow,r=1.0*K.s;shine('255,90,60',c[0],c[1],r*3.2,.55*g);ctx.fillStyle='#ff6a4a';ball(c,r*.75);ctx.fill();ctx.fillStyle='#ffd0c2';ball([c[0]-r*.2,c[1]-r*.25],r*.25);ctx.fill()}});
-    return{muzzle:[22.3,3.65,0],eject:[3.8,5.7,1.2],sup:[11.8,1.25,0]}},
+    return magKeys({muzzle:[22.3,3.65,0],eject:[3.8,5.7,1.2],sup:[11.8,1.25,0],mag:mg,rack:[5.9+bo,3.9,3.9],rackDir:[-1,0,0]},RMD,6.6,[7.6,-8.3,-.8])},
   mitragliatrice(K,st){const sp=st.spin||0,fd=st.feed||0;
     K.prism(rp([[-2.2,1.8],[.5,1.8],[1.2,-3.4],[-1.4,-3.8]],.5),-1,1,'gomma',{dk:.66,hi:.3});
     K.rod(guardPts(.7,3,-1.6,1.6),.75,'nero');K.rod([[1.6,1.5,0],[2.1,.6,0],[1.7,-.1,0]],.42,'nero',{db:.02});
-    K.box(3.4,-4.8,9.8,1.3,-2.1,2.1,'oliva',{dk:.62,det:L=>{L.line(3.6,-.3,9.6,-.3,'rgba(20,26,8,.55)',.4);L.rect(4.4,-3,8.8,-2,'#e8b52a',.2);L.screw(9,-1.4,.32,'#c9cf9a')}},.8);
+    const mg=magPart(K,st,DN,6.8,[6.6,-6.8,-1.2],(k,b)=>k.box(3.4,-4.8,9.8,1.3,-2.1,2.1,'oliva',{dk:.62,db:.6*b,det:L=>{L.line(3.6,-.3,9.6,-.3,'rgba(20,26,8,.55)',.4);L.rect(4.4,-3,8.8,-2,'#e8b52a',.2);L.screw(9,-1.4,.32,'#c9cf9a')}},.8)),
+      seated=!st.magOff&&!(st.mag>0)&&!st.magAt;
     K.box(-7.3,2.1,-5.6,7.3,-1.9,1.9,'arancio',{},.6);
     K.box(-6.2,1.4,7.4,8.1,-2,2,'acciaio',{det:L=>{for(const x of[-4.2,-3.3,-2.4])L.line(x,3.2,x,6.6,'#1c2127',.5);L.screw(5.6,2.7,.36,'#aab4be')}},1.6);
     K.rod([...qpts([-3.2,8,0],[-3,11,0],[.6,11,0],5),...qpts([.6,11,0],[4.3,11,0],[4.5,8,0],5).slice(1)],1,'nero');
     // the belt of rounds from the box up into the gun, on its right side
-    for(let i=0;i<5;i++){const k=(i+fd)/5,x=lerp(9.2,6.2,k),y=lerp(.9,3.4,k)+Math.sin(k*Math.PI)*1.1;K.box(x-.55,y-.4,x+.55,y+1.8,2.05,2.6,'ottone',{hi:.4},.25);K.box(x-.5,y+1.7,x+.5,y+2.6,2.05,2.55,'rame',{hi:.3},.4)}
+    if(seated)for(let i=0;i<5;i++){const k=(i+fd)/5,x=lerp(9.2,6.2,k),y=lerp(.9,3.4,k)+Math.sin(k*Math.PI)*1.1;K.box(x-.55,y-.4,x+.55,y+1.8,2.05,2.6,'ottone',{hi:.4},.25);K.box(x-.5,y+1.7,x+.5,y+2.6,2.05,2.55,'rame',{hi:.3},.4)}
     // four barrels that really turn round their axis
     for(let i=0;i<4;i++){const a=sp+i*TAU/4;K.cyl([7,4.6+Math.cos(a)*1.65,Math.sin(a)*1.65],[27,4.6+Math.cos(a)*1.65,Math.sin(a)*1.65],.72,'acciaio',{hole:1,holeK:.5})}
     K.cyl([11.4,4.6,0],[12.8,4.6,0],2.45,'nero',{db:.1});K.cyl([24.6,4.6,0],[26,4.6,0],2.45,'nero',{db:.1});
     K.cyl([26.6,4.6,0],[28.3,4.6,0],2.25,'nero',{db:.12,capDet:(c,e)=>{if(e[0]<27)return;for(let i=0;i<4;i++){const a=sp+i*TAU/4;const q=K.P(K.W([28.3,4.6+Math.cos(a)*1.65,Math.sin(a)*1.65]));ctx.fillStyle='#121417';ball(q,.5*K.s);ctx.fill()}}});
     K.prism(rp([[15.2,2.4],[17.2,2.4],[17.4,-3.4],[15.4,-3.6]],.6),-.9,.9,'gomma',{hi:.3});
-    return{muzzle:[28.5,4.6,0],eject:[4.6,1.3,2.4],sup:[16.3,-1.2,0]}},
+    return magKeys({muzzle:[28.5,4.6,0],eject:[4.6,1.3,2.4],sup:[16.3,-1.2,0],mag:mg,rack:[lerp(9.4,7,fd),3,4.4],rackDir:[-1,.5,0]},DN,6.8,[6.6,-6.8,-1.2])},
   pompa(K,st){const p=-(st.pump||0)*3.2;
     K.prism(rp([[-.6,5],[-11.6,3.9],[-12.6,3],[-12.6,-1.4],[-11.8,-2],[-3,-.6],[-.6,1.2]],[.3,.5,.6,.6,.6,.8,.3]),-1.1,1.1,'legno',{dk:.6,concave:1,det:L=>{L.grain(-12.4,-1.5,-1,4,4);L.checker(-3.6,-.6,-.8,1.4,'rgba(40,18,6,.4)')}});
     K.box(-13.3,-2.3,-12.3,3.9,-1.15,1.15,'gomma',{hi:.2},.4);
@@ -10630,7 +10682,8 @@ const M={
     K.cyl([8.4,2.65,0],[25.3,2.65,0],.65,'acciaio');K.cyl([24.8,2.65,0],[25.8,2.65,0],.88,'acciaio',{db:.02});
     K.cyl([8.4,4.2,0],[29.7,4.2,0],.8,'acciaio',{hole:1,holeK:.5});K.sph([29.1,5.35,0],.55,'ottone',{db:.05});
     K.box(11+p,1,18.6+p,3.9,-1.3,1.3,'legno',{dk:.55,det:L=>{for(let i=0;i<4;i++)L.line(12.4+p+i*1.6,1.4,12.4+p+i*1.6,3.5,'rgba(50,20,6,.6)',.5)}},.9);
-    return{muzzle:[29.9,4.2,0],eject:[4,5,1.2],sup:[14.8+p,.9,0]}},
+    shellPart(K,st,'rosso');
+    return{muzzle:[29.9,4.2,0],eject:[4,5,1.2],sup:[14.8+p,.9,0],port:[6.4,1.2,0]}},
   tattica(K,st){const p=-(st.pump||0)*2.6,ns=st.saddle==null?4:st.saddle;
     K.box(-7,1.6,-3.4,4.8,-1,1,'nero',{hi:.35},.6);K.box(-7.8,1.2,-6.6,5.2,-1.15,1.15,'arancio',{},.4);
     K.prism(rp([[-2.6,1.8],[.2,1.8],[1,-3.8],[-1.8,-4.2]],.5),-1,1,'gomma',{dk:.66,hi:.3,det:L=>L.line(-1.9,.8,-.9,-3.4,'#e26a24',.5)});
@@ -10647,11 +10700,15 @@ const M={
     K.box(0,5.2,2.6,6.7,-.8,.8,'nero',{hi:.4},.4);
     K.fx([2.15,5.95,0],q=>{const g=st.glow==null?1:st.glow;shine('255,90,60',q[0],q[1],2.6*K.s,.5*g)},.3);
     K.disc([2.6,5.95,0],[1,0,0],.48,'#ff6a4a');K.disc([0,5.95,0],[-1,0,0],.48,'#ff6a4a');
-    return{muzzle:[21,4.4,0],eject:[1.6,5.3,1.2],sup:[9.3+p,.9,0]}},
+    shellPart(K,st,'verde');
+    return{muzzle:[21,4.4,0],eject:[1.6,5.3,1.2],sup:[9.3+p,.9,0],port:[3.4,1.4,0],sad:[0,1,2,3].map(i=>[-1.95+i*1.9,3.8,-3.2])}},
   lanciarazzi(K,st){const ld=st.loaded==null?1:st.loaded;
     K.cyl([-14.4,6.5,0],[-17.6,6.5,0],2.1,'acciaio',{r2:3.7,hole:1,holeK:.8});
-    if(ld>0){const off=(1-ez(ld))*9;K.cyl([15+off,6.5,0],[17.6+off,6.5,0],1.95,'rosso',{db:-.05});K.cyl([17.4+off,6.5,0],[22.6+off,6.5,0],1.95,'rosso',{r2:.2,db:-.04});
-      K.cyl([16+off,6.5,0],[16.7+off,6.5,0],1.98,'cera',{db:-.03})}
+    const ra=st.rocketAt,off=(1-ez(ld))*9+(ra?ra[0]:0),ry=6.5+(ra?ra[1]:0),rz=ra?ra[2]:0;
+    if(ld>0||ra){K.cyl([15+off,ry,rz],[17.6+off,ry,rz],1.95,'rosso',{db:-.05});K.cyl([17.4+off,ry,rz],[22.6+off,ry,rz],1.95,'rosso',{r2:.2,db:-.04});
+      K.cyl([16+off,ry,rz],[16.7+off,ry,rz],1.98,'cera',{db:-.03});
+      // out of the tube the hand holds it whole: the olive motor behind the head, with its fins
+      if(ra){K.cyl([6.8+off,ry,rz],[15.2+off,ry,rz],1.2,'oliva',{db:-.06});for(let i=0;i<3;i++){const a=i/3*TAU+.5;K.rod([[7.2+off,ry+Math.cos(a)*1.1,rz+Math.sin(a)*1.1],[8.6+off,ry+Math.cos(a)*2.3,rz+Math.sin(a)*2.3],[10+off,ry+Math.cos(a)*1.1,rz+Math.sin(a)*1.1]],.42,'oliva',{db:-.05})}}}
     K.cyl([-14.6,6.5,0],[15.4,6.5,0],2.7,'oliva',{hole:ld<.99,holeK:.78,det:t=>{
       // the yellow and black band near the front, a white band at the back, screws along the top
       const band=(k0,k1,col)=>{const pts=[];for(let i=0;i<=8;i++){const an=-Math.PI*.95+i/8*Math.PI*1.9,n=add(mul(t.v,Math.cos(an)),mul(t.w,Math.sin(an)));if(t.F(n)<-.05)continue;pts.push([an])}};
@@ -10666,13 +10723,13 @@ const M={
     K.prism(rp([[-1.4,3.8],[1.2,3.8],[1.8,-3.2],[-1,-3.6]],.5),-1,1,'gomma',{dk:.66,hi:.3});
     K.rod(guardPts(1.3,3.9,-3.6,1.5),.75,'nero');
     K.prism(rp([[6.2,3.9],[8.2,3.9],[8.4,-2.2],[6.4,-2.4]],.6),-.9,.9,'gomma',{hi:.3});
-    return{muzzle:[15.6,6.5,0],back:[-17.8,6.5,0],eject:null,sup:[7.3,-.8,0]}},
+    return{muzzle:[15.6,6.5,0],back:[-17.8,6.5,0],eject:null,sup:[7.3,-.8,0],rocket:[18.6+off,ry-2.6,rz]}},
   // ---------------------------------------------------------------- the four new guns (punto 24; profiles in sprite/armi/disegno_armi.js)
   // the flamethrower: the red tank under the body with brass caps and the hose, the iron body with the gauge, the copper pipe in its
   // perforated shield, the flared nozzle with the blue pilot flame
   lanciafiamme(K,st){const tt=typeof G!=='undefined'&&G&&G.t!=null?G.t:performance.now()/1000;
-    K.cyl([-12.4,-4.1,0],[-1.6,-4.1,0],2.5,'rosso');K.cyl([-13,-4.1,0],[-11.4,-4.1,0],2.2,'ottone',{db:.05});K.cyl([-2.6,-4.1,0],[-1,-4.1,0],2.2,'ottone',{db:.05});
-    K.rod(qpts([-2,-2.4,1.3],[1.5,-1.2,1.7],[3.6,1.2,1.1],5),1.1,'gomma');
+    const mg=magPart(K,st,DN,6.4,[-7,-8.3,-.8],(k,b)=>{k.cyl([-12.4,-4.1,0],[-1.6,-4.1,0],2.5,'rosso',{db:.6*b});k.cyl([-13,-4.1,0],[-11.4,-4.1,0],2.2,'ottone',{db:.05+.6*b});k.cyl([-2.6,-4.1,0],[-1,-4.1,0],2.2,'ottone',{db:.05+.6*b})});
+    if(!st.magOff&&!(st.mag>0)&&!st.magAt)K.rod(qpts([-2,-2.4,1.3],[1.5,-1.2,1.7],[3.6,1.2,1.1],5),1.1,'gomma');
     K.prism(rp([[-2.6,1.4],[.6,1.4],[1.4,-4.6],[-1.6,-5]],.5),-1,1,'legno',{dk:.66});K.rod(guardPts(.9,4.2,-1.3,2.2),.75,'nero');
     K.box(-4,1.2,10.6,4.6,-1.4,1.4,'nero',{hi:.4},1);
     K.cyl([-1.6,6,-.65],[-1.6,6,.65],1.9,'ottone',{capDet:c=>{ctx.fillStyle='#f4ecd0';ball(c,1.25*K.s);ctx.fill();const a=-2.6+(st.glow==null?.8:st.glow)*1.4;ctx.strokeStyle='#c0301e';ctx.lineWidth=.35*K.s;seg(c,[c[0]+Math.cos(a)*K.s,c[1]+Math.sin(a)*K.s]);ctx.stroke()}});
@@ -10681,24 +10738,25 @@ const M={
     K.cyl([24,2.85,0],[27.4,2.85,0],1,'ottone',{r2:1.9,hole:1,holeK:.62});
     K.prism(rp([[12.4,.8],[14.2,.8],[14.4,-3.6],[12.6,-3.8]],.6),-1,1,'legno',{dk:.6});
     K.fx([26.4,-.3,0],q=>{const f=.8+.2*Math.sin(tt*31);shine('120,180,255',q[0],q[1],2.6*K.s,.7);ctx.fillStyle='#7ab8ff';ctx.beginPath();ctx.ellipse(q[0],q[1],.55*K.s,f*K.s,0,0,TAU);ctx.fill();ctx.fillStyle='#e8f4ff';ctx.beginPath();ctx.ellipse(q[0],q[1]+.2*K.s,.25*K.s,.5*f*K.s,0,0,TAU);ctx.fill()},.3);
-    return{muzzle:[27.6,2.85,0],eject:null,sup:[13.3,-1.6,0]}},
+    return magKeys({muzzle:[27.6,2.85,0],eject:null,sup:[13.3,-1.6,0],mag:mg,rack:[-1.6,7.4,-1.8],rackDir:[0,0,0]},DN,6.4,[-7,-8.3,-.8])},
   // the drum gun: the wire stock, the wooden grips, the big steel drum with its brass key, the finned barrel and the brake
   tamburo(K,st){const bo=-(st.slide||0)*2;
     K.box(-8.4,.2,-7.2,4.6,-1.3,1.3,'gomma',{hi:.2},.4);for(const z of[-.9,.9]){K.rod([[-7.4,4,z],[-3.6,4,z]],.6,'acciaio');K.rod([[-7.4,.7,z],[-3.6,.7,z]],.6,'acciaio')}
     K.prism(rp([[-2.4,1.4],[.6,1.4],[1.3,-4.6],[-1.4,-5]],.5),-1,1,'legnoR',{dk:.66});K.rod(guardPts(.9,4,-1.3,2.2),.75,'nero');
-    K.cyl([4.4,-2.8,-1.7],[4.4,-2.8,1.7],3.7,'acciaio',{capDet:c=>{ctx.strokeStyle='rgba(20,24,30,.55)';ctx.lineWidth=.35*K.s;ctx.beginPath();ctx.arc(c[0],c[1],2.6*K.s,0,TAU);ctx.stroke();ctx.fillStyle=MAT.ottone[1];ball(c,1.1*K.s);ctx.fill();ctx.strokeStyle=MAT.ottone[0];seg([c[0]-.7*K.s,c[1]],[c[0]+.7*K.s,c[1]]);ctx.stroke()}});
+    const mg=magPart(K,st,DN,6.6,[4.4,-8.2,-1],(k,b)=>k.cyl([4.4,-2.8,-1.7],[4.4,-2.8,1.7],3.7,'acciaio',{db:.8*b,capDet:c=>{const a=st.key||0,dx=Math.cos(a)*.7*K.s,dy=Math.sin(a)*.7*K.s;
+      ctx.strokeStyle='rgba(20,24,30,.55)';ctx.lineWidth=.35*K.s;ctx.beginPath();ctx.arc(c[0],c[1],2.6*K.s,0,TAU);ctx.stroke();ctx.fillStyle=MAT.ottone[1];ball(c,1.1*K.s);ctx.fill();ctx.strokeStyle=MAT.ottone[0];seg([c[0]-dx,c[1]-dy],[c[0]+dx,c[1]+dy]);ctx.stroke()}}));
     K.box(-4,1.4,9.4,5.6,-1.3,1.3,'nero',{hi:.45,det:L=>L.rect(2+bo,4.5,4.6+bo,5.4,'#121417',.25)},.9);
     K.box(1.2+bo,5.4,2.6+bo,6.6,-.5,.5,'acciaio',{hi:.4},.35);
     K.prism(rp([[9.4,1.4],[11.2,1.4],[11.4,-3.4],[9.6,-3.6]],.6),-1,1,'legnoR',{dk:.6});
     K.cyl([9.2,3.3,0],[17.2,3.3,0],1.1,'brunito',{det:t=>{for(let i=0;i<6;i++){const q=t.P(t.at(.12+i*.14,Math.PI*.5,.05));ctx.fillStyle='#14171b';ball(q,.34*K.s);ctx.fill()}}});
     K.cyl([16.8,3.3,0],[19.4,3.3,0],1.6,'nero',{hole:1,holeK:.45});
-    return{muzzle:[19.6,3.3,0],eject:[3.2,5.4,1.3],sup:[10.3,-1.6,0]}},
+    return magKeys({muzzle:[19.6,3.3,0],eject:[3.2,5.4,1.3],sup:[10.3,-1.6,0],mag:mg,rack:[1.9+bo,8.2,-1.2],rackDir:[-1,0,0]},DN,6.6,[4.4,-8.2,-1])},
   // the steam rifle: the stock, the brass body with rivets, the clip of bolts, the copper tank with its bands, the barrel with the copper
   // coils, the gauge (st.gauge: the pressure), the red valve wheel
   vapore(K,st){const pr=st.gauge==null?.6:st.gauge;
     K.prism(rp([[-4,5],[-11.8,4.4],[-12.8,3.6],[-12.8,-.8],[-12,-1.5],[-4,1.6]],[.3,.5,.6,.6,.5,.3]),-1.1,1.1,'legno',{dk:.62,det:L=>L.grain(-12.4,-.6,-4,4.4,4)});
     K.box(-13.6,-1.6,-12.5,4,-1.15,1.15,'ottone',{hi:.3},.4);
-    K.box(-.8,-4.2,2,1.6,-.9,.9,'nero',{hi:.3},.4);
+    const mg=magPart(K,st,DN,6.2,[.6,-6,-.8],(k,b)=>{k.box(-.8,-4.2,2,1.6,-.9,.9,'nero',{hi:.3,db:.6*b},.4);if(b>-.6)for(let i=0;i<3;i++)k.cyl([-.25+i*.8,1.4,0],[-.25+i*.8,2.3,0],.32,'acciaio',{db:.02})});
     K.prism(rp([[-3.2,1.4],[-.6,1.4],[.4,-4.4],[-2.4,-4.8]],.5),-1,1,'legno',{dk:.66});K.rod(guardPts(-.4,3.2,-1.3,2),.75,'ottone');
     K.box(-4.2,1.3,9,5.8,-1.4,1.4,'ottone',{det:L=>{for(const x of[-3,0,3,6,8])L.screw(x,5,.3,'#f6cf6c')}},1);
     K.cyl([6,-.8,0],[19,-.8,0],2,'rame',{det:t=>{for(const k of[.2,.5,.8]){ctx.strokeStyle=MAT.ottone[1];ctx.lineWidth=.9*K.s;seg(t.P(t.at(k,Math.PI*.5,.05)),t.P(t.at(k,-Math.PI*.5,.05)));ctx.stroke()}}});
@@ -10707,12 +10765,12 @@ const M={
     K.cyl([26.8,3.65,0],[28.6,3.65,0],1.3,'ottone',{hole:1,holeK:.45});
     K.cyl([2,8,-.7],[2,8,.7],2.3,'ottone',{capDet:c=>{ctx.fillStyle='#f4ecd0';ball(c,1.6*K.s);ctx.fill();const a=Math.PI*(.8+cl(pr,0,1)*1.4);ctx.strokeStyle='#c0301e';ctx.lineWidth=.32*K.s;seg(c,[c[0]+Math.cos(a)*1.3*K.s,c[1]+Math.sin(a)*1.3*K.s]);ctx.stroke();ctx.fillStyle=INK;ball(c,.3*K.s);ctx.fill()}});
     K.box(1.6,5.6,2.4,6.1,-.3,.3,'ottone',{hi:0},.1);
-    K.cyl([5.4,-.6,1.4],[5.4,-.6,2],1.3,'rosso');
-    return{muzzle:[28.8,3.65,0],eject:null,sup:[15.4,-3.4,0]}},
+    K.cyl([5.4,-.6,1.4],[5.4,-.6,2],1.3,'rosso',{capDet:c=>{const a=st.valve||0,r=1*K.s;ctx.strokeStyle='#5a1210';ctx.lineWidth=.32*K.s;for(const d of[0,Math.PI/2]){const dx=Math.cos(a+d)*r,dy=Math.sin(a+d)*r;seg([c[0]-dx,c[1]-dy],[c[0]+dx,c[1]+dy]);ctx.stroke()}}});
+    return magKeys({muzzle:[28.8,3.65,0],eject:null,sup:[15.4,-3.4,0],mag:mg,rack:[5.4,-.6,4],rackDir:[0,0,0]},DN,6.2,[.6,-6,-.8])},
   // the resonator: the black stone body with the glowing veins, the crystal core, the brass rings, the leather grip, three prongs round
   // the orb that pulses (st.glow) and flares
   risonatore(K,st){const gl=st.glow==null?1:st.glow,tt=typeof G!=='undefined'&&G&&G.t!=null?G.t:performance.now()/1000;
-    K.prism(rp([[-3.4,4.6],[-1.8,2.6],[-3.4,-2.6],[-5,2.6]],.3),-.8,.8,'cristallo',{hi:.5});
+    const mg=magPart(K,st,DN,6.6,[-3.4,-4.4,-.8],(k,b)=>k.prism(rp([[-3.4,4.6],[-1.8,2.6],[-3.4,-2.6],[-5,2.6]],.3),-.8,.8,'cristallo',{hi:.5,db:.6*b}));
     const vein=(L,a,b,c,d,al)=>L.line(a,b,c,d,`rgba(120,255,210,${al})`,.45);
     K.prism(rp([[-6.6,3.4],[-4,6.4],[4,7],[12,6],[16.4,4.6],[16.4,1.6],[12,.4],[4,-.2],[-4,.4]],[.6,.8,.8,.6,.4,.4,.6,.8,.6]),-1.6,1.6,'ossidiana',{det:L=>{const al=.5+.35*gl;
       vein(L,-4,3.6,0,4.8,al);vein(L,0,4.8,4,3.8,al);vein(L,4,3.8,8,5,al);vein(L,8,5,14,3.4,al);vein(L,-3,1.6,2,2.2,al*.85);vein(L,2,2.2,7,1.4,al*.85);vein(L,7,1.4,13,2,al*.85)}});
@@ -10721,7 +10779,7 @@ const M={
     for(let i=0;i<3;i++){const a=i/3*TAU+Math.PI/2,c=Math.cos(a),s=Math.sin(a);K.tube([[15.6,3.2+c*1.4,s*1.4],[19,3.2+c*3.4,s*3.4],[21.6,3.2+c*2.4,s*2.4],[22.8,3.2+c*1.1,s*1.1]],[1.2,1,.8,.5],'ossidiana')}
     K.cyl([15.2,3.2,0],[19.4,3.2,0],.6,'ottone');
     K.fx([21,3.2,0],q=>{const p=.8+.2*Math.sin(tt*5);shine('140,255,220',q[0],q[1],(7*p*gl+2)*K.s,.75);ctx.fillStyle='#bfffe8';ball(q,1.5*p*K.s);ctx.fill();ctx.fillStyle='#fff';ball([q[0]-.4*K.s,q[1]-.4*K.s],.6*K.s);ctx.fill()},.2);
-    return{muzzle:[21.4,3.2,0],eject:null,sup:[8.6,-2,0]}},
+    return magKeys({muzzle:[21.4,3.2,0],eject:null,sup:[8.6,-2,0],mag:mg,rack:[3.05,3.4,-3.3],rackDir:[0,0,0]},DN,6.6,[-3.4,-4.4,-.8])},
 
 // ------------------------------------------------------------------ the weapons of the Classic mode: the crossbow, the Druid's staff, the bows
   // the light crossbow: a walnut tiller with a pistol grip and a groove for the bolt, a steel prod across the front, thick in the middle,
@@ -10831,10 +10889,13 @@ const hexRgb=h=>{const n=parseInt(h.slice(1),16);return`${n>>16},${n>>8&255},${n
 // the flash) before it is drawn. Returns the key points in the room
 function draw(id,V0,fr,st,extra){const K=kit(V0,fr),f=M[id];if(!f)return null;st=st||{};const pts=f(K,st);if(extra)extra(K,pts);K.draw();const o={};
   for(const k in pts){const v=pts[k];o[k]=v&&v.length===3&&typeof v[0]==='number'?K.W(v):null}return o}
+// the key points of weapon id in its own frame for the state st, without drawing it (a kit that projects nothing)
+const NOV={P:()=>[0,0],D:()=>0,F:()=>0,c:1,s:0};
+function keys(id,st){const f=M[id];if(!f)return{};return f(kit(NOV,{O:[0,0,0],X:[1,0,0],Y:[0,1,0],Z:[0,0,1],s:1}),st||{})||{}}
 // the frame of a weapon held at O (a room point), pointing along aim, its top toward up (made square to aim); s: its size
 function frame(O,aim,up,s){const X=nrm(aim),Y=nrm(sub(up,mul(X,dot(up,X))));return{O,X,Y,Z:cross(Y,X),s:s||1}}
 const DATI_N={tamburo:'Mitraglietta a tamburo',lanciafiamme:'Lanciafiamme',vapore:'Fucile a vapore',risonatore:'Risonatore',pistola:'Pistola',revolver:'Revolver',mitraglietta:'Mitraglietta',mitra:'Mitra',mitragliatrice:'Mitragliatrice',pompa:'Pompa da caccia',tattica:'Pompa tattica',lanciarazzi:'Lanciarazzi',balestra:'Balestra leggera',bastone:'Bastone del Druida',arco:'Arco',scettro:'Bastone dei maghi',martello:'Martello del Fabbro',bomba:'Bomba'};
-return{draw,frame,M,MAT,kit,tones,nomi:DATI_N,ZOMBIE:['pistola','revolver','mitraglietta','mitra','mitragliatrice','pompa','tattica','lanciarazzi','tamburo','lanciafiamme','vapore','risonatore']}})();
+return{draw,keys,frame,M,MAT,kit,tones,nomi:DATI_N,ZOMBIE:['pistola','revolver','mitraglietta','mitra','mitragliatrice','pompa','tattica','lanciarazzi','tamburo','lanciafiamme','vapore','risonatore']}})();
 // L'eroe della modalità Classica (l'Arciere) rifatto con il metodo dei mostri nuovi: scheletro 3D proiettato con V(face) dalla
 // cassetta degli attrezzi CR._rig (sprite/mostri/disegno_mostri.js), quindi gira a 360 gradi e ogni pezzo resta attaccato al suo posto.
 // È lo stesso eroe di oggi (drawRig con heroStyle('arciere') nel gioco) con le stesse misure: corpo a goccia con la giubba, cappuccio tondo
@@ -11308,15 +11369,102 @@ function wpose0(A,anim,p,id,o){o=o||{};const cls=WCLS[id],H=HOLD[cls],dg=sub(A.g
     W.flash=q>=.3?cl(Math.min((q-.3)/.02,1-(q-.32)/.1),0,1):0;W.cast=q>=.32?q-.32:-1;W.rec=0;W.shots=[]}
   return W}
 // the gun of a match (o.gp = ARMI.nuova(id).pose(), on the zombie map): its own recoil, flash and moving parts (slide, hammer and cylinder,
-// barrels and belt, pump, shells on the saddle, rocket) in place of the test cycle of 'shoot', and the reload: the muzzle tipped up by g.tilt,
-// as the 2D guns do (the 3D guns have no magazine to drop)
+// barrels and belt, pump, shells on the saddle, rocket) in place of the test cycle of 'shoot', and its reload (below)
 function realGun(W,g,id){W.rec=cl(g.rec||0,0,1);W.flash=cl(g.flash||0,0,1);W.shots=[];W.ej=[];const s=W.st;
-  if(id==='pistola'||id==='mitraglietta'||id==='mitra')s.slide=g.slide||0;
+  if(id==='pistola'||id==='mitraglietta'||id==='mitra'||id==='tamburo')s.slide=g.slide||0;
+  // the pistol's slide stays back after the last round, until the reload lets it go
+  if(id==='pistola'&&g.n===0&&g.st!=='ricarica')s.slide=1;
   if(id==='revolver'){s.hammer=g.hammer==null?1:cl(g.hammer,0,1);s.cyl=g.cyl||0}
   if(id==='mitragliatrice'){s.spin=g.spin||0;s.feed=g.feed||0}
   if(id==='pompa'||id==='tattica')s.pump=g.pump||0;if(id==='tattica'&&g.saddle!=null)s.saddle=g.saddle;
   if(id==='lanciarazzi'){s.loaded=g.loaded==null?1:g.loaded;W.load=null}
-  if(g.tilt>0&&W.aim){const pt=Math.asin(cl(W.aim[2],-1,1)),yw=Math.atan2(W.aim[1],W.aim[0]);W.aim=dirPY(pt+g.tilt,yw)}}
+  reloadPose(W,g,id);if(!W.rl&&g.eq!=null&&g.eq<1)drawPose(W,g.eq,id)}
+// the gun just taken: it comes up from low at the side (pointing down and back) to its hold, then the free hand works it once: the slide
+// or the bolt, the pump, the cylinder's turn, the rocket's tube (ARMI.EQR: when it clicks)
+const HOLST={one:[[1.5,10,7.5],-1.25,.35],long:[[.5,9.5,7.5],-1.05,.55],shoulder:[[-3,8,12],-.9,.3]};
+function drawPose(W,e,id){const H=HOLST[W.cls];if(!H)return;const k=ez(cl(e/.55,0,1)),A0=dirPY(H[1],H[2]);
+  W.grip=lerp3(H[0],W.grip,k);W.aim=nrm(lerp3(A0,W.aim,k));const r=typeof ARMI!=='undefined'&&ARMI.EQR||.74,w=tzw(e,.5,r-.06,r,.98);
+  if(w>0)W.rl={kind:'draw',e,b:w};const s=W.st;
+  if(id==='pistola'||id==='mitraglietta'||id==='mitra'||id==='tamburo')s.slide=Math.max(s.slide||0,bump((e-(r-.12))/.24));
+  if(id==='pompa'||id==='tattica')s.pump=Math.max(s.pump||0,bump((e-(r-.14))/.26));
+  if(id==='revolver')s.cyl=(s.cyl||0)+ez(cl((e-.55)/.3,0,1))/6;
+  if(id==='mitragliatrice')s.spin=(s.spin||0)+ez(cl((e-.5)/.4,0,1))*TAU*.5}
+// ------------------------------------------------------------------ the reload of the zombie guns (Denis, 14 ottobre: «miglioriamo le
+// animazioni delle pistole, cioè la ricarica»). The gun comes in front of the chest, its muzzle up and turned on its side toward the free
+// hand, and the head looks down at it. The free hand takes the magazine out (it falls: the map throws it on the floor), fetches a new one
+// at the belt, pushes it in and pulls the slide or the bolt; the revolver swings its cylinder out, throws out the six cases, takes six
+// rounds one by one and snaps shut; the shotguns take one shell at a time at the belt (the tactical one from its saddle) and push it
+// into the loading port; the rocket comes from the belt and is pushed into the tube. All of it follows the gun's own state: k = pose().rk
+// (0..1 along the reload) or the shell's f = pose().shell, with the moments of ARMI.RLT, the same for the 2D guns and the sounds.
+const tzw=(k,a,b,c,d)=>k<=a||k>=d?0:k<b?ez((k-a)/(b-a)):k<=c?1:1-ez((k-c)/(d-c));
+// the reload hold of each kind: [the right hand, pitch, yaw, roll (the top of the gun to the right, its bottom toward the free hand)]
+const RLP={one:[[9.6,3.4,12.6],.5,-.62,.55],long:[[5.8,6.2,11.4],.3,-.5,.62],
+  revolver:[[10.6,2.8,10.8],0,-.62,.5],mitragliatrice:[[5.4,6.6,10.8],.14,-.36,.4],lanciafiamme:[[9.6,5,10.4],.12,-.22,.4],vapore:[[8.4,5.4,10.8],.2,-.34,.5],pompa:[[5.4,6,11.6],.24,-.46,.95],tattica:[[5.8,6,11.8],.26,-.5,.95]};
+// where the free hand takes a new magazine, shell or rocket: a pouch on the belt, in front and a little to the right (the hero's frame)
+const POUCH=[9.4,2.4,9.2];
+function reloadPose(W,g,id){const T=typeof ARMI!=='undefined'&&ARMI.RLT,sh=id==='pompa'||id==='tattica',k=g.rk==null?-1:g.rk,s=W.st;if(!T||W.cls==='staff')return;
+  let R=null;
+  if(sh){if(!(g.tilt>0))return;R={kind:'shell',b:cl(g.tilt/.16,0,1),f:g.shell!=null&&g.shell>=0?g.shell:-1}}
+  else{if(k<0)return;
+    if(id==='revolver'){const V=T.rev;R={kind:'rev',k,b:tzw(k,-1,0,.92,1)*ez(cl(k/.06,0,1))};
+      s.swing=k<V.open[0]?0:k<V.open[1]?ez((k-V.open[0])/(V.open[1]-V.open[0])):k<V.shut[0]?1:k<V.shut[1]?1-ez((k-V.shut[0])/(V.shut[1]-V.shut[0])):0;
+      s.eject=k<V.eject[0]?0:k<V.eject[1]?ez((k-V.eject[0])/(V.eject[1]-V.eject[0])):k<V.eject[1]+.012?1:0;
+      const n=(k-V.load[0])/(V.load[1]-V.load[0])*6,i=Math.floor(n),u=n-i;
+      s.rounds=k<V.eject[1]+.012?6:k<V.load[0]?0:k>=V.load[1]?6:Math.min(6,i+(u>=.6?1:0));if(k>=V.load[0]&&k<V.load[1]&&u<.6)s.roundIn=ez(u/.6);
+      R.n=n;R.pit=.55*tzw(k,.1,.15,.2,.25)-.3*tzw(k,.23,.3,.8,.88)}
+    else if(id==='lanciarazzi'){R={kind:'rocket',k,b:tzw(k,0,.14,.84,1)}}
+    else{const M=T.mag;R={kind:'mag',k,b:tzw(k,0,.1,M.done-.04,1)};
+      // the magazine seating and the slide going home jolt the gun a little
+      R.pit=.06*Math.exp(-Math.max(0,k-M.seat)*60)*(k>=M.seat?1:0)+.05*Math.exp(-Math.max(0,k-M.fwd)*60)*(k>=M.fwd?1:0);
+      // the pistol emptied: its slide stays back until the hand lets it go
+      if(id==='pistola'&&g.empty)s.slide=k<M.fwd?1:Math.max(0,1-(k-M.fwd)/.04);
+      if(id==='lanciafiamme')s.glow=k<M.out?.8*(1-k/M.out):k<M.seat?0:Math.min(1,(k-M.seat)/(M.done-M.seat))*.9;
+      if(id==='vapore'){s.valve=k>=M.rack?ez(cl((k-M.rack)/(M.done-M.rack),0,1))*Math.PI*1.5:0;s.gauge=k<M.rack?.1:.1+.6*ez(cl((k-M.rack)/(M.done-M.rack),0,1))}
+      if(id==='tamburo')s.key=k>=M.seat?ez(cl((k-M.seat)/(M.rack-M.seat),0,1))*Math.PI*2:0}}
+  W.rl=R;const P=RLP[id]||RLP[W.cls];if(!P||!R.b)return;
+  // the gun goes to its reload hold (the rocket stays on the shoulder, its muzzle up a little)
+  const b=R.b,A0=dirPY(P[1]+(R.pit||0),P[2]),U0=nrm(sub([0,0,1],mul(A0,A0[2]))),Z0=cross(U0,A0),U=nrm(add(mul(U0,Math.cos(P[3])),mul(Z0,Math.sin(P[3]))));
+  W.grip=lerp3(W.grip,P[0],b);W.aim=nrm(lerp3(W.aim,A0,b));W.up=nrm(lerp3(W.up,U,b))}
+{const _rp=reloadPose;reloadPose=function(W,g,id){_rp(W,g,id);if(id==='lanciarazzi'&&W.rl){const b=W.rl.b,pt=Math.asin(cl(W.aim[2],-1,1)),yw=Math.atan2(W.aim[1],W.aim[0]);W.aim=dirPY(pt+.16*b,yw)}}}
+// where the free hand is during the reload, in the gun's own frame, and what it carries: it sets st (the magazine in the hand, the shell,
+// the rocket) for the gun's drawing. kp: the gun's key points for this state (ARMI3D.keys); loc(q): a point of the hero's frame in the
+// gun's frame; S: where the hand is when it is not reloading (on the fore-grip or the pump, or at the side)
+function reloadHand(R,st,kp,loc,S){const T=ARMI.RLT,E=ez,L3=(a,b,t)=>lerp3(a,b,E(cl(t,0,1))),Pq=loc(POUCH);let H=S;
+  if(R.kind==='mag'&&kp.magSeat){const M=T.mag,k=R.k,MS=kp.magSeat,at=m=>add(MS,mul(kp.magDir,kp.magLen*m)),rk=kp.rack||MS;
+    if(k<M.out)H=L3(S,MS,k/M.out);
+    else if(k<M.drop){const m=E((k-M.out)/(M.drop-M.out))*.6;st.mag=m;H=at(m)}
+    else if(k<M.pouch){st.magOff=true;H=L3(at(.6),Pq,(k-M.drop)/(M.pouch-M.drop))}
+    else if(k<M.well){H=L3(Pq,at(1),(k-M.pouch)/(M.well-M.pouch));st.magAt=sub(H,MS)}
+    else if(k<M.push){st.mag=1;H=at(1)}
+    else if(k<M.seat){const m=1-E((k-M.push)/(M.seat-M.push));st.mag=m;H=at(m)}
+    else if(k<M.rack)H=L3(MS,rk,(k-M.seat)/(M.rack-M.seat));
+    else if(k<M.done)H=rk;
+    else H=L3(rk,S,(k-M.done)/(1-M.done))}
+  else if(R.kind==='rev'){const V=T.rev,k=R.k,side=kp.cylSide,rod=kp.rod,ch=kp.chs,at=(i,r)=>add(ch[Math.max(0,Math.min(5,i))],[-(1-r)*3.2-2.4,0,0]);
+    if(k<V.open[0]+.02)H=L3(S,side,k/(V.open[0]+.02));
+    else if(k<V.eject[0])H=side;
+    else if(k<V.eject[0]+.02)H=L3(side,rod,(k-V.eject[0])/.02);
+    else if(k<V.eject[1]+.012)H=rod;
+    else if(k<V.load[0])H=L3(rod,Pq,(k-V.eject[1]-.012)/(V.load[0]-V.eject[1]-.012)*1.6);
+    else if(k<V.load[1]){const i=Math.floor(R.n),u=R.n-i;H=u<.6?at(i,E(u/.6)):L3(at(i,1),at(i+1,0),(u-.6)/.4);if(i===0&&u<.6)H=L3(Pq,H,u/.25)}
+    else if(k<V.shut[0])H=L3(at(5,1),side,(k-V.load[1])/(V.shut[0]-V.load[1]));
+    else if(k<V.shut[1])H=side;
+    else H=L3(side,S,(k-V.shut[1])/(1-V.shut[1]))}
+  else if(R.kind==='shell'&&kp.port){const f=R.f,po=kp.port,j=Math.max(0,Math.min(3,(st.saddle==null?4:st.saddle)-1)),pick=kp.sad?kp.sad[j]:Pq,
+      UND=add(po,[-2.6,-3.6,0]),INN=add(po,[1.6,1.1,0]),HO=[-1.2,-2,-.6],hand=b=>add(b,HO);
+    if(f<0)H=hand(INN);
+    else if(f<.3)H=L3(hand(INN),pick,f/.3);
+    else if(f<.55){H=L3(pick,hand(UND),(f-.3)/.25);st.shellAt=sub(H,HO);if(kp.sad&&st.saddle>0)st.saddle--}
+    else if(f<.8){const t=E((f-.55)/.25),b=lerp3(UND,INN,t);st.shellAt=b;st.shellIn=t;H=hand(b);if(kp.sad&&st.saddle>0)st.saddle--}
+    else H=hand(INN);
+    H=lerp3(S,H,R.b)}
+  else if(R.kind==='draw'){const rk=kp.rack||kp.cylSide||kp.sup;if(rk)H=lerp3(S,rk,R.b)}
+  else if(R.kind==='rocket'&&kp.rocket){const k=R.k,F0=[27.6,3.9,0];
+    if(k<.15)H=L3(S,Pq,k/.15);
+    else if(k<.3){H=L3(Pq,F0,(k-.15)/.15);st.rocketAt=sub(H,F0)}
+    else if(k<.85)H=kp.rocket;
+    else H=L3(kp.rocket,S,(k-.85)/.12)}
+  return H}
 function wpose(A,anim,p,id,o){const W=wpose0(A,anim,p,id,o);if(o&&o.gp&&typeof ARMI3D!=='undefined'&&ARMI3D.ZOMBIE.includes(id))realGun(W,o.gp,id);return W}
 // a muzzle flash of the zombie guns (ARMI.vampa, drawn in the gun's own plane) at the gun's point pt, k 1 .. 0
 function flashFx(K,id,pt,k,seed,back){if(k<=0||typeof ARMI==='undefined')return;K.fx(pt,q=>{const b=K.P(K.W(add(pt,[1,0,0]))),dx=b[0]-q[0],dy=b[1]-q[1],l=Math.hypot(dx,dy)/K.s;
@@ -11340,16 +11488,22 @@ function weaponParts(parts,V0,X,S,Wp,wid,o){const{D}=V0,cls=Wp.cls,r=Wp.rec,kk=W
   if(wid==='bomba'&&fx&&Wp.cast>=0&&Wp.cast<.36){const k=Wp.cast/.36,a0=X.T(Wp.rel),fw=X.Rd([1,0,0]),c=add(add(a0,mul(fw,k*48)),[0,0,Math.sin(k*Math.PI)*14-k*9]);
     parts.push({d:D(c),f:()=>{const q=V0.P(c),r=4.8;ink(2.2);ball(q,r);ctx.fillStyle=soft(q[0]-r*.36,q[1]-r*.42,q[0],q[1],r*1.2,'#2e2e36',.3,.4);ctx.fill();ctx.stroke();
       const f=[q[0]+1.4,q[1]-r-1.6];ctx.strokeStyle='#8a6a44';ctx.lineWidth=1.4;seg([q[0],q[1]-r+.4],f);ctx.stroke();shine('255,200,90',f[0],f[1],6,.85);ctx.fillStyle='#fff3c0';ball(f,1.1);ctx.fill()}})}
-  parts.push({d:D(X.T(HOLD[cls].anc)),f:()=>{const st={...Wp.st};if(wid==='balestra')st.col=S.bowCol;if(wid==='bastone'||wid==='scettro')st.orbCol=S.eyeCol||'#9fff7a';
+  // the reload: where the free hand goes and what it carries (the gun's key points for this state, the hero's points in the gun's frame)
+  const st={...Wp.st};if(wid==='balestra')st.col=S.bowCol;if(wid==='bastone'||wid==='scettro')st.orbCol=S.eyeCol||'#9fff7a';
+  let RH=null,kp0=null;if(Wp.rl&&ARMI3D.keys&&typeof ARMI!=='undefined'&&ARMI.RLT){kp0=ARMI3D.keys(wid,st);
+    const loc=q=>{const d=sub(X.T(q),fr.O);return[dot(d,fr.X)/fr.s,dot(d,fr.Y)/fr.s,dot(d,fr.Z)/fr.s]};RH=reloadHand(Wp.rl,st,kp0,loc,kp0.sup||loc(Wp.hL))}
+  parts.push({d:D(X.T(HOLD[cls].anc)),f:()=>{
     ARMI3D.draw(wid,V0,fr,st,(K,kp)=>{
+      // where the magazine is when it falls (the zombie map throws it on the floor from there): on the screen, and the floor under it
+      if(o.out&&kp0&&kp0.magSeat&&Wp.rl.kind==='mag'){const q=K.W(add(kp0.magSeat,mul(kp0.magDir,kp0.magLen*.6)));o.out.mag=K.P(q);o.out.magFloor=K.P([q[0],q[1],0])}
       // where the muzzle is on the screen (o.out, in the hero's own units from his feet): the zombie map fires its shots from there
-      if(o.out&&kp.muzzle)o.out.muzzle=K.P(K.W(kp.muzzle));
+      if(o.out&&kp.muzzle)o.out.muzzle=K.P(K.W(kp.muzzle));if(o.out&&kp.eject){const q=K.W(kp.eject);o.out.eject=K.P(q);o.out.ejectZ=q[2]}
       // the right hand on the grip, or pulling the crossbow's string back to the nut
       let rh=[0,0,0];const pl=Wp.pull;
       if(pl&&kp.nut){const at=[kp.nut[0]+.2,4.3,0],far=[10.4,4.3,0];rh=pl.ph===1?lerp3([0,0,0],far,ez(pl.t)):pl.ph===2?at:lerp3([-.4,4.3,0],[0,0,0],ez(pl.t))}
       K.hand(rh,2.8,S.hand,1.2,S.ring?q=>ringOn(V0,q,S.ring):null);
       // the left hand on the fore-grip or the pump; it pushes the new rocket into the tube
-      let lh=kp.sup;const ld=Wp.load;
+      let lh=RH||kp.sup;const ld=Wp.load;
       if(ld&&lh){const off=(1-ez(Wp.st.loaded||0))*9,on=[16.6+off,4.2,0];lh=ld.ph===1?lerp3(kp.sup,[25.6,4.2,0],ez(ld.t)):ld.ph===2?on:lerp3([16.6,4.2,0],kp.sup,ez(ld.t))}
       if(lh)K.hand(lh,2.7,S.hand,1.2);
       // the flash at the muzzle (and the rocket's blast behind), the orb flaring
@@ -11382,7 +11536,7 @@ function weaponParts(parts,V0,X,S,Wp,wid,o){const{D}=V0,cls=Wp.cls,r=Wp.rec,kk=W
           ctx.strokeStyle='rgba(30,90,40,.7)';ctx.lineWidth=.5;seg([-2,0],[2,0]);ctx.stroke();ctx.restore()},0)}
     })}});
   // the free hand: the left one, at the side (it swings when walking)
-  if(cls==='one'||cls==='staff')parts.push({d:D(X.T([-.6,-11.4,11.4])),f:()=>fist(V0,X.T(Wp.hL),2.7,S.hand)})}
+  if((cls==='one'||cls==='staff')&&!RH)parts.push({d:D(X.T([-.6,-11.4,11.4])),f:()=>fist(V0,X.T(Wp.hL),2.7,S.hand)})}
 const hexRgb=h=>{const n=parseInt(String(h).slice(1),16);return`${n>>16},${n>>8&255},${n&255}`};
 
 // ------------------------------------------------------------------ the hero
@@ -11402,7 +11556,7 @@ function arciere0(x,y,face,anim,p,sc,o){sc=sc||1;o=o||{};const S0=o.style||{},ar
   // with a gun, the crossbow or the staff: the body of the bow's pose for standing, walking, the dash and the knock back; when it aims
   // or shoots, a firm stance that breathes, eyes narrowed, the body pushed back a little by each shot
   if(gunW){if(anim==='shoot'||anim==='aim'){A=pose('idle',p,o);A.fL=[2.2,-5.2,0];A.fR=[-1,5,0];A.hd=[.3,0,0];A.hp=.04;A.hy=0;A.squint=anim==='shoot'?.55:.35;A.inhale=A.exhale=0}
-    Wp=wpose(A,anim,p,wid,o);if(Wp.rec>0&&Wp.kick){const k=Wp.rec*Wp.kick[0]/3;A.lean=.02-.06*k;A.B=add(A.B,[-.7*k,0,0]);A.hd=add(A.hd,[-.4*k,0,.1*k])}
+    Wp=wpose(A,anim,p,wid,o);if(Wp.rl&&Wp.rl.b){const b=Wp.rl.b;A.hp+=.22*b;A.hy+=.3*b;A.squint=Math.max(A.squint||0,.25*b)}if(Wp.rec>0&&Wp.kick){const k=Wp.rec*Wp.kick[0]/3;A.lean=.02-.06*k;A.B=add(A.B,[-.7*k,0,0]);A.hd=add(A.hd,[-.4*k,0,.1*k])}
     // the hammer's blow and the bomb's throw move the whole body: back on the wind-up, forward on the strike
     if(Wp.lean!=null){A.lean=Wp.lean;A.hd=add(A.hd,[Wp.lean*3,0,0]);if(Wp.body)A.B=add(A.B,Wp.body);if(Wp.sq)A.s=Wp.sq}}
   // the mages float in the air (style.float): a slow bob instead of the steps
@@ -15440,7 +15594,7 @@ function sep(z){if(z.cl)return;for(const o of W.Z)if(o!==z&&!o.die&&o.rise>=1&&!
 // le armi vere (sprite/armi: ARMI.DATI): l'eroe spara da solo allo zombie più vicino che vede quando sta fermo; ogni colpo (un pallino per i
 // fucili a pompa, che perdono forza con la distanza) va dritto fino al primo zombie sulla sua linea o al primo muro, passa D.pierce zombie in
 // più, il razzo esplode largo D.splash. Uno zombie ucciso dà le monete della partita (W.killCoins, 60)
-function equip(id){if(!window.ARMI||!ARMI.DATI[id])return;W.gunId=id;gunState=ARMI.nuova(id);HSTYLE.gun=id;W.toast=[ARMI.DATI[id].n,1.8]}
+function equip(id){if(!window.ARMI||!ARMI.DATI[id])return;W.gunId=id;gunState=ARMI.nuova(id);if(gunState.estrai)gunState.estrai();HSTYLE.gun=id;W.toast=[ARMI.DATI[id].n,1.8]}
 function hurt(z,n,fx){z.hp-=n;z.flash=.12;if(fx)for(let i=0;i<4;i++)W.FX.push({k:'drop',tw:[z.x,z.y,z.zh||0],x:0,y:-24*RIGK.mzk*z.sc/1.1,vx:rr(-40,40),vy:rr(-60,-10),t:.5});
   if(z.hp<=0&&!z.die){z.die=.001;W.kills=(W.kills||0)+1;const n2=Math.round((z.reward||W.killCoins||60)*((W.mods&&W.mods.cash)||1));W.coins+=n2;W.FX.push({k:'coin',tw:[z.x,z.y,(z.zh||0)+44*z.sc],n:n2,t:1.1,t0:1.1});if(W.director&&W.director.killed)W.director.killed(z)}}
 function fireShot(ev){const h=W.hero,g=gunState,D=g.D,B=basis(heroDir()*Math.PI/4),zk=RIGK.hzk,pp=window.ARMI&&ARMI.inManoPunti&&ARMI.inManoPunti(W.gunId,B,g.pose(),scrAng(h.aim)),m=pp&&pp.muzzle,
@@ -15516,7 +15670,7 @@ function updateBeings(dt,inp){const h=W.hero,DI=W.director,MD=W.mods||{};if(h.de
   // il verso disegnato dell'Arciere 3D (nel mondo): segue in fretta quello vero, senza le 8 direzioni del rig di prima
   {const tf=h.face||0;if(h.f3==null||dt>=.5)h.f3=tf;else h.f3+=Math.atan2(Math.sin(tf-h.f3),Math.cos(tf-h.f3))*Math.min(1,dt*18)}
   // il grilletto: le armi automatiche lo tengono premuto, le altre lo premono di nuovo appena l'arma è pronta
-  if(g){const want=!h.moving&&!!tgt&&!noShoot,ev=g.update(g.st==='ricarica'?dt*(MD.relK||1):dt,want&&(g.D.auto||(g.st==='pronta'&&g.cd<=0)));/* (MD.relK: l'elisir Mani Svelte) */for(const e of ev){if(e.k==='sparo'&&!noShoot)fireShot(e);else if(e.k==='suono'&&ARMI.suono)ARMI.suono(W.gunId,e.w,180);else if(e.k==='bossolo'&&W.onCase)W.onCase(e.n||1)}
+  if(g){const want=!h.moving&&!!tgt&&!noShoot,ev=g.update(g.st==='ricarica'?dt*(MD.relK||1):dt,want&&(g.D.auto||(g.st==='pronta'&&g.cd<=0)));/* (MD.relK: l'elisir Mani Svelte) */for(const e of ev){if(e.k==='sparo'&&!noShoot)fireShot(e);else if(e.k==='suono'&&ARMI.suono)ARMI.suono(W.gunId,e.w,180);else if(e.k==='bossolo'&&W.onCase)W.onCase(e.n||1);else if(e.k==='caricatore'&&W.onMag)W.onMag()}
     if(tgt||h.moving)h.rlT=0;else if((h.rlT=(h.rlT||0)+dt)>1.2&&g.st==='pronta'&&g.mag<g.D.mag&&g.res>0)g.ricarica();// ricarica da solo quando non c'è niente da colpire
     if(W.gunId==='pistola'){if(g.res<g.D.mag*2)g.res+=g.D.res}// la pistola non resta mai senza colpi
     else if(g.mag<=0&&g.res<=0&&g.st!=='ricarica')equip('pistola')}// finiti i colpi si torna alla pistola
@@ -15595,7 +15749,7 @@ function drawHero(){const h=W.hero,q=SB(h.x,h.y,h.zh||0),f=h.fall||0,inv=W.mods&
   if(HERO3()){const DI=W.director,ht=DI&&DI.hurtT!=null?DI.hurtT:9,aimOn=!!h.tgZ&&!h.moving&&!f&&!h.dead;let anim='idle',p=((W.t/2.4)%1+1)%1;
     const job=!f&&!h.dead&&!h.moving&&h.busy&&h.busy.anim?h.busy:null,bare=job||h.unarmed;// un lavoro con le mani (le assi sulla finestra): l'arma va via; senz'arma con la sua sull'incudine
     if(f>0||h.dead){anim='hit';p=.16}else if(ht<.45){anim='hit';p=ht/.45*.5}else if(h.moving){anim='walk';p=(((h.walk||0)/TAU)%1+1)%1}else if(job){anim=job.anim;p=cl(h.busyP||0,0,.999)}else if(aimOn)anim='aim';
-    const out={};try{EROE.arciere(q[0],q[1],(h.f3==null?h.face||0:h.f3)+CAM.yaw,anim,p,1,{style:bare?Object.assign({},HSTYLE,{gun:null}):HSTYLE,gp:gunState&&!bare?gunState.pose():null,noFx:true,out,tool:job?job.tool:null})}catch(e){console.error(e)}W.muzzle=out.muzzle||null}
+    const out={};try{EROE.arciere(q[0],q[1],(h.f3==null?h.face||0:h.f3)+CAM.yaw,anim,p,1,{style:bare?Object.assign({},HSTYLE,{gun:null}):HSTYLE,gp:gunState&&!bare?gunState.pose():null,noFx:true,out,tool:job?job.tool:null})}catch(e){console.error(e)}W.muzzle=out.muzzle||null;W.magP=out.mag||null;W.magF=out.magFloor||null}
   else drawRig(q[0],q[1]-8,heroDir()*Math.PI/4,h.walk,h.moving&&!f,HSTYLE,{gp:gunState?gunState.pose():{},aim:h.aim==null||f?null:scrAng(h.aim)});
   if(f>0)ctx.restore();if(inv)ctx.restore();if(W.director&&W.director.drawOnHero)W.director.drawOnHero(q)}
 // una voce della lista: uno strato di prop (L), un prop intero nell'ordine di prima (W, con W.dbg.ord='ky'), un essere (B: eroe, zombie, corvo
@@ -15619,7 +15773,7 @@ function occluders(order,hi){const out=[];if(hi<0)return out;let[bx0,by0,bx1,by1
 // resta ferma) e la sagoma composta con chi lo copre (in più la telecamera e le voci che coprono con la loro trasparenza)
 function silhouette(occ,h0a){if(!occ.length||W.dbg.noSil)return;const m=ctx.getTransform(),[bx0,by0,bx1,by1]=heroBox(),X0=Math.floor(m.a*bx0+m.e),Y0=Math.floor(m.d*by0+m.f),X1=Math.ceil(m.a*bx1+m.e),Y1=Math.ceil(m.d*by1+m.f),Q=.5,w=Math.ceil((X1-X0)*Q),hh=Math.ceil((Y1-Y0)*Q);if(w<=0||hh<=0)return;// a metà risoluzione: è un velo morbido
   if(!SIL)SIL={o:document.createElement('canvas'),h:document.createElement('canvas')};for(const c of[SIL.o,SIL.h]){if(c.width<w)c.width=w;if(c.height<hh)c.height=hh}
-  const h=W.hero,hq=S(h.x,h.y,h.zh||0),k1=[Math.round((m.a*hq[0]+m.e)*2),Math.round((m.d*hq[1]+m.f)*2),heroDir(),h.aim==null?'n':Math.round(scrAng(h.aim)*20),h.moving?Math.floor(h.walk*3):-1,Math.round(RIGK.hzk*100),Math.round(m.a*100),X0,Y0,w,hh].join('|'),
+  const h=W.hero,hq=S(h.x,h.y,h.zh||0),k1=[Math.round((m.a*hq[0]+m.e)*2),Math.round((m.d*hq[1]+m.f)*2),heroDir(),h.aim==null?'n':Math.round(scrAng(h.aim)*20),h.moving?Math.floor(h.walk*3):-1,gunState&&(gunState.st!=='pronta'||gunState.eq<1)?Math.round(W.t*15):'r',Math.round(RIGK.hzk*100),Math.round(m.a*100),X0,Y0,w,hh].join('|'),
     k2=k1+'|'+[Math.round(CAM.x*2),Math.round(CAM.y*2),Math.round(CAM.oy*2),Math.round(CAM.yaw*200),Math.round(CAM.el*200),occ.map(e=>e.sid+':'+(e.kind==='T'?Math.round(BOX.b.T*30):Math.round((e.prop.house?e.prop.house.a:1)*20))).join(',')].join('|');
   if(SIL.k2!==k2){SIL.k2=k2;const sv=ctx;
     try{let g;if(SIL.k1!==k1){SIL.k1=k1;g=SIL.h.getContext('2d');g.setTransform(1,0,0,1,0,0);g.globalCompositeOperation='source-over';g.globalAlpha=1;g.clearRect(0,0,SIL.h.width,SIL.h.height);g.setTransform(m.a*Q,0,0,m.d*Q,(m.e-X0)*Q,(m.f-Y0)*Q);ctx=g;drawHero();
@@ -18128,7 +18282,7 @@ const ZV=(()=>{let curve=null;
 const KV={zombie:{f:[78,112],fm:[[430,940],[380,820],[520,1050]],rasp:.55,br:.35},strisciante:{f:[115,150],fm:[[560,1250],[620,1400]],rasp:.85,br:.6,gurgle:1},
   minatore:{f:[64,86],fm:[[400,780],[360,700]],rasp:.5,br:.3,cough:1},lanterna:{f:[96,128],fm:[[480,1100],[540,1300]],rasp:.25,br:.55,ghost:1},hound:{f:[150,210],fm:[[700,1500]],rasp:.9,br:.5,dog:1},
   becchino:{f:[50,62],fm:[[360,700]],rasp:.7,br:.4,big:1},spaventapasseri:{f:[90,110],fm:[[520,1200]],rasp:.4,br:.7,straw:1}};
-const A={lastMoan:0,lastStep:0,lastHit:0,lastPain:0,lastDeath:0,lastAtk:0,lastTink:0,lastType:'',busy:[],cases:[]};
+const A={lastMoan:0,lastStep:0,lastHit:0,lastPain:0,lastDeath:0,lastAtk:0,lastTink:0,lastMag:0,lastType:'',busy:[],cases:[],mags:[]};
 // (difetti 48, Denis: «l'audio dopo il quinto round va a farsi fottere») how busy the audio is (src/js/05-audio.js: 0 calm, 1 dense, 2 full):
 // in the big fights of the later rounds the sounds that repeat (steps, hits, pains, deaths, risings, casings) come less often and lighter
 const lvA=()=>typeof audioLv==='function'?audioLv():0;
@@ -18166,8 +18320,9 @@ function death(z,t,P){const v=vox(z),K=v.K,now=AU.ctx.currentTime,say=P.lv<2&&no
   if(say&&K.dog){ZV.voice(t,v.f*1.6,v.f*.7,.6,v.fm,{vol:.13*P.k,att:.02,rasp:.5,rev:P.rev})}
   else if(say)ZV.voice(t,v.f*1.05,v.f*.52,VR(1.15,.15),v.fm,{vol:.14*P.k,att:.05,rasp:K.rasp+.15,breath:K.br+.2,rev:P.rev,fd:.75});ZV.body(t+(say?.62:.05),.3*P.k,P.rev,P.lv>0)}
 function rise(z,t,P){ZV.dirt(t,.18*P.k,P.lv?3:7);if(P.lv)return;const v=vox(z);ZV.voice(t+.3,v.f*.9,v.f*.75,1.1,v.fm,{vol:.08*P.k,att:.3,rasp:v.K.rasp,breath:.5,rev:P.rev})}
-// ------------------------------------------------------------------ every frame: who moans, who steps, who got hit, who died
-function update(dt,D){if(!on())return;const now=AU.ctx.currentTime,t=now+.02,lv=lvA(),pl=(x,y)=>{const P=place(x,y);P.lv=lv;return P};A.busy=A.busy.filter(e=>e>now);
+// ------------------------------------------------------------------ every frame: who moans, who steps, who got hit, who died (the casings and
+// the magazines fly and fall even with the sound off: before, with the effects muted they stayed in the air)
+function update(dt,D){stepCases(dt);stepMags(dt);if(!on())return;const now=AU.ctx.currentTime,t=now+.02,lv=lvA(),pl=(x,y)=>{const P=place(x,y);P.lv=lv;return P};A.busy=A.busy.filter(e=>e>now);
   for(const z of W.Z){const v=vox(z);if(z.idle&&!z.die)continue;
     if(z.rise<1){if(!v.rose&&z.rise>0){v.rose=1;const P=pl(z.x,z.y);if(P.k>.02)rise(z,t,P)}continue}v.rose=1;
     if(z.die){if(!v.dead){v.dead=1;const P=pl(z.x,z.y);if(P.k>.01)death(z,t,P)}continue}
@@ -18177,7 +18332,7 @@ function update(dt,D){if(!on())return;const now=AU.ctx.currentTime,t=now+.02,lv=
     if(z.anim==='walk'&&z.p!=null){const p=z.p,w=v.wp;if((w<.5&&p>=.5)||p<w){if(now-A.lastStep>(lv>1?.12:lv?.07:.045)){const P=pl(z.x,z.y);if(P.k>(lv>1?.35:.03)){A.lastStep=now;step(z,t,P)}}}v.wp=p}
     // a moan now and then (never more than three voices, two dense, one full; never two at the same moment)
     if(now>v.next){const P=pl(z.x,z.y);v.next=now+VR(4.5,.45)*(1+P.d/320);if(P.k>.04&&A.busy.length<3-lv&&now-A.lastMoan>.4){A.lastMoan=now;A.busy.push(now+moan(z,t,P))}}}
-  stepCases(dt)}
+}
 // ------------------------------------------------------------------ the casings: thrown out by the gun (motore.js passes the gun's 'bossolo'
 // events to W.onCase), they fly, bounce and ring only when they land
 W.onCase=n=>{const h=W.hero,a=(h.aim!=null?h.aim:h.face)||0,id=W.gunId,sh=id==='pompa'||id==='tattica',max=LOWFX?10:30;
@@ -18192,6 +18347,25 @@ function tink(c,first){if(!on())return;const lv=lvA(),now=AU.ctx.currentTime;if(
 function stepCases(dt){for(let i=A.cases.length-1;i>=0;i--){const c=A.cases[i];c.life-=dt;if(c.life<=0){A.cases.splice(i,1);continue}
   if(c.vz!==0||c.z>c.ground){c.vz-=300*dt;c.x+=c.vx*dt;c.y+=c.vy*dt;c.z+=c.vz*dt;c.r+=c.vr*dt;
     if(c.z<=c.ground){c.z=c.ground;if(c.vz<-28&&c.b<3){tink(c,c.b===0);c.vz=-c.vz*.34;c.vx*=.5;c.vy*=.5;c.vr*=.5;c.b++}else{c.vz=0;c.vx=c.vy=0;c.vr=0}}}}}
+// ------------------------------------------------------------------ the empty magazine (Denis, 14 ottobre, la ricarica): it leaves the gun
+// where the hero's drawing put it (W.magP, and W.magF the floor under it: offsets on the screen from his feet), falls turning, knocks on
+// the floor once or twice (its own sound: steel, the drum, the tank, the crystal) and lies there a few seconds before it fades
+W.onMag=()=>{const h=W.hero,a=W.magP;if(!a)return;const f=W.magF||[a[0],0],sd=Math.random()<.5?-1:1;
+  A.mags.push({id:W.gunId,wx:h.x,wy:h.y,wz:h.zh||0,x:a[0],y:a[1],fy:Math.max(f[1],a[1]+4),vx:(f[0]-a[0])*1.5+sd*VR(10,.4),vy:-VR(18,.4),r:0,vr:sd*VR(7,.3),b:0,life:4.2,lie:sd*Math.PI/2});
+  if(A.mags.length>(LOWFX?3:6))A.mags.shift()};
+function magLand(c,first){if(!on())return;const lv=lvA(),now=AU.ctx.currentTime;if((!first&&lv)||now-A.lastMag<.08)return;A.lastMag=now;
+  const P=place(c.wx,c.wy),t=now+.005,v=(first?.16:.07)*Math.max(.3,P.k),id=c.id;
+  if(id==='lanciafiamme'){fThump(t,VR(150,.1),80,.12,v*1.4);M.metal(t,v*1.1,VR(260,.05),.5);return}
+  if(id==='risonatore'){fModal(t,VR(2600,.06),[1,2.76,5.4],[.12,.08,.05],v*.6,.25);return}
+  if(id==='tamburo'||id==='mitragliatrice'){fThump(t,VR(170,.1),90,.08,v*1.3);M.metal(t,v*.8,VR(520,.05),.25);fNoise(t,.04,'bandpass',VR(1600,.15),1.2,v*.4);return}
+  fThump(t,VR(260,.1),130,.04,v);M.metal(t,v*.7,VR(id==='pistola'?1500:1100,.05),.12);fNoise(t,.02,'highpass',3200,.7,v*.35)}
+function stepMags(dt){for(let i=A.mags.length-1;i>=0;i--){const c=A.mags[i];c.life-=dt;if(c.life<=0){A.mags.splice(i,1);continue}
+  if(c.vy!==0||c.y<c.fy){c.vy+=320*dt;c.x+=c.vx*dt;c.y+=c.vy*dt;c.r+=c.vr*dt;
+    if(c.y>=c.fy){c.y=c.fy;if(c.vy>55&&c.b<2){magLand(c,c.b===0);c.vy=-c.vy*.3;c.vx*=.4;c.vr*=.4;c.b++}else{c.vy=0;c.vx=0;c.vr=0}}}
+  else c.r+=(c.lie-c.r)*Math.min(1,dt*14)}}
+function drawMag(c){if(!window.ARMI||!ARMI.caricatore)return;const q=ZM.SB(c.wx,c.wy,c.wz),x=q[0]+c.x,a=Math.min(1,c.life/.6);
+  ctx.save();ctx.globalAlpha*=a*.3;ctx.fillStyle='#000';ctx.beginPath();ctx.ellipse(x,q[1]+c.fy+1,4,1.5,0,0,Math.PI*2);ctx.fill();ctx.restore();
+  ctx.save();ctx.translate(x,q[1]+c.y);ctx.scale(1.2,1.2);ARMI.caricatore(c.id,0,0,c.r,a,1);ctx.restore()}
 function drawCase(c,a){const q=ZM.SB(c.x,c.y,c.z);ctx.save();ctx.globalAlpha*=a;ctx.translate(q[0],q[1]);ctx.rotate(c.r);ctx.fillStyle='rgba(27,22,18,.85)';ctx.fillRect(-2,-1.1,4,2.2);ctx.fillStyle=c.sh?'#c8322a':'#d8a838';ctx.fillRect(-1.6,-.7,3.2,1.4);
   ctx.fillStyle=c.sh?'#e8c050':'#fff0b0';ctx.fillRect(c.sh?.6:-1.3,-.6,c.sh?1:1.4,.5);ctx.restore()}
 // hooked to the match (like fortuna.js, armi_speciali.js, compagni.js)
@@ -18199,8 +18373,8 @@ function drawCase(c,a){const q=ZM.SB(c.x,c.y,c.z);ctx.save();ctx.globalAlpha*=a;
   const _u=D.update;D.update=(dt,on2)=>{_u(dt,on2);try{update(dt,D)}catch(e){console.error(e)}};
   // the zombie's blow: its snarl and the claw, when it really hits
   const _zh=D.zombieHit;D.zombieHit=(z,d)=>{const hp=D.hp;_zh(z,d);try{const now=on()?AU.ctx.currentTime:0;if(D.hp<hp&&now&&now-A.lastAtk>.12){A.lastAtk=now;const P=place(z.x,z.y);P.lv=lvA();attack(z,now+.01,P)}}catch(e){}};
-  const _t=D.drawTop;D.drawTop=dt=>{_t(dt);if(!A.cases.length)return;try{for(const c of A.cases)drawCase(c,Math.min(1,c.life/.6))}catch(e){}};
-  const _r=D.reset;D.reset=()=>{_r();A.cases.length=0;A.busy.length=0};return D}}
+  const _t=D.drawTop;D.drawTop=dt=>{_t(dt);if(!A.cases.length&&!A.mags.length)return;try{for(const c of A.mags)drawMag(c);for(const c of A.cases)drawCase(c,Math.min(1,c.life/.6))}catch(e){}};
+  const _r=D.reset;D.reset=()=>{_r();A.cases.length=0;A.mags.length=0;A.busy.length=0};return D}}
 ZM.audio={A,KV,moan,place}})();
 // ---------- LE BARRIERE della mappa zombie (punti 18 e 19 del piano di Denis, anteprima 48): le finestre delle case, che gli zombie rompono per
 // entrare (il vetro si rompe una volta sola, poi la finestra resta rotta) e che l'eroe sbarra con le assi; i varchi delle staccionate di legno

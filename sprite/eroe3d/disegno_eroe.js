@@ -471,15 +471,102 @@ function wpose0(A,anim,p,id,o){o=o||{};const cls=WCLS[id],H=HOLD[cls],dg=sub(A.g
     W.flash=q>=.3?cl(Math.min((q-.3)/.02,1-(q-.32)/.1),0,1):0;W.cast=q>=.32?q-.32:-1;W.rec=0;W.shots=[]}
   return W}
 // the gun of a match (o.gp = ARMI.nuova(id).pose(), on the zombie map): its own recoil, flash and moving parts (slide, hammer and cylinder,
-// barrels and belt, pump, shells on the saddle, rocket) in place of the test cycle of 'shoot', and the reload: the muzzle tipped up by g.tilt,
-// as the 2D guns do (the 3D guns have no magazine to drop)
+// barrels and belt, pump, shells on the saddle, rocket) in place of the test cycle of 'shoot', and its reload (below)
 function realGun(W,g,id){W.rec=cl(g.rec||0,0,1);W.flash=cl(g.flash||0,0,1);W.shots=[];W.ej=[];const s=W.st;
-  if(id==='pistola'||id==='mitraglietta'||id==='mitra')s.slide=g.slide||0;
+  if(id==='pistola'||id==='mitraglietta'||id==='mitra'||id==='tamburo')s.slide=g.slide||0;
+  // the pistol's slide stays back after the last round, until the reload lets it go
+  if(id==='pistola'&&g.n===0&&g.st!=='ricarica')s.slide=1;
   if(id==='revolver'){s.hammer=g.hammer==null?1:cl(g.hammer,0,1);s.cyl=g.cyl||0}
   if(id==='mitragliatrice'){s.spin=g.spin||0;s.feed=g.feed||0}
   if(id==='pompa'||id==='tattica')s.pump=g.pump||0;if(id==='tattica'&&g.saddle!=null)s.saddle=g.saddle;
   if(id==='lanciarazzi'){s.loaded=g.loaded==null?1:g.loaded;W.load=null}
-  if(g.tilt>0&&W.aim){const pt=Math.asin(cl(W.aim[2],-1,1)),yw=Math.atan2(W.aim[1],W.aim[0]);W.aim=dirPY(pt+g.tilt,yw)}}
+  reloadPose(W,g,id);if(!W.rl&&g.eq!=null&&g.eq<1)drawPose(W,g.eq,id)}
+// the gun just taken: it comes up from low at the side (pointing down and back) to its hold, then the free hand works it once: the slide
+// or the bolt, the pump, the cylinder's turn, the rocket's tube (ARMI.EQR: when it clicks)
+const HOLST={one:[[1.5,10,7.5],-1.25,.35],long:[[.5,9.5,7.5],-1.05,.55],shoulder:[[-3,8,12],-.9,.3]};
+function drawPose(W,e,id){const H=HOLST[W.cls];if(!H)return;const k=ez(cl(e/.55,0,1)),A0=dirPY(H[1],H[2]);
+  W.grip=lerp3(H[0],W.grip,k);W.aim=nrm(lerp3(A0,W.aim,k));const r=typeof ARMI!=='undefined'&&ARMI.EQR||.74,w=tzw(e,.5,r-.06,r,.98);
+  if(w>0)W.rl={kind:'draw',e,b:w};const s=W.st;
+  if(id==='pistola'||id==='mitraglietta'||id==='mitra'||id==='tamburo')s.slide=Math.max(s.slide||0,bump((e-(r-.12))/.24));
+  if(id==='pompa'||id==='tattica')s.pump=Math.max(s.pump||0,bump((e-(r-.14))/.26));
+  if(id==='revolver')s.cyl=(s.cyl||0)+ez(cl((e-.55)/.3,0,1))/6;
+  if(id==='mitragliatrice')s.spin=(s.spin||0)+ez(cl((e-.5)/.4,0,1))*TAU*.5}
+// ------------------------------------------------------------------ the reload of the zombie guns (Denis, 14 ottobre: «miglioriamo le
+// animazioni delle pistole, cioè la ricarica»). The gun comes in front of the chest, its muzzle up and turned on its side toward the free
+// hand, and the head looks down at it. The free hand takes the magazine out (it falls: the map throws it on the floor), fetches a new one
+// at the belt, pushes it in and pulls the slide or the bolt; the revolver swings its cylinder out, throws out the six cases, takes six
+// rounds one by one and snaps shut; the shotguns take one shell at a time at the belt (the tactical one from its saddle) and push it
+// into the loading port; the rocket comes from the belt and is pushed into the tube. All of it follows the gun's own state: k = pose().rk
+// (0..1 along the reload) or the shell's f = pose().shell, with the moments of ARMI.RLT, the same for the 2D guns and the sounds.
+const tzw=(k,a,b,c,d)=>k<=a||k>=d?0:k<b?ez((k-a)/(b-a)):k<=c?1:1-ez((k-c)/(d-c));
+// the reload hold of each kind: [the right hand, pitch, yaw, roll (the top of the gun to the right, its bottom toward the free hand)]
+const RLP={one:[[9.6,3.4,12.6],.5,-.62,.55],long:[[5.8,6.2,11.4],.3,-.5,.62],
+  revolver:[[10.6,2.8,10.8],0,-.62,.5],mitragliatrice:[[5.4,6.6,10.8],.14,-.36,.4],lanciafiamme:[[9.6,5,10.4],.12,-.22,.4],vapore:[[8.4,5.4,10.8],.2,-.34,.5],pompa:[[5.4,6,11.6],.24,-.46,.95],tattica:[[5.8,6,11.8],.26,-.5,.95]};
+// where the free hand takes a new magazine, shell or rocket: a pouch on the belt, in front and a little to the right (the hero's frame)
+const POUCH=[9.4,2.4,9.2];
+function reloadPose(W,g,id){const T=typeof ARMI!=='undefined'&&ARMI.RLT,sh=id==='pompa'||id==='tattica',k=g.rk==null?-1:g.rk,s=W.st;if(!T||W.cls==='staff')return;
+  let R=null;
+  if(sh){if(!(g.tilt>0))return;R={kind:'shell',b:cl(g.tilt/.16,0,1),f:g.shell!=null&&g.shell>=0?g.shell:-1}}
+  else{if(k<0)return;
+    if(id==='revolver'){const V=T.rev;R={kind:'rev',k,b:tzw(k,-1,0,.92,1)*ez(cl(k/.06,0,1))};
+      s.swing=k<V.open[0]?0:k<V.open[1]?ez((k-V.open[0])/(V.open[1]-V.open[0])):k<V.shut[0]?1:k<V.shut[1]?1-ez((k-V.shut[0])/(V.shut[1]-V.shut[0])):0;
+      s.eject=k<V.eject[0]?0:k<V.eject[1]?ez((k-V.eject[0])/(V.eject[1]-V.eject[0])):k<V.eject[1]+.012?1:0;
+      const n=(k-V.load[0])/(V.load[1]-V.load[0])*6,i=Math.floor(n),u=n-i;
+      s.rounds=k<V.eject[1]+.012?6:k<V.load[0]?0:k>=V.load[1]?6:Math.min(6,i+(u>=.6?1:0));if(k>=V.load[0]&&k<V.load[1]&&u<.6)s.roundIn=ez(u/.6);
+      R.n=n;R.pit=.55*tzw(k,.1,.15,.2,.25)-.3*tzw(k,.23,.3,.8,.88)}
+    else if(id==='lanciarazzi'){R={kind:'rocket',k,b:tzw(k,0,.14,.84,1)}}
+    else{const M=T.mag;R={kind:'mag',k,b:tzw(k,0,.1,M.done-.04,1)};
+      // the magazine seating and the slide going home jolt the gun a little
+      R.pit=.06*Math.exp(-Math.max(0,k-M.seat)*60)*(k>=M.seat?1:0)+.05*Math.exp(-Math.max(0,k-M.fwd)*60)*(k>=M.fwd?1:0);
+      // the pistol emptied: its slide stays back until the hand lets it go
+      if(id==='pistola'&&g.empty)s.slide=k<M.fwd?1:Math.max(0,1-(k-M.fwd)/.04);
+      if(id==='lanciafiamme')s.glow=k<M.out?.8*(1-k/M.out):k<M.seat?0:Math.min(1,(k-M.seat)/(M.done-M.seat))*.9;
+      if(id==='vapore'){s.valve=k>=M.rack?ez(cl((k-M.rack)/(M.done-M.rack),0,1))*Math.PI*1.5:0;s.gauge=k<M.rack?.1:.1+.6*ez(cl((k-M.rack)/(M.done-M.rack),0,1))}
+      if(id==='tamburo')s.key=k>=M.seat?ez(cl((k-M.seat)/(M.rack-M.seat),0,1))*Math.PI*2:0}}
+  W.rl=R;const P=RLP[id]||RLP[W.cls];if(!P||!R.b)return;
+  // the gun goes to its reload hold (the rocket stays on the shoulder, its muzzle up a little)
+  const b=R.b,A0=dirPY(P[1]+(R.pit||0),P[2]),U0=nrm(sub([0,0,1],mul(A0,A0[2]))),Z0=cross(U0,A0),U=nrm(add(mul(U0,Math.cos(P[3])),mul(Z0,Math.sin(P[3]))));
+  W.grip=lerp3(W.grip,P[0],b);W.aim=nrm(lerp3(W.aim,A0,b));W.up=nrm(lerp3(W.up,U,b))}
+{const _rp=reloadPose;reloadPose=function(W,g,id){_rp(W,g,id);if(id==='lanciarazzi'&&W.rl){const b=W.rl.b,pt=Math.asin(cl(W.aim[2],-1,1)),yw=Math.atan2(W.aim[1],W.aim[0]);W.aim=dirPY(pt+.16*b,yw)}}}
+// where the free hand is during the reload, in the gun's own frame, and what it carries: it sets st (the magazine in the hand, the shell,
+// the rocket) for the gun's drawing. kp: the gun's key points for this state (ARMI3D.keys); loc(q): a point of the hero's frame in the
+// gun's frame; S: where the hand is when it is not reloading (on the fore-grip or the pump, or at the side)
+function reloadHand(R,st,kp,loc,S){const T=ARMI.RLT,E=ez,L3=(a,b,t)=>lerp3(a,b,E(cl(t,0,1))),Pq=loc(POUCH);let H=S;
+  if(R.kind==='mag'&&kp.magSeat){const M=T.mag,k=R.k,MS=kp.magSeat,at=m=>add(MS,mul(kp.magDir,kp.magLen*m)),rk=kp.rack||MS;
+    if(k<M.out)H=L3(S,MS,k/M.out);
+    else if(k<M.drop){const m=E((k-M.out)/(M.drop-M.out))*.6;st.mag=m;H=at(m)}
+    else if(k<M.pouch){st.magOff=true;H=L3(at(.6),Pq,(k-M.drop)/(M.pouch-M.drop))}
+    else if(k<M.well){H=L3(Pq,at(1),(k-M.pouch)/(M.well-M.pouch));st.magAt=sub(H,MS)}
+    else if(k<M.push){st.mag=1;H=at(1)}
+    else if(k<M.seat){const m=1-E((k-M.push)/(M.seat-M.push));st.mag=m;H=at(m)}
+    else if(k<M.rack)H=L3(MS,rk,(k-M.seat)/(M.rack-M.seat));
+    else if(k<M.done)H=rk;
+    else H=L3(rk,S,(k-M.done)/(1-M.done))}
+  else if(R.kind==='rev'){const V=T.rev,k=R.k,side=kp.cylSide,rod=kp.rod,ch=kp.chs,at=(i,r)=>add(ch[Math.max(0,Math.min(5,i))],[-(1-r)*3.2-2.4,0,0]);
+    if(k<V.open[0]+.02)H=L3(S,side,k/(V.open[0]+.02));
+    else if(k<V.eject[0])H=side;
+    else if(k<V.eject[0]+.02)H=L3(side,rod,(k-V.eject[0])/.02);
+    else if(k<V.eject[1]+.012)H=rod;
+    else if(k<V.load[0])H=L3(rod,Pq,(k-V.eject[1]-.012)/(V.load[0]-V.eject[1]-.012)*1.6);
+    else if(k<V.load[1]){const i=Math.floor(R.n),u=R.n-i;H=u<.6?at(i,E(u/.6)):L3(at(i,1),at(i+1,0),(u-.6)/.4);if(i===0&&u<.6)H=L3(Pq,H,u/.25)}
+    else if(k<V.shut[0])H=L3(at(5,1),side,(k-V.load[1])/(V.shut[0]-V.load[1]));
+    else if(k<V.shut[1])H=side;
+    else H=L3(side,S,(k-V.shut[1])/(1-V.shut[1]))}
+  else if(R.kind==='shell'&&kp.port){const f=R.f,po=kp.port,j=Math.max(0,Math.min(3,(st.saddle==null?4:st.saddle)-1)),pick=kp.sad?kp.sad[j]:Pq,
+      UND=add(po,[-2.6,-3.6,0]),INN=add(po,[1.6,1.1,0]),HO=[-1.2,-2,-.6],hand=b=>add(b,HO);
+    if(f<0)H=hand(INN);
+    else if(f<.3)H=L3(hand(INN),pick,f/.3);
+    else if(f<.55){H=L3(pick,hand(UND),(f-.3)/.25);st.shellAt=sub(H,HO);if(kp.sad&&st.saddle>0)st.saddle--}
+    else if(f<.8){const t=E((f-.55)/.25),b=lerp3(UND,INN,t);st.shellAt=b;st.shellIn=t;H=hand(b);if(kp.sad&&st.saddle>0)st.saddle--}
+    else H=hand(INN);
+    H=lerp3(S,H,R.b)}
+  else if(R.kind==='draw'){const rk=kp.rack||kp.cylSide||kp.sup;if(rk)H=lerp3(S,rk,R.b)}
+  else if(R.kind==='rocket'&&kp.rocket){const k=R.k,F0=[27.6,3.9,0];
+    if(k<.15)H=L3(S,Pq,k/.15);
+    else if(k<.3){H=L3(Pq,F0,(k-.15)/.15);st.rocketAt=sub(H,F0)}
+    else if(k<.85)H=kp.rocket;
+    else H=L3(kp.rocket,S,(k-.85)/.12)}
+  return H}
 function wpose(A,anim,p,id,o){const W=wpose0(A,anim,p,id,o);if(o&&o.gp&&typeof ARMI3D!=='undefined'&&ARMI3D.ZOMBIE.includes(id))realGun(W,o.gp,id);return W}
 // a muzzle flash of the zombie guns (ARMI.vampa, drawn in the gun's own plane) at the gun's point pt, k 1 .. 0
 function flashFx(K,id,pt,k,seed,back){if(k<=0||typeof ARMI==='undefined')return;K.fx(pt,q=>{const b=K.P(K.W(add(pt,[1,0,0]))),dx=b[0]-q[0],dy=b[1]-q[1],l=Math.hypot(dx,dy)/K.s;
@@ -503,16 +590,22 @@ function weaponParts(parts,V0,X,S,Wp,wid,o){const{D}=V0,cls=Wp.cls,r=Wp.rec,kk=W
   if(wid==='bomba'&&fx&&Wp.cast>=0&&Wp.cast<.36){const k=Wp.cast/.36,a0=X.T(Wp.rel),fw=X.Rd([1,0,0]),c=add(add(a0,mul(fw,k*48)),[0,0,Math.sin(k*Math.PI)*14-k*9]);
     parts.push({d:D(c),f:()=>{const q=V0.P(c),r=4.8;ink(2.2);ball(q,r);ctx.fillStyle=soft(q[0]-r*.36,q[1]-r*.42,q[0],q[1],r*1.2,'#2e2e36',.3,.4);ctx.fill();ctx.stroke();
       const f=[q[0]+1.4,q[1]-r-1.6];ctx.strokeStyle='#8a6a44';ctx.lineWidth=1.4;seg([q[0],q[1]-r+.4],f);ctx.stroke();shine('255,200,90',f[0],f[1],6,.85);ctx.fillStyle='#fff3c0';ball(f,1.1);ctx.fill()}})}
-  parts.push({d:D(X.T(HOLD[cls].anc)),f:()=>{const st={...Wp.st};if(wid==='balestra')st.col=S.bowCol;if(wid==='bastone'||wid==='scettro')st.orbCol=S.eyeCol||'#9fff7a';
+  // the reload: where the free hand goes and what it carries (the gun's key points for this state, the hero's points in the gun's frame)
+  const st={...Wp.st};if(wid==='balestra')st.col=S.bowCol;if(wid==='bastone'||wid==='scettro')st.orbCol=S.eyeCol||'#9fff7a';
+  let RH=null,kp0=null;if(Wp.rl&&ARMI3D.keys&&typeof ARMI!=='undefined'&&ARMI.RLT){kp0=ARMI3D.keys(wid,st);
+    const loc=q=>{const d=sub(X.T(q),fr.O);return[dot(d,fr.X)/fr.s,dot(d,fr.Y)/fr.s,dot(d,fr.Z)/fr.s]};RH=reloadHand(Wp.rl,st,kp0,loc,kp0.sup||loc(Wp.hL))}
+  parts.push({d:D(X.T(HOLD[cls].anc)),f:()=>{
     ARMI3D.draw(wid,V0,fr,st,(K,kp)=>{
+      // where the magazine is when it falls (the zombie map throws it on the floor from there): on the screen, and the floor under it
+      if(o.out&&kp0&&kp0.magSeat&&Wp.rl.kind==='mag'){const q=K.W(add(kp0.magSeat,mul(kp0.magDir,kp0.magLen*.6)));o.out.mag=K.P(q);o.out.magFloor=K.P([q[0],q[1],0])}
       // where the muzzle is on the screen (o.out, in the hero's own units from his feet): the zombie map fires its shots from there
-      if(o.out&&kp.muzzle)o.out.muzzle=K.P(K.W(kp.muzzle));
+      if(o.out&&kp.muzzle)o.out.muzzle=K.P(K.W(kp.muzzle));if(o.out&&kp.eject){const q=K.W(kp.eject);o.out.eject=K.P(q);o.out.ejectZ=q[2]}
       // the right hand on the grip, or pulling the crossbow's string back to the nut
       let rh=[0,0,0];const pl=Wp.pull;
       if(pl&&kp.nut){const at=[kp.nut[0]+.2,4.3,0],far=[10.4,4.3,0];rh=pl.ph===1?lerp3([0,0,0],far,ez(pl.t)):pl.ph===2?at:lerp3([-.4,4.3,0],[0,0,0],ez(pl.t))}
       K.hand(rh,2.8,S.hand,1.2,S.ring?q=>ringOn(V0,q,S.ring):null);
       // the left hand on the fore-grip or the pump; it pushes the new rocket into the tube
-      let lh=kp.sup;const ld=Wp.load;
+      let lh=RH||kp.sup;const ld=Wp.load;
       if(ld&&lh){const off=(1-ez(Wp.st.loaded||0))*9,on=[16.6+off,4.2,0];lh=ld.ph===1?lerp3(kp.sup,[25.6,4.2,0],ez(ld.t)):ld.ph===2?on:lerp3([16.6,4.2,0],kp.sup,ez(ld.t))}
       if(lh)K.hand(lh,2.7,S.hand,1.2);
       // the flash at the muzzle (and the rocket's blast behind), the orb flaring
@@ -545,7 +638,7 @@ function weaponParts(parts,V0,X,S,Wp,wid,o){const{D}=V0,cls=Wp.cls,r=Wp.rec,kk=W
           ctx.strokeStyle='rgba(30,90,40,.7)';ctx.lineWidth=.5;seg([-2,0],[2,0]);ctx.stroke();ctx.restore()},0)}
     })}});
   // the free hand: the left one, at the side (it swings when walking)
-  if(cls==='one'||cls==='staff')parts.push({d:D(X.T([-.6,-11.4,11.4])),f:()=>fist(V0,X.T(Wp.hL),2.7,S.hand)})}
+  if((cls==='one'||cls==='staff')&&!RH)parts.push({d:D(X.T([-.6,-11.4,11.4])),f:()=>fist(V0,X.T(Wp.hL),2.7,S.hand)})}
 const hexRgb=h=>{const n=parseInt(String(h).slice(1),16);return`${n>>16},${n>>8&255},${n&255}`};
 
 // ------------------------------------------------------------------ the hero
@@ -565,7 +658,7 @@ function arciere0(x,y,face,anim,p,sc,o){sc=sc||1;o=o||{};const S0=o.style||{},ar
   // with a gun, the crossbow or the staff: the body of the bow's pose for standing, walking, the dash and the knock back; when it aims
   // or shoots, a firm stance that breathes, eyes narrowed, the body pushed back a little by each shot
   if(gunW){if(anim==='shoot'||anim==='aim'){A=pose('idle',p,o);A.fL=[2.2,-5.2,0];A.fR=[-1,5,0];A.hd=[.3,0,0];A.hp=.04;A.hy=0;A.squint=anim==='shoot'?.55:.35;A.inhale=A.exhale=0}
-    Wp=wpose(A,anim,p,wid,o);if(Wp.rec>0&&Wp.kick){const k=Wp.rec*Wp.kick[0]/3;A.lean=.02-.06*k;A.B=add(A.B,[-.7*k,0,0]);A.hd=add(A.hd,[-.4*k,0,.1*k])}
+    Wp=wpose(A,anim,p,wid,o);if(Wp.rl&&Wp.rl.b){const b=Wp.rl.b;A.hp+=.22*b;A.hy+=.3*b;A.squint=Math.max(A.squint||0,.25*b)}if(Wp.rec>0&&Wp.kick){const k=Wp.rec*Wp.kick[0]/3;A.lean=.02-.06*k;A.B=add(A.B,[-.7*k,0,0]);A.hd=add(A.hd,[-.4*k,0,.1*k])}
     // the hammer's blow and the bomb's throw move the whole body: back on the wind-up, forward on the strike
     if(Wp.lean!=null){A.lean=Wp.lean;A.hd=add(A.hd,[Wp.lean*3,0,0]);if(Wp.body)A.B=add(A.B,Wp.body);if(Wp.sq)A.s=Wp.sq}}
   // the mages float in the air (style.float): a slow bob instead of the steps

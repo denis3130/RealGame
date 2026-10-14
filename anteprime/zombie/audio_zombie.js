@@ -32,7 +32,7 @@ const ZV=(()=>{let curve=null;
 const KV={zombie:{f:[78,112],fm:[[430,940],[380,820],[520,1050]],rasp:.55,br:.35},strisciante:{f:[115,150],fm:[[560,1250],[620,1400]],rasp:.85,br:.6,gurgle:1},
   minatore:{f:[64,86],fm:[[400,780],[360,700]],rasp:.5,br:.3,cough:1},lanterna:{f:[96,128],fm:[[480,1100],[540,1300]],rasp:.25,br:.55,ghost:1},hound:{f:[150,210],fm:[[700,1500]],rasp:.9,br:.5,dog:1},
   becchino:{f:[50,62],fm:[[360,700]],rasp:.7,br:.4,big:1},spaventapasseri:{f:[90,110],fm:[[520,1200]],rasp:.4,br:.7,straw:1}};
-const A={lastMoan:0,lastStep:0,lastHit:0,lastPain:0,lastDeath:0,lastAtk:0,lastTink:0,lastType:'',busy:[],cases:[]};
+const A={lastMoan:0,lastStep:0,lastHit:0,lastPain:0,lastDeath:0,lastAtk:0,lastTink:0,lastMag:0,lastType:'',busy:[],cases:[],mags:[]};
 // (difetti 48, Denis: «l'audio dopo il quinto round va a farsi fottere») how busy the audio is (src/js/05-audio.js: 0 calm, 1 dense, 2 full):
 // in the big fights of the later rounds the sounds that repeat (steps, hits, pains, deaths, risings, casings) come less often and lighter
 const lvA=()=>typeof audioLv==='function'?audioLv():0;
@@ -70,8 +70,9 @@ function death(z,t,P){const v=vox(z),K=v.K,now=AU.ctx.currentTime,say=P.lv<2&&no
   if(say&&K.dog){ZV.voice(t,v.f*1.6,v.f*.7,.6,v.fm,{vol:.13*P.k,att:.02,rasp:.5,rev:P.rev})}
   else if(say)ZV.voice(t,v.f*1.05,v.f*.52,VR(1.15,.15),v.fm,{vol:.14*P.k,att:.05,rasp:K.rasp+.15,breath:K.br+.2,rev:P.rev,fd:.75});ZV.body(t+(say?.62:.05),.3*P.k,P.rev,P.lv>0)}
 function rise(z,t,P){ZV.dirt(t,.18*P.k,P.lv?3:7);if(P.lv)return;const v=vox(z);ZV.voice(t+.3,v.f*.9,v.f*.75,1.1,v.fm,{vol:.08*P.k,att:.3,rasp:v.K.rasp,breath:.5,rev:P.rev})}
-// ------------------------------------------------------------------ every frame: who moans, who steps, who got hit, who died
-function update(dt,D){if(!on())return;const now=AU.ctx.currentTime,t=now+.02,lv=lvA(),pl=(x,y)=>{const P=place(x,y);P.lv=lv;return P};A.busy=A.busy.filter(e=>e>now);
+// ------------------------------------------------------------------ every frame: who moans, who steps, who got hit, who died (the casings and
+// the magazines fly and fall even with the sound off: before, with the effects muted they stayed in the air)
+function update(dt,D){stepCases(dt);stepMags(dt);if(!on())return;const now=AU.ctx.currentTime,t=now+.02,lv=lvA(),pl=(x,y)=>{const P=place(x,y);P.lv=lv;return P};A.busy=A.busy.filter(e=>e>now);
   for(const z of W.Z){const v=vox(z);if(z.idle&&!z.die)continue;
     if(z.rise<1){if(!v.rose&&z.rise>0){v.rose=1;const P=pl(z.x,z.y);if(P.k>.02)rise(z,t,P)}continue}v.rose=1;
     if(z.die){if(!v.dead){v.dead=1;const P=pl(z.x,z.y);if(P.k>.01)death(z,t,P)}continue}
@@ -81,7 +82,7 @@ function update(dt,D){if(!on())return;const now=AU.ctx.currentTime,t=now+.02,lv=
     if(z.anim==='walk'&&z.p!=null){const p=z.p,w=v.wp;if((w<.5&&p>=.5)||p<w){if(now-A.lastStep>(lv>1?.12:lv?.07:.045)){const P=pl(z.x,z.y);if(P.k>(lv>1?.35:.03)){A.lastStep=now;step(z,t,P)}}}v.wp=p}
     // a moan now and then (never more than three voices, two dense, one full; never two at the same moment)
     if(now>v.next){const P=pl(z.x,z.y);v.next=now+VR(4.5,.45)*(1+P.d/320);if(P.k>.04&&A.busy.length<3-lv&&now-A.lastMoan>.4){A.lastMoan=now;A.busy.push(now+moan(z,t,P))}}}
-  stepCases(dt)}
+}
 // ------------------------------------------------------------------ the casings: thrown out by the gun (motore.js passes the gun's 'bossolo'
 // events to W.onCase), they fly, bounce and ring only when they land
 W.onCase=n=>{const h=W.hero,a=(h.aim!=null?h.aim:h.face)||0,id=W.gunId,sh=id==='pompa'||id==='tattica',max=LOWFX?10:30;
@@ -96,6 +97,25 @@ function tink(c,first){if(!on())return;const lv=lvA(),now=AU.ctx.currentTime;if(
 function stepCases(dt){for(let i=A.cases.length-1;i>=0;i--){const c=A.cases[i];c.life-=dt;if(c.life<=0){A.cases.splice(i,1);continue}
   if(c.vz!==0||c.z>c.ground){c.vz-=300*dt;c.x+=c.vx*dt;c.y+=c.vy*dt;c.z+=c.vz*dt;c.r+=c.vr*dt;
     if(c.z<=c.ground){c.z=c.ground;if(c.vz<-28&&c.b<3){tink(c,c.b===0);c.vz=-c.vz*.34;c.vx*=.5;c.vy*=.5;c.vr*=.5;c.b++}else{c.vz=0;c.vx=c.vy=0;c.vr=0}}}}}
+// ------------------------------------------------------------------ the empty magazine (Denis, 14 ottobre, la ricarica): it leaves the gun
+// where the hero's drawing put it (W.magP, and W.magF the floor under it: offsets on the screen from his feet), falls turning, knocks on
+// the floor once or twice (its own sound: steel, the drum, the tank, the crystal) and lies there a few seconds before it fades
+W.onMag=()=>{const h=W.hero,a=W.magP;if(!a)return;const f=W.magF||[a[0],0],sd=Math.random()<.5?-1:1;
+  A.mags.push({id:W.gunId,wx:h.x,wy:h.y,wz:h.zh||0,x:a[0],y:a[1],fy:Math.max(f[1],a[1]+4),vx:(f[0]-a[0])*1.5+sd*VR(10,.4),vy:-VR(18,.4),r:0,vr:sd*VR(7,.3),b:0,life:4.2,lie:sd*Math.PI/2});
+  if(A.mags.length>(LOWFX?3:6))A.mags.shift()};
+function magLand(c,first){if(!on())return;const lv=lvA(),now=AU.ctx.currentTime;if((!first&&lv)||now-A.lastMag<.08)return;A.lastMag=now;
+  const P=place(c.wx,c.wy),t=now+.005,v=(first?.16:.07)*Math.max(.3,P.k),id=c.id;
+  if(id==='lanciafiamme'){fThump(t,VR(150,.1),80,.12,v*1.4);M.metal(t,v*1.1,VR(260,.05),.5);return}
+  if(id==='risonatore'){fModal(t,VR(2600,.06),[1,2.76,5.4],[.12,.08,.05],v*.6,.25);return}
+  if(id==='tamburo'||id==='mitragliatrice'){fThump(t,VR(170,.1),90,.08,v*1.3);M.metal(t,v*.8,VR(520,.05),.25);fNoise(t,.04,'bandpass',VR(1600,.15),1.2,v*.4);return}
+  fThump(t,VR(260,.1),130,.04,v);M.metal(t,v*.7,VR(id==='pistola'?1500:1100,.05),.12);fNoise(t,.02,'highpass',3200,.7,v*.35)}
+function stepMags(dt){for(let i=A.mags.length-1;i>=0;i--){const c=A.mags[i];c.life-=dt;if(c.life<=0){A.mags.splice(i,1);continue}
+  if(c.vy!==0||c.y<c.fy){c.vy+=320*dt;c.x+=c.vx*dt;c.y+=c.vy*dt;c.r+=c.vr*dt;
+    if(c.y>=c.fy){c.y=c.fy;if(c.vy>55&&c.b<2){magLand(c,c.b===0);c.vy=-c.vy*.3;c.vx*=.4;c.vr*=.4;c.b++}else{c.vy=0;c.vx=0;c.vr=0}}}
+  else c.r+=(c.lie-c.r)*Math.min(1,dt*14)}}
+function drawMag(c){if(!window.ARMI||!ARMI.caricatore)return;const q=ZM.SB(c.wx,c.wy,c.wz),x=q[0]+c.x,a=Math.min(1,c.life/.6);
+  ctx.save();ctx.globalAlpha*=a*.3;ctx.fillStyle='#000';ctx.beginPath();ctx.ellipse(x,q[1]+c.fy+1,4,1.5,0,0,Math.PI*2);ctx.fill();ctx.restore();
+  ctx.save();ctx.translate(x,q[1]+c.y);ctx.scale(1.2,1.2);ARMI.caricatore(c.id,0,0,c.r,a,1);ctx.restore()}
 function drawCase(c,a){const q=ZM.SB(c.x,c.y,c.z);ctx.save();ctx.globalAlpha*=a;ctx.translate(q[0],q[1]);ctx.rotate(c.r);ctx.fillStyle='rgba(27,22,18,.85)';ctx.fillRect(-2,-1.1,4,2.2);ctx.fillStyle=c.sh?'#c8322a':'#d8a838';ctx.fillRect(-1.6,-.7,3.2,1.4);
   ctx.fillStyle=c.sh?'#e8c050':'#fff0b0';ctx.fillRect(c.sh?.6:-1.3,-.6,c.sh?1:1.4,.5);ctx.restore()}
 // hooked to the match (like fortuna.js, armi_speciali.js, compagni.js)
@@ -103,6 +123,6 @@ function drawCase(c,a){const q=ZM.SB(c.x,c.y,c.z);ctx.save();ctx.globalAlpha*=a;
   const _u=D.update;D.update=(dt,on2)=>{_u(dt,on2);try{update(dt,D)}catch(e){console.error(e)}};
   // the zombie's blow: its snarl and the claw, when it really hits
   const _zh=D.zombieHit;D.zombieHit=(z,d)=>{const hp=D.hp;_zh(z,d);try{const now=on()?AU.ctx.currentTime:0;if(D.hp<hp&&now&&now-A.lastAtk>.12){A.lastAtk=now;const P=place(z.x,z.y);P.lv=lvA();attack(z,now+.01,P)}}catch(e){}};
-  const _t=D.drawTop;D.drawTop=dt=>{_t(dt);if(!A.cases.length)return;try{for(const c of A.cases)drawCase(c,Math.min(1,c.life/.6))}catch(e){}};
-  const _r=D.reset;D.reset=()=>{_r();A.cases.length=0;A.busy.length=0};return D}}
+  const _t=D.drawTop;D.drawTop=dt=>{_t(dt);if(!A.cases.length&&!A.mags.length)return;try{for(const c of A.mags)drawMag(c);for(const c of A.cases)drawCase(c,Math.min(1,c.life/.6))}catch(e){}};
+  const _r=D.reset;D.reset=()=>{_r();A.cases.length=0;A.mags.length=0;A.busy.length=0};return D}}
 ZM.audio={A,KV,moan,place}})();

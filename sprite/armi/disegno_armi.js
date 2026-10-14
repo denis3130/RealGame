@@ -77,10 +77,17 @@ const LP=(p,q,t)=>{t=ez(cl(t,0,1));return[lerp(p[0],q[0],t),lerp(p[1],q[1],t)]};
 // the other hand during a magazine change (k 0..1 along the reload, the same timeline as nuova()): it goes to the magazine, takes the old
 // one down, fetches a new one, pushes it in, then pulls the bolt or the slide and lets it go. s: where it rests (null: it is only seen
 // during the reload), m: the bottom of the seated magazine, d: how far the magazine slides out, b: the bolt or slide handle
-function magHand(k,s,m,d,b){const md=f=>[m[0]+d[0]*f,m[1]+d[1]*f+1.6],rest=s||[m[0]-1.5,m[1]+9],away=[m[0]-3.5,m[1]+d[1]*1.6+5];
-  if(k<.1)return LP(rest,md(0),k/.1);if(k<.2)return md(ez((k-.1)/.1)*.6);if(k<.32)return LP(md(.6),away,(k-.2)/.12);if(k<.45)return LP(away,md(1),(k-.32)/.13);
-  if(k<.55)return md(1);if(k<.75)return md(1-ez((k-.55)/.2));if(k<.8)return LP(md(0),b,(k-.75)/.05);if(k<.97)return b;return s?LP(b,s,(k-.97)/.03):null}
+function magHand(k,s,m,d,b){const T=RLT.mag,md=f=>[m[0]+d[0]*f,m[1]+d[1]*f+1.6],rest=s||[m[0]-1.5,m[1]+9],away=[m[0]-3.5,m[1]+d[1]*1.6+5];
+  if(k<T.out)return LP(rest,md(0),k/T.out);if(k<T.drop)return md(ez((k-T.out)/(T.drop-T.out))*.6);if(k<T.pouch)return LP(md(.6),away,(k-T.drop)/(T.pouch-T.drop));
+  if(k<T.well)return LP(away,md(1),(k-T.pouch)/(T.well-T.pouch));if(k<T.push)return md(1);if(k<T.seat)return md(1-ez((k-T.push)/(T.seat-T.push)));
+  if(k<T.rack)return LP(md(0),b,(k-T.seat)/(T.rack-T.seat));if(k<T.done)return b;return s?LP(b,s,(k-T.done)/(1-T.done)):null}
 
+// The moments of a reload (k = 0..1 of D.rel), the same for the guns in 3D (sprite/eroe3d/disegno_eroe.js), the 2D ones and the sounds.
+// mag: the magazine guns: out the release and the magazine coming out, drop it falls, pouch the hand at the belt takes a new one, well
+// it is under the well, push it goes in, seat it clicks home, rack the hand on the slide or the bolt pulls it back, fwd it slams forward,
+// done the hand goes back. rev: the revolver: the cylinder swings out (open), the cases are pushed out and fall (eject), six rounds go in
+// one by one (load), it swings shut (shut), then it spins
+const EQT=.6,EQR=.74,RLT={mag:{out:.1,drop:.18,pouch:.3,well:.42,push:.5,seat:.66,rack:.72,fwd:.8,done:.88},rev:{open:[.04,.16],eject:[.16,.2],load:[.3,.8],shut:[.84,.92]}};
 // ------------------------------------------------------------------ the guns
 // draw(o): the profile for a state o {slide 0..1 (slide or bolt back), pump 0..1 (forend back), mag 0..1 (magazine out), cyl (cylinder
 // turn), hammer 0..1 (cocked), swing 0..1 (cylinder swung out), rounds (rounds in the open cylinder), spin (barrels' turn), feed (belt
@@ -386,14 +393,18 @@ function vampa(id,x,y,k,seed){if(k<=0)return;const back=id==='retro',V=DATI[id].
 // out, .2 it falls (and vanishes from the gun), .45 the hand brings the new one, .55-.75 it goes in, .8-.97 the bolt or slide is pulled.
 function nuova(id){const D=DATI[id],sh=id==='pompa'||id==='tattica';
   const g={id,D,mag:D.mag,res:D.res,st:'pronta',t:0,cd:0,rec:0,flash:0,slide:0,pump:0,magOut:0,magA:1,cyl:0,hammer:0,swing:0,rounds:D.mag,spin:0,spinV:0,feed:0,loaded:1,shell:-1,tilt:0,
-    prev:false,seed:1,q:[],
+    prev:false,seed:1,q:[],eq:1,
+    // the gun just taken (the map's equip): it comes up from the side in EQT seconds and the free hand works the slide, the pump or the
+    // bolt once (sound 'estrai' at the start, 'pronta' halfway through the gesture); it cannot fire until it is up
+    estrai(){g.eq=0;g.cd=Math.max(g.cd,EQT*.8);g.q.push({k:'suono',w:'estrai'})},
     tot:()=>g.mag+g.res,
     ricarica(){if(g.st==='ricarica'||g.mag>=D.mag||g.res<=0)return false;g.empty=g.mag<=0;g.st='ricarica';g.t=0;g.dropped=0;g.cnt=0;g.q.push({k:'suono',w:'ricarica'});return true},
     annulla(){if(g.st!=='ricarica')return;g.st='pronta';g.t=0;g.magOut=0;g.magA=1;g.swing=0;g.slide=0;g.shell=-1;g.tilt=0;g.dropped=0;g.rounds=g.mag;g.loaded=g.mag>0?1:0},
     rk:()=>g.st==='ricarica'&&!sh&&g.t>=0?cl(g.t/D.rel,0,1):-1,
     pose(){return{rec:g.rec,flash:g.flash,slide:g.slide,pump:g.pump,mag:g.magOut,magA:g.magA,cyl:g.cyl,hammer:g.hammer,swing:g.swing,rounds:g.rounds,spin:g.spin,feed:g.feed,
-      loaded:g.loaded,saddle:Math.min(4,g.res),seed:g.seed,glow:.8+.2*Math.sin(G_t()*3),tilt:g.tilt,rk:g.rk(),shell:g.shell}},
+      loaded:g.loaded,saddle:Math.min(4,g.res),seed:g.seed,glow:.8+.2*Math.sin(G_t()*3),tilt:g.tilt,rk:g.rk(),shell:g.shell,n:g.mag,empty:!!g.empty,eq:g.eq}},
     update(dt,fire){const ev=g.q.splice(0);const press=fire&&!g.prev;g.prev=fire;g.t+=dt;g.cd=Math.max(0,g.cd-dt);
+      if(g.eq<1){const was=g.eq;g.eq=Math.min(1,g.eq+dt/EQT);if(was<EQR&&g.eq>=EQR)ev.push({k:'suono',w:'armata'})}
       g.rec=Math.max(0,g.rec-dt*(id==='lanciarazzi'?3:id==='revolver'||sh?5:9));g.flash=Math.max(0,g.flash-dt*(id==='mitragliatrice'?26:16));
       if(g.slide>0&&g.st!=='ricarica')g.slide=Math.max(0,g.slide-dt*(id==='pistola'?9:14));if(id==='revolver')g.hammer=g.st==='ricarica'?0:1-g.cd*D.rate;
       // the machine gun's barrels spin up while the trigger is held, and keep turning a little after
@@ -401,7 +412,7 @@ function nuova(id){const D=DATI[id],sh=id==='pompa'||id==='tattica';
         if(want&&was===0)ev.push({k:'suono',w:'giri'})}
       if(g.st==='pompa'&&g.t>=0){if(!g.ps){g.ps=1;ev.push({k:'suono',w:'pompa'})}const k=g.t/D.pump;g.pump=bump(k);if(k>=.5&&!g.ej){g.ej=1;ev.push({k:'bossolo',n:1})}if(k>=1){g.st='pronta';g.pump=0}}
       if(g.st==='ricarica')rel(dt,ev,fire,press);
-      if(g.st!=='ricarica'){g.tilt=Math.max(0,g.tilt-dt*3);g.shell=-1}
+      if(g.st!=='ricarica'){g.tilt=Math.max(0,g.tilt-dt*(sh?.9:3));g.shell=-1}
       if(g.st==='pronta'&&fire&&g.cd<=0){const can=D.auto?fire:press;
         if(can){if(g.mag<=0){if(g.res>0)g.ricarica();else if(press)ev.push({k:'suono',w:'vuoto'})}
           else if(id!=='mitragliatrice'||g.spinV>=1)shoot(ev)}}
@@ -421,14 +432,14 @@ function nuova(id){const D=DATI[id],sh=id==='pompa'||id==='tattica';
       if(f>=.8&&!g.cnt){g.cnt=1;g.mag++;g.res--;ev.push({k:'suono',w:'cartuccia'})}
       if(f>=1){g.t-=R;g.cnt=0;if(g.mag>=D.mag||g.res<=0){g.shell=-1;ev.push({k:'pronta'});if(g.empty){g.st='pompa';g.t=-.12;g.ej=1;g.ps=0}else g.st='pronta'}}return}
     if(g.t<0)return;const k=g.t/R;
-    if(id==='revolver'){g.tilt=.55*tz(k,.02,.14,.82,.92);g.swing=k<.16?ez((k-.02)/.14):k<.82?1:1-ez((k-.82)/.1);g.hammer=0;
-      if(k>=.2&&!g.dropped){g.dropped=1;g.rounds=0;ev.push({k:'bossolo',n:6})}if(k>=.3&&k<.82)g.rounds=Math.min(Math.min(6,g.mag+g.res),Math.floor((k-.3)/.5*6.99));
-      if(k>=.92)g.cyl+=dt*4}
+    if(id==='revolver'){const V=RLT.rev;g.tilt=.55*tz(k,.02,.14,.82,.92);g.swing=k<V.open[1]?ez(cl((k-V.open[0])/(V.open[1]-V.open[0]),0,1)):k<V.shut[0]?1:k<V.shut[1]?1-ez((k-V.shut[0])/(V.shut[1]-V.shut[0])):0;g.hammer=0;
+      if(k>=V.eject[1]&&!g.dropped){g.dropped=1;g.rounds=0;ev.push({k:'bossolo',n:6})}if(k>=V.load[0]&&k<V.shut[0])g.rounds=Math.min(Math.min(6,g.mag+g.res),Math.floor((k-V.load[0])/(V.load[1]-V.load[0])*6+.4));
+      if(k>=V.shut[1])g.cyl+=dt*4}
     else if(id==='lanciarazzi'){g.tilt=.1*tz(k,0,.15,.8,.95);g.loaded=k<.3?0:Math.min(1,(k-.3)/.55)}
-    else{g.tilt=(id==='mitragliatrice'?.1:.2)*tz(k,0,.1,.72,.84);
-      g.magOut=k<.1?0:k<.2?ez((k-.1)/.1)*.6:k<.55?1:k<.75?1-ez((k-.55)/.2):0;g.magA=k<.2||k>=.55?1:k<.45?0:(k-.45)/.1;
-      if(k>=.2&&!g.dropped){g.dropped=1;ev.push({k:'caricatore'})}
-      g.slide=k>=.8?bump((k-.8)/.17):0;if(id==='mitragliatrice'&&k>.8)g.feed=(k-.8)*5%1}
+    else{const T=RLT.mag;g.tilt=(id==='mitragliatrice'?.1:.2)*tz(k,0,.1,T.done-.04,1);
+      g.magOut=k<T.out?0:k<T.drop?ez((k-T.out)/(T.drop-T.out))*.6:k<T.push?1:k<T.seat?1-ez((k-T.push)/(T.seat-T.push)):0;g.magA=k<T.drop||k>=T.push?1:k<T.well?0:(k-T.well)/(T.push-T.well);
+      if(k>=T.drop&&!g.dropped){g.dropped=1;ev.push({k:'caricatore'})}
+      g.slide=k>=T.rack&&k<T.done?bump((k-T.rack)/(T.done-T.rack)):0;if(id==='mitragliatrice'&&k>T.rack)g.feed=(k-T.rack)*5%1}
     if(k>=1){const n=Math.min(D.mag-g.mag,g.res);g.mag+=n;g.res-=n;g.st='pronta';g.dropped=0;g.magOut=0;g.magA=1;g.swing=0;g.slide=0;g.rounds=g.mag;g.loaded=g.mag>0?1:0;ev.push({k:'pronta'})}}
   return g}
 const G_t=()=>typeof G!=='undefined'&&G.t!=null?G.t:performance.now()/1000;
@@ -500,6 +511,11 @@ function caricatore(id,x,y,ang,a,fl){if(a<=0)return;ctx.save();ctx.globalAlpha*=
   two(()=>{if(id==='pistola'){PB(-1.4,-2.7,1.4,2.2,.3,'nero',{hi:.25});PB(-1.7,1.9,1.7,3.1,.4,'nero',{col:'#4a5058'})}
     else if(id==='mitraglietta'){PP([[-1.5,-4.2],[1.5,-4.2],[1.15,3.6],[-1.85,3.6]],.4,'nero',{dk:.75,hi:.25});PB(-2.25,3.2,1.55,4.2,.4,'nero',{col:'#4a5058'})}
     else if(id==='mitra'){paint(()=>{ctx.beginPath();ctx.moveTo(-3,-4.3);ctx.lineTo(.2,-4.3);ctx.quadraticCurveTo(.8,-.2,3.2,3.4);ctx.lineTo(.6,4.4);ctx.quadraticCurveTo(-1.8,.6,-3,-4.3);ctx.closePath()},[-3,-4.3,3.2,4.4],'rame',{dk:.7})}
+    else if(id==='tamburo'){paint(()=>ball([0,0],3.6),[-3.6,-3.6,3.6,3.6],'acciaio',{gl:1});if(!OUT){ctx.strokeStyle='rgba(20,24,30,.55)';ctx.lineWidth=.35;ctx.beginPath();ctx.arc(0,0,2.5,0,TAU);ctx.stroke()}
+      paint(()=>ball([0,0],1.05),[-1.05,-1.05,1.05,1.05],'ottone',{hi:.4})}
+    else if(id==='lanciafiamme'){PB(-5.2,-2.4,5.2,2.4,2.3,'rosso',{gl:2});PB(-5.8,-2.1,-4.3,2.1,.7,'ottone',{hi:.4});PB(4.3,-2.1,5.8,2.1,.7,'ottone',{hi:.4})}
+    else if(id==='vapore'){PB(-1.4,-2.9,1.4,2.9,.4,'nero',{hi:.3});if(!OUT){ctx.fillStyle=C.acciaio[2];for(let i=0;i<3;i++)ctx.fillRect(-.9+i*.75,-2.6,.36,5.2)}}
+    else if(id==='risonatore'){PP([[0,-3.6],[1.6,-1.2],[0,3.6],[-1.6,-1.2]],.3,'cristallo',{hi:.2,col:'#4f8c80',colD:'#2c5a52',colL:'#8fc4b8'})}
     else{PB(-3.2,-3,3.2,3,.8,'oliva',{dk:.62});lines([[-3,-1.4,3,-1.4]],'rgba(20,26,8,.55)',.4);PB(-2.2,.3,2.2,1.3,.2,'giallo',{hi:0,lw:.8})}});
   ctx.restore()}
 function fxUpdate(dt){for(let i=FX.length-1;i>=0;i--){const p=FX[i];p.t+=dt;if(p.t>=p.life){FX.splice(i,1);continue}
@@ -925,4 +941,4 @@ function suonoBara(w,x,dt){if(typeof AU==='undefined'||!AU.ctx||!AU.on.sfx)retur
   else if(w==='sprofonda'){fNoise(t,1.5,'lowpass',260,.7,.6,{brown:true,att:.2});for(let i=0;i<7;i++)M.stone(t+.1+i*.18+Math.random()*.08,.5);fNoise(t,.9,'bandpass',220,6,.15,{f2:90,att:.1});risata(t+.5,4,.08)}
   else if(w==='sale'){fNoise(t,1.1,'lowpass',260,.7,.5,{brown:true,att:.15});for(let i=0;i<5;i++)M.stone(t+.05+i*.17,.45);fNoise(t+.4,.6,'bandpass',300,7,.15,{f2:700});fThump(t+1,120,60,.15,.5);M.wood(t+1,1,160)}}catch(e){}
   AU.pan=0}
-return{G,DATI,ORDINE,RAR,held,arma,punti,inMano,inManoPunti,manoPos,manoAng,pt,espelliCar,caricatore,vampa,nuova,colpo,razzo,fumo,bossolo,esplosione,scintille,FX,fxAdd,fxUpdate,fxDraw,espelli,munizione,cassaMun,suono,motore,mix,wa,C,paint,rp,rb,poly,ball,seg,shine,rnd,cl,lerp,ez,eo,TAU,BARA,nuovaBara,disegnaBara,suonoBara,moneta,teschio,vistaBara,formaBara,facceBara}})();
+return{RLT,EQT,EQR,G,DATI,ORDINE,RAR,held,arma,punti,inMano,inManoPunti,manoPos,manoAng,pt,espelliCar,caricatore,vampa,nuova,colpo,razzo,fumo,bossolo,esplosione,scintille,FX,fxAdd,fxUpdate,fxDraw,espelli,munizione,cassaMun,suono,motore,mix,wa,C,paint,rp,rb,poly,ball,seg,shine,rnd,cl,lerp,ez,eo,TAU,BARA,nuovaBara,disegnaBara,suonoBara,moneta,teschio,vistaBara,formaBara,facceBara}})();
