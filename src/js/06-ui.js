@@ -1,5 +1,9 @@
 // ---------- UI ----------
 const bannerEl=$('banner');
+// (anteprima 48, punto 57) la riga di vittoria del boss dell'arena (ARENAS[i].boss), come la sua morte (60-morti-boss.js); prima era per
+// capitolo, dei custodi di una volta: nell'arena 1 diceva «La Strega delle Radici è caduta» dopo il Golem
+const VINTO={golem:'Il Golem di Muschio si è sgretolato. La cripta è tua.',magma:'La Salamandra di Lava è cenere. Il vulcano tace.',rospo:'Il Re Rospo è scoppiato. Lo stagno è tuo.',yeti:'Lo Yeti delle Vette è andato in frantumi. La vetta è tua.',
+  radici:'La Strega delle Radici è caduta. La cripta è tua.',fabbro:'Il Fabbro Infernale è caduto. Il vulcano tace.',idra:"L'Idra della Palude è sconfitta. Le lucciole tornano a brillare.",regina:'La Regina dei Ghiacci è caduta. La vetta è tua.'};
 function banner(t,sub,dur){bannerEl.innerHTML='';if(sub){const s=document.createElement('small');s.textContent=sub;bannerEl.appendChild(s)}bannerEl.appendChild(document.createTextNode(t));bannerEl.classList.add('show');G.bannerT=dur||1.8}
 function setPause(v){if(!started||INTRO.on)return;paused=v;$('pauseScr').hidden=!v;
   if(v)$('ownSkills').innerHTML=Object.entries(P.skills).map(([id,n])=>{const k=SK.find(s=>s.id===id);return `<span class="osk ${k.evo?'evo':''}"><svg viewBox="0 0 40 40" aria-hidden="true">${ICON[id]||''}</svg>${n>1?`<b>${n}</b>`:''}${k.n}</span>`}).join('')||'<span class="none">Ancora nessuna abilità: sali di livello per sceglierne una.</span>'}
@@ -147,7 +151,7 @@ function endRun(win,quit){
   $('eTr').innerHTML=G.daily?(DR&&DR.score?`<div class="trd up">${DR.score.toLocaleString('it-IT')}</div><div class="trline">Punteggio · ${DR.pos}° in classifica${DR.bonus?' · <em>'+DR.bonus+'</em>':''}</div>`:''):inf?'':`<div class="trd ${trD>=0?'up':'down'}">${TROPHY}${trD>0?'+':''}${trD}</div><div class="trline">${SAVE.trophies} coppe${arenaUp>=0?` · <em>Nuova arena: ${ARENAS[arenaUp].n}!</em>`:trD===0&&!win?' · <em>La soglia dell’arena ti protegge</em>':''}</div>`;
   $('endTitle').textContent=win?'VITTORIA':quit?'RITIRATA':rec?'NUOVO RECORD':'SEI CADUTO';$('endTitle').style.color=win?'var(--moss)':rec?'var(--gold)':'var(--blood)';
   $('endText').textContent=inf?(quit?`Ti sei ritirato alla stanza ${G.room} dell'Abisso.`:`Sei arrivato alla stanza ${G.room} dell'Abisso.${rec?' Mai così in fondo!':` Il tuo record è la stanza ${SAVE.inf.best}.`}`)
-    :win?(['La Strega delle Radici è caduta. La cripta è tua.','Il Fabbro Infernale è caduto. Il vulcano tace.',"L'Idra della Palude è sconfitta. Le lucciole tornano a brillare.",'La Regina dei Ghiacci è caduta. La vetta è tua.'][chn-1]||'Vittoria!'):quit?`Ti sei ritirato alla stanza ${G.room}. L'oro raccolto resta tuo.`:`Ti sei fermato alla stanza ${G.room}. Migliora l'equipaggiamento e riprova.`;
+    :win?(VINTO[ARENAS[G.arena||0].boss]||'Vittoria!'):quit?`Ti sei ritirato alla stanza ${G.room}. L'oro raccolto resta tuo.`:`Ti sei fermato alla stanza ${G.room}. Migliora l'equipaggiamento e riprova.`;
   $('eRoom').textContent=G.room;$('eKills').textContent=G.kills;$('eGold').textContent=gold;$('eGems').textContent=G.gemsRun||0;
   $('endReward').innerHTML=ch?`<div class="rew${ch.fifth?' fifth':''}"><div class="rewc">${chestSVG(ct,false)}</div><div><b>${ch.fifth?'Quinta cassa: ':''}${CHESTS[ct].n}</b><span>${ch.full?`Posti delle casse pieni: hai preso ${ch.gold} oro al suo posto`:ch.fifth?'I quattro posti erano pieni: è nel posto speciale':'Ti aspetta nei posti delle casse'}</span></div></div>`
     :`<p class="hint">${quit?'Abbandonando non si guadagnano casse.':inf?'Arriva alla stanza 5 per guadagnare una cassa.':'Arriva alla stanza 3 per guadagnare una cassa.'}</p>`;

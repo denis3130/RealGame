@@ -17,6 +17,6 @@ function drawDeathFx(cw,ch){const k=Math.min(1,(G.deathT||0)/.9);if(k<=0)return;
 
 // --- the save code: copy it somewhere safe, paste it back on another phone
 const saveCode=()=>btoa(unescape(encodeURIComponent(JSON.stringify(SAVE))));
-function readCode(code){try{const o=JSON.parse(decodeURIComponent(escape(atob(code.trim()))));return o&&o.items&&o.eq?o:null}catch(e){return null}}
+function readCode(code){try{const o=flatBlocks(JSON.parse(decodeURIComponent(escape(atob(code.trim())))));return o&&o.items&&o.eq?o:null}catch(e){return null}}
 
 

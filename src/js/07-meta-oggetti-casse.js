@@ -39,9 +39,20 @@ const CHESTS={
   oro:{n:"Cassa d'oro",cards:28,gold:[150,280],time:90,odds:[30,32,22,12,4],price:1300}};
 const CHC={legno:{body:'#9b6a3a',dark:'#6b4422',band:'#5a5f68',lock:'#c9cfd6'},argento:{body:'#8a96a3',dark:'#5d6874',band:'#e3eaf0',lock:'#4d97ff'},oro:{body:'#d0921f',dark:'#8a5a10',band:'#ffe08a',lock:'#e5484d'}};
 const SAVE_KEY='cripta_save_v1';
+// (anteprima 48, punto 55) il salvataggio in tre blocchi: nel telefono si scrive {v:2, classica:{…}, zombie:{…}, condivisa:{…}}. In memoria SAVE
+// resta un oggetto solo (il codice lo usa così da sempre). SAVE_BLOCCHI dice di chi è ogni voce (anche mezza voce: 'mat.rot' è della Zombie,
+// 'mat.ess' della Classica); quello che non c'è è condiviso (oro, cristalli, vestiti, compagni, profilo, missioni, traguardi). I salvataggi di
+// prima (un oggetto solo) e i codici di salvataggio si leggono come prima. Il controllo (saveCheck, 79-salvataggio.js) dopo la lettura e prima
+// di ogni scrittura. Le monete della partita zombie non entrano mai nel salvataggio (restano nella mappa, W.coins)
+const SAVE_BLOCCHI={classica:['items','eq','set','slots','slot5','next5','free','trophies','trBest','road','arenaUp','bestA','best','inf','chal','done','sel','hero','heroes','tal','pass','mat.ess','bustine.classica'],
+  zombie:['z','lucky','zRec','zN','zKills','zpass','mat.rot','bustine.zombie']};
+function saveBlocks(S){const where=new Map(),out={v:2,classica:{},zombie:{},condivisa:{}};for(const b of['classica','zombie'])for(const k of SAVE_BLOCCHI[b])where.set(k,b);
+  for(const[k,v] of Object.entries(S)){if(v&&typeof v==='object'&&!Array.isArray(v)&&Object.keys(v).some(sk=>where.has(k+'.'+sk))){for(const[sk,sv] of Object.entries(v)){const b=where.get(k+'.'+sk)||where.get(k)||'condivisa';(out[b][k]=out[b][k]||{})[sk]=sv}}
+    else out[where.get(k)||'condivisa'][k]=v}return out}
+function flatBlocks(o){if(!o||o.v!==2)return o;const S={};for(const b of['condivisa','classica','zombie'])for(const[k,v] of Object.entries(o[b]||{})){if(v&&typeof v==='object'&&!Array.isArray(v)&&S[k]&&typeof S[k]==='object'&&!Array.isArray(S[k]))Object.assign(S[k],v);else S[k]=v}return S}
 function defSave(){return{gold:60,items:{arco_frassino:{lvl:1,cards:0},giubba:{lvl:1,cards:0}},eq:{arma:'arco_frassino',armatura:'giubba',anello:null,amuleto:null},
   slots:[{type:'legno',state:'ready'},null,null,null],best:{room:0,gold:0},runs:0}}
-function loadSave(){try{const s=JSON.parse(localStorage.getItem(SAVE_KEY));if(s&&s.items)return Object.assign(defSave(),s)}catch(e){}return defSave()}
+function loadSave(){try{const s=flatBlocks(JSON.parse(localStorage.getItem(SAVE_KEY)));if(s&&s.items)return Object.assign(defSave(),s)}catch(e){}return defSave()}
 // items renamed between versions: old saves keep their cards and their level (the Arco delle spine became the Arco del tuono)
 function migrateItems(s){const R={arco_spine:'arco_tuono'};if(!s||!s.items)return s;for(const[o,n] of Object.entries(R)){if(s.items[o]){if(!s.items[n])s.items[n]=s.items[o];else{s.items[n].cards=(s.items[n].cards||0)+(s.items[o].cards||0);s.items[n].lvl=Math.max(s.items[n].lvl||1,s.items[o].lvl||1)}delete s.items[o]}if(s.eq&&s.eq.arma===o)s.eq.arma=n}return s}
 let SAVE=migrateItems(loadSave());for(const k of ['gold','gems','runs'])if(typeof SAVE[k]!=='number'||!isFinite(SAVE[k]))SAVE[k]=k==='gold'?(defSave().gold):0;
@@ -99,7 +110,7 @@ function showArenaUp(i){const A=ARENAS[i],el=$('arenaUpScr');
   el.hidden=false;try{const c=$('auCv').getContext('2d');c.drawImage(campBg(modeOf(A.ch)),0,0,360,270)}catch(e){}
   sfx('victory');vib([40,30,40,30,120]);$('auOk').onclick=()=>{sfx('ui');el.hidden=true;renderPlay()}}
 
-function save(){if(INTRO.on)return;try{localStorage.setItem(SAVE_KEY,JSON.stringify(SAVE))}catch(e){}}
+function save(){if(INTRO.on)return;try{saveCheck(SAVE)}catch(e){}try{localStorage.setItem(SAVE_KEY,JSON.stringify(saveBlocks(SAVE)))}catch(e){}}
 
 function itemStats(it,l){const o={};for(const k in it.base)o[k]=it.base[k]+(it.per[k]||0)*(l-1);return o}
 function gear(){const t={atk:0,hp:0,aspd:0,crit:0,dash:0,gold:0},perks=[];

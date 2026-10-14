@@ -2230,6 +2230,10 @@ function tone(f0,f1,dur,type,vol,delay){if(!AU.ctx||!AU.on.sfx)return;try{const 
 
 // ---------- UI ----------
 const bannerEl=$('banner');
+// (anteprima 48, punto 57) la riga di vittoria del boss dell'arena (ARENAS[i].boss), come la sua morte (60-morti-boss.js); prima era per
+// capitolo, dei custodi di una volta: nell'arena 1 diceva «La Strega delle Radici è caduta» dopo il Golem
+const VINTO={golem:'Il Golem di Muschio si è sgretolato. La cripta è tua.',magma:'La Salamandra di Lava è cenere. Il vulcano tace.',rospo:'Il Re Rospo è scoppiato. Lo stagno è tuo.',yeti:'Lo Yeti delle Vette è andato in frantumi. La vetta è tua.',
+  radici:'La Strega delle Radici è caduta. La cripta è tua.',fabbro:'Il Fabbro Infernale è caduto. Il vulcano tace.',idra:"L'Idra della Palude è sconfitta. Le lucciole tornano a brillare.",regina:'La Regina dei Ghiacci è caduta. La vetta è tua.'};
 function banner(t,sub,dur){bannerEl.innerHTML='';if(sub){const s=document.createElement('small');s.textContent=sub;bannerEl.appendChild(s)}bannerEl.appendChild(document.createTextNode(t));bannerEl.classList.add('show');G.bannerT=dur||1.8}
 function setPause(v){if(!started||INTRO.on)return;paused=v;$('pauseScr').hidden=!v;
   if(v)$('ownSkills').innerHTML=Object.entries(P.skills).map(([id,n])=>{const k=SK.find(s=>s.id===id);return `<span class="osk ${k.evo?'evo':''}"><svg viewBox="0 0 40 40" aria-hidden="true">${ICON[id]||''}</svg>${n>1?`<b>${n}</b>`:''}${k.n}</span>`}).join('')||'<span class="none">Ancora nessuna abilità: sali di livello per sceglierne una.</span>'}
@@ -2377,7 +2381,7 @@ function endRun(win,quit){
   $('eTr').innerHTML=G.daily?(DR&&DR.score?`<div class="trd up">${DR.score.toLocaleString('it-IT')}</div><div class="trline">Punteggio · ${DR.pos}° in classifica${DR.bonus?' · <em>'+DR.bonus+'</em>':''}</div>`:''):inf?'':`<div class="trd ${trD>=0?'up':'down'}">${TROPHY}${trD>0?'+':''}${trD}</div><div class="trline">${SAVE.trophies} coppe${arenaUp>=0?` · <em>Nuova arena: ${ARENAS[arenaUp].n}!</em>`:trD===0&&!win?' · <em>La soglia dell’arena ti protegge</em>':''}</div>`;
   $('endTitle').textContent=win?'VITTORIA':quit?'RITIRATA':rec?'NUOVO RECORD':'SEI CADUTO';$('endTitle').style.color=win?'var(--moss)':rec?'var(--gold)':'var(--blood)';
   $('endText').textContent=inf?(quit?`Ti sei ritirato alla stanza ${G.room} dell'Abisso.`:`Sei arrivato alla stanza ${G.room} dell'Abisso.${rec?' Mai così in fondo!':` Il tuo record è la stanza ${SAVE.inf.best}.`}`)
-    :win?(['La Strega delle Radici è caduta. La cripta è tua.','Il Fabbro Infernale è caduto. Il vulcano tace.',"L'Idra della Palude è sconfitta. Le lucciole tornano a brillare.",'La Regina dei Ghiacci è caduta. La vetta è tua.'][chn-1]||'Vittoria!'):quit?`Ti sei ritirato alla stanza ${G.room}. L'oro raccolto resta tuo.`:`Ti sei fermato alla stanza ${G.room}. Migliora l'equipaggiamento e riprova.`;
+    :win?(VINTO[ARENAS[G.arena||0].boss]||'Vittoria!'):quit?`Ti sei ritirato alla stanza ${G.room}. L'oro raccolto resta tuo.`:`Ti sei fermato alla stanza ${G.room}. Migliora l'equipaggiamento e riprova.`;
   $('eRoom').textContent=G.room;$('eKills').textContent=G.kills;$('eGold').textContent=gold;$('eGems').textContent=G.gemsRun||0;
   $('endReward').innerHTML=ch?`<div class="rew${ch.fifth?' fifth':''}"><div class="rewc">${chestSVG(ct,false)}</div><div><b>${ch.fifth?'Quinta cassa: ':''}${CHESTS[ct].n}</b><span>${ch.full?`Posti delle casse pieni: hai preso ${ch.gold} oro al suo posto`:ch.fifth?'I quattro posti erano pieni: è nel posto speciale':'Ti aspetta nei posti delle casse'}</span></div></div>`
     :`<p class="hint">${quit?'Abbandonando non si guadagnano casse.':inf?'Arriva alla stanza 5 per guadagnare una cassa.':'Arriva alla stanza 3 per guadagnare una cassa.'}</p>`;
@@ -2425,9 +2429,20 @@ const CHESTS={
   oro:{n:"Cassa d'oro",cards:28,gold:[150,280],time:90,odds:[30,32,22,12,4],price:1300}};
 const CHC={legno:{body:'#9b6a3a',dark:'#6b4422',band:'#5a5f68',lock:'#c9cfd6'},argento:{body:'#8a96a3',dark:'#5d6874',band:'#e3eaf0',lock:'#4d97ff'},oro:{body:'#d0921f',dark:'#8a5a10',band:'#ffe08a',lock:'#e5484d'}};
 const SAVE_KEY='cripta_save_v1';
+// (anteprima 48, punto 55) il salvataggio in tre blocchi: nel telefono si scrive {v:2, classica:{…}, zombie:{…}, condivisa:{…}}. In memoria SAVE
+// resta un oggetto solo (il codice lo usa così da sempre). SAVE_BLOCCHI dice di chi è ogni voce (anche mezza voce: 'mat.rot' è della Zombie,
+// 'mat.ess' della Classica); quello che non c'è è condiviso (oro, cristalli, vestiti, compagni, profilo, missioni, traguardi). I salvataggi di
+// prima (un oggetto solo) e i codici di salvataggio si leggono come prima. Il controllo (saveCheck, 79-salvataggio.js) dopo la lettura e prima
+// di ogni scrittura. Le monete della partita zombie non entrano mai nel salvataggio (restano nella mappa, W.coins)
+const SAVE_BLOCCHI={classica:['items','eq','set','slots','slot5','next5','free','trophies','trBest','road','arenaUp','bestA','best','inf','chal','done','sel','hero','heroes','tal','pass','mat.ess','bustine.classica'],
+  zombie:['z','lucky','zRec','zN','zKills','zpass','mat.rot','bustine.zombie']};
+function saveBlocks(S){const where=new Map(),out={v:2,classica:{},zombie:{},condivisa:{}};for(const b of['classica','zombie'])for(const k of SAVE_BLOCCHI[b])where.set(k,b);
+  for(const[k,v] of Object.entries(S)){if(v&&typeof v==='object'&&!Array.isArray(v)&&Object.keys(v).some(sk=>where.has(k+'.'+sk))){for(const[sk,sv] of Object.entries(v)){const b=where.get(k+'.'+sk)||where.get(k)||'condivisa';(out[b][k]=out[b][k]||{})[sk]=sv}}
+    else out[where.get(k)||'condivisa'][k]=v}return out}
+function flatBlocks(o){if(!o||o.v!==2)return o;const S={};for(const b of['condivisa','classica','zombie'])for(const[k,v] of Object.entries(o[b]||{})){if(v&&typeof v==='object'&&!Array.isArray(v)&&S[k]&&typeof S[k]==='object'&&!Array.isArray(S[k]))Object.assign(S[k],v);else S[k]=v}return S}
 function defSave(){return{gold:60,items:{arco_frassino:{lvl:1,cards:0},giubba:{lvl:1,cards:0}},eq:{arma:'arco_frassino',armatura:'giubba',anello:null,amuleto:null},
   slots:[{type:'legno',state:'ready'},null,null,null],best:{room:0,gold:0},runs:0}}
-function loadSave(){try{const s=JSON.parse(localStorage.getItem(SAVE_KEY));if(s&&s.items)return Object.assign(defSave(),s)}catch(e){}return defSave()}
+function loadSave(){try{const s=flatBlocks(JSON.parse(localStorage.getItem(SAVE_KEY)));if(s&&s.items)return Object.assign(defSave(),s)}catch(e){}return defSave()}
 // items renamed between versions: old saves keep their cards and their level (the Arco delle spine became the Arco del tuono)
 function migrateItems(s){const R={arco_spine:'arco_tuono'};if(!s||!s.items)return s;for(const[o,n] of Object.entries(R)){if(s.items[o]){if(!s.items[n])s.items[n]=s.items[o];else{s.items[n].cards=(s.items[n].cards||0)+(s.items[o].cards||0);s.items[n].lvl=Math.max(s.items[n].lvl||1,s.items[o].lvl||1)}delete s.items[o]}if(s.eq&&s.eq.arma===o)s.eq.arma=n}return s}
 let SAVE=migrateItems(loadSave());for(const k of ['gold','gems','runs'])if(typeof SAVE[k]!=='number'||!isFinite(SAVE[k]))SAVE[k]=k==='gold'?(defSave().gold):0;
@@ -2485,7 +2500,7 @@ function showArenaUp(i){const A=ARENAS[i],el=$('arenaUpScr');
   el.hidden=false;try{const c=$('auCv').getContext('2d');c.drawImage(campBg(modeOf(A.ch)),0,0,360,270)}catch(e){}
   sfx('victory');vib([40,30,40,30,120]);$('auOk').onclick=()=>{sfx('ui');el.hidden=true;renderPlay()}}
 
-function save(){if(INTRO.on)return;try{localStorage.setItem(SAVE_KEY,JSON.stringify(SAVE))}catch(e){}}
+function save(){if(INTRO.on)return;try{saveCheck(SAVE)}catch(e){}try{localStorage.setItem(SAVE_KEY,JSON.stringify(saveBlocks(SAVE)))}catch(e){}}
 
 function itemStats(it,l){const o={};for(const k in it.base)o[k]=it.base[k]+(it.per[k]||0)*(l-1);return o}
 function gear(){const t={atk:0,hp:0,aspd:0,crit:0,dash:0,gold:0},perks=[];
@@ -5808,7 +5823,7 @@ function drawDeathFx(cw,ch){const k=Math.min(1,(G.deathT||0)/.9);if(k<=0)return;
 
 // --- the save code: copy it somewhere safe, paste it back on another phone
 const saveCode=()=>btoa(unescape(encodeURIComponent(JSON.stringify(SAVE))));
-function readCode(code){try{const o=JSON.parse(decodeURIComponent(escape(atob(code.trim()))));return o&&o.items&&o.eq?o:null}catch(e){return null}}
+function readCode(code){try{const o=flatBlocks(JSON.parse(decodeURIComponent(escape(atob(code.trim())))));return o&&o.items&&o.eq?o:null}catch(e){return null}}
 
 
 // =====================================================================
@@ -20916,6 +20931,31 @@ function drawFrostTrail(){const F=G.frost;if(!F||!F.length)return;ctx.save();for
 // on the floor, under the shadows and everybody (just before the back wall is drawn)
 {const _wb=drawWallBack;drawWallBack=function(){try{drawFrostTrail()}catch(e){}return _wb.apply(this,arguments)}}
 {const _b=buildRoom;buildRoom=function(){if(G)G.frost=[];return _b.apply(this,arguments)}}
+// ---------- IL CONTROLLO DEL SALVATAGGIO (anteprima 48, punto 55 del piano di Denis): dopo la lettura e prima di ogni scrittura (save, in
+// 07-meta-oggetti-casse.js, che scrive i tre blocchi classica, zombie, condivisa). Rimette a posto solo quello che è rotto e non toglie mai
+// niente di posseduto: numeri finiti, non negativi e interi (oro, cristalli, materiali, coppe, partite, carte, bustine, Lucky Cards); livelli
+// tra 1 e il massimo (oggetti e armi zombie 10, vestiti 5); quello che è indossato o portato deve essere posseduto (oggetti, arma zombie,
+// vestito, compagni), altrimenti torna a quello di partenza; i tetti di capienza (99 bustine per rarità, 99 Lucky Cards per tipo, 9.999 carte)
+const SAVE_CAP={bustine:99,lucky:99,cards:9999};
+function nn(v,max){v=Number(v);if(!isFinite(v)||v<0)return 0;v=Math.floor(v);return max!=null?Math.min(v,max):v}
+function lvFix(o,max){if(!o||typeof o!=='object')return{lvl:1,cards:0};o.lvl=Math.max(1,nn(o.lvl,max)||1);o.cards=nn(o.cards,SAVE_CAP.cards);return o}
+function saveCheck(S){if(!S||typeof S!=='object')return S;
+  for(const k of['gold','gems','trophies','runs'])if(k in S)S[k]=nn(S[k]);
+  if(S.mat&&typeof S.mat==='object')for(const k of Object.keys(S.mat))S.mat[k]=nn(S.mat[k]);
+  if(S.items&&typeof S.items==='object'){for(const id of Object.keys(S.items))S.items[id]=lvFix(S.items[id],MAXLV)}
+  if(S.eq&&typeof S.eq==='object'){const D0=defSave().eq;for(const sl of Object.keys(S.eq)){const id=S.eq[sl];if(id&&!(S.items&&S.items[id]))S.eq[sl]=D0[sl]&&S.items&&S.items[D0[sl]]?D0[sl]:null}}
+  if(S.z&&typeof S.z==='object'){for(const g of['guns','acc'])if(S.z[g]&&typeof S.z[g]==='object')for(const id of Object.keys(S.z[g]))S.z[g][id]=lvFix(S.z[g][id],MAXLV);
+    if(S.z.guns&&S.z.gun&&!S.z.guns[S.z.gun])S.z.gun='pistola'}
+  if(S.bustine&&typeof S.bustine==='object')for(const m of Object.keys(S.bustine))if(S.bustine[m]&&typeof S.bustine[m]==='object')for(const r of Object.keys(S.bustine[m]))S.bustine[m][r]=nn(S.bustine[m][r],SAVE_CAP.bustine);
+  if(S.lucky&&S.lucky.inv&&typeof S.lucky.inv==='object'){for(const k of Object.keys(S.lucky.inv))S.lucky.inv[k]=nn(S.lucky.inv[k],SAVE_CAP.lucky);if(S.lucky.pick&&!(S.lucky.inv[S.lucky.pick]>0))S.lucky.pick=null}
+  if(S.skinCards&&typeof S.skinCards==='object')for(const k of Object.keys(S.skinCards))S.skinCards[k]=nn(S.skinCards[k],SAVE_CAP.cards);
+  if(S.skinLv&&typeof S.skinLv==='object')for(const k of Object.keys(S.skinLv))S.skinLv[k]=Math.max(1,nn(S.skinLv[k],SKIN_MAX)||1);
+  if(S.skin&&!(S.skins&&S.skins[S.skin]))S.skin=null;
+  if(S.pets&&typeof S.pets==='object'){const P0=S.pets;if(P0.cards&&typeof P0.cards==='object')for(const k of Object.keys(P0.cards))P0.cards[k]=nn(P0.cards[k],SAVE_CAP.cards);
+    if(P0.owned&&typeof P0.owned==='object')for(const o of Object.values(P0.owned))if(o&&typeof o==='object'){if('cards' in o)o.cards=nn(o.cards,SAVE_CAP.cards);if('lvl' in o)o.lvl=Math.max(1,nn(o.lvl)||1)}
+    if(Array.isArray(P0.eq))P0.eq=P0.eq.filter((id,i,a)=>P0.owned&&P0.owned[id]&&a.indexOf(id)===i).slice(0,PET_SLOTS)}
+  return S}
+saveCheck(SAVE);
 })();
 };
 </script>

@@ -11,5 +11,5 @@ await E(`G.gems.push({x:100,y:300,z:0,vz:0,vx:0,vy:0,t:0,ph:0});endRun(false,fal
 const g=await E('SAVE.gems');ok('a fine partita 7 + 8 = 15 '+g,g===15);
 ok('schermata finale mostra 8 '+await E(`$('eGems').textContent`),await E(`$('eGems').textContent==='8'`));
 // (a reload of a file:// page in headless Chromium sometimes comes back with empty storage: check what was written instead; over http it always persists)
-const ls=await E(`JSON.parse(localStorage.getItem('cripta_save_v1')).gems`);ok('scritti nel salvataggio '+ls,ls===15);
+const ls=await E(`(o=>o.v===2?o.condivisa.gems:o.gems)(JSON.parse(localStorage.getItem('cripta_save_v1')))`);ok('scritti nel salvataggio '+ls,ls===15);
 console.log(R.join('\n'),errs);await b.close()})();
