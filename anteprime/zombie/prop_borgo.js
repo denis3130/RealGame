@@ -184,6 +184,15 @@ def('fucina',function(x,y,w,d){const H=82,th=10,parts=[];shade(x,y,w,d,H,.45);
   const bxx=x+w-38,byy=y+d-th-24;solid(bxx-11,byy-11,22,22).round=true;prop({bx:[bxx-12,byy-12,bxx+12,byy+12,26],parts:[...cyl(bxx,byy,0,11,22,'stave',{n:10,m:{t:'water'},ink:.45})]});
   {const cx=x+30,cy=y+d-th-22,parts2=[];solid(cx-16,cy-10,32,18);E(parts2,fn3(S2=>{const r=prng(cx);for(let i=0;i<34;i++){const a=r()*TAU,rad=r()*14,q=S2(cx+Math.cos(a)*rad,cy+Math.sin(a)*rad*.6,r()*8*(1-rad/15));ctx.fillStyle=i%3?'#141216':'#2a2830';ball(q,1.8+r()*1.6);ctx.fill()}},{fp:[[cx-16,cy-10],[cx+16,cy-10],[cx+16,cy+8],[cx-16,cy+8]],z:[0,10]}));prop({bx:[cx-18,cy-12,cx+18,cy+10,12],parts:parts2})}
   return{x,y,w,d,wallY:y+d-th}},a=>[a[0]+a[2]/2,a[1]+a[3]/2]);
+// ------------------------------------------------------------------ la botola della cantina (nel vicolo della Locanda): due ante di assi nel telaio a
+// terra; quando ne esce uno zombie (bang) si spalancano per un paio di secondi (le ante dritte, il buco nero) con le schegge e un tonfo
+def('botola',function(x,y){const st={t:0},w=30,d=22,x0=x-w/2,y0=y-d/2,parts=[];shade(x0-2,y0-2,w+4,d+4,3,.3);
+  E(parts,...box(x0-3,y0-3,0,w+6,d+6,2.2,'oldwood',{ow:1.4}));
+  for(const t of[...box(x0,y0,2.2,w/2-.6,d,1.6,'plankD',{noFoot:true,ow:1.2}),...box(x0+w/2+.6,y0,2.2,w/2-.6,d,1.6,'plankD',{noFoot:true,ow:1.2})]){t.vis=()=>!(st.t>0);parts.push(t)}
+  const pit=fn3(S2=>{const a=S2(x0,y0,2.4),b=S2(x0+w,y0,2.4),c=S2(x0+w,y0+d,2.4),e=S2(x0,y0+d,2.4);ctx.fillStyle='#060403';ctx.beginPath();ctx.moveTo(...a);ctx.lineTo(...b);ctx.lineTo(...c);ctx.lineTo(...e);ctx.closePath();ctx.fill()},{fp:[[x0,y0],[x0+w,y0],[x0+w,y0+d],[x0,y0+d]],z:[2,3]});pit.vis=()=>st.t>0;parts.push(pit);
+  for(const pl of[plane(x0-.5,y0+d,2.2,d,w/2-.6,-Math.PI/2,'botolaA',leafPaint('#3a2a1a')),plane(x0+w+.5,y0,2.2,d,w/2-.6,Math.PI/2,'botolaA',leafPaint('#3a2a1a'))]){pl.vis=()=>st.t>0;parts.push(pl)}
+  prop({bx:[x0-4,y0-4,x0+w+4,y0+d+4,20],parts,noSplit:true});ANIM.push(dt=>{if(st.t>0)st.t-=dt});
+  return{bang(){st.t=2.2;if(ZM.barriere)ZM.barriere.burst('truciolo',x,y,6,6,[0,0],20);try{if(AU.ctx&&AU.on.sfx){const t=AU.ctx.currentTime+.01;fThump(t,70,40,.5,.5,.3)}}catch(e){}}}});
 // ------------------------------------------------------------------ il MERCATO: banchi col tendone a strisce strappato, casse di roba marcia, la
 // bacheca con i fogli dei dispersi, il carretto rovesciato (da sotto escono gli zombie)
 def('bancarella',function(x,y,col){const w=56,d=30,parts=[];solid(x,y+6,w,d-6);shade(x,y,w,d,58,.4);

@@ -53,7 +53,7 @@ function buildEast(w,h){const E={};const hole=(x,y,z,k)=>holes.push([x,y,z,k||nu
   P.shelter(X(27.2),Y(3.8),X(29.2)-X(27.2),Y(5.9)-Y(3.8));P.valvola(X(28.2),Y(4.55));
   P.gru(X(26.1),Y(10.9));P.carroTronchi(X(20.7),Y(10.0));hole(X(20.4),Y(10.4),4,'carro');
   for(const[x,y] of[[X(24.4),Y(9.7)],[X(18.0),Y(8.6)]])grave(x,y,4);
-  hole(X(21.4),Y(1.85),4,'acqua');hole(X(25.6),Y(1.85),4,'acqua');
+  hole(X(21.4),Y(1.45),4,'acqua');hole(X(25.6),Y(1.45),4,'acqua');// (nell'acqua: escono dal fiume e salgono sulla riva)
   P.lanternPole(X(19.1),Y(9.0),1);P.lanternPole(X(26.8),Y(8.9),-1);
   E.bara4=[X(20.45),Y(4.35)];E.gun4=[X(21.6),Y(8.4)+24];
   {const hostS=SG_FACE(X(21.6),Y(8.4),'s');P.wallGun(X(21.6),Y(8.4)+.6,30,'x','mitra',1250,hostS)}
@@ -61,7 +61,7 @@ function buildEast(w,h){const E={};const hole=(x,y,z,k)=>holes.push([x,y,z,k||nu
   const LC=P.locanda(X(15.2),Y(13.3),6.4*T,3.6*T);E.locanda=LC;
   // la Credenza degli Elisir dietro il bancone, contro il muro nord
   P.elisir(X(15.2)+306,Y(13.3)+22);
-  hole(X(19.2),Y(12.8),3,'botola');// la botola della cantina nel cortile dietro la locanda
+  {const bt=P.botola(X(14.6),Y(13.75));holes.push([X(14.6),Y(13.75),3,'botola',()=>bt.bang()])}// la botola della cantina nel vicolo a ovest della locanda (dietro, la Locanda alta la nascondeva)
   for(const[x,y,c] of[[X(22.9),Y(13.6),'R'],[X(24.65),Y(13.6),'B'],[X(23.75),Y(15.25),'R']])P.bancarella(x,y,c);
   P.bacheca(X(26.6),Y(13.75));P.carrettoRovesciato(X(25.7),Y(15.4));hole(X(25.55),Y(16.75),3,'carro');
   for(const[x,y] of[[X(22.7),Y(16.6)],[X(27.4),Y(15.0)]])P.crate(x,y);P.barrel(X(26.9),Y(16.7));P.barrel(X(22.8),Y(14.9),.85);

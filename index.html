@@ -15324,10 +15324,25 @@ const HERO3=()=>typeof EROE!=='undefined'&&!!EROE.arciere&&HSTYLE.hid==='arciere
 // le buche sono [x, y, zona, tipo, quando]: da una zona chiusa (W.zoneOpen) non esce nessuno; tipo 'mais' (escono camminando dal granturco) e
 // 'porta' (la latrina) non salgono da terra; quando() avvisa il prop (la porta che si spalanca). o (la partita a ondate): {kind, hp e spd
 // (moltiplicano quelli del tipo), q (conta per il round)}; restituisce lo zombie o null se la buca scelta era occupata
-function spawn(o){o=o||{};const h=W.hero,c=holes.filter(p=>(p[2]==null||W.zoneOpen[p[2]])&&Math.hypot(p[0]-h.x,p[1]-h.y)>110&&Math.hypot(p[0]-h.x,p[1]-h.y)<460);if(!c.length)return null;const p=c[Math.floor(Math.random()*c.length)],
-    k=o.kind?KINDS.find(q=>q[0]===o.kind)||KINDS[0]:KINDS[Math.floor(Math.random()*KINDS.length)];
-  if(W.Z.some(z=>Math.hypot(z.x-p[0],z.y-p[1])<30))return null;const out=p[3]==='mais'||p[3]==='porta'||p[3]==='fuori';if(p[4])p[4]();
-  const z={id:++ZID,kind:k[0],sc:k[1],spd:k[2]*(o.spd||1),hp:k[3]*(o.hp||1),x:p[0],y:p[1],face:Math.atan2(h.y-p[1],h.x-p[0]),p:Math.random(),anim:'walk',rise:out?1:0,die:0,flash:0};z.spd0=z.spd;z.hp0=z.hp;if(o.q)z.q=1;if(p[3]==='fuori')z.fin=.9;W.Z.push(z);return z}// ('fuori': esce dal buio oltre il bordo, piano piano)
+// (anteprima 48, punto 17) la buca giusta: tra quelle delle zone aperte e libere, quelle da cui si arriva davvero all'eroe a piedi (il campo di
+// navigazione intorno alla buca: niente buche dietro ostacoli invalicabili, in stanze chiuse o oltre una barriera mai aperta; con l'eroe di
+// sopra conta la strada fino al piede della scala) e a una distanza a piedi tra 130 e 700 px; di queste una a caso tra le sei più vicine, mai la
+// stessa due volte di fila. Senza griglia, o se non ce n'è nessuna, come prima: in linea d'aria tra 110 e 460 px
+function holeDist(p){const N=NAV;if(!N)return null;const cw=N.cw,ch=N.ch,D=N.dist,i0=Math.floor(p[0]/NC),j0=Math.floor(p[1]/NC);let best=1e9;
+  for(let j=j0-4;j<=j0+4;j++)for(let i=i0-4;i<=i0+4;i++){if(i<0||j<0||i>=cw||j>=ch)continue;const v=D[j*cw+i];if(v<best)best=v}return best}
+function pickHole(){const h=W.hero,open=holes.filter(p=>(p[2]==null||W.zoneOpen[p[2]])&&!W.Z.some(z=>Math.hypot(z.x-p[0],z.y-p[1])<30));
+  if(NAV){const c=[];for(const p of open){if(Math.hypot(p[0]-h.x,p[1]-h.y)<110)continue;const d=holeDist(p);if(d==null||d>=1e9||d<130||d>700)continue;c.push([d,p])}
+    if(c.length){c.sort((a,b)=>a[0]-b[0]);let k=c.slice(0,6);if(k.length>1)k=k.filter(a=>a[1]!==W.lastHole);const p=k[Math.floor(Math.random()*k.length)][1];W.lastHole=p;return p}}
+  const c=open.filter(p=>{const e=Math.hypot(p[0]-h.x,p[1]-h.y);return e>110&&e<460});return c.length?c[Math.floor(Math.random()*c.length)]:null}
+// la comparsa secondo il posto (p[3]): dalla fossa e dalla terra esce dal suolo (rise); dal granturco, dalla porta della latrina e dal buio oltre
+// il bordo cammina fuori ('fuori' sfumando); da sotto i carri e la carrozza bruciata striscia fuori sfumando in una nuvola di polvere e cenere;
+// dal fiume esce dall'acqua con i cerchi (sp 'acqua'); dalla botola della cantina sale dal buco nero (sp 'botola')
+function spawn(o){o=o||{};const h=W.hero,p=o.hole||pickHole();if(!p)return null;
+  const k=o.kind?KINDS.find(q=>q[0]===o.kind)||KINDS[0]:KINDS[Math.floor(Math.random()*KINDS.length)];
+  const out=p[3]==='mais'||p[3]==='porta'||p[3]==='fuori'||p[3]==='carro';if(p[4])p[4]();
+  const z={id:++ZID,kind:k[0],sc:k[1],spd:k[2]*(o.spd||1),hp:k[3]*(o.hp||1),x:p[0],y:p[1],face:Math.atan2(h.y-p[1],h.x-p[0]),p:Math.random(),anim:'walk',rise:out?1:0,die:0,flash:0,sp:p[3]||null};z.spd0=z.spd;z.hp0=z.hp;if(o.q)z.q=1;if(p[3]==='fuori'||p[3]==='carro')z.fin=.9;
+  if(p[3]==='carro'&&!LOWFX)for(let i=0;i<6;i++)W.puffs.push({x:p[0]+rr(-12,12),y:p[1]+rr(-8,8),z:rr(2,10),t:rr(1.2,2),r:rr(4,7)});
+  W.Z.push(z);return z}
 // gli zombie fermi in una zona chiusa (la fattoria prima del cancello): girano piano intorno a casa loro; da fermi girano di colpo la testa
 // verso l'eroe quando si avvicina; se l'eroe va al cancello vengono alle sbarre e allungano le braccia. Quando la zona si apre partono
 function idleZombie(kind,x,y,zone){const k=KINDS.find(k=>k[0]===kind)||KINDS[0],z={id:++ZID,kind:k[0],sc:k[1],spd:k[2],hp:k[3],x,y,face:rr(0,TAU),p:Math.random(),anim:'idle',rise:1,die:0,flash:0,idle:{zone,home:[x,y],t:rr(0,3),tg:null}};W.Z.push(z);return z}
@@ -15454,8 +15469,12 @@ const MOUND=k=>[18+8*k,8+3*k];// i raggi del mucchio a terra (x, y del mondo) me
 function drawZombie(z){const q=SB(z.x,z.y,z.zh||0),zk=RIGK.mzk,fc=z.face+CAM.yaw;
   if(z.rise<1){const k=z.rise,c=CAM.c,s=CAM.s,SP=CAM.SP,[mx,my]=MOUND(k),
       G=(ox,oy)=>[q[0]+ox*c-oy*s,q[1]+(ox*s+oy*c)*SP];// un punto del terreno intorno ai piedi, (ox, oy) nel mondo
-    ctx.fillStyle='#4a3a2a';ctx.save();ctx.translate(q[0],q[1]);ctx.transform(c,SP*s,-s,SP*c,0,0);ctx.beginPath();ctx.ellipse(0,0,mx,my,0,0,TAU);ctx.restore();ctx.fill();
-    for(let i=0;i<6;i++){const a=i*1.05+z.x,r=10+k*16,g=G(Math.cos(a)*r,Math.sin(a)*r*.5);ctx.fillStyle='#64503a';ball([g[0],g[1]-Math.sin(k*Math.PI)*6*CAM.CP],2.4);ctx.fill()}
+    if(z.sp==='acqua'){ctx.save();ctx.translate(q[0],q[1]);ctx.transform(c,SP*s,-s,SP*c,0,0);ctx.fillStyle='rgba(8,14,24,.8)';ctx.beginPath();ctx.ellipse(0,0,mx*.9,my*1.3,0,0,TAU);ctx.fill();
+      for(let i=0;i<3;i++){const r=(k*1.7+i/3)%1;ctx.strokeStyle=`rgba(150,185,215,${.55*(1-r)})`;ctx.lineWidth=1.3;ctx.beginPath();ctx.ellipse(0,0,8+r*28,(8+r*28)*.62,0,0,TAU);ctx.stroke()}ctx.restore();
+      if(k>.3)for(let i=0;i<4;i++){const a=i*1.6+z.x,g=G(Math.cos(a)*9,Math.sin(a)*5),f=((W.t*1.4+i*.27)%1);ctx.fillStyle=`rgba(170,200,225,${.7*(1-f)})`;ball([g[0],g[1]-(1-f)*30*CAM.CP*k],1.4);ctx.fill()}}// (dal fiume: cerchi nell'acqua e gocce)
+    else if(z.sp==='botola'){ctx.save();ctx.translate(q[0],q[1]);ctx.transform(c,SP*s,-s,SP*c,0,0);ctx.fillStyle='#060403';ctx.fillRect(-14,-10,28,20);ctx.restore()}// (dalla cantina: il buco nero della botola aperta)
+    else{ctx.fillStyle='#4a3a2a';ctx.save();ctx.translate(q[0],q[1]);ctx.transform(c,SP*s,-s,SP*c,0,0);ctx.beginPath();ctx.ellipse(0,0,mx,my,0,0,TAU);ctx.restore();ctx.fill();
+    for(let i=0;i<6;i++){const a=i*1.05+z.x,r=10+k*16,g=G(Math.cos(a)*r,Math.sin(a)*r*.5);ctx.fillStyle='#64503a';ball([g[0],g[1]-Math.sin(k*Math.PI)*6*CAM.CP],2.4);ctx.fill()}}
     if(k>.25){const u=ez((k-.25)/.75),ck=Math.max(1,z.sc/1.1);ctx.save();ctx.beginPath();ctx.rect(q[0]-60*ck,q[1]-150*ck,120*ck,150*ck+1);ctx.clip();
       ctx.translate(0,(1-u)*60*z.sc*zk);CR[z.kind](q[0],q[1],fc,'idle',(W.t*.6)%1,z.sc);ctx.restore()}return}
   if(z.die){const k=Math.min(1,z.die/1.1),ck=Math.max(1,z.sc/1.1);ctx.save();ctx.globalAlpha=1-k*k;ctx.beginPath();ctx.rect(q[0]-60*ck,q[1]-150*ck,120*ck,150*ck+1);ctx.clip();ctx.translate(0,ez(k)*50*z.sc*zk);CR[z.kind](q[0],q[1],fc,'idle',0,z.sc);ctx.restore();return}
@@ -16213,7 +16232,7 @@ orderReset:()=>{ORD.mm.m=new Map();ORD.fm.m=new Map();ORD.fr+=5},
     texStats:()=>{let n=0,px=0,np=0,pp=0;for(const k in TEX){n++;px+=TEX[k].width*TEX[k].height}for(const k in PLANES){np++;pp+=PLANES[k].width*PLANES[k].height}return{n,mpx:+(px/1e6).toFixed(2),np,mpp:+(pp/1e6).toFixed(2)}},
     buys,equip,buyNow:id=>{const o=buys.find(b=>b.id===id);return o?o.act():null},box:()=>BOX,boxTo:i=>{const q=BOX.spots[i];boxPlace(q[0],q[1],q[3]||0);navBuild();if(NAV)NAV.hc=-1;return[q[0],q[1]]},coins:v=>{if(v!=null)W.coins=v;return W.coins},gun:()=>gunState,nuova:()=>CTL.nuova()};
   return CTL}
-return{scala,STAIRS,sameLv,heroLv,climbStart,SB,toWorld:(x,y)=>TURN?tP(TURN,x,y):[x,y],dirWorld:(x,y)=>TURN?tV(TURN,x,y):[x,y],AREE,anteprima,boxReset,stile,idleZombie,buyable,buys,barrier,BARS,barCheck,sorpresa,equip,hurt,spawn,KINDS,move,zWalk,sep,physClear,gun:()=>gunState,navRebuild:()=>{navBuild();if(NAV)NAV.hc=-1},softImg,turn,group,grp,finalize,facing,across,onGround,onPlane,onRound,ringNear,T,CAM,W,S,LS,MOON,inGround,scrAng,decals,fades,NAMES,stand,stands,heightAt,add3,sub3,len3,rnd,rr,srand,ink,path,hull,material,MAT,MARKS,texture,tone,face,hullOf,ballAt,line3,poly3,fn3,box,prismX,prismY,plane,cyl,prop,solid,shade,shadeR,props,solids,shadows,lights,flames,holes,houses,smokes,perches,hit,bakeGround,edgeSnap,boot,bootAsync,libera,ricuoci,setLive:f=>{liveDraw=f},wa,mix,cl,ez,lerp,TAU,ball,seg}})();
+return{scala,STAIRS,sameLv,heroLv,climbStart,SB,pickHole,holeDist,toWorld:(x,y)=>TURN?tP(TURN,x,y):[x,y],dirWorld:(x,y)=>TURN?tV(TURN,x,y):[x,y],AREE,anteprima,boxReset,stile,idleZombie,buyable,buys,barrier,BARS,barCheck,sorpresa,equip,hurt,spawn,KINDS,move,zWalk,sep,physClear,gun:()=>gunState,navRebuild:()=>{navBuild();if(NAV)NAV.hc=-1},softImg,turn,group,grp,finalize,facing,across,onGround,onPlane,onRound,ringNear,T,CAM,W,S,LS,MOON,inGround,scrAng,decals,fades,NAMES,stand,stands,heightAt,add3,sub3,len3,rnd,rr,srand,ink,path,hull,material,MAT,MARKS,texture,tone,face,hullOf,ballAt,line3,poly3,fn3,box,prismX,prismY,plane,cyl,prop,solid,shade,shadeR,props,solids,shadows,lights,flames,holes,houses,smokes,perches,hit,bakeGround,edgeSnap,boot,bootAsync,libera,ricuoci,setLive:f=>{liveDraw=f},wa,mix,cl,ez,lerp,TAU,ball,seg}})();
 // ---------- PROP della mappa zombie: tutto ciò che sta in piedi sul terreno, costruito sul motore (ZM) con volumi 3D che si piegano
 // via dall'eroe. Ogni prop registra i suoi pezzi (facce con texture, sfere, linee), i solidi per le collisioni, le ombre da cuocere nel
 // terreno, le luci e le fiamme. Misure in pixel del gioco (una casella = 64; l'eroe è alto circa 30).
@@ -17179,6 +17198,15 @@ def('fucina',function(x,y,w,d){const H=82,th=10,parts=[];shade(x,y,w,d,H,.45);
   const bxx=x+w-38,byy=y+d-th-24;solid(bxx-11,byy-11,22,22).round=true;prop({bx:[bxx-12,byy-12,bxx+12,byy+12,26],parts:[...cyl(bxx,byy,0,11,22,'stave',{n:10,m:{t:'water'},ink:.45})]});
   {const cx=x+30,cy=y+d-th-22,parts2=[];solid(cx-16,cy-10,32,18);E(parts2,fn3(S2=>{const r=prng(cx);for(let i=0;i<34;i++){const a=r()*TAU,rad=r()*14,q=S2(cx+Math.cos(a)*rad,cy+Math.sin(a)*rad*.6,r()*8*(1-rad/15));ctx.fillStyle=i%3?'#141216':'#2a2830';ball(q,1.8+r()*1.6);ctx.fill()}},{fp:[[cx-16,cy-10],[cx+16,cy-10],[cx+16,cy+8],[cx-16,cy+8]],z:[0,10]}));prop({bx:[cx-18,cy-12,cx+18,cy+10,12],parts:parts2})}
   return{x,y,w,d,wallY:y+d-th}},a=>[a[0]+a[2]/2,a[1]+a[3]/2]);
+// ------------------------------------------------------------------ la botola della cantina (nel vicolo della Locanda): due ante di assi nel telaio a
+// terra; quando ne esce uno zombie (bang) si spalancano per un paio di secondi (le ante dritte, il buco nero) con le schegge e un tonfo
+def('botola',function(x,y){const st={t:0},w=30,d=22,x0=x-w/2,y0=y-d/2,parts=[];shade(x0-2,y0-2,w+4,d+4,3,.3);
+  E(parts,...box(x0-3,y0-3,0,w+6,d+6,2.2,'oldwood',{ow:1.4}));
+  for(const t of[...box(x0,y0,2.2,w/2-.6,d,1.6,'plankD',{noFoot:true,ow:1.2}),...box(x0+w/2+.6,y0,2.2,w/2-.6,d,1.6,'plankD',{noFoot:true,ow:1.2})]){t.vis=()=>!(st.t>0);parts.push(t)}
+  const pit=fn3(S2=>{const a=S2(x0,y0,2.4),b=S2(x0+w,y0,2.4),c=S2(x0+w,y0+d,2.4),e=S2(x0,y0+d,2.4);ctx.fillStyle='#060403';ctx.beginPath();ctx.moveTo(...a);ctx.lineTo(...b);ctx.lineTo(...c);ctx.lineTo(...e);ctx.closePath();ctx.fill()},{fp:[[x0,y0],[x0+w,y0],[x0+w,y0+d],[x0,y0+d]],z:[2,3]});pit.vis=()=>st.t>0;parts.push(pit);
+  for(const pl of[plane(x0-.5,y0+d,2.2,d,w/2-.6,-Math.PI/2,'botolaA',leafPaint('#3a2a1a')),plane(x0+w+.5,y0,2.2,d,w/2-.6,Math.PI/2,'botolaA',leafPaint('#3a2a1a'))]){pl.vis=()=>st.t>0;parts.push(pl)}
+  prop({bx:[x0-4,y0-4,x0+w+4,y0+d+4,20],parts,noSplit:true});ANIM.push(dt=>{if(st.t>0)st.t-=dt});
+  return{bang(){st.t=2.2;if(ZM.barriere)ZM.barriere.burst('truciolo',x,y,6,6,[0,0],20);try{if(AU.ctx&&AU.on.sfx){const t=AU.ctx.currentTime+.01;fThump(t,70,40,.5,.5,.3)}}catch(e){}}}});
 // ------------------------------------------------------------------ il MERCATO: banchi col tendone a strisce strappato, casse di roba marcia, la
 // bacheca con i fogli dei dispersi, il carretto rovesciato (da sotto escono gli zombie)
 def('bancarella',function(x,y,col){const w=56,d=30,parts=[];solid(x,y+6,w,d-6);shade(x,y,w,d,58,.4);
@@ -18367,7 +18395,7 @@ function buildEast(w,h){const E={};const hole=(x,y,z,k)=>holes.push([x,y,z,k||nu
   P.shelter(X(27.2),Y(3.8),X(29.2)-X(27.2),Y(5.9)-Y(3.8));P.valvola(X(28.2),Y(4.55));
   P.gru(X(26.1),Y(10.9));P.carroTronchi(X(20.7),Y(10.0));hole(X(20.4),Y(10.4),4,'carro');
   for(const[x,y] of[[X(24.4),Y(9.7)],[X(18.0),Y(8.6)]])grave(x,y,4);
-  hole(X(21.4),Y(1.85),4,'acqua');hole(X(25.6),Y(1.85),4,'acqua');
+  hole(X(21.4),Y(1.45),4,'acqua');hole(X(25.6),Y(1.45),4,'acqua');// (nell'acqua: escono dal fiume e salgono sulla riva)
   P.lanternPole(X(19.1),Y(9.0),1);P.lanternPole(X(26.8),Y(8.9),-1);
   E.bara4=[X(20.45),Y(4.35)];E.gun4=[X(21.6),Y(8.4)+24];
   {const hostS=SG_FACE(X(21.6),Y(8.4),'s');P.wallGun(X(21.6),Y(8.4)+.6,30,'x','mitra',1250,hostS)}
@@ -18375,7 +18403,7 @@ function buildEast(w,h){const E={};const hole=(x,y,z,k)=>holes.push([x,y,z,k||nu
   const LC=P.locanda(X(15.2),Y(13.3),6.4*T,3.6*T);E.locanda=LC;
   // la Credenza degli Elisir dietro il bancone, contro il muro nord
   P.elisir(X(15.2)+306,Y(13.3)+22);
-  hole(X(19.2),Y(12.8),3,'botola');// la botola della cantina nel cortile dietro la locanda
+  {const bt=P.botola(X(14.6),Y(13.75));holes.push([X(14.6),Y(13.75),3,'botola',()=>bt.bang()])}// la botola della cantina nel vicolo a ovest della locanda (dietro, la Locanda alta la nascondeva)
   for(const[x,y,c] of[[X(22.9),Y(13.6),'R'],[X(24.65),Y(13.6),'B'],[X(23.75),Y(15.25),'R']])P.bancarella(x,y,c);
   P.bacheca(X(26.6),Y(13.75));P.carrettoRovesciato(X(25.7),Y(15.4));hole(X(25.55),Y(16.75),3,'carro');
   for(const[x,y] of[[X(22.7),Y(16.6)],[X(27.4),Y(15.0)]])P.crate(x,y);P.barrel(X(26.9),Y(16.7));P.barrel(X(22.8),Y(14.9),.85);
