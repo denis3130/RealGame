@@ -5,7 +5,7 @@ from PIL import Image
 import pixel2d as P
 
 N, FPS, BLINK = 8, 8, 5
-OUT = sys.argv[1] if len(sys.argv) > 1 else '..'
+OUT = sys.argv[1] if len(sys.argv) > 1 else os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', 'solo2d')
 
 def make_warp(t):
     def warp(sm, m, e, a):
@@ -36,11 +36,13 @@ def sheet(k, frame, name, pivot):
     Image.fromarray(a, 'RGBA').save(os.path.join(OUT, name + '.png'))
     meta = dict(asset_id='creature_volpefuoco_%s' % name, w=frame[0], h=frame[1], n=N, fps=FPS, loop=True, anchor=list(pivot),
                 frame_width=frame[0], frame_height=frame[1], frames=N, pivot=list(pivot), direction='down_left',
-                source='disegno di Denis (13 ottobre), tutto in 2D', version='0.3-anteprima-2d', status='da approvare')
+                source='disegno di Denis (13 ottobre), tutto in 2D', version='0.5-anteprima-2d-hd', status='da approvare')
     json.dump(meta, open(os.path.join(OUT, name + '.json'), 'w'), indent=1, ensure_ascii=False)
 
 if __name__ == '__main__':
     os.makedirs(OUT, exist_ok=True)
-    sheet(10.5, (96, 96), 'lotta_fermo', (48, 90))
-    sheet(16.0, (64, 64), 'mappa_fermo', (32, 58))
+    P.GRAIN = 7
+    sheet(5.25, (192, 192), 'lotta_fermo', (96, 180))
+    P.GRAIN = 9
+    sheet(8.0, (128, 128), 'mappa_fermo', (64, 116))
     print('fatto')

@@ -12,29 +12,37 @@ HEX = lambda h: [int(h[i:i + 2], 16) for i in (1, 3, 5)]
 PAL = {
     'ol': '#4a2420',   # contorno
     'il': '#8a3a26',   # linee interne
-    'f0': '#fbd796',   # pelo chiaro
-    'f1': '#f8c47a',   # pelo
-    'f2': '#f1a25a',   # pelo ombra
-    'y0': '#ffe58f',   # fiamma cuore
-    'y1': '#fbbd52',   # fiamma gialla
+    'f0': '#fde3a8',   # pelo chiarissimo
+    'f1': '#f9cf86',   # pelo chiaro
+    'f2': '#f6bb6c',   # pelo
+    'f3': '#f0a257',   # pelo ombra
+    'f4': '#e3863f',   # pelo ombra scura
+    'y0': '#fff0b0',   # fiamma cuore
+    'y1': '#ffd468',   # fiamma gialla
+    'o0': '#fbb24b',   # fiamma arancio chiaro
     'o1': '#f4913e',   # fiamma arancio
-    'r1': '#e8623c',   # fiamma rosso arancio
-    'r2': '#cc4134',   # fiamma rossa
+    'r0': '#ee7240',   # fiamma rosso arancio chiaro
+    'r1': '#e05a38',   # fiamma rosso arancio
+    'r2': '#c8402f',   # fiamma rossa
     'r3': '#992a2c',   # rosso scuro (orecchie dentro, ombre delle fiamme)
-    'p1': '#e2724f',   # zampe
-    'p2': '#bd4a3a',   # zampe ombra
+    'p0': '#ee8a63',   # zampe chiare
+    'p1': '#e0704d',   # zampe
+    'p2': '#c2533d',   # zampe ombra
+    'p3': '#9c3c33',   # zampe ombra scura
     'bl': '#f28a6e',   # guance
     'ek': '#3a1418',   # pupilla e contorno dell'occhio
+    'e0': '#5e1a1e',   # iride scurissima
     'e1': '#8e2226',   # iride scura
     'e2': '#d24a32',   # iride rossa
     'e3': '#f7a54a',   # iride bassa
+    'e4': '#ffd27a',   # iride bassa chiara
     'ew': '#fffaf0',   # luce dell'occhio
     'to': '#ee8a8a',   # lingua
     'mo': '#7a2228',   # bocca
 }
 KEYS = [q for q in PAL]
 LAB = {q: rgb2lab(np.array([[np.array(HEX(PAL[q])) / 255.0]]))[0, 0] for q in PAL}
-BODY = ['f0', 'f1', 'f2', 'y0', 'y1', 'o1', 'r1', 'r2', 'r3', 'p1', 'p2', 'bl']
+BODY = ['f0', 'f1', 'f2', 'f3', 'f4', 'y0', 'y1', 'o0', 'o1', 'r0', 'r1', 'r2', 'r3', 'p0', 'p1', 'p2', 'p3', 'bl']
 
 def nearest(L, keys, w=(1.0, 1.3, 1.3)):
     P = np.array([LAB[q] for q in keys]); d = ((L[..., None, :] - P) ** 2 * np.array(w)).sum(-1)
@@ -50,6 +58,7 @@ def source(tv=0.2):
     return _SRC
 
 _FULL = {}
+GRAIN = 9
 def full_labels(sm, m, contrast, sat, shift, cache=True):
     key = (id(sm), contrast, sat, shift)
     if cache and key in _FULL: return _FULL[key]
@@ -65,7 +74,7 @@ def full_labels(sm, m, contrast, sat, shift, cache=True):
     idx[ys, xs] = best
     # grana della matita: ogni pixel prende il colore più comune intorno (finestra 7x7)
     oh = np.stack([(idx == q).astype(np.float32) for q in range(len(BODY))], -1)
-    oh = np.stack([nd.uniform_filter(oh[..., q], 9) for q in range(len(BODY))], -1)
+    oh = np.stack([nd.uniform_filter(oh[..., q], GRAIN) for q in range(len(BODY))], -1)
     idx = np.where(m, oh.argmax(-1), -1).astype(np.int16)
     if cache: _FULL[key] = idx
     return idx
@@ -147,7 +156,7 @@ FEAT = [
 
 def features(lab, op, a, k, ox, oy, warp_shift=None, xf=None):
     H, W = lab.shape; out = np.zeros((H, W), bool)
-    fur = ['f0', 'f1', 'f2', 'y1', 'o1']
+    fur = ['f0', 'f1', 'f2', 'f3', 'y1', 'o0', 'o1']
     for (x0, y0, x1, y1), keys, wt in FEAT:
         if xf is not None:
             (x0, y0), (x1, y1) = [xf[:, :2] @ np.array(q) + xf[:, 2] for q in ((x0, y0), (x1, y1))]
@@ -182,7 +191,7 @@ def stamp(lab, op, cx, cy, far=False, closed=False):
 def clear_around(lab, op, cx, cy, a, b):
     """i pixel non di pelo dentro l'ellisse prendono il pelo più comune lì intorno"""
     H, W = lab.shape
-    fur = ('f0', 'f1', 'f2')
+    fur = ('f0', 'f1', 'f2', 'f3', 'f4')
     ring = []
     for i in range(int(cy - b - 3), int(cy + b + 4)):
         for j in range(int(cx - a - 3), int(cx + a + 4)):
@@ -199,7 +208,7 @@ def eye(lab, op, cx, cy, a, b, far=False, closed=False, ss=6):
     """occhio da sprite: contorno scuro (più spesso sopra), iride dal rosso scuro all'arancio, pupilla dritta, due luci"""
     H, W = lab.shape
     y0, y1 = int(np.floor(cy - b - 1)), int(np.ceil(cy + b + 1)); x0, x1 = int(np.floor(cx - a - 1)), int(np.ceil(cx + a + 1))
-    PR = dict(ek=4, ew=5, e1=1, e2=1, e3=1)
+    PR = dict(ek=4, ew=5, e0=1, e1=1, e2=1, e3=1, e4=1)
     for i in range(max(y0, 0), min(y1 + 1, H)):
         for j in range(max(x0, 0), min(x1 + 1, W)):
             votes = {}
@@ -216,9 +225,13 @@ def eye(lab, op, cx, cy, a, b, far=False, closed=False, ss=6):
                         ring = 1 - 1.05 / max(a, 1.5) if ey > -0.35 else 1 - 1.7 / max(a, 1.5)   # palpebra sopra più spessa
                         if r > ring: c = 'ek'
                         else:
-                            c = 'e1' if ey < -0.3 else ('e2' if ey < 0.38 else 'e3')
+                            if a >= 6:
+                                c = 'e0' if ey < -0.45 else ('e1' if ey < -0.1 else ('e2' if ey < 0.35 else ('e3' if ey < 0.62 else 'e4')))
+                            else:
+                                c = 'e1' if ey < -0.3 else ('e2' if ey < 0.38 else 'e3')
                             if (ex / 0.24) ** 2 + ((ey - 0.02) / 0.5) ** 2 < 1: c = 'ek'
                             if ((ex - (0.05 if far else -0.2)) / 0.3) ** 2 + ((ey + 0.4) / 0.24) ** 2 < 1: c = 'ew'
+                            if a >= 6 and not far and ((ex - 0.3) / 0.12) ** 2 + ((ey - 0.42) / 0.1) ** 2 < 1: c = 'ew'
                     votes[c] = votes.get(c, 0) + 1
             if not votes: continue
             tot = sum(votes.values())

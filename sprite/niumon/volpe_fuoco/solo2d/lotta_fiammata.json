@@ -3,30 +3,30 @@
  "category": "creature_battle",
  "animation": "attack",
  "direction": "front",
- "frame_width": 144,
- "frame_height": 96,
+ "frame_width": 288,
+ "frame_height": 192,
  "frames": 10,
  "fps": 12,
  "loop": false,
  "pivot": [
-  94,
-  90
+  188,
+  180
  ],
  "hitbox": [
-  60,
-  20,
-  76,
-  72
+  120,
+  40,
+  152,
+  144
  ],
  "source": "disegno di Denis (13 ottobre), tutto in 2D",
- "version": "0.4-anteprima-2d",
+ "version": "0.5-anteprima-2d-hd",
  "status": "da approvare",
- "w": 144,
- "h": 96,
+ "w": 288,
+ "h": 192,
  "n": 10,
  "anchor": [
-  94,
-  90
+  188,
+  180
  ],
- "nota": "da mostrare a 2 pixel per pixel; la fiammata esce a sinistra verso l'avversario"
+ "nota": "la fiammata esce a sinistra verso l'avversario"
 }

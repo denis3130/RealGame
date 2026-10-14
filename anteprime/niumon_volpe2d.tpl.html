@@ -3,8 +3,8 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:wght@400;700&family=Pixelify+Sans:wght@500;600;700&display=swap">
 <style>
-/* Layout: confronto col disegno in alto, la mossa della lotta, poi le 8 direzioni della mappa (corsa o fermo) in una griglia.
-   Un solo aspetto scuro di proposito: la pixel art si giudica su un fondo notte. */
+/* Layout: «Prima | Adesso» in alto (vale per tutta la pagina), confronto col disegno, la mossa della lotta, poi le 8 direzioni
+   della mappa (corsa o fermo) in una griglia. Un solo aspetto scuro di proposito: la pixel art si giudica su un fondo notte. */
 :root{
   --bg:#121015; --panel:#1a171d; --line:#302a33; --fg:#f0eae5; --dim:#aaa098; --ember:#f08a4c;
   --f-pix:"Pixelify Sans", ui-monospace, "Courier New", monospace;
@@ -28,45 +28,63 @@ p{margin:0;max-width:62ch}
 img.pic{object-fit:contain;background:#fbfaf7}
 canvas{display:block;width:100%;border-radius:6px;background:radial-gradient(ellipse at 50% 72%,#251e25 0%,#18141a 70%)}
 canvas.pic{aspect-ratio:1/1}
-#cvMossa{height:clamp(220px,40vw,400px)}
+#cvMossa{height:clamp(230px,40vw,420px)}
 .fig figcaption{font-size:.9rem;color:var(--dim)}
 .fig figcaption b{display:block;font-family:var(--f-pix);font-weight:600;color:var(--fg);font-size:.95rem}
-.grid8{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px}
+.grid8{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;
+  grid-template-areas:"su_sinistra su su_destra" "sinistra giro destra" "giu_sinistra giu giu_destra"}
 .cell{display:grid;gap:4px;justify-items:center;background:var(--panel);border:1px solid var(--line);border-radius:8px;padding:8px 6px;min-width:0}
-.cell canvas{height:210px}
+.cell canvas{height:276px}
+.cell.giro{border-color:#4a3a2c}
 .cell span{font:600 .85rem var(--f-pix)}
+.bar{display:flex;flex-wrap:wrap;align-items:center;gap:10px 16px}
 .ctl{display:flex;flex-wrap:wrap;gap:6px}
 .ctl button{font:600 .9rem var(--f-pix);color:var(--fg);background:#221e25;border:1.5px solid var(--line);border-radius:6px;padding:7px 14px;min-height:2.6rem;cursor:pointer;touch-action:manipulation}
 .ctl button[aria-pressed="true"]{border-color:var(--fg);background:#2d2730}
+.ctl.big button[aria-pressed="true"]{border-color:var(--ember);color:#fff}
 button:focus-visible{outline:3px solid var(--fg);outline-offset:2px}
-@media (max-width:760px){.row3{grid-template-columns:repeat(3,minmax(0,1fr));gap:6px}.fig{padding:6px}.fig figcaption span{display:none}
-  .grid8{grid-template-columns:repeat(2,minmax(0,1fr))}.cell canvas{height:170px}}
+.note{font-size:.9rem}
+@media (max-width:760px){
+  .row3{grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
+  .row3 .wide{grid-column:1 / -1;order:3}
+  .fig{padding:8px}
+  .grid8{grid-template-columns:repeat(2,minmax(0,1fr));
+    grid-template-areas:"giro giro" "giu giu_sinistra" "sinistra su_sinistra" "su su_destra" "destra giu_destra"}
+  .cell canvas{height:176px}.cell.giro canvas{height:236px}}
 </style>
 <main class="wrap">
   <header>
     <p class="eyebrow">Niumon · tutto in 2D</p>
-    <h1>Il Niumon <em>di fuoco</em> in 2D</h1>
-    <p class="dim" style="margin-top:10px">Occhio rimesso all'altezza giusta (misurato sul tuo disegno), la mossa in lotta e le 8 direzioni per correre sulla mappa. Niente modellino 3D colorato dalla luce: colori piatti, contorni scuri, come uno sprite disegnato.</p>
+    <h1>Il Niumon <em>di fuoco</em>, più pixel</h1>
+    <p class="dim" style="margin-top:10px">Il doppio dei pixel in tutti gli sprite e colori presi dal tuo disegno: pelo oro e arancio che diventa rosso verso le zampe, fiamme dal bordo rosso al cuore giallo, tratteggio della matita, filo di luce in alto a sinistra. Con «Prima» vedi com'era, alla stessa grandezza.</p>
   </header>
+
+  <div class="bar">
+    <div class="ctl big" role="group" aria-label="Versione">
+      <button type="button" id="bAdesso" aria-pressed="true">Adesso</button>
+      <button type="button" id="bPrima" aria-pressed="false">Prima</button>
+    </div>
+    <p class="dim note" id="vNote">Adesso: lotta 192×192, mappa 128×128.</p>
+  </div>
 
   <section class="sec" aria-labelledby="hCmp">
     <h2 id="hCmp">Il tuo disegno e lo sprite</h2>
     <div class="row3">
-      <figure class="fig"><img class="pic" id="imDraw" alt="Il disegno di Denis"><figcaption><b>Il tuo disegno</b><span>La fonte di tutto.</span></figcaption></figure>
-      <figure class="fig"><canvas class="pic" id="cvLotta" aria-label="Sprite della lotta, fermo"></canvas><figcaption><b>Lotta · fermo</b><span>96×96, da mostrare a 2 pixel per pixel.</span></figcaption></figure>
-      <figure class="fig"><canvas class="pic" id="cvMappa" aria-label="Sprite della mappa dal disegno, fermo"></canvas><figcaption><b>Mappa · dal disegno</b><span>64×64, la stessa vista del disegno.</span></figcaption></figure>
+      <figure class="fig"><img class="pic" id="imDraw" alt="Il disegno di Denis"><figcaption><b>Il tuo disegno</b>La fonte di tutto.</figcaption></figure>
+      <figure class="fig wide"><canvas class="pic" id="cvLotta" aria-label="Sprite della lotta, fermo"></canvas><figcaption><b>Lotta · fermo</b><span class="sz" data-a="192×192 (prima 96×96)." data-p="96×96, com'era.">192×192 (prima 96×96).</span></figcaption></figure>
+      <figure class="fig"><canvas class="pic" id="cvMappa" aria-label="Sprite della mappa dal disegno, fermo"></canvas><figcaption><b>Mappa · dal disegno</b><span class="sz" data-a="128×128, la vista del disegno." data-p="64×64, com'era.">128×128, la vista del disegno.</span></figcaption></figure>
     </div>
   </section>
 
   <section class="sec" aria-labelledby="hMossa">
     <h2 id="hMossa">In lotta: la fiammata</h2>
-    <p class="dim">Si carica all'indietro, scatta in avanti e sputa una fiammata verso l'avversario, poi torna al suo posto. 10 fotogrammi a 12 al secondo, fatti dal tuo disegno.</p>
+    <p class="dim">Si carica all'indietro, scatta in avanti e sputa una fiammata verso l'avversario, poi torna al suo posto. 10 fotogrammi a 12 al secondo, fatti dal tuo disegno, ora a 288×192.</p>
     <canvas id="cvMossa" aria-label="La mossa della fiammata, in loop"></canvas>
   </section>
 
   <section class="sec" aria-labelledby="hDir">
     <h2 id="hDir">Sulla mappa: 8 direzioni</h2>
-    <p class="dim">Ogni pezzo è una forma piatta col suo contorno (testa, orecchie, cresta, gorgiera, corpo, zampe con le calze rosse, la coda presa dal tuo disegno), messa al posto giusto per ogni direzione da uno scheletro di punti. Corsa a balzi: 6 fotogrammi a 12 al secondo. Riquadri da 64×64 ingranditi 3 volte.</p>
+    <p class="dim">Riquadri da 128×128 (prima 64×64). Stesse forme piatte col loro contorno, ma con le proporzioni del tuo disegno: zampe grosse con le calze rosse e le dita, cresta grande, orecchie coi ciuffi di fiamma, ciuffi sulle guance, collare rosso e petto chiaro a punte, fiamme dietro la testa che si vedono da dietro, braci che salgono quando sta fermo. Ogni pezzo ha la luce in alto a sinistra, l'ombra sotto e il tratteggio della matita; le linee scure restano solo dove servono. Corsa a balzi: 6 fotogrammi a 12 al secondo.</p>
     <div class="ctl" role="group" aria-label="Animazione">
       <button type="button" id="bCorsa" aria-pressed="true">Corsa</button>
       <button type="button" id="bFermo" aria-pressed="false">Fermo</button>
@@ -77,32 +95,45 @@ button:focus-visible{outline:3px solid var(--fg);outline-offset:2px}
 <script>
 (()=>{
 'use strict';
-const S=__SHEETS__,IM=__IMAGES__;
+const S=__SHEETS__,OLD=__OLD__,IM=__IMAGES__;
 const reduce=matchMedia('(prefers-reduced-motion: reduce)').matches;
 const $=id=>document.getElementById(id);
-const DIRS=[['su_sinistra','su-sinistra'],['su','su'],['su_destra','su-destra'],['destra','destra'],['giu_destra','giù-destra'],['giu','giù'],['giu_sinistra','giù-sinistra'],['sinistra','sinistra']];
-let anim='corsa';
+const DIRS=[['giu','giù'],['giu_sinistra','giù-sinistra'],['sinistra','sinistra'],['su_sinistra','su-sinistra'],['su','su'],['su_destra','su-destra'],['destra','destra'],['giu_destra','giù-destra']];
+let anim='corsa',ver='adesso';
 function load(src){return new Promise((ok,ko)=>{const i=new Image();i.onload=()=>ok(i);i.onerror=ko;i.src=src})}
 function fit(cv){const D=Math.min(2,window.devicePixelRatio||1),w=Math.round(cv.clientWidth*D),h=Math.round(cv.clientHeight*D);if(cv.width!==w||cv.height!==h){cv.width=w;cv.height=h}return D}
-function draw(cv,sh,t,maxS){const D=fit(cv),g=cv.getContext('2d'),W=cv.width,H=cv.height;g.clearRect(0,0,W,H);if(!sh||!sh.img)return;
-  let sc=Math.min((W-8*D)/sh.w,(H-8*D)/sh.h);const smooth=sc<1;if(!smooth)sc=Math.floor(Math.min(sc,(maxS||99)*D));
-  const f=reduce?0:Math.floor(t*sh.fps)%sh.n,x=Math.round((W-sh.w*sc)/2),y=Math.round((H-sh.h*sc)/2);
-  g.save();g.globalAlpha=.45;g.fillStyle='#050406';g.beginPath();g.ellipse(x+(sh.anchor[0]+.5)*sc,y+(sh.anchor[1]+.5)*sc,Math.min(sh.w,64)*sc*.28,Math.max(2,sc*2.5),0,0,Math.PI*2);g.fill();g.restore();
-  g.imageSmoothingEnabled=smooth;g.drawImage(sh.img,f*sh.w,0,sh.w,sh.h,x,y,sh.w*sc,sh.h*sc)}
-const grid=$('grid'),cells=[];
-for(const[k,n]of DIRS){const c=document.createElement('div');c.className='cell';const cv=document.createElement('canvas');cv.setAttribute('aria-label',n);
-  const l=document.createElement('span');l.textContent=n;c.appendChild(cv);c.appendChild(l);grid.appendChild(c);cells.push([cv,k])}
+// la scala si sceglie sul foglio di adesso; quello di prima si disegna alla stessa grandezza (ogni suo pixel vale 2)
+function draw(cv,key,t,maxS){const D=fit(cv),g=cv.getContext('2d'),W=cv.width,H=cv.height;g.clearRect(0,0,W,H);
+  const ref=S[key];if(!ref||!ref.img)return;const sh=(ver==='prima'&&OLD[key]&&OLD[key].img)?OLD[key]:ref;
+  let sc=Math.min((W-8*D)/ref.w,(H-8*D)/ref.h);const smooth=sc<1;if(!smooth)sc=Math.floor(Math.min(sc,(maxS||99)*D));
+  const k=sc*ref.w/sh.w,f=reduce?0:Math.floor(t*sh.fps)%sh.n,x=Math.round((W-ref.w*sc)/2),y=Math.round((H-ref.h*sc)/2);
+  g.save();g.globalAlpha=.45;g.fillStyle='#050406';g.beginPath();
+  g.ellipse(x+(ref.anchor[0]+.5)*sc,y+(ref.anchor[1]+.5)*sc,Math.min(ref.w,ref.h)*sc*.19,Math.max(2,Math.min(ref.w,ref.h)*sc*.035),0,0,Math.PI*2);g.fill();g.restore();
+  g.imageSmoothingEnabled=smooth||(k%1!==0);g.drawImage(sh.img,f*sh.w,0,sh.w,sh.h,x,y,sh.w*k,sh.h*k)}
+const grid=$('grid'),cells=[];let giro=null,giroL=null;
+function mkCell(k,n,cls){const c=document.createElement('div');c.className='cell'+(cls?' '+cls:'');c.style.gridArea=k;const cv=document.createElement('canvas');cv.setAttribute('aria-label',n);
+  const l=document.createElement('span');l.textContent=n;c.appendChild(cv);c.appendChild(l);grid.appendChild(c);return[cv,l]}
+for(const[k,n]of DIRS)cells.push([mkCell(k,n)[0],k]);
+[giro,giroL]=mkCell('giro','gira su se stesso','giro');
 function setAnim(a){anim=a;$('bCorsa').setAttribute('aria-pressed',String(a==='corsa'));$('bFermo').setAttribute('aria-pressed',String(a==='fermo'))}
+function setVer(v){ver=v;$('bAdesso').setAttribute('aria-pressed',String(v==='adesso'));$('bPrima').setAttribute('aria-pressed',String(v==='prima'));
+  $('vNote').textContent=v==='adesso'?'Adesso: lotta 192×192, mappa 128×128.':'Prima: lotta 96×96, mappa 64×64, ingranditi del doppio.';
+  for(const s of document.querySelectorAll('.sz'))s.textContent=v==='adesso'?s.dataset.a:s.dataset.p}
 $('bCorsa').onclick=()=>setAnim('corsa');$('bFermo').onclick=()=>setAnim('fermo');
+$('bAdesso').onclick=()=>setVer('adesso');$('bPrima').onclick=()=>setVer('prima');
+if(!Object.keys(OLD).length)$('bPrima').closest('.bar').hidden=true;
 const T0=performance.now();
 function frame(now){const t=(now-T0)/1000;
-  draw($('cvLotta'),S.lotta,t);draw($('cvMappa'),S.mappa,t);
+  draw($('cvLotta'),'lotta',t,3);draw($('cvMappa'),'mappa',t,3);
   // la mossa: giocata e poi una pausa da fermo
   const m=S.mossa,cyc=m.n/m.fps+0.9,tt=t%cyc;
-  if(tt<m.n/m.fps)draw($('cvMossa'),m,tt,4);else draw($('cvMossa'),m,0,4);
-  for(const[cv,k]of cells)draw(cv,S[anim+'_'+k],t,3);
+  draw($('cvMossa'),'mossa',tt<m.n/m.fps?tt:0,4);
+  for(const[cv,k]of cells)draw(cv,anim+'_'+k,t,3);
+  // al centro: gira su se stesso, una direzione ogni mezzo secondo
+  const gi=reduce?0:Math.floor(t/0.5)%8,gk=DIRS[gi];draw(giro,anim+'_'+gk[0],t,3);giroL.textContent='gira: '+gk[1];
   requestAnimationFrame(frame)}
-Promise.all(Object.keys(S).map(k=>load(S[k].src).then(i=>{S[k].img=i}))).then(()=>{
-  if(IM.disegno)$('imDraw').src=IM.disegno;else $('imDraw').closest('figure').hidden=true;setAnim('corsa');requestAnimationFrame(frame)});
+const all=[...Object.values(S),...Object.values(OLD)];
+Promise.all(all.map(s=>load(s.src).then(i=>{s.img=i}))).then(()=>{
+  if(IM.disegno)$('imDraw').src=IM.disegno;else $('imDraw').closest('figure').hidden=true;setAnim('corsa');setVer('adesso');requestAnimationFrame(frame)});
 })();
 </script>

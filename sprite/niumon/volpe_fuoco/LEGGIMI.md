@@ -40,6 +40,30 @@ quando correrà in giro».
   fiammeggiano.
 - Pagina: la stessa (`python3 anteprime/mk_niumon_volpe2d.py`).
 
+### Poi (14 ottobre, notte): più pixel e più vero
+
+Denis: «aggiungi più pixel e fallo sembrare più vero dai».
+- Dal disegno, il doppio dei pixel: `solo2d/lotta_fermo` 192×192 (il riquadro della lotta del piano, un pixel per pixel),
+  `solo2d/mappa_fermo` 128×128, `solo2d/lotta_fiammata` 288×192. Tavolozza del disegno più ricca (pelo e fiamme a più toni,
+  iride a cinque toni con due luci), occhi disegnati a questa misura.
+- Mappa in 8 direzioni rifatta con `burattino2d/volpe_hd.py` (128×128, punto d'appoggio (64, 111)); `produci2d.py` ora usa
+  questo (`volpe2d.py` è quello di prima, a 64 px). Sempre forme piatte col loro contorno messe a posto dallo scheletro, ma:
+  - proporzioni del disegno (quelle della base controllata sul disegno: testa ×1, corpo lungo), zampe grosse con le calze rosse
+    e due dita sul davanti del piede, cresta grande a sei lingue, orecchie con due ciuffi di fiamma sul bordo esterno, ciuffi
+    sulle guance, collare rosso a ciuffi e petto chiaro a punte, ciuffo sulla schiena, fiamme dietro la testa (si vedono da
+    dietro), bocca aperta con la lingua, braci che salgono quando sta fermo;
+  - colori del disegno: misurato lo sprite fatto dal disegno, il pelo è quasi tutto oro e arancio (`o0`, `o1`, `y1`) con l'ombra
+    rossa (`r0`, `r1`), non i toni chiari `f0`–`f4`; le calze vanno dall'arancio al rosso scuro, le fiamme dal bordo rosso al
+    cuore giallo;
+  - toni come in una pittura a mano, pezzo per pezzo (`Tela.put`): filo di luce sul bordo verso la luce (in alto a sinistra),
+    ombra sul bordo opposto, più scuro in basso, zampe lontane più scure; il tono delle zampe vicine si calcola insieme al
+    corpo, così spalla e coscia si fondono nel corpo; sopra, il tratteggio della matita fisso sul pezzo (`TEX`);
+  - linee: fuori marrone scuro (rosso scurissimo vicino alle fiamme), dentro più chiare; sul bordo di un pezzo di pelo che guarda
+    la luce la linea interna non c'è (restano sui lati in ombra e sotto); pixel isolati tolti (`despeckle`).
+  - Controlli: nessun fotogramma tocca il bordo (almeno 4 px di margine), i fogli si rifanno uguali al pixel dagli script.
+- Pagina: la stessa, con «Prima | Adesso» (i fogli di prima presi da git, commit 3facba8, mostrati alla stessa grandezza) e le
+  8 direzioni a rosa dei venti, con al centro la volpe che gira su se stessa.
+
 ## Versione colorata in 2D sulla base 3D (14 ottobre, notte)
 
 Denis: «prova a farlo 2d facendolo più simile che ne so ad un evee va bene? mettici poco tempo». Fatto in fretta, sulla stessa base:

@@ -4,29 +4,29 @@
  "animation": "run",
  "direction": "down_left",
  "direzione": "giu_sinistra",
- "frame_width": 64,
- "frame_height": 64,
+ "frame_width": 128,
+ "frame_height": 128,
  "frames": 6,
  "fps": 12,
  "loop": true,
  "pivot": [
-  32,
-  56
+  64,
+  111
  ],
  "hitbox": [
-  20,
-  50,
-  24,
-  8
+  40,
+  99,
+  48,
+  16
  ],
- "source": "burattino 2D dal disegno di Denis (13 ottobre)",
- "version": "0.4-anteprima-2d",
+ "source": "burattino 2D con le forme e i colori del disegno di Denis (13 ottobre)",
+ "version": "0.5-anteprima-2d-hd",
  "status": "da approvare",
- "w": 64,
- "h": 64,
+ "w": 128,
+ "h": 128,
  "n": 6,
  "anchor": [
-  32,
-  56
+  64,
+  111
  ]
 }
