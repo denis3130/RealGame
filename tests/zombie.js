@@ -72,7 +72,8 @@ let fails=0;const ok=(c,m)=>{console.log((c?'  ok  ':'  NO  ')+m);if(!c)fails++}
   ok(await E("JSON.stringify(CR.cam)")===crCam0,"l'inclinazione dei personaggi (CR.cam) è tornata quella del menu");
   ok(/Round\s*3/.test(await p.textContent('#chapCard')),'la scheda mostra il record: round 3');
   // 8. la Classica parte ancora come prima
-  await p.click('#cSprout',{force:true});await p.waitForFunction(()=>__E('!MM.tr'),null,{timeout:10000});await p.waitForTimeout(400);ok(await E("SAVE.modo")==='classica'&&!(await E("$('menu').classList.contains('zmode')")),'il germoglio riporta al menu Classico');
+  // (tornando al menu si apre da solo l'accesso giornaliero, dopo 0,7 s: lo si chiude come farebbe Denis)
+  await p.waitForTimeout(900);await E("if(!$('sheetScr').hidden)closeSheet()");await p.waitForTimeout(300);await p.click('#cSprout',{force:true});await p.waitForFunction(()=>__E('!MM.tr'),null,{timeout:10000});await p.waitForTimeout(400);ok(await E("SAVE.modo")==='classica'&&!(await E("$('menu').classList.contains('zmode')")),'il germoglio riporta al menu Classico');
   await p.click('#playBtn');await p.waitForTimeout(2600);
   ok(await E("started&&!paused&&G&&G.room===1&&$('menu').hidden")&&!(await E("ZG.on")),'con la Classica «Gioca» parte nella cripta come prima');await shot('9_classica');
   console.log('\nERR',JSON.stringify(errs.slice(0,6)));if(errs.length)fails++;console.log(fails?`${fails} prove non passate`:'tutte le prove passate');await b.close();srv.close();process.exit(fails?1:0)})();
