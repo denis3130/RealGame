@@ -321,6 +321,46 @@ const M={
     const f0=[1.6,R0*1.9,0],f1=[3.1,R0*1.9+2.4*k,.3];K.rod([f0,f1],.75,['#5a4228','#8a6a44','#b8956a'],{hi:0,db:.03});
     K.fx(f1,q=>{const fl=.8+.2*Math.sin(G.t*30);shine('255,200,90',q[0],q[1],6*fl*K.s,.85);ctx.fillStyle='#fff3c0';ball(q,1.1*K.s*k);ctx.fill()},.05);
     return{muzzle:C,eject:null,sup:null}},
+  // the Bard's lute: a pear-shaped body of warm wood with its bowl behind (three slabs, smaller and darker, so from the side it reads
+  // round), a dark sound hole in a golden rosette, the bridge, a neck with its fingerboard, the pegbox bent back with its pegs, four
+  // strings. x along the neck (the pegbox at +x), y out of the soundboard, z across the strings; the body's middle at 0,0,0. st.strum:
+  // where the strumming hand is across the strings (-1..1, the hand drawn by the hero); st.ring 0..1: the strings still shaking
+  liuto(K,st){const BODY=[[-8,0],[-7.5,-3],[-5.8,-5],[-3,-5.7],[0,-5.2],[2.8,-3.6],[5,-1.7],[5.8,0],[5,1.7],[2.8,3.6],[0,5.2],[-3,5.7],[-5.8,5],[-7.5,3]],
+      W=['#8a4a1e','#c8803e','#f2b46a'],B=['#4a2410','#7a3e1a','#a85a2a'],S=K.frame([0,0,0],[1,0,0],[0,0,1]),rg=st.ring||0;
+    const sc=(k,dx)=>BODY.map(p=>[p[0]*k+dx,p[1]*k]);
+    // the bowl (behind the soundboard: the sub-frame's z goes into it), then the soundboard
+    S.prism(sc(.5,-1.2),3.4,4.3,B,{hi:0,dk:.5});S.prism(sc(.74,-.7),2.2,3.4,B,{hi:0,dk:.55});S.prism(sc(.9,-.3),.9,2.2,B,{hi:.2,dk:.6});
+    S.prism(BODY,0,.9,W,{hi:.5,dk:.62,det:L=>{L.line(-6.9,-1.9,-6.9,1.9,'rgba(40,20,8,.35)',.35);for(const x of[-4.5,-1.5])L.line(x,-4.6,x,4.6,'rgba(120,60,20,.12)',.3)}});
+    K.disc([1,.03,0],[0,1,0],2.25,'#e8c060',{db:.02});K.disc([1,.04,0],[0,1,0],1.75,'#2a1a10',{db:.03});
+    K.fx([1,.05,0],q=>{ctx.strokeStyle='rgba(255,226,140,.55)';ctx.lineWidth=.4*K.s;ball(q,1.25*K.s);ctx.stroke()},.04);
+    S.box(-6.2,-2.3,-5.2,2.3,-.75,0,B,{hi:.3,db:.05},.3);
+    // the neck and the fingerboard, the pegbox bent back with three pegs a side
+    S.box(5,-1,16.4,1,-.15,1.3,'noce',{hi:.3});S.box(5.2,-.85,16.2,.85,-.55,-.15,['#1d1612','#3a2e26','#5e4c40'],{hi:.2,db:.02});
+    const PB=K.frame([16.2,-.3,0],[.82,-.57,0],[0,0,1]);PB.box(0,-1.1,5,1.1,-.75,.75,'noce',{hi:.3},.4);
+    for(const x of[1.2,2.5,3.8])for(const sd of[-1,1])PB.sph([x,0,sd*1.35],.45,'cera',{db:.02});
+    // the strings, a little above the soundboard, shaking after the strum
+    for(const z of[-.66,-.22,.22,.66]){const w=rg>0?Math.sin(rg*40+z*9)*.32*rg:0;K.rod([[-5.6,.8,z],[1,.95,z+w],[16.2,.62,z]],.22,['#cdbf9f','#f6ead2','#fffaf0'],{noOut:1,hi:0,db:.25})}
+    return{muzzle:[1,1.2,0],strum:[-2.4,1.9,cl(st.strum==null?.3:st.strum,-1,1)*2.6],sup:[12.4,1.7,0],eject:null}},
+  // the Alchemist's flask: a round belly of glass with the liquid glowing inside (st.col), bubbles rising, a narrow neck and a cork; in
+  // the hand at 0,0,0 (y up). st.has 0..1: how much of it there is (a new one pops into the hand after a throw)
+  fiala(K,st){const k=st.has==null?1:st.has;if(k<=.02)return{muzzle:[0,0,0],eject:null,sup:null};const col=st.col||'#7bf06a',rgb=hexRgb(col),
+      GL=['#7f9ea6','#c4e0e6','#ffffff'],R0=3.3*k,C=[1.3,R0*.95,0];
+    K.fx(C,q=>shine(rgb,q[0],q[1],R0*2.4*K.s,.32),-4);
+    K.sph(C,R0,GL);
+    K.fx(C,q=>{const r=R0*K.s*.84;ctx.save();ball(q,r);ctx.clip();const g=ctx.createLinearGradient(0,q[1]-r*.2,0,q[1]+r);g.addColorStop(0,mix(col,'#ffffff',.35));g.addColorStop(1,mix(col,'#0d1418',.35));
+      ctx.fillStyle=g;ctx.fillRect(q[0]-r,q[1]-r*.15,r*2,r*1.3);ctx.fillStyle='rgba(255,255,255,.65)';
+      for(let i=0;i<3;i++){const u=((G.t*.8+i/3)%1),x=q[0]+Math.sin(i*2.3+G.t*2)*r*.35;ball([x,q[1]+r*.75-u*r*.95],r*.11*(1-u*.4));ctx.fill()}ctx.restore();
+      ctx.fillStyle='rgba(255,255,255,.8)';ball([q[0]-r*.42,q[1]-r*.45],r*.2);ctx.fill()},.05);
+    K.cyl([1.3,R0*1.65,0],[1.3,R0*2.55,0],1.05*k,GL,{db:.02});
+    K.cyl([1.3,R0*2.45,0],[1.3,R0*3,0],1.25*k,'legno',{db:.03});
+    return{muzzle:C,eject:null,sup:null}},
+  // the Ninja's star: four points of dark steel round a hole, the edges bright; in the hand at 0,0,0. st.has 0..1, st.spin its turn
+  stellina(K,st){const k=st.has==null?1:st.has;if(k<=.02)return{muzzle:[0,0,0],eject:null,sup:null};const r=4.4*k,c=[2.2,1.4,0],a0=st.spin||0,pts=[];
+    for(let i=0;i<8;i++){const a=i/8*TAU+a0,rr=i%2?r*.3:r;pts.push([Math.cos(a)*rr,Math.sin(a)*rr])}
+    const F=K.frame(c,[1,0,0],[0,1,0]);
+    F.prism(pts,-.32,.32,['#262b33','#5c6672','#c9d2dc'],{hi:.55,dk:.55,det:L=>{for(let i=0;i<4;i++){const a=i/4*TAU+a0;L.line(Math.cos(a)*r*.25,Math.sin(a)*r*.25,Math.cos(a)*r*.9,Math.sin(a)*r*.9,'rgba(255,255,255,.35)',.3)}}});
+    F.disc([0,0,.34],[0,0,1],.85*k,'#121417',{db:.02});F.disc([0,0,-.34],[0,0,-1],.85*k,'#121417',{db:.02});
+    return{muzzle:c,eject:null,sup:null}},
   // the bows, bent in the plane of x (where the belly points, toward the target) and y (along the string), held at 0,0,0: a stave thick in
   // the middle and thin at the tips, the grip wrapped, the string from tip to tip (through st.pinch, the hand that draws it, a point in
   // this frame) and the arrow on it (st.nock). st.kind: 'plain' (frassino: horn tips), 'recurve' (tips that curl forward, green grip,
@@ -363,5 +403,5 @@ function draw(id,V0,fr,st,extra){const K=kit(V0,fr),f=M[id];if(!f)return null;st
   for(const k in pts){const v=pts[k];o[k]=v&&v.length===3&&typeof v[0]==='number'?K.W(v):null}return o}
 // the frame of a weapon held at O (a room point), pointing along aim, its top toward up (made square to aim); s: its size
 function frame(O,aim,up,s){const X=nrm(aim),Y=nrm(sub(up,mul(X,dot(up,X))));return{O,X,Y,Z:cross(Y,X),s:s||1}}
-const DATI_N={pistola:'Pistola',revolver:'Revolver',mitraglietta:'Mitraglietta',mitra:'Mitra',mitragliatrice:'Mitragliatrice',pompa:'Pompa da caccia',tattica:'Pompa tattica',lanciarazzi:'Lanciarazzi',balestra:'Balestra leggera',bastone:'Bastone del Druida',arco:'Arco',scettro:'Bastone dei maghi',martello:'Martello del Fabbro',bomba:'Bomba'};
+const DATI_N={pistola:'Pistola',revolver:'Revolver',mitraglietta:'Mitraglietta',mitra:'Mitra',mitragliatrice:'Mitragliatrice',pompa:'Pompa da caccia',tattica:'Pompa tattica',lanciarazzi:'Lanciarazzi',balestra:'Balestra leggera',bastone:'Bastone del Druida',arco:'Arco',scettro:'Bastone dei maghi',martello:'Martello del Fabbro',bomba:'Bomba',liuto:'Liuto del Bardo',fiala:"Fiala dell'Alchimista",stellina:'Stellina del Ninja'};
 return{draw,frame,M,MAT,kit,tones,nomi:DATI_N,ZOMBIE:['pistola','revolver','mitraglietta','mitra','mitragliatrice','pompa','tattica','lanciarazzi']}})();

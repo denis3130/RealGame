@@ -105,6 +105,12 @@ function head(Vh,Rh,S,A,o){const h=Vh.P(0,0,0),{F}=Vh,hood=S.hood,skin=S.skin,no
   if(S.antlers)deerAntlers(Vh,h,Rh,nod);const tailFront=S.ponytail&&F(nod([-1,0,-.2]))>.15;if(S.ponytail&&!tailFront)ponytail(Vh,h,Rh,S,nod,o.sway||0);
   // the hero's own look: what it needs, what goes behind the head (the feather, the band's tails, the hair's pieces, the far ear)
   const lk=S.look?lookPrep(Vh,Rh,S,o,h,nod):null;if(lk)lookBehind(Vh,Rh,S,o,h,nod,lk);
+  // the new heroes' things round the head: the Bard's plume (unless the look puts a feather there), the Ninja's band (unless the look
+  // puts one), the Alchemist's goggles; the Ninja's mask on the face. Behind the head the plume whose root is on the far side, the
+  // band's knot and tails
+  const LK=S.look,hat=lk&&lk.hat,Rw=lk&&lk.bare?lk.Rc:Rh,plume=S.plume&&!hat&&!(LK&&LK.acc==='piuma'),band=S.bandana&&!hat&&!(LK&&(LK.acc==='fascia'||LK.acc==='maschera')),sw=o.sway||0;
+  if(S.mask)o.mask=S.mask;
+  if(plume&&!featherFront(Vh,nod))featherHood(Vh,h,Rw,nod,sw,S.plume,1.25);if(band)headband(Vh,h,Rw,nod,S.bandana,sw,false);
   // without the hood: the bare head with its hair
   if(lk&&lk.bare)bareHead(Vh,Rh,S,A,o,h,nod,fd,lk);
   else{ink(2.5);ball(h,Rh);ctx.fillStyle=hood;ctx.fill();ctx.stroke();
@@ -128,7 +134,9 @@ function head(Vh,Rh,S,A,o){const h=Vh.P(0,0,0),{F}=Vh,hood=S.hood,skin=S.skin,no
   // and in front of it: the look's pieces, the helmet, the point of the hood, the beard, an ear on our side, the front spikes of the tiara
   if(tailFront)ponytail(Vh,h,Rh,S,nod,o.sway||0);
   if(lk)lookFront(Vh,Rh,S,o,h,nod,lk);
+  if(band)headband(Vh,h,Rw,nod,S.bandana,sw,true);if(S.goggles&&!hat)goggles(Vh,h,Rw,nod);if(plume&&featherFront(Vh,nod))featherHood(Vh,h,Rw,nod,sw,S.plume,1.25);
   if(S.helm)helm(Vh,h,Rh,S,nod);if(S.hoodTip&&!(lk&&lk.bare))hoodTip(Vh,h,Rh,S,nod);if(S.beard)beard(Vh,h,Rh,S,nod);if(S.ears)for(const sd of[-1,1])if(F(nod([0,sd,0]))>.3)ear(Vh,h,Rh,S,nod,sd);if(S.tiara)tiara(Vh,h,Rh,S,nod,true);
+  if(hat)hatDraw(Vh,h,lk.Rc,nod,hat,LK.hatCol,sw);
   if(o.moss&&!mossBack)mossStick(Vh,h,Rh,mouthD,mossD,o,true)}
 // two big dark eyes with a small, sharp point of light (o.eyeLight: false takes it away); they close for a blink, squeeze shut when hit;
 // a faint blush, a little mouth when needed. No eye ever sits on the outline of the head: when the head turns, the far eye slides in
@@ -143,7 +151,7 @@ function face(Vh,h,Rh,nod,o,fd){const{F}=Vh,fq=sp(Vh,h,Rh*.97,fd);
   if(E.length){E[0].q=inward(E[0].q,.6,.74)}
   if(E.length>1){const n=E[0],f=E[1];f.q=inward(f.q,.5,.66);const gap=Math.hypot(f.q[0]-n.q[0],f.q[1]-n.q[1])-n.rx-.8;f.rx=Math.min(f.rx,Math.max(0,gap))}
   // the hero's own look (the making of the hero): a face of its own; without it, the face of always
-  if(o.L){faceLook(Vh,h,Rh,nod,o,fq,E,ry,edge);return}
+  if(o.L){faceLook(Vh,h,Rh,nod,o,fq,E,ry,edge);if(o.mask)ninjaMask(Vh,h,Rh*.97,nod,o.mask);return}
   for(const{v,q,rx} of E){if(rx<.7)continue;
     ctx.save();
     if(o.shut){const dir=fq[0]>=q[0]?1:-1;ctx.strokeStyle=HC.eye;ctx.lineWidth=1.3;ctx.lineCap='round';ctx.lineJoin='round';ctx.beginPath();
@@ -152,7 +160,8 @@ function face(Vh,h,Rh,nod,o,fd){const{F}=Vh,fq=sp(Vh,h,Rh*.97,fd);
       if(o.eyeLight!==false&&sq>.45&&rx>1.2){ctx.fillStyle='#fdf6e8';ball([q[0]-rx*.34,q[1]-sy*.46],.36);ctx.fill()}}
     ctx.restore()}
   if(o.blush!==false)for(const sd of[-1,1]){const c=nrm(nod([CHEEK[0],sd*CHEEK[1],CHEEK[2]])),v=F(c),k=sstep(.15,.35,v);if(k<=0)continue;const q=sp(Vh,h,Rh*.97,c),kk=k*edge(q);ctx.fillStyle=`rgba(255,120,110,${.2*kk})`;ell(q[0],q[1],1.7*Math.pow(v,.7),1);ctx.fill()}
-  if(o.mouth>.05){const m=nrm(nod(MOUTH)),v=F(m);if(v>.05){const q=sp(Vh,h,Rh*.97,m),w=1.3*Math.max(.45,v),hh=.6+o.mouth*1.1;ink(1);ctx.fillStyle='#5a2020';ctx.beginPath();ctx.ellipse(q[0],q[1],w,hh,0,0,TAU);ctx.fill();ctx.stroke()}}}
+  if(o.mouth>.05){const m=nrm(nod(MOUTH)),v=F(m);if(v>.05){const q=sp(Vh,h,Rh*.97,m),w=1.3*Math.max(.45,v),hh=.6+o.mouth*1.1;ink(1);ctx.fillStyle='#5a2020';ctx.beginPath();ctx.ellipse(q[0],q[1],w,hh,0,0,TAU);ctx.fill();ctx.stroke()}}
+  if(o.mask)ninjaMask(Vh,h,Rh*.97,nod,o.mask)}
 
 // ------------------------------------------------------------------ the hero's own look (S.look, from the making of the hero)
 // Denis, 14 October: «nella creazione del pg si possa modificare a piacimento tra occhi cicatrici ecc.», then «migliora il design di
@@ -173,7 +182,9 @@ function face(Vh,h,Rh,nod,o,fd){const{F}=Vh,fq=sp(Vh,h,Rh*.97,fd);
 //          hood it is all there
 //   beard  nessuna | baffetti | baffoni | pizzetto | barbetta | barba | lunga | intrecciata (beardCol, else the colour of the hair)
 //   ears   tonde (under the hood) | punta | lunghe (out of the hood) | gatto | orso | coniglio (on top: of the hood, or of the hair)
+//   tattoo nessuno | tribale | fulmine | luna | puntini | artigli | spirale | onde | cuore (tatK, tatCol: the ink, else dark blue)
 //   hood   su | senza (the bare head, no hood at all: Denis, 14 October, «se non si seleziona il cappuccio toglilo completamente») |
+//          a hat on the bare head (hatCol, else its own): berretto | punta | paglia | cilindro | elmo | bandana | pompon |
 //          giu (the bare head with the hood lowered on the shoulders, drawn with the body: kept, no longer offered)
 //   acc    nessuno | benda | occhialetti | sciarpa | piuma | fascia | orecchino | fiore | maschera | collana | coroncina (accCol; accFix:
 //          a colour picked by the player also for the patch, the frame of the glasses, the mask and the stones of the crown)
@@ -393,6 +404,7 @@ function faceLook(Vh,h,Rh,nod,o,fq,E,ry,edge){const{F}=Vh,L=o.L,w=[F(1,0,0),F(0,
   const kE=L.eyeK||1,kB=L.browK||1,kM=L.mouthK||1,kS=L.markK||1;
   // under the eyes: the marks painted or grown on the skin, then the hair, the beard on the cheeks, the mask
   if(mark!=='nessuno'&&mark!=='cerotto')faceMark(mark,fp,seen,kS,L.markCol);
+  if(L.tattoo&&L.tattoo!=='nessuno')faceTattoo(L.tattoo,fp,seen,L.tatK||1,L.tatCol);
   if(o.hairFn)o.hairFn();if(o.beardFn)o.beardFn();if(o.maskFn)o.maskFn();
   // the eyes (the one under the patch is not there)
   const sq=(o.blink==null?1:o.blink)*(1-.3*(o.squint||0));
@@ -533,9 +545,11 @@ function glasses(E,ry,fq,eyes,edge,kE,col){const fc=col||'#d4a84a';const R=E.fil
   ctx.restore()}
 // ------------------------------------------------------------------ what is worn on the head (on the hood, or on the hair when the hood is down)
 // the feather stuck in its side (before the head when its root is on the far side); R: the radius it sits on
-function featherHood(Vh,h,Rh,nod,sw,col){const nb=nrm(nod([-.15,.85,.45])),d=nrm(nod([-.45,.25+sw*.04,1])),b3=mul(nb,Rh*.94),fw=nrm(cross(d,nb)),side=nrm(add(fw,mul(nb,.8))),L=11.5;
-  const at=(k,o2)=>add(add(b3,mul(d,k*L)),add(mul(side,o2),mul(nb,k*k*2))),wid=k=>k<.1?0:Math.pow(Math.sin(Math.min(1,(k-.1)/.9)*Math.PI),.7)*3.1;
-  const lft=[],rgt=[];for(let i=0;i<=14;i++){const k=.12+i/14*.88;lft.push(hP(Vh,h,at(k,wid(k))));rgt.push(hP(Vh,h,at(k,-wid(k)*.85)))}
+function featherHood(Vh,h,Rh,nod,sw,col,sk){sk=sk||1;const nb=nrm(nod([-.15,.85,.45])),d=nrm(nod(sk>1?[-1.05,.34+sw*.04,.85]:[-.45,.25+sw*.04,1])),b3=mul(nb,Rh*.94),fw=nrm(cross(d,nb)),side=nrm(add(fw,mul(nb,.8))),L=11.5*sk;
+  const at=(k,o2,sd)=>add(add(b3,mul(d,k*L)),add(mul(sd||side,o2),mul(nb,k*k*2*sk))),wid=k=>k<.1?0:Math.pow(Math.sin(Math.min(1,(k-.1)/.9)*Math.PI),.7)*3.1*sk;
+  // the Bard's plume (sk > 1): its two halves bent a little out of one plane, like a real feather, so it never shows as a bare line
+  const vn=nrm(cross(d,side)),sL=sk>1?nrm(add(side,mul(vn,.8))):side,sR=sk>1?nrm(sub(side,mul(vn,.8))):side;
+  const lft=[],rgt=[];for(let i=0;i<=14;i++){const k=.12+i/14*.88;lft.push(hP(Vh,h,at(k,wid(k),sL)));rgt.push(hP(Vh,h,at(k,-wid(k)*.85,sR)))}
   const vane=lft.concat(rgt.reverse()),a=hP(Vh,h,at(0,0)),b=hP(Vh,h,at(1,0)),g=ctx.createLinearGradient(a[0],a[1],b[0],b[1]);g.addColorStop(0,'#f6ead2');g.addColorStop(.55,lt(col,.15));g.addColorStop(1,col);
   ctx.lineJoin='round';poly(vane);ctx.fillStyle=g;ctx.fill();ctx.strokeStyle=INK;ctx.lineWidth=1.5;ctx.stroke();
   ctx.save();poly(vane);ctx.clip();ctx.strokeStyle='rgba(60,30,20,.3)';ctx.lineWidth=.6;ctx.beginPath();for(let k=.25;k<.95;k+=.12){const p=hP(Vh,h,at(k,0)),q=hP(Vh,h,at(k+.08,wid(k)));ctx.moveTo(p[0],p[1]);ctx.lineTo(q[0],q[1])}ctx.stroke();ctx.restore();
@@ -603,11 +617,12 @@ function bandKnot(Vh,h,k3,nod,col,sw){const q=hP(Vh,h,k3);
 // ------------------------------------------------------------------ the look on the head: what is needed for this drawing (the meshes of
 // the hair, the beard and the mask, their colours), the hair and the beard on the face (o.hairFn, o.beardFn, o.mustFn, o.maskFn), what
 // goes behind the head and what in front of it
-function lookPrep(Vh,Rh,S,o,h,nod){const L=S.look;o.L=L;const bare=L.hood==='senza'||L.hood==='giu',K=L.hairK||1,H=HAIRS[L.hair]||HAIRS.nascosti,col=L.hairCol||'#8a5a32';
+function lookPrep(Vh,Rh,S,o,h,nod){const L=S.look;o.L=L;const hat=HATS[L.hood]&&!S.helm?L.hood:null,bare=L.hood==='senza'||L.hood==='giu'||!!hat,K=L.hairK||1,H=HAIRS[L.hair]||HAIRS.nascosti,col=L.hairCol||'#8a5a32';
   const R0=bare?Rh*.93:Rh,Rc=bare?R0*(1+H.v*K):Rh,hl=hairLine(H,K),res=meshRes(R0),NA=res[0],NE=res[1],sw=o.sway||0;
-  const lk={bare,K,H,col,R0,Rc,hl,sw};o.bare=bare;
+  const lk={bare,hat,K,H,col,R0,Rc,hl,sw};o.bare=bare;
   if(bare||(L.hair&&L.hair!=='nascosti')){lk.M=bare?regionMesh(Vh,nod,-Math.PI,Math.PI,hl,()=>Math.PI/2,NA,NE):regionMesh(Vh,nod,-1.35,1.35,hl,()=>Math.PI/2,Math.round(NA*.7),NE);lk.g=hairGrad(h,bare?Rc:Rh,col)}
-  const B=BEARDS[L.beard];if(B){lk.B=B;lk.bcol=hexMix(L.beardCol||col,'#1b1210',.1);lk.bK=L.beardK||1;
+  // (under the Ninja's mask there is no beard)
+  const B=S.mask?null:BEARDS[L.beard];if(B){lk.B=B;lk.bcol=hexMix(L.beardCol||col,'#1b1210',.1);lk.bK=L.beardK||1;
     if(B.line){lk.MB=regionMesh(Vh,nod,-1.35,1.35,()=>-1.5,B.line,Math.round(NA*.6),4);lk.Rb=R0*(1+.05*lk.bK);lk.bg=hairGrad(h,bare?lk.Rb:Rh,lk.bcol)}
     if(B.must)o.mustFn=(fp,seen)=>moustache(B.must,fp,seen,lk.bcol,lk.bK)}
   // the hair on the face: under the hood the part in the opening, with the hood's shadow on it; on the bare head the part over the skin
@@ -622,19 +637,19 @@ function lookPrep(Vh,Rh,S,o,h,nod){const L=S.look;o.L=L;const bare=L.hood==='sen
   if(L.acc==='maschera'){lk.MM=maskMesh(Vh,nod,Math.max(24,Math.round(NA*.8)));o.maskFn=()=>maskPaint(Vh,h,(bare?R0:Rh*.99)*1.006,lk.MM,L.accFix||'#3a2f45')}
   return lk}
 function lookBehind(Vh,Rh,S,o,h,nod,lk){const L=S.look,acc=L.acc,Rw=lk.bare?lk.Rc:Rh;
-  if(acc==='piuma'&&!featherFront(Vh,nod))featherHood(Vh,h,Rw,nod,lk.sw,L.accCol||'#e5484d');
-  if(acc==='fascia'&&!S.helm)headband(Vh,h,Rw,nod,L.accCol||'#d24b3e',lk.sw,false);
+  if(acc==='piuma'&&!lk.hat&&!featherFront(Vh,nod))featherHood(Vh,h,Rw,nod,lk.sw,L.accCol||'#e5484d');
+  if(acc==='fascia'&&!S.helm&&!lk.hat)headband(Vh,h,Rw,nod,L.accCol||'#d24b3e',lk.sw,false);
   if(lk.g)hairPieces(Vh,h,lk.bare?lk.Rc:Rh,nod,lk.H,L,S,lk.col,lk.g,lk.K,false,lk.bare,lk.sw);
   earsDraw(Vh,h,lk.bare?lk.R0:Rh,nod,L,S,lk.bare,false)}
 function lookFront(Vh,Rh,S,o,h,nod,lk){const L=S.look,acc=L.acc,Rw=lk.bare?lk.Rc:Rh;
   if(!lk.bare&&L.hair==='spettinati'&&!S.helm)spikesHood(Vh,h,Rh,nod,lk.col);
   const top=L.ears==='gatto'||L.ears==='orso'||L.ears==='coniglio';if(!top)earsDraw(Vh,h,lk.bare?lk.R0:Rh,nod,L,S,lk.bare,true);
   if(lk.g)hairPieces(Vh,h,lk.bare?lk.Rc:Rh,nod,lk.H,L,S,lk.col,lk.g,lk.K,true,lk.bare,lk.sw);
-  if(top&&!S.helm)earsDraw(Vh,h,lk.bare?lk.Rc*.98:Rh,nod,L,S,lk.bare,true);
+  if(top&&!S.helm&&!lk.hat)earsDraw(Vh,h,lk.bare?lk.Rc*.98:Rh,nod,L,S,lk.bare,true);
   if(lk.B&&lk.B.hang)beardHang(Vh,h,lk.bare?lk.R0:Rh,nod,lk.B,lk.bcol,lk.bK,lk.sw,L.accCol);
-  if(acc==='fascia'&&!S.helm)headband(Vh,h,Rw,nod,L.accCol||'#d24b3e',lk.sw,true);
-  if(acc==='piuma'&&featherFront(Vh,nod))featherHood(Vh,h,Rw,nod,lk.sw,L.accCol||'#e5484d');
-  if(acc==='coroncina'&&!S.helm)crown(Vh,h,lk.bare?lk.Rc:Rh,nod,L.accFix);
+  if(acc==='fascia'&&!S.helm&&!lk.hat)headband(Vh,h,Rw,nod,L.accCol||'#d24b3e',lk.sw,true);
+  if(acc==='piuma'&&!lk.hat&&featherFront(Vh,nod))featherHood(Vh,h,Rw,nod,lk.sw,L.accCol||'#e5484d');
+  if(acc==='coroncina'&&!S.helm&&!lk.hat)crown(Vh,h,lk.bare?lk.Rc:Rh,nod,L.accFix);
   if(acc==='fiore')flower(Vh,h,Rw,nod,L.accCol||'#e5484d');
   if(acc==='orecchino')earring(Vh,h,lk.bare?lk.R0:Rh,nod,L.accCol||'#e5484d',!lk.bare);
   if(acc==='maschera'&&lk.bare){const d=nod(hdir(Math.PI,.27));if(Vh.F(d)>-.2)bandKnot(Vh,h,mul(d,lk.R0*1.04),nod,L.accFix||'#3a2f45',lk.sw)}}
@@ -840,13 +855,14 @@ function quiverArrows(V0,X,jig){const{P}=V0,b3=X.T(QB),t3=X.T(QT),ax=nrm(sub(t3,
 
 // ------------------------------------------------------------------ the armour bits you can see
 // the mantello d'ombra: a purple cloak hanging from the shoulders round the back, its hem waving
-function cape(V0,X,sway){const{P}=V0,top=[],bot=[],N=10;
+function cape(V0,X,sway,col){const{P}=V0,top=[],bot=[],N=10;
   for(let i=0;i<=N;i++){const a=-1+2*i/N,t=Math.PI+a*1.8,ws=Math.sin(a*Math.PI*1.5+sway*2)*.8;
     top.push(P(X.T(surf(t,ZB+13.4-Math.abs(a)*1.6,.6).p)));
     const s=surf(t,ZB+.1,1.3+(1-Math.abs(a))*1.6+ws*.4).p;bot.push(P(X.T([s[0]-sway*.7,s[1],s[2]+(i%2?1:0)*1.1+ws*.4])))}
   const pts=top.concat(bot.reverse());ink(2.4);ctx.beginPath();ctx.moveTo(pts[0][0],pts[0][1]);for(let i=1;i<pts.length;i++)ctx.lineTo(pts[i][0],pts[i][1]);ctx.closePath();
   let y0=1e9,y1=-1e9;for(const q of pts){y0=Math.min(y0,q[1]);y1=Math.max(y1,q[1])}
-  const g=ctx.createLinearGradient(0,y0,0,y1);g.addColorStop(0,'#6a54a0');g.addColorStop(.5,'#3a2c58');g.addColorStop(1,'#241a3a');ctx.fillStyle=g;ctx.fill();ctx.stroke();
+  const g=ctx.createLinearGradient(0,y0,0,y1);g.addColorStop(0,col?lt(col,.12):'#6a54a0');g.addColorStop(.5,col||'#3a2c58');g.addColorStop(1,col?dk(col,.42):'#241a3a');ctx.fillStyle=g;ctx.fill();ctx.stroke();
+  if(col){ctx.save();ctx.clip();ctx.strokeStyle=dk(col,.3);ctx.lineWidth=.8;for(let i=1;i<N;i+=3){const q=top[i],b=bot[N-i];ctx.beginPath();ctx.moveTo(q[0],q[1]+2);ctx.lineTo(b[0],b[1]-1);ctx.stroke()}ctx.restore();return}
   if(!LOWFX){ctx.save();ctx.globalCompositeOperation='lighter';for(let i=0;i<3;i++){const ph=(G.t*.7+i/3)%1,q=P(X.T(surf(Math.PI+(i-1)*.9,ZB+1+ph*8,2).p));glow('140,90,230',q[0],q[1],4+ph*3,.26*(1-ph))}ctx.restore()}}
 function pauldron(V0,c3,rr){const q=V0.P(c3);ink(2.2);ball(q,rr);ctx.fillStyle='#9aa3ad';ctx.fill();ctx.stroke();ctx.save();ball(q,rr-.8);ctx.clip();ctx.fillStyle='rgba(20,26,34,.28)';ell(q[0]+rr*.4,q[1]+rr*.45,rr,rr*.6);ctx.fill();ctx.fillStyle='rgba(255,255,255,.5)';ell(q[0]-rr*.35,q[1]-rr*.4,rr*.45,rr*.28);ctx.fill();ctx.restore()}
 function mossClump(V0,c3,k){const q=V0.P(c3);ink(1.6);ctx.fillStyle='#5f9e3c';for(let i=0;i<3;i++){ball([q[0]+(i-1)*2.6*k,q[1]-(i===1?1.4:0)],2.8*k);ctx.fill();ctx.stroke()}ctx.fillStyle='#9fe06a';ball([q[0]-1,q[1]-1.6],1);ctx.fill();ball([q[0]+2,q[1]-.5],.8);ctx.fill()}
@@ -897,9 +913,10 @@ function pose(anim,p,o){const ph=p*TAU,A={B:[0,0,0],lean:.02,roll:0,s:0,sx:0,hd:
 // the right hand on the grip and the left on the fore-grip (or on the pump, which it works); 'shoulder' the rocket launcher on the right
 // shoulder; 'xbow' the crossbow like a long gun; 'staff' upright in the right hand, its foot near the ground, the orb beside the head.
 const WCLS={pistola:'one',revolver:'one',mitraglietta:'long',mitra:'long',mitragliatrice:'long',pompa:'long',tattica:'long',lanciarazzi:'shoulder',balestra:'xbow',bastone:'staff',
-  scettro:'staff',martello:'hammer',bomba:'one'};
+  scettro:'staff',martello:'hammer',bomba:'one',liuto:'lute',fiala:'one',stellina:'one'};
 // the size of each (1 = the units of the zombie guns' profiles, a little smaller than the game's 2D guns, which are drawn at 1.35)
-const WSZ={pistola:1.22,revolver:1.1,mitraglietta:1.12,mitra:1,mitragliatrice:.92,pompa:.92,tattica:1.02,lanciarazzi:.95,balestra:1,bastone:.95,scettro:.95,martello:1,bomba:1};
+const WSZ={pistola:1.22,revolver:1.1,mitraglietta:1.12,mitra:1,mitragliatrice:.92,pompa:.92,tattica:1.02,lanciarazzi:.95,balestra:1,bastone:.95,scettro:.95,martello:1,bomba:1,
+  liuto:1.08,fiala:1,stellina:.82};
 // rest: [the right hand (on the grip), pitch (down < 0), yaw (toward the middle < 0)] for standing and walking; aim: the same when it
 // shoots; anc: a point of the weapon at rest, which gives it its place in the draw order (always the same, as for every part)
 const HOLD={one:{rest:[[10,8.6,9.4],-.26,-.2],aim:[[12.6,9.4,12.8],0,-.04],anc:[14,8,9.5]},
@@ -908,7 +925,9 @@ const HOLD={one:{rest:[[10,8.6,9.4],-.26,-.2],aim:[[12.6,9.4,12.8],0,-.04],anc:[
   xbow:{rest:[[8,8,9.2],-.2,-.26],aim:[[9,8.4,12.8],0,-.02],anc:[11,7,9.5]},
   staff:{rest:[[-3,12.6,14.4],[-.12,.12,1]],aim:[[8,9.6,13.2],[1,-.08,.45]],anc:[-3,13,16]},
   // the Fabbro's hammer: both hands on the handle at the right side, the head forward and down
-  hammer:{rest:[[7.6,9.4,10.4],-.16,-.08],aim:[[9,9,12],0,-.04],anc:[13,9,10.5]}};
+  hammer:{rest:[[7.6,9.4,10.4],-.16,-.08],aim:[[9,9,12],0,-.04],anc:[13,9,10.5]},
+  // the Bard's lute: across the belly, its neck up toward the left shoulder, the soundboard to the front (set in wpose0)
+  lute:{rest:[[11,3.4,9.6],0,0],aim:[[11.4,3.2,10.2],0,0],anc:[12,3,9.8]}};
 // (the guns are held at the right side of the body, so from behind they still show beside it, and from the front the gun pointing at
 // us is beside the belly, not over it; the anchors are chosen so that from every side the weapon goes in front of the body when it is
 // on the side we see, behind it when it is on the other side; the staff stands at the right side a little behind the middle, so its
@@ -917,18 +936,36 @@ const HOLD={one:{rest:[[10,8.6,9.4],-.26,-.2],aim:[[12.6,9.4,12.8],0,-.04],anc:[
 // between two shots); rel: the reload after a shot (rocket, crossbow)
 const FIRE={pistola:{n:3,off:.04},revolver:{n:2,off:.06},mitraglietta:{n:10,off:.02},mitra:{n:6,off:.03},mitragliatrice:{n:12,off:.02},
   pompa:{n:1,off:.08,pump:[.2,.56]},tattica:{n:2,off:.06,pump:[.3,.74]},lanciarazzi:{n:1,off:.12,rel:[.32,.78]},balestra:{n:1,off:.14,rel:[.36,.84]},bastone:{n:1,off:.3},
-  scettro:{n:1,off:.3},martello:{n:1,off:.1},bomba:{n:1,off:.1}};
+  scettro:{n:1,off:.3},martello:{n:1,off:.1},bomba:{n:1,off:.1},liuto:{n:1,off:.02},fiala:{n:1,off:.1},stellina:{n:1,off:.1}};
 const KICK={pistola:[1.6,.12],revolver:[2.6,.32],mitraglietta:[.9,.05],mitra:[1.4,.07],mitragliatrice:[1.2,.04],pompa:[3,.2],tattica:[2.4,.18],lanciarazzi:[3.4,.14],balestra:[1.2,.08],bastone:[0,0],
-  scettro:[0,0],martello:[0,0],bomba:[0,0]};
-function weaponOf(S0){if(S0.held==='scettro'||S0.held==='martello'||S0.held==='bomba')return S0.held;if(S0.gun&&WCLS[S0.gun])return S0.gun;if(S0.held==='staff')return'bastone';if(S0.held==='xbow'||S0.weapon==='balestra')return'balestra';if(S0.held===null)return null;return'arco'}
+  scettro:[0,0],martello:[0,0],bomba:[0,0],liuto:[0,0],fiala:[0,0],stellina:[0,0]};
+// the new heroes' own things in the hand (style.held): the Bard's lute, the Alchemist's flask, the Ninja's star
+const HELD3={liuto:1,fiala:1,stellina:1};
+function weaponOf(S0){if(S0.held==='scettro'||S0.held==='martello'||S0.held==='bomba')return S0.held;if(S0.gun&&WCLS[S0.gun])return S0.gun;if(HELD3[S0.held])return S0.held;if(S0.held==='staff')return'bastone';if(S0.held==='xbow'||S0.weapon==='balestra')return'balestra';if(S0.held===null)return null;return'arco'}
 const dirPY=(pitch,yaw)=>nrm([Math.cos(pitch)*Math.cos(yaw),Math.cos(pitch)*Math.sin(yaw),Math.sin(pitch)]);
 const bump=k=>k<=0||k>=1?0:Math.sin(k*Math.PI);
+// the lute: across the belly, the neck up toward the left shoulder, the soundboard to the front; the right hand strums (st.strum across
+// the strings, -1..1), the left one holds the neck. The strum: .0-.12 the hand sweeps down across the strings (the notes fly out of the
+// sound hole, only in 'shoot': in battle the game draws its own notes), then it comes back slowly and lifts again before the next one.
+// In battle ('aim') the game's pull drives it, so the strum falls on the shot
+function lutePose(W,A,anim,p,dg,o){const ph=p*TAU;let aim=[.2,-.86,.46],up=[1,.16,.08],strum=.25,ring=0,q=-1,cast=-1,g=[11,3.4,9.6];
+  if(anim==='shoot')q=((p-.02)%1+1)%1;else if(anim==='aim')q=(cl(o.pull==null?1:o.pull,0,1)+.02)%1;
+  if(anim==='idle'){g=add(g,[0,0,.18*Math.sin(ph)]);strum=.25+.08*Math.sin(ph)}
+  if(anim==='walk'){g=add(g,[.4*Math.sin(ph),0,.35*Math.abs(Math.sin(ph))]);aim=add(aim,[0,0,.06*Math.sin(ph*2)])}
+  if(anim==='dash'){const k=Math.sin(cl((p-.16)/.4,0,1)*Math.PI);aim=add(aim,[-.35*k,0,-.15*k]);g=add(g,[-2*k,0,1*k])}
+  if(anim==='hit'){const kb=p<.12?ez(p/.12):Math.exp(-(p-.12)*6)*Math.cos((p-.12)*16);aim=add(aim,[-.3*kb,0,.15*kb]);g=add(g,[-1.4*kb,0,1.6*kb])}
+  if(q>=0){g=[11.4,3.2,10.2];if(q<.12)strum=lerp(.95,-.95,ez(q/.12));else if(q<.8)strum=lerp(-.95,.25,ez((q-.12)/.68));else strum=lerp(.25,.95,ez((q-.8)/.2));
+    ring=q<.6?1-q/.6:0;if(anim==='shoot'&&q<.5)cast=q;g=add(g,[0,0,q<.12?-.45*Math.sin(q/.12*Math.PI):0]);if(q<.2)W.lean=.05*Math.sin(q/.2*Math.PI)}
+  W.grip=add(g,anim==='idle'||anim==='walk'?[0,0,0]:dg.map(v=>v*.3));W.aim=nrm(aim);W.up=nrm(up);W.st.strum=strum;W.st.ring=ring;W.cast=cast;W.rec=0;W.flash=0;W.shots=[];return W}
 // where the weapon is and what its moving parts do, for this move at p (only p: the cycle closes on itself). It reuses the body of the
 // bow's pose (A): breathing, steps, the dash, the knock back
 function wpose0(A,anim,p,id,o){o=o||{};const cls=WCLS[id],H=HOLD[cls],dg=sub(A.grip,REST.grip),W={id,cls,s:WSZ[id],rec:0,flash:0,st:{},shots:[],ej:[],hL:[A.hR[0],-A.hR[1],A.hR[2]],kick:KICK[id]};
   const staff=cls==='staff';
+  if(cls==='lute')return lutePose(W,A,anim,p,dg,o);
+  // the flask and the star in battle ('aim' with the game's pull, 0 just after a shot .. 1 at the next): the throw ends on the shot
+  if(anim==='aim'&&(id==='fiala'||id==='stellina')){const k=cl(o.pull==null?1:o.pull,0,1);p=(k+(id==='fiala'?.46:.4))%1+FIRE[id].off;anim='throw'}
   const set=(h,extra)=>{W.grip=add(h[0],extra||[0,0,0]);if(staff){W.aim=nrm(h[1]);W.up=[1,0,0]}else{W.aim=dirPY(h[1],h[2]);W.up=[0,0,1]}};
-  if(anim!=='shoot'&&anim!=='aim'){set(H.rest,dg);
+  if(anim!=='shoot'&&anim!=='aim'&&anim!=='throw'){set(H.rest,dg);
     const tilt=v=>{if(staff)W.aim=nrm(add(nrm(H.rest[1]),[v,0,0]));else W.aim=dirPY(H.rest[1]+v,H.rest[2])};
     if(anim==='walk')tilt(staff?.08*Math.sin(p*TAU):.05*Math.sin(p*TAU*2));
     if(anim==='dash')tilt((staff?-.5:.34)*Math.sin(cl((p-.16)/.4,0,1)*Math.PI));
@@ -972,13 +1009,20 @@ function wpose0(A,anim,p,id,o){o=o||{};const cls=WCLS[id],H=HOLD[cls],dg=sub(A.g
     else{const k=ez((q-.62)/.38);g=lerp3(SG,RG,k);d=nrm(lerp3(SA,RA,k));ln=.16*(1-k);bd=[1.4*(1-k),0,-.4*(1-k)]}
     W.grip=g;W.aim=nrm(d);W.up=[0,0,1];W.st.hot=Math.max(o.hot||0,q<.47?ez(cl(q/.38,0,1))*.6:.6*(1-cl((q-.47)/.3,0,1)));
     W.impact=q>=.47?q-.47:-1;W.lean=ln;W.body=bd;W.sq=q>=.47&&q<.56?-.06*Math.sin((q-.47)/.09*Math.PI):0;return W}
-  if(id==='bomba'){// the throw: .0-.36 the bomb goes back over the shoulder, .36-.46 the arm swings forward, .44 it leaves the hand and flies
-    // on in an arc; a new one pops into the hand at .8
+  if(id==='stellina'){// the throw: .0-.28 the star goes back across the chest to the left shoulder, .28-.4 the arm whips across, .38 it
+    // leaves the hand and flies straight on, spinning; a new one is in the hand at .75
+    const r0=H.rest,RG=r0[0],RA=dirPY(r0[1],r0[2]),BG=[4.5,-3.5,15.5],BA=nrm([-.25,-1,.25]),TG=[15.5,5.5,12.6],TA=nrm([1,.35,0]);let g,d,ln=0;
+    if(q<.28){const k=ez(q/.28);g=lerp3(RG,BG,k);d=nrm(lerp3(RA,BA,k));ln=-.07*k}
+    else if(q<.4){const k=(q-.28)/.12;g=lerp3(BG,TG,k);d=nrm(lerp3(BA,TA,k));ln=lerp(-.07,.11,k)}
+    else{const k=ez(cl((q-.4)/.35,0,1));g=lerp3(TG,RG,k);d=nrm(lerp3(TA,RA,k));ln=.11*(1-k)}
+    W.grip=g;W.aim=d;W.up=[0,0,1];W.st.has=q<.38?1:q<.75?0:ez(cl((q-.75)/.1,0,1));W.cast=anim==='shoot'&&q>=.38?q-.38:-1;W.rel=TG;W.lean=ln;W.rec=0;W.flash=0;W.shots=[];return W}
+  if(id==='bomba'||id==='fiala'){// the throw: .0-.36 the bomb goes back over the shoulder, .36-.46 the arm swings forward, .44 it leaves the hand and flies
+    // on in an arc; a new one pops into the hand at .8 (the Alchemist's flask the same, a little lower)
     const r0=H.rest,RG=r0[0],RA=dirPY(r0[1],r0[2]),BG=[-5,9.5,21],BA=nrm([-.3,0,1]),TG=[14,6.6,16.5],TA=nrm([1,0,.3]);let g,d,ln=0;
     if(q<.36){const k=ez(q/.36);g=lerp3(RG,BG,k);d=nrm(lerp3(RA,BA,k));ln=-.1*k}
     else if(q<.46){const k=(q-.36)/.1;g=lerp3(BG,TG,k);d=nrm(lerp3(BA,TA,k));ln=lerp(-.1,.12,k)}
     else{const k=ez(cl((q-.46)/.4,0,1));g=lerp3(TG,RG,k);d=nrm(lerp3(TA,RA,k));ln=.12*(1-k)}
-    W.grip=g;W.aim=d;W.up=[0,0,1];W.st.has=q<.44?1:q<.8?0:ez(cl((q-.8)/.12,0,1));W.cast=q>=.44?q-.44:-1;W.rel=TG;W.lean=ln;W.rec=0;W.flash=0;W.shots=[];return W}
+    W.grip=g;W.aim=d;W.up=[0,0,1];W.st.has=q<.44?1:q<.8?0:ez(cl((q-.8)/.12,0,1));W.cast=q>=.44&&(id==='bomba'||anim==='shoot')?q-.44:-1;W.rel=TG;W.lean=ln;W.rec=0;W.flash=0;W.shots=[];return W}
   if(id==='bastone'||id==='scettro'){// the cast: the staff goes up high (the orb above the head, brighter), strikes forward (the orb flares, leaves
     // burst out), holds a moment, then goes back to the side
     const r0=H.rest,r1=H.aim,UP=[[-.6,11.4,18.6],[0,.06,1]];let g,d;
@@ -1020,15 +1064,21 @@ function weaponParts(parts,V0,X,S,Wp,wid,o){const{D}=V0,cls=Wp.cls,r=Wp.rec,kk=W
     parts.push({d:D(gp)+3,f:()=>{const q=V0.P(gp);ctx.save();ctx.globalAlpha=(1-k)*.8;ctx.strokeStyle='rgba(220,205,175,.9)';ctx.lineWidth=2.4*(1-k)+.6;ctx.beginPath();ctx.ellipse(q[0],q[1],6+k*26,(6+k*26)*.45*KR(),0,0,TAU);ctx.stroke();
       for(let i=0;i<6;i++){const a=i/6*TAU+.4,r=4+k*22;ctx.fillStyle=`rgba(225,210,180,${(.5*(1-k)).toFixed(3)})`;ball([q[0]+Math.cos(a)*r,q[1]+Math.sin(a)*r*.45-k*6],2+k*3.5);ctx.fill()}
       for(let i=0;i<4;i++){const a=-Math.PI/2+(i-1.5)*.5,r=k*20;ctx.fillStyle=i%2?'#ffd86b':'#ff8a3c';ball([q[0]+Math.cos(a)*r,q[1]+Math.sin(a)*r-k*k*-8],1.3*(1-k)+.3);ctx.fill()}ctx.restore()}})}
+  if(wid==='fiala'&&fx&&Wp.cast>=0&&Wp.cast<.36){const k=Wp.cast/.36,a0=X.T(Wp.rel),fw=X.Rd([1,0,0]),c=add(add(a0,mul(fw,k*46)),[0,0,Math.sin(k*Math.PI)*16-k*10]);
+    parts.push({d:D(c),f:()=>{const q=V0.P(c);flaskShape(q[0],q[1],2.6,k*9,S.flask||'#7bf06a')}})}
+  if(wid==='stellina'&&fx&&Wp.cast>=0&&Wp.cast<.3){const k=Wp.cast/.3,a0=X.T(Wp.rel),fw=X.Rd(nrm([1,.1,0])),c=add(a0,mul(fw,k*72));
+    parts.push({d:D(c),f:()=>{const q=V0.P(c);ctx.save();ctx.globalAlpha=k>.75?(1-k)/.25:1;if(!LOWFX){ctx.strokeStyle='rgba(255,255,255,.35)';ctx.lineWidth=1.2;const b=V0.P(sub(c,mul(fw,10)));seg(b,q);ctx.stroke()}starShape(q[0],q[1],3.4,k*26,'#8a96a4');ctx.restore()}})}
+  if(wid==='liuto'&&fx&&Wp.cast>=0)for(let i=0;i<3;i++){const k=Wp.cast/.5-i*.14;if(k<0||k>=1)continue;const c=X.T(add(Wp.grip,[4+k*13,(i-1)*4.5*k,3+k*13+Math.sin(k*6+i)*1.6]));
+    parts.push({d:D(c),f:()=>{const q=V0.P(c);ctx.save();ctx.globalAlpha=k<.15?k/.15:1-Math.max(0,(k-.6)/.4);musicNote(q[0],q[1],1.9,NOTE_COL[i%3],i===1?1:0);ctx.restore()}})}
   if(wid==='bomba'&&fx&&Wp.cast>=0&&Wp.cast<.36){const k=Wp.cast/.36,a0=X.T(Wp.rel),fw=X.Rd([1,0,0]),c=add(add(a0,mul(fw,k*48)),[0,0,Math.sin(k*Math.PI)*14-k*9]);
     parts.push({d:D(c),f:()=>{const q=V0.P(c),r=4.8;ink(2.2);ball(q,r);ctx.fillStyle=soft(q[0]-r*.36,q[1]-r*.42,q[0],q[1],r*1.2,'#2e2e36',.3,.4);ctx.fill();ctx.stroke();
       const f=[q[0]+1.4,q[1]-r-1.6];ctx.strokeStyle='#8a6a44';ctx.lineWidth=1.4;seg([q[0],q[1]-r+.4],f);ctx.stroke();shine('255,200,90',f[0],f[1],6,.85);ctx.fillStyle='#fff3c0';ball(f,1.1);ctx.fill()}})}
-  parts.push({d:D(X.T(HOLD[cls].anc)),f:()=>{const st={...Wp.st};if(wid==='balestra')st.col=S.bowCol;if(wid==='bastone'||wid==='scettro')st.orbCol=S.eyeCol||'#9fff7a';
+  parts.push({d:D(X.T(HOLD[cls].anc)),f:()=>{const st={...Wp.st};if(wid==='balestra')st.col=S.bowCol;if(wid==='fiala')st.col=S.flask;if(wid==='bastone'||wid==='scettro')st.orbCol=S.eyeCol||'#9fff7a';
     ARMI3D.draw(wid,V0,fr,st,(K,kp)=>{
       // where the muzzle is on the screen (o.out, in the hero's own units from his feet): the zombie map fires its shots from there
       if(o.out&&kp.muzzle)o.out.muzzle=K.P(K.W(kp.muzzle));
       // the right hand on the grip, or pulling the crossbow's string back to the nut
-      let rh=[0,0,0];const pl=Wp.pull;
+      let rh=kp.strum||[0,0,0];const pl=Wp.pull;
       if(pl&&kp.nut){const at=[kp.nut[0]+.2,4.3,0],far=[10.4,4.3,0];rh=pl.ph===1?lerp3([0,0,0],far,ez(pl.t)):pl.ph===2?at:lerp3([-.4,4.3,0],[0,0,0],ez(pl.t))}
       K.hand(rh,2.8,S.skin,1.2,S.ring?q=>ringOn(V0,q,S.ring):null);
       // the left hand on the fore-grip or the pump; it pushes the new rocket into the tube
@@ -1067,6 +1117,194 @@ function weaponParts(parts,V0,X,S,Wp,wid,o){const{D}=V0,cls=Wp.cls,r=Wp.rec,kk=W
   // the free hand: the left one, at the side (it swings when walking)
   if(cls==='one'||cls==='staff')parts.push({d:D(X.T([-.6,-11.4,11.4])),f:()=>fist(V0,X.T(Wp.hL),2.7,S.skin)})}
 const hexRgb=h=>{const n=parseInt(String(h).slice(1),16);return`${n>>16},${n>>8&255},${n&255}`};
+const NOTE_COL=['#ffd84a','#ff8ab8','#7fe0ff'];
+
+// ------------------------------------------------------------------ the hats of the look (Denis, 15 October: «più cose nell'aspetto»:
+// cappelli). On the bare head over its hair, each a volume on the head's own camera, so they turn with it: up is the head's top, fw its
+// front, rt its right. A brim: drawn whole before the crown and its near half again after it (the crown rises behind it). col: the hat's
+// colour picked in the look (else its own)
+const HAT_COL={berretto:'#c8323c',punta:'#5a3a9a',paglia:'#e8c870',cilindro:'#2e2a30',elmo:'#a9b1ba',bandana:'#d24b3e',pompon:'#3f7fd0'};
+const HATS={berretto:1,punta:1,paglia:1,cilindro:1,elmo:1,bandana:1,pompon:1};
+// (the hats with a brim are pushed back on the head, so from our camera, which looks down, the brim never hides the eyes)
+const HAT_TILT={berretto:.12,punta:.26,paglia:.5,cilindro:.36};
+function hatDraw(Vh,h,R,nod,kind,col,sw){const{F}=Vh,tl=HAT_TILT[kind]||0,up0=nrm(nod([0,0,1])),fw0=nrm(nod([1,0,0])),rt=nrm(nod([0,1,0])),c=col||HAT_COL[kind]||'#c8323c';
+  const up=nrm(add(mul(up0,Math.cos(tl)),mul(fw0,-Math.sin(tl)))),fw=nrm(cross(rt,up));
+  const at=(cz,r,t,c0)=>add(add(mul(up,cz),c0||[0,0,0]),add(mul(fw,Math.cos(t)*r),mul(rt,Math.sin(t)*r))),P3=v=>hP(Vh,h,v);
+  const ring=(cz,r,N,c0)=>{const o=[];for(let i=0;i<N;i++)o.push(P3(at(cz,r,i/N*TAU,c0)));return o};
+  const box=pts=>{const b=[1e9,1e9,-1e9,-1e9];for(const q of pts){b[0]=Math.min(b[0],q[0]);b[1]=Math.min(b[1],q[1]);b[2]=Math.max(b[2],q[0]);b[3]=Math.max(b[3],q[1])}return b};
+  const softF=(pts,col,kl,kd)=>{const b=box(pts);return soft(b[0]+(b[2]-b[0])*.3,b[1]+(b[3]-b[1])*.25,(b[0]+b[2])/2,(b[1]+b[3])/2,Math.max(b[2]-b[0],b[3]-b[1])*.75,col,kl||.16,kd||.32)};
+  const solid=(pts,col,lw)=>{const H=chull(pts);ink(lw||2.2);poly(H);ctx.fillStyle=softF(H,col);ctx.fill();ctx.stroke();return H};
+  // the brim between r0 and r1 at the height cz: the whole ring, or only the half nearer to us (near)
+  const brim=(cz,r0,r1,col,near,det)=>{const N=36,ts=[];for(let i=0;i<=N;i++){const t=i/N*TAU;if(!near||F(add(mul(fw,Math.cos(t)),mul(rt,Math.sin(t))))>-.02)ts.push(t)}
+    if(near){if(ts.length<2)return;// the run of the near half (it can wrap across t = 0)
+      let k=0;for(let i=1;i<ts.length;i++)if(ts[i]-ts[i-1]>.5){k=i;break}const run=k?ts.slice(k).map(t=>t-TAU).concat(ts.slice(0,k)):ts;
+      const O=run.map(t=>P3(at(cz,r1,t))),I=run.map(t=>P3(at(cz,r0,t))).reverse();ctx.beginPath();for(const q of O.concat(I))ctx.lineTo(q[0],q[1]);ctx.closePath();
+      ctx.fillStyle=softF(O,col,.2,.3);ctx.fill();ctx.strokeStyle=INK;ctx.lineWidth=1.6;line(O);ctx.stroke();if(det)det(run,true);return}
+    const O=ring(cz,r1,N);ink(1.8);poly(O);ctx.fillStyle=softF(O,dk(col,.08),.18,.3);ctx.fill();ctx.stroke();if(det)det(ts,false)};
+  const sp1=(i,n)=>i/n*TAU;ctx.lineJoin='round';ctx.lineCap='round';
+  // the angles of a ring whose side faces us, in one run (without this the line jumped across the hat: the old "smile")
+  const runT=(N,lim)=>{const ts=[];for(let i=0;i<N;i++){const t=i/N*TAU;if(F(add(mul(fw,Math.cos(t)),mul(rt,Math.sin(t))))>lim)ts.push(t)}
+    let k=0;for(let i=1;i<ts.length;i++)if(ts[i]-ts[i-1]>TAU/N*1.5){k=i;break}return k?ts.slice(k).map(t=>t-TAU).concat(ts.slice(0,k)):ts};
+  // a band of cloth between two rings (the lower one first), filled, with its two edges inked
+  const strip=(ts,z0,r0,z1,r1,col)=>{if(ts.length<2)return;const A=ts.map(t=>P3(at(z0,r0,t))),B=ts.map(t=>P3(at(z1,r1,t)));ctx.beginPath();for(const q of A.concat(B.slice().reverse()))ctx.lineTo(q[0],q[1]);ctx.closePath();
+    ctx.fillStyle=soft(A[0][0],A[0][1],(A[0][0]+A[A.length-1][0])/2,(A[0][1]+B[0][1])/2,Math.max(8,Math.abs(A[A.length-1][0]-A[0][0])*.7),col,.22,.28);ctx.fill();ctx.strokeStyle=INK;ctx.lineWidth=1.3;line(A);ctx.stroke();line(B);ctx.stroke()};
+  if(kind==='berretto'){// a soft beret pulled to his right, a band round the head, a little stalk on top, a feather
+    const c0=add(mul(rt,R*.22),mul(fw,-R*.05)),pts=[];for(let i=0;i<16;i++)for(const[z,r] of[[R*.6,R*.98],[R*.86,R*1.2],[R*1.08,R*1.02],[R*1.18,R*.5]])pts.push(P3(at(z,r,sp1(i,16),z>R*.7?c0:null)));
+    const H=solid(pts,c);ctx.save();poly(H);ctx.clip();ctx.strokeStyle=dk(c,.3);ctx.lineWidth=1.1;for(const r of ringRunsAt(Vh,h,up,fw,rt,R*.66,R*.97,.02))if(r.length>1){line(r);ctx.stroke()}ctx.restore();
+    const tq=P3(add(mul(up,R*1.22),c0));ink(1.1);ctx.fillStyle=dk(c,.15);ball(tq,1.1);ctx.fill();ctx.stroke();
+    if(!LOWFX){ctx.fillStyle='rgba(255,255,255,.22)';const hl=P3(add(mul(up,R*1.08),add(c0,mul(fw,-R*.2))));ctx.beginPath();ctx.ellipse(hl[0]-R*.2,hl[1],R*.42,R*.13,-.2,0,TAU);ctx.fill()}
+    return}
+  if(kind==='punta'){// the wizard's hat: a wide brim, a tall cone that bends back at the tip, a band, little golden stars
+    const zb=R*.56;brim(zb,R*.84,R*1.44,c);
+    const sp=[[0,R*.92],[R*.55,R*.74],[R*1.05,R*.52],[R*1.5,R*.3],[R*1.85,R*.12],[R*2.05,R*.02]],bend=k=>add(mul(fw,-R*.5*k*k),mul(rt,R*.1*k*k*k)),S=sp.map(([z,r],i)=>({c:add(mul(up,zb+z),bend(i/(sp.length-1))),r}));
+    const segs=[];for(let i=0;i<S.length-1;i++){const a=[],b=[];for(let j=0;j<14;j++){a.push(P3(at(0,S[i].r,sp1(j,14),S[i].c)));b.push(P3(at(0,S[i+1].r,sp1(j,14),S[i+1].c)))}segs.push(chull(a.concat(b)))}
+    ink(2.3);for(const H of segs){poly(H);ctx.stroke()}const all=[].concat(...segs),g=softF(all,c);for(const H of segs){poly(H);ctx.fillStyle=g;ctx.fill()}
+    strip(runT(32,0),zb+R*.04,R*.92,zb+R*.3,R*.82,'#f0c64a');
+    for(const[z,t] of[[.62,.4],[1.05,-.55],[1.4,.15],[.7,-1.75],[1.15,1.6],[.6,2.55],[1.1,-2.75],[1.45,3]]){const k=z/2.05,cc=add(mul(up,zb+R*z),bend(k*1.2)),n=add(mul(fw,Math.cos(t)),mul(rt,Math.sin(t)));if(F(n)<.15)continue;const q=P3(add(cc,mul(n,R*(.74-.34*k))));starS(q[0],q[1],1.25,1)}
+    brim(zb,R*.84,R*1.44,c,true);return}
+  if(kind==='paglia'){// the straw hat: a wide brim with the weave, a low round crown, a red band
+    const zb=R*.5;const weave=(ts,near)=>{if(LOWFX)return;ctx.strokeStyle='rgba(120,80,20,.35)';ctx.lineWidth=.6;for(let i=0;i<ts.length;i+=2){const t=ts[i],a=P3(at(zb,R*1.0,t)),b=P3(at(zb,R*1.56,t));seg(a,b);ctx.stroke()}};
+    brim(zb,R*.86,R*1.6,c,false,weave);const pts=[];for(let i=0;i<16;i++)for(const[z,r] of[[0,R*.94],[R*.4,R*.95],[R*.62,R*.8],[R*.72,R*.45]])pts.push(P3(at(zb+z,r,sp1(i,16))));
+    const H=solid(pts,c);ctx.save();poly(H);ctx.clip();strip(runT(32,-.12),zb+R*.04,R*.955,zb+R*.3,R*.955,'#c8323c');ctx.restore();brim(zb,R*.86,R*1.6,c,true,weave);return}
+  if(kind==='cilindro'){// the top hat: a small curled brim, a tall cylinder, a band and its top seen from above
+    const zb=R*.58;brim(zb,R*.84,R*1.28,c);const pts=[];for(let i=0;i<18;i++)for(const[z,r] of[[0,R*.8],[R*1.36,R*.86]])pts.push(P3(at(zb+z,r,sp1(i,18))));
+    const H=solid(pts,c);ctx.save();poly(H);ctx.clip();strip(runT(32,-.12),zb+R*.06,R*.81,zb+R*.36,R*.82,'#c8323c');ctx.restore();
+    const top=ring(zb+R*1.36,R*.86,18);poly(top);ctx.fillStyle=lt(c,.12);ctx.fill();ctx.strokeStyle=INK;ctx.lineWidth=1.4;ctx.stroke();brim(zb,R*.84,R*1.28,c,true);return}
+  if(kind==='elmo'){// the horned helmet: a steel dome, a band with rivets, two curved horns of bone (the far one first)
+    const zb=R*.38,horns=[-1,1].map(sd=>{const b=add(mul(up,zb+R*.42),mul(rt,sd*R*.86)),pts=[b,add(b,add(mul(rt,sd*R*.55),mul(up,R*.2))),add(b,add(mul(rt,sd*R*.78),mul(up,R*.75))),add(b,add(mul(rt,sd*R*.62),mul(up,R*1.18)))];return{sd,pts,v:F(mul(rt,sd))}}).sort((a,b)=>a.v-b.v);
+    const horn=H3=>{const Q=H3.pts.map(P3),ws=[2.6,2.2,1.5,.5];ctx.fillStyle=INK;for(let i=0;i<3;i++){hull(Q[i],ws[i]+1.2,Q[i+1],ws[i+1]+1.2);ctx.fill()}ctx.fillStyle=softF(Q,'#f2e6c8',.2,.3);for(let i=0;i<3;i++){hull(Q[i],ws[i],Q[i+1],ws[i+1]);ctx.fill()}
+      ctx.strokeStyle='rgba(120,90,50,.45)';ctx.lineWidth=.6;for(let i=1;i<3;i++){const q=Q[i];ctx.beginPath();ctx.moveTo(q[0]-ws[i],q[1]);ctx.lineTo(q[0]+ws[i],q[1]+.5);ctx.stroke()}};
+    if(horns[0].v<0)horn(horns[0]);
+    const pts=[];for(let i=0;i<18;i++)for(const[z,r] of[[0,R*1.02],[R*.4,R*.95],[R*.72,R*.68],[R*.9,R*.3]])pts.push(P3(at(zb+z,r,sp1(i,18))));const H=solid(pts,c,2.4);
+    ctx.save();poly(H);ctx.clip();ctx.fillStyle='rgba(255,255,255,.35)';const hq=P3(add(mul(up,zb+R*.75),mul(fw,R*.2)));ctx.beginPath();ctx.ellipse(hq[0]-R*.25,hq[1],R*.35,R*.14,-.3,0,TAU);ctx.fill();
+    const band=runT(28,-.05).map(t=>({q:P3(at(zb+R*.12,R*1.01,t)),j:Math.round((t+TAU)/TAU*28)%28}));
+    if(band.length>1){ctx.strokeStyle=INK;ctx.lineWidth=3.6;line(band.map(b=>b.q));ctx.stroke();ctx.strokeStyle='#6b727c';ctx.lineWidth=2;line(band.map(b=>b.q));ctx.stroke();ctx.fillStyle='#d8dde3';for(const b of band)if(b.j%4===0){ball(b.q,.55);ctx.fill()}}ctx.restore();
+    for(const hh of horns)if(hh.v>=0||hh===horns[1])if(hh.v>=0)horn(hh);return}
+  if(kind==='bandana'||kind==='pompon'){// cloth on the skull: the pirate's band tied at the back (white spots), or the wool hat with its ribbed
+    // brim and the pompom on top
+    const pom=kind==='pompon',M=regionMesh(Vh,nod,-Math.PI,Math.PI,pom?a=>.42-.06*Math.cos(a):a=>.5-.2*(1-Math.cos(a))/2,()=>Math.PI/2,36,5),Rr=R*(pom?1.07:1.03);
+    ctx.fillStyle=INK;meshPath(M,h,Rr+1.1);ctx.fill();meshPath(M,h,Rr);ctx.fillStyle=soft(h[0]-Rr*.4,h[1]-Rr*.6,h[0],h[1]-Rr*.2,Rr*1.2,c,.18,.3);ctx.fill();
+    ctx.save();meshPath(M,h,Rr);ctx.clip();
+    if(pom){ctx.strokeStyle=dk(c,.28);ctx.lineWidth=.7;for(let a=-3;a<=3;a+=.3){const pts=[];for(let k=0;k<=6;k++){const n=nrm(nod(hdir(a,.5+k*.17)));if(F(n)>.05)pts.push(sp(Vh,h,Rr,n))}if(pts.length>1){line(pts);ctx.stroke()}}}
+    else{ctx.fillStyle='rgba(255,255,255,.85)';for(let i=0;i<14;i++){const n=nrm(nod(hdir(-2.6+i*.4+(i%2)*.15,.62+(i%3)*.28)));if(F(n)<.1)continue;const q=sp(Vh,h,Rr,n);ball(q,.75*Math.min(1,F(n)*2));ctx.fill()}}
+    ctx.restore();
+    // the lower edge: a thick ribbed brim for the wool hat, a fold for the band
+    for(const r of meshEdge(M,h,Rr,0,.04)){if(r.length<2)continue;ctx.strokeStyle=INK;ctx.lineWidth=pom?5.2:3.2;line(r);ctx.stroke();ctx.strokeStyle=pom?lt(c,.08):dk(c,.08);ctx.lineWidth=pom?3.4:1.6;line(r);ctx.stroke()}
+    if(pom){const q=P3(mul(up,Rr*1.12)),r=3.1;ink(1.4);ball(q,r);ctx.fillStyle=soft(q[0]-1.2,q[1]-1.2,q[0],q[1],r*1.3,'#f6efe4',.2,.25);ctx.fill();ctx.stroke();
+      if(!LOWFX){ctx.strokeStyle='rgba(180,170,160,.6)';ctx.lineWidth=.5;for(let i=0;i<6;i++){const a=i/6*TAU;ctx.beginPath();ctx.moveTo(q[0]+Math.cos(a)*r*.3,q[1]+Math.sin(a)*r*.3);ctx.lineTo(q[0]+Math.cos(a)*r*.85,q[1]+Math.sin(a)*r*.85);ctx.stroke()}}}
+    else{const d=nod(hdir(Math.PI,.42));if(F(d)>-.3)bandKnot(Vh,h,mul(d,R*1.05),nod,c,sw||0)}
+    return}}
+// a ring round the head's axis up at the height z (radius r), where it faces us, as runs of screen points
+function ringRunsAt(Vh,h,up,fw,rt,z,r,minF){const runs=[];let cur=[];for(let i=0;i<=36;i++){const t=i/36*TAU,n=add(mul(fw,Math.cos(t)),mul(rt,Math.sin(t)));if(Vh.F(n)>minF)cur.push(hP(Vh,h,add(mul(up,z),mul(n,r))));else if(cur.length){runs.push(cur);cur=[]}}if(cur.length)runs.push(cur);return runs}
+// the tattoos of the look (Denis, 15 October): drawn on the skin in the face's units, ink of a colour (col), grown from their middle by K
+const TAT_INK='#2e4c8c';
+// the tattoos (look 'tatuaggio'), in ink on the skin: shapes that read even small, thin tapered strokes and clean filled figures, never
+// thick lines on a tiny shape (that was a smudge). K: the size of the look's slider; col: the ink
+function faceTattoo(kind,fp,seen,K,col){K=K||1;col=col||TAT_INK;ctx.save();ctx.lineCap='round';ctx.lineJoin='round';const sw=Math.sqrt(K);
+  const at=(cx,cy)=>(x,y)=>fp(cx+(x-cx)*K,cy+(y-cy)*K);
+  const path=(m,P,lw,al,fill)=>{if(al<=.02)return;ctx.globalAlpha=al*.94;ctx.beginPath();for(const p of P){const q=m(p[0],p[1]);ctx.lineTo(q[0],q[1])}if(fill){ctx.closePath();ctx.fillStyle=col;ctx.fill()}else{ctx.strokeStyle=col;ctx.lineWidth=lw*sw;ctx.stroke()}ctx.globalAlpha=1};
+  const arc=(cx,cy,r,a0,a1,n)=>{const o=[];for(let i=0;i<=n;i++){const a=a0+(a1-a0)*i/n;o.push([cx+Math.cos(a)*r,cy+Math.sin(a)*r])}return o};
+  // a tapered stroke from a to b, bowing by bend to one side, w wide in the middle and pointed at both ends
+  const blade=(m,a,b,bend,w,al)=>{const N=12,Lf=[],Rt=[],dx=b[0]-a[0],dy=b[1]-a[1],l=Math.hypot(dx,dy)||1,nx=-dy/l,ny=dx/l;
+    for(let i=0;i<=N;i++){const t=i/N,c=Math.sin(t*Math.PI),x=a[0]+dx*t+nx*bend*c,y=a[1]+dy*t+ny*bend*c,hw=w*Math.pow(c,.75)/2;Lf.push([x+nx*hw,y+ny*hw]);Rt.push([x-nx*hw,y-ny*hw])}
+    path(m,Lf.concat(Rt.reverse()),0,al,true)};
+  if(kind==='tribale'){// three blades fanning down from the outer corner of his left eye
+    const m=at(-.5,-.1),al=seen(-.5,-.1);if(al>.02){blade(m,[-.47,.13],[-.4,-.46],-.14,.13,al);blade(m,[-.61,.06],[-.7,-.37],.11,.095,al);blade(m,[-.35,-.02],[-.19,-.31],-.08,.08,al)}}
+  else if(kind==='fulmine'){// a lightning bolt down his right cheek
+    const m=at(.52,-.16),al=seen(.52,-.16);path(m,[[.42,.12],[.68,.12],[.55,-.07],[.72,-.07],[.38,-.5],[.49,-.21],[.33,-.21]],0,al,true)}
+  else if(kind==='luna'){// a crescent moon in the middle of the forehead, with a small star
+    const m=at(0,.66),al=seen(0,.66);if(al>.02){const o=arc(0,.66,.15,.55,TAU-.55,16),i2=arc(.075,.69,.125,TAU-.95,.95,14).reverse();path(m,o.concat(i2),0,al,true);
+      const q=m(.2,.78);ctx.globalAlpha=al*.94;ctx.fillStyle=col;ctx.beginPath();for(let i=0;i<8;i++){const a=i/8*TAU-Math.PI/2,r=(i%2?.35:1)*1.25*sw;ctx.lineTo(q[0]+Math.cos(a)*r,q[1]+Math.sin(a)*r)}ctx.closePath();ctx.fill();ctx.globalAlpha=1}}
+  else if(kind==='puntini'){// three dots down his left cheekbone
+    for(const[x,y] of[[-.56,.02],[-.5,-.13],[-.44,-.28]]){const al=seen(x,y);if(al<=.02)continue;ctx.globalAlpha=al*.94;ctx.fillStyle=col;ball(fp(-.5+(x+.5)*K,-.13+(y+.13)*K),.72*sw);ctx.fill();ctx.globalAlpha=1}}
+  else if(kind==='artigli'){// three claw marks across his right cheek
+    const m=at(.52,-.14),al=seen(.52,-.14);if(al>.02)for(const d of[-.1,0,.1])blade(m,[.4+d,.12],[.62+d,-.42],.03,.065,al)}
+  else if(kind==='spirale'){// a spiral of a turn and a half on his left cheek, open in the middle
+    const m=at(-.48,-.15),al=seen(-.48,-.15),P=[];for(let i=0;i<=36;i++){const a=i/36*TAU*1.5,r=.05+i/36*.15;P.push([-.48+Math.cos(a)*r,-.15+Math.sin(a)*r])}path(m,P,.58,al)}
+  else if(kind==='onde'){// two waves under each eye
+    for(const sd of[-1,1]){const m=at(sd*.46,-.1),al=seen(sd*.46,-.1);for(const y0 of[-.03,-.16]){const P=[];for(let i=0;i<=16;i++){const x=sd*(.3+i*.022);P.push([x,y0+Math.sin(i/16*TAU*1.5)*.035])}path(m,P,.6,al)}}}
+  else if(kind==='cuore'){// a little heart on his right cheek
+    const m=at(.5,-.17),al=seen(.5,-.17),P=[];for(let i=0;i<=28;i++){const t=i/28*TAU,x=16*Math.pow(Math.sin(t),3),y=13*Math.cos(t)-5*Math.cos(2*t)-2*Math.cos(3*t)-Math.cos(4*t);P.push([.5+x*.0115,-.17+y*.0115])}path(m,P,0,al,true)}
+  ctx.restore()}
+// ------------------------------------------------------------------ the new heroes' own things (Denis, 15 October: «crea altri 3 pg con le
+// loro abilità»): the Bard's plume and cape, the Alchemist's goggles, apron, vials and backpack, the Ninja's mask, band and sword
+// a music note (the Bard's, also the shots in the game): kind 0 one note, 1 two notes beamed; s: its size; col: its colour
+function musicNote(x,y,s,col,kind){ctx.save();ctx.translate(x,y);ctx.lineCap='round';ctx.lineJoin='round';
+  const H=kind?[[-s*.85,s*.25],[s*.95,-s*.05]]:[[0,0]],T=kind?[-s*2.6,-s*2.9]:[-s*2.6];
+  const draw=(w,c,grow)=>{ctx.strokeStyle=c;ctx.fillStyle=c;
+    H.forEach(([hx,hy],i)=>{ctx.beginPath();ctx.ellipse(hx,hy,s*.78+grow,s*.56+grow,-.42,0,TAU);ctx.fill();ctx.lineWidth=s*.34+w;ctx.beginPath();ctx.moveTo(hx+s*.66,hy-s*.12);ctx.lineTo(hx+s*.66,hy+T[i]);ctx.stroke()});
+    if(kind){ctx.lineWidth=s*.62+w;ctx.beginPath();ctx.moveTo(H[0][0]+s*.66,H[0][1]+T[0]);ctx.lineTo(H[1][0]+s*.66,H[1][1]+T[1]);ctx.stroke()}
+    else{ctx.lineWidth=s*.34+w;ctx.beginPath();ctx.moveTo(s*.66,T[0]);ctx.quadraticCurveTo(s*1.75,T[0]+s*.7,s*1.45,T[0]+s*1.75);ctx.stroke()}};
+  draw(s*.55,INK,s*.28);draw(0,col,0);ctx.fillStyle='rgba(255,255,255,.7)';ball([H[0][0]-s*.26,H[0][1]-s*.18],s*.2);ctx.fill();ctx.restore()}
+// the Ninja's star seen flat (a shot in flight): four points round a hole, turned by a
+function starShape(x,y,r,a,col){ctx.save();ctx.translate(x,y);ctx.rotate(a);ctx.lineJoin='round';ctx.beginPath();for(let i=0;i<8;i++){const an=i/8*TAU,rr=i%2?r*.34:r;ctx.lineTo(Math.cos(an)*rr,Math.sin(an)*rr)}ctx.closePath();
+  ctx.strokeStyle=INK;ctx.lineWidth=Math.max(1.2,r*.32);ctx.stroke();ctx.fillStyle=col||'#8a96a4';ctx.fill();
+  ctx.fillStyle='rgba(255,255,255,.5)';ctx.beginPath();ctx.moveTo(0,0);ctx.lineTo(-r*.18,-r*.3);ctx.lineTo(0,-r);ctx.closePath();ctx.fill();ctx.beginPath();ctx.moveTo(0,0);ctx.lineTo(-r*.3,r*.18);ctx.lineTo(-r,0);ctx.closePath();ctx.fill();
+  ctx.fillStyle='#1b1612';ball([0,0],r*.17);ctx.fill();ctx.restore()}
+// the Alchemist's flask seen flat (a shot in flight, or thrown): the glass belly, the liquid glowing in it, the neck and the cork, turned by a
+function flaskShape(x,y,r,a,col){ctx.save();ctx.translate(x,y);ctx.rotate(a);ctx.lineJoin='round';col=col||'#7bf06a';
+  shine(hexRgb(col),0,0,r*2.4,.3);ink(Math.max(1.2,r*.3));ctx.beginPath();ctx.arc(0,0,r,-1.25,Math.PI+1.25);ctx.lineTo(-r*.32,-r*1.75);ctx.lineTo(r*.32,-r*1.75);ctx.closePath();ctx.fillStyle='#d6eef2';ctx.fill();ctx.stroke();
+  ctx.save();ball([0,0],r*.8);ctx.clip();ctx.fillStyle=col;ctx.fillRect(-r,-r*.15,r*2,r*1.2);ctx.fillStyle=lt(col,.45);ctx.fillRect(-r,-r*.15,r*2,r*.22);ctx.restore();
+  ctx.fillStyle='#a86833';ctx.fillRect(-r*.4,-r*2.2,r*.8,r*.5);ctx.strokeRect(-r*.4,-r*2.2,r*.8,r*.5);
+  ctx.fillStyle='rgba(255,255,255,.8)';ball([-r*.4,-r*.35],r*.22);ctx.fill();ctx.restore()}
+// the Alchemist's goggles, pushed up on the forehead: a leather strap round the head (over the hood, or over the hair) and two big
+// round lenses in brass rims on the front, only on our side (drawn after the head)
+function goggles(Vh,h,R,nod){const{F}=Vh,el=a=>lerp(1.02,.66,(1-Math.cos(a))/2),at=a=>nrm(nod(hdir(a,el(a)))),R1=R*1.03;
+  const runs=[];let cur=[];for(let i=0;i<=48;i++){const a=i/48*TAU,m=at(a);if(F(m)>.02)cur.push(a);else if(cur.length){runs.push(cur);cur=[]}}if(cur.length)runs.push(cur);
+  if(runs.length>1&&runs[0][0]===0&&runs[runs.length-1][runs[runs.length-1].length-1]>=TAU-.01){const l=runs.pop();runs[0]=l.map(a=>a-TAU).concat(runs[0])}
+  ctx.lineCap='round';ctx.lineJoin='round';
+  for(const r of runs){if(r.length<2)continue;const pts=r.map(a=>sp(Vh,h,R1,at(a)));ctx.strokeStyle=INK;ctx.lineWidth=3.1;line(pts);ctx.stroke();ctx.strokeStyle='#3d2a1a';ctx.lineWidth=1.7;line(pts);ctx.stroke();
+    ctx.strokeStyle='rgba(240,200,140,.55)';ctx.lineWidth=.5;ctx.setLineDash([.9,1.3]);line(pts);ctx.stroke();ctx.setLineDash([])}
+  // the lenses, the nearer one last; a ring of brass round each, the glass with a light in it
+  const L=[-1,1].map(sd=>{const n=at(sd*.44);return{sd,n,v:F(n)}}).filter(l=>l.v>.05).sort((a,b)=>a.v-b.v);
+  for(const{n,v} of L){let u=cross(n,[0,0,1]);if(len(u)<.2)u=[0,1,0];u=nrm(u);const w=cross(n,u),c=mul(n,R*1.08),rr=2.5;
+    const ring=k=>{const o=[];for(let i=0;i<18;i++){const t=i/18*TAU;o.push(hP(Vh,h,add(c,add(mul(u,Math.cos(t)*rr*k),mul(w,Math.sin(t)*rr*k)))))}return o};
+    const O=ring(1),I=ring(.64),q=hP(Vh,h,c);ctx.save();ctx.globalAlpha*=cl(v*4,0,1);
+    poly(O);ctx.strokeStyle=INK;ctx.lineWidth=1.9;ctx.stroke();ctx.fillStyle=soft(q[0]-1.2,q[1]-1.2,q[0],q[1],rr*1.2,'#d39a33',.3,.3);ctx.fill();
+    poly(I);const g=ctx.createRadialGradient(q[0]-.9,q[1]-.9,.2,q[0],q[1],rr*.75);g.addColorStop(0,'#eafcff');g.addColorStop(1,'#5fa8bc');ctx.fillStyle=g;ctx.fill();ctx.strokeStyle='rgba(70,36,8,.75)';ctx.lineWidth=.6;ctx.stroke();
+    ctx.fillStyle='rgba(255,255,255,.9)';ball([q[0]-.75,q[1]-.7],.5);ctx.fill();ctx.restore()}}
+// the Ninja's mask: cloth over the lower face up to under the eyes (a little higher over the nose), round the whole head, two folds
+function ninjaMask(Vh,h,R,nod,col){const M=regionMesh(Vh,nod,-Math.PI,Math.PI,()=>-1.5,a=>.07+.08*Math.exp(-(a/.32)*(a/.32)),32,4),R1=R*1.004;
+  if(!meshPath(M,h,R1))return;ctx.fillStyle=soft(h[0]-R*.35,h[1],h[0],h[1]+R*.3,R*1.25,col,.18,.3);ctx.fill();
+  ctx.strokeStyle=INK;ctx.lineWidth=1.15;ctx.lineCap='round';for(const r of meshEdge(M,h,R1,M.NE,.04)){if(r.length<2)continue;line(r);ctx.stroke()}
+  ctx.strokeStyle=lt(col,.22);ctx.lineWidth=.6;for(const r of meshEdge(M,h,R1*.995,M.NE,.12)){if(r.length<2)continue;line(r.map(q=>[q[0],q[1]+.8]));ctx.stroke()}
+  ctx.strokeStyle='rgba(0,0,0,.3)';ctx.lineWidth=.7;for(const a of[-.32,.32]){const pts=[];for(let k=0;k<=4;k++){const n=nrm(nod(hdir(a*(1-k*.1),.0-k*.16)));if(Vh.F(n)>.08)pts.push(sp(Vh,h,R1,n))}if(pts.length>1){line(pts);ctx.stroke()}}}
+// the Ninja's sword on his back: the black scabbard from the left hip up to the right shoulder, the round guard, the wrapped hilt over the
+// shoulder and its pommel
+function katanaBack(V0,X){const{P}=V0,a3=X.T([-10,-5.6,ZB+2.6]),b3=X.T([-8.6,3.9,ZB+15.2]),g3=X.T([-8.45,4.5,ZB+16]),h3=X.T([-7.8,7.4,ZB+20.6]),A=P(a3),B=P(b3),G3=P(g3),Hh=P(h3);
+  ctx.lineCap='round';ctx.strokeStyle=INK;ctx.lineWidth=4.8;seg(A,B);ctx.stroke();ctx.strokeStyle='#262832';ctx.lineWidth=3;seg(A,B);ctx.stroke();
+  ctx.strokeStyle='rgba(255,255,255,.2)';ctx.lineWidth=.8;seg([A[0]-.7,A[1]-.5],[B[0]-.7,B[1]-.5]);ctx.stroke();
+  ink(1.1);ctx.fillStyle='#d6a640';ball(A,1.9);ctx.fill();ctx.stroke();
+  ctx.strokeStyle=INK;ctx.lineWidth=4.2;seg(G3,Hh);ctx.stroke();ctx.strokeStyle='#e9e2d0';ctx.lineWidth=2.4;seg(G3,Hh);ctx.stroke();
+  ctx.strokeStyle='#3a2f45';ctx.lineWidth=.9;for(let i=1;i<5;i++){const q=[lerp(G3[0],Hh[0],i/5),lerp(G3[1],Hh[1],i/5)];ctx.beginPath();ctx.moveTo(q[0]-1.3,q[1]+.8);ctx.lineTo(q[0]+1.3,q[1]-.8);ctx.stroke()}
+  ink(1.2);ctx.fillStyle='#c9a24a';ctx.beginPath();ctx.ellipse(G3[0],G3[1],3,1.6,Math.atan2(Hh[1]-G3[1],Hh[0]-G3[0])+Math.PI/2,0,TAU);ctx.fill();ctx.stroke();
+  ctx.fillStyle='#c9a24a';ball(Hh,1.2);ctx.fill();ctx.stroke()}
+// the Alchemist's backpack: a leather bag on the back with its flap and buckle, a big flask and a little one sticking out of the top
+function alchPack(V0,X,col){const{P,F}=V0,C=[];for(const x of[-14.2,-9.4])for(const y of[-4.9,4.9])for(const z of[ZB+3.4,ZB+13.2])C.push(P(X.T([x,y,z])));
+  const H=chull(C),bb=[1e9,1e9,-1e9,-1e9];for(const q of H){bb[0]=Math.min(bb[0],q[0]);bb[1]=Math.min(bb[1],q[1]);bb[2]=Math.max(bb[2],q[0]);bb[3]=Math.max(bb[3],q[1])}
+  // the flasks first (they stand in the bag, behind its front)
+  const fl=(c,r,lc)=>{const q=P(X.T(c)),nk=P(X.T(add(c,[0,0,r*1.7])));ink(1.3);ctx.fillStyle='#cfe6ea';ctx.lineWidth=1.3;ctx.beginPath();ctx.moveTo(q[0]-r*.36,q[1]);ctx.lineTo(nk[0]-r*.36,nk[1]);ctx.lineTo(nk[0]+r*.36,nk[1]);ctx.lineTo(q[0]+r*.36,q[1]);ctx.closePath();ctx.fill();ctx.stroke();
+    ball(q,r);ctx.fill();ctx.stroke();ctx.save();ball(q,r*.8);ctx.clip();ctx.fillStyle=lc;ctx.fillRect(q[0]-r,q[1]-r*.1,r*2,r*1.2);ctx.restore();shine(hexRgb(lc),q[0],q[1],r*2,.25);
+    ctx.fillStyle='rgba(255,255,255,.8)';ball([q[0]-r*.35,q[1]-r*.35],r*.22);ctx.fill();ctx.fillStyle='#a86833';ctx.fillRect(nk[0]-r*.42,nk[1]-r*.5,r*.84,r*.55);ctx.strokeRect(nk[0]-r*.42,nk[1]-r*.5,r*.84,r*.55)};
+  fl([-11.6,1.8,ZB+15.4],2.5,'#7bf06a');fl([-11.2,-2.6,ZB+14.2],1.6,'#ff7ab8');
+  ink(2.3);poly(H);ctx.fillStyle=soft(bb[0]+(bb[2]-bb[0])*.3,bb[1]+(bb[3]-bb[1])*.25,(bb[0]+bb[2])/2,(bb[1]+bb[3])/2,Math.max(bb[2]-bb[0],bb[3]-bb[1])*.75,col,.16,.32);ctx.fill();ctx.stroke();
+  // the flap over the top and its buckle, seen from the back
+  const bk=F(X.Rd([-1,0,0]));if(bk>.05){const f0=P(X.T([-14.3,-4.7,ZB+12.6])),f1=P(X.T([-14.3,4.7,ZB+12.6])),f2=P(X.T([-14.4,4.2,ZB+8.4])),f3=P(X.T([-14.4,-4.2,ZB+8.4]));
+    ctx.save();ctx.globalAlpha=cl(bk*4,0,1);ctx.beginPath();ctx.moveTo(f0[0],f0[1]);ctx.lineTo(f1[0],f1[1]);ctx.quadraticCurveTo((f1[0]+f2[0])/2+1,(f1[1]+f2[1])/2,f2[0],f2[1]);ctx.lineTo(f3[0],f3[1]);ctx.closePath();
+    ctx.fillStyle=dk(col,.18);ctx.fill();ctx.strokeStyle='rgba(27,22,18,.7)';ctx.lineWidth=1;ctx.stroke();const b=P(X.T([-14.5,0,ZB+8.6]));ink(.9);ctx.fillStyle='#d39a33';ctx.fillRect(b[0]-1.3,b[1]-1,2.6,2);ctx.strokeRect(b[0]-1.3,b[1]-1,2.6,2);ctx.restore()}}
+// a vial at the Alchemist's belt (t: where round the body), glass with its coloured liquid and a cork
+function vialAt(V0,X,t,col){const{P}=V0,s=surf(t,ZB+4.2,1.2),c=X.T(s.p),top=add(c,[0,0,3.4]),A=P(c),B=P(top),r=1.45;
+  ctx.fillStyle=INK;hull(A,r+1,B,r*.7+1);ctx.fill();ctx.fillStyle='#d6eef2';hull(A,r,B,r*.7);ctx.fill();
+  const m=[lerp(A[0],B[0],.45),lerp(A[1],B[1],.45)];ctx.fillStyle=col;hull(A,r*.78,m,r*.68);ctx.fill();shine(hexRgb(col),A[0],A[1],4,.25);
+  ctx.fillStyle='#a86833';ball(B,r*.72);ctx.fill();ctx.strokeStyle=INK;ctx.lineWidth=.8;ctx.stroke();ctx.fillStyle='rgba(255,255,255,.75)';ball([A[0]-.5,A[1]-.6],.4);ctx.fill()}
+// the Alchemist's apron, on the tunic (inside its outline): the part of it that faces us, its neck strap, a pocket
+function apronOn(V0,X,col){const{P,F}=V0,vis=(t,z)=>F(X.Rd(surf(t,z,.2).n))>.02,T0=-.78,T1=.78,N=16;const top=[],bot=[];
+  for(let i=0;i<=N;i++){const t=lerp(T0,T1,i/N);if(vis(t,ZB+11.2)){top.push(P(X.T(surf(t,ZB+11.2-Math.abs(t)*1.4,.2).p)));bot.push(P(X.T(surf(t*1.08,ZB+1.1,.2).p)))}}
+  if(top.length<2)return;ctx.beginPath();for(const q of top)ctx.lineTo(q[0],q[1]);for(let i=bot.length-1;i>=0;i--)ctx.lineTo(bot[i][0],bot[i][1]);ctx.closePath();
+  let x0=1e9,y0=1e9,x1=-1e9,y1=-1e9;for(const q of top.concat(bot)){x0=Math.min(x0,q[0]);y0=Math.min(y0,q[1]);x1=Math.max(x1,q[0]);y1=Math.max(y1,q[1])}
+  ctx.fillStyle=soft(x0+(x1-x0)*.3,y0+(y1-y0)*.25,(x0+x1)/2,(y0+y1)/2,Math.max(x1-x0,y1-y0)*.8,col,.12,.26);ctx.fill();ctx.strokeStyle='rgba(27,22,18,.75)';ctx.lineWidth=1.1;ctx.stroke();
+  for(const sd of[-1,1])surfLine(V0,X,k=>surf(sd*lerp(.66,.22,k),lerp(ZB+10.2,ZB+13.4,k),.25),dk(col,.25),1.3,1);
+  if(vis(0,ZB+5)){const pk=[[-.3,ZB+6.4],[.3,ZB+6.4],[.3,ZB+3.6],[-.3,ZB+3.6]].map(([t,z])=>P(X.T(surf(t,z,.3).p)));poly(pk);ctx.fillStyle=dk(col,.12);ctx.fill();ctx.strokeStyle='rgba(27,22,18,.55)';ctx.lineWidth=.8;ctx.setLineDash([1.2,1]);ctx.stroke();ctx.setLineDash([])}}
 
 // ------------------------------------------------------------------ the hero
 // the body being drawn is the robe or the tunic: set for this one drawing, and always put back afterwards
@@ -1100,6 +1338,10 @@ function arciere0(x,y,face,anim,p,sc,o){sc=sc||1;o=o||{};const S0=o.style||{},ar
   if(!S0.robe&&!S0.float)for(const[sd,f] of[[-1,A.fL],[1,A.fR]]){const far=F(0,sd,0)<0;parts.push({d:dT-100+D(f)*.01,f:()=>foot(V0,f,far?(S.foot2||HC.foot2):(S.foot||HC.foot))})}
   // the mantello d'ombra hangs behind the back, over the quiver
   if(arm==='mantello_ombra')parts.push({d:D(X.T([-14,0,ZB+4])),f:()=>cape(V0,X,A.sway*.4)});
+  else if(S0.cape)parts.push({d:D(X.T([-14,0,ZB+4])),f:()=>cape(V0,X,A.sway*.4,S.hood)});
+  if(S0.pack)parts.push({d:D(X.T([-11.6,0,ZB+8])),f:()=>alchPack(V0,X,S0.pack)});
+  if(S0.katana)parts.push({d:D(X.T([-10.4,0,ZB+9])),f:()=>katanaBack(V0,X)});
+  if(S0.vials)S0.vials.forEach((c,i)=>{const t=[-1.05,-1.45,1.2][i%3],s3=X.T(surf(t,ZB+5,1.2).p);parts.push({d:D(s3),f:()=>vialAt(V0,X,t,c)})});
   // the tunic: the hull of the rings, three tones, the hem, the collar, seam and buttons, the strap of the quiver, the belt and its buckle
   const Hc=add(X.T([.5,0,ZB+15]),add(X.Rd([0,0,7.4]),A.hd)),hDep=D(Hc);
   parts.push({d:dT,f:()=>{const pts=[];for(const[dz,r] of BP)for(let i=0;i<24;i++){const t=i/24*TAU;pts.push(P(X.T([Math.cos(t)*r*AX,Math.sin(t)*r,BZ+dz])))}
@@ -1125,6 +1367,7 @@ function arciere0(x,y,face,anim,p,sc,o){sc=sc||1;o=o||{};const S0=o.style||{},ar
       for(const sd of[-1,1])surfLine(V0,X,k=>surf(sd*lerp(.62,.04,k),lerp(ZB+13.2,ZB+10.8,k),.1),'rgba(27,22,18,.5)',1.3,1);
       surfLine(V0,X,k=>surf(.04,lerp(ZB+10.8,ZB+6.8,k),.1),'rgba(27,22,18,.42)',1,1,[1.6,1.6]);
       for(const z of[ZB+9.9,ZB+8]){const s=surf(.17,z,.25),n=X.Rd(s.n);if(F(n)>.1){const q=P(X.T(s.p));ctx.fillStyle=HC.button;ink(.7);ball(q,.95);ctx.fill();ctx.stroke()}}}
+    if(S0.apron)apronOn(V0,X,S0.apron);
     // the strap of the quiver: over the left shoulder, across the chest to the right hip and round the back
     if(S0.strap!==false)surfLine(V0,X,t=>surf(t,ZB+8.4-4.6*Math.sin(t),.35),HC.strap,1.4,0);
     // the belt with the golden buckle
@@ -1165,7 +1408,7 @@ function arciere0(x,y,face,anim,p,sc,o){sc=sc||1;o=o||{};const S0=o.style||{},ar
   parts.push({d:anim==='shoot'||anim==='aim'?D(X.T([12,0,ZB+5]))+.01:D(X.T(REST.hR)),f:()=>fist(V0,hR,2.7,S.skin)});}
   // the head turns on its own camera (the look), the face nods
   const dv=Math.atan2(Math.sin(Math.PI/2-face),Math.cos(Math.PI/2-face)),cheat=o.noCheat?0:.42*Math.sin(dv)*cl((Math.PI-Math.abs(dv))/(Math.PI/2),0,1);
-  parts.push({d:hDep,f:()=>{const Vh=Vat(face+A.hy+cheat+(o.look||0),P(Hc),hDep);head(Vh,Rh,S,A,{blink:A.blink,squint:A.squint,shut:A.shut,mouth:A.mouth,moss:o.moss&&anim==='idle'||o.moss===2,inhale:A.inhale,exhale:A.exhale,eyeLight:o.eyeLight!==false,
+  parts.push({d:hDep,f:()=>{const Vh=Vat(face+A.hy+cheat+(o.look||0),P(Hc),hDep);head(Vh,Rh,S,A,{blink:A.blink,squint:A.squint,shut:A.shut,mouth:A.mouth,moss:!S.mask&&(o.moss&&anim==='idle'||o.moss===2),inhale:A.inhale,exhale:A.exhale,eyeLight:o.eyeLight!==false,
       eyeCol:S0.eyes,glow:S0.glowEyes&&S0.eyes?hexRgb(S0.eyes):null,blush:S0.blush,sway:A.sway});
     if(A.flash>0){ctx.save();ctx.globalAlpha=A.flash*.3;ball(P(Hc),Rh);ctx.fillStyle='#fff';ctx.fill();ctx.restore()}}});
   // the arrow flies off after the release, in front of the hero or behind him
@@ -1177,7 +1420,7 @@ function arciere0(x,y,face,anim,p,sc,o){sc=sc||1;o=o||{};const S0=o.style||{},ar
   ctx.restore()}
 // the Fabbro's lava cracks: [angle round the body, height] along each one (two in front, two on the back)
 const CRACKS=[[[-.45,ZB+11.6],[-.2,ZB+7.4],[-.38,ZB+3]],[[.42,ZB+10],[.2,ZB+4.8]],[[2.6,ZB+11],[2.85,ZB+6.6],[2.7,ZB+3.2]],[[-2.75,ZB+9.4],[-2.95,ZB+4.4]]];
-const NOQ={scettro:1,martello:1,bomba:1};
+const NOQ={scettro:1,martello:1,bomba:1,liuto:1,fiala:1,stellina:1};
 // the skeleton's shield: a round board of wood, thick, with an iron rim and an iron boss; seen from behind its back is darker; cracks
 // spread over it as it wears out (S.shDmg), a flash when it parries (S.shHit)
 function shield(V0,c,n,r,S){const{P,F}=V0;let u=cross(n,[0,0,1]);if(len(u)<.2)u=cross(n,[0,1,0]);u=nrm(u);const v=cross(n,u),N=22,f=F(n),th=1.1,fr=[],bk=[];
@@ -1221,4 +1464,4 @@ function ringOn(V0,h3,id){const it=typeof ITEM!=='undefined'&&ITEM[id],r=it?[it.
 function testa(x,y,face,sc,o){o=o||{};const S0=o.style||{},AR=ARM[S0.armor]||ARM.giubba,S={...S0,body:S0.body||AR[0],hood:S0.hood||AR[1],skin:S0.skin||HC.skin};
   const A=pose('idle',o.p==null?.25:o.p,o);A.hy=0;ctx.save();ctx.translate(x,y);ctx.scale(sc,sc);
   try{head(Vat(face,[0,0],0),10,S,A,{blink:1,squint:0,shut:0,mouth:0,moss:false,eyeLight:true,eyeCol:S0.eyes,glow:S0.glowEyes&&S0.eyes?hexRgb(S0.eyes):null,blush:S0.blush,sway:0})}finally{ctx.restore()}}
-return{arciere,testa,pose,ARM,BOWS,HC,ROBE}})();
+return{arciere,testa,pose,ARM,BOWS,HC,ROBE,nota:musicNote,stella:starShape,fiala:flaskShape,hatCol:HAT_COL}})();

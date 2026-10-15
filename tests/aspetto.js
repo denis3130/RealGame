@@ -31,22 +31,22 @@ let fails=0;const ok=(c,m)=>{console.log((c?'  ok  ':'  NO  ')+m);if(!c)fails++}
   const lk=o=>({...L.def,...o});
   // the style as the game draws it: 62-eroe-3d.js gives the Druida his green eyes
   const GS="(h,lk)=>{const s=sceLookStyle(heroStyle0(h),lk);return s.hid==='druida'&&!s.eyes?{...s,eyes:s.eyeCol}:s}";
-  const MODE={cappuccio:'',capelli:'head',orecchie:'head',pelle:'head',occhi:'head',sopr:'head',bocca:'head',segni:'head',barba:'mid',acc:''};
+  const MODE={cappuccio:'',capelli:'head',orecchie:'head',pelle:'head',occhi:'head',sopr:'head',bocca:'head',segni:'head',tatuaggi:'head',barba:'mid',acc:''};
   const DOWN={capelli:1,orecchie:1,barba:1,acc:1};
   // every choice of every part, on its own (and without the hood where it matters); the colours of the part, on a choice that shows them
-  const CB={occhi:{occhi:'grandi'},capelli:{capelli:'ciuffo',cappuccio:'senza'},sopr:{sopr:'folte'},bocca:{bocca:'sorrisone'},segni:{segno:'pittura'},barba:{barba:'barba',cappuccio:'senza'},acc:{acc:'sciarpa'}};
+  const CB={occhi:{occhi:'grandi'},capelli:{capelli:'ciuffo',cappuccio:'senza'},sopr:{sopr:'folte'},bocca:{bocca:'sorrisone'},segni:{segno:'pittura'},tatuaggi:{tatuaggio:'tribale'},barba:{barba:'barba',cappuccio:'senza'},acc:{acc:'sciarpa'},cappuccio:{cappuccio:'punta'}};
   for(const C of L.cats){const rows=C.list.map(o=>[`${C.n}:\n${o.n}`,lk({[C.key]:o.id})]);
     if(C.cols)for(const o of C.cols)rows.push([`${C.cn||'Colore'}:\n${o.n}`,lk({...(CB[C.id]||{}),[C.ckey]:o.id})]);
     await sheet(`as_${C.id}.png`,rows,HERO,MODE[C.id]);
     if(DOWN[C.id])await sheet(`as_${C.id}_senza.png`,C.list.map(o=>[`${C.n}:\n${o.n}\nsenza cappuccio`,lk({[C.key]:o.id,cappuccio:'senza'})]),HERO,MODE[C.id])}
   // the sizes: the smallest, as drawn, the biggest
-  const SZ={capelli:['riccioli',{cappuccio:'senza'}],occhi:['grandi'],sopr:['folte'],bocca:['sorrisone'],segno:['lentiggini'],barba:['barba',{cappuccio:'senza'}],orecchie:['lunghe']};
+  const SZ={capelli:['riccioli',{cappuccio:'senza'}],occhi:['grandi'],sopr:['folte'],bocca:['sorrisone'],segno:['lentiggini'],tatuaggio:['spirale'],barba:['barba',{cappuccio:'senza'}],orecchie:['lunghe']};
   const szRows=[];for(const k of L.K){const C=L.cats.find(c=>c.size===k),[id,more]=SZ[k];for(const v of[L.kmin,1,L.kmax])szRows.push([`${C.n} (${C.list.find(o=>o.id===id).n}):\n${Math.round(v*100)}%`,{...lk({[C.key]:id,...(more||{})}),k:{[k]:v}}])}
   await sheet('as_grandezze.png',szRows,HERO,'mid');
   // two whole looks on the four heroes (their own pieces stay: the Druida's antlers and green eyes, the Balestriere's helmet, the Cacciatrice's tail)
   const A={pelle:'dorata',occhi:'decisi',iride:'azzurri',sopr:'decise',bocca:'ghigno',segno:'cicatrice',capelli:'frangia',colCap:'rossi',barba:'barbetta',orecchie:'punta',acc:'sciarpa',colAcc:'verde',colBarba:'neri'},
     B={pelle:'scura',occhi:'grandi',iride:'ambra',sopr:'alzate',bocca:'sorriso',segno:'lentiggini',capelli:'riccioli',colCap:'bianchi',orecchie:'gatto',cappuccio:'senza',acc:'piuma',colSopr:'neri',colBocca:'rosso',k:{occhi:1.15,capelli:1.1}};
-  const heroes=['arciere','cacciatrice','balestriere','druida'],names=await E("Object.fromEntries(HEROES.map(h=>[h.id,h.name]))");
+  const heroes=['arciere','cacciatrice','balestriere','druida','bardo','alchimista','ninja'],names=await E("Object.fromEntries(HEROES.map(h=>[h.id,h.name]))");
   await sheet('as_eroi.png',heroes.flatMap(h=>[[`${names[h]||h}\nsenza ritocchi`,null,h],[`${names[h]||h}\naspetto A`,A,h],[`${names[h]||h}\naspetto B`,B,h]]),HERO,'');
   await sheet('as_eroi_viso.png',heroes.flatMap(h=>[[`${names[h]||h}\naspetto A`,A,h],[`${names[h]||h}\naspetto B`,B,h]]),HERO,'head');
   ok(!errs.length,'i fogli: nessun errore'+(errs.length?': '+errs.slice(0,3).join(' | '):''));
@@ -58,12 +58,12 @@ let fails=0;const ok=(c,m)=>{console.log((c?'  ok  ':'  NO  ')+m);if(!c)fails++}
     const diff=(d1,d2)=>{let n=0;for(let i=3;i<d1.length;i+=4)if(Math.abs(d1[i-3]-d2[i-3])+Math.abs(d1[i-2]-d2[i-2])+Math.abs(d1[i-1]-d2[i-1])+Math.abs(d1[i]-d2[i])>8)n++;return n};
     let n=0,fr=0,bk=0,cl=0;
     // the colours a style really draws with (a colour picked equal to the one of always changes nothing)
-    const EF=st=>{const L=st.look||{};return JSON.stringify([L.iris,L.browCol,L.beardCol||L.hairCol,L.hairCol,L.lipCol,L.markCol,L.accCol,SCE_ACCFIX[L.acc]?L.accFix||null:null])};
+    const EF=st=>{const L=st.look||{};return JSON.stringify([L.iris,L.browCol,L.beardCol||L.hairCol,L.hairCol,L.lipCol,L.markCol,L.accCol,SCE_ACCFIX[L.acc]?L.accFix||null:null,L.tatCol||null,L.hatCol||(EROE.hatCol[L.hood]||null)])};
     try{const GS=${GS};for(const h of ${JSON.stringify(heroes)}){const S0=GS(h,null);
       {const B=heroStyle0(h);if(sceLookStyle(B,{...LOOK_DEF})!==B||sceLookStyle(B,null)!==B||sceLookStyle(B,{...LOOK_DEF,k:{occhi:1}})!==B)bad.push(h+': senza ritocchi lo stile cambia')}
       const tries=[];for(const C of SCE_CATS){if(!C.list)continue;for(const o of C.list)if(o.id!==LOOK_DEF[C.key])tries.push({C,id:o.id,look:{...LOOK_DEF,[C.key]:o.id}})}
       for(const k of LOOK_K){const C=SCE_CATS.find(c=>c.size===k),o=C.list.find(x=>x.id!==LOOK_NONE[k]&&x.id!==LOOK_DEF[C.key])||C.list[1];for(const v of[LOOK_KMIN,LOOK_KMAX])tries.push({C,id:o.id+'@'+v,look:{...LOOK_DEF,[C.key]:o.id,k:{[k]:v}},size:1})}
-      const CB=${JSON.stringify({occhi:{occhi:'grandi'},capelli:{capelli:'ciuffo',cappuccio:'senza'},sopr:{sopr:'folte'},bocca:{bocca:'sorrisone'},segni:{segno:'pittura'},barba:{barba:'barba',cappuccio:'senza'},acc:{acc:'sciarpa'}})};
+      const CB=${JSON.stringify({occhi:{occhi:'grandi'},capelli:{capelli:'ciuffo',cappuccio:'senza'},sopr:{sopr:'folte'},bocca:{bocca:'sorrisone'},segni:{segno:'pittura'},tatuaggi:{tatuaggio:'tribale'},barba:{barba:'barba',cappuccio:'senza'},acc:{acc:'sciarpa'},cappuccio:{cappuccio:'punta'}})};
       for(const C of SCE_CATS){if(!C.cols||(C.id==='occhi'&&h==='druida'))continue;const base={...LOOK_DEF,...CB[C.id]};
         for(const o of C.cols)if(o.id!==LOOK_DEF[C.ckey])tries.push({C,id:C.ckey+':'+o.id,look:{...base,[C.ckey]:o.id},base,size:1})}
       for(const T of tries){const st=GS(h,T.look);
@@ -75,7 +75,7 @@ let fails=0;const ok=(c,m)=>{console.log((c?'  ok  ':'  NO  ')+m);if(!c)fails++}
         const front=diff(draw(S0,Math.PI/2,'idle',.3),draw(st,Math.PI/2,'idle',.3));if(sceHides(h,T.C.key,T.id)){if(front>12)bad.push(h+' '+T.id+': nascosto per la scheda, ma davanti si vede ('+front+' px)')}else if(front<6)bad.push(h+' '+T.id+': davanti non si vede ('+front+' px)');else fr++;
         if(T.C.cam==='face'&&T.C.id!=='pelle'){const back=diff(draw(S0,-Math.PI/2,'idle',.3),draw(st,-Math.PI/2,'idle',.3));if(back>4)bad.push(h+' '+T.id+': da dietro si vede attraverso la testa ('+back+' px)');else bk++}}}}
     finally{ctx=sv}return{bad,n,fr,bk,cl}})()`);
-  ok(!r.bad.length,`${r.n} disegni (4 eroi, ogni scelta, grandezza e colore, 6 mosse, 12 direzioni) senza errori; ${r.fr} scelte che si vedono davanti, ${r.bk} del viso nascoste da dietro, ${r.cl} colori che cambiano il disegno`+(r.bad.length?' — '+r.bad.slice(0,40).join('; '):''));
+  ok(!r.bad.length,`${r.n} disegni (${heroes.length} eroi, ogni scelta, grandezza e colore, 6 mosse, 12 direzioni) senza errori; ${r.fr} scelte che si vedono davanti, ${r.bk} del viso nascoste da dietro, ${r.cl} colori che cambiano il disegno`+(r.bad.length?' — '+r.bad.slice(0,40).join('; '):''));
   // the tiles of the screen: every choice of every part drawn, on every hero (a tile is never empty)
   const t2=await E(`(()=>{const bad=[];let n=0;const keep={sel:SCE.sel,look:SCE.look,manto:SCE.manto};try{for(const h of ${JSON.stringify(heroes)}){SCE.sel=h;SCE.look=sceLook(null);SCE.manto='';
       for(const C of SCE_CATS)for(const o of(C.id==='manto'?SCE_MANTI:C.list)){const cv=document.createElement('canvas');sceTileDraw(cv,C,o.id,48);const d=cv.getContext('2d').getImageData(0,0,cv.width,cv.height).data;let k=0;for(let i=3;i<d.length;i+=4)if(d[i]>40)k++;

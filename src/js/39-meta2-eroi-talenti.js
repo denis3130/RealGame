@@ -1,5 +1,9 @@
 // ---------- meta 2: heroes, talents, sets, evolutions, missions, achievements, settings ----------
-(function migrate(){const st=SAVE.starter==='cacciatrice'?'cacciatrice':'arciere';// the first hero is the one picked at the first launch (65)
+// the five heroes that can be picked at the first launch (65): the one picked is free, the others cost gold in the hero tab
+const STARTERS=['arciere','cacciatrice','bardo','alchimista','ninja'],starterId=()=>STARTERS.includes(SAVE.starter)?SAVE.starter:'arciere';
+// the speed of each hero's shot (the arrows 560)
+const PSPD={bolt:720,leaf:520,note:540,flask:470,star:650};
+(function migrate(){const st=starterId();// the first hero is the one picked at the first launch (65)
   const d={sel:'c1',done:{},inf:{best:0,top:[]},best2:{room:0,gold:0},best3:{room:0,gold:0},best4:{room:0,gold:0},hero:st,heroes:{[st]:1},tal:{},
   stats:{kills:{},bosses:{},elites:0,rooms:0,chests:0,dash:0,maxLvl:0,evos:0,gold:0,runs:0,wins:0,nohitAny:0},daily:{day:'',list:[]},free:{next:0,n:0},ach:{},title:null,frame:'base',
   set:{vib:true,left:false,q:'auto',mv:.8,sv:.8}};
@@ -13,6 +17,13 @@ const HEROES=[
   {id:'arciere',n:'Arciere',price:0,d:'Equilibrato in tutto, il veterano della cripta.',start:'Occhio di falco: +10% critico',sk:'crit',mods:{},style:{},proj:'arrow'},
   {id:'cacciatrice',n:'Cacciatrice',price:3000,d:'Rapidissima e sfuggente, ma fragile.',start:'Frecce diagonali fin da subito',sk:'diag',mods:{hp:.8,spd:1.25,dash:.75},
     style:{bighood:false,body:'#8a3a5a',hood:'#d9962e',skin:'#f0c8a8',hair:'#e0a63a',bowCol:'#c94a6a',hoodTip:false,ponytail:true,belt:'#5e2440'},proj:'arrow',pcol:'#ff8ab8'},
+  // the three heroes of the making of the hero (Denis, 15 October: «crea altri 3 pg con le loro abilità»): free when picked there
+  {id:'bardo',n:'Bardo',price:3000,d:'Suona e combatte: le sue note saltano da un nemico all\'altro.',start:'Note che rimbalzano su un altro nemico',sk:'ric',mods:{atk:.92,aspd:1.08,spd:1.05},
+    style:{bighood:false,body:'#a8323e',hood:'#3a5fb8',belt:'#e0b04a',held:'liuto',quiver:false,ownBelt:true,hoodTip:false,plume:'#e5484d',cape:true},proj:'note',pcol:'#ffd84a'},
+  {id:'alchimista',n:'Alchimista',price:3000,d:'Lancia fiale che scoppiano e avvelenano tutto intorno.',start:'Fiale che scoppiano e avvelenano',sk:null,mods:{hp:1.05,atk:1.12,aspd:.85,spd:.95},
+    style:{bighood:false,body:'#2f7a6a',hood:'#8a5a2e',belt:'#5a3a20',held:'fiala',quiver:false,ownBelt:true,hoodTip:false,goggles:true,apron:'#c08a4a',pack:'#8a5a2e',vials:['#7bf06a','#ff7ab8','#6ac8ff'],flask:'#7bf06a',strap:false},proj:'flask',pcol:'#7bf06a'},
+  {id:'ninja',n:'Ninja',price:3000,d:'Il più veloce di tutti: tre stelline a ventaglio, poi sparisce.',start:'Tre stelline a ventaglio, scatto più rapido',sk:'dash',mods:{hp:.8,atk:.76,aspd:1.1,spd:1.3,dash:.8},
+    style:{bighood:false,body:'#45508a',hood:'#363e66',belt:'#c8323c',held:'stellina',quiver:false,ownBelt:true,hoodTip:false,mask:'#2a2f4a',bandana:'#d23a3a',katana:true},proj:'star',pcol:'#c9d2dc'},
   {id:'balestriere',n:'Balestriere',price:7000,d:'Lento e corazzato: ogni dardo è un macigno.',start:'Perforazione fin da subito',sk:'pierce',mods:{hp:1.3,atk:1.35,aspd:.8,spd:.9},
     style:{bighood:false,body:'#6b6f78',hood:'#4a3626',skin:'#e8b890',held:'xbow',bowCol:'#6b4a2a',helm:true,hoodTip:false,sc:1.05,belt:'#3a2a1d'},proj:'bolt',pcol:'#dfe4ea'},
   {id:'druida',n:'Druida',price:12000,d:'Le radici lo proteggono e lo curano.',start:'Una lama rotante, più salute e rigenerazione',sk:'orbit',mods:{hp:1.2,atk:1.2,regen:1.5},
@@ -128,7 +139,7 @@ function kind2svg(k){return k==='mission'?'<svg viewBox="0 0 40 40"><rect x="8" 
 // player creation shared by runs and the hero screen preview
 function applyMeta(p){const h=HERO_BY[SAVE.hero]||HEROES[0],m=h.mods;
   p.spd=150*(m.spd||1);if(m.hp){p.maxhp=Math.round(p.maxhp*m.hp);p.hp=p.maxhp}if(m.atk)p.atk*=m.atk;if(m.aspd)p.aspd*=m.aspd;if(m.dash)p.dashMax*=m.dash;if(m.regen)p.regen=(p.regen||0)+m.regen;
-  p.proj=h.proj;p.pcol=h.pcol;p.pspd=h.proj==='bolt'?720:h.proj==='leaf'?520:560;p.hero=h.id;
+  p.proj=h.proj;p.pcol=h.pcol;p.pspd=PSPD[h.proj]||560;p.hero=h.id;
   {const W=SAVE.eq.arma&&WEAP[SAVE.eq.arma];p.wk=null;p.kbm=h.proj==='bolt'?1.6:1;p.trail=null;
    if(W&&h.proj==='arrow'){p.wk=SAVE.eq.arma;p.proj=W.proj;p.pspd=Math.round((W.proj==='bolt'?620:560)*W.spd);p.kbm=W.kb||1;p.trail=W.trail||null;if(W.fl&&!h.pcol)p.pcol=W.fl}}
   const s=SK.find(x=>x.id===h.sk);if(s){s.f();p.skills[s.id]=(p.skills[s.id]||0)+1}

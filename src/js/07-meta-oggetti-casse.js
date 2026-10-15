@@ -100,7 +100,8 @@ function heroStyle0(id){const h=HERO_BY[id||SAVE.hero]||HEROES[0],a=SAVE.eq.arma
   if(W&&base0.held==='bow'){gear.held=W.held||'bow';gear.bowKind=W.bow}
   const base={...base0,...gear};
   if(h.id==='arciere')return{...base,hid:h.id,body:a?a.tint.a:HERO.body,hood:a?a.tint.b:HERO.hood,bowCol:w?w.tint.a:HERO.bowCol};
-  return{...base,hid:h.id,bowCol:w&&base.held!=='staff'?w.tint.a:base.bowCol,belt:a?a.tint.a:base.belt}}
+  // (the armour's colour goes to the belt; the three heroes of the making of the hero keep their own sash: ownBelt)
+  return{...base,hid:h.id,bowCol:w&&base.held!=='staff'?w.tint.a:base.bowCol,belt:a&&!base.ownBelt?a.tint.a:base.belt}}
 function pickOdds(o){const s=o.reduce((a,b)=>a+b,0);let r=Math.random()*s;for(let i=0;i<o.length;i++){r-=o[i];if(r<0)return i}return 0}
 function rollChest(type){
   const c=CHESTS[type];let left=c.cards;const n=Math.min(4,2+Math.floor(c.cards/10)),out={};

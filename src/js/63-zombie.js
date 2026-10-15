@@ -71,7 +71,7 @@ function zEnter(){if(ZG.on){ZG.wait=false;return}
     $('zLoad').hidden=true;if(ZG.ctl)zStart();else{ZG.wait=false;toast('Il camposanto non si apre: riprova')}},60)}
 // the hero on the map is your hero in 3D (the one in the field: Denis, 14 October, «l'eroe scelto» also in the zombie mode), with the
 // equipment of the menu (armour, ring, amulet, skin) and a zombie gun in hand; the Druid keeps his green eyes
-function zHeroStyle(){const id=HERO_BY[SAVE.hero]&&SAVE.heroes&&SAVE.heroes[SAVE.hero]?SAVE.hero:SAVE.starter==='cacciatrice'?'cacciatrice':'arciere',s=heroStyle(id);if(s.hid==='druida'&&!s.eyes&&s.eyeCol)s.eyes=s.eyeCol;return s}
+function zHeroStyle(){const id=HERO_BY[SAVE.hero]&&SAVE.heroes&&SAVE.heroes[SAVE.hero]?SAVE.hero:starterId(),s=heroStyle(id);if(s.hid==='druida'&&!s.eyes&&s.eyeCol)s.eyes=s.eyeCol;return s}
 function zStart(){ZG.wait=false;ZG.on=true;ZG.last=null;if(SHEET)closeSheet();$('menu').hidden=true;$('wrap').classList.remove('inmenu');zMusicOff();
   try{ZM.stile(zHeroStyle())}catch(e){}ZG.ctl.nuova();ZG.ctl.start()}
 // the end of a match (from partita.js, once): the gold, the record, the counts, the pass; returns {rec} for «Nuovo record!»

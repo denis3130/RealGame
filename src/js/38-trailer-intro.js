@@ -20,10 +20,10 @@ function iFlash(k){const el=$('iFlash');el.className='';void el.offsetWidth;el.c
 // the actors
 function iFoe(type,x,y,spawn,o){const e=makeE(type,x,y,spawn==null?0:spawn);e.hp=e.max=P.atk*(o&&o.hp||.7);if(type==='skeleton'){e.sh=0;e.shMax=0}if(o&&o.cd!=null)e.cd=o.cd;G.enemies.push(e);return e}
 // the cast: yours first, then the others (the other of the first two, the Balestriere, the Druida)
-function iCast(){const main=SAVE.heroes&&SAVE.heroes[SAVE.hero]&&HERO_BY[SAVE.hero]?SAVE.hero:SAVE.starter==='cacciatrice'?'cacciatrice':'arciere';
-  return[main,...['arciere','cacciatrice','balestriere','druida'].filter(i=>i!==main)]}
+function iCast(){const main=SAVE.heroes&&SAVE.heroes[SAVE.hero]&&HERO_BY[SAVE.hero]?SAVE.hero:starterId();
+  return[main,...['arciere','cacciatrice','balestriere','druida'].filter(i=>i!==main)].slice(0,4)}
 // the hero of the shot: only the look and the shots change (the numbers of the trailer stay); yours wears your mantle
-function iAs(id){const h=HERO_BY[id];if(!h||!P)return;Object.assign(P,{hero:id,style:id===iCast()[0]?heroStyle(id):heroStyle0(id),proj:h.proj,pcol:h.pcol||null,pspd:h.proj==='bolt'?720:h.proj==='leaf'?520:560})}
+function iAs(id){const h=HERO_BY[id];if(!h||!P)return;Object.assign(P,{hero:id,style:id===iCast()[0]?heroStyle(id):heroStyle0(id),proj:h.proj,pcol:h.pcol||null,pspd:PSPD[h.proj]||560})}
 // his Super, now (the bar is full for the trailer)
 function iUlt(){if(!P)return;P.ult=100;useUlt()}
 // the others standing beside him at the end (drawn with the room, in depth order: 45-render)
