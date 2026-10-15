@@ -8,7 +8,7 @@
 // - when it loses health: 'hit'; when it moves: 'walk'; else 'idle'. p only grows with time, so every move loops without a jump.
 // The point of the models is the feet: 8 px below the game's point (as for the hero); e.z (jumps, flights) lifts the body.
 // =====================================================================
-const N3G={on:true,cur:null,bad:{},pf:{},zm:{golem:1,toad:1,yeti:1},
+const N3G={on:true,cur:null,bad:{},pf:{},opt:{},zm:{golem:1,toad:1,yeti:1},
   jp:{slime:e=>.22+.38*Math.min(1,Math.max(0,1-e.jump/.5)),bigslime:e=>.22+.38*Math.min(1,Math.max(0,1-e.jump/.5)),magmaslime:e=>.22+.38*Math.min(1,Math.max(0,1-e.jump/.5)),
     frog:e=>.18+.48*Math.min(1,Math.max(0,1-e.jump/.55))},wp:{toad:e=>((e.hopT||0)%.8+.8)%.8/.8},
   // states of the game with another name among the models' moves
@@ -54,7 +54,7 @@ function n3Face(e){return n3Turn(e,n3Face0(e),G.t||0)}
   const hf=e.flash>0;if(hf){ctx.save()}
   const esc=(e.elite||G.giant&&!isBoss(e.type))&&!e.type.includes('slime');if(esc){ctx.save();ctx.translate(x,y);ctx.scale(1.22,1.22);ctx.translate(-x,-y)}
   const M=N3.meta[e.type],[anim,p]=n3Move(e),sx=0;
-  const fc=n3Face(e),pp=Math.min(.999,Math.max(0,p)),t=G.t||0,X=x+sx,zg=N3G.zm[e.type],Y=y+8-(zg||N3G.jp[e.type]?0:(e.z||0)),o3={p2:!!e.p2,noFx:LOWFX};if(zg)o3.z=e.z||0;
+  const fc=n3Face(e),pp=Math.min(.999,Math.max(0,p)),t=G.t||0,X=x+sx,zg=N3G.zm[e.type],Y=y+8-(zg||N3G.jp[e.type]?0:(e.z||0)),o3={p2:!!e.p2,noFx:LOWFX};if(zg)o3.z=e.z||0;if(N3G.opt[e.type])Object.assign(o3,N3G.opt[e.type](e));
   // a change of move fades over 0.12 s: the old pose (frozen) fades under the new one, so no pose ever pops into another
   if(e.a3n!==anim){if(e.a3n!=null){e.b3a=e.a3n;e.b3p=e.a3p;e.b3t=t}e.a3n=anim}e.a3p=pp;
   const aE=ctx.globalAlpha;ctx.globalAlpha=aE*ea;
