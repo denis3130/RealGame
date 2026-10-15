@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
-# Pagina di prova della creazione dell'eroe al primo avvio (src/js/89-scelta-eroe.js, in stile Dark Souls): è il gioco vero, ma ogni volta
-# che si apre parte da un salvataggio vuoto, come un giocatore nuovo: prima il prologo alla Dark Souls (src/js/90-prologo.js; «Salta» in alto),
+# Pagina di prova della creazione dell'eroe al primo avvio (src/js/90-scelta-eroe.js, in stile Dark Souls): è il gioco vero, ma ogni volta
+# che si apre parte da un salvataggio vuoto, come un giocatore nuovo: prima il prologo alla Dark Souls (src/js/91-prologo.js; «Salta» in alto),
 # poi la creazione (classe, aspetto, dono e nome), poi il menu. Il barbiere sta nel Profilo → Aspetto (20 cristalli: col dono «Cristalli» si
 # prova subito). Il bottoncino «Rivedi la creazione» (nel cielo della schermata principale) cancella il salvataggio e riapre subito la
 # creazione, senza il prologo; il prologo si rivede dalle impostazioni («Rivedi il prologo»).

@@ -4,7 +4,7 @@
 // livello, in tutte e due le modalità: skinBonus) e si scelgono dal Guardaroba, dove l'eroe 3D gira con il vestito addosso: si possono
 // provare anche quelli ancora chiusi. Si vedono ovunque ci sia l'eroe: battaglia, mappa zombie, menu, falò, passaggio tra le modalità.
 // =====================================================================
-// (crea: the cloaks of the making of the hero, src/js/89-scelta-eroe.js: every save owns them, no cards and no levels)
+// (crea: the cloaks of the making of the hero, src/js/90-scelta-eroe.js: every save owns them, no cards and no levels)
 const WARD_G={scuro:'Scuro e strappato',crea:'Della creazione',swag:'Swag',pass:'Dal Pass'},WARD_O={scuro:0,crea:1,swag:2,pass:3};
 const WARD_D={stracciato:'Pelle nera consumata sopra la felpa, la cerniera storta, strappi tenuti dalle spille e borchie sulle spalle.',
   felpa:'Felpa antracite col marsupio, i lacci coi puntali e gli strappi che mostrano la maglia rossa.',

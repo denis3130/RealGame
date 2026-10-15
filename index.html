@@ -5740,7 +5740,7 @@ function useUlt(){if(!started||paused||modal||!P||(P.ult||0)<100||G.state==='dea
     sfx('bow','balestra');sfx('boom');moveCircle(P,-Math.cos(a)*14,-Math.sin(a)*14)}
   else if(id==='druida'){sfx('summon');const v=Math.round(P.maxhp*.2);P.hp=Math.min(P.maxhp,P.hp+v);text(P.x,P.y-44,'+'+v,'#9fff7a',18);
     for(const e of G.enemies){if(!canHit(e))continue;e.root=isBoss(e.type)?1.4:2.6;e.rootT=0;vfxBlast(e.x,e.y,'150,255,120',30,{sparks:0,debris:'leaf',n:8,dust:4,ring2:false})}}
-  // the Bardo, the Alchimista and the Ninja: their Supers are in 91
+  // the Bardo, the Alchimista and the Ninja: their Supers are in 92
   else if(NH_ULT[id])NH_ULT[id]()}
 function updUlt(dt){
   if(P.spin>0){P.spin-=dt;P.spinA+=dt*14;P.face=P.spinA;P.spinF=(P.spinF||0)-dt;if(P.spinF<=0){P.spinF=.035;arrow(P.x,P.y-8,P.spinA,.9);if(Math.random()<.4)sfx('bow')}}
@@ -6025,11 +6025,11 @@ addEventListener('keydown',e=>{if(!INTRO.on)return;if(e.code==='Escape')introEnd
 
 
 // ---------- meta 2: heroes, talents, sets, evolutions, missions, achievements, settings ----------
-// the five heroes that can be picked at the first launch (89): the one picked is free, the others cost gold in the hero tab
+// the five heroes that can be picked at the first launch (90): the one picked is free, the others cost gold in the hero tab
 const STARTERS=['arciere','cacciatrice','bardo','alchimista','ninja'],starterId=()=>STARTERS.includes(SAVE.starter)?SAVE.starter:'arciere';
 // the speed of each hero's shot (the arrows 560)
 const PSPD={bolt:720,leaf:520,note:540,flask:470,star:650};
-(function migrate(){const st=starterId();// the first hero is the one picked at the first launch (89)
+(function migrate(){const st=starterId();// the first hero is the one picked at the first launch (90)
   const d={sel:'c1',done:{},inf:{best:0,top:[]},best2:{room:0,gold:0},best3:{room:0,gold:0},best4:{room:0,gold:0},hero:st,heroes:{[st]:1},tal:{},
   stats:{kills:{},bosses:{},elites:0,rooms:0,chests:0,dash:0,maxLvl:0,evos:0,gold:0,runs:0,wins:0,nohitAny:0},daily:{day:'',list:[]},free:{next:0,n:0},ach:{},title:null,frame:'base',
   set:{vib:true,left:false,q:'auto',mv:.8,sv:.8}};
@@ -22390,7 +22390,7 @@ Object.defineProperty(FALO,'gun',{get(){return SAVE.z&&zStartable(SAVE.z.gun)?SA
 // livello, in tutte e due le modalità: skinBonus) e si scelgono dal Guardaroba, dove l'eroe 3D gira con il vestito addosso: si possono
 // provare anche quelli ancora chiusi. Si vedono ovunque ci sia l'eroe: battaglia, mappa zombie, menu, falò, passaggio tra le modalità.
 // =====================================================================
-// (crea: the cloaks of the making of the hero, src/js/89-scelta-eroe.js: every save owns them, no cards and no levels)
+// (crea: the cloaks of the making of the hero, src/js/90-scelta-eroe.js: every save owns them, no cards and no levels)
 const WARD_G={scuro:'Scuro e strappato',crea:'Della creazione',swag:'Swag',pass:'Dal Pass'},WARD_O={scuro:0,crea:1,swag:2,pass:3};
 const WARD_D={stracciato:'Pelle nera consumata sopra la felpa, la cerniera storta, strappi tenuti dalle spille e borchie sulle spalle.',
   felpa:'Felpa antracite col marsupio, i lacci coi puntali e gli strappi che mostrano la maglia rossa.',
@@ -25305,7 +25305,7 @@ const PRO_VOL=1.6;
 {const _g=iGo;iGo=function(){if(INTRO.pro)return proGo();return _g.apply(this,arguments)}}
 // the tap on the loading screen (65): its time, for the black above
 if(typeof bootGo==='function'){const _bg=bootGo;bootGo=function(){BOOTS.tg=performance.now();return _bg.apply(this,arguments)}}
-// the end (or «Salta»): the black stays, and what comes after it (the making of the hero, which 89 opens from introEnd, or the menu)
+// the end (or «Salta»): the black stays, and what comes after it (the making of the hero, which 90 opens from introEnd, or the menu)
 // comes out of it; the long sounds of the prologue stop
 {const _ie=introEnd;introEnd=function(){const was=INTRO.on&&INTRO.pro,skip=was&&PRO.t<PRO.dur-.3;
   if(was){INTRO.pro=false;PRO.on=false;PRO.go=false;cancelAnimationFrame(PRO.raf);if(PRO.txt){PRO.txt.textContent='';PRO.txt.style.opacity='0'}

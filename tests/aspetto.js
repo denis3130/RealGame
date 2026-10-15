@@ -1,4 +1,4 @@
-// L'aspetto dell'eroe (passo «Aspetto» della creazione e il barbiere: src/js/89-scelta-eroe.js; i pezzi in sprite/eroe3d/disegno_eroe.js):
+// L'aspetto dell'eroe (passo «Aspetto» della creazione e il barbiere: src/js/90-scelta-eroe.js; i pezzi in sprite/eroe3d/disegno_eroe.js):
 // ogni scelta di ogni parte nelle quattro direzioni, in fogli PNG da guardare (tests/as_<parte>.png; capelli, orecchie, barba e accessori
 // anche senza cappuccio: as_<parte>_senza.png), i colori di ogni parte, le grandezze (as_grandezze.png), più due aspetti completi sui quattro eroi
 // (as_eroi.png, as_eroi_viso.png). Controlla che nessuna scelta (né grandezza né colore) dia errori in nessuna direzione né in nessuna mossa,

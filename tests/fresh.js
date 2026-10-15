@@ -7,7 +7,7 @@ p.on('pageerror',e=>errs.push(e.message+' @'+((e.stack||'').split('\n')[1]||'').
 p.on('console',m=>{if(m.type()==='error')errs.push('console: '+m.text())});
 const today=new Date();const ds=today.getFullYear()+'-'+(today.getMonth()+1)+'-'+today.getDate();
 await p.goto('file://'+__dirname+'/test.html');await p.waitForTimeout(1500);await p.screenshot({path:'fresh_a.png'});
-// the first launch: the prologue (90-prologo.js: a tap starts it, it plays to the end), then the making of the hero (89-scelta-eroe.js)
+// the first launch: the prologue (91-prologo.js: a tap starts it, it plays to the end), then the making of the hero (90-scelta-eroe.js)
 // in four steps, after the warning («Ho capito»): the Arciere, «Avanti» (his look), «Avanti» (the first gift), «Avanti» (the name offered), «Inizia», and the menu
 await p.mouse.click(195,600);await p.waitForTimeout(8000);await p.screenshot({path:'fresh_b.png'});
 for(let i=0;i<75&&await p.evaluate(()=>__E('INTRO.on'));i++)await p.waitForTimeout(1000);await p.waitForTimeout(2000);

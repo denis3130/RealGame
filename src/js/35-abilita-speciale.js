@@ -23,7 +23,7 @@ function useUlt(){if(!started||paused||modal||!P||(P.ult||0)<100||G.state==='dea
     sfx('bow','balestra');sfx('boom');moveCircle(P,-Math.cos(a)*14,-Math.sin(a)*14)}
   else if(id==='druida'){sfx('summon');const v=Math.round(P.maxhp*.2);P.hp=Math.min(P.maxhp,P.hp+v);text(P.x,P.y-44,'+'+v,'#9fff7a',18);
     for(const e of G.enemies){if(!canHit(e))continue;e.root=isBoss(e.type)?1.4:2.6;e.rootT=0;vfxBlast(e.x,e.y,'150,255,120',30,{sparks:0,debris:'leaf',n:8,dust:4,ring2:false})}}
-  // the Bardo, the Alchimista and the Ninja: their Supers are in 91
+  // the Bardo, the Alchimista and the Ninja: their Supers are in 92
   else if(NH_ULT[id])NH_ULT[id]()}
 function updUlt(dt){
   if(P.spin>0){P.spin-=dt;P.spinA+=dt*14;P.face=P.spinA;P.spinF=(P.spinF||0)-dt;if(P.spinF<=0){P.spinF=.035;arrow(P.x,P.y-8,P.spinA,.9);if(Math.random()<.4)sfx('bow')}}

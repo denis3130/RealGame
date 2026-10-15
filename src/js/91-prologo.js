@@ -69,7 +69,7 @@ const PRO_VOL=1.6;
 {const _g=iGo;iGo=function(){if(INTRO.pro)return proGo();return _g.apply(this,arguments)}}
 // the tap on the loading screen (65): its time, for the black above
 if(typeof bootGo==='function'){const _bg=bootGo;bootGo=function(){BOOTS.tg=performance.now();return _bg.apply(this,arguments)}}
-// the end (or «Salta»): the black stays, and what comes after it (the making of the hero, which 89 opens from introEnd, or the menu)
+// the end (or «Salta»): the black stays, and what comes after it (the making of the hero, which 90 opens from introEnd, or the menu)
 // comes out of it; the long sounds of the prologue stop
 {const _ie=introEnd;introEnd=function(){const was=INTRO.on&&INTRO.pro,skip=was&&PRO.t<PRO.dur-.3;
   if(was){INTRO.pro=false;PRO.on=false;PRO.go=false;cancelAnimationFrame(PRO.raf);if(PRO.txt){PRO.txt.textContent='';PRO.txt.style.opacity='0'}

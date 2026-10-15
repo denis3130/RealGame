@@ -1,9 +1,9 @@
 // ---------- meta 2: heroes, talents, sets, evolutions, missions, achievements, settings ----------
-// the five heroes that can be picked at the first launch (89): the one picked is free, the others cost gold in the hero tab
+// the five heroes that can be picked at the first launch (90): the one picked is free, the others cost gold in the hero tab
 const STARTERS=['arciere','cacciatrice','bardo','alchimista','ninja'],starterId=()=>STARTERS.includes(SAVE.starter)?SAVE.starter:'arciere';
 // the speed of each hero's shot (the arrows 560)
 const PSPD={bolt:720,leaf:520,note:540,flask:470,star:650};
-(function migrate(){const st=starterId();// the first hero is the one picked at the first launch (89)
+(function migrate(){const st=starterId();// the first hero is the one picked at the first launch (90)
   const d={sel:'c1',done:{},inf:{best:0,top:[]},best2:{room:0,gold:0},best3:{room:0,gold:0},best4:{room:0,gold:0},hero:st,heroes:{[st]:1},tal:{},
   stats:{kills:{},bosses:{},elites:0,rooms:0,chests:0,dash:0,maxLvl:0,evos:0,gold:0,runs:0,wins:0,nohitAny:0},daily:{day:'',list:[]},free:{next:0,n:0},ach:{},title:null,frame:'base',
   set:{vib:true,left:false,q:'auto',mv:.8,sv:.8}};

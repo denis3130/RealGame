@@ -1,4 +1,4 @@
-// La creazione dell'eroe al primo avvio (src/js/89-scelta-eroe.js), in stile Dark Souls: con il salvataggio vuoto prima c'è l'intro, poi
+// La creazione dell'eroe al primo avvio (src/js/90-scelta-eroe.js), in stile Dark Souls: con il salvataggio vuoto prima c'è l'intro, poi
 // (alla fine o con «Salta») l'avviso (l'aspetto dopo si cambia solo pagando; «Ho capito») e la creazione in quattro passi. I Classe: i cinque
 // eroi a sinistra (Arciere, Cacciatrice, Bardo, Alchimista, Ninja; Balestriere e Druida non ci sono più), ognuno entra sulla pietra a modo suo,
 // l'eroe 3D grande al centro sotto la luce (si gira col dito, un tocco lo fa tirare), le statistiche a destra, la storia sotto.
@@ -34,7 +34,7 @@ const OLD={gold:900,gems:40,introSeen:1,handSeen:1,runs:4,trophies:120,items:{ar
 
   // 1. a new player: first the intro, then the making of the hero
   {const {p,cx,E,shot}=await phone(null);
-    // the prologue (90-prologo.js, in the place of the trailer): black, «Tocca per iniziare»; a tap starts the music and its clock together
+    // the prologue (91-prologo.js, in the place of the trailer): black, «Tocca per iniziare»; a tap starts the music and its clock together
     ok(await E("INTRO.on&&INTRO.pro&&INTRO.splash&&!SCE.on&&!document.getElementById('sceScr')&&getComputedStyle(document.getElementById('proSplash')).display!=='none'"),'salvataggio vuoto: prima il prologo (fermo su «Tocca per iniziare»), la creazione non c\'è ancora');
     await p.tap('#introScr',{force:true});await p.waitForTimeout(1600);
     ok(await E("INTRO.on&&INTRO.pro&&!INTRO.splash&&AU.cur&&AU.cur.name==='prologo'&&PRO.go&&PRO.t>.5"),'un tocco: il prologo parte, con la sua musica e il suo orologio');
