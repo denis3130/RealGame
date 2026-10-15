@@ -26,6 +26,10 @@ File (si caricano in quest'ordine, dopo il gioco: servono `CR._rig`, `EROE` e, p
 - `boss3.js`: i 4 boss nuovi del terzo giro (Burattinaio d'Ombra, Fenice della Forgia, Piovra della Palude, Cervo d'Aurora), con le mosse
   di battaglia e anche `enter` (l'entrata) e `die` (la sconfitta), che il gioco fa recitare ai modelli; e il burattino d'ombra (`puppet`),
   il servitore del Burattinaio, uguale ai burattini della sua mossa. Nel gioco dal 15 ottobre (`src/js/81-86`, `docs/boss-nuovi.md`).
+  Dal 15 ottobre (Denis: «voce e personalità») hanno anche `taunt`, «Presa in giro»: un pezzo della loro entrata già approvata, rifatto
+  come mossa a sé (l'inchino del Burattinaio; le ali che si aprono e si richiudono della Fenice; il saluto con due tentacoli e la faccia
+  brontolona della Piovra; la testa alta del Cervo con le corna che si accendono, sempre intere). Il gioco la usa quando il boss ti colpisce
+  o quando gli stai lontano (`src/js/88-boss3-voci.js`).
 - `eroi.js` (gruppo «Eroi e compagni», richiesta di Denis «fammi anche i pg tutti in 3d»): l'Arciere, la Cacciatrice (coda di capelli),
   il Balestriere (elmo, balestra) e il Druida (corna di legno, bastone, occhi verdi) sul corpo dell'Arciere 3D; i compagni Muschietto, Lucciola e
   Draghetto; il Mercante col tappeto, le pozioni e la cassa. `N3.meta[nome].old` disegna quello di oggi per «Prima e dopo».

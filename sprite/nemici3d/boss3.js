@@ -630,4 +630,15 @@ function puppet(x,y,face,anim,p,sc,o){sc=sc||1;o=o||{};const K=o.p2?PPK2:PPK,V0=
 reg('puppet',{n:"Burattino d'ombra",g:'boss3',sc:1,an:['idle','walk','attack','hit'],dur:{idle:1.8,walk:.5,attack:1,hit:.6},
   lab:{idle:'Fermo',walk:'Saltella',attack:'Attacca',hit:'Colpito'}},puppet);
 
+// ---- the mocking gesture (Denis, 15 ottobre: «voce e personalità»; in the game it comes when the boss hits you or when you keep away,
+// src/js/88-boss3-voci.js): a piece of its own entrance, already seen and approved, played as a move of its own. The Puppeteer's deep
+// bow; the Phoenix spreading its wings and crying, then folding them back; the Octopus waving two tentacles and putting on its grumpy
+// face; the Stag raising its head with its mouth open while the antlers light up, then lowering it. The antlers stay grown, no dust of
+// the landing nor splash of the coming up out of the water.
+{const bk=k=>{const u=k<.5?k*2:2-k*2;return u*u*(3-2*u)},TT={puppeteer:[k=>.62+.34*k,()=>{}],phoenix:[k=>.6+.32*bk(k),A=>{A.dustK=-1}],
+    octopus:[k=>.6+.36*k,A=>{A.splash=-1}],stag:[k=>.58+.37*bk(k),A=>{A.antK=1;A.dust=-1}]},wrap=(f,t)=>function(anim,p,o){if(anim!=='taunt')return f.apply(this,arguments);
+    const A=f('enter',Math.min(.999,TT[t][0](p)),o);TT[t][1](A);return A};
+  puPose=wrap(puPose,'puppeteer');pxPose=wrap(pxPose,'phoenix');ocPose=wrap(ocPose,'octopus');sgPose=wrap(sgPose,'stag');
+  for(const[t,d] of [['puppeteer',1],['phoenix',1.2],['octopus',1.1],['stag',1.2]]){const M=N3.meta[t];M.an.splice(M.an.indexOf('enter'),0,'taunt');M.dur.taunt=d;M.lab.taunt='Presa in giro'}}
+
 })();

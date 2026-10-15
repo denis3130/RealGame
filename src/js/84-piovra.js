@@ -31,7 +31,7 @@ EUPD.octopus=(e,dt,sm,a,d)=>{
     if(b3at(e,.47)){const ca=Math.cos(e.lf),sa=Math.sin(e.lf),dx=P.x-e.x,dy=P.y-e.y,u=dx*ca+dy*sa,v=Math.abs(dy*ca-dx*sa);
       if(u>0&&u<110&&v<24+P.r*.6&&P.inv<=0&&P.dashT<=0)hurtP(Math.round(24*DMG()));
       const tx=e.x+ca*80,ty=e.y+sa*80;G.waves.push({x:tx,y:ty,r:10,max:p2?190:160,dmg:Math.round(14*DMG()),hit:false,rgb:'120,220,210'});
-      vfxBlast(tx,ty,'120,220,210',70,{sparks:14,spcol:['#ffffff','#9ff0e0','#3aa89a'],dust:0,ring2:false});G.ripples.push({x:tx,y:ty,r:8,max:70,a:1});shake(6);sfx('splash',2,tx)}
+      vfxBlast(tx,ty,'120,220,210',70,{sparks:14,spcol:['#ffffff','#9ff0e0','#3aa89a'],dust:0,ring2:false});G.ripples.push({x:tx,y:ty,r:8,max:70,a:1});shake(6);sfx('splash',2,tx);b3fx(e,'oslam',tx,ty)}
     if(e.stT<=0){if(p2&&e.nx==='slam'&&!e.dbl){e.dbl=1;e.lf=a;b3go(e,'prep',.38);e.nx='slam';b3wline(e.x,e.y,a,105,46,.38+.66,'90,210,200');return}
       e.dbl=0;b3go(e,'walk',p2?rand(.7,1):rand(1,1.4))}}
   else if(e.st==='ink'){e.face=a;
@@ -42,10 +42,10 @@ EUPD.octopus=(e,dt,sm,a,d)=>{
     if(k>.1&&k<.9){if(d<300&&d>e.r+P.r&&P.dashT<=0){const pull=(p2?78:58)*(1-d/340);moveCircle(P,(e.x-P.x)/d*pull*dt,(e.y-P.y)/d*pull*dt)}
       e.fireT=(e.fireT||0)-dt;if(e.fireT<=0){e.fireT=.17;const arms=p2?3:2;for(let q=0;q<arms;q++){const an=(e.rot||0)+q*TAU/arms;const pr={x:e.x+Math.cos(an)*24,y:e.y-14+Math.sin(an)*14};
           shootE(pr.x,pr.y,an,110,7,11,'bubble');const pj=G.eproj[G.eproj.length-1];if(pj)pj.ph=rand(0,TAU)}e.rot=(e.rot||0)+.33}}
-    if(b3at(e,.1))sfx('bubble',2,e.x);
+    if(b3at(e,.1)){sfx('bubble',2,e.x);b3fx(e,'owhirl')}
     if(e.stT<=0)b3go(e,'walk',p2?rand(.7,1):rand(1,1.4))}
   else if(e.st==='dive'){e.face=a;
-    if(b3at(e,.3)){e.hidden=true;e.air=1}
+    if(b3at(e,.3)){e.hidden=true;e.air=1;b3fx(e,'osink',e.x,e.y)}
     if(k>=.32&&k<.45){e.tx=clamp(P.x,L+40,R-40);e.ty=clamp(P.y,TOP+50,BOT-50)}
     if(b3at(e,.45)){const s=b3spot(e.tx,e.ty,20);e.tx=s.x;e.ty=s.y;e.sx0=e.x;e.sy0=e.y;b3warn(e.tx,e.ty,58,.25*B3D(e,'dive'),'90,210,200')}
     if(k>=.45&&k<.66&&e.sx0!=null){const u=(k-.45)/.21,q=u*u*(3-2*u);e.x=e.sx0+(e.tx-e.sx0)*q;e.y=e.sy0+(e.ty-e.sy0)*q;if(!LOWFX&&Math.random()<.5)G.fx.push({k:'bub',x:e.x+rand(-14,14),y:e.y+rand(-8,8),t:.5,r:rand(2,4)})}
@@ -53,7 +53,7 @@ EUPD.octopus=(e,dt,sm,a,d)=>{
     if(b3at(e,.7)){if(Math.hypot(P.x-e.x,P.y-e.y)<58+P.r*.4&&P.inv<=0&&P.dashT<=0)hurtP(Math.round(24*DMG()));const n=p2?16:12,o=rand(0,TAU);
       for(let i=0;i<n;i++){shootE(e.x,e.y-14,o+i*TAU/n,120,7,11,'bubble');const pj=G.eproj[G.eproj.length-1];if(pj)pj.ph=rand(0,TAU)}
       G.waves.push({x:e.x,y:e.y,r:12,max:120,dmg:Math.round(12*DMG()),hit:false,rgb:'120,220,210'});vfxBlast(e.x,e.y,'120,220,210',100,{sparks:18,spcol:['#ffffff','#9ff0e0','#3aa89a'],dust:0,ring2:false});
-      G.ripples.push({x:e.x,y:e.y,r:12,max:90,a:1});shake(7);sfx('splash',2,e.x)}
+      G.ripples.push({x:e.x,y:e.y,r:12,max:90,a:1});shake(7);sfx('splash',2,e.x);b3fx(e,'orise',e.x,e.y)}
     if(b3at(e,.8))e.air=0;
     if(e.stT<=0){e.hidden=false;e.air=0;e.sx0=null;b3go(e,'walk',p2?rand(.7,1):rand(1,1.4))}}
   else b3go(e,'walk',1)};

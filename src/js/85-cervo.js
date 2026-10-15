@@ -23,25 +23,25 @@ EUPD.stag=(e,dt,sm,a,d)=>{
   if(e.st==='prep'){e.face=e.lf;if(e.stT<=0){b3go(e,'charge',1.15);e.ct=0;e.cv={x:Math.cos(e.lf),y:Math.sin(e.lf)};sfx('dash',0,e.x)}}
   else if(e.st==='charge'){e.face=e.lf;e.ct=(e.ct||0)+dt;const sp=p2?430:380,ox=e.x,oy=e.y;moveCircle(e,e.cv.x*sp*dt,e.cv.y*sp*dt);
     if(k>=1){e.mt-=B3D(e,'charge');e.s3=null}// the gallop loops: a new stride from the start (the stride is periodic)
-    e.stepT=(e.stepT||0)-dt;if(e.stepT<=0){e.stepT=.17;stepFx(e.x,e.y+6,true);if(!LOWFX)fxPush({k:'puff',x:e.x-e.cv.x*20,y:e.y+8,vx:-e.cv.x*40,vy:-12,t:.4,r:rand(5,8)})}
+    e.stepT=(e.stepT||0)-dt;if(e.stepT<=0){e.stepT=.17;stepFx(e.x,e.y+6,true);b3fx(e,'sstride',e.x,e.y+6);if(!LOWFX)fxPush({k:'puff',x:e.x-e.cv.x*20,y:e.y+8,vx:-e.cv.x*40,vy:-12,t:.4,r:rand(5,8)})}
     const moved=Math.hypot(e.x-ox,e.y-oy),wall=e.x<=L+e.r+2||e.x>=R-e.r-2||e.y<=TOP+e.r+2||e.y>=BOT-e.r-2;
     if((wall||moved<sp*dt*.4)&&e.ct>.12||e.stT<=0){const hit=e.stT>0;
       if(hit){shake(9);sfx('boom',0,e.x);vib([50,30,70]);vfxBlast(e.x+e.cv.x*e.r,e.y+e.cv.y*e.r*.6,'190,255,225',80,{sparks:16,spcol:['#ffffff','#c8fff0','#c8b0ff'],debris:['#e0fff4','#a8e8d0','#ffffff'],n:12,dust:10});
-        const n=p2?10:8,o=Math.atan2(-e.cv.y,-e.cv.x);for(let i=0;i<n;i++)shootE(e.x,e.y-20,o+(i-(n-1)/2)*.32,180,6,12,'crystal');stamp('crater',e.x+e.cv.x*e.r,e.y+e.cv.y*e.r*.6,22)}
+        const n=p2?10:8,o=Math.atan2(-e.cv.y,-e.cv.x);for(let i=0;i<n;i++)shootE(e.x,e.y-20,o+(i-(n-1)/2)*.32,180,6,12,'crystal');stamp('crater',e.x+e.cv.x*e.r,e.y+e.cv.y*e.r*.6,22);b3fx(e,'swall',e.x+e.cv.x*e.r,e.y+e.cv.y*e.r*.6)}
       if(p2&&!e.dbl){e.dbl=1;e.lf=Math.atan2(P.y-e.y,P.x-e.x);b3go(e,'prep',.5);stagLine(e,e.lf,.5);return}
       e.dbl=0;b3go(e,'walk',hit?rand(1,1.3):rand(.7,1))}}
   else if(e.st==='crystals'){e.face=a;
-    const fan=off=>{const n=p2?9:7;for(let i=0;i<n;i++)shootE(e.x,e.y-50,a+(i-(n-1)/2+off)*.15,215,6,12,'crystal');sfx('shimmer',1,e.x)};
+    const fan=off=>{const n=p2?9:7;for(let i=0;i<n;i++)shootE(e.x,e.y-50,a+(i-(n-1)/2+off)*.15,215,6,12,'crystal');sfx('shimmer',1,e.x);b3fx(e,'scrystals')};
     if(b3at(e,.42))fan(0);if(p2&&b3at(e,.6))fan(.5);
     if(e.stT<=0)b3go(e,'walk',p2?rand(.7,1):rand(1,1.4))}
   else if(e.st==='aurora'){e.face=a;
     if(b3at(e,.2)){const n=p2?4:3;for(let i=0;i<n;i++){const h=i%2===1,base=h?P.y:P.x,off=i<2?0:rand(60,90)*(Math.random()<.5?-1:1),pos=h?clamp(base+off,TOP+20,BOT-20):clamp(base+off,L+20,R-20);
-        b3curtain(pos,h,48,.95+i*.28,18)}sfx('shimmer',2,e.x)}
+        b3curtain(pos,h,48,.95+i*.28,18)}sfx('shimmer',2,e.x);b3fx(e,'saurora')}
     if(e.stT<=0)b3go(e,'walk',p2?rand(.7,1):rand(1,1.4))}
   else if(e.st==='stomp'){e.face=a;
     if(b3at(e,.44)){G.waves.push({x:e.x,y:e.y,r:e.r,max:p2?290:240,dmg:Math.round(16*DMG()),hit:false,rgb:'190,255,230'});if(Math.hypot(P.x-e.x,P.y-e.y)<e.r+40)hurtP(Math.round(26*DMG()));
       const n=p2?16:12;for(let i=0;i<n;i++)shootE(e.x,e.y-10,i*TAU/n,150,6,12,'ice');for(let i=0;i<4;i++){const an=i*TAU/4+rand(-.4,.4),r=rand(60,100);addZone(clamp(e.x+Math.cos(an)*r,L+20,R-20),clamp(e.y+Math.sin(an)*r*.7,TOP+20,BOT-20),24,3,'frost')}
-      stamp('crater',e.x,e.y+4,34);vfxBlast(e.x,e.y,'220,255,240',120,{debris:['#ffffff','#e0fff4','#c8e8f0'],n:24,sparks:14,spcol:['#ffffff','#c8fff0'],dust:16,cracks:36});shake(10);sfx('boom',0,e.x);sfx('icicles',0,e.x)}
+      stamp('crater',e.x,e.y+4,34);vfxBlast(e.x,e.y,'220,255,240',120,{debris:['#ffffff','#e0fff4','#c8e8f0'],n:24,sparks:14,spcol:['#ffffff','#c8fff0'],dust:16,cracks:36});shake(10);sfx('boom',0,e.x);sfx('icicles',0,e.x);b3fx(e,'sstomp',e.x,e.y)}
     if(e.stT<=0)b3go(e,'walk',p2?rand(.7,1):rand(1.1,1.5))}
   else b3go(e,'walk',1)};
 // the start of a move: the charge first lowers the head and paws the ground (a band shows the run), the stomp shows its circle

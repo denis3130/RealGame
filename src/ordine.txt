@@ -116,4 +116,6 @@ js/83-fenice.js
 js/84-piovra.js
 js/85-cervo.js
 js/86-musiche-boss3.js
+js/87-boss3-arena.js
+js/88-boss3-voci.js
 coda.html

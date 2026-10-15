@@ -12,7 +12,7 @@
 EUPD.phoenix=(e,dt,sm,a,d)=>{
   b3tick(e,dt);const p2=e.p2,k=b3k(e);if(e.shell>0)e.shell-=dt;
   // half health: the rebirth (once), whatever it was doing
-  if(!e.reborn&&e.hp<e.max*.5){e.reborn=1;e.air=1;e.hidden=false;b3go(e,'rebirth');e.shell=3.1;e.moving=false;sfx('ignite',2,e.x);return}
+  if(!e.reborn&&e.hp<e.max*.5){e.reborn=1;e.air=1;e.hidden=false;b3go(e,'rebirth');e.shell=3.1;e.moving=false;sfx('ignite',2,e.x);b3fx(e,'fegg');return}
   if(e.st==='enter'){b3go(e,'walk',.9);return}
   if(e.st==='walk'){e.face=a;e.air=0;
     if(!e.anchor||Math.hypot(e.anchor.x-P.x,e.anchor.y-P.y)<130){const an=Math.atan2(e.y-P.y,e.x-P.x)+rand(-1,1),r=rand(160,230);e.anchor=b3spot(P.x+Math.cos(an)*r,P.y+Math.sin(an)*r*.8,40)}
@@ -30,7 +30,7 @@ EUPD.phoenix=(e,dt,sm,a,d)=>{
   e.moving=false;
   if(e.st==='prep'){e.face=e.lf;if(e.stT<=0)b3go(e,e.nx)}
   else if(e.st==='feathers'){e.face=a;
-    const fan=off=>{const n=p2?9:7;for(let i=0;i<n;i++)shootE(e.x,e.y-30,a+(i-(n-1)/2+off)*.16,210,6,13,p2?'featherb':'feather');sfx('dash',0,e.x)};
+    const fan=off=>{const n=p2?9:7;for(let i=0;i<n;i++)shootE(e.x,e.y-30,a+(i-(n-1)/2+off)*.16,210,6,13,p2?'featherb':'feather');sfx('dash',0,e.x);b3fx(e,'ffeathers')};
     if(b3at(e,.4))fan(0);if(p2&&b3at(e,.62))fan(.5);
     if(e.stT<=0)b3go(e,'walk',p2?rand(.7,1):rand(1,1.4))}
   else if(e.st==='dive'){const D=e.dv;e.face=D?D.ang:e.lf;
@@ -39,12 +39,12 @@ EUPD.phoenix=(e,dt,sm,a,d)=>{
     if(D&&k>=.35&&k<=.62){const u=(k-.35)/.27,q=u*u*(3-2*u);e.x=D.sx+(D.ex-D.sx)*q;e.y=D.sy+(D.ey-D.sy)*q;
       if(!LOWFX&&Math.random()<.7)fxPush({k:'firep',x:e.x+rand(-8,8),y:e.y+rand(-6,6),r:rand(6,11),t:.4,max:.4})}
     if(D&&b3at(e,.62)){e.x=D.ex;e.y=D.ey;const len=Math.hypot(D.ex-D.sx,D.ey-D.sy);for(let s=20;s<len;s+=38)addZone(D.sx+Math.cos(D.ang)*s,D.sy+Math.sin(D.ang)*s,17,p2?3:2.2,'fire');
-      vfxBlast(e.x,e.y,p2?'120,200,255':'255,140,50',80,{fire:10,sparks:14,dust:8,ring2:false});stamp('scorch',e.x,e.y,26);shake(6);sfx('boom',0,e.x)}
+      vfxBlast(e.x,e.y,p2?'120,200,255':'255,140,50',80,{fire:10,sparks:14,dust:8,ring2:false});stamp('scorch',e.x,e.y,26);shake(6);sfx('boom',0,e.x);b3fx(e,'fdive',0,0,D)}
     if(b3at(e,.75))e.air=0;
     if(e.stT<=0){e.air=0;e.dv=null;b3go(e,'walk',p2?rand(.7,1):rand(1,1.4))}}
   else if(e.st==='vortex'){e.face=a;
     const ring=()=>{G.waves.push({x:e.x,y:e.y,r:16,max:p2?260:220,dmg:Math.round(15*DMG()),hit:false,rgb:p2?'120,200,255':'255,140,40'});fxPush({k:'ring2',x:e.x,y:e.y-12,rgb:p2?'150,220,255':'255,170,70',r0:12,r1:70,t:.35,max:.35,w:6});sfx('ignite',0,e.x)};
-    if(b3at(e,.15)||b3at(e,.5)||(p2&&b3at(e,.8)))ring();
+    if(b3at(e,.15)||b3at(e,.5)||(p2&&b3at(e,.8)))ring();if(b3at(e,.15))b3fx(e,'fvortex',e.x,e.y);
     if(k>.15&&k<.85){e.fireT=(e.fireT||0)-dt;if(e.fireT<=0){e.fireT=.13;const arms=p2?3:2;for(let q=0;q<arms;q++)shootE(e.x,e.y-20,(e.rot||0)+q*TAU/arms,125,6,11,'fire');e.rot=(e.rot||0)+.27}}
     if(e.stT<=0)b3go(e,'walk',p2?rand(.7,1):rand(1,1.4))}
   else if(e.st==='rain'){e.face=a;
@@ -56,7 +56,7 @@ EUPD.phoenix=(e,dt,sm,a,d)=>{
     if(b3at(e,.3))sfx('rock',0,e.x);
     if(b3at(e,.55)){e.p2=true;banner('La Fenice rinasce','Fase 2',1.6);bossRage(e,'120,200,255');$('bossBar').classList.add('rage');shake(9);sfx('boom',0,e.x);vib([60,40,100]);
       for(let i=0;i<16;i++)shootE(e.x,e.y-20,i*TAU/16,140,7,12,'fire');G.waves.push({x:e.x,y:e.y,r:16,max:240,dmg:Math.round(14*DMG()),hit:false,rgb:'120,200,255'});
-      vfxBlast(e.x,e.y-20,'150,220,255',120,{fire:16,sparks:20,spcol:['#ffffff','#9fe0ff','#3a8ae8'],dust:10})}
+      vfxBlast(e.x,e.y-20,'150,220,255',120,{fire:16,sparks:20,spcol:['#ffffff','#9fe0ff','#3a8ae8'],dust:10});b3fx(e,'freborn',e.x,e.y)}
     if(b3at(e,.7))roarBoss(e);
     if(e.stT<=0){e.shell=0;e.air=0;e.si=0;b3go(e,'walk',.8)}}
   else b3go(e,'walk',1)};

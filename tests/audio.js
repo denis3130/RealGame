@@ -9,6 +9,10 @@ const R=[];
 for(const k of ['boom','coin','roar','hit','splash']){R.push(['(vecchio) '+k,await meas(`sfx('${k}')`,1500)])}
 for(const k of ['crumble','icicles','ignite','frost','groan','bloom','hiss','deepBubble','mimicWake','mimicStep','mimicBreath','farGrowl']){R.push([k,await meas(`try{SFX2['${k}'](AU.ctx.currentTime+.01,1)}catch(e){window.__err=(window.__err||'')+'${k}:'+e.message+' '}`,1800)])}
 for(const m of ['witch','frost','forge'])R.push(['magic '+m,await meas(`SFX2.magic(AU.ctx.currentTime+.01,'${m}')`,1800)]);
+// the voices of the four new bosses (src/js/88-boss3-voci.js): made at once, then each said as in the game (near the hero)
+await E(`for(const t of ['puppeteer','phoenix','octopus','stag'])B3VO.prep(t);0`);for(let w=0;w<60;w++){if(await E(`(()=>{const s=B3VO.state();return !s.q&&!s.wk})()`))break;await p.waitForTimeout(100)}
+R.push(['(vecchio) goblin',await meas(`VOX.goblin.a(AU.ctx.currentTime+.01)`,1200)]);
+for(const t of ['puppeteer','phoenix','octopus','stag'])for(const k of ['cry','laugh','hurt','angry','die'])R.push([`voce ${t} ${k}`,await meas(`try{B3VO.play('${t}','${k}',AU.ctx.currentTime+.01,B3VX['${k}']||.75,1,.18)}catch(e){window.__err=(window.__err||'')+'${t}.${k}:'+e.message+' '}`,k==='die'||k==='cry'||k==='angry'?2200:1300)]);
 console.log('errori dentro i suoni:',await E(`window.__err||'nessuno'`));
 for(const [kind,ch] of [['moss',1],['lava',2],['swamp',3],['ice',4],['menu',0]]){await E(ch?`$('menu').hidden=true;started=true;paused=false;G.chapter=${ch};G.room=3;0`:`$('menu').hidden=false;0`);await p.waitForTimeout(3000);const k=await E('AMB.kind');R.push(['ambiente '+kind+' ('+k+')',await meas(`0`,4000)])}
 await E(`$('menu').hidden=true;started=false;0`);

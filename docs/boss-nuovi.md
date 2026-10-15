@@ -62,3 +62,51 @@ Collaudo (15 ottobre), tutto passato senza errori: `boss3gioco.js` (tutte le mos
 per ognuna delle arene 9–12 (vittoria sul custode nuovo alla stanza 10) e una per capitolo (Golem, Re Rospo, Yeti, Strega); `zombie.js`,
 `avvio.js`, `meta2.js`, `menu2.js`, `menu3.js` (foto guardate), `salvataggio.js`, `bossdie.js` (le morti dei boss di prima non cambiano),
 `audio.js`, `mig.js`. Poi ripubblicati il gioco su claude.ai e l'app.
+
+## Voce, personalità e arena che reagisce (15 ottobre)
+
+Denis, dopo averli visti nel gioco: «ci sta ma secondo me gli manca qualcosa». Tra quattro proposte (arena che reagisce, stanza tutta
+loro, voce e personalità, una mossa da sfruttare) ha scelto **l'arena che reagisce** e **voce e personalità**.
+
+**L'arena reagisce** (`src/js/87-boss3-arena.js`): come per i 9 boss di prima (`52-boss2-arena-reagisce.js`, `ENV2`) ogni colpo vero
+lascia il segno, nel suo fotogramma (le mosse in `82`–`85` chiamano `b3fx`).
+- Burattinaio: le manate fanno tremare e crepare gli ostacoli, cade polvere dal soffitto, crepe a terra, torce viola (magenta nella fase
+  2); il filo d'oro fa vibrare e scintillare gli ostacoli che attraversa, taglia l'erba, accende le torce d'oro; dove escono i burattini e
+  dove sprofonda o risale restano macchie d'ombra; mentre è sparito le torce si abbassano.
+- Fenice: le piume fanno divampare le torce (azzurre nella fase 2); la picchiata brucia l'erba e incendia il legno lungo la strada e lascia
+  cenere con le braci dove atterra; il vortice brucia l'erba intorno; quando diventa uovo le torce quasi si spengono, quando rinasce si
+  accendono azzurre e la stanza trema (bruciatura e cenere).
+- Piovra: le tentacolate fanno schizzi e pozzanghere nuove (al massimo 8 in un combattimento) e fanno tremare gli ostacoli; l'inchiostro
+  lascia macchie lucide che restano anche quando non rallenta più; il gorgo fa tremare l'acqua di tutte le pozzanghere e colora le torce;
+  tuffarsi e riemergere fa schizzi, onde e una pozzanghera.
+- Cervo: la carica lascia brina sotto gli zoccoli; contro un muro o un ostacolo fa cadere ghiaccioli, crepa tutto e pianta schegge di
+  cristallo; i cristalli e l'aurora colorano le torce; dove cadono le tende d'aurora resta una riga di brina; la zoccolata gela il
+  pavimento.
+- Fase 2 di tutti: le torce prendono il colore della rabbia e la stanza trema. I segni nuovi (ombra, cenere, inchiostro, schegge) sono cotti
+  nel pavimento come gli altri; con `LOWFX` volano meno pezzi.
+
+**Le voci** (`src/js/88-boss3-voci.js`, `B3VO`): voci da cartone, per la Classica, fatte col codice come la gola degli zombie (colpi della
+glottide, tre formanti, respiro, raschio, gorgoglii; per la Fenice un fischio con le armoniche) e preparate una volta sola, a fettine di
+2 ms, nelle prime stanze di un'arena con uno di loro (50–190 ms in tutto sul computer di prova). Ognuno ha il grido d'entrata (al posto del
+ringhio), la rabbia della fase 2, un verso per ogni mossa (si sente arrivare), il lamento, la risata della presa in giro, la chiamata, il
+grido della sconfitta e la risata quando cadi.
+- Burattinaio: «Ah-ah!» da teatro, «eh-eh-eh», «oh-oh-oh», «hup!», un sussurro prima di sparire, ridacchia quando chiama i burattini, un
+  lungo «nooo» che trema; qualche nota di carillon intorno.
+- Fenice: strido con le armoniche, trilli quando ti prende in giro, un grido che sale prima della picchiata; quando cade il grido si spegne
+  e dall'uovo esce il «pip pip» del pulcino.
+- Piovra: un «bluooarg» gorgogliante, la pernacchia, «blub!», «hmpf», «ptù!» quando sputa l'inchiostro; bolle.
+- Cervo: bramito profondo, sbuffi col naso e zoccoli, un richiamo morbido quando chiama l'aurora, campanelle di ghiaccio.
+- Volumi (`node tests/audio.js`): forti come il ruggito dei boss di prima (picco 0,26–0,47); la Fenice abbassata a meno della metà
+  (il fischio cade dove l'orecchio è più sensibile). Tra due versi dello stesso boss almeno 2,4 s (grido, rabbia, prese in giro e
+  sconfitta passano sempre): in battaglia circa un verso ogni due secondi e mezzo.
+
+**La personalità**: quando ti colpisce ti prende in giro (al massimo ogni 9 s; se è in mezzo a una mossa, appena la finisce) con la
+mossa nuova dei modelli «Presa in giro» (`taunt`: un pezzo della sua entrata già approvata, `sprite/nemici3d/boss3.js`) e la risata; se
+non lo colpisci per 7 s ti chiama (al massimo ogni 11 s); si lamenta quando lo colpisci forte (il 2% della vita in un attimo, al massimo
+ogni 6 s); ride se cadi. Durante la presa in giro (1–1,2 s) non attacca: un piccolo respiro per chi gioca. Niente anello di carica.
+
+Prove: `node tests/boss3voci.js [arena]` (voci pronte, grido, presa in giro col gesto, versi delle mosse e quanti al minuto, lamento,
+chiamata, rabbia, sconfitta e pulcino, risata quando cadi, reazioni dell'arena; foto `tests/b3v_<boss>_presa.png` e `_segni.png`).
+Pagina per provarli dal telefono senza arrivare a 5.200 coppe: `python3 anteprime/mk_prova_boss.py` → `anteprime/prova_boss.html` (una
+copia del gioco col pannello «Prova dei boss nuovi»: si entra subito nella stanza di uno dei quattro, eroe forte o invincibile; ha il suo
+salvataggio, il gioco sul telefono non cambia).

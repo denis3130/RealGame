@@ -32,24 +32,24 @@ EUPD.puppeteer=(e,dt,sm,a,d)=>{
   if(e.st==='prep'){e.face=e.lf;if(e.stT<=0)b3go(e,e.nx)}
   else if(e.st==='slam'){e.face=e.lf;
     if(b3at(e,.44)){const x=e.tx,y=e.ty;G.waves.push({x,y,r:14,max:p2?290:230,dmg:Math.round(17*DMG()),hit:false,rgb:'170,110,255'});if(Math.hypot(P.x-x,P.y-y)<48)hurtP(Math.round(24*DMG()));
-      vfxBlast(x,y,'150,90,230',90,{sparks:12,spcol:['#ffd84a','#c8a0ff','#ffffff'],dust:14,debris:'stone',n:10,cracks:30});stamp('crater',x,y,28);shake(8);sfx('boom',0,x);vib([40,30,60]);
+      vfxBlast(x,y,'150,90,230',90,{sparks:12,spcol:['#ffd84a','#c8a0ff','#ffffff'],dust:14,debris:'stone',n:10,cracks:30});stamp('crater',x,y,28);shake(8);sfx('boom',0,x);vib([40,30,60]);b3fx(e,'pslam',x,y);
       if(p2)for(let i=0;i<10;i++)shootE(x,y-10,i*TAU/10+rand(0,.3),130,7,12,'shadow')}
     if(e.stT<=0)b3go(e,'walk',p2?rand(.7,1):rand(1.1,1.5))}
   else if(e.st==='strings'){e.face=e.lf;
-    if(b3at(e,.3)){b3thread(e.x,e.y,e.lf,p2?340:290,18,{back:p2,s0:22});sfx('shimmer',2,e.x);sfx('dash',0,e.x)}
+    if(b3at(e,.3)){b3thread(e.x,e.y,e.lf,p2?340:290,18,{back:p2,s0:22});b3fx(e,'pstrings');sfx('shimmer',2,e.x);sfx('dash',0,e.x)}
     if(e.stT<=0)b3go(e,'walk',p2?rand(.7,1):rand(1.1,1.5))}
   else if(e.st==='puppets'){e.face=a;
     if(b3at(e,.15))sfx('creep',1,e.x);
     if(b3at(e,.86)){const n=G.enemies.filter(m=>m.type==='puppet'&&!m.dead).length;let made=0;
       for(const t of(p2?[-.6,0,.6]:[-.6,.6])){if(n+made>=4)break;const q=b3pt(e,40*Math.cos(t)+6,40*Math.sin(t),e.f3),x=clamp(q.x,L+16,R-16),y=clamp(q.y-8,TOP+20,BOT-20);
-        const m=makeE('puppet',x,y,0);m.p2=p2;m.face=a;G.enemies.push(m);made++;if(!LOWFX)vfxBlast(x,y,'120,70,200',26,{sparks:4,spcol:['#ffd84a','#c8a0ff'],dust:0,ring2:false})}}
+        const m=makeE('puppet',x,y,0);m.p2=p2;m.face=a;G.enemies.push(m);made++;b3fx(e,'ppuppet',x,y);if(!LOWFX)vfxBlast(x,y,'120,70,200',26,{sparks:4,spcol:['#ffd84a','#c8a0ff'],dust:0,ring2:false})}}
     if(e.stT<=0)b3go(e,'walk',p2?rand(.8,1.1):rand(1.2,1.6))}
   else if(e.st==='vanish'){e.face=a;
-    if(b3at(e,.33)){e.hidden=true}
+    if(b3at(e,.33)){e.hidden=true;b3fx(e,'psink',e.x,e.y)}
     if(b3at(e,.5)){vfxBlast(e.x,e.y,'90,50,160',50,{sparks:0,dust:10,ring2:false});const an=rand(0,TAU),r=rand(120,165),s=b3spot(P.x+Math.cos(an)*r,P.y+Math.sin(an)*r*.8,30);
       e.x=s.x;e.y=s.y;b3warn(e.x,e.y,40,.33,'170,110,255',true);vfxBlast(e.x,e.y,'90,50,160',50,{sparks:0,dust:10,ring2:false});sfx('creep',2,e.x)}
     if(b3at(e,.62))e.hidden=false;
-    if(b3at(e,.68)){const n=p2?16:12,o=rand(0,TAU);for(let i=0;i<n;i++)shootE(e.x,e.y-16,o+i*TAU/n,135,7,12,'shadow');fxPush({k:'ring2',x:e.x,y:e.y-10,rgb:'170,110,255',r0:10,r1:100,t:.45,max:.45,w:7});sfx('magic',0,e.x);shake(4)}
+    if(b3at(e,.68)){const n=p2?16:12,o=rand(0,TAU);for(let i=0;i<n;i++)shootE(e.x,e.y-16,o+i*TAU/n,135,7,12,'shadow');fxPush({k:'ring2',x:e.x,y:e.y-10,rgb:'170,110,255',r0:10,r1:100,t:.45,max:.45,w:7});sfx('magic',0,e.x);shake(4);b3fx(e,'prise',e.x,e.y)}
     if(p2&&b3at(e,.82)){const n=12,o=rand(0,TAU);for(let i=0;i<n;i++)shootE(e.x,e.y-16,o+(i+.5)*TAU/n,120,7,12,'shadow')}
     if(e.stT<=0){e.hidden=false;b3go(e,'walk',p2?rand(.7,1):rand(1,1.4))}}
   else b3go(e,'walk',1)};

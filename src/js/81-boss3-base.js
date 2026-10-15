@@ -143,11 +143,11 @@ function b3update(dt){if(!G||!G.b3)return;const B=G.b3;if(G.state!=='play'){if(B
     // out of the room: gone, or back home once (the second pass can hit again)
     if(h.dir>0&&h.s>h.far){if(h.back){h.dir=-1;h.hit=false;h.back=false;sfx('shimmer',1,P.x)}else{B.thr.splice(i,1);continue}}
     if(h.dir<0&&h.s<10)B.thr.splice(i,1)}
-  for(let i=B.aur.length-1;i>=0;i--){const c=B.aur[i];if(c.warn>0){c.warn-=dt;if(c.warn<=0){shake(2);sfx('shimmer',2,c.h?AW/2:c.pos)}continue}c.act-=dt;
+  for(let i=B.aur.length-1;i>=0;i--){const c=B.aur[i];if(c.warn>0){c.warn-=dt;if(c.warn<=0){shake(2);sfx('shimmer',2,c.h?AW/2:c.pos);b3fx(null,'scurtain',0,0,c)}continue}c.act-=dt;
     const inside=c.h?Math.abs(P.y-c.pos)<c.w/2+P.r*.5:Math.abs(P.x-c.pos)<c.w/2+P.r*.5;if(inside&&!c.hit&&c.act>.1&&P.inv<=0&&P.dashT<=0){c.hit=true;hurtP(c.dmg)}
     if(c.act<=0)B.aur.splice(i,1)}
   for(let i=B.lob.length-1;i>=0;i--){const b=B.lob[i];b.t+=dt;if(b.t<b.dur)continue;B.lob.splice(i,1);
-    G.zones.push({x:b.tx,y:b.ty,r:b.r*1.15,t:4.5,max:4.5,kind:'slime',ink:true});vfxBlast(b.tx,b.ty,'70,50,120',b.r*1.4,{sparks:8,spcol:['#3a2a6a','#8a7ae0','#2a2244'],dust:0,ring2:false});sfx('splash',0,b.tx);
+    G.zones.push({x:b.tx,y:b.ty,r:b.r*1.15,t:4.5,max:4.5,kind:'slime',ink:true});b3fx(null,'oink',b.tx,b.ty,b.r);vfxBlast(b.tx,b.ty,'70,50,120',b.r*1.4,{sparks:8,spcol:['#3a2a6a','#8a7ae0','#2a2244'],dust:0,ring2:false});sfx('splash',0,b.tx);
     if(Math.hypot(P.x-b.tx,P.y-b.ty)<b.r+P.r*.4)hurtP(b.dmg)}
   for(let i=B.warn.length-1;i>=0;i--){const w=B.warn[i];w.t-=dt;if(w.t<=0)B.warn.splice(i,1)}}
 {const _u=update;update=function(dt){_u.apply(this,arguments);try{if(G&&G.b3&&started&&!paused)b3update(dt)}catch(err){}}}
