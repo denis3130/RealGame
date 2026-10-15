@@ -1,11 +1,10 @@
-# I 4 boss nuovi del terzo giro «su carta» (anteprima 48)
+# I 4 boss nuovi del terzo giro (anteprima 48, nel gioco dal 15 ottobre)
 
-Punto 5 del piano: un boss per arena; le arene 9–12 oggi riusano i custodi del primo giro. Questi sono i quattro boss nuovi, uno per
+Punto 5 del piano: un boss per arena; fino al 14 ottobre le arene 9–12 riusavano i custodi del secondo giro. Questi sono i quattro boss nuovi, uno per
 mondo, disegnati con lo stesso metodo degli altri (modelli 3D in `sprite/nemici3d/boss3.js`, cassetta `C3`), nello stile della Classica:
-forme tonde da giocattolo, colori pieni, occhi grandi con la luce, bocche semplici, niente sangue. **Non sono ancora nel gioco**: prima
-Denis guarda le quattro direzioni e le mosse (pagina `python3 anteprime/mk_nemici3d.py --nuovi` → `anteprime/boss3.html`; fogli
-`node tests/boss3.js` → `tests/nb_<boss>_dir.png` e `tests/nb_<boss>_mosse.png`). Dopo il suo sì: comportamento in battaglia, entrata,
-sconfitta e barra nel gioco, musica.
+forme tonde da giocattolo, colori pieni, occhi grandi con la luce, bocche semplici, niente sangue. Denis li ha visti nelle quattro direzioni
+e con le mosse (pagina `python3 anteprime/mk_nemici3d.py --nuovi` → `anteprime/boss3.html`; fogli `node tests/boss3.js` →
+`tests/nb_<boss>_dir.png` e `tests/nb_<boss>_mosse.png`) e il 14 ottobre ha detto sì: sono nel gioco (sotto, «Nel gioco»).
 
 | Arena | Boss | Sagoma | Attacchi (come si leggono) | Cambio di fase | Sconfitta |
 |---|---|---|---|---|---|
@@ -20,3 +19,41 @@ giù dall'alto e alza la testa mentre le corna si accendono punta dopo punta.
 
 Musica (dopo il sì): carillon storto e archi pizzicati per il Burattinaio, tamburi di forgia e ottoni per la Fenice, marimba e bolle per
 la Piovra, coro e campane di ghiaccio per il Cervo, sullo stesso schema delle musiche dei boss (punto 51).
+
+## Nel gioco (15 ottobre)
+
+Denis, il 14 ottobre dopo la terza richiesta: «ok perfetto riporta tutto sul gioco». Le arene 9–12 hanno i loro custodi (`ARENAS[i].bt`); l'Abisso e la
+sfida del giorno tengono i boss di prima.
+
+- **Collegamenti** (`src/js/81-boss3-base.js`): vita, danno, nome e titolo (`ET`); la stanza resta quella del mondo, con un cerchio di rune
+  suo (`B3V`, `RUNEC`: Teatro delle Ombre, Nido della Fenice, Stagno della Piovra con la pozza, Prato dell'Aurora). L'entrata e la sconfitta
+  le recitano i modelli (mosse `enter` e `die`, col loro tempo). Poi la barra che si rompe a modo suo (`BBFX`), alone, aura e anello di
+  carica (`B2`), la musica e l'accordo di vittoria (`BMS`), le anteprime e la schermata di sblocco col custode nuovo, la guida, quattro
+  traguardi (30–50 cristalli). Il giro d'anello generico delle arene alte (`bossExtra`) è spento per loro: hanno i loro schemi.
+- **Pericoli nuovi**: il filo d'oro che attraversa la stanza (si passa con lo scatto o dietro un ostacolo), le tende d'aurora, le palle
+  d'inchiostro con le chiazze che rallentano, i proiettili (sfere d'ombra, piume di fuoco anche azzurre, gocce d'inchiostro, cristalli),
+  gli avvisi a terra (cerchi e strisce). Il burattino d'ombra è un nemico nuovo, in 3D come gli altri (`N3.puppet` in
+  `sprite/nemici3d/boss3.js`), uguale ai burattini della mossa del Burattinaio.
+- **Mosse**: ogni stato del boss ha il nome di una mossa del modello, il colpo vero parte nel suo fotogramma (`b3at`). I file:
+  `82-burattinaio.js`, `83-fenice.js` (la rinascita a metà vita: uovo che non si può colpire, poi fiamme azzurre), `84-piovra.js`,
+  `85-cervo.js`. Musiche in `86-musiche-boss3.js`.
+
+| Boss | Vita (×arena) | Danno di contatto | Mosse |
+|---|---|---|---|
+| Burattinaio d'Ombra | 6.000 | 22 | Manate (onda), Fili, Burattini (2, 3 nella fase 2; al massimo 4; 14 s di vita), Sipario |
+| Fenice della Forgia | 6.600 | 24 | Piume (7, 9 azzurre), Picchiata (striscia di fuoco), Vortice, Pioggia di braci; Rinascita a metà vita |
+| Piovra della Palude | 7.000 | 24 | Tentacolata (doppia nella fase 2), Inchiostro (3, 5), Gorgo che tira, Immersione |
+| Cervo d'Aurora | 7.600 | 22 | Carica (doppia nella fase 2), Cristalli, Aurora (3, 4 tende), Zoccolata |
+
+Misure:
+- **Disegno**: ogni modello costa da 0,6 a 1,2 ms a fotogramma (i boss di prima da 0,4 a 0,8), misurato pulendo la tela a ogni
+  fotogramma come fa il gioco. La stanza intera col boss: da 2,5 a 4,7 ms sul computer di prova.
+- **Difficoltà**: con l'eroe fermo che tira, come nelle misure della FASE 2 (caso peggiore, livello 6, arco al livello 3), vite perse al
+  minuto: Burattinaio 6, Fenice 9,3, Piovra 8, Cervo 10,6. I custodi di prima nelle stesse arene: Strega 4,6, Fabbro 32, Idra 10,
+  Regina 5,5. Prima i burattini facevano da scudo e il 96% del danno del Burattinaio era il loro contatto: ora meno vita, meno danno,
+  più lenti, meno insieme. Da regolare giocando.
+- **Volume delle musiche**: da −25 a −27 dB come i temi dei boss di prima.
+
+Prove: `node tests/boss3gioco.js [arena]` (entrata, lotta, tutte le mosse, fase 2, sconfitta, stanza ripulita, tempi di disegno; foto
+`tests/b3g_<boss>_*.png`); `node tests/boss3mosse.js [boss]` (ogni mossa in tre momenti: `tests/b3m_<boss>.png`); `node tests/anteprime.js`
+(miniature e sblocco delle arene).

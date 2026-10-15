@@ -114,6 +114,6 @@ function updEnemy(e,dt){
     case 'mimic':mimicUpd(e,dt,a,d);break;
     default:if(EUPD[e.type])EUPD[e.type](e,dt,sm,a,d);
   }
-  if(!e.hidden&&e.z<4&&d<P.r+e.r-2)hurtP(e.cdmg);
+  if(!e.hidden&&!e.air&&e.z<4&&d<P.r+e.r-2)hurtP(e.cdmg);
 }
 

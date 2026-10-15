@@ -1,4 +1,4 @@
-# Nemici e boss della Classica in 3D (prova, non ancora nel gioco)
+# Nemici e boss della Classica in 3D (nel gioco dal 13 ottobre)
 
 Richiesta di Denis del 13 ottobre: «ricreami tutti i boss ed i nemici in 3d come hai fatto col pg». Ogni mostro è quello di oggi nel
 gioco (stessi colori, stessi pezzi, stesse proporzioni, stessi occhi), rifatto con volumi 3D visti dalla telecamera dei mostri
@@ -23,6 +23,9 @@ File (si caricano in quest'ordine, dopo il gioco: servono `CR._rig`, `EROE` e, p
   di lava, scudo, bastone dei maghi, martello, bomba; l'Arciere resta identico al pixel): goblin, scheletro, scheletrino, negromante,
   piromante, nano bombarolo, la Strega, il Fabbro, la Regina dei Ghiacci e il suo riflesso.
 - `boss1.js`: Golem, Re Rospo, Yeti. `boss2.js`: Salamandra, Idra, Mimic.
+- `boss3.js`: i 4 boss nuovi del terzo giro (Burattinaio d'Ombra, Fenice della Forgia, Piovra della Palude, Cervo d'Aurora), con le mosse
+  di battaglia e anche `enter` (l'entrata) e `die` (la sconfitta), che il gioco fa recitare ai modelli; e il burattino d'ombra (`puppet`),
+  il servitore del Burattinaio, uguale ai burattini della sua mossa. Nel gioco dal 15 ottobre (`src/js/81-86`, `docs/boss-nuovi.md`).
 - `eroi.js` (gruppo «Eroi e compagni», richiesta di Denis «fammi anche i pg tutti in 3d»): l'Arciere, la Cacciatrice (coda di capelli),
   il Balestriere (elmo, balestra) e il Druida (corna di legno, bastone, occhi verdi) sul corpo dell'Arciere 3D; i compagni Muschietto, Lucciola e
   Draghetto; il Mercante col tappeto, le pozioni e la cassa. `N3.meta[nome].old` disegna quello di oggi per «Prima e dopo».
@@ -31,5 +34,6 @@ Pagina di prova: `python3 anteprime/mk_nemici3d.py [nome]` → `anteprime/nemici
 «Tutti»; mosse, ◀ ▶, «Fase 2» per i boss, effetti bassi, tempo di disegno), pubblicata su
 https://claude.ai/artifact/KJAoPYt98bEeiiwmYpPTYG.
 
-Da fare dopo il giudizio di Denis: le correzioni che chiede; poi l'innesto nel gioco (adattatore dallo stato di ogni nemico in `update`
-alla mossa e a `p`, come `src/js/62-eroe-3d.js` fa per l'eroe), i fogli per i telefoni lenti, la mossa «muore».
+Nel gioco: `src/js/64-nemici-3d.js` (lo stato di ogni nemico diventa la mossa e `p`). Per misurare il tempo di disegno di un modello
+pulire la tela a ogni fotogramma come fa il gioco: senza, il browser accumula i comandi e a tratti rallenta (la Piovra sembrava costare
+5 ms invece di 0,9).

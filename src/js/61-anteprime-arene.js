@@ -44,7 +44,7 @@ function arenaScene(cv,i,t){const A=ARENAS[i],z=A.boss||'radici',E=ENV[z]||ENV.m
   if(typeof arsPreview==='function')arsPreview(i,W,H,wh,t);
   const g=c.createRadialGradient(W/2,H*.55,H*.3,W/2,H*.55,H*.95);g.addColorStop(0,'rgba(0,0,0,0)');g.addColorStop(1,`rgba(0,0,0,${.35+.3*(E.dark||.4)})`);c.fillStyle=g;c.fillRect(0,0,W,H);
   // the boss: it breathes, and every 3.5 s it shows its blow (the 3D move 'attack', from the time of a shot)
-  const e=fakeBoss(BOSSZ[z]||'witch');e.t=1.2+t;if(G)G.t=t;{const ph=t%3.5;if(t>0&&ph>=1)e.a3=t-ph+1}const sc=1.3*W/360;c.setTransform(sc,0,0,sc,W/2,H*.76);noShadow=false;try{shadowFor(e);drawEnemy(e)}catch(err){}
+  const e=fakeBoss(A.bt||BOSSZ[z]||'witch');e.t=1.2+t;if(G)G.t=t;{const ph=t%3.5;if(t>0&&ph>=1)e.a3=t-ph+1}const sc=1.3*W/360;c.setTransform(sc,0,0,sc,W/2,H*.76);noShadow=false;try{shadowFor(e);drawEnemy(e)}catch(err){}
   c.setTransform(1,0,0,1,0,0);noShadow=ns;if(G)G.t=gt;ctx=saved}
 // the still picture used by the trophy road, the pass and the arena card (cached; the arena's tint on top)
 // (its own key: the menu asks for the thumbnail once before this file is loaded, and that old picture must not be kept)
@@ -52,7 +52,7 @@ arenaThumb=function(i){const k='athumb'+i;if(CAMP.bg[k])return CAMP.bg[k];const 
   return CAMP.bg[k]=s.toDataURL('image/jpeg',.84)};
 // «Nuova arena sbloccata!»: the boss room, alive, with the boss breathing and the torches flickering
 showArenaUp=function(i){const A=ARENAS[i],el=$('arenaUpScr'),z=A.boss||'radici';
-  el.innerHTML=`<div class="vsRays"></div><div class="auBox"><span class="vsKind">Nuova arena sbloccata!</span><div class="auPic"><canvas id="auCv" width="360" height="270" style="filter:${A.tint||'none'}"></canvas><span class="auNum">Arena ${i+1}</span></div><span class="ribbon" style="--ac:${A.col}">${A.n}</span><p>${A.d}</p><p class="auBoss">Custode: <b>${(CUSTODE_INTRO[z]||'').replace(/^(Il|La|Lo|L')\s?/,'')}</b></p><p class="auTr">${TROPHY}${A.t} coppe</p><button class="btn go" id="auOk">Fantastico!</button></div>`;
+  el.innerHTML=`<div class="vsRays"></div><div class="auBox"><span class="vsKind">Nuova arena sbloccata!</span><div class="auPic"><canvas id="auCv" width="360" height="270" style="filter:${A.tint||'none'}"></canvas><span class="auNum">Arena ${i+1}</span></div><span class="ribbon" style="--ac:${A.col}">${A.n}</span><p>${A.d}</p><p class="auBoss">Custode: <b>${(A.bt?ET[A.bt].name:CUSTODE_INTRO[z]||'').replace(/^(Il|La|Lo|L')\s?/,'')}</b></p><p class="auTr">${TROPHY}${A.t} coppe</p><button class="btn go" id="auOk">Fantastico!</button></div>`;
   el.hidden=false;const cv=$('auCv'),t0=performance.now();
   const loop=()=>{if(el.hidden||!cv.isConnected)return;try{arenaScene(cv,i,(performance.now()-t0)/1000)}catch(e){}if(!LOWFX)requestAnimationFrame(loop)};loop();
   sfx('victory');vib([40,30,40,30,120]);$('auOk').onclick=()=>{sfx('ui');el.hidden=true;renderPlay()}};

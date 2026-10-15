@@ -596,4 +596,38 @@ reg('stag',{n:"Il Cervo d'Aurora",g:'boss3',sc:1,an:['idle','walk','prep','charg
   dur:{idle:3,walk:1,prep:1.2,charge:.7,crystals:1.3,aurora:2.4,stomp:1.5,hit:.6,enter:2.8,die:4},
   lab:{idle:'Fermo',walk:'Trotta',prep:'Prepara',charge:'Carica',crystals:'Cristalli',aurora:'Aurora',stomp:'Zoccolata',hit:'Colpito',enter:'Entrata',die:'Sconfitta'}},stag);
 
+// ------------------------------------------------------------------ IL BURATTINO D'OMBRA (puppet): the little shadow puppets the
+// Puppeteer pulls out of the floor in its 'puppets' move, now on their own feet in battle (the same look: a round violet head with two
+// yellow eyes on a soft violet sack of a body, two stick arms up with little white gloves, golden strings going up into the dark).
+// Moves: idle (bobs on its string, the arms sway), walk (hops), attack (the arms go up, the eyes flare, a little lunge), hit.
+// Phase 2 of its master (o.p2): darker, orange eyes, pink strings.
+const PPK={body:'#4a2a7a',head:'#5a3590',eye:'#ffd84a',eyeRgb:'255,216,74',str:'255,233,160',hand:'#f2ecff'},
+  PPK2=Object.assign({},PPK,{body:'#3c1f66',head:'#4c2a86',eye:'#ff7a3a',eyeRgb:'255,122,58',str:'255,154,224'});
+function puppet(x,y,face,anim,p,sc,o){sc=sc||1;o=o||{};const K=o.p2?PPK2:PPK,V0=V(face),{P,D,F}=V0,ph=p*TAU;
+  let z=0,lean=0,arm=.35,aw=0,glowK=0,shut=0;
+  if(anim==='walk'){const h=Math.abs(Math.sin(ph));z=6*h;lean=.2;arm=.6+.25*Math.sin(ph*2);aw=.5*Math.sin(ph*2)}
+  else if(anim==='attack'){const k=sstep(0,.35,p)*(1-sstep(.8,1,p)),lu=p>.4&&p<.62?Math.sin((p-.4)/.22*Math.PI):0;arm=.35+.85*k;glowK=k;lean=-.15*k+.35*lu;z=1.5*k}
+  else if(anim==='hit'){const kb=hitK(p);lean=-.4*kb;shut=p<.5?1:0;z=2*kb;arm=.3+.8*kb}
+  else{z=1.4*Math.sin(ph);arm=.35+.18*Math.sin(ph+1);aw=.25*Math.sin(ph*2)}
+  floor(V0,x,y,sc,[0,0,0],8.5,7.5,.3,z);
+  ctx.save();ctx.translate(x,y);ctx.scale(sc,sc);const L=parts(),sl=Math.sin(lean),cl0=Math.cos(lean);
+  const lx=v=>[v[0]+v[2]*sl,v[1],v[2]*cl0+z],HR=6.4,hc=lx([0,0,19]),bt=lx([0,0,3]);
+  // the string from the top of the head up into the dark (behind everything)
+  L.add(-50,()=>{const a=P(add(hc,[0,0,HR])),b=P(add(hc,[0,0,70]));ctx.save();const g=ctx.createLinearGradient(a[0],a[1],b[0],b[1]);g.addColorStop(0,`rgba(${K.str},.85)`);g.addColorStop(1,`rgba(${K.str},0)`);
+    ctx.strokeStyle=g;ctx.lineWidth=.9;seg(a,b);ctx.stroke();ctx.restore()});
+  // the body: a soft little sack from the neck down to the floor
+  L.add(D(bt),()=>{const a=P(add(hc,[0,0,-3])),b=P(bt);ink(2);hull(a,5.6,b,7.4);ctx.fillStyle=softBox([b[0]-8,a[1]-6,b[0]+8,b[1]+8],K.body,.2,.3);ctx.fill();ctx.stroke()});
+  // the arms: two little sticks up and out from the shoulders, a white glove on each with its own string
+  for(const sd of[-1,1]){const sh=lx([1,sd*5.5,14]),an=arm+(sd>0?aw:-aw)*.5,hd=add(sh,[2+3*Math.cos(an*1.4),sd*(4+5*Math.sin(an)),7*Math.sin(an*1.3)+2]);
+    L.add(D(hd)+.5,()=>{const a=P(sh),b=P(hd);ink(2.6);seg(a,b);ctx.stroke();ctx.strokeStyle=K.body;ctx.lineWidth=1.4;seg(a,b);ctx.stroke();ink(1.6);ball(b,2.2);ctx.fillStyle=K.hand;ctx.fill();ctx.stroke();
+      const s=P(add(hd,[0,0,40]));ctx.save();ctx.strokeStyle=`rgba(${K.str},.6)`;ctx.lineWidth=.7;seg(b,s);ctx.stroke();ctx.restore()})}
+  // the head with its two yellow eyes (only on the side that looks at us)
+  L.add(D(hc)+1,()=>{const q=P(hc);ink(2);ball(q,HR);ctx.fillStyle=softBall(q,HR,K.head,.2,.3);ctx.fill();ctx.stroke();rim(q,HR,q,HR,.3);
+    for(const sd of[-1,1]){const n=nrm([1,sd*.42,.12]),f=F(n);if(f<=.05)continue;const e=P(add(hc,mul(n,HR*.92)));ctx.save();ctx.globalAlpha*=cl(f*3,0,1);
+      if(shut){ctx.strokeStyle=K.eye;ctx.lineWidth=1.2;seg([e[0]-1.4,e[1]],[e[0]+1.4,e[1]]);ctx.stroke()}
+      else{ctx.fillStyle=K.eye;ball(e,1.35*(1+.25*glowK));ctx.fill();if(!LOWFX)shine(K.eyeRgb,e[0],e[1],4+3*glowK,.35+.3*glowK)}ctx.restore()}});
+  run(L);ctx.restore()}
+reg('puppet',{n:"Burattino d'ombra",g:'boss3',sc:1,an:['idle','walk','attack','hit'],dur:{idle:1.8,walk:.5,attack:1,hit:.6},
+  lab:{idle:'Fermo',walk:'Saltella',attack:'Attacca',hit:'Colpito'}},puppet);
+
 })();
