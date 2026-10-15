@@ -109,4 +109,12 @@ Prove: `node tests/boss3voci.js [arena]` (voci pronte, grido, presa in giro col 
 chiamata, rabbia, sconfitta e pulcino, risata quando cadi, reazioni dell'arena; foto `tests/b3v_<boss>_presa.png` e `_segni.png`).
 Pagina per provarli dal telefono senza arrivare a 5.200 coppe: `python3 anteprime/mk_prova_boss.py` → `anteprime/prova_boss.html` (una
 copia del gioco col pannello «Prova dei boss nuovi»: si entra subito nella stanza di uno dei quattro, eroe forte o invincibile; ha il suo
-salvataggio, il gioco sul telefono non cambia).
+salvataggio, il gioco sul telefono non cambia), pubblicata su https://claude.ai/artifact/Xit8vqC61QjKu4fmQsuTrp («Prova dei boss nuovi»: si
+aggiorna ripubblicando `anteprime/prova_boss.html`). La pagina dei boss su carta (https://claude.ai/artifact/KrYogWLkw61CANfz64uzmA,
+`python3 anteprime/mk_nemici3d.py --nuovi`) ha anche la mossa «Presa in giro».
+
+Collaudo (15 ottobre), tutto passato senza errori: `boss3voci.js` (le voci pronte in 50–90 ms, ogni boss dice tutti e quattro i versi
+delle mosse, 23–35 versi al minuto contando grido, prese in giro e lamenti), `boss3gioco.js` (disegno della stanza 3,1–4,6 ms, come prima),
+una partita automatica per ognuna delle arene 9–12 e per capitolo, `zombie.js`, `avvio.js`, `meta2.js`, `menu2.js`, `menu3.js`,
+`salvataggio.js`, `bossdie.js`, `audio.js` (voci da 0,03 a 0,08 di volume medio, il ruggito dei boss di prima 0,077), `mig.js`.
+Ripubblicati il gioco su claude.ai e l'app.

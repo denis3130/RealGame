@@ -23174,11 +23174,11 @@ const B3VO=(()=>{const SR=22050,TAU=Math.PI*2;
 // ---- the voices get ready during the first rooms of an arena with one of the four (the boss room asks again: a quick start, the tests)
 {const _br=buildRoom;buildRoom=function(){const r=_br.apply(this,arguments);try{const A=G&&G.mode!=='inf'&&!G.daily&&ARENAS[G.arena||0];if(A&&A.bt)B3VO.prep(A.bt)}catch(err){}return r}}
 // ---- one clip said by boss e (or its corpse): louder near, softer far (never under half), with something of its own around a few of them.
-// It never talks over itself: between a move's voice or a moan and the clip before, at least 2.4 s (the cry, the rage, the mocking, the
-// defeat and the laugh when you fall always come; force for the others that must)
+// It never talks over itself: a moan comes at least 2.4 s after the clip before, a move's voice 1.2 s (it tells you the blow is coming);
+// the cry, the rage, the mocking, the defeat and the laugh when you fall always come (force for the others that must)
 const B3VX={cry:1,angry:1,win:1,die:1,laugh:.9,laugh2:.85,hurt:.8,chick:.7},B3PRI={cry:1,angry:1,die:1,win:1,chick:1,laugh:1,laugh2:1};
 function b3say(e,k,force){if(!e||!AU.ctx||!AU.on.sfx||AU.ctx.state!=='running'||!B3VO.has(e.type,k))return 0;const S=e.b3s||(e.b3s={}),now=G&&G.t||0;
-  if(!B3PRI[k]&&!force&&now-(S.talkT==null?-99:S.talkT)<2.4)return 0;let d=0;
+  if(!B3PRI[k]&&!force&&now-(S.talkT==null?-99:S.talkT)<(k.startsWith('c_')?1.2:2.4))return 0;let d=0;
   try{const near=Math.max(.55,enemyAt(e)),t=AU.ctx.currentTime+.01;d=B3VO.play(e.type,k,t,(B3VX[k]||.75)*near,VR(1,.03),.18);if(d){S.talkT=now;b3sayMore(e,k,t)}}catch(err){}AU.pan=0;return d}
 function b3sayMore(e,k,t){const T=e.type;
   if(T==='puppeteer'){if(k==='cry'||k==='win')[72,76,79,84].forEach((m,i)=>vBox(null,t+.1+i*.09,m,.6,.035));else if(k==='laugh'||k==='laugh2')[79,76].forEach((m,i)=>vBox(null,t+.05+i*.12,m,.4,.025))}
