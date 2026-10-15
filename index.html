@@ -22415,7 +22415,7 @@ function wardStyle(k,o){const s0=heroStyle0(SAVE.hero),S=k&&SKINS[k];return{...s
   const sv=noShadow;noShadow=false;try{drawRig(0,0,Math.PI/2-.42,0,false,wardStyle(k,{held:null,quiver:false}),{})}finally{noShadow=sv}})}}
 // ------------------------------------------------------------------ the Guardaroba
 const WD={sel:null,raf:0};
-function fillVestiti(){lastSheetHTML='';const cur=SAVE.skin&&wardOwn(SAVE.skin)?SAVE.skin:'';if(WD.sel==null||(WD.sel&&!SKINS[WD.sel]))WD.sel=cur;
+function fillVestiti(){lastSheetHTML='';const cur=SAVE.skin&&wardOwn(SAVE.skin)&&SKINS[SAVE.skin]?SAVE.skin:'';if(WD.sel==null||(WD.sel&&!SKINS[WD.sel]))WD.sel=cur;
   const k=WD.sel,S=k&&SKINS[k],cr=!!(S&&S.crea),own=wardOwn(k),lv=k?(SAVE.skinLv[k]||(own?1:0)):0,cards=k?SAVE.skinCards[k]||0:0,need=k?(own?skinNeed(lv):SKIN_UNLOCK[skinRar(k)]):0,max=own&&lv>=SKIN_MAX,r=k?RAR[skinRar(k)]:null;
   const bar=k&&!cr?`<div class="pbar${!max&&cards>=need?' full':''}"><i style="width:${max?100:Math.min(100,cards/Math.max(1,need)*100)}%"></i><span>${max?'MAX':`${cards}/${need}`}</span></div>`:'';
   const btns=!k?(cur?`<button class="btn go" data-wdwear="">Torna all'originale</button>`:`<em class="inuse">Indossato</em>`)
@@ -22443,7 +22443,7 @@ $('sheet').addEventListener('click',e=>{if(SHEET!=='vestiti')return;const b=e.ta
   if(b.dataset.wdwear!=null){const k=b.dataset.wdwear;if(k&&!wardOwn(k))return;SAVE.skin=k||null;save();sfx('upgrade');vib(20);renderTop.k=null;renderTop();fillVestiti();wardRefresh();toast(k?`Indossi ${SKINS[k].n}`:'Torni al vestito di sempre');return}
   if(b.dataset.wdup!=null){const k=b.dataset.wdup;if(skinUp(k)){vib(25);toast(`${SKINS[k].n} sale al livello ${SAVE.skinLv[k]}!`);fillVestiti();wardRefresh()}}});
 // ------------------------------------------------------------------ where you open it: the Armeria (both modes) and the Profile
-function wardRow(){const k=SAVE.skin&&wardOwn(SAVE.skin)?SAVE.skin:'',up=wardList().some(id=>{const o=wardOwn(id),l=SAVE.skinLv[id]||1,c=SAVE.skinCards[id]||0;return o&&l<SKIN_MAX&&c>=skinNeed(l)});
+function wardRow(){const k=SAVE.skin&&wardOwn(SAVE.skin)&&SKINS[SAVE.skin]?SAVE.skin:'',up=wardList().some(id=>{const o=wardOwn(id),l=SAVE.skinLv[id]||1,c=SAVE.skinCards[id]||0;return o&&l<SKIN_MAX&&c>=skinNeed(l)});
   return `<button class="wdRow" data-wdopen="1"><img src="${imgSrc(k?skinIcon(k):wardOrigIcon())}" alt=""><span><small>Vestito</small><b>${k?SKINS[k].n:'Originale'}</b></span><em>Guardaroba ›</em>${up?'<i class="wdDot"></i>':''}</button>`}
 function wardRefresh(){const a=$('wdArm');if(a)a.innerHTML=wardRow();const s=$('skins');if(s)s.innerHTML=wardRow()}
 {const tg=$('tabGear'),ph=tg&&tg.querySelector('.pageHead');if(ph){const d=document.createElement('div');d.id='wdArm';ph.after(d);d.innerHTML=wardRow()}}
@@ -24157,6 +24157,8 @@ const SCE_MANTI=[{id:'',n:'Originale',d:'I colori di sempre.'},
   {id:'brace_nera',n:'Rubino',sk:'Manto di rubino',d:'Nero come la notte, con il rosso di un rubino.',body:'#24222a',hood:'#b8283a',belt:'#4a4a54'}];
 const SCE_MANTO=Object.fromEntries(SCE_MANTI.map(m=>[m.id,m]));
 for(const m of SCE_MANTI)if(m.id&&!SKINS[m.id]){SKINS[m.id]={n:m.sk,body:m.body,hood:m.hood,belt:m.belt,crea:1,group:'crea'};if(!WARD_D[m.id])WARD_D[m.id]=m.d}
+// (the Guardaroba's row was drawn at load by 72, before these were there: again, with the cloak you wear)
+try{wardRefresh()}catch(e){}
 // they belong to every save, also to one put back as it was (the intro restores the save from a copy taken before this file runs) or
 // loaded from a code: given again when the save has lost them
 function sceOwnSkins(){SAVE.skins=SAVE.skins||{};for(const m of SCE_MANTI)if(m.id)SAVE.skins[m.id]=1}

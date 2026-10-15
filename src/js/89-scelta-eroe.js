@@ -49,6 +49,8 @@ const SCE_MANTI=[{id:'',n:'Originale',d:'I colori di sempre.'},
   {id:'brace_nera',n:'Rubino',sk:'Manto di rubino',d:'Nero come la notte, con il rosso di un rubino.',body:'#24222a',hood:'#b8283a',belt:'#4a4a54'}];
 const SCE_MANTO=Object.fromEntries(SCE_MANTI.map(m=>[m.id,m]));
 for(const m of SCE_MANTI)if(m.id&&!SKINS[m.id]){SKINS[m.id]={n:m.sk,body:m.body,hood:m.hood,belt:m.belt,crea:1,group:'crea'};if(!WARD_D[m.id])WARD_D[m.id]=m.d}
+// (the Guardaroba's row was drawn at load by 72, before these were there: again, with the cloak you wear)
+try{wardRefresh()}catch(e){}
 // they belong to every save, also to one put back as it was (the intro restores the save from a copy taken before this file runs) or
 // loaded from a code: given again when the save has lost them
 function sceOwnSkins(){SAVE.skins=SAVE.skins||{};for(const m of SCE_MANTI)if(m.id)SAVE.skins[m.id]=1}

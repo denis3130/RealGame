@@ -171,7 +171,7 @@ const OLD={gold:900,gems:40,introSeen:1,handSeen:1,runs:4,trophies:120,items:{ar
     await p.tap('.sceGo',{force:true});await p.waitForTimeout(1800);
     ok(await E("SCE.el&&SCE.el.classList.contains('band')")&&/Lupo Grigio/.test(await p.textContent('.sceBand')),'«Inizia»: «Il viaggio ha inizio», col nome');await shot('6_fine');
     await p.waitForTimeout(3600);
-    const m=await E("({sce:SCE.on,el:!!document.getElementById('sceScr'),menu:!$('menu').hidden,music:AU.cur&&AU.cur.name,hero:SAVE.hero,heroes:SAVE.heroes,starter:SAVE.starter,dono:SAVE.dono,slots:SAVE.slots,pname:SAVE.pname,skin:SAVE.skin,hood:heroStyle().hood,look:SAVE.look,lk:heroStyle().look,dr:heroStyle('druida'),pA:HERO_BY.arciere.price,pC:HERO_BY.cacciatrice.price,pB:HERO_BY.balestriere.price,pN:['bardo','alchimista','ninja'].map(i=>HERO_BY[i].price).join(),ls:JSON.parse(localStorage.getItem(SAVE_KEY))})");
+    const m=await E("({sce:SCE.on,el:!!document.getElementById('sceScr'),menu:!$('menu').hidden,music:AU.cur&&AU.cur.name,hero:SAVE.hero,heroes:SAVE.heroes,starter:SAVE.starter,dono:SAVE.dono,slots:SAVE.slots,pname:SAVE.pname,skin:SAVE.skin,hood:heroStyle().hood,look:SAVE.look,lk:heroStyle().look,dr:heroStyle('druida'),pA:HERO_BY.arciere.price,pC:HERO_BY.cacciatrice.price,pB:HERO_BY.balestriere.price,pN:['bardo','alchimista','ninja'].map(i=>HERO_BY[i].price).join(),ls:flatBlocks(JSON.parse(localStorage.getItem(SAVE_KEY)))})");
     ok(!m.sce&&!m.el&&m.menu&&m.music==='menu','poi il menu, con la sua musica');
     ok(m.hero==='cacciatrice'&&m.starter==='cacciatrice'&&JSON.stringify(m.heroes)==='{"cacciatrice":1}','la Cacciatrice in campo, ed è l\'unica eroina che hai');
     ok(m.dono==='cassa'&&m.slots.some(s=>s&&s.type==='argento'&&s.state==='ready')&&m.ls.starter==='cacciatrice'&&m.ls.dono==='cassa','la cassa d\'argento è tra le tue casse, pronta (e tutto è salvato)');
@@ -181,8 +181,11 @@ const OLD={gold:900,gems:40,introSeen:1,handSeen:1,runs:4,trophies:120,items:{ar
     ok(m.pA===3000&&m.pC===0&&m.pB===7000&&m.pN==='3000,3000,3000','prezzi: Arciere, Bardo, Alchimista e Ninja 3.000, Cacciatrice gratis, Balestriere 7.000');
     ok(/Dono: Cassa d'argento/.test(await E("$('toast').textContent")),'un avviso ricorda il dono');await shot('7_menu');
     await E("renderProfile()");await p.waitForTimeout(300);
-    const pr=await E("({n:$('pName').textContent,chip:(document.querySelector('#skins [data-skin=brace]')||{}).className||'',lock:(document.querySelector('#skins [data-skin=corvo]')||{}).disabled})");
-    ok(pr.n==='Lupo Grigio'&&/\bon\b/.test(pr.chip)&&pr.lock===false,'nel Profilo: il nome, «Manto di brace» indossato, gli altri mantelli della creazione disponibili');
+    // the cloaks of the making of the hero are in the Guardaroba (72), in their own group, with no cards and no levels
+    const pr=await E("({n:$('pName').textContent,row:$('skins').textContent})");await E("openSheet('vestiti')");await p.waitForTimeout(300);
+    const wd=await E("({on:(document.querySelector('#sheet [data-wd=brace]')||{}).className||'',lock:(document.querySelector('#sheet [data-wd=corvo]')||{}).className||'',grp:[...document.querySelectorAll('#sheet h3')].map(h=>h.textContent),up:!!document.querySelector('#sheet [data-wdup]')})");
+    await E("closeSheet()");
+    ok(pr.n==='Lupo Grigio'&&/Manto di brace/.test(pr.row)&&/\bon\b/.test(wd.on)&&wd.lock&&!/locked/.test(wd.lock)&&wd.grp.includes('Della creazione')&&!wd.up,'nel Profilo il nome e «Manto di brace»; nel Guardaroba i mantelli della creazione, il tuo indossato, gli altri tuoi, senza livelli');
     await E("setTab('tabHero')");await p.waitForTimeout(600);ok(/In campo/.test(await p.textContent('#hAct')),'scheda Eroi: la Cacciatrice «In campo»');
     await E("heroView='arciere';renderHero()");await p.waitForTimeout(400);ok(/Sblocca\s*3\.000/.test(await p.textContent('#hAct')),'scheda Eroi: l\'Arciere «Sblocca 3.000»');
     // reopen: no choice, no intro, and the Arciere is not given back by the save's repair; the mantle is still on
@@ -207,7 +210,7 @@ const OLD={gold:900,gems:40,introSeen:1,handSeen:1,runs:4,trophies:120,items:{ar
     ok(await E("!SCE.on&&SAVE.gems===10&&SAVE.look.segno==='cicatrice'&&!$('menu').hidden"),'«Annulla»: tutto come prima, di nuovo il Profilo');
     await E("SAVE.gems=50");await p.click('#barberGo');await p.waitForTimeout(700);await p.tap('.sceTab[data-cat=segni]',{force:true});await p.waitForTimeout(200);await p.tap('.sceTile[data-id=runa]',{force:true});await p.waitForTimeout(200);
     await p.tap('.sceGo',{force:true});await p.waitForTimeout(2600);
-    const bb=await E("({on:SCE.on,gems:SAVE.gems,seg:SAVE.look.segno,lk:heroStyle().look.mark,ls:JSON.parse(localStorage.getItem(SAVE_KEY)).look,menu:!$('menu').hidden})");
+    const bb=await E("({on:SCE.on,gems:SAVE.gems,seg:SAVE.look.segno,lk:heroStyle().look.mark,ls:flatBlocks(JSON.parse(localStorage.getItem(SAVE_KEY))).look,menu:!$('menu').hidden})");
     ok(!bb.on&&bb.menu&&bb.gems===30&&bb.seg==='runa'&&bb.lk==='runa'&&bb.ls&&bb.ls.segno==='runa','«Conferma»: 20 cristalli, la runa sul viso (e nel salvataggio)');
     await p.click('#barberGo');await p.waitForTimeout(700);await p.tap('.sceGo',{force:true});await p.waitForTimeout(1300);
     ok(await E("!SCE.on&&SAVE.gems===30"),'senza cambiare niente, «Esci» non costa niente');
