@@ -97,8 +97,8 @@ grido della sconfitta e la risata quando cadi.
 - Piovra: un «bluooarg» gorgogliante, la pernacchia, «blub!», «hmpf», «ptù!» quando sputa l'inchiostro; bolle.
 - Cervo: bramito profondo, sbuffi col naso e zoccoli, un richiamo morbido quando chiama l'aurora, campanelle di ghiaccio.
 - Volumi (`node tests/audio.js`): forti come il ruggito dei boss di prima (picco 0,26–0,47); la Fenice abbassata a meno della metà
-  (il fischio cade dove l'orecchio è più sensibile). Tra due versi dello stesso boss almeno 2,4 s (grido, rabbia, prese in giro e
-  sconfitta passano sempre): in battaglia circa un verso ogni due secondi e mezzo.
+  (il fischio cade dove l'orecchio è più sensibile). Non si parlano sopra: il lamento arriva almeno 2,4 s dopo il verso di prima, il
+  verso di una mossa almeno 1,2 s (ti dice che il colpo sta arrivando); grido, rabbia, prese in giro e sconfitta passano sempre.
 
 **La personalità**: quando ti colpisce ti prende in giro (al massimo ogni 9 s; se è in mezzo a una mossa, appena la finisce) con la
 mossa nuova dei modelli «Presa in giro» (`taunt`: un pezzo della sua entrata già approvata, `sprite/nemici3d/boss3.js`) e la risata; se

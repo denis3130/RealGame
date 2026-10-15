@@ -29,10 +29,12 @@ const only=+process.argv[2]||0;
     let shot=false;for(let i=0;i<60;i++){await p.waitForTimeout(400);if(!shot&&await E(`window.__tp===1`)){await p.waitForTimeout(250);await p.screenshot({path:path.join(__dirname,`b3v_${bt}_presa.png`)});shot=true;await E(`window.__tp=2;0`)}
       if(i%12===5)await E(`P.inv=0;P.dashT=0;hurtP(5);0`)}
     v=await said(bt);const tm=await E(`window.__tpm||''`);ok(`  presa in giro col gesto dell'entrata`,v.includes('laugh')&&shot&&/taunt/.test(tm),`mossa del modello ${tm}`);
-    // a move's voice can stay silent when the boss has just spoken (2.4 s between two clips): at least three of the four; and how much it talks
+    // a move's voice can stay silent when the boss has just spoken (1.2 s after the clip before): at least three of the four; and how much it talks
     const cs=cues[bt].filter(c=>v.includes(c));ok(`  versi delle mosse`,cs.length>=cues[bt].length-1,`${cs.join(', ')}${cs.length<cues[bt].length?' · muti questa volta: '+cues[bt].filter(c=>!v.includes(c)).join(', '):''} · ${(v.length/24*60).toFixed(0)} versi al minuto`);
     await p.screenshot({path:path.join(__dirname,`b3v_${bt}_segni.png`)});
     // hit hard: the cry of pain
+    // (when it can be hit: not in the air, not hidden, not in the middle of its mocking gesture)
+    for(let w=0;w<30;w++){if(await E(`(()=>{const e=G.enemies.find(q=>q.type==='${bt}');return !e||e.st!=='taunt'&&!e.air&&!e.hidden&&!(e.shell>0)})()`))break;await p.waitForTimeout(100)}
     await E(`__vl.length=0;{const e=G.enemies.find(q=>q.type==='${bt}');if(e&&e.b3s){e.b3s.hurtT=-99;e.b3s.talkT=-99}if(e)hurtE(e,e.max*.03,false)}0`);await p.waitForTimeout(500);v=await said(bt);ok(`  lamento quando lo colpisci forte`,v.includes('hurt'),v.join(' '));
     // the hero keeps away and does not hit it: it calls him out
     await E(`__vl.length=0;clearInterval(__iv);window.__iv=setInterval(()=>{P.hp=P.maxhp;const e=G.enemies.find(q=>q.type==='${bt}');if(e&&e.b3s){e.b3s.lastHit=G.t-9;e.b3s.tauntT=-99;e.b3s.callT=-99}if(!$('skScr').hidden){$('skScr').hidden=true;modal=false;paused=false}},200);0`);
