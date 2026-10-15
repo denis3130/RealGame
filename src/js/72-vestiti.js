@@ -4,7 +4,8 @@
 // livello, in tutte e due le modalità: skinBonus) e si scelgono dal Guardaroba, dove l'eroe 3D gira con il vestito addosso: si possono
 // provare anche quelli ancora chiusi. Si vedono ovunque ci sia l'eroe: battaglia, mappa zombie, menu, falò, passaggio tra le modalità.
 // =====================================================================
-const WARD_G={scuro:'Scuro e strappato',swag:'Swag',pass:'Dal Pass'},WARD_O={scuro:0,swag:1,pass:2};
+// (crea: the cloaks of the making of the hero, src/js/89-scelta-eroe.js: every save owns them, no cards and no levels)
+const WARD_G={scuro:'Scuro e strappato',crea:'Della creazione',swag:'Swag',pass:'Dal Pass'},WARD_O={scuro:0,crea:1,swag:2,pass:3};
 const WARD_D={stracciato:'Pelle nera consumata sopra la felpa, la cerniera storta, strappi tenuti dalle spille e borchie sulle spalle.',
   felpa:'Felpa antracite col marsupio, i lacci coi puntali e gli strappi che mostrano la maglia rossa.',
   sopravvissuto:'Giacca militare con le toppe, cartucciera a tracolla, fazzoletto al collo, occhialoni, guanti e scarponi.',
@@ -29,18 +30,18 @@ function wardStyle(k,o){const s0=heroStyle0(SAVE.hero),S=k&&SKINS[k];return{...s
 // ------------------------------------------------------------------ the Guardaroba
 const WD={sel:null,raf:0};
 function fillVestiti(){lastSheetHTML='';const cur=SAVE.skin&&wardOwn(SAVE.skin)?SAVE.skin:'';if(WD.sel==null||(WD.sel&&!SKINS[WD.sel]))WD.sel=cur;
-  const k=WD.sel,S=k&&SKINS[k],own=wardOwn(k),lv=k?(SAVE.skinLv[k]||(own?1:0)):0,cards=k?SAVE.skinCards[k]||0:0,need=k?(own?skinNeed(lv):SKIN_UNLOCK[skinRar(k)]):0,max=own&&lv>=SKIN_MAX,r=k?RAR[skinRar(k)]:null;
-  const bar=k?`<div class="pbar${!max&&cards>=need?' full':''}"><i style="width:${max?100:Math.min(100,cards/Math.max(1,need)*100)}%"></i><span>${max?'MAX':`${cards}/${need}`}</span></div>`:'';
+  const k=WD.sel,S=k&&SKINS[k],cr=!!(S&&S.crea),own=wardOwn(k),lv=k?(SAVE.skinLv[k]||(own?1:0)):0,cards=k?SAVE.skinCards[k]||0:0,need=k?(own?skinNeed(lv):SKIN_UNLOCK[skinRar(k)]):0,max=own&&lv>=SKIN_MAX,r=k?RAR[skinRar(k)]:null;
+  const bar=k&&!cr?`<div class="pbar${!max&&cards>=need?' full':''}"><i style="width:${max?100:Math.min(100,cards/Math.max(1,need)*100)}%"></i><span>${max?'MAX':`${cards}/${need}`}</span></div>`:'';
   const btns=!k?(cur?`<button class="btn go" data-wdwear="">Torna all'originale</button>`:`<em class="inuse">Indossato</em>`)
-    :own?(cur===k?`<em class="inuse">Indossato</em>`:`<button class="btn go" data-wdwear="${k}">Indossa</button>`)+(max?'':`<button class="btn" data-wdup="${k}" ${cards>=need?'':'disabled'}>Migliora</button>`)
+    :own?(cur===k?`<em class="inuse">Indossato</em>`:`<button class="btn go" data-wdwear="${k}">Indossa</button>`)+(max||cr?'':`<button class="btn" data-wdup="${k}" ${cards>=need?'':'disabled'}>Migliora</button>`)
     :`<span class="wdLock">${LOCK} ${S.group==='pass'?'Si ottiene dal Pass':'Carte dalle bustine Rare, Epiche, Leggendarie e Immortali'}</span>`;
-  const card=id=>{const S2=id&&SKINS[id],o=wardOwn(id),l=id?(SAVE.skinLv[id]||1):0,c=id?SAVE.skinCards[id]||0:0,nd=id?(o?skinNeed(l):SKIN_UNLOCK[skinRar(id)]):0,ready=id&&c>=nd&&!(o&&l>=SKIN_MAX);
+  const card=id=>{const S2=id&&SKINS[id],o=wardOwn(id),l=id?(SAVE.skinLv[id]||1):0,c=id?SAVE.skinCards[id]||0:0,nd=id?(o?skinNeed(l):SKIN_UNLOCK[skinRar(id)]):0,ready=id&&!S2.crea&&c>=nd&&!(o&&l>=SKIN_MAX);
     return `<button class="wdc ${o?'':'locked'} ${WD.sel===id?'sel':''} ${cur===id?'on':''}" data-wd="${id}" style="--rc:${id?RAR[skinRar(id)].c:'#cfc6b0'}">
-      <img src="${imgSrc(id?skinIcon(id):wardOrigIcon())}" alt=""><b>${id?S2.n:'Originale'}</b><small>${!id?'Il vestito di sempre':o?`Liv. ${l}`:`${LOCK} ${c}/${nd}`}</small>${cur===id?'<i class="wdOn">✓</i>':ready?'<i class="wdDot"></i>':''}</button>`};
+      <img src="${imgSrc(id?skinIcon(id):wardOrigIcon())}" alt=""><b>${id?S2.n:'Originale'}</b><small>${!id?'Il vestito di sempre':S2.crea?'Tuo':o?`Liv. ${l}`:`${LOCK} ${c}/${nd}`}</small>${cur===id?'<i class="wdOn">✓</i>':ready?'<i class="wdDot"></i>':''}</button>`};
   $('sheet').innerHTML=`<h2>Guardaroba</h2><p class="lead">I vestiti valgono in tutte e due le modalità: ogni livello dà <b>+2% di vita</b>. Tocca un vestito per provarlo addosso.</p>
-    <div class="wdStage" style="--rc:${r?r.c:'#cfc6b0'}"><canvas id="wdCv"></canvas><div class="wdInfo"><b>${k?S.n:'Originale'}</b>${k?`<div class="wdTag"><u style="color:${r.c}">${r.n}</u> · <span>${WARD_G[S.group]||''}</span></div>`:''}
-      <p>${k?WARD_D[k]||'':'Il cappuccio verde acqua e la giubba di sempre.'}</p>${k&&own?`<small>Livello ${lv} · +${lv*2}% di vita</small>`:''}${bar}<div class="wdBtns">${btns}</div></div></div>
-    ${['scuro','swag','pass'].map(g=>{const ids=wardList().filter(id=>SKINS[id].group===g);return ids.length?`<h3 class="h3">${WARD_G[g]}</h3><div class="wdGrid">${(g==='scuro'?[''].concat(ids):ids).map(card).join('')}</div>`:''}).join('')}
+    <div class="wdStage" style="--rc:${cr?S.hood:r?r.c:'#cfc6b0'}"><canvas id="wdCv"></canvas><div class="wdInfo"><b>${k?S.n:'Originale'}</b>${k?`<div class="wdTag">${cr?'':`<u style="color:${r.c}">${r.n}</u> · `}<span>${WARD_G[S.group]||''}</span></div>`:''}
+      <p>${k?WARD_D[k]||'':'Il cappuccio verde acqua e la giubba di sempre.'}</p>${k&&own?`<small>${cr?'Solo colori: niente livelli':`Livello ${lv} · +${lv*2}% di vita`}</small>`:''}${bar}<div class="wdBtns">${btns}</div></div></div>
+    ${['scuro','crea','swag','pass'].map(g=>{const ids=wardList().filter(id=>SKINS[id].group===g);return ids.length?`<h3 class="h3">${WARD_G[g]}</h3><div class="wdGrid">${(g==='scuro'?[''].concat(ids):ids).map(card).join('')}</div>`:''}).join('')}
     <button class="btn alt close">Chiudi</button>`;
   wardStart()}
 function wardOrigIcon(){return iconCv('s3:orig',x=>{x.translate(48,72);x.scale(2.1,2.1);const sv=noShadow;noShadow=false;try{drawRig(0,0,Math.PI/2-.42,0,false,{...heroStyle0(SAVE.hero),held:null,quiver:false},{})}finally{noShadow=sv}})}

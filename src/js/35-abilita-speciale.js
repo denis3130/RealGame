@@ -5,7 +5,10 @@ const ULT={
   arciere:{n:'Pioggia di frecce',d:'Una pioggia di frecce cade su tutti i nemici per un secondo.',col:'#2fb3a6',rgb:'120,230,210'},
   cacciatrice:{n:'Danza delle lame',d:'Gira su sé stessa, intoccabile, e scaglia una spirale di frecce.',col:'#ff8ab8',rgb:'255,150,200'},
   balestriere:{n:"Dardo d'assedio",d:'Un dardo enorme che trapassa tutto ed esplode contro il muro.',col:'#dfe4ea',rgb:'230,235,245'},
-  druida:{n:'Abbraccio delle radici',d:'Le radici bloccano e feriscono ogni nemico; tu recuperi salute.',col:'#9fff7a',rgb:'150,255,120'}};
+  druida:{n:'Abbraccio delle radici',d:'Le radici bloccano e feriscono ogni nemico; tu recuperi salute.',col:'#9fff7a',rgb:'150,255,120'},
+  bardo:{n:'Ballata',d:'Una canzone che rallenta tutti i nemici, li stordisce un attimo e ti cura.',col:'#ffd84a',rgb:'255,216,74'},
+  alchimista:{n:'Grande calderone',d:'Un calderone enorme scoppia sui nemici e lascia una pozza di veleno.',col:'#7bf06a',rgb:'123,240,106'},
+  ninja:{n:'Cento ombre',d:'Tre ombre di te compaiono e tirano stelline insieme a te.',col:'#b8a6ff',rgb:'184,166,255'}};
 const ultGain=v=>{if(!P||G.state==='dead')return;const was=P.ult>=100;P.ult=Math.min(100,(P.ult||0)+v);if(!was&&P.ult>=100){sfx('shimmer',2);$('ultBtn').classList.add('full')}};
 function useUlt(){if(!started||paused||modal||!P||(P.ult||0)<100||G.state==='dead'||G.state==='trans')return;
   const id=P.hero||'arciere',U=ULT[id];P.ult=0;$('ultBtn').classList.remove('full');
@@ -19,7 +22,9 @@ function useUlt(){if(!started||paused||modal||!P||(P.ult||0)<100||G.state==='dea
     G.arrows.push({wb:0,x:P.x+Math.cos(a)*10,y:P.y-8+Math.sin(a)*10,a,vx:Math.cos(a)*640,vy:Math.sin(a)*640,m:5,pierce:999,ric:0,hit:new Set(),life:2,big:true,siege:true});
     sfx('bow','balestra');sfx('boom');moveCircle(P,-Math.cos(a)*14,-Math.sin(a)*14)}
   else if(id==='druida'){sfx('summon');const v=Math.round(P.maxhp*.2);P.hp=Math.min(P.maxhp,P.hp+v);text(P.x,P.y-44,'+'+v,'#9fff7a',18);
-    for(const e of G.enemies){if(!canHit(e))continue;e.root=isBoss(e.type)?1.4:2.6;e.rootT=0;vfxBlast(e.x,e.y,'150,255,120',30,{sparks:0,debris:'leaf',n:8,dust:4,ring2:false})}}}
+    for(const e of G.enemies){if(!canHit(e))continue;e.root=isBoss(e.type)?1.4:2.6;e.rootT=0;vfxBlast(e.x,e.y,'150,255,120',30,{sparks:0,debris:'leaf',n:8,dust:4,ring2:false})}}
+  // the Bardo, the Alchimista and the Ninja: their Supers are in 91
+  else if(NH_ULT[id])NH_ULT[id]()}
 function updUlt(dt){
   if(P.spin>0){P.spin-=dt;P.spinA+=dt*14;P.face=P.spinA;P.spinF=(P.spinF||0)-dt;if(P.spinF<=0){P.spinF=.035;arrow(P.x,P.y-8,P.spinA,.9);if(Math.random()<.4)sfx('bow')}}
   for(let i=G.ultRain.length-1;i>=0;i--){const r=G.ultRain[i];r.t+=dt;if(r.t<r.dur)continue;G.ultRain.splice(i,1);

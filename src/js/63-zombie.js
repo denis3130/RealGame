@@ -67,9 +67,11 @@ function zEnter(){if(ZG.on){ZG.wait=false;return}
   LOAD.show('zombie','Il camposanto si risveglia…');const passo=k=>LOAD.prog(k);
   (ZG.ctl?ZM.ricuoci({passo}).then(()=>ZG.ctl):ZM.bootAsync(ZM.AREE.mappa,{game:true,fine:zFine,esci:zExit,passo})).then(ctl=>{ZG.ctl=ctl;zStart();
     requestAnimationFrame(()=>requestAnimationFrame(()=>LOAD.hide()))},e=>{console.error(e);LOAD.hide(true);ZG.wait=false;toast('Il camposanto non si apre: riprova')})}
-// the hero on the map is the Arciere in 3D with the equipment of the menu (armour, ring, amulet, skin) and a zombie gun in hand
+// the hero on the map is your hero in 3D (the one in the field: Denis, 14 October, «l'eroe scelto» also in the zombie mode), with the
+// equipment of the menu (armour, ring, amulet, skin) and a zombie gun in hand; the Druid keeps his green eyes
+function zHeroStyle(){const id=HERO_BY[SAVE.hero]&&SAVE.heroes&&SAVE.heroes[SAVE.hero]?SAVE.hero:starterId(),s=heroStyle(id);if(s.hid==='druida'&&!s.eyes&&s.eyeCol)s.eyes=s.eyeCol;return s}
 function zStart(){ZG.wait=false;ZG.on=true;ZG.last=null;if(SHEET)closeSheet();$('menu').hidden=true;$('wrap').classList.remove('inmenu');zMusicOff();
-  try{ZM.stile(heroStyle('arciere'))}catch(e){}ZG.ctl.nuova();ZG.ctl.start()}
+  try{ZM.stile(zHeroStyle())}catch(e){}ZG.ctl.nuova();ZG.ctl.start()}
 // the end of a match (from partita.js, once): the gold, the record, the counts, the pass; returns {rec} for «Nuovo record!»
 function zFine(oro,R,kills){const rec=R>(SAVE.zRec||0),st=SAVE.stats;SAVE.gold=(SAVE.gold||0)+oro;if(st){st.gold+=oro;st.runs++}SAVE.runs=(SAVE.runs||0)+1;
   SAVE.zRec=Math.max(SAVE.zRec||0,R);SAVE.zN=(SAVE.zN||0)+1;SAVE.zKills=(SAVE.zKills||0)+kills;mprog('gold',null,oro);

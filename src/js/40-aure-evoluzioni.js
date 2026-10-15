@@ -103,7 +103,7 @@ function fillSettings(){const S=SAVE.set;lastSheetHTML='';$('sheet').innerHTML=`
   <div class="srow"><span>Grafica</span><div class="seg"><button class="${S.q==='auto'?'on':''}" data-q="auto">Automatica</button><button class="${S.q==='alta'?'on':''}" data-q="alta">Alta</button><button class="${S.q==='bassa'?'on':''}" data-q="bassa">Bassa</button></div></div>
   <p class="lead">Con le stanze grandi la telecamera segue l'eroe; le stanze piccole stanno tutte nello schermo. Con la grafica bassa ci sono meno luci ed effetti: utile sui telefoni lenti. La vibrazione funziona sui telefoni Android che la supportano.</p>
   <div class="srow"><span>Salvataggio</span><div class="seg"><button data-code="out">Copia codice</button><button data-code="in">Carica codice</button></div></div><div id="codeBox"></div>
-  <button class="btn alt" data-intro="1">Rivedi la intro</button>
+  <button class="btn alt" data-intro="1">Rivedi il prologo</button>
   <button class="btn alt" data-guide="1">Apri la guida del gioco</button>
   <button class="btn alt close">Chiudi</button>`}
 $('sheet').addEventListener('click',e=>{const b=e.target.closest('button');if(!b)return;if(b.dataset.guide){openSheet('guide');return}

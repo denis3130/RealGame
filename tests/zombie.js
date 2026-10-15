@@ -29,7 +29,9 @@ let fails=0;const ok=(c,m)=>{console.log((c?'  ok  ':'  NO  ')+m);if(!c)fails++}
   // 3. Gioca: il camposanto (la prima volta si costruisce), il menu sparisce, la musica tace, l'eroe è l'Arciere 3D
   // (un'inclinazione dei personaggi diversa da quella della mappa: uscendo deve tornare proprio questa)
   await E("CR.cam.k=.61");const crCam0=await E("JSON.stringify(CR.cam)"),g0=await E("SAVE.gold");
-  await p.click('#playBtn');await p.waitForFunction(()=>window.__MZ&&__MZ.W.ground&&!document.getElementById('mz').hidden,null,{timeout:60000});await p.waitForTimeout(4200);await shot('3_mappa');
+  await p.click('#playBtn');await p.waitForFunction(()=>window.__MZ&&__MZ.W.ground&&!document.getElementById('mz').hidden,null,{timeout:60000});await p.waitForTimeout(4200);
+  // on a slow machine the game runs slower than the clock: wait for the first round (3 s of the game's own time) instead of a fixed time
+  await p.waitForFunction(()=>__MZ.W.director.R>=1,null,{timeout:20000}).catch(()=>{});await shot('3_mappa');
   const s3=await p.evaluate(()=>({menu:document.getElementById('menu').hidden,on:__E('ZG.on'),music:__E('AU.cur?AU.cur.name:null'),R:__MZ.W.director.R,st:__MZ.W.director.st,coins:__MZ.W.coins,muzzle:!!__MZ.W.muzzle,bar:getComputedStyle(document.getElementById('mzBar')).display,pz:!!document.getElementById('mzPz')}));
   ok(s3.menu&&s3.on&&s3.music===null,'Gioca porta sulla mappa: menu nascosto, musica del menu spenta');
   ok(s3.R===1&&s3.st==='round'&&s3.coins===500,`la partita parte: round ${s3.R}, ${s3.coins} monete`);
