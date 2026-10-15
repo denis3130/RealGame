@@ -34,6 +34,9 @@ if(G2ON){
   N3G.wp.golem=e=>{const d=B3D(e,'walk');return(((e.wt||0)%d)+d)%d/d};
 }
 // ---- helpers
+// the model's own drawings of the pieces of its attacks (design: Slab(x,y,z,rot,sc,o), Rock(x,y,z,r,spin,sc,o), Fang(x,y,h,k,sc,o),
+// Shard(x,y,z,a,sc,o); x, y the floor point, z the height); the game's simple drawings if the model has none
+const g2art=n=>N3['golem'+n]||N3['golem2'+n]||null;
 const g2pt=(e,bx,by,bz,face)=>{const f=face!=null?face:e.f3!=null?e.f3:(e.face||0),q=C3.V(f).P([bx,by,bz||0]);return{x:e.x+q[0],y:e.y+8+q[1]}};
 function g2walk(e){b3go(e,'walk',rand(1.1,1.6))}
 // how far from (x,y) along a before a wall or an obstacle (the temporary ones too, unless soft)
@@ -43,8 +46,8 @@ function g2reach(x,y,a,max,soft){const ca=Math.cos(a),sa=Math.sin(a);let s=0;for
 function g2spot(x,y,far){for(let i=0;i<24;i++){const a=rand(0,TAU),d=i?rand(10,90):0,tx=clamp(x+Math.cos(a)*d,L+30,R-30),ty=clamp(y+Math.sin(a)*d,TOP+40,BOT-40);
     if(Math.hypot(tx-P.x,ty-P.y)>=far&&!G.rocks.some(k=>Math.hypot(k.x-tx,k.y-ty)<k.r+26))return{x:tx,y:ty}}return null}
 // a temporary stone on the floor (the boulders of the Landslide, the fallen pauldrons): at most six, the oldest crumbles
-function g2stone(x,y,r,life,kind){const T=G.rocks.filter(k=>k.temp);if(T.length>=6){const o=T.sort((a,b)=>a.life-b.life)[0];o.life=0;dustRing(o.x,o.y,10)}
-  G.rocks.push({x,y,r,seed:Math.random()*10,temp:true,life,kind:kind||'boulder',g2:1});fields={}}
+function g2stone(x,y,r,life,mat,p2){const T=G.rocks.filter(k=>k.temp);if(T.length>=6){const o=T.sort((a,b)=>a.life-b.life)[0];o.life=0;dustRing(o.x,o.y,10)}
+  G.rocks.push({x,y,r,seed:Math.random()*10,temp:true,life,kind:'boulder',g2:1,g2k:mat||'floor',p2:!!p2,born:G.t||0});fields={}}
 function g2reset(){if(G)G.g2={warn:[],slabs:[],chunks:[],faults:[],fangs:[],lane:null,beam:null,arrows:[]}}
 {const _br=buildRoom;buildRoom=function(){g2reset();return _br.apply(this,arguments)}}
 function g2warn(o){(G.g2||(g2reset(),G.g2)).warn.push(o)}
@@ -122,7 +125,7 @@ if(G2ON)golemUpd=function(e,dt,a){const sp=e.p2?1.3:1;dt*=sp;// the second phase
   case 'rage':{e.moving=false;e.face=a;
     if(b3at(e,.22))fxPush({k:'flash',x:e.x,y:e.y-50,r:90,rgb:'255,240,200',t:.25,max:.25});
     if(b3at(e,.62)){for(const s of[-1,1]){let q=g2pt(e,-4,72*s);if(q.x<L+30||q.x>R-30||q.y<TOP+40||q.y>BOT-40||Math.hypot(q.x-P.x,q.y-P.y)<80)q=g2spot(q.x,q.y,80);
-        if(q){g2stone(q.x,q.y,16,12,'boulder');dustRing(q.x,q.y,14);vfxBlast(q.x,q.y,'200,190,170',40,{debris:'stone',n:10,dust:8,ring2:false})}}shake(5);sfx('boom',0,e.x)}
+        if(q){g2stone(q.x,q.y,16,12,'slate');dustRing(q.x,q.y,14);vfxBlast(q.x,q.y,'200,190,170',40,{debris:'stone',n:10,dust:8,ring2:false})}}shake(5);sfx('boom',0,e.x)}
     if(b3at(e,.72)){shake(8);sfx('roar');vib([60,40,120]);for(let i=0;i<3;i++)setTimeout(()=>{if(G&&G.fx)fxPush({k:'ring2',x:e.x,y:e.y-e.r,rgb:'255,180,120',r0:e.r,r1:e.r*5,t:.45,max:.45,w:6-i*1.5})},i*170)}
     if(e.stT<=0){e.shell=0;e.si=2;b3go(e,'beam');e.bx=P.x;e.by=P.y}break}
   default:g2walk(e)}};
@@ -143,10 +146,10 @@ function g2update(dt){const B=G.g2;if(!B)return;if(G.state!=='play'){if(B.slabs.
   for(let i=B.chunks.length-1;i>=0;i--){const c=B.chunks[i];c.t+=dt;if(c.t<c.dur)continue;B.chunks.splice(i,1);
     if(Math.hypot(P.x-c.tx,P.y-c.ty)<24+P.r*.4&&P.inv<=0&&P.dashT<=0)hurtP(Math.round(16*DMG()));
     shake(3);dustRing(c.tx,c.ty,10);stamp('crater',c.tx,c.ty,16);vfxBlast(c.tx,c.ty,'230,210,180',46,{debris:'stone',n:10,sparks:6,dust:8,cracks:14});sfx('boom',0,c.tx);
-    if(BOSS2)ENV2.rocks(c.tx,c.ty,70,2);if(Math.hypot(P.x-c.tx,P.y-c.ty)>24)g2stone(c.tx,c.ty,14,9,'boulder')}
+    if(BOSS2)ENV2.rocks(c.tx,c.ty,70,2);if(Math.hypot(P.x-c.tx,P.y-c.ty)>24)g2stone(c.tx,c.ty,14,9,'floor',c.p2)}
   // the fault: the crack runs at 420 px/s, a fang every 18 px; each rises in .08 s, stays .6 s, crumbles in .2 s
   for(let i=B.faults.length-1;i>=0;i--){const f=B.faults[i];f.s+=420*dt;const ca=Math.cos(f.a),sa=Math.sin(f.a);
-    while(f.next<=Math.min(f.s,f.len)){const x=f.x+ca*f.next,y=f.y+sa*f.next;B.fangs.push({x,y,t:0,p2:f.p2,rot:rand(-.3,.3),seed:Math.random()*10});
+    while(f.next<=Math.min(f.s,f.len)){const x=f.x+ca*f.next,y=f.y+sa*f.next;B.fangs.push({x,y,t:0,p2:f.p2,rot:rand(-.3,.3),seed:Math.random()*10,a:f.a});
       for(const r of G.rocks)if(r.temp&&Math.hypot(r.x-x,r.y-y)<r.r+8){r.life=0;dustRing(r.x,r.y,8)}
       if(!f.hit&&Math.hypot(P.x-x,P.y-y)<22&&P.inv<=0&&P.dashT<=0){f.hit=true;hurtP(Math.round(16*DMG()))}
       if(!LOWFX&&f.next%36<18)fxPush({k:'puff',x,y,vx:rand(-10,10),vy:-14,t:.4,r:rand(4,7)});f.next+=18}
@@ -154,13 +157,14 @@ function g2update(dt){const B=G.g2;if(!B)return;if(G.state!=='play'){if(B.slabs.
   for(let i=B.fangs.length-1;i>=0;i--){B.fangs[i].t+=dt;if(B.fangs[i].t>.88)B.fangs.splice(i,1)}}
 {const _u=update;update=function(dt){_u.apply(this,arguments);try{if(G2ON&&G&&G.g2&&started&&!paused)g2update(dt)}catch(err){console.error(err)}}}
 // a fang of stone (the model's own if it has one): rises, stands, crumbles
-function g2fang(f){const k=f.t<.08?f.t/.08:f.t<.68?1:1-(f.t-.68)/.2;if(k<=0)return;if(N3.golemFang){try{N3.golemFang(f.x,f.y,k,f.p2,f.seed);return}catch(e){}}
+function g2fang(f){const F=g2art('Fang');if(F){try{F(f.x,f.y,22,Math.min(.999,f.t/.88),1,{p2:f.p2,seed:f.seed,a:f.a});return}catch(e){}}
+  const k=f.t<.08?f.t/.08:f.t<.68?1:1-(f.t-.68)/.2;if(k<=0)return;
   const h=22*k,w=7;ctx.save();ctx.translate(f.x,f.y);ctx.rotate(f.rot*.3);ink(1.8);ctx.beginPath();ctx.moveTo(-w,0);ctx.lineTo(-w*.4,-h*.65);ctx.lineTo(0,-h);ctx.lineTo(w*.5,-h*.55);ctx.lineTo(w,0);ctx.closePath();
   const g=ctx.createLinearGradient(-w,0,w,0);g.addColorStop(0,'#5d666b');g.addColorStop(.45,'#8e979a');g.addColorStop(1,'#3e4549');ctx.fillStyle=g;ctx.fill();ctx.stroke();
   ctx.strokeStyle=f.p2?'rgba(255,140,60,.9)':'rgba(140,255,200,.75)';ctx.lineWidth=1.2;ctx.beginPath();ctx.moveTo(-1,-h*.15);ctx.lineTo(1,-h*.55);ctx.stroke();ctx.restore()}
 // a stone in flight (slab or boulder), the model's own if it has one
-function g2rockAir(x,y,z,r,rot,p2,slab,seed){shadow(x,y+2,r*(1-Math.min(.5,z/300)),r*.35*(1-Math.min(.5,z/300)),.3);const yy=y-z;
-  if(slab&&N3.golemSlab){try{N3.golemSlab(x,yy,rot,p2);return}catch(e){}}if(!slab&&N3.golemRock){try{N3.golemRock(x,yy,r,rot,p2,seed);return}catch(e){}}
+function g2rockAir(x,y,z,r,rot,p2,slab,seed){shadow(x,y+2,r*(1-Math.min(.5,z/300)),r*.35*(1-Math.min(.5,z/300)),.3);const yy=y-z,A=g2art(slab?'Slab':'Rock');
+  if(A){try{if(slab)A(x,y,z,rot,1,{p2,shadow:false});else A(x,y,z,r,rot,1,{kind:'floor',p2,seed,shadow:false});return}catch(e){}}
   ctx.save();ctx.translate(x,yy);ctx.rotate(rot);ink(2.2);ctx.beginPath();const n=slab?4:7;for(let i=0;i<n;i++){const a=i/n*TAU+(slab?Math.PI/4:0),rr=slab?r*1.3:r*(.85+.15*Math.sin(i*2.3+(seed||0)));const px=Math.cos(a)*rr,py=Math.sin(a)*rr*(slab?.55:.85);i?ctx.lineTo(px,py):ctx.moveTo(px,py)}ctx.closePath();
   const g=ctx.createLinearGradient(-r,-r,r,r);g.addColorStop(0,'#9aa3a6');g.addColorStop(.5,'#6b7478');g.addColorStop(1,'#3f474b');ctx.fillStyle=g;ctx.fill();ctx.stroke();
   if(p2){ctx.strokeStyle='rgba(255,130,50,.95)';ctx.lineWidth=1.4;ctx.beginPath();ctx.moveTo(-r*.5,-r*.1);ctx.lineTo(0,r*.15);ctx.lineTo(r*.45,-r*.2);ctx.stroke()}
@@ -190,11 +194,14 @@ function g2air(){const B=G.g2;if(!B)return;
   if(B.beam&&B.beam.fire){const b=B.beam,k=(b.k-.646)/.208,a=Math.sin(Math.min(1,k)*Math.PI),ca=Math.cos(b.a),sa=Math.sin(b.a),ex=b.x+ca*b.len,ey=b.y+sa*b.len-18,mx=b.x+ca*40,my=b.y+sa*40-18;
     ctx.save();ctx.lineCap='round';ctx.globalCompositeOperation='lighter';for(const[w,col,al] of[[26,'255,110,30',.35],[16,'255,170,60',.6],[7,'255,240,190',.95]]){ctx.strokeStyle=`rgba(${col},${al*a})`;ctx.lineWidth=w;
       ctx.beginPath();ctx.moveTo(b.hx,b.hy);ctx.lineTo(mx,my);ctx.lineTo(ex,ey);ctx.stroke()}ctx.restore();glow('255,170,60',ex,ey,26,.6*a)}}
+if(G2ON){const _dr=drawRock;drawRock=function(k){const A=k.g2&&g2art('Rock');if(!A)return _dr.apply(this,arguments);
+  ctx.save();ctx.globalAlpha*=Math.min(1,k.life/.6);try{A(k.x,k.y,0,k.r,k.seed,1,{kind:k.g2k||'floor',p2:k.p2,cool:Math.min(1,((G.t||0)-(k.born||0))/2),seed:k.seed,shadow:false})}
+  catch(err){ctx.restore();return _dr.apply(this,arguments)}ctx.restore()}}
 {const _g2=drawHazards2Ground;drawHazards2Ground=function(){_g2.apply(this,arguments);try{if(G2ON)g2ground()}catch(err){}}}
 {const _a2=drawHazards2Air;drawHazards2Air=function(){_a2.apply(this,arguments);try{if(G2ON)g2air()}catch(err){}}}
 // the hot shards of the second phase (the model's own if it has one)
 Object.assign(TRC,{stone:'255,130,50'});
-Object.assign(EPDRAW,{stone:p=>{if(N3.golemShard){try{N3.golemShard(p.x,p.y,p.r,p.a);return}catch(e){}}glow('255,120,40',p.x,p.y,p.r*2.4,.4);ctx.save();ctx.translate(p.x,p.y);ctx.rotate(p.a+G.t*6);ink(1.6);
+Object.assign(EPDRAW,{stone:p=>{const A=g2art('Shard');if(A){try{A(p.x,p.y,0,p.a,(p.r||7)/7,{});return}catch(e){}}glow('255,120,40',p.x,p.y,p.r*2.4,.4);ctx.save();ctx.translate(p.x,p.y);ctx.rotate(p.a+G.t*6);ink(1.6);
   ctx.beginPath();ctx.moveTo(p.r*1.3,0);ctx.lineTo(-p.r*.2,-p.r*.9);ctx.lineTo(-p.r,-p.r*.1);ctx.lineTo(-p.r*.3,p.r*.8);ctx.closePath();ctx.fillStyle='#4a4f52';ctx.fill();ctx.stroke();
   ctx.strokeStyle='#ff8a3a';ctx.lineWidth=1.3;ctx.beginPath();ctx.moveTo(-p.r*.5,0);ctx.lineTo(p.r*.6,0);ctx.stroke();ctx.restore()}});
 // ---- the entrance (3.2 s, the model's 'enter'): a statue on its knees in the middle of the runes wakes up

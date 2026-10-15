@@ -2,9 +2,11 @@
 # sfidarli», «migliora anche le loro abilità speciali»): una copia del gioco con il modello nuovo (sprite/nemici3d/golem2.js) e il suo
 # cervello (src/js/89-golem-nuovo.js), più un pannello che porta subito nella stanza del Golem (arena 1, stanza 10) con l'eroe forte o
 # invincibile. Il gioco vero non cambia finché Denis non dice sì. Ha il suo salvataggio (la pagina pubblicata è un altro indirizzo).
-# Uso: python3 anteprime/mk_golem2.py [--stub] [--test]  ->  anteprime/golem2.html
-#   --stub  senza il modello nuovo: un modello finto che usa il Golem di oggi per tutte le mosse (per provare il cervello)
-#   --test  la pagina per le prove (tests/golem2_test.html, con window.__E come tests/test.html)
+# Uso: python3 anteprime/mk_golem2.py [--stub] [--test] [--modello file.js]  ->  anteprime/golem2.html
+#   --stub     senza il modello nuovo: un modello finto che usa il Golem di oggi per tutte le mosse (per provare il cervello)
+#   --test     la pagina per le prove (tests/golem2_test.html, con window.__E come tests/test.html)
+#   --modello  un altro file di modello al posto di sprite/nemici3d/golem2.js (es. i file di lavoro golem2a.js, golem2b.js: il loro id
+#              diventa 'golem2', anche i disegni esportati con quel nome)
 import os,subprocess,sys
 here=os.path.dirname(os.path.abspath(__file__));root=os.path.join(here,'..')
 subprocess.run([sys.executable,os.path.join(root,'build.py')],check=True)
@@ -12,6 +14,7 @@ s=open(os.path.join(root,'index.html'),encoding='utf-8').read()
 stub='--stub' in sys.argv
 test='--test' in sys.argv
 mp=os.path.join(root,'sprite','nemici3d','golem2.js')
+if '--modello' in sys.argv:mp=os.path.abspath(sys.argv[sys.argv.index('--modello')+1])
 if stub:
     model=r"""
 // a pretend model for the brain's tests: the Golem of today for every move of the new one
@@ -23,6 +26,11 @@ if stub:
 else:
     if not os.path.exists(mp):sys.exit('manca sprite/nemici3d/golem2.js (oppure usa --stub)')
     model=open(mp,encoding='utf-8').read()
+    mid=os.path.basename(mp)[:-3]
+    if mid!='golem2':model+=f"""
+// the work file {mid}.js as the model 'golem2' (its drawings for the game too)
+(()=>{{if(!N3.golem2&&N3['{mid}']){{N3.golem2=N3['{mid}'];N3.meta.golem2=N3.meta['{mid}'];for(const n of ['Slab','Rock','Fang','Shard'])if(N3['{mid}'+n]&&!N3['golem2'+n])N3['golem2'+n]=N3['{mid}'+n];N3.order.push('golem2')}}}})();
+"""
 brain=open(os.path.join(root,'src','js','89-golem-nuovo.js'),encoding='utf-8').read()
 seed="""<script>try{if(!localStorage.getItem('cripta_save_v1'))localStorage.setItem('cripta_save_v1',JSON.stringify({gold:2000,gems:50,trophies:0,runs:3,introSeen:1,tutDone:1,handSeen:1,
 login:{last:'2099-1-1',n:1},items:{arco_frassino:{lvl:3,cards:0},giubba:{lvl:3,cards:0}},eq:{arma:'arco_frassino',armatura:'giubba',anello:null,amuleto:null}}))}catch(e){}</script>"""
