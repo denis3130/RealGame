@@ -57,3 +57,8 @@ Misure:
 Prove: `node tests/boss3gioco.js [arena]` (entrata, lotta, tutte le mosse, fase 2, sconfitta, stanza ripulita, tempi di disegno; foto
 `tests/b3g_<boss>_*.png`); `node tests/boss3mosse.js [boss]` (ogni mossa in tre momenti: `tests/b3m_<boss>.png`); `node tests/anteprime.js`
 (miniature e sblocco delle arene).
+
+Collaudo (15 ottobre), tutto passato senza errori: `boss3gioco.js` (tutte le mosse dei 4 boss, fase 2, sconfitta); una partita automatica
+per ognuna delle arene 9–12 (vittoria sul custode nuovo alla stanza 10) e una per capitolo (Golem, Re Rospo, Yeti, Strega); `zombie.js`,
+`avvio.js`, `meta2.js`, `menu2.js`, `menu3.js` (foto guardate), `salvataggio.js`, `bossdie.js` (le morti dei boss di prima non cambiano),
+`audio.js`, `mig.js`. Poi ripubblicati il gioco su claude.ai e l'app.
