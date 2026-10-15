@@ -49,7 +49,7 @@ function g2reset(){if(G)G.g2={warn:[],slabs:[],chunks:[],faults:[],fangs:[],lane
 {const _br=buildRoom;buildRoom=function(){g2reset();return _br.apply(this,arguments)}}
 function g2warn(o){(G.g2||(g2reset(),G.g2)).warn.push(o)}
 // ---- the brain
-const g2rage=e=>{e.p2=true;e.shell=9;banner('Il Golem si infuria!','Fase 2',1.6);bossRage(e,G2.lava);$('bossBar').classList.add('rage');shake(8);sfx('boom',0,e.x);G.eproj=[];if(G.g2)G.g2.lane=null;b3go(e,'rage');e.moving=false};
+const g2rage=e=>{e.p2=true;e.shell=9;banner('Il Golem si infuria!','Fase 2',1.6);bossRage(e,G2.lava);$('bossBar').classList.add('rage');shake(8);sfx('boom',0,e.x);G.eproj=[];if(G.g2)G.g2.lane=null;b3go(e,'rage');e.moving=false;b3say(e,'angry')};
 if(G2ON)golemUpd=function(e,dt,a){const sp=e.p2?1.3:1;dt*=sp;// the second phase runs 1.3 times faster (n3Move draws the model at the same pace)
   if(!G.g2)g2reset();const B=G.g2;
   if(!e.p2&&e.hp<e.max*.5&&!['leap','roll'].includes(e.st)){g2rage(e);return}
@@ -205,7 +205,7 @@ if(G2ON){const _bi=bossIntro;bossIntro=function(e,dt,a){if(e.type!=='golem')retu
   for(const s of[1.41,1.57,1.70,1.82,1.95])if(at(s)){sfx('rock',0,e.x);shake(1.5)}
   for(const s of[2.24,2.40])if(at(s))sfx('click',0,e.x);
   if(at(2.69)){shake(10);dustRing(e.x,e.y,26);vib([80,40,100]);for(const s of[-1,1]){const q=g2pt(e,26,26*s);stamp('crater',q.x,q.y,16)}vfxBlast(e.x,e.y,'215,200,175',120,{debris:'stone',n:26,dust:22,sparks:10});sfx('boom',0,e.x)}
-  if(at(2.75)){sfx('roar');vib([60,40,120]);shake(6);for(let i=0;i<3;i++)setTimeout(()=>{if(G&&G.fx)fxPush({k:'ring2',x:e.x,y:e.y-e.r,rgb:'255,255,255',r0:e.r,r1:e.r*5,t:.45,max:.45,w:6-i*1.5})},i*170)}
+  if(at(2.75)){if(!b3say(e,'cry'))sfx('roar');vib([60,40,120]);shake(6);for(let i=0;i<3;i++)setTimeout(()=>{if(G&&G.fx)fxPush({k:'ring2',x:e.x,y:e.y-e.r,rgb:'255,255,255',r0:e.r,r1:e.r*5,t:.45,max:.45,w:6-i*1.5})},i*170)}
   if(e.intro<=0){e.z=0;e.em=null;e.si=-1;b3go(e,'walk',.9)}}}
 // what the model plays: the entrance over its whole length, the ball rolling on its own clock (the game turns it with o.spin)
 if(G2ON){const _nm=n3Move;n3Move=function(e){if(e.type==='golem'){if(e.intro>0)return['enter',Math.min(.999,Math.max(0,(e.iT||0)/BOSS_INTRO.golem))];
@@ -217,3 +217,36 @@ if(G2ON){const _sb=snapBoss;snapBoss=function(e){if(e.type==='golem')return{live
       if(p>.55&&!c.thud){c.thud=1;shake(6);sfx('boom',0,c.x)}},
     draw(c,D){const p=Math.min(.999,c.t/c.dur),M=N3.meta.golem;try{N3.golem(c.x,c.y+8,c.face,'die',p,(M&&M.sc)||1,{p2:c.p2,noFx:LOWFX})}catch(err){}}};
   const _dc=drawCorpse;drawCorpse=function(c){if(c.type!=='golem')return _dc.apply(this,arguments);try{BDIE.golem.draw(c,BDEATH.golem)}catch(err){}drawParts(c)}}
+// ---- the voice and the personality, like the four new bosses (88-boss3-voci.js): a colossus of stone. A deep rumbling roar with the
+// stone grinding under it; a slow «hm-hm-hm» when it hits you and mocks you (its gesture, the model's 'taunt'); a grumble when you keep
+// away and it calls you out; a grunt for each blow, after the heart beating («tum-tum», you hear the blow coming); a moan when you hit
+// it hard; a long moan that sinks into the stone when it falls; a slow «ho… ho… ho» if you fall.
+if(G2ON){B3S.add('golem');
+  const ha=(n,t0,step,d,fa,fb,v,o)=>[...Array(n)].map((_,i)=>{const f=fa+(fb-fa)*i/Math.max(1,n-1);return{t:t0+i*step,d,f:[f*1.04,f*.94],v,a:1-i*.08,h:.25,...(o||{})}});
+  B3VO.VB.golem={base:{br:.4,ro:.55,ji:.14,lp:.4},k:{
+    cry:[[1.9,[{t:0,d:.16,noise:1,v:'h',a:.6},{t:.14,d:1.7,f:[58,104,66],v:['u','o','a','o'],h:.06,ro:.75,vib:[.03,4],rel:.4}],.66]],
+    angry:[[1.8,[{t:0,d:.5,f:[52,60],v:'o',a:.85,ro:.9,ji:.25},{t:.48,d:1.28,f:[70,118,62],v:['o','a','o'],ro:.8,h:.06,vib:[.035,5],rel:.4}],.66]],
+    laugh:[[1.05,[...ha(3,0,.24,.17,88,74,'m',{ro:.45}),{t:.72,d:.32,f:[70,58],v:['m','o'],a:.7,ro:.6,rel:.5}],.52]],
+    laugh2:[[.95,[{t:0,d:.14,noise:1,v:'h',a:.7},{t:.16,d:.76,f:[66,92,72],v:['m','o'],ro:.65,am:[.35,14],h:.1}],.52]],
+    hurt:[[.3,[{t:0,d:.28,f:[105,66],v:['u','o'],ro:.55,h:.12}],.5],[.28,[{t:0,d:.06,noise:1,v:'h',a:.7},{t:.05,d:.22,f:[96,70],v:'o',ro:.6,h:.2}],.5]],
+    c_leap:[[.34,[{t:0,d:.32,f:[74,110],v:['u','a'],h:.35,ro:.45}],.5]],
+    c_throw:[[.5,[{t:0,d:.26,f:[66,74],v:'m',ro:.55,h:.2},{t:.28,d:.2,f:[100,78],v:'a',ro:.4}],.5]],
+    c_fault:[[.24,[{t:0,d:.22,f:[96,72],v:['u','a'],ro:.4,h:.25}],.48]],
+    c_roll:[[.62,[{t:0,d:.6,f:[58,64],v:'o',ro:.85,am:[.55,17]}],.48]],
+    c_beam:[[.95,[{t:0,d:.92,f:[56,96,140],v:['m','o','a'],ro:.3,vib:[.04,6],h:.05,rel:.25}],.5]],
+    die:[[2.2,[{t:0,d:2.15,f:[92,72,36],v:['o','u'],ro:.5,vib:[.05,3.5],rel:.6,br:.5}],.58]],
+    win:[[1.35,[...ha(3,0,.34,.24,84,70,'o',{ro:.5}),{t:1.02,d:.3,f:[66,52],v:'u',a:.6,ro:.6,rel:.5}],.56]]}};
+  B3CUE.golem={leap:'c_leap',throw:'c_throw',fault:'c_fault',curl:'c_roll',beam:'c_beam'};
+  // under its big cries the stone grinds
+  {const _m=b3sayMore;b3sayMore=function(e,k,t){if(e.type!=='golem')return _m.apply(this,arguments);
+    if(k==='cry'||k==='angry'||k==='die'||k==='win')fNoise(t+.05,k==='die'?1.9:1.3,'lowpass',VR(240,.15),.7,.08,{brown:true})}}
+  // the heart before every blow: tum-tum (the warning you hear, with the light running down its veins)
+  {const _g=b3go;b3go=function(e,st){_g.apply(this,arguments);try{if(e.type==='golem'&&!(e.intro>0)&&B3CUE.golem[st]&&AU.ctx&&AU.on.sfx&&AU.ctx.state==='running'){
+    const t=AU.ctx.currentTime+.01,v=Math.max(.55,enemyAt(e));for(let i=0;i<2;i++)fThump(t+i*.17,64,38,.15,.22*v*(i?.75:1));AU.pan=0}}catch(err){}}}
+  // the voices get ready in the rooms of its arena (and at once in its room)
+  {const _br=buildRoom;buildRoom=function(){const r=_br.apply(this,arguments);try{const A=G&&G.mode!=='inf'&&!G.daily&&ARENAS[G.arena||0];
+    if(A&&BOSSZ[A.boss]==='golem'||G&&(G.enemies||[]).some(q=>q.type==='golem'))B3VO.prep('golem')}catch(err){}return r}}
+  // its mocking gesture in its brain (a pause in its walk, never between two blows: it walks again a little before the next move)
+  {const _gu=golemUpd;golemUpd=function(e,dt,a){if(e.st!=='taunt')return _gu.apply(this,arguments);b3tick(e,dt*(e.p2?1.3:1));e.moving=false;e.face=a;if(e.stT<=0)b3go(e,'walk',rand(.6,1))}}
+  // the defeat with its voice (the cry of the entrance and the rage are in bossIntro and g2rage)
+  {const _s=BDIE.golem.setup;BDIE.golem.setup=function(c){_s.apply(this,arguments);b3say(c,'die')}}}
