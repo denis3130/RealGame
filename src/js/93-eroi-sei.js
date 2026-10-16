@@ -27,14 +27,14 @@ const ESH=id=>P&&P.hero===id;
     if(P.proj==='axe'){axeSpawn(x,y,a,m);return}
     if(P.proj==='lash'){lashSpawn(x,y,a,m);return}}
   _a.apply(this,arguments);const ar=G.arrows[G.arrows.length-1];if(!ar||!P)return;
-  if(P.proj==='hammer'){ar.ham=true;ar.ph=rand(0,TAU);if(++ES.palN%4===0){ar.sacred=true;ar.m*=1.25}}
-  else if(P.proj==='ice'){ar.orb=true;ar.ph=rand(0,TAU);if(++ES.iceN%5===0){ar.frost=true;ar.m*=1.15}}
+  if(P.proj==='hammer'){ar.ham=true;ar.ph=rand(0,TAU);if(++ES.palN%(P.palEvery||4)===0){ar.sacred=true;ar.m*=1.25}}
+  else if(P.proj==='ice'){ar.orb=true;ar.ph=rand(0,TAU);if(++ES.iceN%(P.iceEvery||5)===0){ar.frost=true;ar.m*=1.15}}
   else if(P.proj==='knife')ar.knife=true;
   else if(P.proj==='wave'){ar.wave=true;ar.life=Math.min(ar.life,.6);ar.rad=13;ar.pierce=(ar.pierce||0)+1}}}
 {const _v=volley;volley=function(a){if(!P||!G)return _v.apply(this,arguments);
   // the Corsair: an enemy too close gets the sabre instead of the knives
-  if(P.proj==='knife'){const e=nearest(P.x,P.y);if(e&&Math.hypot(e.x-P.x,e.y-P.y)-e.r<44){slashStart(Math.atan2(e.y-P.y,e.x-P.x));return}}
-  if(P.proj==='wave'){ES.punchN++;P.alt=ES.punchN%2===0;if(ES.punchN%4===0)shockRing(P.x,P.y,1)}
+  if(P.proj==='knife'){const e=nearest(P.x,P.y);if(e&&Math.hypot(e.x-P.x,e.y-P.y)-e.r<(P.sabT||44)){slashStart(Math.atan2(e.y-P.y,e.x-P.x));return}}
+  if(P.proj==='wave'){ES.punchN++;P.alt=ES.punchN%2===0;if(ES.punchN%(P.shockEvery||4)===0)shockRing(P.x,P.y,1)}
   // the axes and the lashes: the volley's shots become them; its giant shot (every third volley) is a big one, here
   const own=P.proj==='axe'||P.proj==='lash',gi=P.giant;if(own){ES.vol=true;P.giant=0}
   try{_v.apply(this,arguments)}finally{if(own){ES.vol=false;P.giant=gi}}
@@ -52,7 +52,7 @@ const ESH=id=>P&&P.hero===id;
     if(s.ar.frost)for(const e of nw)if(!e.dead&&!isBoss(e.type)&&!(e.frozen>0)){e.frozen=1.1;text(e.x,e.y-e.r-30,'GELO','#bfe9ff',13);sfx('es','freeze',e.x)}}}}
 // the shield: a golden parry (the shield on his arm flashes)
 {const _hp=hurtP;hurtP=function(d){if(ESH('paladino')&&!INTRO.on&&P.shield&&P.shCd<=0&&!(P.inv>0)&&!(P.dashT>0)&&G.state!=='dead'){
-    P.shCd=6;P.inv=.45;P.shHit=.35;vfxBlast(P.x,P.y-10,'255,215,110',44,{sparks:LOWFX?5:12,spcol:['#fff6c8','#ffd86b','#e0b040'],dust:0,ring2:false});
+    P.shCd=P.shEvery||6;P.inv=.45;P.shHit=.35;vfxBlast(P.x,P.y-10,'255,215,110',44,{sparks:LOWFX?5:12,spcol:['#fff6c8','#ffd86b','#e0b040'],dust:0,ring2:false});
     text(P.x,P.y-42,'PARATO','#ffd86b',14);sfx('es','parry',P.x);return}
   return _hp.apply(this,arguments)}}
 // ------------------------------------------------------------------ the Berserker's axes: out and back
@@ -73,7 +73,7 @@ const L_=()=>L,R_=()=>R;
 // ------------------------------------------------------------------ the Corsair: the second knife, the sabre
 function slashStart(a){P.slashT=0;P.face=a;(G.slashQ||(G.slashQ=[])).push({t:.07,a});sfx('es','swish',P.x)}
 function slashHit(a){const x=P.x,y=P.y-6;let n=0;
-  for(const e of G.enemies){if(!canHit(e))continue;const dx=e.x-x,dy=e.y-y,d=Math.hypot(dx,dy);if(d>66+e.r)continue;let da=Math.atan2(dy,dx)-a;da=Math.atan2(Math.sin(da),Math.cos(da));if(Math.abs(da)>1.4&&d>e.r+10)continue;
+  for(const e of G.enemies){if(!canHit(e))continue;const dx=e.x-x,dy=e.y-y,d=Math.hypot(dx,dy);if(d>(P.sabR||66)+e.r)continue;let da=Math.atan2(dy,dx)-a;da=Math.atan2(Math.sin(da),Math.cos(da));if(Math.abs(da)>1.4&&d>e.r+10)continue;
     const crit=Math.random()<P.crit;hurtE(e,P.atk*1.8*(crit?(P.critMul||2):1),crit);ultGain(1.5);n++;if(!e.dead&&!isBoss(e.type)){e.kbx=(e.kbx||0)+Math.cos(a)*120;e.kby=(e.kby||0)+Math.sin(a)*120}}
   G.slashFx={x,y,a,t:0};if(n){shake(2);sfx('es','clang',x);G.hitstop=Math.max(G.hitstop||0,.04)}}
 // ------------------------------------------------------------------ the Tamer's whip: a crack on the first enemy in its reach
@@ -99,7 +99,7 @@ function wolfUpdate(dt){if(!ESH('domatore')){G.allies=null;return}let W=G.allies
   if(W.howl>0){W.anim='howl'}
   else if(tg&&Math.hypot(tg.x-P.x,tg.y-P.y)<420){const dx=tg.x-W.x,dy=tg.y-W.y,d=Math.hypot(dx,dy)||1;W.face=Math.atan2(dy,dx);
     if(d>tg.r+15){mx=dx/d*sp;my=dy/d*sp}
-    else if(W.cd<=0){W.cd=W.fury>0?.42:.85;W.bite=.5;const crit=Math.random()<P.crit;hurtE(tg,P.atk*1.05*(W.fury>0?1.3:1)*(crit?(P.critMul||2):1),crit);ultGain(.8);sfx('es','bite',W.x);
+    else if(W.cd<=0){W.cd=W.fury>0?.42:.85;W.bite=.5;const crit=Math.random()<P.crit;hurtE(tg,P.atk*1.05*(W.fury>0?1.3:1)*(P.zannaK||1)*(crit?(P.critMul||2):1),crit);ultGain(.8);sfx('es','bite',W.x);
       if(!tg.dead&&!isBoss(tg.type)){tg.kbx=(tg.kbx||0)+Math.cos(W.face)*36;tg.kby=(tg.kby||0)+Math.sin(tg.face||0)*0+Math.sin(W.face)*36}}}
   else{const hx=P.x-Math.cos(P.face||0)*26,hy=P.y+12-Math.sin(P.face||0)*10,dx=hx-W.x,dy=hy-W.y,d=Math.hypot(dx,dy);if(d>14){const s=Math.min(sp,d*4);mx=dx/d*s;my=dy/d*s;W.face=Math.atan2(dy,dx)}else W.face=P.face||W.face}
   if(mx||my){const nx=clamp(W.x+mx*dt,L+10,R-10),ny=clamp(W.y+my*dt,TOP+14,BOT-8);W.x=nx;W.y=ny}

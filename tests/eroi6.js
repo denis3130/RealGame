@@ -1,7 +1,7 @@
 // the six heroes of 16 October and what came with them (src/js/93-96): every hero's Super at grade 0 and III (no errors, the grade's
 // effect is there), the reach of the short blows (94) and its switch in the settings, every voice of every hero made without a NaN (95),
 // the mastery (96): the levels from the save, the points from a kill and a clean room, the band «Maestria N» with its gold, the name of the
-// Super with its numeral, the row in the Heroes tab. Uso: node eroi6.js (dopo python3 tests/mk.py)
+// Super with its numeral, the row in the Heroes tab; the own weapons (97): power and look only with their hero. Uso: node eroi6.js (dopo python3 tests/mk.py)
 const {chromium}=require('playwright');
 const HEROES=['arciere','cacciatrice','balestriere','druida','bardo','alchimista','ninja','paladino','mago','berserker','corsaro','domatore','monaco'];
 const SAVE0=(hero,mq)=>({gold:1000,gems:50,trophies:700,trBest:700,runs:6,introSeen:1,starter:'arciere',sel:'arena',items:{arco_frassino:{lvl:3,cards:0},giubba:{lvl:3,cards:0}},
@@ -46,5 +46,10 @@ const SAVE0=(hero,mq)=>({gold:1000,gems:50,trophies:700,trBest:700,runs:6,introS
     await E("endRun(false,true)");await p.waitForTimeout(1200);await E("document.querySelectorAll('#sheetScr,#arenaUpScr').forEach(e=>e.hidden=true);heroView='mago';setTab('tabHero');renderHero()");await p.waitForTimeout(300);
     ok('maestria: nella scheda Eroi la riga col livello e i tre gradi',await E("!!$('mqBox')&&/Maestria Liv\\. 7/.test($('mqBox').textContent)&&$('mqBox').querySelectorAll('.mqT .on').length===2"));
     const ls=await E(`(o=>o.v===2?o.classica.maestria:o.maestria)(JSON.parse(localStorage.getItem('cripta_save_v1')))`);ok('maestria: nel salvataggio, nel blocco della Classica',!!ls&&ls.paladino>=320);await p.close()}
+  // 5. the own weapons: the power and the look only with their hero
+  for(const [hero,w,chk] of [['arciere','arco_stelle',"P.style.bowKind==='stelle'"],['berserker','asce_tuono',"(G.axes||[]).length>=2"],['monaco','grani_quiete',"P.shockEvery===3&&P.style.wraps==='#f0c64a'"]]){
+    const sv=SAVE0(hero);sv.items[w]={lvl:1,cards:0};sv.eq.arma=w;const {p,E}=await page(sv);await E('startRun()');await p.waitForTimeout(1500);await E(crowd);await p.waitForTimeout(1600);
+    const r=await E(`({own:P.own,leg:P.style.legW,chk:${chk}})`);await E("SAVE.hero='"+(hero==='arciere'?'paladino':'arciere')+"';SAVE.heroes[SAVE.hero]=1");const o=await E('(()=>{const q=makeP();return{own:q.own,leg:heroStyle0(SAVE.hero).legW||null}})()');
+    ok(`armi proprie: ${w} col suo eroe (potere e aspetto), con un altro solo i numeri`,r.own===w&&r.leg===w&&r.chk&&!o.own&&!o.leg);await p.close()}
   ok('nessun errore nella pagina'+(errs.length?': '+errs.slice(0,4).join(' | '):''),!errs.length);
   console.log(R.join('\n'));await b.close();process.exit(R.some(r=>r.startsWith('FAIL'))?1:0)})();

@@ -17,7 +17,7 @@ const GIT={k:0,ang:null,hot:0,spec:null,tg:null,on:()=>!(SAVE.set&&SAVE.set.gitt
 function gitSpec(){if(!P||!P.proj)return null;const sp=P.pspd||560;
   switch(P.proj){
     case 'wave':return{kind:'punch',r:sp*.6+10,rgb:'255,241,168'};   // the wave lives .6 s (93)
-    case 'knife':return{kind:'sabre',r:66,trig:44,rgb:'236,240,248'};  // slashStart under 44 px, slashHit reaches 66
+    case 'knife':return{kind:'sabre',r:P.sabR||66,trig:P.sabT||44,rgb:'236,240,248'};  // slashStart under 44 px, slashHit reaches 66 (the captain's sabre 60 and 90)
     case 'lash':return{kind:'whip',r:200,cone:.38,rgb:'255,236,180'}; // lashSpawn: reach 200, ±.38 rad
     case 'axe':return{kind:'axe',r:sp*.414,rgb:'236,240,248'};        // out for .46 s slowing down: 232 px at 560 px/s
     case 'flask':return{kind:'flask',r:44,rgb:'123,240,106'};}         // flaskBurst: 44 px round where it bursts
@@ -55,7 +55,7 @@ function gitDraw(){if(!G||!P||INTRO.on||GIT.k<.02||!GIT.spec||G.state==='dead')r
     ctx.strokeStyle=`rgba(${c},${la.toFixed(3)})`;ctx.lineWidth=2.6;ctx.stroke();ctx.restore()};
   if(S.kind==='punch'){lane(16,S.r,30,(.07+.07*H)*A,(.45+.3*H)*A);
     // the fourth punch shakes the ground: its ring waits round him
-    if(typeof ES!=='undefined'&&ES.punchN%4===3){ctx.strokeStyle=`rgba(255,215,110,${((.3+.16*Math.sin(t*8))*A).toFixed(3)})`;ctx.lineWidth=2.2;ctx.beginPath();ctx.arc(x,y,74,0,TAU);ctx.stroke()}}
+    if(typeof ES!=='undefined'&&ES.punchN%(P.shockEvery||4)===(P.shockEvery||4)-1){ctx.strokeStyle=`rgba(255,215,110,${((.3+.16*Math.sin(t*8))*A).toFixed(3)})`;ctx.lineWidth=2.2;ctx.beginPath();ctx.arc(x,y,74,0,TAU);ctx.stroke()}}
   else if(S.kind==='sabre')slice(12,S.r,a-1.4,a+1.4,(.035+.11*H)*A,(.26+.44*H)*A,false);
   else if(S.kind==='whip')slice(18,S.r,a-S.cone,a+S.cone,(.05+.07*H)*A,(.36+.3*H)*A,true);
   else if(S.kind==='axe'){

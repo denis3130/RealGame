@@ -21,6 +21,21 @@ const ITEMS=[
   {id:'amuleto_luna',slot:'amuleto',rar:1,n:'Amuleto lunare',base:{hp:15,gold:.08},per:{hp:5,gold:.03},tint:{a:'#c9cfd6',b:'#c7d2ff'}},
   {id:'amuleto_lame',slot:'amuleto',rar:3,n:'Amuleto delle lame',base:{atk:5},per:{atk:2},tint:{a:'#9aa3ad',b:'#dfe4ea'},perk:'Inizi con una lama rotante',perkf:p=>p.orbit++},
   {id:'cuore_drago',slot:'amuleto',rar:4,n:'Cuore di drago',base:{hp:50,atk:6},per:{hp:12,atk:2},tint:{a:'#ffd86b',b:'#e5484d'},perk:'Una volta per partita ti rialzi con metà salute',perkf:p=>p.revive=1}];
+// the heroes' own weapons (16 October): legendary, one a hero; their look and their power only with their hero (src/js/97-armi-proprie.js)
+ITEMS.push(
+  {id:'arco_stelle',slot:'arma',rar:4,hero:'arciere',n:'Arco delle stelle',base:{atk:13,aspd:.1},per:{atk:4,aspd:.03},tint:{a:'#2c3f8a',b:'#ffd86b'}},
+  {id:'arco_luna',slot:'arma',rar:4,hero:'cacciatrice',n:'Arco della luna',base:{atk:12,crit:.06},per:{atk:3.8,crit:.012},tint:{a:'#d0dae8',b:'#7fb8e8'}},
+  {id:'balestra_drago',slot:'arma',rar:4,hero:'balestriere',n:'Balestra del drago',base:{atk:15},per:{atk:4.5},tint:{a:'#6a1812',b:'#e0b040'}},
+  {id:'bastone_salice',slot:'arma',rar:4,hero:'druida',n:'Bastone del salice',base:{atk:12,hp:20},per:{atk:3.5,hp:6},tint:{a:'#b8a070',b:'#ffe27a'}},
+  {id:'liuto_oro',slot:'arma',rar:4,hero:'bardo',n:"Liuto d'oro",base:{atk:12,aspd:.08},per:{atk:3.6,aspd:.02},tint:{a:'#e8b440',b:'#fff0a0'}},
+  {id:'fiala_arcobaleno',slot:'arma',rar:4,hero:'alchimista',n:"Fiala dell'arcobaleno",base:{atk:13},per:{atk:4},tint:{a:'#c06aff',b:'#7bf06a'}},
+  {id:'stelle_ombra',slot:'arma',rar:4,hero:'ninja',n:"Stelle d'ombra",base:{atk:11,aspd:.08},per:{atk:3.4,aspd:.025},tint:{a:'#4a2a6a',b:'#c8a6ff'}},
+  {id:'martello_alba',slot:'arma',rar:4,hero:'paladino',n:"Martello dell'alba",base:{atk:14,hp:25},per:{atk:4,hp:7},tint:{a:'#f0c64a',b:'#ffffff'}},
+  {id:'bastone_bufera',slot:'arma',rar:4,hero:'mago',n:'Bastone della bufera',base:{atk:13},per:{atk:4},tint:{a:'#2a4680',b:'#9ad4ff'}},
+  {id:'asce_tuono',slot:'arma',rar:4,hero:'berserker',n:'Asce del tuono',base:{atk:13,aspd:.06},per:{atk:3.8,aspd:.02},tint:{a:'#3e3438',b:'#ff5a3a'}},
+  {id:'sciabola_capitano',slot:'arma',rar:4,hero:'corsaro',n:'Sciabola del capitano',base:{atk:13,crit:.05},per:{atk:3.8,crit:.012},tint:{a:'#e0b040',b:'#e5484d'}},
+  {id:'frusta_zanna',slot:'arma',rar:4,hero:'domatore',n:'Frusta di zanna',base:{atk:12,hp:20},per:{atk:3.6,hp:6},tint:{a:'#d8ccb0',b:'#8a7a60'}},
+  {id:'grani_quiete',slot:'arma',rar:4,hero:'monaco',n:'Grani della quiete',base:{atk:13,aspd:.06},per:{atk:3.8,aspd:.02},tint:{a:'#e0b040',b:'#c8323c'}});
 const ITEM={};ITEMS.forEach(i=>ITEM[i.id]=i);
 // every bow shoots its own way: shape in hand, projectile, speed, push, sound
 const WEAP={
@@ -129,7 +144,7 @@ function rollChest(type){
   const c=CHESTS[type];let left=c.cards;const n=Math.min(4,2+Math.floor(c.cards/10)),out={};
   for(let s=0;s<n&&left>0;s++){let cnt=s===n-1?left:Math.max(1,Math.round(left*rand(.3,.5)));left-=cnt;
     let rar=pickOdds(c.odds),pool=ITEMS.filter(i=>i.rar===rar);while(!pool.length&&rar>0){rar--;pool=ITEMS.filter(i=>i.rar===rar)}
-    const it=pool[randi(0,pool.length-1)];cnt=Math.max(1,Math.round(cnt/(1+rar*.7)));out[it.id]=(out[it.id]||0)+cnt}
+    const it=itemPickW(pool);cnt=Math.max(1,Math.round(cnt/(1+rar*.7)));out[it.id]=(out[it.id]||0)+cnt}
   const pc={legno:[.35,1,2],argento:[.6,2,4],oro:[.9,3,6]}[type];
   if(pc&&Math.random()<pc[0]){const w=PETS.map(q=>[q.id,(type==='legno'?[0,8,2,.5]:type==='argento'?[0,6,3,1]:[0,4,3,2])[q.rar]]),tot=w.reduce((a,b)=>a+b[1],0);let r=Math.random()*tot,id=w[0][0];for(const[k,v]of w){r-=v;if(r<0){id=k;break}}
     out['pet:'+id]=randi(pc[1],pc[2])}

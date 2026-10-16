@@ -2424,6 +2424,21 @@ const ITEMS=[
   {id:'amuleto_luna',slot:'amuleto',rar:1,n:'Amuleto lunare',base:{hp:15,gold:.08},per:{hp:5,gold:.03},tint:{a:'#c9cfd6',b:'#c7d2ff'}},
   {id:'amuleto_lame',slot:'amuleto',rar:3,n:'Amuleto delle lame',base:{atk:5},per:{atk:2},tint:{a:'#9aa3ad',b:'#dfe4ea'},perk:'Inizi con una lama rotante',perkf:p=>p.orbit++},
   {id:'cuore_drago',slot:'amuleto',rar:4,n:'Cuore di drago',base:{hp:50,atk:6},per:{hp:12,atk:2},tint:{a:'#ffd86b',b:'#e5484d'},perk:'Una volta per partita ti rialzi con metà salute',perkf:p=>p.revive=1}];
+// the heroes' own weapons (16 October): legendary, one a hero; their look and their power only with their hero (src/js/97-armi-proprie.js)
+ITEMS.push(
+  {id:'arco_stelle',slot:'arma',rar:4,hero:'arciere',n:'Arco delle stelle',base:{atk:13,aspd:.1},per:{atk:4,aspd:.03},tint:{a:'#2c3f8a',b:'#ffd86b'}},
+  {id:'arco_luna',slot:'arma',rar:4,hero:'cacciatrice',n:'Arco della luna',base:{atk:12,crit:.06},per:{atk:3.8,crit:.012},tint:{a:'#d0dae8',b:'#7fb8e8'}},
+  {id:'balestra_drago',slot:'arma',rar:4,hero:'balestriere',n:'Balestra del drago',base:{atk:15},per:{atk:4.5},tint:{a:'#6a1812',b:'#e0b040'}},
+  {id:'bastone_salice',slot:'arma',rar:4,hero:'druida',n:'Bastone del salice',base:{atk:12,hp:20},per:{atk:3.5,hp:6},tint:{a:'#b8a070',b:'#ffe27a'}},
+  {id:'liuto_oro',slot:'arma',rar:4,hero:'bardo',n:"Liuto d'oro",base:{atk:12,aspd:.08},per:{atk:3.6,aspd:.02},tint:{a:'#e8b440',b:'#fff0a0'}},
+  {id:'fiala_arcobaleno',slot:'arma',rar:4,hero:'alchimista',n:"Fiala dell'arcobaleno",base:{atk:13},per:{atk:4},tint:{a:'#c06aff',b:'#7bf06a'}},
+  {id:'stelle_ombra',slot:'arma',rar:4,hero:'ninja',n:"Stelle d'ombra",base:{atk:11,aspd:.08},per:{atk:3.4,aspd:.025},tint:{a:'#4a2a6a',b:'#c8a6ff'}},
+  {id:'martello_alba',slot:'arma',rar:4,hero:'paladino',n:"Martello dell'alba",base:{atk:14,hp:25},per:{atk:4,hp:7},tint:{a:'#f0c64a',b:'#ffffff'}},
+  {id:'bastone_bufera',slot:'arma',rar:4,hero:'mago',n:'Bastone della bufera',base:{atk:13},per:{atk:4},tint:{a:'#2a4680',b:'#9ad4ff'}},
+  {id:'asce_tuono',slot:'arma',rar:4,hero:'berserker',n:'Asce del tuono',base:{atk:13,aspd:.06},per:{atk:3.8,aspd:.02},tint:{a:'#3e3438',b:'#ff5a3a'}},
+  {id:'sciabola_capitano',slot:'arma',rar:4,hero:'corsaro',n:'Sciabola del capitano',base:{atk:13,crit:.05},per:{atk:3.8,crit:.012},tint:{a:'#e0b040',b:'#e5484d'}},
+  {id:'frusta_zanna',slot:'arma',rar:4,hero:'domatore',n:'Frusta di zanna',base:{atk:12,hp:20},per:{atk:3.6,hp:6},tint:{a:'#d8ccb0',b:'#8a7a60'}},
+  {id:'grani_quiete',slot:'arma',rar:4,hero:'monaco',n:'Grani della quiete',base:{atk:13,aspd:.06},per:{atk:3.8,aspd:.02},tint:{a:'#e0b040',b:'#c8323c'}});
 const ITEM={};ITEMS.forEach(i=>ITEM[i.id]=i);
 // every bow shoots its own way: shape in hand, projectile, speed, push, sound
 const WEAP={
@@ -2532,7 +2547,7 @@ function rollChest(type){
   const c=CHESTS[type];let left=c.cards;const n=Math.min(4,2+Math.floor(c.cards/10)),out={};
   for(let s=0;s<n&&left>0;s++){let cnt=s===n-1?left:Math.max(1,Math.round(left*rand(.3,.5)));left-=cnt;
     let rar=pickOdds(c.odds),pool=ITEMS.filter(i=>i.rar===rar);while(!pool.length&&rar>0){rar--;pool=ITEMS.filter(i=>i.rar===rar)}
-    const it=pool[randi(0,pool.length-1)];cnt=Math.max(1,Math.round(cnt/(1+rar*.7)));out[it.id]=(out[it.id]||0)+cnt}
+    const it=itemPickW(pool);cnt=Math.max(1,Math.round(cnt/(1+rar*.7)));out[it.id]=(out[it.id]||0)+cnt}
   const pc={legno:[.35,1,2],argento:[.6,2,4],oro:[.9,3,6]}[type];
   if(pc&&Math.random()<pc[0]){const w=PETS.map(q=>[q.id,(type==='legno'?[0,8,2,.5]:type==='argento'?[0,6,3,1]:[0,4,3,2])[q.rar]]),tot=w.reduce((a,b)=>a+b[1],0);let r=Math.random()*tot,id=w[0][0];for(const[k,v]of w){r-=v;if(r<0){id=k;break}}
     out['pet:'+id]=randi(pc[1],pc[2])}
@@ -6631,7 +6646,7 @@ function drawHeroPreview(dt,cvx,hid){pvT+=dt;const C=cvx||hcv,X=C.getContext('2d
 const DEAL_N=[14,9,5,3,1],DEAL_P=[120,240,450,900,2200];
 function ensureDeals(){const t=today();if(SAVE.deals&&SAVE.deals.day===t)return;
   let h=7;for(const ch of t)h=(Math.imul(h,31)+ch.charCodeAt(0))>>>0;const rnd=()=>{h=(Math.imul(h,1103515245)+12345)>>>0;return h/4294967296};
-  const pick=r=>{const pool=ITEMS.filter(i=>i.rar===r);return pool[Math.floor(rnd()*pool.length)]};const list=[];
+  const pick=r=>{const pool=ITEMS.filter(i=>i.rar===r);return itemPickW(pool,rnd)};const list=[];
   for(const r of [0,1,2+(rnd()<.35?1:0)+(rnd()<.08?1:0)]){let it=pick(Math.min(4,r));while(list.some(x=>x.id===it.id))it=pick(Math.min(4,r));list.push({id:it.id,n:DEAL_N[it.rar],p:DEAL_P[it.rar],sold:false})}
   SAVE.deals={day:t,list};save()}
 // gold for gems: what the crystals' gems are for
@@ -11067,11 +11082,15 @@ const M={
     if(bolt){const x0=nut[0]+.4,y=3.05,bl=['#1d3f78','#4d97ff','#a9cdff'];K.rod([[x0,y,0],[13.9,y,0]],.62,'lucido',{db:.06});K.cyl([13.7,y,0],[15.9,y,0],.62,'lucido',{r2:.06,db:.07});
       const fl=K.frame([x0,y,0],[1,0,0],[0,0,1]);fl.prism([[.3,0],[2.9,0],[.8,1.5]],-.07,.07,bl,{hi:0,dk:.7,db:.09});fl.prism([[.3,0],[.8,-1.5],[2.9,0]],-.07,.07,bl,{hi:0,dk:.7,db:.09});
       K.prism([[x0+.3,y],[x0+2.9,y],[x0+.8,y+1.4]],-.07,.07,bl,{hi:0,dk:.7,db:.09})}
+    if(st.leg){const DH=[[13.4,3.9],[16.4,3.6],[18.9,2.7],[17.6,2.15],[19,1.5],[17.4,1],[16,1.4],[14.4,.4],[13.2,1.2]];
+      K.prism(DH,-1.25,1.25,['#7a4a10','#e0b040','#fff0a0'],{hi:.5,dk:.55,det:L=>{L.line(14.6,3.6,15.6,1.6,'rgba(90,50,10,.55)',.35);L.line(16.2,3.4,17,2.2,'rgba(90,50,10,.45)',.3)}});
+      for(const sd of[-1,1]){K.cyl([14.6,3.4,sd*.9],[12.4,5.4,sd*1.4],.42,'ottone',{r2:.2,db:.03});K.fx([16.6,2.95,sd*1.27],q=>{ctx.fillStyle='#ff3a2a';ball(q,.55*K.s);ctx.fill();if(!LOWFX)shine('255,80,40',q[0],q[1],2.6*K.s,.7)},.2)}
+      K.fx([18.4,2,0],q=>shine('255,120,40',q[0],q[1],(5+1.5*Math.sin(TNOW()*8))*K.s,.42),.3)}
     return{muzzle:[16,3.05,0],eject:null,sup:[7.6,.9,0],nut}},
   // the Druid's staff: a crooked branch, thicker at the foot, with two knots and a green cloth wrap where the hand holds it; at the top the
   // wood swells and opens in three prongs that cup a glowing orb (the colour of the Druid's eyes); two leaves. x goes up the staff, the
   // hand is at 0,0,0. st.glow: how bright the orb is (it flares when the staff casts), st.orbCol
-  bastone(K,st){const g=st.glow==null?1:st.glow,oc=st.orbCol||'#9fff7a',OT=[mix(oc,'#0d2a12',.5),oc,mix(oc,'#ffffff',.72)],rgb=hexRgb(oc),T='corteccia';
+  bastone(K,st){const g=st.leg?1.3:st.glow==null?1:st.glow,oc=st.leg?'#ffe27a':st.orbCol||'#9fff7a',OT=[mix(oc,'#0d2a12',.5),oc,mix(oc,'#ffffff',.72)],rgb=hexRgb(oc),T=st.leg?['#6a5a3a','#b8a070','#ece0b8']:'corteccia';
     K.tube([[-15.5,0,0],[-10,.5,.2],[-4,-.3,-.2],[2,.3,.1],[8,-.3,0],[12.6,.1,0]],[2.6,2.5,2.35,2.25,2.15,2.35],T);
     K.sph([-8.2,1.05,.3],.9,T,{db:.02});K.sph([5,-1.05,-.2],.85,T,{db:.02});
     K.cyl([-2.3,0,0],[2.3,0,0],1.55,'stoffa',{det:t=>{ctx.strokeStyle='rgba(16,40,10,.5)';ctx.lineWidth=.5*K.s;ctx.lineCap='round';
@@ -11086,6 +11105,9 @@ const M={
     const LEAF=[[0,0],[1.2,.85],[2.6,1.05],[3.8,.7],[4.8,0],[3.8,-.7],[2.6,-1.05],[1.2,-.85]];
     for(const[o,d,u] of[[[12.4,1.2,.7],[.5,1,.55],[0,-.4,1]],[[11.2,-1.1,-.6],[.35,-1,-.45],[0,.3,1]]])
       K.frame(o,d,u).prism(LEAF,-.08,.08,'foglia',{hi:.35,dk:.55,det:L=>L.line(.3,0,4.2,0,'rgba(20,60,10,.55)',.32)});
+    if(st.leg){for(const[o,d,u] of[[[6.4,1.6,.4],[.4,1,.3],[0,-.3,1]],[[-3.6,-1.7,-.3],[.3,-1,-.4],[0,.3,1]],[[-10.4,1.8,.2],[.3,1,.2],[0,-.2,1]]])
+        K.frame(o,d,u).prism(LEAF,-.08,.08,'foglia',{hi:.35,dk:.55,det:L=>L.line(.3,0,4.2,0,'rgba(20,60,10,.55)',.32)});
+      for(const f of[[9.4,-1.6,.8],[-6.8,1.9,-.5]])K.fx(f,q=>{const r=1.1*K.s;for(let i=0;i<5;i++){const a=i*TAU/5+.3;ctx.fillStyle='#ffd8e8';ball([q[0]+Math.cos(a)*r,q[1]+Math.sin(a)*r],r*.75);ctx.fill()}ctx.fillStyle='#ffd84a';ball(q,r*.5);ctx.fill()},.3)}
     return{muzzle:C,orb:C,eject:null,sup:null}},
   // the mages' staff (necromancer, pyromancer, the Witch, the Ice Queen; held 'staff' of the game's rig): a straight dark stick with an
   // iron collar under a big glowing orb (the colour of their eyes, st.orbCol); x goes up the staff, the hand at 0,0,0; st.glow as the Druid's
@@ -11115,7 +11137,7 @@ const M={
   // strings. x along the neck (the pegbox at +x), y out of the soundboard, z across the strings; the body's middle at 0,0,0. st.strum:
   // where the strumming hand is across the strings (-1..1, the hand drawn by the hero); st.ring 0..1: the strings still shaking
   liuto(K,st){const BODY=[[-8,0],[-7.5,-3],[-5.8,-5],[-3,-5.7],[0,-5.2],[2.8,-3.6],[5,-1.7],[5.8,0],[5,1.7],[2.8,3.6],[0,5.2],[-3,5.7],[-5.8,5],[-7.5,3]],
-      W=['#8a4a1e','#c8803e','#f2b46a'],B=['#4a2410','#7a3e1a','#a85a2a'],S=K.frame([0,0,0],[1,0,0],[0,0,1]),rg=st.ring||0;
+      W=st.leg?['#9a6a14','#e8b440','#fff0a0']:['#8a4a1e','#c8803e','#f2b46a'],B=st.leg?['#4a2e0c','#7a5216','#b07a24']:['#4a2410','#7a3e1a','#a85a2a'],S=K.frame([0,0,0],[1,0,0],[0,0,1]),rg=st.ring||0;
     const sc=(k,dx)=>BODY.map(p=>[p[0]*k+dx,p[1]*k]);
     // the bowl (behind the soundboard: the sub-frame's z goes into it), then the soundboard
     S.prism(sc(.5,-1.2),3.4,4.3,B,{hi:0,dk:.5});S.prism(sc(.74,-.7),2.2,3.4,B,{hi:0,dk:.55});S.prism(sc(.9,-.3),.9,2.2,B,{hi:.2,dk:.6});
@@ -11129,10 +11151,12 @@ const M={
     for(const x of[1.2,2.5,3.8])for(const sd of[-1,1])PB.sph([x,0,sd*1.35],.45,'cera',{db:.02});
     // the strings, a little above the soundboard, shaking after the strum
     for(const z of[-.66,-.22,.22,.66]){const w=rg>0?Math.sin(rg*40+z*9)*.32*rg:0;K.rod([[-5.6,.8,z],[1,.95,z+w],[16.2,.62,z]],.22,['#cdbf9f','#f6ead2','#fffaf0'],{noOut:1,hi:0,db:.25})}
+    if(st.leg&&!LOWFX)K.fx([-1,1.2,0],q=>{const tt=TNOW();for(let i=0;i<3;i++){const u=(tt*.6+i/3)%1,sw=Math.sin(u*Math.PI),a=i*2.1+tt*.4,b=[q[0]+Math.cos(a)*7*K.s,q[1]+Math.sin(a)*5*K.s-u*4*K.s],r=(1.3*sw+.2)*K.s;
+      ctx.fillStyle=`rgba(255,240,170,${(.9*sw).toFixed(3)})`;ctx.beginPath();for(let j=0;j<8;j++){const aa=j*Math.PI/4,rr=j%2?r*.45:r*1.8;ctx.lineTo(b[0]+Math.cos(aa)*rr,b[1]+Math.sin(aa)*rr)}ctx.closePath();ctx.fill()}},.3);
     return{muzzle:[1,1.2,0],strum:[-2.4,1.9,cl(st.strum==null?.3:st.strum,-1,1)*2.6],sup:[12.4,1.7,0],eject:null}},
   // the Alchemist's flask: a round belly of glass with the liquid glowing inside (st.col), bubbles rising, a narrow neck and a cork; in
   // the hand at 0,0,0 (y up). st.has 0..1: how much of it there is (a new one pops into the hand after a throw)
-  fiala(K,st){const k=st.has==null?1:st.has;if(k<=.02)return{muzzle:[0,0,0],eject:null,sup:null};const col=st.col||'#7bf06a',rgb=hexRgb(col),
+  fiala(K,st){const k=st.has==null?1:st.has;if(k<=.02)return{muzzle:[0,0,0],eject:null,sup:null};const col=st.leg?hueHex(TNOW()*70):st.col||'#7bf06a',rgb=hexRgb(col),
       GL=['#7f9ea6','#c4e0e6','#ffffff'],R0=3.3*k,C=[1.3,R0*.95,0];
     K.fx(C,q=>shine(rgb,q[0],q[1],R0*2.4*K.s,.32),-4);
     K.sph(C,R0,GL);
@@ -11141,36 +11165,40 @@ const M={
       for(let i=0;i<3;i++){const u=((G.t*.8+i/3)%1),x=q[0]+Math.sin(i*2.3+G.t*2)*r*.35;ball([x,q[1]+r*.75-u*r*.95],r*.11*(1-u*.4));ctx.fill()}ctx.restore();
       ctx.fillStyle='rgba(255,255,255,.8)';ball([q[0]-r*.42,q[1]-r*.45],r*.2);ctx.fill()},.05);
     K.cyl([1.3,R0*1.65,0],[1.3,R0*2.55,0],1.05*k,GL,{db:.02});
-    K.cyl([1.3,R0*2.45,0],[1.3,R0*3,0],1.25*k,'legno',{db:.03});
+    K.cyl([1.3,R0*2.45,0],[1.3,R0*3,0],1.25*k,st.leg?'ottone':'legno',{db:.03});if(st.leg)K.cyl([1.3,R0*1.95,0],[1.3,R0*2.15,0],1.2*k,'ottone',{db:.04});
     return{muzzle:C,eject:null,sup:null}},
   // the Ninja's star: four points of dark steel round a hole, the edges bright; in the hand at 0,0,0. st.has 0..1, st.spin its turn
   stellina(K,st){const k=st.has==null?1:st.has;if(k<=.02)return{muzzle:[0,0,0],eject:null,sup:null};const r=4.4*k,c=[2.2,1.4,0],a0=st.spin||0,pts=[];
     for(let i=0;i<8;i++){const a=i/8*TAU+a0,rr=i%2?r*.3:r;pts.push([Math.cos(a)*rr,Math.sin(a)*rr])}
     const F=K.frame(c,[1,0,0],[0,1,0]);
-    F.prism(pts,-.32,.32,['#262b33','#5c6672','#c9d2dc'],{hi:.55,dk:.55,det:L=>{for(let i=0;i<4;i++){const a=i/4*TAU+a0;L.line(Math.cos(a)*r*.25,Math.sin(a)*r*.25,Math.cos(a)*r*.9,Math.sin(a)*r*.9,'rgba(255,255,255,.35)',.3)}}});
+    if(st.leg&&!LOWFX)K.fx(c,q=>shine('190,150,255',q[0],q[1],r*2.1*K.s,.42),-2);
+    F.prism(pts,-.32,.32,st.leg?['#1a1024','#4a2a6a','#c8a6ff']:['#262b33','#5c6672','#c9d2dc'],{hi:.55,dk:.55,det:L=>{for(let i=0;i<4;i++){const a=i/4*TAU+a0;L.line(Math.cos(a)*r*.25,Math.sin(a)*r*.25,Math.cos(a)*r*.9,Math.sin(a)*r*.9,'rgba(255,255,255,.35)',.3)}}});
     F.disc([0,0,.34],[0,0,1],.85*k,'#121417',{db:.02});F.disc([0,0,-.34],[0,0,-1],.85*k,'#121417',{db:.02});
     return{muzzle:c,eject:null,sup:null}},
   // ---------------------------------------------------------------- the six heroes of 16 October
   // the Paladin's hammer: a walnut handle wrapped in leather at the grip, a golden collar, a short steel head with two golden bands and a
   // golden sun on each face, a little spike on top; x along the handle (the head at +x), the faces along ±y. st.glow 0..1: the suns shine
-  maglio(K,st){const g=st.glow||0;
-    K.tube([[-5,0,0],[5,0,0],[13.6,0,0]],[2.2,2.1,2],'noce');K.cyl([-2.2,0,0],[2.2,0,0],1.45,['#3a2216','#5e3a24','#8a5a38'],{db:.02});
+  maglio(K,st){const g=st.leg?Math.max(.7,st.glow||0):st.glow||0,LG=!!st.leg;
+    K.tube([[-5,0,0],[5,0,0],[13.6,0,0]],[2.2,2.1,2],LG?['#b8ad98','#efe6d6','#fffaf0']:'noce');K.cyl([-2.2,0,0],[2.2,0,0],1.45,['#3a2216','#5e3a24','#8a5a38'],{db:.02});
     K.cyl([12.2,0,0],[13.8,0,0],1.65,'ottone',{db:.02});K.sph([-5.4,0,0],1.6,'ottone',{db:.01});
-    K.box(13.4,-5.4,20.2,5.4,-3.3,3.3,'lucido',{hi:.5},1.1);
-    for(const x of[14.3,19.3])K.box(x-.55,-5.6,x+.55,5.6,-3.5,3.5,'ottone',{hi:.35,db:.03},.3);
+    K.box(13.4,-5.4,20.2,5.4,-3.3,3.3,LG?['#8a5a10','#f0c64a','#fff3c0']:'lucido',{hi:.5},1.1);
+    for(const x of[14.3,19.3])K.box(x-.55,-5.6,x+.55,5.6,-3.5,3.5,LG?'lucido':'ottone',{hi:.35,db:.03},.3);
     K.cyl([20,0,0],[23.4,0,0],1.4,'lucido',{r2:.12,db:.01});
     if(g>.02)K.fx([16.8,0,0],q=>shine('255,220,120',q[0],q[1],(10+8*g)*K.s,.25+.45*g),-3);
-    for(const sd of[-1,1]){K.disc([16.8,sd*5.62,0],[0,sd,0],2.4,'#f0c64a',{db:.04,edge:1});K.disc([16.8,sd*5.66,0],[0,sd,0],1.3,'#fff1a8',{db:.05})}
+    for(const sd of[-1,1]){K.disc([16.8,sd*5.62,0],[0,sd,0],2.4,LG?'#ffffff':'#f0c64a',{db:.04,edge:1});K.disc([16.8,sd*5.66,0],[0,sd,0],1.3,LG?'#ffe27a':'#fff1a8',{db:.05});
+      if(LG&&!LOWFX)K.fx([16.8,sd*5.8,0],q=>{const tt=TNOW();ctx.strokeStyle='rgba(255,240,180,.75)';ctx.lineWidth=.9;ctx.lineCap='round';for(let i=0;i<8;i++){const a=i*Math.PI/4+tt*.6,r0=3.2*K.s,r1=(4.6+.8*Math.sin(tt*6+i))*K.s;ctx.beginPath();ctx.moveTo(q[0]+Math.cos(a)*r0,q[1]+Math.sin(a)*r0);ctx.lineTo(q[0]+Math.cos(a)*r1,q[1]+Math.sin(a)*r1);ctx.stroke()}},.06)}
     return{muzzle:[16.8,0,0],head:[16.8,0,0],eject:null,sup:null}},
   // the Ice Mage's staff: a pale frosted shaft with silver rings, a cluster of ice crystals on top (the big one in the middle, four small
   // ones round it), glowing; x goes up the staff, the hand at 0,0,0; st.glow as the Druid's
-  gelo(K,st){const g=st.glow==null?1:st.glow,ICE=['#3a86c8','#a6dcff','#f2fbff'],FR=['#5a6e86','#a4b8cc','#e6f1fb'];
+  gelo(K,st){const g=st.leg?1.35:st.glow==null?1:st.glow,ICE=st.leg?['#2a6ab8','#9ad4ff','#ffffff']:['#3a86c8','#a6dcff','#f2fbff'],FR=st.leg?['#14244a','#2a4680','#5a7ab8']:['#5a6e86','#a4b8cc','#e6f1fb'];
     K.tube([[-15.5,0,0],[-6,.15,0],[4,-.1,0],[12.6,0,0]],[2.3,2.2,2.15,2.3],FR);
     K.cyl([-1.8,0,0],[1.8,0,0],1.45,['#2a3a5a','#40587e','#7090b8'],{db:.02});K.cyl([11.6,0,0],[13.6,0,0],1.9,'lucido',{db:.03});K.cyl([-15.6,0,0],[-14.4,0,0],1.7,'lucido',{db:.02});
     const C=[19,0,0];K.fx(C,q=>shine('140,215,255',q[0],q[1],(8+3.5*g)*K.s,.22+.32*g),-5);
     for(const[a,b,r] of[[[13.4,1.7,1],[17.6,4.2,1.8],1.1],[[13.4,-1.6,-.8],[17,-4.4,-1.6],1],[[13.4,.4,-1.8],[16.4,1.2,-4.4],.9],[[13.4,-.3,1.8],[16.8,-.8,4.4],.95]])K.cyl(a,b,r,ICE,{r2:.12,n:6,db:.01});
     K.cyl([13,0,0],[16,0,0],2.2,ICE,{n:6,db:.02});K.cyl([16,0,0],[23.6,0,0],2.2,ICE,{r2:.15,n:6,db:.02});
     K.fx(C,q=>{ctx.fillStyle=`rgba(255,255,255,${.55+.3*g})`;ball([q[0]-1.1*K.s,q[1]-1.4*K.s],.75*K.s);ctx.fill()},.06);
+    if(st.leg){for(const[a,b,r] of[[[14,2.4,-1.6],[20,6.2,-3],.9],[[14,-2.2,1.6],[19.6,-5.8,3.2],.85]])K.cyl(a,b,r,ICE,{r2:.12,n:6,db:.01});
+      if(!LOWFX)K.fx(C,q=>{const tt=TNOW();ctx.fillStyle='rgba(240,250,255,.9)';for(let i=0;i<6;i++){const a=tt*1.6+i*TAU/6,rr=(7+1.2*Math.sin(tt*3+i))*K.s;ball([q[0]+Math.cos(a)*rr,q[1]+Math.sin(a)*rr*.55],(.55+.25*Math.sin(tt*5+i*2))*K.s);ctx.fill()}},.4)}
     return{muzzle:C,orb:C,eject:null,sup:null}},
   // the Berserker's axe: an ash handle wrapped at the grip, an iron head with a bearded blade (its edge bright) and a golden rune on the
   // cheek, a little iron spike behind; x along the handle (the head at +x), the blade toward +y. st.has 0..1: how much of it is in the hand
@@ -11178,7 +11206,8 @@ const M={
   ascia(K,st){const k=st.has==null?1:st.has;if(k<=.02)return{muzzle:[14,0,0],eject:null,sup:null};const S=K.frame([0,0,0],[1,0,0],[0,1,0],k);
     S.tube([[-3.5,0,0],[6,0,0],[16.4,0,0]],[2.1,2,1.9],'legno');S.cyl([-1.6,0,0],[2.2,0,0],1.45,['#2a1810','#4a2c1c','#76503a'],{db:.02});S.sph([-3.8,0,0],1.5,'brunito',{db:.01});
     const BL=[[11.2,1.2],[16.2,1.2],[18.6,4.6],[19.4,9.2],[16.2,11],[13.4,8.6],[12.2,4.2]];
-    S.prism(BL,-.75,.75,['#3a4450','#7a8694','#d8e2ec'],{hi:.5,dk:.55,det:L=>{L.line(18.3,4.6,18.9,9.3,'rgba(255,255,255,.75)',.55);L.line(13.6,4.2,15.4,8.4,'#e0b040',.5);L.line(15.4,8.4,16.6,4.6,'#e0b040',.5)}});
+    const LG=!!st.leg;if(LG&&!LOWFX)S.fx([15.4,6,0],q=>shine('255,90,50',q[0],q[1],(6.5+2*Math.sin(TNOW()*9))*K.s,.45),-1);
+    S.prism(BL,-.75,.75,LG?['#1e1a1c','#4a3e44','#8a7a80']:['#3a4450','#7a8694','#d8e2ec'],{hi:.5,dk:.55,det:L=>{L.line(18.3,4.6,18.9,9.3,LG?'#ffd86b':'rgba(255,255,255,.75)',.55);const rc=LG?'#ff5a3a':'#e0b040';L.line(13.6,4.2,15.4,8.4,rc,.5);L.line(15.4,8.4,16.6,4.6,rc,.5);if(LG){L.line(14.6,5.2,16.2,5.4,rc,.4);L.line(13.4,7.4,15,6.4,rc,.4)}}});
     S.box(11.2,-1.6,16.6,1.6,-1.25,1.25,['#2c323a','#535c66','#9aa5b0'],{hi:.35,db:.02},.4);
     S.prism([[12.2,-1.4],[15.6,-1.4],[14,-4.4]],-.55,.55,['#2c323a','#5c6672','#a9b4bf'],{hi:.3,db:.01});
     return{muzzle:[15.4,6,0],eject:null,sup:null}},
@@ -11188,13 +11217,14 @@ const M={
     S.prism([[1.2,-.9],[6.8,-.75],[10.4,0],[6.8,.85],[1.2,.9]],-.32,.32,['#46505c','#a9b4bf','#eef3f7'],{hi:.6,dk:.5,det:L=>L.line(1.6,.15,9.4,.08,'rgba(255,255,255,.7)',.3)});
     S.box(.4,-1.9,1.3,1.9,-.65,.65,'ottone',{hi:.3,db:.02},.3);
     S.cyl([-3.6,0,0],[.5,0,0],1,['#6a1414','#c0282c','#ee6a6a'],{db:.01,det:t=>{ctx.strokeStyle='rgba(40,6,6,.5)';ctx.lineWidth=.45*K.s;for(let i=1;i<4;i++){const a=t.P(t.at(i/4,0,.05)),b=t.P(t.at(i/4+.06,Math.PI,.05));ctx.beginPath();ctx.moveTo(a[0],a[1]);ctx.lineTo(b[0],b[1]);ctx.stroke()}}});
-    S.sph([-3.9,0,0],.9,'ottone',{db:.02});
+    S.sph([-3.9,0,0],.9,st.leg?['#6a0a12','#e5484d','#ffb0b0']:'ottone',{db:.02});
     return{muzzle:[9,0,0],eject:null,sup:null}},
   // the Corsair's sabre (in the hand only for the slash): a curved blade, a golden basket guard round the hand, a dark grip
   sciabola(K,st){const BL=[[1.6,-.7],[8,-1.2],[14,-1.3],[19.4,-.4],[21.4,1.2],[19,.9],[13.6,1],[8,1],[1.6,.9]];
-    K.prism(BL,-.3,.3,['#4a5460','#b4bec8','#f2f6fa'],{hi:.6,dk:.5,det:L=>L.line(2,0,19.6,-.2,'rgba(255,255,255,.6)',.35)});
+    K.prism(BL,-.3,.3,['#4a5460','#b4bec8','#f2f6fa'],{hi:.6,dk:.5,det:L=>{L.line(2,0,19.6,-.2,'rgba(255,255,255,.6)',.35);if(st.leg)L.line(2.4,.45,13,.35,'#e0b040',.35)}});
+    if(st.leg&&!LOWFX)K.fx([2+((TNOW()*.9)%1)*17,0,.32],q=>shine('255,255,255',q[0],q[1],2.6*K.s,.8),.4);
     K.cyl([-3.4,0,0],[.6,0,0],1.05,['#1d1612','#3a2e26','#5e4c40'],{db:.01});
-    K.tube([[1,-2.2,0],[-.4,-3.2,0],[-3,-2.4,0],[-3.8,-.9,0]],[.8,.8,.75,.7],'ottone',{db:.03});K.box(.6,-2.4,1.4,2.4,-1.2,1.2,'ottone',{hi:.35,db:.02},.4);K.sph([-3.9,0,0],1,'ottone',{db:.02});
+    K.tube([[1,-2.2,0],[-.4,-3.2,0],[-3,-2.4,0],[-3.8,-.9,0]],[.8,.8,.75,.7],'ottone',{db:.03});K.box(.6,-2.4,1.4,2.4,-1.2,1.2,'ottone',{hi:.35,db:.02},.4);K.sph([-3.9,0,0],st.leg?1.15:1,st.leg?['#6a0a12','#e5484d','#ffb0b0']:'ottone',{db:.02});
     return{muzzle:[19,0,0],eject:null,sup:null}},
   // the Tamer's whip: a short leather handle with a brass knob; the lash coiled in three loops under the hand (st.out 0), or flying out
   // straight ahead (st.out 1) with a wave running along it (st.wave); the tip cracks (st.crack 0..1, a flash of light)
@@ -11206,7 +11236,9 @@ const M={
       const an=u*TAU*3,cq=[6.4+Math.sin(an)*3.2+u*1.2,-3.4-(1-Math.cos(an))*3.2-u*1.4,Math.cos(an*.5)*.6+(u-.5)*1.4],
         xq=[6.6+u*42,Math.sin(u*Math.PI*2.2-wv*TAU)*3.2*u*(1-o*.5)-u*u*2*(1-o),0];
       pts.push(lerp3(cq,xq,ez(o)));ws.push(lerp(1.6,.55,u))}
-    K.tube(pts,ws,['#3a2214','#7a4a2a','#b07a50'],{db:-.02});
+    K.tube(pts,ws,st.leg?['#8a7a60','#d8ccb0','#fff8e6']:['#3a2214','#7a4a2a','#b07a50'],{db:-.02});
+    if(st.leg){for(let i=3;i<N-1;i+=3)K.fx(pts[i],q=>{ctx.fillStyle='rgba(90,70,50,.55)';ball(q,ws[i]*.55*K.s);ctx.fill()},-.01);
+      const a=pts[N-2],b=pts[N-1],dd=nrm(sub(b,a));K.cyl(b,add(b,mul(dd,3.4)),.9,['#c8bca0','#fffaf0','#ffffff'],{r2:.05,db:.02})}
     const tp=pts[N-1];if(st.crack>0)K.fx(tp,q=>{const c=st.crack;shine('255,240,190',q[0],q[1],(5+8*c)*K.s,.7*c);ctx.strokeStyle=`rgba(255,250,220,${.9*c})`;ctx.lineWidth=1.1;ctx.lineCap='round';
       for(let i=0;i<5;i++){const a=i/5*TAU+.3,r=(2+5*(1-c))*K.s;ctx.beginPath();ctx.moveTo(q[0]+Math.cos(a)*r*.4,q[1]+Math.sin(a)*r*.4);ctx.lineTo(q[0]+Math.cos(a)*r,q[1]+Math.sin(a)*r);ctx.stroke()}},1);
     return{muzzle:tp,tip:tp,eject:null,sup:null}},
@@ -11221,11 +11253,13 @@ const M={
     const N=17,pts=[],ws=[];for(let i=0;i<N;i++){const t=i/(N-1);pts.push(at(t));ws.push(1.4+1.9*Math.pow(Math.sin(t*Math.PI),.7))}
     if(kind==='phoenix')K.fx([0,0,0],q=>shine('255,130,40',q[0],q[1],18*K.s,.3+.08*Math.sin(G.t*9)),-6);
     if(kind==='thunder')K.fx([0,0,0],q=>shine('110,170,255',q[0],q[1],17*K.s,.22+.07*Math.sin(G.t*11)),-6);
+    if(kind==='stelle')K.fx([0,0,0],q=>shine('255,214,110',q[0],q[1],18*K.s,.26+.08*Math.sin(TNOW()*7)),-6);
+    if(kind==='luna')K.fx([0,0,0],q=>shine('180,215,255',q[0],q[1],17*K.s,.24+.06*Math.sin(TNOW()*5)),-6);
     K.tube(pts,ws,T);
     // the grip: a wrap round the middle (leather; green for the recurve, dark green for the thorn bow, gold for the phoenix)
-    const gc=kind==='recurve'?'#6cc24a':kind==='thorn'?'#2f5a22':kind==='phoenix'?'#ffb020':kind==='thunder'?'#d9a520':'#5a3a22',wrap=[];for(let i=0;i<=6;i++)wrap.push(at(.36+i/6*.28));
+    const gc=kind==='recurve'?'#6cc24a':kind==='thorn'?'#2f5a22':kind==='phoenix'?'#ffb020':kind==='thunder'?'#d9a520':kind==='stelle'?'#f0c64a':kind==='luna'?'#4a6aa8':'#5a3a22',wrap=[];for(let i=0;i<=6;i++)wrap.push(at(.36+i/6*.28));
     K.tube(wrap,wrap.map(_=>3.7),tones(gc),{db:.04});
-    if(kind==='recurve'||kind==='phoenix'||kind==='thunder')for(const t of[.355,.645]){const c=at(t),d=tg(t);K.cyl(sub(c,mul(d,.38)),add(c,mul(d,.38)),2.2,'ottone',{db:.06})}
+    if(kind==='recurve'||kind==='phoenix'||kind==='thunder'||kind==='stelle'||kind==='luna')for(const t of[.355,.645]){const c=at(t),d=tg(t);K.cyl(sub(c,mul(d,.38)),add(c,mul(d,.38)),2.2,kind==='luna'?'lucido':'ottone',{db:.06})}
     if(kind==='plain'||kind==='thorn')for(const t of[0,1]){const c=at(t),d=tg(t);K.cyl(c,add(c,mul(d,t?1:-1)),.9,'cera',{r2:.55,db:.03})}
     if(kind==='recurve')for(const sg of[1,-1]){const h=qpts([-bk,sg*L,0],[-bk-.8,sg*(L+3.4),0],[-bk+3.4,sg*(L+4.4),0],6);K.tube(h,[1.4,1.3,1.25,1.15,1.05,.95],T);K.sph(h[5],.62,'ottone',{db:.02})}
     // the thunder bow: golden caps on the tips with sparks that flicker, a golden zigzag on the belly of each limb
@@ -11241,14 +11275,28 @@ const M={
       K.sph([1.25,0,0],1.05,['#7a1408','#ff5a2a','#ffd8a8'],{db:.08});K.fx([1.25,0,0],q=>shine('255,120,60',q[0],q[1],4.5*K.s,.5),.09);
       if(!LOWFX)K.fx([0,0,0],()=>{for(let i=0;i<4;i++){const u=(G.t*.55+i/4)%1,b=K.P(K.W(at(.12+i*.25)));ctx.fillStyle=`rgba(255,${170+60*(1-u)|0},80,${((1-u)*.8).toFixed(3)})`;
         ball([b[0]+Math.sin(G.t*3+i*2)*1.6*u,b[1]-u*10],.9*(1-u)+.3);ctx.fill()}},.5)}
+    // the star bow (the Archer's own, 16 October): golden caps, a golden star turning at each tip, twinkles running along the limbs, a
+    // sapphire on the grip; the moon bow (the Huntress's own): a silver crescent blade hooked forward at each tip, a moonstone on the grip
+    if(kind==='stelle'){for(const t of[0,1]){const c=at(t),d=tg(t),sg=t?1:-1;K.cyl(c,add(c,mul(d,sg*1.1)),1,'ottone',{r2:.5,db:.03});
+        K.fx(add(c,mul(d,sg*2.7)),q=>{const r=3.1*K.s,a0=TNOW()*.8+t;if(!LOWFX)shine('255,226,130',q[0],q[1],r*2.3,.45);ctx.beginPath();for(let i=0;i<10;i++){const a=a0+i*Math.PI/5-Math.PI/2,rr=i%2?r*.45:r;ctx.lineTo(q[0]+Math.cos(a)*rr,q[1]+Math.sin(a)*rr)}ctx.closePath();
+          ctx.fillStyle='#ffd86b';ctx.fill();ctx.lineWidth=1.1;ctx.lineJoin='round';ctx.strokeStyle=INK;ctx.stroke();ctx.fillStyle='#fff6c8';ball([q[0]-r*.15,q[1]-r*.2],r*.24);ctx.fill()},.5)}
+      if(!LOWFX)K.fx([0,0,0],()=>{const tt=TNOW();for(let i=0;i<5;i++){const u=(tt*.7+i*.37)%1,b=K.P(K.W(at(.08+i*.21))),sw=Math.sin(u*Math.PI),r=1.5*sw+.2;ctx.fillStyle=`rgba(255,240,180,${(.9*sw).toFixed(3)})`;ctx.beginPath();
+        for(let j=0;j<8;j++){const a=j*Math.PI/4,rr=j%2?r*.5:r*2;ctx.lineTo(b[0]+Math.cos(a)*rr,b[1]+Math.sin(a)*rr)}ctx.closePath();ctx.fill()}},.6);
+      K.sph([1.25,0,0],1,['#1a2a6a','#6a8cff','#e8f0ff'],{db:.08});K.fx([1.25,0,0],q=>shine('140,170,255',q[0],q[1],3.6*K.s,.45),.09)}
+    if(kind==='luna'){const CRES=[[-1.2,0],[-1.6,1.6],[-1,3.4],[.6,4.6],[2.6,5],[4.4,4.3],[3,4],[1.4,3.6],[.4,2.6],[0,1.2],[.6,0]];
+      for(const t of[0,1]){const c=at(t),d=tg(t),sg=t?1:-1,o=add(c,mul(d,sg*1.1));K.frame(o,[1,0,0],[0,sg,0]).prism(CRES,-.35,.35,['#5a6878','#c9d4e4','#f4f8ff'],{hi:.6,dk:.5,det:L=>L.line(-.6,1.4,3.4,4.6,'rgba(255,255,255,.75)',.3)});
+        if(!LOWFX)K.fx(o,q=>shine('190,220,255',q[0],q[1],6*K.s,.35),.4)}
+      K.sph([1.25,0,0],1,['#2a3a6a','#a6c8ff','#f4f8ff'],{db:.08});K.fx([1.25,0,0],q=>shine('190,220,255',q[0],q[1],3.4*K.s,.5),.09)}
     // the string and the arrow on it
     const pin=st.pinch||[-bk+(st.twang?Math.sin(st.twang*22)*1.2*st.twang:0),0,0];
-    K.rod([top,pin,bot],1.1,['#cdbf9f','#f6ead2','#fffaf0'],{noOut:1,hi:0,db:-.01});
+    K.rod([top,pin,bot],1.1,kind==='stelle'?['#c8a040','#ffe28a','#fff8d0']:kind==='luna'?['#8aa8d8','#d8e8ff','#ffffff']:['#cdbf9f','#f6ead2','#fffaf0'],{noOut:1,hi:0,db:-.01});
     if((st.nock||0)>.5){const a=pin;K.rod([a,[4.6,0,0]],1.05,['#a47a46','#d9b27a','#f3d9a8'],{db:.3,hi:0});K.cyl([4.6,0,0],[7.4,0,0],1.25,'lucido',{r2:.08,db:.31});
       K.prism([[a[0]+.9,.15],[a[0]+3.9,.35],[a[0]+.3,2.1]],-.07,.07,['#8a221b','#e5484d','#f27566'],{hi:0,dk:.8,db:.32});
       K.prism([[a[0]+.9,-.15],[a[0]+.3,-2.1],[a[0]+3.9,-.35]],-.07,.07,['#b7a888','#f6ead2','#fffaf0'],{hi:0,dk:.8,db:.32})}
     return{grip:[0,0,0],nock:pin,muzzle:[7.4,0,0],top,bot}}};
 const hexRgb=h=>{const n=parseInt(h.slice(1),16);return`${n>>16},${n>>8&255},${n&255}`};
+const TNOW=()=>typeof G!=='undefined'&&G&&G.t!=null?G.t:performance.now()/1000;
+const hueHex=h=>{h=((h%360)+360)%360;const f=n=>{const k=(n+h/30)%12,c=.62-.42*Math.max(-1,Math.min(k-3,9-k,1));return Math.round(c*255).toString(16).padStart(2,'0')};return'#'+f(0)+f(8)+f(4)};
 
 // ------------------------------------------------------------------ drawing one
 // fr = {O, X, Y, Z, s}: X forward, Y up, Z to the side (unit vectors in the room); extra(K, its key points) can add pieces (the hands,
@@ -12504,7 +12552,7 @@ function boltFx(V0,a3,b3,al){if(al<=.02)return;const{P}=V0,A=P(a3),B=P(b3),dx=B[
 // the weapon (with its hands and its effects) as one part of the hero, and the free hand at the side
 function weaponParts(parts,V0,X,S,Wp,wid,o){const{D}=V0,cls=Wp.cls,r=Wp.rec,kk=Wp.kick||[0,0],fx=!o.noFx;
   if(cls==='fists'){// the Monk's two fists, wrapped, each in its own place in the draw order; the punch's wave flies off the fist
-    for(const g of[Wp.grip,Wp.hL]){const g3=X.T(g);parts.push({d:D(g3)+.02,f:()=>fistW(V0,g3,2.9,S.hand,S.wraps)})}
+    for(const g of[Wp.grip,Wp.hL]){const g3=X.T(g);if(S.legW&&!LOWFX)parts.push({d:D(g3)-.4,f:()=>{const q=V0.P(g3);shine('255,220,120',q[0],q[1],10,.42)}});parts.push({d:D(g3)+.02,f:()=>fistW(V0,g3,2.9,S.hand,S.wraps)})}
     if(fx&&Wp.cast>=0&&Wp.cast<.35){const k=Wp.cast/.35,g=Wp.side>0?Wp.grip:Wp.hL,c=X.T(add(g,[2+k*30,0,0])),fw=X.Rd([1,0,0]);
       parts.push({d:D(c),f:()=>{const q=V0.P(c),b=V0.P(add(c,fw));waveShape(q[0],q[1],2.6+k*1.6,Math.atan2(b[1]-q[1],b[0]-q[0]),1-k)}})}
     return}
@@ -12536,7 +12584,7 @@ function weaponParts(parts,V0,X,S,Wp,wid,o){const{D}=V0,cls=Wp.cls,r=Wp.rec,kk=W
     parts.push({d:D(c),f:()=>{const q=V0.P(c),r=4.8;ink(2.2);ball(q,r);ctx.fillStyle=soft(q[0]-r*.36,q[1]-r*.42,q[0],q[1],r*1.2,'#2e2e36',.3,.4);ctx.fill();ctx.stroke();
       const f=[q[0]+1.4,q[1]-r-1.6];ctx.strokeStyle='#8a6a44';ctx.lineWidth=1.4;seg([q[0],q[1]-r+.4],f);ctx.stroke();shine('255,200,90',f[0],f[1],6,.85);ctx.fillStyle='#fff3c0';ball(f,1.1);ctx.fill()}})}
   // the reload: where the free hand goes and what it carries (the gun's key points for this state, the hero's points in the gun's frame)
-  const st={...Wp.st};if(wid==='balestra')st.col=S.bowCol;if(wid==='fiala')st.col=S.flask;if(wid==='bastone'||wid==='scettro')st.orbCol=S.eyeCol||'#9fff7a';
+  const st={...Wp.st};if(S.legW)st.leg=1;if(wid==='balestra')st.col=S.bowCol;if(wid==='fiala')st.col=S.flask;if(wid==='bastone'||wid==='scettro')st.orbCol=S.eyeCol||'#9fff7a';
   let RH=null,kp0=null;if(Wp.rl&&ARMI3D.keys&&typeof ARMI!=='undefined'&&ARMI.RLT){kp0=ARMI3D.keys(wid,st);
     const loc=q=>{const d=sub(X.T(q),fr.O);return[dot(d,fr.X)/fr.s,dot(d,fr.Y)/fr.s,dot(d,fr.Z)/fr.s]};RH=reloadHand(Wp.rl,st,kp0,loc,kp0.sup||loc(Wp.hL))}
   parts.push({d:D(X.T(HOLD[cls].anc)),f:()=>{
@@ -21982,7 +22030,7 @@ const rIn=(a,b)=>a+Math.floor(Math.random()*(b-a+1));
 // the cards a pack of a mode can give: Classic items, or zombie guns and accessories
 function packPool(mode){return mode==='zombie'?zGuns().map(id=>({id:'z:'+id,rar:zGunInfo(id).rar})).concat(ZACC.map(a=>({id:'za:'+a.id,rar:a.rar}))):ITEMS.map(i=>({id:i.id,rar:i.rar}))}
 function rollPack(mode,rar){const B=BUSTE[rar],pool=packPool(mode),out={};let left=B.cards;const n=Math.min(6,2+Math.floor(B.cards/14));
-  const pick=r=>{let rr=r,pl=pool.filter(p=>p.rar===rr);while(!pl.length&&rr>0){rr--;pl=pool.filter(p=>p.rar===rr)}return pl[Math.floor(Math.random()*pl.length)]};
+  const pick=r=>{let rr=r,pl=pool.filter(p=>p.rar===rr);while(!pl.length&&rr>0){rr--;pl=pool.filter(p=>p.rar===rr)}return itemPickW(pl)};
   // the promised rare cards first (min, min2 of them), then the rest by the odds
   const forced=[];if(B.min)for(let k=0;k<(B.min2||1);k++)forced.push(B.min);
   for(let s=0;s<n&&left>0;s++){const rr=s<forced.length?forced[s]:pickOdds(B.odds),it=pick(rr);if(!it)continue;let cnt=s===n-1?left:Math.max(1,Math.round(left*(.25+Math.random()*.25)));left-=cnt;
@@ -26305,14 +26353,14 @@ const ESH=id=>P&&P.hero===id;
     if(P.proj==='axe'){axeSpawn(x,y,a,m);return}
     if(P.proj==='lash'){lashSpawn(x,y,a,m);return}}
   _a.apply(this,arguments);const ar=G.arrows[G.arrows.length-1];if(!ar||!P)return;
-  if(P.proj==='hammer'){ar.ham=true;ar.ph=rand(0,TAU);if(++ES.palN%4===0){ar.sacred=true;ar.m*=1.25}}
-  else if(P.proj==='ice'){ar.orb=true;ar.ph=rand(0,TAU);if(++ES.iceN%5===0){ar.frost=true;ar.m*=1.15}}
+  if(P.proj==='hammer'){ar.ham=true;ar.ph=rand(0,TAU);if(++ES.palN%(P.palEvery||4)===0){ar.sacred=true;ar.m*=1.25}}
+  else if(P.proj==='ice'){ar.orb=true;ar.ph=rand(0,TAU);if(++ES.iceN%(P.iceEvery||5)===0){ar.frost=true;ar.m*=1.15}}
   else if(P.proj==='knife')ar.knife=true;
   else if(P.proj==='wave'){ar.wave=true;ar.life=Math.min(ar.life,.6);ar.rad=13;ar.pierce=(ar.pierce||0)+1}}}
 {const _v=volley;volley=function(a){if(!P||!G)return _v.apply(this,arguments);
   // the Corsair: an enemy too close gets the sabre instead of the knives
-  if(P.proj==='knife'){const e=nearest(P.x,P.y);if(e&&Math.hypot(e.x-P.x,e.y-P.y)-e.r<44){slashStart(Math.atan2(e.y-P.y,e.x-P.x));return}}
-  if(P.proj==='wave'){ES.punchN++;P.alt=ES.punchN%2===0;if(ES.punchN%4===0)shockRing(P.x,P.y,1)}
+  if(P.proj==='knife'){const e=nearest(P.x,P.y);if(e&&Math.hypot(e.x-P.x,e.y-P.y)-e.r<(P.sabT||44)){slashStart(Math.atan2(e.y-P.y,e.x-P.x));return}}
+  if(P.proj==='wave'){ES.punchN++;P.alt=ES.punchN%2===0;if(ES.punchN%(P.shockEvery||4)===0)shockRing(P.x,P.y,1)}
   // the axes and the lashes: the volley's shots become them; its giant shot (every third volley) is a big one, here
   const own=P.proj==='axe'||P.proj==='lash',gi=P.giant;if(own){ES.vol=true;P.giant=0}
   try{_v.apply(this,arguments)}finally{if(own){ES.vol=false;P.giant=gi}}
@@ -26330,7 +26378,7 @@ const ESH=id=>P&&P.hero===id;
     if(s.ar.frost)for(const e of nw)if(!e.dead&&!isBoss(e.type)&&!(e.frozen>0)){e.frozen=1.1;text(e.x,e.y-e.r-30,'GELO','#bfe9ff',13);sfx('es','freeze',e.x)}}}}
 // the shield: a golden parry (the shield on his arm flashes)
 {const _hp=hurtP;hurtP=function(d){if(ESH('paladino')&&!INTRO.on&&P.shield&&P.shCd<=0&&!(P.inv>0)&&!(P.dashT>0)&&G.state!=='dead'){
-    P.shCd=6;P.inv=.45;P.shHit=.35;vfxBlast(P.x,P.y-10,'255,215,110',44,{sparks:LOWFX?5:12,spcol:['#fff6c8','#ffd86b','#e0b040'],dust:0,ring2:false});
+    P.shCd=P.shEvery||6;P.inv=.45;P.shHit=.35;vfxBlast(P.x,P.y-10,'255,215,110',44,{sparks:LOWFX?5:12,spcol:['#fff6c8','#ffd86b','#e0b040'],dust:0,ring2:false});
     text(P.x,P.y-42,'PARATO','#ffd86b',14);sfx('es','parry',P.x);return}
   return _hp.apply(this,arguments)}}
 // ------------------------------------------------------------------ the Berserker's axes: out and back
@@ -26351,7 +26399,7 @@ const L_=()=>L,R_=()=>R;
 // ------------------------------------------------------------------ the Corsair: the second knife, the sabre
 function slashStart(a){P.slashT=0;P.face=a;(G.slashQ||(G.slashQ=[])).push({t:.07,a});sfx('es','swish',P.x)}
 function slashHit(a){const x=P.x,y=P.y-6;let n=0;
-  for(const e of G.enemies){if(!canHit(e))continue;const dx=e.x-x,dy=e.y-y,d=Math.hypot(dx,dy);if(d>66+e.r)continue;let da=Math.atan2(dy,dx)-a;da=Math.atan2(Math.sin(da),Math.cos(da));if(Math.abs(da)>1.4&&d>e.r+10)continue;
+  for(const e of G.enemies){if(!canHit(e))continue;const dx=e.x-x,dy=e.y-y,d=Math.hypot(dx,dy);if(d>(P.sabR||66)+e.r)continue;let da=Math.atan2(dy,dx)-a;da=Math.atan2(Math.sin(da),Math.cos(da));if(Math.abs(da)>1.4&&d>e.r+10)continue;
     const crit=Math.random()<P.crit;hurtE(e,P.atk*1.8*(crit?(P.critMul||2):1),crit);ultGain(1.5);n++;if(!e.dead&&!isBoss(e.type)){e.kbx=(e.kbx||0)+Math.cos(a)*120;e.kby=(e.kby||0)+Math.sin(a)*120}}
   G.slashFx={x,y,a,t:0};if(n){shake(2);sfx('es','clang',x);G.hitstop=Math.max(G.hitstop||0,.04)}}
 // ------------------------------------------------------------------ the Tamer's whip: a crack on the first enemy in its reach
@@ -26377,7 +26425,7 @@ function wolfUpdate(dt){if(!ESH('domatore')){G.allies=null;return}let W=G.allies
   if(W.howl>0){W.anim='howl'}
   else if(tg&&Math.hypot(tg.x-P.x,tg.y-P.y)<420){const dx=tg.x-W.x,dy=tg.y-W.y,d=Math.hypot(dx,dy)||1;W.face=Math.atan2(dy,dx);
     if(d>tg.r+15){mx=dx/d*sp;my=dy/d*sp}
-    else if(W.cd<=0){W.cd=W.fury>0?.42:.85;W.bite=.5;const crit=Math.random()<P.crit;hurtE(tg,P.atk*1.05*(W.fury>0?1.3:1)*(crit?(P.critMul||2):1),crit);ultGain(.8);sfx('es','bite',W.x);
+    else if(W.cd<=0){W.cd=W.fury>0?.42:.85;W.bite=.5;const crit=Math.random()<P.crit;hurtE(tg,P.atk*1.05*(W.fury>0?1.3:1)*(P.zannaK||1)*(crit?(P.critMul||2):1),crit);ultGain(.8);sfx('es','bite',W.x);
       if(!tg.dead&&!isBoss(tg.type)){tg.kbx=(tg.kbx||0)+Math.cos(W.face)*36;tg.kby=(tg.kby||0)+Math.sin(tg.face||0)*0+Math.sin(W.face)*36}}}
   else{const hx=P.x-Math.cos(P.face||0)*26,hy=P.y+12-Math.sin(P.face||0)*10,dx=hx-W.x,dy=hy-W.y,d=Math.hypot(dx,dy);if(d>14){const s=Math.min(sp,d*4);mx=dx/d*s;my=dy/d*s;W.face=Math.atan2(dy,dx)}else W.face=P.face||W.face}
   if(mx||my){const nx=clamp(W.x+mx*dt,L+10,R-10),ny=clamp(W.y+my*dt,TOP+14,BOT-8);W.x=nx;W.y=ny}
@@ -26559,7 +26607,7 @@ const GIT={k:0,ang:null,hot:0,spec:null,tg:null,on:()=>!(SAVE.set&&SAVE.set.gitt
 function gitSpec(){if(!P||!P.proj)return null;const sp=P.pspd||560;
   switch(P.proj){
     case 'wave':return{kind:'punch',r:sp*.6+10,rgb:'255,241,168'};   // the wave lives .6 s (93)
-    case 'knife':return{kind:'sabre',r:66,trig:44,rgb:'236,240,248'};  // slashStart under 44 px, slashHit reaches 66
+    case 'knife':return{kind:'sabre',r:P.sabR||66,trig:P.sabT||44,rgb:'236,240,248'};  // slashStart under 44 px, slashHit reaches 66 (the captain's sabre 60 and 90)
     case 'lash':return{kind:'whip',r:200,cone:.38,rgb:'255,236,180'}; // lashSpawn: reach 200, ±.38 rad
     case 'axe':return{kind:'axe',r:sp*.414,rgb:'236,240,248'};        // out for .46 s slowing down: 232 px at 560 px/s
     case 'flask':return{kind:'flask',r:44,rgb:'123,240,106'};}         // flaskBurst: 44 px round where it bursts
@@ -26597,7 +26645,7 @@ function gitDraw(){if(!G||!P||INTRO.on||GIT.k<.02||!GIT.spec||G.state==='dead')r
     ctx.strokeStyle=`rgba(${c},${la.toFixed(3)})`;ctx.lineWidth=2.6;ctx.stroke();ctx.restore()};
   if(S.kind==='punch'){lane(16,S.r,30,(.07+.07*H)*A,(.45+.3*H)*A);
     // the fourth punch shakes the ground: its ring waits round him
-    if(typeof ES!=='undefined'&&ES.punchN%4===3){ctx.strokeStyle=`rgba(255,215,110,${((.3+.16*Math.sin(t*8))*A).toFixed(3)})`;ctx.lineWidth=2.2;ctx.beginPath();ctx.arc(x,y,74,0,TAU);ctx.stroke()}}
+    if(typeof ES!=='undefined'&&ES.punchN%(P.shockEvery||4)===(P.shockEvery||4)-1){ctx.strokeStyle=`rgba(255,215,110,${((.3+.16*Math.sin(t*8))*A).toFixed(3)})`;ctx.lineWidth=2.2;ctx.beginPath();ctx.arc(x,y,74,0,TAU);ctx.stroke()}}
   else if(S.kind==='sabre')slice(12,S.r,a-1.4,a+1.4,(.035+.11*H)*A,(.26+.44*H)*A,false);
   else if(S.kind==='whip')slice(18,S.r,a-S.cone,a+S.cone,(.05+.07*H)*A,(.36+.3*H)*A,true);
   else if(S.kind==='axe'){
@@ -26886,6 +26934,96 @@ function mqHTML(id){const l=mqLvl(id),x=mqXP(id),max=l>=10,a=MQ_XP[l-1],b=max?a:
   <div class="mqTip">Si guadagna giocando con questo eroe: nemici, boss, stanze pulite. La Super cresce ai livelli 3, 6 e 10.</div>`}
 {const _rh=renderHero;renderHero=function(){const r=_rh.apply(this,arguments);try{const h=HERO_BY[heroView]||HEROES[0],info=$('heroInfo');if(info){let box=$('mqBox');
     if(!box){box=document.createElement('div');box.id='mqBox';box.className='mqBox';info.insertAdjacentElement('afterend',box)}box.innerHTML=mqHTML(h.id)}}catch(e){}return r}}
+// =====================================================================
+// THE HEROES' OWN WEAPONS (Denis, 16 October: «Armi proprie: un'arma speciale per ogni eroe nelle casse», and of two ways «Tutti, potere
+// col suo»: anyone can carry one for its numbers; its look and its special power only with its own hero). Thirteen legendary weapons
+// (rarity 4, slot «arma»), one a hero. With its hero: the weapon in his hand changes (sprite/eroe3d/armi3d.js, st.leg: the star bow, the
+// moon bow, the dragon crossbow, the willow staff, the golden lute, the rainbow flask, the shadow stars, the hammer of the dawn, the staff
+// of the blizzard, the thunder axes, the captain's sabre, the fang whip, the golden beads and fists) and his trick gets stronger (POWER).
+// With another hero only the numbers. In the chests, the shop and the packs (itemPickW): a hero's own weapon comes more often when you
+// play him, less when you own him, rarely when you do not; the three legendaries of before keep their chance.
+// =====================================================================
+// what each one gives with its own hero (the rows of the weapons are in 07, with the other items)
+const OWNP={arco_stelle:'ogni quinta freccia è una stella che si divide in tre quando colpisce',arco_luna:'le frecce rimbalzano su un nemico in più e i critici arrivano più spesso',balestra_drago:'i dardi bruciano e spingono più lontano',bastone_salice:'le foglie a volte bloccano il nemico con le radici e ogni colpo ti cura un poco',liuto_oro:'le note rimbalzano su due nemici in più e ogni ottava nota ti cura',fiala_arcobaleno:'pozze più grandi e il veleno fa il doppio',stelle_ombra:'cinque stelline a ventaglio invece di tre',martello_alba:'ogni terzo martello è sacro e lo scudo para un colpo ogni 4 secondi',bastone_bufera:'ogni terza sfera gela il nemico',asce_tuono:'lancia due asce insieme',sciabola_capitano:'tre coltelli invece di due e la sciabola arriva più lontano',frusta_zanna:'la frusta colpisce due nemici e Zanna morde più forte',grani_quiete:"ogni terzo pugno fa l'onda d'urto"};
+const OWNA={arciere:"con l'",alchimista:"con l'",cacciatrice:'con la '};
+for(const id in OWNP){const it=ITEM[id],h=it&&HERO_BY[it.hero];if(it)it.perk=`Solo ${OWNA[it.hero]||'col '}${h?h.n:it.hero}: ${OWNP[id]}`}
+const ownW=()=>{const id=SAVE.eq&&SAVE.eq.arma,it=id&&ITEM[id];return it&&it.hero?it:null};
+// ---- in the chests, the shop and the packs: weighted (the hero you play, the ones you own, the others; the old legendaries stay at 1)
+function itemW(o){const it=o&&(o.hero!==undefined?o:ITEM[o.id]);if(!it||!it.hero)return 1;return it.hero===SAVE.hero?1:SAVE.heroes&&SAVE.heroes[it.hero]?.35:.12}
+function itemPickW(pool,rnd){if(!pool||!pool.length)return undefined;const r0=rnd||Math.random,w=pool.map(itemW),tot=w.reduce((a,b)=>a+b,0);let r=r0()*tot;for(let i=0;i<pool.length;i++){r-=w[i];if(r<0)return pool[i]}return pool[pool.length-1]}
+// ---- the look: the weapon of his own hero, in his hand (the colours of the stave or the beads, the kind of bow); another hero keeps his
+{const _hs=heroStyle0;heroStyle0=function(id){const s=_hs.apply(this,arguments),it=ownW();if(!it)return s;const hid=s.hid||id||SAVE.hero,base=(HERO_BY[hid]||HEROES[0]).style||{};
+  if(it.hero!==hid)return{...s,bowCol:base.bowCol||HERO.bowCol};
+  const o={...s,legW:it.id};
+  if(it.id==='arco_stelle'){o.bowKind='stelle';o.bowCol='#2c3f8a'}else if(it.id==='arco_luna'){o.bowKind='luna';o.bowCol='#d0dae8'}
+  else if(it.id==='balestra_drago')o.bowCol='#6a1812';else if(it.id==='grani_quiete'){o.wraps='#f0c64a';o.beads='#e0b040'}
+  return o}}
+// ---- the power: only with his own hero (after the hero's own numbers)
+{const _am=applyMeta;applyMeta=function(p){_am.apply(this,arguments);if(!p)return;const it=ownW();p.own=it&&it.hero===p.hero?it.id:null;if(!p.own)return;
+  if(p.own==='arco_luna'){p.ric=(p.ric||0)+1;p.crit+=.08}
+  else if(p.own==='balestra_drago'){p.fire=true;p.kbm=(p.kbm||1)*1.35}
+  else if(p.own==='liuto_oro')p.ric=(p.ric||0)+2;
+  else if(p.own==='martello_alba'){p.palEvery=3;p.shEvery=4}
+  else if(p.own==='bastone_bufera')p.iceEvery=3;
+  else if(p.own==='sciabola_capitano'){p.sabT=60;p.sabR=90}
+  else if(p.own==='frusta_zanna')p.zannaK=1.3;
+  else if(p.own==='grani_quiete')p.shockEvery=3}}
+// the star arrow (every fifth volley of the Archer), the notes that heal (every eighth of the Bard), the stars of the Ninja, the third knife
+let OWN_N=0;
+{const _v=volley;volley=function(a){const pre=P&&P.slashT;const r=_v.apply(this,arguments);try{if(!P||!G||INTRO.on||!P.own)return r;const id=P.own;OWN_N++;
+  if(id==='arco_stelle'&&OWN_N%5===0){for(let i=G.arrows.length-1;i>=0&&i>=G.arrows.length-6;i--){const ar=G.arrows[i];if(!ar.blade&&!ar.star&&!ar.starKid){ar.star=true;ar.m*=1.2;break}}}
+  else if(id==='liuto_oro'&&OWN_N%8===0){const v=Math.max(1,Math.round(P.maxhp*.02));if(P.hp<P.maxhp){P.hp=Math.min(P.maxhp,P.hp+v);text(P.x,P.y-44,'+'+v,'#ffd84a',14)}}
+  else if(id==='stelle_ombra'&&P.proj==='star'){arrow(P.x,P.y-6,a+.44,.35);arrow(P.x,P.y-6,a-.44,.35)}
+  else if(id==='sciabola_capitano'&&P.proj==='knife'&&P.slashT==null)(G.knifeQ||(G.knifeQ=[])).push({t:.18,a})}catch(e){}return r}}
+// the Berserker's two axes (not the big one of every third volley)
+if(typeof axeSpawn==='function'){const _ax=axeSpawn;axeSpawn=function(x,y,a,m){if(P&&P.own==='asce_tuono'&&!(m>2)){_ax.call(this,x,y,a-.13,m);return _ax.call(this,x,y,a+.13,m)}return _ax.apply(this,arguments)}}
+// the Tamer's whip: a second crack on another enemy in reach
+if(typeof lashSpawn==='function'){const _ls=lashSpawn;lashSpawn=function(x,y,a,m){const r=_ls.apply(this,arguments);try{if(P&&P.own==='frusta_zanna'&&G.lashes&&G.lashes.length){const L=G.lashes,first=L[L.length-1].e;let best=null,bd=1e9;
+    for(const e of G.enemies){if(!canHit(e)||e===first)continue;const d=Math.hypot(e.x-P.x,e.y-P.y)-e.r;if(d>200)continue;let da=Math.atan2(e.y-P.y,e.x-P.x)-a;da=Math.atan2(Math.sin(da),Math.cos(da));if(Math.abs(da)>.9)continue;if(d<bd){bd=d;best=e}}
+    if(best){const an=Math.atan2(best.y-P.y,best.x-P.x);L.push({a:an,t:-.06,dur:.32,e:best,tx:best.x,ty:best.y-best.r*.6,m:m||1,hit:false,side:-L[L.length-1].side||1})}}}catch(e){}return r}}
+// the Alchemist: bigger puddles, and the poison twice
+if(typeof pzAdd==='function'){const _pz=pzAdd;pzAdd=function(x,y,r,t,big){if(P&&P.own==='fiala_arcobaleno'){r*=1.3;t*=1.2}return _pz.call(this,x,y,r,t,big)}}
+if(typeof flaskBurst==='function'){const _fb=flaskBurst;flaskBurst=function(ar){const r=_fb.apply(this,arguments);try{if(P&&P.own==='fiala_arcobaleno'&&G){const R0=ar.big?62:44;for(const e of G.enemies)if(canHit(e)&&!e.dead&&Math.hypot(e.x-ar.x,e.y-ar.y)<R0+e.r)e.poisonS=Math.min(4,(e.poisonS||0)+1)}}catch(e){}return r}}
+// the hits of the shots (a set of the enemies each had hit, before the game's update): the star splits, the willow's leaves root and heal
+{const _u=update;update=function(dt){const g=G,A0=g&&g.arrows;let snap=null;
+  if(A0&&A0.length&&P&&(P.own==='arco_stelle'||P.own==='bastone_salice')){snap=[];for(const ar of A0)if(!ar.blade&&(ar.star||P.own==='bastone_salice'))snap.push({ar,h:new Set(ar.hit)})}
+  _u.apply(this,arguments);if(!snap||G!==g||!P)return;
+  try{let heal=0;for(const s of snap){for(const e of s.ar.hit){if(s.h.has(e))continue;
+      if(s.ar.star&&!s.ar.split){s.ar.split=true;const a=s.ar.a!=null?s.ar.a:Math.atan2(s.ar.vy,s.ar.vx);for(const da of[-.55,0,.55]){arrow(e.x,e.y,a+da,.5);const k=G.arrows[G.arrows.length-1];if(k){k.starKid=true;k.hit.add(e)}}
+        vfxBlast(e.x,e.y,'255,226,130',26,{sparks:LOWFX?4:10,spcol:['#fff6c8','#ffd86b','#e0b040'],dust:0,ring2:false});sfx('es','bell',e.x)}
+      if(P.own==='bastone_salice'){heal++;if(!isBoss(e.type)&&!e.dead&&Math.random()<.1&&!(e.root>0)){e.root=1;e.rootT=0;e.rootK=.5;vfxBlast(e.x,e.y,'150,255,120',22,{sparks:0,debris:'leaf',n:LOWFX?3:6,dust:2,ring2:false})}}}}
+    if(heal&&P.hp<P.maxhp)P.hp=Math.min(P.maxhp,P.hp+heal)}catch(err){}}}
+// the star arrow: golden, with a glow and a little star turning on it
+{const _da=drawArrow;drawArrow=function(a){if(a&&a.star&&!LOWFX){ctx.save();ctx.globalCompositeOperation='lighter';glow('255,226,130',a.x,a.y,16,.6);ctx.restore()}_da.apply(this,arguments);
+  if(a&&a.star){const r=4.2,a0=(G.t||0)*9;ctx.save();ctx.beginPath();for(let i=0;i<10;i++){const an=a0+i*Math.PI/5,rr=i%2?r*.45:r;ctx.lineTo(a.x+Math.cos(an)*rr,a.y+Math.sin(an)*rr)}ctx.closePath();ctx.fillStyle='#ffd86b';ctx.fill();ctx.lineWidth=1.2;ctx.strokeStyle=INK;ctx.stroke();ctx.restore()}}}
+// ---- the icons: the 3D weapons with their own look (the beads drawn by hand)
+if(typeof ITART!=='undefined'){const B3=(id,st,rot,rgb)=>x=>{if(rgb)iglow(x,rgb,48,48,42,.32);return bow3d(x,id,{leg:1,...st},rot)};
+  Object.assign(ITART,{
+    arco_stelle:B3('arco',{kind:'stelle',col:'#2c3f8a',draw:0,nock:1},.62,'255,214,110'),
+    arco_luna:B3('arco',{kind:'luna',col:'#d0dae8',draw:0,nock:1},.62,'180,215,255'),
+    balestra_drago:B3('balestra',{draw:1,bolt:true,col:'#6a1812'},-.5,'255,120,40'),
+    bastone_salice:B3('bastone',{glow:1},-.8,'255,226,130'),
+    liuto_oro:B3('liuto',{},-.5,'255,214,110'),
+    fiala_arcobaleno:B3('fiala',{},0,'200,140,255'),
+    stelle_ombra:B3('stellina',{},0,'190,150,255'),
+    martello_alba:B3('maglio',{glow:1},-.8,'255,226,140'),
+    bastone_bufera:B3('gelo',{glow:1},-.8,'150,215,255'),
+    asce_tuono:B3('ascia',{},-.8,'255,90,50'),
+    sciabola_capitano:B3('sciabola',{},-.9,'255,226,140'),
+    frusta_zanna:B3('frusta',{out:0},-.6,'230,220,190'),
+    grani_quiete:x=>{iglow(x,'255,220,120',48,48,40,.3);const N=14,cx=48,cy=44,rx=26,ry=24;
+      for(let i=0;i<N;i++){const a=i/N*TAU-Math.PI/2,bx=cx+Math.cos(a)*rx,by=cy+Math.sin(a)*ry,big=i%4===0,r=big?6.4:5;
+        paint(x,()=>{x.beginPath();x.arc(bx,by,r,0,TAU)},big?'#c8323c':'#e0b040',{box:[bx-r,by-r,bx+r,by+r],lw:2.6,rim:false});x.fillStyle='rgba(255,255,255,.7)';x.beginPath();x.arc(bx-r*.35,by-r*.38,r*.26,0,TAU);x.fill()}
+      // the tassel
+      paint(x,()=>{x.beginPath();x.moveTo(44,70);x.lineTo(52,70);x.lineTo(56,90);x.lineTo(40,90);x.closePath()},'#c8323c',{box:[40,70,56,90],lw:2.6});
+      paint(x,()=>{x.beginPath();x.arc(48,70,4.6,0,TAU)},'#e0b040',{box:[43,65,53,75],lw:2.4,rim:false})}})}
+// ---- the item sheet: whose weapon it is
+{const _oi=typeof openItem==='function'?openItem:null;if(_oi)openItem=function(id){const r=_oi.apply(this,arguments);try{const it=ITEM[id];if(it&&it.hero){const h=HERO_BY[it.hero];
+  const el=document.querySelector('#itemPanel .ihead .tag');if(el&&h&&!/Arma d/.test(el.textContent))el.textContent=el.textContent.replace(/Arma$/,'Arma '+(/^[AEIOU]/.test(h.n)?"dell'":it.hero==='cacciatrice'?'della ':'del ')+h.n)}}catch(e){}return r}}
+// ---- taking a hero into the field: if in your hand there is another hero's own weapon (that gives him nothing) and you have his own, he
+// takes his own (a weapon of the others, chosen by you, stays)
+$('hAct').addEventListener('click',e=>{const b=e.target.closest('[data-hact]');if(!b||b.dataset.hact!=='use')return;try{const cur=ITEM[SAVE.eq.arma],mine=ITEMS.find(i=>i.hero===SAVE.hero);
+  if(cur&&cur.hero&&cur.hero!==SAVE.hero&&mine&&SAVE.items[mine.id]){SAVE.eq.arma=mine.id;save();toast(mine.n+' in mano');renderHero();renderGear()}}catch(err){}});
 })();
 };
 </script>

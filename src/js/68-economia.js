@@ -80,7 +80,7 @@ const rIn=(a,b)=>a+Math.floor(Math.random()*(b-a+1));
 // the cards a pack of a mode can give: Classic items, or zombie guns and accessories
 function packPool(mode){return mode==='zombie'?zGuns().map(id=>({id:'z:'+id,rar:zGunInfo(id).rar})).concat(ZACC.map(a=>({id:'za:'+a.id,rar:a.rar}))):ITEMS.map(i=>({id:i.id,rar:i.rar}))}
 function rollPack(mode,rar){const B=BUSTE[rar],pool=packPool(mode),out={};let left=B.cards;const n=Math.min(6,2+Math.floor(B.cards/14));
-  const pick=r=>{let rr=r,pl=pool.filter(p=>p.rar===rr);while(!pl.length&&rr>0){rr--;pl=pool.filter(p=>p.rar===rr)}return pl[Math.floor(Math.random()*pl.length)]};
+  const pick=r=>{let rr=r,pl=pool.filter(p=>p.rar===rr);while(!pl.length&&rr>0){rr--;pl=pool.filter(p=>p.rar===rr)}return itemPickW(pl)};
   // the promised rare cards first (min, min2 of them), then the rest by the odds
   const forced=[];if(B.min)for(let k=0;k<(B.min2||1);k++)forced.push(B.min);
   for(let s=0;s<n&&left>0;s++){const rr=s<forced.length?forced[s]:pickOdds(B.odds),it=pick(rr);if(!it)continue;let cnt=s===n-1?left:Math.max(1,Math.round(left*(.25+Math.random()*.25)));left-=cnt;

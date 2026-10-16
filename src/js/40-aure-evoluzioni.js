@@ -419,7 +419,7 @@ function drawHeroPreview(dt,cvx,hid){pvT+=dt;const C=cvx||hcv,X=C.getContext('2d
 const DEAL_N=[14,9,5,3,1],DEAL_P=[120,240,450,900,2200];
 function ensureDeals(){const t=today();if(SAVE.deals&&SAVE.deals.day===t)return;
   let h=7;for(const ch of t)h=(Math.imul(h,31)+ch.charCodeAt(0))>>>0;const rnd=()=>{h=(Math.imul(h,1103515245)+12345)>>>0;return h/4294967296};
-  const pick=r=>{const pool=ITEMS.filter(i=>i.rar===r);return pool[Math.floor(rnd()*pool.length)]};const list=[];
+  const pick=r=>{const pool=ITEMS.filter(i=>i.rar===r);return itemPickW(pool,rnd)};const list=[];
   for(const r of [0,1,2+(rnd()<.35?1:0)+(rnd()<.08?1:0)]){let it=pick(Math.min(4,r));while(list.some(x=>x.id===it.id))it=pick(Math.min(4,r));list.push({id:it.id,n:DEAL_N[it.rar],p:DEAL_P[it.rar],sold:false})}
   SAVE.deals={day:t,list};save()}
 // gold for gems: what the crystals' gems are for

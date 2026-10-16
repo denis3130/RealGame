@@ -1240,7 +1240,7 @@ function boltFx(V0,a3,b3,al){if(al<=.02)return;const{P}=V0,A=P(a3),B=P(b3),dx=B[
 // the weapon (with its hands and its effects) as one part of the hero, and the free hand at the side
 function weaponParts(parts,V0,X,S,Wp,wid,o){const{D}=V0,cls=Wp.cls,r=Wp.rec,kk=Wp.kick||[0,0],fx=!o.noFx;
   if(cls==='fists'){// the Monk's two fists, wrapped, each in its own place in the draw order; the punch's wave flies off the fist
-    for(const g of[Wp.grip,Wp.hL]){const g3=X.T(g);parts.push({d:D(g3)+.02,f:()=>fistW(V0,g3,2.9,S.hand,S.wraps)})}
+    for(const g of[Wp.grip,Wp.hL]){const g3=X.T(g);if(S.legW&&!LOWFX)parts.push({d:D(g3)-.4,f:()=>{const q=V0.P(g3);shine('255,220,120',q[0],q[1],10,.42)}});parts.push({d:D(g3)+.02,f:()=>fistW(V0,g3,2.9,S.hand,S.wraps)})}
     if(fx&&Wp.cast>=0&&Wp.cast<.35){const k=Wp.cast/.35,g=Wp.side>0?Wp.grip:Wp.hL,c=X.T(add(g,[2+k*30,0,0])),fw=X.Rd([1,0,0]);
       parts.push({d:D(c),f:()=>{const q=V0.P(c),b=V0.P(add(c,fw));waveShape(q[0],q[1],2.6+k*1.6,Math.atan2(b[1]-q[1],b[0]-q[0]),1-k)}})}
     return}
@@ -1272,7 +1272,7 @@ function weaponParts(parts,V0,X,S,Wp,wid,o){const{D}=V0,cls=Wp.cls,r=Wp.rec,kk=W
     parts.push({d:D(c),f:()=>{const q=V0.P(c),r=4.8;ink(2.2);ball(q,r);ctx.fillStyle=soft(q[0]-r*.36,q[1]-r*.42,q[0],q[1],r*1.2,'#2e2e36',.3,.4);ctx.fill();ctx.stroke();
       const f=[q[0]+1.4,q[1]-r-1.6];ctx.strokeStyle='#8a6a44';ctx.lineWidth=1.4;seg([q[0],q[1]-r+.4],f);ctx.stroke();shine('255,200,90',f[0],f[1],6,.85);ctx.fillStyle='#fff3c0';ball(f,1.1);ctx.fill()}})}
   // the reload: where the free hand goes and what it carries (the gun's key points for this state, the hero's points in the gun's frame)
-  const st={...Wp.st};if(wid==='balestra')st.col=S.bowCol;if(wid==='fiala')st.col=S.flask;if(wid==='bastone'||wid==='scettro')st.orbCol=S.eyeCol||'#9fff7a';
+  const st={...Wp.st};if(S.legW)st.leg=1;if(wid==='balestra')st.col=S.bowCol;if(wid==='fiala')st.col=S.flask;if(wid==='bastone'||wid==='scettro')st.orbCol=S.eyeCol||'#9fff7a';
   let RH=null,kp0=null;if(Wp.rl&&ARMI3D.keys&&typeof ARMI!=='undefined'&&ARMI.RLT){kp0=ARMI3D.keys(wid,st);
     const loc=q=>{const d=sub(X.T(q),fr.O);return[dot(d,fr.X)/fr.s,dot(d,fr.Y)/fr.s,dot(d,fr.Z)/fr.s]};RH=reloadHand(Wp.rl,st,kp0,loc,kp0.sup||loc(Wp.hL))}
   parts.push({d:D(X.T(HOLD[cls].anc)),f:()=>{

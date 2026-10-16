@@ -375,11 +375,15 @@ const M={
     if(bolt){const x0=nut[0]+.4,y=3.05,bl=['#1d3f78','#4d97ff','#a9cdff'];K.rod([[x0,y,0],[13.9,y,0]],.62,'lucido',{db:.06});K.cyl([13.7,y,0],[15.9,y,0],.62,'lucido',{r2:.06,db:.07});
       const fl=K.frame([x0,y,0],[1,0,0],[0,0,1]);fl.prism([[.3,0],[2.9,0],[.8,1.5]],-.07,.07,bl,{hi:0,dk:.7,db:.09});fl.prism([[.3,0],[.8,-1.5],[2.9,0]],-.07,.07,bl,{hi:0,dk:.7,db:.09});
       K.prism([[x0+.3,y],[x0+2.9,y],[x0+.8,y+1.4]],-.07,.07,bl,{hi:0,dk:.7,db:.09})}
+    if(st.leg){const DH=[[13.4,3.9],[16.4,3.6],[18.9,2.7],[17.6,2.15],[19,1.5],[17.4,1],[16,1.4],[14.4,.4],[13.2,1.2]];
+      K.prism(DH,-1.25,1.25,['#7a4a10','#e0b040','#fff0a0'],{hi:.5,dk:.55,det:L=>{L.line(14.6,3.6,15.6,1.6,'rgba(90,50,10,.55)',.35);L.line(16.2,3.4,17,2.2,'rgba(90,50,10,.45)',.3)}});
+      for(const sd of[-1,1]){K.cyl([14.6,3.4,sd*.9],[12.4,5.4,sd*1.4],.42,'ottone',{r2:.2,db:.03});K.fx([16.6,2.95,sd*1.27],q=>{ctx.fillStyle='#ff3a2a';ball(q,.55*K.s);ctx.fill();if(!LOWFX)shine('255,80,40',q[0],q[1],2.6*K.s,.7)},.2)}
+      K.fx([18.4,2,0],q=>shine('255,120,40',q[0],q[1],(5+1.5*Math.sin(TNOW()*8))*K.s,.42),.3)}
     return{muzzle:[16,3.05,0],eject:null,sup:[7.6,.9,0],nut}},
   // the Druid's staff: a crooked branch, thicker at the foot, with two knots and a green cloth wrap where the hand holds it; at the top the
   // wood swells and opens in three prongs that cup a glowing orb (the colour of the Druid's eyes); two leaves. x goes up the staff, the
   // hand is at 0,0,0. st.glow: how bright the orb is (it flares when the staff casts), st.orbCol
-  bastone(K,st){const g=st.glow==null?1:st.glow,oc=st.orbCol||'#9fff7a',OT=[mix(oc,'#0d2a12',.5),oc,mix(oc,'#ffffff',.72)],rgb=hexRgb(oc),T='corteccia';
+  bastone(K,st){const g=st.leg?1.3:st.glow==null?1:st.glow,oc=st.leg?'#ffe27a':st.orbCol||'#9fff7a',OT=[mix(oc,'#0d2a12',.5),oc,mix(oc,'#ffffff',.72)],rgb=hexRgb(oc),T=st.leg?['#6a5a3a','#b8a070','#ece0b8']:'corteccia';
     K.tube([[-15.5,0,0],[-10,.5,.2],[-4,-.3,-.2],[2,.3,.1],[8,-.3,0],[12.6,.1,0]],[2.6,2.5,2.35,2.25,2.15,2.35],T);
     K.sph([-8.2,1.05,.3],.9,T,{db:.02});K.sph([5,-1.05,-.2],.85,T,{db:.02});
     K.cyl([-2.3,0,0],[2.3,0,0],1.55,'stoffa',{det:t=>{ctx.strokeStyle='rgba(16,40,10,.5)';ctx.lineWidth=.5*K.s;ctx.lineCap='round';
@@ -394,6 +398,9 @@ const M={
     const LEAF=[[0,0],[1.2,.85],[2.6,1.05],[3.8,.7],[4.8,0],[3.8,-.7],[2.6,-1.05],[1.2,-.85]];
     for(const[o,d,u] of[[[12.4,1.2,.7],[.5,1,.55],[0,-.4,1]],[[11.2,-1.1,-.6],[.35,-1,-.45],[0,.3,1]]])
       K.frame(o,d,u).prism(LEAF,-.08,.08,'foglia',{hi:.35,dk:.55,det:L=>L.line(.3,0,4.2,0,'rgba(20,60,10,.55)',.32)});
+    if(st.leg){for(const[o,d,u] of[[[6.4,1.6,.4],[.4,1,.3],[0,-.3,1]],[[-3.6,-1.7,-.3],[.3,-1,-.4],[0,.3,1]],[[-10.4,1.8,.2],[.3,1,.2],[0,-.2,1]]])
+        K.frame(o,d,u).prism(LEAF,-.08,.08,'foglia',{hi:.35,dk:.55,det:L=>L.line(.3,0,4.2,0,'rgba(20,60,10,.55)',.32)});
+      for(const f of[[9.4,-1.6,.8],[-6.8,1.9,-.5]])K.fx(f,q=>{const r=1.1*K.s;for(let i=0;i<5;i++){const a=i*TAU/5+.3;ctx.fillStyle='#ffd8e8';ball([q[0]+Math.cos(a)*r,q[1]+Math.sin(a)*r],r*.75);ctx.fill()}ctx.fillStyle='#ffd84a';ball(q,r*.5);ctx.fill()},.3)}
     return{muzzle:C,orb:C,eject:null,sup:null}},
   // the mages' staff (necromancer, pyromancer, the Witch, the Ice Queen; held 'staff' of the game's rig): a straight dark stick with an
   // iron collar under a big glowing orb (the colour of their eyes, st.orbCol); x goes up the staff, the hand at 0,0,0; st.glow as the Druid's
@@ -423,7 +430,7 @@ const M={
   // strings. x along the neck (the pegbox at +x), y out of the soundboard, z across the strings; the body's middle at 0,0,0. st.strum:
   // where the strumming hand is across the strings (-1..1, the hand drawn by the hero); st.ring 0..1: the strings still shaking
   liuto(K,st){const BODY=[[-8,0],[-7.5,-3],[-5.8,-5],[-3,-5.7],[0,-5.2],[2.8,-3.6],[5,-1.7],[5.8,0],[5,1.7],[2.8,3.6],[0,5.2],[-3,5.7],[-5.8,5],[-7.5,3]],
-      W=['#8a4a1e','#c8803e','#f2b46a'],B=['#4a2410','#7a3e1a','#a85a2a'],S=K.frame([0,0,0],[1,0,0],[0,0,1]),rg=st.ring||0;
+      W=st.leg?['#9a6a14','#e8b440','#fff0a0']:['#8a4a1e','#c8803e','#f2b46a'],B=st.leg?['#4a2e0c','#7a5216','#b07a24']:['#4a2410','#7a3e1a','#a85a2a'],S=K.frame([0,0,0],[1,0,0],[0,0,1]),rg=st.ring||0;
     const sc=(k,dx)=>BODY.map(p=>[p[0]*k+dx,p[1]*k]);
     // the bowl (behind the soundboard: the sub-frame's z goes into it), then the soundboard
     S.prism(sc(.5,-1.2),3.4,4.3,B,{hi:0,dk:.5});S.prism(sc(.74,-.7),2.2,3.4,B,{hi:0,dk:.55});S.prism(sc(.9,-.3),.9,2.2,B,{hi:.2,dk:.6});
@@ -437,10 +444,12 @@ const M={
     for(const x of[1.2,2.5,3.8])for(const sd of[-1,1])PB.sph([x,0,sd*1.35],.45,'cera',{db:.02});
     // the strings, a little above the soundboard, shaking after the strum
     for(const z of[-.66,-.22,.22,.66]){const w=rg>0?Math.sin(rg*40+z*9)*.32*rg:0;K.rod([[-5.6,.8,z],[1,.95,z+w],[16.2,.62,z]],.22,['#cdbf9f','#f6ead2','#fffaf0'],{noOut:1,hi:0,db:.25})}
+    if(st.leg&&!LOWFX)K.fx([-1,1.2,0],q=>{const tt=TNOW();for(let i=0;i<3;i++){const u=(tt*.6+i/3)%1,sw=Math.sin(u*Math.PI),a=i*2.1+tt*.4,b=[q[0]+Math.cos(a)*7*K.s,q[1]+Math.sin(a)*5*K.s-u*4*K.s],r=(1.3*sw+.2)*K.s;
+      ctx.fillStyle=`rgba(255,240,170,${(.9*sw).toFixed(3)})`;ctx.beginPath();for(let j=0;j<8;j++){const aa=j*Math.PI/4,rr=j%2?r*.45:r*1.8;ctx.lineTo(b[0]+Math.cos(aa)*rr,b[1]+Math.sin(aa)*rr)}ctx.closePath();ctx.fill()}},.3);
     return{muzzle:[1,1.2,0],strum:[-2.4,1.9,cl(st.strum==null?.3:st.strum,-1,1)*2.6],sup:[12.4,1.7,0],eject:null}},
   // the Alchemist's flask: a round belly of glass with the liquid glowing inside (st.col), bubbles rising, a narrow neck and a cork; in
   // the hand at 0,0,0 (y up). st.has 0..1: how much of it there is (a new one pops into the hand after a throw)
-  fiala(K,st){const k=st.has==null?1:st.has;if(k<=.02)return{muzzle:[0,0,0],eject:null,sup:null};const col=st.col||'#7bf06a',rgb=hexRgb(col),
+  fiala(K,st){const k=st.has==null?1:st.has;if(k<=.02)return{muzzle:[0,0,0],eject:null,sup:null};const col=st.leg?hueHex(TNOW()*70):st.col||'#7bf06a',rgb=hexRgb(col),
       GL=['#7f9ea6','#c4e0e6','#ffffff'],R0=3.3*k,C=[1.3,R0*.95,0];
     K.fx(C,q=>shine(rgb,q[0],q[1],R0*2.4*K.s,.32),-4);
     K.sph(C,R0,GL);
@@ -449,36 +458,40 @@ const M={
       for(let i=0;i<3;i++){const u=((G.t*.8+i/3)%1),x=q[0]+Math.sin(i*2.3+G.t*2)*r*.35;ball([x,q[1]+r*.75-u*r*.95],r*.11*(1-u*.4));ctx.fill()}ctx.restore();
       ctx.fillStyle='rgba(255,255,255,.8)';ball([q[0]-r*.42,q[1]-r*.45],r*.2);ctx.fill()},.05);
     K.cyl([1.3,R0*1.65,0],[1.3,R0*2.55,0],1.05*k,GL,{db:.02});
-    K.cyl([1.3,R0*2.45,0],[1.3,R0*3,0],1.25*k,'legno',{db:.03});
+    K.cyl([1.3,R0*2.45,0],[1.3,R0*3,0],1.25*k,st.leg?'ottone':'legno',{db:.03});if(st.leg)K.cyl([1.3,R0*1.95,0],[1.3,R0*2.15,0],1.2*k,'ottone',{db:.04});
     return{muzzle:C,eject:null,sup:null}},
   // the Ninja's star: four points of dark steel round a hole, the edges bright; in the hand at 0,0,0. st.has 0..1, st.spin its turn
   stellina(K,st){const k=st.has==null?1:st.has;if(k<=.02)return{muzzle:[0,0,0],eject:null,sup:null};const r=4.4*k,c=[2.2,1.4,0],a0=st.spin||0,pts=[];
     for(let i=0;i<8;i++){const a=i/8*TAU+a0,rr=i%2?r*.3:r;pts.push([Math.cos(a)*rr,Math.sin(a)*rr])}
     const F=K.frame(c,[1,0,0],[0,1,0]);
-    F.prism(pts,-.32,.32,['#262b33','#5c6672','#c9d2dc'],{hi:.55,dk:.55,det:L=>{for(let i=0;i<4;i++){const a=i/4*TAU+a0;L.line(Math.cos(a)*r*.25,Math.sin(a)*r*.25,Math.cos(a)*r*.9,Math.sin(a)*r*.9,'rgba(255,255,255,.35)',.3)}}});
+    if(st.leg&&!LOWFX)K.fx(c,q=>shine('190,150,255',q[0],q[1],r*2.1*K.s,.42),-2);
+    F.prism(pts,-.32,.32,st.leg?['#1a1024','#4a2a6a','#c8a6ff']:['#262b33','#5c6672','#c9d2dc'],{hi:.55,dk:.55,det:L=>{for(let i=0;i<4;i++){const a=i/4*TAU+a0;L.line(Math.cos(a)*r*.25,Math.sin(a)*r*.25,Math.cos(a)*r*.9,Math.sin(a)*r*.9,'rgba(255,255,255,.35)',.3)}}});
     F.disc([0,0,.34],[0,0,1],.85*k,'#121417',{db:.02});F.disc([0,0,-.34],[0,0,-1],.85*k,'#121417',{db:.02});
     return{muzzle:c,eject:null,sup:null}},
   // ---------------------------------------------------------------- the six heroes of 16 October
   // the Paladin's hammer: a walnut handle wrapped in leather at the grip, a golden collar, a short steel head with two golden bands and a
   // golden sun on each face, a little spike on top; x along the handle (the head at +x), the faces along ±y. st.glow 0..1: the suns shine
-  maglio(K,st){const g=st.glow||0;
-    K.tube([[-5,0,0],[5,0,0],[13.6,0,0]],[2.2,2.1,2],'noce');K.cyl([-2.2,0,0],[2.2,0,0],1.45,['#3a2216','#5e3a24','#8a5a38'],{db:.02});
+  maglio(K,st){const g=st.leg?Math.max(.7,st.glow||0):st.glow||0,LG=!!st.leg;
+    K.tube([[-5,0,0],[5,0,0],[13.6,0,0]],[2.2,2.1,2],LG?['#b8ad98','#efe6d6','#fffaf0']:'noce');K.cyl([-2.2,0,0],[2.2,0,0],1.45,['#3a2216','#5e3a24','#8a5a38'],{db:.02});
     K.cyl([12.2,0,0],[13.8,0,0],1.65,'ottone',{db:.02});K.sph([-5.4,0,0],1.6,'ottone',{db:.01});
-    K.box(13.4,-5.4,20.2,5.4,-3.3,3.3,'lucido',{hi:.5},1.1);
-    for(const x of[14.3,19.3])K.box(x-.55,-5.6,x+.55,5.6,-3.5,3.5,'ottone',{hi:.35,db:.03},.3);
+    K.box(13.4,-5.4,20.2,5.4,-3.3,3.3,LG?['#8a5a10','#f0c64a','#fff3c0']:'lucido',{hi:.5},1.1);
+    for(const x of[14.3,19.3])K.box(x-.55,-5.6,x+.55,5.6,-3.5,3.5,LG?'lucido':'ottone',{hi:.35,db:.03},.3);
     K.cyl([20,0,0],[23.4,0,0],1.4,'lucido',{r2:.12,db:.01});
     if(g>.02)K.fx([16.8,0,0],q=>shine('255,220,120',q[0],q[1],(10+8*g)*K.s,.25+.45*g),-3);
-    for(const sd of[-1,1]){K.disc([16.8,sd*5.62,0],[0,sd,0],2.4,'#f0c64a',{db:.04,edge:1});K.disc([16.8,sd*5.66,0],[0,sd,0],1.3,'#fff1a8',{db:.05})}
+    for(const sd of[-1,1]){K.disc([16.8,sd*5.62,0],[0,sd,0],2.4,LG?'#ffffff':'#f0c64a',{db:.04,edge:1});K.disc([16.8,sd*5.66,0],[0,sd,0],1.3,LG?'#ffe27a':'#fff1a8',{db:.05});
+      if(LG&&!LOWFX)K.fx([16.8,sd*5.8,0],q=>{const tt=TNOW();ctx.strokeStyle='rgba(255,240,180,.75)';ctx.lineWidth=.9;ctx.lineCap='round';for(let i=0;i<8;i++){const a=i*Math.PI/4+tt*.6,r0=3.2*K.s,r1=(4.6+.8*Math.sin(tt*6+i))*K.s;ctx.beginPath();ctx.moveTo(q[0]+Math.cos(a)*r0,q[1]+Math.sin(a)*r0);ctx.lineTo(q[0]+Math.cos(a)*r1,q[1]+Math.sin(a)*r1);ctx.stroke()}},.06)}
     return{muzzle:[16.8,0,0],head:[16.8,0,0],eject:null,sup:null}},
   // the Ice Mage's staff: a pale frosted shaft with silver rings, a cluster of ice crystals on top (the big one in the middle, four small
   // ones round it), glowing; x goes up the staff, the hand at 0,0,0; st.glow as the Druid's
-  gelo(K,st){const g=st.glow==null?1:st.glow,ICE=['#3a86c8','#a6dcff','#f2fbff'],FR=['#5a6e86','#a4b8cc','#e6f1fb'];
+  gelo(K,st){const g=st.leg?1.35:st.glow==null?1:st.glow,ICE=st.leg?['#2a6ab8','#9ad4ff','#ffffff']:['#3a86c8','#a6dcff','#f2fbff'],FR=st.leg?['#14244a','#2a4680','#5a7ab8']:['#5a6e86','#a4b8cc','#e6f1fb'];
     K.tube([[-15.5,0,0],[-6,.15,0],[4,-.1,0],[12.6,0,0]],[2.3,2.2,2.15,2.3],FR);
     K.cyl([-1.8,0,0],[1.8,0,0],1.45,['#2a3a5a','#40587e','#7090b8'],{db:.02});K.cyl([11.6,0,0],[13.6,0,0],1.9,'lucido',{db:.03});K.cyl([-15.6,0,0],[-14.4,0,0],1.7,'lucido',{db:.02});
     const C=[19,0,0];K.fx(C,q=>shine('140,215,255',q[0],q[1],(8+3.5*g)*K.s,.22+.32*g),-5);
     for(const[a,b,r] of[[[13.4,1.7,1],[17.6,4.2,1.8],1.1],[[13.4,-1.6,-.8],[17,-4.4,-1.6],1],[[13.4,.4,-1.8],[16.4,1.2,-4.4],.9],[[13.4,-.3,1.8],[16.8,-.8,4.4],.95]])K.cyl(a,b,r,ICE,{r2:.12,n:6,db:.01});
     K.cyl([13,0,0],[16,0,0],2.2,ICE,{n:6,db:.02});K.cyl([16,0,0],[23.6,0,0],2.2,ICE,{r2:.15,n:6,db:.02});
     K.fx(C,q=>{ctx.fillStyle=`rgba(255,255,255,${.55+.3*g})`;ball([q[0]-1.1*K.s,q[1]-1.4*K.s],.75*K.s);ctx.fill()},.06);
+    if(st.leg){for(const[a,b,r] of[[[14,2.4,-1.6],[20,6.2,-3],.9],[[14,-2.2,1.6],[19.6,-5.8,3.2],.85]])K.cyl(a,b,r,ICE,{r2:.12,n:6,db:.01});
+      if(!LOWFX)K.fx(C,q=>{const tt=TNOW();ctx.fillStyle='rgba(240,250,255,.9)';for(let i=0;i<6;i++){const a=tt*1.6+i*TAU/6,rr=(7+1.2*Math.sin(tt*3+i))*K.s;ball([q[0]+Math.cos(a)*rr,q[1]+Math.sin(a)*rr*.55],(.55+.25*Math.sin(tt*5+i*2))*K.s);ctx.fill()}},.4)}
     return{muzzle:C,orb:C,eject:null,sup:null}},
   // the Berserker's axe: an ash handle wrapped at the grip, an iron head with a bearded blade (its edge bright) and a golden rune on the
   // cheek, a little iron spike behind; x along the handle (the head at +x), the blade toward +y. st.has 0..1: how much of it is in the hand
@@ -486,7 +499,8 @@ const M={
   ascia(K,st){const k=st.has==null?1:st.has;if(k<=.02)return{muzzle:[14,0,0],eject:null,sup:null};const S=K.frame([0,0,0],[1,0,0],[0,1,0],k);
     S.tube([[-3.5,0,0],[6,0,0],[16.4,0,0]],[2.1,2,1.9],'legno');S.cyl([-1.6,0,0],[2.2,0,0],1.45,['#2a1810','#4a2c1c','#76503a'],{db:.02});S.sph([-3.8,0,0],1.5,'brunito',{db:.01});
     const BL=[[11.2,1.2],[16.2,1.2],[18.6,4.6],[19.4,9.2],[16.2,11],[13.4,8.6],[12.2,4.2]];
-    S.prism(BL,-.75,.75,['#3a4450','#7a8694','#d8e2ec'],{hi:.5,dk:.55,det:L=>{L.line(18.3,4.6,18.9,9.3,'rgba(255,255,255,.75)',.55);L.line(13.6,4.2,15.4,8.4,'#e0b040',.5);L.line(15.4,8.4,16.6,4.6,'#e0b040',.5)}});
+    const LG=!!st.leg;if(LG&&!LOWFX)S.fx([15.4,6,0],q=>shine('255,90,50',q[0],q[1],(6.5+2*Math.sin(TNOW()*9))*K.s,.45),-1);
+    S.prism(BL,-.75,.75,LG?['#1e1a1c','#4a3e44','#8a7a80']:['#3a4450','#7a8694','#d8e2ec'],{hi:.5,dk:.55,det:L=>{L.line(18.3,4.6,18.9,9.3,LG?'#ffd86b':'rgba(255,255,255,.75)',.55);const rc=LG?'#ff5a3a':'#e0b040';L.line(13.6,4.2,15.4,8.4,rc,.5);L.line(15.4,8.4,16.6,4.6,rc,.5);if(LG){L.line(14.6,5.2,16.2,5.4,rc,.4);L.line(13.4,7.4,15,6.4,rc,.4)}}});
     S.box(11.2,-1.6,16.6,1.6,-1.25,1.25,['#2c323a','#535c66','#9aa5b0'],{hi:.35,db:.02},.4);
     S.prism([[12.2,-1.4],[15.6,-1.4],[14,-4.4]],-.55,.55,['#2c323a','#5c6672','#a9b4bf'],{hi:.3,db:.01});
     return{muzzle:[15.4,6,0],eject:null,sup:null}},
@@ -496,13 +510,14 @@ const M={
     S.prism([[1.2,-.9],[6.8,-.75],[10.4,0],[6.8,.85],[1.2,.9]],-.32,.32,['#46505c','#a9b4bf','#eef3f7'],{hi:.6,dk:.5,det:L=>L.line(1.6,.15,9.4,.08,'rgba(255,255,255,.7)',.3)});
     S.box(.4,-1.9,1.3,1.9,-.65,.65,'ottone',{hi:.3,db:.02},.3);
     S.cyl([-3.6,0,0],[.5,0,0],1,['#6a1414','#c0282c','#ee6a6a'],{db:.01,det:t=>{ctx.strokeStyle='rgba(40,6,6,.5)';ctx.lineWidth=.45*K.s;for(let i=1;i<4;i++){const a=t.P(t.at(i/4,0,.05)),b=t.P(t.at(i/4+.06,Math.PI,.05));ctx.beginPath();ctx.moveTo(a[0],a[1]);ctx.lineTo(b[0],b[1]);ctx.stroke()}}});
-    S.sph([-3.9,0,0],.9,'ottone',{db:.02});
+    S.sph([-3.9,0,0],.9,st.leg?['#6a0a12','#e5484d','#ffb0b0']:'ottone',{db:.02});
     return{muzzle:[9,0,0],eject:null,sup:null}},
   // the Corsair's sabre (in the hand only for the slash): a curved blade, a golden basket guard round the hand, a dark grip
   sciabola(K,st){const BL=[[1.6,-.7],[8,-1.2],[14,-1.3],[19.4,-.4],[21.4,1.2],[19,.9],[13.6,1],[8,1],[1.6,.9]];
-    K.prism(BL,-.3,.3,['#4a5460','#b4bec8','#f2f6fa'],{hi:.6,dk:.5,det:L=>L.line(2,0,19.6,-.2,'rgba(255,255,255,.6)',.35)});
+    K.prism(BL,-.3,.3,['#4a5460','#b4bec8','#f2f6fa'],{hi:.6,dk:.5,det:L=>{L.line(2,0,19.6,-.2,'rgba(255,255,255,.6)',.35);if(st.leg)L.line(2.4,.45,13,.35,'#e0b040',.35)}});
+    if(st.leg&&!LOWFX)K.fx([2+((TNOW()*.9)%1)*17,0,.32],q=>shine('255,255,255',q[0],q[1],2.6*K.s,.8),.4);
     K.cyl([-3.4,0,0],[.6,0,0],1.05,['#1d1612','#3a2e26','#5e4c40'],{db:.01});
-    K.tube([[1,-2.2,0],[-.4,-3.2,0],[-3,-2.4,0],[-3.8,-.9,0]],[.8,.8,.75,.7],'ottone',{db:.03});K.box(.6,-2.4,1.4,2.4,-1.2,1.2,'ottone',{hi:.35,db:.02},.4);K.sph([-3.9,0,0],1,'ottone',{db:.02});
+    K.tube([[1,-2.2,0],[-.4,-3.2,0],[-3,-2.4,0],[-3.8,-.9,0]],[.8,.8,.75,.7],'ottone',{db:.03});K.box(.6,-2.4,1.4,2.4,-1.2,1.2,'ottone',{hi:.35,db:.02},.4);K.sph([-3.9,0,0],st.leg?1.15:1,st.leg?['#6a0a12','#e5484d','#ffb0b0']:'ottone',{db:.02});
     return{muzzle:[19,0,0],eject:null,sup:null}},
   // the Tamer's whip: a short leather handle with a brass knob; the lash coiled in three loops under the hand (st.out 0), or flying out
   // straight ahead (st.out 1) with a wave running along it (st.wave); the tip cracks (st.crack 0..1, a flash of light)
@@ -514,7 +529,9 @@ const M={
       const an=u*TAU*3,cq=[6.4+Math.sin(an)*3.2+u*1.2,-3.4-(1-Math.cos(an))*3.2-u*1.4,Math.cos(an*.5)*.6+(u-.5)*1.4],
         xq=[6.6+u*42,Math.sin(u*Math.PI*2.2-wv*TAU)*3.2*u*(1-o*.5)-u*u*2*(1-o),0];
       pts.push(lerp3(cq,xq,ez(o)));ws.push(lerp(1.6,.55,u))}
-    K.tube(pts,ws,['#3a2214','#7a4a2a','#b07a50'],{db:-.02});
+    K.tube(pts,ws,st.leg?['#8a7a60','#d8ccb0','#fff8e6']:['#3a2214','#7a4a2a','#b07a50'],{db:-.02});
+    if(st.leg){for(let i=3;i<N-1;i+=3)K.fx(pts[i],q=>{ctx.fillStyle='rgba(90,70,50,.55)';ball(q,ws[i]*.55*K.s);ctx.fill()},-.01);
+      const a=pts[N-2],b=pts[N-1],dd=nrm(sub(b,a));K.cyl(b,add(b,mul(dd,3.4)),.9,['#c8bca0','#fffaf0','#ffffff'],{r2:.05,db:.02})}
     const tp=pts[N-1];if(st.crack>0)K.fx(tp,q=>{const c=st.crack;shine('255,240,190',q[0],q[1],(5+8*c)*K.s,.7*c);ctx.strokeStyle=`rgba(255,250,220,${.9*c})`;ctx.lineWidth=1.1;ctx.lineCap='round';
       for(let i=0;i<5;i++){const a=i/5*TAU+.3,r=(2+5*(1-c))*K.s;ctx.beginPath();ctx.moveTo(q[0]+Math.cos(a)*r*.4,q[1]+Math.sin(a)*r*.4);ctx.lineTo(q[0]+Math.cos(a)*r,q[1]+Math.sin(a)*r);ctx.stroke()}},1);
     return{muzzle:tp,tip:tp,eject:null,sup:null}},
@@ -529,11 +546,13 @@ const M={
     const N=17,pts=[],ws=[];for(let i=0;i<N;i++){const t=i/(N-1);pts.push(at(t));ws.push(1.4+1.9*Math.pow(Math.sin(t*Math.PI),.7))}
     if(kind==='phoenix')K.fx([0,0,0],q=>shine('255,130,40',q[0],q[1],18*K.s,.3+.08*Math.sin(G.t*9)),-6);
     if(kind==='thunder')K.fx([0,0,0],q=>shine('110,170,255',q[0],q[1],17*K.s,.22+.07*Math.sin(G.t*11)),-6);
+    if(kind==='stelle')K.fx([0,0,0],q=>shine('255,214,110',q[0],q[1],18*K.s,.26+.08*Math.sin(TNOW()*7)),-6);
+    if(kind==='luna')K.fx([0,0,0],q=>shine('180,215,255',q[0],q[1],17*K.s,.24+.06*Math.sin(TNOW()*5)),-6);
     K.tube(pts,ws,T);
     // the grip: a wrap round the middle (leather; green for the recurve, dark green for the thorn bow, gold for the phoenix)
-    const gc=kind==='recurve'?'#6cc24a':kind==='thorn'?'#2f5a22':kind==='phoenix'?'#ffb020':kind==='thunder'?'#d9a520':'#5a3a22',wrap=[];for(let i=0;i<=6;i++)wrap.push(at(.36+i/6*.28));
+    const gc=kind==='recurve'?'#6cc24a':kind==='thorn'?'#2f5a22':kind==='phoenix'?'#ffb020':kind==='thunder'?'#d9a520':kind==='stelle'?'#f0c64a':kind==='luna'?'#4a6aa8':'#5a3a22',wrap=[];for(let i=0;i<=6;i++)wrap.push(at(.36+i/6*.28));
     K.tube(wrap,wrap.map(_=>3.7),tones(gc),{db:.04});
-    if(kind==='recurve'||kind==='phoenix'||kind==='thunder')for(const t of[.355,.645]){const c=at(t),d=tg(t);K.cyl(sub(c,mul(d,.38)),add(c,mul(d,.38)),2.2,'ottone',{db:.06})}
+    if(kind==='recurve'||kind==='phoenix'||kind==='thunder'||kind==='stelle'||kind==='luna')for(const t of[.355,.645]){const c=at(t),d=tg(t);K.cyl(sub(c,mul(d,.38)),add(c,mul(d,.38)),2.2,kind==='luna'?'lucido':'ottone',{db:.06})}
     if(kind==='plain'||kind==='thorn')for(const t of[0,1]){const c=at(t),d=tg(t);K.cyl(c,add(c,mul(d,t?1:-1)),.9,'cera',{r2:.55,db:.03})}
     if(kind==='recurve')for(const sg of[1,-1]){const h=qpts([-bk,sg*L,0],[-bk-.8,sg*(L+3.4),0],[-bk+3.4,sg*(L+4.4),0],6);K.tube(h,[1.4,1.3,1.25,1.15,1.05,.95],T);K.sph(h[5],.62,'ottone',{db:.02})}
     // the thunder bow: golden caps on the tips with sparks that flicker, a golden zigzag on the belly of each limb
@@ -549,14 +568,28 @@ const M={
       K.sph([1.25,0,0],1.05,['#7a1408','#ff5a2a','#ffd8a8'],{db:.08});K.fx([1.25,0,0],q=>shine('255,120,60',q[0],q[1],4.5*K.s,.5),.09);
       if(!LOWFX)K.fx([0,0,0],()=>{for(let i=0;i<4;i++){const u=(G.t*.55+i/4)%1,b=K.P(K.W(at(.12+i*.25)));ctx.fillStyle=`rgba(255,${170+60*(1-u)|0},80,${((1-u)*.8).toFixed(3)})`;
         ball([b[0]+Math.sin(G.t*3+i*2)*1.6*u,b[1]-u*10],.9*(1-u)+.3);ctx.fill()}},.5)}
+    // the star bow (the Archer's own, 16 October): golden caps, a golden star turning at each tip, twinkles running along the limbs, a
+    // sapphire on the grip; the moon bow (the Huntress's own): a silver crescent blade hooked forward at each tip, a moonstone on the grip
+    if(kind==='stelle'){for(const t of[0,1]){const c=at(t),d=tg(t),sg=t?1:-1;K.cyl(c,add(c,mul(d,sg*1.1)),1,'ottone',{r2:.5,db:.03});
+        K.fx(add(c,mul(d,sg*2.7)),q=>{const r=3.1*K.s,a0=TNOW()*.8+t;if(!LOWFX)shine('255,226,130',q[0],q[1],r*2.3,.45);ctx.beginPath();for(let i=0;i<10;i++){const a=a0+i*Math.PI/5-Math.PI/2,rr=i%2?r*.45:r;ctx.lineTo(q[0]+Math.cos(a)*rr,q[1]+Math.sin(a)*rr)}ctx.closePath();
+          ctx.fillStyle='#ffd86b';ctx.fill();ctx.lineWidth=1.1;ctx.lineJoin='round';ctx.strokeStyle=INK;ctx.stroke();ctx.fillStyle='#fff6c8';ball([q[0]-r*.15,q[1]-r*.2],r*.24);ctx.fill()},.5)}
+      if(!LOWFX)K.fx([0,0,0],()=>{const tt=TNOW();for(let i=0;i<5;i++){const u=(tt*.7+i*.37)%1,b=K.P(K.W(at(.08+i*.21))),sw=Math.sin(u*Math.PI),r=1.5*sw+.2;ctx.fillStyle=`rgba(255,240,180,${(.9*sw).toFixed(3)})`;ctx.beginPath();
+        for(let j=0;j<8;j++){const a=j*Math.PI/4,rr=j%2?r*.5:r*2;ctx.lineTo(b[0]+Math.cos(a)*rr,b[1]+Math.sin(a)*rr)}ctx.closePath();ctx.fill()}},.6);
+      K.sph([1.25,0,0],1,['#1a2a6a','#6a8cff','#e8f0ff'],{db:.08});K.fx([1.25,0,0],q=>shine('140,170,255',q[0],q[1],3.6*K.s,.45),.09)}
+    if(kind==='luna'){const CRES=[[-1.2,0],[-1.6,1.6],[-1,3.4],[.6,4.6],[2.6,5],[4.4,4.3],[3,4],[1.4,3.6],[.4,2.6],[0,1.2],[.6,0]];
+      for(const t of[0,1]){const c=at(t),d=tg(t),sg=t?1:-1,o=add(c,mul(d,sg*1.1));K.frame(o,[1,0,0],[0,sg,0]).prism(CRES,-.35,.35,['#5a6878','#c9d4e4','#f4f8ff'],{hi:.6,dk:.5,det:L=>L.line(-.6,1.4,3.4,4.6,'rgba(255,255,255,.75)',.3)});
+        if(!LOWFX)K.fx(o,q=>shine('190,220,255',q[0],q[1],6*K.s,.35),.4)}
+      K.sph([1.25,0,0],1,['#2a3a6a','#a6c8ff','#f4f8ff'],{db:.08});K.fx([1.25,0,0],q=>shine('190,220,255',q[0],q[1],3.4*K.s,.5),.09)}
     // the string and the arrow on it
     const pin=st.pinch||[-bk+(st.twang?Math.sin(st.twang*22)*1.2*st.twang:0),0,0];
-    K.rod([top,pin,bot],1.1,['#cdbf9f','#f6ead2','#fffaf0'],{noOut:1,hi:0,db:-.01});
+    K.rod([top,pin,bot],1.1,kind==='stelle'?['#c8a040','#ffe28a','#fff8d0']:kind==='luna'?['#8aa8d8','#d8e8ff','#ffffff']:['#cdbf9f','#f6ead2','#fffaf0'],{noOut:1,hi:0,db:-.01});
     if((st.nock||0)>.5){const a=pin;K.rod([a,[4.6,0,0]],1.05,['#a47a46','#d9b27a','#f3d9a8'],{db:.3,hi:0});K.cyl([4.6,0,0],[7.4,0,0],1.25,'lucido',{r2:.08,db:.31});
       K.prism([[a[0]+.9,.15],[a[0]+3.9,.35],[a[0]+.3,2.1]],-.07,.07,['#8a221b','#e5484d','#f27566'],{hi:0,dk:.8,db:.32});
       K.prism([[a[0]+.9,-.15],[a[0]+.3,-2.1],[a[0]+3.9,-.35]],-.07,.07,['#b7a888','#f6ead2','#fffaf0'],{hi:0,dk:.8,db:.32})}
     return{grip:[0,0,0],nock:pin,muzzle:[7.4,0,0],top,bot}}};
 const hexRgb=h=>{const n=parseInt(h.slice(1),16);return`${n>>16},${n>>8&255},${n&255}`};
+const TNOW=()=>typeof G!=='undefined'&&G&&G.t!=null?G.t:performance.now()/1000;
+const hueHex=h=>{h=((h%360)+360)%360;const f=n=>{const k=(n+h/30)%12,c=.62-.42*Math.max(-1,Math.min(k-3,9-k,1));return Math.round(c*255).toString(16).padStart(2,'0')};return'#'+f(0)+f(8)+f(4)};
 
 // ------------------------------------------------------------------ drawing one
 // fr = {O, X, Y, Z, s}: X forward, Y up, Z to the side (unit vectors in the room); extra(K, its key points) can add pieces (the hands,

@@ -125,4 +125,5 @@ js/93-eroi-sei.js
 js/94-gittata.js
 js/95-voci-eroi.js
 js/96-maestria.js
+js/97-armi-proprie.js
 coda.html
