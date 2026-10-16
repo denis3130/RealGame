@@ -3,6 +3,9 @@
 // Everything on screen is the engine itself (same rooms, monsters, bosses, effects);
 // a director only places the actors, moves the hero and the camera, and writes the big words.
 // It never touches the save: a copy is taken before and put back after.
+// The four heroes are in it (Denis, 14 October: «aggiungi anche gli altri pg nel filmato»): yours leads it (at the first launch, before
+// the making of the hero, the Arciere; later with his mantle), each of the other three has a world and uses his own Super there
+// («ognuno con la sua Super»), and at the end all four stand together under the title.
 // =====================================================================
 const iEase=k=>k<.5?4*k*k*k:1-Math.pow(-2*k+2,3)/2;
 const iLerp=(a,b,k)=>a+(b-a)*clamp(k,0,1);
@@ -16,11 +19,20 @@ function iSay(txt,sub,col,dur){const el=$('iCap'),W=$('introScr').clientWidth||3
 function iFlash(k){const el=$('iFlash');el.className='';void el.offsetWidth;el.className=k||'w'}
 // the actors
 function iFoe(type,x,y,spawn,o){const e=makeE(type,x,y,spawn==null?0:spawn);e.hp=e.max=P.atk*(o&&o.hp||.7);if(type==='skeleton'){e.sh=0;e.shMax=0}if(o&&o.cd!=null)e.cd=o.cd;G.enemies.push(e);return e}
+// the cast: yours first, then the others (the other of the first two, the Balestriere, the Druida)
+function iCast(){const main=SAVE.heroes&&SAVE.heroes[SAVE.hero]&&HERO_BY[SAVE.hero]?SAVE.hero:starterId();
+  return[main,...['arciere','cacciatrice','balestriere','druida'].filter(i=>i!==main)].slice(0,4)}
+// the hero of the shot: only the look and the shots change (the numbers of the trailer stay); yours wears your mantle
+function iAs(id){const h=HERO_BY[id];if(!h||!P)return;Object.assign(P,{hero:id,style:id===iCast()[0]?heroStyle(id):heroStyle0(id),proj:h.proj,pcol:h.pcol||null,pspd:PSPD[h.proj]||560})}
+// his Super, now (the bar is full for the trailer)
+function iUlt(){if(!P)return;P.ult=100;useUlt()}
+// the others standing beside him at the end (drawn with the room, in depth order: 45-render)
+function iDrawCast(a){drawRig(a.x,a.y,a.face,0,false,a.style,{})}
 function iHero(){P=makeP();
   Object.assign(P,{hero:'arciere',proj:'arrow',pcol:null,pspd:560,wk:null,trail:null,kbm:1,style:heroStyle0('arciere'),atk:40,aspd:2.6,multi:2,front:1,diag:1,side:0,rear:0,fan:0,giant:0,
     crit:.25,critMul:2,maxhp:320,hp:320,need:1e9,ric:0,pierce:0,orbit:0,storm:false,light:0,fire:false,ice:false,dashMax:.3,dashCd:0,revive:0,shield:0,vamp:0,regen:0,poison:0,ult:0,spd:150});
   G={mode:'camp',chapter:1,room:2,gold:0,kills:0,t:4.9,fade:0,shake:0,state:'cine',bannerT:0,seq:[{c:2}],si:0,event:null,orbs:[],lvlT:0,curseHp:1,diff:1,arena:0,darkN:9,wheelAt:-1};
-  G.pet={id:'spiritello',x:P.x-26,y:P.y+8,t:0,cd:1,hcd:0,face:-Math.PI/2,att:0,hop:0,happy:0,moving:false}}
+  G.pet={id:'spiritello',x:P.x-26,y:P.y+8,t:0,cd:1,hcd:0,face:-Math.PI/2,att:0,hop:0,happy:0,moving:false};INTRO.cast=null;iAs(iCast()[0])}
 function iRoom(ch,room,o){o=o||{};
   Object.assign(G,{chapter:ch,room,event:null,seq:[{c:room}],si:0,cam:null,slowT:0,hitstop:0,ultFx:null,meteorRain:false,kc:0});
   buildRoom();G.state='cine';G.door=false;document.querySelectorAll('.kcPop').forEach(o=>o.remove());
@@ -48,23 +60,23 @@ const SHOTS=[
    tick(lt){if(lt<.9)iStop();else if(lt<1.3)iGoTo(1,0);else iStop();
     if(lt>=.9&&iOnce('bats')){iFoe('bat',L+10,230,.3);iFoe('bat',R-10,200,.3);iFoe('slime',300,330,.5)}}},
   // 2 · the volcano: fireballs, bombs and meteors, and a hero who isn't there any more
-  {at:6,setup(){iFlash('w');iRoom(2,2,{x:80,y:540,lay:[[66,250,18],[294,250,18]]});iSay('SCHIVA!','','#ff9a3c',1.6);
+  {at:6,setup(){iFlash('w');iRoom(2,2,{x:80,y:540,lay:[[66,250,18],[294,250,18]]});iAs(iCast()[1]);iSay('SCHIVA!','','#ff9a3c',1.6);
     iFoe('imp',120,170,0,{cd:.15});iFoe('imp',250,150,0,{cd:.35});iFoe('imp',300,300,0,{cd:.55});iFoe('pyro',180,230,0,{cd:.3});iFoe('bomber',70,330,0,{cd:.2});iFoe('magmaslime',230,420,0);iFoe('magmaslime',140,360,0);
     meteor(150,505,0,30,0);meteor(225,470,.15,30,0)},
    tick(lt){if(lt<.75)iGoTo(1,-.45);else if(lt<1.0)iGoTo(.2,-1);else iStop();
-    if(lt>=.32&&iOnce('d1'))dash();if(lt>=.8&&iOnce('d2'))dash()}},
+    if(lt>=.32&&iOnce('d1'))dash();if(lt>=.8&&iOnce('d2'))dash();if(lt>=1.12&&iOnce('u2'))iUlt()}},
   // 3 · the swamp: arrows that bounce, lightning that jumps
-  {at:8,setup(){iFlash('w');iRoom(3,2,{x:200,y:520,lay:[[66,260,16],[294,260,16]]});iSay('4 MONDI!','Cripta · Vulcano · Palude · Ghiaccio','#9cef5e',1.8);
+  {at:8,setup(){iFlash('w');iRoom(3,2,{x:200,y:520,lay:[[66,260,16],[294,260,16]]});iAs(iCast()[2]);iSay('4 MONDI!','Cripta · Vulcano · Palude · Ghiaccio','#9cef5e',1.8);
     Object.assign(P,{ric:2,light:3,multi:2,front:2,diag:1});
     iFoe('frog',100,200);iFoe('frog',260,200);iFoe('frog',180,300);iFoe('mosquito',60,350);iFoe('mosquito',300,360);iFoe('mosquito',180,160);const c=iFoe('croc',120,400);c.st='out'},
-   tick(lt){if(lt<.45)iGoTo(-.6,-.8);else iStop()}},
+   tick(lt){if(lt<.45)iGoTo(-.6,-.8);else iStop();if(lt>=.62&&iOnce('u3'))iUlt()}},
   // 4 · the ice: a level up, spinning blades, a hero who walks into the wolves
-  {at:10,setup(){iFlash('w');iRoom(4,2,{x:AW/2,y:490,lay:[[80,230,18],[280,230,18]]});iSay('PIÙ FORTE!','a ogni livello','#8fe8ff',1.7);
+  {at:10,setup(){iFlash('w');iRoom(4,2,{x:AW/2,y:490,lay:[[80,230,18],[280,230,18]]});iAs(iCast()[3]);iSay('PIÙ FORTE!','a ogni livello','#8fe8ff',1.7);
     Object.assign(P,{ric:0,light:0,orbit:3,storm:true,multi:2,front:2,diag:2});iLevelBurst();
     iFoe('wolf',60,210,0,{cd:.2});iFoe('wolf',300,210,0,{cd:.35});iFoe('wolf',70,340,0,{cd:.1});iFoe('wolf',290,340,0,{cd:.25});iFoe('snowspirit',140,150);iFoe('snowspirit',220,150)},
-   tick(lt){if(lt>.45&&lt<1.15)iGoTo(0,-1);else iStop()}},
+   tick(lt){if(lt>.45&&lt<1.15)iGoTo(0,-1);else iStop();if(lt>=.95&&iOnce('u4'))iUlt()}},
   // 5 · the Golem falls from the ceiling
-  {at:12,setup(){iFlash('w');iRoom(1,5,{x:AW/2,y:530,hold:true});Object.assign(P,{orbit:0,storm:false,front:1,diag:1});iCam(1,AW/2,AH/2)},
+  {at:12,setup(){iFlash('w');iRoom(1,5,{x:AW/2,y:530,hold:true});iAs(iCast()[0]);Object.assign(P,{orbit:0,storm:false,front:1,diag:1});iCam(1,AW/2,AH/2)},
    tick(lt){
     if(lt<2)iCam(iLerp(1,1.1,lt/2),AW/2,iLerp(320,340,lt/2));else if(lt<2.15)iCam(iLerp(1.1,1.22,(lt-2)/.15),AW/2,340);else iCam(iLerp(1.22,1.06,(lt-2.15)/.5)+Math.max(0,lt-2.65)*.04,AW/2,340);
     if(lt>=.85&&iOnce('golem')){const e=makeE('golem',AW/2,250,0);e.hp=e.max=99999;G.enemies.push(e)}
@@ -79,8 +91,11 @@ const SHOTS=[
     if(lt>=.95&&iOnce('safety')){const b=G.enemies.find(e=>isBoss(e.type)&&!e.dead);if(b)hurtE(b,b.hp+1,true)}}},
   // 8 · the title
   {at:20,setup(){$('introScr').classList.add('logo');const bd=$('bossDown');if(!bd.hidden){bd.classList.add('out');setTimeout(()=>{bd.hidden=true},400)}iFlash('w');INTRO.hold=true;iStop();
-    INTRO.camFrom=G.cam?{...G.cam}:{z:1,x:AW/2,y:AH/2}},
-   tick(lt){const f=INTRO.camFrom,k=iEase(Math.min(1,lt/4.5));iCam(iLerp(f.z,1.7,k),iLerp(f.x,P.x,k),iLerp(f.y,P.y-30,k))}}];
+    INTRO.camFrom=G.cam?{...G.cam}:{z:1,x:AW/2,y:AH/2};
+    // (the companion steps out of the picture: the four heroes stand alone)
+    const C=iCast();P.x=clamp(P.x,L+70,R-110);P.face=Math.PI/2;INTRO.gx=P.x+18;G.pet=null;
+    INTRO.cast=[[C[1],-36,.2],[C[2],36,-.12],[C[3],72,-.24]].map(([id,dx,f])=>({id,x:P.x+dx,y:P.y,face:Math.PI/2+f,style:heroStyle0(id)}))},
+   tick(lt){const f=INTRO.camFrom,k=iEase(Math.min(1,lt/4.5));iCam(iLerp(f.z,1.7,k),iLerp(f.x,INTRO.gx||P.x,k),iLerp(f.y,P.y-30,k))}}];
 
 // the trailer score: a heartbeat, four worlds (one bar each), the giants, the final blow, the title
 TRACKS.trailer={bpm:120,
@@ -140,7 +155,7 @@ function introEnd(){if(!INTRO.on)return;INTRO.on=false;INTRO.splash=false;
   if(INTRO.snap){try{const s=JSON.parse(INTRO.snap);for(const k of Object.keys(SAVE))delete SAVE[k];Object.assign(SAVE,s)}catch(e){}INTRO.snap=null}
   SAVE.introSeen=1;save();
   const bd=$('bossDown');bd.hidden=true;bd.classList.remove('out');clearTimeout(bossDown.t);document.querySelectorAll('.kcPop').forEach(o=>o.remove());
-  bannerEl.classList.remove('show');$('bossBar').hidden=true;INTRO.drop=null;INTRO.ex=null;INTRO.stick=false;mossOn=0;
+  bannerEl.classList.remove('show');$('bossBar').hidden=true;INTRO.drop=null;INTRO.ex=null;INTRO.stick=false;INTRO.cast=null;mossOn=0;
   started=false;paused=true;newRun();initAudio();showMenu()}
 // the moss stick, once it has fallen from his mouth: drops, bounces, glows on the floor, then goes out
 function introWorld(){if(INTRO.ex!=null){const t=G.t-INTRO.ex;if(t<.8){const sc=t<.1?t/.1*1.35:1.35-.35*Math.min(1,(t-.1)/.12),a=t<.62?1:1-(t-.62)/.18;

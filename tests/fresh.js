@@ -7,7 +7,12 @@ p.on('pageerror',e=>errs.push(e.message+' @'+((e.stack||'').split('\n')[1]||'').
 p.on('console',m=>{if(m.type()==='error')errs.push('console: '+m.text())});
 const today=new Date();const ds=today.getFullYear()+'-'+(today.getMonth()+1)+'-'+today.getDate();
 await p.goto('file://'+__dirname+'/test.html');await p.waitForTimeout(1500);await p.screenshot({path:'fresh_a.png'});
-await p.mouse.click(195,600);await p.waitForTimeout(6000);await p.screenshot({path:'fresh_b.png'});await p.waitForTimeout(22000);await p.screenshot({path:'fresh_c.png'});
+// the first launch: the prologue (91-prologo.js: a tap starts it, it plays to the end), then the making of the hero (90-scelta-eroe.js)
+// in four steps, after the warning («Ho capito»): the Arciere, «Avanti» (his look), «Avanti» (the first gift), «Avanti» (the name offered), «Inizia», and the menu
+await p.mouse.click(195,600);await p.waitForTimeout(8000);await p.screenshot({path:'fresh_b.png'});
+for(let i=0;i<75&&await p.evaluate(()=>__E('INTRO.on'));i++)await p.waitForTimeout(1000);await p.waitForTimeout(2000);
+console.log('choice',await p.evaluate(()=>__E(`SCE.on`)));await p.screenshot({path:'fresh_c.png'});
+if(await p.isVisible('.sceOk')){await p.click('.sceOk');await p.waitForTimeout(500)}for(let i=0;i<3;i++){await p.click('.sceGo',{force:true});await p.waitForTimeout(700)}await p.click('.sceGo',{force:true});await p.waitForTimeout(5200);
 console.log('afterIntro',await p.evaluate(()=>__E(`JSON.stringify({intro:INTRO.on,menu:!$('menu').hidden,save:SAVE})`)));
 await p.waitForTimeout(1500);await p.screenshot({path:'fresh_d.png'});
 const boot=await p.evaluate(()=>__E(`({menu:!$('menu').hidden,intro:INTRO.on,sel:SAVE.sel,open:modeOpen(SAVE.sel||'arena')})`));

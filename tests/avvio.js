@@ -1,5 +1,5 @@
 // La schermata d'avvio e i caricamenti (src/js/65-caricamento.js, punti 52 e 53 del piano): la schermata compare prima che il gioco sia letto,
-// la barra va avanti per davvero, «Tocca per iniziare» apre il menu con la sua musica (la prima volta il filmato), i fotogrammi del menu
+// la barra va avanti per davvero, «Tocca per iniziare» apre il menu con la sua musica (la prima volta il prologo), i fotogrammi del menu
 // dopo il tocco sono lisci; l'ingresso nella mappa zombie è fatto a pezzi dietro la schermata zombie (avanzamento che cresce, nessun blocco
 // lungo); quando l'app va in secondo piano la foto del terreno zombie viene buttata e rientrando torna identica al pixel.
 // Qui il browser di prova si fa passare per un telefono vero (navigator.webdriver falso): le altre prove partono subito, senza schermata.
@@ -56,11 +56,11 @@ const SAVE={gold:900,gems:40,introSeen:1,handSeen:1,runs:3,trophies:120,items:{a
   await p.evaluate(()=>__E('zExit()'));await p.waitForTimeout(600);
   ok(await p.evaluate(()=>__E("!ZG.on&&!$('menu').hidden&&document.getElementById('boot').hidden")),'e si torna al menu');
   await p.context().close();
-  // 4. la prima volta in assoluto: dopo il tocco parte il filmato, con la sua musica
+  // 4. la prima volta in assoluto: dopo il tocco parte il prologo, con la sua musica
   p=await page(null);await p.goto(url,{waitUntil:'commit'});
   await p.waitForFunction(()=>{const b=document.getElementById('boot');return b&&!b.querySelector('.bt-go').hidden},null,{timeout:30000});
   await p.mouse.click(195,700);await p.waitForTimeout(1200);
-  ok(await p.evaluate(()=>__E("INTRO.on&&!INTRO.splash&&$('menu').hidden&&AU.cur&&AU.cur.name==='trailer'")),'la prima volta il tocco fa partire il filmato con la sua musica (senza un secondo «tocca»)');
+  ok(await p.evaluate(()=>__E("INTRO.on&&INTRO.pro&&!INTRO.splash&&$('menu').hidden&&AU.cur&&AU.cur.name==='prologo'")),'la prima volta il tocco fa partire il prologo con la sua musica (senza un secondo «tocca»)');
   await p.screenshot({path:path.join(OUT,'5_filmato.png')});
   await p.context().close();
   console.log('\nERR',JSON.stringify(errs.slice(0,6)));if(errs.length)fails++;console.log(fails?`${fails} prove non passate`:'tutte le prove passate');await b.close();srv.close();process.exit(fails?1:0)})();

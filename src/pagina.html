@@ -366,6 +366,8 @@ html,body{height:100%;margin:0;background:var(--ink);color:var(--parch);overflow
 .chips{display:flex;flex-wrap:wrap;gap:6px}
 .chipb{padding:5px 11px;border:2.5px solid var(--ink);border-radius:var(--hewn2);background:#3a2f26;color:var(--parch);font-family:var(--body);font-weight:700;font-size:13px;cursor:pointer}
 .chipb.on{background:linear-gradient(170deg,var(--parchA),var(--parchB));color:var(--ink)}
+.barberRow{display:flex;align-items:center;gap:10px;margin:2px 0 6px}.barberRow p{flex:1;margin:0;font-size:13px;line-height:1.3;color:var(--parch)}
+#barberGo{font-size:15px;padding:7px 11px;box-shadow:0 3px 0 var(--ink);white-space:nowrap}#barberGo .gemI{display:inline-block;width:13px;height:13px;margin-left:4px;vertical-align:-1px}
 .frames{display:grid;grid-template-columns:repeat(auto-fill,minmax(64px,1fr));gap:6px}
 .frm{display:flex;flex-direction:column;align-items:center;gap:2px;padding:5px 3px;border:2.5px solid var(--ink);border-radius:var(--hewn2);background:#2a221c;color:var(--parch);cursor:pointer;font-family:var(--body)}
 .frm i{width:34px;height:34px;border-radius:9px 5px 10px 6px;background:linear-gradient(145deg,var(--f1),var(--f2));border:2px solid var(--ink)}
@@ -1563,7 +1565,7 @@ html,body{height:100%;margin:0;background:var(--ink);color:var(--parch);overflow
         <div class="seg tabsSeg" id="profSeg"><button data-v="ach" class="on">Traguardi</button><button data-v="lb">Abisso</button><button data-v="look">Aspetto</button></div>
         <div id="vAch"><div class="achHead" id="achCount"></div><div class="achs" id="achs"></div></div>
         <div id="vLb" hidden><p class="sub">Le tue cinque discese più profonde.</p><ol class="lb" id="lb"></ol></div>
-        <div id="vLook" hidden><h3 class="h3">Titolo</h3><div class="chips" id="titles"></div><h3 class="h3">Cornice</h3><div class="frames" id="frames"></div><h3 class="h3">Vestito</h3><div id="skins"></div></div>
+        <div id="vLook" hidden><h3 class="h3">Il tuo aspetto</h3><div id="barber"></div><h3 class="h3">Titolo</h3><div class="chips" id="titles"></div><h3 class="h3">Cornice</h3><div class="frames" id="frames"></div><h3 class="h3">Vestito</h3><div id="skins"></div></div>
       </section>
     </div>
     <nav id="tabs">
@@ -1603,7 +1605,7 @@ html,body{height:100%;margin:0;background:var(--ink);color:var(--parch);overflow
   <div id="introScr" hidden>
     <div id="iFlash"></div>
     <div id="iCap"></div>
-    <div id="iLogo"><i class="iRays"></i><div class="iL"><span class="m">MOSS</span><span class="b">BOUND</span></div><p>Un arco. Quattro mondi. Boss giganti.</p><button id="iPlay">Gioca!</button></div>
+    <div id="iLogo"><i class="iRays"></i><div class="iL"><span class="m">MOSS</span><span class="b">BOUND</span></div><p>Quattro eroi. Quattro mondi. Boss giganti.</p><button id="iPlay">Gioca!</button></div>
     <div id="iSplash"><div class="iEmber"><svg viewBox="0 0 64 24" aria-hidden="true"><rect x="4" y="8" width="44" height="9" rx="4.5" fill="#4f8a34" stroke="#1b1612" stroke-width="2"/><rect x="12" y="10" width="5" height="3" fill="#8fd14f"/><rect x="24" y="12.5" width="5" height="3" fill="#8fd14f"/><rect x="36" y="10" width="5" height="3" fill="#8fd14f"/><circle class="tip" cx="50" cy="12.5" r="5" fill="#c9ff7a"/></svg><i></i><i></i><i></i></div><b>Tocca per iniziare</b></div>
     <button id="iSkip">Salta ›</button>
   </div>

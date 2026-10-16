@@ -118,4 +118,7 @@ js/85-cervo.js
 js/86-musiche-boss3.js
 js/87-boss3-arena.js
 js/88-boss3-voci.js
+js/90-scelta-eroe.js
+js/91-prologo.js
+js/92-eroi-nuovi.js
 coda.html

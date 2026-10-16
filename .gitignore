@@ -33,3 +33,6 @@ tests/golem2_test.html
 # work files of the model builders (the chosen one becomes <boss>2.js)
 sprite/nemici3d/*2a.js
 sprite/nemici3d/*2b.js
+anteprime/filmato.html
+anteprime/scelta.html
+anteprime/filmato_b.html

@@ -60,7 +60,7 @@ await p.waitForTimeout(6000);await p.screenshot({path:'t_dead3.png'});ok('fine p
 await p.reload();await p.waitForTimeout(1500);s=JSON.parse(await E('JSON.stringify(SAVE)'));ok('salvataggio dopo ricarica',s.pname==='Denis'&&s.heroes.cacciatrice&&s.items.giubba.lvl===4);
 // intro replay from settings keeps save
 const before=await E('JSON.stringify(SAVE)');await E(`document.querySelectorAll('#sheetScr,#arenaUpScr').forEach(e=>e.hidden=true);setTab('tabProfile')`);await p.click('#gearBtn');await p.waitForTimeout(300);await p.click('[data-intro]');await p.waitForTimeout(3000);await p.screenshot({path:'t_intro.png'});
-ok('intro parte',await E('INTRO.on'));await p.waitForTimeout(25000);ok('intro finisce al menu',await E(`!INTRO.on&&!$('menu').hidden`));
+ok('intro parte (il prologo)',await E('INTRO.on&&INTRO.pro'));for(let i=0;i<75&&await E('INTRO.on');i++)await p.waitForTimeout(1000);ok('intro finisce al menu',await E(`!INTRO.on&&!$('menu').hidden`));
 const after=await E('JSON.stringify(SAVE)');const a=JSON.parse(after),bb=JSON.parse(before);delete a.introSeen;delete bb.introSeen;ok('intro non tocca il salvataggio',JSON.stringify(a)===JSON.stringify(bb));
 await p.screenshot({path:'t_after_intro.png'});
 console.log(R.join('\n'));console.log('ERRORS',JSON.stringify(errs,null,1));await b.close();srv.close()})();

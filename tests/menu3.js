@@ -8,7 +8,7 @@ for(const [w,h] of [[390,844],[360,640]]){
  p.on('pageerror',e=>errs.push(`${w}x${h}: `+e.message+' @'+((e.stack||'').split('\n')[1]||'').trim().slice(-60)));
  p.on('console',m=>{if(m.type()==='error')errs.push(`${w}x${h} console: `+m.text())});
  const today=new Date();const ds=today.getFullYear()+'-'+(today.getMonth()+1)+'-'+today.getDate();
- await p.addInitScript(([ds,fresh])=>{if(fresh){localStorage.setItem('cripta_save_v1',JSON.stringify({gold:60,items:{arco_frassino:{lvl:1,cards:0},giubba:{lvl:1,cards:0}},eq:{arma:'arco_frassino',armatura:'giubba',anello:null,amuleto:null},slots:[{type:'legno',state:'ready'},null,null,null],best:{room:0,gold:0},runs:0,introSeen:1}));return}
+ await p.addInitScript(([ds,fresh])=>{if(fresh){localStorage.setItem('cripta_save_v1',JSON.stringify({gold:60,items:{arco_frassino:{lvl:1,cards:0},giubba:{lvl:1,cards:0}},eq:{arma:'arco_frassino',armatura:'giubba',anello:null,amuleto:null},slots:[{type:'legno',state:'ready'},null,null,null],best:{room:0,gold:0},runs:0,introSeen:1,starter:'arciere'}));return}
   localStorage.setItem('cripta_save_v1',JSON.stringify({gold:4200,gems:260,trophies:820,trBest:820,runs:14,introSeen:1,login:{last:'',n:3},
   items:{arco_frassino:{lvl:4,cards:9},giubba:{lvl:3,cards:2},arco_ricurvo:{lvl:2,cards:5},anello_rame:{lvl:2,cards:1},amuleto_luna:{lvl:1,cards:0}},eq:{arma:'arco_ricurvo',armatura:'giubba',anello:'anello_rame',amuleto:'amuleto_luna'},
   slots:[{type:'legno',state:'ready'},{type:'argento',state:'unlocking',end:Date.now()+1800e3},{type:'oro',state:'locked'},null],best:{room:10,gold:100},best2:{room:10,gold:100},best3:{room:6,gold:80},

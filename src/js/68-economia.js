@@ -88,7 +88,7 @@ function rollPack(mode,rar){const B=BUSTE[rar],pool=packPool(mode),out={};let le
   // shared things: creature cards, outfit cards
   if(Math.random()<B.pet){const w=PETS.map(q=>[q.id,[0,8,3,1.2][q.rar]||1]),tot=w.reduce((a,b)=>a+b[1],0);let r=Math.random()*tot,id=w[0][0];for(const[k,v] of w){r-=v;if(r<0){id=k;break}}
     out['pet:'+id]=(out['pet:'+id]||0)+rIn(1,2)+PR.indexOf(rar)*2}
-  if(Math.random()<B.skin){const ks=Object.keys(SKINS);if(ks.length){const id=ks[Math.floor(Math.random()*ks.length)];out['skin:'+id]=(out['skin:'+id]||0)+rIn(2,4)+PR.indexOf(rar)*2}}
+  if(Math.random()<B.skin){const ks=Object.keys(SKINS).filter(k=>!SKINS[k].crea);if(ks.length){const id=ks[Math.floor(Math.random()*ks.length)];out['skin:'+id]=(out['skin:'+id]||0)+rIn(2,4)+PR.indexOf(rar)*2}}
   const mat={};mat[mode==='zombie'?'rot':'ess']=Math.round(B.mat*(.85+Math.random()*.3));
   return{cards:Object.entries(out).map(([id,n])=>({id,n})).sort((a,b)=>CI(a.id).rar-CI(b.id).rar),gold:rIn(B.gold[0],B.gold[1]),mat}}
 function rollLucky(rar){const B=LBUSTE[rar],out={};for(let k=0;k<B.cards;k++){const rr=pickOdds(B.odds);let pl=LUCKY.filter(c=>c.rar===rr);if(!pl.length)pl=LUCKY;const c=pl[Math.floor(Math.random()*pl.length)];out['luck:'+c.id]=(out['luck:'+c.id]||0)+1}
@@ -144,7 +144,7 @@ function luckyGlyph(x,id,s){x.save();x.scale(s,s);x.lineJoin='round';x.lineCap='
 function zUpInfo(kind,id){const o=kind==='gun'?SAVE.z.guns[id]:SAVE.z.acc[id];if(!o)return null;const rar=kind==='gun'?zGunInfo(id).rar:ZACC_BY[id].rar,need=needCards(o.lvl),gold=Math.round((COST[o.lvl-1]||0)*(1+rar*.4)),rot=matCost(o.lvl);
   return{o,need,gold,rot,max:o.lvl>=MAXLV,ok:o.lvl<MAXLV&&o.cards>=need&&SAVE.gold>=gold&&SAVE.mat.rot>=rot}}
 function zUp(kind,id){const U=zUpInfo(kind,id);if(!U||!U.ok)return false;U.o.cards-=U.need;U.o.lvl++;SAVE.gold-=U.gold;SAVE.mat.rot-=U.rot;save();sfx('upgrade');return true}
-function skinUp(k){const lv=SAVE.skinLv[k]||0,need=skinNeed(lv);if(!(SAVE.skins&&SAVE.skins[k])||lv>=SKIN_MAX||(SAVE.skinCards[k]||0)<need)return false;SAVE.skinCards[k]-=need;SAVE.skinLv[k]=lv+1;save();sfx('upgrade');return true}
+function skinUp(k){const lv=SAVE.skinLv[k]||0,need=skinNeed(lv);if(!(SAVE.skins&&SAVE.skins[k])||SKINS[k]&&SKINS[k].crea||lv>=SKIN_MAX||(SAVE.skinCards[k]||0)<need)return false;SAVE.skinCards[k]-=need;SAVE.skinLv[k]=lv+1;save();sfx('upgrade');return true}
 // the health bonus of the outfit you wear (both modes)
 const skinBonus=()=>SAVE.skin&&SAVE.skinLv&&SAVE.skinLv[SAVE.skin]?.02*SAVE.skinLv[SAVE.skin]:0;
 // the zombie bonuses of a match: the level of each gun, the accessories
