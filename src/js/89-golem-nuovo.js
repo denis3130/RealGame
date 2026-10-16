@@ -38,7 +38,7 @@ if(G2ON){
 // Shard(x,y,z,a,sc,o); x, y the floor point, z the height); the game's simple drawings if the model has none
 const g2art=n=>N3['golem'+n]||N3['golem2'+n]||null;
 const g2pt=(e,bx,by,bz,face)=>{const f=face!=null?face:e.f3!=null?e.f3:(e.face||0),q=C3.V(f).P([bx,by,bz||0]);return{x:e.x+q[0],y:e.y+8+q[1]}};
-function g2walk(e){b3go(e,'walk',rand(1.1,1.6))}
+function g2walk(e){e.wt=0;b3go(e,'walk',rand(1.1,1.6))}
 // how far from (x,y) along a before a wall or an obstacle (the temporary ones too, unless soft)
 function g2reach(x,y,a,max,soft){const ca=Math.cos(a),sa=Math.sin(a);let s=0;for(;s<(max||900);s+=6){const px=x+ca*s,py=y+sa*s;if(px<L+4||px>R-4||py<TOP+4||py>BOT-4)break;
     if(G.rocks.some(k=>(!soft||!k.temp)&&Math.hypot(k.x-px,k.y-py)<k.r))break}return s}
@@ -109,7 +109,7 @@ if(G2ON)golemUpd=function(e,dt,a){const sp=e.p2?1.3:1;dt*=sp;// the second phase
     if(hit){e.bounces--;e.bump3=1;shake(4);sfx('boom',0,e.x);fallingPebbles(B3N(4));vfxBlast(hx,hy,'230,210,180',50,{sparks:8,debris:'stone',n:8,dust:6,ring2:false});
       const da=Math.atan2(e.vy,e.vx);B.arrows.push({x:e.x,y:e.y,a:da,t:.25,max:.25});if(BOSS2)ENV2.rocks(e.x,e.y,90,1.5);
       if(p2){const ca=Math.atan2((TOP+BOT)/2-e.y,(L+R)/2-e.x);for(const o of[-.436,0,.436])shootE(e.x,e.y-10,ca+o,120,6,10,'stone')}}
-    e.face=Math.atan2(e.vy,e.vx);if(e.bounces<=0||e.stT<=0)b3go(e,'unroll');break}
+    e.face=Math.atan2(e.vy,e.vx);if(hit){e.f3=e.face;e.fx3=Math.cos(e.face);e.fy3=Math.sin(e.face);e.f3t=G.t}if(e.bounces<=0||e.stT<=0)b3go(e,'unroll');break}
   case 'unroll':{e.moving=false;if(e.stT<=0)g2walk(e);break}
   // ---- RAGGIO DEL CUORE (second phase): the aim chases you slowly, locks (.417), flashes (.45, .52); the beam from .646 to .854
   case 'beam':{e.moving=false;const rdt=dt/sp;
@@ -247,9 +247,11 @@ if(G2ON){B3S.add('golem');
   // under its big cries the stone grinds
   {const _m=b3sayMore;b3sayMore=function(e,k,t){if(e.type!=='golem')return _m.apply(this,arguments);
     if(k==='cry'||k==='angry'||k==='die'||k==='win')fNoise(t+.05,k==='die'?1.9:1.3,'lowpass',VR(240,.15),.7,.08,{brown:true})}}
-  // the heart before every blow: tum-tum (the warning you hear, with the light running down its veins)
-  {const _g=b3go;b3go=function(e,st){_g.apply(this,arguments);try{if(e.type==='golem'&&!(e.intro>0)&&B3CUE.golem[st]&&AU.ctx&&AU.on.sfx&&AU.ctx.state==='running'){
-    const t=AU.ctx.currentTime+.01,v=Math.max(.55,enemyAt(e));for(let i=0;i<2;i++)fThump(t+i*.17,64,38,.15,.22*v*(i?.75:1));AU.pan=0}}catch(err){}}}
+  // the heart before every blow: you hear it when the model's heart beats and sends its light down the veins (the Schianto two beats,
+  // at .06 and .18 of the move; the Frana, the Faglia and the Valanga one at the start; in the boss's time, faster in the second phase)
+  const G2BEAT={leap:[.06,.18],throw:[.03],fault:[.03],curl:[.05]};
+  {const _g=b3go;b3go=function(e,st){_g.apply(this,arguments);try{const B=e.type==='golem'&&!(e.intro>0)&&G2BEAT[st];if(B&&AU.ctx&&AU.on.sfx&&AU.ctx.state==='running'){
+    const k=B3D(e,st)/((e.p2?1.3:1)*((bossLvl()||{}).spd||1)),t=AU.ctx.currentTime+.01,v=Math.max(.55,enemyAt(e));B.forEach((c,i)=>fThump(t+c*k,64,38,.15,.22*v*(i?.8:1)));AU.pan=0}}catch(err){}}}
   // the voices get ready in the rooms of its arena (and at once in its room)
   {const _br=buildRoom;buildRoom=function(){const r=_br.apply(this,arguments);try{const A=G&&G.mode!=='inf'&&!G.daily&&ARENAS[G.arena||0];
     if(A&&BOSSZ[A.boss]==='golem'||G&&(G.enemies||[]).some(q=>q.type==='golem'))B3VO.prep('golem')}catch(err){}return r}}
