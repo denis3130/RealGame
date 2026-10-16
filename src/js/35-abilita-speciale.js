@@ -8,7 +8,14 @@ const ULT={
   druida:{n:'Abbraccio delle radici',d:'Le radici bloccano e feriscono ogni nemico; tu recuperi salute.',col:'#9fff7a',rgb:'150,255,120'},
   bardo:{n:'Ballata',d:'Una canzone che rallenta tutti i nemici, li stordisce un attimo e ti cura.',col:'#ffd84a',rgb:'255,216,74'},
   alchimista:{n:'Grande calderone',d:'Un calderone enorme scoppia sui nemici e lascia una pozza di veleno.',col:'#7bf06a',rgb:'123,240,106'},
-  ninja:{n:'Cento ombre',d:'Tre ombre di te compaiono e tirano stelline insieme a te.',col:'#b8a6ff',rgb:'184,166,255'}};
+  ninja:{n:'Cento ombre',d:'Tre ombre di te compaiono e tirano stelline insieme a te.',col:'#b8a6ff',rgb:'184,166,255'},
+  // the six heroes of 16 October: their Supers are in 93
+  paladino:{n:'Martello del cielo',d:'Un martello di luce gigante cade sui nemici e li stordisce; tu recuperi salute e resti protetto un attimo.',col:'#ffd86b',rgb:'255,215,110'},
+  mago:{n:'Tormenta',d:'Una bufera congela tutti i nemici e fa piovere ghiaccio su di loro.',col:'#9fe8ff',rgb:'160,230,255'},
+  berserker:{n:'Furia',d:'Per sei secondi lanci molto più veloce, colpisci più forte e corri di più.',col:'#ff6a3c',rgb:'255,106,60'},
+  corsaro:{n:'Bordata',d:'Le palle di cannone della tua nave cadono sui nemici.',col:'#f0c64a',rgb:'240,198,74'},
+  domatore:{n:'Il branco',d:'Zanna ulula, quattro lupi di luce travolgono i nemici e Zanna morde il doppio.',col:'#8fc8ff',rgb:'143,200,255'},
+  monaco:{n:'Cento pugni',d:'Una tempesta di pugni, poi un palmo di luce che trapassa tutto.',col:'#fff1a8',rgb:'255,241,168'}};
 const ultGain=v=>{if(!P||G.state==='dead')return;const was=P.ult>=100;P.ult=Math.min(100,(P.ult||0)+v);if(!was&&P.ult>=100){sfx('shimmer',2);$('ultBtn').classList.add('full')}};
 function useUlt(){if(!started||paused||modal||!P||(P.ult||0)<100||G.state==='dead'||G.state==='trans')return;
   const id=P.hero||'arciere',U=ULT[id];P.ult=0;$('ultBtn').classList.remove('full');

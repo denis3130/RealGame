@@ -15,11 +15,14 @@ function is3D(S){return H3D.on&&typeof EROE!=='undefined'&&!!S&&(H3IDS.includes(
   else if(st.hit!=null){anim='hit';p=st.hit}
   else if(moving){anim='walk';p=(((walk||0)/TAU)%1+1)%1}
   else if(st.aim||pull>0)anim='aim';
+  // the six heroes of 16 October (93): the Corsair's cut with the sabre, the Monk's other fist
+  const ex=H3D.st&&H3D.ex;if(ex&&ex.slash!=null&&anim!=='dash'){anim='slash';p=ex.slash}
+  const xo={alt:!!(ex&&ex.alt)};
   if(H3D.st&&!H3D.prev){const o=H3D.tf||(H3D.tf={}),tt=(G&&G.t)||0;if(o.f==null||tt-o.t>.3){o.f=face}else{let d=face-o.f;d=Math.atan2(Math.sin(d),Math.cos(d));const dt=Math.max(0,tt-o.t),mx=30*dt;o.f+=Math.max(-mx,Math.min(mx,d*(1-Math.exp(-dt*30))))}o.t=tt;face=o.f}
   // seen through (the blink after a hit): drawn whole on a small layer, then laid down see-through, so the pieces under the others
   // do not show through
-  const a=ctx.globalAlpha;if(a<.99&&a>0&&!LOWFX&&heroLayer(x,y,sc,()=>EROE.arciere(x,y+8*sc,face,anim,p,sc,{style:S.hid==='druida'&&!S.eyes?{...S,eyes:S.eyeCol}:S,moss:mossOn?2:false,pull,noFx:true}),a))return;
-  EROE.arciere(x,y+8*sc,face,anim,p,sc,{style:S.hid==='druida'&&!S.eyes?{...S,eyes:S.eyeCol}:S,moss:mossOn?2:false,pull,noFx:!st.fx})}}
+  const a=ctx.globalAlpha;if(a<.99&&a>0&&!LOWFX&&heroLayer(x,y,sc,()=>EROE.arciere(x,y+8*sc,face,anim,p,sc,{style:S.hid==='druida'&&!S.eyes?{...S,eyes:S.eyeCol}:S,moss:mossOn?2:false,pull,noFx:true,...xo}),a))return;
+  EROE.arciere(x,y+8*sc,face,anim,p,sc,{style:S.hid==='druida'&&!S.eyes?{...S,eyes:S.eyeCol}:S,moss:mossOn?2:false,pull,noFx:!st.fx,...xo})}}
 // a small layer the size of the hero on the screen (in device pixels, with the canvas' own transform), for the see-through blink
 const HLAY={cv:null};
 function heroLayer(x,y,sc,draw,alpha){if(typeof document==='undefined')return false;const m=ctx.getTransform(),k=Math.hypot(m.a,m.b)||1;

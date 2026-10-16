@@ -36,7 +36,8 @@ function below(V0,X,ells,z,bb){const pts=[];for(const[Cc,R] of ells){const t=(z-
   ctx.beginPath();for(const q of lo)ctx.lineTo(q[0],q[1]);ctx.lineTo(lo[lo.length-1][0],bb[3]+30);ctx.lineTo(lo[0][0],bb[3]+30);ctx.closePath();return true}
 
 // ------------------------------------------------------------------ LUPO DELLE NEVI (EDRAW.wolf): 56 long from the tail to the nose
-const WC={fur:'#8a9ab0',lite:'#d8e2ee',dark:'#5a6a80',earIn:'#7c8aa0',nose:'#1b1612',eye:'#9fe6ff',mouth:'#5a1f2e',fang:'#f4f8ff'};
+// (o.pal: other colours, o.collar: a collar, for the Domatore's wolf Zanna, src/js/93; the snow wolf stays as it is)
+const WC0={fur:'#8a9ab0',lite:'#d8e2ee',dark:'#5a6a80',earIn:'#7c8aa0',nose:'#1b1612',eye:'#9fe6ff',mouth:'#5a1f2e',fang:'#f4f8ff'};
 // the body: the chest and the hips, two ellipsoids under one skin
 const WB=[[[3.5,0,17.4],[10.5,8.6,7.4]],[[-9.5,0,16.6],[8,7.6,6.4]],[[9.6,0,21],[4.6,5,4.8]]];
 // the legs: hips (body frame) and paws at rest (on the floor); front legs bend forward at the wrist, hind legs back at the hock
@@ -46,7 +47,7 @@ const WSK=[5.8,5.9,5.4],WMZ=[[1.6,0,-.4,4.2,3.6],[7.4,0,-.9,3,2.6],[11.4,0,-1.1,
 // a tapered volume through rings [x, y, z, half width, half height] (the muzzle and the jaw), turned by fn into the frame of the camera
 function rings(R,fn,m){const pts=[];m=m||10;for(const[x,y,z,w,h] of R)for(let i=0;i<m;i++){const a=i/m*TAU;pts.push(fn([x,y+Math.cos(a)*w,z+Math.sin(a)*h]))}
   const l=R[R.length-1];pts.push(fn([l[0]+l[4]*.8,l[1],l[2]]));return pts}
-function wolf(x,y,face,anim,p,sc,o){sc=sc||1;o=o||{};const V0=V(face),{P,D,F}=V0,ph=p*TAU;
+function wolf(x,y,face,anim,p,sc,o){sc=sc||1;o=o||{};const WC=o.pal?{...WC0,...o.pal}:WC0;const V0=V(face),{P,D,F}=V0,ph=p*TAU;
   // A: the body (B, lean = the front goes down > 0, roll, s, sx, yaw), the head (H its place in the body frame, hp nose up, hy look,
   // jaw 0..1, ears back 0..1), the tail (tl lift, tw sway), the paws (dx, dz off their rest place), the face, the puffs, the stars
   const A={B:[0,0,0],lean:0,roll:0,s:0,sx:0,yaw:0,H:[13.8,0,23.2],hp:0,hy:0,jaw:0,ears:0,tl:0,tw:0,pw:WL.map(()=>[0,0,0]),blink:1,shut:0,squint:0,puff:-1,stars:0};
@@ -92,6 +93,10 @@ function wolf(x,y,face,anim,p,sc,o){sc=sc||1;o=o||{};const V0=V(face),{P,D,F}=V0
     // the shadow under the head on the shoulders
     {const q=P(hT([-1,0,-3])),g=ctx.createRadialGradient(q[0],q[1]+3,1,q[0],q[1]+3,9);g.addColorStop(0,'rgba(20,30,50,.22)');g.addColorStop(1,'rgba(20,30,50,0)');ctx.fillStyle=g;ctx.fillRect(q[0]-10,q[1]-7,20,20)}
     ctx.restore();ink(2.4);poly(hp);ctx.stroke();C.rimPoly(hp,.32)});
+  if(o.collar){const c=[10.4,0,21.2],ax=nrm([1,0,.62]),u=nrm(cross(ax,[0,1,0])),v=[0,1,0],R0=4.9;
+    L.add(hD-.8,()=>{const pts=[];for(let i=0;i<=24;i++){const a=i/24*TAU,d=add(mul(u,Math.cos(a)),mul(v,Math.sin(a))),n=X.Rd(d);if(F(n)>-.05)pts.push(P(X.T(add(c,mul(d,R0)))));else if(pts.length>1)break;else pts.length=0}
+      if(pts.length<2)return;ctx.lineCap='round';ctx.lineJoin='round';ctx.strokeStyle=INK;ctx.lineWidth=3.6;line(pts);ctx.stroke();ctx.strokeStyle=o.collar;ctx.lineWidth=2;line(pts);ctx.stroke();
+      const fr=F(X.Rd(u));if(fr>0){const q=P(X.T(add(c,mul(u,R0+.6))));ink(.9);ctx.fillStyle='#f0c64a';ball([q[0],q[1]+1.4],1.25);ctx.fill();ctx.stroke()}})}
   // the head: the skull and the upper muzzle under one skin (as the game's wedge), the pale jaw under it (it opens round its hinge), the
   // dark mouth, two little fangs, the black nose, the ice eyes, the ears; its own little list of parts in the order the camera sees them
   L.add(hD,()=>{const H=parts(),fc=ellFace(V0,XH,[0,0,0],WSK),op=A.jaw,fwd=F(hR([1,0,0]));
@@ -110,7 +115,7 @@ function wolf(x,y,face,anim,p,sc,o){sc=sc||1;o=o||{};const V0=V(face),{P,D,F}=V0
       // the pale cheeks and underside of the muzzle (the game's light band under the snout)
       if(below(V0,XH,[[[0,0,0],WSK],[[6.2,0,-.9],[5.6,3.4,2.7]]],-1.7,bbox(hp))){ctx.fillStyle=softBox(bbox(hp),WC.lite,.06,.16);ctx.fill()}
       const EY=eyes(null,fc.h,5.6,{at:fc.at,dir:[.8,.54,.42],kind:'glow',col:WC.eye,rx:2.1,ry:1.45,fall:.6,blink:A.blink,squint:A.squint,shut:A.shut,shutCol:'#2a3a50',a:.55,b:.7,lr:.45});
-      if(!A.shut)for(const e of EY)if(e.rx>.7)shine('159,230,255',e.q[0],e.q[1],3.6,.3*Math.min(1,e.v*2)*A.blink*sstep(.7,.9,e.rx));
+      if(!A.shut)for(const e of EY)if(e.rx>.7)shine(WC.eyeRgb||'159,230,255',e.q[0],e.q[1],3.6,.3*Math.min(1,e.v*2)*A.blink*sstep(.7,.9,e.rx));
       ctx.restore();
       if(op>.15)for(const sd of[-1,1]){const a=P(hT([9.2,sd*1.2,-2.5])),b=P(hT([9.2,sd*1.2,-2.5-1.8*op]));ctx.fillStyle=WC.fang;ink(.8);tri(a[0],a[1],b[0],b[1],.8)}
       if(fwd>-.5){const q=P(hT([11.9,0,-.4]));ctx.save();ctx.globalAlpha=cl((fwd+.5)*3,0,1);ink(1);ctx.fillStyle=WC.nose;ctx.beginPath();ctx.ellipse(q[0],q[1],1.8,1.35,0,0,TAU);ctx.fill();ctx.fillStyle='rgba(255,255,255,.5)';ball([q[0]-.6,q[1]-.5],.45);ctx.fill();ctx.restore()}});

@@ -8,7 +8,7 @@ p.on('console',m=>{if(m.type()==='error')errs.push('console: '+m.text())});
 const today=new Date();const ds=today.getFullYear()+'-'+(today.getMonth()+1)+'-'+today.getDate();
 await p.addInitScript(([sel,tro,ds,hero,pet])=>{localStorage.setItem('cripta_save_v1',JSON.stringify({gold:5000,gems:500,trophies:+tro,trBest:+tro,runs:6,introSeen:1,sel,
  login:{last:ds,n:1},items:{arco_frassino:{lvl:3,cards:0},giubba:{lvl:3,cards:0}},eq:{arma:'arco_frassino',armatura:'giubba',anello:null,amuleto:null},
- slots:[null,null,null,null],best:{room:10,gold:100},best2:{room:10,gold:100},inf:{best:0,top:[]},tutDone:1,hero:hero||'arciere',heroes:{arciere:1,cacciatrice:1,balestriere:1,druida:1,bardo:1,alchimista:1,ninja:1},pets:{owned:{spiritello:{lvl:5},funghetto:{lvl:4},lucciola:{lvl:3},corvetto:{lvl:3},draghetto:{lvl:10}},sel:pet||'spiritello'}}))},[sel,tro,ds,hero,pet]);
+ slots:[null,null,null,null],best:{room:10,gold:100},best2:{room:10,gold:100},inf:{best:0,top:[]},tutDone:1,hero:hero||'arciere',heroes:{arciere:1,cacciatrice:1,balestriere:1,druida:1,bardo:1,alchimista:1,ninja:1,paladino:1,mago:1,berserker:1,corsaro:1,domatore:1,monaco:1},pets:{owned:{spiritello:{lvl:5},funghetto:{lvl:4},lucciola:{lvl:3},corvetto:{lvl:3},draghetto:{lvl:10}},sel:pet||'spiritello'}}))},[sel,tro,ds,hero,pet]);
 await p.goto('file://'+__dirname+'/test.html');await p.waitForTimeout(1500);
 const boot=await p.evaluate(()=>__E(`({menu:!$('menu').hidden,intro:INTRO.on,sel:SAVE.sel,open:modeOpen(SAVE.sel||'arena')})`));
 console.log('boot',JSON.stringify(boot));

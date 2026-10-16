@@ -31,7 +31,7 @@ function update(dt){
     if(gone){if(ar.siege)siegeBoom(ar);G.fx.push({k:'spark',x:ar.x,y:ar.y,t:.15});G.arrows.splice(i,1);continue}
     for(const e of G.enemies){
       if(e.dead||e.spawn>0||e.hidden||e.z>20||ar.hit.has(e))continue;
-      if(Math.hypot(e.x-ar.x,e.y-e.z-8-ar.y)>e.r+5)continue;
+      if(Math.hypot(e.x-ar.x,e.y-e.z-8-ar.y)>e.r+(ar.rad||5))continue;
       ar.hit.add(e);
       if(e.type==='skeleton'&&e.lunge<=0&&skShield(e)>0){const fx=Math.cos(e.face),fy=Math.sin(e.face);
         if(-(fx*ar.vx+fy*ar.vy)/560>(e.elite?.12:.55)){const hitv=(ar.big?2:1)+(Math.random()<P.crit?1:0);e.sh=Math.max(0,e.sh-hitv);e.shHit=.22;

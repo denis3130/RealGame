@@ -24,7 +24,10 @@ const SCE_IDS=STARTERS,SCE_FREE=STARTERS,SCE_PRICE=3000;
 const SCE_INFO={arciere:{rgb:'92,222,200',hex:'#5cdec8',the:"l'Arciere",twang:null,ent:'drop'},cacciatrice:{rgb:'255,140,190',hex:'#ff8cbe',the:'la Cacciatrice',twang:'arco_ricurvo',ent:'spin'},
   bardo:{rgb:'255,206,90',hex:'#ffce5a',the:'il Bardo',ent:'chord',snd:'chord',rel:.02},alchimista:{rgb:'123,240,106',hex:'#8af27a',the:"l'Alchimista",ent:'smoke',snd:'flask',rel:.54,smoke:'120,200,100'},
   ninja:{rgb:'184,166,255',hex:'#b8a6ff',the:'il Ninja',ent:'shadow',snd:'star',rel:.48,smoke:'110,92,170'},
-  balestriere:{rgb:'150,190,255',hex:'#a9c8ff',the:'il Balestriere'},druida:{rgb:'123,240,168',hex:'#7bf0a8',the:'il Druida'}};
+  balestriere:{rgb:'150,190,255',hex:'#a9c8ff',the:'il Balestriere'},druida:{rgb:'123,240,168',hex:'#7bf0a8',the:'il Druida'},
+  // the six heroes of 16 October (not in the making of the hero: their colour at the barber)
+  paladino:{rgb:'255,215,110',hex:'#ffd86b',the:'il Paladino'},mago:{rgb:'150,220,255',hex:'#9fe8ff',the:'il Mago del ghiaccio'},berserker:{rgb:'255,120,80',hex:'#ff7a50',the:'il Berserker'},
+  corsaro:{rgb:'240,198,74',hex:'#f0c64a',the:'il Corsaro'},domatore:{rgb:'190,220,140',hex:'#bedc8c',the:'il Domatore'},monaco:{rgb:'255,180,90',hex:'#ffb45a',the:'il Monaco'}};
 const SCE_LORE={arciere:'Il veterano della cripta: equilibrato in tutto, non ha un punto debole e non perde mai la calma.',
   cacciatrice:'Rapidissima e sfuggente: colpisce di lato e sparisce prima che il nemico si giri. Ma bastano pochi colpi a fermarla.',
   balestriere:'Lento e corazzato. Ogni dardo è un macigno: trapassa i nemici e li spinge via.',
@@ -555,10 +558,15 @@ const sceHides=(id,k,v)=>id==='balestriere'&&(k==='sopr'&&v!=='nessuna'||k==='or
   ||id==='ninja'&&(k==='bocca'&&v!=='nessuna'||k==='barba'&&v!=='nessuna'||k==='segno'&&!SCE_NINJA_OK[v]||k==='tatuaggio'&&!SCE_NINJA_OK[v]);
 // (what shows over the Ninja's mask: the scar through the eye, the rune and the moon up on the face)
 const SCE_NINJA_OK={nessuno:1,cicatrice:1,runa:1,luna:1};
+// the name of a choice; the first of a part that the hero has his own of (style.look0: the Paladin's helmet, the Ice Mage's hair and
+// beard…) is that one of his, while the player leaves it as it is
+const SCE_OWNK={cappuccio:['hood','su'],capelli:['hair','nascosti'],barba:['beard','nessuna']},SCE_OWNN={cavaliere:'Elmo da cavaliere',gelo:'Cappello del mago',elmo:'Elmo cornuto',tricorno:'Tricorno',lupo:'Testa di lupo',senza:'Niente'};
+function sceOptN(C,o){const k=SCE_OWNK[C.id],h=HERO_BY[SCE.sel],L0=h&&h.style&&h.style.look0;if(!k||!L0||L0[k[0]]==null||o.id!==k[1])return o.n;
+  return C.id==='cappuccio'?(SCE_OWNN[L0.hood]||'Il suo'):C.id==='capelli'?'I suoi':'La sua'}
 function sceLookUI(){const el=SCE.el,C=SCE_CAT[SCE.cat],D=el.querySelector('.sceDesc'),opts=C.id==='manto'?SCE_MANTI:C.list;el.querySelector('.sceStats').classList.add('empty');
   const tabs=`<div class="sceTabs" role="tablist" aria-label="Le parti">${sceCats().map(c=>`<button class="sceTab" data-cat="${c.id}" role="tab" aria-label="${c.n}" title="${c.n}">${SCE_ICON[c.id]}</button>`).join('')}</div>`;
   const hd=`<div class="sceLkHd"><h3></h3><button class="sceIco" data-act="rnd" aria-label="Un aspetto a caso" title="Un aspetto a caso">${SCE_DICE}</button><button class="sceIco" data-act="reset" aria-label="Questa parte com'era" title="Questa parte com'era">${SCE_UNDO}</button></div><p class="sceLkP"></p>`;
-  const tiles=`<div class="sceTiles" role="listbox" aria-label="${C.n}">${opts.map(o=>`<button class="sceTile" data-id="${o.id}" role="option" aria-label="${o.n}" title="${o.n}"><canvas aria-hidden="true"></canvas></button>`).join('')}</div>`;
+  const tiles=`<div class="sceTiles" role="listbox" aria-label="${C.n}">${opts.map(o=>`<button class="sceTile" data-id="${o.id}" role="option" aria-label="${sceOptN(C,o)}" title="${sceOptN(C,o)}"><canvas aria-hidden="true"></canvas></button>`).join('')}</div>`;
   const rc=C.cols?`<div class="sceRowC"><span>${C.cn}<em></em></span><div class="sceSws${C.cols.length>10?' many':''}">${C.cols.map(o=>`<button class="sceSw${o.sp?' sp':o.c?'':' no'}" data-sw="${o.id}" style="--c:${o.c||'#1b1612'}" aria-label="${o.n}" title="${o.n}"></button>`).join('')}</div></div>`:'';
   const rk=C.size?`<div class="sceRowK"><span>Grandezza</span><input class="sceK" type="range" min="${Math.round(LOOK_KMIN*100)}" max="${Math.round(LOOK_KMAX*100)}" step="1" value="100" aria-label="Grandezza"><button class="sceKv" data-act="k1" aria-label="Grandezza di sempre" title="Grandezza di sempre"></button></div>`:'';
   D.style.setProperty('--c','#f6e2a8');D.innerHTML=tabs+hd+tiles+rc+rk;
@@ -576,7 +584,7 @@ function sceLookSync(){const el=SCE.el;if(!el||SCE.step!==2)return;const C=SCE_C
   for(const b of D.querySelectorAll('.sceTab')){const c=SCE_CAT[b.dataset.cat],on=c.id===SCE.cat;b.classList.toggle('on',on);b.setAttribute('aria-selected',on?'true':'false');b.classList.toggle('mod',sceCatMod(c))}
   const cur=sceLookCur(),opts=C.id==='manto'?SCE_MANTI:C.list,o=opts.find(x=>x.id===cur)||opts[0];
   for(const t of D.querySelectorAll('.sceTile')){const on=t.dataset.id===o.id;t.classList.toggle('on',on);t.setAttribute('aria-selected',on?'true':'false')}
-  D.querySelector('.sceLkHd h3').innerHTML=`<small>${C.n}</small>${o.n}`;
+  D.querySelector('.sceLkHd h3').innerHTML=`<small>${C.n}</small>${sceOptN(C,o)}`;
   // a line about it (the heroes' own pieces stay)
   let p=o.d||C.d||'';const dr=SCE.sel==='druida';if(o.dc&&C.cols&&!lkFind(C.cols,SCE.look[C.ckey]).sp)p=o.dc;
   if(C.id==='manto'&&!o.id)p=`I colori di sempre ${(SCE_INFO[SCE.sel]||SCE_INFO.arciere).the.replace(/^l'/,"dell'").replace(/^la /,'della ').replace(/^il /,'del ')}. Lo cambi quando vuoi nel Profilo.`;
@@ -584,6 +592,8 @@ function sceLookSync(){const el=SCE.el;if(!el||SCE.step!==2)return;const C=SCE_C
   else if(sceHides(SCE.sel,C.key,o.id))p=SCE.sel==='ninja'?`Sotto la maschera del Ninja ${C.id==='bocca'?'la bocca non si vede':C.id==='barba'?'la barba non si vede':C.id==='tatuaggi'?'questo tatuaggio non si vede':'questo segno non si vede'}: sugli altri eroi sì.`
     :`Sotto l'elmo del Balestriere ${C.id==='sopr'?'le sopracciglia non si vedono':C.id==='orecchie'?'queste orecchie non si vedono':C.id==='cappuccio'?'il cappello non ci sta':C.id==='tatuaggi'?'la luna non si vede':o.id==='fascia'?'la fascia non si vede':'la corona non si vede'}: sugli altri eroi sì.`;
   else if(C.id==='capelli'&&SCE.sel==='cacciatrice'&&o.id==='nascosti')p='Il colore va anche alla coda della Cacciatrice.';
+  else if(sceOptN(C,o)!==o.n){const T=(SCE_INFO[SCE.sel]||SCE_INFO.arciere).the;p=C.id==='cappuccio'?`Quello ${T.replace(/^l'/,"dell'").replace(/^la /,'della ').replace(/^il /,'del ')}, come sempre.`
+    :C.id==='capelli'?`I capelli ${T.replace(/^l'/,"dell'").replace(/^la /,'della ').replace(/^il /,'del ')}, come sempre.`:`La barba ${T.replace(/^l'/,"dell'").replace(/^la /,'della ').replace(/^il /,'del ')}, come sempre.`}
   D.querySelector('.sceLkP').textContent=p;
   if(C.cols){const R=D.querySelector('.sceRowC'),S=R.querySelector('.sceSws'),sp=sceColSp(C);R.classList.toggle('off',sceColOff(C));
     for(const w of S.children){const on=w.dataset.sw===SCE.look[C.ckey];w.classList.toggle('on',on);w.setAttribute('aria-pressed',on?'true':'false');if(w.classList.contains('sp'))w.style.setProperty('--c',sp)}

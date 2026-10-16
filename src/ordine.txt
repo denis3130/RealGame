@@ -121,4 +121,5 @@ js/88-boss3-voci.js
 js/90-scelta-eroe.js
 js/91-prologo.js
 js/92-eroi-nuovi.js
+js/93-eroi-sei.js
 coda.html

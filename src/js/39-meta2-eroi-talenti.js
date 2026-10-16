@@ -30,7 +30,7 @@ const HEROES=[
   // hood, hair and beard, under the player's look (where the player left a part as it was)
   {id:'paladino',n:'Paladino',price:7000,d:'Martello sacro e scudo: lo scudo para i colpi, il martello cura.',start:'Lo scudo para un colpo ogni 6 secondi',sk:null,mods:{hp:1.25,atk:1.05,aspd:.85,spd:.92},
     style:{bighood:false,body:'#efe6cc',hood:'#3a5fb8',belt:'#8a5a2a',held:'maglio',quiver:false,ownBelt:true,hoodTip:false,look0:{hood:'cavaliere'},emblem:'sole',pauldrons:'#c9cfd6',shield:'pal'},proj:'hammer',pcol:'#ffd86b'},
-  {id:'mago',n:'Mago del ghiaccio',price:7000,d:'Sfere di ghiaccio: chi viene colpito si muove a fatica.',start:'Sfere di gelo che rallentano',sk:null,mods:{hp:.9,atk:1.1,aspd:.9},
+  {id:'mago',n:'Mago del ghiaccio',price:7000,d:'Sfere di ghiaccio: chi viene colpito si muove a fatica.',start:'Sfere di gelo che rallentano',sk:'ice',mods:{hp:.9,atk:1.1,aspd:.9},
     style:{bighood:false,body:'#4f9bd8',hood:'#2f5fb0',belt:'#bfe6ff',held:'gelo',quiver:false,ownBelt:true,hoodTip:false,look0:{hood:'gelo',hair:'lunghi',hairCol:'#eef4ff',beard:'lunga'},eyeCol:'#8fe0ff',emblem:'fiocco',hem:'#f4f8ff',strap:false},proj:'ice',pcol:'#9fe8ff'},
   {id:'berserker',n:'Berserker',price:7000,d:'Lancia asce che tornano indietro: colpiscono all\'andata e al ritorno.',start:'Asce che tornano come un boomerang',sk:null,mods:{hp:1.2,atk:1.15,aspd:.8},
     style:{bighood:false,body:'#a03c24',hood:'#5a3a24',belt:'#3a2a1a',held:'ascia',quiver:false,ownBelt:true,hoodTip:false,look0:{hood:'elmo',hair:'lunghi',hairCol:'#d0662a',beard:'intrecciata'},fur:'#a8865a',strap:false},proj:'axe',pcol:'#cfd6de'},

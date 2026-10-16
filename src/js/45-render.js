@@ -39,6 +39,8 @@ function render(){
   for(const st of G.stuck)list.push({y:st.k.y+(Math.sin(st.a)>0?-1:1),f:()=>drawStuck(st)});
   list.push({y:P.y,f:()=>{if(inDoor){ctx.save();ctx.beginPath();ctx.rect(0,TOP,AW,AH);doorPath();ctx.clip();drawHero();ctx.restore();doorDark(true);doorFrame()}else drawHero()}});
   for(const pt of G.pets||(G.pet?[G.pet]:[]))list.push({y:pt.y+(pt.id==='funghetto'?0:6),f:()=>drawPet(pt)});
+  // the heroes' allies (the Domatore's wolf, 93)
+  for(const w of G.allies||[])if(w)list.push({y:w.y+4,f:()=>drawAlly(w)});
   if(INTRO.on&&INTRO.cast)for(const a of INTRO.cast)list.push({y:a.y,f:()=>iDrawCast(a)});
   list.sort((a,b)=>a.y-b.y);for(const it of list)it.f();
   noShadow=false;
