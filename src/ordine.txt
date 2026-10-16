@@ -122,4 +122,5 @@ js/90-scelta-eroe.js
 js/91-prologo.js
 js/92-eroi-nuovi.js
 js/93-eroi-sei.js
+js/94-gittata.js
 coda.html

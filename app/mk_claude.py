@@ -30,4 +30,4 @@ open(os.path.join(out,'index.html'),'w',encoding='utf-8',newline='').write(page)
 open(os.path.join(out,'stile.css'),'w',encoding='utf-8',newline='').write('@charset "UTF-8";\n'+'\n'.join(css))
 open(os.path.join(out,'gioco.js'),'w',encoding='utf-8',newline='').write(code)
 kb=lambda s:len(s.encode('utf-8'))/1024
-print('app/claude: pagina %.0f KB (%d righe), stile %.0f KB, gioco %.0f KB'%(kb(page),page.count('\n')+1,kb('\n'.join(css)),kb(code)))
+print(os.path.relpath(out,root)+': pagina %.0f KB (%d righe), stile %.0f KB, gioco %.0f KB'%(kb(page),page.count('\n')+1,kb('\n'.join(css)),kb(code)))

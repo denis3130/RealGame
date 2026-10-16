@@ -145,8 +145,9 @@ const OLD={gold:900,gems:40,introSeen:1,handSeen:1,runs:4,trophies:120,items:{ar
     ok(await E("SCE.mode==='gift'&&SCE.gcur&&SCE.gcur.id==='oro'"),'il dono sta da solo sulla pietra, al posto dell\'eroe');
     await shot('4_dono');
     for(const id of ['cristalli','cassa','anello','compagno','piuma']){await p.tap(`.sceRow[data-id=${id}]`,{force:true});await p.waitForTimeout(450);await shot('4_dono_'+id)}
-    // (the feather swings in about 7.9 s and is narrow seen from the side: the best of half a swing)
-    let lg=0;for(let i=0;i<17;i++){lg=Math.max(lg,await lit(p));await p.waitForTimeout(250)}ok(/Rinascite/.test(await p.textContent('.sceStats'))&&lg>.17,`la piuma della fenice nella luce, con quello che dà (${(lg*100).toFixed(0)}%)`);
+    // (the feather swings in about 7.9 s and is narrow seen from the side: the best of half a swing; with the light on, whatever the speed
+    // of the test machine: a slow one turns the light passes off by itself, SCE.low, checked further down)
+    await E('SCE.low=false;SCE.slow=0;SCE.ema=0');let lg=0;for(let i=0;i<17;i++){lg=Math.max(lg,await lit(p));await p.waitForTimeout(250)}ok(/Rinascite/.test(await p.textContent('.sceStats'))&&lg>.17,`la piuma della fenice nella luce, con quello che dà (${(lg*100).toFixed(0)}%)`);
     await p.tap('.sceBack',{force:true});await p.waitForTimeout(400);ok(await E("SCE.step===2&&SCE.manto==='brace'&&SCE.look.segno==='cicatrice'&&SCE.mode==='hero'"),'«Indietro»: di nuovo l\'aspetto, tutto come l\'avevi lasciato, l\'eroe torna sulla pietra');
     await p.tap('.sceBack',{force:true});await p.waitForTimeout(400);ok(await E('SCE.step')===1&&(await rows(p))[1].on,'«Indietro»: gli eroi, la Cacciatrice ancora scelta');
     await p.tap('.sceGo',{force:true});await p.waitForTimeout(400);await p.tap('.sceGo',{force:true});await p.waitForTimeout(400);
