@@ -33,7 +33,7 @@ s = s.replace('<script>', '<script>' + patch, 1)
 again = '''<button id="qaAgain" hidden style="position:fixed;left:50%;top:calc(76px + env(safe-area-inset-top,0px));transform:translateX(-50%);z-index:9998;
   font:400 13px 'Lilita One',sans-serif;color:#fff;background:rgba(20,16,12,.72);border:2px solid rgba(255,255,255,.35);border-radius:999px;padding:4px 12px 5px;cursor:pointer">↺ Rivedi la creazione</button>
 <script>(()=>{const b=document.getElementById('qaAgain');b.onclick=()=>{try{sessionStorage.setItem('qa_again',1)}catch(e){}location.reload()};
-  setInterval(()=>{const m=document.getElementById('menu');b.hidden=!!document.getElementById('sceScr')||!m||m.hidden||!m.classList.contains('home')},400)})()</script>
+  setInterval(()=>{const m=document.getElementById('menu');b.hidden=!!document.getElementById('sceScr')||!m||m.hidden||!m.classList.contains('home')||[...document.querySelectorAll('.screen')].some(e=>!e.hidden)},400)})()</script>
 '''
 i = s.rfind('</body>')
 s = s[:i] + again + s[i:] if i >= 0 else s + again
