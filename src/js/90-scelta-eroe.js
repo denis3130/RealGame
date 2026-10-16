@@ -103,7 +103,11 @@ const SCE_CAPELLI=[{id:'nascosti',n:'Corti',d:'Corti e in ordine: col cappuccio 
   {id:'caschetto',n:'Caschetto',d:'Un caschetto tondo che copre le orecchie.'},{id:'treccine',n:'Treccine',d:'Due trecce legate con un nastro.'},
   {id:'coda',n:'Coda',d:'Una coda tirata indietro: esce dal cappuccio.'},{id:'chignon',n:'Chignon',d:'Raccolti in uno chignon con lo spillone.'},
   {id:'cresta',n:'Cresta',d:'Una cresta da guerriero, i lati rasati.'},{id:'rasati',n:'Rasati',d:'Cortissimi: niente può tirarglieli.'},
-  {id:'mossi',n:'Mossi',d:'Mossi come le onde della palude.'}];
+  {id:'mossi',n:'Mossi',d:'Mossi come le onde della palude.'},
+  // 16 October («altri copricapi e capelli»)
+  {id:'codini',n:'Codini',d:'Due codini alti con i nastri: saltano a ogni passo.'},{id:'afro',n:'Afro',d:'Una nuvola tonda e morbida di riccioli.'},
+  {id:'samurai',n:'Codino',d:'Tirati indietro e legati in un codino in cima alla testa.'},{id:'trecce',n:'Trecce lunghe',d:'Due trecce lunghe fino alla cintura.'},
+  {id:'ciuffone',n:'Ciuffo alto',d:'Un ciuffo alto pettinato all\'indietro, da grande occasione.'}];
 const SCE_COLCAP=[{id:'castani',n:'Castani',c:'#8a5a32'},{id:'neri',n:'Neri',c:'#3a2e2a'},{id:'biondi',n:'Biondi',c:'#e8c060'},{id:'rossi',n:'Rossi',c:'#c8582a'},
   {id:'bianchi',n:'Bianchi',c:'#ece6dc'},{id:'cenere',n:'Cenere',c:'#a19c94'},{id:'muschio',n:'Muschio',c:'#5fae3c'},{id:'viola',n:'Viola',c:'#8a5ad0'},
   {id:'blu',n:'Blu notte',c:'#3d5fa8'},{id:'rosa',n:'Rosa',c:'#e48fb2'}];
@@ -138,7 +142,12 @@ const SCE_CAPPUCCIO=[{id:'su',n:'Cappuccio',d:'Il cappuccio in testa, come sempr
   {id:'berretto',n:'Berretto',d:'Un berretto morbido tirato da una parte, come i musici.'},{id:'punta',n:'Da mago',d:"Alto e a punta, con le stelline d'oro."},
   {id:'paglia',n:'Paglia',d:'Un cappello di paglia a tesa larga, per il sole dei campi.'},{id:'cilindro',n:'Cilindro',d:'Elegante come un mago da palcoscenico.'},
   {id:'elmo',n:'Elmo cornuto',d:'Un elmo con le corna: fa paura anche al Golem.'},{id:'bandana',n:'Bandana',d:'Rossa a pois, annodata dietro come i pirati.'},
-  {id:'pompon',n:'Di lana',d:'Un berretto di lana col pompon, per i Picchi di Brina.'}];
+  {id:'pompon',n:'Di lana',d:'Un berretto di lana col pompon, per i Picchi di Brina.'},
+  // 16 October («altri copricapi»): also the own ones of the new heroes
+  {id:'corona',n:'Corona',d:'Una corona d\'oro col velluto rosso: il re della cripta.'},{id:'lupo',n:'Testa di lupo',d:'Un cappuccio fatto da una testa di lupo, col muso e le orecchie.'},
+  {id:'cavaliere',n:'Elmo da cavaliere',d:'Un elmo d\'acciaio col pennacchio rosso.'},{id:'ghirlanda',n:'Ghirlanda',d:'Una corona di foglie e fiori.'},
+  {id:'tricorno',n:'Tricorno',d:'Il cappello a tre punte dei corsari, col bordo d\'oro.'},{id:'turbante',n:'Turbante',d:'Un turbante con la spilla d\'oro e la piuma bianca.'},
+  {id:'gelo',n:'Cappello del gelo',d:'Un cappello da mago col pelo bianco e i fiocchi di neve.'}];
 const SCE_HAT=id=>id&&id!=='su'&&id!=='senza'&&id!=='giu';
 // the tattoos (Denis, 15 October): ink on the skin, a colour and a size of their own
 const SCE_TATUAGGI=[{id:'nessuno',n:'Nessuno',d:'La pelle pulita.'},{id:'tribale',n:'Tribale',d:'Linee curve sulla guancia, come gli antichi esploratori.'},
@@ -239,7 +248,12 @@ const SCE_GIFTS=[
    rows:[['Rarità','Raro'],['Critico','+5%'],['Attacco','+3']],
    give(){SAVE.items=SAVE.items||{};if(!SAVE.items.anello_falco)SAVE.items.anello_falco={lvl:1,cards:0};SAVE.eq=SAVE.eq||{};if(!SAVE.eq.anello)SAVE.eq.anello='anello_falco'}},
   {id:'piuma',n:'Piuma della fenice',rgb:'255,140,70',d:'Una piuma che non smette mai di scaldare. La prima volta che cadi in battaglia prende fuoco e ti rialzi.',
-   rows:[['Rinascite','+1']],give(){SAVE.piuma=(SAVE.piuma||0)+1}}];
+   rows:[['Rinascite','+1']],give(){SAVE.piuma=(SAVE.piuma||0)+1}},
+  // a companion from the start (Denis, 16 October: «Compagno iniziale»): the Lucciola, yours and with you at once
+  {id:'compagno',n:'La Lucciola',rgb:'232,255,140',d:'Una lucciola che non ti lascia mai: fa luce intorno a te, lancia scintille che inseguono i nemici e ogni tanto ti cura. Viene con te da subito.',
+   rows:[['Rarità','Rara'],['Cura','Ogni 8 s']],
+   give(){SAVE.pets=SAVE.pets||{owned:{},cards:{}};const P0=SAVE.pets;P0.owned=P0.owned||{};if(!P0.owned.lucciola)P0.owned.lucciola={lvl:1,cards:0};
+     const eq=Array.isArray(P0.eq)?P0.eq.filter(id=>id!=='lucciola'):[];eq.unshift('lucciola');P0.eq=eq.slice(0,typeof PET_SLOTS!=='undefined'?PET_SLOTS:2)}}];
 const SCE_GIFT=Object.fromEntries(SCE_GIFTS.map(g=>[g.id,g]));
 // the phoenix feather: the first fall in battle (when no dragon's heart is left) burns it and you get up again
 {const _d=die;die=function(){if(!INTRO.on&&G&&G.mode&&!G.ended&&G.state!=='dead'&&P&&!(P.revive>0)&&(SAVE.piuma||0)>0){SAVE.piuma--;save();
@@ -516,7 +530,7 @@ function scePic(cv,draw){const s=cv.clientWidth;if(!(s>4))return;const dpr=Math.
 function scePics(root){for(const cv of root.querySelectorAll('canvas.scePic')){const h=cv.dataset.hero,gi=cv.dataset.gift;
   if(h&&HERO_BY[h])scePic(cv,(s,g)=>{const dr=h==='druida',R=s*(dr?.25:.3);EROE.testa(s*.5,s*(dr?.64:.56),Math.PI/2-.4,R/10,{style:sceStyle(h),p:.3});
     if(!sceFree(h)){g.globalCompositeOperation='source-atop';g.fillStyle='rgba(10,10,14,.5)';g.fillRect(0,0,s,s);g.globalCompositeOperation='source-over'}});
-  else if(gi&&window.C3&&SCE_G3[gi])scePic(cv,s=>{const flat=gi==='anello'||gi==='piuma',k=s/(gi==='piuma'?37:gi==='cassa'?27:gi==='cristalli'?27:31);
+  else if(gi&&window.C3&&SCE_G3[gi])scePic(cv,s=>{const flat=gi==='anello'||gi==='piuma',k=s/(gi==='piuma'?37:gi==='cassa'?27:gi==='cristalli'?27:gi==='compagno'?30:31);
     ctx.translate(s*.5,s*(gi==='piuma'?.92:.84));ctx.scale(k,k);SCE_G3[gi](C3.V(flat?Math.PI/2+.6:.75),1.3,C3)})}}
 // the texts of each step: the right column and the panel underneath
 function sceHeroText(id){const h=HERO_BY[id],I=SCE_INFO[id],U=typeof ULT!=='undefined'&&ULT[id],S=SCE.stats[id],B=SCE.stats.arciere,lk=!sceFree(id),R=SCE.el.querySelector('.sceStats');
@@ -748,7 +762,7 @@ function sceFinish(){if(SCE.done||!SCE.on||!sceFree(SCE.sel)||!SCE.gift)return;c
   sceOwnSkins();SAVE.starter=id;SAVE.hero=id;SAVE.heroes=hs;SAVE.dono=g.id;SAVE.pname=SCE.name;SAVE.skin=SCE.manto||null;SAVE.look=sceLookN(SCE.look)?sceLook(SCE.look):null;try{g.give()}catch(e){}heroView=id;heroConfirm=null;
   // written now even while the prologue is on (save() waits for its end): in three blocks like save() (07)
   try{saveCheck(SAVE)}catch(e){}try{localStorage.setItem(SAVE_KEY,JSON.stringify(saveBlocks(SAVE)))}catch(e){}
-  if(INTRO.on&&INTRO.snap){try{const s=JSON.parse(INTRO.snap);for(const k of['starter','hero','heroes','dono','pname','skin','skins','look','gold','gems','slots','items','eq','piuma'])s[k]=SAVE[k];INTRO.snap=JSON.stringify(s)}catch(e){}}
+  if(INTRO.on&&INTRO.snap){try{const s=JSON.parse(INTRO.snap);for(const k of['starter','hero','heroes','dono','pname','skin','skins','look','gold','gems','slots','items','eq','piuma','pets'])s[k]=SAVE[k];INTRO.snap=JSON.stringify(s)}catch(e){}}
   SCE.fin={t0:t};SCE.el.classList.add('fin');SCE.el.querySelector('.sceBand small').textContent=SCE.name;sceSnd('ok');if(SCE.hero)SCE.hero.act=t+.2;
   for(let i=0;i<(LOWFX||SCE.low?8:20);i++)sceEmber(SCE_INFO[id].rgb,true);
   setTimeout(()=>{if(SCE.el){SCE.el.classList.add('band');sceSnd('band')}},1350);
@@ -756,7 +770,7 @@ function sceFinish(){if(SCE.done||!SCE.on||!sceFree(SCE.sel)||!SCE.gift)return;c
   setTimeout(()=>sceDone(g),4250)}
 function sceDone(g){if(!SCE.on)return;sceClose(true);playMusic('menu');
   try{if(!INTRO.on){renderGold();renderPlay();renderWho();renderTop.k=null;renderTop()}}catch(e){}
-  setTimeout(()=>{try{if(!INTRO.on)toast(`Dono: ${g.n}${g.id==='oro'?' (+500 oro)':g.id==='cristalli'?' (+30 cristalli)':g.id==='cassa'?' (tra le tue casse)':''}`)}catch(e){}},700)}
+  setTimeout(()=>{try{if(!INTRO.on)toast(`Dono: ${g.n}${g.id==='oro'?' (+500 oro)':g.id==='cristalli'?' (+30 cristalli)':g.id==='cassa'?' (tra le tue casse)':g.id==='compagno'?' (viene con te)':''}`)}catch(e){}},700)}
 // keys: up and down (or left and right, W/S, A/D) move in the list, Enter or Space go on, Esc goes back; in the look left and right
 // (A/D) change the part, up and down the choice, Q and E the colour, - and + the size, R a look at random, Delete the part as it was;
 // while writing the name only Enter (done) and Esc count
@@ -912,6 +926,8 @@ function sceLayer(X,Y,k,draw,alpha,dark,light,bx){const m=ctx.getTransform(),dp=
 // ------------------------------------------------------------------ the gifts in 3D (the C3 toolkit of the 3D monsters, painted like them:
 // three soft tones, the thick dark outline, the warm rim). Each one turns with `face`; (0, 0) is the point under it, z up
 const SCE_G3={
+  // the Lucciola, flying in the hero's place: the companions' 3D model (sprite/nemici3d/eroi.js), turning with the others
+  compagno(V0,t,C){if(typeof N3==='undefined'||!N3.lucciola)return;N3.lucciola(0,16,Math.atan2(V0.s,V0.c),'idle',((t/2.4)%1+1)%1,.82,{})},
   // a sack of rough cloth tied with a rope, coins peeping out of the top, two coins flying round it
   oro(V0,t,C){const{vol,revo,IDF,surfLine}=C,orb=[0,1].map(i=>{const a=t*1.1+i*Math.PI;return{c:[Math.cos(a)*12.5,Math.sin(a)*12.5,8+3*Math.sin(t*1.6+i*2)],a}}),dc=V0.D(0,0,8);
     const coin=(c,n,r)=>{n=C.nrm(n);const back=C.add(c,C.mul(n,-.8));ctx.lineJoin='round';C.disc3(V0,back,n,r);ctx.fillStyle='#b5620a';ctx.fill();ctx.strokeStyle=INK;ctx.lineWidth=1.3;ctx.stroke();

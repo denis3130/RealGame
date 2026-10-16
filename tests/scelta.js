@@ -3,7 +3,7 @@
 // eroi a sinistra (Arciere, Cacciatrice, Bardo, Alchimista, Ninja; Balestriere e Druida non ci sono più), ognuno entra sulla pietra a modo suo,
 // l'eroe 3D grande al centro sotto la luce (si gira col dito, un tocco lo fa tirare), le statistiche a destra, la storia sotto.
 // II Aspetto: dodici parti in icone sopra il pannello (mantello, copricapo, capelli, orecchie, pelle, occhi, sopracciglia, bocca, segni,
-// tatuaggi, barba, accessori), ogni scelta un riquadro disegnato, il colore, la grandezza, il dado e la freccia indietro; poi il barbiere. III Dono: cinque doni in 3D, ognuno da solo sulla pietra al
+// tatuaggi, barba, accessori), ogni scelta un riquadro disegnato, il colore, la grandezza, il dado e la freccia indietro; poi il barbiere. III Dono: sei doni in 3D, ognuno da solo sulla pietra al
 // posto dell'eroe. IV Nome: il nome (il dado ne propone uno), il riepilogo (un tocco su una riga torna a quel passo), «Inizia», «Il viaggio
 // ha inizio» col nome, il menu con l'eroe col suo mantello. Quello scelto è gratis e in campo, gli altri quattro costano 3.000 oro nella
 // scheda Eroi; dono, nome e mantello arrivano nel salvataggio. Riaprendo il gioco la creazione non torna; chiuso a metà, torna sopra il menu.
@@ -140,12 +140,13 @@ const OLD={gold:900,gems:40,introSeen:1,handSeen:1,runs:4,trophies:120,items:{ar
     // III · the gift, alone on the stone in the hero's place
     await p.tap('.sceGo',{force:true});await p.waitForTimeout(900);
     const g=await rows(p);
-    ok(await E('SCE.step')===3&&/Scegli un dono/.test(await title(p))&&g.map(r=>r.id).join()==='oro,cristalli,cassa,anello,piuma','«Avanti»: il dono, cinque da scegliere');
+    ok(await E('SCE.step')===3&&/Scegli un dono/.test(await title(p))&&g.map(r=>r.id).join()==='oro,cristalli,cassa,anello,piuma,compagno','«Avanti»: il dono, sei da scegliere');
     ok(g[0].on&&/Avanti/.test(await p.textContent('.sceGo'))&&/\+500/.test(await p.textContent('.sceStats')),'il sacco d\'oro già scelto (+500)');
     ok(await E("SCE.mode==='gift'&&SCE.gcur&&SCE.gcur.id==='oro'"),'il dono sta da solo sulla pietra, al posto dell\'eroe');
     await shot('4_dono');
-    for(const id of ['cristalli','cassa','anello','piuma']){await p.tap(`.sceRow[data-id=${id}]`,{force:true});await p.waitForTimeout(450);await shot('4_dono_'+id)}
-    let lg=0;for(let i=0;i<6;i++){lg=Math.max(lg,await lit(p));await p.waitForTimeout(220)}ok(/Rinascite/.test(await p.textContent('.sceStats'))&&lg>.17,`la piuma della fenice nella luce, con quello che dà (${(lg*100).toFixed(0)}%)`);
+    for(const id of ['cristalli','cassa','anello','compagno','piuma']){await p.tap(`.sceRow[data-id=${id}]`,{force:true});await p.waitForTimeout(450);await shot('4_dono_'+id)}
+    // (the feather swings in about 7.9 s and is narrow seen from the side: the best of half a swing)
+    let lg=0;for(let i=0;i<17;i++){lg=Math.max(lg,await lit(p));await p.waitForTimeout(250)}ok(/Rinascite/.test(await p.textContent('.sceStats'))&&lg>.17,`la piuma della fenice nella luce, con quello che dà (${(lg*100).toFixed(0)}%)`);
     await p.tap('.sceBack',{force:true});await p.waitForTimeout(400);ok(await E("SCE.step===2&&SCE.manto==='brace'&&SCE.look.segno==='cicatrice'&&SCE.mode==='hero'"),'«Indietro»: di nuovo l\'aspetto, tutto come l\'avevi lasciato, l\'eroe torna sulla pietra');
     await p.tap('.sceBack',{force:true});await p.waitForTimeout(400);ok(await E('SCE.step')===1&&(await rows(p))[1].on,'«Indietro»: gli eroi, la Cacciatrice ancora scelta');
     await p.tap('.sceGo',{force:true});await p.waitForTimeout(400);await p.tap('.sceGo',{force:true});await p.waitForTimeout(400);
@@ -239,9 +240,9 @@ const OLD={gold:900,gems:40,introSeen:1,handSeen:1,runs:4,trophies:120,items:{ar
   // 3. the gifts, each on its own into a new save; and the phoenix feather in battle
   {const {p,cx,E}=await phone({...OLD,runs:0,introSeen:1,gems:0,gold:60,slots:[{type:'legno',state:'ready'},null,null,null]});
     ok(await E('SCE.on&&!INTRO.on'),'chiuso a metà (intro vista, nessun eroe preso): la creazione torna subito sopra il menu');
-    const d=await E(`(()=>{const out={};for(const g of SCE_GIFTS){const keep=JSON.stringify(SAVE);g.give();out[g.id]={gold:SAVE.gold,gems:SAVE.gems,slots:SAVE.slots.map(s=>s&&s.type+':'+s.state).join(),ring:!!(SAVE.items.anello_falco&&SAVE.eq.anello==='anello_falco'),piuma:SAVE.piuma||0};
+    const d=await E(`(()=>{const out={};for(const g of SCE_GIFTS){const keep=JSON.stringify(SAVE);g.give();out[g.id]={gold:SAVE.gold,gems:SAVE.gems,slots:SAVE.slots.map(s=>s&&s.type+':'+s.state).join(),ring:!!(SAVE.items.anello_falco&&SAVE.eq.anello==='anello_falco'),piuma:SAVE.piuma||0,pet:!!(SAVE.pets&&SAVE.pets.owned&&SAVE.pets.owned.lucciola),peq:SAVE.pets&&SAVE.pets.eq&&SAVE.pets.eq[0]};
       const s=JSON.parse(keep);for(const k of Object.keys(SAVE))delete SAVE[k];Object.assign(SAVE,s)}return out})()`);
-    ok(d.oro.gold===560&&d.cristalli.gems===30&&d.cassa.slots==='legno:ready,argento:ready,,'&&d.anello.ring&&d.piuma.piuma===1,'i cinque doni: 500 oro, 30 cristalli, la cassa d\'argento pronta, l\'anello indossato, la piuma');
+    ok(d.oro.gold===560&&d.cristalli.gems===30&&d.cassa.slots==='legno:ready,argento:ready,,'&&d.anello.ring&&d.piuma.piuma===1&&d.compagno.pet&&d.compagno.peq==='lucciola','i sei doni: 500 oro, 30 cristalli, la cassa d\'argento pronta, l\'anello indossato, la piuma, la Lucciola che viene con te');
     // the mantles of the creation are always yours, also in a save put back without them (after the intro, or from a code)
     ok(await E("(()=>{delete SAVE.skins;SAVE.skin='notte';const h=heroStyle().hood;return h==='#4a6bc4'&&SAVE.skins.notte===1})()"),'i mantelli della creazione restano tuoi anche in un salvataggio che li ha persi');
     await E("SAVE.skin=null;sceClose(false)");await p.waitForTimeout(300);

@@ -11362,7 +11362,7 @@ function capPath(V0,q,Rr,n,al){n=nrm(n);let u=cross(n,[0,0,1]);if(len(u)<.2)u=cr
 // where the face looks (a little up, so seen from the front the face sits in the middle of the hood as in the game) and its pieces
 const FACE=[1,0,.27],EYE=[1,.33,.25],CHEEK=[1,.54,.04],MOUTH=[1,-.13,-.06];
 // the hood and the face. Vh: the head's own camera (it turns with the look); A.hp: how much the head nods down; o: eyes, mouth, moss
-function head(Vh,Rh,S,A,o){const h=Vh.P(0,0,0),{F}=Vh,hood=S.hood,skin=S.skin,nod=v=>rotY(v,A.hp),fd=nrm(nod(FACE));
+function head(Vh,Rh,S,A,o){const h=Vh.P(0,0,0),{F}=Vh,hood=S.look&&S.look.hood==='lupo'&&!S.helm?(S.look.hatCol||HAT_COL.lupo):S.hood,skin=S.skin,nod=v=>rotY(v,A.hp),fd=nrm(nod(FACE));
   if(S.skull)return skullHead(Vh,Rh,S,A,o,h,nod);
   const mouthD=nrm(nod(MOUTH)),mossD=nrm(nod([.66,-.72,-.22]));
   // the moss stick, when the mouth turns away: drawn before the hood, so only the part sticking out past the cheek shows
@@ -11381,7 +11381,7 @@ function head(Vh,Rh,S,A,o){const h=Vh.P(0,0,0),{F}=Vh,hood=S.hood,skin=S.skin,no
   // the outfit's pieces on the hood (sprite/eroe3d/vestiti3d.js: behind it, on its cloth, in front of it), not on a bare head or under a hat
   const OH=S.of&&S.of.hoodFx&&!(lk&&lk.bare)?{Vh,h,Rh,nod,F,S,A,hood,sp,capPath}:null;if(OH)S.of.hoodFx(OH,'back');
   // without the hood: the bare head with its hair
-  const wolf=LK&&LK.hood==='lupo'&&!(lk&&lk.bare);if(wolf)wolfHood(Vh,h,Rh,nod,hood,false);
+  const wolf=LK&&LK.hood==='lupo'&&!S.helm&&!(lk&&lk.bare);if(wolf)wolfHood(Vh,h,Rh,nod,hood,false);
   if(lk&&lk.bare)bareHead(Vh,Rh,S,A,o,h,nod,fd,lk);
   else{ink(2.5);ball(h,Rh);ctx.fillStyle=hood;ctx.fill();ctx.stroke();
   // soft shading of a ball lit from the upper left: the three tones blend into each other, no patches with an edge
@@ -11507,7 +11507,13 @@ const HAIRS={
   chignon:{v:.045,f:a=>.85,fa:.45,s:.1,ta:.72,ear:.34,n:-.4,bun:1,sw:.25},
   cresta:{v:0,f:a=>.86,fa:.45,s:.12,ta:.74,ear:.34,n:-.45,flat:1,fin:1},
   rasati:{v:0,f:a=>.8,fa:.45,s:.12,ta:.74,ear:.34,n:-.45,flat:1},
-  mossi:{v:.12,f:a=>.66+.035*Math.sin(a*8),fa:.47,s:-.32,ta:.65,ear:null,n:-.52,waves:1}};
+  mossi:{v:.12,f:a=>.66+.035*Math.sin(a*8),fa:.47,s:-.32,ta:.65,ear:null,n:-.52,waves:1},
+  // 16 October («più acconciature»): pigtails, an afro, a topknot, two long braids, a high quiff
+  codini:{v:.05,f:a=>.78+.012*Math.sin(a*14),fa:.42,s:.04,ta:.68,ear:.3,n:-.5,pig:1,sw:.25},
+  afro:{v:.46,f:a=>.69+.02*Math.sin(a*11),fa:.5,s:-.12,ta:.68,ear:null,n:-.45,curls:1},
+  samurai:{v:.03,f:a=>.9,fa:.45,s:.1,ta:.72,ear:.34,n:-.42,knot:1},
+  trecce:{v:.06,f:a=>.68+.02*Math.sin(a*10),fa:.45,s:-.1,ta:.66,ear:.28,n:-.6,braids:1,blen:1.7,bw:1.25},
+  ciuffone:{v:.07,f:a=>.95-.12*Math.abs(a),fa:.5,s:.04,ta:.7,ear:.3,n:-.55,quiff:1}};
 // the hairline of a style; K (the size) makes the long hair longer, the fringe stays where it is
 function hairLine(H,K){const fa=H.fa,ta=H.ta,s=H.s-(H.s<-.1?(K-1)*.3:0),n=H.n-(K-1)*.14,ear=H.ear;
   return a=>{const x=Math.abs(a);if(x<=fa)return H.f(a);const f0=H.f(a<0?-fa:fa);
@@ -11583,8 +11589,18 @@ function hairPieces(Vh,h,R,nod,H,L,S,col,g,K,front,bare,sw){const{F}=Vh,fr=v=>F(
     if(!front)for(const sd of[-1,1]){const b0=bare?mul(nod(hdir(sd*1.05,-.05)),R*.88):mul(nod(hdir(sd*.72,-.42)),R*.9),P=[b0,add(b0,nod([.6,sd*.9,-L0*.42])),add(b0,nod([.9,sd*.8,-L0*.8])),add(b0,nod([.8,sd*.9+sw*.4,-L0*1.05]))];
       lock3(Vh,h,P,[3.4,3.1,2.4,.8].map(v=>v*Math.sqrt(K)),col,g)}
     if(bare&&backV===front){const b0=mul(nod(hdir(Math.PI,-.2)),R*.9),P=[b0,add(b0,nod([-1.4,sw*.3,-4.8*K])),add(b0,nod([-1.8,sw*.6,-8.4*K]))];lock3(Vh,h,P,[7.4,7,5.6].map(v=>v*Math.sqrt(K)),col,g)}}
-  if(H.braids&&!front){for(const sd of[-1,1]){const d0=bare?nod(hdir(sd*1.25,-.25)):nod(hdir(sd*.74,-.44)),
-    b0=mul(d0,R*.92),P=[b0,add(b0,nod([1.3,sd*.6,-3.8*K])),add(b0,nod([2,sd*.5+sw*.3,-7.6*K])),add(b0,nod([2.2,sd*.6+sw*.6,-10.2*K]))];braid3(Vh,h,P,2.3*Math.sqrt(K),col,g,L.accCol)}}
+  if(H.braids&&!front){const bl=H.blen||1,bw=H.bw||1;for(const sd of[-1,1]){const d0=bare?nod(hdir(sd*1.25,-.25)):nod(hdir(sd*.74,-.44)),
+    b0=mul(d0,R*.92),P=[b0,add(b0,nod([1.3,sd*.6,-3.8*K*bl])),add(b0,nod([2,sd*.5+sw*.3,-7.6*K*bl])),add(b0,nod([2.2,sd*.6+sw*.6,-10.2*K*bl]))];braid3(Vh,h,P,2.3*Math.sqrt(K)*bw,col,g,L.accCol)}}
+  // the pigtails: one each side, tied high, standing out and hanging (the near one in front of the head, the far one behind)
+  if(H.pig){for(const sd of[-1,1]){if((F(nod([0,sd,0]))>-.2)!==front)continue;const tie=mul(nrm(nod(bare?hdir(sd*1.72,.62):hdir(sd*.8,-.38))),R*(bare?1:.96)),out=nod([-.5,sd*2.4,0]),
+      P=[tie,add(tie,add(out,nod([0,0,-1]))),add(tie,add(mul(out,1.5),nod([0,sd*sw*.4,-5*K]))),add(tie,add(mul(out,1.35),nod([0,sd*sw*.8,-8.6*K])))];
+      lock3(Vh,h,P,[2.5,2.8,2.3,.9].map(v=>v*Math.sqrt(K)),col,g);const q=hP(Vh,h,tie);ink(1.1);ctx.fillStyle=L.accCol||'#e5484d';ball(q,1.6*Math.sqrt(K));ctx.fill();ctx.stroke()}}
+  // the topknot: a short thick lock lying forward on the crown, tied at its root
+  if(H.knot&&bare){const d=nrm(nod(hdir(Math.PI*.95,1.25))),c=mul(d,R+1*K);if((F(d)>-.5)===front){const fw2=nod([1,0,0]),up2=nod([0,0,1]),
+      P=[add(c,add(mul(fw2,-.8*K),mul(up2,-.4*K))),c,add(c,add(mul(fw2,2*K),mul(up2,1*K))),add(c,add(mul(fw2,3.8*K),mul(up2,.9*K)))];lock3(Vh,h,P,[2.3,2.7,2.3,1.1].map(v=>v*K),col,g);
+      const q=hP(Vh,h,add(c,add(mul(fw2,.4*K),mul(up2,.3*K))));ink(1);ctx.fillStyle=L.accCol||'#e8e0cc';ctx.beginPath();ctx.ellipse(q[0],q[1],1.1*K,2.3*K,0,0,TAU);ctx.fill();ctx.stroke()}}
+  // the high quiff: a wave of hair rising over the forehead and curling back
+  if(H.quiff&&bare&&front&&F(nod(hdir(0,.9)))>-.1){const P=[[0,1.5,.1],[0,1.18,1.7],[0,.98,2.9],[.06,.82,3.3],[.12,.7,1.8]].map(([a,e,o])=>mul(nod(hdir(a,e)),R+o*K)),W=[2.2,3.4,4,3.3,1.1].map(v=>v*K);lock3(Vh,h,P,W,col,g)}
   if(H.tail&&!S.ponytail){const back=F(nod([-1,0,.2]))<=.15;if(back===!front){// the tail: from the back of the head (out of the hood) down behind the neck
       const tie=mul(nod(hdir(Math.PI,bare?.3:.05)),R*(bare?1:.95)),P=[tie,add(tie,nod([-2.6,sw*.5,-2.4])),add(tie,nod([-3.4,sw*1.2,-6.8*K])),add(tie,nod([-2.8,sw*2,-10.8*K]))];
       lock3(Vh,h,P,[2.9,3,2.4,.8].map(v=>v*Math.sqrt(K)),col,g);const q=hP(Vh,h,tie);ink(1.1);ctx.fillStyle=L.accCol||'#d24b3e';ball(q,1.6*Math.sqrt(K));ctx.fill();ctx.stroke()}}
@@ -12608,9 +12624,10 @@ function wolfHood(Vh,h,R,nod,col,front){const{F}=Vh,fw=nrm(nod([1,0,0])),up=nrm(
 // front, rt its right. A brim: drawn whole before the crown and its near half again after it (the crown rises behind it). col: the hat's
 // colour picked in the look (else its own)
 const HAT_COL={berretto:'#c8323c',punta:'#5a3a9a',paglia:'#e8c870',cilindro:'#2e2a30',elmo:'#a9b1ba',bandana:'#d24b3e',pompon:'#3f7fd0',
-  tricorno:'#26222a',cavaliere:'#b4bcc6',gelo:'#2f5fb0'};
+  tricorno:'#26222a',cavaliere:'#b4bcc6',gelo:'#2f5fb0',corona:'#f0c64a',ghirlanda:'#ff8ab8',turbante:'#7a3a9a',lupo:'#8c8478'};
 // (tricorno, cavaliere, gelo: the own hats of the Corsaro, the Paladino and the Ice Mage, style.look0, 16 October)
-const HATS={berretto:1,punta:1,paglia:1,cilindro:1,elmo:1,bandana:1,pompon:1,tricorno:1,cavaliere:1,gelo:1};
+// (corona, ghirlanda, turbante: 16 October, «altri copricapi»; the wolf's head, lupo, is a hood, not a hat: head() and wolfHood)
+const HATS={berretto:1,punta:1,paglia:1,cilindro:1,elmo:1,bandana:1,pompon:1,tricorno:1,cavaliere:1,gelo:1,corona:1,ghirlanda:1,turbante:1};
 // (the hats with a brim are pushed back on the head, so from our camera, which looks down, the brim never hides the eyes)
 const HAT_TILT={berretto:.12,punta:.26,paglia:.5,cilindro:.36,tricorno:.3,gelo:.26};
 function hatDraw(Vh,h,R,nod,kind,col,sw){const{F}=Vh,tl=HAT_TILT[kind]||0,up0=nrm(nod([0,0,1])),fw0=nrm(nod([1,0,0])),rt=nrm(nod([0,1,0])),c=col||HAT_COL[kind]||'#c8323c';
@@ -12728,6 +12745,41 @@ function hatDraw(Vh,h,R,nod,kind,col,sw){const{F}=Vh,tl=HAT_TILT[kind]||0,up0=nr
     for(const r of meshEdge(M,h,Rr,0,.03)){if(r.length<2)continue;ctx.lineCap='round';ctx.lineJoin='round';ctx.strokeStyle=INK;ctx.lineWidth=3.8;line(r);ctx.stroke();ctx.strokeStyle='#e0b040';ctx.lineWidth=2;line(r);ctx.stroke();
       ctx.fillStyle='#fff1b0';for(let i=2;i<r.length;i+=5){ball(r[i],.55);ctx.fill()}}
     if(bk>=.2)plume();
+    return}
+  if(kind==='corona'){// the king's crown: a cap of red velvet, a golden band with five points round it, pearls at their tips, red and
+    // blue stones on the band. The points on the far side first (the cap covers their feet), the cap, then the band and the near points
+    const zb=R*.46,N=5,ts=[];for(let i=0;i<N;i++)ts.push(i/N*TAU);
+    const pt=(t,near)=>{const b0=at(zb+R*.26,R*.98,t-.26),b1=at(zb+R*.26,R*.98,t+.26),tp=at(zb+R*.78,R*1.04,t),Q=[b0,tp,b1].map(P3),n=add(mul(fw,Math.cos(t)),mul(rt,Math.sin(t)));
+      ink(1.4);ctx.beginPath();ctx.moveTo(Q[0][0],Q[0][1]);ctx.lineTo(Q[1][0],Q[1][1]);ctx.lineTo(Q[2][0],Q[2][1]);ctx.closePath();ctx.fillStyle=softF(Q,near?c:dk(c,.22),.25,.3);ctx.fill();ctx.stroke();
+      ctx.fillStyle='#fff6e2';ink(.8);ball(Q[1],1.1);ctx.fill();ctx.stroke()};
+    for(const t of ts)if(F(add(mul(fw,Math.cos(t)),mul(rt,Math.sin(t))))<0)pt(t,false);
+    const pts=[];for(let i=0;i<16;i++)for(const[z,r] of[[0,R*.92],[R*.4,R*.9],[R*.62,R*.62],[R*.72,R*.28]])pts.push(P3(at(zb+z,r,sp1(i,16))));const H=solid(pts,'#c8283a');
+    if(!LOWFX){ctx.save();poly(H);ctx.clip();ctx.fillStyle='rgba(255,255,255,.18)';const hl=P3(add(mul(up,zb+R*.55),mul(fw,R*.1)));ctx.beginPath();ctx.ellipse(hl[0]-R*.2,hl[1],R*.32,R*.12,-.2,0,TAU);ctx.fill();ctx.restore()}
+    const tq=P3(mul(up,zb+R*.8));ink(1);ctx.fillStyle='#f0c64a';ball(tq,1.6);ctx.fill();ctx.stroke();
+    const bt=runT(40,-.05);strip(bt,zb,R*.99,zb+R*.3,R*.98,c);
+    for(let i=0;i<bt.length;i+=4){const t=bt[i],q=P3(at(zb+R*.15,R*1.02,t)),v=F(add(mul(fw,Math.cos(t)),mul(rt,Math.sin(t))));if(v<.15)continue;ctx.save();ctx.globalAlpha=cl((v-.15)*4,0,1);
+      ink(.8);ctx.fillStyle=i%8?'#3f7fd0':'#d6323a';ball(q,1.15);ctx.fill();ctx.stroke();ctx.fillStyle='rgba(255,255,255,.7)';ball([q[0]-.35,q[1]-.35],.35);ctx.fill();ctx.restore()}
+    for(const t of ts)if(F(add(mul(fw,Math.cos(t)),mul(rt,Math.sin(t))))>=0)pt(t,true);
+    return}
+  if(kind==='ghirlanda'){// a wreath of leaves and flowers round the head (only what faces us), the flowers in the hat's colour
+    const zb=R*.62,N=16,E=[];for(let i=0;i<N;i++){const t=i/N*TAU,n=add(mul(fw,Math.cos(t)),mul(rt,Math.sin(t))),c3=add(mul(up,zb),mul(n,R*.84));E.push({t,n,c3,v:F(nrm(add(mul(n,.75),mul(up,.66)))),fl:i%2===0})}
+    E.sort((a,b)=>a.v-b.v);
+    for(const e of E){if(e.v<-.05)continue;const q=P3(e.c3),al=cl((e.v+.05)*4,0,1);ctx.save();ctx.globalAlpha*=al;
+      if(e.fl){ink(.9);for(let k=0;k<5;k++){const a=k/5*TAU+e.t;ctx.fillStyle=c;ball([q[0]+Math.cos(a)*1.5,q[1]+Math.sin(a)*1.1],1.2);ctx.fill();ctx.stroke()}ctx.fillStyle='#ffe28a';ball(q,.85);ctx.fill()}
+      else{const tg=P3(add(e.c3,mul(nrm(cross(up,e.n)),2.6))),dx=tg[0]-q[0],dy=tg[1]-q[1];ink(.9);ctx.fillStyle='#4f9a3a';ctx.beginPath();ctx.ellipse(q[0],q[1],2.6,1.2,Math.atan2(dy,dx),0,TAU);ctx.fill();ctx.stroke();
+        ctx.strokeStyle='rgba(20,60,10,.55)';ctx.lineWidth=.4;ctx.beginPath();ctx.moveTo(q[0]-dx*.4,q[1]-dy*.4);ctx.lineTo(q[0]+dx*.4,q[1]+dy*.4);ctx.stroke()}
+      ctx.restore()}
+    return}
+  if(kind==='turbante'){// the turban: cloth wound round the head in a soft high dome, the turns of the cloth across it, a golden brooch with a
+    // red stone in front and a white feather
+    const M=regionMesh(Vh,nod,-Math.PI,Math.PI,a=>.52-.08*Math.cos(a),()=>Math.PI/2,36,5),Rr=R*1.13;
+    ctx.fillStyle=INK;meshPath(M,h,Rr+1.1);ctx.fill();meshPath(M,h,Rr);ctx.fillStyle=soft(h[0]-Rr*.4,h[1]-Rr*.6,h[0],h[1]-Rr*.2,Rr*1.25,c,.22,.32);ctx.fill();
+    ctx.save();meshPath(M,h,Rr);ctx.clip();ctx.strokeStyle=dk(c,.3);ctx.lineWidth=.9;ctx.lineCap='round';
+    for(let k=0;k<5;k++){const pts=[];for(let i=0;i<=24;i++){const a=-Math.PI+i/24*TAU,n=nrm(nod(hdir(a,.62+k*.17+.12*Math.sin(a+k))));if(F(n)>.04)pts.push(sp(Vh,h,Rr,n));else if(pts.length>1){line(pts);ctx.stroke();pts.length=0}else pts.length=0}if(pts.length>1){line(pts);ctx.stroke()}}
+    ctx.restore();for(const r of meshEdge(M,h,Rr,0,.04)){if(r.length<2)continue;ctx.strokeStyle=INK;ctx.lineWidth=3.4;line(r);ctx.stroke();ctx.strokeStyle=lt(c,.1);ctx.lineWidth=1.7;line(r);ctx.stroke()}
+    const d=nrm(nod(hdir(0,.72))),v=F(d);if(v>.05){const q=sp(Vh,h,Rr*1.02,d);ctx.save();ctx.globalAlpha=cl(v*4,0,1);
+      const f0=q,f1=[q[0]+2.6,q[1]-8.5],f2=[q[0]+5.2,q[1]-13];ctx.strokeStyle=INK;ctx.lineWidth=4.2;ctx.lineCap='round';ctx.beginPath();ctx.moveTo(f0[0],f0[1]);ctx.quadraticCurveTo(f1[0],f1[1],f2[0],f2[1]);ctx.stroke();
+      ctx.strokeStyle='#f6f2ea';ctx.lineWidth=2.6;ctx.stroke();ink(1.1);ctx.fillStyle='#f0c64a';ball(q,2.1);ctx.fill();ctx.stroke();ctx.fillStyle='#d6323a';ball(q,1.2);ctx.fill();ctx.fillStyle='rgba(255,255,255,.75)';ball([q[0]-.4,q[1]-.4],.4);ctx.fill();ctx.restore()}
     return}}
 // a little snowflake: six arms with two twigs each
 function flake(x,y,r,col){ctx.save();ctx.lineCap='round';for(const[w,c] of[[1.6,'rgba(27,22,18,.55)'],[.7,col]]){ctx.strokeStyle=c;ctx.lineWidth=w;ctx.beginPath();
@@ -24576,7 +24628,11 @@ const SCE_CAPELLI=[{id:'nascosti',n:'Corti',d:'Corti e in ordine: col cappuccio 
   {id:'caschetto',n:'Caschetto',d:'Un caschetto tondo che copre le orecchie.'},{id:'treccine',n:'Treccine',d:'Due trecce legate con un nastro.'},
   {id:'coda',n:'Coda',d:'Una coda tirata indietro: esce dal cappuccio.'},{id:'chignon',n:'Chignon',d:'Raccolti in uno chignon con lo spillone.'},
   {id:'cresta',n:'Cresta',d:'Una cresta da guerriero, i lati rasati.'},{id:'rasati',n:'Rasati',d:'Cortissimi: niente può tirarglieli.'},
-  {id:'mossi',n:'Mossi',d:'Mossi come le onde della palude.'}];
+  {id:'mossi',n:'Mossi',d:'Mossi come le onde della palude.'},
+  // 16 October («altri copricapi e capelli»)
+  {id:'codini',n:'Codini',d:'Due codini alti con i nastri: saltano a ogni passo.'},{id:'afro',n:'Afro',d:'Una nuvola tonda e morbida di riccioli.'},
+  {id:'samurai',n:'Codino',d:'Tirati indietro e legati in un codino in cima alla testa.'},{id:'trecce',n:'Trecce lunghe',d:'Due trecce lunghe fino alla cintura.'},
+  {id:'ciuffone',n:'Ciuffo alto',d:'Un ciuffo alto pettinato all\'indietro, da grande occasione.'}];
 const SCE_COLCAP=[{id:'castani',n:'Castani',c:'#8a5a32'},{id:'neri',n:'Neri',c:'#3a2e2a'},{id:'biondi',n:'Biondi',c:'#e8c060'},{id:'rossi',n:'Rossi',c:'#c8582a'},
   {id:'bianchi',n:'Bianchi',c:'#ece6dc'},{id:'cenere',n:'Cenere',c:'#a19c94'},{id:'muschio',n:'Muschio',c:'#5fae3c'},{id:'viola',n:'Viola',c:'#8a5ad0'},
   {id:'blu',n:'Blu notte',c:'#3d5fa8'},{id:'rosa',n:'Rosa',c:'#e48fb2'}];
@@ -24611,7 +24667,12 @@ const SCE_CAPPUCCIO=[{id:'su',n:'Cappuccio',d:'Il cappuccio in testa, come sempr
   {id:'berretto',n:'Berretto',d:'Un berretto morbido tirato da una parte, come i musici.'},{id:'punta',n:'Da mago',d:"Alto e a punta, con le stelline d'oro."},
   {id:'paglia',n:'Paglia',d:'Un cappello di paglia a tesa larga, per il sole dei campi.'},{id:'cilindro',n:'Cilindro',d:'Elegante come un mago da palcoscenico.'},
   {id:'elmo',n:'Elmo cornuto',d:'Un elmo con le corna: fa paura anche al Golem.'},{id:'bandana',n:'Bandana',d:'Rossa a pois, annodata dietro come i pirati.'},
-  {id:'pompon',n:'Di lana',d:'Un berretto di lana col pompon, per i Picchi di Brina.'}];
+  {id:'pompon',n:'Di lana',d:'Un berretto di lana col pompon, per i Picchi di Brina.'},
+  // 16 October («altri copricapi»): also the own ones of the new heroes
+  {id:'corona',n:'Corona',d:'Una corona d\'oro col velluto rosso: il re della cripta.'},{id:'lupo',n:'Testa di lupo',d:'Un cappuccio fatto da una testa di lupo, col muso e le orecchie.'},
+  {id:'cavaliere',n:'Elmo da cavaliere',d:'Un elmo d\'acciaio col pennacchio rosso.'},{id:'ghirlanda',n:'Ghirlanda',d:'Una corona di foglie e fiori.'},
+  {id:'tricorno',n:'Tricorno',d:'Il cappello a tre punte dei corsari, col bordo d\'oro.'},{id:'turbante',n:'Turbante',d:'Un turbante con la spilla d\'oro e la piuma bianca.'},
+  {id:'gelo',n:'Cappello del gelo',d:'Un cappello da mago col pelo bianco e i fiocchi di neve.'}];
 const SCE_HAT=id=>id&&id!=='su'&&id!=='senza'&&id!=='giu';
 // the tattoos (Denis, 15 October): ink on the skin, a colour and a size of their own
 const SCE_TATUAGGI=[{id:'nessuno',n:'Nessuno',d:'La pelle pulita.'},{id:'tribale',n:'Tribale',d:'Linee curve sulla guancia, come gli antichi esploratori.'},
@@ -24712,7 +24773,12 @@ const SCE_GIFTS=[
    rows:[['Rarità','Raro'],['Critico','+5%'],['Attacco','+3']],
    give(){SAVE.items=SAVE.items||{};if(!SAVE.items.anello_falco)SAVE.items.anello_falco={lvl:1,cards:0};SAVE.eq=SAVE.eq||{};if(!SAVE.eq.anello)SAVE.eq.anello='anello_falco'}},
   {id:'piuma',n:'Piuma della fenice',rgb:'255,140,70',d:'Una piuma che non smette mai di scaldare. La prima volta che cadi in battaglia prende fuoco e ti rialzi.',
-   rows:[['Rinascite','+1']],give(){SAVE.piuma=(SAVE.piuma||0)+1}}];
+   rows:[['Rinascite','+1']],give(){SAVE.piuma=(SAVE.piuma||0)+1}},
+  // a companion from the start (Denis, 16 October: «Compagno iniziale»): the Lucciola, yours and with you at once
+  {id:'compagno',n:'La Lucciola',rgb:'232,255,140',d:'Una lucciola che non ti lascia mai: fa luce intorno a te, lancia scintille che inseguono i nemici e ogni tanto ti cura. Viene con te da subito.',
+   rows:[['Rarità','Rara'],['Cura','Ogni 8 s']],
+   give(){SAVE.pets=SAVE.pets||{owned:{},cards:{}};const P0=SAVE.pets;P0.owned=P0.owned||{};if(!P0.owned.lucciola)P0.owned.lucciola={lvl:1,cards:0};
+     const eq=Array.isArray(P0.eq)?P0.eq.filter(id=>id!=='lucciola'):[];eq.unshift('lucciola');P0.eq=eq.slice(0,typeof PET_SLOTS!=='undefined'?PET_SLOTS:2)}}];
 const SCE_GIFT=Object.fromEntries(SCE_GIFTS.map(g=>[g.id,g]));
 // the phoenix feather: the first fall in battle (when no dragon's heart is left) burns it and you get up again
 {const _d=die;die=function(){if(!INTRO.on&&G&&G.mode&&!G.ended&&G.state!=='dead'&&P&&!(P.revive>0)&&(SAVE.piuma||0)>0){SAVE.piuma--;save();
@@ -24989,7 +25055,7 @@ function scePic(cv,draw){const s=cv.clientWidth;if(!(s>4))return;const dpr=Math.
 function scePics(root){for(const cv of root.querySelectorAll('canvas.scePic')){const h=cv.dataset.hero,gi=cv.dataset.gift;
   if(h&&HERO_BY[h])scePic(cv,(s,g)=>{const dr=h==='druida',R=s*(dr?.25:.3);EROE.testa(s*.5,s*(dr?.64:.56),Math.PI/2-.4,R/10,{style:sceStyle(h),p:.3});
     if(!sceFree(h)){g.globalCompositeOperation='source-atop';g.fillStyle='rgba(10,10,14,.5)';g.fillRect(0,0,s,s);g.globalCompositeOperation='source-over'}});
-  else if(gi&&window.C3&&SCE_G3[gi])scePic(cv,s=>{const flat=gi==='anello'||gi==='piuma',k=s/(gi==='piuma'?37:gi==='cassa'?27:gi==='cristalli'?27:31);
+  else if(gi&&window.C3&&SCE_G3[gi])scePic(cv,s=>{const flat=gi==='anello'||gi==='piuma',k=s/(gi==='piuma'?37:gi==='cassa'?27:gi==='cristalli'?27:gi==='compagno'?30:31);
     ctx.translate(s*.5,s*(gi==='piuma'?.92:.84));ctx.scale(k,k);SCE_G3[gi](C3.V(flat?Math.PI/2+.6:.75),1.3,C3)})}}
 // the texts of each step: the right column and the panel underneath
 function sceHeroText(id){const h=HERO_BY[id],I=SCE_INFO[id],U=typeof ULT!=='undefined'&&ULT[id],S=SCE.stats[id],B=SCE.stats.arciere,lk=!sceFree(id),R=SCE.el.querySelector('.sceStats');
@@ -25221,7 +25287,7 @@ function sceFinish(){if(SCE.done||!SCE.on||!sceFree(SCE.sel)||!SCE.gift)return;c
   sceOwnSkins();SAVE.starter=id;SAVE.hero=id;SAVE.heroes=hs;SAVE.dono=g.id;SAVE.pname=SCE.name;SAVE.skin=SCE.manto||null;SAVE.look=sceLookN(SCE.look)?sceLook(SCE.look):null;try{g.give()}catch(e){}heroView=id;heroConfirm=null;
   // written now even while the prologue is on (save() waits for its end): in three blocks like save() (07)
   try{saveCheck(SAVE)}catch(e){}try{localStorage.setItem(SAVE_KEY,JSON.stringify(saveBlocks(SAVE)))}catch(e){}
-  if(INTRO.on&&INTRO.snap){try{const s=JSON.parse(INTRO.snap);for(const k of['starter','hero','heroes','dono','pname','skin','skins','look','gold','gems','slots','items','eq','piuma'])s[k]=SAVE[k];INTRO.snap=JSON.stringify(s)}catch(e){}}
+  if(INTRO.on&&INTRO.snap){try{const s=JSON.parse(INTRO.snap);for(const k of['starter','hero','heroes','dono','pname','skin','skins','look','gold','gems','slots','items','eq','piuma','pets'])s[k]=SAVE[k];INTRO.snap=JSON.stringify(s)}catch(e){}}
   SCE.fin={t0:t};SCE.el.classList.add('fin');SCE.el.querySelector('.sceBand small').textContent=SCE.name;sceSnd('ok');if(SCE.hero)SCE.hero.act=t+.2;
   for(let i=0;i<(LOWFX||SCE.low?8:20);i++)sceEmber(SCE_INFO[id].rgb,true);
   setTimeout(()=>{if(SCE.el){SCE.el.classList.add('band');sceSnd('band')}},1350);
@@ -25229,7 +25295,7 @@ function sceFinish(){if(SCE.done||!SCE.on||!sceFree(SCE.sel)||!SCE.gift)return;c
   setTimeout(()=>sceDone(g),4250)}
 function sceDone(g){if(!SCE.on)return;sceClose(true);playMusic('menu');
   try{if(!INTRO.on){renderGold();renderPlay();renderWho();renderTop.k=null;renderTop()}}catch(e){}
-  setTimeout(()=>{try{if(!INTRO.on)toast(`Dono: ${g.n}${g.id==='oro'?' (+500 oro)':g.id==='cristalli'?' (+30 cristalli)':g.id==='cassa'?' (tra le tue casse)':''}`)}catch(e){}},700)}
+  setTimeout(()=>{try{if(!INTRO.on)toast(`Dono: ${g.n}${g.id==='oro'?' (+500 oro)':g.id==='cristalli'?' (+30 cristalli)':g.id==='cassa'?' (tra le tue casse)':g.id==='compagno'?' (viene con te)':''}`)}catch(e){}},700)}
 // keys: up and down (or left and right, W/S, A/D) move in the list, Enter or Space go on, Esc goes back; in the look left and right
 // (A/D) change the part, up and down the choice, Q and E the colour, - and + the size, R a look at random, Delete the part as it was;
 // while writing the name only Enter (done) and Esc count
@@ -25385,6 +25451,8 @@ function sceLayer(X,Y,k,draw,alpha,dark,light,bx){const m=ctx.getTransform(),dp=
 // ------------------------------------------------------------------ the gifts in 3D (the C3 toolkit of the 3D monsters, painted like them:
 // three soft tones, the thick dark outline, the warm rim). Each one turns with `face`; (0, 0) is the point under it, z up
 const SCE_G3={
+  // the Lucciola, flying in the hero's place: the companions' 3D model (sprite/nemici3d/eroi.js), turning with the others
+  compagno(V0,t,C){if(typeof N3==='undefined'||!N3.lucciola)return;N3.lucciola(0,16,Math.atan2(V0.s,V0.c),'idle',((t/2.4)%1+1)%1,.82,{})},
   // a sack of rough cloth tied with a rope, coins peeping out of the top, two coins flying round it
   oro(V0,t,C){const{vol,revo,IDF,surfLine}=C,orb=[0,1].map(i=>{const a=t*1.1+i*Math.PI;return{c:[Math.cos(a)*12.5,Math.sin(a)*12.5,8+3*Math.sin(t*1.6+i*2)],a}}),dc=V0.D(0,0,8);
     const coin=(c,n,r)=>{n=C.nrm(n);const back=C.add(c,C.mul(n,-.8));ctx.lineJoin='round';C.disc3(V0,back,n,r);ctx.fillStyle='#b5620a';ctx.fill();ctx.strokeStyle=INK;ctx.lineWidth=1.3;ctx.stroke();
