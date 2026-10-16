@@ -383,3 +383,18 @@ Tutto quello che c'è, con numeri e prove, sta in `docs/anteprima-48.md`; qui co
   zona chiusa, i morti del Becchino (`partita.js evoca`) solo in una zona aperta e raggiungibile. Prova `zone_prova.js`.
 - **Attacchi** (`motore.js ATKT`, `ATKH`): un attacco dura 1 s (strisciante 1,05, minatore e lanterna 1,1, cane 0,8), il colpo a metà;
   danni in `partita.js PZ.danno`.
+
+## Le abilità (16 ottobre, ramo `eroi-nuovi`: Denis, 12 ottobre: «scegliere e sbloccare delle abilità, per esempio lo scatto, al massimo 3»)
+
+- `abilita.js` (globale `ZM.abil`, dopo `macchine.js`): sei abilità, tre in partita (`W.abil = [{id, lv}…]`, messe dal menu prima di
+  `nuova`, `src/js/99-abilita-zombie.js`; nella pagina di prova Scatto, Granata e Pupazzo). Numeri in `ZAB`, livelli con `pw` (forza) e
+  `cdOf` (ricarica), la forza dei colpi per `hpMul` del round (`partita.js`). Bottoni in basso a destra (`#mzAb`, tasti 1, 2, 3), agganciati
+  alla partita come gli altri moduli (`ZM.partita`: `update`, `drawGround`, `drawTop`, `drawOnHero`, `reset`). Prova `tests/abilita.js`.
+- Agganci nuovi del motore: `W.heroHook(h, dt, inp)` dopo il passo dell'eroe (lo scatto lo porta; `h.moving` vero, così l'arma non spara);
+  `h.dashP` (la mossa «dash» dell'eroe 3D in `drawHero`); `MD.gunK` (l'arma va più svelta: spari e ricariche, l'Adrenalina); `W.goal`
+  (`navGoal` punta lì invece che all'eroe: il Pupazzo; chi gli arriva a 30 px lo graffia, anim «attack» senza colpi; i boss e gli zombie
+  fermi no); `W.things` e `W.drawThing` (cose in piedi messe dalle abilità, esseri nell'ordine di disegno come i compagni: il Pupazzo, `sid`
+  `A<n>`). Senza abilità in campo nulla cambia: `ordine_mappa.js` e `bara_ordine.js` danno gli stessi numeri di prima.
+- Il Pupazzo è disegnato con la cassetta `C3` dei mostri 3D (fermo nel mondo, girato verso l'eroe che l'ha lanciato: girando la telecamera
+  lo si vede di lato e da dietro); la Tagliola sta nel piano del terreno (`inGround`); la Granata è una palla col cerchio rosso dove
+  scoppierà (la sua gittata) e la macchia che resta.

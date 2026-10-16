@@ -91,6 +91,7 @@ js/62-eroe-3d.js
 ../anteprime/zombie/audio_zombie.js
 ../anteprime/zombie/barriere.js
 ../anteprime/zombie/macchine.js
+../anteprime/zombie/abilita.js
 ../anteprime/zombie/area_mappa.js
 js/63-zombie.js
 js/64-nemici-3d.js
@@ -127,4 +128,6 @@ js/95-voci-eroi.js
 js/96-maestria.js
 js/97-armi-proprie.js
 js/98-nemici-vivi.js
+js/99-abilita-zombie.js
+js/100-sfida-zombie.js
 coda.html

@@ -392,7 +392,7 @@ function climbStep(o,dt){const C=o.cl,S=C.S;C.t=Math.min(1,C.t+dt/C.T);const q=s
 // scala: alla stessa altezza, a meno di 46 px); la meta del campo degli zombie a terra: l'eroe, o il piede della sua scala se è di sopra
 function heroLv(){const h=W.hero;return h.cl?(h.cl.dir>0?1:0):(h.lv||0)}
 function sameLv(z,o){o=o||W.hero;if(z.cl||o.cl)return Math.abs((z.zh||0)-(o.zh||0))<46;return(z.lv||0)===(o.lv||0)}
-function navGoal(){const h=W.hero;return STAIRS.length&&heroLv()===1&&h.st?h.st.bot:[h.x,h.y]}
+function navGoal(){if(W.goal)return W.goal;const h=W.hero;return STAIRS.length&&heroLv()===1&&h.st?h.st.bot:[h.x,h.y]}
 // chi sta dentro un edificio col piano di sopra si piega con l'edificio (il suo ref, come i corvi posati sui tetti): di sopra e sulla scala resta
 // sul suo pavimento; a terra (z 0) non cambia niente. SB è S per gli esseri e i loro effetti
 function refAt(x,y){for(const S of STAIRS){const h=S.hs;if(x>h.x&&x<h.x+h.w&&y>h.y&&y<h.y+h.d)return S.ref||null}return null}
@@ -694,6 +694,7 @@ function boxPrims(){const F=BOX.F,k=F.BS,c=Math.cos(BOX.a),s=Math.sin(BOX.a),X=B
 // W.mods (fortuna.js, il gioco): cose che la partita cambia per un po' o per tutta la partita: spd la corsa dell'eroe, dmg il danno, crit la
 // probabilità di un colpo doppio, cash le monete degli zombie, invis gli zombie che non lo vedono
 function updateBeings(dt,inp){const h=W.hero,DI=W.director,MD=W.mods||{};if(h.dead||h.cl)inp={x:0,y:0};LV=h.lv||0;const m=Math.hypot(inp.x,inp.y);h.moving=m>.15;if(h.moving){const sp=150*Math.min(1,m)*(MD.spd||1);move(h,inp.x/m*sp*dt,inp.y/m*sp*dt,10);h.face=Math.atan2(inp.y,inp.x);h.walk+=dt*12}
+  if(W.heroHook)W.heroHook(h,dt,inp);// (abilita.js: lo scatto porta l'eroe da solo; intanto h.moving resta vero e l'arma non spara)
   if(h.cl){climbStep(h,dt);LV=h.lv||0;h.moving=true;h.walk+=dt*12}else h.zh=h.lv?h.lvH:(h.zh||0)+(heightAt(h.x,h.y)-(h.zh||0))*Math.min(1,dt*14);h.lvz=h.cl?h.zh:h.lv?h.lvH:0;
   const noShoot=!!W.dbg.noShoot||!!h.dead||!!h.busy||!!h.unarmed||!!h.cl;// (mentre ripara una finestra non spara; senz'arma: la sua è sull'incudine della Forgia)
   // il bersaglio: lo zombie più vicino entro 230 px che l'eroe vede davvero (i colpi non passano attraverso muri, recinti, lapidi, casse…);
@@ -707,7 +708,7 @@ function updateBeings(dt,inp){const h=W.hero,DI=W.director,MD=W.mods||{};if(h.de
   // il verso disegnato dell'Arciere 3D (nel mondo): segue in fretta quello vero, senza le 8 direzioni del rig di prima
   {const tf=h.face||0;if(h.f3==null||dt>=.5)h.f3=tf;else h.f3+=Math.atan2(Math.sin(tf-h.f3),Math.cos(tf-h.f3))*Math.min(1,dt*18)}
   // il grilletto: le armi automatiche lo tengono premuto, le altre lo premono di nuovo appena l'arma è pronta
-  if(g){const want=!h.moving&&!!tgt&&!noShoot,ev=g.update(g.st==='ricarica'?dt*(MD.relK||1):dt,want&&(g.D.auto||(g.st==='pronta'&&g.cd<=0)));/* (MD.relK: l'elisir Mani Svelte) */for(const e of ev){if(e.k==='sparo'&&!noShoot)fireShot(e);else if(e.k==='suono'&&ARMI.suono)ARMI.suono(W.gunId,e.w,180);else if(e.k==='bossolo'&&W.onCase)W.onCase(e.n||1);else if(e.k==='caricatore'&&W.onMag)W.onMag()}
+  if(g){const want=!h.moving&&!!tgt&&!noShoot,ev=g.update((g.st==='ricarica'?dt*(MD.relK||1):dt)*(MD.gunK||1),want&&(g.D.auto||(g.st==='pronta'&&g.cd<=0)));/* (MD.relK: l'elisir Mani Svelte) */for(const e of ev){if(e.k==='sparo'&&!noShoot)fireShot(e);else if(e.k==='suono'&&ARMI.suono)ARMI.suono(W.gunId,e.w,180);else if(e.k==='bossolo'&&W.onCase)W.onCase(e.n||1);else if(e.k==='caricatore'&&W.onMag)W.onMag()}
     // le voci che durano finché l'arma lavora: il motore delle canne della mitragliatrice, il ruggito del lanciafiamme (si spengono da sole)
     if(W.gunId==='mitragliatrice'&&ARMI.motore)ARMI.motore(g,180);else if(W.gunId==='lanciafiamme'&&ARMI.fiamma)ARMI.fiamma(g,180);
     if(tgt||h.moving)h.rlT=0;else if((h.rlT=(h.rlT||0)+dt)>1.2&&g.st==='pronta'&&g.mag<g.D.mag&&g.res>0)g.ricarica();// ricarica da solo quando non c'è niente da colpire
@@ -726,6 +727,7 @@ function updateBeings(dt,inp){const h=W.hero,DI=W.director,MD=W.mods||{};if(h.de
     if(z.bx){barStep(z,dt);z.bT=0;if(!(z.bx&&z.bx.from))sep(z);continue}
     const dx=h.x-z.x,dy=h.y-z.y,d=Math.hypot(dx,dy);
     if(d<30&&!z.cl&&!h.cl&&sameLv(z)&&physClear(z.x,z.y,h.x,h.y,2,null,2)){z.face=Math.atan2(dy,dx);if(z.anim!=='attack'){z.anim='attack';z.p=0}const p0=z.p;z.p+=dt/(ATKT[z.kind]||ATKT.zombie);if(DI&&DI.zombieHit&&p0<ATKH&&z.p>=ATKH)DI.zombieHit(z,d);z.chk=0;z.cx0=null}// il colpo arriva a metà del gesto
+    else if(W.goal&&!z.cl&&!z.lv&&Math.hypot(W.goal[0]-z.x,W.goal[1]-z.y)<30){z.face=Math.atan2(W.goal[1]-z.y,W.goal[0]-z.x);if(z.anim!=='attack'){z.anim='attack';z.p=0}z.p+=dt/(ATKT[z.kind]||ATKT.zombie)}// (abilita.js: il pupazzo che li attira; le graffiano, senza fargli niente)
     else{if(z.anim!=='walk'){z.anim='walk';z.p=0}z.p+=dt/(z.kind==='hound'?.6:1.1);zWalk(z,dt);bloccato(z,dt)}
     sep(z);z.p%=1}
   LV=h.lv||0;for(let i=W.Z.length-1;i>=0;i--)if(W.Z[i].die>1.1||(!zOn&&W.Z[i].rise<1))W.Z.splice(i,1);
@@ -787,13 +789,13 @@ function heroDir(){const h=W.hero,sa=scrAng(h.face),d=Q8(sa),cur=h.dS==null?d:h.
 function drawHero(){const h=W.hero,q=SB(h.x,h.y,h.zh||0),f=h.fall||0,inv=W.mods&&W.mods.invis>0;if(inv){ctx.save();ctx.globalAlpha*=.32+.12*Math.sin(W.t*6)}if(f>0){ctx.save();ctx.translate(q[0],q[1]-6);ctx.rotate(-f*1.42);ctx.translate(-q[0],-(q[1]-6))}
   if(HERO3()){const DI=W.director,ht=DI&&DI.hurtT!=null?DI.hurtT:9,aimOn=!!h.tgZ&&!h.moving&&!f&&!h.dead;let anim='idle',p=((W.t/2.4)%1+1)%1;
     const job=!f&&!h.dead&&!h.moving&&h.busy&&h.busy.anim?h.busy:null,bare=job||h.unarmed;// un lavoro con le mani (le assi sulla finestra): l'arma va via; senz'arma con la sua sull'incudine
-    if(f>0||h.dead){anim='hit';p=.16}else if(ht<.45){anim='hit';p=ht/.45*.5}else if(h.moving){anim='walk';p=(((h.walk||0)/TAU)%1+1)%1}else if(job){anim=job.anim;p=cl(h.busyP||0,0,.999)}else if(aimOn)anim='aim';
+    if(f>0||h.dead){anim='hit';p=.16}else if(h.dashP!=null){anim='dash';p=cl(h.dashP,0,.999)}else if(ht<.45){anim='hit';p=ht/.45*.5}else if(h.moving){anim='walk';p=(((h.walk||0)/TAU)%1+1)%1}else if(job){anim=job.anim;p=cl(h.busyP||0,0,.999)}else if(aimOn)anim='aim';
     const out={};try{EROE.arciere(q[0],q[1],(h.f3==null?h.face||0:h.f3)+CAM.yaw,anim,p,1,{style:bare?Object.assign({},HSTYLE,{gun:null}):HSTYLE,gp:gunState&&!bare?gunState.pose():null,noFx:true,out,tool:job?job.tool:null})}catch(e){console.error(e)}W.muzzle=out.muzzle||null;W.magP=out.mag||null;W.magF=out.magFloor||null}
   else drawRig(q[0],q[1]-8,heroDir()*Math.PI/4,h.walk,h.moving&&!f,HSTYLE,{gp:gunState?gunState.pose():{},aim:h.aim==null||f?null:scrAng(h.aim)});
   if(f>0)ctx.restore();if(inv)ctx.restore();if(W.director&&W.director.drawOnHero)W.director.drawOnHero(q)}
 // una voce della lista: uno strato di prop (L), un prop intero nell'ordine di prima (W, con W.dbg.ord='ky'), un essere (B: eroe, zombie, corvo
 // posato, fiamma libera)
-function drawEntry(e,h0a){switch(e.kind){case'V':return drawVeil(e.k);case'L':return drawLayer(e);case'T':return drawBox();case'W':return drawWhole(e.prop);case'B':return e.box?drawBox():e.pet?(W.drawPet&&W.drawPet(e.pet)):e.hero?drawHero():e.z?drawZombie(e.z):e.pc?drawPerch(e.pc):e.fl?drawFlame(e.fl,h0a):null}}
+function drawEntry(e,h0a){switch(e.kind){case'V':return drawVeil(e.k);case'L':return drawLayer(e);case'T':return drawBox();case'W':return drawWhole(e.prop);case'B':return e.box?drawBox():e.pet?(W.drawPet&&W.drawPet(e.pet)):e.thing?(W.drawThing&&W.drawThing(e.thing)):e.hero?drawHero():e.z?drawZombie(e.z):e.pc?drawPerch(e.pc):e.fl?drawFlame(e.fl,h0a):null}}
 function drawWhole(p){LEANK=p.lk==null?1:p.lk;setRef(p.ref);ROTP=p.rot||null;try{drawProp(p,p.house?part=>alphaOf(p.house,part):null)}finally{ROTP=null}LEANK=1;setRef(null)}
 // la sagoma dell'eroe dove è coperto (dietro la casa, la cripta, un albero): si ridisegnano in una tela piccola solo le cose disegnate dopo di lui
 // che toccano il suo riquadro, e lì sopra si stampa la sua sagoma chiara a metà trasparenza. Costa qualcosa solo quando è davvero coperto.
@@ -1143,6 +1145,7 @@ function buildOrder(vis){const D=W.dbg,fl=[],li=[];psiUpdate();camStamp();UCAM=C
     if(!D.noFlames)for(const f of flames)L2.push({k:K(f.x,f.ky!=null?f.ky:f.y+.6),e:beingE(f.KE,f.x,f.y,f.z-4,10,4,CAM.CP,f.lvl!=null?f.ref:null)});
     for(const c of perches){if(c.away)continue;const ho=perchHost(c);L2.push({k:ho?kp(ho)+.05:K(c.x,c.y+.6),e:beingE(c.E,c.x,c.y,c.z,14,6,CAM.CP)})}
     for(const pt of W.pets||[]){const e=pt.E||(pt.E={kind:'B',pet:pt,sid:'P'+pt.i,sk:600000+pt.i});L2.push({k:K(pt.x,pt.y+.01),e:beingE(e,pt.x,pt.y,pt.zh||0,30,8,RIGK.mzk,STAIRS.length&&pt.zh>0?refAt(pt.x,pt.y):null)})}
+    for(const o of W.things||[]){const e=o.E||(o.E={kind:'B',thing:o,sid:'A'+o.i,sk:700000+o.i});L2.push({k:K(o.x,o.y+.01),e:beingE(e,o.x,o.y,o.zh||0,o.H||30,o.hw||8,RIGK.mzk,null)})}
     if(BOX)L2.push({k:K(BOX.x,BOX.y+.01),e:boxEntry()});
     L2.sort((a,b)=>a.k-b.k);return[fl,L2.map(o=>o.e)]}
   for(const p of props){if(p.hide||!vis(p))continue;for(const L of p.layers){layerSB(L);(L.floor?fl:li).push(L)}}
@@ -1151,6 +1154,8 @@ function buildOrder(vis){const D=W.dbg,fl=[],li=[];psiUpdate();camStamp();UCAM=C
   for(const c of perches){if(!c.away&&!farV(c.x,c.y,60))li.push(beingE(c.E,c.x,c.y,c.z,14,6,CAM.CP))}
   // i compagni dell'eroe (compagni.js): esseri come gli zombie
   for(const pt of W.pets||[]){if(farV(pt.x,pt.y,60))continue;const e=pt.E||(pt.E={kind:'B',pet:pt,sid:'P'+pt.i,sk:600000+pt.i});li.push(beingE(e,pt.x,pt.y,pt.zh||0,30,8,RIGK.mzk,rA(pt.x,pt.y,pt.zh||0)))}
+  // le cose che stanno in piedi messe dalle abilità (abilita.js: il pupazzo): esseri come i compagni, disegnati da W.drawThing
+  for(const o of W.things||[]){if(farV(o.x,o.y,60))continue;const e=o.E||(o.E={kind:'B',thing:o,sid:'A'+o.i,sk:700000+o.i});li.push(beingE(e,o.x,o.y,o.zh||0,o.H||30,o.hw||8,RIGK.mzk,null))}
   if(!D.noFlames)for(const f of FREEF)if(!farV(f.x,f.y,40))li.push(beingE(f.E,f.x,f.y,f.z-4,10,4,CAM.CP,f.lvl!=null?f.ref:null));
   if(BOX)li.push(boxEntry());
   // con la zona chiusa velata e la telecamera che guarda verso di lei: prima tutto quello che sta di là dalla linea del confine, poi il velo, poi
