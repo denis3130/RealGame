@@ -37,3 +37,8 @@ sprite/nemici3d/*2b.js
 anteprime/filmato.html
 anteprime/scelta.html
 anteprime/filmato_b.html
+# pages built by anteprime/mk_boss2.py
+tests/*2_test.html
+tests/boss2_test.html
+anteprime/*2.html
+anteprime/boss_classici_sfida.html
