@@ -123,4 +123,5 @@ js/91-prologo.js
 js/92-eroi-nuovi.js
 js/93-eroi-sei.js
 js/94-gittata.js
+js/95-voci-eroi.js
 coda.html
