@@ -59,6 +59,38 @@ pietra e si sbriciola in un tumulo; barra e «sconfitto» al momento clou (2,2 s
 Nel gioco: cerchio di rune verde menta nella fase 1 e arancio nella fase 2 (`RUNEC.golem`), alone e barra più grandi (`B2H.golem` 100),
 spenti i sassi, il muschio, il fiorellino e il funghetto in 2D del Golem di prima (il modello disegna tutto).
 
+### Come è nato (15–16 ottobre)
+
+- Tre proposte: «il Colosso Antico» (vince, 8,6 su 10), «la Bestia di Pietra» (7,6: troppo simile allo Yeti e richiama la Bestia che
+  Denis ha tolto), «il Guardiano delle Rune» (7,1: pezzi che galleggiano, leggero invece che possente). Dalle altre due sono entrati il
+  sopracciglio a V, il triangolo di luci (occhi e cuore), il cerchio d'atterraggio con le sei tacche, i fiorellini sul tumulo, le nocche
+  che tamburellano, gli spallacci che cadono e fanno da riparo, la bocca buia con la luce in fondo.
+- Due modelli dallo stesso design; ha vinto il primo (più fedele, cuore e spallacci che si leggono, disegni per il gioco già pronti),
+  rifinito con le idee migliori del secondo (Valanga senza braccia trasparenti, faccia più cattiva, vene sui fianchi del petto, muschio
+  più cupo, cumulo della sconfitta).
+- Tre critici (direzioni, animazioni, quanto è figo) hanno trovato 55 difetti; corretti i 33 gravi o medi (sopracciglio diviso per lato,
+  spallacci a scudo, braccia in quattro pezzi ordinate da dove sta il pugno, pietre ritte sulla gobba, pugni alti nello Schianto, cuore
+  che si vede nei Pugni incastrati, luce nelle dita dei piedi, bocca che si apre nel ruggito, occhi che si accendono a testa alta
+  nell'entrata, fiatone che si legge, nocche color ardesia, lastra più grande, bordo caldo su tutti i pezzi grandi). Poi: cuore che
+  trema 4 volte al secondo prima di spaccarsi (non più un lampeggio da 13), lampo bianco morbido, mascella del Raggio che si apre piano.
+- Nel cervello: la palla gira subito dopo ogni rimbalzo, la camminata riparte dal primo passo, il «tum-tum» suona quando il cuore del
+  modello batte.
+
+### Misure
+
+- Disegno: mediana 1,2 ms a fotogramma (i boss nuovi 0,6–1,2), la stanza intera col Golem 3,2 ms.
+- Difficoltà (arena 1, eroe fermo che tira, livello 4, caso peggiore, 3 prove): Golem di oggi 3,1–4,3 vite a combattimento
+  (5,4–6,3 al minuto), nuovo 3,4–4,1 (5,8–6,9 al minuto; più nella prima metà, meno dopo la furia); combattimento di 35–38 s contro
+  34–45. Ogni colpo ha il suo avviso, quindi chi si muove ne prende molti meno. Da regolare giocando.
+- Voce: tra 0,07 e 0,11 di volume medio, come il Cervo e la Piovra.
+
+### Pagine per Denis
+
+- Il modello, si gira col dito, tutte le mosse, «prima e dopo»: https://claude.ai/artifact/UnHGgjDbpZikqJU7aWcSmL
+  (`python3 anteprime/mk_nemici3d.py --classici` → `anteprime/boss_classici.html`).
+- Sfida il Golem dal telefono: https://claude.ai/artifact/7c7LspnByt8aFQKoru5SWa (`python3 anteprime/mk_golem2.py` →
+  `anteprime/golem2.html`).
+
 ### File e prove
 
 - Modello: `sprite/nemici3d/golem2.js` (modello `golem2`; esporta anche `N3.golemSlab`, `golemRock`, `golemFang`, `golemShard` per la
@@ -73,4 +105,8 @@ spenti i sassi, il muschio, il fiorellino e il funghetto in 2D del Golem di prim
   pericoli, furia e Raggio, tempo di disegno della stanza, sconfitta e stanza ripulita; foto `tests/g2_*.png`). Con il modello finto:
   tutte le mosse passano, nessun errore, stanza disegnata in 2,2–2,5 ms.
 - Foglio: `node tests/foglio3d.js golem2 tests/g2/golem2.png --file sprite/nemici3d/golem2.js`; pagina «prima e dopo»:
-  `python3 anteprime/mk_nemici3d.py --classici` → `anteprime/boss_classici.html`.
+  `python3 anteprime/mk_nemici3d.py --classici` → `anteprime/boss_classici.html`. Anteprime delle arene con il Golem nuovo:
+  `node tests/anteprime.js golem2_test.html`.
+- Voce e personalità come i 4 boss nuovi (in `89-golem-nuovo.js`, con `B3VO` di `88-boss3-voci.js`): ruggito di pietra con la pietra
+  che stride sotto, «hm-hm-hm» quando ti prende in giro (mossa `taunt`), brontolio quando gli stai lontano, un verso per ogni colpo dopo
+  il battito del cuore, rabbia, lamento della sconfitta, «ho… ho… ho» se cadi.
