@@ -117,6 +117,7 @@ function head(Vh,Rh,S,A,o){const h=Vh.P(0,0,0),{F}=Vh,hood=S.hood,skin=S.skin,no
   // the outfit's pieces on the hood (sprite/eroe3d/vestiti3d.js: behind it, on its cloth, in front of it), not on a bare head or under a hat
   const OH=S.of&&S.of.hoodFx&&!(lk&&lk.bare)?{Vh,h,Rh,nod,F,S,A,hood,sp,capPath}:null;if(OH)S.of.hoodFx(OH,'back');
   // without the hood: the bare head with its hair
+  const wolf=LK&&LK.hood==='lupo'&&!(lk&&lk.bare);if(wolf)wolfHood(Vh,h,Rh,nod,hood,false);
   if(lk&&lk.bare)bareHead(Vh,Rh,S,A,o,h,nod,fd,lk);
   else{ink(2.5);ball(h,Rh);ctx.fillStyle=hood;ctx.fill();ctx.stroke();
   // soft shading of a ball lit from the upper left: the three tones blend into each other, no patches with an edge
@@ -140,6 +141,7 @@ function head(Vh,Rh,S,A,o){const h=Vh.P(0,0,0),{F}=Vh,hood=S.hood,skin=S.skin,no
   // and in front of it: the look's pieces, the helmet, the point of the hood, the beard, an ear on our side, the front spikes of the tiara
   if(tailFront)ponytail(Vh,h,Rh,S,nod,o.sway||0);
   if(lk)lookFront(Vh,Rh,S,o,h,nod,lk);
+  if(wolf)wolfHood(Vh,h,Rh,nod,hood,true);
   if(band)headband(Vh,h,Rw,nod,S.bandana,sw,true);if(S.goggles&&!hat)goggles(Vh,h,Rw,nod);if(plume&&featherFront(Vh,nod))featherHood(Vh,h,Rw,nod,sw,S.plume,1.25);
   if(S.helm)helm(Vh,h,Rh,S,nod);if(S.hoodTip&&!(lk&&lk.bare))hoodTip(Vh,h,Rh,S,nod);if(S.beard)beard(Vh,h,Rh,S,nod);if(S.ears)for(const sd of[-1,1])if(F(nod([0,sd,0]))>.3)ear(Vh,h,Rh,S,nod,sd);if(S.tiara)tiara(Vh,h,Rh,S,nod,true);
   if(OH)S.of.hoodFx(OH,'front');
@@ -939,10 +941,13 @@ function mixPose(A,B,k){const M={...(k<.5?A:B)};for(const key of Object.keys(A))
 // the right hand on the grip and the left on the fore-grip (or on the pump, which it works); 'shoulder' the rocket launcher on the right
 // shoulder; 'xbow' the crossbow like a long gun; 'staff' upright in the right hand, its foot near the ground, the orb beside the head.
 const WCLS={tamburo:'long',lanciafiamme:'long',vapore:'long',risonatore:'long',pistola:'one',revolver:'one',mitraglietta:'long',mitra:'long',mitragliatrice:'long',pompa:'long',tattica:'long',lanciarazzi:'shoulder',balestra:'xbow',bastone:'staff',
-  scettro:'staff',martello:'hammer',bomba:'one',liuto:'lute',fiala:'one',stellina:'one'};
+  scettro:'staff',martello:'hammer',bomba:'one',liuto:'lute',fiala:'one',stellina:'one',
+  // the six heroes of 16 October: the Paladin's hammer, the Ice Mage's staff, the Berserker's axe, the Corsair's knife and sabre, the Tamer's
+  // whip, the Monk's fists
+  maglio:'mace',gelo:'staff',ascia:'mace',coltello:'one',sciabola:'one',frusta:'one',pugni:'fists'};
 // the size of each (1 = the units of the zombie guns' profiles, a little smaller than the game's 2D guns, which are drawn at 1.35)
 const WSZ={tamburo:1.08,lanciafiamme:.9,vapore:.9,risonatore:1,pistola:1.22,revolver:1.1,mitraglietta:1.12,mitra:1,mitragliatrice:.92,pompa:.92,tattica:1.02,lanciarazzi:.95,balestra:1,bastone:.95,scettro:.95,martello:1,bomba:1,
-  liuto:1.08,fiala:1,stellina:.82};
+  liuto:1.08,fiala:1,stellina:.82,maglio:1,gelo:.95,ascia:1,coltello:.9,sciabola:1,frusta:1,pugni:1};
 // rest: [the right hand (on the grip), pitch (down < 0), yaw (toward the middle < 0)] for standing and walking; aim: the same when it
 // shoots; anc: a point of the weapon at rest, which gives it its place in the draw order (always the same, as for every part)
 const HOLD={one:{rest:[[10,8.6,9.4],-.26,-.2],aim:[[12.6,9.4,12.8],0,-.04],anc:[14,8,9.5]},
@@ -953,7 +958,11 @@ const HOLD={one:{rest:[[10,8.6,9.4],-.26,-.2],aim:[[12.6,9.4,12.8],0,-.04],anc:[
   // the Fabbro's hammer: both hands on the handle at the right side, the head forward and down
   hammer:{rest:[[7.6,9.4,10.4],-.16,-.08],aim:[[9,9,12],0,-.04],anc:[13,9,10.5]},
   // the Bard's lute: across the belly, its neck up toward the left shoulder, the soundboard to the front (set in wpose0)
-  lute:{rest:[[11,3.4,9.6],0,0],aim:[[11.4,3.2,10.2],0,0],anc:[12,3,9.8]}};
+  lute:{rest:[[11,3.4,9.6],0,0],aim:[[11.4,3.2,10.2],0,0],anc:[12,3,9.8]},
+  // the Paladin's hammer and the Berserker's axe: upright at the right side, the head up beside the shoulder (held like the staff)
+  mace:{rest:[[3,11,8.6],[.16,.14,1]],aim:[[8,9.6,13.2],[1,-.08,.45]],anc:[1,12,15]},
+  // the Monk's fists: up in a guard in front of the chest (the pose in fistsPose)
+  fists:{rest:[[6.2,5.4,12.4],0,0],aim:[[6.2,5.4,12.4],0,0],anc:[9,0,12.4]}};
 // (the guns are held at the right side of the body, so from behind they still show beside it, and from the front the gun pointing at
 // us is beside the belly, not over it; the anchors are chosen so that from every side the weapon goes in front of the body when it is
 // on the side we see, behind it when it is on the other side; the staff stands at the right side a little behind the middle, so its
@@ -962,11 +971,15 @@ const HOLD={one:{rest:[[10,8.6,9.4],-.26,-.2],aim:[[12.6,9.4,12.8],0,-.04],anc:[
 // between two shots); rel: the reload after a shot (rocket, crossbow)
 const FIRE={tamburo:{n:12,off:.02},lanciafiamme:{n:12,off:.02},vapore:{n:1,off:.08},risonatore:{n:1,off:.1},pistola:{n:3,off:.04},revolver:{n:2,off:.06},mitraglietta:{n:10,off:.02},mitra:{n:6,off:.03},mitragliatrice:{n:12,off:.02},
   pompa:{n:1,off:.08,pump:[.2,.56]},tattica:{n:2,off:.06,pump:[.3,.74]},lanciarazzi:{n:1,off:.12,rel:[.32,.78]},balestra:{n:1,off:.14,rel:[.36,.84]},bastone:{n:1,off:.3},
-  scettro:{n:1,off:.3},martello:{n:1,off:.1},bomba:{n:1,off:.1},liuto:{n:1,off:.02},fiala:{n:1,off:.1},stellina:{n:1,off:.1}};
+  scettro:{n:1,off:.3},martello:{n:1,off:.1},bomba:{n:1,off:.1},liuto:{n:1,off:.02},fiala:{n:1,off:.1},stellina:{n:1,off:.1},
+  maglio:{n:1,off:.1},gelo:{n:1,off:.3},ascia:{n:1,off:.1},coltello:{n:1,off:.1},sciabola:{n:1,off:.1},frusta:{n:1,off:.08},pugni:{n:2,off:.04}};
 const KICK={tamburo:[.8,.05],lanciafiamme:[.5,.02],vapore:[2.2,.12],risonatore:[1.6,.1],pistola:[1.6,.12],revolver:[2.6,.32],mitraglietta:[.9,.05],mitra:[1.4,.07],mitragliatrice:[1.2,.04],pompa:[3,.2],tattica:[2.4,.18],lanciarazzi:[3.4,.14],balestra:[1.2,.08],bastone:[0,0],
-  scettro:[0,0],martello:[0,0],bomba:[0,0],liuto:[0,0],fiala:[0,0],stellina:[0,0]};
+  scettro:[0,0],martello:[0,0],bomba:[0,0],liuto:[0,0],fiala:[0,0],stellina:[0,0],maglio:[0,0],gelo:[0,0],ascia:[0,0],coltello:[0,0],sciabola:[0,0],frusta:[0,0],pugni:[0,0]};
 // the new heroes' own things in the hand (style.held): the Bard's lute, the Alchemist's flask, the Ninja's star
-const HELD3={liuto:1,fiala:1,stellina:1};
+const HELD3={liuto:1,fiala:1,stellina:1,maglio:1,gelo:1,ascia:1,coltello:1,sciabola:1,frusta:1,pugni:1};
+// in battle ('aim', the game's pull: 0 just after a shot .. 1 at the next) the move of these is played so that its moment (the throw, the
+// blow, the crack, the cut) falls on the shot: where that moment is in the cycle
+const AIMQ={fiala:.46,stellina:.4,ascia:.46,coltello:.4,maglio:.4,frusta:.34,sciabola:.32};
 function weaponOf(S0){if(S0.held==='scettro'||S0.held==='martello'||S0.held==='bomba')return S0.held;if(S0.gun&&WCLS[S0.gun])return S0.gun;if(HELD3[S0.held])return S0.held;if(S0.held==='staff')return'bastone';if(S0.held==='xbow'||S0.weapon==='balestra')return'balestra';if(S0.held===null)return null;return'arco'}
 const dirPY=(pitch,yaw)=>nrm([Math.cos(pitch)*Math.cos(yaw),Math.cos(pitch)*Math.sin(yaw),Math.sin(pitch)]);
 const bump=k=>k<=0||k>=1?0:Math.sin(k*Math.PI);
@@ -983,23 +996,39 @@ function lutePose(W,A,anim,p,dg,o){const ph=p*TAU;let aim=[.2,-.86,.46],up=[1,.1
   if(q>=0){g=[11.4,3.2,10.2];if(q<.12)strum=lerp(.95,-.95,ez(q/.12));else if(q<.8)strum=lerp(-.95,.25,ez((q-.12)/.68));else strum=lerp(.25,.95,ez((q-.8)/.2));
     ring=q<.6?1-q/.6:0;if(anim==='shoot'&&q<.5)cast=q;g=add(g,[0,0,q<.12?-.45*Math.sin(q/.12*Math.PI):0]);if(q<.2)W.lean=.05*Math.sin(q/.2*Math.PI)}
   W.grip=add(g,anim==='idle'||anim==='walk'?[0,0,0]:dg.map(v=>v*.3));W.aim=nrm(aim);W.up=nrm(up);W.st.strum=strum;W.st.ring=ring;W.cast=cast;W.rec=0;W.flash=0;W.shots=[];return W}
+// the Monk's fists (cls 'fists'): up in a guard in front of the chest; walking they bob with the steps; a punch: the fist shoots straight
+// forward and comes back, the body leaning into it (in 'shoot' the right one and then the left one; in battle, 'aim', one a shot, the
+// left one when o.alt). W.grip is the right fist, W.hL the left one; W.cast the time since the fist reached its end (the wave)
+function fistsPose(W,A,anim,p,dg,o){const ph=p*TAU,R0=[6.2,5.4,12.4],L0=[7,-4.4,12.9];let r=R0,l=L0,ln=.04,body=[0,0,0],cast=-1,roll=0;
+  if(anim==='idle'){r=add(R0,[0,0,.35*Math.sin(ph)]);l=add(L0,[0,0,.35*Math.sin(ph+.7)])}
+  if(anim==='walk'){const b=Math.sin(ph*2);r=add(R0,[.4*Math.sin(ph),0,.4*b]);l=add(L0,[-.4*Math.sin(ph),0,.4*b])}
+  if(anim==='dash'){const k=Math.sin(cl((p-.16)/.4,0,1)*Math.PI);r=lerp3(R0,[1,9,10],k);l=lerp3(L0,[1,-9,10],k)}
+  if(anim==='hit'){const kb=p<.12?ez(p/.12):Math.exp(-(p-.12)*6)*Math.cos((p-.12)*16);r=add(R0,[-2*kb,1*kb,1.5*kb]);l=add(L0,[-2*kb,-1*kb,1.5*kb])}
+  // a punch at q (0..1 of its own time): .0-.08 out, .08-.16 held, .16-.42 back
+  const punch=(q,side)=>{const T=side>0?[19.6,1.2,13.4]:[19.6,-.8,13.6],B0=side>0?R0:L0,k=q<.08?ez(q/.08):q<.16?1:q<.42?1-ez((q-.16)/.26):0;
+    if(q>=.08&&q<.6)cast=q-.08;ln=.04+.16*k;body=[2.2*k,0,-.3*k];roll=side*.09*k;return lerp3(B0,T,k)};
+  if(anim==='shoot'){const q=((p-.04)%1+1)%1;if(q<.5)r=punch(q*2,1);else l=punch((q-.5)*2,-1)}
+  if(anim==='aim'){const k=cl(o.pull==null?1:o.pull,0,1),q=(k+.08)%1;if(o.alt)l=punch(q,-1);else r=punch(q,1)}
+  W.grip=r;W.hL=l;W.aim=[1,0,0];W.up=[0,0,1];W.lean=ln;W.body=body;W.roll=roll;W.cast=cast;W.side=cast>=0&&anim==='shoot'?(((p-.04)%1+1)%1<.5?1:-1):o.alt?-1:1;W.rec=0;W.flash=0;W.shots=[];return W}
 // where the weapon is and what its moving parts do, for this move at p (only p: the cycle closes on itself). It reuses the body of the
 // bow's pose (A): breathing, steps, the dash, the knock back
 function wpose0(A,anim,p,id,o){o=o||{};const cls=WCLS[id],H=HOLD[cls],dg=sub(A.grip,REST.grip),W={id,cls,s:WSZ[id],rec:0,flash:0,st:{},shots:[],ej:[],hL:[A.hR[0],-A.hR[1],A.hR[2]],kick:KICK[id]};
-  const staff=cls==='staff';
+  const staff=cls==='staff'||cls==='mace';
   if(cls==='lute')return lutePose(W,A,anim,p,dg,o);
-  // the flask and the star in battle ('aim' with the game's pull, 0 just after a shot .. 1 at the next): the throw ends on the shot
-  if(anim==='aim'&&(id==='fiala'||id==='stellina')){const k=cl(o.pull==null?1:o.pull,0,1);p=(k+(id==='fiala'?.46:.4))%1+FIRE[id].off;anim='throw'}
+  if(cls==='fists')return fistsPose(W,A,anim,p,dg,o);
+  // the flask, the star and the others of AIMQ in battle ('aim' with the game's pull, 0 just after a shot .. 1 at the next): the throw ends
+  // on the shot
+  if(anim==='aim'&&AIMQ[id]!=null){const k=cl(o.pull==null?1:o.pull,0,1);p=(k+AIMQ[id])%1+FIRE[id].off;anim='throw'}
   const set=(h,extra)=>{W.grip=add(h[0],extra||[0,0,0]);if(staff){W.aim=nrm(h[1]);W.up=[1,0,0]}else{W.aim=dirPY(h[1],h[2]);W.up=[0,0,1]}};
   if(anim!=='shoot'&&anim!=='aim'&&anim!=='throw'){set(H.rest,dg);
     const tilt=v=>{if(staff)W.aim=nrm(add(nrm(H.rest[1]),[v,0,0]));else W.aim=dirPY(H.rest[1]+v,H.rest[2])};
     if(anim==='walk')tilt(staff?.08*Math.sin(p*TAU):.05*Math.sin(p*TAU*2));
     if(anim==='dash')tilt((staff?-.5:.34)*Math.sin(cl((p-.16)/.4,0,1)*Math.PI));
     if(anim==='hit'){const kb=p<.12?ez(p/.12):Math.exp(-(p-.12)*6)*Math.cos((p-.12)*16);tilt((staff?-.4:.3)*kb)}
-    if(id==='bastone'||id==='scettro')W.st.glow=.6+.25*Math.sin(p*TAU);if(id==='martello')W.st.hot=o.hot||0;
+    if(id==='bastone'||id==='scettro'||id==='gelo')W.st.glow=.6+.25*Math.sin(p*TAU);if(id==='martello')W.st.hot=o.hot||0;if(id==='maglio')W.st.glow=.15+.1*Math.sin(p*TAU);
     return W}
   // aiming and shooting: the aim hold, breathing a little
-  set(H.aim,[0,0,.15*Math.sin(p*TAU)]);if(anim==='aim'){if(id==='bastone')W.st.glow=.8;
+  set(H.aim,[0,0,.15*Math.sin(p*TAU)]);if(anim==='aim'){if(id==='bastone'||id==='gelo')W.st.glow=.8;
     // the crossbow follows the game's pull: the string goes back to the nut and the new bolt drops in before the next shot
     if(id==='balestra'&&o.pull!=null){const k=cl(o.pull,0,1);W.st.draw=k;W.st.bolt=k>.45}return W}
   const F=FIRE[id],T=1/F.n,q=((p-F.off)%1+1)%1,k=Math.floor(q/T),u=q-k*T,un=u/T;W.k=k;W.u=u;W.T=T;W.q=q;
@@ -1035,21 +1064,46 @@ function wpose0(A,anim,p,id,o){o=o||{};const cls=WCLS[id],H=HOLD[cls],dg=sub(A.g
     else{const k=ez((q-.62)/.38);g=lerp3(SG,RG,k);d=nrm(lerp3(SA,RA,k));ln=.16*(1-k);bd=[1.4*(1-k),0,-.4*(1-k)]}
     W.grip=g;W.aim=nrm(d);W.up=[0,0,1];W.st.hot=Math.max(o.hot||0,q<.47?ez(cl(q/.38,0,1))*.6:.6*(1-cl((q-.47)/.3,0,1)));
     W.impact=q>=.47?q-.47:-1;W.lean=ln;W.body=bd;W.sq=q>=.47&&q<.56?-.06*Math.sin((q-.47)/.09*Math.PI):0;return W}
-  if(id==='stellina'){// the throw: .0-.28 the star goes back across the chest to the left shoulder, .28-.4 the arm whips across, .38 it
+  if(id==='maglio'){// the Paladin's blow: .0-.3 the hammer goes up over the right shoulder, .3-.4 it comes down in front, .4 the blow (its suns
+    // flare), .4-.56 it stays down, .56-1 back to the rest
+    const r0=H.rest,RG=r0[0],RA=Array.isArray(r0[1])?nrm(r0[1]):dirPY(r0[1],r0[2]),UG=[-1.5,9.2,20.5],UA=nrm([-.35,.1,.93]),SG=[13,6.4,11.5],SA=nrm([.9,-.1,-.42]);let g,d,ln=0,bd=[0,0,0];
+    if(q<.3){const k=ez(q/.3);g=lerp3(RG,UG,k);d=nrm(lerp3(RA,UA,k));ln=-.08*k;bd=[-.8*k,0,0]}
+    else if(q<.4){const k=(q-.3)/.1,kk=k*k;g=lerp3(UG,SG,kk);d=nrm(lerp3(UA,SA,kk));ln=lerp(-.08,.12,kk);bd=[lerp(-.8,1.2,kk),0,0]}
+    else if(q<.56){g=SG;d=SA;ln=.12;bd=[1.2,0,-.3]}
+    else{const k=ez((q-.56)/.44);g=lerp3(SG,RG,k);d=nrm(lerp3(SA,RA,k));ln=.12*(1-k);bd=[1.2*(1-k),0,-.3*(1-k)]}
+    W.grip=g;W.aim=d;W.up=[0,0,1];W.st.glow=q<.4?.15+.85*ez(cl(q/.38,0,1)):1-.85*cl((q-.4)/.3,0,1);W.cast=q>=.4?q-.4:-1;W.lean=ln;W.body=bd;W.rec=0;W.flash=0;W.shots=[];return W}
+  if(id==='frusta'){// the Tamer's crack: .0-.22 the hand goes up and back, the lash starts to unroll; .22-.34 the arm snaps forward, the lash
+    // flies out straight; .34 the crack at the tip; .34-.62 the lash lies out and sinks; .62-1 the hand comes back and it coils again
+    const r0=H.rest,RG=r0[0],RA=dirPY(r0[1],r0[2]),BG=[2,9.5,20],BA=nrm([-.2,0,1]),TG=[13.5,7,12.5],TA=nrm([1,0,-.04]),DA=nrm([1,0,-.26]);let g,d,ln=0,out=0,wv=0,cr=0;
+    if(q<.22){const k=ez(q/.22);g=lerp3(RG,BG,k);d=nrm(lerp3(RA,BA,k));ln=-.06*k;out=.25*k;wv=k*.3}
+    else if(q<.34){const k=(q-.22)/.12;g=lerp3(BG,TG,k);d=nrm(lerp3(BA,TA,k));ln=lerp(-.06,.1,k);out=lerp(.25,1,k*k);wv=.3+k*.5}
+    else if(q<.62){const k=(q-.34)/.28;g=TG;d=nrm(lerp3(TA,DA,ez(k)));ln=.1*(1-k*.5);out=1;wv=.8+k*.6;cr=Math.max(0,1-k*4)}
+    else{const k=ez((q-.62)/.38);g=lerp3(TG,RG,k);d=nrm(lerp3(DA,RA,k));ln=.05*(1-k);out=1-k;wv=1.4}
+    W.grip=g;W.aim=d;W.up=[0,0,1];W.st.out=out;W.st.wave=wv;W.st.crack=cr;W.cast=q>=.34?q-.34:-1;W.lean=ln;W.rec=0;W.flash=0;W.shots=[];return W}
+  if(id==='sciabola'){// the Corsair's cut: .0-.22 the blade goes up over the left shoulder, .22-.32 it cuts across and down to the right,
+    // .32 the cut (a white arc), .32-.5 it stays, .5-1 back
+    const r0=H.rest,RG=r0[0],RA=dirPY(r0[1],r0[2]),UG=[4,-3,17],UA=nrm([-.1,-.6,.8]),EG=[11,9,8.5],EA=nrm([.5,.75,-.42]);let g,d,ln=0;
+    if(q<.22){const k=ez(q/.22);g=lerp3(RG,UG,k);d=nrm(lerp3(RA,UA,k));ln=-.05*k}
+    else if(q<.32){const k=(q-.22)/.1;g=lerp3(UG,EG,k);d=nrm(lerp3(UA,EA,k));ln=lerp(-.05,.1,k)}
+    else if(q<.5){g=EG;d=EA;ln=.1}
+    else{const k=ez((q-.5)/.5);g=lerp3(EG,RG,k);d=nrm(lerp3(EA,RA,k));ln=.1*(1-k)}
+    W.grip=g;W.aim=d;W.up=[0,0,1];W.cast=q>=.22&&q<.42?q-.22:-1;W.lean=ln;W.rec=0;W.flash=0;W.shots=[];return W}
+  if(id==='stellina'||id==='coltello'){// the throw (the Corsair's knife the same): .0-.28 the star goes back across the chest to the left shoulder, .28-.4 the arm whips across, .38 it
     // leaves the hand and flies straight on, spinning; a new one is in the hand at .75
     const r0=H.rest,RG=r0[0],RA=dirPY(r0[1],r0[2]),BG=[4.5,-3.5,15.5],BA=nrm([-.25,-1,.25]),TG=[15.5,5.5,12.6],TA=nrm([1,.35,0]);let g,d,ln=0;
     if(q<.28){const k=ez(q/.28);g=lerp3(RG,BG,k);d=nrm(lerp3(RA,BA,k));ln=-.07*k}
     else if(q<.4){const k=(q-.28)/.12;g=lerp3(BG,TG,k);d=nrm(lerp3(BA,TA,k));ln=lerp(-.07,.11,k)}
     else{const k=ez(cl((q-.4)/.35,0,1));g=lerp3(TG,RG,k);d=nrm(lerp3(TA,RA,k));ln=.11*(1-k)}
     W.grip=g;W.aim=d;W.up=[0,0,1];W.st.has=q<.38?1:q<.75?0:ez(cl((q-.75)/.1,0,1));W.cast=anim==='shoot'&&q>=.38?q-.38:-1;W.rel=TG;W.lean=ln;W.rec=0;W.flash=0;W.shots=[];return W}
-  if(id==='bomba'||id==='fiala'){// the throw: .0-.36 the bomb goes back over the shoulder, .36-.46 the arm swings forward, .44 it leaves the hand and flies
+  if(id==='bomba'||id==='fiala'||id==='ascia'){// the throw (the Berserker's axe the same): .0-.36 the bomb goes back over the shoulder, .36-.46 the arm swings forward, .44 it leaves the hand and flies
     // on in an arc; a new one pops into the hand at .8 (the Alchemist's flask the same, a little lower)
-    const r0=H.rest,RG=r0[0],RA=dirPY(r0[1],r0[2]),BG=[-5,9.5,21],BA=nrm([-.3,0,1]),TG=[14,6.6,16.5],TA=nrm([1,0,.3]);let g,d,ln=0;
+    const r0=H.rest,RG=r0[0],RA=Array.isArray(r0[1])?nrm(r0[1]):dirPY(r0[1],r0[2]),BG=[-5,9.5,21],BA=nrm([-.3,0,1]),TG=[14,6.6,16.5],TA=nrm([1,0,.3]);let g,d,ln=0;
     if(q<.36){const k=ez(q/.36);g=lerp3(RG,BG,k);d=nrm(lerp3(RA,BA,k));ln=-.1*k}
     else if(q<.46){const k=(q-.36)/.1;g=lerp3(BG,TG,k);d=nrm(lerp3(BA,TA,k));ln=lerp(-.1,.12,k)}
     else{const k=ez(cl((q-.46)/.4,0,1));g=lerp3(TG,RG,k);d=nrm(lerp3(TA,RA,k));ln=.12*(1-k)}
-    W.grip=g;W.aim=d;W.up=[0,0,1];W.st.has=q<.44?1:q<.8?0:ez(cl((q-.8)/.12,0,1));W.cast=q>=.44&&(id==='bomba'||anim==='shoot')?q-.44:-1;W.rel=TG;W.lean=ln;W.rec=0;W.flash=0;W.shots=[];return W}
-  if(id==='bastone'||id==='scettro'){// the cast: the staff goes up high (the orb above the head, brighter), strikes forward (the orb flares, leaves
+    W.grip=g;W.aim=d;W.up=[0,0,1];W.st.has=q<.44?1:q<.8?0:ez(cl((q-.8)/.12,0,1));if(id==='ascia'&&o.has!=null)W.st.has=cl(o.has,0,1);
+    W.cast=q>=.44&&(id==='bomba'||anim==='shoot')?q-.44:-1;W.rel=TG;W.lean=ln;W.rec=0;W.flash=0;W.shots=[];return W}
+  if(id==='bastone'||id==='scettro'||id==='gelo'){// the cast: the staff goes up high (the orb above the head, brighter), strikes forward (the orb flares, leaves
     // burst out), holds a moment, then goes back to the side
     const r0=H.rest,r1=H.aim,UP=[[-.6,11.4,18.6],[0,.06,1]];let g,d;
     if(q<.24){const k=ez(q/.24);g=lerp3(r0[0],UP[0],k);d=lerp3(nrm(r0[1]),nrm(UP[1]),k)}
@@ -1169,6 +1223,11 @@ function boltFx(V0,a3,b3,al){if(al<=.02)return;const{P}=V0,A=P(a3),B=P(b3),dx=B[
 
 // the weapon (with its hands and its effects) as one part of the hero, and the free hand at the side
 function weaponParts(parts,V0,X,S,Wp,wid,o){const{D}=V0,cls=Wp.cls,r=Wp.rec,kk=Wp.kick||[0,0],fx=!o.noFx;
+  if(cls==='fists'){// the Monk's two fists, wrapped, each in its own place in the draw order; the punch's wave flies off the fist
+    for(const g of[Wp.grip,Wp.hL]){const g3=X.T(g);parts.push({d:D(g3)+.02,f:()=>fistW(V0,g3,2.9,S.hand,S.wraps)})}
+    if(fx&&Wp.cast>=0&&Wp.cast<.35){const k=Wp.cast/.35,g=Wp.side>0?Wp.grip:Wp.hL,c=X.T(add(g,[2+k*30,0,0])),fw=X.Rd([1,0,0]);
+      parts.push({d:D(c),f:()=>{const q=V0.P(c),b=V0.P(add(c,fw));waveShape(q[0],q[1],2.6+k*1.6,Math.atan2(b[1]-q[1],b[0]-q[0]),1-k)}})}
+    return}
   // the recoil: the weapon goes back along its aim and the muzzle goes up, round the hand
   let aimB=Wp.aim,upB=Wp.up;if(r>0&&kk[1]){const th=kk[1]*r,c=Math.cos(th),sn=Math.sin(th);[aimB,upB]=[add(mul(aimB,c),mul(upB,sn)),sub(mul(upB,c),mul(aimB,sn))]}
   const g3=X.T(sub(Wp.grip,mul(Wp.aim,kk[0]*r*.55))),fr=ARMI3D.frame(g3,nrm(X.Rd(aimB)),nrm(X.Rd(upB)),Wp.s);
@@ -1181,6 +1240,16 @@ function weaponParts(parts,V0,X,S,Wp,wid,o){const{D}=V0,cls=Wp.cls,r=Wp.rec,kk=W
     parts.push({d:D(c),f:()=>{const q=V0.P(c);flaskShape(q[0],q[1],2.6,k*9,S.flask||'#7bf06a')}})}
   if(wid==='stellina'&&fx&&Wp.cast>=0&&Wp.cast<.3){const k=Wp.cast/.3,a0=X.T(Wp.rel),fw=X.Rd(nrm([1,.1,0])),c=add(a0,mul(fw,k*72));
     parts.push({d:D(c),f:()=>{const q=V0.P(c);ctx.save();ctx.globalAlpha=k>.75?(1-k)/.25:1;if(!LOWFX){ctx.strokeStyle='rgba(255,255,255,.35)';ctx.lineWidth=1.2;const b=V0.P(sub(c,mul(fw,10)));seg(b,q);ctx.stroke()}starShape(q[0],q[1],3.4,k*26,'#8a96a4');ctx.restore()}})}
+  if(wid==='coltello'&&fx&&Wp.cast>=0&&Wp.cast<.3){const k=Wp.cast/.3,a0=X.T(Wp.rel),fw=X.Rd(nrm([1,.1,0])),c=add(a0,mul(fw,k*72));
+    parts.push({d:D(c),f:()=>{const q=V0.P(c),b=V0.P(add(c,fw));ctx.save();ctx.globalAlpha=k>.75?(1-k)/.25:1;if(!LOWFX){ctx.strokeStyle='rgba(255,255,255,.35)';ctx.lineWidth=1.2;const t=V0.P(sub(c,mul(fw,10)));seg(t,q);ctx.stroke()}
+      knifeShape(q[0],q[1],2.2,Math.atan2(b[1]-q[1],b[0]-q[0]));ctx.restore()}})}
+  if(wid==='ascia'&&fx&&Wp.cast>=0&&Wp.cast<.36){const k=Wp.cast/.36,a0=X.T(Wp.rel),fw=X.Rd([1,0,0]),out=Math.sin(k*Math.PI),c=add(add(a0,mul(fw,out*42)),[0,0,out*5]);
+    parts.push({d:D(c),f:()=>{const q=V0.P(c);axeShape(q[0],q[1],2.6,k*26)}})}
+  if(wid==='sciabola'&&Wp.cast>=0&&Wp.cast<.2){const k=Wp.cast/.2,c=X.T([11,0,11]);
+    parts.push({d:D(c)+2,f:()=>{const pts=[];for(let i=0;i<=14;i++){const a=lerp(-1.25,1.25,i/14*Math.min(1,k*1.6+.2));pts.push(V0.P(X.T([5+Math.cos(a)*15,Math.sin(a)*15,13-i*.35])))}
+      ctx.save();ctx.globalAlpha=1-k;ctx.lineCap='round';ctx.lineJoin='round';ctx.strokeStyle='rgba(255,255,255,.85)';ctx.lineWidth=3.2;line(pts);ctx.stroke();ctx.strokeStyle='rgba(200,230,255,.6)';ctx.lineWidth=1.4;line(pts.map(q=>[q[0],q[1]+2]));ctx.stroke();ctx.restore()}})}
+  if(wid==='gelo'&&fx&&Wp.cast>=0&&Wp.cast<.3){for(let i=0;i<5;i++){const k=Wp.cast/.3,an=(i-2)*.22,c=X.T(add(Wp.grip,[6+k*36*Math.cos(an),k*30*Math.sin(an),14-k*4]));
+    parts.push({d:D(c),f:()=>{const q=V0.P(c);ctx.save();ctx.globalAlpha=cl((1-k)*2,0,1);iceShape(q[0],q[1],1.3,G.t*6+i);ctx.restore()}})}}
   if(wid==='liuto'&&fx&&Wp.cast>=0)for(let i=0;i<3;i++){const k=Wp.cast/.5-i*.14;if(k<0||k>=1)continue;const c=X.T(add(Wp.grip,[4+k*13,(i-1)*4.5*k,3+k*13+Math.sin(k*6+i)*1.6]));
     parts.push({d:D(c),f:()=>{const q=V0.P(c);ctx.save();ctx.globalAlpha=k<.15?k/.15:1-Math.max(0,(k-.6)/.4);musicNote(q[0],q[1],1.9,NOTE_COL[i%3],i===1?1:0);ctx.restore()}})}
   if(wid==='bomba'&&fx&&Wp.cast>=0&&Wp.cast<.36){const k=Wp.cast/.36,a0=X.T(Wp.rel),fw=X.Rd([1,0,0]),c=add(add(a0,mul(fw,k*48)),[0,0,Math.sin(k*Math.PI)*14-k*9]);
@@ -1207,6 +1276,8 @@ function weaponParts(parts,V0,X,S,Wp,wid,o){const{D}=V0,cls=Wp.cls,r=Wp.rec,kk=W
       // the flash at the muzzle (and the rocket's blast behind), the orb flaring
       if(Wp.flash>0&&kp.muzzle&&ARMI3D.ZOMBIE.includes(wid))flashFx(K,wid,kp.muzzle,Wp.flash,(Wp.k||0)*7+3);
       if(wid==='lanciarazzi'&&Wp.flash>0&&kp.back)flashFx(K,wid,kp.back,Wp.flash,11,true);
+      if(wid==='maglio'&&Wp.cast>=0&&Wp.cast<.3&&kp.head){const k=Wp.cast/.3;K.fx(kp.head,q=>{shine('255,220,120',q[0],q[1],14+18*k,.75*(1-k));ctx.strokeStyle=`rgba(255,240,170,${(.85*(1-k)).toFixed(3)})`;ctx.lineWidth=2;ball(q,5+k*14);ctx.stroke()},2)}
+      if(wid==='gelo'&&Wp.flash>0){K.fx(kp.orb,q=>{shine('150,220,255',q[0],q[1],18*Wp.flash+6,.75*Wp.flash);ctx.strokeStyle=`rgba(230,248,255,${(.8*Wp.flash).toFixed(3)})`;ctx.lineWidth=1.4;ball(q,4+(1-Wp.flash)*9);ctx.stroke()},2)}
       if((wid==='bastone'||wid==='scettro')&&Wp.flash>0){const rgb=hexRgb(S.eyeCol||'#9fff7a');K.fx(kp.orb,q=>{shine(rgb,q[0],q[1],18*Wp.flash+6,.75*Wp.flash);ctx.strokeStyle=`rgba(234,255,214,${(.8*Wp.flash).toFixed(3)})`;ctx.lineWidth=1.4;ball(q,4+(1-Wp.flash)*9);ctx.stroke()},2)}
       if(!fx)return;
       // effects: the bullets, the shotgun's pellets, the rocket, the smoke, the spent cases, the bolt, the leaves
@@ -1234,18 +1305,50 @@ function weaponParts(parts,V0,X,S,Wp,wid,o){const{D}=V0,cls=Wp.cls,r=Wp.rec,kk=W
           ctx.strokeStyle='rgba(30,90,40,.7)';ctx.lineWidth=.5;seg([-2,0],[2,0]);ctx.stroke();ctx.restore()},0)}
     })}});
   // the free hand: the left one, at the side (it swings when walking)
-  if((cls==='one'||cls==='staff')&&!RH)parts.push({d:D(X.T([-.6,-11.4,11.4])),f:()=>fist(V0,X.T(Wp.hL),2.7,S.hand)})}
+  if((cls==='one'||cls==='staff'||cls==='mace')&&!RH)parts.push({d:D(X.T([-.6,-11.4,11.4])),f:()=>fist(V0,X.T(Wp.hL),2.7,S.hand)})}
 const hexRgb=h=>{const n=parseInt(String(h).slice(1),16);return`${n>>16},${n>>8&255},${n&255}`};
 const NOTE_COL=['#ffd84a','#ff8ab8','#7fe0ff'];
 
+// ------------------------------------------------------------------ the tamer's wolf hood (look hood 'lupo', the Domatore's own, 16
+// October): the hood is a wolf's skin with his head on top of ours: two furry ears, the muzzle over the forehead with its black nose, two
+// small kind eyes, two little white fangs under it. front: the parts on our side (after the hood), else the far ones (before it)
+function wolfHood(Vh,h,R,nod,col,front){const{F}=Vh,fw=nrm(nod([1,0,0])),up=nrm(nod([0,0,1])),rt=nrm(nod([0,1,0])),P3=v=>hP(Vh,h,v),dark=dk(col,.2);
+  const softP=(pts,c,kl,kd)=>{const b=[1e9,1e9,-1e9,-1e9];for(const q of pts){b[0]=Math.min(b[0],q[0]);b[1]=Math.min(b[1],q[1]);b[2]=Math.max(b[2],q[0]);b[3]=Math.max(b[3],q[1])}
+    return soft(b[0]+(b[2]-b[0])*.3,b[1]+(b[3]-b[1])*.25,(b[0]+b[2])/2,(b[1]+b[3])/2,Math.max(b[2]-b[0],b[3]-b[1])*.8,c,kl,kd)};
+  // the ears: on top, toward the front, a little out; the paler inside where it faces us
+  for(const sd of[-1,1]){const b=mul(nrm(nod(hdir(sd*.78,.92))),R*.9),o=nrm(add(mul(up,.86),add(mul(rt,sd*.42),mul(fw,.08)))),side=nrm(cross(o,fw)),
+      tip=add(b,mul(o,R*.8)),b0=add(b,mul(side,R*.36)),b1=add(b,mul(side,-R*.36)),vis=F(nrm(add(mul(fw,.7),mul(o,.3))));
+    if((F(nrm(b))>-.45)!==front)continue;const T=P3(tip),A=P3(b0),B=P3(b1);
+    ink(2.1);ctx.fillStyle=softP([T,A,B],dark,.2,.3);ctx.beginPath();ctx.moveTo(A[0],A[1]);ctx.quadraticCurveTo((A[0]+T[0])/2,(A[1]+T[1])/2-.8,T[0],T[1]);ctx.quadraticCurveTo((B[0]+T[0])/2,(B[1]+T[1])/2-.3,B[0],B[1]);ctx.closePath();ctx.fill();ctx.stroke();
+    if(vis>.05){ctx.save();ctx.globalAlpha=cl(vis*3,0,1);const m=[(A[0]+B[0])/2,(A[1]+B[1])/2+.3];ctx.fillStyle='#e6bfae';ctx.beginPath();ctx.moveTo(lerp(m[0],A[0],.5),lerp(m[1],A[1],.5));
+      ctx.lineTo(lerp(m[0],T[0],.72),lerp(m[1],T[1],.72));ctx.lineTo(lerp(m[0],B[0],.5),lerp(m[1],B[1],.5));ctx.closePath();ctx.fill();ctx.restore()}}
+  if(!front)return;
+  // a few tufts of fur on the crown of the hood
+  if(!LOWFX){ctx.strokeStyle=dk(col,.32);ctx.lineWidth=.8;ctx.lineCap='round';for(const[a,e] of[[2.4,.9],[2.9,.5],[-2.6,.7],[3.1,1.2],[-2.9,1.05],[2.1,.35],[-2.2,.4]]){const n=nrm(nod(hdir(a,e)));if(F(n)<.12)continue;
+    const q=sp(Vh,h,R*.97,n),q2=sp(Vh,h,R*.97,nrm(nod(hdir(a,e-.16))));ctx.beginPath();ctx.moveTo(q[0],q[1]);ctx.quadraticCurveTo(q[0]+1,q[1]+.5,q2[0],q2[1]);ctx.stroke()}}
+  // the muzzle over the forehead, when the front of the head faces us
+  const ff=F(fw);if(ff<-.3)return;const c0=mul(nrm(nod(hdir(0,1.02))),R*.92),c1=add(c0,add(mul(fw,R*.52),mul(up,-R*.02))),A=P3(c0),B=P3(c1);
+  ctx.save();ctx.globalAlpha=cl((ff+.3)*4,0,1);
+  // two little fangs under it, then the muzzle over their root
+  for(const sd of[-1,1]){const f0=P3(add(c0,add(mul(fw,R*.4),add(mul(rt,sd*R*.14),mul(up,-R*.17))))),f1=P3(add(c0,add(mul(fw,R*.42),add(mul(rt,sd*R*.12),mul(up,-R*.34)))));
+    ink(.9);ctx.fillStyle='#fffaf0';ctx.beginPath();ctx.moveTo(f0[0]-1,f0[1]);ctx.lineTo(f0[0]+1,f0[1]);ctx.lineTo(f1[0],f1[1]);ctx.closePath();ctx.fill();ctx.stroke()}
+  ctx.fillStyle=INK;hull(A,R*.32+1.2,B,R*.2+1.2);ctx.fill();ctx.fillStyle=soft(A[0]-R*.18,A[1]-R*.32,(A[0]+B[0])/2,(A[1]+B[1])/2,R*.7,col,.22,.25);hull(A,R*.32,B,R*.2);ctx.fill();
+  // the pale chin of the muzzle, the eyes on its top, the black nose at its end
+  ctx.save();hull(A,R*.32,B,R*.2);ctx.clip();ctx.fillStyle='rgba(255,248,236,.35)';hull([A[0],A[1]+R*.26],R*.2,[B[0],B[1]+R*.16],R*.13);ctx.fill();ctx.restore();
+  for(const sd of[-1,1]){const e=P3(add(c0,add(mul(fw,R*.08),add(mul(rt,sd*R*.2),mul(up,R*.18))))),v=F(nrm(add(mul(fw,.55),add(mul(rt,sd*.55),mul(up,.6)))));if(v<.05)continue;
+    ctx.fillStyle='#1b1612';ctx.beginPath();ctx.ellipse(e[0],e[1],1.1*Math.min(1,v*2),1.3,0,0,TAU);ctx.fill();ctx.fillStyle='#fff';ball([e[0]-.35,e[1]-.45],.4);ctx.fill()}
+  const n=P3(add(c1,mul(fw,R*.17)));ink(1.1);ctx.fillStyle='#1b1612';ctx.beginPath();ctx.ellipse(n[0],n[1],1.6,1.2,0,0,TAU);ctx.fill();ctx.stroke();ctx.fillStyle='rgba(255,255,255,.5)';ball([n[0]-.6,n[1]-.5],.45);ctx.fill();
+  ctx.restore()}
 // ------------------------------------------------------------------ the hats of the look (Denis, 15 October: «più cose nell'aspetto»:
 // cappelli). On the bare head over its hair, each a volume on the head's own camera, so they turn with it: up is the head's top, fw its
 // front, rt its right. A brim: drawn whole before the crown and its near half again after it (the crown rises behind it). col: the hat's
 // colour picked in the look (else its own)
-const HAT_COL={berretto:'#c8323c',punta:'#5a3a9a',paglia:'#e8c870',cilindro:'#2e2a30',elmo:'#a9b1ba',bandana:'#d24b3e',pompon:'#3f7fd0'};
-const HATS={berretto:1,punta:1,paglia:1,cilindro:1,elmo:1,bandana:1,pompon:1};
+const HAT_COL={berretto:'#c8323c',punta:'#5a3a9a',paglia:'#e8c870',cilindro:'#2e2a30',elmo:'#a9b1ba',bandana:'#d24b3e',pompon:'#3f7fd0',
+  tricorno:'#26222a',cavaliere:'#b4bcc6',gelo:'#2f5fb0'};
+// (tricorno, cavaliere, gelo: the own hats of the Corsaro, the Paladino and the Ice Mage, style.look0, 16 October)
+const HATS={berretto:1,punta:1,paglia:1,cilindro:1,elmo:1,bandana:1,pompon:1,tricorno:1,cavaliere:1,gelo:1};
 // (the hats with a brim are pushed back on the head, so from our camera, which looks down, the brim never hides the eyes)
-const HAT_TILT={berretto:.12,punta:.26,paglia:.5,cilindro:.36};
+const HAT_TILT={berretto:.12,punta:.26,paglia:.5,cilindro:.36,tricorno:.3,gelo:.26};
 function hatDraw(Vh,h,R,nod,kind,col,sw){const{F}=Vh,tl=HAT_TILT[kind]||0,up0=nrm(nod([0,0,1])),fw0=nrm(nod([1,0,0])),rt=nrm(nod([0,1,0])),c=col||HAT_COL[kind]||'#c8323c';
   const up=nrm(add(mul(up0,Math.cos(tl)),mul(fw0,-Math.sin(tl)))),fw=nrm(cross(rt,up));
   const at=(cz,r,t,c0)=>add(add(mul(up,cz),c0||[0,0,0]),add(mul(fw,Math.cos(t)*r),mul(rt,Math.sin(t)*r))),P3=v=>hP(Vh,h,v);
@@ -1273,13 +1376,25 @@ function hatDraw(Vh,h,R,nod,kind,col,sw){const{F}=Vh,tl=HAT_TILT[kind]||0,up0=nr
     const tq=P3(add(mul(up,R*1.22),c0));ink(1.1);ctx.fillStyle=dk(c,.15);ball(tq,1.1);ctx.fill();ctx.stroke();
     if(!LOWFX){ctx.fillStyle='rgba(255,255,255,.22)';const hl=P3(add(mul(up,R*1.08),add(c0,mul(fw,-R*.2))));ctx.beginPath();ctx.ellipse(hl[0]-R*.2,hl[1],R*.42,R*.13,-.2,0,TAU);ctx.fill()}
     return}
-  if(kind==='punta'){// the wizard's hat: a wide brim, a tall cone that bends back at the tip, a band, little golden stars
-    const zb=R*.56;brim(zb,R*.84,R*1.44,c);
+  if(kind==='punta'||kind==='gelo'){// the wizard's hat: a wide brim, a tall cone that bends back at the tip, a band, little golden stars.
+    // The Ice Mage's (gelo): a band of white fur, snowflakes for the stars, a little crystal of ice at the tip
+    const ice=kind==='gelo',zb=R*.56;brim(zb,R*.84,R*1.44,c);
     const sp=[[0,R*.92],[R*.55,R*.74],[R*1.05,R*.52],[R*1.5,R*.3],[R*1.85,R*.12],[R*2.05,R*.02]],bend=k=>add(mul(fw,-R*.5*k*k),mul(rt,R*.1*k*k*k)),S=sp.map(([z,r],i)=>({c:add(mul(up,zb+z),bend(i/(sp.length-1))),r}));
     const segs=[];for(let i=0;i<S.length-1;i++){const a=[],b=[];for(let j=0;j<14;j++){a.push(P3(at(0,S[i].r,sp1(j,14),S[i].c)));b.push(P3(at(0,S[i+1].r,sp1(j,14),S[i+1].c)))}segs.push(chull(a.concat(b)))}
     ink(2.3);for(const H of segs){poly(H);ctx.stroke()}const all=[].concat(...segs),g=softF(all,c);for(const H of segs){poly(H);ctx.fillStyle=g;ctx.fill()}
-    strip(runT(32,0),zb+R*.04,R*.92,zb+R*.3,R*.82,'#f0c64a');
-    for(const[z,t] of[[.62,.4],[1.05,-.55],[1.4,.15],[.7,-1.75],[1.15,1.6],[.6,2.55],[1.1,-2.75],[1.45,3]]){const k=z/2.05,cc=add(mul(up,zb+R*z),bend(k*1.2)),n=add(mul(fw,Math.cos(t)),mul(rt,Math.sin(t)));if(F(n)<.15)continue;const q=P3(add(cc,mul(n,R*(.74-.34*k))));starS(q[0],q[1],1.25,1)}
+    if(ice){const ts=runT(40,-.12);if(ts.length>1){const A=ts.map(t=>P3(at(zb+R*.02,R*.98,t))),B=ts.map(t=>P3(at(zb+R*.36,R*.86,t)));
+      // the fur: a soft white band, a bumpy edge (overlapping puffs, no outline between them), a little blue shade under it
+      ctx.fillStyle=INK;for(const q of A){ball(q,R*.17);ctx.fill()}ctx.beginPath();for(const q of A.concat(B.slice().reverse()))ctx.lineTo(q[0],q[1]);ctx.closePath();ctx.lineWidth=2.6;ctx.strokeStyle=INK;ctx.stroke();
+      ctx.fillStyle='#dfe9f6';for(const q of A){ball(q,R*.13);ctx.fill()}ctx.beginPath();for(const q of A.concat(B.slice().reverse()))ctx.lineTo(q[0],q[1]);ctx.closePath();ctx.fill();
+      ctx.fillStyle='#f7fbff';for(let i=0;i<A.length;i++){const q=[lerp(A[i][0],B[i][0],.45),lerp(A[i][1],B[i][1],.45)];ball(q,R*.12);ctx.fill()}
+      ctx.fillStyle='rgba(150,180,215,.45)';for(let i=1;i<A.length;i+=2){ball([A[i][0]+.4,A[i][1]+.6],R*.06);ctx.fill()}}}
+    else strip(runT(32,0),zb+R*.04,R*.92,zb+R*.3,R*.82,'#f0c64a');
+    for(const[z,t] of[[.62,.4],[1.05,-.55],[1.4,.15],[.7,-1.75],[1.15,1.6],[.6,2.55],[1.1,-2.75],[1.45,3]]){const k=z/2.05,cc=add(mul(up,zb+R*z),bend(k*1.2)),n=add(mul(fw,Math.cos(t)),mul(rt,Math.sin(t)));if(F(n)<.15)continue;const q=P3(add(cc,mul(n,R*(.74-.34*k))));
+      if(ice)flake(q[0],q[1],1.55,'#f2f8ff');else starS(q[0],q[1],1.25,1)}
+    if(ice){// the crystal at the bent tip: a little diamond of ice, glowing
+      const tq=P3(S[S.length-1].c),gl=.8+.2*Math.sin((G.t||0)*3);if(!LOWFX)shine('150,220,255',tq[0],tq[1],5.5,.45*gl);ink(1.2);ctx.fillStyle='#bfeaff';
+      ctx.beginPath();ctx.moveTo(tq[0],tq[1]-2.6);ctx.lineTo(tq[0]+1.5,tq[1]);ctx.lineTo(tq[0],tq[1]+2.6);ctx.lineTo(tq[0]-1.5,tq[1]);ctx.closePath();ctx.fill();ctx.stroke();
+      ctx.fillStyle='rgba(255,255,255,.85)';ctx.beginPath();ctx.moveTo(tq[0]-.2,tq[1]-1.9);ctx.lineTo(tq[0]+.6,tq[1]-.2);ctx.lineTo(tq[0]-.6,tq[1]-.2);ctx.closePath();ctx.fill()}
     brim(zb,R*.84,R*1.44,c,true);return}
   if(kind==='paglia'){// the straw hat: a wide brim with the weave, a low round crown, a red band
     const zb=R*.5;const weave=(ts,near)=>{if(LOWFX)return;ctx.strokeStyle='rgba(120,80,20,.35)';ctx.lineWidth=.6;for(let i=0;i<ts.length;i+=2){const t=ts[i],a=P3(at(zb,R*1.0,t)),b=P3(at(zb,R*1.56,t));seg(a,b);ctx.stroke()}};
@@ -1312,7 +1427,48 @@ function hatDraw(Vh,h,R,nod,kind,col,sw){const{F}=Vh,tl=HAT_TILT[kind]||0,up0=nr
     if(pom){const q=P3(mul(up,Rr*1.12)),r=3.1;ink(1.4);ball(q,r);ctx.fillStyle=soft(q[0]-1.2,q[1]-1.2,q[0],q[1],r*1.3,'#f6efe4',.2,.25);ctx.fill();ctx.stroke();
       if(!LOWFX){ctx.strokeStyle='rgba(180,170,160,.6)';ctx.lineWidth=.5;for(let i=0;i<6;i++){const a=i/6*TAU;ctx.beginPath();ctx.moveTo(q[0]+Math.cos(a)*r*.3,q[1]+Math.sin(a)*r*.3);ctx.lineTo(q[0]+Math.cos(a)*r*.85,q[1]+Math.sin(a)*r*.85);ctx.stroke()}}}
     else{const d=nod(hdir(Math.PI,.42));if(F(d)>-.3)bandKnot(Vh,h,mul(d,R*1.05),nod,c,sw||0)}
+    return}
+  if(kind==='tricorno'){// the pirate's three-cornered hat: a low round crown, the brim turned up into three flaps (a point in front, two
+    // behind the sides), a golden braid along its edge, a golden star on the front flap. The far flaps first (we see their inside), the
+    // crown, then the near ones over its foot
+    const zb=R*.5,N=60,Rin=R*.9,cw=t=>Math.pow(Math.max(0,Math.cos(3*t)),3.2),OUT=t=>add(at(zb,R*(1.04+.58*cw(t)),t),mul(up,R*(.46+.22*cw(t)))),IN=t=>at(zb,Rin,t);
+    const half=near=>{const ts=[];for(let i=0;i<N;i++){const t=i/N*TAU;if((F(add(mul(fw,Math.cos(t)),mul(rt,Math.sin(t))))>=0)===near)ts.push(t)}
+      let k=0;for(let i=1;i<ts.length;i++)if(ts[i]-ts[i-1]>TAU/N*1.5){k=i;break}const r=k?ts.slice(k).map(t=>t-TAU).concat(ts.slice(0,k)):ts;
+      if(r.length)r.push(r[r.length-1]+TAU/N);if(r.length)r.unshift(r[0]-TAU/N);return r};
+    const flap=(ts,near)=>{if(ts.length<2)return;const O=ts.map(t=>P3(OUT(t))),I=ts.map(t=>P3(IN(t)));ctx.beginPath();for(const q of O.concat(I.slice().reverse()))ctx.lineTo(q[0],q[1]);ctx.closePath();
+      ctx.fillStyle=softF(O.concat(I),near?c:dk(c,.25),.18,.3);ctx.fill();ctx.strokeStyle=INK;ctx.lineWidth=1.6;ctx.stroke();
+      ctx.strokeStyle=INK;ctx.lineWidth=2.2;line(O);ctx.stroke();ctx.strokeStyle='#d8a838';ctx.lineWidth=.9;line(O);ctx.stroke()};
+    flap(half(false),false);
+    const pts=[];for(let i=0;i<16;i++)for(const[z,r] of[[0,R*.93],[R*.34,R*.94],[R*.6,R*.8],[R*.72,R*.44]])pts.push(P3(at(zb+z,r,sp1(i,16))));const H=solid(pts,c);
+    if(!LOWFX){ctx.save();poly(H);ctx.clip();ctx.fillStyle='rgba(255,255,255,.14)';const hl=P3(add(mul(up,zb+R*.55),mul(fw,R*.1)));ctx.beginPath();ctx.ellipse(hl[0]-R*.25,hl[1],R*.4,R*.14,-.2,0,TAU);ctx.fill();ctx.restore()}
+    flap(half(true),true);
+    const fr=F(fw);if(fr>.1){const q=P3(add(at(zb,R*1.2,0),mul(up,R*.34)));ctx.save();ctx.globalAlpha=cl((fr-.1)*4,0,1);ink(1);ctx.fillStyle='#f0c64a';
+      ctx.beginPath();for(let i=0;i<10;i++){const a=-Math.PI/2+i/10*TAU,r=i%2?.9:2.2;ctx.lineTo(q[0]+Math.cos(a)*r,q[1]+Math.sin(a)*r)}ctx.closePath();ctx.fill();ctx.stroke();ctx.restore()}
+    return}
+  if(kind==='cavaliere'){// the knight's helmet: a steel dome over the whole head, down to the jaw at the sides and to the nape behind, the
+    // face open from the brows down; a golden edge with rivets, a raised crest from the brow to the nape, a red plume flowing back
+    const lo=a=>{const x=Math.abs(a);return x<.8?.68:x<1.3?lerp(.68,-.52,sstep(.8,1.3,x)):x<2.3?-.52:lerp(-.52,-.3,sstep(2.3,3.1,x))};
+    const M=regionMesh(Vh,nod,-Math.PI,Math.PI,lo,()=>Math.PI/2,40,6),Rr=R*1.05,bk=F(mul(fw,-1));
+    const plume=()=>{const root=mul(nod(hdir(Math.PI*.82,1.2)),Rr*1.06),Q=[root,add(root,add(mul(fw,-R*.5),mul(up,R*.42))),add(root,add(mul(fw,-R*1.1),mul(up,R*.25))),add(root,add(mul(fw,-R*1.5),mul(up,-R*.25)))].map(P3),ws=[2.6,3.2,2.6,1.2];
+      ctx.fillStyle=INK;for(let i=0;i<3;i++){hull(Q[i],ws[i]+1.2,Q[i+1],ws[i+1]+1.2);ctx.fill()}ctx.fillStyle=softF(Q,'#d63a3a',.22,.3);for(let i=0;i<3;i++){hull(Q[i],ws[i],Q[i+1],ws[i+1]);ctx.fill()}
+      ctx.strokeStyle='rgba(120,20,20,.5)';ctx.lineWidth=.7;ctx.lineCap='round';for(const o of[-.9,.9]){ctx.beginPath();ctx.moveTo(Q[1][0]+o,Q[1][1]);ctx.quadraticCurveTo(Q[2][0]+o,Q[2][1]+o*.6,Q[3][0],Q[3][1]);ctx.stroke()}};
+    if(bk<.2)plume();
+    ctx.fillStyle=INK;meshPath(M,h,Rr+1.2);ctx.fill();meshPath(M,h,Rr);ctx.fillStyle=soft(h[0]-Rr*.42,h[1]-Rr*.62,h[0],h[1]-Rr*.12,Rr*1.3,c,.4,.42);ctx.fill();
+    ctx.save();meshPath(M,h,Rr);ctx.clip();
+    if(!LOWFX){ctx.fillStyle='rgba(255,255,255,.42)';const hq=P3(add(mul(up,R*.78),mul(fw,R*.12)));ctx.beginPath();ctx.ellipse(hq[0]-R*.3,hq[1]-R*.08,R*.36,R*.13,-.35,0,TAU);ctx.fill()}
+    // the crest along the middle, from the brow over the top to the nape
+    {const pts=[];for(let i=0;i<=22;i++){const n=nrm(nod(hdir(0,.72+i/22*(Math.PI-1.1))));if(F(n)>.02)pts.push(sp(Vh,h,Rr*1.04,n));else if(pts.length>1)break;else pts.length=0}
+      if(pts.length>1){ctx.lineCap='round';ctx.strokeStyle=INK;ctx.lineWidth=4.4;line(pts);ctx.stroke();ctx.strokeStyle=lt(c,.2);ctx.lineWidth=2.4;line(pts);ctx.stroke();ctx.strokeStyle='rgba(255,255,255,.55)';ctx.lineWidth=.8;line(pts.map(q=>[q[0]-.5,q[1]-.4]));ctx.stroke()}}
+    ctx.restore();
+    // the golden edge round the opening and the bottom, with rivets
+    for(const r of meshEdge(M,h,Rr,0,.03)){if(r.length<2)continue;ctx.lineCap='round';ctx.lineJoin='round';ctx.strokeStyle=INK;ctx.lineWidth=3.8;line(r);ctx.stroke();ctx.strokeStyle='#e0b040';ctx.lineWidth=2;line(r);ctx.stroke();
+      ctx.fillStyle='#fff1b0';for(let i=2;i<r.length;i+=5){ball(r[i],.55);ctx.fill()}}
+    if(bk>=.2)plume();
     return}}
+// a little snowflake: six arms with two twigs each
+function flake(x,y,r,col){ctx.save();ctx.lineCap='round';for(const[w,c] of[[1.6,'rgba(27,22,18,.55)'],[.7,col]]){ctx.strokeStyle=c;ctx.lineWidth=w;ctx.beginPath();
+  for(let i=0;i<6;i++){const a=i/6*TAU,ca=Math.cos(a),sa=Math.sin(a);ctx.moveTo(x,y);ctx.lineTo(x+ca*r,y+sa*r);const m=[x+ca*r*.55,y+sa*r*.55];
+    for(const sd of[-1,1]){const b=a+sd*.8;ctx.moveTo(m[0],m[1]);ctx.lineTo(m[0]+Math.cos(b)*r*.38,m[1]+Math.sin(b)*r*.38)}}ctx.stroke()}ctx.restore()}
 // a ring round the head's axis up at the height z (radius r), where it faces us, as runs of screen points
 function ringRunsAt(Vh,h,up,fw,rt,z,r,minF){const runs=[];let cur=[];for(let i=0;i<=36;i++){const t=i/36*TAU,n=add(mul(fw,Math.cos(t)),mul(rt,Math.sin(t)));if(Vh.F(n)>minF)cur.push(hP(Vh,h,add(mul(up,z),mul(n,r))));else if(cur.length){runs.push(cur);cur=[]}}if(cur.length)runs.push(cur);return runs}
 // the tattoos of the look (Denis, 15 October): drawn on the skin in the face's units, ink of a colour (col), grown from their middle by K
@@ -1366,6 +1522,33 @@ function flaskShape(x,y,r,a,col){ctx.save();ctx.translate(x,y);ctx.rotate(a);ctx
   ctx.save();ball([0,0],r*.8);ctx.clip();ctx.fillStyle=col;ctx.fillRect(-r,-r*.15,r*2,r*1.2);ctx.fillStyle=lt(col,.45);ctx.fillRect(-r,-r*.15,r*2,r*.22);ctx.restore();
   ctx.fillStyle='#a86833';ctx.fillRect(-r*.4,-r*2.2,r*.8,r*.5);ctx.strokeRect(-r*.4,-r*2.2,r*.8,r*.5);
   ctx.fillStyle='rgba(255,255,255,.8)';ball([-r*.4,-r*.35],r*.22);ctx.fill();ctx.restore()}
+// the shots of the six heroes of 16 October seen flat (in flight in the game, and flying off in the sheets), turned by a
+// the Corsair's knife: a narrow bright blade, a little guard, the red handle
+function knifeShape(x,y,r,a){ctx.save();ctx.translate(x,y);ctx.rotate(a);ctx.lineJoin='round';ink(Math.max(1,r*.32));
+  ctx.beginPath();ctx.moveTo(r*2.6,0);ctx.lineTo(r*.9,-r*.42);ctx.lineTo(-r*.2,-r*.36);ctx.lineTo(-r*.2,r*.36);ctx.lineTo(r*.9,r*.42);ctx.closePath();ctx.fillStyle='#dfe6ec';ctx.fill();ctx.stroke();
+  ctx.fillStyle='rgba(255,255,255,.85)';ctx.fillRect(0,-r*.12,r*1.9,r*.16);
+  ctx.fillStyle='#d6a640';ctx.fillRect(-r*.45,-r*.62,r*.3,r*1.24);ctx.strokeRect(-r*.45,-r*.62,r*.3,r*1.24);
+  ctx.fillStyle='#c0282c';ctx.beginPath();ctx.roundRect?ctx.roundRect(-r*1.5,-r*.3,r*1.05,r*.6,r*.2):ctx.rect(-r*1.5,-r*.3,r*1.05,r*.6);ctx.fill();ctx.stroke();ctx.restore()}
+// the Berserker's axe spinning: the handle and the bearded blade, a ring of speed round it
+function axeShape(x,y,r,a){ctx.save();ctx.translate(x,y);ctx.rotate(a);ctx.lineJoin='round';ctx.lineCap='round';
+  if(!LOWFX){ctx.strokeStyle='rgba(255,255,255,.28)';ctx.lineWidth=r*.5;ctx.beginPath();ctx.arc(0,0,r*2.1,-.6,1.4);ctx.stroke()}
+  ctx.strokeStyle=INK;ctx.lineWidth=r*.8;seg([-r*2,0],[r*1.6,0]);ctx.stroke();ctx.strokeStyle='#a86833';ctx.lineWidth=r*.4;seg([-r*2,0],[r*1.6,0]);ctx.stroke();
+  ink(Math.max(1,r*.3));ctx.fillStyle='#b8c2cc';ctx.beginPath();ctx.moveTo(r*.6,-r*.3);ctx.lineTo(r*1.7,-r*.3);ctx.lineTo(r*2.2,-r*1.3);ctx.lineTo(r*2.1,-r*2.4);ctx.lineTo(r*1.1,-r*2);ctx.lineTo(r*.8,-r*1.1);ctx.closePath();ctx.fill();ctx.stroke();
+  ctx.strokeStyle='rgba(255,255,255,.9)';ctx.lineWidth=r*.18;seg([r*2.15,-r*1.35],[r*2.05,-r*2.3]);ctx.stroke();ctx.strokeStyle='#e0b040';ctx.lineWidth=r*.14;seg([r*1.2,-r*1.1],[r*1.5,-r*1.7]);ctx.stroke();ctx.restore()}
+// the Paladin's hammer of light: a golden hammer, glowing, turning end over end
+function hammerShape(x,y,r,a){ctx.save();ctx.translate(x,y);if(!LOWFX)shine('255,215,110',0,0,r*4.2,.45);ctx.rotate(a);ctx.lineJoin='round';ctx.lineCap='round';
+  ctx.strokeStyle=INK;ctx.lineWidth=r*.75;seg([-r*1.9,0],[r*1,0]);ctx.stroke();ctx.strokeStyle='#fff1b0';ctx.lineWidth=r*.38;seg([-r*1.9,0],[r*1,0]);ctx.stroke();
+  ink(Math.max(1,r*.3));ctx.fillStyle='#f0c64a';ctx.beginPath();ctx.roundRect?ctx.roundRect(r*.6,-r*1.15,r*1.5,r*2.3,r*.25):ctx.rect(r*.6,-r*1.15,r*1.5,r*2.3);ctx.fill();ctx.stroke();
+  ctx.fillStyle='#fffbe0';ctx.fillRect(r*.85,-r*.95,r*.35,r*1.9);ctx.restore()}
+// the Ice Mage's orb: a glowing ball of ice with a white heart and four little spikes, turning
+function iceShape(x,y,r,a){ctx.save();ctx.translate(x,y);if(!LOWFX)shine('140,215,255',0,0,r*3.6,.5);ctx.rotate(a);ink(Math.max(1,r*.3));
+  ctx.fillStyle='#bfeaff';ctx.beginPath();for(let i=0;i<8;i++){const an=i/8*TAU,rr=i%2?r*.95:r*1.6;ctx.lineTo(Math.cos(an)*rr,Math.sin(an)*rr)}ctx.closePath();ctx.fill();ctx.stroke();
+  ctx.fillStyle='#e8f8ff';ball([0,0],r*.7);ctx.fill();ctx.fillStyle='#fff';ball([-r*.25,-r*.3],r*.3);ctx.fill();ctx.restore()}
+// the Monk's wave: a crescent of air pushed out by the fist, a lighter inner one
+function waveShape(x,y,r,a,al){ctx.save();ctx.translate(x,y);ctx.rotate(a);ctx.globalAlpha*=al==null?1:al;ctx.lineCap='round';
+  ctx.strokeStyle='rgba(27,22,18,.45)';ctx.lineWidth=r*.9;ctx.beginPath();ctx.arc(-r*1.2,0,r*2,-1.05,1.05);ctx.stroke();
+  ctx.strokeStyle='#fff1a8';ctx.lineWidth=r*.55;ctx.beginPath();ctx.arc(-r*1.2,0,r*2,-1.05,1.05);ctx.stroke();
+  ctx.strokeStyle='rgba(255,255,255,.75)';ctx.lineWidth=r*.25;ctx.beginPath();ctx.arc(-r*2,0,r*1.6,-.9,.9);ctx.stroke();ctx.restore()}
 // the Alchemist's goggles, pushed up on the forehead: a leather strap round the head (over the hood, or over the hair) and two big
 // round lenses in brass rims on the front, only on our side (drawn after the head)
 function goggles(Vh,h,R,nod){const{F}=Vh,el=a=>lerp(1.02,.66,(1-Math.cos(a))/2),at=a=>nrm(nod(hdir(a,el(a)))),R1=R*1.03;
@@ -1425,11 +1608,82 @@ function apronOn(V0,X,col){const{P,F}=V0,vis=(t,z)=>F(X.Rd(surf(t,z,.2).n))>.02,
   for(const sd of[-1,1])surfLine(V0,X,k=>surf(sd*lerp(.66,.22,k),lerp(ZB+10.2,ZB+13.4,k),.25),dk(col,.25),1.3,1);
   if(vis(0,ZB+5)){const pk=[[-.3,ZB+6.4],[.3,ZB+6.4],[.3,ZB+3.6],[-.3,ZB+3.6]].map(([t,z])=>P(X.T(surf(t,z,.3).p)));poly(pk);ctx.fillStyle=dk(col,.12);ctx.fill();ctx.strokeStyle='rgba(27,22,18,.55)';ctx.lineWidth=.8;ctx.setLineDash([1.2,1]);ctx.stroke();ctx.setLineDash([])}}
 
+// ------------------------------------------------------------------ the six heroes of 16 October (Denis: «sia la 1 che la 2»): their own
+// things on the body. The Paladin's sun on the chest, his steel pauldrons and his blue shield; the Ice Mage's snowflake and the white fur
+// of his hem; the Berserker's fur mantle; the Corsair's golden buttons and his sabre at the hip; the Tamer's horn; the Monk's prayer beads
+// a badge on the chest of the tunic (style.emblem): 'sole' the golden sun, 'fiocco' the snowflake; flat on the cloth, narrower as it turns
+function emblem(V0,X,kind){const{P,F}=V0,s=surf(0,ZB+8.3,.3),v=F(X.Rd(s.n));if(v<=.1)return;const q=P(X.T(s.p)),a=P(X.T(surf(-.15,ZB+8.3,.3).p)),b=P(X.T(surf(.15,ZB+8.3,.3).p)),ang=Math.atan2(b[1]-a[1],b[0]-a[0]);
+  ctx.save();ctx.globalAlpha=cl((v-.1)*4,0,1);ctx.translate(q[0],q[1]);ctx.rotate(ang);ctx.scale(Math.max(.25,v),1);ctx.lineJoin='round';ctx.lineCap='round';
+  if(kind==='sole'){ink(1);ctx.fillStyle='#f0c64a';ctx.beginPath();for(let i=0;i<16;i++){const an=i/16*TAU,r=i%2?2.4:3.9;ctx.lineTo(Math.cos(an)*r,Math.sin(an)*r)}ctx.closePath();ctx.fill();ctx.stroke();
+    ctx.fillStyle='#ffe58a';ball([0,0],1.7);ctx.fill();ctx.strokeStyle='#b8862a';ctx.lineWidth=.6;ctx.stroke();ctx.fillStyle='rgba(255,255,255,.75)';ball([-.6,-.6],.55);ctx.fill()}
+  else{for(const[w,c] of[[2.2,'rgba(27,22,18,.7)'],[1,'#f2f9ff']]){ctx.strokeStyle=c;ctx.lineWidth=w;ctx.beginPath();for(let i=0;i<6;i++){const an=i/6*TAU+Math.PI/2,ca=Math.cos(an),sa=Math.sin(an);ctx.moveTo(0,0);ctx.lineTo(ca*3.6,sa*3.6);
+      const m=[ca*2.2,sa*2.2];for(const sd of[-1,1]){const bb=an+sd*.75;ctx.moveTo(m[0],m[1]);ctx.lineTo(m[0]+Math.cos(bb)*1.3,m[1]+Math.sin(bb)*1.3)}}ctx.stroke()}
+    ctx.fillStyle='#bfeaff';ball([0,0],.9);ctx.fill()}
+  ctx.restore()}
+// the white fur round the hem of the Ice Mage's robe: a soft band, its tufts a little over the edge
+function hemFur(V0,X,col){const{P,F}=V0;surfLine(V0,X,t=>surf(t,BZ+1.4,.35),dk(col,.1),3.4,0,null,true);
+  for(let i=0;i<32;i++){const t=i/32*TAU,s=surf(t,BZ+1.5,.55),v=F(X.Rd(s.n));if(v<=.08)continue;const q=P(X.T(s.p));ctx.fillStyle=col;ball([q[0],q[1]+.5],1.35);ctx.fill()}
+  for(let i=0;i<32;i+=2){const t=i/32*TAU+.08,s=surf(t,BZ+1.8,.5),v=F(X.Rd(s.n));if(v<=.2)continue;const q=P(X.T(s.p));ctx.fillStyle='rgba(255,255,255,.9)';ball([q[0]-.3,q[1]-.4],.55);ctx.fill()}}
+// the Corsair's coat: lapels from the collar and two rows of golden buttons
+function coatButtons(V0,X,col){const{P,F}=V0;for(const sd of[-1,1])surfLine(V0,X,k=>surf(sd*lerp(.6,.12,k),lerp(ZB+13.1,ZB+8.2,k),.15),'rgba(27,22,18,.55)',1.2,1);
+  for(const sd of[-1,1])for(const z of[ZB+10.4,ZB+8.6,ZB+6.9]){const s=surf(sd*.26,z,.3),v=F(X.Rd(s.n));if(v<=.1)continue;const q=P(X.T(s.p));ctx.save();ctx.globalAlpha=cl((v-.1)*5,0,1);
+    ink(.75);ctx.fillStyle=col;ball(q,1.05);ctx.fill();ctx.stroke();ctx.fillStyle='rgba(255,255,255,.7)';ball([q[0]-.3,q[1]-.35],.32);ctx.fill();ctx.restore()}}
+// steel pauldrons with a golden rim (the Paladin's)
+function pauldron2(V0,c3,rr,col){const q=V0.P(c3),ry=rr*.7;ink(2.2);ctx.beginPath();ctx.ellipse(q[0],q[1],rr,ry,0,0,TAU);ctx.fillStyle=soft(q[0]-rr*.4,q[1]-ry*.5,q[0],q[1],rr*1.2,col,.38,.42);ctx.fill();ctx.stroke();
+  ctx.strokeStyle='#e0b040';ctx.lineWidth=1;ctx.beginPath();ctx.ellipse(q[0],q[1]+ry*.25,rr-.9,ry*.62,0,.15,Math.PI-.15);ctx.stroke();
+  ctx.fillStyle='rgba(255,255,255,.6)';ell(q[0]-rr*.36,q[1]-ry*.45,rr*.36,ry*.22);ctx.fill()}
+// the Berserker's fur mantle round the shoulders: a thick soft roll of fur with tufts; near: the half on our side (after the tunic and
+// under the head), else the far half (before the tunic)
+const FUR_Z=11.9;
+function furMantle(V0,X,col,sw,near){const{P,F}=V0,z=ZB+FUR_Z,r=radAt(FUR_Z)+2.3,rt=2.7,N=40,pts=[];
+  for(let i=0;i<=N;i++){const t=i/N*TAU,n=X.Rd([Math.cos(t),Math.sin(t),0]);pts.push({t,q:P(X.T([Math.cos(t)*r*AX,Math.sin(t)*r,z])),f:F(n)})}
+  const runs=[];let cur=[];for(const p of pts){if((p.f>=0)===near)cur.push(p);else if(cur.length){runs.push(cur);cur=[]}}if(cur.length)runs.push(cur);
+  ctx.lineCap='round';ctx.lineJoin='round';
+  for(const[w,c] of[[rt+1.3,INK],[rt,near?col:dk(col,.15)]]){ctx.strokeStyle=c;ctx.lineWidth=w*2;for(const r of runs){if(r.length<2)continue;line(r.map(p=>p.q));ctx.stroke()}}
+  // the tufts: soft bumps along the lower edge and a few light hairs on top
+  for(const r of runs)for(let i=0;i<r.length;i++){const q=r[i].q;ctx.fillStyle=INK;ball([q[0],q[1]+rt*.9],1.75);ctx.fill()}
+  for(const r of runs)for(let i=0;i<r.length;i++){const q=r[i].q;ctx.fillStyle=near?col:dk(col,.15);ball([q[0],q[1]+rt*.85],1.25);ctx.fill();ctx.fillStyle=near?dk(col,.28):dk(col,.36);ball([q[0]+.3,q[1]+rt*.95],.6);ctx.fill()}
+  if(near)for(const r of runs){ctx.strokeStyle=lt(col,.4);ctx.lineWidth=.7;for(let i=1;i<r.length;i+=2){const q=r[i].q;ctx.beginPath();ctx.moveTo(q[0]-.8,q[1]-rt*.55);ctx.quadraticCurveTo(q[0],q[1]-rt*.95,q[0]+.9,q[1]-rt*.6);ctx.stroke()}}}
+// the Corsair's sabre at his left hip: the curved black scabbard hanging back and down with a brass tip, the golden basket guard and the
+// grip pointing forward and up
+function saberHip(V0,X){const{P}=V0,top=[2.6,-9.4,ZB+5.4],pts=[top,[-1.6,-10.6,ZB+2.6],[-6,-11.2,ZB+.4],[-10.6,-10.9,ZB-.8]].map(v=>P(X.T(v)));
+  ctx.lineCap='round';ctx.lineJoin='round';ctx.strokeStyle=INK;ctx.lineWidth=4.6;line(pts);ctx.stroke();ctx.strokeStyle='#2a1f1a';ctx.lineWidth=2.8;line(pts);ctx.stroke();
+  ctx.strokeStyle='rgba(255,255,255,.18)';ctx.lineWidth=.8;line(pts.map(q=>[q[0]-.5,q[1]-.6]));ctx.stroke();
+  ink(1);ctx.fillStyle='#d6a640';ball(pts[3],1.7);ctx.fill();ctx.stroke();
+  const g=P(X.T([4.6,-9.2,ZB+6.4])),gt=P(X.T([7.6,-9,ZB+8.4]));ctx.strokeStyle=INK;ctx.lineWidth=3.6;seg(g,gt);ctx.stroke();ctx.strokeStyle='#3a2a20';ctx.lineWidth=2;seg(g,gt);ctx.stroke();
+  ink(1.2);ctx.fillStyle='#e0b040';ctx.beginPath();ctx.ellipse(g[0],g[1],3,2.1,Math.atan2(gt[1]-g[1],gt[0]-g[0]),0,TAU);ctx.fill();ctx.stroke();ctx.fillStyle='rgba(255,250,200,.7)';ball([g[0]-.8,g[1]-.6],.6);ctx.fill();
+  ctx.fillStyle='#e0b040';ball(gt,1.2);ctx.fill();ctx.stroke()}
+// the Tamer's hunting horn at his right hip, hanging from its strap: ivory with two golden rings, the bell open toward the back
+function hornHip(V0,X){const{P}=V0,pts=[[3.6,10.2,ZB+6.2],[1.2,11.6,ZB+3.6],[-2.6,11.8,ZB+2.4],[-6.2,10.8,ZB+3.6]].map(v=>P(X.T(v))),ws=[.9,1.5,2.2,3.2];
+  ctx.fillStyle=INK;for(let i=0;i<3;i++){hull(pts[i],ws[i]+1.2,pts[i+1],ws[i+1]+1.2);ctx.fill()}
+  const bb=[1e9,1e9,-1e9,-1e9];for(const q of pts){bb[0]=Math.min(bb[0],q[0]-3);bb[1]=Math.min(bb[1],q[1]-3);bb[2]=Math.max(bb[2],q[0]+3);bb[3]=Math.max(bb[3],q[1]+3)}
+  ctx.fillStyle=soft(bb[0]+(bb[2]-bb[0])*.3,bb[1]+(bb[3]-bb[1])*.25,(bb[0]+bb[2])/2,(bb[1]+bb[3])/2,Math.max(bb[2]-bb[0],bb[3]-bb[1])*.8,'#efe2c0',.2,.3);for(let i=0;i<3;i++){hull(pts[i],ws[i],pts[i+1],ws[i+1]);ctx.fill()}
+  ctx.strokeStyle='#d6a640';ctx.lineWidth=1.3;for(const k of[.35,.8]){const i=Math.min(2,Math.floor(k*3)),u=k*3-i,q=[lerp(pts[i][0],pts[i+1][0],u),lerp(pts[i][1],pts[i+1][1],u)],w=lerp(ws[i],ws[i+1],u);
+    ctx.beginPath();ctx.moveTo(q[0],q[1]-w);ctx.lineTo(q[0],q[1]+w);ctx.stroke()}
+  ink(1.1);ctx.fillStyle='#3a2a20';ctx.beginPath();ctx.ellipse(pts[3][0],pts[3][1],1.6,ws[3],0,0,TAU);ctx.fill();ctx.stroke();ctx.fillStyle='#d6a640';ball(pts[0],1);ctx.fill();ctx.stroke()}
+// the Monk's prayer beads: big wooden beads round the neck hanging on the chest, a golden one every few, a red tassel at the bottom
+function beadsOn(V0,X,col){const{P,F}=V0,N=20;let low=null;for(let i=0;i<=N;i++){const k=i/N,sd=k<.5?-1:1,u=Math.abs(k-.5)*2,s=surf(sd*lerp(.02,.66,u),lerp(ZB+7.2,ZB+12.8,Math.pow(u,1.3)),.6),v=F(X.Rd(s.n));
+    if(i===N/2)low={q:P(X.T(s.p)),v};if(v<=.06)continue;const q=P(X.T(s.p));ctx.save();ctx.globalAlpha=cl(v*5,0,1);ink(.85);ctx.fillStyle=i%5===0?'#e0b040':i%2?col:lt(col,.15);ball(q,1.65);ctx.fill();ctx.stroke();
+    ctx.fillStyle='rgba(255,255,255,.45)';ball([q[0]-.45,q[1]-.45],.4);ctx.fill();ctx.restore()}
+  if(low&&low.v>.1){const q=low.q;ctx.save();ctx.globalAlpha=cl(low.v*4,0,1);ctx.fillStyle=INK;ctx.beginPath();ctx.moveTo(q[0]-1.5,q[1]+1);ctx.lineTo(q[0]+1.5,q[1]+1);ctx.lineTo(q[0]+2.2,q[1]+5.4);ctx.lineTo(q[0]-2.2,q[1]+5.4);ctx.closePath();ctx.fill();
+    ctx.fillStyle='#d6323a';ctx.beginPath();ctx.moveTo(q[0]-.9,q[1]+1.5);ctx.lineTo(q[0]+.9,q[1]+1.5);ctx.lineTo(q[0]+1.5,q[1]+4.9);ctx.lineTo(q[0]-1.5,q[1]+4.9);ctx.closePath();ctx.fill();
+    ctx.strokeStyle='rgba(120,10,20,.5)';ctx.lineWidth=.5;for(const x of[-.6,0,.6]){ctx.beginPath();ctx.moveTo(q[0]+x,q[1]+2.4);ctx.lineTo(q[0]+x*1.4,q[1]+4.8);ctx.stroke()}ctx.restore()}}
+// a fist wrapped in cloth (the Monk's): the fist, then two bands of the wrap across it
+function fistW(V0,p3,r,col,wrap){fist(V0,p3,r,col);if(!wrap)return;const q=V0.P(p3);ctx.save();ball(q,r-.3);ctx.clip();ctx.strokeStyle=wrap;ctx.lineWidth=1.6;
+  for(const o of[-1,.6]){ctx.beginPath();ctx.moveTo(q[0]-r,q[1]+o-r*.35);ctx.lineTo(q[0]+r,q[1]+o+r*.35);ctx.stroke()}ctx.strokeStyle='rgba(27,22,18,.35)';ctx.lineWidth=.5;
+  for(const o of[-1,.6])for(const d of[-.8,.8]){ctx.beginPath();ctx.moveTo(q[0]-r,q[1]+o+d-r*.35);ctx.lineTo(q[0]+r,q[1]+o+d+r*.35);ctx.stroke()}ctx.restore();
+  ink(1.6);ctx.beginPath();ctx.arc(q[0],q[1],r,0,TAU);ctx.stroke()}
+
 // ------------------------------------------------------------------ the hero
+// a hero's own look (style.look0: his hat or hood, hair, beard and their colours) under the player's: where the player left a part as it
+// was (look.def, set by the making of the hero, src/js/89) or has no look at all, the hero's own
+function lookOf(S0){const L0=S0.look0,L=S0.look;if(!L0)return L;if(!L)return{...L0};const d=L.def||{},o={...L};for(const k in L0)if(d[k])o[k]=L0[k];return o}
 // the body being drawn is the robe or the tunic: set for this one drawing, and always put back afterwards
-function arciere(x,y,face,anim,p,sc,o){const S0=(o&&o.style)||{};BP=S0.robe?ROBE:PROF;BZ=S0.robe?0:ZB;try{arciere0(x,y,face,anim,p,sc,o)}finally{BP=PROF;BZ=ZB}}
+// (anim 'slash': the Corsair's cut with the sabre, which leaves his hip for the hand; a 'shoot' cycle of the sabre)
+function arciere(x,y,face,anim,p,sc,o){if(anim==='slash'){const st=(o&&o.style)||{};o={...(o||{}),style:{...st,held:'sciabola',saber:false}};anim='shoot'}
+  const S0=(o&&o.style)||{};BP=S0.robe?ROBE:PROF;BZ=S0.robe?0:ZB;try{arciere0(x,y,face,anim,p,sc,o)}finally{BP=PROF;BZ=ZB}}
 function arciere0(x,y,face,anim,p,sc,o){sc=sc||1;o=o||{};const S0=o.style||{},arm=S0.armor==='none'?'none':S0.armor&&ARM[S0.armor]?S0.armor:'giubba',wk=S0.weapon,AR=ARM[arm]||ARM.giubba;
-  const S={...S0,body:S0.body||AR[0],hood:S0.hood||AR[1],skin:S0.skin||HC.skin,belt:S0.belt===null?null:S0.belt||HC.belt};
+  const S={...S0,body:S0.body||AR[0],hood:S0.hood||AR[1],skin:S0.skin||HC.skin,belt:S0.belt===null?null:S0.belt||HC.belt};if(S0.look0)S.look=lookOf(S0);
   // the outfit (style.outfit, sprite/eroe3d/vestiti3d.js): its own boots, gloves, details on the tunic and the hood, pieces of its own;
   // without it the hero stays identical to the pixel
   const OF=VESTITI[S0.outfit||S0.skinId]||null;S.hand=(OF&&OF.glove)||S.skin;if(OF){S.of=OF;if(OF.foot)S.foot=OF.foot;if(OF.foot2)S.foot2=OF.foot2}
@@ -1444,7 +1698,7 @@ function arciere0(x,y,face,anim,p,sc,o){sc=sc||1;o=o||{};const S0=o.style||{},ar
   if(gunW){if(anim==='shoot'||anim==='aim'){A=pose('idle',p,o);A.fL=[2.2,-5.2,0];A.fR=[-1,5,0];A.hd=[.3,0,0];A.hp=.04;A.hy=0;A.squint=anim==='shoot'?.55:.35;A.inhale=A.exhale=0}
     Wp=wpose(A,anim,p,wid,o);if(Wp.rl&&Wp.rl.b){const b=Wp.rl.b;A.hp+=.22*b;A.hy+=.3*b;A.squint=Math.max(A.squint||0,.25*b)}if(Wp.rec>0&&Wp.kick){const k=Wp.rec*Wp.kick[0]/3;A.lean=.02-.06*k;A.B=add(A.B,[-.7*k,0,0]);A.hd=add(A.hd,[-.4*k,0,.1*k])}
     // the hammer's blow and the bomb's throw move the whole body: back on the wind-up, forward on the strike
-    if(Wp.lean!=null){A.lean=Wp.lean;A.hd=add(A.hd,[Wp.lean*3,0,0]);if(Wp.body)A.B=add(A.B,Wp.body);if(Wp.sq)A.s=Wp.sq}}
+    if(Wp.lean!=null){A.lean=Wp.lean;A.hd=add(A.hd,[Wp.lean*3,0,0]);if(Wp.body)A.B=add(A.B,Wp.body);if(Wp.sq)A.s=Wp.sq}if(Wp.roll)A.roll=(A.roll||0)+Wp.roll}
   // the mages float in the air (style.float): a slow bob instead of the steps
   if(S0.float){const fl=7+2.4*Math.sin(p*TAU+.4);A.B=[A.B[0],A.B[1],A.B[2]*(anim==='walk'?.2:1)+fl];A.roll*=.4}
   // o.tweak(A, p): a last touch to the pose from outside (the intro film's acting); without it nothing changes
@@ -1493,14 +1747,18 @@ function arciere0(x,y,face,anim,p,sc,o){sc=sc||1;o=o||{};const S0=o.style||{},ar
       surfLine(V0,X,k=>surf(.04,lerp(ZB+10.8,ZB+6.8,k),.1),'rgba(27,22,18,.42)',1,1,[1.6,1.6]);
       for(const z of[ZB+9.9,ZB+8]){const s=surf(.17,z,.25),n=X.Rd(s.n);if(F(n)>.1){const q=P(X.T(s.p));ctx.fillStyle=HC.button;ink(.7);ball(q,.95);ctx.fill();ctx.stroke()}}}
     if(S0.apron)apronOn(V0,X,S0.apron);
+    if(S0.hem)hemFur(V0,X,S0.hem);if(S0.emblem)emblem(V0,X,S0.emblem);if(S0.buttons)coatButtons(V0,X,S0.buttons);
     // the strap of the quiver: over the left shoulder, across the chest to the right hip and round the back
     if(S0.strap!==false)surfLine(V0,X,t=>surf(t,ZB+8.4-4.6*Math.sin(t),.35),OF&&OF.strap||HC.strap,1.4,0);
+    // the Monk's sash: a wide band of darker cloth from the left shoulder across the chest to the right hip
+    if(S0.kesa){surfLine(V0,X,t=>surf(t,ZB+8.2-4.8*Math.sin(t),.3),S0.kesa,3.6,0,null,true);surfLine(V0,X,t=>surf(t,ZB+9.2-4.8*Math.sin(t),.32),lt(S0.kesa,.25),.7,0)}
     // the belt with the golden buckle
     if(S.belt)surfLine(V0,X,t=>surf(t,ZB+5.6,.3),S.belt,2.7,0,null,true);
     if(S.belt){const s=surf(0,ZB+5.6,.55),n=X.Rd(s.n),v=F(n);if(v>.05){const q=P(X.T(s.p)),k=Math.max(.45,v);ctx.save();ctx.globalAlpha=cl(v*4,0,1);ink(1);ctx.fillStyle=OF&&OF.buckle||HC.buckle;ctx.fillRect(q[0]-1.7*k,q[1]-2,3.4*k,4);ctx.strokeRect(q[0]-1.7*k,q[1]-2,3.4*k,4);ctx.fillStyle='#fff3c0';ctx.fillRect(q[0]-1.1*k,q[1]-1.4,1*k,1);ctx.fillStyle='#8a5a20';ctx.fillRect(q[0]-.5*k,q[1]-.4,1*k,1.6);ctx.restore()}}
     if(OF&&OF.over)OF.over(KO);
     if(S.amu)amulet(V0,X,S.amu);
     if(S0.look&&S0.look.acc==='collana')necklace(V0,X,S0.look.accCol||'#d24b3e');
+    if(S0.beads)beadsOn(V0,X,S0.beads);
     ctx.restore();rimPoly(hp,.32);
     if(A.flash>0){ctx.save();ctx.globalAlpha=A.flash*.3;poly(hp);ctx.fillStyle='#ffffff';ctx.fill();ctx.restore()}}});
   // the hood lowered (the hero's own look): on the upper back, and gathered round the neck unless the scarf is there
@@ -1510,6 +1768,12 @@ function arciere0(x,y,face,anim,p,sc,o){sc=sc||1;o=o||{};const S0=o.style||{},ar
   // the scarf of the hero's own look: its far half before the tunic, the near half after it and under the head
   if(S0.look&&S0.look.acc==='sciarpa'){const col=S0.look.accCol||'#d24b3e',r=radAt(SCARF_Z)+1.25;let dn=-1e9;for(let i=0;i<16;i++){const t=i/16*TAU;dn=Math.max(dn,D(X.T([Math.cos(t)*r*AX,Math.sin(t)*r,ZB+SCARF_Z])))}
     parts.push({d:dT-.02,f:()=>scarf(V0,X,col,A.sway,false)});parts.push({d:Math.max(dT+.01,Math.min(hDep-.01,dn)),f:()=>scarf(V0,X,col,A.sway,true)})}
+  // the Berserker's fur mantle: its far half before the tunic, the near half after it and under the head
+  if(S0.fur){const r=radAt(FUR_Z)+2.3;let dn=-1e9;for(let i=0;i<16;i++){const t=i/16*TAU;dn=Math.max(dn,D(X.T([Math.cos(t)*r*AX,Math.sin(t)*r,ZB+FUR_Z])))}
+    parts.push({d:dT-.025,f:()=>furMantle(V0,X,S0.fur,A.sway,false)});parts.push({d:Math.max(dT+.015,Math.min(hDep-.012,dn)),f:()=>furMantle(V0,X,S0.fur,A.sway,true)})}
+  if(S0.saber)parts.push({d:D(X.T([-2,-10.6,ZB+2.6])),f:()=>saberHip(V0,X)});
+  if(S0.horn)parts.push({d:D(X.T([-1.4,11.2,ZB+3.6])),f:()=>hornHip(V0,X)});
+  if(S0.pauldrons)for(const sd of[-1,1]){const c3=X.T([.6,sd*9.2,ZB+10.2]);parts.push({d:D(c3)+.05,f:()=>pauldron2(V0,c3,3,S0.pauldrons)})}
   // the quiver on the back (the balestriere keeps his bolts in it too)
   if(S0.quiver!==false&&!S0.gun&&wid!=='bastone'&&!NOQ[wid]){parts.push({d:D(X.T([-11,0,ZB+6])),f:()=>quiverTube(V0,X)});parts.push({d:D(X.T(QT)),f:()=>quiverArrows(V0,X,A.jig,wid)})}
   if(OF&&OF.parts)OF.parts({V0,X,P,F,D,S,A,anim,p,face,ZB,surf,surfLine,Hc,hDep,dT},parts);
@@ -1554,16 +1818,22 @@ function arciere0(x,y,face,anim,p,sc,o){sc=sc||1;o=o||{};const S0=o.style||{},ar
   ctx.restore()}
 // the Fabbro's lava cracks: [angle round the body, height] along each one (two in front, two on the back)
 const CRACKS=[[[-.45,ZB+11.6],[-.2,ZB+7.4],[-.38,ZB+3]],[[.42,ZB+10],[.2,ZB+4.8]],[[2.6,ZB+11],[2.85,ZB+6.6],[2.7,ZB+3.2]],[[-2.75,ZB+9.4],[-2.95,ZB+4.4]]];
-const NOQ={scettro:1,martello:1,bomba:1,liuto:1,fiala:1,stellina:1};
+const NOQ={scettro:1,martello:1,bomba:1,liuto:1,fiala:1,stellina:1,maglio:1,gelo:1,ascia:1,coltello:1,sciabola:1,frusta:1,pugni:1};
 // the skeleton's shield: a round board of wood, thick, with an iron rim and an iron boss; seen from behind its back is darker; cracks
 // spread over it as it wears out (S.shDmg), a flash when it parries (S.shHit)
 function shield(V0,c,n,r,S){const{P,F}=V0;let u=cross(n,[0,0,1]);if(len(u)<.2)u=cross(n,[0,1,0]);u=nrm(u);const v=cross(n,u),N=22,f=F(n),th=1.1,fr=[],bk=[];
   for(let i=0;i<N;i++){const t=i/N*TAU,d=add(mul(u,Math.cos(t)*r),mul(v,Math.sin(t)*r));fr.push(P(add(add(c,d),mul(n,th))));bk.push(P(add(add(c,d),mul(n,-th))))}
   const H=chull(fr.concat(bk)),face=f>=0?fr:bk,q=P(add(c,mul(n,f>=0?th:-th)));
-  ink(2.6);poly(H);ctx.fillStyle='#5a3a20';ctx.fill();ctx.stroke();
+  const pal=S.shield==='pal';
+  ink(2.6);poly(H);ctx.fillStyle=pal?'#7a828c':'#5a3a20';ctx.fill();ctx.stroke();
   const bb=[1e9,1e9,-1e9,-1e9];for(const p of face){bb[0]=Math.min(bb[0],p[0]);bb[1]=Math.min(bb[1],p[1]);bb[2]=Math.max(bb[2],p[0]);bb[3]=Math.max(bb[3],p[1])}
-  poly(face);ctx.fillStyle=soft(bb[0]+(bb[2]-bb[0])*.3,bb[1]+(bb[3]-bb[1])*.28,(bb[0]+bb[2])/2,(bb[1]+bb[3])/2,Math.max(bb[2]-bb[0],bb[3]-bb[1])*.7,f>=0?'#8a5a32':'#6b4a2a',.18,.3);ctx.fill();
-  if(f>=0){ctx.save();poly(face);ctx.clip();
+  poly(face);ctx.fillStyle=soft(bb[0]+(bb[2]-bb[0])*.3,bb[1]+(bb[3]-bb[1])*.28,(bb[0]+bb[2])/2,(bb[1]+bb[3])/2,Math.max(bb[2]-bb[0],bb[3]-bb[1])*.7,pal?(f>=0?'#3a64c4':'#8a929c'):f>=0?'#8a5a32':'#6b4a2a',.18,.3);ctx.fill();
+  if(pal&&f>=0){// the steel rim with its golden edge, the golden sun in the middle with its rays
+    const ring=k=>{const o=[];for(let i=0;i<N;i++){const t=i/N*TAU;o.push(P(add(add(c,mul(n,th+.05)),add(mul(u,Math.cos(t)*(r-k)),mul(v,Math.sin(t)*(r-k))))))}return o};
+    ctx.strokeStyle='#c9cfd6';ctx.lineWidth=2.2;poly(ring(1.3));ctx.stroke();ctx.strokeStyle='#e0b040';ctx.lineWidth=.9;poly(ring(2.6));ctx.stroke();
+    ctx.fillStyle='#f0c64a';ink(.9);ctx.beginPath();for(let i=0;i<16;i++){const t=i/16*TAU,rr=i%2?2.6:4.6,q=P(add(add(c,mul(n,th+.1)),add(mul(u,Math.cos(t)*rr),mul(v,Math.sin(t)*rr))));ctx.lineTo(q[0],q[1])}ctx.closePath();ctx.fill();ctx.stroke();
+    const bq=P(add(c,mul(n,th+.6)));ink(1.6);ball(bq,2.1);ctx.fillStyle=soft(bq[0]-.8,bq[1]-.9,bq[0],bq[1],2.6,'#ffe58a',.4,.3);ctx.fill();ctx.stroke()}
+  if(!pal&&f>=0){ctx.save();poly(face);ctx.clip();
     // the planks, the iron rim, the boss in the middle
     ctx.strokeStyle='rgba(40,22,10,.4)';ctx.lineWidth=.9;for(const k of[-.34,.34]){const a=P(add(add(c,mul(n,th)),add(mul(v,k*r),mul(u,-r)))),b=P(add(add(c,mul(n,th)),add(mul(v,k*r),mul(u,r))));seg(a,b);ctx.stroke()}
     ctx.restore();const rim2=[];for(let i=0;i<N;i++){const t=i/N*TAU;rim2.push(P(add(add(c,mul(n,th+.05)),add(mul(u,Math.cos(t)*(r-1.4)),mul(v,Math.sin(t)*(r-1.4))))))}
@@ -1595,7 +1865,7 @@ function ringOn(V0,h3,id){const it=typeof ITEM!=='undefined'&&ITEM[id],r=it?[it.
   if(r[2]>=2)shine(id==='anello_gelo'?'160,220,255':id==='anello_vento'?'150,240,240':'120,170,255',q[0]+1.2,q[1]+.6,6,.32*(.5+.5*Math.sin(G.t*5)))}
 
 // only the head, its centre at x, y (the little portraits of the making of the hero): standing still, turned to `face`
-function testa(x,y,face,sc,o){o=o||{};const S0=o.style||{},AR=ARM[S0.armor]||ARM.giubba,S={...S0,body:S0.body||AR[0],hood:S0.hood||AR[1],skin:S0.skin||HC.skin};
+function testa(x,y,face,sc,o){o=o||{};const S0=o.style||{},AR=ARM[S0.armor]||ARM.giubba,S={...S0,body:S0.body||AR[0],hood:S0.hood||AR[1],skin:S0.skin||HC.skin};if(S0.look0)S.look=lookOf(S0);
   const A=pose('idle',o.p==null?.25:o.p,o);A.hy=0;ctx.save();ctx.translate(x,y);ctx.scale(sc,sc);
   try{head(Vat(face,[0,0],0),10,S,A,{blink:1,squint:0,shut:0,mouth:0,moss:false,eyeLight:true,eyeCol:S0.eyes,glow:S0.glowEyes&&S0.eyes?hexRgb(S0.eyes):null,blush:S0.blush,sway:0})}finally{ctx.restore()}}
-return{arciere,testa,pose,ARM,BOWS,HC,ROBE,VESTITI,nota:musicNote,stella:starShape,fiala:flaskShape,hatCol:HAT_COL,kit:{surf,surfLine,soft,dk,lt,line,poly,sp,capPath,rotY,keys,ZB,AX,HC}}})();
+return{arciere,testa,pose,ARM,BOWS,HC,ROBE,VESTITI,nota:musicNote,stella:starShape,fiala:flaskShape,coltello:knifeShape,ascia:axeShape,martello:hammerShape,ghiaccio:iceShape,onda:waveShape,hatCol:HAT_COL,kit:{surf,surfLine,soft,dk,lt,line,poly,sp,capPath,rotY,keys,ZB,AX,HC}}})();

@@ -6,7 +6,7 @@
 // pull), idle. EROE.arciere's point is the feet, 8 px below drawRig's.
 // =====================================================================
 const H3D={on:true,st:null,prev:false};
-const H3IDS=['arciere','cacciatrice','balestriere','druida','bardo','alchimista','ninja'];
+const H3IDS=['arciere','cacciatrice','balestriere','druida','bardo','alchimista','ninja','paladino','mago','berserker','corsaro','domatore','monaco'];
 function is3D(S){return H3D.on&&typeof EROE!=='undefined'&&!!S&&(H3IDS.includes(S.hid)||S===HERO)}
 {const _dr=drawRig;drawRig=function(x,y,face,walk,moving,S,o){if(!is3D(S))return _dr.apply(this,arguments);o=o||{};
   const st=H3D.st||{},sc=S.sc||1,t=(G&&G.t)||0;let anim='idle',p=((t/2.4)%1+1)%1,pull=Math.min(1,Math.max(0,(o.pull||0)/5));

@@ -193,7 +193,9 @@ function sceLookStyle(S,lk){if(!lk||!sceLookN(lk))return S;const L=sceLook(lk),P
   const look={eyes:L.occhi,iris:I.c,brows:L.sopr,browCol:hxMix(own(SCE_COLPEL,L.colSopr)||C.c,'#1b1612',.42),mouth:L.bocca,lipCol:own(SCE_COLBOC,L.colBocca),mark:L.segno,markCol:own(SCE_COLPIT,L.colSegno),
     hair:L.capelli,hairCol:C.c,beard:L.barba,beardCol:own(SCE_COLPEL,L.colBarba),ears:L.orecchie,hood:L.cappuccio,hatCol:own(SCE_COLCOP,L.colCop),
     tattoo:L.tatuaggio,tatCol:own(SCE_COLTAT,L.colTat),tatK:k.tatuaggio,
-    acc:L.acc,accCol:ac||accCol(S),accFix:ac,eyeK:k.occhi,browK:k.sopr,mouthK:k.bocca,markK:k.segno,hairK:k.capelli,beardK:k.barba,earK:k.orecchie};
+    acc:L.acc,accCol:ac||accCol(S),accFix:ac,eyeK:k.occhi,browK:k.sopr,mouthK:k.bocca,markK:k.segno,hairK:k.capelli,beardK:k.barba,earK:k.orecchie,
+    // the parts left as they were: there the heroes with a hat, a hood, hair or a beard of their own (style.look0) keep theirs
+    def:{hood:L.cappuccio===LOOK_DEF.cappuccio,hatCol:L.colCop===LOOK_DEF.colCop,hair:L.capelli===LOOK_DEF.capelli,hairCol:L.colCap===LOOK_DEF.colCap,beard:L.barba===LOOK_DEF.barba,beardCol:L.colBarba===LOOK_DEF.colBarba}};
   const o={...S,look};if(P.c)o.skin=P.c;if(S.ponytail&&L.colCap!==LOOK_DEF.colCap)o.hair=C.c;return o}
 let heroStyleBase=heroStyle;
 {const _hs=heroStyle;heroStyleBase=function(){const K=SAVE.skin&&SKINS[SAVE.skin];if(K&&K.crea&&!(SAVE.skins&&SAVE.skins[SAVE.skin]))sceOwnSkins();return _hs.apply(this,arguments)};

@@ -18,6 +18,10 @@ reg('arciere',{n:'Arciere',g:'eroi',an:['idle','walk','shoot','dash','hit'],dur:
 reg('cacciatrice',{n:'Cacciatrice',g:'eroi',an:['idle','walk','shoot','dash','hit'],dur:HD,lab:{shoot:'Tira',dash:'Scatto'},old:oldHero('cacciatrice')},hero('cacciatrice'));
 reg('balestriere',{n:'Balestriere',g:'eroi',an:['idle','walk','shoot','dash','hit'],dur:{...HD,shoot:1.8},lab:{shoot:'Balestra',dash:'Scatto'},old:oldHero('balestriere')},hero('balestriere'));
 reg('druida',{n:'Druida',g:'eroi',an:['idle','walk','shoot','dash','hit'],dur:{...HD,shoot:1.5},lab:{shoot:'Incanta',dash:'Scatto'},old:oldHero('druida')},hero('druida'));
+// the six heroes of 16 October (Denis: «sia la 1 che la 2»), on the same 3D body with their own pieces: they have no drawing of before
+for(const[id,n,sh,lab,ex] of[['paladino','Paladino',1.3,'Martello'],['mago','Mago del ghiaccio',1.5,'Incanta'],['berserker','Berserker',1.3,'Ascia'],['corsaro','Corsaro',1.1,'Coltello',['slash',1,'Sciabola']],
+    ['domatore','Domatore',1.2,'Frusta'],['monaco','Monaco',1,'Pugni']]){const an=['idle','walk','shoot','dash','hit'],dur={...HD,shoot:sh},lb={shoot:lab,dash:'Scatto'};if(ex){an.splice(3,0,ex[0]);dur[ex[0]]=ex[1];lb[ex[0]]=ex[2]}
+  reg(id,{n,g:'eroi',an,dur,lab:lb},hero(id))}
 
 // the companions of today (drawPetSprite of the game, with a pretend state)
 const oldPet=id=>(x,y,face,anim,p)=>{const t=G.t;drawPetSprite(id,x,y,{face,moving:anim==='walk',hop:p*TAU*2,t,att:anim==='attack'&&p>.3&&p<.7?1:0,happy:anim==='happy'?1:0})};

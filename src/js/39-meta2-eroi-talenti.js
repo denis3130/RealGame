@@ -2,7 +2,7 @@
 // the five heroes that can be picked at the first launch (90): the one picked is free, the others cost gold in the hero tab
 const STARTERS=['arciere','cacciatrice','bardo','alchimista','ninja'],starterId=()=>STARTERS.includes(SAVE.starter)?SAVE.starter:'arciere';
 // the speed of each hero's shot (the arrows 560)
-const PSPD={bolt:720,leaf:520,note:540,flask:470,star:650};
+const PSPD={bolt:720,leaf:520,note:540,flask:470,star:650,hammer:520,ice:480,axe:560,knife:700,lash:900,wave:560};
 (function migrate(){const st=starterId();// the first hero is the one picked at the first launch (90)
   const d={sel:'c1',done:{},inf:{best:0,top:[]},best2:{room:0,gold:0},best3:{room:0,gold:0},best4:{room:0,gold:0},hero:st,heroes:{[st]:1},tal:{},
   stats:{kills:{},bosses:{},elites:0,rooms:0,chests:0,dash:0,maxLvl:0,evos:0,gold:0,runs:0,wins:0,nohitAny:0},daily:{day:'',list:[]},free:{next:0,n:0},ach:{},title:null,frame:'base',
@@ -26,6 +26,20 @@ const HEROES=[
     style:{bighood:false,body:'#45508a',hood:'#363e66',belt:'#c8323c',held:'stellina',quiver:false,ownBelt:true,hoodTip:false,mask:'#2a2f4a',bandana:'#d23a3a',katana:true},proj:'star',pcol:'#c9d2dc'},
   {id:'balestriere',n:'Balestriere',price:7000,d:'Lento e corazzato: ogni dardo è un macigno.',start:'Perforazione fin da subito',sk:'pierce',mods:{hp:1.3,atk:1.35,aspd:.8,spd:.9},
     style:{bighood:false,body:'#6b6f78',hood:'#4a3626',skin:'#e8b890',held:'xbow',bowCol:'#6b4a2a',helm:true,hoodTip:false,sc:1.05,belt:'#3a2a1d'},proj:'bolt',pcol:'#dfe4ea'},
+  // the six heroes of 16 October (Denis: «sia la 1 che la 2»): in the hero tab, 7.000 gold like the Balestriere. look0: their own hat or
+  // hood, hair and beard, under the player's look (where the player left a part as it was)
+  {id:'paladino',n:'Paladino',price:7000,d:'Martello sacro e scudo: lo scudo para i colpi, il martello cura.',start:'Lo scudo para un colpo ogni 6 secondi',sk:null,mods:{hp:1.25,atk:1.05,aspd:.85,spd:.92},
+    style:{bighood:false,body:'#efe6cc',hood:'#3a5fb8',belt:'#8a5a2a',held:'maglio',quiver:false,ownBelt:true,hoodTip:false,look0:{hood:'cavaliere'},emblem:'sole',pauldrons:'#c9cfd6',shield:'pal'},proj:'hammer',pcol:'#ffd86b'},
+  {id:'mago',n:'Mago del ghiaccio',price:7000,d:'Sfere di ghiaccio: chi viene colpito si muove a fatica.',start:'Sfere di gelo che rallentano',sk:null,mods:{hp:.9,atk:1.1,aspd:.9},
+    style:{bighood:false,body:'#4f9bd8',hood:'#2f5fb0',belt:'#bfe6ff',held:'gelo',quiver:false,ownBelt:true,hoodTip:false,look0:{hood:'gelo',hair:'lunghi',hairCol:'#eef4ff',beard:'lunga'},eyeCol:'#8fe0ff',emblem:'fiocco',hem:'#f4f8ff',strap:false},proj:'ice',pcol:'#9fe8ff'},
+  {id:'berserker',n:'Berserker',price:7000,d:'Lancia asce che tornano indietro: colpiscono all\'andata e al ritorno.',start:'Asce che tornano come un boomerang',sk:null,mods:{hp:1.2,atk:1.15,aspd:.8},
+    style:{bighood:false,body:'#a03c24',hood:'#5a3a24',belt:'#3a2a1a',held:'ascia',quiver:false,ownBelt:true,hoodTip:false,look0:{hood:'elmo',hair:'lunghi',hairCol:'#d0662a',beard:'intrecciata'},fur:'#a8865a',strap:false},proj:'axe',pcol:'#cfd6de'},
+  {id:'corsaro',n:'Corsaro',price:7000,d:'Coltelli da lancio veloci; chi arriva vicino assaggia la sciabola.',start:'Due coltelli a ogni tiro, sciabolata da vicino',sk:null,mods:{hp:.95,atk:.9,aspd:1.15,spd:1.1},
+    style:{bighood:false,body:'#26386a',hood:'#26222a',belt:'#c8323c',held:'coltello',quiver:false,ownBelt:true,hoodTip:false,look0:{hood:'tricorno',hair:'lunghi',hairCol:'#2a1d18',beard:'baffetti'},saber:true,buttons:'#f0c64a'},proj:'knife',pcol:'#dfe4ea'},
+  {id:'domatore',n:'Domatore',price:7000,d:'Combatte con il suo lupo: lui frusta da lontano, il lupo morde.',start:'Il lupo Zanna combatte con te',sk:null,mods:{hp:1.05,atk:.85,spd:1.05},
+    style:{bighood:false,body:'#6e8a34',hood:'#8c8478',belt:'#5a3a20',held:'frusta',quiver:false,ownBelt:true,hoodTip:false,look0:{hood:'lupo'},horn:true},proj:'lash',pcol:'#e8c070'},
+  {id:'monaco',n:'Monaco',price:7000,d:'Pugni veloci che lanciano onde d\'urto; ogni quarto pugno scuote tutto intorno.',start:'Onde d\'urto: ogni quarto pugno colpisce intorno',sk:null,mods:{hp:1.1,atk:.95,aspd:1.25,spd:1.05},
+    style:{bighood:false,body:'#e8922a',hood:'#c8641e',belt:'#c8323c',held:'pugni',quiver:false,ownBelt:true,hoodTip:false,look0:{hood:'senza',hair:'rasati'},beads:'#9a6232',wraps:'#f2ead6',kesa:'#b84a1e',strap:false},proj:'wave',pcol:'#fff1a8'},
   {id:'druida',n:'Druida',price:12000,d:'Le radici lo proteggono e lo curano.',start:'Una lama rotante, più salute e rigenerazione',sk:'orbit',mods:{hp:1.2,atk:1.2,regen:1.5},
     style:{bighood:false,body:'#3f6a2a',hood:'#2c4a1e',skin:'#e8c8a0',held:'staff',eyeCol:'#9fff7a',hoodTip:true,antlers:true,quiver:false,belt:'#6b4a2a'},proj:'leaf',pcol:'#7bf0a8'}];
 const HERO_BY={};HEROES.forEach(h=>HERO_BY[h.id]=h);

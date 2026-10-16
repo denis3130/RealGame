@@ -458,6 +458,66 @@ const M={
     F.prism(pts,-.32,.32,['#262b33','#5c6672','#c9d2dc'],{hi:.55,dk:.55,det:L=>{for(let i=0;i<4;i++){const a=i/4*TAU+a0;L.line(Math.cos(a)*r*.25,Math.sin(a)*r*.25,Math.cos(a)*r*.9,Math.sin(a)*r*.9,'rgba(255,255,255,.35)',.3)}}});
     F.disc([0,0,.34],[0,0,1],.85*k,'#121417',{db:.02});F.disc([0,0,-.34],[0,0,-1],.85*k,'#121417',{db:.02});
     return{muzzle:c,eject:null,sup:null}},
+  // ---------------------------------------------------------------- the six heroes of 16 October
+  // the Paladin's hammer: a walnut handle wrapped in leather at the grip, a golden collar, a short steel head with two golden bands and a
+  // golden sun on each face, a little spike on top; x along the handle (the head at +x), the faces along ±y. st.glow 0..1: the suns shine
+  maglio(K,st){const g=st.glow||0;
+    K.tube([[-5,0,0],[5,0,0],[13.6,0,0]],[2.2,2.1,2],'noce');K.cyl([-2.2,0,0],[2.2,0,0],1.45,['#3a2216','#5e3a24','#8a5a38'],{db:.02});
+    K.cyl([12.2,0,0],[13.8,0,0],1.65,'ottone',{db:.02});K.sph([-5.4,0,0],1.6,'ottone',{db:.01});
+    K.box(13.4,-5.4,20.2,5.4,-3.3,3.3,'lucido',{hi:.5},1.1);
+    for(const x of[14.3,19.3])K.box(x-.55,-5.6,x+.55,5.6,-3.5,3.5,'ottone',{hi:.35,db:.03},.3);
+    K.cyl([20,0,0],[23.4,0,0],1.4,'lucido',{r2:.12,db:.01});
+    if(g>.02)K.fx([16.8,0,0],q=>shine('255,220,120',q[0],q[1],(10+8*g)*K.s,.25+.45*g),-3);
+    for(const sd of[-1,1]){K.disc([16.8,sd*5.62,0],[0,sd,0],2.4,'#f0c64a',{db:.04,edge:1});K.disc([16.8,sd*5.66,0],[0,sd,0],1.3,'#fff1a8',{db:.05})}
+    return{muzzle:[16.8,0,0],head:[16.8,0,0],eject:null,sup:null}},
+  // the Ice Mage's staff: a pale frosted shaft with silver rings, a cluster of ice crystals on top (the big one in the middle, four small
+  // ones round it), glowing; x goes up the staff, the hand at 0,0,0; st.glow as the Druid's
+  gelo(K,st){const g=st.glow==null?1:st.glow,ICE=['#3a86c8','#a6dcff','#f2fbff'],FR=['#5a6e86','#a4b8cc','#e6f1fb'];
+    K.tube([[-15.5,0,0],[-6,.15,0],[4,-.1,0],[12.6,0,0]],[2.3,2.2,2.15,2.3],FR);
+    K.cyl([-1.8,0,0],[1.8,0,0],1.45,['#2a3a5a','#40587e','#7090b8'],{db:.02});K.cyl([11.6,0,0],[13.6,0,0],1.9,'lucido',{db:.03});K.cyl([-15.6,0,0],[-14.4,0,0],1.7,'lucido',{db:.02});
+    const C=[19,0,0];K.fx(C,q=>shine('140,215,255',q[0],q[1],(8+3.5*g)*K.s,.22+.32*g),-5);
+    for(const[a,b,r] of[[[13.4,1.7,1],[17.6,4.2,1.8],1.1],[[13.4,-1.6,-.8],[17,-4.4,-1.6],1],[[13.4,.4,-1.8],[16.4,1.2,-4.4],.9],[[13.4,-.3,1.8],[16.8,-.8,4.4],.95]])K.cyl(a,b,r,ICE,{r2:.12,n:6,db:.01});
+    K.cyl([13,0,0],[16,0,0],2.2,ICE,{n:6,db:.02});K.cyl([16,0,0],[23.6,0,0],2.2,ICE,{r2:.15,n:6,db:.02});
+    K.fx(C,q=>{ctx.fillStyle=`rgba(255,255,255,${.55+.3*g})`;ball([q[0]-1.1*K.s,q[1]-1.4*K.s],.75*K.s);ctx.fill()},.06);
+    return{muzzle:C,orb:C,eject:null,sup:null}},
+  // the Berserker's axe: an ash handle wrapped at the grip, an iron head with a bearded blade (its edge bright) and a golden rune on the
+  // cheek, a little iron spike behind; x along the handle (the head at +x), the blade toward +y. st.has 0..1: how much of it is in the hand
+  // (it flies off and comes back)
+  ascia(K,st){const k=st.has==null?1:st.has;if(k<=.02)return{muzzle:[14,0,0],eject:null,sup:null};const S=K.frame([0,0,0],[1,0,0],[0,1,0],k);
+    S.tube([[-3.5,0,0],[6,0,0],[16.4,0,0]],[2.1,2,1.9],'legno');S.cyl([-1.6,0,0],[2.2,0,0],1.45,['#2a1810','#4a2c1c','#76503a'],{db:.02});S.sph([-3.8,0,0],1.5,'brunito',{db:.01});
+    const BL=[[11.2,1.2],[16.2,1.2],[18.6,4.6],[19.4,9.2],[16.2,11],[13.4,8.6],[12.2,4.2]];
+    S.prism(BL,-.75,.75,['#3a4450','#7a8694','#d8e2ec'],{hi:.5,dk:.55,det:L=>{L.line(18.3,4.6,18.9,9.3,'rgba(255,255,255,.75)',.55);L.line(13.6,4.2,15.4,8.4,'#e0b040',.5);L.line(15.4,8.4,16.6,4.6,'#e0b040',.5)}});
+    S.box(11.2,-1.6,16.6,1.6,-1.25,1.25,['#2c323a','#535c66','#9aa5b0'],{hi:.35,db:.02},.4);
+    S.prism([[12.2,-1.4],[15.6,-1.4],[14,-4.4]],-.55,.55,['#2c323a','#5c6672','#a9b4bf'],{hi:.3,db:.01});
+    return{muzzle:[15.4,6,0],eject:null,sup:null}},
+  // the Corsair's throwing knife: a narrow steel blade, a little brass guard, a handle wrapped in red; x along it (the point at +x).
+  // st.has 0..1 (a new one in the hand after each throw)
+  coltello(K,st){const k=st.has==null?1:st.has;if(k<=.02)return{muzzle:[8,0,0],eject:null,sup:null};const S=K.frame([0,0,0],[1,0,0],[0,1,0],k);
+    S.prism([[1.2,-.9],[6.8,-.75],[10.4,0],[6.8,.85],[1.2,.9]],-.32,.32,['#46505c','#a9b4bf','#eef3f7'],{hi:.6,dk:.5,det:L=>L.line(1.6,.15,9.4,.08,'rgba(255,255,255,.7)',.3)});
+    S.box(.4,-1.9,1.3,1.9,-.65,.65,'ottone',{hi:.3,db:.02},.3);
+    S.cyl([-3.6,0,0],[.5,0,0],1,['#6a1414','#c0282c','#ee6a6a'],{db:.01,det:t=>{ctx.strokeStyle='rgba(40,6,6,.5)';ctx.lineWidth=.45*K.s;for(let i=1;i<4;i++){const a=t.P(t.at(i/4,0,.05)),b=t.P(t.at(i/4+.06,Math.PI,.05));ctx.beginPath();ctx.moveTo(a[0],a[1]);ctx.lineTo(b[0],b[1]);ctx.stroke()}}});
+    S.sph([-3.9,0,0],.9,'ottone',{db:.02});
+    return{muzzle:[9,0,0],eject:null,sup:null}},
+  // the Corsair's sabre (in the hand only for the slash): a curved blade, a golden basket guard round the hand, a dark grip
+  sciabola(K,st){const BL=[[1.6,-.7],[8,-1.2],[14,-1.3],[19.4,-.4],[21.4,1.2],[19,.9],[13.6,1],[8,1],[1.6,.9]];
+    K.prism(BL,-.3,.3,['#4a5460','#b4bec8','#f2f6fa'],{hi:.6,dk:.5,det:L=>L.line(2,0,19.6,-.2,'rgba(255,255,255,.6)',.35)});
+    K.cyl([-3.4,0,0],[.6,0,0],1.05,['#1d1612','#3a2e26','#5e4c40'],{db:.01});
+    K.tube([[1,-2.2,0],[-.4,-3.2,0],[-3,-2.4,0],[-3.8,-.9,0]],[.8,.8,.75,.7],'ottone',{db:.03});K.box(.6,-2.4,1.4,2.4,-1.2,1.2,'ottone',{hi:.35,db:.02},.4);K.sph([-3.9,0,0],1,'ottone',{db:.02});
+    return{muzzle:[19,0,0],eject:null,sup:null}},
+  // the Tamer's whip: a short leather handle with a brass knob; the lash coiled in three loops under the hand (st.out 0), or flying out
+  // straight ahead (st.out 1) with a wave running along it (st.wave); the tip cracks (st.crack 0..1, a flash of light)
+  frusta(K,st){const o=cl(st.out||0,0,1),wv=st.wave||0;
+    K.cyl([-2.2,0,0],[6,0,0],1.25,['#3a2214','#6a4024','#9a6a44'],{det:t=>{ctx.strokeStyle='rgba(30,14,6,.45)';ctx.lineWidth=.45*K.s;for(let i=1;i<6;i++){const a=t.P(t.at(i/6,0,.05)),b=t.P(t.at(i/6+.05,Math.PI,.05));ctx.beginPath();ctx.moveTo(a[0],a[1]);ctx.lineTo(b[0],b[1]);ctx.stroke()}}});
+    K.sph([-2.6,0,0],1.4,'ottone',{db:.02});K.cyl([5.6,0,0],[6.6,0,0],1.35,'ottone',{db:.02});
+    const N=26,pts=[],ws=[];for(let i=0;i<N;i++){const u=i/(N-1);
+      // coiled: three loops hanging under the end of the handle; out: along +x, 42 long, a wave travelling to the tip
+      const an=u*TAU*3,cq=[6.4+Math.sin(an)*3.2+u*1.2,-3.4-(1-Math.cos(an))*3.2-u*1.4,Math.cos(an*.5)*.6+(u-.5)*1.4],
+        xq=[6.6+u*42,Math.sin(u*Math.PI*2.2-wv*TAU)*3.2*u*(1-o*.5)-u*u*2*(1-o),0];
+      pts.push(lerp3(cq,xq,ez(o)));ws.push(lerp(1.6,.55,u))}
+    K.tube(pts,ws,['#3a2214','#7a4a2a','#b07a50'],{db:-.02});
+    const tp=pts[N-1];if(st.crack>0)K.fx(tp,q=>{const c=st.crack;shine('255,240,190',q[0],q[1],(5+8*c)*K.s,.7*c);ctx.strokeStyle=`rgba(255,250,220,${.9*c})`;ctx.lineWidth=1.1;ctx.lineCap='round';
+      for(let i=0;i<5;i++){const a=i/5*TAU+.3,r=(2+5*(1-c))*K.s;ctx.beginPath();ctx.moveTo(q[0]+Math.cos(a)*r*.4,q[1]+Math.sin(a)*r*.4);ctx.lineTo(q[0]+Math.cos(a)*r,q[1]+Math.sin(a)*r);ctx.stroke()}},1);
+    return{muzzle:tp,tip:tp,eject:null,sup:null}},
   // the bows, bent in the plane of x (where the belly points, toward the target) and y (along the string), held at 0,0,0: a stave thick in
   // the middle and thin at the tips, the grip wrapped, the string from tip to tip (through st.pinch, the hand that draws it, a point in
   // this frame) and the arrow on it (st.nock). st.kind: 'plain' (frassino: horn tips), 'recurve' (tips that curl forward, green grip,
@@ -508,5 +568,5 @@ const NOV={P:()=>[0,0],D:()=>0,F:()=>0,c:1,s:0};
 function keys(id,st){const f=M[id];if(!f)return{};return f(kit(NOV,{O:[0,0,0],X:[1,0,0],Y:[0,1,0],Z:[0,0,1],s:1}),st||{})||{}}
 // the frame of a weapon held at O (a room point), pointing along aim, its top toward up (made square to aim); s: its size
 function frame(O,aim,up,s){const X=nrm(aim),Y=nrm(sub(up,mul(X,dot(up,X))));return{O,X,Y,Z:cross(Y,X),s:s||1}}
-const DATI_N={tamburo:'Mitraglietta a tamburo',lanciafiamme:'Lanciafiamme',vapore:'Fucile a vapore',risonatore:'Risonatore',pistola:'Pistola',revolver:'Revolver',mitraglietta:'Mitraglietta',mitra:'Mitra',mitragliatrice:'Mitragliatrice',pompa:'Pompa da caccia',tattica:'Pompa tattica',lanciarazzi:'Lanciarazzi',balestra:'Balestra leggera',bastone:'Bastone del Druida',arco:'Arco',scettro:'Bastone dei maghi',martello:'Martello del Fabbro',bomba:'Bomba',liuto:'Liuto del Bardo',fiala:"Fiala dell'Alchimista",stellina:'Stellina del Ninja'};
+const DATI_N={tamburo:'Mitraglietta a tamburo',lanciafiamme:'Lanciafiamme',vapore:'Fucile a vapore',risonatore:'Risonatore',pistola:'Pistola',revolver:'Revolver',mitraglietta:'Mitraglietta',mitra:'Mitra',mitragliatrice:'Mitragliatrice',pompa:'Pompa da caccia',tattica:'Pompa tattica',lanciarazzi:'Lanciarazzi',balestra:'Balestra leggera',bastone:'Bastone del Druida',arco:'Arco',scettro:'Bastone dei maghi',martello:'Martello del Fabbro',bomba:'Bomba',liuto:'Liuto del Bardo',fiala:"Fiala dell'Alchimista",stellina:'Stellina del Ninja',maglio:'Martello del Paladino',gelo:'Bastone di ghiaccio',ascia:'Ascia del Berserker',coltello:'Coltello da lancio',sciabola:'Sciabola del Corsaro',frusta:'Frusta del Domatore'};
 return{draw,keys,frame,M,MAT,kit,tones,nomi:DATI_N,ZOMBIE:['pistola','revolver','mitraglietta','mitra','mitragliatrice','pompa','tattica','lanciarazzi','tamburo','lanciafiamme','vapore','risonatore']}})();
