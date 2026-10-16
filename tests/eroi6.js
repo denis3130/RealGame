@@ -51,5 +51,12 @@ const SAVE0=(hero,mq)=>({gold:1000,gems:50,trophies:700,trBest:700,runs:6,introS
     const sv=SAVE0(hero);sv.items[w]={lvl:1,cards:0};sv.eq.arma=w;const {p,E}=await page(sv);await E('startRun()');await p.waitForTimeout(1500);await E(crowd);await p.waitForTimeout(1600);
     const r=await E(`({own:P.own,leg:P.style.legW,chk:${chk}})`);await E("SAVE.hero='"+(hero==='arciere'?'paladino':'arciere')+"';SAVE.heroes[SAVE.hero]=1");const o=await E('(()=>{const q=makeP();return{own:q.own,leg:heroStyle0(SAVE.hero).legW||null}})()');
     ok(`armi proprie: ${w} col suo eroe (potere e aspetto), con un altro solo i numeri`,r.own===w&&r.leg===w&&r.chk&&!o.own&&!o.leg);await p.close()}
+  // 6. the classic enemies more alive (98): the wind-up before the blow and the look round when still
+  {const {p,E}=await page(SAVE0('arciere'));await E('startRun()');await p.waitForTimeout(1400);
+    const r=await E(`(()=>{const out={};for(const t of ['goblin','skeleton','plant','imp','eyeflower']){G.enemies.length=0;G.eproj.length=0;P.inv=999;const e=makeE(t,P.x,P.y-170,0);e.spawn=0;e.hp=e.max=99999;G.enemies.push(e);
+      let prep=0;for(let i=0;i<480;i++){update(1/60);P.hp=P.maxhp;P.x=AW/2;P.y=BOT-60;const[a]=n3Move(e);if(a==='prep')prep++;e.a3n=a}out[t]=prep}return{out,n:Object.keys(N3.meta).filter(k=>N3.meta[k].an.includes('prep')&&N3.meta[k].g!=='boss3').length}})()`);
+    ok('nemici più vivi: «Prepara» per 26 nemici, e si vede prima dei loro colpi '+JSON.stringify(r),r.n===26&&Object.values(r.out).every(v=>v>20));
+    const sw=await E(`(()=>{G.enemies.length=0;const e=makeE('plant',P.x+60,P.y-160,0);e.spawn=0;G.enemies.push(e);e.a3n='idle';let mn=9,mx=-9;for(let i=0;i<400;i++){G.t+=1/60;const f=n3Face(e)-n3Face0(e);mn=Math.min(mn,f);mx=Math.max(mx,f)}return+(mx-mn).toFixed(2)})()`);
+    ok('nemici più vivi: da fermi si guardano intorno piano ('+sw+' rad)',sw>.3&&sw<1.4);await p.close()}
   ok('nessun errore nella pagina'+(errs.length?': '+errs.slice(0,4).join(' | '):''),!errs.length);
   console.log(R.join('\n'));await b.close();process.exit(R.some(r=>r.startsWith('FAIL'))?1:0)})();
