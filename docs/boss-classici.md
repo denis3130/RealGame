@@ -23,6 +23,20 @@ Ordine: Golem, Salamandra, Re Rospo, Yeti, Strega, Fabbro, Idra, Regina, Mimic, 
 5. Dopo il sì: il modello nuovo prende il posto di quello di oggi (stesso nome nel gioco), il disegno di prima resta come
    `N3.meta.<boss>.old` per le pagine; si rifanno le prove dei boss (`tests/bossdie.js`, `tests/anteprime.js`, una partita per capitolo).
 
+## Gli altri dodici (16 ottobre, Denis: «sì, fai gli altri 12»)
+
+Stesso metodo del Golem, un po' più snello e uguale per tutti, in quattro workflow che lavorano insieme (il contenitore ha 4 processori:
+2 agenti alla volta per workflow): Salamandra, Re Rospo, Yeti · Strega, Fabbro, Idra · Regina, Mimic, Burattinaio · Fenice, Piovra, Cervo.
+Per ogni boss: tre proposte (tre direzioni scritte per lui), il direttore artistico che sceglie e scrive il design, poi **insieme** il
+modello 3D (`sprite/nemici3d/<tipo>2.js`) e il cervello (`src/js/89-<nome>-nuovo.js`, provato col modello finto
+`anteprime/boss2/<tipo>_stub.js`), due critici sul modello (direzioni e pittura; animazioni e gioco), le correzioni, il collaudo con
+modello e cervello insieme (prove, difficoltà contro il boss di oggi, miniatura dell'arena) e la scheda per questo documento.
+
+Attrezzi comuni: `python3 anteprime/mk_boss2.py <tipo ...>|--tutti [--stub] [--test]` (la copia del gioco coi boss rifatti; legge
+`index.html` così com'è), `node tests/boss2gioco.js <tipo>` (entrata, mosse della fase 1 e 2, pericoli, disegno, sconfitta, voce),
+`node tests/boss2diff.js <tipo>` (eroe fermo che tira contro il boss di oggi e il nuovo: vite perse); ogni cervello si iscrive nel
+registro `BCL` (come si entra nella sua stanza, mosse, pericoli, voce). Foglio del boss di oggi: `tests/b2/<tipo>_oggi.png`.
+
 ## Il Golem di Muschio: «il Colosso della Cripta»
 
 Nome e titolo restano («Golem di Muschio», «Guardiano della prima cripta»). Un colosso di ardesia scolpito nella pietra della cripta,
@@ -88,7 +102,7 @@ spenti i sassi, il muschio, il fiorellino e il funghetto in 2D del Golem di prim
 
 - Il modello, si gira col dito, tutte le mosse, «prima e dopo»: https://claude.ai/artifact/UnHGgjDbpZikqJU7aWcSmL
   (`python3 anteprime/mk_nemici3d.py --classici` → `anteprime/boss_classici.html`).
-- Sfida il Golem dal telefono: https://claude.ai/artifact/7c7LspnByt8aFQKoru5SWa (`python3 anteprime/mk_golem2.py` →
+- Sfida il Golem dal telefono: https://claude.ai/artifact/7c7LspnByt8aFQKoru5SWa (`python3 anteprime/mk_boss2.py golem` →
   `anteprime/golem2.html`).
 
 ### File e prove
@@ -98,15 +112,15 @@ spenti i sassi, il muschio, il fiorellino e il funghetto in 2D del Golem di prim
 - Cervello: `src/js/89-golem-nuovo.js` (non ancora in `src/ordine.txt`): `golemUpd` nuovo, pericoli (`G.g2`: avvisi, lastre, massi,
   faglie, zanne, striscia, raggio), entrata, sconfitta, `n3Move` per la palla che rotola e l'entrata. Si accende solo se c'è
   `N3.golem2`.
-- Anteprima giocabile: `python3 anteprime/mk_golem2.py` → `anteprime/golem2.html` (pannello «Il Golem nuovo»: «Sfida il Golem», eroe
-  forte o invincibile); `--stub` usa il Golem di oggi al posto del modello nuovo (per provare il cervello), `--test` fa
-  `tests/golem2_test.html` per le prove.
-- Prove: `python3 anteprime/mk_golem2.py --test && node tests/golem2gioco.js` (entrata, tutte le mosse della fase 1 e i loro
+- Anteprima giocabile: `python3 anteprime/mk_boss2.py golem` → `anteprime/golem2.html` (pannello: «Sfida il Golem», eroe forte o
+  invincibile); `--stub` usa il modello finto `anteprime/boss2/golem_stub.js` (il Golem di oggi che fa le mosse nuove) per provare il
+  cervello, `--test` fa `tests/golem2_test.html` per le prove, `--tutti` mette tutti i boss rifatti in una pagina sola.
+- Prove: `python3 anteprime/mk_boss2.py golem --test && node tests/boss2gioco.js golem` (entrata, tutte le mosse della fase 1 e i loro
   pericoli, furia e Raggio, tempo di disegno della stanza, sconfitta e stanza ripulita; foto `tests/g2_*.png`). Con il modello finto:
   tutte le mosse passano, nessun errore, stanza disegnata in 2,2–2,5 ms.
 - Foglio: `node tests/foglio3d.js golem2 tests/g2/golem2.png --file sprite/nemici3d/golem2.js`; pagina «prima e dopo»:
   `python3 anteprime/mk_nemici3d.py --classici` → `anteprime/boss_classici.html`. Anteprime delle arene con il Golem nuovo:
-  `node tests/anteprime.js golem2_test.html`.
+  `node tests/anteprime.js golem2_test.html`. Difficoltà contro il boss di oggi: `node tests/boss2diff.js golem`.
 - Voce e personalità come i 4 boss nuovi (in `89-golem-nuovo.js`, con `B3VO` di `88-boss3-voci.js`): ruggito di pietra con la pietra
   che stride sotto, «hm-hm-hm» quando ti prende in giro (mossa `taunt`), brontolio quando gli stai lontano, un verso per ogni colpo dopo
   il battito del cuore, rabbia, lamento della sconfitta, «ho… ho… ho» se cadi.

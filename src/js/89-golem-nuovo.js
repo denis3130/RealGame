@@ -259,3 +259,11 @@ if(G2ON){B3S.add('golem');
   {const _gu=golemUpd;golemUpd=function(e,dt,a){if(e.st!=='taunt')return _gu.apply(this,arguments);b3tick(e,dt*(e.p2?1.3:1));e.moving=false;e.face=a;if(e.stT<=0)b3go(e,'walk',rand(.6,1))}}
   // the defeat with its voice (the cry of the entrance and the rage are in bossIntro and g2rage)
   {const _s=BDIE.golem.setup;BDIE.golem.setup=function(c){_s.apply(this,arguments);b3say(c,'die')}}}
+// ---- for the previews (anteprime/mk_boss2.py) and the tests (tests/boss2gioco.js): every boss made anew says here how to get into its
+// room, which moves it has in each phase, which dangers it puts in the room (counted by the tests) and the clips of its voice
+if(G2ON){const R=window.BCL||(window.BCL={});R.golem={n:'Golem di Muschio',arena:0,p2:true,
+  enter(){G.arena=0;G.chapter=ARENAS[0].ch;G.diff=ARENAS[0].diff;G.bossLvl=null;G.room=ROOMS;G.event=null;buildRoom()},
+  moves:['leap','stuck','throw','fault','curl','roll','unroll'],moves2:['rage','beam'],
+  hz(){const B=G.g2||{};return{cerchi:(B.warn||[]).length,lastre:(B.slabs||[]).length,massi_in_volo:(B.chunks||[]).length,faglie:(B.faults||[]).length,zanne:(B.fangs||[]).length,
+    massi_a_terra:G.rocks.filter(k=>k.g2).length,onde:G.waves.length,striscia:B.lane?1:0,raggio:B.beam&&B.beam.fire?1:0,schegge:G.eproj.filter(q=>q.kind==='stone').length}},
+  voice:['cry','laugh','angry','die']}}
