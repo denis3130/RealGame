@@ -66,7 +66,7 @@ function axeUpdate(dt){const L=G.axes;if(!L||!L.length)return;
       if(d<16||ax.tb>2.2){L.splice(i,1);if(d<16)sfx('es','catch',P.x);continue}}
     const set=ax.back?ax.hit2:ax.hit,R0=ax.big?15:11;
     for(const e of G.enemies){if(!canHit(e)||set.has(e))continue;if(Math.hypot(e.x-ax.x,e.y-e.z-8-ax.y)>e.r+R0)continue;set.add(e);
-      const crit=Math.random()<P.crit;hurtE(e,P.atk*ax.m*(crit?(P.critMul||2):1)*(P.fury>0?1.3:1),crit);ultGain(1);
+      const crit=Math.random()<P.crit;hurtE(e,P.atk*ax.m*(crit?(P.critMul||2):1)*(P.fury>0?(ultK()>1?1.6:1.3):1),crit);ultGain(1);if(P.fury>0&&P.furyX)mqLeech();
       if(!e.dead&&!isBoss(e.type)){const ka=ax.back?Math.atan2(e.y-P.y,e.x-P.x):ax.a;e.kbx=(e.kbx||0)+Math.cos(ka)*60;e.kby=(e.kby||0)+Math.sin(ka)*60}
       for(let q=0;q<4;q++)G.fx.push({k:'chunk',x:ax.x,y:ax.y,vx:rand(-90,90),vy:rand(-90,90),t:rand(.15,.3),r:rand(1.2,2.2),col:ECOL[e.type]})}}}
 const L_=()=>L,R_=()=>R;
@@ -125,23 +125,24 @@ function esFxDraw(){const L=G.esfx;if(!L||!L.length)return;
 // ------------------------------------------------------------------ the Supers (called by useUlt in 35)
 Object.assign(NH_ULT,{
   // Martello del cielo: on the thickest crowd (or in front of him) a giant hammer of light falls: stuns, heals, keeps him safe
-  paladino(){sfx('es','skyham');const t=esCrowd(110);G.skyHam={x:t.x,y:t.y,t:0,fall:.62,done:false}},
+  paladino(){sfx('es','skyham');const t=esCrowd(110);G.skyHam={x:t.x,y:t.y,t:0,fall:.62,done:false,x3:ultX()}},
   // Tormenta: every enemy frozen (the bosses slowed), hurt, and ice falls on them for a while
-  mago(){sfx('es','blizzard');G.blizz={t:0,dur:3.4,tick:.4};fxPush({k:'flash',x:P.x,y:P.y-10,rgb:'200,235,255',r:420,t:.45,max:.45});
-    for(const e of G.enemies){if(!canHit(e))continue;hurtE(e,P.atk*1.2,Math.random()<P.crit);if(e.dead)continue;if(isBoss(e.type))e.slow=Math.max(e.slow||0,4.5);else e.frozen=Math.max(e.frozen||0,2.4)}},
+  mago(){sfx('es','blizzard');G.blizz={t:0,dur:3.4*ultD(),tick:.4,x3:ultX()};fxPush({k:'flash',x:P.x,y:P.y-10,rgb:'200,235,255',r:420,t:.45,max:.45});
+    for(const e of G.enemies){if(!canHit(e))continue;hurtE(e,P.atk*1.2*ultK(),Math.random()<P.crit);if(e.dead)continue;if(isBoss(e.type))e.slow=Math.max(e.slow||0,4.5*ultD());else e.frozen=Math.max(e.frozen||0,2.4*ultD())}},
   // Furia: faster, harder, quicker for six seconds, red with rage
-  berserker(){sfx('es','fury');P.fury=6;P.furyAspd=P.aspd;P.aspd*=1.8;P.furySpd=P.spd;P.spd*=1.15;shake(5);
+  berserker(){sfx('es','fury');P.fury=6*ultD();P.furyX=ultX();P.furyHeal=0;P.furyAspd=P.aspd;P.aspd*=1.8;P.furySpd=P.spd;P.spd*=1.15;shake(5);
     vfxBlast(P.x,P.y-10,'255,90,60',70,{sparks:LOWFX?8:20,spcol:['#ffd0a0','#ff6a3c','#c8281e'],dust:LOWFX?3:8,ring2:true})},
   // Bordata: cannonballs from the sea, on the enemies and round them
-  corsaro(){sfx('es','cannon');const tg=G.enemies.filter(canHit).sort(()=>Math.random()-.5),L=[];
-    for(let i=0;i<10;i++){const e=tg[i%Math.max(1,tg.length)];const x=e&&i<tg.length+3?e.x+rand(-16,16):rand(L_()+40,R_()-40),y=e&&i<tg.length+3?e.y+rand(-12,12):rand(TOP+50,BOT-50);
-      L.push({x:clamp(x,L_()+20,R_()-20),y:clamp(y,TOP+30,BOT-20),t:-i*.13-rand(0,.08),fall:.7,done:false})}G.cannon=(G.cannon||[]).concat(L)},
+  corsaro(){sfx('es','cannon');const tg=G.enemies.filter(canHit).sort(()=>Math.random()-.5),L=[],nb=Math.round(10*ultD());
+    for(let i=0;i<nb;i++){const e=tg[i%Math.max(1,tg.length)];const x=e&&i<tg.length+3?e.x+rand(-16,16):rand(L_()+40,R_()-40),y=e&&i<tg.length+3?e.y+rand(-12,12):rand(TOP+50,BOT-50);
+      L.push({x:clamp(x,L_()+20,R_()-20),y:clamp(y,TOP+30,BOT-20),t:-i*.13-rand(0,.08),fall:.7,done:false})}
+    if(ultX()){const c=esCrowd(110);L.push({x:c.x,y:c.y,t:-nb*.13-.35,fall:.9,done:false,big:true})}G.cannon=(G.cannon||[]).concat(L)},
   // Il branco: Zanna howls, four wolves of light run through the enemies, Zanna in a fury
-  domatore(){sfx('es','howl');const W=G.allies&&G.allies.find(a=>a.k==='wolf');if(W){W.howl=.9;W.fury=7}
-    const tg=G.enemies.filter(canHit),L=[];for(let i=0;i<4;i++){const e=tg[i%Math.max(1,tg.length)],a=e?Math.atan2(e.y-P.y,e.x-P.x)+rand(-.15,.15):P.face+(i-1.5)*.7;
-      L.push({x:P.x,y:P.y,a,t:-.25-i*.08,hit:new Set()})}G.pack={t:0,list:L}},
+  domatore(){sfx('es','howl');const W=G.allies&&G.allies.find(a=>a.k==='wolf');if(W){W.howl=.9;W.fury=7*ultD()}
+    const tg=G.enemies.filter(canHit),L=[],nw=Math.round(4*ultD());for(let i=0;i<nw;i++){const e=tg[i%Math.max(1,tg.length)],a=e?Math.atan2(e.y-P.y,e.x-P.x)+rand(-.15,.15):P.face+(i-1.5)*.7;
+      L.push({x:P.x,y:P.y,a,t:-.25-i*.08,hit:new Set()})}G.pack={t:0,list:L,x3:ultX()}},
   // Cento pugni: a storm of punches toward the nearest, then a palm of light that goes through everything
-  monaco(){sfx('es','flurry');G.flurry={t:0,dur:1.8,cd:0,palm:false};P.inv=Math.max(P.inv,.4)}});
+  monaco(){sfx('es','flurry');G.flurry={t:0,dur:1.8*ultD(),cd:0,palm:false,x3:ultX()};P.inv=Math.max(P.inv,.4)}});
 // the thickest crowd of enemies (the most within r of one of them), or a point in front of the hero
 function esCrowd(r){let best=null,bn=-1;for(const e of G.enemies){if(!canHit(e))continue;let n=0;for(const f of G.enemies)if(canHit(f)&&Math.hypot(f.x-e.x,f.y-e.y)<r)n++;
     const d=Math.hypot(e.x-P.x,e.y-P.y);if(n>bn||(n===bn&&d<best.d)){bn=n;best={x:e.x,y:e.y,d}}}
@@ -159,28 +160,28 @@ function esUpdate(dt){if(!G||!P)return;esFxUpdate(dt);axeUpdate(dt);lashUpdate(d
   // the giant hammer of light
   const H=G.skyHam;if(H){H.t+=dt;if(!H.done&&H.t>=H.fall){H.done=true;const x=H.x,y=H.y;shake(9);vib([50,30,90]);sfx('boom',0,x);sfx('es','bell',x);
       vfxBlast(x,y,'255,215,110',120,{sparks:LOWFX?8:24,spcol:['#fff6c8','#ffd86b','#e0b040'],debris:'stone',n:LOWFX?5:12,dust:LOWFX?4:10,cracks:40});fxPush({k:'flash',x,y,rgb:'255,230,150',r:180,t:.32,max:.32});
-      for(const e of G.enemies){if(!canHit(e)||Math.hypot(e.x-x,e.y-y)>110+e.r)continue;hurtE(e,P.atk*3,Math.random()<P.crit);if(e.dead)continue;if(isBoss(e.type))e.slow=Math.max(e.slow||0,3);else e.daze=Math.max(e.daze||0,1.6)}
-      const v=Math.round(P.maxhp*.25);P.hp=Math.min(P.maxhp,P.hp+v);text(P.x,P.y-44,'+'+v,'#ffd86b',18);P.inv=Math.max(P.inv,1.6);
+      for(const e of G.enemies){if(!canHit(e)||Math.hypot(e.x-x,e.y-y)>110+e.r)continue;hurtE(e,P.atk*3*ultK(),Math.random()<P.crit);if(e.dead)continue;if(isBoss(e.type))e.slow=Math.max(e.slow||0,3*ultD());else e.daze=Math.max(e.daze||0,1.6*ultD())}
+      const v=Math.round(P.maxhp*.25);P.hp=Math.min(P.maxhp,P.hp+v);text(P.x,P.y-44,'+'+v,'#ffd86b',18);P.inv=Math.max(P.inv,1.6*ultD());
       fxPush({k:'ring2',x:P.x,y:P.y-10,rgb:'255,225,140',r0:14,r1:46,t:1.4,max:1.4,w:4})}
-    if(H.t>=H.fall+1.3)G.skyHam=null}
+    if(H.t>=H.fall+1.3){G.skyHam=null;if(H.x3&&!H.second)mqHammer2(H)}}
   // the blizzard
   const B=G.blizz;if(B){B.t+=dt;B.tick-=dt;if(!LOWFX&&Math.random()<dt*40)esFx({k:'snow',x:rand(G.vx||0,(G.vx||0)+VW),y:(G.vy||0)+rand(-10,40),vx:rand(-30,-10),vy:rand(60,110),max:rand(2,3.4),r:rand(1,2.4)});
     if(B.tick<=0&&G.state==='play'){B.tick=.45;const L=G.enemies.filter(canHit);const e=L[Math.floor(Math.random()*L.length)];
-      if(e){hurtE(e,P.atk*.4,false);sfx('es','freeze',e.x);if(!LOWFX)for(let i=0;i<4;i++)esFx({k:'shard',x:e.x,y:e.y-e.r,vx:rand(-60,60),vy:rand(-90,-30),g:300,max:.5,r:2.2,rot:rand(0,TAU)})}}
-    if(B.t>=B.dur)G.blizz=null}
+      if(e){hurtE(e,P.atk*.4*ultK(),false);sfx('es','freeze',e.x);if(!LOWFX)for(let i=0;i<4;i++)esFx({k:'shard',x:e.x,y:e.y-e.r,vx:rand(-60,60),vy:rand(-90,-30),g:300,max:.5,r:2.2,rot:rand(0,TAU)})}}
+    if(B.t>=B.dur){if(B.x3)mqSpikes();G.blizz=null}}
   // the cannonballs
   const C=G.cannon;if(C&&C.length)for(let i=C.length-1;i>=0;i--){const c=C[i];c.t+=dt;if(c.done){if(c.t>=c.fall+.5)C.splice(i,1);continue}if(c.t<c.fall)continue;c.done=true;
-    const x=c.x,y=c.y;shake(3);sfx('boom',0,x);vfxBlast(x,y,'255,170,90',46,{fire:LOWFX?2:5,sparks:LOWFX?4:10,debris:'stone',n:LOWFX?3:6,dust:LOWFX?3:6,cracks:22});
-    for(const e of G.enemies)if(canHit(e)&&Math.hypot(e.x-x,e.y-y)<48+e.r)hurtE(e,P.atk*2,Math.random()<P.crit)}
+    const x=c.x,y=c.y,bg=!!c.big;shake(bg?8:3);sfx('boom',0,x);vfxBlast(x,y,'255,170,90',bg?100:46,{fire:LOWFX?2:bg?10:5,sparks:LOWFX?4:bg?22:10,debris:'stone',n:LOWFX?3:bg?12:6,dust:LOWFX?3:bg?12:6,cracks:bg?44:22});
+    for(const e of G.enemies)if(canHit(e)&&Math.hypot(e.x-x,e.y-y)<(bg?95:48)+e.r)hurtE(e,P.atk*(bg?5:2)*ultK(),Math.random()<P.crit)}
   // the wolves of light
-  const K=G.pack;if(K){K.t+=dt;let alive=0;for(const w of K.list){w.t+=dt;if(w.t<0){alive++;continue}if(w.t>1.1)continue;alive++;w.x+=Math.cos(w.a)*560*dt;w.y+=Math.sin(w.a)*560*dt;
-      for(const e of G.enemies)if(canHit(e)&&!w.hit.has(e)&&Math.hypot(e.x-w.x,e.y-w.y)<e.r+16){w.hit.add(e);hurtE(e,P.atk*2,Math.random()<P.crit);if(!e.dead&&!isBoss(e.type)){e.kbx=(e.kbx||0)+Math.cos(w.a)*80;e.kby=(e.kby||0)+Math.sin(w.a)*80}}}
+  const K=G.pack;if(K){K.t+=dt;let alive=0;for(const w of K.list){w.t+=dt;if(w.t<0){alive++;continue}if(w.t>1.1){if(K.x3&&!w.back){w.back=true;w.t=0;w.a+=Math.PI;w.hit=new Set();alive++}continue}alive++;w.x+=Math.cos(w.a)*560*dt;w.y+=Math.sin(w.a)*560*dt;
+      for(const e of G.enemies)if(canHit(e)&&!w.hit.has(e)&&Math.hypot(e.x-w.x,e.y-w.y)<e.r+16){w.hit.add(e);hurtE(e,P.atk*2*ultK(),Math.random()<P.crit);if(!e.dead&&!isBoss(e.type)){e.kbx=(e.kbx||0)+Math.cos(w.a)*80;e.kby=(e.kby||0)+Math.sin(w.a)*80}}}
     if(!alive)G.pack=null}
   // the storm of punches
   const F=G.flurry;if(F){F.t+=dt;F.cd-=dt;
-    if(F.t<F.dur&&F.cd<=0&&G.state==='play'){F.cd=LOWFX?.1:.07;const tg=nearest(P.x,P.y),a=tg?Math.atan2(tg.y-P.y,tg.x-P.x):P.face;P.face=a;P.alt=!P.alt;arrow(P.x,P.y-6,a+rand(-.22,.22),.55);sfx('bow','wave',P.x)}
+    if(F.t<F.dur&&F.cd<=0&&G.state==='play'){F.cd=LOWFX?.1:.07;const tg=nearest(P.x,P.y),a=tg?Math.atan2(tg.y-P.y,tg.x-P.x):P.face;P.face=a;P.alt=!P.alt;arrow(P.x,P.y-6,a+rand(-.22,.22),.55*ultK());sfx('bow','wave',P.x)}
     if(F.t>=F.dur&&!F.palm){F.palm=true;const tg=nearest(P.x,P.y),a=tg?Math.atan2(tg.y-P.y,tg.x-P.x):P.face;P.face=a;
-      G.arrows.push({wb:0,x:P.x+Math.cos(a)*10,y:P.y-8+Math.sin(a)*10,a,vx:Math.cos(a)*520,vy:Math.sin(a)*520,m:3,pierce:999,ric:0,hit:new Set(),life:1.2,palm:true,rad:30});
+      for(const da of F.x3?[-.32,0,.32]:[0]){const b=a+da;G.arrows.push({wb:0,x:P.x+Math.cos(b)*10,y:P.y-8+Math.sin(b)*10,a:b,vx:Math.cos(b)*520,vy:Math.sin(b)*520,m:3*ultK(),pierce:999,ric:0,hit:new Set(),life:1.2,palm:true,rad:30})}
       sfx('es','palm',P.x);shake(4);shockRing(P.x,P.y,1.3)}
     if(F.t>=F.dur+.2)G.flurry=null}}
 {const _uu=updUlt;updUlt=function(dt){_uu.apply(this,arguments);esUpdate(dt)}}
@@ -222,11 +223,11 @@ function skyHamDraw(){const H=G.skyHam;if(!H)return;const fall=H.t<H.fall,k=Math
     ctx.strokeStyle=`rgba(255,215,110,${(.3+.5*k).toFixed(3)})`;ctx.lineWidth=2;ctx.setLineDash([6,5]);ctx.beginPath();ctx.ellipse(x,y,110,46,0,0,TAU);ctx.stroke();ctx.setLineDash([])}
   else if(!LOWFX){const u=(H.t-H.fall)/1.3;ctx.save();ctx.globalAlpha=Math.max(0,.6*(1-u));glow('255,220,130',x,y-20,90,.5);ctx.restore()}
   ctx.save();ctx.globalAlpha=Math.max(0,a);EROE.martello(x,y-26-h,13,fall?-1.3+k*.4:-.9);ctx.restore()}
-function cannonDraw(c){const x=c.x,y=c.y;if(c.t<0)return;
-  if(!c.done){const k=Math.min(1,c.t/c.fall),h=(1-k)*(1-k)*300;ctx.fillStyle=`rgba(0,0,0,${(.12+.3*k).toFixed(3)})`;ctx.beginPath();ctx.ellipse(x,y,6+12*k,(6+12*k)*.45,0,0,TAU);ctx.fill();
-    ctx.strokeStyle=`rgba(255,120,80,${(.25+.5*k).toFixed(3)})`;ctx.lineWidth=1.5;ctx.setLineDash([4,4]);ctx.beginPath();ctx.ellipse(x,y,48,22,0,0,TAU);ctx.stroke();ctx.setLineDash([]);
+function cannonDraw(c){const x=c.x,y=c.y,B=c.big?2.05:1;if(c.t<0)return;
+  if(!c.done){const k=Math.min(1,c.t/c.fall),h=(1-k)*(1-k)*300;ctx.fillStyle=`rgba(0,0,0,${(.12+.3*k).toFixed(3)})`;ctx.beginPath();ctx.ellipse(x,y,(6+12*k)*B,(6+12*k)*.45*B,0,0,TAU);ctx.fill();
+    ctx.strokeStyle=`rgba(255,120,80,${(.25+.5*k).toFixed(3)})`;ctx.lineWidth=1.5;ctx.setLineDash([4,4]);ctx.beginPath();ctx.ellipse(x,y,48*B,22*B,0,0,TAU);ctx.stroke();ctx.setLineDash([]);
     const by=y-h-8;if(!LOWFX){ctx.fillStyle='rgba(120,110,100,.35)';for(let i=1;i<4;i++){ctx.beginPath();ctx.arc(x+i*1.5,by-i*9,3+i,0,TAU);ctx.fill()}}
-    ctx.lineWidth=2.4;ctx.strokeStyle=INK;ctx.fillStyle='#2a2a30';ctx.beginPath();ctx.arc(x,by,7,0,TAU);ctx.fill();ctx.stroke();ctx.fillStyle='rgba(255,255,255,.35)';ctx.beginPath();ctx.arc(x-2.4,by-2.4,2.2,0,TAU);ctx.fill()}}
+    ctx.lineWidth=2.4;ctx.strokeStyle=INK;ctx.fillStyle='#2a2a30';ctx.beginPath();ctx.arc(x,by,7*B,0,TAU);ctx.fill();ctx.stroke();ctx.fillStyle='rgba(255,255,255,.35)';ctx.beginPath();ctx.arc(x-2.4*B,by-2.4*B,2.2*B,0,TAU);ctx.fill()}}
 function packDraw(){const K=G.pack;if(!K||typeof N3==='undefined'||!N3.wolf)return;
   for(const w of K.list){if(w.t<0||w.t>1.1)continue;const al=Math.min(1,w.t*6)*Math.min(1,(1.1-w.t)*5);ctx.save();ctx.globalAlpha=al*.72;if(!LOWFX)glow('140,200,255',w.x,w.y-10,30,.45);
     try{N3.wolf(w.x,w.y,w.a,'walk',(w.t/.5)%1,.62,{pal:{fur:'#8fc8ff',lite:'#e8f6ff',dark:'#4a7ac8',earIn:'#bfe0ff',eye:'#ffffff',eyeRgb:'255,255,255'},noFx:true})}catch(e){}ctx.restore()}}

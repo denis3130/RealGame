@@ -43,7 +43,7 @@ function updEnemy(e,dt){
   e.t+=dt;e.flash=Math.max(0,e.flash-dt);e.orbCd-=dt;if(e.kbx||e.kby){const f=Math.exp(-dt*14);moveCircle(e,e.kbx*(1-f)/14,e.kby*(1-f)/14,e.kbf);e.kbx*=f;e.kby*=f;if(Math.abs(e.kbx)+Math.abs(e.kby)<.5)e.kbx=e.kby=0}
   if(e.spawn>0){e.spawn-=dt;return}
   if(e.frozen>0){e.frozen-=dt;e.moving=false;return}
-  if(e.root>0){e.root-=dt;e.moving=false;e.rootT=(e.rootT||0)-dt;if(e.rootT<=0){e.rootT=.5;hurtE(e,P.atk*.45,false,true);if(e.dead)return}if(!isBoss(e.type))return}
+  if(e.root>0){e.root-=dt;e.moving=false;e.rootT=(e.rootT||0)-dt;if(e.rootT<=0){e.rootT=.5;hurtE(e,P.atk*.45*(e.rootK||1),false,true);if(e.dead)return}if(!isBoss(e.type))return}
   const dx=P.x-e.x,dy=P.y-e.y,d=Math.hypot(dx,dy)||1,a=Math.atan2(dy,dx);
   if(e.intro>0){bossIntro(e,dt,a);return}
   if(e.poisonT>0){e.poisonT-=dt;e.pTick=(e.pTick||0)-dt;if(e.pTick<=0){e.pTick=.5;hurtE(e,P.atk*.07*e.poisonS*(P.poison||1),false,true);if(e.dead)return}}else e.poisonS=0;

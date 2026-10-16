@@ -68,15 +68,15 @@ function hfxDraw(){const L=G.hfx;if(!L||!L.length)return;
 const NH_ULT={
   // Ballata: every enemy hurt and slowed, the small ones stunned a moment (golden notes over their heads), health back
   bardo(){sfx('nh','ballata');const v=Math.round(P.maxhp*.15);P.hp=Math.min(P.maxhp,P.hp+v);text(P.x,P.y-44,'+'+v,'#ffd84a',18);
-    G.ballad={t:0,dur:1.5,ring:0,note:0};
-    for(const e of G.enemies){if(!canHit(e))continue;hurtE(e,P.atk*1.4,Math.random()<P.crit);if(e.dead)continue;e.slow=Math.max(e.slow||0,4.5);if(!isBoss(e.type))e.daze=Math.max(e.daze||0,1.6)}},
+    G.ballad={t:0,dur:1.5*ultD(),ring:0,note:0};if(ultX())ultLater(2.1,mqVerse);
+    for(const e of G.enemies){if(!canHit(e))continue;hurtE(e,P.atk*1.4*ultK(),Math.random()<P.crit);if(e.dead)continue;e.slow=Math.max(e.slow||0,4.5*ultD());if(!isBoss(e.type))e.daze=Math.max(e.daze||0,1.6*ultD())}},
   // Grande calderone: on the thickest crowd (or in front of him), it falls from the sky and bursts
   alchimista(){sfx('nh','cauldron');let best=null,bn=-1;for(const e of G.enemies){if(!canHit(e))continue;let n=0;for(const f of G.enemies)if(canHit(f)&&Math.hypot(f.x-e.x,f.y-e.y)<95)n++;
       const d=Math.hypot(e.x-P.x,e.y-P.y);if(n>bn||(n===bn&&d<best.d)){bn=n;best={x:e.x,y:e.y,d}}}
     const tx=best?best.x:P.x+Math.cos(P.face)*100,ty=best?best.y:P.y+Math.sin(P.face)*100;
-    G.cauld={x:clamp(tx,L+40,R-40),y:clamp(ty,TOP+50,BOT-30),t:0,fall:.62,done:false,rot:rand(-.4,.4)}},
+    G.cauld={x:clamp(tx,L+40,R-40),y:clamp(ty,TOP+50,BOT-30),t:0,fall:.62,done:false,rot:rand(-.4,.4)};if(ultX())mqCaulds(G.cauld)},
   // Cento ombre: three shadows of him out of the smoke, round him, throwing stars too
-  ninja(){sfx('nh','ombre');P.inv=Math.max(P.inv,.6);const L=[0,1,2].map(i=>({a:P.face+Math.PI/2+i/3*TAU,cd:.25+i*.12}));G.shadows={t:0,dur:4.5,list:L};
+  ninja(){sfx('nh','ombre');P.inv=Math.max(P.inv,.6);const L=[0,1,2].map(i=>({a:P.face+Math.PI/2+i/3*TAU,cd:.25+i*.12}));G.shadows={t:0,dur:4.5*ultD(),list:L,x3:ultX()};
     for(const s of L)smokePuff(P.x+Math.cos(s.a)*42,P.y+Math.sin(s.a)*26-8,'120,96,180',LOWFX?3:8)}};
 // stunned: the small ones stand still a moment (the bosses are only slowed)
 {const _ue=updEnemy;updEnemy=function(e,dt){if(e.daze>0){e.daze-=dt;if(!isBoss(e.type)&&!(e.intro>0)){e.moving=false;return}}return _ue.apply(this,arguments)}}
@@ -90,13 +90,13 @@ function nhUpdate(dt){if(!G||!P)return;pzUpdate(dt);hfxUpdate(dt);
     if(!c.done&&c.t>=c.fall){c.done=true;const x=c.x,y=c.y;shake(9);vib([50,30,90]);sfx('boom',0,x);sfx('nh','splash',x);
       vfxBlast(x,y,'123,240,106',125,{sparks:LOWFX?8:22,spcol:['#e8ffd8','#9cf57e','#5fd04a'],debris:'stone',n:LOWFX?5:12,dust:LOWFX?4:10,spore:LOWFX?4:14,sporeRgb:'140,240,110',cracks:40});
       fxPush({k:'flash',x,y,rgb:'160,255,130',r:170,t:.3,max:.3});
-      for(const e of G.enemies){if(!canHit(e)||Math.hypot(e.x-x,e.y-y)>105+e.r)continue;hurtE(e,P.atk*3,Math.random()<P.crit);if(!e.dead){e.poisonS=4;e.poisonT=Math.max(e.poisonT||0,5)}}
-      pzAdd(x,y,74,5.5,true);if(!LOWFX)for(let i=0;i<10;i++)hfx({k:'glass',x,y:y-10,vx:rand(-160,160),vy:rand(-220,-60),g:480,max:rand(.5,.8),r:rand(1.4,2.6),rot:rand(0,TAU),vr:rand(-14,14)})}
+      for(const e of G.enemies){if(!canHit(e)||Math.hypot(e.x-x,e.y-y)>105+e.r)continue;hurtE(e,P.atk*3*ultK(),Math.random()<P.crit);if(!e.dead){e.poisonS=4;e.poisonT=Math.max(e.poisonT||0,5)}}
+      pzAdd(x,y,ultD()>1?88:74,5.5*ultD(),true);if(!LOWFX)for(let i=0;i<10;i++)hfx({k:'glass',x,y:y-10,vx:rand(-160,160),vy:rand(-220,-60),g:480,max:rand(.5,.8),r:rand(1.4,2.6),rot:rand(0,TAU),vr:rand(-14,14)})}
     if(c.t>=c.fall+1.4)G.cauld=null}
   const S=G.shadows;if(S){S.t+=dt;const fade=S.t>S.dur-.35;
     for(const s of S.list){s.a+=dt*.9;s.x=P.x+Math.cos(s.a)*42;s.y=P.y+Math.sin(s.a)*26;s.cd-=dt;
-      if(!fade&&s.cd<=0&&G.state==='play'){const tg=nearest(s.x,s.y);if(tg){s.cd=.42;const an=Math.atan2(tg.y-s.y,tg.x-s.x);s.face=an;arrow(s.x,s.y-6,an,.55);sfx('bow','star',s.x)}else s.cd=.2}}
-    if(S.t>=S.dur){for(const s of S.list)smokePuff(s.x,s.y-8,'120,96,180',LOWFX?3:7);sfx('nh','poof',P.x);G.shadows=null}}}
+      if(!fade&&s.cd<=0&&G.state==='play'){const tg=nearest(s.x,s.y);if(tg){s.cd=.42;const an=Math.atan2(tg.y-s.y,tg.x-s.x);s.face=an;arrow(s.x,s.y-6,an,.55*ultK());sfx('bow','star',s.x)}else s.cd=.2}}
+    if(S.t>=S.dur){for(const s of S.list)smokePuff(s.x,s.y-8,'120,96,180',LOWFX?3:7);sfx('nh','poof',P.x);if(S.x3)mqShadowBurst(S.list);G.shadows=null}}}
 {const _uu=updUlt;updUlt=function(dt){_uu.apply(this,arguments);nhUpdate(dt)}}
 {const _b=buildRoom;buildRoom=function(){const r=_b.apply(this,arguments);if(G)Object.assign(G,{pz:[],hfx:[],cauld:null,shadows:null,ballad:null});return r}}
 // ------------------------------------------------------------------ drawing: the puddles on the floor; the particles, the cauldron and the stunned
