@@ -109,9 +109,9 @@ const KW=[.75,.25,0,.5];                                                       /
 // the antlers: the beam (rosette, three nodes, the palm) and the points (the given points are the tips of the crystals): P1 the lance,
 // P2, P3 on the beam; P4 up, P5 out, P6 back on the edge of the palm; P7 and P8 only in the second phase. The palm a little lower than
 // in the design (116 instead of 118) so that its points read as points and the tallest tip stays P3, at 126
-const AB0=[[45,6.5,95],[39,17,105],[31,31,113],[27,45,116],[25,49,113.5]],ABR=[5.4,4.8,4.2,3.6,3.2];
-const ATIP=[[64,12,99],[50,24,120],[34,38,126],[28,50,125],[19,60,121],[16,54,112],[22,57,127],[13,60,116]];
-const ACL=[9.5,9,9,8.5,8.5,8.5,8.5,8.5],ACW=[3.6,3.4,3.4,3.2,3.2,3.1,3.2,3.1],PALN=nrm([.9,.3,-.15]);
+const AB0=[[45,6.5,95],[36,17,105],[26,31,113],[17,45,116],[12,49,113.5]],ABR=[5.4,4.8,4.2,3.6,3.2];
+const ATIP=[[64,12,99],[45,24,120],[24,38,126],[15,50,125],[6,60,121],[3,54,112],[9,57,127],[0,60,116]];
+const PLT=[1,.74,.96,.8,1.04,.72,.94,.82,1,.7],ACL=[9.5,9,9,10.5,10.5,10,10.5,10],ACW=[3.6,3.4,3.4,3.2,3.2,3.1,3.2,3.1],PALN=nrm([.9,.3,-.15]);
 const KNOT=[[.3,1,1.7],[.55,-1,1.9],[.8,1,1.5]];                                 // the knots of old ice on the beam near the head
 const ROSN=[-1,1].map(sd=>ellN(SKR,AXES,nrm([(45-48)/14,6.5*sd/11,(95-86)/11.5])));  // the skull's normal under each rosette
 const EARN=[-1,1].map(sd=>ellN(SKR,AXES,nrm([(42.5-48)/14,10*sd/11,(92-86)/11.5])));
@@ -119,7 +119,7 @@ const AGC={};
 function antGeo(sd,g,cs){const id=sd+'|'+Math.round(g*40)+'|'+Math.round(cs*40);if(AGC[id])return AGC[id];
   const R0=[45,6.5*sd,95],S=q=>add(R0,mul(sub(q,R0),g)),my=q=>[q[0],q[1]*sd,q[2]],B=AB0.map(q=>S(my(q))),pc=B[4],st=[lerp3(B[0],B[1],.2),B[1],B[2]],T=[];
   for(let i=0;i<8;i++){const palm=i>=3;let tip0=S(my(ATIP[i]));if(i===1||i===2){const r=st[i];tip0=add(r,mul(sub(tip0,r),1.15))}let s,t=tip0;
-    if(palm){const pn=nrm(my(PALN)),d0=sub(tip0,pc),d=nrm(sub(d0,mul(pn,dot(d0,pn)))),Lr=i<6?Math.max(len(d0),13.5*g)*cs:13.5*g;t=add(pc,mul(d,Lr));s=add(pc,mul(d,3))}else s=st[i];
+    if(palm){const pn=nrm(my(PALN)),d0=sub(tip0,pc),d=nrm(sub(d0,mul(pn,dot(d0,pn)))),Lr=i<6?Math.max(len(d0),16*g)*cs:16*g;t=add(pc,mul(d,Lr));s=add(pc,mul(d,3))}else s=st[i];
     const d=nrm(sub(t,s)),Lc=ACL[i]*(g>1.01?1.06:1);T.push({i,s,b:add(t,mul(d,-Lc)),t,d,Lc,r0:palm?2.6:[3.5,3.3,3.1][i],r1:palm?2.2:[2.3,2.2,2.1][i],w:ACW[i],palm})}
   return AGC[id]={B,BR:ABR.map(r=>r*(1+.3*(g-1))),T,pc,pn:nrm(my(PALN)),R0,d0:nrm(sub(B[1],B[0]))}}
 // the ice of the mane: bases on the crest (the first four on the neck: their place along it), heights, tilted back 35°
@@ -361,11 +361,11 @@ function starsDraw(V0,X,A,K,TCb,TRb){const{P,F}=V0,sp=new Path2D(),dp=new Path2D
 // little flowers of ice on it in the second phase
 function mossGrad(b,T){const w=b[2]-b[0],h=b[3]-b[1],cx=(b[0]+b[2])/2,R=Math.max(w,h,2)*.78,g=ctx.createRadialGradient(cx-w*.14,b[1]+h*.1,R*.04,cx-w*.04,b[1]+h*.32,R);
   g.addColorStop(0,T.l);g.addColorStop(.3,T.b);g.addColorStop(.78,T.d);g.addColorStop(1,T.d);return g}
-const MMANT=nrm([-.35,0,.94]),MHIP=[nrm([-.2,-.6,.75]),nrm([-.2,.6,.75])];
+const MMANT=nrm([-.35,0,.94]),MHIP=[nrm([-.05,-.9,.42]),nrm([-.05,.9,.42])];
 const mrf=t=>1+.12*Math.pow(Math.abs(Math.cos(t*5.5)),.7),mrf2=t=>1+.16*Math.pow(Math.abs(Math.cos(t*3.5)),.7);
 function mossDraw(V0,X,A,K,TCb,TRb){if(GH)return;const{P,F}=V0;
   // (the tufts on the hips small and darker than the mantle: a little moss in the shade, never two green spots)
-  for(let j=0;j<3;j++){const e=j?2:0,m=j?MHIP[j-1]:MMANT,al=j?.32:.66,alv=j?.27:.56,R2=add(TRb[e],j?[1.2,1.2,1.2]:[1.8,1.8,1.8]);
+  for(let j=0;j<3;j++){const e=j?2:0,m=j?MHIP[j-1]:MMANT,al=j?.36:.66,alv=j?.2:.56,R2=add(TRb[e],j?[1.2,1.2,1.2]:[1.8,1.8,1.8]);
     const r=ellCap(V0,X,TCb[e],R2,AXES,m,al,j?20:33,{alv,u:[1,0,0],ck:j?'smh'+j:'smm',rf:j?mrf2:mrf});if(!r)continue;
     const q=P(X.T(ellAt(TCb[e],R2,AXES,m))),w=j?8:16,h=j?6:11,bb=[q[0]-w,q[1]-h,q[0]+w,q[1]+h];ctx.fillStyle=mossGrad(bb,j?T3(cmix(K.moss.l,K.moss.b,.6),cmix(K.moss.b,K.moss.d,.55),K.moss.d):K.moss);ctx.fill();ctx.lineJoin='round';ctx.strokeStyle=INK;ctx.lineWidth=j?1.7:2.1;ctx.stroke();
     if(j)continue;
@@ -381,10 +381,15 @@ function collarCap(V0,X,K,TCb,TRb){const R2=add(TRb[0],[1,1,1]),r=ellCap(V0,X,TC
   const q=V0.P(X.T(ellAt(TCb[0],R2,AXES,nrm([.8,0,-.3])))),bb=[q[0]-16,q[1]-18,q[0]+16,q[1]+16];ctx.fillStyle=grad3(bb,K.frost);ctx.fill();ctx.lineJoin='round';ctx.strokeStyle=INK;ctx.lineWidth=2;ctx.stroke()}
 // the locks of the collar (two rows on the throat and the chest) and the three little icicles under it: they sway with the breath and the
 // step; a lock is drawn while its side of the chest faces us (the ones round the far side drop out)
-function collarDraw(V0,X,A,K,J){if(GH)return;const{P,F}=V0,pa=new Path2D(),sp=new Path2D(),nd=J.nd||[0,0,0];let n=0;
+function collarDraw(V0,X,A,K,J){if(GH)return;const{P,F}=V0,pa=new Path2D(),sp=new Path2D(),nd=J.nd||[0,0,0],bp=[[],[]];let n=0;
   for(const c of COLL){const nw=X.Rd(c.n),f=F(nw);if(f<-.32)continue;const b=add(X.T(c.b),c.row?[0,0,0]:mul(nd,.7)),d=nrm(X.Rd([.2+(c.row?0:.08),c.y*.025+A.coll*(c.row?.8:1.2),-1])),s=nrm(cross(d,nw));
-    const r=leafP(pa,P,b,d,s,c.L,2.3,nw,.35);n++;if(c.L>9.5){sp.moveTo(lerp(r[0][0],r[1][0],.18),lerp(r[0][1],r[1][1],.18));sp.quadraticCurveTo(lerp(r[2][0],r[3][0],.55),lerp(r[2][1],r[3][1],.55),lerp(r[0][0],r[1][0],.8),lerp(r[0][1],r[1][1],.8))}}
-  if(n){const b0=P(X.T([40,0,66])),b1=P(X.T([32,0,36])),g=ctx.createLinearGradient(b0[0],b0[1],b1[0],b1[1]);g.addColorStop(0,K.frost.l);g.addColorStop(.55,K.frost.b);g.addColorStop(1,K.frost.d);inkFill(pa,g,1.8);
+    bp[c.row].push(P(add(b,mul(d,1.2))));const r=leafP(pa,P,b,d,s,c.L,2.3,nw,.35);n++;if(c.L>9.5){sp.moveTo(lerp(r[0][0],r[1][0],.18),lerp(r[0][1],r[1][1],.18));sp.quadraticCurveTo(lerp(r[2][0],r[3][0],.55),lerp(r[2][1],r[3][1],.55),lerp(r[0][0],r[1][0],.8),lerp(r[0][1],r[1][1],.8))}}
+  if(n){const b0=P(X.T([40,0,66])),b1=P(X.T([32,0,36])),g=ctx.createLinearGradient(b0[0],b0[1],b1[0],b1[1]);g.addColorStop(0,K.frost.l);g.addColorStop(.55,K.frost.b);g.addColorStop(1,K.frost.d);
+    // the soft white root of the locks (one band on the throat and one on the chest, joined): the locks grow out of a mane of frost,
+    // never a row of white points on the dark chest
+    const ba=new Path2D();for(let w=0;w<2;w++){const Z=bp[w],r=w?4.4:3.8;Z.forEach((q,i)=>{ballP(ba,q,r);if(i)ballP(ba,[(q[0]+Z[i-1][0])/2,(q[1]+Z[i-1][1])/2],r*.92)})}
+    if(bp[0].length&&bp[1].length){const a=bp[0][bp[0].length>>1],b=bp[1][bp[1].length>>1];for(const k of[.33,.66])ballP(ba,[lerp(a[0],b[0],k),lerp(a[1],b[1],k)],4)}
+    inkFill(ba,g,1.5);inkFill(pa,g,1.5);
     ctx.strokeStyle=rgba(K.fStr,.55);ctx.lineWidth=.8;ctx.stroke(sp)}
   // three little icicles under the collar
   if(F(X.Rd(nrm([.8,0,-.6])))>-.35){const ip=new Path2D(),lp=new Path2D();for(const[x,y,z,L] of[[32,5,38,4.5],[33,0,37,5],[32,-5,38,4.5]]){const b=P(X.T([x,y,z])),t=P(X.T([x+.6,y,z-L])),dx=t[0]-b[0],dy=t[1]-b[1],l=Math.hypot(dx,dy)||1,nx=-dy/l*1.4,ny=dx/l*1.4;
@@ -571,14 +576,22 @@ function antDraw(V0,TA,TD,A,K,sd,G,o){const{P,F}=V0,lit=litRgb(A),pale=A.pale||0
     for(let i=0;i<4;i++)side(Bs[i],Bs[i+1],G.BR[i],G.BR[i+1]);for(const z of TT)if(!z.t.palm)side(z.s,z.b,z.t.r0,z.t.r1);
     ctx.lineCap='round';ctx.strokeStyle=rgba(KB.d,.65);ctx.lineWidth=2;ctx.stroke(dkp);ctx.strokeStyle='rgba(236,250,255,.32)';ctx.lineWidth=1.1;ctx.stroke(lt);
     // the vein of aurora inside the beam (it breathes); a plain light line on slow phones
-    const vk=A.veinK*(1-pale);if(vk>.02){const v=new Path2D();v.moveTo(lerp(Bs[0][0],Bs[1][0],.3),lerp(Bs[0][1],Bs[1][1],.3));for(let i=1;i<4;i++)v.lineTo(Bs[i][0],Bs[i][1]);v.lineTo(lerp(Bs[3][0],Bs[4][0],.6),lerp(Bs[3][1],Bs[4][1],.6));
+    const vk=A.veinK*(1-pale);if(vk>.02){const v=new Path2D();v.moveTo(lerp(Bs[0][0],Bs[1][0],.3),lerp(Bs[0][1],Bs[1][1],.3));for(let i=1;i<4;i++)v.lineTo(Bs[i][0],Bs[i][1]);v.lineTo(Bs[4][0],Bs[4][1]);
       if(!LOWFX){ctx.save();ctx.globalCompositeOperation='lighter';ctx.strokeStyle=`rgba(${lit},${(.13*vk).toFixed(3)})`;ctx.lineWidth=2.6;ctx.stroke(v);ctx.restore()}ctx.strokeStyle=`rgba(200,255,240,${(.32*vk).toFixed(3)})`;ctx.lineWidth=.8;ctx.stroke(v)}
     for(const r of A.runs){const path=r.g==='lance'?[Bs[0],TT[0].s,TT[0].e]:Bs;runDraw(path,r.k,r.a*(1-pale),r.vio?VIO:lit,r.soft)}}
-  // the palm: a round plate of crystal (a little thick), facing forward and out
-  {const c=TA(G.pc),n=TD(G.pn),[u,v]=frm(n,[0,0,1]),H=ellSil(V0,c,[9.5,9.5,1.5],{u,v,w:n},null,18);
-    if(H.length>2){poly(H);const pk=Math.max(A.palm,A.tl[3]*.6);ctx.fillStyle=GH?GG:grad3(bbox(H),pk>.02?mixT(KC,T3('#ffffff',`rgb(${lit})`,KC.b),pk*.7):KC);ctx.fill();ctx.strokeStyle=GH?GWC:INK;ctx.lineWidth=GH?1.4:1.8;ctx.lineJoin='round';ctx.stroke();
-      if(!GH){const q=P(c),fl=new Path2D();for(const z of TT)if(z.t.palm){fl.moveTo(q[0],q[1]);fl.lineTo(lerp(q[0],z.b[0],.9),lerp(q[1],z.b[1],.9))}ctx.strokeStyle='rgba(255,255,255,.4)';ctx.lineWidth=.8;ctx.stroke(fl);
-        if(pk>.05&&!LOWFX)shine(lit,q[0],q[1],16,.4*pk)}}}
+  // the palm: a jagged plate of crystal, wider than tall, its heart a little raised: a fan of facets, each lit by where it faces
+  {const c=TA(G.pc),n=TD(G.pn),[u,v]=frm(n,[0,0,1]),H=[],c3=add(c,mul(n,1.6));
+    for(let k=0;k<PLT.length;k++){const a=k/PLT.length*TAU,r=PLT[k];H.push(add(c,add(mul(u,Math.cos(a)*8.2*r),mul(v,Math.sin(a)*11*r*sd))))}
+    const Q=H.map(q=>P(q)),qc=P(c3);
+    if(Q.length>2){const pk=Math.max(A.palm,A.tl[3]*.6,.3*Math.min(1,A.flameK||0)),T=GH?null:pk>.02?mixT(KC,T3('#ffffff',`rgb(${lit})`,KC.b),pk*.7):KC;
+      ctx.beginPath();ctx.moveTo(Q[0][0],Q[0][1]);for(let k=1;k<Q.length;k++)ctx.lineTo(Q[k][0],Q[k][1]);ctx.closePath();
+      ctx.lineJoin='round';ctx.strokeStyle=GH?GWC:INK;ctx.lineWidth=GH?2.8:3.6;ctx.stroke();ctx.fillStyle=GH?GG:T.b;ctx.fill();
+      if(!GH){const fl=[new Path2D(),new Path2D(),new Path2D()];
+        for(let k=0;k<H.length;k++){const a=H[k],b=H[(k+1)%H.length];let nf=nrm(cross(sub(a,c3),sub(b,c3)));if(F(nf)<0)nf=mul(nf,-1);const l=.6*nf[2]+.4*F(nf)+(k%2?.08:-.08);
+          const w=fl[l>.5?0:l>.18?1:2];w.moveTo(qc[0],qc[1]);w.lineTo(Q[k][0],Q[k][1]);w.lineTo(Q[(k+1)%Q.length][0],Q[(k+1)%Q.length][1]);w.closePath()}
+        ctx.fillStyle=T.l;ctx.fill(fl[0]);ctx.fillStyle=cmix(T.b,T.d,.45);ctx.fill(fl[2]);
+        const ed=new Path2D();for(let k=0;k<Q.length;k+=2){ed.moveTo(qc[0],qc[1]);ed.lineTo(lerp(qc[0],Q[k][0],.92),lerp(qc[1],Q[k][1],.92))}ctx.strokeStyle='rgba(255,255,255,.45)';ctx.lineWidth=.8;ctx.stroke(ed);
+        if(pk>.05&&!LOWFX)shine(lit,qc[0],qc[1],16,.4*pk)}}}
   // the crystals of the points
   const Lh=new Path2D(),Dh=new Path2D(),Wl=new Path2D(),DM=[];
   for(const z of TT){const d=diamond(z.b,z.e,z.w);DM.push([d,z]);Lh.moveTo(d.b[0],d.b[1]);Lh.lineTo(d.L[0],d.L[1]);Lh.lineTo(d.e[0],d.e[1]);Lh.closePath();Dh.moveTo(d.b[0],d.b[1]);Dh.lineTo(d.e[0],d.e[1]);Dh.lineTo(d.D[0],d.D[1]);Dh.closePath();
@@ -598,14 +611,15 @@ function antDraw(V0,TA,TD,A,K,sd,G,o){const{P,F}=V0,lit=litRgb(A),pale=A.pale||0
   if(!o.noRose)roseDraw(V0,TA(G.R0),TD(G.d0),K,A,lit)
   // the flames of aurora on the points (the second phase): they flicker under 8 Hz with the game's clock
   if(A.flameK>.02&&!LOWFX&&!pale){const t0=G.t||0,fp=new Path2D(),cp=new Path2D();let y0=1e9,y1=-1e9;
-    for(const[d,z] of DM){const h=(3.8+1.1*Math.sin(t0*TAU*5.2+z.t.i*1.9+sd))*Math.min(1.6,A.flameK),q=d.e,sw=.8*Math.sin(t0*TAU*3.1+z.t.i);y0=Math.min(y0,q[1]-h);y1=Math.max(y1,q[1]);
-      fp.moveTo(q[0]-1.9,q[1]+.5);fp.quadraticCurveTo(q[0]-1.7,q[1]-h*.55,q[0]+sw,q[1]-h);fp.quadraticCurveTo(q[0]+1.7,q[1]-h*.55,q[0]+1.9,q[1]+.5);fp.closePath();
-      cp.moveTo(q[0]-.8,q[1]);cp.quadraticCurveTo(q[0]-.7,q[1]-h*.35,q[0]+sw*.6,q[1]-h*.6);cp.quadraticCurveTo(q[0]+.7,q[1]-h*.35,q[0]+.8,q[1]);cp.closePath()}
+    for(const[d,z] of DM){const h=(8.5+2*Math.sin(t0*TAU*5.2+z.t.i*1.9+sd))*Math.min(1.35,A.flameK),q=d.e,sw=.8*Math.sin(t0*TAU*3.1+z.t.i);y0=Math.min(y0,q[1]-h);y1=Math.max(y1,q[1]);
+      fp.moveTo(q[0]-2.6,q[1]+.6);fp.quadraticCurveTo(q[0]-2.4,q[1]-h*.5,q[0]+sw,q[1]-h);fp.quadraticCurveTo(q[0]+2.4,q[1]-h*.5,q[0]+2.6,q[1]+.6);fp.closePath();
+      cp.moveTo(q[0]-1.1,q[1]);cp.quadraticCurveTo(q[0]-1,q[1]-h*.32,q[0]+sw*.6,q[1]-h*.55);cp.quadraticCurveTo(q[0]+1,q[1]-h*.32,q[0]+1.1,q[1]);cp.closePath()}
     const g=ctx.createLinearGradient(0,y1,0,y0);g.addColorStop(0,'rgba(125,255,176,.75)');g.addColorStop(.55,'rgba(195,140,255,.7)');g.addColorStop(1,'rgba(255,122,208,.55)');
-    ctx.save();ctx.globalCompositeOperation='lighter';ctx.globalAlpha*=Math.min(1,A.flameK);ctx.fillStyle=g;ctx.fill(fp);ctx.fillStyle='rgba(255,255,255,.75)';ctx.fill(cp);ctx.restore()}}
+    ctx.save();ctx.globalCompositeOperation='lighter';ctx.globalAlpha*=Math.min(1,A.flameK);ctx.fillStyle=g;ctx.fill(fp);ctx.fillStyle='rgba(255,255,255,.75)';ctx.fill(cp);ctx.restore();
+    const pq=P(TA(G.pc));shine('190,140,255',pq[0],pq[1]-4,20,.3*Math.min(1,A.flameK))}}
 // two threads of lichen hanging from the lance, each with two knots (they swing; still on slow phones)
 function lichDraw(V0,TA,TD,A,K,G){const{P}=V0,z=G.T[0],side=TD([0,1,0]),pa=new Path2D(),kp=new Path2D();
-  for(const[k,ph] of[[.38,0],[.66,1.3]]){const a=TA(lerp3(z.s,z.b,k)),th=LOWFX?0:A.lich*(1+.3*ph)*Math.cos(ph),sw=Math.sin(th),m=add(a,add([0,0,-4.6],mul(side,sw*2.2))),e=add(a,add([0,0,-9*Math.cos(th)],mul(side,sw*9*.5)));
+  for(const[k,ph] of[[.74,0],[.93,1.3]]){const a=TA(lerp3(z.s,z.b,k)),th=LOWFX?0:A.lich*(1+.3*ph)*Math.cos(ph),sw=Math.sin(th),m=add(a,add([0,0,-4.6],mul(side,sw*2.2))),e=add(a,add([0,0,-9*Math.cos(th)],mul(side,sw*9*.5)));
     const qa=P(a),qm=P(m),qe=P(e);pa.moveTo(qa[0],qa[1]);pa.quadraticCurveTo(qm[0],qm[1],qe[0],qe[1]);ballP(kp,qm,1.1);ballP(kp,qe,1.35)}
   ctx.lineCap='round';ctx.strokeStyle=INK;ctx.lineWidth=2.7;ctx.stroke(pa);ctx.strokeStyle=K.lich.b;ctx.lineWidth=1.3;ctx.stroke(pa);ctx.fillStyle=K.lich.l;ctx.fill(kp);ctx.strokeStyle=INK;ctx.lineWidth=.8;ctx.stroke(kp)}
 // the shadow on the floor: an ellipse along the body (lighter and smaller when it rears up)
@@ -659,12 +673,15 @@ function stag2(x,y,face,anim,p,sc,o){sc=sc||1;o=o||{};anim=MV.includes(anim)?ani
     if(ao<.99)LB.add(-1000+D(TA(G.R0))*.01,()=>dv(1));if(ao>.01)LB.add(300+D(TA(G.R0))*.01,()=>dv(ao))}
   // ---------------- the effects
   if(fx)for(const e of A.fx)fxDraw(V0,X,LF,e,A,K,J,HX,TA,AG);
-  if(A.pearl>=0&&!GH)LF.add(450,()=>pearlDraw(V0,X,A,K,J,HX));
+  if(A.pearl>=0&&!GH){const fF=F(HRd([1,0,0])),cF=F(X.Rd([1,0,0])),fl=sstep(.05,.4,F(X.Rd(nrm([1,0,.35]))));
+    if(fF>-.2)LB.add(kH+1,()=>pearlDraw(V0,X,A,K,J,HX,'head'));
+    (cF>0?LB:L0).add(151,()=>pearlDraw(V0,X,A,K,J,HX,'chest'));
+    for(const g of LG.slice(0,2)){const d0=D(RT0[g.i])*.01,fo=A.fo[g.i]*fl;LB.add((fo>.5?401:-799)+d0,()=>pearlDraw(V0,X,A,K,J,HX,'leg',g))}}
   if(A.ring>=0)LF.add(460,()=>ringDraw(V0,TA,A,K));
   if(A.det>0&&A.mound>0){LC.add(480,()=>moundDraw(V0,X,A,K));LC.add(520,()=>moundFront(V0,X,A,K))}
   if(A.dawn>0)LF.add(490,()=>dawnDraw(V0,TA,A));
   // (a thread behind the chest is drawn before the body: the body hides it)
-  if(A.threads>.01&&fx)for(let j=0;j<2;j++){const tp=TA(AG[j].T[0].t);(D(tp)<D(X.T([30,0,50]))?L0:LF).add(905,()=>threadDraw(V0,tp,j,A))}
+  if(A.threads>.01&&fx){const fw=F(HRd([1,0,0])),Lh=lerp(24,10,sstep(.1,.4,fw));for(let j=0;j<2;j++){const tp=TA(AG[j].T[0].t);(fw>.3||D(tp)<D(X.T([30,0,50]))?L0:LF).add(905,()=>threadDraw(V0,tp,j,A,Lh))}}
   if(A.lastDrop>=0&&fx)LF.add(495,()=>{const G=AG[1],t=TA(G.T[2].t),k=A.lastDrop,z=t[2]*(1-ez(cl((k-.3)/.7,0,1))),q=P([t[0],t[1],Math.max(6,z)]);if(!LOWFX)shine('234,255,246',q[0],q[1],7,.6);ctx.fillStyle='#eafff6';ball(q,1.5);ctx.fill()});
   if(A.rib>=0&&fx)LF.add(600,()=>ribbonDraw(V0,X,A));
   if(A.cflash>0&&!LOWFX&&A.det<.5)LF.add(700,()=>{const q=P(TA(CR0));shine(litRgb(A),q[0],q[1],60,.5*A.cflash);shine('255,255,255',q[0],q[1],24,.4*A.cflash)});
@@ -705,15 +722,19 @@ function roseOnHead(V0,HX,A,K){for(const sd of[-1,1]){const G=antGeo(sd,1,1);ros
 // each front leg from its root through the knee to the hoof)
 function crS(Q,n){const out=[Q[0]];for(let i=0;i<Q.length-1;i++){const a=Q[Math.max(0,i-1)],b=Q[i],c=Q[i+1],d=Q[Math.min(Q.length-1,i+2)];
     for(let j=1;j<=n;j++){const t=j/n,t2=t*t,t3=t2*t,f=(p0,p1,p2,p3)=>.5*(2*p1+(-p0+p2)*t+(2*p0-5*p1+4*p2-p3)*t2+(-p0+3*p1-3*p2+p3)*t3);out.push([f(a[0],b[0],c[0],d[0]),f(a[1],b[1],c[1],d[1])])}}return out}
-function pearlDraw(V0,X,A,K,J,HX){const{P}=V0,k=A.pearl,top=crS([HX.T([45,0,96]),HX.T([47,0,85]),HX.T([46,0,76]),X.T([38,0,66]),X.T([34,0,52]),X.T([29,0,40])].map(P),4);
-  const lit=litRgb(A),k1=cl(k/.6,0,1);runDraw(top,k1,1,lit);if(k>.6){const k2=(k-.6)/.4;for(const g of J.LG.slice(0,2))runDraw(crS([top[top.length-1],P(g.root),P(g.kn),P(g.en)],3),k2,1,lit)}}
-// the threads of light of the second phase: from each lance a thin thread of aurora runs down to the snow (in place of the drops), two
-// beads of light sliding down it, a faint star of frost where it touches the floor (not on slow phones: the effects are off there)
-function threadDraw(V0,tp,j,A){const{P}=V0,k=A.threads;ctx.save();ctx.globalCompositeOperation='lighter';ctx.lineCap='round';
-  {const a=P(add(tp,[0,0,-1.6])),b=P([tp[0],tp[1],0]),g=ctx.createLinearGradient(a[0],a[1],b[0],b[1]);g.addColorStop(0,`rgba(200,255,236,${(.42*k).toFixed(3)})`);g.addColorStop(.7,`rgba(170,150,255,${(.22*k).toFixed(3)})`);g.addColorStop(1,'rgba(170,150,255,0)');
-    ctx.strokeStyle=g;ctx.lineWidth=1.1;ctx.beginPath();ctx.moveTo(a[0],a[1]);ctx.lineTo(b[0],b[1]);ctx.stroke();
-    for(let i=0;i<2;i++){const u=((A.tp+i*.5+j*.25)%1+1)%1,q=[lerp(a[0],b[0],u),lerp(a[1],b[1],u)],al=k*Math.sin(Math.PI*u);ctx.fillStyle=`rgba(235,255,246,${(.8*al).toFixed(3)})`;ball(q,1.2);ctx.fill()}
-    const st=new Path2D();star4(st,b,2.6);ctx.fillStyle=`rgba(225,215,255,${(.35*k).toFixed(3)})`;ctx.fill(st)}ctx.restore()}
+// (in three pieces, each drawn at the depth of what it runs on: down the cheek that faces us (behind the eye, never across the face), down
+// the front of the neck and the chest (hidden by the body when the chest turns away), down each front leg with its leg)
+function pearlDraw(V0,X,A,K,J,HX,part,g){if(GH)return;const{P,F}=V0,k=A.pearl,k1=cl(k/.6,0,1),lit=litRgb(A),s=F(HX.Rd([0,1,0]))>=0?1:-1;
+  if(part==='head'){runDraw(crS([HX.T([44,7.5*s,97]),HX.T([46.5,9*s,87]),HX.T([45,8.5*s,78])].map(P),4),cl(k1*2,0,1),1,lit);return}
+  const top=[HX.T([45,8.5*s,78]),X.T([38,0,66]),X.T([34,0,52]),X.T([29,0,40])].map(P);
+  if(part==='chest'){runDraw(crS(top,4),cl(k1*2-1,0,1),1,lit);return}
+  if(k>.6&&g)runDraw(crS([top[top.length-1],P(g.root),P(g.kn),P(g.en)],3),(k-.6)/.4,1,lit)}
+// the drops of light of the second phase: under each lance a short thread of aurora that fades into nothing (24 long, 10 while the lance
+// is in front of the face, and then behind the head), a bead of light that slides down it and drops off
+function threadDraw(V0,tp,j,A,Lh){const{P}=V0,k=A.threads;ctx.save();ctx.globalCompositeOperation='lighter';ctx.lineCap='round';
+  const a=P(add(tp,[0,0,-1.6])),b=P(add(tp,[0,0,-1.6-Lh])),g=ctx.createLinearGradient(a[0],a[1],b[0],b[1]);g.addColorStop(0,`rgba(200,255,236,${(.5*k).toFixed(3)})`);g.addColorStop(1,'rgba(170,150,255,0)');
+  ctx.strokeStyle=g;ctx.lineWidth=1.2;ctx.beginPath();ctx.moveTo(a[0],a[1]);ctx.lineTo(b[0],b[1]);ctx.stroke();
+  const u=((A.tp+j*.5)%1+1)%1,q=P(add(tp,[0,0,-1.6-Lh*1.35*u])),al=k*Math.sin(Math.PI*Math.min(1,u*1.1));ctx.fillStyle=`rgba(235,255,246,${(.85*al).toFixed(3)})`;ball(q,1.25);ctx.fill();ctx.restore()}
 // the ring of light of the Corona Boreale over the crown (rising to z 140, its radius 10 to 40; it pulses, then fades)
 function ringDraw(V0,TA,A,K){const{P}=V0,k=A.ring,ph=k*.81+.15,r0=sstep(.15,.4,ph),c=TA(CR0),z=lerp(c[2]+20,140*(1+.08*A.grow),r0),R=lerp(10,40,ez(r0))*(1+.06*Math.sin(TAU*3*4*ph)*(ph>.4?1:0)),al=sstep(.15,.22,ph)*(1-sstep(.88,.96,ph));
   if(al<=.01)return;const pts=[];for(let i=0;i<28;i++){const t=i/28*TAU;pts.push(P([c[0]+Math.cos(t)*R,c[1]+Math.sin(t)*R,z]))}
@@ -761,8 +782,8 @@ function ribbonDraw(V0,X,A){if(LOWFX)return;const{P}=V0,k=A.rib,c=P(X.T([0,0,40]
 function fxDraw(V0,X,L,e,A,K,J,HX,TA,AG){const{P,D}=V0,t=e.t,HT=HX.T,HRd=HX.Rd;
   const front=V0.F(HRd([1,0,0]))>-.15,kHd=front?950:-950;
   if(e.k==='breath'||e.k==='cloud'||e.k==='vapor'){L.add(kHd,()=>{const big=e.k==='cloud'||e.big,n=e.k==='vapor'?2:3;for(let i=0;i<n;i++){const u=e.k==='vapor'?((t*3+i*.5)%1):cl(t*1.15-i*.12,0,1);if(u<=0||u>=1)continue;
-      const sd=i%2?1:-1,q=P(HT(e.k==='cloud'?[72+u*16,(i-1)*4*u,72+u*10+i]:[72+u*12,sd*2.4*(1+u*2),78-u*3+i*.6])),r=(big?3+u*8:1.8+u*4.5)*(e.k==='vapor'?.7:1),al=(e.k==='vapor'?.25:.55)*(1-u);
-      ctx.fillStyle=`rgba(235,246,255,${al.toFixed(3)})`;ball(q,r);ctx.fill()}})}
+      const sd=i%2?1:-1,q=P(HT(e.k==='cloud'?[66+u*12,sd*(5+u*6),70+u*9+i]:[71+u*10,sd*(2.6+u*5),77-u*6+i*.6])),r=Math.min(big?7:6,(big?2+u*6:1.4+u*4.6)*(e.k==='vapor'?.7:1)),al=(e.k==='vapor'?.2:.3)*(1-u);
+      const gr=ctx.createRadialGradient(q[0],q[1],r*.15,q[0],q[1],r);gr.addColorStop(0,`rgba(235,246,255,${al.toFixed(3)})`);gr.addColorStop(1,'rgba(235,246,255,0)');ctx.fillStyle=gr;ball(q,r);ctx.fill()}})}
   else if(e.k==='snow'){const legs=e.j!=null?[e.i,e.j]:[e.i];for(const i of legs){const g=J.LG[i];if(!g)continue;const at=[g.en[0]+3,g.en[1],0];L.add(-1800+D(at)*.01,()=>{const n=e.big?7:4;for(let j=0;j<n;j++){const a=j/n*TAU+.4,d=(e.big?9:5)*(.4+t*.9),q=P(add(at,[Math.cos(a)*d,Math.sin(a)*d,t*6+(j%2)*2]));ctx.fillStyle=`rgba(235,246,255,${(.6*(1-t)).toFixed(3)})`;ball(q,(e.big?2.4:1.8)+t*3.6);ctx.fill()}})}}
   else if(e.k==='print'){const i=e.i,base=FT0[i],u=t*.95,x0=base[0]+21-70*u,at=[x0,base[1],0];if(u<.55)return;const al=sstep(.55,.62,u)*(1-sstep(.75,.95,u));
     L.add(-1900,()=>{const q=P(at);ctx.fillStyle=`rgba(232,246,255,${(.55*al).toFixed(3)})`;ctx.beginPath();ctx.ellipse(q[0],q[1],3.4,1.8,0,0,TAU);ctx.fill();ctx.strokeStyle=`rgba(120,150,190,${(.5*al).toFixed(3)})`;ctx.lineWidth=.8;ctx.beginPath();ctx.moveTo(q[0]+2.6,q[1]);ctx.lineTo(q[0]-1,q[1]);ctx.stroke()})}
