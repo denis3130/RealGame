@@ -127,7 +127,7 @@ Poi (15 ottobre, Denis: «ci sta ma secondo me gli manca qualcosa», ha scelto �
 - Suoni dal codice (`NH_SND`: pizzico del liuto, accordo, vetro, sibilo, scoppio, fumo, tonfo del calderone; `sfx` avvolto). Particelle proprie (`G.hfx`: vetro, fumo, note), pulite a ogni stanza (`buildRoom` avvolto). Tutto rispetta `LOWFX`.
 - Nel menu: scheda Eroi (sette eroi), Profilo, schermata principale, modalità Zombie (l'arma zombie vince sull'arma propria), trailer (`iCast` dà sempre quattro eroi). Collaudo: una partita automatica per eroe fino alla stanza 10 senza errori (`node tests/run.js arena 500 1 c5 6 bardo`, ecc.; `run.js` possiede anche gli eroi nuovi).
 
-## I boss della Classica rifatti (15–16 ottobre, in corso)
+## I boss della Classica rifatti (15–19 ottobre, in corso)
 
 Denis: «non mi piacciono, rivisita tutti i boss, rendili più creepy e fatti meglio sia da fermi che nelle animazioni […] dal Golem
 all'ultimo»; paura «un po' più cupi» (restano della Classica), «prima uno, poi tutti», agenti sì: «falli possenti, belli, fighi, che
@@ -136,9 +136,13 @@ Cripta»: colosso di ardesia col muschio, cuore di runa che manda la luce nel br
 Schianto con i pugni incastrati, Frana, Faglia, Valanga, Raggio del Cuore nella fase 2, furia, entrata della statua che si risveglia,
 sconfitta, voce di pietra e presa in giro). **Solo anteprima**, il gioco vero non cambia: modello `sprite/nemici3d/golem2.js`, cervello
 `src/js/89-golem-nuovo.js` (non in `src/ordine.txt`), pagine https://claude.ai/artifact/UnHGgjDbpZikqJU7aWcSmL (modello, «prima e
-dopo») e https://claude.ai/artifact/7c7LspnByt8aFQKoru5SWa (sfida il Golem). Si aspetta il sì di Denis sullo stile; poi gli altri 12
-nello stesso modo (Salamandra, Re Rospo, Yeti, Strega, Fabbro, Idra, Regina, Mimic, Burattinaio, Fenice, Piovra, Cervo) e tutti nel
-gioco. Metodo, design, numeri, misure e prove in `docs/boss-classici.md`.
+dopo») e https://claude.ai/artifact/7c7LspnByt8aFQKoru5SWa (sfida il Golem). Il 16 ottobre Denis: «sì, fai gli altri 12». Al 19 ottobre
+sono **finiti e collaudati, non ancora nel gioco**, anche Salamandra, Re Rospo e Yeti (modelli `sprite/nemici3d/<tipo>2.js`, cervelli
+`src/js/89-*.js`; provati con i quattro in `src/ordine.txt` in una copia a parte: arene 1–4, Abisso, menu, nessun errore; prologo e guida
+già adattati: `PRO_B2` in 91, `BEAST2` in 44), la Strega è costruita (la critica da correggere è in `docs/boss-classici.md`), il Fabbro
+l'ha fatto l'altra sessione (cassetta comune `sprite/nemici3d/boss2kit.js`). Il 19 ottobre Denis ha scelto che tutto il resto lo faccia
+una sessione sola, senza agenti, e di vedere tutti i boss alla fine. Stato di ogni boss, metodo, design, numeri, misure e prove in
+`docs/boss-classici.md` («Passaggio all'altra sessione»).
 
 ## Modalità zombie (nel gioco dal 13 ottobre)
 
