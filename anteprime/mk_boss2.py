@@ -35,6 +35,8 @@ for t in types:
     if not os.path.exists(bf):
         if not tutti:print('manca il cervello',os.path.relpath(bf,root))
         continue
+    if open(bf,encoding='utf-8').read()[:400] in s:
+        print(t,': cervello e modello sono già nel gioco (src/ordine.txt), la pagina usa quelli');used.append((t,'nel gioco'));continue
     if stub or not os.path.exists(mp):
         if not os.path.exists(sp):print('manca il modello di',t,'(né',os.path.relpath(mp,root),'né',os.path.relpath(sp,root)+')');continue
         models.append(open(sp,encoding='utf-8').read());kind='finto'

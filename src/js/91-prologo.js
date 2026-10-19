@@ -269,6 +269,10 @@ function proFiamma(lt,dur,W,H,low){const life=1-.86*proSeg(lt,6.8,11.6),fl=life*
 // their eyes are lit again after the dark of the scene (where they are: from the model's own height and the way it faces)
 function pEyes(K,c,th,fw,up,sp,rgb,a,r){const{V0}=K,f=[Math.cos(th),Math.sin(th),0],n=[-Math.sin(th),Math.cos(th),0];if(V0.F(f)<.05)return;const al=a*Math.min(1,V0.F(f)*3);
   for(const sd of[-1,1]){const q=K.S([c[0]+f[0]*fw+n[0]*sd*sp,c[1]+f[1]*fw+n[1]*sd*sp,c[2]+up]);pLight(q[0],q[1],r*K.k,rgb,al);ctx.save();ctx.globalCompositeOperation='lighter';ctx.fillStyle=`rgba(${rgb},${Math.min(1,al*1.4).toFixed(3)})`;ctx.beginPath();ctx.arc(q[0],q[1],r*.22*K.k,0,TAU);ctx.fill();ctx.restore()}}
+// the bosses remade (89, docs/boss-classici.md) are bigger models with their eyes elsewhere: on the scenes about as big as the old ones,
+// the lamps of the eyes on theirs (s: the size; e: the eyes forward, up, apart, in the units of the scene)
+const PRO_B2={toad:{s:.4,e:[10.7,30.7,10.1]},yeti:{s:.38,e:[17.3,35.2,2.8]},salamander:{s:.5}};
+const proB2=t=>N3[t+'2']&&N3[t]===N3[t+'2']?PRO_B2[t]:null;
 // the way a model on the scene faces, for its own camera (th: where it looks in the scene)
 const pFace=(K,th)=>K.face+th;
 // III · «…e i morti non dormirono più.»
@@ -310,7 +314,7 @@ function proMorti(lt,dur,W,H,low){const k=Math.min(W/196,H/360)*(1.02+.07*proEz(
 function proRe(lt,dur,W,H,low){const k=Math.min(W/150,H/290)*(1+.08*proEz(lt/dur)),cx=W/2,cy=H*.5,face=Math.PI/2-.2+lt*.02,K=proCam(face,cx,cy,k,[-26,0,22]),{V0}=K;
   pSlab(K,84,24,'#362e32','#160f16',2.2,{sy:.84,edge:'#ff8a60',mark:T=>{const a=V0.P([60,-12,0]),b=V0.P([60,12,0]),c=V0.P([-14,12,0]),d=V0.P([-14,-12,0]);ctx.beginPath();ctx.moveTo(a[0],a[1]);ctx.lineTo(b[0],b[1]);ctx.lineTo(c[0],c[1]);ctx.lineTo(d[0],d[1]);ctx.closePath();
       ctx.fillStyle='#4a161a';ctx.fill();ctx.strokeStyle='#8a6a32';ctx.lineWidth=1;ctx.stroke()}});
-  const parts=[],look=proSeg(lt,2.1,2.9),turn=th=>Math.PI/2+th*(1-look);
+  const parts=[],look=proSeg(lt,2.1,2.9),turn=th=>Math.PI/2+th*(1-look),rb=proB2('toad');
   parts.push({d:-300,f:()=>{pBox(K,[-30,0,0],34,96,4,'#463e42',{lw:1.6});pBox(K,[-32,0,4],28,80,4,'#50464b',{lw:1.6});
     // the wall behind the thrones
     pBox(K,[-52,0,0],6,100,82,'#2c262a',{lw:1.8})}});
@@ -320,7 +324,7 @@ function proRe(lt,dur,W,H,low){const k=Math.min(W/150,H/290)*(1+.08*proEz(lt/dur
   // the thrones and the kings
   for(const[y,who,th] of[[-20,'toad',.95],[20,'icequeen',-.95]]){
     parts.push({d:V0.D([-40,y,0]),f:()=>{pBox(K,[-40,y,8],10,16,9,'#3a2a22',{lw:1.4});pBox(K,[-45,y,8],4,18,40,'#3a2a22',{lw:1.5});for(const dy of[-7,0,7])pCone(K,[-45,y+dy,48],2,dy?5:8,'#a8843a',{m:8,lw:1.1})}});
-    parts.push({d:V0.D([-28,y,0]),f:()=>{const q=V0.P([-26,y,8]);if(who==='toad')N3.toad(q[0],q[1],turn(th),'idle',(lt/2.4)%1,.62);else N3.icequeen(q[0],q[1]-4,turn(th),'idle',(lt/2.4)%1,.5)}})}
+    parts.push({d:V0.D([-28,y,0]),f:()=>{const q=V0.P([-26,y,8]);if(who==='toad')N3.toad(q[0],q[1],turn(th),'idle',(lt/2.4)%1,rb?rb.s:.62);else N3.icequeen(q[0],q[1]-4,turn(th),'idle',(lt/2.4)%1,.5)}})}
   // two braziers with a low red fire
   for(const y of[-44,44])parts.push({d:V0.D([-2,y,0]),f:()=>{pRound(K,[-2,y,0],[[0,3],[16,1.6],[18,5],[21,6]],'#4a3a2c',{m:12})}});
   pRun(parts);
@@ -328,7 +332,7 @@ function proRe(lt,dur,W,H,low){const k=Math.min(W/150,H/290)*(1+.08*proEz(lt/dur
   pNight(W,H,tq[0],tq[1],Math.max(W,H)*.7,'rgb(168,118,112)','rgb(20,12,20)');pDesat(W,H,.42);
   for(const y of[-44,44]){const q=K.S([-2,y,21]);pFlame(q[0],q[1],13*k,3.6*k,.38,lt+y,low);pLight(q[0],q[1]+6*k,44*k,'255,90,50',.32,20*k)}
   // their eyes: the toad's two yellow lamps, the queen's cold blue
-  const ek=.25+.75*look;pEyes(K,[-26,-20,8],turn(.95)-K.face,9,25,5,'255,220,90',.85*ek,5);pEyes(K,[-26,20,4],turn(-.95)-K.face,6,26,2.6,'120,210,255',.85*ek,4);
+  const ek=.25+.75*look,re=rb?rb.e:[9,25,5];pEyes(K,[-26,-20,8],turn(.95)-K.face,re[0],re[1],re[2],'255,220,90',.85*ek,5);pEyes(K,[-26,20,4],turn(-.95)-K.face,6,26,2.6,'120,210,255',.85*ek,4);
   pFog(W,H*.62,H*.86,lt,'140,110,120',.07,4,61);ctx.restore()}
 
 // V · «I custodi, carcerieri.»
@@ -347,13 +351,15 @@ function proCustodi(lt,dur,W,H,low){const k=Math.min(W/168,H/320)*(1.02+.07*proE
     const lq=V0.P([-29,0,30]);ink(1.2);ctx.fillStyle='#a8843a';ctx.fillRect(lq[0]-3,lq[1]-2,6,6);ctx.strokeRect(lq[0]-3,lq[1]-2,6,6);ctx.beginPath();ctx.arc(lq[0],lq[1]-2,2.2,Math.PI,0);ctx.stroke()}});
   // the guardians: the Yeti roars once
   const ys=lt>2.6&&lt<4.0?'roar':'idle',yp=ys==='roar'?(lt-2.6)/1.4:(lt/2.8)%1;
-  parts.push({d:V0.D([6,-40,0]),f:()=>{const q=V0.P([6,-40,0]);N3.yeti(q[0],q[1],Math.PI/2+.5,ys,yp,.56)}});
-  parts.push({d:V0.D([12,30,0]),f:()=>{const q=V0.P([12,30,0]);N3.salamander(q[0],q[1],Math.PI/2-.9,'idle',(lt/2.6)%1,.56)}});
+  const yb=proB2('yeti'),sb=proB2('salamander');
+  parts.push({d:V0.D([6,-40,0]),f:()=>{const q=V0.P([6,-40,0]);N3.yeti(q[0],q[1],Math.PI/2+.5,ys,yp,yb?yb.s:.56)}});
+  parts.push({d:V0.D([12,30,0]),f:()=>{const q=V0.P([12,30,0]);N3.salamander(q[0],q[1],Math.PI/2-.9,'idle',(lt/2.6)%1,sb?sb.s:.56)}});
   pRun(parts);
   ctx.save();pScreen();
   const sq=K.S([12,30,8]),yq=K.S([6,-40,30]);pNight(W,H,W/2,H*.48,Math.max(W,H)*.7,'rgb(150,150,176)','rgb(14,12,22)');pDesat(W,H,.38);
   pLight(sq[0],sq[1],76*k,'255,110,40',.4,42*k);pLight(yq[0],yq[1],56*k,'150,200,255',.14);
-  pEyes(K,[6,-40,0],.5-0,8,34,3,'140,210,255',.8,4);
+  // (the new Yeti rears up when it roars: its own eyes are enough then)
+  const ye=yb?yb.e:[8,34,3],yf=yb&&ys==='roar'?1-Math.min(1,yp/.15,(1-yp)/.15):1;if(yf>.01)pEyes(K,[6,-40,0],.5-0,ye[0],ye[1],ye[2],'140,210,255',.8*yf,4);
   if(!low)pMotes(lt,sq[0],sq[1]-20*k,60*k,60*k,14,'255,150,60',.8,1.6,71);
   pFog(W,H*.6,H*.86,lt,'130,130,160',.08,5,81);ctx.restore()}
 

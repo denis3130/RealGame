@@ -37,6 +37,24 @@ Attrezzi comuni: `python3 anteprime/mk_boss2.py <tipo ...>|--tutti [--stub] [--t
 `node tests/boss2diff.js <tipo>` (eroe fermo che tira contro il boss di oggi e il nuovo: vite perse); ogni cervello si iscrive nel
 registro `BCL` (come si entra nella sua stanza, mosse, pericoli, voce). Foglio del boss di oggi: `tests/b2/<tipo>_oggi.png`.
 
+## Nel gioco dal 19 ottobre: Golem, Salamandra, Re Rospo, Yeti
+
+Denis (19 ottobre), alla domanda su cosa fare dei quattro boss pronti: «sì, metti i 4 pronti»; per gli altri nove il **metodo leggero**
+(per ogni boss un agente per il modello e uno per il cervello insieme, la critica la faccio io guardando i fogli, poi un solo agente per
+correzioni e collaudo; due o tre boss alla volta), per consumare meno.
+
+- In `src/ordine.txt`, prima di `coda.html`: i quattro modelli (`../sprite/nemici3d/golem2.js`, `salamander2.js`, `toad2.js`, `yeti2.js`)
+  e poi i quattro cervelli (`js/89-golem-nuovo.js`, `89-salamandra-nuova.js`, `89-rospo-nuovo.js`, `89-yeti-nuovo.js`). Ognuno si accende
+  da solo perché c'è il suo modello e prende il posto del boss di prima dappertutto: arene 1–4, Abisso (stanze 5, 15, 25, 35…), trailer,
+  guida, anteprime e sblocco delle arene, prologo. Il disegno di prima resta come `N3.meta.<tipo>.old` (per le pagine «prima e dopo»).
+- I modelli nuovi sono più grandi di quelli di prima (alti in punta a sc 1: Golem 139 px contro 80, Salamandra 111 contro 78, Re Rospo 170
+  contro 87, Yeti 153 contro 106). Nella guida il ritratto li rimpicciolisce (`BEAST2` in `src/js/44-guida.js`); nel prologo il Re Rospo
+  sul trono, lo Yeti e la Salamandra al cancello hanno misure e luci degli occhi loro (`PRO_B2` in `src/js/91-prologo.js`; mentre lo Yeti
+  ruggisce la luce degli occhi si spegne, bastano i suoi). Le anteprime e lo sblocco delle arene vanno bene così: il boss riempie la stanza.
+- `anteprime/mk_boss2.py` con un boss che è già nel gioco usa quello del gioco (lo dice: «cervello e modello sono già nel gioco»).
+- La prova delle anteprime (`tests/anteprime.js`) ora ha un salvataggio con gli oggetti e l'eroe (senza, il gioco lo prendeva per un
+  giocatore nuovo e il prologo copriva tutto) e aspetta che le porte dello sblocco si aprano.
+
 ## Il Golem di Muschio: «il Colosso della Cripta»
 
 Nome e titolo restano («Golem di Muschio», «Guardiano della prima cripta»). Un colosso di ardesia scolpito nella pietra della cripta,
