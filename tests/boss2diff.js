@@ -11,7 +11,7 @@ const T=process.argv[2],LV=+process.argv[3]||4;if(!T){console.log('uso: node tes
     await p.goto('file://'+path.join(__dirname,file));await p.waitForTimeout(1500);const E=s=>p.evaluate(s=>__E(s),s);
     if(name==='nuovo')arena=await E(`window.BCL&&BCL['${T}']?BCL['${T}'].arena:null`);
     // into the boss room: the new one as its brain says; the old one in the same arena (the Mimic: spawned in a cleared room)
-    const ENTER=name==='nuovo'?`BCL['${T}'].enter()`:(arena!=null?`G.arena=${arena};G.chapter=ARENAS[${arena}].ch;G.diff=ARENAS[${arena}].diff;G.bossLvl=null;G.room=ROOMS;G.event=null;buildRoom()`
+    const ENTER=name==='nuovo'?`BCL['${T}'].enter()`:(arena!=null&&T!=='mimic'?`G.arena=${arena};G.chapter=ARENAS[${arena}].ch;G.diff=ARENAS[${arena}].diff;G.bossLvl=null;G.room=ROOMS;G.event=null;buildRoom()`
       :`G.room=4;G.event=null;buildRoom();G.enemies=[];const m=makeE('${T}',AW/2,TOP+(BOT-TOP)*.4,0);m.hp=m.max=Math.round(ET['${T}'].hp*(1+(effRoom()-1)*.14));m.intro=1.3;G.enemies.push(m);G.state='play'`);
     for(let rep=0;rep<3;rep++){
       const r=JSON.parse(await E(`(()=>{document.querySelectorAll('#sheetScr,#arenaUpScr,#endScr,#skScr').forEach(e=>e.hidden=true);modal=false;AU.on.music=false;AU.on.sfx=false;

@@ -7000,7 +7000,8 @@ const BEST2={golem:'Boss. Schianta i pugni a terra, fa franare massi, apre fagli
   icequeen:'Boss. Lance di cristallo, colonne di ghiaccio che ti ingabbiano, il Fiocco Reale. Nella Sala degli Specchi solo la vera ha l\'ombra.',
   smith:'Boss. Il maglio rovente apre la terra, le incudini cadono dal cielo, la catena arriva lontano. Quando la fornace sfiata, colpiscila.',
   hydra:'Boss. Il veleno sale nel collo che sta per colpire. Morde a tenaglia, sputa pozze, sbuca dal pavimento sotto di te. Le pozze ribollono: al centro della corona sei salvo.',
-  phoenix:"Boss. Ventagli di piume con un varco, picchiata da cometa (attirala contro un'incudine!), coda che spazza in cerchio, pioggia di braci. A metà vita rinasce azzurra dall'uovo."},
+  phoenix:"Boss. Ventagli di piume con un varco, picchiata da cometa (attirala contro un'incudine!), coda che spazza in cerchio, pioggia di braci. A metà vita rinasce azzurra dall'uovo.",
+  mimic:'Mini boss nascosto in una delle due casse: morde, frusta con la lingua, ti assaggia e ti risputa, sputa oro. Nella fase 2 ti sfida al gioco delle tre casse.'},
   bestTx=(t,d)=>beast2(t)!==1&&BEST2[t]||d;
 function drawBeast(cv,type){const c=cv.getContext('2d'),saved=ctx;ctx=c;c.setTransform(1,0,0,1,0,0);c.clearRect(0,0,cv.width,cv.height);
   const e=makeE0(type,0,0,0);Object.assign(e,{intro:0,face:Math.PI*.42,t:1.2,cd:1,z:0,jump:0,alpha:1});if(type==='hydra')e.heads=[-1,0,1].map(s2=>({s:s2,ext:0,open:0,st:'idle'}));if(type==='icesentinel'){e.shards=[0,1,2].map(i=>({a:i*TAU/3,hp:2,re:0,hit:0}));e.rot=.4}if(type==='snowspirit')e.ph2='float';if(type==='croc')e.st='out';if(type==='salamander')e.trail=Array.from({length:50},(_,i)=>({x:-60+i*1.2,y:-20+i*.4}));const big=isBoss(type),sc=(big?1.15*beast2(type):2.1)*cv.width/90;
