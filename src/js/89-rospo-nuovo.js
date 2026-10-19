@@ -46,9 +46,10 @@ if(TKON){
   // what the game passes to the model: the tip of the tongue, the side of the Frustata, the chained belly flops, the pool it points at, its
   // fireflies flown onto the landing circle, the height of its leaps (only while it leaps: otherwise the model keeps its own); the walk
   // follows its own clock
+  // (wk: how far into its crawl it is, so the first step grows out of the pose at rest and the last goes back to it)
   N3G.zm.toad=1;
   N3G.opt.toad=e=>({tip:e.tkTip||undefined,side:e.tkSide||1,chain:!!e.tkChain,point:e.tkPoint,noFlies:!!e.tkNoFlies,
-    z:e.st==='flop'||e.st==='walk'&&e.p2?(e.z||0):undefined});
+    z:e.st==='flop'||e.st==='walk'&&e.p2?(e.z||0):undefined,wk:e.st==='walk'&&!e.p2?Math.max(0,Math.min(1,(e.wt||0)/.35,(e.stT||0)/.3)):undefined});
   N3G.wp.toad=e=>{const d=B3D(e,'walk');return(((e.wt||0)%d)+d)%d/d};
   {const b=BEST.find(q=>q[0]==='toad');if(b)b[2]='Boss. Lingua che ti tira a sé (se ti manca resta incollata: colpiscilo!), panciate che fanno onde, rutti di bolle, il tamburo di pancia che chiama i girini; a metà vita si mangia le lucciole e le fa piovere.'}
   VINTO.rospo='Il Re Rospo si è sgonfiato. Le lucciole sono libere.'}
@@ -64,10 +65,11 @@ const tkGp=(e,bx,by,face)=>{const q=tkPt(e,bx,by,0,face);return{x:q.x,y:q.y-TK.F
 // distances on the floor as they look (a circle on the floor is an ellipse 1 : .6)
 const tkD=(x,y,X,Y)=>Math.hypot(X-x,(Y-y)/TK.K);
 const tkBoss=()=>G&&G.enemies?G.enemies.find(q=>q.type==='toad'&&!q.dead):null;
-// the tip of the tongue for the model: the screen offset from its drawing point of a game point (x, y) at height h
-const tkTipXY=(e,x,y,h)=>[x-e.x,y-e.y-h];
-const tkMouthTip=e=>{const q=tkPt(e,36,0,55);return[q.x-e.x,q.y-e.y-8]};
-const tkLerp=(a,b,u)=>[a[0]+(b[0]-a[0])*u,a[1]+(b[1]-a[1])*u];
+// the tip of the tongue for the model: the screen offset from its drawing point of a game point (x, y) at height h, and h (the model
+// draws the tongue exactly to it, and hides behind its head what is behind it)
+const tkTipXY=(e,x,y,h)=>[x-e.x,y-e.y-h,h];
+const tkMouthTip=e=>{const q=tkPt(e,36,0,55);return[q.x-e.x,q.y-e.y-8,55*tkS(e)]};
+const tkLerp=(a,b,u)=>[a[0]+(b[0]-a[0])*u,a[1]+(b[1]-a[1])*u,(a[2]||0)+((b[2]||0)-(a[2]||0))*u];
 // how strong the light running inside him is now (0..1)
 const tkSig=e=>{const w=TK.sig[e.st];if(!w||e.intro>0)return 0;const k=b3k(e);return k<w[0]||k>w[1]?0:Math.min(1,(k-w[0])/.08,(w[1]-k)/.04+.3)};
 function tkReset(){if(G)G.tk={warn:[],strip:null,fan:null,orb:null,lane:null,pre:null,rings:[],rain:[],rainQ:[],tads:[],up:[],bub:[],pops:[],eat:[],scare:null}}
@@ -102,7 +104,7 @@ function tkSnd(k,x){if(typeof AU==='undefined'||!AU.ctx||!AU.on.sfx)return;const
     case 'drum':fThump(t,VR(74,.04),46,.34,.42,.15);fNoise(t,.09,'lowpass',VR(420,.1),1.2,.16,{brown:true});fModal(t,VR(150,.05),[1,1.59,2.14],[.16,.09,.05],.05,.2);break;
     case 'boing':fThump(t,VR(200,.08),VR(460,.06),.15,.07);fThump(t+.05,VR(320,.08),VR(250,.06),.09,.04);break;
     case 'clink':coinClink(t,1.4);fModal(t+.02,VR(2600,.04),[1,2.4,3.9],[.4,.25,.15],.045,.4);break;
-    case 'tap':fThump(t,VR(170,.06),115,.05,.08);fThump(t+.14,VR(165,.06),112,.05,.07);break;
+    case 'tap':fThump(t,VR(170,.06),115,.05,.08);fThump(t+.07,VR(165,.06),112,.05,.07);break;
     case 'fall':whoosh(t,.6,2600,480,.075,.3);break;
     case 'pop':fThump(t,VR(650,.1),VR(1500,.1),.035,.05);fNoise(t,.03,'highpass',3500,.8,.03);break;
     case 'sizzle':fNoise(t,.2,'highpass',VR(3000,.1),.8,.05);fThump(t,VR(500,.1),900,.04,.04);break;
@@ -155,7 +157,7 @@ if(TKON)EUPD.toad=(e,dt,sm,a,d)=>{const sp=e.p2?TK.sp2:1;dt*=sp;// the second ph
   // is already there (so it lasts at least .6 s even in the second phase)
   case 'walk':{const w0=e.wt||0;e.wt=w0+dt;const D=B3D(e,'walk'),ph0=(w0%D)/D,ph1=(e.wt%D)/D,cr=x=>ph1<ph0?(ph0<x||ph1>=x):(ph0<x&&ph1>=x),near=d<e.r+P.r+8;
     if(!p2){const na=navAngle(e);e.moving=!near;e.face=near?a:na;if(!near)moveCircle(e,Math.cos(na)*34*dt,Math.sin(na)*34*dt);
-      if(!near&&(cr(.001)||cr(.5))){const h=tkPt(e,42,cr(.5)?30:-30,0);stepFx(h.x,h.y,true);G.shake=Math.max(G.shake,1)}}
+      if(!near&&e.wt>.25&&(cr(.001)||cr(.5))){const h=tkPt(e,54,cr(.5)?30:-30,0);stepFx(h.x,h.y,true);G.shake=Math.max(G.shake,1)}}
     else{e.moving=true;if(ph1>=.1&&ph1<.47){if(e.hopA==null)e.hopA=near?a:navAngle(e);e.face=e.hopA;e.air=1;
         if(ph1<.45&&!near)moveCircle(e,Math.cos(e.hopA)*45/(.35*D)*dt,Math.sin(e.hopA)*45/(.35*D)*dt);e.z=ph1<.45?16*Math.sin(Math.PI*(ph1-.1)/.35):0}
       else{e.z=0;e.air=0;e.hopA=null;e.face=a}
@@ -176,8 +178,10 @@ if(TKON)EUPD.toad=(e,dt,sm,a,d)=>{const sp=e.p2?TK.sp2:1;dt*=sp;// the second ph
         tkSnd('slurp',P.x);shake(3);vib(30)}
       else e.tkTip=tkTipXY(e,S.x+ca*l,S.y+sa*l,55*s*(1-u)+(S.rock?12:S.wall?10:4)*u)}
     if(e.tkHit){B.strip=null;
-      // a dash tore you off (dash() below): the tongue snaps back to the mouth and it walks on, no mocking
-      if(e.tkSnapT!=null){const u=Math.min(1,((G.t||0)-e.tkSnapT)/.07);e.tkTip=tkLerp(e.tkTip0||tkMouthTip(e),tkMouthTip(e),u);if(u>=1){e.tkTip=null;tkWalk(e)}break}
+      // a dash tore you off (dash() below): the tongue snaps back to the mouth in .07 s; then the move ends on its own clock from .86 (the
+      // model swallows and licks its lips: the mouth never shuts in one frame) and it walks on, no mocking
+      if(e.tkSnapT!=null){const u=Math.min(1,((G.t||0)-e.tkSnapT)/.07),D=B3D(e,'tongue');e.tkTip=u<1?tkLerp(e.tkTip0||tkMouthTip(e),tkMouthTip(e),u):null;
+        if(u>=1&&k<.86){e.mt=.86*D;e.stT=D-e.mt}if(e.stT<=0){e.tkTip=null;tkWalk(e)}break}
       if(P.pull&&P.pull.tk&&P.pull.t>0){e.tkTip=tkTipXY(e,P.x,P.y,14);e.tkTip0=e.tkTip;e.face=Math.atan2(P.y-e.y,P.x-e.x)}
       else if(k<.9){if(e.tkK0==null){e.tkK0=k;e.tkTip0=e.tkTip||tkTipXY(e,P.x,P.y,14)}e.tkTip=tkLerp(e.tkTip0,tkMouthTip(e),Math.min(1,(k-e.tkK0)/Math.max(.02,.9-e.tkK0)))}
       else e.tkTip=null}
@@ -198,6 +202,9 @@ if(TKON)EUPD.toad=(e,dt,sm,a,d)=>{const sp=e.p2?TK.sp2:1;dt*=sp;// the second ph
     if(k<.3&&F){const M0=tkGp(e,36,0,e.sa),tg=Math.atan2(P.y-M0.y,P.x-M0.x);e.sa+=clamp(angDiff(e.sa,tg),-2.44*dt,2.44*dt)}
     e.face=e.sa;const M=tkGp(e,36,0,e.sa);
     if(F&&!F.fire){F.x=M.x;F.y=M.y;F.a=e.sa;F.lock=k>=.3;F.fill=Math.min(1,k/.52)}
+    // .47-.52: the tongue hanging from the corner of the mouth stretches out to the edge of the fan where the lash starts (the model goes
+    // from its hanging tongue to this tip over the same moments: no jump when the lash begins)
+    if(F&&!F.fire&&k>=.47&&k<.52){const a0=F.a+F.hw*F.side,u=Math.min(1,Math.max(0,(k-.47)/.05)),l=F.R*u*u*(3-2*u);e.tkTip=tkTipXY(e,F.x+Math.cos(a0)*l,F.y+Math.sin(a0)*l,55*s*(1-l/F.R)+10*l/F.R)}
     if(b3at(e,.52)&&F){F.fire=1;tkSnd('fwip',e.x)}
     if(F&&F.fire&&k<.7){const u=Math.max(0,(k-.52)/.18),q=u*u*(3-2*u),ang=F.a+F.hw*F.side*(1-2*q),dx=P.x-F.x,dy=P.y-F.y,dd=Math.hypot(dx,dy);
       if(!e.swHit&&dd>6&&dd<F.R+P.r*.5&&P.inv<=0&&P.dashT<=0){const th=Math.atan2(dy,dx),d1=angDiff(ang,th),d0=e.swA==null?d1:angDiff(e.swA,th),tol=Math.atan2(12+P.r*.5,Math.max(dd,24));
@@ -220,7 +227,9 @@ if(TKON)EUPD.toad=(e,dt,sm,a,d)=>{const sp=e.p2?TK.sp2:1;dt*=sp;// the second ph
     if(k>=.3&&k<.75&&e.sx!=null){const u=(k-.3)/.45,q=u*u*(3-2*u);e.x=e.sx+(e.tx-e.sx)*q;e.y=e.sy+(e.ty-e.sy)*q;e.z=150*Math.sin(Math.PI*u);e.air=e.z>30?1:0;e.face=e.lf}
     if(b3at(e,.75)&&e.sx!=null){tkSplat(e,roy,small);e.sx=null}
     if(k>=.75){e.z=0;e.air=0}
-    if(e.stT<=0){e.z=0;e.air=0;B.orb=null;if(e.tkTri&&e.tkTri<3){const n=e.tkTri+1;b3go(e,'flop');e.tkTri=n;e.tkChain=true;e.tkNoFlies=true}else tkWalk(e)}break}
+    // the Triple: the next flop starts at once from the squashed belly (the model's chained flop begins on the splat's pose), the third ends
+    if(e.tkTri&&e.tkTri<3&&k>=.755&&e.sx==null){e.z=0;e.air=0;B.orb=null;const n=e.tkTri+1;b3go(e,'flop');e.tkTri=n;e.tkChain=true;e.tkNoFlies=true;break}
+    if(e.stT<=0){e.z=0;e.air=0;B.orb=null;tkWalk(e)}break}
   // ---- RUTTO DI BOLLE: the red fan follows his face (he turns to you at most 90°/s) until .40, locks; .60 the burp: two rows of bubbles
   case 'bubbles':{e.moving=false;if(k<.4)e.face+=clamp(angDiff(e.face,a),-1.571*dt,1.571*dt);const M=tkGp(e,36,0,e.face);
     if(k>=.03&&k<.6)B.fan={kind:'bub',x:M.x,y:M.y,a:e.face,hw:50*TK.deg,R:260,lock:k>=.4,fill:Math.min(1,(k-.03)/.57)};
@@ -241,11 +250,14 @@ if(TKON)EUPD.toad=(e,dt,sm,a,d)=>{const sp=e.p2?TK.sp2:1;dt*=sp;// the second ph
     for(const c of[.15,.25,.35])if(b3at(e,c)){shake(4);sfx('splash',1,e.x);const sd=c===.15?[-1]:c===.25?[1]:[-1,1];for(const q of sd){const h=tkPt(e,42,30*q,0);
       if(BOSS2)ENV2.splash(h.x,h.y,B3N(8),'#8a7a5a');vfxBlast(h.x,h.y,'150,130,90',30,{debris:['#5a4a30','#3e3220','#7a6a48'],n:B3N(6),sparks:0,dust:4,ring2:false})}}
     if(b3at(e,.38))tkEat(e);
-    if(b3at(e,.62)){B.orange=1;if(G.env)ENV2.torches(TK.orange[0],TK.orange[1],9999);b3say(e,'angry');shake(8);vib([60,40,120]);
+    // (the voice starts on the gulps: its three short croaks fall on them, the long one when the sac is full)
+    if(b3at(e,.41))b3say(e,'angry');
+    if(b3at(e,.62)){B.orange=1;if(G.env)ENV2.torches(TK.orange[0],TK.orange[1],9999);shake(8);vib([60,40,120]);
       for(let i=0;i<3;i++)setTimeout(()=>{if(G&&G.fx)fxPush({k:'ring2',x:e.x,y:e.y-e.r,rgb:'255,190,110',r0:e.r,r1:e.r*5,t:.45,max:.45,w:6-i*1.5})},i*170)}
     if(e.stT<=0){e.p2=true;e.shell=0;e.air=0;e.tkRage=0;e.si=-1;tkNext(e,a)}break}
-  // ---- its mocking gesture (a pause in its walk, never between two blows: it walks again a little before the next move)
-  case 'taunt':{e.moving=false;e.face=a;e.z=0;e.air=0;if(B.pre){B.pre=null;B.fan=null;B.lane=null}if(e.stT<=0){e.wt=0;b3go(e,'walk',rand(.3,.55))}break}
+  // ---- its mocking gesture (a pause in its walk, never between two blows: it walks again a little before the next move); the laugh starts
+  // when the model laughs (.38: «gro-gro-gro» with the sac swelling at each one), not with the pats on the belly
+  case 'taunt':{e.moving=false;e.face=a;e.z=0;e.air=0;if(B.pre){B.pre=null;B.fan=null;B.lane=null}if(b3at(e,.38))b3say(e,e.tkLk||'laugh',true);if(e.stT<=0){e.wt=0;b3go(e,'walk',rand(.3,.55))}break}
   default:tkWalk(e)}};
 // the belly flop lands: the blow in the circle, the wave (not in the first two of the three), the mud, the swamp splashes
 function tkSplat(e,roy,small){const B=tkB(),O=B.orb;e.z=0;e.air=0;e.x=e.tx;e.y=e.ty;moveCircle(e,0,0);const x=e.x,y=e.y,fy=y+TK.FY,R0=roy?70:56;
@@ -260,12 +272,13 @@ function tkSplat(e,roy,small){const B=tkB(),O=B.orb;e.z=0;e.air=0;e.x=e.tx;e.y=e
 function tkMud(x,y,n){const K=TK.K,a0=rand(0,TAU);for(let i=0;i<n;i++){const Z=G.zones.filter(z=>z.tkMud);if(Z.length>=6){let o=Z[0];for(const z of Z)if(z.t<o.t)o=z;G.zones.splice(G.zones.indexOf(o),1)}
   const an=a0+i*TAU/n+rand(-.4,.4),dd=rand(40,60);G.zones.push({x:clamp(x+Math.cos(an)*dd,L+20,R-20),y:clamp(y+Math.sin(an)*dd*K,TOP+20,BOT-20),r:24,t:4,max:4,kind:'slime',tkMud:1,seed:rand(0,9)})}}
 // the burp: two rows of bubbles from his mouth (row B in the gaps of row A, faster); at most 13 in the room, the oldest bursts
-function tkBurp(e,M){const rows=e.p2?[[7,60,75],[6,50,105]]:[[5,40,70],[4,30,100]];for(const[n,w,v] of rows)for(let i=0;i<n;i++)tkBubble(M.x,M.y,e.face+(-w+i*2*w/(n-1))*TK.deg,v,e.p2);
+function tkBurp(e,M){const rows=e.p2?[[7,60,75],[6,50,105]]:[[5,40,70],[4,30,100]],z0=50*tkS(e)-14;for(const[n,w,v] of rows)for(let i=0;i<n;i++)tkBubble(M.x,M.y,e.face+(-w+i*2*w/(n-1))*TK.deg,v,e.p2,z0);
   if(!b3say(e,'burp',true))sfx('bubble',0,e.x);shake(3);for(const p of G.puddles||[])G.ripples.push({x:p.x,y:p.y,r:3,max:p.rx*.8,a:.8});
   // the lily pads in front of him fly away
   const F=(G.puddles||[]).filter(p=>p.swamp&&Math.abs(angDiff(e.face,Math.atan2(p.y-8-e.y,p.x-e.x)))<.9&&Math.hypot(p.x-e.x,p.y-e.y)<300);for(const p of F)tkLilies(p.x,p.y,4,B3N(4))}
-function tkBubble(x,y,a,v,p2){const B=tkB();B.bub=B.bub.filter(p=>G.eproj.includes(p));while(B.bub.length>=13){const o=B.bub.shift(),i=G.eproj.indexOf(o);if(i>=0)G.eproj.splice(i,1);tkPop(o)}
-  const p={x,y:y-6,vx:Math.cos(a)*v,vy:Math.sin(a)*v,a,r:10,dmg:Math.round(12*DMG()),kind:'fbubble',life:5,ph:rand(0,9),p2:!!p2,x0:x,y0:y-6};G.eproj.push(p);B.bub.push(p)}
+// (z0: how high above its flight its mouth is: the bubble is drawn coming out of the mouth and drops to its height over its first 40 px)
+function tkBubble(x,y,a,v,p2,z0){const B=tkB();B.bub=B.bub.filter(p=>G.eproj.includes(p));while(B.bub.length>=13){const o=B.bub.shift(),i=G.eproj.indexOf(o);if(i>=0)G.eproj.splice(i,1);tkPop(o)}
+  const p={x,y:y-6,vx:Math.cos(a)*v,vy:Math.sin(a)*v,a,r:10,dmg:Math.round(12*DMG()),kind:'fbubble',life:5,ph:rand(0,9),p2:!!p2,x0:x,y0:y-6,z0:z0||0};G.eproj.push(p);B.bub.push(p)}
 // a bubble bursts: a ring of light, four droplets, its firefly flies off
 function tkPop(p){const B=tkB();if(tkArt('Bubble')&&!LOWFX)B.pops.push({x:p.x,y:p.y,ph:p.ph,p2:p.p2,t:0});else fxPush({k:'pop',x:p.x,y:p.y,r:p.r||10,t:.25,max:.25,col:'rgba(220,255,235,.9)'});
   for(let i=0;i<4;i++){const an=i*TAU/4+rand(-.4,.4);G.debris.push({x:p.x,y:p.y+14,z:14,vx:Math.cos(an)*40,vy:Math.sin(an)*20,vz:rand(40,90),col:'#cfe9d8',s:1.5,rot:0,vr:0,life:1,drop:true})}
@@ -282,8 +295,9 @@ function tkTadpoles(e){const B=tkB(),n=e.p2?4:3,alive=G.enemies.filter(q=>q.type
     for(let i=0;i<m;i++){const q2=pools[i%pools.length];B.tads.push({x:q2.x+rand(-q2.rx,q2.rx)*.35,y:q2.y+rand(-q2.ry,q2.ry)*.3,t:.8})}}
   else if(m){const M=tkGp(e,36,0);for(let i=0;i<m;i++)G.enemies.push(makeE('tadpole',clamp(M.x+rand(-20,20),L+12,R-12),clamp(M.y+16+rand(-8,8),TOP+12,BOT-12),.25));sfx('croak',1,e.x)}}
 // a cough of the Pioggia: six orange fireflies rise from his mouth and leave the screen (only for the eye: they fall back in the circles)
-function tkCough(e){const B=tkB(),m=tkPt(e,36,0,58);shake(1.5);fxPush({k:'puff',x:m.x,y:m.y,vx:0,vy:-20,t:.4,r:6});
-  for(let i=0;i<(LOWFX?3:6);i++)B.up.push({x:m.x+rand(-5,5),y:m.y+rand(-4,2),vx:rand(-45,45),vy:-rand(170,260),t:0,ph:rand(0,9),p2:true});
+// (from the real mouth of the body thrown back to the sky; they come in over the first 40 px, as the model's own fade out)
+function tkCough(e){const B=tkB(),m=tkPt(e,15,0,64);shake(1.5);fxPush({k:'puff',x:m.x,y:m.y,vx:0,vy:-20,t:.4,r:6});
+  for(let i=0;i<(LOWFX?3:6);i++){const x=m.x+rand(-5,5),y=m.y+rand(-4,2);B.up.push({x,y,x0:x,y0:y,vx:rand(-45,45),vy:-rand(170,260),t:0,ph:rand(0,9),p2:true,fin:1})}
   for(const t of G.torches||[])for(let i=0;i<2;i++)G.embers.push({k:'ember',x:t.x+rand(-3,3),y:t.y-16,vx:rand(-20,20),vy:rand(-70,-30),life:rand(.4,.8),max:.8,ph:rand(0,9)})}
 // a circle of the Pioggia: the first under you, three round it (70-110 px, more than 70° apart), three more where you are then
 function tkRainCircle(i){const B=tkB(),K=TK.K;let x=P.x,y=P.y,an=null;
@@ -340,7 +354,8 @@ function tkDUpdate(dt){const D=G.tkd;for(let i=D.free.length-1;i>=0;i--){const f
   if(D.sit)D.sit.t+=dt}
 {const _u=update;update=function(dt){_u.apply(this,arguments);try{if(TKON&&G&&started&&!paused){if(G.tk)tkUpdate(dt);if(G.tkd)tkDUpdate(dt)}}catch(err){console.error(err)}}}
 // ---- the drawings of its pieces when the model has none (the stub, LOWFX fallbacks)
-function tkFly(x,y,z,k,o){o=o||{};const A=tkArt('Fly');if(A){try{A(x,y,z,k,1,o);return}catch(err){}}
+// (k: the phase of the blink, in cycles; the model's N3.toadFly takes it the same way)
+function tkFly(x,y,z,k,o){o=o||{};const A=tkArt('Fly');if(A){try{A(x,y,z,k,o.sc||1,o);return}catch(err){}}
   const b=.55+.45*Math.sin(k*TAU),c=o.p2?'255,150,50':'214,255,90',yy=y-z;
   if(!LOWFX){ctx.save();ctx.globalCompositeOperation='lighter';if(o.fall>0){const g=ctx.createLinearGradient(x,yy-70,x,yy);g.addColorStop(0,`rgba(${c},0)`);g.addColorStop(1,`rgba(${c},${.65*o.fall})`);
       ctx.strokeStyle=g;ctx.lineWidth=3;ctx.beginPath();ctx.moveTo(x,yy-70);ctx.lineTo(x,yy);ctx.stroke()}glow(c,x,yy,9,.7*b);ctx.restore()}
@@ -362,9 +377,10 @@ function tkCrownDraw(x,y,rot){ctx.save();ctx.translate(x,y);ctx.rotate(Math.sin(
   if(dry<.5){ctx.fillStyle='rgba(160,138,98,.55)';ctx.beginPath();ctx.ellipse(x-r*.3,y-r*.22,r*.28,r*.08,-.15,0,TAU);ctx.fill();
     for(let i=0;i<2;i++){const bx=x+Math.sin(z.seed+i*2.1)*r*.4,by=y+Math.cos(z.seed+i*1.3)*r*.2;ctx.strokeStyle='rgba(201,183,140,.6)';ctx.lineWidth=.9;circ(bx,by,1.4+Math.sin((G.t||0)*3+i)*.4);ctx.stroke()}}
   ctx.restore()}}
-// the bubble with the firefly inside (the model's own if it has one); it fades in over the first 30 px out of the mouth (drawn by the model)
-Object.assign(EPDRAW,{fbubble:p=>{const d=Math.hypot(p.x-p.x0,p.y-p.y0),al=Math.min(1,Math.max(0,(d-14)/16));if(al<=0)return;const A=tkArt('Bubble'),a0=ctx.globalAlpha;ctx.globalAlpha=a0*al;
-  try{if(A)A(p.x,p.y+14,14,p.r,(G.t||0)*3+p.ph,1,{p2:p.p2});else tkBubbleDraw(p.x,p.y,p.r,p.ph,p.p2)}catch(err){tkBubbleDraw(p.x,p.y,p.r,p.ph,p.p2)}ctx.globalAlpha=a0}});
+// the bubble with the firefly inside (the model's own if it has one): it comes out of his mouth (fading in over the first 12 px, as the
+// model's froth fades out) and drops from the height of the mouth to its own over its first 40 px; it hits where it is drawn after that
+Object.assign(EPDRAW,{fbubble:p=>{const d=Math.hypot(p.x-p.x0,p.y-p.y0),al=Math.min(1,Math.max(0,(d-2)/10));if(al<=0)return;const A=tkArt('Bubble'),a0=ctx.globalAlpha,zz=(p.z0||0)*Math.max(0,1-d/40);ctx.globalAlpha=a0*al;
+  try{if(A)A(p.x,p.y+14,14+zz,p.r,(G.t||0)*3+p.ph,1,{p2:p.p2});else tkBubbleDraw(p.x,p.y-zz,p.r,p.ph,p.p2)}catch(err){tkBubbleDraw(p.x,p.y-zz,p.r,p.ph,p.p2)}ctx.globalAlpha=a0}});
 Object.assign(TRC,{fbubble:'190,240,200'});
 // ---- on the floor: the strip of the tongue, the fans, the landing circle (its growing shadow, six ticks, the dashed reach of the wave), the
 // reach and the corridor of the drum and its rings of swamp water, the circles of the Pioggia; the light of his belly on the floor
@@ -382,11 +398,11 @@ function tkGround(){const B=G.tk;if(!B)return;const t=G.t||0,FY=TK.FY,K=TK.K,RD=
     ctx.strokeStyle='rgba(216,240,200,.9)';ctx.lineWidth=2;ctx.beginPath();ctx.ellipse(x,y-2,g.r,g.r*K,0,a0,a1);ctx.stroke();ctx.restore()}
   if(B.strip){const S=B.strip,w=S.w,l=S.len;ctx.save();ctx.translate(S.x,S.y+FY);ctx.rotate(S.a);
     if(S.fire){ctx.fillStyle=`rgba(${RD},.12)`;ctx.fillRect(0,-w/2,l,w)}
-    else if(S.lock){ctx.fillStyle=`rgba(${RD},${Math.sin(t*30)>0?.36:.18})`;ctx.fillRect(0,-w/2,l,w);ctx.strokeStyle=`rgba(${RD},.9)`;ctx.lineWidth=2.4;ctx.strokeRect(0,-w/2,l,w)}
+    else if(S.lock){ctx.fillStyle=`rgba(${RD},${(.27+.09*Math.sin(t*20)).toFixed(3)})`;ctx.fillRect(0,-w/2,l,w);ctx.strokeStyle=`rgba(${RD},.9)`;ctx.lineWidth=2.4;ctx.strokeRect(0,-w/2,l,w)}
     else{ctx.fillStyle=`rgba(${RD},.1)`;ctx.fillRect(0,-w/2,l,w);ctx.strokeStyle=`rgba(${RD},.7)`;ctx.lineWidth=2;ctx.setLineDash([8,6]);ctx.strokeRect(0,-w/2,l,w);ctx.setLineDash([])}
     if(!S.fire){ctx.fillStyle=`rgba(${RD},${S.lock?.6:.32})`;circ(l,0,6);ctx.fill()}ctx.restore()}
   if(B.fan&&!B.fan.done){const F=B.fan,x=F.x,y=F.y+FY,a0=F.a-F.hw,a1=F.a+F.hw,path=(r,b0,b1)=>{ctx.beginPath();ctx.moveTo(x,y);ctx.arc(x,y,r,b0,b1);ctx.closePath()};ctx.save();
-    path(F.R,a0,a1);ctx.fillStyle=`rgba(${RD},${F.lock?(Math.sin(t*30)>0?.2:.1):.07})`;ctx.fill();ctx.strokeStyle=`rgba(${RD},${F.lock?.85:.6})`;ctx.lineWidth=2;if(!F.lock)ctx.setLineDash([8,6]);ctx.stroke();ctx.setLineDash([]);
+    path(F.R,a0,a1);ctx.fillStyle=`rgba(${RD},${F.lock?(.15+.05*Math.sin(t*20)).toFixed(3):.07})`;ctx.fill();ctx.strokeStyle=`rgba(${RD},${F.lock?.85:.6})`;ctx.lineWidth=2;if(!F.lock)ctx.setLineDash([8,6]);ctx.stroke();ctx.setLineDash([]);
     const k=F.fill||0;
     if(F.kind==='sweep'){const as=F.a+F.hw*F.side,ae=as-2*F.hw*F.side*k;if(k>0){path(F.R,Math.min(as,ae),Math.max(as,ae));ctx.fillStyle=`rgba(${RD},.2)`;ctx.fill()}
       // the arrow on the arc: the way the tongue will sweep
@@ -408,12 +424,13 @@ function tkAir(){const t=G.t||0,B=G.tk,D=G.tkd,FY=TK.FY,K=TK.K;
   if(B){const e=tkBoss();
     if(B.orb&&!B.orb.done&&!LOWFX&&e){const O=B.orb,u=Math.min(1,(t-O.t0)/.35),q=u*u*(3-2*u);for(let i=0;i<3;i++){const an=t*2.6+i*TAU/3,cx=O.x+Math.cos(an)*(O.r+4),cy=O.y+FY+Math.sin(an)*(O.r+4)*K,z=34+6*Math.sin(t*3+i*2);
       tkFly(e.x+(cx-e.x)*q,e.y+8+(cy-e.y-8)*q,60+(z-60)*q,t*1.3+i*.37,{p2:!!e.p2})}}
-    for(const f of B.up)tkFly(f.x,f.y,0,t*1.6+f.ph,{p2:f.p2});
+    for(const f of B.up){const al=f.fin?Math.min(1,Math.hypot(f.x-f.x0,f.y-f.y0)/40):1;if(al<=.02)continue;const a0=ctx.globalAlpha;ctx.globalAlpha=a0*al;tkFly(f.x,f.y,0,t*1.6+f.ph,{p2:f.p2});ctx.globalAlpha=a0}
     for(const c of B.rain)if(c.st==='warn'&&c.w-c.t<.25){const f=1-(c.w-c.t)/.25;tkFly(c.x,c.y+FY,240*(1-f),t*2+c.i,{p2:true,fall:f})}
     if(B.eat.length&&e){const m=tkPt(e,36,0,56);for(const f of B.eat){if(f.t<0)continue;const u=Math.min(1,f.t/f.d),q=u*u,an=(1-q)*Math.PI*1.4*f.sp,dx=f.x0-m.x,dy=f.y0-m.y,ca=Math.cos(an),sa=Math.sin(an);
       tkFly(m.x+(dx*ca-dy*sa)*(1-q),m.y+(dx*sa+dy*ca)*(1-q),0,t*2+f.ph,{p2:false})}}
     const A=tkArt('Bubble');if(A)for(const p of B.pops){try{A(p.x,p.y+14,14,10,t*3+p.ph,1,{p2:p.p2,pop:Math.min(1,p.t/.25)})}catch(err){}}}
-  if(D){for(const f of D.free)if(f.t>=0)tkFly(f.x,f.y,0,t*1.4+f.ph,{p2:false});if(D.sit)tkFly(D.sit.x,D.sit.y,0,D.sit.t*.45,{p2:false})}}
+  // (the one on the crown blinks once a second, as it did while the model drew it)
+  if(D){for(const f of D.free)if(f.t>=0)tkFly(f.x,f.y,0,t*1.4+f.ph,{p2:false});if(D.sit)tkFly(D.sit.x,D.sit.y,D.sit.z||0,D.sit.t,{p2:false,sc:D.sit.s||1})}}
 {const _g2=drawHazards2Ground;drawHazards2Ground=function(){_g2.apply(this,arguments);try{if(TKON)tkGround()}catch(err){}}}
 {const _a2=drawHazards2Air;drawHazards2Air=function(){_a2.apply(this,arguments);try{if(TKON)tkAir()}catch(err){}}}
 // ---- the entrance (3.4 s, the model's 'enter'): the fireflies of the room whirl over the circle of runes, a far croak from above, a whistle,
@@ -433,17 +450,23 @@ if(TKON){const _bi=bossIntro;bossIntro=function(e,dt,a){if(e.type!=='toad')retur
     vfxBlast(x,y,'190,235,170',120,{debris:['#5a4a30','#3e3220','#7a8a4a'],n:B3N(22),sparks:B3N(10),spcol:['#e8ffc0','#c8f07a','#ffffff'],dust:B3N(12),ring2:false});
     for(let i=0;i<3;i++)setTimeout(()=>{if(G&&G.fx)fxPush({k:'ring2',x,y,rgb:'200,240,190',r0:e.r,r1:e.r*(3.5+i*1.8),t:.5,max:.5,w:7-i*2})},i*110);tkScare(c.x,c.y-30,.9)}
   for(const s of[1.87,1.94,2.01,2.07,2.14,2.21,2.28])if(at(s))tkSnd('boing',e.x);
-  if(at(2.15)){tkSnd('clink',e.x);const q=tkPt(e,8,-3,92);fxPush({k:'flash',x:q.x,y:q.y,r:22,rgb:'255,240,170',t:.25,max:.25})}
+  // (the clink and the glint when the crown lands on his head: the model's .68)
+  if(at(2.31)){tkSnd('clink',e.x);const q=tkPt(e,8,-3,92);fxPush({k:'flash',x:q.x,y:q.y,r:22,rgb:'255,240,170',t:.25,max:.25})}
   if(at(2.52)){if(!b3say(e,'cry'))sfx('croak',2,e.x);vib([60,40,120]);shake(5);for(const t2 of G.torches||[])t2.ph+=2.5;
     for(let i=0;i<3;i++)setTimeout(()=>{if(G&&G.fx)fxPush({k:'ring2',x:e.x,y:e.y-e.r,rgb:'230,255,190',r0:e.r,r1:e.r*5,t:.45,max:.45,w:6-i*1.5})},i*170)}
-  if(at(3.06))tkSnd('tap',e.x);
+  if(at(3.18))tkSnd('tap',e.x);// the two fingers on the belly (the model's .935 and .955)
   if(e.intro<=0){e.z=0;e.em=null;e.si=-1;e.tkAmb=null;e.wt=0;b3go(e,'walk',.9)}}}
-// what the model plays: the entrance over its whole length (its own clock, not the boss speed)
-if(TKON){const _nm=n3Move;n3Move=function(e){if(e.type==='toad'&&e.intro>0)return['enter',Math.min(.999,Math.max(0,(e.iT||0)/BOSS_INTRO.toad))];return _nm.apply(this,arguments)}}
+// what the model plays: the entrance over its whole length (its own clock, not the boss speed); every move on the brain's own clock (the
+// blow of the game and the gesture of the model in the same frame, and a chained flop starts again from its first frame)
+if(TKON){const _nm=n3Move;n3Move=function(e){if(e.type==='toad'){if(e.intro>0)return['enter',Math.min(.999,Math.max(0,(e.iT||0)/BOSS_INTRO.toad))];
+    const M=N3.meta.toad;if(e.st&&e.st!=='walk'&&M&&M.an.includes(e.st))return[e.st,Math.min(.999,Math.max(0,b3k(e)))]}
+  return _nm.apply(this,arguments)}}
 // ---- the defeat (4 s, the model's 'die'): it swells, spits all its fireflies in a fountain of light (2 s: the bar and «sconfitto»), they stay
 // in the room; it deflates, shrinks to a common little toad that dives into the mud (.92); the crown stays on the floor, a firefly on it
-function tkBakeCrown(c){const q=C3.V(c.face).P([26,-50,0]),x=c.x+q[0],y=c.y+8+q[1],A=tkArt('Crown'),sv=ctx;if(G.tkd)G.tkd.sit={x,y:y+1,t:0};
-  try{ctx=fx;fx.save();fx.setTransform(2,0,0,2,0,0);if(A)A(x,y,0,c.face,1,{});else tkCrownDraw(x,y,c.face);fx.restore()}catch(err){try{fx.restore()}catch(e2){}}finally{ctx=sv}}
+// (at the size, in the place and turned the way the model drew it at its last frame; the firefly that sat on it stays where it sat)
+function tkBakeCrown(c){const s=c.p2?1.12:1,V=C3.V(c.face),q=V.P([26*s,-50*s,0]),x=c.x+q[0],y=c.y+8+q[1],A=tkArt('Crown'),sv=ctx;
+  if(G.tkd){const q2=V.P([28*s,-49*s,0]);G.tkd.sit={x:c.x+q2[0],y:c.y+8+q2[1],z:14*s,s,t:0}}
+  try{ctx=fx;fx.save();fx.setTransform(2,0,0,2,0,0);if(A)A(x,y,0,c.face,s,{});else tkCrownDraw(x,y,c.face);fx.restore()}catch(err){try{fx.restore()}catch(e2){}}finally{ctx=sv}}
 if(TKON){const _sb=snapBoss;snapBoss=function(e){if(e.type==='toad')return{live:1};return _sb.apply(this,arguments)}
   BDIE.toad={setup(c){const e=c.e;tkReset();if(!G.tkd)tkDreset();c.face=e.f3!=null?e.f3:(e.face||Math.PI/2);c.p2=!!e.p2;c.live=1;if(P.pull&&P.pull.tk)P.pull=null;sfx('croak',1,c.x)},
     tick(c,dt,D){const p=Math.min(1,c.t/c.dur),pass=x=>c.t-dt<x*c.dur&&c.t>=x*c.dur,TD=G.tkd||(tkDreset(),G.tkd);
@@ -470,10 +493,12 @@ if(TKON){const _sb=snapBoss;snapBoss=function(e){if(e.type==='toad')return{live:
 if(TKON){B3S.add('toad');
   B3VO.VB.toad={base:{br:.32,ro:.45,ji:.1,lp:.42},k:{
     far:[[.95,[{t:0,d:.9,f:[66,88,70],v:['o','a','o'],am:[.55,21],ro:.5,rel:.45}],.42]],
-    cry:[[1.95,[{t:0,d:.18,noise:1,v:'h',a:.55},{t:.16,d:1.75,f:[62,100,70],v:['o','a','o'],am:[.55,22],ro:.55,h:.04,vib:[.025,4],rel:.35}],.66]],
-    angry:[[1.95,[{t:0,d:.16,f:[70,64],v:'o',am:[.5,24],ro:.5,h:.12},{t:.2,d:.16,f:[85,76],v:'o',am:[.5,24],ro:.5,h:.12},{t:.4,d:.16,f:[100,90],v:'a',am:[.5,24],ro:.55,h:.12},
-      {t:.62,d:1.3,f:[75,120,65],v:['a','a','o'],am:[.6,24],ro:.65,ji:.16,vib:[.03,5],h:.04,rel:.35}],.66]],
-    laugh:[[1,[{t:0,d:.18,f:[92,86],v:'o',am:[.5,22],ro:.45,h:.2},{t:.24,d:.18,f:[83,78],v:'o',am:[.5,22],ro:.45,h:.2,a:.92},{t:.48,d:.24,f:[74,68],v:['o','u'],am:[.5,22],ro:.5,h:.2,a:.85,rel:.45}],.52]],
+    // (the royal croak as long as the sac stays full in the entrance; the rage's long croak while its sac is full; the laugh's three
+    // «gro» on the model's three laughs)
+    cry:[[1.05,[{t:0,d:.16,noise:1,v:'h',a:.55},{t:.14,d:.56,f:[62,100,70],v:['o','a','o'],am:[.55,22],ro:.55,h:.04,vib:[.025,4],rel:.3}],.66]],
+    angry:[[1.65,[{t:0,d:.16,f:[70,64],v:'o',am:[.5,24],ro:.5,h:.12},{t:.2,d:.16,f:[85,76],v:'o',am:[.5,24],ro:.5,h:.12},{t:.4,d:.16,f:[100,90],v:'a',am:[.5,24],ro:.55,h:.12},
+      {t:.62,d:.82,f:[75,120,65],v:['a','a','o'],am:[.6,24],ro:.65,ji:.16,vib:[.03,5],h:.04,rel:.3}],.66]],
+    laugh:[[.9,[{t:0,d:.16,f:[92,86],v:'o',am:[.5,22],ro:.45,h:.2},{t:.18,d:.16,f:[83,78],v:'o',am:[.5,22],ro:.45,h:.2,a:.92},{t:.36,d:.22,f:[74,68],v:['o','u'],am:[.5,22],ro:.5,h:.2,a:.85,rel:.4}],.52]],
     laugh2:[[1.45,[{t:0,d:.62,f:[70,76,95],v:['a','a','o'],am:[.55,21],ro:.5,h:.1,rel:.25},{t:.78,d:.6,noise:1,v:['a','o'],a:.5}],.5]],
     hurt:[[.3,[{t:0,d:.27,f:[130,85],v:['u','a'],am:[.4,23],ro:.4,h:.08}],.5],[.3,[{t:0,d:.05,noise:1,v:'h',a:.6},{t:.04,d:.24,f:[122,82],v:['o','a'],am:[.4,23],ro:.45}],.5]],
     c_tongue:[[.6,[{t:0,d:.55,f:[78,72,80],v:'m',am:[.3,20],ro:.4,rel:.4}],.4]],
@@ -488,6 +513,9 @@ if(TKON){B3S.add('toad');
     cra:[[.26,[{t:0,d:.22,f:[430,380],v:'a',am:[.3,30],ro:.15,h:.1}],.38]],
     win:[[1.7,[{t:0,d:.3,f:[84,76],v:'o',am:[.5,22],ro:.5,h:.15},{t:.5,d:.24,f:[92,84],v:'o',ro:.45,h:.3},{t:.92,d:.24,f:[88,80],v:'o',ro:.45,h:.3},{t:1.32,d:.3,f:[62,50],v:['o','a'],am:[.6,26],ro:.7,ji:.25,a:.7}],.56]]}};
   B3CUE.toad={tongue:'c_tongue',sweep:'c_sweep',flop:'c_flop',bubbles:'c_burp',drum:'c_drum',rain:'c_rain'};
+  // its mocking (88-boss3-voci.js): the gesture now, the voice when the model laughs (the 'taunt' case of the brain, at .38)
+  {const _bt=b3taunt;b3taunt=function(e,k){if(!e||e.type!=='toad')return _bt.apply(this,arguments);const S=e.b3s||(e.b3s={});S.tauntT=G.t||0;S.pend=0;
+    b3go(e,'taunt');e.moving=false;e.anchor=null;e.tkLk=k||'laugh'}}
   // under its big cries the sac resonates, low
   {const _m=b3sayMore;b3sayMore=function(e,k,t){if(e.type!=='toad')return _m.apply(this,arguments);
     if(k==='cry'||k==='angry'||k==='die'||k==='win'||k==='burp')fNoise(t+.08,k==='die'?2.2:k==='burp'?.6:1.4,'lowpass',VR(170,.1),.9,.07,{brown:true,att:.25})}}

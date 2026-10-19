@@ -9,7 +9,8 @@
 // Ogni stato ha il nome di una mossa del modello; il colpo vero parte nel suo fotogramma (b3at, 81-boss3-base.js). Mosse:
 // - Sputafuoco (spit): un cono rosso a terra dalla bocca verso di te, poi tre ventagli di palle di magma (5, 4 e 5, gli uni negli spazi
 //   degli altri): si esce dal cono di lato.
-// - Frustata (whip): se sei lontano scatta verso di te (rush), poi si gira di spalle; una mezzaluna rossa dietro di lei si riempie nel
+// - Frustata (whip): se sei lontano e dopo tocca al Tuffo, prima il Tuffo (la pinna la porta da te) e subito dopo la Frustata; se no
+//   scatta verso di te (rush). Poi si gira di spalle; una mezzaluna rossa dietro di lei si riempie nel
 //   verso della spazzata e la coda spazza il pavimento lasciando il fuoco (uscire oltre la mezzaluna o scattare attraverso la coda). Se le
 //   stai addosso troppo a lungo la fa anche fuori turno. Nella fase 2 doppia (whip2): la spazzata, poi lo schiocco lungo una striscia.
 // - Tuffo di lava (burrow, swim, breach): si tuffa e sotto il pavimento resta solo la corona, che taglia la pietra come una pinna e ti
@@ -53,7 +54,7 @@ if(SL2ON){
   {const _g=b3go;b3go=function(e,st){const pv=e&&e.st,w0=e&&e.wt,m0=e&&e.mt;_g.apply(this,arguments);if(e&&e.type==='salamander'){if(pv==='walk'&&st!=='walk'){const d=B3D(e,'walk');e.wph=((((w0||0)%d)+d)%d)/d}else e.wph=null;
     if((pv==='run'||pv==='rush')&&st!=='run'&&st!=='rush'){const d=B3D(e,'run');e.rph=((((m0||0)/d)%1)+1)%1}else e.rph=null}}}
   N3G.wp.salamander=e=>{const d=B3D(e,'walk');return(((e.wt||0)%d)+d)%d/d};
-  {const b=BEST.find(q=>q[0]==='salamander');if(b)b[2]='Boss. Ventagli di magma, frustate di coda, nuota sotto il pavimento con la corona come una pinna e ti chiude in un anello di fuoco. A metà vita cambia pelle: la pelle vecchia resta e fa da riparo.'}
+  // (her line in the guide is written in 44-guida.js with her new moves; the line of the victory is the crown that falls)
   VINTO.magma='La corona della Salamandra è caduta. Il vulcano tace.'}
 // ---- helpers
 // the model's own drawings of the pieces of her attacks (design: Glob(x,y,z,a,sc,o), Geyser(x,y,k,sc,o), Pool(x,y,r,k,o), Husk(x,y,face,sc,o),

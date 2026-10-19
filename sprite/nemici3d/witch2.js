@@ -98,6 +98,11 @@ const KC=.5523;const CIRC=[['M',1,0],['C',1,KC,KC,1,0,1],['C',-KC,1,-1,KC,-1,0],
 // a little flame (a candle on a fingertip), a teardrop (buds, the seed): pointing up
 const FLM=[['M',0,-1],['C',.55,-.45,.62,.35,0,.62],['C',-.62,.35,-.55,-.45,0,-1]];
 const TEAR=[['M',0,-1.4],['C',.5,-.85,.95,-.15,.95,.25],['C',.95,.75,.52,1,0,1],['C',-.52,1,-.95,.75,-.95,.25],['C',-.95,-.15,-.5,-.85,0,-1.4]];
+// the leaf of the gown and of the sleeves: a broad ovate leaf (a round base, the widest at .44, a point), never an almond (that reads as an eye)
+const OVL=[['M',0,0],['C',.02,.62,.2,1.02,.44,1],['C',.68,.98,.88,.5,1,0],['C',.88,-.5,.68,-.98,.44,-1],['C',.2,-1.02,.02,-.62,0,0]];
+// a flat shape added to a Path2D through an affine map (many shapes, one fill)
+function traceTo(pa,sh,a,b,c,d,e,f){for(const k of sh){if(k[0]==='M')pa.moveTo(a*k[1]+c*k[2]+e,b*k[1]+d*k[2]+f);else if(k[0]==='L')pa.lineTo(a*k[1]+c*k[2]+e,b*k[1]+d*k[2]+f);
+  else if(k[0]==='Q')pa.quadraticCurveTo(a*k[1]+c*k[2]+e,b*k[1]+d*k[2]+f,a*k[3]+c*k[4]+e,b*k[3]+d*k[4]+f);else pa.bezierCurveTo(a*k[1]+c*k[2]+e,b*k[1]+d*k[2]+f,a*k[3]+c*k[4]+e,b*k[3]+d*k[4]+f,a*k[5]+c*k[6]+e,b*k[5]+d*k[6]+f)}pa.closePath()}
 function trace(sh,a,b,c,d,e,f,noBegin){if(!noBegin)ctx.beginPath();const X=(x,y)=>a*x+c*y+e,Y=(x,y)=>b*x+d*y+f;
   for(const k of sh){if(k[0]==='M')ctx.moveTo(X(k[1],k[2]),Y(k[1],k[2]));else if(k[0]==='L')ctx.lineTo(X(k[1],k[2]),Y(k[1],k[2]));else if(k[0]==='Q')ctx.quadraticCurveTo(X(k[1],k[2]),Y(k[1],k[2]),X(k[3],k[4]),Y(k[3],k[4]));
     else ctx.bezierCurveTo(X(k[1],k[2]),Y(k[1],k[2]),X(k[3],k[4]),Y(k[3],k[4]),X(k[5],k[6]),Y(k[5],k[6]))}ctx.closePath()}
@@ -112,7 +117,7 @@ function drawLines(V0,X,set,col,w,dash,inked){const runs=[];for(const L0 of set)
 // a flat leaf: the base b, along d (length Ln), across s (half width W); one tone from how it faces the light (its back side in o.back), the
 // outline, the vein (o.vk lights it with the running light)
 function leafF(V0,path,b,d,s,Ln,W,T,K,o){o=o||{};flatPath(V0,path,b,mul(d,Ln),mul(s,W));const n=nrm(cross(d,s)),f=V0.F(n);
-  ctx.fillStyle=o.col||(f<0&&o.back?o.back:tone(T,lit(V0,f<0?mul(n,-1):n)+(o.kb||0)));ctx.fill();ctx.lineJoin='round';ctx.strokeStyle=INK;ctx.lineWidth=o.lw||2;ctx.stroke();
+  ctx.fillStyle=o.col||(f<0&&o.backT?tone(o.backT,lit(V0,mul(n,-1))+(o.kbb||0)):f<0&&o.back?o.back:tone(T,lit(V0,f<0?mul(n,-1):n)+(o.kb||0)));ctx.fill();ctx.lineJoin='round';ctx.strokeStyle=INK;ctx.lineWidth=o.lw||2;ctx.stroke();
   if(o.vein!==false&&Math.abs(f)>.08){const a=V0.P(add(b,mul(d,Ln*.12))),e=V0.P(add(b,mul(d,Ln*(o.vl||.78)))),vk=o.vk||0;if(o.veins&&vk<=.05){o.veins.push([a,e]);return}ctx.lineCap='round';
     if(vk>.05&&!LOWFX){ctx.save();ctx.globalCompositeOperation='lighter';ctx.strokeStyle=`rgba(${K.vG},${.4*vk})`;ctx.lineWidth=3.4;seg(a,e);ctx.stroke();ctx.restore()}
     ctx.strokeStyle=vk>0?cmix(K.nerv,K.vOn,vk):K.nerv;ctx.lineWidth=1;seg(a,e);ctx.stroke()}
@@ -125,7 +130,7 @@ const mixRgb=(a,b,k)=>{if(k<=0)return a;if(k>=1)return b;const A=a.split(',').ma
 // they count
 const K1={bark:T3('#9a6040','#52301f','#24120b'),groove:'#170c07',vOff:'#3a2016',vOn:'#7bf0c0',vG:'123,240,192',
   hat:T3('#b07a4e','#6a4228','#2e180c'),thread:'#1f120c',
-  leaf:T3('#5fae6c','#2a6a44','#10351f'),nerv:'#8fd8a0',back:'#3a7a52',dryL:'#2a6a44',
+  leaf:T3('#5fae6c','#2a6a44','#10351f'),nerv:'#8fd8a0',back:'#3a7a52',backT:T3('#62a072','#3a7a52','#1d4a30'),dryL:'#2a6a44',
   moss:'#4f8a34',mossD:'#3f6a2a',mossT:'#86b84a',
   skin:T3('#e6efd8','#b6c9a4','#6d8468'),cheek:'rgba(70,40,70,.22)',
   lid:'#3a2440',lidE:'#5a3460',lip:'#4a2a40',mIn:'#2a1424',tongue:'#b0506a',fang:'#fff6e8',
@@ -139,7 +144,7 @@ const K1={bark:T3('#9a6040','#52301f','#24120b'),groove:'#170c07',vOff:'#3a2016'
 // phase 2, the autumn: ember leaves, deeper bark with orange veins, amber eyes, a golden seed, orange lanterns (winter cherries)
 const K2={bark:T3('#8a5a3a','#4e2e1e','#22120b'),groove:'#170c07',vOff:'#4a2414',vOn:'#ff8a3c',vG:'255,138,60',
   hat:T3('#a06a40','#5a3420','#26140a'),thread:'#1f120c',
-  leaf:T3('#ffb04a','#d0602a','#7a2a18'),nerv:'#ffd27a',back:'#b8502a',dryL:'#9a6a3a',
+  leaf:T3('#ffb04a','#d0602a','#7a2a18'),nerv:'#ffd27a',back:'#b8502a',backT:T3('#f0904c','#b8502a','#6a2814'),dryL:'#9a6a3a',
   moss:'#6a7a2e',mossD:'#4f5a24',mossT:'#c0a040',
   skin:K1.skin,cheek:K1.cheek,lid:'#3a2034',lidE:'#5a3050',lip:'#4a2a3a',mIn:'#2a1420',tongue:'#b0506a',fang:'#fff6e8',
   eye:'#ffb03c',eyeIn:'#ffe0a0',eyeG:'255,150,60',
@@ -150,7 +155,7 @@ const K2={bark:T3('#8a5a3a','#4e2e1e','#22120b'),groove:'#170c07',vOff:'#4a2414'
   cap:'#ff9a3c',capD:'#c2561c',dots:'#ffe0b0',stem:'#e8dcc8',capG:'255,150,60',
   nail:'#efe3c8',spine:'#efe3c8',knot:'#ff8a3c',flame:'#fff0d0',flameG:'255,170,80',dust:'170,130,100'};
 // the defeat: dry leaves and dry grey bark
-const KD={leaf:T3('#c49a64','#8a6a3e','#4a3420'),bark:T3('#8a7a6a','#5a4e42','#2a221a'),hat:T3('#9a8a76','#625646','#2e261c'),nerv:'#d8bc8a',back:'#a07a4a',dryL:'#8a6a3e',
+const KD={leaf:T3('#c49a64','#8a6a3e','#4a3420'),backT:T3('#c8a878','#a07a4a','#5a4228'),bark:T3('#8a7a6a','#5a4e42','#2a221a'),hat:T3('#9a8a76','#625646','#2e261c'),nerv:'#d8bc8a',back:'#a07a4a',dryL:'#8a6a3e',
   moss:'#6a6a4a',mossD:'#4a4a34',mossT:'#8a8a64',hair:'#2a2a24',hairL:'#4a4a3e',hairT:'#5a5a4a'};
 const PALC={};
 function pal(k2,dry){k2=Math.round(cl(k2,0,1)*24)/24;dry=Math.round(cl(dry||0,0,1)*24)/24;const id=k2+'|'+dry;if(PALC[id])return PALC[id];const K={};
@@ -160,7 +165,7 @@ function pal(k2,dry){k2=Math.round(cl(k2,0,1)*24)/24;dry=Math.round(cl(dry||0,0,
 
 // ------------------------------------------------------------------ the body at rest (x forward, y to her right, z up; 0,0,0 the floor point)
 const SKP=[[0,23],[8,22],[18,19.5],[30,15.5],[42,11.5],[52,8.5]],SKA=.92;          // the skirt: a bell of bark (profile [z, r], depth AX)
-const RINGS=[{z:19,n:11,L:17.5,W:5.3,off:.5,o:.8},{z:33,n:10,L:15.5,W:4.5,off:0,o:.7},{z:46,n:8,L:12.5,W:3.7,off:.5,o:.6}];   // the leaves on it, bottom to top
+const RINGS=[{z:17,n:10,L:18.5,W:6.6,off:.5,o:.9},{z:30,n:9,L:16,W:5.8,off:0,o:.7},{z:42.5,n:7,L:13.5,W:5.2,off:.5,o:.55}];   // the leaves on it, bottom to top
 const BC=[0,0,64],BRD=[8,11.5,13];                                                 // the corset
 const SHN=[-1,14.5,74],SHR=4.7,UA=18,FA=18;                                         // the shoulder knots (y × side), the arm bones
 const NK0=[0,0,73],NK1=[1.5,0,79];                                                  // the neck
@@ -175,7 +180,9 @@ const HBD=[Array.from({length:25},(_,i)=>revoAt(HATP,1,0,i/24*TAU,1.4,.7))];    
 const TWIGS=[[1.1,4,1],[1.75,3.5,-1],[2.45,5,1],[3.1,6,-.5],[-2.6,4.5,.8],[-1.95,5.5,-1],[-1.25,3.8,.6]];   // round the brim: angle, length, up/down
 const LANTS=[{a:-1.80,r:16.2,th:7,ph:0},{a:-1.2,r:16,th:6,ph:2.1},{a:2.03,r:16.3,th:8,ph:4.2}];    // two at her left, one at her right behind
 const HORNS=[{sd:-1,pts:[[0,-8,8],[-.6,-12.5,12],[.4,-15,17],[-1.4,-17.5,22.5],[-2.6,-19,27]]},{sd:1,pts:[[0,8,8],[-.8,12.8,11.5],[.2,15.6,15.5],[-1.6,18,19.5]]}];
-const COL=[{a:-1.02,L:23,W:6,z:72,b:.78},{a:-.52,L:25,W:6.8,z:74,b:.58},{a:0,L:27,W:7.2,z:75,b:.44},{a:.52,L:25,W:6.8,z:74,b:.58},{a:1.02,L:23,W:6,z:72,b:.78}];  // the collar, round the back
+// the collar: five broad round leaves planted round the back of the neck, opening in a fan behind the head (the middle one straight up and
+// back, the others leaning out): from the front they frame the head and the hat, from the back they cover the nape
+const COL=[{g:-.66,b:[-4.6,-9.6,72.5],L:21.5,W:7.6},{g:-.33,b:[-7.7,-5.6,74.5],L:25,W:8.4},{g:0,b:[-9,0,75.5],L:28,W:9},{g:.33,b:[-7.7,5.6,74.5],L:25,W:8.4},{g:.66,b:[-4.6,9.6,72.5],L:21.5,W:7.6}];
 const HAIRF=[[1.2,10.3,94],[2.4,12.3,86],[3.4,13.4,77.5],[3.8,13.7,69],[3.4,13.1,61]],HAIRFR=[2.8,2.6,2.2,1.8,1.3];
 const HAIRB=[[[-7,0,90],[-9.4,0,83],[-10.4,0,76],[-10.6,0,70],[-10,0,64]],[[-6,-5,89],[-8.4,-5.6,82],[-9.4,-6,76],[-9.6,-6.2,71],[-9.2,-6,67]],[[-6,5,89],[-8.4,5.6,82],[-9.4,6,76],[-9.6,6.2,71],[-9.2,6,67]]],HAIRBR=[4.2,3.9,3.3,2.6,1.8];
 const HW0=[5,9.6,55];                                                               // the wrists at rest: the hands joined to a point in front of the waist
@@ -361,32 +368,44 @@ function bodiesOf(V0,X0,XU,XH,XT){const w=[V0.D(1,0,0),V0.D(0,1,0),V0.D(0,0,1)],
     const k=hi<=3&&hi<=lo?hi-1:lo;return 10*(k+1)-5+V0.D(q)*.002};
   return{B,front,slot,w}}
 
-// the skirt: the bark bell (back leaves first, then the bell, then the leaves that face us, bottom ring first: each ring hangs over the one
-// below), the eight rootlets of the hem are drawn with the floor. Returns the bell's outline
+// the skirt: the bark bell under three rings of leaves laid like shingles (each ring hangs over the one below). A ring is painted in one go:
+// its leaves never overlap each other, so they are filled by tone (dark, mid, light: how much each faces the light) and outlined in one
+// stroke; the leaves at the back that stick out of the bell's outline go first, in one dark batch. The rootlets of the hem go with the floor
 const SKV=Array.from({length:7},(_,i)=>{const t=(i+.2)/7*TAU;return Array.from({length:8},(_,j)=>{const k=j/7;return revoAt(SKP,SKA,0,t+.25*Math.sin(k*3),lerp(51,31,k),.1)})});
 const rnd=(a,b)=>{const v=Math.sin(a*12.9898+b*78.233)*43758.5453;return v-Math.floor(v)};
-function skirtProf(A){const b=A.bell||0;return SKP.map(([z,r])=>[z,r*(1+b*(1-z/52))])}
+function skirtProf(A){const b=A.bell||0;return b?SKP.map(([z,r])=>[z,r*(1+b*(1-z/52))]):SKP}
+const SKH=[0,1,2,3,5];                                                              // the rings of the profile that make the bell's outline
 // how far a leaf has come off (-1 still on, 0..1 falling, >=1 gone): the top ring and the outer collar leaves in the autumn, every leaf at the end
 function offK(A,thr,top){let u=-1;if(top&&A.fall>0)u=A.fall>=1?2:(A.fall-thr*.8)/.2;if(A.leafK<1){const v=((1-A.leafK)-thr*.85)/.15;if(v>u)u=v}return u<0?-1:u}
-function leafRings(V0,X0,A,K){const prof=skirtProf(A),out=[[],[],[]],nr=LOWFX?2:3,mvx=A.hem?[Math.cos(A.tr.mv),Math.sin(A.tr.mv)]:null;
-  for(let ri=0;ri<nr;ri++){const R0=RINGS[LOWFX?ri:ri],top=ri===2;
-    for(let i=0;i<R0.n;i++){const off=offK(A,rnd(i,ri),top);if(off>=1)continue;const t=(i+R0.off)/R0.n*TAU+(A.skTw||0)*(1+ri*.25),s0=revoAt(prof,SKA,0,t,R0.z,R0.o),s1=revoAt(prof,SKA,0,t,R0.z-4,R0.o);
-      let d=nrm(add(mul(nrm(sub(s1.p,s0.p)),.95),mul(s0.n,.32)));if(mvx&&ri===0)d=nrm(add(d,[-mvx[0]*A.hem,-mvx[1]*A.hem,0]));
-      const jr=rnd(i*3.1,ri+4)-.5;d=nrm(add(d,mul(nrm(cross(s0.n,d)),jr*.35)));const sv=nrm(cross(s0.n,d));let b=s0.p,dd=d;
-      if(off>=0){const u=ez(off);b=add(b,add(mul(s0.n,9*u),[0,0,-(R0.z-2)*u*u]));dd=nrm(add(mul(d,Math.cos(u*2.6)),mul(s0.n,Math.sin(u*2.6))))}
-      const bw=X0.T(b),dw=X0.Rd(dd),swv=X0.Rd(sv),nw=X0.Rd(s0.n),f=V0.F(nw);if(off<0&&f<-.66)continue;out[off>=0?2:f<0?0:1].push({ri,b:bw,d:dw,s:swv,L:R0.L*(1+.16*jr),W:R0.W*(1-.1*jr),dep:V0.D(bw),z:R0.z,al:off>=0?1-sstep(.7,1,off):1,kb:-.24+ri*.06})}}
-  for(const g of out)g.sort((a,b)=>a.ri-b.ri||a.dep-b.dep);return out}
-function drawSkirt(V0,X0,A,K,KZ,LR){const prof=skirtProf(A),pts=revo(prof,SKA,X0,0,13).map(q=>V0.P(q));
-  // leaf by leaf (each ring over the one below), the veins of a ring in one stroke before the next ring
-  let VS=[],ri=-1,Kv=null;const flush=()=>{if(VS.length){strokeRuns(VS,Kv.nerv,1);VS=[]}};
-  const leafOne=e=>{if(e.ri!==ri){flush();ri=e.ri}const Kz=KZ(e.z),vk=A.vein.skirt>0?cl((A.vein.skirt-(1-e.z/52)*.8)*4,0,1):0;Kv=Kz;ga(e.al,()=>leafF(V0,ALM,e.b,e.d,e.s,e.L,e.W,Kz.leaf,Kz,{back:Kz.back,vk,lw:1.7,kb:e.kb,veins:VS}))};
-  for(const e of LR[0])leafOne(e);flush();ri=-1;
+// the leaves, made once: angle round the bell, a little jitter; their place at rest is kept (the bell flares only in the Spiral)
+const LEAFC=RINGS.map((R0,ri)=>Array.from({length:R0.n},(_,i)=>({ri,i,jr:rnd(i*3.1,ri+4)-.5,thr:rnd(i,ri),t:(i+R0.off)/R0.n*TAU})));
+function leafGeo(prof,R0,c,A,mvx){const t=c.t+(A.skTw||0)*(1+c.ri*.25),s0=revoAt(prof,SKA,0,t,R0.z,R0.o),s1=revoAt(prof,SKA,0,t,R0.z-4,R0.o);
+  let d=nrm(add(mul(nrm(sub(s1.p,s0.p)),.95),mul(s0.n,.36)));if(mvx&&c.ri===0)d=nrm(add(d,[-mvx[0]*A.hem,-mvx[1]*A.hem,0]));
+  d=nrm(add(d,mul(nrm(cross(s0.n,d)),c.jr*.28)));return{b:s0.p,n:s0.n,d,sv:nrm(cross(s0.n,d))}}
+function leafRings(V0,X0,A,K){const prof=skirtProf(A),nr=LOWFX?2:3,mvx=A.hem?[Math.cos(A.tr.mv),Math.sin(A.tr.mv)]:null,dyn=!!(A.bell||A.skTw||A.hem),R={back:[[],[],[]],rings:[[],[],[]],fall:[]};
+  for(let ri=0;ri<nr;ri++){const R0=RINGS[ri],top=ri===2;
+    for(const c of LEAFC[ri]){const off=offK(A,c.thr,top);if(off>=1)continue;const g=dyn||off>=0?leafGeo(prof,R0,c,A,mvx):(c.g||(c.g=leafGeo(SKP,R0,c,A,null)));
+      let b=g.b,dd=g.d;if(off>=0){const u=ez(off);b=add(b,add(mul(g.n,9*u),[0,0,-(R0.z-2)*u*u]));dd=nrm(add(mul(g.d,Math.cos(u*2.6)),mul(g.n,Math.sin(u*2.6))))}
+      const nw=X0.Rd(g.n),f=V0.F(nw);if(off<0&&f<-.55)continue;
+      const e={ri,b:X0.T(b),d:X0.Rd(dd),s:X0.Rd(g.sv),n:nw,f,L:R0.L*(1+.12*c.jr),W:R0.W*(1-.06*c.jr),z:R0.z};
+      if(off>=0){e.al=1-sstep(.7,1,off);e.dep=V0.D(e.b);R.fall.push(e)}else(f<0?R.back:R.rings)[ri].push(e)}}
+  return R}
+// a batch of flat leaves of one ring: filled by tone, one outline, the veins in one stroke (lit by the running light: vk)
+function leafBatch(V0,list,K,ri,dark,vk,sh){if(!list.length)return;const T=K.leaf,dk=[.2,.08,0][ri],cols=dark?[cmix(T.d,T.b,.2)]:[cmix(cmix(T.d,T.b,.45),T.d,dk),cmix(T.b,T.d,dk),cmix(cmix(T.b,T.l,.45),T.d,dk*.6)];
+  const PS=cols.map(()=>null),VS=[];
+  for(const e of list){const ti=dark?0:(()=>{const l=lit(V0,e.n);return l<.44?0:l<.7?1:2})(),q=V0.P(e.b),a=V0.P(mul(e.d,e.L)),b=V0.P(mul(e.s,e.W));
+    traceTo(PS[ti]||(PS[ti]=new Path2D()),sh||OVL,a[0],a[1],b[0],b[1],q[0],q[1]);if(!dark&&e.f>.12){const m=V0.P(add(e.b,mul(e.d,e.L*.14))),n=V0.P(add(e.b,mul(e.d,e.L*.74)));VS.push([m,n])}}
+  ctx.lineJoin='round';for(let i=0;i<PS.length;i++)if(PS[i]){ctx.fillStyle=cols[i];ctx.fill(PS[i])}
+  ctx.strokeStyle=INK;ctx.lineWidth=1.7;for(const pa of PS)if(pa)ctx.stroke(pa);
+  if(VS.length){if(vk>.05&&!LOWFX){ctx.save();ctx.globalCompositeOperation='lighter';strokeRuns(VS,`rgba(${K.vG},${.45*vk})`,3.2);ctx.restore()}strokeRuns(VS,vk>0?cmix(K.nerv,K.vOn,vk):cmix(K.nerv,T.b,.25),1)}}
+function drawSkirt(V0,X0,A,K,KZ,LR){const prof=skirtProf(A),pts=[];for(const i of SKH){const[z,r]=prof[i];for(let j=0;j<10;j++){const t=j/10*TAU;pts.push(V0.P(X0.T([Math.cos(t)*r*SKA,Math.sin(t)*r,z])))}}
+  for(let ri=0;ri<3;ri++)leafBatch(V0,LR.back[ri],KZ(RINGS[ri].z),ri,true,0);
   const H=svol(pts,T3(cmix(K.bark.b,K.leaf.d,.5*(1-A.dry)),cmix(K.bark.d,K.leaf.d,.55*(1-A.dry)),'#0a140c'),{lw:2.8,rim:.3});
-  ctx.save();ctx.clip(H.path);{const b=bbox(H),g=ctx.createLinearGradient(0,b[1],0,b[3]);g.addColorStop(0,'rgba(16,8,4,.15)');g.addColorStop(.6,'rgba(16,8,4,0)');g.addColorStop(1,'rgba(16,8,4,.38)');ctx.fillStyle=g;ctx.fill(H.path)}
-  // the autumn: where the top ring has fallen, the bark with its veins lit
-  if(A.fall>.3){const Kz=KZ(46),al=sstep(.3,.8,A.fall);ctx.globalAlpha=al;drawLines(V0,X0,SKV,Kz.groove,2.2);if(!LOWFX){ctx.save();ctx.globalCompositeOperation='lighter';drawLines(V0,X0,SKV,`rgba(${Kz.vG},.35)`,3.4);ctx.restore()}drawLines(V0,X0,SKV,Kz.vOn,1);ctx.globalAlpha=1}
-  ctx.restore();
-  for(const e of LR[1])leafOne(e);flush();
+  {const b=bbox(H),g=ctx.createLinearGradient(0,b[1],0,b[3]);g.addColorStop(0,'rgba(16,8,4,.15)');g.addColorStop(.6,'rgba(16,8,4,0)');g.addColorStop(1,'rgba(16,8,4,.38)');ctx.fillStyle=g;ctx.fill(H.path)}
+  // the autumn (where the top ring has fallen) and the tree: the bark with its grooves, the veins lit in the autumn
+  if(A.fall>.3||A.dry>.3){const Kz=KZ(46),al=Math.max(sstep(.3,.8,A.fall)*(1-A.dry),sstep(.3,.8,A.dry));ctx.save();ctx.clip(H.path);ctx.globalAlpha=al;drawLines(V0,X0,SKV,Kz.groove,2.2);
+    if(A.dry<.5){if(!LOWFX){ctx.globalCompositeOperation='lighter';drawLines(V0,X0,SKV,`rgba(${Kz.vG},.35)`,3.4);ctx.globalCompositeOperation='source-over'}drawLines(V0,X0,SKV,Kz.vOn,1)}else drawLines(V0,X0,SKV,'rgba(200,190,170,.35)',.8);ctx.restore()}
+  for(let ri=0;ri<3;ri++){const R0=RINGS[ri],vk=A.vein.skirt>0?cl((A.vein.skirt-(1-R0.z/52)*.8)*4,0,1):0;leafBatch(V0,LR.rings[ri],KZ(R0.z),ri,false,vk)}
   return H}
 // the belt: three roots plaited round the waist
 const BELT=[0,1,2].map(k=>Array.from({length:25},(_,i)=>{const t=i/24*TAU,z=52+1.3*Math.sin(3*t+k*TAU/3);return revoAt(SKP,SKA,0,t,Math.min(51.6,z),1.6+.4*Math.cos(3*t+k*TAU/3))}));
@@ -457,23 +476,33 @@ function handGeo(g,XU,sd){const H=g.H,W=g.W,u=nrm(XU.Rd(H.u));let w=XU.Rd(H.w);w
     for(let k=0;k<ls.length;k++){a+=as[k]+tw*.18*(k%2?1:-1)*(j-1);const dk=nrm(add(mul(d,Math.cos(a)),mul(w,-Math.sin(a))));q=add(q,mul(dk,ls[k]));pts.push(q)}F.push(pts)}
   {const c=H.curl[3]||0,b=add(add(W,mul(u,2.6)),mul(th,2.5)),d0=nrm(add(mul(u,.75),mul(th,.7))),a1=c*.6,d1=nrm(add(mul(d0,Math.cos(a1)),mul(nrm(add(mul(w,-1),mul(th,-.3))),Math.sin(a1)))),p1=add(b,mul(d0,4.2*tl)),p2=add(p1,mul(d1,3.4*tl));F.push([b,p1,p2])}
   return{W,u,v,w,F}}
-function drawHand(V0,hg,H,K,A){const NL=[],{W,u,v,w,F}=hg,fw=V0.F(w),L=parts(),ex=H.ext||0,tw=H.twig||0,Ts=tw>0?mixT(K.skin,K.bark,tw):K.skin;
-  const pc=add(W,mul(u,3.3)),palm=()=>{const Fr={u,v,w},pts=ellSil(V0,pc,[3.7,2.8,1.6],Fr,null,12);svol(pts,Ts,{lw:1.9})};
-  L.add(V0.D(pc),palm);
-  F.forEach((pts,j)=>{const isT=j===3,n=pts.length,root=!isT&&ex>0&&n>4,r=isT?[2.1,1.75,1.4]:root?pts.map((q,k)=>lerp(2.1,1.3,k/(n-1))*(1+.5*ex*Math.sin(Math.PI*k/(n-1)))):LOWFX?[2.1,1.75,1.3]:[2.1,1.8,1.5,1.25];
-    const mid=pts[1],dep=V0.D(mid)+(dot(sub(mid,pc),w)*fw<0?-.4:.4);
-    L.add(dep,()=>{const T=root?mixT(Ts,K.bark,cl(ex*1.3,0,1)):Ts,P2=limb3(V0,pts,tw>0?r.map((x,k)=>x*(1-.35*tw*k/(r.length-1))):r,T,{lw:1.5,flat:!root,dark:'rgba(40,56,40,.32)',al:.22});
-      if(!root&&P2.length>2){const a=P2[0],b=P2[2],dx=b[0]-a[0],dy=b[1]-a[1],l=Math.hypot(dx,dy)||1,nx=-dy/l*r[1]*.9,ny=dx/l*r[1]*.9;ctx.strokeStyle=K.bark.b;ctx.lineWidth=1.1;ctx.lineCap='round';seg([P2[1][0]-nx,P2[1][1]-ny],[P2[1][0]+nx,P2[1][1]+ny]);ctx.stroke()}
+function drawHand(V0,hg,H,K,A){const NL=[],HL=[],KN=[],{W,u,v,w,F}=hg,fw=V0.F(w),L=parts(),ex=H.ext||0,tw=H.twig||0,Ts=tw>0?mixT(K.skin,K.bark,tw):K.skin;
+  const base=cmix(Ts.b,Ts.l,.3),pc=add(W,mul(u,3.3));
+  // the palm: a soft light oval, its back lit at the upper left
+  L.add(V0.D(pc),()=>{const pts=ellSil(V0,pc,[3.8,2.9,1.7],{u,v,w},null,10);ctx.lineJoin='round';poly(pts);ctx.fillStyle=base;ctx.fill();ctx.strokeStyle=INK;ctx.lineWidth=1.6;ctx.stroke();
+    const b=bbox(pts);ctx.fillStyle=cmix(Ts.l,'#ffffff',.25);ctx.beginPath();ctx.ellipse(b[0]+(b[2]-b[0])*.38,b[1]+(b[3]-b[1])*.36,(b[2]-b[0])*.18,(b[3]-b[1])*.13,0,0,TAU);ctx.fill()});
+  F.forEach((pts,j)=>{const isT=j===3,n=pts.length,root=!isT&&ex>0&&n>4,r0=isT?[2.15,1.8,1.45]:root?pts.map((q,k)=>lerp(2.2,1.3,k/(n-1))*(1+.5*ex*Math.sin(Math.PI*k/(n-1)))):LOWFX?[2.15,1.8,1.35]:[2.2,1.9,1.6,1.3];
+    const r=tw>0?r0.map((x,k)=>x*(1-.35*tw*k/(r0.length-1))):r0,mid=pts[1],dep=V0.D(mid)+(dot(sub(mid,pc),w)*fw<0?-.4:.4);
+    L.add(dep,()=>{let P2;
+      if(root)P2=limb3(V0,pts,r,mixT(Ts,K.bark,cl(ex*1.3,0,1)),{lw:1.6,dark:'rgba(40,24,16,.36)',al:.22});
+      else{// a toy finger: one outline, one fill (its knuckle ring, the light along it and the nail come after, all fingers at once)
+        P2=pts.map(V0.P);ctx.fillStyle=INK;ctx.beginPath();for(let i=0;i<P2.length-1;i++)hullAdd(P2[i],r[i]+.72,P2[i+1],r[i+1]+.72);ctx.fill();
+        ctx.fillStyle=base;ctx.beginPath();for(let i=0;i<P2.length-1;i++)hullAdd(P2[i],Math.max(.4,r[i]-.62),P2[i+1],Math.max(.4,r[i+1]-.62));ctx.fill();
+        if(P2.length>2){const a=P2[0],b=P2[2],dx=b[0]-a[0],dy=b[1]-a[1],l=Math.hypot(dx,dy)||1,nx=-dy/l*r[1]*.85,ny=dx/l*r[1]*.85;KN.push([[P2[1][0]-nx,P2[1][1]-ny],[P2[1][0]+nx,P2[1][1]+ny]]);
+          const sx=nx+ny>0?-1:1;HL.push([[a[0]+sx*nx*.45,a[1]+sx*ny*.45],[lerp(a[0],b[0],.8)+sx*nx*.4,lerp(a[1],b[1],.8)+sx*ny*.4]])}}
       const e=P2[P2.length-1],pr=P2[P2.length-2],dx=e[0]-pr[0],dy=e[1]-pr[1],l=Math.hypot(dx,dy)||1;
-      if(!root&&tw<.6){const nx=-dy/l*1.05,ny=dx/l*1.05,x0=e[0]-dx/l*.5,y0=e[1]-dy/l*.5;NL.push([[x0+nx,y0+ny],[e[0]+dx/l*1.8,e[1]+dy/l*1.8],[x0-nx,y0-ny]])}
+      if(!root&&tw<.6){const nx=-dy/l*1.15,ny=dx/l*1.15,x0=e[0]-dx/l*.6,y0=e[1]-dy/l*.6;NL.push([[x0+nx,y0+ny],[e[0]+dx/l*1.9,e[1]+dy/l*1.9],[x0-nx,y0-ny]])}
       const tk=(H.tips[j]||0)*A.glow;if(tk>.02&&!root)flameAt([e[0]+dx/l*1.6,e[1]+dy/l*1.6],tk,K)})});
-  run(L);if(NL.length){ctx.beginPath();for(const t of NL){ctx.moveTo(t[0][0],t[0][1]);ctx.lineTo(t[1][0],t[1][1]);ctx.lineTo(t[2][0],t[2][1]);ctx.closePath()}ctx.fillStyle=K.nail;ctx.fill();ctx.strokeStyle=INK;ctx.lineWidth=.9;ctx.stroke()}}
+  run(L);if(KN.length)strokeRuns(KN,cmix(K.bark.b,base,.25),1);if(HL.length)strokeRuns(HL,cmix(Ts.l,'#ffffff',.4),.8);
+  if(NL.length){ctx.beginPath();for(const t of NL){ctx.moveTo(t[0][0],t[0][1]);ctx.lineTo(t[1][0],t[1][1]);ctx.lineTo(t[2][0],t[2][1]);ctx.closePath()}ctx.fillStyle=K.nail;ctx.fill();ctx.strokeStyle=INK;ctx.lineWidth=.8;ctx.stroke()}}
 function flameAt(q,k,K){if(!LOWFX)shine(K.flameG,q[0],q[1]-2,7*k+2,.55*k);scrPath(FLM,[q[0],q[1]-1.6*k],0,2.2*k+.4,3.2*k+.5);ctx.fillStyle=`rgba(${K.flameG},${.85*Math.min(1,k*1.5)})`;ctx.fill();
   ctx.fillStyle=K.flame;ball([q[0],q[1]-1.2*k],1.1*k);ctx.fill()}
 
 // the head: an egg with the pointed chin, the pale face lit at the chin and shaded under the hat, the black moss of the hair over the top,
-// the mint eyes under the plum lids (a V), the long thin nose, the crooked smile with two little fangs
+// the mint eyes (almonds slanting down to the nose under heavy plum lids: her V, the outer corner drawn out like make-up), the long thin
+// nose, the crooked smile with two little fangs. With her lights out the eyes are shut (smug lids): never dark holes, never a skull
 const HAIRL=Array.from({length:24},(_,i)=>{const t=i/24*TAU,e=lerp(.66,-.3,(1-Math.cos(t))/2)+.08*Math.cos(2*t);return[Math.cos(t)*Math.cos(e),Math.sin(t)*Math.cos(e),Math.sin(e)]});
+const EYEM=[-1,1].map(sd=>nrm([1,sd*.4,.07]));
 function drawHead(V0,XH,A,K,J){const T=XH.T,P=V0.P,F=V0.F,fwd=F(XH.Rd([1,0,0])),hq=P(T(HC)),gl=A.glow;
   const pts=ellSil(V0,HC,HRD,null,T,16);for(const q of crp(P(T([8.2,0,78.6])),3,8))pts.push(q);for(const q of crp(P(T([9.8,0,75.6])),1.7,6))pts.push(q);
   const H=svol(pts,K.skin,{lw:2.6,rim:.3});J.head=H;
@@ -484,23 +513,15 @@ function drawHead(V0,XH,A,K,J){const T=XH.T,P=V0.P,F=V0.F,fwd=F(XH.Rd([1,0,0])),
     ctx.beginPath();if(s0<0){if(R[0].v>0){for(const r of R)ctx.lineTo(r.q[0],r.q[1])}}else{let i=s0,first=null,last=null;while(R[i%R.length].v>0&&i<s0+R.length){const q=R[i%R.length].q;if(!first)first=q;last=q;ctx.lineTo(q[0],q[1]);i++}
       if(first){ctx.lineTo(last[0],last[1]-60);ctx.lineTo(first[0],first[1]-60)}}ctx.closePath();ctx.fillStyle=K.hair;ctx.fill();ctx.strokeStyle=K.hairL;ctx.lineWidth=.9;ctx.stroke()}
   if(fwd>-.45){
-    {const top=P(T([4,0,101])),bot=P(T([9,0,76])),g=ctx.createLinearGradient(top[0],top[1],bot[0],bot[1]);g.addColorStop(0,'rgba(24,14,30,.66)');g.addColorStop(.36,'rgba(24,14,30,.16)');g.addColorStop(.62,'rgba(24,14,30,0)');g.addColorStop(1,'rgba(255,236,214,.22)');ctx.fillStyle=g;ctx.fill(H.path)}
+    {const top=P(T([4,0,101])),bot=P(T([9,0,76])),g=ctx.createLinearGradient(top[0],top[1],bot[0],bot[1]);g.addColorStop(0,'rgba(48,22,48,.55)');g.addColorStop(.36,'rgba(48,22,48,.12)');g.addColorStop(.62,'rgba(48,22,48,0)');g.addColorStop(1,'rgba(255,236,214,.22)');ctx.fillStyle=g;ctx.fill(H.path)}
     for(const sd of[-1,1]){const n=XH.Rd(nrm([.62,sd*.72,-.25])),f=F(n);if(f<.08)continue;const q=P(T([9.3,sd*6.4,84.4]));ctx.fillStyle=`rgba(70,40,70,${.26*cl((f-.08)*4,0,1)})`;ctx.beginPath();ctx.ellipse(q[0],q[1],2.9*Math.pow(f,.6),1.3,0,0,TAU);ctx.fill()}
     if(A.under>.02&&!LOWFX&&gl>.1){const q=P(T([10,0,80]));ctx.save();ctx.globalCompositeOperation='lighter';shine(K.flameG,q[0],q[1],12,.5*A.under*gl,9);ctx.restore()}
-    const at=m=>({q:P(T(ellAt(HC,HRD,null,m))),v:F(XH.Rd(ellN(HRD,null,m)))}),eK=A.eyeK2,eye=eK==null?K.eye:cmix(K1.eye,K2.eye,eK),eyeIn=eK==null?K.eyeIn:cmix(K1.eyeIn,K2.eyeIn,eK),eyeG=eK==null?K.eyeG:mixRgb(K1.eyeG,K2.eyeG,eK);
-    const on=cl(gl*A.eye,0,1.6),col=cmix('#1c3a30',eye,cl(on,0,1)),sq=A.blink*(1-.35*A.squint);
-    const E=eyes(null,hq,10.4,{at,dir:[1,.39,.08],kind:'glow',col,glow:eyeG,rx:4,ry:3.1,blink:A.blink,squint:A.squint,light:false,a:.6,b:.74,gap:1.6,v0:.1});
-    const nb=P(T([12.2,0,90.6]));
-    for(const e of E){if(e.rx<.6)continue;const q=e.q,rx=e.rx,sy=3.1*Math.max(.12,sq),inn=nb[0]>=q[0]?1:-1;
-      if(sq>.2&&on>.05){ctx.fillStyle=cmix(col,eyeIn,cl(on,0,1));ctx.beginPath();ctx.ellipse(q[0]+inn*rx*.12,q[1]+sy*.22,rx*.56,sy*.48,0,0,TAU);ctx.fill();
-        if(sq>.4){ctx.fillStyle='#ffffff';ball([q[0]+inn*rx*.05,q[1]+sy*.02],Math.min(1,.38+rx*.16));ctx.fill()}}
-      // the heavy plum lid: a straight slant from the outer corner (high) to the nose (low), over the top of the eye and a little above it
-      // like make-up (the V of her look), its outer corner drawn out
-      const dn=.5*(1-sq),o1=[q[0]-inn*(rx+.8),q[1]-sy*(.52-dn)],i1=[q[0]+inn*(rx+.6),q[1]+sy*(.12+dn)];
-      ctx.save();ctx.beginPath();ctx.ellipse(q[0],q[1]-.7,rx+.6,sy+1.3,0,0,TAU);ctx.clip();
-      ctx.beginPath();ctx.moveTo(o1[0],o1[1]);ctx.lineTo(i1[0],i1[1]);ctx.lineTo(i1[0],q[1]-sy-4);ctx.lineTo(o1[0],q[1]-sy-4);ctx.closePath();ctx.fillStyle=K.lid;ctx.fill();ctx.restore();
-      ctx.strokeStyle=INK;ctx.lineWidth=1.2;ctx.lineCap='round';ctx.lineJoin='round';ctx.beginPath();ctx.moveTo(q[0]-inn*(rx+2.1),q[1]-sy*.95-.7);ctx.lineTo(o1[0],o1[1]);ctx.lineTo(i1[0],i1[1]);ctx.stroke()}
-    if(!LOWFX&&on>.02)for(const e of E){if(e.rx<.6||sq<.25)continue;shine(eyeG,e.q[0],e.q[1],10,(.6+.4*A.eyeFl)*Math.min(1,on)*Math.min(1,e.v*2))}
+    const eK=A.eyeK2,eye=eK==null?K.eye:cmix(K1.eye,K2.eye,eK),eyeIn=eK==null?K.eyeIn:cmix(K1.eyeIn,K2.eyeIn,eK),eyeG=eK==null?K.eyeG:mixRgb(K1.eyeG,K2.eyeG,eK);
+    const on=cl(gl*A.eye,0,1.6),op=A.blink*(1-.4*A.squint)*sstep(.12,.42,on),E=[],nb=P(T([12.2,0,90.6]));
+    for(const m of EYEM){const q=P(T(ellAt(HC,HRD,null,m))),v=F(XH.Rd(ellN(HRD,null,m)));if(v>.1)E.push({q,v,rx:3.8*Math.pow(v,.7)})}
+    E.sort((a,b)=>b.v-a.v);if(E.length)E[0].q=C.inward(hq,10.4,E[0].q,.6,.74);
+    if(E.length>1){const n=E[0],f=E[1];f.q=C.inward(hq,10.4,f.q,.5,.66);f.rx=Math.min(f.rx,Math.max(0,Math.hypot(f.q[0]-n.q[0],f.q[1]-n.q[1])-n.rx-1.4))}
+    for(const e of E){if(e.rx<.7)continue;eyeDraw(e.q,e.rx,nb[0]>=e.q[0]?1:-1,op,on,A.squint,eye,eyeIn,eyeG,K,Math.min(1,e.v*2),A.eyeFl)}
     J.eyes=E;
     if(fwd>0){const N2=NP.map(P),sx=F(XH.Rd([0,1,0]))>0?1:-1,k=cl(fwd*3,0,1);ctx.save();ctx.globalAlpha*=k;ctx.strokeStyle='rgba(70,60,80,.38)';ctx.lineWidth=1.2;ctx.lineCap='round';const n0=lerp3(NP[0],NP[1],.45),q0=P(n0);ctx.beginPath();ctx.moveTo(q0[0]+sx*1.2,q0[1]);ctx.quadraticCurveTo(N2[1][0]+sx*1.4,N2[1][1],N2[2][0]+sx*1.2,N2[2][1]);ctx.stroke();
       const tq=N2[2];ctx.fillStyle=K.skin.l;ball([tq[0],tq[1]-.2],1.25);ctx.fill();ctx.fillStyle='rgba(60,40,60,.32)';ctx.beginPath();ctx.ellipse(tq[0],tq[1]+1.6,1.6,.65,0,0,TAU);ctx.fill();ctx.fillStyle='#ffffff';ball([tq[0]-.5,tq[1]-.7],.45);ctx.fill();ctx.restore()}}
@@ -508,20 +529,39 @@ function drawHead(V0,XH,A,K,J){const T=XH.T,P=V0.P,F=V0.F,fwd=F(XH.Rd([1,0,0])),
   if(fwd>-.45)mouthDraw(V0,XH,A,K);
   if(fwd>-.65&&fwd<.6){ctx.save();const cp=new Path2D();cp.rect(-1e4,-1e4,2e4,2e4);cp.addPath(H.path);ctx.clip(cp,'evenodd');limb3(V0,NP,NR,K.skin,{lw:1.8,dark:'rgba(70,84,66,.35)',al:.25});ctx.restore()}
   return H}
+// one eye at q (half width rx, inn = the side of the nose): a mint almond, its inner corner lower (the V), the light inside and a point of
+// light, the heavy plum lid over its top third with the outer corner drawn out; shut (op 0) it is a smug lid line
+function eyeDraw(q,rx,inn,op,on,sq,eye,eyeIn,eyeG,K,vis,fl){const ry=2.75,ic=[q[0]+inn*rx,q[1]+.55],oc=[q[0]-inn*rx,q[1]-.75],wing=[oc[0]-inn*2.1,q[1]-2.5];
+  ctx.lineCap='round';ctx.lineJoin='round';
+  if(op<.22){// shut: the lid is down, a curve bowing down from the drawn-out outer corner to the nose
+    ctx.fillStyle=K.lid;ctx.beginPath();ctx.moveTo(oc[0],oc[1]-.2);ctx.quadraticCurveTo(q[0],q[1]-ry*.9,ic[0],ic[1]-.2);ctx.quadraticCurveTo(q[0],q[1]+1.5,oc[0],oc[1]-.2);ctx.fill();
+    ctx.strokeStyle=INK;ctx.lineWidth=1.2;ctx.beginPath();ctx.moveTo(wing[0],wing[1]+.6);ctx.lineTo(oc[0],oc[1]);ctx.quadraticCurveTo(q[0],q[1]+1.7,ic[0],ic[1]);ctx.stroke();return}
+  const sy=ry*Math.min(1,op),col=cmix('#1f4a3a',eye,cl(on,0,1));
+  if(on>.05&&vis>.2)shine(eyeG,q[0],q[1]+.3,7.5,(.28+.3*(fl||0))*Math.min(1,on)*vis);
+  ctx.beginPath();ctx.moveTo(ic[0],ic[1]);ctx.quadraticCurveTo(q[0]-inn*rx*.15,q[1]-sy*2.05,oc[0],oc[1]);ctx.quadraticCurveTo(q[0]+inn*rx*.1,q[1]+sy*1.55,ic[0],ic[1]);ctx.closePath();
+  ctx.fillStyle=col;ctx.fill();ctx.save();ctx.clip();
+  if(on>.05){ctx.fillStyle=cmix(col,eyeIn,cl(on,0,1));ctx.beginPath();ctx.ellipse(q[0]+inn*rx*.1,q[1]+sy*.35,rx*.55,sy*.62,0,0,TAU);ctx.fill()}
+  // the lid: everything above its edge, which runs from high at the outer corner down to the inner one
+  const d=.45*(1-op)+.4*sq,l0=[oc[0]-inn*.6,q[1]-sy*(.8-d)],l1=[ic[0]+inn*.4,q[1]-sy*(.12-d)];ctx.fillStyle=K.lid;ctx.beginPath();ctx.moveTo(l0[0],l0[1]);ctx.lineTo(l1[0],l1[1]);ctx.lineTo(l1[0],q[1]-sy*3);ctx.lineTo(l0[0],q[1]-sy*3);ctx.closePath();ctx.fill();
+  ctx.strokeStyle=K.lidE;ctx.lineWidth=.7;ctx.beginPath();ctx.moveTo(l0[0],l0[1]-.5);ctx.lineTo(l1[0],l1[1]-.5);ctx.stroke();ctx.restore();
+  if(on>.3&&op>.5){ctx.fillStyle='#ffffff';ball([q[0]+inn*rx*.18,q[1]+sy*.22],Math.min(.85,.42+rx*.12));ctx.fill()}
+  ctx.strokeStyle=INK;ctx.lineWidth=.9;ctx.beginPath();ctx.moveTo(ic[0],ic[1]);ctx.quadraticCurveTo(q[0]+inn*rx*.1,q[1]+sy*1.55,oc[0],oc[1]);ctx.stroke();
+  ctx.lineWidth=1.35;ctx.beginPath();ctx.moveTo(wing[0],wing[1]);ctx.lineTo(l0[0],l0[1]);ctx.lineTo(l1[0],l1[1]);ctx.stroke()}
 function mouthDraw(V0,XH,A,K){const T=XH.T,P=V0.P,F=V0.F,mc=[10.1,0,80.6],n=XH.Rd(nrm([.86,0,-.5])),f=F(n);if(f<.1)return;const k=cl((f-.1)*4,0,1);
-  const cL=P(T([9.6,-2.9,80.9])),cR=P(T([9.6,2.9,80.4])),c=P(T(mc)),op=A.mouth||0;ctx.save();ctx.globalAlpha*=k;
+  const cL=P(T([9.6,-2.9,80.9])),cR=P(T([9.6,2.9,80.4])),c=P(T(mc)),op=A.mouth||0;ctx.save();ctx.globalAlpha*=k;ctx.lineCap='round';ctx.lineJoin='round';
   if(A.blow>.05){const r=.7+.8*A.blow;ctx.fillStyle=K.mIn;ctx.strokeStyle=K.lip;ctx.lineWidth=1.1;ctx.beginPath();ctx.ellipse(c[0],c[1]+.3,r*.9,r*1.15,0,0,TAU);ctx.fill();ctx.stroke()}
-  else if(op>.08){const w=Math.hypot(cR[0]-cL[0],cR[1]-cL[1])/2*.9,h=1.1+op*3.2,cx=(cL[0]+cR[0])/2,cy=(cL[1]+cR[1])/2+h*.35;ctx.fillStyle=K.mIn;ctx.strokeStyle=INK;ctx.lineWidth=1.1;ctx.beginPath();ctx.ellipse(cx,cy,w,h,0,0,TAU);ctx.fill();ctx.stroke();
-    ctx.save();ctx.clip();ctx.fillStyle=K.tongue;ctx.beginPath();ctx.ellipse(cx,cy+h*.9,w*.6,h*.55,0,0,TAU);ctx.fill();ctx.fillStyle=K.fang;ctx.strokeStyle=INK;ctx.lineWidth=.6;for(const sd of[-1,1])tri(cx+sd*w*.45,cy-h-.2,cx+sd*w*.45,cy-h+Math.min(h*.8,1.8),.75);ctx.restore()}
-  else{const sm=A.smile,lo=[c[0]+(cL[1]>cR[1]?.2:-.2),c[1]+1.3*sm];ctx.strokeStyle=K.lip;ctx.lineWidth=1.05;ctx.lineCap='round';ctx.beginPath();ctx.moveTo(cL[0],cL[1]-1*sm);ctx.quadraticCurveTo(lo[0],lo[1],cR[0],cR[1]+.5*sm);ctx.stroke();
-    ctx.fillStyle=K.fang;ctx.strokeStyle='rgba(27,22,18,.8)';ctx.lineWidth=.5;for(const u of[.4,.6]){const x0=lerp(cL[0],cR[0],u),y0=lerp(cL[1],cR[1],u)+(lo[1]-c[1])*.62;tri(x0,y0-.3,x0,y0+1.25,.55)}}
+  else if(op>.08){const w=Math.hypot(cR[0]-cL[0],cR[1]-cL[1])/2*.95,h=1.1+op*3.2,cx=(cL[0]+cR[0])/2,cy=(cL[1]+cR[1])/2+h*.35;ctx.fillStyle=K.mIn;ctx.strokeStyle=INK;ctx.lineWidth=1.1;ctx.beginPath();ctx.ellipse(cx,cy,w,h,0,0,TAU);ctx.fill();ctx.stroke();
+    ctx.save();ctx.clip();ctx.fillStyle=K.tongue;ctx.beginPath();ctx.ellipse(cx,cy+h*.9,w*.6,h*.55,0,0,TAU);ctx.fill();ctx.fillStyle=K.fang;ctx.strokeStyle=INK;ctx.lineWidth=.6;for(const sd of[-1,1])tri(cx+sd*w*.45,cy-h-.2,cx+sd*w*.45,cy-h+Math.min(h*.8,1.9),.85);ctx.restore()}
+  else{const sm=A.smile,lo=[c[0]+(cL[1]>cR[1]?.2:-.2),c[1]+1.3*sm],a=[cL[0],cL[1]-1*sm],b=[cR[0],cR[1]+.5*sm];
+    // the two little fangs hang from the lip, then the lip over them
+    ctx.fillStyle=K.fang;ctx.strokeStyle='rgba(27,22,18,.85)';ctx.lineWidth=.55;for(const u of[.36,.62]){const x0=(1-u)*(1-u)*a[0]+2*u*(1-u)*lo[0]+u*u*b[0],y0=(1-u)*(1-u)*a[1]+2*u*(1-u)*lo[1]+u*u*b[1];tri(x0,y0-.4,x0+(u-.5)*.6,y0+1.55,.85)}
+    ctx.strokeStyle=K.lip;ctx.lineWidth=1.25;ctx.beginPath();ctx.moveTo(a[0],a[1]);ctx.quadraticCurveTo(lo[0],lo[1],b[0],b[1]);ctx.stroke()}
   ctx.restore()}
-
 // the collar of leaves round the back of the neck: the inside faces her (the leaf colour), the outside is the lighter back
 function collarGeo(XU,A){const out=[];COL.forEach((c,i)=>{const outer=i===0||i===4,off=offK(A,outer?.15+.5*rnd(i,9):.4+.6*rnd(i,9),outer);if(off>=1)return;
-    const a=Math.PI+c.a*(1+.25*A.ruff)+c.a*A.collar*.6,rad=[Math.cos(a),Math.sin(a),0],tg=[-Math.sin(a),Math.cos(a),0],be=c.b+A.collar+.2*A.ruff,d=nrm(add(mul([0,0,1],Math.cos(be)),mul(rad,Math.sin(be))));
-    let b=[rad[0]*8.4,rad[1]*9.4,c.z],dd=d;if(off>=0){const u=ez(off);b=add(b,add(mul(rad,10*u),[0,0,-60*u*u]));dd=nrm(add(mul(d,Math.cos(u*2.4)),mul(rad,Math.sin(u*2.4))))}
-    const bw=XU.T(b),dw=XU.Rd(dd),sw=XU.Rd(tg),inner=nrm(cross(dw,sw));out.push({i,b:bw,d:dw,s:sw,L:c.L,W:c.W,inner,z:c.z+c.L*.5,al:off>=0?1-sstep(.7,1,off):1})});return out}
+    const g=c.g*(1+.25*A.ruff+.6*A.collar),be=.42+.12*A.collar+.2*A.ruff,d=nrm([-Math.sin(be)*Math.cos(g),Math.sin(g),Math.cos(be)*Math.cos(g)]),s=nrm(cross(d,[1,0,0]));
+    let b=c.b,dd=d;if(off>=0){const u=ez(off),rad=nrm([c.b[0],c.b[1],0]);b=add(b,add(mul(rad,10*u),[0,0,-60*u*u]));dd=nrm(add(mul(d,Math.cos(u*2.4)),mul(rad,Math.sin(u*2.4))))}
+    const bw=XU.T(b),dw=XU.Rd(dd),sw=XU.Rd(s);out.push({i,b:bw,d:dw,s:sw,L:c.L,W:c.W,mid:XU.T(add(b,mul(dd,c.L*.5))),z:c.b[2]+c.L*.5,al:off>=0?1-sstep(.7,1,off):1})});return out}
 // the hair of black moss: two locks down in front of the shoulders, three down the back under the collar (from the head to the body)
 function lock(XH,XU,pts,ph,amp){return pts.map((q,i)=>{const u=i/(pts.length-1),h=XH.T(q),b=XU.T(q),w=sstep(.25,.85,u),s=Math.sin(ph-u*2.4)*amp*u;return add(lerp3(h,b,w),[s*.3,s,0])})}
 function drawLock(V0,pts,rs,K){const P2=limb3(V0,pts,rs,T3(cmix(K.hair,K.hairL,.25),K.hair,'#0a0f08'),{lw:2.1,flat:1,noShade:1});
@@ -697,7 +737,7 @@ function witch2(x,y,face,anim,p,sc,o){sc=sc||1;o=o||{};anim=MV.includes(anim)?an
   if(!below(6)&&A.ftK>.02)for(const sd of[-1,1])for(let i=1;i>=0;i--){const pts=footPts(A,sd,i).map(X0.T),rs=FEET[i].rs.map(r=>r*(.35+.65*A.ftK));L.add(-58+i*.1+D(pts[1])*.001,()=>drawRoot(V0,pts,rs,KLow))}
   // ---------------- the four volumes
   const LR=below(54)?null:leafRings(V0,X0,A,K);
-  if(LR){L.add(0,()=>{J.skirt=drawSkirt(V0,X0,A,K,KZ,LR)});for(const e of LR[2])L.add(e.dep>D(0,0,30)?8:-1,()=>{const Kz=KZ(e.z);ga(e.al,()=>leafF(V0,ALM,e.b,e.d,e.s,e.L,e.W,Kz.leaf,Kz,{back:Kz.back,lw:1.7}))});L.add(9.5,()=>drawBelt(V0,X0,A,K))}
+  if(LR){L.add(0,()=>{J.skirt=drawSkirt(V0,X0,A,K,KZ,LR)});for(const e of LR.fall)L.add(e.dep>D(0,0,30)?8:-1,()=>{const Kz=KZ(e.z);ga(e.al,()=>leafF(V0,OVL,e.b,e.d,e.s,e.L,e.W,Kz.leaf,Kz,{back:Kz.back,lw:1.7}))});L.add(9.5,()=>drawBelt(V0,X0,A,K))}
   if(!below(79)){L.add(10,()=>{drawBust(V0,XU,A,K,J);drawSeed(V0,XU,A,K,J)});
     L.add(12,()=>{const a=XU.T(NK0),b=XU.T(NK1);limb3(V0,[a,b],[3.6,3.1],A.dry?mixT(K.skin,K.bark,A.dry):K.skin,{lw:2.4,dark:'rgba(60,70,60,.3)'})})}
   if(!below(106))L.add(20,()=>drawHead(V0,XH,A,A.dry?Object.assign({},KH,{skin:mixT(KH.skin,T3('#c8c0ae','#9a907e','#5a5246'),A.dry)}):KH,J));
@@ -713,7 +753,7 @@ function witch2(x,y,face,anim,p,sc,o){sc=sc||1;o=o||{};anim=MV.includes(anim)?an
   if(!below(104)){const ph=LOWFX?0:A.hairPh;for(const sd of[-1,1]){const pts=lock(XH,XU,HAIRF.map(q=>[q[0],sd*q[1],q[2]]),ph+sd,.35),top=pts[0];
       const inH=BD.front(BD.B[2],add(top,XH.Rd([0,sd*2.4,0]))),inB=BD.front(BD.B[1],add(pts[3],XU.Rd([2,sd*2,0])));L.add((inH?25:inB?15:4.5)+D(top)*.001,()=>drawLock(V0,pts,HAIRFR,A.dry?pal(0,A.dry):K))}
     const bk=BD.front(BD.B[2],XH.T([-9,0,88]));if(bk||F(XU.Rd([-1,0,0]))>-.55)HAIRB.forEach((h,i)=>{const pts=lock(XH,XU,h,ph+i*1.3,.4);L.add((bk?24.5:3.8)+i*.01,()=>drawLock(V0,pts,HAIRBR,A.dry?pal(0,A.dry):K))});
-    for(const c of collarGeo(XU,A)){const f=F(c.inner),Kc=KZ(c.z),path=A.fall>=.5?SER:PET;L.add(f>0?3+c.i*.01:37+D(c.b)*.001,()=>ga(c.al,()=>leafF(V0,path,c.b,c.d,c.s,c.L,c.W,Kc.leaf,Kc,{back:Kc.back,lw:2.1,vl:.86,kb:-.3})))}
+    for(const c of collarGeo(XU,A)){const Kc=KZ(c.z),path=A.fall>=.5?SER:PET;L.add(slot(c.mid,9),()=>ga(c.al,()=>leafF(V0,path,c.b,c.d,c.s,c.L,c.W,Kc.leaf,Kc,{backT:Kc.backT,lw:2.1,vl:.86,kb:-.62,kbb:-.05})))}
     if(A.fall>=.5&&A.dry<.5)for(const sd of[-1,1]){const a=Math.PI+sd*1.02,b=XU.T([Math.cos(a)*8,Math.sin(a)*9,72]),e=XU.T([Math.cos(a)*15,Math.sin(a)*17,92]),m=XU.T([Math.cos(a)*11,Math.sin(a)*12.5,82]);
       const inner=F(XU.Rd([-Math.cos(a),-Math.sin(a),.3]))>0;L.add(inner?2.9:37,()=>{limb3(V0,[b,m,e],[1.6,1.2,.8],K.bark,{lw:1.8,noShade:true});const q=P(m),qe=P(add(m,XU.Rd([0,sd*2.5,1.5])));ctx.fillStyle=K.spine;ctx.strokeStyle=INK;ctx.lineWidth=.8;tri(q[0],q[1],qe[0],qe[1],1)})}
     if(A.halo>.01)L.add(backF?38:2.8,()=>drawHalo(V0,XU,A,K,p))}
