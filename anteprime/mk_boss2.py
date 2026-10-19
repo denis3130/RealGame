@@ -83,6 +83,8 @@ panel=r"""
     if(inMenu&&(first||PB.ran)){first=false;PB.ran=false;show()}}catch(err){}},300)})();
 """
 i=s.rfind('})();')
+kit=os.path.join(root,'sprite','nemici3d','boss2kit.js')   # the toolkit of the bosses made after the Golem (once, before their models)
+if os.path.exists(kit)and'window.C3K='not in s:models.insert(0,open(kit,encoding='utf-8').read())
 s=s[:i]+'\n'+'\n'.join(models)+'\n'+'\n'.join(brains)+'\n'+('window.__E=s=>eval(s);' if test else panel)+s[i:]
 name=('boss2' if multi else used[0][0]+'2')+'_test.html' if test else ('boss_classici_sfida.html' if multi else used[0][0]+'2.html')
 out=os.path.join(root,'tests',name) if test else os.path.join(here,name)

@@ -14,7 +14,7 @@ game=open(os.path.join(root,'index.html'),encoding='utf-8').read()
 ne=open(os.path.join(root,'sprite','nemici','disegno_nemici.js'),encoding='utf-8').read()
 d3=os.path.join(root,'sprite','nemici3d')
 # the toolkit first, then the monsters in the order of the chapters
-order=['base3d.js','cap1.js','cap1b.js','cap2.js','cap3.js','cap4.js','umanoidi.js','boss1.js','boss2.js','boss3.js']
+order=['base3d.js','boss2kit.js','cap1.js','cap1b.js','cap2.js','cap3.js','cap4.js','umanoidi.js','boss1.js','boss2.js','boss3.js']
 import re
 files=[f for f in order if os.path.exists(os.path.join(d3,f))]+sorted(os.path.basename(f) for f in glob.glob(os.path.join(d3,'*.js')) if os.path.basename(f) not in order and not re.search(r'2[ab]\.js$',os.path.basename(f)))
 src='\n'.join(open(os.path.join(d3,f),encoding='utf-8').read() for f in files)

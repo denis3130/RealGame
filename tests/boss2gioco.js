@@ -41,6 +41,8 @@ const page=path.join(__dirname,`${T}2_test.html`);if(!fs.existsSync(page)){conso
   if(C.p2){await E(`window.__half=1;window.__st={};{const e=${FIND};if(e){e.hp=e.max*.49}}0`);
     for(let i=0;i<24;i++){await p.waitForTimeout(250);if(await E(`(()=>{const e=${FIND};return !!(e&&e.p2)})()`))break}
     await p.waitForTimeout(900);await shot('fase2_a');await p.waitForTimeout(6000);await shot('fase2_b');await p.waitForTimeout(7000);await shot('fase2_c');
+    // a long second phase: keep watching (up to 24 s more) until every move of it has been seen
+    for(let i=0;i<48;i++){const seen=JSON.parse(await E(`JSON.stringify(__st)`));if(C.moves2.every(m=>seen[m]))break;await p.waitForTimeout(500)}
     st=JSON.parse(await E(`JSON.stringify({st:__st,hz:__hz,p2:!!(${FIND}||{}).p2})`));
     const s2=C.moves2.filter(m=>st.st[m]);ok('fase 2',st.p2&&s2.length===C.moves2.length,s2.join(', ')+(s2.length<C.moves2.length?' · mancano: '+C.moves2.filter(m=>!st.st[m]).join(', '):'')+' · '+JSON.stringify(st.st));
     if(C.voice.includes('angry'))ok('voce: la rabbia della fase 2',(await said()).includes('angry'),'')}
