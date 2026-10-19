@@ -67,6 +67,8 @@ sono **finiti e collaudati ma non sono nel gioco**: ce li mette l'altra sessione
   Regina, Fenice e il Fabbro) riscrivono anche loro la riga della guida (`BEST.find(...)`), con testi più lunghi che allungano le schede
   vicine: va scelto un posto solo. Le anteprime e lo sblocco delle arene vanno bene così (il boss riempie la stanza; nella miniatura
   dell'arena 3 le punte delle tife del Re Rospo arrivano al bordo alto).
+- Pagina per sfidare i quattro dal telefono, con le versioni finali (19 ottobre sera): https://claude.ai/artifact/HQLxFvDjYaJAr1KupGnVYJ
+  (`python3 anteprime/mk_boss2.py golem salamander toad yeti` → `anteprime/boss_classici_sfida.html`, ripubblicando lo stesso file).
 - `anteprime/mk_boss2.py` con un boss che è già nel gioco usa quello del gioco (lo dice: «cervello e modello sono già nel gioco»).
 - La prova delle anteprime (`tests/anteprime.js`) ora ha un salvataggio con gli oggetti e l'eroe (senza, il gioco lo prendeva per un
   giocatore nuovo e il prologo copriva tutto) e aspetta che le porte dello sblocco si aprano.
