@@ -2,7 +2,8 @@
 // LA SALAMANDRA DI LAVA RIFATTA: «la Regina del Vulcano» (Denis, 15 ottobre: «rivisita tutti i boss … possenti, belli, fighi, che diano
 // timore nello sfidarli», «migliora anche le loro abilità speciali»; 16 ottobre, dopo il Golem: «sì, fai gli altri 12»). ANTEPRIMA: questo
 // file e il modello sprite/nemici3d/salamander2.js entrano solo nella copia del gioco fatta da anteprime/mk_boss2.py; nel gioco vero dopo
-// il sì di Denis (il modello prende il posto di 'salamander' e questo file va in src/ordine.txt). Design e numeri: docs/boss-classici.md.
+// il sì di Denis (il modello prende il posto di 'salamander' e questo file va in src/ordine.txt). Design, mosse e numeri:
+// docs/boss-classici-design/salamander.md (il metodo comune: docs/boss-classici.md). Modello finto per le prove: anteprime/boss2/salamander_stub.js.
 // Una salamandra pezzata enorme, carminio e oro, ritta come su un trono, con una corona d'ossidiana, una gorgiera di petali di magma (il
 // suo cuore: prima di ogni colpo si apre come un sole e la sua luce corre nella parte che colpirà) e lo scettro in punta alla coda.
 // Ogni stato ha il nome di una mossa del modello; il colpo vero parte nel suo fotogramma (b3at, 81-boss3-base.js). Mosse:
@@ -23,11 +24,12 @@
 // coda alla testa, la corona cade e rotola, il corpo diventa un mucchio d'ossidiana. È il primo boss del vulcano: mai due attacchi insieme,
 // ogni danno ha un avviso a terra di almeno 0,6 s, dopo ogni mossa almeno 1 s di camminata. Gli avvisi tondi sono ellissi 1 : 0,6 (il
 // pavimento visto dalla telecamera dei modelli) e colpiscono esattamente dove si vedono; i pericoli stanno sul pavimento (i piedi dell'eroe
-// sono 8 px sotto il suo punto). Nella fase 2 l'ordine è Frustata doppia, Tuffo, Sputafuoco, Anello, Eruzione: le mosse nuove arrivano
-// subito dopo la muta e l'Eruzione beve l'anello appena acceso.
+// sono 8 px sotto il suo punto). Fase 1: Sputafuoco, Frustata, Tuffo, Sputafuoco, Anello. Fase 2 (il giro del design): Sputafuoco, Anello,
+// Frustata doppia, Tuffo col salto del delfino, Eruzione (una volta per giro, dopo il Tuffo, quando c'è fuoco da bere); subito dopo la muta
+// l'Eruzione e poi, prima del giro, la Frustata doppia e il Tuffo: le due mosse nuove si vedono appena ha cambiato pelle.
 // =====================================================================
 const SL2ON=typeof N3!=='undefined'&&!!N3.salamander2;
-const SL2={seq1:['spit','whip','dive','spit','ring'],seq2:['whip2','dive','spit','ring','erupt'],red:'229,72,77',lava:'255,140,50',gold:'255,215,120',
+const SL2={seq1:['spit','whip','dive','spit','ring'],seq2:['spit','ring','whip2','dive','erupt'],pre2:['whip2','dive'],red:'229,72,77',lava:'255,140,50',gold:'255,215,120',
   K:.6,KP:.55,sp2:1.25,cha:100*Math.PI/180,charge:new Set(['spit','whip','whip2','burrow','crouch','erupt'])};
 const SL2TORCH={red:[['#ff3d12','#ff8a22','#ffe0a0'],'255,110,50'],white:[['#fff0c0','#ffd27a','#ffffff'],'255,230,180']};
 if(SL2ON){
@@ -38,11 +40,18 @@ if(SL2ON){
   // the bar, the halo, the aura and the runes; the 2D flames, embers and smoke of the old trail go: the model draws all of it
   B2H.salamander=92;B2T.salamander=[[SL2.lava,SL2.gold],'255,190,110'];B2.salamander.back=()=>{};B2.salamander.front=()=>{};
   BBFX.salamander={c:'#43355a',f:'#ffb060',k:'rise',s:'ignite'};RUNEC.magma=['255,110,40',SL2.gold];
-  // what the game passes to the model: the height of the dolphin leap (o.z), the head turned toward the hero while she walks (o.look,
-  // smoothed), the bend of the run round the ring (o.curve); the walk follows its own clock
-  N3G.zm.salamander=1;
-  N3G.opt.salamander=e=>{let lk=0;if(e.st==='walk'&&typeof P!=='undefined'&&P){const f=e.f3!=null?e.f3:(e.face||0);lk=clamp(angDiff(f,Math.atan2(P.y-e.y,P.x-e.x)),-1.2,1.2)}
-    const t=G.t||0,dt=Math.min(.1,Math.max(0,t-(e.lkT==null?t:e.lkT)));e.lkT=t;e.lk=e.lk==null?lk:e.lk+(lk-e.lk)*Math.min(1,dt*8);return{look:e.lk,curve:e.curve||0}};
+  // what the game passes to the model: the height of the dolphin leap (o.z) and its first hole (o.h1, where the column of lava stays), the
+  // head turned toward the hero while she walks (o.look, smoothed; in the attacks that start from the walk only the lag of the body's turn,
+  // so the head never leaves you: it points where the blow will go and comes back to the body by itself), the bend of the run round the
+  // ring (o.curve), the dash before the Frustata (o.rush: the collar opens as a fan, not the comet of the ring); the walk follows its clock
+  N3G.zm.salamander=1;const SL2LK={spit:1,crouch:1,pant:1,erupt:1,rage:1,taunt:1};
+  N3G.opt.salamander=e=>{let lk=0;const f=e.f3!=null?e.f3:(e.face||0);if(e.st==='walk'&&typeof P!=='undefined'&&P)lk=clamp(angDiff(f,Math.atan2(P.y-e.y,P.x-e.x)),-1.2,1.2);
+    else if(SL2LK[e.st])lk=clamp(angDiff(f,e.face||0),-1.2,1.2);
+    const t=G.t||0,dt=Math.min(.1,Math.max(0,t-(e.lkT==null?t:e.lkT)));e.lkT=t;e.lk=e.lk==null?lk:e.lk+(lk-e.lk)*Math.min(1,dt*8);
+    return{look:e.lk,curve:e.curve||0,rush:e.st==='rush'?1:0,h1:e.st==='leap'&&e.c1?{x:e.c1.x-e.x,y:e.c1.y-e.y}:null,wph:e.st!=='walk'?e.wph:null,rph:e.st==='pant'||e.st==='whip'||e.st==='whip2'?e.rph:null}};
+  // (the phase of the walk she leaves for a move: the model starts the move from that pose of the walk, nothing pops)
+  {const _g=b3go;b3go=function(e,st){const pv=e&&e.st,w0=e&&e.wt,m0=e&&e.mt;_g.apply(this,arguments);if(e&&e.type==='salamander'){if(pv==='walk'&&st!=='walk'){const d=B3D(e,'walk');e.wph=((((w0||0)%d)+d)%d)/d}else e.wph=null;
+    if((pv==='run'||pv==='rush')&&st!=='run'&&st!=='rush'){const d=B3D(e,'run');e.rph=((((m0||0)/d)%1)+1)%1}else e.rph=null}}}
   N3G.wp.salamander=e=>{const d=B3D(e,'walk');return(((e.wt||0)%d)+d)%d/d};
   {const b=BEST.find(q=>q[0]==='salamander');if(b)b[2]='Boss. Ventagli di magma, frustate di coda, nuota sotto il pavimento con la corona come una pinna e ti chiude in un anello di fuoco. A metà vita cambia pelle: la pelle vecchia resta e fa da riparo.'}
   VINTO.magma='La corona della Salamandra è caduta. Il vulcano tace.'}
@@ -105,8 +114,9 @@ function sl2sfx(k,x,i){if(!SL2SND[k]||!AU.ctx||!AU.on.sfx||AU.ctx.state!=='runni
 
 // ---- the brain
 function sl2walk(e,t){e.wt=0;e.wk=0;e.curve=0;e.shell=0;e.air=0;e.z=0;e.moving=true;b3go(e,'walk',t!=null?t:e.p2?rand(1,1.3):rand(1.1,1.5))}
-// the next move of the sequence (the Frustata out of turn does not count)
-function sl2next(e){const seq=e.p2?SL2.seq2:SL2.seq1;e.si=(e.si==null?-1:e.si)+1;const nx=seq[e.si%seq.length];e.moving=false;
+// the next move of the sequence (the Frustata out of turn does not count; after the moult first the two new moves, then the sequence).
+// Before the Frustata, if you are beyond the reach of its crescent (150 px on the floor) she dashes at you first
+function sl2next(e){const seq=e.p2?SL2.seq2:SL2.seq1;let nx;if(e.pre&&e.pre.length)nx=e.pre.shift();else{e.si=(e.si==null?-1:e.si)+1;nx=seq[e.si%seq.length]}e.moving=false;
   if(nx==='spit')sl2spit0(e);
   else if(nx==='whip'||nx==='whip2'){if(sl2d(e.x,e.y,P.x,P.y)>150){b3go(e,'rush',.9);e.rushTo=nx;sfx('dash',0,e.x)}else sl2whip0(e,nx)}
   else if(nx==='dive'){const a=Math.atan2(P.y-e.y,P.x-e.x);b3go(e,'burrow');e.face=a;e.lf=a;e.sa=null}
@@ -118,7 +128,7 @@ function sl2spit0(e){const a=Math.atan2(P.y-e.y,P.x-e.x),M=b3pt(e,40,0,a),H=sl2h
   b3go(e,'spit');e.moving=false;e.face=a;e.lf=a;
   const len=Math.min(sl2reach(M.x,M.y,aa,900),Math.max(240,Math.hypot(H.x-M.x,H.y-M.y)+70));
   e.sp={x:M.x,y:M.y,a:aa,ha:(p2?30:23)*Math.PI/180,len};e.spw=sl2w({k:'cone',x:M.x,y:M.y,a:aa,ha:e.sp.ha,len,t:.76*B3D(e,'spit')/sl2rt(e)});sl2torch(...SL2TORCH.red,1.5)}
-function sl2fan(e,n){const F=e.sp;if(!F)return;const S=b3pt(e,44,0,e.lf),st=e.p2?.175:.2;for(let i=0;i<n;i++)sl2shoot(S.x,S.y-14,F.a+(i-(n-1)/2)*st,e.p2?185:165,12,16,e.p2);
+function sl2fan(e,n){const F=e.sp;if(!F)return;const S=b3pt(e,44,0,e.lf),st=e.p2?.175:.2;for(let i=0;i<n;i++)sl2shoot(S.x,S.y-14,F.a+(i-(n-1)/2)*st,e.p2?185:165,12,45,e.p2);
   if(!LOWFX)vfxBlast(S.x,S.y-36,SL2.lava,26,{sparks:6,dust:false,ring2:false,spcol:['#ffd05a','#ff8a2a','#fff3c4']});shake(1.5)}
 // ---- FRUSTATA: it turns its back (the model), the crescent behind her toward you (.16), the sweep (.66); in the second phase also the
 // stripe (.54) and the crack of the tail along it (.85). e.face stays the direction toward you at p 0 for the whole move
@@ -154,15 +164,22 @@ function sl2burst(e,x,y,r,dmg,n,pr,pt){const H=sl2hf();
   sl2fire(x,y,pr,pt,{p2:e.p2});shake(7);sfx('boom',0,x);vib([40,30,60]);sl2sfx('geyser',x);
   vfxBlast(x,y-6,'255,130,50',90,{debris:'lava',n:B3N(20),fire:B3N(14),sparks:B3N(16),dust:8});
   if(BOSS2){ENV2.mark('crater',x,y,34);ENV2.chunks(x,y,B3N(16),['#3a2a24','#ff7a2e','#5a4038'],150);ENV2.fall(B3N(8));sl2torch(...SL2TORCH.white,.6);ENV2.rocks(x,y,150,3);ENV2.burnGrass(x,y,70);ENV2.ignite(x,y,70)}}
-// ---- ANELLO DI FUOCO: the ring round you (chosen at p 0 of the crouch), the gap just before where she gets on it
-function sl2ring(e){const p2=e.p2,cx0=(L+R)/2,cy0=(TOP+BOT)/2,gap=(p2?40:60)*Math.PI/180,C=[];
-  for(let rr=p2?110:125;rr>=(p2?90:95);rr-=10)for(let i=0;i<=10;i++){const u=i/10,cx=P.x+(cx0-P.x)*u,cy=P.y+(cy0-P.y)*u;
-    if(cx-rr<L+20||cx+rr>R-20||cy-rr<TOP+20||cy+rr>BOT-20)continue;if(G.rocks.some(k=>Math.abs(Math.hypot(k.x-cx,k.y-cy)-rr)<k.r+24))continue;
-    const cl=rr-Math.hypot(P.x-cx,P.y-cy);if(cl>=44)return sl2ringOf(e,cx,cy,rr,gap);C.push([cl,cx,cy,rr])}
-  if(C.length){C.sort((a,b)=>b[0]-a[0]);return sl2ringOf(e,C[0][1],C[0][2],C[0][3],gap)}
+// ---- ANELLO DI FUOCO: the ring round you (chosen at p 0 of the crouch), the gap just before where she gets on it. Its centre is where you
+// are, or as near to you as the walls (20 px) and the basalt (24 px from the line) let it be, in any direction (only toward the middle of
+// the room, a third of the rings did not have you inside: by the walls or by the columns); the biggest ring that keeps you 44 px inside
+function sl2ring(e){const p2=e.p2,cx0=(L+R)/2,cy0=(TOP+BOT)/2,gap=(p2?40:60)*Math.PI/180;let best=null;
+  for(let rr=p2?110:125;rr>=(p2?90:95);rr-=10){
+    for(let dx=-rr;dx<=rr;dx+=8)for(let dy=-rr;dy<=rr;dy+=8){const cx=P.x+dx,cy=P.y+dy,cl=rr-Math.hypot(dx,dy);if(cl<-40||best&&cl<=best[0])continue;
+      if(cx-rr<L+20||cx+rr>R-20||cy-rr<TOP+20||cy+rr>BOT-20)continue;if(G.rocks.some(k=>Math.abs(Math.hypot(k.x-cx,k.y-cy)-rr)<k.r+24))continue;best=[cl,cx,cy,rr]}
+    if(best&&best[0]>=44)break}
+  if(best)return sl2ringOf(e,best[1],best[2],best[3],gap);
   // no room for a ring: the lap of the room of today, an ellipse round the middle
   return{cx:cx0,cy:cy0,rr:0,rx:130,ry:170,oval:1,th:Math.atan2((e.y-cy0)/170,(e.x-cx0)/130),dir:Math.random()<.5?1:-1,gap:0}}
-function sl2ringOf(e,cx,cy,rr,gap){return{cx,cy,rr,oval:0,th:Math.atan2(e.y-cy,e.x-cx),dir:Math.random()<.5?1:-1,gap}}
+// where she gets on it: the point of the ring nearest to her, or the nearest one she can run to straight without going through a column
+function sl2ringOf(e,cx,cy,rr,gap){const t0=Math.atan2(e.y-cy,e.x-cx);let th=t0;
+  for(let j=0;j<=26;j++){const t=t0+(j%2?1:-1)*Math.ceil(j/2)*.12,ex=cx+Math.cos(t)*rr,ey=cy+Math.sin(t)*rr,dx=ex-e.x,dy=ey-e.y,dd=dx*dx+dy*dy||1;
+    if(!G.rocks.some(k=>{const u=clamp(((k.x-e.x)*dx+(k.y-e.y)*dy)/dd,0,1);return Math.hypot(e.x+dx*u-k.x,e.y+dy*u-k.y)<k.r+16})){th=t;break}}
+  return{cx,cy,rr,oval:0,th,dir:Math.random()<.5?1:-1,gap}}
 const sl2rpt=(R,th)=>R.oval?{x:R.cx+Math.cos(th)*R.rx,y:R.cy+Math.sin(th)*R.ry}:{x:R.cx+Math.cos(th)*R.rr,y:R.cy+Math.sin(th)*R.rr};
 const sl2rds=(R,th)=>R.oval?Math.hypot(R.rx*Math.sin(th),R.ry*Math.cos(th)):R.rr;
 function sl2rlen(R){if(!R.oval)return R.rr*R.tot;let s=0;for(let i=0;i<64;i++)s+=sl2rds(R,(i+.5)/64*TAU)*TAU/64;return s*R.tot/TAU}
@@ -180,8 +197,8 @@ function sl2wave(e,w){const B=G.sl2,X=e.er,n=[6,9,12][w],d=[85,160,235][w],o=X.o
   for(const q of pts){if(!sl2in(q.x,q.y,12))continue;if(G.rocks.some(k=>Math.hypot(k.x-q.x,k.y-q.y)<k.r+30))continue;
     B.gey.push({x:q.x,y:q.y,t:-lead,lead,on:0,hit:X.hit[w],p2:e.p2,seed:Math.random()*9})}
   sl2sfx('rumble',cx)}
-// ---- LA MUTA: at half health, from a calm move; no damage, no attacks; the banner at .86; at the end she slides 30 px forward and the old
-// skin stays where she was (with two temporary stones inside it: a shelter), then the eruption
+// ---- LA MUTA: at half health, from a calm move; no damage, no attacks; the banner at .86; at the end she slides 45 forward (as the model
+// does) and the old skin stays where she was (with two temporary stones inside it: a shelter), then the eruption
 function sl2moult(e,a){const B=sl2B();e.p2=true;e.moult=1;e.shell=99;e.air=0;e.z=0;e.curve=0;e.sp=null;G.eproj=G.eproj.filter(p=>p.kind!=='magma');B.warn=[];B.gey=[];
   for(const z of B.fire)z.drink=0;b3go(e,'rage');e.moving=false;e.face=a;e.lf=a;sfx('hiss',0,e.x);shake(3)}
 function sl2husk(x,y,f){const B=sl2B(),V0=C3.V(f);B.husk={x,y,face:f,t:0,life:15,max:15,brk:0};
@@ -201,7 +218,7 @@ if(SL2ON)salamUpd=function(e,dt,a,d){const sp=e.p2?SL2.sp2:1;dt*=sp;// the secon
     const g=Math.hypot(P.x-e.x,P.y-e.y),base=g>170?navAngle(e):a,off=g>170?.4:g>110?1.3:g>80?1.75:2.5,ma=base+off*e.wsd,v=(g>80?50:70)*dt,ox=e.x,oy=e.y;
     sl2move(e,Math.cos(ma)*v,Math.sin(ma)*v);if(v>0&&Math.hypot(e.x-ox,e.y-oy)<v*.3){e.wsd=-e.wsd;e.sdT=rand(2,3)}e.face=ma;
     // the front feet leave a print that glows and cools (front right at .00, front left at .50)
-    const D=B3D(e,'walk'),ph0=(w0%D)/D,ph1=(e.wt%D)/D;if(ph1<ph0)sl2print(e,-1);if(ph0<.5&&ph1>=.5)sl2print(e,1);
+    const D=B3D(e,'walk'),ph0=(w0%D)/D,ph1=(e.wt%D)/D;if(ph1<ph0)sl2print(e,1);if(ph0<.5&&ph1>=.5)sl2print(e,-1);
     // the train of the queen: the tip of the tail drags on the floor and leaves fire
     e.trT=(e.trT||0)-dt;if(e.trT<=0){e.trT=.3;const q=b3pt(e,-112,0);sl2fire(q.x,q.y,11,p2?2.2:1.4,{p2});
       if(!LOWFX)for(let i=0;i<2;i++)fxPush({k:'streak',x:q.x+rand(-4,4),y:q.y-2,vx:rand(-40,40),vy:rand(-80,-30),g:300,t:rand(.2,.35),max:.35,col:pk(['#ffd05a','#ff8a2a']),w:1.6})}
@@ -215,8 +232,8 @@ if(SL2ON)salamUpd=function(e,dt,a,d){const sp=e.p2?SL2.sp2:1;dt*=sp;// the secon
     if(e.stT<=0){sl2unw(e.spw);e.spw=null;e.sp=null;sl2walk(e)}break}
   // the dash before the Frustata when you are out of reach (the model's run, straight); still out of reach after it: the next move
   case 'rush':{e.moving=true;e.curve=0;const ra=Math.atan2(P.y-e.y,P.x-e.x),ed=sl2d(e.x,e.y,P.x,P.y);e.face=ra;
-    if(ed>95){const v=230*dt;sl2move(e,Math.cos(ra)*v,Math.sin(ra)*v);if(!LOWFX&&Math.random()<.5)fxPush({k:'puff',x:e.x+rand(-14,14),y:e.y+8,vx:-Math.cos(ra)*30,vy:-8,t:.4,r:rand(4,8)})}
-    if(ed<=95||e.stT<=0){e.moving=false;if(sl2d(e.x,e.y,P.x,P.y)>150)sl2next(e);else sl2whip0(e,e.rushTo||'whip')}break}
+    if(ed>90){const v=230*dt;sl2move(e,Math.cos(ra)*v,Math.sin(ra)*v);if(!LOWFX&&Math.random()<.5)fxPush({k:'puff',x:e.x+rand(-14,14),y:e.y+8,vx:-Math.cos(ra)*30,vy:-8,t:.4,r:rand(4,8)})}
+    if(ed<=90||e.stT<=0){e.moving=false;if(sl2d(e.x,e.y,P.x,P.y)>150)sl2next(e);else sl2whip0(e,e.rushTo||'whip')}break}
   case 'whip':case 'whip2':{e.moving=false;e.face=e.lf;const W2=e.st==='whip2',D=B3D(e,e.st),ks=W2?.14:.16,kh=W2?.53:.66;
     if(b3at(e,ks))e.cw=sl2w({k:'cres',x:e.x,y:e.y+8,a:e.wa,r0:40,r1:150,ha:SL2.cha,dir:e.wdir,t:(kh-ks)*D/sl2rt(e)});
     if(b3at(e,kh)){sl2unw(e.cw);e.cw=null;sl2sweep(e)}
@@ -228,7 +245,7 @@ if(SL2ON)salamUpd=function(e,dt,a,d){const sp=e.p2?SL2.sp2:1;dt*=sp;// the secon
     if(b3at(e,.22)){const q=b3pt(e,30,0);if(BOSS2)ENV2.mark('cracks',q.x,q.y,22);sl2sfx('dig',e.x)}
     if(e.stT<=0){b3go(e,'swim',e.dv2?.8:p2?1.1:1.4);e.dv2=0;e.shell=9;e.air=1;e.sa=null;e.rmT=0}break}
   // the fin comes toward you (130 px/s, turning at most 2.5 rad/s); it stops 40 px from you or when its time is over, never under a rock
-  case 'swim':{e.moving=false;e.shell=9;e.air=1;const ta=Math.atan2(H.y-(e.y+8),H.x-e.x);if(e.sa==null)e.sa=e.face;e.sa+=clamp(angDiff(e.sa,ta),-2.5*dt,2.5*dt);e.face=e.sa;
+  case 'swim':{e.moving=false;e.shell=9;e.air=1;const ta=Math.atan2(H.y-(e.y+8),H.x-e.x);if(e.sa==null)e.sa=e.face;e.sa+=clamp(angDiff(e.sa,ta),-2.5*dt,2.5*dt);e.face=e.sa;e.f3t=-9;
     const v=130*dt;e.x=clamp(e.x+Math.cos(e.sa)*v,L+34,R-34);e.y=clamp(e.y+Math.sin(e.sa)*v,TOP+44,BOT-44);
     if(!e.cpt||Math.hypot(e.x-e.cpt.x,e.y-e.cpt.y)>9){e.cpt={x:e.x,y:e.y};const j=rand(-3,3);B.cracks.push({x:e.x-Math.sin(e.sa)*j,y:e.y+8+Math.cos(e.sa)*j*SL2.K,t:1.5});if(B.cracks.length>40)B.cracks.shift()}
     for(const r of G.rocks)if(!r.temp&&Math.hypot(r.x-e.x,r.y-e.y)<r.r+14&&!(r._sl2T>(G.t||0)-.5)){r._sl2T=G.t||0;if(BOSS2)ENV2.rocks(r.x,r.y,r.r+10,0)}
@@ -252,17 +269,17 @@ if(SL2ON)salamUpd=function(e,dt,a,d){const sp=e.p2?SL2.sp2:1;dt*=sp;// the secon
     if(b3at(e,.8)){e.air=0;e.z=0;sl2unw(e.lw2);e.lw2=null;if(c2)sl2burst(e,c2.x,c2.y+8,40,18,LOWFX?6:8,22,3)}
     if(e.stT<=0){e.z=0;e.air=0;e.shell=0;e.c1=e.c2=null;sl2walk(e)}break}
   // ---- ANELLO: crouched (the ring is already on the floor), then the run: straight to where she gets on it, then round it
-  case 'crouch':{e.moving=false;e.face=e.lf;if(e.stT<=0){const R=e.rg;R.ph='to';R.acc=0;R.mk=0;R.el=0;R.shots=0;R.len=sl2rlen(R);R.lapReal=R.len/((p2?375:300)*sl2rt(e));b3go(e,'run',99);e.moving=true;e.air=1}break}
+  case 'crouch':{e.moving=false;e.face=e.lf;if(e.stT<=0){const R=e.rg;R.ph='to';R.acc=0;R.mk=0;R.el=0;R.shots=0;R.len=sl2rlen(R);R.lapReal=R.len/(300*sl2rt(e));b3go(e,'run',99);e.moving=true;e.air=1}break}
   // on the run she touches you only where the band of the ring is (0.6 of her circle each side of the line, as wide as the band drawn):
   // the game's own contact would reach 40 px off the line, where nothing warns you
-  case 'run':{e.moving=true;const R=e.rg;if(!R){sl2walk(e);break}const v=(p2?375:300)*dt;e.air=1;if(Math.hypot(P.x-e.x,P.y-e.y)<P.r+e.r*.6)hurtP(e.cdmg);
+  case 'run':{e.moving=true;const R=e.rg;if(!R){sl2walk(e);break}const v=300*dt;e.air=1;if(Math.hypot(P.x-e.x,P.y-e.y)<P.r+e.r*.6)hurtP(e.cdmg);
     if(R.ph==='to'){const E=sl2rpt(R,R.th),dx=E.x-e.x,dy=E.y-e.y,dd=Math.hypot(dx,dy);e.curve=0;
       if(dd<=v){e.x=E.x;e.y=E.y;R.ph='lap';R.cur=R.th}else{e.x+=dx/dd*v;e.y+=dy/dd*v;e.face=Math.atan2(dy,dx)}break}
     // round the ring: fire every 18 px (27 with LOWFX: the fires are fewer), a scorch every 40 px; in the second phase a ball at you
     // from outside at a quarter, half and three quarters of the lap
     R.el+=dt/sl2rt(e);const dth=Math.min(R.tot-R.cov,v/sl2rds(R,R.cur));R.cur+=R.dir*dth;R.cov+=dth;
     const q=sl2rpt(R,R.cur);e.x=q.x;e.y=q.y;e.face=Math.atan2(R.oval?R.ry*Math.cos(R.cur):Math.cos(R.cur),R.oval?-R.rx*Math.sin(R.cur):-Math.sin(R.cur))+(R.dir<0?Math.PI:0);
-    {const rd=sl2rds(R,R.cur),kap=R.oval?R.rx*R.ry/Math.pow(rd,3):1/R.rr;e.curve=R.dir*kap}
+    {const rd=sl2rds(R,R.cur),kap=R.oval?R.rx*R.ry/Math.pow(rd,3):1/R.rr;e.curve=-R.dir*kap}e.f3t=-9;
     R.acc+=v;R.mk+=v;const gap=LOWFX?27:18;
     while(R.acc>=gap){R.acc-=gap;const left=Math.max(0,R.lapReal-R.el);sl2fire(e.x,e.y+8,LOWFX?17:15,left+(p2?3:2.2),{p2,ring:1})}
     if(R.mk>=40){R.mk=0;if(BOSS2)ENV2.mark('scorch',e.x,e.y+8,14)}
@@ -286,10 +303,11 @@ if(SL2ON)salamUpd=function(e,dt,a,d){const sp=e.p2?SL2.sp2:1;dt*=sp;// the secon
     [.74,.77,.80,.83,.86].forEach((ka,i)=>{if(b3at(e,ka))sl2sfx('notes',e.x,i)});
     if(b3at(e,.86)){banner('La Regina cambia pelle!','Fase 2',1.6);bossRage(e,SL2.gold);$('bossBar').classList.add('rage');shake(8);b3say(e,'angry');vib([60,40,120]);
       if(BOSS2){sl2torch(...SL2TORCH.red,3);ENV2.rocks(e.x,e.y,400,0);ENV2.fall(B3N(10))}}
-    if(e.stT<=0){const hx=e.x,hy=e.y,hf=e.f3!=null?e.f3:e.lf;moveCircle(e,Math.cos(e.lf)*30,Math.sin(e.lf)*30);sl2husk(hx,hy,hf);e.shell=0;e.si=-1;sl2erupt0(e)}break}
+    if(e.stT<=0){const hx=e.x,hy=e.y,hf=e.f3!=null?e.f3:e.lf,qa=b3pt(e,45,0),qb=b3pt(e,0,0);moveCircle(e,qa.x-qb.x,qa.y-qb.y);sl2husk(hx,hy,hf);e.shell=0;e.si=-1;e.pre=SL2.pre2.slice();sl2erupt0(e)}break}
   default:sl2walk(e)}};
-// the prints of her front feet (s: +1 her left, -1 her right)
-function sl2print(e,s){const B=G.sl2;if(!B)return;const q=b3pt(e,6,32*s),f=e.f3!=null?e.f3:e.face||0;B.prints.push({x:q.x,y:q.y,a:f,t:0});if(B.prints.length>8)B.prints.shift();G.shake=Math.max(G.shake||0,.8)}
+// the prints of her front feet where the model puts them down (s: +1 her right, -1 her left: the model's y is to her right; the foot lands
+// 17 ahead of its place at rest, 6 + 17)
+function sl2print(e,s){const B=G.sl2;if(!B)return;const q=b3pt(e,23,32*s),f=e.f3!=null?e.f3:e.face||0;B.prints.push({x:q.x,y:q.y,a:f,t:0});if(B.prints.length>8)B.prints.shift();G.shake=Math.max(G.shake||0,.8)}
 // shell: no blows at all (under the floor, in the moult); the cold collar: +50%
 {const _h=hurtE;hurtE=function(e,d){if(SL2ON&&e&&e.type==='salamander'&&!e.dead&&!(e.intro>0)){
   if(e.shell>0){if(G&&G.fx)G.fx.push({k:'spark',x:e.x,y:e.y-14,t:.15});return}
@@ -313,10 +331,11 @@ function sl2update(dt){const B=G.sl2;if(!B)return;const h=B.husk,S=sl2boss();
   for(let i=B.prints.length-1;i>=0;i--){B.prints[i].t+=dt;if(B.prints[i].t>1.2)B.prints.splice(i,1)}
   for(let i=B.cracks.length-1;i>=0;i--){B.cracks[i].t-=dt;if(B.cracks[i].t<=0)B.cracks.splice(i,1)}
   for(let i=B.drink.length-1;i>=0;i--){B.drink[i].t+=dt;if(B.drink[i].t>B.drink[i].d)B.drink.splice(i,1)}
-  // the geysers: the floor boils in the circle, then the column (0.6 s): 18 if you are in it, one blow a wave; a drop of fire stays
+  // the geysers: the floor boils in the circle, then the column (0.6 s; it stands for the first 0.36 s, then falls back into a drop): 18
+  // if you are in it while it stands, one blow a wave; a drop of fire stays
   for(let i=B.gey.length-1;i>=0;i--){const g=B.gey[i];g.t+=dt;
     if(g.t>=0&&!g.on){g.on=1;shake(1.2);if(!g.hit.snd){g.hit.snd=1;sl2sfx('geyser',g.x)}if(!LOWFX)vfxBlast(g.x,g.y-8,SL2.lava,30,{sparks:5,dust:false,ring2:false,debris:'lava',n:3})}
-    if(g.on&&g.t<.3&&!g.hit.h&&P.inv<=0&&P.dashT<=0&&sl2d(g.x,g.y,H.x,H.y)<24+P.r*.4){g.hit.h=1;hurtP(Math.round(18*DMG()))}
+    if(g.on&&g.t<.36&&!g.hit.h&&P.inv<=0&&P.dashT<=0&&sl2d(g.x,g.y,H.x,H.y)<24+P.r*.4){g.hit.h=1;hurtP(Math.round(18*DMG()))}
     if(g.t>=.6){B.gey.splice(i,1);sl2fire(g.x,g.y,14,1.2,{p2:g.p2})}}
   // her balls drop from the mouth to their flight
   for(const p of G.eproj)if(p.kind==='magma'&&p.h>0){p.h=Math.max(0,p.h-dt*60);p.tr=null}}
@@ -467,6 +486,8 @@ if(SL2ON){const _nm=n3Move;n3Move=function(e){if(e.type!=='salamander')return _n
   if(st&&st!=='walk'&&M.an.includes(st))return[st,clamp(b3k(e),0,.999)];
   return _nm.apply(this,arguments)}}
 // ---- the defeat (4 s, the model's 'die'; the clou at 2.3 s when the crown rolls on the floor)
+function sl2bake(c){const M=N3.meta.salamander;if(!M||!M.an.includes('die'))return;const sv=ctx;
+  try{ctx=fx;fx.save();fx.setTransform(2,0,0,2,0,0);N3.salamander(c.x,c.y+8,c.face,'die',.999,M.sc||1,{p2:c.p2,noFx:1});fx.restore()}catch(err){try{fx.restore()}catch(e2){}}finally{ctx=sv}}
 function sl2coolCrack(c,l){const L0=G.lavaLights||[],i=L0.indexOf(l);if(i>=0)L0.splice(i,1);
   const g=fx;g.save();g.setTransform(2,0,0,2,0,0);const gr=g.createRadialGradient(l.x,l.y,2,l.x,l.y,40);gr.addColorStop(0,'rgba(24,15,12,.78)');gr.addColorStop(.55,'rgba(24,15,12,.5)');gr.addColorStop(1,'rgba(24,15,12,0)');
   g.fillStyle=gr;g.beginPath();g.ellipse(l.x,l.y,40,28,0,0,TAU);g.fill();g.restore();cpart(c,{k:'steam',x:l.x,y:l.y,z:0,vz:rand(14,26),life:rand(.7,1),r:rand(4,6)})}
@@ -483,8 +504,10 @@ if(SL2ON){const _sb=snapBoss;snapBoss=function(e){if(e.type==='salamander')retur
       if(p>.8&&Math.random()<(LOWFX?.08:.2))cpart(c,{k:'puff',x:c.x+rand(-14,14),y:c.y+8,z:10,vz:rand(10,22),vx:rand(-6,6),life:rand(1,1.4),r:rand(4,7),col:'70,58,56'});
       // the lava cracks of the room go out one by one
       if(c.t>=D.clou&&c.ci<c.cool.length){const n=c.cool.length,due=Math.floor((c.t-D.clou)/((c.dur-D.clou-.15)/n))+1;while(c.ci<Math.min(n,due))sl2coolCrack(c,c.cool[c.ci++])}},
-    draw(c,D){const p=Math.min(.999,c.t/c.dur),M=N3.meta.salamander,f=p>.96?(1-p)/.04:1,a0=ctx.globalAlpha;ctx.globalAlpha=a0*Math.max(0,f);
-      try{N3.salamander(c.x,c.y+8,c.face,M.an.includes('die')?'die':'hit',p,(M&&M.sc)||1,{p2:c.p2,noFx:LOWFX})}catch(err){}ctx.globalAlpha=a0}};
+    draw(c,D){const p=Math.min(.999,c.t/c.dur),M=N3.meta.salamander;if(c.baked)return;
+      try{N3.salamander(c.x,c.y+8,c.face,M.an.includes('die')?'die':'hit',p,(M&&M.sc)||1,{p2:c.p2,noFx:LOWFX})}catch(err){}}};
+  // (at the end the heap of obsidian and the fallen crown stay in the room: her last picture goes into the floor, as the other bosses' remains)
+  {const _t=BDIE.salamander.tick;BDIE.salamander.tick=function(c,dt,D){_t.apply(this,arguments);if(c.t>=c.dur-1e-6&&!c.baked){c.baked=1;sl2bake(c)}}}
   const _dc=drawCorpse;drawCorpse=function(c){if(c.type!=='salamander')return _dc.apply(this,arguments);const k=Math.min(1,c.t/c.dur);shadow(c.x,c.y+8,44*(1-.4*k),14,.28*(1-k));
     try{BDIE.salamander.draw(c,BDEATH.salamander)}catch(err){}drawParts(c)}}
 
@@ -497,17 +520,17 @@ if(SL2ON){B3S.add('salamander');
   B3VO.VB.salamander={base:{br:.45,ro:.2,ji:.06,lp:.5,hs:.12},k:{
     cry:[[1.95,[{t:0,d:.75,noise:1,v:['u','i'],hs:.9,a:.75},{t:.55,d:1.36,f:[84,138,96],v:['o','a','o'],h:.06,ro:.45,gu:.35,vib:[.03,5],rel:.4,hs:.25}],.54]],
     angry:[[1.7,[{t:0,d:.3,noise:1,v:'a',hs:.7,a:.8},{t:.22,d:1.42,f:[78,128,70],v:['o','a','o'],ro:.7,ji:.3,gu:.5,vib:[.035,6],rel:.35}],.55]],
-    laugh:[[1.15,[{t:0,d:.2,noise:1,v:'i',hs:1,a:.85},{t:.27,d:.2,noise:1,v:'i',hs:1,a:.75},{t:.54,d:.2,noise:1,v:'i',hs:1,a:.65},{t:.78,d:.34,f:[66,58],v:'r',am:[.7,22],a:.6,br:.6,rel:.5}],.36]],
-    laugh2:[[1.05,[{t:0,d:.05,noise:1,v:'e',hs:.6,a:.9},{t:.13,d:.05,noise:1,v:'e',hs:.6,a:.9},{t:.26,d:.05,noise:1,v:'e',hs:.6,a:.9},{t:.42,d:.6,noise:1,v:['i','e'],hs:1,a:.8}],.36]],
-    hurt:[[.3,[{t:0,d:.04,noise:1,v:'a',a:1},{t:.03,d:.26,noise:1,v:'i',hs:1,a:.85}],.48],[.32,[{t:0,d:.05,noise:1,v:'o',a:.9},{t:.04,d:.26,f:[150,110],v:['i','e'],a:.6,br:.8,hs:.9,ro:.3}],.48]],
+    laugh:[[1.15,[{t:0,d:.2,noise:1,v:'i',hs:1,a:.85},{t:.27,d:.2,noise:1,v:'i',hs:1,a:.75},{t:.54,d:.2,noise:1,v:'i',hs:1,a:.65},{t:.78,d:.34,f:[66,58],v:'r',am:[.7,22],a:.6,br:.6,rel:.5}],.43]],
+    laugh2:[[1.05,[{t:0,d:.05,noise:1,v:'e',hs:.6,a:.9},{t:.13,d:.05,noise:1,v:'e',hs:.6,a:.9},{t:.26,d:.05,noise:1,v:'e',hs:.6,a:.9},{t:.42,d:.6,noise:1,v:['i','e'],hs:1,a:.8}],.4]],
+    hurt:[[.3,[{t:0,d:.04,noise:1,v:'a',a:1},{t:.03,d:.26,noise:1,v:'i',hs:1,a:.85}],.44],[.32,[{t:0,d:.05,noise:1,v:'o',a:.9},{t:.04,d:.26,f:[150,110],v:['i','e'],a:.6,br:.8,hs:.9,ro:.3}],.44]],
     c_spit:[[.5,[{t:0,d:.48,f:[80,150],v:['u','o'],gu:.9,ro:.3,a:.85,h:.1}],.37]],
-    c_whip:[[.55,[{t:0,d:.3,f:[72,76],v:'m',ro:.4,a:.7},{t:.32,d:.05,noise:1,v:'h',a:.8},{t:.36,d:.17,f:[170,120],v:'a',ro:.3,h:.2}],.48]],
+    c_whip:[[.55,[{t:0,d:.3,f:[72,76],v:'m',ro:.4,a:.7},{t:.32,d:.05,noise:1,v:'h',a:.8},{t:.36,d:.17,f:[170,120],v:'a',ro:.3,h:.2}],.52]],
     c_dive:[[.5,[{t:0,d:.48,noise:1,v:['i','u'],hs:.85,a:.85}],.42]],
     c_ring:[[.55,[{t:0,d:.52,f:[118,138,124],v:'r',am:[.85,28],ro:.25,a:.85}],.46]],
     c_erupt:[[.9,[{t:0,d:.86,f:[96,170,118],v:['o','a','o'],ro:.5,gu:.3,vib:[.03,6],h:.05,rel:.3}],.44]],
-    c_pant:[[1,[{t:0,d:.13,noise:1,v:'h',a:.8},{t:.2,d:.13,noise:1,v:'h',a:.7},{t:.4,d:.13,noise:1,v:'h',a:.7},{t:.6,d:.13,noise:1,v:'h',a:.6},{t:.72,d:.28,noise:1,v:['e','i'],hs:1,a:.6}],.37]],
+    c_pant:[[1,[{t:0,d:.13,noise:1,v:'h',a:.8},{t:.2,d:.13,noise:1,v:'h',a:.7},{t:.4,d:.13,noise:1,v:'h',a:.7},{t:.6,d:.13,noise:1,v:'h',a:.6},{t:.72,d:.28,noise:1,v:['e','i'],hs:1,a:.6}],.42]],
     die:[[2.5,[{t:0,d:1.1,noise:1,v:['i','e'],hs:.95,a:.85},{t:.9,d:.95,f:[62,52],v:'h',br:1,hs:.8,gu:.9,a:.55,ro:0},{t:1.85,d:.6,noise:1,v:['a','u'],a:.45}],.47]],
-    win:[[1.95,[{t:0,d:.26,noise:1,v:'i',hs:1,a:.8},{t:.46,d:.26,noise:1,v:'i',hs:1,a:.7},{t:.92,d:.26,noise:1,v:'i',hs:1,a:.6},{t:1.3,d:.6,f:[62,54],v:'r',am:[.75,20],br:.5,a:.65,rel:.5}],.48]]}};
+    win:[[1.95,[{t:0,d:.26,noise:1,v:'i',hs:1,a:.8},{t:.46,d:.26,noise:1,v:'i',hs:1,a:.7},{t:.92,d:.26,noise:1,v:'i',hs:1,a:.6},{t:1.3,d:.6,f:[62,54],v:'r',am:[.75,20],br:.5,a:.65,rel:.5}],.52]]}};
   B3CUE.salamander={spit:'c_spit',whip:'c_whip',whip2:'c_whip',burrow:'c_dive',crouch:'c_ring',erupt:'c_erupt',pant:'c_pant'};
   // under her big cries the lava gurgles
   {const _m=b3sayMore;b3sayMore=function(e,k,t){if(e.type!=='salamander')return _m.apply(this,arguments);
@@ -521,7 +544,11 @@ if(SL2ON){B3S.add('salamander');
   // the voices get ready in the rooms of her arena (and at once in her room)
   {const _br=buildRoom;buildRoom=function(){const r=_br.apply(this,arguments);try{const A=G&&G.mode!=='inf'&&!G.daily&&ARENAS[G.arena||0];
     if(A&&BOSSZ[A.boss]==='salamander'||G&&(G.enemies||[]).some(q=>q.type==='salamander'))B3VO.prep('salamander')}catch(err){}return r}}
-  // her mocking gesture in her brain (a pause in her walk, never between two blows: she walks again a little before the next move)
+  // her mocking gesture in her brain (a pause in her walk, never between two blows: she walks again a little before the next move). Never
+  // with you in her face (she would stand on you): the laugh and the gesture wait until she has walked off a little (88-boss3-voci.js
+  // tries again for 2.2 s), and a call-out is simply skipped
+  {const _bt=b3taunt;b3taunt=function(e,k){if(e&&e.type==='salamander'&&typeof P!=='undefined'&&P&&Math.hypot(P.x-e.x,P.y-e.y)<70){const S=e.b3s||(e.b3s={});
+    if(k!=='laugh2'&&!S.pend)S.pend=G.t||0;return}return _bt.apply(this,arguments)}}
   {const _su=salamUpd;salamUpd=function(e,dt,a,d){if(e.st!=='taunt')return _su.apply(this,arguments);if(!e.p2&&e.hp<e.max*.5){sl2moult(e,a);return}
     if(!e.mt&&Math.hypot(P.x-e.x,P.y-e.y)<70){e.wt=0;b3go(e,'walk',rand(.6,1));return}b3tick(e,dt*(e.p2?SL2.sp2:1));e.moving=false;e.face=a;e.curve=0;if(b3at(e,.62)||b3at(e,.76))sl2sfx('tick',e.x);if(e.stT<=0){e.wt=0;b3go(e,'walk',rand(.6,1))}}}
   // the defeat with her voice (the cry of the entrance and the rage are in bossIntro and the moult)
