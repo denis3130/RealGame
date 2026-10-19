@@ -77,7 +77,12 @@ sono **finiti e collaudati ma non sono nel gioco**: ce li mette l'altra sessione
 
 Prima Denis ha passato tutto all'altra sessione (`session_01NzD5NzkcNh3pmk6QqLSVHu`, che ha fatto Fabbro e Idra e stava facendo il Mimic);
 poi, alla domanda «io quali riprendo?», qui: «tutti, fermo l'altra». Quindi i boss che mancano li finisce questa sessione
-(`session_01Dgjf4PuqZowPts7C7dSiaz`), da sola e senza agenti; l'altra la ferma Denis. Stato:
+(`session_01Dgjf4PuqZowPts7C7dSiaz`), da sola e senza agenti; l'altra la ferma Denis. Poi, a Mimic unito, Denis: «a me sembra che sia
+meglio usare gli agenti»: Burattinaio, Piovra e Cervo li fanno gli agenti, tre workflow insieme (uno per boss, lo stesso script
+«boss-classico»): un agente per il modello e uno per il cervello in parallelo (al Burattinaio il modello già cominciato qui: pose delle 18
+mosse, gambe, farsetto, braccia, gorgiera, testa), due critici (aspetto e direzioni; mosse e gioco), un agente per le correzioni e il
+collaudo (prove, difficoltà, scheda in `docs/boss-classici-schede/<tipo>.md`), una verifica avversaria e, se trova qualcosa, un secondo giro.
+Stato:
 
 | Boss | Modello | Cervello | Stato |
 |---|---|---|---|
@@ -91,7 +96,9 @@ poi, alla domanda «io quali riprendo?», qui: «tutti, fermo l'altra». Quindi 
 | Fabbro | `smith2.js` | `89-fabbro-nuovo.js` | finito dall'altra sessione (`session_01NzD5NzkcNh3pmk6QqLSVHu`), collaudo e difficoltà (scheda sotto) |
 | Idra | `hydra2.js` | `89-idra-nuova.js` | finita dall'altra sessione, collaudo e difficoltà (scheda sotto) |
 | Mimic | `mimic2.js` | `89-mimic-nuovo.js` | finito dall'altra sessione il 19 ottobre sera, collaudo e difficoltà (scheda sotto); da parte c'è il Mimic B, fatto in parallelo da questa sessione (`anteprime/boss2/mimic_b/`) |
-| Burattinaio, Piovra, Cervo | — | — | da fare (i design sono in `docs/boss-classici-design/`) |
+| Burattinaio | `puppeteer2.js` | `89-burattinaio-nuovo.js` | in corso con gli agenti (19 ottobre notte) |
+| Piovra | `octopus2.js` | `89-piovra-nuova.js` | in corso con gli agenti (19 ottobre notte) |
+| Cervo | `stag2.js` | `89-cervo-nuovo.js` | in corso con gli agenti (19 ottobre notte) |
 
 ### La Strega: la critica sui fogli (corretta il 19 ottobre sera, vedi la scheda)
 
