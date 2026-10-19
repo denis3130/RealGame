@@ -386,7 +386,7 @@ Object.assign(EPDRAW,{yice:p=>{const A=y2art('Shard');if(A){try{A(p.x,p.y,0,p.a,
 // ---- the entrance (3.4 s, the model's 'enter'): the avalanche brings him in, the mound breathes, two eyes open in the snow, the horns break
 // out, the clods roll away, he shakes himself like a dog, takes the great breath (the signal, at once) and roars with the echo of the mountain
 if(Y2ON){const _bi=bossIntro;bossIntro=function(e,dt,a){if(e.type!=='yeti')return _bi.apply(this,arguments);
-  const T=BOSS_INTRO.yeti;if(e.iT==null){e.iT=0;e.iStep=0}const t0=e.iT;e.iT+=dt;const t=e.iT,at=s=>t0<s&&t>=s;e.intro=Math.max(0,T-t);e.face=a;e.st='enter';e.z=0;e.yy=null;e.em=t<3.3?.999:1;
+  const T=BOSS_INTRO.yeti;if(e.iT==null){e.iT=0;e.iStep=0}const t0=e.iT;e.iT+=dt;const t=e.iT,at=s=>t0<s&&t>=s;e.intro=Math.max(0,T-t);e.face=a;e.st='enter';e.z=0;e.yy=null;e.em=null;e.fa=t<3.3?.999:1;
   if(t0===0){sfx('quake');shake(2);if(BOSS2)ENV2.fall(B3N(6),true)}
   if(t<.5&&Math.random()<.4)G.debris.push({x:AW/2+rand(-DOORW,DOORW),y:TOP+rand(2,10),z:rand(30,60),vx:rand(-20,20),vy:rand(10,40),vz:0,col:pk(['#ffffff','#e0ecf4','#bfe9ff']),s:rand(1.6,3),rot:0,vr:3,life:1.6});
   if(at(.4)){shake(5);sfx('boom',0,e.x);dustRing(e.x,e.y,18);vfxBlast(e.x,e.y,'235,245,255',90,{debris:Y2.snow,n:B3N(18),sparks:0,dust:B3N(14),ring2:false})}
@@ -397,7 +397,7 @@ if(Y2ON){const _bi=bossIntro;bossIntro=function(e,dt,a){if(e.type!=='yeti')retur
   if(at(2.31))y2inhale(e,.41,true);
   if(at(2.72)){if(!b3say(e,'cry'))sfx('roar');b3torch('blue',2);if(BOSS2)ENV2.fall(B3N(10),true);shake(6);vib([60,40,120]);
     for(let i=0;i<3;i++)setTimeout(()=>{if(G&&G.fx)fxPush({k:'ring2',x:e.x,y:e.y-e.r,rgb:'235,245,255',r0:e.r,r1:e.r*5,t:.45,max:.45,w:6-i*1.5})},i*170)}
-  if(e.intro<=0){e.z=0;e.em=null;e.si=-1;y2walk(e,.9)}}}
+  if(e.intro<=0){e.z=0;e.em=null;e.fa=null;e.si=-1;y2walk(e,.9)}}}
 // what the model plays: the entrance over its whole length, every state that is one of its moves at the brain's pace (64 doesn't know the
 // 1.25 of his second phase)
 if(Y2ON){const _nm=n3Move;n3Move=function(e){if(e.type==='yeti'){if(e.intro>0)return['enter',Math.min(.999,Math.max(0,(e.iT||0)/BOSS_INTRO.yeti))];

@@ -308,7 +308,7 @@ function yPose(anim,p,o){const ph=p*TAU,P2=!!o.p2&&anim!=='enter'&&anim!=='rage'
     const air=p>.22&&p<.8?(p-.22)/.58:-1,t=air>=0?Math.sin(Math.PI*air):0;A.lift=60*t;
     A.fR=hk([[0,F0(1)],[.21,F0(1)],[.3,[-3,17,8]],[.5,[-4,17,13]],[.7,[-3,18,8]],[.79,[-2,20,0]],[.88,[-2,20,0]],[1,F0(1)]],1);A.fL=hk([[0,F0(1)],[.21,F0(1)],[.3,[-3,17,8]],[.5,[-4,17,13]],[.7,[-3,18,8]],[.79,[-2,20,0]],[.88,[-2,20,0]],[1,F0(1)]],-1);
     A.inh=sstep(.02,.2,p)*(1-sstep(.22,.27,p));A.infl=.08*A.inh;A.flagUp=t;A.fluff=.15*t;
-    A.jaw=.35*rise(p,.82,.86,.93,.97);A.squint=.5*rise(p,.1,.15,.2,.24)+.4*rise(p,.82,.86,.93,.97);A.hy=.32*trem(p,.88,.97,6,2.4);A.hp=.1*rise(p,.0,.12,.2,.24)+.12*rise(p,.8,.84,.9,.98);
+    A.jaw=.35*rise(p,.82,.86,.93,.97);A.squint=.5*rise(p,.1,.15,.2,.24)+.4*rise(p,.82,.86,.93,.97);A.hy=.32*trem(p,.88,.97,o.p2?5:6.4,2.4);A.hp=.1*rise(p,.0,.12,.2,.24)+.12*rise(p,.8,.84,.9,.98);
     fx('scrape',(p-.1)/.12,{sd:1,back:1});fx('scrape',(p-.16)/.12,{sd:-1,back:1});fx('hah',(p-.22)/.2);fx('ring',(p-.8)/.2);fx('snow',(p-.8)/.2,{at:[30,0,0],n:9,r:30});fx('fall',(p-.88)/.12,{head:1})}
   else if(anim==='bound'){// BALZO CORTO (fase 2): a short crouch with a short breath, a low hop with the arms forward, lands on hands and feet
     const v=kv([[0,[.1,0,0]],[.2,[.32,-6,-.03]],[.25,[.32,-6,-.03]],[.29,[0,-1,.05]],[.72,[.12,0,0]],[.8,[.45,-10,-.06]],[.88,[.32,-6,-.02]],[1,[.1,0,0]]],p);
@@ -326,7 +326,7 @@ function yPose(anim,p,o){const ph=p*TAU,P2=!!o.p2&&anim!=='enter'&&anim!=='rage'
     A.lean=v[0];A.rear=v[1];A.B[2]=v[2];A.roll=v[3];
     A.hL=hb([[0,H0(1)],[.1,[-2,70,86]],[.2,[6,52,128]],[.37,[6,52,132]],[.42,[36,30,5],[52,72,64]],[.5,[30,36,14]],[.56,[26,40,18]],[.64,[0,46,118],[40,80,64]],[.665,[0,46,120]],[.74,[40,14,5],[64,82,72]],[.88,[40,14,5]],[1,H0(1)]],-1);
     A.hR=hb([[0,H0(1)],[.1,[-2,70,86]],[.2,[6,52,128]],[.37,[6,52,132]],[.43,[20,54,118]],[.5,[10,54,126]],[.56,[36,30,5],[52,72,64]],[.585,[32,34,14]],[.645,[0,46,118],[40,80,64]],[.665,[0,46,120]],[.74,[40,14,5],[64,82,72]],[.88,[40,14,5]],[1,H0(1)]],1);
-    if(p>.26&&p<.37){const t=.9*trem(p,.26,.37,o.p2?5.6:7,2.2);A.hL[2]+=t;A.hR[2]-=t;A.B[1]=.5*t}
+    if(p>.26&&p<.37){const t=.9*trem(p,.26,.37,o.p2?5.2:6.6,2.2);A.hL[2]+=t;A.hR[2]-=t;A.B[1]=.5*t}
     const UPF=[.1,.3,1],DESC=[.8,.25,.45],DESCN=[.5,-.1,-.8],LOW=[.9,.1,-.2],LOWN=[.2,0,-1],RISE=[.3,.6,.7],RISEN=[.7,-.5,.3];
     ho([[0,FD0,PN0,.35],[.1,RISE,RISEN,.15],[.2,UPF,FWD,0],[.37,UPF,FWD,0],[.4,DESC,DESCN,0],[.42,FWD,DN,0],[.5,LOW,LOWN,.1],[.56,LOW,LOWN,.1],[.6,DESC,DESCN,.05],[.64,UPF,FWD,0],[.665,UPF,FWD,0],[.7,DESC,DESCN,0],[.74,FWD,DN,0],[.88,FWD,DN,0],[1,FD0,PN0,.35]],-1);
     ho([[0,FD0,PN0,.35],[.1,RISE,RISEN,.15],[.2,UPF,FWD,0],[.5,UPF,FWD,0],[.53,DESC,DESCN,0],[.56,FWD,DN,0],[.585,LOW,LOWN,.1],[.615,DESC,DESCN,.05],[.645,UPF,FWD,0],[.665,UPF,FWD,0],[.7,DESC,DESCN,0],[.74,FWD,DN,0],[.88,FWD,DN,0],[1,FD0,PN0,.35]],1);
@@ -376,7 +376,7 @@ function yPose(anim,p,o){const ph=p*TAU,P2=!!o.p2&&anim!=='enter'&&anim!=='rage'
     A.squint=.5*pre;A.wrev=blow;
     A.hL=kv([[0,H0(-1)],[.3,[8,-56,36]],[.42,[8,-56,38]],[.46,[16,-52,30]],[.8,[16,-52,30]],[1,[16,-52,30]]],p);A.hR=kv([[0,H0(1)],[.3,[8,56,36]],[.42,[8,56,38]],[.46,[16,52,30]],[.8,[16,52,30]],[1,[16,52,30]]],p);
     const OPEN=[.3,.5,-.8],OPENN=[.6,-.8,-.1];ho2([[0,FD0,PN0,.35],[.3,OPEN,OPENN,0],[.8,OPEN,OPENN,0],[1,OPEN,OPENN,.2]]);
-    if(blow>0){const t=.5*trem(p,.44,.8,o.p2?5.6:7,3);A.B[1]+=t;A.hy+=.02*t}
+    if(blow>0){const t=.5*trem(p,.44,.8,o.p2?5.2:6.6,3);A.B[1]+=t;A.hy+=.02*t}
     gaspTo(sstep(.8,1,p));
     fx('mflash',(p-.42)/.08);fx('cone',(p-.42)/.38);fx('pant',(p-.86)/.14)}
   else if(anim==='gasp'){// SENZA FIATO: bent over with the hands on its knees (as the breath or the howl left it), the head hanging, the tongue
@@ -384,7 +384,7 @@ function yPose(anim,p,o){const ph=p*TAU,P2=!!o.p2&&anim!=='enter'&&anim!=='rage'
     const b=1-sstep(.85,1,p),pump=Math.max(pls(p,.12,.08),pls(p,.34,.08),pls(p,.56,.08),pls(p,.78,.08));
     A.lean=lerp(.1,.45,b)+.04*pump;A.rear=-.08*b;A.B[2]=-4*b-1.2*pump;A.hp=.35*b-.1*pump;A.tongue=b;A.jaw=lerp(0,.45,b)+.15*pump;A.infl=-.04*b;A.fluff=-.18*b;A.dim=b;A.flagOff=b;A.squint=.4*b;
     for(const sd of[-1,1]){const k=sd<0?'L':'R';A['h'+k]=lerp3(H0(sd),[16,sd*30,26],b);A['fd'+k]=nrm(lerp3(mr(FD0,sd),FWD,b));A['pn'+k]=nrm(lerp3(mr(PN0,sd),DN,b));A['g'+k]=lerp(.35,.5,b)}
-    A.hy=.3*trem(p,.85,.98,6,1.4);
+    A.hy=.3*trem(p,.85,.98,o.p2?5:6.4,1.4);
     for(const c of[.12,.34,.56,.78])fx('pant',(p-c)/.16)}
   else if(anim==='roar'){// RUGGITO DELLA VALANGA: rears up and beats its chest with the fists (.10 left, .18 right, .26 left: a white ring each),
     // the breath fills it; throws the head back and howls at the sky, the arms wide and high, a column of breath, the whole body shaking;
@@ -395,7 +395,7 @@ function yPose(anim,p,o){const ph=p*TAU,P2=!!o.p2&&anim!=='enter'&&anim!=='rage'
     ho2([[0,FD0,PN0,.35],[.06,[1,0,.2],[0,-1,0],1],[.3,[1,0,.2],[0,-1,0],1],[.36,[.2,.6,.8],FWD,0],[.68,[.2,.6,.8],FWD,0],[1,[.2,.6,.8],FWD,0]]);
     A.inh=sstep(.02,.3,p)*(1-sstep(.3,.34,p));A.infl=.08*A.inh;A.spark=A.inh;A.suck=p<.3?p/.3:-1;A.flagM=.7*A.inh;
     const how=rise(p,.3,.36,.66,.72);A.hp=-.7*how;A.jaw=Math.max(how,.3*Math.max(pls(p,.78,.06),pls(p,.9,.06)));A.throat=how;A.squint=.5*how;A.blz=Math.max(A.blz,how);
-    if(how>0){const tz=o.p2?.8:1,t=trem(p,.32,.7,7*tz,3);A.B[1]+=.8*t;A.B[0]+=.4*trem(p,.32,.7,5*tz,3)}
+    if(how>0){const tz=o.p2?.74:.94,t=trem(p,.32,.7,7*tz,3);A.B[1]+=.8*t;A.B[0]+=.4*trem(p,.32,.7,5*tz,3)}
     for(const[c] of bt){fx('chest',(p-c)/.22);A.bz-=1.5*pls(p,c,.05)}
     gaspTo(sstep(.7,1,p));
     fx('column',(p-.32)/.4);fx('pant',(p-.78)/.12);fx('pant',(p-.9)/.1)}
@@ -430,7 +430,7 @@ function yPose(anim,p,o){const ph=p*TAU,P2=!!o.p2&&anim!=='enter'&&anim!=='rage'
     A.crys=sstep(.46,.6,p);A.blade=.44*sstep(.5,.51,p)+.34*sstep(.54,.55,p)+.22*sstep(.58,.59,p);
     A.hp=-.7*how+.12*rise(p,.45,.5,.58,.62)+.06*sstep(.9,1,p);A.jaw=Math.max(how,.3*Math.max(...bts.map(([c])=>pls(p,c,.05))));A.throat=how;A.squint=.4*rise(p,.14,.2,.6,.66);
     A.ek=sstep(.63,.66,p);A.blz=sstep(.62,.72,p);A.inh=.6*rise(p,.5,.6,.62,.66);A.infl=.05*A.inh;
-    if(how>0){const t=trem(p,.64,.88,5.5,3);A.B[1]+=.8*t}
+    if(how>0){const t=trem(p,.64,.88,5.2,3);A.B[1]+=.8*t}
     for(const[c] of bts){fx('chest',(p-c)/.2,{frost:1});A.bz-=1.5*pls(p,c,.05)}fx('crac',(p-.5)/.12);
     fx('frost',(p-.62)/.3);fx('column',(p-.64)/.26)}
   else if(anim==='taunt'){// PRESA IN GIRO «Vieni qui»: leans toward you and holds out its long arm (the one on our side) palm up, out to the side
@@ -996,7 +996,7 @@ function yeti2(x,y,face,anim,p,sc,o){sc=sc||1;o=o||{};anim=MV.includes(anim)?ani
   if(A.chunks>=0)chunksDraw(V0,A,L,D);
   if(A.sink>0){const LL=L.slice().sort((a,b)=>a.d-b.d),front=LL.filter(e=>e.d>=9000||e.d>500),body=LL.filter(e=>!(e.d>=9000||e.d>500));
     // under the snow until it breaks out; then what is still in the floor hides behind the base of the mound, which sinks as it rises
-    if(A.mound>=1&&A.crater>.001){const[Rx,Ry]=moundR(A);moundDraw(V0,A,p,J,fx,'back');ctx.save();floorClip(V0,MC,Rx,Ry);for(const e of body){ink(2.4);e.f()}ctx.restore()}
+    if(A.mound<0||A.mound>=1&&A.crater>.001){const[Rx,Ry]=moundR(A);if(A.mound>=1)moundDraw(V0,A,p,J,fx,'back');ctx.save();floorClip(V0,MC,Rx,Ry);for(const e of body){ink(2.4);e.f()}ctx.restore()}
     for(const e of front){ink(2.4);e.f()}}
   else run(L);
   ctx.restore()}
