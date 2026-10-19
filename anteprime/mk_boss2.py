@@ -12,7 +12,7 @@
 #   --build    prima ricostruisce index.html (python3 build.py); di solito no: index.html si legge com'è, così più prove insieme non si
 #              pestano i piedi
 #   --modello  (con un solo tipo) un altro file di modello: il suo id diventa '<tipo>2', anche i disegni esportati con quel nome
-# Uscita: anteprime/<tipo>2.html (un boss) o anteprime/boss_classici_sfida.html (--tutti); con --test in tests/.
+# Uscita: anteprime/<tipo>2.html (un boss) o anteprime/boss_classici_sfida.html (--tutti o più boss); con --test in tests/.
 import os,subprocess,sys,re
 here=os.path.dirname(os.path.abspath(__file__));root=os.path.join(here,'..')
 # tipo del gioco: (file del cervello, nome)
@@ -46,7 +46,8 @@ for t in types:
 """)
     brains.append(open(bf,encoding='utf-8').read());used.append((t,kind))
 if not used:sys.exit('nessun boss da mettere nella pagina')
-title='Boss Classici · Sfida' if tutti else B[used[0][0]][1]+' nuovo'
+multi=tutti or len(used)>1
+title='Boss Classici · Sfida' if multi else B[used[0][0]][1]+' nuovo'
 seed="""<script>try{if(!localStorage.getItem('cripta_save_v1'))localStorage.setItem('cripta_save_v1',JSON.stringify({gold:2000,gems:50,trophies:0,runs:3,introSeen:1,tutDone:1,handSeen:1,
 starter:'arciere',login:{last:'2099-1-1',n:1},items:{arco_frassino:{lvl:3,cards:0},giubba:{lvl:3,cards:0}},eq:{arma:'arco_frassino',armatura:'giubba',anello:null,amuleto:null}}))}catch(e){}</script>"""
 s=s.replace('<title>Mossbound</title>','<title>'+title+'</title>'+seed,1)
@@ -81,7 +82,7 @@ panel=r"""
 """
 i=s.rfind('})();')
 s=s[:i]+'\n'+'\n'.join(models)+'\n'+'\n'.join(brains)+'\n'+('window.__E=s=>eval(s);' if test else panel)+s[i:]
-name=('boss2' if tutti else used[0][0]+'2')+'_test.html' if test else ('boss_classici_sfida.html' if tutti else used[0][0]+'2.html')
+name=('boss2' if multi else used[0][0]+'2')+'_test.html' if test else ('boss_classici_sfida.html' if multi else used[0][0]+'2.html')
 out=os.path.join(root,'tests',name) if test else os.path.join(here,name)
 open(out,'w',encoding='utf-8').write(s)
 print(os.path.relpath(out,root),len(s)//1024,'KB ·',', '.join(f'{t} ({k})' for t,k in used))
