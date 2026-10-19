@@ -45,6 +45,13 @@ Copiare un'immagine 1:1 su pixel interi costa 5–7 volte meno che copiarla scal
 10. **Stanza nuova**: il nero resta tre fotogrammi in più (circa 50 ms), così il primo disegno della stanza (immagini copiate la prima
     volta, luci e ombre preparate) cade nel buio e non nella dissolvenza.
 
+11. **Menu, schermata principale** (la cripta della Classica e il falò della Zombie): stessa cura. La tela della scena a 2 pixel a punto
+    esatti e la scena su pixel interi (`campResize`, `oy`/`ox` arrotondati in `drawCamp` e `campFrame`), così lo sfondo e il recinto del
+    falò, preparati a 2×, si copiano 1:1; la mappa delle luci a un pixel per punto (`campLightBlit` in 40); la vignetta preparata una
+    volta (`campVigDraw`, fatta solo quando la scena è ferma da tre fotogrammi: mentre il menu entra si muove); i fotogrammi del menu
+    contano per le luci morbide (`glowTick` intorno a `drawCamp`, in 67). La cripta da 41 a 21 ms qui, il falò da 55 a 41 (resta il
+    disegno dell'eroe seduto, degli oggetti e degli zombie sul sentiero). Le altre schede del menu andavano già a 60 al secondo.
+
 ## Risultati (questo computer, un fotogramma con il disegno)
 
 | scena | prima | dopo |
@@ -60,7 +67,6 @@ Circa il 35–45% in meno. `update()` costa meno di 1 ms: tutto il resto è dise
 
 - I **modelli 3D** (nemici ~1–2,5 ms l'uno qui, l'eroe ~3,5): tanti tratti sottili (contorni, pieghe) e riempimenti; non si alleggeriscono
   senza cambiarne l'aspetto. Gli ostacoli animati (`ROCK_LIVE`: canne, bracieri, cumuli di fango…) ~0,5 ms l'uno.
-- Il **menu**: la scena della schermata principale (`drawCamp`) costa quanto una stanza (~41 ms qui): stessa cura in corso.
 - Da provare sul telefono vero di Denis: fluidità in battaglia, nel menu, nei passaggi di stanza.
 
 ## Prove

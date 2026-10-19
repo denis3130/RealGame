@@ -162,9 +162,10 @@ telecamera su pixel interi (pavimento, muri e paesaggio copiati 1:1; `resize` in
 se i fotogrammi restano lenti (`RESCUT`, poi `LOWFX` come prima), luci morbide grandi preparate una volta e copiate (`glowFast`, `glowTick`
 in 18), vignetta a bande (`drawVig`), mappa delle luci a un pixel per punto (`lwFill`, `lightBlit`), ombre degli ostacoli in un'immagine
 (`shadowSprite` in 47), colonne di luce a bande (`stripFast`), HUD toccato solo quando cambia (`hudSet`), stanza in pausa disegnata una
-volta (`PZD`), tre fotogrammi di nero in più quando si entra in una stanza (`G.fadeHold`). Circa −40% a fotogramma. Restano i modelli 3D
-(intoccabili senza cambiarne l'aspetto) e il menu (la scena della schermata principale costa quanto una stanza). Dettagli, numeri e cosa
-resta in `docs/fase-9-fluidita.md`; prova `node tests/fluido.js`.
+volta (`PZD`), tre fotogrammi di nero in più quando si entra in una stanza (`G.fadeHold`). Circa −40% a fotogramma. Poi il menu: la scena
+della schermata principale (cripta e falò) a 2 pixel a punto esatti, mappa delle luci e vignetta come in battaglia (`campResize`,
+`campLightBlit`, `campVigDraw` in 40, `glowTick` intorno a `drawCamp` in 67): la cripta da 41 a 21 ms qui. Restano i modelli 3D
+(intoccabili senza cambiarne l'aspetto). Dettagli, numeri e cosa resta in `docs/fase-9-fluidita.md`; prova `node tests/fluido.js`.
 
 ## Modalità zombie (nel gioco dal 13 ottobre)
 
