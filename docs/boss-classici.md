@@ -75,6 +75,11 @@ sono **finiti e collaudati ma non sono nel gioco**: ce li mette l'altra sessione
 
 ## Stato dei boss (19 ottobre sera)
 
+**Pagine con tutti e 13** (19 ottobre notte, per Denis): i modelli (si girano col dito; «4 direzioni» con quello di oggi sotto; «Prima
+e dopo»; tutte le mosse e la fase 2) https://claude.ai/artifact/QZ3eLCWFHcYVHBU2XCaAbp (`python3 anteprime/mk_nemici3d.py --classici`
+→ `anteprime/boss_classici.html`, in ordine d'arena); la sfida dal telefono (un tocco e sei nella stanza del boss)
+https://claude.ai/artifact/5M8qo4U6iHFKYkQFdeG7ps (`python3 anteprime/mk_boss2.py --tutti` → `anteprime/boss_classici_sfida.html`).
+
 Prima Denis ha passato tutto all'altra sessione (`session_01NzD5NzkcNh3pmk6QqLSVHu`, che ha fatto Fabbro e Idra e stava facendo il Mimic);
 poi, alla domanda «io quali riprendo?», qui: «tutti, fermo l'altra». Quindi i boss che mancano li finisce questa sessione
 (`session_01Dgjf4PuqZowPts7C7dSiaz`), da sola e senza agenti; l'altra la ferma Denis. Poi, a Mimic unito, Denis: «a me sembra che sia

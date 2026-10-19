@@ -36,7 +36,9 @@ const OLD={};
 // the order of the game (the chapters, then the bosses arena by arena)
 const ORDER=['arciere','cacciatrice','balestriere','druida','muschietto','lucciola','draghetto','mercante','slime','bigslime','bat','goblin','plant','skeleton','mushroom','wisp','beetle','eyeflower','shadoweye','necro','bonelet','imp','magmaslime','obsidian','pyro','bomber',
   'frog','mosquito','croc','snail','tadpole','wolf','snowspirit','icesentinel','golem','salamander','toad','yeti','witch','smith','hydra','icequeen','qmirror','mimic','puppeteer','phoenix','octopus','stag'];
-const rank=id=>{const i=ORDER.indexOf(id);return i<0?999:i};
+// the Classic bosses redone in the order of the arenas (the puppet right after its master)
+const ORD2=['golem2','salamander2','toad2','yeti2','witch2','smith2','hydra2','icequeen2','mimic2','puppeteer2','puppet2','phoenix2','octopus2','stag2'];
+const rank=id=>{const j=ORD2.indexOf(id);if(j>=0)return 2000+j;const i=ORDER.indexOf(id);return i<0?999:i};
 const ids=()=>{const out=[];for(const[g] of GROUPS)for(const id of N3.order.slice().sort((a,b)=>rank(a)-rank(b)))if(N3.meta[id].g===g)out.push(id);for(const id of N3.order)if(!out.includes(id))out.push(id);return SOLO?out.filter(id=>N3.meta[id].g===SOLO):out};
 const isBoss=id=>/^boss|classici/.test(N3.meta[id].g);
 let view='__VIEW__',cur='__START__',anim='idle',face=Math.PI/2-.5,spin=true,low=false,p2=false,zoom=1,p=0,ms=0,last=performance.now(),tAnim=0;
