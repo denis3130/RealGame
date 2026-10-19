@@ -49,7 +49,8 @@ const f2sp=e=>(e.p2?1.15:1)*((G.bossLvl||bossLvl()||{}).spd||1);
 function f2hand(e,anim,p){const H=f2art('Hand');if(!H)return{h:{x:e.x+8,y:e.y-40},m:{x:e.x+14,y:e.y-22}};const r=H(e.f3!=null?e.f3:e.face||0,anim,p,{p2:!!e.p2});
   return{h:{x:e.x+r.h[0],y:e.y+8+r.h[1]},m:r.m?{x:e.x+r.m[0],y:e.y+8+r.m[1]}:null}}
 const f2D=(x,y,X,Y)=>Math.hypot(X-x,(Y-y)/F2.K);   // distances on the floor as they look (a circle on the floor is an ellipse 1 : .6)
-function f2walk(e){e.wt=0;b3go(e,'walk',e.p2?rand(.9,1.2):rand(1.1,1.5))}
+// between two blows a few steps toward you; already close, only a beat (he turns to you and breathes) before the next one
+function f2walk(e){e.wt=0;const near=Math.hypot(P.x-e.x,P.y-e.y)<120;b3go(e,'walk',near?(e.p2?rand(.32,.45):rand(.42,.6)):(e.p2?rand(.55,.85):rand(.75,1.05)))}
 // how far from (x,y) along a before a wall or an obstacle (soft: the temporary ones do not stop it)
 function f2reach(x,y,a,max,soft){const ca=Math.cos(a),sa=Math.sin(a);let s=0;for(;s<(max||900);s+=5){const px=x+ca*s,py=y+sa*s;if(px<L+4||px>R-4||py<TOP+4||py>BOT-4)break;
     if(G.rocks.some(k=>(!soft||!k.temp||k.f2work)&&Math.hypot(k.x-px,k.y-py)<k.r))break}return s}
@@ -80,16 +81,17 @@ if(F2ON)smithUpd=function(e,dt,a,d){const sp=e.p2?1.15:1;dt*=sp;const B=f2B(),p2
   if(!e.p2&&e.hp<e.max*.5&&e.st==='walk'){f2rage(e);return}
   b3tick(e,dt);const k=b3k(e);
   switch(e.st){
-  case 'walk':{const far=d>80;e.face=far?navAngle(e):a;e.moving=far;const w0=e.wt||0;e.wt=w0+dt;const D=B3D(e,'walk'),ph0=(w0%D)/D,ph1=(e.wt%D)/D;
+  // too close (after the Turbine, or when you walk into him): he turns and walks off to his working distance, never parks on you
+  case 'walk':{const far=d>80,near=d<64;e.face=far?navAngle(e):near?a+Math.PI:a;e.moving=far||near;const w0=e.wt||0;e.wt=w0+dt;const D=B3D(e,'walk'),ph0=(w0%D)/D,ph1=(e.wt%D)/D;
     if(ph1<ph0||(ph0<.5&&ph1>=.5)){stepFx(e.x,e.y+4,true);G.shake=Math.max(G.shake,1.5);f2puff(e)}
-    if(far)moveCircle(e,Math.cos(e.face)*34*dt,Math.sin(e.face)*34*dt);
+    if(far||near)moveCircle(e,Math.cos(e.face)*34*dt,Math.sin(e.face)*34*dt);
     if(e.stT<=0){e.moving=false;f2next(e,a)}break}
   // ---- MARTELLATA ROVENTE: the circle in front of him (.05) that heats with the maul, the lines (.12); the blow (.62); the cracks run
   case 'slam':{e.moving=false;if(k<.03){e.face=a;e.lf=a}else e.face=e.lf;
     if(b3at(e,.05)){const c=f2pt(e,50,0,0,e.lf);B.slam={x:c.x,y:c.y,r:56,lines:null,p2,t0:G.t||0};sfx('ignite',0,e.x)}
     if(b3at(e,.12)&&B.slam){const s=B.slam,ang=e.lf,os=p2?[0,-.489,.489,-.977,.977]:[0,-.489,.489];s.lines=os.map(o=>{const an=ang+o;return{a:an,len:Math.min(320,f2reach(s.x,s.y,an,320,false))}})}
     if(B.slam)B.slam.heat=C3.keys([[0,0],[.1,0],[.22,.35],[.32,.7],[.42,1],[1,1]],k);
-    if(b3at(e,.62)&&B.slam){const s=B.slam,x=s.x,y=s.y;if(f2D(P.x,P.y,x,y)<56+P.r*.4&&f2can())hurtP(Math.round(22*DMG()));
+    if(b3at(e,.62)&&B.slam){const s=B.slam,x=s.x,y=s.y;if(f2D(P.x,P.y,x,y)<56+P.r*.4&&f2can())hurtP(Math.round(32*DMG()));
       for(const l of s.lines||[])B.cracks.push({x,y,a:l.a,len:l.len,s:0,hit:false,p2,t:0,next:40});
       B.runes.push({x,y,t:0});stamp('crater',x,y,36);vfxBlast(x,y,'255,170,70',110,{debris:'lava',n:22,sparks:30,cracks:60,fire:8});dustRing(x,y,16);
       if(BOSS2){ENV2.mark('cracks',x,y,60);ENV2.mark('scorch',x,y,30);ENV2.rocks(x,y,170,3);ENV2.fall(B3N(8));ENV2.chunks(x,y,B3N(16),['#3a3a42','#ff7a2e','#5f5f68'],150);ENV2.torches(['#ffffff','#ffd86b','#ff8a22'],'255,220,160',1.2)}
@@ -125,7 +127,7 @@ if(F2ON)smithUpd=function(e,dt,a,d){const sp=e.p2?1.15:1;dt*=sp;const B=f2B(),p2
       if(p2&&Math.hypot(x-(M.lx==null?M.bx:M.lx),y-(M.ly==null?M.by:M.ly))>=22){addZone(x,y,11,1.2,'fire');M.lx=x;M.ly=y}
       if(!M.sc||Math.hypot(x-M.sc.x,y-M.sc.y)>40){stamp('cracks',x,y,10);M.sc={x,y}}
       for(const r of G.rocks)if(r.f2&&!r.f2work&&r.temp&&Math.hypot(r.x-x,r.y-y)<r.r+13)f2smash(r);
-      if(!M.hit&&Math.hypot(P.x-x,P.y-y)<13+P.r*.4&&f2can()){M.hit=true;hurtP(Math.round(12*DMG()))}
+      if(!M.hit&&Math.hypot(P.x-x,P.y-y)<13+P.r*.4&&f2can()){M.hit=true;hurtP(Math.round(17*DMG()))}
       M.x=x;M.y=y;if(u>=1){B.maul=null;B.strip=null;B.tgt=null}}
     if(e.stT<=0){B.maul=null;B.strip=null;B.tgt=null;f2press(e);f2walk(e)}break}
   // ---- SFIATATA: the eight lanes (.06; in the double one A at .04 and B at .40, turned 22.5°); the jets
@@ -134,7 +136,7 @@ if(F2ON)smithUpd=function(e,dt,a,d){const sp=e.p2?1.15:1;dt*=sp;const B=f2B(),p2
     if(b3at(e,two?.04:.06)){B.lanes={L:mk(0),hit:false,on:false,t:0};B.warn.push({k:'lanes',ref:'A',t:(two?.36:.49)*B3D(e,e.st)/real,max:(two?.36:.49)*B3D(e,e.st)/real});sfx('hiss',0,e.x)}
     const jets=(a0,a1,key)=>{if(k>=a0&&k<a1&&B.lanes){if(!B.lanes['on'+key]){B.lanes['on'+key]=1;shake(5);sfx('hiss',0,e.x);sfx('boom',0,e.x);B.jets.push({L:B.lanes.L,t:0,dur:(a1-a0)*B3D(e,e.st)/real,p2});
         if(BOSS2){ENV2.torches(['#ffe6c0','#ffd27a','#ff8a22'],'255,230,190',.8);for(const l of B.lanes.L)for(let s=40;s<=Math.min(90,l.len);s+=25)stamp('scorch',e.x+Math.cos(l.a)*s,e.y+Math.sin(l.a)*s,6)}}
-      if(!B.lanes['hit'+key]&&f2can())for(const l of B.lanes.L)if(f2seg(e.x,e.y,l.a,l.len,P.x,P.y)<11+P.r*.4&&Math.hypot(P.x-e.x,P.y-e.y)>18){B.lanes['hit'+key]=1;hurtP(Math.round(16*DMG()));break}}};
+      if(!B.lanes['hit'+key]&&f2can())for(const l of B.lanes.L)if(f2seg(e.x,e.y,l.a,l.len,P.x,P.y)<11+P.r*.4&&Math.hypot(P.x-e.x,P.y-e.y)>18){B.lanes['hit'+key]=1;hurtP(Math.round(23*DMG()));break}}};
     if(two){jets(.40,.55,'A');if(b3at(e,.40)){const off=Math.PI/8;B.lanesB={L:mk(off)};B.warn.push({k:'lanes',ref:'B',t:.36*B3D(e,e.st)/real,max:.36*B3D(e,e.st)/real})}
       if(k>=.55&&B.lanesB&&B.lanes&&!B.lanes.swapped){B.lanes={L:B.lanesB.L,hit:false,swapped:1};B.lanesB=null}jets(.76,.90,'B')}
     else jets(.55,.80,'A');
@@ -143,14 +145,16 @@ if(F2ON)smithUpd=function(e,dt,a,d){const sp=e.p2?1.15:1;dt*=sp;const B=f2B(),p2
   // ---- TURBINE (second phase): the red disc round him (spinup), three turns forward (spin), then it staggers (dizzy)
   case 'spinup':{e.moving=false;e.face=a;if(B.disc){B.disc.x=e.x;B.disc.y=e.y}if(e.stT<=0){if(B.disc)B.disc.on=true;b3go(e,'spin',3*B3D(e,'spin'));e.turn=-1;sfx('dash',0,e.x)}break}
   case 'spin':{e.moving=false;e.face=a;const turn=Math.floor((e.mt||0)/B3D(e,'spin'));if(turn!==e.turn){e.turn=turn;e.sHit=false;sfx('dash',0,e.x)}
-    const v=75*dt/real,an=Math.atan2(P.y-e.y,P.x-e.x),nx=e.x+Math.cos(an)*v,ny=e.y+Math.sin(an)*v;
+    // forward until the disc covers you (it hurts at 74 on the floor), never on top of you (contact at 42)
+    const v=(f2D(P.x,P.y,e.x,e.y)>66&&d>47?75:0)*dt/real,an=Math.atan2(P.y-e.y,P.x-e.x),nx=e.x+Math.cos(an)*v,ny=e.y+Math.sin(an)*v;
     for(const r of G.rocks)if(r.f2&&r.temp&&!r.f2work&&Math.hypot(r.x-nx,r.y-ny)<r.r+74*.7)f2smash(r);
     moveCircle(e,Math.cos(an)*v,Math.sin(an)*v);if(B.disc){B.disc.x=e.x;B.disc.y=e.y}
-    if(!e.sHit&&f2D(P.x,P.y,e.x,e.y)<74+P.r*.4&&f2can()){e.sHit=true;hurtP(Math.round(18*DMG()))}
+    if(!e.sHit&&f2D(P.x,P.y,e.x,e.y)<74+P.r*.4&&f2can()){e.sHit=true;hurtP(Math.round(26*DMG()))}
     if(!LOWFX&&Math.random()<.5)fxPush({k:'puff',x:e.x+rand(-40,40),y:e.y+rand(-10,14),vx:rand(-20,20),vy:-14,t:.4,r:rand(4,8)});
     if(Math.random()<.25)stamp('cracks',e.x+Math.cos(G.t*9)*62,e.y+Math.sin(G.t*9)*37,8);
     if(e.stT<=0){B.disc=null;b3go(e,'dizzy');sfx('block',0,e.x);shake(3)}break}
-  case 'dizzy':{e.moving=false;e.face=a;if(e.stT<=0)f2walk(e);break}
+  // staggering, he totters back a little (away from you)
+  case 'dizzy':{e.moving=false;e.face=a;if(k<.6&&d<96)moveCircle(e,-Math.cos(a)*30*dt/real,-Math.sin(a)*30*dt/real);if(e.stT<=0)f2walk(e);break}
   // ---- SI ARROVENTA (second phase): no damage, no blows; the clang (.30), the roar (.78)
   case 'rage':{e.moving=false;e.face=a;
     if(b3at(e,.30)){fxPush({k:'flash',x:e.x,y:e.y-120,r:90,rgb:'255,240,200',t:.25,max:.25});sfx('block',0,e.x);shake(5);vfxBlast(e.x,e.y-110,'255,200,120',60,{sparks:24,ring2:false})}
@@ -168,17 +172,17 @@ function f2update(dt){const B=G.f2;if(!B)return;if(G.state!=='play'){if(B.falls.
   if(B.tgt&&B.tgt.fl>0)B.tgt.fl-=dt;
   // the cracks of lava: the front runs at 520 px/s; it hurts once per crack when it passes you; in the second phase they stay lava 1.2 s
   for(let i=B.cracks.length-1;i>=0;i--){const c=B.cracks[i];c.t+=dt;const s0=c.s;c.s=Math.min(c.len,c.s+520*dt);
-    if(!c.hit&&f2can()){const ca=Math.cos(c.a),sa=Math.sin(c.a);for(let s=s0;s<=c.s;s+=6){const x=c.x+ca*s,y=c.y+sa*s;if(Math.hypot(P.x-x,P.y-y)<11+P.r*.4){c.hit=true;hurtP(Math.round(12*DMG()));break}}}
+    if(!c.hit&&f2can()){const ca=Math.cos(c.a),sa=Math.sin(c.a);for(let s=s0;s<=c.s;s+=6){const x=c.x+ca*s,y=c.y+sa*s;if(Math.hypot(P.x-x,P.y-y)<11+P.r*.4){c.hit=true;hurtP(Math.round(17*DMG()));break}}}
     while(c.next<=c.s){const x=c.x+Math.cos(c.a)*c.next,y=c.y+Math.sin(c.a)*c.next;stamp('cracks',x,y,12);c.next+=40}
     if(c.p2&&!c.zoned&&c.s>=c.len){c.zoned=1;for(let s=12;s<c.len;s+=24)addZone(c.x+Math.cos(c.a)*s,c.y+Math.sin(c.a)*s,12,1.2,'fire')}
     if(c.t>(c.p2?2.6:1.6))B.cracks.splice(i,1)}
   // the anvils from the ceiling: 1 s after the DONG they land (in the last .4 s you see them come down)
   for(let i=B.falls.length-1;i>=0;i--){const f=B.falls[i];f.t+=dt;if(f.t<f.dur)continue;B.falls.splice(i,1);const hit=Math.hypot(P.x-f.x,(P.y-f.y)/F2.K)<26+P.r*.4;
-    if(hit&&f2can())hurtP(Math.round(18*DMG()));stamp('crater',f.x,f.y,18);dustRing(f.x,f.y,10);vfxBlast(f.x,f.y,'230,200,160',46,{debris:'stone',n:8,sparks:10,dust:8});shake(3);sfx('block',0,f.x);
+    if(hit&&f2can())hurtP(Math.round(26*DMG()));stamp('crater',f.x,f.y,18);dustRing(f.x,f.y,10);vfxBlast(f.x,f.y,'230,200,160',46,{debris:'stone',n:8,sparks:10,dust:8});shake(3);sfx('block',0,f.x);
     if(BOSS2)ENV2.rocks(f.x,f.y,80,2);if(!hit)f2anvil(f.x,f.y,f.p2)}
   // the maul: in flight (an arc 70 high, two turns, .5 s), planted, coming back (the brain moves it in 'yank')
   const M=B.maul;if(M&&M.st==='fly'){M.t+=dt;const u=Math.min(1,M.t/M.dur);M.x=M.x0+(M.tx-M.x0)*u;M.y=M.y0+(M.ty-M.y0)*u;M.z=70*Math.sin(Math.PI*u);M.spin=u*TAU*2;
-    if(u>=1){M.st='planted';M.z=0;M.x=M.tx;M.y=M.ty;if(f2D(P.x,P.y,M.x,M.y)<40+P.r*.4&&f2can())hurtP(Math.round(20*DMG()));
+    if(u>=1){M.st='planted';M.z=0;M.x=M.tx;M.y=M.ty;if(f2D(P.x,P.y,M.x,M.y)<40+P.r*.4&&f2can())hurtP(Math.round(29*DMG()));
       stamp('crater',M.x,M.y,22);vfxBlast(M.x,M.y,'255,170,70',60,{debris:'lava',n:10,sparks:16,dust:8});shake(5);sfx('boom',0,M.x);
       for(const r of G.rocks)if(r.f2&&Math.hypot(r.x-M.x,r.y-M.y)<70)r.hit=Math.max(r.hit||0,.25);B.tgt=null}}
   for(const j of B.jets)j.t+=dt;B.jets=B.jets.filter(j=>j.t<j.dur);
