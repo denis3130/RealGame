@@ -52,6 +52,11 @@ Copiare un'immagine 1:1 su pixel interi costa 5–7 volte meno che copiarla scal
     contano per le luci morbide (`glowTick` intorno a `drawCamp`, in 67). La cripta da 41 a 21 ms qui, il falò da 55 a 41 (resta il
     disegno dell'eroe seduto, degli oggetti e degli zombie sul sentiero). Le altre schede del menu andavano già a 60 al secondo.
 
+12. **Mappa zombie**: la vignetta (una sfumatura su tutto lo schermo a ogni fotogramma) preparata una volta e copiata a bande (`zVig` in
+    `anteprime/zombie/motore.js`), e i fotogrammi della mappa contano per le luci morbide. Il resto della mappa zombie è il disegno delle
+    case, degli oggetti e degli zombie in 3D (`w.voci`, ~40 ms qui a 1,5 pixel a punto): da guardare a parte, con Denis, perché lì la
+    «piega» degli oggetti alti cambia a ogni passo della telecamera e non si può copiare senza toccare l'aspetto.
+
 ## Risultati (questo computer, un fotogramma con il disegno)
 
 | scena | prima | dopo |
