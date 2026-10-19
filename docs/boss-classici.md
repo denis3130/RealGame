@@ -87,7 +87,7 @@ poi, alla domanda «io quali riprendo?», qui: «tutti, fermo l'altra». Quindi 
 | Yeti | `yeti2.js` | `89-yeti-nuovo.js` | finito: critici, correzioni e collaudo (scheda sotto) |
 | Strega | `witch2.js` | `89-strega-nuova.js` | finita: costruita col metodo leggero, critica sui fogli corretta e collaudo (scheda sotto) |
 | Regina | `icequeen2.js` | `89-regina-nuova.js` | finita: occhi aperti, maniche e orlo, misure del prologo e della guida, collaudo (scheda sotto) |
-| Fenice | `phoenix2.js` | `89-fenice-nuova.js` | modello a metà, cervello finito (16 ottobre): foglio `tests/b2/phoenix2_stato.png` |
+| Fenice | `phoenix2.js` | `89-fenice-nuova.js` | finita: gemma del diadema, corona di sole ad anello, volo senza cerchi a terra, collaudo (scheda sotto) |
 | Fabbro | `smith2.js` | `89-fabbro-nuovo.js` | fatto dall'altra sessione |
 | Idra, Mimic, Burattinaio, Piovra, Cervo | — | — | da fare (i design sono in `docs/boss-classici-design/`) |
 
@@ -755,7 +755,8 @@ di ogni incantesimo, «oh!» se la colpisci forte, una nota alta che si spezza c
 
 - Design scelto dal direttore artistico tra tre proposte (`docs/boss-classici-design/icequeen.md`); modello e cervello fatti il 16 ottobre e
   fermati dal limite settimanale prima del collaudo. Finita il 19 ottobre (questa sessione, da sola): il cervello passa tutte le mosse
-  delle due fasi col modello vero; il testo della guida è in `src/js/44-guida.js` (non più nel cervello).
+  delle due fasi col modello vero; il testo della guida è in `src/js/44-guida.js` (`BEST2`, non più nel cervello: vale solo quando
+  c'è il modello nuovo).
 - Correzioni guardando i fogli e il gioco: gli **occhi** a mezz'asta (l'idea era «superba») alla misura del gioco erano una riga scura sotto
   la corona, sembrava dormisse: ora sono aperti e freddi, con l'iride piena (bordo blu scuro, anello, centro chiaro) e la palpebra appena
   pesante; le **maniche a campana** di seta (prima pezzi lisci) con tre pieghe, l'orlo a festone e quattro lucine di brina (non con
@@ -779,3 +780,67 @@ di ogni incantesimo, «oh!» se la colpisci forte, una nota alta che si spezza c
 - Prove: `python3 anteprime/mk_boss2.py icequeen --test && node tests/boss2gioco.js icequeen`, `node tests/boss2diff.js icequeen`,
   `node tests/anteprime.js boss2_test.html` (miniatura e sblocco dell'arena 8). Foglio: `tests/b2/icequeen2.png`
   (`cd tests && node foglio3d.js icequeen2 b2/icequeen2.png --file ../sprite/nemici3d/icequeen2.js`).
+
+## La Fenice della Forgia: «la Fenice Imperiale»
+
+Nome e titolo restano: «La Fenice della Forgia», «Rinasce dalla sua cenere» (arena 10, «Forgia degli Dei», uno dei quattro boss del
+terzo giro). L'imperatrice di fuoco della Forgia: un rapace regale cremisi e oro, più alto del Golem (122 in punta al pennacchio, tre
+volte l'eroe), che ti guarda dall'alto del becco a uncino con due occhi d'oro bianco incandescenti in una maschera scura da falco, sotto un
+cipiglio d'oro a V e un diadema con la gemma menta degli dei. A riposo è una regina sul trono: ali chiuse come un mantello col bordo d'oro,
+una corona di cinque pennacchi di fiamma, dietro uno strascico di cinque piume lunghe con gli occhi di fiamma in punta. **Il suo avviso**
+è il Cuore di Forgia nel petto: prima di ogni colpo batte due volte e una perla di luce corre lungo le penne fino al pezzo che colpirà.
+Brucia mentre combatte: le punte delle piume diventano cenere man mano che perde vita. Resta della Classica: forme robuste, colori pieni,
+occhi con la lucina, niente denti né sangue.
+
+### Mosse e abilità
+
+Ogni stato ha il nome di una mossa del modello e il colpo vero parte nel suo fotogramma; ogni danno ha un avviso rosso a terra di almeno
+0,6 s veri, una mossa alla volta, un po' di volo tra una mossa e l'altra. Il suo tempo è quello del design, pensato per l'arena 10: il
+cervello toglie la velocità dei boss dell'arena (`bossLvl`). Vita 6.600 come oggi.
+
+| Mossa | Cosa fa | Come si schiva |
+|---|---|---|
+| **Ventaglio dell'Impero** (`fan`) | apre le ali dietro di sé come un ventaglio; otto raggi rossi sottili segnano le corsie delle penne accese, due corsie restano scure: il varco. Le piume si fermano contro le incudini e restano piantate nei muri | nel varco, o dietro un'incudine |
+| **Picchiata della Cometa** (`dive`) | una striscia rossa da lei, attraverso di te, fino al muro (o a un'incudine), col cerchio d'arrivo; sale, si chiude a cometa e si tuffa lasciando il fuoco. Contro un'incudine si schianta e resta a terra di più. Poi resta a terra (`grounded`): i colpi fanno **+50%** («Fiamma bassa!»); si rialza (`rise`) | di lato alla striscia; attirarla contro un'incudine |
+| **Ali dell'Impero** (`wings`) | plana verso di te; una mezzaluna rossa davanti a lei si riempie e lei chiude le ali come due falci di fuoco | fuori dalla mezzaluna, o dietro di lei |
+| **Ruota di Fiamme** (`sweep`) | lo strascico diventa una frusta che spazza il cerchio intorno a lei (il cerchio, la riga dove parte, la freccia del verso), poi un anello di fuoco si allarga dai suoi piedi | fuori dal cerchio, poi saltare l'anello con lo scatto |
+| **Pioggia di Braci** (`rain`) | in alto batte le ali tre volte; a ogni battuta cadono le penne accese su di te e in cerchio intorno a te | uscire dai cerchi |
+| **Sguardo del Giudizio** (`judge`, fase 2) | un cerchio ti insegue e a ogni cenno della testa cade una colonna di fuoco azzurro dove sta | continuare a muoversi |
+
+**Fase 2, la Rinascita** (`rebirth`, a metà vita): si spegne in un uovo di cenere che batte tre volte (non si può colpire) mentre il fuoco
+degli dei sale dal pavimento; un anello rosso fin dove arriva lo scoppio; rinasce azzurra (cobalto e oro bianco), con una corona di sole di
+fiamme azzurre e sette piume nello strascico; da lì tutto 1,15 volte più rapido. Fase 2: Sguardo del Giudizio, Picchiata a V (`dive` e
+`redive`), Ventaglio doppio (`fan2`), Ali dell'Impero doppie (`wings2`), Ruota a due fruste, Pioggia a quattro ondate.
+
+**Entrata** (`enter` 3,4 s): l'ombra delle ali attraversa la stanza, scende in una colonna di fuoco, apre le ali e grida. **Sconfitta**
+(`die` 4 s): torna cenere, resta un uovo e ne esce un pulcino.
+
+### Come è nata (16–19 ottobre)
+
+- Design scelto dal direttore artistico tra tre proposte (`docs/boss-classici-design/phoenix.md`); cervello finito il 16 ottobre, modello
+  fermato dal limite settimanale prima del collaudo. Finita il 19 ottobre (questa sessione, da sola): il modello aveva già tutte le 18
+  mosse; corretto guardando i fogli e il gioco:
+  - la **gemma del diadema** era disegnata come un occhio (mandorla con la pupilla): da davanti sembrava un ciclope e i suoi occhi veri
+    passavano in secondo piano; ora è una gemma menta tagliata a rombo;
+  - la **corona di sole** della fase 2 era un disco pieno: da dietro copriva la testa con una macchia bianca; ora è un anello di fiamme;
+  - in **volo**, a ogni battito d'ali lasciava a terra un cerchio con dei puntini, che nel gioco è l'aspetto di un avviso: ora uno sbuffo
+    d'aria morbido e un po' di cenere sparsa;
+  - **Colpita** (solo per le pagine) si vedeva appena: testa e corpo vanno più indietro.
+- Il testo della guida è in `src/js/44-guida.js` (`BEST2`, non più nel cervello: vale solo quando c'è il modello nuovo).
+
+### Misure
+
+- Disegno: 1,1–1,3 ms a fotogramma (mediano) nel foglio; la stanza intera 5,5 ms (la Forgia ha molti fuochi).
+- Difficoltà (arena 10, eroe fermo che tira, livello 4, caso peggiore, 3 prove): Fenice di oggi 39,6 vite in 240 s (9,9 al minuto), nuova
+  35,1 (8,8 al minuto; fase 1 7,6 contro 9): un po' più gentile, coi colpi più grossi e più radi (200 contro 300). Nessuna delle due
+  battuta in 240 s da un eroe fermo di livello 4. L'anello di sfere dei boss alti non c'è (è uno dei quattro boss del terzo giro, `B3S`).
+  Da regolare giocando.
+
+### File e prove
+
+- Modello: `sprite/nemici3d/phoenix2.js` (modello `phoenix2`); esporta anche `N3.phoenixFeather`, `phoenixEmber`, `phoenixShard`,
+  `phoenixShadow`, `phoenixSweep`, `phoenixInfo`.
+- Cervello: `src/js/89-fenice-nuova.js` (si accende solo se c'è `N3.phoenix2`).
+- Prove: `python3 anteprime/mk_boss2.py phoenix --test && node tests/boss2gioco.js phoenix` (tutto OK, ERR []),
+  `node tests/boss2diff.js phoenix`, `node tests/anteprime.js phoenix2_test.html` (miniatura e sblocco dell'arena 10). Foglio:
+  `tests/b2/phoenix2.png` (`cd tests && node foglio3d.js phoenix2 b2/phoenix2.png --file ../sprite/nemici3d/phoenix2.js`).

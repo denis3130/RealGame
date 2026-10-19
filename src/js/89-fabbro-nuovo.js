@@ -37,7 +37,8 @@ if(F2ON){
   // what the game passes to the model: the pressure (the vents lit); the walk follows its own clock
   N3G.opt.smith=e=>({press:e.press||0});
   N3G.wp.smith=e=>{const d=B3D(e,'walk');return(((e.wt||0)%d)+d)%d/d};
-  {const b=BEST.find(q=>q[0]==='smith');if(b)b[2]='Boss. Il maglio rovente apre la terra, le incudini cadono dal cielo, la catena arriva lontano. Quando la fornace sfiata, colpiscila.'}}
+  // (its line in the guide is in 44-guida.js, BEST2, with the others)
+}
 // ---- helpers
 // the model's own drawings of the pieces of its attacks (design: Anvil(x,y,z,rot,sc,o), Maul(x,y,z,rot,sc,o), Chain(ax,ay,az,bx,by,bz,sc,o),
 // Hand(face,anim,p,o), Crack(x,y,a,len,k,sc,o), Jet(x,y,a,len,k,sc,o)); the game's simple drawings if the model has none

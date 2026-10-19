@@ -39,7 +39,8 @@ if(PXON){
   // wheel, the ash on the tips, the veil of the train when you stand on it
   N3G.zm.phoenix=1;N3G.wp.phoenix=e=>{const d=B3D(e,'walk');return(((e.wt||0)%d)+d)%d/d};
   N3G.opt.phoenix=e=>({gap:e.gap3!=null?e.gap3:-1,gap2:e.gap4!=null?e.gap4:-1,chain:!!e.chain3,anvil:e.anvil3?1:0,dir:e.sdir||1,ash:pxAsh(e),veil:e.veil3||0});
-  {const b=BEST.find(q=>q[0]==='phoenix');if(b)b[2]="Boss. Ventagli di piume con un varco, picchiata da cometa (attirala contro un'incudine!), ali che tagliano davanti a sé, coda che spazza in cerchio, pioggia di braci a ondate. A metà vita rinasce dall'uovo, azzurra, e ti giudica con colonne di fuoco."}}
+  // (its line in the guide is in 44-guida.js, BEST2, with the others)
+}
 // ---- helpers
 // the model's own drawings of the pieces of its attacks (design: Feather, Ember, Shard (x,y,z,a,sc,o), Shadow (x,y,a,k,sc)) and its numbers
 const pxa=n=>N3['phoenix'+n]||N3['phoenix2'+n]||null;

@@ -207,8 +207,8 @@ function pPose(anim,p,o){const ph=p*TAU,P2=!!o.p2&&anim!=='rebirth',A={B:[0,0,0]
     A.cLag=-.05*Math.sin(TAU*(p-.2));beat(.03,.25,.08);fx('ashring',(p-.38)/.3)}
   else if(anim==='hit'){// COLPITA (only for the pages and the voice): the head goes back, three feathers fly off and turn to ash in the air, the
     // crown trembles, the eyes narrow; at .45 she is in pose again
-    const k=hitK(p);A.hp=.12-.4*k;A.hx=-3*k;A.B=[-3*k,0,0];A.lean=-.08*k;A.squint=.75*(1-sstep(.36,.44,p));A.cLag=.25*k*Math.sin(p*40);A.heart=.5*pls(p,.08,.08);
-    both(WS({lift:.25*k,sh:k*Math.sin(p*60)}));fx('pluck',p/.9)}
+    const k=hitK(p);A.hp=.12-.62*k;A.hx=-4.5*k;A.B=[-5*k,0,0];A.lean=-.17*k;A.squint=.75*(1-sstep(.36,.44,p));A.cLag=.3*k*Math.sin(p*40);A.heart=.5*pls(p,.08,.08);
+    both(WS({lift:.45*k,sh:k*Math.sin(p*60)}));fx('pluck',p/.9)}
   else if(anim==='fan'||anim==='fan2'){// VENTAGLIO DELL'IMPERO: she rises with the chest out, the heart beats twice, the light climbs into both wings;
     // the wings open behind her up into an imperial fan (the remiges a half circle behind the head), the lanes light up two by two from the
     // inside out (the two of the gap stay dark), brighter and brighter; a tremendous beat forward, the lit feathers fly off (the game
@@ -700,11 +700,13 @@ function headDraw(V0,X,A,K,Hc,face,ash,J,Kc){Kc=Kc||K;const{P,F}=V0,hy=A.hy+chea
   for(const w of BR)if(w.f>=.12)browDraw(V0,T,HR,w,A,K,1);
   // the beak
   if(bk>.01)ga(bk,()=>beakDraw(V0,T,HR,A,K));
-  // the eye of the gods on the diadem
-  {const m=nrm([.55,0,.84]),f=F(EN(m));if(f>.05){const c=T(mul(E(m),1.03)),q=P(c),gk=A.gem||0;ctx.save();ctx.globalAlpha*=cl((f-.05)*4,0,1);
-    if(!LOWFX)shine(K.gglow,q[0],q[1],8+7*gk,.22+.55*gk);ctx.beginPath();ctx.moveTo(q[0]-3,q[1]);ctx.quadraticCurveTo(q[0],q[1]-2.6,q[0]+3,q[1]);ctx.quadraticCurveTo(q[0],q[1]+2.6,q[0]-3,q[1]);ctx.closePath();
-    ctx.fillStyle=C.soft(q[0]-1,q[1]-1,q[0],q[1],3.2,cmix(K.gem.b,K.gem.l,gk*.6),.4,.3);ctx.fill();ctx.strokeStyle=INK;ctx.lineWidth=1.1;ctx.stroke();
-    ctx.fillStyle=K.gpup;ctx.beginPath();ctx.ellipse(q[0],q[1]+.1,.6,1.2,0,0,TAU);ctx.fill();ctx.fillStyle='#ffffff';ball([q[0]-1,q[1]-.6],.45);ctx.fill();ctx.restore()}}
+  // the eye of the gods on the diadem: a mint gem cut as a tall rhombus (drawn as an almond with a pupil it was a third eye, a cyclops
+  // over the beak, and her own eyes no longer led)
+  {const m=nrm([.55,0,.84]),f=F(EN(m));if(f>.05){const c=T(mul(E(m),1.03)),q=P(c),gk=A.gem||0,w=2.3,h=3.3;ctx.save();ctx.globalAlpha*=cl((f-.05)*4,0,1);
+    if(!LOWFX)shine(K.gglow,q[0],q[1],8+7*gk,.22+.55*gk);const R=[[q[0],q[1]-h],[q[0]+w,q[1]],[q[0],q[1]+h],[q[0]-w,q[1]]];
+    poly(R);ctx.fillStyle=cmix(K.gem.b,K.gem.l,gk*.6);ctx.fill();ctx.fillStyle=cmix(K.gem.l,'#ffffff',.25+.4*gk);ctx.beginPath();ctx.moveTo(R[0][0],R[0][1]);ctx.lineTo(R[3][0],R[3][1]);ctx.lineTo(q[0],q[1]);ctx.closePath();ctx.fill();
+    ctx.fillStyle=K.gem.d;ctx.beginPath();ctx.moveTo(R[2][0],R[2][1]);ctx.lineTo(R[1][0],R[1][1]);ctx.lineTo(q[0],q[1]);ctx.closePath();ctx.fill();
+    poly(R);ctx.strokeStyle=INK;ctx.lineWidth=1.1;ctx.stroke();ctx.fillStyle='#ffffff';ball([q[0]-.7,q[1]-1.3],.45);ctx.fill();ctx.restore()}}
   crownDraw(V0,T,HR,A,Kc,ash);
   if((A.sun>.01||A.sunBreak>=0)&&sk0<.99)ga(1-sk0,()=>sunDraw(V0,T,HR,A,K));
   // the trails of the eyes (second phase), longer when she judges you
@@ -724,7 +726,8 @@ function sunDraw(V0,T,HR,A,K){const{P}=V0,c=[-6,0,3],t=LOWFX?0:(G.t||0)*.5,N=10,
   const g=ctx.createRadialGradient(q0[0],q0[1],8,q0[0],q0[1],30*fl);g.addColorStop(0,'rgba(255,255,255,.95)');g.addColorStop(.55,'rgba(200,240,255,.85)');g.addColorStop(.85,'rgba(159,224,255,.6)');g.addColorStop(1,'rgba(159,224,255,0)');ctx.fillStyle=g;
   ctx.beginPath();for(let i=0;i<N;i++){const a0=i/N*TAU+t,a1=a0+TAU/N*.5,a2=a0+TAU/N,o2=on?on[i]:1,h=(20+(7+2*Math.sin((G.t||0)*6+i*1.9))*o2)*fl;
     const b0=at(a0,15),tip=at(a1+.12*Math.sin((G.t||0)*4+i),h),b1=at(a2,15),m0=at(a0+TAU/N*.2,17+(h-17)*.5);if(i===0)ctx.moveTo(b0[0],b0[1]);ctx.quadraticCurveTo(m0[0],m0[1],tip[0],tip[1]);ctx.quadraticCurveTo(at(a1+TAU/N*.3,17)[0],at(a1+TAU/N*.3,17)[1],b1[0],b1[1])}
-  ctx.closePath();ctx.fill();ctx.restore()}
+  // (a ring, not a disc: seen from behind it goes over the head, which must show through its middle)
+  ctx.closePath();for(let i=0;i<=20;i++){const q=at(-i/20*TAU,14);if(i)ctx.lineTo(q[0],q[1]);else ctx.moveTo(q[0],q[1])}ctx.closePath();ctx.fill('evenodd');ctx.restore()}
 // a brow: a plate of beaten gold from the inner end (low, over the beak) to the outer end (high), standing a little out of the skull
 function browDraw(V0,T,HR,w,A,K,near){const{P,F}=V0,ea=ellAt([0,0,0],HRD,AXES,w.a),eb=ellAt([0,0,0],HRD,AXES,w.b),na=ellN(HRD,AXES,w.a),nb=ellN(HRD,AXES,w.b),up=[0,0,1];
   const ua=nrm(sub(up,mul(na,dot(up,na)))),ub=nrm(sub(up,mul(nb,dot(up,nb)))),pts=[add(add(ea,mul(na,2.2)),mul(ua,1.7)),add(add(eb,mul(nb,2)),mul(ub,2)),add(add(eb,mul(nb,1)),mul(ub,-1.2)),add(add(ea,mul(na,1.5)),mul(ua,-1.9))].map(q=>P(T(q)));
@@ -860,7 +863,12 @@ function chickDraw(c,k,p,clipY){const r=6.5,t=G.t||0;ctx.save();ctx.beginPath();
   if(!LOWFX)shine('140,210,255',f[0],f[1]-3,6,.5);ctx.restore()}
 // the effects drawn on the floor (under her) and in the air
 function fxFloor(V0,X,L,e,A,K){const{P,D}=V0,t=e.t;
-  if(e.k==='ashring')L.add(-1500,()=>{const r=14+t*46;ring0(V0,[A.B[0],A.B[1],0],r,'200,190,175',.45*(1-t),3*(1-t)+1);dust(V0,[A.B[0],A.B[1],0],t,8,r*.8,'200,190,175',.35)});
+  // the downwash of a beat: a soft shadow pressed on the floor and the ash blown out unevenly; never a ring with dots, which in the game
+  // is the look of a warning
+  if(e.k==='ashring')L.add(-1500,()=>{const c=[A.B[0],A.B[1],0],r=14+t*40,q=V0.P(c),g=ctx.createRadialGradient(q[0],q[1],1,q[0],q[1],r);
+    g.addColorStop(0,`rgba(30,20,16,${(.18*(1-t)).toFixed(3)})`);g.addColorStop(1,'rgba(30,20,16,0)');ctx.fillStyle=g;ctx.beginPath();ctx.ellipse(q[0],q[1],r,r*.55,0,0,TAU);ctx.fill();
+    for(let i=0;i<7;i++){const a=i/7*TAU+.4+.6*Math.sin(i*2.3),d=r*(.35+t*.75)*(.75+.25*Math.sin(i*1.7+1)),q2=V0.P(add(c,[Math.cos(a)*d,Math.sin(a)*d,t*5+(i%3)*1.5]));
+      ctx.fillStyle=`rgba(200,190,175,${(.3*(1-t)*(.6+.4*Math.sin(i*3.1+2)**2)).toFixed(3)})`;ball(q2,2+t*4*(.7+.3*Math.cos(i*1.3)));ctx.fill()}});
   else if(e.k==='firering')L.add(-1500,()=>{const r=20+t*170;ring0(V0,[0,0,0],r,K.fire,.8*(1-t),6*(1-t)+1.5);ring0(V0,[0,0,0],r*.92,K.hot,.6*(1-t),2);lickB(()=>{for(let i=0;i<14;i++){const a=i/14*TAU+t*2,q=P(Math.cos(a)*r,Math.sin(a)*r,0);lick(q,3.2*(1-t*.5),K.fire,K.hot,1-t,i)}})});
   else if(e.k==='scrape')L.add(-1400,()=>{for(const sd of[-1,1])for(let i=0;i<3;i++){const u=cl(t-i*.1,0,1),q0=P(14-u*30,sd*(10+i),0),q1=P(14-u*30-10,sd*(10+i),0);ctx.strokeStyle=`rgba(40,26,20,${.5*(1-t)})`;ctx.lineWidth=1.6;ctx.lineCap='round';seg(q0,q1);ctx.stroke()}});
   else if(e.k==='ashland')L.add(-1400,()=>dust(V0,[0,0,0],t,10,30,'200,190,175',.45))}

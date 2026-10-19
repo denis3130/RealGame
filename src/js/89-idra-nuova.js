@@ -35,7 +35,8 @@ if(HY2ON){
     if(!LOWFX&&G.hy)for(const q of G.hy.pools)if(!q.dry)Lt(q.x,q.y,30,.3)};
   // what the game passes to the model: the bite targets, the turn of the breath, how far you are (the eyes converge), the call
   N3G.opt.hydra=e=>({tg:e.tg||null,tg2:e.tg2||null,sweep:e.sweep||0,td:Math.max(60,Math.hypot(P.x-e.x,P.y-e.y)),call:e.call?1:0,noGlob:true});
-  {const b=BEST.find(q=>q[0]==='hydra');if(b)b[2]="Boss. Il veleno sale nel collo che sta per colpire. Morde a tenaglia, sputa pozze, sbuca dal pavimento sotto di te. Le pozze ribollono: al centro della corona sei salvo."}}
+  // (its line in the guide is in 44-guida.js, BEST2, with the others)
+}
 // ---- helpers
 const hySp=e=>(e.p2?1.15:1)*((G.bossLvl||bossLvl()||{}).spd||1);          // model time per real second
 const hyD=(x,y,X,Y)=>Math.hypot(X-x,(Y-y)/HY2.K);                        // distances on the floor as they look (circles are ellipses 1 : .6)

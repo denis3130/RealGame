@@ -142,8 +142,10 @@ sono **finiti e collaudati, non ancora nel gioco**, anche Salamandra, Re Rospo e
 già adattati: `PRO_B2` in 91, `BEAST2` in 44; pagina per sfidarli https://claude.ai/artifact/HQLxFvDjYaJAr1KupGnVYJ), poi la Strega
 (corretta dopo la critica sui fogli); Fabbro e Idra li ha fatti l'altra sessione (cassetta comune `sprite/nemici3d/boss2kit.js`). Il 19
 ottobre sera Denis: i boss che mancano (Regina, Fenice, Mimic, Burattinaio, Piovra, Cervo) li fa questa sessione, da sola e senza agenti
-(«tutti, fermo l'altra»); tutti i boss si vedono alla fine e poi entrano nel gioco. I testi della guida stanno in `src/js/44-guida.js`, non
-nei cervelli. Stato di ogni boss, metodo, design, numeri, misure e prove in `docs/boss-classici.md` («Stato dei boss»).
+(«tutti, fermo l'altra»); tutti i boss si vedono alla fine e poi entrano nel gioco. Finite anche Regina e Fenice (19 ottobre sera). I
+testi nuovi della guida stanno in `src/js/44-guida.js` (`BEST2`), non nei cervelli, e valgono solo quando il modello nuovo ha preso il
+posto del vecchio (nel gioco di oggi restano le righe dei boss di oggi). Stato di ogni boss, metodo, design, numeri, misure e prove in
+`docs/boss-classici.md` («Stato dei boss»).
 
 ## Modalità zombie (nel gioco dal 13 ottobre)
 
