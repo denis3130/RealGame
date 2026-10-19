@@ -21,6 +21,11 @@
 // il verso della Corona Boreale, +1 la testa gira verso la sua sinistra, +y). Con LOWFX niente gocce né fili di luce, fiamme, controluce,
 // scia, fiato né licheni che dondolano; stelle ferme senza alone; la vena è una riga chiara; bagliori solo negli occhi; il fantasma è una
 // sagoma piena.
+// Scelte dove il design lasciava margine: la pala di cristallo un po' più grande (raggio 9,5 invece di 8) e girata davanti, con le sue punte
+// nel suo piano, perché da davanti la corona si legga come corona e non come due rami; P2 e P3 un poco più lunghe e i cristalli più tozzi
+// (punte a 129 da fermo, 132 nella fase 2, 163 nell'impennata; larga 123 e 135); nella fase 2 i fili di luce scendono dalle lance fino
+// alla neve nelle mosse calme (fermo, cammina, presa in giro). Ogni tremolio sta sotto i 5,5 Hz del modello (sotto gli 8 Hz anche
+// nell'arena 12, dove il boss va 1,38 volte).
 // Disegni per il gioco con lo stesso aspetto: N3.stagShard (la scheggia di cristallo), N3.stagSpike (la punta di ghiaccio dell'onda),
 // N3.stagSpirit (lo spirito della mandria), N3.stagCrown (la corona ritta sul cumulo fiorito) e N3.stagInfo (i momenti delle mosse); gli
 // stessi anche come N3.stag2Shard ecc. Modello 'stag2': nel gioco prende il nome 'stag' (src/js/89-cervo-nuovo.js).
@@ -104,17 +109,17 @@ const KW=[.75,.25,0,.5];                                                       /
 // the antlers: the beam (rosette, three nodes, the palm) and the points (the given points are the tips of the crystals): P1 the lance,
 // P2, P3 on the beam; P4 up, P5 out, P6 back on the edge of the palm; P7 and P8 only in the second phase. The palm a little lower than
 // in the design (116 instead of 118) so that its points read as points and the tallest tip stays P3, at 126
-const AB0=[[45,6.5,95],[39,17,105],[31,31,113],[27,45,117],[25,50,116]],ABR=[5.4,4.8,4.2,3.6,3.2];
+const AB0=[[45,6.5,95],[39,17,105],[31,31,113],[27,45,116],[25,49,113.5]],ABR=[5.4,4.8,4.2,3.6,3.2];
 const ATIP=[[64,12,99],[50,24,120],[34,38,126],[28,50,125],[19,60,121],[16,54,112],[22,57,127],[13,60,116]];
-const ACL=[8,7.5,7.5,7,7,7,7,7],ACW=[3.2,3,3,2.8,2.8,2.7,2.8,2.7],PALN=nrm([.72,.44,-.53]);
+const ACL=[9.5,9,9,8.5,8.5,8.5,8.5,8.5],ACW=[3.6,3.4,3.4,3.2,3.2,3.1,3.2,3.1],PALN=nrm([.9,.3,-.15]);
 const KNOT=[[.3,1,1.7],[.55,-1,1.9],[.8,1,1.5]];                                 // the knots of old ice on the beam near the head
 const ROSN=[-1,1].map(sd=>ellN(SKR,AXES,nrm([(45-48)/14,6.5*sd/11,(95-86)/11.5])));  // the skull's normal under each rosette
 const EARN=[-1,1].map(sd=>ellN(SKR,AXES,nrm([(42.5-48)/14,10*sd/11,(92-86)/11.5])));
 const AGC={};
 function antGeo(sd,g,cs){const id=sd+'|'+Math.round(g*40)+'|'+Math.round(cs*40);if(AGC[id])return AGC[id];
   const R0=[45,6.5*sd,95],S=q=>add(R0,mul(sub(q,R0),g)),my=q=>[q[0],q[1]*sd,q[2]],B=AB0.map(q=>S(my(q))),pc=B[4],st=[lerp3(B[0],B[1],.2),B[1],B[2]],T=[];
-  for(let i=0;i<8;i++){const palm=i>=3;let tip0=S(my(ATIP[i]));if(i===1||i===2){const r=st[i];tip0=add(r,mul(sub(tip0,r),1.2))}let s,t=tip0;
-    if(palm){const d=nrm(sub(tip0,pc)),Lr=Math.max(len(sub(tip0,pc)),12*g)*(i<6?cs:1);t=add(pc,mul(d,Lr));s=add(pc,mul(d,3))}else s=st[i];
+  for(let i=0;i<8;i++){const palm=i>=3;let tip0=S(my(ATIP[i]));if(i===1||i===2){const r=st[i];tip0=add(r,mul(sub(tip0,r),1.15))}let s,t=tip0;
+    if(palm){const pn=nrm(my(PALN)),d0=sub(tip0,pc),d=nrm(sub(d0,mul(pn,dot(d0,pn)))),Lr=i<6?Math.max(len(d0),13.5*g)*cs:13.5*g;t=add(pc,mul(d,Lr));s=add(pc,mul(d,3))}else s=st[i];
     const d=nrm(sub(t,s)),Lc=ACL[i]*(g>1.01?1.06:1);T.push({i,s,b:add(t,mul(d,-Lc)),t,d,Lc,r0:palm?2.6:[3.5,3.3,3.1][i],r1:palm?2.2:[2.3,2.2,2.1][i],w:ACW[i],palm})}
   return AGC[id]={B,BR:ABR.map(r=>r*(1+.3*(g-1))),T,pc,pn:nrm(my(PALN)),R0,d0:nrm(sub(B[1],B[0]))}}
 // the ice of the mane: bases on the crest (the first four on the neck: their place along it), heights, tilted back 35°
@@ -154,10 +159,12 @@ function sPose(anim,p,o){const ph=p*TAU,P2=!!o.p2&&anim!=='enter'&&anim!=='rage'
     ft:FT0.map(f=>f.slice()),fb:[0,0,0,0],rs:[0,0,0,0],fo:[0,0,0,0],hd:[0,0,0],ny:0,np:0,hy:0,hp:.12,hr:0,hk:.2,ch:.28,
     jaw:0,blink:1,lid:.3,squint:0,brow:0,nost:0,lookD:0,earL:0,earR:0,tail:0,tsw:0,mane:0,maneLit:P2?.55:0,maneO:0,br:0,coll:0,lich:0,cr:0,cs:1,
     tl:[0,0,0,0,0,0,0,0],tcol:0,tw:0,palm:0,veinK:.8,runs:[],rose:0,trem:0,eflash:0,eyeOn:1,k2:P2?1:0,grow:P2?1:0,p78:P2?1:0,starK:P2?1:0,constel:P2?1:0,
-    starPulse:0,hoofW:0,pearl:-1,ring:-1,flameK:P2?1:0,threads:P2?1:0,ghost:0,vis:1,cline:-1,cup:0,det:0,body:1,rib:-1,bodyUp:0,dawn:0,mound:0,flw:0,edel:0,
+    starPulse:0,hoofW:0,pearl:-1,ring:-1,flameK:P2?1:0,threads:P2&&(anim==='idle'||anim==='walk'||anim==='taunt'||anim==='hit')?1:0,ghost:0,vis:1,cline:-1,cup:0,det:0,body:1,rib:-1,bodyUp:0,dawn:0,mound:0,flw:0,edel:0,
     lastDrop:-1,cflash:0,pale:0,fx:[]};
   const fx=(k,t,o2)=>{if(t>=0&&t<1)A.fx.push(Object.assign({k,t},o2||{}))};
-  const shake=(a,b,amp)=>{const k=(p-a)/(b-a);if(k>0&&k<1){const e=Math.sin(k*Math.PI);A.hy+=amp*Math.sin(k*TAU*2)*e;A.cr-=amp*.35*Math.sin(k*TAU*2-.6)*e;A.maneO+=.08*Math.sin(k*TAU*4)*e}};
+  // (a shake of the crown: at most two, never faster than 5.5 a second, so that in the arena 12, where the boss runs 1.38 times, every
+  // tremor stays under 8 Hz; the same limit for every tremor below)
+  const shake=(a,b,amp)=>{const k=(p-a)/(b-a);if(k>0&&k<1){const e=Math.sin(k*Math.PI),n=Math.max(1,Math.min(2,5.5*(b-a)*DUR[anim]));A.hy+=amp*Math.sin(k*TAU*n)*e;A.cr-=amp*.35*Math.sin(k*TAU*n-.6)*e;A.maneO+=.08*Math.sin(k*TAU*n+1)*e}};
   if(anim==='walk'){// CAMMINA: a heavy step in four beats (LH 0, LF .25, RH .5, RF .75), each hoof up 7 and down with its weight; the shoulder and
     // the hip slide with their hoof, the head nods at each front hoof and the crown follows a moment later; a king walking past his prey
     const st=stepper(p,.6),hf=P2?12:7;for(let i=0;i<4;i++){const r=st(KW[i],21,i<2?hf:7);A.ft[i][0]+=r.x;A.ft[i][2]+=r.z;A.rs[i]=r.x/21*(i<2?7:6)}
@@ -168,13 +175,13 @@ function sPose(anim,p,o){const ph=p*TAU,P2=!!o.p2&&anim!=='enter'&&anim!=='rage'
     if(P2)fx('vapor',p)}
   else if(anim==='hit'){// COLPITO (only for the pages): the head back, the body back 4, the ears flat, the eyes shut, the crown's light trembles
     const k=hitK(p);A.hp=.12-.3*k;A.hd=[-3*k,0,1.5*k];A.B[0]=-4*k;A.lean=-.05*k;A.earL=A.earR=-Math.min(1,Math.abs(k));A.blink=1-rise(p,0,.04,.36,.42);
-    A.trem=Math.min(1,Math.abs(k));A.maneO=.12*k*Math.sin(TAU*7*.6*p);fx('frost',p/.5)}
+    A.trem=Math.min(1,Math.abs(k));A.maneO=.12*k*Math.sin(TAU*5.5*.6*p);fx('frost',p/.5)}
   else if(anim==='prep'){// PREPARA LA CARICA: the head goes down until the lances point forward like swords, two paws of the right front hoof, the
     // light comes down from the rosettes into the lances (white from .35, the flash of the eyes: the strip locks), then it loads back
     const dn=sstep(0,.2,p);A.hp=.12+.43*dn;A.hd=[4*dn,0,-10*dn];A.np=.2*dn;A.earL=A.earR=-.9*dn;A.ch=.28-.16*dn;A.squint=.35*dn;
     paw(A,1,p,.32);paw(A,1,p,.58);fx('snow',(p-.32)/.2,{i:1});fx('snow',(p-.58)/.2,{i:1});
     A.runs.push({g:'lance',k:sstep(.2,.35,p),a:1});A.tl[0]=sstep(.33,.37,p);A.tw=sstep(.2,.35,p);A.rose=sstep(.15,.22,p)*(1-sstep(.4,.5,p));A.eflash=flash(p,.35,.1);fx('breath',(p-.62)/.25,{});
-    const ld=sstep(.8,.95,p);A.B[0]-=4*ld;A.B[2]-=3*ld;A.lean-=.05*ld;A.B[1]+=.7*trem(p,.8,1,6,1.4);A.tail=sstep(.8,.92,p)}
+    const ld=sstep(.8,.95,p);A.B[0]-=4*ld;A.B[2]-=3*ld;A.lean-=.05*ld;A.B[1]+=.7*trem(p,.8,1,5.5,1.4);A.tail=sstep(.8,.92,p)}
   else if(anim==='charge'){// CARICA: a true gallop in bounds (a cycle): the front legs reach together, the hind ones push, all four in the air at
     // .45-.60; the head low and still with the lances forward, the ears flat, the white flag of the tail, a trail of aurora from the lances
     const CT=[[.02,.40],[.10,.45],[.60,.96],[.66,1.04]];for(let i=0;i<4;i++){const g=gal(p,CT[i][0],CT[i][1],i<2?17:18,i<2?12:9);A.ft[i][0]+=g[0];A.ft[i][2]+=g[1];A.rs[i]=g[0]/18*(i<2?7:6)}
@@ -191,17 +198,17 @@ function sPose(anim,p,o){const ph=p*TAU,P2=!!o.p2&&anim!=='enter'&&anim!=='rage'
     step(A,0,p,.8,.85,0,0);{const k=sstep(.8,.85,p)*(1-end);A.ft[0][0]-=8*k;A.ft[0][2]+=3.5*Math.sin(Math.PI*cl((p-.8)/.05,0,1))}
     {const k=sstep(.83,.88,p)*(1-end);A.ft[1][0]-=8*k;A.ft[1][2]+=3.5*Math.sin(Math.PI*cl((p-.83)/.05,0,1))}
     for(const i of[0,1])A.ft[i][2]+=2.5*Math.sin(Math.PI*cl((p-.88-.04*i)/.08,0,1));
-    A.rose=p>.08&&p<.8?.5+.5*Math.sin(TAU*4*1.6*(p-.08)):0;A.earL=A.earR=-.8*(1-end);A.squint=.5*(1-end);A.tl[0]=1-sstep(.05,.2,p);A.tw=1;A.maneO=.1*tug*Math.sin(TAU*7*1.6*p);
+    A.rose=p>.08&&p<.8?.5+.5*Math.sin(TAU*4*1.6*(p-.08)):0;A.earL=A.earR=-.8*(1-end);A.squint=.5*(1-end);A.tl[0]=1-sstep(.05,.2,p);A.tw=1;A.maneO=.1*tug*Math.sin(TAU*5.5*1.6*p);
     fx('crack',p/.3,{});fx('bits',(p-.3)/.3,{});fx('bits',(p-.58)/.3,{});shake(.88,1,.22);fx('breath',(p-.9)/.1,{snort:1})}
   else if(anim==='recoil'){// RIMBALZO (the first charge of the second phase): it bounces off, a step back with the front legs, a shake of the crown
-    const b=sstep(0,.06,p)*(1-sstep(.2,.5,p)),up=sstep(0,.18,p);A.hp=lerp(.55,.12,up)-.35*b;A.hd=[4*(1-up)-3*b,0,-10*(1-up)];A.np=.2*(1-up);A.B[0]=-4*b;A.maneO=.12*b*Math.sin(TAU*7*.5*p);
+    const b=sstep(0,.06,p)*(1-sstep(.2,.5,p)),up=sstep(0,.18,p);A.hp=lerp(.55,.12,up)-.35*b;A.hd=[4*(1-up)-3*b,0,-10*(1-up)];A.np=.2*(1-up);A.B[0]=-4*b;A.maneO=.12*b*Math.sin(TAU*5.5*.5*p);
     for(const[i,a] of[[0,.2],[1,.36]]){const k=cl((p-a)/.2,0,1),bk=cl((p-a-.42)/.16,0,1);A.ft[i][0]-=6*ez(k)*(1-ez(bk));A.ft[i][2]+=3.5*Math.sin(Math.PI*k)+2.5*Math.sin(Math.PI*bk)}
     shake(.6,1,.18);A.tl[0]=1-sstep(0,.2,p);A.tw=1;A.earL=A.earR=-.5*b}
   else if(anim==='prep2'){// SECONDA CARICA: it turns to you and lowers the head, the lances already lit (the strip is already locked: the flash at
     // .05), one paw (.45), it loads back and trembles
     const dn=sstep(0,.3,p);A.hp=.12+.43*dn;A.hd=[4*dn,0,-10*dn];A.np=.2*dn;A.earL=A.earR=-.9*dn;A.ch=.28-.16*dn;A.squint=.35*dn;
     A.tl[0]=1;A.tw=1;A.runs.push({g:'lance',k:1,a:1});A.eflash=flash(p,.05,.1);paw(A,1,p,.45);fx('snow',(p-.45)/.2,{i:1});
-    const ld=sstep(.6,.85,p);A.B[0]-=4*ld;A.B[2]-=3*ld;A.lean-=.05*ld;A.B[1]+=.7*trem(p,.6,1,6,.95);A.tail=sstep(.6,.8,p)}
+    const ld=sstep(.6,.85,p);A.B[0]-=4*ld;A.B[2]-=3*ld;A.lean-=.05*ld;A.B[1]+=.7*trem(p,.6,1,5.5,.95);A.tail=sstep(.6,.8,p)}
   else if(anim==='skid'){// FRENATA: the front hooves planted forward, the body pulled back, snow from the hooves (the game slides it); it straightens
     const k=sstep(0,.1,p)*(1-sstep(.55,.8,p)),bk=1-sstep(.45,.85,p);for(const i of[0,1])A.ft[i][0]+=8*k;A.lean=-.15*k;A.B[0]=-3*k;A.B[2]=-1.5*k;
     A.hp=lerp(.12,.55,bk);A.hd=[6*bk,0,-12*bk];A.np=.25*bk;A.hk=.2*(1-bk);A.ch=.28-.18*bk;A.earL=A.earR=-bk;A.tail=bk;fx('spray',p/.6,{});shake(.62,1,.2)}
@@ -212,13 +219,13 @@ function sPose(anim,p,o){const ph=p*TAU,P2=!!o.p2&&anim!=='enter'&&anim!=='rage'
     if(p>=.55){const k=ez(cl((p-.55)/.15,0,1));hy=lerp(-1,1,k);yaw=lerp(-.2,.2,k);hr=lerp(-.35,.22,k)}
     if(!P2&&p>=.7){const k=sstep(.7,1,p);hy=lerp(1,0,k);yaw=lerp(.2,0,k);hr=lerp(.22,0,k)}
     if(P2&&p>=.7){if(p<.82){const k=ez((p-.7)/.12);hy=lerp(1,-.3,k);yaw=lerp(.2,-.06,k);hr=lerp(.22,-.12,k)}else{const k=sstep(.82,1,p);hy=lerp(-.3,0,k);yaw=lerp(-.06,0,k);hr=lerp(-.12,0,k)}}
-    A.hy=hy;A.yaw=yaw;A.hr=hr;A.ny=.5*hy-yaw;if(p>=.5&&p<.55){const t=trem(p,.5,.55,6,1.8);A.B[1]+=.6*t;A.hy+=.03*t}
+    A.hy=hy;A.yaw=yaw;A.hr=hr;A.ny=.5*hy-yaw;if(p>=.5&&p<.55){const t=trem(p,.5,.55,5.5,1.8);A.B[1]+=.6*t;A.hy+=.03*t}
     if(P2)shake(.84,1,.12);else shake(.73,.95,.16);
     const NT=[.08,.16,.24,.32,.40,.48];for(let i=0;i<8;i++){const j=Math.min(i,5);let l=sstep(NT[j],NT[j]+.03,p)*(1-sstep(.56+.02*j,.58+.02*j,p));
       if(P2)l=Math.max(l,sstep(.66,.7,p)*(1-sstep(.72+.016*j,.74+.016*j,p)));A.tl[i]=l}
     A.tw=.5;A.rose=sstep(0,.08,p)*(1-sstep(.5,.6,p));A.eflash=flash(p,.48,.1);A.earL=A.earR=-.4*wd*(p<.75?1:0);
     {const k=cl((p-.55)/.07,0,1),bk=cl((p-.86)/.12,0,1);A.ft[0][1]+=6*ez(k)*(1-ez(bk));A.ft[0][0]+=2*ez(k)*(1-ez(bk));A.ft[0][2]+=4*Math.sin(Math.PI*k)+3*Math.sin(Math.PI*bk)}
-    fx('trail',(p-.55)/.15,{sweep:1});if(P2)fx('trail',(p-.7)/.12,{sweep:1});fx('dropfall',(p-.72)/.22,{});fx('breath',(p-.85)/.15,{snort:1})}
+    fx('trail',(p-.55)/.15,{sweep:1});if(P2)fx('trail',(p-.7)/.12,{sweep:-1});fx('dropfall',(p-.72)/.22,{});fx('breath',(p-.85)/.15,{snort:1})}
   else if(anim==='aurora'){// TENDE D'AURORA: the head to the sky, the palms blaze and the light rises from them like smoke, the drops rise; it holds
     // the head high (the neck trembles under 5 Hz), the soft call (.2-.5); three sharp nods, one for each curtain (.58, .72, .86 in the
     // second phase); it lowers the head and shakes the crown
@@ -231,15 +238,18 @@ function sPose(anim,p,o){const ph=p*TAU,P2=!!o.p2&&anim!=='enter'&&anim!=='rage'
     // stand up; a pearl of light comes down from the rosettes along the front of the neck and the chest into the front legs (the hooves go
     // white); the flash of the eyes (.40), it trembles at the top, it slams down (the blow at .52), stays low with the frosty breath, rises.
     // Second phase: it rises halfway and slams again (.76)
-    let r;if(p<.45)r=ez(p/.45);else if(p<.49)r=1;else if(p<.52)r=1-Math.pow((p-.49)/.03,2);else r=0;
+    let r;if(p<.45)r=ez(p/.45);else if(p<.48)r=1;else if(p<.52)r=1-Math.pow((p-.48)/.04,2);else r=0;
     if(P2){if(p>=.56&&p<.7)r=.5*ez((p-.56)/.14);else if(p>=.7&&p<.74)r=.5;else if(p>=.74&&p<.76)r=.5*(1-Math.pow((p-.74)/.02,2))}
     A.lean=-.7*r;A.pv=[-27,0,30];A.hk=.5;A.hp=.12+.3*r;A.np=-.3*r;A.hd=[0,0,3*r];A.mane=Math.max(r,0);A.coll=.12*Math.sin(TAU*3*p)*r;
-    const fb=sstep(0,.25,r);A.fb[0]=A.fb[1]=fb;A.fo[0]=A.fo[1]=sstep(.15,.55,r);for(const i of[2,3])A.ft[i][0]-=3*r;
+    // (the front legs fold as it rears and reach down for the floor while it falls: by the clock, not by the height, or they would snap
+    // straight in the last instant of the slam)
+    let fb=sstep(.02,.25,p)*(1-sstep(.46,.52,p)),fo=sstep(.1,.3,p)*(1-sstep(.48,.52,p));if(P2){fb=Math.max(fb,sstep(.57,.66,p)*(1-sstep(.71,.76,p)));fo=Math.max(fo,sstep(.58,.66,p)*(1-sstep(.73,.76,p)))}
+    A.fb[0]=A.fb[1]=fb;A.fo[0]=A.fo[1]=fo;for(const i of[2,3])A.ft[i][0]-=3*r;
     A.pearl=p<.42?sstep(.02,.35,p):-1;A.hoofW=sstep(.3,.36,p)*(1-sstep(P2?.84:.6,P2?.95:.75,p));A.eflash=flash(p,.40,.1);A.rose=sstep(0,.05,p)*(1-sstep(.3,.4,p));
-    A.B[1]+=.8*trem(p,.45,.49,6,2);A.earL=A.earR=-.5*r;
+    A.B[1]+=.8*trem(p,.45,.48,5.5,2);A.earL=A.earR=-.5*r;
     for(const c of P2?[.52,.76]:[.52]){const k=pls(p,c+.006,.03);A.s-=.06*k;A.B[2]-=3*k;A.hp+=.15*pls(p,c+.015,.05);fx('ring',(p-c)/.3,{});fx('snow',(p-c)/.25,{i:0,j:1,big:1})}
     const low=P2?rise(p,.52,.54,.55,.57)+rise(p,.76,.78,.86,.94):rise(p,.52,.54,.74,.82);A.B[2]-=3*low;A.lean+=.05*low;
-    A.maneO=.1*rise(p,.52,.54,.7,.78)*Math.sin(TAU*7*2*p);fx('breath',(p-.56)/.2,{big:1});fx('breath',(p-.9)/.1,{snort:1})}
+    A.maneO=.1*rise(p,.52,.54,.7,.78)*Math.sin(TAU*5.5*2*p);fx('breath',(p-.56)/.2,{big:1});fx('breath',(p-.9)/.1,{snort:1})}
   else if(anim==='call'){// RICHIAMO DELLA MANDRIA: the neck forward and up, the bellow (.25-.70), the crown goes violet from the rosettes to the
     // points, the icicles stand up and light; the neck trembles, three clouds of breath, two flashes of the eyes; it lowers the head, two snorts
     const up=sstep(0,.25,p)*(1-sstep(.7,.9,p)),hold=rise(p,.25,.3,.65,.7);A.hd=[8*up,0,7*up];A.np=-.25*up;A.hp=.12-.45*up;A.jaw=.85*rise(p,.06,.25,.66,.72);A.brow=up;A.earL=A.earR=-.5*up;
@@ -253,19 +263,19 @@ function sPose(anim,p,o){const ph=p*TAU,P2=!!o.p2&&anim!=='enter'&&anim!=='rage'
     A.ft[0][1]+=4*pl;A.ft[1][1]-=4*pl;A.hp=.12-.42*sstep(0,.15,p)*(1-sstep(.88,.94,p))+.28*rise(p,.88,.94,.97,1);A.cs=1+.15*pl;
     for(let i=0;i<8;i++)A.tl[i]=g*(1-off);A.tw=sstep(.3,.4,p)*(1-off);A.flameK=1+g*(1-off);A.maneLit=Math.max(.55,g*(1-off));A.mane=.6*g*(1-off);A.rose=g*(1-off);
     A.ring=p>=.15&&p<.96?(p-.15)/.81:-1;A.eflash=flash(p,.38,.1);A.hy=dr*.698*cl((p-.4)/.48,0,1)*(1-sstep(.9,1,p));A.ny=.35*A.hy;
-    A.B[1]+=.3*trem(p,.4,.88,6,4);A.runs.push({g:'beam',k:g,a:1-off});for(const c of[.9,.95])fx('breath',(p-c)/.1,{big:1})}
+    A.B[1]+=.3*trem(p,.4,.88,5.5,4);A.runs.push({g:'beam',k:g,a:1-off});for(const c of[.9,.95])fx('breath',(p-c)/.1,{big:1})}
   else if(anim==='rage'){// L'AURORA SI ACCENDE (the change of phase): it staggers and the crown goes out; it kneels on the left knee with the head
     // bowed (it looks finished); the column of aurora (the game's): the crown lights again from the points down, P7 and P8 grow, the antlers
     // and the icicles grow longer, the colours turn to the second phase; it rises, the stars light one by one into constellations, the eyes
     // open violet; the bellow of rage; it lowers the crown, ready
-    const st=sstep(0,.06,p)*(1-sstep(.1,.18,p));A.B[0]=-4*st;A.lean=-.06*st;A.B[1]+=.6*trem(p,0,.12,7,3);
-    const out=sstep(.04,.12,p),re=sstep(.34,.5,p);A.veinK=.8*(1-out)*(.6+.4*Math.sin(TAU*7*3*p))+re;
-    const ORD=[2,3,6,1,4,7,5,0];for(let i=0;i<8;i++){const t0=.34+.02*ORD.indexOf(i);A.tl[i]=.5*(1-out)*(.5+.5*Math.sin(TAU*7*3*p+i))+sstep(t0,t0+.03,p)*(1-.7*sstep(.9,1,p))}
+    const st=sstep(0,.06,p)*(1-sstep(.1,.18,p));A.B[0]=-4*st;A.lean=-.06*st;A.B[1]+=.6*trem(p,0,.12,5.5,3);
+    const out=sstep(.04,.12,p),re=sstep(.34,.5,p);A.veinK=.8*(1-out)*(.6+.4*Math.sin(TAU*16*p))+re;
+    const ORD=[2,3,6,1,4,7,5,0];for(let i=0;i<8;i++){const t0=.34+.02*ORD.indexOf(i);A.tl[i]=.5*(1-out)*(.5+.5*Math.sin(TAU*16*p+i))+sstep(t0,t0+.03,p)*(1-.7*sstep(.9,1,p))}
     A.grow=sstep(.32,.5,p);A.p78=sstep(.36,.5,p);A.k2=sstep(.32,.6,p);A.maneLit=sstep(.4,.6,p)*.55;A.starK=sstep(.5,.66,p);A.constel=sstep(.6,.68,p);A.flameK=sstep(.42,.56,p);A.threads=sstep(.6,.7,p);A.rose=re*(1-sstep(.9,1,p));
     const kn=sstep(.12,.3,p)*(1-sstep(.5,.66,p));A.B[2]-=9*kn;A.lean+=.14*kn;A.ft[0]=lerp3(FT0[0],[5,11,2.5],kn);A.hp=.12+.62*kn;A.hd[2]-=6*kn;A.np+=.3*kn;A.blink=1-.75*rise(p,.14,.2,.5,.56);
     A.eflash=flash(p,.6,.1);A.earL=A.earR=-.6*kn;
     const roar=rise(p,.68,.72,.86,.9);A.hd=add(A.hd,[6*roar,0,8*roar]);A.np-=.25*roar;A.hp-=.5*roar;A.jaw=.9*roar;A.brow=roar;A.mane=Math.max(A.mane,roar);A.nost=roar;A.earL=A.earR=Math.min(A.earL,-.6*roar);
-    A.hp+=.08*sstep(.9,1,p);A.maneO=.08*roar*Math.sin(TAU*7*3*p);fx('cloud',(p-.7)/.2,{})}
+    A.hp+=.08*sstep(.9,1,p);A.maneO=.08*roar*Math.sin(TAU*16*p);fx('cloud',(p-.7)/.2,{})}
   else if(anim==='taunt'){// PRESA IN GIRO: it raises the chin and looks down the muzzle at you under the heavy lids, two puffs, a slow «no, no» while
     // the drops of light on the lances tinkle like little bells, one paw, then it stares at you again
     const up=sstep(0,.15,p)*(1-sstep(.85,1,p));A.hp=.12-.52*up;A.hd[2]+=2*up;A.lid=.3+.22*up;A.lookD=up;
@@ -288,8 +298,8 @@ function sPose(anim,p,o){const ph=p*TAU,P2=!!o.p2&&anim!=='enter'&&anim!=='rage'
     // the antlers come off clean (the rosettes stay) and stand in the moss in front of it like a little tree of crystal; the body turns into
     // aurora light from the hooves up and rises like a curtain rolling up; a warm ray of dawn falls on the antlers, the mound of moss grows
     // with white flowers and an edelweiss, the last drop of light falls from the highest point. At .999: the pale crown on the flowered mound
-    A.B[1]+=.8*trem(p,0,.16,6,4.2);A.roll=.03*trem(p,0,.16,5,4.2);A.B[0]=-3*sstep(0,.08,p)*(1-sstep(.12,.2,p));
-    const ORD=[2,3,6,1,4,7,5,0];for(let i=0;i<8;i++){const t0=.15+.022*ORD.indexOf(i);A.tl[i]=sstep(0,.05,p)*(.65+.35*Math.sin(TAU*6*4.2*p+i))*(1-sstep(t0,t0+.025,p))}
+    A.B[1]+=.8*trem(p,0,.16,5.5,4.2);A.roll=.03*trem(p,0,.16,5,4.2);A.B[0]=-3*sstep(0,.08,p)*(1-sstep(.12,.2,p));
+    const ORD=[2,3,6,1,4,7,5,0];for(let i=0;i<8;i++){const t0=.15+.022*ORD.indexOf(i);A.tl[i]=sstep(0,.05,p)*(.65+.35*Math.sin(TAU*5.5*4.2*p+i))*(1-sstep(t0,t0+.025,p))}
     A.veinK=.8*(1-sstep(.3,.36,p))*(.65+.35*Math.sin(TAU*5*4.2*p))+.6*pls(p,.53,.06);A.rose=.5*(1-sstep(.3,.36,p));
     const bw=sstep(.34,.5,p);A.B[2]-=12*bw;A.lean+=.22*bw;A.hp=.12+1.02*bw;A.hd=[6*bw,0,-10*bw];A.np=.4*bw;A.hk=.6;A.ch=.28*(1-bw);
     A.ft[0]=lerp3(FT0[0],[6,11,2.5],bw);A.ft[1]=lerp3(FT0[1],[6,-11,2.5],bw);A.blink=1-.6*bw;A.earL=A.earR=-.4*bw;
@@ -302,13 +312,13 @@ function sPose(anim,p,o){const ph=p*TAU,P2=!!o.p2&&anim!=='enter'&&anim!=='rage'
     // sways; heavy lids and a slow blink, the ears, the tail; it lowers the crown a little at you (.5-.6) and paws the snow (.82)
     const nb=P2?3:2,amp=P2?1.4:1,br=.5-.5*Math.cos(TAU*nb*p);A.br=br*amp;A.roll=.02*Math.sin(ph);A.B[2]=.4*br*amp;for(const i of[0,1,2,3])A.ft[i][1]+=i%2?-1.5:1.5;
     A.blink=blink(p,.62,.1);A.earL=.7*pls(p,.2,.08);A.earR=.7*pls(p,.45,.08);{const k=(p-.66)/.1;if(k>0&&k<1)A.tsw=Math.sin(k*TAU)*Math.sin(k*Math.PI)}
-    A.coll=.05*Math.sin(TAU*nb*p-.6);A.lich=.22*Math.sin(TAU*2*p+.4);A.maneO=.05*(pw(p,.25,.12)+pw(p,.75,.12))*Math.sin(TAU*7*3*p);
+    A.coll=.05*Math.sin(TAU*nb*p-.6);A.lich=.22*Math.sin(TAU*2*p+.4);A.maneO=.05*(pw(p,.25,.12)+pw(p,.75,.12))*Math.sin(TAU*16*p);
     A.hp=.12+.18*pls(p,.55,.1);paw(A,1,p,.82);fx('snow',(p-.82)/.18,{i:1});
     for(const c of P2?[.05,.38,.72]:[.1,.6]){const k=(p-c)/.3;if(k>0&&k<1.3)A.runs.push({g:'beam',k:cl(k,0,1),a:1-sstep(.95,1.3,k),soft:1})}
     A.veinK=.55+.45*br;A.rose=.3*br;
     if(!P2){fx('drop',(p-.12)/.38,{sd:1});fx('drop',(p-.62)/.38,{sd:-1})}else A.starPulse=br;
     for(const c of P2?[.33,.66,.99]:[.35,.85])fx('breath',cyc(p,c)/.3,{});if(P2)fx('vapor',p)}
-  if(P2&&anim!=='die'){A.tl=A.tl.map(v=>Math.max(v,.12))}
+  A.tp=p*(anim==='idle'?3:anim==='rage'?2:1);   // the clock of the threads of light (whole cycles in the loops)
   return A}
 
 // ------------------------------------------------------------------ pieces
@@ -354,9 +364,10 @@ function mossGrad(b,T){const w=b[2]-b[0],h=b[3]-b[1],cx=(b[0]+b[2])/2,R=Math.max
 const MMANT=nrm([-.35,0,.94]),MHIP=[nrm([-.2,-.6,.75]),nrm([-.2,.6,.75])];
 const mrf=t=>1+.12*Math.pow(Math.abs(Math.cos(t*5.5)),.7),mrf2=t=>1+.16*Math.pow(Math.abs(Math.cos(t*3.5)),.7);
 function mossDraw(V0,X,A,K,TCb,TRb){if(GH)return;const{P,F}=V0;
-  for(let j=0;j<3;j++){const e=j?2:0,m=j?MHIP[j-1]:MMANT,al=j?.4:.66,alv=j?.34:.56,R2=add(TRb[e],j?[1.2,1.2,1.2]:[1.8,1.8,1.8]);
+  // (the tufts on the hips small and darker than the mantle: a little moss in the shade, never two green spots)
+  for(let j=0;j<3;j++){const e=j?2:0,m=j?MHIP[j-1]:MMANT,al=j?.32:.66,alv=j?.27:.56,R2=add(TRb[e],j?[1.2,1.2,1.2]:[1.8,1.8,1.8]);
     const r=ellCap(V0,X,TCb[e],R2,AXES,m,al,j?20:33,{alv,u:[1,0,0],ck:j?'smh'+j:'smm',rf:j?mrf2:mrf});if(!r)continue;
-    const q=P(X.T(ellAt(TCb[e],R2,AXES,m))),w=j?8:16,h=j?6:11,bb=[q[0]-w,q[1]-h,q[0]+w,q[1]+h];ctx.fillStyle=mossGrad(bb,K.moss);ctx.fill();ctx.lineJoin='round';ctx.strokeStyle=INK;ctx.lineWidth=j?1.7:2.1;ctx.stroke();
+    const q=P(X.T(ellAt(TCb[e],R2,AXES,m))),w=j?8:16,h=j?6:11,bb=[q[0]-w,q[1]-h,q[0]+w,q[1]+h];ctx.fillStyle=mossGrad(bb,j?T3(cmix(K.moss.l,K.moss.b,.6),cmix(K.moss.b,K.moss.d,.55),K.moss.d):K.moss);ctx.fill();ctx.lineJoin='round';ctx.strokeStyle=INK;ctx.lineWidth=j?1.7:2.1;ctx.stroke();
     if(j)continue;
     // the frosted tips of the scallops of the mantle, and its little flowers of ice in the second phase
     const n=nrm(m);let u=sub([1,0,0],mul(n,dot([1,0,0],n)));u=nrm(u);const v=cross(n,u),tips=new Path2D(),fl=new Path2D();let nt=0;
@@ -516,10 +527,13 @@ function eyesDraw(V0,HX,A,K,J){const{P,F}=V0,HT=HX.T,HRd=HX.Rd,open=Math.min(A.b
 function earDraw(V0,HX,A,K,sd){const{P,F}=V0,HT=HX.T,HRd=HX.Rd,ang=sd>0?A.earL:A.earR,d0=[-.64,.76*sd,.04];
   // (out and back nearly level, under the beam of the antler: up they would hide behind it)
   const dl=nrm(ang>=0?lerp3(d0,[.12,.92*sd,.3],ang):lerp3(d0,[-.95,.28*sd,0],-ang)),b=HT([42.5,10*sd,92]),d=HRd(dl),n0=HRd(nrm([.6,.2*sd,.75])),s=nrm(cross(n0,d)),n=nrm(cross(d,s));
-  const pa=new Path2D(),r=leafP(pa,P,b,d,s,14,3.7,n,.3),inside=F(n)>=0;
+  // (a thin volume, the front leaf and its back a little behind it: edge on it is still an ear, never a stick)
+  const pa=new Path2D(),r=leafP(pa,P,b,d,s,14,3.7,n,.3);leafP(pa,P,add(b,mul(n,-1.5)),d,s,13.2,3.4,n,.3);
   if(GH){inkFill(pa,GG,1.4);return}
-  inkFill(pa,grad3(bbox(r),inside?K.frost:K.coat),1.8);
-  if(inside){const ip=new Path2D();leafP(ip,P,add(b,mul(d,2.5)),d,s,8.5,1.7,n,.3);ctx.fillStyle=rgba(K.frost.d,.55);ctx.fill(ip)}
+  inkFill(pa,grad3(bbox(r),K.coat),1.8);
+  // the frost inside the ear, shown as the inside turns toward us (no sudden swap of colours)
+  const fi=sstep(-.12,.2,F(n));if(fi>.01){const ip=new Path2D(),ri=leafP(ip,P,add(b,mul(d,1.2)),d,s,11.5,2.8,n,.3);ctx.save();ctx.globalAlpha*=fi;ctx.fillStyle=grad3(bbox(ri),K.frost);ctx.fill(ip);
+    const iq=new Path2D();leafP(iq,P,add(b,mul(d,3)),d,s,7.5,1.4,n,.3);ctx.fillStyle=rgba(K.frost.d,.55);ctx.fill(iq);ctx.restore()}
   // the dark tip, the little icicle hanging from it
   const tp=new Path2D(),tb=add(b,mul(d,9.8));leafP(tp,P,tb,d,s,4.2,1.7,n,.3);ctx.fillStyle=K.lid;ctx.fill(tp);
   const tip=add(add(b,mul(d,14)),mul(n,.3*14*.4)),ice=add(tip,[.4*A.maneO*8,0,-3.2]),q0=P(tip),q1=P(ice);ctx.fillStyle=K.ice.l;ctx.strokeStyle=INK;ctx.lineWidth=.8;C.tri(q0[0],q0[1],q1[0],q1[1],1.1)}
@@ -561,7 +575,7 @@ function antDraw(V0,TA,TD,A,K,sd,G,o){const{P,F}=V0,lit=litRgb(A),pale=A.pale||0
       if(!LOWFX){ctx.save();ctx.globalCompositeOperation='lighter';ctx.strokeStyle=`rgba(${lit},${(.13*vk).toFixed(3)})`;ctx.lineWidth=2.6;ctx.stroke(v);ctx.restore()}ctx.strokeStyle=`rgba(200,255,240,${(.32*vk).toFixed(3)})`;ctx.lineWidth=.8;ctx.stroke(v)}
     for(const r of A.runs){const path=r.g==='lance'?[Bs[0],TT[0].s,TT[0].e]:Bs;runDraw(path,r.k,r.a*(1-pale),r.vio?VIO:lit,r.soft)}}
   // the palm: a round plate of crystal (a little thick), facing forward and out
-  {const c=TA(G.pc),n=TD(G.pn),[u,v]=frm(n,[0,0,1]),H=chull(ringS(V0,add(c,mul(n,1.3)),u,v,8,14).concat(ringS(V0,add(c,mul(n,-1.3)),u,v,8,14)));
+  {const c=TA(G.pc),n=TD(G.pn),[u,v]=frm(n,[0,0,1]),H=ellSil(V0,c,[9.5,9.5,1.5],{u,v,w:n},null,18);
     if(H.length>2){poly(H);const pk=Math.max(A.palm,A.tl[3]*.6);ctx.fillStyle=GH?GG:grad3(bbox(H),pk>.02?mixT(KC,T3('#ffffff',`rgb(${lit})`,KC.b),pk*.7):KC);ctx.fill();ctx.strokeStyle=GH?GWC:INK;ctx.lineWidth=GH?1.4:1.8;ctx.lineJoin='round';ctx.stroke();
       if(!GH){const q=P(c),fl=new Path2D();for(const z of TT)if(z.t.palm){fl.moveTo(q[0],q[1]);fl.lineTo(lerp(q[0],z.b[0],.9),lerp(q[1],z.b[1],.9))}ctx.strokeStyle='rgba(255,255,255,.4)';ctx.lineWidth=.8;ctx.stroke(fl);
         if(pk>.05&&!LOWFX)shine(lit,q[0],q[1],16,.4*pk)}}}
@@ -579,7 +593,7 @@ function antDraw(V0,TA,TD,A,K,sd,G,o){const{P,F}=V0,lit=litRgb(A),pale=A.pale||0
     ctx.beginPath();ctx.moveTo(d.b[0],d.b[1]);ctx.lineTo(d.L[0],d.L[1]);ctx.lineTo(d.e[0],d.e[1]);ctx.closePath();ctx.fillStyle=ll;ctx.fill();ctx.beginPath();ctx.moveTo(d.b[0],d.b[1]);ctx.lineTo(d.e[0],d.e[1]);ctx.lineTo(d.D[0],d.D[1]);ctx.closePath();ctx.fillStyle=lc;ctx.fill();
     ctx.beginPath();ctx.moveTo(d.b[0],d.b[1]);ctx.lineTo(d.L[0],d.L[1]);ctx.lineTo(d.e[0],d.e[1]);ctx.lineTo(d.D[0],d.D[1]);ctx.closePath();ctx.strokeStyle=INK;ctx.lineWidth=1.5;ctx.stroke();
     const c=[lerp(d.m[0],d.e[0],.25),lerp(d.m[1],d.e[1],.25)];ctx.beginPath();ctx.moveTo(lerp(c[0],d.b[0],.4),lerp(c[1],d.b[1],.4));ctx.lineTo(lerp(c[0],d.L[0],.45),lerp(c[1],d.L[1],.45));ctx.lineTo(lerp(c[0],d.e[0],.45),lerp(c[1],d.e[1],.45));ctx.lineTo(lerp(c[0],d.D[0],.45),lerp(c[1],d.D[1],.45));ctx.closePath();ctx.fillStyle='#ffffff';ctx.fill();
-    ctx.restore();if(!LOWFX)shine(lit,d.e[0]*.6+d.m[0]*.4,d.e[1]*.6+d.m[1]*.4,9,.55*Math.min(1,L))}
+    ctx.restore();if(!LOWFX&&L>.2)shine(lit,d.e[0]*.6+d.m[0]*.4,d.e[1]*.6+d.m[1]*.4,9,.55*Math.min(1,L))}
   // the rosette of antique gold: a ring of seven buttons round the root of the beam (the half that faces us, over the beam)
   if(!o.noRose)roseDraw(V0,TA(G.R0),TD(G.d0),K,A,lit)
   // the flames of aurora on the points (the second phase): they flicker under 8 Hz with the game's clock
@@ -623,36 +637,41 @@ function stag2(x,y,face,anim,p,sc,o){sc=sc||1;o=o||{};anim=MV.includes(anim)?ani
   // the floor
   if(gh0<.5&&!A.ghost&&A.body>0)shadowE(V0,x,y,sc,A,.3*(1-A.bodyUp));
   ctx.save();ctx.translate(x,y);ctx.scale(sc,sc);GG=ghostGrad(V0);
-  const LB=parts(),LF=parts(),kN=100,kM=120,kH=200,dk=sd=>.35*sstep(.02,.4,-F(X.Rd([0,sd,0])));
+  const LB=parts(),LF=parts(),L0=parts(),kN=100,kM=120,kH=200,dk=sd=>.35*sstep(.02,.4,-F(X.Rd([0,sd,0])));
   // ---------------- the stag (drawn in colour, or as light of the aurora)
   for(const g of LG){const d0=D(RT0[g.i])*.01,fo=A.fo[g.i]*sstep(.05,.4,F(X.Rd(nrm([1,0,.35])))),dr=()=>legDraw(V0,X,A,K,g,dk(g.sd));
     if(fo<.99)LB.add(-800+d0,dr);if(fo>.01)LB.add(400+d0,()=>fadeOr(fo,dr,P(lerp3(g.root,g.en,.5)),40))}
-  {const to=sstep(-.12,.12,F(X.Rd(nrm([-1,0,.25])))),dr=()=>tailDraw(V0,X,A,K);if(to<.99)LB.add(-700,dr);if(to>.01)LB.add(160,()=>fadeOr(to,dr,P(X.T([-48,0,54])),16))}
+  {const to=sstep(-.05,.05,F(X.Rd(nrm([-1,0,.25])))),dr=()=>tailDraw(V0,X,A,K);if(to<.99)LB.add(-700,dr);if(to>.01)LB.add(160,()=>fadeOr(to,dr,P(X.T([-48,0,54])),16))}
   LB.add(0,()=>bodyDraw(V0,X,A,K,J));
   LB.add(kN,()=>neckDraw(V0,NKW,A,K,J));
   LB.add(kM,()=>fadeOr(1-see,()=>maneDraw(V0,X,A,K,J,NKW),P(X.T([22,0,90])),36));
   LB.add(140,()=>collarDraw(V0,X,A,K,J));
   LB.add(kH,()=>{headDraw(V0,HX,A,K,J);if(A.det>0&&!GH)roseOnHead(V0,HX,A,K)});
-  for(const sd of[-1,1]){const j=sd>0?1:0,eo=sstep(-.12,.12,F(HRd(EARN[j]))),de=()=>earDraw(V0,HX,A,K,sd),qe=P(HT([38,16*sd,98]));
-    if(eo<.99)LB.add(-990,()=>fadeOr(1-eo<.99?1:0,de,qe,18));if(eo>.01)LB.add(290,()=>fadeOr(eo,de,qe,18))}
-  // the antlers: over the head while the rosette (on top of the skull) faces us, behind everything when it does not, with a short fade
-  const antOn=A.det<.02||A.det>.98?null:1,crownLB=A.det>0?LF:LB;
-  for(const sd of[-1,1]){const j=sd>0?1:0,G=AG[j],ao=A.det>0?1:sstep(-.1,.12,F(CRd(ROSN[j]))),qa=P(TA([32,36*sd,110])),ra=50*gro,
+  for(const sd of[-1,1]){const j=sd>0?1:0,eo=sstep(-.05,.05,F(HRd(EARN[j]))),de=()=>earDraw(V0,HX,A,K,sd),qe=P(HT([38,16*sd,98]));
+    if(eo<.99)LB.add(-990,de);if(eo>.01)LB.add(290,()=>fadeOr(eo,de,qe,18))}
+  // the antlers: over the head while the rosette (on top of the skull) faces us, behind everything when it does not, with a short crossfade
+  // (one picture) only while the rosette is on the edge of the skull. Come off (the defeat) they stand in the moss in front of him: drawn
+  // before the body when the body is between them and us (L0), after it otherwise, never in the passes of the body turning into light
+  const LC=A.det>0&&D(X.T([54,0,0]))<D(X.T([20,0,40]))?L0:LF;
+  for(const sd of[-1,1]){const j=sd>0?1:0,G=AG[j],ao=A.det>0?1:sstep(-.05,.05,F(CRd(ROSN[j]))),qa=P(TA([32,36*sd,110])),ra=50*gro,
       da=()=>antDraw(V0,TA,CRd,A,K,sd,G,{noRose:A.det>0}),dv=k=>fadeOr(k*(1-see),da,qa,ra);
-    if(A.det>0){crownLB.add(D(TA(G.R0))>D(X.T([20,0,40]))?500+D(TA(G.R0))*.01:-1100,()=>dv(1));continue}
+    if(A.det>0){LC.add(500+D(TA(G.R0))*.01,()=>dv(1));continue}
     if(ao<.99)LB.add(-1000+D(TA(G.R0))*.01,()=>dv(1));if(ao>.01)LB.add(300+D(TA(G.R0))*.01,()=>dv(ao))}
   // ---------------- the effects
   if(fx)for(const e of A.fx)fxDraw(V0,X,LF,e,A,K,J,HX,TA,AG);
   if(A.pearl>=0&&!GH)LF.add(450,()=>pearlDraw(V0,X,A,K,J,HX));
   if(A.ring>=0)LF.add(460,()=>ringDraw(V0,TA,A,K));
-  if(A.det>0&&A.mound>0)LF.add(D(54,0,0)>D(X.T([20,0,40]))?480:-1150,()=>moundDraw(V0,X,A,K));
+  if(A.det>0&&A.mound>0){LC.add(480,()=>moundDraw(V0,X,A,K));LC.add(520,()=>moundFront(V0,X,A,K))}
   if(A.dawn>0)LF.add(490,()=>dawnDraw(V0,TA,A));
+  // (a thread behind the chest is drawn before the body: the body hides it)
+  if(A.threads>.01&&fx)for(let j=0;j<2;j++){const tp=TA(AG[j].T[0].t);(D(tp)<D(X.T([30,0,50]))?L0:LF).add(905,()=>threadDraw(V0,tp,j,A))}
   if(A.lastDrop>=0&&fx)LF.add(495,()=>{const G=AG[1],t=TA(G.T[2].t),k=A.lastDrop,z=t[2]*(1-ez(cl((k-.3)/.7,0,1))),q=P([t[0],t[1],Math.max(6,z)]);if(!LOWFX)shine('234,255,246',q[0],q[1],7,.6);ctx.fillStyle='#eafff6';ball(q,1.5);ctx.fill()});
   if(A.rib>=0&&fx)LF.add(600,()=>ribbonDraw(V0,X,A));
   if(A.cflash>0&&!LOWFX&&A.det<.5)LF.add(700,()=>{const q=P(TA(CR0));shine(litRgb(A),q[0],q[1],60,.5*A.cflash);shine('255,255,255',q[0],q[1],24,.4*A.cflash)});
   // ---------------- draw: in colour, as aurora light (the spirits), or both cut by the line where the colour rises (the entrance) or leaves
   // (the defeat)
   const gk=A.ghost?A.gk:gh0,ghostAll=A.ghost||gh0>.99;
+  run(L0);
   if(A.body>0){
     if(ghostAll&&A.cline<0)ghostPass(V0,LB,gk*(gh0>0&&gh0<1?gh0:1),0,null,A);
     else if(A.cline>=0){const lo=P(0,0,0)[1]+12,hi=P(0,0,136)[1]-6,yb=lerp(lo,hi,A.cline),up=A.bodyUp*70;
@@ -678,12 +697,23 @@ function roseDraw(V0,c,d0,K,A,lit){const{P,F}=V0,[u,v]=frm(d0,[0,0,1]),ring=ring
   ctx.lineCap='round';ctx.lineJoin='round';for(const[w,col] of[[5.2,INK],[3,K.gold.b]])for(const r of runs){if(r.length<2)continue;ctx.beginPath();for(const q of r)ctx.lineTo(q[0],q[1]);ctx.strokeStyle=col;ctx.lineWidth=w;ctx.stroke()}
   for(let k=0;k<7;k++){const a=k/7*TAU+.3,dr=add(mul(u,Math.cos(a)),mul(v,Math.sin(a)));if(F(dr)<-.2)continue;const q=P(add(add(c,mul(dr,4.8)),mul(d0,.5)));bq.push(q);ballP(bp,q,2.25);ballP(hl,[q[0]-.7,q[1]-.8],.6)}
   if(!bq.length)return;const b2=bbox(bq);b2[0]-=2.5;b2[1]-=2.5;b2[2]+=2.5;b2[3]+=2.5;ctx.fillStyle=grad3(b2,K.gold);ctx.fill(bp);ctx.strokeStyle=INK;ctx.lineWidth=1.2;ctx.stroke(bp);ctx.fillStyle='rgba(255,252,230,.9)';ctx.fill(hl);
-  if(A.rose>.03&&!LOWFX){const q=P(c);shine('255,226,150',q[0],q[1],10,.45*A.rose);shine(lit||LIT0,q[0],q[1],8,.35*A.rose)}}
+  if(A.rose>.1&&!LOWFX){const q=P(c);shine(mixRgb('255,226,150',lit||LIT0,.45),q[0],q[1],10,.55*A.rose)}}
 // the rosettes left on the head when the antlers come off
 function roseOnHead(V0,HX,A,K){for(const sd of[-1,1]){const G=antGeo(sd,1,1);roseDraw(V0,HX.T(G.R0),HX.Rd(G.d0),K,A,null)}}
 // the pearl of light of the Stomp: from the rosettes down the front of the neck and the chest into the two front legs
-function pearlDraw(V0,X,A,K,J,HX){const{P}=V0,k=A.pearl,top=[HX.T([45,0,93]),HX.T([54,0,78]),add(J.nk2||HX.T([44,0,74]),[0,0,0]),X.T([40,0,62]),X.T([37,0,48]),X.T([28,0,34])].map(P);
-  const lit=litRgb(A),k1=cl(k/.6,0,1);runDraw(top,k1,1,lit);if(k>.6){const k2=(k-.6)/.4;for(const g of J.LG.slice(0,2))runDraw([top[top.length-1],P(g.root),P(g.kn),P(g.en)],k2,1,lit)}}
+// (the path is a smooth curve through its points: from the rosettes down behind the eye to the throat, the front of the neck, the chest, then
+// each front leg from its root through the knee to the hoof)
+function crS(Q,n){const out=[Q[0]];for(let i=0;i<Q.length-1;i++){const a=Q[Math.max(0,i-1)],b=Q[i],c=Q[i+1],d=Q[Math.min(Q.length-1,i+2)];
+    for(let j=1;j<=n;j++){const t=j/n,t2=t*t,t3=t2*t,f=(p0,p1,p2,p3)=>.5*(2*p1+(-p0+p2)*t+(2*p0-5*p1+4*p2-p3)*t2+(-p0+3*p1-3*p2+p3)*t3);out.push([f(a[0],b[0],c[0],d[0]),f(a[1],b[1],c[1],d[1])])}}return out}
+function pearlDraw(V0,X,A,K,J,HX){const{P}=V0,k=A.pearl,top=crS([HX.T([45,0,96]),HX.T([47,0,85]),HX.T([46,0,76]),X.T([38,0,66]),X.T([34,0,52]),X.T([29,0,40])].map(P),4);
+  const lit=litRgb(A),k1=cl(k/.6,0,1);runDraw(top,k1,1,lit);if(k>.6){const k2=(k-.6)/.4;for(const g of J.LG.slice(0,2))runDraw(crS([top[top.length-1],P(g.root),P(g.kn),P(g.en)],3),k2,1,lit)}}
+// the threads of light of the second phase: from each lance a thin thread of aurora runs down to the snow (in place of the drops), two
+// beads of light sliding down it, a faint star of frost where it touches the floor (not on slow phones: the effects are off there)
+function threadDraw(V0,tp,j,A){const{P}=V0,k=A.threads;ctx.save();ctx.globalCompositeOperation='lighter';ctx.lineCap='round';
+  {const a=P(add(tp,[0,0,-1.6])),b=P([tp[0],tp[1],0]),g=ctx.createLinearGradient(a[0],a[1],b[0],b[1]);g.addColorStop(0,`rgba(200,255,236,${(.42*k).toFixed(3)})`);g.addColorStop(.7,`rgba(170,150,255,${(.22*k).toFixed(3)})`);g.addColorStop(1,'rgba(170,150,255,0)');
+    ctx.strokeStyle=g;ctx.lineWidth=1.1;ctx.beginPath();ctx.moveTo(a[0],a[1]);ctx.lineTo(b[0],b[1]);ctx.stroke();
+    for(let i=0;i<2;i++){const u=((A.tp+i*.5+j*.25)%1+1)%1,q=[lerp(a[0],b[0],u),lerp(a[1],b[1],u)],al=k*Math.sin(Math.PI*u);ctx.fillStyle=`rgba(235,255,246,${(.8*al).toFixed(3)})`;ball(q,1.2);ctx.fill()}
+    const st=new Path2D();star4(st,b,2.6);ctx.fillStyle=`rgba(225,215,255,${(.35*k).toFixed(3)})`;ctx.fill(st)}ctx.restore()}
 // the ring of light of the Corona Boreale over the crown (rising to z 140, its radius 10 to 40; it pulses, then fades)
 function ringDraw(V0,TA,A,K){const{P}=V0,k=A.ring,ph=k*.81+.15,r0=sstep(.15,.4,ph),c=TA(CR0),z=lerp(c[2]+20,140*(1+.08*A.grow),r0),R=lerp(10,40,ez(r0))*(1+.06*Math.sin(TAU*3*4*ph)*(ph>.4?1:0)),al=sstep(.15,.22,ph)*(1-sstep(.88,.96,ph));
   if(al<=.01)return;const pts=[];for(let i=0;i<28;i++){const t=i/28*TAU;pts.push(P([c[0]+Math.cos(t)*R,c[1]+Math.sin(t)*R,z]))}
@@ -691,17 +721,32 @@ function ringDraw(V0,TA,A,K){const{P}=V0,k=A.ring,ph=k*.81+.15,r0=sstep(.15,.4,p
   poly(pts);ctx.strokeStyle=`rgba(240,255,250,${(.85*al).toFixed(3)})`;ctx.lineWidth=1.6;ctx.stroke();ctx.restore()}
 // the warm ray of dawn falling on the antlers (the defeat)
 function dawnDraw(V0,TA,A){const{P}=V0,c=TA([35,0,108]),b=P([c[0],c[1],0]),t=P([c[0],c[1],230]),al=A.dawn;
-  const g=ctx.createLinearGradient(0,t[1],0,b[1]);g.addColorStop(0,'rgba(255,217,160,0)');g.addColorStop(.6,`rgba(255,217,160,${(.24*al).toFixed(3)})`);g.addColorStop(1,`rgba(255,217,160,${(.1*al).toFixed(3)})`);
-  ctx.save();if(!LOWFX)ctx.globalCompositeOperation='lighter';ctx.fillStyle=g;ctx.beginPath();ctx.moveTo(t[0]-14,t[1]);ctx.lineTo(t[0]+14,t[1]);ctx.lineTo(b[0]+40,b[1]+4);ctx.lineTo(b[0]-40,b[1]+4);ctx.closePath();ctx.fill();ctx.restore()}
-// the mound of moss where the crown stands: it grows round its foot with little white flowers and an edelweiss at its feet
-function moundDraw(V0,X,A,K,c0){const{P}=V0,k=A.mound,c=c0||add(X.T([54,0,0]),[0,0,0]);c[2]=0;if(k<=.01)return;
-  const R=[22*(.6+.4*k),17*(.6+.4*k),11*k],cc=add(c,[0,0,-2]),hp=ellSil(V0,cc,R,null,null,16),fl=new Path2D(),fc=new Path2D();
-  const pa=smoothP(hullE(hp,.05));ctx.fillStyle=mossGrad(bbox(hp),K1.moss);ctx.fill(pa);ctx.strokeStyle=INK;ctx.lineWidth=2.2;ctx.lineJoin='round';ctx.stroke(pa);
+  // (three nested rays, each faint, so its edges are soft; on slow phones only the middle one)
+  const g=ctx.createLinearGradient(0,t[1],0,b[1]);g.addColorStop(0,'rgba(255,217,160,0)');g.addColorStop(.62,`rgba(255,217,160,${(.085*al).toFixed(3)})`);g.addColorStop(1,`rgba(255,217,160,${(.04*al).toFixed(3)})`);
+  ctx.save();if(!LOWFX)ctx.globalCompositeOperation='lighter';ctx.fillStyle=g;
+  for(const w of LOWFX?[.66]:[1,.66,.36]){ctx.beginPath();ctx.moveTo(t[0]-12*w,t[1]);ctx.lineTo(t[0]+12*w,t[1]);ctx.lineTo(b[0]+42*w,b[1]+4);ctx.lineTo(b[0]-42*w,b[1]+4);ctx.closePath();ctx.fill()}ctx.restore();
+  if(!LOWFX){const q=P(TA([32,0,104]));shine('255,217,160',q[0],q[1],34,.3*al)}}
+// the mound of moss where the crown stands (the end of the defeat): a low cushion (a dome: only what is above the floor) with a soft bumpy
+// edge, dark and lit only on top, frosted tufts, little white flowers on it and an edelweiss at its foot, on the side toward us
+const MDN=[];for(let i=0;i<16;i++){const t=i/16*TAU,b=1+.06*Math.sin(t*3+1)+.04*Math.sin(t*5+2);for(const[f,z] of[[1,0],[.9,.5],[.6,.86]])MDN.push([Math.cos(t)*b*f,Math.sin(t)*b*f,z])}MDN.push([0,0,1]);
+const MFL=[[.5,.62,1],[1.7,.5,.9],[2.9,.66,.85],[4.1,.45,1],[5.3,.6,.9],[.1,.25,.8]];
+function moundAt(X,c0){const c=c0?c0.slice():X.T([54,0,0]);c[2]=0;return c}
+function moundDraw(V0,X,A,K,c0){const k=A.mound;if(k<=.01)return;const{P}=V0,c=moundAt(X,c0),g=.55+.45*k,R=[29*g,23*g,12*k];
+  poly(ellSil(V0,c,[R[0]*1.12,R[1]*1.12,.01],null,null,16));ctx.fillStyle='rgba(0,0,0,.22)';ctx.fill();
+  const hp=hullE(MDN.map(m=>P(c[0]+m[0]*R[0],c[1]+m[1]*R[1],m[2]*R[2])),.05);if(hp.length<3)return;const pa=smoothP(hp),bb=bbox(hp);
+  ctx.fillStyle=mossGrad(bb,K1.moss);ctx.fill(pa);
+  {const gd=ctx.createLinearGradient(0,bb[1]+(bb[3]-bb[1])*.45,0,bb[3]);gd.addColorStop(0,'rgba(10,30,14,0)');gd.addColorStop(1,'rgba(10,30,14,.38)');ctx.fillStyle=gd;ctx.fill(pa)}
+  ctx.strokeStyle=INK;ctx.lineWidth=2.2;ctx.lineJoin='round';ctx.stroke(pa);
   // the tufts of frost on the moss, the little white flowers
-  const tp=new Path2D();for(const[a,r] of[[.4,.7],[2.1,.6],[3.6,.75],[5,.55]]){const q=P(add(cc,[Math.cos(a)*R[0]*r,Math.sin(a)*R[1]*r,R[2]*.75]));ballP(tp,q,1.2)}ctx.fillStyle=K1.mTip;ctx.fill(tp);
-  if(A.flw>0)for(const[a,r,s] of[[.9,.55,1],[2.6,.45,.85],[4.2,.6,.9],[5.6,.35,.8]]){const q=P(add(cc,[Math.cos(a)*R[0]*r,Math.sin(a)*R[1]*r,R[2]*.85])),sz=A.flw*s;for(let i=0;i<5;i++){const an=i/5*TAU+a;ballP(fl,[q[0]+Math.cos(an)*2*sz,q[1]+Math.sin(an)*1.5*sz],1.5*sz)}ballP(fc,q,1*sz)}
-  if(A.flw>0){ctx.fillStyle='#ffffff';ctx.fill(fl);ctx.strokeStyle=INK;ctx.lineWidth=.7;ctx.stroke(fl);ctx.fillStyle='#ffd84a';ctx.fill(fc)}
-  if(A.edel>0)edelweiss(P(add(c,[R[0]*.5,R[1]*.95,0])),A.edel)}
+  const on=(a,r,z)=>P(c[0]+Math.cos(a)*R[0]*r,c[1]+Math.sin(a)*R[1]*r,R[2]*z),tp=new Path2D();for(const[a,r] of[[.4,.72],[2.1,.6],[3.6,.76],[5,.55],[1.2,.3]])ballP(tp,on(a,r,Math.sqrt(1-r*r)*.95),1.2);ctx.fillStyle=K1.mTip;ctx.fill(tp);
+  if(A.flw>.02){const fl=new Path2D(),fc=new Path2D();for(const[a,r,s] of MFL){const q=on(a,r,Math.sqrt(1-r*r)*.97),sz=A.flw*s;for(let i=0;i<5;i++){const an=i/5*TAU+a;ballP(fl,[q[0]+Math.cos(an)*1.9*sz,q[1]+Math.sin(an)*1.4*sz],1.4*sz)}ballP(fc,q,.9*sz)}
+    ctx.fillStyle='#ffffff';ctx.fill(fl);ctx.strokeStyle=INK;ctx.lineWidth=.7;ctx.stroke(fl);ctx.fillStyle='#ffd84a';ctx.fill(fc)}
+  if(A.edel>.02){const a=Math.atan2(V0.c,V0.s)+.55;edelweiss(P(c[0]+Math.cos(a)*R[0]*1.02,c[1]+Math.sin(a)*R[1]*1.02,0),A.edel*1.25)}}
+// the moss over the foot of the crown (after the antlers): a few tufts round the roots of the beams, on the side toward us
+function moundFront(V0,X,A,K,c0){const k=A.mound;if(k<=.05)return;const{P,F}=V0,c=moundAt(X,c0),z=12*k*.85,pa=new Path2D(),tp=new Path2D();let n=0;
+  for(let i=0;i<9;i++){const a=i/9*TAU+.2,d=[Math.cos(a),Math.sin(a),0];if(F(d)<.05)continue;const b=[c[0]+d[0]*8,c[1]+d[1]*8,z],dl=nrm([d[0]*.8,d[1]*.8,.7]),s=nrm(cross(dl,[0,0,1]));
+    const r=leafP(pa,P,b,dl,s,5.5*k,2.6*k);ballP(tp,r[1],.9*k);n++}
+  if(!n)return;inkFill(pa,mossGrad(bbox([P(c[0]-10,c[1],z+6),P(c[0]+10,c[1],z-3)]),K1.moss),1.1);ctx.fillStyle=K1.mTip;ctx.fill(tp)}
 // an edelweiss: eight felt petals in a star, a cluster of yellow-green buds in the middle (k: how open it is)
 function edelweiss(q,k){if(k<=.02)return;const pa=new Path2D();for(let i=0;i<8;i++){const a=i/8*TAU+.2,L=(i%2?3.6:4.4)*k,e=[q[0]+Math.cos(a)*L,q[1]+Math.sin(a)*L*.75],s=.42;
     pa.moveTo(q[0],q[1]);pa.quadraticCurveTo(q[0]+Math.cos(a+s)*L*.55,q[1]+Math.sin(a+s)*L*.55*.75,e[0],e[1]);pa.quadraticCurveTo(q[0]+Math.cos(a-s)*L*.55,q[1]+Math.sin(a-s)*L*.55*.75,q[0],q[1]);pa.closePath()}
@@ -726,11 +771,14 @@ function fxDraw(V0,X,L,e,A,K,J,HX,TA,AG){const{P,D}=V0,t=e.t,HT=HX.T,HRd=HX.Rd;
   else if(e.k==='rdrop'){if(e.k2===0)return;L.add(900,()=>{for(let s=0;s<2;s++){const G=AG[s],a=TA(G.pc);for(let i=0;i<3;i++){const u=(t*3.4+i/3+s*.17)%1,q=P(add(a,[Math.sin(i*2+s)*4,0,4+u*30]));ctx.fillStyle=`rgba(234,255,246,${(.85*Math.sin(u*Math.PI)*e.k).toFixed(3)})`;ball(q,1.3);ctx.fill()}}})}
   else if(e.k==='smoke'){if(LOWFX)return;L.add(880,()=>{ctx.save();ctx.globalCompositeOperation='lighter';for(let s=0;s<2;s++){const G=AG[s];for(const z of[3,4,5]){const tp=TA(G.T[z].t);for(let i=0;i<2;i++){const u=(t*3.4*1.4+i*.5+z*.13+s*.3)%1,q=P(add(tp,[Math.sin(u*5+z)*3,0,u*26])),rgb=i?'95,224,255':'110,255,196';
       ctx.fillStyle=`rgba(${rgb},${(.3*Math.sin(u*Math.PI)*e.k).toFixed(3)})`;ball(q,2+u*5);ctx.fill()}}}ctx.restore()})}
-  else if(e.k==='thread'){}
-  else if(e.k==='trail'){if(LOWFX)return;L.add(870,()=>{ctx.save();ctx.globalCompositeOperation='lighter';ctx.lineCap='round';const lit=litRgb(A),fw=X.Rd([1,0,0]);
-      for(const G of AG){const pts=e.sweep?[0,1,2,3,4,5].map(i=>TA(G.T[i].t)):[TA(G.T[0].t)];for(const tp of pts){const q0=P(tp);for(let i=1;i<=4;i++){const back=e.sweep?HRd([0,0,0]):fw,q1=P(add(tp,e.sweep?[0,0,0]:mul(fw,-9*i)));
-        if(e.sweep){const sd=Math.sign(G.R0[1]);const off=HRd([0,-sd*0,0]);void off}ctx.strokeStyle=`rgba(${lit},${(.55*(1-i/5)*(e.sweep?Math.sin(Math.min(1,t)*Math.PI):1)).toFixed(3)})`;ctx.lineWidth=4-i*.6;if(!e.sweep){ctx.beginPath();ctx.moveTo(q0[0],q0[1]);ctx.lineTo(q1[0],q1[1]);ctx.stroke()}}
-        if(e.sweep){const sgn=A.hy>0?-1:1,q1=P(add(tp,HRd([0,sgn*10,0])));ctx.strokeStyle=`rgba(${lit},${(.5*Math.sin(t*Math.PI)).toFixed(3)})`;ctx.lineWidth=3;ctx.beginPath();ctx.moveTo(q0[0],q0[1]);ctx.lineTo(q1[0],q1[1]);ctx.stroke()}}}ctx.restore()})}
+  // the trail of aurora behind the points: in the Charge four fading strokes back from the lances; in the Sweep an arc behind each point
+  // (where it was a moment ago: the point turned back round the nape, against the way the head sweeps)
+  else if(e.k==='trail'){if(LOWFX)return;L.add(870,()=>{ctx.save();ctx.globalCompositeOperation='lighter';ctx.lineCap='round';const lit=litRgb(A);
+      if(!e.sweep){const fw=X.Rd([1,0,0]);for(const G of AG){const tp=TA(G.T[0].t),q0=P(tp);for(let i=1;i<=4;i++){const q1=P(add(tp,mul(fw,-9*i)));
+          ctx.strokeStyle=`rgba(${lit},${(.55*(1-i/5)).toFixed(3)})`;ctx.lineWidth=4-i*.6;ctx.beginPath();ctx.moveTo(q0[0],q0[1]);ctx.lineTo(q1[0],q1[1]);ctx.stroke()}}}
+      else{const Hc=HT(NAPE),al=.5*Math.sin(Math.PI*cl(t,0,1));for(const G of AG)for(const z of G.T){if(z.i>=6&&!A.p78)continue;const tp=TA(z.t),rel=sub(tp,Hc),Q=[];for(let i=0;i<5;i++)Q.push(P(add(Hc,yawR(rel,-e.sweep*.1*i))));
+          for(let i=1;i<5;i++){ctx.strokeStyle=`rgba(${lit},${(al*(1-i/5)).toFixed(3)})`;ctx.lineWidth=3.4-i*.6;ctx.beginPath();ctx.moveTo(Q[i-1][0],Q[i-1][1]);ctx.lineTo(Q[i][0],Q[i][1]);ctx.stroke()}}}
+      ctx.restore()})}
   else if(e.k==='crack'){L.add(910,()=>{for(const G of AG){const q=P(TA(G.T[0].t));ctx.strokeStyle=`rgba(255,255,255,${(.9*(1-t)).toFixed(3)})`;ctx.lineWidth=1;ctx.lineCap='round';ctx.beginPath();for(let i=0;i<5;i++){const a=i/5*TAU+.3,r=3+t*5;ctx.moveTo(q[0]+Math.cos(a)*1.5,q[1]+Math.sin(a)*1.5);ctx.lineTo(q[0]+Math.cos(a)*r,q[1]+Math.sin(a)*r)}ctx.stroke()}})}
   else if(e.k==='bits'){L.add(905,()=>{for(let s=0;s<2;s++){const G=AG[s];for(let i=0;i<3;i++){const a=TA(G.T[[1,2,4][i]].t),z=a[2]-110*t*t-8*t,q=P([a[0]+i*2,a[1],Math.max(1,z)]);if(z<1&&t>.9)continue;ctx.fillStyle=K.crys.l;ctx.strokeStyle=INK;ctx.lineWidth=.8;ctx.beginPath();ctx.moveTo(q[0],q[1]-2);ctx.lineTo(q[0]+1.3,q[1]);ctx.lineTo(q[0],q[1]+2);ctx.lineTo(q[0]-1.3,q[1]);ctx.closePath();ctx.fill();ctx.stroke()}}})}
   else if(e.k==='spray'){for(const i of[0,1]){const g=J.LG[i];L.add(-1700,()=>{const fw=X.Rd([1,0,0]);for(let j=0;j<5;j++){const u=(t*2.4+j/5)%1,q=P(add([g.en[0],g.en[1],0],[fw[0]*u*18+Math.sin(j*2.1)*4,fw[1]*u*18+Math.cos(j*1.7)*4,u*8-u*u*6]));ctx.fillStyle=`rgba(235,246,255,${(.7*(1-u)).toFixed(3)})`;ball(q,1.6+u*2.6);ctx.fill()}})}}
@@ -742,7 +790,8 @@ function fxDraw(V0,X,L,e,A,K,J,HX,TA,AG){const{P,D}=V0,t=e.t,HT=HX.T,HRd=HX.Rd;
 // debug: the screen points of the model (for the tests of the jumps)
 function dbgPts(D0,x,y,sc,V0,X,A,LG,Hc,HT,TA,AG){const S=q=>{const s=V0.P(q);return[x+s[0]*sc,y+s[1]*sc]};D0.pts={};
   LG.forEach((g,i)=>{D0.pts['hoof'+i]=S(g.en);D0.pts['knee'+i]=S(g.kn)});D0.pts.head=S(Hc);D0.pts.nose=S(HT([71,0,81]));D0.pts.body=S(X.T([0,0,50]));D0.pts.tail=S(X.T([-50,0,52]));
-  AG.forEach((G,j)=>{D0.pts['lance'+j]=S(TA(G.T[0].t));D0.pts['p3'+j]=S(TA(G.T[2].t));D0.pts['palm'+j]=S(TA(G.pc))})}
+  AG.forEach((G,j)=>{D0.pts['lance'+j]=S(TA(G.T[0].t));D0.pts['p3'+j]=S(TA(G.T[2].t));D0.pts['palm'+j]=S(TA(G.pc))});
+  D0.tips=AG.map(G=>G.T.map(t=>TA(t.t)))}
 
 // ------------------------------------------------------------------ for the game: the pieces of its attacks, with the same look
 // N3.stagShard(x, y, z, a, sc, o): the shard of crystal of the crown (the Sweep, the blow of the Charge): a diamond 18 long and 7 wide with a
@@ -772,7 +821,7 @@ N3.stagSpirit=function(x,y,face,p,sc,o){o=o||{};sc=sc==null?.62:sc;const k=o.k==
 N3.stagCrown=function(x,y,sc,o){o=o||{};sc=sc||1;const face=o.face==null?Math.PI/2-.42:o.face,V0=V(face),A={tl:[0,0,0,0,0,0,0,0].map(()=>cl(o.k||0,0,1)),tcol:0,tw:0,palm:0,veinK:.8*cl(o.k||0,0,1),runs:[],rose:0,p78:o.p2?1:0,pale:1-cl(o.k||0,0,1),flameK:0,lich:0,mound:1,flw:1,edel:1};
   const K=pal(o.p2?1:0),g=o.p2?1.1:1,cp=[0,0,5],R=v=>yawR(pitR(v,.45),0),TA=q=>add(cp,R(sub(q,CR0)));
   ctx.save();ctx.translate(x,y);ctx.scale(sc,sc);const L=parts();L.add(-1,()=>moundDraw(V0,null,A,K,[0,0,0]));
-  for(const sd of[-1,1]){const G=antGeo(sd,g,1);L.add(V0.D(TA(G.R0)),()=>antDraw(V0,TA,R,A,K,sd,G,{noRose:true}))}run(L);ctx.restore()};
+  for(const sd of[-1,1]){const G=antGeo(sd,g,1);L.add(V0.D(TA(G.R0)),()=>antDraw(V0,TA,R,A,K,sd,G,{noRose:true}))}L.add(1e3,()=>moundFront(V0,null,A,K,[0,0,0]));run(L);ctx.restore()};
 // the moments of the moves for the brain
 N3.stagInfo=INFO;
 for(const nm of['Shard','Spike','Spirit','Crown','Info'])N3['stag2'+nm]=N3['stag'+nm];

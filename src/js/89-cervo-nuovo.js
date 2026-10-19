@@ -25,6 +25,10 @@
 // =====================================================================
 const SGON=typeof N3!=='undefined'&&!!N3.stag2;
 const SGC={red:'229,72,77',
+  // the weight of his blows: one multiplier on the damage of every attack of his (the plain touch stays 22, as the design wants). With the
+  // design's numbers (1) a hero standing still loses 8.5-8.8 lives a minute (tests/boss2diff.js), under the design's window of 9-11; with
+  // 1.15 about 9.8 (phase 2 alone about 10.5). Warnings, sizes, speeds and timings stay the design's
+  dmg:1.15,
   seq1:['charge','sweep','aurora','charge','stomp','call'],seq2:['crown','charge','sweep','aurora','stomp','charge','call'],
   // the states that are no attack of their own: no charging ring round him when they start (51-boss2-mondi.js)
   calm:new Set(['charge','stuck','recoil','skid']),
@@ -68,8 +72,11 @@ function sgClear(){const B=G&&G.s2;if(!B)return;B.band=null;B.curt=[];B.lanes=[]
 {const _br=buildRoom;buildRoom=function(){sgReset();return _br.apply(this,arguments)}}
 // the next move waits until the dangers of the one before are over: curtains fallen, spirits gone, rays out
 const sgBusy=()=>{const B=G.s2;return!!B&&(B.curt.length>0||B.lanes.length>0||!!B.herd||!!B.rays||B.rayOut>0)};
-// a shot whose speed is given in real px/s (shootE speeds the shots up with the room: here the design's speeds are the real ones)
-function sgShoot(x,y,a,real,r,dmg,kind,p2){const f=Math.min(1.7,1+(effRoom()-1)*.035);shootE(x,y,a,real/f,r,dmg,kind);const q=G.eproj[G.eproj.length-1];if(q&&q.kind===kind)q.sp2=p2?1:0}
+// the damage of one of his blows (the design's number, its weight SGC.dmg, the room's DMG)
+const sgDm=n=>Math.round(n*SGC.dmg*DMG());
+// a shot whose speed is given in real px/s (shootE speeds the shots up with the room: here the design's speeds are the real ones; it
+// multiplies the damage by DMG itself)
+function sgShoot(x,y,a,real,r,dmg,kind,p2){const f=Math.min(1.7,1+(effRoom()-1)*.035);shootE(x,y,a,real/f,r,dmg*SGC.dmg,kind);const q=G.eproj[G.eproj.length-1];if(q&&q.kind===kind)q.sp2=p2?1:0}
 // how far he can run along a from (x, y) before the antlers touch a wall or an obstacle (the band of the Charge, like stagLine of today)
 function sgRun(e,x,y,a){const ca=Math.cos(a),sa=Math.sin(a),m=e.r;let s=0;for(;s<1000;s+=6){const px=x+ca*(s+6),py=y+sa*(s+6);
   if(px<L+m||px>R-m||py<TOP+m||py>BOT-m)break;if(G.rocks.some(k=>Math.hypot(k.x-px,k.y-py)<k.r+m*.6))break}return s}
@@ -138,7 +145,7 @@ if(SGON)EUPD.stag=function(e,dt,sm,a,d){if(!G.s2)sgReset();const B=G.s2,rdt=dt/s
       if(ss>=s1)break}
     const s=hit?hit.s:s1;e.x=C.x0+ca*s;e.y=C.y0+sa*s;C.s=s;e.lf=C.a;e.face=sgFace(C.a);
     // the body: 24 once, in place of the plain touch (e.air keeps that one off)
-    if(!C.hit&&P.inv<=0&&P.dashT<=0&&Math.hypot(P.x-e.x,P.y-e.y)<P.r+e.r-2){C.hit=1;hurtP(Math.round(24*DMG()))}
+    if(!C.hit&&P.inv<=0&&P.dashT<=0&&Math.hypot(P.x-e.x,P.y-e.y)<P.r+e.r-2){C.hit=1;hurtP(sgDm(24))}
     e.stepT=(e.stepT||0)-dt;if(e.stepT<=0){e.stepT=.17;stepFx(e.x,e.y+6,true);b3fx(e,'sstride',e.x,e.y+6);if(!LOWFX)fxPush({k:'puff',x:e.x-ca*20,y:e.y+8,vx:-ca*40,vy:-12,t:.4,r:rand(5,8)})}
     if(hit){sgImpact(e,C);break}
     // past the end of its band without touching anything (the obstacle is gone), or running too long: it brakes, and no reward for you
@@ -163,7 +170,7 @@ if(SGON)EUPD.stag=function(e,dt,sm,a,d){if(!G.s2)sgReset();const B=G.s2,rdt=dt/s
     if(sgAt(e,N[N.length-1]))sgTink(e);
     for(let i=0;i<9;i++)if(sgAt(e,g0+i*(g1-g0)/8)){sgShoot(S.ox,S.oy,S.A[i],210,6,12,'crystal',p2);S.shot=i+1;if(!i)b3fx(e,'scrystals')}
     if(sgAt(e,.62)){const dx=P.x-e.x,dy=P.y-e.y,dd=Math.hypot(dx,dy);
-      if(P.inv<=0&&P.dashT<=0&&dd<95+P.r*.5&&(dd<10||Math.abs(angDiff(S.a,Math.atan2(dy,dx)))<=75*SGD))hurtP(Math.round(22*DMG()));
+      if(P.inv<=0&&P.dashT<=0&&dd<95+P.r*.5&&(dd<10||Math.abs(angDiff(S.a,Math.atan2(dy,dx)))<=75*SGD))hurtP(sgDm(22));
       b3fx(e,'ssweep',e.x,e.y,S.a);shake(3);if(AU.ctx&&AU.on.sfx&&AU.ctx.state==='running'){whoosh(AU.ctx.currentTime+.01,.32,280,1700,.08,.25);AU.pan=0}}
     if(p2)for(let j=0;j<8;j++)if(sgAt(e,bk[0]+(j+.5)*(bk[1]-bk[0])/8)){sgShoot(S.ox,S.oy,S.back[j],150,6,12,'crystal',true);if(!j&&AU.ctx&&AU.on.sfx&&AU.ctx.state==='running'){whoosh(AU.ctx.currentTime+.01,.28,320,1500,.06,.25);AU.pan=0}}
     if(e.stT<=0){e.sw=null;sgWalk(e)}break}
@@ -179,7 +186,7 @@ if(SGON)EUPD.stag=function(e,dt,sm,a,d){if(!G.s2)sgReset();const B=G.s2,rdt=dt/s
     if(k>=Ry[0]&&k<Ry[1]){const u=(k-Ry[0])/(Ry[1]-Ry[0]),Rs=[];for(let i=0;i<6;i++){const ar=e.th0+i*Math.PI/3+e.cdir*40*SGD*u;Rs.push({a:ar,len:sgRay(e.x,e.y,ar)})}
       if(!B.rays){B.rays={x:e.x,y:e.y,R:Rs,hit:[0,0,0,0,0,0]};sgCrownOn(e)}else{B.rays.R=Rs;B.rays.x=e.x;B.rays.y=e.y}
       if(P.inv<=0&&P.dashT<=0)for(let i=0;i<6;i++){if(B.rays.hit[i])continue;const r=Rs[i],ux=P.x-e.x,uy=P.y-e.y,ca=Math.cos(r.a),sa=Math.sin(r.a),u2=ux*ca+uy*sa,v=Math.abs(uy*ca-ux*sa);
-        if(u2>0&&u2<r.len&&v<9+P.r*.5){B.rays.hit[i]=1;hurtP(Math.round(18*DMG()));break}}}
+        if(u2>0&&u2<r.len&&v<9+P.r*.5){B.rays.hit[i]=1;hurtP(sgDm(18));break}}}
     if(sgAt(e,Ry[1])&&B.rays){B.rayEnd=B.rays;B.rays=null;B.rayOut=.1;b3fx(e,'scrown',e.x,e.y,B.rayEnd)}
     if(e.stT<=0)sgWalk(e,1.4);break}
   // ---- FASE 2: no damage, no attacks; the column of aurora (.32-.50), the bellow of the rage (.68), the snow swept away (.70)
@@ -213,10 +220,10 @@ function sgImpact(e,C){const B=G.s2,p2=!!e.p2,ca=Math.cos(C.a),sa=Math.sin(C.a),
   if(p2&&e.dbl===1){e.dbl=2;sgGo(e,'recoil')}else{e.dbl=0;sgGo(e,'stuck',p2?1.4:1.6,true)}}
 // the Stomp's blows: 26 in the circle; the first one the wave of frost with its spikes, the second (second phase) twelve shards of ice
 function sgStomp(e,n){const B=G.s2,p2=!!e.p2,R0=p2?80:72,x=e.x,y=e.y;
-  if(P.inv<=0&&P.dashT<=0&&Math.hypot(P.x-x,P.y-y)<R0+P.r*.5)hurtP(Math.round(26*DMG()));
+  if(P.inv<=0&&P.dashT<=0&&Math.hypot(P.x-x,P.y-y)<R0+P.r*.5)hurtP(sgDm(26));
   vfxBlast(x,y,'220,245,255',n===1?110:80,{debris:['#ffffff','#e0f4ff','#a2eaf6'],n:B3N(n===1?20:12),sparks:B3N(12),spcol:['#ffffff','#a2eaf6',p2?'#cdb8ff':'#9fffe0'],dust:n===1?14:8,ring2:false});
   fxPush({k:'ring2',x,y,rgb:'230,248,255',r0:e.r,r1:R0*1.4,t:.35,max:.35,w:6});sfx('boom',0,x);
-  if(n===1){G.waves.push({x,y,r:e.r,max:p2?290:240,dmg:Math.round(16*DMG()),hit:false,rgb:'190,240,255'});B.spw.push({x,y,r:e.r,max:p2?290:240,next:LOWFX?120:70,ring:0,p2});
+  if(n===1){G.waves.push({x,y,r:e.r,max:p2?290:240,dmg:sgDm(16),hit:false,rgb:'190,240,255'});B.spw.push({x,y,r:e.r,max:p2?290:240,next:LOWFX?120:70,ring:0,p2});
     shake(10);sfx('icicles',0,x);vib([40,30,60]);stamp('crater',x,y+4,34);b3fx(e,'sstomp',x,y)}
   else{const o=rand(0,Math.PI/6);for(let i=0;i<12;i++){const a=o+i*Math.PI/6;sgShoot(x+Math.cos(a)*60,y+Math.sin(a)*60-8,a,150,6,12,'ice',true)}
     shake(8);sfx('freeze',1,x);stamp('cracks',x,y+4,30);if(BOSS2)ENV2.rocks(x,y,160,1)}}
@@ -250,7 +257,7 @@ function sgCrownOn(e){shake(3);if(AU.ctx&&AU.on.sfx&&AU.ctx.state==='running'){c
 // the blows on the stuck antlers hurt more (and the first time in the run, the words over the crown); the rage cannot be hurt
 {const _h=hurtE;hurtE=function(e,d){if(SGON&&e&&e.type==='stag'&&!e.dead){
   if(e.shell>0){if(!(e._shF>(G.t||0)-.12)){e._shF=G.t||0;G.fx.push({k:'spark',x:e.x+rand(-18,18),y:e.y-30-rand(0,50),t:.15})}return}
-  if(e.st==='stuck'){const A=[...arguments];A[1]=d*1.5;if(!G.sgTxt){G.sgTxt=1;text(e.x,e.y-145,'Corna incastrate!','#ffd84a',18)}return _h.apply(this,A)}}return _h.apply(this,arguments)}}
+  if(e.st==='stuck'&&!arguments[3]){const A=[...arguments];A[1]=d*1.5;if(!G.sgTxt){G.sgTxt=1;text(e.x,e.y-145,'Corna incastrate!','#ffd84a',18)}return _h.apply(this,A)}}return _h.apply(this,arguments)}}
 // what the model plays: the entrance over its whole length (its last frame until the brain moves on), the gallop as a loop on its own
 // clock, every other move over the length the brain gave it
 if(SGON){const _nm=n3Move;n3Move=function(e){if(e.type!=='stag')return _nm.apply(this,arguments);
@@ -271,13 +278,13 @@ function sgUpdate(dt){const B=G.s2;if(!B)return;
     for(let i=B.curt.length-1;i>=0;i--){const c=B.curt[i];
       if(c.st==='warn'){c.warn-=dt;if(c.warn<=0){c.st='fall';c.fall=0}}
       else if(c.st==='fall'){c.fall+=dt;if(c.fall>=.1){c.st='act';c.act=0;shake(2);sfx('shimmer',2,c.h?P.x:c.pos);b3fx(e,'scurtain',0,0,c);b3fx(e,'saurora')}}
-      else{c.act+=dt;if(!c.hit&&P.inv<=0&&P.dashT<=0&&sgInCurt(c,P.x,P.y,P.r*.5)){c.hit=true;hurtP(Math.round(18*DMG()))}if(c.act>=.5)B.curt.splice(i,1)}}
+      else{c.act+=dt;if(!c.hit&&P.inv<=0&&P.dashT<=0&&sgInCurt(c,P.x,P.y,P.r*.5)){c.hit=true;hurtP(sgDm(18))}if(c.act>=.5)B.curt.splice(i,1)}}
     // the lanes: the spirit takes shape (0.6 s), waits, gallops through the obstacles (they sparkle), vanishes in sparks at the wall
     for(let i=B.lanes.length-1;i>=0;i--){const l=B.lanes[i];l.t+=dt;
       if(l.st==='form'){l.k=Math.min(1,l.t/.6);if(l.t>=l.go){l.st='run';l.k=1;l.pp=l.s;sgHoof(l)}}
       else if(l.st==='run'){const s0=l.s;l.s+=540*dt*l.dir;if(l.dir>0?l.s>=l.end:l.s<=l.end)l.s=l.end;
         const ps=l.h?P.x:P.y,pd=l.h?P.y:P.x;
-        if(!l.hit&&P.inv<=0&&P.dashT<=0&&Math.abs(pd-l.pos)<24+P.r*.5&&((ps-s0)*(ps-l.s)<=0||Math.abs(ps-l.s)<14)){l.hit=true;hurtP(Math.round(18*DMG()))}
+        if(!l.hit&&P.inv<=0&&P.dashT<=0&&Math.abs(pd-l.pos)<24+P.r*.5&&((ps-s0)*(ps-l.s)<=0||Math.abs(ps-l.s)<14)){l.hit=true;hurtP(sgDm(18))}
         while(Math.abs(l.s-l.pp)>=40){l.pp+=40*l.dir;l.pn++;if(B.prints.length<70)B.prints.push({x:l.h?l.pp:l.pos+(l.pn%2?6:-6),y:l.h?l.pos+(l.pn%2?6:-6):l.pp,a:l.h?(l.dir>0?0:Math.PI):(l.dir>0?Math.PI/2:-Math.PI/2),t:0,p2:l.p2})}
         for(const k of G.rocks){const ka=l.h?k.x:k.y,kd=l.h?k.y:k.x;if(Math.abs(kd-l.pos)<k.r+24&&(ka-s0)*(ka-l.s)<=0&&!(k._sgT>(G.t||0)-.4)){k._sgT=G.t||0;k.hit=Math.max(k.hit||0,.18);
           if(!LOWFX)for(let j=0;j<4;j++)fxPush({k:'spark',x:k.x+rand(-k.r,k.r)*.6,y:k.y-kH(k)*rand(.2,.9),t:.3});if(AU.ctx&&AU.on.sfx&&AU.ctx.state==='running')M.glass(AU.ctx.currentTime+.01,.35,VR(3000,.08))}}
@@ -450,7 +457,7 @@ const SGFX={
   // a curtain has fallen: a line of frost along its real wavy line (every 70 px)
   scurtain(e,x,y,c){const a0=c.h?L:TOP,a1=c.h?R:BOT;for(let s=a0+20;s<a1;s+=70){if(Math.abs(s-c.fold)<32)continue;const m=sgWave(c,s);if(c.h)ENV2.mark('frost',s,m,14);else ENV2.mark('frost',m,s,14)}},
   // the defeat: the frost round the body melts into moss and flowers
-  sdie(e,x,y){for(let i=0;i<5;i++){const a=i/5*TAU+rand(-.3,.3),r=i?rand(30,70):0;ENV2.mark('bloom',x+Math.cos(a)*r,y+Math.sin(a)*r*.6,i?16:24)}ENV2.wiltGrass(x,y,10)}};
+  sdie(e,x,y){for(let i=0;i<5;i++){const a=i/5*TAU+rand(-.3,.3),r=i?rand(30,70):0;ENV2.mark('bloom',x+Math.cos(a)*r,y+Math.sin(a)*r*.6,i?16:24)}}};
 {const _f=b3fx;b3fx=function(e,what,x,y,r){if(!SGON||!SGFX[what]||what==='scurtain'&&!(r&&r.sg))return _f.apply(this,arguments);if(!BOSS2||!G||!G.rocks)return;try{SGFX[what](e,x,y,r)}catch(err){}}}
 // ---- the entrance (3.4 s, the model's 'enter'): the veil of aurora comes down on the circle of runes, his shape of light takes colour from
 // the hooves up, two heavy steps, the eyes open, the crown lights up a tip at a time (a bell for each), the bellow
@@ -480,8 +487,8 @@ if(SGON){const V=B3VO.VB.stag,bug=(d,lo,hi,gr,pk)=>[d,[{t:0,d:.5,f:lo,v:['o','a'
     ...gr.map((t0,i)=>({t:t0,d:.12,f:[90-i*3,75-i*3],v:'u',ro:.7,a:.85-i*.1,h:.2}))],pk];
   V.base={br:.35,ro:.3,ji:.06};
   Object.assign(V.k,{
-    cry:[bug(2.1,[72,95,170],[560,720,650,1.05],[1.48,1.67,1.86],.34)],
-    angry:[[2,[{t:0,d:.55,f:[66,80,150],v:['o','a'],h:.08,ro:.8,ji:.15},{t:.48,d:1,f:[500,680,600],v:'B',tn:1,br:.25,vib:[.03,6.5],am:[.12,22],att:.15,rel:.3,a:.9},{t:1.5,d:.42,f:[95,70],v:['a','o'],ro:.8,rel:.4}],.34]],
+    cry:[bug(2.1,[72,95,170],[560,720,650,1.05],[1.48,1.67,1.86],.3)],
+    angry:[[2,[{t:0,d:.55,f:[66,80,150],v:['o','a'],h:.08,ro:.8,ji:.15},{t:.48,d:1,f:[500,680,600],v:'B',tn:1,br:.25,vib:[.03,6.5],am:[.12,22],att:.15,rel:.3,a:.9},{t:1.5,d:.42,f:[95,70],v:['a','o'],ro:.8,rel:.4}],.3]],
     laugh:[[.72,[{t:0,d:.1,noise:1,v:'n'},{t:.17,d:.1,noise:1,v:'n',a:.9},{t:.36,d:.32,f:[104,90],v:'m',a:.75,h:.3}],.5]],
     laugh2:[[.8,[{t:0,d:.12,noise:1,v:'n'},{t:.2,d:.55,f:[90,117,95],v:['u','o'],a:.8,h:.15}],.5]],
     hurt:[[.25,[{t:0,d:.23,f:[122,86],v:['u','o'],ro:.45,h:.15}],.48]],

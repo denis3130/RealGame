@@ -62,6 +62,10 @@ function rimC(pts,al,rgb){if(!pts||pts.length<3)return;const[x0,y0,x1,y1]=bbox(p
   kx=1-1.9/Math.max(1,(x1-x0)/2),ky=1-1.9/Math.max(1,(y1-y0)/2);g.addColorStop(0,`rgba(${rgb},${al*.55})`);g.addColorStop(1,`rgba(${rgb},0)`);
   ctx.beginPath();for(const q of pts)ctx.lineTo(cx+(q[0]-cx)*kx,cy+(q[1]-cy)*ky);ctx.closePath();ctx.strokeStyle=g;ctx.lineWidth=1.3;ctx.stroke()}
 
+// the fill of the big wet volumes (mantle, head, skirt): a radial light from the upper left, a touch lighter than the light tone at its
+// heart, down to the shadow tone at the far edge
+function skinGrad(b,T){const w=b[2]-b[0],h=b[3]-b[1],cx=(b[0]+b[2])/2,cy=(b[1]+b[3])/2,R=Math.max(w,h,2)*.72,g=ctx.createRadialGradient(cx-w*.22,cy-h*.3,R*.04,cx-w*.02,cy+h*.02,R);
+  g.addColorStop(0,C.lt(T.l,.2));g.addColorStop(.18,T.l);g.addColorStop(.52,T.b);g.addColorStop(.96,T.d);return g}
 // ------------------------------------------------------------------ colours: three tones per piece (light, base, shadow)
 // phase 1: petroleum teal, coral bellies, amber eyes, mother of pearl; the light of the signal is the water green of the runes of the room
 const K1={skin:T3('#58bdb0','#1d8080','#0c4552'),rimRgb:'223,251,234',wet:'242,255,251',hem:'#2e9a92',
@@ -71,7 +75,7 @@ const K1={skin:T3('#58bdb0','#1d8080','#0c4552'),rimRgb:'223,251,234',wet:'242,2
   lid:'#145a62',lidL:'#0b2e36',mouth:'#2b1020',beak:T3('#fffaf0','#f6ebd3','#b8a27a'),siph:'#0b2e36',
   reed:T3('#9a8254','#7a6440','#4e3e24'),reedD:'#2a2012',shell:T3('#fff2e2','#e8c9b4','#a9806e'),band:'#8a5a46',iri:'207,233,255',
   musO:T3('#5a5236','#3a3424','#211d14'),musI:T3('#fff4ec','#e9d6e6','#b7a2c0'),
-  pearl:'#f6ffff',pearlD:'#c9d8e6',pearlG:'190,255,240',petal:'#ff9ad8',petalD:'#e05aa8',heart:'#ffd84a',fOpen:0,
+  pearl:'#d3e6e8',pearlD:'#71909f',pearlG:'190,255,240',petal:'#ff9ad8',petalD:'#e05aa8',heart:'#ffd84a',fOpen:0,
   alga:'#78a043',algaD:'#3e6a28',water:'#173f44',waterL:'#3d8f8a',waterD:'#0b262a',foam:'205,245,235',refl:'190,255,240',refl2:'61,143,138',
   shellLit:0,shellG:'255,110,215',ink:'#2a1f40',inkRgb:'42,31,64'};
 // phase 2: colder and darker, the warning rings lit magenta, red-magenta eyes, the crown lit from within, the pool of ink
@@ -85,7 +89,7 @@ const PALC={};
 function pal(k2,pl){k2=Math.round(cl(k2,0,1)*24)/24;pl=Math.round(cl(pl||0,0,1)*16)/16;const id=k2+'|'+pl;if(PALC[id])return PALC[id];const K={};
   for(const k in K1){const a=K1[k],b=K2[k];K[k]=typeof a==='number'?lerp(a,b,k2):typeof a==='string'?(a===b?a:a[0]==='#'?cmix(a,b,k2):mixRgb(a,b,k2)):mixT(a,b,k2)}
   if(pl>0){K.skin=mixT(K.skin,PALE.skin,pl);K.hem=cmix(K.hem,PALE.skin.b,pl);K.ringO=cmix(K.ringO,'#5e586a',pl);K.ringC=cmix(K.ringC,PALE.ring,pl);K.lid=cmix(K.lid,'#8a8396',pl);K.ringOn*=1-pl}
-  K.k2=k2;return PALC[id]=K}
+  K.ringOq=cmix(K1.ringO,'#5e586a',pl);K.ringCq=cmix(K1.ringC,PALE.ring,pl);K.k2=k2;return PALC[id]=K}
 
 // ------------------------------------------------------------------ the body at rest (x forward, y to her left, z up; 0,0,0 the floor point)
 const HC=[9,0,34],HR=[22,26,16];                       // the head: wide and flat
@@ -129,13 +133,13 @@ const ARM=[['hand',-1],['hand',1],['side',-1],['side',1],['cobra',-1],['cobra',1
 const REST1={
   hand:SH({kind:'hand',b:[26,11,4],L:70,k:[dirv(.42,-.02),dirv(.52,-.01),dirv(.56,0),dirv(.5,.12)],c:{ax:[0,0,-1],ang:1.45*PI,u0:.62,pw:1.6}}),
   side:SH({kind:'side',b:[11,26,4],L:70,k:[dirv(1.22,-.02),dirv(1.52,0),dirv(1.22,0),dirv(1.3,0)],c:{ax:[.964,-.267,0],ang:1.25*PI,u0:.70,pw:1.6}}),
-  cobra:SH({kind:'cobra',b:[-14,25,6],L:90,k:[dirv(2.15,.62),dirv(1.95,1.38),dirv(1.62,1.12),dirv(1.57,1.05)],c:{ax:[-1,0,0],ang:1.45*PI,u0:.66,pw:1.35},vb:[1,0,0],fb:1}),
-  throne:SH({kind:'throne',b:[-26,13,6],L:130,rb:9.5,k:[nrm([-12,4,34]),nrm([-4,1.6,24]),nrm([4,1.4,22]),nrm([2,1,22])],c:{ax:[-1,0,0],ang:1.6*PI,u0:.74,pw:1.25},vb:[1,0,0],fb:1})};
+  cobra:SH({kind:'cobra',b:[-14,25,6],L:90,k:[dirv(2.15,.62),dirv(1.95,1.38),dirv(1.62,1.12),dirv(1.57,1.05)],c:{ax:[-1,0,0],ang:1.45*PI,u0:.66,pw:1.35},vb:nrm([.35,-1,0]),fb:1}),
+  throne:SH({kind:'throne',b:[-26,13,6],L:142,rb:9.5,k:[nrm([-12,4,34]),nrm([-4,2.4,24]),nrm([4,2.2,22]),nrm([2,1.6,22])],c:{ax:[-1,0,0],ang:1.75*PI,u0:.58,pw:2.1},vb:[1,0,0],fb:1})};
 // the second phase: the body 12 higher, the first third of every arm down to the water like a bent leg, the cobras wider, the hands
 // farther forward
 const REST2={
-  hand:SH(Object.assign({},REST1.hand,{b:[26,11,4],k:[dirv(.42,.25),dirv(.45,-1.0),dirv(.5,.02),dirv(.5,.08)],c:{ax:[0,0,-1],ang:.75*PI,u0:.72,pw:1.6}})),
-  side:SH(Object.assign({},REST1.side,{k:[dirv(1.25,.25),dirv(1.35,-1.0),dirv(1.25,.02),dirv(1.3,0)],c:{ax:[.964,-.267,0],ang:1.15*PI,u0:.74,pw:1.6}})),
+  hand:SH(Object.assign({},REST1.hand,{b:[26,11,4],k:[dirv(.42,.25),dirv(.45,-.8),dirv(.5,.02),dirv(.5,.08)],c:{ax:[.48,-.88,0],ang:.7*PI,u0:.72,pw:1.6}})),
+  side:SH(Object.assign({},REST1.side,{k:[dirv(1.25,.25),dirv(1.35,-.8),dirv(1.25,.02),dirv(1.3,0)],c:{ax:[.964,-.267,0],ang:1.15*PI,u0:.74,pw:1.6}})),
   cobra:SH(Object.assign({},REST1.cobra,{k:[dirv(2.1,-.35),dirv(1.85,1.05),dirv(1.55,1.0),dirv(1.5,.85)],c:{ax:[-1,0,0],ang:1.35*PI,u0:.68,pw:1.35}})),
   throne:SH(Object.assign({},REST1.throne,{k:[nrm([-9,4,10]),nrm([-4,1.6,24]),nrm([4,1.4,22]),nrm([2,1,22])]}))};
 const RC={};
@@ -169,13 +173,15 @@ const MV=['idle','walk','hit','slam','stuck','slam2','ink','cage','whirl','sink'
 const DUR={idle:3,walk:1.2,hit:.6,slam:1.8,stuck:1.4,slam2:2.6,ink:1.6,cage:2.2,whirl:2.8,sink:.9,swim:.8,rise:1.6,tide:3.2,rage:2.8,taunt:1.1,enter:3.4,die:4};
 const LAB={idle:'Ferma',walk:'Scivola',hit:'Colpita',slam:'Tentacolata',stuck:'Ventose attaccate',slam2:'Doppia tentacolata (fase 2)',ink:"Pioggia d'inchiostro",
   cage:'Gabbia degli abissi',whirl:'Gorgo',sink:'Si immerge',swim:"Sott'acqua",rise:'Agguato',tide:'Marea Nera (fase 2)',rage:'Furia',taunt:'Presa in giro',enter:'Entrata',die:'Sconfitta'};
-const POPS=[.20,.29,.38,.47,.56,.65,.74,.83],INK3=[.40,.47,.54],INK5=[.36,.42,.48,.54,.60];
+const POPS=[.20,.29,.38,.47,.56,.65,.74,.83],INK3=[.40,.47,.54],INK5=[.36,.42,.48,.54,.60],FIN=-96;   // FIN: how deep she swims (only the tips of the crown out: the top of the mantle under it is not drawn)
 // the order of the arms round the body (from her front left round her back to her front right): the wave of the walk, the groups of legs
 const ROUND=[7,0,6,1,5,2,4,3];   // ROUND[i] = place of arm i round her
 const PERM=[7,6,5,4,3,2,1,0];    // after the turn and a half of the whirl the arm i is where PERM[i] was
 // the hand of the side sd raised high over its flank and rolled back like a whip (two half turns)
-function whipUp(i,k2){const R=rest(i,k2),sd=ARM[i][1],az=sd*.95,ax=nrm(cross(dirv(az,0),[0,0,1]));
-  return Object.assign({},R,{k:[dirv(az,.95),dirv(az,1.32),dirv(az-sd*.12,1.66),dirv(az-sd*.18,1.9)],c:{ax,ang:2*PI,u0:.48,pw:1.2},c2:null,roll:0,th:1})}
+// (it stretches to 125, as it will to lie along the blow; its top hooks out and back over her flank, so the raised arm shows from the
+// front, where the hero is)
+function whipUp(i,k2){const R=rest(i,k2),sd=ARM[i][1];
+  return Object.assign({},R,{L:125,k:[dirv(sd*1.05,.9),dirv(sd*1,1.3),dirv(sd*.9,1.42),dirv(sd*.8,1.45)],c:{ax:nrm([-sd*.85,-.5,0]),ang:1.4*PI,u0:.62,pw:1.25},c2:null,roll:0,th:1})}
 // the same arm lying on the floor along the blow: from its root to the end of the line (len from her centre along ang); bz: how high its
 // root is (the second phase stands 12 higher), yaw: how much the body has turned (the line stays where it is in the room)
 function whipDown(i,k2,ang,L0,yaw,bz){const R=rest(i,k2),b=R.b,a0=ang-yaw,E=[Math.cos(a0)*L0,Math.sin(a0)*L0,0],v=sub(E,b),Lh=Math.hypot(v[0],v[1]),a=Math.atan2(v[1],v[0]),
@@ -190,8 +196,8 @@ function armTo(i,k2,kind){const R=rest(i,k2),a=ROOTA_(i),sd=ARM[i][1],out=dirv(a
   if(kind==='open')return Object.assign({},R,{k:[dirv(a,.9),dirv(a-sd*.15,1.35),dirv(a-sd*.1,1.25),dirv(a,.95)],c:{ax:mul(ax,-1),ang:.9*PI,u0:.7,pw:1.4},c2:null,fb:0,vb:[0,0,1]});
   if(kind==='plant'){const a2=a+sd*.18;return Object.assign({},R,{k:[dirv(a2,.85),dirv(a2,.25),dirv(a2,-1.05),dirv(a2,-1.45)],c:{ax,ang:.15,u0:.8,pw:1.5},c2:null,fb:0,vb:[0,0,1]})}
   if(kind==='petal')return Object.assign({},R,{k:[dirv(a,1.05),dirv(a,1.25),dirv(a,1.0),dirv(a,.6)],c:{ax:mul(ax,-1),ang:1.1*PI,u0:.62,pw:1.5},c2:null,fb:0,vb:[0,0,1],L:Math.min(R.L,84)});
-  if(kind==='jet')return Object.assign({},R,{k:[dirv(a,1.4),dirv(a,1.5),dirv(a,1.1),dirv(a,.2)],c:{ax:mul(ax,-1),ang:.8*PI,u0:.7,pw:1.4},c2:null,fb:0,vb:[0,0,1],L:Math.min(R.L,88)});
-  if(kind==='flat')return Object.assign({},R,{k:[dirv(a,-.04),dirv(a,0),dirv(a,0),dirv(a,.03)],c:{ax:[0,0,sd],ang:.1,u0:.85,pw:1.5},c2:null,fb:0,vb:[0,0,-1],L:76,th:.95,rb:Math.min(R.rb,10)});
+  if(kind==='jet')return Object.assign({},R,{k:[dirv(a,1.45),dirv(a,1.3),dirv(a,.55),dirv(a,-.5)],c:{ax:mul(ax,-1),ang:.3*PI,u0:.8,pw:1.4},c2:null,fb:0,vb:[-Math.cos(a),-Math.sin(a),0],L:100});
+  if(kind==='flat')return Object.assign({},R,{k:[dirv(a,-.04),dirv(a,0),dirv(a,0),dirv(a,.05)],c:{ax:[0,0,-1],ang:.5*PI,u0:.7,pw:1.5},c2:null,fb:0,vb:[0,0,-1],L:76,th:.95,rb:Math.min(R.rb,10)});
   if(kind==='stilt')return Object.assign({},R,{k:[dirv(a,-.55),dirv(a,-1.0),dirv(a,-.4),dirv(a,0)],c:{ax:[0,0,sd],ang:.4,u0:.8,pw:1.5},c2:null,fb:0,vb:[0,0,-1],L:Math.min(R.L,80)});
   if(kind==='wrap'){const a2=a+sd*.9;return Object.assign({},R,{k:[dirv(a,1.1),dirv(a2,1.25),dirv(a2+sd*.6,1.3),dirv(a2+sd*1.2,1.2)],c:{ax:[0,0,sd],ang:.8*PI,u0:.6,pw:1.3},c2:null,fb:0,vb:[0,0,1],L:Math.min(R.L,92)})}
   if(kind==='droop')return Object.assign({},R,{k:[dirv(a,.35),dirv(a*.6,.05),dirv(a*.4,-.02),dirv(a*.3,0)],c:{ax:[0,0,-sd],ang:.5*PI,u0:.75,pw:1.5},c2:null,fb:0,vb:[0,0,-1],L:Math.min(R.L,96)});
@@ -223,7 +229,7 @@ function oPose(anim,p,o){const ph=p*TAU,P2=!!o.p2&&anim!=='enter'&&anim!=='rage'
         const g=ROUND[i]%2,q=fr(p-g*.5),st=q<.5?Math.sin(q/.5*PI):0,pl=q>=.5?Math.sin((q-.5)/.5*PI):0;
         return Object.assign(bendS(S,upAx(S),[.32*st,.18*st,.06*st,0]),{c:Object.assign({},S.c,{ang:S.c.ang+.35*pl})})}
       const up=Math.max(0,w),push=Math.max(0,-w);return bendS(bendS(S,upAx(S),[0,.1*up,.12*up,.1*up]),[0,0,1],[0,-sd*.08*push,-sd*.1*push,-sd*.08*push])});
-    if(P2){A.B[2]+=1.5*Math.abs(Math.sin(TAU*p));A.rflick=.35*Math.max(pls(p,0,.12),pls(p,.5,.12),pls(p,1,.12))}
+    if(P2){A.B[2]+=1.5*Math.abs(Math.sin(TAU*p));A.rflick=.35*Math.max(pls(p,0,.16),pls(p,.5,.16),pls(p,1,.16))}
     fx('vwave',p)}
   else if(anim==='hit'){const k=hitK(p);A.msq=-.08*k;A.squint=.8*(1-sstep(.3,.45,p));A.lean=-.06*k;A.B[0]-=2*k;A.pg=.6;
     A.arms=A.arms.map(S=>bendS(S,upAx(S),[0,.12*k,.16*k,.1*k]))}
@@ -237,13 +243,15 @@ function oPose(anim,p,o){const ph=p*TAU,P2=!!o.p2&&anim!=='enter'&&anim!=='rage'
       if(p<.5)A.arms[i1]=mixS(R,W1,ez(sstep(.05,.5,p)));else if(p<.6)A.arms[i1]=mixS(W1,W2,(p-.5)/.1,.9);
       else{const bo=rise(p,.6,.63,.66,.72)-.4*rise(p,.66,.7,.72,.8);A.arms[i1]=bendS(W2,upAx(W2),[0,.1*bo,.14*bo,.08*bo])}
       A.hi[i1]=rise(p,.05,.15,.55,.6);
-      A.pf=pls(p,.035,.07);A.halo=A.pf;A.look=[0,.4*sstep(0,.06,p)*(1-sstep(.65,.9,p))];
+      A.pf=pls(p,.05,.1);A.halo=A.pf;A.look=[0,.4*sstep(0,.06,p)*(1-sstep(.65,.9,p))];
       run(i1,0,sstep(.10,.45,p),1-sstep(.62,.78,p));
       A.ml=.12*sstep(.05,.45,p)*(1-sstep(.5,.56,p))-.15*rise(p,.5,.56,.66,.8)-.04*sstep(.66,.8,p);
       A.pw=lerp(.32,.2,sstep(.05,.2,p));A.brow=-1*sstep(.05,.2,p);A.squint=.25*sstep(.05,.2,p);
       A.lean=.15*sstep(.5,.58,p);A.B[0]+=2*sstep(.5,.58,p);A.jaw=.6*rise(p,.5,.53,.62,.72);
       // the other arms spread and press on the water
       const pr=sstep(.08,.3,p);for(let i=0;i<4;i++)if(i!==i1){const sd=ARM[i][1],S=A.arms[i];A.arms[i]=bendS(S,[0,0,1],[sd*.1*pr,sd*.12*pr,sd*.1*pr,0])}
+      // the cobra on that side leans back out of the way of the raised arm
+      {const ic=4+i1,yk=sstep(.05,.3,p)*(1-sstep(.56,.75,p));A.arms[ic]=bendS(A.arms[ic],[0,0,1],[s1*.3*yk,s1*.35*yk,s1*.2*yk,0])}
       fx('drip',(p-.22)/.16,{arm:i1});fx('drip',(p-.36)/.14,{arm:i1});fx('splashline',(p-.6)/.32,{arm:i1});fx('ring',(p-.6)/.3,{arm:i1,u:1,r:26})}
     else if(anim==='stuck'){// VENTOSE ATTACCATE: it tugs (0-.15), the arm tenses and turns a little on its side; the suckers come off one by
       // one from the tip (eight pops) and the arm rises from the tip a piece at a time; the body stays bent forward, the crown leant toward
@@ -253,6 +261,7 @@ function oPose(anim,p,o){const ph=p*TAU,P2=!!o.p2&&anim!=='enter'&&anim!=='rage'
       const tug=rise(p,0,.06,.12,.16),uf=.95-.78*f,ax=upAx(W2);
       let S=Object.assign({},W2,{roll:ARM[i1][1]*.45*sstep(0,.15,p),th:W2.th*(1+.06*tug),c2:{ax,ang:1.5*PI*f,u0:uf,pw:1.25}});
       A.arms[i1]=back>0?mixS(S,rest(i1,k2),ez(back)):S;A.pops={i:i1,f};
+      {const pr=1-sstep(.85,1,p);for(let i=0;i<4;i++)if(i!==i1){const sd=ARM[i][1];A.arms[i]=bendS(A.arms[i],[0,0,1],[sd*.1*pr,sd*.12*pr,sd*.1*pr,0])}}
       A.lean=.15*(1-back);A.B[0]+=2*(1-back)-1.5*tug;A.ml=-.04*(1-back)+.08*tug;A.crTilt=[.12*sstep(.08,.2,p)*(1-back),0];
       A.ptr=sstep(.12,.2,p)*(1-sstep(.8,.88,p));A.pg=.75;A.pw=lerp(.2,.32,back);A.brow=-.5*(1-back);A.squint=.2*(1-back)+.3*tug;
       for(let k=0;k<8;k++)fx('pop',(p-POPS[k])/.1,{arm:i1,n:k});fx('drip',(p-.86)/.14,{arm:i1})}
@@ -264,10 +273,12 @@ function oPose(anim,p,o){const ph=p*TAU,P2=!!o.p2&&anim!=='enter'&&anim!=='rage'
       A.arms[i1]=p<.38?mixS(R1,U1,ez(sstep(.04,.38,p))):p<.45?mixS(U1,D1,(p-.38)/.07,.9):p<.70?D1:mixS(D1,R1,ez(sstep(.70,.95,p)));
       A.arms[i2]=p<.45?R2:p<.78?mixS(R2,U2,ez(sstep(.45,.78,p))):p<.85?mixS(U2,D2,(p-.78)/.07,.9):D2;
       A.hi[i1]=rise(p,.04,.12,.42,.45);A.hi[i2]=rise(p,.45,.53,.82,.85);
-      A.pf=Math.max(pls(p,.035,.07),.7*pls(p,.47,.06));A.halo=A.pf;
+      A.pf=Math.max(pls(p,.035,.07),.7*pls(p,.47,.08));A.halo=A.pf;
       run(i1,0,sstep(.08,.34,p),1-sstep(.48,.6,p));run(i2,0,sstep(.50,.74,p),1-sstep(.88,.98,p));
       A.pw=.2;A.brow=-1;A.squint=.25;A.ml=.1*rise(p,.04,.3,.36,.4)-.13*rise(p,.38,.42,.5,.56)+.1*rise(p,.45,.7,.76,.8)-.13*rise(p,.78,.82,.9,.96);
-      A.jaw=.6*Math.max(rise(p,.38,.41,.48,.55),rise(p,.78,.81,.9,.96));A.lean=.12*Math.max(rise(p,.38,.44,.6,.72),sstep(.78,.84,p));A.B[0]+=2*sstep(.78,.84,p);
+      A.jaw=.6*Math.max(rise(p,.38,.41,.48,.55),rise(p,.78,.81,.9,.96));A.lean=Math.max(.12*rise(p,.38,.44,.6,.72),.15*sstep(.78,.84,p));A.B[0]+=2*sstep(.78,.84,p);
+      // the other arms press on the water (the first one too, once it is back: the pose stuck starts from)
+      {for(let i=0;i<4;i++){if(i===i2)continue;const pr=i===i1?sstep(.7,.95,p):sstep(.04,.2,p),sd=ARM[i][1];A.arms[i]=bendS(A.arms[i],[0,0,1],[sd*.1*pr,sd*.12*pr,sd*.1*pr,0])}}
       fx('splashline',(p-.45)/.3,{arm:i1});fx('ring',(p-.45)/.3,{arm:i1,u:1,r:24});fx('splashline',(p-.85)/.15,{arm:i2});fx('ring',(p-.85)/.15,{arm:i2,u:1,r:24})}}
   else if(anim==='ink'){// PIOGGIA D'INCHIOSTRO: the mantle swells like a balloon (+16%) and the rings widen, the siphon turns to the hero and
     // swells, the light of the pearl runs down to it (.10-.34); at every shot the mantle loses a notch, the siphon spits a puff of ink
@@ -275,9 +286,9 @@ function oPose(anim,p,o){const ph=p*TAU,P2=!!o.p2&&anim!=='enter'&&anim!=='rage'
     const n=(o.n||(o.p2?5:3))>=5?5:3,T=n===5?INK5:INK3;let notch=0,kick=0;for(const t of T){notch+=sstep(t,t+.03,p);kick=Math.max(kick,blip(p,t+.012,.07))}
     A.mb=.16*sstep(0,.36,p)-.12/n*notch-.04*sstep(.62,.9,p)+.03*(1-sstep(0,.2,p))*.5;A.rsz=1+.35*cl(A.mb/.16,0,1);
     A.siT=sstep(.04,.3,p)*(1-sstep(.7,.95,p));A.siP=.8*sstep(.1,.36,p)*(1-sstep(T[n-1],T[n-1]+.12,p))+.5*kick;A.siLit=sstep(.28,.34,p)*(1-sstep(.62,.8,p));
-    A.inkRun=sstep(.10,.34,p);A.inkA=1-sstep(.62,.78,p);A.pf=pls(p,.035,.07);A.halo=A.pf;A.pg=.6;
+    A.inkRun=sstep(.10,.34,p);A.inkA=1-sstep(.62,.78,p);A.pf=pls(p,.055,.11);A.halo=A.pf;A.pg=.6;
     A.hp=-.07*kick;A.B[0]-=1.2*kick;A.lean=-.05*sstep(.1,.36,p)*(1-sstep(.62,.9,p));A.look=[0,.3*sstep(0,.1,p)*(1-sstep(.7,.9,p))];A.squint=.2*sstep(.2,.36,p)*(1-sstep(.62,.8,p));
-    for(let k=0;k<n;k++)fx('spit',(p-T[k])/.16,{k});fx('bubbles',(p-.64)/.3,{siph:1})}
+    for(let k=0;k<n;k++)fx('spit',(p-T[k])/.16,{n:k});fx('bubbles',(p-.64)/.3,{siph:1})}
   else if(anim==='cage'){// GABBIA DEGLI ABISSI: she rises a little and lifts four arms (cobras and sides) high and open like a hand, the suckers
     // lit from the root (.05-.22); she plants them in her pool at her flanks (splash .33): cut by the water, the light goes down with them;
     // she stays bent with the arms tense in the water, the eyes lit and fixed on the hero, the pool turning slowly; a push down at .71 (the
@@ -287,7 +298,7 @@ function oPose(anim,p,o){const ph=p*TAU,P2=!!o.p2&&anim!=='enter'&&anim!=='rage'
       if(p>.38&&p<.85){const t=.03*Math.sin(TAU*(p-.38)*2.2*3.5);S=bendS(S,upAx(Pl),[t,0,0,0])}
       A.arms[i]=out>0?mixS(S,R,out):S;A.hi[i]=up*(1-dn)+.3*dn*(1-out);run(i,0,sstep(.05,.22,p),1-sstep(.36,.44,p))}
     A.lean=.1*sstep(.3,.4,p)*(1-out);A.eyeGlow=1+.5*sstep(.3,.4,p)*(1-out);A.look=[0,.5*sstep(.3,.4,p)*(1-out)];A.squint=.3*sstep(.3,.4,p)*(1-out);A.pw=lerp(.32,.24,sstep(.3,.4,p)*(1-out));
-    A.pool.spin=.5*sstep(.3,.4,p)*(p-.3);A.pool.boil=.4*rise(p,.35,.45,.8,.9);A.pf=pls(p,.035,.07);A.halo=A.pf;
+    A.pool.spin=.5*sstep(.3,.4,p)*(p-.3);A.pool.boil=.4*rise(p,.35,.45,.8,.9);A.pf=pls(p,.04,.08);A.halo=A.pf;
     for(const i of[2,3,4,5])fx('splash',(p-.33)/.22,{arm:i,u:.72});for(const i of[2,3,4,5])fx('drip',(p-.86)/.14,{arm:i})}
   else if(anim==='whirl'){// GORGO: the eight arms flat on the water like a star (~200 tip to tip), the skirt opens, a flash (0-.15); skirt and
     // arms turn a turn and a half round her (slow, fast, slow), the arms bent back like the blades of a pinwheel, the algae flying out, the
@@ -296,34 +307,34 @@ function oPose(anim,p,o){const ph=p*TAU,P2=!!o.p2&&anim!=='enter'&&anim!=='rage'
     const k0=ez(sstep(0,.15,p)),u=cl((p-.15)/.7,0,1),sp=TAU*1.5*ez(u),w=u<.5?4*u:4*(1-u),back=ez(sstep(.86,1,p)),jolt=p>.85?.1*Math.sin((p-.85)/.15*TAU)*(1-sstep(.85,1,p)):0;
     A.spin=sp+jolt;A.skOpen=k0*(1-back);A.algaOut=sstep(.15,.3,p)*(1-sstep(.85,.95,p));A.pf=pls(p,.04,.08);A.halo=A.pf;
     A.arms=A.arms.map((S,i)=>{const F=armTo(i,k2,'flat');let T=mixS(S,F,k0);if(u>0&&u<1)T=Object.assign({},T,{c2:{ax:[0,0,1],ang:-.75*Math.min(1,w),u0:.15,pw:1}});
-      if(back>0)T=mixS(T,turnS(rest(PERM[i],k2),-PI),back);const a=ROOTA[i];if(p>.15&&p<.85)run(i,0,fr(p*2.6-a/TAU+.3),.8*sstep(.15,.22,p)*(1-sstep(.78,.85,p)));return T});
+      if(back>0)T=mixS(T,Object.assign(turnS(rest(PERM[i],k2),-PI),{fb:0}),back);const a=ROOTA[i];if(p>.15&&p<.85)run(i,0,fr(p*2.6-a/TAU+.3),.8*sstep(.15,.22,p)*(1-sstep(.78,.85,p)));return T});
     A.hr=.08*Math.sin((p-.86)/.14*TAU*1.5)*(p>.86?1-sstep(.86,1,p):0);A.squint=.3*sstep(.1,.2,p)*(1-back);A.look=[0,.3];
-    A.pool.swirl=sstep(.08,.2,p)*(1-sstep(.85,1,p));A.pool.spin=sp;fx('whirlfoam',p)}
+    A.pool.swirl=sstep(.08,.2,p)*(1-sstep(.85,1,p));A.pool.spin=sp}
   else if(anim==='sink'||anim==='swim'){
     if(anim==='sink'){// SI IMMERGE: a breath and a look at the hero (0-.20); she wraps herself in her arms like a cloak, lowers the crown and
       // sinks with a suck of bubbles (under at .70, cut at the water); .85-1 only the tips of the crown are out, two amber lights under the
       // water: the pose of swim
-      const w=ez(sstep(.2,.55,p)),dn=p<.7?-120*ez(sstep(.22,.7,p)):lerp(-120,-95,ez(sstep(.72,.95,p)));A.B[2]+=dn;A.mb=.08*rise(p,0,.2,.3,.4);A.cut=sstep(.18,.22,p);
+      const w=ez(sstep(.2,.55,p)),dn=p<.7?-120*ez(sstep(.22,.7,p)):lerp(-120,FIN,ez(sstep(.72,.95,p)));A.B[2]+=dn;A.mb=.08*rise(p,0,.2,.3,.4);A.cut=sstep(.18,.22,p);
       A.arms=A.arms.map((S,i)=>mixS(S,armTo(i,k2,'wrap'),w));A.hp=.12*sstep(.2,.45,p);A.lid=lerp(.34,.2,rise(p,0,.15,.3,.4));A.look=[0,.4*rise(p,0,.1,.3,.4)];
       A.eyesU=sstep(.8,.95,p);A.fin=sstep(.85,1,p);fx('suck',(p-.3)/.55);fx('bubbles',(p-.45)/.4)}
     else{// SOTT'ACQUA: only the tips of the crown out of the water, cutting it like a fin, the V wake toward where she goes; two amber
       // lights under the water; bubbles (the last frame is the first)
-      A.B[2]+=-95+1.2*Math.sin(ph);A.cut=1;A.eyesU=1;A.fin=1;A.arms=A.arms.map((S,i)=>armTo(i,k2,'wrap'));A.hp=.12;fx('vwave',p,{fin:1});fx('trail',p)}}
+      A.B[2]+=FIN+1.2*Math.sin(ph);A.cut=1;A.eyesU=1;A.fin=1;A.arms=A.arms.map((S,i)=>armTo(i,k2,'wrap'));A.hp=.12;fx('vwave',p,{fin:1});fx('trail',p)}}
   else if(anim==='rise'){// AGGUATO: from under the water: the water boils in a circle, the crown goes under, the eyes rise brighter and the
     // surface swells (0-.63); THE BLOW at .63: she bursts out with all her arms open upward like a flower and the beak wide, in a column of
     // water; she holds the flower (.63-.75), the arms fall slapping the water (.80), she settles (.90-1)
-    const out=sstep(.6,.66,p),z=p<.6?-95-15*ez(sstep(0,.6,p)):lerp(-110,6,ez(out))-6*sstep(.75,.95,p);A.B[2]+=z;A.cut=1;
+    const out=sstep(.6,.66,p),z=p<.6?FIN-11*ez(sstep(0,.6,p)):lerp(-110,6,ez(out))-6*sstep(.75,.95,p);A.B[2]+=z;A.cut=1;
     A.eyesU=(1+.6*sstep(.2,.6,p))*(1-sstep(.6,.64,p));A.eyeTop=sstep(.2,.6,p);A.pool.boil=sstep(.05,.3,p)*(1-sstep(.62,.7,p));A.pool.swell=sstep(.3,.6,p)*(1-sstep(.6,.64,p));
     const fl=ez(sstep(.6,.66,p)),fall=ez(sstep(.75,.82,p)),set=ez(sstep(.88,1,p));
     A.arms=A.arms.map((S,i)=>{const W=armTo(i,k2,'wrap'),Pt=armTo(i,k2,'petal'),F=armTo(i,k2,'flat');let T=mixS(W,Pt,fl);if(fall>0)T=mixS(T,F,fall);if(set>0)T=mixS(T,S,set);A.hi[i]=fl*(1-fall);return T});
-    A.jaw=.9*rise(p,.61,.64,.76,.84);A.hp=-.18*rise(p,.61,.65,.75,.85);A.squint=.3*rise(p,.62,.66,.74,.8);A.pf=.8*pls(p,.63,.08);A.halo=A.pf;A.eyeGlow=1.3;
+    A.jaw=.9*rise(p,.61,.64,.76,.84);A.hp=.12*(1-sstep(.55,.62,p))-.18*rise(p,.61,.65,.75,.85);A.squint=.3*rise(p,.62,.66,.74,.8);A.pf=.8*pls(p,.63,.11);A.halo=A.pf;A.eyeGlow=1.3;
     fx('column',(p-.6)/.32);fx('slap',(p-.8)/.2);fx('bubbles',(p-.05)/.55,{wide:1})}
   else if(anim==='tide'){// MAREA NERA (second phase): up on the tips of her arms (+20), then every arm over her head like a fountain, rings and
     // crown blazing, the pearl burning (0-.30); she pulls them down slowly, breathing deep, the water rising round her (.30-.55); she slams
     // them all on the water at .55 (a ring of splashes: the wave starts) and pushes; .80-1 she comes back down
     const upB=ez(sstep(0,.14,p))*(1-ez(sstep(.8,1,p)));A.B[2]+=20*upB;A.pool.mound=upB;
-    const st=ez(sstep(0,.12,p)),jt=ez(sstep(.1,.28,p)),dw=ez(sstep(.3,.53,p)),sl=ez(sstep(.53,.56,p)),bk=ez(sstep(.8,1,p));
-    A.arms=A.arms.map((S,i)=>{let T=mixS(S,armTo(i,1,'stilt'),st);T=mixS(T,armTo(i,1,'jet'),jt);const D=bendS(armTo(i,1,'jet'),upAx(armTo(i,1,'flat')),[-.5,-.6,-.6,-.4]);
+    const jt=ez(sstep(.02,.26,p)),dw=ez(sstep(.3,.53,p)),sl=ez(sstep(.53,.56,p)),bk=ez(sstep(.8,1,p));
+    A.arms=A.arms.map((S,i)=>{let T=mixS(S,armTo(i,1,'jet'),jt);const D=bendS(armTo(i,1,'jet'),upAx(armTo(i,1,'flat')),[-.5,-.6,-.6,-.4]);
       T=mixS(T,D,dw*.6);T=mixS(T,armTo(i,1,'flat'),sl);if(p>.56&&p<.8)T=bendS(T,upAx(T),[.04*Math.sin(TAU*(p-.56)*3.2*3.5),0,0,0]);if(bk>0)T=mixS(T,S,bk);A.hi[i]=jt*(1-sl);return T});
     A.mb=.1*rise(p,.3,.45,.53,.6);A.pool.rim=sstep(.3,.55,p)*(1-sstep(.62,.9,p));A.ring=1;A.rflick=.5*rise(p,.05,.15,.5,.6);A.shellK=1+.8*rise(p,.05,.15,.5,.6);A.pg=1;A.pf=.6*rise(p,.05,.12,.25,.32);A.halo=A.pf;
     A.hp=-.12*rise(p,.1,.2,.28,.35)+.06*rise(p,.53,.56,.7,.8);A.jaw=.5*rise(p,.52,.56,.62,.7);A.squint=.3*rise(p,.5,.55,.75,.85);
@@ -332,7 +343,7 @@ function oPose(anim,p,o){const ph=p*TAU,P2=!!o.p2&&anim!=='enter'&&anim!=='rage'
     // throws her head back while the rings light magenta in a wave from the head to the tips, the shells of the crown light up within, the
     // flower opens, the pool turns to ink from the middle out and the skin takes the colours of the second phase (.50-.70); she roars with
     // the beak open, the arms lashing up and out with a spray (.70-.85); she settles in the pose of the second phase
-    A.B[1]+=.9*trem(p,0,.2,3.6,2.8);A.rflick=.6*(1-sstep(.15,.22,p))*sstep(0,.03,p);
+    A.B[1]+=.9*trem(p,0,.2,2.6,2.8);A.rflick=.6*(1-sstep(.15,.22,p))*sstep(0,.03,p);
     const up=ez(sstep(.2,.5,p));A.B[2]+=12*up;A.arms=A.arms.map((S,i)=>mixS(rest(i,0),rest(i,1),up));
     A.k2=sstep(.5,.7,p);A.ring=sstep(.5,.52,p);A.rfront=-.3+1.6*sstep(.5,.7,p);A.pool.ink=1;A.pool.inkR=sstep(.5,.7,p);
     A.hp=-.35*rise(p,.5,.6,.8,.9);A.lid=lerp(.34,.12,rise(p,.5,.6,.85,.95));A.jaw=.9*rise(p,.7,.74,.84,.88);A.brow=1.2*rise(p,.5,.6,.85,.95);
@@ -346,7 +357,7 @@ function oPose(anim,p,o){const ph=p*TAU,P2=!!o.p2&&anim!=='enter'&&anim!=='rage'
     const i=5,R=A.arms[i],tp=ez(sstep(0,.18,p))*(1-ez(sstep(.24,.36,p))),tap=blip(p,.22,.06);
     const T=Object.assign({},R,{k:[nrm([.02,.38,1]),nrm([.06,.12,1]),nrm([.16,-.18,1]),nrm([.25,-.55,.8])],c:{ax:[1,0,0],ang:.7*PI*(1+.25*tap),u0:.72,pw:1.4}});
     A.arms[i]=mixS(R,T,tp);A.hi[i]=tp;A.crTilt=[0,.1*(1-sstep(.2,.24,p))*sstep(0,.08,p)];
-    A.pf=pls(p,.12,.07);A.halo=A.pf;A.hp=-.08*rise(p,.28,.36,.7,.8);A.lid=lerp(.34,.46,rise(p,.28,.36,.7,.8));A.brow=1.3*rise(p,.28,.36,.7,.8);
+    A.pf=pls(p,.12,.15);A.halo=A.pf;A.hp=-.08*rise(p,.28,.36,.7,.8);A.lid=lerp(.34,.46,rise(p,.28,.36,.7,.8));A.brow=1.3*rise(p,.28,.36,.7,.8);
     if(o.call){A.hr=.15*rise(p,.28,.36,.7,.8);const cu=Math.max(blip(p,.38,.1),blip(p,.56,.1)),C=Object.assign({},R,{k:[dirv(1.6,.6),dirv(1.3,1.0),dirv(.9,.9),dirv(.6,.6)],c:{ax:[0,0,-1],ang:(.8+.9*cu)*PI,u0:.6,pw:1.3}});
       A.arms[5]=mixS(A.arms[5],C,rise(p,.3,.36,.66,.74));A.hi[5]=Math.max(A.hi[5],rise(p,.3,.36,.66,.74))}
     else{A.siT=rise(p,.28,.34,.66,.74);A.siP=.4*rise(p,.3,.34,.58,.64);fx('bubstring',(p-.32)/.3);fx('bigbub',(p-.42)/.24)}
@@ -357,7 +368,7 @@ function oPose(anim,p,o){const ph=p*TAU,P2=!!o.p2&&anim!=='enter'&&anim!=='rage'
     // .60) with a wet snap, the skirt spreading on the water; the pearl lights up (.66); she slams both hands on the water (.75); she roars
     // (.82-.92); she lowers her lids and looks down at the hero (.92-1)
     A.pool.k=ez(sstep(0,.15,p));A.pool.boil=sstep(.02,.1,p)*(1-sstep(.4,.55,p));
-    const upk=ez(sstep(.40,.66,p));A.B[2]+=-95*(1-upk);A.cut=1-sstep(.64,.68,p);A.yaw=.35*Math.sin(TAU*(p-.15)/.25*.5)*sstep(.15,.2,p)*(1-sstep(.38,.46,p));
+    const upk=ez(sstep(.40,.66,p));A.B[2]+=lerp(-125,FIN,ez(sstep(.1,.22,p)))*(1-upk);A.cut=1-sstep(.64,.68,p);A.yaw=.35*Math.sin(TAU*(p-.15)/.25*.5)*sstep(.15,.2,p)*(1-sstep(.38,.46,p));
     A.eyesU=sstep(.17,.25,p)*(1-sstep(.5,.58,p));A.fin=sstep(.15,.22,p);A.skK=lerp(.55,1,ez(sstep(.45,.66,p)));A.drip=rise(p,.42,.5,.66,.78);
     A.pg=.55*sstep(.64,.68,p);A.pf=pls(p,.665,.06);A.halo=A.pf;
     const taps=Math.max(blip(p,.31,.04),blip(p,.35,.04),blip(p,.39,.04));A.tip=p>.28&&p<.44?{k:sstep(.28,.31,p)*(1-sstep(.4,.44,p)),tap:taps}:null;
@@ -374,8 +385,8 @@ function oPose(anim,p,o){const ph=p*TAU,P2=!!o.p2&&anim!=='enter'&&anim!=='rage'
     // she sinks turning a quarter, the arms curling like springs and going under last; at .55 the crown slips off and falls on the water
     // with a plop (the climax); a cloud of ink opens on the water and clears (.55-.80); only the crown floats on the calm water, the pearl's
     // last glow at .90, a last bubble at .95 (in the second phase the flower opens white at the end)
-    A.B[1]+=.8*trem(p,0,.15,3.6,4)*(1-sstep(.12,.15,p));A.round=sstep(.02,.08,p);A.lid=lerp(.34,.02,sstep(.02,.1,p));A.lidLo=lerp(.14,0,sstep(.02,.1,p));A.brow=.9*sstep(.02,.1,p);
-    A.ptr=1-sstep(.12,.16,p);A.ring=o.p2?1:0;A.rfront=1.3-1.6*sstep(.15,.3,p);A.pale=sstep(.25,.4,p);
+    A.B[1]+=.8*trem(p,0,.15,3,4)*(1-sstep(.12,.15,p));A.round=sstep(.02,.08,p);A.lid=lerp(.34,.02,sstep(.02,.1,p));A.lidLo=lerp(.14,0,sstep(.02,.1,p));A.brow=.9*sstep(.02,.1,p);
+    A.ptr=1-sstep(.12,.16,p);A.ring=o.p2?1:0;A.rfront=1.3-1.6*sstep(.15,.3,p);A.pale=.85*sstep(.25,.4,p);A.eyeGlow=1-.8*sstep(.25,.5,p);
     const dr=ez(sstep(.15,.4,p)),sp=ez(sstep(.4,.6,p));
     A.arms=A.arms.map((S,i)=>{let T=S;if(ARM[i][0]==='cobra'||ARM[i][0]==='throne')T=mixS(T,armTo(i,k2,'droop'),dr);if(sp>0)T=mixS(T,armTo(i,k2,'spring'),sp);return T});
     A.yaw=PI/2*ez(sstep(.4,.62,p));A.B[2]+=-80*ez(sstep(.38,.55,p))-50*ez(sstep(.55,.72,p));A.cut=sstep(.36,.4,p);A.hp=.15*sstep(.3,.5,p);
@@ -415,37 +426,56 @@ function armGeo(S,F,A){const Rf=F.Xf.Rd,Rb=F.X.Rd,fb=S.fb,R=fb<.001?Rf:v=>nrmS(l
   for(let j=0;j<NP;j++){const d=sub(P[j],A.B),x=d[0]*cy-d[1]*sy-SKX,y=d[0]*sy+d[1]*cy,z=d[2]/zk,inside=z>=0&&z<=22&&Math.hypot(x,y)<skR(z)*sk*.97;
     if(!inside){js=Math.max(0,j-1);under=z<7;break}if(j===NP-1)js=NS}
   return{P,H,HP,R:RR,N,S,js,under}}
-// the shading of an arm on the screen, worked out once for all its pieces: screen points, the side of the shadow (lower right), the
-// coral belly (β: its angle from the view round the arm, 0 when it faces us: its band on the screen runs from -r cos β to r on its side)
-function armScreen(V0,G){const{P,F}=V0,Q=G.P.map(q=>P(q)),NS2=new Array(NP),bel=new Array(NP),ok=new Array(NP);G.Q=Q;
-  for(let j=0;j<NP;j++){const a=Q[Math.max(0,j-1)],b=Q[Math.min(NS,j+1)],dx=b[0]-a[0],dy=b[1]-a[1],l=Math.hypot(dx,dy);
-    let nx=l>1e-4?-dy/l:-.55,ny=l>1e-4?dx/l:-.83;if(nx*.55+ny*.83<0){nx=-nx;ny=-ny}NS2[j]=[nx,ny];ok[j]=l>.45*G.R[j];
-    const N=G.N[j],o=P(add(G.P[j],N));bel[j]=Math.atan2((o[0]-Q[j][0])*nx+(o[1]-Q[j][1])*ny,F(N))}
-  G.NS2=NS2;G.bel=bel;G.ok=ok;let x0=1e9,y0=1e9,x1=-1e9,y1=-1e9;for(let j=0;j<NP;j++){const q=Q[j],r=G.R[j];x0=Math.min(x0,q[0]-r);y0=Math.min(y0,q[1]-r);x1=Math.max(x1,q[0]+r);y1=Math.max(y1,q[1]+r)}G.bb=[x0,y0,x1,y1]}
+// the shading of an arm on the screen, worked out once for all its pieces: the screen points, a normal across the arm that turns with it
+// (never flipped), the side that the light reaches (the arm's own up across it, as it shows on the screen, and the light from the upper
+// left: on the floor its top, raised its upper left side) and how sure that is (KB: the bands shrink to the edge where the side changes
+// or where the arm is seen end on, so they never jump from one edge to the other)
+const LXY=(()=>{const l=Math.hypot(.55,.83);return[-.55/l,-.83/l]})();
+function armScreen(V0,G){const{P}=V0,Q=G.P.map(q=>P(q)),NN=new Array(NP),SD=new Array(NP),KB=new Array(NP);G.Q=Q;let px=-.83,py=.55;
+  for(let j=0;j<NP;j++){const ia=Math.max(0,j-1),ib=Math.min(NS,j+1),a=Q[ia],b=Q[ib],dx=b[0]-a[0],dy=b[1]-a[1],l=Math.hypot(dx,dy),r=G.R[j];
+    let nx=px,ny=py;if(l>1e-4){nx=-dy/l;ny=dx/l}px=nx;py=ny;
+    const h=G.HP[j],w=[-h[0]*h[2],-h[1]*h[2],1-h[2]*h[2]],wl=len(w);let sc=.6*(nx*LXY[0]+ny*LXY[1]);
+    if(wl>.04){const e=P(add(G.P[j],mul(w,1/wl))),ex=e[0]-Q[j][0],ey=e[1]-Q[j][1],el=Math.hypot(ex,ey);if(el>.05)sc+=Math.min(1,wl*1.6)*(nx*ex+ny*ey)/el}
+    NN[j]=[nx,ny];SD[j]=sc>=0?1:-1;KB[j]=sstep(.1,.38,Math.abs(sc))*sstep(.2,.5,l/(ib-ia)/Math.max(1.5,r))}
+  G.NN=NN;G.SD=SD;G.KB=KB;let x0=1e9,y0=1e9,x1=-1e9,y1=-1e9;for(let j=0;j<NP;j++){const q=Q[j],r=G.R[j];x0=Math.min(x0,q[0]-r);y0=Math.min(y0,q[1]-r);x1=Math.max(x1,q[0]+r);y1=Math.max(y1,q[1]+r)}G.bb=[x0,y0,x1,y1]}
 // a point along the arm at u (0 root .. 1 tip): position, radius, belly, heading (between the chain's points)
 function armAt(G,u){let j=0;while(j<NS-1&&UP[j+1]<u)j++;const k=cl((u-UP[j])/(UP[j+1]-UP[j]),0,1);
   return{p:lerp3(G.P[j],G.P[j+1],k),r:lerp(G.R[j],G.R[j+1],k),n:nrmS(lerp3(G.N[j],G.N[j+1],k)),h:nrmS(lerp3(G.HP[j],G.HP[j+1],k)),j,k}}
-// a band along the arm between two offsets across it (in units of its radius, + toward the shadow), from point a to b: one polygon
-function bandPoly(G,a,b,s0,s1){ctx.beginPath();let on=false;const Q=G.Q,N=G.NS2,R=G.R;
-  const L=[],Rr=[];const flush=()=>{if(L.length>1){ctx.moveTo(L[0][0],L[0][1]);for(let i=1;i<L.length;i++)ctx.lineTo(L[i][0],L[i][1]);for(let i=Rr.length-1;i>=0;i--)ctx.lineTo(Rr[i][0],Rr[i][1]);ctx.closePath();on=true}L.length=0;Rr.length=0};
-  for(let j=a;j<=b;j++){if(!G.ok[j]){flush();continue}const q=Q[j],n=N[j],r=R[j],o0=typeof s0==='function'?s0(j):s0,o1=typeof s1==='function'?s1(j):s1;
-    if(o1<=o0){flush();continue}L.push([q[0]+n[0]*r*o0,q[1]+n[1]*r*o0]);Rr.push([q[0]+n[0]*r*o1,q[1]+n[1]*r*o1])}flush();return on}
+// a band along the arm from point a to b between two offsets across it (in units of its radius; + toward the light), as one path; the
+// offsets shrink to the edge (o -> 1.25) as KB goes to 0, and the band breaks where the lit side changes
+function bandPath(G,a,b,o0,o1){ctx.beginPath();let on=false;const Q=G.Q,NN=G.NN,SD=G.SD,KB=G.KB,R=G.R,L=[],Rr=[];
+  const flush=()=>{if(L.length>1){ctx.moveTo(L[0][0],L[0][1]);for(let i=1;i<L.length;i++)ctx.lineTo(L[i][0],L[i][1]);for(let i=Rr.length-1;i>=0;i--)ctx.lineTo(Rr[i][0],Rr[i][1]);ctx.closePath();on=true}L.length=0;Rr.length=0};
+  const edge=Math.sign(o0+o1)*1.25;let sd0=0;
+  for(let j=a;j<=b;j++){if(G.dead&&G.dead[j]){flush();continue}const k=KB[j],sd=SD[j];if(k<=.01){flush();sd0=0;continue}if(sd0&&sd!==sd0)flush();sd0=sd;
+    const q=Q[j],n=NN[j],r=R[j]*sd,e0=lerp(edge,o0,k),e1=lerp(edge,o1,k);L.push([q[0]+n[0]*r*e0,q[1]+n[1]*r*e0]);Rr.push([q[0]+n[0]*r*e1,q[1]+n[1]*r*e1])}
+  flush();return on}
+// the coral belly, exactly: on every ring the arc round the belly's normal (±BW) that faces us, joined to the next ring's (one path)
+const BW=1.2,SHD='rgb(6,24,32)';
+function bellyPath(V0,G,a,b){const{P,F}=V0;ctx.beginPath();let any=false;
+  for(let j=a;j<b;j++){if(G.dead&&(G.dead[j]||G.dead[j+1]))continue;const c0=G.P[j],c1=G.P[j+1],n0=G.N[j],n1=G.N[j+1],b0=nrmS(cross(G.HP[j],n0)),b1=nrmS(cross(G.HP[j+1],n1));
+    const ph=Math.atan2(F(b0)+F(b1),F(n0)+F(n1)),lo=Math.max(-BW,ph-PI/2),hi=Math.min(BW,ph+PI/2);if(hi-lo<.04)continue;
+    const r0=G.R[j],r1=G.R[j+1],m=Math.max(2,Math.ceil((hi-lo)/.5));
+    for(let i=0;i<=m;i++){const t=lo+(hi-lo)*i/m,ct=Math.cos(t),st=Math.sin(t),q=P([c0[0]+(n0[0]*ct+b0[0]*st)*r0,c0[1]+(n0[1]*ct+b0[1]*st)*r0,c0[2]+(n0[2]*ct+b0[2]*st)*r0]);i?ctx.lineTo(q[0],q[1]):ctx.moveTo(q[0],q[1])}
+    for(let i=m;i>=0;i--){const t=lo+(hi-lo)*i/m,ct=Math.cos(t),st=Math.sin(t),q=P([c1[0]+(n1[0]*ct+b1[0]*st)*r1,c1[1]+(n1[1]*ct+b1[1]*st)*r1,c1[2]+(n1[2]*ct+b1[2]*st)*r1]);ctx.lineTo(q[0],q[1])}
+    ctx.closePath();any=true}
+  return any}
 // one piece of an arm (chain points j0..j1): the outline only of its own segments, the fill one segment further on both sides (so
 // pieces drawn at different depths join without a seam, and a piece that comes out of the skirt grows out of it), then inside its fill
-// the three tones, the coral belly, the rings on the back, the suckers (lit by the signal), the pearl of light at the head of the signal
+// the three tones (the skin's gradient, a dark band on the side away from the light, a deeper one at its edge, a light band and the warm
+// rim on the lit side), the coral belly, the rings on the back, the suckers (lit by the signal), the pearl of light at the head of the signal
 function armPiece(V0,G,j0,j1,K,A,o){const Q=G.Q,Rr=G.R,lw=2.6,js=G.js,os=Math.max(j0,js+1),fs=Math.max(js,j0-1),fe=Math.min(NS-1,j1);if(fe<fs)return;
   const po=new Path2D(),pf=new Path2D();let any=false;
   for(let s=os;s<j1;s++){if(G.dead&&(G.dead[s]||G.dead[s+1]))continue;capP(po,Q[s],Rr[s]+lw/2,Q[s+1],Rr[s+1]+lw/2);any=true}
   for(let s=fs;s<=fe;s++){if(G.dead&&(G.dead[s]||G.dead[s+1]))continue;capP(pf,Q[s],Math.max(.35,Rr[s]-lw/2+.1),Q[s+1],Math.max(.35,Rr[s+1]-lw/2+.1))}
-  ctx.lineJoin='round';if(any){ctx.fillStyle=INK;ctx.fill(po)}ctx.fillStyle=G.fill;ctx.fill(pf);
-  ctx.save();ctx.clip(pf);const a=fs,b=fe+1;
-  // the coral belly where it faces us, then the shadow (two steps) and the light over skin and belly alike
-  const bl=G.bel;ctx.fillStyle=K.belly.b;if(bandPoly(G,a,b,j=>bl[j]>=0?-Math.cos(bl[j]):-1.2,j=>bl[j]>=0?1.2:Math.cos(bl[j])))ctx.fill();
-  ctx.fillStyle=K.belly.l;ctx.globalAlpha*=.55;if(bandPoly(G,a,b,j=>{const c=Math.cos(bl[j]);return Math.abs(bl[j])<PI/2?(bl[j]>=0?-c:-1.2)*.85:2},j=>{const c=Math.cos(bl[j]);return Math.abs(bl[j])<PI/2?(bl[j]>=0?.15:c*.5-.35):1})){ctx.fill()}ctx.globalAlpha/=.55;
-  ctx.fillStyle=G.dk;ctx.globalAlpha*=.5;if(bandPoly(G,a,b,.05,1.25))ctx.fill();ctx.globalAlpha/=.5;
-  ctx.globalAlpha*=.38;if(bandPoly(G,a,b,.55,1.25))ctx.fill();ctx.globalAlpha/=.38;
-  ctx.fillStyle=G.lt;ctx.globalAlpha*=.5;if(bandPoly(G,a,b,-.82,-.32))ctx.fill();ctx.globalAlpha/=.5;
-  if(!LOWFX){ctx.fillStyle=`rgba(${K.rimRgb},.32)`;if(bandPoly(G,a,b,j=>-1+1.9/Math.max(2,Rr[j]),j=>-1+3.1/Math.max(2,Rr[j])))ctx.fill()}
+  ctx.lineJoin='round';if(any){ctx.fillStyle=INK;ctx.fill(po)}ctx.fillStyle=G.grad;ctx.fill(pf);
+  ctx.save();ctx.clip(pf);const a=fs,b=fe+1,a0=ctx.globalAlpha;
+  // the light down the lit side, the coral belly where it faces us (its own light where the light band crosses it), then the shadow in
+  // two steps away from the light (a neutral dark, so the belly keeps its colour) and the warm rim
+  const hasL=bandPath(G,a,b,.28,.8);if(hasL){ctx.fillStyle=G.lt;ctx.globalAlpha=a0*.45;ctx.fill();ctx.globalAlpha=a0}
+  if(bellyPath(V0,G,a,b)){ctx.fillStyle=K.belly.b;ctx.fill();if(hasL){ctx.save();ctx.clip();bandPath(G,a,b,.2,.9);ctx.fillStyle=K.belly.l;ctx.globalAlpha=a0*.75;ctx.fill();ctx.restore()}}
+  ctx.fillStyle=SHD;if(bandPath(G,a,b,-.06,-1.25)){ctx.globalAlpha=a0*.36;ctx.fill();ctx.globalAlpha=a0}
+  if(bandPath(G,a,b,-.58,-1.25)){ctx.globalAlpha=a0*.3;ctx.fill();ctx.globalAlpha=a0}
+  if(!LOWFX){ctx.fillStyle=`rgba(${K.rimRgb},.3)`;if(bandPath(G,a,b,.8,1.02))ctx.fill()}
   armDetails(V0,G,a,b,K,A,o);ctx.restore()}
 // the rings on the back of the raised arms and the suckers (two rows on the belly, at most 8 a row; only those that face us; the budget
 // of the drawing goes first to the arm that attacks, then to the raised ones), lit by the signal, the pearl of light at its head
@@ -453,24 +483,25 @@ function armDetails(V0,G,a,b,K,A,o){const{P,F}=V0,u0=UP[a],u1=UP[Math.min(NS,b)]
   if(G.rings)for(const u of[.38,.6]){if(u<u0||u>u1)continue;const s=armAt(G,u),n=mul(s.n,-1),f=F(n);if(f<.12)continue;
     const c=add(s.p,mul(n,s.r*.92)),rr=s.r*.42,lit=G.ringLit(.5+.4*u);ringSpot(V0,c,n,rr,K,lit,cl((f-.12)*4,0,1))}
   if(!G.suck)return;const runs=G.runs,pop=G.pop,outer=new Path2D(),inn=new Path2D(),hot=new Path2D();let nOut=0,nHot=0;
-  for(let i=0;i<8;i++){const u=.2+.093*i;if(u<u0-.001||u>u1+.001)continue;const s=armAt(G,u);
+  for(let i=0;i<8;i++){const u=.2+.093*i;if(u<u0-.001||u>u1+.001)continue;const s=armAt(G,u);if(G.dead&&(G.dead[s.j]||G.dead[s.j+1]))continue;
     let lit=0;for(const r of runs)if(u<=r.u1+.001&&u>=r.u0)lit=Math.max(lit,r.a*(r.u1>=.999?1:sstep(r.u1+.001,r.u1-.05,u)));
     const popped=pop&&(7-i)<pop.f*8-.3;
-    for(const sg of[-1,1]){if((G.qn||0)>=G.quota)break;const d=rotAx(s.n,s.h,sg*.48),f=F(d);if(f<.1)continue;G.qn=(G.qn||0)+1;
-      const c=add(s.p,mul(d,s.r*.93)),rs=Math.max(1,s.r*.27),t1=s.h,t2=nrm(cross(d,t1)),q=P(c),pa=P(add(c,mul(t1,rs))),pb=P(add(c,mul(t2,rs))),ax=pa[0]-q[0],ay=pa[1]-q[1],bx=pb[0]-q[0],by=pb[1]-q[1];
+    for(const sg of[-1,1]){if((G.qn||0)>=G.quota)break;const d=rotAx(s.n,s.h,sg*.5),f=F(d);if(f<.12)continue;G.qn=(G.qn||0)+1;
+      const c=add(s.p,mul(d,s.r*.9)),rs=Math.max(1.15,s.r*.27)*sstep(.12,.3,f),t1=s.h,t2=nrm(cross(d,t1)),q=P(c),pa=P(add(c,mul(t1,rs))),pb=P(add(c,mul(t2,rs))),ax=pa[0]-q[0],ay=pa[1]-q[1],bx=pb[0]-q[0],by=pb[1]-q[1];
       const el=(pa2,k)=>{pa2.moveTo(q[0]+ax*k,q[1]+ay*k);for(let m=1;m<=10;m++){const t=m/10*TAU,c2=Math.cos(t),s2=Math.sin(t);pa2.lineTo(q[0]+(ax*c2+bx*s2)*k,q[1]+(ay*c2+by*s2)*k)}pa2.closePath()};
-      el(outer,1);nOut++;if(popped)continue;if(lit>.05){el(hot,.62);nHot++;glo(K.sig,q[0],q[1],rs*3.2,.5*lit*f)}else el(inn,.55)}}
-  if(nOut){ctx.fillStyle=K.belly.l;ctx.fill(outer);ctx.strokeStyle=K.belly.d;ctx.lineWidth=.8;ctx.stroke(outer);ctx.fillStyle=K.suck;ctx.fill(inn);if(nHot){ctx.fillStyle=K.suckOn;ctx.fill(hot)}}
-  // the head of the signal: a pearl of light running toward the tip
-  for(const r of runs){if(r.u1>=.995||r.a<.3||r.u1<u0||r.u1>u1)continue;const s=armAt(G,r.u1),q=P(s.p),bq=G.NS2[s.j],bb=G.bel[s.j],off=Math.abs(bb)<PI/2?Math.sin(bb)*.45*s.r:0,c=[q[0]+bq[0]*off,q[1]+bq[1]*off];
-    glo(K.sig,c[0],c[1],12,.7*r.a);ctx.fillStyle=`rgba(255,255,255,${(.9*r.a).toFixed(3)})`;ball(c,2.2);ctx.fill()}}
+      el(outer,1);nOut++;if(popped)continue;if(lit>.05){el(hot,.66);nHot++;glo(K.sig,q[0],q[1],rs*2.6,.38*lit*f)}else el(inn,.5)}}
+  if(nOut){ctx.fillStyle=K.belly.l;ctx.fill(outer);ctx.strokeStyle=K.belly.d;ctx.lineWidth=.75;ctx.stroke(outer);ctx.fillStyle=K.suck;ctx.fill(inn);if(nHot){ctx.fillStyle=K.suckOn;ctx.fill(hot)}}
+  // the head of the signal: a pearl of light running toward the tip, on the belly
+  for(const r of runs){if(r.u1>=.995||r.a<.3||r.u1<u0||r.u1>u1)continue;const s=armAt(G,r.u1),f=F(s.n),c=P(add(s.p,mul(s.n,s.r*(f>0?.7:0))));
+    glo(K.sig,c[0],c[1],9,.65*r.a);ctx.fillStyle=`rgba(255,255,255,${(.9*r.a).toFixed(3)})`;ball(c,2.1);ctx.fill()}}
 const SUCK={n:0,max:48},RINGS={n:0,max:20};
-// a ring of the skin (a dark circle with a light centre; lit magenta in the second phase), flat on the surface at c (normal n)
+// the tones of an arm: the skin's three tones over its box (a far arm a little darker), its light
+function armTones(g,K,fk){const T=fk>0?mixT(K.skin,T3(K.skin.b,K.skin.d,K.skin.d),fk):K.skin;g.grad=grad3(g.bb,T);g.lt=K.skin.l}
+// a ring of the skin (a dark circle with a lighter centre: quiet in the first phase; lit magenta in the second), flat on the surface at c
 function ringSpot(V0,c,n,rr,K,lit,al){if(RINGS.n>=RINGS.max||al<=.02)return;RINGS.n++;const{P}=V0,t1=perpOf(n),t2=cross(n,t1),q=P(c),a=P(add(c,mul(t1,rr))),b=P(add(c,mul(t2,rr))),ax=a[0]-q[0],ay=a[1]-q[1],bx=b[0]-q[0],by=b[1]-q[1];
   const pth=k=>{ctx.beginPath();for(let m=0;m<12;m++){const t=m/12*TAU,c2=Math.cos(t),s2=Math.sin(t);ctx.lineTo(q[0]+(ax*c2+bx*s2)*k,q[1]+(ay*c2+by*s2)*k)}ctx.closePath()};
-  const a0=ctx.globalAlpha;ctx.globalAlpha=a0*al;
-  if(lit>.02){glo(K.ringG,q[0],q[1],rr*3.2,.75*lit);pth(1);ctx.fillStyle=cmix(K1.ringO,K.ringO,lit);ctx.fill();pth(.55);ctx.fillStyle=cmix(K1.ringC,K.ringC,lit);ctx.fill()}
-  else{pth(1);ctx.fillStyle=K1.ringO;ctx.fill();pth(.55);ctx.fillStyle=cmix(K1.ringC,K.ringC,K.k2>.5?.35:0);ctx.fill()}
+  const a0=ctx.globalAlpha;ctx.globalAlpha=a0*al*.62;pth(1);ctx.fillStyle=K.ringOq;ctx.fill();ctx.globalAlpha=a0*al*.45;pth(.52);ctx.fillStyle=K.ringCq;ctx.fill();
+  if(lit>.02){ctx.globalAlpha=a0*al*Math.min(1,lit);glo(K.ringG,q[0],q[1],rr*2.5,.5*lit);pth(1);ctx.fillStyle=K.ringO;ctx.fill();pth(.55);ctx.fillStyle=K.ringC;ctx.fill()}
   ctx.globalAlpha=a0}
 
 // ------------------------------------------------------------------ the pool: dark water with foam on its rim, the rings that leave her
@@ -534,9 +565,9 @@ function ellRowsT(Cc,Rd,Fr,T,n,m){const rows=[];for(let i=0;i<=n;i++){const a=-P
 // how lit a ring is: the second phase (in the palette), the wave of light from the head (w 0) to the tips (w 1), the front that lights or puts
 // them out (the Furia, the defeat), a flicker
 function ringLitF(A,K,w){const fr2=A.rfront>=1.5?1:sstep(w-.06,w+.06,A.rfront),pu=A.rwave<0?1:.55+.45*Math.max(0,Math.cos(TAU*(A.rwave-w*.6)));return cl(K.ringOn*A.ring*fr2*pu+A.rflick*(1-K.ringOn*.5),0,1)}
-function mantleDraw(V0,F,A,K,J){const{P,F:FF}=V0,{MF,MRn}=J.M,top=A.B[2]+MC[2]+MRn[2],bot=A.B[2]+MC[2]-MRn[2];if(top<0)return;
+function mantleDraw(V0,F,A,K,J){const{P,F:FF}=V0,{MF,MRn}=J.M,top=A.B[2]+MC[2]+MRn[2],bot=A.B[2]+MC[2]-MRn[2];if(top<(A.cut>0?7:0))return;
   let pts;if(A.cut>0&&bot<2){const c=cutPts(ellRowsT(MC,MRn,MF,F.TU,8,16));if(c.length<3)return;pts=hullE(c.map(q=>P(q)),.08)}else pts=ellSil(V0,MC,MRn,MF,F.TU,20);
-  if(pts.length<3)return;const hp=svol3(V0,pts,K.skin,{lw:2.8,scr:1});J.mH=hp;
+  if(pts.length<3)return;const hp=svol3(V0,pts,K.skin,{lw:2.8,scr:1,fill:skinGrad(bbox(pts),K.skin)});J.mH=hp;
   ctx.save();ctx.clip(hp.path);const b=bbox(pts);
   // darker toward its foot, the darker cloud passing down it, the rings, the warts, the wet shine on its top
   {const g=ctx.createLinearGradient(0,b[1]+(b[3]-b[1])*.5,0,b[3]);g.addColorStop(0,'rgba(4,20,26,0)');g.addColorStop(1,'rgba(4,20,26,.4)');ctx.fillStyle=g;ctx.fillRect(b[0],b[1],b[2]-b[0],b[3]-b[1])}
@@ -545,8 +576,10 @@ function mantleDraw(V0,F,A,K,J){const{P,F:FF}=V0,{MF,MRn}=J.M,top=A.B[2]+MC[2]+M
   RINGM.forEach(([az,el,r],i)=>{const m=dirv(az,el),n=F.RdU(ellN(MRn,MF,m)),f=FF(n);if(f<.12)return;const c=F.TU(ellAt(MC,MRn,MF,m));ringSpot(V0,add(c,mul(n,.3)),n,r*A.rsz,K,ringLitF(A,K,.14+.035*i),cl((f-.12)*4,0,1))});
   for(const[az,el,r] of WARTS){const m=dirv(az,el),n=F.RdU(ellN(MRn,MF,m)),f=FF(n);if(f<.2)continue;const q=P(F.TU(ellAt(MC,MRn,MF,m)));ctx.fillStyle=`rgba(${K.wet},${(.35*f).toFixed(3)})`;ball(q,r);ctx.fill();
     ctx.fillStyle=`rgba(4,30,36,${(.25*f).toFixed(3)})`;ball([q[0]+r*.35,q[1]+r*.4],r*.7);ctx.fill()}
-  {const q=[b[0]+(b[2]-b[0])*.36,b[1]+(b[3]-b[1])*.2],rx=(b[2]-b[0])*.2,ry=(b[3]-b[1])*.1,g=ctx.createRadialGradient(q[0],q[1],1,q[0],q[1],rx);g.addColorStop(0,`rgba(${K.wet},.5)`);g.addColorStop(.55,`rgba(${K.wet},.16)`);g.addColorStop(1,`rgba(${K.wet},0)`);
-    ctx.fillStyle=g;ctx.save();ctx.translate(q[0],q[1]);ctx.rotate(-.35);ctx.scale(1,ry/rx);ctx.beginPath();ctx.arc(0,0,rx,0,TAU);ctx.fill();ctx.restore()}
+  {const q=[b[0]+(b[2]-b[0])*.35,b[1]+(b[3]-b[1])*.19],rx=(b[2]-b[0])*.21,ry=(b[3]-b[1])*.1,g=ctx.createRadialGradient(q[0],q[1],1,q[0],q[1],rx);g.addColorStop(0,`rgba(${K.wet},.62)`);g.addColorStop(.5,`rgba(${K.wet},.2)`);g.addColorStop(1,`rgba(${K.wet},0)`);
+    ctx.fillStyle=g;ctx.save();ctx.translate(q[0],q[1]);ctx.rotate(-.4);ctx.scale(1,ry/rx);ctx.beginPath();ctx.arc(0,0,rx,0,TAU);ctx.fill();ctx.restore();
+    // the sharp wet glint
+    ctx.fillStyle=`rgba(${K.wet},.75)`;ctx.save();ctx.translate(q[0]-rx*.18,q[1]-ry*.2);ctx.rotate(-.4);ctx.beginPath();ctx.ellipse(0,0,rx*.22,ry*.32,0,0,TAU);ctx.fill();ctx.restore()}
   if(A.drip>0){ctx.strokeStyle=`rgba(${K.wet},${(.5*A.drip).toFixed(3)})`;ctx.lineWidth=1.2;ctx.lineCap='round';ctx.beginPath();for(let i=0;i<6;i++){const az=-1.4+i*.56,m0=dirv(az,.6),m1=dirv(az+.05,-.1);
     const a=P(F.TU(ellAt(MC,MRn,MF,m0))),c=P(F.TU(ellAt(MC,MRn,MF,m1))),f=FF(F.RdU(ellN(MRn,MF,dirv(az,.2))));if(f<.2)continue;const t=fr(A.dripT+i*.17);ctx.moveTo(a[0],lerp(a[1],c[1],t*.6));ctx.lineTo(a[0]+(c[0]-a[0])*.1,lerp(a[1],c[1],t*.6+.3))}ctx.stroke()}
   ctx.restore();rimC(pts,.3,K.rimRgb)}
@@ -557,16 +590,23 @@ function foldOf(V0,F,J){const{MF,MRn}=J.M,N=24,pts=[],inH=q=>{const a=(q[0]-HC[0
   if(pts.length<6)return null;let il=0,ir=0;for(let i=1;i<pts.length;i++){if(pts[i][0]<pts[il][0])il=i;if(pts[i][0]>pts[ir][0])ir=i}
   const ch=(a,b)=>{const out=[];let i=a;for(let n=0;n<=pts.length;n++){out.push(pts[i]);if(i===b)break;i=(i+1)%pts.length}return out};
   const c1=ch(il,ir),c2=ch(ir,il).reverse(),my=c=>c.reduce((s,q)=>s+q[1],0)/c.length;return my(c1)>=my(c2)?c1:c2}
-function headDraw(V0,F,A,K,J,face,ch){const{P,F:FF}=V0,top=A.B[2]+HC[2]+HR[2]+2,bot=A.B[2]+HC[2]-HR[2]-3;if(top<0)return;
+function headDraw(V0,F,A,K,J,face,ch){const{P,F:FF}=V0,top=A.B[2]+HC[2]+HR[2]+2,bot=A.B[2]+HC[2]-HR[2]-3;if(top<(A.cut>0?4.5:0))return;
   let pts;if(A.cut>0&&bot<2){const c=cutPts(ellRowsT(HC,HR,AXES,F.TU,7,16));if(c.length<3)return;pts=hullE(c.map(q=>P(q)),.08)}else pts=ellSil(V0,HC,HR,AXES,F.TU,20);if(pts.length<3)return;
   const fold=J.fold;ctx.save();
   if(fold){ctx.beginPath();ctx.rect(-1e4,-1e4,2e4,2e4);ctx.moveTo(fold[0][0]-.5,fold[0][1]);for(const q of fold)ctx.lineTo(q[0],q[1]);const e=fold[fold.length-1];ctx.lineTo(e[0]+.5,e[1]);ctx.lineTo(e[0]+.5,e[1]-600);ctx.lineTo(fold[0][0]-.5,fold[0][1]-600);ctx.closePath();ctx.clip('evenodd')}
-  const hp=svol3(V0,pts,K.skin,{lw:2.8,scr:1});ctx.save();ctx.clip(hp.path);const b=bbox(pts);
+  // the far brows first: the head covers them, only what sticks out over its edge shows
+  const bf=[-1,1].map(sd=>{const m=nrm(dirv(sd*.52+ch,.84));return FF(F.RdU(ellN(HR,AXES,m)))});
+  for(const sd of[-1,1])if(bf[(sd+1)/2]<=.05&&bf[(sd+1)/2]>-.3)browDraw(V0,F,A,K,sd,ch);
+  const hp=svol3(V0,pts,K.skin,{lw:2.8,scr:1,fill:skinGrad(bbox(pts),K.skin)});ctx.save();ctx.clip(hp.path);const b=bbox(pts);
   {const g=ctx.createLinearGradient(0,b[1]+(b[3]-b[1])*.45,0,b[3]);g.addColorStop(0,'rgba(4,20,26,0)');g.addColorStop(1,'rgba(4,20,26,.35)');ctx.fillStyle=g;ctx.fillRect(b[0],b[1],b[2]-b[0],b[3]-b[1])}
   // the shadow of the mantle on the top of the head, under the fold
   if(fold){ctx.lineCap='round';ctx.lineJoin='round';ctx.strokeStyle='rgba(4,24,30,.32)';ctx.lineWidth=7;ctx.beginPath();fold.forEach((q,i)=>i?ctx.lineTo(q[0],q[1]+2.5):ctx.moveTo(q[0],q[1]+2.5));ctx.stroke()}
   RINGH.forEach(([az,el,r],i)=>{const m=dirv(az+ch,el),n=F.RdU(ellN(HR,AXES,m)),f=FF(n);if(f<.15)return;const c=F.TU(ellAt(HC,HR,AXES,m));ringSpot(V0,add(c,mul(n,.3)),n,r,K,ringLitF(A,K,.02+.03*i),cl((f-.15)*4,0,1))});
-  ctx.restore();rimC(pts,.28,K.rimRgb);ctx.restore();
+  ctx.restore();rimC(pts,.28,K.rimRgb);
+  // the face: the mouth, the eyes, the near brows over them (all under the fold, like the head)
+  mouthDraw(V0,F,A,K,ch);for(const sd of[-1,1])eyeDraw(V0,F,A,K,sd,ch);
+  for(const sd of[-1,1])if(bf[(sd+1)/2]>.05)browDraw(V0,F,A,K,sd,ch);
+  ctx.restore();
   // the fold: a dark line with a thread of light under it
   if(fold){ctx.lineCap='round';ctx.lineJoin='round';ctx.strokeStyle=`rgba(${K.wet},.3)`;ctx.lineWidth=1.1;ctx.beginPath();fold.forEach((q,i)=>i?ctx.lineTo(q[0],q[1]+1.8):ctx.moveTo(q[0],q[1]+1.8));ctx.stroke();
     ctx.strokeStyle=INK;ctx.lineWidth=2;ctx.beginPath();fold.forEach((q,i)=>i?ctx.lineTo(q[0],q[1]):ctx.moveTo(q[0],q[1]));ctx.stroke()}
@@ -575,10 +615,10 @@ function headDraw(V0,F,A,K,J,face,ch){const{P,F:FF}=V0,top=A.B[2]+HC[2]+HR[2]+2,
 // the heavy upper lid leaning down toward the middle of the face (a haughty look), the lower lid a little up; drawn on the surface of
 // the head (its own tangent plane), never on its outline
 function eyeDraw(V0,F,A,K,sd,ch){const{P,F:FF}=V0,m=nrm(rotZ([EYD[0],sd*EYD[1],EYD[2]],ch)),c=F.TU(ellAt(HC,HR,AXES,m)),n=F.RdU(ellN(HR,AXES,m)),v=FF(n);
-  if(v<.1||c[2]<.5)return;const al=cl((v-.1)*5,0,1),t1=nrm(cross([0,0,1],n)),t2=cross(n,t1),q=P(c),pa=P(add(c,mul(t1,EYRX*.94))),pb=P(add(c,mul(t2,-EYRY*.92)));
+  if(v<.16||c[2]<.5)return;const al=cl((v-.16)*5,0,1),t1=nrm(cross([0,0,1],n)),t2=cross(n,t1),q=P(c),pa=P(add(c,mul(t1,EYRX*.94))),pb=P(add(c,mul(t2,-EYRY*.92)));
   const ax=pa[0]-q[0],ay=pa[1]-q[1],bx=pb[0]-q[0],by=pb[1]-q[1],tr=()=>ctx.transform(ax,ay,bx,by,q[0],q[1]),inS=-sd;
   const bl=A.blink,lid=Math.min(1.05,A.lid+.2*A.squint+(1.08-A.lid)*(1-bl)),lo=A.lidLo+.12*A.squint+.25*(1-bl);
-  glo(K.eyeG,q[0],q[1],EYRY*2.8,.42*A.eyeGlow*al*sstep(.15,.5,bl));
+  glo(K.eyeG,q[0],q[1],EYRY*2.1,.3*A.eyeGlow*al*sstep(.15,.5,bl));
   const a0=ctx.globalAlpha;ctx.globalAlpha=a0*al;
   ctx.save();tr();ctx.beginPath();ctx.arc(0,0,1.13,0,TAU);ctx.fillStyle=K.eyeR;ctx.fill();ctx.beginPath();ctx.arc(0,0,1,0,TAU);ctx.clip();
   {const g=ctx.createRadialGradient(-.32,-.4,.05,0,.12,1.12);g.addColorStop(0,K.iris.l);g.addColorStop(.45,K.iris.b);g.addColorStop(1,K.iris.d);ctx.fillStyle=g;ctx.fillRect(-1.1,-1.1,2.2,2.2)}
@@ -588,11 +628,14 @@ function eyeDraw(V0,F,A,K,sd,ch){const{P,F:FF}=V0,m=nrm(rotZ([EYD[0],sd*EYD[1],E
     if(hw-hh>.01){ctx.arc(cx-(hw-hh),cy,hh,PI/2,PI*1.5);ctx.arc(cx+(hw-hh),cy,hh,-PI/2,PI/2)}else ctx.arc(cx,cy,hh,0,TAU);ctx.closePath();ctx.fill()}
   ctx.fillStyle='#ffffff';ctx.beginPath();ctx.arc(-.36,-.42,.21,0,TAU);ctx.fill();ctx.globalAlpha*=.85;ctx.beginPath();ctx.arc(.38,.36,.1,0,TAU);ctx.fill();ctx.globalAlpha=a0*al;
   // the lids
-  const yl=x=>-1+2*lid+.24*inS*x,ylo=1-2*lo;ctx.fillStyle=K.lid;ctx.beginPath();ctx.moveTo(-1.2,-1.2);ctx.lineTo(1.2,-1.2);ctx.lineTo(1.2,yl(1.2));ctx.lineTo(-1.2,yl(-1.2));ctx.closePath();ctx.fill();
-  ctx.beginPath();ctx.moveTo(-1.2,1.2);ctx.lineTo(1.2,1.2);ctx.lineTo(1.2,ylo);ctx.lineTo(-1.2,ylo);ctx.closePath();ctx.fill();
-  ctx.strokeStyle=K.lidL;ctx.lineWidth=.17;ctx.beginPath();ctx.moveTo(-1.1,yl(-1.1));ctx.lineTo(1.1,yl(1.1));ctx.stroke();if(lo>.02){ctx.lineWidth=.12;ctx.beginPath();ctx.moveTo(-1.1,ylo);ctx.lineTo(1.1,ylo);ctx.stroke()}
-  // a soft light on the lid
-  ctx.strokeStyle=`rgba(${K.wet},.25)`;ctx.lineWidth=.12;ctx.beginPath();ctx.moveTo(-.7,yl(-.7)-.22);ctx.lineTo(.5,yl(.5)-.22);ctx.stroke();
+  const yl=x=>-1+2*lid+.24*inS*x,ylo=1-2*lo;
+  {const g=ctx.createLinearGradient(0,-1.1,0,Math.max(-.9,yl(0)));g.addColorStop(0,K.skin.b);g.addColorStop(1,K.lid);ctx.fillStyle=g}
+  ctx.beginPath();ctx.moveTo(-1.2,-1.2);ctx.lineTo(1.2,-1.2);ctx.lineTo(1.2,yl(1.2));ctx.lineTo(-1.2,yl(-1.2));ctx.closePath();ctx.fill();
+  ctx.fillStyle=K.lid;ctx.beginPath();ctx.moveTo(-1.2,1.2);ctx.lineTo(1.2,1.2);ctx.lineTo(1.2,ylo);ctx.lineTo(-1.2,ylo);ctx.closePath();ctx.fill();
+  // the shadow of the lid on the eye, its crisp edge, a wet light over it
+  ctx.strokeStyle='rgba(20,8,4,.35)';ctx.lineWidth=.3;ctx.beginPath();ctx.moveTo(-1.1,yl(-1.1)+.16);ctx.lineTo(1.1,yl(1.1)+.16);ctx.stroke();
+  ctx.strokeStyle=K.lidL;ctx.lineWidth=.2;ctx.beginPath();ctx.moveTo(-1.1,yl(-1.1));ctx.lineTo(1.1,yl(1.1));ctx.stroke();if(lo>.02){ctx.lineWidth=.13;ctx.beginPath();ctx.moveTo(-1.1,ylo);ctx.lineTo(1.1,ylo);ctx.stroke()}
+  ctx.strokeStyle=`rgba(${K.wet},.32)`;ctx.lineWidth=.12;ctx.beginPath();ctx.moveTo(-.75,yl(-.75)-.24);ctx.lineTo(.55,yl(.55)-.24);ctx.stroke();
   ctx.restore();ctx.save();tr();ctx.beginPath();ctx.arc(0,0,1.13,0,TAU);ctx.restore();ctx.strokeStyle=INK;ctx.lineWidth=1.5;ctx.stroke();ctx.globalAlpha=a0}
 // the brow over an eye: a fold of skin like a capsule from the inner end (lower) to the outer one, a little round papilla curling up and
 // back at its outer end (a V that looks down on you); the far one tucked behind the edge of the head
@@ -654,27 +697,41 @@ function snailDraw(V0,b,ax,out,h,r,K,A,cutZ){const{P,F}=V0,w=nrm(ax),u=nrm(sub(o
   ctx.strokeStyle=K.band;ctx.lineWidth=1.05;ctx.lineCap='round';ctx.beginPath();let on=false;for(let i=0;i<=40;i++){const s=i/40,z=.14+s*.8,t=s*2.6*TAU+.6,rr=snR(z)+.06,c=[Math.cos(t)*rr,Math.sin(t)*rr,z],n=nrm(add(add(mul(u,Math.cos(t)),mul(v,Math.sin(t))),mul(w,.3)));
     const q=P(W(c));if(F(n)>.05&&W(c)[2]>cutZ){on?ctx.lineTo(q[0],q[1]):ctx.moveTo(q[0],q[1]);on=true}else on=false}ctx.stroke();
   // the mouth at the foot, toward out: dark, or lit from within
-  const mc=W([.95,0,.13]),fm=F(u);if(fm>.05&&mc[2]>cutZ){const q=P(mc),a=P(W([.95,.55,.13])),c2=P(W([.95,0,.33])),L=K.shellLit*(A.shellK||1);ctx.save();ctx.globalAlpha*=cl(fm*3,0,1);
-    ctx.transform(a[0]-q[0],a[1]-q[1],c2[0]-q[0],c2[1]-q[1],q[0],q[1]);ctx.beginPath();ctx.arc(0,0,1,0,TAU);ctx.restore();ctx.fillStyle=L>.05?cmix('#3a2a20','#ffd0f0',Math.min(1,L*.8)):'#3a2a20';ctx.fill();
-    if(L>.05)glo(K.shellG,q[0],q[1],h*.9,.55*Math.min(1.4,L));ctx.restore()}
+  const mc=W([.95,0,.13]),fm=F(u);if(fm>.05&&mc[2]>cutZ){const q=P(mc),a=P(W([.95,.55,.13])),c2=P(W([.95,0,.33])),L=K.shellLit*(A.shellK||1),a0=ctx.globalAlpha;ctx.globalAlpha=a0*cl(fm*3,0,1);
+    ctx.save();ctx.transform(a[0]-q[0],a[1]-q[1],c2[0]-q[0],c2[1]-q[1],q[0],q[1]);ctx.beginPath();ctx.arc(0,0,1,0,TAU);ctx.restore();ctx.fillStyle=L>.05?cmix('#3a2a20','#ffd0f0',Math.min(1,L*.8)):'#3a2a20';ctx.fill();
+    if(L>.05)glo(K.shellG,q[0],q[1],h*.9,.55*Math.min(1.4,L));ctx.globalAlpha=a0}
   if(K.shellLit*(A.shellK||1)>.05){const q=P(W([0,0,.4]));glo(K.shellG,q[0],q[1],h*.8,.25*K.shellLit*(A.shellK||1))}
-  ctx.restore();ctx.strokeStyle=`rgba(${K.iri},.6)`;ctx.lineWidth=1;rimC(H,.5,K.iri)}
+  ctx.restore();ctx.strokeStyle=`rgba(${K.iri},.6)`;ctx.lineWidth=1;rimC(H,.5,K.iri);
+  // where it cuts the water: a ring of foam round it (the fin)
+  if(cutZ>-1e8&&b[2]<cutZ){const zz=(cutZ-b[2])/(w[2]*h||1),c=W([0,0,zz]),rr=snR(zz)*r+1.6;flatEll(V0,[c[0],c[1],cutZ],rr*1.15,rr,0);ctx.strokeStyle=`rgba(${K.foam},.8)`;ctx.lineWidth=1.2;ctx.stroke()}}
 // the river mussel open like a fan (two valves: dark outside with the lines of growth, mother of pearl inside), the pearl at its hinge
 function musselDraw(V0,b,up,fw,K,A,cutZ,pearlQ){const{P,F}=V0,side=nrm(cross(up,fw));
-  for(const sd of[-1,1]){const d=nrm(add(mul(up,Math.cos(.45)),mul(side,sd*Math.sin(.45)))),s=nrm(cross(fw,d)),bb=add(b,mul(side,sd*1.2));if(add(bb,mul(d,15))[2]<cutZ)continue;
-    const pts=leaf(V0,bb,d,mul(s,sd),15,4.4,K.musI.b,{back:K.musO.b,ell:true,lw:1.6,kl:.3,kd:.2,bend:-.2});
-    // the lines of growth (outside) or the sheen of the mother of pearl (inside)
-    const n=nrm(cross(d,mul(s,sd))),f=F(n);ctx.save();poly(pts);ctx.clip();ctx.lineWidth=.8;
-    if(f<0){ctx.strokeStyle=K.musO.l;for(const k of[.45,.7,.9]){ctx.beginPath();for(let i=0;i<=8;i++){const t=-1+i/4,q=P(add(add(bb,mul(d,15*k*(1-.12*t*t))),mul(s,sd*4.4*k*t*.9)));i?ctx.lineTo(q[0],q[1]):ctx.moveTo(q[0],q[1])}ctx.stroke()}}
-    else{ctx.strokeStyle=`rgba(${K.iri},.7)`;ctx.lineWidth=1.1;ctx.beginPath();for(let i=0;i<=8;i++){const t=-1+i/4,q=P(add(add(bb,mul(d,14*(1-.12*t*t))),mul(s,sd*4*t*.9)));i?ctx.lineTo(q[0],q[1]):ctx.moveTo(q[0],q[1])}ctx.stroke();
-      const g=P(add(bb,mul(d,7)));ctx.fillStyle='rgba(255,255,255,.25)';ball([g[0]-1,g[1]-1],2.6);ctx.fill()}ctx.restore()}
-  // the pearl of the pond: it breathes, flashes before every move, trembles when the arms are stuck
-  const pc=add(add(b,mul(fw,3.2)),mul(up,2.4));if(pc[2]<cutZ)return;let q=P(pc);if(A.ptr>0){const t=A.ptrT||0;q=[q[0]+.8*A.ptr*Math.sin(TAU*3.5*t),q[1]+.5*A.ptr*Math.sin(TAU*3.5*t+1.3)]}pearlQ.q=q;
-  const r=5.5,gl=A.pg+A.pf;glo(K.pearlG,q[0],q[1],r*2.6+10*A.pf,.35+.45*gl);
-  ctx.fillStyle=INK;ball(q,r+1.3);ctx.fill();ctx.fillStyle=softBall(q,r,K.pearl,.2,.22);ball(q,r);ctx.fill();
-  {const g=ctx.createRadialGradient(q[0],q[1],r*.3,q[0],q[1],r);g.addColorStop(0,'rgba(255,255,255,0)');g.addColorStop(1,`rgba(${K.k2>.5?'255,170,230':'170,210,255'},.35)`);ctx.fillStyle=g;ball(q,r);ctx.fill()}
-  if(A.pf>0){ctx.fillStyle=`rgba(255,255,255,${(.8*A.pf).toFixed(3)})`;ball(q,r*.7);ctx.fill()}
-  ctx.fillStyle='#ffffff';ball([q[0]-r*.35,q[1]-r*.38],r*.3);ctx.fill();ctx.fillStyle='rgba(255,255,255,.6)';ball([q[0]+r*.32,q[1]+r*.3],r*.14);ctx.fill()}
+  // the two valves open like a fan, their insides (mother of pearl) toward her front, the dark outsides with the lines of growth behind
+  const V=[-1,1].map(sd=>{const d=nrm(add(mul(up,Math.cos(.5)),mul(side,sd*Math.sin(.5))));let s=nrm(cross(fw,d));if(dot(cross(d,s),fw)<0)s=mul(s,-1);return{sd,d,s,bb:add(add(b,mul(side,sd*1.1)),mul(fw,-.8))}});
+  // the far valve first
+  V.sort((p,q)=>V0.D(add(p.bb,mul(p.d,8)))-V0.D(add(q.bb,mul(q.d,8))));
+  for(const{d,s,bb} of V){if(add(bb,mul(d,14))[2]<cutZ)continue;const n=nrm(cross(d,s)),f=F(n);
+    if(bb[2]<cutZ){// half out of the water: the valve's outline cut at the water, in its own colour
+      const o3=[];for(let i=0;i<=10;i++){const k=i/10,w=5*Math.sqrt(Math.max(0,1-(2*k-1)*(2*k-1)));o3.push(add(add(bb,mul(d,k*14)),mul(s,w)))}for(let i=9;i>0;i--){const k=i/10,w=5*Math.sqrt(Math.max(0,1-(2*k-1)*(2*k-1)));o3.push(add(add(bb,mul(d,k*14)),mul(s,-w)))}
+      const cz=K3.clipZ(o3.map(q=>[q[0],q[1],q[2]-cutZ]));if(cz.length<3)continue;poly(cz.map(q=>P([q[0],q[1],q[2]+cutZ])));ctx.fillStyle=f<0?K.musO.b:K.musI.b;ctx.fill();ctx.strokeStyle=INK;ctx.lineWidth=1.6;ctx.stroke();continue}
+    const pts=leaf(V0,bb,d,s,14,5,K.musI.b,{back:K.musO.b,ell:true,lw:1.6,kl:.32,kd:.22,bend:-.18});
+    ctx.save();poly(pts);ctx.clip();ctx.lineCap='round';
+    if(f<0){ctx.strokeStyle=K.musO.l;ctx.lineWidth=.8;for(const k of[.42,.66,.88]){ctx.beginPath();for(let i=0;i<=8;i++){const t=-1+i/4,q=P(add(add(bb,mul(d,15*k*(1-.12*t*t))),mul(s,4.3*k*t*.9)));i?ctx.lineTo(q[0],q[1]):ctx.moveTo(q[0],q[1])}ctx.stroke()}}
+    else{// the dark lip of the shell round the inside, the sheen of the mother of pearl, a blue rim inside the edge
+      ctx.strokeStyle=K.musO.b;ctx.lineWidth=3.6;poly(pts);ctx.stroke();ctx.strokeStyle=`rgba(${K.iri},.35)`;ctx.lineWidth=.8;for(const k of[.5,.75]){ctx.beginPath();for(let i=0;i<=8;i++){const t=-1+i/4,q=P(add(add(bb,mul(d,14*k*(1-.12*t*t))),mul(s,5*k*t*.9)));i?ctx.lineTo(q[0],q[1]):ctx.moveTo(q[0],q[1])}ctx.stroke()}
+      ctx.strokeStyle=`rgba(${K.iri},.85)`;ctx.lineWidth=1;ctx.beginPath();for(let i=0;i<=10;i++){const t=-1+i/5,q=P(add(add(bb,mul(d,13.6*(1-.1*t*t)+.6)),mul(s,3.7*t)));i?ctx.lineTo(q[0],q[1]):ctx.moveTo(q[0],q[1])}ctx.stroke();
+      const g=P(add(bb,mul(d,8.5)));ctx.fillStyle='rgba(255,236,250,.5)';ctx.beginPath();ctx.ellipse(g[0]-.6,g[1]-.4,1.7,3.2,Math.atan2(P(d)[0]-P([0,0,0])[0],-(P(d)[1]-P([0,0,0])[1])),0,TAU);ctx.fill()}
+    ctx.restore()}
+  // the pearl of the pond at the hinge: it breathes, flashes before every move, trembles when the arms are stuck
+  const pc=add(add(b,mul(fw,3)),mul(up,2.6));if(pc[2]<cutZ+4)return;let q=P(pc);if(A.ptr>0){const t=A.ptrT||0;q=[q[0]+.8*A.ptr*Math.sin(TAU*2.4*t),q[1]+.5*A.ptr*Math.sin(TAU*2.4*t+1.3)]}pearlQ.q=q;
+  const r=5.5;if(!LOWFX)shine(K.pearlG,q[0],q[1],r*2.6,.12+.22*A.pg);glo(K.pearlG,q[0],q[1],r*2.4+12*A.pf,.6*A.pf);
+  ctx.fillStyle=INK;ball(q,r+1.2);ctx.fill();
+  {const g=ctx.createRadialGradient(q[0]-r*.38,q[1]-r*.42,r*.08,q[0]-r*.05,q[1]+r*.05,r*1.12);g.addColorStop(0,'#ffffff');g.addColorStop(.45,K.pearl);g.addColorStop(1,K.pearlD);ctx.fillStyle=g;ball(q,r);ctx.fill()}
+  // the play of colours round its edge (pink and blue; magenta in the second phase), the breath of its light, the flash
+  ctx.strokeStyle=K.k2>.5?'rgba(255,150,225,.6)':'rgba(255,190,225,.5)';ctx.lineWidth=1.1;ctx.beginPath();ctx.arc(q[0],q[1],r*.72,.2,1.9);ctx.stroke();
+  ctx.strokeStyle=`rgba(${K.iri},.65)`;ctx.beginPath();ctx.arc(q[0],q[1],r*.72,2.3,3.6);ctx.stroke();
+  if(A.pf>.02){ctx.fillStyle=`rgba(255,255,255,${Math.min(.95,.9*A.pf).toFixed(3)})`;ball(q,r*(.5+.3*A.pf));ctx.fill()}
+  ctx.fillStyle='#ffffff';ball([q[0]-r*.36,q[1]-r*.4],r*.26);ctx.fill();ctx.fillStyle='rgba(255,255,255,.7)';ball([q[0]+r*.34,q[1]+r*.3],r*.12);ctx.fill()}
 // the pink water lily pinned like a brooch (half open; wide open and shining in the second phase; white at the end of the defeat)
 function flowerDraw(V0,c,n,K,A,r,open){const{P,F}=V0;let u=perpOf(n);const v=cross(n,u),f=F(n),pet=A.flWhite>0?cmix(K.petal,'#fff6fa',A.flWhite):K.petal,petD=A.flWhite>0?cmix(K.petalD,'#f0d8e6',A.flWhite):K.petalD;
   if(K.fOpen>.3&&A.flWhite<.5){const q=P(c);glo('255,140,220',q[0],q[1],r*2.6,.45*K.fOpen)}
@@ -689,7 +746,7 @@ function algaDraw(V0,b,outW,K,A,sd){const sw=LOWFX?0:A.algae,o=A.algaOut||0;
 
 // ------------------------------------------------------------------ the water cuts an arm: the points under it are not drawn, the one
 // next to the water moves to where the arm goes in, and there a collar of foam
-function waterCut(g){const P=g.P;let lo=1e9;for(const q of P)lo=Math.min(lo,q[2]);g.dead=null;g.cuts=null;if(lo>=-.2)return;
+function waterCut(g){const P=g.P;let lo=1e9;for(const q of P)lo=Math.min(lo,q[2]);g.dead=null;g.cuts=null;if(lo>=-1.5)return;
   const dead=new Array(NP).fill(false),cuts=[],P2=P.slice();
   for(let j=0;j<NP;j++){if(P[j][2]>=0)continue;const pa=j>0&&P[j-1][2]>=0,pb=j<NS&&P[j+1][2]>=0;
     if(pa){const a=P[j-1],b=P[j],k=a[2]/(a[2]-b[2]);P2[j]=lerp3(a,b,k);cuts.push({c:P2[j],r:g.R[j],j})}else if(pb){const a=P[j+1],b=P[j],k=a[2]/(a[2]-b[2]);P2[j]=lerp3(a,b,k);cuts.push({c:P2[j],r:g.R[j],j})}else dead[j]=true}
@@ -749,7 +806,7 @@ function octopus2(x,y,face,anim,p,sc,o){sc=sc||1;o=o||{};anim=MV.includes(anim)?
   L.add(-1e7,()=>poolDraw(V0,A,K,o,fxo,Math.max(1,Math.round(DUR[anim]/1.5)),p));
   // ---------------- the arms: their geometry, the cuts of the water, the shading; each in three pieces at their own depth
   const G=A.arms.map((S,i)=>{const g=armGeo(S,F,A);g.i=i;g.rings=S.kind==='cobra'||S.kind==='throne';g.suck=true;g.runs=A.runs.filter(r=>r.i===i);g.pop=A.pops&&A.pops.i===i?A.pops:null;g.ringLit=w=>ringLitF(A,K,w);
-    const fk=sstep(0,-.7,FF(F.Xf.Rd(nrmS([S.b[0],S.b[1],0]))))*.3;g.fill=fk>0?cmix(K.skin.b,K.skin.d,fk):K.skin.b;g.dk=K.skin.d;g.lt=K.skin.l;waterCut(g);armScreen(V0,g);return g});
+    const fk=sstep(0,-.7,FF(F.Xf.Rd(nrmS([S.b[0],S.b[1],0]))))*.3;waterCut(g);armScreen(V0,g);armTones(g,K,fk);return g});
   J.G=G;suckBudget(V0,G,A);
   const sRef=F.Xf.T([SKX,0,10]),uRef=F.X.T([-2,0,45]);
   G.forEach((g,i)=>{for(let pi=0;pi<3;pi++){const[a0,b0]=PIECE[pi],a=Math.max(a0,g.js),b=b0;if(b<=a)continue;let ref=[0,0,0],n=0,live=false;for(let j=a;j<=b;j++){ref=add(ref,g.P[j]);n++;if(!g.dead||!g.dead[j])live=true}if(!live)continue;ref=mul(ref,1/n);
@@ -760,8 +817,6 @@ function octopus2(x,y,face,anim,p,sc,o){sc=sc||1;o=o||{};anim=MV.includes(anim)?
   if(!hidden&&deep+22>0)L.add(0,()=>skirtDraw(V0,F,A,K,J));
   if(deep+MC[2]+MR[2]>0){J.fold=foldOf(V0,F,J);L.add(100,()=>mantleDraw(V0,F,A,K,J))}
   if(deep+HC[2]+HR[2]>0){L.add(200,()=>headDraw(V0,F,A,K,J,face,ch));
-    for(const sd of[-1,1]){const m=nrm(dirv(sd*.52+ch,.84)),nb=F.RdU(ellN(HR,AXES,m)),fb=FF(nb);if(fb<-.25)continue;L.add(fb>.05?206:195,()=>browDraw(V0,F,A,K,sd,ch))}
-    L.add(205,()=>{mouthDraw(V0,F,A,K,ch);for(const sd of[-1,1])eyeDraw(V0,F,A,K,sd,ch)});
     {const ns=F.RdU(nrm([-.1,1,-.15])),fs=FF(ns);J.siE=F.TU(add(SIB,mul(nrmS(lerp3(SID,nrm([.72,.6,-.2]),A.siT)),8.5)));L.add(fs>-.05?210:190,()=>siphonDraw(V0,F,A,K))}
     if(A.inkRun>0)L.add(220,()=>inkRunDraw(V0,F,A,K,J))}
   // the crown: its ring and pieces at their depth on the mantle (the far ones before it); floating after the defeat
@@ -785,21 +840,30 @@ function octopus2(x,y,face,anim,p,sc,o){sc=sc||1;o=o||{};anim=MV.includes(anim)?
   glowFlush();
   if(A.halo>0&&!LOWFX){const q=P(add(CF.o,mul(CF.dir([0,0,1]),18)));glo(K.pearlG,q[0],q[1]-8,46,.55*A.halo,64);glo('255,255,255',q[0],q[1],18,.5*A.halo);glowFlush()}
   GL=null;ctx.restore()}
-// the light of the pearl running down her left side to the siphon (the ink): only the stretches that face us
+// the light of the pearl running down her left side to the siphon (the ink): from the pearl down the front left of the mantle to the
+// fold, then along the left of the head to the root of the siphon; only the stretches that face us, a smooth line with a bead of light
 function inkRunDraw(V0,F,A,K,J){const{P,F:FF}=V0,{MF,MRn}=J.M,k=A.inkRun,al=A.inkA==null?1:A.inkA;if(al<=.01)return;
-  const path=[];for(let i=0;i<=10;i++){const u=i/10;let c,n;if(u<.6){const m=dirv(lerp(.25,1.25,u/.6),lerp(.5,-.05,u/.6));c=ellAt(MC,MRn,MF,m);n=ellN(MRn,MF,m)}else{const m=dirv(lerp(1.15,1.3,(u-.6)/.4),lerp(.45,.05,(u-.6)/.4));c=ellAt(HC,HR,AXES,m);n=ellN(HR,AXES,m)}
+  const path=[],N=16,pq=J.pearl&&J.pearl.q;
+  for(let i=0;i<=N;i++){const u=i/N;let c,n;
+    if(u<.62){const w=u/.62,m=dirv(lerp(.3,1.4,w),lerp(.42,-.42,w));c=ellAt(MC,MRn,MF,m);n=ellN(MRn,MF,m)}
+    else{const w=(u-.62)/.38,m=dirv(lerp(1.5,2.02,w),lerp(.28,-.3,w));c=ellAt(HC,HR,AXES,m);n=ellN(HR,AXES,m)}
     path.push({q:P(F.TU(add(c,mul(n,.8)))),v:FF(F.RdU(n)),u})}
+  if(pq)path.unshift({q:pq,v:1,u:0});
   const runs=[];let cur=[];for(let i=0;i<path.length;i++){const s=path[i];if(s.u<=k+.001&&s.v>.02)cur.push(s.q);else{if(cur.length>1)runs.push(cur);cur=[]}}if(cur.length>1)runs.push(cur);
-  ctx.save();ctx.globalAlpha*=al;ctx.lineCap='round';ctx.lineJoin='round';for(const[w,c] of[[3.4,`rgba(${K.sig},.5)`],[1.6,K.suckOn],[.7,'#ffffff']]){ctx.strokeStyle=c;ctx.lineWidth=w;ctx.beginPath();for(const r of runs){ctx.moveTo(r[0][0],r[0][1]);for(const q of r)ctx.lineTo(q[0],q[1])}ctx.stroke()}
-  if(k<.99){const s=path[Math.min(10,Math.round(k*10))];if(s.v>.02){glo(K.sig,s.q[0],s.q[1],12,.7*al);ctx.fillStyle='#ffffff';ball(s.q,2);ctx.fill()}}ctx.restore()}
+  ctx.save();ctx.globalAlpha*=al;ctx.lineCap='round';ctx.lineJoin='round';
+  for(const[w,c] of[[3.6,`rgba(${K.sig},.42)`],[1.7,K.suckOn],[.7,'#ffffff']]){ctx.strokeStyle=c;ctx.lineWidth=w;ctx.beginPath();
+    for(const r of runs){ctx.moveTo(r[0][0],r[0][1]);for(let i=1;i<r.length-1;i++){const a=r[i],b=r[i+1];ctx.quadraticCurveTo(a[0],a[1],(a[0]+b[0])/2,(a[1]+b[1])/2)}const e=r[r.length-1];ctx.lineTo(e[0],e[1])}ctx.stroke()}
+  if(k<.99){const f=Math.min(N,k*N),i=Math.floor(f),t=f-i,a=path[Math.min(path.length-1,i+(pq?1:0))],b=path[Math.min(path.length-1,i+1+(pq?1:0))];
+    if(a.v>.02){const q=[lerp(a.q[0],b.q[0],t),lerp(a.q[1],b.q[1],t)];glo(K.sig,q[0],q[1],10,.7*al);ctx.fillStyle='#ffffff';ball(q,2);ctx.fill()}}
+  ctx.restore()}
 // the two amber lights of her eyes under the water (with the bar of the pupil), brighter when they rise
 function eyesUnder(V0,F,A,K){const{P}=V0,a=Math.min(1,A.eyesU),b=Math.max(0,A.eyesU-1);for(const sd of[-1,1]){const m=nrm([EYD[0],sd*EYD[1],EYD[2]]),c=F.TU(ellAt(HC,HR,AXES,m)),q=P([c[0],c[1],0]),s=1+.35*A.eyeTop;
   glo(K.eyeG,q[0],q[1],16*s,(.45+.4*b)*a);ctx.fillStyle=`rgba(255,190,90,${(.85*a).toFixed(3)})`;ctx.beginPath();ctx.ellipse(q[0],q[1],3.6*s,1.9*s,0,0,TAU);ctx.fill();
   ctx.fillStyle=`rgba(255,240,200,${(.7*a).toFixed(3)})`;ctx.beginPath();ctx.ellipse(q[0]-.6,q[1]-.4,1.4*s,.7*s,0,0,TAU);ctx.fill();ctx.fillStyle=`rgba(22,11,6,${(.8*a).toFixed(3)})`;ctx.fillRect(q[0]-1.7*s,q[1]-.35,3.4*s,.7)}}
 // the tip of a hand coming out of the water and tapping it, impatient (the entrance)
 function tipDraw(V0,A,K){const T=A.tip,h=T.k,tap=T.tap,S=SH({kind:'hand',b:[44,10,-16+14*h],L:28,rb:4.6,k:[dirv(.5,1.35),dirv(.5,1.2),dirv(.4,.7-.6*tap),dirv(.3,.2-.8*tap)],c:{ax:[0,0,-1],ang:.6*PI,u0:.75,pw:1.5},vb:[1,0,0]});
-  const F0=frames({B:[0,0,0],lean:0,roll:0,yaw:0,s:0,spin:0,hy:0,hp:0,hr:0}),g=armGeo(S,F0,{B:[0,0,0],yaw:0,spin:0,skK:0,skOpen:0},true);g.js=0;g.rings=false;g.suck=true;g.runs=[];g.pop=null;g.quota=4;g.fill=K.skin.b;g.dk=K.skin.d;g.lt=K.skin.l;
-  waterCut(g);armScreen(V0,g);armPiece(V0,g,0,NS,K,A,{});if(g.cuts)for(const c of g.cuts)collar(V0,c.c,c.r,K)}
+  const F0=frames({B:[0,0,0],lean:0,roll:0,yaw:0,s:0,spin:0,hy:0,hp:0,hr:0}),g=armGeo(S,F0,{B:[0,0,0],yaw:0,spin:0,skK:0,skOpen:0},true);g.js=0;g.rings=false;g.suck=true;g.runs=[];g.pop=null;g.quota=4;
+  waterCut(g);armScreen(V0,g);armTones(g,K,0);armPiece(V0,g,0,NS,K,A,{});if(g.cuts)for(const c of g.cuts)collar(V0,c.c,c.r,K)}
 
 reg('octopus2',{n:'La Piovra della Palude',g:'boss',sc:1,p2:true,an:MV.slice(),dur:Object.assign({},DUR),lab:Object.assign({},LAB)},octopus2);
 // «prima e dopo»: the drawing of today (once the game puts this model in place of N3.octopus, N3.octopus is the new one)
@@ -829,7 +893,7 @@ N3.octopus2Arm=function(x,y,k,a,sc,o){sc=sc||1;o=o||{};k=cl(+k||0,0,1);const V0=
     const L0=54,S0=SH({kind:'cobra',b:[0,0,-L0*(1-up)-2],L:L0+4,rb:9,k:[dirv(0,1.52),dirv(0,1.5+sw),dirv(PI,1.45-sw*1.4),dirv(PI,1.3)],c:{ax:[0,1,0],ang:-.9*PI,u0:.72,pw:1.4},vb:[1,0,0]});
     const S=lash>0?bendS(S0,[0,1,0],[0,.35*lash,.75*lash,1.3*lash]):S0;
     const F0=frames({B:[0,0,0],lean:0,roll:0,yaw:0,s:0,spin:0,hy:0,hp:0,hr:0}),g=armGeo(S,F0,{B:[0,0,0],yaw:0,spin:0,skK:0,skOpen:0});g.js=0;g.rings=true;g.suck=true;
-    g.runs=k>.66&&k<.92?[{i:0,u0:0,u1:1,a:1}]:[];g.pop=null;g.quota=16;g.ringLit=()=>o.p2?1:0;g.fill=K.skin.b;g.dk=K.skin.d;g.lt=K.skin.l;waterCut(g);armScreen(V0,g);
+    g.runs=k>.66&&k<.92?[{i:0,u0:0,u1:1,a:1}]:[];g.pop=null;g.quota=16;g.ringLit=()=>o.p2?1:0;waterCut(g);armScreen(V0,g);armTones(g,K,0);
     const A0={hi:[0],runs:[]};SUCK.n=0;RINGS.n=0;const gl=GL;GL=[];armPiece(V0,g,0,NS,K,A0,o);if(g.cuts)for(const c of g.cuts)collar(V0,c.c,Math.max(6,c.r),K,ink?'#1d1330':'#173f44');glowFlush();GL=gl;
     if(fx&&k<.72){const u=(k-.62)/.1;for(let i=0;i<8;i++){const an=i/8*TAU,q=P([Math.cos(an)*(8+14*u),Math.sin(an)*(8+14*u),Math.sin(u*PI)*14]);ctx.fillStyle=ink?`rgba(40,24,60,${1-u})`:`rgba(${K.foam},${1-u})`;ball(q,1.6);ctx.fill()}}}
   ctx.restore()};
@@ -860,7 +924,7 @@ N3.octopus2Blob=function(x,y,z,k,sc,o){sc=sc||1;o=o||{};k=+k||0;const r=7,a=k*TA
   ctx.save();ball([0,0],r-.6);ctx.clip();ctx.strokeStyle='rgba(120,230,210,.55)';ctx.lineWidth=1;ctx.beginPath();ctx.ellipse(0,0,r*.8,r*.3,a,0,PI);ctx.stroke();
   ctx.fillStyle=`rgba(${hi},.55)`;ctx.beginPath();ctx.ellipse(-r*.3,-r*.38,r*.38,r*.2,-.6,0,TAU);ctx.fill();ctx.fillStyle='rgba(255,255,255,.75)';ball([-r*.42,-r*.45],r*.12);ctx.fill();ctx.restore();ctx.restore()};
 // N3.octopus2Info: the moments of her moves (p of the model), for the brain
-N3.octopus2Dbg={oPose,frames,armGeo,rest,mantleOf,foldOf,crownOf,skirtPts,CR0,ORN,crownAt,headAt,UP,NS};
+N3.octopus2Dbg={oPose,frames,armGeo,rest,mantleOf,foldOf,crownOf,skirtPts,CR0,ORN,crownAt,headAt,UP,NS,SH,dirv,REST1,REST2,mixS,armTo,whipUp,whipDown,RC};
 N3.octopus2Info={dur:DUR,impact:{slam:.60,slam2:[.45,.85],rise:.63,tide:.55,enter:.75},flash:{slam:.035,slam2:[.035,.47],ink:.035,cage:.035,whirl:.04,taunt:.12,rage:[.6,.76],enter:.665,die:.9},
   pops:POPS,ink:{3:INK3,5:INK5},cage:{plant:.33,push:.712,out:.85},whirl:{star:.15,stop:.86},sink:{under:.70,fin:.85},rise:{burst:.63,slap:.80},tide:{up:.3,slam:.55,down:.8},
   taunt:{flash:.12,pop:.62,taps:[.75,.85],call:[.38,.56]},enter:{eyes:.17,taps:[.31,.35,.39],snaps:[.52,.60],pearl:.665,slap:.75,roar:[.82,.92]},die:{clou:.55,pearl:.90,bubble:.95},
