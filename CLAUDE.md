@@ -162,9 +162,16 @@ telecamera su pixel interi (pavimento, muri e paesaggio copiati 1:1; `resize` in
 se i fotogrammi restano lenti (`RESCUT`, poi `LOWFX` come prima), luci morbide grandi preparate una volta e copiate (`glowFast`, `glowTick`
 in 18), vignetta a bande (`drawVig`), mappa delle luci a un pixel per punto (`lwFill`, `lightBlit`), ombre degli ostacoli in un'immagine
 (`shadowSprite` in 47), colonne di luce a bande (`stripFast`), HUD toccato solo quando cambia (`hudSet`), stanza in pausa disegnata una
-volta (`PZD`), tre fotogrammi di nero in più quando si entra in una stanza (`G.fadeHold`). Circa −40% a fotogramma. Restano i modelli 3D
-(intoccabili senza cambiarne l'aspetto) e il menu (la scena della schermata principale costa quanto una stanza). Dettagli, numeri e cosa
-resta in `docs/fase-9-fluidita.md`; prova `node tests/fluido.js`.
+volta (`PZD`), tre fotogrammi di nero in più quando si entra in una stanza (`G.fadeHold`). Circa −40% a fotogramma. Poi il menu: la scena
+della schermata principale (cripta e falò) a 2 pixel a punto esatti, mappa delle luci e vignetta come in battaglia (`campResize`,
+`campLightBlit`, `campVigDraw` in 40, `glowTick` intorno a `drawCamp` in 67): la cripta da 41 a 21 ms qui. Restano i modelli 3D
+(intoccabili senza cambiarne l'aspetto) e, nella mappa zombie, il disegno 3D di case e oggetti (da decidere con Denis). Dettagli, numeri e cosa
+resta in `docs/fase-9-fluidita.md`; prova `node tests/fluido.js`. **Anteprima per il telefono** (20 ottobre): https://claude.ai/artifact/N8yfkjf53iaBG8PLeYkaHx
+(«Mossbound Fase 9»: il gioco di `piano-maestro` diviso come quello pubblicato, `python3 app/mk_claude.py index.html <cartella>` col titolo
+cambiato; si aggiorna ripubblicando la stessa cartella); il gioco pubblicato e l'app non cambiano finché Denis non dice sì.
+Mappa zombie (20 ottobre): la parte più pesante che resta (case, lampioni, tombe e zombie ridisegnati in 3D a ogni fotogramma, per la piega
+che cambia mentre la telecamera segue l'eroe); proposta: ogni casa e oggetto disegnato una volta e rifatto solo quando la sua piega cambia
+di mezzo pixel. Denis: «Aspetta, prima provo» (prima prova l'anteprima sul telefono).
 
 ## Modalità zombie (nel gioco dal 13 ottobre)
 

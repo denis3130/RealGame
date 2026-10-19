@@ -45,6 +45,18 @@ Copiare un'immagine 1:1 su pixel interi costa 5–7 volte meno che copiarla scal
 10. **Stanza nuova**: il nero resta tre fotogrammi in più (circa 50 ms), così il primo disegno della stanza (immagini copiate la prima
     volta, luci e ombre preparate) cade nel buio e non nella dissolvenza.
 
+11. **Menu, schermata principale** (la cripta della Classica e il falò della Zombie): stessa cura. La tela della scena a 2 pixel a punto
+    esatti e la scena su pixel interi (`campResize`, `oy`/`ox` arrotondati in `drawCamp` e `campFrame`), così lo sfondo e il recinto del
+    falò, preparati a 2×, si copiano 1:1; la mappa delle luci a un pixel per punto (`campLightBlit` in 40); la vignetta preparata una
+    volta (`campVigDraw`, fatta solo quando la scena è ferma da tre fotogrammi: mentre il menu entra si muove); i fotogrammi del menu
+    contano per le luci morbide (`glowTick` intorno a `drawCamp`, in 67). La cripta da 41 a 21 ms qui, il falò da 55 a 41 (resta il
+    disegno dell'eroe seduto, degli oggetti e degli zombie sul sentiero). Le altre schede del menu andavano già a 60 al secondo.
+
+12. **Mappa zombie**: la vignetta (una sfumatura su tutto lo schermo a ogni fotogramma) preparata una volta e copiata a bande (`zVig` in
+    `anteprime/zombie/motore.js`), e i fotogrammi della mappa contano per le luci morbide. Il resto della mappa zombie è il disegno delle
+    case, degli oggetti e degli zombie in 3D (`w.voci`, ~40 ms qui a 1,5 pixel a punto): da guardare a parte, con Denis, perché lì la
+    «piega» degli oggetti alti cambia a ogni passo della telecamera e non si può copiare senza toccare l'aspetto.
+
 ## Risultati (questo computer, un fotogramma con il disegno)
 
 | scena | prima | dopo |
@@ -60,8 +72,13 @@ Circa il 35–45% in meno. `update()` costa meno di 1 ms: tutto il resto è dise
 
 - I **modelli 3D** (nemici ~1–2,5 ms l'uno qui, l'eroe ~3,5): tanti tratti sottili (contorni, pieghe) e riempimenti; non si alleggeriscono
   senza cambiarne l'aspetto. Gli ostacoli animati (`ROCK_LIVE`: canne, bracieri, cumuli di fango…) ~0,5 ms l'uno.
-- Il **menu**: la scena della schermata principale (`drawCamp`) costa quanto una stanza (~41 ms qui): stessa cura in corso.
 - Da provare sul telefono vero di Denis: fluidità in battaglia, nel menu, nei passaggi di stanza.
+
+## Anteprima sul telefono
+
+https://claude.ai/artifact/N8yfkjf53iaBG8PLeYkaHx («Mossbound Fase 9», 20 ottobre): il gioco di `piano-maestro` diviso in tre pezzi come
+quello pubblicato (`python3 app/mk_claude.py index.html <cartella>`, titolo cambiato). Ha il suo salvataggio (un'altra pagina): si parte
+dal prologo, oppure si porta il proprio col codice di salvataggio (Impostazioni → Salvataggio).
 
 ## Prove
 

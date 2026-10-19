@@ -1434,7 +1434,7 @@ function boot(area,o){o=o||{};const GAME=!!o.game;let ACT=!GAME,RUN=false,PAUSE=
     for(const[x,y] of[[0,0],[W.w,0],[W.w,W.h],[0,W.h]]){const dx=x-cx,dy=y-cy,u=dx*c-dy*s,v=dx*s+dy*c;for(const z of[0,90]){const Y=v*SP-z*CP;X0=Math.min(X0,u);X1=Math.max(X1,u);Y0=Math.min(Y0,Y);Y1=Math.max(Y1,Y)}}
     return[Math.min(Wp/(X1-X0+60),(Hp-150)/(Y1-Y0+30)),-(Y0+Y1)/2-10]}
   function render(dt,ix,iy){const Wp=ov.clientWidth,Hp=ov.clientHeight;if(cv.width!==Math.round(Wp*dpr)||cv.height!==Math.round(Hp*dpr)){cv.width=Math.round(Wp*dpr);cv.height=Math.round(Hp*dpr)}
-    const saved=ctx,lf=LOWFX;ctx=cv.getContext('2d');LOWFX=GAME?lf:low;const t0=performance.now();
+    const saved=ctx,lf=LOWFX;ctx=cv.getContext('2d');LOWFX=GAME?lf:low;const t0=performance.now();if(typeof glowTick==='function')glowTick();
     try{/* W.dbg.tm={}: i tempi delle parti del fotogramma (tempi_grande.js e le misure del punto 54) */const TM=W.dbg.tm,tk=TM?(k=>{const t=performance.now();TM[k]=(TM[k]||0)+t-TM._;TM._=t}):null;if(TM)TM._=performance.now();updateBeings(dt,{x:ix,y:iy});if(tk)tk('beings');updateAmbient(dt);if(tk)tk('ambient');if(area.update)area.update(dt);if(tk)tk('area');
       const h=W.hero;let tx,ty,z,oyT;
       if(camOv){tx=camOv[0];ty=camOv[1];z=zoomOv||Wp/330;oyT=0}
@@ -1446,9 +1446,19 @@ function boot(area,o){o=o||{};const GAME=!!o.game;let ACT=!GAME,RUN=false,PAUSE=
       if(tk){ctx.getImageData(0,0,1,1);tk('backdrop')}drawWorld(dt,{Wp,Hp});if(tk){ctx.getImageData(0,0,1,1);tk('world')}
       drawDark(cv.width,cv.height,(x,y,r)=>{const p=scr(x,y);return[p[0],p[1],r*CAM.z*dpr]},houses[0]?houses[0].a:1);if(tk){ctx.getImageData(0,0,1,1);tk('dark')}
       ctx.setTransform(dpr,0,0,dpr,0,0);if(!W.dbg.noSticks&&!whole){drawStick(stick,64,Hp-196);drawLook(Wp-64,Hp-196)}
-      const vg=ctx.createRadialGradient(Wp/2,Hp/2,Math.min(Wp,Hp)*.4,Wp/2,Hp/2,Math.max(Wp,Hp)*.75);vg.addColorStop(0,'rgba(0,0,0,0)');vg.addColorStop(1,'rgba(0,0,0,.45)');ctx.fillStyle=vg;ctx.fillRect(0,0,Wp,Hp);
+      zVig(Wp,Hp);
       const show=hudOn&&!W.dbg.noSticks;if(nordEl.hidden===show)nordEl.hidden=!show;if(show)drawNord();if(tk){ctx.getImageData(0,0,1,1);tk('hud')}
     }catch(e){console.error(e)}finally{ms=ms*.93+(performance.now()-t0)*.07;ctx=saved;LOWFX=lf}}
+  /* la vignetta (FASE 9 del gioco, «più fluido sul telefono»): la sfumatura su tutto lo schermo si prepara una volta alla misura della tela e
+     poi si copia 1:1 a bande, saltando il centro trasparente (il cerchio di raggio min(Wp,Hp)·0,4); identica a prima */
+  let ZV=null;
+  function zVig(Wp,Hp){const W0=cv.width,H0=cv.height,key=W0+'x'+H0+'@'+dpr;
+    if(!ZV||ZV.key!==key){if(ZV)ZV.c.width=ZV.c.height=0;const c=document.createElement('canvas');c.width=W0;c.height=H0;const g=c.getContext('2d');g.setTransform(dpr,0,0,dpr,0,0);
+      const vg=g.createRadialGradient(Wp/2,Hp/2,Math.min(Wp,Hp)*.4,Wp/2,Hp/2,Math.max(Wp,Hp)*.75);vg.addColorStop(0,'rgba(0,0,0,0)');vg.addColorStop(1,'rgba(0,0,0,.45)');g.fillStyle=vg;g.fillRect(0,0,Wp,Hp);
+      const cx=dpr*Wp/2,cy=dpr*Hp/2,R=dpr*Math.min(Wp,Hp)*.4-1,B=[];
+      for(let y0=0;y0<H0;y0+=32){const y1=Math.min(H0,y0+32),dy=Math.max(Math.abs(y0-cy),Math.abs(y1-cy)),hw=dy<R?Math.sqrt(R*R-dy*dy):0,a=Math.max(0,Math.ceil(cx-hw)),b=Math.min(W0,Math.floor(cx+hw));B.push(hw>1&&b>a?[y0,y1-y0,a,b]:[y0,y1-y0,W0,W0])}
+      ZV={key,c,B}}
+    ctx.save();ctx.setTransform(1,0,0,1,0,0);for(const[y0,bh,a,b] of ZV.B){if(a>0)ctx.drawImage(ZV.c,0,y0,a,bh,0,y0,a,bh);if(b<W0)ctx.drawImage(ZV.c,b,y0,W0-b,bh,b,y0,W0-b,bh)}ctx.restore()}
   let fEma=.016,slowZ=0,slowR=0;/* DPRCUT: abbassata una volta, resta così per le partite dopo (niente 2 s di scatti a ogni partita) */
   function frame(now){if(!ACT){RUN=false;return}// la pagina spenta (nel gioco vero, col menu) non disegna niente
     if(W.dbg.halt){last=now;requestAnimationFrame(frame);return}// W.dbg.halt: le prove ferme il ciclo dei fotogrammi (misure senza disturbi)
