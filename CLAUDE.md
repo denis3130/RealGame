@@ -148,7 +148,10 @@ cominciato l'altra sessione e l'ha finito (19 ottobre sera, prima di sapere dell
 collaudato, scheda nelle note; quello fatto qui è il Mimic B, da parte in `anteprime/boss2/mimic_b/`); restano Burattinaio, Piovra e Cervo.
 Poi (19 ottobre notte) Denis: «a me sembra che sia meglio usare gli agenti»: i tre che restano li fanno gli agenti, un workflow per boss
 («boss-classico»: modello e cervello in parallelo, due critici sui fogli, correzioni e collaudo, verifica avversaria e un secondo giro se
-serve; le schede in `docs/boss-classici-schede/`, poi riportate nelle note). I
+serve). Poco dopo Denis: «bro fermali stanno prosciugando l'utilizzo», «continua tu senza agenti da dove hanno interrotto»: fermati
+gli agenti, i tre li ha finiti questa sessione da sola (Cervo: corna all'indietro, paletta di cristallo, collare; Burattinaio: il pugno di
+«Tira!»; collaudo di tutti e tre, guida, schede nelle note). **Al 19 ottobre notte i 13 boss sono finiti e collaudati**, nessuno nel
+gioco: prossimo passo farli vedere tutti a Denis (quattro direzioni e la pagina per sfidarli), poi nel gioco dopo il suo sì. I
 testi nuovi della guida stanno in `src/js/44-guida.js` (`BEST2`), non nei cervelli, e valgono solo quando il modello nuovo ha preso il
 posto del vecchio (nel gioco di oggi restano le righe dei boss di oggi). Stato di ogni boss, metodo, design, numeri, misure e prove in
 `docs/boss-classici.md` («Stato dei boss»).

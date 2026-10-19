@@ -82,7 +82,9 @@ meglio usare gli agenti»: Burattinaio, Piovra e Cervo li fanno gli agenti, tre 
 «boss-classico»): un agente per il modello e uno per il cervello in parallelo (al Burattinaio il modello già cominciato qui: pose delle 18
 mosse, gambe, farsetto, braccia, gorgiera, testa), due critici (aspetto e direzioni; mosse e gioco), un agente per le correzioni e il
 collaudo (prove, difficoltà, scheda in `docs/boss-classici-schede/<tipo>.md`), una verifica avversaria e, se trova qualcosa, un secondo giro.
-Stato:
+Poco dopo Denis: «bro fermali stanno prosciugando l'utilizzo», «continua tu senza agenti da dove hanno interrotto»: fermati (e il
+contenitore si era riavviato due volte), i tre boss li ha finiti questa sessione da sola, senza agenti (le schede sono qui sotto, non in
+`docs/boss-classici-schede/`). Stato:
 
 | Boss | Modello | Cervello | Stato |
 |---|---|---|---|
@@ -96,9 +98,9 @@ Stato:
 | Fabbro | `smith2.js` | `89-fabbro-nuovo.js` | finito dall'altra sessione (`session_01NzD5NzkcNh3pmk6QqLSVHu`), collaudo e difficoltà (scheda sotto) |
 | Idra | `hydra2.js` | `89-idra-nuova.js` | finita dall'altra sessione, collaudo e difficoltà (scheda sotto) |
 | Mimic | `mimic2.js` | `89-mimic-nuovo.js` | finito dall'altra sessione il 19 ottobre sera, collaudo e difficoltà (scheda sotto); da parte c'è il Mimic B, fatto in parallelo da questa sessione (`anteprime/boss2/mimic_b/`) |
-| Burattinaio | `puppeteer2.js` | `89-burattinaio-nuovo.js` | in corso con gli agenti (19 ottobre notte) |
-| Piovra | `octopus2.js` | `89-piovra-nuova.js` | in corso con gli agenti (19 ottobre notte) |
-| Cervo | `stag2.js` | `89-cervo-nuovo.js` | in corso con gli agenti (19 ottobre notte) |
+| Burattinaio | `puppeteer2.js` | `89-burattinaio-nuovo.js` | finito: agenti (19 ottobre notte), poi questa sessione da sola; collaudo e difficoltà (scheda sotto) |
+| Piovra | `octopus2.js` | `89-piovra-nuova.js` | finita: agenti (19 ottobre notte), poi questa sessione da sola; collaudo e difficoltà (scheda sotto) |
+| Cervo | `stag2.js` | `89-cervo-nuovo.js` | finito: agenti (19 ottobre notte), poi questa sessione da sola (corna, paletta, collare); collaudo (scheda sotto) |
 
 ### La Strega: la critica sui fogli (corretta il 19 ottobre sera, vedi la scheda)
 
@@ -992,3 +994,148 @@ Casse con le casse in fila sulla griglia della stanza. Prove (19 ottobre, dopo l
 2,3 vite a combattimento contro 3,6 di oggi. Per vederlo: `python3 anteprime/mk_boss2.py mimic --modello anteprime/boss2/mimic_b/mimic2.js
 --cervello anteprime/boss2/mimic_b/89-mimic-nuovo.js` (con `--test` per le prove). Se Denis preferisce lui, i due file vanno al posto di
 `sprite/nemici3d/mimic2.js` e `src/js/89-mimic-nuovo.js` (la riga della guida in 44 va bene per tutti e due).
+
+## Il Burattinaio d'Ombra: «la Marionetta del Teatro delle Ombre»
+
+Nome e titolo restano: «Il Burattinaio d'Ombra», «Il teatro delle ombre» (arena 9, «Cripta delle Ombre»). Era l'artista del teatro della
+Cripta; l'Ombra gli ha rubato la croce di comando e adesso la marionetta più grande del teatro è lui: un giullare di legno, avorio e
+velluto viola alto tre volte e mezzo l'eroe (130 in cima alle punte del cappuccio), appeso a cinque fili d'oro che salgono a una croce che
+dondola da sola nel buio. Viso tondo d'avorio con le guance rosa, mascherina da Arlecchino a V, occhi d'oro con la lucina, sorriso dipinto
+con la mascella da marionetta e due zannette, gorgiera, farsetto a botte coi rombi viola e cremisi, braccia e gambe di legno con le
+giunture a palla, grandi mani bianche, scarpe coi campanellini. **Il suo avviso**: prima di ogni colpo si accendono e si tendono i fili
+dell'arto che colpirà (una perla di luce corre giù dalla croce), la croce si piega da quella parte, tintinnano i campanelli; coi fili molli
+è indifeso. Design: `docs/boss-classici-design/puppeteer.md`.
+
+### Mosse e abilità
+
+| Mossa | Cosa fa | Come si schiva |
+|---|---|---|
+| **Manate** (`slam`) | due cerchi rossi dove cadono i pugni e l'anello dell'onda d'ombra; poi resta piegato coi fili molli | fuori dai cerchi e oltre l'anello |
+| **Fili d'oro** (`strings`) | una banda rossa attraverso la stanza passando per lui, poi il filo d'oro la spazza (nella fase 2 resta teso contro la parete e torna dopo 2,2 s) | scatto o riparo dietro un ostacolo |
+| **Sei il mio burattino!** (`lasso`, `yank`, `snap`) | una linea d'oro dal dito a te si blocca col clic, il filo corre; se ti prende tre strattoni ti tirano verso di lui e un pugno cade nel cerchio rosso davanti a lui | lo scatto spezza il filo: barcolla indifeso (+50%) |
+| **Burattini** (`puppets`) | due botole (tre nella fase 2), ne saltano fuori i burattini d'ombra; ogni burattino rotto ferisce il padrone (1,2% della vita) | romperli |
+| **Sipario e riflettore** (`vanish`, `spot`, `drop`) | cala il sipario e sparisce; un occhio di bue ti cerca, si blocca e lui cade dall'alto in un mucchio (fili allentati: +50%), con un anello di sfere | uscire dalla luce, poi colpirlo a terra |
+| **Mano dell'Ombra** (`hand`, fase 2) | l'ombra di una mano enorme ti insegue, si blocca e la mano cade dal buio | uscire dall'ombra |
+| **Manate a catena** (`slam3`, fase 2) | tre pugni che avanzano verso di te | di lato alla fila |
+
+**Fase 2, il vero Burattinaio** (`rage`, a metà vita): crolla, una mano d'ombra gigante afferra la croce, due occhi magenta nel buio; da lì
+lo portano (velluto più cupo, fili magenta, crepe della vernice accese). **Entrata** (`enter`): si alza il sipario, i fili si tendono uno a
+uno, l'inchino. **Sconfitta** (`die`): i fili si spezzano uno a uno, resta un giocattolo e cala il sipario. Il contatto fa 22 come oggi,
+ma non quando è un mucchio di legno né mentre barcolla col filo spezzato.
+
+### Come è nato (19 ottobre)
+
+- Modello cominciato qui (pose delle 18 mosse, gambe, farsetto, braccia, gorgiera, testa), poi tre giri di agenti (critici sui fogli,
+  correzioni: sipario 96×166 perché le mani non restassero fuori, asticella delle ginocchia ±20 perché i fili non passassero davanti al
+  viso, code del frac che girano intorno ai fianchi, radice delle punte del cappuccio senza contorno); cervello finito da un agente.
+- Dopo l'arresto degli agenti, qui: collaudo col modello finale e una correzione al cervello: gli strattoni di «Tira!» si fermavano a 70 px
+  da lui e quando l'eroe stava sopra il pugno non arrivava mai; ora a 52 px (il corpo è 26 + l'eroe, nessun contatto).
+
+### Misure
+
+- Disegno: 1,3 ms a fotogramma (mediano; golem2 1,2 nella stessa prova); la stanza intera 5,2 ms (burattini, fili, botole).
+- Difficoltà (arena 9, eroe fermo che tira, livello 4, caso peggiore, 3 prove): oggi 7,15 vite al minuto, nuovo 6,65 (dentro il 5,5–7 del
+  design). Quasi tutti i danni a un eroe fermo vengono dai burattini (contatto e sfere), che sono quelli di oggi. La fase 2 contro l'eroe
+  fermo è appena più dura della fase 1: da regolare giocando, come il volume dei suoni nuovi (zing, clac, botole, applauso).
+
+### File e prove
+
+- Modello: `sprite/nemici3d/puppeteer2.js` (modello `puppeteer2` e il burattino `puppet2`); esporta anche `N3.puppeteer2Hand`,
+  `puppeteer2Trap`, `puppeteer2Info`.
+- Cervello: `src/js/89-burattinaio-nuovo.js` (si accende solo se c'è `N3.puppeteer2`).
+- Prove: `python3 anteprime/mk_boss2.py puppeteer --test && node tests/boss2gioco.js puppeteer` (tutto OK, ERR []: mosse della fase 1
+  slam, strings, lasso, yank, snap, puppets, vanish, spot, drop; fase 2 rage, hand, slam3), `node tests/boss2diff.js puppeteer`.
+
+## La Piovra della Palude: «la Signora dello Stagno»
+
+Nome e titolo restano: «La Piovra della Palude» (arena 11, «Palude Maledetta»). Una piovra antica color petrolio, seduta nella sua pozza
+come su un trono, con la corona dello stagno (giunco, chiocciole di palude, la cozza con la Perla), occhi d'ambra arrabbiati, otto braccia
+con le ventose rosa. **Il suo avviso** è la Perla: lampeggia prima di ogni mossa e la sua luce corre dove sta per colpire (nelle ventose
+del braccio che si alza, giù fino al sifone, nelle braccia che si tuffano). Design: `docs/boss-classici-design/octopus.md`.
+
+### Mosse e abilità
+
+| Mossa | Cosa fa | Come si schiva |
+|---|---|---|
+| **Tentacolata** (`slam`, poi `stuck`) | una striscia rossa verso di te; il braccio si abbatte lungo mezza stanza e lo schizzo corre oltre la punta. Poi resta con le ventose attaccate: i colpi fanno +50% («Colpo alla perla!») | un passo di lato |
+| **Pioggia d'inchiostro** (`ink`) | tre palle in fila di traverso (cinque a X nella fase 2) coi cerchi rossi; restano pozze che rallentano (al massimo 8) | fuori dai cerchi |
+| **Gabbia degli abissi** (`cage`) | otto braccia sbucano in cerchio intorno a te, tranne un buco dalla parte lontana da lei, poi frustano verso il centro | uscire dal buco, o prima che sbuchino |
+| **Gorgo** (`whirl`) | gira con le braccia stese a stella, ti tira a sé e spara bolle a spirale; l'anello rosso è fin dove arrivano le braccia (nella fase 2 finisce con la Risacca) | stare fuori dall'anello, tra le bolle |
+| **Agguato** (`sink`, `swim`, `rise`) | si immerge, la corona taglia l'acqua come una pinna e ti viene dietro, poi esplode fuori con un anello di bolle (nella fase 2 due volte, la seconda da una pozza d'inchiostro) | correre (è più lenta di te) |
+| **Doppia tentacolata** (`slam2`, fase 2) | due braccia una dopo l'altra, la seconda verso dove sei | due passi di lato |
+| **Marea Nera** (`tide`, fase 2) | un'onda nera copre la stanza | salire su una ninfea |
+
+**Furia** (`rage`, a metà vita): si alza sulle braccia, si accende di magenta, la pozza diventa d'inchiostro; da lì tutto 1,2 volte più
+rapido. **Entrata** (`enter`): la pozza ribolle, gli occhi d'ambra sotto l'acqua, tre colpetti impazienti, si alza, sbatte le mani,
+ruggisce. **Sconfitta** (`die`): la luce si ritira dalle punte, affonda, la corona resta a galleggiare.
+
+### Come è nata (19 ottobre)
+
+- Modello e cervello degli agenti (quattro giri sul modello: critici sui fogli, correzioni, costo); l'ultimo è stato fermato a lavoro quasi
+  finito (prove complete passate: 109.888 disegni senza errori, tutte le giunture tra le mosse). Il giro del Gorgo è esportato
+  (`N3.octopus2Info.whirlA`) e il cervello lo usa per le bolle.
+- Qui: collaudo col modello finale (tutto OK), riga e ritratto della guida.
+
+### Misure
+
+- Disegno: 1,7 ms a fotogramma (mediano; golem2 1,2 nella stessa prova): è il boss più grande (otto braccia). Le sette braccia della
+  Gabbia costano circa 1,9 ms in più per 0,35 s (1,1 con LOWFX). La stanza intera 3,5 ms.
+- Difficoltà (arena 11, eroe fermo, livello 4, caso peggiore): oggi 8,95 vite al minuto, nuova 8,14 (fase 1 circa 8, fase 2 tra 9 e 11),
+  dentro il bersaglio del design. Da regolare giocando.
+
+### File e prove
+
+- Modello: `sprite/nemici3d/octopus2.js` (modello `octopus2`); esporta anche `N3.octopus2Arm` e `octopus2Info`.
+- Cervello: `src/js/89-piovra-nuova.js` (si accende solo se c'è `N3.octopus2`).
+- Prove: `python3 anteprime/mk_boss2.py octopus --test && node tests/boss2gioco.js octopus` (tutto OK, ERR []: fase 1 slam, stuck, ink,
+  cage, whirl, sink, swim, rise; fase 2 rage, tide, slam2), `node tests/boss2diff.js octopus`.
+
+## Il Cervo d'Aurora: «il Re della Vetta»
+
+Nome e titolo restano: «Il Cervo d'Aurora» (arena 12, «Vetta di Mossbound»: l'ultimo boss). Un cervo del nord immenso, blu notte, con le
+stelle di brina sul manto, il collare di brina bianca sul petto, il muschio sul garrese e la corona di cristallo vivo: due stanghe di
+ghiaccio antico che salgono all'indietro, una lancia in avanti, due punte sulla stanga e una paletta di cristallo a facce con le sue punte.
+**Il suo avviso**: prima di ogni colpo l'aurora nasce dalle rosette d'oro e corre una punta alla volta nel pezzo che colpirà (come il
+cuore del Golem). Design: `docs/boss-classici-design/stag.md`.
+
+### Mosse e abilità
+
+| Mossa | Cosa fa | Come si schiva |
+|---|---|---|
+| **Carica del Re** (`prep`, `charge`, `stuck`) | una striscia rossa ti segue, si blocca e lampeggia; galoppa dritto e pianta le corna nel muro o in un ostacolo, poi resta incastrato: i colpi fanno +50% («Corna incastrate!»). Se l'ostacolo non c'è più frena (`skid`) | di lato; attirarlo contro un ostacolo |
+| **Spazzata della Corona** (`sweep`) | un settore rosso davanti a lui e nove righe dove volano le schegge (nella fase 2 il ritorno, otto schegge negli spazi delle prime) | dietro di lui o tra le righe |
+| **Tende d'Aurora** (`aurora`) | due fasce a onde da muro a muro (tre nella fase 2), ognuna con la sua piega senza luce; cadono ai suoi cenni | nella piega |
+| **Zoccolata del Re** (`stomp`) | si impenna: un cerchio sotto di lui e l'anello dell'onda di brina con le punte di ghiaccio (nella fase 2 due colpi e dodici schegge) | fuori dal cerchio, scatto sull'onda |
+| **Richiamo della Mandria** (`call`) | tre corsie da muro a muro, gli spiriti d'aurora le percorrono al galoppo (nella fase 2 altre due in verticale) | fuori dalle corsie |
+| **Corona Boreale** (`crown`, fase 2) | sei raggi d'aurora che girano insieme di 40° (le frecce dicono il verso) | girare con i raggi |
+
+**Fase 2** (`rage`, a metà vita): la corona si spegne, si inginocchia, scende una colonna d'aurora e si rialza viola, con le fiamme
+d'aurora sulle punte, la perla e i fili di luce; nell'arena torce color aurora, neve leggera e un nastro d'aurora sopra il muro.
+Nessuna accelerazione in più (nell'arena 12 i boss vanno già ×1,38). **Entrata** (`enter`): scende con l'aurora sul cerchio di rune,
+gli occhi si aprono, sei campane e il bramito. **Sconfitta** (`die`): si inchina, lascia la corona ritta nel muschio fiorito e torna aurora.
+
+### Come è nato (19 ottobre)
+
+- Modello e cervello degli agenti (entrambi finiti); la critica sui fogli è arrivata, le correzioni le ha fatte questa sessione da sola:
+  - di lato le corna sembravano un'**antenna**: le stanghe ora salgono all'indietro (la paletta 13 più indietro);
+  - le **palette** erano due palle di neve: ora una lastra di cristallo frastagliata, più larga che alta, a facce chiare e scure, con la
+    vena d'aurora che ci arriva dentro e le punte più lunghe;
+  - il **collare** sul petto sembrava una fila di denti: le ciocche nascono da una base bianca morbida;
+  - la **perla** della fase 2 stava sopra tutto: ora sulla guancia verso di noi, sul petto e sulla zampa, ognuna alla sua profondità; i
+    **fili** di luce della fase 2 più corti, a goccia; il **fiato** esce dalle narici e dall'angolo della bocca, senza coprire il muso;
+  - le **fiamme** d'aurora della fase 2 più alte e larghe, con un bagliore per paletta;
+  - il **muschio dei fianchi** da dietro sembrava due occhi: più in basso e di lato; i licheni pendono dalla punta della lancia.
+
+### Misure
+
+- Disegno: 1,4 ms a fotogramma (mediano, 90% sotto 2,3; golem2 1,2); la stanza intera 3,9 ms.
+- Difficoltà (arena 12, eroe fermo che tira, livello 4, caso peggiore, 3 prove): oggi 11,17 vite al minuto, nuovo 9,55 (dentro il 9–11
+  del design). Per arrivarci tutti i suoi colpi pesano ×1,15 (`SGC.dmg`, in cima al cervello): con 1 sono i numeri del design alla lettera
+  (8,5–8,8). Da confermare con Denis giocando.
+
+### File e prove
+
+- Modello: `sprite/nemici3d/stag2.js` (modello `stag2`); esporta anche `N3.stagShard`, `stagSpike`, `stagSpirit`, `stagCrown`, `stagInfo`.
+- Cervello: `src/js/89-cervo-nuovo.js` (si accende solo se c'è `N3.stag2`).
+- Prove: `python3 anteprime/mk_boss2.py stag --test && node tests/boss2gioco.js stag` (tutto OK, ERR []: fase 1 prep, charge, stuck, sweep,
+  aurora, stomp, call; fase 2 rage, crown, recoil, prep2), `node tests/boss2diff.js stag`.
