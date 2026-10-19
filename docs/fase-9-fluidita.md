@@ -74,6 +74,12 @@ Circa il 35–45% in meno. `update()` costa meno di 1 ms: tutto il resto è dise
   senza cambiarne l'aspetto. Gli ostacoli animati (`ROCK_LIVE`: canne, bracieri, cumuli di fango…) ~0,5 ms l'uno.
 - Da provare sul telefono vero di Denis: fluidità in battaglia, nel menu, nei passaggi di stanza.
 
+## Anteprima sul telefono
+
+https://claude.ai/artifact/N8yfkjf53iaBG8PLeYkaHx («Mossbound Fase 9», 20 ottobre): il gioco di `piano-maestro` diviso in tre pezzi come
+quello pubblicato (`python3 app/mk_claude.py index.html <cartella>`, titolo cambiato). Ha il suo salvataggio (un'altra pagina): si parte
+dal prologo, oppure si porta il proprio col codice di salvataggio (Impostazioni → Salvataggio).
+
 ## Prove
 
 - `node tests/fluido.js [scene]`: la tela a 2 pixel a punto, lo stesso fotogramma con e senza le scorciatoie (differenza massima ≤ 64,

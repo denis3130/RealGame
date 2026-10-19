@@ -165,7 +165,10 @@ in 18), vignetta a bande (`drawVig`), mappa delle luci a un pixel per punto (`lw
 volta (`PZD`), tre fotogrammi di nero in più quando si entra in una stanza (`G.fadeHold`). Circa −40% a fotogramma. Poi il menu: la scena
 della schermata principale (cripta e falò) a 2 pixel a punto esatti, mappa delle luci e vignetta come in battaglia (`campResize`,
 `campLightBlit`, `campVigDraw` in 40, `glowTick` intorno a `drawCamp` in 67): la cripta da 41 a 21 ms qui. Restano i modelli 3D
-(intoccabili senza cambiarne l'aspetto). Dettagli, numeri e cosa resta in `docs/fase-9-fluidita.md`; prova `node tests/fluido.js`.
+(intoccabili senza cambiarne l'aspetto) e, nella mappa zombie, il disegno 3D di case e oggetti (da decidere con Denis). Dettagli, numeri e cosa
+resta in `docs/fase-9-fluidita.md`; prova `node tests/fluido.js`. **Anteprima per il telefono** (20 ottobre): https://claude.ai/artifact/N8yfkjf53iaBG8PLeYkaHx
+(«Mossbound Fase 9»: il gioco di `piano-maestro` diviso come quello pubblicato, `python3 app/mk_claude.py index.html <cartella>` col titolo
+cambiato; si aggiorna ripubblicando la stessa cartella); il gioco pubblicato e l'app non cambiano finché Denis non dice sì.
 
 ## Modalità zombie (nel gioco dal 13 ottobre)
 
