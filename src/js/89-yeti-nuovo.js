@@ -31,6 +31,9 @@ if(Y2ON){
   ESHADOW.yeti=e=>{if(e.intro>0&&(e.iT||0)<.55)return;const sz=1-Math.min(.5,(e.z||0)/200);shadow(e.x,e.y+6,46*sz,15*sz,.45)};
   // the walk follows its own clock (two steps in 1.3 s of the model)
   N3G.wp.yeti=e=>{const d=B3D(e,'walk');return(((e.wt||0)%d)+d)%d/d};
+  // what the model is told: in the Furia the move before it still fades out in the first phase (no glimpse of the second before he
+  // turns); in the Presa in giro the arm on our side, chosen when it starts (it never swaps arms as he turns to follow you)
+  N3G.opt.yeti=e=>{const o={};if(e.st==='rage')o.p2=false;if(e.st==='taunt'&&e.tsd)o.tsd=e.tsd;return o};
   // voice and personality like the new bosses (88-boss3-voci.js); panting is no attack (no charging ring round him)
   B3S.add('yeti');B2CALM.add('gasp');
   // of the old aura only the snow falling round him stays
@@ -84,7 +87,7 @@ function y2mark(kind,x,y,r,a){const c=fx;if(!c)return;c.save();c.setTransform(2,
   c.restore()}
 function y2step(x,y,a){const B=G.y2;if(!B)return;B.prints.push({x,y,a,t:0});if(B.prints.length>14)B.prints.shift()}
 // ---- the brain
-function y2walk(e,d){e.wt=0;b3go(e,'walk',d||rand(1.1,1.6));e.moving=true}
+function y2walk(e,d){e.wt=.25*B3D(e,'walk');e.tsd=0;b3go(e,'walk',d||rand(1.1,1.6));e.moving=true}
 function y2gasp(e){b3go(e,'gasp');e.moving=false;if(!G.y2txt){G.y2txt=1;text(e.x,e.y-128,'Senza fiato!','#ffd84a',18)}}
 // the start of a move: its warnings that come at once
 function y2go(e,st,a){const D=B3D(e,st),rt=y2rt(e);b3go(e,st);e.moving=false;e.lf=a;
@@ -152,9 +155,11 @@ if(Y2ON)EUPD.yeti=function(e,dt,sm,a,d){const sp=e.p2?1.25:1;dt*=sp;// the secon
   b3tick(e,dt);const p2=e.p2,k=b3k(e),rdt=dt/y2rt(e);
   switch(e.st){
   case 'walk':{e.face=navAngle(e);e.moving=true;const w0=e.wt||0;e.wt=w0+dt;const D=B3D(e,'walk'),ph0=(w0%D)/D,ph1=(e.wt%D)/D;
-    if(ph1<ph0||(ph0<.5&&ph1>=.5)){const f=b3pt(e,2,ph1<ph0?18:-18);stepFx(f.x,f.y-4,true);G.shake=Math.max(G.shake,1.5);y2step(f.x,f.y,e.face)}
-    moveCircle(e,Math.cos(e.face)*42*dt,Math.sin(e.face)*42*dt);
-    if(e.stT<=0&&!y2busy()){e.moving=false;y2next(e,a)}
+    // (the foot is planted 2 + its stride in front of him: 13.65, 16 in the second phase, where he walks faster so it never slides)
+    if(ph1<ph0||(ph0<.5&&ph1>=.5)){const f=b3pt(e,e.p2?18:15.65,ph1<ph0?18:-18);stepFx(f.x,f.y-4,true);G.shake=Math.max(G.shake,1.5);y2step(f.x,f.y,e.face)}
+    const vw=e.p2?49.2:42;moveCircle(e,Math.cos(e.face)*vw*dt,Math.sin(e.face)*vw*dt);
+    const q=((ph1-.25)%.5+.5)%.5,near=Math.min(q,.5-q)<.045;
+    if(e.stT<=0&&!y2busy()&&(near||e.stT<-.6)){e.moving=false;y2next(e,a)}
     break}
   // ---- BALZO DEL GIGANTE: breath (.04), the claws rake the ice, he springs (.22): the circle follows you until .40 and locks, he lands (.80)
   case 'leap':{e.moving=false;const D=B3D(e,'leap');
@@ -231,12 +236,12 @@ if(Y2ON)EUPD.yeti=function(e,dt,sm,a,d){const sp=e.p2?1.25:1;dt*=sp;// the secon
     if(b3at(e,.48))y2cres(e,0);if(b3at(e,.66))y2cres(e,1);if(b3at(e,.8))y2pant(e);
     if(e.stT<=0){e.cb=null;y2walk(e)}break}
   // ---- PRESA IN GIRO (88-boss3-voci.js starts it while he walks): «come here», then he walks again a little before the next move
-  case 'taunt':{e.moving=false;e.face=a;if(e.stT<=0)y2walk(e,rand(.6,1));break}
+  case 'taunt':{e.moving=false;e.face=a;if(!e.tsd)e.tsd=Math.cos(e.f3!=null?e.f3:e.face)>=0?1:-1;if(e.stT<=0)y2walk(e,rand(.6,1));break}
   default:y2walk(e)}};
 // out of breath: the blows hurt him more
 {const _h=hurtE;hurtE=function(e,d){if(Y2ON&&e&&e.type==='yeti'&&e.st==='gasp'){const A=[...arguments];A[1]=d*1.5;return _h.apply(this,A)}return _h.apply(this,arguments)}}
 // ---- the dangers in flight and on the floor (real time: they never speed up)
-function y2update(dt){const B=G.y2;if(!B)return;if(G.state!=='play'){if(B.warn.length||B.ice.length||B.balls.length||B.cres.length||B.waves.length||B.cone||B.snow)y2reset();return}
+function y2update(dt){const B=G.y2;if(!B)return;if(G.state!=='play'){if(B.warn.length||B.ice.length||B.balls.length||B.cres.length||B.waves.length||B.cone){const sn=B.snow;y2reset();G.y2.snow=sn}return}
   for(let i=B.warn.length-1;i>=0;i--){B.warn[i].t-=dt;if(B.warn[i].t<=0)B.warn.splice(i,1)}
   for(let i=B.prints.length-1;i>=0;i--){B.prints[i].t+=dt;if(B.prints[i].t>8)B.prints.splice(i,1)}
   // the icicles: a shadow that grows (.85 s), the fall (the last .25 s), then they shatter; the stalactite 1.1 s and .3 s
@@ -318,7 +323,7 @@ function y2ground(){const B=G.y2;if(!B)return;const t=G.t||0,pu=.55+.3*Math.sin(
       ctx.globalCompositeOperation='source-over';ctx.fillStyle=`rgba(${Y2.red},.8)`;ctx.beginPath();ctx.moveTo(w.len-4,0);ctx.lineTo(w.len-24,-14);ctx.lineTo(w.len-24,14);ctx.closePath();ctx.fill();ctx.restore()}}
   if(B.cone)y2coneWarn(B.cone,t);
   if(B.sbl)for(const l of B.sbl){if(l.gone)continue;ctx.save();ctx.beginPath();ctx.rect(L,TOP,R-L,BOT-TOP);ctx.clip();ctx.translate(l.x,l.y);ctx.rotate(l.a);const hw=28;
-    ctx.fillStyle=`rgba(${Y2.red},${l.lock?(Math.sin(t*30)>0?.3:.14):.1})`;ctx.fillRect(0,-hw,l.len,hw*2);ctx.strokeStyle=`rgba(${Y2.red},.75)`;ctx.lineWidth=2;if(!l.lock)ctx.setLineDash([8,6]);
+    ctx.fillStyle=`rgba(${Y2.red},${l.lock?(.22+.08*Math.sin(t*20)).toFixed(3):.1})`;ctx.fillRect(0,-hw,l.len,hw*2);ctx.strokeStyle=`rgba(${Y2.red},.75)`;ctx.lineWidth=2;if(!l.lock)ctx.setLineDash([8,6]);
     ctx.strokeRect(0,-hw,l.len,hw*2);ctx.setLineDash([]);ctx.fillStyle=`rgba(${Y2.red},.85)`;ctx.beginPath();ctx.moveTo(l.len-4,0);ctx.lineTo(l.len-22,-12);ctx.lineTo(l.len-22,12);ctx.closePath();ctx.fill();ctx.restore()}
   for(const W of B.waves)if(W.st==='warn'){const w=(R-L)/6,pat=y2pat(true);for(const i of W.lanes){const x0=L+w*i+2;ctx.fillStyle=pat||`rgba(${Y2.red},.14)`;ctx.fillRect(x0,TOP,w-4,BOT-TOP);
       ctx.fillStyle=`rgba(${Y2.red},${(.05+.05*Math.sin(t*10)).toFixed(3)})`;ctx.fillRect(x0,TOP,w-4,BOT-TOP);ctx.strokeStyle=`rgba(${Y2.red},${(.35+.3*Math.sin(t*10)).toFixed(3)})`;ctx.lineWidth=2;ctx.setLineDash([10,7]);ctx.strokeRect(x0,TOP,w-4,BOT-TOP);ctx.setLineDash([])}}

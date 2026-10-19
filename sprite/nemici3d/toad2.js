@@ -237,8 +237,9 @@ const TABG={1:capTab(GC,GR,AXES,[.1,.75,.65],inBody,18,[1,0,0]),'-1':capTab(mir(
 const TABTH=capFix(dir(0,-.2),.36,.78,[0,0,1],20);                    // the cream of the throat, under the mouth
 // the cape on the body grown 5%: its edge through key points (the collar across the nape, where the cattails stand; down the sides behind
 // the glands and the flanks behind the arms; the hem across the back at the height of 40-44), smooth between them, the hem waving
-// (72 points round the edge, so the trim's puffs touch; the hem waves a little, unevenly: it stays up over the six warts of the low back)
-const CAPEN=nrm([-.85,0,.5]),TABC=capKeys(CAPEN,[1,0,0],[[-29,0,66],[-27,22,62],[-20,36,54],[-10,45,45],[-3,46,40],[-22,44,38],[-38,28,40],[-47,0,42]],72,t=>Math.max(0,-Math.cos(t))*(.03*Math.cos(t*9)+.012*Math.sin(t*2.6+.8)));
+// (36 points round the edge, the trim's puffs on them and half way between them; the hem waves a little, unevenly: it stays up over
+// the six warts of the low back)
+const CAPEN=nrm([-.85,0,.5]),TABC=capKeys(CAPEN,[1,0,0],[[-29,0,66],[-27,22,62],[-20,36,54],[-10,45,45],[-3,46,40],[-22,44,38],[-38,28,40],[-47,0,42]],36,t=>Math.max(0,-Math.cos(t))*(.03*Math.cos(t*9)+.012*Math.sin(t*2.6+.8)));
 // where the trim runs: across the collar (between its two ends) and along the hem round the back, ending before the thighs (their
 // firefly warts stay free); the front edges down the sides have none (seen from behind they would ring the cape like a plate)
 const tOn=(tab,q)=>{const m=dirOn(q,BC,BR,FB);let t=Math.atan2(dot(m,tab.v),dot(m,tab.u));return t<0?t+TAU:t};
@@ -462,11 +463,12 @@ function tPose(anim,p,o){const ph=p*TAU,P2=(!!o.p2||anim==='rain'||anim==='sweep
     const inf=sstep(.1,.45,p),def1=sstep(.5,.7,p),def2=sstep(.7,.85,p),base=P2?1.12:1;
     A.size=base*(1+.45*inf)*(1-.586*def1)*(1-.733*def2);A.size*=1+.02*trem(p,.1,.45,5,dur);
     A.pale=sstep(.15,.45,p);A.k2=(P2?1:0)*(1-sstep(.1,.4,p));A.kr=null;A.glands=A.k2;A.belly=1+1.5*rise(p,.15,.45,.5,.6);A.ulit=A.belly>1.2?.6:0;
-    // the face: the eyes really bulge as it swells (no lid, tiny pupils, the crests up in fright, the domes trembling), screwed shut for the
+    // the face: the eyes really bulge as it swells (no lid, tiny pupils, the crests up in fright, the domes trembling) and through the
     // burp, then dazed (half shut, rolling) until the little toad blinks; the mouth an «O» to the sky, never a grin
-    const bul=rise(p,.1,.22,.46,.5),daz=rise(p,.56,.6,.65,.7);
-    A.eyeK=1+.4*bul+.05*bul*Math.sin(p*dur*TAU*6);A.lid=lerp(lerp(-1,.45,sstep(.56,.62,p)),0,sstep(.68,.74,p));A.pup=.95*bul;A.crestUp=rise(p,.1,.2,.46,.52);
-    A.shut=rise(p,.47,.49,.55,.58);A.look=[.5*Math.cos((p-.56)*TAU*7)*daz,.35*Math.sin((p-.56)*TAU*7)*daz];A.oh=rise(p,.44,.47,.56,.62);
+    // (through the burp they stay bulging, tiny pupils: shock, never the eyes shut with glee)
+    const bul=rise(p,.1,.22,.54,.6),daz=rise(p,.58,.62,.65,.7);
+    A.eyeK=1+.4*bul+.05*bul*Math.sin(p*dur*TAU*6);A.lid=lerp(lerp(-1,.45,sstep(.58,.64,p)),0,sstep(.68,.74,p));A.pup=.95*bul;A.crestUp=rise(p,.1,.2,.54,.6);
+    A.look=[.5*Math.cos((p-.58)*TAU*7)*daz,.35*Math.sin((p-.58)*TAU*7)*daz];A.oh=rise(p,.44,.47,.56,.62);
     A.crest=(P2?1:0)*(1-sstep(.08,.2,p));A.pout=(P2?1:0)*(1-sstep(.3,.5,p));
     A.fluff=P2?1:0;A.tPop=TPOPI.map(i=>p<TPOPT[i]?-1:(p-TPOPT[i])/.14);
     const st=1-sstep(.08,.14,p);A.lean=-.15*sstep(0,.05,p)*st+v3k([[.4,[0]],[.48,[-.55]],[.54,[-.12]],[.7,[0]]],p)[0];A.B[0]=-3*sstep(0,.05,p)*st;A.roll=.06*Math.sin(p*TAU*3*dur*.5)*st*sstep(0,.03,p);
@@ -682,7 +684,9 @@ function bellyPaint(V0,X,A,K,YCc,YRc,J){const{P,F}=V0,r=capReg(V0,X,YCc,YRc,AXES
 // u from -1 (its left corner) to 1: a direction on the body's ellipsoid; lo: how far down the lower lip has dropped
 const MOUTHAZ=1.08;
 // (A.oh: the mouth an «O», the lower lip drops only in the middle and the corners stay shut: the defeat's burp, never a grin)
-function mouthDir(u,A,lo){const az=u*MOUTHAZ*(1+.08*A.grin),k=u*u,oh=A.oh||0,dk=oh>0?lerp(1-k*.85,Math.max(0,1-k/.28),oh):1-k*.85,el=.245+(.17-.1*A.pout-.06*A.grin)*k+(u<0?.07*k:0)-(lo||0)*dk;return dir(az,el)}
+function mouthDir(u,A,lo){const az=u*MOUTHAZ*(1+.08*A.grin),k=u*u,oh=A.oh||0,om=oh>0?Math.max(0,1-k/.28):0,dk=oh>0?lerp(1-k*.85,om,oh):1-k*.85,
+  // (with the «O» the corners go flat, no smile, and the upper lip lifts in the middle as the lower one drops)
+  el=.245+(.17-.1*A.pout-.06*A.grin)*k*(1-.85*oh)+(u<0?.07*k*(1-oh):0)-(lo||0)*dk+(lo?0:.13*oh*om*(A.open||0));return dir(az,el)}
 function mouthDraw(V0,X,A,K){const{P,F}=V0,N=14,up=[],vs=[],lo=.42*A.open,at=m=>P(X.T(ellAt(BC,BR,FB,m))),vis=m=>F(X.Rd(ellN(BR,FB,m)));
   for(let i=0;i<=N;i++){const m=mouthDir(-1+2*i/N,A);vs.push(vis(m));up.push(at(m))}
   if(Math.max(...vs)<.02)return;
@@ -728,7 +732,11 @@ function capeDraw(V0,X,A,K){const{P,F}=V0,op=A.capeOpen||0,R2=[BR[0]*(CAPEK+.04*
   const eo=r.eo?'evenodd':'nonzero',q=P(X.T(ellAt(BC,R2,FB,CAPEN))),bb=[q[0]-42,q[1]-30,q[0]+42,q[1]+36];
   // the front edges have no trim: the cloth throws a soft shadow on the skin under them and they get their ink line (cloth lying on the
   // body, not a sticker cut straight)
-  const N=TABC.N,fe=[];{let cur=[];for(let k=0;k<=N;k++){const i=k%N,t=i/N*TAU,m=TABC.b[i],v=F(X.Rd(ellN(R2,FB,m)));if(v>.02&&trimW(t)<.35)cur.push(P(X.T(ellAt(BC,R2,FB,m))));else if(cur.length){fe.push(cur);cur=[]}}if(cur.length)fe.push(cur)}
+  // (each of the 72 points of the edge once, the cape's 36 and the ones half way: where it is, its normal, how it faces us; the trim
+  // uses the same)
+  const N=TABC.N*2,E=new Array(N);for(let i=0;i<N;i++){const j=i>>1,m=i%2?nrm(add(TABC.b[j],TABC.b[(j+1)%TABC.N])):TABC.b[j],n=X.Rd(ellN(R2,FB,m)),v=F(n),tw=trimW(i/N*TAU);
+    E[i]={c:(v>.02&&(tw<.35||tw>.02&&v>.06))?X.T(ellAt(BC,R2,FB,m)):null,n,v,tw}}
+  const fe=[];{let cur=[];for(let k=0;k<=N;k++){const e=E[k%N];if(e.v>.02&&e.tw<.35)cur.push(P(e.c));else if(cur.length){fe.push(cur);cur=[]}}if(cur.length)fe.push(cur)}
   if(fe.length){const a0=ctx.globalAlpha;ctx.globalAlpha=a0*.34;strokeRuns(fe.map(r=>r.map(q=>[q[0]+.8,q[1]+1.8])),'#0a160c',7.5);ctx.globalAlpha=a0}
   ctx.fillStyle=gradDeep(bb,K.cape);ctx.fill(r.path,eo);
   // the nap of the velvet: three broad soft folds from the neck down to the hem, each with a sheen beside it
@@ -736,14 +744,14 @@ function capeDraw(V0,X,A,K){const{P,F}=V0,op=A.capeOpen||0,R2=[BR[0]*(CAPEK+.04*
       const n=X.Rd(ellN(R2,FB,m));if(F(n)>.06){const qq=P(X.T(ellAt(BC,R2,FB,m)));a.push(qq);b.push([qq[0]-2.8,qq[1]-.7])}else if(a.length){dk.push(a);lt.push(b);a=[];b=[]}}if(a.length){dk.push(a);lt.push(b)}}
     ctx.globalAlpha*=.42;strokeRuns(dk,K.cape.d,3.6);ctx.globalAlpha*=.5;strokeRuns(lt,K.cape.l,1.5)}ctx.restore();
   strokeRuns([r.limb],INK,2.6);if(fe.length)strokeRuns(fe,INK,2.2);if(r.limb.length>2)rimP(r.limb,K.rimc,.3,false);
-  trimDraw(V0,X,A,K,R2)}
+  trimDraw(V0,X,A,K,R2,E)}
 // the trim of white down along the collar at the nape (it stands up a little: seen from the front it frames the head) and along the hem;
-// the front edges down the flanks have none. A chain of uneven overlapping puffs, one on each of the 72 points of the edge: each grows out
+// the front edges down the flanks have none. A chain of uneven overlapping puffs, one on each of the 72 points of the edge (the cape's 36 and the ones half way): each grows out
 // of nothing where its point turns to face us and toward the ends of the trim, so turning never makes a piece of it pop in or out. Ink
 // round them all, the cold shadow of their lower half, the cream, a light on top; the ermine's dark tails on every fourth
-function trimDraw(V0,X,A,K,R2){const{P,F}=V0,N=TABC.N,B=[];
-  for(let i=0;i<N;i++){const t=i/N*TAU,tw=trimW(t);if(tw<=.02)continue;const m=TABC.b[i],n=X.Rd(ellN(R2,FB,m)),v=F(n);if(v<=.06)continue;
-    const k=Math.min(1,2*tw)*sstep(.06,.25,v);if(k<.05)continue;B.push({q:P(add(X.T(ellAt(BC,R2,FB,m)),mul(n,1.2))),r:(3.3+1.4*(((i*37)%11)/10))*k,i})}
+function trimDraw(V0,X,A,K,R2,E){const{P}=V0,N=E.length,B=[];
+  for(let i=0;i<N;i++){const e=E[i],tw=e.tw;if(tw<=.02||e.v<=.06)continue;
+    const k=Math.min(1,2*tw)*sstep(.06,.25,e.v);if(k<.05)continue;B.push({q:P(add(e.c,mul(e.n,1.2))),r:(3.3+1.4*(((i*37)%11)/10))*k,i})}
   if(!B.length)return;
   const puffs=(dx,dy,f,col)=>{ctx.beginPath();for(const b of B)ballA([b.q[0]+dx,b.q[1]+dy],b.r*f);ctx.fillStyle=col;ctx.fill()};
   ctx.beginPath();for(const b of B)ballA(b.q,b.r+1.2);ctx.fillStyle=INK;ctx.fill();

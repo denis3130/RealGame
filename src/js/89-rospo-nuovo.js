@@ -315,7 +315,8 @@ if(TKON){const _d=dash;dash=function(){const pl=P&&P.pull,r=_d.apply(this,argume
   if(e&&e.st==='tongue'&&e.tkHit&&e.tkSnapT==null){e.tkSnapT=G.t||0;e.tkTip0=e.tkTip;e.tkPend=0;if(e.b3s)e.b3s.pend=0}tkSnd('snap',P.x);
   if(!G.tkStr){G.tkStr=1;text(P.x,P.y-44,'Strappo!','#ffd84a',18)}}}catch(err){}return r}}
 // no charging ring round him when the tongue gets stuck (it is no attack); in the second phase no flames at his feet (his light is embers)
-if(TKON){const _bf=b2front;b2front=function(e){if(e&&e.type==='toad'&&e.st==='stuck')e._b2st=e.st;return _bf.apply(this,arguments)}
+// (the charge cue at the start of a blow takes his light: lime, embers in the second phase; it was the old king's pale blue)
+if(TKON){const _bf=b2front;b2front=function(e){if(e&&e.type==='toad'){if(e.st==='stuck')e._b2st=e.st;B2T.toad[1]=e.p2?TK.ember:TK.lime}return _bf.apply(this,arguments)}
   const _bb=b2back;b2back=function(e){if(!e||e.type!=='toad')return _bb.apply(this,arguments);const t=G.t||0,h=B2H.toad||100,z=e.z||0;if(B2G.toad)B2G.toad(e);
     ctx.save();ctx.globalCompositeOperation='lighter';glow(b2halo(e),e.x,e.y-z-h*.55,h*1.1,(.24+.06*Math.sin(t*1.7))*(e.intro>0?.6:1));ctx.restore()}}
 // ---- the dangers in time (real seconds)
@@ -377,9 +378,9 @@ function tkCrownDraw(x,y,rot){ctx.save();ctx.translate(x,y);ctx.rotate(Math.sin(
   if(dry<.5){ctx.fillStyle='rgba(160,138,98,.55)';ctx.beginPath();ctx.ellipse(x-r*.3,y-r*.22,r*.28,r*.08,-.15,0,TAU);ctx.fill();
     for(let i=0;i<2;i++){const bx=x+Math.sin(z.seed+i*2.1)*r*.4,by=y+Math.cos(z.seed+i*1.3)*r*.2;ctx.strokeStyle='rgba(201,183,140,.6)';ctx.lineWidth=.9;circ(bx,by,1.4+Math.sin((G.t||0)*3+i)*.4);ctx.stroke()}}
   ctx.restore()}}
-// the bubble with the firefly inside (the model's own if it has one): it comes out of his mouth (fading in over the first 12 px, as the
-// model's froth fades out) and drops from the height of the mouth to its own over its first 40 px; it hits where it is drawn after that
-Object.assign(EPDRAW,{fbubble:p=>{const d=Math.hypot(p.x-p.x0,p.y-p.y0),al=Math.min(1,Math.max(0,(d-2)/10));if(al<=0)return;const A=tkArt('Bubble'),a0=ctx.globalAlpha,zz=(p.z0||0)*Math.max(0,1-d/40);ctx.globalAlpha=a0*al;
+// the bubble with the firefly inside (the model's own if it has one): it comes out of his mouth (fading in from 6 to 22 px, as the
+// model's froth fades out and the rows open up) and drops from the height of the mouth to its own over its first 40 px; it hits where it is drawn after that
+Object.assign(EPDRAW,{fbubble:p=>{const d=Math.hypot(p.x-p.x0,p.y-p.y0),al=Math.min(1,Math.max(0,(d-6)/16));if(al<=0)return;const A=tkArt('Bubble'),a0=ctx.globalAlpha,zz=(p.z0||0)*Math.max(0,1-d/40);ctx.globalAlpha=a0*al;
   try{if(A)A(p.x,p.y+14,14+zz,p.r,(G.t||0)*3+p.ph,1,{p2:p.p2});else tkBubbleDraw(p.x,p.y-zz,p.r,p.ph,p.p2)}catch(err){tkBubbleDraw(p.x,p.y-zz,p.r,p.ph,p.p2)}ctx.globalAlpha=a0}});
 Object.assign(TRC,{fbubble:'190,240,200'});
 // ---- on the floor: the strip of the tongue, the fans, the landing circle (its growing shadow, six ticks, the dashed reach of the wave), the

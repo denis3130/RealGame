@@ -257,6 +257,8 @@ const MANE=[[[.58,.76,-.3],7,3.1,.45],[[.42,.84,-.5],7.5,3.2,.55],[[.2,.92,-.35]
 const BEARD=[[[13,0,-16.5],[15.5,0,-33],4.2],[[11.5,-5,-16],[13,-8.5,-28],3.2],[[11.5,5,-16],[13,8.5,-28],3.2]];
 
 // ------------------------------------------------------------------ the moves (every one depends only on p; idle and walk close on themselves)
+const lin=(K,p)=>{if(p<=K[0][0])return K[0][1];for(let i=0;i<K.length-1;i++){const a=K[i],b=K[i+1];if(p<=b[0])return lerp(a[1],b[1],(p-a[0])/(b[0]-a[0]))}return K[K.length-1][1]};
+const SINK=[[.16,80],[.36,78],[.42,74],[.445,68],[.47,50],[.5,28],[.53,12],[.56,0]];
 const MV=['idle','walk','hit','leap','bound','pound','snowball','breath','gasp','roar','claws','rage','taunt','enter','die'];
 const DUR={idle:3,walk:1.3,hit:.6,leap:2.4,bound:1.3,pound:2.2,snowball:2,breath:3,gasp:1.4,roar:3,claws:1.9,rage:3,taunt:1.2,enter:3.4,die:4};
 function yPose(anim,p,o){const ph=p*TAU,P2=!!o.p2&&anim!=='enter'&&anim!=='rage';
@@ -284,7 +286,7 @@ function yPose(anim,p,o){const ph=p*TAU,P2=!!o.p2&&anim!=='enter'&&anim!=='rage'
     for(const sd of[-1,1]){const k=sd<0?'L':'R';A['h'+k]=add(lerp3(A['h'+k],[16,sd*30,26],w),[0,sd*10*Math.sin(Math.PI*w),0]);A['fd'+k]=nrm(lerp3(A['fd'+k]||mr(FD0,sd),FWD,w));A['pn'+k]=nrm(lerp3(A['pn'+k]||mr(PN0,sd),DN,w));A['g'+k]=lerp(A['g'+k],.5,w)}};
   if(anim==='walk'){// CAMMINA: two heavy steps, the body dips and rolls over the planted foot, the long arms swing against the legs and the
     // claws scrape the snow at the bottom of the swing; the head stays on the hero. At .25 and .75 it goes through its rest pose
-    const st=stepper(p,.5),S=P2?16:12,a=st(0,S,5),b=st(.5,S,5);A.fR=[2+a.x,18,a.z];A.fL=[2+b.x,-18,b.z];
+    const st=stepper(p,.5),S=P2?16:13.65,a=st(0,S,5),b=st(.5,S,5);A.fR=[2+a.x,18,a.z];A.fL=[2+b.x,-18,b.z];
     const imp=Math.max(0,Math.cos(TAU*2*(p-.03)));A.B[2]=-2*imp;A.s=-.02*imp;A.roll=-.05*Math.sin(ph);A.yaw=.03*Math.sin(ph);A.lean=.1+.03*imp;A.flap=imp;
     const sw=Math.cos(ph);
     if(P2){A.hR=[24-9*sw,42,28+3*sw*sw];A.hL=[24+9*sw,-42,28+3*sw*sw];for(const sd of[-1,1])ho([[0,FD2,PN2,.2],[1,FD2,PN2,.2]],sd);A.B[2]-=4;A.lean+=.08}
@@ -445,9 +447,11 @@ function yPose(anim,p,o){const ph=p*TAU,P2=!!o.p2&&anim!=='enter'&&anim!=='rage'
   else if(anim==='enter'){// ENTRATA «la valanga lo porta»: a front of snow slides in from behind and heaps into a mound; the mound breathes; two
     // eyes open in the snow and the tips of the horns come out; the horns break through, then the head and the shoulders, the mound splits
     // into clods that roll away; it shakes like a dog; the great breath; it roars forward and stands at rest
-    A.sink=kv([[0,[130]],[.3,[130]],[.4,[86]],[.47,[34]],[.56,[0]],[1,[0]]],p)[0];A.B[2]=-A.sink;
-    A.rear=.4*rise(p,.3,.38,.5,.6);A.hp=-.25*rise(p,.3,.38,.5,.58);A.lean=.1-.1*rise(p,.3,.38,.5,.6);
-    A.mound=p<.16?p/.16:p<.56?1:-1;A.chunks=p>=.44&&p<.74?(p-.44)/.3:-1;A.snowEyes=rise(p,.3,.34,.4,.44);A.eyeOn=sstep(.4,.44,p);
+    A.sink=p<.16?lerp(130,80,ez(p/.16)):(lin(SINK,p-.01)+lin(SINK,p)+lin(SINK,p+.01))/3;A.B[2]=-A.sink;
+    // (he rears up only once he is out of the snow: under it he stays curled, the hump inside the mound)
+    A.rear=.4*rise(p,.47,.53,.56,.62);A.hp=-.25*rise(p,.47,.53,.56,.6);A.lean=.1-.1*rise(p,.47,.53,.56,.62);
+    A.mound=p<.16?p/.16:p<.56?1:-1;A.heave=rise(p,.34,.42,.5,.56);A.crater=sstep(.42,.56,p);A.chunks=p>=.46&&p<.76?(p-.46)/.3:-1;
+    A.snowEyes=rise(p,.3,.34,.44,.47);A.eyeOn=sstep(.3,.34,p);
     const sh=p>.56&&p<.68?(p-.56)/.12:-1;if(sh>=0){A.yaw=.35*Math.sin(sh*TAU*1.5)*Math.sin(Math.PI*sh);A.hy=-.5*A.yaw;A.fluff=.3*Math.sin(Math.PI*sh)}
     const br=sstep(.68,.78,p)*(1-sstep(.8,.83,p));A.inh=br;A.infl=.1*br;A.spark=br;A.suck=p>.68&&p<.8?(p-.68)/.12:-1;A.flagM=.7*br;A.bz=3*br;A.hp+=-.3*br;
     const ro=rise(p,.8,.84,.92,.98);A.lean+=.22*ro;A.hp+=.15*ro;A.jaw=ro;A.throat=ro*.6;A.squint=.4*ro;
@@ -533,10 +537,18 @@ function mantleDraw(V0,XU,A,K,J){const{P,F}=V0,R2=add(mul(UR,1+A.infl),[2.4,2.4,
   const bb=bbox(r.pts);ctx.fillStyle=grad3(bb,K.snow);ctx.fill();ctx.lineJoin='round';ctx.lineCap='round';snowEdge(r);
   // the dots of the snow, its two folds, the band of light of the crust (second phase)
   ctx.save();ctx.beginPath();for(const q of r.pts)ctx.lineTo(q[0],q[1]);ctx.closePath();ctx.clip();
-  ctx.fillStyle=K.dots;ctx.beginPath();for(const m of MDOT){const n=XU.Rd(ellN(R2,AXES,m));if(F(n)<.2)continue;const q=P(XU.T(ellAt(UC,R2,AXES,m)));ctx.moveTo(q[0]+1.3,q[1]);ctx.arc(q[0],q[1],1.3,0,TAU)}ctx.fill();
+  const kb=K.band;
+  if(kb<.98)ga(1-kb,()=>{ctx.fillStyle=K.dots;ctx.beginPath();for(const m of MDOT){const n=XU.Rd(ellN(R2,AXES,m));if(F(n)<.2)continue;const q=P(XU.T(ellAt(UC,R2,AXES,m)));ctx.moveTo(q[0]+1.3,q[1]);ctx.arc(q[0],q[1],1.3,0,TAU)}ctx.fill()});
+  // (the crust of ice of the second phase: short cracks and the edges of a few facets where the snow had its dots)
+  if(kb>.02)ga(kb,()=>{ctx.lineCap='round';ctx.lineJoin='round';for(let i=0;i<MDOT.length;i++){const m=MDOT[i],n=XU.Rd(ellN(R2,AXES,m));if(F(n)<.2)continue;const c=XU.T(ellAt(UC,R2,AXES,m)),[u,v]=frm(n,[0,0,1]);
+    if(i%3===2){const a=P(add(c,add(mul(u,4.5),mul(v,-3.5)))),b=P(add(c,add(mul(u,-3.5),mul(v,4.5))));ctx.strokeStyle='rgba(40,90,150,.6)';ctx.lineWidth=1.4;seg(a,b);ctx.stroke();
+      ctx.strokeStyle='rgba(255,255,255,.9)';ctx.lineWidth=1;seg([a[0]+1.2,a[1]-1],[b[0]+1.2,b[1]-1]);ctx.stroke()}
+    else{const pts=[[0,0],[2.4,1.5],[3.6,-.7],[6,.5]].map(([x0,y0])=>P(add(c,add(mul(v,x0-3),mul(u,y0)))));ctx.strokeStyle='rgba(40,90,150,.62)';ctx.lineWidth=1.15;ctx.beginPath();for(const w of pts)ctx.lineTo(w[0],w[1]);ctx.stroke()}}});
   ctx.lineCap='round';for(const f of MFOLD){const S=[];for(const m of f){const n=XU.Rd(ellN(R2,AXES,m));if(F(n)<.1)continue;S.push(P(XU.T(ellAt(UC,R2,AXES,m))))}
     if(S.length>1)for(const[dy,col,lw] of[[1.1,K.fold,1.6],[-.6,'rgba(255,255,255,.9)',1.2]]){ctx.strokeStyle=col;ctx.lineWidth=lw;ctx.beginPath();ctx.moveTo(S[0][0],S[0][1]+dy);if(S.length>2)ctx.quadraticCurveTo(S[1][0],S[1][1]+dy,S[2][0],S[2][1]+dy);else ctx.lineTo(S[1][0],S[1][1]+dy);ctx.stroke()}}
-  if(K.band>0){const c=[(bb[0]+bb[2])/2,(bb[1]+bb[3])/2],w=bb[2]-bb[0];ctx.globalAlpha*=.55*K.band;ctx.strokeStyle='#ffffff';ctx.lineWidth=3;ctx.beginPath();ctx.moveTo(c[0]-w*.35,c[1]-2);ctx.quadraticCurveTo(c[0]-w*.05,c[1]-w*.18,c[0]+w*.25,c[1]-w*.12);ctx.stroke();ctx.globalAlpha/=.55*K.band||1}
+  // (the band of light of the crust: a bright stroke and a thin one under it)
+  if(kb>.02){const c=[(bb[0]+bb[2])/2,(bb[1]+bb[3])/2],w=bb[2]-bb[0];ga(kb,()=>{ctx.lineCap='round';ctx.strokeStyle='rgba(255,255,255,.92)';ctx.lineWidth=3.6;ctx.beginPath();ctx.moveTo(c[0]-w*.35,c[1]-2);ctx.quadraticCurveTo(c[0]-w*.05,c[1]-w*.18,c[0]+w*.25,c[1]-w*.12);ctx.stroke();
+    ctx.strokeStyle='rgba(255,255,255,.6)';ctx.lineWidth=1.4;ctx.beginPath();ctx.moveTo(c[0]-w*.28,c[1]+4);ctx.quadraticCurveTo(c[0]-w*.02,c[1]-w*.09,c[0]+w*.2,c[1]-w*.04);ctx.stroke()})}
   ctx.restore();
   rims(r.pts,.6,0);
   // the icicles hanging from its edge (longer in the second phase)
@@ -584,8 +596,12 @@ function legDraw(V0,X,A,K,sd,g,J){const{P,F}=V0,fw=X.Rd([1,0,0]),fd=nrm([fw[0],f
 
 // ------------------------------------------------------------------ arms: the shoulder under the snow, the long furry arm, the fringe under
 // the forearm with its little icicles, the night-blue hand with four ice claws (blades in the second phase)
+// the two bones of an arm like ik, but the elbow never snaps straight: near full reach it unbends softly (the wrist still goes where
+// it must; the forearm stretches a few px at most)
+function ik2(a,t,L1,L2,pole){const d=sub(t,a),dl=len(d),mx=L1+L2,s=.9*mx,m=.985*mx;if(dl<=s)return ik(a,t,L1,L2,pole);
+  const de=s+(m-s)*(1-Math.exp(-(dl-s)/(m-s))),u=mul(d,1/dl),[E]=ik(a,add(a,mul(u,de)),L1,L2,pole);return[E,add(a,mul(u,Math.min(dl,mx-.02)))]}
 function armGeo(sd,A,XU,lift){const S=XU.T([SHJ[0],sd*SHJ[1],SHJ[2]]),h0=sd<0?A.hL:A.hR,pc=[h0[0],h0[1],h0[2]+lift],fdh=nrm((sd<0?A.fdL:A.fdR)||[.22,sd*.06,-1]),
-    wT=sub(pc,mul(fdh,7)),[El,Wr]=ik(S,wT,LUA,LFA,XU.Rd((sd<0?A.poL:A.poR)||[-.5,sd*.8,-.1])),fa=nrm(sub(Wr,El)),fd=nrm(add(mul(fa,.4),mul(fdh,.6)));
+    wT=sub(pc,mul(fdh,7)),[El,Wr]=ik2(S,wT,LUA,LFA,XU.Rd((sd<0?A.poL:A.poR)||[-.5,sd*.8,-.1])),fa=nrm(sub(Wr,El)),fd=nrm(add(mul(fa,.4),mul(fdh,.6)));
   let pnh=(sd<0?A.pnL:A.pnR)||[.55,-sd*.85,0],pn=sub(pnh,mul(fd,dot(pnh,fd)));if(len(pn)<.2)pn=cross(fd,[0,0,1]);pn=nrm(pn);
   return{S,El,W:Wr,fa,fd,pn,Pc:add(Wr,mul(fd,7.5)),sd}}
 function shoulderDraw(V0,XU,A,K,sd,J){const{P,F}=V0,c=XU.T([DLT[0],sd*DLT[1],DLT[2]]),r=DLR*(1+A.infl*.5),q=P(c),fk=sstep(0,-.25,F(XU.Rd([.15,sd,0])));
@@ -671,7 +687,13 @@ function headDraw(V0,Hc,HR,A,K,J,oc){
   add2(fwd>-.3?1.8:-4,()=>beardDraw(V0,T,HR,A,K,rj,J));
   if(A.tongue>.05)add2(4.5,()=>tongueDraw(V0,T,HR,A,K,rj,fwd));
   // the roots of the horns, out of the top of the skull: over all of the head while where they come out faces us, else behind it
-  for(const r of J.roots||[])add2(r.f?9:-9,()=>hornDraw(V0,J.hornT,HR,A,K,r.sd,0,2));
+  // (as they turn away the part of them past a line that sweeps from the base to the tip goes behind the head, the rest stays over it,
+  // so a root never jumps from over the head to under it)
+  for(const r of J.roots||[]){const f=()=>hornDraw(V0,J.hornT,HR,A,K,r.sd,0,2),k=sstep(.12,-.12,r.f);if(k<=.001){add2(9,f);continue}if(k>=.999){add2(-9,f);continue}
+    const b=P(T([HORN[0][0],r.sd*HORN[0][1],HORN[0][2]])),e=P(T([HORN[2][0],r.sd*HORN[2][1],HORN[2][2]])),ux=e[0]-b[0],uy=e[1]-b[1],ul=Math.hypot(ux,uy)||1,u=[ux/ul,uy/ul],v=[-u[1],u[0]],
+      ext=ul+10,sw=lerp(-10,ext,k),m=[b[0]+u[0]*sw,b[1]+u[1]*sw],half=back=>{const kk=back?-1e4:1e4,o=back?.6:-.6,c=[m[0]+u[0]*o,m[1]+u[1]*o],pa=new Path2D();pa.moveTo(c[0]+v[0]*1e4,c[1]+v[1]*1e4);
+        pa.lineTo(c[0]-v[0]*1e4,c[1]-v[1]*1e4);pa.lineTo(c[0]-v[0]*1e4+u[0]*kk,c[1]-v[1]*1e4+u[1]*kk);pa.lineTo(c[0]+v[0]*1e4+u[0]*kk,c[1]+v[1]*1e4+u[1]*kk);pa.closePath();return pa};
+    add2(-9,()=>{ctx.save();ctx.clip(half(true));f();ctx.restore()});add2(9,()=>{ctx.save();ctx.clip(half(false));f();ctx.restore()})}
   LH.sort((a,b)=>a.d-b.d);for(const e of LH)e.f()}
 // a horn, or a piece of it (segments i0..i1-1: the root out of the skull, the spiral round the ear), all its pieces in the same light
 function hornDraw(V0,T,HR,A,K,sd,i0,i1){const{P,F}=V0,pts=HORN.map(q=>T([q[0],sd*q[1],q[2]])),S=pts.map(P),n=S.length;i0=i0||0;i1=i1==null?n-1:i1;
@@ -802,45 +824,84 @@ const MCH=[[-.4,-1,0,.95],[.7,.2,.2,1],[2.1,.9,.1,.9],[3.3,.6,.3,.85],[4.4,.3,.1
 function domeDraw(V0,c,rx,rz,T,o){o=o||{};const{P}=V0,pts=[],dx=(o.dx||rx)/rx;for(const k of[0,.35,.65,.85,1]){const z=k*rz,r=rx*Math.sqrt(Math.max(0,1-k*k));for(let i=0;i<16;i++){const a=i/16*TAU;pts.push(P(add(c,[Math.cos(a)*r*dx,Math.sin(a)*r,z])))}}
   const H=chull(pts);if(H.length<3)return H;ctx.lineJoin='round';const pa=smoothP(H);ctx.fillStyle=grad3(bbox(H),T);ctx.fill(pa);ctx.strokeStyle=INK;ctx.lineWidth=o.lw||2.6;ctx.stroke(pa);rims(H,.6,.25);
   if(o.dots){ctx.fillStyle=K1.dots;for(const[a,b] of[[-.4,-.5],[.3,-.35],[.1,-.65],[-.2,-.2],[.45,-.6]]){const q=P(add(c,[0,0,0]));ball([q[0]+a*rx,q[1]+b*rz*.9],1.3);ctx.fill()}}return H}
-function moundDraw(V0,A,p,J,fx){const{P}=V0,k=A.mound;if(k<0)return;
+// the mound of the entrance: centred under his chest and head; it heaves (wider, a little taller) as he pushes up
+const MC=[4,0,0],moundR=A=>{const h=A.heave||0;return[40+12*h,40+16*h,42+6*h]};
+// part 'back': the inside of the crater behind him (before his body); 'front': the avalanche sliding in, then the mound in front of him (its
+// part under the rim of the crater, the broken lip, the cracks while it heaves, the eyes that open in the snow, the tips of the horns)
+function moundDraw(V0,A,p,J,fx,part){const{P,D}=V0,k=A.mound;if(k<0)return;
   // the front of the avalanche sliding in from behind (a wall of snow with balls rolling in it), then the mound
-  if(k<1){const u=ez(k),c=[-90*(1-u),0,0],w=lerp(35,40,u),dx=lerp(22,40,u),h=lerp(30,42,u),T=K1.snow,sp=fx?rise(k,0,.06,.55,.95):0,back=V0.F([-1,0,.3])>0,pw=[];
+  if(k<1){if(part==='back')return;const u=ez(k),c=[MC[0]-100*(1-u),0,0],w=lerp(35,40,u),dx=lerp(22,40,u),h=lerp(30,42,u),T=K1.snow,sp=fx?rise(k,0,.06,.55,.95):0,back=V0.F([-1,0,.3])>0,pw=[];
     // the powder thrown up behind the moving wall (in front of it when we look from behind)
     for(let i=0;i<4&&sp>0;i++){const q=P(add(c,[-dx*(.4+.25*i),(i%2?1:-1)*(5+6*i),h*(.82+.1*Math.sin(i*1.9+k*11))+i*3]));pw.push(()=>cloud(q,8+3*i,(.42-.07*i)*sp,'232,242,255'))}
     if(!back)for(const f of pw)f();
     domeDraw(V0,c,w,h,T,{dots:1,dx});
-    // the balls tumble over its crest and down its leading face: they come out of the snow, roll and sink back in (fading in and out,
-    // so none of them ever jumps); they melt into the mound as it stops
-    for(let i=0;i<3;i++){const t=(k*1.2+i*.37)%1,el=lerp(1.3,.45,t),az=(i-1)*.8,ca=Math.cos(el),sv=[dx*ca*Math.cos(az),w*ca*Math.sin(az),h*Math.sin(el)],
-        n=nrm([sv[0]/(dx*dx),sv[1]/(w*w),sv[2]/(h*h)]),r=9+1.5*(i%2),al=sstep(0,.25,V0.F(n))*Math.pow(Math.sin(Math.PI*t),.5)*(1-sstep(.7,.95,k));
-      if(al<.02)continue;ctx.save();ctx.globalAlpha*=al;ballDraw(V0,add(add(c,sv),mul(n,-r*.15)),r,t*5+i*2,[1,0,0],false);ctx.restore()}
+    // the balls come up out of the snow at its crest, roll down its leading face and sink back into it (cut where they are still in the
+    // snow, never faded in); they melt into the mound as it stops
+    for(let i=0;i<3;i++){const t=(k*1.2+i*.37)%1,el=lerp(1.25,.4,t),az=(i-1)*.8,ca=Math.cos(el),sv=[dx*ca*Math.cos(az),w*ca*Math.sin(az),h*Math.sin(el)],
+        n=nrm([sv[0]/(dx*dx),sv[1]/(w*w),sv[2]/(h*h)]),r=9+1.5*(i%2),cb=add(add(c,sv),mul(n,r*(-.95+1.5*Math.sin(Math.PI*t)))),al=sstep(-.05,.2,V0.F(n))*(1-sstep(.7,.95,k));
+      if(al<.02)continue;const oc=outCap({T:q=>q,Rd:v=>v},c,[dx,w,h],AXES,cb,r,1);if(oc===false)continue;ga(al,()=>sunkDraw(V0,P(cb),r,oc,()=>ballDraw(V0,cb,r,t*5+i*2,[1,0,0],false)))}
     if(back)for(const f of pw)f();return}
-  const br=1+.035*Math.sin((p-.16)/.14*TAU*1.5)*rise(p,.16,.18,.28,.3);domeDraw(V0,[0,0,0],40*br,42*br,K1.snow,{dots:1});
-  // the two eyes that open in the snow, the tips of the horns
-  if(A.snowEyes>0){const h=P([30,0,26]);for(const sd of[-1,1]){const q=[h[0]-V0.c*0+sd*6.5*Math.abs(V0.s)+(-sd*6.5*V0.c)*0,h[1]],e=P([30,sd*7,24]);ctx.save();ctx.globalAlpha*=A.snowEyes;
-      if(!LOWFX)shine(K1.eye,e[0],e[1],9,.6);ctx.fillStyle='#283466';ctx.beginPath();ctx.ellipse(e[0],e[1],4.4,2.8,0,0,TAU);ctx.fill();ctx.fillStyle=K1.iris;ctx.beginPath();ctx.ellipse(e[0],e[1],3.4,2*Math.min(1,A.snowEyes*1.6),0,0,TAU);ctx.fill();ctx.fillStyle='#fff';ball([e[0]-1,e[1]-.6],.8);ctx.fill();ctx.restore()}
-    for(const sd of[-1,1]){const b=[16,sd*20,36],e=[10,sd*26,44],qa=P(b),qb=P(e);ctx.save();ctx.globalAlpha*=sstep(0,.3,A.snowEyes);ctx.fillStyle=K1.horn.b;ctx.strokeStyle=INK;ctx.lineWidth=1.6;tri(qa[0],qa[1],qb[0],qb[1],3.4);ctx.restore()}}}
-function chunksDraw(V0,A,L,D){const k=A.chunks;if(k<0)return;for(let i=0;i<MCH.length;i++){const[a,ro,ti,s2]=MCH[i],u=ez(Math.min(1,k*1.3)),d=16+44*u,z=Math.max(0,22*s2*(1-u)+8*Math.sin(Math.PI*Math.min(1,k*1.6))),c=[Math.cos(a)*d,Math.sin(a)*d,z],r=11*s2*(1-.7*k);
-    if(r<1.5)continue;L.add(D(c)+(D(c)>D([0,0,40])?60:-60),()=>{ctx.save();ctx.globalAlpha*=1-sstep(.75,1,k);const q=V0.P(c);ctx.translate(q[0],q[1]);ctx.rotate(ro*k*4+ti);const pts=[];for(let j=0;j<7;j++){const b=j/7*TAU;pts.push([Math.cos(b)*r*(1+.15*Math.sin(j*2.3+i)),Math.sin(b)*r*.78*(1+.12*Math.cos(j*1.7))-r*.4])}
-      ctx.lineJoin='round';C.smooth(pts);ctx.fillStyle=grad3(bbox(pts),T3('#ffffff','#d8e6f6','#8ea8cc'));ctx.fill();ctx.strokeStyle=INK;ctx.lineWidth=2;ctx.stroke();ctx.fillStyle='rgba(120,150,200,.35)';ctx.beginPath();ctx.ellipse(r*.15,-r*.2,r*.5,r*.25,0,0,TAU);ctx.fill();ctx.restore()})}}
+  const[Rx,Ry,Rz0]=moundR(A),br=1+.035*Math.sin((p-.16)/.14*TAU*1.5)*rise(p,.16,.18,.28,.3),Rz=Rz0*br,c=A.crater||0,zc=Rz*(1-c),cr=A.heave||0;
+  const ring=(z,n,rr)=>{const f=Math.sqrt(Math.max(0,1-(z/Rz)*(z/Rz))),out=[];for(let i=0;i<n;i++){const t=i/n*TAU,q=rr?rr(t):1;out.push(add(MC,[Math.cos(t)*Rx*br*f*q,Math.sin(t)*Ry*br*f*q,z]))}return out};
+  const rim=c>.001?ring(zc,28,t=>1+.06*Math.sin(5*t+.7)+.035*Math.sin(11*t+.2)).map((q,i)=>add(q,[0,0,1.6*Math.sin(i*1.7)*Math.min(1,c*4)])):null,rimS=rim?rim.map(q=>P(q)):null;
+  if(part==='back'){if(!rim)return;// the inside of the crater behind him: snow in the shade, darker deep down
+    const dk=1-sstep(.55,.9,c);if(dk<=.01)return;poly(rimS);const b=bbox(rimS),g=ctx.createLinearGradient(0,b[1],0,b[3]);g.addColorStop(0,'#cdd9ec');g.addColorStop(1,'#8aa0c4');ctx.save();ctx.globalAlpha*=dk;ctx.fillStyle=g;ctx.fill();ctx.restore();return}
+  const pts=[];for(const kz of[0,.35,.65,.85,1])for(const q of ring(kz*zc,16))pts.push(P(q));if(rimS)for(const q of rimS)pts.push(q);const H=chull(pts);if(H.length<3)return;
+  const fo=1-sstep(.78,1,c);if(fo<=.01)return;ctx.save();ctx.globalAlpha*=fo;const hp=smoothP(H),pa=new Path2D();pa.addPath(hp);if(rimS){pa.moveTo(rimS[0][0],rimS[0][1]);for(const q of rimS)pa.lineTo(q[0],q[1]);pa.closePath()}
+  ctx.fillStyle=grad3(bbox(H),K1.snow);ctx.fill(pa,'evenodd');ctx.lineJoin='round';ctx.lineCap='round';ctx.strokeStyle=INK;ctx.lineWidth=2.6;ctx.stroke(hp);rims(H,.6,.25);
+  ctx.save();ctx.clip(pa,'evenodd');
+  {const q0=P(add(MC,[0,0,0]));ctx.fillStyle=K1.dots;for(const[a,b] of[[-.4,-.5],[.3,-.35],[.1,-.65],[-.2,-.2],[.45,-.6]]){ball([q0[0]+a*Ry,q0[1]+b*Rz*.9],1.3);ctx.fill()}}
+  // the cracks while it heaves (on our side, from the top down)
+  if(cr>.02){for(const az of[-1.1,-.35,.4,1.15]){const S=[];for(let j=0;j<=4;j++){const el=lerp(1.3,1.3-.85*cr,j/4),a=az+Math.atan2(V0.c,V0.s)+.12*Math.sin(j*2.3+az*3),f=Math.cos(el);
+        S.push(add(MC,[Math.cos(a)*Rx*br*f,Math.sin(a)*Ry*br*f,Rz*Math.sin(el)]))}
+      if(D(S[2])<D(add(MC,[0,0,Rz*.6])))continue;const Q=S.map(P);for(const[col,lw,dy] of[['rgba(40,62,120,.6)',2,0],['rgba(255,255,255,.85)',1,-1]]){ctx.strokeStyle=col;ctx.lineWidth=lw;ctx.beginPath();for(const q of Q)ctx.lineTo(q[0]+(dy?.6:0),q[1]+dy);ctx.stroke()}}}
+  // the eyes that open in the snow: where his real eyes are under it (so they become his eyes as he comes out), the far one only while
+  // it faces us; the tips of the horns poking out of the top
+  if(A.snowEyes>0&&J.eyeQ){ctx.globalAlpha*=A.snowEyes;for(const e of J.eyeQ){const q=e.q,w=Math.min(1,e.v*2.5);if(!LOWFX)shine(K1.eye,q[0],q[1],9,.6*w);
+      ctx.fillStyle='#283466';ctx.beginPath();ctx.ellipse(q[0],q[1],4.8*w+.6,3.1,0,0,TAU);ctx.fill();ctx.fillStyle=K1.iris;ctx.beginPath();ctx.ellipse(q[0],q[1],3.7*w,2.2*Math.min(1,A.snowEyes*1.6),0,0,TAU);ctx.fill();
+      ctx.fillStyle='#ffffff';ball([q[0]-1.1*w,q[1]-.7],.9);ctx.fill()}}
+  ctx.restore();
+  const hk=sstep(0,.3,A.snowEyes)*(1-sstep(.4,.44,p));if(hk>.01)for(const sd of[-1,1]){const qa=P(add(MC,[6,sd*20,36])),qb=P(add(MC,[0,sd*26,44]));ctx.save();ctx.globalAlpha*=hk;ctx.fillStyle=K1.horn.b;ctx.strokeStyle=INK;ctx.lineWidth=1.6;tri(qa[0],qa[1],qb[0],qb[1],3.4);ctx.restore()}
+  // the broken lip of the crater on our side: a blue shade on it and a bright edge of fresh snow just under it
+  if(rim){const dc=D(add(MC,[0,0,zc]));let s0=-1;for(let i=0;i<28;i++)if(D(rim[i])>=dc&&D(rim[(i+27)%28])<dc){s0=i;break}
+    if(s0>=0){const arc=[];for(let j=0;j<28;j++){const i=(s0+j)%28;if(D(rim[i])<dc)break;arc.push(rimS[i])}
+      if(arc.length>1){ctx.lineCap='round';ctx.lineJoin='round';ctx.strokeStyle='#283466';ctx.lineWidth=1.8;ctx.beginPath();for(const q of arc)ctx.lineTo(q[0],q[1]);ctx.stroke();
+        ctx.strokeStyle='rgba(255,255,255,.95)';ctx.lineWidth=1.6;ctx.beginPath();for(const q of arc)ctx.lineTo(q[0],q[1]+2.2);ctx.stroke()}}}ctx.restore()}
+function chunksDraw(V0,A,L,D){const k=A.chunks;if(k<0)return;const dm=D(add(MC,[0,0,30]));for(let i=0;i<MCH.length;i++){const[a,ro,ti,s2]=MCH[i],u=ez(Math.min(1,k*1.3)),d=30+36*u,
+      z=Math.max(0,26*s2*(1-u)+8*Math.sin(Math.PI*Math.min(1,k*1.6))),c=add(MC,[Math.cos(a)*d,Math.sin(a)*d,z]),r=12.5*s2*(1-.65*k);
+    if(r<1.5)continue;const near=D(c)>dm,dd=near?(A.sink>0?10000+D(c)*.01:D(c)+60):D(c)-60;
+    L.add(dd,()=>{ctx.save();ctx.globalAlpha*=1-sstep(.75,1,k);const q=V0.P(c);ctx.translate(q[0],q[1]);ctx.rotate(ro*k*3+ti*.5);const pts=[];
+      for(let j=0;j<9;j++){const b=j/9*TAU,w=1+.22*Math.sin(j*2.7+i*1.3)+.12*Math.cos(j*4.1+i);pts.push([Math.cos(b)*r*w,Math.sin(b)*r*.7*w-r*.35])}
+      ctx.lineJoin='round';C.smooth(pts);ctx.fillStyle=grad3(bbox(pts),T3('#ffffff','#dbe7f6','#8aa4cb'));ctx.fill();ctx.strokeStyle=INK;ctx.lineWidth=2;ctx.stroke();
+      ctx.save();C.smooth(pts);ctx.clip();ctx.fillStyle='rgba(110,140,195,.42)';ctx.beginPath();ctx.ellipse(r*.25,r*.25,r*.95,r*.42,-.2,0,TAU);ctx.fill();ctx.fillStyle='rgba(255,255,255,.8)';ctx.beginPath();ctx.ellipse(-r*.25,-r*.62,r*.45,r*.18,-.15,0,TAU);ctx.fill();ctx.restore();ctx.restore()})}}
 // the clip of a body sunk into the floor: only what is above the front edge of its hole in the floor
 function floorClip(V0,c,rx,ry){const{P}=V0,pts=[];for(let i=0;i<32;i++){const a=i/32*TAU;pts.push(P(add(c,[Math.cos(a)*rx,Math.sin(a)*ry,0])))}let l=0,r=0;pts.forEach((q,i)=>{if(q[0]<pts[l][0])l=i;if(q[0]>pts[r][0])r=i});
-  const cy=(pts[l][1]+pts[r][1])/2,lower=[];for(let i=0;i<32;i++){const j=(l+i)%32;lower.push(pts[j]);if(j===r)break}const lo2=[];for(let i=0;i<32;i++){const j=(l-i+32)%32;lo2.push(pts[j]);if(j===r)break}
-  const arc=lower.reduce((s2,q)=>s2+q[1],0)/lower.length>lo2.reduce((s2,q)=>s2+q[1],0)/lo2.length?lower:lo2;ctx.beginPath();ctx.moveTo(arc[0][0],-1e4);for(const q of arc)ctx.lineTo(q[0],q[1]);ctx.lineTo(arc[arc.length-1][0],-1e4);ctx.closePath();ctx.clip()}
+  const lower=[];for(let i=0;i<32;i++){const j=(l+i)%32;lower.push(pts[j]);if(j===r)break}const lo2=[];for(let i=0;i<32;i++){const j=(l-i+32)%32;lo2.push(pts[j]);if(j===r)break}
+  const arc=lower.reduce((s2,q)=>s2+q[1],0)/lower.length>lo2.reduce((s2,q)=>s2+q[1],0)/lo2.length?lower:lo2,a0=arc[0],a1=arc[arc.length-1];
+  ctx.beginPath();ctx.moveTo(-1e4,-1e4);ctx.lineTo(-1e4,a0[1]);for(const q of arc)ctx.lineTo(q[0],q[1]);ctx.lineTo(1e4,a1[1]);ctx.lineTo(1e4,-1e4);ctx.closePath();ctx.clip()}
 
 // ------------------------------------------------------------------ the defeat: glass, cracks, the shards, the horns on the little mound
 const CRK=[[[0,[.8,.3,-.6]],[0,[.95,.2,-.1]],[1,[.85,.35,-.3]],[1,[.8,.4,.1]],[2,[-.1,.7,.6]]],[[0,[.75,-.4,-.5]],[0,[.9,-.25,0]],[1,[.85,-.45,-.2]],[1,[.6,-.7,.3]]],
   [[0,[-.6,.6,-.5]],[0,[-.85,.4,0]],[2,[-.8,.5,-.3]],[2,[-.7,.3,.4]]],[[0,[-.7,-.5,-.4]],[2,[-.85,-.4,-.4]],[2,[-.75,-.45,.2]],[2,[-.4,-.3,.85]]]].map(c=>c.map(([i,m])=>({i,m:nrm(m)})));
-const SHD=[[0,[0,0,60],8.5,[.9,.1,.4]],[1,[10,22,50],7,[.2,1,.2]],[2,[10,-22,50],7,[.2,-1,.2]],[3,[-14,12,40],7.5,[-.8,.7,.3]],[4,[-14,-12,40],7,[-.8,-.7,.3]],[5,[6,0,86],6.5,[.6,0,.8]],[6,[-6,30,70],6,[-.3,1,.5]],[7,[-6,-30,70],6,[-.3,-1,.5]]];
+const SHD=[[0,[0,0,60],13,[.9,.1,.4]],[1,[10,22,50],11.5,[.2,1,.2]],[2,[10,-22,50],11.5,[.2,-1,.2]],[3,[-14,12,40],12,[-.8,.7,.3]],[4,[-14,-12,40],11.5,[-.8,-.7,.3]],[5,[6,0,86],11,[.6,0,.8]],[6,[-6,30,70],10.5,[-.3,1,.5]],[7,[-6,-30,70],10.5,[-.3,-1,.5]]];
+const SHT=[T3('#d4f0ff','#78b8e2','#386aa6'),T3('#e0f6ff','#6aaee0','#2c5c9c')];
+// the blades of the second phase that fall with it: [from (the hands at the end of its fall), the way they fly]
+const BLD=[[[30,34,8],[.5,.85,.6]],[[34,28,8],[.95,.25,.7]],[[22,-34,24],[.4,-.9,.5]],[[26,-28,24],[.9,-.4,.8]]];
+function bladePiece(V0,c,L0,a,ax,T){const r=v=>add(c,rotAx(v,ax,a)),tip=r([L0,0,0]),bk=r([-L0*.3,0,0]),S=[r([0,2.8,0]),r([0,0,1.5]),r([0,-2.8,0]),r([0,0,-1.5])],FS=[];
+  for(let i=0;i<4;i++){FS.push([S[i],S[(i+1)%4],tip]);FS.push([S[(i+1)%4],S[i],bk])}facets(V0,FS,T,{lw:1.6,seamCol:'rgba(255,255,255,.6)'})}
 function shardsDraw(V0,A,L,D,J){const k=A.shat,n=LOWFX?4:8;for(let i=0;i<n;i++){const s=SHD[LOWFX?i*2:i],v=nrm(s[3]),T=Math.min(1,k/.45),air=T<1,t=ez(T),c0=s[1],hor=[v[0]*46,v[1]*46],
       c=[c0[0]+hor[0]*t,c0[1]+hor[1]*t,air?Math.max(s[2]*.7,c0[2]+60*T*v[2]*1.4-(c0[2]+40)*T*T):s[2]*.7],an=air?T*6+i:6+i;
-    L.add(D(c)+5,()=>iceChunk(V0,c,s[2],an,nrm([.3,.7,.5]),J.KG.fur))}}
+    L.add(D(c)+5,()=>iceChunk(V0,c,s[2],an,nrm([.3,.7,.5]),mixT(SHT[0],SHT[1],A.k2)))}
+  if(A.k2>.5)for(let i=0;i<(LOWFX?2:4);i++){const[c0,v0]=BLD[LOWFX?i*2:i],v=nrm(v0),T=Math.min(1,k/.4),t=ez(T),air=T<1,
+      c=[c0[0]+v[0]*40*t,c0[1]+v[1]*40*t,air?Math.max(3,c0[2]+70*T*v[2]-(c0[2]+50)*T*T):3],an=air?T*7+i:7+i;
+    L.add(D(c)+5,()=>bladePiece(V0,c,16,an,nrm([.2,.5,.8]),BLADE))}}
 function remainsDraw(V0,A,L,D,J){const k=A.shat,{P}=V0,mk=sstep(0,.4,k);
   // the little mound of snow (60 x 26) and the two horns crossed on top, like a small peak
   if(mk>0)L.add(D([0,0,0])-1,()=>domeDraw(V0,[0,0,0],30*(.6+.4*mk),26*mk,K1.snow,{dots:1}));
   // the horns: they fall tumbling from where the head was, bounce once on the snow and lie crossed on top of it, the coils up
   for(const sd of[-1,1]){const fall=cl(k/.3,0,1),bz=k>.3&&k<.45?Math.sin((k-.3)/.15*Math.PI)*7:0,top=[0,0,26*mk+1],st=J.hornAt[sd<0?0:1],
-      rest=v=>add(top,rotZ(rotX([v[0]*.82+4,(v[1]-9)*.82,v[2]*.82+6],sd*1.15),sd*.45)),
+      vr=[V0.c,-V0.s,0],vt=[V0.s,V0.c,0],ca=Math.cos(sd*.62),sa=Math.sin(sd*.62),
+      rest=v=>{const X0=-sd*(v[0]+5.4)*.86,Z0=(v[2]-.5)*.86,xr=X0*ca-Z0*sa,zr=X0*sa+Z0*ca;return add(add(top,[0,0,9]),add(add(mul(vr,xr+sd*9.5),[0,0,zr]),mul(vt,(v[1]-20)*.2+sd*.6)))},
       tum=v=>add(st,rotY(rotX([v[0]*.82,(v[1]-9)*.82*sd,v[2]*.82],fall*5*sd),fall*3)),w=ez(fall),
       pts=HORN.map(q=>{const v=[q[0],q[1],q[2]];return k<.3?lerp3(tum(v),rest(v),w):add(rest(v),[0,0,bz])}),c=pts[2];
     L.add(D(top)+2+(sd>0?.5:0),()=>{const S=pts.map(P);
@@ -862,10 +923,10 @@ function yeti2(x,y,face,anim,p,sc,o){sc=sc||1;o=o||{};anim=MV.includes(anim)?ani
   // the defeat: the glass from the feet up (by the height of each piece), the remains after .55
   const gl=A.ice>=0?z=>cl((A.ice*150-z)/18+.5,0,1):null,Kz=z=>gl?pal(A.k2,gl(z)):K;J.KG=pal(A.k2,1);J.KH=Kz(90);
   if(A.shat>=0){J.hornAt=[-1,1].map(sd=>add(Hc,HR([-12,sd*28,0])));ctx.save();ctx.translate(x,y);ctx.scale(sc,sc);const L=parts();
-    floor(V0,0,0,1,[0,0,0],34,12,.35*A.fade,0);shardsDraw(V0,A,L,D,J);remainsDraw(V0,A,L,D,J);
+    if(A.fade>.03)floor(V0,0,0,1,[0,0,0],34,12,.35*A.fade,0);shardsDraw(V0,A,L,D,J);remainsDraw(V0,A,L,D,J);
     if(A.fade<.99){const LL=L.slice().sort((a,b)=>a.d-b.d);fadeDraw(()=>{for(const e of LL){ink(2.4);e.f()}},P([0,0,30]),90,A.fade)}else run(L);ctx.restore();return}
   const shK=A.sink>0?sstep(30,0,A.sink):1;
-  floor(V0,x,y,sc,[A.B[0],A.B[1],0],46,15,.45*shK,lift);
+  if(shK>.02)floor(V0,x,y,sc,[A.B[0],A.B[1],0],46,15,.45*shK,lift);
   ctx.save();ctx.translate(x,y);ctx.scale(sc,sc);const L=parts(),dT=D(XU.T(CC));
   L.add(dT,()=>torsoDraw(V0,X,XU,A,Kz(50),J));
   L.add(dT+.2,()=>flagDraw(V0,XU,A,J));
@@ -892,16 +953,27 @@ function yeti2(x,y,face,anim,p,sc,o){sc=sc||1;o=o||{};anim=MV.includes(anim)?ani
   for(const sd of[-1,1]){const g=armGeo(sd,A,XU,lift),sh=XU.T([DLT[0],sd*DLT[1],DLT[2]]),ks=sstep(.1,-.1,tside(sh,UC,UR)),dsF=Math.max(dT+.5,dT+sig(sh)),dsB=Math.min(dT-.5,dT+sig(sh)),
       mu=lerp3(g.S,g.El,.5),mf=lerp3(g.El,g.W,.5),hump=XU.T(UC),rs=Math.max(0,D(mu)-D(sh))*sstep(-5,10,g.El[2]-g.S[2]);J.hands[sd<0?0:1]=g;
     split(()=>shoulderDraw(V0,XU,A,Kz(88),sd,J),dsF,dsB,sh,hump,24,ks);
-    split(()=>upperArmDraw(V0,g,A,Kz(70),J),dsF-.3+rs,dsB-.3+rs,sh,hump,24,ks);const dua=lerp(dsF,dsB,ks>.5?1:0)-.3+rs;
-    const zh=g.Pc[2]-lift,dF0=dT+sig(g.Pc),hw=sstep(-4,-16,g.Pc[2]-g.El[2])*sstep(-2,-12,D(mf)-D(mu)),dF=lerp(dF0,Math.min(dF0,dua-.1),hw),Ka=Kz(Math.max(0,zh));
+    const Kua=Kz(70),uaD=()=>upperArmDraw(V0,g,A,Kua,J);
+    split(uaD,dsF-.3+rs,dsB-.3+rs,sh,hump,24,ks);const dua=lerp(dsF,dsB,ks>.5?1:0)-.3+rs;
+    // the forearm goes where its hand is against the torso; against the upper arm by which of the two is nearer to us at the elbow: it is
+    // drawn after the upper arm, and the end of the upper arm is drawn again over the elbow, wiped in from its end as it comes in front (so
+    // the two never swap at once as it turns). With the torso between the two, what is behind it stays behind it (clipped to outside it)
+    const zh=g.Pc[2]-lift,dF0=dT+sig(g.Pc),same=(dF0-dT)*(dua-dT)>0,Ka=Kz(Math.max(0,zh)),wup=sstep(-2.5,2.5,D(lerp3(g.El,g.S,.3))-D(lerp3(g.El,g.W,.3)));
+    const outT=()=>{if(!J.tpath)return;const pa=new Path2D();pa.rect(-1e4,-1e4,2e4,2e4);pa.addPath(J.tpath);ctx.clip(pa,'evenodd')};
+    const wipe=t=>{if(wup<=.01)return;const a=P(g.S),b=P(g.El),ux=b[0]-a[0],uy=b[1]-a[1],l=Math.hypot(ux,uy);if(l<2)return;const u=[ux/l,uy/l],v=[-u[1],u[0]],s=lerp(12,-Math.min(13,l*.4),wup),
+        m=[b[0]+u[0]*s,b[1]+u[1]*s];ctx.save();if(t)outT();ctx.beginPath();ctx.moveTo(m[0]+v[0]*1e3,m[1]+v[1]*1e3);ctx.lineTo(m[0]-v[0]*1e3,m[1]-v[1]*1e3);
+        ctx.lineTo(m[0]-v[0]*1e3+u[0]*1e3,m[1]-v[1]*1e3+u[1]*1e3);ctx.lineTo(m[0]+v[0]*1e3+u[0]*1e3,m[1]+v[1]*1e3+u[1]*1e3);ctx.closePath();ctx.clip();ink(2.4);uaD();ctx.restore()};
     const hb=[A.ball,A.ball2].find(b=>b&&b.held===sd),hbD=hb?()=>ballDraw(V0,add(hb.c,[0,0,lift]),hb.r,hb.spin,[1,0,0],A.k2>.5):null,bf=hb&&F(g.pn)>0,hf=F(g.fd)>-.85;
-    L.add(dF,()=>{if(hb&&!bf)hbD();if(hf){forearmDraw(V0,g,A,Ka,J);handDraw(V0,g,A,Ka,J)}else{handDraw(V0,g,A,Ka,J);forearmDraw(V0,g,A,Ka,J)}if(bf)hbD()})}
+    const fa=()=>{if(hb&&!bf)hbD();if(hf){forearmDraw(V0,g,A,Ka,J);handDraw(V0,g,A,Ka,J)}else{handDraw(V0,g,A,Ka,J);forearmDraw(V0,g,A,Ka,J)}if(bf)hbD()};
+    if(same)L.add(Math.max(dF0,dua+.05),()=>{fa();wipe(false)});
+    else if(dF0>dua)L.add(dF0,()=>{fa();wipe(true)});
+    else{L.add(dF0,fa);L.add(dua+.01,()=>{ctx.save();outT();ink(2.4);fa();ctx.restore();wipe(true)})}}
   // the head: in front of the torso while the hump's side toward it faces us, behind it when that side turns away; in front, the skull is
   // cut where it goes into the chest (only the skull: the face, the mane and the beard never). Toward the swap it goes behind the torso
   // little by little, from its back: the part of it past a line that sweeps over it is drawn before the torso, the rest after it, so at
   // the swap it is all behind and nothing jumps. The roots of the horns go with it
   const KH=Kz(84),hS=tside(Hc,UC,UR),hfr=hS>0,dH=hfr?Math.max(dT+.5,dT+sig(Hc)):Math.min(dT-.5,dT+sig(Hc)),oc=hfr?outCap(XU,CC,mul(CR3,1+A.infl),AXES,hc0,16.2,1):null,hsw=hfr?sstep(.3,0,hS):0;
-  const T=q=>add(Hc,HR(q)),dHc=D(Hc),roots=[-1,1].map(sd=>({sd,f:F(HR([HBASE[0],sd*HBASE[1],HBASE[2]]))>0}));J.roots=roots;J.hornT=T;
+  J.dH=dH;const T=q=>add(Hc,HR(q)),dHc=D(Hc),roots=[-1,1].map(sd=>({sd,f:F(HR([HBASE[0],sd*HBASE[1],HBASE[2]]))}));J.roots=roots;J.hornT=T;
   // (the cut of the skull where it goes into the chest only on the part drawn after the torso)
   split(()=>headDraw(V0,Hc,HR,A,KH,J,oc||null),dH,Math.min(dT-.5,dT+sig(Hc)),Hc,XU.T(CC),34,hsw,()=>headDraw(V0,Hc,HR,A,KH,J,null));
   // the spirals of the horns round the ears: their own depth, against the skull, the shoulder and the torso
@@ -918,12 +990,13 @@ function yeti2(x,y,face,anim,p,sc,o){sc=sc||1;o=o||{};anim=MV.includes(anim)?ani
     if(A.suck>=0&&A.suck<1)L.add(999,()=>suckDraw(V0,A,J));
     if(A.k2>.5&&anim!=='gasp'&&anim!=='die')L.add(D(J.mouth)+20,()=>wispDraw(V0,A,J,K))}
   // the entrance: the mound covers the body sunk in it, the clods roll away
-  if(A.mound>=0)L.add(9999,()=>moundDraw(V0,A,p,J,fx));
+  if(A.mound>=0){const MR=moundR(A);J.eyeQ=[-1,1].map(sd=>{const m=[EYED[0],sd*EYED[1],EYED[2]];let E=add(Hc,HR(ellAt([0,0,0],HRD,null,m)));const d=sub(E,MC),nr=Math.hypot(d[0]/MR[0],d[1]/MR[1],d[2]/MR[2]);
+      if(nr>.94)E=add(MC,mul(d,.94/nr));return{q:P(E),v:F(HR(ellN(HRD,null,m)))}}).filter(e=>e.v>.1);
+    L.add(9999,()=>moundDraw(V0,A,p,J,fx,'front'))}
   if(A.chunks>=0)chunksDraw(V0,A,L,D);
   if(A.sink>0){const LL=L.slice().sort((a,b)=>a.d-b.d),front=LL.filter(e=>e.d>=9000||e.d>500),body=LL.filter(e=>!(e.d>=9000||e.d>500));
     // under the snow until it breaks out; then what is still in the floor hides behind the base of the mound, which sinks as it rises
-    if(A.mound<0){ctx.save();floorClip(V0,[A.B[0],A.B[1],0],46,58);for(const e of body){ink(2.4);e.f()}ctx.restore();
-      const bk=cl(A.sink/82,0,1);if(bk>.01)domeDraw(V0,[0,0,0],44*Math.sqrt(bk),36*bk,T3('#ffffff','#dde9f6','#93abcf'),{dots:1,lw:lerp(1.2,2.6,Math.min(1,bk*4))})}
+    if(A.mound>=1&&A.crater>.001){const[Rx,Ry]=moundR(A);moundDraw(V0,A,p,J,fx,'back');ctx.save();floorClip(V0,MC,Rx,Ry);for(const e of body){ink(2.4);e.f()}ctx.restore()}
     for(const e of front){ink(2.4);e.f()}}
   else run(L);
   ctx.restore()}
@@ -943,8 +1016,11 @@ function wispDraw(V0,A,J,K){if(LOWFX)return;const{P}=V0;for(let i=0;i<3;i++){con
 // ------------------------------------------------------------------ the effects of the moves
 function fxDraw(V0,X,XU,L,e,A,J,Hc,HR,K){const{P,D}=V0,t=e.t,br=K.breath,mouth=J.mouth,fwd=HR([1,0,0]);
   if(e.k==='nose'){const m0=add(Hc,HR([22,0,-4]));L.add(D(m0)+30,()=>{for(const sd of[-1,1]){const u=t,q=P(add(add(m0,HR([3+u*8,sd*(2+u*4),-1-u*3])),mul(J.W,u*10)));cloud(q,1.6+u*3.4,.5*(1-u)*Math.min(1,u*6),br)}})}
-  else if(e.k==='scrape'){const g=J.hands&&J.hands[e.sd<0?0:1];if(!g)return;const c=[g.Pc[0]+(e.back?-6:8),g.Pc[1],0];L.add(D(c)+20,()=>{for(let i=0;i<5;i++){const u=cl(t*1.3-i*.07,0,1);if(u<=0||u>=1)continue;
-      const q=P(add(c,[(e.back?-1:-1)*(u*12+i*2),(i-2)*3,1+14*u*(1-u)]));ctx.fillStyle=`rgba(236,246,255,${.75*(1-u)})`;ball(q,1.1+u*1.8);ctx.fill()}})}
+  else if(e.k==='scrape'){const g=J.hands&&J.hands[e.sd<0?0:1];if(!g)return;const fw=X.Rd([1,0,0]),f0=nrm([fw[0],fw[1],0]),sv=[-f0[1],f0[0],0],o0=e.back?-4:8,c=[g.Pc[0]+f0[0]*o0,g.Pc[1]+f0[1]*o0,0];
+    // two scratches in the ice behind the claws (pale, with a blue edge under them so they read on the white floor), a puff of snow
+    L.add(-850,()=>{const k=sstep(0,.35,t),al=1-sstep(.55,1,t);if(al<=.01)return;ctx.save();ctx.globalAlpha*=al;
+      for(const o of[-2.8,2.8]){const a=P(add(c,mul(sv,o))),b=P(add(add(c,mul(sv,o*1.25)),mul(f0,-15*k)));taper([a[0],a[1]+.9],[b[0],b[1]+.9],1.7,'rgba(60,92,150,.5)');taper(a,b,1.2,'rgba(250,253,255,.95)')}ctx.restore()});
+    L.add(D(c)+20,()=>{const u=sstep(0,.6,t);cloud(P(add(c,[0,0,3+8*u])),2+4*u,.5*(1-u),'236,246,255')})}
   else if(e.k==='hah'||e.k==='pant'||e.k==='cloud'){const big=e.k==='cloud'?1.6:e.k==='pant'?.55:e.small?.75:1.15;L.add(D(mouth)+40,()=>{for(let i=0;i<5;i++){const u=cl(t*1.25-i*.06,0,1);if(u<=0||u>=1)continue;
       const q=P(add(add(mouth,mul(fwd,(4+u*20)*big)),add(mul(J.W,u*8),[0,0,(i-2)*1.6*big+u*4])));cloud(q,(2+u*6)*big,.62*(1-u)*Math.min(1,u*5),br)}})}
   else if(e.k==='snow'){const c=e.at;L.add(D(c)+25,()=>{const n=e.n||6,r=e.r||10;for(let i=0;i<n;i++){const a=i/n*TAU+.5,d=r*(.35+t*.9),q=P(add(c,[Math.cos(a)*d,Math.sin(a)*d,t*10+(i%2)*3]));cloud(q,2.2+t*4.5,.6*(1-t),'240,248,255')}})}
@@ -954,28 +1030,35 @@ function fxDraw(V0,X,XU,L,e,A,J,Hc,HR,K){const{P,D}=V0,t=e.t,br=K.breath,mouth=J
   else if(e.k==='crack'){L.add(-900,()=>{const k=sstep(0,.25,t),al=1-sstep(.7,1,t);ctx.save();ctx.globalAlpha*=al;ctx.lineCap='round';
       for(let i=0;i<5;i++){const a=i/5*TAU+.4;const pts=[];for(let j=0;j<=4;j++){const r=4+j*(e.r||20)/4*k;pts.push(P(add(e.at,[Math.cos(a+Math.sin(j*2.1+i)*.3)*r,Math.sin(a+Math.sin(j*2.1+i)*.3)*r,0])))}
         ctx.strokeStyle='rgba(40,70,120,.55)';ctx.lineWidth=2.4;ctx.beginPath();for(const q of pts)ctx.lineTo(q[0],q[1]);ctx.stroke();ctx.strokeStyle='rgba(255,255,255,.9)';ctx.lineWidth=1.1;ctx.stroke()}ctx.restore()})}
-  else if(e.k==='chest'){const c=XU.T([28,0,66]),n=XU.Rd([1,0,.15]);L.add(D(c)+50,()=>{const[u,v]=frm(n,[0,0,1]),r=6+t*30,pts=[];for(let i=0;i<24;i++){const a=i/24*TAU;pts.push(P(add(c,add(mul(u,Math.cos(a)*r),mul(v,Math.sin(a)*r)))))}
+  else if(e.k==='chest'){const c=XU.T([30,0,54]),n=XU.Rd([1,0,.15]);L.add(J.dH!=null?J.dH-.1:D(c)+50,()=>{const[u,v]=frm(n,[0,0,1]),r=6+t*30,pts=[];for(let i=0;i<24;i++){const a=i/24*TAU;pts.push(P(add(c,add(mul(u,Math.cos(a)*r),mul(v,Math.sin(a)*r)))))}
       ctx.strokeStyle=e.frost?`rgba(190,235,255,${.85*(1-t)})`:`rgba(255,255,255,${.8*(1-t)})`;ctx.lineWidth=3.5*(1-t)+.8;poly(pts);ctx.stroke();if(e.frost&&!LOWFX)for(let i=0;i<6;i++){const q=pts[i*4];star4(q,3*(1-t),1-t,'#e8fbff')}})}
   else if(e.k==='mflash'){L.add(999,()=>{const q=P(mouth),a=1-t,g=ctx.createRadialGradient(q[0],q[1],1,q[0],q[1],22);g.addColorStop(0,`rgba(255,255,255,${.9*a})`);g.addColorStop(.5,`rgba(200,240,255,${.45*a})`);g.addColorStop(1,'rgba(200,240,255,0)');ctx.fillStyle=g;ball(q,22);ctx.fill()})}
-  else if(e.k==='cone'){// the root of the blast: the first 60 px of the white-blue wind from the mouth, flakes and sparks along it (the game draws the cone)
-    const d0=nrm([fwd[0],fwd[1],0]),end=add([mouth[0],mouth[1],0],mul(d0,60)),side=nrm(cross(d0,[0,0,1]));
-    L.add(Math.max(D(mouth),D(end))+30,()=>{const a=Math.min(1,t*8)*(1-sstep(.85,1,t)),q0=P(mouth),q1=P(add(end,[0,0,10])),sp1=P(add(add(end,mul(side,34)),[0,0,6])),sp2=P(add(add(end,mul(side,-34)),[0,0,6]));
-      const g=ctx.createLinearGradient(q0[0],q0[1],q1[0],q1[1]);g.addColorStop(0,`rgba(255,255,255,${.85*a})`);g.addColorStop(.5,`rgba(200,236,255,${.5*a})`);g.addColorStop(1,'rgba(200,236,255,0)');
-      ctx.fillStyle=g;ctx.beginPath();ctx.moveTo(q0[0],q0[1]-2);ctx.quadraticCurveTo((q0[0]+sp1[0])/2,(q0[1]+sp1[1])/2-4,sp1[0],sp1[1]);ctx.lineTo(sp2[0],sp2[1]);ctx.quadraticCurveTo((q0[0]+sp2[0])/2,(q0[1]+sp2[1])/2+4,q0[0],q0[1]+2);ctx.closePath();ctx.fill();
-      for(let i=0;i<9;i++){const u=(t*3.2+i/9)%1,w=(i%3-1)*.8*u,c=add(add(mouth,mul(sub(add(end,[0,0,6]),mouth),u)),mul(side,w*26)),q=P(c);ctx.fillStyle=`rgba(255,255,255,${.9*a*Math.sin(Math.PI*u)})`;if(i%3===0&&!LOWFX)star4(q,2.6,a*Math.sin(Math.PI*u));else{ball(q,1.3);ctx.fill()}}})}
+  else if(e.k==='cone'){// the root of the blast: the first 60 px of the white-blue wind from the mouth along the body (the game draws the cone, along
+    // e.face: the head is turned toward us a little), soft: three layers narrower and brighter inward, puffs along it, flakes and sparks
+    const fw=X.Rd([1,0,0]),d0=nrm([fw[0],fw[1],0]),end=X.T([106,0,44]),side=nrm(cross(d0,[0,0,1])),hw=A.k2>.5?22:34;
+    L.add(Math.max(D(mouth),D(end))+30,()=>{const a=Math.min(1,t*8)*(1-sstep(.85,1,t)),q0=P(mouth),q1=P(end);
+      for(const[wk,al] of[[1,.22],[.7,.3],[.42,.42]]){const sp1=P(add(end,mul(side,hw*wk))),sp2=P(add(end,mul(side,-hw*wk)));
+        const g=ctx.createLinearGradient(q0[0],q0[1],q1[0],q1[1]);g.addColorStop(0,`rgba(255,255,255,${(al*1.6*a).toFixed(3)})`);g.addColorStop(.55,`rgba(205,238,255,${(al*a).toFixed(3)})`);g.addColorStop(1,'rgba(200,236,255,0)');
+        ctx.fillStyle=g;ctx.beginPath();ctx.moveTo(q0[0],q0[1]-2*wk);ctx.quadraticCurveTo((q0[0]+sp1[0])/2,(q0[1]+sp1[1])/2-5*wk,sp1[0],sp1[1]);ctx.quadraticCurveTo(q1[0]+(q1[0]-q0[0])*.08,q1[1]+(q1[1]-q0[1])*.08,sp2[0],sp2[1]);
+        ctx.quadraticCurveTo((q0[0]+sp2[0])/2,(q0[1]+sp2[1])/2+5*wk,q0[0],q0[1]+2*wk);ctx.closePath();ctx.fill()}
+      for(const[u,r] of[[.3,5],[.58,8],[.86,11]]){const w=Math.sin(t*TAU*1.5+u*7)*.25,c=P(add(lerp3(mouth,end,u),mul(side,w*14)));cloud(c,r*(.8+.3*Math.sin(t*9+u*5)),.32*a,'232,246,255')}
+      for(let i=0;i<9;i++){const u=(t*3.2+i/9)%1,w=(i%3-1)*.8*u,c=add(add(mouth,mul(sub(end,mouth),u)),mul(side,w*hw*.75)),q=P(c);ctx.fillStyle=`rgba(255,255,255,${.9*a*Math.sin(Math.PI*u)})`;if(i%3===0&&!LOWFX)star4(q,2.6,a*Math.sin(Math.PI*u));else{ball(q,1.3);ctx.fill()}}})}
   else if(e.k==='column'){L.add(D(mouth)+60,()=>{for(let i=0;i<7;i++){const u=(t*2.4+i/7)%1,q=P(add(mouth,[(i%2?2:-2)*u,0,6+u*48]));cloud(q,3+u*7,.55*Math.sin(Math.PI*u)*(1-sstep(.85,1,t)),br)}})}
   else if(e.k==='slash'){const sd=e.sd,a0=sd>0?[-10,30,128]:[-10,-30,128],a1=sd>0?[40,-20,20]:[40,20,20];L.add(999,()=>{const k=sstep(0,.3,t),al=1-sstep(.45,1,t);ctx.save();ctx.globalAlpha*=al;ctx.lineCap='round';
       for(let j=-1;j<=1;j++){const off=[0,0,j*5],m=add(lerp3(a0,a1,.5),[22,0,12]),S=[];for(let i=0;i<=10;i++){const u=i/10*k,b=add(add(lerp3(lerp3(a0,m,u),lerp3(m,a1,u),u),off),[0,0,0]);S.push(P(b))}
         ctx.strokeStyle='rgba(120,200,255,.5)';ctx.lineWidth=5;ctx.beginPath();for(const q of S)ctx.lineTo(q[0],q[1]);ctx.stroke();ctx.strokeStyle='#ffffff';ctx.lineWidth=2;ctx.stroke()}ctx.restore()})}
   else if(e.k==='clap'){const g=J.hands;if(!g)return;const c=lerp3(g[0].Pc,g[1].Pc,.5);L.add(D(c)+30,()=>{for(let i=0;i<6;i++){const a=i/6*TAU,q=P(add(c,[Math.cos(a)*(3+t*12),Math.sin(a)*(3+t*12),Math.sin(a*2)*4+t*4]));cloud(q,1.8+t*3,.7*(1-t),'240,248,255')}})}
   else if(e.k==='fall'){const pts=e.head?[add(Hc,HR([-4,-8,16])),add(Hc,HR([-4,8,16]))]:[XU.T([DLT[0],-DLT[1],DLT[2]+10]),XU.T([DLT[0],DLT[1],DLT[2]+10])];
-    L.add(990,()=>{for(const c of pts)for(let i=0;i<4;i++){const u=cl(t*1.2-i*.08,0,1);if(u<=0||u>=1)continue;const q=P(add(c,[(i-1.5)*3,(i%2?2:-2)*u*6,-u*u*50]));ctx.fillStyle=`rgba(244,250,255,${1-u})`;ctx.strokeStyle=`rgba(27,22,18,${.6*(1-u)})`;ctx.lineWidth=1;ball(q,1.6+i*.3);ctx.fill();ctx.stroke()}})}
+    L.add(990,()=>{for(const c of pts)for(let i=0;i<4;i++){const u=cl(t*1.2-i*.08,0,1);if(u<=0||u>=1)continue;const q=P(add(c,[(i-1.5)*3,(i%2?2:-2)*u*6,-u*u*50])),r=1.5+i*.3,an=i*1.3+u*4;
+      ctx.fillStyle=`rgba(80,112,175,${(.35*(1-u)).toFixed(3)})`;ctx.beginPath();ctx.ellipse(q[0]+.4,q[1]+.8,r*1.15,r*.8,an,0,TAU);ctx.fill();
+      ctx.fillStyle=`rgba(250,253,255,${(1-u).toFixed(3)})`;ctx.beginPath();ctx.ellipse(q[0],q[1],r*1.15,r*.8,an,0,TAU);ctx.moveTo(q[0]+r*1.2,q[1]-r*.3);ctx.ellipse(q[0]+r*.6,q[1]-r*.3,r*.6,r*.5,0,0,TAU);ctx.fill()}})}
   else if(e.k==='frost'){L.add(999,()=>{for(let i=0;i<16;i++){const a=i/16*TAU,u=t,r=20+u*70,q=P([Math.cos(a)*r,Math.sin(a)*r,40+20*Math.sin(i*1.3)*(1-u)]);cloud(q,3+u*6,.75*(1-u),'228,246,255');if(i%4===0&&!LOWFX)star4(q,4*(1-u),1-u)}})}
   else if(e.k==='crac'){const g=J.hands;if(!g)return;L.add(999,()=>{for(const h of g){const q=P(add(h.Pc,mul(h.fd,9)));if(!LOWFX)shine(BLADERGB,q[0],q[1],12,.7*(1-t));star4(q,7*(1-t),1-t)}})}
   else if(e.k==='mist'){L.add(-700,()=>{for(let i=0;i<6;i++){const a=i/6*TAU+t*TAU,r=24+8*Math.sin(t*TAU*2+i),q=P([Math.cos(a)*r,Math.sin(a)*r*1.1,2]);cloud(q,6+2*Math.sin(t*TAU+i),.22,'200,230,255')}})}
-  else if(e.k==='puffm'){L.add(99999,()=>{const q=P([0,0,44]);for(let i=0;i<4;i++){const u=t,c=[q[0]+(i-1.5)*6*u,q[1]-u*18-(i%2)*3];cloud(c,2+u*5,.65*(1-u),'235,248,255')}})}
+  else if(e.k==='puffm'){L.add(99999,()=>{const q=P([MC[0],0,44]);for(let i=0;i<4;i++){const u=t,c=[q[0]+(i-1.5)*6*u,q[1]-u*18-(i%2)*3];cloud(c,2+u*5,.65*(1-u),'235,248,255')}})}
   else if(e.k==='lastb'){L.add(999,()=>{for(let i=0;i<7;i++){const u=cl(t*1.2-i*.05,0,1);if(u<=0||u>=1)continue;const q=P(add(add(mouth,mul(fwd,6+u*8)),add(mul(W0(J),u*46),[0,0,u*26+(i-3)*3*u])));cloud(q,4+u*11,.55*(1-u)*Math.min(1,u*5),br)}})}}
 const W0=J=>J.W;
+function taper(a,b,w,col){const dx=b[0]-a[0],dy=b[1]-a[1],l=Math.hypot(dx,dy);if(l<.5)return;const nx=-dy/l*w,ny=dx/l*w;ctx.fillStyle=col;ctx.beginPath();ctx.moveTo(a[0]+nx,a[1]+ny);ctx.quadraticCurveTo((a[0]+b[0])/2+nx*.6,(a[1]+b[1])/2+ny*.6,b[0],b[1]);ctx.quadraticCurveTo((a[0]+b[0])/2-nx*.6,(a[1]+b[1])/2-ny*.6,a[0]-nx,a[1]-ny);ctx.closePath();ctx.fill()}
 
 // ------------------------------------------------------------------ for the game: the pieces of its attacks, with the same look
 // N3.yetiIcicle(x, y, z, sc, o): the icicle that falls (x, y: its point on the floor; z: the height of its tip), 26 long and 9 wide, three
