@@ -28,8 +28,9 @@ const page=path.join(__dirname,`${T}2_test.html`);if(!fs.existsSync(page)){conso
   const in1=JSON.parse(await E(`(()=>{const e=${FIND};return JSON.stringify({st:e&&e.st,intro:e&&e.intro})})()`));
   ok('dopo l\'entrata combatte',!(in1.intro>0),JSON.stringify(in1));
   if(C.voice.includes('cry'))ok('voce: il grido dell\'entrata',(await said()).includes('cry'),(await said()).join(' '));
-  // the fight: the states and the dangers every 100 ms; the hero stays at the bottom and shoots; once it gets hit (the mocking)
-  await E(`window.__iv=setInterval(()=>{const e=${FIND};if(!$('skScr').hidden){$('skScr').hidden=true;modal=false;paused=false}P.hp=P.maxhp;if(!e)return;__st[e.st]=(__st[e.st]||0)+1;
+  // the fight: the states and the dangers every 100 ms; the hero stays at the bottom and shoots (or where the brain says: BCL[tipo].hero,
+  // for a boss that does not come to you); once it gets hit (the mocking)
+  await E(`window.__iv=setInterval(()=>{const e=${FIND};if(!$('skScr').hidden){$('skScr').hidden=true;modal=false;paused=false}P.hp=P.maxhp;if(!e)return;__st[e.st]=(__st[e.st]||0)+1;if(BCL['${T}'].hero){const h=BCL['${T}'].hero(e);if(h){P.x=h.x;P.y=h.y}}
     try{const h=BCL['${T}'].hz?BCL['${T}'].hz():{};for(const k in h)__hz[k]=Math.max(__hz[k]||0,+h[k]||0)}catch(err){}
     if(e.hp<e.max*.55&&!window.__half)e.hp=e.max*.9},100);0`);
   for(let i=0;i<6;i++){await p.waitForTimeout(4200);await shot('lotta'+(i+1));if(i===1)await E(`P.inv=0;P.dashT=0;hurtP(5);0`)}
