@@ -3217,7 +3217,10 @@ function updEnemy(e,dt){
 function update(dt){
   G.t+=dt;
   if(G.bannerT>0){G.bannerT-=dt;if(G.bannerT<=0)bannerEl.classList.remove('show')}
-  if(G.state==='trans'){G.fade+=dt*G.fadeDir*3.5;if(G.fadeDir>0&&G.fade>=1){G.fade=1;const ev=G.event;nextStep();G.prevState=G.state;G.state='trans';G.fadeDir=-1}else if(G.fadeDir<0&&G.fade<=0){G.fade=0;G.state=G.prevState||(G.event?'cleared':'play')}return}
+  // after the new room is built the screen stays black for three more frames (phase 9): the first drawings of the room (its pictures
+  // copied for the first time, the lights and shadows made once) happen in the dark, not while it fades in
+  if(G.state==='trans'){if(G.fadeDir<0&&G.fadeHold>0){G.fadeHold--;G.fade=1;return}
+    G.fade+=dt*G.fadeDir*3.5;if(G.fadeDir>0&&G.fade>=1){G.fade=1;const ev=G.event;nextStep();G.prevState=G.state;G.state='trans';G.fadeDir=-1;G.fadeHold=3}else if(G.fadeDir<0&&G.fade<=0){G.fade=0;G.state=G.prevState||(G.event?'cleared':'play')}return}
   if(G.state==='dead'){deathTick(dt);return}
   // player
   if(P.regen&&P.hp<P.maxhp)P.hp=Math.min(P.maxhp,P.hp+P.regen*dt);
@@ -3903,7 +3906,36 @@ const GLOW={};let LOWFX=false;
 const VIG=document.createElement('canvas');VIG.width=AW/4;VIG.height=AH/4;{const v=VIG.getContext('2d'),g=v.createRadialGradient(AW/8,AH/8,AH*.3/4,AW/8,AH/8,AH*.72/4);g.addColorStop(0,'rgba(0,0,0,0)');g.addColorStop(1,'rgba(0,0,0,.45)');v.fillStyle=g;v.fillRect(0,0,AW/4,AH/4)}
 function glowSprite(rgb){if(GLOW[rgb])return GLOW[rgb];const c=document.createElement('canvas');c.width=c.height=64;const x=c.getContext('2d');
   const g=x.createRadialGradient(32,32,0,32,32,32);g.addColorStop(0,`rgba(${rgb},1)`);g.addColorStop(.45,`rgba(${rgb},.42)`);g.addColorStop(1,`rgba(${rgb},0)`);x.fillStyle=g;x.fillRect(0,0,64,64);return GLOW[rgb]=c}
-function glow(rgb,x,y,r,a,ry){if(a<=0)return;ctx.globalAlpha=Math.min(1,a);ctx.drawImage(glowSprite(rgb),x-r,y-(ry||r),r*2,(ry||r)*2);ctx.globalAlpha=1}
+// big soft lights copied one to one (phase 9): a light that keeps its size on the screen from one frame to the next is drawn once at
+// that size and from then on only copied, on whole pixels of the canvas (a scaled copy costs a phone 5 to 7 times more); a light that
+// grows or shrinks, a small one, a turned or stretched one: drawn as before. GLCF counts the frames (render), the unused ones go away
+const GLC=new Map(),GLC_MIN=9000,GLC_MAX=3e6;let GLCF=0,GLCpx=0;
+function glowFast(rgb,x,y,r,ry,a){const m=ctx.getTransform();if(m.b!==0||m.c!==0||!(m.a>0)||!(m.d>0))return false;
+  const W=Math.round(m.a*r*2),H=Math.round(m.d*ry*2);if(W*H<GLC_MIN||W>2048||H>2048)return false;
+  const key=rgb+'|'+W+'|'+H;let g=GLC.get(key);if(!g){GLC.set(key,{c:null,f:GLCF,n:1});return false}
+  if(g.f!==GLCF){g.f=GLCF;g.n++}
+  if(!g.c){if(g.n<3||GLCpx+W*H>GLC_MAX)return false;const c=document.createElement('canvas');c.width=W;c.height=H;c.getContext('2d').drawImage(glowSprite(rgb),0,0,W,H);g.c=c;GLCpx+=W*H}
+  ctx.setTransform(1,0,0,1,0,0);ctx.globalAlpha=Math.min(1,a);ctx.drawImage(g.c,Math.round(m.a*(x-r)+m.e),Math.round(m.d*(y-ry)+m.f));ctx.globalAlpha=1;ctx.setTransform(m.a,m.b,m.c,m.d,m.e,m.f);return true}
+function glowTick(){GLCF++;if(GLCF%30)return;for(const M of [GLC,SPC])for(const[k,g] of M)if(GLCF-g.f>90){if(g.c){GLCpx-=g.c.width*g.c.height;g.c.width=g.c.height=0}M.delete(k)}}
+// shafts of light copied one to one (phase 9): a long slanted strip with a soft fade from y g0 (alpha 1) to y g1 (alpha 0), the same from
+// one frame to the next but for its brightness (a) and a slow sway; drawn once at full brightness as big as it is on the canvas, then
+// copied in bands of rows that follow the slant (not the empty corners), the brightness as alpha. key names the shape: pts may move
+// but keep it. A slanted gradient strip cost a phone more than a whole screen of copies
+const SPC=new Map();
+function stripX(pts,ya,yb){let lo=1e9,hi=-1e9;const n=pts.length;for(let i=0;i<n;i++){const[x1,y1]=pts[i],[x2,y2]=pts[(i+1)%n];if(y1>=ya&&y1<=yb){lo=Math.min(lo,x1);hi=Math.max(hi,x1)}
+    for(const y of [ya,yb])if((y-y1)*(y-y2)<=0&&y1!==y2){const x=x1+(x2-x1)*(y-y1)/(y2-y1);lo=Math.min(lo,x);hi=Math.max(hi,x)}}return[lo,hi]}
+function stripFast(key,pts,rgb,g0,g1,a,op){const m=ctx.getTransform();if(m.b!==0||m.c!==0||!(m.a>=1)||Math.abs(m.a-m.d)>1e-6)return false;const S=m.a,k2=key+'|'+S;
+  let e=SPC.get(k2);if(!e){SPC.set(k2,{c:null,f:GLCF,n:1});return false}if(e.f!==GLCF){e.f=GLCF;e.n++}
+  if(!e.c){if(e.n<3)return false;let x0=1e9,y0=1e9,x1=-1e9,y1=-1e9;for(const[x,y] of pts){x0=Math.min(x0,x);x1=Math.max(x1,x);y0=Math.min(y0,y);y1=Math.max(y1,y)}
+    const bx=Math.floor(x0)-1,by=Math.floor(y0)-1,W=Math.ceil((Math.ceil(x1)+1-bx)*S),H=Math.ceil((Math.ceil(y1)+1-by)*S);if(W>2048||H>2048||GLCpx+W*H>GLC_MAX)return false;
+    const c=document.createElement('canvas');c.width=W;c.height=H;const x=c.getContext('2d');x.setTransform(S,0,0,S,-bx*S,-by*S);
+    const g=x.createLinearGradient(0,g0,0,g1);g.addColorStop(0,`rgba(${rgb},1)`);g.addColorStop(1,`rgba(${rgb},0)`);x.fillStyle=g;x.beginPath();pts.forEach(([px,py],i)=>i?x.lineTo(px,py):x.moveTo(px,py));x.closePath();x.fill();
+    const B=[];for(let r0=0;r0<H;r0+=64){const r1=Math.min(H,r0+64),[lo,hi]=stripX(pts,by+r0/S,by+r1/S);if(!(hi>=lo))continue;const sx=Math.max(0,Math.floor((lo-bx)*S)-2),ex=Math.min(W,Math.ceil((hi-bx)*S)+2);if(ex>sx)B.push([sx,r0,ex-sx,r1-r0])}
+    e.c=c;e.B=B;e.dx=pts[0][0]-bx;e.dy=pts[0][1]-by;GLCpx+=W*H}
+  const X=Math.round(S*(pts[0][0]-e.dx)+m.e),Y=Math.round(S*(pts[0][1]-e.dy)+m.f),o=ctx.globalCompositeOperation;
+  ctx.setTransform(1,0,0,1,0,0);if(op)ctx.globalCompositeOperation=op;ctx.globalAlpha=Math.min(1,a);for(const[sx,sy,sw,sh] of e.B)ctx.drawImage(e.c,sx,sy,sw,sh,X+sx,Y+sy,sw,sh);
+  ctx.globalAlpha=1;ctx.globalCompositeOperation=o;ctx.setTransform(m.a,m.b,m.c,m.d,m.e,m.f);return true}
+function glow(rgb,x,y,r,a,ry){if(a<=0)return;ry=ry||r;if(r>0&&ry>0&&r*ry>=GLC_MIN/16&&glowFast(rgb,x,y,r,ry,a))return;ctx.globalAlpha=Math.min(1,a);ctx.drawImage(glowSprite(rgb),x-r,y-ry,r*2,ry*2);ctx.globalAlpha=1}
 const hexRgb=h=>{const n=parseInt(h.slice(1,7),16);return `${n>>16},${(n>>8)&255},${n&255}`};
 const ENV={
   muschio:{wall:['#2e2721','#352d25','#2a231d','#3a3129'],mortar:'#1a1612',side:'#221d18',floor:['#5a5143','#554c40','#5f5647','#51493d'],base:'#3e372e',torch:['#ff5a14','#ffa632','#fff1c0'],light:'255,170,80',ember:'#ffb347',dark:.42,amb:{firefly:9,mote:12},fog:null},
@@ -4144,7 +4176,7 @@ function drawTorch(t){
 function torchLight(){
   const c=G.env.light;
   if(!G.dark)for(const t of G.torches){const f=.2+Math.sin(G.t*2.3+t.ph)*.012+Math.sin(G.t*5.9+t.ph)*.007;glow(c,t.x,TOP+30,190,f,150)}
-  for(const s of G.shafts){const a=.07+.03*Math.sin(G.t*.7+s.ph);ctx.save();ctx.globalCompositeOperation='lighter';
+  for(const s of G.shafts){const a=.07+.03*Math.sin(G.t*.7+s.ph);if(stripFast('ts|'+s.w+'|'+TOP+'|'+BOT,[[s.x,TOP],[s.x+s.w,TOP],[s.x+s.w+90,BOT],[s.x+90,BOT]],'255,250,220',TOP,BOT,a*1.6,'lighter'))continue;ctx.save();ctx.globalCompositeOperation='lighter';
     const g=ctx.createLinearGradient(0,TOP,0,BOT);g.addColorStop(0,`rgba(255,250,220,${a*1.6})`);g.addColorStop(1,'rgba(255,250,220,0)');ctx.fillStyle=g;
     ctx.beginPath();ctx.moveTo(s.x,TOP);ctx.lineTo(s.x+s.w,TOP);ctx.lineTo(s.x+s.w+90,BOT);ctx.lineTo(s.x+90,BOT);ctx.closePath();ctx.fill();ctx.restore()}
 }
@@ -4205,8 +4237,8 @@ function camTarget(){const m=BIG.m;let fx=P.x,fy=P.y;
 function camSnap(){const[a,b]=camTarget();G.vx=a;G.vy=b}
 function camStep(dt){if(G.vx==null){camSnap();return}const[a,b]=camTarget(),k=1-Math.exp(-dt*6);G.vx+=(a-G.vx)*k;G.vy+=(b-G.vy)*k}
 function drawLighting(pass){
-  if(LOWFX&&!G.dark){const s=Math.min(cv.width/VW,cv.height/VH),ex=(cv.width-VW*s)/2/s+2,ey=Math.max(0,(cv.height-VH*s)/2)/s+2;ctx.drawImage(VIG,(G.vx||0)-ex,(G.vy||0)-ey,VW+ex*2,VH+ey*2);return}
-  if(pass==='out'){ctx.save();ctx.beginPath();ctx.rect(-20,-20,AW+40,AH+40);ctx.rect(L,TOP,R-L,BOT-TOP);ctx.clip('evenodd');ctx.drawImage(lc,0,0,AW,AH);ctx.restore();return}
+  if(LOWFX&&!G.dark){const s=Math.min(cv.width/VW,cv.height/VH),ex=(cv.width-VW*s)/2/s+2,ey=Math.max(0,(cv.height-VH*s)/2)/s+2;drawVig((G.vx||0)-ex,(G.vy||0)-ey,VW+ex*2,VH+ey*2);return}
+  if(pass==='out'){ctx.save();ctx.beginPath();ctx.rect(-20,-20,AW+40,AH+40);ctx.rect(L,TOP,R-L,BOT-TOP);ctx.clip('evenodd');lightBlit();ctx.restore();return}
   lx.globalCompositeOperation='source-over';lx.clearRect(0,0,AW,AH);lx.fillStyle=`rgba(8,5,14,${G.dark?.95:G.env.dark})`;lx.fillRect(0,0,AW,AH);
   lx.globalCompositeOperation='destination-out';
   const spr=glowSprite('0,0,0'),Lt=(x,y,r,a)=>{lx.globalAlpha=Math.min(1,a*1.25);lx.drawImage(spr,x-r,y-r,r*2,r*2)};
@@ -4226,8 +4258,17 @@ function drawLighting(pass){
   if(G.door)Lt(AW/2,TOP-6,70,.85);
   if(G.prop)Lt(G.prop.x,G.prop.y-18,130,.9);
   lx.globalAlpha=1;lx.globalCompositeOperation='source-over';
-  if(pass==='in'){ctx.save();ctx.beginPath();ctx.rect(L,TOP,R-L,BOT-TOP);ctx.clip();ctx.drawImage(lc,0,0,AW,AH);ctx.restore()}else ctx.drawImage(lc,0,0,AW,AH);
+  lwFill();if(pass==='in'){ctx.save();ctx.beginPath();ctx.rect(L,TOP,R-L,BOT-TOP);ctx.clip();lightBlit();ctx.restore()}else lightBlit();
 }
+// the light map at one pixel a point (phase 9): the small map (a pixel every 3 points) scaled straight onto the canvas meant a whole
+// screen of smoothed copies every frame; now only the part on the screen is smoothed, once, into a map as big as the room, which is then
+// copied with every pixel doubled (the map is soft: the difference is at most half a point of its slope, a step or two of 255)
+const lw=document.createElement('canvas'),lwx=lw.getContext('2d');let lwOk=false;
+const lwFit=m=>m.b===0&&m.c===0&&m.a>=1.4&&m.d>=1.4&&m.a<=4&&m.d<=4;
+function lwFill(){const m=ctx.getTransform();lwOk=false;if(!lwFit(m))return;if(lw.width!==AW||lw.height!==AH){lw.width=AW;lw.height=AH}
+  const x0=Math.max(0,Math.floor(-m.e/m.a)-4),y0=Math.max(0,Math.floor(-m.f/m.d)-4),x1=Math.min(AW,Math.ceil((cv.width-m.e)/m.a)+4),y1=Math.min(AH,Math.ceil((cv.height-m.f)/m.d)+4);if(x1<=x0||y1<=y0)return;
+  lwx.save();lwx.beginPath();lwx.rect(x0,y0,x1-x0,y1-y0);lwx.clip();lwx.clearRect(x0,y0,x1-x0,y1-y0);lwx.drawImage(lc,0,0,AW,AH);lwx.restore();lwOk=true}
+function lightBlit(){if(!lwOk||!lwFit(ctx.getTransform())){ctx.drawImage(lc,0,0,AW,AH);return}const sm=ctx.imageSmoothingEnabled;ctx.imageSmoothingEnabled=false;ctx.drawImage(lw,0,0);ctx.imageSmoothingEnabled=sm}
 
 // ---------- themed obstacles ----------
 const KINDS={
@@ -5759,7 +5800,9 @@ function drawRoots(e){const k=Math.min(1,(e.root||0)/.3),x=e.x,y=e.y;ctx.save();
     ctx.strokeStyle=INK;ctx.lineWidth=6;ctx.beginPath();ctx.moveTo(sx,sy);ctx.quadraticCurveTo(sx+Math.cos(a)*6,ty+6,tx,ty);ctx.stroke();ctx.strokeStyle='#6b4a2a';ctx.lineWidth=3;ctx.stroke();
     ctx.fillStyle='#7bd65a';ctx.beginPath();ctx.ellipse(tx,ty,3,1.6,a,0,TAU);ctx.fill()}ctx.restore()}
 function drawUltOverlay(){const u=G.ultFx;if(!u)return;const k=u.t/u.max;ctx.fillStyle=`rgba(6,8,16,${.32*Math.sin(k*Math.PI)})`;ctx.fillRect(-60,-60,AW+120,AH+120);ctx.save();ctx.globalCompositeOperation='lighter';glow(u.rgb,P.x,P.y-12,90,.5*k);ctx.restore()}
-function hudUlt(){const b=$('ultBtn');if(!b||!P)return;const hide=G.state==='dead';if(b.hidden!==hide)b.hidden=hide;const v=(P.ult||0)/100;b.style.setProperty('--u',v*360+'deg');b.style.setProperty('--uc',(ULT[P.hero]||ULT.arciere).col)}
+// (the button's ring and colour are written only when they change: every change makes the phone paint the button again)
+function hudUlt(){const b=$('ultBtn');if(!b||!P)return;const hide=G.state==='dead';if(b.hidden!==hide)b.hidden=hide;const u=Math.round((P.ult||0)/100*180)*2+'deg',c=(ULT[P.hero]||ULT.arciere).col;
+  if(b._u!==u){b._u=u;b.style.setProperty('--u',u)}if(b._uc!==c){b._uc=c;b.style.setProperty('--uc',c)}}
 
 
 // =====================================================================
@@ -7032,11 +7075,13 @@ function fillGuide(){const T=(t,b)=>`<details class="gsec"><summary>${t}</summar
 
 // ---------- render ----------
 function render(){
-  const cw=cv.width,ch=cv.height,s=Math.min(cw/VW,ch/VH),ox=(cw-VW*s)/2,oy=Math.max(0,(ch-VH*s)/2);
+  const cw=cv.width,ch=cv.height,s=Math.min(cw/VW,ch/VH),ox=Math.round((cw-VW*s)/2),oy=Math.round(Math.max(0,(ch-VH*s)/2));
   ctx.setTransform(1,0,0,1,0,0);ctx.fillStyle='#120e0b';ctx.fillRect(0,0,cw,ch);
-  if(!G)return;
-  const sx=(Math.random()-.5)*G.shake,sy=(Math.random()-.5)*G.shake;
-  const vx=G.vx||0,vy=G.vy||0;
+  if(!G)return;glowTick();
+  // the camera and the shake on whole pixels of the canvas: with 2 pixels a point (resize) the floor, the walls and the landscape outside
+  // the arena, baked at 2x, are copied one to one, without resampling (on a phone the biggest saving of a frame)
+  const px=v=>Math.round(v*s)/s,sx=px((Math.random()-.5)*G.shake),sy=px((Math.random()-.5)*G.shake);
+  const vx=px(G.vx||0),vy=px(G.vy||0);
   if(G.state==='dead'&&G.deathT){const k=Math.min(1,G.deathT/.9),zs=1+.12*k,zx=(P.x-vx-VW/2)*k*.5,zy=(P.y-vy-VH/2)*k*.5;ctx.setTransform(s*zs,0,0,s*zs,ox+s*(VW/2)*(1-zs)-s*zs*zx+sx*s,oy+s*(VH/2)*(1-zs)-s*zs*zy+sy*s)}
   else if(G.cam){const c=G.cam;ctx.setTransform(s*c.z,0,0,s*c.z,ox+s*(VW/2-c.z*c.x)+sx*s,oy+s*(VH/2-c.z*c.y)+sy*s)}
   else ctx.setTransform(s,0,0,s,ox+sx*s,oy+sy*s);
@@ -7095,7 +7140,7 @@ function render(){
   drawUltOverlay();
   if(!inDoor)drawBars();
   if(G.goldRun)drawGoldTimer();if(G.trial)drawTrialTag();
-  {const ex=ox/s+2,ey=oy/s+2;ctx.drawImage(VIG,vx-ex,vy-ey,VW+ex*2,VH+ey*2)}
+  {const ex=ox/s+2,ey=oy/s+2;drawVig(vx-ex,vy-ey,VW+ex*2,VH+ey*2)}
   ctx.textAlign='center';
   for(const t of G.texts){ctx.globalAlpha=Math.min(1,t.life*2.5);ctx.font=Math.round(t.size*(t.pop?1+1.2*Math.max(0,(t.life-.62)/.18):1))+'px "Lilita One", sans-serif';ctx.lineWidth=3.5;ctx.strokeStyle=INK;ctx.strokeText(t.t,t.x,t.y);ctx.fillStyle=t.col;ctx.fillText(t.t,t.x,t.y)}
   ctx.globalAlpha=1;
@@ -7106,20 +7151,59 @@ function render(){
   if(joy.active){const rc=cv.getBoundingClientRect(),dpr=cw/rc.width,jx=(joy.ox-rc.left)*dpr,jy=(joy.oy-rc.top)*dpr;
     ctx.strokeStyle='rgba(246,234,210,.35)';ctx.lineWidth=3*dpr;circ(jx,jy,JR*dpr);ctx.stroke();ctx.fillStyle='rgba(246,234,210,.4)';circ(jx+joy.dx*JR*dpr,jy+joy.dy*JR*dpr,20*dpr);ctx.fill()}
 }
+// the vignette copied one to one (phase 9): scaled once to the size it has on the canvas (the screen and 2 points more on every side),
+// then copied on whole pixels, band by band, leaving out the see-through middle (about half of the screen); with the camera zoomed in
+// (boss entrance, fall) it is drawn as before
+let VIGC=null;
+function vigCache(){const cw=cv.width,ch=cv.height,s=Math.min(cw/VW,ch/VH),ox=Math.round((cw-VW*s)/2),oy=Math.round(Math.max(0,(ch-VH*s)/2)),W=Math.round(s*VW+2*ox+4*s),H=Math.round(s*VH+2*oy+4*s),key=W+'x'+H;
+  if(VIGC&&VIGC.key===key)return VIGC;if(VIGC)VIGC.c.width=VIGC.c.height=0;VIGC=null;if(!(W>0&&H>0&&W<=4096&&H<=4096))return null;
+  const c=document.createElement('canvas');c.width=W;c.height=H;const x=c.getContext('2d');x.drawImage(VIG,0,0,W,H);
+  // every band of 32 rows: the see-through stretch that all its rows have around the middle column
+  const d=x.getImageData(0,0,W,H).data,B=[],mid=W>>1,clear=(y,i)=>!d[(y*W+i)*4+3];
+  for(let y0=0;y0<H;y0+=32){const y1=Math.min(H,y0+32);let a=0,b=W;
+    for(let y=y0;y<y1&&a<b;y++){if(!clear(y,mid)){a=b=W;break}let l=mid,r=mid;while(l>0&&clear(y,l-1))l--;while(r<W-1&&clear(y,r+1))r++;a=Math.max(a,l);b=Math.min(b,r+1)}
+    B.push(a<b?[y0,y1-y0,a,b]:[y0,y1-y0,W,W])}
+  return VIGC={key,c,W,H,B}}
+function drawVig(x,y,w,h){const m=ctx.getTransform(),V=m.b===0&&m.c===0&&m.a>0&&Math.abs(m.a-m.d)<1e-6?vigCache():null;
+  if(V&&Math.abs(m.a*w-V.W)<=1.01&&Math.abs(m.d*h-V.H)<=1.01){const X=Math.round(m.a*x+m.e),Y=Math.round(m.d*y+m.f),W=V.W;ctx.setTransform(1,0,0,1,0,0);
+    for(const[y0,bh,a,b] of V.B){if(a>0)ctx.drawImage(V.c,0,y0,a,bh,X,Y+y0,a,bh);if(b<W)ctx.drawImage(V.c,b,y0,W-b,bh,X+b,Y+y0,W-b,bh)}
+    ctx.setTransform(m.a,m.b,m.c,m.d,m.e,m.f);return}
+  ctx.drawImage(VIG,x,y,w,h)}
+// the HUD: the page is touched only when what it shows changes (every change makes the phone lay out and paint that piece again)
+const HUDC={},hudSet=(id,k,v)=>{const key=id+'|'+k;if(HUDC[key]===v)return;HUDC[key]=v;const el=$(id);if(!el)return;if(k==='t')el.textContent=v;else el.style[k]=v};
+{const _r=bossBarReset;bossBarReset=function(){delete HUDC['bossFill|width'];return _r.apply(this,arguments)}}
 function hud(){
   if(!G)return;
-  $('roomTxt').textContent=G.event?'Evento':G.mode==='inf'?'∞ '+G.room:G.room+'/'+ROOMS;if(modal)$('hint').classList.remove('show');$('goldTxt').textContent=G.gold;$('gemTxt').textContent=G.gemsRun;$('lvTxt').textContent='Liv. '+P.lvl;$('xpFill').style.width=Math.min(100,100*P.xp/P.need)+'%';
-  hudUlt();const pct=P.dashCd>0?1-P.dashCd/P.dashMax:1;$('dashBtn').style.background=`conic-gradient(var(--teal) ${pct*360}deg,#3a4c49 0deg)`;
-  const b=G.enemies.find(e=>isBoss(e.type));if(b)$('bossFill').style.width=Math.max(0,100*b.hp/b.max)+'%';
+  hudSet('roomTxt','t',G.event?'Evento':G.mode==='inf'?'∞ '+G.room:G.room+'/'+ROOMS);if(modal)$('hint').classList.remove('show');hudSet('goldTxt','t',''+G.gold);hudSet('gemTxt','t',''+G.gemsRun);hudSet('lvTxt','t','Liv. '+P.lvl);
+  hudSet('xpFill','width',(Math.round(Math.min(100,100*P.xp/P.need)*10)/10)+'%');
+  hudUlt();const pct=P.dashCd>0?1-P.dashCd/P.dashMax:1;hudSet('dashBtn','background',`conic-gradient(var(--teal) ${Math.round(pct*180)*2}deg,#3a4c49 0deg)`);
+  const b=G.enemies.find(e=>isBoss(e.type));if(b)hudSet('bossFill','width',(Math.round(Math.max(0,100*b.hp/b.max)*10)/10)+'%');
 }
-function resize(){const dpr=SAVE.set&&SAVE.set.q==='bassa'?Math.min(1.25,window.devicePixelRatio||1):Math.min(2,window.devicePixelRatio||1);cv.width=Math.round(cv.clientWidth*dpr);cv.height=Math.round(cv.clientHeight*dpr)}
+// the canvas of the battle. On a phone (where the game would get about 2 pixels a point of its world, from 1,75 to 2,75) exactly 2 pixels a
+// point: the floor, the walls and the landscape outside the arena are baked at 2x, so with the camera on whole pixels (render) they are
+// copied one to one instead of being resampled every frame (on the phone that was the dearest part of a frame), and there are a few less
+// pixels to colour (a 390-point phone: 720 pixels wide instead of 780; the browser stretches the canvas on the screen, as it did before).
+// RESCUT: the quality «auto» saw the frames stay under 60 a second for 2 s (loop): 1,5 pixels a point, a little more than half the pixels
+// (the zombie map does the same); only if that is not enough the effects go down too (LOWFX), as before.
+let RESCUT=false,RESMODE=false,PZD=false;
+function resize(){if(SAVE.set&&SAVE.set.q!=='auto')RESCUT=false;
+  const W=cv.clientWidth,H=cv.clientHeight,bassa=SAVE.set&&SAVE.set.q==='bassa',dpr=bassa?Math.min(1.25,window.devicePixelRatio||1):Math.min(2,window.devicePixelRatio||1),s0=Math.min(W*dpr/VW,H*dpr/VH);
+  RESMODE=!bassa&&W>0&&H>0&&s0>=1.75&&s0<=2.75;let w,h;
+  if(RESMODE){const S=RESCUT?1.5:2;if(W/VW<=H/VH){w=VW*S;h=VH*S+2*Math.max(0,Math.round((H*VW/W-VH)*S/2))}else{h=VH*S;w=VW*S+2*Math.max(0,Math.round((W*VH/H-VW)*S/2))}}
+  else{w=Math.round(W*dpr);h=Math.round(H*dpr)}
+  // a canvas given the size it already has is cleared and made again for nothing
+  if(cv.width!==w||cv.height!==h)PZD=false;if(cv.width!==w)cv.width=w;if(cv.height!==h)cv.height=h}
 addEventListener('resize',resize);
 let last=performance.now();
-let frameEma=.016,slowT=0;
+let frameEma=.016,slowT=0,slowR=0;
 function loop(now){const raw=(now-last)/1000,dt=Math.min(.033,raw);last=now;if(INTRO.on)introTick(now);
-  if(started&&!paused&&!INTRO.on&&raw<.2){frameEma+=(raw-frameEma)*.05;if(SAVE.set.q==='auto'&&!LOWFX&&frameEma>.026){slowT+=raw;if(slowT>2.5)LOWFX=true}else slowT=0}
+  if(started&&!paused&&!INTRO.on&&raw<.2){frameEma+=(raw-frameEma)*.05;const au=SAVE.set.q==='auto';
+    if(au&&RESMODE&&!RESCUT&&frameEma>.0185){slowR+=raw;if(slowR>2){RESCUT=true;resize();slowR=0;frameEma=.0167}}else slowR=0;
+    if(au&&!LOWFX&&(RESCUT||!RESMODE)&&frameEma>.026){slowT+=raw;if(slowT>2.5)LOWFX=true}else slowT=0}
   if(started&&!paused){if(G.hitstop>0)G.hitstop-=dt;else if(G.slowT>0){G.slowT-=dt;update(dt*(G.slowT>1?.22:.22+.78*(1-G.slowT)))}else update(dt)}
-  if($('menu').hidden){render();hud()}
+  // paused (a choice, the revive, the end): the frame does not change, so it is drawn once and then left on the canvas (phase 9): the
+  // screen above it (with the blur behind it) stays smooth and the phone does not redraw the room for nothing
+  if($('menu').hidden&&(!paused||INTRO.on||!PZD)){render();hud();PZD=paused}
   if(!$('menu').hidden&&$('chestScr').hidden){if(!$('tabHero').hidden){G.t+=dt;drawHeroPreview(dt)}else if(!$('tabGear').hidden){G.t+=dt;drawHeroPreview(dt,$('gearCv'),SAVE.hero)}const home=!$('tabPlay').hidden;CAMP.fr=(CAMP.fr||0)+1;if(home){if($('sheetScr').hidden)drawCamp(dt)}else if(CAMP.fr%2===0||!MBG.drawn)drawMenuBg(dt*2)}
   requestAnimationFrame(loop)}
 
@@ -7160,7 +7244,18 @@ let lastTap=[innerWidth/2,innerHeight/2];addEventListener('pointerdown',e=>{last
 // darker at the bottom and lit from above (drawn once into a sprite, then reused every frame)
 // =====================================================================
 const MAINCTX=ctx;const SHB=(()=>{const c=document.createElement('canvas');c.width=c.height=64;const x=c.getContext('2d'),g=x.createRadialGradient(32,32,0,32,32,32);g.addColorStop(0,'rgba(0,0,0,1)');g.addColorStop(.45,'rgba(0,0,0,.62)');g.addColorStop(1,'rgba(0,0,0,0)');x.fillStyle=g;x.fillRect(0,0,64,64);return c})();
-function castShadow(k){const a=k.temp?Math.min(1,k.life/.6):1,h=kH(k),r=k.r;
+// the three shadows of an obstacle that stays put, in one picture as big as they are on the canvas, copied one to one (phase 9): black over
+// black, the floor under them gets just as dark; an obstacle that fades away, or one that keeps moving, as before
+function shadowSprite(k,h,r){const m=ctx.getTransform();if(m.b!==0||m.c!==0||!(m.a>=1)||Math.abs(m.a-m.d)>1e-6||(k._shN||0)>4)return false;const S=m.a,key=S+'|'+r+'|'+h+'|'+k.x+'|'+k.y;let c=k._sh;
+  if(!c||c.key!==key){const l=r*1.1+h*.42,cx=k.x+h*.28,cy=k.y+h*.12+2,co=Math.cos(.5),si=Math.sin(.5),hx=co*l+si*r*.72,hy=si*l+co*r*.72,
+      x0=Math.floor(Math.min(cx-hx,k.x-r*1.5))-1,y0=Math.floor(Math.min(cy-hy,k.y+2-r*.64))-1,x1=Math.ceil(Math.max(cx+hx,k.x+r*1.5))+1,y1=Math.ceil(Math.max(cy+hy,k.y+2+r*.64))+1;
+    if(!(x1>x0&&y1>y0&&(x1-x0)*S<2048&&(y1-y0)*S<2048))return false;
+    const sc=c&&c.cv||document.createElement('canvas');sc.width=Math.ceil((x1-x0)*S);sc.height=Math.ceil((y1-y0)*S);const x=sc.getContext('2d');x.setTransform(S,0,0,S,-x0*S,-y0*S);
+    x.save();x.globalAlpha=.4;x.translate(cx,cy);x.rotate(.5);x.drawImage(SHB,-l,-r*.72,l*2,r*1.44);x.restore();
+    x.globalAlpha=.55;x.drawImage(SHB,k.x-r*1.5,k.y+2-r*.64,r*3,r*1.28);x.globalAlpha=.7;x.drawImage(SHB,k.x-r*1.08,k.y+1.5-r*.4,r*2.16,r*.8);
+    c=k._sh={key,cv:sc,x0,y0};k._shN=(k._shN||0)+1}
+  ctx.setTransform(1,0,0,1,0,0);ctx.globalAlpha=1;ctx.drawImage(c.cv,Math.round(S*c.x0+m.e),Math.round(S*c.y0+m.f));ctx.setTransform(m.a,m.b,m.c,m.d,m.e,m.f);return true}
+function castShadow(k){const a=k.temp?Math.min(1,k.life/.6):1,h=kH(k),r=k.r;if(a>=1&&!k.temp&&shadowSprite(k,h,r))return;
   ctx.save();ctx.globalAlpha=a*.4;ctx.translate(k.x+h*.28,k.y+h*.12+2);ctx.rotate(.5);const l=r*1.1+h*.42;ctx.drawImage(SHB,-l,-r*.72,l*2,r*1.44);ctx.restore();
   ctx.globalAlpha=a*.55;ctx.drawImage(SHB,k.x-r*1.5,k.y+2-r*.64,r*3,r*1.28);
   ctx.globalAlpha=a*.7;ctx.drawImage(SHB,k.x-r*1.08,k.y+1.5-r*.4,r*2.16,r*.8);ctx.globalAlpha=1};
@@ -7215,9 +7310,10 @@ const ROCK_LIVE={crystal:1,brazier:1,lavarock:1,cauldron:1,mudmound:1,reeds:1,la
     let g=o.createLinearGradient(0,k.y+r*.5,0,k.y-Math.min(30,Math.max(10,H*.55)));g.addColorStop(0,'rgba(12,8,6,.6)');g.addColorStop(1,'rgba(12,8,6,0)');o.fillStyle=g;o.fillRect(x0,y0,w,h);
     g=o.createLinearGradient(0,k.y-H-r*1.2,0,k.y-H*.35);g.addColorStop(0,'rgba(255,236,200,.2)');g.addColorStop(1,'rgba(255,236,200,0)');o.fillStyle=g;o.fillRect(x0,y0,w,h);
     o.fillStyle=`rgba(${(G.env&&G.env.light)||'255,200,140'},.05)`;o.fillRect(x0,y0,w,h);o.globalCompositeOperation='source-over';
-    return k._sp={key,c,x0,y0,w,h}}
+    return k._sp={key,c,x0,y0,w,h,ss:SS}}
   drawRock=function(k){if(k._raw||k.temp||ROCK_LIVE[k.kind]||ctx!==MAINCTX){_dr(k);return}
-    const sp=rockSprite(k),dx=k.hit>0?Math.sin(G.t*90)*k.hit*14:0;ctx.drawImage(sp.c,sp.x0+dx,sp.y0,sp.w,sp.h);groundFront(k)}}
+    // on whole pixels and at its own size: with the canvas at 2 (or 1,5) pixels a point the picture is copied one to one, not resampled
+    const sp=rockSprite(k),dx=k.hit>0?Math.sin(G.t*90)*k.hit*14:0,S=sp.ss;ctx.drawImage(sp.c,Math.round((sp.x0+dx)*S)/S,Math.round(sp.y0*S)/S,sp.c.width/S,sp.c.height/S);groundFront(k)}}
 
 // =====================================================================
 // MENU BACKDROP (the pages behind the boards: Eroi, Armeria, Compagni, Bottega…). Since the 13 October preview (punto 42 del piano: no
@@ -22778,10 +22874,11 @@ function airDecor(a){if(LOWFX)return;const t=AW_(),[k,n,c]=a,W=R-L,H=BOT-TOP+40,
     else if(k==='wind'){const y=TOP+20+r2*(BOT-TOP-40),ph2=(t*.5+r1)%1,x=L-60+ph2*(W+120);ctx.strokeStyle=`rgba(255,255,255,${.22*Math.sin(ph2*Math.PI)})`;ctx.lineWidth=1.2;ctx.beginPath();ctx.moveTo(x,y);ctx.quadraticCurveTo(x+20,y-4,x+44,y);ctx.stroke()}}}
 // ------------------------------------------------------------------ the light of the arena (over the room, soft)
 function arsLight(lt){if(LOWFX||!lt)return;const t=AW_();ctx.save();ctx.globalCompositeOperation='lighter';
-  if(lt.shafts||lt.sun){const rgb=lt.shafts||lt.sun;for(let k=0;k<3;k++){const x=L+40+k*(R-L-80)/2+Math.sin(t*.2+k)*10,a=.05+.025*Math.sin(t*.6+k*2),g=ctx.createLinearGradient(0,TOP,0,BOT);g.addColorStop(0,`rgba(${rgb},${a*1.6})`);g.addColorStop(1,`rgba(${rgb},0)`);ctx.fillStyle=g;
+  if(lt.shafts||lt.sun){const rgb=lt.shafts||lt.sun;for(let k=0;k<3;k++){const x=L+40+k*(R-L-80)/2+Math.sin(t*.2+k)*10,a=.05+.025*Math.sin(t*.6+k*2);
+    if(stripFast('as|'+rgb+'|'+(lt.sun?1:0)+'|'+TOP+'|'+BOT,[[x,TOP-10],[x+30,TOP-10],[x+(lt.sun?140:90),BOT],[x+(lt.sun?80:50),BOT]],rgb,TOP,BOT,a*1.6,'lighter'))continue;const g=ctx.createLinearGradient(0,TOP,0,BOT);g.addColorStop(0,`rgba(${rgb},${a*1.6})`);g.addColorStop(1,`rgba(${rgb},0)`);ctx.fillStyle=g;
     ctx.beginPath();ctx.moveTo(x,TOP-10);ctx.lineTo(x+30,TOP-10);ctx.lineTo(x+(lt.sun?140:90),BOT);ctx.lineTo(x+(lt.sun?80:50),BOT);ctx.closePath();ctx.fill()}}
   if(lt.pulse){const b=.5+.5*Math.sin(t*1.1);for(const[x,y] of[[L,BOT],[R,BOT],[L,TOP+30],[R,TOP+30]])glow(lt.pulse,x,y,120,.06+.05*b)}
-  if(lt.cold){const g=ctx.createLinearGradient(0,TOP-20,0,TOP+120);g.addColorStop(0,`rgba(${lt.cold},.12)`);g.addColorStop(1,`rgba(${lt.cold},0)`);ctx.fillStyle=g;ctx.fillRect(0,TOP-20,AW,140)}
+  if(lt.cold&&!stripFast('ac|'+lt.cold+'|'+AW+'|'+TOP,[[0,TOP-20],[AW,TOP-20],[AW,TOP+120],[0,TOP+120]],lt.cold,TOP-20,TOP+120,.12,'lighter')){const g=ctx.createLinearGradient(0,TOP-20,0,TOP+120);g.addColorStop(0,`rgba(${lt.cold},.12)`);g.addColorStop(1,`rgba(${lt.cold},0)`);ctx.fillStyle=g;ctx.fillRect(0,TOP-20,AW,140)}
   ctx.restore()}
 // ------------------------------------------------------------------ hooked to the room and to the drawing
 {const _be=buildEnv;buildEnv=function(){_be.apply(this,arguments);try{arsBuild()}catch(e){console.error(e);G.ars=null}}}

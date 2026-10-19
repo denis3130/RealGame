@@ -157,10 +157,11 @@ function airDecor(a){if(LOWFX)return;const t=AW_(),[k,n,c]=a,W=R-L,H=BOT-TOP+40,
     else if(k==='wind'){const y=TOP+20+r2*(BOT-TOP-40),ph2=(t*.5+r1)%1,x=L-60+ph2*(W+120);ctx.strokeStyle=`rgba(255,255,255,${.22*Math.sin(ph2*Math.PI)})`;ctx.lineWidth=1.2;ctx.beginPath();ctx.moveTo(x,y);ctx.quadraticCurveTo(x+20,y-4,x+44,y);ctx.stroke()}}}
 // ------------------------------------------------------------------ the light of the arena (over the room, soft)
 function arsLight(lt){if(LOWFX||!lt)return;const t=AW_();ctx.save();ctx.globalCompositeOperation='lighter';
-  if(lt.shafts||lt.sun){const rgb=lt.shafts||lt.sun;for(let k=0;k<3;k++){const x=L+40+k*(R-L-80)/2+Math.sin(t*.2+k)*10,a=.05+.025*Math.sin(t*.6+k*2),g=ctx.createLinearGradient(0,TOP,0,BOT);g.addColorStop(0,`rgba(${rgb},${a*1.6})`);g.addColorStop(1,`rgba(${rgb},0)`);ctx.fillStyle=g;
+  if(lt.shafts||lt.sun){const rgb=lt.shafts||lt.sun;for(let k=0;k<3;k++){const x=L+40+k*(R-L-80)/2+Math.sin(t*.2+k)*10,a=.05+.025*Math.sin(t*.6+k*2);
+    if(stripFast('as|'+rgb+'|'+(lt.sun?1:0)+'|'+TOP+'|'+BOT,[[x,TOP-10],[x+30,TOP-10],[x+(lt.sun?140:90),BOT],[x+(lt.sun?80:50),BOT]],rgb,TOP,BOT,a*1.6,'lighter'))continue;const g=ctx.createLinearGradient(0,TOP,0,BOT);g.addColorStop(0,`rgba(${rgb},${a*1.6})`);g.addColorStop(1,`rgba(${rgb},0)`);ctx.fillStyle=g;
     ctx.beginPath();ctx.moveTo(x,TOP-10);ctx.lineTo(x+30,TOP-10);ctx.lineTo(x+(lt.sun?140:90),BOT);ctx.lineTo(x+(lt.sun?80:50),BOT);ctx.closePath();ctx.fill()}}
   if(lt.pulse){const b=.5+.5*Math.sin(t*1.1);for(const[x,y] of[[L,BOT],[R,BOT],[L,TOP+30],[R,TOP+30]])glow(lt.pulse,x,y,120,.06+.05*b)}
-  if(lt.cold){const g=ctx.createLinearGradient(0,TOP-20,0,TOP+120);g.addColorStop(0,`rgba(${lt.cold},.12)`);g.addColorStop(1,`rgba(${lt.cold},0)`);ctx.fillStyle=g;ctx.fillRect(0,TOP-20,AW,140)}
+  if(lt.cold&&!stripFast('ac|'+lt.cold+'|'+AW+'|'+TOP,[[0,TOP-20],[AW,TOP-20],[AW,TOP+120],[0,TOP+120]],lt.cold,TOP-20,TOP+120,.12,'lighter')){const g=ctx.createLinearGradient(0,TOP-20,0,TOP+120);g.addColorStop(0,`rgba(${lt.cold},.12)`);g.addColorStop(1,`rgba(${lt.cold},0)`);ctx.fillStyle=g;ctx.fillRect(0,TOP-20,AW,140)}
   ctx.restore()}
 // ------------------------------------------------------------------ hooked to the room and to the drawing
 {const _be=buildEnv;buildEnv=function(){_be.apply(this,arguments);try{arsBuild()}catch(e){console.error(e);G.ars=null}}}

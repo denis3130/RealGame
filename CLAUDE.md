@@ -46,6 +46,7 @@ Servono Node e Python. Una volta sola: `npm install` e poi `npx playwright insta
 - `boss3gioco.js [arena]`: i 4 boss nuovi nelle arene 9–12 (entrata, tutte le mosse, fase 2, sconfitta, stanza ripulita, tempi di disegno); `boss3mosse.js [boss]`: ogni mossa in tre momenti, una tavola per boss; `boss3voci.js [arena]`: voci, prese in giro e arena che reagisce.
 - `scelta.js`: la creazione dell'eroe al primo avvio (salvataggio vuoto: prima il prologo, fermo su «Tocca per iniziare», poi un tocco che fa partire musica e orologio insieme, il primo quadro e la prima riga, poi con «Salta» o alla fine la creazione con la sua musica; l'avviso, che blocca tutto finché non tocchi «Ho capito» e sta nello schermo; i cinque eroi liberi, ognuno con la sua entrata; statistiche; dito che gira l'eroe, tocco che lo fa tirare; la pietra intera sopra il pannello; l'aspetto (undici parti in icone, le scelte in riquadri disegnati, i colori anche di sopracciglia, bocca, segni dipinti, barba e accessori (la riga spenta quando la parte non lo prende), grandezza col cursore e col numero, dado e freccia indietro, la telecamera che si avvicina, frecce, Q/E e −/+, i ritocchi nel salvataggio e su tutti gli eroi); il barbiere del Profilo (dieci parti, 20 cristalli, «Annulla», cristalli che non bastano); i cinque doni da soli sulla pietra; il nome (dado, ripulito, 14 lettere), il riepilogo che torna ai passi; «Indietro», «Inizia», la fascia col nome, il menu con l'eroe col mantello; salvataggio, Profilo, prezzi, scheda Eroi, acquisto dell'altro, ricarica senza creazione; tastiera, anche nel nome; i cinque doni nel salvataggio; i mantelli che tornano in un salvataggio che li ha persi; la piuma in battaglia; chiusa a metà torna sopra il menu; quattro telefoni senza niente tagliato né fuori schermo; telefono piccolo con effetti ridotti; tempi di disegno e luce che si spegne da sola sui telefoni lenti; salvataggi vecchi che non la vedono). Anche `fresh.js` e `mig.js` passano dalla creazione quando c'è (quattro volte «Avanti»/«Inizia»); i salvataggi di prova con `runs:0` (`gems.js`, `hand.js`, `menu3.js`) hanno `starter`.
 - `aspetto.js [eroe]`: i ritocchi dell'aspetto nelle quattro direzioni, in fogli da guardare (`tests/as_<parte>.png`; ogni colore di ogni parte; capelli, orecchie, barba e accessori anche senza cappuccio, `as_<parte>_senza.png`; le grandezze, `as_grandezze.png`; `as_eroi.png`, `as_eroi_viso.png`), più ogni scelta, grandezza e colore su ogni eroe in tutte le mosse e 12 direzioni senza errori, ogni colore che cambia il disegno, i pezzi del viso che non si vedono da dietro, ogni riquadro della schermata disegnato, il costo di disegno (grande e in battaglia).
+- `fluido.js [scene]`: FASE 9: la tela a 2 pixel a punto su un telefono a 3, lo stesso fotogramma con e senza le scorciatoie di disegno (fogli `tests/fl_<scena>.png` con la differenza), la qualità «auto» e «alta», il nero all'entrata di una stanza.
 - `mostri.js [nome ...]`: fogli PNG dei nemici zombie in `sprite/mostri/` (controllare che quelli della lanterna non cambino). `armi.js`: armi zombie e Bara delle Sorprese (anteprime in `sprite/armi/`). `poligono.js`: rifà le immagini del poligono di prova delle armi.
 
 Dopo ogni modifica: almeno una partita automatica per capitolo, `meta2.js`, `menu2.js` e `menu3.js`, e guardare le schermate; se si tocca la modalità zombie anche `zombie.js` e le prove di `anteprime/zombie/`.
@@ -151,6 +152,19 @@ serve; le schede in `docs/boss-classici-schede/`, poi riportate nelle note). I
 testi nuovi della guida stanno in `src/js/44-guida.js` (`BEST2`), non nei cervelli, e valgono solo quando il modello nuovo ha preso il
 posto del vecchio (nel gioco di oggi restano le righe dei boss di oggi). Stato di ogni boss, metodo, design, numeri, misure e prove in
 `docs/boss-classici.md` («Stato dei boss»).
+
+## FASE 9: più fluido sul telefono (19 ottobre, in corso)
+
+Denis: «vai, lascia perdere l'intro ecc» (la FASE 9 subito; intro, prologo e filmati non si toccano). Il gioco più fluido sul suo iPhone
+**senza cambiare l'aspetto**. Misura: telefono finto 390×844 a 3 pixel a punto, il fotogramma con il disegno forzato a finire; il disegno
+era l'80% del tempo, le copie scalate di immagini la parte più cara. Fatto (in battaglia): tela a **2 pixel a punto esatti** con la
+telecamera su pixel interi (pavimento, muri e paesaggio copiati 1:1; `resize` in 45), qualità «Automatica» che scende a 1,5 pixel a punto
+se i fotogrammi restano lenti (`RESCUT`, poi `LOWFX` come prima), luci morbide grandi preparate una volta e copiate (`glowFast`, `glowTick`
+in 18), vignetta a bande (`drawVig`), mappa delle luci a un pixel per punto (`lwFill`, `lightBlit`), ombre degli ostacoli in un'immagine
+(`shadowSprite` in 47), colonne di luce a bande (`stripFast`), HUD toccato solo quando cambia (`hudSet`), stanza in pausa disegnata una
+volta (`PZD`), tre fotogrammi di nero in più quando si entra in una stanza (`G.fadeHold`). Circa −40% a fotogramma. Restano i modelli 3D
+(intoccabili senza cambiarne l'aspetto) e il menu (la scena della schermata principale costa quanto una stanza). Dettagli, numeri e cosa
+resta in `docs/fase-9-fluidita.md`; prova `node tests/fluido.js`.
 
 ## Modalità zombie (nel gioco dal 13 ottobre)
 
