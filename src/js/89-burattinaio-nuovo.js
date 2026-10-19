@@ -328,11 +328,11 @@ function bu2Update(dt){const B=G.pu2;if(!B)return;
       else if(Lz.s>=Lz.len){Lz.st='back';if(Lz.len<419)fxPush({k:'spark',x:x1,y:y1-10,t:.2})}}
     else if(Lz.st==='back'){Lz.s-=1300*dt;if(Lz.s<=10)B.lasso=null}}
   else if(Lz&&!e)B.lasso=null;
-  // tied: a dash snaps the thread; the tugs pull you (26 px in 0.1 s, up to 70% less if you run away; never nearer than 70 px to him;
+  // tied: a dash snaps the thread; the tugs pull you (26 px in 0.1 s, up to 70% less if you run away; never nearer than 52 px to him, so the punch of «Tira!» lands from every side;
   // never into walls or obstacles: moveCircle, as for your own steps)
   if(B.tied){if(!e||e.st!=='yank')bu2Untie();else if(P.dashT>0)bu2Snap(e);
     else if(B.pull){const pl=B.pull;pl.t-=dt;const dx=e.x-P.x,dy=e.y-P.y,dd=Math.hypot(dx,dy);
-      if(dd>70){const ux=dx/dd,uy=dy/dd,run=clamp(-((P.vxs||0)*ux+(P.vys||0)*uy)/(P.spd||150),0,1),s=Math.min(pl.left,260*dt*(1-.7*run),dd-70);if(s>0){moveCircle(P,ux*s,uy*s);pl.left-=s}}
+      if(dd>52){const ux=dx/dd,uy=dy/dd,run=clamp(-((P.vxs||0)*ux+(P.vys||0)*uy)/(P.spd||150),0,1),s=Math.min(pl.left,260*dt*(1-.7*run),dd-52);if(s>0){moveCircle(P,ux*s,uy*s);pl.left-=s}}
       if(pl.t<=0||pl.left<=0)B.pull=null}}
   // the trapdoors: the light grows in the cracks, they open (0.1 s), stay open, shut (0.3 s) and are baked into the floor (at most 6)
   for(let i=B.traps.length-1;i>=0;i--){const tr=B.traps[i];tr.t+=dt;if(tr.open>=0)tr.open+=dt;if(tr.close>=0){tr.close+=dt;if(tr.close>=.3){B.traps.splice(i,1);bu2Bake(tr)}}}

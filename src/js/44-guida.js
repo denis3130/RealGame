@@ -15,7 +15,7 @@ const BEST=[['slime','Slime','Salta verso di te. Il più debole della cripta.'],
   ['toad','Re Rospo','Boss. Lingua che ti tira a sé, panciate, bolle e girini.'],['hydra',"Idra della Palude",'Boss. Tre teste che mordono e sputano veleno, si immerge e riaffiora.'],
   ['yeti','Yeti delle Vette','Boss. Pugni che fanno cadere ghiaccioli, palle di neve e valanghe.'],['icequeen','Regina dei Ghiacci','Boss. Schegge, specchi ingannatori, tormente e muri di ghiaccio.']];
 // the bosses remade (89, docs/boss-classici.md) are bigger models: in the portrait about as big as the old ones
-const BEAST2={golem:.6,salamander:.72,toad:.52,yeti:.7,icequeen:.56,mimic:.55},beast2=t=>N3[t+'2']&&N3[t]===N3[t+'2']?BEAST2[t]||.65:1;
+const BEAST2={golem:.6,salamander:.72,toad:.52,yeti:.7,icequeen:.56,mimic:.55,octopus:.45,puppeteer:.42,stag:.55},beast2=t=>N3[t+'2']&&N3[t]===N3[t+'2']?BEAST2[t]||.65:1;
 // their lines in the bestiary (the bosses remade, docs/boss-classici.md): only where the new model has taken the place of the old one
 const BEST2={golem:'Boss. Schianta i pugni a terra, fa franare massi, apre faglie e rotola come una valanga. Quando si infuria, il cuore di runa spara un raggio.',
   salamander:'Boss. Sputa fuoco, frusta con la coda, nuota sotto il pavimento ed esplode fuori; corre in un anello di fiamme. Poi fa la muta e torna incandescente.',
@@ -26,7 +26,10 @@ const BEST2={golem:'Boss. Schianta i pugni a terra, fa franare massi, apre fagli
   smith:'Boss. Il maglio rovente apre la terra, le incudini cadono dal cielo, la catena arriva lontano. Quando la fornace sfiata, colpiscila.',
   hydra:'Boss. Il veleno sale nel collo che sta per colpire. Morde a tenaglia, sputa pozze, sbuca dal pavimento sotto di te. Le pozze ribollono: al centro della corona sei salvo.',
   mimic:'Mini boss nascosto in una delle due casse: morde, frusta con la lingua, ti assaggia e ti risputa, sputa oro e nella fase 2 ti sfida al gioco delle tre casse. A bocca spalancata i colpi da davanti fanno di più.',
-  phoenix:"Boss. Ventagli di piume con un varco, picchiata da cometa (attirala contro un'incudine!), coda che spazza in cerchio, pioggia di braci. A metà vita rinasce azzurra dall'uovo."},
+  phoenix:"Boss. Ventagli di piume con un varco, picchiata da cometa (attirala contro un'incudine!), coda che spazza in cerchio, pioggia di braci. A metà vita rinasce azzurra dall'uovo.",
+  puppeteer:"Boss. Una marionetta appesa ai fili d'oro: prima di ogni colpo si accendono i fili del braccio che colpirà. Manate, un filo che spazza la stanza, un lazo (scatta per spezzarlo), burattini dalle botole. A metà vita si vede chi tira i fili.",
+  octopus:"Boss. Braccia lunghe mezza stanza (poi resta attaccata: colpiscila), pioggia d'inchiostro, gabbia di tentacoli (esci dal buco), un gorgo che ti tira a sé; si immerge e ti insegue. Infuriata, manda la Marea Nera: salvati su una ninfea.",
+  stag:"Boss. Carica e resta con le corna incastrate, spazza con la corona, fa cadere le tende d'aurora, si impenna e chiama la mandria di luce. A metà vita la corona si accende e gira i suoi raggi."},
   bestTx=(t,d)=>beast2(t)!==1&&BEST2[t]||d;
 function drawBeast(cv,type){const c=cv.getContext('2d'),saved=ctx;ctx=c;c.setTransform(1,0,0,1,0,0);c.clearRect(0,0,cv.width,cv.height);
   const e=makeE0(type,0,0,0);Object.assign(e,{intro:0,face:Math.PI*.42,t:1.2,cd:1,z:0,jump:0,alpha:1});if(type==='hydra')e.heads=[-1,0,1].map(s2=>({s:s2,ext:0,open:0,st:'idle'}));if(type==='icesentinel'){e.shards=[0,1,2].map(i=>({a:i*TAU/3,hp:2,re:0,hit:0}));e.rot=.4}if(type==='snowspirit')e.ph2='float';if(type==='croc')e.st='out';if(type==='salamander')e.trail=Array.from({length:50},(_,i)=>({x:-60+i*1.2,y:-20+i*.4}));const big=isBoss(type),sc=(big?1.15*beast2(type):2.1)*cv.width/90;
