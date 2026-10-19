@@ -27,7 +27,7 @@
 // cade), N3.puppeteer2Trap (la botola) e N3.puppeteer2Info (i momenti dei colpi). Modello 'puppeteer2': nel gioco prende il nome
 // 'puppeteer' (src/js/89-burattinaio-nuovo.js).
 (()=>{const C=C3,K3=C3K,{TAU,cl,ez,lerp,add,sub,mul,len,nrm,dot,cross,lerp3,V,ball,seg,run,cmix,poly,bbox,
-  rotX,rotY,rotZ,keys,sstep,hitK,frame,ellAt,ellN,AXES,chain,parts,reg,shine,ik,glowTop,cam,hull,rim,chull,bump}=C;
+  rotX,rotY,rotZ,keys,sstep,hitK,frame,ellAt,ellN,AXES,chain,parts,reg,shine,ik,glowTop,cam,hull,rim,chull,bump,floor}=C;
 const{trem,fxOn,cheat,pls,rise,ga,ellCap,fadeDraw,grad3,ellSil,smoothP,rimP,frm,ringS,limbGrad,T3,mixT,mixRgb,rotAx}=K3;
 
 // ------------------------------------------------------------------ helpers
@@ -61,11 +61,11 @@ const K1={vel:T3('#a47ae8','#6e42b8','#351a6e'),cri:T3('#c8384f','#8f1d35','#4a0
 const K2={vel:T3('#8a5ccc','#55309a','#261050'),cri:T3('#a82a48','#6a1028','#300614'),plum:T3('#5e3478','#3a1a52','#1a0828'),
   eye:'#ff5fc8',eyeC:'#ffe6f6',eyeG:'255,95,200',str:'255,154,224',strHot:'#ffe0f4',top:'255,95,200'};
 // the Shadow (phase 2) and the curtain
-const SHD={mist:'20,10,34',rim:'120,70,200',hand:T3('#4a2a6e','#2a1444','#120820'),hr:'255,95,200',eye:'#ff5fc8',eyeG:'255,95,200'};
+const SHD={mist:'26,12,44',rim:'120,70,200',hand:T3('#4a2a6e','#2a1444','#120820'),hr:'255,95,200',eye:'#ff5fc8',eyeG:'255,95,200'};
 const PALC={};
 function pal(k2){k2=Math.round(cl(k2,0,1)*12)/12;if(PALC[k2])return PALC[k2];const K=Object.assign({},K1);if(k2>0){
   for(const n of['vel','cri','plum'])K[n]=mixT(K1[n],K2[n],k2);for(const n of['eye','eyeC','strHot'])K[n]=cmix(K1[n],K2[n],k2);
-  for(const n of['eyeG','str'])K[n]=mixRgb(K1[n],K2[n],k2);K.top=k2>.05?K2.top:null;K.topA=k2}return PALC[k2]=K}
+  for(const n of['eyeG','str'])K[n]=mixRgb(K1[n],K2[n],k2);K.top=k2>.05?K2.top:null;K.topA=k2}K.strC='rgb('+K.str+')';return PALC[k2]=K}
 
 // ------------------------------------------------------------------ the body at rest (x forward, y to its left, z up; 0,0,0 the floor point)
 const HIP=[-1,11,44],LTH=18.5,LSH=20.4;                  // the hips (±y), thigh and shin
@@ -73,11 +73,11 @@ const SHJ=[0,30,80],LUA=21,LFA=20,PUFF=[0,29,84],PUFFR=12; // the shoulder joint
 const BC=[0,0,66],BRD=[17,25,24];                         // the barrel doublet
 const HC0=[3,0,108],HOOD=18.6;                            // the head (its own turn on the peg), the hood over it
 const CR0=[0,0,158];                                      // the control cross
-const RUFC=[1,0,92],RUFR=15.5,RUFB=4.8;                   // the ruff
+const RUFC=[1,0,91],RUFR=15.5,RUFB=4.8;                   // the ruff
 const WR0=[12,39,42],AN0=[-1,10,6];                       // the wrists and the ankles at rest
 const GS=1.4;                                             // the big gloves
 // the face: the cap of ivory on the front of the head (62° wide, a little taller), the eyes, the jaw
-const FACEN=[1,0,.06],FACEA=1.08,FACEAV=1.2,EYEF=.37,EYEP=.03;
+const FACEN=[1,0,.05],FACEA=1.0,FACEAV=1.02,EYEF=.36,EYEP=.36;
 const dirAt=(f,s)=>[Math.cos(s)*Math.cos(f),Math.cos(s)*Math.sin(f),Math.sin(s)];
 // the two points of the hood (head space, from the root to the tip), their radii, the bell under the tip
 const TIP=[[-5,8,13],[-7,15,18],[-9,26,17],[-9,33,10],[-8,35,3]],TIPR=[6,5,3.8,2.8,2],TIPLAG=[0,0,.35,.7,1],TIPDROOP=[0,0,4,10,16];
@@ -112,8 +112,14 @@ function rest(p2){const A={B:[0,0,0],lean:0,roll:0,yaw:0,s:0,lift:p2?3:0,breath:
 // light a string at p = a (the pearl runs down in .1), out by b
 function lightS(A,ks,p,a,b){for(const k of ks){const s=A.S[k],l=rise(p,a,a+.02,b-.03,b);s.l=Math.max(s.l,l);if(p>=a&&p<a+.1)s.u=(p-a)/.1}}
 const slack=(A,t,ks)=>{for(const k of ks||STR)A.S[k].t=Math.min(A.S[k].t,t)};
-const tense=(A,k,p,a)=>{A.S[k].t=Math.min(A.S[k].t,sstep(a-.005,a+.02,p))};
+// a slack string pulled taut again at p = a (after slack(): it can only raise the tension), with a «tac» on its eyelet
+const tense=(A,k,p,a,noTac)=>{A.S[k].t=Math.max(A.S[k].t,sstep(a-.005,a+.02,p));if(!noTac&&p>=a&&p<a+.05)A.fx.push({k:'tac',s:k,t:(p-a)/.05})};
 const snapS=(A,k,p,a)=>{if(p>=a){A.S[k].b=cl((p-a)/.08,0,1);if(p<a+.12)A.fx.push({k:'spark',s:k,t:(p-a)/.12})}};
+// the eyes' light grows a moment before each blow (the halo ×1.4)
+const preHit=(A,p,hs)=>{for(const h of hs)A.eg=Math.max(A.eg,1+pls(p,h-.05,.09))};
+// the shoe's lowest point under the ankle when the toes point down by t: how much the ankle must rise so that the sole never goes into
+// the floor (the sole is an ellipsoid 4.6 in front of the ankle and 2.6 below it, radii 10 along the foot and 3.3 up)
+const toeLift=t=>{const s=Math.sin(t),c=Math.cos(t);return Math.max(0,4.6*s+2.6*c+Math.sqrt(100*s*s+10.9*c*c)-5.9)};
 // the heap: a puppet nobody moves (sitting on the floor, the legs bent outward, the arms wide on the floor, the head lolling)
 function heap(A,k,sd){if(k<=0)return;const s=sd||1;
   A.B=lerp3(A.B,[2,0,-33],k);A.lean=lerp(A.lean,.3,k);A.roll=lerp(A.roll,.14*s,k);A.yaw=lerp(A.yaw,0,k);
@@ -134,15 +140,17 @@ function pPose(anim,p,o){const ph=p*TAU,P2=!!o.p2&&anim!=='enter'&&anim!=='rage'
     A.jaw=Math.max(A.jaw,1.5*(pls(p,.3,.04)+pls(p,.36,.04)));
     A.hy=lin([[0,0],[.1,0],[.16,.5],[.3,.5],[.36,0],[.45,0],[.5,-.5],[.6,-.5],[.66,0],[.68,0],[.84,1.9],[.85,1.9],[.866,-.1],[.88,.05],[.9,0],[1,0]],p);
     if(p>.68&&p<.85)A.hy=1.9*ez((p-.68)/.17);
-    A.lid=pls(p,.885,.03);A.tR=Math.max(A.tR,-.35*pls(p,.55,.06)*(P2?0:1));
+    A.lid=pls(p,.885,.03);if(!P2)A.tR-=.35*pls(p,.55,.06);
     if(!P2)A.hint=pls(p,.96,.06);
     if(P2){A.sh.breath=.04*(.5-.5*Math.cos(ph));A.sh.blink=1-pls(p,.3,.05)-pls(p,.8,.05);A.crk=.75+.25*Math.sin(ph*2)}}
   else if(anim==='walk'){A.look=1;
-    if(!P2){// a puppet's step: the string of the knee pulls the knee up, the shin dangles, the foot comes down on its toe
+    if(!P2){// a puppet's step: the string of the knee pulls the knee up (12 up, 14 forward), the shin dangles under it with the toes
+      // down, the foot comes down on its toe at .45 (and .95) and flattens, then slides back under him; the string of the leg that rises
+      // is the tauter one
       for(const[sd,o2] of[[-1,0],[1,.5]]){const q=((p-o2)%1+1)%1,sw=q<.5,u=sw?q/.5:0,su=sw?0:(q-.5)/.5,f=sd>0?A.fL:A.fR;
-        f[0]+=sw?lerp(-7,7,ez(u)):lerp(7,-7,su);f[2]+=sw?14*Math.sin(Math.PI*u):0;
-        const t=sw?(u<.8?.6*Math.sin(Math.PI*Math.min(1,u*1.25)):lerp(.25,0,(u-.8)/.2)):0;if(sd>0)A.tL=t;else A.tR=t;
-        if(sw)tense(A,sd>0?'kL':'kR',1,0)}
+        const t=sw?.55*Math.pow(Math.sin(Math.PI*u),.6):0;
+        f[0]+=sw?lerp(-8,8,ez(u))+10*Math.sin(Math.PI*u):lerp(8,-8,su);f[2]+=sw?12*Math.sin(Math.PI*Math.min(1,u/.9))+toeLift(t):0;
+        if(sd>0)A.tL=t;else A.tR=t;A.S[sd>0?'kL':'kR'].t=sw?1:.8}
       A.B[2]+=2.5*(.5-.5*Math.cos(2*ph));A.roll=.04*Math.sin(ph);A.cx[0]+=4;A.kb=.25*Math.sin(ph)}
     else{// carried by the Shadow: the feet over the floor, toes down, the legs left behind like a pendulum
       const sw=Math.sin(ph);A.fL[0]+=-4+3*sw;A.fR[0]+=-4-3*sw;A.lean=-.08;A.roll=.05*Math.sin(ph);A.cx[0]+=5;A.B[2]+=1.2*Math.sin(2*ph)}
@@ -150,40 +158,44 @@ function pPose(anim,p,o){const ph=p*TAU,P2=!!o.p2&&anim!=='enter'&&anim!=='rage'
     const as=Math.sin(ph-.5);A.hL[0]+=6*as;A.hR[0]-=6*as;A.hL[2]+=1.5*Math.abs(as);A.hR[2]+=1.5*Math.abs(as);
     A.tsw=.2*Math.sin(2*ph-.6);A.tail=.12*Math.sin(2*ph-.7);A.jb=.6;A.jph=p*4;A.hp=.14;A.cx[1]+=2*Math.sin(ph-.4);
     if(P2)A.crk=.85}
-  else if(anim==='hit'){const kb=hitK(p);A.lean=-.3*kb;A.B[0]-=4*kb;A.hy=1.2*Math.sin(Math.PI*cl(p/.6,0,1));A.lid=p<.5?1:sstep(.6,.5,p);A.stars=p<.75?1-p/.75:0;A.vib=1.5*(1-p);A.look=0;
+  else if(anim==='hit'){const kb=hitK(p);A.lean=-.3*kb;A.B[0]-=4*kb;A.hy=1.2*Math.sin(Math.PI*cl(p/.6,0,1));A.lid=sstep(0,.04,p)*(1-sstep(.5,.6,p));A.stars=sstep(0,.06,p)*(1-sstep(.4,.75,p));A.vib=1.5*(1-p);A.look=0;
     A.hL=add(A.hL,[-6*kb,4*kb,8*kb]);A.hR=add(A.hR,[-6*kb,-4*kb,8*kb]);A.cp=-.2*kb;A.jb=1;A.jph=p*6;A.tsw=-.3*kb}
   else if(anim==='slam'){A.look=0;
     lightS(A,['wL','wR'],p,0,.47);A.jb=p<.1?1:p<.47?.4:0;A.jph=p*8;A.lid=.55*rise(p,.0,.06,.74,.8);
     const up=sstep(.06,.4,p),dn=sstep(.47,.52,p),st=sstep(.74,.78,p)*.5+sstep(.8,.84,p)*.5;
     A.cp=-.25*rise(p,0,.06,.45,.5);A.cx[2]=lin([[0,0],[.06,6],[.4,22],[.47,22],[.52,-8],[.74,-8],[.78,8],[.84,0],[1,0]],p);
-    A.lean=lin([[0,0],[.06,-.05],[.4,-.15],[.47,-.15],[.52,.8],[.74,.8],[.78,.45],[.84,.05],[.9,-.03],[1,0]],p);
-    A.B[2]=lin([[0,0],[.47,0],[.52,-20],[.74,-20],[.78,-10],[.84,0],[1,0]],p);
-    const hu=[2,24,118],hd=[34,20,10],tr=.8*trem(p,.4,.47,7,1.8);
-    for(const sd of[1,-1]){let h;if(p<.47)h=lerp3(sd>0?A.hL:A.hR,[hu[0],sd*hu[1],hu[2]+tr],up);else if(p<.52)h=lerp3([hu[0],sd*hu[1],hu[2]],[hd[0],sd*hd[1],hd[2]],ez(dn));
-      else if(p<.74)h=[hd[0]+.8*Math.sin(p*60+sd),sd*hd[1],hd[2]];else h=lerp3([hd[0],sd*hd[1],hd[2]],sd>0?WR0:[WR0[0],-WR0[1],WR0[2]],st);
-      if(sd>0)A.hL=h;else A.hR=h;const g=p>.04&&p<.82?FIST():HP(null,null);if(p>.4&&p<.74)g.fd=p<.52?[0,0,-1]:[.7,0,-.7];if(p>.06&&p<.4)g.fd=[0,0,1];if(sd>0)A.gL=g;else A.gR=g}
+    A.lean=lin([[0,0],[.06,-.05],[.4,-.15],[.47,-.15],[.52,.7],[.74,.7],[.78,.4],[.84,.05],[.9,-.03],[1,0]],p);
+    A.B[2]=lin([[0,0],[.47,0],[.52,-18],[.74,-18],[.78,-9],[.84,0],[1,0]],p);
+    const hu=[0,29,120],hd=[34,20,10],tr=.8*trem(p,.4,.47,7,1.8),dn2=dn*dn;
+    for(const sd of[1,-1]){let h;if(p<.47)h=lerp3(sd>0?A.hL:A.hR,[hu[0],sd*hu[1],hu[2]+tr],up);else if(p<.52)h=lerp3([hu[0],sd*hu[1],hu[2]],[hd[0],sd*hd[1],hd[2]],dn2);
+      else if(p<.74)h=[hd[0],sd*hd[1],hd[2]];else h=lerp3([hd[0],sd*hd[1],hd[2]],sd>0?WR0:[WR0[0],-WR0[1],WR0[2]],st);
+      if(sd>0)A.hL=h;else A.hR=h;let g=p>.04&&p<.58?FIST():HP(null,null);if(p>.4&&p<.58)g.fd=p<.52?[0,0,-1]:[.7,0,-.7];if(p>.06&&p<.4)g.fd=[0,0,1];
+      // on the floor the fists open and the fingers scratch it (one after the other, under 6 a second)
+      if(p>=.55&&p<.8){const k=rise(p,.55,.6,.74,.8);g=HP([.75,sd*.15,-.65],[0,0,1],[0,1,2].map(i=>lerp(.3,.25+.6*(.5+.5*Math.sin(p*TAU*9+i*1.1+(sd>0?0:.8))),k)),.3)}
+      if(sd>0)A.gL=g;else A.gR=g}
     A.jaw=Math.max(A.jaw,5*rise(p,.1,.2,.4,.47));A.hp=lin([[0,.12],[.4,-.05],[.47,0],[.52,.55],[.74,.55],[.84,.12],[1,.12]],p);
     if(p>=.47&&p<.74)slack(A,.15);else if(p>=.74&&p<.8)slack(A,.6);
     if(p>=.52&&p<.6)A.fx.push({k:'pound',t:(p-.52)/.08});A.tsw=.3*rise(p,.47,.52,.74,.84);A.tail=.25*rise(p,.47,.52,.74,.84)}
-  else if(anim==='slam3'){A.look=0;A.lift=0;A.tL=A.tR=0;
-    // three blows that come forward: the left fist, the right, both
-    const H=(at,up,dn,hit,w)=>({up:sstep(at,up,p)*(1-sstep(dn,hit,p)),hit:p>=hit&&p<hit+.1});
+  else if(anim==='slam3'){A.look=0;
+    // three blows that come forward: the left fist, the right, both. It comes down from its hover onto the floor for them (.00-.05) and goes
+    // back up at the end (.95-1)
+    const k0=sstep(0,.05,p)*(1-sstep(.95,1,p));A.lift=3*(1-k0);
     lightS(A,['wL'],p,0,.4);lightS(A,['wR'],p,.44,.64);lightS(A,['wL','wR'],p,.68,.9);A.jb=1;A.jph=p*9;
     A.cr=lin([[0,0],[.05,.3],[.4,.3],[.44,-.3],[.64,-.3],[.68,0],[1,0]],p);A.cp=-.25*rise(p,.68,.72,.86,.9);
-    const hu=sd=>[4,sd*24,118],hd=(sd,two)=>two?[34,sd*20,10]:[36,sd*16,10];
-    const L1=keys([[0,0],[.05,0],[.34,1],[.38,0],[.4,0],[.66,0],[.7,0],[.84,1],[.88,0],[1,0]],p),R1=keys([[0,0],[.46,0],[.6,1],[.63,0],[.7,0],[.84,1],[.88,0],[1,0]],p);
-    const downL=(p>=.38&&p<.66)||(p>=.88&&p<.95),downR=(p>=.63&&p<.7)||(p>=.88&&p<.95);
-    A.hL=downL?hd(1,p>=.88):L1>.02?lerp3([20,30,60],hu(1),L1):[20,30,60];A.hR=downR?hd(-1,p>=.88):R1>.02?lerp3([20,-30,60],hu(-1),R1):[20,-30,60];
-    if(p>=.95){const k=sstep(.95,1,p);A.hL=lerp3(A.hL,WR0,k);A.hR=lerp3(A.hR,[WR0[0],-WR0[1],WR0[2]],k)}
-    A.gL=A.gR=FIST();
-    A.lean=lin([[0,.1],[.34,-.1],[.4,.6],[.42,.6],[.54,.3],[.6,-.05],[.64,.6],[.66,.6],[.78,.3],[.84,-.12],[.9,.75],[.95,.75],[1,0]],p);
+    // each fist: from the rest to a fist in front (N), up over the shoulder (U), falling dead weight (accelerating) to the floor (F), back
+    const W0L=WR0,W0R=[WR0[0],-WR0[1],WR0[2]],NL=[20,30,60],NR=[20,-30,60],UL=[2,28,120],UR=[2,-28,120],F1=[36,16,10],F2=[36,-16,10],F3L=[34,20,10],F3R=[34,-20,10];
+    const path=(S)=>{for(const[a,b,f,t,e] of S)if(p<=b){const k=cl((p-a)/(b-a),0,1);return lerp3(f,t,e==='fall'?k*k:ez(k))}return S[S.length-1][3]};
+    A.hL=path([[0,.05,W0L,NL],[.05,.34,NL,UL],[.34,.4,UL,F1,'fall'],[.4,.46,F1,F1],[.46,.56,F1,NL],[.56,.7,NL,NL],[.7,.84,NL,UL],[.84,.9,UL,F3L,'fall'],[.9,.95,F3L,F3L],[.95,1,F3L,W0L]]);
+    A.hR=path([[0,.05,W0R,NR],[.05,.46,NR,NR],[.46,.6,NR,UR],[.6,.64,UR,F2,'fall'],[.64,.7,F2,F2],[.7,.84,F2,UR],[.84,.9,UR,F3R,'fall'],[.9,.95,F3R,F3R],[.95,1,F3R,W0R]]);
+    const fi=k0>.5;A.gL=fi?FIST():HP(null,null);A.gR=fi?FIST():HP(null,null);
+    A.lean=lin([[0,0],[.05,.05],[.34,-.1],[.4,.6],[.44,.6],[.54,.3],[.6,-.05],[.64,.6],[.68,.6],[.78,.3],[.84,-.12],[.9,.75],[.95,.75],[1,0]],p);
     A.roll=lin([[0,0],[.4,.2],[.5,.1],[.64,-.2],[.75,-.1],[.9,0],[1,0]],p);
     A.B[2]=lin([[0,0],[.38,0],[.4,-16],[.44,-14],[.54,-4],[.62,0],[.64,-16],[.68,-14],[.78,-4],[.88,0],[.9,-20],[.95,-20],[1,0]],p);
     // dragged forward by the Shadow (the game moves it 45 px): the feet trail on their toes, the body stays back
-    const dr=rise(p,.42,.46,.5,.54)+rise(p,.66,.7,.74,.78);A.fL[0]-=10*dr;A.fR[0]-=10*dr;A.tL=A.tR=.5*dr;A.lean-=.15*dr;
-    A.hp=.12+.3*(downL||downR?1:0);A.jaw=3*(pls(p,.38,.05)+pls(p,.62,.05)+pls(p,.88,.06));
+    const dr=rise(p,.42,.46,.5,.54)+rise(p,.66,.7,.74,.78);A.fL[0]-=10*dr;A.fR[0]-=10*dr;A.tL=A.tR=.38*(1-k0)+.5*dr;A.lean-=.15*dr;
+    const dn=Math.max(rise(p,.36,.4,.44,.5),rise(p,.6,.64,.68,.72),rise(p,.86,.9,.95,1));A.hp=.12+.3*dn;A.jaw=3*(pls(p,.38,.05)+pls(p,.62,.05)+pls(p,.88,.06));
     if(p>=.9&&p<.95)slack(A,.2);for(const c of[.4,.64,.9])if(p>=c&&p<c+.08)A.fx.push({k:'pound',t:(p-c)/.08,one:c<.9?(c<.5?1:-1):0});
-    A.tsw=.25*Math.sin(p*20);A.tail=.2*Math.sin(p*14)}
+    A.smoke=.5*rise(p,.36,.42,.9,.98);A.tsw=.25*Math.sin(p*TAU*3)*rise(p,0,.05,.95,1);A.tail=.2*Math.sin(p*TAU*2)*rise(p,0,.05,.95,1)}
   else if(anim==='strings'){A.look=p<.4?1:0;
     lightS(A,['wL','wR'],p,0,.45);A.jb=p<.1?1:.2;A.jph=p*8;A.lid=.5*rise(p,.05,.1,.42,.5);
     const op=sstep(0,.08,p),wh=sstep(.38,.42,p),bk=sstep(.62,1,p);
@@ -228,8 +240,8 @@ function pPose(anim,p,o){const ph=p*TAU,P2=!!o.p2&&anim!=='enter'&&anim!=='rage'
     A.gL=HP(null,null,[0,0,0],0);A.gR=HP(null,null,[0,0,0],0);A.jaw=3*st*(.5+.5*Math.sin(p*50));A.tsw=.4*st*Math.sin(p*25);A.jb=1;A.jph=p*10;
     if(p<.15)A.fx.push({k:'snapR',t:p/.15})}
   else if(anim==='vanish'){A.look=1;lightS(A,['up'],p,0,.45);A.S.up.v=1.4*rise(p,0,.03,.4,.45);A.jb=p<.12?1:.3;A.jph=p*8;
-    A.cur={k:sstep(.06,.32,p)*(1-sstep(.55,.85,p)),w:rise(p,.06,.3,.6,.85),bulge:pls(p,.385,.13)};
-    const yk=sstep(.45,.55,p);A.lift+=320*yk*yk;A.cx[2]+=40*rise(p,.4,.45,1,1.1);A.body=1-sstep(.5,.56,p);A.gL=A.gR=HP(null,null,[.4,.4,.45],.4);
+    A.cur={k:sstep(.06,.32,p)*(1-sstep(.55,.85,p)),w:rise(p,.06,.3,.6,.85)+.8*pls(p,.47,.1),bulge:pls(p,.385,.13),ph:p*TAU*2.5};
+    const yk=sstep(.45,.55,p);A.lift+=320*yk*yk;A.cx[2]+=40*sstep(.42,.5,p);A.body=1-sstep(.5,.56,p);A.vmask=p>=.44;A.strK=1-sstep(.5,.62,p);A.gL=A.gR=HP(null,null,[.4,.4,.45],.4);
     if(p>.3&&p<.45){A.hL[2]+=8;A.hR[2]+=8;A.lean=-.1}if(P2)A.sh.k=1-sstep(.45,.55,p)}
   else if(anim==='drop'){A.look=0;const z=o.z!=null?o.z:(p<.28?260*(1-(p/.28)*(p/.28)):0);A.lift=Math.max(0,z);
     if(p<.28){slack(A,.25);A.hL=[0,58,70];A.hR=[0,-58,70];A.gL=A.gR=HP(null,null,[0,0,0],0);A.fL=[-2,20,10];A.fR=[-2,-20,10];A.tL=A.tR=.3;
@@ -252,12 +264,12 @@ function pPose(anim,p,o){const ph=p*TAU,P2=!!o.p2&&anim!=='enter'&&anim!=='rage'
     const up=rise(p,.0,.05,.75,.8),bt=Math.sin(p*TAU*4.5)*sstep(.05,.1,p)*(1-sstep(.7,.75,p)),dn=pls(p,.79,.04);
     for(const sd of[1,-1]){let h=lerp3(sd>0?A.hL:A.hR,[10,sd*34,118+5*bt*sd],up);h=add(h,[0,0,-30*dn]);if(sd>0)A.hL=h;else A.hR=h;const g=HP([0,sd*.3,1],[-1,0,0],[.1,.2,.3],.3);if(up<.4){g.fd=null;g.bk=null}if(sd>0)A.gL=g;else A.gR=g}
     A.hr=.15*bt;A.hy=.2*Math.sin(p*TAU*2.25);A.jaw=Math.max(A.jaw,3*up*(.5+.5*Math.sin(p*70)));A.lean=-.08*up+.12*dn;A.jb=.6;A.jph=p*9;
-    if(P2){A.sh.eg=1+.5*rise(p,0,.08,.7,.8);A.sh.sq=rise(p,.34,.38,.78,.86);A.sh.free={k:rise(p,.08,.12,.16,.2)+rise(p,.86,.92,1,1.1),z:p<.5?60*sstep(.08,.2,p):60*(1-sstep(.86,1,p))}}}
+    if(P2){A.sh.eg=1+.5*rise(p,0,.08,.7,.8);A.sh.sq=rise(p,.34,.38,.78,.86);A.sh.free={k:rise(p,0,.06,.15,.2)+rise(p,.86,.9,.95,1),z:p<.5?60*sstep(.08,.2,p):60*(1-sstep(.86,.95,p))}}}
   else if(anim==='rage'){A.look=0;A.k2=sstep(.6,.8,p);A.crk=sstep(.62,.8,p);
     const fall=sstep(0,.18,p),up=sstep(.58,.8,p);
     heap(A,fall*(1-up));slack(A,1-fall+up);A.S.up.b=p>=.05&&p<.5?cl((p-.05)/.08,0,1):-1;
     // the cross falls spinning to 110, a hand of shadow comes down from the mist and catches it, pulls it up
-    A.cx[2]=lin([[0,0],[.18,0],[.42,-48],[.5,-48],[.58,-44],[.8,0],[1,0]],p);A.cyw=TAU*.75*sstep(.18,.42,p);A.cr=.4*rise(p,.18,.3,.42,.5);
+    A.cx[2]=lin([[0,0],[.18,0],[.42,-48],[.5,-48],[.58,-44],[.8,0],[1,0]],p);A.cyw=TAU*sstep(.18,.42,p);A.cr=.4*rise(p,.18,.3,.42,.5);
     A.sh={k:sstep(.18,.4,p),eye:sstep(.2,.38,p)*(1-pls(p,.3,.04)-pls(p,.36,.04)),eg:1,sq:rise(p,.82,.86,.96,1),blink:1,gz:p<.5?lerp(70,0,sstep(.42,.5,p)):0,go:p<.5?1-sstep(.46,.5,p):0,free:null,breath:0,mistK:sstep(.2,.4,p)};
     if(p>=.58){A.lift=3*up;for(const c of[.62,.68,.74])if(p>=c&&p<c+.05)A.fx.push({k:'tac',t:(p-c)/.05,smoke:1})}
     A.smoke=rise(p,.62,.66,.85,1);A.hp=lerp(A.hp,-.35,rise(p,.8,.84,.96,1));A.jaw=Math.max(A.jaw,5*rise(p,.8,.83,.96,1)*(.6+.4*Math.sin(p*70)));A.lid=up>0&&up<1?0:A.lid;A.wide=rise(p,.58,.62,.8,.86)}
@@ -266,14 +278,14 @@ function pPose(anim,p,o){const ph=p*TAU,P2=!!o.p2&&anim!=='enter'&&anim!=='rage'
     A.hy=TAU*ez(cl(p/.55,0,1));A.tsw=-.5*Math.sin(Math.PI*cl(p/.6,0,1));A.jaw=Math.max(A.jaw,3*rise(p,.3,.33,.77,.8)*(.5+.5*Math.cos((p-.3)/.5*TAU*3)));
     const cl2=rise(p,.78,.82,.97,1),cp=Math.abs(Math.sin((p-.8)/.2*TAU*2))*cl2;
     A.hL=lerp3(A.hL,[26,6+5*cp,76],cl2);A.hR=lerp3(A.hR,[26,-6-5*cp,76],cl2);if(cl2>.3){A.gL=HP([.3,0,1],[0,1,0],[.1,.1,.1],.1);A.gR=HP([.3,0,1],[0,-1,0],[.1,.1,.1],.1)}
-    A.lean=.2*rise(p,.85,.9,.96,1);A.jb=.5;A.jph=p*8;if(P2)A.sh.sq=rise(p,.1,.2,.8,.95);if(p>=.8&&p<1)for(const c of[.85,.95])if(p>=c&&p<c+.04)A.fx.push({k:'clap',t:(p-c)/.04})}
+    A.lean=.2*rise(p,.85,.9,.96,1);A.jb=.5;A.jph=p*8;if(P2)A.sh.moon=rise(p,.1,.2,.8,.95);if(p>=.8&&p<1)for(const c of[.85,.95])if(p>=c&&p<c+.04)A.fx.push({k:'clap',t:(p-c)/.04})}
   else if(anim==='call'){A.look=1;
     const fw=rise(p,0,.15,.8,1);A.hR=lerp3(A.hR,[26,-28,76],fw);const g=HP([1,.1,0],[0,0,-1],[0,1,1],.6,1);
     const bk=pls(p,.32,.25)+pls(p,.67,.25);g.c=[.85*bk,1,1];if(fw<.5){g.fd=null;g.bk=null;g.c=[.25,.3,.35];g.pt=0}A.gR=g;
     A.hr=.3*fw;A.jaw=Math.max(A.jaw,1.6*fw*(.5+.5*Math.sin(p*45)));sway(.5)}
   else if(anim==='enter'){A.look=0;
     // .00-.30 the curtain goes up and shows a limp puppet hanging on slack strings; the strings tense one at a time
-    A.cur={k:1-sstep(0,.3,p),w:rise(p,0,.05,.25,.32),bulge:0};
+    A.cur={k:1-sstep(0,.3,p),w:rise(p,0,.05,.25,.32),bulge:0,ph:p*TAU*4};
     const T=[['h',.31],['wR',.38],['wL',.44],['kR',.51],['kL',.56]];slack(A,.12);for(const[s,a] of T)tense(A,s,p,a);
     const hk=sstep(.305,.32,p),ar=sstep(.375,.39,p),al=sstep(.435,.45,p),kr=sstep(.505,.52,p),kl=sstep(.555,.57,p);
     A.hp=lerp(.85,.12,hk);A.hr=lerp(.2,0,hk);A.lid=lerp(1,0,sstep(.315,.33,p));A.eg=lerp(0,1,sstep(.31,.34,p));A.droop=lerp(.8,0,hk);
@@ -300,8 +312,9 @@ function pPose(anim,p,o){const ph=p*TAU,P2=!!o.p2&&anim!=='enter'&&anim!=='rage'
     if(d){A.sh={k:1-sstep(.6,.84,p),eye:1-sstep(.6,.84,p),eg:1,sq:0,blink:1,gz:0,go:sstep(.5,.54,p),free:null,breath:0,rise:sstep(.6,.84,p)}}
     // a bell comes off the hood, rolls in front of the heap and stops; the curtain comes down; it melts in sparks of gold
     A.bell=p>=.74?{k:sstep(.74,.86,p),out:1-sstep(.95,1,p)}:null;
-    A.cur={k:sstep(.86,.95,p),w:rise(p,.86,.9,.95,1),bulge:0,melt:sstep(.95,1,p)};A.jb=rise(p,.48,.5,.66,.7);A.jph=p*10;
-    for(const c of[.12,.2,.28,.36,.46])if(p>=c&&p<c+.05)A.fx.push({k:'ping',t:(p-c)/.05});A.fade=1-sstep(.95,1,p)}
+    // (the curtain is down by .93: the heap goes away behind it before the curtain melts from the hem)
+    A.cur={k:sstep(.86,.93,p),w:rise(p,.86,.9,.93,.97),bulge:0,melt:sstep(.95,1,p),ph:p*TAU*3};A.jb=rise(p,.48,.5,.66,.7);A.jph=p*10;
+    for(const[c,k] of[[.12,'kL'],[.2,'kR'],[.28,'wL'],[.36,'wR'],[.46,'h']])if(p>=c&&p<c+.05)A.fx.push({k:'ping',s:k,t:(p-c)/.05});A.fade=1-sstep(.93,.95,p);A.strK=A.fade}
   // the look of the head toward the hero (from the game) in the poses that aim
   A.lookK=A.look;
   return A}
@@ -318,8 +331,8 @@ function legGeo(X,A,sd){const hip=X.T([HIP[0],sd*HIP[1],HIP[2]]),f=sd>0?A.fL:A.f
     pole0=X.Rd([1,sd*.12,.05]),pole=A.kpole&&A.kpk>0?nrm(lerp3(pole0,[A.kpole[0],sd*A.kpole[1],A.kpole[2]],A.kpk)):pole0,[kn,a2]=ik(hip,an,LTH,LSH,pole);
   const t=sd>0?A.tL:A.tR,fy=(sd>0?A.fyL:A.fyR)*sd,fw=[Math.cos(t)*Math.cos(fy),Math.cos(t)*Math.sin(fy),-Math.sin(t)],side=nrm(cross([0,0,1],fw)),up=nrm(cross(fw,side));
   // the knee points away from the line hip-ankle: the string's eyelet is on its front
-  const mid=lerp3(hip,a2,.5);let kd=sub(kn,mid);if(len(kd)<.5)kd=X.Rd([1,0,0]);kd=nrm(kd);
-  return{sd,hip,kn,an:a2,fw,side,up,eye:add(kn,mul(kd,6.6)),kd}}
+  const mid=lerp3(hip,a2,.5);let kd=sub(kn,mid);if(len(kd)<.5)kd=X.Rd([1,0,0]);kd=nrm(kd);const ke=nrm(add(kd,X.Rd([0,sd*.9,0])));
+  return{sd,hip,kn,an:a2,fw,side,up,eye:add(kn,mul(ke,6.6)),kd:ke}}
 function legDraw(V0,X,A,K,g){const{P,F}=V0,{sd,hip,kn,an,fw,side,up}=g,lat=X.Rd([0,sd,0]);
   // the breeches: a velvet puff round the top of the thigh, a golden band at the bottom, three soft folds
   const w=nrm(sub(kn,hip)),[pu,pv]=frm(w,X.Rd([1,0,0])),pc=add(lerp3(hip,kn,.36),mul(lat,.5)),FR3={u:pu,v:pv,w},Rd=[8.5,9.5,9.5],sil=ellSil(V0,pc,Rd,FR3,null,18),pa=smoothP(sil);
@@ -340,7 +353,11 @@ function legDraw(V0,X,A,K,g){const{P,F}=V0,{sd,hip,kn,an,fw,side,up}=g,lat=X.Rd(
     const q0=P(add(add(pc,mul(w,-6)),mul(n,6))),q1=P(add(add(pc,mul(w,4)),mul(n,8.4)));ctx.beginPath();ctx.moveTo(q0[0],q0[1]);ctx.quadraticCurveTo((q0[0]+q1[0])/2+1,(q0[1]+q1[1])/2,q1[0],q1[1]);ctx.stroke()}
   glowTop(P(pc),9,.1);ctx.restore();ctx.strokeStyle=INK;ctx.lineWidth=2.3;ctx.stroke(pa);rimP(sil,.25);
   // the knee: a wooden ball, a dark peg on its outer side, a thin golden ring, the eyelet of the string in front
-  const qk=P(kn);ball3(qk,6.8,K.wood,2.2);ctx.strokeStyle='rgba(255,205,69,.75)';ctx.lineWidth=.9;ctx.beginPath();ctx.ellipse(qk[0],qk[1],4.6,4.6,0,0,TAU);ctx.stroke();
+  const qk=P(kn);ball3(qk,6.8,K.wood,2.2);topM(qk,6.8,K);
+  // a thin golden ring round the joint, where the shin goes into it (only its half toward us)
+  {const sd2=nrm(sub(an,kn)),[u,v]=frm(sd2,[1,0,0]),c=add(kn,mul(sd2,2.4)),R=ringS(V0,c,u,v,6.35,20),runs=[];let cur=[];
+    for(let i=0;i<=20;i++){const t=i%20/20*TAU,m=add(mul(u,Math.cos(t)),mul(v,Math.sin(t)));if(F(m)>.02)cur.push(R[i%20]);else if(cur.length){runs.push(cur);cur=[]}}if(cur.length)runs.push(cur);
+    K3.strokeRuns(runs,INK,2.6);K3.strokeRuns(runs,K.gold.b,1.3)}
   if(F(lat)>.1){const q=P(add(kn,mul(lat,6.4)));ctx.fillStyle=K.peg;ball(q,1.6);ctx.fill()}
   if(F(g.kd)>-.2){const q=P(g.eye);ctx.strokeStyle=INK;ctx.lineWidth=2;ball(q,1.4);ctx.stroke();ctx.strokeStyle=K.gold.b;ctx.lineWidth=1;ctx.stroke()}}
 function shoeDraw(V0,A,K,g){const{P,F}=V0,{an,fw,side,up}=g,at=(a,b,c)=>add(an,add(add(mul(fw,a),mul(side,b)),mul(up,c)));
@@ -351,7 +368,7 @@ function shoeDraw(V0,A,K,g){const{P,F}=V0,{an,fw,side,up}=g,at=(a,b,c)=>add(an,a
   ctx.fillStyle=INK;for(let i=0;i<2;i++){hull(qs[i],[2.6,1.9,1.3][i]+1.1,qs[i+1],[2.6,1.9,1.3][i+1]+1.1);ctx.fill()}
   ctx.fillStyle=K.shoe.b;for(let i=0;i<2;i++){hull(qs[i],[2.6,1.9,1.3][i]-.2,qs[i+1],[2.6,1.9,1.3][i+1]-.2);ctx.fill()}
   // the white light on the instep and the worn tip
-  ctx.save();ctx.clip(pa);const qi=P(at(1,0,1.4));ctx.fillStyle='rgba(255,255,255,.55)';ctx.beginPath();ctx.ellipse(qi[0]-.5,qi[1]-.4,2.2,1,-.3,0,TAU);ctx.fill();
+  ctx.save();ctx.clip(pa);const qi=P(at(1,0,1.4)),qj=P(at(8,0,.8));ctx.strokeStyle='rgba(255,255,255,.5)';ctx.lineWidth=1.3;ctx.lineCap='round';seg(qi,qj);ctx.stroke();ctx.fillStyle='rgba(255,255,255,.8)';ctx.beginPath();ctx.ellipse(qi[0]-.5,qi[1]-.4,2,1,-.3,0,TAU);ctx.fill();
   const qt=P(at(11,0,-1.6));ctx.fillStyle=K.wear;ctx.globalAlpha*=.55;ctx.beginPath();ctx.ellipse(qt[0],qt[1],2,1.2,0,0,TAU);ctx.fill();ctx.restore();rimP(sil,.22);
   const qb=P(add(tp[2],mul(up,-1.2)));ball3(qb,1.8,K.gold,1.2)}
 
@@ -372,7 +389,7 @@ function torsoDraw(V0,X,A,K,J){const{P,F}=V0,br=1+A.breath,Rd=[BRD[0]*br,BRD[1]*
     const pp=patch(V0,ring,o0);if(pp){ctx.moveTo(pp[0][0],pp[0][1]);for(const q of pp)ctx.lineTo(q[0],q[1]);ctx.closePath()}}
   ctx.fill();
   // the golden lines: the edges of the diamonds, two families of spirals from z 50 to 84
-  const runs=[];for(const dir of[1,-1])for(let k=0;k<8;k++){let cur=[];for(let i=0;i<=12;i++){const u=i/12,z=50+34*u,th=k*Math.PI/4+dir*u*Math.PI/2,s2=surfB(X,Rd,th,z);
+  const runs=[];for(const dir of[1,-1])for(let k=0;k<8;k++){let cur=[];for(let i=0;i<=12;i++){const u=i/12,z=50+34*u,th=k*Math.PI/4+dth+dir*u*Math.PI/2,s2=surfB(X,Rd,th,z);
       if(F(s2.n)>0)cur.push(P(s2.p));else if(cur.length){if(cur.length>1)runs.push(cur);cur=[]}}if(cur.length>1)runs.push(cur)}
   for(const z of[50,84]){let cur=[];for(let i=0;i<=32;i++){const s2=surfB(X,Rd,i/32*TAU,z);if(F(s2.n)>0)cur.push(P(s2.p));else if(cur.length){if(cur.length>1)runs.push(cur);cur=[]}}if(cur.length>1)runs.push(cur)}
   K3.strokeRuns(runs,'rgba(60,24,10,.45)',2.2);K3.strokeRuns(runs,K.gold.b,1.05);
@@ -400,7 +417,8 @@ function backMask(V0,X,Rd,K){const{P,F}=V0,cen=surfB(X,Rd,Math.PI,71);if(F(cen.n
   const sm=[[-5.4,68.4],[-2.6,66.2],[0,65.6],[2.6,66.2],[5.4,68.4]].map(([u,z])=>at(u,z));ctx.beginPath();ctx.moveTo(sm[0][0],sm[0][1]);for(const q of sm)ctx.lineTo(q[0],q[1]);ctx.strokeStyle=K.gold.b;ctx.lineWidth=1.2;ctx.stroke();
   for(const s of[-1,1]){const q=at(s*5.6,70.4);ctx.fillStyle=K.gold.b;ball(q,.8);ctx.fill()}ctx.restore()}
 // the coat tails: two tongues of violet velvet with a golden edge, hanging behind from the belt (late)
-function tailsDraw(V0,X,A,K){const{P}=V0;for(const sd of[-1,1]){const sw=A.tail*(sd>0?1:.85),a=X.T([TAILA[0],sd*TAILA[1],TAILA[2]]),d=X.Rd(rotAx([TAILB[0]-TAILA[0],sd*(TAILB[1]-TAILA[1]),TAILB[2]-TAILA[2]],[0,1,0],-sw*.9)),
+function tailsDraw(V0,X,A,K,Rd){const{P}=V0;for(const sd of[-1,1]){const sw=A.tail*(sd>0?1:.85),zz=(TAILA[2]-BC[2])/Rd[2],s=Math.sqrt(Math.max(0,1-zz*zz)),ry=Math.min(.95,TAILA[1]/(Rd[1]*s)),
+    ax=-Rd[0]*s*Math.sqrt(1-ry*ry)+.6,a=X.T([ax,sd*TAILA[1],TAILA[2]]),d=X.Rd(rotAx([TAILB[0]-ax,sd*(TAILB[1]-TAILA[1]),TAILB[2]-TAILA[2]],[0,1,0],-sw*.9)),
     lat=X.Rd([0,sd,0]),b=add(a,d),m=add(lerp3(a,b,.5),X.Rd([-2-2*sw,0,0])),pts=[add(a,mul(lat,-4.5)),add(m,mul(lat,-4.4)),add(b,mul(lat,-2.4)),add(b,add(mul(lat,0),X.Rd([0,0,-3]))),add(b,mul(lat,2.4)),add(m,mul(lat,4.4)),add(a,mul(lat,4.5))].map(P);
     ctx.lineJoin='round';ctx.beginPath();ctx.moveTo(pts[0][0],pts[0][1]);ctx.quadraticCurveTo(pts[1][0],pts[1][1],pts[2][0],pts[2][1]);ctx.quadraticCurveTo(pts[3][0],pts[3][1]+1.5,pts[4][0],pts[4][1]);ctx.quadraticCurveTo(pts[5][0],pts[5][1],pts[6][0],pts[6][1]);ctx.closePath();
     ctx.fillStyle=grad3(bbox(pts),K.vel);ctx.fill();ctx.strokeStyle=INK;ctx.lineWidth=2.2;ctx.stroke();ctx.strokeStyle=K.gold.b;ctx.lineWidth=1;ctx.save();ctx.clip();ctx.lineWidth=2.2;ctx.stroke();ctx.restore()}}
@@ -408,8 +426,13 @@ function tailsDraw(V0,X,A,K){const{P}=V0;for(const sd of[-1,1]){const sw=A.tail*
 // ------------------------------------------------------------------ the arms: the puffed sleeve with the golden bands across it, the violet
 // upper sleeve, the wooden elbow ball, the bare wooden forearm, the wrist ball with the eyelet of the string, the big white glove
 function armGeo(X,A,sd){const S=X.T([SHJ[0],sd*SHJ[1],SHJ[2]]),h=sd>0?A.hL:A.hR,W=[h[0],h[1],h[2]+A.lift],[El,Wr]=ik(S,W,LUA,LFA,X.Rd([-.35,sd,-.5]));
-  const g=sd>0?A.gL:A.gR,fa=nrm(sub(Wr,El));let u=g.fd?nrm(g.fd):fa,bk=g.bk?nrm(g.bk):X.Rd([0,sd,0]);if(Math.abs(dot(bk,u))>.95)bk=X.Rd([1,0,0]);
-  const c=add(Wr,mul(u,11));return{sd,S,El,Wr,u,bk,c,g,puff:X.T([PUFF[0],sd*PUFF[1],PUFF[2]]),eye:add(Wr,[0,0,3.8])}}
+  const g=sd>0?A.gL:A.gR,fa=nrm(sub(Wr,El));let u=g.fd?nrm(g.fd):fa,bk=g.bk?nrm(g.bk):X.Rd([0,sd,0]);
+  // a wooden wrist bends at most 80° from the forearm (never folds the hand back over it)
+  {const du=dot(u,fa);if(du<.17){let pp=sub(u,mul(fa,du));if(len(pp)<.05)pp=sub(bk,mul(fa,dot(bk,fa)));u=nrm(add(mul(fa,.17),mul(nrm(pp),.985)))}}
+  if(Math.abs(dot(bk,u))>.95)bk=X.Rd([1,0,0]);
+  // the eyelet of the string on the wrist ball: on top, toward the back of the hand, away from the fingers
+  const w=nrm(sub(bk,mul(u,dot(bk,u)))),ey=nrm(add(add([0,0,1],mul(w,.8)),mul(u,-.6)));
+  const c=add(Wr,mul(u,11)),a={sd,S,El,Wr,u,bk,c,g,puff:X.T([PUFF[0],sd*PUFF[1],PUFF[2]]),eye:add(Wr,mul(ey,3.8)),ptip:sd<0?A.ptip||0:0};a.G=gloveGeo(a);return a}
 function upperArmDraw(V0,X,A,K,a){const{P,F}=V0,qs=P(a.S),qe=P(a.El);caps3(qs,6,qe,5,K.vel,2.3);
   // the sleeve gathers at the elbow: a golden band
   {const d=nrm(sub(a.El,a.S)),[u,v]=frm(d,[0,0,1]),r=ringS(V0,add(a.El,mul(d,-3.5)),u,v,5.3,14);ctx.strokeStyle=INK;ctx.lineWidth=3.2;poly(r);ctx.stroke();ctx.strokeStyle=K.gold.b;ctx.lineWidth=1.7;ctx.stroke()}
@@ -422,32 +445,36 @@ function puffDraw(V0,X,A,K,a){const{P,F}=V0,c=a.puff,q=P(c),r=PUFFR;ball3(q,r,K.
   K3.strokeRuns(runs,INK,3.4);K3.strokeRuns(runs,K.gold.b,1.9);
   // the gathers where the sleeve goes in
   ctx.strokeStyle='rgba(20,8,30,.4)';ctx.lineWidth=1;for(const t of[-.7,.7]){const d=X.Rd([Math.sin(t)*.5,a.sd*.45,-.75]);if(F(d)<.1)continue;const q0=P(add(c,mul(nrm(d),r*.55))),q1=P(add(c,mul(nrm(d),r*.95)));ctx.beginPath();ctx.moveTo(q0[0],q0[1]);ctx.lineTo(q1[0],q1[1]);ctx.stroke()}}
-function lowerArmDraw(V0,X,A,K,a,L2){const{P,F,D}=V0,qe=P(a.El),qw=P(a.Wr),gl=()=>{a.tips=glove(V0,a,K)};
+function lowerArmDraw(V0,X,A,K,a){const{P,D}=V0,qe=P(a.El),qw=P(a.Wr),gl=()=>gloveDraw(V0,a,K);
   const fore=()=>{caps3(qe,4.5,qw,3.8,K.wood,2.2);ctx.save();hull(qe,4.5,qw,3.8);ctx.clip();ctx.strokeStyle=K.grain;ctx.lineWidth=.8;const n=nrm([-(qw[1]-qe[1]),qw[0]-qe[0],0]);
-      for(const o2 of[-1.3,1.5]){ctx.beginPath();ctx.moveTo(qe[0]+n[0]*o2,qe[1]+n[1]*o2);ctx.quadraticCurveTo((qe[0]+qw[0])/2+n[0]*(o2+.7),(qe[1]+qw[1])/2+n[1]*(o2+.7),qw[0]+n[0]*o2,qw[1]+n[1]*o2);ctx.stroke()}ctx.restore();
-      ball3(qw,3.8,K.wood,2);const qy=P(a.eye);ctx.strokeStyle=INK;ctx.lineWidth=2;ball(qy,1.3);ctx.stroke();ctx.strokeStyle=K.gold.b;ctx.lineWidth=1;ctx.stroke()};
+      for(const o2 of[-1.3,1.5]){ctx.beginPath();ctx.moveTo(qe[0]+n[0]*o2,qe[1]+n[1]*o2);ctx.quadraticCurveTo((qe[0]+qw[0])/2+n[0]*(o2+.7),(qe[1]+qw[1])/2+n[1]*(o2+.7),qw[0]+n[0]*o2,qw[1]+n[1]*o2);ctx.stroke()}
+      shadeL(qe,qw,4.5,3.8);ctx.restore();
+      ball3(qw,3.8,K.wood,2);topM(qw,3.8,K);const qy=P(a.eye);ctx.strokeStyle=INK;ctx.lineWidth=2;ball(qy,1.3);ctx.stroke();ctx.strokeStyle=K.gold.b;ctx.lineWidth=1;ctx.stroke()};
   if(D(a.c)<D(a.Wr)-2){gl();fore()}else{fore();gl()}}
 // the white glove (boss3.js glove() made bigger): the palm, the violet cuff with the golden trim, three fingers and the thumb as soft
-// capsules that bend one by one, the index straight to point; little wooden knuckles on the back. Returns the fingertips (3D)
-function glove(V0,a,K){const{P,D,F}=V0,g=a.g,u=a.u,w=nrm(sub(a.bk,mul(u,dot(a.bk,u)))),v=cross(w,u),s=GS,c=a.c,sd=a.sd,
-  at=(x,y,z)=>add(c,mul(add(add(mul(u,x),mul(v,y)),mul(w,z)),s)),L=parts(),tips=[],ts=-sd,ix=1-sd;
+// capsules that bend one by one (each by itself, for the waves of the fingers), the index straight to point; little wooden knuckles on the
+// back. The geometry first (the game wants the tips of the index fingers), then the drawing
+function gloveGeo(a){const g=a.g,u=a.u,w=nrm(sub(a.bk,mul(u,dot(a.bk,u)))),v=cross(w,u),s=GS,c=a.c,sd=a.sd,ts=-sd,ix=1-sd,FG=[],
+  at=(x,y,z)=>add(c,mul(add(add(mul(u,x),mul(v,y)),mul(w,z)),s));
+  const fing=(b,dirs,rs)=>{const pts=[b];let q=b;for(const d of dirs){q=add(q,mul(d,s));pts.push(q)}FG.push({pts,rs,d0:dirs[0]})};
+  for(let i=0;i<3;i++){const b=at(5,(i-1)*3.6,.3),k=cl(g.c[i]||0,0,1),pt=i===ix?g.pt:0,lr=(i-1);
+    const op=[add(add(mul(u,4.4),mul(w,-.7)),mul(v,lr*.9)),add(add(mul(u,3.8),mul(w,-1.3)),mul(v,lr*.7))],fi=[add(mul(u,2.2),mul(w,-2.6)),add(mul(u,-1.6),mul(w,-2.4))],st=[mul(u,4.7),mul(u,4.3)];
+    let d=[lerp3(op[0],fi[0],k),lerp3(op[1],fi[1],k)];if(pt>0)d=[lerp3(d[0],st[0],pt),lerp3(d[1],st[1],pt)];fing(b,d,[2.35,2.15,1.9])}
+  const tb=at(.5,ts*5.2,-.4),tk=cl(g.th,0,1),td=[lerp3(add(mul(v,ts*2.8),mul(u,2.2)),add(mul(v,ts*1.8),mul(u,2.6)),tk),lerp3(add(mul(u,2.8),mul(v,ts*.6)),add(mul(u,1.8),mul(w,-1.4)),tk)];
+  fing(tb,td,[2.3,2.1,1.85]);return{u,v,w,s,at,FG,ix,idx:FG[ix].pts[2],tips:FG.map(f=>f.pts[f.pts.length-1])}}
+function gloveDraw(V0,a,K){const{P,D,F}=V0,G=a.G,{u,v,w,s,at}=G,c=a.c,L=parts();
   const sil=ellSil(V0,c,[6.6*s,6.2*s,3.8*s],{u,v,w},null,16),pa=smoothP(sil);
   L.add(D(c),()=>{ctx.fillStyle=grad3(bbox(sil),K.ivory);ctx.fill(pa);ctx.strokeStyle=INK;ctx.lineWidth=2.3;ctx.stroke(pa);rimP(sil,.3);
     if(F(w)>.15){ctx.save();ctx.globalAlpha*=sstep(.15,.4,F(w));ctx.fillStyle='rgba(150,120,90,.55)';for(let i=0;i<3;i++){ball(P(at(4.4,(i-1)*3.6,2.6)),.85);ctx.fill()}ctx.restore()}});
   // the cuff: a short wide ring behind the palm, its golden trim toward the fingers
-  const cf=at(-7.5,0,0),cr=(o)=>{const R=[];for(let i=0;i<14;i++){const t=i/14*TAU;R.push(P(add(add(cf,mul(u,o*s)),add(mul(v,Math.cos(t)*5.6*s),mul(w,Math.sin(t)*4.4*s)))))}return R};
+  const cf=at(-7.5,0,0),cr=o=>{const R=[];for(let i=0;i<14;i++){const t=i/14*TAU;R.push(P(add(add(cf,mul(u,o*s)),add(mul(v,Math.cos(t)*5.6*s),mul(w,Math.sin(t)*4.4*s)))))}return R};
   L.add(D(cf)-.6,()=>{const R0=cr(-1.9),R1=cr(1.9),H=chull(R0.concat(R1));poly(H);ctx.fillStyle=grad3(bbox(H),K.vel);ctx.fill();ctx.strokeStyle=INK;ctx.lineWidth=2.2;ctx.stroke();
     ctx.strokeStyle=K.gold.b;ctx.lineWidth=1.5;poly(R1);ctx.stroke()});
-  const rk=1.1,fing=(b,dirs,rs,i)=>{const pts=[b];let q=b;for(const d of dirs){q=add(q,mul(d,s));pts.push(q)}tips[i]=q;
-    L.add(D(lerp3(b,q,.5))+(dot(dirs[0],w)<-.3?-.3:.3),()=>{const P2=pts.map(P),bb=bbox(P2);bb[0]-=3;bb[1]-=3;bb[2]+=3;bb[3]+=3;chain(V0,pts,rs.map(r=>r*rk),K.ivory.b,{lw:2.2,fill:grad3(bb,K.ivory),rim:.2})})};
-  for(let i=0;i<3;i++){const b=at(5,(i-1)*3.6,.3),k=cl(g.c[i]||0,0,1),pt=i===ix?g.pt:0,lr=(i-1);
-    const op=[add(add(mul(u,4.4),mul(w,-.7)),mul(v,lr*.9)),add(add(mul(u,3.8),mul(w,-1.3)),mul(v,lr*.7))],fi=[add(mul(u,2.2),mul(w,-2.6)),add(mul(u,-1.6),mul(w,-2.4))],st=[mul(u,4.7),mul(u,4.3)];
-    let d=[lerp3(op[0],fi[0],k),lerp3(op[1],fi[1],k)];if(pt>0)d=[lerp3(d[0],st[0],pt),lerp3(d[1],st[1],pt)];fing(b,d,[2.35,2.15,1.9],i)}
-  const tb=at(.5,ts*5.2,-.4),tk=cl(g.th,0,1),td=[lerp3(add(mul(v,ts*2.8),mul(u,2.2)),add(mul(v,ts*1.8),mul(u,2.6)),tk),lerp3(add(mul(u,2.8),mul(v,ts*.6)),add(mul(u,1.8),mul(w,-1.4)),tk)];
-  fing(tb,td,[2.3,2.1,1.85],3);run(L);
+  for(const f of G.FG){const pts=f.pts,q=pts[pts.length-1];
+    L.add(D(lerp3(pts[0],q,.5))+(dot(f.d0,w)<-.3?-.3:.3),()=>{const P2=pts.map(P),bb=bbox(P2);bb[0]-=3;bb[1]-=3;bb[2]+=3;bb[3]+=3;chain(V0,pts,f.rs.map(r=>r*1.1),K.ivory.b,{lw:2.2,fill:grad3(bb,K.ivory),rim:.2})})}
+  run(L);
   // the tip of the index lights up when it points (the lasso)
-  if(a.ptip>0){const q=P(tips[ix]);glowL(K.str,q,7,.6*a.ptip);star4(q,3.5*a.ptip,a.ptip,'#fffbe8')}
-  return{idx:tips[ix],all:tips}}
+  if(a.ptip>0){const q=P(G.idx);glowL(K.str,q,7,.6*a.ptip);star4(q,3.5*a.ptip,a.ptip,'#fffbe8')}}
 
 // ------------------------------------------------------------------ the ruff: puffs of white round the neck, a golden thread under them
 function ruffPts(X,A,hyK){const n=LOWFX?10:12,o=[],r0=hyK;for(let i=0;i<n;i++){const t=i/n*TAU+r0,c=X.T([RUFC[0]+Math.cos(t)*RUFR,Math.sin(t)*RUFR,RUFC[2]+(i%2?.6:-.4)]);o.push(c)}return o}
@@ -460,37 +487,47 @@ function ruffThread(V0,X,K){const{P,F}=V0,runs=[];let cur=[];for(let i=0;i<=24;i
 // little ball of a nose, the rosy cheeks, the painted smile with the marionette's jaw and two little fangs
 function headDraw(V0,J,A,K){const{P,F}=V0,Hc=J.Hc,HR=J.HR,R=HOOD,q0=P(Hc),cv=J.cv,
     pt=(d,r)=>{let w=HR(d);const f=dot(w,cv);if(f<.03)w=nrm(add(sub(w,mul(cv,f)),mul(cv,.03)));return P(add(Hc,mul(w,r||R)))},vis=d=>dot(HR(d),cv);
-  ctx.lineJoin='round';ball(q0,R);ctx.fillStyle=grad3([q0[0]-R,q0[1]-R,q0[0]+R,q0[1]+R],K.vel);ctx.fill();ctx.strokeStyle=INK;ctx.lineWidth=2.6;ctx.stroke();
+  ctx.lineJoin='round';const hs=J.hsil;ctx.fillStyle=grad3([q0[0]-R,q0[1]-R*1.14,q0[0]+R,q0[1]+R*1.14],K.vel);ctx.fill(hs);ctx.strokeStyle=INK;ctx.lineWidth=2.6;ctx.stroke(hs);
   // the seam over the hood, from the brow to the nape
   {const runs=[];let cur=[];for(let i=0;i<=16;i++){const a=-.2+i/16*2.6,d=[Math.cos(a)*.0+Math.sin(-a+Math.PI/2)*1,0,Math.sin(a)];const dd=nrm([Math.cos(a),0,Math.sin(a)]);if(vis(dd)>.05)cur.push(P(add(Hc,HR(mul(dd,R*.99)))));else if(cur.length){runs.push(cur);cur=[]}}
     if(cur.length)runs.push(cur);K3.strokeRuns(runs,'rgba(26,8,40,.45)',1.1)}
-  rim(q0,R,q0,R,.3);glowTop(q0,R,.13);if(K.top){ctx.save();ctx.globalCompositeOperation='lighter';glowTop(q0,R,.28*K.topA);ctx.restore()}
+  rimP(J.hpts,.3);glowTop(q0,R,.13);topM(q0,R,K);
   // the face
   const Xh={T:q=>add(Hc,HR(q)),Rd:HR};ctx.save();const cap=ellCap(V0,Xh,[0,0,0],[R,R,R],AXES,FACEN,FACEA,32,{alv:FACEAV,ck:'pu2f'});
   if(!cap){ctx.restore();return}
   ctx.fillStyle=grad3([q0[0]-R,q0[1]-R,q0[0]+R,q0[1]+R],K.ivory);ctx.fill();ctx.clip();
-  // the dark lining of the hood shows at the edge on the far side
+  // (the features sit a little higher on the head than the design's heights, so that they read under a camera that looks down at 29°:
+  // the mask between the brows and the cheekbones, the eyes in it, the nose at its lower edge, the smile above the ruff)
   // the cheeks
-  for(const sd of[-1,1]){const d=dirAt(sd*.56,-.42),v=vis(d);if(v<.12)continue;const q=pt(d),k=sstep(.12,.4,v);ctx.fillStyle=rgba(K.cheek,.5*k);ctx.beginPath();ctx.ellipse(q[0],q[1],3.6*Math.pow(v,.7),2.5,0,0,TAU);ctx.fill()}
-  // the mask: from the temples (its points up to z 119) to the cheekbones, a point down between the eyes; a thin golden edge
-  {const top=[],bot=[];for(let i=0;i<=12;i++){const f=-1.02+2.04*i/12,af=Math.abs(f);top.push(dirAt(f,Math.min(.64,.15+.48*af+(af>.9?(af-.9)*.6:0))))}
-    for(let i=0;i<=8;i++){const f=1.02-2.04*i/8;bot.push(dirAt(f,-.27+.13*f*f))}
-    const sh=top.concat(bot).map(d=>pt(d,R+.1));poly(sh);const b=bbox(sh),g=ctx.createLinearGradient(0,b[1],0,b[3]);g.addColorStop(0,K.mask.l);g.addColorStop(.5,K.mask.b);g.addColorStop(1,K.mask.d);
+  for(const sd of[-1,1]){const d=dirAt(sd*.56,-.08),v=vis(d);if(v<.12)continue;const q=pt(d),k=sstep(.12,.4,v);ctx.fillStyle=rgba(K.cheek,.55*k);ctx.beginPath();ctx.ellipse(q[0],q[1],3.4*Math.pow(v,.7),2.4,0,0,TAU);ctx.fill()}
+  // the harlequin mask: a dark band from the temples (its points rise to them) to the cheekbones; its top edge makes a V of brows that dips
+  // between the eyes (the evil look from every side); a thin golden edge
+  const mTop=f=>{const af=Math.abs(f);return .5+.48*Math.pow(af,1.15)},mBot=f=>.1+.12*f*f,MF=1.0;
+  {const top=[],bot=[];for(let i=0;i<=14;i++){const f=-MF+2*MF*i/14;top.push(dirAt(f,mTop(f)))}for(let i=0;i<=10;i++){const f=MF-2*MF*i/10;bot.push(dirAt(f,mBot(f)))}
+    const sh=top.concat(bot).map(d=>pt(d,R+.1));poly(sh);const b=bbox(sh),g=ctx.createLinearGradient(0,b[1],0,b[3]);g.addColorStop(0,K.mask.l);g.addColorStop(.45,K.mask.b);g.addColorStop(1,K.mask.d);
     ctx.fillStyle=g;ctx.fill();ctx.strokeStyle=K.gold.b;ctx.lineWidth=1;ctx.stroke()}
-  // the eyes: gold that shines in a dark socket, looking a little down; the wooden eyelids of a doll close from the top
+  // the eyes: gold that shines in a dark socket, looking a little down, cut on top by the V of the mask; the light does not throb, it grows
+  // (the halo ×1.4) a moment before each blow; the wooden eyelids of a doll close from the top
   const E=[1,-1].map(sd=>{const d=dirAt(sd*EYEF,EYEP),v=vis(d);return{sd,d,v,q:pt(d,R+.15)}}).filter(e=>e.v>.08).sort((a,b)=>a.v-b.v);
   for(const e of E){const wd=1+.18*A.wide,rx=4.4*wd*Math.pow(e.v,.7),ry=5*wd,q=e.q,eg=A.eg*(e.sd>0?(A.eyeL==null?1:A.eyeL):(A.eyeR==null?1:A.eyeR)),op=1-A.lid;
+    // the brow line over this eye: the mask's top edge between its inner and outer corner
+    const fi=e.sd*(EYEF-.26),fo=e.sd*(EYEF+.3),bi=pt(dirAt(fi,mTop(fi)-.06),R+.1),bo=pt(dirAt(fo,mTop(fo)-.06),R+.1),bx=bo[0]-bi[0],by=bo[1]-bi[1],bl=Math.hypot(bx,by)||1,nx=by/bl,ny=-bx/bl,
+      below=nx*(q[0]-bi[0])+ny*(q[1]-bi[1])>0?1:-1;
+    ctx.save();ctx.beginPath();ctx.moveTo(bi[0]-bx*2,bi[1]-by*2);ctx.lineTo(bo[0]+bx*2,bo[1]+by*2);ctx.lineTo(bo[0]+bx*2+nx*below*30,bo[1]+by*2+ny*below*30);ctx.lineTo(bi[0]-bx*2+nx*below*30,bi[1]-by*2+ny*below*30);ctx.closePath();ctx.clip();
     ctx.fillStyle=K.mask.d;ctx.beginPath();ctx.ellipse(q[0],q[1],rx*1.3+.6,ry*1.18,0,0,TAU);ctx.fill();
-    if(eg>.02&&op>.05){glowL(K.eyeG,q,ry*3.3,.42*eg*op*(1+.4*(A.eg>1?A.eg-1:0)));
-      const g=ctx.createRadialGradient(q[0]-rx*.2,q[1]+ry*.1,.3,q[0],q[1]+ry*.15,ry*1.05);g.addColorStop(0,K.eyeC);g.addColorStop(.55,K.eye);g.addColorStop(1,cmix(K.eye,'#000000',.35));
+    if(eg>.02&&op>.05){glowL(K.eyeG,q,ry*2.3*(1+.4*Math.max(0,A.eg-1)),.34*Math.min(1,eg)*op);
+      const g=ctx.createRadialGradient(q[0]-rx*.2,q[1]+ry*.15,.3,q[0],q[1]+ry*.2,ry*1.05);g.addColorStop(0,K.eyeC);g.addColorStop(.5,K.eye);g.addColorStop(1,cmix(K.eye,'#000000',.38));
       ctx.save();ctx.globalAlpha*=cl(eg,0,1);ctx.fillStyle=g;ctx.beginPath();ctx.ellipse(q[0],q[1],rx,ry,0,0,TAU);ctx.fill();
-      if(op>.45&&rx>1.4){ctx.fillStyle='#ffffff';ball([q[0]-rx*.34,q[1]-ry*.42],.95);ctx.fill()}ctx.restore()}
+      if(op>.45&&rx>1.4){ctx.fillStyle='#ffffff';ball([q[0]-rx*.3,q[1]-ry*.15],.95);ctx.fill()}ctx.restore()}
     else{ctx.fillStyle='#0b0410';ctx.beginPath();ctx.ellipse(q[0],q[1],rx,ry,0,0,TAU);ctx.fill()}
     if(A.lid>.02){ctx.save();ctx.beginPath();ctx.ellipse(q[0],q[1],rx+.4,ry+.4,0,0,TAU);ctx.clip();const yl=q[1]-ry-.4+(2*ry+.8)*A.lid;
-      ctx.fillStyle=K.mask.b;ctx.fillRect(q[0]-rx-1,q[1]-ry-1,2*rx+2,yl-(q[1]-ry-1));ctx.strokeStyle=K.gold.b;ctx.lineWidth=1;ctx.beginPath();ctx.moveTo(q[0]-rx-1,yl);ctx.lineTo(q[0]+rx+1,yl);ctx.stroke();ctx.restore()}}
+      ctx.fillStyle=K.mask.b;ctx.fillRect(q[0]-rx-1,q[1]-ry-1,2*rx+2,yl-(q[1]-ry-1));ctx.strokeStyle=K.gold.b;ctx.lineWidth=1;ctx.beginPath();ctx.moveTo(q[0]-rx-1,yl);ctx.lineTo(q[0]+rx+1,yl);ctx.stroke();ctx.restore()}
+    ctx.restore();
+    // the golden edge of the brow over it
+    ctx.strokeStyle=K.gold.b;ctx.lineWidth=1.1;ctx.lineCap='round';seg(bi,bo);ctx.stroke()}
   // the smile, the marionette's jaw between the two grooves (it drops when it talks, laughs or shouts), the dark mouth with a violet light
-  {const dm=dirAt(0,-.66);if(vis(dm)>.04){const j=A.jaw,N=8,sm=[];for(let i=0;i<=N;i++){const f=-.45+.9*i/N;sm.push(pt(dirAt(f,-.66+.11*(f/.45)*(f/.45))))}
-    const gl=[pt(dirAt(-.45,-.55)),pt(dirAt(-.41,-1.02))],gr=[pt(dirAt(.45,-.55)),pt(dirAt(.41,-1.02))],chin=[];for(let i=0;i<=6;i++){const f=.41-.82*i/6;chin.push(pt(dirAt(f,-1.02)))}
+  {const ME=-.22,dm=dirAt(0,ME);if(vis(dm)>.04){const j=A.jaw,N=8,sm=[];for(let i=0;i<=N;i++){const f=-.45+.9*i/N;sm.push(pt(dirAt(f,ME+.1*(f/.45)*(f/.45))))}
+    const gl=[pt(dirAt(-.45,ME+.09)),pt(dirAt(-.41,-.62))],gr=[pt(dirAt(.45,ME+.09)),pt(dirAt(.41,-.62))],chin=[];for(let i=0;i<=6;i++){const f=.41-.82*i/6;chin.push(pt(dirAt(f,-.64)))}
     if(j>.15){const dn=sm.map(q=>[q[0],q[1]+j]);
       ctx.beginPath();ctx.moveTo(sm[0][0],sm[0][1]);for(const q of sm)ctx.lineTo(q[0],q[1]);for(let i=dn.length-1;i>=0;i--)ctx.lineTo(dn[i][0],dn[i][1]);ctx.closePath();ctx.fillStyle=K.mouthIn;ctx.fill();
       if(!LOWFX){const m=sm[N>>1];ctx.save();ctx.clip();const g=ctx.createRadialGradient(m[0],m[1]+j*.6,.3,m[0],m[1]+j*.6,7);g.addColorStop(0,rgba(K.mouthL,.55));g.addColorStop(1,rgba(K.mouthL,0));ctx.fillStyle=g;ctx.fillRect(m[0]-9,m[1]-2,18,j+6);ctx.restore()}
@@ -500,10 +537,12 @@ function headDraw(V0,J,A,K){const{P,F}=V0,Hc=J.Hc,HR=J.HR,R=HOOD,q0=P(Hc),cv=J.c
       ctx.beginPath();ctx.moveTo(dn[0][0],dn[0][1]);for(const q of dn)ctx.lineTo(q[0],q[1]);ctx.lineTo(gr[1][0],gr[1][1]+j);for(const q of chin)ctx.lineTo(q[0],q[1]+j);ctx.lineTo(gl[1][0],gl[1][1]+j);ctx.closePath();
       ctx.fillStyle=K.ivory.b;ctx.fill();ctx.strokeStyle=INK;ctx.lineWidth=1.1;ctx.stroke();
       ctx.strokeStyle=K.smile;ctx.lineWidth=1.4;ctx.beginPath();ctx.moveTo(dn[0][0],dn[0][1]);for(const q of dn)ctx.lineTo(q[0],q[1]);ctx.stroke()}
-    else{ctx.strokeStyle=K.smile;ctx.lineWidth=1.45;ctx.lineCap='round';ctx.beginPath();ctx.moveTo(sm[0][0],sm[0][1]);for(const q of sm)ctx.lineTo(q[0],q[1]);ctx.stroke()}
+    else{ctx.strokeStyle=K.smile;ctx.lineWidth=1.5;ctx.lineCap='round';ctx.beginPath();ctx.moveTo(sm[0][0],sm[0][1]);for(const q of sm)ctx.lineTo(q[0],q[1]);ctx.stroke()}
     ctx.strokeStyle=rgba('106,29,68',.75);ctx.lineWidth=1.1;for(const G of[gl,gr]){ctx.beginPath();ctx.moveTo(G[0][0],G[0][1]+(j>.15?j:0));ctx.lineTo(G[1][0],G[1][1]+(j>.15?j:0));ctx.stroke()}}}
+  // the dark plum lining of the hood, a band just inside its golden edge
+  if(cap.rim&&cap.rim.length>1){ctx.beginPath();ctx.moveTo(cap.rim[0][0],cap.rim[0][1]);for(const q of cap.rim)ctx.lineTo(q[0],q[1]);if(cap.full)ctx.closePath();ctx.strokeStyle=rgba('35,15,53',.7);ctx.lineWidth=5;ctx.lineJoin='round';ctx.stroke()}
   // the cracks of the paint in the second phase: thin lines from the points of the mask down the temples, lit magenta, breathing
-  if(A.crk>.02&&K.top){for(const sd of[-1,1]){const pts=[[1.0,.6],[1.05,.47],[1.0,.37],[1.07,.25],[1.03,.13]].map(([f,s2])=>dirAt(sd*f,s2));if(vis(pts[2])<.05)continue;const S=pts.map(d=>pt(d,R+.1));
+  if(A.crk>.02&&K.top){for(const sd of[-1,1]){const pts=[[.97,.9],[1.0,.78],[.95,.68],[1.0,.57],[.96,.47]].map(([f,s2])=>dirAt(sd*f,s2));if(vis(pts[2])<.05)continue;const S=pts.map(d=>pt(d,R+.1));
     ctx.save();ctx.lineCap='round';ctx.lineJoin='round';ctx.beginPath();S.forEach((q,i)=>i?ctx.lineTo(q[0],q[1]):ctx.moveTo(q[0],q[1]));ctx.strokeStyle='rgba(40,8,30,.7)';ctx.lineWidth=1.8;ctx.stroke();
     ctx.strokeStyle=rgba(K1.crk,.95*A.crk);ctx.lineWidth=.9;ctx.stroke();if(!LOWFX){ctx.globalCompositeOperation='lighter';ctx.strokeStyle=rgba(K1.crk,.35*A.crk);ctx.lineWidth=3;ctx.stroke()}ctx.restore()}}
   ctx.restore();
@@ -511,18 +550,431 @@ function headDraw(V0,J,A,K){const{P,F}=V0,Hc=J.Hc,HR=J.HR,R=HOOD,q0=P(Hc),cv=J.c
   if(cap.rim&&cap.rim.length>1){ctx.beginPath();ctx.moveTo(cap.rim[0][0],cap.rim[0][1]);for(const q of cap.rim)ctx.lineTo(q[0],q[1]);if(cap.full)ctx.closePath();ctx.lineCap='round';ctx.lineJoin='round';
     ctx.strokeStyle=INK;ctx.lineWidth=3.8;ctx.stroke();ctx.strokeStyle=K.gold.b;ctx.lineWidth=2.2;ctx.stroke()}
   // the nose: a little ball that sticks out
-  {const d=dirAt(0,-.22),v=vis(d);if(v>-.3){const q=P(add(Hc,mul(HR(d),R+1.5)));ctx.save();ctx.globalAlpha*=sstep(-.3,0,v);ball3(q,3.2,K.nose,1.4,.2);ctx.fillStyle='rgba(255,255,255,.75)';ball([q[0]-1,q[1]-1.1],.8);ctx.fill();ctx.restore()}}
+  {const d=dirAt(0,.08),v=vis(d);if(v>-.3){const q=P(add(Hc,mul(HR(d),R+1.5)));ctx.save();ctx.globalAlpha*=sstep(-.3,0,v);ball3(q,3.2,K.nose,1.4,.2);ctx.fillStyle='rgba(255,255,255,.75)';ball([q[0]-1,q[1]-1.1],.8);ctx.fill();ctx.restore()}}
   // the stars over the head (hit, snap)
-  if(A.stars>0)C.stars(P(add(Hc,[0,0,R+8])),14,A.stars)}
+  if(A.stars>0)starsP(P(add(Hc,[0,0,R+8])),14,A.stars,A.jph*2)}
+// dizzy stars over the head (turning with the move, not with the clock)
+function starsP(c0,r,a,ph){if(a<=0)return;for(let i=0;i<3;i++){const an=ph+i*TAU/3;C.starS(c0[0]+Math.cos(an)*r,c0[1]+Math.sin(an)*r*.33*C.KR(),2.2,a)}}
 // the two points of the hood: from the top of the head out and down to the bells (the purple one on its left, the crimson one on its
-// right), later than the head; limp when nobody holds the strings
-function tipPts(J,A,sd){const o=[];for(let i=0;i<TIP.length;i++){const l=[TIP[i][0],sd*TIP[i][1],TIP[i][2]],a=add(J.Hc,J.HR(l)),b=add(J.Hcl,J.HRl(l)),k=TIPLAG[i];
-    let q=lerp3(a,b,k);if(A.droop>0){const dz=TIPDROOP[i]*A.droop;q=add(q,[0,0,-dz]);q=add(q,mul(J.HR([0,sd,0]),-dz*.25))}
-    if(A.tsw)q=add(q,J.HR([0,sd*A.tsw*TIPLAG[i]*3,A.tsw*TIPLAG[i]*4]));o.push(q)}return o}
+// right). They follow the head a little late: each point turns with the head of a moment ago as much as it is far from the root (the root
+// never leaves the hood); limp when nobody holds the strings
+function tipPts(H0,H1,X,A,sd){const o=[];for(let i=0;i<TIP.length;i++){const k=TIPLAG[i],l=[TIP[i][0],sd*TIP[i][1],TIP[i][2]],
+    hy=lerp(H0.hy,H1.hy,k),hp=lerp(H0.hp,H1.hp,k),hr=lerp(H0.hr,H1.hr,k),R=v=>X.Rd(rotZ(rotX(rotY(v,hp),hr),hy));
+    // (only the turn lags, and the chain stays on the head: it never stretches)
+    let q=add(H0.Hc,R(l));if(A.droop>0){const dz=TIPDROOP[i]*A.droop;q=add(q,[0,0,-dz]);q=add(q,mul(R([0,sd,0]),-dz*.25))}
+    if(A.tsw)q=add(q,R([0,sd*A.tsw*k*3,A.tsw*k*4]));o.push(q)}return o}
 function bellAt(A,pts,sd){const t=pts[pts.length-1],ph=A.jph*TAU+(sd>0?0:1.3),j=A.jb;return add(t,[1.4*j*Math.sin(ph),1.8*j*Math.sin(ph+1),-4])}
-function tipDraw(V0,J,A,K,sd){const{P}=V0,pts=J.tips[sd>0?1:0],T=sd>0?K.vel:K.cri,P2=pts.map(P),bb=bbox(P2);bb[0]-=6;bb[1]-=6;bb[2]+=6;bb[3]+=6;
-  chain(V0,pts,TIPR,T.b,{lw:2.4,fill:grad3(bb,T),rim:.24});
-  if(J.bellOff&&sd<0)return;bellDraw(V0,bellAt(A,pts,sd),K,A.jb)}
+function tipDraw(V0,pts,A,K,sd,noBell){const T=sd>0?K.vel:K.cri,P2=pts.map(q=>V0.P(q)),bb=bbox(P2);bb[0]-=6;bb[1]-=6;bb[2]+=6;bb[3]+=6;
+  chain(V0,pts,TIPR,T.b,{lw:2.4,fill:grad3(bb,T),rim:.24});topM(P2[1],5.5,K);
+  if(!noBell)bellDraw(V0,bellAt(A,pts,sd),K,A.jb)}
 function bellDraw(V0,c,K,jb){const q=V0.P(c);if(jb>.3)glowL('255,214,110',q,8,.25*jb);ball3(q,3.2,K.gold,1.6,.3);
   ctx.strokeStyle='#5a3a08';ctx.lineWidth=.9;ctx.beginPath();ctx.moveTo(q[0]-1.9,q[1]+1.3);ctx.quadraticCurveTo(q[0],q[1]+2.5,q[0]+1.9,q[1]+1.3);ctx.stroke();
   ctx.fillStyle='#3a2408';ball([q[0],q[1]+2.6],.75);ctx.fill();ctx.fillStyle='rgba(255,255,240,.85)';ball([q[0]-1,q[1]-1.1],.7);ctx.fill()}
+// the magenta light of the Shadow's eyes on the top of a piece (the second phase: the glowTop turns magenta)
+function topM(q,r,K){if(!K.top)return;ctx.fillStyle=rgba(K.top,.3*K.topA);ctx.beginPath();ctx.ellipse(q[0]-r*.3,q[1]-r*.45,r*.58,r*.34,0,0,TAU);ctx.fill()}
+// the lantern's shadeLimb on a piece of limb (a darker side away from the light, a thin warm line on the lit one)
+const shadeL=(a,b,ra,rb)=>C.R.shadeLimb([a,b],[ra*.9,rb*.9],'rgba(60,28,10,.2)',.16);
+
+// ------------------------------------------------------------------ the head's own camera: it turns on its peg by itself, nods and tilts,
+// a little toward the camera (so the face reads from the side too) and it half follows the body's lean (a puppet's head on its peg)
+function headNow(A,X,face){const hy=A.hy+cheat(face,.3)*(1-A.droop),hp=A.hp-.4*A.lean,hr=A.hr;
+  return{Hc:X.T([HC0[0]+A.hx,0,HC0[2]+A.hz]),hy,hp,hr,HR:v=>X.Rd(rotZ(rotX(rotY(v,hp),hr),hy))}}
+
+// ------------------------------------------------------------------ the strings: lines between the true points of the cross and of the body,
+// so they stay attached from every side and in every pose. Gold of 1.1 over a dark line of 2.2 (they stand out from the floor); taut =
+// straight; slack = a belly of up to 18 that hangs out and down, dimmer; lit = 1.6 and bright with a halo, a pearl of light running down
+// from the cross to the limb; shaking (under 8 a second); broken = it springs back up from its eyelet and fades
+const SPH={h:.4,wL:1.7,wR:2.9,kL:4.1,kR:5.3,up:.9};
+// the points of a string from the cross end b down to the eyelet a (3D, 11 of them)
+function strLine(a,b,t,out){const N=10,belly=18*(1-cl(t,0,1)),o=[];if(belly<.3){for(let i=0;i<=N;i++)o.push(lerp3(b,a,i/N));return o}
+  const m=lerp3(b,a,.5),c=add(m,mul(nrm(add(out,[0,0,-.75])),2*belly));
+  for(let i=0;i<=N;i++){const u=i/N,v=1-u;o.push([v*v*b[0]+2*u*v*c[0]+u*u*a[0],v*v*b[1]+2*u*v*c[1]+u*u*a[1],v*v*b[2]+2*u*v*c[2]+u*u*a[2]])}return o}
+// its screen points, shaken across by vib in the middle
+function strScr(P,pts,vib,ph){const Q=pts.map(q=>P(q));if(vib<=.05)return Q;const a=Q[0],b=Q[Q.length-1],dx=b[0]-a[0],dy=b[1]-a[1],l=Math.hypot(dx,dy)||1,nx=-dy/l,ny=dx/l,s=Math.sin(ph);
+  for(let i=1;i<Q.length-1;i++){const k=vib*s*Math.sin(Math.PI*i/(Q.length-1));Q[i]=[Q[i][0]+nx*k,Q[i][1]+ny*k]}return Q}
+// the piece of a polyline between the fractions f0 and f1 (of its points)
+function sub2(Q,f0,f1){const n=Q.length-1,at=f=>{const x=cl(f,0,1)*n,i=Math.min(n-1,Math.floor(x)),k=x-i;return[lerp(Q[i][0],Q[i+1][0],k),lerp(Q[i][1],Q[i+1][1],k)]};
+  const o=[at(f0)];for(let i=Math.floor(f0*n)+1;i<f1*n-1e-6;i++)o.push(Q[i]);o.push(at(f1));return o}
+const sub3=(pts,f)=>{const n=pts.length-1,x=cl(f,0,1)*n,i=Math.min(n-1,Math.floor(x));return lerp3(pts[i],pts[i+1],x-i)};
+function strStroke(Q,s,K,al){if(Q.length<2||al<=.01)return;const l=cl(s.l,0,1),a=al*(.5+.5*cl(s.t,0,1));
+  ctx.lineCap='round';ctx.lineJoin='round';ctx.beginPath();ctx.moveTo(Q[0][0],Q[0][1]);for(let i=1;i<Q.length;i++)ctx.lineTo(Q[i][0],Q[i][1]);
+  ctx.strokeStyle=`rgba(40,20,10,${(.5*a).toFixed(3)})`;ctx.lineWidth=2.2+.6*l;ctx.stroke();
+  if(l>.02&&!LOWFX){ctx.save();ctx.globalCompositeOperation='lighter';ctx.strokeStyle=rgba(K.str,.32*l*a);ctx.lineWidth=5.5;ctx.stroke();ctx.restore()}
+  ctx.strokeStyle=C.rgba(l>.02?cmix(K.strC,K.strHot,l):K.strC,a);ctx.lineWidth=1.1+.5*l;ctx.stroke()}
+function pearl(Q,u,K,al){if(u<0||u>1||al<=.05)return;const e=sub2(Q,0,u),q=e[e.length-1];glowL(K.str,q,7,.8*al);ctx.fillStyle=`rgba(255,255,255,${al.toFixed(3)})`;ball(q,1.7);ctx.fill()}
+
+// ------------------------------------------------------------------ the control cross: dark lacquered wood in its own frame (it turns with the
+// body's facing, swings and tilts by itself; roll > 0 dips its left end, pitch > 0 its front end): the long bar for the wrists, the short bar,
+// the bar of the knees across its front end, golden knobs on the six ends and the golden ring on top
+const CRL=28,CRF=21,CRB=16,CRK=20,KBZ=-.6;
+function crossNow(A,mini,lift){const c=[CR0[0]+A.cx[0],CR0[1]+A.cx[1],(mini?140:CR0[2])+A.cx[2]+lift],cp=A.cp,cr=A.cr,cy=A.cyw,kb=A.kb||0;
+  const R=v=>rotZ(rotX(rotY(v,cp),-cr),cy),T=q=>add(c,R(q)),Tk=y=>add(c,R(add([CRF,0,KBZ],rotX([0,y,0],-kb))));
+  return{c,R,T,Tk,ends:{h:T([0,0,-1.9]),wL:T([0,CRL,0]),wR:T([0,-CRL,0]),kL:Tk(CRK),kR:Tk(-CRK),ring:T([0,0,6.8]),upL:T([0,3,10.2]),upR:T([0,-3,10.2])}}}
+function crossDraw(V0,CX,K,A,sh){const{P,D}=V0,T=K.crossW,L=parts();
+  const bar=(a,b,r)=>{const qa=P(a),qb=P(b);caps3(qa,r,qb,r,T,2);rim(qa,r,qb,r,.24);
+    // the lacquer: a thin line of light along its top (magenta in the second phase)
+    const dx=qb[0]-qa[0],dy=qb[1]-qa[1],l=Math.hypot(dx,dy);if(l<2)return;let nx=-dy/l,ny=dx/l;if(nx+ny>0){nx=-nx;ny=-ny}
+    ctx.strokeStyle=K.top?rgba(K.top,.35*K.topA+.1):'rgba(255,226,180,.4)';ctx.lineWidth=.8;ctx.lineCap='round';seg([qa[0]+nx*r*.45+dx*.08,qa[1]+ny*r*.45+dy*.08],[qb[0]+nx*r*.45-dx*.08,qb[1]+ny*r*.45-dy*.08]);ctx.stroke()};
+  const bars=[[CX.T([0,-CRL,0]),CX.T([0,CRL,0]),1.8],[CX.T([-CRB,0,1.5]),CX.T([CRF+1,0,1.5]),1.7],[CX.Tk(-CRK),CX.Tk(CRK),1.5]];
+  for(const[a,b,r] of bars)L.add(D(lerp3(a,b,.5)),()=>bar(a,b,r));
+  for(const q of[CX.T([0,-CRL-1.4,0]),CX.T([0,CRL+1.4,0]),CX.T([-CRB-1.4,0,1.5]),CX.T([CRF+2.8,0,1.5]),CX.Tk(-CRK-1.2),CX.Tk(CRK+1.2)])L.add(D(q)+.05,()=>ball3(P(q),2.6,K.gold,1.6,.3));
+  // the golden ring on top, standing across the long bar (the two strings into the dark go through it)
+  L.add(D(CX.ends.ring)+.2,()=>{const R=ringS(V0,CX.ends.ring,CX.R([0,1,0]),CX.R([0,0,1]),3.6,16);poly(R);ctx.lineJoin='round';ctx.strokeStyle=INK;ctx.lineWidth=4.4;ctx.stroke();
+    ctx.strokeStyle=K.gold.d;ctx.lineWidth=2.4;ctx.stroke();ctx.strokeStyle=K.gold.l;ctx.lineWidth=1;ctx.beginPath();for(let i=9;i<15;i++)ctx.lineTo(R[i][0],R[i][1]-.3);ctx.stroke()});
+  if(sh)shHands(V0,L,CX,sh);
+  run(L)}
+
+// ------------------------------------------------------------------ the Shadow (second phase): a dark violet mist over the cross facing the
+// camera, two big almond eyes of magenta in it, and a hand of shadow in 3D in the cross's frame that holds it: the palm over the ring, four
+// long but round fingers round the long bar near its middle, the thumb under it, the wrist rising into the mist like a column of smoke that
+// thins out; the other hand only in the Mano dell'Ombra and in the fury. Nebbia, due occhi e una mano: niente denti
+const SHH=[-6.6,-2.2,2.2,6.6],SHFC=[[4,6.5],[8,2.5],[6.5,-2.8],[2.8,-4.6]],SHFO=[[4,6.5],[10,5.2],[15.5,3.4],[20,1.6]],SHFR=[3.4,3.1,2.8,2.4];
+function shHand(V0,L,T0,go,gz,al,side){const{P,D}=V0,H=SHD.hand,dz=gz||0,yy=side||0,T=q=>add(T0([q[0],q[1],q[2]-dz]),[0,0,dz]);   // (its height over the grip is the world's)
+  const palm=T([-1,yy,9+dz]);
+  // the palm: a soft dark cushion over the ring
+  L.add(D(palm),()=>ga(al,()=>{const S=[];for(let i=0;i<14;i++){const t=i/14*TAU;S.push(P(T([-1+8*Math.cos(t),yy+10*Math.sin(t),9+dz+(Math.cos(t)>0?-1:1)])))}
+    const top=P(T([-1,yy,13.5+dz]));S.push(top);const h=chull(S);if(h.length<3)return;const pa=smoothP(h);ctx.fillStyle=grad3(bbox(h),H);ctx.fill(pa);ctx.strokeStyle=INK;ctx.lineWidth=2;ctx.stroke(pa);rimM(h,.55)}));
+  for(let i=0;i<4;i++){const y=yy+SHH[i],pts=SHFC.map((c,j)=>T([lerp(c[0],SHFO[j][0],go),y,lerp(c[1],SHFO[j][1],go)+dz]));
+    L.add(D(pts[2])+(go<.5?0:.1),()=>ga(al,()=>{const P2=pts.map(q=>P(q)),bb=bbox(P2);bb[0]-=4;bb[1]-=4;bb[2]+=4;bb[3]+=4;chain(V0,pts,SHFR,H.b,{lw:2,fill:grad3(bb,H),noRim:1});
+      ctx.strokeStyle=rgba(SHD.hr,.45);ctx.lineWidth=.9;ctx.lineCap='round';ctx.beginPath();for(const q of P2)ctx.lineTo(q[0]-.9,q[1]-1.3);ctx.stroke()}))}
+  const th=[[-6,yy+7.5,5.5],lerp3([-6.5,yy+6,.5],[-9,yy+10,3],go),lerp3([-3.5,yy+3.5,-3.6],[-11,yy+12,1],go)].map(q=>T([q[0],q[1],q[2]+dz]));
+  L.add(D(th[1]),()=>ga(al,()=>{const P2=th.map(q=>P(q)),bb=bbox(P2);bb[0]-=4;bb[1]-=4;bb[2]+=4;bb[3]+=4;chain(V0,th,[3.2,2.9,2.4],H.b,{lw:2,fill:grad3(bb,H),noRim:1})}));
+  return palm}
+// a magenta rim inside an outline (the light of the eyes on the Shadow's hand)
+function rimM(pts,al){const[x0,y0,x1,y1]=bbox(pts),cx=(x0+x1)/2,cy=(y0+y1)/2,Rr=Math.max(x1-x0,y1-y0)/2,g=ctx.createLinearGradient(cx-Rr*.8,cy-Rr*.8,cx+Rr*.2,cy+Rr*.2),kx=1-1.6/Math.max(1,(x1-x0)/2),ky=1-1.6/Math.max(1,(y1-y0)/2);
+  g.addColorStop(0,rgba(SHD.hr,al));g.addColorStop(1,rgba(SHD.hr,0));ctx.beginPath();for(const q of pts)ctx.lineTo(cx+(q[0]-cx)*kx,cy+(q[1]-cy)*ky);ctx.closePath();ctx.strokeStyle=g;ctx.lineWidth=1.3;ctx.stroke()}
+function shHands(V0,L,CX,sh){const al=sh.k,o=sh;if(al<=.01)return;
+  // the hand that holds the cross (it comes down from the mist and closes on it in the fury)
+  shHand(V0,L,CX.T,o.go||0,o.gz||0,al,0);
+  // the free hand (rises from the cross into the dark and comes back)
+  if(o.free&&o.free.k>.01)shHand(V0,L,CX.T,.85,o.free.z||0,al*o.free.k,-15)}
+// the mist: lumps of soft dark violet with a violet edge (an ellipse at half strength on slow phones), breathing
+function shMist(q,k,br){if(k<=.01)return;const rx=45*(1+br),ry=32*(1+br);
+  if(LOWFX){ctx.fillStyle=`rgba(${SHD.mist},${(.5*k).toFixed(3)})`;ctx.beginPath();ctx.ellipse(q[0],q[1],rx,ry,0,0,TAU);ctx.fill();return}
+  for(const[dx,dy,r,a] of[[0,2,1,.85],[-17,6,.62,.55],[18,4,.6,.55],[-4,-14,.55,.5]]){const c=[q[0]+dx*(1+br),q[1]+dy*(1+br)],R=rx*r,g=ctx.createRadialGradient(c[0],c[1],R*.05,c[0],c[1],R);
+    g.addColorStop(0,`rgba(${SHD.mist},${(a*k).toFixed(3)})`);g.addColorStop(.62,`rgba(${SHD.mist},${(a*.6*k).toFixed(3)})`);g.addColorStop(1,`rgba(${SHD.mist},0)`);
+    ctx.save();ctx.translate(c[0],c[1]);ctx.scale(1,ry/rx);ctx.fillStyle=g;ctx.beginPath();ctx.arc(0,0,R,0,TAU);ctx.fill();ctx.restore()}
+  const g=ctx.createRadialGradient(q[0],q[1],rx*.5,q[0],q[1],rx);g.addColorStop(0,`rgba(${SHD.rim},0)`);g.addColorStop(.78,`rgba(${SHD.rim},${(.32*k).toFixed(3)})`);g.addColorStop(1,`rgba(${SHD.rim},0)`);
+  ctx.save();ctx.translate(q[0],q[1]);ctx.scale(1,ry/rx);ctx.fillStyle=g;ctx.beginPath();ctx.arc(0,0,rx,0,TAU);ctx.fill();ctx.restore()}
+// an almond eye facing the camera (w × h, the inner corner lower: cross), with its white core and halo; blink 1 open .. 0 shut; sq narrows
+// it; moon turns it into a laughing crescent
+function almond(c,w,h,rot,col,core,glow,al,o){if(al<=.01)return;o=o||{};const bl=o.blink==null?1:o.blink,sq=o.sq||0,mo=o.moon||0,hh=h*Math.max(.08,bl)*(1-.55*sq);
+  ctx.save();ctx.translate(c[0],c[1]);ctx.rotate(rot);ctx.globalAlpha*=al;
+  if(glow&&!LOWFX&&bl>.2){ctx.save();ctx.globalCompositeOperation='lighter';shine(glow,0,0,w*1.15*(o.eg||1),.55*Math.min(1,bl),w*.55*(o.eg||1));ctx.restore()}
+  if(mo>.5){ctx.strokeStyle=col;ctx.lineWidth=h*.55;ctx.lineCap='round';ctx.beginPath();ctx.moveTo(-w/2,h*.25);ctx.quadraticCurveTo(0,-h*1.1,w/2,h*.25);ctx.stroke();
+    if(core){ctx.strokeStyle=core;ctx.lineWidth=h*.18;ctx.stroke()}ctx.restore();return}
+  ctx.beginPath();ctx.moveTo(-w/2,0);ctx.quadraticCurveTo(0,-hh*1.15-(sq*h*.15),w/2,0);ctx.quadraticCurveTo(0,hh*1.05,-w/2,0);ctx.closePath();
+  if(core){const g=ctx.createRadialGradient(0,0,.3,0,0,w*.5);g.addColorStop(0,core);g.addColorStop(.38,col);g.addColorStop(1,cmix(col,'#000000',.35));ctx.fillStyle=g}else ctx.fillStyle=col;ctx.fill();
+  ctx.restore()}
+function shEyes(q,sh,al,lk){const sp=15,bl=sh.blink==null?1:sh.blink,e=sh.eye==null?1:sh.eye;if(e<=.01)return;
+  for(const sd of[-1,1])almond([q[0]+sd*sp+lk[0],q[1]-2+lk[1]],14,6*e,-sd*.26,SHD.eye,'#ffffff',SHD.eyeG,al,{blink:bl,sq:sh.sq||0,moon:sh.moon||0,eg:sh.eg||1})}
+// the hint of who moves it (first phase): two light violet eyes open a little in the dark over the cross and close again (20%)
+function hintEyes(q,a){if(a<=.01)return;for(const sd of[-1,1])almond([q[0]+sd*13,q[1]],11,4,-sd*.26,'rgb(190,150,255)',null,null,.2*a,{blink:a})}
+// the Shadow's wrist: a column of smoke from the palm up into the mist, thinner as it rises
+function shWrist(V0,palm,top,al){if(al<=.01)return;const a=V0.P(palm),b=top,dx=b[0]-a[0],dy=b[1]-a[1],l=Math.hypot(dx,dy)||1,nx=-dy/l,ny=dx/l,w0=8,w1=3;
+  ctx.save();ctx.globalAlpha*=al;const g=ctx.createLinearGradient(a[0],a[1],b[0],b[1]);g.addColorStop(0,'rgba(42,20,68,.95)');g.addColorStop(.7,'rgba(30,14,48,.55)');g.addColorStop(1,'rgba(20,10,34,0)');
+  const sw=Math.sin(a[1]*.07)*2;ctx.beginPath();ctx.moveTo(a[0]+nx*w0,a[1]+ny*w0);ctx.quadraticCurveTo((a[0]+b[0])/2+nx*(w0+w1)/2+sw,(a[1]+b[1])/2,b[0]+nx*w1,b[1]+ny*w1);
+  ctx.lineTo(b[0]-nx*w1,b[1]-ny*w1);ctx.quadraticCurveTo((a[0]+b[0])/2-nx*(w0+w1)/2+sw,(a[1]+b[1])/2,a[0]-nx*w0,a[1]-ny*w0);ctx.closePath();ctx.fillStyle=g;ctx.fill();
+  ctx.strokeStyle=rgba(SHD.hr,.3);ctx.lineWidth=1;ctx.beginPath();ctx.moveTo(a[0]+nx*w0*.8,a[1]+ny*w0*.8);ctx.quadraticCurveTo((a[0]+b[0])/2+nx*(w0+w1)*.4+sw,(a[1]+b[1])/2,b[0]+nx*w1,b[1]+ny*w1);ctx.stroke();ctx.restore()}
+
+// ------------------------------------------------------------------ the curtain: a drape of crimson velvet facing the camera (the same from every
+// side), 78 wide and 150 tall, centred on him and in front of him. It hangs from the dark (its top melts into it in the last 25), seven folds
+// in three tones (four on slow phones), the golden fringe along the hem (one dashed stroke of upright dashes), the golden cord with its
+// tassel tied on the left a third of the way up. c.k: how far down it is (0 up in the dark, 1 down to the floor); c.w: how much the hem and
+// the folds wave (±4); c.bulge: his shape pushing it once; c.melt: it dissolves from the hem in sparks of gold
+// draws f() in a canvas of its own and fades it in along y: transparent above y0, whole below y1 (current coordinates, no rotation)
+const MK={c:null};
+function maskV(f,b,y0,y1){const T=ctx.getTransform(),X0=Math.floor(T.a*b[0]+T.e)-2,Y0=Math.floor(T.d*b[1]+T.f)-2,W=Math.ceil(T.a*(b[2]-b[0]))+5,H=Math.ceil(T.d*(b[3]-b[1]))+5;
+  if(W<3||H<3)return;let oc=MK.c;if(!oc)oc=MK.c=document.createElement('canvas');if(oc.width<W||oc.height<H){oc.width=Math.max(oc.width,W);oc.height=Math.max(oc.height,H)}
+  const g=oc.getContext('2d');g.setTransform(1,0,0,1,0,0);g.globalCompositeOperation='source-over';g.globalAlpha=1;g.clearRect(0,0,W,H);g.setTransform(T.a,T.b,T.c,T.d,T.e-X0,T.f-Y0);
+  const sv=ctx;ctx=g;try{f()}finally{ctx=sv}
+  g.globalCompositeOperation='destination-in';const gr=g.createLinearGradient(0,y0,0,y1);gr.addColorStop(0,'rgba(0,0,0,0)');gr.addColorStop(1,'rgba(0,0,0,1)');g.fillStyle=gr;g.fillRect(b[0]-3,b[1]-3,b[2]-b[0]+6,b[3]-b[1]+6);g.globalCompositeOperation='source-over';
+  ctx.save();ctx.setTransform(1,0,0,1,0,0);ctx.drawImage(oc,0,0,W,H,X0,Y0,W,H);ctx.restore()}
+function curtainDraw(V0,c,K,fx){const q0=V0.P(0,0,0),Wd=78,Ht=150,yF=q0[1]+8,yT=yF-Ht,melt=c.melt||0,yB=yT+Ht*c.k*(1-melt);if(yB-yT<1.5)return;
+  const nF=LOWFX?4:7,fw=Wd/nF,x0=q0[0]-Wd/2,wv=c.w||0,ph=c.ph||0,bu=c.bulge||0,T=K1.cri,yc=yT+Ht*.5;
+  const hem=x=>yB+4*wv*Math.sin((x-x0)*.17+ph*1.3)*Math.min(1,(yB-yT)/30);
+  const ex=(i,y)=>{if(i<=0)return x0;if(i>=nF)return x0+Wd;const xc=x0+i*fw,b=bu*.14*(xc-q0[0])*Math.exp(-(((y-yc)/42)**2));return xc+1.6*wv*Math.sin(y*.09+i*2.1+ph)+b};
+  const draw=()=>{ctx.lineJoin='round';
+    for(let i=0;i<nF;i++){const ys=[];for(let j=0;j<=5;j++)ys.push(yT+(yB-yT)*j/5);const L0=ys.map(y=>[ex(i,y),y]),R0=ys.map(y=>[ex(i+1,y),y]);
+      L0[5][1]=hem(L0[5][0]);R0[5][1]=hem(R0[5][0]);ctx.beginPath();for(const q of L0)ctx.lineTo(q[0],q[1]);for(let j=5;j>=0;j--)ctx.lineTo(R0[j][0],R0[j][1]);ctx.closePath();
+      const xa=x0+i*fw,g=ctx.createLinearGradient(xa,0,xa+fw,0);g.addColorStop(0,T.b);g.addColorStop(.3,T.l);g.addColorStop(.62,T.b);g.addColorStop(1,T.d);ctx.fillStyle=g;ctx.fill()}
+    // the fold lines, the hem a little darker, his shape pushing it
+    ctx.strokeStyle='rgba(40,4,14,.45)';ctx.lineWidth=1;for(let i=1;i<nF;i++){ctx.beginPath();for(let j=0;j<=5;j++){const y=yT+(yB-yT)*j/5;ctx.lineTo(ex(i,y),j<5?y:hem(ex(i,y)))}ctx.stroke()}
+    {const g=ctx.createLinearGradient(0,yT,0,yB);g.addColorStop(0,'rgba(20,0,8,.25)');g.addColorStop(.55,'rgba(20,0,8,0)');g.addColorStop(1,'rgba(20,0,8,.28)');ctx.fillStyle=g;ctx.fillRect(x0,yT,Wd,yB-yT+5)}
+    if(bu>.01){const g=ctx.createRadialGradient(q0[0]-4,yc-6,4,q0[0],yc,40);g.addColorStop(0,`rgba(255,190,200,${(.22*bu).toFixed(3)})`);g.addColorStop(.7,`rgba(255,150,170,${(.08*bu).toFixed(3)})`);g.addColorStop(1,'rgba(40,0,10,0)');ctx.fillStyle=g;ctx.fillRect(x0,yT,Wd,yB-yT)}
+    // the outline: the two sides and the hem
+    ctx.beginPath();ctx.moveTo(x0,yT);ctx.lineTo(x0,hem(x0));for(let i=1;i<=12;i++){const x=x0+Wd*i/12;ctx.lineTo(x,hem(x))}ctx.lineTo(x0+Wd,yT);ctx.strokeStyle=INK;ctx.lineWidth=2.4;ctx.stroke();
+    // the golden fringe under the hem: a band of dark gold, then upright dashes of gold
+    ctx.beginPath();for(let i=0;i<=16;i++){const x=x0+1+(Wd-2)*i/16;ctx.lineTo(x,hem(x)+2.8)}ctx.lineCap='butt';ctx.strokeStyle=INK;ctx.lineWidth=6.6;ctx.stroke();ctx.strokeStyle='#b17b12';ctx.lineWidth=5;ctx.stroke();
+    ctx.setLineDash([1.5,1.3]);ctx.strokeStyle='#ffcd45';ctx.lineWidth=5;ctx.stroke();ctx.setLineDash([]);ctx.lineCap='round';
+    ctx.beginPath();for(let i=0;i<=16;i++){const x=x0+1+(Wd-2)*i/16;ctx.lineTo(x,hem(x)+.4)}ctx.strokeStyle='#ffcd45';ctx.lineWidth=1.4;ctx.stroke();
+    // the golden cord tied on the left a third of the way up, with its tassel
+    const ry=yF-Ht/3;if(ry<yB-6&&ry>yT+10){const a=[x0-1.5,ry-7],b=[x0+15,ry+1],e=[x0-1.5,ry+7];ctx.beginPath();ctx.moveTo(a[0],a[1]);ctx.quadraticCurveTo(b[0]+2,b[1]-6,b[0],b[1]);ctx.quadraticCurveTo(b[0]+2,b[1]+6,e[0],e[1]);
+      ctx.strokeStyle=INK;ctx.lineWidth=3.8;ctx.stroke();ctx.strokeStyle='#ffcd45';ctx.lineWidth=2;ctx.stroke();
+      const k=[b[0]-1,b[1]];ball3(k,2.2,K1.gold,1.4,.2);const tl=[k[0]+1,k[1]+2.5],sw=Math.sin(ph*1.7)*wv*1.5;ctx.beginPath();ctx.moveTo(tl[0]-1.6,tl[1]);ctx.quadraticCurveTo(tl[0]-3.4+sw,tl[1]+6,tl[0]-2.4+sw,tl[1]+9.5);
+      ctx.lineTo(tl[0]+2.6+sw,tl[1]+9.5);ctx.quadraticCurveTo(tl[0]+3.6+sw,tl[1]+6,tl[0]+1.6,tl[1]);ctx.closePath();ctx.fillStyle='#ffcd45';ctx.fill();ctx.strokeStyle=INK;ctx.lineWidth=1.3;ctx.stroke();
+      ctx.strokeStyle='#b17b12';ctx.lineWidth=.8;for(const d of[-1,.2,1.4]){ctx.beginPath();ctx.moveTo(tl[0]+d+sw*.5,tl[1]+3.5);ctx.lineTo(tl[0]+d*1.2+sw,tl[1]+9);ctx.stroke()}}};
+  maskV(draw,[x0-8,yT-2,x0+Wd+8,Math.max(yB,yF)+14],yT,yT+25);
+  // melting from the hem: sparks of gold rising
+  if(melt>0&&fx){for(let i=0;i<14;i++){const u=(i+.5)/14,x=x0+Wd*u,t=cl(melt*1.25-((i*7)%5)*.05,0,1);if(t<=0||t>=1)continue;const q=[x+Math.sin(i*3.1)*3*t,hem(x)-4-26*t];
+    ctx.fillStyle=`rgba(255,${200+((i*37)%50)},110,${(1-t).toFixed(3)})`;ball(q,1.4*(1-t*.4));ctx.fill();if(i%3===0)star4(q,3*(1-t),1-t,'#fff6c8')}}}
+
+// ------------------------------------------------------------------ the effects of the moves (none with o.noFx or on slow phones)
+function sparkAt(q,t,col,n){if(t<0||t>=1)return;for(let i=0;i<(n||6);i++){const a=i/(n||6)*TAU+.4,d=3+12*t,g=8*t*t;ctx.fillStyle=`rgba(${col},${(1-t).toFixed(3)})`;ball([q[0]+Math.cos(a)*d,q[1]+Math.sin(a)*d*.8+g],1.3*(1-t*.5));ctx.fill()}
+  star4(q,5*(1-t),1-t,'#ffffff')}
+function fxDraw(V0,L,e,A,K,J){const{P,D}=V0,t=e.t,col=A.k2>.5?'255,122,214':'255,214,110',top=J.dTop+20;
+  if(e.k==='spark'||e.k==='ping'){const c=J.eyes[e.s];if(!c)return;L.add(top,()=>{const q=P(c);if(e.k==='spark')sparkAt(q,t,col,7);else{ctx.strokeStyle=rgba(col,.7*(1-t));ctx.lineWidth=1.2;ball(q,2+8*t);ctx.stroke()}})}
+  else if(e.k==='tac'){const c=J.eyes[e.s];if(!c)return;L.add(top,()=>{const q=P(c);ctx.strokeStyle=`rgba(255,250,225,${(1-t).toFixed(3)})`;ctx.lineWidth=1.2;ctx.lineCap='round';
+      for(let i=0;i<4;i++){const a=i*Math.PI/2+.78,r0=2+3*t,r1=4+6*t;seg([q[0]+Math.cos(a)*r0,q[1]+Math.sin(a)*r0],[q[0]+Math.cos(a)*r1,q[1]+Math.sin(a)*r1]);ctx.stroke()}
+      if(e.smoke)K3.dust(V0,c,t,5,5,'150,100,210',.45)})}
+  else if(e.k==='pound'){for(const sd of[1,-1]){if(e.one&&e.one!==sd)continue;const a=sd>0?J.aL:J.aR,c=[a.c[0],a.c[1],0];
+      L.add(-9000,()=>{const q=P(c);ctx.strokeStyle=`rgba(200,180,255,${(.6*(1-t)).toFixed(3)})`;ctx.lineWidth=2*(1-t)+.6;ctx.beginPath();ctx.ellipse(q[0],q[1],6+22*t,(6+22*t)*.55*C.KR(),0,0,TAU);ctx.stroke()});
+      L.add(D(c)+30,()=>K3.dust(V0,c,t,7,9,'196,184,160',.55))}}
+  else if(e.k==='thud'){const c=[A.B[0],A.B[1],0];L.add(-9000,()=>{const q=P(c);ctx.strokeStyle=`rgba(200,180,255,${(.5*(1-t)).toFixed(3)})`;ctx.lineWidth=2.4*(1-t)+.6;ctx.beginPath();ctx.ellipse(q[0],q[1],20+40*t,(20+40*t)*.55*C.KR(),0,0,TAU);ctx.stroke()});
+    L.add(J.dTop+5,()=>K3.dust(V0,[c[0]+6,c[1],0],t,12,28,'196,184,160',.5))}
+  else if(e.k==='clap'){const m=lerp3(J.aL.c,J.aR.c,.5);L.add(top,()=>{const q=P(m);star4(q,7*(1-t),1-t,'#fff6d8');ctx.strokeStyle=`rgba(255,240,200,${(.8*(1-t)).toFixed(3)})`;ctx.lineWidth=1.1;
+      for(let i=0;i<6;i++){const a=i/6*TAU,r0=4+4*t,r1=7+8*t;seg([q[0]+Math.cos(a)*r0,q[1]+Math.sin(a)*r0],[q[0]+Math.cos(a)*r1,q[1]+Math.sin(a)*r1]);ctx.stroke()}})}
+  else if(e.k==='snapR'){const c=J.aR.G.idx;L.add(top,()=>{const q=P(c);sparkAt(q,t,col,8);for(let i=0;i<3;i++){const u=cl(t*1.3-i*.12,0,1);if(u<=0||u>=1)continue;const q2=P(add(c,mul(J.fw,20+30*u+i*8)));ctx.fillStyle=`rgba(${col},${(1-u).toFixed(3)})`;ball(q2,1.4);ctx.fill()}})}}
+// the joints smoke a thread of violet in the strong moves of the second phase
+function smokeDraw(V0,pts,k,p){for(let j=0;j<pts.length;j++){const c=pts[j];for(let i=0;i<2;i++){const u=((p*3+i*.5+j*.27)%1+1)%1,q=V0.P(add(c,[Math.sin(j+u*3)*2,0,3+u*16]));
+  ctx.fillStyle=`rgba(120,60,180,${(.35*k*(1-u)).toFixed(3)})`;ball(q,1.8+u*3.5);ctx.fill()}}}
+
+// ------------------------------------------------------------------ the model
+const EPS=.05;
+function puppeteer2(x,y,face,anim,p,sc,o){sc=sc||1;o=o||{};anim=MV.includes(anim)?anim:'idle';p=cl(+p||0,0,.9999);
+  const V0=V(face),{P,D,F}=V0,po={p2:!!o.p2,game:!!o.game,z:o.z!=null?o.z/sc:null},A=pPose(anim,p,po),fx=fxOn(o);
+  // the game's values: hit (the strings shake, it sways back a little), where the head looks (toward the hero), the jaw that talks
+  const jig=cl(o.jig||0,0,1),talk=cl(o.talk||0,0,1),veil=cl(o.veil||0,0,1),mini=!!o.mini,lookG=cl(o.look||0,-1.9,1.9),vk=1-.6*veil;
+  const tune=B=>{B.lean-=.06*jig;B.hy+=lookG*B.look};tune(A);if(jig>0)A.vib=Math.max(A.vib,1.5*jig);
+  if(talk>0){const nb=Math.max(1,Math.round(DUR[anim]*7));A.jaw=Math.max(A.jaw,talk*3.6*(.5-.5*Math.cos(p*TAU*nb)))}
+  const K=pal(A.k2),X=bodyX(A),lift=A.lift,H0=headNow(A,X,face);
+  // the points of the hood follow the head 0.24 s late: the head of a moment ago
+  const lag=Math.min(.12,.24/DUR[anim]),pl=anim==='idle'||anim==='walk'?((p-lag)%1+1)%1:Math.max(0,p-lag),Al=pPose(anim,pl,po);tune(Al);const H1=headNow(Al,bodyX(Al),face);H1.hp+=(Al.lean-A.lean)*.6;H1.hr+=(Al.roll-A.roll)*.6;H1.hy+=Al.yaw-A.yaw;
+  const bodyK=(A.body==null?1:A.body)*(A.fade==null?1:A.fade),sK=A.strK==null?1:A.strK;
+  if(bodyK>.01)floor(V0,x,y,sc,[A.B[0],A.B[1],0],30,11,.34*bodyK,lift);
+  ctx.save();ctx.translate(x,y);ctx.scale(sc,sc);
+  const L=parts(),LB=parts(),BCw=X.T(BC),dT=D(BCw),ex=X.Rd([1,0,0]),ey=X.Rd([0,1,0]),ez3=X.Rd([0,0,1]),fw=X.Rd([1,0,0]);
+  // in front of the barrel or behind it, as the camera sees it: the barrel's normal toward the point, in the body's frame (0 on its outline);
+  // the copy in front fades in over the one behind (never a jump); far from the barrel a plain switch (nothing to cover there)
+  const kOf=q=>{const r=sub(q,BCw),bx=dot(r,ex),by=dot(r,ey),e=bx*bx/289+by*by/625;if(e<1e-4)return F(ex)>0?1:0;const f=F(nrm(add(mul(ex,bx/289),mul(ey,by/625))));
+    return e>2.4?(f>0?1:0):sstep(-.08,.08,f)};
+  const lay=(Ls,d,kf,f)=>{if(kf<.99)Ls.add(Math.min(d,dT-EPS),f);if(kf>.01)Ls.add(Math.max(d,dT+EPS),kf<.99?()=>ga(kf,f):f)};
+  const zB=q=>dot(sub(q,BCw),ez3)+BC[2];   // a point's height in the body's frame
+  // ---------------- the legs (behind the barrel; in the heap, the knees in front of it come forward)
+  const gL=legGeo(X,A,1),gR=legGeo(X,A,-1);
+  for(const g of[gR,gL]){const kz=sstep(38,48,zB(g.kn)),kf=kz>0?kz*kOf(g.kn):0;lay(LB,D(g.hip)-6,kf,()=>legDraw(V0,X,A,K,g))}
+  // ---------------- the barrel doublet; the coat tails behind it (in front of it seen from the back)
+  const br=1+A.breath,Rd=[BRD[0]*br,BRD[1]*br,BRD[2]*(1+A.breath*.5)];
+  LB.add(dT,()=>torsoDraw(V0,X,A,K,null));
+  {const tm=X.T([-14,0,36]);lay(LB,D(tm),kOf(tm),()=>tailsDraw(V0,X,A,K,Rd))}
+  // ---------------- the arms: the sleeve with its puff by the side it hangs from; the forearm and the hand by where the hand is (in front of
+  // the barrel or behind it; by the head when it is raised over the shoulders)
+  const aL=armGeo(X,A,1),aR=armGeo(X,A,-1);
+  for(const a of[aR,aL]){const fs=F(X.Rd([0,a.sd,0]));lay(LB,D(a.puff),sstep(-.38,-.12,fs),()=>upperArmDraw(V0,X,A,K,a));
+    const dF=D(lerp3(a.Wr,a.c,.5)),hz=zB(a.Wr),draw=()=>lowerArmDraw(V0,X,A,K,a);
+    if(hz>100)LB.add(Math.max(dF,dT+EPS),draw);else lay(LB,dF,kOf(a.c),draw)}
+  // ---------------- the neck, the ruff (each puff at its own depth: the front ones cover the chin), the head, the points of the hood
+  const dHd=Math.max(D(H0.Hc),dT+3*EPS),J={Hc:H0.Hc,HR:H0.HR,cv:camDir(V0),aL,aR,fw:ex};
+  J.hpts=ellSil(V0,H0.Hc,[HOOD,HOOD,HOOD],AXES,null,26);J.hsil=smoothP(J.hpts);
+  {const a=X.T([1,0,89]),b=add(H0.Hc,H0.HR([-1,0,-13]));LB.add(Math.max(D(a),dT+EPS),()=>{const qa=P(a),qb=P(b);caps3(qa,4,qb,4,K.wood,2.2);shadeL(qa,qb,4,4)})}
+  LB.add(dT+1.5*EPS,()=>ruffThread(V0,X,K));
+  for(const c of ruffPts(X,A,(H0.hy-cheat(face,.3))*.22))LB.add(Math.max(D(c),dT+2*EPS),()=>ruffPuff(V0,c,K));
+  LB.add(dHd,()=>headDraw(V0,J,A,K));
+  const tL=tipPts(H0,H1,X,A,1),tR=tipPts(H0,H1,X,A,-1);
+  for(const[sd,pts] of[[1,tL],[-1,tR]]){const kf=sstep(-.12,.12,F(nrm(sub(pts[1],H0.Hc)))),dr=()=>tipDraw(V0,pts,A,K,sd,sd<0&&!!A.bell);
+    LB.add(dHd-.02,dr);if(kf>.01)LB.add(dHd+.02,()=>{ctx.save();ctx.clip(J.hsil);ga(kf,dr);ctx.restore()})}
+  // the violet smoke from the joints (second phase, strong moves)
+  if(fx&&A.smoke>.02){const js=[gL.kn,gR.kn,aL.El,aR.El,aL.Wr,aR.Wr];LB.add(dHd+.5,()=>smokeDraw(V0,js,A.smoke,p))}
+  // ---------------- the strings: from the cross to the head, the wrists and the knees. A piece low down goes in front of the barrel or behind it
+  // (the near one in front, the far one behind), the piece above the shoulders by its own depth (beside the head, the points, the ruff)
+  const CX=crossNow(A,mini,lift),eyes={h:add(H0.Hc,H0.HR([-1,0,19])),wL:aL.eye,wR:aR.eye,kL:gL.eye,kR:gR.eye,up:CX.ends.ring};J.eyes=eyes;J.dTop=dHd+5;
+  const zs=H0.Hc[2]-14,nv=Math.max(1,Math.round(DUR[anim]*6.5)),pearlOn=fx&&!o.noFx;
+  if(sK>.01)for(const k of['h','wL','wR','kL','kR']){const s=A.S[k];if(s.b>=1)continue;const a=eyes[k],b=CX.ends[k],mid=lerp3(a,b,.5);
+    const out0=sub(mid,BCw);let out=nrm([out0[0],out0[1],0]);if(k==='h'||len([out0[0],out0[1],0])<2)out=ey;
+    const pts=strLine(a,b,s.t,out),Q=strScr(P,pts,Math.max(A.vib,s.v||0),SPH[k]+p*TAU*nv),fE=s.b>=0?1-.85*ez(s.b):1,al=(s.b>=0?1-s.b:1)*sK;
+    let fs;if(pts[0][2]<zs)fs=0;else if(pts[10][2]>=zs)fs=1;else{fs=1;for(let i=0;i<10;i++)if(pts[i][2]>=zs&&pts[i+1][2]<zs){fs=(i+(pts[i][2]-zs)/Math.max(1e-6,pts[i][2]-pts[i+1][2]))/10;break}}
+    const f1=Math.min(fs,fE);
+    if(f1>.005){const dm=D(sub3(pts,f1/2)),dd=k==='h'?Math.max(dm,dHd+.6):k[0]==='k'?Math.min(Math.max(dm,dT+EPS),dHd-.1):Math.max(dm,dT+EPS);L.add(dd,()=>{strStroke(sub2(Q,0,f1),s,K,al*vk);if(pearlOn&&s.u<=f1)pearl(Q,s.u,K,al*vk)})}
+    if(fE>fs+.005){const m3=sub3(pts,(fs+fE)/2);lay(LB,D(m3)+2,kOf(m3),()=>{strStroke(sub2(Q,fs,fE),s,K,al);if(pearlOn&&s.u>fs)pearl(Q,s.u,K,al)})}}
+  // ---------------- the cross, the two strings from its ring up into the dark, the Shadow (or its hint)
+  const sh=A.sh&&!mini?A.sh:null,cK=(A.cvis==null?1:A.cvis)*sK*vk;let dX=dHd+10;
+  if(A.cx[2]<-60&&F(fw)<-.15)dX=dT-2*EPS;
+  if(cK>.01){L.add(dX,()=>{if(cK<.99)ctx.globalAlpha*=cK;crossDraw(V0,CX,K,A,sh&&sh.k>.01?sh:null);if(cK<.99)ctx.globalAlpha/=cK})}
+  const shC=[CX.c[0],CX.c[1],206+cl(A.cx[2],-3,25)+Math.min(lift,3)+(A.sh&&A.sh.rise?30*A.sh.rise:0)],shQ=P(shC);
+  if(!mini&&sK>.01){const s=A.S.up;if(s.b<1){const bb=s.b>=0?ez(s.b):0,al=(1-bb)*sK*vk,vib=Math.max(A.vib*.5,s.v||0);
+    L.add(dX-1.5,()=>{for(const[i,e] of[[0,CX.ends.upL],[1,CX.ends.upR]]){const a=P(add(e,[0,0,bb*30])),b=P(add(e,[0,0,46])),w=vib*Math.sin(SPH.up+i+p*TAU*nv);
+      const g=ctx.createLinearGradient(a[0],a[1],b[0],b[1]),l=cl(s.l,0,1),c0=l>.02?cmix(K.strC,K.strHot,l):K.strC;g.addColorStop(0,C.rgba(c0,al));g.addColorStop(.3,C.rgba(c0,al*.85));g.addColorStop(1,C.rgba(c0,0));
+      ctx.lineCap='round';ctx.beginPath();ctx.moveTo(a[0],a[1]);ctx.quadraticCurveTo((a[0]+b[0])/2+w,(a[1]+b[1])/2,b[0],b[1]);
+      if(l>.02&&!LOWFX){ctx.save();ctx.globalCompositeOperation='lighter';ctx.strokeStyle=rgba(K.str,.3*l*al);ctx.lineWidth=5;ctx.stroke();ctx.restore()}
+      ctx.strokeStyle=g;ctx.lineWidth=1.1+.5*l;ctx.stroke()}})}}
+  if(sh&&sh.k>.01){const al=sh.k*vk,shk=sh.mistK==null?1:sh.mistK,lk=[0,0];
+    {const d=X.Rd(rotZ([1,0,0],lookG)),q1=P(add(BCw,mul(d,10))),q0=P(BCw),l=Math.hypot(q1[0]-q0[0],q1[1]-q0[1])||1;lk[0]=2*(q1[0]-q0[0])/l;lk[1]=2*(q1[1]-q0[1])/l}
+    L.add(dX-3,()=>shMist(shQ,al*shk,sh.breath||0));
+    const palm=CX.T([-1,0,13+(sh.gz||0)]);L.add(dX-1,()=>{shWrist(V0,palm,[shQ[0],shQ[1]+6],al*shk);shEyes(shQ,sh,al,lk)})}
+  if(A.hint>.01&&!mini&&!sh)L.add(dX-1,()=>hintEyes(P([CX.c[0],CX.c[1],206+Math.min(lift,3)]),A.hint*vk));
+  // ---------------- the pieces of the moves: the thread between the index fingers (Fili d'oro), the threads from the fingertips to the
+  // trapdoors (Burattini), the lasso in the pages, the light where it falls (pages), the bell that comes off (Sconfitta)
+  if(A.thr){const t=A.thr,a=aL.G.idx,b=aR.G.idx;L.add(Math.max(D(a),D(b),dT)+1,()=>{const qa=P(a),qb=P(b),dx=qb[0]-qa[0],dy=qb[1]-qa[1],l=Math.hypot(dx,dy)||1,nx=-dy/l,ny=dx/l,
+      w=o.noFx?0:t.tr*2.6*Math.sin(p*TAU*nv*1.1),m=[(qa[0]+qb[0])/2+nx*w,(qa[1]+qb[1])/2+ny*w];ctx.lineCap='round';ctx.beginPath();ctx.moveTo(qa[0],qa[1]);ctx.quadraticCurveTo(m[0],m[1],qb[0],qb[1]);
+      ctx.strokeStyle='rgba(40,20,10,.5)';ctx.lineWidth=2+t.k;ctx.stroke();if(!o.noFx&&!LOWFX&&t.k>.3){ctx.save();ctx.globalCompositeOperation='lighter';ctx.strokeStyle=rgba(K.str,.4*t.k);ctx.lineWidth=6;ctx.stroke();ctx.restore()}
+      ctx.strokeStyle=o.noFx?K.strC:cmix(K.strC,K.strHot,t.k);ctx.lineWidth=o.noFx?1.1:.6+1*t.k;ctx.stroke()})}
+  if(A.fthr&&(o.traps||!o.game)){const t=A.fthr,TP=o.traps?o.traps.map(r=>{const sx=(r.x-x)/sc,sy=(r.y-y)/sc/cam.k;return[sx*V0.c+sy*V0.s,-sx*V0.s+sy*V0.c,0]}):[[70,24,0],[70,-24,0]];
+    for(const T0 of TP){const a=dot(sub(T0,aL.c),ey)>dot(sub(T0,aR.c),ey)?aL:aR,tips=a.G.tips.slice(0,3),dd=D(T0)>dT?dT+EPS*3:dT-EPS*3;
+      L.add(Math.max(dd,D(lerp3(a.c,T0,.3))),()=>{for(const tp of tips){const e=lerp3(tp,T0,t.k*(1-t.out)),e2=add(lerp3(tp,e,1),[0,0,70*t.out]),qa=P(tp),qb=P(t.out>0?e2:e);
+        ctx.strokeStyle=`rgba(40,20,10,${(.4*(1-t.out)).toFixed(3)})`;ctx.lineWidth=1.8;seg(qa,qb);ctx.stroke();ctx.strokeStyle=C.rgba(K.strC,.85*(1-t.out));ctx.lineWidth=.8;ctx.stroke()}})}}
+  if(A.lasso&&!o.game){const t=A.lasso,a=aR.G.idx,e=t.tied?[110,0,14]:add(a,add(mul(fw,120*t.k),[0,0,-(a[2]-16)*t.k]));L.add(D(lerp3(a,e,.5))+20,()=>{const qa=P(a),qe=P(e);
+    ctx.strokeStyle='rgba(40,20,10,.5)';ctx.lineWidth=2.6;seg(qa,qe);ctx.stroke();ctx.strokeStyle=K.strHot;ctx.lineWidth=1.4;ctx.stroke();ctx.lineWidth=1.3;ctx.beginPath();ctx.ellipse(qe[0],qe[1],5,3,0,0,TAU);ctx.stroke()})}
+  if(A.ring&&!o.game){const k=A.ring.k;L.add(-9500,()=>{const q=P(0,0,0),r=46;if(!LOWFX){ctx.save();ctx.globalCompositeOperation='lighter';shine('255,244,214',q[0],q[1],r*1.1,.35*k,r*.6*C.KR());ctx.restore()}
+    ctx.strokeStyle=`rgba(255,244,214,${(.3+.5*k).toFixed(3)})`;ctx.lineWidth=1.6;ctx.beginPath();ctx.ellipse(q[0],q[1],r,r*.55*C.KR(),0,0,TAU);ctx.stroke()})}
+  if(A.bell){const b=A.bell,b0=bellAt(A,tR,-1),fl=[30,-10,3.2],k=b.k,pos=add(lerp3(b0,fl,ez(k)),[0,0,Math.sin(Math.PI*k)*12*(1-k)]),sw=k>=1?0:1;
+    J.bellQ=pos;L.add(1e6+1,()=>ga(b.out,()=>{const q=P(pos);ctx.save();ctx.translate(q[0],q[1]);ctx.rotate(k<1?k*TAU*2:.35*Math.sin((p-.86)*90)*Math.exp(-(p-.86)*25));ctx.translate(-q[0],-q[1]);bellDraw(V0,pos,K,0);ctx.restore()}))}
+  // ---------------- the curtain, in front of everything
+  if(A.cur&&A.cur.k>.002)L.add(1e6,()=>curtainDraw(V0,A.cur,K,fx));
+  if(fx)for(const e of A.fx)fxDraw(V0,L,e,A,K,J);
+  // ---------------- the body: as one picture while it fades (the Sipario, the end of the defeat), or pulled up into the dark (only what
+  // is under the top of the curtain shows); otherwise piece by piece among the rest
+  if(bodyK<=.01){}
+  else if(A.vmask&&A.cur){const yT=V0.P(0,0,0)[1]+8-150,LBs=LB.slice().sort((a,b)=>a.d-b.d);L.add(dT,()=>{const f=()=>{for(const e of LBs){ink(2.4);e.f()}};
+      if(bodyK<.99)ctx.globalAlpha*=bodyK;maskV(f,[-70,yT-lift-200,70,40],yT,yT+30);if(bodyK<.99)ctx.globalAlpha/=bodyK})}
+  else if(bodyK<.99){const LBs=LB.slice().sort((a,b)=>a.d-b.d);L.add(dT,()=>K3.fadeDraw(()=>{for(const e of LBs){ink(2.4);e.f()}},P(X.T([0,0,60])),110,bodyK))}
+  else for(const e of LB)L.push(e);
+  run(L);ctx.restore();
+  // ---------------- the points for the game (on the screen, in the world's coordinates)
+  if(o.dbg){const Q=q=>{const s=P(q);return[x+s[0]*sc,y+s[1]*sc]};Object.assign(o.dbg,{head:Q(H0.Hc),body:Q(BCw),wL:Q(aL.Wr),wR:Q(aR.Wr),hL:Q(aL.c),hR:Q(aR.c),kL:Q(gL.kn),kR:Q(gR.kn),aL:Q(gL.an),aR:Q(gR.an),
+    cross:Q(CX.c),tipL:Q(tL[4]),tipR:Q(tR[4]),idxR:Q(aR.G.idx),shadow:sh&&sh.k>.01?shQ.map((v,i)=>i?y+v*sc:x+v*sc):null})}
+  if(o.out){const W=q=>{const s=P(q),r=[x+s[0]*sc,y+s[1]*sc];r.x=r[0];r.y=r[1];return r};
+    o.out.tipR=W(aR.G.idx);o.out.tipL=W(aL.G.idx);o.out.wristR=W(aR.Wr);o.out.wristL=W(aL.Wr);o.out.cross=W(CX.ends.ring);o.out.head=W(add(H0.Hc,mul(H0.HR(FACEN),HOOD)))}}
+
+// ------------------------------------------------------------------ for the game: the pieces of its attacks, with the same look
+// the giant hand of the Shadow that falls from the dark (Mano dell'Ombra): x, y the point on the floor under the palm, z the palm's height;
+// k: 0 falling, palm down and the fingers half closed; .3 the blow, the fingers spread wide, the palm flat and a little squashed; .6 it
+// presses; 1 it rises closing the fingers. o.a: its turn on the floor (where the fingers point); o.noFx. A hundred wide from finger to
+// finger: the palm 44 × 38, four long round fingers of 28, the thumb; dark violet with the magenta edge, smoke rising from the wrist into
+// the dark. Its shadow on the floor is the game's
+const HKY=[[0,[.5,.65,1]],[.3,[0,1.2,.74]],[.6,[.12,1.1,.86]],[1,[.85,.7,1]]];
+N3.puppeteer2Hand=function(x,y,z,k,sc,o){o=o||{};sc=sc||1;k=cl(k||0,0,1);const v=keys(HKY,k),curl=v[0],spr=v[1],sq=v[2],a=o.a==null?0:o.a,V0=V(Math.PI/2),{P,D}=V0,H=SHD.hand,fx=fxOn(o);
+  const ca=Math.cos(a),sa=Math.sin(a),T=q=>[q[0]*ca-q[1]*sa,q[0]*sa+q[1]*ca,z/sc+q[2]*sq];
+  ctx.save();ctx.translate(x,y);ctx.scale(sc,sc);const L=parts();
+  // the wrist and the arm of smoke rising into the dark (behind the hand)
+  {const w0=T([-24,0,8]),w1=T([-40,0,120]);L.add(-50,()=>{const a0=P(w0),a1=P(w1),g=ctx.createLinearGradient(a0[0],a0[1],a1[0],a1[1]);g.addColorStop(0,'rgba(42,20,68,.95)');g.addColorStop(.55,'rgba(28,12,46,.6)');g.addColorStop(1,'rgba(20,10,34,0)');
+    const dx=a1[0]-a0[0],dy=a1[1]-a0[1],l=Math.hypot(dx,dy)||1,nx=-dy/l,ny=dx/l;ctx.beginPath();ctx.moveTo(a0[0]+nx*15,a0[1]+ny*15);ctx.lineTo(a1[0]+nx*7,a1[1]+ny*7);ctx.lineTo(a1[0]-nx*7,a1[1]-ny*7);ctx.lineTo(a0[0]-nx*15,a0[1]-ny*15);ctx.closePath();ctx.fillStyle=g;ctx.fill();
+    if(fx){ctx.strokeStyle=rgba(SHD.hr,.35);ctx.lineWidth=1.2;ctx.beginPath();ctx.moveTo(a0[0]+nx*14,a0[1]+ny*14);ctx.lineTo(a1[0]+nx*6,a1[1]+ny*6);ctx.stroke()}})}
+  // the palm: a flat dark cushion
+  {const S=[];for(let i=0;i<20;i++){const t=i/20*TAU;S.push(T([Math.cos(t)*22,Math.sin(t)*19,Math.cos(t)>0?2:4]))}for(let i=0;i<10;i++){const t=i/10*TAU;S.push(T([Math.cos(t)*16-2,Math.sin(t)*13,7]))}
+    L.add(0,()=>{const h=chull(S.map(q=>P(q)));const pa=smoothP(h);ctx.fillStyle=grad3(bbox(h),H);ctx.fill(pa);ctx.strokeStyle=INK;ctx.lineWidth=2.6;ctx.stroke(pa);rimM(h,.6);
+      // the knuckles' ridge and two soft creases
+      ctx.strokeStyle='rgba(10,4,18,.45)';ctx.lineWidth=1.2;ctx.lineCap='round';const c1=P(T([8,-12,6])),c2=P(T([10,0,6.5])),c3=P(T([8,12,6]));ctx.beginPath();ctx.moveTo(c1[0],c1[1]);ctx.quadraticCurveTo(c2[0],c2[1]-2,c3[0],c3[1]);ctx.stroke()})}
+  // four long round fingers and the thumb, each in two bones that curl toward the palm
+  for(let i=0;i<4;i++){const yy=(i-1.5)*9.6*spr,bend=curl,b=T([18,yy*.82,3]),d=nrm([1,yy*.022*spr,0]),j=add(b,[0,0,0]);
+    const m=T([18+14*Math.cos(bend*.9)*d[0],yy*.82+14*d[1],3-14*Math.sin(bend*.9)]),e=T([18+14*Math.cos(bend*.9)+13*Math.cos(bend*1.9),yy*.82+(14+13)*d[1],3-14*Math.sin(bend*.9)-13*Math.sin(bend*1.9)]);
+    const pts=[b,m,e],rs=[6.2,5.6,4.6];L.add(1+i*.01,()=>{const P2=pts.map(q=>P(q)),bb=bbox(P2);bb[0]-=6;bb[1]-=6;bb[2]+=6;bb[3]+=6;chain(V0,pts,rs,H.b,{lw:2.4,fill:grad3(bb,H),noRim:1});
+      ctx.strokeStyle=rgba(SHD.hr,.5);ctx.lineWidth=1.1;ctx.lineCap='round';ctx.beginPath();for(const q of P2)ctx.lineTo(q[0]-1.2,q[1]-2.6);ctx.stroke()})}
+  {const b=T([-4,22*spr,3]),m=T([6,30*spr,1-6*curl]),e=T([14,33*spr,-1-8*curl]);L.add(.5,()=>{const P2=[b,m,e].map(q=>P(q)),bb=bbox(P2);bb[0]-=6;bb[1]-=6;bb[2]+=6;bb[3]+=6;chain(V0,[b,m,e],[6,5.4,4.4],H.b,{lw:2.4,fill:grad3(bb,H),noRim:1})})}
+  run(L);
+  // smoke curling off the edge while it presses and rises
+  if(fx&&k>.25){const u=sstep(.25,1,k);for(let i=0;i<6;i++){const t=i/6*TAU+u*2,q=P(T([Math.cos(t)*26,Math.sin(t)*22,4+u*20]));ctx.fillStyle=`rgba(90,46,140,${(.28*(1-u)).toFixed(3)})`;ball(q,4+u*6);ctx.fill()}}
+  ctx.restore()};
+// the trapdoor, 26 × 26: two wooden leaves hinged on its sides, golden hinges, golden light in the cracks. k 0 shut (o.glow 0..1 makes the
+// light grow); .0-.3 the leaves open downward; .3-.7 open (a dark hole with the golden light inside); .7-1 they close again. o.p2: magenta
+// light. Shut and without light it can be baked into the floor (the game draws it once with k 0)
+N3.puppeteer2Trap=function(x,y,k,sc,o){o=o||{};sc=sc||1;k=cl(k||0,0,1);const V0=V(Math.PI/2),{P}=V0,gl=cl(o.glow||0,0,1),lc=o.p2?'255,120,210':'255,210,110',W=13;
+  const op=k<.3?ez(k/.3):k<.7?1:1-ez((k-.7)/.3),th=op*Math.PI*.47,open=op>.01,inner=Math.max(gl,op);
+  ctx.save();ctx.translate(x,y);ctx.scale(sc,sc);ctx.lineJoin='round';
+  const C4=[[-W,-W,0],[W,-W,0],[W,W,0],[-W,W,0]].map(q=>P(q));
+  // the frame: a dark border of old wood
+  poly(C4);ctx.fillStyle='#2d190c';ctx.fill();ctx.strokeStyle=INK;ctx.lineWidth=2.2;ctx.stroke();
+  const I4=[[-W+2,-W+2,0],[W-2,-W+2,0],[W-2,W-2,0],[-W+2,W-2,0]].map(q=>P(q));
+  // the hole and its light (when open, or through the cracks)
+  if(open){poly(I4);const c=P(0,0,-6),g=ctx.createRadialGradient(c[0],c[1],1,c[0],c[1],18);g.addColorStop(0,`rgba(${lc},${(.85*op).toFixed(3)})`);g.addColorStop(.45,`rgba(${lc},${(.35*op).toFixed(3)})`);g.addColorStop(1,'rgba(10,4,14,1)');
+    ctx.fillStyle='#0a0408';ctx.fill();ctx.fillStyle=g;ctx.fill();if(!LOWFX&&!o.noFx){ctx.save();ctx.globalCompositeOperation='lighter';shine(lc,c[0],c[1]-4,16,.45*op,10);ctx.restore()}}
+  // the two leaves: hinged on the left and the right side, falling into the hole
+  for(const sd of[-1,1]){const hx=sd*(W-2),L4=[[-W+2,hx,0],[W-2,hx,0],[W-2,hx-sd*(W-2)*Math.cos(th),-(W-2)*Math.sin(th)],[-W+2,hx-sd*(W-2)*Math.cos(th),-(W-2)*Math.sin(th)]].map(q=>P(q));
+    poly(L4);const g=ctx.createLinearGradient(L4[0][0],L4[0][1],L4[2][0],L4[2][1]);g.addColorStop(0,cmix('#5f3b22','#000000',.35*op));g.addColorStop(1,cmix('#5f3b22','#2d190c',.4+.4*op));ctx.fillStyle=g;ctx.fill();ctx.strokeStyle=INK;ctx.lineWidth=1.6;ctx.stroke();
+    // the planks' seams and a little worn light on the edge
+    ctx.strokeStyle='rgba(20,10,4,.45)';ctx.lineWidth=.8;for(const u of[.33,.66]){const a=lerp(L4[0][0],L4[1][0],u),b=lerp(L4[0][1],L4[1][1],u),c2=lerp(L4[3][0],L4[2][0],u),d=lerp(L4[3][1],L4[2][1],u);seg([a,b],[c2,d]);ctx.stroke()}
+    // the golden hinges on its side
+    for(const u of[.22,.78]){const q=P(lerp(-W+2,W-2,u),hx,0);ctx.fillStyle='#ffcd45';ctx.strokeStyle=INK;ctx.lineWidth=.9;ctx.beginPath();ctx.rect(q[0]-1.6,q[1]-1.2,3.2,2.4);ctx.fill();ctx.stroke()}}
+  // the light in the cracks (between the leaves and round the frame)
+  if(!open&&gl>.01){const a=P(-W+2,0,0),b=P(W-2,0,0);ctx.strokeStyle=`rgba(${lc},${(.9*gl).toFixed(3)})`;ctx.lineWidth=1.2;seg(a,b);ctx.stroke();poly(I4);ctx.strokeStyle=`rgba(${lc},${(.45*gl).toFixed(3)})`;ctx.lineWidth=.9;ctx.stroke();
+    if(!LOWFX&&!o.noFx){ctx.save();ctx.globalCompositeOperation='lighter';shine(lc,(a[0]+b[0])/2,a[1],14,.4*gl,7);ctx.restore()}}
+  ctx.restore()};
+// the moments of the model (the brain reads them): the blows and the warnings, as fractions of each move
+N3.puppeteer2Info=Object.assign({},INFO,{dur:Object.assign({},DUR),moves:MV.slice(),
+  hits:{slam:[.52],slam3:[.4,.64,.9],strings:[.4],puppets:[.62],lasso:[.68],yank:[.94],drop:[.28],hand:[.78]},
+  warn:{slam:.04,slam3:.04,strings:.04,puppets:.08,lasso:.06,yank:.72,vanish:0,hand:.08},
+  slack:{slam:[.52,.74],slam3:[.9,.95],snap:[0,.6],drop:[.28,.55],rage:[0,.58]},
+  trapOpen:.62,trapClose:.8,yankPulls:[.12,.39,.66],handFree:[.08,.2],handBack:.86,threadGone:.4,lassoBack:[.8,.95],
+  vanishCurtain:[.06,.32],vanishUp:[.55,.85],dropStand:.9,dropStrings:[.6,.7,.76,.84],
+  rage:{fall:[0,.18],eyes:[.2,.4],grab:.5,clacks:[.62,.68,.74],laugh:.8},enter:{curtainUp:[0,.3],strings:[.31,.38,.44,.51,.56],stand:.6,cry:.76,bow:[.8,1]},
+  die:{pings:[.12,.2,.28,.36,.46],clou:.46,heap:[.48,.68],upSnap:.5,cross:.7,lids:.84,bell:.86,curtain:[.86,.93],melt:.95},
+  taunt:{turn:[0,.55],claps:[.85,.95]},call:{beckon:[[.2,.45],[.55,.8]]},
+  size:{h:130,cross:158,r:26,hand:100,trap:26}});
+
+// ------------------------------------------------------------------ IL BURATTINO NUOVO ('puppet2', in the game in place of 'puppet'): a little
+// marionette like its master, 28 tall: a head of violet lacquered wood with the ivory face, the dark mask and two little glowing eyes, a
+// little hood with two points and tiny bells, a ruff of six puffs, a sack of violet velvet with a golden diamond in front, stick arms and
+// legs of honey wood with round joints, little ivory hands and pointed shoes, three golden strings (the head and the hands) going up 50 and
+// fading. idle, walk (hops as if pulled by the strings), attack (the arms go up on the strings, a little violet sphere between the hands,
+// thrown at .50), hit, spawn (out of the trapdoor on its string, from 22 under the floor to 6 over it, then down). o.p2: magenta eyes and
+// strings; o.noFx
+const PK={head:T3('#8e6ad0','#6a46a8','#22103e'),body:T3('#a47ae8','#6e42b8','#351a6e'),cri:T3('#c8384f','#8f1d35','#4a0b1d'),wood:T3('#f3c98a','#c4864a','#6f4224'),
+  ivory:T3('#fffaf0','#f1e4c8','#b9a383'),mask:'#24102a',gold:T3('#fff1a8','#ffcd45','#b17b12'),ruff:T3('#ffffff','#f3eeff','#c5b8e4'),shoe:T3('#6c4c8c','#3f2659','#1d102b'),
+  eye:'#ffd84a',eyeG:'255,216,74',str:'255,233,160'},PK2=Object.assign({},PK,{eye:'#ff5fc8',eyeG:'255,95,200',str:'255,154,224',body:T3('#8a5ccc','#55309a','#261050')});
+function puPose2(anim,p){const ph=p*TAU,A={z:0,lean:0,roll:0,hy:0,hr:0,sw:0,arm:[[2,4.6,6.4],[2,-4.6,6.4]],leg:[[0,2.4,.9],[0,-2.4,.9]],toe:[0,0],eg:1,shut:0,orb:-1,clip:false,str:1};
+  if(anim==='walk'){// one hop per cycle, pulled up by the strings: up 6, the legs kick and dangle, soft landing
+    const h=Math.sin(Math.PI*p);A.z=6*h*h*(3-2*h);A.lean=.12;A.roll=.06*Math.sin(ph);const kk=Math.sin(ph*2);A.leg=[[-1.5+3*kk,2.4,.9+2.2*h],[-1.5-3*kk,-2.4,.9+2.2*h]];A.toe=[.5*h,.5*h];
+    A.arm=[[3+1.5*Math.sin(ph),5.4,8.5+3*h],[3-1.5*Math.sin(ph),-5.4,8.5+3*h]];A.sw=.25*Math.sin(ph)}
+  else if(anim==='attack'){// .00-.45 the arms go up on the strings, the eyes light up, a little violet sphere grows between the hands; .50 thrown
+    const up=sstep(0,.45,p)*(1-sstep(.62,1,p)),th=sstep(.46,.52,p)*(1-sstep(.6,.8,p));A.arm=[lerp3([2,4.6,6.4],lerp3([3,3,22],[7,2.4,16],th),up),lerp3([2,-4.6,6.4],lerp3([3,-3,22],[7,-2.4,16],th),up)];
+    A.eg=1+.8*up;A.orb=p<.5?sstep(.08,.45,p):-1;A.lean=-.12*up+.3*th;A.z=1.5*up}
+  else if(anim==='hit'){const kb=hitK(p);A.lean=-.42*kb;A.hy=1.4*Math.sin(Math.PI*cl(p/.7,0,1));A.shut=p<.5?1:0;A.z=2*kb;A.arm=[[0,6,10+4*kb],[0,-6,10+4*kb]]}
+  else if(anim==='spawn'){// out of the trapdoor on its string: from 22 under the floor up to 6, then down to the floor; the legs kick, the strings taut
+    A.z=p<.55?lerp(-22,6,ez(p/.55)):lerp(6,0,ez((p-.55)/.45));A.clip=true;const kk=Math.sin(ph*3);A.leg=[[1+2.5*kk,2.6,1.2+2.5*(1-p)],[1-2.5*kk,-2.6,1.2+2.5*(1-p)]];A.arm=[[1,5,16],[1,-5,16]];
+    A.roll=.12*Math.sin(ph*2)*(1-p);if(p>.85){const s=Math.sin((p-.85)/.15*Math.PI);A.z-=.8*s}}
+  else{// idle: it swings on its strings, the feet barely touch, the head tilts, the arms hang
+    A.sw=1.5*Math.sin(ph);A.z=.5+.5*Math.sin(ph*2);A.hr=.18*Math.sin(ph+.6);A.hy=.25*Math.sin(ph-1);A.arm=[[2+.8*Math.sin(ph+.4),4.6,6.4],[2-.8*Math.sin(ph+.4),-4.6,6.4]]}
+  return A}
+function puppet2(x,y,face,anim,p,sc,o){sc=sc||1;o=o||{};anim=['idle','walk','attack','hit','spawn'].includes(anim)?anim:'idle';p=cl(+p||0,0,.9999);
+  const K=o.p2?PK2:PK,V0=V(face),{P,D,F}=V0,A=puPose2(anim,p),fx=fxOn(o),X=frame({B:[0,A.sw*.0,A.z],lean:A.lean,roll:A.roll},0);
+  const sw=A.sw,Tq=q=>add(X.T(q),[0,sw,0]);
+  if(A.z>-8)floor(V0,x,y,sc,[0,0,0],8.5,7,.3*(A.z<0?sstep(-8,0,A.z):1),Math.max(0,A.z));
+  ctx.save();ctx.translate(x,y);ctx.scale(sc,sc);
+  if(A.clip){const q=P(0,0,0);ctx.beginPath();ctx.rect(q[0]-60,q[1]-200,120,200+6);ctx.clip()}
+  const L=parts(),Hc=Tq([0,0,19.5]),HR=v=>X.Rd(rotZ(rotX(v,A.hr),A.hy+cheat(face,.25))),hips=[Tq([0,2,6.5]),Tq([0,-2,6.5])],sh=[Tq([0,4,13]),Tq([0,-4,13])];
+  // the strings from the head and the hands up into the dark
+  const hands=[0,1].map(i=>{const a=A.arm[i];return add(add(a,[0,sw,0]),[0,0,A.z])});
+  L.add(-40,()=>{for(const q3 of[add(Hc,HR([0,0,6.5])),hands[0],hands[1]]){const a=P(q3),b=P(add(q3,[0,0,50])),g=ctx.createLinearGradient(a[0],a[1],b[0],b[1]);g.addColorStop(0,`rgba(${K.str},.9)`);g.addColorStop(1,`rgba(${K.str},0)`);
+    ctx.strokeStyle='rgba(40,20,10,.35)';ctx.lineWidth=1.7;seg(a,[b[0],(a[1]+b[1])/2]);ctx.stroke();ctx.strokeStyle=g;ctx.lineWidth=.8;seg(a,b);ctx.stroke()}});
+  // the legs: two sticks with a round knee, the little pointed shoes
+  for(let i=0;i<2;i++){const sd=i?-1:1,hp=hips[i],f=add(add(A.leg[i],[0,0,A.z]),[0,sw*.6,0]),[kn,an]=ik(hp,f,3.6,3.6,X.Rd([1,0,.2]));
+    L.add(D(hp)-3,()=>{const a=P(hp),b=P(kn),c=P(an);ctx.lineCap='round';ctx.strokeStyle=INK;ctx.lineWidth=3.2+1.4;ctx.beginPath();ctx.moveTo(a[0],a[1]);ctx.lineTo(b[0],b[1]);ctx.lineTo(c[0],c[1]);ctx.stroke();
+      ctx.strokeStyle=K.wood.b;ctx.lineWidth=3.2;ctx.stroke();ball3(b,2,K.wood,1.3,.2);
+      const t=A.toe[i],fd=X.Rd([Math.cos(t),0,-Math.sin(t)]),s0=P(add(an,mul(fd,-1))),s1=P(add(add(an,mul(fd,4.2)),[0,0,.6]));ctx.strokeStyle=INK;ctx.lineWidth=4.6;seg(s0,s1);ctx.stroke();ctx.strokeStyle=K.shoe.b;ctx.lineWidth=3;ctx.stroke()})}
+  // the sack of velvet with its golden diamond
+  const bc=Tq([0,0,10]);L.add(D(bc),()=>{const sil=ellSil(V0,bc,[3.6,4.2,4.4],{u:X.Rd([1,0,0]),v:X.Rd([0,1,0]),w:X.Rd([0,0,1])},null,14),pa=smoothP(sil);ctx.fillStyle=grad3(bbox(sil),K.body);ctx.fill(pa);ctx.strokeStyle=INK;ctx.lineWidth=2;ctx.stroke(pa);rimP(sil,.25);
+    const n=X.Rd([1,0,0]),f=F(n);if(f>.1){const c=P(add(bc,mul(n,3.5))),kx=Math.pow(f,.7);ctx.beginPath();ctx.moveTo(c[0],c[1]-2.6);ctx.lineTo(c[0]+1.8*kx,c[1]);ctx.lineTo(c[0],c[1]+2.6);ctx.lineTo(c[0]-1.8*kx,c[1]);ctx.closePath();ctx.fillStyle=K.gold.b;ctx.fill();ctx.strokeStyle=INK;ctx.lineWidth=.8;ctx.stroke()}});
+  // the arms: little sticks from the shoulders, round elbows, ivory hands
+  for(let i=0;i<2;i++){const s=sh[i],h=hands[i],[el,wr]=ik(s,h,4.6,4.6,X.Rd([-.4,i?-1:1,-.4])),fs=F(X.Rd([0,i?-1:1,0]));
+    L.add(fs>-.2?D(bc)+1+D(s)*.001:D(bc)-1,()=>{const a=P(s),b=P(el),c=P(wr);ctx.lineCap='round';ctx.strokeStyle=INK;ctx.lineWidth=4.6;ctx.beginPath();ctx.moveTo(a[0],a[1]);ctx.lineTo(b[0],b[1]);ctx.lineTo(c[0],c[1]);ctx.stroke();
+      ctx.strokeStyle=K.wood.b;ctx.lineWidth=3.2;ctx.stroke();ball3(b,2,K.wood,1.3,.2);ball3(c,2.4,K.ivory,1.4,.25)})}
+  // the ruff: six white puffs
+  for(let i=0;i<6;i++){const t=i/6*TAU,c=Tq([Math.cos(t)*4.4,Math.sin(t)*4.4,13.6]);L.add(D(c)+.5,()=>ball3(P(c),2.1,K.ruff,1.2,.2))}
+  // the head: violet lacquered wood, the ivory face, the dark mask, two little eyes; the hood with two points and bells
+  L.add(D(Hc)+1,()=>{const q=P(Hc),r=6.5;ball3(q,r,K.head,2,.3);glowTop(q,r,.14);
+    const fn=HR([1,0,0]),fv=F(fn);if(fv>-.2){ctx.save();ball(q,r-.6);ctx.clip();const c=[q[0]+(P(add(Hc,fn))[0]-q[0])*r*.62,q[1]+(P(add(Hc,fn))[1]-q[1])*r*.62+.6],kx=Math.max(.2,Math.pow(Math.max(0,fv),.6));
+      ctx.fillStyle=K.ivory.b;ctx.beginPath();ctx.ellipse(c[0],c[1],4.3*kx,4.6,0,0,TAU);ctx.fill();ctx.fillStyle=K.mask;ctx.beginPath();ctx.ellipse(c[0],c[1]-.8,4.6*kx,1.7,0,0,TAU);ctx.fill();
+      for(const sd of[-1,1]){const e=[c[0]+sd*1.8*kx,c[1]-.8];if(A.shut){ctx.strokeStyle=K.eye;ctx.lineWidth=.9;seg([e[0]-1,e[1]],[e[0]+1,e[1]]);ctx.stroke()}
+        else{if(fx)glowL(K.eyeG,e,3.5*A.eg,.45);ctx.fillStyle=K.eye;ball(e,1.05*kx+.2);ctx.fill();ctx.fillStyle='#fff';ball([e[0]-.35,e[1]-.35],.35);ctx.fill()}}
+      ctx.strokeStyle='#6a1d44';ctx.lineWidth=.8;ctx.beginPath();ctx.moveTo(c[0]-1.6*kx,c[1]+2);ctx.quadraticCurveTo(c[0],c[1]+3,c[0]+1.6*kx,c[1]+2);ctx.stroke();ctx.restore()}
+    for(const sd of[1,-1]){const pts=[[-1,sd*2.5,5],[-2,sd*6,6.5],[-2,sd*8.5,3.5]].map(v=>add(Hc,HR(v))),T=sd>0?K.head:K.cri,P2=pts.map(v=>P(v)),bb=bbox(P2);bb[0]-=3;bb[1]-=3;bb[2]+=3;bb[3]+=3;
+      chain(V0,pts,[2.4,1.8,1.2],T.b,{lw:1.6,fill:grad3(bb,T),rim:.2});const b=P(add(pts[2],[0,0,-1.6]));ball3(b,1.3,K.gold,1,.2)}});
+  // the little violet sphere between the hands (attack)
+  if(A.orb>0){const c=lerp3(hands[0],hands[1],.5),q3=add(c,[0,0,2.5]);L.add(D(q3)+5,()=>C.orb(P(q3),1+2.6*A.orb,o.p2?'#c060e0':'#8a4ad8',{glow:o.p2?'255,95,200':'170,110,255',ga:.5*A.orb}))}
+  run(L);ctx.restore()}
+reg('puppet2',{n:"Burattino d'ombra",g:'boss3',sc:1,an:['idle','walk','attack','hit','spawn'],dur:{idle:1.8,walk:.5,attack:1,hit:.6,spawn:.8},
+  lab:{idle:'Fermo',walk:'Saltella',attack:'Attacca',hit:'Colpito',spawn:'Esce dalla botola'}},puppet2);
+
+reg('puppeteer2',{n:"Il Burattinaio d'Ombra",g:'boss',sc:1,p2:true,an:MV.slice(),dur:Object.assign({},DUR),lab:Object.assign({},LAB)},puppeteer2);
+{const OLD=N3.puppeteer,M0=N3.meta.puppeteer;if(OLD&&M0)N3.meta.puppeteer2.old=(x,y,f,a,pp)=>OLD(x,y,f,M0.an.includes(a)?a:'idle',pp,M0.sc||1,{})}
+{const OLD=N3.puppet,M0=N3.meta.puppet;if(OLD&&M0)N3.meta.puppet2.old=(x,y,f,a,pp)=>OLD(x,y,f,M0.an.includes(a)?a:'idle',pp,M0.sc||1,{})}
+})();
