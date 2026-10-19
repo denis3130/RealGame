@@ -464,3 +464,177 @@ Regole:
   - foglio: `cd tests && node foglio3d.js toad2 b2/toad2.png --file ../sprite/nemici3d/toad2.js`.
 - Immagini del collaudo: `tests/b2/toad2_collaudo_*.png` (entrata, lingua, tripla, tamburo, Frustata, Pioggia, rutto, Furia, sconfitta)
   e `tests/b2/toad2_correzioni_*.png`.
+
+## Lo Yeti delle Vette: «la Montagna che Respira»
+
+Nome e titolo restano: «Yeti delle Vette», «Il ruggito della valanga». Restano anche l'arena 4 (Picchi di Brina), la Tana coi quattro blocchi di ghiaccio, la musica yetiM e la frase della fase 2.
+
+È un gigante antichissimo delle vette, curvo ma in piedi, alto il triplo dell'eroe:
+- il pelo è blu ghiacciaio;
+- sopra porta un mantello di neve che gli copre gobba, spalle e cima della testa, come la neve in cima a un monte;
+- dalla gobba il vento strappa una bandiera di neve;
+- ha grandi corna scure da montone a spirale, con la brina sul bordo;
+- criniera, sopracciglia e barba sono d'argento, con un ghiacciolo in punta alla barba;
+- il muso è blu notte a cuore, con due occhi azzurro ghiaccio con la lucina e due zannette;
+- le braccia sono lunghissime, fino alle ginocchia; le mani sono scure, con quattro artigli di ghiaccio.
+
+Fa paura perché è una montagna che respira: sta fermo, ti fiuta, e prima di ogni colpo prende un respiro enorme. Resta della Classica: forme tonde, colori pieni, niente sangue né ferite. Ha anche i suoi momenti buffi: si scrolla come un cane, ansima con la lingua fuori, si batte le mani per togliersi la neve, ride «hoo-hoo-hoo».
+
+Misure (a sc 1):
+- la gobba innevata è il punto più alto (circa 115); la testa arriva a 100, le corna a 104;
+- è largo 108 con le mani;
+- in piedi (Pioggia, Ruggito) la testa arriva a 136;
+- nella fase 2 i cristalli delle corna arrivano a 120;
+- l'Arciere 3D è alto 37;
+- nel gioco: raggio 34, ombra scura 46×15.
+
+I colori:
+- il bianco sta solo in alto;
+- il corpo è più scuro e più saturo del pavimento quasi bianco della Tana;
+- il viso blu notte è la parte più scura, così gli occhi sono la prima cosa che si vede.
+
+Nella fase 2, «il gelo eterno»:
+- il pelo è gelato, a punte brinate;
+- il mantello diventa una crosta di ghiaccio, con crepe e spigoli;
+- i ghiaccioli sono lunghi il doppio;
+- ci sono sei cristalli blu su ogni corno;
+- gli artigli diventano lame e gli occhi diventano bianchi;
+- un filo di fiato esce sempre dalla bocca e una nebbia fredda gli sta ai piedi;
+- la bandiera diventa una piccola bufera.
+
+**Il suo avviso è il respiro.** Prima di ogni colpo prende fiato:
+- il pelo si gonfia e si rizza (fino all'8%, il 12% nel Soffio);
+- la bandiera si piega verso la bocca e i fiocchi della stanza gli corrono in bocca a spirale;
+- si accendono gli occhi e quattro brillii del mantello;
+- si sente il fiato che sale, con tre note di vetro (mi, sol, si).
+
+Il colpo parte con lo sbuffo «HAH!». Dopo il Soffio e il Ruggito resta senza fiato. Con LOWFX restano il pelo che si gonfia, gli occhi schiariti con un anello chiaro piatto e la gola accesa. La regola per un bambino: «Prende fiato: scappa. Ha il fiatone: colpiscilo.»
+
+### Mosse e abilità
+
+Ogni stato ha il nome di una mossa del modello, e il modello va con l'orologio del cervello: il colpo vero parte nel fotogramma del gesto. Regole:
+- mai due attacchi insieme: nessuna mossa nuova finché rotola una palla, cade un ghiacciolo, vola una mezzaluna o scende la valanga;
+- ogni danno ha un avviso a terra di almeno 0,6 s veri, anche nella fase 2 con l'arena 4 al massimo delle coppe;
+- tra una mossa e l'altra cammina 1,1–1,6 s, a 42 px/s; nella fase 2 ha il passo più lungo ed è un po' più svelto;
+- la camminata parte e finisce nella sua posa di riposo;
+- nella fase 2 tutto va 1,25 volte più veloce;
+- quando è in aria (sopra i 20 px) non si può colpire;
+- i danni sono quelli prima di `DMG()`.
+
+| Mossa | Cosa fa | Come si schiva |
+|---|---|---|
+| **Balzo del Gigante** (`leap` 2,4 s) | Si accuccia, raspa il ghiaccio e prende fiato; a .22 salta. Un cerchio rosso di raggio 54, con la sua ombra che cresce, ti insegue a 130 px/s; a .40 si blocca (lampo e clic). A .80 atterra a quattro zampe: 26 nel cerchio, 12 schegge di ghiaccio a raggiera (140 px/s, 10 ciascuna; 16 nella fase 2), brina che rallenta (raggio 56, 3 s), cratere | uscire dal cerchio dopo il blocco (0,96 s), poi passare tra le schegge, che sono lente |
+| **Pioggia di ghiaccioli** (`pound` 2,2 s) | Si raddrizza in tutta la sua altezza, braccia larghe in alto, e prende fiato. Tre dischi rossi sotto le mani: il sinistro (raggio 34, a .42) fa 20, il destro (34, a .56) 20, quello davanti (46, a .74) 24, con tutto il peso. A ogni schiaffo un ghiacciolo cade dove sei (disco di raggio 20, avviso 0,85 s, 14 danni); all'ultimo schiaffo ne cadono due, dove sei e dove stai andando. Nella fase 2 due anche al secondo, e a .86 la stalattite gigante sopra di te (raggio 40, avviso 1,1 s, 22 danni, poi 6 schegge) | stare lontano dalle mani e non fermarsi mai |
+| **La palla che cresce** (`snowball` 2 s) | Arrotola la neve e carica come un bocciatore. A .14 dalla mano destra parte una corsia rossa larga 56 (fino a 320 px o al primo blocco), che ti segue a 90° al secondo e a .40 si blocca. A .60 la palla parte rasoterra: nasce di raggio 14 a 130 px/s, cresce di 5 px al secondo fino a 30 e accelera fino a 145 px/s, sempre più piano di te; gira verso di te al massimo di 55° al secondo. Fa 20 e una spinta. Si rompe contro i blocchi e i muri, dopo 3,5 s si affloscia in brina, e due palle che si toccano scoppiano. Nella fase 2 una palla per mano, a V (.52 e .66) | uscire dalla corsia, poi farla sbattere contro un blocco o scappare |
+| **Soffio gelido** (`breath` 3 s) e **Senza fiato** (`gasp` 1,4 s) | Il grande respiro (.02–.42): un cono rosso di 60° e 270 px ti segue a 70° al secondo e a .12 si blocca. I blocchi di ghiaccio lo fermano, e dietro ognuno resta uno spicchio sicuro a righe azzurre. Da .42 a .80 soffia: il fronte corre a 520 px/s, fa 8 ogni 0,3 s (al massimo 3 volte), rallenta e spinge indietro; dopo lascia una scia di brina. Poi resta piegato con le mani sulle ginocchia: i colpi fanno +50% (la prima volta compare la scritta «Senza fiato!») | andare di lato, stare oltre i 270 px o dietro un blocco; poi colpirlo forte |
+| **Furia** (`rage` 3 s, a metà vita, mai in aria) | Nessun danno e non si può colpire. Si batte il petto quattro volte e la brina gli gela il pelo. Gli crescono i cristalli sulle corna e gli artigli gelano in lame con tre «crac». Poi ulula: «Lo Yeti scatena la valanga», le torce diventano blu e la bufera entra nella stanza (12 strisce di neve, 6 ferme con LOWFX) | — |
+| **Ruggito della valanga** (`roar` 3 s, fase 2), poi Senza fiato | Si batte il petto tre volte; a .30 ulula e il pavimento si divide in 6 corsie: 4 rosse a righe, con le frecce in cima allo schermo, e 2 libere, una vicino a te. A .70 dal muro in alto scendono i fronti di neve con due palle (alti 44, 260 px/s): 20 e una spinta in giù. La seconda ondata parte 1,4 s dopo, con le corsie libere spostate di una. Sotto un blocco, o sotto di lui, si è al riparo | entrare nella corsia libera vicina, poi spostarsi di una; oppure mettersi sotto un blocco |
+| **Balzi della bufera** (`bound` 1,3 s due volte, poi il Balzo; fase 2) | Due salti corti: ogni volta un cerchio rosso di raggio 44 fermo dove sei; atterra a .80: 18 danni e brina (raggio 30, 2 s). Poi il Balzo del Gigante con 16 schegge: «salto, salto, SALTO» | uscire dal cerchio ogni volta |
+| **Artigli di ghiaccio** (`claws` 1,9 s, fase 2) | Una banda rossa larga 80 dalla mano destra verso di te, che si riempie fino a .48; a .18 una seconda dalla mano sinistra verso dove sei, che si riempie fino a .66. Una mezzaluna di gelo larga 80 vola lungo ogni banda a 300 px/s: 16 ciascuna. Si rompe contro un blocco e lascia 4 solchi | un passo fuori da ogni banda, due volte a tempo, oppure lo scatto |
+| **Soffio che spazza** (fase 2) | Come il Soffio, ma il cono è di 40° e 300 px. A .12 si fissa una spazzata di 110° verso il lato con più spazio: il primo spicchio è pieno e una freccia dice il verso. Da .42 a .80 il cono gira e lui gira col corpo. Poi Senza fiato | stare dalla parte dove finisce, oppure dietro un blocco |
+| **Presa in giro** (`taunt` 1,2 s) | Quando ti colpisce: «vieni qui» col braccio dalla tua parte (scelto all'inizio della mossa), palmo in su, chiude due volte gli artigli; poi ride «hoo-hoo-hoo» | colpirlo |
+
+- Contatto: 25, col raggio 34. Vita: 4.700 × arena, come oggi.
+- Ordine delle mosse:
+  - fase 1: Balzo, Pioggia, Palla, Soffio con Senza fiato, poi da capo; si comincia col Balzo, perché all'inizio è lontano;
+  - fase 2, dopo la Furia: Ruggito con Senza fiato, Balzi della bufera, Artigli, Pioggia con la stalattite, Soffio che spazza con Senza fiato, Palla doppia, poi da capo.
+- L'arena reagisce:
+  - orme a tre dita che svaniscono in 8 s;
+  - ai balzi crateri, brina, blocchi che tremano e ghiaccioli finti dal soffitto;
+  - crepe sotto le mani;
+  - la scia di neve della palla;
+  - ventaglio di brina e torce blu al Soffio;
+  - i solchi degli artigli;
+  - nella fase 2 la bufera, che si ferma alla sconfitta e resta se cadi e rinasci.
+
+**Entrata** (`enter`, 3,4 s, «la valanga lo porta»):
+- un fronte di neve scivola da dietro, con le palle che escono dalla neve e ci rientrano, e si ammucchia in un cumulo largo 80 e alto 42;
+- il cumulo respira;
+- nella neve si aprono due occhi azzurri, nel punto dove sono davvero i suoi, e spuntano le punte delle corna;
+- il cumulo si gonfia e si crepa, e in cima si apre un cratere;
+- ne escono prima le corna, poi la testa (gli occhi della neve diventano i suoi) e le spalle;
+- il cumulo si spacca in zolle che rotolano via;
+- si scrolla come un cane, con la neve che vola;
+- fa il grande respiro, così insegna subito il suo avviso;
+- ruggisce in avanti con l'eco della montagna.
+
+**Sconfitta** (`die`, 4 s, «torna neve», momento clou a 2,2 s):
+- barcolla e gli occhi tremolano piano;
+- cade su un ginocchio, il vento si ferma e l'ultimo fiato vola via;
+- la brina sale dai piedi e il pelo diventa vetro azzurro, con crepe bianche che gli corrono su;
+- a 2,2 s va in frantumi: otto grandi pezzi di ghiaccio (4 con LOWFX; nella fase 2 cadono anche le lame) e la neve scoppia;
+- resta un cumulo basso con le due corna in cima, come una piccola vetta;
+- tutto sfuma.
+
+**Voce** (`B3VO`): una gola profonda e cava da gorilla, più alta del Golem.
+- La firma è l'eco della montagna: dopo il grido, la rabbia, l'ululato, la sconfitta e la risata quando cadi, lo stesso verso torna due volte, più piano e più scuro.
+- «HOOOAARRGH» nell'entrata.
+- «hoo-hoo-hoo» quando ti colpisce; «hrrrm… hoo?» se stai lontano; «uhnn» se lo colpisci forte.
+- Un verso per ogni mossa, il fiato risucchiato con le tre note di vetro, lo sbuffo «HAH» a ogni colpo, i pugni sul petto.
+- Un lamento nel vento quando cade; «hoo-hoo-hoo-HOOO» col tamburo del petto se cadi tu.
+- Mai un verso sopra l'altro.
+
+### Come è nato (16–19 ottobre)
+
+- **Design** (16 ottobre): scelto dal direttore artistico fra tre proposte (`docs/boss-classici-design/yeti.md`). La base è «re»; dal «ghiacciaio» viene il pelo a due toni, dalla «tormenta» la gobba con la bandiera e il «vieni qui».
+- **Critica** (16 ottobre): due critici, uno su direzioni e pittura, uno su animazioni e gioco.
+- **Prima correzione** (lo stesso giorno):
+  - testa senza il filo scuro;
+  - corna staccate dalle spalle;
+  - luce calda come filo;
+  - braccia pelose col bordo freddo;
+  - mani e polsi che non saltano più;
+  - una posa di riposo per fase;
+  - occhi più grandi e avviso visibile anche con LOWFX.
+- **Rifinitura e collaudo** (19 ottobre):
+  - entrata rifatta: il cumulo che si gonfia, il cratere, gli occhi nella neve che diventano i suoi;
+  - braccia e radici delle corna che non saltano più girandolo;
+  - gomito morbido a braccio teso;
+  - radice del Soffio lungo il corpo e vento morbido nel gioco;
+  - crosta della fase 2 a crepe;
+  - pezzi della sconfitta più grandi e lame;
+  - tremolii sotto gli 8 Hz;
+  - orme sotto il piede e passo che non scivola;
+  - niente fantasma della fase 2 nella Furia;
+  - braccio della Presa in giro scelto una volta sola;
+  - bufera che resta se cadi;
+  - il cervello non usa più e.em (il gioco tagliava il modello alla linea del pavimento: cumulo, occhi e dita) ma e.fa;
+  - disegno alleggerito.
+
+### Misure
+
+- **Disegno.** Con `foglio3d.js` (tutte le mosse, fase 1) la mediana è 1,4 ms (90% sotto 2,3). Sulla stessa macchina, nella stessa ora, il Golem fa 1,3 ms; la macchina era carica, con altri agenti al lavoro.
+- Alternandoli nella stessa prova:
+
+| | Fase 1 | Fase 2 |
+|---|---|---|
+| Yeti | 1,4 ms | 1,5–1,6 ms |
+| Golem | 1,1–1,2 ms | 1,1 ms |
+| Yeti prima della rifinitura | 1,6 ms | 1,9 ms |
+
+- La stanza intera con lo Yeti, nel gioco: 2,8–3,5 ms (il Golem fa 3,2).
+- **Difficoltà** (arena 4, eroe fermo che tira, livello 4, il caso peggiore, 3 prove):
+  - Yeti di oggi: 65,6–68,1 vite a combattimento, 26,7–27,0 al minuto;
+  - nuovo: 63,6–67,8 vite, 26,2–26,3 al minuto, in 146–155 s di lotta;
+  - in media −2%.
+- Con l'eroe fermo il boss gli sta addosso e quasi tutto il danno viene dal contatto (25).
+- Contando solo gli attacchi (prova a parte, col contatto tolto): oggi 7,9 vite al minuto, nuovo 5,2.
+- Ogni colpo ha il suo avviso, quindi chi si muove ne prende molti meno. Da regolare giocando. Se la fase 2 pesa troppo si toglie prima il secondo Balzo corto, poi gli Artigli.
+- **Giunti:** nessun salto (prova a 1/2000 di p, tutte le mosse, due fasi); polso–spalla mai sotto 20 px; le corna non entrano mai nelle spalle.
+- **Giro:** girato a passi di 0,2–0,3°, niente salta.
+
+### File e prove
+
+- **Modello:** `sprite/nemici3d/yeti2.js` (modello `yeti2`; nel gioco prende il nome `yeti`). Esporta anche i disegni per il gioco, con lo stesso aspetto: `N3.yetiIcicle` (ghiacciolo e stalattite), `N3.yetiBall`, `N3.yetiShard`, `N3.yetiCrescent`, anche coi nomi `yeti2…`. Il disegno di oggi resta come `N3.meta.yeti2.old`.
+- **Cervello:** `src/js/89-yeti-nuovo.js`. Contiene `Y2`, `EUPD.yeti`, i pericoli in `G.y2`, l'entrata, la sconfitta, la voce e `BCL.yeti`. Si accende solo se c'è `N3.yeti2`.
+- **Modello finto:** `anteprime/boss2/yeti_stub.js`.
+- **Prove:**
+  - `python3 anteprime/mk_boss2.py yeti --test && node tests/boss2gioco.js yeti` (tutto OK, ERR []);
+  - `node tests/boss2diff.js yeti`;
+  - `node tests/anteprime.js yeti2_test.html` (la miniatura e lo sblocco dell'arena 4 stanno nel riquadro; lo Yeti riempie la stanza);
+  - foglio: `cd tests && node foglio3d.js yeti2 b2/yeti2.png --file ../sprite/nemici3d/yeti2.js`.
+- **Immagini:**
+  - `tests/b2/yeti2.png` (il foglio);
+  - `tests/b2/yeti2_16dir.png` (16 direzioni e la fase 2);
+  - `tests/b2/yeti2_entrata_modello.png`;
+  - il collaudo nella stanza vera, mossa per mossa nei momenti dei colpi: `tests/b2/yeti2_collaudo_entrata.png`, `tests/b2/yeti2_collaudo_fase1.png`, `tests/b2/yeti2_collaudo_fase2.png`.

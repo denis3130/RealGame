@@ -350,11 +350,17 @@ function y2front(W,t){const w=(R-L)/6,y=W.y,br=Math.min(24,w*.25+6),e=y2boss(),p
       heap(s0+2,s1-2,10,20,s0*.1+2,'#ffffff','#eef5fc','#cfdeee');
       if(!LOWFX){ctx.fillStyle='rgba(255,255,255,.4)';const n=Math.max(2,Math.round((s1-s0)/16));for(let j=0;j<n;j++){const q=(t*2.2+j*.37)%1;circ(s0+(s1-s0)*(j+.5)/n+Math.sin(j*3+t*5)*4,y-62-q*24,3+q*5);ctx.fill()}}}}}
 // in the air: the wind of the breath, the fronts of the avalanche and their arrows, the balls, the crescents, the icicles
-function y2wind(C,t){const R0=y2rays(C,C.cur,C.half,C.front),lift=d=>73*Math.max(0,1-d/150);ctx.save();ctx.globalCompositeOperation='lighter';
-  const g=ctx.createRadialGradient(C.x,C.y-40,8,C.x,C.y,Math.max(30,C.front+20));g.addColorStop(0,'rgba(235,248,255,.55)');g.addColorStop(.6,'rgba(170,215,255,.28)');g.addColorStop(1,'rgba(150,200,255,0)');
-  ctx.fillStyle=g;ctx.beginPath();ctx.moveTo(C.x,C.y-73);for(const[an,d] of R0)ctx.lineTo(C.x+Math.cos(an)*d,C.y+Math.sin(an)*d-lift(d));ctx.closePath();ctx.fill();
+// the wind of the breath: frosty, soft at the sides (three fans narrower and brighter inward, not a white beam), streaks of wind and
+// flakes running out along it; it rises to his mouth near him
+function y2wind(C,t){const lift=d=>73*Math.max(0,1-d/150),fan=(half,a0,a1,a2)=>{const R0=y2rays(C,C.cur,half,C.front);const g=ctx.createRadialGradient(C.x,C.y-40,8,C.x,C.y,Math.max(30,C.front+20));
+    g.addColorStop(0,`rgba(240,250,255,${a0})`);g.addColorStop(.55,`rgba(200,228,255,${a1})`);g.addColorStop(1,`rgba(170,210,250,${a2})`);ctx.fillStyle=g;ctx.beginPath();ctx.moveTo(C.x,C.y-73);
+    for(const[an,d] of R0)ctx.lineTo(C.x+Math.cos(an)*d,C.y+Math.sin(an)*d-lift(d));ctx.closePath();ctx.fill()};
+  ctx.save();fan(C.half,.26,.16,0);fan(C.half*.72,.24,.16,0);fan(C.half*.42,.3,.2,0);
+  if(!LOWFX){ctx.lineCap='round';for(let i=0;i<7;i++){const an=C.cur+(((i*.43)%1)-.5)*1.7*C.half,re=Math.min(C.front,y2reach(C.x,C.y,an,C.len)),u=(t*1.4+i*.31)%1,d0=re*u*.7,d1=Math.min(re,d0+50);if(d1-d0<8)continue;
+      ctx.strokeStyle=`rgba(255,255,255,${(.5*Math.sin(Math.PI*u)).toFixed(3)})`;ctx.lineWidth=1.6;ctx.beginPath();ctx.moveTo(C.x+Math.cos(an)*d0,C.y+Math.sin(an)*d0-lift(d0));ctx.lineTo(C.x+Math.cos(an)*d1,C.y+Math.sin(an)*d1-lift(d1));ctx.stroke()}}
   const N=LOWFX?8:20;for(let i=0;i<N;i++){const h=(i*.618)%1,u=(t*1.7+h)%1,an=C.cur+(((i*.37)%1)-.5)*2*C.half*.9,dd=u*C.front;if(dd>y2reach(C.x,C.y,an,C.len))continue;
-    ctx.fillStyle=`rgba(255,255,255,${(.8*(1-u)).toFixed(3)})`;circ(C.x+Math.cos(an)*dd,C.y+Math.sin(an)*dd-lift(dd),1.4+u*1.6);ctx.fill()}
+    ctx.fillStyle=`rgba(255,255,255,${(.85*(1-u)).toFixed(3)})`;circ(C.x+Math.cos(an)*dd,C.y+Math.sin(an)*dd-lift(dd),1.4+u*1.6);ctx.fill();
+    ctx.strokeStyle=`rgba(70,110,170,${(.35*(1-u)).toFixed(3)})`;ctx.lineWidth=.8;ctx.stroke()}
   ctx.restore()}
 function y2iceDraw(c){const f0=c.dur-c.fall;if(!c.land&&c.t<f0)return;const H=c.big?380:320,u=c.land?1:(c.t-f0)/c.fall,z=c.land?0:H*(1-u*u),A=y2art('Icicle');
   if(A){try{A(c.x,c.y,z,1,{big:c.big,p2:c.p2,shatter:c.land?Math.min(1,c.sh):0,seed:c.seed});return}catch(err){}}

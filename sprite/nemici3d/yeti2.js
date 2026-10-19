@@ -55,7 +55,7 @@ function capDir(n,al,alv,uh,t,k){n=nrm(n);let u=sub(uh,mul(n,dot(uh,n)));if(len(
 // how a ball (centre c0, radius r) sticks out of an ellipsoid: null clear, false inside, else the cap; and the drawing cut there (golem2.js)
 function outCap(X,Cc,Rd,Fr,c0,r,k){const R2=mul(Rd,k),d=sub(c0,Cc),u=[dot(d,Fr.u)/R2[0],dot(d,Fr.v)/R2[1],dot(d,Fr.w)/R2[2]],l=len(u);if(l<1e-4)return false;
   const m=mul(u,1/l),n=ellN(R2,Fr,m),h=dot(sub(c0,ellAt(Cc,R2,Fr,m)),n);if(h>=r)return null;if(h<=-r)return false;return{n:X.Rd(n),al:Math.acos(cl(-h/r,-1,1))}}
-function capPts(V0,q,Rr,n,al){n=nrm(n);let u=cross(n,[0,0,1]);if(len(u)<.2)u=cross(n,[0,1,0]);u=nrm(u);const v=cross(n,u),ca=Math.cos(al),sa=Math.sin(al),N=36,b=[],f=[];
+function capPts(V0,q,Rr,n,al){n=nrm(n);let u=cross(n,[0,0,1]);if(len(u)<.2)u=cross(n,[0,1,0]);u=nrm(u);const v=cross(n,u),ca=Math.cos(al),sa=Math.sin(al),N=22,b=[],f=[];
   for(let i=0;i<N;i++){const t=i/N*TAU,m=add(mul(n,ca),add(mul(u,Math.cos(t)*sa),mul(v,Math.sin(t)*sa)));b.push(m);f.push(V0.F(m))}
   const nv=f.filter(x=>x>=0).length;if(!nv)return false;if(nv===N){const pts=b.map(m=>sp(V0,q,Rr,m));return{pts,rim:pts,full:true}}
   let s0=0;for(let i=0;i<N;i++)if(f[i]<0&&f[(i+1)%N]>=0){s0=(i+1)%N;break}
@@ -112,6 +112,13 @@ function shadeL(pts,rs,colD,al){for(let i=0;i<pts.length-1;i++){const A=pts[i],B
     let nx=-dy,ny=dx;const k=cl(Math.abs(nx+ny)/.35,0,1);if(k<.02)continue;if(nx+ny>0){nx=-nx;ny=-ny}
     ctx.save();C.hull(A,ra,B,rb);ctx.clip();ctx.globalAlpha*=k;ctx.lineCap='round';ctx.strokeStyle=colD;ctx.lineWidth=(ra+rb)*.44;seg([A[0]-nx*ra*.66,A[1]-ny*ra*.66],[B[0]-nx*rb*.66,B[1]-ny*rb*.66]);ctx.stroke();
     ctx.strokeStyle=`rgba(255,238,205,${(al*.55).toFixed(3)})`;ctx.lineWidth=Math.max(.5,(ra+rb)*.14);seg([A[0]+nx*ra*.52,A[1]+ny*ra*.52],[B[0]+nx*rb*.52,B[1]+ny*rb*.52]);ctx.stroke();ctx.restore()}}
+// the same over a chain already drawn as one path (the horns): one clip for all its pieces
+function shadeLc(pts,rs,colD,al,clip){ctx.save();ctx.clip(clip);ctx.lineCap='round';const a0=ctx.globalAlpha;
+  for(let i=0;i<pts.length-1;i++){const A=pts[i],B=pts[i+1],ra=rs[i],rb=rs[i+1];let dx=B[0]-A[0],dy=B[1]-A[1];const l=Math.hypot(dx,dy);if(l<.4)continue;dx/=l;dy/=l;
+    let nx=-dy,ny=dx;const k=cl(Math.abs(nx+ny)/.35,0,1);if(k<.02)continue;if(nx+ny>0){nx=-nx;ny=-ny}ctx.globalAlpha=a0*k;
+    ctx.strokeStyle=colD;ctx.lineWidth=(ra+rb)*.44;seg([A[0]-nx*ra*.66,A[1]-ny*ra*.66],[B[0]-nx*rb*.66,B[1]-ny*rb*.66]);ctx.stroke();
+    ctx.strokeStyle=`rgba(255,238,205,${(al*.55).toFixed(3)})`;ctx.lineWidth=Math.max(.5,(ra+rb)*.14);seg([A[0]+nx*ra*.52,A[1]+ny*ra*.52],[B[0]+nx*rb*.52,B[1]+ny*rb*.52]);ctx.stroke()}
+  ctx.restore()}
 // the shaggy outline of a limb (screen capsule a,ra .. b,rb): tufts all along both sides, hanging and going with the wind, sizes that
 // vary (fixed per tuft); s0 a seed. They stay at their place along the limb as it turns
 const FURV=[1,.78,1.12,.86,1.05,.72,.95,1.18,.82,1];
@@ -215,11 +222,11 @@ let SEED=7;const rnd=()=>{SEED=(SEED*9301+49297)%233280;return SEED/233280};
 // the tufts of the outline of the torso: tied to directions of each volume (computed once), drawn only near the outline, so the shaggy edge
 // never crawls as it turns. Left out: buried in another volume, under the snow of the hump, on the bare skin of the chest
 const VOL=[[BC,BR],[CC,CR3],[UC,UR]],TUF=[[],[],[]];
-{const D=fib(72),MU=nrm(sub([0,0,1],mul(MN,MN[2]))),MVv=cross(MN,MU);
+{const D=fib(60),MU=nrm(sub([0,0,1],mul(MN,MN[2]))),MVv=cross(MN,MU);
   VOL.forEach(([C0,R],i)=>{for(const m of D){const q=ellAt(C0,R,null,m);let bur=false;VOL.forEach(([C1,R1],j)=>{if(j!==i&&inE(q,C1,R1,.96))bur=true});if(bur)continue;
     if(i===2){const a=Math.acos(cl(dot(m,MN),-1,1)),t=Math.atan2(dot(m,MVv),dot(m,MU)),lim=rfM(t)/Math.hypot(Math.cos(t)/MAL,Math.sin(t)/MALV);if(a<lim*.98)continue}
     if(i===1&&Math.acos(cl(dot(m,SKN),-1,1))<.55)continue;
-    const low=cl(-m[2],0,1);TUF[i].push({m,L:(9+3.5*rnd())*(1+.2*low*(i===0?0:1)),w:5+1.8*rnd(),b:(rnd()-.5)*3,ph:rnd()*TAU})}})}
+    const low=cl(-m[2],0,1);TUF[i].push({m,n0:ellN(R,null,m),L:(9+3.5*rnd())*(1+.2*low*(i===0?0:1)),w:5+1.8*rnd(),b:(rnd()-.5)*3,ph:rnd()*TAU})}})}
 // the locks of the fur: V marks hanging down, on the front, the sides and the back: [volume, direction, size]
 const CURL=[[0,[.72,.48,-.34],1],[0,[.62,-.5,-.12],.9],[0,[.35,.85,.0],.9],[0,[.3,-.88,-.12],.9],[0,[-.3,.85,-.2],.9],[0,[-.2,-.9,.06],.85],[0,[-.85,.3,-.2],1],
   [1,[.5,.8,-.15],1],[1,[.42,-.84,-.32],.9],[1,[.1,.95,.15],.9],[1,[.16,-.95,.02],.85],
@@ -232,7 +239,7 @@ const BICE=[[.45,.6,-.66],[.45,-.6,-.66],[-.15,.8,-.58],[-.15,-.8,-.58]].map(nrm
 const MICE=[[-1.42,4.5],[-1.27,7.5],[-1.07,4],[-.07,9],[.08,12.5],[.25,5.5],[1.03,7.5],[1.22,4.5]].map(([t,l])=>({t:Math.PI+t,l,m:capDir(MN,MAL,MALV,[0,0,1],Math.PI+t,rfM(Math.PI+t)*.97)}));
 // the dots and the two folds of the snow: directions on the mantle cap
 const MDOT=[[.4,.35],[1.2,.6],[2.2,.5],[2.9,.75],[3.5,.4],[4.2,.65],[5.1,.5],[5.8,.3],[3.14,.15],[.8,.8],[5.4,.82]].map(([t,k])=>capDir(MN,MAL,MALV,[0,0,1],t,k*rfM(t)));
-const MFOLD=[[[2.2,.3],[2.5,.56],[2.72,.86]],[[4.08,.3],[3.78,.56],[3.56,.86]]].map(f=>f.map(([t,k])=>capDir(MN,MAL,MALV,[0,0,1],t,k*rfM(t))));
+const MFOLD=[[[1.85,.32],[2.45,.58],[2.95,.86]],[[4.45,.32],[3.85,.58],[3.35,.86]]].map(f=>f.map(([t,k])=>capDir(MN,MAL,MALV,[0,0,1],t,k*rfM(t))));
 const MSPK=[[.3,.45],[2.4,.62],[3.4,.6],[5.2,.55]].map(([t,k])=>capDir(MN,MAL,MALV,[0,0,1],t,k*rfM(t)));
 // four long locks of the fur of the back hanging out from under the edge of the mantle: [t round the cap, length, width]
 const MLOCK=[[Math.PI-.5,17,4.6],[Math.PI+.42,19,5],[Math.PI-1.45,13,4],[Math.PI+1.5,14,4.2]].map(([t,L,w])=>({m:capDir(MN,MAL,MALV,[0,0,1],t,rfM(t)*1.02),L,w}));
@@ -501,16 +508,16 @@ function torsoDraw(V0,X,XU,A,K,J){const{P,F}=V0,inf=A.infl,vs=[{C:BC,R:mul(BR,1+
   const pts=[];for(const v of vs)for(const q of ellSil(V0,v.C,v.R,null,v.T.T,16))pts.push(q);const H=hullE(pts,.08);if(H.length<3)return;const hp=smoothP(H);J.thull=H;J.tpath=hp;
   // the tufts: they grow as their root comes to the outline; they hang, open out with the breath, go with the wind; one shaggy shape with
   // the body (one outline round all), the clumps that overlap outside the body parted by a deep blue line
+  // (the cold rim of the moon on the upper left of the outline and the warm thread of the torches of the Den on the lower left: light
+  // strokes under the fill, so only their outer half shows on the dark outline; each only over the tufts its fading light reaches)
+  const bb=bbox(H),bw=bb[2]-bb[0],bh=bb[3]-bb[1],RIM=[[bb[0],bb[1]+bh*.25,bb[0]+bw*.4,bb[1]+bh*.45,.75,'225,240,255'],[bb[0],bb[3]-bh*.05,bb[0]+bw*.42,bb[1]+bh*.5,.8,'255,170,100']].map(r=>{const dx=r[2]-r[0],dy=r[3]-r[1];return{r,dx,dy,l2:dx*dx+dy*dy||1,pa:new Path2D()}});
   const tp=new Path2D(),W=J.W,hang=lerp(.5,.16,A.k2),Lk=(1+.35*A.inh+A.fluff)*lerp(1,1.22,A.k2),wk=lerp(1,.7,A.k2),op=.45*A.inh+A.fluff,wv=A.windK*(LOWFX?0:1);
-  for(let i=0;i<3;i++){const v=vs[i];for(const t of TUF[i]){const n=v.T.Rd(ellN(v.R,null,t.m)),f=F(n),af=Math.abs(f);if(af>.42)continue;const k=1-sstep(.1,.42,af);if(k<.05)continue;
+  for(let i=0;i<3;i++){const v=vs[i];for(const t of TUF[i]){const n=v.T.Rd(t.n0),f=F(n),af=Math.abs(f);if(af>.42)continue;const k=1-sstep(.1,.42,af);if(k<.05)continue;
     const s=v.T.T(ellAt(v.C,v.R,null,t.m)),gust=.16+.12*Math.sin(A.wph*TAU+t.ph);
-    const d=nrm(add(add(mul(n,1-hang+op),[0,0,-hang*(1-op*.6)]),mul(W,gust*wv*(1-A.k2*.6))));
-    tuft(tp,P(add(s,mul(n,-2.8))),P(add(s,mul(d,t.L*k*Lk))),t.w*k*wk,t.b*(1-.6*A.k2))}}
-  const bb=bbox(H);ctx.lineJoin='round';ctx.lineCap='round';ctx.strokeStyle=INK;ctx.lineWidth=5;ctx.stroke(hp);ctx.lineWidth=3.4;ctx.stroke(tp);
-  // the cold rim of the moon on the upper left of the outline, the warm thread of the torches of the Den on the lower left: light strokes
-  // under the fill, so only their outer half shows, on the dark outline
-  {const w=bb[2]-bb[0],h=bb[3]-bb[1];for(const[x0,y0,x1,y1,al,rgb] of[[bb[0],bb[1]+h*.25,bb[0]+w*.4,bb[1]+h*.45,.75,'225,240,255'],[bb[0],bb[3]-h*.05,bb[0]+w*.42,bb[1]+h*.5,.8,'255,170,100']]){
-    const g=ctx.createLinearGradient(x0,y0,x1,y1);g.addColorStop(0,`rgba(${rgb},${al})`);g.addColorStop(1,`rgba(${rgb},0)`);ctx.strokeStyle=g;ctx.lineWidth=2.8;ctx.stroke(hp);ctx.lineWidth=2.2;ctx.stroke(tp)}}
+    const d=nrm(add(add(mul(n,1-hang+op),[0,0,-hang*(1-op*.6)]),mul(W,gust*wv*(1-A.k2*.6)))),qa=P(add(s,mul(n,-2.8))),qt=P(add(s,mul(d,t.L*k*Lk))),tw=t.w*k*wk,tb=t.b*(1-.6*A.k2);
+    tuft(tp,qa,qt,tw,tb);for(const R of RIM)if(((qa[0]-R.r[0])*R.dx+(qa[1]-R.r[1])*R.dy)/R.l2<1.05)tuft(R.pa,qa,qt,tw,tb)}}
+  ctx.lineJoin='round';ctx.lineCap='round';ctx.strokeStyle=INK;ctx.lineWidth=5;ctx.stroke(hp);ctx.lineWidth=3.4;ctx.stroke(tp);
+  for(const R of RIM){const[x0,y0,x1,y1,al,rgb]=R.r,g=ctx.createLinearGradient(x0,y0,x1,y1);g.addColorStop(0,`rgba(${rgb},${al})`);g.addColorStop(1,`rgba(${rgb},0)`);ctx.strokeStyle=g;ctx.lineWidth=2.8;ctx.stroke(hp);ctx.lineWidth=2.2;ctx.stroke(R.pa)}
   const g=furGrad(bb,K.fur);ctx.fillStyle=g;ctx.fill(hp);ctx.fill(tp);
   {ctx.save();const out=new Path2D();out.rect(-1e4,-1e4,2e4,2e4);out.addPath(hp);ctx.clip(out,'evenodd');ctx.globalAlpha*=.8;ctx.strokeStyle=K.gap;ctx.lineWidth=1.2;ctx.stroke(tp);
     if(A.k2>.02){ctx.globalAlpha=A.k2;ctx.strokeStyle=K.tip;ctx.lineWidth=.9;ctx.stroke(tp)}ctx.restore()}
@@ -518,11 +525,11 @@ function torsoDraw(V0,X,XU,A,K,J){const{P,F}=V0,inf=A.infl,vs=[{C:BC,R:mul(BR,1+
   {const gr=ctx.createLinearGradient(0,bb[1]+(bb[3]-bb[1])*.5,0,bb[3]+8);gr.addColorStop(0,'rgba(14,18,48,0)');gr.addColorStop(1,'rgba(14,18,48,.45)');ctx.fillStyle=gr;ctx.fill(hp);ctx.fill(tp)}
   ctx.save();ctx.clip(hp);
   // the bare night-blue skin of the chest (a ragged edge where the fur grows over it)
-  {const r=ellCap(V0,XU,CC,mul(CR3,1+inf),AXES,SKN,SKA,28,{alv:SKAV,u:[0,0,1],ck:'skin',rf:t=>1+.1*Math.sin(t*7+.5)});
+  {const r=ellCap(V0,XU,CC,mul(CR3,1+inf),AXES,SKN,SKA,22,{alv:SKAV,u:[0,0,1],ck:'skin',rf:t=>1+.1*Math.sin(t*7+.5)});
     if(r){const b2=bbox(r.pts);ctx.fillStyle=grad3(b2,K.skin);ctx.fill();ctx.strokeStyle=K.gap;ctx.lineWidth=1.2;ctx.stroke()}}
   // the curls of the fur
   // (soft «u» curls, like locks hanging: never a «V»)
-  ctx.lineCap='round';ctx.lineJoin='round';for(const c of CURL){const v=vs[c.i],n=v.T.Rd(ellN(v.R,null,c.m)),f=F(n);if(f<.16)continue;const s=v.T.T(ellAt(v.C,v.R,null,c.m)),[u,w]=frm(n,[0,0,1]),k=c.k*3.4,
+  ctx.lineCap='round';ctx.lineJoin='round';for(const c of CURL){const v=vs[c.i],n=v.T.Rd(c.n0||(c.n0=ellN(VOL[c.i][1],null,c.m))),f=F(n);if(f<.16)continue;const s=v.T.T(ellAt(v.C,v.R,null,c.m)),[u,w]=frm(n,[0,0,1]),k=c.k*3.4,
       hk=c.h,a=P(add(s,add(mul(w,k*hk),mul(u,k*.6)))),b=P(add(s,add(mul(u,-k*1.15),mul(w,-k*.15*hk)))),e=P(add(s,add(mul(w,-k*.75*hk),mul(u,-k*.2)))),li=lit(V0,n)>.6;
     ctx.globalAlpha=cl((f-.16)*4,0,1)*(li?.7:.8);ctx.strokeStyle=li?K.curlL:K.curlD;ctx.lineWidth=1.5;ctx.beginPath();ctx.moveTo(a[0],a[1]);ctx.quadraticCurveTo(b[0],b[1],e[0],e[1]);ctx.stroke()}ctx.globalAlpha=1;
   ctx.restore();
@@ -533,17 +540,17 @@ function torsoDraw(V0,X,XU,A,K,J){const{P,F}=V0,inf=A.infl,vs=[{C:BC,R:mul(BR,1+
     if(any){union([pl],furGrad(bb,K.fur),2.4);ctx.save();ctx.clip(pl);ctx.strokeStyle=K.curlD;ctx.globalAlpha=.55;ctx.lineWidth=1.1;ctx.stroke(pl);ctx.restore()}}
   if(A.k2>.05)for(const m of BICE){const v=vs[0],n=X.Rd(ellN(v.R,null,m)),f=F(n);if(f<-.1)continue;const q3=X.T(ellAt(v.C,v.R,null,m));ga(cl((f+.1)*5,0,1)*sstep(.05,.4,A.k2),()=>icicle(V0,add(q3,[0,0,-1]),9*A.k2,2.2,K.ice))}
   mantleDraw(V0,XU,A,K,J)}
-function mantleDraw(V0,XU,A,K,J){const{P,F}=V0,R2=add(mul(UR,1+A.infl),[2.4,2.4,2.4]),r=ellCap(V0,XU,UC,R2,AXES,MN,MAL,44,{alv:MALV,u:[0,0,1],ck:'mt',rf:rfM});if(!r)return;
+function mantleDraw(V0,XU,A,K,J){const{P,F}=V0,R2=add(mul(UR,1+A.infl),[2.4,2.4,2.4]),r=ellCap(V0,XU,UC,R2,AXES,MN,MAL,36,{alv:MALV,u:[0,0,1],ck:'mt',rf:rfM});if(!r)return;
   const bb=bbox(r.pts);ctx.fillStyle=grad3(bb,K.snow);ctx.fill();ctx.lineJoin='round';ctx.lineCap='round';snowEdge(r);
   // the dots of the snow, its two folds, the band of light of the crust (second phase)
   ctx.save();ctx.beginPath();for(const q of r.pts)ctx.lineTo(q[0],q[1]);ctx.closePath();ctx.clip();
   const kb=K.band;
   if(kb<.98)ga(1-kb,()=>{ctx.fillStyle=K.dots;ctx.beginPath();for(const m of MDOT){const n=XU.Rd(ellN(R2,AXES,m));if(F(n)<.2)continue;const q=P(XU.T(ellAt(UC,R2,AXES,m)));ctx.moveTo(q[0]+1.3,q[1]);ctx.arc(q[0],q[1],1.3,0,TAU)}ctx.fill()});
   // (the crust of ice of the second phase: short cracks and the edges of a few facets where the snow had its dots)
-  if(kb>.02)ga(kb,()=>{ctx.lineCap='round';ctx.lineJoin='round';for(let i=0;i<MDOT.length;i++){const m=MDOT[i],n=XU.Rd(ellN(R2,AXES,m));if(F(n)<.2)continue;const c=XU.T(ellAt(UC,R2,AXES,m)),[u,v]=frm(n,[0,0,1]);
-    if(i%3===2){const a=P(add(c,add(mul(u,4.5),mul(v,-3.5)))),b=P(add(c,add(mul(u,-3.5),mul(v,4.5))));ctx.strokeStyle='rgba(40,90,150,.6)';ctx.lineWidth=1.4;seg(a,b);ctx.stroke();
-      ctx.strokeStyle='rgba(255,255,255,.9)';ctx.lineWidth=1;seg([a[0]+1.2,a[1]-1],[b[0]+1.2,b[1]-1]);ctx.stroke()}
-    else{const pts=[[0,0],[2.4,1.5],[3.6,-.7],[6,.5]].map(([x0,y0])=>P(add(c,add(mul(v,x0-3),mul(u,y0)))));ctx.strokeStyle='rgba(40,90,150,.62)';ctx.lineWidth=1.15;ctx.beginPath();for(const w of pts)ctx.lineTo(w[0],w[1]);ctx.stroke()}}});
+  if(kb>.02)ga(kb,()=>{const ck=new Path2D(),ed=new Path2D(),el=new Path2D();for(let i=0;i<MDOT.length;i++){const m=MDOT[i],n=XU.Rd(ellN(R2,AXES,m));if(F(n)<.2)continue;const c=XU.T(ellAt(UC,R2,AXES,m)),[u,v]=frm(n,[0,0,1]);
+      if(i%3===2){const a=P(add(c,add(mul(u,4.5),mul(v,-3.5)))),b=P(add(c,add(mul(u,-3.5),mul(v,4.5))));ed.moveTo(a[0],a[1]);ed.lineTo(b[0],b[1]);el.moveTo(a[0]+1.2,a[1]-1);el.lineTo(b[0]+1.2,b[1]-1)}
+      else{const pts=[[0,0],[2.4,1.5],[3.6,-.7],[6,.5]].map(([x0,y0])=>P(add(c,add(mul(v,x0-3),mul(u,y0)))));ck.moveTo(pts[0][0],pts[0][1]);for(let j=1;j<4;j++)ck.lineTo(pts[j][0],pts[j][1])}}
+    ctx.lineCap='round';ctx.lineJoin='round';ctx.strokeStyle='rgba(40,90,150,.62)';ctx.lineWidth=1.15;ctx.stroke(ck);ctx.lineWidth=1.4;ctx.strokeStyle='rgba(40,90,150,.6)';ctx.stroke(ed);ctx.strokeStyle='rgba(255,255,255,.9)';ctx.lineWidth=1;ctx.stroke(el)});
   ctx.lineCap='round';for(const f of MFOLD){const S=[];for(const m of f){const n=XU.Rd(ellN(R2,AXES,m));if(F(n)<.1)continue;S.push(P(XU.T(ellAt(UC,R2,AXES,m))))}
     if(S.length>1)for(const[dy,col,lw] of[[1.1,K.fold,1.6],[-.6,'rgba(255,255,255,.9)',1.2]]){ctx.strokeStyle=col;ctx.lineWidth=lw;ctx.beginPath();ctx.moveTo(S[0][0],S[0][1]+dy);if(S.length>2)ctx.quadraticCurveTo(S[1][0],S[1][1]+dy,S[2][0],S[2][1]+dy);else ctx.lineTo(S[1][0],S[1][1]+dy);ctx.stroke()}}
   // (the band of light of the crust: a bright stroke and a thin one under it)
@@ -612,12 +619,13 @@ function shoulderDraw(V0,XU,A,K,sd,J){const{P,F}=V0,c=XU.T([DLT[0],sd*DLT[1],DLT
     tuft(pa,P(add(s,mul(rd,-2.5))),P(add(s,mul(d,8*(1-Math.abs(f)*.8)*(1+.3*A.inh)))),3.2,1)}
   union([pb,pa],grad3([q[0]-r,q[1]-r,q[0]+r,q[1]+r],Kf),2.8,1.6);
   // the snow lying on top, toward the back (thin, a wavy edge, two little icicles)
-  const R2=[r+1.4,r+1.4,r+1.4],XS={T:q3=>add(c,XU.Rd(q3)),Rd:XU.Rd},sn=[-.4,sd*.28,1],sr=ellCap(V0,XS,[0,0,0],R2,AXES,sn,.74,24,{alv:.86,u:[1,0,0],ck:'sh'+sd,rf:t=>1+.12*Math.sin(5*t+sd)});
+  const R2=[r+1.4,r+1.4,r+1.4],XS={T:q3=>add(c,XU.Rd(q3)),Rd:XU.Rd},sn=[-.4,sd*.28,1],sr=ellCap(V0,XS,[0,0,0],R2,AXES,sn,.74,18,{alv:.86,u:[1,0,0],ck:'sh'+sd,rf:t=>1+.12*Math.sin(5*t+sd)});
   if(sr){ctx.fillStyle=grad3(bbox(sr.pts),K.snow);ctx.fill();ctx.lineJoin='round';ctx.lineCap='round';snowEdge(sr,2.4)}
   for(const t of[2.2,3.6]){const m=capDir(sn,.74,.86,[1,0,0],t,.97*(1+.12*Math.sin(5*t+sd))),n=XU.Rd(m),f=F(n);if(f<-.15)continue;ga(cl((f+.15)*5,0,1),()=>icicle(V0,add(c,XU.Rd(mul(m,r+1.2))),lerp(4,8,A.k2),1.8,K.ice))}}
-function upperArmDraw(V0,g,A,K,J){const{P,F}=V0,a=P(g.S),b=P(g.El),pb=new Path2D(),pa=new Path2D();capsP(pb,a,9.6,b,9);limbFur(pa,a,9.6,b,9,4,8.5,g.sd>0?0:3,A,J.Wsc);
-  const fk=sstep(0,-.25,F(sub(g.El,J.bodyC||g.S))),Kf=fk>0?mixT(K.fur,T3(K.fur.b,K.fur.d,K.fur.d),.3*fk):K.fur;
-  union([pb,pa],limbGrad(a,b,10,Kf),2.8,1.6);shadeL([a,b],[8,7.5],'rgba(14,18,48,.22)',.12);limbCurls(a,9.6,b,9,[[.42,-.3],[.7,.35]],K);rims(capsPts(a,9.6,b,9),.5,.2)}
+function upperArmDraw(V0,g,A,K,J){const{P,F}=V0;let c=g._ua;
+  if(!c){const a=P(g.S),b=P(g.El),pb=new Path2D(),pa=new Path2D();capsP(pb,a,9.6,b,9);limbFur(pa,a,9.6,b,9,4,8.5,g.sd>0?0:3,A,J.Wsc);
+    const fk=sstep(0,-.25,F(sub(g.El,J.bodyC||g.S))),Kf=fk>0?mixT(K.fur,T3(K.fur.b,K.fur.d,K.fur.d),.3*fk):K.fur;c=g._ua={a,b,pb,pa,Kf,rp:capsPts(a,9.6,b,9)}}
+  union([c.pb,c.pa],limbGrad(c.a,c.b,10,c.Kf),2.8,1.6);shadeL([c.a,c.b],[8,7.5],'rgba(14,18,48,.22)',.12);limbCurls(c.a,9.6,c.b,9,[[.42,-.3],[.7,.35]],K);rims(c.rp,.5,.2)}
 function forearmPath(V0,g,A,J){const{P,F}=V0,a=P(g.El),b=P(g.W),pb=new Path2D(),pa=new Path2D();capsP(pb,a,10.2,b,8.4);const ax=g.fa,W=J.W;limbFur(pa,a,10.2,b,8.4,4,8,g.sd>0?2:7,A,J.Wsc);
   // the fringe: three tongues hanging from the outer back of the forearm, a little icicle at each tip
   let ob=sub(J.XU.Rd([-.45,g.sd,-.2]),mul(ax,dot(J.XU.Rd([-.45,g.sd,-.2]),ax)));ob=len(ob)<.2?cross(ax,[0,0,1]):nrm(ob);const tips=[];
@@ -627,7 +635,7 @@ function forearmPath(V0,g,A,J){const{P,F}=V0,a=P(g.El),b=P(g.W),pb=new Path2D(),
   const[u,v]=frm(ax,[0,0,1]);for(let i=0;i<5;i++){const t=i/5*TAU+.4,rd=add(mul(u,Math.cos(t)),mul(v,Math.sin(t))),f=F(rd);if(Math.abs(f)>.7)continue;const s=add(lerp3(g.El,g.W,.88),mul(rd,8)),d=nrm(add(mul(rd,.5),mul(ax,.9)));
     tuft(pa,P(add(s,mul(rd,-2.5))),P(add(s,mul(d,6.5))),3,i%2?.8:-.8)}
   return{pb,pa,tips,a,b}}
-function forearmDraw(V0,g,A,K,J){const{P,F}=V0,fp=forearmPath(V0,g,A,J),fk=sstep(0,-.25,F(XUside(J,g.sd))),Kf=fk>0?mixT(K.fur,T3(K.fur.b,K.fur.d,K.fur.d),.3*fk):K.fur;
+function forearmDraw(V0,g,A,K,J){const{P,F}=V0,fp=g._fa||(g._fa=forearmPath(V0,g,A,J)),fk=sstep(0,-.25,F(XUside(J,g.sd))),Kf=fk>0?mixT(K.fur,T3(K.fur.b,K.fur.d,K.fur.d),.3*fk):K.fur;
   union([fp.pb,fp.pa],limbGrad(fp.a,fp.b,11,Kf),2.8,1.6);shadeL([fp.a,fp.b],[8.6,7],'rgba(14,18,48,.22)',.12);limbCurls(fp.a,10.2,fp.b,8.4,[[.3,-.35],[.55,.3],[.78,-.2]],K);rims(capsPts(fp.a,10.2,fp.b,8.4),.5,.2);
   for(const e of fp.tips)icicle(V0,add(e,[0,0,1.5]),lerp(3.5,7,A.k2),1.5,K.ice)}
 const XUside=(J,sd)=>J.XU.Rd([0,sd,0]);
@@ -649,7 +657,7 @@ function handDraw(V0,g,A,K,J){const{P,F}=V0,fd=g.fd,pn=g.pn,sv=nrm(cross(fd,pn))
   rims(pts,.35,0);
   if(cf)clawDraw();
   // the light of the blades of the second phase; the light that runs along them from the knuckles to the tips before a slash
-  if(bl>.3&&!LOWFX)for(const c of claws){const q=P(c.e);shine(BLADERGB,q[0],q[1],6,.35*bl)}
+  if(bl>.3&&!LOWFX){let x=0,y=0;for(const c of claws){const q=P(c.e);x+=q[0]/4;y+=q[1]/4}shine(BLADERGB,x,y,11,.32*bl)}
   if(lt>.01){ctx.save();ctx.lineCap='round';for(const c of claws){const qa=P(c.b),qe=P(c.e),u=Math.min(1,lt*1.15),q=[lerp(qa[0],qe[0],u),lerp(qa[1],qe[1],u)];
     ctx.strokeStyle='#ffffff';ctx.lineWidth=1.4;ctx.beginPath();ctx.moveTo(qa[0],qa[1]);ctx.lineTo(q[0],q[1]);ctx.stroke();if(!LOWFX)shine(BLADERGB,q[0],q[1],7,.6);star4(q,2.6,1)}ctx.restore()}}
 
@@ -671,9 +679,9 @@ function headDraw(V0,Hc,HR,A,K,J,oc){
   const cp=oc?capPts(V0,h,17.6,mul(oc.n,-1),Math.PI-oc.al):null;
   add2(0,()=>{if(cp){ctx.save();ctx.beginPath();ctx.rect(-1e4,-1e4,2e4,2e4);ctx.moveTo(cp.pts[0][0],cp.pts[0][1]);for(const w of cp.pts)ctx.lineTo(w[0],w[1]);ctx.closePath();ctx.clip('evenodd')}
     const sk=ellSil(V0,[0,0,0],HRD,null,T,16);ctx.lineJoin='round';poly(sk);ctx.fillStyle=grad3(bbox(sk),K.fur);ctx.fill();ctx.strokeStyle=INK;ctx.lineWidth=2.8;ctx.stroke();
-    const R2=add(HRD,[1.6,1.6,1.6]),sr=ellCap(V0,{T,Rd:HR},[0,0,0],R2,AXES,HSN,.62,26,{alv:.82,u:[1,0,0],ck:'hs',rf:rfH});
+    const R2=add(HRD,[1.6,1.6,1.6]),sr=ellCap(V0,{T,Rd:HR},[0,0,0],R2,AXES,HSN,.62,20,{alv:.82,u:[1,0,0],ck:'hs',rf:rfH});
     if(sr){ctx.fillStyle=grad3(bbox(sr.pts),K.snow);ctx.fill();ctx.lineJoin='round';ctx.lineCap='round';snowEdge(sr,2.4)}
-    const mk=ellCap(V0,{T,Rd:HR},[0,0,0],add(HRD,[.2,.2,.2]),AXES,MSK,.92,30,{alv:1.02,u:[0,0,1],ck:'mk',rf:rfK});
+    const mk=ellCap(V0,{T,Rd:HR},[0,0,0],add(HRD,[.2,.2,.2]),AXES,MSK,.92,24,{alv:1.02,u:[0,0,1],ck:'mk',rf:rfK});
     if(mk){ctx.fillStyle=grad3(bbox(mk.pts),K.skin);ctx.fill();ctx.strokeStyle=INK;ctx.lineWidth=1.6;ctx.stroke()}
     rims(sk,.45,.25);if(cp)ctx.restore()});
   // the eyes: almond, icy blue, a light centre and a point of light, a soft glow that breathes; the far one slides in and narrows
@@ -698,9 +706,11 @@ function headDraw(V0,Hc,HR,A,K,J,oc){
 // a horn, or a piece of it (segments i0..i1-1: the root out of the skull, the spiral round the ear), all its pieces in the same light
 function hornDraw(V0,T,HR,A,K,sd,i0,i1){const{P,F}=V0,pts=HORN.map(q=>T([q[0],sd*q[1],q[2]])),S=pts.map(P),n=S.length;i0=i0||0;i1=i1==null?n-1:i1;
   // the outline round the piece, then the fill, the rings, the frost on its top edge
-  ctx.lineCap='round';ctx.lineJoin='round';ctx.fillStyle=INK;for(let i=i0;i<i1;i++){C.hull(S[i],HORNR[i]+1.4,S[i+1],HORNR[i+1]+1.4);ctx.fill()}
-  const bb=bbox(S);bb[0]-=6;bb[1]-=6;bb[2]+=6;bb[3]+=6;ctx.fillStyle=grad3(bb,K.horn);for(let i=i0;i<i1;i++){C.hull(S[i],HORNR[i]-1.2,S[i+1],HORNR[i+1]-1.2);ctx.fill()}
-  shadeL(S.slice(i0,i1+1),HORNR.slice(i0,i1+1).map(r=>r-1),'rgba(20,18,40,.3)',.14);
+  // (one path for the outline and one for the fill, the shading inside the fill in one clip: the horns are drawn four times a frame)
+  const po=new Path2D(),pf=new Path2D();for(let i=i0;i<i1;i++){capsP(po,S[i],HORNR[i]+1.4,S[i+1],HORNR[i+1]+1.4);capsP(pf,S[i],HORNR[i]-1.2,S[i+1],HORNR[i+1]-1.2)}
+  ctx.lineCap='round';ctx.lineJoin='round';ctx.fillStyle=INK;ctx.fill(po);
+  const bb=bbox(S);bb[0]-=6;bb[1]-=6;bb[2]+=6;bb[3]+=6;ctx.fillStyle=grad3(bb,K.horn);ctx.fill(pf);
+  shadeLc(S.slice(i0,i1+1),HORNR.slice(i0,i1+1).map(r=>r-1),'rgba(20,18,40,.3)',.14,pf);
   // the rings in relief across the horn: one path for the dark grooves, one for the light ridges (one where two pieces meet)
   {const gr=new Path2D(),rd=new Path2D();for(const[i,k] of[[0,.55],[1,.3],[1,1],[2,.45],[3,.3],[3,.85]]){if(i<i0||i>=i1)continue;const a=lerp3(pts[i],pts[i+1],k),ax=nrm(sub(pts[i+1],pts[i])),[u,v]=frm(ax,[0,0,1]),r=lerp(HORNR[i],HORNR[i+1],k)-1.1;
       const e=sub(V0.P(add(a,u)),V0.P(a)),side=Math.abs(e[0])+Math.abs(e[1])>.4?u:v,q0=P(add(a,mul(side,r))),q1=P(add(a,mul(side,-r))),qc=P(add(a,mul(ax,1.6))),qd=P(add(a,mul(ax,-1.2)));
@@ -711,10 +721,20 @@ function hornDraw(V0,T,HR,A,K,sd,i0,i1){const{P,F}=V0,pts=HORN.map(q=>T([q[0],sd
   if(i1===n-1)glowTop(S[n-1],2,.4);
   // the crystals of the second phase, growing along the spiral from the root to the tip
   if(A.crys>0)crystals(V0,T,A,sd,pts,i0,i1)}
-function crystals(V0,T,A,sd,pts,i0,i1){const{P,F}=V0;for(let j=0;j<HCRY.length;j++){const[i,k,s]=HCRY[j],g=cl((A.crys-j/HCRY.length*.75)/.25,0,1);if(g<=0||i<i0||i>=i1)continue;
-  const a=lerp3(pts[i],pts[i+1],k),ax=nrm(sub(pts[i+1],pts[i])),out=nrm(sub(a,T([0,0,0]))),d=nrm(add(mul(out,1),mul(ax,.25))),L=(9+8*s)*ez(g),w=3.2*s*ez(g),[u,v]=frm(d,ax),b=add(a,mul(d,lerp(HORNR[i],HORNR[i+1],k)*.6));
-  const tip=add(b,mul(d,L)),FS=[];for(let q=0;q<4;q++){const t0=q/4*TAU+.4,t1=(q+1)/4*TAU+.4,c0=add(b,add(mul(u,Math.cos(t0)*w),mul(v,Math.sin(t0)*w))),c1=add(b,add(mul(u,Math.cos(t1)*w),mul(v,Math.sin(t1)*w)));FS.push([c0,c1,tip])}
-  facets(V0,FS,CRY,{lw:1.4});if(!LOWFX){const q=P(add(b,mul(d,L*.55)));shine(CRYRGB,q[0],q[1],5+3*s,.3*g*(A.cpulse!=null?.7+.6*A.cpulse:1))}}}
+// (the crystals of a piece of horn as two-tone spikes on the screen, batched: the side toward the light of the moon light, the other dark,
+// the contrast fading where the spike lies along the light so the lit side never jumps; one outline; one soft light on the big one)
+const CRQ=[0,1,2,3].map(i=>{const k=i/3;return[cmix(CRY.b,CRY.l,k),cmix(CRY.b,CRY.d,k)]});
+function crystals(V0,T,A,sd,pts,i0,i1){const{P}=V0,hc=T([0,0,0]),LP=[],DP=[];let OL=null,big=null;
+  const tri3=(pa,a,b,c)=>{pa.moveTo(a[0],a[1]);pa.lineTo(b[0],b[1]);pa.lineTo(c[0],c[1]);pa.closePath()};
+  for(let j=0;j<HCRY.length;j++){const[i,k,s]=HCRY[j],g=cl((A.crys-j/HCRY.length*.75)/.25,0,1);if(g<=0||i<i0||i>=i1)continue;
+    const a=lerp3(pts[i],pts[i+1],k),ax=nrm(sub(pts[i+1],pts[i])),out=nrm(sub(a,hc)),d=nrm(add(out,mul(ax,.25))),L=(9+8*s)*ez(g),w=3.4*s*ez(g),b=add(a,mul(d,lerp(HORNR[i],HORNR[i+1],k)*.6));
+    const qb=P(b),qt=P(add(b,mul(d,L))),dx=qt[0]-qb[0],dy=qt[1]-qb[1],l=Math.hypot(dx,dy),ux=l>.5?dx/l:0,uy=l>.5?dy/l:-1,nx=-uy,ny=ux,tp=l>w*.8?qt:[qb[0]+ux*w*.8,qb[1]+uy*w*.8];
+    const c1=[qb[0]+nx*w,qb[1]+ny*w],c2=[qb[0]-nx*w,qb[1]-ny*w],bk=[qb[0]-ux*w*.45,qb[1]-uy*w*.45],lv=-(nx+ny)*.7,q=Math.min(3,Math.round(cl(Math.abs(lv)/.3,0,1)*3));
+    if(!OL)OL=new Path2D();if(!LP[q]){LP[q]=new Path2D();DP[q]=new Path2D()}
+    if(lv>=0){tri3(LP[q],tp,c1,bk);tri3(DP[q],tp,c2,bk)}else{tri3(LP[q],tp,c2,bk);tri3(DP[q],tp,c1,bk)}
+    OL.moveTo(tp[0],tp[1]);OL.lineTo(c1[0],c1[1]);OL.lineTo(bk[0],bk[1]);OL.lineTo(c2[0],c2[1]);OL.closePath();if(j===2)big={qb,qt,g}}
+  if(!OL)return;ctx.lineJoin='round';for(let q=0;q<4;q++){if(!LP[q])continue;ctx.fillStyle=CRQ[q][0];ctx.fill(LP[q]);ctx.fillStyle=CRQ[q][1];ctx.fill(DP[q])}ctx.strokeStyle=INK;ctx.lineWidth=1.4;ctx.stroke(OL);
+  if(big&&!LOWFX)shine(CRYRGB,lerp(big.qb[0],big.qt[0],.55),lerp(big.qb[1],big.qt[1],.55),12,.4*big.g*(A.cpulse!=null?.7+.6*A.cpulse:1))}
 function eyesDraw(V0,T,HR,A,K0,h,at,J){let K=K0;const{P}=V0,inh=A.inh,big=1+.15*inh,rx0=4.6*big,ry0=3.5*big,E=[-1,1].map(sd=>{const r=at([EYED[0],sd*EYED[1],EYED[2]]);return{sd,v:r.v,q:r.q,rx:rx0*Math.pow(Math.max(0,r.v),.7)}}).filter(e=>e.v>.08).sort((a,b)=>b.v-a.v);
   if(E.length)E[0].q=inward(h,16,E[0].q,.62,.78);if(E.length>1){const n=E[0],f=E[1];f.q=inward(h,16,f.q,.52,.7);const gap=Math.hypot(f.q[0]-n.q[0],f.q[1]-n.q[1])-n.rx-1;f.rx=Math.min(f.rx,Math.max(0,gap))}
   // (taking a breath the eyes open wide and light up: the squint gives way)
