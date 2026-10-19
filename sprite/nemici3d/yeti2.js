@@ -1024,7 +1024,10 @@ function fxDraw(V0,X,XU,L,e,A,J,Hc,HR,K){const{P,D}=V0,t=e.t,br=K.breath,mouth=J
   else if(e.k==='hah'||e.k==='pant'||e.k==='cloud'){const big=e.k==='cloud'?1.6:e.k==='pant'?.55:e.small?.75:1.15;L.add(D(mouth)+40,()=>{for(let i=0;i<5;i++){const u=cl(t*1.25-i*.06,0,1);if(u<=0||u>=1)continue;
       const q=P(add(add(mouth,mul(fwd,(4+u*20)*big)),add(mul(J.W,u*8),[0,0,(i-2)*1.6*big+u*4])));cloud(q,(2+u*6)*big,.62*(1-u)*Math.min(1,u*5),br)}})}
   else if(e.k==='snow'){const c=e.at;L.add(D(c)+25,()=>{const n=e.n||6,r=e.r||10;for(let i=0;i<n;i++){const a=i/n*TAU+.5,d=r*(.35+t*.9),q=P(add(c,[Math.cos(a)*d,Math.sin(a)*d,t*10+(i%2)*3]));cloud(q,2.2+t*4.5,.6*(1-t),'240,248,255')}})}
-  else if(e.k==='ring'){L.add(e.spray?D([0,0,40])+80:-800,()=>{const r=(e.small?14:22)+t*(e.small?36:58),pts=[];if(e.spray){for(let i=0;i<18;i++){const a=i/18*TAU,q=P([Math.cos(a)*(30+t*40),Math.sin(a)*(30+t*40),60-t*30+(i%3)*6]);ctx.fillStyle=`rgba(240,250,255,${.8*(1-t)})`;ball(q,1.6);ctx.fill()}return}
+  else if(e.k==='ring'){L.add(e.spray?D([0,0,40])+80:-800,()=>{const r=(e.small?14:22)+t*(e.small?36:58),pts=[];if(e.spray){// the snow he shakes off flies out of his fur: soft flakes (a blue shade under each), out past his outline
+        for(let i=0;i<18;i++){const a=i/18*TAU+.3*Math.sin(i*2.1),d=36+46*t+(i%4)*3,q=P([Math.cos(a)*d,Math.sin(a)*d,74-44*t+(i%3)*9]),r=.9+2.2*(1-t),an=i+t*5;
+          ctx.fillStyle=`rgba(80,112,175,${(.3*(1-t)).toFixed(3)})`;ctx.beginPath();ctx.ellipse(q[0]+.4,q[1]+.8,r*1.2,r*.75,an,0,TAU);ctx.fill();
+          ctx.fillStyle=`rgba(250,253,255,${(.9*(1-t)).toFixed(3)})`;ctx.beginPath();ctx.ellipse(q[0],q[1],r*1.2,r*.75,an,0,TAU);ctx.fill()}return}
       for(let i=0;i<28;i++){const a=i/28*TAU;pts.push(P([A.B[0]+Math.cos(a)*r,A.B[1]+Math.sin(a)*r,0]))}ctx.strokeStyle=`rgba(240,248,255,${.7*(1-t)})`;ctx.lineWidth=4*(1-t)+1;poly(pts);ctx.stroke();
       for(let i=0;i<10;i++){const a=i/10*TAU+.3,q=P([Math.cos(a)*r,Math.sin(a)*r,2+4*t]);cloud(q,2.5+t*4,.5*(1-t),'240,248,255')}})}
   else if(e.k==='crack'){L.add(-900,()=>{const k=sstep(0,.25,t),al=1-sstep(.7,1,t);ctx.save();ctx.globalAlpha*=al;ctx.lineCap='round';
