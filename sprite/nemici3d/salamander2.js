@@ -1004,16 +1004,23 @@ function fxDraw(V0,L,e,A,K,info){const{P,D}=V0,t=e.t,hd=info&&info.hd,S=info&&in
   else if(e.k==='dsteam'&&S){L.add(998,()=>{const f0=1-t,fi=sstep(0,.08,t);for(let i=0;i<4;i++){const f=(f0*(NS-2)+1)+i*.6,u=(t*5+i*.3)%1;if(f>NS-1)continue;const s=surf(S,Math.min(NS-1.01,f),Math.PI/2,1),q=P(add(s.p,[0,0,u*18]));ctx.fillStyle=`rgba(${K.steam},${.5*(1-u)*fi})`;ball(q,2+u*4);ctx.fill()}})}
   else if(e.k==='flameout'&&hd&&!A.crownOff){L.add(D(hd.c)+70,()=>{for(const c of CROWN){const tk=(t*.3-CRL.indexOf(c.k)*.025-.02)/.14;if(tk<=0||tk>=1)continue;const q=P(hd.T(c.tip));
     for(let i=0;i<3;i++){const qq=[q[0]+Math.sin(i*2.1+c.k)*3*tk,q[1]-tk*12-i*2.5];ctx.fillStyle=`rgba(${K.steam},${.55*(1-tk)})`;ball(qq,1.6+tk*3.5);ctx.fill()}}})}
-  else if(e.k==='crownfall'&&hd){L.add(D(hd.c)+80,()=>crownFallDraw(V0,hd,A,K,t))}
-  else if(e.k==='firefly'){L.add(1e4,()=>{const c0=[34,24,10],path=u=>{if(u<.2)return lerp3([-10,0,24],[30,20,40],ez(u/.2));if(u<.7){const a=(u-.2)/.5*TAU*1.2;return[34+Math.cos(a)*10,22+Math.sin(a)*10,40+4*Math.sin(a*2)]}return lerp3([44,22,40],[52,30,0],ez((u-.7)/.3))},q=P(path(t));
+  else if(e.k==='crownfall'&&hd){const cf=crownFallAt(V0,hd,t);if(cf)L.add(D(cf.c)+6,()=>crownFallDraw(V0,A,K,cf))}
+  else if(e.k==='firefly'){L.add(1e4,()=>{const X0=CREST[0]-10,Y0=CREST[1]-4,path=u=>{if(u<.2)return lerp3([-10,0,24],[X0-4,Y0-2,40],ez(u/.2));if(u<.7){const a=(u-.2)/.5*TAU*1.2;return[X0+Math.cos(a)*10,Y0+Math.sin(a)*10,40+4*Math.sin(a*2)]}return lerp3([X0+10,Y0,40],[X0+18,Y0+8,0],ez((u-.7)/.3))},q=P(path(t));
     if(t<.85){if(!LOWFX)shine('255,190,90',q[0],q[1],7,.7);ctx.fillStyle='#fff3c4';ball(q,1.5);ctx.fill()}
-    else{const k=1-sstep(.9,1,t),a=P(46,26,0),b=P(52,30,0),c=P(60,30,0);ctx.strokeStyle=`rgba(255,170,70,${k})`;ctx.lineWidth=1.8;ctx.beginPath();ctx.moveTo(a[0],a[1]);ctx.lineTo(b[0],b[1]);ctx.lineTo(c[0],c[1]);ctx.stroke();if(!LOWFX)shine('255,140,50',b[0],b[1],10,.6*k)}})}
+    else{const k=1-sstep(.9,1,t),a=P(X0+12,Y0+4,0),b=P(X0+18,Y0+8,0),c=P(X0+26,Y0+8,0);ctx.strokeStyle=`rgba(255,170,70,${k})`;ctx.lineWidth=1.8;ctx.beginPath();ctx.moveTo(a[0],a[1]);ctx.lineTo(b[0],b[1]);ctx.lineTo(c[0],c[1]);ctx.stroke();if(!LOWFX)shine('255,140,50',b[0],b[1],10,.6*k)}})}
   else if(e.k==='smokecurl'){L.add(1e4-1,()=>{for(let i=0;i<5;i++){const u=(t+i*.2)%1,q=P(-20+Math.sin(u*6+i)*5,0,20+u*36);ctx.fillStyle=`rgba(${K.smoke},${.35*Math.sin(u*Math.PI)*(1-t*.5)})`;ball(q,2.6+u*6);ctx.fill()}})}}
-// the crown coming off the cooling skull (the climax of the defeat): it slides off (.55), falls, bounces and rolls on the floor (.575) and
-// lies there by the heap, a last glint on its middle point (.93, before the end: the game keeps the last picture). t from .52 of the move
-function crownFallDraw(V0,hd,A,K,t){const p=.52+t*.48;if(p<.55)return;const{P}=V0,u=cl((p-.55)/.025,0,1),r2=cl((p-.575)/.1,0,1),c0=hd.T([CRB,0,8]),end=[44,26,4];
-  let c,rot;if(p<.575){c=lerp3(c0,[lerp(c0[0],end[0],.7),lerp(c0[1],end[1],.7),Math.max(6,c0[2]*(1-u*u))],ez(u));rot=1.4*u}else{const b=Math.abs(Math.sin(Math.PI*2*r2))*(1-r2)*6;c=lerp3([lerp(c0[0],end[0],.7),lerp(c0[1],end[1],.7),6],end,ez(r2));c=[c[0],c[1],c[2]+b];rot=1.4+.3*Math.sin(r2*9)*(1-r2)}
-  const R=v=>rotZ(rotY(rotX(v,rot),-.2),.6),T=d=>add(c,R(sub(d,[CRB,0,8]))),fake={T,R,c,F:{u:R([1,0,0]),v:R([0,1,0]),w:R([0,0,1])}};
+// the crown coming off the cooling skull (the climax of the defeat): it slides off (.55), falls, bounces on the floor (.575), spins and
+// wobbles to rest beside her muzzle almost upright, a little on one side (lying flat on its side it read as a black claw under her chin:
+// upright and turned toward the camera it is her crown at once, from every side); a last glint on its middle point (.93, before the end: the game keeps the last
+// picture). It is drawn at its own depth (in the views from behind it stays behind the head). t from .52 of the move
+const CREST=[54,40,4];
+function crownFallAt(V0,hd,t){const p=.52+t*.48;if(p<.55)return null;const u=cl((p-.55)/.025,0,1),r2=cl((p-.575)/.1,0,1),c0=hd.T([CRB,0,8]),end=CREST,mid=[lerp(c0[0],end[0],.7),lerp(c0[1],end[1],.7),6];
+  const o=V0.P([0,0,0]),yw=Math.atan2(V0.P([0,1,0])[1]-o[1],V0.P([1,0,0])[1]-o[1])+.35;
+  let c,tilt,yaw;if(p<.575){c=lerp3(c0,[mid[0],mid[1],Math.max(6,c0[2]*(1-u*u))],ez(u));tilt=.9*u;yaw=yw+1.6*u}
+  else{const b=Math.abs(Math.sin(Math.PI*2*r2))*(1-r2)*6,k=ez(r2);c=lerp3(mid,end,k);c=[c[0],c[1],c[2]+b];tilt=lerp(.9,.36,k)+.28*Math.sin(r2*9)*(1-r2);yaw=yw+1.6*(1-k)}
+  return{p,c,tilt,yaw}}
+function crownFallDraw(V0,A,K,cf){const{P}=V0,c=cf.c,p=cf.p;
+  const R=v=>rotZ(rotY(rotX(v,cf.tilt),-.2),cf.yaw),T=d=>add(c,R(sub(d,[CRB,0,8]))),fake={T,R,c,F:{u:R([1,0,0]),v:R([0,1,0]),w:R([0,0,1])}};
   crownDraw(V0,fake,Object.assign({},A,{crownOff:0,husk0:0}),KC,null,null);
   const gl=pls(p,.93,.04);if(gl>0){const q=P(T(add(CROWN[0].b,mul(CROWN[0].d,CROWN[0].L*.9))));if(!LOWFX)shine('255,255,255',q[0],q[1],8,.8*gl);ctx.fillStyle=`rgba(255,255,255,${gl})`;ball(q,1.4);ctx.fill()}}
 const KC=Object.assign({},K1,{edge:null});

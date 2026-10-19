@@ -115,11 +115,14 @@ function sl2sfx(k,x,i){if(!SL2SND[k]||!AU.ctx||!AU.on.sfx||AU.ctx.state!=='runni
 // ---- the brain
 function sl2walk(e,t){e.wt=0;e.wk=0;e.curve=0;e.shell=0;e.air=0;e.z=0;e.moving=true;b3go(e,'walk',t!=null?t:e.p2?rand(1,1.3):rand(1.1,1.5))}
 // the next move of the sequence (the Frustata out of turn does not count; after the moult first the two new moves, then the sequence).
-// Before the Frustata, if you are beyond the reach of its crescent (150 px on the floor) she dashes at you first
+// Before the Frustata, if you are beyond the reach of its crescent (150 px on the floor): when the Tuffo comes next she does the Tuffo
+// first (the fin brings her up to you) and the Frustata right after it; otherwise she dashes at you first
 function sl2next(e){const seq=e.p2?SL2.seq2:SL2.seq1;let nx;if(e.pre&&e.pre.length)nx=e.pre.shift();else{e.si=(e.si==null?-1:e.si)+1;nx=seq[e.si%seq.length]}e.moving=false;
   if(nx==='spit')sl2spit0(e);
-  else if(nx==='whip'||nx==='whip2'){if(sl2d(e.x,e.y,P.x,P.y)>150){b3go(e,'rush',.9);e.rushTo=nx;sfx('dash',0,e.x)}else sl2whip0(e,nx)}
-  else if(nx==='dive'){const a=Math.atan2(P.y-e.y,P.x-e.x);b3go(e,'burrow');e.face=a;e.lf=a;e.sa=null}
+  else if(nx==='whip'||nx==='whip2'){if(sl2d(e.x,e.y,P.x,P.y)>150){const pr=e.pre&&e.pre.length?e.pre:null;
+      if((pr?pr[0]:seq[(e.si+1)%seq.length])==='dive'){if(pr)pr[0]=nx;else{e.si++;e.pre=[nx]}sl2dive0(e);return}
+      b3go(e,'rush',.9);e.rushTo=nx;sfx('dash',0,e.x)}else sl2whip0(e,nx)}
+  else if(nx==='dive')sl2dive0(e);
   else if(nx==='ring')sl2crouch0(e);
   else if(nx==='erupt')sl2erupt0(e);
   else sl2walk(e)}
@@ -150,7 +153,9 @@ function sl2crack(e,W){const H=sl2hf(),ca=Math.cos(W.a),sa=Math.sin(W.a),ux=H.x-
   for(const k of G.rocks){if(!k.temp)continue;const kx=k.x-W.x,ky=k.y-W.y,ku=kx*ca+ky*sa,kv=Math.abs(ky*ca-kx*sa);if(ku>0&&ku<W.l1+k.r&&kv<W.w/2+k.r){if(k.sl2husk)sl2huskBreak();else if(k.life>.3){k.life=.3;dustRing(k.x,k.y,8)}}}
   shake(5);sl2sfx('whip',e.x);if(BOSS2){ENV2.mark('cracks',W.x+ca*W.l1*.5,W.y+sa*W.l1*.5,40);ENV2.rocks(W.x+ca*120,W.y+sa*120,140,1.5)}
   if(!LOWFX)vfxBlast(W.x+ca*W.l1*.6,W.y+sa*W.l1*.6-6,SL2.lava,40,{sparks:10,dust:6,ring2:false,spcol:['#ffd05a','#ff8a2a','#fff3c4']})}
-// ---- TUFFO: the circle where she comes out (six ticks), the blow: damage in the circle, a ring of balls, a pool of magma; the room shakes
+// ---- TUFFO: she dives toward you; the circle where she comes out (six ticks), the blow: damage in the circle, a ring of balls, a pool of
+// magma; the room shakes
+function sl2dive0(e){const a=Math.atan2(P.y-e.y,P.x-e.x);b3go(e,'burrow');e.face=a;e.lf=a;e.sa=null}
 function sl2breach0(e){const a=Math.atan2(P.y-e.y,P.x-e.x);b3go(e,'breach');e.shell=9;e.air=1;e.face=a;e.lf=a;e.sa=null;
   e.bw=sl2w({k:'circ',x:e.x,y:e.y+8,r:48,t:.48*B3D(e,'breach')/sl2rt(e),boil:1,seed:Math.random()*9});sl2sfx('rumble',e.x)}
 function sl2leap0(e){const a=Math.atan2(P.y-e.y,P.x-e.x);b3go(e,'leap');e.shell=9;e.air=1;e.face=a;e.lf=a;e.sa=null;e.c1={x:e.x,y:e.y};e.c2=null;
@@ -166,10 +171,11 @@ function sl2burst(e,x,y,r,dmg,n,pr,pt){const H=sl2hf();
   if(BOSS2){ENV2.mark('crater',x,y,34);ENV2.chunks(x,y,B3N(16),['#3a2a24','#ff7a2e','#5a4038'],150);ENV2.fall(B3N(8));sl2torch(...SL2TORCH.white,.6);ENV2.rocks(x,y,150,3);ENV2.burnGrass(x,y,70);ENV2.ignite(x,y,70)}}
 // ---- ANELLO DI FUOCO: the ring round you (chosen at p 0 of the crouch), the gap just before where she gets on it. Its centre is where you
 // are, or as near to you as the walls (20 px) and the basalt (24 px from the line) let it be, in any direction (only toward the middle of
-// the room, a third of the rings did not have you inside: by the walls or by the columns); the biggest ring that keeps you 44 px inside
+// the room, a third of the rings did not have you inside: by the walls or by the columns); the biggest ring that keeps you 44 px inside.
+// Against a wall no ring can have you inside: the nearest one passes by you (up to 40 px outside its line), never the lap of the room
 function sl2ring(e){const p2=e.p2,cx0=(L+R)/2,cy0=(TOP+BOT)/2,gap=(p2?40:60)*Math.PI/180;let best=null;
-  for(let rr=p2?110:125;rr>=(p2?90:95);rr-=10){
-    for(let dx=-rr;dx<=rr;dx+=8)for(let dy=-rr;dy<=rr;dy+=8){const cx=P.x+dx,cy=P.y+dy,cl=rr-Math.hypot(dx,dy);if(cl<-40||best&&cl<=best[0])continue;
+  for(let rr=p2?110:125;rr>=(p2?90:95);rr-=10){const m=rr+40;
+    for(let dx=-m;dx<=m;dx+=8)for(let dy=-m;dy<=m;dy+=8){const cx=P.x+dx,cy=P.y+dy,cl=rr-Math.hypot(dx,dy);if(cl<-40||best&&cl<=best[0])continue;
       if(cx-rr<L+20||cx+rr>R-20||cy-rr<TOP+20||cy+rr>BOT-20)continue;if(G.rocks.some(k=>Math.abs(Math.hypot(k.x-cx,k.y-cy)-rr)<k.r+24))continue;best=[cl,cx,cy,rr]}
     if(best&&best[0]>=44)break}
   if(best)return sl2ringOf(e,best[1],best[2],best[3],gap);

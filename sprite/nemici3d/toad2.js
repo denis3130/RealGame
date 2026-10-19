@@ -94,9 +94,12 @@ function svol3(V0,pts3,T,o){o=o||{};const pts=o.scr?pts3:hullE(pts3.map(q=>V0.P(
 // a soft ball painted in three tones with the outline and the rim (screen centre q)
 function tball(q,r,T,rgb,lw,ra,g0){ctx.beginPath();ctx.arc(q[0],q[1],Math.max(.2,r),0,TAU);ctx.fillStyle=g0||grad3([q[0]-r,q[1]-r,q[0]+r,q[1]+r],T);ctx.fill();if(lw!==0){ctx.strokeStyle=INK;ctx.lineWidth=lw||2.2;ctx.stroke()}
   if(ra&&r>3){const g=ctx.createLinearGradient(q[0]-r*.8,q[1]-r*.8,q[0]+r*.15,q[1]+r*.15);g.addColorStop(0,`rgba(${rgb},${ra})`);g.addColorStop(1,`rgba(${rgb},0)`);ctx.beginPath();ctx.arc(q[0],q[1],r-1.7,0,TAU);ctx.strokeStyle=g;ctx.lineWidth=1.3;ctx.stroke()}}
-// a limb's shading: across it, from the lit side (upper left) through the base to the dark side
-function limbGrad(qa,qb,r,T){let nx=-(qb[1]-qa[1]),ny=qb[0]-qa[0];const l=Math.hypot(nx,ny)||1;nx/=l;ny/=l;if(nx+ny>0){nx=-nx;ny=-ny}const mx=(qa[0]+qb[0])/2,my=(qa[1]+qb[1])/2;
-  if(l<r*.6){nx=-.7;ny=-.7}const g=ctx.createLinearGradient(mx+nx*r,my+ny*r,mx-nx*r,my-ny*r);g.addColorStop(0,T.l);g.addColorStop(.42,T.b);g.addColorStop(1,T.d);return g}
+// a limb's shading: across it, from the lit side (the light comes from the upper left) through the base to the dark side. The light's
+// part across the limb has no sign to flip: a limb that turns parallel to the light gets a flatter shading, never the sides swapped
+function limbGrad(qa,qb,r,T){const mx=(qa[0]+qb[0])/2,my=(qa[1]+qb[1])/2,l=Math.hypot(qb[0]-qa[0],qb[1]-qa[1]),Lx=-.7071,Ly=-.7071;let nx=Lx,ny=Ly;
+  if(l>1e-3){const tx=(qb[0]-qa[0])/l,ty=(qb[1]-qa[1])/l,d=Lx*tx+Ly*ty,w=sstep(r*.3,r*.9,l);nx=Lx-d*tx*w;ny=Ly-d*ty*w}
+  const m=Math.hypot(nx,ny);if(m>1e-4){nx/=m;ny/=m}else{nx=Lx;ny=Ly}const k=Math.min(1,m);
+  const g=ctx.createLinearGradient(mx+nx*r,my+ny*r,mx-nx*r,my-ny*r);g.addColorStop(0,k>.97?T.l:cmix(T.b,T.l,k));g.addColorStop(.42,T.b);g.addColorStop(1,k>.97?T.d:cmix(T.b,T.d,.5+.5*k));return g}
 // a limb of capsules in one piece (every outline, then every fill), shaded across, with the rim
 function limb3(V0,pts3,rs,T,rgb,lw){const P2=pts3.map(q=>V0.P(q));lw=lw||2.6;ctx.fillStyle=INK;for(let i=0;i<P2.length-1;i++){hull(P2[i],rs[i]+lw/2,P2[i+1],rs[i+1]+lw/2);ctx.fill()}
   const qa=P2[0],qb=P2[P2.length-1];ctx.fillStyle=limbGrad(qa,qb,Math.max(...rs),T);for(let i=0;i<P2.length-1;i++){hull(P2[i],Math.max(.3,rs[i]-lw/2),P2[i+1],Math.max(.3,rs[i+1]-lw/2));ctx.fill()}
@@ -125,11 +128,12 @@ function nearPrep(V0,X,C0,R,Fr){const o=X.T(C0),a=[sub(X.T(add(C0,mul(Fr.u,R[0])
   return{d0:V0.D(o),h,q0,sx:sh[0]-q0[0],sy:sh[1]-q0[1],sil:null,bb:null,mk:()=>ellSil(V0,C0,R,Fr,X.T,16)}}
 function nearSil(N){if(!N.sil){const s=N.sil=N.mk();let x0=1e9,y0=1e9,x1=-1e9,y1=-1e9;for(const q of s){if(q[0]<x0)x0=q[0];if(q[0]>x1)x1=q[0];if(q[1]<y0)y0=q[1];if(q[1]>y1)y1=q[1]}N.bb=[x0,y0,x1,y1]}return N.sil}
 // the region at a depth: null (nothing hides there) or the section {N, k}, made into a polygon only when it is needed
-function nearAt(N,d){const k=(d-N.d0)/N.h;return k>=.99?null:{N,k:Math.max(0,k)}}
-function regPts(r){if(Array.isArray(r))return r;const N=r.N,sil=nearSil(N),k=r.k;if(k<=0)return sil;const q0=N.q0,dx=N.sx*k,dy=N.sy*k,sc=Math.sqrt(1-k*k);
+// (it grows from nothing at the far edge of the solid: a part turning behind it is never bitten all at once)
+function nearAt(N,d){const k=(d-N.d0)/N.h;return k>=1?null:{N,k:Math.max(0,k)}}
+function regPts(r){if(Array.isArray(r))return r;const N=r.N,sil=nearSil(N),k=r.k;if(k<=0)return sil;const q0=N.q0,dx=N.sx*k,dy=N.sy*k,sc=Math.sqrt(Math.max(0,1-k*k));
   return sil.map(p=>[q0[0]+(p[0]-q0[0])*sc+dx,q0[1]+(p[1]-q0[1])*sc+dy])}
 function regBox(r){if(Array.isArray(r)){let x0=1e9,y0=1e9,x1=-1e9,y1=-1e9;for(const q of r){if(q[0]<x0)x0=q[0];if(q[0]>x1)x1=q[0];if(q[1]<y0)y0=q[1];if(q[1]>y1)y1=q[1]}return[x0,y0,x1,y1]}
-  const N=r.N;nearSil(N);const q0=N.q0,k=r.k,dx=N.sx*k,dy=N.sy*k,sc=Math.sqrt(1-k*k),b=N.bb;return[q0[0]+(b[0]-q0[0])*sc+dx,q0[1]+(b[1]-q0[1])*sc+dy,q0[0]+(b[2]-q0[0])*sc+dx,q0[1]+(b[3]-q0[1])*sc+dy]}
+  const N=r.N;nearSil(N);const q0=N.q0,k=r.k,dx=N.sx*k,dy=N.sy*k,sc=Math.sqrt(Math.max(0,1-k*k)),b=N.bb;return[q0[0]+(b[0]-q0[0])*sc+dx,q0[1]+(b[1]-q0[1])*sc+dy,q0[0]+(b[2]-q0[0])*sc+dx,q0[1]+(b[3]-q0[1])*sc+dy]}
 // a capsule and a ball added to the current path (several shapes of one colour, one fill)
 function hullA(a,ra,b,rb){const dx=b[0]-a[0],dy=b[1]-a[1],d=Math.hypot(dx,dy);if(d<=Math.abs(ra-rb)+.01){ballA(ra>=rb?a:b,Math.max(ra,rb));return}
   const an=Math.atan2(dy,dx),f=Math.acos(cl((ra-rb)/d,-1,1)),s=an+f;ctx.moveTo(a[0]+Math.cos(s)*ra,a[1]+Math.sin(s)*ra);ctx.arc(a[0],a[1],ra,s,an+TAU-f);ctx.arc(b[0],b[1],rb,an-f,an+f);ctx.closePath()}
@@ -181,27 +185,28 @@ function capReg(V0,X,C0,R,Fr,tab){const{P,F}=V0,S=m=>P(X.T(ellAt(C0,R,Fr,m))),g=
 // ------------------------------------------------------------------ colours
 const T3=(l,b,d)=>({l,b,d}),mixT=(a,b,k)=>k<=0?a:k>=1?b:T3(cmix(a.l,b.l,k),cmix(a.b,b.b,k),cmix(a.d,b.d,k));
 const mixRgb=(a,b,k)=>{if(k<=0)return a;if(k>=1)return b;const A=a.split(',').map(Number),B=b.split(',').map(Number);return A.map((v,i)=>Math.round(v+(B[i]-v)*k)).join(',')};
-// first phase: deep greens with cold shadows, the lime light of the fireflies, cinnamon velvet, gold
-const K1={skin:T3('#9ccf5c','#4f8a34','#1e4022'),spot:'#2a4a1e',wet:'234,255,216',rimc:'226,242,138',
-  wart:T3('#b0d870','#5f9638','#2c5020'),fcore:'#f6ffc0',fcol:'#d6f55a',fglow:'214,255,90',fdim:'#7f9a3e',
-  crest:T3('#8aaa52','#44682a','#1c3218'),crestL:'#d8e890',gland:T3('#8cbc58','#4a7a30','#22401c'),pore:'#1a3216',gOn:0,gcore:'#ffb04a',gedge:'#c25a14',gglow:'255,140,50',
+// first phase: deep greens with cold shadows, the lime light of the fireflies, cinnamon velvet, gold (the skin a fifth darker than the
+// design's first numbers: next to the Golem it was a cheerful puppet, and the amber eyes and the firefly warts need some dark round them)
+const K1={skin:T3('#86b84e','#3f7429','#15301a'),spot:'#213d17',wet:'234,255,216',rimc:'226,242,138',
+  wart:T3('#9cc463','#4f8433','#22441b'),fcore:'#f6ffc0',fcol:'#d6f55a',fglow:'214,255,90',fdim:'#7f9a3e',
+  crest:T3('#86a650','#3f6227','#192e15'),crestL:'#d8e890',gland:T3('#7aa84c','#3d6a28','#1b3517'),pore:'#1a3216',gOn:0,gcore:'#ffb04a',gedge:'#c25a14',gglow:'255,140,50',
   belly:T3('#fff3c4','#ecd38c','#a8873e'),fold:'#c4a356',blight:'220,255,120',
   sac:T3('#fff8dc','#f1dc98','#b89a50'),sacLit:'#fffbe0',sacGlow:'235,255,150',sacRim:'#5a7a1c',
   eye:T3('#ffe9a0','#ffb02e','#b8680c'),eyeGlow:'255,190,70',blush:0,
   mouth:'#4a1a2c',mouthD:'#2a0c18',tongue:T3('#ffa3b8','#e8607e','#a02c4c'),tipBall:'#ffc4d2',tipGlow:'255,170,195',
   tusk:T3('#fffaf0','#efe2c0','#b8a882'),gold:T3('#fff0a0','#f2b62e','#94580c'),mud:'#5a4a2a',gem:T3('#f6ffc0','#b8f040','#4e8a14'),gemGlow:'200,255,90',
-  cape:T3('#c27a44','#8a4a26','#4a2412'),down:T3('#fff6e2','#e8dcc0','#b8a888'),ermine:'#5a3a20',
+  cape:T3('#b46c3c','#7a4020','#3e1e0c'),down:T3('#fff6e2','#ece0c4','#a89a80'),ermine:'#5a3a20',
   spike:T3('#b88048','#7a4a24','#3a2210'),stem:T3('#9cb85a','#5e7e30','#2c4218'),fluff:'#fff0d8',fluffGlow:'255,190,110',
   fly:'#3a3020',ftail:'#f6ffc0',flyGlow:'214,255,90',web:'#3a6a28',splash:'90,74,48',
   light:'214,255,90',lcore:'#f6ffc0'};
 // second phase: colder, deeper skin (the orange stands out and the body never melts into the olive floor), embers inside
-const K2=Object.assign({},K1,{skin:T3('#86c77a','#3f7f4a','#173a26'),spot:'#1f4a2c',rimc:'255,192,112',
-  wart:T3('#a0cc8a','#4f8a52','#1f4a2c'),fcore:'#fff2c0',fcol:'#ffaa3a',fglow:'255,150,50',fdim:'#a8642a',
+const K2=Object.assign({},K1,{skin:T3('#7cbc70','#397444','#143422'),spot:'#1c4228',rimc:'255,192,112',
+  wart:T3('#96c080','#48804c','#1c4428'),fcore:'#fff2c0',fcol:'#ffaa3a',fglow:'255,150,50',fdim:'#a8642a',
   crest:T3('#6a9a62','#2f5a36','#142a1a'),crestL:'#c8e0b0',gland:T3('#7cb070','#3a7046','#1a3a24'),gOn:1,
   belly:T3('#ffe2b0','#f4b468','#a8602a'),fold:'#c8844a',blight:'255,170,70',sacLit:'#fff0d8',sacGlow:'255,170,80',sacRim:'#9a3a12',
   eye:T3('#ffc8a0','#ff5a26','#a01e08'),eyeGlow:'255,90,40',blush:1,
   tongue:T3('#ffa0bc','#ff6f9a','#b02c58'),tipGlow:'255,170,80',gem:T3('#fff0c8','#ffb040','#a8501a'),gemGlow:'255,140,40',
-  cape:T3('#a8603a','#6e3a1e','#3a1c0e'),down:T3('#ffe8cc','#e8cfb0','#b09878'),
+  cape:T3('#a05a36','#66361b','#34190c'),down:T3('#ffe8cc','#ecd2b2','#a89074'),
   ftail:'#ffd08a',flyGlow:'255,150,50',light:'255,150,50',lcore:'#fff2c0'});
 // a palette between the two phases (k2) and toward a pale, stretched skin (the defeat): mixes are cached
 const PALC={},PALE=T3('#d8f0a8','#a6d070','#5e8a3c');
@@ -217,9 +222,9 @@ const YC=[18,0,27],YR=[31,37,27];               // the belly, its own volume (it
 const TC=[-16,44,19],TR=[26,16,18];             // the thighs (y × side)
 const HIP=[-12,40,20],LTH=21,LSH=15;            // the legs: hip, thigh bone, shin (the knee folds forward, the foot comes back under it)
 const SHO=[24,33,34],LUA=22,LFA=18;             // the arms: shoulder, upper arm, forearm
-const EC=[16,22,73],ER=12,EDIR=[1,.3,.35];       // the eye domes and where the eyes look
+const EC=[16,22,73],ER=12,EDIR=[1,.4,.35];       // the eye domes and where the eyes look (a little sideways: half the iris shows in profile)
 const KC=[8,-1,76.5],KRAD=10,KHT=13,KTILT=.25;    // the crown (base centre, radius, height, crooked toward its left)
-const GC=[-4,29,66],GR=[13,9,7];                // the glands behind the eyes
+const GC=[-4,30,64],GR=[15,8,5.5];              // the glands behind the eyes (low and long: never a second eye)
 const SAC0=[27,0,46],SAC1=[52,0,37];            // the throat sac at rest (inside the throat: it only shows when it swells) and swollen
 const inEll=(q,C0,R,Fr)=>{const d=sub(q,C0),a=dot(d,Fr.u)/R[0],b=dot(d,Fr.v)/R[1],c=dot(d,Fr.w)/R[2];return a*a+b*b+c*c<1};
 const inBody=q=>inEll(q,BC,BR,FB),inBelly=q=>inEll(q,YC,YR,AXES);
@@ -232,11 +237,12 @@ const TABG={1:capTab(GC,GR,AXES,[.1,.75,.65],inBody,18,[1,0,0]),'-1':capTab(mir(
 const TABTH=capFix(dir(0,-.2),.36,.78,[0,0,1],20);                    // the cream of the throat, under the mouth
 // the cape on the body grown 5%: its edge through key points (the collar across the nape, where the cattails stand; down the sides behind
 // the glands and the flanks behind the arms; the hem across the back at the height of 40-44), smooth between them, the hem waving
-const CAPEN=nrm([-.85,0,.5]),TABC=capKeys(CAPEN,[1,0,0],[[-29,0,66],[-27,22,62],[-20,36,54],[-10,45,45],[-3,46,40],[-22,44,38],[-38,28,40],[-47,0,42]],36,t=>.045*Math.max(0,-Math.cos(t))*Math.cos(t*9));
-// where the trim runs: across the collar (between its two ends) and along the hem (from flank to flank round the back); the front edges
-// down the sides have none (seen from behind they would ring the cape like a plate)
+// (72 points round the edge, so the trim's puffs touch; the hem waves a little, unevenly: it stays up over the six warts of the low back)
+const CAPEN=nrm([-.85,0,.5]),TABC=capKeys(CAPEN,[1,0,0],[[-29,0,66],[-27,22,62],[-20,36,54],[-10,45,45],[-3,46,40],[-22,44,38],[-38,28,40],[-47,0,42]],72,t=>Math.max(0,-Math.cos(t))*(.03*Math.cos(t*9)+.012*Math.sin(t*2.6+.8)));
+// where the trim runs: across the collar (between its two ends) and along the hem round the back, ending before the thighs (their
+// firefly warts stay free); the front edges down the sides have none (seen from behind they would ring the cape like a plate)
 const tOn=(tab,q)=>{const m=dirOn(q,BC,BR,FB);let t=Math.atan2(dot(m,tab.v),dot(m,tab.u));return t<0?t+TAU:t};
-const TRC=tOn(TABC,[-27,22,62]),TRH=tOn(TABC,[-3,46,40]);
+const TRC=tOn(TABC,[-27,22,62]),TRH=tOn(TABC,[-22,44,38]);
 const trimW=t=>{const tc=Math.min(t,TAU-t),th=Math.abs(t-Math.PI);return Math.max(sstep(TRC+.02,TRC-.2,tc),sstep(Math.PI-TRH+.02,Math.PI-TRH-.22,th))};
 const CAPEK=1.05;
 // marks on the body (unit directions on its ellipsoid): the six firefly warts of the low back, the dull warts, the dark spots
@@ -289,12 +295,13 @@ function tPose(anim,p,o){const ph=p*TAU,P2=(!!o.p2||anim==='rain'||anim==='sweep
   const hmix=(sd,k,pos,u,w)=>{if(k<=0)return;const p0=sd<0?A.hL:A.hR,u0=sd<0?A.huL:A.huR,w0=sd<0?A.hwL:A.hwR,l0=sd<0?A.hlkL:A.hlkR;hand(sd,lerp3(p0,pos,k),lerp(l0,1,k),nrm(lerp3(u0,u,k)),nrm(lerp3(w0,w,k)))};
   if(anim==='walk'){
     if(!P2){// FASE 1: it crawls on all fours like a sumo wrestler: the left hand (.00), the right foot (.25), the right hand (.50), the left foot (.75)
-      const st=stepper(p,.75),hl=st(0,12,8),hr=st(.5,12,8),fr=st(.75,11,2),fl=st(.25,11,2);
-      A.hL=[42+hl.x,-30-2*hl.z/8,2+hl.z];A.hR=[42+hr.x,30+2*hr.z/8,2+hr.z];A.fL=[2+fl.x,-56,1+fl.z];A.fR=[2+fr.x,56,1+fr.z];
-      A.lean=.08+.025*Math.cos(ph*2);A.roll=-.075*Math.cos(ph);A.yaw=.05*Math.sin(ph);A.B[2]=-1.6*(.5+.5*Math.cos(ph*4));A.B[1]=-2*Math.cos(ph);
-      A.by=-6*Math.cos(TAU*(p-.06));for(const c of[0,.25,.5,.75])A.bs+=.03*wob(p,c,5,dur,7)+.03*wob(p+1,c,5,dur,7);
-      A.sway=[2.2*Math.sin(ph*2-1),1.8*Math.sin(ph-1.4)];A.cz=.8*Math.abs(Math.sin(ph*2-.5));A.ctilt+=.03*Math.sin(ph-1);A.sacR=7+1.4*(.5+.5*Math.cos(ph*2));
-      for(const[c,sd] of[[0,-1],[.5,1]])fx('splash',cyc(p,c)/.2,{at:[54,sd*31,0],n:5,r:7})}
+      // (o.wk from the game, 0..1: how far into its stride it is; the first step grows out of the pose at rest every move ends on)
+      const wk=o.wk==null?1:cl(o.wk,0,1),st=stepper(p,.75),hl=st(0,12,8),hr=st(.5,12,8),fr=st(.75,11,2),fl=st(.25,11,2);
+      A.hL=[42+hl.x*wk,-30-2*hl.z/8*wk,2+hl.z*wk];A.hR=[42+hr.x*wk,30+2*hr.z/8*wk,2+hr.z*wk];A.fL=[2+fl.x*wk,-56,1+fl.z*wk];A.fR=[2+fr.x*wk,56,1+fr.z*wk];
+      A.lean=wk*(.08+.025*Math.cos(ph*2));A.roll=-.075*Math.cos(ph)*wk;A.yaw=.05*Math.sin(ph)*wk;A.B[2]=-1.6*(.5+.5*Math.cos(ph*4))*wk;A.B[1]=-2*Math.cos(ph)*wk;
+      A.by=-6*Math.cos(TAU*(p-.06))*wk;for(const c of[0,.25,.5,.75])A.bs+=(.03*wob(p,c,5,dur,7)+.03*wob(p+1,c,5,dur,7))*wk;
+      A.sway=[2.2*Math.sin(ph*2-1)*wk,1.8*Math.sin(ph-1.4)*wk];A.cz=.8*Math.abs(Math.sin(ph*2-.5))*wk;A.ctilt+=.03*Math.sin(ph-1)*wk;A.sacR=7+1.4*(.5+.5*Math.cos(ph*2))*wk;
+      if(wk>.5)for(const[c,sd] of[[0,-1],[.5,1]])fx('splash',cyc(p,c)/.2,{at:[54,sd*31,0],n:5,r:7})}
     else{// FASE 2: a heavy hop each cycle: the thighs push (.00-.10), a low flight with the belly hanging and the hands forward (.10-.45),
       // it lands on its belly (.47) squashed by 15% with a splash, a ripple runs up to the crown (.50-.80), it gathers itself again
       const K=[[0,[-.1,.1,0]],[.1,[-.13,.14,0]],[.18,[.1,-.06,-.04]],[.38,[.06,.1,0]],[.47,[-.15,.04,.12]],[.56,[.05,0,-.03]],[.66,[-.04,0,.02]],[.8,[0,0,0]],[.92,[-.07,.07,0]],[1,[-.1,.1,0]]];
@@ -312,16 +319,18 @@ function tPose(anim,p,o){const ph=p*TAU,P2=(!!o.p2||anim==='rain'||anim==='sweep
     const K=[[0,[0,0,0]],[.1,[.04,0,0]],[.4,[-.15,-.02,-.02]],[.52,[-.15,-.02,-.02]],[.55,[.1,.02,.04]],[.62,[.08,.01,.03]],[.66,[.06,0,0]],[.9,[0,0,0]],[1,[0,0,0]]];
     const v=kv(K,p);A.lean+=v[0];A.s+=v[1];A.sx+=v[2];if(p>.4&&p<.52)A.B[1]=.6*trem(p,.4,.52,6,dur);
     wide(sstep(.085,.11,p)*(1-sstep(.9,.98,p)));A.grin=.7*rise(p,.1,.2,.52,.55);
-    A.pearl={path:'mouth',f:sstep(.05,.36,p),a:1-sstep(.5,.56,p)};A.mlit=sstep(.32,.4,p)*(1-sstep(.55,.6,p));A.ulit=.8*rise(p,.1,.35,.55,.62);A.belly=1+.3*rise(p,0,.1,.3,.4);
+    // (the belly goes dim as its light leaves it: the pearl reads as the light on its way)
+    A.pearl={path:'mouth',f:sstep(.05,.36,p),a:1-sstep(.5,.56,p)};A.mlit=sstep(.32,.4,p)*(1-sstep(.55,.6,p));A.ulit=.8*rise(p,.1,.35,.55,.62);A.belly=1-.45*rise(p,.08,.22,.55,.7);
     A.sacR=7+4*rise(p,.1,.4,.52,.56)+4*pls(p,.93,.07);A.open=sstep(.545,.56,p)*(1-sstep(.88,.93,p));
     const tl=p<.55?0:p<.6?ez((p-.55)/.05):p<.66?1:p<.9?1-ez((p-.66)/.24):0;if(tl>0)A.tongue={l:tl,wob:p>.6&&p<.66?Math.sin((p-.6)*TAU*8*dur)*sstep(.6,.61,p)*(1-sstep(.64,.66,p)):0,mode:'out'};
     A.lick=p>.93?(p-.93)/.07:-1}
   else if(anim==='stuck'){// LINGUA INCOLLATA: the tongue stuck to where it hit, the light gone from the throat, the belly dull: helpless. The
     // eyes goggle, the crests up; two yanks (.15, .45); it tears free (.70), the tongue snaps back like an elastic and it reels back;
     // it shakes its head twice, licks its lips
-    const yank=Math.max(pls(p,.15,.09),pls(p,.45,.09));A.B[0]=4*yank;A.lean+=.06+.08*yank-.06*sstep(.68,.72,p);A.bs=.06*(wob(p,.16,5,dur,6)+wob(p,.46,5,dur,6));
-    if(p>=.7)A.lean-=.2*Math.sin(Math.PI*cl((p-.7)/.18,0,1));A.belly=.25+.75*sstep(.75,1,p);
-    A.lid=lerp(-1,.7,yank)*(1-sstep(.85,1,p));A.eyeK=1+.12*(1-sstep(.72,.8,p))-.04*yank;A.pup=.55*(1-sstep(.75,.9,p));A.crestUp=1-sstep(.72,.9,p);A.crest=0;
+    // (the surprise comes in over the first .07: the tongue had the cruel aim face a moment before)
+    const yank=Math.max(pls(p,.15,.09),pls(p,.45,.09)),ein=sstep(0,.07,p);A.B[0]=4*yank;A.lean+=.06+.08*yank-.06*sstep(.68,.72,p);A.bs=.06*(wob(p,.16,5,dur,6)+wob(p,.46,5,dur,6));
+    if(p>=.7)A.lean-=.2*Math.sin(Math.PI*cl((p-.7)/.18,0,1));A.belly=lerp(1,.25,sstep(0,.1,p))+.75*sstep(.75,1,p);
+    A.lid=lerp(-1,.7,yank)*(1-sstep(.85,1,p));A.eyeK=1+.12*ein*(1-sstep(.72,.8,p))-.04*yank;A.pup=lerp(.9,.55,ein)*(1-sstep(.75,.9,p));A.crestUp=ein*(1-sstep(.72,.9,p));A.crest=1-ein+(P2?sstep(.75,.95,p):0);
     A.open=1-sstep(.7,.76,p);const tl=p<.7?1:1-ez(cl((p-.7)/.07,0,1));if(tl>0)A.tongue={l:tl,wob:.9*(Math.sin((p-.15)*TAU*7*dur)*pls(p,.17,.12)+Math.sin((p-.45)*TAU*7*dur)*pls(p,.47,.12)),mode:'stuck',snap:p>=.7};
     const sh=rise(p,.77,.8,.95,.99);A.yaw+=.14*Math.sin(TAU*2*(p-.77)/.2)*sh;A.lick=p>.9?(p-.9)/.1:-1}
   else if(anim==='sweep'){// FRUSTATA (second phase): it turns its front toward the side o.side, the tongue hangs out of that corner of the
@@ -331,15 +340,18 @@ function tPose(anim,p,o){const ph=p*TAU,P2=(!!o.p2||anim==='rain'||anim==='sweep
     A.by=6*sd*(rise(p,.05,.4,.52,.6)-2*rise(p,.56,.7,.75,.95));if(p>.45&&p<.52)A.B[1]=.6*trem(p,.45,.52,6,dur);
     wide(sstep(.07,.1,p)*(1-sstep(.88,.97,p)));A.cheek=sd<0?[sstep(.15,.45,p)*(1-sstep(.52,.6,p)),0]:[0,sstep(.15,.45,p)*(1-sstep(.52,.6,p))];
     A.pearl={path:sd<0?'cheekL':'cheekR',f:sstep(.04,.4,p),a:1-sstep(.48,.54,p)};A.grin=.5*rise(p,.1,.2,.5,.55);A.lean+=-.05*rise(p,.1,.4,.5,.55)+.06*rise(p,.52,.55,.66,.72);
+    A.belly=1-.4*rise(p,.06,.2,.5,.66);
     A.open=sstep(.18,.24,p)*(1-sstep(.84,.88,p))*.75+.25*pls(p,.9,.04)+.2*pls(p,.96,.04);
     const hg=p<.2?0:p<.47?sstep(.2,.3,p):1-sstep(.47,.53,p),tl=p<.48?0:p<.53?sstep(.48,.53,p):p<.7?1:p<.85?1-ez((p-.7)/.15):0;
     if(hg>0||tl>0)A.tongue={l:tl,h:hg,mode:'sweep',side:sd,ang:p<.52?55*sd:lerp(55*sd,-55*sd,ez(sw)),wob:p<.47?Math.sin(p*TAU*3*dur)*.6*sstep(.25,.3,p):0}}
   else if(anim==='flop'){// PANCIATA: it crouches, the belly pressed flat (.00-.30), the light runs down into the thighs and up over all the
     // warts (the belly goes dark); a shove (.30); up spread-eagled, leaning back with the belly showing, the cape flying open; it turns
     // over and falls on its belly (SPLAT .75: flat and wide, a flash inside, splashes); a ripple up to the crown; it pushes itself up
+    // (the dive is held until it touches the floor: stretched, belly first; it squashes flat in one frame at the contact and stays there a
+    // moment. The second and third of the Triple start from that pose: the game passes them on just after the splat)
     const ch=!!o.chain,S0=ch?[-.35,.3,.18,-.35]:[0,0,0,0];
     const K=[[0,S0],[.12,[-.1,.05,.06,-.1]],[.28,[-.18,.1,.1,-.2]],[.30,[-.2,.1,.1,-.2]],[.335,[.14,-.08,-.12,.08]],[.42,[.06,-.02,-.35,.04]],[.5,[.04,0,-.35,.04]],[.6,[0,0,.3,0]],[.7,[0,0,.9,0]],
-      [.75,[-.35,.3,.18,-.35]],[.8,[-.1,.12,.12,.12]],[.86,[-.16,.15,.1,-.06]],[.9,[-.13,.12,.08,0]],[1,[0,0,0,0]]];
+      [.745,[.05,-.04,.95,.05]],[.752,[-.35,.3,.18,-.35]],[.78,[-.33,.28,.17,-.3]],[.815,[-.1,.12,.12,.12]],[.865,[-.16,.15,.1,-.06]],[.9,[-.13,.12,.08,0]],[1,[0,0,0,0]]];
     const v=kv(K,p);A.s=v[0];A.sx=v[1];A.lean=v[2];A.bs=v[3];A.z0=34;
     if(p>.22&&p<.3)A.B[1]=.6*trem(p,.22,.3,7,dur);
     const air=p>.3&&p<.75?Math.sin(Math.PI*(p-.3)/.45):0;A.lift=150*air;A.B[2]=-3*rise(p,.05,.25,.3,.32)-2*rise(p,.75,.78,.86,.95);
@@ -355,7 +367,10 @@ function tPose(anim,p,o){const ph=p*TAU,P2=(!!o.p2||anim==='rain'||anim==='sweep
     A.pearl={path:'thigh',f:sstep(.05,.16,p),a:1-sstep(.15,.18,p)};A.thLit=rise(p,.12,.16,.3,.4);A.wave=p>.14&&p<.32?(p-.14)/.18:-1;A.belly=1-.75*rise(p,.05,.15,.7,.75)+1.2*flash(p,.75,.1);
     A.bflash=flash(p,.75,.08);A.cz=6*Math.sin(Math.PI*cl((p-.8)/.1,0,1))+2*air;A.ctilt+=.06*air;A.open=.3*rise(p,.33,.38,.5,.6);A.grin=.4*rise(p,.05,.1,.3,.33);
     A.shut=rise(p,.745,.755,.79,.82)*.8;
-    fx('splash',(p-.75)/.25,{at:[34,0,0],n:12,r:34,big:1});fx('ring',(p-.75)/.25,{r:40,rgb:'190,235,170'});fx('drips',(p-.33)/.3)}
+    fx('splash',(p-.75)/.25,{at:[34,0,0],n:12,r:34,big:1});fx('ring',(p-.75)/.25,{r:40,rgb:'190,235,170'});fx('drips',(p-.33)/.3);
+    // the chained ones carry on what the splat before them left: the eyes screwed shut, the flash dying in the belly, the splash, the ring
+    if(ch){const q=p+.005;A.shut=Math.max(A.shut,.8*(1-sstep(.035,.07,p)));A.bflash=Math.max(A.bflash,flash(q,0,.08));A.belly+=1.2*flash(q,0,.1);
+      fx('splash',q/.25,{at:[34,0,0],n:12,r:34,big:1});fx('ring',q/.25,{r:40,rgb:'190,235,170'})}}
   else if(anim==='bubbles'){// RUTTO DI BOLLE: the sac swells into a lantern with four fireflies going round inside (.00-.55), the cheeks puff,
     // the eyes wide then bulging; a comic tremble; the BURP (.60): the mouth wide open, the head snaps forward, the sac empties at once and
     // a stream of bubbles; the mouth stays open, blowing; it wipes its mouth with the back of the right hand
@@ -379,9 +394,12 @@ function tPose(anim,p,o){const ph=p*TAU,P2=(!!o.p2||anim==='rain'||anim==='sweep
     for(const[c,h] of hits){const k=h===0?1.4:1;A.bflash=Math.max(A.bflash,flash(p,c,.06)*k*.8);A.bs+=-.16*k*pls(p,c+.01,.04)+.06*k*wob(p,c+.02,4,dur,5);A.bx+=-3*k*pls(p,c+.01,.04);A.by+=h*-5*pls(p,c+.01,.05);A.B[2]-=1.5*k*pls(p,c+.01,.04);
       A.cz+=4*k*Math.sin(Math.PI*cl((p-c)/.08,0,1));if(h===0)A.lean+=-.1*rise(p,c,c+.02,c+.06,c+.12);fx('splash',(p-c)/.16,{at:[20,-50,0],n:4,r:6});fx('splash',(p-c)/.16,{at:[20,50,0],n:4,r:6});fx('ring',(p-c)/.18,{r:30,rgb:'210,240,130',lo:1})}
     if(p>last)A.bs+=.03*Math.sin((p-last)*TAU*9*dur*.25)*(1-sstep(last,.88,p));
-    // pointing at the puddle
-    {const pk=rise(p,.86,.91,.97,1),a=o.point!=null?o.point:.55;if(pk>0){hmix(1,pk,[30+38*Math.cos(a),26+38*Math.sin(a),34],nrm([Math.cos(a),Math.sin(a),-.05]),[0,0,1]);A.ptR=pk}
-      A.gemF=pls(p,.9,.04)+pls(p,.96,.04)}}
+    // pointing at the puddle, with the hand on its side; a puddle behind it: the eyes go first, the body turns half way, the arm goes up and
+    // out over the shoulder (never inside the body). The gem of the crown flashes twice, slowly
+    {const pk=rise(p,.86,.91,.97,1),a0=o.point!=null?o.point:.55,a=Math.atan2(Math.sin(a0),Math.cos(a0)),sg=a<0?-1:1;
+      if(pk>0){const tn=sg*.55*sstep(.8,1.9,Math.abs(a))*pk,aa=cl(a-tn,-2.1,2.1),up=sstep(1.1,2,Math.abs(aa));A.yaw+=tn;A.look=[-sg*.9*pk*sstep(.3,1,Math.abs(a)),A.look[1]];
+        hmix(sg,pk,[30+38*Math.cos(aa),sg*26+38*Math.sin(aa)+sg*6*up,34+18*up],nrm([Math.cos(aa),Math.sin(aa),-.05+.35*up]),[0,0,1]);if(sg<0)A.ptL=pk;else A.ptR=pk}
+      A.gemF=pls(p,.855,.04)+pls(p,.98,.04)}}
   else if(anim==='rain'){// PIOGGIA DI LUCCIOLE (second phase): it rears back with its mouth to the sky, the belly glowing orange, the light up
     // the throat; three coughs (.35, .45, .55), each spitting a spurt of fireflies; it watches them go up grinning, then sits back
     const K=[[0,[0,0]],[.3,[-.35,.02]],[.8,[-.35,.02]],[1,[0,0]]],v=kv(K,p);A.lean+=v[0];A.s+=v[1];A.belly=1+.7*rise(p,0,.15,.6,.8);
@@ -393,7 +411,8 @@ function tPose(anim,p,o){const ph=p*TAU,P2=(!!o.p2||anim==='rain'||anim==='sweep
     // colour changes from the belly outward (.45-.62), the glands light up; red eyes for good (.60); the huge croak (.62-.85), the cattails
     // stand stiff and their spikes burst into glowing down (.70); a sulky pant
     const kc=sstep(.45,.62,p);A.size=1+.12*kc;A.k2=kc;A.kr={belly:sstep(.45,.52,p),skin:sstep(.48,.6,p),warts:sstep(.47,.6,p),eye:sstep(.59,.61,p),cape:sstep(.5,.62,p)};A.glands=sstep(.55,.62,p);
-    A.pout=sstep(.62,.8,p);A.ctilt=.1*sstep(.02,.12,p);A.fluff=p>=.7?1:0;A.burst=p>=.7&&p<1?(p-.7)/.3:-1;A.flies=3+2*sstep(.45,.6,p);A.frev=1;
+    // (the spikes swell and give way to the down over .69-.73, each with a little flash: no shape changes in one frame)
+    A.pout=sstep(.62,.8,p);A.ctilt=.1*sstep(.02,.12,p);A.fluff=sstep(.69,.73,p);A.burst=p>=.7&&p<1?(p-.7)/.3:-1;A.flies=3+2*sstep(.45,.6,p);A.frev=1;
     A.B[0]=-4*rise(p,0,.12,.8,1);A.lean=-.08*rise(p,0,.1,.14,.2);wide(sstep(.01,.04,p));A.crest=sstep(.58,.62,p);A.crestUp=.7*rise(p,.02,.06,.3,.4);
     // the pounding: left, right, both (the fingers curled into fists)
     for(const[c,h] of[[.15,-1],[.25,1],[.35,0]])for(const sd of[-1,1]){if(h!==0&&h!==sd)continue;const up=rise(p,c-.065,c-.035,c-.012,c),pos=lerp3(H0(sd),h===0?[42,sd*32,60]:[44,sd*40,54],up);
@@ -431,7 +450,8 @@ function tPose(anim,p,o){const ph=p*TAU,P2=(!!o.p2||anim==='rain'||anim==='sweep
     if(p<.68){A.crownAt=p<.32?null:p<.4?{dz:900*Math.pow((p-.32)/.08,1.4),spin:(p-.32)*30}:p<.62?{dz:1e4,spin:0}:{dz:420*Math.pow(1-(p-.62)/.06,2),spin:(.68-p)*20}}
     A.cz=3*Math.sin(Math.PI*cl((p-.68)/.05,0,1));A.ctilt=.1*Math.sin(Math.PI*cl((p-.68)/.06,0,1));A.crownG=flash(p,.68,.08);
     // the royal croak
-    const cr=rise(p,.72,.74,.86,.91);A.sacK=cr;A.sacR=7+17*cr;A.sacLit=cr;if(p>.74&&p<.86)A.B[1]=.8*trem(p,.74,.86,6,dur);
+    // (the sac swells over a fifth of a second, full when the croak starts at .74, and goes down with the voice)
+    const cr=rise(p,.69,.745,.88,.93);A.sacK=cr;A.sacR=7+17*cr;A.sacLit=cr;if(p>.74&&p<.88)A.B[1]=.8*trem(p,.74,.88,6,dur);
     A.grin=.6*sstep(.88,.94,p);{const k=rise(p,.88,.92,.97,1);hmix(1,k,add(HB(1),[3,0,2]),HPU(1),HBW(1));A.lfR=[0,.8*pls(p,.935,.025),.8*pls(p,.955,.025),0]}
     A.sway=[6*wob(p,.6,2.5,dur,3),0];
     fx('splash',(p-.45)/.25,{at:[0,0,0],n:14,r:46,big:1});fx('ring',(p-.45)/.25,{r:50,rgb:'190,235,170'});fx('ring',(p-.5)/.25,{r:50,rgb:'190,235,170'});fx('ring',(p-.55)/.25,{r:50,rgb:'190,235,170'})}
@@ -442,9 +462,14 @@ function tPose(anim,p,o){const ph=p*TAU,P2=(!!o.p2||anim==='rain'||anim==='sweep
     const inf=sstep(.1,.45,p),def1=sstep(.5,.7,p),def2=sstep(.7,.85,p),base=P2?1.12:1;
     A.size=base*(1+.45*inf)*(1-.586*def1)*(1-.733*def2);A.size*=1+.02*trem(p,.1,.45,5,dur);
     A.pale=sstep(.15,.45,p);A.k2=(P2?1:0)*(1-sstep(.1,.4,p));A.kr=null;A.glands=A.k2;A.belly=1+1.5*rise(p,.15,.45,.5,.6);A.ulit=A.belly>1.2?.6:0;
-    A.eyeK=1+.25*rise(p,.2,.4,.5,.6);A.lid=P2?lerp(-1,0,sstep(.55,.7,p)):lerp(-1,0,sstep(.55,.7,p));A.crest=(P2?1:0)*(1-sstep(.4,.6,p));A.pout=(P2?1:0)*(1-sstep(.3,.5,p));
+    // the face: the eyes really bulge as it swells (no lid, tiny pupils, the crests up in fright, the domes trembling), screwed shut for the
+    // burp, then dazed (half shut, rolling) until the little toad blinks; the mouth an «O» to the sky, never a grin
+    const bul=rise(p,.1,.22,.46,.5),daz=rise(p,.56,.6,.65,.7);
+    A.eyeK=1+.4*bul+.05*bul*Math.sin(p*dur*TAU*6);A.lid=lerp(lerp(-1,.45,sstep(.56,.62,p)),0,sstep(.68,.74,p));A.pup=.95*bul;A.crestUp=rise(p,.1,.2,.46,.52);
+    A.shut=rise(p,.47,.49,.55,.58);A.look=[.5*Math.cos((p-.56)*TAU*7)*daz,.35*Math.sin((p-.56)*TAU*7)*daz];A.oh=rise(p,.44,.47,.56,.62);
+    A.crest=(P2?1:0)*(1-sstep(.08,.2,p));A.pout=(P2?1:0)*(1-sstep(.3,.5,p));
     A.fluff=P2?1:0;A.tPop=TPOPI.map(i=>p<TPOPT[i]?-1:(p-TPOPT[i])/.14);
-    const st=1-sstep(.08,.14,p);A.lean=-.15*sstep(0,.05,p)*st+v3k([[.4,[0]],[.48,[-.4]],[.54,[-.1]],[.7,[0]]],p)[0];A.B[0]=-3*sstep(0,.05,p)*st;A.roll=.06*Math.sin(p*TAU*3*dur*.5)*st*sstep(0,.03,p);
+    const st=1-sstep(.08,.14,p);A.lean=-.15*sstep(0,.05,p)*st+v3k([[.4,[0]],[.48,[-.55]],[.54,[-.12]],[.7,[0]]],p)[0];A.B[0]=-3*sstep(0,.05,p)*st;A.roll=.06*Math.sin(p*TAU*3*dur*.5)*st*sstep(0,.03,p);
     A.roll+=-.3*pls(p,.56,.06)+.3*pls(p,.63,.06);A.B[1]=-8*pls(p,.56,.07)+8*pls(p,.63,.07);
     A.open=rise(p,.47,.5,.56,.62);A.bflash=sstep(.493,.502,p)*(1-sstep(.502,.6,p));A.sacR=7+6*rise(p,.15,.4,.48,.5);
     // the crown: off at once, a spin in the air, down in front of its left (and it stays there, the room's: drawn apart)
@@ -470,6 +495,7 @@ function tPose(anim,p,o){const ph=p*TAU,P2=(!!o.p2||anim==='rain'||anim==='sweep
       // and the glowing down go round twice
       const b=.5-.5*Math.cos(ph*4),j=Math.pow(Math.max(0,Math.sin(ph*4-.5)),3);A.B[2]=1.4*b;A.s=.02*b;A.bs=.05*j-.012;A.sacR=7+2.2*b;
       A.sway=[1.2*Math.sin(ph*2-.9),1*Math.sin(ph*4-1.3)];A.cz=.5*Math.sin(ph*4-.8);A.yaw=.04*Math.sin(ph*2);A.look=[.25*Math.sin(ph*2+.5),0];A.wave=(p*2)%1;A.bt=p*2}}
+  if(LOWFX)A.sway=[0,0];   // with few effects the cattails and the cape stand still (they still spring up and pop off)
   return A}
 // keyframes (of numbers or points), held at the first key before it and at the last after it
 function v3k(K,p){if(p<=K[0][0]){const f=K[0][1];return Array.isArray(f)?f.slice():f}return keys(K,p)}
@@ -521,11 +547,16 @@ function toad2(x,y,face,anim,p,sc,o){sc=sc||1;o=o||{};anim=MV.includes(anim)?ani
     L.add(1000+D(mul(cw,kb))+30,()=>{ctx.save();ctx.scale(kb,kb);crownFree(V0,cw,k*TAU*2.2+1.1*e,lerp(KTILT,1.25,sstep(.5,.85,k)),K,A);ctx.restore()})}
   else if(A.crownAt.dz!=null&&A.crownAt.dz<600){const c=X.T(add(KC,[0,0,A.crownAt.dz]));L.add(1000+D(c),()=>{const sp0=A.crownAt.spin;crownAt(V0,q=>X.T(add(KC,add([0,0,A.crownAt.dz],rotZ(sub(q,KC),sp0)))),v=>X.Rd(rotZ(v,sp0)),KC,KTILT,K,A)})}
   // ---------------- the seven cattails (behind the head seen from the front, over the cape seen from behind)
-  for(let i=0;i<7;i++){const tp=A.tPop?A.tPop[i]:-1;if(tp>=1)continue;const nb=X.Rd(nrm([-.7,CTB[i][1]/40,.7])),front=tp>=0||F(nb)>0,mid=X.T(lerp3(CTB[i],CTT[i],.5));
-    L.add((front?1000:-1000)+D(mid)+(tp>=0?60:0),()=>cattail(V0,X,A,K,i))}
-  // ---------------- the throat sac
-  {const r=Math.min(A.sacR,27),sc0=add(lerp3(SAC0,SAC1,A.sacK),[0,0,-.55*Math.max(0,r-18)]),c=X.T(sc0),oc=outCap(X,BC,BR,FB,sc0,r,1),front=!oc||F(oc.n)>-.2;
-    if(oc!==false)L.add((front?1000:-1000)+D(c),()=>{const q=P(c);sunkDraw(V0,q,r,oc,()=>sacDraw(V0,q,r,A,K),`rgba(120,96,40,${(.6*sstep(8,15,r)).toFixed(3)})`)})}
+  // (one popped off like a cork goes in front of the body or behind it from where it flies: never over the face while behind the head)
+  {const dB=D(X.T(BC));for(let i=0;i<7;i++){const tp=A.tPop?A.tPop[i]:-1;if(tp>=1)continue;const nb=X.Rd(nrm([-.7,CTB[i][1]/40,.7])),mid=X.T(lerp3(CTB[i],CTT[i],.5));
+    let front=F(nb)>0,dd=D(mid);if(tp>=0){const kk=tp;dd=D(X.T(add(lerp3(CTB[i],CTT[i],.5),[-14*kk,(i-3)*9*kk,95*kk-35*kk*kk])));front=dd>dB}
+    L.add((front?1000:-1000)+dd,()=>cattail(V0,X,A,K,i))}}
+  // ---------------- the throat sac (a small one sits high, under the chin: the throat swelling, not a button on the chest)
+  // (it is drawn over the body and the body hides it from where its tip is: seen from behind or at the side it slides behind the chest bit
+  // by bit, never all at once)
+  {const r=Math.min(A.sacR,27),sc0=add(lerp3(SAC0,SAC1,A.sacK),[0,0,-.55*Math.max(0,r-18)+4*(1-sstep(10,18,r))]),c=X.T(sc0),oc=outCap(X,BC,BR,FB,sc0,r,1);
+    if(oc!==false){const dT=oc?D(add(c,mul(oc.n,r))):D(c);L.add(1000+Math.min(D(c),dT),()=>{const q=P(c);
+      behind([nearAt(NB,dT)],()=>sunkDraw(V0,q,r,oc,()=>sacDraw(V0,q,r,A,K),`rgba(120,96,40,${(.6*sstep(15,21,r)).toFixed(3)})`),[q[0]-r-4,q[1]-r-4,q[0]+r+4,q[1]+r+4])})}}
   // ---------------- the arms: upper arm, the shoulder, the forearm with the golden bracelet, the hand
   // (the thighs now, for hiding the limbs behind them)
   const THS={};for(const sd of[-1,1]){const g=LG[sd],h=sdv(HIP,sd);THS[sd]={c:add(h,g.Rw(sub(sdv(TC,sd),h))),F:{u:g.Rw([1,0,0]),v:g.Rw([0,1,0]),w:g.Rw([0,0,1])}}}
@@ -536,8 +567,9 @@ function toad2(x,y,face,anim,p,sc,o){sc=sc||1;o=o||{};anim=MV.includes(anim)?ani
     J['arm'+sd]={S,El,W,hc};L.add(1000+D(lerp3(El,hc,.5)),()=>armDraw(V0,X,A,K,sd,S,El,W,hc,HF,hideAt))}
   // ---------------- the legs: the shin along the thigh, the webbed foot
   for(const sd of[-1,1]){const g=LG[sd];L.add(1000+D(lerp3(g.kn,g.an,.5)),()=>legDraw(V0,X,A,K,sd,g,hideAt))}
-  // ---------------- the tongue: out of the mouth (behind the head when it looks away)
-  if(A.tongue){const m0=X.T(ellAt(BC,BR,FB,mouthDir(0,A,.12*A.open))),front=fF>-.05;L.add(front?1000+D(m0)+80:-2000,()=>tongueDraw(V0,X,A,K,m0,o,SS,p))}
+  // ---------------- the tongue: out of the mouth; while the mouth shows it is drawn over the body and the head hides what goes behind it,
+  // bit by bit (the root slides behind the cheek); only when the mouth is on the far side is it all behind
+  if(A.tongue){const m0=X.T(ellAt(BC,BR,FB,mouthDir(0,A,.12*A.open))),tg=tongueGeo(V0,X,A,m0,o,SS);L.add(1000+Math.max(D(m0),tg.dTip)+20,()=>tongueDraw(V0,X,A,K,m0,tg,NB))}
   // ---------------- the fireflies going round it (and the glowing down of the second phase)
   if(!o.noFlies&&!LOWFX&&A.flies>0){const n=Math.ceil(A.flies),n0=Math.floor(A.flies),m=A.flies-n0,dc=D(X.T(BC));for(let i=0;i<n;i++){const al=i<n0?1:m,a=TAU*p*A.frev+(i<n0&&m>0?lerp(i*TAU/n0,i*TAU/n,m):i*TAU/n),R=58+8*((i*5)%3)/2,h=62+22*Math.sin(TAU*p*A.frev*2+i*1.9)+4*(i%2),
       q3=[R*Math.cos(a)+A.B[0],R*Math.sin(a)+A.B[1],h+lift*.6],k=.5+.5*Math.sin(TAU*p*Math.round(2*DUR[anim])+i*2.1);L.add((D(q3)>dc?1000:-1000)+D(q3),()=>{const a0=ctx.globalAlpha;ctx.globalAlpha=a0*al;flyAt(P(q3),k,K,1,A.k2>.5);ctx.globalAlpha=a0})}
@@ -559,13 +591,14 @@ function massDraw(V0,X,A,K,J,LG,YCc,YRc,face){const{P,F,D}=V0,rgb=K.rimc;
   ctx.save();ctx.clip(hp.path);
   const onB=m=>({q:P(X.T(ellAt(BC,BR,FB,m))),v:F(X.Rd(ellN(BR,FB,m)))});
   // the dark spots of the back, the dull warts of the flanks, the firefly warts of the low back
-  {ctx.beginPath();let any=false;for(const s of SPB){const r=onB(s.m);if(r.v<.08)continue;any=true;const k=cl((r.v-.08)*4,0,1),n=X.Rd(ellN(BR,FB,s.m)),c=X.T(ellAt(BC,BR,FB,s.m));spotPath(V0,c,n,s.r*(.4+.6*k))}
+  // (near the outline they grow out of nothing: turning, no dot ever pops in or out)
+  {ctx.beginPath();let any=false;for(const s of SPB){const r=onB(s.m);if(r.v<.08)continue;const k=sstep(.08,.34,r.v);if(k<.05)continue;any=true;const n=X.Rd(ellN(BR,FB,s.m)),c=X.T(ellAt(BC,BR,FB,s.m));spotPath(V0,c,n,s.r*k)}
     if(any){ctx.fillStyle=K.spot;ctx.globalAlpha*=.75;ctx.fill();ctx.globalAlpha/=.75}}
-  {const W=[];for(const w of DWB){const r=onB(w.m);if(r.v<.12)continue;W.push({q:r.q,r:w.r*Math.min(1,.3+r.v)})}wartsDraw(W,K)}
+  {const W=[];for(const w of DWB){const r=onB(w.m);if(r.v<.12)continue;const rr=w.r*sstep(.12,.45,r.v);if(rr>.4)W.push({q:r.q,r:rr})}wartsDraw(W,K)}
   for(let i=0;i<FWB.length;i++){const r=onB(FWB[i]);if(r.v<.05)continue;fwartDraw(r.q,FWBR[i>>1],K,wartLit(A,i>>1),cl((r.v-.05)*5,0,1))}
-  // the wet sheen on the back and the head
-  {const b=bbox(hp),w=b[2]-b[0],h=b[3]-b[1],cx=b[0]+w*.34,cy=b[1]+h*.24,g=ctx.createRadialGradient(cx,cy,1,cx,cy,w*.3);g.addColorStop(0,`rgba(${K.wet},.32)`);g.addColorStop(1,`rgba(${K.wet},0)`);
-    ctx.save();ctx.translate(cx,cy);ctx.scale(1,.55);ctx.translate(-cx,-cy);ctx.fillStyle=g;ctx.beginPath();ctx.arc(cx,cy,w*.3,0,TAU);ctx.fill();ctx.restore()}
+  // the wet sheen on the back and the head (small and soft: the skin is deep, not shiny plastic)
+  {const b=bbox(hp),w=b[2]-b[0],h=b[3]-b[1],cx=b[0]+w*.34,cy=b[1]+h*.24,g=ctx.createRadialGradient(cx,cy,1,cx,cy,w*.22);g.addColorStop(0,`rgba(${K.wet},.18)`);g.addColorStop(1,`rgba(${K.wet},0)`);
+    ctx.save();ctx.translate(cx,cy);ctx.scale(1,.55);ctx.translate(-cx,-cy);ctx.fillStyle=g;ctx.beginPath();ctx.arc(cx,cy,w*.22,0,TAU);ctx.fill();ctx.restore()}
   // the throat's cream under the mouth
   {const r=capReg(V0,X,BC,BR,FB,TABTH);if(r){const c=P(X.T(ellAt(BC,BR,FB,TABTH.n))),bb=bbox(r.limb.length?r.crease.concat(r.limb):r.crease),R=Math.max(bb[2]-bb[0],bb[3]-bb[1],4)*.6,g=ctx.createRadialGradient(c[0],c[1]+2,1,c[0],c[1],R);
     g.addColorStop(0,K.belly.l);g.addColorStop(.62,K.belly.b);g.addColorStop(1,`rgba(${C.rgbs(K.belly.b)},.15)`);ctx.fillStyle=g;ctx.fill(r.path)}}
@@ -598,17 +631,22 @@ function wartsDraw(W,K){if(!W.length)return;ctx.beginPath();for(const w of W){ct
 function fwartDraw(q,r,K,lit,k){ga(k,()=>{if(!LOWFX)shine(K.fglow,q[0],q[1],r*(2.8+1.8*lit),.4+.5*lit);ctx.beginPath();ctx.arc(q[0],q[1],r,0,TAU);ctx.fillStyle=cmix(K.fdim,K.fcol,.45+.55*lit);ctx.fill();ctx.strokeStyle='rgba(20,34,12,.85)';ctx.lineWidth=1.2;ctx.stroke();
   ctx.fillStyle=cmix(K.fcol,K.fcore,.3+.7*lit);ball([q[0]-r*.08,q[1]-r*.1],r*.58);ctx.fill();ctx.fillStyle='rgba(255,255,245,.9)';ball([q[0]-r*.3,q[1]-r*.36],r*.24);ctx.fill()})}
 // the wave of light over the firefly warts: from the tail to the head (rows: 0 the highest of the low back .. 2 the lowest, 3 the thighs)
-function wartLit(A,i){const base=i===3&&A.thLit>0?A.thLit:.2;if(A.wave<0)return base;const c=A.wave*1.4-.2,pos=[.75,.5,.25,0][i];return Math.max(base,.2+.8*Math.max(0,1-Math.abs(c-pos)/.3))}
+// (at rest they glow at .45, always a little: from behind the dark mass has its lights)
+function wartLit(A,i){const base=i===3?Math.max(.45,A.thLit||0):.45;if(A.wave<0)return base;const c=A.wave*1.4-.2,pos=[.75,.5,.25,0][i];return Math.max(base,.45+.55*Math.max(0,1-Math.abs(c-pos)/.3))}
 // the light that runs under the skin before a blow: a pearl of light with its trail along a path of the body
 function pearlDraw(V0,X,A,K){const pr=A.pearl;if(!pr||pr.a<=.01||pr.f<=.001)return;const fin=sstep(0,.1,pr.f);const names=pr.path==='thigh'?['thighL','thighR']:[pr.path];
   for(const nm of names){const pa=PATHS[nm],S=pa.S,fs=pa.f,f=pr.f,pts=[];
     for(let i=0;i<S.length;i++){if(fs[i]>f)break;if(fs[i]<f-.35)continue;pts.push({q:V0.P(X.T(S[i].p)),v:V0.F(X.Rd(S[i].n)),k:1-(f-fs[i])/.35})}
     let hi=0;while(hi<fs.length-2&&fs[hi+1]<f)hi++;const k=cl((f-fs[hi])/((fs[hi+1]-fs[hi])||1),0,1),hq=V0.P(X.T(lerp3(S[hi].p,S[hi+1].p,k))),hv=V0.F(X.Rd(nrm(lerp3(S[hi].n,S[hi+1].n,k))));pts.push({q:hq,v:hv,k:1});
+    // (a dark halo under the light so it reads on the cream belly too; with few effects a white bead with its outline)
     ctx.save();ctx.globalAlpha*=pr.a*fin;ctx.lineCap='round';const lc=C.rgbs(K.lcore);
     for(let i=1;i<pts.length;i++){const a=pts[i-1],b=pts[i];if(a.v<.03||b.v<.03)continue;const al=.6*b.k;
+      ctx.strokeStyle=`rgba(20,40,10,${.3*b.k})`;ctx.lineWidth=2.2*b.k+3;seg(a.q,b.q);ctx.stroke();
       if(!LOWFX){ctx.globalCompositeOperation='lighter';ctx.strokeStyle=`rgba(${K.light},${al*.45})`;ctx.lineWidth=7*b.k+2;seg(a.q,b.q);ctx.stroke();ctx.globalCompositeOperation='source-over'}
       ctx.strokeStyle=`rgba(${lc},${al})`;ctx.lineWidth=2.2*b.k+.6;seg(a.q,b.q);ctx.stroke()}
-    const hk=1-sstep(.88,1,f);if(hv>.03&&hk>0){ctx.globalAlpha*=hk;shine(K.light,hq[0],hq[1],13,.8);ctx.fillStyle=LOWFX?`rgba(${lc},.85)`:K.lcore;ball(hq,3.1*(.6+.4*hk));ctx.fill()}
+    const hk=1-sstep(.88,1,f);if(hv>.03&&hk>0){ctx.globalAlpha*=hk;const rr=4*(.6+.4*hk);ctx.fillStyle='rgba(20,40,10,.5)';ball(hq,rr+2);ctx.fill();
+      if(LOWFX){ctx.fillStyle='#ffffff';ball(hq,3.5);ctx.fill();ctx.strokeStyle=INK;ctx.lineWidth=1.2;ctx.stroke()}
+      else{shine(K.light,hq[0],hq[1],15,.85);ctx.fillStyle=K.lcore;ball(hq,rr);ctx.fill();ctx.fillStyle='#ffffff';ball([hq[0]-.6,hq[1]-.7],rr*.45);ctx.fill()}}
     ctx.restore()}}
 
 // ------------------------------------------------------------------ the thighs: their own volume over the mass (shade, crease, outline)
@@ -618,7 +656,7 @@ function thighPaint(V0,X,A,K,sd,Cc,Fr){const{P,F}=V0,r=capReg(V0,X,Cc,TR,Fr,TABT
     ctx.save();ctx.clip(r.path,eo);
     {ctx.beginPath();let any=false;for(const s of SPT){const m=sdv(s.m,sd),n=X.Rd(ellN(TR,Fr,m)),v=F(n);if(v<.1)continue;any=true;spotPath(V0,X.T(ellAt(Cc,TR,Fr,m)),n,s.r)}
       if(any){ctx.fillStyle=K.spot;ctx.globalAlpha*=.7;ctx.fill();ctx.globalAlpha/=.7}}
-    {const W=[];for(const w of DWT){const m=sdv(w.m,sd),v=F(X.Rd(ellN(TR,Fr,m)));if(v<.15)continue;W.push({q:P(X.T(ellAt(Cc,TR,Fr,m))),r:w.r*Math.min(1,.3+v)})}wartsDraw(W,K)}
+    {const W=[];for(const w of DWT){const m=sdv(w.m,sd),v=F(X.Rd(ellN(TR,Fr,m)));if(v<.15)continue;const rr=w.r*sstep(.15,.45,v);if(rr>.4)W.push({q:P(X.T(ellAt(Cc,TR,Fr,m))),r:rr})}wartsDraw(W,K)}
     {const m=sdv(FWT,sd),v=F(X.Rd(ellN(TR,Fr,m)));if(v>.05)fwartDraw(P(X.T(ellAt(Cc,TR,Fr,m))),4.4,K,wartLit(A,3),cl((v-.05)*5,0,1))}
     ctx.restore();
     strokeRuns([r.crease],'rgba(16,34,14,.55)',2);strokeRuns([r.limb],INK,2.4);if(r.limb.length>2)rimP(r.limb,K.rimc,.3,false)})}
@@ -643,7 +681,8 @@ function bellyPaint(V0,X,A,K,YCc,YRc,J){const{P,F}=V0,r=capReg(V0,X,YCc,YRc,AXES
 // ------------------------------------------------------------------ the mouth: a wide line from cheek to cheek, the crooked smile
 // u from -1 (its left corner) to 1: a direction on the body's ellipsoid; lo: how far down the lower lip has dropped
 const MOUTHAZ=1.08;
-function mouthDir(u,A,lo){const az=u*MOUTHAZ*(1+.08*A.grin),k=u*u,el=.245+(.17-.1*A.pout-.06*A.grin)*k+(u<0?.07*k:0)-(lo||0)*(1-k*.85);return dir(az,el)}
+// (A.oh: the mouth an «O», the lower lip drops only in the middle and the corners stay shut: the defeat's burp, never a grin)
+function mouthDir(u,A,lo){const az=u*MOUTHAZ*(1+.08*A.grin),k=u*u,oh=A.oh||0,dk=oh>0?lerp(1-k*.85,Math.max(0,1-k/.28),oh):1-k*.85,el=.245+(.17-.1*A.pout-.06*A.grin)*k+(u<0?.07*k:0)-(lo||0)*dk;return dir(az,el)}
 function mouthDraw(V0,X,A,K){const{P,F}=V0,N=14,up=[],vs=[],lo=.42*A.open,at=m=>P(X.T(ellAt(BC,BR,FB,m))),vis=m=>F(X.Rd(ellN(BR,FB,m)));
   for(let i=0;i<=N;i++){const m=mouthDir(-1+2*i/N,A);vs.push(vis(m));up.push(at(m))}
   if(Math.max(...vs)<.02)return;
@@ -664,11 +703,11 @@ function mouthDraw(V0,X,A,K){const{P,F}=V0,N=14,up=[],vs=[],lo=.42*A.open,at=m=>
     if(lr.length>1){strokeRuns([lr],cmix(K.belly.l,K.skin.l,.4),2.4);strokeRuns([lr.map(q=>[q[0],q[1]+1.6])],'rgba(30,40,14,.35)',1.2)}}
   strokeRuns(runs,INK,2.8);
   // the line of the mouth lit by the light that climbed the throat
-  if(A.mlit>.01){ctx.save();ctx.globalAlpha*=A.mlit;if(!LOWFX){ctx.globalCompositeOperation='lighter';strokeRuns(runs,`rgba(${K.light},.5)`,7);ctx.globalCompositeOperation='source-over'}strokeRuns(runs,K.lcore,1.3);ctx.restore()}
-  // the two little tusks on the lower lip near the corners, pointing up
-  for(const sd of[-1,1]){const m=mouthDir(sd*.74,A,.02+lo),v=vis(m);if(v<.12)continue;const b0=X.T(ellAt(BC,BR,FB,m)),up3=X.Rd([0,0,1]),tip=add(b0,mul(up3,5.5)),qa=P(add(b0,mul(up3,-.8))),qb=P(tip);
-    ga(cl((v-.12)*5,0,1),()=>{const w=1.9;ctx.beginPath();ctx.moveTo(qa[0]-w,qa[1]);ctx.quadraticCurveTo(qb[0]-w*.9,qb[1]+1.5,qb[0],qb[1]);ctx.quadraticCurveTo(qb[0]+w*.9,qb[1]+1.5,qa[0]+w,qa[1]);ctx.closePath();
-      ctx.fillStyle=grad3([qa[0]-w,qb[1],qa[0]+w,qa[1]],K.tusk);ctx.fill();ctx.strokeStyle=INK;ctx.lineWidth=1.3;ctx.stroke();ctx.fillStyle='rgba(255,255,255,.7)';ball([qb[0]-.5,qb[1]+1.6],.7);ctx.fill()})}
+  if(A.mlit>.01){ctx.save();ctx.globalAlpha*=A.mlit;if(!LOWFX){ctx.globalCompositeOperation='lighter';strokeRuns(runs,`rgba(${K.light},.55)`,9);ctx.globalCompositeOperation='source-over'}strokeRuns(runs,K.lcore,2);ctx.restore()}
+  // the two little tusks on the lower lip where the line is still flat (the corner's hook stays free), pointing up, round at the tip
+  for(const sd of[-1,1]){const m=mouthDir(sd*.6,A,.06+lo),v=vis(m);if(v<.12)continue;const b0=X.T(ellAt(BC,BR,FB,m)),up3=X.Rd([0,0,1]),tip=add(b0,mul(up3,5)),qa=P(add(b0,mul(up3,-.6))),qb=P(tip);
+    ga(cl((v-.12)*5,0,1),()=>{ctx.beginPath();hullA(qa,1.9,qb,1);ctx.fillStyle=grad3([qa[0]-2,qb[1]-1,qa[0]+2,qa[1]],K.tusk);ctx.fill();ctx.strokeStyle=INK;ctx.lineWidth=1.3;ctx.stroke();
+      ctx.fillStyle='rgba(255,255,255,.7)';ball([qb[0]-.5,qb[1]+.9],.7);ctx.fill()})}
   // licking its lips: the tip of the tongue comes out of the left corner and runs over the upper lip
   if(A.lick>=0&&A.lick<1){const L=A.lick,ut=-1+1.25*Math.sin(Math.PI*L),sz=Math.sin(Math.PI*cl(L*1.15,0,1)),pts=[];for(let j=0;j<=6;j++){const u=-1.02+(ut+1.02)*j/6,m=mouthDir(u,A,-.035);if(vis(m)>.05)pts.push(at(m))}
     if(pts.length>1&&sz>.05){ctx.lineCap='round';ctx.lineJoin='round';const w=5.5*sz;strokeRuns([pts],INK,w+2.4);strokeRuns([pts],K.tongue.b,w);const e=pts[pts.length-1];ctx.fillStyle=K.tongue.l;ball([e[0]-.6,e[1]-1],w*.28);ctx.fill()}}}
@@ -679,34 +718,37 @@ function glandDraw(V0,X,A,K,sd){const{P,F}=V0,Cg=sdv(GC,sd),r=capReg(V0,X,Cg,GR,
   const pc=P(X.T(ellAt(Cg,GR,AXES,nrm([.1,sd*.8,.6]))));
   if(gl>.01){ctx.save();ctx.clip(r.path);ctx.globalAlpha*=gl;const g=ctx.createRadialGradient(pc[0],pc[1],.5,pc[0],pc[1],7);g.addColorStop(0,K.gcore);g.addColorStop(.55,`rgba(194,90,20,.75)`);g.addColorStop(1,`rgba(194,90,20,0)`);ctx.fillStyle=g;ctx.fill(r.path);ctx.restore();
     shine(K.gglow,pc[0],pc[1],12,.3*gl)}
-  ctx.fillStyle=gl>.5?K.gcore:K.pore;ctx.beginPath();for(const[a,b] of[[-.3,.2],[.1,.35],[.35,.05],[-.05,-.15],[.4,.4],[-.4,-.1]]){const m=nrm([a,sd*.8,.55+b]),v=F(X.Rd(ellN(GR,AXES,m)));if(v<.15)continue;ballA(P(X.T(ellAt(Cg,GR,AXES,m))),gl>.5?1.1:.9)}ctx.fill();
-  strokeRuns([r.crease],'rgba(16,34,14,.5)',1.6);strokeRuns([r.limb],INK,2)}
+  // (dull in the first phase: soft pores, the crease barely drawn, ink only on the outline, so it never reads as a second eye)
+  ctx.fillStyle=gl>.5?K.gcore:K.pore;ctx.beginPath();for(const[a,b] of[[-.3,.2],[.1,.35],[.35,.05],[-.05,-.15],[.4,.4],[-.4,-.1]]){const m=nrm([a,sd*.8,.55+b]),v=F(X.Rd(ellN(GR,AXES,m)));if(v<.15)continue;ballA(P(X.T(ellAt(Cg,GR,AXES,m))),gl>.5?1.1:.85)}
+  if(gl<=.5)ctx.globalAlpha*=.5;ctx.fill();if(gl<=.5)ctx.globalAlpha/=.5;
+  strokeRuns([r.crease],'rgba(16,34,14,.25)',1.4);strokeRuns([r.limb],INK,2)}
 
 // ------------------------------------------------------------------ the cape: velvet of cattail, a trim of white down with the ermine's dots
 function capeDraw(V0,X,A,K){const{P,F}=V0,op=A.capeOpen||0,R2=[BR[0]*(CAPEK+.04*op),BR[1]*(CAPEK+.22*op),BR[2]*(CAPEK+.03*op)],r=capReg(V0,X,BC,R2,FB,TABC);if(!r)return;
   const eo=r.eo?'evenodd':'nonzero',q=P(X.T(ellAt(BC,R2,FB,CAPEN))),bb=[q[0]-42,q[1]-30,q[0]+42,q[1]+36];
+  // the front edges have no trim: the cloth throws a soft shadow on the skin under them and they get their ink line (cloth lying on the
+  // body, not a sticker cut straight)
+  const N=TABC.N,fe=[];{let cur=[];for(let k=0;k<=N;k++){const i=k%N,t=i/N*TAU,m=TABC.b[i],v=F(X.Rd(ellN(R2,FB,m)));if(v>.02&&trimW(t)<.35)cur.push(P(X.T(ellAt(BC,R2,FB,m))));else if(cur.length){fe.push(cur);cur=[]}}if(cur.length)fe.push(cur)}
+  if(fe.length){const a0=ctx.globalAlpha;ctx.globalAlpha=a0*.34;strokeRuns(fe.map(r=>r.map(q=>[q[0]+.8,q[1]+1.8])),'#0a160c',7.5);ctx.globalAlpha=a0}
   ctx.fillStyle=gradDeep(bb,K.cape);ctx.fill(r.path,eo);
-  // the nap of the velvet: soft folds from the neck down to the hem, each with a sheen beside it
-  ctx.save();ctx.clip(r.path,eo);{const dk=[],lt=[];for(const s0 of[-.62,-.24,.2,.6]){let a=[],b=[];for(let j=0;j<=7;j++){const e=.3-j*.15,m=nrm(add(add(mul(CAPEN,Math.cos(e)),mul(TABC.u,Math.sin(e))),mul(TABC.v,s0*(1+.3*j/7))));
-      const n=X.Rd(ellN(R2,FB,m));if(F(n)>.06){const qq=P(X.T(ellAt(BC,R2,FB,m)));a.push(qq);b.push([qq[0]-2.4,qq[1]-.6])}else if(a.length){dk.push(a);lt.push(b);a=[];b=[]}}if(a.length){dk.push(a);lt.push(b)}}
-    ctx.globalAlpha*=.4;strokeRuns(dk,K.cape.d,2.6);ctx.globalAlpha*=.5;strokeRuns(lt,K.cape.l,1.2)}ctx.restore();
-  strokeRuns([r.limb],INK,2.6);if(r.limb.length>2)rimP(r.limb,K.rimc,.3,false);
+  // the nap of the velvet: three broad soft folds from the neck down to the hem, each with a sheen beside it
+  ctx.save();ctx.clip(r.path,eo);{const dk=[],lt=[];for(const s0 of[-.5,.04,.52]){let a=[],b=[];for(let j=0;j<=7;j++){const e=.3-j*.15,m=nrm(add(add(mul(CAPEN,Math.cos(e)),mul(TABC.u,Math.sin(e))),mul(TABC.v,s0*(1+.35*j/7))));
+      const n=X.Rd(ellN(R2,FB,m));if(F(n)>.06){const qq=P(X.T(ellAt(BC,R2,FB,m)));a.push(qq);b.push([qq[0]-2.8,qq[1]-.7])}else if(a.length){dk.push(a);lt.push(b);a=[];b=[]}}if(a.length){dk.push(a);lt.push(b)}}
+    ctx.globalAlpha*=.42;strokeRuns(dk,K.cape.d,3.6);ctx.globalAlpha*=.5;strokeRuns(lt,K.cape.l,1.5)}ctx.restore();
+  strokeRuns([r.limb],INK,2.6);if(fe.length)strokeRuns(fe,INK,2.2);if(r.limb.length>2)rimP(r.limb,K.rimc,.3,false);
   trimDraw(V0,X,A,K,R2)}
-// the trim of white down: a fluffy roll along the collar at the nape (it stands up a little: seen from the front it frames the head) and
-// a fluffy band along the hem; the front edges down the flanks have none. The ermine's dark tails on every other puff
-function trimDraw(V0,X,A,K,R2){const{P,F}=V0,N=TABC.N,runs=[],bumps=[];let cur=[];
-  // the trim follows the whole edge: the collar (a roll that stands up), the front edges down the flanks (only where they face us, so
-  // seen from the front they never outline the head), the hem
-  for(let k=0;k<=N;k++){const i=k%N,t=i/N*TAU,tw=trimW(t),m=TABC.b[i],n=X.Rd(ellN(R2,FB,m)),v=F(n);
-    if(v>.06&&tw>.02){const q=P(add(X.T(ellAt(BC,R2,FB,m)),mul(n,.8))),w=sstep(.06,.2,v)*tw;cur.push(q);if(i%3===0)bumps.push({q,w,i})}
-    else if(cur.length){runs.push(cur);cur=[]}}
-  if(cur.length)runs.push(cur);if(!runs.length)return;
-  ctx.lineCap='round';ctx.lineJoin='round';const rb=b=>3.2*(.45+.55*b.w);
-  ctx.fillStyle=INK;ctx.beginPath();for(const b of bumps){const r=rb(b)+1.25;ctx.moveTo(b.q[0]+r,b.q[1]);ctx.arc(b.q[0],b.q[1],r,0,TAU)}ctx.fill();strokeRuns(runs,INK,8.2);
-  ctx.fillStyle=K.down.b;ctx.beginPath();for(const b of bumps){const r=rb(b);ctx.moveTo(b.q[0]+r,b.q[1]);ctx.arc(b.q[0],b.q[1],r,0,TAU)}ctx.fill();strokeRuns(runs,K.down.b,5.8);
-  strokeRuns(runs.map(r=>r.map(q=>[q[0]-.4,q[1]-1.2])),K.down.l,2.6);
-  ctx.fillStyle=K.down.l;ctx.beginPath();for(const b of bumps){const r=rb(b)*.5;ctx.moveTo(b.q[0]-.4+r,b.q[1]-1);ctx.arc(b.q[0]-.4,b.q[1]-1,r,0,TAU)}ctx.fill();
-  ctx.fillStyle=K.ermine;for(const b of bumps){if((b.i/3)%2!==1||b.w<.6)continue;ctx.beginPath();ctx.ellipse(b.q[0]+.4,b.q[1]+.6,.9,1.7,0,0,TAU);ctx.fill()}}
+// the trim of white down along the collar at the nape (it stands up a little: seen from the front it frames the head) and along the hem;
+// the front edges down the flanks have none. A chain of uneven overlapping puffs, one on each of the 72 points of the edge: each grows out
+// of nothing where its point turns to face us and toward the ends of the trim, so turning never makes a piece of it pop in or out. Ink
+// round them all, the cold shadow of their lower half, the cream, a light on top; the ermine's dark tails on every fourth
+function trimDraw(V0,X,A,K,R2){const{P,F}=V0,N=TABC.N,B=[];
+  for(let i=0;i<N;i++){const t=i/N*TAU,tw=trimW(t);if(tw<=.02)continue;const m=TABC.b[i],n=X.Rd(ellN(R2,FB,m)),v=F(n);if(v<=.06)continue;
+    const k=Math.min(1,2*tw)*sstep(.06,.25,v);if(k<.05)continue;B.push({q:P(add(X.T(ellAt(BC,R2,FB,m)),mul(n,1.2))),r:(3.3+1.4*(((i*37)%11)/10))*k,i})}
+  if(!B.length)return;
+  const puffs=(dx,dy,f,col)=>{ctx.beginPath();for(const b of B)ballA([b.q[0]+dx,b.q[1]+dy],b.r*f);ctx.fillStyle=col;ctx.fill()};
+  ctx.beginPath();for(const b of B)ballA(b.q,b.r+1.2);ctx.fillStyle=INK;ctx.fill();
+  puffs(0,.3,1,K.down.d);puffs(-.25,-.55,.88,K.down.b);puffs(-.9,-1.4,.34,K.down.l);
+  ctx.fillStyle=K.ermine;ctx.beginPath();for(const b of B){if(b.i%6!==2||b.r<3)continue;const x=b.q[0]+.4,y=b.q[1]+1;ctx.moveTo(x+1.3,y);ctx.ellipse(x,y,1.3,2.4,0,0,TAU)}ctx.fill()}
 // the cape slid off in the defeat: a heap of velvet on the floor behind it, a bit of the trim (k: 0 falling .. 1 lying), al: its fading
 function heapDraw(V0,K,k,al){const{P,F}=V0,kk=cl(k,0,1),c=[-34,6,34*Math.pow(1-kk,2)],sq=1-.4*(1-kk),rr=t=>15+3*Math.sin(3*t+.5)+2*Math.sin(5*t+1.2),
     at=(t,f,z)=>{const r=rr(t)*f;return P([c[0]+Math.cos(t)*1.15*r,c[1]+Math.sin(t)*r,c[2]+z])},fd=t=>F([Math.cos(t)*1.15,Math.sin(t),0]);
@@ -725,6 +767,8 @@ function heapDraw(V0,K,k,al){const{P,F}=V0,kk=cl(k,0,1),c=[-34,6,34*Math.pow(1-k
 // ------------------------------------------------------------------ the eye domes, the eyes, the lids, the crests
 function domeDraw(V0,X,A,K,sd,c,front){const{P,F}=V0,q=P(c),r=ER*A.eyeK,oc=front?outCap(X,BC,BR,FB,sdv(EC,sd),r,CAPEK):null;
   const gs=grad3([q[0]-r,q[1]-r,q[0]+r,q[1]+r],K.skin),draw=()=>{tball(q,r,K.skin,K.rimc,2.6,.32,gs);eyeDraw(V0,X,A,K,sd,q,r,gs)};
+  // a soft shadow on the head round the dome: a little dark round the amber, so it lights up
+  if(front&&oc!==false){const g=ctx.createRadialGradient(q[0],q[1]+1.5,r*.8,q[0],q[1]+1.5,r*1.5);g.addColorStop(0,'rgba(6,18,8,.34)');g.addColorStop(1,'rgba(6,18,8,0)');ctx.fillStyle=g;ctx.beginPath();ctx.arc(q[0],q[1]+1.5,r*1.5,0,TAU);ctx.fill()}
   if(front)sunkDraw(V0,q,r,oc,draw);else draw();
   crestDraw(V0,X,A,K,sd,c,q,r)}
 const PUPT=[];for(let i=0;i<16;i++){const t=i/16*Math.PI*2,cs=Math.cos(t),sn=Math.sin(t);PUPT.push([Math.pow(Math.abs(cs),.55)*Math.sign(cs),Math.pow(Math.abs(sn),.7)*Math.sign(sn)])}
@@ -739,17 +783,18 @@ function eyeDraw(V0,X,A,K,sd,q,r,gs){const{F}=V0,n=X.Rd(nrm(sdv(EDIR,sd))),fv=F(
   const cp=capPts(V0,q,r*.985,n,al,18);if(!cp)return;
   ctx.save();const ip=new Path2D();ip.moveTo(cp.pts[0][0],cp.pts[0][1]);for(const w of cp.pts)ip.lineTo(w[0],w[1]);ip.closePath();
   // the glow of the eye
-  if(!LOWFX)shine(K.eyeGlow,q[0],q[1],r*1.6,.22+.25*(lid<0?-lid:0));
+  if(!LOWFX)shine(K.eyeGlow,q[0],q[1],r*1.6,.35+.25*(lid<0?-lid:0));
   // the iris: amber, lit from inside
   const ic=sp(V0,q,r,n);{const g=ctx.createRadialGradient(ic[0]-1,ic[1]-1.5,.5,ic[0],ic[1],r*.95);g.addColorStop(0,K.eye.l);g.addColorStop(.45,K.eye.b);g.addColorStop(1,K.eye.d);ctx.fillStyle=g;ctx.fill(ip)}
   ctx.clip(ip);
   // the pupil: a rounded bar across (narrower when it aims); the point of light
-  {const lk=A.look,pc=nrm(add(n,add(mul(hu,lk[0]*.22),mul(vu,lk[1]*.15)))),c0=sp(V0,q,r,pc),a=sp(V0,q,r,nrm(add(pc,mul(hu,.5-.12*A.pup)))),b=sp(V0,q,r,nrm(add(pc,mul(vu,.2*(1-.55*A.pup)))));
+  {const lk=A.look,pc=nrm(add(n,add(mul(hu,lk[0]*.22),mul(vu,lk[1]*.15)))),c0=sp(V0,q,r,pc),a=sp(V0,q,r,nrm(add(pc,mul(hu,.5-.14*A.pup)))),b=sp(V0,q,r,nrm(add(pc,mul(vu,.2*(1-.7*A.pup)))));
     const ax=[a[0]-c0[0],a[1]-c0[1]],bx=[b[0]-c0[0],b[1]-c0[1]];ctx.beginPath();for(const[e,f] of PUPT)ctx.lineTo(c0[0]+ax[0]*e+bx[0]*f,c0[1]+ax[1]*e+bx[1]*f)
     ctx.closePath();ctx.fillStyle='#1a1210';ctx.fill()}
   {const hl=sp(V0,q,r,nrm(add(n,add(mul(hu,-.3),mul(vu,.12)))));ctx.fillStyle='#fff';ball(hl,Math.max(1.3,r*.15));ctx.fill();ctx.fillStyle='rgba(255,255,255,.6)';ball([hl[0]+r*.32,hl[1]+r*.28],r*.06+.3);ctx.fill()}
-  // the upper lid: skin from the top of the eye down to a third of the iris at rest (0), wide open (-1), shut (1)
-  const lv=lid<0?Sa*(1+.25*lid):lerp(Sa/3,-Sa*1.05,cl(lid,0,1));
+  // the upper lid: skin from the top of the eye down to a third of the iris at rest (0), out of sight wide open (-1), shut (1); smooth
+  // through 0, so opening and dropping back never jump
+  const lv=lid<0?lerp(Sa/3,Sa,Math.min(1,-lid)):lerp(Sa/3,-Sa*1.05,cl(lid,0,1));
   if(lv<Sa){const lc=capPts(V0,q,r*1.2,vu,Math.acos(cl(lv,-1,1)),16);if(lc){ctx.beginPath();for(const w of lc.pts)ctx.lineTo(w[0],w[1]);ctx.closePath();ctx.fillStyle=gs||grad3([q[0]-r,q[1]-r,q[0]+r,q[1]+r],K.skin);ctx.fill();
       const lr={rim:lc.rim.map(w=>[q[0]+(w[0]-q[0])/1.2,q[1]+(w[1]-q[1])/1.2])};if(lr.rim.length>1){ctx.beginPath();for(const w of lr.rim)ctx.lineTo(w[0],w[1]);ctx.strokeStyle=INK;ctx.lineWidth=2;ctx.lineCap='round';ctx.stroke();
         ctx.beginPath();for(const w of lr.rim)ctx.lineTo(w[0],w[1]-1.6);ctx.strokeStyle=`rgba(${K.rimc},.35)`;ctx.lineWidth=1;ctx.stroke()}}}
@@ -757,9 +802,12 @@ function eyeDraw(V0,X,A,K,sd,q,r,gs){const{F}=V0,n=X.Rd(nrm(sdv(EDIR,sd))),fv=F(
   ctx.beginPath();for(const w of cp.rim)ctx.lineTo(w[0],w[1]);if(cp.full)ctx.closePath();ctx.strokeStyle=INK;ctx.lineWidth=1.8;ctx.lineJoin='round';ctx.stroke()}
 // the bony crest over each dome, from the inner front end to the outer back end (the inner end goes down 4 into a cruel V when it aims):
 // a thick cord in two tones with a light thread on top, drawn where it faces us (the dome hides the rest)
+// (a soft shadow under it on the dome; seen from behind it fades away: no pot handles on the head)
 function crestDraw(V0,X,A,K,sd,c,q,r){const{P,F}=V0,e1=nrm(sdv([8,-8,9-5*A.crest+3*A.crestUp],sd)),e2=nrm(sdv([-8,10,9],sd)),N=6,runs=[];let cur=[];
+  const al=sstep(-.75,-.2,F(X.Rd(nrm(sdv(EDIR,sd)))));if(al<=.02)return;
   for(let i=0;i<=N;i++){const m=nrm(lerp3(e1,e2,i/N)),d=X.Rd(m);if(F(d)>-.05)cur.push(P(add(c,mul(d,r*1.02+1.2))));else if(cur.length){runs.push(cur);cur=[]}}if(cur.length)runs.push(cur);if(!runs.length)return;
-  strokeRuns(runs,INK,8.2);strokeRuns(runs,K.crest.d,6);strokeRuns(runs.map(r=>r.map(q=>[q[0]-.5,q[1]-.9])),K.crest.b,4);strokeRuns(runs.map(r=>r.map(q=>[q[0]-.7,q[1]-1.8])),K.crestL,1.1)}
+  ga(al,()=>{ctx.save();ctx.globalAlpha*=.3;strokeRuns(runs.map(r=>r.map(q=>[q[0]+.6,q[1]+2.4])),'#06120a',9);ctx.restore();
+    strokeRuns(runs,INK,8.2);strokeRuns(runs,K.crest.d,6);strokeRuns(runs.map(r=>r.map(q=>[q[0]-.5,q[1]-.9])),K.crest.b,4);strokeRuns(runs.map(r=>r.map(q=>[q[0]-.7,q[1]-1.8])),K.crestL,1.1)})}
 
 // ------------------------------------------------------------------ the crown: five points with little balls, the bent one, the mud, the gem
 function crownDraw(V0,X,A,K){const tilt=KTILT+A.ctilt,c=add(KC,[0,0,A.cz]);crownAt(V0,q=>X.T(q),v=>X.Rd(v),c,tilt,K,A);
@@ -773,7 +821,7 @@ function crownAt(V0,T0,R0,c,tilt,K,A){const{P,F}=V0,ca=Math.cos(tilt),sa=Math.si
   const quads=side=>{ctx.beginPath();for(let i=0;i<N;i++){if((nf[i]>=0)!==side)continue;let Q=[B[i],B[i+1],Tp[i+1],Tp[i]];const ar=(Q[1][0]-Q[0][0])*(Q[2][1]-Q[0][1])-(Q[2][0]-Q[0][0])*(Q[1][1]-Q[0][1])+(Q[2][0]-Q[0][0])*(Q[3][1]-Q[0][1])-(Q[3][0]-Q[0][0])*(Q[2][1]-Q[0][1]);
     if(ar<0)Q=Q.reverse();ctx.moveTo(Q[0][0],Q[0][1]);for(let k=1;k<4;k++)ctx.lineTo(Q[k][0],Q[k][1]);ctx.closePath()}};
   ctx.lineJoin='round';ctx.lineCap='round';const bb=bbox(B.concat(Tp)),gf=ctx.createLinearGradient(bb[0],bb[1],bb[2],bb[3]);gf.addColorStop(0,K.gold.l);gf.addColorStop(.45,K.gold.b);gf.addColorStop(1,K.gold.d);
-  const inner=cmix(K.gold.d,'#3a2004',.35);
+  const inner=cmix(K.gold.d,K.gold.b,.3);   // the inside: dark gold, never a black hole in the head
   const tipBalls=back=>{const Q=[];for(let i=0;i<N;i+=2){const a=i/N*TAU;if((F(Rd([Math.cos(a),Math.sin(a),0]))<0)===back)Q.push(Tp[i])}if(!Q.length)return;
     ctx.beginPath();for(const q of Q)ballA(q,2.3);ctx.fillStyle=K.gold.b;ctx.fill();ctx.strokeStyle=INK;ctx.lineWidth=1.3;ctx.stroke();ctx.beginPath();for(const q of Q)ballA([q[0]-.7,q[1]-.8],.9);ctx.fillStyle=K.gold.l;ctx.fill()};
   quads(false);ctx.fillStyle=inner;ctx.fill();ctx.strokeStyle=inner;ctx.lineWidth=.8;ctx.stroke();
@@ -804,20 +852,28 @@ function cattail(V0,X,A,K,i){const{P}=V0,b=CTB[i],t0=CTT[i],sw=A.sway,k=(i-3)/3,
   // popped off like a cork (the defeat): up and away, turning over
   const pop=A.tPop?A.tPop[i]:-1;let T=X.T,al=1;if(pop>=0){const kk=pop,mid=lerp3(b,tip,.5),off=[-14*kk,(i-3)*9*kk,95*kk-35*kk*kk],spin=kk*6*((i%2)?1:-1);T=q=>X.T(add(add(mid,rotAx(sub(q,mid),[1,0,0],spin)),off));al=1-sstep(.7,1,kk)}
   const dd=sub(tip,b),L0=len(dd),mid=add(lerp3(b,tip,.5),[-2,0,0]),at=u=>{const a=lerp3(b,mid,u),c=lerp3(mid,tip,u);return lerp3(a,c,u)};
-  const Q=[0,.25,.5,.75,1].map(at).map(T).map(P);
+  // (the stem is drawn from where it comes out of the collar's down: its foot never covers the trim, nor the trim it, when it turns)
+  const ua=Math.min(.3,7/Math.max(L0,1)),Q=[ua,ua+(1-ua)*.25,ua+(1-ua)*.5,ua+(1-ua)*.75,1].map(at).map(T).map(P);
   ga(al,()=>{ctx.lineCap='round';ctx.lineJoin='round';ctx.beginPath();ctx.moveTo(Q[0][0],Q[0][1]);for(let j=1;j<Q.length;j++)ctx.lineTo(Q[j][0],Q[j][1]);ctx.strokeStyle=INK;ctx.lineWidth=4.6;ctx.stroke();ctx.strokeStyle=K.stem.b;ctx.lineWidth=2.6;ctx.stroke();
-    // the spike: velvet, 15 long, ending 3 under the tip; over it the thin tip of the stem (in the second phase a puff of glowing down)
-    const u1=1-3/L0,u0=u1-15/L0,s0=T(at(u0)),s1=T(at(u1)),q0=P(s0),q1=P(s1);
-    if(A.fluff>.5)fluffDraw(V0,lerp3(s0,s1,.6),K,i);
-    else{ctx.fillStyle=INK;hull(q0,2.8+1.2,q1,2.8+1.2);ctx.fill();ctx.fillStyle=K.spike.b;hull(q0,2.6,q1,2.6);ctx.fill();ctx.lineCap='round';
-      ctx.strokeStyle=K.spike.d;ctx.lineWidth=1.6;seg([q0[0]+1.1,q0[1]+.5],[q1[0]+1.1,q1[1]+.5]);ctx.stroke();ctx.strokeStyle=K.spike.l;ctx.lineWidth=1.1;seg([q0[0]-1,q0[1]-.6],[q1[0]-1,q1[1]-.6]);ctx.stroke()}
+    // the spike: velvet, 15 long, ending 3 under the tip; over it the thin tip of the stem (in the second phase a puff of glowing down:
+    // the spike swells, fades and the down grows out of it)
+    const u1=1-3/L0,u0=u1-15/L0,s0=T(at(u0)),s1=T(at(u1)),q0=P(s0),q1=P(s1),fl=cl(A.fluff||0,0,1);
+    if(fl<1)ga(1-fl,()=>{const sw=1+.4*fl;ctx.fillStyle=INK;hull(q0,(2.8+1.2)*sw,q1,(2.8+1.2)*sw);ctx.fill();ctx.fillStyle=K.spike.b;hull(q0,2.6*sw,q1,2.6*sw);ctx.fill();ctx.lineCap='round';
+      ctx.strokeStyle=K.spike.d;ctx.lineWidth=1.6;seg([q0[0]+1.1,q0[1]+.5],[q1[0]+1.1,q1[1]+.5]);ctx.stroke();ctx.strokeStyle=K.spike.l;ctx.lineWidth=1.1;seg([q0[0]-1,q0[1]-.6],[q1[0]-1,q1[1]-.6]);ctx.stroke()});
+    if(fl>0){const c=lerp3(s0,s1,.6);if(fl<1&&!LOWFX){const qq=P(c);shine(K.fluffGlow,qq[0],qq[1],16,.8*Math.sin(Math.PI*fl))}fluffDraw(V0,c,K,i,fl)}
     {const qt=P(T(tip));ctx.strokeStyle=INK;ctx.lineWidth=3;seg(q1,qt);ctx.stroke();ctx.strokeStyle=K.stem.l;ctx.lineWidth=1.2;seg(q1,qt);ctx.stroke()}})}
-function fluffDraw(V0,c,K,i){const q=V0.P(c);shine(K.fluffGlow,q[0],q[1],12,.5);const pts=[];for(let j=0;j<10;j++){const a=j/10*TAU+i,rr=(j%2?3.6:5.4)*(1+.12*Math.sin(j*2.3+i));pts.push([q[0]+Math.cos(a)*rr,q[1]+Math.sin(a)*rr*.9-1])}
-  smooth(pts);const g=ctx.createRadialGradient(q[0]-1,q[1]-2,.5,q[0],q[1]-1,6);g.addColorStop(0,'#ffffff');g.addColorStop(.6,K.fluff);g.addColorStop(1,'#f2c890');ctx.fillStyle=g;ctx.fill();ctx.strokeStyle='rgba(150,90,40,.7)';ctx.lineWidth=1;ctx.stroke()}
+// a puff of glowing down (the cattails' spikes in the second phase): three soft round balls, a little different, no hard outline (k: its size)
+function fluffDraw(V0,c,K,i,k){k=k==null?1:k;const q=V0.P(c);if(!LOWFX)shine(K.fluffGlow,q[0],q[1],12*k,.5);
+  for(const[dx,dy,r] of[[-1.6,.6,3.6],[1.7,.3,3.4],[0,-1.6,3.9]]){const x=q[0]+(dx+.3*Math.sin(i*2.1+dx))*k,y=q[1]+dy*k,rr=r*k*(1+.06*Math.sin(i*1.7+r)),g=ctx.createRadialGradient(x-1,y-1.2,.4,x,y,rr);
+    g.addColorStop(0,'#ffffff');g.addColorStop(.62,K.fluff);g.addColorStop(1,'rgba(242,200,144,.85)');ctx.fillStyle=g;ctx.beginPath();ctx.arc(x,y,rr,0,TAU);ctx.fill()}
+  ctx.strokeStyle='rgba(150,90,40,.28)';ctx.lineWidth=.8;ctx.beginPath();ctx.arc(q[0],q[1]-.2,4.6*k,.2,Math.PI-.2);ctx.stroke()}
 
 // ------------------------------------------------------------------ the throat sac (a lantern when the light runs into it)
-function sacDraw(V0,q,r,A,K){const lt=cl(A.sacLit,0,1),ik=sstep(9,16,r),a0=ctx.globalAlpha;   // a small sac is a soft swelling of the throat; a big one a ball with its outline
-  ctx.beginPath();ctx.arc(q[0],q[1],r,0,TAU);ctx.fillStyle=grad3([q[0]-r,q[1]-r,q[0]+r,q[1]+r],K.sac);ctx.fill();
+function sacDraw(V0,q,r,A,K){const lt=cl(A.sacLit,0,1),ik=sstep(15,21,r),a0=ctx.globalAlpha;   // a small sac is a soft swelling of the throat; a big one a ball with its outline
+  // (a small one melts into the cream of the chin at its edge: never a button or an egg on the chest)
+  ctx.beginPath();ctx.arc(q[0],q[1],r,0,TAU);if(ik>=.98)ctx.fillStyle=grad3([q[0]-r,q[1]-r,q[0]+r,q[1]+r],K.sac);
+  else{const g=ctx.createRadialGradient(q[0]-r*.2,q[1]-r*.25,r*.05,q[0],q[1],r);g.addColorStop(0,K.sac.l);g.addColorStop(.55,K.sac.b);g.addColorStop(.8,cmix(K.sac.b,K.sac.d,.5));g.addColorStop(1,`rgba(${C.rgbs(K.sac.b)},${(.15+.85*ik).toFixed(3)})`);ctx.fillStyle=g}
+  ctx.fill();
   ctx.save();ctx.clip();
   // lit from inside like a paper lantern: bright in the middle, the stretched skin deeper in colour toward its rim; the fireflies in it
   if(lt>.02){const gc=`rgb(${K.sacGlow})`,g=ctx.createRadialGradient(q[0],q[1]+r*.12,r*.05,q[0],q[1],r);
@@ -842,7 +898,7 @@ function handFrame(A,sd,X,lk){const u0=sd<0?A.huL:A.huR,w0=sd<0?A.hwL:A.hwR,u=nr
 function armDraw(V0,X,A,K,sd,S,El,W,hc,HF,hideAt){const{P,F,D}=V0;
   // the upper arm and the forearm each hidden at its own depth (the shoulder goes into the belly, a hand on the belly stays in front of it)
   const hand=()=>behind(hideAt(sd,D(hc)),()=>handDraw(V0,A,K,sd,hc,HF),bbOf(V0,[hc],22)),dU=D(lerp3(S,El,.5)),dF=D(lerp3(El,W,.5)),
-    up=()=>behind(hideAt(sd,dU),()=>limb3(V0,[S,El],[9.6,7.6],K.skin,K.rimc,2.6),bbOf(V0,[S,El],13)),fo=()=>behind(hideAt(sd,dF),()=>{limb3(V0,[El,W],[7.6,6.6],K.skin,K.rimc,2.6);const ax=nrm(sub(W,El));band(V0,add(W,mul(ax,-5)),add(W,mul(ax,-1)),7.4,K.gold,{r2:7.2,lw:2})},bbOf(V0,[El,W],11)),
+    up=()=>behind(hideAt(sd,dU),()=>limb3(V0,[S,El],[9.6,7.6],K.skin,K.rimc,2.6),bbOf(V0,[S,El],13)),fo=()=>behind(hideAt(sd,dF),()=>{limb3(V0,[El,W],[7.6,6.6],K.skin,K.rimc,2.6);const ax=nrm(sub(W,El));band(V0,add(W,mul(ax,-7)),add(W,mul(ax,-3)),7.4,K.gold,{r2:7.2,lw:2})},bbOf(V0,[El,W],11)),
     arm=()=>{if(dU<dF){up();fo()}else{fo();up()}};
   if(F(sub(hc,W))>0){arm();hand()}else{hand();arm()}}
 // four fingers spread like a fan with round pads at the tips; they curl into a fist (curl), lift off (lf: drumming), the forefinger points
@@ -853,8 +909,9 @@ function handDraw(V0,A,K,sd,hc,HF){const{P,F}=V0,{u,v,w}=HF,cu=sd<0?A.curlL:A.cu
     ctx.lineJoin='round';smooth(H);ctx.fillStyle=grad3(bbox(H),K.skin);ctx.fill();ctx.strokeStyle=INK;ctx.lineWidth=2.2;ctx.stroke()};
   const fing=f=>{const a=P(f.b0),b=P(f.e),rp=3.2+.6*f.c,rf=2.2+1.3*f.c;ctx.beginPath();hullA(a,rf+1.2,b,rf+1.2);ballA(b,rp+1.1);ctx.fillStyle=INK;ctx.fill();
     ctx.beginPath();hullA(a,rf,b,rf);ballA(b,rp-.1);ctx.fillStyle=K.skin.b;ctx.fill();ctx.fillStyle=K.skin.l;ball([b[0]-rp*.3,b[1]-rp*.35],rp*.42);ctx.fill()};
-  // the fingers that point toward us go over the palm
-  const fr=fingers.filter(f=>F(sub(f.e,hc))>0),bk=fingers.filter(f=>F(sub(f.e,hc))<=0);for(const f of bk)fing(f);palm();for(const f of fr)fing(f)}
+  // the back of the hand toward us: all the fingers over the palm (a hand planted on the floor, nearly always); else all under it (one
+  // test for the whole hand: turning, the fingers never reorder one by one)
+  if(F(w)>0){palm();for(const f of fingers)fing(f)}else{for(const f of fingers)fing(f);palm()}}
 
 // ------------------------------------------------------------------ the legs: the shin folded along the thigh, the webbed foot
 function legDraw(V0,X,A,K,sd,g,hideAt){const{P,F,D}=V0,fl=A.flk,fd0=X.Rd(nrm([1,sd*.32,0])),fdG=nrm([fd0[0],fd0[1],0]),fd=fl>0?nrm(lerp3(fdG,X.Rd(nrm([-.2,sd*.9,-.3])),fl)):fdG,upv=fl>0?nrm(lerp3([0,0,1],X.Rd([0,0,1]),fl)):[0,0,1],
@@ -870,21 +927,36 @@ function legDraw(V0,X,A,K,sd,g,hideAt){const{P,F,D}=V0,fl=A.flk,fd0=X.Rd(nrm([1,
 
 // ------------------------------------------------------------------ the tongue: thick and pink, a round sticky tip with its light
 // from the mouth m0 to its tip: o.tip from the game (on the screen, from the drawing's point), else in front of it (or the way of the sweep)
-function tongueDraw(V0,X,A,K,m0,o,SS,p){const{P}=V0,t=A.tongue,oT=o.tip?[o.tip[0]/SS,o.tip[1]/SS]:null;let st,b,sc=1;
+// The game gives the whole tip ([dx, dy] and, third, its height over the floor): the model draws the tongue to it as it is, never shorter
+// (its own length t.l only without the game, and for the snap back of the stuck one). The head hides the parts of the tongue that are
+// behind it, each piece at its own depth (from the mouth to the tip on the floor): the root slides behind the cheek bit by bit
+function tongueGeo(V0,X,A,m0,o,SS){const{P,D}=V0,t=A.tongue,oT=o.tip?[o.tip[0]/SS,o.tip[1]/SS,(o.tip[2]!=null?o.tip[2]:8)/SS]:null;let st,b,sc=1,dTip;
+  // the depth of a point on the screen at a known height (the inverse of the camera)
+  const dAt=(q,z)=>{const ck=C.cam?C.cam.k:.55,cz=C.cam?C.cam.zk:1;return(q[1]+z*cz)/ck+ck/cz*z};
   if(t.mode==='sweep'){// hanging out of one corner of the mouth (h 1), then the lash across the front (its tip from the game, o.tip)
     const sd=t.side||1,h=t.h||0,corner=X.T(ellAt(BC,BR,FB,mouthDir(sd*.82,A,.06))),hangTip=add(corner,mul(X.Rd(nrm([.45,sd*.55,-.9])),17*Math.max(h,.2))),an=t.ang*Math.PI/180,
-      lash=oT||P(add(m0,add(mul(X.Rd([Math.cos(an),Math.sin(an),0]),110*t.l),[0,0,-40*t.l])));
-    st=lerp3([...P(corner),0],[...P(m0),0],1-h);b=lerp3([...P(hangTip),0],[lash[0],lash[1],0],1-h);sc=lerp(.75,1,1-h)}
-  else{st=P(m0);if(oT)b=lerp3([st[0],st[1],0],[oT[0],oT[1],0],t.mode==='stuck'&&!t.snap?1:t.l);else b=P(add(m0,add(mul(X.Rd([1,0,0]),96*t.l),[0,0,-40*t.l])))}
+      own=add(m0,add(mul(X.Rd([Math.cos(an),Math.sin(an),0]),110*t.l),[0,0,-40*t.l])),lash=oT||P(own);
+    st=lerp3([...P(corner),0],[...P(m0),0],1-h);b=lerp3([...P(hangTip),0],[lash[0],lash[1],0],1-h);sc=lerp(.75,1,1-h);dTip=lerp(D(hangTip),oT?dAt(oT,oT[2]):D(own),1-h)}
+  else{st=P(m0);if(oT){const sn=t.mode==='stuck'&&t.snap;b=sn?lerp3([st[0],st[1],0],[oT[0],oT[1],0],t.l):[oT[0],oT[1],0];dTip=lerp(D(m0),dAt(oT,oT[2]),sn?t.l:1)}
+    else{const q3=add(m0,add(mul(X.Rd([1,0,0]),96*t.l),[0,0,-40*t.l]));b=P(q3);dTip=D(q3)}}
+  return{st,b,sc,dTip}}
+function tongueDraw(V0,X,A,K,m0,G0,NB){const{D}=V0,t=A.tongue,{st,b,sc,dTip}=G0;
   const dx=b[0]-st[0],dy=b[1]-st[1],L=Math.hypot(dx,dy)||1,nx=-dy/L,ny=dx/L,w=(t.wob||0)*5,mid=[(st[0]+b[0])/2+nx*(L*.08+w),(st[1]+b[1])/2+ny*(L*.08+w)-L*.06];
-  const path=()=>{ctx.beginPath();ctx.moveTo(st[0],st[1]);ctx.quadraticCurveTo(mid[0],mid[1],b[0],b[1])};
-  if(t.mode==='stuck'&&!t.snap){ctx.fillStyle='rgba(255,170,195,.6)';ctx.beginPath();ctx.ellipse(b[0],b[1]+3,13,5.5,0,0,TAU);ctx.fill();ctx.fillStyle='rgba(255,220,230,.5)';ctx.beginPath();ctx.ellipse(b[0]-4,b[1]+2,4,1.4,0,0,TAU);ctx.fill()}
-  ctx.lineCap='round';path();ctx.strokeStyle=INK;ctx.lineWidth=12*sc;ctx.stroke();ctx.strokeStyle=K.tongue.b;ctx.lineWidth=8*sc;ctx.stroke();ctx.strokeStyle=`rgba(${C.rgbs(K.tongue.l)},.8)`;ctx.lineWidth=2.2*sc;
-  ctx.save();ctx.translate(-.8,-1.6);path();ctx.stroke();ctx.restore();ctx.strokeStyle=`rgba(${C.rgbs(K.tongue.d)},.5)`;ctx.lineWidth=1.6*sc;ctx.save();ctx.translate(.8,2);path();ctx.stroke();ctx.restore();
-  const rr=8*sc;shine(K.tipGlow,b[0],b[1],rr*2,.35);tball(b,rr,T3(K.tipBall,K.tongue.b,K.tongue.d),null,2.4);ctx.fillStyle='rgba(255,255,255,.75)';ball([b[0]-rr*.35,b[1]-rr*.38],rr*.28);ctx.fill()}
+  // the curve in 16 steps, four pieces of four (each piece hidden behind the head at its own depth)
+  const Q=[];for(let i=0;i<=16;i++){const u=i/16,a=(1-u)*(1-u),bb=2*u*(1-u),c=u*u;Q.push([a*st[0]+bb*mid[0]+c*b[0],a*st[1]+bb*mid[1]+c*b[1]])}
+  const d0=D(m0),regs=[0,1,2,3].map(i=>NB?nearAt(NB,lerp(d0,dTip,(i+.5)/4)):null),tipReg=NB?nearAt(NB,dTip):null,rr=8*sc*(t.mode==='out'?sstep(0,.18,t.l):1);
+  const strokes=(pts,cap)=>{const path=(ox,oy)=>{ctx.beginPath();ctx.moveTo(pts[0][0]+ox,pts[0][1]+oy);for(let i=1;i<pts.length;i++)ctx.lineTo(pts[i][0]+ox,pts[i][1]+oy)};ctx.lineCap=cap;ctx.lineJoin='round';
+    path(0,0);ctx.strokeStyle=INK;ctx.lineWidth=12*sc;ctx.stroke();ctx.strokeStyle=K.tongue.b;ctx.lineWidth=8*sc;ctx.stroke();
+    path(-.8,-1.6);ctx.strokeStyle=`rgba(${C.rgbs(K.tongue.l)},.8)`;ctx.lineWidth=2.2*sc;ctx.stroke();path(.8,2);ctx.strokeStyle=`rgba(${C.rgbs(K.tongue.d)},.5)`;ctx.lineWidth=1.6*sc;ctx.stroke()};
+  const tip=()=>{if(t.mode==='stuck'&&!t.snap){ctx.fillStyle='rgba(255,170,195,.6)';ctx.beginPath();ctx.ellipse(b[0],b[1]+3,13,5.5,0,0,TAU);ctx.fill();ctx.fillStyle='rgba(255,220,230,.5)';ctx.beginPath();ctx.ellipse(b[0]-4,b[1]+2,4,1.4,0,0,TAU);ctx.fill()}
+    if(rr>.5){shine(K.tipGlow,b[0],b[1],rr*2,.35);tball(b,rr,T3(K.tipBall,K.tongue.b,K.tongue.d),null,2.4);ctx.fillStyle='rgba(255,255,255,.75)';ball([b[0]-rr*.35,b[1]-rr*.38],rr*.28);ctx.fill()}};
+  if(!regs.some(r=>r)&&!tipReg){strokes(Q,'round');tip();return}
+  for(let i=0;i<4;i++){const pts=Q.slice(i*4,i*4+5);behind([regs[i]],()=>strokes(pts,'butt'),bbOf0(pts,8*sc))}
+  behind([tipReg],tip,[b[0]-16,b[1]-14,b[0]+16,b[1]+12])}
+const bbOf0=(pts,m)=>{let x0=1e9,y0=1e9,x1=-1e9,y1=-1e9;for(const q of pts){if(q[0]<x0)x0=q[0];if(q[0]>x1)x1=q[0];if(q[1]<y0)y0=q[1];if(q[1]>y1)y1=q[1]}return[x0-m,y0-m,x1+m,y1+m]};
 
 // ------------------------------------------------------------------ a firefly: a dark round body, two wings, the tail that glows
-function flyAt(q,k,K,s,p2){s=s||1;const tail=[q[0]+1.6*s,q[1]+1.4*s];if(!LOWFX)shine(p2?'255,150,50':K.flyGlow,tail[0],tail[1],8*s*(.7+.5*k),.55+.35*k);
+function flyAt(q,k,K,s,p2){s=s||1;k=cl(k,0,1);const tail=[q[0]+1.6*s,q[1]+1.4*s];if(!LOWFX)shine(p2?'255,150,50':K.flyGlow,tail[0],tail[1],8*s*(.7+.5*k),.55+.35*k);
   ctx.fillStyle='rgba(255,255,255,.5)';ctx.beginPath();ctx.ellipse(q[0]-1.6*s,q[1]-2.4*s,2.4*s,1.3*s,-.6,0,TAU);ctx.ellipse(q[0]+.6*s,q[1]-2.8*s,2.4*s,1.3*s,.5,0,TAU);ctx.fill();
   ctx.fillStyle=p2?'#ffd08a':K.ftail;ctx.strokeStyle='rgba(30,24,10,.8)';ctx.lineWidth=.8;ball(tail,1.9*s*(.85+.25*k));ctx.fill();ctx.stroke();
   ctx.fillStyle=K.fly;ball(q,1.7*s);ctx.fill();ctx.fillStyle='rgba(255,255,255,.8)';ball([tail[0]-.5*s,tail[1]-.6*s],.6*s);ctx.fill()}
@@ -894,7 +966,8 @@ function floorThings(V0,A,K,p,fx){const{P}=V0,T0=[26,-50,0];
   if(A.heap>0)heapDraw(V0,K,A.capeOff,1-sstep(.93,1,p));
   if(A.crownAt&&A.crownAt.die>=1){crownFree(V0,[T0[0],T0[1],3.2],1.1,1.25,K,A);
     // a firefly lands on it and blinks
-    if(p>.93&&!LOWFX){const k=cl((p-.93)/.05,0,1),q=P(lerp3([T0[0]+18,T0[1]-10,40],[T0[0]+2,T0[1]+1,14],ez(k)));flyAt(q,.5+.5*Math.sin(p*TAU*8),K,1,false)}}}
+    // (it blinks once a second, the same blink the game keeps when the crown stays on the floor: N3.toadFly with the phase t)
+    if(p>.93&&!LOWFX){const k=cl((p-.93)/.05,0,1),q=P(lerp3([T0[0]+18,T0[1]-10,40],[T0[0]+2,T0[1]+1,14],ez(k)));flyAt(q,.5+.5*Math.sin(p*TAU*4),K,1,false)}}}
 
 // ------------------------------------------------------------------ the effects of the moves (only when the game does not draw its own)
 function fxDraw(V0,X,L,e,A,K,J,lift,o){const{P,D}=V0,t=e.t;
@@ -905,12 +978,14 @@ function fxDraw(V0,X,L,e,A,K,J,lift,o){const{P,D}=V0,t=e.t;
         ctx.beginPath();ctx.ellipse(q[0],q[1]+up*s0*.4,s0,s0*(1+.7*Math.abs(up)),0,0,TAU);ctx.fill();ctx.fillStyle=`rgba(255,255,255,${.6*al})`;ball([q[0]-s0*.3,q[1]-s0*.3],s0*.3);ctx.fill()})}}
   else if(e.k==='ring'){L.add(-3000,()=>{const r=(e.r||30)*(.3+t*(e.lo?1.2:2)),pts=[],c=e.world?[0,0]:[A.B[0],A.B[1]];for(let i=0;i<32;i++){const a=i/32*TAU;pts.push(P([c[0]+Math.cos(a)*r,c[1]+Math.sin(a)*r,0]))}ctx.strokeStyle=`rgba(${e.rgb},${.6*(1-t)})`;ctx.lineWidth=3*(1-t)+1;C.poly(pts);ctx.stroke()})}
   else if(e.k==='drips'){for(let i=0;i<4;i++){const u=(t*2+i/4)%1,c=X.T([(i-1.5)*10,(i%2?1:-1)*24,10]),q3=[c[0],c[1],c[2]-u*40];if(q3[2]<0)continue;L.add(D(q3)+2000,()=>{const q=P(q3);ctx.fillStyle=`rgba(170,215,190,${.8*(1-u)})`;ball(q,1.5);ctx.fill()})}}
-  else if(e.k==='bubbles'){// the first bubbles out of the mouth (the game draws them after 30 px)
-    const m0=X.T(ellAt(BC,BR,FB,mouthDir(0,A,.2))),fw=X.Rd([1,0,0]),sd=X.Rd([0,1,0]);for(let i=0;i<5;i++){const u=cl(t*1.6-i*.12,0,1);if(u<=0||u>=1)continue;const q3=add(m0,add(mul(fw,6+u*30),add(mul(sd,(i-2)*5*u),[0,0,(i%2?3:-2)*u])));
-      L.add(D(q3)+1500,()=>bubbleAt(P(q3),5+2*(i%2),i+t*6,K,A.k2>.5,0))}}
-  else if(e.k==='jet'){// fireflies spurting out of the mouth to the sky (the game takes them after 40 px)
-    const m0=X.T(ellAt(BC,BR,FB,mouthDir(0,A,.2)));for(let i=0;i<6;i++){const u=cl(t*1.5-i*.08,0,1);if(u<=0||u>=1)continue;const q3=add(m0,[Math.cos(i*2.1)*6*u,Math.sin(i*2.1)*6*u,8+u*40]);
-      L.add(D(q3)+2000,()=>flyAt(P(q3),.8,K,1,true))}}
+  else if(e.k==='bubbles'){// the froth of the burp: small bubbles out of the mouth along the game's rows, dropping toward the height the game's
+    // bubbles fly at and fading as those come in (the game draws the real ones from the mouth on)
+    const m0=X.T(ellAt(BC,BR,FB,mouthDir(0,A,.2))),fw=X.Rd([1,0,0]),sd=X.Rd([0,1,0]),wA=A.k2>.5?30:20;for(let i=0;i<5;i++){const u=cl(t*1.6-i*.12,0,1);if(u<=0||u>=1)continue;
+      const an=(i-2)*wA*Math.PI/180,d=6+u*22,dz=-(m0[2]-14)*Math.min(1,d/40),q3=add(m0,add(add(mul(fw,Math.cos(an)*d),mul(sd,Math.sin(an)*d)),[0,0,dz])),al=1-sstep(.4,1,u);
+      L.add(D(q3)+1500,()=>ga(al,()=>bubbleAt(P(q3),4+1.5*(i%2),i+t*6,K,A.k2>.5,0)))}}
+  else if(e.k==='jet'){// fireflies spurting out of the mouth to the sky (the game's own come in over the first 40 px: these fade)
+    const m0=X.T(ellAt(BC,BR,FB,mouthDir(0,A,.2)));for(let i=0;i<6;i++){const u=cl(t*1.5-i*.08,0,1);if(u<=0||u>=1)continue;const q3=add(m0,[Math.cos(i*2.1)*6*u,Math.sin(i*2.1)*6*u,8+u*40]),al=1-sstep(.5,1,u);
+      L.add(D(q3)+2000,()=>ga(al,()=>flyAt(P(q3),.8,K,1,true)))}}
   else if(e.k==='mud'||e.k==='mud2'){const c=e.at;for(let i=0;i<5;i++){const a=i*1.3+.4,v=10+i*3,q3=[c[0]+Math.cos(a)*v*t,c[1]+Math.sin(a)*v*t,4+30*t-50*t*t];if(q3[2]<0)continue;
       L.add(D(q3)+(D(q3)>D(X.T(BC))?1000:-1000),()=>{const q=P(q3);ctx.fillStyle='#4a3a26';ctx.strokeStyle=INK;ctx.lineWidth=1;ball(q,2.2-i*.2);ctx.fill();ctx.stroke()})}}
   else if(e.k==='seeds'){// the spikes burst into glowing down: a little cloud of seeds that stays round it
@@ -933,10 +1008,11 @@ function bubbleAt(q,r,ph,K,p2,pop){if(pop>0){const u=pop,al=1-u;ctx.strokeStyle=
 // ------------------------------------------------------------------ for the game: the pieces of its attacks, with the same look
 // N3.toadBubble(x, y, z, r, ph, sc, o): a big clear bubble with a firefly blinking in it (ph); o.p2 an orange one; o.pop 0..1 bursts it
 N3.toadBubble=function(x,y,z,r,ph,sc,o){o=o||{};sc=sc||1;ctx.save();ctx.translate(x,y-(z||0));ctx.scale(sc,sc);bubbleAt([0,0],r||10,ph||0,pal(o.p2?1:0,0),!!o.p2,o.pop||0);ctx.restore()};
-// N3.toadFly(x, y, z, k, sc, o): a firefly (k: its blink 0..1); o.p2 an ember; o.fall 0..1: the streak of light it leaves falling from the sky
+// N3.toadFly(x, y, z, k, sc, o): a firefly; k is the phase of its blink, in cycles (it grows with the time: .5+.5 sin(k·2π) is how bright it
+// is); o.p2 an ember; o.fall 0..1: the streak of light it leaves falling from the sky
 N3.toadFly=function(x,y,z,k,sc,o){o=o||{};sc=sc||1;const K=pal(o.p2?1:0,0);ctx.save();ctx.translate(x,y-(z||0));ctx.scale(sc,sc);
   if(o.fall>0){const u=o.fall,g=ctx.createLinearGradient(0,-90,0,0);g.addColorStop(0,`rgba(${o.p2?'255,150,50':'214,255,90'},0)`);g.addColorStop(1,`rgba(${o.p2?'255,200,120':'240,255,170'},${.75*Math.min(1,u*2)})`);ctx.strokeStyle=g;ctx.lineWidth=3;ctx.lineCap='round';seg([0,-90*Math.min(1,u*1.5)],[0,0]);ctx.stroke()}
-  flyAt([0,0],k==null?.6:k,K,1,!!o.p2);ctx.restore()};
+  flyAt([0,0],k==null?.6:.5+.5*Math.sin(k*TAU),K,1,!!o.p2);ctx.restore()};
 // N3.toadMud(x, y, r, k, sc, o): the patch of mud of the belly flop (k 0..1 its life: it spreads, stays wet and glossy with two little
 // bubbles, then dries with a lighter crust and fades); darker than the floor, so it reads as a wet hole
 N3.toadMud=function(x,y,r,k,sc,o){sc=sc||1;r=r||24;k=cl(k||0,0,1);const g0=sstep(0,.1,k),dry=sstep(.75,1,k),al=1-sstep(.9,1,k),R=r*(.4+.6*g0),ry=R*.55*KR();if(al<=0)return;
@@ -946,8 +1022,9 @@ N3.toadMud=function(x,y,r,k,sc,o){sc=sc||1;r=r||24;k=cl(k||0,0,1);const g0=sstep
     for(const[a,b,s] of[[.3,.1,1],[-.1,.3,.7]]){const bq=[R*a,ry*b],bs=(2.2*s)*(.6+.4*Math.sin(k*TAU*3+a*9));ctx.strokeStyle='rgba(201,183,140,.8)';ctx.lineWidth=.8;ball(bq,bs);ctx.stroke()}}
   if(dry>0){ctx.globalAlpha=al*dry;ctx.strokeStyle='rgba(150,130,96,.8)';ctx.lineWidth=1.2;ctx.beginPath();for(let i=0;i<4;i++){const a=i*1.6+.3;ctx.moveTo(Math.cos(a)*R*.15,Math.sin(a)*ry*.15);ctx.lineTo(Math.cos(a+.3)*R*.6,Math.sin(a+.3)*ry*.6)}ctx.stroke()}
   ctx.restore()};
-// N3.toadCrown(x, y, z, rot, sc, o): the crown on its own, fallen on its side (the one left on the floor after the defeat); rot turns it
-N3.toadCrown=function(x,y,z,rot,sc,o){o=o||{};sc=sc||1;const V0=V(Math.PI/2+(rot||0));ctx.save();ctx.translate(x,y-(z||0));ctx.scale(sc,sc);crownFree(V0,[0,0,3.2],1.1,1.25,pal(0,0),{});ctx.restore()};
+// N3.toadCrown(x, y, z, rot, sc, o): the crown on its own, fallen on its side (the one left on the floor after the defeat); rot is the face
+// the boss had (the same view the model's defeat draws it with, so it never turns when the game bakes it into the floor)
+N3.toadCrown=function(x,y,z,rot,sc,o){o=o||{};sc=sc||1;const V0=V(rot==null?Math.PI/2:rot);ctx.save();ctx.translate(x,y-(z||0));ctx.scale(sc,sc);crownFree(V0,[0,0,3.2],1.1,1.25,pal(0,0),{});ctx.restore()};
 
 reg('toad2',{n:'Re Rospo',g:'boss',sc:1,an:MV.slice(),dur:Object.assign({},DUR),
   lab:{idle:'Fermo',walk:'Avanza',hit:'Colpito',tongue:'Linguata',stuck:'Lingua incollata',sweep:'Frustata',flop:'Panciata',bubbles:'Rutto di bolle',drum:'Tamburo di pancia',
