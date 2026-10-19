@@ -15,7 +15,7 @@ const BEST=[['slime','Slime','Salta verso di te. Il più debole della cripta.'],
   ['toad','Re Rospo','Boss. Lingua che ti tira a sé, panciate, bolle e girini.'],['hydra',"Idra della Palude",'Boss. Tre teste che mordono e sputano veleno, si immerge e riaffiora.'],
   ['yeti','Yeti delle Vette','Boss. Pugni che fanno cadere ghiaccioli, palle di neve e valanghe.'],['icequeen','Regina dei Ghiacci','Boss. Schegge, specchi ingannatori, tormente e muri di ghiaccio.']];
 // the bosses remade (89, docs/boss-classici.md) are bigger models: in the portrait about as big as the old ones
-const BEAST2={golem:.6,salamander:.72,toad:.52,yeti:.7,icequeen:.56},beast2=t=>N3[t+'2']&&N3[t]===N3[t+'2']?BEAST2[t]||.65:1;
+const BEAST2={golem:.6,salamander:.72,toad:.52,yeti:.7,icequeen:.56,mimic:.55},beast2=t=>N3[t+'2']&&N3[t]===N3[t+'2']?BEAST2[t]||.65:1;
 // their lines in the bestiary (the bosses remade, docs/boss-classici.md): only where the new model has taken the place of the old one
 const BEST2={golem:'Boss. Schianta i pugni a terra, fa franare massi, apre faglie e rotola come una valanga. Quando si infuria, il cuore di runa spara un raggio.',
   salamander:'Boss. Sputa fuoco, frusta con la coda, nuota sotto il pavimento ed esplode fuori; corre in un anello di fiamme. Poi fa la muta e torna incandescente.',
@@ -25,6 +25,7 @@ const BEST2={golem:'Boss. Schianta i pugni a terra, fa franare massi, apre fagli
   icequeen:'Boss. Lance di cristallo, colonne di ghiaccio che ti ingabbiano, il Fiocco Reale. Nella Sala degli Specchi solo la vera ha l\'ombra.',
   smith:'Boss. Il maglio rovente apre la terra, le incudini cadono dal cielo, la catena arriva lontano. Quando la fornace sfiata, colpiscila.',
   hydra:'Boss. Il veleno sale nel collo che sta per colpire. Morde a tenaglia, sputa pozze, sbuca dal pavimento sotto di te. Le pozze ribollono: al centro della corona sei salvo.',
+  mimic:'Mini boss nascosto in una delle due casse: morde, frusta con la lingua, ti assaggia e ti risputa, sputa oro e nella fase 2 ti sfida al gioco delle tre casse. A bocca spalancata i colpi da davanti fanno di più.',
   phoenix:"Boss. Ventagli di piume con un varco, picchiata da cometa (attirala contro un'incudine!), coda che spazza in cerchio, pioggia di braci. A metà vita rinasce azzurra dall'uovo."},
   bestTx=(t,d)=>beast2(t)!==1&&BEST2[t]||d;
 function drawBeast(cv,type){const c=cv.getContext('2d'),saved=ctx;ctx=c;c.setTransform(1,0,0,1,0,0);c.clearRect(0,0,cv.width,cv.height);

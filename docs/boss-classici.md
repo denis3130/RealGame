@@ -88,8 +88,10 @@ poi, alla domanda «io quali riprendo?», qui: «tutti, fermo l'altra». Quindi 
 | Strega | `witch2.js` | `89-strega-nuova.js` | finita: costruita col metodo leggero, critica sui fogli corretta e collaudo (scheda sotto) |
 | Regina | `icequeen2.js` | `89-regina-nuova.js` | finita: occhi aperti, maniche e orlo, misure del prologo e della guida, collaudo (scheda sotto) |
 | Fenice | `phoenix2.js` | `89-fenice-nuova.js` | finita: gemma del diadema, corona di sole ad anello, volo senza cerchi a terra, collaudo (scheda sotto) |
-| Fabbro | `smith2.js` | `89-fabbro-nuovo.js` | fatto dall'altra sessione |
-| Idra, Mimic, Burattinaio, Piovra, Cervo | — | — | da fare (i design sono in `docs/boss-classici-design/`) |
+| Fabbro | `smith2.js` | `89-fabbro-nuovo.js` | finito dall'altra sessione (`session_01NzD5NzkcNh3pmk6QqLSVHu`), collaudo e difficoltà (scheda sotto) |
+| Idra | `hydra2.js` | `89-idra-nuova.js` | finita dall'altra sessione, collaudo e difficoltà (scheda sotto) |
+| Mimic | `mimic2.js` | `89-mimic-nuovo.js` | finito dall'altra sessione il 19 ottobre sera, collaudo e difficoltà (scheda sotto) |
+| Burattinaio, Piovra, Cervo | — | — | da fare (i design sono in `docs/boss-classici-design/`) |
 
 ### La Strega: la critica sui fogli (corretta il 19 ottobre sera, vedi la scheda)
 
@@ -844,3 +846,131 @@ fiamme azzurre e sette piume nello strascico; da lì tutto 1,15 volte più rapid
 - Prove: `python3 anteprime/mk_boss2.py phoenix --test && node tests/boss2gioco.js phoenix` (tutto OK, ERR []),
   `node tests/boss2diff.js phoenix`, `node tests/anteprime.js phoenix2_test.html` (miniatura e sblocco dell'arena 10). Foglio:
   `tests/b2/phoenix2.png` (`cd tests && node foglio3d.js phoenix2 b2/phoenix2.png --file ../sprite/nemici3d/phoenix2.js`).
+
+## Il Fabbro Infernale: «il Gigante della Forgia»
+
+Nome e titolo restano. Un gigante di bronzo nato nel cuore del vulcano, il fabbro e la sua fucina in un corpo solo: nel petto a botte una
+fornace dietro un portello a grata, ai lati tre feritoie per parte (le costole) dove sale la pressione, sulle spalle due spallacci-stufa coi
+camini che fumano a ogni passo, l'avambraccio sinistro è un'incudine, sul destro la catena del maglio (un blocco di ghisa grande quanto
+l'eroe), dal cappuccio di cuoio solo due occhi di brace. **Il suo avviso**: il metallo che colpirà si arroventa (bianco vuol dire adesso).
+Ogni mossa carica la pressione; con tre file accese sfiata e la fornace resta aperta: è lì che si colpisce.
+
+### Mosse e abilità
+
+| Mossa | Cosa fa | Come si schiva |
+|---|---|---|
+| **Martellata rovente** (`slam`, poi `stuck`) | un cerchio rosso davanti a lui e tre linee (cinque nella fase 2); il maglio cala e lungo le linee corrono le crepe di lava | di lato, non indietro |
+| **Incudini dal cielo** (`anvil`) | tre DONG (quattro nella fase 2), ogni DONG un'incudine col suo cerchio; restano 9 s come ripari | fuori dai cerchi |
+| **Lancio del maglio** (`swing`, `hold`, `yank`) | un cerchio ti segue e si ferma, il maglio arriva sulla catena; poi la striscia della catena si accende e il maglio torna strisciando | prima fuori dal cerchio, poi dalla linea |
+| **Sfiatata delle costole** (`vent`) | otto corsie a stella di vapore e fuoco; poi la fornace resta aperta (`open`): **+50%** («Colpo alla fornace!») | tra le corsie |
+| **Turbine del maglio** (`spinup`, `spin`, `dizzy`, fase 2) | un disco rosso intorno a lui, gira avanzando verso di te fin dove il disco ti prende, poi barcolla indietro con la fornace spalancata (+50%) | fuori dal disco |
+
+**Fase 2** (`rage`, a metà vita): il cappuccio brucia, la criniera di fuoco, tutto il bronzo rovente; poi tutto 1,15 volte più svelto.
+**Entrata** (`enter`): è già lì, di spalle, al lavoro sull'incudine (che resta nella stanza come riparo). **Sconfitta** (`die`): in
+ginocchio sul maglio, la fornace si spegne in un sospiro di vapore.
+
+### Misure
+
+- Modello circa 1,35 volte il Golem; la stanza intera 5,9 ms.
+- Difficoltà (arena 6, eroe fermo che tira, livello 4, caso peggiore): oggi 27,9 vite al minuto (quasi tutto contatto), nuovo 7,8 (fase 1
+  5,3, fase 2 circa 10,7). Prima della rifinitura si fermava addosso all'eroe (il contatto ogni 0,7 s era il 90% del danno della fase 2): ora
+  si allontana se è troppo vicino, il Turbine si ferma dove il disco ti prende, barcolla indietro; colpi ×1,45 e pause più corte da vicino.
+
+### File e prove
+
+- Modello `sprite/nemici3d/smith2.js` (con la cassetta comune `sprite/nemici3d/boss2kit.js`, `C3K`); cervello `src/js/89-fabbro-nuovo.js`.
+- `python3 anteprime/mk_boss2.py smith --test && node tests/boss2gioco.js smith` (tutto OK), `node tests/boss2diff.js smith`.
+
+## L'Idra della Palude: «l'Antica della Pozza Nera»
+
+Nome e titolo restano. Tre teste e una sola mente nella sua pozza nera: colli a squame verde palude con la striscia chiara sul davanti,
+ventagli d'avorio e viola sulla nuca, due zannette per testa; respirano insieme, ti guardano insieme, sbattono gli occhi nello stesso
+istante. **Il suo avviso**: il veleno sale luminoso lungo la striscia del collo che colpirà, dall'acqua alla gola. Non si sposta finché non
+apre il terzo occhio (a metà vita le gemme sulle fronti si aprono: erano occhi); poi nuota verso di te.
+
+### Mosse e abilità
+
+| Mossa | Cosa fa | Come si schiva |
+|---|---|---|
+| **Morso a Tenaglia** (`bite`, poi `stuck`) | tre cerchi, uno dove sei e due ai lati; mordono le teste di lato, poi quella di mezzo; poi resta con le zanne piantate: **+50%** («Colpo alla testa!») | un passo avanti o indietro, o lo scatto |
+| **Salva di Veleno** (`spit`) | tre palle a pallonetto (cinque nella fase 2) dove sei, dove vai e di lato; dove cadono resta una pozza (5 ogni mezzo secondo) | fuori dai cerchi e dalle pozze |
+| **Soffio Velenoso** (`breath`) | tre strisce dalle bocche, poi la nebbia; nella fase 2 le strisce girano verso dove vai | dietro un riparo o tra le strisce |
+| **Agguato dal Profondo** (`ambush`) | le teste vanno sotto e sbucano dal pavimento sotto di te, una alla volta | continuare a muoversi; intanto colpire il corpo |
+| **Il Giudizio della Palude** (`decree`) | le pozze ribollono, una corona di punti intorno a te; al cenno diventano geyser | stare fermi al centro della corona |
+| **Tuffo** (`dive`, `under`, `rise`) | le sue luci nuotano sotto il pavimento, si apre l'acqua nera dove riemerge, poi l'onda | fuori dal cerchio, poi saltare l'onda |
+| **Sguardo del Terzo Occhio** (`gaze`, fase 2) | un cono; al lampo chi ci sta dentro senza riparo resta incantato (lento) finché non scatta | fuori dal cono o dietro un ostacolo |
+
+**Fase 2** (`rage`): le gemme erano occhi, poi tutto 1,15 volte più svelto. **Entrata** (`enter`, 4,2 s): l'acqua nera gira, sei occhi
+d'oro si aprono sotto, escono i ventagli e le teste. **Sconfitta** (`die`, 4 s): si addormenta e la palude guarisce.
+
+### Misure
+
+- Foglio: mediano 1,5 ms; la stanza intera 4 ms.
+- Difficoltà (arena 7, eroe fermo che tira, caso peggiore): oggi 9,2 vite al minuto, nuova 6,7 (tanti colpi piccoli delle pozze: da fermo è
+  la pozza che fa più male, come vuole il design).
+
+### File e prove
+
+- Modello `sprite/nemici3d/hydra2.js` (esporta anche `N3.hydraMouths`, `hydraHead`, `hydraUnder`, `hydraStain`, `hydraGlob`, `hydraPool`,
+  `hydraGeyser`); cervello `src/js/89-idra-nuova.js`.
+- `python3 anteprime/mk_boss2.py hydra --test && node tests/boss2gioco.js hydra` (tutto OK: `BCL.hydra.hero` porta l'eroe vicino per vedere
+  il morso, perché nella fase 1 non si sposta), `node tests/boss2diff.js hydra`.
+
+## Il Mimic: «la cassa sbagliata» (il Forziere Affamato)
+
+Nome e titolo restano («Il Mimic», «La cassa sbagliata»); esce come prima da una delle due casse gemelle (42), una volta per partita dopo una
+stanza ripulita (arena 1, stanze 3, 4, 6–9; nell'Abisso la 7 di ogni dieci). Il vecchio forziere della cripta: quercia scura mezza marcia,
+angolari e fasce d'ottone, ragnatele agli spigoli di dietro; quando si sveglia, due occhi d'ambra nel buio della fessura, una gola di velluto
+cremisi trapuntato coi bottoncini d'oro e denti d'avorio (uno è d'oro), in fondo il mucchio d'oro che fa luce dal basso; si alza su lunghe
+gambe pallide col ginocchio all'indietro e pianta a terra due braccia ad arco più lunghe di lui, con tre artigli. Alto tre volte l'eroe,
+fermo come un mobile e poi veloce come un ragno. **Il suo avviso**: il tesoro si sveglia (tin-tin) e la sua luce corre nell'ottone fino alla
+parte che colpirà. A metà vita la serratura si apre: era un occhio. Dentro è un portagioie, mai carne; niente sangue.
+
+### Mosse e abilità
+
+Ogni danno ha un avviso rosso a terra di almeno 0,8 s nella fase 1 e 0,6 s nella fase 2, una mossa alla volta, dopo ogni mossa 1,1–1,5 s di
+corsa a scatti (mai addosso all'eroe: il contatto fa male solo se ci vai contro tu; se è lontano, prima del Morso e della Tagliola corre un
+po' di più). **«Colpo in bocca!»**: a bocca spalancata i colpi da davanti fanno +50% (da Incastrato e da Stordito da ogni lato).
+
+| Mossa | Cosa fa | Come si schiva |
+|---|---|---|
+| **Il Morso** (`chomp`) | una corsia rossa con tre impronte di denti che si accendono in fila; corre e morde tre volte (CIAC). Contro un ostacolo lo morde e resta l'impronta. Fase 2: due di fila | un passo di lato, o un ostacolo in mezzo |
+| **La Frustata** (`tongue`; `tongue3` nella fase 2) | una linea rossa dalla bocca; la lingua schiocca lungo il pavimento fino al primo ostacolo. Fase 2: tre linee a ventaglio che schioccano in fila | di lato o dietro un ostacolo |
+| **L'Assaggio** (`grab`, `gulp`) | se gli stai addosso, un ventaglio rosso; se ti prende ti mastica (non ti vede nessuno, niente scatto né Super) e ti risputa 70 px più in là, poi ti prende in giro | uscire dal ventaglio o scattare |
+| **Sputo d'oro** (`coins`) | sette linee tratteggiate a ventaglio; le monete rimbalzano raso terra e restano a terra 3 s: si raccolgono (1 oro). Fase 2 (**Pioggia d'oro**): nove monete e sei cerchi dove ricade la fontana | fuori dal ventaglio, lontano dove le linee si allargano |
+| **La Tagliola** (`leap`, poi `stuck`) | due balzi a bocca aperta (tre nella fase 2) dove sei: un cerchio con otto dentini che si accendono in giro; l'ultimo resta incastrato (+50% da ogni lato) | fuori dal cerchio |
+| **Il Gioco delle Casse** (`hide`, `chest`, `pop`, `daze`; fase 2, al massimo due volte) | torna cassa, cadono due finte, le tre si scambiano di posto (la vera accende gli occhi un attimo all'inizio di ogni scambio, e mentre aspetti alza il coperchio ogni tanto); tocca quella vera: le finte scoppiano in assi e monete e lui resta **Stordito** 2 s (+50% da ogni lato); se sbagli o aspetti più di 3 s ti salta addosso | guardare la vera |
+
+**Fase 2** («Ha fame!», `rage`): la serratura si crepa e si apre come una palpebra (il terzo occhio), il coperchio si spalanca, la luce
+passa all'arancio e esce dalle fughe; poi tutto 1,3 volte più svelto (il Gioco delle Casse e lo Stordito no). **Entrata** (`enter`, 2,8 s):
+la cassa sbagliata fa un balzo indietro, trema, gli occhi nella fessura, escono le gambe in tre scatti e le braccia, il coperchio si
+spalanca e le ragnatele si strappano, il grido. **Sconfitta** (`die`, 3,4 s): le gambe si piegano come una sedia pieghevole, il coperchio
+salta via e dalla cassa vuota esce una fontana di monete. Anche l'**esca** (`lure`): quando lo lasci stare troppo, socchiude il coperchio
+e ti chiama col dito; se resti lontano, la Frustata.
+
+### Come è nato (19 ottobre sera)
+
+- Design scelto dal direttore artistico tra tre proposte (`docs/boss-classici-design/mimic.md`); modello e cervello fatti insieme
+  dall'altra sessione (`session_01NzD5NzkcNh3pmk6QqLSVHu`), da sola. Correzioni guardando i fogli: braccia e gambe sottili come trampoli di
+  ragno (a quelle del design sembravano tubi), gomito in fuori come le stampelle ad arco, lingua di lato (così la serratura si vede),
+  finestre tra i denti davanti agli occhi (se no i denti li coprivano), il velluto sotto il coperchio sopra il legno, le ragnatele.
+- Le casse gemelle (42) si disegnano col modello: la buona e la sbagliata uguali al pixel; la cassa ferma è un'immagine fatta una volta (la
+  prima costa circa 20 ms: si fa nei momenti liberi del menu).
+
+### Misure
+
+- Disegno: mediano 0,6 ms (0,5 con `LOWFX`), 90% sotto 1,2 ms; la cassa chiusa ferma quasi niente (un'immagine), dal vivo 0,4 ms mentre
+  trema; la stanza intera 3,2–3,9 ms.
+- Difficoltà (arena 1, eroe fermo che tira, livello 4, caso peggiore, 3 prove): oggi 7,9 vite al minuto (3,6 a combattimento, 28 s; quasi
+  tutto il contatto: oggi ti salta addosso), nuovo 3,2 al minuto (1,6 a combattimento, 30 s), coi danni già un quarto più alti del design
+  (Morso 28, Frustata 25, Tagliola 25 e l'ultimo 30, boccone 30, monete 15, pioggia 20, finte 18). È un mini boss che esce nella prima arena:
+  da regolare giocando (se pesa poco, si alzano ancora i danni o si accorcia la corsa tra le mosse).
+
+### File e prove
+
+- Modello `sprite/nemici3d/mimic2.js` (modello `mimic2`; esporta anche `N3.mimicChest` (la cassa chiusa, con le opzioni delle casse gemelle
+  e delle finte), `N3.mimicCoin`, `N3.mimicPlank`); cervello `src/js/89-mimic-nuovo.js` (`mimicUpd` nuovo; avvolge `drawTwinChest`,
+  `spawnTwinChests`, l'ombra, `drawHero` e la barra dell'eroe per il boccone).
+- `python3 anteprime/mk_boss2.py mimic --test && node tests/boss2gioco.js mimic` (tutto OK; `BCL.mimic.hero` porta l'eroe vicino ogni tanto
+  per l'Assaggio e sulla cassa vera nel Gioco delle Casse), `node tests/boss2diff.js mimic` (il Mimic di oggi lo fa nascere in una stanza
+  ripulita). `tests/boss2gioco.js` nella fase 2 tiene la vita del boss sopra il 15% finché non ha visto tutte le mosse (il Mimic ha poca vita).
