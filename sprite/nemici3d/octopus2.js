@@ -29,7 +29,7 @@
 // Disegni per il gioco con lo stesso aspetto: N3.octopus2Arm (il braccio che sbuca dal pavimento nella Gabbia), N3.octopus2Pad (la ninfea
 // della Marea Nera), N3.octopus2Blob (la palla d'inchiostro in volo) e N3.octopus2Info (i momenti delle mosse). Nel gioco prende il nome
 // 'octopus' (src/js/89-piovra-nuova.js); il disegno di oggi resta in N3.meta.octopus2.old per la pagina «prima e dopo».
-(()=>{const C=C3,K3=C3K,{TAU,cl,ez,lerp,add,sub,mul,len,nrm,dot,cross,lerp3,V,ball,seg,cmix,poly,bbox,
+(()=>{const C=C3,K3=C3K,{TAU,cl,ez,lerp,add,sub,mul,len,nrm,dot,cross,lerp3,V,ball,seg,cmix,poly,bbox,smooth,
   rotX,rotY,rotZ,keys,sstep,hitK,frame,ellAt,ellN,AXES,parts,reg,shine,chull,wa,leaf,softBall,KR}=C;
 const{trem,fxOn,pls,rise,flash,ga,grad3,ellSil,hullE,smoothP,svol3,T3,mixT,mixRgb,rotAx,fadeDraw}=K3;
 const PI=Math.PI;
@@ -49,18 +49,34 @@ const lineP=pts=>{ctx.beginPath();ctx.moveTo(pts[0][0],pts[0][1]);for(let i=1;i<
 function capP(pa,a,ra,b,rb){const dx=b[0]-a[0],dy=b[1]-a[1],d=Math.hypot(dx,dy);
   if(d<=Math.abs(ra-rb)+.01){const q=ra>=rb?a:b,r=Math.max(ra,rb);pa.moveTo(q[0]+r,q[1]);pa.arc(q[0],q[1],r,0,TAU);return}
   const an=Math.atan2(dy,dx),f=Math.acos(cl((ra-rb)/d,-1,1));pa.moveTo(a[0]+ra*Math.cos(an+f),a[1]+ra*Math.sin(an+f));pa.arc(a[0],a[1],ra,an+f,an+TAU-f);pa.arc(b[0],b[1],rb,an-f,an+f);pa.closePath()}
+// the camera of the model: V(face) with a lighter P and F (the same numbers, no Array.isArray, no recursion, no Math.hypot)
+const VF=face=>{const v=V(face),c=v.c,s=v.s,K=C.cam.k,Z=C.cam.zk,KZ=K/Z,NF=K===.55&&Z===1?1.141:Math.hypot(1,KZ);
+  v.P=(x,y,z)=>typeof x==='number'?[x*c-y*s,(x*s+y*c)*K-z*Z]:[x[0]*c-x[1]*s,(x[0]*s+x[1]*c)*K-x[2]*Z];
+  v.F=(x,y,z)=>{if(typeof x!=='number'){z=x[2];y=x[1];x=x[0]}z=z||0;const l=Math.sqrt(x*x+y*y+z*z)||1;return(x*s+y*c+KZ*z)/(l*NF)};return v};
+// the runs of a chain of screen circles that are straight enough to be one capsule: the points within .3 of the line between the ends of
+// the run and the radius within .3 of the straight taper (the union of the capsules of a straight chain is the capsule of its ends: the
+// thick straight part of an arm is one capsule, its curl stays many). Pairs [a, b] of point indices, segments s0..s1, the dead ones skipped
+function capRuns(Q,R,s0,s1,dead){const out=[];let a=s0;
+  while(a<=s1){if(dead&&(dead[a]||dead[a+1])){a++;continue}let b=a+1;
+    while(b<=s1&&!(dead&&dead[b+1])){const e=b+1,qa=Q[a],qe=Q[e],dx=qe[0]-qa[0],dy=qe[1]-qa[1],l2=dx*dx+dy*dy;if(l2<1e-6)break;let ok=true;
+      for(let j=a+1;j<e;j++){const q=Q[j],t=((q[0]-qa[0])*dx+(q[1]-qa[1])*dy)/l2;if(t<=0||t>=1){ok=false;break}const px=qa[0]+dx*t-q[0],py=qa[1]+dy*t-q[1];
+        if(px*px+py*py>.09||Math.abs(R[a]+(R[e]-R[a])*t-R[j])>.3){ok=false;break}}
+      if(!ok)break;b=e}
+    out.push(a,b);a=b}return out}
 // a flat ellipse on the floor or on the water (centre c, radii rx along the body's x, ry along y, both turned by the angle t): the path
 // in ctx, exact (a parallel projection of an ellipse is an ellipse)
-function flatEll(V0,c,rx,ry,t){const o=V0.P(c),ct=Math.cos(t||0),st=Math.sin(t||0),a=V0.P(add(c,[ct*rx,st*rx,0])),b=V0.P(add(c,[-st*ry,ct*ry,0]));
-  ctx.save();ctx.transform(a[0]-o[0],a[1]-o[1],b[0]-o[0],b[1]-o[1],o[0],o[1]);ctx.beginPath();ctx.arc(0,0,1,0,TAU);ctx.restore()}
+function flatEll(V0,c,rx,ry,t){const o=V0.P(c),ct=Math.cos(t||0),st=Math.sin(t||0),a=V0.P(c[0]+ct*rx,c[1]+st*rx,c[2]),b=V0.P(c[0]-st*ry,c[1]+ct*ry,c[2]);
+  const a0=a[0]-o[0],a1=a[1]-o[1],b0=b[0]-o[0],b1=b[1]-o[1],s11=a0*a0+b0*b0,s22=a1*a1+b1*b1,s12=a0*a1+b0*b1,h=Math.sqrt((s11-s22)*(s11-s22)+4*s12*s12),tr=s11+s22;
+  ctx.beginPath();ctx.ellipse(o[0],o[1],Math.sqrt(Math.max(0,(tr+h)/2)),Math.sqrt(Math.max(0,(tr-h)/2)),.5*Math.atan2(2*s12,s11-s22),0,TAU)}
 // soft lights in one pass ('lighter'): every glow of the drawing is kept and drawn at the end of its layer
 let GL=null;
 const glo=(rgb,x,y,r,a,ry)=>{if(LOWFX||a<=.01)return;const k=a*ctx.globalAlpha;if(GL)GL.push([rgb,x,y,r,k,ry]);else shine(rgb,x,y,r,a,ry)};
 function glowFlush(){if(!GL||!GL.length)return;ctx.save();ctx.globalCompositeOperation='lighter';const a0=ctx.globalAlpha;for(const g of GL){glow(g[0],g[1],g[2],g[3],Math.min(1,g[4]),g[5])}ctx.globalAlpha=a0;ctx.restore();GL.length=0}
 // the warm (or cold) rim inside an outline, in a colour of its own
-function rimC(pts,al,rgb){if(!pts||pts.length<3)return;const[x0,y0,x1,y1]=bbox(pts),cx=(x0+x1)/2,cy=(y0+y1)/2,Rr=Math.max(x1-x0,y1-y0)/2,g=ctx.createLinearGradient(cx-Rr*.8,cy-Rr*.8,cx+Rr*.15,cy+Rr*.15),
-  kx=1-1.9/Math.max(1,(x1-x0)/2),ky=1-1.9/Math.max(1,(y1-y0)/2);g.addColorStop(0,`rgba(${rgb},${al*.55})`);g.addColorStop(1,`rgba(${rgb},0)`);
-  ctx.beginPath();for(const q of pts)ctx.lineTo(cx+(q[0]-cx)*kx,cy+(q[1]-cy)*ky);ctx.closePath();ctx.strokeStyle=g;ctx.lineWidth=1.3;ctx.stroke()}
+function rimC(pts,al,rgb){if(!pts||pts.length<3)return;const[x0,y0,x1,y1]=bbox(pts),cx=(x0+x1)/2,cy=(y0+y1)/2,n=pts.length,kx=1-1.9/Math.max(1,(x1-x0)/2),ky=1-1.9/Math.max(1,(y1-y0)/2);
+  const on=pts.map(q=>{const dx=q[0]-cx,dy=q[1]-cy,l=Math.hypot(dx,dy)||1;return(dx*-.55+dy*-.83)/l>.2});let s0=on.indexOf(false);if(s0<0)s0=0;
+  ctx.beginPath();let pen=false;for(let i=1;i<=n;i++){const j=(s0+i)%n;if(on[j]){const q=pts[j],x=cx+(q[0]-cx)*kx,y=cy+(q[1]-cy)*ky;pen?ctx.lineTo(x,y):ctx.moveTo(x,y);pen=true}else pen=false}
+  ctx.strokeStyle=`rgba(${rgb},${(al*.5).toFixed(3)})`;ctx.lineWidth=1.3;ctx.lineCap='round';ctx.stroke()}
 
 // the fill of the big wet volumes (mantle, head, skirt): a radial light from the upper left, a touch lighter than the light tone at its
 // heart, down to the shadow tone at the far edge
@@ -109,8 +125,8 @@ const WARTS=[[-.25,.78,1.5],[.3,.72,1.2],[-.8,.66,1.3],[.95,.6,1.1]];
 // is four headings (at u 0, .3, .6, 1 of its length, smoothly between) and a curl that rolls the last part round an axis (faster toward
 // the tip), so it rolls and unrolls without changing its length; the belly (the coral side with the suckers) is carried along the arm
 // from where it faces at the root. The points are closer toward the tip, so the curls stay round
-const NS=14,NP=15,UP=[],UM=[];for(let j=0;j<NP;j++)UP.push(1-Math.pow(1-j/NS,1.55));for(let j=0;j<NS;j++)UM.push((UP[j]+UP[j+1])/2);
-const KU=[0,.3,.6,1],PIECE=[[0,3],[3,8],[8,14]];
+const NS=12,NP=13,UP=[],UM=[],RF=[];for(let j=0;j<NP;j++){UP.push(1-Math.pow(1-j/NS,1.55));RF.push(Math.pow(1-UP[j],.85))}for(let j=0;j<NS;j++)UM.push((UP[j]+UP[j+1])/2);
+const KU=[0,.3,.6,1],PIECE=[[0,3],[3,7],[7,12]];
 // a shape (side +1): L length, k headings, c curl {ax, ang, u0, pw}, c2 a second bend, vb where the belly faces at the root, roll a turn
 // on its side, th thickness, rb root radius, b the root (on the skirt), fb how much it follows the lean of the body (0 the floor's frame)
 function SH(o){return Object.assign({L:70,k:null,c:{ax:[0,0,1],ang:0,u0:.7,pw:1.6},c2:null,vb:[0,0,-1],roll:0,th:1,rb:10.5,b:[0,0,0],fb:0,kind:'hand'},o)}
@@ -126,8 +142,11 @@ const mirS=S=>Object.assign({},S,{b:mir(S.b),k:S.k.map(mir),c:mirC(S.c),c2:mirC(
 const turnS=(S,a)=>Object.assign({},S,{b:rotZ(S.b,a),k:S.k.map(v=>rotZ(v,a)),c:S.c&&Object.assign({},S.c,{ax:rotZ(S.c.ax,a)}),c2:S.c2&&Object.assign({},S.c2,{ax:rotZ(S.c2.ax,a)}),vb:rotZ(S.vb,a)});
 function bendS(S,ax,angs){return Object.assign({},S,{k:S.k.map((v,i)=>angs[i]?rotAx(v,ax,angs[i]):v)})}
 // the heading at u (body axes)
-function headAt(S,u){const i=u>KU[2]?2:u>KU[1]?1:0,k=sstep(KU[i],KU[i+1],u),a=S.k[i],b=S.k[i+1];let h=nrmS([a[0]+(b[0]-a[0])*k,a[1]+(b[1]-a[1])*k,a[2]+(b[2]-a[2])*k]);
-  for(const c of[S.c,S.c2])if(c&&c.ang){const t=u<=c.u0?0:Math.pow((u-c.u0)/(1-c.u0),c.pw);if(t>0)h=rotAx(h,c.ax,c.ang*t)}return h}
+// (a vector turned round a unit axis by an angle, Rodrigues, with no arrays in between: the arms are worked out 120 times a drawing)
+function rotI(v,a,t){const c=Math.cos(t),s=Math.sin(t),d=(a[0]*v[0]+a[1]*v[1]+a[2]*v[2])*(1-c);
+  return[v[0]*c+(a[1]*v[2]-a[2]*v[1])*s+a[0]*d,v[1]*c+(a[2]*v[0]-a[0]*v[2])*s+a[1]*d,v[2]*c+(a[0]*v[1]-a[1]*v[0])*s+a[2]*d]}
+function headAt(S,u){const i=u>KU[2]?2:u>KU[1]?1:0,k=sstep(KU[i],KU[i+1],u),a=S.k[i],b=S.k[i+1],x=a[0]+(b[0]-a[0])*k,y=a[1]+(b[1]-a[1])*k,z=a[2]+(b[2]-a[2])*k,l=Math.sqrt(x*x+y*y+z*z)||1;
+  let h=[x/l,y/l,z/l];const c=S.c,c2=S.c2;if(c&&c.ang&&u>c.u0)h=rotI(h,c.ax,c.ang*Math.pow((u-c.u0)/(1-c.u0),c.pw));if(c2&&c2.ang&&u>c2.u0)h=rotI(h,c2.ax,c2.ang*Math.pow((u-c2.u0)/(1-c2.u0),c2.pw));return h}
 // the eight arms: kind and side; their shapes at rest (side +1; the other side mirrored)
 const ARM=[['hand',-1],['hand',1],['side',-1],['side',1],['cobra',-1],['cobra',1],['throne',-1],['throne',1]];
 const REST1={
@@ -165,7 +184,7 @@ const ORN=[{k:'snail',t:PI/4,h:17,r:5,tilt:.26},{k:'snail',t:-PI/4,h:17,r:5,tilt
   {k:'snail',t:PI,h:11,r:3.5,tilt:.14},{k:'mussel',t:0,h:15,w:16},{k:'flower',t:80*PI/180,r:7},{k:'alga',t:95*PI/180,l:18},{k:'alga',t:-95*PI/180,l:18}];
 // a pond snail (a tall pointed spiral shell, Lymnaea): its profile (height, radius) and its points at unit size, worked out once
 const SNP=[[0,.6],[.1,.95],[.22,1],[.36,.8],[.52,.54],[.68,.33],[.84,.16],[1,.02]];
-const SNPTS=(()=>{const out=[];for(const[z,r] of SNP)for(let i=0;i<10;i++){const t=i/10*TAU,bulge=1+.18*Math.max(0,Math.cos(t))*(z<.4?1:0);out.push([Math.cos(t)*r*bulge,Math.sin(t)*r,z])}return out})();
+const SNPTS=(()=>{const out=[];for(const[z,r] of SNP.filter((_,i)=>i!==2&&i!==5))for(let i=0;i<7;i++){const t=i/7*TAU,bulge=1+.18*Math.max(0,Math.cos(t))*(z<.4?1:0);out.push([Math.cos(t)*r*bulge,Math.sin(t)*r,z])}return out})();
 const snR=z=>{for(let i=0;i<SNP.length-1;i++){const a=SNP[i],b=SNP[i+1];if(z<=b[0])return lerp(a[1],b[1],(z-a[0])/(b[0]-a[0]))}return 0};
 
 // ------------------------------------------------------------------ the moves (every one depends only on p; idle, walk and swim close on themselves)
@@ -173,6 +192,10 @@ const MV=['idle','walk','hit','slam','stuck','slam2','ink','cage','whirl','sink'
 const DUR={idle:3,walk:1.2,hit:.6,slam:1.8,stuck:1.4,slam2:2.6,ink:1.6,cage:2.2,whirl:2.8,sink:.9,swim:.8,rise:1.6,tide:3.2,rage:2.8,taunt:1.1,enter:3.4,die:4};
 const LAB={idle:'Ferma',walk:'Scivola',hit:'Colpita',slam:'Tentacolata',stuck:'Ventose attaccate',slam2:'Doppia tentacolata (fase 2)',ink:"Pioggia d'inchiostro",
   cage:'Gabbia degli abissi',whirl:'Gorgo',sink:'Si immerge',swim:"Sott'acqua",rise:'Agguato',tide:'Marea Nera (fase 2)',rage:'Furia',taunt:'Presa in giro',enter:'Entrata',die:'Sconfitta'};
+// the turn of the skirt and the arms in the Gorgo (in her body, from her face): a turn and a half, slow, fast, slow, from .15 to .85, and
+// the jolt where it stops dead (the brain sends the bubbles from the tips with it: N3.octopus2Info.whirlA); the push of the Gabbia at the
+// moment the arms burst out far away in the game (.715)
+const whirlA=p=>{const u=cl((p-.15)/.7,0,1);return TAU*1.5*ez(u)+(p>.85?.1*Math.sin((p-.85)/.15*TAU)*(1-sstep(.85,1,p)):0)},CAGEP=.715;
 const POPS=[.20,.29,.38,.47,.56,.65,.74,.83],INK3=[.40,.47,.54],INK5=[.36,.42,.48,.54,.60],FIN=-96;   // FIN: how deep she swims (only the tips of the crown out: the top of the mantle under it is not drawn)
 // the order of the arms round the body (from her front left round her back to her front right): the wave of the walk, the groups of legs
 const ROUND=[7,0,6,1,5,2,4,3];   // ROUND[i] = place of arm i round her
@@ -293,7 +316,7 @@ function oPose(anim,p,o){const ph=p*TAU,P2=!!o.p2&&anim!=='enter'&&anim!=='rage'
     // lit from the root (.05-.22); she plants them in her pool at her flanks (splash .33): cut by the water, the light goes down with them;
     // she stays bent with the arms tense in the water, the eyes lit and fixed on the hero, the pool turning slowly; a push down at .71 (the
     // arms burst out far away in the game at .715); .85-1 she pulls them out dripping and straightens
-    A.B[2]+=4*rise(p,0,.2,.85,1)-3*blip(p,.712,.07);const up=ez(sstep(0,.25,p)),dn=ez(sstep(.25,.36,p)),out=ez(sstep(.85,1,p));
+    A.B[2]+=4*rise(p,0,.2,.85,1)-3*blip(p,CAGEP,.07);const up=ez(sstep(0,.25,p)),dn=ez(sstep(.25,.36,p)),out=ez(sstep(.85,1,p));
     for(const i of[2,3,4,5]){const R=rest(i,k2),O=armTo(i,k2,'open'),Pl=armTo(i,k2,'plant');let S=mixS(mixS(R,O,up),Pl,dn);
       if(p>.38&&p<.85){const t=.03*Math.sin(TAU*(p-.38)*2.2*3.5);S=bendS(S,upAx(Pl),[t,0,0,0])}
       A.arms[i]=out>0?mixS(S,R,out):S;A.hi[i]=up*(1-dn)+.3*dn*(1-out);run(i,0,sstep(.05,.22,p),1-sstep(.36,.44,p))}
@@ -304,8 +327,8 @@ function oPose(anim,p,o){const ph=p*TAU,P2=!!o.p2&&anim!=='enter'&&anim!=='rage'
     // arms turn a turn and a half round her (slow, fast, slow), the arms bent back like the blades of a pinwheel, the algae flying out, the
     // light running round in the suckers; head, mantle and crown keep looking at the hero; .85-1 it stops dead (a jolt at .86), the arms go
     // back to their places (the turn and a half puts each where its opposite was: PERM) and the head sways
-    const k0=ez(sstep(0,.15,p)),u=cl((p-.15)/.7,0,1),sp=TAU*1.5*ez(u),w=u<.5?4*u:4*(1-u),back=ez(sstep(.86,1,p)),jolt=p>.85?.1*Math.sin((p-.85)/.15*TAU)*(1-sstep(.85,1,p)):0;
-    A.spin=sp+jolt;A.skOpen=k0*(1-back);A.algaOut=sstep(.15,.3,p)*(1-sstep(.85,.95,p));A.pf=pls(p,.04,.08);A.halo=A.pf;
+    const k0=ez(sstep(0,.15,p)),u=cl((p-.15)/.7,0,1),sp=TAU*1.5*ez(u),w=u<.5?4*u:4*(1-u),back=ez(sstep(.86,1,p));
+    A.spin=whirlA(p);A.skOpen=k0*(1-back);A.algaOut=sstep(.15,.3,p)*(1-sstep(.85,.95,p));A.pf=pls(p,.04,.08);A.halo=A.pf;
     A.arms=A.arms.map((S,i)=>{const F=armTo(i,k2,'flat');let T=mixS(S,F,k0);if(u>0&&u<1)T=Object.assign({},T,{c2:{ax:[0,0,1],ang:-.75*Math.min(1,w),u0:.15,pw:1}});
       if(back>0)T=mixS(T,Object.assign(turnS(rest(PERM[i],k2),-PI),{fb:0}),back);const a=ROOTA[i];if(p>.15&&p<.85)run(i,0,fr(p*2.6-a/TAU+.3),.8*sstep(.15,.22,p)*(1-sstep(.78,.85,p)));return T});
     A.hr=.08*Math.sin((p-.86)/.14*TAU*1.5)*(p>.86?1-sstep(.86,1,p):0);A.squint=.3*sstep(.1,.2,p)*(1-back);A.look=[0,.3];
@@ -419,8 +442,8 @@ const perpOf=h=>{let v=cross(h,[0,0,1]);if(len(v)<.2)v=cross(h,[1,0,0]);return n
 function armGeo(S,F,A){const Rf=F.Xf.Rd,Rb=F.X.Rd,fb=S.fb,R=fb<.001?Rf:v=>nrmS(lerp3(Rf(v),Rb(v),fb));
   const P=new Array(NP),H=new Array(NS),HP=new Array(NP),RR=new Array(NP),N=new Array(NP);P[0]=F.Xf.T(S.b);
   for(let j=0;j<NS;j++){const h=R(headAt(S,UM[j])),ds=S.L*(UP[j+1]-UP[j]);H[j]=h;P[j+1]=[P[j][0]+h[0]*ds,P[j][1]+h[1]*ds,P[j][2]+h[2]*ds]}
-  for(let j=0;j<NP;j++){RR[j]=(2+(S.rb-2)*Math.pow(1-UP[j],.85))*S.th;HP[j]=j===0?H[0]:j===NS?H[NS-1]:nrmS(add(H[j-1],H[j]))}
-  let n=R(S.vb);for(let j=0;j<NP;j++){const h=HP[j];n=sub(n,mul(h,dot(n,h)));const l=len(n);n=l>1e-4?mul(n,1/l):perpOf(h);N[j]=S.roll?rotAx(n,h,S.roll):n}
+  for(let j=0;j<NP;j++){RR[j]=(2+(S.rb-2)*RF[j])*S.th;if(j===0)HP[j]=H[0];else if(j===NS)HP[j]=H[NS-1];else{const a=H[j-1],b=H[j],x=a[0]+b[0],y=a[1]+b[1],z=a[2]+b[2],l=Math.sqrt(x*x+y*y+z*z)||1;HP[j]=[x/l,y/l,z/l]}}
+  let n=R(S.vb);for(let j=0;j<NP;j++){const h=HP[j],d=n[0]*h[0]+n[1]*h[1]+n[2]*h[2],x=n[0]-h[0]*d,y=n[1]-h[1]*d,z=n[2]-h[2]*d,l=Math.sqrt(x*x+y*y+z*z);n=l>1e-4?[x/l,y/l,z/l]:perpOf(h);N[j]=S.roll?rotI(n,h,S.roll):n}
   // the skirt in the floor's frame: the first point outside it, and whether the arm comes out from under it (low) or through its side
   const cy=Math.cos(-(A.yaw+A.spin)),sy=Math.sin(-(A.yaw+A.spin)),sk=A.skK*(1+.12*A.skOpen),zk=1-.35*A.skOpen;let js=0,under=true;
   for(let j=0;j<NP;j++){const d=sub(P[j],A.B),x=d[0]*cy-d[1]*sy-SKX,y=d[0]*sy+d[1]*cy,z=d[2]/zk,inside=z>=0&&z<=22&&Math.hypot(x,y)<skR(z)*sk*.97;
@@ -435,7 +458,7 @@ function armScreen(V0,G){const{P}=V0,Q=G.P.map(q=>P(q)),NN=new Array(NP),SD=new 
   for(let j=0;j<NP;j++){const ia=Math.max(0,j-1),ib=Math.min(NS,j+1),a=Q[ia],b=Q[ib],dx=b[0]-a[0],dy=b[1]-a[1],l=Math.hypot(dx,dy),r=G.R[j];
     let nx=px,ny=py;if(l>1e-4){nx=-dy/l;ny=dx/l}px=nx;py=ny;
     const h=G.HP[j],w=[-h[0]*h[2],-h[1]*h[2],1-h[2]*h[2]],wl=len(w);let sc=.6*(nx*LXY[0]+ny*LXY[1]);
-    if(wl>.04){const e=P(add(G.P[j],mul(w,1/wl))),ex=e[0]-Q[j][0],ey=e[1]-Q[j][1],el=Math.hypot(ex,ey);if(el>.05)sc+=Math.min(1,wl*1.6)*(nx*ex+ny*ey)/el}
+    if(wl>.04){const e=P(w[0]/wl,w[1]/wl,w[2]/wl),ex=e[0],ey=e[1],el=Math.hypot(ex,ey);if(el>.05)sc+=Math.min(1,wl*1.6)*(nx*ex+ny*ey)/el}
     NN[j]=[nx,ny];SD[j]=sc>=0?1:-1;KB[j]=sstep(.1,.38,Math.abs(sc))*sstep(.2,.5,l/(ib-ia)/Math.max(1.5,r))}
   G.NN=NN;G.SD=SD;G.KB=KB;let x0=1e9,y0=1e9,x1=-1e9,y1=-1e9;for(let j=0;j<NP;j++){const q=Q[j],r=G.R[j];x0=Math.min(x0,q[0]-r);y0=Math.min(y0,q[1]-r);x1=Math.max(x1,q[0]+r);y1=Math.max(y1,q[1]+r)}G.bb=[x0,y0,x1,y1]}
 // a point along the arm at u (0 root .. 1 tip): position, radius, belly, heading (between the chain's points)
@@ -443,66 +466,93 @@ function armAt(G,u){let j=0;while(j<NS-1&&UP[j+1]<u)j++;const k=cl((u-UP[j])/(UP
   return{p:lerp3(G.P[j],G.P[j+1],k),r:lerp(G.R[j],G.R[j+1],k),n:nrmS(lerp3(G.N[j],G.N[j+1],k)),h:nrmS(lerp3(G.HP[j],G.HP[j+1],k)),j,k}}
 // a band along the arm from point a to b between two offsets across it (in units of its radius; + toward the light), as one path; the
 // offsets shrink to the edge (o -> 1.25) as KB goes to 0, and the band breaks where the lit side changes
-function bandPath(G,a,b,o0,o1){ctx.beginPath();let on=false;const Q=G.Q,NN=G.NN,SD=G.SD,KB=G.KB,R=G.R,L=[],Rr=[];
-  const flush=()=>{if(L.length>1){ctx.moveTo(L[0][0],L[0][1]);for(let i=1;i<L.length;i++)ctx.lineTo(L[i][0],L[i][1]);for(let i=Rr.length-1;i>=0;i--)ctx.lineTo(Rr[i][0],Rr[i][1]);ctx.closePath();on=true}L.length=0;Rr.length=0};
-  const edge=Math.sign(o0+o1)*1.25;let sd0=0;
-  for(let j=a;j<=b;j++){if(G.dead&&G.dead[j]){flush();continue}const k=KB[j],sd=SD[j];if(k<=.01){flush();sd0=0;continue}if(sd0&&sd!==sd0)flush();sd0=sd;
-    const q=Q[j],n=NN[j],r=R[j]*sd,e0=lerp(edge,o0,k),e1=lerp(edge,o1,k);L.push([q[0]+n[0]*r*e0,q[1]+n[1]*r*e0]);Rr.push([q[0]+n[0]*r*e1,q[1]+n[1]*r*e1])}
-  flush();return on}
+const BX0=new Float64Array(NP),BY0=new Float64Array(NP),BX1=new Float64Array(NP),BY1=new Float64Array(NP);
+// the strip of the first n points of the buffers into the path: one edge forward, the other back
+function stripOut(n){ctx.moveTo(BX0[0],BY0[0]);for(let i=1;i<n;i++)ctx.lineTo(BX0[i],BY0[i]);for(let i=n-1;i>=0;i--)ctx.lineTo(BX1[i],BY1[i]);ctx.closePath()}
+// (where the band fades out, k <= .01, the strip ends on a point of no width at the edge, and starts again from one: it tapers to the edge
+// instead of being cut across)
+function bandPath(G,a,b,o0,o1){ctx.beginPath();let on=false,n=0,sd0=0,jz=-1;const Q=G.Q,NN=G.NN,SD=G.SD,KB=G.KB,R=G.R,dead=G.dead,edge=Math.sign(o0+o1)*1.25;
+  const put=(j,s,k)=>{const q=Q[j],nn=NN[j],r=R[j]*s,e0=(edge+(o0-edge)*k)*r,e1=(edge+(o1-edge)*k)*r;BX0[n]=q[0]+nn[0]*e0;BY0[n]=q[1]+nn[1]*e0;BX1[n]=q[0]+nn[0]*e1;BY1[n]=q[1]+nn[1]*e1;n++};
+  // (and where the lit side changes from one edge to the other, the band shrinks to its old edge and grows again from the new one)
+  let jp=-1;for(let j=a;j<=b;j+=(j<7&&j+2<=b)?2:1){if(dead&&dead[j]){if(n>1){stripOut(n);on=true}n=0;jz=-1;jp=-1;continue}const k=KB[j],sd=SD[j];
+    if(k<=.01){if(n>0){put(j,sd0,0);if(n>1){stripOut(n);on=true}}n=0;sd0=0;jz=j;jp=j;continue}
+    if(sd0&&sd!==sd0){put(j,sd0,0);if(n>1){stripOut(n);on=true}n=0;if(jp>=0)put(jp,sd,0)}
+    else if(n===0&&jz>=0&&sd0===0)put(jz,sd,0);sd0=sd;jz=-1;jp=j;put(j,sd,k)}
+  if(n>1){stripOut(n);on=true}return on}
 // the coral belly, exactly: on every ring the arc round the belly's normal (±BW) that faces us, joined to the next ring's (one path)
 const BW=1.2,SHD='rgb(6,24,32)';
-function bellyPath(V0,G,a,b){const{P,F}=V0;ctx.beginPath();let any=false;
-  for(let j=a;j<b;j++){if(G.dead&&(G.dead[j]||G.dead[j+1]))continue;const c0=G.P[j],c1=G.P[j+1],n0=G.N[j],n1=G.N[j+1],b0=nrmS(cross(G.HP[j],n0)),b1=nrmS(cross(G.HP[j+1],n1));
-    const ph=Math.atan2(F(b0)+F(b1),F(n0)+F(n1)),lo=Math.max(-BW,ph-PI/2),hi=Math.min(BW,ph+PI/2);if(hi-lo<.04)continue;
-    const r0=G.R[j],r1=G.R[j+1],m=Math.max(2,Math.ceil((hi-lo)/.5));
-    for(let i=0;i<=m;i++){const t=lo+(hi-lo)*i/m,ct=Math.cos(t),st=Math.sin(t),q=P([c0[0]+(n0[0]*ct+b0[0]*st)*r0,c0[1]+(n0[1]*ct+b0[1]*st)*r0,c0[2]+(n0[2]*ct+b0[2]*st)*r0]);i?ctx.lineTo(q[0],q[1]):ctx.moveTo(q[0],q[1])}
-    for(let i=m;i>=0;i--){const t=lo+(hi-lo)*i/m,ct=Math.cos(t),st=Math.sin(t),q=P([c1[0]+(n1[0]*ct+b1[0]*st)*r1,c1[1]+(n1[1]*ct+b1[1]*st)*r1,c1[2]+(n1[2]*ct+b1[2]*st)*r1]);ctx.lineTo(q[0],q[1])}
-    ctx.closePath();any=true}
-  return any}
+function bellyPath(V0,G,a,b){const{P,F}=V0,dead=G.dead;ctx.beginPath();let any=false,m=0;
+  // one strip along the arm: on every ring the two ends of the arc round the belly's normal (±BW) that faces us (the projection is linear:
+  // the ring's centre and its two axes on the screen)
+  for(let j=a;j<=b;j++){if(dead&&dead[j]){if(m>1){stripOut(m);any=true}m=0;continue}const c=G.P[j],n=G.N[j],h=G.HP[j],bx=h[1]*n[2]-h[2]*n[1],by=h[2]*n[0]-h[0]*n[2],bz=h[0]*n[1]-h[1]*n[0],
+      ph=Math.atan2(F(bx,by,bz),F(n)),lo=Math.max(-BW,ph-PI/2),hi=Math.min(BW,ph+PI/2);
+    if(hi-lo<.04){if(m>1){stripOut(m);any=true}m=0;continue}const r=G.R[j],qc=G.Q[j],qn=P(n[0]*r,n[1]*r,n[2]*r),qb=P(bx*r,by*r,bz*r),c0=Math.cos(lo),s0=Math.sin(lo),c1=Math.cos(hi),s1=Math.sin(hi);
+    BX0[m]=qc[0]+qn[0]*c0+qb[0]*s0;BY0[m]=qc[1]+qn[1]*c0+qb[1]*s0;BX1[m]=qc[0]+qn[0]*c1+qb[0]*s1;BY1[m]=qc[1]+qn[1]*c1+qb[1]*s1;m++}
+  if(m>1){stripOut(m);any=true}return any}
 // one piece of an arm (chain points j0..j1): the outline only of its own segments, the fill one segment further on both sides (so
 // pieces drawn at different depths join without a seam, and a piece that comes out of the skirt grows out of it), then inside its fill
 // the three tones (the skin's gradient, a dark band on the side away from the light, a deeper one at its edge, a light band and the warm
 // rim on the lit side), the coral belly, the rings on the back, the suckers (lit by the signal), the pearl of light at the head of the signal
-function armPiece(V0,G,j0,j1,K,A,o){const Q=G.Q,Rr=G.R,lw=2.6,js=G.js,os=Math.max(j0,js+1),fs=Math.max(js,j0-1),fe=Math.min(NS-1,j1);if(fe<fs)return;
-  const po=new Path2D(),pf=new Path2D();let any=false;
-  for(let s=os;s<j1;s++){if(G.dead&&(G.dead[s]||G.dead[s+1]))continue;capP(po,Q[s],Rr[s]+lw/2,Q[s+1],Rr[s+1]+lw/2);any=true}
-  for(let s=fs;s<=fe;s++){if(G.dead&&(G.dead[s]||G.dead[s+1]))continue;capP(pf,Q[s],Math.max(.35,Rr[s]-lw/2+.1),Q[s+1],Math.max(.35,Rr[s+1]-lw/2+.1))}
-  ctx.lineJoin='round';if(any){ctx.fillStyle=INK;ctx.fill(po)}ctx.fillStyle=G.grad;ctx.fill(pf);
-  ctx.save();ctx.clip(pf);const a=fs,b=fe+1,a0=ctx.globalAlpha;
-  // the light down the lit side, the coral belly where it faces us (its own light where the light band crosses it), then the shadow in
-  // two steps away from the light (a neutral dark, so the belly keeps its colour) and the warm rim
-  const hasL=bandPath(G,a,b,.28,.8);if(hasL){ctx.fillStyle=G.lt;ctx.globalAlpha=a0*.45;ctx.fill();ctx.globalAlpha=a0}
-  if(bellyPath(V0,G,a,b)){ctx.fillStyle=K.belly.b;ctx.fill();if(hasL){ctx.save();ctx.clip();bandPath(G,a,b,.2,.9);ctx.fillStyle=K.belly.l;ctx.globalAlpha=a0*.75;ctx.fill();ctx.restore()}}
-  ctx.fillStyle=SHD;if(bandPath(G,a,b,-.06,-1.25)){ctx.globalAlpha=a0*.36;ctx.fill();ctx.globalAlpha=a0}
-  if(bandPath(G,a,b,-.58,-1.25)){ctx.globalAlpha=a0*.3;ctx.fill();ctx.globalAlpha=a0}
+function armPiece(V0,G,j0,j1,K,A,o,plain){const Q=G.Q,Rr=G.R,lw=2.6,js=G.js,os=Math.max(j0,js+1),fs=Math.max(js,j0-1),fe=Math.min(NS-1,j1);if(fe<fs)return;
+  // the fill's capsules of its own segments, stroked 5 wide (the outline from r - 1.2 out to r + 1.3, its inner half under the fill), then
+  // the one more segment on each side, and the fill of them all (the same union as an outline of its own and a fill one segment longer)
+  const ro=capRuns(Q,Rr,os,j1-1,G.dead),fr2=j=>Math.max(.35,Rr[j]-lw/2+.1),seg1=s=>{if(!(G.dead&&(G.dead[s]||G.dead[s+1])))capP(ctx,Q[s],fr2(s),Q[s+1],fr2(s+1))};
+  ctx.lineJoin='round';ctx.beginPath();for(let i=0;i<ro.length;i+=2){const a=ro[i],b=ro[i+1];capP(ctx,Q[a],fr2(a),Q[b],fr2(b))}
+  if(ro.length){ctx.strokeStyle=INK;ctx.lineWidth=2*lw-.2;ctx.stroke()}
+  for(let s=fs;s<Math.min(os,fe+1);s++)seg1(s);for(let s=Math.max(j1,fs,os);s<=fe;s++)seg1(s);ctx.fillStyle=G.grad;ctx.fill();
+  // (the root of an arm under the skirt, behind it: only its outline and its tone)
+  if(plain){ctx.fillStyle=SHD;ctx.globalAlpha*=.3;ctx.fill();ctx.globalAlpha/=.3;return}
+  ctx.save();ctx.clip();const a=fs,b=fe+1,a0=ctx.globalAlpha;
+  // the coral belly where it faces us, the light down the lit side over skin and belly alike, the shadow away from the light (a neutral
+  // dark, so the belly keeps its colour) and the warm rim
+  if(bellyPath(V0,G,a,b)){ctx.fillStyle=K.belly.b;ctx.fill()}
+  if(bandPath(G,a,b,.28,.8)){ctx.fillStyle=G.lt;ctx.globalAlpha=a0*.4;ctx.fill();ctx.globalAlpha=a0}
+  ctx.fillStyle=SHD;if(bandPath(G,a,b,-.12,-1.25)){ctx.globalAlpha=a0*.44;ctx.fill();ctx.globalAlpha=a0}
   if(!LOWFX){ctx.fillStyle=`rgba(${K.rimRgb},.3)`;if(bandPath(G,a,b,.8,1.02))ctx.fill()}
   armDetails(V0,G,a,b,K,A,o);ctx.restore()}
 // the rings on the back of the raised arms and the suckers (two rows on the belly, at most 8 a row; only those that face us; the budget
 // of the drawing goes first to the arm that attacks, then to the raised ones), lit by the signal, the pearl of light at its head
+// the eight places of the suckers along an arm (u = .2 + .093 i): the chain point before and how far to the next
+const SUP=Array.from({length:8},(_,i)=>{const u=.2+.093*i;let j=0;while(j<NS-1&&UP[j+1]<u)j++;return{u,j,k:cl((u-UP[j])/(UP[j+1]-UP[j]),0,1)}});
+const C5=Math.cos(.5),S5=Math.sin(.5),C8=Array.from({length:8},(_,i)=>[Math.cos(i/8*TAU),Math.sin(i/8*TAU)]);
 function armDetails(V0,G,a,b,K,A,o){const{P,F}=V0,u0=UP[a],u1=UP[Math.min(NS,b)];
   if(G.rings)for(const u of[.38,.6]){if(u<u0||u>u1)continue;const s=armAt(G,u),n=mul(s.n,-1),f=F(n);if(f<.12)continue;
     const c=add(s.p,mul(n,s.r*.92)),rr=s.r*.42,lit=G.ringLit(.5+.4*u);ringSpot(V0,c,n,rr,K,lit,cl((f-.12)*4,0,1))}
-  if(!G.suck)return;const runs=G.runs,pop=G.pop,outer=new Path2D(),inn=new Path2D(),hot=new Path2D();let nOut=0,nHot=0;
-  for(let i=0;i<8;i++){const u=.2+.093*i;if(u<u0-.001||u>u1+.001)continue;const s=armAt(G,u);if(G.dead&&(G.dead[s.j]||G.dead[s.j+1]))continue;
+  if(!G.suck)return;const runs=G.runs,pop=G.pop,SK=[];let nHot=0;
+  for(let i=0;i<8;i++){const{u,j,k}=SUP[i];if(u<u0-.001||u>u1+.001)continue;if(G.dead&&(G.dead[j]||G.dead[j+1]))continue;
     let lit=0;for(const r of runs)if(u<=r.u1+.001&&u>=r.u0)lit=Math.max(lit,r.a*(r.u1>=.999?1:sstep(r.u1+.001,r.u1-.05,u)));
     const popped=pop&&(7-i)<pop.f*8-.3;
-    for(const sg of[-1,1]){if((G.qn||0)>=G.quota)break;const d=rotAx(s.n,s.h,sg*.5),f=F(d);if(f<.12)continue;G.qn=(G.qn||0)+1;
-      const c=add(s.p,mul(d,s.r*.9)),rs=Math.max(1.15,s.r*.27)*sstep(.12,.3,f),t1=s.h,t2=nrm(cross(d,t1)),q=P(c),pa=P(add(c,mul(t1,rs))),pb=P(add(c,mul(t2,rs))),ax=pa[0]-q[0],ay=pa[1]-q[1],bx=pb[0]-q[0],by=pb[1]-q[1];
-      const el=(pa2,k)=>{pa2.moveTo(q[0]+ax*k,q[1]+ay*k);for(let m=1;m<=10;m++){const t=m/10*TAU,c2=Math.cos(t),s2=Math.sin(t);pa2.lineTo(q[0]+(ax*c2+bx*s2)*k,q[1]+(ay*c2+by*s2)*k)}pa2.closePath()};
-      el(outer,1);nOut++;if(popped)continue;if(lit>.05){el(hot,.66);nHot++;glo(K.sig,q[0],q[1],rs*2.6,.38*lit*f)}else el(inn,.5)}}
-  if(nOut){ctx.fillStyle=K.belly.l;ctx.fill(outer);ctx.strokeStyle=K.belly.d;ctx.lineWidth=.75;ctx.stroke(outer);ctx.fillStyle=K.suck;ctx.fill(inn);if(nHot){ctx.fillStyle=K.suckOn;ctx.fill(hot)}}
+    // the point of the arm there, its radius, its belly n and its heading h (between the chain's points), h x n across the belly
+    const P0=G.P[j],P1=G.P[j+1],N0=G.N[j],N1=G.N[j+1],H0=G.HP[j],H1=G.HP[j+1],r=G.R[j]+(G.R[j+1]-G.R[j])*k;
+    let nx=N0[0]+(N1[0]-N0[0])*k,ny=N0[1]+(N1[1]-N0[1])*k,nz=N0[2]+(N1[2]-N0[2])*k,hx=H0[0]+(H1[0]-H0[0])*k,hy=H0[1]+(H1[1]-H0[1])*k,hz=H0[2]+(H1[2]-H0[2])*k;
+    let l=Math.sqrt(nx*nx+ny*ny+nz*nz)||1;nx/=l;ny/=l;nz/=l;l=Math.sqrt(hx*hx+hy*hy+hz*hz)||1;hx/=l;hy/=l;hz/=l;
+    const cx=hy*nz-hz*ny,cy=hz*nx-hx*nz,cz=hx*ny-hy*nx,px=P0[0]+(P1[0]-P0[0])*k,py=P0[1]+(P1[1]-P0[1])*k,pz=P0[2]+(P1[2]-P0[2])*k;
+    for(const sg of[-1,1]){if((G.qn||0)>=G.quota)break;const dx=nx*C5+cx*sg*S5,dy=ny*C5+cy*sg*S5,dz=nz*C5+cz*sg*S5,f=F(dx,dy,dz);if(f<.12)continue;G.qn=(G.qn||0)+1;
+      // (its round rim: along the arm and across it, t2 = d x h)
+      const c=[px+dx*r*.9,py+dy*r*.9,pz+dz*r*.9],rs=Math.max(1.15,r*.27)*sstep(.12,.3,f),ex=dy*hz-dz*hy,ey=dz*hx-dx*hz,ez2=dx*hy-dy*hx,q=P(c),pa=P(c[0]+hx*rs,c[1]+hy*rs,c[2]+hz*rs),pb=P(c[0]+ex*rs,c[1]+ey*rs,c[2]+ez2*rs),ax=pa[0]-q[0],ay=pa[1]-q[1],bx=pb[0]-q[0],by=pb[1]-q[1];
+      const hot=!popped&&lit>.05;SK.push([q[0],q[1],ax,ay,bx,by,popped?0:hot?2:1]);if(hot){nHot++;const gs=G.glowStep||1;if(nHot%gs===1%gs)glo(K.sig,q[0],q[1],rs*2.6*(gs>1?1.6:1),.38*lit*f)}}}
+  if(SK.length){const el=(e,k2)=>{const x0=e[0],y0=e[1],ax=e[2]*k2,ay=e[3]*k2,bx=e[4]*k2,by=e[5]*k2;ctx.moveTo(x0+ax,y0+ay);for(let m=1;m<8;m++){const c2=C8[m][0],s2=C8[m][1];ctx.lineTo(x0+ax*c2+bx*s2,y0+ay*c2+by*s2)}ctx.closePath()};
+    ctx.beginPath();for(const e of SK)el(e,1);ctx.fillStyle=K.belly.l;ctx.fill();ctx.strokeStyle=K.belly.d;ctx.lineWidth=.75;ctx.stroke();
+    if(SK.length>nHot){ctx.beginPath();for(const e of SK)if(e[6]===1)el(e,.5);ctx.fillStyle=K.suck;ctx.fill()}
+    if(nHot){ctx.beginPath();for(const e of SK)if(e[6]===2)el(e,.66);ctx.fillStyle=K.suckOn;ctx.fill()}}
   // the head of the signal: a pearl of light running toward the tip, on the belly
   for(const r of runs){if(r.u1>=.995||r.a<.3||r.u1<u0||r.u1>u1)continue;const s=armAt(G,r.u1),f=F(s.n),c=P(add(s.p,mul(s.n,s.r*(f>0?.7:0))));
     glo(K.sig,c[0],c[1],9,.65*r.a);ctx.fillStyle=`rgba(255,255,255,${(.9*r.a).toFixed(3)})`;ball(c,2.1);ctx.fill()}}
-const SUCK={n:0,max:48},RINGS={n:0,max:20};
+const SUCK={n:0,max:36},RINGS={n:0,max:20};
 // the tones of an arm: the skin's three tones over its box (a far arm a little darker), its light
-function armTones(g,K,fk){const T=fk>0?mixT(K.skin,T3(K.skin.b,K.skin.d,K.skin.d),fk):K.skin;g.grad=grad3(g.bb,T);g.lt=K.skin.l}
+function armTones(g,K,fk){g.grad=fk>0?cmix(K.skin.b,K.skin.d,fk):K.skin.b;g.lt=cmix(K.skin.l,'#ffffff',.3)}
 // a ring of the skin (a dark circle with a lighter centre: quiet in the first phase; lit magenta in the second), flat on the surface at c
-function ringSpot(V0,c,n,rr,K,lit,al){if(RINGS.n>=RINGS.max||al<=.02)return;RINGS.n++;const{P}=V0,t1=perpOf(n),t2=cross(n,t1),q=P(c),a=P(add(c,mul(t1,rr))),b=P(add(c,mul(t2,rr))),ax=a[0]-q[0],ay=a[1]-q[1],bx=b[0]-q[0],by=b[1]-q[1];
-  const pth=k=>{ctx.beginPath();for(let m=0;m<12;m++){const t=m/12*TAU,c2=Math.cos(t),s2=Math.sin(t);ctx.lineTo(q[0]+(ax*c2+bx*s2)*k,q[1]+(ay*c2+by*s2)*k)}ctx.closePath()};
-  const a0=ctx.globalAlpha;ctx.globalAlpha=a0*al*.62;pth(1);ctx.fillStyle=K.ringOq;ctx.fill();ctx.globalAlpha=a0*al*.45;pth(.52);ctx.fillStyle=K.ringCq;ctx.fill();
-  if(lit>.02){ctx.globalAlpha=a0*al*Math.min(1,lit);glo(K.ringG,q[0],q[1],rr*2.5,.5*lit);pth(1);ctx.fillStyle=K.ringO;ctx.fill();pth(.55);ctx.fillStyle=K.ringC;ctx.fill()}
+const C12=Array.from({length:12},(_,i)=>[Math.cos(i/12*TAU),Math.sin(i/12*TAU)]);
+// a ring of the skin (a dark circle with a lighter centre: quiet in the first phase; lit magenta in the second), flat on the surface at c;
+// the quiet ones that face us fully go into a batch (B: two paths filled once for all the rings of a surface)
+function ringSpot(V0,c,n,rr,K,lit,al,B){if(RINGS.n>=RINGS.max||al<=.02)return;RINGS.n++;const{P}=V0,t1=perpOf(n),t2=cross(n,t1),q=P(c),a=P(t1[0]*rr,t1[1]*rr,t1[2]*rr),b=P(t2[0]*rr,t2[1]*rr,t2[2]*rr),ax=a[0],ay=a[1],bx=b[0],by=b[1];
+  const pth=(pa,k)=>{const x0=q[0],y0=q[1],a1=ax*k,a2=ay*k,b1=bx*k,b2=by*k;pa.moveTo(x0+a1,y0+a2);for(let m=1;m<12;m++){const c=C12[m][0],s=C12[m][1];pa.lineTo(x0+a1*c+b1*s,y0+a2*c+b2*s)}pa.closePath();return pa};
+  if(B&&lit<=.02&&al>=.98){pth(B.o,1);pth(B.c,.52);B.n++;return}
+  const a0=ctx.globalAlpha;ctx.globalAlpha=a0*al*.62;ctx.fillStyle=K.ringOq;ctx.fill(pth(new Path2D(),1));ctx.globalAlpha=a0*al*.45;ctx.fillStyle=K.ringCq;ctx.fill(pth(new Path2D(),.52));
+  if(lit>.02){ctx.globalAlpha=a0*al*Math.min(1,lit);glo(K.ringG,q[0],q[1],rr*2.5,.5*lit);ctx.fillStyle=K.ringO;ctx.fill(pth(new Path2D(),1));ctx.fillStyle=K.ringC;ctx.fill(pth(new Path2D(),.55))}
   ctx.globalAlpha=a0}
+const ringBatch=()=>({o:new Path2D(),c:new Path2D(),n:0});
+function ringFlush(B,K){if(!B.n)return;const a0=ctx.globalAlpha;ctx.globalAlpha=a0*.62;ctx.fillStyle=K.ringOq;ctx.fill(B.o);ctx.globalAlpha=a0*.45;ctx.fillStyle=K.ringCq;ctx.fill(B.c);ctx.globalAlpha=a0}
 
 // ------------------------------------------------------------------ the pool: dark water with foam on its rim, the rings that leave her
 // body, the pearl's reflection; ink in the second phase. With o.noWater only the rings
@@ -517,8 +567,9 @@ function poolDraw(V0,A,K,o,fx,nr,p){const{P}=V0,c=[A.B[0],A.B[1],0],pk=A.pool.k;
     if(A.pool.inkR>0&&A.pool.inkR<1){flatEll(V0,c,rx*A.pool.inkR*1.05,ry*A.pool.inkR*1.05,0);ctx.fillStyle=K2.water;ctx.fill()}
     // the sky's light on the far edge, the foam broken along the rim (it turns slowly with the pool)
     flatEll(V0,c,rx*.94,ry*.9,0);ctx.strokeStyle=`rgba(${K.foam},.18)`;ctx.lineWidth=2.4;ctx.stroke();
-    if(!LOWFX){const sp=A.pool.spin||0;ctx.strokeStyle=`rgba(${K.foam},.55)`;ctx.lineWidth=1.3;ctx.lineCap='round';ctx.beginPath();
-      for(let i=0;i<14;i++){const t0=i/14*TAU+sp*.3+.2*Math.sin(i*2.3),t1=t0+.18+.08*Math.sin(i*1.7);for(let m=0;m<=3;m++){const t=lerp(t0,t1,m/3),w=P(add(c,[Math.cos(t)*rx*.97,Math.sin(t)*ry*.97,0]));m?ctx.lineTo(w[0],w[1]):ctx.moveTo(w[0],w[1])}}ctx.stroke()}
+    if(!LOWFX){const sp=A.pool.spin||0,o0=P(c),e1=P([c[0]+rx*.97,c[1],0]),e2=P([c[0],c[1]+ry*.97,0]),ax=e1[0]-o0[0],ay=e1[1]-o0[1],bx=e2[0]-o0[0],by=e2[1]-o0[1];
+      ctx.strokeStyle=`rgba(${K.foam},.55)`;ctx.lineWidth=1.3;ctx.lineCap='round';ctx.beginPath();
+      for(let i=0;i<14;i++){const t0=i/14*TAU+sp*.3+.2*Math.sin(i*2.3),t1=t0+.18+.08*Math.sin(i*1.7);for(let m=0;m<=3;m++){const t=lerp(t0,t1,m/3),ct=Math.cos(t),st=Math.sin(t),wx=o0[0]+ax*ct+bx*st,wy=o0[1]+ay*ct+by*st;m?ctx.lineTo(wx,wy):ctx.moveTo(wx,wy)}}ctx.stroke()}
     // the reflection of the pearl and of the eyes, in front of her
     if(!LOWFX&&A.cut<.5){const w=P(add(c,[34,0,0]));glo(K.refl,w[0],w[1],14,.18+.25*A.pg,7);const w2=P(add(c,[-30,-20,0]));glo(K.refl2,w2[0],w2[1],18,.12,6)}
     // the water rising round her (the Marea) and the swell over her when she comes up (the Agguato), the mound that lifts her
@@ -537,22 +588,21 @@ function poolDraw(V0,A,K,o,fx,nr,p){const{P}=V0,c=[A.B[0],A.B[1],0],pk=A.pool.k;
 
 // ------------------------------------------------------------------ the skirt: a solid of revolution laid on the water, eight low
 // scallops on its hem (over the arms), a wave running round them; the same colour as the skin, only its edge a shade lighter
-function skirtPts(F,A,cutW){const zs=[0,4,9,15,22],N=24,sk=A.skK*(1+.12*A.skOpen),zk=1-.35*A.skOpen,ang=A.arms.map(S=>Math.atan2(S.b[1],S.b[0]-SKX)),rows=[];
+function skirtPts(F,A,zs){zs=zs||[0,4,9,15,22];const N=24,sk=A.skK*(1+.12*A.skOpen),zk=1-.35*A.skOpen,ang=A.arms.map(S=>Math.atan2(S.b[1],S.b[0]-SKX)),rows=[];
   for(const z of zs){const row=[];for(let i=0;i<N;i++){const t=i/N*TAU;let r=skR(z)*sk,zz=z*zk;
-      if(z===0){let sc=0;for(const a of ang){const d=Math.atan2(Math.sin(t-a),Math.cos(t-a));sc=Math.max(sc,Math.exp(-(d/.22)*(d/.22)))}const wv=Math.sin(2*t-TAU*A.skWave);r=(42+4*sc)*sk+1.1*wv;zz=.7+.6*wv}
+      if(z===0){let sc=0;for(const a of ang){let d=(t-a)%TAU;if(d>PI)d-=TAU;else if(d<-PI)d+=TAU;if(d>-.8&&d<.8)sc=Math.max(sc,Math.exp(-(d/.22)*(d/.22)))}const wv=Math.sin(2*t-TAU*A.skWave);r=(42+4*sc)*sk+1.1*wv;zz=.7+.6*wv}
       row.push(F.Xf.T([SKX+Math.cos(t)*r,Math.sin(t)*r,zz]))}rows.push(row)}
   return rows}
 function cutPts(rows){const out=[],n=rows.length;for(let i=0;i<n;i++){const r=rows[i],m=r.length;for(let j=0;j<m;j++){const a=r[j];if(a[2]>=0)out.push(a);const b=r[(j+1)%m];
     if(a[2]*b[2]<0)out.push(lerp3(a,b,a[2]/(a[2]-b[2])));if(i<n-1){const c=rows[i+1][j%rows[i+1].length];if(a[2]*c[2]<0)out.push(lerp3(a,c,a[2]/(a[2]-c[2])))}}}return out}
-function skirtDraw(V0,F,A,K,J){const{P}=V0,rows=skirtPts(F,A),cut=A.cut>0&&A.B[2]<1;let hem=rows[0],up=[];for(let i=1;i<rows.length;i++)up=up.concat(rows[i]);
+function skirtDraw(V0,F,A,K,J){const{P}=V0,cut=A.cut>0&&A.B[2]<1,rows=skirtPts(F,A,cut?null:[0,4,22]);let hem=rows[0],up=[];for(let i=1;i<rows.length;i++)up=up.concat(rows[i]);
   let Hs,Hh=null;if(cut){const pts=cutPts(rows);if(pts.length<3)return;Hs=hullE(pts.map(q=>P(q)),.08)}else{Hs=hullE(up.map(q=>P(q)),.08);Hh=hem.map(q=>P(q))}
   if(Hs.length<3)return;const pa=smoothP(Hs);let ph=null;if(Hh){ph=smoothP(Hh)}
   const bb=bbox(Hh?Hs.concat(Hh):Hs);ctx.lineJoin='round';ctx.strokeStyle=INK;ctx.lineWidth=5.6;ctx.stroke(pa);if(ph)ctx.stroke(ph);
   ctx.fillStyle=grad3(bb,K.skin);ctx.fill(pa);if(ph)ctx.fill(ph);
   // the soft shadow of the head on the top of the skirt, the darker hem, the light edge of the hem that faces us, the warm rim
-  ctx.save();{const u=new Path2D();u.addPath(pa);if(ph)u.addPath(ph);ctx.clip(u)}
-  {const hq=P(F.TU([12,0,22])),g=ctx.createRadialGradient(hq[0],hq[1]+4,2,hq[0],hq[1]+4,30);g.addColorStop(0,'rgba(4,16,20,.42)');g.addColorStop(1,'rgba(4,16,20,0)');ctx.fillStyle=g;ctx.fillRect(hq[0]-32,hq[1]-28,64,64)}
-  ctx.restore();
+  // (the shadow is filled into the skirt's outline itself: no clip; it fades out before the scallops of the hem)
+  {const hq=P(F.TU([12,0,22])),g=ctx.createRadialGradient(hq[0],hq[1]+4,2,hq[0],hq[1]+4,30);g.addColorStop(0,'rgba(4,16,20,.42)');g.addColorStop(1,'rgba(4,16,20,0)');ctx.fillStyle=g;ctx.fill(pa)}
   if(Hh){const fr0=[];for(let i=0;i<hem.length;i++){const t=i/hem.length*TAU,d=F.Xf.Rd([Math.cos(t),Math.sin(t),0]);fr0.push(V0.F(d)>.05?[Hh[i][0],Hh[i][1]-1.4]:null)}
     ctx.strokeStyle=K.hem;ctx.lineWidth=1.3;ctx.lineCap='round';ctx.beginPath();let on=false;for(let i=0;i<=fr0.length;i++){const q=fr0[i%fr0.length];if(!q){on=false;continue}on?ctx.lineTo(q[0],q[1]):ctx.moveTo(q[0],q[1]);on=true}ctx.stroke()}
   rimC(Hs,.28,K.rimRgb);J.skH=Hs}
@@ -573,9 +623,10 @@ function mantleDraw(V0,F,A,K,J){const{P,F:FF}=V0,{MF,MRn}=J.M,top=A.B[2]+MC[2]+M
   {const g=ctx.createLinearGradient(0,b[1]+(b[3]-b[1])*.5,0,b[3]);g.addColorStop(0,'rgba(4,20,26,0)');g.addColorStop(1,'rgba(4,20,26,.4)');ctx.fillStyle=g;ctx.fillRect(b[0],b[1],b[2]-b[0],b[3]-b[1])}
   if(A.cloud>0){const m=dirv(.15,lerp(.85,-.25,A.cloudY||0)),c=P(F.TU(ellAt(MC,MRn,MF,m))),r=(b[2]-b[0])*.55,g=ctx.createRadialGradient(c[0],c[1],2,c[0],c[1],r);
     g.addColorStop(0,`rgba(${K.cloud},${(.38*A.cloud).toFixed(3)})`);g.addColorStop(1,`rgba(${K.cloud},0)`);ctx.fillStyle=g;ctx.fillRect(c[0]-r,c[1]-r,2*r,2*r)}
-  RINGM.forEach(([az,el,r],i)=>{const m=dirv(az,el),n=F.RdU(ellN(MRn,MF,m)),f=FF(n);if(f<.12)return;const c=F.TU(ellAt(MC,MRn,MF,m));ringSpot(V0,add(c,mul(n,.3)),n,r*A.rsz,K,ringLitF(A,K,.14+.035*i),cl((f-.12)*4,0,1))});
-  for(const[az,el,r] of WARTS){const m=dirv(az,el),n=F.RdU(ellN(MRn,MF,m)),f=FF(n);if(f<.2)continue;const q=P(F.TU(ellAt(MC,MRn,MF,m)));ctx.fillStyle=`rgba(${K.wet},${(.35*f).toFixed(3)})`;ball(q,r);ctx.fill();
-    ctx.fillStyle=`rgba(4,30,36,${(.25*f).toFixed(3)})`;ball([q[0]+r*.35,q[1]+r*.4],r*.7);ctx.fill()}
+  {const RB=ringBatch();RINGM.forEach(([az,el,r],i)=>{const m=dirv(az,el),n=F.RdU(ellN(MRn,MF,m)),f=FF(n);if(f<.12)return;const c=F.TU(ellAt(MC,MRn,MF,m));ringSpot(V0,add(c,mul(n,.3)),n,r*A.rsz,K,ringLitF(A,K,.14+.035*i),cl((f-.12)*4,0,1),RB)});ringFlush(RB,K)}
+  {const wl=new Path2D(),wd=new Path2D();let nw=0;for(const[az,el,r] of WARTS){const m=dirv(az,el),n=F.RdU(ellN(MRn,MF,m)),f=FF(n);if(f<.35)continue;const q=P(F.TU(ellAt(MC,MRn,MF,m)));
+    wd.moveTo(q[0]+r*1.05,q[1]+r*.4);wd.arc(q[0]+r*.35,q[1]+r*.4,r*.7,0,TAU);wl.moveTo(q[0]+r,q[1]);wl.arc(q[0],q[1],r,0,TAU);nw++}
+    if(nw){ctx.fillStyle=`rgba(${K.wet},.3)`;ctx.fill(wl);ctx.fillStyle='rgba(4,30,36,.22)';ctx.fill(wd)}}
   {const q=[b[0]+(b[2]-b[0])*.35,b[1]+(b[3]-b[1])*.19],rx=(b[2]-b[0])*.21,ry=(b[3]-b[1])*.1,g=ctx.createRadialGradient(q[0],q[1],1,q[0],q[1],rx);g.addColorStop(0,`rgba(${K.wet},.62)`);g.addColorStop(.5,`rgba(${K.wet},.2)`);g.addColorStop(1,`rgba(${K.wet},0)`);
     ctx.fillStyle=g;ctx.save();ctx.translate(q[0],q[1]);ctx.rotate(-.4);ctx.scale(1,ry/rx);ctx.beginPath();ctx.arc(0,0,rx,0,TAU);ctx.fill();ctx.restore();
     // the sharp wet glint
@@ -584,9 +635,13 @@ function mantleDraw(V0,F,A,K,J){const{P,F:FF}=V0,{MF,MRn}=J.M,top=A.B[2]+MC[2]+M
     const a=P(F.TU(ellAt(MC,MRn,MF,m0))),c=P(F.TU(ellAt(MC,MRn,MF,m1))),f=FF(F.RdU(ellN(MRn,MF,dirv(az,.2))));if(f<.2)continue;const t=fr(A.dripT+i*.17);ctx.moveTo(a[0],lerp(a[1],c[1],t*.6));ctx.lineTo(a[0]+(c[0]-a[0])*.1,lerp(a[1],c[1],t*.6+.3))}ctx.stroke()}
   ctx.restore();rimC(pts,.3,K.rimRgb)}
 // the fold where the mantle meets the head: the near half of the line where the two meet, on the screen (from her left to her right)
-function foldOf(V0,F,J){const{MF,MRn}=J.M,N=24,pts=[],inH=q=>{const a=(q[0]-HC[0])/HR[0],b=(q[1]-HC[1])/HR[1],c=(q[2]-HC[2])/HR[2];return a*a+b*b+c*c<1};
-  for(let k=0;k<N;k++){const t=k/N*TAU,ct=Math.cos(t),st=Math.sin(t),at=e=>ellAt(MC,MRn,MF,[Math.cos(e)*ct,Math.cos(e)*st,Math.sin(e)]);let lo=-PI/2+.02,hi=.45;
-    if(inH(at(hi))||!inH(at(lo)))continue;for(let it=0;it<10;it++){const m=(lo+hi)/2;if(inH(at(m)))lo=m;else hi=m}pts.push(V0.P(F.TU(at(hi))))}
+const FOLD={};let FOLDN=0;
+function foldOf(V0,F,J){const{MF,MRn}=J.M,N=24,inH=q=>{const a=(q[0]-HC[0])/HR[0],b=(q[1]-HC[1])/HR[1],c=(q[2]-HC[2])/HR[2];return a*a+b*b+c*c<1};
+  const key=MF.u[0].toFixed(3)+'|'+MF.u[2].toFixed(3)+'|'+MRn.map(v=>v.toFixed(2)).join();let F3=FOLD[key];
+  if(!F3){F3=[];for(let k=0;k<N;k++){const t=k/N*TAU,ct=Math.cos(t),st=Math.sin(t),at=e=>ellAt(MC,MRn,MF,[Math.cos(e)*ct,Math.cos(e)*st,Math.sin(e)]);let lo=-PI/2+.02,hi=.45;
+      if(inH(at(hi))||!inH(at(lo)))continue;for(let it=0;it<10;it++){const m=(lo+hi)/2;if(inH(at(m)))lo=m;else hi=m}F3.push(at(hi))}
+    if(++FOLDN>400){for(const k in FOLD)delete FOLD[k];FOLDN=0}FOLD[key]=F3}
+  const pts=F3.map(q=>V0.P(F.TU(q)));
   if(pts.length<6)return null;let il=0,ir=0;for(let i=1;i<pts.length;i++){if(pts[i][0]<pts[il][0])il=i;if(pts[i][0]>pts[ir][0])ir=i}
   const ch=(a,b)=>{const out=[];let i=a;for(let n=0;n<=pts.length;n++){out.push(pts[i]);if(i===b)break;i=(i+1)%pts.length}return out};
   const c1=ch(il,ir),c2=ch(ir,il).reverse(),my=c=>c.reduce((s,q)=>s+q[1],0)/c.length;return my(c1)>=my(c2)?c1:c2}
@@ -601,7 +656,7 @@ function headDraw(V0,F,A,K,J,face,ch){const{P,F:FF}=V0,top=A.B[2]+HC[2]+HR[2]+2,
   {const g=ctx.createLinearGradient(0,b[1]+(b[3]-b[1])*.45,0,b[3]);g.addColorStop(0,'rgba(4,20,26,0)');g.addColorStop(1,'rgba(4,20,26,.35)');ctx.fillStyle=g;ctx.fillRect(b[0],b[1],b[2]-b[0],b[3]-b[1])}
   // the shadow of the mantle on the top of the head, under the fold
   if(fold){ctx.lineCap='round';ctx.lineJoin='round';ctx.strokeStyle='rgba(4,24,30,.32)';ctx.lineWidth=7;ctx.beginPath();fold.forEach((q,i)=>i?ctx.lineTo(q[0],q[1]+2.5):ctx.moveTo(q[0],q[1]+2.5));ctx.stroke()}
-  RINGH.forEach(([az,el,r],i)=>{const m=dirv(az+ch,el),n=F.RdU(ellN(HR,AXES,m)),f=FF(n);if(f<.15)return;const c=F.TU(ellAt(HC,HR,AXES,m));ringSpot(V0,add(c,mul(n,.3)),n,r,K,ringLitF(A,K,.02+.03*i),cl((f-.15)*4,0,1))});
+  {const RB=ringBatch();RINGH.forEach(([az,el,r],i)=>{const m=dirv(az+ch,el),n=F.RdU(ellN(HR,AXES,m)),f=FF(n);if(f<.15)return;const c=F.TU(ellAt(HC,HR,AXES,m));ringSpot(V0,add(c,mul(n,.3)),n,r,K,ringLitF(A,K,.02+.03*i),cl((f-.15)*4,0,1),RB)});ringFlush(RB,K)}
   ctx.restore();rimC(pts,.28,K.rimRgb);
   // the face: the mouth, the eyes, the near brows over them (all under the fold, like the head)
   mouthDraw(V0,F,A,K,ch);for(const sd of[-1,1])eyeDraw(V0,F,A,K,sd,ch);
@@ -614,6 +669,7 @@ function headDraw(V0,F,A,K,J,face,ch){const{P,F:FF}=V0,top=A.B[2]+HC[2]+HR[2]+2,
 // an eye: amber that fills it inside a thin dark ring, the pupil a bar with round ends, the light up left and a smaller one down right,
 // the heavy upper lid leaning down toward the middle of the face (a haughty look), the lower lid a little up; drawn on the surface of
 // the head (its own tangent plane), never on its outline
+const IRG={};let IRGN=0;
 function eyeDraw(V0,F,A,K,sd,ch){const{P,F:FF}=V0,m=nrm(rotZ([EYD[0],sd*EYD[1],EYD[2]],ch)),c=F.TU(ellAt(HC,HR,AXES,m)),n=F.RdU(ellN(HR,AXES,m)),v=FF(n);
   if(v<.16||c[2]<.5)return;const al=cl((v-.16)*5,0,1),t1=nrm(cross([0,0,1],n)),t2=cross(n,t1),q=P(c),pa=P(add(c,mul(t1,EYRX*.94))),pb=P(add(c,mul(t2,-EYRY*.92)));
   const ax=pa[0]-q[0],ay=pa[1]-q[1],bx=pb[0]-q[0],by=pb[1]-q[1],tr=()=>ctx.transform(ax,ay,bx,by,q[0],q[1]),inS=-sd;
@@ -621,7 +677,7 @@ function eyeDraw(V0,F,A,K,sd,ch){const{P,F:FF}=V0,m=nrm(rotZ([EYD[0],sd*EYD[1],E
   glo(K.eyeG,q[0],q[1],EYRY*2.1,.3*A.eyeGlow*al*sstep(.15,.5,bl));
   const a0=ctx.globalAlpha;ctx.globalAlpha=a0*al;
   ctx.save();tr();ctx.beginPath();ctx.arc(0,0,1.13,0,TAU);ctx.fillStyle=K.eyeR;ctx.fill();ctx.beginPath();ctx.arc(0,0,1,0,TAU);ctx.clip();
-  {const g=ctx.createRadialGradient(-.32,-.4,.05,0,.12,1.12);g.addColorStop(0,K.iris.l);g.addColorStop(.45,K.iris.b);g.addColorStop(1,K.iris.d);ctx.fillStyle=g;ctx.fillRect(-1.1,-1.1,2.2,2.2)}
+  {const id=K.iris.l+K.iris.b+K.iris.d;let g=IRG[id];if(!g){if(++IRGN>64){for(const k in IRG)delete IRG[k];IRGN=0}g=IRG[id]=ctx.createRadialGradient(-.32,-.4,.05,0,.12,1.12);g.addColorStop(0,K.iris.l);g.addColorStop(.45,K.iris.b);g.addColorStop(1,K.iris.d)}ctx.fillStyle=g;ctx.fillRect(-1.1,-1.1,2.2,2.2)}
   ctx.strokeStyle=K.iris.d;ctx.globalAlpha*=.55;ctx.lineWidth=.16;ctx.beginPath();ctx.arc(0,0,.93,0,TAU);ctx.stroke();ctx.globalAlpha=a0*al;
   // the pupil: a pill (narrower aiming, wider laughing, round in fear)
   {const lx=A.look[0]*.2,ly=A.look[1]*.14,rd=A.round,hh=lerp(A.pw/2*(K.k2>.5?.85:1),.3,rd),hw=lerp(.375,.3,rd),cx=lx,cy=ly+.04;ctx.fillStyle=K.pupil;ctx.beginPath();
@@ -642,9 +698,8 @@ function eyeDraw(V0,F,A,K,sd,ch){const{P,F:FF}=V0,m=nrm(rotZ([EYD[0],sd*EYD[1],E
 function browDraw(V0,F,A,K,sd,ch){const{P,F:FF}=V0,e0=.78+.07*A.brow-.07*A.squint,e1=.87+.07*A.brow-.02*A.squint,pts=[],rs=[];
   for(let i=0;i<=4;i++){const k=i/4,m=nrm(dirv(sd*lerp(.24,.8,k)+ch,lerp(e0,e1,k)+.025*Math.sin(k*PI))),c=F.TU(add(ellAt(HC,HR,AXES,m),mul(ellN(HR,AXES,m),1.2)));if(c[2]<.5)return;pts.push(c);rs.push(lerp(1.3,1.6,Math.sin(k*PI*.8+.3)))}
   const e=pts[4],m4=nrm(dirv(sd*.8+ch,e1)),up=F.RdU(ellN(HR,AXES,m4)),bk=F.RdU([-.6,sd*.3,.75]);pts.push(add(e,mul(nrm(add(up,bk)),1.8)));rs.push(1.25);pts.push(add(e,mul(nrm(add(mul(up,.5),bk)),3.3)));rs.push(1.05);
-  const Q=pts.map(q=>P(q)),pa=new Path2D(),pf=new Path2D();for(let i=0;i<Q.length-1;i++){capP(pa,Q[i],rs[i]+1,Q[i+1],rs[i+1]+1);capP(pf,Q[i],rs[i]-.5,Q[i+1],rs[i+1]-.5)}
-  ctx.fillStyle=INK;ctx.fill(pa);ctx.fillStyle=K.skin.b;ctx.fill(pf);ctx.save();ctx.clip(pf);ctx.strokeStyle=K.skin.l;ctx.lineWidth=1.4;ctx.lineCap='round';lineP(Q.map(q=>[q[0],q[1]-1.1]));ctx.stroke();
-  ctx.strokeStyle=K.skin.d;ctx.lineWidth=1.2;lineP(Q.map(q=>[q[0],q[1]+1.2]));ctx.stroke();ctx.restore()}
+  const Q=pts.map(q=>P(q)),B=Q.slice(0,5),T=Q.slice(4),st=(pts,c,w,dy)=>{ctx.strokeStyle=c;ctx.lineWidth=w;ctx.beginPath();ctx.moveTo(pts[0][0],pts[0][1]+dy);for(let i=1;i<pts.length;i++)ctx.lineTo(pts[i][0],pts[i][1]+dy);ctx.stroke()};
+  ctx.lineCap='round';ctx.lineJoin='round';st(B,INK,5,0);st(T,INK,4.3,0);st(B,K.skin.b,1.9,0);st(T,K.skin.b,1.3,0);st(B,K.skin.l,.75,-.58);st(B,K.skin.d,.55,.68)}
 // the mouth: small and turned down at the corners when shut (haughty); open, a dark oval with the beak's two tips, the only fangs
 function mouthDraw(V0,F,A,K,ch){const{P,F:FF}=V0,m=nrm(rotZ(MOD,ch)),c=F.TU(ellAt(HC,HR,AXES,m)),n=F.RdU(ellN(HR,AXES,m)),v=FF(n);if(v<.1||c[2]<.5)return;
   const q=P(c),t1=nrm(cross([0,0,1],n)),a=P(add(c,mul(t1,4.6))),ax=a[0]-q[0],ay=a[1]-q[1],al=cl((v-.1)*4,0,1),j=A.jaw,a0=ctx.globalAlpha;ctx.globalAlpha=a0*al;
@@ -681,27 +736,31 @@ function ringDraw(V0,CF,K,near,cutZ){const{P,F}=V0,N=CR0.N,W=[],V=[];for(let i=0
   // the run that wraps round the start of the ring joins its two ends
   if(runs.length>1&&V[0]&&V[N]){const a=runs.shift(),b=runs.pop();runs.push(b.concat(a.slice(1)))}
   if(!runs.length)return;ctx.lineCap='round';ctx.lineJoin='round';const st=(c,w)=>{ctx.strokeStyle=c;ctx.lineWidth=w;ctx.beginPath();for(const r of runs){ctx.moveTo(r[0][0],r[0][1]);for(let i=1;i<r.length;i++)ctx.lineTo(r[i][0],r[i][1])}ctx.stroke()};
-  st(INK,5.8);st(K.reed.d,3.6);st(K.reed.b,2.4);ctx.save();ctx.translate(-.4,-.7);st(K.reed.l,1);ctx.restore();
+  st(INK,5.8);st(K.reed.d,3.6);st(K.reed.b,2.4);
+  if(near){ctx.save();ctx.translate(-.4,-.7);st(K.reed.l,1);ctx.restore();
   // the weave: short slanted strokes, one way and the other
   ctx.strokeStyle=K.reedD;ctx.lineWidth=.8;ctx.beginPath();for(const r of runs)for(let i=1;i<r.length;i++){const a=r[i-1],b=r[i],dx=b[0]-a[0],dy=b[1]-a[1],l=Math.hypot(dx,dy)||1,ux=dx/l,uy=dy/l,s=i%2?1:-1;
-    for(const t of[.3,.75]){const m=[lerp(a[0],b[0],t),lerp(a[1],b[1],t)];ctx.moveTo(m[0]-ux*1.1-uy*1.4*s,m[1]-uy*1.1+ux*1.4*s);ctx.lineTo(m[0]+ux*1.1+uy*1.4*s,m[1]+uy*1.1-ux*1.4*s)}}ctx.stroke();
+    for(const t of[.3,.75]){const m=[lerp(a[0],b[0],t),lerp(a[1],b[1],t)];ctx.moveTo(m[0]-ux*1.1-uy*1.4*s,m[1]-uy*1.1+ux*1.4*s);ctx.lineTo(m[0]+ux*1.1+uy*1.4*s,m[1]+uy*1.1-ux*1.4*s)}}ctx.stroke()}
   // the knot behind
   const kq=CF.at(CR0.ring[N/2]),kn=CF.free?CF.dir([-1,0,.3]):CF.dir(CR0.nrm[N/2]);if((F(kn)>0)===near&&kq[2]>cutZ){const q=P(add(kq,mul(kn,1)));ctx.fillStyle=K.reed.b;ctx.strokeStyle=INK;ctx.lineWidth=1.3;ball(q,2.6);ctx.fill();ctx.stroke();ctx.fillStyle=K.reed.l;ball([q[0]-.7,q[1]-.8],.9);ctx.fill()}}
 // a pond snail: the spire along ax (h tall), the mouth at its foot toward out; three turns of brown bands, an iridescent thread on its lit
 // edge; lit from within in the second phase. Cut at the water (the fin)
-function snailDraw(V0,b,ax,out,h,r,K,A,cutZ){const{P,F}=V0,w=nrm(ax),u=nrm(sub(out,mul(w,dot(out,w)))),v=cross(w,u),W=q=>[b[0]+u[0]*q[0]*r+v[0]*q[1]*r+w[0]*q[2]*h,b[1]+u[1]*q[0]*r+v[1]*q[1]*r+w[1]*q[2]*h,b[2]+u[2]*q[0]*r+v[2]*q[1]*r+w[2]*q[2]*h];
-  let pts=SNPTS.map(W);if(cutZ>-1e8){const top=b[2]+w[2]*h;if(top<cutZ)return;if(Math.min(b[2],top)<cutZ){pts=pts.filter(q=>q[2]>=cutZ);const cr=[];for(let i=0;i<12;i++){const t=i/12*TAU,zz=(cutZ-b[2])/(w[2]*h||1);if(zz<0||zz>1)continue;const rr=snR(zz);cr.push(W([Math.cos(t)*rr,Math.sin(t)*rr,zz]))}pts=pts.concat(cr)}}
-  if(pts.length<3)return;const H=hullE(pts.map(q=>P(q)),.05);if(H.length<3)return;const hp=svol3(V0,H,K.shell,{lw:1.7,scr:1});
-  ctx.save();ctx.clip(hp.path);
+function snailDraw(V0,b,ax,out,h,r,K,A,cutZ,far){const{P,F}=V0,w=nrm(ax),u=nrm(sub(out,mul(w,dot(out,w)))),v=cross(w,u),W=q=>[b[0]+u[0]*q[0]*r+v[0]*q[1]*r+w[0]*q[2]*h,b[1]+u[1]*q[0]*r+v[1]*q[1]*r+w[1]*q[2]*h,b[2]+u[2]*q[0]*r+v[2]*q[1]*r+w[2]*q[2]*h];
+  const pb=P(b),pu=P(u[0]*r,u[1]*r,u[2]*r),pv=P(v[0]*r,v[1]*r,v[2]*r),pw=P(w[0]*h,w[1]*h,w[2]*h),S=(x,y,z)=>[pb[0]+pu[0]*x+pv[0]*y+pw[0]*z,pb[1]+pu[1]*x+pv[1]*y+pw[1]*z],
+    Zt=(x,y,z)=>b[2]+(u[2]*x+v[2]*y)*r+w[2]*z*h;
+  let pts;if(cutZ>-1e8){const top=b[2]+w[2]*h;if(top<cutZ)return;pts=[];for(const q of SNPTS)if(Zt(q[0],q[1],q[2])>=cutZ)pts.push(S(q[0],q[1],q[2]));
+    if(Math.min(b[2],top)<cutZ){const zz=(cutZ-b[2])/(w[2]*h||1);if(zz>=0&&zz<=1){const rr=snR(zz);for(let i=0;i<12;i++){const t=i/12*TAU;pts.push(S(Math.cos(t)*rr,Math.sin(t)*rr,zz))}}}}
+  else pts=SNPTS.map(q=>S(q[0],q[1],q[2]));
+  if(pts.length<3)return;const H=hullE(pts,.05);if(H.length<3)return;svol3(V0,H,K.shell,{lw:1.7,scr:1});
   // the bands of the spiral (only on the side that faces us)
-  ctx.strokeStyle=K.band;ctx.lineWidth=1.05;ctx.lineCap='round';ctx.beginPath();let on=false;for(let i=0;i<=40;i++){const s=i/40,z=.14+s*.8,t=s*2.6*TAU+.6,rr=snR(z)+.06,c=[Math.cos(t)*rr,Math.sin(t)*rr,z],n=nrm(add(add(mul(u,Math.cos(t)),mul(v,Math.sin(t))),mul(w,.3)));
-    const q=P(W(c));if(F(n)>.05&&W(c)[2]>cutZ){on?ctx.lineTo(q[0],q[1]):ctx.moveTo(q[0],q[1]);on=true}else on=false}ctx.stroke();
+  ctx.strokeStyle=K.band;ctx.lineWidth=1.05;ctx.lineCap='round';ctx.beginPath();let on=false;for(let i=0;i<=18;i++){const s=i/18,z=.14+s*.8,t=s*2.6*TAU+.6,rr=snR(z)+.02,ct=Math.cos(t),st=Math.sin(t);
+    if(F(u[0]*ct+v[0]*st+w[0]*.3,u[1]*ct+v[1]*st+w[1]*.3,u[2]*ct+v[2]*st+w[2]*.3)>.05&&Zt(ct*rr,st*rr,z)>cutZ){const q=S(ct*rr,st*rr,z);on?ctx.lineTo(q[0],q[1]):ctx.moveTo(q[0],q[1]);on=true}else on=false}ctx.stroke();
   // the mouth at the foot, toward out: dark, or lit from within
-  const mc=W([.95,0,.13]),fm=F(u);if(fm>.05&&mc[2]>cutZ){const q=P(mc),a=P(W([.95,.55,.13])),c2=P(W([.95,0,.33])),L=K.shellLit*(A.shellK||1),a0=ctx.globalAlpha;ctx.globalAlpha=a0*cl(fm*3,0,1);
+  const fm=F(u);if(fm>.05&&Zt(.95,0,.13)>cutZ){const q=S(.95,0,.13),a=S(.95,.55,.13),c2=S(.95,0,.33),L=K.shellLit*(A.shellK||1),a0=ctx.globalAlpha;ctx.globalAlpha=a0*cl(fm*3,0,1);
     ctx.save();ctx.transform(a[0]-q[0],a[1]-q[1],c2[0]-q[0],c2[1]-q[1],q[0],q[1]);ctx.beginPath();ctx.arc(0,0,1,0,TAU);ctx.restore();ctx.fillStyle=L>.05?cmix('#3a2a20','#ffd0f0',Math.min(1,L*.8)):'#3a2a20';ctx.fill();
     if(L>.05)glo(K.shellG,q[0],q[1],h*.9,.55*Math.min(1.4,L));ctx.globalAlpha=a0}
-  if(K.shellLit*(A.shellK||1)>.05){const q=P(W([0,0,.4]));glo(K.shellG,q[0],q[1],h*.8,.25*K.shellLit*(A.shellK||1))}
-  ctx.restore();ctx.strokeStyle=`rgba(${K.iri},.6)`;ctx.lineWidth=1;rimC(H,.5,K.iri);
+  if(K.shellLit*(A.shellK||1)>.05){const q=S(0,0,.4);glo(K.shellG,q[0],q[1],h*.8,.25*K.shellLit*(A.shellK||1))}
+  if(!LOWFX&&!far)rimC(H,.5,K.iri);
   // where it cuts the water: a ring of foam round it (the fin)
   if(cutZ>-1e8&&b[2]<cutZ){const zz=(cutZ-b[2])/(w[2]*h||1),c=W([0,0,zz]),rr=snR(zz)*r+1.6;flatEll(V0,[c[0],c[1],cutZ],rr*1.15,rr,0);ctx.strokeStyle=`rgba(${K.foam},.8)`;ctx.lineWidth=1.2;ctx.stroke()}}
 // the river mussel open like a fan (two valves: dark outside with the lines of growth, mother of pearl inside), the pearl at its hinge
@@ -715,13 +774,12 @@ function musselDraw(V0,b,up,fw,K,A,cutZ,pearlQ){const{P,F}=V0,side=nrm(cross(up,
       const o3=[];for(let i=0;i<=10;i++){const k=i/10,w=5*Math.sqrt(Math.max(0,1-(2*k-1)*(2*k-1)));o3.push(add(add(bb,mul(d,k*14)),mul(s,w)))}for(let i=9;i>0;i--){const k=i/10,w=5*Math.sqrt(Math.max(0,1-(2*k-1)*(2*k-1)));o3.push(add(add(bb,mul(d,k*14)),mul(s,-w)))}
       const cz=K3.clipZ(o3.map(q=>[q[0],q[1],q[2]-cutZ]));if(cz.length<3)continue;poly(cz.map(q=>P([q[0],q[1],q[2]+cutZ])));ctx.fillStyle=f<0?K.musO.b:K.musI.b;ctx.fill();ctx.strokeStyle=INK;ctx.lineWidth=1.6;ctx.stroke();continue}
     const pts=leaf(V0,bb,d,s,14,5,K.musI.b,{back:K.musO.b,ell:true,lw:1.6,kl:.32,kd:.22,bend:-.18});
-    ctx.save();poly(pts);ctx.clip();ctx.lineCap='round';
+    ctx.lineCap='round';
     if(f<0){ctx.strokeStyle=K.musO.l;ctx.lineWidth=.8;for(const k of[.42,.66,.88]){ctx.beginPath();for(let i=0;i<=8;i++){const t=-1+i/4,q=P(add(add(bb,mul(d,15*k*(1-.12*t*t))),mul(s,4.3*k*t*.9)));i?ctx.lineTo(q[0],q[1]):ctx.moveTo(q[0],q[1])}ctx.stroke()}}
     else{// the dark lip of the shell round the inside, the sheen of the mother of pearl, a blue rim inside the edge
       ctx.strokeStyle=K.musO.b;ctx.lineWidth=3.6;poly(pts);ctx.stroke();ctx.strokeStyle=`rgba(${K.iri},.35)`;ctx.lineWidth=.8;for(const k of[.5,.75]){ctx.beginPath();for(let i=0;i<=8;i++){const t=-1+i/4,q=P(add(add(bb,mul(d,14*k*(1-.12*t*t))),mul(s,5*k*t*.9)));i?ctx.lineTo(q[0],q[1]):ctx.moveTo(q[0],q[1])}ctx.stroke()}
       ctx.strokeStyle=`rgba(${K.iri},.85)`;ctx.lineWidth=1;ctx.beginPath();for(let i=0;i<=10;i++){const t=-1+i/5,q=P(add(add(bb,mul(d,13.6*(1-.1*t*t)+.6)),mul(s,3.7*t)));i?ctx.lineTo(q[0],q[1]):ctx.moveTo(q[0],q[1])}ctx.stroke();
-      const g=P(add(bb,mul(d,8.5)));ctx.fillStyle='rgba(255,236,250,.5)';ctx.beginPath();ctx.ellipse(g[0]-.6,g[1]-.4,1.7,3.2,Math.atan2(P(d)[0]-P([0,0,0])[0],-(P(d)[1]-P([0,0,0])[1])),0,TAU);ctx.fill()}
-    ctx.restore()}
+      const g=P(add(bb,mul(d,8.5)));ctx.fillStyle='rgba(255,236,250,.5)';ctx.beginPath();ctx.ellipse(g[0]-.6,g[1]-.4,1.7,3.2,Math.atan2(P(d)[0]-P([0,0,0])[0],-(P(d)[1]-P([0,0,0])[1])),0,TAU);ctx.fill()}}
   // the pearl of the pond at the hinge: it breathes, flashes before every move, trembles when the arms are stuck
   const pc=add(add(b,mul(fw,3)),mul(up,2.6));if(pc[2]<cutZ+4)return;let q=P(pc);if(A.ptr>0){const t=A.ptrT||0;q=[q[0]+.8*A.ptr*Math.sin(TAU*2.4*t),q[1]+.5*A.ptr*Math.sin(TAU*2.4*t+1.3)]}pearlQ.q=q;
   const r=5.5;if(!LOWFX)shine(K.pearlG,q[0],q[1],r*2.6,.12+.22*A.pg);glo(K.pearlG,q[0],q[1],r*2.4+12*A.pf,.6*A.pf);
@@ -732,17 +790,25 @@ function musselDraw(V0,b,up,fw,K,A,cutZ,pearlQ){const{P,F}=V0,side=nrm(cross(up,
   ctx.strokeStyle=`rgba(${K.iri},.65)`;ctx.beginPath();ctx.arc(q[0],q[1],r*.72,2.3,3.6);ctx.stroke();
   if(A.pf>.02){ctx.fillStyle=`rgba(255,255,255,${Math.min(.95,.9*A.pf).toFixed(3)})`;ball(q,r*(.5+.3*A.pf));ctx.fill()}
   ctx.fillStyle='#ffffff';ball([q[0]-r*.36,q[1]-r*.4],r*.26);ctx.fill();ctx.fillStyle='rgba(255,255,255,.7)';ball([q[0]+r*.34,q[1]+r*.3],r*.12);ctx.fill()}
+// a petal's outline added to the path in ctx (a flat oval from b along d, length L, half width W across s)
+const PETK=[[0,0],[.2,.72],[.5,1],[.8,.72],[1,0],[.8,-.72],[.5,-1],[.2,-.72]];
+function petalP(V0,b,d,s,L,W){const{P}=V0,pb=P(b),pd=P(d[0]*L,d[1]*L,d[2]*L),ps=P(s[0]*W,s[1]*W,s[2]*W),pts=PETK.map(([k,w])=>[pb[0]+pd[0]*k+ps[0]*w,pb[1]+pd[1]*k+ps[1]*w]),n=8,m=i=>[(pts[i][0]+pts[(i+1)%n][0])/2,(pts[i][1]+pts[(i+1)%n][1])/2];
+  let q=m(n-1);ctx.moveTo(q[0],q[1]);for(let i=0;i<n;i++){q=m(i);ctx.quadraticCurveTo(pts[i][0],pts[i][1],q[0],q[1])}ctx.closePath()}
+// a light petal: a flat oval from b along d (length L, half width W across s), the colour of the face that turns to us, a thin outline
+function petal(V0,b,d,s,L,W,col,back,lw){const{P,F}=V0,pts=[];for(const[k,w] of[[0,0],[.2,.72],[.5,1],[.8,.72],[1,0],[.8,-.72],[.5,-1],[.2,-.72]])pts.push(P([b[0]+d[0]*k*L+s[0]*w*W,b[1]+d[1]*k*L+s[1]*w*W,b[2]+d[2]*k*L+s[2]*w*W]));
+  smooth(pts);ctx.fillStyle=F(cross(d,s))<0?back:col;ctx.fill();ctx.strokeStyle=INK;ctx.lineWidth=lw||1.1;ctx.stroke()}
 // the pink water lily pinned like a brooch (half open; wide open and shining in the second phase; white at the end of the defeat)
 function flowerDraw(V0,c,n,K,A,r,open){const{P,F}=V0;let u=perpOf(n);const v=cross(n,u),f=F(n),pet=A.flWhite>0?cmix(K.petal,'#fff6fa',A.flWhite):K.petal,petD=A.flWhite>0?cmix(K.petalD,'#f0d8e6',A.flWhite):K.petalD;
   if(K.fOpen>.3&&A.flWhite<.5){const q=P(c);glo('255,140,220',q[0],q[1],r*2.6,.45*K.fOpen)}
-  const lift=lerp(.75,.18,open),L=[];for(let i=0;i<7;i++){const a=i/7*TAU+.2,d=nrm(add(mul(n,Math.sin(lift)),mul(add(mul(u,Math.cos(a)),mul(v,Math.sin(a))),Math.cos(lift)))),s=nrm(cross(n,d)),tip=add(c,mul(d,r));L.push({d,s,dd:V0.D(tip)})}
-  L.sort((a,b)=>a.dd-b.dd);for(const e of L)leaf(V0,c,e.d,e.s,r,2.6,pet,{back:petD,ell:true,lw:1.2,kl:.4,kd:.15});
-  for(let i=0;i<5;i++){const a=i/5*TAU+.6,d=nrm(add(mul(n,Math.sin(lift+.4)),mul(add(mul(u,Math.cos(a)),mul(v,Math.sin(a))),Math.cos(lift+.4)))),s=nrm(cross(n,d));leaf(V0,c,d,s,r*.62,1.9,petD,{back:petD,ell:true,lw:1,kl:.35,kd:.2})}
+  const lift=lerp(.75,.18,open),L=[];for(let i=0;i<6;i++){const a=i/6*TAU+.2,d=nrm(add(mul(n,Math.sin(lift)),mul(add(mul(u,Math.cos(a)),mul(v,Math.sin(a))),Math.cos(lift)))),s=nrm(cross(n,d)),tip=add(c,mul(d,r));L.push({d,s,dd:V0.D(tip)})}
+  L.sort((a,b)=>a.dd-b.dd);ctx.beginPath();let fw=0;for(const e of L){petalP(V0,c,e.d,e.s,r,2.8);fw+=F(cross(e.d,e.s))<0?-1:1}ctx.fillStyle=fw<0?petD:pet;ctx.fill();ctx.strokeStyle=INK;ctx.lineWidth=1.1;ctx.stroke();
+  ctx.beginPath();for(let i=0;i<4;i++){const a=i/4*TAU+.6,d=nrm(add(mul(n,Math.sin(lift+.4)),mul(add(mul(u,Math.cos(a)),mul(v,Math.sin(a))),Math.cos(lift+.4)))),s=nrm(cross(n,d));petalP(V0,c,d,s,r*.62,2)}
+  ctx.fillStyle=petD;ctx.fill();ctx.lineWidth=.9;ctx.stroke();
   const h=P(add(c,mul(n,1.6)));ctx.strokeStyle=INK;ctx.lineWidth=1.1;ball(h,2.1);ctx.fillStyle=softBall(h,2.1,K.heart,.4,.2);ctx.fill();ctx.stroke()}
 // a tuft of algae: two ribbons hanging from the ring and swaying like springs (their own frame: down in the room, out from the crown)
 function algaDraw(V0,b,outW,K,A,sd){const sw=LOWFX?0:A.algae,o=A.algaOut||0;
   for(const[L,da,w] of[[18,0,2.2],[13.5,.35,1.8]]){let d=nrm(add(mul([0,0,-1],1-o*.85),mul(outW,.28+o*1.1)));d=rotAx(d,[0,0,1],sd*(da+.25*sw));d=rotAx(d,nrm(cross(d,[0,0,1])),.3*sw*(da?1:-1));
-    const s=nrm(cross(d,[0,0,1]));leaf(V0,add(b,mul(s,da*2)),d,s,L,w,K.alga,{back:K.algaD,lw:1.3,bend:.55+.2*sw,kl:.3,kd:.2})}}
+    const s=nrm(cross(d,[0,0,1]));leaf(V0,add(b,mul(s,da*2)),d,s,L,w,K.alga,{back:K.algaD,lw:1.3,bend:.55+.2*sw,flat:true})}}
 
 // ------------------------------------------------------------------ the water cuts an arm: the points under it are not drawn, the one
 // next to the water moves to where the arm goes in, and there a collar of foam
@@ -752,9 +818,11 @@ function waterCut(g){const P=g.P;let lo=1e9;for(const q of P)lo=Math.min(lo,q[2]
     if(pa){const a=P[j-1],b=P[j],k=a[2]/(a[2]-b[2]);P2[j]=lerp3(a,b,k);cuts.push({c:P2[j],r:g.R[j],j})}else if(pb){const a=P[j+1],b=P[j],k=a[2]/(a[2]-b[2]);P2[j]=lerp3(a,b,k);cuts.push({c:P2[j],r:g.R[j],j})}else dead[j]=true}
   g.P=P2;g.dead=dead;g.cuts=cuts}
 function collar(V0,c,r,K,dark){flatEll(V0,[c[0],c[1],0],r+2.2,(r+2.2)*.92,0);ctx.fillStyle=dark||K.water;ctx.fill();ctx.strokeStyle=`rgba(${K.foam},.75)`;ctx.lineWidth=1.4;ctx.stroke()}
-// the budget of the suckers (48 a drawing): first the arm that attacks, then the raised ones, then the others
+// the budget of the suckers (36 a drawing): first the arm that attacks, then the raised ones, then the others
 function suckBudget(V0,G,A){const pr=G.map((g,i)=>({g,w:g.runs.length?3:A.hi[i]>.3||g.rings?2:1})).sort((a,b)=>b.w-a.w);let left=SUCK.max;
-  for(const{g} of pr){let n=0;for(let i=0;i<8;i++){const u=.2+.093*i;if(u<UP[g.js]||(g.dead&&g.dead[Math.min(NS,Math.round(u*NS))]))continue;const s=armAt(g,u);for(const sg of[-1,1])if(V0.F(rotAx(s.n,s.h,sg*.48))>=.1)n++}g.quota=Math.min(n,left);left-=g.quota}}
+  const c5=Math.cos(.5),s5=Math.sin(.5);
+  for(const{g} of pr){let n=0;for(let i=0;i<8;i++){const u=.2+.093*i;if(u<UP[g.js]||(g.dead&&g.dead[Math.min(NS,Math.round(u*NS))]))continue;const s=armAt(g,u),fn=V0.F(s.n),fb=V0.F(cross(s.h,s.n));
+    for(const sg of[-1,1])if(c5*fn+sg*s5*fb>=.12)n++}g.quota=Math.min(n,left);left-=g.quota}}
 
 // ------------------------------------------------------------------ the effects of the moves, on the water and in the air
 function fxDraw(V0,F,A,K,J,L,e){const{P,D}=V0,t=e.t,G=J.G,B0=[A.B[0],A.B[1],0];
@@ -796,7 +864,7 @@ function fxDraw(V0,F,A,K,J,L,e){const{P,D}=V0,t=e.t,G=J.G,B0=[A.B[0],A.B[1],0];
   else if(k==='lastbub')L.add(1e6,()=>{const q=P([-9,14,2+12*t]),r=1.4+1.5*t;ctx.strokeStyle=`rgba(${K.foam},${(1-sstep(.8,1,t)).toFixed(3)})`;ctx.lineWidth=1;ball(q,r);ctx.stroke()});}
 
 // ------------------------------------------------------------------ the model
-function octopus2(x,y,face,anim,p,sc,o){sc=sc||1;o=o||{};anim=MV.includes(anim)?anim:'idle';p=cl(+p||0,0,1);const V0=V(face),{P,D,F:FF}=V0,A=oPose(anim,p,o),fxo=fxOn(o);
+function octopus2(x,y,face,anim,p,sc,o){sc=sc||1;o=o||{};anim=MV.includes(anim)?anim:'idle';p=cl(+p||0,0,1);const V0=VF(face),{P,D,F:FF}=V0,A=oPose(anim,p,o),fxo=fxOn(o);
   if(o.z)A.B[2]+=o.z/sc;A.ptrT=p*DUR[anim];A.dripT=p*DUR[anim]*1.5;
   const K=pal(A.k2,A.pale),F=frames(A),J={M:mantleOf(A)},ch=C3K.cheat(face,.3),deep=A.B[2];
   SUCK.n=0;RINGS.n=0;GL=[];ctx.save();ctx.translate(x,y);ctx.scale(sc,sc);
@@ -810,8 +878,8 @@ function octopus2(x,y,face,anim,p,sc,o){sc=sc||1;o=o||{};anim=MV.includes(anim)?
   J.G=G;suckBudget(V0,G,A);
   const sRef=F.Xf.T([SKX,0,10]),uRef=F.X.T([-2,0,45]);
   G.forEach((g,i)=>{for(let pi=0;pi<3;pi++){const[a0,b0]=PIECE[pi],a=Math.max(a0,g.js),b=b0;if(b<=a)continue;let ref=[0,0,0],n=0,live=false;for(let j=a;j<=b;j++){ref=add(ref,g.P[j]);n++;if(!g.dead||!g.dead[j])live=true}if(!live)continue;ref=mul(ref,1/n);
-    if(A.hi[i]>0)ref=lerp3(ref,g.P[NS],A.hi[i]);const dRel=D(ref)-D(lerp3(sRef,uRef,sstep(15,45,ref[2]))),back=(pi===0||a<3)&&g.under||dRel<=0;
-    L.add((back?-1e5:1e5)+D(ref),null,{arm:i,j0:a0,j1:b0})}});
+    if(A.hi[i]>0)ref=lerp3(ref,g.P[NS],A.hi[i]);const dRel=D(ref)-D(lerp3(sRef,uRef,sstep(15,45,ref[2]))),back=(pi===0||a<PIECE[1][0])&&g.under||dRel<=0;
+    L.add((back?-1e5:1e5)+D(ref),null,{arm:i,j0:a0,j1:b0,plain:pi===0&&back&&g.under&&!A.hi[i]})}});
   // ---------------- the body: skirt, mantle, head (cut at the fold), the face, the siphon, the crown
   const hidden=deep<-150;
   if(!hidden&&deep+22>0)L.add(0,()=>skirtDraw(V0,F,A,K,J));
@@ -824,7 +892,7 @@ function octopus2(x,y,face,anim,p,sc,o){sc=sc||1;o=o||{};anim=MV.includes(anim)?
   {const fin=A.fin>0&&A.fin<.99&&deep<-60,CL=fin?[]:L,add2=(d,f)=>CL.push({d,f});
     add2(CF.free?400:50,()=>ringDraw(V0,CF,K,false,cutZ));add2(CF.free?401:300,()=>ringDraw(V0,CF,K,true,cutZ));
     ORN.forEach((g,gi)=>{const c=crownAt(g.t),nW=CF.free?CF.dir([c.out[0],c.out[1],.6]):CF.dir(c.n),near=FF(nW)>0,base=CF.at(c.q),dd=(CF.free?402:near?305:45)+gi*.01;
-      if(g.k==='snail'){const axL=nrm(add(mul([0,0,1],Math.cos(g.tilt)),mul(c.out,Math.sin(g.tilt))));add2(dd,()=>snailDraw(V0,add(base,mul(CF.dir(axL),-1.2)),CF.dir(axL),CF.dir(c.out),g.h*(1+A.mb*.4),g.r,K,A,cutZ))}
+      if(g.k==='snail'){const axL=nrm(add(mul([0,0,1],Math.cos(g.tilt)),mul(c.out,Math.sin(g.tilt))));add2(dd,()=>snailDraw(V0,add(base,mul(CF.dir(axL),-1.2)),CF.dir(axL),CF.dir(c.out),g.h*(1+A.mb*.4),g.r,K,A,cutZ,!near&&!CF.free))}
       else if(g.k==='mussel')add2(CF.free?403:FF(CF.dir(c.n))>-.35?306:44,()=>musselDraw(V0,add(base,CF.dir([0,0,1.5])),CF.dir([0,0,1]),CF.dir(c.out),K,A,cutZ,J.pearl));
       else if(g.k==='flower'){const q2=sub(c.q,[0,0,3.2]),nn=nrm(add(c.n,mul(c.out,.3)));add2(dd,()=>{const cc=CF.at(add(q2,mul(nn,1)));if(cc[2]>cutZ)flowerDraw(V0,cc,CF.dir(nn),K,A,7,lerp(K.fOpen,1,A.flWhite))})}
       else if(g.k==='alga')add2(CF.free?399:near?310:40,()=>{if(base[2]>cutZ+3)algaDraw(V0,base,CF.dir(c.out),K,A,Math.sign(g.t))})});
@@ -835,8 +903,8 @@ function octopus2(x,y,face,anim,p,sc,o){sc=sc||1;o=o||{};anim=MV.includes(anim)?
   if(fxo)for(const e of A.fx)fxDraw(V0,F,A,K,J,L,e);
   // ---------------- draw (pieces of the same arm one after the other are drawn as one), the lights, the halo of the pearl
   L.sort((a,b)=>a.d-b.d);
-  for(let i=0;i<L.length;i++){const e=L[i];if(o.dbgArms&&(e.arm==null?o.dbgNoBody:!o.dbgArms.includes(e.arm)))continue;if(e.arm==null){e.f();continue}let j1=e.j1;while(i+1<L.length&&L[i+1].arm===e.arm&&L[i+1].j0===j1){j1=L[i+1].j1;i++}
-    const g=G[e.arm];armPiece(V0,g,e.j0,j1,K,A,o);if(g.cuts)for(const c of g.cuts)if(c.j>=e.j0&&c.j<=j1)collar(V0,c.c,c.r,K)}
+  for(let i=0;i<L.length;i++){const e=L[i];if(o.dbgArms&&(e.arm==null?o.dbgNoBody:!o.dbgArms.includes(e.arm)))continue;if(e.arm==null){e.f();continue}let j1=e.j1,plain=e.plain;while(i+1<L.length&&L[i+1].arm===e.arm&&L[i+1].j0===j1){j1=L[i+1].j1;i++;plain=false}
+    const g=G[e.arm];armPiece(V0,g,e.j0,j1,K,A,o,plain);if(g.cuts)for(const c of g.cuts)if(c.j>=e.j0&&c.j<=j1)collar(V0,c.c,c.r,K)}
   glowFlush();
   if(A.halo>0&&!LOWFX){const q=P(add(CF.o,mul(CF.dir([0,0,1]),18)));glo(K.pearlG,q[0],q[1]-8,46,.55*A.halo,64);glo('255,255,255',q[0],q[1],18,.5*A.halo);glowFlush()}
   GL=null;ctx.restore()}
@@ -876,7 +944,7 @@ reg('octopus2',{n:'La Piovra della Palude',g:'boss',sc:1,p2:true,an:MV.slice(),d
 // tall, r 9 at the root and 2 at the tip, the tip curled); .68-.84 it stands and sways a little, the suckers lit toward a; .84-.90 it
 // lashes (bends 75° toward a); .90-1 back down into the hole: the ring of broken stone with the water stays. o.p2 (magenta suckers and
 // rings), o.ink (out of a pool of ink: dark drops, a violet rim), o.seed (varies the bend and the sway)
-N3.octopus2Arm=function(x,y,k,a,sc,o){sc=sc||1;o=o||{};k=cl(+k||0,0,1);const V0=V(a==null?PI/2:a),{P}=V0,K=pal(o.p2?1:0,0),sd=o.seed||0,s1=Math.sin(sd*12.9898)*.5,t=G&&G.t||0;
+N3.octopus2Arm=function(x,y,k,a,sc,o){sc=sc||1;o=o||{};k=cl(+k||0,0,1);const V0=VF(a==null?PI/2:a),{P}=V0,K=pal(o.p2?1:0,0),sd=o.seed||0,s1=Math.sin(sd*12.9898)*.5,t=G&&G.t||0;
   ctx.save();ctx.translate(x,y);ctx.scale(sc,sc);
   const st=k<.62?ez(k/.62):1,rS=14*st,out=k>=.62,ink=!!o.ink,fx=!LOWFX;
   // the wet stain (or the pool of ink) and its cracks
@@ -885,15 +953,15 @@ N3.octopus2Arm=function(x,y,k,a,sc,o){sc=sc||1;o=o||{};k=cl(+k||0,0,1);const V0=
       for(let m=1;m<=3;m++){const r=L2*m/3,w=.25*Math.sin(i*3+m*2);q=P([Math.cos(an+w)*r,Math.sin(an+w)*r,0]);ctx.lineTo(q[0],q[1])}}ctx.stroke();
     if(fx&&!out)for(let i=0;i<5;i++){const u=fr(k*6+i*.23),an=i/5*TAU+s1,q=P([Math.cos(an)*rS*.6,Math.sin(an)*rS*.6,0]);ctx.strokeStyle=`rgba(${K.foam},${(.7*(1-u)*st).toFixed(3)})`;ctx.lineWidth=1;ball([q[0],q[1]-u*3],.8+u*2);ctx.stroke()}}
   // the broken stone round the hole
-  if(out){const ru=ez(sstep(.62,.68,k));for(let i=0;i<9;i++){const an=i/9*TAU+s1,r=13+3*Math.sin(i*2.1),z=k<.7?Math.sin(sstep(.62,.7,k)*PI)*5:0,q=P([Math.cos(an)*(r+4*(1-ru)),Math.sin(an)*(r+4*(1-ru)),z]);
-      ctx.fillStyle=i%2?'#6f6658':'#5a5246';ctx.strokeStyle=INK;ctx.lineWidth=1;ctx.beginPath();ctx.moveTo(q[0]-2.6,q[1]+1);ctx.lineTo(q[0]-.6,q[1]-2.2);ctx.lineTo(q[0]+2.4,q[1]-1);ctx.lineTo(q[0]+1.6,q[1]+1.8);ctx.closePath();ctx.fill();ctx.stroke()}
+  if(out){const ru=ez(sstep(.62,.68,k));ctx.strokeStyle=INK;ctx.lineWidth=1;for(const odd of[0,1]){ctx.beginPath();for(let i=odd;i<9;i+=2){const an=i/9*TAU+s1,r=13+3*Math.sin(i*2.1),z=k<.7?Math.sin(sstep(.62,.7,k)*PI)*5:0,q=P([Math.cos(an)*(r+4*(1-ru)),Math.sin(an)*(r+4*(1-ru)),z]);
+      ctx.moveTo(q[0]-2.6,q[1]+1);ctx.lineTo(q[0]-.6,q[1]-2.2);ctx.lineTo(q[0]+2.4,q[1]-1);ctx.lineTo(q[0]+1.6,q[1]+1.8);ctx.closePath()}ctx.fillStyle=odd?'#6f6658':'#5a5246';ctx.fill();ctx.stroke()}
     flatEll(V0,[0,0,0],9,8,0);ctx.fillStyle=ink?'#1d1330':'#173f44';ctx.fill();ctx.strokeStyle=INK;ctx.lineWidth=1.2;ctx.stroke()}
   // the arm
   if(out&&k<1){const up=k<.68?ez(sstep(.62,.68,k)):k<.9?1:1-ez(sstep(.9,1,k)),lash=k<.84?0:k<.9?ez(sstep(.84,.9,k)):1-ez(sstep(.9,.96,k)),sw=k>.68&&k<.84?.08*Math.sin(TAU*(k-.68)/.16*1.5+sd):0;
     const L0=54,S0=SH({kind:'cobra',b:[0,0,-L0*(1-up)-2],L:L0+4,rb:9,k:[dirv(0,1.52),dirv(0,1.5+sw),dirv(PI,1.45-sw*1.4),dirv(PI,1.3)],c:{ax:[0,1,0],ang:-.9*PI,u0:.72,pw:1.4},vb:[1,0,0]});
     const S=lash>0?bendS(S0,[0,1,0],[0,.35*lash,.75*lash,1.3*lash]):S0;
     const F0=frames({B:[0,0,0],lean:0,roll:0,yaw:0,s:0,spin:0,hy:0,hp:0,hr:0}),g=armGeo(S,F0,{B:[0,0,0],yaw:0,spin:0,skK:0,skOpen:0});g.js=0;g.rings=true;g.suck=true;
-    g.runs=k>.66&&k<.92?[{i:0,u0:0,u1:1,a:1}]:[];g.pop=null;g.quota=16;g.ringLit=()=>o.p2?1:0;waterCut(g);armScreen(V0,g);armTones(g,K,0);
+    g.runs=k>.66&&k<.92?[{i:0,u0:0,u1:1,a:1}]:[];g.pop=null;g.quota=12;g.glowStep=3;g.ringLit=()=>o.p2?1:0;waterCut(g);armScreen(V0,g);armTones(g,K,0);
     const A0={hi:[0],runs:[]};SUCK.n=0;RINGS.n=0;const gl=GL;GL=[];armPiece(V0,g,0,NS,K,A0,o);if(g.cuts)for(const c of g.cuts)collar(V0,c.c,Math.max(6,c.r),K,ink?'#1d1330':'#173f44');glowFlush();GL=gl;
     if(fx&&k<.72){const u=(k-.62)/.1;for(let i=0;i<8;i++){const an=i/8*TAU,q=P([Math.cos(an)*(8+14*u),Math.sin(an)*(8+14*u),Math.sin(u*PI)*14]);ctx.fillStyle=ink?`rgba(40,24,60,${1-u})`:`rgba(${K.foam},${1-u})`;ball(q,1.6);ctx.fill()}}}
   ctx.restore()};
@@ -926,7 +994,7 @@ N3.octopus2Blob=function(x,y,z,k,sc,o){sc=sc||1;o=o||{};k=+k||0;const r=7,a=k*TA
 // N3.octopus2Info: the moments of her moves (p of the model), for the brain
 N3.octopus2Dbg={oPose,frames,armGeo,rest,mantleOf,foldOf,crownOf,skirtPts,CR0,ORN,crownAt,headAt,UP,NS,SH,dirv,REST1,REST2,mixS,armTo,whipUp,whipDown,RC};
 N3.octopus2Info={dur:DUR,impact:{slam:.60,slam2:[.45,.85],rise:.63,tide:.55,enter:.75},flash:{slam:.035,slam2:[.035,.47],ink:.035,cage:.035,whirl:.04,taunt:.12,rage:[.6,.76],enter:.665,die:.9},
-  pops:POPS,ink:{3:INK3,5:INK5},cage:{plant:.33,push:.712,out:.85},whirl:{star:.15,stop:.86},sink:{under:.70,fin:.85},rise:{burst:.63,slap:.80},tide:{up:.3,slam:.55,down:.8},
+  pops:POPS,ink:{3:INK3,5:INK5},cage:{plant:.33,push:CAGEP,out:.85},whirl:{star:.15,stop:.86},whirlA,sink:{under:.70,fin:.85},rise:{burst:.63,slap:.80},tide:{up:.3,slam:.55,down:.8},
   taunt:{flash:.12,pop:.62,taps:[.75,.85],call:[.38,.56]},enter:{eyes:.17,taps:[.31,.35,.39],snaps:[.52,.60],pearl:.665,slap:.75,roar:[.82,.92]},die:{clou:.55,pearl:.90,bubble:.95},
   siphon:[-2,28,30],radius:34};
 })();

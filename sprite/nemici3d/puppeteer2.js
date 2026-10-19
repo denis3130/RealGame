@@ -27,10 +27,13 @@
 // cade: con o.a 0 le dita vanno in su sullo schermo e il pollice a sinistra, come l'ombra della mano che disegna il cervello),
 // N3.puppeteer2Trap (la botola) e N3.puppeteer2Info (i momenti dei colpi e degli avvisi). Modello 'puppeteer2': nel gioco prende il nome
 // 'puppeteer' (src/js/89-burattinaio-nuovo.js).
-// Scelte dove il design non bastava: il sipario è largo 96 (con 78 le grandi mani restavano fuori ai lati); l'asticella delle ginocchia
-// va da −20 a +20 (con ±11 i fili delle ginocchia passavano davanti al viso); nell'entrata i polsi afflosciati sono a ±29 (dietro il
-// sipario); i lampi delle mosse salgono e scendono in qualche fotogramma (mai uno scatto da un fotogramma all'altro, tranne i colpi
-// voluti: i pugni che cadono a peso morto, la frusta, lo strappo verso l'alto del Sipario).
+// Scelte dove il design non bastava: il sipario è largo 96 e alto 166 (con 78 le grandi mani restavano fuori ai lati, con 150 la cima
+// del cappuccio e le sue punte si vedevano attraverso la parte che sfuma nel buio); l'asticella delle ginocchia va da −20 a +20 (con ±11
+// i fili delle ginocchia passavano davanti al viso); nell'entrata i polsi afflosciati sono a ±29 (dietro il sipario); le code del frac
+// girano un poco in avanti intorno ai fianchi (di lato erano una riga); sul cappuccio la radice delle punte non ha il contorno (una punta
+// che viene verso di noi sembrava un buco); un pezzo che passa davanti o dietro alla botte sfuma solo per pochi gradi, mai in una posa
+// che resta ferma; i lampi delle mosse salgono e scendono in qualche fotogramma (mai uno scatto da un fotogramma all'altro, tranne i
+// colpi voluti: i pugni che cadono a peso morto, la frusta, lo strappo verso l'alto del Sipario).
 (()=>{const C=C3,K3=C3K,{TAU,cl,ez,lerp,add,sub,mul,len,nrm,dot,cross,lerp3,V,ball,seg,run,cmix,poly,bbox,
   rotX,rotY,rotZ,keys,sstep,hitK,frame,ellAt,ellN,AXES,chain,parts,reg,shine,ik,glowTop,cam,hull,rim,chull,bump,floor,wa}=C;
 const{trem,fxOn,cheat,pls,rise,ga,ellCap,fadeDraw,grad3,ellSil,smoothP,rimP,frm,ringS,limbGrad,T3,mixT,mixRgb,rotAx}=K3;
@@ -159,7 +162,7 @@ const toeLift=t=>{const s=Math.sin(t),c=Math.cos(t);return Math.max(0,4.6*s+2.6*
 function heap(A,k,sd){if(k<=0)return;const s=sd||1;
   A.B=lerp3(A.B,[2,0,-33],k);A.lean=lerp(A.lean,.3,k);A.roll=lerp(A.roll,.14*s,k);A.yaw=lerp(A.yaw,0,k);
   A.fL=lerp3(A.fL,[20,27,4],k);A.fR=lerp3(A.fR,[20,-27,4],k);A.tL=lerp(A.tL,-.45,k);A.tR=lerp(A.tR,-.45,k);A.fyL=lerp(A.fyL,.55,k);A.fyR=lerp(A.fyR,.55,k);
-  A.kpole=[.15,1,.75];A.kpk=k;
+  A.kpole=[.5,1,.6];A.kpk=k;   // (the knees out and a little forward: seen from the front they are clearly in front of the barrel)
   A.hL=lerp3(A.hL,[8,50,4],k);A.hR=lerp3(A.hR,[8,-50,4],k);A.gL=HPmix(A.gL,HP([.5,1,0],[0,0,1],[.2,.25,.3],.2),k);A.gR=HPmix(A.gR,HP([.5,-1,0],[0,0,1],[.2,.25,.3],.2),k);
   A.hp=lerp(A.hp,.6,k);A.hr=lerp(A.hr,.7*s,k);A.hy=lerp(A.hy,.25*s,k);A.droop=Math.max(A.droop,k);A.look=lerp(A.look,0,k);A.tail=lerp(A.tail,.5,k)}
 function pPose(anim,p,o){const ph=p*TAU,P2=!!o.p2&&anim!=='enter'&&anim!=='rage',A=rest(P2);
@@ -481,7 +484,9 @@ function backMask(S,Rd,K){const cen=S(Math.PI,71);if(cen[2]<.1)return;const k=ss
 // the coat tails: two tongues of violet velvet with a golden edge, hanging behind from the belt (late)
 function tailsDraw(V0,X,A,K,Rd){const{P}=V0;for(const sd of[-1,1]){const sw=A.tail*(sd>0?1:.85),zz=(TAILA[2]-BC[2])/Rd[2],s=Math.sqrt(Math.max(0,1-zz*zz)),ry=Math.min(.95,TAILA[1]/(Rd[1]*s)),
     ax=-Rd[0]*s*Math.sqrt(1-ry*ry)+.6,a=X.T([ax,sd*TAILA[1],TAILA[2]]),d=X.Rd(rotAx([TAILB[0]-ax,sd*(TAILB[1]-TAILA[1]),TAILB[2]-TAILA[2]],[0,1,0],-sw*.9)),
-    lat=X.Rd([0,sd,0]),b=add(a,d),m=add(lerp3(a,b,.5),X.Rd([-2-2*sw,0,0])),pts=[add(a,mul(lat,-4.5)),add(m,mul(lat,-4.4)),add(b,mul(lat,-2.4)),add(b,add(mul(lat,0),X.Rd([0,0,-3]))),add(b,mul(lat,2.4)),add(m,mul(lat,4.4)),add(a,mul(lat,4.5))].map(P);
+    lat=X.Rd([0,sd,0]),fw=X.Rd([1,0,0]),b=add(a,d),m=add(lerp3(a,b,.5),X.Rd([-2-2*sw,0,0])),
+    // (the outer edge wraps forward round the hips, as velvet does on a round body: seen from the side the tail is a narrow tongue, not a line)
+    pts=[add(a,mul(lat,-4.5)),add(m,mul(lat,-4.4)),add(b,mul(lat,-2.4)),add(b,add(mul(lat,.3),X.Rd([0,0,-3]))),add(add(b,mul(lat,2.4)),mul(fw,2)),add(add(m,mul(lat,4.4)),mul(fw,3.6)),add(add(a,mul(lat,4.5)),mul(fw,4.2))].map(P);
     ctx.lineJoin='round';ctx.beginPath();ctx.moveTo(pts[0][0],pts[0][1]);ctx.quadraticCurveTo(pts[1][0],pts[1][1],pts[2][0],pts[2][1]);ctx.quadraticCurveTo(pts[3][0],pts[3][1]+1.5,pts[4][0],pts[4][1]);ctx.quadraticCurveTo(pts[5][0],pts[5][1],pts[6][0],pts[6][1]);ctx.closePath();
     ctx.fillStyle=grad3(bbox(pts),K.vel);ctx.fill();ctx.strokeStyle=INK;ctx.lineWidth=2.2;ctx.stroke();ctx.strokeStyle=K.gold.b;ctx.lineWidth=1;ctx.save();ctx.clip();ctx.lineWidth=2.2;ctx.stroke();ctx.restore()}}
 
@@ -633,8 +638,15 @@ function tipPts(H0,H1,X,A,sd){const o=[];for(let i=0;i<TIP.length;i++){const k=T
     let q=add(H0.Hc,R(l));if(A.droop>0){const dz=TIPDROOP[i]*A.droop;q=add(q,[0,0,-dz]);q=add(q,mul(R([0,sd,0]),-dz*.25))}
     if(A.tsw)q=add(q,R([0,sd*A.tsw*k*3,A.tsw*k*4]));o.push(q)}return o}
 function bellAt(A,pts,sd){const t=pts[pts.length-1],ph=A.jph*TAU+(sd>0?0:1.3),j=A.jb;return add(t,[1.4*j*Math.sin(ph),1.8*j*Math.sin(ph+1),-4])}
-function tipDraw(V0,pts,A,K,sd,noBell){const T=sd>0?K.vel:K.cri,P2=pts.map(q=>V0.P(q)),bb=bbox(P2);bb[0]-=6;bb[1]-=6;bb[2]+=6;bb[3]+=6;
-  chain(V0,pts,TIPR,T.b,{lw:2.4,fill:grad3(bb,T),noRim:1});rimChain(P2.slice(0,3),TIPR,.24);topM(P2[1],5.5,K);
+function tipDraw(V0,pts,A,K,sd,noBell,front){const T=sd>0?K.vel:K.cri,P2=pts.map(q=>V0.P(q)),bb=bbox(P2);bb[0]-=6;bb[1]-=6;bb[2]+=6;bb[3]+=6;
+  const gr=grad3(front||bb,T);
+  if(!front)chain(V0,pts,TIPR,T.b,{lw:2.4,fill:gr,noRim:1});
+  else{// over the hood (front: the hood's box, its velvet's gradient): the root is the hood's own velvet going into the point (the violet
+    // one without a line, the crimson one with a thin seam), the rest a thinner outline
+    const W=[sd>0?0:.9,2,2,2],cap=(i,r0,r1)=>{hull(P2[i],Math.max(.25,r0),P2[i+1],Math.max(.25,r1));ctx.fill()};
+    ctx.fillStyle=INK;for(let i=0;i<P2.length-1;i++)if(W[i])cap(i,TIPR[i]+W[i]/2+.1,TIPR[i+1]+W[i]/2+.1);
+    ctx.fillStyle=gr;for(let i=0;i<P2.length-1;i++)cap(i,TIPR[i]-W[i]/2+.1,TIPR[i+1]-W[i]/2+.1)}
+  rimChain(P2.slice(0,3),TIPR,.24);topM(P2[1],5.5,K);
   if(!noBell)bellDraw(V0,bellAt(A,pts,sd),K,A.jb)}
 function bellDraw(V0,c,K,jb){const q=V0.P(c);glowL('255,214,110',q,8,.25*jb*sstep(.2,.5,jb));ball3(q,3.2,K.gold,1.6,.3);
   ctx.strokeStyle='#5a3a08';ctx.lineWidth=.9;ctx.beginPath();ctx.moveTo(q[0]-1.9,q[1]+1.3);ctx.quadraticCurveTo(q[0],q[1]+2.5,q[0]+1.9,q[1]+1.3);ctx.stroke();
@@ -753,11 +765,13 @@ function shWrist(V0,palm,top,al){if(al<=.01)return;const a=V0.P(palm),b=top,dx=b
   ctx.strokeStyle=rgba(SHD.hr,.3);ctx.lineWidth=1;ctx.beginPath();ctx.moveTo(a[0]+nx*w0*.8,a[1]+ny*w0*.8);ctx.quadraticCurveTo((a[0]+b[0])/2+nx*(w0+w1)*.4+sw,(a[1]+b[1])/2,b[0]+nx*w1,b[1]+ny*w1);ctx.stroke();ctx.restore()}
 
 // ------------------------------------------------------------------ the curtain: a drape of crimson velvet facing the camera (the same from every
-// side), 96 wide (the design's 78 left his big hands out at the sides) and 150 tall, centred on him and in front of him. It hangs from the dark (its top melts into it in the last 25), seven folds
+// side), 96 wide (the design's 78 left his big hands out at the sides) and 166 tall (with 150 the top of his hood and its two points showed
+// through the part that melts into the dark), centred on him and in front of him. It hangs from the dark (its top melts into it in the last 25), seven folds
 // in three tones (four on slow phones), the golden fringe along the hem (one dashed stroke of upright dashes), the golden cord with its
 // tassel tied on the left a third of the way up. c.k: how far down it is (0 up in the dark, 1 down to the floor); c.w: how much the hem and
 // the folds wave (±4); c.bulge: his shape pushing it once; c.melt: it dissolves from the hem in sparks of gold
-function curtainDraw(V0,c,K,fx){const q0=V0.P(0,0,0),Wd=96,Ht=150,yF=q0[1]+8,yT=yF-Ht,melt=c.melt||0,yB=yT+Ht*c.k*(1-melt);if(yB-yT<1.5)return;
+const CURW=96,CURH=166;
+function curtainDraw(V0,c,K,fx){const q0=V0.P(0,0,0),Wd=CURW,Ht=CURH,yF=q0[1]+8,yT=yF-Ht,melt=c.melt||0,yB=yT+Ht*c.k*(1-melt);if(yB-yT<1.5)return;
   const nF=LOWFX?4:7,fw=Wd/nF,x0=q0[0]-Wd/2,wv=c.w||0,ph=c.ph||0,bu=c.bulge||0,T=K1.cri,yc=yT+Ht*.5,yS=yT+Math.min(25,(yB-yT)*.6);
   const hem=x=>yB+4*wv*Math.sin((x-x0)*.17+ph*1.3)*Math.min(1,(yB-yT)/30);
   const ex=(i,y)=>{if(i<=0)return x0;if(i>=nF)return x0+Wd;const xc=x0+i*fw,b=bu*.14*(xc-q0[0])*Math.exp(-(((y-yc)/42)**2));return xc+1.6*wv*Math.sin(y*.09+i*2.1+ph)+b};
@@ -833,12 +847,12 @@ function puppeteer2(x,y,face,anim,p,sc,o){sc=sc||1;o=o||{};anim=MV.includes(anim
   // in front of the barrel or behind it, as the camera sees it: the barrel's normal toward the point, in the body's frame (0 on its outline);
   // the copy in front fades in over the one behind (never a jump); far from the barrel a plain switch (nothing to cover there)
   const kOf=q=>{const r=sub(q,BCw),bx=dot(r,ex),by=dot(r,ey),e=bx*bx/289+by*by/625;if(e<1e-4)return F(ex)>0?1:0;const f=F(nrm(add(mul(ex,bx/289),mul(ey,by/625))));
-    return e>2.4?(f>0?1:0):sstep(-.08,.08,f)};
+    return e>2.4?(f>0?1:0):sstep(-.04,.04,f)};
   const lay=(Ls,d,kf,f)=>{if(kf<.99)Ls.add(Math.min(d,dT-EPS),f);if(kf>.01)Ls.add(Math.max(d,dT+EPS),kf<.99?()=>ga(kf,f):f)};
   const zB=q=>dot(sub(q,BCw),ez3)+BC[2];   // a point's height in the body's frame
   // ---------------- the legs (behind the barrel; in the heap, the knees in front of it come forward)
   const gL=legGeo(X,A,1),gR=legGeo(X,A,-1);
-  for(const g of[gR,gL]){const kz=sstep(38,48,zB(g.kn)),kf=kz>0?kz*kOf(g.kn):0;lay(LB,D(g.hip)-6,kf,()=>legDraw(V0,X,A,K,g))}
+  for(const g of[gR,gL]){const kz=sstep(38.8,42.8,zB(g.kn)),kf=kz>0?kz*kOf(g.kn):0;lay(LB,D(g.hip)-6,kf,()=>legDraw(V0,X,A,K,g))}
   // ---------------- the barrel doublet; the coat tails behind it (in front of it seen from the back)
   const br=1+A.breath,Rd=[BRD[0]*br,BRD[1]*br,BRD[2]*(1+A.breath*.5)];
   LB.add(dT,()=>torsoDraw(V0,X,A,K));
@@ -846,19 +860,21 @@ function puppeteer2(x,y,face,anim,p,sc,o){sc=sc||1;o=o||{};anim=MV.includes(anim
   // ---------------- the arms: the sleeve with its puff by the side it hangs from; the forearm and the hand by where the hand is (in front of
   // the barrel or behind it; by the head when it is raised over the shoulders)
   const aL=armGeo(X,A,1),aR=armGeo(X,A,-1);
-  for(const a of[aR,aL]){const fs=F(X.Rd([0,a.sd,0]));lay(LB,D(a.puff),sstep(-.38,-.12,fs),()=>upperArmDraw(V0,X,A,K,a));
+  for(const a of[aR,aL]){const fs=F(X.Rd([0,a.sd,0]));lay(LB,D(a.puff),sstep(-.3,-.2,fs),()=>upperArmDraw(V0,X,A,K,a));
     const dF=D(lerp3(a.Wr,a.c,.5)),hz=zB(a.Wr),draw=()=>lowerArmDraw(V0,X,A,K,a);
     if(hz>100)LB.add(Math.max(dF,dT+EPS),draw);else lay(LB,dF,kOf(a.c),draw)}
   // ---------------- the neck, the ruff (each puff at its own depth: the front ones cover the chin), the head, the points of the hood
   const dHd=Math.max(D(H0.Hc),dT+3*EPS),J={Hc:H0.Hc,HR:H0.HR,cv:camDir(V0),aL,aR,fw:ex};
-  J.hpts=ellSil(V0,H0.Hc,[HOOD,HOOD,HOOD],AXES,null,26);J.hsil=smoothP(J.hpts);
+  J.hpts=ellSil(V0,H0.Hc,[HOOD,HOOD,HOOD],AXES,null,26);J.hsil=smoothP(J.hpts);{const q=P(H0.Hc);J.hbb=[q[0]-HOOD,q[1]-HOOD*1.14,q[0]+HOOD,q[1]+HOOD*1.14]}
   {const a=X.T([1,0,89]),b=add(H0.Hc,H0.HR([-1,0,-13]));LB.add(Math.max(D(a),dT+EPS),()=>{const qa=P(a),qb=P(b);caps3(qa,4,qb,4,K.wood,2.2);shadeL(qa,qb,4,4)})}
   LB.add(dT+1.5*EPS,()=>ruffThread(V0,X,K));
   for(const c of ruffPts(X,A,(H0.hy-cheat(face,.3))*.22))LB.add(Math.max(D(c),dT+2*EPS),()=>ruffPuff(V0,c,K));
   LB.add(dHd,()=>headDraw(V0,J,A,K));
   const tL=tipPts(H0,H1,X,A,1),tR=tipPts(H0,H1,X,A,-1);
-  for(const[sd,pts] of[[1,tL],[-1,tR]]){const kf=sstep(-.12,.12,F(nrm(sub(pts[1],H0.Hc)))),dr=()=>tipDraw(V0,pts,A,K,sd,sd<0&&!!A.bell);
-    LB.add(dHd-.02,dr);if(kf>.01)LB.add(dHd+.02,()=>{ctx.save();ctx.clip(J.hsil);ga(kf,dr);ctx.restore()})}
+  // (over the hood a point is the same velvet coming out of it: there its root has only a thin seam, so a point that comes toward us does
+  // not look like a hole in the hood)
+  for(const[sd,pts] of[[1,tL],[-1,tR]]){const kf=sstep(-.12,.12,F(nrm(sub(pts[1],H0.Hc)))),nb=sd<0&&!!A.bell,dr=()=>tipDraw(V0,pts,A,K,sd,nb);
+    LB.add(dHd-.02,dr);if(kf>.01)LB.add(dHd+.02,()=>{ctx.save();ctx.clip(J.hsil);ga(kf,()=>tipDraw(V0,pts,A,K,sd,nb,J.hbb));ctx.restore()})}
   // the violet smoke from the joints (second phase, strong moves)
   if(fx&&A.smoke>.02){const js=[gL.kn,gR.kn,aL.El,aR.El,aL.Wr,aR.Wr];LB.add(dHd+.5,()=>smokeDraw(V0,js,A.smoke,p))}
   // ---------------- the strings: from the cross to the head, the wrists and the knees. A piece low down goes in front of the barrel or behind it
@@ -911,9 +927,9 @@ function puppeteer2(x,y,face,anim,p,sc,o){sc=sc||1;o=o||{};anim=MV.includes(anim
   if(A.cur&&A.cur.k>.002)L.add(1e6,()=>curtainDraw(V0,A.cur,K,fx));
   if(fx)for(const e of A.fx)fxDraw(V0,L,e,A,K,J);
   // ---------------- the body: as one picture while it fades (the Sipario, the end of the defeat), or pulled up into the dark (only what
-  // is under the top of the curtain shows); otherwise piece by piece among the rest
+  // is under the curtain's whole velvet shows, never through the top that melts into the dark); otherwise piece by piece among the rest
   if(bodyK<=.01){}
-  else if(A.vmask&&A.cur){const yT=V0.P(0,0,0)[1]+8-150,LBs=LB.slice().sort((a,b)=>a.d-b.d);L.add(dT,()=>{ctx.save();ctx.beginPath();ctx.rect(-200,yT+12,400,400);ctx.clip();
+  else if(A.vmask&&A.cur){const yT=V0.P(0,0,0)[1]+8-CURH,LBs=LB.slice().sort((a,b)=>a.d-b.d);L.add(dT,()=>{ctx.save();ctx.beginPath();ctx.rect(-200,yT+25,400,400);ctx.clip();
       ga(bodyK,()=>{for(const e of LBs){ink(2.4);e.f()}});ctx.restore()})}
   else if(bodyK<.99){const LBs=LB.slice().sort((a,b)=>a.d-b.d);L.add(dT,()=>ga(bodyK,()=>{for(const e of LBs){ink(2.4);e.f()}}))}
   else for(const e of LB)L.push(e);
