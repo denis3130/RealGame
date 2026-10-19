@@ -125,7 +125,7 @@ const mixRgb=(a,b,k)=>{if(k<=0)return a;if(k>=1)return b;const A=a.split(',').ma
 // phase 1, «gelo reale»: deep ice, indigo velvet, frosted silk, porcelain, midnight hair, the cyan of the eyes and of the crystal
 const K1={gown:T3('#BDEBFF','#3F86D6','#1D3486'),gcore:'#111A52',gedge:'#EAFBFF',glight:'110,205,255',
   ice:T3('#F2FCFF','#9ADAFF','#3F7FD0'),vel:T3('#5A66D6','#2E368F','#161B52'),emb:'#DCE8FF',silv:'#E6ECFA',bgem:'#78E6FF',
-  silk:T3('#F4F7FF','#BCC9F0','#6D7CC0'),sice:'#E8FAFF',skin:T3('#F6F9FF','#D9E4F6','#A3B3DA'),cheek:'200,180,255',
+  silk:T3('#E6EEFF','#A9BCF0','#5A6CC0'),sice:'#E8FAFF',skin:T3('#F6F9FF','#D9E4F6','#A3B3DA'),cheek:'200,180,255',
   hair:T3('#4B5C9E','#232D63','#0F1433'),hstr:'#A9C4F0',brow:'#232D63',lid:'#1B1A3A',esh:'96,96,208',
   iris:'#9FF6FF',eyeC:'#FFFFFF',eglow:'140,235,255',lips:'#4B3D8F',mole:'#EAFBFF',
   cice:T3('#FFFFFF','#A8E6FF','#3F80D6'),clit:'170,235,255',circ:T3('#E6ECFA','#9AA8CC','#56628E'),
@@ -134,7 +134,7 @@ const K1={gown:T3('#BDEBFF','#3F86D6','#1D3486'),gcore:'#111A52',gedge:'#EAFBFF'
   fan:T3('#F2EEFF','#A996F0','#4E3DA8')};
 // phase 2, «notte polare»: the gown full of night and stars, violet ice, the white and violet eyes
 const K2=Object.assign({},K1,{gown:T3('#D9CCFF','#6A55D0','#221A6E'),gcore:'#120C3D',gedge:'#F2ECFF',glight:'190,160,255',ice:T3('#F6F2FF','#C9B8FF','#6A4FD6'),
-  vel:T3('#4A3A9A','#241A5C','#0E0A2A'),emb:'#E6D8FF',silk:T3('#EEE8FF','#B3A6E8','#6555B0'),sice:'#E6DCFF',hstr:'#B9A8F0',iris:'#F0E6FF',eglow:'200,160,255',
+  vel:T3('#4A3A9A','#241A5C','#0E0A2A'),emb:'#E6D8FF',silk:T3('#E8DEFF','#A796E6','#5A48A8'),sice:'#E6DCFF',hstr:'#B9A8F0',iris:'#F0E6FF',eglow:'200,160,255',
   lips:'#3A2470',cice:T3('#FFFFFF','#D2C2FF','#6A4FD6'),clit:'210,180,255',gem:'#9A6CFF',gemL:'#E6D8FF',gemG:'190,140,255',cry:T3('#FFFFFF','#C9B0FF','#6A3FD8'),cglow:'200,170,255'});
 // a palette between the phases (k2) and, for the reflection, lighter (gh): mixes are cached
 const PALC={};
@@ -447,7 +447,11 @@ function sleeveDraw(V0,a,g,K,A,sd){const{P,F}=V0,[u,v]=frm(g.fa,[0,0,1]),pts=[],
   // the lining where the cuff opens toward us
   const fo=F(g.fa);if(fo>.05){const Q=rim3.map(q=>P(lerp3(q,wr,.16)));ga(cl((fo-.05)*3.5,0,1),()=>{smooth(Q);ctx.fillStyle=cmix(K.silk.d,'#1a1440',.45);ctx.fill()})}
   // soft folds from the elbow toward the hem, the light on the upper edge
-  {const e=P(add(a.El,[0,0,-1.5]));ctx.strokeStyle='rgba(70,80,160,.3)';ctx.lineWidth=1;ctx.lineCap='round';ctx.beginPath();for(const k of[.35,.7]){const m=P(lerp3(lerp3(a.El,g.mid,.5),lerp3(wr,tp,.5),k)),t0=P(lerp3(g.mid,tp,k));ctx.moveTo(e[0],e[1]);ctx.quadraticCurveTo(m[0],m[1],t0[0],t0[1])}ctx.stroke()}
+  {const e=P(add(a.El,[0,0,-1.5]));ctx.strokeStyle='rgba(60,70,160,.5)';ctx.lineWidth=1.2;ctx.lineCap='round';ctx.beginPath();for(const k of[.2,.5,.8]){const m=P(lerp3(lerp3(a.El,g.mid,.5),lerp3(wr,tp,.5),k)),t0=P(lerp3(g.mid,tp,k));ctx.moveTo(e[0],e[1]);ctx.quadraticCurveTo(m[0],m[1],t0[0],t0[1])}ctx.stroke()}
+  // the hem scalloped (a soft wave just inside the hanging rim) and the frost glinting on the silk
+  {const lo=rim3.filter((q,i)=>Math.cos(i/18*TAU)<-.05).map(q=>P(lerp3(q,g.mid,.1)));if(lo.length>2){ctx.strokeStyle=cmix(K.silk.d,'#2a3a78',.35);ctx.lineWidth=.9;ctx.beginPath();ctx.moveTo(lo[0][0],lo[0][1]);
+    for(let i=1;i<lo.length;i++){const a0=lo[i-1],b1=lo[i];ctx.quadraticCurveTo((a0[0]+b1[0])/2,(a0[1]+b1[1])/2+1.3,b1[0],b1[1])}ctx.stroke()}}
+  if(!LOWFX){ctx.fillStyle='rgba(255,255,255,.85)';for(const[k1,k2] of[[.3,.25],[.55,.6],[.75,.35],[.45,.85]]){const q=P(lerp3(lerp3(a.El,wr,k1),lerp3(g.mid,tp,k1),k2));ctx.beginPath();ctx.moveTo(q[0],q[1]-1.3);ctx.lineTo(q[0]+.6,q[1]);ctx.lineTo(q[0],q[1]+1.3);ctx.lineTo(q[0]-.6,q[1]);ctx.closePath();ctx.fill()}}
   // the icicles on the hem
   const sw=A.sw||0,ice=A.sice>0?lerp(1,1.65,A.sice):1;ctx.fillStyle=K.sice;ctx.strokeStyle='#2a3a78';ctx.lineWidth=.9;ctx.lineJoin='round';
   for(const[s2,L,up] of[[-2.6,4,1.2],[0,6,0],[2.6,4,1.2]]){const b1=add(tp,add(mul(side,s2),[0,0,up+.6])),q0=P(b1),q1=P(add(b1,[sw*.6,0,-L*ice]));
@@ -548,9 +552,11 @@ function hairCap(V0,T,HR,K){const{P,F}=V0,R2=add(HRD,[.9,.9,.9]),S=m=>P(T([m[0]*
   return pts}
 // a pair of eyes and the rest of the face; returns the eyes (for their glow)
 function faceDraw(V0,T,HR,Hc,A,K,gh){const{P,F}=V0,h=P(Hc),Rh=12.4,R2=HRD,at=m=>({q:P(T(ellAt([0,0,0],R2,null,m))),v:F(HR(ellN(R2,null,m)))});
-  const E=[-1,1].map(sd=>{const m=nrm([1,sd*.36,-.07]),r=at(m);return{sd,v:r.v,q:r.q,rx:2.4*Math.pow(Math.max(0,r.v),.7)}}).filter(e=>e.v>.08).sort((a,b)=>b.v-a.v);
+  const E=[-1,1].map(sd=>{const m=nrm([1,sd*.36,-.07]),r=at(m);return{sd,v:r.v,q:r.q,rx:2.75*Math.pow(Math.max(0,r.v),.7)}}).filter(e=>e.v>.08).sort((a,b)=>b.v-a.v);
   if(E.length)E[0].q=inward(h,Rh,E[0].q,.6,.74);if(E.length>1){const n=E[0],f=E[1];f.q=inward(h,Rh,f.q,.5,.66);const gap=Math.hypot(f.q[0]-n.q[0],f.q[1]-n.q[1])-n.rx-1;f.rx=Math.min(f.rx,Math.max(0,gap))}
-  const op=A.blink,wd=A.wide||0,ry=1.9*(1+.18*wd);
+  // (her proud half-shut lids read as shut at the size of the game, a dark line under the crown: the eyes open and cold, the lids only a
+  // little heavy; closed stays closed)
+  const op=A.blink<.12?A.blink:Math.min(1.25,.45+A.blink),wd=A.wide||0,ry=2.5*(1+.18*wd);
   // the cheeks, the eye shadow
   for(const sd of[-1,1]){const r=at(nrm([1,sd*.5,-.22]));if(r.v<.2)continue;const q=inward(h,Rh,r.q,.66,.8);ctx.fillStyle=rgbA(K.cheek,.22*sstep(.2,.4,r.v));ctx.beginPath();ctx.ellipse(q[0],q[1],2*Math.pow(r.v,.7),1.2,0,0,TAU);ctx.fill()}
   for(const e of E){if(e.rx<.6)continue;ctx.fillStyle=rgbA(K.esh,.35*Math.min(1,e.v*1.6));ctx.beginPath();ctx.ellipse(e.q[0],e.q[1]-ry*.85,e.rx*1.3,ry*.85,0,0,TAU);ctx.fill()}
@@ -574,11 +580,12 @@ function eyeDraw(q,rx,ry,op,low,wd,out,K,v,gh){const x=q[0],y=q[1],o=Math.max(0,
   if(o<.12){ctx.strokeStyle=K.lid;ctx.lineWidth=1.25;ctx.lineCap='round';ctx.beginPath();ctx.moveTo(ix,iy);ctx.quadraticCurveTo(x,lo2+.4,ox,oy+.5);ctx.lineTo(ox+out*1.4,oy-.5);ctx.stroke();return}
   const lid=()=>{ctx.moveTo(ix,li);ctx.quadraticCurveTo(x-out*rx*.15,Math.min(lidC,lo-.4),ox,oy)};
   const lw2=Math.max(lo,lidC+.9),cy=(lidC+lw2)/2,alm=k=>{const X2=v=>x+(v-x)*k,Y2=v=>cy+(v-cy)*k;ctx.beginPath();ctx.moveTo(X2(ix),Y2(li));ctx.quadraticCurveTo(X2(x-out*rx*.15),Y2(Math.min(lidC,lo-.4)),X2(ox),Y2(oy));ctx.quadraticCurveTo(X2(x),Y2(lw2),X2(ix),Y2(li));ctx.closePath()};
-  alm(1);ctx.fillStyle=cmix(K.iris,'#2a6fc0',.45);ctx.fill();alm(.72);ctx.fillStyle=K.iris;ctx.fill();
-  const hc=Math.min(ry*.42,(lw2-lidC)*.32);if(hc>.25){ctx.fillStyle=K.eyeC;ctx.beginPath();ctx.ellipse(x+out*.2,cy+.15,rx*.36,hc,0,0,TAU);ctx.fill()}
+  // (a deep rim and a full iris: the pale cyan alone did not stand out of the porcelain, and the eyes read as shut)
+  alm(1);ctx.fillStyle=cmix(K.iris,'#16306e',.68);ctx.fill();alm(.74);ctx.fillStyle=cmix(K.iris,'#1e8ad8',.42);ctx.fill();alm(.5);ctx.fillStyle=K.iris;ctx.fill();
+  const hc=Math.min(ry*.34,(lw2-lidC)*.26);if(hc>.25){ctx.fillStyle=K.eyeC;ctx.beginPath();ctx.ellipse(x+out*.2,cy+.15,rx*.24,hc,0,0,TAU);ctx.fill()}
   if(o>.3){ctx.fillStyle='#ffffff';ball([x-out*rx*.3,lidC+(lw2-lidC)*.32],.45+.08*rx);ctx.fill()}
   // the heavy lid and its flick, the fine lower lid
-  ctx.strokeStyle=K.lid;ctx.lineWidth=1.3;ctx.lineCap='round';ctx.lineJoin='round';ctx.beginPath();lid();ctx.lineTo(ox+out*1.5,oy-1.1);ctx.stroke();
+  ctx.strokeStyle=K.lid;ctx.lineWidth=1.15;ctx.lineCap='round';ctx.lineJoin='round';ctx.beginPath();lid();ctx.lineTo(ox+out*1.5,oy-1.1);ctx.stroke();
   ctx.strokeStyle='rgba(27,26,58,.7)';ctx.lineWidth=.75;ctx.beginPath();ctx.moveTo(ix+out*.2,li+.15);ctx.quadraticCurveTo(x,Math.max(lo,lidC+.9)+.2,ox-out*.15,oy+.25);ctx.stroke()}
 // the circlet of silver round the head, the sapphire on the forehead (covered by frost, or bare and shining), the fringe of icicles
 function circlet(V0,T,HR,A,K,gh,fringe){const{P,F}=V0,R2=mul(HRD,1.07),N=26,runs=[];let cur=[];

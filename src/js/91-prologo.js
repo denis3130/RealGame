@@ -271,7 +271,7 @@ function pEyes(K,c,th,fw,up,sp,rgb,a,r){const{V0}=K,f=[Math.cos(th),Math.sin(th)
   for(const sd of[-1,1]){const q=K.S([c[0]+f[0]*fw+n[0]*sd*sp,c[1]+f[1]*fw+n[1]*sd*sp,c[2]+up]);pLight(q[0],q[1],r*K.k,rgb,al);ctx.save();ctx.globalCompositeOperation='lighter';ctx.fillStyle=`rgba(${rgb},${Math.min(1,al*1.4).toFixed(3)})`;ctx.beginPath();ctx.arc(q[0],q[1],r*.22*K.k,0,TAU);ctx.fill();ctx.restore()}}
 // the bosses remade (89, docs/boss-classici.md) are bigger models with their eyes elsewhere: on the scenes about as big as the old ones,
 // the lamps of the eyes on theirs (s: the size; e: the eyes forward, up, apart, in the units of the scene)
-const PRO_B2={toad:{s:.4,e:[10.7,30.7,10.1]},yeti:{s:.38,e:[17.3,35.2,2.8]},salamander:{s:.5}};
+const PRO_B2={toad:{s:.4,e:[10.7,30.7,10.1]},yeti:{s:.38,e:[17.3,35.2,2.8]},salamander:{s:.5},icequeen:{s:.33,e:[3.1,31.4,1.4]}};
 const proB2=t=>N3[t+'2']&&N3[t]===N3[t+'2']?PRO_B2[t]:null;
 // the way a model on the scene faces, for its own camera (th: where it looks in the scene)
 const pFace=(K,th)=>K.face+th;
@@ -314,7 +314,7 @@ function proMorti(lt,dur,W,H,low){const k=Math.min(W/196,H/360)*(1.02+.07*proEz(
 function proRe(lt,dur,W,H,low){const k=Math.min(W/150,H/290)*(1+.08*proEz(lt/dur)),cx=W/2,cy=H*.5,face=Math.PI/2-.2+lt*.02,K=proCam(face,cx,cy,k,[-26,0,22]),{V0}=K;
   pSlab(K,84,24,'#362e32','#160f16',2.2,{sy:.84,edge:'#ff8a60',mark:T=>{const a=V0.P([60,-12,0]),b=V0.P([60,12,0]),c=V0.P([-14,12,0]),d=V0.P([-14,-12,0]);ctx.beginPath();ctx.moveTo(a[0],a[1]);ctx.lineTo(b[0],b[1]);ctx.lineTo(c[0],c[1]);ctx.lineTo(d[0],d[1]);ctx.closePath();
       ctx.fillStyle='#4a161a';ctx.fill();ctx.strokeStyle='#8a6a32';ctx.lineWidth=1;ctx.stroke()}});
-  const parts=[],look=proSeg(lt,2.1,2.9),turn=th=>Math.PI/2+th*(1-look),rb=proB2('toad');
+  const parts=[],look=proSeg(lt,2.1,2.9),turn=th=>Math.PI/2+th*(1-look),rb=proB2('toad'),qb=proB2('icequeen');
   parts.push({d:-300,f:()=>{pBox(K,[-30,0,0],34,96,4,'#463e42',{lw:1.6});pBox(K,[-32,0,4],28,80,4,'#50464b',{lw:1.6});
     // the wall behind the thrones
     pBox(K,[-52,0,0],6,100,82,'#2c262a',{lw:1.8})}});
@@ -324,7 +324,7 @@ function proRe(lt,dur,W,H,low){const k=Math.min(W/150,H/290)*(1+.08*proEz(lt/dur
   // the thrones and the kings
   for(const[y,who,th] of[[-20,'toad',.95],[20,'icequeen',-.95]]){
     parts.push({d:V0.D([-40,y,0]),f:()=>{pBox(K,[-40,y,8],10,16,9,'#3a2a22',{lw:1.4});pBox(K,[-45,y,8],4,18,40,'#3a2a22',{lw:1.5});for(const dy of[-7,0,7])pCone(K,[-45,y+dy,48],2,dy?5:8,'#a8843a',{m:8,lw:1.1})}});
-    parts.push({d:V0.D([-28,y,0]),f:()=>{const q=V0.P([-26,y,8]);if(who==='toad')N3.toad(q[0],q[1],turn(th),'idle',(lt/2.4)%1,rb?rb.s:.62);else N3.icequeen(q[0],q[1]-4,turn(th),'idle',(lt/2.4)%1,.5)}})}
+    parts.push({d:V0.D([-28,y,0]),f:()=>{const q=V0.P([-26,y,8]);if(who==='toad')N3.toad(q[0],q[1],turn(th),'idle',(lt/2.4)%1,rb?rb.s:.62);else N3.icequeen(q[0],q[1]-4,turn(th),'idle',(lt/2.4)%1,qb?qb.s:.5)}})}
   // two braziers with a low red fire
   for(const y of[-44,44])parts.push({d:V0.D([-2,y,0]),f:()=>{pRound(K,[-2,y,0],[[0,3],[16,1.6],[18,5],[21,6]],'#4a3a2c',{m:12})}});
   pRun(parts);
@@ -332,7 +332,7 @@ function proRe(lt,dur,W,H,low){const k=Math.min(W/150,H/290)*(1+.08*proEz(lt/dur
   pNight(W,H,tq[0],tq[1],Math.max(W,H)*.7,'rgb(168,118,112)','rgb(20,12,20)');pDesat(W,H,.42);
   for(const y of[-44,44]){const q=K.S([-2,y,21]);pFlame(q[0],q[1],13*k,3.6*k,.38,lt+y,low);pLight(q[0],q[1]+6*k,44*k,'255,90,50',.32,20*k)}
   // their eyes: the toad's two yellow lamps, the queen's cold blue
-  const ek=.25+.75*look,re=rb?rb.e:[9,25,5];pEyes(K,[-26,-20,8],turn(.95)-K.face,re[0],re[1],re[2],'255,220,90',.85*ek,5);pEyes(K,[-26,20,4],turn(-.95)-K.face,6,26,2.6,'120,210,255',.85*ek,4);
+  const ek=.25+.75*look,re=rb?rb.e:[9,25,5];pEyes(K,[-26,-20,8],turn(.95)-K.face,re[0],re[1],re[2],'255,220,90',.85*ek,5);const qe=qb?qb.e:[6,26,2.6];pEyes(K,[-26,20,qb?12:4],turn(-.95)-K.face,qe[0],qe[1],qe[2],'120,210,255',.85*ek,qb?3:4);
   pFog(W,H*.62,H*.86,lt,'140,110,120',.07,4,61);ctx.restore()}
 
 // V · «I custodi, carcerieri.»

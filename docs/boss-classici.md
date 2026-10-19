@@ -86,7 +86,7 @@ poi, alla domanda «io quali riprendo?», qui: «tutti, fermo l'altra». Quindi 
 | Re Rospo | `toad2.js` | `89-rospo-nuovo.js` | finito: critici, correzioni e collaudo (scheda sotto) |
 | Yeti | `yeti2.js` | `89-yeti-nuovo.js` | finito: critici, correzioni e collaudo (scheda sotto) |
 | Strega | `witch2.js` | `89-strega-nuova.js` | finita: costruita col metodo leggero, critica sui fogli corretta e collaudo (scheda sotto) |
-| Regina | `icequeen2.js` | `89-regina-nuova.js` | a metà (16 ottobre, fermati dal limite settimanale): foglio `tests/b2/icequeen2_stato.png` |
+| Regina | `icequeen2.js` | `89-regina-nuova.js` | finita: occhi aperti, maniche e orlo, misure del prologo e della guida, collaudo (scheda sotto) |
 | Fenice | `phoenix2.js` | `89-fenice-nuova.js` | modello a metà, cervello finito (16 ottobre): foglio `tests/b2/phoenix2_stato.png` |
 | Fabbro | `smith2.js` | `89-fabbro-nuovo.js` | fatto dall'altra sessione |
 | Idra, Mimic, Burattinaio, Piovra, Cervo | — | — | da fare (i design sono in `docs/boss-classici-design/`) |
@@ -716,3 +716,66 @@ verso per ogni mossa, rabbia della muta d'autunno, lamento della sconfitta; volu
   `node tests/anteprime.js witch2_test.html` (miniatura e sblocco dell'arena 5 nel riquadro). Foglio: `tests/b2/witch2.png`
   (`cd tests && node foglio3d.js witch2 b2/witch2.png --file ../sprite/nemici3d/witch2.js`), 16 direzioni `tests/b2/witch2_16dir.png`.
 
+## La Regina dei Ghiacci: «l'Imperatrice di Cristallo»
+
+Nome e titolo restano: «Regina dei Ghiacci», «Signora dei Picchi di Brina» (arena 8, «Ghiacciaio Eterno», nella Sala del Trono di
+Ghiaccio). Un'imperatrice altissima e immobile, piantata a terra come un monumento: l'abito è un iceberg a facce di gemma che si allarga
+fino a terra, il corpetto di velluto indaco con le maniche a campana di seta, i capelli blu notte col nodo dietro, il viso di porcellana con
+due occhi azzurri che brillano sotto una frangia di ghiaccioli, e dietro la testa la corona a raggiera di sette stalattiti. Non corre e non
+si scompone: scivola sul ghiaccio senza muovere un piede, sempre girata verso di te, e ti guarda dall'alto in basso. **Il suo avviso** è la
+corona-orologio: prima di ogni incantesimo le stalattiti si accendono a coppie (tin… tin… tin… TIN) e quando si accende quella di mezzo il
+colpo parte. Resta della Classica: forme pulite, colori pieni, occhi con la lucina, niente sangue.
+
+### Mosse e abilità
+
+Ogni stato ha il nome di una mossa del modello e il colpo vero parte nel suo fotogramma. Ogni danno ha un avviso a terra di almeno 0,6 s
+veri, anche nella fase 2. Vita come la Regina di oggi.
+
+| Mossa | Cosa fa | Come si schiva |
+|---|---|---|
+| **Lance di Cristallo** (`lances`) | cinque lance (sette nella fase 2) nascono sopra la sua testa, una linea rossa per ognuna, poi le lancia a ventaglio con un gesto da direttore d'orchestra; nella fase 2 subito una seconda raffica, mirata di nuovo | tra due linee, o di lato |
+| **Incoronazione** (`crown`) | la corona vola via e sette stalattiti cadono in cerchio intorno a te (cerchi rossi), restano come pilastri e ti sparano una scheggia ciascuno (strisce rosse); mentre la corona è spoglia la gemma è scoperta: **+50%** | uscire da un varco tra i pilastri |
+| **Fiocco Reale** (`nova`) | pianta lo scettro: sei bracci rossi a fiocco di neve e una fila di punte di ghiaccio corre lungo ognuno; poi lo scettro resta incastrato ed è il momento di colpirla. Fase 2: un secondo fiocco girato di 30° quando strappa lo scettro | stare tra due bracci, o dietro un ostacolo |
+| **Sala degli Specchi** (`mirror`, `emerge`, `cast`) | una piroetta, tre specchi (quattro) le salgono intorno a te, si scioglie in neve ed esce da uno di loro; dagli altri escono i suoi riflessi, che tirano a turno. La vera ha l'ombra e la corona accesa: colpiscila e lo specchio si infrange (+50%); se in 6 s non la trovi gli specchi scoppiano in schegge lente | guardare le ombre |
+| **Sguardo d'Inverno** (`gaze`, solo fase 2, sempre dopo l'Incoronazione) | un cono di luce gira con la sua testa e ti congela per un attimo se ci resti dentro | dietro un pilastro, contro il verso, o lo scatto |
+| **Valzer della Tormenta** (`waltz`, solo fase 2) | balla lungo tre archi lasciando una scia che diventa rossa ed esplode in punte; poi una piroetta e otto fiocchi lenti | lontano dalla scia |
+
+**Fase 2, la Notte Polare** (`rage`, a metà vita, mai durante Sguardo, Valzer o Sala): l'abito si riempie di stelle e diventa viola, dietro
+il collo si apre il Ventaglio d'Inverno (nove lame di cristallo); da lì tutto 1,15 volte più rapido, le torce restano viola e nevica il
+doppio. Ordine: fase 1 Lance, Incoronazione, Fiocco, Sala; fase 2 Incoronazione, Sguardo, Valzer, Lance, Sala, Fiocco.
+
+**Entrata** (`enter` 3,4 s): «Specchio, specchio…», esce da uno specchio che poi va in frantumi. **Sconfitta** (`die` 4 s, «l'ultimo
+inchino»): si scioglie in un vortice di neve e sul cumulo restano la corona e lo scettro.
+
+**Voce** (`B3VO.VB.icequeen`): un soprano lontano dentro un'armonica di vetro: un «aaah» lungo che sale quando arriva, un «oh-oh-oh» leggero
+quando ti colpisce (con la presa in giro: si specchia nel suo specchietto), «mm?» e due colpetti di scettro se stai lontano, un «hm» prima
+di ogni incantesimo, «oh!» se la colpisci forte, una nota alta che si spezza come vetro quando cade.
+
+### Come è nata (16–19 ottobre)
+
+- Design scelto dal direttore artistico tra tre proposte (`docs/boss-classici-design/icequeen.md`); modello e cervello fatti il 16 ottobre e
+  fermati dal limite settimanale prima del collaudo. Finita il 19 ottobre (questa sessione, da sola): il cervello passa tutte le mosse
+  delle due fasi col modello vero; il testo della guida è in `src/js/44-guida.js` (non più nel cervello).
+- Correzioni guardando i fogli e il gioco: gli **occhi** a mezz'asta (l'idea era «superba») alla misura del gioco erano una riga scura sotto
+  la corona, sembrava dormisse: ora sono aperti e freddi, con l'iride piena (bordo blu scuro, anello, centro chiaro) e la palpebra appena
+  pesante; le **maniche a campana** di seta (prima pezzi lisci) con tre pieghe, l'orlo a festone e quattro lucine di brina (non con
+  `LOWFX`).
+- Misure prese insieme agli altri boss: nel prologo (quadro «I re») siede sul trono a 0,33 con le luci degli occhi al posto giusto
+  (`PRO_B2.icequeen`; prima il cervello la rimpiccioliva per conto suo quando girava il prologo); nella guida `BEAST2.icequeen` = 0,56 (con
+  la corona dentro il riquadro); nelle miniature dell'arena resta il suo 0,9 (`QN.gs`).
+
+### Misure
+
+- Disegno: 1,2 ms a fotogramma (mediano; 90% sotto 1,9 ms) nel foglio, come la Strega.
+- Difficoltà (arena 8, eroe fermo che tira, livello 4, caso peggiore): Regina di oggi 18,2 vite in 240 s (4,55 al minuto), nuova 19,3
+  (4,84 al minuto); nessuna delle due battuta in 240 s da un eroe fermo. L'anello di sfere dei boss alti (`bossExtra`) per lei è spento
+  (`B3S`): le sue mosse lo sostituiscono. Da regolare giocando.
+
+### File e prove
+
+- Modello: `sprite/nemici3d/icequeen2.js` (modello `icequeen2`); esporta anche i pezzi degli attacchi (`N3.icequeen2Lance`, i pilastri,
+  le punte, gli specchi, le schegge, i fiocchi) e fa da riflesso (`N3.qmirror`, lo stesso modello pallido e senza ombra).
+- Cervello: `src/js/89-regina-nuova.js` (si accende solo se c'è `N3.icequeen2`).
+- Prove: `python3 anteprime/mk_boss2.py icequeen --test && node tests/boss2gioco.js icequeen`, `node tests/boss2diff.js icequeen`,
+  `node tests/anteprime.js boss2_test.html` (miniatura e sblocco dell'arena 8). Foglio: `tests/b2/icequeen2.png`
+  (`cd tests && node foglio3d.js icequeen2 b2/icequeen2.png --file ../sprite/nemici3d/icequeen2.js`).

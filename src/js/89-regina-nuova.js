@@ -44,10 +44,10 @@ const QN={seq1:['lances','crown','nova','mirror'],
   T:{blue:[['#1a62ff','#7fc8ff','#f0fbff'],'140,200,255'],white:[['#5fb8ff','#dff4ff','#ffffff'],'200,235,255'],night:[['#7a3cff','#b48aff','#f4eeff'],'200,160,255'],
     warm:[['#ff7a2e','#ffc46b','#fff0d0'],'255,190,120']}};
 if(QON){
-  // the new model in place of the old one (its drawing of today stays as N3.meta.icequeen.old for the pages); in the prologue (91, «I re»)
-  // she sits on the throne at the size of today's queen (0.5 × 0.58), and the guide and the arena pictures may ask for her smaller (QN.gs)
+  // the new model in place of the old one (its drawing of today stays as N3.meta.icequeen.old for the pages); the arena pictures ask for
+  // her a little smaller (QN.gs); her size in the prologue (91, «I re») and in the guide (44) is with the other bosses remade
   const old=N3.icequeen,oldM=N3.meta.icequeen,oldQ=N3.qmirror,oldQM=N3.meta.qmirror,M2=N3.icequeen2;
-  N3.icequeen2=N3.icequeen=(x,y,f,a,p,sc,o)=>M2(x,y,f,a,p,(sc||1)*(QN.gs||(typeof PRO!=='undefined'&&PRO.on?.58:1)),o);
+  N3.icequeen2=N3.icequeen=(x,y,f,a,p,sc,o)=>M2(x,y,f,a,p,(sc||1)*(QN.gs||1),o);
   N3.meta.icequeen=Object.assign({},N3.meta.icequeen2,{old:(x,y,f,a,p)=>old(x,y,f,oldM.an.includes(a)?a:'idle',p,oldM.sc||1,{})});
   // her reflection is the model itself, pale and without its shadow
   N3.qmirror=(x,y,f,a,p,sc,o)=>M2(x,y,f,a,p,sc,Object.assign({},o,{ghost:1}));
@@ -66,7 +66,7 @@ if(QON){
   N3G.wp.icequeen=e=>{const d=B3D(e,'walk');return(((e.wt||0)%d)+d)%d/d};N3G.wp.qmirror=N3G.wp.icequeen;
   // her pillars and mirrors are obstacles of ice (their height for the shadows, their chips when an arrow hits them)
   Object.assign(KH,{qpillar:2.8,qmirror:3.2});Object.assign(DPAL,{qpillar:['#ffffff','#a8e6ff','#3f80d6'],qmirror:['#e6ecfa','#9aa8cc','#3a4a9a']});
-  {const b=BEST.find(q=>q[0]==='icequeen');if(b)b[2]='Boss. Lance di cristallo, la corona che ti chiude in gabbia, il Fiocco Reale e la Sala degli Specchi (la vera ha l\'ombra); nella fase 2 lo Sguardo d\'Inverno e il Valzer della Tormenta.'}
+  // (her line in the guide is in 44-guida.js, with the others)
 }
 // ---- helpers
 // the model's own drawings of the pieces of her attacks (design: Lance(x,y,z,a,sc,o), Pillar(x,y,z,k,sc,o), Spike(x,y,h,k,sc,o),
@@ -454,9 +454,8 @@ if(QON){const _sb=snapBoss;snapBoss=function(e){if(e.type==='icequeen')return{li
       if(p>.8&&Math.random()<(LOWFX?.05:.2))cpart(c,{k:'frost',x:c.x+rand(-30,30),y:c.y-rand(30,90),vx:rand(-6,6),vz:-rand(10,25),life:1.2,r:rand(2,3),ph:rand(0,3)})},
     draw(c,D){const p=Math.min(.999,c.t/c.dur),M=N3.meta.icequeen;try{N3.icequeen(c.x,c.y+8,c.face,'die',p,(M&&M.sc)||1,{p2:c.p2,noFx:LOWFX})}catch(err){}}};
   const _dc=drawCorpse;drawCorpse=function(c){if(c.type!=='icequeen')return _dc.apply(this,arguments);try{BDIE.icequeen.draw(c,BDEATH.icequeen)}catch(err){}drawParts(c)}}
-// ---- the guide and the arena pictures: she is far taller than the queen of today, so she is drawn smaller there
-if(QON){const _db=drawBeast;drawBeast=function(cv,type){if(type!=='icequeen')return _db.apply(this,arguments);QN.gs=.5;try{return _db.apply(this,arguments)}finally{QN.gs=0}}
-  if(typeof arenaScene==='function'){const _as=arenaScene;arenaScene=function(cv,i){const A=ARENAS[i];if(!A||A.bt||BOSSZ[A.boss]!=='icequeen')return _as.apply(this,arguments);QN.gs=.9;try{return _as.apply(this,arguments)}finally{QN.gs=0}}}}
+// ---- the arena pictures: she is far taller than the queen of today, so she is drawn a little smaller there
+if(QON){if(typeof arenaScene==='function'){const _as=arenaScene;arenaScene=function(cv,i){const A=ARENAS[i];if(!A||A.bt||BOSSZ[A.boss]!=='icequeen')return _as.apply(this,arguments);QN.gs=.9;try{return _as.apply(this,arguments)}finally{QN.gs=0}}}}
 // ---- the sounds of her ice and glass (her voice is below): the crown's clock, the lances born and thrown, the pillars, the snowflake,
 // the mirrors, the freeze. Glass is a struck object with inharmonic partials (fModal), frost a high hiss
 function qGlass(t,f,v,dec){fModal(t,VR(f,.02),[1,2.32,4.25,6.63],[(dec||.5),(dec||.5)*.64,(dec||.5)*.4,(dec||.5)*.24],.07*v,.45)}
