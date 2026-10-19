@@ -95,8 +95,13 @@ function w2next(e,a){const seq=e.p2?W2.seq2:W2.seq1;let n=seq[(e.si=(e.si+1)%seq
 function w2sink(e,center){const B=G.w2;b3go(e,'sink');e.w2c=!!center;e.neat3=false;e.moving=false;const A=center?w2center():w2arrival(e);e.w2A={x:A.x,y:A.y};
   e.w2fd=clamp(Math.hypot(A.x-e.x,A.y-e.y)/380,.35,.9);B.arr={x:A.x,y:A.y,t:0,max:(B3D(e,'sink')+e.w2fd+.12*B3D(e,'rise'))/w2rate(e),p2:e.p2}}
 // the second phase: no damage, no attacks; the autumn comes down from the hat, the guardian roots come out (the model's 'rage')
-function w2rage(e){e.p2=true;e.w2rq=0;e.shell=99;e.guard3=0;banner("L'autunno della Strega!",'Fase 2',1.6);bossRage(e,W2.amber);$('bossBar').classList.add('rage');shake(8);sfx('boom',0,e.x);
+function w2rage(e){e.p2=true;e.w2rq=0;e.shell=99;e.guard3=0;banner("L'autunno della Strega!",'Fase 2',1.6);w2rageFx(e);$('bossBar').classList.add('rage');shake(8);sfx('boom',0,e.x);
   G.eproj=[];w2clearHz();b3go(e,'rage');e.moving=false;e.w2mv=0;b3say(e,'angry');b3torch('fire',3)}
+// the burst of the autumn (in place of bossRage, whose chips are stone): a mint flash that turns amber, the ring, a puff of autumn leaves
+function w2rageFx(e){fxPush({k:'flash',x:e.x,y:e.y-60,rgb:W2.mint,r:90,t:.18,max:.18});fxPush({k:'flash',x:e.x,y:e.y-60,rgb:W2.amber,r:130,t:.4,max:.4});
+  fxPush({k:'ring2',x:e.x,y:e.y,rgb:W2.amber,r0:20,r1:200,t:.7,max:.7,w:10});w2leafBurst(e.x,e.y+W2.FY,LOWFX?8:18,['#ffb04a','#d0602a','#7a2a18','#9a6a3a']);vib([60,40,100])}
+function w2leafBurst(x,y,n,cols){for(let i=0;i<n;i++){const a=rand(0,TAU),s=rand(60,170);G.debris.push({x:x+rand(-10,10),y:y+rand(-4,4),z:rand(30,90),vx:Math.cos(a)*s,vy:Math.sin(a)*s*.6,vz:rand(60,160),
+  col:pk(cols),s:rand(2,3.2),rot:rand(0,TAU),vr:rand(-9,9),life:rand(1.6,2.6),leaf:true})}if(G.debris.length>300)G.debris.splice(0,G.debris.length-300)}
 // the four guardian roots of the second phase: they turn round her 58 px out (1.7 rad/s of her time), away while she is under the floor and
 // before they come out in the autumn; their tips hurt (at most once every 0.6 s)
 function w2guard(e,dt){if(!e.p2){e.guard3=0;return}e.orb3=(e.orb3||0)+1.7*dt;const st=e.st,on=!(st==='sink'||st==='fin'||st==='rise'||st==='rage'&&b3k(e)<.62);
@@ -389,7 +394,7 @@ function w2rayWarn(r){const k=1-r.warn/r.warn0,pu=.5+.35*Math.sin((G.t||0)*20);f
     ctx.save();ctx.globalCompositeOperation='lighter';glow('255,205,195',m.rx,m.ry,13+7*k,.45+.45*k,9);ctx.restore()}}
 // ---- in the air: the seeds of the Garden in flight, the leaves of the autumn, and whatever tall piece was not drawn yet
 function w2air(){const B=G.w2;if(!B)return;if(W2D.t===G.t)for(let j=0;j<W2D.a.length;j++)if(!W2D.done[j]){W2D.done[j]=true;w2tall(W2D.a[j],j+1<W2D.a.length?W2D.a[j+1]:1e9)}
-  {const F=w2art('Seed');for(const s of B.seeds){const u=clamp(s.t/s.dur,0,1),x=s.sx+(s.tx-s.sx)*u,gy=s.sy+(s.ty-s.sy)*u+W2.FY,z=40*(1-u)+90*u*(1-u),sp=s.spin+u*9;
+  {const F=w2art('Seed');for(const s of B.seeds){const u=clamp(s.t/s.dur,0,1),x=s.sx+(s.tx-s.sx)*u,gy=s.sy+(s.ty-s.sy)*u+W2.FY,z=40*(1-u)+105*u*(1-u),sp=s.spin+u*9;
     shadow(x,gy,4.5*(1-z/160),1.8,.25);let ok=false;if(F){try{F(x,gy,z,1,{p2:s.p2,spin:sp});ok=true}catch(err){}}if(!ok)W2F.seed(x,gy,z,s.p2,sp)}}
   {const F=w2art('Leaf');for(const l of B.leaves){const a=l.z>0?1:Math.max(0,1-l.lie/3.5);if(a<=0)continue;ctx.save();ctx.globalAlpha*=a;let ok=false;
     if(F){try{F(l.x,l.y,l.z,l.rot,1,{p2:true,dry:l.dry});ok=true}catch(err){}}if(!ok)W2F.leaf(l.x,l.y,l.z,l.rot,true,l.dry);ctx.restore()}}}
@@ -440,8 +445,10 @@ if(W2ON){const _nm=n3Move;n3Move=function(e){if(e.type!=='witch')return _nm.appl
 // ---- the defeat (4 s, the model's 'die'): the last autumn, the hat falls (1.8 s), she becomes a bare tree, a sprout; the tree, the hat
 // and the flowers stay until you leave the room
 if(W2ON){BDIE.witch={setup(c){const e=c.e;w2clearHz();c.face=e.f3!=null?e.f3:(e.face||Math.PI/2);c.p2=!!e.p2;c.live=1;
-      // her creatures wither: leaves and spores where they stood
-      for(const o of G.enemies)if(o!==e&&!o.dead&&o.w2kid)vfxBlast(o.x,o.y,'190,140,255',28,{sparks:0,spore:LOWFX?3:8,sporeRgb:'190,140,255',dust:4,debris:'leaf',n:LOWFX?3:6,ring2:false});
+      // her creatures wither: leaves and spores where they stood, no gold and no cloud of poison (killE would leave the mushroom's cloud);
+      // her knots of branches crumble with her
+      for(const o of G.enemies)if(o!==e&&!o.dead&&o.w2kid){vfxBlast(o.x,o.y,o.type==='wisp'?'255,170,90':'190,140,255',28,{sparks:0,spore:LOWFX?3:8,sporeRgb:o.type==='wisp'?'255,170,90':'190,140,255',dust:4,debris:'leaf',n:LOWFX?3:6,ring2:false});o.dead=true}
+      for(const k of G.rocks)if(k.kind==='wfist')k.life=Math.min(k.life,.5);
       sfx('creep',0,c.x)},
     tick(c,dt,D){const p=Math.min(1,c.t/c.dur);
       if(p>.4&&p<.75&&Math.random()<(LOWFX?.25:.6))cpart(c,{k:'leaf',x:c.x+rand(-26,26),y:c.y+W2.FY,z:rand(40,110),vx:rand(-20,20),vz:rand(-30,-10),g:-10,sw:5,ph:rand(0,6),life:rand(1,1.6),col:pk(['#c49a64','#8a6a3e','#4a3420'])});
@@ -466,16 +473,16 @@ if(W2ON){B3S.add('witch');
   const ha=(n,t0,step,d,fa,fb,v,o)=>[...Array(n)].map((_,i)=>{const f=fa+(fb-fa)*i/Math.max(1,n-1);return{t:t0+i*step,d,f:[f*1.05,f*.94],v:Array.isArray(v)?v[i%v.length]:v,a:1-i*.06,h:.25,...(o||{})}});
   B3VO.VB.witch={base:{br:.3,ro:.1,ji:.05,lp:.62},k:{
     cry:[[1.35,[{t:0,d:.2,f:[300,380],v:['n','a'],h:.15},{t:.24,d:.16,f:[400,470],v:'a',h:.1},{t:.42,d:.9,f:[520,660,380],v:['a','e','i'],vib:[.045,6.5],rel:.4,ro:.15}],.55]],
-    angry:[[1.5,[{t:0,d:.45,f:[330,300],v:['n','a'],ro:.45,ji:.12},{t:.42,d:1.02,f:[420,640,340],v:['a','o','a'],ro:.3,vib:[.05,7.5],rel:.35}],.58]],
+    angry:[[1.5,[{t:0,d:.45,f:[330,300],v:['n','a'],ro:.45,ji:.12},{t:.42,d:1.02,f:[420,640,340],v:['a','o','a'],ro:.3,vib:[.05,7.5],rel:.35}],.52]],
     laugh:[[.85,[...ha(4,0,.11,.08,600,500,'i',{h:.2}),{t:.47,d:.34,f:[520,560,420],v:['i','e'],a:.75,vib:[.04,8],rel:.5}],.48]],
     laugh2:[[1.62,[{t:0,d:.2,f:[392,392],v:['i','e'],h:.12},{t:.24,d:.28,f:[330,330],v:['n','i'],vib:[.03,6]},{t:.62,d:.2,f:[392,392],v:['i','e'],h:.12},
       {t:.86,d:.32,f:[330,322],v:['n','i'],vib:[.03,6],rel:.4},...ha(3,1.26,.1,.07,560,500,'i',{a:.7})],.46]],
-    hurt:[[.32,[{t:0,d:.06,noise:1,v:'m',a:.6},{t:.05,d:.25,f:[400,300],v:['m','u'],h:.1,ro:.2}],.45],[.28,[{t:0,d:.26,f:[520,380],v:['a','i'],h:.18}],.45]],
+    hurt:[[.32,[{t:0,d:.06,noise:1,v:'m',a:.6},{t:.05,d:.25,f:[400,300],v:['m','u'],h:.1,ro:.2}],.43],[.28,[{t:0,d:.26,f:[520,380],v:['a','i'],h:.18}],.42]],
     c_hand:[[.22,[{t:0,d:.2,f:[340,270],v:['n','u'],h:.3}],.42]],
     c_spiral:[[.85,[{t:0,d:.82,noise:1,v:['u','e','i'],hs:.55,a:.75}],.36]],
     c_sink:[[.62,ha(4,0,.13,.09,520,340,'i',{a:.85}),.42]],
     c_rise:[[.48,[{t:0,d:.17,f:[440,520],v:'a',h:.22},{t:.21,d:.25,f:[580,470],v:'a',h:.12}],.45]],
-    c_fix:[[.34,[{t:0,d:.06,noise:1,v:'m',a:.65},{t:.05,d:.27,f:[310,250],v:'m',h:.1}],.42]],
+    c_fix:[[.34,[{t:0,d:.06,noise:1,v:'m',a:.65},{t:.05,d:.27,f:[310,250],v:'m',h:.1}],.38]],
     c_roots:[[.7,[{t:0,d:.66,f:[220,205,230],v:'m',vib:[.03,5],h:.05}],.45]],
     c_sow:[[.95,[{t:0,d:.2,f:[440,440],v:['n','a'],vib:[.02,5]},{t:.23,d:.2,f:[523,523],v:['n','a'],vib:[.02,5]},{t:.46,d:.46,f:[659,650],v:['n','a'],vib:[.035,6],rel:.45}],.44]],
     c_rite:[[1.8,[{t:0,d:1.75,f:[262,330,440],v:['o','a','e'],vib:[.04,5.5],br:.45,rel:.3}],.48]],
