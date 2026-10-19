@@ -3,7 +3,7 @@
 # (sprite/nemici3d/<tipo>2.js) e i loro cervelli (src/js/89-<nome>-nuovo.js), più un pannello che porta subito nella stanza di un boss con
 # l'eroe forte o invincibile. Il gioco vero non cambia finché i cervelli non entrano in src/ordine.txt. Ogni cervello dice nel registro
 # BCL come si entra nella sua stanza, le sue mosse e i suoi pericoli (le prove: tests/boss2gioco.js).
-# Uso: python3 anteprime/mk_boss2.py <tipo ...> | --tutti  [--stub] [--test] [--build] [--modello file.js]
+# Uso: python3 anteprime/mk_boss2.py <tipo ...> | --tutti  [--stub] [--test] [--build] [--modello file.js] [--cervello file.js]
 #   <tipo>     golem, salamander, toad, yeti, witch, smith, hydra, icequeen, mimic, puppeteer, phoenix, octopus, stag
 #   --tutti    tutti i boss che hanno il cervello (e il modello, o con --stub il modello finto) → anteprime/boss_classici_sfida.html
 #   --stub     al posto del modello nuovo il modello finto anteprime/boss2/<tipo>_stub.js (il boss di oggi che fa le mosse nuove),
@@ -12,6 +12,9 @@
 #   --build    prima ricostruisce index.html (python3 build.py); di solito no: index.html si legge com'è, così più prove insieme non si
 #              pestano i piedi
 #   --modello  (con un solo tipo) un altro file di modello: il suo id diventa '<tipo>2', anche i disegni esportati con quel nome
+#   --cervello (con un solo tipo) un altro file di cervello, di solito insieme a --modello: il Mimic B (fatto in parallelo il 19 ottobre e
+#              tenuto da parte) è  python3 anteprime/mk_boss2.py mimic --modello anteprime/boss2/mimic_b/mimic2.js
+#              --cervello anteprime/boss2/mimic_b/89-mimic-nuovo.js
 # Uscita: anteprime/<tipo>2.html (un boss) o anteprime/boss_classici_sfida.html (--tutti o più boss); con --test in tests/.
 import os,subprocess,sys,re
 here=os.path.dirname(os.path.abspath(__file__));root=os.path.join(here,'..')
@@ -23,14 +26,15 @@ B={'golem':('89-golem-nuovo.js','Golem di Muschio'),'salamander':('89-salamandra
    'octopus':('89-piovra-nuova.js','La Piovra della Palude'),'stag':('89-cervo-nuovo.js',"Il Cervo d'Aurora")}
 A=sys.argv[1:];stub='--stub' in A;test='--test' in A;tutti='--tutti' in A
 mfile=A[A.index('--modello')+1] if '--modello' in A else None
+cfile=A[A.index('--cervello')+1] if '--cervello' in A else None
 types=[a for a in A if a in B]
 if tutti:types=list(B)
-if not types:sys.exit('uso: python3 anteprime/mk_boss2.py <tipo ...> | --tutti [--stub] [--test] [--build] [--modello file.js]')
+if not types:sys.exit('uso: python3 anteprime/mk_boss2.py <tipo ...> | --tutti [--stub] [--test] [--build] [--modello file.js] [--cervello file.js]')
 if '--build' in A:subprocess.run([sys.executable,os.path.join(root,'build.py')],check=True)
 s=open(os.path.join(root,'index.html'),encoding='utf-8').read()
 models,brains,used=[],[],[]
 for t in types:
-    bf=os.path.join(root,'src','js',B[t][0]);mp=os.path.abspath(mfile) if mfile and len(types)==1 else os.path.join(root,'sprite','nemici3d',t+'2.js')
+    bf=os.path.abspath(cfile) if cfile and len(types)==1 else os.path.join(root,'src','js',B[t][0]);mp=os.path.abspath(mfile) if mfile and len(types)==1 else os.path.join(root,'sprite','nemici3d',t+'2.js')
     sp=os.path.join(here,'boss2',t+'_stub.js')
     if not os.path.exists(bf):
         if not tutti:print('manca il cervello',os.path.relpath(bf,root))
