@@ -43,7 +43,8 @@ if(W2ON){
   // what the game passes to the model: the way she moves (walk), the guardian roots, how many hands, the turn of the spiral, the hat kept
   // straight before the Rite, how much of the hat is out (the fin)
   N3G.opt.witch=e=>({mv:e.mv3w||0,orb:e.orb3||0,guard:e.p2?(e.guard3||0):0,hands:e.hands3||1,spin:e.spin3||1,neat:!!e.neat3,k:e.k3==null?1:e.k3});
-  {const b=BEST.find(q=>q[0]==='witch');if(b)b[2]='Boss. Mani di rami dal pavimento, spirali di spine e radici che spaccano le lastre; sprofonda e riaffiora: segui la punta del cappello.'}}
+  // (its line in the guide is in 44-guida.js, with the others)
+}
 // ---- helpers
 // the model's own drawings of the pieces of her magic (design: Thorn(x,y,a,sc,o), Seed(x,y,z,sc,o), Hand(x,y,k,sc,o), Bump(x,y,a,k,sc,o),
 // Root(x0,y0,x1,y1,k,sc,o), Husk(x,y,face,k,sc,o), Sprout(x,y,k,sc,o), Leaf(x,y,z,rot,sc,o)); the game's simple drawings if the model has none

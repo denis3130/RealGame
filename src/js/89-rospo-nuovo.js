@@ -51,7 +51,7 @@ if(TKON){
   N3G.opt.toad=e=>({tip:e.tkTip||undefined,side:e.tkSide||1,chain:!!e.tkChain,point:e.tkPoint,noFlies:!!e.tkNoFlies,
     z:e.st==='flop'||e.st==='walk'&&e.p2?(e.z||0):undefined,wk:e.st==='walk'&&!e.p2?Math.max(0,Math.min(1,(e.wt||0)/.35,(e.stT||0)/.3)):undefined});
   N3G.wp.toad=e=>{const d=B3D(e,'walk');return(((e.wt||0)%d)+d)%d/d};
-  {const b=BEST.find(q=>q[0]==='toad');if(b)b[2]='Boss. Lingua che ti tira a sé (se ti manca resta incollata: colpiscilo!), panciate che fanno onde, rutti di bolle, il tamburo di pancia che chiama i girini; a metà vita si mangia le lucciole e le fa piovere.'}
+  // (its line in the guide is in 44-guida.js, with the others)
   VINTO.rospo='Il Re Rospo si è sgonfiato. Le lucciole sono libere.'}
 // ---- helpers
 // the model's own drawings of the pieces of its attacks (design: Bubble(x,y,z,r,ph,sc,o), Fly(x,y,z,k,sc,o), Mud(x,y,r,k,sc,o),

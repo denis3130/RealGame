@@ -139,10 +139,11 @@ sconfitta, voce di pietra e presa in giro). **Solo anteprima**, il gioco vero no
 dopo») e https://claude.ai/artifact/7c7LspnByt8aFQKoru5SWa (sfida il Golem). Il 16 ottobre Denis: «sì, fai gli altri 12». Al 19 ottobre
 sono **finiti e collaudati, non ancora nel gioco**, anche Salamandra, Re Rospo e Yeti (modelli `sprite/nemici3d/<tipo>2.js`, cervelli
 `src/js/89-*.js`; provati con i quattro in `src/ordine.txt` in una copia a parte: arene 1–4, Abisso, menu, nessun errore; prologo e guida
-già adattati: `PRO_B2` in 91, `BEAST2` in 44), la Strega è costruita (la critica da correggere è in `docs/boss-classici.md`), il Fabbro
-l'ha fatto l'altra sessione (cassetta comune `sprite/nemici3d/boss2kit.js`). Il 19 ottobre Denis ha scelto che tutto il resto lo faccia
-una sessione sola, senza agenti, e di vedere tutti i boss alla fine. Stato di ogni boss, metodo, design, numeri, misure e prove in
-`docs/boss-classici.md` («Passaggio all'altra sessione»).
+già adattati: `PRO_B2` in 91, `BEAST2` in 44; pagina per sfidarli https://claude.ai/artifact/HQLxFvDjYaJAr1KupGnVYJ), poi la Strega
+(corretta dopo la critica sui fogli); Fabbro e Idra li ha fatti l'altra sessione (cassetta comune `sprite/nemici3d/boss2kit.js`). Il 19
+ottobre sera Denis: i boss che mancano (Regina, Fenice, Mimic, Burattinaio, Piovra, Cervo) li fa questa sessione, da sola e senza agenti
+(«tutti, fermo l'altra»); tutti i boss si vedono alla fine e poi entrano nel gioco. I testi della guida stanno in `src/js/44-guida.js`, non
+nei cervelli. Stato di ogni boss, metodo, design, numeri, misure e prove in `docs/boss-classici.md` («Stato dei boss»).
 
 ## Modalità zombie (nel gioco dal 13 ottobre)
 

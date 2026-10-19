@@ -73,9 +73,11 @@ sono **finiti e collaudati ma non sono nel gioco**: ce li mette l'altra sessione
 - La prova delle anteprime (`tests/anteprime.js`) ora ha un salvataggio con gli oggetti e l'eroe (senza, il gioco lo prendeva per un
   giocatore nuovo e il prologo copriva tutto) e aspetta che le porte dello sblocco si aprano.
 
-## Passaggio all'altra sessione (19 ottobre sera)
+## Stato dei boss (19 ottobre sera)
 
-Lo stato dei boss lasciato da questa sessione (`session_01Dgjf4PuqZowPts7C7dSiaz`):
+Prima Denis ha passato tutto all'altra sessione (`session_01NzD5NzkcNh3pmk6QqLSVHu`, che ha fatto Fabbro e Idra e stava facendo il Mimic);
+poi, alla domanda «io quali riprendo?», qui: «tutti, fermo l'altra». Quindi i boss che mancano li finisce questa sessione
+(`session_01Dgjf4PuqZowPts7C7dSiaz`), da sola e senza agenti; l'altra la ferma Denis. Stato:
 
 | Boss | Modello | Cervello | Stato |
 |---|---|---|---|
@@ -83,13 +85,13 @@ Lo stato dei boss lasciato da questa sessione (`session_01Dgjf4PuqZowPts7C7dSiaz
 | Salamandra | `salamander2.js` | `89-salamandra-nuova.js` | finita: critici, correzioni e collaudo (scheda sotto) |
 | Re Rospo | `toad2.js` | `89-rospo-nuovo.js` | finito: critici, correzioni e collaudo (scheda sotto) |
 | Yeti | `yeti2.js` | `89-yeti-nuovo.js` | finito: critici, correzioni e collaudo (scheda sotto) |
-| Strega | `witch2.js` | `89-strega-nuova.js` | costruiti col metodo leggero, prove OK col modello vero; **la critica sotto non è ancora corretta** |
+| Strega | `witch2.js` | `89-strega-nuova.js` | finita: costruita col metodo leggero, critica sui fogli corretta e collaudo (scheda sotto) |
 | Regina | `icequeen2.js` | `89-regina-nuova.js` | a metà (16 ottobre, fermati dal limite settimanale): foglio `tests/b2/icequeen2_stato.png` |
 | Fenice | `phoenix2.js` | `89-fenice-nuova.js` | modello a metà, cervello finito (16 ottobre): foglio `tests/b2/phoenix2_stato.png` |
 | Fabbro | `smith2.js` | `89-fabbro-nuovo.js` | fatto dall'altra sessione |
 | Idra, Mimic, Burattinaio, Piovra, Cervo | — | — | da fare (i design sono in `docs/boss-classici-design/`) |
 
-### La Strega: com'è e cosa resta da correggere
+### La Strega: la critica sui fogli (corretta il 19 ottobre sera, vedi la scheda)
 
 Costruita il 19 ottobre: modello rifatto partendo da quello a metà (16 mosse del design; disegno da 2,1 a 1,2 ms, pari al Golem; 16
 direzioni, tutte le mosse a 100 passi senza salti, idle, walk e fin che si richiudono, LOWFX, 15.484 chiamate senza errori), cervello
@@ -98,7 +100,7 @@ controllato contro il design (servitori che appassiscono senza oro, scoppio d'au
 combattimento (3,26 al minuto, 135 s), nuova 6,7 (3,21 al minuto, 125 s; più gentile nella fase 1, più dura nella fase 2), vita 2.900.
 Fogli: `tests/b2/witch2.png`, `witch2_16dir.png`, `witch2_sc1.png`, `witch2_disegni.png`; foto `tests/b2g_witch_*.png`.
 
-La critica sui fogli (da fare):
+La critica sui fogli:
 1. **Fase 2, la gonna a righe**: nel giro alto dell'abito la corteccia ha righe arancio verticali dritte e uguali; a sc 1 sembra una gonna a
    righe. Vene di brace come crepe storte che si ramificano (poche, spessore che cambia, più fitte in basso), o foglie d'autunno arricciate.
 2. **Le mani bianco gesso** sono le macchie più chiare della figura e sembrano guanti o ossa: pelle del viso (menta pallido) un tono più
@@ -640,3 +642,77 @@ Ogni stato ha il nome di una mossa del modello, e il modello va con l'orologio d
   - `tests/b2/yeti2_16dir.png` (16 direzioni e la fase 2);
   - `tests/b2/yeti2_entrata_modello.png`;
   - il collaudo nella stanza vera, mossa per mossa nei momenti dei colpi: `tests/b2/yeti2_collaudo_entrata.png`, `tests/b2/yeti2_collaudo_fase1.png`, `tests/b2/yeti2_collaudo_fase2.png`.
+
+## La Strega delle Radici: «la Signora delle Radici»
+
+Nome e titolo restano: «Strega delle Radici», «Signora della cripta» (arena 5, «Cripta Risvegliata», col suo santuario). Secoli fa ha
+piantato il suo trono nel santuario e ha lasciato che il bosco le crescesse addosso: altissima (tre volte e mezzo l'eroe, 120 px in punta
+al cappello), dritta e calma, non cammina ma scivola, tirata da un groviglio di radici vive che le fanno da piedi e da strascico. Abito di
+corteccia coperto di foglie verde bosco a tre giri come tegole, un collare di foglie a ventaglio dietro la testa, il viso pallido di betulla
+con due occhi verde menta sotto palpebre prugna e due zannette, un alto cappello a punta storto intrecciato di rami, coi boccioli viola
+accesi e tre lanterne di spore. Sul petto il **Seme del Bosco**, il suo cuore: **il suo avviso** è la luce del seme che corre nelle vene
+della corteccia fino alla parte che colpirà (il braccio della Mano, tutte e due le braccia della Spirale, la gonna delle Radici). Resta della
+Classica: forme tonde, colori pieni, occhi con la lucina, niente sangue.
+
+### Mosse e abilità
+
+Ogni stato ha il nome di una mossa del modello e il colpo vero parte nel suo fotogramma. Mai due attacchi insieme (servitori e guardiane a
+parte); ogni danno ha un avviso rosso a terra di almeno 0,63 s veri; tra due mosse cammina 1,0–1,4 s (fase 2: 0,8–1,1), verso un punto a
+150–230 px da te, senza inseguirti. Vita 2.900 (il design diceva 2.300: con 2.900 il combattimento dura e pesa come quello di oggi).
+
+| Mossa | Cosa fa | Come si schiva |
+|---|---|---|
+| **Mano del Bosco** (`hand` 3 s) | la luce corre giù per il braccio, la mano sale ad artiglio vicino al cappello e poi affonda: le dita diventano tre radici attorcigliate con la luce menta dentro, che entrano nel pavimento; una gobba corre sotto le lastre fino a te e si ferma (.50) in un cerchio rosso; a .80 la mano gigante di rami si chiude: 22. Se l'hai evitata resta un **nodo di rami** per 6 s, che ferma spine, semi e frecce (al massimo due). Fase 2: due mani, due cerchi in fila | uscire dal cerchio dopo che si è fermato, o lo scatto |
+| **Spirale di Spine** (`spiral` 3,2 s) | anello rosso tratteggiato intorno a lei con le frecce del verso; le braccia larghe come un direttore d'orchestra, l'aureola di spine dietro il collare; da .27 a .85 una spina per braccio ogni 0,11 s, 2 bracci (3 nella fase 2), che girano. Fase 2: a .55 uno schiocco e il verso si inverte (la spirale fa una S) | girare nei varchi, o ripararsi dietro un nodo di rami: per questo viene sempre dopo la Mano |
+| **Sprofonda, la pinna, Riaffiora** (`sink` 1,1 s, `fin`, `rise` 1,2 s) | si avvolge nel bozzolo di radici e sprofonda; sotto terra (non si può colpire) si vede solo la punta del cappello col bocciolo viola, che taglia il pavimento come una pinna verso di te; riaffiora in una colonna di radici che si apre come un bocciolo (il colpo nel cerchio) e spara un anello di semi. Fase 2: il guscio vuoto che lascia si accende e spara 8 spine | uscire dal cerchio dove riaffiora |
+| **Cappello storto** (`fix` 1 s) | dopo Riaffiora il cappello è storto e lei lo raddrizza con due mani: **punto debole**, i colpi fanno +50% | colpirla |
+| **Radici della Cripta** (`roots` 2,8 s) | le mani basse, la luce corre sulla gonna; strisce rosse sul pavimento, poi una radice spinosa esce ad archi lungo ogni striscia (18) | un passo fuori dalla striscia o lo scatto |
+| **Il Giardino della Strega** (`sow` 1,8 s) | lancia semi in arco: diventano due funghi servitori (fase 2: due fuochi fatui); quando muore appassiscono, senza oro | colpirli o starne lontano |
+| **Rito delle Rune** (`rite` 4,8 s, solo fase 2) | sprofonda al centro, alza le braccia al cielo e il santuario si accende: tre raggi rossi a terra girano lenti intorno a lei | spostarsi di lato continuando a muoversi; chi resta fermo prende 4 colpi |
+| **Radici guardiane** (fase 2, sempre) | quattro radici le girano intorno nel pavimento: 14 se tocchi la punta | non starle addosso |
+
+**Fase 2, L'autunno della Strega** (`rage` 2,8 s): a metà vita si piega urlando, le foglie diventano color brace, il cappello mette corna di
+rami con lanterne arancioni, gli occhi ambra, il seme d'oro; escono le quattro radici guardiane; da lì tutto va 1,1 volte più rapido.
+Ordine: fase 1 Mano, Spirale, Sprofonda (col Cappello storto), Radici, Giardino; fase 2 [sprofonda al centro] Rito, Mano, Spirale,
+Sprofonda, Radici, Giardino.
+
+**Entrata, Il Risveglio** (`enter` 3,2 s): un bocciolo di foglie cresce da una buca al centro del santuario, si apre in cinque petali stesi
+a terra e dentro c'è lei accovacciata, che si alza e apre le braccia.
+
+**Sconfitta, L'ultimo autunno** (`die` 4 s): un urlo lungo piegata indietro; si stringe il cappello, una crepa lo attraversa, le sue luci si
+spengono e si spezza (momento clou: resta storto a terra davanti a lei); le foglie cadono in una tempesta, prima dei suoi colori e poi
+secche; l'abito diventa corteccia, le braccia salgono al cielo e le dita diventano rametti: un albero nudo di legno caldo; l'ultima luce
+menta del seme le esce dal petto e sale oltre il cappello spegnendosi, due lucciole le escono dagli occhi; ai suoi piedi un germoglio si
+apre e sbocciano tre fiorellini.
+
+**Voce** (`B3VO.VB.witch`): grido dell'entrata, risata quando ti colpisce (con la presa in giro: si porta la mano alla bocca e ride), un
+verso per ogni mossa, rabbia della muta d'autunno, lamento della sconfitta; volume medio 0,07–0,12 come gli altri boss nuovi.
+
+### Come è nata (16–19 ottobre)
+
+- Design scelto dal direttore artistico tra tre proposte (`docs/boss-classici-design/witch.md`). Modello e cervello iniziati il 16 ottobre e
+  fermati dal limite settimanale; finiti il 19 ottobre col metodo leggero (un agente per il modello, uno per il cervello): il disegno è
+  sceso da 2,1 a 1,2 ms; foglie a mandorla (sembravano occhi) rifatte a scaglie larghe, collare a ventaglio, occhi nuovi, mani da giocattolo,
+  aureola vera dietro il collare, guardiane spinose, pinna col solco, scatti tra i fotogrammi tolti.
+- Critica sui fogli (19 ottobre sera) e correzioni: la gonna della fase 2 non più a righe (crepe di brace storte che si ramificano); le mani
+  un tono sotto il viso con le unghie prugna (prima erano le macchie più chiare della figura, guanti bianchi); la Mano del Bosco con tre
+  radici sottili attorcigliate e la luce dentro (prima un bastone); la sconfitta con la luce del seme che sale, le foglie d'autunno prima di
+  quelle secche, l'albero di legno caldo e i fiori più grandi; il bocciolo della punta del cappello più acceso nella pinna; le foglie
+  dell'abito più varie e una su cinque morsicata. Il testo della guida è in `src/js/44-guida.js` (non più nel cervello).
+
+### Misure
+
+- Disegno: 1,2–1,4 ms a fotogramma, pari al Golem nella stessa prova (la macchina varia); la stanza intera 3,6–4,8 ms.
+- Difficoltà (arena 5, eroe fermo che tira, livello 4, caso peggiore, 3 prove): Strega di oggi 7,4 vite a combattimento (3,26 al minuto,
+  135 s), nuova 6,7 (3,21 al minuto, 125 s): più gentile nella fase 1 (circa 2,1 al minuto) e più dura nella fase 2. L'anello di sfere dei
+  boss alti (`bossExtra`) per lei è spento (`B3S`): le sue mosse lo sostituiscono. Da regolare giocando.
+
+### File e prove
+
+- Modello: `sprite/nemici3d/witch2.js` (modello `witch2`); esporta anche `N3.witchThorn`, `witchSeed`, `witchHand`, `witchBump`,
+  `witchRoot`, `witchHusk`, `witchSprout`, `witchLeaf` (spina, seme, mano gigante, gobba, radice delle strisce, guscio, germogli, foglia).
+- Cervello: `src/js/89-strega-nuova.js` (si accende solo se c'è `N3.witch2`); modello finto `anteprime/boss2/witch_stub.js`.
+- Prove: `python3 anteprime/mk_boss2.py witch --test && node tests/boss2gioco.js witch` (tutto OK, ERR []), `node tests/boss2diff.js witch`,
+  `node tests/anteprime.js witch2_test.html` (miniatura e sblocco dell'arena 5 nel riquadro). Foglio: `tests/b2/witch2.png`
+  (`cd tests && node foglio3d.js witch2 b2/witch2.png --file ../sprite/nemici3d/witch2.js`), 16 direzioni `tests/b2/witch2_16dir.png`.
+

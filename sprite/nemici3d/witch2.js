@@ -103,6 +103,8 @@ const FLM=[['M',0,-1],['C',.55,-.45,.62,.35,0,.62],['C',-.62,.35,-.55,-.45,0,-1]
 const TEAR=[['M',0,-1.4],['C',.5,-.85,.95,-.15,.95,.25],['C',.95,.75,.52,1,0,1],['C',-.52,1,-.95,.75,-.95,.25],['C',-.95,-.15,-.5,-.85,0,-1.4]];
 // the leaf of the gown and of the sleeves: a broad ovate leaf (a round base, the widest at .44, a point), never an almond (that reads as an eye)
 const OVL=[['M',0,0],['C',.02,.62,.2,1.02,.44,1],['C',.68,.98,.88,.5,1,0],['C',.88,-.5,.68,-.98,.44,-1],['C',.2,-1.02,.02,-.62,0,0]];
+// the same leaf with a bite out of its upper edge (one in five on the gown)
+const OVLB=[['M',0,0],['C',.02,.62,.2,1.02,.44,1],['C',.55,.99,.6,.88,.62,.76],['C',.68,.86,.78,.78,.82,.6],['C',.9,.42,.96,.2,1,0],['C',.88,-.5,.68,-.98,.44,-1],['C',.2,-1.02,.02,-.62,0,0]];
 // a flat shape added to a Path2D through an affine map (many shapes, one fill)
 function traceTo(pa,sh,a,b,c,d,e,f){for(const k of sh){if(k[0]==='M')pa.moveTo(a*k[1]+c*k[2]+e,b*k[1]+d*k[2]+f);else if(k[0]==='L')pa.lineTo(a*k[1]+c*k[2]+e,b*k[1]+d*k[2]+f);
   else if(k[0]==='Q')pa.quadraticCurveTo(a*k[1]+c*k[2]+e,b*k[1]+d*k[2]+f,a*k[3]+c*k[4]+e,b*k[3]+d*k[4]+f);else pa.bezierCurveTo(a*k[1]+c*k[2]+e,b*k[1]+d*k[2]+f,a*k[3]+c*k[4]+e,b*k[3]+d*k[4]+f,a*k[5]+c*k[6]+e,b*k[5]+d*k[6]+f)}pa.closePath()}
@@ -143,7 +145,7 @@ const K1={bark:T3('#9a6040','#52301f','#24120b'),groove:'#170c07',vOff:'#3a2016'
   lant:T3('#62ad8c','#3f8a6a','#2a5e48'),calyx:'#2a6a44',lantC:'#c8ffe8',lantG:'123,240,192',
   seed:T3('#c48ae8','#8a4ab8','#4a2070'),seedC:'#7bf0c0',seedG:'123,240,192',
   cap:'#9a5ad0',capD:'#7a3ab0',dots:'#e8c8ff',stem:'#e8dcc8',capG:'190,110,255',
-  nail:'#efe3c8',spine:'#efe3c8',knot:'#7bf0c0',flame:'#e8fff4',flameG:'123,240,192',dust:'150,128,120'};
+  nail:'#7a4466',spine:'#efe3c8',knot:'#7bf0c0',flame:'#e8fff4',flameG:'123,240,192',dust:'150,128,120'};
 // phase 2, the autumn: ember leaves, deeper bark with orange veins, amber eyes, a golden seed, orange lanterns (winter cherries)
 const K2={bark:T3('#8a5a3a','#4e2e1e','#22120b'),groove:'#170c07',vOff:'#4a2414',vOn:'#ff8a3c',vG:'255,138,60',
   hat:T3('#a06a40','#5a3420','#26140a'),thread:'#1f120c',
@@ -156,9 +158,9 @@ const K2={bark:T3('#8a5a3a','#4e2e1e','#22120b'),groove:'#170c07',vOff:'#4a2414'
   lant:T3('#ffd27a','#ff8a3c','#a3401a'),calyx:'#7a4a1a',lantC:'#fff0c0',lantG:'255,170,80',
   seed:T3('#ffd27a','#d88a34','#7a3a14'),seedC:'#ffcf6a',seedG:'255,190,90',
   cap:'#ff9a3c',capD:'#c2561c',dots:'#ffe0b0',stem:'#e8dcc8',capG:'255,150,60',
-  nail:'#efe3c8',spine:'#efe3c8',knot:'#ff8a3c',flame:'#fff0d0',flameG:'255,170,80',dust:'170,130,100'};
+  nail:'#7a3a4a',spine:'#efe3c8',knot:'#ff8a3c',flame:'#fff0d0',flameG:'255,170,80',dust:'170,130,100'};
 // the defeat: dry leaves and dry grey bark
-const KD={leaf:T3('#c49a64','#8a6a3e','#4a3420'),backT:T3('#c8a878','#a07a4a','#5a4228'),bark:T3('#8a7a6a','#5a4e42','#2a221a'),hat:T3('#9a8a76','#625646','#2e261c'),nerv:'#d8bc8a',back:'#a07a4a',dryL:'#8a6a3e',
+const KD={leaf:T3('#c49a64','#8a6a3e','#4a3420'),backT:T3('#c8a878','#a07a4a','#5a4228'),bark:T3('#a08466','#64503c','#2c2016'),hat:T3('#a88e70','#685440','#30241a'),nerv:'#d8bc8a',back:'#a07a4a',dryL:'#8a6a3e',
   moss:'#6a6a4a',mossD:'#4a4a34',mossT:'#8a8a64',hair:'#2a2a24',hairL:'#4a4a3e',hairT:'#5a5a4a'};
 const PALC={};
 function pal(k2,dry){k2=Math.round(cl(k2,0,1)*24)/24;dry=Math.round(cl(dry||0,0,1)*24)/24;const id=k2+'|'+dry;if(PALC[id])return PALC[id];const K={};
@@ -249,14 +251,14 @@ function wPose(anim,p,o){const ph=p*TAU,P2=!!o.p2&&anim!=='enter',A={B:[0,0,0],s
     // the floor; it holds them (trembling), squeezes (.80: the hand of branches closes in the game) and tears them out
     const two=o.hands===2,sd0=o.hands===-1?-1:1;
     const side=(sd,tS,tO)=>{const H=hkeys([[0,'rest'],[.22,'claw'],[.24,'claw'],[.32,'reach'],[tO,'reach'],[1,'rest']],p,sd);
-      H.ext=sstep(.25,.32,p)*(1-sstep(tO,tO+.07,p));H.tgt=[0,1,2].map(j=>[30+(j-1)*3.2,sd*(9+(j-1)*3.4),0]);
+      H.ext=sstep(.25,.32,p)*(1-sstep(tO,tO+.07,p));H.tgt=[0,1,2].map(j=>[30+(j-1)*7,sd*(9+(j-1)*6.5),0]);
       const sq=sstep(tS-.012,tS+.012,p)*(1-sstep(tO,tO+.03,p));H.W=add(H.W,[-4*sq,sd*1.5*sq,-1.5*sq]);
       if(p>.32&&p<tO)H.W=add(H.W,[0,0,.6*trem(p,.32,tO,6,3)]);
       const lit=sstep(.1,.13,p)*(1-sstep(.24,.28,p));H.tips=[lit,lit,lit,lit*.8];armLight(sd,sstep(0,.12,p),(1-.6*sstep(.14,.3,p))*(1-sstep(.9,1,p)));return H};
     if(two){A.hR=side(1,.80,.88);A.hL=side(-1,.90,.92)}else{const H=side(sd0,.80,.88);if(sd0>0)A.hR=H;else A.hL=H}
     A.bl=kv([[0,-.04],[.24,-.12],[.32,.27],[.8,.27],[.82,.18],[.88,.22],[1,-.04]],p);A.hp=kv([[0,0],[.2,.08],[.32,-.17],[.86,-.17],[1,0]],p);A.hr=sd0*.1*rise(p,.05,.2,.3,.4);
     A.smile=1.3;A.under=rise(p,.08,.18,.3,.36);A.squint=.25*rise(p,.32,.4,.85,.95);A.seed=Math.max(pls(p,.04,.08),.3*rise(p,.1,.2,.85,.95));
-    for(const sd of two?[-1,1]:[sd0])for(let j=0;j<3;j++)fx('crack',(p-.25-j*.012)/.6,{at:[30+(j-1)*3.2,sd*(9+(j-1)*3.4),0],big:j===1});
+    for(const sd of two?[-1,1]:[sd0])for(let j=0;j<3;j++)fx('crack',(p-.25-j*.012)/.6,{at:[30+(j-1)*7,sd*(9+(j-1)*6.5),0],big:j===1});
     fx('pebs',(p-.88)/.12,{at:[30,sd0*9,0]});if(two)fx('pebs',(p-.92)/.08,{at:[30,-9,0]})}
   else if(anim==='spiral'){// SPIRALE DI SPINE: the light runs up both arms, the arms go wide like a conductor's, the eight fingertips light one
     // by one, the halo of thorns grows behind the collar and turns; the wrists turn, the gown flares; in the autumn, a snap over the head
@@ -345,8 +347,8 @@ function wPose(anim,p,o){const ph=p*TAU,P2=!!o.p2&&anim!=='enter',A={B:[0,0,0],s
     A.hat.crack=sstep(.12,.3,p);A.budOn=[.16,.21,.26,.26].map(t=>1-sstep(t,t+.02,p));A.lantOn=[.16,.21,.26].map(t=>1-sstep(t,t+.02,p));
     if(p>=.3){const k=sstep(.3,.45,p),pos=kv([[.3,[2,0,98]],[.36,[12,-5,64]],[.4,[22,-8,15.5]],[.425,[25,-9,20]],[.45,[27,-10,15.5]],[1,[27,-10,15.5]]],p),tl=kv([[.3,[-.18,0,0]],[.4,[.9,.3,1.6]],[.45,[1,.42,2]],[1,[1,.42,2]]],p);
       A.hat.free={pos,tilt:tl[0],roll:tl[1],yaw:tl[2]};A.hatK=k}
-    A.dry=sstep(.4,.62,p);A.leafK=1-sstep(.45,.75,p);A.B[2]=-10*sstep(.4,.75,p);A.tr.mode='trunk';A.tr.k=tw;A.glow=1-sstep(.75,.9,p);A.flies=(p-.75)/.22;A.sprout=sstep(.9,1,p);
-    A.squint=.5*sstep(.75,.9,p);A.smile=.4;A.guard*=1-sstep(0,.14,p);fx('storm',(p-.45)/.3,{dry:1});fx('dust',(p-.4)/.15,{at:[22,-8,0],n:6,r:10,al:.5})}
+    A.dry=sstep(.4,.62,p);A.leafK=1-sstep(.45,.75,p);A.B[2]=-10*sstep(.4,.75,p);A.tr.mode='trunk';A.tr.k=tw;A.glow=1-sstep(.75,.9,p);A.flies=(p-.75)/.22;A.soul=(p-.6)/.36;A.sprout=sstep(.9,1,p);
+    A.squint=.5*sstep(.75,.9,p);A.smile=.4;A.guard*=1-sstep(0,.14,p);fx('storm',(p-.42)/.3);fx('storm',(p-.52)/.32,{dry:1});fx('dust',(p-.4)/.15,{at:[22,-8,0],n:6,r:10,al:.5})}
   else{// FERMO: two breaths, the seed beats, the head looks round, the fingers drum, the right root taps, the tip of the train curls
     const b=-Math.cos(TAU*2*p);A.bz=.5+.5*b;A.collar=.07*b;A.seed=Math.max(pls(p,.2,.08),pls(p,.7,.08));
     A.hy=look(p,.3);A.hr=.06*Math.sin(ph+1);A.blink=blink(p,.62,.08);
@@ -375,23 +377,29 @@ function bodiesOf(V0,X0,XU,XH,XT){const w=[V0.D(1,0,0),V0.D(0,1,0),V0.D(0,0,1)],
 // the skirt: the bark bell under three rings of leaves laid like shingles (each ring hangs over the one below). A ring is painted in one go:
 // its leaves never overlap each other, so they are filled by tone (dark, mid, light: how much each faces the light) and outlined in one
 // stroke; the leaves at the back that stick out of the bell's outline go first, in one dark batch. The rootlets of the hem go with the floor
-const SKV=Array.from({length:7},(_,i)=>{const t=(i+.2)/7*TAU;return Array.from({length:8},(_,j)=>{const k=j/7;return revoAt(SKP,SKA,0,t+.25*Math.sin(k*3),lerp(51,31,k),.1)})});
+// the bark under the top ring (the autumn, the tree): cracks of ember, crooked and of different lengths, wandering round the bell, with two
+// short branches each (seven straight even lines read as a striped skirt)
+const skh=(i,k)=>{const v=Math.sin(i*12.9898+k*78.233)*43758.5453;return v-Math.floor(v)};
+const SKV=[],SKVB=[];
+for(let i=0;i<5;i++){const z1=lerp(31,40,skh(i,1)),n=7,T=[],L0=[];let t=(i+.1+skh(i,2)*.6)/5*TAU;
+  for(let j=0;j<=n;j++){if(j)t+=(skh(i,j+3)-.5)*.3;T.push(t);L0.push(revoAt(SKP,SKA,0,t,lerp(51,z1,j/n),.1))}SKV.push(L0);
+  for(const j0 of[2,4]){const sd=skh(i,j0+11)<.5?-1:1,z0=lerp(51,z1,j0/n),len=4+3*skh(i,j0+13);SKVB.push([0,1,2].map(m=>revoAt(SKP,SKA,0,T[j0]+sd*m*.11,z0-m*len/2,.1)))}}
 const rnd=(a,b)=>{const v=Math.sin(a*12.9898+b*78.233)*43758.5453;return v-Math.floor(v)};
 function skirtProf(A){const b=A.bell||0;return b?SKP.map(([z,r])=>[z,r*(1+b*(1-z/52))]):SKP}
 const SKH=[0,1,2,3,5];                                                              // the rings of the profile that make the bell's outline
 // how far a leaf has come off (-1 still on, 0..1 falling, >=1 gone): the top ring and the outer collar leaves in the autumn, every leaf at the end
 function offK(A,thr,top){let u=-1;if(top&&A.fall>0)u=A.fall>=1?2:(A.fall-thr*.8)/.2;if(A.leafK<1){const v=((1-A.leafK)-thr*.85)/.15;if(v>u)u=v}return u<0?-1:u}
 // the leaves, made once: angle round the bell, a little jitter; their place at rest is kept (the bell flares only in the Spiral)
-const LEAFC=RINGS.map((R0,ri)=>Array.from({length:R0.n},(_,i)=>({ri,i,jr:rnd(i*3.1,ri+4)-.5,thr:rnd(i,ri),t:(i+R0.off)/R0.n*TAU})));
+const LEAFC=RINGS.map((R0,ri)=>Array.from({length:R0.n},(_,i)=>({ri,i,jr:rnd(i*3.1,ri+4)-.5,thr:rnd(i,ri),bite:rnd(i*1.7,ri+9)<.2,t:(i+R0.off)/R0.n*TAU})));
 function leafGeo(prof,R0,c,A,mvx){const t=c.t+(A.skTw||0)*(1+c.ri*.25),s0=revoAt(prof,SKA,0,t,R0.z,R0.o),s1=revoAt(prof,SKA,0,t,R0.z-4,R0.o);
   let d=nrm(add(mul(nrm(sub(s1.p,s0.p)),.95),mul(s0.n,.36)));if(mvx&&c.ri===0)d=nrm(add(d,[-mvx[0]*A.hem,-mvx[1]*A.hem,0]));
-  d=nrm(add(d,mul(nrm(cross(s0.n,d)),c.jr*.28)));return{b:s0.p,n:s0.n,d,sv:nrm(cross(s0.n,d))}}
+  d=nrm(add(d,mul(nrm(cross(s0.n,d)),c.jr*.42)));return{b:s0.p,n:s0.n,d,sv:nrm(cross(s0.n,d))}}
 function leafRings(V0,X0,A,K){const prof=skirtProf(A),nr=LOWFX?2:3,mvx=A.hem?[Math.cos(A.tr.mv),Math.sin(A.tr.mv)]:null,dyn=!!(A.bell||A.skTw||A.hem),R={back:[[],[],[]],rings:[[],[],[]],fall:[]};
   for(let ri=0;ri<nr;ri++){const R0=RINGS[ri],top=ri===2;
     for(const c of LEAFC[ri]){const off=offK(A,c.thr,top);if(off>=1)continue;const g=dyn||off>=0?leafGeo(prof,R0,c,A,mvx):(c.g||(c.g=leafGeo(SKP,R0,c,A,null)));
       let b=g.b,dd=g.d;if(off>=0){const u=ez(off);b=add(b,add(mul(g.n,9*u),[0,0,-(R0.z-2)*u*u]));dd=nrm(add(mul(g.d,Math.cos(u*2.6)),mul(g.n,Math.sin(u*2.6))))}
       const nw=X0.Rd(g.n),f=V0.F(nw);if(off<0&&f<-.55)continue;
-      const e={ri,b:X0.T(b),d:X0.Rd(dd),s:X0.Rd(g.sv),n:nw,f,L:R0.L*(1+.12*c.jr),W:R0.W*(1-.06*c.jr),z:R0.z};
+      const e={ri,b:X0.T(b),d:X0.Rd(dd),s:X0.Rd(g.sv),n:nw,f,L:R0.L*(1+.24*c.jr),W:R0.W*(1-.1*c.jr),sh:c.bite?OVLB:null,z:R0.z};
       if(off>=0){e.al=1-sstep(.7,1,off);e.dep=V0.D(e.b);R.fall.push(e)}else(f<0?R.back:R.rings)[ri].push(e)}}
   return R}
 // a batch of flat leaves of one ring: filled by tone, one outline, the veins in one stroke (lit by the running light: vk)
@@ -400,7 +408,7 @@ const ringTone=(V0,T,ri,n)=>{const l=lit(V0,V0.F(n)<0?mul(n,-1):n);return RTC(T,
 function leafBatch(V0,list,K,ri,dark,vk,sh){if(!list.length)return;const T=K.leaf,cols=dark?[cmix(T.d,T.b,.2)]:RTC(T,ri);
   const PS=cols.map(()=>null),VS=[];
   for(const e of list){const ti=dark?0:(()=>{const l=lit(V0,e.n);return l<.44?0:l<.7?1:2})(),q=V0.P(e.b),a=V0.P(mul(e.d,e.L)),b=V0.P(mul(e.s,e.W));
-    traceTo(PS[ti]||(PS[ti]=new Path2D()),sh||OVL,a[0],a[1],b[0],b[1],q[0],q[1]);if(!dark&&e.f>.12){const m=V0.P(add(e.b,mul(e.d,e.L*.14))),n=V0.P(add(e.b,mul(e.d,e.L*.74)));VS.push([m,n])}}
+    traceTo(PS[ti]||(PS[ti]=new Path2D()),e.sh||sh||OVL,a[0],a[1],b[0],b[1],q[0],q[1]);if(!dark&&e.f>.12){const m=V0.P(add(e.b,mul(e.d,e.L*.14))),n=V0.P(add(e.b,mul(e.d,e.L*.74)));VS.push([m,n])}}
   ctx.lineJoin='round';for(let i=0;i<PS.length;i++)if(PS[i]){ctx.fillStyle=cols[i];ctx.fill(PS[i])}
   ctx.strokeStyle=INK;ctx.lineWidth=1.7;for(const pa of PS)if(pa)ctx.stroke(pa);
   if(VS.length){if(vk>.05&&!LOWFX){ctx.save();ctx.globalCompositeOperation='lighter';strokeRuns(VS,`rgba(${K.vG},${.34*vk})`,2.3);ctx.restore()}strokeRuns(VS,vk>0?cmix(K.nerv,K.vOn,vk):cmix(K.nerv,T.b,.25),1)}}
@@ -409,8 +417,9 @@ function drawSkirt(V0,X0,A,K,KZ,LR){const prof=skirtProf(A),pts=[];for(const i o
   const dr=A.dry,H=svol(pts,T3(cmix(cmix(K.bark.b,K.leaf.d,.5),K.bark.l,dr),cmix(cmix(K.bark.d,K.leaf.d,.55),K.bark.b,dr),cmix('#0a140c',K.bark.d,dr)),{lw:2.8,rim:.3});
   {const b=bbox(H),g=ctx.createLinearGradient(0,b[1],0,b[3]);g.addColorStop(0,'rgba(16,8,4,.15)');g.addColorStop(.6,'rgba(16,8,4,0)');g.addColorStop(1,'rgba(16,8,4,.38)');ctx.fillStyle=g;ctx.fill(H.path)}
   // the autumn (where the top ring has fallen) and the tree: the bark with its grooves, the veins lit in the autumn
-  if(A.fall>.3||A.dry>.3){const Kz=KZ(46),al=Math.max(sstep(.3,.8,A.fall)*(1-A.dry),sstep(.3,.8,A.dry));ctx.save();ctx.clip(H.path);ctx.globalAlpha=al;drawLines(V0,X0,SKV,Kz.groove,2.2);
-    if(A.dry<.5){if(!LOWFX){ctx.globalCompositeOperation='lighter';drawLines(V0,X0,SKV,`rgba(${Kz.vG},.35)`,3.4);ctx.globalCompositeOperation='source-over'}drawLines(V0,X0,SKV,Kz.vOn,1)}else drawLines(V0,X0,SKV,'rgba(200,190,170,.35)',.8);ctx.restore()}
+  if(A.fall>.3||A.dry>.3){const Kz=KZ(46),al=Math.max(sstep(.3,.8,A.fall)*(1-A.dry),sstep(.3,.8,A.dry));ctx.save();ctx.clip(H.path);ctx.globalAlpha=al;drawLines(V0,X0,SKV,Kz.groove,2.2);drawLines(V0,X0,SKVB,Kz.groove,1.5);
+    if(A.dry<.5){if(!LOWFX){ctx.globalCompositeOperation='lighter';drawLines(V0,X0,SKV,`rgba(${Kz.vG},.35)`,3.4);drawLines(V0,X0,SKVB,`rgba(${Kz.vG},.28)`,2.4);ctx.globalCompositeOperation='source-over'}drawLines(V0,X0,SKV,Kz.vOn,1);drawLines(V0,X0,SKVB,Kz.vOn,.75)}
+    else{drawLines(V0,X0,SKV,'rgba(200,190,170,.35)',.8);drawLines(V0,X0,SKVB,'rgba(200,190,170,.3)',.6)}ctx.restore()}
   for(let ri=0;ri<3;ri++){const R0=RINGS[ri],vk=A.vein.skirt>0?cl((A.vein.skirt-(1-R0.z/52)*.8)*4,0,1):0;leafBatch(V0,LR.rings[ri],KZ(R0.z),ri,false,vk)}
   return H}
 // the belt: three roots plaited round the waist
@@ -477,25 +486,31 @@ function drawSleeves(V0,g,K,A){const ax=nrm(sub(g.W,g.E)),dn=[0,0,-1];let out=nr
     const q=V0.P(b),a2=V0.P(mul(d,Ln)),b2=V0.P(mul(s,4.6));traceTo(pa,OVL,a2[0],a2[1],b2[0],b2[1],q[0],q[1]);any=1;
     if(i===1){const f=V0.F(r);tn=lit(V0,r);if(f>.1)VS=[[V0.P(add(b,mul(d,Ln*.14))),V0.P(add(b,mul(d,Ln*.74)))]]}}
   if(!any)return;ctx.lineJoin='round';ctx.fillStyle=tone(K.leaf,tn-.18);ctx.fill(pa);ctx.strokeStyle=INK;ctx.lineWidth=1.8;ctx.stroke(pa);if(VS)strokeRuns(VS,K.nerv,1)}
-// the hand: a light palm, three long fingers and the thumb in three pieces (two on slow phones), a dark ring of bark on the knuckle, light
+// the hand (a tone under the face, so the face stays the lightest thing on her; plum nails): a palm, three long fingers and the thumb in three pieces (two on slow phones), a dark ring of bark on the knuckle, light
 // thorn nails, the fingertips lit like candles when she casts; they grow into roots (the Hand of the Wood) and into twigs (the tree)
 function handGeo(g,XU,sd){const H=g.H,W=g.W,u=nrm(XU.Rd(H.u));let w=XU.Rd(H.w);w=nrm(sub(w,mul(u,dot(w,u))));const v=cross(w,u),th=mul(v,-sd);
   const F=[],bases=[[6.2,2.1,4.3,3.4,2.6],[6.5,0,4.8,3.7,2.8],[6.1,-2.1,4.1,3.2,2.4]],ex=H.ext||0,tw=H.twig||0,tl=1+.9*tw;
   for(let j=0;j<3;j++){const[b0,o,l0,l1,l2]=bases[j],c=H.curl[j]||0,sp=((H.spread||0)+tw*.6)*(1-j)*.32;let d=nrm(add(u,mul(th,sp))),q=add(add(W,mul(u,b0)),add(mul(th,o),mul(w,.35))),pts=[q];
-    if(ex>0&&g.tgt){const t=g.tgt[j],N=5,c1=add(q,mul(d,6+10*ex));for(let k=1;k<=N;k++){const s2=k/N,a=lerp3(lerp3(q,c1,s2),lerp3(c1,t,s2),s2),fr=add(q,mul(d,(l0+l1+l2)*s2*.9));pts.push(lerp3(fr,a,ex))}F.push(pts);continue}
+    if(ex>0&&g.tgt){const t=g.tgt[j],N=6,c1=add(q,mul(d,6+10*ex));for(let k=1;k<=N;k++){const s2=k/N,a=lerp3(lerp3(q,c1,s2),lerp3(c1,t,s2),s2),fr=add(q,mul(d,(l0+l1+l2)*s2*.9)),
+      // (wound round each other on the way: three roots, not a stick)
+      ph=s2*Math.PI*1.6+j*2.09,tw2=4.2*ex*Math.sin(Math.PI*Math.min(1,s2*1.15));pts.push(add(lerp3(fr,a,ex),add(mul(th,Math.cos(ph)*tw2),mul(w,Math.sin(ph)*tw2))))}F.push(pts);continue}
     const ang=[c*.55,c*.75,c*.6],ls=(LOWFX?[l0+l1*.5,l2+l1*.5]:[l0,l1,l2]).map(l=>l*tl),as=LOWFX?[ang[0]+ang[1]*.5,ang[2]+ang[1]*.5]:ang;let a=0;
     for(let k=0;k<ls.length;k++){a+=as[k]+tw*.18*(k%2?1:-1)*(j-1);const dk=nrm(add(mul(d,Math.cos(a)),mul(w,-Math.sin(a))));q=add(q,mul(dk,ls[k]));pts.push(q)}F.push(pts)}
   {const c=H.curl[3]||0,b=add(add(W,mul(u,2.6)),mul(th,2.5)),d0=nrm(add(mul(u,.75),mul(th,.7))),a1=c*.6,d1=nrm(add(mul(d0,Math.cos(a1)),mul(nrm(add(mul(w,-1),mul(th,-.3))),Math.sin(a1)))),p1=add(b,mul(d0,4.2*tl)),p2=add(p1,mul(d1,3.4*tl));F.push([b,p1,p2])}
   return{W,u,v,w,F}}
 function drawHand(V0,hg,H,K,A){const NL=[],HL=[],KN=[],{W,u,v,w,F}=hg,fw=V0.F(w),L=parts(),ex=H.ext||0,tw=H.twig||0,Ts=tw>0?mixT(K.skin,K.bark,tw):K.skin;
-  const base=cmix(Ts.b,Ts.l,.3),pc=add(W,mul(u,3.3));
+  const base=cmix(Ts.b,Ts.d,.22),pc=add(W,mul(u,3.3));
   // the palm: a soft light oval, its back lit at the upper left
   L.add(V0.D(pc),()=>{const pts=ellSil(V0,pc,[3.8,2.9,1.7],{u,v,w},null,10);ctx.lineJoin='round';poly(pts);ctx.fillStyle=base;ctx.fill();ctx.strokeStyle=INK;ctx.lineWidth=1.6;ctx.stroke();
-    const b=bbox(pts);ctx.fillStyle=cmix(Ts.l,'#ffffff',.25);ctx.beginPath();ctx.ellipse(b[0]+(b[2]-b[0])*.38,b[1]+(b[3]-b[1])*.36,(b[2]-b[0])*.18,(b[3]-b[1])*.13,0,0,TAU);ctx.fill()});
-  F.forEach((pts,j)=>{const isT=j===3,n=pts.length,root=!isT&&ex>0&&n>4,r0=isT?[2.15,1.8,1.45]:root?pts.map((q,k)=>lerp(2.4,lerp(1.3,2,ex),k/(n-1))*(1+.45*ex*Math.sin(Math.PI*k/(n-1)))):LOWFX?[2.15,1.8,1.35]:[2.2,1.9,1.6,1.3];
+    const b=bbox(pts);ctx.fillStyle=cmix(Ts.b,Ts.l,.55);ctx.beginPath();ctx.ellipse(b[0]+(b[2]-b[0])*.38,b[1]+(b[3]-b[1])*.36,(b[2]-b[0])*.18,(b[3]-b[1])*.13,0,0,TAU);ctx.fill()});
+  F.forEach((pts,j)=>{const isT=j===3,n=pts.length,root=!isT&&ex>0&&n>4,r0=isT?[2.15,1.8,1.45]:root?pts.map((q,k)=>lerp(2.2,lerp(1.3,1,ex),k/(n-1))*(1+.12*ex*Math.sin(Math.PI*k/(n-1)))):LOWFX?[2.15,1.8,1.35]:[2.2,1.9,1.6,1.3];
     const r=tw>0?r0.map((x,k)=>x*(1-.35*tw*k/(r0.length-1))):r0,mid=pts[1],dep=V0.D(mid)+(dot(sub(mid,pc),w)*fw<0?-.4:.4);
     L.add(dep,()=>{let P2;
-      if(root)P2=limb3(V0,pts,r,mixT(Ts,K.bark,cl(ex*1.3,0,1)),{lw:1.6,dark:'rgba(40,24,16,.36)',al:.22});
+      if(root){P2=limb3(V0,pts,r,mixT(Ts,K.bark,cl(ex*1.3,0,1)),{lw:1.6,dark:'rgba(40,24,16,.36)',al:.22});
+        // the light of the seed running down inside each root to the floor (three roots, not a stick)
+        if(ex>.3){const vp=()=>{ctx.beginPath();P2.forEach((q,i)=>i?ctx.lineTo(q[0],q[1]):ctx.moveTo(q[0],q[1]))};ctx.lineCap='round';ctx.lineJoin='round';
+          if(!LOWFX){ctx.save();ctx.globalCompositeOperation='lighter';ctx.strokeStyle=`rgba(${K.vG},${(.3*ex).toFixed(3)})`;ctx.lineWidth=2.4;vp();ctx.stroke();ctx.restore()}
+          ctx.strokeStyle=cmix(K.vOff,K.vOn,cl((ex-.3)/.5,0,1));ctx.lineWidth=.85;vp();ctx.stroke()}}
       else{// a toy finger: one outline, one fill (its knuckle ring, the light along it and the nail come after, all fingers at once)
         P2=pts.map(V0.P);ctx.fillStyle=INK;ctx.beginPath();for(let i=0;i<P2.length-1;i++)hullAdd(P2[i],r[i]+.72,P2[i+1],r[i+1]+.72);ctx.fill();
         ctx.fillStyle=base;ctx.beginPath();for(let i=0;i<P2.length-1;i++)hullAdd(P2[i],Math.max(.4,r[i]-.62),P2[i+1],Math.max(.4,r[i+1]-.62));ctx.fill();
@@ -504,7 +519,7 @@ function drawHand(V0,hg,H,K,A){const NL=[],HL=[],KN=[],{W,u,v,w,F}=hg,fw=V0.F(w)
       const e=P2[P2.length-1],pr=P2[P2.length-2],dx=e[0]-pr[0],dy=e[1]-pr[1],l=Math.hypot(dx,dy)||1;
       if(!root&&tw<.6){const nk=1-tw/.6,nx=-dy/l*1.15*nk,ny=dx/l*1.15*nk,x0=e[0]-dx/l*.6,y0=e[1]-dy/l*.6;NL.push([[x0+nx,y0+ny],[e[0]+dx/l*1.9*nk,e[1]+dy/l*1.9*nk],[x0-nx,y0-ny]])}
       const tk=(H.tips[j]||0)*A.glow;if(tk>.02&&!root)flameAt([e[0]+dx/l*1.6,e[1]+dy/l*1.6],tk,K)})});
-  run(L);if(KN.length)strokeRuns(KN,cmix(K.bark.b,base,.25),1);if(HL.length)strokeRuns(HL,cmix(Ts.l,'#ffffff',.4),.8);
+  run(L);if(KN.length)strokeRuns(KN,cmix(K.bark.b,base,.25),1);if(HL.length)strokeRuns(HL,cmix(Ts.b,Ts.l,.6),.8);
   if(NL.length){ctx.beginPath();for(const t of NL){ctx.moveTo(t[0][0],t[0][1]);ctx.lineTo(t[1][0],t[1][1]);ctx.lineTo(t[2][0],t[2][1]);ctx.closePath()}ctx.fillStyle=K.nail;ctx.fill();ctx.strokeStyle=INK;ctx.lineWidth=.8;ctx.stroke()}}
 function flameAt(q,k,K){if(!LOWFX)shine(K.flameG,q[0],q[1]-2,7*k+2,.55*k);scrPath(FLM,[q[0],q[1]-1.6*k],0,2.2*k+.4,3.2*k+.5);ctx.fillStyle=`rgba(${K.flameG},${.85*Math.min(1,k*1.5)})`;ctx.fill();
   ctx.fillStyle=K.flame;ball([q[0],q[1]-1.2*k],1.1*k);ctx.fill()}
@@ -641,7 +656,7 @@ function drawHat(V0,XT,A,K,J,Kp){const P=V0.P,F=V0.F;
   const tp=tipPts(A).map(XT.T),tipB=tp[tp.length-1],up=XT.Rd([0,0,1]);
   limb3(V0,tp,TIPR,K.hat,{lw:2.2});
   const tipBudBack=V0.D(tipB)<V0.D(XT.T([0,0,18])),bk2=A.budK2,lit0=(A.budOn[0]||0)*(.8+.2*Math.sin(A.budPh*2));
-  const tipBud=()=>hatBud(V0,add(tipB,XT.Rd([-.6,0,.6])),nrm(sub(tipB,tp[tp.length-2])),2.7*(1+.2*A.bud[0]),0,lit0,bk2?bk2[0]:Kp);
+  const fz=A.fin||0,tipBud=()=>hatBud(V0,add(tipB,XT.Rd([-.6,0,.6])),nrm(sub(tipB,tp[tp.length-2])),2.7*(1+.2*A.bud[0])*(1+.3*fz),0,Math.max(lit0,.95*fz),bk2?bk2[0]:Kp);
   if(tipBudBack)tipBud();
   cone();
   BUDS.forEach((b,i)=>{if(A.budHide[i]>.5)return;const n=XT.Rd(nrm([b[0],b[1],2])),f=F(n);if(f<-.1)return;ga(cl((f+.1)*5,0,1),()=>hatBud(V0,XT.T(b),up,2.1*(1+.35*(A.bud[i]||0)),0,(A.budOn[i+1]==null?1:A.budOn[i+1])*(.7+.3*Math.sin(A.budPh*2+i*2.1))+.6*(A.bud[i]||0),bk2?bk2[i%bk2.length]:Kp))});
@@ -767,7 +782,7 @@ function drawSprout(V0,X0,k,KD0){if(k<=.01)return;const P=V0.P,b=X0.T([16,4,0]),
   const t=[q[0]+.5,q[1]-h];for(const sd of[-1,1]){ctx.fillStyle='#7fd36a';ctx.strokeStyle=INK;ctx.lineWidth=1;ctx.beginPath();ctx.ellipse(t[0]+sd*2.4*k,t[1]+1.5,2.6*k,1.2*k,sd*.5,0,TAU);ctx.fill();ctx.stroke()}
   const op=sstep(.4,1,k);if(!LOWFX)shine('123,240,192',t[0],t[1]-1.5,7,.5*op);ctx.fillStyle=cmix('#3f8a6a','#7bf0c0',op);ctx.strokeStyle=INK;ctx.lineWidth=1;ctx.beginPath();ctx.ellipse(t[0],t[1]-1.6,1.6+.8*op,2+.4*op,0,0,TAU);ctx.fill();ctx.stroke();
   if(op>.3){ctx.fillStyle='#e8fff4';ball([t[0]-.5,t[1]-2.2],.7*op);ctx.fill()}
-  [[10,-12,0],[24,-3,.2],[6,16,.4]].forEach(([x,y,d],i)=>{const f=sstep(d*.6,d*.6+.5,k);if(f<=0)return;const c=P(X0.T([x,y,0])),r=3.3*f;ctx.fillStyle=i%2?'#c48ae8':'#f4ecff';ctx.strokeStyle=INK;ctx.lineWidth=1;
+  [[10,-12,0],[24,-3,.2],[6,16,.4]].forEach(([x,y,d],i)=>{const f=sstep(d*.6,d*.6+.5,k);if(f<=0)return;const c=P(X0.T([x,y,0])),r=4.4*f;ctx.fillStyle=i%2?'#c48ae8':'#f4ecff';ctx.strokeStyle=INK;ctx.lineWidth=1;
     ctx.beginPath();for(let j=0;j<5;j++){const a=j/5*TAU+i,px=c[0]+Math.cos(a)*r*.75,py=c[1]+Math.sin(a)*r*.42-1.2;ctx.moveTo(px+r*.5,py);ctx.ellipse(px,py,r*.5,r*.34,0,0,TAU)}ctx.fill();ctx.stroke();ctx.fillStyle='#ffd23c';ctx.beginPath();ctx.arc(c[0],c[1]-1.2,r*.32,0,TAU);ctx.fill();ctx.strokeStyle='rgba(27,22,18,.6)';ctx.lineWidth=.6;ctx.stroke()})}
 
 // ------------------------------------------------------------------ the model
@@ -826,6 +841,10 @@ function witch2(x,y,face,anim,p,sc,o){sc=sc||1;o=o||{};anim=MV.includes(anim)?an
   if(A.sprout>0)L.add(D(X0.T([16,4,0]))>dc?96:-57,()=>drawSprout(V0,X0,A.sprout));
   if(A.flies>=0&&A.flies<1)L.add(99,()=>{for(let i=0;i<2;i++){const u=cl(A.flies*1.1-i*.1,0,1);if(u<=0||u>=1)continue;const e=J.eyes&&J.eyes[i]?J.eyes[i].q:P(XH.T([11,i?-3:3,90])),q=[e[0]+Math.sin(u*7+i*2)*8*u+(i?-6:6)*u,e[1]-u*60];
     if(!LOWFX)shine('123,240,192',q[0],q[1],8,.6*Math.sin(u*Math.PI));ctx.fillStyle=`rgba(200,255,232,${Math.sin(u*Math.PI)})`;ball(q,1.4);ctx.fill()}});
+  // the last light of the seed: it leaves her chest, rises slowly swaying over the hat and goes out (soft light, never a full disc)
+  if(A.soul>0&&A.soul<1)L.add(99.5,()=>{const s=ellM(SEEDM),c0=P(XU.T(add(s.p,mul(s.n,1.2)))),u=A.soul,al=sstep(0,.15,u)*(1-sstep(.65,1,u)),q=[c0[0]+Math.sin(u*5.5)*6*u,c0[1]-u*95];
+    if(!LOWFX)shine('123,240,192',q[0],q[1],16,.55*al);scrPath(TEAR,q,Math.sin(u*5.5)*.25,2.6,2.6);ctx.fillStyle=`rgba(123,240,192,${(.85*al).toFixed(3)})`;ctx.fill();
+    ctx.fillStyle=`rgba(232,255,244,${al.toFixed(3)})`;ball([q[0],q[1]+.4],1.1);ctx.fill()});
   // ---------------- the effects of the moves
   if(fx)for(const e of A.fx)fxDraw(V0,X0,XU,XH,L,e,A,K,J,p);
   // under the floor (Sprofonda, the fin, Riaffiora): the hole first, every piece cut at the floor, the ring of earth over the cut
