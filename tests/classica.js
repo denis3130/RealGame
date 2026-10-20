@@ -40,7 +40,7 @@ const SOLO=process.argv[2]||'';
   const run=async(maxS,stop)=>{const t0=Date.now();while(Date.now()-t0<maxS*1000){await W(400);const s=await J(`({end:!$('endScr').hidden,room:G.room,st:G.state})`);if(s.end||(stop&&await E(stop)))return s}return null};
   const arena=async(a)=>{await toMenu();await E(`(()=>{LOWFX=false;SAVE.cn=SAVE.cn||{};SAVE.cn.pick=${a||0};__A.endSeen=0;__A.ends=[];__A.log=[];CN.forceRar=null;startRun();return 0})()`);await W(2400)};
   const vis=id=>`(!!$('${id}')&&$('${id}').offsetParent!==null)`;
-  const openMap=async()=>{const q=await J(`(()=>{const L=ISL.lay,r=campCv.getBoundingClientRect();return{x:r.left+L.cx/L.dpr,y:r.top+(L.lab+30*L.dpr)/L.dpr}})()`);await p.mouse.click(q.x,q.y);await W(500)};
+  const openMap=async()=>{const q=await J(`(()=>{const L=ISL.lay,r=campCv.getBoundingClientRect();return{x:r.left+L.cx/L.dpr,y:r.top+(L.lab+14*L.dpr)/L.dpr}})()`);await p.mouse.click(q.x,q.y);await W(500)};
   const jump=r=>`(()=>{const k=G.seq.findIndex(q=>q.c===${r});G.si=k-1;G.enemies=[];G.eproj=[];nextStep();return 0})()`;   // straight to room r
 
   // ---------------------------------------------------------------- the menu

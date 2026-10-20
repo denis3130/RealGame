@@ -1483,7 +1483,7 @@ function cnIncPill(L,x0,y0,a,t){const d=L.dpr,on=!!ISL.inc,txt='Incubo',w=cnIncW
   if(on&&!LOWFX){ctx.save();ctx.globalCompositeOperation='lighter';glow('255,60,60',x0+w/2,y0+h/2,w*.75,.22+.08*Math.sin(t*4));ctx.restore()}
   cnRR(x0,y0,w,h,10*d);ctx.fillStyle=on?'#b0182a':'rgba(30,6,10,.72)';ctx.fill();ctx.lineWidth=1.6*d;ctx.strokeStyle=on?'#ffb0b0':'#c0392b';ctx.stroke();
   cnMoonAt(x0+13*d,y0+h/2,5.6*d,on?'#fff0f0':'#e5484d');ctx.textAlign='left';ctx.lineWidth=3*d;ctx.strokeStyle=INK;ctx.strokeText(txt,x0+23*d,y0+h*.72);ctx.fillStyle=on?'#ffffff':'#ff9a9a';ctx.fillText(txt,x0+23*d,y0+h*.72);
-  ctx.restore();if(a>.5)ISL.incBtn=[x0-8*d,y0-6*d,x0+w+8*d,y0+h+6*d]}
+  ctx.restore();if(a>.5)ISL.incBtn=[x0-4*d,y0-5*d,x0+w+4*d,y0+h+5*d]}
 function cnPlayLbl(){const b=$('playBtn');if(!b)return;const on=CN.on&&!zMode()&&ISL.view!=null&&cnIncOn(ISL.go!=null?ISL.go:Math.round(ISL.view));if(b._inc===on)return;b._inc=on;b.classList.toggle('cnInc',on);const sp=b.querySelector('span');if(sp)sp.textContent=on?'Incubo':'Gioca'}
 {const _zm=modeSwitch;modeSwitch=function(){const r=_zm.apply(this,arguments);try{cnPlayLbl()}catch(err){}return r}}
 // the run of the Incubo: more life, more damage, elites everywhere (the knobs of DIFF changed for the run and given back after)
