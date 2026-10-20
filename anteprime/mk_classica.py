@@ -1,0 +1,24 @@
+# Pagina della Classica nuova (Denis, 20 ottobre: «ok creami le cose che mi hai elencato su una cosa a parte senza intaccare il progetto
+# principale»): una copia del gioco con src/js/94-classica-nuova.js (bivi tra le stanze, stanze con un obiettivo, famiglie di abilità che si
+# fondono, reliquie, mappa del mondo con le stelle e i bracieri, Torre della settimana, Corsa dei boss). Il gioco vero non cambia: 94 non è in
+# src/ordine.txt. La pagina parte con un salvataggio suo, già dopo la creazione dell'eroe.
+# Uso: python3 anteprime/mk_classica.py [--test] [--build]
+#   --test   la pagina per le prove (tests/classica_test.html, con window.__E come tests/test.html)
+#   --build  prima ricostruisce index.html (python3 build.py)
+# Uscita: anteprime/classica.html (con --test tests/classica_test.html).
+import os,subprocess,sys
+here=os.path.dirname(os.path.abspath(__file__));root=os.path.join(here,'..')
+A=sys.argv[1:];test='--test' in A
+if '--build' in A:subprocess.run([sys.executable,os.path.join(root,'build.py')],check=True)
+s=open(os.path.join(root,'index.html'),encoding='utf-8').read()
+cn=open(os.path.join(root,'src','js','94-classica-nuova.js'),encoding='utf-8').read()
+if cn[:300] in s:sys.exit('94-classica-nuova.js è già nel gioco')
+seed="""<script>try{if(!localStorage.getItem('cripta_save_v1'))localStorage.setItem('cripta_save_v1',JSON.stringify({gold:1500,gems:60,trophies:0,runs:3,introSeen:1,tutDone:1,handSeen:1,
+starter:'arciere',login:{last:'2099-1-1',n:1},items:{arco_frassino:{lvl:3,cards:0},giubba:{lvl:3,cards:0}},eq:{arma:'arco_frassino',armatura:'giubba',anello:null,amuleto:null}}))}catch(e){}</script>"""
+assert '<title>Mossbound</title>' in s
+s=s.replace('<title>Mossbound</title>','<title>Mossbound · Classica nuova</title>'+seed,1)
+i=s.rfind('})();')
+s=s[:i]+'\n'+cn+'\n'+('window.__E=s=>eval(s);' if test else '')+s[i:]
+out=os.path.join(root,'tests','classica_test.html') if test else os.path.join(here,'classica.html')
+open(out,'w',encoding='utf-8').write(s)
+print(os.path.relpath(out,root),len(s)//1024,'KB')
