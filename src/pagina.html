@@ -1082,7 +1082,7 @@ html,body{height:100%;margin:0;background:var(--ink);color:var(--parch);overflow
 #pName:has(input)::after{content:none}
 .nameIn{width:100%;max-width:200px;padding:3px 8px;border:2.5px solid var(--crInk);border-radius:8px;background:#fff;color:#191714;font-family:var(--display);font-size:22px}
 /* chest opening in the menu's colours */
-#chestScr{background:#27241f}
+#chestScr{background:#27241f;backdrop-filter:none;-webkit-backdrop-filter:none}/* opaque: the blur behind it could not be seen, but the phone computed it at every frame (phase 9) */
 #chestScr .ctitle{color:#fff;text-shadow:var(--tol)}
 #ctap{color:#fff;text-shadow:var(--tol-s)}
 @media (prefers-reduced-motion:reduce){.tabIn,.lday.today,#menu .sideBtns .qbtn.hot{animation:none}}
