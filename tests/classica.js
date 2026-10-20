@@ -215,9 +215,11 @@ const SOLO=process.argv[2]||'';
     window.__kill=()=>{for(const e of G.enemies.slice())if(!e.cnAnchor&&!e.dead&&!isBoss(e.type)){e.spawn=0;e.intro=0;hurtE(e,e.hp+(e.cnSh||0)+1,false)}};
     window.__floor=(f)=>{G.si=f-2;G.cnTw.px=P.x;G.cnTw.py=P.y;G.enemies=[];G.cnRise=null;nextStep()};return 0})()`;
   if(!SOLO||SOLO==='ondate'){
-    await E(helpers);await arena(1);await E(`(()=>{__A.on=false;return 0})()`);
+    // where each enemy climbed in (they start walking at once: where they are 2.4 s later depends on the speed of the computer)
+    await E(helpers);await E(`(()=>{if(!window.__clw){window.__clw=1;const _c=cnClimbIn;cnClimbIn=function(list,late){const r=_c.apply(this,arguments);for(const e of list)e.__sx=[e.x,e.y];return r}}return 0})()`);
+    await arena(1);await E(`(()=>{__A.on=false;return 0})()`);
     const o0=await J(`({mode:G.cnMode,plan:G.cnTw.plan.map(q=>q.k).join(''),seq:G.seq.map(q=>q.c).join(','),hud:!$('cnTow').hidden&&$('cnTow').textContent,chip:$('roomChip').classList.contains('cnw')&&$('cnFlTxt').textContent,
-      edge:G.enemies.filter(e=>!e.cnAnchor&&!isBoss(e.type)).every(e=>e.x<=L+40||e.x>=R-40||e.y>=BOT-40)})`);await snap('torre_piano1');
+      edge:G.enemies.some(e=>e.__sx)&&G.enemies.filter(e=>!e.cnAnchor&&!isBoss(e.type)).every(e=>{const q=e.__sx||[e.x,e.y];return q[0]<=L+40||q[0]>=R-40||q[1]>=BOT-40})})`);await snap('torre_piano1');
     ok('la torre: 10 piani (Campioni alla 5, premio alla 8, custode alla 10), nemici che salgono dai bordi, la barra dei piani',o0.mode==='torre'&&o0.plan==='nnnnennpnb'&&o0.seq==='1,2,3,4,5,6,7,8,9,10'&&/Piano 1\/10/.test(o0.hud)&&o0.chip==='1/10'&&o0.edge,JSON.stringify(o0));
     for(let k=0;k<12&&!(await E(`!!G.cnRise`));k++)await E(`(()=>{__kill();__step(.4);return 0})()`);
     const o1=await J(`({rise:!!G.cnRise,ban:$('banner').textContent,px:Math.round(P.x),py:Math.round(P.y)})`);await E(`__step(.5);0`);await snap('torre_sale');
