@@ -8,8 +8,10 @@
 // (piani, nemici dai bordi, la salita, i buchi, i Campioni, il premio, il custode, la torre da 20 col campione) e le trappole (percorso coi
 // traguardi, trappole e nemici, la fuga dal crollo, il custode tra le trappole), la modalità sulla scheda e sulla mappa; le isole; tutto in 3D
 // (gli ostacoli di 95 dipinti una volta, il disegno di prima che torna, le cose della stanza, le isole); il ponte di pietre tra le isole, la Prova
-// dell'Incubo e le isole chiuse al buio; le isole verso nord col ponte che sale dritto e l'eroe che lo attraversa.
-// Foto tests/cn_<n>.png. Uso: python3 anteprime/mk_classica.py --test --build && node tests/classica.js [menu|stanze|furia|rarita|evo|nemesi|torre|corsa|ondate|trappole|3d|ponte]
+// dell'Incubo e le isole chiuse al buio; le isole verso nord col ponte che sale dritto e l'eroe che lo attraversa; le carte su un telefono
+// largo 430 (testi su righe loro, la Furia che non copre la rarità); il cristallo che si rompe senza crepe (luce, schegge, spuntoni che si
+// staccano, l'esplosione in pezzi 3D, la brina, gli effetti ridotti, la cassa che lo schiaccia).
+// Foto tests/cn_<n>.png. Uso: python3 anteprime/mk_classica.py --test --build && node tests/classica.js [menu|stanze|furia|rarita|evo|nemesi|torre|corsa|ondate|trappole|3d|ponte|cristallo]
 const {chromium}=require('playwright');const path=require('path');
 const SOLO=process.argv[2]||'';
 (async()=>{const b=await chromium.launch({args:['--autoplay-policy=no-user-gesture-required']});const p=await b.newPage({viewport:{width:390,height:844},deviceScaleFactor:2});const errs=[];
@@ -115,6 +117,16 @@ const SOLO=process.argv[2]||'';
     const r2=await J(`({rar:[...document.querySelectorAll('#skList .sk em.rar')].map(e=>e.textContent),cls:[...document.querySelectorAll('#skList .sk')].map(b=>b.className.match(/cnr\\d|cnEvoC/)?.[0]||''),desc:[...document.querySelectorAll('#skList .sk div>span')].map(s=>s.textContent)})`);await snap('carte_leggendarie');
     ok('forzate leggendarie: cornice d\'oro, nome e descrizione più grande',r2.rar.every(t=>t==='Leggendaria')&&r2.cls.every(c=>c==='cnr3')&&r2.desc.every(d=>/\+25% danno|\+70%|\+35%|100%|56%|45%/.test(d)),JSON.stringify(r2));
     await E(`(()=>{closeSkills();CN.rar=null;CN.revEnd=0;return 0})()`);
+    // the phone of Denis is 430 wide: the cards stand in three columns, each text on its own line, the Furia hidden under the choice
+    await p.setViewportSize({width:430,height:932});await W(400);await E(`(()=>{CN.forceRar=0;cnFuAdd(9);cnFuHud(true);openSkills('level');cnRarSkip();return 0})()`);await W(600);
+    const c4=await J(`(()=>{const bs=[...document.querySelectorAll('#skList .sk')];return{dir:bs.map(b=>getComputedStyle(b).flexDirection),
+      rows:bs.map(b=>{const d=b.querySelector('div'),k=[...d.children].map(c=>c.getBoundingClientRect());return k.every((r,i)=>!i||r.top>=k[i-1].bottom-1)}),
+      last:bs.map(b=>{const d=b.querySelector('div'),c=[...d.children];const lv=c.findIndex(x=>/^Livello/.test(x.textContent)),ev=c.findIndex(x=>x.classList.contains('evoh'));return lv<0||ev<0||ev<lv}),
+      fu:getComputedStyle($('cnFu')).visibility}})()`);await snap('carte_430');
+    await E(`(()=>{closeSkills();CN.rar=null;CN.revEnd=0;CN.forceRar=null;return 0})()`);await W(200);const fu2=await J(`getComputedStyle($('cnFu')).visibility`);
+    await p.setViewportSize({width:390,height:844});await W(400);
+    ok('sul telefono largo 430: tre carte in colonna, nome, descrizione, «Verso» e «Livello» su righe loro; la Furia sparisce sotto la scelta e torna dopo',
+      c4.dir.every(d=>d==='column')&&c4.rows.every(Boolean)&&c4.last.every(Boolean)&&c4.fu==='hidden'&&fu2==='visible',JSON.stringify({c4,fu2}));
     const ap=await J(`(()=>{const out={};let s=SK.find(q=>q.id==='atk');let pre={atk:P.atk,aspd:P.aspd,crit:P.crit,maxhp:P.maxhp,hp:P.hp,dashMax:P.dashMax,spd:P.spd,lv:0};s.f();P.skills.atk=(P.skills.atk||0)+1;cnRarApply(s,3,pre);out.atk=+(P.atk/pre.atk).toFixed(3);
       s=SK.find(q=>q.id==='front');const f0=P.front,lv0=P.skills.front||0,a0=P.atk;pre={atk:P.atk,lv:lv0};s.f();P.skills.front=lv0+1;cnRarApply(s,3,pre);out.front=[P.front-f0,P.skills.front,+(P.atk/a0).toFixed(3)];
       s=SK.find(q=>q.id==='hp');pre={maxhp:P.maxhp,hp:P.hp,lv:0};const m0=P.maxhp;s.f();P.skills.hp=(P.skills.hp||0)+1;cnRarApply(s,2,pre);out.hp=+(P.maxhp/m0).toFixed(2);return out})()`);
@@ -273,6 +285,26 @@ const SOLO=process.argv[2]||'';
     ok('monete, cristalli, sfere, cuori, fontana, altare, tesoro, massi in volo e spine in 3D (le liste tornano intere)',o2.coins===6&&o2.hearts===1&&!o2.hold,JSON.stringify(o2));
     await toMenu();const i0=await J(`(()=>{SAVE.cn.all=1;ISL.cache.clear();const t0=performance.now();for(let i=0;i<12;i++){ISL.view=i;cnIslImg(i,ISL.lay)}const t=performance.now()-t0;SAVE.cn.all=0;ISL.cache.clear();ISL.view=ISL.cur;return{ms:+(t/12).toFixed(1)}})()`);
     ok('le isole coi dettagli in 3D: le dodici dipinte senza errori',i0.ms>0,JSON.stringify(i0));
+  }
+  // ---------------------------------------------------------------- the crystal that breaks, without cracks
+  if(!SOLO||SOLO==='cristallo'){
+    await arena(0);await E(`(()=>{__A.on=false;return 0})()`);await E(jump(6));await W(2500);
+    // the game stepped by hand: a crystal of each size hit until it bursts
+    const cr=await J(`(()=>{G.enemies=[];G.eproj=[];paused=true;LOWFX=false;const out={},step=n=>{for(let i=0;i<n;i++){G.hitstop=0;update(1/60);render()}};
+      for(const r of[16,22]){const k={x:AW/2,y:TOP+200,r,seed:3,kind:'crystal'};G.rocks.push(k);render();const key0=k._s3&&k._s3.key,cs=[],fr=[],g0=G.gems.length,N=r>=20?8:5;
+        for(let i=1;i<N;i++){const f0=G.fx.filter(f=>f.k==='cry3').length;rockHit(k,k.x+3,k.y-4,-Math.PI/2,false);cs.push(cryLeft(k));fr.push(G.fx.filter(f=>f.k==='cry3').length-f0);step(3)}
+        const chips=G.fx.filter(f=>f.k==='cryc').length,key1=k._s3&&k._s3.key;
+        rockHit(k,k.x+3,k.y-4,-Math.PI/2,false);const fx=[...new Set(G.fx.map(f=>f.k))],pieces=G.fx.filter(f=>f.k==='cry3').length,lights=CRY.lights.length,gems=G.gems.length-g0;step(150);
+        out[r]={cs,fr,chips,new:key0!==key1,gone:!G.rocks.includes(k),gems,fx,pieces,lights,left:G.fx.filter(f=>/^cry/.test(f.k)).length+CRY.lights.length}}
+      // on a slow phone fewer pieces; crushed by a chest it bursts the same, without the crystals
+      LOWFX=true;const k={x:AW/2,y:TOP+200,r:16,seed:3,kind:'crystal'};G.rocks.push(k);const g0=G.gems.length;shatterRock(k);out.low={pieces:G.fx.filter(f=>f.k==='cry3').length,gone:!G.rocks.includes(k),gems:G.gems.length-g0};LOWFX=false;step(150);
+      paused=false;return out})()`);
+    const a=cr[16],b=cr[22];
+    ok('il cristallo colpito si accende dentro e perde le schegge; uno spuntone si stacca e vola a ogni quarto della sua vita (il disegno si rifà)',
+      a.cs.join()==='4,3,2,1'&&b.cs.join()==='4,3,3,2,2,1,1'&&a.fr.join()==='0,1,1,1'&&a.chips>0&&a.new&&b.new,JSON.stringify({a:[a.cs,a.fr,a.chips],b:[b.cs,b.fr]}));
+    ok('l\'ultimo colpo lo fa esplodere: pezzi in 3D, lampo, anello di luce, luce nella stanza, +1 o +2 cristalli, poi tutto pulito',
+      a.gone&&b.gone&&a.gems>=1&&a.gems<=2&&b.gems>=1&&a.pieces>=4&&['cry3','flash','ring2','cryT','cryc'].every(k=>a.fx.includes(k))&&a.lights===1&&a.left===0&&b.left===0,JSON.stringify({a,b}));
+    ok('effetti ridotti: meno pezzi; schiacciato da una cassa esplode uguale ma senza cristalli',cr.low.gone&&cr.low.gems===0&&cr.low.pieces>0&&cr.low.pieces<a.pieces+4,JSON.stringify(cr.low));
   }
   // ---------------------------------------------------------------- the stone bridge, the Incubo, the dark islands
   if(!SOLO||SOLO==='ponte'){

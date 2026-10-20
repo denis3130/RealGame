@@ -62,6 +62,7 @@ html,body{height:100%;margin:0;background:var(--ink);color:var(--parch);overflow
 .sk{flex:1 1 100px;min-width:0;display:flex;flex-direction:column;align-items:center;gap:6px;padding:14px 8px 12px;border-radius:14px;border:3px solid var(--ink);background:linear-gradient(#f6ead2,#e4d2ad);color:var(--ink);cursor:pointer;box-shadow:0 5px 0 var(--ink);font-family:var(--body);text-align:center}
 .sk:hover{background:linear-gradient(#fff6e2,#ecdcb9)}
 .sk svg{width:46px;height:46px;flex:none}
+.sk div{display:flex;flex-direction:column;align-items:center;gap:3px;min-width:0}
 .sk b{font-family:var(--display);font-weight:400;font-size:17px;line-height:1.05}
 .sk span{font-size:15px;line-height:1.15;color:#4a3a2a}
 .sk em{font-style:normal;font-size:12px;font-weight:700;color:#8a5a20;letter-spacing:.06em;text-transform:uppercase}
@@ -242,7 +243,7 @@ html,body{height:100%;margin:0;background:var(--ink);color:var(--parch);overflow
 #skFoot:empty{display:none}
 #skFoot .btn{width:100%}
 #skNote b{color:#c48ae8}
-@media (max-width:420px){.panel h1{font-size:40px}.sk{flex-basis:100%;flex-direction:row;text-align:left;padding:10px 12px}.sk div{display:flex;flex-direction:column;gap:1px}}
+@media (max-width:420px){.panel h1{font-size:40px}.sk{flex-basis:100%;flex-direction:row;text-align:left;padding:10px 12px}.sk div{align-items:stretch;gap:1px}}
 @media (prefers-reduced-motion:reduce){#banner,#bossBar span{transition:none}}
 
 /* ===== menu: the camp before the crypt ===== */

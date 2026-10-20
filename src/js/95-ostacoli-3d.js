@@ -128,10 +128,16 @@ OM.stump=(K,k,r,h,sd,S)=>{const{V0}=K,H=h+8,w=r*.95,a0=oFront(V0),roots=[-2.4,-1
   for(const R of roots)if(R.d>=0)root(R);
   const m=OQ(w*.78,w*.55,0);pRound(K,m,[[0,1.2],[4,1.1]],'#ece0c6',{m:10,lw:1.4});pRound(K,[m[0],m[1],3.6],[[0,4],[1.6,3.6],[3.4,.2]],'#d65b5b',{m:12,lw:1.6,kl:.35});
   ctx.fillStyle='#fff3e0';for(const[dy,dz] of[[-1.4,5.3],[1.2,4.8]]){const q=V0.P([m[0]+1.8,m[1]+dy,dz]);ctx.beginPath();ctx.arc(q[0],q[1],.7,0,TAU);ctx.fill()}};
-// a crystal cluster: hexagonal shards with pointed tips, pale on the side of the light and violet in the shade (the glow lives on top)
-OM.crystal=(K,k,r,h,sd,S)=>{const{V0}=K;C3.vol(V0,C3.ellPts([0,0,0],[r*.6,r*.95,2.5],null,2,14,0),S.lo,{lw:2,kl:.15,kd:.3,rim:.1});
-  const sh=[[0,0,1,0],[-.55,.15,.7,-.35],[.55,.2,.75,.3],[.15,.3,.55,.05]].map(([ox,oy,sz,tl],i)=>({c:OQ(ox*r,oy*r*1.1,0),sz,tl,i})).sort((a,b)=>V0.D(a.c)-V0.D(b.c));
-  for(const s of sh){const H=h*s.sz,R=r*.36*s.sz;oPrism(K,s.c,6,R,H*.72,'#6fc9e8',{tip:H*.28,a:sd+s.i,lean:[0,-s.tl*.6],lw:2,cf:n=>n[1]>.35?'#c9f3ff':n[1]<-.35?'#6a4fc4':'#7fd0ec'});
+// a crystal cluster: hexagonal shards with pointed tips, pale on the side of the light and violet in the shade (the glow lives on top); the
+// shards the hits have broken off (k.cs of 4 still standing, CRY_LOSE) leave a low stump with the pale ice of the break on top
+const CRY_SH=[[0,0,1,0],[-.55,.15,.7,-.35],[.55,.2,.75,.3],[.15,.3,.55,.05]];   // the shards: across, toward us, size, tilt
+const CRY_LOSE=[3,1,2],CRY_STUB=.2;   // the order they break off in (the main shard last, with the burst), the stump left of a shard
+const cryLeft=k=>k.cs==null?4:k.cs,cryLost=k=>CRY_LOSE.slice(0,4-cryLeft(k));
+OM.crystal=(K,k,r,h,sd,S)=>{const{V0}=K,lost=cryLost(k);C3.vol(V0,C3.ellPts([0,0,0],[r*.6,r*.95,2.5],null,2,14,0),S.lo,{lw:2,kl:.15,kd:.3,rim:.1});
+  const sh=CRY_SH.map(([ox,oy,sz,tl],i)=>({c:OQ(ox*r,oy*r*1.1,0),sz,tl,i})).sort((a,b)=>V0.D(a.c)-V0.D(b.c));
+  for(const s of sh){const H=h*s.sz,R=r*.36*s.sz;
+    if(lost.includes(s.i)){oPrism(K,s.c,6,R,H*CRY_STUB,'#6fc9e8',{a:sd+s.i,lean:[0,-s.tl*.6],lw:2,cf:n=>n[2]>.9?'#e6fbff':n[1]>.35?'#c9f3ff':n[1]<-.35?'#6a4fc4':'#7fd0ec'});continue}
+    oPrism(K,s.c,6,R,H*.72,'#6fc9e8',{tip:H*.28,a:sd+s.i,lean:[0,-s.tl*.6],lw:2,cf:n=>n[1]>.35?'#c9f3ff':n[1]<-.35?'#6a4fc4':'#7fd0ec'});
     const a=V0.P([s.c[0]+R*.3,s.c[1],H*.1]),b=V0.P([s.c[0]+R*.3-s.tl*0,s.c[1]-s.tl*.6*H*.85,H*.92]);ctx.strokeStyle='rgba(255,255,255,.6)';ctx.lineWidth=1.2;ctx.beginPath();ctx.moveTo(a[0],a[1]);ctx.lineTo(b[0],b[1]);ctx.stroke()}};
 // a brazier: three iron legs, the round bowl, the coals (the flame lives on top)
 OM.brazier=(K,k,r,h,sd,S)=>{const{V0}=K;
@@ -286,11 +292,16 @@ OB3.L.snowman=(K,k,r,h,sd,t)=>{const{r2,z2}=oSnowM(r);oSnowArm(K.V0,r2,z2,-1,LOW
 OM.snowrock=(K,k,r,h,sd,S)=>{oRock(K,[0,0,0],r*1.02,r*.92,Math.max(h,r*.95),S.mid,sd,{snow:1})};
 
 // ------------------------------------------------------------------ the live parts (every frame, over the picture)
-OB3.L.crystal=(K,k,r,h,sd,t)=>{const{V0}=K,gl=.5+.5*Math.sin(t*2+sd),c=V0.P([0,0,h*.5]);ctx.save();ctx.globalCompositeOperation='lighter';glow('127,224,240',c[0],c[1],r*1.8,.18+gl*.16);ctx.restore();
-  if(k.chmax&&k.chp<k.chmax){const dm=1-k.chp/k.chmax,n=Math.ceil(dm*5);ctx.lineCap='round';ctx.lineJoin='round';
-    for(let i=0;i<n;i++){const ox=Math.sin(sd*3+i*2.1)*r*.45,oy=-h*(.25+((i*.37+sd)%1)*.5),Lc=r*(.35+dm*.4),x=c[0]+ox,y=oy;
-      ctx.beginPath();ctx.moveTo(x,y);ctx.lineTo(x+Lc*.35,y+Lc*.3);ctx.lineTo(x+Lc*.1,y+Lc*.65);ctx.lineTo(x+Lc*.45,y+Lc);ctx.strokeStyle=INK;ctx.lineWidth=2.4;ctx.stroke();ctx.strokeStyle='rgba(235,252,255,.95)';ctx.lineWidth=1.1;ctx.stroke()}
-    if(dm>.5){ctx.save();ctx.globalCompositeOperation='lighter';glowAt(ctx,c[0],-h*.5,r*1.4,'170,240,255',.12+.2*dm*(.6+.4*Math.sin(t*9)));ctx.restore()}}};
+OB3.L.crystal=(K,k,r,h,sd,t)=>{const{V0}=K,dm=k.chmax?1-k.chp/k.chmax:0,gl=.5+.5*Math.sin(t*(2+dm*4)+sd),c=V0.P([0,0,h*.5]),lost=cryLost(k);
+  ctx.save();ctx.globalCompositeOperation='lighter';glow('127,224,240',c[0],c[1],r*1.8,.18+gl*.16+dm*.1);
+  for(const i of lost){const s=CRY_SH[i],H=h*s[2],q=V0.P([s[1]*r*1.1,-s[0]*r-s[3]*.6*H*CRY_STUB,H*CRY_STUB]);glow('200,245,255',q[0],q[1],r*.8*s[2],.3+.12*Math.sin(t*3+i))}
+  // a hit: the light inside flares up and fades (k.cf, the time of the hit)
+  const e=k.cf!=null?(G.t||0)-k.cf:9;if(e>=0&&e<.3){const f=1-e/.3;glow('230,252,255',c[0],c[1]-h*.08,r*(1+.6*(1-f)),.6*f);glow('140,225,255',c[0],c[1],r*2.6,.22*f)}
+  // once it has been hit, now and then a star of light runs up to the point of a shard (more often as it weakens); the whole crystal
+  // stays as it always was
+  const u=t*(.42+dm*.5)+sd*.37,q=u%1;if(dm>0&&q<.2){const left=[0,1,2,3].filter(i=>!lost.includes(i)),i=left[Math.floor(u)%left.length],s=CRY_SH[i],H=h*s[2],p=V0.P([s[1]*r*1.1,-s[0]*r-s[3]*.6*H,H]);
+    cryStar(p[0],p[1],(1.5+r*.06)*Math.sin(q/.2*Math.PI),u*3)}
+  ctx.restore()};
 OB3.L.brazier=(K,k,r,h,sd,t)=>{const q=K.V0.P([0,0,20]);flame(q[0],q[1],1.45,themeOf(G.room)==='radici'?ENV.radici.torch:ENV.muschio.torch,sd)};
 OB3.L.lavarock=(K,k,r,h,sd,t)=>{const p=.7+.3*Math.sin(t*2+sd),cr=OB3.lavaCr(K,r,h);ctx.save();ctx.lineCap='round';ctx.lineJoin='round';ctx.strokeStyle=`rgba(255,${120+60*p|0},40,.95)`;ctx.lineWidth=1.8;for(const l of cr){C3.line(l);ctx.stroke()}
   ctx.globalCompositeOperation='lighter';ctx.strokeStyle=`rgba(255,220,140,${(.35*p).toFixed(3)})`;ctx.lineWidth=.8;for(const l of cr){C3.line(l);ctx.stroke()}const c=K.V0.P([0,0,r*.5]);glow('255,120,40',c[0],c[1],r*1.2,.25*p);ctx.restore()};
@@ -312,10 +323,11 @@ function oFoot(K,k,r,sd,th,side){const{V0}=K,M=footMat(th),S=stonePal(),n=r>=20?
     else if(isSwamp(th))C3.leaf(V0,[c[0],c[1],w*.4],[0,0,1],v,8,1.4,'#7a8a3a',{lw:1,bend:.3});}}
 
 // the floor round an obstacle of the crystal caves without the little glowing crystals (Denis: «togliere quei microcristalli attorno agli
-// ostacoli»); the rest as in 47: the floor darker near it, cracks under the weight, chipped flakes, the bed of the world's stuff
-{const _gp=groundPatch;groundPatch=function(c,k,th){if(!OB3.on||th!=='cristalli')return _gp.apply(this,arguments);const x=k.x,y=k.y,r=k.r,M=footMat(th);
+// ostacoli»); the rest as in 47: the floor darker near it, cracks under the weight (not under a crystal, in any world: they would show
+// where it stood once it bursts), chipped flakes, the bed of the world's stuff
+{const _gp=groundPatch;groundPatch=function(c,k,th){if(!OB3.on||th!=='cristalli'&&k.kind!=='crystal')return _gp.apply(this,arguments);const x=k.x,y=k.y,r=k.r,M=footMat(th);
   c.save();c.translate(x,y+2);c.scale(1,.5);const g=c.createRadialGradient(0,0,r*.3,0,0,r*2.2);g.addColorStop(0,'rgba(14,9,6,.62)');g.addColorStop(.5,'rgba(14,9,6,.24)');g.addColorStop(1,'rgba(14,9,6,0)');c.fillStyle=g;c.beginPath();c.arc(0,0,r*2.2,0,TAU);c.fill();c.restore();
-  for(let i=0;i<3;i++){const a=rand(0,TAU);let px=x+Math.cos(a)*r*1.02,py=y+Math.sin(a)*r*.46;const pts=[[px,py]];for(let j=0;j<2;j++){px+=Math.cos(a+rand(-.5,.5))*rand(3,6);py+=Math.sin(a+rand(-.5,.5))*rand(1.5,3.5);pts.push([px,py])}
+  if(k.kind!=='crystal')for(let i=0;i<3;i++){const a=rand(0,TAU);let px=x+Math.cos(a)*r*1.02,py=y+Math.sin(a)*r*.46;const pts=[[px,py]];for(let j=0;j<2;j++){px+=Math.cos(a+rand(-.5,.5))*rand(3,6);py+=Math.sin(a+rand(-.5,.5))*rand(1.5,3.5);pts.push([px,py])}
     c.strokeStyle='rgba(0,0,0,.36)';c.lineWidth=1.1;c.beginPath();pts.forEach((p,j)=>j?c.lineTo(p[0],p[1]):c.moveTo(p[0],p[1]));c.stroke();
     c.strokeStyle='rgba(255,255,255,.08)';c.lineWidth=1;c.beginPath();pts.forEach((p,j)=>j?c.lineTo(p[0]+.8,p[1]+.8):c.moveTo(p[0]+.8,p[1]+.8));c.stroke()}
   for(let i=0;i<5;i++){const a=rand(0,TAU),d=rand(1.15,1.7),px=x+Math.cos(a)*r*d,py=y+Math.sin(a)*r*.5*d,s=rand(1.6,3.2),rot=rand(0,TAU);
@@ -351,7 +363,7 @@ function ob3Worn(k,st){const bites=wearBites(k,st);if(!bites.length){ob3Model(k,
   ctx.save();try{oFoot(ob3Cam(k.x,k.y),k,k.r,k.seed||1,themeOf(G.room),1)}finally{ctx.restore()}}
 // the picture of a still obstacle (model, wear and foot), as big as it is on the canvas, shaded darker at the base and lit from above like the
 // others (47), made again only when the wear, the world, the Golem's rage or the canvas changes
-function ob3Sprite(k){const th=themeOf(G.room),fl=ob3Fl(k,th),SS=Math.min(3,Math.max(1.5,Math.round(cv.width/VW*2)/2)),st=wearSt(k),key=k.kind+'|'+th+'|'+st+'|'+fl+'|'+SS;
+function ob3Sprite(k){const th=themeOf(G.room),fl=ob3Fl(k,th),SS=Math.min(3,Math.max(1.5,Math.round(cv.width/VW*2)/2)),st=wearSt(k),key=k.kind+'|'+th+'|'+st+'|'+fl+'|'+SS+(k.kind==='crystal'?'|'+cryLeft(k):'');
   if(k._s3&&k._s3.key===key)return k._s3;
   const r=k.r,H=kH(k)+(k.kind==='frozenstatue'?r*1.2:0),x0=k.x-r*2.8-6,y0=k.y-H-r*2.6-14,w=r*5.6+12,h=H+r*3.9+20,c=k._s3&&k._s3.c||document.createElement('canvas');c.width=Math.ceil(w*SS);c.height=Math.ceil(h*SS);
   const o=c.getContext('2d');o.setTransform(SS,0,0,SS,-x0*SS,-y0*SS);const keep=ctx,hit=k.hit;ctx=o;k.hit=0;try{if(st)ob3Worn(k,st);else ob3Model(k,0,{foot:1})}finally{ctx=keep;k.hit=hit}
@@ -489,3 +501,108 @@ const O3FIRE=['#ff6a1a','#ffb030','#fff0a0'];
   ctx.restore()}}
 {const _de=drawEnemy;drawEnemy=function(e){const r=_de.apply(this,arguments);try{if(OB3.on&&e&&e.burn>0&&!e.dead&&!(e.spawn>0)&&ctx===MAINCTX){const k=Math.min(1,e.burn/.6),h=e.r*1.15+(e.z||0);
     for(const sd of[-1,1])flame(e.x+sd*e.r*.42,e.y-h*(sd>0?1:.85),.3*k*(e.r/14),O3FIRE,(e.x+sd)*.13)}}catch(err){}return r}}
+
+// ------------------------------------------------------------------ the crystal that breaks: its hit and its burst remade (Denis: «cambia
+// animazione quando si rompono senza mettere quelle linee a zigzag quando la si colpisce»). No cracks any more: a hit lights the crystal from
+// inside, knocks off a few chips that tinkle to the floor and lights a star where the arrow struck; at every quarter of its life a shard
+// breaks off whole and flies away turning (a glittering stump stays, the light leaking from it); the last hit bursts it: a flash, the last
+// shards and pieces of its heart fly in 3D turning in the light and crumble into glitter where they land, a ring of cold light runs over the
+// floor, stars rise and a frost of crystal dust stays where it stood, no crater. The same hits as before (5, or 8 for the big ones), the
+// same crystals dropped. On a slow phone (LOWFX) fewer pieces, chips and stars.
+const CRY={lights:[]},CRY_G=700;
+const CRY_C=[['#e6fbff','#7fd0ec'],['#d9f3ff','#5fb0e0'],['#ece2ff','#8f72dc']];   // the chips: the half in the light and the other
+const cryRot=(v,k,th)=>{const c=Math.cos(th),s=Math.sin(th),d=k[0]*v[0]+k[1]*v[1]+k[2]*v[2];
+  return[v[0]*c+(k[1]*v[2]-k[2]*v[1])*s+k[0]*d*(1-c),v[1]*c+(k[2]*v[0]-k[0]*v[2])*s+k[1]*d*(1-c),v[2]*c+(k[0]*v[1]-k[1]*v[0])*s+k[2]*d*(1-c)]};
+function cryFrame(ax){const a=C3.nrm(ax),h=Math.abs(a[0])<.9?[1,0,0]:[0,1,0],b=C3.nrm(C3.cross(a,h));return[a,b,C3.cross(a,b)]}
+// a star of light: four long points and its glow (in the current light mode)
+function cryStar(x,y,s,rot,a){if(!(s>.2))return;a=a==null?1:a;ctx.save();ctx.translate(x,y);ctx.rotate(Math.sin(rot)*.35);glow('190,240,255',0,0,s*3.4,.5*a);
+  ctx.fillStyle=`rgba(242,253,255,${(.95*a).toFixed(3)})`;ctx.beginPath();const L=s*2.3,W=s*.3;ctx.moveTo(0,-L);ctx.lineTo(W,-W);ctx.lineTo(L,0);ctx.lineTo(W,W);ctx.lineTo(0,L);ctx.lineTo(-W,W);ctx.lineTo(-L,0);ctx.lineTo(-W,-W);
+  ctx.closePath();ctx.fill();ctx.restore()}
+// a chip of crystal that flies off (x, y on the floor, z above it), bounces once and lies there fading; a star that rises and fades
+function cryChip(x,y,a,sp,z){fxPush({k:'cryc',x,y,z:z||6,ux:Math.cos(a)*sp,uy:Math.sin(a)*sp*.6,uz:rand(80,170),rot:rand(0,TAU),vr:rand(-16,16),s:rand(1.3,2.4),c:randi(0,2),t:rand(.55,.85),max:.85,b:0})}
+function cryTw(x,y,s,life,uy){fxPush({k:'cryT',x,y,s,t:life,max:life,rot:rand(0,TAU),uy:uy||0})}
+// a piece of crystal in the air: a six-sided column with its point (tip) or broken at both ends, centred on c in the obstacle's own space,
+// its length along F[0]; the broken faces are the pale ice of the inside, the others shaded like the crystal
+function cryPiece(K,c,F,L,R,tip,sd){const n=6,[ea,eb,ec]=F,P=(s,u,v)=>[c[0]+ea[0]*s+eb[0]*u+ec[0]*v,c[1]+ea[1]*s+eb[1]*u+ec[1]*v,c[2]+ea[2]*s+eb[2]*u+ec[2]*v],
+    rad=t=>[eb[0]*Math.cos(t)+ec[0]*Math.sin(t),eb[1]*Math.cos(t)+ec[1]*Math.sin(t),eb[2]*Math.cos(t)+ec[2]*Math.sin(t)],tl=tip?Math.min(L*.4,R*1.7):0,s0=-L/2,s1=L/2-tl,
+    ring=(s,rr,j)=>{const q=[];for(let i=0;i<n;i++){const t=i/n*TAU+sd,w=rr*(j?1+.1*Math.sin(i*2.3+sd*3):1);q.push(P(s+(j?(oH(i,sd+j)-.5)*R*.55:0),Math.cos(t)*w,Math.sin(t)*w))}return q};
+  const B=ring(s0,R*.94,1),U=ring(s1,R,tip?0:2),F2=[];
+  for(let i=0;i<n;i++){const j=(i+1)%n;F2.push([rad((i+.5)/n*TAU+sd),[B[i],B[j],U[j],U[i]]])}
+  if(tip){const A=P(L/2,0,0);for(let i=0;i<n;i++){const j=(i+1)%n,r0=rad((i+.5)/n*TAU+sd);F2.push([C3.nrm([r0[0]*tl+ea[0]*R*.9,r0[1]*tl+ea[1]*R*.9,r0[2]*tl+ea[2]*R*.9]),[U[i],U[j],A]])}}
+  else{const nn=ea.slice();nn.br=1;F2.push([nn,U.slice().reverse()])}
+  {const nn=[-ea[0],-ea[1],-ea[2]];nn.br=1;F2.push([nn,B.slice()])}
+  return oFaces(K,F2,'#6fc9e8',{lw:R>4?1.5:1.1,ew:.6,cf:n=>n.br?'#e6fbff':n[1]>.35?'#c9f3ff':n[1]<-.35?'#6a4fc4':'#7fd0ec'})}
+// a piece that flies: p and v in the obstacle's own space round (cx, cy) (v from the floor speed: toward us = vy/.55, across = −vx), its
+// frame turning about w
+function cryFrag(cx,cy,p,F,L,R,tip,v,w,spin,sd){fxPush({k:'cry3',cx,cy,p:p.slice(),F,L,R,tip,v,w,spin,th:0,sd,t:3,max:3})}
+const cryVel=(dir,sp,up)=>[Math.sin(dir)*sp/.55,-Math.cos(dir)*sp,up];
+const crySpin=()=>C3.nrm([rand(-1,1),rand(-1,1),rand(-.5,.5)]);
+// where a piece lands it crumbles: chips, a puff of glitter, a star, a tinkle
+function cryCrumble(f){const x=f.cx-f.p[1],y=f.cy+f.p[0]*.55,n=LOWFX?1:Math.round(2+f.R*.25);for(let i=0;i<n;i++)cryChip(x,y,rand(0,TAU),rand(25,70),2);
+  cryTw(x,y-3,1.5+f.R*.16,.36);fxPush({k:'cryD',x,y,r:f.R*2.4,t:.5,max:.5});sfx('cryChip',0,x)}
+// a shard broken off by a hit: it flies away from the middle turning, chips and a star at the stump
+function cryShardOff(k,i,a){const s=CRY_SH[i],r=k.r,H=kH(k)*s[2],R=r*.36*s[2],ly=-s[3]*.6,z0=H*CRY_STUB,L=H-z0,zc=z0+L/2,
+    out=Math.hypot(s[0],s[1])>.01?Math.atan2(s[1]*.6,s[0]):a,dir=out+rand(-.45,.45);
+  cryFrag(k.x,k.y,[s[1]*r*1.1,-s[0]*r+ly*zc,zc],cryFrame([0,ly,1]),L,R,true,cryVel(dir,rand(55,95),rand(150,210)),crySpin(),rand(7,12)*(Math.random()<.5?-1:1),(k.seed||1)+i);
+  const bx=k.x+s[0]*r,by=k.y+s[1]*r*.6;for(let j=0;j<(LOWFX?1:2);j++)cryChip(bx,by,dir+rand(-.8,.8),rand(35,80),z0+2);cryTw(bx,by-z0-2,2.2,.42);sfx('cryChip',0,bx)}
+// the burst
+function cryBurst(k){const r=k.r,h=kH(k),lost=cryLost(k),lo=LOWFX,sd=k.seed||1,ix=G.rocks.indexOf(k);if(ix>=0)G.rocks.splice(ix,1);fields={};shake(lo?2:3);
+  fxPush({k:'flash',x:k.x,y:k.y-h*.5,rgb:'205,246,255',r:r*3.2,t:.32,max:.32});
+  fxPush({k:'ring2',x:k.x,y:k.y,rgb:'130,215,255',r0:r*.5,r1:r*3.8,t:.6,max:.6,w:6});
+  if(!lo)fxPush({k:'ring2',x:k.x,y:k.y,rgb:'235,250,255',r0:r*.3,r1:r*2.3,t:.38,max:.38,w:3});
+  CRY.lights.push({x:k.x,y:k.y-h*.4,r:140,t:.7,max:.7});
+  // the shards still standing fly (the main one in two pieces), each from where it stood
+  for(let i=0;i<4;i++){if(lost.includes(i))continue;const s=CRY_SH[i],H=h*s[2],R=r*.36*s[2],ly=-s[3]*.6,out=Math.hypot(s[0],s[1])>.01?Math.atan2(s[1]*.6,s[0]):rand(0,TAU);
+    for(const[f0,f1,tp] of (i===0&&!lo?[[0,.5,0],[.5,1,1]]:[[0,1,1]])){const z0=H*f0,L=H*(f1-f0),zc=z0+L/2,dir=out+rand(-.7,.7);
+      cryFrag(k.x,k.y,[s[1]*r*1.1,-s[0]*r+ly*zc,zc],cryFrame([0,ly,1]),L,R*(tp?1:1.05),!!tp,cryVel(dir,rand(50,120)*(tp?1:.7),rand(170,260)*(tp?1:.8)),crySpin(),rand(6,12)*(Math.random()<.5?-1:1),sd+i*3+f0)}}
+  // pieces of its heart
+  for(let j=0;j<(lo?1:3);j++)cryFrag(k.x,k.y,[0,0,h*rand(.2,.45)],cryFrame([rand(-1,1),rand(-1,1),rand(.3,1)]),r*rand(.45,.75),r*rand(.16,.24),Math.random()<.5,
+    cryVel(rand(0,TAU),rand(60,130),rand(160,240)),crySpin(),rand(7,13),sd+10+j);
+  for(let j=0;j<(lo?3:8);j++)cryTw(k.x+rand(-r,r)*.9,k.y-rand(4,h*1.1),rand(1.7,3.1),rand(.45,.85),rand(-40,-12));
+  for(let j=0;j<(lo?4:8);j++)cryChip(k.x+rand(-r,r)*.4,k.y+rand(-3,3),rand(0,TAU),rand(40,120),rand(4,h*.6));
+  cryFrost(k);sfx('cryBurst',0,k.x)}
+// where it stood: a frost of pale light on the floor, little pieces lying flat with their lit half, glitter; no lines
+function cryFrost(k){const c=fx,x=k.x,y=k.y,r=k.r;c.save();c.setTransform(2,0,0,2,0,0);c.translate(x,y+1);c.scale(1,.5);
+  const g=c.createRadialGradient(0,0,0,0,0,r*1.9);g.addColorStop(0,'rgba(205,242,255,.34)');g.addColorStop(.55,'rgba(140,210,240,.14)');g.addColorStop(1,'rgba(140,210,240,0)');
+  c.fillStyle=g;c.beginPath();c.arc(0,0,r*1.9,0,TAU);c.fill();c.restore();
+  for(let i=0;i<(LOWFX?3:5);i++){const a=rand(0,TAU),d=rand(.15,1.3)*r,s=rand(1.2,2.4),C=CRY_C[randi(0,2)];c.save();c.setTransform(2,0,0,2,0,0);c.translate(x+Math.cos(a)*d,y+Math.sin(a)*d*.5);c.rotate(rand(0,TAU));c.scale(1,.6);
+    c.fillStyle='rgba(0,0,0,.22)';c.beginPath();c.ellipse(.5,1.2,s*1.1,s*.55,0,0,TAU);c.fill();
+    c.beginPath();c.moveTo(0,-s*1.5);c.lineTo(s*.8,0);c.lineTo(0,s*1.5);c.lineTo(-s*.8,0);c.closePath();c.fillStyle=C[1];c.fill();
+    c.beginPath();c.moveTo(0,-s*1.5);c.lineTo(s*.8,0);c.lineTo(0,s*1.5);c.closePath();c.fillStyle=C[0];c.fill();c.restore()}
+  c.save();c.setTransform(2,0,0,2,0,0);c.fillStyle='rgba(232,250,255,.6)';for(let i=0;i<(LOWFX?5:10);i++){const a=rand(0,TAU),d=rand(.1,1.8)*r;c.fillRect(x+Math.cos(a)*d,y+Math.sin(a)*d*.5,.8,.8)}c.restore()}
+// the hit
+{const _rh=rockHit;rockHit=function(k,x,y,a,big){if(!OB3.on||!k||k.kind!=='crystal'||k.temp)return _rh.apply(this,arguments);
+  k.hit=.14;k.cf=G.t||0;sfx('rock','crystal',x);
+  for(let i=0;i<(LOWFX?1:3);i++)cryChip(x,y,a+Math.PI+rand(-1.1,1.1),rand(40,95)*(big?1.4:1),rand(4,14));cryTw(x+rand(-3,3),y-rand(4,10),2.4,.32);
+  if(k.breaking)return;if(!k.chmax){k.chmax=k.r>=20?8:5;k.chp=k.chmax}k.chp-=big?2:1;
+  if(k.chp>0){const cs=Math.max(1,Math.ceil(k.chp/k.chmax*4));while(cryLeft(k)>cs){const i=CRY_LOSE[4-cryLeft(k)];k.cs=cryLeft(k)-1;cryShardOff(k,i,a)}}
+  else breakCrystal(k)}}
+// the burst, for every way a crystal is destroyed (its last hit, a chest falling on it)
+{const _sr=shatterRock;shatterRock=function(k){if(!OB3.on||!k||k.kind!=='crystal')return _sr.apply(this,arguments);cryBurst(k)}}
+// the pieces, chips and stars move with the game's clock (the lists of the effects empty with the room)
+{const _u=update;update=function(dt){_u(dt);if(!OB3.on||!G||!G.fx)return;
+  for(const f of G.fx){if(f.k==='cry3'){if(f.done)continue;f.p[0]+=f.v[0]*dt;f.p[1]+=f.v[1]*dt;f.v[2]-=CRY_G*dt;f.p[2]+=f.v[2]*dt;f.th+=f.spin*dt;if(f.v[2]<0&&f.p[2]<=f.R*.8){f.done=1;f.t=0;cryCrumble(f)}}
+    else if(f.k==='cryc'){f.uz-=CRY_G*dt;f.z+=f.uz*dt;f.x+=f.ux*dt;f.y+=f.uy*dt;f.rot+=f.vr*dt;if(f.z<=0){f.z=0;if(!f.b){f.b=1;f.uz=-f.uz*.3;f.ux*=.45;f.uy*=.45;f.vr*=.4}else{f.uz=0;f.ux*=.85;f.uy*=.85;f.vr*=.9}}}
+    else if(f.k==='cryT')f.y+=f.uy*dt}
+  for(const l of CRY.lights)l.t-=dt;if(CRY.lights.length)CRY.lights=CRY.lights.filter(l=>l.t>0)}}
+{const _b=buildRoom;buildRoom=function(){CRY.lights=[];return _b.apply(this,arguments)}}
+// the drawing of the pieces (in 3D, with their shadow and a little glow), the chips, the stars and the puffs of glitter
+FXDRAW.cry3=f=>{if(f.done)return;const F=f.F.map(e=>cryRot(e,f.w,f.th)),hz=Math.max(0,f.p[2]);
+  ctx.fillStyle=`rgba(10,20,30,${(.28*Math.max(0,1-hz/70)).toFixed(3)})`;ctx.beginPath();ctx.ellipse(f.cx-f.p[1],f.cy+f.p[0]*.55,f.R*1.4,f.R*.6,0,0,TAU);ctx.fill();
+  ctx.save();try{const K=ob3Cam(f.cx,f.cy);cryPiece(K,f.p,F,f.L,f.R,f.tip,f.sd);const q=K.V0.P(f.p);ctx.globalCompositeOperation='lighter';glow('150,230,255',q[0],q[1],f.R*3,.24)}catch(err){f.done=1}finally{ctx.restore()}};
+FXDRAW.cryc=f=>{const a=Math.min(1,f.t/.3),s=f.s,C=CRY_C[f.c]||CRY_C[0];
+  if(f.z>1){ctx.fillStyle=`rgba(10,20,30,${(.22*a).toFixed(3)})`;ctx.beginPath();ctx.ellipse(f.x,f.y,s*1.1,s*.45,0,0,TAU);ctx.fill()}
+  ctx.save();ctx.translate(f.x,f.y-f.z);ctx.rotate(f.rot);ctx.globalAlpha=a;ctx.beginPath();ctx.moveTo(0,-s*1.5);ctx.lineTo(s*.8,0);ctx.lineTo(0,s*1.5);ctx.lineTo(-s*.8,0);ctx.closePath();
+  ctx.fillStyle=C[1];ctx.fill();ctx.strokeStyle=INK;ctx.lineWidth=.8;ctx.stroke();ctx.beginPath();ctx.moveTo(0,-s*1.5);ctx.lineTo(s*.8,0);ctx.lineTo(0,s*1.5);ctx.closePath();ctx.fillStyle=C[0];ctx.fill();
+  if(Math.sin(f.rot*2.7)>.8){ctx.globalCompositeOperation='lighter';glow('220,248,255',0,-s*.4,s*2.2,.55*a)}ctx.restore()};
+FXDRAW.cryT=f=>{const p=1-f.t/f.max;ctx.save();ctx.globalCompositeOperation='lighter';cryStar(f.x,f.y,f.s*Math.sin(Math.min(1,p*1.15)*Math.PI),f.rot+p*2);ctx.restore()};
+FXDRAW.cryD=f=>{const p=1-f.t/f.max,r=f.r*(.6+.6*p);ctx.save();ctx.globalCompositeOperation='lighter';ctx.translate(f.x,f.y-1);ctx.scale(1,.5);const g=ctx.createRadialGradient(0,0,0,0,0,r);
+  g.addColorStop(0,`rgba(180,235,255,${(.32*(1-p)).toFixed(3)})`);g.addColorStop(1,'rgba(180,235,255,0)');ctx.fillStyle=g;ctx.beginPath();ctx.arc(0,0,r,0,TAU);ctx.fill();ctx.restore()};
+// the light of the burst in the room's light map, fading
+{const _lf=lwFill;lwFill=function(){if(OB3.on&&CRY.lights.length){const spr=glowSprite('0,0,0');lx.save();lx.globalCompositeOperation='destination-out';
+    for(const l of CRY.lights){lx.globalAlpha=Math.min(1,.95*l.t/l.max);lx.drawImage(spr,l.x-l.r,l.y-l.r,l.r*2,l.r*2)}lx.restore()}return _lf.apply(this,arguments)}}
+// the sounds: a chip (two glassy clinks and a little bell) and the burst (a falling run of bells and a cold hiss over the shatter of the game)
+{const _s=sfx;sfx=function(k,arg,x){if(k!=='cryChip'&&k!=='cryBurst')return _s.apply(this,arguments);if(!AU.ctx||!AU.on.sfx)return;
+  const now=performance.now();if(now-(AU.last[k]||0)<(k==='cryChip'?55:150))return;AU.last[k]=now;const t=AU.ctx.currentTime+.005;AU.pan=x==null?0:Math.max(-.7,Math.min(.7,(x-180)/200));
+  try{if(k==='cryChip'){M.glass(t,.8,VR(3000,.1));M.glass(t+.025,.45,VR(3900,.1));vBell(null,t+.015,91+randi(0,5),.45,.028)}
+    else{[98,94,91,86,82].forEach((m,i)=>vBell(null,t+.05+i*.06,m,1.2-i*.12,.042));fNoise(t+.04,.8,'highpass',6500,.6,.07,{rev:.6})}}catch(err){}AU.pan=0}}

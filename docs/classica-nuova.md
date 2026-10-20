@@ -7,6 +7,43 @@ delle coppe con le arene», poi «ok creami le cose che mi hai elencato su una c
 pubblicata su https://claude.ai/artifact/K6E5QMv5pxKkt61MCFJsba («Mossbound · Classica nuova»: si aggiorna ripubblicando
 `anteprime/classica.html`). Prova: `python3 anteprime/mk_classica.py --test --build && node tests/classica.js [menu|stanze|furia|rarita|evo|nemesi|torre|corsa|ondate|trappole|3d|ponte]`.
 
+## Le carte sui telefoni larghi e il cristallo che si rompe (20 ottobre notte)
+
+Denis: «sì correggi ed riaggiungi i cristalli ma solo quelli rompibili, e cambia animazione quando si rompono senza mettere quelle linea a
+zigzag quando la si colpisce»; alla domanda su quali cristalli rimettere (quelli grandi che si rompono c'erano ancora, con i microcristalli
+erano andati via solo i cristallini decorativi): «cambia solo animazioni come ti ho detto». Quindi niente cristallini: le carte corrette e
+il colpo e la rottura del cristallo grande rifatti.
+
+**Le carte.** Sul telefono di Denis la pagina è larga circa 430 punti (misurato sulla sua foto: «Cambia gratis» largo come qui a 430),
+sopra i 420 del foglio di stile: le carte stanno su tre colonne e il blocco del testo non andava a capo, così nome, descrizione,
+«Verso «…»» e «Livello N di M» erano attaccati. In `src/pagina.html` il testo della carta è una colonna anche lì (`.sk div`; sotto i 420
+punti le carte restano righe come prima). È un difetto anche del gioco vero sui telefoni larghi: la correzione è nel foglio comune. Nella
+Classica nuova «Verso «…»» va prima di «Livello» (`cnEvoHint`) e la Furia (rango, barra, «×1,1 oro ed esperienza · 5 s»), che stava sopra
+tutte le finestre e copriva la rarità della terza carta, sparisce mentre è aperta una finestra (`#wrap:has(>.screen:not([hidden]))`, anche
+le scritte della torre e delle trappole) e torna dopo.
+
+**Il cristallo che si rompe** (`95-ostacoli-3d.js`, in fondo: `rockHit` e `shatterRock` avvolti per i cristalli, `cryBurst`). Gli stessi
+colpi di prima (5, o 8 per i grandi) e gli stessi cristalli lasciati (+1, a volte +2); intatto è identico a prima. Via le crepe a zigzag
+del disegno a ogni colpo e il cratere con le crepe scure per terra (e le crepe sotto la base, che si vedevano dopo la rottura):
+- **il colpo**: la luce dentro il cristallo si accende e si spegne in 0,3 s, saltano 3 schegge (rombi a due toni che rimbalzano una volta e
+  spariscono in meno di un secondo; 1 con `LOWFX`), una stellina dove ha colpito la freccia, il tintinnio di prima;
+- **a ogni quarto della sua vita uno spuntone si stacca intero** e vola via girando in 3D (prima il piccolo davanti, poi quello a sinistra,
+  poi quello a destra; il grande resta per ultimo): al suo posto resta un moncone basso con il ghiaccio chiaro della rottura in cima, da cui
+  esce un po' di luce; dove lo spuntone cade si sbriciola in schegge e polvere luccicante con un tintinnio e una campanella. Dopo il primo
+  colpo una stellina corre ogni tanto su una punta, più spesso man mano che si indebolisce;
+- **l'ultimo colpo**: un lampo, due anelli di luce fredda che corrono sul pavimento, una luce nella stanza che si spegne in 0,7 s (nella
+  mappa delle luci, così il buio non torna di colpo), gli spuntoni rimasti (il grande in due pezzi) e tre pezzi del cuore volano in 3D
+  girando nella luce e si sbriciolano dove cadono, otto stelline salgono, otto schegge; per terra resta una brina di luce chiara con
+  qualche scheggia stesa e un po' di polvere luccicante. Suono: la rottura di prima più una discesa di campanelle e un soffio freddo.
+  Con `LOWFX`: due pezzi in meno, tre stelline, quattro schegge;
+- schiacciato da una cassa gemella esplode allo stesso modo, senza lasciare cristalli.
+
+Costo sul computer di prova (un fotogramma intero della stanza, a 2 pixel per punto): 11,1 ms prima, 12,1 durante i colpi, 13,5 di mediana
+durante l'esplosione (al massimo 22), 10,7 dopo; con `LOWFX` nessuna differenza. Foglio della sequenza: `tests/cn_cristallo_foglio.jpg`.
+Prova: `node tests/classica.js cristallo` (spuntoni che si staccano ai colpi giusti per i due tipi, il disegno che si rifà, l'esplosione
+con pezzi, lampo, anelli e luce, +1 o +2 cristalli, tutto pulito dopo, gli effetti ridotti, la cassa); `node tests/classica.js rarita` ha
+le carte a 430 punti.
+
 ## Annotato: le abilità che si livellano nel menu (20 ottobre notte)
 
 Denis, con la foto della scelta «Livello 5 · Scegli un'abilità»: «fai in modo che nella modalità classica ci sia una nuova funzione di
