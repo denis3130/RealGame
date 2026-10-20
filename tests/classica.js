@@ -283,8 +283,8 @@ const SOLO=process.argv[2]||'';
     await E(fresh);
     // a retreat at room 7: 18 stones (3 for each room passed)
     await arena(0);await E(`(()=>{__A.on=false;return 0})()`);await E(jump(7));await W(300);await E(`(()=>{endRun(false,true);return 0})()`);await W(700);
-    const b1=await J(`({br:SAVE.cn.br[0],l:(document.querySelector('#eTr .cnBridge')||{}).textContent||'',anim:CN.brAnim})`);await snap('ponte_fine');
-    ok('ogni stanza superata porta 3 pietre al ponte (ritirata alla stanza 7: 18 pietre)',b1.br===18&&/\+18 pietre/.test(b1.l)&&/18\/100/.test(b1.l)&&b1.anim&&b1.anim.i===0&&b1.anim.from===0&&b1.anim.to===1&&!b1.anim.done,JSON.stringify(b1));
+    const b1=await J(`({br:SAVE.cn.br[0],l:(document.querySelector('#eTr .cnBridge')||{}).textContent||'',anim:CN.brAnim,lab:$('eRoom').nextElementSibling.textContent})`);await snap('ponte_fine');
+    ok('ogni stanza superata porta 3 pietre al ponte (ritirata alla stanza 7: 18 pietre)',b1.br===18&&/\+18 pietre/.test(b1.l)&&/18\/100/.test(b1.l)&&b1.anim&&b1.anim.i===0&&b1.anim.from===0&&b1.anim.to===1&&!b1.anim.done&&b1.lab==='Stanza',JSON.stringify(b1));
     await toMenu();await W(900);const b2=await J(`({brA:ISL.brA,hold:!!ISL.hold,cur:ISL.cur,anim:CN.brAnim})`);await snap('ponte_pietre');
     ok('nel menu la telecamera va al ponte e la pietra nuova cade al suo posto',b2.brA&&b2.brA.i===0&&b2.brA.to===1&&b2.hold&&b2.cur===0&&!b2.anim,JSON.stringify(b2));
     await W(2600);

@@ -926,8 +926,9 @@ function cnDrawShrine(s,t){if(s.gone)return;const x=s.x,y=s.y,a=s.used?Math.max(
   ctx.restore()}
 // la fine della partita nella torre: il piano a cui sei arrivato e il record
 {const _er=endRun;endRun=function(win,quit){const T=G&&G.cnTw,a=G&&G.cnA,f=T?(win?T.plan.length:T.f||1):0;const r=_er.apply(this,arguments);
-  try{if(CN.on&&T&&a!=null){const S=cnS(),B=S.best[a]||(S.best[a]={fu:-1,win:false});B.fl=Math.max(B.fl||0,f);save();
-    $('eRoom').textContent=f;const lab=$('eRoom').nextElementSibling;if(lab)lab.textContent='Piano';
+  try{const lab=$('eRoom').nextElementSibling;if(lab)lab.textContent='Stanza';   // a tower before leaves «Piano» there
+    if(CN.on&&T&&a!=null){const S=cnS(),B=S.best[a]||(S.best[a]={fu:-1,win:false});B.fl=Math.max(B.fl||0,f);save();
+    $('eRoom').textContent=f;if(lab)lab.textContent='Piano';
     if(!win&&!quit)$('endText').textContent=`Sei arrivato al piano ${f} di ${T.plan.length} della torre.`}
     $('cnTow')&&($('cnTow').hidden=true);const c=$('roomChip');if(c)c.classList.remove('cnw');cnHud('')}catch(err){cnErr(err)}return r}}
 {const _sm=showMenu;showMenu=function(){const el=$('cnTow');if(el)el.hidden=true;const c=$('roomChip');if(c)c.classList.remove('cnw');return _sm.apply(this,arguments)}}
