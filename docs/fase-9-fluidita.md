@@ -54,8 +54,37 @@ Copiare un'immagine 1:1 su pixel interi costa 5–7 volte meno che copiarla scal
 
 12. **Mappa zombie**: la vignetta (una sfumatura su tutto lo schermo a ogni fotogramma) preparata una volta e copiata a bande (`zVig` in
     `anteprime/zombie/motore.js`), e i fotogrammi della mappa contano per le luci morbide. Il resto della mappa zombie è il disegno delle
-    case, degli oggetti e degli zombie in 3D (`w.voci`, ~40 ms qui a 1,5 pixel a punto): da guardare a parte, con Denis, perché lì la
-    «piega» degli oggetti alti cambia a ogni passo della telecamera e non si può copiare senza toccare l'aspetto.
+    case, degli oggetti e degli zombie in 3D (`w.voci`, ~40 ms qui a 1,5 pixel a punto): la «piega» degli oggetti alti cambia a ogni passo
+    della telecamera, quindi copiarli tali e quali avrebbe cambiato l'aspetto. Fatto dopo, sotto (13).
+
+13. **Mappa zombie: gli strati fermi copiati** (20 ottobre; Denis: «Mappa zombie più fluida», dopo la proposta «ogni casa e oggetto
+    disegnato una volta e rifatto solo quando la sua piega cambia di mezzo pixel»). In `anteprime/zombie/motore.js` (`LCB`, `lcPrep`,
+    `lcPaint`, `lcDraw`, prima di `drawLayer`):
+    - i pezzi fermi di ogni strato (facce, pannelli, palle, linee, contorni: i muri, i tetti, le lapidi, gli alberi, gli steccati, i mobili)
+      si dipingono una volta in una tela loro, grande quanto serve, e si copiano 1:1: a vista dritta la telecamera sta su pixel interi della
+      tela (lo spostamento arrotondato in `render`, al più mezzo pixel della tela, come in battaglia);
+    - una copia si ridipinge quando la piega del suo strato, misurata sugli spigoli dell'impronta in basso e in alto (`L.pp`, calcolati in
+      `layerSB` insieme al riquadro), si è mossa di più di mezzo pixel della tela (`LCB.tol`), o di meno ma con lo zoom diverso (lontano
+      dall'angolo della mappa una scala diversa di un decimillesimo sposta la copia di un decimo di pixel: conta anche quello); tutti gli strati
+      di un prop si ridipingono insieme, così i muri di una casa restano attaccati;
+    - **a telecamera ferma le copie tornano esatte**: ferma da due fotogrammi, quelle fatte con la piega di poco diversa (più di due
+      centesimi di pixel) si ridipingono, otto prop per fotogramma, le più lontane prima;
+    - quando cambia un pezzo la copia si rifà: punti nuovi (le ante del cancello, l'asse che cade, la porta della latrina), materiale,
+      colore, raggio, trasparenza, spessore (`lcTouch`), le assi delle barriere (`vis`), le trasparenze delle case con l'eroe dentro o
+      dietro (contano i 256 passi che si vedono: il valore si avvicina alla meta senza fermarsi mai del tutto);
+    - i disegni a mano (`fn`: lanterne, insegne, il secchio del pozzo che oscilla, le macchine, il corvo sul palo, i lumini) restano dal vivo
+      al loro posto nell'ordine, tra una copia e l'altra; anche le fiamme figlie e i prop che sfumano (`fade`);
+    - uno strato che cambia a ogni fotogramma (la piega che corre vicino al centro mentre l'eroe va di lato, una porta che si apre) si
+      disegna dal vivo come prima finché non rallenta (`C.hot`), così non costa più di prima;
+    - le tele stanno in 48 MB (`LCB.max`; una vista ne usa 20–45 a 2 pixel per punto, molto meno a 1,5): oltre, fuori le meno usate di
+      recente, e quello che non entra si disegna dal vivo; si liberano quando si esce dalla mappa (`stop`, tornando al menu: si rifanno da
+      sole nei primi fotogrammi quando si rientra) e con il terreno (`libera`);
+    - girando la visuale (`CAM.rot`), per la sagoma dell'eroe dietro le cose e con `W.dbg.noLC`: tutto dal vivo, come prima.
+
+    Misure (questo computer, 2 pixel a punto, mediane; i numeri ballano molto): fermo 35–55 → 25–41 ms a fotogramma (il disegno degli
+    oggetti da 30–45 a 9–13 ms), in giù 35–63 → 26–48, di lato 33–84 → 25–57 (gli oggetti vicini al centro restano dal vivo), con 10 zombie
+    di lato 46–76 → 39–70. Conteggi camminando di lato alla partenza: per fotogramma 47 copie, 6 ridipinti, 25 dal vivo (prima 78 dal vivo).
+    Prova: `node anteprime/zombie/copie_prova.js` (sotto).
 
 ## Risultati (questo computer, un fotogramma con il disegno)
 
@@ -86,3 +115,9 @@ dal prologo, oppure si porta il proprio col codice di salvataggio (Impostazioni 
   pixel oltre 8 ≤ 0,2%; fogli `tests/fl_<scena>.png` con le due immagini e la differenza ×16), la qualità «auto» e «alta», il nero dei
   tre fotogrammi, i tempi con e senza (solo per confronto).
 - Una partita automatica per capitolo (`run.js`), `meta2.js`, `menu2.js`, `menu3.js`: senza errori.
+- `python3 anteprime/zombie/mk.py area_mappa && node anteprime/zombie/copie_prova.js`: la mappa zombie, lo stesso fotogramma con le copie e
+  tutto dal vivo (`W.dbg.lcLive`: la telecamera resta sui pixel interi) in otto posti, fermo, dopo una corsa di lato e in diagonale e di
+  nuovo fermo, col cancello che si apre, la barriera rotta e riparata, la casa con l'eroe dentro, il piano di sopra della Locanda, gli
+  effetti bassi. Fermo: al massimo lo 0,02% dei pixel con Δ>30 e nessun gruppo più spesso di 4 px (sono arrotondamenti dei bordi: di
+  solito 0–0,007%, pixel sparsi); mentre la telecamera scivola ancora: ogni copia entro mezzo pixel dal disegno vero (righe sottili lungo i
+  bordi). Poi i tempi con e senza copie e la memoria.

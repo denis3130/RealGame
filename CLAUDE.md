@@ -205,13 +205,20 @@ in 18), vignetta a bande (`drawVig`), mappa delle luci a un pixel per punto (`lw
 volta (`PZD`), tre fotogrammi di nero in più quando si entra in una stanza (`G.fadeHold`). Circa −40% a fotogramma. Poi il menu: la scena
 della schermata principale (cripta e falò) a 2 pixel a punto esatti, mappa delle luci e vignetta come in battaglia (`campResize`,
 `campLightBlit`, `campVigDraw` in 40, `glowTick` intorno a `drawCamp` in 67): la cripta da 41 a 21 ms qui. Restano i modelli 3D
-(intoccabili senza cambiarne l'aspetto) e, nella mappa zombie, il disegno 3D di case e oggetti (da decidere con Denis). Dettagli, numeri e cosa
+(intoccabili senza cambiarne l'aspetto). Dettagli, numeri e cosa
 resta in `docs/fase-9-fluidita.md`; prova `node tests/fluido.js`. **Anteprima per il telefono** (20 ottobre): https://claude.ai/artifact/N8yfkjf53iaBG8PLeYkaHx
 («Mossbound Fase 9»: il gioco di `piano-maestro` diviso come quello pubblicato, `python3 app/mk_claude.py index.html <cartella>` col titolo
 cambiato; si aggiorna ripubblicando la stessa cartella); il gioco pubblicato e l'app non cambiano finché Denis non dice sì.
-Mappa zombie (20 ottobre): la parte più pesante che resta (case, lampioni, tombe e zombie ridisegnati in 3D a ogni fotogramma, per la piega
-che cambia mentre la telecamera segue l'eroe); proposta: ogni casa e oggetto disegnato una volta e rifatto solo quando la sua piega cambia
-di mezzo pixel. Denis: «Aspetta, prima provo» (prima prova l'anteprima sul telefono).
+Mappa zombie (20 ottobre): la parte più pesante che restava (case, lampioni, tombe e zombie ridisegnati in 3D a ogni fotogramma, per la
+piega che cambia mentre la telecamera segue l'eroe). Proposta: ogni casa e oggetto disegnato una volta e rifatto solo quando la sua piega
+cambia di mezzo pixel; Denis prima: «Aspetta, prima provo», poi (20 ottobre, alla domanda «ora che si fa?») «Mappa zombie più fluida».
+**Fatto** (`anteprime/zombie/motore.js`, «gli strati fermi copiati»: `LCB`, `lcPrep`, `lcPaint`, `lcDraw`): i pezzi fermi di ogni strato
+dipinti una volta in una tela loro e copiati 1:1 (a vista dritta la telecamera su pixel interi della tela), ridipinti quando la piega si
+muove di più di mezzo pixel della tela, quando cambia un pezzo (ante, assi, porte, trasparenze delle case) o lo zoom; tutti gli strati di
+un prop insieme; a telecamera ferma le copie tornano esatte; i disegni a mano, le fiamme e chi cambia a ogni fotogramma dal vivo come prima;
+48 MB di tele al massimo, liberate uscendo dalla mappa; girando la visuale tutto dal vivo. Fermo: il disegno degli oggetti da 30–45 a 9–13 ms qui; di lato restano dal
+vivo gli oggetti vicini al centro. Prova `node anteprime/zombie/copie_prova.js` (fermo uguale al disegno dal vivo, arrotondamenti dei bordi a
+parte). Solo in `piano-maestro`, nell'anteprima della FASE 9: il ramo `gioco` (pubblicato) non ce l'ha finché Denis non dice sì.
 
 ## Modalità zombie (nel gioco dal 13 ottobre)
 
