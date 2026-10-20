@@ -207,7 +207,7 @@ caso della partita dopo col tuo sacco, buffa o spavalda (`cnNem*`, bacheca dei R
 di ondate** e poi il custode, ma Denis: «è troppo rotta come modalità quella dei 5minuti […] siamo veramente troppo op», poi «togliamola per
 ora, e togli quell'effetto delle fiamme sul personaggio» e «il moltiplicatore ecc non deve durare tutto il tempo ma una manciata di secondi»
 (20 ottobre notte): le ondate sono tolte (codice nel commit 22ea83a) e la partita d'arena è di nuovo **le 10 stanze di sempre**; via le
-fiamme dell'SSS; la Furia dà oro ed esperienza in più solo per **6 secondi dopo ogni rango nuovo** (`CN_FUT`), un colpo preso la spegne. Per le Nemesi spavalde Denis ha permesso il sangue anche nella Classica
+fiamme dell'SSS; la Furia dà oro ed esperienza in più solo per **6 secondi dopo ogni rango nuovo** (`CN_FUT`), un colpo preso la spegne. Poi (20 ottobre notte, Denis con le foto di Archero 2: «dovremmo modificare la scalata delle arene e metterci modalità diverse ogni tot») la **scalata a giro**, una modalità per arena: **le stanze** (1, 4, 7, 10), **la torre che sale** (2, 5 da 10 piani, 8, 11 da 20 col campione ogni 5: un'ondata per piano, nemici che si arrampicano dal bordo, la piattaforma che sale, buchi nel pavimento, piano del premio; «non tocca copiare l'idea ad archero») e **le trappole** (3, 6, 9, 12: percorso coi tre traguardi, trappole e nemici, fuga dal crollo, custode tra le trappole); prove `node tests/classica.js ondate|trappole`. Per le Nemesi spavalde Denis ha permesso il sangue anche nella Classica
 («aggiungi pure il sangue se necessario»): il taglio rosso e le gocce quando ti uccidono, le macchie sul manifesto. Restano la mappa coi
 bracieri (senza stelle), il bottone «Premi», le élite coi poteri, la Torre e la Corsa.
 

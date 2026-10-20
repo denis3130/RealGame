@@ -4,8 +4,10 @@
 // la Furia (ranghi, moltiplicatore per 6 secondi, colpo che la spezza, niente fiamme); le carte con la rarità a sorpresa (rivelazione,
 // effetti più grandi, due livelli alle leggendarie); le evoluzioni spettacolari (la carta, la trasformazione, tutte e sei insieme senza
 // errori); la Nemesi (chi ti uccide si prende l'oro, il manifesto, l'invasione in una stanza a caso col sacco, le frasi, la taglia, la
-// Nemesi che cresce, il custode che tiene l'oro); la Torre fino al piano 20 e la Corsa dei boss.
-// Foto tests/cn_<n>.png. Uso: python3 anteprime/mk_classica.py --test --build && node tests/classica.js [menu|stanze|furia|rarita|evo|nemesi|torre|corsa]
+// Nemesi che cresce, il custode che tiene l'oro); la Torre fino al piano 20 e la Corsa dei boss; la scalata a giro: la torre che sale
+// (piani, nemici dai bordi, la salita, i buchi, i Campioni, il premio, il custode, la torre da 20 col campione) e le trappole (percorso coi
+// traguardi, trappole e nemici, la fuga dal crollo, il custode tra le trappole), la modalità sulla scheda e sulla mappa.
+// Foto tests/cn_<n>.png. Uso: python3 anteprime/mk_classica.py --test --build && node tests/classica.js [menu|stanze|furia|rarita|evo|nemesi|torre|corsa|ondate|trappole]
 const {chromium}=require('playwright');const path=require('path');
 const SOLO=process.argv[2]||'';
 (async()=>{const b=await chromium.launch({args:['--autoplay-policy=no-user-gesture-required']});const p=await b.newPage({viewport:{width:390,height:844},deviceScaleFactor:2});const errs=[];
@@ -183,5 +185,60 @@ const SOLO=process.argv[2]||'';
     const r1=await J(`({i:G.rush.i,beat:G.rush.beat})`);await snap('corsa_4');ok('da un custode all\'altro (4 custodi di fila)',r1.i>=3&&seen.size>=3,JSON.stringify(Object.assign({visti:[...seen]},r1)));
     await E(`(()=>{__A.on=false;endRun(false,true);return 0})()`);await W(500);const r2=await J(`({tag:$('endTag').textContent,best:SAVE.cn.rush.best,t:SAVE.trophies,b:SAVE.bestA})`);await snap('corsa_fine');
     ok('la fine della Corsa: record e niente coppe o record d\'arena cambiati',r2.tag==='Corsa dei boss'&&r2.best>=3&&r2.t===tr0.t&&JSON.stringify(r2.b)===JSON.stringify(tr0.b),JSON.stringify(r2));
+  }
+  // ---------------------------------------------------------------- the tower that rises (arena 2; arena 8 has 20 floors)
+  const helpers=`(()=>{SAVE.cn.all=true;window.__step=(sec)=>{for(let i=0;i<sec*30;i++){if(!$('skScr').hidden){CN.revEnd=0;pick(0);if(!$('skScr').hidden)pick(0)}if(!$('revScr').hidden)$('rvNo').click();if(G.hitstop>0)G.hitstop=0;P.hp=P.maxhp;update(1/30)}};
+    window.__kill=()=>{for(const e of G.enemies.slice())if(!e.cnAnchor&&!e.dead&&!isBoss(e.type)){e.spawn=0;e.intro=0;hurtE(e,e.hp+(e.cnSh||0)+1,false)}};
+    window.__floor=(f)=>{G.si=f-2;G.cnTw.px=P.x;G.cnTw.py=P.y;G.enemies=[];G.cnRise=null;nextStep()};return 0})()`;
+  if(!SOLO||SOLO==='ondate'){
+    await E(helpers);await arena(1);await E(`(()=>{__A.on=false;return 0})()`);
+    const o0=await J(`({mode:G.cnMode,plan:G.cnTw.plan.map(q=>q.k).join(''),seq:G.seq.map(q=>q.c).join(','),hud:!$('cnTow').hidden&&$('cnTow').textContent,chip:$('roomChip').classList.contains('cnw')&&$('cnFlTxt').textContent,
+      edge:G.enemies.filter(e=>!e.cnAnchor&&!isBoss(e.type)).every(e=>e.x<=L+40||e.x>=R-40||e.y>=BOT-40)})`);await snap('torre_piano1');
+    ok('la torre: 10 piani (Campioni alla 5, premio alla 8, custode alla 10), nemici che salgono dai bordi, la barra dei piani',o0.mode==='torre'&&o0.plan==='nnnnennpnb'&&o0.seq==='1,2,3,4,5,6,7,8,9,10'&&/Piano 1\/10/.test(o0.hud)&&o0.chip==='1/10'&&o0.edge,JSON.stringify(o0));
+    for(let k=0;k<12&&!(await E(`!!G.cnRise`));k++)await E(`(()=>{__kill();__step(.4);return 0})()`);
+    const o1=await J(`({rise:!!G.cnRise,ban:$('banner').textContent,px:Math.round(P.x),py:Math.round(P.y)})`);await E(`__step(.5);0`);await snap('torre_sale');
+    await E(`__step(2.4);0`);const o2=await J(`({f:G.cnTw.f,room:G.room,rise:!!G.cnRise,holes:(G.cnHoles||[]).length,inHole:cnInHole(P.x,P.y,0),px:Math.round(P.x),py:Math.round(P.y),hud:$('cnTow').textContent})`);await snap('torre_piano2');
+    ok('ripulito il piano, la piattaforma sale al piano 2: l\'eroe resta dov\'era, un buco nel pavimento',o1.rise&&/Il piano sale/.test(o1.ban)&&o2.f===2&&o2.room===2&&!o2.rise&&o2.holes>=1&&!o2.inHole&&Math.hypot(o2.px-o1.px,o2.py-o1.py)<40&&/Piano 2\/10/.test(o2.hud),JSON.stringify({o1,o2}));
+    const hb=await J(`(()=>{const h=G.cnHoles[0],p=h.parts[0];P.x=p.x;P.y=p.y-p.r*.62-24;for(let i=0;i<40;i++)moveCircle(P,0,3,false);const [ci,cj]=cellOf(p.x,p.y);fields={};const f=field(14);return{inside:cnInHole(P.x,P.y,0),nav:f.blk[cj*GC+ci]===1}})()`);
+    ok('nel buco non si cade: l\'eroe ci gira intorno e i nemici lo evitano',!hb.inside&&hb.nav,JSON.stringify(hb));
+    await E(`(()=>{P.x=AW/2;P.y=BOT-60;__floor(5);__step(2.5);return 0})()`);const o5=await J(`({f:G.cnTw.f,k:G.cnTw.k,el:G.enemies.filter(e=>e.elite&&e.cnAfx).length})`);await snap('torre_campioni');
+    ok('il piano 5: i Campioni coi poteri',o5.f===5&&o5.k==='e'&&o5.el>=2,JSON.stringify(o5));
+    await E(`(()=>{__floor(8);__step(2.5);return 0})()`);const o8=await J(`({k:G.cnTw.k,pick:G.cnPick&&G.cnPick.map(s=>s.k),anchor:G.enemies.some(e=>e.cnAnchor),n:G.enemies.filter(e=>!e.cnAnchor).length,rocks:G.rocks.filter(k=>G.cnPick.some(q=>Math.hypot(k.x-q.x,k.y-q.y)<k.r+60)).length})`);await snap('torre_premio');
+    await E(`(()=>{P.hp=Math.round(P.maxhp*.4);const s=G.cnPick[0];P.x=s.x;P.y=s.y+6;cnShrineTick(.016);return 0})()`);const h8=await J(`({hp:P.hp,max:P.maxhp})`);
+    await E(`(()=>{for(let i=0;i<60;i++)update(1/30);return 0})()`);const o8b=await J(`({anchor:G.enemies.some(e=>e.cnAnchor),st:G.state,pick:!!G.cnPick})`);
+    ok('il piano del premio: la fonte o l\'altare, niente ostacoli addosso; la fonte cura e il piano si ripulisce',o8.k==='p'&&o8.pick.join()==='fonte,altare'&&o8.anchor&&o8.n===0&&o8.rocks===0&&h8.hp>=h8.max*.75&&!o8b.anchor&&!o8b.pick&&o8b.st!=='play',JSON.stringify({o8,h8,o8b}));
+    await E(`(()=>{__floor(10);__step(2);__A.on=true;__A.every=3;return 0})()`);const o10=await J(`({k:G.cnTw.k,boss:(G.enemies.find(e=>isBoss(e.type))||{}).type,hud:$('cnTow').innerHTML.includes('svg')})`);await snap('torre_custode');
+    const end=await run(90);await W(1200);const oe=await J(`({ends:__A.ends,room:$('eRoom').textContent,lab:$('eRoom').nextElementSibling&&$('eRoom').nextElementSibling.textContent,best:SAVE.cn.best[1],etr:$('eTr').textContent.replace(/\\s+/g,' ').slice(0,120)})`);await snap('torre_vittoria');
+    ok('il custode in cima alla torre; la vittoria col piano 10 e il braciere',o10.k==='b'&&o10.boss==='salamander'&&end&&oe.ends[0]&&oe.ends[0].title==='VITTORIA'&&oe.room==='10'&&oe.lab==='Piano'&&oe.best&&oe.best.fl===10&&/braciere/.test(oe.etr),JSON.stringify({o10,oe}));
+    await arena(7);await E(`(()=>{__A.on=false;return 0})()`);const t20=await J(`({plan:G.cnTw.plan.map(q=>q.k).join(''),n:G.seq.length})`);
+    await E(`(()=>{P.x=AW/2;P.y=BOT-60;__floor(5);__step(2.6);return 0})()`);const mb=await J(`(()=>{const m=G.enemies.find(e=>e.cnMini);return m?{afx:m.cnAfx.length,name:m.cnName,big:m.max>ET[m.type].hp*3,n:G.enemies.length}:null})()`);await snap('torre_campione');
+    ok('la torre lunga (arena 8): 20 piani, il campione del piano ogni 5 coi tre poteri',t20.n===20&&t20.plan==='nnnnmnnpnmnnnnmpnnnb'&&mb&&mb.afx===3&&mb.name==='Campione del piano'&&mb.big,JSON.stringify({t20,mb}));
+  }
+  // ---------------------------------------------------------------- the traps (arena 3)
+  if(!SOLO||SOLO==='trappole'){
+    await E(helpers);await arena(2);await E(`(()=>{__A.on=false;__step(1.5);return 0})()`);
+    const c0=await J(`({mode:G.cnMode,kind:G.cnTr.kind,tr:[...new Set(G.cnTr.list.map(o=>o.k))].join(','),coins:G.cnTr.coins.length,en:G.enemies.length,door:G.door,hud:$('cnHud').textContent})`);await snap('trappole_percorso');
+    ok('il percorso: lame, trave, spuntoni e sfiati, nove monete, la porta aperta, i tre traguardi',c0.mode==='trappole'&&c0.kind==='corso'&&c0.tr==='saw,beam,spk,vent'&&c0.coins===9&&c0.en===0&&c0.door&&/Tempo/.test(c0.hud)&&/Monete0\/9/.test(c0.hud.replace(/\\s/g,'')),JSON.stringify(c0));
+    const c1=await J(`(()=>{const T=G.cnTr,r={};let o=T.list.find(o=>o.k==='saw');P.inv=0;P.dashT=0;let h0=P.hp;P.x=o.x;P.y=o.y;cnTrTick(.016);r.saw=h0-P.hp;
+      o=T.list.find(o=>o.k==='vent');o.ph=o.per*.9-T.t;P.inv=0;h0=P.hp;P.x=o.x;P.y=o.y;cnTrTick(.016);r.vent=h0-P.hp;r.hit=T.hit;return r})()`);
+    ok('le trappole fanno male: la lama e lo sfiato (e il traguardo «nessun colpo» salta)',c1.saw>0&&c1.vent>0&&c1.hit,JSON.stringify(c1));
+    const c2=await J(`(()=>{for(const c of G.cnTr.coins){P.x=c.x;P.y=c.y;cnTrTick(.016)}const g0=G.gold,k0=G.gemsRun||0;P.x=AW/2;P.y=TOP+4;cnTrTick(.016);return{res:G.cnTr.res,gold:G.gold-g0,gems:(G.gemsRun||0)-k0,ban:$('banner').textContent}})()`);
+    ok('all\'uscita i traguardi diventano oro e cristalli',c2.res&&c2.res[0]&&!c2.res[1]&&c2.res[2]&&c2.gold===30&&c2.gems===2&&/★★☆/.test(c2.ban),JSON.stringify(c2));
+    await E(`(()=>{const k=G.seq.findIndex(q=>q.c===2);G.si=k-1;G.enemies=[];nextStep();__step(2.5);return 0})()`);
+    const m0=await J(`(()=>{const o=G.cnTr.list.find(o=>o.k==='saw'),e=G.enemies.find(e=>canHit(e)&&!cnFlies(e)&&!isBoss(e.type));let d=0;if(o&&e){const h=e.hp;e.x=o.x;e.y=o.y;e.cnTrT=0;cnTrTick(.016);d=Math.round(h-e.hp)}return{kind:G.cnTr.kind,n:G.cnTr.list.length,en:G.enemies.length,d}})()`);await snap('trappole_misto');
+    ok('trappole e nemici: le trappole colpiscono anche loro',m0.kind==='misto'&&m0.n>=3&&m0.en>=2&&m0.d>0,JSON.stringify(m0));
+    await E(`(()=>{const k=G.seq.findIndex(q=>q.c===3);G.si=k-1;G.enemies=[];nextStep();__step(3.6);return 0})()`);
+    const f0=await J(`({kind:G.cnTr.kind,door:G.door,st:G.state,col:Math.round(G.cnCol.y),bot:BOT,en:G.enemies.length})`);await snap('trappole_fuga');
+    const f1=await J(`(()=>{P.inv=0;P.dashT=0;const h0=P.hp;P.y=G.cnCol.y+20;cnColTick(.016);return{dmg:h0-P.hp,above:P.y<G.cnCol.y}})()`);
+    await E(`(()=>{P.x=AW/2;P.y=TOP+4;__step(.1);P.y=TOP-20;__step(1.2);return 0})()`);await W(900);const f2=await J(`({room:G.room,kind:G.cnTr&&G.cnTr.kind})`);
+    ok('la fuga dal crollo: porta aperta coi nemici in giro, il crollo sale, chi resta sotto prende un colpo e salta avanti, si esce',f0.kind==='fuga'&&f0.door&&f0.st==='play'&&f0.col<f0.bot&&f1.dmg>0&&f1.above&&f2.room===4&&f2.kind==='corso',JSON.stringify({f0,f1,f2}));
+    await E(`(()=>{const k=G.seq.findIndex(q=>q.c===10);G.si=k-1;G.enemies=[];nextStep();__step(3);return 0})()`);
+    const b0=await J(`(()=>{const b=G.enemies.find(e=>isBoss(e.type)),o=G.cnTr.list.find(o=>o.k==='saw');let d=0;if(b&&o){b.intro=0;const h=b.hp,x=b.x,y=b.y;b.x=o.x;b.y=o.y;b.cnTrT=0;cnTrTick(.016);d=Math.round(h-b.hp);b.x=x;b.y=y}return{kind:G.cnTr.kind,tr:G.cnTr.list.map(o=>o.k).join(','),boss:b&&b.type,d}})()`);await snap('trappole_custode');
+    ok('il custode tra le trappole, che colpiscono anche lui',b0.kind==='boss'&&b0.tr==='saw,saw,vent,vent'&&b0.boss==='toad'&&b0.d>0,JSON.stringify(b0));
+    await toMenu();await E(`(()=>{SAVE.cn.pick=1;renderChap();return 0})()`);await W(300);
+    const k0=await J(`({t:$('chapCard').textContent,n:$('chapCard').querySelectorAll('.rn').length})`);await snap('scheda_torre');
+    await p.click('#chapCard');await W(500);const mp=await J(`({badges:document.querySelectorAll('#cnMap .cnMoN').length,line:(document.querySelector('#cnMap .cnMoL')||{}).textContent})`);await snap('mappa_modi');
+    await p.click('#cnMap .cnX');await W(300);
+    ok('scheda e mappa dicono la modalità di ogni arena',/La torre che sale/.test(k0.t)&&k0.n===10&&mp.badges===12&&/torre che sale/.test(mp.line||''),JSON.stringify({k0:k0.t.slice(0,80),n:k0.n,mp}));
   }
   console.log('\n'+R.join('\n'));console.log(errs.length?'ERRORI:\n'+[...new Set(errs)].slice(0,20).join('\n'):'nessun errore');await b.close()})();

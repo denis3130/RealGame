@@ -5,9 +5,44 @@ delle coppe con le arene», poi «ok creami le cose che mi hai elencato su una c
 `classica-nuova` (da `piano-maestro`); il gioco vero non cambia: `src/js/94-classica-nuova.js` **non** è in `src/ordine.txt`. Pagina:
 `python3 anteprime/mk_classica.py [--build]` → `anteprime/classica.html` (parte con un salvataggio suo, già dopo la creazione dell'eroe),
 pubblicata su https://claude.ai/artifact/K6E5QMv5pxKkt61MCFJsba («Mossbound · Classica nuova»: si aggiorna ripubblicando
-`anteprime/classica.html`). Prova: `python3 anteprime/mk_classica.py --test --build && node tests/classica.js [menu|stanze|furia|rarita|evo|nemesi|torre|corsa]`.
+`anteprime/classica.html`). Prova: `python3 anteprime/mk_classica.py --test --build && node tests/classica.js [menu|stanze|furia|rarita|evo|nemesi|torre|corsa|ondate|trappole]`.
 
-## Le ondate tolte (20 ottobre notte)
+## La scalata a giro: una modalità per arena (20 ottobre notte)
+
+Denis, con quattro foto di Archero 2 (tre di ondate su isole con i ponti, una di un percorso a trappole): «dovremmo modificare la scalata
+delle arene e metterci modalità diverse ogni tot tipo la modalità che abbiamo già va bene, si inizierà così a inizio game. aggiungiamo una
+modalità simile a quelle che vedi nelle prime 3 immagini […] ed un'altra come l'ultima». Le sue risposte alle domande: **una modalità per
+arena, a giro**; per le ondate «come le isole con i ponti ma non tocca copiare l'idea ad archero tocca fare una cosa molto diversa» → **la
+torre che sale**; **10 ondate e il custode nelle arene 2 e 5, 20 col boss ogni 5 nelle 8 e 11**; l'eroe cresce **come nelle stanze**; per le
+trappole **tutti e tre i tipi** di stanza e **il custode alla fine**.
+
+| Arene | Modalità | Com'è fatta |
+|---|---|---|
+| 1, 4, 7, 10 | **Le stanze** | Le 10 stanze di sempre (si comincia così) |
+| 2, 5 · 8, 11 | **La torre che sale** | 10 piani (Campioni al 5, premio all'8, custode al 10) · 20 piani (campione del piano al 5, 10, 15, premio all'8 e al 16, custode al 20) |
+| 3, 6, 9, 12 | **Le trappole** | Percorso (1, 4, 7), trappole e nemici (2, 5, 8), fuga dal crollo (3, 6, 9), custode tra le trappole (10) |
+
+- **La torre che sale** (`cnTowPlan`, `cnTowSetup`, `cnTowTick`): un'ondata per piano, ognuno con la forza di una stanza (`c`: vita, danno,
+  nemici ed esperienza come nelle stanze; nella torre da 20 ogni piano ha due terzi dei nemici). I nemici **salgono dall'abisso e si
+  arrampicano sul bordo** della piattaforma (a sinistra, a destra o in basso, mai addosso all'eroe: le mani sul bordo e la polvere), metà
+  subito e il resto quando i primi sono quasi finiti («Ne arrivano altri!», tenuto aperto dal segnaposto `cnanchor`). Ripulito il piano, monete
+  ed esperienza arrivano all'eroe e **la piattaforma sale** (2,6 s: trema, sassi e polvere che cadono, bande d'ombra che scorrono, un attimo
+  di buio quando attraversa il solaio, il tonfo all'arrivo); l'eroe resta dov'era. Dal piano 2 **buchi nel pavimento** (`cnHolesMake`): si
+  vede l'abisso con la parete di pietra e la luce del mondo in fondo; chi cammina ci gira intorno (anche nella navigazione dei nemici), chi
+  vola no, i colpi ci passano sopra. **Campione del piano** (`cnMiniBoss`): il nemico più forte del piano con tre poteri e la vita ×3,2.
+  **Piano del premio** (`cnShrines`): la fonte (cura il 40%) o l'altare (un'abilità); l'altra si sbriciola. Barra dei piani in alto
+  (`#cnTow`: il piano e i prossimi cinque, con le icone di Campioni, campione, premio e custode) e «7/20» al posto della stanza. A fine
+  partita il piano raggiunto e il record (`SAVE.cn.best[a].fl`).
+- **Le trappole** (`CN_TRK`, `cnTrapSetup`, `cnTrTick`): **lame** che girano sui binari, **travi runiche** che scorrono, **spuntoni** a tempo
+  (i buchi si accendono prima), **sfiati del mondo** (fiamma d'ombra, getto di lava, geyser di veleno, soffio di brina che rallenta). Colpiscono
+  anche i nemici (16% della vita) e il custode (2%). **Percorso**: niente nemici, la porta aperta, nove monete a zig zag; tre traguardi
+  (tempo, nessun colpo, tutte le monete): 15 oro e un cristallo ciascuno, tutti e tre anche la cura del 20%, e l'esperienza della stanza.
+  **Trappole e nemici**: la stanza di sempre con 3–4 trappole. **Fuga dal crollo**: il pavimento crolla dal fondo (`cnColTick`) sempre più
+  svelto, la porta è aperta anche coi nemici in giro, chi resta sotto la linea prende un colpo (18% della salute, mai l'ultimo) e salta in
+  avanti; i nemici e gli ostacoli sotto la linea cadono. **Custode**: due lame sui lati e due sfiati.
+- Scheda dell'arena e mappa: la modalità di ogni arena (icona e nome, sulla mappa anche la riga che la spiega), la striscia coi piani o con
+  le stanze delle trappole, il record giusto. La Nemesi non invade il percorso, la fuga né il piano del premio.
+
 
 Denis, dopo averla provata: «è troppo rotta come modalità quella dei 5minuti bro siamo veramente troppo op rispetto ai nemici gli
 fulminiamo»; poi «togliamola per ora, e togli quell'effetto delle fiamme sul personaggio che sblocchi con le abilità» e «il

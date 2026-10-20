@@ -1,7 +1,7 @@
 # Pagina della Classica nuova (Denis, 20 ottobre: «ok creami le cose che mi hai elencato su una cosa a parte senza intaccare il progetto
-# principale», poi la seconda versione con le sue risposte): una copia del gioco con src/js/94-classica-nuova.js (arena a ondate per 5
-# minuti e poi il boss, Furia a catena, carte con la rarità a sorpresa, evoluzioni spettacolari, la Nemesi che si prende il tuo oro, mappa
-# del mondo coi bracieri, menu con «Premi», élite coi poteri, Torre della settimana e Corsa dei boss). Il gioco vero non cambia: 94 non è in
+# principale», poi la seconda versione con le sue risposte): una copia del gioco con src/js/94-classica-nuova.js (la scalata a giro: stanze,
+# torre che sale e trappole; Furia a catena, carte con la rarità a sorpresa, evoluzioni spettacolari, la Nemesi che si prende il tuo oro,
+# mappa del mondo coi bracieri, menu con «Premi», élite coi poteri, Torre della settimana e Corsa dei boss). Il gioco vero non cambia: 94 non è in
 # src/ordine.txt. La pagina parte con un salvataggio suo, già dopo la creazione dell'eroe.
 # Uso: python3 anteprime/mk_classica.py [--test] [--build]
 #   --test   la pagina per le prove (tests/classica_test.html, con window.__E come tests/test.html)
