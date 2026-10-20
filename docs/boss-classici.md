@@ -941,8 +941,9 @@ d'oro si aprono sotto, escono i ventagli e le teste. **Sconfitta** (`die`, 4 s):
   con LOWFX 1,1. Per restarci: spire e coda senza ritaglio, cappucci senza ritaglio (ogni segno sta dentro per costruzione), un bagliore
   per le due pupille, le corna corte senza sfumatura, la luce della pozza solo sulla parte bassa dei colli. La stanza intera 3,3–3,8 ms.
 - 13.056 disegni (tutte le mosse in 24 momenti, 8 direzioni, le due fasi, normale e LOWFX, più tutti i disegni per il gioco) senza errori.
-- Difficoltà (arena 7, eroe fermo che tira, caso peggiore): oggi 9,2 vite al minuto, nuova 6,7 (tanti colpi piccoli delle pozze: da fermo è
-  la pozza che fa più male, come vuole il design). Il cervello non è cambiato (solo `B2H.hydra` 112, l'alone per la testa più alta).
+- Difficoltà (arena 7, eroe fermo che tira, livello 4, caso peggiore, 3 prove col modello nuovo, 20 ottobre): Idra di oggi 8,5 vite al
+  minuto, nuova 6,7 (fase 1 circa 7; tanti colpi piccoli delle pozze: da fermo è la pozza che fa più male, come vuole il design); l'eroe
+  fermo la batte in circa 234 s. Come con la prima versione: il cervello non è cambiato (solo `B2H.hydra` 112, l'alone per la testa più alta).
 
 ### File e prove
 
