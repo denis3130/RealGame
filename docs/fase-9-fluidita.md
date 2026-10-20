@@ -84,7 +84,10 @@ Copiare un'immagine 1:1 su pixel interi costa 5–7 volte meno che copiarla scal
     Misure (questo computer, 2 pixel a punto, mediane; i numeri ballano molto): fermo 35–55 → 25–41 ms a fotogramma (il disegno degli
     oggetti da 30–45 a 9–13 ms), in giù 35–63 → 26–48, di lato 33–84 → 25–57 (gli oggetti vicini al centro restano dal vivo), con 10 zombie
     di lato 46–76 → 39–70. Conteggi camminando di lato alla partenza: per fotogramma 47 copie, 6 ridipinti, 25 dal vivo (prima 78 dal vivo).
-    Prova: `node anteprime/zombie/copie_prova.js` (sotto).
+    Prova: `node anteprime/zombie/copie_prova.js` (sotto). Le prove di misura della mappa rifatte anche sul codice di prima delle copie
+    (24751dd) danno gli stessi numeri: `ordine_mappa.js`, `bara_ordine.js` (i 4 errori di 15 px a visuale girata c'erano già),
+    `visibilita.js`, `giro.js` (78,0 scambi per giro, oltre la soglia di 65 già prima: girando si disegna dal vivo); `navmappa.js` 93/96 in
+    tutti e due (cambia solo quale zombie resta fermo).
 
 ## Risultati (questo computer, un fotogramma con il disegno)
 
@@ -101,11 +104,12 @@ Circa il 35–45% in meno. `update()` costa meno di 1 ms: tutto il resto è dise
 
 - I **modelli 3D** (nemici ~1–2,5 ms l'uno qui, l'eroe ~3,5): tanti tratti sottili (contorni, pieghe) e riempimenti; non si alleggeriscono
   senza cambiarne l'aspetto. Gli ostacoli animati (`ROCK_LIVE`: canne, bracieri, cumuli di fango…) ~0,5 ms l'uno.
-- Da provare sul telefono vero di Denis: fluidità in battaglia, nel menu, nei passaggi di stanza.
+- Da provare sul telefono vero di Denis: fluidità in battaglia, nel menu, nei passaggi di stanza e sulla mappa zombie.
 
 ## Anteprima sul telefono
 
-https://claude.ai/artifact/N8yfkjf53iaBG8PLeYkaHx («Mossbound Fase 9», 20 ottobre): il gioco di `piano-maestro` diviso in tre pezzi come
+https://claude.ai/artifact/N8yfkjf53iaBG8PLeYkaHx («Mossbound Fase 9», 20 ottobre; ripubblicata lo stesso giorno con gli strati fermi della
+mappa zombie, commit efe05c4): il gioco di `piano-maestro` diviso in tre pezzi come
 quello pubblicato (`python3 app/mk_claude.py index.html <cartella>`, titolo cambiato). Ha il suo salvataggio (un'altra pagina): si parte
 dal prologo, oppure si porta il proprio col codice di salvataggio (Impostazioni → Salvataggio).
 

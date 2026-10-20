@@ -218,7 +218,8 @@ muove di più di mezzo pixel della tela, quando cambia un pezzo (ante, assi, por
 un prop insieme; a telecamera ferma le copie tornano esatte; i disegni a mano, le fiamme e chi cambia a ogni fotogramma dal vivo come prima;
 48 MB di tele al massimo, liberate uscendo dalla mappa; girando la visuale tutto dal vivo. Fermo: il disegno degli oggetti da 30–45 a 9–13 ms qui; di lato restano dal
 vivo gli oggetti vicini al centro. Prova `node anteprime/zombie/copie_prova.js` (fermo uguale al disegno dal vivo, arrotondamenti dei bordi a
-parte). Solo in `piano-maestro`, nell'anteprima della FASE 9: il ramo `gioco` (pubblicato) non ce l'ha finché Denis non dice sì.
+parte; le prove di misura della mappa danno gli stessi numeri del codice di prima). Solo in `piano-maestro` e nell'anteprima della FASE 9
+(ripubblicata il 20 ottobre con le copie, commit efe05c4): il ramo `gioco` (pubblicato) non ce l'ha finché Denis non dice sì.
 
 ## Modalità zombie (nel gioco dal 13 ottobre)
 
