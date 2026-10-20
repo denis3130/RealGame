@@ -226,7 +226,7 @@ solo dove si vedono, niente sfocatura invisibile dietro `#chestScr`, tela della 
 **falò** −25% (strato del campo ridipinto un fotogramma sì e uno no mentre l'eroe sta seduto, zombie del sentiero in tele loro ridipinte a
 turno); **mappa zombie**: zombie dalle buche entro 420 punti a piedi (prima quelle fuori dallo schermo; se meno di due le tre più vicine
 entro 700, `pickHole`), esseri disegnati solo se toccano lo schermo (`visB`), zombie fermi delle zone chiuse fermi anche nell'aggiornamento
-se lontani (salvo le barriere che li chiamano), fumo e foglie solo vicino allo schermo. Dettagli in `docs/fase-9-fluidita.md` (14–16).
+se lontani (salvo le barriere che li chiamano), fumo e foglie solo vicino allo schermo. Anteprima della FASE 9 ripubblicata con tutto questo (commit 24ae4a2). Dettagli in `docs/fase-9-fluidita.md` (14–16).
 
 ## Modalità zombie (nel gioco dal 13 ottobre)
 
