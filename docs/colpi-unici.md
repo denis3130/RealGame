@@ -83,7 +83,7 @@ tutto intorno: Golem, Yeti, Strega, Idra, Burattinaio, Piovra, Fenice, Salamandr
 
 - Pagina: `python3 anteprime/mk_colpi.py` → `anteprime/colpi.html` (una copia del gioco coi 13 boss rifatti e il file dei colpi; il
   pannello «Colpi»: scegli un nemico o un boss, «Colpi nuovi» / «Colpi di oggi», «Élite», «L'eroe cammina avanti e indietro», «L'eroe non
-  tira», «Fase 2» per i boss). Pubblicata (l'indirizzo è in CLAUDE.md).
+  tira», «Fase 2» per i boss). Pubblicata su https://claude.ai/artifact/7RuqpJPGVgabvySyuYfXNZ (si aggiorna ripubblicando `anteprime/colpi.html`).
 - `node tests/colpi.js [tipo ...]`: ogni nemico (anche l'élite) spara il suo colpo, foto `tests/cu_<tipo>.png`, i colpi di oggi con «Colpi
   di oggi», il costo del disegno.
 - `node tests/colpi_moto.js`: ogni modo di sparare messo alla prova (riga di mira, frecce in fila, dardi piantati e paralleli, semi che

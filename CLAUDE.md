@@ -178,7 +178,8 @@ tutti, Burattinaio coi rombi d'Arlecchino sui fili d'oro che vanno e tornano, Pi
 pesanti che cadono a 130 px, Yeti con le schegge che rimbalzano una volta, Strega coi semi che accelerano, Idra con l'anello in tre ondate
 (una per testa), Cervo con le sue schegge anche nell'anello. Danni e cadenze uguali. I pezzi fermi si copiano da piccole tele (FASE 9):
 ogni colpo costa 2–40 µs (la palla rossa di oggi 15–27). Dettagli, tabelle e misure in `docs/colpi-unici.md`. Pagina:
-`python3 anteprime/mk_colpi.py` (pannello «Colpi»: un nemico o un boss alla volta, «Colpi nuovi» / «Colpi di oggi», élite, eroe che
+`python3 anteprime/mk_colpi.py`, pubblicata su https://claude.ai/artifact/7RuqpJPGVgabvySyuYfXNZ (si aggiorna ripubblicando
+`anteprime/colpi.html`; pannello «Colpi»: un nemico o un boss alla volta, «Colpi nuovi» / «Colpi di oggi», élite, eroe che
 cammina e non tira, «Fase 2»). Prove: `node tests/colpi.js`, `tests/colpi_moto.js`, `tests/colpi_boss.js`, `tests/colpi_oggi.js` (i boss
 di oggi restano come sono), `tests/colpi_foglio.js` (foglio ingrandito); `mk_boss2.py <tipo> --test --colpi` per `boss2gioco.js` coi
 colpi nuovi. Nel gioco dopo il sì di Denis: `js/93-colpi-unici.js` in fondo a `src/ordine.txt`.
