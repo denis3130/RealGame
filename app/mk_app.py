@@ -84,9 +84,10 @@ for f in ICONS:shutil.copy(os.path.join(here,f),os.path.join(out,f))
 print('app/sito pronta (versione %s, %d KB)'%(ver,sum(os.path.getsize(os.path.join(out,f)) for f in os.listdir(out))//1024))
 
 if '--pubblica' in sys.argv:
-  # the app on the phone comes only from the branch of the game (never from a preview being worked on)
+  # the app on the phone comes only from the branch of the game (never from a preview being worked on): piano-maestro, or gioco when
+  # piano-maestro has inside something Denis has not said yes to yet (gioco = piano-maestro without it, see CLAUDE.md)
   br=subprocess.run(['git','rev-parse','--abbrev-ref','HEAD'],cwd=root,capture_output=True,text=True).stdout.strip()
-  if br!='piano-maestro':sys.exit('la app si pubblica solo dal ramo piano-maestro (ora: %s)'%br)
+  if br not in('piano-maestro','gioco'):sys.exit('la app si pubblica solo dai rami piano-maestro e gioco (ora: %s)'%br)
   # the gh-pages branch in a worktree of its own: the files of the app replace the old ones, one more commit, push
   g=lambda *a,**k:subprocess.run(['git']+list(a),cwd=k.get('cwd',root),check=k.get('check',True),capture_output=True,text=True)
   wt=tempfile.mkdtemp(prefix='gh-pages-')
