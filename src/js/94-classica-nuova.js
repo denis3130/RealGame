@@ -2,12 +2,16 @@
 // Denis: «ok creami le cose che mi hai elencato su una cosa a parte senza intaccare il progetto principale». Questo file NON è in
 // src/ordine.txt: lo mette python3 anteprime/mk_classica.py in una copia del gioco (ramo classica-nuova). CN.on lo spegne.
 // Seconda versione (Denis: «mi piace la grafica delle cose che hai aggiunto ma non la meccanica […] ispirandoti ai giochi più in foga»,
-// poi le sue risposte alle domande): la partita d'arena sono 5 minuti di ondate e poi il boss (cnWave*); la Furia a catena (CN_FU); le
+// poi le sue risposte alle domande): la Furia a catena (CN_FU); le
 // carte con la rarità a sorpresa (CN_RAR); le evoluzioni spettacolari (CN_EVO); la Nemesi, il nemico che ti uccide, si prende l'oro della
 // partita e torna a cercarti (cnNem*: buffa o spavalda, e per le spavalde un po' di sangue: «aggiungi pure il sangue se necessario»).
 // Restano della prima versione la mappa del mondo coi bracieri (senza stelle), il menu con «Premi», le élite coi poteri (CN_AFX), la Torre
 // e la Corsa dei boss con le reliquie. Il salvataggio nuovo sta in SAVE.cn (vittorie, record, reliquie, Torre, Corsa, Nemesi, oro dei custodi).
-const CN={on:true,next:null,last:null,fx:[],err:0,sel:0,sub:null,pool:null,poolR:0,bub:[],lances:[],dr:[],rar:null,revEnd:0,revTok:0,forceRar:null,gAcc:0,gSkip:0,wS:-1};
+// Poi (Denis: «è troppo rotta come modalità quella dei 5minuti […] siamo veramente troppo op», «togliamola per ora, e togli quell'effetto
+// delle fiamme sul personaggio», «il moltiplicatore ecc non deve durare tutto il tempo ma una manciata di secondi»): via le ondate a tempo
+// (commit 22ea83a), la partita d'arena torna alle 10 stanze di sempre; via le fiamme dell'SSS; il moltiplicatore della Furia dura qualche
+// secondo dopo ogni rango nuovo (CN_FUT).
+const CN={on:true,next:null,last:null,fx:[],err:0,sel:0,sub:null,bub:[],lances:[],dr:[],rar:null,revEnd:0,revTok:0,forceRar:null,gAcc:0,gSkip:0};
 function cnS(){const S=SAVE.cn||(SAVE.cn={});S.stars=S.stars||{};S.relics=S.relics||{};S.tower=S.tower||{};S.rush=S.rush||{};S.best=S.best||{};S.nem=S.nem||[];S.nemOut=S.nemOut||[];S.bossGold=S.bossGold||{};return S}
 const cnErr=err=>{if(CN.err++<6)console.error('classica nuova:',err)};
 const cnBoss=i=>ARENAS[i].bt||BOSSZ[ARENAS[i].boss]||'golem';
@@ -15,7 +19,7 @@ const cnWon=i=>!!((cnS().stars[i]||0)&1);   // stars[i]: il primo bit è la vitt
 const cnOpen=i=>i===0||!!cnS().all||cnWon(i-1);
 const cnLit=()=>ARENAS.filter((_,i)=>cnWon(i)).length;
 function cnPick(){const S=cnS();let p=S.pick;if(p==null||!ARENAS[p]||!cnOpen(p)){p=0;for(let i=0;i<ARENAS.length;i++)if(cnOpen(i))p=i}return p}
-// una partita della Classica nuova: arena a ondate, Torre o Corsa (non l'Abisso di sempre né la sfida del giorno)
+// una partita della Classica nuova: arena, Torre o Corsa (non l'Abisso di sempre né la sfida del giorno)
 const cnRun=()=>CN.on&&!!G&&!G.daily&&(G.cnA!=null||!!G.tower||!!G.rush);
 const cnRgb=h=>{const n=parseInt(h.slice(1),16);return`${n>>16&255},${n>>8&255},${n&255}`};
 const cnMS=s=>{s=Math.round(s);return Math.floor(s/60)+':'+String(s%60).padStart(2,'0')};
@@ -80,7 +84,7 @@ const CN_HPROOM=.14;
 const cnAfxN=()=>(G.arena||0)>=3||G.room>=8?2:1;
 const cnAfxOk=()=>CN.on&&G&&!G.daily&&(G.mode==='camp'||!!G.tower);
 function cnMakeElite(e){if(e.elite)return;e.elite=true;e.hp*=2.2;e.max=e.hp;e.r=Math.round(e.r*1.2);e.gold*=3;e.cdmg=Math.round(e.cdmg*1.3)}
-function cnGiveAfx(e,n,ks){if(!e||isBoss(e.type)||e.cnAnchor)return;ks=ks||shuffle(Object.keys(CN_AFX)).slice(0,n);e.cnAfx=ks;e.cnCalm=0;e.cnSh=e.cnShM=0;
+function cnGiveAfx(e,n,ks){if(!e||isBoss(e.type))return;ks=ks||shuffle(Object.keys(CN_AFX)).slice(0,n);e.cnAfx=ks;e.cnCalm=0;e.cnSh=e.cnShM=0;
   e.cnFur=ks.includes('furia');e.cnGel=ks.includes('gelo');e.cnReg=ks.includes('rigenera');e.cnDiv=ks.includes('divide');e.cnBo=ks.includes('bomba');
   if(ks.includes('scudo')){e.cnSh=e.cnShM=Math.round(e.max*.35);e.cnShT=0}}
 {const _mk=makeE;makeE=function(t,x,y,sp,el){const e=_mk.apply(this,arguments);try{if(el&&e&&e.elite&&!e.cnAfx&&!isBoss(t)&&cnAfxOk()){e.hp*=2.2/2.6;e.max=e.hp;cnGiveAfx(e,cnAfxN())}}catch(err){cnErr(err)}return e}}
@@ -95,59 +99,32 @@ function cnAfxTick(dt){for(const e of G.enemies){if(!e.cnAfx||e.dead||e.spawn>0)
     if(e.cnReg){e.cnCalm+=dt;e.cnRegOn=e.cnCalm>1.6&&e.hp<e.max;if(e.cnRegOn)e.hp=Math.min(e.max,e.hp+e.max*.05*dt)}
     if(e.cnGel&&G.state==='play'&&!(P.dashT>0)&&Math.hypot(e.x-P.x,(e.y-P.y)*1.2)<64)P.mire=Math.max(P.mire||0,.12)}}
 
-// ---------------------------------------------------------------- 1 ondate a tempo (come la modalità a tempo di Archero 2, Megabonk, Survivor.io)
-// l'arena di oggi (460×820); 5 minuti di ondate sempre più fitte, un'ondata grande ogni minuto con le élite, poi la stanza del boss.
-// G.room sale da 1 a 9 col tempo, così vita, danno e cadenza dei nemici crescono come stanza dopo stanza. Un segnaposto invisibile
-// (cnAnchor) tiene la stanza aperta: non si chiude mai finché le ondate non sono finite.
-const CN_WV={dur:300,cap0:6,cap1:12,max:16,gap0:1.45,gap1:.5,bigs:[60,120,180,240]};   // max: mai più di 16 insieme (i modelli 3D sono la parte che costa)
-Object.defineProperty(ET,'cnanchor',{value:{r:1,hp:1,cdmg:0,gold:0,name:'',title:''},enumerable:false,configurable:true});ECOL.cnanchor='#000000';XPV.cnanchor=0;
-function cnAnchor(){if(G.enemies.some(e=>e.cnAnchor))return;const e=makeE('cnanchor',AW/2,TOP-400,1e9);if(SAVE.seen)delete SAVE.seen.cnanchor;e.cnAnchor=1;e.spawn=1e9;e.hidden=true;G.enemies.push(e)}
-function cnWaveStart(){const S=cnS(),n=cnNemWanted();G.cnW={t:0,sp:.8,bi:0,done:false,nemT:n?rand(70,200):-1,nemId:n?n.id:null};cnAnchor();CN.wS=-1;
-  banner('Ondate · 5 minuti','Resisti fino al custode',2.6);$('roomChip').classList.add('cnw');cnWaveHud(CN_WV.dur)}
-function cnWavePool(){if(CN.poolR!==G.room||!CN.pool){CN.poolR=G.room;CN.pool=compositionFor(G.room).filter(t=>ET[t]&&!isBoss(t)&&t!=='cnanchor')}return CN.pool.length?CN.pool:['slime']}
-function cnWaveSpot(r){for(let k=0;k<30;k++){const x=rand(L+30,R-30),y=rand(TOP+46,BOT-60),d=Math.hypot(x-P.x,y-P.y);if(d<165||d>480)continue;if(G.rocks.some(q=>Math.hypot(q.x-x,q.y-y)<q.r+r+12))continue;return{x,y}}return freeSpot(r,TOP+40,BOT-80)}
-function cnWaveSpawn(n,elite){const pool=cnWavePool();for(let i=0;i<n;i++){const t=pk(pool),s=cnWaveSpot(ET[t].r);G.enemies.push(makeE(t,s.x,s.y,.9,elite?true:eliteRoll(t)))}}
-function cnBigWave(n){banner('Ondata '+(n+1)+'!',n>=4?"L'ultima, poi il custode":'Arrivano in tanti',1.8);sfx('roar');shake(2);const room=CN_WV.max-G.enemies.filter(e=>!e.dead&&!e.cnAnchor).length,el=n>=3?2:1;
-  cnWaveSpawn(el,true);cnWaveSpawn(clamp(Math.min(2+n,room-el),0,6))}
-function cnWaveTick(dt){const W=G.cnW;if(!W||W.done||G.state!=='play')return;W.t+=dt;const k=Math.min(1,W.t/CN_WV.dur),room=Math.min(9,1+Math.floor(k*9));if(room!==G.room)G.room=room;
-  const alive=G.enemies.filter(e=>!e.dead&&!e.cnAnchor).length,cap=Math.round(CN_WV.cap0+(CN_WV.cap1-CN_WV.cap0)*k);
-  W.sp-=dt;if(W.sp<=0){W.sp=CN_WV.gap0+(CN_WV.gap1-CN_WV.gap0)*k;if(alive<cap)cnWaveSpawn(alive<cap-4&&k>.25?2:1)}
-  if(!alive&&W.t>2)cnWaveSpawn(2);
-  if(W.bi<CN_WV.bigs.length&&W.t>=CN_WV.bigs[W.bi]){W.bi++;cnBigWave(W.bi)}
-  if(W.nemT>0&&W.t>=W.nemT){W.nemT=-1;cnNemInvade()}
-  if(W.t>=CN_WV.dur)cnWaveEnd()}
-// alla fine il bottino rimasto a terra è tuo, i nemici fuggono nel fumo e si va dal custode
-function cnWaveEnd(){const W=G.cnW;W.done=true;let g=0;for(const c of G.coins)g+=c.gr?1:(1+Math.floor(effRoom()/5));G.coins=[];if(g){G.gold+=g;text(P.x,P.y-52,'+'+g+' oro','#ffd84a',15)}
-  let xp=0;for(const o of G.orbs)xp+=o.v;G.orbs=[];if(xp)gainXp(xp);
-  for(const e of G.enemies)if(!e.dead&&!e.cnAnchor&&!(e.spawn>0))for(let q=0;q<5;q++)G.fx.push({k:'puff',x:e.x+rand(-10,10),y:e.y-e.r,vx:rand(-50,50),vy:rand(-60,-10),t:rand(.3,.5),r:rand(4,8)});
-  G.enemies=[];G.eproj=[];$('roomChip').classList.remove('cnw');
-  banner('Il custode si risveglia!',ARENAS[G.arena||0].n,1.8);sfx('roar');shake(4);
-  G.prevState='play';G.state='trans';G.fadeDir=1;G.fade=0}
-// nelle ondate la stanza non si ripulisce mai: esperienza e monete volano da sole verso l'eroe poco dopo essere cadute (le prende il gioco)
-function cnWaveMagnet(dt){for(const o of G.orbs){if(!(o.t>.9))continue;const dx=P.x-o.x,dy=P.y-6-o.y,d=Math.hypot(dx,dy)||1,sp=Math.min(d,(220+o.t*260)*dt);o.x+=dx/d*sp;o.y+=dy/d*sp;o.vx=o.vy=0}
-  for(const c of G.coins){if(!(c.t>1.1))continue;const dx=P.x-c.x,dy=P.y-c.y,d=Math.hypot(dx,dy)||1,sp=Math.min(d,(240+c.t*240)*dt);c.x+=dx/d*sp;c.y+=dy/d*sp;c.vx*=.6;c.vy*=.6}}
-function cnWaveHud(s){cnEnsure();const el=$('cnWaveTxt');if(!el)return;el.textContent=cnMS(s);$('roomChip').classList.toggle('hot',s<=10&&s>0)}
+// ---------------------------------------------------------------- 1 la partita d'arena: le 10 stanze di sempre
+// le ondate a tempo (5 minuti, poi il custode) sono tolte per ora (Denis: «togliamola per ora»): il codice è nel commit 22ea83a.
+// Un posto libero lontano dall'eroe (tra 165 e 480 px), per la Nemesi che invade
+function cnSpot(r){for(let k=0;k<30;k++){const x=rand(L+30,R-30),y=rand(TOP+46,BOT-60),d=Math.hypot(x-P.x,y-P.y);if(d<165||d>480)continue;if(G.rocks.some(q=>Math.hypot(q.x-x,q.y-y)<q.r+r+12))continue;return{x,y}}return freeSpot(r,TOP+40,BOT-80)}
 
 // ---------------------------------------------------------------- 2 Furia a catena (come Devil May Cry e Hi-Fi Rush)
-// uccidere di fila senza farti colpire fa salire la Furia; senza uccisioni cala, un colpo preso la spezza; moltiplica oro ed esperienza;
-// a SSS l'eroe prende fuoco: danni +30% e frecce che bruciano
+// uccidere di fila senza farti colpire fa salire la Furia; senza uccisioni cala, un colpo preso la spezza; ogni rango nuovo moltiplica
+// oro ed esperienza per qualche secondo: «non deve durare tutto il tempo ma una manciata di secondi»
 const CN_FU=[{l:'D',w:'Deciso',n:3,m:1.1,c:'#a9bdd0'},{l:'C',w:'Carico',n:8,m:1.2,c:'#7bd88f'},{l:'B',w:'Brutale',n:15,m:1.35,c:'#3fd0c9'},{l:'A',w:'Assurdo',n:24,m:1.5,c:'#ffd84a'},
   {l:'S',w:'Spietato',n:36,m:1.7,c:'#ff9a3c'},{l:'SS',w:'Sanguinario',n:52,m:2,c:'#ff5a4a'},{l:'SSS',w:'Sovrumano',n:72,m:2.5,c:'#e48aff'}];
-function cnFuria(){return G.cnF||(G.cnF={n:0,lv:-1,idle:0,max:-1})}
+const CN_FUT=6;   // secondi del moltiplicatore dopo ogni rango nuovo; un colpo preso lo spegne
+function cnFuria(){return G.cnF||(G.cnF={n:0,lv:-1,idle:0,max:-1,bt:0,bm:1})}
 function cnFuLv(n){let l=-1;for(let i=0;i<CN_FU.length;i++)if(n>=CN_FU[i].n)l=i;return l}
-const cnFuMul=()=>{const F=G&&G.cnF;return F&&F.lv>=0?CN_FU[F.lv].m:1};
+const cnFuMul=()=>{const F=G&&G.cnF;return F&&F.bt>0?F.bm:1};
 function cnFuAdd(v){const F=cnFuria();F.n+=v;F.idle=0;cnFuCheck()}
-function cnFuCheck(){const F=cnFuria(),l=cnFuLv(F.n);if(l===F.lv)return;const up=l>F.lv;F.lv=l;if(l>F.max)F.max=l;P.cnBlaze=l>=CN_FU.length-1;cnFuHud(true,up);if(up)cnFuSting(l)}
-function cnFuTick(dt){const F=cnFuria();F.idle+=dt;if(F.idle>2.6&&F.n>0){F.n=Math.max(0,F.n-dt*(2.5+F.n*.07));cnFuCheck()}cnFuHud(false);
-  if(P.cnBlaze&&!LOWFX&&Math.random()<dt*22)CN.fx.push({k:'ember',x:P.x+rand(-12,12),y:P.y-rand(4,30),vx:rand(-14,14),vy:rand(-70,-30),t:.6,max:.6})}
-function cnFuHit(){const F=cnFuria();if(F.n<=0)return;const was=F.lv;F.n*=.35;F.idle=0;cnFuCheck();if(was>=2){text(P.x,P.y-60,'Furia spezzata!','#ff8a7a',14);tone(420,110,.3,'sawtooth',.05)}}
+function cnFuCheck(){const F=cnFuria(),l=cnFuLv(F.n);if(l===F.lv)return;const up=l>F.lv;F.lv=l;if(l>F.max)F.max=l;if(up){F.bt=CN_FUT;F.bm=CN_FU[l].m}cnFuHud(true,up);if(up)cnFuSting(l)}
+function cnFuTick(dt){const F=cnFuria();F.idle+=dt;if(F.bt>0)F.bt=Math.max(0,F.bt-dt);if(F.idle>2.6&&F.n>0){F.n=Math.max(0,F.n-dt*(2.5+F.n*.07));cnFuCheck()}cnFuHud(false)}
+function cnFuHit(){const F=cnFuria();F.bt=0;if(F.n<=0)return;const was=F.lv;F.n*=.35;F.idle=0;cnFuCheck();if(was>=2){text(P.x,P.y-60,'Furia spezzata!','#ff8a7a',14);tone(420,110,.3,'sawtooth',.05)}}
 function cnFuSting(l){const f=[392,440,494,523,587,659,784][l]||523;tone(f,f*1.5,.12,'square',.035);tone(f*1.25,f*2,.14,'triangle',.04,.07);if(l>=4)tone(f*1.5,f*3,.22,'sawtooth',.03,.14);
   if(l>=CN_FU.length-1){sfx('shimmer',2);tone(110,55,.6,'sawtooth',.05,.05)}vib([20])}
 function cnFuHud(force,up){const F=cnFuria();let el=$('cnFu');if(!el){el=document.createElement('div');el.id='cnFu';el.innerHTML='<b></b><span></span><i><u></u></i><small></small>';$('banner').parentElement.appendChild(el)}
   const now=performance.now();if(!force&&now-(CN.fuT||0)<90)return;CN.fuT=now;const l=F.lv,R=l>=0?CN_FU[l]:null,nx=CN_FU[l+1],hid=l<0;if(el.hidden!==hid)el.hidden=hid;
-  if(force||el._l!==l){el._l=l;el.querySelector('b').textContent=R?R.l:'·';el.querySelector('span').textContent=R?R.w:'Furia';
-    el.querySelector('small').textContent=R?'×'+String(R.m).replace('.',',')+' oro ed esperienza':'';el.style.setProperty('--fc',R?R.c:'#a9bdd0');el.classList.toggle('sss',l>=CN_FU.length-1);
+  if(force||el._l!==l){el._l=l;el.querySelector('b').textContent=R?R.l:'·';el.querySelector('span').textContent=R?R.w:'Furia';el.style.setProperty('--fc',R?R.c:'#a9bdd0');
     if(up){el.classList.remove('pop');void el.offsetWidth;el.classList.add('pop')}}
+  const bs=F.bt>0?'×'+String(F.bm).replace('.',',')+' oro ed esperienza'+' · '+Math.ceil(F.bt)+' s':'';
+  if(el._s!==bs){el._s=bs;el.querySelector('small').textContent=bs;el.classList.toggle('burst',!!bs);el.classList.toggle('sss',!!bs&&l>=CN_FU.length-1)}
   const lo=R?R.n:0,hi=nx?nx.n:lo+1,k=nx?clamp((F.n-lo)/(hi-lo),0,1):1,w=Math.round(k*50);if(el._w!==w){el._w=w;el.querySelector('u').style.transform=`scaleX(${(w/50).toFixed(2)})`}}
 function cnFuHide(){const el=$('cnFu');if(el)el.hidden=true}
 
@@ -234,7 +211,7 @@ function cnEvoTick(dt){
 
 // ---------------------------------------------------------------- 5 la Nemesi (come Shadow of Mordor e le invasioni di Dark Souls)
 // chi ti uccide si prende l'oro della partita e diventa la tua Nemesi (al massimo tre): un nome, un titolo, i poteri delle élite, buffa o
-// spavalda. Nelle ondate la più ricercata invade la partita col tuo sacco sulle spalle e ti prende in giro; battila e ti riprendi l'oro più
+// spavalda. In una stanza a caso della partita d'arena la più ricercata invade col tuo sacco sulle spalle e ti prende in giro; battila e ti riprendi l'oro più
 // la taglia in cristalli; se ti batte ancora diventa più forte e si tiene tutto. Se ti uccide un custode, è lui a tenersi l'oro.
 const CN_NEMN=['Grugno','Zanna','Muffo','Brodo','Ciuffo','Sgorbio','Ghigno','Scheggia','Spillo','Torvo','Fango','Ossobuco','Brontolo','Graffio','Rospone','Mastino','Pustola','Brufolo'];
 const CN_NEMT={buffa:['il Prepotente','lo Sbruffone','il Dispettoso','il Mangiamonete','il Furbetto','dai Piedi Puzzolenti','il Ruttone','il Ladruncolo'],
@@ -260,7 +237,7 @@ function cnNemTalk(e,k,force){if(!e||!e.cnTone)return;const now=G.t||0;if(!force
 function cnProjSrc(){let b=null,bd=1e9;for(const p of G.eproj){if(!p.cnSrc)continue;const d=Math.hypot(P.x-p.x,P.y-6-p.y);if(d<bd){bd=d;b=p}}return b&&bd<P.r+(b.r||5)+16?b.cnSrc:null}
 function cnNemOnDeath(){const H=G.cnLastHit;let k=H&&G.t-H.t<3?H.e:null;
   // un colpo senza autore (onde, pericoli, colpi ad area dei custodi): il nemico più vicino, se no il custode della stanza
-  if(!k||k.cnAnchor){k=null;let bd=280;for(const e of G.enemies){if(e.dead||e.cnAnchor||e.spawn>0||isBoss(e.type))continue;const d=Math.hypot(e.x-P.x,e.y-P.y);if(d<bd){bd=d;k=e}}
+  if(!k){let bd=280;for(const e of G.enemies){if(e.dead||e.spawn>0||isBoss(e.type))continue;const d=Math.hypot(e.x-P.x,e.y-P.y);if(d<bd){bd=d;k=e}}
     if(!k)k=G.enemies.find(e=>isBoss(e.type)&&!e.dead)||null}
   if(!k){G.cnKiller=null;return}
   G.cnKiller={type:k.type,boss:isBoss(k.type),nem:k.cnNem||null};if(isBoss(k.type))return;
@@ -273,7 +250,10 @@ function cnNemCommit(gold){const S=cnS(),K=G.cnKiller;if(!K)return{kind:'lost',g
   if(n){n.lvl=Math.min(5,n.lvl+1);n.gold+=gold;n.wins++;if(n.afx.length<3){const free=Object.keys(CN_AFX).filter(k=>!n.afx.includes(k));n.afx.push(pk(free))}return{kind:'up',n,gold}}
   n=G.cnNewNem||cnNemNew(K.type);n.gold+=gold;n.wins=1;n.d=Date.now();
   if(S.nem.length>=3){S.nem.sort((a,b)=>b.gold-a.gold);S.nem.length=2}S.nem.push(n);return{kind:'new',n,gold}}
-function cnNemInvade(){const n=cnS().nem.find(q=>q.id===G.cnW.nemId);if(!n||!ET[n.type])return;const s=cnWaveSpot(ET[n.type].r);
+// la più ricercata invade una stanza a caso della partita d'arena (dalla 3 alla 8, mai i Campioni né il custode; dopo un evento, la stanza dopo)
+function cnNemPlan(){const n=cnNemWanted();G.cnNem=n?{id:n.id,r:pk([3,4,6,7,8]),done:false}:null}
+function cnNemCheck(){const M=G.cnNem;if(!M||M.done||G.cnA==null||G.event||G.room<M.r||isBossRoom(G.room)||champRoom())return;M.done=true;cnNemInvade()}
+function cnNemInvade(){const n=cnS().nem.find(q=>q.id===(G.cnNem&&G.cnNem.id));if(!n||!ET[n.type])return;const s=cnSpot(ET[n.type].r);
   CN.fx.push({k:'portal',x:s.x,y:s.y,t:1.6,max:1.6,n});sfx('roar');shake(3);cnRed();banner('Invasione!',`«${cnNemFull(n)}» è tornato per te`,2.6)}
 function cnNemSpawn(n,x,y){const e=makeE(n.type,x,y,1.1,true);e.max*=1.4+.45*n.lvl;e.hp=e.max;cnGiveAfx(e,0,n.afx.slice());e.r=Math.round(e.r*1.1);e.gold=(e.gold||1)*2;
   Object.assign(e,{cnNem:n.id,cnTone:n.tone,cnName:cnNemFull(n),cnLvl:n.lvl,cnSack:n.gold,cnBig:1,cnSayQ:'invade'});G.enemies.push(e)}
@@ -311,7 +291,6 @@ function cnDrawGround(){const t=G.t;
     if(e.cnBig){ctx.strokeStyle=e.cnNem?'rgba(220,50,50,.6)':'rgba(255,201,60,.6)';ctx.lineWidth=3;ell(e.x,e.y+4,e.r*1.7,e.r*.7);ctx.stroke()}
     if(e.cnGel){ctx.save();ctx.fillStyle='rgba(200,240,255,.07)';ell(e.x,e.y+4,64,53);ctx.fill();ctx.strokeStyle='rgba(200,240,255,.5)';ctx.lineWidth=2;ctx.setLineDash([3,6]);ctx.lineDashOffset=t*10;ell(e.x,e.y+4,64,53);ctx.stroke();ctx.setLineDash([]);ctx.restore()}
     if(e.cnFur&&!LOWFX){ctx.save();ctx.globalCompositeOperation='lighter';glow('255,80,50',e.x,e.y,e.r*1.8,.22+.08*Math.sin(t*9));ctx.restore()}}
-  const F=G.cnF;if(F&&F.lv>=4&&!LOWFX&&G.state!=='dead'){const c=cnRgb(CN_FU[F.lv].c);ctx.save();ctx.globalCompositeOperation='lighter';glow(c,P.x,P.y+4,34+4*Math.sin(t*8),.32);ctx.restore()}
   if(P.cnCyclone&&G.state==='play'){ctx.save();ctx.lineWidth=3;for(let i=0;i<3;i++){const a0=t*(4+i)+i*2.1;ctx.strokeStyle=`rgba(190,235,255,${.28-.06*i})`;ctx.beginPath();ctx.ellipse(P.x,P.y-6,62-i*9,(62-i*9)*.8,0,a0,a0+2.2);ctx.stroke()}ctx.restore()}}
 function cnDrawMeteor(f){const p=1-f.t/f.max,x=f.e&&!f.e.dead?f.e.x:f.x,y=f.e&&!f.e.dead?f.e.y:f.y,sx=x+130*(1-p),sy=y-340*(1-p)-8;ctx.save();
   if(!LOWFX){ctx.globalCompositeOperation='lighter';for(let i=1;i<=5;i++){const q=Math.min(1,1-p+i*.05);glow('255,140,50',x+130*q,y-340*q-8,14-i,.3)}glow('255,200,90',sx,sy,26,.8);ctx.globalCompositeOperation='source-over'}
@@ -334,8 +313,6 @@ function cnDrawAir(){const t=G.t;
     else if(f.k==='shard'){const a=f.t/f.max;ctx.save();ctx.translate(f.x,f.y-8);ctx.rotate(f.rot+t*9);ctx.globalAlpha=a;ink(1.4);ctx.beginPath();ctx.moveTo(0,-5);ctx.lineTo(2.6,2);ctx.lineTo(-2.6,2);ctx.closePath();fs('#dff4ff');ctx.restore()}
     else if(f.k==='ember'){const a=f.t/f.max;ctx.fillStyle=`rgba(255,${(140+90*a)|0},60,${a.toFixed(2)})`;circ(f.x,f.y,1.8+a);ctx.fill()}}
   for(const d of CN.dr)cnDrawDragon(d);
-  if(P.cnBlaze&&G.state!=='dead'){ctx.save();if(!LOWFX){ctx.globalCompositeOperation='lighter';glow('255,120,40',P.x,P.y-14,42,.32+.1*Math.sin(t*12));ctx.globalCompositeOperation='source-over'}
-    for(let i=0;i<6;i++){const ph=t*8+i*1.7,ax=P.x+Math.cos(i*1.05+t*1.5)*11,h=13+6*Math.sin(ph);ctx.fillStyle=i%2?'rgba(255,201,60,.8)':'rgba(255,110,40,.75)';ctx.beginPath();ctx.moveTo(ax-4,P.y-1);ctx.quadraticCurveTo(ax+Math.sin(ph)*3,P.y-1-h*1.7,ax+4,P.y-1);ctx.fill()}ctx.restore()}
   if(CN.evoT>0){const a=Math.min(1,CN.evoT/1.6);ctx.save();ctx.globalCompositeOperation='lighter';const g=ctx.createLinearGradient(0,P.y-230,0,P.y);g.addColorStop(0,'rgba(255,214,90,0)');g.addColorStop(1,`rgba(255,214,90,${(.55*a).toFixed(2)})`);ctx.fillStyle=g;ctx.fillRect(P.x-26,P.y-230,52,232);ctx.restore()}}
 {const _do=drawOrbs;drawOrbs=function(){if(CN.on&&G&&P)try{cnDrawGround()}catch(err){cnErr(err)}return _do.apply(this,arguments)}}
 {const _db=drawBoulders;drawBoulders=function(){const r=_db.apply(this,arguments);if(CN.on&&G&&P)try{cnDrawAir()}catch(err){cnErr(err)}return r}}
@@ -378,7 +355,7 @@ function cnDrawArrowX(a){if(a.tr)drawTrail(a,a.cnK==='lance'?'180,230,255':'255,
   ctx.restore()}
 
 // ---------------------------------------------------------------- avvolgimenti dei nemici, dei colpi, dei danni e delle uccisioni
-{const _ue=updEnemy;updEnemy=function(e,dt){if(e.cnAnchor)return;if(CN.on&&e.cnSayQ&&!(e.spawn>0)){const k=e.cnSayQ;e.cnSayQ=null;cnNemTalk(e,k,true)}
+{const _ue=updEnemy;updEnemy=function(e,dt){if(CN.on&&e.cnSayQ&&!(e.spawn>0)){const k=e.cnSayQ;e.cnSayQ=null;cnNemTalk(e,k,true)}
   return _ue.call(this,e,CN.on&&e.cnFur&&!(e.spawn>0)&&!(e.frozen>0)?dt*1.4:dt)}}
 {const _de=drawEnemy;drawEnemy=function(e){if(!CN.on||!e||!(e.cnBig||e.cnSack!=null||e.cnDance))return _de.apply(this,arguments);ctx.save();
   try{if(e.cnBig){ctx.translate(e.x,e.y);ctx.scale(1.18,1.18);ctx.translate(-e.x,-e.y)}
@@ -396,7 +373,6 @@ function cnDrawArrowX(a){if(a.tr)drawTrail(a,a.cnK==='lance'?'180,230,255':'255,
   return r}}
 {const _he=hurtE;hurtE=function(e,dmg,crit,dot){if(!CN.on||!P||!e||e.dead||(e.intro>0)||e.hidden)return _he.call(this,e,dmg,crit,dot);
   if(P.cnEye&&!dot&&!e.cnEyed){e.cnEyed=1;dmg*=2}if(P.cnFury&&P.hp<P.maxhp/3)dmg*=1.5;
-  if(P.cnBlaze&&!dot){dmg*=1.3;if(!isBoss(e.type)){e.burn=Math.max(e.burn||0,2);if(!(e.burnTick>0))e.burnTick=.3}}
   // l'élite con lo scudo: lo scudo prende il colpo per primo e torna dopo 4 secondi senza colpi
   if(e.cnAfx){e.cnCalm=0;if(e.cnSh>0&&dmg>0){const a=Math.min(e.cnSh,dmg);e.cnSh-=a;e.cnShT=4;e.cnShF=.12;dmg-=a;if(e.cnSh<=0)cnShBreak(e);if(dmg<=.01){G.fx.push({k:'spark',x:e.x+rand(-9,9),y:e.y-e.r-e.z,t:.15});return}}}
   const r=_he.call(this,e,dmg,crit,dot);
@@ -404,7 +380,7 @@ function cnDrawArrowX(a){if(a.tr)drawTrail(a,a.cnK==='lance'?'180,230,255':'255,
     if(P.cnThunder&&!dot&&!CN.inTh&&(e.cnThT||0)<G.t&&Math.random()<.35){e.cnThT=G.t+.6;cnThunder(e)}}catch(err){cnErr(err)}
   return r}}
 {const _ke=killE;killE=function(e,noLoot){const was=e.dead,boss=isBoss(e.type);const r=_ke.apply(this,arguments);
-  try{if(CN.on&&G&&!was&&!e.cnAnchor){const run=cnRun();
+  try{if(CN.on&&G&&!was){const run=cnRun();
     if(run)cnFuAdd(boss?6:e.elite?3:1);
     if(!boss){if(!noLoot&&P.cnCalice&&++G.cnKills%10===0){const v=Math.round(P.maxhp*.12);P.hp=Math.min(P.maxhp,P.hp+v);text(P.x,P.y-40,'+'+v,'#e5484d',16);sfx('heal')}
       if(P.cnBomb&&!noLoot)cnBlast(e.x,e.y,52,.35)}
@@ -432,27 +408,26 @@ function cnDrawArrowX(a){if(a.tr)drawTrail(a,a.cnK==='lance'?'180,230,255':'255,
 function cnRushSet(i){const a=G.rush.list[i];G.arena=a;G.chapter=ARENAS[a].ch;G.diff=ARENAS[a].diff;G.bossLvl=null;G.room=ROOMS;G.event=null}
 const cnRushList=()=>ARENAS.map((_,i)=>i).filter(i=>cnS().all||cnWon(i));
 {const _ms=makeSeqFor;makeSeqFor=function(){const nx=CN.next;CN.next=null;if(!CN.on||!G)return _ms.apply(this,arguments);
-  try{G.cnA=null;G.tower=null;G.rush=null;G.relics=[];G.cnKills=0;G.cnWave=false;G.cnW=null;G.cnF=null;CN.fx=[];CN.last=null;CN.gAcc=0;CN.gSkip=0;CN.vol=0;CN.metT=null;CN.drT=null;CN.dr=[];CN.lances=[];CN.bub=[];CN.evoT=0;
+  try{G.cnA=null;G.tower=null;G.rush=null;G.relics=[];G.cnKills=0;G.cnNem=null;G.cnF=null;CN.fx=[];CN.last=null;CN.gAcc=0;CN.gSkip=0;CN.vol=0;CN.metT=null;CN.drT=null;CN.dr=[];CN.lances=[];CN.bub=[];CN.evoT=0;
     if(nx==='tower'&&G.mode==='inf'){CN.last='tower';G.tower={wk:cnWeek(),mods:cnTowerMods()};for(const m of G.tower.mods)m.f();const s=_ms.apply(this,arguments),k=s.findIndex(q=>q.c===20);return s.slice(0,k+1)}
     if(nx==='rush'){const list=cnRushList();if(list.length){CN.last='rush';G.rush={list,i:0,beat:0};cnRushSet(0);return[{c:ROOMS}]}}
-    if(G.mode==='camp'&&!G.daily){const a=cnPick();G.cnA=a;G.arena=a;G.chapter=ARENAS[a].ch;G.diff=ARENAS[a].diff;G.bossLvl=null;G.cnWave=true;return[{c:1},{c:ROOMS}]}}catch(err){cnErr(err)}
+    if(G.mode==='camp'&&!G.daily){const a=cnPick();G.cnA=a;G.arena=a;G.chapter=ARENAS[a].ch;G.diff=ARENAS[a].diff;G.bossLvl=null;cnNemPlan()}}catch(err){cnErr(err)}
   return _ms.apply(this,arguments)}}
 {const _br=buildRoom;buildRoom=function(){const r=_br.apply(this,arguments);try{if(CN.on&&G)cnRoomSetup()}catch(err){cnErr(err)}return r}}
-function cnRoomSetup(){G.cnBlocked=false;G.cnRT=0;CN.fx=[];CN.lances=[];CN.dr=[];CN.bub=[];CN.pool=null;cnHud('');const run=cnRun();cnEnsure();$('roomChip').classList.remove('cnw','hot');if(!run)cnFuHide();
+function cnRoomSetup(){G.cnBlocked=false;G.cnRT=0;CN.fx=[];CN.lances=[];CN.dr=[];CN.bub=[];cnHud('');const run=cnRun();cnEnsure();if(!run)cnFuHide();
   if(G.tower&&!G.event&&!isBossRoom(G.room))banner('Torre · Piano '+G.room,G.tower.mods.map(m=>m.n).join(' · '),2.2);
   if(G.rush&&!G.event){const sm=$('banner').querySelector('small');if(sm)sm.textContent=`Corsa dei boss · ${G.rush.i+1} di ${G.rush.list.length}`}
-  if(G.cnWave&&G.cnA!=null&&!G.event&&!G.cnW&&!isBossRoom(G.room))cnWaveStart();
+  cnNemCheck();
   const b=run&&G.enemies.find(e=>isBoss(e.type));if(b){const g=cnS().bossGold[b.type];if(g)cnLater(()=>banner(ET[b.type].name,`Ha il tuo oro: ${g} · battilo per riprenderlo`,2.6),3000)}}
 {const _rc=onRoomClear;onRoomClear=function(){const r=_rc.apply(this,arguments);try{if(CN.on&&G&&G.tower&&!G.event&&isBossRoom(G.room)&&G.room<20)cnLater(()=>cnRelicOffer('Premio del custode'),1400)}catch(err){cnErr(err)}return r}}
 {const _ns=nextStep;nextStep=function(){if(!CN.on||!G)return _ns.apply(this,arguments);
   try{if(G.rush){cnRushSet(G.rush.i);P.queue=[];buildRoom();return}if(G.tower&&!G.seq[G.si+1]){endRun(true);return}}catch(err){cnErr(err)}
   return _ns.apply(this,arguments)}}
 {const _up=update;update=function(dt){if(!CN.on||!G||!P)return _up.apply(this,arguments);const u0=P.ult||0,g0=G.gold;
-  try{if(G.cnW&&!G.cnW.done&&G.state==='play')cnWaveTick(dt)}catch(err){cnErr(err)}const r=_up.apply(this,arguments);try{cnPost(dt,u0,g0)}catch(err){cnErr(err)}return r}}
+  const r=_up.apply(this,arguments);try{cnPost(dt,u0,g0)}catch(err){cnErr(err)}return r}}
 function cnPost(dt,u0,g0){for(const b of CN.bub)if(G.state!=='dead')b.t-=dt;if(CN.bub.length)CN.bub=CN.bub.filter(b=>b.t>0);
   if(G.state==='trans'||G.state==='dead')return;const run=cnRun();cnAfxTick(dt);
-  if(run){cnFuTick(dt);const d=G.gold-g0-CN.gSkip;CN.gSkip=0;if(d>0){CN.gAcc+=d*(cnFuMul()-1);const add=Math.floor(CN.gAcc);if(add>0){G.gold+=add;CN.gAcc-=add}}
-    if(G.cnW&&!G.cnW.done){const s=Math.max(0,Math.ceil(CN_WV.dur-G.cnW.t));if(s!==CN.wS){CN.wS=s;cnWaveHud(s)}cnWaveMagnet(dt)}cnEvoTick(dt)}
+  if(run){cnFuTick(dt);const d=G.gold-g0-CN.gSkip;CN.gSkip=0;if(d>0){CN.gAcc+=d*(cnFuMul()-1);const add=Math.floor(CN.gAcc);if(add>0){G.gold+=add;CN.gAcc-=add}}cnEvoTick(dt)}
   // le reliquie della Torre
   const dash=P.dashT>0;
   if(dash&&P.cnBraci){CN.braT=(CN.braT||0)-dt;if(CN.braT<=0){CN.braT=.045;CN.fx.push({k:'fire',x:P.x,y:P.y+4,t:2.2,max:2.2,r:15,tk:0})}}
@@ -490,20 +465,18 @@ function cnRushNext(){const R=G.rush;R.beat++;R.i++;const nxt=cnBoss(R.list[R.i]
 {const _er=endRun;endRun=function(win,quit){if(!CN.on||!G||G.ended)return _er.apply(this,arguments);
   if(G.rush&&win&&!quit&&G.rush.i<G.rush.list.length-1){try{cnRushNext();return}catch(err){cnErr(err)}}
   const S=cnS(),run=cnRun(),keep=['trophies','trBest','arenaUp','inf','best','best2','best3','best4','bestA','done'],snap=JSON.stringify(Object.fromEntries(keep.filter(k=>k in SAVE).map(k=>[k,SAVE[k]])));
-  const T0=SAVE.trophies||0,mode=G.rush?'rush':G.tower?'tower':G.cnA!=null?'arena':null,a=G.cnA,wt=G.cnW?(G.cnW.done?CN_WV.dur:G.cnW.t):0,fuMax=G.cnF?G.cnF.max:-1,boss=!!(G.cnW&&G.cnW.done);
+  const T0=SAVE.trophies||0,mode=G.rush?'rush':G.tower?'tower':G.cnA!=null?'arena':null,a=G.cnA,fuMax=G.cnF?G.cnF.max:-1;
   if(mode==='rush'&&win)G.rush.beat++;
   // chi ti ha ucciso si prende l'oro della partita (ritirarsi invece lo lascia a te)
   let stolen=0;if(run&&!win&&!quit){if(G.cnKiller===undefined)cnNemOnDeath();stolen=Math.max(0,Math.round(G.gold||0));G.gold=0}
   const r=_er.apply(this,arguments);
-  try{cnHud('');cnFuHide();$('roomChip').classList.remove('cnw','hot');CN.next=CN.last;
+  try{cnHud('');cnFuHide();CN.next=CN.last;
     if(mode==='rush'||mode==='tower'){const o=JSON.parse(snap);for(const k of keep)if(k in o)SAVE[k]=o[k];else delete SAVE[k]}
     if(mode==='arena'){if((SAVE.trophies||0)<T0)SAVE.trophies=T0;const old=S.stars[a]||0,first=win&&!(old&1);if(win)S.stars[a]=old|1;if(first&&ARENAS[a+1])S.pick=a+1;   // la prima vittoria apre e propone l'arena dopo
-      const B=S.best[a]||(S.best[a]={t:0,fu:-1,win:false});B.t=Math.max(B.t||0,Math.round(wt));B.fu=Math.max(B.fu==null?-1:B.fu,fuMax);if(win)B.win=true;
-      $('eTr').innerHTML=`<div class="cnEndW"><span><b>${cnMS(Math.min(wt,CN_WV.dur))}</b><small>di ondate</small></span><span><b style="color:${fuMax>=0?CN_FU[fuMax].c:'#8f846e'}">${fuMax>=0?CN_FU[fuMax].l:'–'}</b><small>Furia massima</small></span></div>
+      const B=S.best[a]||(S.best[a]={fu:-1,win:false});B.fu=Math.max(B.fu==null?-1:B.fu,fuMax);if(win)B.win=true;
+      $('eTr').innerHTML=`<div class="cnEndW"><span><b style="color:${fuMax>=0?CN_FU[fuMax].c:'#8f846e'}">${fuMax>=0?CN_FU[fuMax].l:'–'}</b><small>Furia massima</small></span></div>
         ${first?`<div class="cnLitL">${CN_BRAZ}Hai riacceso il braciere di ${ARENAS[a].n}!</div>`:''}`;
-      $('eRoom').textContent=cnMS(Math.min(wt,CN_WV.dur));const lab=$('eRoom').nextElementSibling;if(lab)lab.textContent='Ondate';
-      const hint=$('endReward').querySelector('.hint');if(hint&&/stanza 3/.test(hint.textContent))hint.textContent=`Resisti almeno ${cnMS(CN_WV.dur*2/9)} alle ondate per guadagnare una cassa.`;
-      if(!win)$('endText').textContent=quit?`Ti sei ritirato dopo ${cnMS(wt)} di ondate. L'oro raccolto resta tuo.`:boss?`Il custode ti ha fermato a un passo dalla fine.`:`Hai resistito ${cnMS(wt)} alle ondate.`}
+      if(!win&&quit)$('endText').textContent=`Ti sei ritirato alla stanza ${G.room}. L'oro raccolto resta tuo.`}
     if(mode==='tower'){const wk=cnWeek(),fl=win?20:G.room;if(S.tower.wk!==wk)S.tower={wk,best:0};const rec=fl>(S.tower.best||0)&&!quit;if(rec)S.tower.best=fl;const pos=cnTowerBoard().findIndex(q=>q.me)+1;
       $('endTag').textContent='Torre della settimana';$('endTitle').textContent=win?'TORRE CONQUISTATA':quit?'RITIRATA':rec?'NUOVO RECORD':'SEI CADUTO';
       $('endText').textContent=win?'Hai salito tutti i venti piani della Torre!':`Sei arrivato al piano ${fl} di 20.`;$('eRoom').textContent=fl;
@@ -523,13 +496,13 @@ function cnEndNem(res){const el=$('eTr');if(!el)return;
   else if(res.kind==='boss'&&res.gold)el.insertAdjacentHTML('beforeend',`<div class="cnLitL cnBossL">${ET[res.type]?ET[res.type].name:'Il custode'} si tiene il tuo oro (${res.gold}): battilo per riprenderlo</div>`);
   else if(res.gold)el.insertAdjacentHTML('beforeend',`<div class="cnLitL cnBossL">Il tuo oro (${res.gold}) è caduto nel buio</div>`)}
 $('againBtn').onclick=()=>{if(CN.on)CN.next=CN.last;startRun()};
-{const _sm=showMenu;showMenu=function(){CN.next=null;cnFuHide();const c=$('roomChip');if(c)c.classList.remove('cnw','hot');return _sm.apply(this,arguments)}}
+{const _sm=showMenu;showMenu=function(){CN.next=null;cnFuHide();return _sm.apply(this,arguments)}}
 
 // ---------------------------------------------------------------- la mappa del mondo coi bracieri della fiamma
 {const _rc=renderChap;renderChap=function(){if(!CN.on||zMode())return _rc.apply(this,arguments);try{cnChap()}catch(err){cnErr(err);_rc.apply(this,arguments)}}}
 $('chapCard').onclick=()=>{sfx('ui');if(zMode())openSheet('zombie');else if(CN.on)cnMapOpen();else setTab('tabRoad')};
-function cnChap(){const i=cnPick(),A=ARENAS[i],S=cnS(),B=S.best[i]||{},lit=cnLit(),tt=B.win?6:Math.min(5,Math.floor((B.t||0)/60));let tr='';
-  for(let m=1;m<=6;m++){const boss=m===6;tr+=(m>1?`<i class="rl ${m<=tt?'on':''}"></i>`:'')+`<span class="rn ${boss?'boss':''} ${m<=tt?'on':''} ${m===tt+1?'next':''}">${boss?SKULL_SVG(true):''}</span>`}
+function cnChap(){const i=cnPick(),A=ARENAS[i],S=cnS(),b=bestRoom(i),lit=cnLit();let tr='';
+  for(let r=1;r<=ROOMS;r++){const boss=isBossRoom(r);tr+=(r>1?`<i class="rl ${r<=b?'on':''}"></i>`:'')+`<span class="rn ${boss?'boss':''} ${r===5?'elite':''} ${r<=b?'on':''} ${r===b+1?'next':''}">${boss?SKULL_SVG(r===ROOMS):''}</span>`}
   const nem=S.nem.length,html=`<div><span class="ck">Arena ${i+1}${cnWon(i)?` <i class="cnCkB">${CN_BRAZ}</i>`:''}</span><h3>${A.n}</h3></div><div class="ctr"><span class="trNow cnTr">${CN_BRAZ}${lit}/${ARENAS.length}</span><div class="trBar"><i style="width:${lit/ARENAS.length*100}%"></i><span>${nem?`${nem} ${nem===1?'Nemesi ti cerca':'Nemesi ti cercano'}`:`Bracieri accesi: ${lit} su ${ARENAS.length}`}</span></div></div><div class="rtrack">${tr}<em>Mappa ›</em></div>`;
   const el=$('chapCard');if(el._h!==html){el.innerHTML=html+'<i class="candle l"></i><i class="candle r"></i>';el._h=html;el.style.setProperty('--ac',A.col);el.style.setProperty('--thumb',`url(${arenaThumb(i)})`)}}
 function cnMapOpen(){cnEnsure();CN.sel=cnPick();CN.sub=null;cnMapRender();$('cnMap').hidden=false;const sc=$('cnMapIn').querySelector('.cnPath'),n=$('cnMapIn').querySelector('.cnN.sel');if(sc&&n)sc.scrollTop=n.offsetTop-sc.clientHeight/2+40}
@@ -537,16 +510,16 @@ function cnMapClose(){$('cnMap').hidden=true;renderChap()}
 function cnMapRender(){const el=$('cnMapIn'),S=cnS();if(CN.sub==='tower')return cnTowerRender(el);if(CN.sub==='rush')return cnRushRender(el);if(CN.sub==='rel')return cnRelRender(el);if(CN.sub==='nem')return cnNemRender(el);
   const N=ARENAS.length,lit=cnLit(),H=N*100+46,cur=cnPick(),sc=el.querySelector('.cnPath'),top=sc?sc.scrollTop:null;
   let fire='';for(let i=0;i<N;i++)fire+=`<i class="cnBr ${cnWon(i)?'on':''}" style="--ac:${ARENAS[i].col}">${CN_BRAZ}</i>`;
-  const pts=[];let nodes='';for(let i=0;i<N;i++){const y=H-58-i*100,x=50+Math.sin(i*1.3)*27;pts.push([x,y]);const op=cnOpen(i),B=S.best[i]||{};
-    nodes+=`<button class="cnN ${op?'':'lock'} ${CN.sel===i?'sel':''} ${i===cur?'cur':''} ${x<50?'l':'r'}" data-a="${i}" style="left:${x}%;top:${y}px;--ac:${ARENAS[i].col}"><span class="cnPic"><img src="${arenaThumb(i)}" alt="">${op?'':`<b class="cnLk">${CN_LOCK}</b>`}<em>${i+1}</em></span><span class="cnNm">${ARENAS[i].n}<i class="cnSt">${cnWon(i)?`<b class="on">${CN_BRAZ}</b>`:op&&B.t?`<small>${cnMS(B.t)}</small>`:''}</i></span></button>`}
+  const pts=[];let nodes='';for(let i=0;i<N;i++){const y=H-58-i*100,x=50+Math.sin(i*1.3)*27;pts.push([x,y]);const op=cnOpen(i);
+    nodes+=`<button class="cnN ${op?'':'lock'} ${CN.sel===i?'sel':''} ${i===cur?'cur':''} ${x<50?'l':'r'}" data-a="${i}" style="left:${x}%;top:${y}px;--ac:${ARENAS[i].col}"><span class="cnPic"><img src="${arenaThumb(i)}" alt="">${op?'':`<b class="cnLk">${CN_LOCK}</b>`}<em>${i+1}</em></span><span class="cnNm">${ARENAS[i].n}<i class="cnSt">${cnWon(i)?`<b class="on">${CN_BRAZ}</b>`:op&&bestRoom(i)?`<small>${bestRoom(i)}/${ROOMS}</small>`:''}</i></span></button>`}
   let seg='';for(let i=1;i<N;i++){const[a,b]=[pts[i-1],pts[i]];seg+=`<line x1="${a[0]}" y1="${a[1]}" x2="${b[0]}" y2="${b[1]}" class="${cnOpen(i)?'on':''}"/>`}
   const a=CN.sel,A=ARENAS[a],B=S.best[a]||{},op=cnOpen(a),bt=cnBoss(a),found=CN_REL.filter(r=>S.relics[r.id]).length,RL=cnRushList().length,T=S.tower,bg=S.bossGold[bt];
   el.innerHTML=`<header class="cnHd"><button class="cnX" aria-label="Chiudi">‹</button><h2>Mappa del mondo</h2><span class="cnTot">${CN_BRAZ}${lit}<small>/${N}</small></span></header>
     <div class="cnFire"><div class="cnBrs">${fire}</div><div class="cnFl"><span>La fiamma · ${lit} ${lit===1?'braciere acceso':'bracieri accesi'} su ${N}</span><span>Batti il custode per riaccendere il suo</span></div></div>
     <div class="cnPath"><div class="cnPin" style="height:${H}px"><svg class="cnLine" viewBox="0 0 100 ${H}" preserveAspectRatio="none">${seg}</svg>${nodes}</div></div>
     <div class="cnSel" style="--ac:${A.col}"><div class="cnSh"><img src="${arenaThumb(a)}" alt=""><div><span class="ck">Arena ${a+1}</span><h3>${A.n}</h3><small>Custode: ${ET[bt].name}${bg?` · <b class="cnGoldT">ha il tuo oro: ${bg}</b>`:''}</small></div></div>
-      <ul class="cnRec2"><li><b>${B.t?cnMS(B.t):'–'}</b><small>Record di ondate</small></li><li><b style="color:${B.fu>=0?CN_FU[B.fu].c:'inherit'}">${B.fu>=0?CN_FU[B.fu].l:'–'}</b><small>Furia massima</small></li><li><b>${B.win?'Vinta':'Da vincere'}</b><small>Il custode</small></li></ul>
-      ${op?`<button class="btn cnPlay">Gioca · 5 minuti di ondate</button>`:`<p class="cnLockP">${CN_LOCK} Vinci «${ARENAS[a-1].n}» per aprirla</p>`}</div>
+      <ul class="cnRec2"><li><b>${bestRoom(a)?bestRoom(a)+'/'+ROOMS:'–'}</b><small>Stanza migliore</small></li><li><b style="color:${B.fu>=0?CN_FU[B.fu].c:'inherit'}">${B.fu>=0?CN_FU[B.fu].l:'–'}</b><small>Furia massima</small></li><li><b>${B.win?'Vinta':'Da vincere'}</b><small>Il custode</small></li></ul>
+      ${op?`<button class="btn cnPlay">Gioca</button>`:`<p class="cnLockP">${CN_LOCK} Vinci «${ARENAS[a-1].n}» per aprirla</p>`}</div>
     <div class="cnModes"><button class="cnMode" data-sub="tower" style="--mc:#c48ae8">${cnIco('totem')}<b>Torre</b><small>${T.wk===cnWeek()&&T.best?'Piano '+T.best:'Della settimana'}</small></button>
       <button class="cnMode" data-sub="rush" style="--mc:#e5484d">${cnIco('crown')}<b>Corsa dei boss</b><small>${RL?RL+' custodi':'Chiusa'}</small></button>
       <button class="cnMode" data-sub="rel" style="--mc:#ffc93c">${cnRelIco('stella')}<b>Reliquie</b><small>${found} di ${CN_REL.length}</small></button>
@@ -577,7 +550,7 @@ function cnRelRender(el){const S=cnS();
       :`<div class="cnRelB no"><span class="cnRelI">?</span><b>???</b><span>Ancora da trovare</span></div>`).join('')}</div></div>`;cnSubWire(el)}
 // la bacheca dei Ricercati: le Nemesi coi loro manifesti, i custodi che tengono il tuo oro, quelle già sconfitte
 function cnNemRender(el){const S=cnS(),bg=Object.entries(S.bossGold).filter(([,g])=>g>0);
-  el.innerHTML=cnSubHead('Ricercati')+`<div class="cnSub"><p class="cnLead">Chi ti batte si prende l'oro della partita e torna a cercarti nelle ondate, col tuo sacco sulle spalle. Battilo e ti riprendi tutto, più la taglia.</p>
+  el.innerHTML=cnSubHead('Ricercati')+`<div class="cnSub"><p class="cnLead">Chi ti batte si prende l'oro della partita e torna a cercarti in un'altra partita, col tuo sacco sulle spalle. Battilo e ti riprendi tutto, più la taglia.</p>
     ${S.nem.length?`<div class="cnWants">${S.nem.map(n=>`<div class="cnWant ${n.tone}"><span class="cnWT">Ricercato</span><canvas width="176" height="176" data-t="${n.type}" data-tone="${n.tone}"></canvas><b>${n.name}</b><small>${n.title}</small>
       <i class="cnLv">${'★'.repeat(n.lvl)}<s>${'★'.repeat(5-n.lvl)}</s></i><span class="cnAf">${n.afx.map(k=>`<em style="--c:${CN_AFX[k].c}">${CN_AFX[k].n}</em>`).join('')}</span>
       <span class="cnTaglia">Taglia: <b>${n.gold}</b> oro + <b>${cnNemBounty(n)}</b> cristalli</span><small class="cnWins">Ti ha battuto ${n.wins} ${n.wins===1?'volta':'volte'}</small></div>`).join('')}</div>`
@@ -611,14 +584,11 @@ function cnPremiFill(){const pan=$('cnPremi');
 function cnEnsure(){if($('cnMap'))return;const w=$('wrap'),mk=(id,inner)=>{const d=document.createElement('div');d.className='screen cnScr';d.id=id;d.hidden=true;d.innerHTML=`<div class="${inner}" id="${id}In"></div>`;w.appendChild(d);return d};
   mk('cnRel','cnRelBox');mk('cnMap','cnMapBox');
   for(const id of['cnRed','cnSlash']){const d=document.createElement('div');d.id=id;w.appendChild(d)}
-  const chip=$('roomChip');if(chip&&!$('cnWaveTxt')){const s=document.createElement('span');s.id='cnWaveTxt';chip.appendChild(s)}
   const st=document.createElement('style');st.textContent=CN_CSS;document.head.appendChild(st)}
 const CN_CSS=`
 #cnHud{position:absolute;left:50%;top:calc(104px + env(safe-area-inset-top,0px));transform:translateX(-50%);z-index:6;pointer-events:none;font-family:var(--display);font-size:17px;color:#fff;text-shadow:var(--tol);
   background:rgba(20,14,10,.66);border:2px solid #191714;border-radius:14px;padding:3px 12px 4px;white-space:nowrap;display:flex;gap:8px;align-items:baseline}
 #cnHud b{color:var(--gold);font-weight:400}#cnHud[hidden]{display:none}
-#cnWaveTxt{display:none}#roomChip.cnw #roomTxt{display:none}#roomChip.cnw #cnWaveTxt{display:inline;font-variant-numeric:tabular-nums}
-#roomChip.cnw.hot{animation:cnPulse .5s ease-in-out infinite alternate}#roomChip.cnw.hot #cnWaveTxt{color:#ff8a7a}
 #cnFu{position:absolute;right:10px;top:calc(122px + env(safe-area-inset-top,0px));z-index:6;pointer-events:none;display:flex;flex-direction:column;align-items:flex-end;gap:2px;--fc:#a9bdd0}
 #cnFu[hidden]{display:none}
 #cnFu b{display:block;font-family:var(--display);font-weight:400;font-size:46px;line-height:.9;color:var(--fc);font-style:italic;transform:skewX(-8deg);
@@ -627,6 +597,7 @@ const CN_CSS=`
 #cnFu i{display:block;width:86px;height:7px;border:2px solid #191714;border-radius:5px;background:rgba(0,0,0,.5);overflow:hidden}
 #cnFu u{display:block;height:100%;background:linear-gradient(90deg,var(--fc),#fff);transform-origin:left center;transform:scaleX(0);transition:transform .12s linear}
 #cnFu small{font-size:10.5px;font-weight:800;color:#ffe9a8;text-shadow:var(--tol)}
+#cnFu.burst small{font-size:12px;color:#ffd84a;transform-origin:right center;animation:cnFuBurst .45s ease-in-out infinite alternate}
 #cnFu.pop b{animation:cnFuPop .45s cubic-bezier(.2,1.6,.4,1)}
 #cnFu.sss b{color:#ffe27a;animation:cnFuFire .35s ease-in-out infinite alternate}
 #cnRed,#cnSlash{position:absolute;inset:0;pointer-events:none;z-index:7;opacity:0}
@@ -737,11 +708,12 @@ const CN_CSS=`
 .cnPrX{display:flex;flex-direction:column;min-width:0}.cnPrX b{font-family:var(--display);font-weight:400;font-size:15.5px;text-shadow:var(--tol)}.cnPrX small{font-size:11.5px;color:#dbd0b0}.cnPrR.hot small{color:var(--gold);font-weight:800}
 @keyframes cnIn{from{opacity:0;transform:translateY(18px) scale(.92)}to{opacity:1;transform:none}}
 @keyframes cnPulse{to{filter:brightness(1.25)}}@keyframes cnFlick{to{transform:scaleY(1.12) scaleX(.94)}}
+@keyframes cnFuBurst{from{transform:scale(1)}to{transform:scale(1.1)}}
 @keyframes cnFuPop{0%{transform:skewX(-8deg) scale(2.3);opacity:.15}60%{transform:skewX(-8deg) scale(.9);opacity:1}100%{transform:skewX(-8deg) scale(1)}}
 @keyframes cnFuFire{from{text-shadow:0 4px 0 #191714,-2px -2px 0 #191714,2px -2px 0 #191714,-2px 2px 0 #191714,2px 2px 0 #191714,0 0 12px #ff8a3c,0 -6px 18px #ff5a1a}
   to{text-shadow:0 4px 0 #191714,-2px -2px 0 #191714,2px -2px 0 #191714,-2px 2px 0 #191714,2px 2px 0 #191714,0 0 22px #e48aff,0 -10px 26px #ffc93c}}
 @keyframes cnRedA{0%{opacity:0}18%{opacity:1}100%{opacity:0}}@keyframes cnSlashA{0%{opacity:0;transform:scale(1.25)}12%{opacity:1;transform:scale(1)}70%{opacity:.85}100%{opacity:0}}
 @keyframes cnLand{0%{transform:scale(.86)}60%{transform:scale(1.06)}100%{transform:none}}
-@media (prefers-reduced-motion:reduce){.cnRelC,.cnN.sel .cnPic,.cnBr.on .fl,#cnFu.pop b,#cnFu.sss b,.sk.cnLand,.sk.cnLeg::after,#cnPremi,#roomChip.cnw.hot{animation:none}}`;
+@media (prefers-reduced-motion:reduce){.cnRelC,.cnN.sel .cnPic,.cnBr.on .fl,#cnFu.pop b,#cnFu.sss b,#cnFu.burst small,.sk.cnLand,.sk.cnLeg::after,#cnPremi{animation:none}}`;
 
 cnEnsure();cnPremiInit();

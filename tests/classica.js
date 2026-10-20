@@ -1,11 +1,11 @@
 // Prova della Classica nuova (src/js/94-classica-nuova.js, solo nell'anteprima), seconda versione con le scelte di Denis: il menu (scheda coi
-// bracieri, mappa senza stelle, Torre, Corsa, Reliquie, Ricercati, il bottone «Premi», la Zombie com'era); l'arena a ondate (cronometro,
-// nemici che arrivano, la stanza che non si chiude, l'esperienza che vola all'eroe, l'ondata grande con le élite coi poteri, il custode dopo
-// 5 minuti, la vittoria col braciere e il record); la Furia (ranghi, moltiplicatori, colpo che la spezza, SSS in fiamme); le carte con la
-// rarità a sorpresa (rivelazione, effetti più grandi, due livelli alle leggendarie); le evoluzioni spettacolari (la carta, la trasformazione,
-// tutte e sei insieme senza errori); la Nemesi (chi ti uccide si prende l'oro, il manifesto, l'invasione col sacco, le frasi, la taglia, la
+// bracieri, mappa senza stelle, Torre, Corsa, Reliquie, Ricercati, il bottone «Premi», la Zombie com'era); la partita d'arena con le 10 stanze
+// di sempre (le ondate a tempo sono tolte: l'eroe cresce, la Furia sale, il custode alla stanza 10, la vittoria col braciere e il record);
+// la Furia (ranghi, moltiplicatore per 6 secondi, colpo che la spezza, niente fiamme); le carte con la rarità a sorpresa (rivelazione,
+// effetti più grandi, due livelli alle leggendarie); le evoluzioni spettacolari (la carta, la trasformazione, tutte e sei insieme senza
+// errori); la Nemesi (chi ti uccide si prende l'oro, il manifesto, l'invasione in una stanza a caso col sacco, le frasi, la taglia, la
 // Nemesi che cresce, il custode che tiene l'oro); la Torre fino al piano 20 e la Corsa dei boss.
-// Foto tests/cn_<n>.png. Uso: python3 anteprime/mk_classica.py --test --build && node tests/classica.js [solo]
+// Foto tests/cn_<n>.png. Uso: python3 anteprime/mk_classica.py --test --build && node tests/classica.js [menu|stanze|furia|rarita|evo|nemesi|torre|corsa]
 const {chromium}=require('playwright');const path=require('path');
 const SOLO=process.argv[2]||'';
 (async()=>{const b=await chromium.launch({args:['--autoplay-policy=no-user-gesture-required']});const p=await b.newPage({viewport:{width:390,height:844},deviceScaleFactor:2});const errs=[];
@@ -36,6 +36,7 @@ const SOLO=process.argv[2]||'';
   const run=async(maxS,stop)=>{const t0=Date.now();while(Date.now()-t0<maxS*1000){await W(400);const s=await J(`({end:!$('endScr').hidden,room:G.room,st:G.state})`);if(s.end||(stop&&await E(stop)))return s}return null};
   const arena=async(a)=>{await toMenu();await E(`(()=>{LOWFX=false;SAVE.cn=SAVE.cn||{};SAVE.cn.pick=${a||0};__A.endSeen=0;__A.ends=[];__A.log=[];CN.forceRar=null;startRun();return 0})()`);await W(2400)};
   const vis=id=>`(!!$('${id}')&&$('${id}').offsetParent!==null)`;
+  const jump=r=>`(()=>{const k=G.seq.findIndex(q=>q.c===${r});G.si=k-1;G.enemies=[];G.eproj=[];nextStep();return 0})()`;   // straight to room r
 
   // ---------------------------------------------------------------- the menu
   if(!SOLO||SOLO==='menu'){
@@ -58,39 +59,37 @@ const SOLO=process.argv[2]||'';
     await p.click('#cnMap .cnX');await W(200);await p.click('#cnMap .cnMode[data-sub="nem"]');await W(300);ok('i Ricercati: nessuno per ora',await E(`!!document.querySelector('#cnMap .cnEmpty')`));
     await p.click('#cnMap .cnX');await W(200);await p.click('#cnMap .cnX');await W(300);
   }
-  // ---------------------------------------------------------------- the arena in waves
-  if(!SOLO||SOLO==='onde'){
-    await arena(0);const s0=await J(`({w:!!G.cnW,chip:$('cnWaveTxt').textContent,cnw:$('roomChip').classList.contains('cnw'),seq:G.seq.map(q=>q.c),room:G.room,anchor:G.enemies.filter(e=>e.cnAnchor).length})`);
-    ok('la partita d\'arena: ondate per 5 minuti, poi il custode',s0.w&&s0.cnw&&/^[45]:\d\d$/.test(s0.chip)&&s0.seq.join()==='1,10'&&s0.anchor===1,JSON.stringify(s0));
-    await E(`(()=>{__A.on=true;__A.every=8;return 0})()`);await W(9000);
-    const s1=await J(`({t:G.cnW.t,st:G.state,room:G.room,lvl:P.lvl,orbs:G.orbs.length,coins:G.coins.length,gold:G.gold,kills:G.kills,alive:G.enemies.filter(e=>!e.dead&&!e.cnAnchor).length,chip:$('cnWaveTxt').textContent})`);await snap('ondate');
-    ok('i nemici arrivano, la stanza non si chiude, esperienza e monete arrivano all\'eroe',s1.st==='play'&&s1.t>10&&s1.kills>=8&&s1.lvl>=2&&s1.gold>0,JSON.stringify(s1));
-    await E(`(()=>{__A.on=false;if(!$('skScr').hidden){CN.revEnd=0;pick(0)}G.state='play';G.cnW.t=59.95;for(let i=0;i<3;i++)update(.033);return 0})()`);
-    const s2=await J(`({ban:$('banner').textContent,bi:G.cnW.bi,el:G.enemies.filter(e=>e.elite&&e.cnAfx&&!e.dead).length,afx:[...new Set(G.enemies.filter(e=>e.cnAfx).flatMap(e=>e.cnAfx))]})`);await snap('ondata_grande');
-    ok('l\'ondata grande ogni minuto, con le élite coi poteri',s2.bi===1&&s2.el>=1&&/Ondata 2/.test(s2.ban),JSON.stringify(s2));
-    await snap('ondata_grande_2');await E(`(()=>{G.cnW.t=200;cnWaveTick(.01);__A.on=true;return 0})()`);const s3=await J(`({room:G.room})`);ok('il tempo fa salire la stanza (vita, danno e cadenza dei nemici)',s3.room>=6&&s3.room<=9,JSON.stringify(s3));
-    await E(`(()=>{G.cnW.t=299.8;return 0})()`);
-    for(let i=0;i<30&&!(await E(`G.room===ROOMS&&G.state==='play'&&G.enemies.some(e=>isBoss(e.type))`));i++)await W(300);
-    const s4=await J(`({room:G.room,st:G.state,boss:(G.enemies.find(e=>isBoss(e.type))||{}).type,cnw:$('roomChip').classList.contains('cnw'),done:G.cnW.done})`);await snap('custode');
-    ok('dopo 5 minuti la stanza del custode',s4.room===10&&s4.boss==='golem'&&!s4.cnw&&s4.done,JSON.stringify(s4));
+  // ---------------------------------------------------------------- the arena: the 10 rooms of the game
+  if(!SOLO||SOLO==='stanze'){
+    await arena(0);const s0=await J(`({seq:G.seq.filter(q=>q.c).map(q=>q.c),room:G.room,chip:$('roomTxt').textContent,wave:!!$('cnWaveTxt'),xb:!$('xpBar').hidden,a:G.cnA})`);
+    ok('la partita d\'arena: le 10 stanze di sempre, niente ondate',s0.seq.join()==='1,2,3,4,5,6,7,8,9,10'&&s0.room===1&&s0.chip==='1/10'&&!s0.wave&&s0.xb&&s0.a===0,JSON.stringify(s0));
+    await E(`(()=>{__A.on=true;__A.every=6;return 0})()`);await run(90,`G.room>=3&&G.state==='play'`);
+    const s1=await J(`({room:G.room,chip:$('roomTxt').textContent,lvl:P.lvl,xp:Math.round(P.xp),fu:G.cnF?G.cnF.max:-1,gold:G.gold})`);await snap('stanza_3');
+    ok('stanza dopo stanza: l\'esperienza arriva, la Furia sale, l\'oro arriva',s1.room>=3&&s1.chip===s1.room+'/10'&&(s1.lvl>=2||s1.xp>0)&&s1.fu>=0&&s1.gold>0,JSON.stringify(s1));
+    const s2r=await run(240,`G.room===ROOMS&&G.state==='play'&&G.enemies.some(e=>isBoss(e.type))`);
+    const s2=await J(`({room:G.room,lvl:P.lvl,sk:Object.keys(P.skills).length,boss:(G.enemies.find(e=>isBoss(e.type))||{}).type})`);await snap('custode');
+    ok('il custode alla stanza 10',!!s2r&&s2.room===10&&s2.boss==='golem'&&s2.lvl>=4&&s2.sk>=3,JSON.stringify(s2));
     await E(`__A.every=3;0`);const end=await run(90);await W(1200);
-    const s5=await J(`({ends:__A.ends,won:SAVE.cn.stars[0],best:SAVE.cn.best[0],pick:SAVE.cn.pick,etr:$('eTr').textContent.replace(/\\s+/g,' ').slice(0,160),room:$('eRoom').textContent})`);await snap('vittoria');
-    ok('la vittoria: braciere acceso, record, l\'arena dopo proposta',end&&s5.ends[0]&&s5.ends[0].title==='VITTORIA'&&(s5.won&1)===1&&s5.best&&s5.best.win&&s5.best.t===300&&s5.pick===1&&/braciere/.test(s5.etr),JSON.stringify(s5));
-    await toMenu();const c=await J(`$('chapCard').textContent`);ok('la scheda dopo la vittoria propone l\'arena 2',/Arena 2/.test(c),c.slice(0,60));
+    const s5=await J(`({ends:__A.ends,won:SAVE.cn.stars[0],best:SAVE.cn.best[0],bestA:bestRoom(0),pick:SAVE.cn.pick,etr:$('eTr').textContent.replace(/\\s+/g,' ').slice(0,160),room:$('eRoom').textContent})`);await snap('vittoria');
+    ok('la vittoria: braciere acceso, record, l\'arena dopo proposta',end&&s5.ends[0]&&s5.ends[0].title==='VITTORIA'&&(s5.won&1)===1&&s5.best&&s5.best.win&&s5.bestA===10&&s5.pick===1&&/braciere/.test(s5.etr)&&/Furia massima/.test(s5.etr),JSON.stringify(s5));
+    await toMenu();const c=await J(`({t:$('chapCard').textContent,n:$('chapCard').querySelectorAll('.rn').length,on:$('chapCard').querySelectorAll('.rn.on').length})`);
+    ok('la scheda dopo la vittoria propone l\'arena 2, con le sue 10 stanze',/Arena 2/.test(c.t)&&c.n===10&&c.on===0,JSON.stringify(c));
   }
   // ---------------------------------------------------------------- the Furia
   if(!SOLO||SOLO==='furia'){
-    await arena(0);await E(`(()=>{__A.on=false;G.cnW.sp=999;return 0})()`);
+    await arena(0);await E(`(()=>{__A.on=false;G.enemies=[];G.eproj=[];P.inv=99;return 0})()`);
     const kill=async n=>E(`(()=>{for(let i=0;i<${n};i++){const e=makeE('slime',AW/2,TOP+150,0,false);G.enemies.push(e);killE(e)}return 0})()`);
-    await kill(3);const f1=await J(`({lv:G.cnF.lv,txt:$('cnFu').querySelector('b').textContent,vis:!$('cnFu').hidden,mul:cnFuMul()})`);
-    ok('3 uccisioni di fila: Furia D, ×1,1',f1.lv===0&&f1.txt==='D'&&f1.vis&&f1.mul===1.1,JSON.stringify(f1));
-    await kill(70);await W(200);const f2=await J(`(()=>{const x0=P.xp,l0=P.lvl;gainXp(4);return{lv:G.cnF.lv,txt:$('cnFu').querySelector('b').textContent,blaze:!!P.cnBlaze,mul:cnFuMul(),xp:P.lvl>l0?'up':P.xp-x0,sss:$('cnFu').classList.contains('sss')}})()`);
-    ok('72 uccisioni: SSS, ×2,5 oro ed esperienza, l\'eroe in fiamme',f2.lv===6&&f2.txt==='SSS'&&f2.blaze&&f2.mul===2.5&&(f2.xp===10||f2.xp==='up')&&f2.sss,JSON.stringify(f2));
-    await E(`(()=>{for(let i=0;i<6;i++)cnWaveSpawn(1);G.state='play';return 0})()`);await W(300);
+    await kill(3);const f1=await J(`({lv:G.cnF.lv,txt:$('cnFu').querySelector('b').textContent,vis:!$('cnFu').hidden,mul:cnFuMul(),sm:$('cnFu').querySelector('small').textContent})`);
+    ok('3 uccisioni di fila: Furia D, ×1,1 per 6 secondi',f1.lv===0&&f1.txt==='D'&&f1.vis&&f1.mul===1.1&&/×1,1 oro ed esperienza · 6 s/.test(f1.sm),JSON.stringify(f1));
+    await kill(70);await W(200);const f2=await J(`(()=>{const x0=P.xp,l0=P.lvl;gainXp(4);return{lv:G.cnF.lv,txt:$('cnFu').querySelector('b').textContent,blaze:'cnBlaze' in P,mul:cnFuMul(),xp:P.lvl>l0?'up':P.xp-x0,sss:$('cnFu').classList.contains('sss')}})()`);
+    ok('72 uccisioni: SSS, ×2,5 oro ed esperienza, niente fiamme',f2.lv===6&&f2.txt==='SSS'&&!f2.blaze&&f2.mul===2.5&&(f2.xp===10||f2.xp==='up')&&f2.sss,JSON.stringify(f2));
+    await E(`(()=>{for(let i=0;i<6;i++)G.enemies.push(makeE('slime',AW/2-60+i*24,TOP+160,0,false));G.state='play';return 0})()`);await W(300);
     const g=await J(`(()=>{const e=G.enemies.find(e=>canHit(e));const h=e?e.hp:0;if(e){e.burn=0;hurtE(e,10,false)}return{dmg:e?Math.round(h-e.hp):0,burn:e?e.burn>0:false}})()`);
-    ok('a SSS i colpi fanno +30% e bruciano',g.dmg===13&&g.burn,JSON.stringify(g));
+    ok('a SSS i colpi fanno il loro danno e non bruciano',g.dmg===10&&!g.burn,JSON.stringify(g));
     await E(`(()=>{for(let i=0;i<20;i++)update(.033);return 0})()`);await snap('furia_sss');
-    await E(`(()=>{P.inv=0;P.dashT=0;hurtP(5);return 0})()`);const f3=await J(`({lv:G.cnF.lv,blaze:!!P.cnBlaze})`);ok('un colpo preso spezza la Furia',f3.lv<6&&f3.lv>=0&&!f3.blaze,JSON.stringify(f3));
+    const fb=await J(`(()=>{for(let i=0;i<200;i++){G.cnF.idle=0;cnFuTick(.033)}cnFuHud(true);return{lv:G.cnF.lv,mul:cnFuMul(),sm:$('cnFu').querySelector('small').textContent,burst:$('cnFu').classList.contains('burst')}})()`);
+    ok('dopo 6 secondi il moltiplicatore finisce, il rango resta',fb.lv===6&&fb.mul===1&&fb.sm===''&&!fb.burst,JSON.stringify(fb));
+    await E(`(()=>{G.cnF.bt=3;G.cnF.bm=2.5;P.inv=0;P.dashT=0;hurtP(5);return 0})()`);const f3=await J(`({lv:G.cnF.lv,bt:G.cnF.bt,mul:cnFuMul()})`);ok('un colpo preso spezza la Furia e spegne il moltiplicatore',f3.lv<6&&f3.lv>=0&&f3.bt===0&&f3.mul===1,JSON.stringify(f3));
     const f4=await J(`(()=>{const n0=G.cnF.n;G.cnF.idle=10;for(let i=0;i<90;i++)cnFuTick(.033);return{n0,n:G.cnF.n,lv:G.cnF.lv}})()`);ok('senza uccisioni la Furia cala',f4.n<f4.n0-5,JSON.stringify(f4));
   }
   // ---------------------------------------------------------------- the cards with a surprise rarity
@@ -116,14 +115,14 @@ const SOLO=process.argv[2]||'';
     ok('Raffica al massimo e Frecce infuocate: la prima carta è l\'evoluzione «Pioggia di meteore»',e0.first==='ev_meteore'&&!e0.old,JSON.stringify(e0));
     await E(`(()=>{CN.revEnd=0;pick(0);return 0})()`);await W(200);const e1=await J(`({m:!!P.cnMeteor,ban:$('banner').textContent,evoT:CN.evoT>0})`);ok('la trasformazione: «EVOLUZIONE!» e la colonna di luce',e1.m&&/EVOLUZIONE/.test(e1.ban)&&e1.evoT,JSON.stringify(e1));
     await E(`(()=>{for(const id of['pierce','ice','ric','light','orbit','dash','front','crit','diag','side']){const s=SK.find(q=>q.id===id);while((P.skills[id]||0)<s.max){s.f();P.skills[id]=(P.skills[id]||0)+1}}
-      for(const v of CN_EVO)if(!P.skills[v.id]){v.f();P.skills[v.id]=1}CN.forceRar=null;window.__C={dr:0,th:0};{const _e=cnEvoTick;cnEvoTick=function(dt){const n=CN.dr.length;const r=_e.apply(this,arguments);if(CN.dr.length>n)__C.dr++;return r}}{const _t=cnThunder;cnThunder=function(e){__C.th++;return _t.apply(this,arguments)}}for(let i=0;i<8;i++)cnWaveSpawn(1);__A.on=true;__A.every=30;return 0})()`);
+      for(const v of CN_EVO)if(!P.skills[v.id]){v.f();P.skills[v.id]=1}CN.forceRar=null;window.__C={dr:0,th:0};{const _e=cnEvoTick;cnEvoTick=function(dt){const n=CN.dr.length;const r=_e.apply(this,arguments);if(CN.dr.length>n)__C.dr++;return r}}{const _t=cnThunder;cnThunder=function(e){__C.th++;return _t.apply(this,arguments)}}for(let i=0;i<8;i++){const q=cnSpot(14);G.enemies.push(makeE(pk(['slime','goblin','bat']),q.x,q.y,.9,false))}__A.on=true;__A.every=30;return 0})()`);
     let seen={meteor:0,dragon:0,lance:0,shard:0,feather:0,bolt:0};for(let i=0;i<16;i++){await W(450);const s=await J(`({meteor:CN.fx.some(f=>f.k==='meteor'||f.k==='scorch'),dragon:CN.dr.length>0,lance:G.arrows.some(a=>a.cnK==='lance'),shard:CN.fx.some(f=>f.k==='shard'),feather:G.arrows.some(a=>a.cnK==='feather'),bolt:G.fx.some(f=>f.k==='bolt')})`);for(const k in s)if(s[k])seen[k]++;if(i===7)await snap('evoluzioni')}
     await E(`__A.on=false;0`);const er=await J(`__A.log.filter(l=>/ERR/.test(l))`),C=await J(`__C`);seen.dragon+=C.dr;seen.bolt+=C.th;
     ok('tutte e sei le evoluzioni insieme: meteore, drago, lance e schegge, piume, fulmini, senza errori',seen.meteor&&seen.dragon&&seen.lance&&seen.shard&&seen.feather&&!er.length,JSON.stringify({seen,er}));
   }
   // ---------------------------------------------------------------- the Nemesis
   if(!SOLO||SOLO==='nemesi'){
-    await arena(0);await E(`(()=>{__A.on=false;__A.god=false;G.cnW.sp=999;return 0})()`);
+    await arena(0);await E(`(()=>{__A.on=false;__A.god=false;return 0})()`);
     const g0=await J(`SAVE.gold`);
     await E(`(()=>{const e=makeE('goblin',P.x,P.y-70,0,false);G.enemies.push(e);G.gold=345;G.cnLastHit={e,t:G.t};P.inv=0;P.dashT=0;P.revive=0;N3G.cur=e;try{hurtP(P.hp+50)}finally{N3G.cur=null}window.__K=e;return 0})()`);await W(400);
     const d0=await J(`({st:G.state,name:__K.cnName,tone:__K.cnTone,dance:!!__K.cnDance,bub:CN.bub.length})`);for(let i=0;i<10;i++)await E(`(()=>{if(G.state==='dead')update(.033);return 0})()`);await snap('nemesi_nasce');
@@ -137,26 +136,27 @@ const SOLO=process.argv[2]||'';
     ok('la bacheca dei Ricercati col manifesto e la taglia',bd.posters===1&&/345/.test(bd.taglia||''),JSON.stringify(bd));
     await p.click('#cnMap .cnX');await W(200);await p.click('#cnMap .cnX');await W(300);
     // the next run: the invasion with the sack, the taunts, the bounty
-    await arena(0);const inv=await J(`({nemT:G.cnW.nemT,nemId:G.cnW.nemId})`);await E(`(()=>{__A.god=true;G.cnW.nemT=G.cnW.t+.3;return 0})()`);
+    await arena(0);const inv=await J(`({r:G.cnNem&&G.cnNem.r,id:G.cnNem&&G.cnNem.id,now:G.enemies.some(e=>e.cnNem)})`);await E(`(()=>{__A.god=true;return 0})()`);
+    await E(jump(`G.cnNem.r`));const iv=await J(`({room:G.room,portal:CN.fx.some(f=>f.k==='portal'),ban:$('banner').textContent})`);
     await E(`(()=>{for(let i=0;i<70;i++)update(.033);return 0})()`);const n0=await J(`(()=>{const e=G.enemies.find(e=>e.cnNem);return e?{sack:e.cnSack,name:e.cnName,afx:e.cnAfx,big:e.cnBig,hp:e.hp,max:e.max,spawn:e.spawn}:null})()`);
     await E(`(()=>{for(let i=0;i<40;i++)update(.033);return 0})()`);const nb=await J(`({bub:CN.bub.map(b=>b.txt),ban:$('banner').textContent})`);await snap('invasione');
-    ok('l\'invasione: la Nemesi col sacco (345), il nome, i poteri, la prima frase',inv.nemT>0&&n0&&n0.sack===345&&!!n0.name&&n0.afx.length>=1&&nb.bub.length>=1,JSON.stringify({inv,n0,nb}));
+    ok('l\'invasione in una stanza a caso (3–8, mai la 5): la Nemesi col sacco (345), il nome, i poteri, la prima frase',[3,4,6,7,8].includes(inv.r)&&!!inv.id&&!inv.now&&iv.room===inv.r&&iv.portal&&/Invasione/.test(iv.ban)&&n0&&n0.sack===345&&!!n0.name&&n0.afx.length>=1&&nb.bub.length>=1,JSON.stringify({inv,iv,n0,nb}));
     const k0=await J(`({gold:G.gold,gems:G.gemsRun||0})`);await E(`(()=>{const e=G.enemies.find(e=>e.cnNem);for(let i=0;i<6&&!e.dead;i++)hurtE(e,e.hp+(e.cnSh||0)+1,false);return 0})()`);await W(300);
     const k1=await J(`({nem:SAVE.cn.nem.length,out:SAVE.cn.nemOut.length,gold:G.gold,gems:G.gemsRun||0,coins:G.coins.filter(c=>c.gr).length,ban:$('banner').textContent})`);await snap('nemesi_sconfitta');
     ok('battuta la Nemesi: ti riprendi l\'oro e la taglia in cristalli',k1.nem===0&&k1.out===1&&k1.gold-k0.gold+k1.coins>=345&&k1.gems-k0.gems===10&&/Nemesi sconfitta/.test(k1.ban),JSON.stringify({k0,k1}));
     // a Nemesis that beats you again grows
     await toMenu();await E(`(()=>{SAVE.cn.nem=[{id:'nprova',type:'skeleton',name:'Torvo',title:'il Macellaio',tone:'spavalda',lvl:1,afx:['scudo'],gold:100,wins:1}];save();return 0})()`);
-    await arena(0);await E(`(()=>{__A.god=false;G.cnW.nemT=G.cnW.t+.2;for(let i=0;i<60;i++)update(.033);const e=G.enemies.find(e=>e.cnNem);G.gold=50;G.cnLastHit={e,t:G.t};P.inv=0;P.dashT=0;P.revive=0;N3G.cur=e;try{hurtP(P.hp+50)}finally{N3G.cur=null}return 0})()`);
+    await arena(0);await E(`(()=>{__A.god=false;G.cnNem.r=G.room;cnNemCheck();for(let i=0;i<60;i++)update(.033);const e=G.enemies.find(e=>e.cnNem);G.gold=50;G.cnLastHit={e,t:G.t};P.inv=0;P.dashT=0;P.revive=0;N3G.cur=e;try{hurtP(P.hp+50)}finally{N3G.cur=null}return 0})()`);
     for(let i=0;i<20&&await E(`$('endScr').hidden`);i++){await E(`(()=>{if(!$('revScr').hidden)$('rvNo').click();return 0})()`);await W(300)}await W(400);
     const up=await J(`({n:SAVE.cn.nem[0],txt:$('eTr').textContent.replace(/\\s+/g,' ').slice(0,160)})`);await snap('nemesi_cresce');
     ok('la Nemesi che ti batte ancora: livello 2, un potere in più, il suo sacco cresce',up.n&&up.n.lvl===2&&up.n.afx.length===2&&up.n.gold===150&&up.n.wins===2&&/più forte/.test(up.txt),JSON.stringify(up));
     // the keeper that kills you keeps your gold, and gives it back when you beat it
     await toMenu();await E(`(()=>{SAVE.cn.nem=[];SAVE.cn.bossGold={};save();return 0})()`);await arena(0);
-    await E(`(()=>{__A.god=false;G.cnW.t=299.9;return 0})()`);for(let i=0;i<30&&!(await E(`G.room===ROOMS&&G.state==='play'&&G.enemies.some(e=>isBoss(e.type))`));i++){await E(`(()=>{if(started&&!paused&&!modal)for(let k=0;k<6;k++)update(.033);return 0})()`);await W(200)}
+    await E(`(()=>{__A.god=false;return 0})()`);await E(jump('ROOMS'));for(let i=0;i<30&&!(await E(`G.room===ROOMS&&G.state==='play'&&G.enemies.some(e=>isBoss(e.type))`));i++){await E(`(()=>{if(started&&!paused&&!modal)for(let k=0;k<6;k++)update(.033);return 0})()`);await W(200)}
     await E(`(()=>{const b=G.enemies.find(e=>isBoss(e.type));G.gold=210;G.cnLastHit={e:b,t:G.t};P.inv=0;P.dashT=0;P.revive=0;hurtP(P.hp+50);return 0})()`);
     for(let i=0;i<20&&await E(`$('endScr').hidden`);i++){await E(`(()=>{if(!$('revScr').hidden)$('rvNo').click();return 0})()`);await W(300)}await W(300);
     const bg=await J(`({bg:SAVE.cn.bossGold,txt:$('eTr').textContent.replace(/\\s+/g,' ').slice(0,160)})`);ok('il custode che ti uccide si tiene l\'oro',bg.bg.golem===210&&/si tiene il tuo oro/.test(bg.txt),JSON.stringify(bg));
-    await arena(0);await E(`(()=>{__A.god=true;G.cnW.t=299.9;return 0})()`);for(let i=0;i<30&&!(await E(`G.room===ROOMS&&G.state==='play'&&G.enemies.some(e=>isBoss(e.type))`));i++){await E(`(()=>{if(started&&!paused&&!modal)for(let k=0;k<6;k++)update(.033);return 0})()`);await W(200)}
+    await arena(0);await E(`(()=>{__A.god=true;return 0})()`);await E(jump('ROOMS'));for(let i=0;i<30&&!(await E(`G.room===ROOMS&&G.state==='play'&&G.enemies.some(e=>isBoss(e.type))`));i++){await E(`(()=>{if(started&&!paused&&!modal)for(let k=0;k<6;k++)update(.033);return 0})()`);await W(200)}
     await W(3500);const bb=await J(`({ban:$('banner').textContent})`);
     const kb=await J(`(()=>{const g0=G.gold,b=G.enemies.find(e=>isBoss(e.type));if(b){b.intro=0;killE(b)}return{d:G.gold-g0,left:SAVE.cn.bossGold.golem||0}})()`);
     ok('battuto il custode ti riprendi l\'oro',kb.d>=210&&!kb.left,JSON.stringify(Object.assign(kb,bb)));
@@ -166,8 +166,8 @@ const SOLO=process.argv[2]||'';
   if(!SOLO||SOLO==='torre'){
     await toMenu();const inf0=await J(`SAVE.inf`);
     await E(`(()=>{CN.next='tower';__A.endSeen=0;__A.ends=[];__A.log=[];__A.god=true;__A.every=6;goPlay('arena');return 0})()`);await W(2600);
-    const t=await J(`({mode:G.mode,mods:(G.tower&&G.tower.mods||[]).map(m=>m.id),last:G.seq[G.seq.length-1],room:G.room,w:!!G.cnW})`);await snap('torre_piano1');
-    ok('la Torre: Abisso con tre regole della settimana, fino al piano 20, senza ondate',t.mode==='inf'&&t.mods.length===3&&t.last.c===20&&!t.w,JSON.stringify(t));
+    const t=await J(`({mode:G.mode,mods:(G.tower&&G.tower.mods||[]).map(m=>m.id),last:G.seq[G.seq.length-1],room:G.room})`);await snap('torre_piano1');
+    ok('la Torre: Abisso con tre regole della settimana, fino al piano 20',t.mode==='inf'&&t.mods.length===3&&t.last.c===20,JSON.stringify(t));
     await E(`(()=>{const k=G.seq.findIndex(s=>s.c===19);G.si=k;G.room=19;G.event=null;buildRoom();__A.on=true;__A.kill=true;return 0})()`);
     const end=await run(120);await W(800);const tt=await J(`({ends:__A.ends,inf:SAVE.inf,tower:SAVE.cn.tower,rel:__A.log.filter(l=>/reliquia/.test(l))})`);await snap('torre_fine');
     ok('in cima alla Torre: «Torre conquistata», il record della settimana, l\'Abisso intatto',tt.ends[0]&&tt.ends[0].title==='TORRE CONQUISTATA'&&tt.tower.best===20&&JSON.stringify(tt.inf)===JSON.stringify(inf0),JSON.stringify(tt.ends[0]));
