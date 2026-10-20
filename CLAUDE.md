@@ -220,6 +220,13 @@ un prop insieme; a telecamera ferma le copie tornano esatte; i disegni a mano, l
 vivo gli oggetti vicini al centro. Prova `node anteprime/zombie/copie_prova.js` (fermo uguale al disegno dal vivo, arrotondamenti dei bordi a
 parte; le prove di misura della mappa danno gli stessi numeri del codice di prima). Solo in `piano-maestro` e nell'anteprima della FASE 9
 (ripubblicata il 20 ottobre con le copie, commit efe05c4): il ramo `gioco` (pubblicato) non ce l'ha finché Denis non dice sì.
+Poi (20 ottobre, Denis: «i cali di frame nella modalità zombie […] nei menu […] quando apri bustine o le casse», «ok vai»): **aperture
+di bustine e casse** da 9 a 18–19 fotogrammi al secondo qui, identiche (sfondo degli effetti preparato una volta `fxBg`, bagliori e raggi
+solo dove si vedono, niente sfocatura invisibile dietro `#chestScr`, tela della bustina rifatta solo quando cambia molto `pkResize`);
+**falò** −25% (strato del campo ridipinto un fotogramma sì e uno no mentre l'eroe sta seduto, zombie del sentiero in tele loro ridipinte a
+turno); **mappa zombie**: zombie dalle buche entro 420 punti a piedi (prima quelle fuori dallo schermo; se meno di due le tre più vicine
+entro 700, `pickHole`), esseri disegnati solo se toccano lo schermo (`visB`), zombie fermi delle zone chiuse fermi anche nell'aggiornamento
+se lontani (salvo le barriere che li chiamano), fumo e foglie solo vicino allo schermo. Dettagli in `docs/fase-9-fluidita.md` (14–16).
 
 ## Modalità zombie (nel gioco dal 13 ottobre)
 

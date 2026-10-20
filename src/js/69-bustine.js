@@ -301,7 +301,10 @@ const PK={on:false,kind:'',rar:'',t:0,last:0,cv:null,buf:null,lo:null,hi:null,do
 .zlk.fifth{box-shadow:0 0 0 2px #ffd84a inset}
 small.zlk{display:block;background:none;border:0;opacity:.7}
 @media (prefers-reduced-motion:reduce){.chestWrap.pack.idle{animation:none}}`;document.head.appendChild(st)}
-function pkResize(){const c=PK.cv;if(!c)return;const r=c.getBoundingClientRect(),d=Math.min(2,window.devicePixelRatio||1);const w=Math.max(10,Math.round(r.width*d)),h=Math.max(10,Math.round(r.height*d));
+// the pack's canvas as big as it is on the screen; made again only when it gets bigger than the canvas or much smaller (phase 9: its box
+// changed a little at every frame while it floats and tilts, and the canvas and its buffer were made again each time)
+function pkResize(){const c=PK.cv;if(!c)return;const r=c.getBoundingClientRect(),d=Math.min(2,window.devicePixelRatio||1);let w=Math.max(10,Math.round(r.width*d)),h=Math.max(10,Math.round(r.height*d));
+  if(w<=c.width&&h<=c.height&&w>=c.width*.8&&h>=c.height*.8)return;w=Math.round(w*1.06);h=Math.round(h*1.06);
   if(c.width!==w||c.height!==h){c.width=w;c.height=h;PK.buf.width=w;PK.buf.height=h}}
 // one frame of the pack: the cover drawn again (its animations), then cut along the tear: the body, the slit with light coming out, the strip
 // lifted where it is torn; once torn the strip flies away

@@ -31,18 +31,25 @@ function burst(x,y,n,cols,o){o=o||{};const d=FX.d;if(RM)n=Math.ceil(n/3);
     FX.parts.push({k,x:x+rand(-10,10)*d,y:y+rand(-10,10)*d,vx:Math.cos(a)*s,vy:Math.sin(a)*s,g:(o.g==null?700:o.g)*d,drag:o.drag||1.6,life:rand(.6,1.3)*(o.life||1),max:0,col:cols[randi(0,cols.length-1)],r:rand(2,4.5)*d,rot:rand(0,TAU),vr:rand(-12,12)})}
   FX.parts.forEach(p=>{if(!p.max)p.max=p.life})}
 function ring(x,y,col,max,w){FX.rings.push({x,y,r:10*FX.d,max:(max||420)*FX.d,col,w:(w||10)*FX.d,a:1})}
+// the background of an opening (phase 9): the same gradient until the chest moves or the colour changes, so it is painted once in a canvas
+// of its own and copied (an opaque copy instead of a gradient over the whole screen every frame)
+const fxBgC=document.createElement('canvas');let fxBgK='';
+function fxBg(W,H){const key=[W,H,FX.cx,FX.cy,FX.bg].join('|');if(key!==fxBgK){fxBgK=key;fxBgC.width=W;fxBgC.height=H;const x=fxBgC.getContext('2d');
+    const bg=x.createRadialGradient(FX.cx,FX.cy,10,FX.cx,FX.cy,Math.max(W,H)*.75);bg.addColorStop(0,FX.bg);bg.addColorStop(.6,'#132f62');bg.addColorStop(1,'#0b1d42');x.fillStyle=bg;x.fillRect(0,0,W,H)}
+  fxx.drawImage(fxBgC,0,0)}
 function fxFrame(now){
   if(!FX.on)return;const dt=Math.min(.04,(now-(FX.last||now))/1000);FX.last=now;
   const W=fxc.width,H=fxc.height,c=fxx,d=FX.d;
   FX.rayA+=(FX.rayTarget-FX.rayA)*Math.min(1,dt*4);FX.rayT+=dt*FX.raySpeed;FX.flash=Math.max(0,FX.flash-dt*2.2);FX.shake=Math.max(0,FX.shake-dt*30);
   c.setTransform(1,0,0,1,0,0);c.globalCompositeOperation='source-over';
-  const bg=c.createRadialGradient(FX.cx,FX.cy,10,FX.cx,FX.cy,Math.max(W,H)*.75);bg.addColorStop(0,FX.bg);bg.addColorStop(.6,'#132f62');bg.addColorStop(1,'#0b1d42');c.fillStyle=bg;c.fillRect(0,0,W,H);
+  fxBg(W,H);
   c.globalCompositeOperation='lighter';
-  if(FX.glow>0){const g=c.createRadialGradient(FX.cx,FX.cy,4,FX.cx,FX.cy,280*d);g.addColorStop(0,hexA(FX.glowCol,.55*FX.glow));g.addColorStop(1,hexA(FX.glowCol,0));c.fillStyle=g;c.fillRect(0,0,W,H)}
-  if(FX.rayA>.01){const R=Math.hypot(W,H);for(let i=0;i<FX.rayN;i++){const a=FX.rayT+i*TAU/FX.rayN,w=TAU/FX.rayN*.42;
-      const g=c.createRadialGradient(FX.cx,FX.cy,0,FX.cx,FX.cy,R*.6);g.addColorStop(0,hexA(FX.rayCol,.5*FX.rayA));g.addColorStop(1,hexA(FX.rayCol,0));
-      c.fillStyle=g;c.beginPath();c.moveTo(FX.cx,FX.cy);c.arc(FX.cx,FX.cy,R,a-w/2,a+w/2);c.closePath();c.fill()}
-    const core=c.createRadialGradient(FX.cx,FX.cy,0,FX.cx,FX.cy,160*d);core.addColorStop(0,hexA('#ffffff',.35*FX.rayA));core.addColorStop(1,hexA(FX.rayCol,0));c.fillStyle=core;c.fillRect(0,0,W,H)}
+  if(FX.glow>0){const g=c.createRadialGradient(FX.cx,FX.cy,4,FX.cx,FX.cy,280*d);g.addColorStop(0,hexA(FX.glowCol,.55*FX.glow));g.addColorStop(1,hexA(FX.glowCol,0));c.fillStyle=g;c.fillRect(FX.cx-281*d,FX.cy-281*d,562*d,562*d)}
+  // the rays: the same fade for all of them, so one path and one fill; the fade ends at 0,6 of the screen's diagonal, the rays stop there
+  // (past it they added nothing). The core only in its own square (phase 9: the same picture, a fraction of the work)
+  if(FX.rayA>.01){const R=Math.hypot(W,H)*.6+2;const g=c.createRadialGradient(FX.cx,FX.cy,0,FX.cx,FX.cy,R-2);g.addColorStop(0,hexA(FX.rayCol,.5*FX.rayA));g.addColorStop(1,hexA(FX.rayCol,0));c.fillStyle=g;c.beginPath();
+    for(let i=0;i<FX.rayN;i++){const a=FX.rayT+i*TAU/FX.rayN,w=TAU/FX.rayN*.42;c.moveTo(FX.cx,FX.cy);c.arc(FX.cx,FX.cy,R,a-w/2,a+w/2);c.closePath()}c.fill();
+    const core=c.createRadialGradient(FX.cx,FX.cy,0,FX.cx,FX.cy,160*d);core.addColorStop(0,hexA('#ffffff',.35*FX.rayA));core.addColorStop(1,hexA(FX.rayCol,0));c.fillStyle=core;c.fillRect(FX.cx-161*d,FX.cy-161*d,322*d,322*d)}
   if(FX.plat>0){const py=FX.cy+(FX.size||120)*.42*d,g=c.createRadialGradient(FX.cx,py,2,FX.cx,py,(FX.size||120)*.95*d);g.addColorStop(0,hexA(FX.glowCol,.45*FX.plat));g.addColorStop(1,hexA(FX.glowCol,0));c.save();c.translate(FX.cx,py);c.scale(1,.32);c.translate(-FX.cx,-py);c.fillStyle=g;c.fillRect(FX.cx-300*d,py-300*d,600*d,600*d);c.restore()}
   if(FX.beam>0){FX.beam=Math.max(0,FX.beam-dt*.9);const bw=(70+60*FX.beam)*d,g=c.createLinearGradient(FX.cx-bw,0,FX.cx+bw,0);g.addColorStop(0,hexA(FX.rayCol,0));g.addColorStop(.5,hexA('#ffffff',.75*FX.beam));g.addColorStop(1,hexA(FX.rayCol,0));
     const fade=c.createLinearGradient(0,0,0,FX.cy);c.fillStyle=g;c.globalAlpha=1;c.fillRect(FX.cx-bw,0,bw*2,FX.cy);
@@ -58,7 +65,7 @@ function fxFrame(now){
     else if(p.k==='coin'){c.globalCompositeOperation='source-over';const w=Math.abs(Math.cos(p.rot))*p.r*2.2+1;c.fillStyle='#ffc93c';c.strokeStyle='#1b1612';c.lineWidth=1.5*d;c.beginPath();c.ellipse(p.x,p.y,w,p.r*2.2,0,0,TAU);c.fill();c.stroke();c.fillStyle='rgba(255,255,255,.7)';c.beginPath();c.ellipse(p.x-w*.3,p.y-p.r*.6,w*.25,p.r*.5,0,0,TAU);c.fill();c.globalCompositeOperation='lighter'}
     else{c.save();c.translate(p.x,p.y);c.rotate(p.rot);c.fillStyle=hexA(p.col,a);c.fillRect(-p.r,-p.r*.5,p.r*2,p.r);c.restore()}}
   if(FX.flash>0){c.globalCompositeOperation='source-over';c.fillStyle=hexA(FX.flashCol,Math.min(1,FX.flash));c.fillRect(0,0,W,H)}
-  const sc=$('cscene');sc.style.transform=FX.shake>0&&!RM?`translate(${rand(-1,1)*FX.shake}px,${rand(-1,1)*FX.shake}px)`:'';
+  const sc=$('cscene'),tf=FX.shake>0&&!RM?`translate(${rand(-1,1)*FX.shake}px,${rand(-1,1)*FX.shake}px)`:'';if(FX.tf!==tf){FX.tf=tf;sc.style.transform=tf}
   requestAnimationFrame(fxFrame);
 }
 let tapRes=null,CHbusy=false,CHgest=false;// CHgest: a pack waits for the finger to tear it (src/js/69-bustine.js)
@@ -184,7 +191,7 @@ async function summary(rew,T,cw){CHskip=false;
   gEl.parentElement.animate([{transform:'scale(1.3)'},{transform:'none'}],{duration:300,easing:'ease-out'});burst(gx,gy,18,['#ffd84a','#ffffff'],{kind:'star',min:80,max:240,g:0,life:.6});
   const b=$('cdone');b.hidden=false;b.animate([{transform:'scale(0)'},{transform:'scale(1.1)',offset:.7},{transform:'none'}],{duration:350,easing:'ease-out'});
 }
-$('cdone').onclick=async()=>{duckMusic(1);const scr=$('chestScr');await canim(scr,[{opacity:1},{opacity:0}],{duration:250});scr.hidden=true;scr.getAnimations().forEach(a=>a.cancel());FX.on=false;$('tray').getAnimations().forEach(a=>a.cancel());renderHero();renderPlay();renderShop()};
+$('cdone').onclick=async()=>{duckMusic(1);const scr=$('chestScr');await canim(scr,[{opacity:1},{opacity:0}],{duration:250});scr.hidden=true;scr.getAnimations().forEach(a=>a.cancel());FX.on=false;fxBgC.width=fxBgC.height=0;fxBgK='';$('tray').getAnimations().forEach(a=>a.cancel());renderHero();renderPlay();renderShop()};
 addEventListener('resize',()=>{if(FX.on)fxSize()});
 
 const hcv=$('heroCv'),hctx=hcv.getContext('2d');let pvT=0;

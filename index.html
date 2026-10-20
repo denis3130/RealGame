@@ -1082,7 +1082,7 @@ html,body{height:100%;margin:0;background:var(--ink);color:var(--parch);overflow
 #pName:has(input)::after{content:none}
 .nameIn{width:100%;max-width:200px;padding:3px 8px;border:2.5px solid var(--crInk);border-radius:8px;background:#fff;color:#191714;font-family:var(--display);font-size:22px}
 /* chest opening in the menu's colours */
-#chestScr{background:#27241f}
+#chestScr{background:#27241f;backdrop-filter:none;-webkit-backdrop-filter:none}/* opaque: the blur behind it could not be seen, but the phone computed it at every frame (phase 9) */
 #chestScr .ctitle{color:#fff;text-shadow:var(--tol)}
 #ctap{color:#fff;text-shadow:var(--tol-s)}
 @media (prefers-reduced-motion:reduce){.tabIn,.lday.today,#menu .sideBtns .qbtn.hot{animation:none}}
@@ -2664,18 +2664,25 @@ function burst(x,y,n,cols,o){o=o||{};const d=FX.d;if(RM)n=Math.ceil(n/3);
     FX.parts.push({k,x:x+rand(-10,10)*d,y:y+rand(-10,10)*d,vx:Math.cos(a)*s,vy:Math.sin(a)*s,g:(o.g==null?700:o.g)*d,drag:o.drag||1.6,life:rand(.6,1.3)*(o.life||1),max:0,col:cols[randi(0,cols.length-1)],r:rand(2,4.5)*d,rot:rand(0,TAU),vr:rand(-12,12)})}
   FX.parts.forEach(p=>{if(!p.max)p.max=p.life})}
 function ring(x,y,col,max,w){FX.rings.push({x,y,r:10*FX.d,max:(max||420)*FX.d,col,w:(w||10)*FX.d,a:1})}
+// the background of an opening (phase 9): the same gradient until the chest moves or the colour changes, so it is painted once in a canvas
+// of its own and copied (an opaque copy instead of a gradient over the whole screen every frame)
+const fxBgC=document.createElement('canvas');let fxBgK='';
+function fxBg(W,H){const key=[W,H,FX.cx,FX.cy,FX.bg].join('|');if(key!==fxBgK){fxBgK=key;fxBgC.width=W;fxBgC.height=H;const x=fxBgC.getContext('2d');
+    const bg=x.createRadialGradient(FX.cx,FX.cy,10,FX.cx,FX.cy,Math.max(W,H)*.75);bg.addColorStop(0,FX.bg);bg.addColorStop(.6,'#132f62');bg.addColorStop(1,'#0b1d42');x.fillStyle=bg;x.fillRect(0,0,W,H)}
+  fxx.drawImage(fxBgC,0,0)}
 function fxFrame(now){
   if(!FX.on)return;const dt=Math.min(.04,(now-(FX.last||now))/1000);FX.last=now;
   const W=fxc.width,H=fxc.height,c=fxx,d=FX.d;
   FX.rayA+=(FX.rayTarget-FX.rayA)*Math.min(1,dt*4);FX.rayT+=dt*FX.raySpeed;FX.flash=Math.max(0,FX.flash-dt*2.2);FX.shake=Math.max(0,FX.shake-dt*30);
   c.setTransform(1,0,0,1,0,0);c.globalCompositeOperation='source-over';
-  const bg=c.createRadialGradient(FX.cx,FX.cy,10,FX.cx,FX.cy,Math.max(W,H)*.75);bg.addColorStop(0,FX.bg);bg.addColorStop(.6,'#132f62');bg.addColorStop(1,'#0b1d42');c.fillStyle=bg;c.fillRect(0,0,W,H);
+  fxBg(W,H);
   c.globalCompositeOperation='lighter';
-  if(FX.glow>0){const g=c.createRadialGradient(FX.cx,FX.cy,4,FX.cx,FX.cy,280*d);g.addColorStop(0,hexA(FX.glowCol,.55*FX.glow));g.addColorStop(1,hexA(FX.glowCol,0));c.fillStyle=g;c.fillRect(0,0,W,H)}
-  if(FX.rayA>.01){const R=Math.hypot(W,H);for(let i=0;i<FX.rayN;i++){const a=FX.rayT+i*TAU/FX.rayN,w=TAU/FX.rayN*.42;
-      const g=c.createRadialGradient(FX.cx,FX.cy,0,FX.cx,FX.cy,R*.6);g.addColorStop(0,hexA(FX.rayCol,.5*FX.rayA));g.addColorStop(1,hexA(FX.rayCol,0));
-      c.fillStyle=g;c.beginPath();c.moveTo(FX.cx,FX.cy);c.arc(FX.cx,FX.cy,R,a-w/2,a+w/2);c.closePath();c.fill()}
-    const core=c.createRadialGradient(FX.cx,FX.cy,0,FX.cx,FX.cy,160*d);core.addColorStop(0,hexA('#ffffff',.35*FX.rayA));core.addColorStop(1,hexA(FX.rayCol,0));c.fillStyle=core;c.fillRect(0,0,W,H)}
+  if(FX.glow>0){const g=c.createRadialGradient(FX.cx,FX.cy,4,FX.cx,FX.cy,280*d);g.addColorStop(0,hexA(FX.glowCol,.55*FX.glow));g.addColorStop(1,hexA(FX.glowCol,0));c.fillStyle=g;c.fillRect(FX.cx-281*d,FX.cy-281*d,562*d,562*d)}
+  // the rays: the same fade for all of them, so one path and one fill; the fade ends at 0,6 of the screen's diagonal, the rays stop there
+  // (past it they added nothing). The core only in its own square (phase 9: the same picture, a fraction of the work)
+  if(FX.rayA>.01){const R=Math.hypot(W,H)*.6+2;const g=c.createRadialGradient(FX.cx,FX.cy,0,FX.cx,FX.cy,R-2);g.addColorStop(0,hexA(FX.rayCol,.5*FX.rayA));g.addColorStop(1,hexA(FX.rayCol,0));c.fillStyle=g;c.beginPath();
+    for(let i=0;i<FX.rayN;i++){const a=FX.rayT+i*TAU/FX.rayN,w=TAU/FX.rayN*.42;c.moveTo(FX.cx,FX.cy);c.arc(FX.cx,FX.cy,R,a-w/2,a+w/2);c.closePath()}c.fill();
+    const core=c.createRadialGradient(FX.cx,FX.cy,0,FX.cx,FX.cy,160*d);core.addColorStop(0,hexA('#ffffff',.35*FX.rayA));core.addColorStop(1,hexA(FX.rayCol,0));c.fillStyle=core;c.fillRect(FX.cx-161*d,FX.cy-161*d,322*d,322*d)}
   if(FX.plat>0){const py=FX.cy+(FX.size||120)*.42*d,g=c.createRadialGradient(FX.cx,py,2,FX.cx,py,(FX.size||120)*.95*d);g.addColorStop(0,hexA(FX.glowCol,.45*FX.plat));g.addColorStop(1,hexA(FX.glowCol,0));c.save();c.translate(FX.cx,py);c.scale(1,.32);c.translate(-FX.cx,-py);c.fillStyle=g;c.fillRect(FX.cx-300*d,py-300*d,600*d,600*d);c.restore()}
   if(FX.beam>0){FX.beam=Math.max(0,FX.beam-dt*.9);const bw=(70+60*FX.beam)*d,g=c.createLinearGradient(FX.cx-bw,0,FX.cx+bw,0);g.addColorStop(0,hexA(FX.rayCol,0));g.addColorStop(.5,hexA('#ffffff',.75*FX.beam));g.addColorStop(1,hexA(FX.rayCol,0));
     const fade=c.createLinearGradient(0,0,0,FX.cy);c.fillStyle=g;c.globalAlpha=1;c.fillRect(FX.cx-bw,0,bw*2,FX.cy);
@@ -2691,7 +2698,7 @@ function fxFrame(now){
     else if(p.k==='coin'){c.globalCompositeOperation='source-over';const w=Math.abs(Math.cos(p.rot))*p.r*2.2+1;c.fillStyle='#ffc93c';c.strokeStyle='#1b1612';c.lineWidth=1.5*d;c.beginPath();c.ellipse(p.x,p.y,w,p.r*2.2,0,0,TAU);c.fill();c.stroke();c.fillStyle='rgba(255,255,255,.7)';c.beginPath();c.ellipse(p.x-w*.3,p.y-p.r*.6,w*.25,p.r*.5,0,0,TAU);c.fill();c.globalCompositeOperation='lighter'}
     else{c.save();c.translate(p.x,p.y);c.rotate(p.rot);c.fillStyle=hexA(p.col,a);c.fillRect(-p.r,-p.r*.5,p.r*2,p.r);c.restore()}}
   if(FX.flash>0){c.globalCompositeOperation='source-over';c.fillStyle=hexA(FX.flashCol,Math.min(1,FX.flash));c.fillRect(0,0,W,H)}
-  const sc=$('cscene');sc.style.transform=FX.shake>0&&!RM?`translate(${rand(-1,1)*FX.shake}px,${rand(-1,1)*FX.shake}px)`:'';
+  const sc=$('cscene'),tf=FX.shake>0&&!RM?`translate(${rand(-1,1)*FX.shake}px,${rand(-1,1)*FX.shake}px)`:'';if(FX.tf!==tf){FX.tf=tf;sc.style.transform=tf}
   requestAnimationFrame(fxFrame);
 }
 let tapRes=null,CHbusy=false,CHgest=false;// CHgest: a pack waits for the finger to tear it (src/js/69-bustine.js)
@@ -2817,7 +2824,7 @@ async function summary(rew,T,cw){CHskip=false;
   gEl.parentElement.animate([{transform:'scale(1.3)'},{transform:'none'}],{duration:300,easing:'ease-out'});burst(gx,gy,18,['#ffd84a','#ffffff'],{kind:'star',min:80,max:240,g:0,life:.6});
   const b=$('cdone');b.hidden=false;b.animate([{transform:'scale(0)'},{transform:'scale(1.1)',offset:.7},{transform:'none'}],{duration:350,easing:'ease-out'});
 }
-$('cdone').onclick=async()=>{duckMusic(1);const scr=$('chestScr');await canim(scr,[{opacity:1},{opacity:0}],{duration:250});scr.hidden=true;scr.getAnimations().forEach(a=>a.cancel());FX.on=false;$('tray').getAnimations().forEach(a=>a.cancel());renderHero();renderPlay();renderShop()};
+$('cdone').onclick=async()=>{duckMusic(1);const scr=$('chestScr');await canim(scr,[{opacity:1},{opacity:0}],{duration:250});scr.hidden=true;scr.getAnimations().forEach(a=>a.cancel());FX.on=false;fxBgC.width=fxBgC.height=0;fxBgK='';$('tray').getAnimations().forEach(a=>a.cancel());renderHero();renderPlay();renderShop()};
 addEventListener('resize',()=>{if(FX.on)fxSize()});
 
 const hcv=$('heroCv'),hctx=hcv.getContext('2d');let pvT=0;
@@ -17160,6 +17167,8 @@ const W={dbg:{},w:10*T,h:10*T,ground:null,hero:null,Z:[],FX:[],crows:[],flock:[]
 let BARM=0;
 let DPRCUT=false;let VIEWR=1e9;/* (anteprima 48, punto 54) il mezzo lato del quadrato del mondo che può stare sullo schermo (anche girando): quello che è fuori non si aggiorna a vista, non si ordina e non si disegna (zombie, fiamme libere, corvi posati, luci, fumi) */
 const farV=(x,y,r)=>Math.abs(x-CAM.x)>VIEWR+r||Math.abs(y-CAM.y)>VIEWR+r;
+/* (FASE 9) un punto a terra entro m punti dallo schermo (a vista dritta e girata: S fa la rotazione); prima del primo disegno sempre sì */
+const nearScr=(x,y,m)=>{if(!ORD.HW)return true;const q=S(x,y,0);return Math.abs(q[0]-CAM.x)<ORD.HW+m&&Math.abs(q[1]-CAM.y+CAM.oy)<ORD.HH+m};
 let LV=0;/* il piano dei solidi che contano (anteprima 48, punto 15): 0 a terra, 1 il piano di sopra di un edificio (i suoi solidi hanno lv:1) */
 /* (difetti 48) la griglia dei solidi: hit() guarda solo i solidi delle caselle di 64 px intorno (prima tutti, centinaia nella mappa grande: era un
    terzo del tempo degli zombie); tra quelli toccati vince il primo creato, come prima. Si rifà quando nascono solidi nuovi o la Bara si sposta (SGV) */
@@ -17410,12 +17419,17 @@ function holeDist(p){const N=NAV;if(!N)return null;const cw=N.cw,ch=N.ch,D=N.dis
 // chi esce lì accanto sembrava venire dalla zona chiusa
 function shutNear(x,y,r){const G=W.gate;if(G&&!G.open&&Math.hypot(x-G.x,y-G.y)<r)return true;for(const L of W.lures||[])if(!L.isOpen()&&Math.hypot(x-L.x,y-L.y)<r)return true;return false}
 const zoneOk=(x,y,tag)=>(tag==null||W.zoneOpen[tag])&&(!W.zoneIdAt||W.zoneOpen[W.zoneIdAt(x,y)]!==false);
+/* (FASE 9, Denis, 20 ottobre: «non far spawnare i zombie […] troppo lontani a noi») una buca sullo schermo (0) o fuori (1); prima del primo
+   disegno (ORD.HW) tutte fuori */
+function holeScr(p){if(!ORD.HW)return 1;const q=S(p[0],p[1],0);return Math.abs(q[0]-CAM.x)<ORD.HW-24&&Math.abs(q[1]-CAM.y+CAM.oy)<ORD.HH-24?0:1}
 function pickHole(o){const h=W.hero,open=holes.filter(p=>zoneOk(p[0],p[1],p[2])&&!shutNear(p[0],p[1],110)&&!W.Z.some(z=>Math.hypot(z.x-p[0],z.y-p[1])<30));
-  if(NAV){const c=[],far=[];for(const p of open){if(Math.hypot(p[0]-h.x,p[1]-h.y)<110)continue;const d=holeDist(p);if(d==null||d>=1e9||d<130)continue;(d>700?far:c).push([d,p])}
-    // (difetti 48) senza buche a giusta distanza le più vicine tra quelle raggiungibili, mai una buca a caso che magari sta dietro una barriera chiusa
-    if(!c.length&&far.length){far.sort((a,b)=>a[0]-b[0]);c.push(...far.slice(0,3))}
-    if(c.length){c.sort((a,b)=>a[0]-b[0]);let k=c.slice(0,6);if(k.length>1)k=k.filter(a=>a[1]!==W.lastHole);const p=k[Math.floor(Math.random()*k.length)][1];W.lastHole=p;return p}
-    return null}
+  if(NAV){const c=[];for(const p of open){if(Math.hypot(p[0]-h.x,p[1]-h.y)<110)continue;const d=holeDist(p);if(d==null||d>=1e9||d<130)continue;c.push([d,p,holeScr(p)])}
+    if(!c.length)return null;
+    // le buche vicine per strada (entro 420 punti: lo schermo del telefono è alto, «fuori dallo schermo» in su o in giù vorrebbe dire lontano),
+    // tra queste prima quelle fuori dallo schermo (non si vedono nascere a metà schermo); se ce n'è meno di due, le tre più vicine per strada (entro 700, come prima, se ci sono).
+    // Mai la stessa di prima; tutte raggiungibili (difetti 48: mai una buca a caso che magari sta dietro una barriera chiusa)
+    c.sort((a,b)=>a[0]-b[0]);let k=c.filter(a=>a[0]<=420);if(k.length<2){k=c.filter(a=>a[0]<=700).slice(0,3);if(!k.length)k=c.slice(0,3)}else{const off=k.filter(a=>a[2]>0);if(off.length)k=off}
+    k=k.slice(0,6);if(k.length>1)k=k.filter(a=>a[1]!==W.lastHole);const p=k[Math.floor(Math.random()*k.length)][1];W.lastHole=p;return p}
   const c=open.filter(p=>{const e=Math.hypot(p[0]-h.x,p[1]-h.y);return e>110&&e<460});return c.length?c[Math.floor(Math.random()*c.length)]:null}
 // (difetti 48) uno zombie della partita che non si avvicina più all'eroe (chiuso di là da una barriera, incastrato) e non si vede sullo schermo
 // rinasce da una buca raggiungibile, come in CoD; se nessuna buca va bene riprova dopo
@@ -17563,7 +17577,7 @@ function updateBeings(dt,inp){const h=W.hero,DI=W.director,MD=W.mods||{};if(h.de
   // scarto sullo schermo (la bocca dell'arma, l'altezza del petto, il volo delle gocce): girando la telecamera restano dove sono successe
   if(DI)DI.update(dt,zOn);else{spawnT-=dt;if(zOn&&spawnT<=0&&W.Z.filter(z=>!z.idle&&!z.die).length<(W.maxZ||5)){spawn();spawnT=rr(2,3.5)}}navUpdate(dt);
   for(const z of W.Z){if(z.flash>0)z.flash-=dt;if(z.fin>0)z.fin-=dt;if(z.die){z.die+=dt;continue}LV=z.lv||0;if(!z.cl)z.zh=z.lv?z.lvH:(z.zh||0)+(heightAt(z.x,z.y)-(z.zh||0))*Math.min(1,dt*14);if(z.rise<1){z.rise=Math.min(1,z.rise+dt/1.3);z.face=Math.atan2(h.y-z.y,h.x-z.x);continue}
-    if(z.idle){if(W.zoneOpen[z.idle.zone])z.idle=null;else{idleStep(z,dt);sep(z);continue}}
+    if(z.idle){if(W.zoneOpen[z.idle.zone])z.idle=null;else{if(!ORD.HW||nearScr(z.x,z.y,260)||lureOf(z)){idleStep(z,dt);sep(z)}continue}}// lontani dallo schermo restano fermi, se non li chiama una barriera (FASE 9)
     if(z.ai){z.ai(z,dt);sep(z);continue}// un boss della partita: si muove e colpisce da solo
     if(z.stun>0){z.stun-=dt;if(z.anim!=='idle'){z.anim='idle';z.p=0}z.p=(z.p+dt/2.4)%1;sep(z);continue}// respinto dall'anima che rialza l'eroe
     if(!z.bx&&BARS.length&&!z.lv&&!z.cl&&(z.bxT=(z.bxT||0)-dt)<=0){z.bxT=.15;z.bx=barCheck(z)}// una finestra o un varco da passare (barriere.js)
@@ -18048,6 +18062,10 @@ function drawLayer(L){if(LCF&&L.lcA&&L.lcA<3&&ctx===LCF.ctx&&L.lc)return lcDraw(
 // il riquadro a schermo del segugio: lungo ±12 nel verso in cui guarda
 function houndSB(e,z){const c=Math.cos(z.face)*12,s=Math.sin(z.face)*12;for(const k of[-1,1]){const q=S(z.x+c*k,z.y+s*k,z.zh||0);e.sb[0]=Math.min(e.sb[0],q[0]-e.hw);e.sb[2]=Math.max(e.sb[2],q[0]+e.hw);e.sb[3]=Math.max(e.sb[3],q[1]+5)}}
 // le voci di questo fotogramma, in ordine: [pavimenti, tutto il resto]
+/* (FASE 9) un essere alto H in (x, y, z0) tocca lo schermo? la sua figura (piedi e testa con la piega) allargata di r; senza disegni di prova
+   (ORD.HW) sempre sì */
+function visB(x,y,z0,H,r){if(!ORD.HW||W.dbg.visAll)return true;const a=S(x,y,z0),b=S(x,y,z0+H);r+=LK*H;
+  return Math.max(a[0],b[0])+r>CAM.x-ORD.HW&&Math.min(a[0],b[0])-r<CAM.x+ORD.HW&&Math.max(a[1],b[1])+r>CAM.y-CAM.oy-ORD.HH&&Math.min(a[1],b[1])-r<CAM.y-CAM.oy+ORD.HH}
 function buildOrder(vis){const D=W.dbg,fl=[],li=[];psiUpdate();camStamp();UCAM=CAM.x*PC-CAM.y*PSN;
   if(D.ord==='ky'){// l'ordine di prima: prop interi per ky (kyFn), esseri per y, fiamme e corvi come voci; girando la V del punto (centro, ky)
     const h=W.hero,hx=h?h.x:0,K=(x,y)=>x*PSN+y*PC,kp=p=>CAM.rot?K((p.bx[0]+p.bx[2])/2,p.ky):(p.kyFn?p.kyFn(hx):p.ky),L2=[];
@@ -18061,11 +18079,11 @@ function buildOrder(vis){const D=W.dbg,fl=[],li=[];psiUpdate();camStamp();UCAM=C
     L2.sort((a,b)=>a.k-b.k);return[fl,L2.map(o=>o.e)]}
   for(const p of props){if(p.hide||!vis(p))continue;for(const L of p.layers){layerSB(L);(L.floor?fl:li).push(L)}}
   const h=W.hero,rA=(x,y,z)=>STAIRS.length&&z>0?refAt(x,y):null;if(h&&!D.noHero&&!D.heroLast)li.push(beingE(HE,h.x,h.y,h.zh||0,56,10,RIGK.hzk,rA(h.x,h.y,h.zh||0)));
-  for(const z of W.Z){if(z.id==null)z.id=++ZID;if(farV(z.x,z.y,90))continue;const e=z.E||(z.E={kind:'B',z,sid:'Z'+z.id,sk:900000+(z.id%99999)}),hd=z.kind==='hound';beingE(e,z.x,z.y,z.zh||0,(hd?30:46)*z.sc,(hd?16:10)*z.sc,RIGK.mzk,rA(z.x,z.y,z.zh||0));if(hd)houndSB(e,z);li.push(e)}
-  for(const c of perches){if(!c.away&&!farV(c.x,c.y,60))li.push(beingE(c.E,c.x,c.y,c.z,14,6,CAM.CP))}
+  for(const z of W.Z){if(z.id==null)z.id=++ZID;if(farV(z.x,z.y,90)||!visB(z.x,z.y,z.zh||0,(z.kind==='hound'?30:46)*z.sc,40))continue;const e=z.E||(z.E={kind:'B',z,sid:'Z'+z.id,sk:900000+(z.id%99999)}),hd=z.kind==='hound';beingE(e,z.x,z.y,z.zh||0,(hd?30:46)*z.sc,(hd?16:10)*z.sc,RIGK.mzk,rA(z.x,z.y,z.zh||0));if(hd)houndSB(e,z);li.push(e)}
+  for(const c of perches){if(!c.away&&!farV(c.x,c.y,60)&&visB(c.x,c.y,c.z,14,30))li.push(beingE(c.E,c.x,c.y,c.z,14,6,CAM.CP))}
   // i compagni dell'eroe (compagni.js): esseri come gli zombie
-  for(const pt of W.pets||[]){if(farV(pt.x,pt.y,60))continue;const e=pt.E||(pt.E={kind:'B',pet:pt,sid:'P'+pt.i,sk:600000+pt.i});li.push(beingE(e,pt.x,pt.y,pt.zh||0,30,8,RIGK.mzk,rA(pt.x,pt.y,pt.zh||0)))}
-  if(!D.noFlames)for(const f of FREEF)if(!farV(f.x,f.y,40))li.push(beingE(f.E,f.x,f.y,f.z-4,10,4,CAM.CP,f.lvl!=null?f.ref:null));
+  for(const pt of W.pets||[]){if(farV(pt.x,pt.y,60)||!visB(pt.x,pt.y,pt.zh||0,30,40))continue;const e=pt.E||(pt.E={kind:'B',pet:pt,sid:'P'+pt.i,sk:600000+pt.i});li.push(beingE(e,pt.x,pt.y,pt.zh||0,30,8,RIGK.mzk,rA(pt.x,pt.y,pt.zh||0)))}
+  if(!D.noFlames)for(const f of FREEF)if(!farV(f.x,f.y,40)&&visB(f.x,f.y,f.z-4,14,30))li.push(beingE(f.E,f.x,f.y,f.z-4,10,4,CAM.CP,f.lvl!=null?f.ref:null));
   if(BOX)li.push(boxEntry());
   // con la zona chiusa velata e la telecamera che guarda verso di lei: prima tutto quello che sta di là dalla linea del confine, poi il velo, poi
   // il resto (il confine è una retta: chi sta tutto di là non può coprire chi sta di qua, come in un albero BSP)
@@ -18110,7 +18128,7 @@ function drawWorld(dt,view){const h0=houses[0],h0a=h0?h0.a:1,D=W.dbg;ZS.f++;ZS.n
   if(PH)PH('terreno');if(tk)tk('terreno');if(W.split)drawVeil(W.split.k-veilK());// il velo sul terreno quando non copre anche le cose (guardando di lato o all'indietro)
   // chi si vede: l'impronta del prop girata intorno al perno (u, v), allargata della piega più grande che può avere (LK·altezza di lato,
   // LKV in verticale) e di un margine; a vista dritta vale come prima (senza più il riquadro del mondo, che girando nasconderebbe cose)
-  const HW=view.Wp/2/CAM.z+24,HH=view.Hp/2/CAM.z+24,c=CAM.c,s=CAM.s,SP=CAM.SP,CP=CAM.CP,oy=CAM.oy;VIEWR=Math.hypot(view.Wp,view.Hp/SP)/2/CAM.z+64+Math.abs(oy)/SP;
+  const HW=view.Wp/2/CAM.z+24,HH=view.Hp/2/CAM.z+24,c=CAM.c,s=CAM.s,SP=CAM.SP,CP=CAM.CP,oy=CAM.oy;ORD.HW=HW;ORD.HH=HH;VIEWR=Math.hypot(view.Wp,view.Hp/SP)/2/CAM.z+64+Math.abs(oy)/SP;
   const vis=D.visAll?()=>true:p=>{const f=fpOf(p),z1=f[4],ex=LK*z1*(p.lk==null?1:p.lk);let u0=1e9,u1=-1e9,v0=1e9,v1=-1e9;
     for(const X of[f[0],f[2]])for(const Y of[f[1],f[3]]){const dx=X-CAM.x,dy=Y-CAM.y,u=dx*c-dy*s,v=dx*s+dy*c;if(u<u0)u0=u;if(u>u1)u1=u;if(v<v0)v0=v;if(v>v1)v1=v}
     return u0-ex<HW&&u1+ex>-HW&&v1*SP+oy>-HH&&v0*SP-z1*CP-LKV*z1+oy<HH};
@@ -18126,7 +18144,7 @@ function drawWorld(dt,view){const h0=houses[0],h0a=h0?h0.a:1,D=W.dbg;ZS.f++;ZS.n
   if(PH)PH('voci');const t2=D.prof?performance.now():0;LASTOCC=occluders(order,hi);silhouette(LASTOCC,h0a);if(PH)PH('sagoma');if(tk)tk('sagoma');ORD.last=order;ORD.lastF=floors;LASTLIST=order;
   if(D.prof){const a=.1;ORD.tOrd=t1-t0+ORD.tIntra;ORD.tSil=performance.now()-t2;ORD.pOrd+=(ORD.tOrd-ORD.pOrd)*a;ORD.pSil+=(ORD.tSil-ORD.pSil)*a}
   if(!LOWFX){for(const p of W.puffs){if(farV(p.x,p.y,40+p.z))continue;setRef(p.ref);const q=S(p.x,p.y,p.z);setRef(null);ctx.fillStyle=`rgba(150,150,165,${.28*(1-p.t/3.2)})`;ball(q,p.r);ctx.fill()}
-    for(const l of W.leaves){const q=S(l.x,l.y,l.z);ctx.save();ctx.translate(q[0],q[1]);ctx.rotate(l.t*4+l.ph);ctx.fillStyle=l.c;ctx.beginPath();ctx.ellipse(0,0,2.6,1.2,0,0,TAU);ctx.fill();ctx.restore()}
+    for(const l of W.leaves){if(farV(l.x,l.y,40))continue;const q=S(l.x,l.y,l.z);ctx.save();ctx.translate(q[0],q[1]);ctx.rotate(l.t*4+l.ph);ctx.fillStyle=l.c;ctx.beginPath();ctx.ellipse(0,0,2.6,1.2,0,0,TAU);ctx.fill();ctx.restore()}
     ctx.save();ctx.globalCompositeOperation='lighter';for(const f of W.flies){const q=S(f.x,f.y,f.z),b=.5+.5*Math.sin(W.t*3+f.ph);glow('170,255,120',q[0],q[1],9,.5*b);ctx.fillStyle=`rgba(230,255,190,${.9*b})`;ctx.fillRect(q[0]-.8,q[1]-.8,1.6,1.6)}ctx.restore()}
   for(const f of W.FX){if(f.k==='coin'){const t=SB(f.tw),k=1-f.t/f.t0,y=t[1]-k*26;ctx.save();ctx.globalAlpha=Math.min(1,f.t/.35);ctx.font='800 14px "Baloo 2",system-ui';ctx.textAlign='center';ctx.lineJoin='round';ctx.lineWidth=3.6;ctx.strokeStyle=INK;ctx.strokeText('+'+f.n,t[0],y);ctx.fillStyle='#ffd65a';ctx.fillText('+'+f.n,t[0],y);ctx.restore();continue}
     if(f.k==='boom'){const t=SB(f.tw),k=1-f.t/f.t0;ctx.save();ctx.globalCompositeOperation='lighter';glow('255,170,70',t[0],t[1]-10,f.r*(.6+k),.9*(1-k));ctx.restore();ctx.strokeStyle=`rgba(255,220,160,${.7*(1-k)})`;ctx.lineWidth=3;ctx.beginPath();ctx.ellipse(t[0],t[1],f.r*(.4+k),f.r*(.4+k)*.6*CAM.SP,0,0,TAU);ctx.stroke();continue}
@@ -18140,9 +18158,9 @@ function updateAmbient(dt){W.t+=dt;updateCrows(dt);
   if(W.split){const sp=W.split;if(sp.fade){sp.k-=dt/2.5;if(sp.k<=0){W.split=null}}if(sp.wisps)for(const m of sp.wisps){m.x+=m.v*dt;if(m.x>W.w+m.r)m.x=-m.r}}
   if(LOWFX)return;
   for(const f of W.flies){f.a+=dt*(Math.sin(W.t*.7+f.ph)*1.6);f.x+=Math.cos(f.a)*14*dt;f.y+=Math.sin(f.a)*14*dt;f.z=cl(f.z+Math.sin(W.t*2+f.ph)*8*dt,4,50);if(f.x<0)f.x=W.w;if(f.x>W.w)f.x=0;if(f.y<0)f.y=W.h;if(f.y>W.h)f.y=0}
-  for(const s of smokes){s.t-=dt;if(s.t<=0){s.t=.22;W.puffs.push({x:s.x+rr(-3,3),y:s.y+rr(-3,3),z:s.z,t:0,r:rr(4,6),ref:s.ref})}}
+  for(const s of smokes){s.t-=dt;if(s.t<=0){s.t=.22;if(!nearScr(s.x,s.y,200))continue;W.puffs.push({x:s.x+rr(-3,3),y:s.y+rr(-3,3),z:s.z,t:0,r:rr(4,6),ref:s.ref})}}
   for(const p of W.puffs){p.t+=dt;p.z+=16*dt;p.x+=10*dt;p.r+=5*dt}for(let i=W.puffs.length-1;i>=0;i--)if(W.puffs[i].t>3.2)W.puffs.splice(i,1);
-  for(const tr of W.leafTrees||[])if(Math.random()<dt*.8)W.leaves.push({x:tr[0]+rr(-40,40),y:tr[1]+rr(-40,40),z:rr(70,90),t:0,ph:rr(0,6),c:['#a8562a','#c87a2a','#d0a040'][Math.floor(Math.random()*3)]});
+  for(const tr of W.leafTrees||[])if(Math.random()<dt*.8&&nearScr(tr[0],tr[1],160))W.leaves.push({x:tr[0]+rr(-40,40),y:tr[1]+rr(-40,40),z:rr(70,90),t:0,ph:rr(0,6),c:['#a8562a','#c87a2a','#d0a040'][Math.floor(Math.random()*3)]});
   for(const l of W.leaves){l.t+=dt;l.z-=14*dt;l.x+=Math.sin(l.t*3+l.ph)*20*dt+6*dt}for(let i=W.leaves.length-1;i>=0;i--)if(W.leaves[i].z<0)W.leaves.splice(i,1)}
 // ------------------------------------------------------------------ le aree (area_mappa.js) si registrano in AREE; anteprima(id) costruisce e accende
 // quella della pagina di prova (anteprime/zombie/mk.py), il gioco vero la costruisce col menu (src/js/63-zombie.js)
@@ -21383,6 +21401,14 @@ function zfZombies(dt){const Z=FALO.Z;if(!FALO.zInit){FALO.zInit=1;Z.push(zfWalk
     // where it faces: along the path; at the look it turns to us (or to the hero by the fire) in a moment, back slowly
     const tgt=z.st==='look'?(z.look===1?Math.PI/2:Math.atan2(40,(FALO.hx||156)-z.x)):z.dir>0?0:Math.PI,k=z.st==='look'?Math.min(1,dt*14):Math.min(1,dt*3);
     let d=tgt-z.face;d=Math.atan2(Math.sin(d),Math.cos(d));z.face+=d*k}}
+// (FASE 9) a zombie on the path: painted in a little canvas of its own and copied where it is; each one is painted again every other frame,
+// in turn (they are small and far; when it changes what it does, at once). With the view turned or tilted (never here) drawn as before
+function zfZDraw(z,f,an,sc){const m=ctx.getTransform();if(m.b||m.c||!(m.a>0)){f(z.x,z.y,z.face,an,z.p,sc);return}
+  const k=m.a,W=Math.ceil(96*sc*k),H=Math.ceil(110*sc*k),fx=W/2,fy=Math.round(H*.8);let c=z.cv;if(!c)c=z.cv=document.createElement('canvas');
+  const i=FALO.Z.indexOf(z),key=[W,H,an].join('|');FALO.zc=(FALO.zc||0);
+  if(c.width!==W||c.height!==H||z.ck!==key||((FALO.zc+i)&1)===0){if(c.width!==W||c.height!==H){c.width=W;c.height=H}z.ck=key;
+    const g=c.getContext('2d'),sv=ctx;g.setTransform(1,0,0,1,0,0);g.clearRect(0,0,W,H);g.setTransform(k,0,0,k,fx,fy);ctx=g;try{f(0,0,z.face,an,z.p,sc)}finally{ctx=sv}}
+  ctx.save();ctx.setTransform(1,0,0,1,0,0);ctx.drawImage(c,m.a*z.x+m.e-fx,m.d*z.y+m.f-fy);ctx.restore()}
 // a far groan, panned where the zombie stands (the audio may not be open yet: then nothing)
 function sndZGroan(z){try{if(!AU.ctx||!AU.on.sfx||$('menu').hidden)return;const c=AU.ctx,t=c.currentTime,pan=c.createStereoPanner?c.createStereoPanner():null,g=c.createGain(),o=c.createOscillator(),f=c.createBiquadFilter();
   o.type='sawtooth';const f0=70+Math.random()*30;o.frequency.setValueAtTime(f0,t);o.frequency.linearRampToValueAtTime(f0*.78,t+1.1);f.type='lowpass';f.frequency.value=420;f.Q.value=6;
@@ -21469,9 +21495,9 @@ drawFalo=function(A){const t=A.t,dt=A.dt,hs=A.hs,hx=A.hx,hy=A.hy;FALO.hx=hx;FALO
       ctx.strokeStyle='rgba(12,20,18,.92)';seg([ax+Math.cos(a+1.57)*2.4,ay+Math.sin(a+1.57)*2.4],[ex+Math.cos(a+1.57)*2.4,ey+Math.sin(a+1.57)*2.4]);ctx.stroke()}
     ctx.fillStyle='#0a1210';circ(mx,my,2.4);ctx.fill()}
   // the zombies on the path (far away: small and dim, eyes still glowing), behind the fence
-  zfZombies(dt);
+  zfZombies(dt);FALO.zc=(FALO.zc||0)+1;
   for(const z of FALO.Z.slice().sort((a,b)=>a.y-b.y)){const an=z.st==='walk'?'walk':'idle',f=CR[z.kind];if(!f)continue;ctx.save();ctx.globalAlpha=.9;
-    try{f(z.x,z.y,z.face,an,z.p,hs*.3)}catch(e){}ctx.restore()}
+    try{zfZDraw(z,f,an,hs*.3)}catch(e){}ctx.restore()}
   ctx.drawImage(zfFence(),ZFX0,ZFY0,ZFW,ZFH);
   // fog over the field
   if(!LOWFX){const im=glowSprite('150,175,160');ctx.save();for(let k=0;k<5;k++){const w=150+k*30,fx=((k*137+t*(4+k*1.6))%(360+w*2))-w,fy=132+k*9;ctx.globalAlpha=.1+.03*Math.sin(t*.3+k);ctx.drawImage(im,fx,fy-12,w*2,26)}ctx.restore();ctx.globalAlpha=1}
@@ -21489,6 +21515,10 @@ drawFalo=function(A){const t=A.t,dt=A.dt,hs=A.hs,hx=A.hx,hy=A.hy;FALO.hx=hx;FALO
   // the camp's things on a layer of their own (same transform), lit by the fire afterwards: only where there is something
   const M=ctx.getTransform(),L=FALO.lay||(FALO.lay=document.createElement('canvas')),bx0=-60,by0=-64,bw=98,bh=76,
     d0=[M.a*bx0+M.e,M.d*by0+M.f],W1=Math.ceil(bw*M.a)+2,H1=Math.ceil(bh*M.d)+2;if(L.width<W1)L.width=W1;if(L.height<H1)L.height=H1;
+  // (FASE 9) while the hero sits still by the fire the layer is painted every other frame (his breath takes 9 s, the fire's light on him
+  // flickers slower than 30 times a second): the frame in between copies the last one. Standing up, walking off, any change: every frame
+  const lk=[M.a,M.d,M.e,M.f,W1,H1].join('|'),still=!(A.walk>0)&&(A.k==null||A.k>=.999),reuse=still&&FALO.lk===lk&&((FALO.lf=(FALO.lf||0)+1)&1)===1;
+  if(!reuse){FALO.lk=lk;
   const lg=L.getContext('2d'),sv=ctx;lg.setTransform(1,0,0,1,0,0);lg.clearRect(0,0,L.width,L.height);lg.setTransform(M.a,0,0,M.d,M.e-Math.floor(d0[0]),M.f-Math.floor(d0[1]));ctx=lg;
   try{
     // the log runs almost across the screen (people sit a little turned), the hero on it, facing the fire. Behind it the shovel stuck in
@@ -21513,7 +21543,7 @@ drawFalo=function(A){const t=A.t,dt=A.dt,hs=A.hs,hx=A.hx,hy=A.hy;FALO.hx=hx;FALO
       const g=tg.createRadialGradient(fq[0],fq[1]-6,2,fq[0],fq[1]-6,56);g.addColorStop(0,`rgba(255,160,70,${(.95*fl).toFixed(3)})`);g.addColorStop(.5,`rgba(255,130,50,${(.55*fl).toFixed(3)})`);g.addColorStop(1,'rgba(255,110,40,0)');
       tg.fillStyle=g;tg.fillRect(bx0,by0,bw,bh);tg.setTransform(1,0,0,1,0,0);tg.globalCompositeOperation='destination-in';tg.drawImage(L,0,0);
       lg.save();lg.setTransform(1,0,0,1,0,0);lg.globalCompositeOperation='soft-light';lg.drawImage(Tm,0,0);lg.globalCompositeOperation='lighter';lg.globalAlpha=.16;lg.drawImage(Tm,0,0);lg.restore()}
-  }finally{ctx=sv}
+  }finally{ctx=sv}}
   ctx.save();ctx.setTransform(1,0,0,1,0,0);ctx.drawImage(L,0,0,W1,H1,Math.floor(d0[0]),Math.floor(d0[1]),W1,H1);ctx.restore();
   // the fire: scorched ground, the ring of stones, the logs, the flames
   {const q=V0.P(F3);ctx.fillStyle='#16110d';ctx.beginPath();ctx.ellipse(q[0],q[1],9.5,9.5*.55,0,0,TAU);ctx.fill();ctx.fillStyle='rgba(120,110,100,.35)';for(let i=0;i<9;i++){const a=i*2.3;ctx.fillRect(q[0]+Math.cos(a)*5,q[1]+Math.sin(a)*2.4,1.2,.8)}
@@ -22213,7 +22243,10 @@ const PK={on:false,kind:'',rar:'',t:0,last:0,cv:null,buf:null,lo:null,hi:null,do
 .zlk.fifth{box-shadow:0 0 0 2px #ffd84a inset}
 small.zlk{display:block;background:none;border:0;opacity:.7}
 @media (prefers-reduced-motion:reduce){.chestWrap.pack.idle{animation:none}}`;document.head.appendChild(st)}
-function pkResize(){const c=PK.cv;if(!c)return;const r=c.getBoundingClientRect(),d=Math.min(2,window.devicePixelRatio||1);const w=Math.max(10,Math.round(r.width*d)),h=Math.max(10,Math.round(r.height*d));
+// the pack's canvas as big as it is on the screen; made again only when it gets bigger than the canvas or much smaller (phase 9: its box
+// changed a little at every frame while it floats and tilts, and the canvas and its buffer were made again each time)
+function pkResize(){const c=PK.cv;if(!c)return;const r=c.getBoundingClientRect(),d=Math.min(2,window.devicePixelRatio||1);let w=Math.max(10,Math.round(r.width*d)),h=Math.max(10,Math.round(r.height*d));
+  if(w<=c.width&&h<=c.height&&w>=c.width*.8&&h>=c.height*.8)return;w=Math.round(w*1.06);h=Math.round(h*1.06);
   if(c.width!==w||c.height!==h){c.width=w;c.height=h;PK.buf.width=w;PK.buf.height=h}}
 // one frame of the pack: the cover drawn again (its animations), then cut along the tear: the body, the slit with light coming out, the strip
 // lifted where it is torn; once torn the strip flies away

@@ -89,6 +89,37 @@ Copiare un'immagine 1:1 su pixel interi costa 5–7 volte meno che copiarla scal
     `visibilita.js`, `giro.js` (78,0 scambi per giro, oltre la soglia di 65 già prima: girando si disegna dal vivo); `navmappa.js` 93/96 in
     tutti e due (cambia solo quale zombie resta fermo).
 
+14. **Apertura di bustine e casse** (20 ottobre; Denis: «i cali di frame […] quando apri bustine o le casse», «ok vai»). Misura:
+    un'apertura intera sul telefono finto, ogni fotogramma (`chest_prof.js` nello scratch, con i tocchi fatti dalla prova). Prima 9
+    fotogrammi al secondo qui. Le cause: la tela degli effetti a tutto schermo (lo sfondo in sfumatura rifatto a ogni fotogramma, il
+    bagliore e il nucleo dei raggi stesi su tutto lo schermo anche dove erano trasparenti, 9–25 raggi a uno a uno lunghi fino all'angolo
+    dello schermo), la sfocatura dietro la schermata (`.screen`, ma `#chestScr` ha lo sfondo pieno: non si vedeva, il telefono la
+    calcolava lo stesso), la tela della bustina rifatta da capo a ogni fotogramma (seguiva il riquadro sullo schermo, che cambia di un
+    pixel mentre la bustina galleggia e si inclina). Fatto, identico al pixel salvo arrotondamenti (`vis_fx.js`: al massimo 9 su 255 in
+    pochi pixel): sfondo preparato una volta finché la cassa non si sposta (`fxBg` in 09, liberato alla chiusura), bagliore e nucleo
+    solo nel loro quadrato, raggi in un solo tracciato che finisce dove finisce la sfumatura, la scossa scritta nella pagina solo quando
+    cambia, niente sfocatura dietro `#chestScr` (`src/pagina.html`), la tela della bustina rifatta solo quando diventa più grande o molto
+    più piccola (`pkResize` in 69). Dopo: 18–19 fotogrammi al secondo qui (il doppio), il 99% dei fotogrammi da 233–283 a 117 ms.
+    Resta il disegno della bustina (6–7 ms qui a fotogramma, tutta animata) e le particelle.
+15. **Falò del menu Zombie, seconda parte**: lo strato del campo (eroe seduto, ceppo, pala, zaino, cassa, fucile e la luce del fuoco
+    su di loro, quattro passate su tutto lo strato tra cui una «soft-light») si ridipinge un fotogramma sì e uno no mentre l'eroe sta
+    seduto (il respiro dura 9 s, il tremolio del fuoco è più lento di 30 al secondo); in piedi, mentre se ne va o cambia modalità a
+    ogni fotogramma come prima. Gli zombie sul sentiero: ognuno dipinto in una tela sua, una volta ogni due fotogrammi a turno, e copiato
+    dov'è a ogni fotogramma (come sulla mappa); quando cambiano mossa subito. Un fotogramma da 56 a 42 ms qui (`falo_ab2.js`). Uguale al
+    pixel nel fotogramma in cui si ridipinge (`vis_falo.js`).
+16. **Mappa zombie: nascite vicine, cose lontane ferme** (20 ottobre; Denis: «non far spawnare i zombie nelle aree ancora da sbloccare
+    o troppo lontani a noi […] disattivare le parti di mappa dove siamo abbastanza lontani da non vederci»). Le zone chiuse erano già
+    escluse (dal 14 ottobre, `zone_prova.js`); prima gli zombie nascevano dalle 6 buche più vicine a piedi tra 130 e 700 punti
+    (mediana 444, uno su cinque oltre 500). Ora (`pickHole`, `holeScr` in `motore.js`): le buche entro 420 punti a piedi, tra queste
+    prima quelle fuori dallo schermo; se ce n'è meno di due, le tre più vicine entro 700 come prima. «Fuori dallo schermo» non vuol dire
+    lontano: lo schermo del telefono è alto, in su e in giù vede fino a 500 punti. Gli esseri (zombie, compagni, corvi posati, fiamme
+    libere) si disegnano solo se la loro figura tocca lo schermo (`visB`; prima bastava il quadrato largo quanto lo schermo girato in
+    ogni verso, che di lato prendeva zombie che non si vedevano e che consumavano i ridisegni a turno degli zombie); gli zombie fermi
+    delle zone chiuse lontani dallo schermo non si muovono, se non li chiama una barriera (`nearScr`, `lureOf`); il fumo dei camini e le
+    foglie solo vicino allo schermo, le foglie lontane non si disegnano. Prove: `comparse_prova.js` (tutte le buche entro 700 a piedi,
+    più d'una, mai la stessa di fila), `zone_prova.js`, `chiusi_prova.js`, `ondate.js`, `gioco.js`. `ordine_mappa.js` dà gli stessi
+    numeri di prima (sopra le sue soglie anche senza queste modifiche: da guardare a parte).
+
 ## Risultati (questo computer, un fotogramma con il disegno)
 
 | scena | prima | dopo |
