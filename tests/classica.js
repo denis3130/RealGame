@@ -38,6 +38,7 @@ const SOLO=process.argv[2]||'';
   const run=async(maxS,stop)=>{const t0=Date.now();while(Date.now()-t0<maxS*1000){await W(400);const s=await J(`({end:!$('endScr').hidden,room:G.room,st:G.state})`);if(s.end||(stop&&await E(stop)))return s}return null};
   const arena=async(a)=>{await toMenu();await E(`(()=>{LOWFX=false;SAVE.cn=SAVE.cn||{};SAVE.cn.pick=${a||0};__A.endSeen=0;__A.ends=[];__A.log=[];CN.forceRar=null;startRun();return 0})()`);await W(2400)};
   const vis=id=>`(!!$('${id}')&&$('${id}').offsetParent!==null)`;
+  const openMap=async()=>{const q=await J(`(()=>{const L=ISL.lay,r=campCv.getBoundingClientRect();return{x:r.left+L.cx/L.dpr,y:r.top+(L.lab+30*L.dpr)/L.dpr}})()`);await p.mouse.click(q.x,q.y);await W(500)};
   const jump=r=>`(()=>{const k=G.seq.findIndex(q=>q.c===${r});G.si=k-1;G.enemies=[];G.eproj=[];nextStep();return 0})()`;   // straight to room r
 
   // ---------------------------------------------------------------- the menu
@@ -47,12 +48,20 @@ const SOLO=process.argv[2]||'';
     ok('la scheda dell\'arena: bracieri, niente stelle, porta alla mappa',card.braz===1&&card.stars===0&&/Mappa/.test(card.t)&&/0\/12/.test(card.t),card.t.slice(0,90));
     const mn=await J(`({premi:${vis('cnPremiBtn')},mis:${vis('misBtn')},login:${vis('loginBtn')},road:${vis('roadSide')},offer:${vis('offerBtn')},pass:${vis('passBtn')},chest:${vis('chestBtn')}})`);
     ok('menu: a sinistra solo «Premi», a destra Pass e Casse',mn.premi&&!mn.mis&&!mn.login&&!mn.road&&!mn.offer&&mn.pass&&mn.chest,JSON.stringify(mn));
+    const is0=await J(`({cur:ISL.cur,pick:cnPick(),view:ISL.view,row:document.querySelectorAll('#cnModeRow .cnMode').length,rowVis:${vis('cnModeRow')},card:${vis('chapCard')},lay:!!ISL.lay})`);await snap('isole');
+    ok('le isole: l\'eroe sull\'isola dell\'arena, i quattro modi sopra Gioca, la scheda nascosta',is0.cur===is0.pick&&is0.view===is0.pick&&is0.row===4&&is0.rowVis&&!is0.card&&is0.lay,JSON.stringify(is0));
+    {const q=await J(`(()=>{const r=$('homeStage').getBoundingClientRect(),L=ISL.lay;return{x:r.left+r.width*.72,y:campCv.getBoundingClientRect().top+L.cy/L.dpr}})()`);
+      await p.mouse.move(q.x,q.y);await p.mouse.down();for(let i=1;i<=8;i++){await p.mouse.move(q.x-i*22,q.y);await W(16)}await p.mouse.up();await W(1200)}
+    const is1=await J(`({cur:ISL.cur,view:ISL.view,zm:zMode()})`);await snap('isole_chiusa');
+    await E(`(()=>{goPlay('arena');return 0})()`);await W(300);const is2=await J(`({started,toast:($('toast')||{}).textContent||''})`);
+    ok('scorrendo si vede l\'isola chiusa, l\'eroe resta e «Gioca» dice come aprirla',is1.view===1&&is1.cur===0&&!is1.zm&&!is2.started&&/Vinci/.test(is2.toast),JSON.stringify({is1,is2}));
+    await E(`(()=>{ISL.view=ISL.cur;return 0})()`);
     await p.click('#cnPremiBtn');await W(450);const pr=await J(`({open:!$('cnPremi').hidden,rows:document.querySelectorAll('#cnPremi .cnPrR').length})`);await snap('menu_premi');
     ok('«Premi» apre Missioni, Accesso, Ruota e Traguardi',pr.open&&pr.rows===4,JSON.stringify(pr));
     await p.click('#cnPremi .cnPrR[data-id="misBtn"]');await W(600);const ms=await J(`({sheet:SHEET,vis:!$('sheetScr').hidden})`);ok('dal pannello si aprono le Missioni',ms.vis&&ms.sheet==='mis',JSON.stringify(ms));
     await E(`(()=>{closeSheet();modal=false;return 0})()`);
     const zm=await J(`(()=>{const m=$('menu');m.classList.add('zmode');const r={premi:${vis('cnPremiBtn')},mis:${vis('misBtn')}};m.classList.remove('zmode');return r})()`);ok('nella Zombie il menu resta com\'era',!zm.premi&&zm.mis,JSON.stringify(zm));
-    await p.click('#chapCard');await W(500);
+    await openMap();
     const m=await J(`({open:!$('cnMap').hidden,nodes:document.querySelectorAll('#cnMap .cnN').length,lock:document.querySelectorAll('#cnMap .cnN.lock').length,br:document.querySelectorAll('#cnMap .cnBr').length,modes:[...document.querySelectorAll('#cnMap .cnMode b')].map(b=>b.textContent),rec:document.querySelectorAll('#cnMap .cnRec2 li').length,stars:document.querySelectorAll('#cnMap .cnGoals').length})`);
     ok('la mappa: 12 arene, 11 chiuse, 12 bracieri, i record, quattro modi, niente stelle',m.open&&m.nodes===12&&m.lock===11&&m.br===12&&m.rec===3&&m.modes.join()==='Torre,Corsa dei boss,Reliquie,Ricercati'&&!m.stars,JSON.stringify(m));await snap('mappa');
     await p.click('#cnMap .cnN[data-a="3"]');await W(300);ok('un\'arena chiusa dice come aprirla',await E(`!!document.querySelector('#cnMap .cnLockP')&&!document.querySelector('#cnMap .cnPlay')`));
@@ -133,7 +142,7 @@ const SOLO=process.argv[2]||'';
     const d1=await J(`({nem:SAVE.cn.nem,card:!!document.querySelector('#eTr .cnDeath'),txt:$('eTr').textContent.replace(/\\s+/g,' ').slice(0,200),gold:SAVE.gold})`);
     await W(500);await snap('nemesi_manifesto_fine');
     ok('a fine partita: la Nemesi col tuo oro (345) e il manifesto, l\'oro non arriva al menu',d1.nem.length===1&&d1.nem[0].gold===345&&d1.card&&/345/.test(d1.txt)&&d1.gold===g0,JSON.stringify({n:d1.nem[0],txt:d1.txt,gold:d1.gold,g0}));
-    await toMenu();await p.click('#chapCard');await W(400);await p.click('#cnMap .cnMode[data-sub="nem"]');await W(500);
+    await toMenu();await openMap();await p.click('#cnMap .cnMode[data-sub="nem"]');await W(500);
     const bd=await J(`({posters:document.querySelectorAll('#cnMap .cnWant').length,badge:!!document.querySelector('#cnMap .cnBadge'),taglia:(document.querySelector('#cnMap .cnTaglia')||{}).textContent})`);await snap('ricercati');
     ok('la bacheca dei Ricercati col manifesto e la taglia',bd.posters===1&&/345/.test(bd.taglia||''),JSON.stringify(bd));
     await p.click('#cnMap .cnX');await W(200);await p.click('#cnMap .cnX');await W(300);
@@ -237,7 +246,7 @@ const SOLO=process.argv[2]||'';
     ok('il custode tra le trappole, che colpiscono anche lui',b0.kind==='boss'&&b0.tr==='saw,saw,vent,vent'&&b0.boss==='toad'&&b0.d>0,JSON.stringify(b0));
     await toMenu();await E(`(()=>{SAVE.cn.pick=1;renderChap();return 0})()`);await W(300);
     const k0=await J(`({t:$('chapCard').textContent,n:$('chapCard').querySelectorAll('.rn').length})`);await snap('scheda_torre');
-    await p.click('#chapCard');await W(500);const mp=await J(`({badges:document.querySelectorAll('#cnMap .cnMoN').length,line:(document.querySelector('#cnMap .cnMoL')||{}).textContent})`);await snap('mappa_modi');
+    await openMap();const mp=await J(`({badges:document.querySelectorAll('#cnMap .cnMoN').length,line:(document.querySelector('#cnMap .cnMoL')||{}).textContent})`);await snap('mappa_modi');
     await p.click('#cnMap .cnX');await W(300);
     ok('scheda e mappa dicono la modalità di ogni arena',/La torre che sale/.test(k0.t)&&k0.n===10&&mp.badges===12&&/torre che sale/.test(mp.line||''),JSON.stringify({k0:k0.t.slice(0,80),n:k0.n,mp}));
   }

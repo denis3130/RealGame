@@ -912,6 +912,213 @@ function cnTrack(i){const m=cnModeOf(i),B=cnS().best[i]||{};let tr='';
   const b=bestRoom(i);for(let r=1;r<=ROOMS;r++){const boss=isBossRoom(r),k=m==='trappole'&&!boss?CN_TRK[r]:'';tr+=(r>1?`<i class="rl ${r<=b?'on':''}"></i>`:'')+`<span class="rn ${boss?'boss':''} ${r===5?'elite':''} ${k?'k-'+k:''} ${r<=b?'on':''} ${r===b+1?'next':''}">${boss?SKULL_SVG(r===ROOMS):''}</span>`}
   return'<div class="rtrack">'+tr}
 
+// ---------------------------------------------------------------- 7 il cammino delle isole (la schermata principale della Classica)
+// Denis: «e faremo in modo che si avanzi così come vedi nelle immagini» (le isole dei capitoli di Archero 2), poi le sue risposte: al posto
+// della cripta l'isola dell'arena con l'eroe in piedi sopra, che scorrendo col dito salta all'isola dopo; ogni isola un pezzo del suo mondo
+// sospeso sull'abisso come nel prologo (nebbia, la luce del mondo, il suo custode che dorme sopra); sotto il braciere, «Completata», il
+// record e la modalità; Torre, Corsa, Reliquie e Ricercati in una fila sopra Gioca. Le isole usano gli attrezzi del prologo (proCam,
+// pSlab, pBox, pRound…); i pezzi fermi di ogni isola sono dipinti una volta in una tela loro (ISL.cache) e copiati.
+const ISL={cur:null,view:null,drag:null,jump:null,go:null,cache:new Map(),lay:null,t:0,lastPick:null};
+const CNI_R=100,CNI_SY=1.12,CNI_DEP=40,CNI_FACE=Math.PI/2+.16,CNI_HERO=2;
+const IP=(sx,sy,z)=>[sy,-sx,z||0];   // a point of an island by screen directions: sx to the right, sy toward you, z up
+const CN_ISW=[null,
+  {top:'#6f9a4a',side:'#4a3f34',edge:'#eaffb8',stone:'#9a9686',path:'#a8a08a',light:'170,235,130',sky:['#08161a','#123a2c'],fog:'120,180,140',deco:['#ff6a5a','#ffd84a','#c890ff','#ffffff']},
+  {top:'#634238',side:'#2e1d19',edge:'#ffb27a',stone:'#55494a',path:'#4a3a36',light:'255,130,50',sky:['#160806','#3e160a'],fog:'160,90,60',deco:['#ff7a30','#ffd070']},
+  {top:'#5f8040',side:'#3a3424',edge:'#e8f8a0',stone:'#7a7a62',path:'#8a7a5a',light:'190,240,110',sky:['#07130c','#1e3414'],fog:'120,170,100',deco:['#e070ff','#ffe066','#ffffff']},
+  {top:'#eef6fc',side:'#7d93ab',edge:'#ffffff',stone:'#c4d4e4',path:'#cfe0f0',light:'160,215,255',sky:['#0a1426','#1c3456'],fog:'170,200,240',deco:['#9fdcff','#ffffff']}];
+const cnIslW=i=>CN_ISW[Math.max(1,Math.min(4,ARENAS[i].ch||1))];
+const cnIslG=i=>Math.floor(i/4);   // the round: 0 the first four arenas, 1 the second, 2 the third
+const cnIslOn=()=>CN.on&&!zMode()&&!$('tabPlay').hidden;
+const cnMixC=(a,b,k)=>{const p=s=>[1,3,5].map(j=>parseInt(s.slice(j,j+2),16)),A=p(a),B=p(b);return'#'+A.map((v,j)=>Math.round(v+(B[j]-v)*k).toString(16).padStart(2,'0')).join('')};
+// where the hero stands and the guardian sleeps, the gate at the back, the brazier in front
+const CI_HERO=IP(-4,30),CI_BOSS=IP(58,-30),CI_GATE=IP(-26,-58),CI_BRAZ=IP(-70,8);
+function cnIslSync(anim){const p=cnPick();if(ISL.cur==null||!anim||!cnOpen(p)){ISL.cur=p;ISL.view=p;ISL.jump=null;ISL.go=null;return}
+  if(p!==ISL.cur){const a=ISL.cur;ISL.view=a;setTimeout(()=>{if(ISL.cur===a&&!ISL.drag){ISL.jump={a,b:p,t:0};ISL.cur=p;ISL.go=p;sfx('ui');tone(330,660,.18,'triangle',.03)}},700)}}
+// ------------------------------------------------ the place of everything on the canvas (canvas pixels)
+function cnIslLay(){const W=campCv.width,H=campCv.height,cr=campCv.getBoundingClientRect(),dpr=W/Math.max(1,cr.width),r=el=>el.getBoundingClientRect();
+  const top=(r($('topbar')).bottom-cr.top)*dpr,pill=(r($('heroPill')).top-cr.top)*dpr,sl=document.querySelector('#homeStage .sideBtns.l'),sr=document.querySelector('#homeStage .sideBtns.r');
+  const l=sl?(r(sl).right-cr.left)*dpr:W*.17,rr=sr?(r(sr).left-cr.left)*dpr:W*.83,mid=Math.max(W*.5,rr-l);
+  const hw=CNI_R*CNI_SY,k=Math.min(W*.74/(2*hw),Math.max(40*dpr,pill-top-118*dpr)/(CNI_R*1.1+50*CNI_HERO+CNI_DEP*.35)),ry=CNI_R*.55*k,info=pill-14*dpr,cy=info-20*dpr-ry-CNI_DEP*.3*k,lab=top+8*dpr;
+  return{W,H,dpr,top,pill,k,ry,cx:W/2,cy,info,lab,sp:2*hw*k*1.08,hs:CNI_HERO}}
+// ------------------------------------------------ the still pieces of an island, painted once
+function cnIslImg(i,L){const won=cnWon(i),op=cnOpen(i),key=i+'|'+L.k.toFixed(3)+'|'+(won?1:0)+(op?1:0)+(LOWFX?1:0);let c=ISL.cache.get(key);if(c){ISL.cache.delete(key);ISL.cache.set(key,c);return c}
+  const k=L.k,w=Math.ceil(2*(CNI_R*CNI_SY+22)*k),h=Math.ceil(230*k),ox=w/2,oy=Math.ceil(122*k),cv=document.createElement('canvas');cv.width=w;cv.height=h;
+  const saved=ctx;ctx=cv.getContext('2d');try{ctx.save();const K=proCam(CNI_FACE,ox,oy,k);cnIslPaint(i,K,won,op);ctx.restore();
+    ctx.globalCompositeOperation='source-atop';const lg=ctx.createLinearGradient(w*.15,0,w*.85,h);lg.addColorStop(0,'rgba(255,248,225,.13)');lg.addColorStop(.55,'rgba(0,0,0,0)');lg.addColorStop(1,'rgba(10,8,30,.28)');ctx.fillStyle=lg;ctx.fillRect(0,0,w,h);ctx.globalCompositeOperation='source-over'}catch(err){cnErr(err)}finally{ctx=saved}
+  c={cv,ox,oy};ISL.cache.set(key,c);while(ISL.cache.size>6)ISL.cache.delete(ISL.cache.keys().next().value);return c}
+function cnIslPaint(i,K,won,op){const{V0}=K,Wd=cnIslW(i),ch=ARENAS[i].ch||1,g=cnIslG(i),ac=ARENAS[i].col,P=p=>V0.P(p),D=p=>V0.D(p);
+  const mix=(c,q)=>g?cnMixC(c,ac,q*g):c,top=mix(Wd.top,.14),stone=mix(Wd.stone,.12),seed=i*1.7+.4,[gx,gy]=[CI_GATE[1]*-1,CI_GATE[0]];
+  // the ground: an uneven slab, its side going down into the dark; on top the path to the gate and the marks of the world
+  pSlab(K,CNI_R,CNI_DEP,top,mix(Wd.side,.1),seed,{sy:CNI_SY,edge:Wd.edge,mark:T=>cnIslMarks(i,K,ch,Wd,mix)});
+  if(ch===4)for(let j=0;j<18;j++){const a=-Math.PI*.42+j/17*Math.PI*.84,r=CNI_R*(.97+.05*Math.sin(a*3+seed)),p=[Math.cos(a)*r,Math.sin(a)*r*CNI_SY,0];if(V0.F([Math.cos(a),Math.sin(a),0])<.1)continue;pCone(K,p,2.4+prH(j,5)*2.4,-(7+prH(j,6)*14),'#d4ecfb',{m:6,lw:1})}
+  if(ch===1||ch===3)for(let j=0;j<10;j++){const a=-Math.PI*.4+j/9*Math.PI*.8,r=CNI_R*.98,p=[Math.cos(a)*r,Math.sin(a)*r*CNI_SY,-2],q=P(p);ctx.strokeStyle=ch===1?'#5a8a3a':'#4a6a2a';ctx.lineWidth=1.6;ctx.beginPath();ctx.moveTo(q[0],q[1]);ctx.quadraticCurveTo(q[0]+(prH(j,7)-.5)*4,q[1]+8,q[0]+(prH(j,8)-.5)*6,q[1]+12+prH(j,9)*14);ctx.stroke()}
+  const parts=[];
+  // the gate of the arena at the back: an arch of stone on two pillars, its dark mouth (the light of the arena lives in it)
+  parts.push({d:D(CI_GATE),f:()=>cnIslGate(K,gx,gy,stone,ac,g,op)});
+  // the brazier of the fire: lit once the arena is won (the flame is alive, drawn on top)
+  parts.push({d:D(CI_BRAZ),f:()=>{pRound(K,CI_BRAZ,[[0,8],[4,7],[13,4.4],[14,9],[19,12],[21,11]],'#6a5f56',{m:16});const q=P([CI_BRAZ[0],CI_BRAZ[1],20.6]);ctx.fillStyle=won?'#4a1e0a':'#2a2624';ctx.beginPath();ctx.ellipse(q[0],q[1],10,3.8,0,0,TAU);ctx.fill();
+    if(!won){ctx.fillStyle='#7a7064';for(let j=0;j<6;j++){ctx.beginPath();ctx.arc(q[0]+(j-2.5)*3,q[1]+Math.sin(j*2)*1.2,1.5,0,TAU);ctx.fill()}}}});
+  const R=(sx,sy,f)=>parts.push({d:D(IP(sx,sy)),f});
+  if(ch===1){R(-80,-16,()=>cnIslPillar(K,IP(-80,-16),stone,30));R(78,-50,()=>cnIslPillar(K,IP(78,-50),stone,20));
+    for(const[sx,sy,a] of[[30,-62,.15],[92,-28,-.2],[8,-70,0]])R(sx,sy,()=>cnIslGrave(K,IP(sx,sy),stone,a));
+    for(const[sx,sy,c] of[[-46,20,'#ff5a4a'],[-38,28,'#ffb040'],[70,22,'#ff5a4a'],[44,-6,'#c060f0'],[-86,8,'#ffb040']])R(sx,sy,()=>cnIslShroom(K,IP(sx,sy),c));
+    for(const[sx,sy] of[[-60,-40],[96,4],[20,-40]])R(sx,sy,()=>cnIslRock(K,IP(sx,sy),9,mix('#8a8676',.1),'#6aa04a'))}
+  else if(ch===2){R(70,-62,()=>{pRound(K,IP(70,-62),[[0,34],[14,26],[30,14],[38,10]],mix('#5a3e36',.1),{m:22});const q=P(IP(70,-62,38));ctx.fillStyle='#ff6a20';ctx.beginPath();ctx.ellipse(q[0],q[1],10,3.8,0,0,TAU);ctx.fill();ctx.fillStyle='#ffd070';ctx.beginPath();ctx.ellipse(q[0],q[1]-.4,5.6,2,0,0,TAU);ctx.fill();
+      ctx.strokeStyle='#ff7a30';ctx.lineWidth=2.4;ctx.lineCap='round';ctx.beginPath();ctx.moveTo(q[0]-5,q[1]+2);ctx.quadraticCurveTo(q[0]-11,q[1]+14,q[0]-6,q[1]+28);ctx.stroke();ctx.strokeStyle='#ffd070';ctx.lineWidth=.9;ctx.stroke()});
+    for(const[sx,sy,hh] of[[-78,-34,28],[-90,-16,18],[-66,-14,12],[-96,-40,22]])R(sx,sy,()=>pRound(K,IP(sx,sy),[[0,7],[hh,7]],mix('#3e3639',.1),{m:6,lw:1.5}));
+    for(const[sx,sy] of[[40,-10],[88,8],[-40,-48]])R(sx,sy,()=>cnIslRock(K,IP(sx,sy),8,'#2e2628','#ff7a30'));
+    if(g>=1)R(18,-62,()=>{pBox(K,IP(18,-62),8,6,8,'#3a3d42',{lw:1.4});pBox(K,IP(18,-62,8),8,18,6,'#4a4f56',{lw:1.4})})}
+  else if(ch===3){R(84,-52,()=>{const b=IP(84,-52);C3.caps(V0,b,5,IP(82,-52,40),2.6,'#4e3e30',{lw:1.4});for(const[dx,z,l] of[[12,26,16],[-14,32,13],[6,40,10]])C3.caps(V0,IP(82,-52,z),2,IP(82+dx,-52-l*.3,z+l*.7),.8,'#4e3e30',{lw:1.1,noRim:true})});
+    for(const[sx,sy] of[[24,4],[86,8],[-84,-30],[-20,-58]])R(sx,sy,()=>{const b=P(IP(sx,sy));ctx.strokeStyle='#3e6a2a';ctx.lineWidth=1.6;ctx.lineCap='round';for(let j=0;j<6;j++){ctx.beginPath();ctx.moveTo(b[0]+j*1.4-3.5,b[1]);ctx.quadraticCurveTo(b[0]+(j-2.5)*3,b[1]-12,b[0]+(j-2.5)*5,b[1]-22-j%2*5);ctx.stroke()}ctx.fillStyle='#7a4a24';for(const j of[1,4])ctx.fillRect(b[0]+(j-2.5)*5-1.6,b[1]-28-j%2*5,3.2,7)});
+    for(const[sx,sy,c] of[[-46,22,'#d070ff'],[52,-24,'#d070ff'],[-90,0,'#ffd040']])R(sx,sy,()=>cnIslShroom(K,IP(sx,sy),c))}
+  else{for(const[sx,sy,r,hh,c] of[[76,-56,9,40,'#9fdcff'],[90,-36,7,26,'#c6ecff'],[62,-36,5,17,'#8ccff8'],[-88,-18,6,22,'#b4e4ff'],[-76,-40,4,14,'#d8f2ff']])R(sx,sy,()=>pCone(K,IP(sx,sy),r,hh,c,{m:6,lw:1.4}));
+    for(const[sx,sy,r] of[[-70,-50,18],[30,-56,11],[50,18,9],[-44,24,7]])R(sx,sy,()=>pRound(K,IP(sx,sy),[[0,r],[r*.4,r*.82],[r*.7,r*.42],[r*.82,.1]],'#f6fbff',{m:16,lw:1.4}))}
+  pRun(parts);
+  // a locked island: chains across the gate and a padlock
+  if(!op){ctx.strokeStyle='#9a9aa4';ctx.lineWidth=1.5;for(const[z0,z1] of[[34,8],[8,34]])for(let j=0;j<=12;j++){const u=j/12,q=P(IP(gx-15+u*30,gy+4,plerp(z0,z1,u)-Math.sin(u*Math.PI)*5));ctx.beginPath();ctx.ellipse(q[0],q[1],1.7,1.1,j%2?0:1.2,0,TAU);ctx.stroke()}
+    const lq=P(IP(gx,gy+5,22));ink(1.5);ctx.fillStyle='#c09a44';ctx.fillRect(lq[0]-5,lq[1]-2,10,9);ctx.strokeRect(lq[0]-5,lq[1]-2,10,9);ctx.beginPath();ctx.arc(lq[0],lq[1]-2,3.6,Math.PI,0);ctx.stroke()}}
+// the arch of the arena: two pillars, a round arch of blocks with its keystone, the dark mouth (from the 2nd round banners, the 3rd spikes)
+function cnIslGate(K,gx,gy,stone,ac,g,op){const{V0}=K,P=p=>V0.P(p),r0=17,ri=13,zt=32,arc=(r,z)=>{const a=[];for(let j=0;j<=12;j++){const u=Math.PI-j/12*Math.PI;a.push(IP(gx+Math.cos(u)*r,gy,z+Math.sin(u)*r))}return a};
+  const mouth=[IP(gx-ri,gy,0),...arc(ri,zt),IP(gx+ri,gy,0)].map(P);C3.poly(mouth);ctx.fillStyle='#0a0706';ctx.fill();
+  pBox(K,IP(gx-r0+2,gy),10,8,zt,stone,{lw:1.6});pBox(K,IP(gx+r0-2,gy),10,8,zt,stone,{lw:1.6});
+  const A=arc(r0-2,zt);for(let j=0;j<A.length-1;j++)C3.caps(V0,A[j],4.4,A[j+1],4.4,j%2?stone:C3.lt(stone,.06),{lw:1.3,noRim:true});
+  pBox(K,IP(gx,gy,zt+r0-6),7,9,8,C3.lt(stone,.12),{lw:1.4});
+  if(g>=1)for(const s of[-1,1]){const a=P(IP(gx+s*(r0-2),gy+5,zt-2)),b=P(IP(gx+s*(r0-2),gy+5,zt-22));ctx.fillStyle=ac;ctx.strokeStyle=INK;ctx.lineWidth=1.2;ctx.beginPath();ctx.moveTo(a[0]-4.5,a[1]);ctx.lineTo(a[0]+4.5,a[1]);ctx.lineTo(b[0]+4.5,b[1]);ctx.lineTo(b[0],b[1]-5);ctx.lineTo(b[0]-4.5,b[1]);ctx.closePath();ctx.fill();ctx.stroke()}
+  if(g>=2)for(let j=-2;j<=2;j++)pCone(K,IP(gx+j*7,gy,zt+r0+1-Math.abs(j)*2.5),2.4,8-Math.abs(j)*1.6,C3.dk(stone,.25),{m:6,lw:1})}
+const cnIslPillar=(K,c,stone,hh)=>{pRound(K,c,[[0,9],[3,8],[hh-4,7.2],[hh,8]],stone,{m:12});const q=K.V0.P([c[0],c[1],hh]);ctx.fillStyle='#6aa04a';ctx.beginPath();ctx.ellipse(q[0],q[1],7,2.6,0,0,TAU);ctx.fill();ctx.strokeStyle='#4a7a2a';ctx.lineWidth=1.2;ctx.beginPath();ctx.moveTo(q[0]+4,q[1]+1);ctx.quadraticCurveTo(q[0]+6,q[1]+8,q[0]+5,q[1]+14);ctx.stroke()};
+const cnIslGrave=(K,c,stone,a)=>{pBox(K,c,4,12,16,cnMixC(stone,'#6a6a60',.35),{a,lw:1.4});const q=K.V0.P([c[0]+2.2,c[1],11]);ctx.strokeStyle='rgba(0,0,0,.4)';ctx.lineWidth=1.1;ctx.beginPath();ctx.moveTo(q[0]-2.5,q[1]);ctx.lineTo(q[0]+2.5,q[1]);ctx.moveTo(q[0],q[1]-2.5);ctx.lineTo(q[0],q[1]+4);ctx.stroke()};
+const cnIslShroom=(K,c,col)=>{pRound(K,c,[[0,1.8],[5,1.8],[6,6],[8.6,5],[10,.1]],col,{m:10,lw:1.2});const q=K.V0.P([c[0],c[1],8.6]);ctx.fillStyle='rgba(255,255,255,.9)';ctx.beginPath();ctx.arc(q[0]-2,q[1],1.2,0,TAU);ctx.arc(q[0]+2.2,q[1]+.8,1,0,TAU);ctx.fill()};
+const cnIslRock=(K,c,r,col,moss)=>{pRound(K,c,[[0,r],[r*.5,r*.9],[r*.9,r*.5],[r,.1]],col,{m:9,lw:1.4});const q=K.V0.P([c[0],c[1],r*.75]);ctx.fillStyle=moss;ctx.globalAlpha=.85;ctx.beginPath();ctx.ellipse(q[0]-1,q[1],r*.55,r*.22,0,0,TAU);ctx.fill();ctx.globalAlpha=1};
+// the marks on the top of the slab (clipped to it): the path of slabs to the gate, then each world its own
+function cnIslMarks(i,K,ch,Wd,mix){const{V0}=K,P=p=>V0.P(p),seed=i*3.1,gx=-CI_GATE[1],gy=CI_GATE[0];
+  // the path: slabs from the front edge to the gate, a little crooked
+  for(let j=0;j<9;j++){const u=j/8,sx=plerp(-4,gx,u)+Math.sin(j*1.9+seed)*4,sy=plerp(96,gy+8,u),q=P(IP(sx,sy)),w=14-u*4;ctx.fillStyle=mix(Wd.path,.08);ctx.strokeStyle='rgba(0,0,0,.35)';ctx.lineWidth=1;ctx.beginPath();ctx.ellipse(q[0],q[1],w*.95,w*.42,0,0,TAU);ctx.fill();ctx.stroke();ctx.fillStyle='rgba(255,255,255,.14)';ctx.beginPath();ctx.ellipse(q[0]-1,q[1]-1,w*.6,w*.18,0,0,TAU);ctx.fill()}
+  const blob=(n,col,a0,s0,s1,yk)=>{ctx.fillStyle=col;for(let j=0;j<n;j++){const a=prH(j,seed+a0)*TAU,r=16+prH(j,seed+a0+1)*80,q=P([Math.cos(a)*r,Math.sin(a)*r*CNI_SY,0]);ctx.beginPath();ctx.ellipse(q[0],q[1],s0+prH(j,seed+a0+2)*s1,(s0+prH(j,seed+a0+3)*s1)*(yk||.36),0,0,TAU);ctx.fill()}};
+  if(ch===1){blob(16,'rgba(150,200,90,.55)',2,5,9);blob(10,'rgba(60,90,40,.35)',6,4,6);ctx.lineCap='round';for(let j=0;j<26;j++){const a=prH(j,seed+9)*TAU,r=20+prH(j,seed+10)*78,q=P([Math.cos(a)*r,Math.sin(a)*r*CNI_SY,0]);ctx.strokeStyle='#9ad86a';ctx.lineWidth=1.3;ctx.beginPath();ctx.moveTo(q[0],q[1]);ctx.lineTo(q[0]-1.5,q[1]-4);ctx.moveTo(q[0],q[1]);ctx.lineTo(q[0]+1.6,q[1]-3.4);ctx.stroke();
+      if(j%3===0){ctx.fillStyle=Wd.deco[j%Wd.deco.length];ctx.beginPath();ctx.arc(q[0]+3,q[1]-1,1.4,0,TAU);ctx.fill()}}}
+  else if(ch===2){blob(8,'rgba(30,20,18,.45)',2,6,10);ctx.lineCap='round';for(let j=0;j<8;j++){let a=prH(j,seed)*TAU,r=24+prH(j,seed+1)*56,q=P([Math.cos(a)*r,Math.sin(a)*r*CNI_SY,0]);ctx.strokeStyle='#ff7a30';ctx.lineWidth=2;ctx.beginPath();ctx.moveTo(q[0],q[1]);for(let s=0;s<4;s++){a+=(prH(j*4+s,seed+2)-.5)*.9;r+=8;q=P([Math.cos(a)*r,Math.sin(a)*r*CNI_SY,0]);ctx.lineTo(q[0],q[1])}ctx.stroke();ctx.strokeStyle='rgba(255,230,140,.8)';ctx.lineWidth=.8;ctx.stroke()}
+    const lp=P(IP(50,24));ctx.fillStyle='#ff6a20';ctx.beginPath();ctx.ellipse(lp[0],lp[1],22,7.5,0,0,TAU);ctx.fill();ctx.strokeStyle='#2a1a14';ctx.lineWidth=2;ctx.stroke();ctx.fillStyle='#ffc060';ctx.beginPath();ctx.ellipse(lp[0]-4,lp[1]-1.4,12,3.2,0,0,TAU);ctx.fill()}
+  else if(ch===3){blob(10,'rgba(70,60,36,.4)',2,6,9);const q=P(IP(46,22));ctx.fillStyle='#244a34';ctx.beginPath();ctx.ellipse(q[0],q[1],34,12,0,0,TAU);ctx.fill();ctx.strokeStyle='#183022';ctx.lineWidth=2;ctx.stroke();ctx.fillStyle='rgba(170,230,210,.3)';ctx.beginPath();ctx.ellipse(q[0]-9,q[1]-3.5,13,2.6,0,0,TAU);ctx.fill();
+    for(const[dx,dy,r,f] of[[-16,2,5,'#ff8ad8'],[11,-4,4.2,0],[20,4,3.4,'#ffe066']]){ctx.fillStyle='#62aa40';ctx.beginPath();ctx.ellipse(q[0]+dx,q[1]+dy,r,r*.42,0,.3,TAU-.3);ctx.lineTo(q[0]+dx,q[1]+dy);ctx.fill();if(f){ctx.fillStyle=f;ctx.beginPath();ctx.arc(q[0]+dx,q[1]+dy-1.4,1.8,0,TAU);ctx.fill()}}}
+  else{blob(14,'rgba(120,170,220,.22)',2,8,10);const q=P(IP(-30,10));ctx.fillStyle='rgba(170,225,255,.55)';ctx.beginPath();ctx.ellipse(q[0],q[1],26,8,0,0,TAU);ctx.fill();ctx.strokeStyle='rgba(255,255,255,.7)';ctx.lineWidth=1;ctx.beginPath();ctx.moveTo(q[0]-14,q[1]-2);ctx.lineTo(q[0]-4,q[1]+1);ctx.lineTo(q[0]+6,q[1]-2);ctx.stroke()}}
+// ------------------------------------------------ one frame of the home: the abyss, the islands, the hero, the names
+function cnIsles(dt){campResize();CAMP.t+=dt;const t=CAMP.t;if(G)G.t=t;const L=ISL.lay=cnIslLay(),saved=ctx;ctx=campX;
+  if(ISL.cur==null)cnIslSync(false);
+  try{cnIslStep(dt,L);ctx.setTransform(1,0,0,1,0,0);
+    const v=ISL.view,i0=Math.max(0,Math.floor(v)),i1=Math.min(ARENAS.length-1,i0+1),f=v-i0,A=cnIslW(i0),B=cnIslW(i1);
+    // the abyss: the sky of the world you look at, its light from below, far rocks drifting, stars, fog
+    const sky=ctx.createLinearGradient(0,0,0,L.H);sky.addColorStop(0,cnMixC(A.sky[0],B.sky[0],f));sky.addColorStop(1,cnMixC(A.sky[1],B.sky[1],f));ctx.fillStyle=sky;ctx.fillRect(0,0,L.W,L.H);
+    for(let j=0;j<70;j++){const x=((j*97.3-v*L.sp*.08)%L.W+L.W)%L.W,y=L.top+(j*53.7)%(L.H*.55),tw=.35+.65*Math.abs(Math.sin(t*1.1+j*1.7));ctx.fillStyle=`rgba(255,250,230,${(tw*.55).toFixed(2)})`;ctx.fillRect(x,y,1.5*L.dpr,1.5*L.dpr)}
+    if(!LOWFX){const gl=i=>cnIslW(i).light;pLight(L.cx,L.cy+L.ry*2.8,L.W*.8,f<.5?gl(i0):gl(i1),.3,L.W*.36)}
+    cnIslFar(L,t,v);
+    // the islands near the view (the hero's own one carries him)
+    for(let i=Math.max(0,Math.round(v)-2);i<=Math.min(ARENAS.length-1,Math.round(v)+2);i++){const x=L.cx+(i-v)*L.sp;if(x<-L.sp*.6||x>L.W+L.sp*.6)continue;cnIslDraw(i,x,L,t)}
+    cnIslHero(L,t);
+    if(!LOWFX)pFog(L.W,L.cy+L.ry*.6,L.info,t,f<.5?A.fog:B.fog,.1,4,13);
+    cnIslText(L,t);
+    cnIslVig(L)}
+  finally{ctx.setTransform(1,0,0,1,0,0);ctx=saved}}
+// the camera follows the finger, then settles on an island; the hero's jump
+function cnIslStep(dt,L){if(ISL.jump){ISL.jump.t+=dt;if(ISL.jump.t>=.75){const J=ISL.jump;ISL.jump=null;cnIslLand(J.b)}}
+  if(ISL.drag)return;const target=ISL.go!=null?ISL.go:Math.round(ISL.view);ISL.view+=(target-ISL.view)*Math.min(1,dt*(ISL.jump?5:9));if(Math.abs(target-ISL.view)<.002){ISL.view=target;if(ISL.go===target&&!ISL.jump)ISL.go=null}}
+function cnIslLand(i){tone(150,80,.14,'triangle',.05);ISL.dust={i,t:0};vib([12])}
+// far rocks floating in the abyss, slower than the islands (they give the depth)
+function cnIslFar(L,t,v){ctx.save();for(let j=0;j<7;j++){const s=.25+prH(j,3)*.35,x=((prH(j,1)*L.W*2.2-v*L.sp*s*.5+t*3*s)%(L.W*1.6)+L.W*1.6)%(L.W*1.6)-L.W*.3,y=L.top+L.H*(.18+prH(j,2)*.42),r=(18+prH(j,4)*30)*L.dpr*s;
+    ctx.fillStyle=`rgba(4,6,10,${(.35+s*.5).toFixed(2)})`;ctx.beginPath();ctx.ellipse(x,y,r,r*.32,0,Math.PI,0);ctx.lineTo(x+r*.5,y+r*.5);ctx.lineTo(x,y+r*.95);ctx.lineTo(x-r*.45,y+r*.45);ctx.closePath();ctx.fill()}ctx.restore()}
+function cnIslDraw(i,x,L,t){const c=cnIslImg(i,L),won=cnWon(i),op=cnOpen(i),W=cnIslW(i),ac=cnRgb(ARENAS[i].col),k=L.k,bob=Math.sin(t*.9+i*1.3)*2.2*L.dpr,y=L.cy+bob,ch=ARENAS[i].ch||1;
+  ctx.save();if(!op)ctx.globalAlpha=.62;
+  if(!LOWFX)pLight(x,y+L.ry*1.4,CNI_R*1.3*k,W.light,op?.16:.06,CNI_R*.5*k);
+  ctx.drawImage(c.cv,Math.round(x-c.ox),Math.round(y-c.oy));
+  // the live parts: the arena's glow in the gate, the brazier's flame, the world (lava, fireflies, snow), the guardian asleep
+  const K={V0:C3.V(CNI_FACE),k},S=p=>{const q=K.V0.P(p);return[x+q[0]*k,y+q[1]*k]};
+  if(op){const g=S([CI_GATE[0],CI_GATE[1],16]),pul=.7+.3*Math.sin(t*1.8+i);pLight(g[0],g[1],22*k,ac,.5*pul,26*k);for(let j=0;j<5;j++){const q=(t*.3+j/5)%1;ctx.fillStyle=`rgba(${ac},${(1-q)*.8})`;ctx.fillRect(g[0]+Math.sin(j*2.1+t)*8*k,g[1]+20*k-q*30*k,1.4*L.dpr,1.4*L.dpr)}}
+  if(won){const b=S([CI_BRAZ[0],CI_BRAZ[1],17]);pLight(b[0],b[1],26*k,'255,170,70',.55);pFlame(b[0],b[1],16*k,9*k,1,t+i,LOWFX)}
+  if(ch===2&&!LOWFX){const q=S(IP(-62,-30,33));pLight(q[0],q[1],20*k,'255,110,40',.5+.2*Math.sin(t*2));for(let j=0;j<4;j++){const u=(t*.12+j/4)%1;ctx.fillStyle=`rgba(70,50,46,${(.35*(1-u)).toFixed(2)})`;ctx.beginPath();ctx.arc(q[0]-u*14*k+Math.sin(u*6+j)*3*k,q[1]-u*40*k,(3+u*9)*k,0,TAU);ctx.fill()}}
+  if(!LOWFX&&op){const cc=S([0,0,0]);if(ch===3)pMotes(t,cc[0],cc[1]-30*k,160*k,70*k,10,'210,255,120',.9,.6,40+i);else if(ch===4)pMotes(t,cc[0],cc[1]-20*k,200*k,140*k,14,'240,248,255',.7,-1.2,50+i);else if(ch===1)pMotes(t,cc[0],cc[1]-24*k,170*k,80*k,8,'190,255,150',.7,.5,60+i);else pMotes(t,cc[0],cc[1]-30*k,150*k,90*k,10,'255,160,80',.8,1.4,70+i)}
+  if(!won)cnIslBoss(i,S,k,t,op,L);
+  if(ISL.dust&&ISL.dust.i===i){ISL.dust.t+=1/60;const d=ISL.dust.t,h=S(CI_HERO);if(d<.5){ctx.fillStyle=`rgba(220,210,190,${(.5*(1-d/.5)).toFixed(2)})`;for(let j=0;j<6;j++){const a=j/6*TAU;ctx.beginPath();ctx.arc(h[0]+Math.cos(a)*d*60*k,h[1]+Math.sin(a)*d*14*k,(4-d*5)*k,0,TAU);ctx.fill()}}else ISL.dust=null}
+  ctx.restore()}
+// the guardian of the arena asleep on its island (it breathes slowly, «z» float up); in the dark while the island is locked
+function cnIslBoss(i,S,k,t,op,L){const bt=cnBoss(i),M=N3.meta&&N3.meta[bt];if(!N3[bt])return;const q=S(CI_BOSS),sc=(M&&M.sc||1)*CNI_HERO*.4,p=(t*.18+i*.13)%1;
+  ctx.save();ctx.translate(q[0],q[1]);ctx.scale(k,k);ctx.fillStyle='rgba(0,0,0,.3)';ctx.beginPath();ctx.ellipse(0,2,22*sc,6*sc,0,0,TAU);ctx.fill();
+  if(!op)ctx.globalAlpha*=.45;try{N3[bt](0,0,Math.PI/2+.85,'idle',p,sc,{noFx:true})}catch(err){}ctx.restore();
+  if(op)for(let j=0;j<3;j++){const u=((t*.35+j/3)%1),zx=q[0]-8*k+u*16*k+Math.sin(u*5+j)*4*k,zy=q[1]-(70*sc+u*40)*k;ctx.save();ctx.globalAlpha=Math.sin(u*Math.PI)*.85;ctx.font=`${Math.round((8+u*6)*k)}px "Lilita One", sans-serif`;ctx.textAlign='center';ctx.lineWidth=2*L.dpr;ctx.strokeStyle=INK;ctx.strokeText('z',zx,zy);ctx.fillStyle='#e8f0ff';ctx.fillText('z',zx,zy);ctx.restore()}}
+// the hero on his island (and the companions), his jump to the next one, his walk into the gate when you press «Gioca»
+function cnIslHero(L,t){const k=L.k,hi=ISL.jump?null:ISL.cur,J=ISL.jump,K0=C3.V(CNI_FACE),P0=K0.P(CI_HERO);let x,y,s=L.hs*k,fade=1;
+  const at=i=>[L.cx+(i-ISL.view)*L.sp+P0[0]*k,L.cy+Math.sin(t*.9+i*1.3)*2.2*L.dpr+P0[1]*k];
+  if(J){const u=Math.min(1,J.t/.75),e=u<.5?2*u*u:1-Math.pow(-2*u+2,2)/2,a=at(J.a),b=at(J.b);x=plerp(a[0],b[0],e);y=plerp(a[1],b[1],e)-Math.sin(u*Math.PI)*L.sp*.42}
+  else{[x,y]=at(hi);if(x<-L.sp*.4||x>L.W+L.sp*.4){CAMP.hero=null;return}}
+  if(CAMP.walk>0){const q=Math.min(1,(t-CAMP.walk)/1.4),g=K0.P(CI_GATE);x+=(g[0]-P0[0])*k*q;y+=(g[1]-P0[1])*k*q;s*=1-.3*q;fade=q<.7?1:Math.max(0,1-(q-.7)/.3)}
+  ctx.save();ctx.globalAlpha=fade;ctx.fillStyle='rgba(0,0,0,.35)';if(!J){ctx.beginPath();ctx.ellipse(x,y+2*s,12*s,3.6*s,0,0,TAU);ctx.fill()}
+  drawHomeHero(x,y,s,t);ctx.restore();
+  if(!J&&!CAMP.walk&&SAVE.pets)petEq().forEach((id,i)=>{const px=x+(i?-1:1)*22*s,py=y+3*s,ps=s*.5;ctx.save();ctx.translate(px,py);ctx.scale(ps,ps);ctx.fillStyle='rgba(0,0,0,.3)';ell(0,2,9,3);ctx.fill();drawPetSprite(id,0,0,{t:t+i*.7,face:i?0:Math.PI,moving:false,att:0,happy:0,hop:0});ctx.restore()});
+  CAMP.hero=J||CAMP.walk?null:{x,y,w:18*s,h:50*s,dpr:L.dpr}}
+// above the island its number and name, the mode; below, the brazier and the record
+function cnIslText(L,t){const v=ISL.view,i=Math.max(0,Math.min(ARENAS.length-1,Math.round(v))),a=1-Math.min(1,Math.abs(v-i)*2.2),A=ARENAS[i],mo=cnModeOf(i),op=cnOpen(i),won=cnWon(i),d=L.dpr;if(a<=.02)return;
+  ctx.save();ctx.globalAlpha=a;ctx.textAlign='center';ctx.lineJoin='round';const font=(n)=>`${Math.round(n*d)}px "Lilita One", sans-serif`,out=(s,x,y,c,w)=>{ctx.lineWidth=w*d;ctx.strokeStyle=INK;ctx.strokeText(s,x,y);ctx.fillStyle=c;ctx.fillText(s,x,y)};
+  let y=L.lab+22*d;ctx.font=font(13);out(`ARENA ${i+1}`,L.cx,y,A.col,3.4);
+  y+=26*d;ctx.font=font(Math.min(25,Math.max(18,300/Math.max(10,A.n.length))));out(A.n,L.cx,y,'#fff7e6',5);
+  y+=22*d;ctx.font=font(12.5);const mn=CN_MO[mo].n,w=ctx.measureText(mn).width+30*d;cnRR(L.cx-w/2,y-13*d,w,18*d,8*d);ctx.fillStyle='rgba(0,0,0,.42)';ctx.fill();cnMoGlyph(mo,L.cx-w/2+11*d,y-4*d,d);ctx.textAlign='left';out(mn,L.cx-w/2+21*d,y,CN_MO[mo].c,3);ctx.textAlign='center';
+  // below the island
+  y=L.info;ctx.font=font(14);const rec=cnRecTxt(i),line=!op?`Vinci «${ARENAS[i-1].n}» per aprirla`:won?'Completata':rec?`Record ${rec}`:'Da conquistare';
+  const full=won&&rec?`${line} · ${rec}`:line,lw=ctx.measureText(full).width,bx=L.cx-lw/2-6*d;cnIslBraz(bx,y-4*d,d*1.25,won,t);out(full,L.cx+10*d,y,won?'#ffd84a':op?'#f2e6cc':'#c9b9a0',3.4)
+  ctx.restore()}
+function cnMoGlyph(mo,x,y,d){ctx.save();ctx.translate(x,y);ctx.scale(d*.55,d*.55);ctx.lineWidth=2;ctx.strokeStyle=INK;ctx.lineJoin='round';
+  if(mo==='torre'){ctx.fillStyle='#8fd0ff';ctx.beginPath();ctx.rect(-6,-6,12,14);ctx.fill();ctx.stroke();ctx.beginPath();ctx.rect(-7.5,-10,15,4);ctx.fill();ctx.stroke()}
+  else if(mo==='trappole'){ctx.fillStyle='#c9ced4';ctx.beginPath();for(let j=0;j<16;j++){const r=j%2?5:9,a=j/16*TAU;ctx.lineTo(Math.cos(a)*r,Math.sin(a)*r)}ctx.closePath();ctx.fill();ctx.stroke();ctx.fillStyle='#ff8a3c';ctx.beginPath();ctx.arc(0,0,2.4,0,TAU);ctx.fill()}
+  else{ctx.fillStyle='#e8d6b0';ctx.beginPath();ctx.moveTo(-7,9);ctx.lineTo(-7,-2);ctx.arc(0,-2,7,Math.PI,0);ctx.lineTo(7,9);ctx.closePath();ctx.fill();ctx.stroke();ctx.fillStyle=INK;ctx.fillRect(-2.5,1,5,8)}
+  ctx.restore()}
+function cnIslBraz(x,y,d,on,t){ctx.save();ctx.translate(x,y);ctx.scale(d,d);ink(1.6);ctx.fillStyle='#5a4636';ctx.beginPath();ctx.moveTo(-9,0);ctx.lineTo(9,0);ctx.lineTo(5,6);ctx.lineTo(-5,6);ctx.closePath();ctx.fill();ctx.stroke();
+  if(on){const f=1+.08*Math.sin(t*9);ctx.fillStyle='#ff9a3c';ctx.beginPath();ctx.moveTo(-6,0);ctx.quadraticCurveTo(-7,-8*f,0,-15*f);ctx.quadraticCurveTo(7,-8*f,6,0);ctx.closePath();ctx.fill();ctx.stroke();ctx.fillStyle='#ffe27a';ctx.beginPath();ctx.moveTo(-3,0);ctx.quadraticCurveTo(-3,-5*f,0,-9*f);ctx.quadraticCurveTo(3,-5*f,3,0);ctx.closePath();ctx.fill()}
+  else{ctx.fillStyle='#7a7064';ctx.beginPath();ctx.ellipse(0,0,7,2,0,0,TAU);ctx.fill()}ctx.restore()}
+// the edges of the screen a little darker (painted once for each size)
+function cnIslVig(L){const key=L.W+'x'+L.H;let c=ISL.vig;if(!c||c.key!==key){c=ISL.vig=document.createElement('canvas');c.key=key;c.width=Math.max(1,L.W>>2);c.height=Math.max(1,L.H>>2);const x=c.getContext('2d'),g=x.createRadialGradient(c.width/2,c.height*.5,c.height*.25,c.width/2,c.height*.5,c.height*.75);g.addColorStop(0,'rgba(0,0,0,0)');g.addColorStop(1,'rgba(0,0,0,.55)');x.fillStyle=g;x.fillRect(0,0,c.width,c.height)}
+  ctx.drawImage(c,0,0,L.W,L.H)}
+// ------------------------------------------------ the home's canvas: the islands instead of the crypt (the Zombie keeps its fire)
+{const _dc=drawCamp;drawCamp=function(dt){if(!CN.on||(!MM.tr&&zMode()))return _dc.apply(this,arguments);glowTick();const T=MM.tr;
+  if(!T){cnIsles(dt);return}
+  // the change of mode (the same sweep as src/js/67-menu-modi.js, with the islands as the Classic side)
+  const el=CAMP.t-T.t0,w=mez(clamp((el-.12)/.95,0,1)),W=campCv.width,H=campCv.height,toZ=T.to==='zombie';if(el>.62)modeMid();if(el>=MM.DUR){modeFinish();return drawCamp(0)}
+  const kOld=toZ?1:1-mez(clamp(el/.45,0,1)),kNew=toZ?mez(clamp((el-.75)/.6,0,1)):1;
+  if(T.from==='zombie'){CAMP.t+=dt;G.t=CAMP.t;drawCampZ(dt,kOld)}else cnIsles(dt);
+  const edge=x=>T.dir<0?W*(1-w)+x:W*w-x,sl=H*.18;campX.save();campX.setTransform(1,0,0,1,0,0);campX.beginPath();
+  if(T.dir<0){campX.moveTo(edge(0)+sl,0);campX.lineTo(W+2,0);campX.lineTo(W+2,H);campX.lineTo(edge(0)-sl,H)}else{campX.moveTo(-2,0);campX.lineTo(edge(0)+sl,0);campX.lineTo(edge(0)-sl,H);campX.lineTo(-2,H)}
+  campX.closePath();campX.clip();if(toZ)drawCampZ(dt,kNew);else{const t0=CAMP.t;cnIsles(dt);CAMP.t=t0}campX.restore()}}
+// ------------------------------------------------ the finger: sideways it moves the islands (in the Classic it does not change mode any more:
+// the zombie hand does), a tap on a side island goes there, a tap on the name opens the map
+{const st=$('homeStage');
+  st.addEventListener('pointerdown',e=>{if(!cnIslOn()||MM.tr||e.target.closest('button'))return;ISL.drag={x:e.clientX,y:e.clientY,v0:ISL.view,t:performance.now(),id:e.pointerId,moved:false,lx:e.clientX,lt:performance.now(),vx:0}},true);
+  st.addEventListener('pointermove',e=>{const D=ISL.drag;if(!D||D.id!==e.pointerId||!ISL.lay)return;const dx=e.clientX-D.x,dy=e.clientY-D.y;
+    if(!D.moved&&Math.abs(dx)>9&&Math.abs(dx)>Math.abs(dy))D.moved=true;if(!D.moved)return;e.stopImmediatePropagation();
+    const now=performance.now();D.vx=(e.clientX-D.lx)/Math.max(1,now-D.lt);D.lx=e.clientX;D.lt=now;ISL.view=clamp(D.v0-dx*ISL.lay.dpr/ISL.lay.sp,-.35,ARENAS.length-.65)},true);
+  const end=e=>{const D=ISL.drag;if(!D||D.id!==e.pointerId)return;ISL.drag=null;if(!D.moved){cnIslTap(e);return}e.stopImmediatePropagation();MM.eatNext=true;
+    cnIslGo(clamp(Math.round(ISL.view-D.vx*.35),0,ARENAS.length-1))};
+  st.addEventListener('pointerup',end,true);st.addEventListener('pointercancel',e=>{if(ISL.drag&&ISL.drag.id===e.pointerId){ISL.drag=null;cnIslGo(clamp(Math.round(ISL.view),0,ARENAS.length-1))}},true)}
+function cnIslGo(j){const L=ISL.lay;ISL.go=j;if(j===ISL.cur){sfx('ui');return}
+  if(cnOpen(j)){const a=ISL.cur;ISL.jump={a,b:j,t:0};ISL.cur=j;const S=cnS();S.pick=j;save();sfx('ui');tone(330,660,.18,'triangle',.03);renderPlay()}else{sfx('ui');tone(220,160,.2,'square',.02)}}
+function cnIslTap(e){const L=ISL.lay;if(!L)return;const r=campCv.getBoundingClientRect(),x=(e.clientX-r.left)*L.dpr,y=(e.clientY-r.top)*L.dpr;
+  if(y<L.lab+80*L.dpr&&y>L.lab-10*L.dpr&&Math.abs(x-L.cx)<L.W*.3){sfx('ui');cnMapOpen();return}
+  const v=Math.round(ISL.view);if(Math.abs(x-L.cx)>CNI_R*L.k*1.05&&y>L.cy-90*L.dpr&&y<L.info){cnIslGo(clamp(v+(x>L.cx?1:-1),0,ARENAS.length-1))}}
+// «Gioca» plays the island you see; a locked one tells you how to open it
+{const _gp=goPlay;goPlay=function(mode){if(CN.on&&mode==='arena'&&!zMode()&&ISL.cur!=null&&!CN.next){const v=ISL.go!=null?ISL.go:Math.round(ISL.view);
+    if(!cnOpen(v)){toast(`Vinci «${ARENAS[v-1].n}» per aprirla`);sfx('ui');return}if(v!==cnPick()){const S=cnS();S.pick=v;save()}}
+  return _gp.apply(this,arguments)}}
+// back to the menu: the hero is on the island of the arena to play (after a first victory he jumps to the next one)
+{const _sm=showMenu;showMenu=function(){const r=_sm.apply(this,arguments);try{if(CN.on)cnIslSync(true)}catch(err){cnErr(err)}return r}}
+// the four modes of the map in a row above «Gioca»; the arena card goes (its island says it all)
+function cnModeRow(){if(!CN.on)return;cnEnsure();let el=$('cnModeRow');if(!el){el=document.createElement('div');el.id='cnModeRow';const pr=document.querySelector('#tabPlay .playRow');pr.parentNode.insertBefore(el,pr)}
+  const S=cnS(),T=S.tower,RL=cnRushList().length,found=CN_REL.filter(r=>S.relics[r.id]).length,nm=S.nem.length,h=`<button class="cnMode" data-sub="tower" style="--mc:#c48ae8">${cnIco('totem')}<b>Torre</b><small>${T.wk===cnWeek()&&T.best?'Piano '+T.best:'Settimana'}</small></button>
+    <button class="cnMode" data-sub="rush" style="--mc:#e5484d">${cnIco('crown')}<b>Corsa</b><small>${RL?RL+' custodi':'Chiusa'}</small></button>
+    <button class="cnMode" data-sub="rel" style="--mc:#ffc93c">${cnRelIco('stella')}<b>Reliquie</b><small>${found} di ${CN_REL.length}</small></button>
+    <button class="cnMode" data-sub="nem" style="--mc:#c0392b">${cnIco('poster')}<b>Ricercati</b><small>${nm?nm+' ti cercano':'Nessuno'}</small>${nm?`<i class="cnBadge">${nm}</i>`:''}</button>`;
+  if(el._h!==h){el._h=h;el.innerHTML=h;el.querySelectorAll('.cnMode').forEach(m=>m.onclick=()=>{sfx('ui');cnMapOpen();CN.sub=m.dataset.sub;CN.subOnly=true;cnMapRender()})}}
+{const _rp=renderPlay;renderPlay=function(){const r=_rp.apply(this,arguments);try{cnModeRow()}catch(err){cnErr(err)}return r}}
+// from the row, the back arrow of a mode closes the map (the islands are the map now)
+{const _sw=cnSubWire;cnSubWire=function(el){_sw.apply(this,arguments);const x=el.querySelector('.cnX');if(x&&CN.subOnly){x.onclick=()=>{CN.subOnly=false;sfx('ui');CN.sub=null;cnMapClose()}}}}
+{const _mo=cnMapOpen;cnMapOpen=function(){CN.subOnly=false;return _mo.apply(this,arguments)}}
+// the sideways swipe of src/js/67-menu-modi.js never changes the mode while the finger is moving the islands
+{const _ms=modeSwitch;modeSwitch=function(){if(CN.on&&!zMode()&&ISL.drag)return;return _ms.apply(this,arguments)}}
+
 // ---------------------------------------------------------------- schermate e stile
 function cnEnsure(){if($('cnMap'))return;const w=$('wrap'),mk=(id,inner)=>{const d=document.createElement('div');d.className='screen cnScr';d.id=id;d.hidden=true;d.innerHTML=`<div class="${inner}" id="${id}In"></div>`;w.appendChild(d);return d};
   mk('cnRel','cnRelBox');mk('cnMap','cnMapBox');
@@ -1062,6 +1269,9 @@ const CN_CSS=`
 .rtrack.cn20 .rn{width:7px;height:7px;border-width:1.5px}.rtrack.cn20 .rn.boss svg{width:18px;height:18px}.rtrack.cn20 .rl{margin:0}
 .rtrack .rn.prem{border-color:#5fd0b0;background:#1e4a40}.rtrack .rn.prem.on{background:#7fd8c0}
 .rtrack .rn.k-corso{border-color:#ffab6a}.rtrack .rn.k-fuga{border-color:#ff7a5a;border-radius:50%;transform:none}
+#cnModeRow{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin:2px 10px 8px;position:relative;z-index:2}
+#menu.zmode #cnModeRow{display:none}#menu:not(.zmode) #chapCard{display:none}
+#cnModeRow .cnMode{padding:5px 2px 4px;min-height:0}#cnModeRow .cnMode svg{width:24px;height:24px}#cnModeRow .cnMode b{font-size:12.5px}#cnModeRow .cnMode small{font-size:9.5px}
 @media (prefers-reduced-motion:reduce){.cnRelC,.cnN.sel .cnPic,.cnBr.on .fl,#cnFu.pop b,#cnFu.sss b,#cnFu.burst small,.sk.cnLand,.sk.cnLeg::after,#cnPremi{animation:none}}`;
 
 cnEnsure();cnPremiInit();

@@ -7,6 +7,20 @@ delle coppe con le arene», poi «ok creami le cose che mi hai elencato su una c
 pubblicata su https://claude.ai/artifact/K6E5QMv5pxKkt61MCFJsba («Mossbound · Classica nuova»: si aggiorna ripubblicando
 `anteprime/classica.html`). Prova: `python3 anteprime/mk_classica.py --test --build && node tests/classica.js [menu|stanze|furia|rarita|evo|nemesi|torre|corsa|ondate|trappole]`.
 
+## Il cammino delle isole (20 ottobre notte)
+
+Denis, con le foto della campagna di Archero 2: «faremo in modo che si avanzi così come vedi nelle immagini». Risposte: le isole **al
+centro con l'eroe sopra** (si scorre col dito e l'eroe salta sull'isola dopo), **pezzi di mondo sospesi** come nel prologo (nebbia, la luce
+del mondo, il custode che dorme sull'isola), sotto ogni isola **il braciere e il record** e l'icona della modalità, **Torre, Corsa,
+Reliquie e Ricercati in una fila sopra Gioca**. Nella Classica la schermata principale non ha più la cripta e la scheda dell'arena: al
+loro posto il cammino (`src/js/94-classica-nuova.js`, sezione 7, `ISL`): ogni arena un pezzo di terra del suo mondo (muschio, vulcano,
+palude, ghiaccio, coi colori dell'arena) col sentiero, l'arco del cancello, il braciere e le cose del mondo, il custode che dorme in fondo;
+le isole chiuse hanno le catene col lucchetto. Scorrendo si guardano le altre (chiuse comprese, l'eroe resta dov'è); su un'isola aperta
+l'eroe ci salta e «Gioca» gioca quella; dopo la prima vittoria salta da solo sull'isola dopo. In alto «ARENA N», il nome e la modalità
+(un tocco apre la mappa del mondo), sotto il braciere con «Completata» e il record. La Zombie resta com'era (lo scorrimento tra le modalità
+funziona come prima fuori dalle isole). Ogni isola è dipinta una volta in una tela sua (al massimo 6), un fotogramma costa circa 7 ms qui
+(la cripta 21). Prova `node tests/classica.js menu`.
+
 ## La scalata a giro: una modalità per arena (20 ottobre notte)
 
 Denis, con quattro foto di Archero 2 (tre di ondate su isole con i ponti, una di un percorso a trappole): «dovremmo modificare la scalata
@@ -118,7 +132,7 @@ Hades II, Megabonk, Balatro, Vampire Survivors; sul telefono Brawl Stars e Arche
 Sul computer di prova (lento, senza scheda grafica) a 3 pixel a punto: il disegno di un fotogramma è circa 1,7–2,6 ms per nemico 3D (con 13
 nemici 21 ms, con 21 43 ms); le evoluzioni aggiungono poco. Per questo nelle ondate al massimo 12 nemici insieme (16 con le ondate grandi).
 
-### Prove (`tests/classica.js`, 41 controlli, nessun errore; in qualità alta, perché sul computer di prova la qualità automatica passerebbe agli effetti ridotti)
+### Prove (`tests/classica.js`, 57 controlli, nessun errore; in qualità alta, perché sul computer di prova la qualità automatica passerebbe agli effetti ridotti)
 
 Menu (scheda coi bracieri, «Premi» e le Missioni, la Zombie com'era, mappa senza stelle, arena chiusa, Torre, Corsa chiusa, Ricercati vuoti);
 la partita d'arena (le 10 stanze di sempre senza ondate, esperienza, Furia e oro stanza dopo stanza, il custode alla stanza 10, la vittoria
