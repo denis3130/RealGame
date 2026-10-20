@@ -1,71 +1,91 @@
 # Classica nuova (anteprima, 20 ottobre)
 
 Denis: «ascolta ora pensiamo a migliorare la modalità classica […] per rendere l'esperienza di gioco migliore e non pallosa come la scalata
-delle coppe con le arene», poi, dopo la lista delle proposte: «ok creami le cose che mi hai elencato su una cosa a parte senza intaccare il
-progetto principale». Ramo `classica-nuova` (da `piano-maestro`); il gioco vero non cambia: `src/js/94-classica-nuova.js` **non** è in
-`src/ordine.txt`. Pagina: `python3 anteprime/mk_classica.py` → `anteprime/classica.html` (parte con un salvataggio suo, già dopo la creazione
-dell'eroe), pubblicata su https://claude.ai/artifact/K6E5QMv5pxKkt61MCFJsba («Mossbound · Classica nuova»: si aggiorna ripubblicando
-`anteprime/classica.html`). Prova: `python3 anteprime/mk_classica.py --test && node tests/classica.js [menu|obj|elite|fusioni|partita|torre|corsa]`.
+delle coppe con le arene», poi «ok creami le cose che mi hai elencato su una cosa a parte senza intaccare il progetto principale». Ramo
+`classica-nuova` (da `piano-maestro`); il gioco vero non cambia: `src/js/94-classica-nuova.js` **non** è in `src/ordine.txt`. Pagina:
+`python3 anteprime/mk_classica.py [--build]` → `anteprime/classica.html` (parte con un salvataggio suo, già dopo la creazione dell'eroe),
+pubblicata su https://claude.ai/artifact/K6E5QMv5pxKkt61MCFJsba («Mossbound · Classica nuova»: si aggiorna ripubblicando
+`anteprime/classica.html`). Prova: `python3 anteprime/mk_classica.py --test --build && node tests/classica.js [menu|onde|furia|rarita|evo|nemesi|torre|corsa]`.
 
-## Le otto novità
+## Seconda versione (20 ottobre sera)
 
-1. **Bivi tra le stanze** (`cnRouteOpts`, `cnRouteShow`, `cnRouteApply`): nelle arene, uscendo da una stanza, si sceglie tra due o tre
-   porte ad arco: Battaglia, Élite (due nemici élite, premio una reliquia) o una stanza con un obiettivo (premio un'abilità in più), e a
-   volte una sosta (Fontana, Mercante, Altare, Tesoro, Stanza dell'oro, Prova del coraggio; al massimo 4 per partita). Prima del boss: il
-   boss o la fontana. In alto la strada fatta (le 10 stanze, le soste, il boss) e le reliquie che hai. Gli eventi fissi delle stanze 2, 5, 7
-   non ci sono più: le soste le scegli tu.
-2. **Stanze con un obiettivo** (`CN_OBJ`, `cnObjStart`, `cnObjTick`): Resisti 30 secondi (i nemici continuano ad arrivare, la stanza non si
-   chiude prima); I tre totem (si rompono a frecce, chiamano un rinforzo ogni 5 s); Il pavimento sale (veleno, lava, palude o acqua gelida
-   secondo il mondo; dentro si perde il 7% della salute ogni 0,75 s); Scrigno a tempo (22 s più le stanze); La lanterna (metà dei nemici va
-   a spegnerla, i loro colpi la colpiscono). Riquadro in alto con il tempo o il conto (`#cnHud`).
-3. **Famiglie di abilità che si fondono** (`CN_FAM`): quattro abilità nuove (Scia di braci, Brina, Spore, Carica statica) fanno coppia con
-   Frecce infuocate, di ghiaccio, velenose e Fulmine; con tutte e due arriva la carta **FUSIONE**: Inferno (chi brucia esplode), Bufera (ogni
-   6 s congela i vicini), Peste (il veleno salta e fa il doppio), Tempesta (fulmini doppi che stordiscono). Sulle carte la famiglia e «con
-   questa, FUSIONE!».
-4. **Reliquie** (`CN_REL`, 12): si scelgono tra due dopo le stanze élite e dopo i custodi della Torre; durano la partita e restano nella
-   collezione (`SAVE.cn.relics`). Specchio di sponda, Stivali di brace, Calice del vampiro, Calamita d'oro, Occhio del cacciatore, Guscio di
-   tartaruga, Cuore di bomba, Furia dell'orso, Clessidra rotta, Piuma del passero, Radice antica, Stella cadente.
-5. **Mappa del mondo con le stelle** (`cnMapOpen`): la scheda dell'arena apre una mappa che sale dall'arena 1 alla 12; ogni arena ha 3
-   stelle (vinci; finisci con più di metà salute; finisci in meno di 7 minuti); un'arena si apre vincendo quella prima; si gioca l'arena
-   scelta; le coppe non si perdono più. Ogni 6 stelle un premio della fiamma (300 oro e 10 cristalli). Nella pagina c'è «apri tutte le arene»
-   (solo anteprima).
-6. **Bracieri della fiamma**: 12 bracieri in cima alla mappa, uno per arena, si accendono battendo il suo custode («Hai riacceso il braciere
-   di…» a fine partita); il conto anche sulla scheda dell'arena.
-7. **Torre della settimana** (`cnTowerMods`, `cnTowerBoard`): 20 piani dell'Abisso, un custode ogni 5 e una reliquia dopo ognuno, tre regole
-   che cambiano il lunedì (una buona e due cattive, dalle regole della sfida del giorno più Sete di sangue, Niente cuori, Contro il tempo),
-   classifica della settimana. Non tocca i record dell'Abisso.
-8. **Corsa dei boss** (`cnRushNext`): i custodi già battuti uno dopo l'altro; tra uno e l'altro il 35% di salute e un'abilità; record di
-   custodi di fila e tempo di tutti e 12. Non tocca coppe né record delle arene.
+Denis, sulla prima versione: «mi piace la grafica delle cose che hai aggiunto ma non la meccanica.. trovati belle idee ispirandoti ai
+giochi più in foga che fanno più forte, e fammi domande con risposte». Giochi guardati: Slay the Spire 2 (il lancio roguelike più grande),
+Hades II, Megabonk, Balatro, Vampire Survivors; sul telefono Brawl Stars e Archero 2 (modalità a tempo, sfide 3 contro 3). Le sue risposte:
 
-## Le modifiche proposte (20 ottobre, nella stessa pagina)
+- In battaglia: **Furia a catena** (non scelte: ruba il potere, schivata perfetta, santuari da caricare).
+- Crescita: **Rarità a sorpresa** ed **Evoluzioni spettacolari** (non scelte: fusioni a stelle, moltiplicatori alla Balatro).
+- Per tornare a giocare: **Anime perdute** e **la Nemesi**, **insieme** (consigliato e scelto: chi ti uccide si prende l'oro), carattere
+  «**entrambe** ed aggiungi pure il sangue se necessario» (non scelte: sblocchi con le imprese, Ascensione).
+- La partita: **ondate a tempo**, arena **come oggi** (460×820, non più grande).
+- Da tenere della prima versione: **mappa del mondo**, **menu con «Premi»**, **élite coi poteri**, **Torre e Corsa dei boss**. Tolti: bivi,
+  stanze con un obiettivo, famiglie e fusioni, crescita automatica, Capobanda, Altare e frammenti, stelle (la versione di prima è nel commit
+  9d51e82).
 
-Denis: «fammela vedere la classica nuova e le modifiche che mi avevi proposto».
+### Cosa c'è
 
-9. **Crescita automatica** (`CN_GROW`, `cnGrow`): le carte che erano solo numeri (Punte affilate, Cuore di quercia, Corda tesa, Occhio di
-   falco) non escono più; a ogni livello arriva da sola, a giro, +10% attacco, +10% salute, +10% cadenza, +5% critico (scritta sopra
-   l'eroe e nell'avviso del livello). Nelle scelte restano le abilità che cambiano il modo di giocare. Colpo letale chiede due crescite
-   di attacco e due di critico (dal livello 9).
-10. **Élite con un potere** (`CN_AFX`, `cnGiveAfx`): ogni élite (anche i Campioni e la Torre) ha un potere scritto sopra la barra, due
-    dall'arena 4 o dalla stanza 8: Scudo (para il 35% della vita e torna dopo 4 s senza colpi, bolla azzurra), Si divide (cadendo diventa
-    due più piccoli), Esplosivo (lascia una bomba che scoppia dopo 1,2 s, cerchio rosso), Furioso (tutto più veloce, ×1,4), Gelido
-    (vicino a lui cammini piano, anello di brina), Rigenera (se non lo colpisci per 1,6 s si cura del 5% al secondo). In cambio le élite
-    hanno ×2,2 di vita invece di ×2,6 e la vita dei nemici cresce del 14% a stanza invece del 20%.
-11. **Capobanda e passaggi più veloci**: la stanza 3 è sempre del Capobanda (il nemico più grosso della stanza diventa un'élite più grande
-    con due poteri e la corona, premio una reliquia); la porta si apre 0,4 s dopo l'ultimo nemico (prima 0,9; le morti dei boss si
-    aspettano come prima), il nero tra le stanze dura meno e con la porta aperta l'eroe corre verso l'uscita (×1,45).
-12. **Frammenti di fiamma e Altare** (`CN_ALT`): a fine partita un frammento per stanza (sei in più se vinci), metà dei piani nella Torre,
-    tre a custode nella Corsa; nell'Altare (quarto bottone della mappa) Cuore di brace (+6% salute a livello, 5 livelli), Lama ardente
-    (+5% attacco, 5), Passo di cenere (−8% di attesa dello scatto, 3), Ultima scintilla (una volta a partita, sotto un quinto della
-    salute, ne recuperi un terzo), Occhio del destino (reliquie tra tre). Prezzi 8–45 frammenti. Nell'anteprima si parte con 20.
-13. **Menu con meno bottoni** (`cnPremi*`): nella Classica a sinistra un solo bottone «Premi» (si accende e conta quando qualcosa è pronto)
-    che apre Missioni, Accesso, Ruota e Traguardi; a destra restano Pass e Casse (il Cammino delle coppe non serve con le stelle, le
-    Offerte stanno nella Bottega). La Zombie resta com'è. Unire oro e cristalli in una moneta sola è rimasto una proposta: non è fatto.
+1. **Ondate a tempo** (`CN_WV`, `cnWaveStart`, `cnWaveTick`, `cnWaveEnd`; come la modalità a tempo di Archero 2, Megabonk e Survivor.io): la
+   partita d'arena è `[{c:1},{c:10}]`: 5 minuti di ondate nella stanza di sempre, poi la stanza del custode. Nemici dalla composizione della
+   stanza che corrisponde al tempo (`G.room` sale da 1 a 9: vita, danno e cadenza crescono come stanza dopo stanza; la vita cresce del 14% a
+   stanza invece del 20%), da 6 a 12 insieme e mai più di 16, uno ogni 1,45 → 0,5 s; ogni minuto un'«Ondata N!» grande con 1–2 élite coi
+   poteri. Cronometro al posto di «N/10» (rosso negli ultimi 10 s). Un segnaposto invisibile (`cnAnchor`, tipo `cnanchor`) tiene la stanza
+   aperta; esperienza e monete volano da sole all'eroe (`cnWaveMagnet`); alla fine il bottino a terra è tuo, i nemici fuggono nel fumo e si va
+   dal custode. Record per arena in `SAVE.cn.best[a]` (`t` ondate, `fu` Furia massima, `win`).
+2. **Furia a catena** (`CN_FU`; come Devil May Cry e Hi-Fi Rush): uccisioni di fila (élite 3, custode 6) → D Deciso (3), C Carico (8),
+   B Brutale (15), A Assurdo (24), S Spietato (36), SS Sanguinario (52), SSS Sovrumano (72); moltiplica oro ed esperienza (×1,1 … ×2,5); dopo
+   2,6 s senza uccisioni cala, un colpo preso la spezza (resta il 35%); a SSS l'eroe prende fuoco: danni +30% e colpi che bruciano. Lettera
+   grande a destra con la parola, la barra e il moltiplicatore, suono a ogni rango; sotto i piedi una luce dal rango S. Nella Classica nuova
+   prende il posto di «Doppia! Tripla!…» (`killStreak`).
+3. **Carte con la rarità a sorpresa** (`CN_RAR`; come Megabonk e Brotato): ogni carta esce Comune, Rara, Epica o Leggendaria (64/24/9/3; la
+   Furia le sposta verso le rare). Le carte dei numeri crescono (Attacco, Salute, Cadenza +20/30/45/70%, Critico +10/15/22/35%, Pozione
+   40–100%, scatto, stivali), le altre danno +8/16/25% di danno e, leggendarie, due livelli. Arrivano coperte e si girano una alla volta;
+   quelle rare girano come una slot (colori che cambiano, tic tic) e si fermano con un suono per rarità; il primo tocco le scopre tutte.
+4. **Evoluzioni spettacolari** (`CN_EVO`; come Vampire Survivors): un'abilità al massimo con la compagna giusta. Pioggia di meteore (Raffica +
+   Frecce infuocate: tre meteore ogni 2,6 s, cratere che brucia), Lancia di ghiaccio (Perforazione + Frecce di ghiaccio: lance che trapassano
+   tutto e alla fine scoppiano in schegge che gelano), Catena del tuono (Rimbalzo + Fulmine: fulmini su tre nemici, stordiscono), Ciclone di
+   lame (Lame rotanti + Passo d'ombra: cinque lame nel vortice), Freccia del drago (Freccia frontale + Occhio di falco: un drago di fuoco ogni
+   4 s, critico), Corona di piume (Frecce diagonali + Frecce laterali: dodici piume d'oro ogni terza raffica). Sulle carte «Verso…» e
+   «Sblocca…»; quando la prendi «EVOLUZIONE!», onda, scintille e una colonna di luce. Le sei evoluzioni di prima restano fuori dalla Classica
+   nuova (ci sono nell'Abisso e nella sfida del giorno).
+5. **La Nemesi col tuo oro** (`cnNem*`; come Shadow of Mordor e le invasioni di Dark Souls): chi ti uccide (il nemico che si muoveva, il
+   colpo tirato, se no il più vicino o il custode) prende un nome e un titolo (`CN_NEMN`, `CN_NEMT`), è buffa o spavalda a caso, balla e ti
+   prende in giro; a fine partita si prende l'oro raccolto e diventa una Nemesi (al massimo tre, `SAVE.cn.nem`). Nelle ondate la più ricercata
+   invade la partita (tra 1:10 e 3:20): portale rosso, «Invasione!», il tuo sacco sulle spalle, nome sopra la testa, i poteri delle élite,
+   più vita col livello, frasi nei fumetti con una voce fatta di sillabe (`CN_NEML`, `cnVoice`). Battila: ti riprendi l'oro e la taglia
+   (5 + 5 × livello cristalli); se ti batte ancora sale di livello (fino a 5), prende un potere in più e il sacco cresce. Se ti uccide un
+   custode, è lui a tenersi l'oro (`SAVE.cn.bossGold`) fino a quando non lo batti. Per le spavalde un po' di sangue: il taglio rosso sullo
+   schermo e le gocce a terra quando ti uccidono, le macchie sul manifesto e a terra quando le batti (Denis: «aggiungi pure il sangue se
+   necessario»). A fine partita il manifesto col ritratto (il modello 3D, `cnPortrait`); nella mappa la bacheca dei **Ricercati** con i
+   manifesti, la taglia, i custodi col tuo oro e le Nemesi sconfitte. Ritirarsi lascia l'oro a te.
+6. **Restano**: la mappa del mondo coi 12 bracieri (si accendono vincendo; via le stelle; per ogni arena i record), il bottone «Premi», le
+   élite coi poteri (Scudo, Si divide, Esplosivo, Furioso, Gelido, Rigenera), la Torre della settimana con le reliquie dopo ogni custode e la
+   Corsa dei boss (sotto).
 
-## Prove (`tests/classica.js`, 39 controlli, nessun errore)
+### Misure
 
-Menu e mappa (scheda, 12 arene, chiuse, «apri tutte», Torre, Corsa, Reliquie); i cinque obiettivi con il premio; «Resisti» che non si chiude
-prima; élite con la reliquia e la collezione; fusione Inferno; fusioni e reliquie tutte insieme senza errori; una partita intera del
-giocatore automatico con i bivi fino alla vittoria con le 3 stelle e il braciere; la scheda che propone l'arena 2; la Torre dal piano 19 al
-20 («Torre conquistata», Abisso intatto); la Corsa per 4 custodi di fila e la fine senza coppe cambiate. Con `nuovo`: il menu con «Premi»
-(e la Zombie com'era), la crescita automatica e le carte senza numeri, i sei poteri delle élite, il Capobanda con la sua reliquia, la porta
-subito aperta, i frammenti a fine partita (16 con la vittoria), l'Altare e la miglioria nella partita dopo.
+Sul computer di prova (lento, senza scheda grafica) a 3 pixel a punto: il disegno di un fotogramma è circa 1,7–2,6 ms per nemico 3D (con 13
+nemici 21 ms, con 21 43 ms); le evoluzioni aggiungono poco. Per questo nelle ondate al massimo 12 nemici insieme (16 con le ondate grandi).
+
+### Prove (`tests/classica.js`, 42 controlli, nessun errore, due giri di fila; in qualità alta, perché sul computer di prova la qualità automatica passerebbe agli effetti ridotti)
+
+Menu (scheda coi bracieri, «Premi» e le Missioni, la Zombie com'era, mappa senza stelle, arena chiusa, Torre, Corsa chiusa, Ricercati vuoti);
+ondate (cronometro, nemici, stanza che non si chiude, livelli e oro, ondata grande con le élite, la stanza che sale col tempo, il custode
+dopo 5 minuti, vittoria col braciere e il record, la scheda che propone l'arena 2); Furia (D, SSS ×2,5 in fiamme, +30% e bruciatura, colpo
+che la spezza, calo); carte (coperte, primo tocco, leggendarie forzate, effetti, la Furia che fa uscire più rare); evoluzioni (la carta,
+la trasformazione, tutte e sei insieme); Nemesi (nasce, manifesto e oro, bacheca, invasione col sacco e la frase, taglia, che cresce, il
+custode che tiene l'oro e lo ridà); Torre fino al piano 20; Corsa per 4 custodi. Foto `tests/cn_<n>.png`.
+
+## Prima versione (20 ottobre, tolta dopo la risposta di Denis)
+
+Bivi tra le stanze, stanze con un obiettivo (resisti, totem, pavimento che sale, scrigno a tempo, lanterna), famiglie di abilità che si
+fondono, 12 reliquie dalle élite, mappa con le 3 stelle per arena, bracieri, Torre della settimana, Corsa dei boss; poi le modifiche proposte
+(crescita automatica, élite coi poteri, Capobanda alla stanza 3, porta subito aperta, frammenti e Altare, menu con «Premi»). Codice nel
+commit 9d51e82 del ramo `classica-nuova`.
+
+## Torre della settimana e Corsa dei boss (come nella prima versione)
+
+- **Torre della settimana** (`cnTowerMods`, `cnTowerBoard`): 20 piani dell'Abisso, un custode ogni 5 e una reliquia dopo ognuno, tre regole
+  che cambiano il lunedì (una buona e due cattive, dalle regole della sfida del giorno più Sete di sangue, Niente cuori, Contro il tempo),
+  classifica della settimana. Non tocca i record dell'Abisso. Niente ondate.
+- **Corsa dei boss** (`cnRushNext`): i custodi già battuti uno dopo l'altro; tra uno e l'altro il 35% di salute e un'abilità; record di
+  custodi di fila e tempo di tutti e 12. Non tocca coppe né record delle arene.

@@ -197,15 +197,16 @@ colpi nuovi. Nel gioco dal 20 ottobre con i boss rifatti (sopra).
 ## Classica nuova (20 ottobre, anteprima nel ramo `classica-nuova`)
 
 Denis: «pensiamo a migliorare la modalità classica […] non pallosa come la scalata delle coppe», poi «creami le cose che mi hai elencato su
-una cosa a parte senza intaccare il progetto principale». `src/js/94-classica-nuova.js` (**non** in `src/ordine.txt`): bivi tra le stanze,
-stanze con un obiettivo, famiglie di abilità che si fondono, 12 reliquie, mappa del mondo con le stelle al posto della scalata delle coppe,
-bracieri della fiamma, Torre della settimana, Corsa dei boss. Pagina `python3 anteprime/mk_classica.py`, pubblicata su
-https://claude.ai/artifact/K6E5QMv5pxKkt61MCFJsba; prova `node tests/classica.js`; dettagli in `docs/classica-nuova.md`. Nel gioco solo dopo
-il sì di Denis. Poi (Denis: «fammela vedere la classica nuova e le modifiche che mi avevi proposto») nella stessa pagina anche le modifiche
-proposte: crescita automatica al posto delle carte che erano solo numeri (`CN_GROW`), élite con un potere scritto sopra la testa e vita che
-cresce meno (`CN_AFX`, `hpMul` +14% a stanza), il Capobanda alla stanza 3, porta aperta subito e passaggi più veloci, frammenti di fiamma e
-l'Altare nella mappa (`CN_ALT`), il menu della Classica con un solo bottone «Premi» al posto di quattro (via Cammino e Offerte). Unire oro
-e cristalli è rimasto una proposta.
+una cosa a parte senza intaccare il progetto principale». `src/js/94-classica-nuova.js` (**non** in `src/ordine.txt`). Pagina
+`python3 anteprime/mk_classica.py [--build]`, pubblicata su https://claude.ai/artifact/K6E5QMv5pxKkt61MCFJsba; prova `node tests/classica.js`;
+dettagli in `docs/classica-nuova.md`. Nel gioco solo dopo il sì di Denis. La prima versione (bivi, obiettivi, fusioni, stelle, Altare…:
+commit 9d51e82) non gli è piaciuta nella meccanica («mi piace la grafica […] ma non la meccanica»); con le sue risposte alle domande la
+**seconda versione**: la partita d'arena sono **5 minuti di ondate** nella stanza di sempre e poi il custode (`CN_WV`); la **Furia a catena**
+D…SSS che moltiplica oro ed esperienza (`CN_FU`); le **carte con la rarità a sorpresa** che si girano come una slot (`CN_RAR`); le **evoluzioni
+spettacolari** (`CN_EVO`, sei); la **Nemesi**: chi ti uccide si prende l'oro della partita e torna a cercarti nelle ondate col tuo sacco,
+buffa o spavalda (`cnNem*`, bacheca dei Ricercati nella mappa). Per le Nemesi spavalde Denis ha permesso il sangue anche nella Classica
+(«aggiungi pure il sangue se necessario»): il taglio rosso e le gocce quando ti uccidono, le macchie sul manifesto. Restano la mappa coi
+bracieri (senza stelle), il bottone «Premi», le élite coi poteri, la Torre e la Corsa.
 
 ## FASE 9: più fluido sul telefono (19 ottobre, in corso)
 
@@ -342,9 +343,9 @@ se lontani (salvo le barriere che li chiamano), fumo e foglie solo vicino allo s
   prove, poi `python3 app/mk_claude.py index.html <cartella>` e `python3 app/mk_app.py --pubblica` dal ramo `gioco` (lo script accetta
   `piano-maestro` e `gioco`). Il lavoro sulla mappa zombie più fluida (sotto, FASE 9) sta solo in `piano-maestro`: va tolto anche quello
   finché Denis non dice sì. Quando la approva, si torna a pubblicare da `piano-maestro`.
-- **Ramo `classica-nuova`** (20 ottobre): l'anteprima della Classica nuova (bivi, obiettivi, fusioni, reliquie, mappa con le stelle, bracieri,
-  Torre, Corsa dei boss), fuori dal gioco finché Denis non dice sì: note nel CLAUDE.md di quel ramo e in `docs/classica-nuova.md`, pagina
-  https://claude.ai/artifact/K6E5QMv5pxKkt61MCFJsba.
+- **Ramo `classica-nuova`** (20 ottobre): l'anteprima della Classica nuova (seconda versione: ondate a tempo, Furia, carte a sorpresa,
+  evoluzioni, Nemesi; mappa coi bracieri, Torre, Corsa), fuori dal gioco finché Denis non dice sì: note nel CLAUDE.md di quel ramo e in
+  `docs/classica-nuova.md`, pagina https://claude.ai/artifact/K6E5QMv5pxKkt61MCFJsba.
 - **App per il telefono** (13 ottobre, richiesta di Denis, che ha un iPhone): https://denis3130.github.io/RealGame/ dal ramo `gh-pages` (GitHub Pages, da attivare una volta da Denis: Settings → Pages → ramo `gh-pages`); su iPhone Safari → Condividi → «Aggiungi alla schermata Home». **Ogni volta che si ripubblica il gioco, anche `python3 app/mk_app.py --pubblica`**. Funziona anche senza internet; i progressi si portano col codice di salvataggio (Impostazioni → Salvataggio). Note in `app/LEGGIMI.md`, prova `node app/prova.js`.
 - Anteprime pubblicate (pagine di prova, il gioco vero non le contiene): La Discesa https://claude.ai/artifact/QAocTWmJLvf97YuYQDc4Yk (`anteprime/discesa.html`); Epico https://claude.ai/artifact/S8sZHqt9LbkDny8P78GYZU (`python3 anteprime/mk_epico.py`); La Bestia https://claude.ai/artifact/FPW7CX8vJst28tJzyr2pt2 (`python3 anteprime/mk_beast.py`); Eroe nuovo (scartato) https://claude.ai/artifact/VHZ9vBv2nhayWDQPWvHZNX; Boss nuovi (già nel gioco) https://claude.ai/artifact/7b7Vtw5eWZ45oF5gWqTHWE (`python3 anteprime/mk_boss.py`). Filmato dell'intro (14 ottobre, ramo `filmato-intro`, non ancora nel gioco): https://claude.ai/artifact/4hufhMS1LRndpGdqbByEYH (`python3 anteprime/mk_filmato.py`, note in `anteprime/filmato/LEGGIMI.md`). Filmato B, l'allenamento all'alba (14 ottobre, stesso ramo; protagonista l'eroe scelto, battute del compagno scelte da Denis): https://claude.ai/artifact/HRb3gsLPptMFpnpPWH4ZDu (`python3 anteprime/mk_filmato_b.py`, note in `anteprime/filmato_b/LEGGIMI.md`). Le anteprime si costruiscono incollando un `.js` in una copia di `index.html`; se il gioco cambia vanno ricostruite.
 
