@@ -14,14 +14,16 @@
 const CN={on:true,next:null,last:null,fx:[],err:0,sel:0,sub:null,bub:[],lances:[],dr:[],rar:null,revEnd:0,revTok:0,forceRar:null,gAcc:0,gSkip:0};
 function cnS(){const S=SAVE.cn||(SAVE.cn={});S.stars=S.stars||{};S.relics=S.relics||{};S.tower=S.tower||{};S.rush=S.rush||{};S.best=S.best||{};S.nem=S.nem||[];S.nemOut=S.nemOut||[];S.bossGold=S.bossGold||{};S.br=S.br||{};S.inc=S.inc||{};
   if(!S.brv){S.brv=1;for(const k in S.stars)if(S.stars[k]&1)S.br[k]=cnBrNeed(+k)}   // the islands an older preview had opened stay open (their bridge is built)
+  if(S.brv<2){S.brv=2;for(const k in S.br)if(S.br[k]>=CN_BRN0[Math.min(2,Math.floor((+k+1)/4))])S.br[k]=Math.max(S.br[k],cnBrNeed(+k))}   // a bridge finished with the old lengths stays finished
   return S}
 const cnErr=err=>{if(CN.err++<6)console.error('classica nuova:',err)};
 const cnBoss=i=>ARENAS[i].bt||BOSSZ[ARENAS[i].boss]||'golem';
 const cnWon=i=>!!((cnS().stars[i]||0)&1);   // stars[i]: il primo bit è la vittoria (le stelle di prima non ci sono più)
 // the bridge of stones from island i to the next (Denis: «aggiungi ponte di pietra»): the next island opens only when it is finished; every run
-// brings stones (cnStones), a victory about half a bridge; the bridges get longer each round of four islands
-const CN_BRN=[100,130,160],CN_BRS=12;   // stones for a bridge (by the round of the island it leads to); stones drawn on a bridge
-const cnBrNeed=i=>CN_BRN[Math.min(2,Math.floor((i+1)/4))];
+// brings stones (cnStones), a victory 40; every bridge 10 stones longer than the one before (Denis: «dai meno mattoncini e aumenta di 10 ad
+// isola»): 100 to the second island, 110 to the third … 200 to the twelfth
+const CN_BRN0=[100,130,160],CN_BRS=12;   // the lengths of before (by the round of four islands), for the saves; stones drawn on a bridge
+const cnBrNeed=i=>100+10*i;
 const cnBrHave=i=>Math.min(cnBrNeed(i),cnS().br[i]||0);
 const cnBrDone=i=>cnBrHave(i)>=cnBrNeed(i);
 const cnBrStones=(have,need)=>Math.floor(CN_BRS*have/need+1e-9);
@@ -1205,7 +1207,9 @@ function cnIslFadeLow(L,A,B,f){const y0=L.info+4*L.dpr,y1=Math.min(L.H,L.pill+30
   if(y1<L.H){const g2=ctx.createLinearGradient(0,y1,0,L.H);g2.addColorStop(0,sk(y1));g2.addColorStop(1,sk(L.H));ctx.fillStyle=g2;ctx.fillRect(0,y1,L.W,L.H-y1)}}
 // the camera follows the finger, then settles on an island; while the hero walks over a bridge it goes with him
 function cnIslStep(dt,L){const J=ISL.jump;if(J){J.t+=dt;if(J.t>=J.dur){ISL.jump=null;cnIslLand(J.b)}}
-  if(ISL.drag)return;if(J&&J.way){const u=Math.min(1,J.t/J.dur),e=u<.5?2*u*u:1-Math.pow(-2*u+2,2)/2;ISL.view=J.a+(J.b-J.a)*e;return}
+  if(J&&J.way&&J.ft!=null)J.fs=(J.fs==null?J.ft:J.fs)+cnAd(J.ft-(J.fs==null?J.ft:J.fs))*Math.min(1,dt*9);
+  // over a bridge the camera follows him exactly: he stays where he always stands on the screen while the islands go by
+  if(ISL.drag)return;if(J&&J.way){const p=cnWayAt(J.way,cnWayDD(J));ISL.view=J.way.lo+clamp((p[0]-cnIslNE(CI_HERO)[0])/CNI_GAP,0,1);return}
   const now=performance.now(),H=ISL.hold;if(H&&now>H.until)ISL.hold=null;
   const target=ISL.hold&&now>=ISL.hold.from?ISL.hold.v:ISL.go!=null?ISL.go:Math.round(ISL.view);ISL.view+=(target-ISL.view)*Math.min(1,dt*(ISL.jump?5:9));if(Math.abs(target-ISL.view)<.002){ISL.view=target;if(ISL.go===target&&!ISL.jump)ISL.go=null}}
 function cnIslLand(i){tone(150,80,.14,'triangle',.05);ISL.dust={i,t:0};vib([12])}
@@ -1240,10 +1244,16 @@ function cnIslBoss(i,A,t,op,L,awake){const bt=cnBoss(i),M=N3.meta&&N3.meta[bt];i
   if(op&&!awake)for(let j=0;j<3;j++){const u=((t*.35+j/3)%1),zx=q[0]-8*k+u*16*k+Math.sin(u*5+j)*4*k,zy=q[1]-(70*sc+u*40)*k;ctx.save();ctx.globalAlpha=Math.sin(u*Math.PI)*.85;ctx.font=`${Math.round((8+u*6)*k)}px "Lilita One", sans-serif`;ctx.textAlign='center';ctx.lineWidth=2*L.dpr;ctx.strokeStyle=INK;ctx.strokeText('z',zx,zy);ctx.fillStyle='#e8f0ff';ctx.fillText('z',zx,zy);ctx.restore()}}
 // ------------------------------------------------ the hero's way over a bridge (from the middle of island lo = min(a, b)): chain points
 // [north, east, high]; from his place to the path, along it to the edge, over the bridge, along the next island's path to his place there
-function cnIslWay(a,b){const lo=Math.min(a,b),[hn,he]=cnIslNE(CI_HERO),G0=cnBrGeo(lo),pts=[[hn,he,0],[hn+16,0,0],[G0.a0-6,0,0]];
+function cnIslWay(a,b){const lo=Math.min(a,b),[hn,he]=cnIslNE(CI_HERO),G0=cnBrGeo(lo),pts=[],
+    bez=(p0,c,p2,n)=>{for(let j=0;j<=n;j++){const s=j/n,r=1-s;pts.push([r*r*p0[0]+2*r*s*c[0]+s*s*p2[0],r*r*p0[1]+2*r*s*c[1]+s*s*p2[1],0])}};
+  // from his place a soft curve onto the middle of the path, the bridge, a soft curve off it to his place on the other island
+  const n0=Math.min(hn+60,G0.a0-6),n1=Math.max(G0.a1+8,CNI_GAP+hn-60);bez([hn,he],[hn+(n0-hn)*.4,0],[n0,0],6);if(G0.a0-6>n0+1)pts.push([G0.a0-6,0,0]);
   for(let j=1;j<=10;j++){const u=j/10,n=G0.a0+G0.len*u;pts.push([n,0,cnBrZ(G0,n)])}
-  pts.push([G0.a1+8,0,0],[CNI_GAP+hn+16,0,0],[CNI_GAP+hn,he,0]);if(b<a)pts.reverse();
+  pts.push([G0.a1+8,0,0]);if(n1>G0.a1+9)pts.push([n1,0,0]);bez([n1,0],[n1+(CNI_GAP+hn-n1)*.6,0],[CNI_GAP+hn,he],6);pts.splice(pts.length-7,1);if(b<a)pts.reverse();
   let len=0;const cum=[0];for(let j=1;j<pts.length;j++){len+=Math.hypot(pts[j][0]-pts[j-1][0],pts[j][1]-pts[j-1][1],pts[j][2]-pts[j-1][2]);cum.push(len)}return{pts,cum,len,lo}}
+// how far along the way he is (a soft start and a soft stop, the same speed in the middle)
+function cnWayDD(J){const u=Math.min(1,J.t/J.dur),ea=.12,cc=2*ea*(1-ea);return J.way.len*(u<ea?u*u/cc:u>1-ea?1-(1-u)*(1-u)/cc:(u-ea/2)/(1-ea))}
+const cnAd=d=>{while(d>Math.PI)d-=TAU;while(d<-Math.PI)d+=TAU;return d};
 // a point of the way (d units along it): [north, east, high] from island lo's middle
 function cnWayAt(w,d){d=clamp(d,0,w.len);let j=1;while(j<w.cum.length-1&&w.cum[j]<d)j++;const a=w.pts[j-1],b=w.pts[j],u=(d-w.cum[j-1])/Math.max(.001,w.cum[j]-w.cum[j-1]);return[plerp(a[0],b[0],u),plerp(a[1],b[1],u),plerp(a[2],b[2],u)]}
 // a point by the path anywhere (n from island lo's middle) on the screen: on an island its own picture, on a bridge the bridge's
@@ -1254,11 +1264,16 @@ function cnChainScr(lo,n,e,z,L,t){let i=lo;while(n>CNI_GAP*.5+1&&i<ARENAS.length
 // the hero on his island (and the companions), his walk over a bridge or his jump, his walk into the gate when you press «Gioca»
 function cnIslHero(L,t){const J=ISL.jump,K0=cnV(),P0=K0.P(CI_HERO);let x,y,s,fade=1;
   const at=i=>{const A=cnIslAt(i,L,t);return[A.x+P0[0]*A.k,A.y+P0[1]*A.k,A.k]};
-  if(J&&J.way){const W=J.way,u=Math.min(1,J.t/J.dur),ea=.12,cc=2*ea*(1-ea),dd=W.len*(u<ea?u*u/cc:u>1-ea?1-(1-u)*(1-u)/cc:(u-ea/2)/(1-ea)),p=cnWayAt(W,dd),q=cnChainScr(W.lo,p[0],p[1],p[2],L,t),p2=cnWayAt(W,dd+4),q2=cnChainScr(W.lo,p2[0],p2[1],p2[2],L,t);
-    const face=Math.atan2((q2[1]-q[1])/.55,q2[0]-q[0]||1e-6),sc=L.hs*q[2];
+  if(J&&J.way){const W=J.way,u=Math.min(1,J.t/J.dur),dd=cnWayDD(J),p=cnWayAt(W,dd),q=cnChainScr(W.lo,p[0],p[1],p[2],L,t),p2=cnWayAt(W,dd+12),
+      g=cnChainScr(W.lo,p[0],p[1],0,L,t),g2=cnChainScr(W.lo,p2[0],p2[1],0,L,t),home=Math.PI/2-.2,wb=u<.1?1-u/.1:u>.86?(u-.86)/.14:0;
+    let tf=Math.hypot(g2[0]-g[0],g2[1]-g[1])>.05?Math.atan2((g2[1]-g[1])/.55,g2[0]-g[0]):(J.ft!=null?J.ft:home);tf+=cnAd(home-tf)*wb*wb*(3-2*wb);J.ft=tf;
+    // his size from his own distance to the camera (the camera follows him, so it stays the same), not from the island or the bridge
+    // under his feet (he grew by a tenth stepping onto the bridge and shrank leaving it)
+    const hn=cnIslNE(CI_HERO)[0],kAt=n=>{const d=(W.lo-ISL.view)*CNI_GAP+n-hn;return L.k*CNI_PD/(CNI_PD+Math.max(-CNI_PD*.55,d))};
+    if(J.fs==null)J.fs=home;const face=J.fs,sc=L.hs*kAt(p[0]);
     // the companions walk after him
-    if(SAVE.pets)petEq().forEach((id,j)=>{const pd=dd-(26+j*22);if(pd<0)return;const pp=cnWayAt(W,pd),pq=cnChainScr(W.lo,pp[0],pp[1],pp[2],L,t),ps=L.hs*pq[2]*.5;ctx.save();ctx.translate(pq[0]+(j?-1:1)*6*pq[2],pq[1]);ctx.scale(ps,ps);ctx.fillStyle='rgba(0,0,0,.3)';ell(0,2,9,3);ctx.fill();drawPetSprite(id,0,0,{t:t+j*.7,face,moving:true,att:0,happy:0,hop:0});ctx.restore()});
-    ctx.save();ctx.fillStyle='rgba(0,0,0,.35)';ctx.beginPath();ctx.ellipse(q[0],q[1]+2*sc,12*sc,3.6*sc,0,0,TAU);ctx.fill();ctx.translate(q[0],q[1]);ctx.scale(sc,sc);noShadow=false;mossOn=1;drawRig(0,0,face,dd*.24,true,heroStyle(),{});mossOn=0;ctx.restore();
+    if(SAVE.pets)petEq().forEach((id,j)=>{const pd=dd-(26+j*22);if(pd<0)return;const pp=cnWayAt(W,pd),pq=cnChainScr(W.lo,pp[0],pp[1],pp[2],L,t),ps=L.hs*kAt(pp[0])*.5;ctx.save();ctx.translate(pq[0]+(j?-1:1)*6*pq[2],pq[1]);ctx.scale(ps,ps);ctx.fillStyle='rgba(0,0,0,.3)';ell(0,2,9,3);ctx.fill();drawPetSprite(id,0,0,{t:t+j*.7,face,moving:true,att:0,happy:0,hop:0});ctx.restore()});
+    ctx.save();ctx.fillStyle='rgba(0,0,0,.35)';ctx.beginPath();ctx.ellipse(q[0],q[1]+2*sc,12*sc,3.6*sc,0,0,TAU);ctx.fill();ctx.translate(q[0],q[1]);ctx.scale(sc,sc);noShadow=false;mossOn=1;drawRig(0,0,face,dd*.046,u<.985,heroStyle(),{});mossOn=0;ctx.restore();
     CAMP.hero=null;return}
   if(J){const u=Math.min(1,J.t/J.dur),e=u<.5?2*u*u:1-Math.pow(-2*u+2,2)/2,a=at(J.a),b=at(J.b);x=plerp(a[0],b[0],e);y=plerp(a[1],b[1],e)-Math.sin(u*Math.PI)*L.pairPx*.5;s=L.hs*plerp(a[2],b[2],e)}
   else{const h=at(ISL.cur);[x,y]=h;s=L.hs*h[2];if(y<-60*L.dpr||y>L.H+60*L.dpr){CAMP.hero=null;return}}
@@ -1348,13 +1363,13 @@ function cnModeRow(){if(!CN.on)return;cnEnsure();let el=$('cnModeRow');if(!el){e
 // ---------------------------------------------------------------- 8 il ponte di pietre, la Prova dell'Incubo, le arene chiuse al buio
 // Denis: «non fare in modo che si possa passare da un'isola all'altra solo vincendo una partita da 10 round» → «più difficile», poi «aggiungi
 // ponte di pietra e prova dell'incubo a parte perché la voglio provare», e «oscura tutte le arene non accessibili così che non si vedono i boss».
-// Il ponte: ogni partita porta pietre (3 per ogni stanza o piano superato, il custode 25 in più: una vittoria fa circa metà ponte); finito il
+// Il ponte: ogni partita porta pietre (2 per ogni stanza o piano superato, il custode 20 in più: una vittoria 40, i ponti da 100 a 200); finito il
 // ponte l'isola dopo si apre e l'eroe ci passa. L'Incubo, a parte: sulle isole vinte un interruttore «Incubo» sotto il nome; nemici più forti,
 // più élite, il custode già arrabbiato, la stanza rossa; oro doppio e 3 cristalli se vinci, una luna rossa sull'isola; niente pietre.
 const CN_STONE='<svg viewBox="0 0 24 24"><path d="M2.5 15.5l4.2-6.4h9.6l5.2 6.4-4.4 4.6H6.8z" fill="#9a9384" stroke="#1b1612" stroke-width="2" stroke-linejoin="round"/><path d="M6.7 9.1l3.1 6.4h11.4M9.8 15.5l-3 4.6" fill="none" stroke="#1b1612" stroke-width="1.3" opacity=".55"/><path d="M8 10.4h7.4" stroke="#fff" stroke-width="1.2" opacity=".35"/></svg>';
 const CN_MOON='<svg viewBox="0 0 24 24"><path d="M15.5 3.2A9 9 0 1 0 20.8 16 7.2 7.2 0 0 1 15.5 3.2z" fill="#e5484d" stroke="#1b1612" stroke-width="2" stroke-linejoin="round"/></svg>';
-// the stones a run brings: 3 for each room (or floor) passed, 25 more for the custode; the Incubo none
-function cnStones(win){if(G.cnInc)return 0;const T=G.cnTw,N=T?T.plan.length:ROOMS,passed=win?N:Math.max(0,(T?(T.f||1):(G.room||1))-1);return Math.round(30*passed/N)+(win?25:0)}
+// the stones a run brings: 2 for each room (or floor) passed, 20 more for the custode; the Incubo none
+function cnStones(win){if(G.cnInc)return 0;const T=G.cnTw,N=T?T.plan.length:ROOMS,passed=win?N:Math.max(0,(T?(T.f||1):(G.room||1))-1);return Math.round(20*passed/N)+(win?20:0)}
 function cnBridgeAdd(a,win){const S=cnS(),nx=ARENAS[a+1];if(!nx||S.all)return'';const need=cnBrNeed(a),had=Math.min(need,S.br[a]||0);if(had>=need)return'';
   const st=cnStones(win);if(st<=0)return'';const now=Math.min(need,had+st),done=now>=need;S.br[a]=now;
   CN.brAnim={i:a,from:cnBrStones(had,need),to:cnBrStones(now,need),done};if(done)S.pick=a+1;

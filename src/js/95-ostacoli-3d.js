@@ -420,13 +420,96 @@ function o3Heart(x,y,sp){ctx.save();const K=o3K(x,y,OB3.face+sp),{V0}=K;oExtrude
       OB3.hold=[G.coins,G.hearts];G.coins=[];G.hearts=[]}catch(err){if(OB3.hold){G.coins=OB3.hold[0];G.hearts=OB3.hold[1];OB3.hold=null}console.error(err);return _o.apply(this,arguments)}}}
 {const _w=drawWallBack;drawWallBack=function(){if(OB3.hold){G.coins=OB3.hold[0];G.hearts=OB3.hold[1];OB3.hold=null}return _w.apply(this,arguments)}}
 {const _g=drawGem;drawGem=function(x,y,s,a){if(!OB3.on||LOWFX||ctx!==MAINCTX)return _g.apply(this,arguments);try{o3Gem(x,y,s||1,a,(G.t||0)*1.4+x*.05)}catch(err){_g.apply(this,arguments)}}}
+// ------------------------------------------------------------------ the fountain of life (Denis: «migliora la fontana della vita»): a fountain in
+// two tiers of pale stone with gilded bands, carved flutes on its basin and a vine round its pedestal; the water of life, aquamarine and
+// glowing, falls from a scalloped bowl in eight threads onto the basin with little splashes, and on top a stone bud holds the seed of life,
+// a light that breathes and pours four little arcs of water into the bowl; motes of light rise from the water. When you drink, a column of
+// light, the water drains (1.4 s) and the seed goes out. The same fountain, smaller, is the tower's spring. On a slow phone (LOWFX) fewer
+// motes, no glints, the threads behind and the splashes left out.
+const FN={st:'#ab9b7d',lt:'#d2c3a1',dk:'#83765e',ft:'#7a6e58',gold:'#e8bd4c',gl:'#f7dc84',moss:'#5f9e3c',wd:'#0f7584',wm:'#24adaa',wh:'#86f2dc',wE:'#2b4247',vine:'#3f7f30',leaf:'#76c456',cache:new Map()};
+const fnMix=(a,b,k)=>{const A=parseInt(a.slice(1),16),B=parseInt(b.slice(1),16),c=(x,y)=>Math.round(x+(y-x)*k);
+  return`rgb(${c(A>>16,B>>16)},${c(A>>8&255,B>>8&255)},${c(A&255,B&255)})`};
+// how full it is: 1 full, 0 drained (p.fnT: the time it was drunk)
+const fnFull=p=>!p.used?1:p.fnT==null?0:clamp(1-((G.t||0)-p.fnT)/1.4,0,1);
+// the side of a ring that faces us (from the azimuth that faces the camera, half a turn round)
+const fnFront=(V0,r,z,n)=>{const a0=oFront(V0),pts=[];for(let i=0;i<=n;i++){const a=a0-Math.PI/2+i/n*Math.PI;pts.push([Math.cos(a)*r,Math.sin(a)*r,z])}return pts};
+// a gilded band round the front of a ring
+function fnBand(V0,r,z,lw){const pts=fnFront(V0,r,z,28).map(q=>V0.P(q));ctx.lineCap='round';ctx.strokeStyle=INK;ctx.lineWidth=lw+1.6;C3.line(pts);ctx.stroke();ctx.strokeStyle=FN.gold;ctx.lineWidth=lw;C3.line(pts);ctx.stroke();
+  ctx.strokeStyle='rgba(255,246,205,.75)';ctx.lineWidth=lw*.35;C3.line(pts.map(q=>[q[0],q[1]-lw*.3]));ctx.stroke()}
+// a water surface (a disc at z): deep at the rim, light in the middle, the shade of the rim on it, the sky in it, ripples, glints, its glow
+function fnWater(V0,r,z,full,t,o){o=o||{};const c=V0.P([0,0,z]);C3.disc3(V0,[0,0,z],[0,0,1],r,{N:28});
+  const g=ctx.createRadialGradient(c[0]-r*.12,c[1]-r*.1,1,c[0],c[1],r*1.02);g.addColorStop(0,fnMix(FN.wh,FN.wE,1-full));g.addColorStop(.5,fnMix(FN.wm,FN.wE,1-full));g.addColorStop(1,fnMix(FN.wd,FN.wE,1-full));
+  ctx.fillStyle=g;ctx.fill();ctx.save();C3.disc3(V0,[0,0,z],[0,0,1],r,{N:28});ctx.clip();
+  ctx.strokeStyle='rgba(0,30,40,.35)';ctx.lineWidth=r*.12;C3.disc3(V0,[0,0,z],[0,0,1],r,{N:28});ctx.stroke();
+  if(full>.02){ctx.strokeStyle=`rgba(230,255,250,${(.3*full).toFixed(3)})`;ctx.lineWidth=1.4;ctx.beginPath();ctx.ellipse(c[0],c[1]-r*.24,r*.62,r*.14,0,Math.PI*1.12,Math.PI*1.88);ctx.stroke();
+    ctx.lineWidth=1;for(let k=0;k<3;k++){const q=((t*.45+k/3)%1),rr=q*r*.92+1;ctx.strokeStyle=`rgba(225,255,248,${(.36*(1-q)*full).toFixed(3)})`;C3.disc3(V0,[0,0,z+.05],[0,0,1],rr,{N:22});ctx.stroke()}
+    if(!LOWFX)for(let k=0;k<3;k++){const a=t*.35+k*2.1,rr=r*(.35+.22*k),q=V0.P([Math.cos(a)*rr,Math.sin(a)*rr,z+.1]),w=2.2+k*.8;ctx.strokeStyle=`rgba(255,255,255,${(.6*full*(.6+.4*Math.sin(t*2.3+k))).toFixed(3)})`;
+      ctx.lineWidth=1;ctx.beginPath();ctx.ellipse(q[0],q[1],w,w*.3,0,Math.PI*1.1,Math.PI*1.9);ctx.stroke()}}
+  ctx.restore();if(full>.02){ctx.save();ctx.globalCompositeOperation='lighter';glow('110,250,215',c[0],c[1],r*1.15,(.14+.05*Math.sin(t*2.2+(o.ph||0)))*full);ctx.restore()}}
+// a thread of water: out over the bowl's lip, then falling onto the basin, a gleam running down it
+function fnThread(V0,a,full,t,k){const ca=Math.cos(a),sa=Math.sin(a),pts=[];for(let j=0;j<=9;j++){const u=j/9,r=17.6+4.4*Math.sqrt(u),z=29.4-16.8*u*u;pts.push(V0.P([ca*r,sa*r,z]))}
+  ctx.lineCap='round';ctx.strokeStyle=`rgba(25,140,150,${(.5*full).toFixed(3)})`;ctx.lineWidth=2.3;C3.line(pts);ctx.stroke();ctx.strokeStyle=`rgba(170,255,238,${(.75*full).toFixed(3)})`;ctx.lineWidth=1.1;C3.line(pts);ctx.stroke();
+  if(!LOWFX){const q=(t*1.6+k*.37)%1,i0=Math.min(7,Math.floor(q*8));ctx.strokeStyle=`rgba(255,255,255,${(.9*full).toFixed(3)})`;ctx.lineWidth=1;C3.line(pts.slice(i0,i0+3));ctx.stroke()}}
+// the stone parts, painted once (for each size of the canvas) and copied: the basin; the pedestal with its vine and the bowl; the lotus bud
+const FN_BOX=[[-40,-38,80,63],[-21,-45,42,41],[-14,-52,28,29]];
+function fnStone(K,id){const{V0}=K,a0=oFront(V0);
+  if(id===0){
+    // the plinth, the fluted basin with its gilded band and moss at the foot, the lip, the inner wall
+    pRound(K,[0,0,0],[[0,35.8],[1.6,35.4],[2.3,34.2]],FN.ft,{m:30,lw:2.4,kl:.2,kd:.5,rim:.2});
+    pRound(K,[0,0,1.6],[[0,33.8],[1.4,32],[8.4,31.8],[10,33.6],[11.9,34.4]],FN.st,{m:30,lw:2.4,kl:.22,kd:.52,rim:.28});
+    for(let i=0;i<9;i++){const a=a0-1.25+i/8*2.5,ca=Math.cos(a),sa=Math.sin(a);oGroove(V0,[[ca*32.1,sa*32.1,4.2],[ca*32.1,sa*32.1,9.8]],.42,1.8)}
+    fnBand(V0,32,3.1,1.6);
+    for(const[da,n] of[[-.85,3],[.35,2],[1.05,3]]){const a=a0+da;for(let k=0;k<n;k++){const b=a+(k-(n-1)/2)*.06,q=[Math.cos(b)*35,Math.sin(b)*35,1.8];
+      C3.leaf(V0,q,[Math.cos(b)*.5,Math.sin(b)*.5,1],[-Math.sin(b),Math.cos(b),0],3+(k%2)*1.6,1.6,k%2?FN.moss:FN.leaf,{lw:.8,bend:.3})}}
+    C3.disc3(V0,[0,0,13.5],[0,0,1],34.4,{N:30});ctx.fillStyle=FN.lt;ctx.fill();ctx.strokeStyle=INK;ctx.lineWidth=1.8;ctx.stroke();
+    C3.disc3(V0,[0,0,13.55],[0,0,1],29.8,{N:30});ctx.fillStyle=FN.dk;ctx.fill();ctx.strokeStyle='rgba(0,0,0,.25)';ctx.lineWidth=1;ctx.stroke();return}
+  if(id===1){
+    // the pedestal with a ring of moulding and a vine, the deep scalloped bowl with its gilded band
+    pRound(K,[0,0,12],[[0,7.4],[1.6,6.2],[6,5],[9.5,5.2],[11,6.8]],FN.st,{m:20,lw:2.1,kl:.24,kd:.5,rim:.3});
+    const pts=[];for(let i=0;i<=30;i++){const u=i/30,a=a0-.9+u*2.2,z=13+u*8.6,r=5.1+Math.max(0,(z-20.5)*1.3);pts.push(V0.P([Math.cos(a)*(r+.3),Math.sin(a)*(r+.3),z]))}
+    ctx.lineCap='round';ctx.strokeStyle='rgba(20,40,15,.6)';ctx.lineWidth=2;C3.line(pts);ctx.stroke();ctx.strokeStyle=FN.vine;ctx.lineWidth=1.1;C3.line(pts);ctx.stroke();
+    for(const[u,sd] of[[.22,1],[.52,-1],[.82,1]]){const a=a0-.9+u*2.2,z=13+u*8.6,r=5.3+Math.max(0,(z-20.5)*1.3),q=[Math.cos(a)*r,Math.sin(a)*r,z];
+      C3.leaf(V0,q,[Math.cos(a+sd*.9),Math.sin(a+sd*.9),.45],[0,0,1],3.8,1.9,FN.leaf,{lw:.8})}
+    pRound(K,[0,0,21],[[0,6.8],[2.4,10.6],[5.4,15],[7.4,17.2],[8.8,17.6]],FN.st,{m:26,lw:2.1,kl:.24,kd:.5,rim:.32});fnBand(V0,16.6,27.9,1.3);
+    const rim=[];for(let i=0;i<48;i++){const a=i/48*TAU,r=17.4+1*Math.cos(a*8-Math.PI);rim.push(V0.P([Math.cos(a)*r,Math.sin(a)*r,29.8]))}C3.poly(rim);ctx.fillStyle=FN.lt;ctx.fill();ctx.strokeStyle=INK;ctx.lineWidth=1.6;ctx.stroke();
+    C3.disc3(V0,[0,0,29.85],[0,0,1],14.6,{N:26});ctx.fillStyle=FN.dk;ctx.fill();return}
+  // the golden lotus: a short neck, six open petals and four closed round the seed (the seed is drawn live), back petals first
+  pRound(K,[0,0,29.6],[[0,4.4],[1.6,3.1],[3.6,3.4]],FN.st,{m:16,lw:1.8,kl:.24,kd:.5,rim:.3});
+  const pet=(a,len,wid,up,col)=>{const d=[Math.cos(a)*(1-up),Math.sin(a)*(1-up),up*1.6];C3.leaf(V0,[Math.cos(a)*2.4,Math.sin(a)*2.4,33.2],d,[-Math.sin(a),Math.cos(a),0],len,wid,col,{lw:1.3,bend:.35})};
+  const P6=[0,1,2,3,4,5].map(k=>k/6*TAU+.25).sort((x,y)=>Math.cos(x-a0)-Math.cos(y-a0)),P4=[0,1,2,3].map(k=>k/4*TAU+.65).sort((x,y)=>Math.cos(x-a0)-Math.cos(y-a0));
+  for(const a of P6)if(Math.cos(a-a0)<0)pet(a,8,4.2,.42,FN.gold);
+  for(const a of P4)pet(a,5.6,3.1,.78,FN.gl);
+  for(const a of P6)if(Math.cos(a-a0)>=0)pet(a,8,4.2,.42,FN.gold)}
+function fnCached(K,id,S){const SS=Math.min(3,Math.max(1.5,Math.round(cv.width/VW*2)/2))*S,key=id+'|'+SS.toFixed(2);let c=FN.cache.get(key);const B=FN_BOX[id];
+  if(!c){c=document.createElement('canvas');c.width=Math.ceil(B[2]*SS);c.height=Math.ceil(B[3]*SS);const o=c.getContext('2d'),keep=ctx;ctx=o;o.setTransform(SS,0,0,SS,-B[0]*SS,-B[1]*SS);
+    try{fnStone(K,id)}finally{ctx=keep}FN.cache.set(key,c)}
+  ctx.drawImage(c,B[0],B[1],B[2],B[3])}
+function fnDraw(K,p,t,S){const{V0}=K,full=fnFull(p),lo=LOWFX,a0=oFront(V0);if(S!==1)ctx.scale(S,S);
+  const live=ctx!==MAINCTX,st=id=>live?fnStone(K,id):fnCached(K,id,S);
+  st(0);const wz=plerp(9.8,12.6,full);fnWater(V0,plerp(28.3,29.4,full),wz,full,t,{ph:0});
+  // the splashes where the threads fall
+  const th=[];for(let k=0;k<6;k++){const a=k/6*TAU+.5;th.push({a,k,front:Math.cos(a-a0)>=0})}
+  if(full>.05&&!lo)for(const h of th){const q=(t*1.9+h.k*.29)%1,c=[Math.cos(h.a)*22,Math.sin(h.a)*22,wz+.2];ctx.strokeStyle=`rgba(230,255,250,${(.65*(1-q)*full).toFixed(3)})`;ctx.lineWidth=1;C3.disc3(V0,c,[0,0,1],1+q*3.4,{N:12});ctx.stroke()}
+  // the threads behind, the pedestal and the bowl, the bowl's water, the threads in front
+  if(full>.02&&!lo)for(const h of th)if(!h.front)fnThread(V0,h.a,full,t,h.k);
+  st(1);fnWater(V0,14.3,plerp(27.9,29.45,full),full,t,{ph:1.3});
+  if(full>.02)for(const h of th)if(h.front)fnThread(V0,h.a,full,t,h.k);
+  // the seed of life in the bud, breathing light, and four little arcs of water from it into the bowl
+  const arcs=[];for(let k=0;k<4;k++){const a=k/4*TAU+.4;arcs.push({a,k,front:Math.cos(a-a0)>=0})}
+  const arc=h=>{const ca=Math.cos(h.a),sa=Math.sin(h.a),pts=[];for(let j=0;j<=10;j++){const u=j/10,r=1.6+u*11.6,z=40.6-u*11+5.4*4*u*(1-u);pts.push(V0.P([ca*r,sa*r,z]))}
+    ctx.lineCap='round';ctx.strokeStyle=`rgba(25,140,150,${(.45*full).toFixed(3)})`;ctx.lineWidth=2;C3.line(pts);ctx.stroke();ctx.strokeStyle=`rgba(170,255,238,${(.85*full).toFixed(3)})`;ctx.lineWidth=1;C3.line(pts);ctx.stroke();
+    ctx.fillStyle=`rgba(245,255,252,${full.toFixed(3)})`;const q=(t*1.6+h.k*.25)%1,i=Math.min(9,Math.floor(q*10));ctx.beginPath();ctx.arc(pts[i][0],pts[i][1],1.2,0,TAU);ctx.fill()};
+  if(full>.02)for(const h of arcs)if(!h.front)arc(h);
+  st(2);const sz=37.4+Math.sin(t*1.6)*.45;C3.sball(V0,[0,0,sz],3.6,fnMix('#e4fff0','#7d8a86',1-full),{lw:1.4,kl:.6,kd:.28,rim:.4});
+  if(full>.02)for(const h of arcs)if(h.front)arc(h);
+  if(full>.02){const q=V0.P([0,0,sz]);ctx.save();ctx.globalCompositeOperation='lighter';glow('170,255,215',q[0],q[1],13+2*Math.sin(t*2.4),(.5+.18*Math.sin(t*2.4))*full);glow('230,255,240',q[0],q[1],4.5,.7*full);
+    // motes of light rising from the water
+    const n=lo?2:5;for(let i=0;i<n;i++){const u=(t/3.4+i/n)%1,a=i*2.4+t*.25,r=9+((i*.37)%1)*14,z=14+u*46,m=V0.P([Math.cos(a)*r,Math.sin(a)*r,z]),al=Math.sin(u*Math.PI)*full,mx=m[0]+Math.sin(t*2+i)*2;
+      glow('160,255,205',mx,m[1],5.5,.5*al);ctx.fillStyle=`rgba(240,255,245,${(.9*al).toFixed(3)})`;ctx.fillRect(mx-.8,m[1]-.8,1.6,1.6)}
+    ctx.restore()}}
 // the fountain, the altar and the treasure of the event rooms (the merchant is the 3D one of 64)
 OB3.P={
-  fontana:(K,p,t)=>{const{V0}=K;pRound(K,[0,0,0],[[0,33],[3,31],[9,30],[11.5,32]],'#6f7a7a',{m:28,lw:2.4,kl:.3,kd:.45});C3.disc3(V0,[0,0,11.6],[0,0,1],32,{N:28});ctx.fillStyle='#8f9a9a';ctx.fill();ctx.strokeStyle=INK;ctx.lineWidth=1.6;ctx.stroke();
-    C3.disc3(V0,[0,0,11.8],[0,0,1],27,{N:28});ctx.fillStyle=p.used?'#2a4450':'#3a8fb0';ctx.fill();ctx.strokeStyle='rgba(220,245,255,.5)';ctx.lineWidth=1.3;for(let k=0;k<3;k++){const r=((t*12+k*8)%24)+1;C3.disc3(V0,[0,0,11.9],[0,0,1],r,{N:20});ctx.stroke()}
-    pRound(K,[0,0,11],[[0,5.5],[20,4.6],[22,7.5],[24.5,9.5],[26,9]],'#7d8888',{m:16,lw:2,kl:.35,kd:.45});C3.disc3(V0,[0,0,26.1],[0,0,1],8,{N:16});ctx.fillStyle=p.used?'#2a4450':'#5ab0d8';ctx.fill();
-    if(!p.used){ctx.strokeStyle='rgba(170,225,255,.85)';ctx.lineWidth=2;ctx.lineCap='round';for(let s=0;s<4;s++){const a=s*Math.PI/2+.4,pts=[];for(let j=0;j<=10;j++){const u=j/10;pts.push(V0.P([Math.cos(a)*(8+u*17),Math.sin(a)*(8+u*17),27+u*8-u*u*23]))}C3.line(pts);ctx.stroke()}
-      ctx.fillStyle='#d8f4ff';for(let k=0;k<4;k++){const q=(t*1.6+k*.25)%1,a=k*Math.PI/2+.4,pp=V0.P([Math.cos(a)*(8+q*17),Math.sin(a)*(8+q*17),27+q*8-q*q*23]);ctx.beginPath();ctx.arc(pp[0],pp[1],1.4,0,TAU);ctx.fill()}}},
+  fontana:(K,p,t)=>fnDraw(K,p,t,1),
   altare:(K,p,t)=>{const{V0}=K;oBox(K,[0,0,0],22,52,24,'#3a3440',{lw:2.4,cf:n=>n[2]>.5?'#4a4252':'#3a3440',face:(n,q)=>{if(n[0]<.5)return;const M=oMap(V0,...oCorners(V0,q));ctx.strokeStyle=p.used?'rgba(140,90,180,.3)':'rgba(190,120,255,.85)';ctx.lineWidth=2;ctx.lineCap='round';
       for(const u of[.23,.5,.77]){C3.line([M(u-.08,.75),M(u,.33),M(u+.08,.75)]);ctx.stroke()}}});
     oBox(K,[0,0,24],26,60,6,'#4a4252',{lw:2.2,cf:n=>n[2]>.5?'#5a5266':'#4a4252'});
@@ -606,3 +689,25 @@ FXDRAW.cryD=f=>{const p=1-f.t/f.max,r=f.r*(.6+.6*p);ctx.save();ctx.globalComposi
   const now=performance.now();if(now-(AU.last[k]||0)<(k==='cryChip'?55:150))return;AU.last[k]=now;const t=AU.ctx.currentTime+.005;AU.pan=x==null?0:Math.max(-.7,Math.min(.7,(x-180)/200));
   try{if(k==='cryChip'){M.glass(t,.8,VR(3000,.1));M.glass(t+.025,.45,VR(3900,.1));vBell(null,t+.015,91+randi(0,5),.45,.028)}
     else{[98,94,91,86,82].forEach((m,i)=>vBell(null,t+.05+i*.06,m,1.2-i*.12,.042));fNoise(t+.04,.8,'highpass',6500,.6,.07,{rev:.6})}}catch(err){}AU.pan=0}}
+
+// ------------------------------------------------------------------ the sip at the fountain of life: a column of light, a ring of green light,
+// motes that swirl from the water round the hero and rise, a bubbling gulp and two bells; then the water drains (fnFull). The same at the
+// tower's spring, which now is the fountain of life, smaller (its old drawing comes back with OB3.on = false)
+function fnSip(x,y,S){fxPush({k:'fnC',x,y:y-6*S,h:160*S,w:40*S,t:1.2,max:1.2});
+  fxPush({k:'ring2',x,y,rgb:'140,255,200',r0:12*S,r1:90*S,t:.6,max:.6,w:5});fxPush({k:'flash',x,y:y-26*S,rgb:'190,255,225',r:60*S,t:.3,max:.3});
+  const n=LOWFX?6:14;for(let i=0;i<n;i++)fxPush({k:'fnM',x0:x,y0:y-26*S,a:i/n*TAU,sp:rand(.8,1.2),t:1.3,max:1.3});sfx('fnSip',0,x)}
+{const _ue=updEvent;updEvent=function(dt){const p=G&&G.prop,was=!!(p&&p.kind==='fontana'&&!p.used),r=_ue.apply(this,arguments);if(OB3.on&&was&&p.used){p.fnT=G.t||0;fnSip(p.x,p.y,1)}return r}}
+{const _st=cnShrineTick;cnShrineTick=function(dt){const S=G&&G.cnPick,f=S&&S.find(s=>s.k==='fonte'&&!s.used),r=_st.apply(this,arguments);if(OB3.on&&f&&f.used){f.fnT=G.t||0;fnSip(f.x,f.y,.74)}return r}}
+{const _ds=cnDrawShrine;cnDrawShrine=function(s,t){if(!OB3.on||!s||s.k!=='fonte'||s.gone)return _ds.apply(this,arguments);
+  const x=s.x,y=s.y,a=s.used?Math.max(0,1-(G.cnPick&&G.cnPick.dt||0)*1.2):1;ctx.save();ctx.globalAlpha=a;ctx.fillStyle='rgba(0,0,0,.32)';ell(x,y+4,30,11);ctx.fill();
+  ctx.save();try{fnDraw(proCam(OB3.face,x,y,1),{used:!!s.used,fnT:s.fnT},t,.74)}catch(err){console.error(err)}finally{ctx.restore()}
+  ctx.font='12px "Lilita One", sans-serif';ctx.textAlign='center';ctx.lineWidth=3;ctx.strokeStyle=INK;ctx.strokeText('Fonte · cura',x,y+20);ctx.fillStyle='#f6ead2';ctx.fillText('Fonte · cura',x,y+20);ctx.restore()}}
+// the column of light, soft at the edges, fading; a mote that swirls from the fountain to the hero and rises
+FXDRAW.fnC=f=>{const p=1-f.t/f.max,a=Math.sin(Math.min(1,p*2.2)*Math.PI*.5)*(1-p),w=f.w*(1-p*.3);ctx.save();ctx.globalCompositeOperation='lighter';
+  const g=ctx.createLinearGradient(0,f.y-f.h,0,f.y);g.addColorStop(0,'rgba(160,255,210,0)');g.addColorStop(.55,`rgba(160,255,210,${(.42*a).toFixed(3)})`);g.addColorStop(1,`rgba(205,255,235,${(.62*a).toFixed(3)})`);
+  ctx.fillStyle=g;ctx.beginPath();ctx.ellipse(f.x,f.y-f.h/2,w/2,f.h/2,0,0,TAU);ctx.fill();glow('170,255,215',f.x,f.y,w*1.4,.4*a);ctx.restore()};
+FXDRAW.fnM=f=>{const p=1-f.t/f.max,k=Math.min(1,p*1.6),ang=f.a+p*5*f.sp,r=(1-p)*26+8,x=plerp(f.x0,P.x,k)+Math.cos(ang)*r,y=plerp(f.y0,P.y-20,k)+Math.sin(ang)*r*.5-p*60,al=Math.sin(Math.min(1,p*1.25)*Math.PI);
+  ctx.save();ctx.globalCompositeOperation='lighter';glow('150,255,200',x,y,6,.55*al);ctx.fillStyle=`rgba(240,255,245,${(.95*al).toFixed(3)})`;ctx.fillRect(x-1,y-1,2,2);ctx.restore()};
+// the gulp: a bubble that rises, the water, two little bells
+{const _s=sfx;sfx=function(k,arg,x){if(k!=='fnSip')return _s.apply(this,arguments);if(!AU.ctx||!AU.on.sfx)return;const t=AU.ctx.currentTime+.005;AU.pan=x==null?0:Math.max(-.7,Math.min(.7,(x-180)/200));
+  try{fThump(t,180,560,.18,.22,.2);fNoise(t+.02,.35,'lowpass',1400,.8,.12,{f2:500,att:.02,rev:.3});[86,93].forEach((m,i)=>vBell(null,t+.1+i*.08,m,1,.035))}catch(err){}AU.pan=0}}

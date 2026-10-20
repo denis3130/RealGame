@@ -7,6 +7,38 @@ delle coppe con le arene», poi «ok creami le cose che mi hai elencato su una c
 pubblicata su https://claude.ai/artifact/K6E5QMv5pxKkt61MCFJsba («Mossbound · Classica nuova»: si aggiorna ripubblicando
 `anteprime/classica.html`). Prova: `python3 anteprime/mk_classica.py --test --build && node tests/classica.js [menu|stanze|furia|rarita|evo|nemesi|torre|corsa|ondate|trappole|3d|ponte]`.
 
+## La fontana della vita, il ponte che non vibra, le pietre (20 ottobre notte)
+
+Denis: «migliora la fontana della vita. e l'animazione di quando passa dal ponte vibra troppo. dai meno mattoncini e aumenta di 10 ad
+isola»; alla domanda su come intendere le pietre: «Meno pietre, ponti +10».
+
+**La fontana della vita** (la stanza evento; `fnDraw` in `95-ostacoli-3d.js`, `OB3.P.fontana`). Prima era una vasca grigia con acqua blu e
+quattro zampilli. Ora una fontana a due piani di pietra color sabbia: lo zoccolo scuro col muschio ai piedi, la vasca scanalata con la fascia
+dorata e il bordo svasato, il piedistallo con la modanatura e un rampicante, la coppa a conchiglia profonda con la sua fascia dorata, in cima un
+loto d'oro (sei petali aperti e quattro chiusi) che tiene il **seme della vita**, una luce verde che respira. L'acqua della vita è
+verde-azzurra e luminosa (scura sul bordo, chiara nel mezzo, l'ombra del bordo, il cielo riflesso, i cerchi, i luccichii): dal seme quattro
+archetti cadono nella coppa, dalla coppa sei fili escono oltre il bordo e ricadono nella vasca con gli spruzzi, e dall'acqua salgono cinque
+lucine. **Il sorso**: una colonna di luce verde, un anello che corre sul pavimento, un lampo, quattordici lucine che girano intorno all'eroe e
+salgono, un gorgoglio e due campanelle (la cura è quella di prima, metà della salute); poi l'acqua si abbassa e si spegne in 1,4 s e il seme
+diventa grigio. Le parti di pietra sono dipinte una volta in tre immagini (vasca; piedistallo e coppa; loto) per ogni misura della tela;
+acqua, fili, seme e lucine dal vivo. Costo della fontana da sola sul computer di prova: 0,7 ms, 0,14 con `LOWFX` (due lucine, niente
+luccichii, niente fili dietro né spruzzi). La **Fonte della torre** (il piano del premio) è la stessa fontana più piccola (×0,74), con lo
+stesso sorso. Foto: `tests/cn_fontana.jpg`.
+
+**La camminata sul ponte** (`cnIslHero`, `cnIslStep`, `cnIslWay` in 94). Misurata fotogramma per fotogramma, le cause erano quattro: la
+telecamera aveva un'andatura sua, diversa da quella dell'eroe, così sullo schermo lui saliva, tornava giù di 15–20 pixel e risaliva; la sua
+grandezza veniva dall'isola o dal ponte sotto i piedi (+9% salendo sul ponte, −4% scendendo); i passi erano quasi cinque volte più veloci che
+in battaglia (64 al secondo invece di 12); il sentiero partiva con un passo quasi di lato e all'arrivo andava oltre il suo posto e tornava
+indietro, e lui si girava di scatto (fino a 1,9 radianti da un fotogramma all'altro). Ora la telecamera lo segue esattamente (resta dove sta
+sempre sullo schermo e sale e scende solo con la gobba del ponte), la grandezza viene dalla sua distanza (non cambia), i passi hanno il ritmo
+della battaglia (`cnWayDD`, `dd·0,046`), il sentiero entra ed esce con due curve morbide, e lui si gira piano: via da noi alla partenza,
+verso di noi all'arrivo (al massimo 0,37 radianti tra due fotogrammi). Prova: `node tests/classica.js ponte` («sul ponte non vibra»).
+
+**Le pietre**: 2 per ogni stanza o piano superato (20 per una partita intera, anche nella torre) e 20 per il custode: una vittoria dà 40
+pietre invece di 55. Ogni ponte vuole 10 pietre più del precedente: 100 verso la seconda isola, 110 verso la terza … 200 verso la dodicesima
+(`cnBrNeed`; prima 100, 130, 160 a giri di quattro isole). Il primo ponte vuole quindi tre vittorie. Nei salvataggi i ponti finiti con le
+lunghezze di prima restano finiti (`S.brv` 2), quelli a metà tengono le loro pietre.
+
 ## Le carte sui telefoni larghi e il cristallo che si rompe (20 ottobre notte)
 
 Denis: «sì correggi ed riaggiungi i cristalli ma solo quelli rompibili, e cambia animazione quando si rompono senza mettere quelle linea a
