@@ -94,6 +94,14 @@ function zfZombies(dt){const Z=FALO.Z;if(!FALO.zInit){FALO.zInit=1;Z.push(zfWalk
     // where it faces: along the path; at the look it turns to us (or to the hero by the fire) in a moment, back slowly
     const tgt=z.st==='look'?(z.look===1?Math.PI/2:Math.atan2(40,(FALO.hx||156)-z.x)):z.dir>0?0:Math.PI,k=z.st==='look'?Math.min(1,dt*14):Math.min(1,dt*3);
     let d=tgt-z.face;d=Math.atan2(Math.sin(d),Math.cos(d));z.face+=d*k}}
+// (FASE 9) a zombie on the path: painted in a little canvas of its own and copied where it is; each one is painted again every other frame,
+// in turn (they are small and far; when it changes what it does, at once). With the view turned or tilted (never here) drawn as before
+function zfZDraw(z,f,an,sc){const m=ctx.getTransform();if(m.b||m.c||!(m.a>0)){f(z.x,z.y,z.face,an,z.p,sc);return}
+  const k=m.a,W=Math.ceil(96*sc*k),H=Math.ceil(110*sc*k),fx=W/2,fy=Math.round(H*.8);let c=z.cv;if(!c)c=z.cv=document.createElement('canvas');
+  const i=FALO.Z.indexOf(z),key=[W,H,an].join('|');FALO.zc=(FALO.zc||0);
+  if(c.width!==W||c.height!==H||z.ck!==key||((FALO.zc+i)&1)===0){if(c.width!==W||c.height!==H){c.width=W;c.height=H}z.ck=key;
+    const g=c.getContext('2d'),sv=ctx;g.setTransform(1,0,0,1,0,0);g.clearRect(0,0,W,H);g.setTransform(k,0,0,k,fx,fy);ctx=g;try{f(0,0,z.face,an,z.p,sc)}finally{ctx=sv}}
+  ctx.save();ctx.setTransform(1,0,0,1,0,0);ctx.drawImage(c,m.a*z.x+m.e-fx,m.d*z.y+m.f-fy);ctx.restore()}
 // a far groan, panned where the zombie stands (the audio may not be open yet: then nothing)
 function sndZGroan(z){try{if(!AU.ctx||!AU.on.sfx||$('menu').hidden)return;const c=AU.ctx,t=c.currentTime,pan=c.createStereoPanner?c.createStereoPanner():null,g=c.createGain(),o=c.createOscillator(),f=c.createBiquadFilter();
   o.type='sawtooth';const f0=70+Math.random()*30;o.frequency.setValueAtTime(f0,t);o.frequency.linearRampToValueAtTime(f0*.78,t+1.1);f.type='lowpass';f.frequency.value=420;f.Q.value=6;
@@ -180,9 +188,9 @@ drawFalo=function(A){const t=A.t,dt=A.dt,hs=A.hs,hx=A.hx,hy=A.hy;FALO.hx=hx;FALO
       ctx.strokeStyle='rgba(12,20,18,.92)';seg([ax+Math.cos(a+1.57)*2.4,ay+Math.sin(a+1.57)*2.4],[ex+Math.cos(a+1.57)*2.4,ey+Math.sin(a+1.57)*2.4]);ctx.stroke()}
     ctx.fillStyle='#0a1210';circ(mx,my,2.4);ctx.fill()}
   // the zombies on the path (far away: small and dim, eyes still glowing), behind the fence
-  zfZombies(dt);
+  zfZombies(dt);FALO.zc=(FALO.zc||0)+1;
   for(const z of FALO.Z.slice().sort((a,b)=>a.y-b.y)){const an=z.st==='walk'?'walk':'idle',f=CR[z.kind];if(!f)continue;ctx.save();ctx.globalAlpha=.9;
-    try{f(z.x,z.y,z.face,an,z.p,hs*.3)}catch(e){}ctx.restore()}
+    try{zfZDraw(z,f,an,hs*.3)}catch(e){}ctx.restore()}
   ctx.drawImage(zfFence(),ZFX0,ZFY0,ZFW,ZFH);
   // fog over the field
   if(!LOWFX){const im=glowSprite('150,175,160');ctx.save();for(let k=0;k<5;k++){const w=150+k*30,fx=((k*137+t*(4+k*1.6))%(360+w*2))-w,fy=132+k*9;ctx.globalAlpha=.1+.03*Math.sin(t*.3+k);ctx.drawImage(im,fx,fy-12,w*2,26)}ctx.restore();ctx.globalAlpha=1}
@@ -200,6 +208,10 @@ drawFalo=function(A){const t=A.t,dt=A.dt,hs=A.hs,hx=A.hx,hy=A.hy;FALO.hx=hx;FALO
   // the camp's things on a layer of their own (same transform), lit by the fire afterwards: only where there is something
   const M=ctx.getTransform(),L=FALO.lay||(FALO.lay=document.createElement('canvas')),bx0=-60,by0=-64,bw=98,bh=76,
     d0=[M.a*bx0+M.e,M.d*by0+M.f],W1=Math.ceil(bw*M.a)+2,H1=Math.ceil(bh*M.d)+2;if(L.width<W1)L.width=W1;if(L.height<H1)L.height=H1;
+  // (FASE 9) while the hero sits still by the fire the layer is painted every other frame (his breath takes 9 s, the fire's light on him
+  // flickers slower than 30 times a second): the frame in between copies the last one. Standing up, walking off, any change: every frame
+  const lk=[M.a,M.d,M.e,M.f,W1,H1].join('|'),still=!(A.walk>0)&&(A.k==null||A.k>=.999),reuse=still&&FALO.lk===lk&&((FALO.lf=(FALO.lf||0)+1)&1)===1;
+  if(!reuse){FALO.lk=lk;
   const lg=L.getContext('2d'),sv=ctx;lg.setTransform(1,0,0,1,0,0);lg.clearRect(0,0,L.width,L.height);lg.setTransform(M.a,0,0,M.d,M.e-Math.floor(d0[0]),M.f-Math.floor(d0[1]));ctx=lg;
   try{
     // the log runs almost across the screen (people sit a little turned), the hero on it, facing the fire. Behind it the shovel stuck in
@@ -224,7 +236,7 @@ drawFalo=function(A){const t=A.t,dt=A.dt,hs=A.hs,hx=A.hx,hy=A.hy;FALO.hx=hx;FALO
       const g=tg.createRadialGradient(fq[0],fq[1]-6,2,fq[0],fq[1]-6,56);g.addColorStop(0,`rgba(255,160,70,${(.95*fl).toFixed(3)})`);g.addColorStop(.5,`rgba(255,130,50,${(.55*fl).toFixed(3)})`);g.addColorStop(1,'rgba(255,110,40,0)');
       tg.fillStyle=g;tg.fillRect(bx0,by0,bw,bh);tg.setTransform(1,0,0,1,0,0);tg.globalCompositeOperation='destination-in';tg.drawImage(L,0,0);
       lg.save();lg.setTransform(1,0,0,1,0,0);lg.globalCompositeOperation='soft-light';lg.drawImage(Tm,0,0);lg.globalCompositeOperation='lighter';lg.globalAlpha=.16;lg.drawImage(Tm,0,0);lg.restore()}
-  }finally{ctx=sv}
+  }finally{ctx=sv}}
   ctx.save();ctx.setTransform(1,0,0,1,0,0);ctx.drawImage(L,0,0,W1,H1,Math.floor(d0[0]),Math.floor(d0[1]),W1,H1);ctx.restore();
   // the fire: scorched ground, the ring of stones, the logs, the flames
   {const q=V0.P(F3);ctx.fillStyle='#16110d';ctx.beginPath();ctx.ellipse(q[0],q[1],9.5,9.5*.55,0,0,TAU);ctx.fill();ctx.fillStyle='rgba(120,110,100,.35)';for(let i=0;i<9;i++){const a=i*2.3;ctx.fillRect(q[0]+Math.cos(a)*5,q[1]+Math.sin(a)*2.4,1.2,.8)}
@@ -247,10 +259,10 @@ drawFalo=function(A){const t=A.t,dt=A.dt,hs=A.hs,hx=A.hx,hy=A.hy;FALO.hx=hx;FALO
   const q=[hx+fc[0]*s,cy0+fc[1]*.55*s],lx=campLx,LOF=300,LH2=SH+600;lx.globalCompositeOperation='source-over';lx.clearRect(0,0,SW,LH2);lx.fillStyle='rgba(2,6,8,.42)';lx.fillRect(0,0,SW,LH2);
   lx.globalCompositeOperation='destination-out';const spr=glowSprite('0,0,0'),Lt=(x,y,r,a)=>{lx.globalAlpha=Math.min(1,a);lx.drawImage(spr,x-r,y+LOF-r,r*2,r*2)};
   Lt(q[0],q[1]-6*s,(30+16*s)*fl,1);Lt(q[0],q[1]-4*s,(14+9*s)*fl,1);Lt(hx,cy0-14*s,(16+10*s)*fl,.7);Lt(268,-108,52,.7);Lt(111,103,14,.6);
-  lx.globalAlpha=1;ctx.drawImage(campL,0,-LOF,SW,LH2);
+  lx.globalAlpha=1;campLightBlit();
   // the eyes of the zombies on the path: two small glows that breathe, above the dark
   if(!LOWFX){ctx.save();ctx.globalCompositeOperation='lighter';for(const z of FALO.Z){const k=.6+.4*Math.sin(t*2.2+z.x*.1),sc=hs*.3,e=CR._rig.V(z.face).P(4.6,0,0),hxz=z.x+e[0]*sc,hyz=z.y-34*sc+e[1]*sc;
       if(Math.cos(z.face-Math.PI/2)>-.3){glow('200,255,120',hxz,hyz,3.2*sc,.5*k);glow('220,255,160',hxz,hyz,1.1*sc,.9*k)}}ctx.restore()}
   // the fire's warm light on everything near (it flickers)
   if(!LOWFX){ctx.save();ctx.globalCompositeOperation='lighter';glow('255,130,50',q[0],q[1]-8*s,(26+12*s)*fl,.17*fl);glow('255,170,90',q[0],q[1]-5*s,(10+6*s)*fl,.14);ctx.restore()}
-  const v=ctx.createRadialGradient(SW/2,SH*.6,SH*.4,SW/2,SH*.6,SH*1.35);v.addColorStop(0,'rgba(0,0,0,0)');v.addColorStop(1,'rgba(0,0,0,.5)');ctx.fillStyle=v;ctx.fillRect(-400,-LOF,SW+800,LH2)}}
+  campVigDraw(1.35)}}

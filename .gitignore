@@ -46,3 +46,6 @@ anteprime/boss_classici_sfida.html
 anteprime/colpi.html
 tests/colpi_test.html
 tests/colpi_oggi_test.html
+# pages built by anteprime/mk_classica.py
+anteprime/classica.html
+tests/classica_test.html

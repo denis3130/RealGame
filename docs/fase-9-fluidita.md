@@ -54,8 +54,98 @@ Copiare un'immagine 1:1 su pixel interi costa 5–7 volte meno che copiarla scal
 
 12. **Mappa zombie**: la vignetta (una sfumatura su tutto lo schermo a ogni fotogramma) preparata una volta e copiata a bande (`zVig` in
     `anteprime/zombie/motore.js`), e i fotogrammi della mappa contano per le luci morbide. Il resto della mappa zombie è il disegno delle
-    case, degli oggetti e degli zombie in 3D (`w.voci`, ~40 ms qui a 1,5 pixel a punto): da guardare a parte, con Denis, perché lì la
-    «piega» degli oggetti alti cambia a ogni passo della telecamera e non si può copiare senza toccare l'aspetto.
+    case, degli oggetti e degli zombie in 3D (`w.voci`, ~40 ms qui a 1,5 pixel a punto): la «piega» degli oggetti alti cambia a ogni passo
+    della telecamera, quindi copiarli tali e quali avrebbe cambiato l'aspetto. Fatto dopo, sotto (13).
+
+13. **Mappa zombie: gli strati fermi copiati** (20 ottobre; Denis: «Mappa zombie più fluida», dopo la proposta «ogni casa e oggetto
+    disegnato una volta e rifatto solo quando la sua piega cambia di mezzo pixel»). In `anteprime/zombie/motore.js` (`LCB`, `lcPrep`,
+    `lcPaint`, `lcDraw`, prima di `drawLayer`):
+    - i pezzi fermi di ogni strato (facce, pannelli, palle, linee, contorni: i muri, i tetti, le lapidi, gli alberi, gli steccati, i mobili)
+      si dipingono una volta in una tela loro, grande quanto serve, e si copiano 1:1: a vista dritta la telecamera sta su pixel interi della
+      tela (lo spostamento arrotondato in `render`, al più mezzo pixel della tela, come in battaglia);
+    - una copia si ridipinge quando la piega del suo strato, misurata sugli spigoli dell'impronta in basso e in alto (`L.pp`, calcolati in
+      `layerSB` insieme al riquadro), si è mossa di più di mezzo pixel della tela (`LCB.tol`), o di meno ma con lo zoom diverso (lontano
+      dall'angolo della mappa una scala diversa di un decimillesimo sposta la copia di un decimo di pixel: conta anche quello); tutti gli strati
+      di un prop si ridipingono insieme, così i muri di una casa restano attaccati;
+    - **a telecamera ferma le copie tornano esatte**: ferma da due fotogrammi, quelle fatte con la piega di poco diversa (più di due
+      centesimi di pixel) si ridipingono, otto prop per fotogramma, le più lontane prima;
+    - quando cambia un pezzo la copia si rifà: punti nuovi (le ante del cancello, l'asse che cade, la porta della latrina), materiale,
+      colore, raggio, trasparenza, spessore (`lcTouch`), le assi delle barriere (`vis`), le trasparenze delle case con l'eroe dentro o
+      dietro (contano i 256 passi che si vedono: il valore si avvicina alla meta senza fermarsi mai del tutto);
+    - i disegni a mano (`fn`: lanterne, insegne, il secchio del pozzo che oscilla, le macchine, il corvo sul palo, i lumini) restano dal vivo
+      al loro posto nell'ordine, tra una copia e l'altra; anche le fiamme figlie e i prop che sfumano (`fade`);
+    - uno strato che cambia a ogni fotogramma (la piega che corre vicino al centro mentre l'eroe va di lato, una porta che si apre) si
+      disegna dal vivo come prima finché non rallenta (`C.hot`), così non costa più di prima;
+    - le tele stanno in 48 MB (`LCB.max`; una vista ne usa 20–45 a 2 pixel per punto, molto meno a 1,5): oltre, fuori le meno usate di
+      recente, e quello che non entra si disegna dal vivo; si liberano quando si esce dalla mappa (`stop`, tornando al menu: si rifanno da
+      sole nei primi fotogrammi quando si rientra) e con il terreno (`libera`);
+    - girando la visuale (`CAM.rot`), per la sagoma dell'eroe dietro le cose e con `W.dbg.noLC`: tutto dal vivo, come prima.
+
+    Misure (questo computer, 2 pixel a punto, mediane; i numeri ballano molto): fermo 35–55 → 25–41 ms a fotogramma (il disegno degli
+    oggetti da 30–45 a 9–13 ms), in giù 35–63 → 26–48, di lato 33–84 → 25–57 (gli oggetti vicini al centro restano dal vivo), con 10 zombie
+    di lato 46–76 → 39–70. Conteggi camminando di lato alla partenza: per fotogramma 47 copie, 6 ridipinti, 25 dal vivo (prima 78 dal vivo).
+    Prova: `node anteprime/zombie/copie_prova.js` (sotto). Le prove di misura della mappa rifatte anche sul codice di prima delle copie
+    (24751dd) danno gli stessi numeri: `ordine_mappa.js`, `bara_ordine.js` (i 4 errori di 15 px a visuale girata c'erano già),
+    `visibilita.js`, `giro.js` (78,0 scambi per giro, oltre la soglia di 65 già prima: girando si disegna dal vivo); `navmappa.js` 93/96 in
+    tutti e due (cambia solo quale zombie resta fermo).
+
+14. **Apertura di bustine e casse** (20 ottobre; Denis: «i cali di frame […] quando apri bustine o le casse», «ok vai»). Misura:
+    un'apertura intera sul telefono finto, ogni fotogramma (`chest_prof.js` nello scratch, con i tocchi fatti dalla prova). Prima 9
+    fotogrammi al secondo qui. Le cause: la tela degli effetti a tutto schermo (lo sfondo in sfumatura rifatto a ogni fotogramma, il
+    bagliore e il nucleo dei raggi stesi su tutto lo schermo anche dove erano trasparenti, 9–25 raggi a uno a uno lunghi fino all'angolo
+    dello schermo), la sfocatura dietro la schermata (`.screen`, ma `#chestScr` ha lo sfondo pieno: non si vedeva, il telefono la
+    calcolava lo stesso), la tela della bustina rifatta da capo a ogni fotogramma (seguiva il riquadro sullo schermo, che cambia di un
+    pixel mentre la bustina galleggia e si inclina). Fatto, identico al pixel salvo arrotondamenti (`vis_fx.js`: al massimo 9 su 255 in
+    pochi pixel): sfondo preparato una volta finché la cassa non si sposta (`fxBg` in 09, liberato alla chiusura), bagliore e nucleo
+    solo nel loro quadrato, raggi in un solo tracciato che finisce dove finisce la sfumatura, la scossa scritta nella pagina solo quando
+    cambia, niente sfocatura dietro `#chestScr` (`src/pagina.html`), la tela della bustina rifatta solo quando diventa più grande o molto
+    più piccola (`pkResize` in 69). Dopo: 18–19 fotogrammi al secondo qui (il doppio), il 99% dei fotogrammi da 233–283 a 117 ms.
+    Resta il disegno della bustina (6–7 ms qui a fotogramma, tutta animata) e le particelle.
+15. **Falò del menu Zombie, seconda parte**: lo strato del campo (eroe seduto, ceppo, pala, zaino, cassa, fucile e la luce del fuoco
+    su di loro, quattro passate su tutto lo strato tra cui una «soft-light») si ridipinge un fotogramma sì e uno no mentre l'eroe sta
+    seduto (il respiro dura 9 s, il tremolio del fuoco è più lento di 30 al secondo); in piedi, mentre se ne va o cambia modalità a
+    ogni fotogramma come prima. Gli zombie sul sentiero: ognuno dipinto in una tela sua, una volta ogni due fotogrammi a turno, e copiato
+    dov'è a ogni fotogramma (come sulla mappa); quando cambiano mossa subito. Un fotogramma da 56 a 42 ms qui (`falo_ab2.js`). Uguale al
+    pixel nel fotogramma in cui si ridipinge (`vis_falo.js`).
+16. **Mappa zombie: nascite vicine, cose lontane ferme** (20 ottobre; Denis: «non far spawnare i zombie nelle aree ancora da sbloccare
+    o troppo lontani a noi […] disattivare le parti di mappa dove siamo abbastanza lontani da non vederci»). Le zone chiuse erano già
+    escluse (dal 14 ottobre, `zone_prova.js`); prima gli zombie nascevano dalle 6 buche più vicine a piedi tra 130 e 700 punti
+    (mediana 444, uno su cinque oltre 500). Ora (`pickHole`, `holeScr` in `motore.js`): le buche entro 420 punti a piedi, tra queste
+    prima quelle fuori dallo schermo; se ce n'è meno di due, le tre più vicine entro 700 come prima. «Fuori dallo schermo» non vuol dire
+    lontano: lo schermo del telefono è alto, in su e in giù vede fino a 500 punti. Gli esseri (zombie, compagni, corvi posati, fiamme
+    libere) si disegnano solo se la loro figura tocca lo schermo (`visB`; prima bastava il quadrato largo quanto lo schermo girato in
+    ogni verso, che di lato prendeva zombie che non si vedevano e che consumavano i ridisegni a turno degli zombie); gli zombie fermi
+    delle zone chiuse lontani dallo schermo non si muovono, se non li chiama una barriera (`nearScr`, `lureOf`); il fumo dei camini e le
+    foglie solo vicino allo schermo, le foglie lontane non si disegnano. Prove: `comparse_prova.js` (tutte le buche entro 700 a piedi,
+    più d'una, mai la stessa di fila), `zone_prova.js`, `chiusi_prova.js`, `ondate.js`, `gioco.js`. `ordine_mappa.js` dà gli stessi
+    numeri di prima (sopra le sue soglie anche senza queste modifiche: da guardare a parte).
+17. **Mappa zombie: niente zombie nelle zone chiuse** (20 ottobre; Denis, dopo l'anteprima: «non è cambiato un cazzo», poi «dammi
+    l'anteprima giusta coi zombie che non spawnano nelle aree chiuse e troppo lontani»).
+    - **Gli zombie fermi delle zone chiuse non ci sono più** (tre nell'aia, tre nel Borgo, tre nella Segheria: dall'altra parte del
+      cancello e delle assi sembravano nati lì). Restano nel codice per le prove che li cercano apposta (`W.dbg.fermi`, `fermi()` in
+      `area_mappa.js`; `chiusi_prova.js` li accende per le assi e il cancello; `tests/zombie.js`: Rigioca senza zombie nelle zone chiuse).
+      Il gioco pubblicato (ramo `gioco`) li ha ancora.
+    - **Le nascite**: nello stesso momento l'altra sessione ha fatto la stessa richiesta (`farOpen`, `groundSpot`: buche solo con tutto
+      intorno aperto, punti di terra liberi a 170–420 px di strada, i boss uguali; nel gioco pubblicato dal 20 ottobre). La mia versione
+      (`dynSpots`) è stata lasciata nell'unione: resta la sua. Misura con `anteprime/zombie/nascite_misura.js` (l'eroe in 65–278 punti di
+      ogni zona aperta, 30 nascite a punto, quattro mappe dalla sola partenza a tutto aperto): prima del 20 ottobre mediana 372–415 px a
+      piedi, il 36–49% oltre 420, fino a 950; ora mediana 285–295, il 90% entro 405, oltre 420 il 3–5% (quasi tutte tra 420 e 440), sullo
+      schermo il 13–20%.
+18. **Il contatore** (`src/js/101-contatore.js`; Denis: «non è cambiato un cazzo», poi «vai»): le misure fin qui vengono da un computer
+    senza scheda grafica che imita un telefono, sull'iPhone il tempo può andare altrove. Il contatore misura sul telefono vero: ogni
+    `requestAnimationFrame` (i fotogrammi raggruppati per il tempo che dà il browser), dentro il ciclo del gioco aggiornamento, disegno,
+    scritte, cripta e falò, sfondo dei menu, eroe nel menu, e il codice dei timer (musica, menu) come «altro codice»; il «resto» è il
+    telefono che disegna e mostra la pagina. Un chip coi fotogrammi al secondo (verde, giallo, rosso); un tocco apre il pannello: adesso
+    (fps, fotogramma medio e peggiore, codice, altro codice, resto, scatti oltre 50 ms negli ultimi 10 s, le parti), una riga per
+    schermata da quando la pagina è aperta (Mappa zombie, Menu Zombie, Casse, Bustine, Battaglia, Menu Classica, Caricamento…: fps,
+    peggior secondo, scatti, codice e resto), il telefono (iOS, schermo, misure delle tele, grafica, app dalla Home o dentro un'altra
+    pagina); «Parti della mappa · 5 s» (i tempi di `W.dbg.tm` della mappa, con lo svuotamento dopo ogni parte: mostra il lavoro della
+    scheda grafica e rallenta un poco mentre misura), «Copia» (tutto in testo da incollare nella chat), «Azzera», «Sposta», «Chiudi».
+    Un avviso se la pagina sta ferma a 30 fotogrammi col codice che ci starebbe in 60 (Risparmio energetico, o forse la pagina dentro
+    l'app di Claude, che sta dentro un'altra pagina) e se il tempo va al telefono più che al codice. Acceso nell'anteprima
+    (`window.MB_CONTATORE`, messo dalla pagina dell'anteprima), spento nel gioco; Impostazioni → Contatore. Spento non c'è niente (la
+    misura dei fotogrammi si installa solo quando si accende); acceso costa due `performance.now()` a richiamo e il testo del chip due
+    volte al secondo; non disegna sulle tele. Prova `tests/contatore.js`.
 
 ## Risultati (questo computer, un fotogramma con il disegno)
 
@@ -72,13 +162,15 @@ Circa il 35–45% in meno. `update()` costa meno di 1 ms: tutto il resto è dise
 
 - I **modelli 3D** (nemici ~1–2,5 ms l'uno qui, l'eroe ~3,5): tanti tratti sottili (contorni, pieghe) e riempimenti; non si alleggeriscono
   senza cambiarne l'aspetto. Gli ostacoli animati (`ROCK_LIVE`: canne, bracieri, cumuli di fango…) ~0,5 ms l'uno.
-- Da provare sul telefono vero di Denis: fluidità in battaglia, nel menu, nei passaggi di stanza.
+- Da provare sul telefono vero di Denis: fluidità in battaglia, nel menu, nei passaggi di stanza e sulla mappa zombie.
 
 ## Anteprima sul telefono
 
-https://claude.ai/artifact/N8yfkjf53iaBG8PLeYkaHx («Mossbound Fase 9», 20 ottobre): il gioco di `piano-maestro` diviso in tre pezzi come
+https://claude.ai/artifact/N8yfkjf53iaBG8PLeYkaHx («Mossbound Fase 9», 20 ottobre; ripubblicata lo stesso giorno con gli strati fermi della
+mappa zombie, commit efe05c4, e poi con le aperture, il falò e gli zombie vicini, commit 24ae4a2): il gioco di `piano-maestro` diviso in tre pezzi come
 quello pubblicato (`python3 app/mk_claude.py index.html <cartella>`, titolo cambiato). Ha il suo salvataggio (un'altra pagina): si parte
-dal prologo, oppure si porta il proprio col codice di salvataggio (Impostazioni → Salvataggio).
+dal prologo, oppure si porta il proprio col codice di salvataggio (Impostazioni → Salvataggio). Dal 20 ottobre sera (commit 00f53ea) ha il
+contatore acceso (punto 18: la pagina mette `window.MB_CONTATORE=1` prima di `gioco.js`) e niente zombie nelle zone chiuse (punto 17).
 
 ## Prove
 
@@ -86,3 +178,11 @@ dal prologo, oppure si porta il proprio col codice di salvataggio (Impostazioni 
   pixel oltre 8 ≤ 0,2%; fogli `tests/fl_<scena>.png` con le due immagini e la differenza ×16), la qualità «auto» e «alta», il nero dei
   tre fotogrammi, i tempi con e senza (solo per confronto).
 - Una partita automatica per capitolo (`run.js`), `meta2.js`, `menu2.js`, `menu3.js`: senza errori.
+- `node tests/contatore.js`: il contatore acceso come nell'anteprima (chip, pannello, una cassa, la mappa con le parti, «Copia»,
+  Impostazioni), spento nel gioco vero (nessuna misura installata).
+- `python3 anteprime/zombie/mk.py area_mappa && node anteprime/zombie/copie_prova.js`: la mappa zombie, lo stesso fotogramma con le copie e
+  tutto dal vivo (`W.dbg.lcLive`: la telecamera resta sui pixel interi) in otto posti, fermo, dopo una corsa di lato e in diagonale e di
+  nuovo fermo, col cancello che si apre, la barriera rotta e riparata, la casa con l'eroe dentro, il piano di sopra della Locanda, gli
+  effetti bassi. Fermo: al massimo lo 0,02% dei pixel con Δ>30 e nessun gruppo più spesso di 4 px (sono arrotondamenti dei bordi: di
+  solito 0–0,007%, pixel sparsi); mentre la telecamera scivola ancora: ogni copia entro mezzo pixel della tela dal disegno vero (righe
+  sottili lungo i bordi, al massimo lo 0,6% dei pixel). Poi i tempi con e senza copie e la memoria.

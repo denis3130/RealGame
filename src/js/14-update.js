@@ -2,7 +2,10 @@
 function update(dt){
   G.t+=dt;
   if(G.bannerT>0){G.bannerT-=dt;if(G.bannerT<=0)bannerEl.classList.remove('show')}
-  if(G.state==='trans'){G.fade+=dt*G.fadeDir*3.5;if(G.fadeDir>0&&G.fade>=1){G.fade=1;const ev=G.event;nextStep();G.prevState=G.state;G.state='trans';G.fadeDir=-1}else if(G.fadeDir<0&&G.fade<=0){G.fade=0;G.state=G.prevState||(G.event?'cleared':'play')}return}
+  // after the new room is built the screen stays black for three more frames (phase 9): the first drawings of the room (its pictures
+  // copied for the first time, the lights and shadows made once) happen in the dark, not while it fades in
+  if(G.state==='trans'){if(G.fadeDir<0&&G.fadeHold>0){G.fadeHold--;G.fade=1;return}
+    G.fade+=dt*G.fadeDir*3.5;if(G.fadeDir>0&&G.fade>=1){G.fade=1;const ev=G.event;nextStep();G.prevState=G.state;G.state='trans';G.fadeDir=-1;G.fadeHold=3}else if(G.fadeDir<0&&G.fade<=0){G.fade=0;G.state=G.prevState||(G.event?'cleared':'play')}return}
   if(G.state==='dead'){deathTick(dt);return}
   // player
   if(P.regen&&P.hp<P.maxhp)P.hp=Math.min(P.maxhp,P.hp+P.regen*dt);

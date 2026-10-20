@@ -149,4 +149,5 @@ js/89-fenice-nuova.js
 js/89-piovra-nuova.js
 js/89-cervo-nuovo.js
 js/93-colpi-unici.js
+js/101-contatore.js
 coda.html

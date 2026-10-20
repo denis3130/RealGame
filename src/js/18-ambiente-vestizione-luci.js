@@ -3,7 +3,36 @@ const GLOW={};let LOWFX=false;
 const VIG=document.createElement('canvas');VIG.width=AW/4;VIG.height=AH/4;{const v=VIG.getContext('2d'),g=v.createRadialGradient(AW/8,AH/8,AH*.3/4,AW/8,AH/8,AH*.72/4);g.addColorStop(0,'rgba(0,0,0,0)');g.addColorStop(1,'rgba(0,0,0,.45)');v.fillStyle=g;v.fillRect(0,0,AW/4,AH/4)}
 function glowSprite(rgb){if(GLOW[rgb])return GLOW[rgb];const c=document.createElement('canvas');c.width=c.height=64;const x=c.getContext('2d');
   const g=x.createRadialGradient(32,32,0,32,32,32);g.addColorStop(0,`rgba(${rgb},1)`);g.addColorStop(.45,`rgba(${rgb},.42)`);g.addColorStop(1,`rgba(${rgb},0)`);x.fillStyle=g;x.fillRect(0,0,64,64);return GLOW[rgb]=c}
-function glow(rgb,x,y,r,a,ry){if(a<=0)return;ctx.globalAlpha=Math.min(1,a);ctx.drawImage(glowSprite(rgb),x-r,y-(ry||r),r*2,(ry||r)*2);ctx.globalAlpha=1}
+// big soft lights copied one to one (phase 9): a light that keeps its size on the screen from one frame to the next is drawn once at
+// that size and from then on only copied, on whole pixels of the canvas (a scaled copy costs a phone 5 to 7 times more); a light that
+// grows or shrinks, a small one, a turned or stretched one: drawn as before. GLCF counts the frames (render), the unused ones go away
+const GLC=new Map(),GLC_MIN=9000,GLC_MAX=3e6;let GLCF=0,GLCpx=0;
+function glowFast(rgb,x,y,r,ry,a){const m=ctx.getTransform();if(m.b!==0||m.c!==0||!(m.a>0)||!(m.d>0))return false;
+  const W=Math.round(m.a*r*2),H=Math.round(m.d*ry*2);if(W*H<GLC_MIN||W>2048||H>2048)return false;
+  const key=rgb+'|'+W+'|'+H;let g=GLC.get(key);if(!g){GLC.set(key,{c:null,f:GLCF,n:1});return false}
+  if(g.f!==GLCF){g.f=GLCF;g.n++}
+  if(!g.c){if(g.n<3||GLCpx+W*H>GLC_MAX)return false;const c=document.createElement('canvas');c.width=W;c.height=H;c.getContext('2d').drawImage(glowSprite(rgb),0,0,W,H);g.c=c;GLCpx+=W*H}
+  ctx.setTransform(1,0,0,1,0,0);ctx.globalAlpha=Math.min(1,a);ctx.drawImage(g.c,Math.round(m.a*(x-r)+m.e),Math.round(m.d*(y-ry)+m.f));ctx.globalAlpha=1;ctx.setTransform(m.a,m.b,m.c,m.d,m.e,m.f);return true}
+function glowTick(){GLCF++;if(GLCF%30)return;for(const M of [GLC,SPC])for(const[k,g] of M)if(GLCF-g.f>90){if(g.c){GLCpx-=g.c.width*g.c.height;g.c.width=g.c.height=0}M.delete(k)}}
+// shafts of light copied one to one (phase 9): a long slanted strip with a soft fade from y g0 (alpha 1) to y g1 (alpha 0), the same from
+// one frame to the next but for its brightness (a) and a slow sway; drawn once at full brightness as big as it is on the canvas, then
+// copied in bands of rows that follow the slant (not the empty corners), the brightness as alpha. key names the shape: pts may move
+// but keep it. A slanted gradient strip cost a phone more than a whole screen of copies
+const SPC=new Map();
+function stripX(pts,ya,yb){let lo=1e9,hi=-1e9;const n=pts.length;for(let i=0;i<n;i++){const[x1,y1]=pts[i],[x2,y2]=pts[(i+1)%n];if(y1>=ya&&y1<=yb){lo=Math.min(lo,x1);hi=Math.max(hi,x1)}
+    for(const y of [ya,yb])if((y-y1)*(y-y2)<=0&&y1!==y2){const x=x1+(x2-x1)*(y-y1)/(y2-y1);lo=Math.min(lo,x);hi=Math.max(hi,x)}}return[lo,hi]}
+function stripFast(key,pts,rgb,g0,g1,a,op){const m=ctx.getTransform();if(m.b!==0||m.c!==0||!(m.a>=1)||Math.abs(m.a-m.d)>1e-6)return false;const S=m.a,k2=key+'|'+S;
+  let e=SPC.get(k2);if(!e){SPC.set(k2,{c:null,f:GLCF,n:1});return false}if(e.f!==GLCF){e.f=GLCF;e.n++}
+  if(!e.c){if(e.n<3)return false;let x0=1e9,y0=1e9,x1=-1e9,y1=-1e9;for(const[x,y] of pts){x0=Math.min(x0,x);x1=Math.max(x1,x);y0=Math.min(y0,y);y1=Math.max(y1,y)}
+    const bx=Math.floor(x0)-1,by=Math.floor(y0)-1,W=Math.ceil((Math.ceil(x1)+1-bx)*S),H=Math.ceil((Math.ceil(y1)+1-by)*S);if(W>2048||H>2048||GLCpx+W*H>GLC_MAX)return false;
+    const c=document.createElement('canvas');c.width=W;c.height=H;const x=c.getContext('2d');x.setTransform(S,0,0,S,-bx*S,-by*S);
+    const g=x.createLinearGradient(0,g0,0,g1);g.addColorStop(0,`rgba(${rgb},1)`);g.addColorStop(1,`rgba(${rgb},0)`);x.fillStyle=g;x.beginPath();pts.forEach(([px,py],i)=>i?x.lineTo(px,py):x.moveTo(px,py));x.closePath();x.fill();
+    const B=[];for(let r0=0;r0<H;r0+=64){const r1=Math.min(H,r0+64),[lo,hi]=stripX(pts,by+r0/S,by+r1/S);if(!(hi>=lo))continue;const sx=Math.max(0,Math.floor((lo-bx)*S)-2),ex=Math.min(W,Math.ceil((hi-bx)*S)+2);if(ex>sx)B.push([sx,r0,ex-sx,r1-r0])}
+    e.c=c;e.B=B;e.dx=pts[0][0]-bx;e.dy=pts[0][1]-by;GLCpx+=W*H}
+  const X=Math.round(S*(pts[0][0]-e.dx)+m.e),Y=Math.round(S*(pts[0][1]-e.dy)+m.f),o=ctx.globalCompositeOperation;
+  ctx.setTransform(1,0,0,1,0,0);if(op)ctx.globalCompositeOperation=op;ctx.globalAlpha=Math.min(1,a);for(const[sx,sy,sw,sh] of e.B)ctx.drawImage(e.c,sx,sy,sw,sh,X+sx,Y+sy,sw,sh);
+  ctx.globalAlpha=1;ctx.globalCompositeOperation=o;ctx.setTransform(m.a,m.b,m.c,m.d,m.e,m.f);return true}
+function glow(rgb,x,y,r,a,ry){if(a<=0)return;ry=ry||r;if(r>0&&ry>0&&r*ry>=GLC_MIN/16&&glowFast(rgb,x,y,r,ry,a))return;ctx.globalAlpha=Math.min(1,a);ctx.drawImage(glowSprite(rgb),x-r,y-ry,r*2,ry*2);ctx.globalAlpha=1}
 const hexRgb=h=>{const n=parseInt(h.slice(1,7),16);return `${n>>16},${(n>>8)&255},${n&255}`};
 const ENV={
   muschio:{wall:['#2e2721','#352d25','#2a231d','#3a3129'],mortar:'#1a1612',side:'#221d18',floor:['#5a5143','#554c40','#5f5647','#51493d'],base:'#3e372e',torch:['#ff5a14','#ffa632','#fff1c0'],light:'255,170,80',ember:'#ffb347',dark:.42,amb:{firefly:9,mote:12},fog:null},
@@ -244,7 +273,7 @@ function drawTorch(t){
 function torchLight(){
   const c=G.env.light;
   if(!G.dark)for(const t of G.torches){const f=.2+Math.sin(G.t*2.3+t.ph)*.012+Math.sin(G.t*5.9+t.ph)*.007;glow(c,t.x,TOP+30,190,f,150)}
-  for(const s of G.shafts){const a=.07+.03*Math.sin(G.t*.7+s.ph);ctx.save();ctx.globalCompositeOperation='lighter';
+  for(const s of G.shafts){const a=.07+.03*Math.sin(G.t*.7+s.ph);if(stripFast('ts|'+s.w+'|'+TOP+'|'+BOT,[[s.x,TOP],[s.x+s.w,TOP],[s.x+s.w+90,BOT],[s.x+90,BOT]],'255,250,220',TOP,BOT,a*1.6,'lighter'))continue;ctx.save();ctx.globalCompositeOperation='lighter';
     const g=ctx.createLinearGradient(0,TOP,0,BOT);g.addColorStop(0,`rgba(255,250,220,${a*1.6})`);g.addColorStop(1,'rgba(255,250,220,0)');ctx.fillStyle=g;
     ctx.beginPath();ctx.moveTo(s.x,TOP);ctx.lineTo(s.x+s.w,TOP);ctx.lineTo(s.x+s.w+90,BOT);ctx.lineTo(s.x+90,BOT);ctx.closePath();ctx.fill();ctx.restore()}
 }
@@ -305,8 +334,8 @@ function camTarget(){const m=BIG.m;let fx=P.x,fy=P.y;
 function camSnap(){const[a,b]=camTarget();G.vx=a;G.vy=b}
 function camStep(dt){if(G.vx==null){camSnap();return}const[a,b]=camTarget(),k=1-Math.exp(-dt*6);G.vx+=(a-G.vx)*k;G.vy+=(b-G.vy)*k}
 function drawLighting(pass){
-  if(LOWFX&&!G.dark){const s=Math.min(cv.width/VW,cv.height/VH),ex=(cv.width-VW*s)/2/s+2,ey=Math.max(0,(cv.height-VH*s)/2)/s+2;ctx.drawImage(VIG,(G.vx||0)-ex,(G.vy||0)-ey,VW+ex*2,VH+ey*2);return}
-  if(pass==='out'){ctx.save();ctx.beginPath();ctx.rect(-20,-20,AW+40,AH+40);ctx.rect(L,TOP,R-L,BOT-TOP);ctx.clip('evenodd');ctx.drawImage(lc,0,0,AW,AH);ctx.restore();return}
+  if(LOWFX&&!G.dark){const s=Math.min(cv.width/VW,cv.height/VH),ex=(cv.width-VW*s)/2/s+2,ey=Math.max(0,(cv.height-VH*s)/2)/s+2;drawVig((G.vx||0)-ex,(G.vy||0)-ey,VW+ex*2,VH+ey*2);return}
+  if(pass==='out'){ctx.save();ctx.beginPath();ctx.rect(-20,-20,AW+40,AH+40);ctx.rect(L,TOP,R-L,BOT-TOP);ctx.clip('evenodd');lightBlit();ctx.restore();return}
   lx.globalCompositeOperation='source-over';lx.clearRect(0,0,AW,AH);lx.fillStyle=`rgba(8,5,14,${G.dark?.95:G.env.dark})`;lx.fillRect(0,0,AW,AH);
   lx.globalCompositeOperation='destination-out';
   const spr=glowSprite('0,0,0'),Lt=(x,y,r,a)=>{lx.globalAlpha=Math.min(1,a*1.25);lx.drawImage(spr,x-r,y-r,r*2,r*2)};
@@ -326,6 +355,15 @@ function drawLighting(pass){
   if(G.door)Lt(AW/2,TOP-6,70,.85);
   if(G.prop)Lt(G.prop.x,G.prop.y-18,130,.9);
   lx.globalAlpha=1;lx.globalCompositeOperation='source-over';
-  if(pass==='in'){ctx.save();ctx.beginPath();ctx.rect(L,TOP,R-L,BOT-TOP);ctx.clip();ctx.drawImage(lc,0,0,AW,AH);ctx.restore()}else ctx.drawImage(lc,0,0,AW,AH);
+  lwFill();if(pass==='in'){ctx.save();ctx.beginPath();ctx.rect(L,TOP,R-L,BOT-TOP);ctx.clip();lightBlit();ctx.restore()}else lightBlit();
 }
+// the light map at one pixel a point (phase 9): the small map (a pixel every 3 points) scaled straight onto the canvas meant a whole
+// screen of smoothed copies every frame; now only the part on the screen is smoothed, once, into a map as big as the room, which is then
+// copied with every pixel doubled (the map is soft: the difference is at most half a point of its slope, a step or two of 255)
+const lw=document.createElement('canvas'),lwx=lw.getContext('2d');let lwOk=false;
+const lwFit=m=>m.b===0&&m.c===0&&m.a>=1.4&&m.d>=1.4&&m.a<=4&&m.d<=4;
+function lwFill(){const m=ctx.getTransform();lwOk=false;if(!lwFit(m))return;if(lw.width!==AW||lw.height!==AH){lw.width=AW;lw.height=AH}
+  const x0=Math.max(0,Math.floor(-m.e/m.a)-4),y0=Math.max(0,Math.floor(-m.f/m.d)-4),x1=Math.min(AW,Math.ceil((cv.width-m.e)/m.a)+4),y1=Math.min(AH,Math.ceil((cv.height-m.f)/m.d)+4);if(x1<=x0||y1<=y0)return;
+  lwx.save();lwx.beginPath();lwx.rect(x0,y0,x1-x0,y1-y0);lwx.clip();lwx.clearRect(x0,y0,x1-x0,y1-y0);lwx.drawImage(lc,0,0,AW,AH);lwx.restore();lwOk=true}
+function lightBlit(){if(!lwOk||!lwFit(ctx.getTransform())){ctx.drawImage(lc,0,0,AW,AH);return}const sm=ctx.imageSmoothingEnabled;ctx.imageSmoothingEnabled=false;ctx.drawImage(lw,0,0);ctx.imageSmoothingEnabled=sm}
 

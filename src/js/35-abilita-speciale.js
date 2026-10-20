@@ -42,6 +42,8 @@ function drawRoots(e){const k=Math.min(1,(e.root||0)/.3),x=e.x,y=e.y;ctx.save();
     ctx.strokeStyle=INK;ctx.lineWidth=6;ctx.beginPath();ctx.moveTo(sx,sy);ctx.quadraticCurveTo(sx+Math.cos(a)*6,ty+6,tx,ty);ctx.stroke();ctx.strokeStyle='#6b4a2a';ctx.lineWidth=3;ctx.stroke();
     ctx.fillStyle='#7bd65a';ctx.beginPath();ctx.ellipse(tx,ty,3,1.6,a,0,TAU);ctx.fill()}ctx.restore()}
 function drawUltOverlay(){const u=G.ultFx;if(!u)return;const k=u.t/u.max;ctx.fillStyle=`rgba(6,8,16,${.32*Math.sin(k*Math.PI)})`;ctx.fillRect(-60,-60,AW+120,AH+120);ctx.save();ctx.globalCompositeOperation='lighter';glow(u.rgb,P.x,P.y-12,90,.5*k);ctx.restore()}
-function hudUlt(){const b=$('ultBtn');if(!b||!P)return;const hide=G.state==='dead';if(b.hidden!==hide)b.hidden=hide;const v=(P.ult||0)/100;b.style.setProperty('--u',v*360+'deg');b.style.setProperty('--uc',(ULT[P.hero]||ULT.arciere).col)}
+// (the button's ring and colour are written only when they change: every change makes the phone paint the button again)
+function hudUlt(){const b=$('ultBtn');if(!b||!P)return;const hide=G.state==='dead';if(b.hidden!==hide)b.hidden=hide;const u=Math.round((P.ult||0)/100*180)*2+'deg',c=(ULT[P.hero]||ULT.arciere).col;
+  if(b._u!==u){b._u=u;b.style.setProperty('--u',u)}if(b._uc!==c){b._uc=c;b.style.setProperty('--uc',c)}}
 
 

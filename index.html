@@ -1082,7 +1082,7 @@ html,body{height:100%;margin:0;background:var(--ink);color:var(--parch);overflow
 #pName:has(input)::after{content:none}
 .nameIn{width:100%;max-width:200px;padding:3px 8px;border:2.5px solid var(--crInk);border-radius:8px;background:#fff;color:#191714;font-family:var(--display);font-size:22px}
 /* chest opening in the menu's colours */
-#chestScr{background:#27241f}
+#chestScr{background:#27241f;backdrop-filter:none;-webkit-backdrop-filter:none}/* opaque: the blur behind it could not be seen, but the phone computed it at every frame (phase 9) */
 #chestScr .ctitle{color:#fff;text-shadow:var(--tol)}
 #ctap{color:#fff;text-shadow:var(--tol-s)}
 @media (prefers-reduced-motion:reduce){.tabIn,.lday.today,#menu .sideBtns .qbtn.hot{animation:none}}
@@ -2664,18 +2664,25 @@ function burst(x,y,n,cols,o){o=o||{};const d=FX.d;if(RM)n=Math.ceil(n/3);
     FX.parts.push({k,x:x+rand(-10,10)*d,y:y+rand(-10,10)*d,vx:Math.cos(a)*s,vy:Math.sin(a)*s,g:(o.g==null?700:o.g)*d,drag:o.drag||1.6,life:rand(.6,1.3)*(o.life||1),max:0,col:cols[randi(0,cols.length-1)],r:rand(2,4.5)*d,rot:rand(0,TAU),vr:rand(-12,12)})}
   FX.parts.forEach(p=>{if(!p.max)p.max=p.life})}
 function ring(x,y,col,max,w){FX.rings.push({x,y,r:10*FX.d,max:(max||420)*FX.d,col,w:(w||10)*FX.d,a:1})}
+// the background of an opening (phase 9): the same gradient until the chest moves or the colour changes, so it is painted once in a canvas
+// of its own and copied (an opaque copy instead of a gradient over the whole screen every frame)
+const fxBgC=document.createElement('canvas');let fxBgK='';
+function fxBg(W,H){const key=[W,H,FX.cx,FX.cy,FX.bg].join('|');if(key!==fxBgK){fxBgK=key;fxBgC.width=W;fxBgC.height=H;const x=fxBgC.getContext('2d');
+    const bg=x.createRadialGradient(FX.cx,FX.cy,10,FX.cx,FX.cy,Math.max(W,H)*.75);bg.addColorStop(0,FX.bg);bg.addColorStop(.6,'#132f62');bg.addColorStop(1,'#0b1d42');x.fillStyle=bg;x.fillRect(0,0,W,H)}
+  fxx.drawImage(fxBgC,0,0)}
 function fxFrame(now){
   if(!FX.on)return;const dt=Math.min(.04,(now-(FX.last||now))/1000);FX.last=now;
   const W=fxc.width,H=fxc.height,c=fxx,d=FX.d;
   FX.rayA+=(FX.rayTarget-FX.rayA)*Math.min(1,dt*4);FX.rayT+=dt*FX.raySpeed;FX.flash=Math.max(0,FX.flash-dt*2.2);FX.shake=Math.max(0,FX.shake-dt*30);
   c.setTransform(1,0,0,1,0,0);c.globalCompositeOperation='source-over';
-  const bg=c.createRadialGradient(FX.cx,FX.cy,10,FX.cx,FX.cy,Math.max(W,H)*.75);bg.addColorStop(0,FX.bg);bg.addColorStop(.6,'#132f62');bg.addColorStop(1,'#0b1d42');c.fillStyle=bg;c.fillRect(0,0,W,H);
+  fxBg(W,H);
   c.globalCompositeOperation='lighter';
-  if(FX.glow>0){const g=c.createRadialGradient(FX.cx,FX.cy,4,FX.cx,FX.cy,280*d);g.addColorStop(0,hexA(FX.glowCol,.55*FX.glow));g.addColorStop(1,hexA(FX.glowCol,0));c.fillStyle=g;c.fillRect(0,0,W,H)}
-  if(FX.rayA>.01){const R=Math.hypot(W,H);for(let i=0;i<FX.rayN;i++){const a=FX.rayT+i*TAU/FX.rayN,w=TAU/FX.rayN*.42;
-      const g=c.createRadialGradient(FX.cx,FX.cy,0,FX.cx,FX.cy,R*.6);g.addColorStop(0,hexA(FX.rayCol,.5*FX.rayA));g.addColorStop(1,hexA(FX.rayCol,0));
-      c.fillStyle=g;c.beginPath();c.moveTo(FX.cx,FX.cy);c.arc(FX.cx,FX.cy,R,a-w/2,a+w/2);c.closePath();c.fill()}
-    const core=c.createRadialGradient(FX.cx,FX.cy,0,FX.cx,FX.cy,160*d);core.addColorStop(0,hexA('#ffffff',.35*FX.rayA));core.addColorStop(1,hexA(FX.rayCol,0));c.fillStyle=core;c.fillRect(0,0,W,H)}
+  if(FX.glow>0){const g=c.createRadialGradient(FX.cx,FX.cy,4,FX.cx,FX.cy,280*d);g.addColorStop(0,hexA(FX.glowCol,.55*FX.glow));g.addColorStop(1,hexA(FX.glowCol,0));c.fillStyle=g;c.fillRect(FX.cx-281*d,FX.cy-281*d,562*d,562*d)}
+  // the rays: the same fade for all of them, so one path and one fill; the fade ends at 0,6 of the screen's diagonal, the rays stop there
+  // (past it they added nothing). The core only in its own square (phase 9: the same picture, a fraction of the work)
+  if(FX.rayA>.01){const R=Math.hypot(W,H)*.6+2;const g=c.createRadialGradient(FX.cx,FX.cy,0,FX.cx,FX.cy,R-2);g.addColorStop(0,hexA(FX.rayCol,.5*FX.rayA));g.addColorStop(1,hexA(FX.rayCol,0));c.fillStyle=g;c.beginPath();
+    for(let i=0;i<FX.rayN;i++){const a=FX.rayT+i*TAU/FX.rayN,w=TAU/FX.rayN*.42;c.moveTo(FX.cx,FX.cy);c.arc(FX.cx,FX.cy,R,a-w/2,a+w/2);c.closePath()}c.fill();
+    const core=c.createRadialGradient(FX.cx,FX.cy,0,FX.cx,FX.cy,160*d);core.addColorStop(0,hexA('#ffffff',.35*FX.rayA));core.addColorStop(1,hexA(FX.rayCol,0));c.fillStyle=core;c.fillRect(FX.cx-161*d,FX.cy-161*d,322*d,322*d)}
   if(FX.plat>0){const py=FX.cy+(FX.size||120)*.42*d,g=c.createRadialGradient(FX.cx,py,2,FX.cx,py,(FX.size||120)*.95*d);g.addColorStop(0,hexA(FX.glowCol,.45*FX.plat));g.addColorStop(1,hexA(FX.glowCol,0));c.save();c.translate(FX.cx,py);c.scale(1,.32);c.translate(-FX.cx,-py);c.fillStyle=g;c.fillRect(FX.cx-300*d,py-300*d,600*d,600*d);c.restore()}
   if(FX.beam>0){FX.beam=Math.max(0,FX.beam-dt*.9);const bw=(70+60*FX.beam)*d,g=c.createLinearGradient(FX.cx-bw,0,FX.cx+bw,0);g.addColorStop(0,hexA(FX.rayCol,0));g.addColorStop(.5,hexA('#ffffff',.75*FX.beam));g.addColorStop(1,hexA(FX.rayCol,0));
     const fade=c.createLinearGradient(0,0,0,FX.cy);c.fillStyle=g;c.globalAlpha=1;c.fillRect(FX.cx-bw,0,bw*2,FX.cy);
@@ -2691,7 +2698,7 @@ function fxFrame(now){
     else if(p.k==='coin'){c.globalCompositeOperation='source-over';const w=Math.abs(Math.cos(p.rot))*p.r*2.2+1;c.fillStyle='#ffc93c';c.strokeStyle='#1b1612';c.lineWidth=1.5*d;c.beginPath();c.ellipse(p.x,p.y,w,p.r*2.2,0,0,TAU);c.fill();c.stroke();c.fillStyle='rgba(255,255,255,.7)';c.beginPath();c.ellipse(p.x-w*.3,p.y-p.r*.6,w*.25,p.r*.5,0,0,TAU);c.fill();c.globalCompositeOperation='lighter'}
     else{c.save();c.translate(p.x,p.y);c.rotate(p.rot);c.fillStyle=hexA(p.col,a);c.fillRect(-p.r,-p.r*.5,p.r*2,p.r);c.restore()}}
   if(FX.flash>0){c.globalCompositeOperation='source-over';c.fillStyle=hexA(FX.flashCol,Math.min(1,FX.flash));c.fillRect(0,0,W,H)}
-  const sc=$('cscene');sc.style.transform=FX.shake>0&&!RM?`translate(${rand(-1,1)*FX.shake}px,${rand(-1,1)*FX.shake}px)`:'';
+  const sc=$('cscene'),tf=FX.shake>0&&!RM?`translate(${rand(-1,1)*FX.shake}px,${rand(-1,1)*FX.shake}px)`:'';if(FX.tf!==tf){FX.tf=tf;sc.style.transform=tf}
   requestAnimationFrame(fxFrame);
 }
 let tapRes=null,CHbusy=false,CHgest=false;// CHgest: a pack waits for the finger to tear it (src/js/69-bustine.js)
@@ -2817,7 +2824,7 @@ async function summary(rew,T,cw){CHskip=false;
   gEl.parentElement.animate([{transform:'scale(1.3)'},{transform:'none'}],{duration:300,easing:'ease-out'});burst(gx,gy,18,['#ffd84a','#ffffff'],{kind:'star',min:80,max:240,g:0,life:.6});
   const b=$('cdone');b.hidden=false;b.animate([{transform:'scale(0)'},{transform:'scale(1.1)',offset:.7},{transform:'none'}],{duration:350,easing:'ease-out'});
 }
-$('cdone').onclick=async()=>{duckMusic(1);const scr=$('chestScr');await canim(scr,[{opacity:1},{opacity:0}],{duration:250});scr.hidden=true;scr.getAnimations().forEach(a=>a.cancel());FX.on=false;$('tray').getAnimations().forEach(a=>a.cancel());renderHero();renderPlay();renderShop()};
+$('cdone').onclick=async()=>{duckMusic(1);const scr=$('chestScr');await canim(scr,[{opacity:1},{opacity:0}],{duration:250});scr.hidden=true;scr.getAnimations().forEach(a=>a.cancel());FX.on=false;fxBgC.width=fxBgC.height=0;fxBgK='';$('tray').getAnimations().forEach(a=>a.cancel());renderHero();renderPlay();renderShop()};
 addEventListener('resize',()=>{if(FX.on)fxSize()});
 
 const hcv=$('heroCv'),hctx=hcv.getContext('2d');let pvT=0;
@@ -3217,7 +3224,10 @@ function updEnemy(e,dt){
 function update(dt){
   G.t+=dt;
   if(G.bannerT>0){G.bannerT-=dt;if(G.bannerT<=0)bannerEl.classList.remove('show')}
-  if(G.state==='trans'){G.fade+=dt*G.fadeDir*3.5;if(G.fadeDir>0&&G.fade>=1){G.fade=1;const ev=G.event;nextStep();G.prevState=G.state;G.state='trans';G.fadeDir=-1}else if(G.fadeDir<0&&G.fade<=0){G.fade=0;G.state=G.prevState||(G.event?'cleared':'play')}return}
+  // after the new room is built the screen stays black for three more frames (phase 9): the first drawings of the room (its pictures
+  // copied for the first time, the lights and shadows made once) happen in the dark, not while it fades in
+  if(G.state==='trans'){if(G.fadeDir<0&&G.fadeHold>0){G.fadeHold--;G.fade=1;return}
+    G.fade+=dt*G.fadeDir*3.5;if(G.fadeDir>0&&G.fade>=1){G.fade=1;const ev=G.event;nextStep();G.prevState=G.state;G.state='trans';G.fadeDir=-1;G.fadeHold=3}else if(G.fadeDir<0&&G.fade<=0){G.fade=0;G.state=G.prevState||(G.event?'cleared':'play')}return}
   if(G.state==='dead'){deathTick(dt);return}
   // player
   if(P.regen&&P.hp<P.maxhp)P.hp=Math.min(P.maxhp,P.hp+P.regen*dt);
@@ -3903,7 +3913,36 @@ const GLOW={};let LOWFX=false;
 const VIG=document.createElement('canvas');VIG.width=AW/4;VIG.height=AH/4;{const v=VIG.getContext('2d'),g=v.createRadialGradient(AW/8,AH/8,AH*.3/4,AW/8,AH/8,AH*.72/4);g.addColorStop(0,'rgba(0,0,0,0)');g.addColorStop(1,'rgba(0,0,0,.45)');v.fillStyle=g;v.fillRect(0,0,AW/4,AH/4)}
 function glowSprite(rgb){if(GLOW[rgb])return GLOW[rgb];const c=document.createElement('canvas');c.width=c.height=64;const x=c.getContext('2d');
   const g=x.createRadialGradient(32,32,0,32,32,32);g.addColorStop(0,`rgba(${rgb},1)`);g.addColorStop(.45,`rgba(${rgb},.42)`);g.addColorStop(1,`rgba(${rgb},0)`);x.fillStyle=g;x.fillRect(0,0,64,64);return GLOW[rgb]=c}
-function glow(rgb,x,y,r,a,ry){if(a<=0)return;ctx.globalAlpha=Math.min(1,a);ctx.drawImage(glowSprite(rgb),x-r,y-(ry||r),r*2,(ry||r)*2);ctx.globalAlpha=1}
+// big soft lights copied one to one (phase 9): a light that keeps its size on the screen from one frame to the next is drawn once at
+// that size and from then on only copied, on whole pixels of the canvas (a scaled copy costs a phone 5 to 7 times more); a light that
+// grows or shrinks, a small one, a turned or stretched one: drawn as before. GLCF counts the frames (render), the unused ones go away
+const GLC=new Map(),GLC_MIN=9000,GLC_MAX=3e6;let GLCF=0,GLCpx=0;
+function glowFast(rgb,x,y,r,ry,a){const m=ctx.getTransform();if(m.b!==0||m.c!==0||!(m.a>0)||!(m.d>0))return false;
+  const W=Math.round(m.a*r*2),H=Math.round(m.d*ry*2);if(W*H<GLC_MIN||W>2048||H>2048)return false;
+  const key=rgb+'|'+W+'|'+H;let g=GLC.get(key);if(!g){GLC.set(key,{c:null,f:GLCF,n:1});return false}
+  if(g.f!==GLCF){g.f=GLCF;g.n++}
+  if(!g.c){if(g.n<3||GLCpx+W*H>GLC_MAX)return false;const c=document.createElement('canvas');c.width=W;c.height=H;c.getContext('2d').drawImage(glowSprite(rgb),0,0,W,H);g.c=c;GLCpx+=W*H}
+  ctx.setTransform(1,0,0,1,0,0);ctx.globalAlpha=Math.min(1,a);ctx.drawImage(g.c,Math.round(m.a*(x-r)+m.e),Math.round(m.d*(y-ry)+m.f));ctx.globalAlpha=1;ctx.setTransform(m.a,m.b,m.c,m.d,m.e,m.f);return true}
+function glowTick(){GLCF++;if(GLCF%30)return;for(const M of [GLC,SPC])for(const[k,g] of M)if(GLCF-g.f>90){if(g.c){GLCpx-=g.c.width*g.c.height;g.c.width=g.c.height=0}M.delete(k)}}
+// shafts of light copied one to one (phase 9): a long slanted strip with a soft fade from y g0 (alpha 1) to y g1 (alpha 0), the same from
+// one frame to the next but for its brightness (a) and a slow sway; drawn once at full brightness as big as it is on the canvas, then
+// copied in bands of rows that follow the slant (not the empty corners), the brightness as alpha. key names the shape: pts may move
+// but keep it. A slanted gradient strip cost a phone more than a whole screen of copies
+const SPC=new Map();
+function stripX(pts,ya,yb){let lo=1e9,hi=-1e9;const n=pts.length;for(let i=0;i<n;i++){const[x1,y1]=pts[i],[x2,y2]=pts[(i+1)%n];if(y1>=ya&&y1<=yb){lo=Math.min(lo,x1);hi=Math.max(hi,x1)}
+    for(const y of [ya,yb])if((y-y1)*(y-y2)<=0&&y1!==y2){const x=x1+(x2-x1)*(y-y1)/(y2-y1);lo=Math.min(lo,x);hi=Math.max(hi,x)}}return[lo,hi]}
+function stripFast(key,pts,rgb,g0,g1,a,op){const m=ctx.getTransform();if(m.b!==0||m.c!==0||!(m.a>=1)||Math.abs(m.a-m.d)>1e-6)return false;const S=m.a,k2=key+'|'+S;
+  let e=SPC.get(k2);if(!e){SPC.set(k2,{c:null,f:GLCF,n:1});return false}if(e.f!==GLCF){e.f=GLCF;e.n++}
+  if(!e.c){if(e.n<3)return false;let x0=1e9,y0=1e9,x1=-1e9,y1=-1e9;for(const[x,y] of pts){x0=Math.min(x0,x);x1=Math.max(x1,x);y0=Math.min(y0,y);y1=Math.max(y1,y)}
+    const bx=Math.floor(x0)-1,by=Math.floor(y0)-1,W=Math.ceil((Math.ceil(x1)+1-bx)*S),H=Math.ceil((Math.ceil(y1)+1-by)*S);if(W>2048||H>2048||GLCpx+W*H>GLC_MAX)return false;
+    const c=document.createElement('canvas');c.width=W;c.height=H;const x=c.getContext('2d');x.setTransform(S,0,0,S,-bx*S,-by*S);
+    const g=x.createLinearGradient(0,g0,0,g1);g.addColorStop(0,`rgba(${rgb},1)`);g.addColorStop(1,`rgba(${rgb},0)`);x.fillStyle=g;x.beginPath();pts.forEach(([px,py],i)=>i?x.lineTo(px,py):x.moveTo(px,py));x.closePath();x.fill();
+    const B=[];for(let r0=0;r0<H;r0+=64){const r1=Math.min(H,r0+64),[lo,hi]=stripX(pts,by+r0/S,by+r1/S);if(!(hi>=lo))continue;const sx=Math.max(0,Math.floor((lo-bx)*S)-2),ex=Math.min(W,Math.ceil((hi-bx)*S)+2);if(ex>sx)B.push([sx,r0,ex-sx,r1-r0])}
+    e.c=c;e.B=B;e.dx=pts[0][0]-bx;e.dy=pts[0][1]-by;GLCpx+=W*H}
+  const X=Math.round(S*(pts[0][0]-e.dx)+m.e),Y=Math.round(S*(pts[0][1]-e.dy)+m.f),o=ctx.globalCompositeOperation;
+  ctx.setTransform(1,0,0,1,0,0);if(op)ctx.globalCompositeOperation=op;ctx.globalAlpha=Math.min(1,a);for(const[sx,sy,sw,sh] of e.B)ctx.drawImage(e.c,sx,sy,sw,sh,X+sx,Y+sy,sw,sh);
+  ctx.globalAlpha=1;ctx.globalCompositeOperation=o;ctx.setTransform(m.a,m.b,m.c,m.d,m.e,m.f);return true}
+function glow(rgb,x,y,r,a,ry){if(a<=0)return;ry=ry||r;if(r>0&&ry>0&&r*ry>=GLC_MIN/16&&glowFast(rgb,x,y,r,ry,a))return;ctx.globalAlpha=Math.min(1,a);ctx.drawImage(glowSprite(rgb),x-r,y-ry,r*2,ry*2);ctx.globalAlpha=1}
 const hexRgb=h=>{const n=parseInt(h.slice(1,7),16);return `${n>>16},${(n>>8)&255},${n&255}`};
 const ENV={
   muschio:{wall:['#2e2721','#352d25','#2a231d','#3a3129'],mortar:'#1a1612',side:'#221d18',floor:['#5a5143','#554c40','#5f5647','#51493d'],base:'#3e372e',torch:['#ff5a14','#ffa632','#fff1c0'],light:'255,170,80',ember:'#ffb347',dark:.42,amb:{firefly:9,mote:12},fog:null},
@@ -4144,7 +4183,7 @@ function drawTorch(t){
 function torchLight(){
   const c=G.env.light;
   if(!G.dark)for(const t of G.torches){const f=.2+Math.sin(G.t*2.3+t.ph)*.012+Math.sin(G.t*5.9+t.ph)*.007;glow(c,t.x,TOP+30,190,f,150)}
-  for(const s of G.shafts){const a=.07+.03*Math.sin(G.t*.7+s.ph);ctx.save();ctx.globalCompositeOperation='lighter';
+  for(const s of G.shafts){const a=.07+.03*Math.sin(G.t*.7+s.ph);if(stripFast('ts|'+s.w+'|'+TOP+'|'+BOT,[[s.x,TOP],[s.x+s.w,TOP],[s.x+s.w+90,BOT],[s.x+90,BOT]],'255,250,220',TOP,BOT,a*1.6,'lighter'))continue;ctx.save();ctx.globalCompositeOperation='lighter';
     const g=ctx.createLinearGradient(0,TOP,0,BOT);g.addColorStop(0,`rgba(255,250,220,${a*1.6})`);g.addColorStop(1,'rgba(255,250,220,0)');ctx.fillStyle=g;
     ctx.beginPath();ctx.moveTo(s.x,TOP);ctx.lineTo(s.x+s.w,TOP);ctx.lineTo(s.x+s.w+90,BOT);ctx.lineTo(s.x+90,BOT);ctx.closePath();ctx.fill();ctx.restore()}
 }
@@ -4205,8 +4244,8 @@ function camTarget(){const m=BIG.m;let fx=P.x,fy=P.y;
 function camSnap(){const[a,b]=camTarget();G.vx=a;G.vy=b}
 function camStep(dt){if(G.vx==null){camSnap();return}const[a,b]=camTarget(),k=1-Math.exp(-dt*6);G.vx+=(a-G.vx)*k;G.vy+=(b-G.vy)*k}
 function drawLighting(pass){
-  if(LOWFX&&!G.dark){const s=Math.min(cv.width/VW,cv.height/VH),ex=(cv.width-VW*s)/2/s+2,ey=Math.max(0,(cv.height-VH*s)/2)/s+2;ctx.drawImage(VIG,(G.vx||0)-ex,(G.vy||0)-ey,VW+ex*2,VH+ey*2);return}
-  if(pass==='out'){ctx.save();ctx.beginPath();ctx.rect(-20,-20,AW+40,AH+40);ctx.rect(L,TOP,R-L,BOT-TOP);ctx.clip('evenodd');ctx.drawImage(lc,0,0,AW,AH);ctx.restore();return}
+  if(LOWFX&&!G.dark){const s=Math.min(cv.width/VW,cv.height/VH),ex=(cv.width-VW*s)/2/s+2,ey=Math.max(0,(cv.height-VH*s)/2)/s+2;drawVig((G.vx||0)-ex,(G.vy||0)-ey,VW+ex*2,VH+ey*2);return}
+  if(pass==='out'){ctx.save();ctx.beginPath();ctx.rect(-20,-20,AW+40,AH+40);ctx.rect(L,TOP,R-L,BOT-TOP);ctx.clip('evenodd');lightBlit();ctx.restore();return}
   lx.globalCompositeOperation='source-over';lx.clearRect(0,0,AW,AH);lx.fillStyle=`rgba(8,5,14,${G.dark?.95:G.env.dark})`;lx.fillRect(0,0,AW,AH);
   lx.globalCompositeOperation='destination-out';
   const spr=glowSprite('0,0,0'),Lt=(x,y,r,a)=>{lx.globalAlpha=Math.min(1,a*1.25);lx.drawImage(spr,x-r,y-r,r*2,r*2)};
@@ -4226,8 +4265,17 @@ function drawLighting(pass){
   if(G.door)Lt(AW/2,TOP-6,70,.85);
   if(G.prop)Lt(G.prop.x,G.prop.y-18,130,.9);
   lx.globalAlpha=1;lx.globalCompositeOperation='source-over';
-  if(pass==='in'){ctx.save();ctx.beginPath();ctx.rect(L,TOP,R-L,BOT-TOP);ctx.clip();ctx.drawImage(lc,0,0,AW,AH);ctx.restore()}else ctx.drawImage(lc,0,0,AW,AH);
+  lwFill();if(pass==='in'){ctx.save();ctx.beginPath();ctx.rect(L,TOP,R-L,BOT-TOP);ctx.clip();lightBlit();ctx.restore()}else lightBlit();
 }
+// the light map at one pixel a point (phase 9): the small map (a pixel every 3 points) scaled straight onto the canvas meant a whole
+// screen of smoothed copies every frame; now only the part on the screen is smoothed, once, into a map as big as the room, which is then
+// copied with every pixel doubled (the map is soft: the difference is at most half a point of its slope, a step or two of 255)
+const lw=document.createElement('canvas'),lwx=lw.getContext('2d');let lwOk=false;
+const lwFit=m=>m.b===0&&m.c===0&&m.a>=1.4&&m.d>=1.4&&m.a<=4&&m.d<=4;
+function lwFill(){const m=ctx.getTransform();lwOk=false;if(!lwFit(m))return;if(lw.width!==AW||lw.height!==AH){lw.width=AW;lw.height=AH}
+  const x0=Math.max(0,Math.floor(-m.e/m.a)-4),y0=Math.max(0,Math.floor(-m.f/m.d)-4),x1=Math.min(AW,Math.ceil((cv.width-m.e)/m.a)+4),y1=Math.min(AH,Math.ceil((cv.height-m.f)/m.d)+4);if(x1<=x0||y1<=y0)return;
+  lwx.save();lwx.beginPath();lwx.rect(x0,y0,x1-x0,y1-y0);lwx.clip();lwx.clearRect(x0,y0,x1-x0,y1-y0);lwx.drawImage(lc,0,0,AW,AH);lwx.restore();lwOk=true}
+function lightBlit(){if(!lwOk||!lwFit(ctx.getTransform())){ctx.drawImage(lc,0,0,AW,AH);return}const sm=ctx.imageSmoothingEnabled;ctx.imageSmoothingEnabled=false;ctx.drawImage(lw,0,0);ctx.imageSmoothingEnabled=sm}
 
 // ---------- themed obstacles ----------
 const KINDS={
@@ -5759,7 +5807,9 @@ function drawRoots(e){const k=Math.min(1,(e.root||0)/.3),x=e.x,y=e.y;ctx.save();
     ctx.strokeStyle=INK;ctx.lineWidth=6;ctx.beginPath();ctx.moveTo(sx,sy);ctx.quadraticCurveTo(sx+Math.cos(a)*6,ty+6,tx,ty);ctx.stroke();ctx.strokeStyle='#6b4a2a';ctx.lineWidth=3;ctx.stroke();
     ctx.fillStyle='#7bd65a';ctx.beginPath();ctx.ellipse(tx,ty,3,1.6,a,0,TAU);ctx.fill()}ctx.restore()}
 function drawUltOverlay(){const u=G.ultFx;if(!u)return;const k=u.t/u.max;ctx.fillStyle=`rgba(6,8,16,${.32*Math.sin(k*Math.PI)})`;ctx.fillRect(-60,-60,AW+120,AH+120);ctx.save();ctx.globalCompositeOperation='lighter';glow(u.rgb,P.x,P.y-12,90,.5*k);ctx.restore()}
-function hudUlt(){const b=$('ultBtn');if(!b||!P)return;const hide=G.state==='dead';if(b.hidden!==hide)b.hidden=hide;const v=(P.ult||0)/100;b.style.setProperty('--u',v*360+'deg');b.style.setProperty('--uc',(ULT[P.hero]||ULT.arciere).col)}
+// (the button's ring and colour are written only when they change: every change makes the phone paint the button again)
+function hudUlt(){const b=$('ultBtn');if(!b||!P)return;const hide=G.state==='dead';if(b.hidden!==hide)b.hidden=hide;const u=Math.round((P.ult||0)/100*180)*2+'deg',c=(ULT[P.hero]||ULT.arciere).col;
+  if(b._u!==u){b._u=u;b.style.setProperty('--u',u)}if(b._uc!==c){b._uc=c;b.style.setProperty('--uc',c)}}
 
 
 // =====================================================================
@@ -6485,12 +6535,14 @@ function drawSeated(x,y,S,t){const sc=2.05,br=Math.sin(t*1.6)*.025;
   ctx.restore();
   ink(2);ctx.fillStyle='#7a5a3a';ctx.beginPath();ctx.ellipse(52,4,11,9,0,0,TAU);ctx.fill();ctx.stroke();ctx.fillStyle='#5a3f2a';ctx.beginPath();ctx.ellipse(52,-3,9,4,0,0,TAU);ctx.fill();ctx.stroke();ctx.strokeStyle='#3a2a1d';ctx.lineWidth=2;ctx.beginPath();ctx.moveTo(45,2);ctx.lineTo(59,2);ctx.stroke();
   ctx.restore()}
-function campResize(){const dpr=Math.min(2,window.devicePixelRatio||1),w=Math.max(1,Math.round(campCv.clientWidth*dpr)),h=Math.max(1,Math.round(campCv.clientHeight*dpr));if(campCv.width!==w||campCv.height!==h){campCv.width=w;campCv.height=h}}
+// on a phone (phase 9) exactly 2 pixels a point of the scene, as in battle: the background baked at 2x is copied one to one
+function campResize(){const dpr=Math.min(2,window.devicePixelRatio||1),cw=campCv.clientWidth,ch=campCv.clientHeight;let w=Math.max(1,Math.round(cw*dpr)),h=Math.max(1,Math.round(ch*dpr));
+  if(cw>0&&w/SW>=1.75&&w/SW<=2.75){w=SW*2;h=Math.max(1,Math.round(ch*w/cw))}if(campCv.width!==w||campCv.height!==h){campCv.width=w;campCv.height=h}}
 const LO=300,LH=SH+600;const campL=document.createElement('canvas');campL.width=SW/3;campL.height=LH/3;const campLx=campL.getContext('2d');campLx.scale(1/3,1/3);
 function drawCamp(dt){campResize();const m=homeMode(),open=true,Z=SCENE[m.id],saved=ctx;ctx=campX;CAMP.t+=dt;const t=CAMP.t;G.t=t;
   // the hero's feet stand just above the «change hero» pill, the crypt fills the space behind him
   const cr=campCv.getBoundingClientRect(),dpr=campCv.width/Math.max(1,cr.width),hp=$('heroPill').getBoundingClientRect(),tb=$('topbar').getBoundingClientRect();
-  const u=campCv.width/SW,top=(tb.bottom-cr.top)*dpr,feet0=(hp.top-cr.top)*dpr,room=Math.max(80*dpr,feet0-top),hs=clamp(Math.min(room*.56,215*dpr)/(46*u),1.4,3.6),feet=feet0-13*hs*u,oy=feet-HOME_Y*u,ox=campCv.width/2-180*u;
+  const u=campCv.width/SW,top=(tb.bottom-cr.top)*dpr,feet0=(hp.top-cr.top)*dpr,room=Math.max(80*dpr,feet0-top),hs=clamp(Math.min(room*.56,215*dpr)/(46*u),1.4,3.6),feet=feet0-13*hs*u,oy=Math.round(feet-HOME_Y*u),ox=Math.round(campCv.width/2-180*u);
   CAMP.tf={u,ox,oy,dpr,hs};ctx.setTransform(1,0,0,1,0,0);ctx.fillStyle=Z.sky[0];ctx.fillRect(0,0,campCv.width,campCv.height);ctx.setTransform(u,0,0,u,ox,oy);
   ctx.fillStyle=Z.ground[2];ctx.fillRect(-400,SH-2,SW+800,900);
   ctx.drawImage(tintBg(m),0,-CBG_UP,SW,SH+CBG_UP);
@@ -6546,12 +6598,34 @@ function drawCamp(dt){campResize();const m=homeMode(),open=true,Z=SCENE[m.id],sa
   const fl=1+.04*Math.sin(t*2.1);Lt(hx,hy-18*hs,(44+18*hs)*fl,1);Lt(hx,hy-6*hs,(18+10*hs)*fl,1);
   for(const[tx,ty,r] of [[131,100,34],[229,100,34],[120,154,52],[240,154,52]])Lt(tx,ty,r*(1+.04*Math.sin(t*5+tx)),.9);
   Lt(gx,gb-14,open?50:24,open?.9:.5);if(m.id!=='c2')Lt(246,-70,60,.7);else Lt(277,58,60,.7);
-  lx.globalAlpha=1;ctx.drawImage(campL,0,-LO,SW,LH);
+  lx.globalAlpha=1;campLightBlit();
   ctx.save();ctx.globalCompositeOperation='lighter';glow(m.glow,hx,hy-6,16*hs,.14+.04*Math.sin(t*2.1));glow(m.glow,gx,gb-12,30,open?.22*pul:.04);ctx.restore();
-  const v=ctx.createRadialGradient(SW/2,SH*.6,SH*.4,SW/2,SH*.6,SH*1.3);v.addColorStop(0,'rgba(0,0,0,0)');v.addColorStop(1,'rgba(0,0,0,.5)');ctx.fillStyle=v;ctx.fillRect(-400,-LO,SW+800,LH);
+  campVigDraw();
   if(CAMP.swap>0){CAMP.swap=Math.max(0,CAMP.swap-dt*3);ctx.fillStyle=`rgba(6,4,10,${CAMP.swap})`;ctx.fillRect(-400,-LO,SW+800,LH)}
   if(CAMP.walk>0&&t-CAMP.walk>1.25){ctx.fillStyle=`rgba(6,4,10,${Math.min(1,(t-CAMP.walk-1.25)/.4)})`;ctx.fillRect(-400,-LO,SW+800,LH)}
   ctx.setTransform(1,0,0,1,0,0);ctx=saved}
+// the camp's light map at one pixel a point (phase 9), as in battle (lwFill): only the part on the screen is smoothed, then copied with
+// every pixel doubled
+const campLw=document.createElement('canvas'),campLwx=campLw.getContext('2d');
+function campLightBlit(){const m=ctx.getTransform();if(!lwFit(m)){ctx.drawImage(campL,0,-LO,SW,LH);return}if(campLw.width!==SW||campLw.height!==LH){campLw.width=SW;campLw.height=LH}
+  const x0=Math.max(0,Math.floor(-m.e/m.a)-4),y0=Math.max(0,Math.floor(-m.f/m.d)+LO-4),x1=Math.min(SW,Math.ceil((campCv.width-m.e)/m.a)+4),y1=Math.min(LH,Math.ceil((campCv.height-m.f)/m.d)+LO+4);if(x1<=x0||y1<=y0)return;
+  campLwx.save();campLwx.beginPath();campLwx.rect(x0,y0,x1-x0,y1-y0);campLwx.clip();campLwx.clearRect(x0,y0,x1-x0,y1-y0);campLwx.drawImage(campL,0,0,SW,LH);campLwx.restore();
+  const sm=ctx.imageSmoothingEnabled;ctx.imageSmoothingEnabled=false;ctx.drawImage(campLw,0,-LO);ctx.imageSmoothingEnabled=sm}
+// the camp's vignette (phase 9): drawn once as big as the canvas and copied in bands, without its see-through middle (the circle of radius
+// SH*.4 around its centre); made only once the canvas and the scene's place have stayed the same for three frames (while the menu comes in
+// they move), till then drawn as before
+let CVIG=null;
+function campVigDraw(k1){k1=k1||1.3;const m=ctx.getTransform(),W=campCv.width,H=campCv.height,key=[W,H,m.a,m.d,m.e,m.f,k1].join('|'),old=()=>{const v=ctx.createRadialGradient(SW/2,SH*.6,SH*.4,SW/2,SH*.6,SH*k1);v.addColorStop(0,'rgba(0,0,0,0)');v.addColorStop(1,'rgba(0,0,0,.5)');ctx.fillStyle=v;ctx.fillRect(-400,-LO,SW+800,LH)};
+  if(m.b!==0||m.c!==0||Math.abs(m.a-m.d)>1e-6||W>4096||H>4096){old();return}
+  if(!CVIG||CVIG.key!==key){if(!CVIG||CVIG.want!==key){if(CVIG&&CVIG.c){CVIG.c.width=CVIG.c.height=0}CVIG={want:key,n:0}}if(++CVIG.n<3){old();return}
+    const c=document.createElement('canvas');c.width=W;c.height=H;const x=c.getContext('2d');x.setTransform(m.a,0,0,m.d,m.e,m.f);
+    const v=x.createRadialGradient(SW/2,SH*.6,SH*.4,SW/2,SH*.6,SH*k1);v.addColorStop(0,'rgba(0,0,0,0)');v.addColorStop(1,'rgba(0,0,0,.5)');x.fillStyle=v;x.fillRect(-400,-LO,SW+800,LH);
+    // the clear circle in pixels of the canvas (a pixel less, to be safe), and for each band of 32 rows the stretch inside it on every row
+    const cx=m.a*SW/2+m.e,cy=m.d*SH*.6+m.f,R=m.a*SH*.4-1,B=[];
+    for(let y0=0;y0<H;y0+=32){const y1=Math.min(H,y0+32),dy=Math.max(Math.abs(y0-cy),Math.abs(y1-cy)),hw=dy<R?Math.sqrt(R*R-dy*dy):0,a=Math.max(0,Math.ceil(cx-hw)),b=Math.min(W,Math.floor(cx+hw));
+      B.push(hw>1&&b>a?[y0,y1-y0,a,b]:[y0,y1-y0,W,W])}
+    CVIG={key,want:key,c,B}}
+  ctx.setTransform(1,0,0,1,0,0);for(const[y0,bh,a,b] of CVIG.B){if(a>0)ctx.drawImage(CVIG.c,0,y0,a,bh,0,y0,a,bh);if(b<W)ctx.drawImage(CVIG.c,b,y0,W-b,bh,b,y0,W-b,bh)}ctx.setTransform(m.a,m.b,m.c,m.d,m.e,m.f)}
 $('playBtn').onclick=()=>goPlay('arena');
 
 // --- hero tab ---
@@ -7035,11 +7109,13 @@ function fillGuide(){const T=(t,b)=>`<details class="gsec"><summary>${t}</summar
 
 // ---------- render ----------
 function render(){
-  const cw=cv.width,ch=cv.height,s=Math.min(cw/VW,ch/VH),ox=(cw-VW*s)/2,oy=Math.max(0,(ch-VH*s)/2);
+  const cw=cv.width,ch=cv.height,s=Math.min(cw/VW,ch/VH),ox=Math.round((cw-VW*s)/2),oy=Math.round(Math.max(0,(ch-VH*s)/2));
   ctx.setTransform(1,0,0,1,0,0);ctx.fillStyle='#120e0b';ctx.fillRect(0,0,cw,ch);
-  if(!G)return;
-  const sx=(Math.random()-.5)*G.shake,sy=(Math.random()-.5)*G.shake;
-  const vx=G.vx||0,vy=G.vy||0;
+  if(!G)return;glowTick();
+  // the camera and the shake on whole pixels of the canvas: with 2 pixels a point (resize) the floor, the walls and the landscape outside
+  // the arena, baked at 2x, are copied one to one, without resampling (on a phone the biggest saving of a frame)
+  const px=v=>Math.round(v*s)/s,sx=px((Math.random()-.5)*G.shake),sy=px((Math.random()-.5)*G.shake);
+  const vx=px(G.vx||0),vy=px(G.vy||0);
   if(G.state==='dead'&&G.deathT){const k=Math.min(1,G.deathT/.9),zs=1+.12*k,zx=(P.x-vx-VW/2)*k*.5,zy=(P.y-vy-VH/2)*k*.5;ctx.setTransform(s*zs,0,0,s*zs,ox+s*(VW/2)*(1-zs)-s*zs*zx+sx*s,oy+s*(VH/2)*(1-zs)-s*zs*zy+sy*s)}
   else if(G.cam){const c=G.cam;ctx.setTransform(s*c.z,0,0,s*c.z,ox+s*(VW/2-c.z*c.x)+sx*s,oy+s*(VH/2-c.z*c.y)+sy*s)}
   else ctx.setTransform(s,0,0,s,ox+sx*s,oy+sy*s);
@@ -7098,7 +7174,7 @@ function render(){
   drawUltOverlay();
   if(!inDoor)drawBars();
   if(G.goldRun)drawGoldTimer();if(G.trial)drawTrialTag();
-  {const ex=ox/s+2,ey=oy/s+2;ctx.drawImage(VIG,vx-ex,vy-ey,VW+ex*2,VH+ey*2)}
+  {const ex=ox/s+2,ey=oy/s+2;drawVig(vx-ex,vy-ey,VW+ex*2,VH+ey*2)}
   ctx.textAlign='center';
   for(const t of G.texts){ctx.globalAlpha=Math.min(1,t.life*2.5);ctx.font=Math.round(t.size*(t.pop?1+1.2*Math.max(0,(t.life-.62)/.18):1))+'px "Lilita One", sans-serif';ctx.lineWidth=3.5;ctx.strokeStyle=INK;ctx.strokeText(t.t,t.x,t.y);ctx.fillStyle=t.col;ctx.fillText(t.t,t.x,t.y)}
   ctx.globalAlpha=1;
@@ -7109,20 +7185,59 @@ function render(){
   if(joy.active){const rc=cv.getBoundingClientRect(),dpr=cw/rc.width,jx=(joy.ox-rc.left)*dpr,jy=(joy.oy-rc.top)*dpr;
     ctx.strokeStyle='rgba(246,234,210,.35)';ctx.lineWidth=3*dpr;circ(jx,jy,JR*dpr);ctx.stroke();ctx.fillStyle='rgba(246,234,210,.4)';circ(jx+joy.dx*JR*dpr,jy+joy.dy*JR*dpr,20*dpr);ctx.fill()}
 }
+// the vignette copied one to one (phase 9): scaled once to the size it has on the canvas (the screen and 2 points more on every side),
+// then copied on whole pixels, band by band, leaving out the see-through middle (about half of the screen); with the camera zoomed in
+// (boss entrance, fall) it is drawn as before
+let VIGC=null;
+function vigCache(){const cw=cv.width,ch=cv.height,s=Math.min(cw/VW,ch/VH),ox=Math.round((cw-VW*s)/2),oy=Math.round(Math.max(0,(ch-VH*s)/2)),W=Math.round(s*VW+2*ox+4*s),H=Math.round(s*VH+2*oy+4*s),key=W+'x'+H;
+  if(VIGC&&VIGC.key===key)return VIGC;if(VIGC)VIGC.c.width=VIGC.c.height=0;VIGC=null;if(!(W>0&&H>0&&W<=4096&&H<=4096))return null;
+  const c=document.createElement('canvas');c.width=W;c.height=H;const x=c.getContext('2d');x.drawImage(VIG,0,0,W,H);
+  // every band of 32 rows: the see-through stretch that all its rows have around the middle column
+  const d=x.getImageData(0,0,W,H).data,B=[],mid=W>>1,clear=(y,i)=>!d[(y*W+i)*4+3];
+  for(let y0=0;y0<H;y0+=32){const y1=Math.min(H,y0+32);let a=0,b=W;
+    for(let y=y0;y<y1&&a<b;y++){if(!clear(y,mid)){a=b=W;break}let l=mid,r=mid;while(l>0&&clear(y,l-1))l--;while(r<W-1&&clear(y,r+1))r++;a=Math.max(a,l);b=Math.min(b,r+1)}
+    B.push(a<b?[y0,y1-y0,a,b]:[y0,y1-y0,W,W])}
+  return VIGC={key,c,W,H,B}}
+function drawVig(x,y,w,h){const m=ctx.getTransform(),V=m.b===0&&m.c===0&&m.a>0&&Math.abs(m.a-m.d)<1e-6?vigCache():null;
+  if(V&&Math.abs(m.a*w-V.W)<=1.01&&Math.abs(m.d*h-V.H)<=1.01){const X=Math.round(m.a*x+m.e),Y=Math.round(m.d*y+m.f),W=V.W;ctx.setTransform(1,0,0,1,0,0);
+    for(const[y0,bh,a,b] of V.B){if(a>0)ctx.drawImage(V.c,0,y0,a,bh,X,Y+y0,a,bh);if(b<W)ctx.drawImage(V.c,b,y0,W-b,bh,X+b,Y+y0,W-b,bh)}
+    ctx.setTransform(m.a,m.b,m.c,m.d,m.e,m.f);return}
+  ctx.drawImage(VIG,x,y,w,h)}
+// the HUD: the page is touched only when what it shows changes (every change makes the phone lay out and paint that piece again)
+const HUDC={},hudSet=(id,k,v)=>{const key=id+'|'+k;if(HUDC[key]===v)return;HUDC[key]=v;const el=$(id);if(!el)return;if(k==='t')el.textContent=v;else el.style[k]=v};
+{const _r=bossBarReset;bossBarReset=function(){delete HUDC['bossFill|width'];return _r.apply(this,arguments)}}
 function hud(){
   if(!G)return;
-  $('roomTxt').textContent=G.event?'Evento':G.mode==='inf'?'∞ '+G.room:G.room+'/'+ROOMS;if(modal)$('hint').classList.remove('show');$('goldTxt').textContent=G.gold;$('gemTxt').textContent=G.gemsRun;$('lvTxt').textContent='Liv. '+P.lvl;$('xpFill').style.width=Math.min(100,100*P.xp/P.need)+'%';
-  hudUlt();const pct=P.dashCd>0?1-P.dashCd/P.dashMax:1;$('dashBtn').style.background=`conic-gradient(var(--teal) ${pct*360}deg,#3a4c49 0deg)`;
-  const b=G.enemies.find(e=>isBoss(e.type));if(b)$('bossFill').style.width=Math.max(0,100*b.hp/b.max)+'%';
+  hudSet('roomTxt','t',G.event?'Evento':G.mode==='inf'?'∞ '+G.room:G.room+'/'+ROOMS);if(modal)$('hint').classList.remove('show');hudSet('goldTxt','t',''+G.gold);hudSet('gemTxt','t',''+G.gemsRun);hudSet('lvTxt','t','Liv. '+P.lvl);
+  hudSet('xpFill','width',(Math.round(Math.min(100,100*P.xp/P.need)*10)/10)+'%');
+  hudUlt();const pct=P.dashCd>0?1-P.dashCd/P.dashMax:1;hudSet('dashBtn','background',`conic-gradient(var(--teal) ${Math.round(pct*180)*2}deg,#3a4c49 0deg)`);
+  const b=G.enemies.find(e=>isBoss(e.type));if(b)hudSet('bossFill','width',(Math.round(Math.max(0,100*b.hp/b.max)*10)/10)+'%');
 }
-function resize(){const dpr=SAVE.set&&SAVE.set.q==='bassa'?Math.min(1.25,window.devicePixelRatio||1):Math.min(2,window.devicePixelRatio||1);cv.width=Math.round(cv.clientWidth*dpr);cv.height=Math.round(cv.clientHeight*dpr)}
+// the canvas of the battle. On a phone (where the game would get about 2 pixels a point of its world, from 1,75 to 2,75) exactly 2 pixels a
+// point: the floor, the walls and the landscape outside the arena are baked at 2x, so with the camera on whole pixels (render) they are
+// copied one to one instead of being resampled every frame (on the phone that was the dearest part of a frame), and there are a few less
+// pixels to colour (a 390-point phone: 720 pixels wide instead of 780; the browser stretches the canvas on the screen, as it did before).
+// RESCUT: the quality «auto» saw the frames stay under 60 a second for 2 s (loop): 1,5 pixels a point, a little more than half the pixels
+// (the zombie map does the same); only if that is not enough the effects go down too (LOWFX), as before.
+let RESCUT=false,RESMODE=false,PZD=false;
+function resize(){if(SAVE.set&&SAVE.set.q!=='auto')RESCUT=false;
+  const W=cv.clientWidth,H=cv.clientHeight,bassa=SAVE.set&&SAVE.set.q==='bassa',dpr=bassa?Math.min(1.25,window.devicePixelRatio||1):Math.min(2,window.devicePixelRatio||1),s0=Math.min(W*dpr/VW,H*dpr/VH);
+  RESMODE=!bassa&&W>0&&H>0&&s0>=1.75&&s0<=2.75;let w,h;
+  if(RESMODE){const S=RESCUT?1.5:2;if(W/VW<=H/VH){w=VW*S;h=VH*S+2*Math.max(0,Math.round((H*VW/W-VH)*S/2))}else{h=VH*S;w=VW*S+2*Math.max(0,Math.round((W*VH/H-VW)*S/2))}}
+  else{w=Math.round(W*dpr);h=Math.round(H*dpr)}
+  // a canvas given the size it already has is cleared and made again for nothing
+  if(cv.width!==w||cv.height!==h)PZD=false;if(cv.width!==w)cv.width=w;if(cv.height!==h)cv.height=h}
 addEventListener('resize',resize);
 let last=performance.now();
-let frameEma=.016,slowT=0;
+let frameEma=.016,slowT=0,slowR=0;
 function loop(now){const raw=(now-last)/1000,dt=Math.min(.033,raw);last=now;if(INTRO.on)introTick(now);
-  if(started&&!paused&&!INTRO.on&&raw<.2){frameEma+=(raw-frameEma)*.05;if(SAVE.set.q==='auto'&&!LOWFX&&frameEma>.026){slowT+=raw;if(slowT>2.5)LOWFX=true}else slowT=0}
+  if(started&&!paused&&!INTRO.on&&raw<.2){frameEma+=(raw-frameEma)*.05;const au=SAVE.set.q==='auto';
+    if(au&&RESMODE&&!RESCUT&&frameEma>.0185){slowR+=raw;if(slowR>2){RESCUT=true;resize();slowR=0;frameEma=.0167}}else slowR=0;
+    if(au&&!LOWFX&&(RESCUT||!RESMODE)&&frameEma>.026){slowT+=raw;if(slowT>2.5)LOWFX=true}else slowT=0}
   if(started&&!paused){if(G.hitstop>0)G.hitstop-=dt;else if(G.slowT>0){G.slowT-=dt;update(dt*(G.slowT>1?.22:.22+.78*(1-G.slowT)))}else update(dt)}
-  if($('menu').hidden){render();hud()}
+  // paused (a choice, the revive, the end): the frame does not change, so it is drawn once and then left on the canvas (phase 9): the
+  // screen above it (with the blur behind it) stays smooth and the phone does not redraw the room for nothing
+  if($('menu').hidden&&(!paused||INTRO.on||!PZD)){render();hud();PZD=paused}
   if(!$('menu').hidden&&$('chestScr').hidden){if(!$('tabHero').hidden){G.t+=dt;drawHeroPreview(dt)}else if(!$('tabGear').hidden){G.t+=dt;drawHeroPreview(dt,$('gearCv'),SAVE.hero)}const home=!$('tabPlay').hidden;CAMP.fr=(CAMP.fr||0)+1;if(home){if($('sheetScr').hidden)drawCamp(dt)}else if(CAMP.fr%2===0||!MBG.drawn)drawMenuBg(dt*2)}
   requestAnimationFrame(loop)}
 
@@ -7163,7 +7278,18 @@ let lastTap=[innerWidth/2,innerHeight/2];addEventListener('pointerdown',e=>{last
 // darker at the bottom and lit from above (drawn once into a sprite, then reused every frame)
 // =====================================================================
 const MAINCTX=ctx;const SHB=(()=>{const c=document.createElement('canvas');c.width=c.height=64;const x=c.getContext('2d'),g=x.createRadialGradient(32,32,0,32,32,32);g.addColorStop(0,'rgba(0,0,0,1)');g.addColorStop(.45,'rgba(0,0,0,.62)');g.addColorStop(1,'rgba(0,0,0,0)');x.fillStyle=g;x.fillRect(0,0,64,64);return c})();
-function castShadow(k){const a=k.temp?Math.min(1,k.life/.6):1,h=kH(k),r=k.r;
+// the three shadows of an obstacle that stays put, in one picture as big as they are on the canvas, copied one to one (phase 9): black over
+// black, the floor under them gets just as dark; an obstacle that fades away, or one that keeps moving, as before
+function shadowSprite(k,h,r){const m=ctx.getTransform();if(m.b!==0||m.c!==0||!(m.a>=1)||Math.abs(m.a-m.d)>1e-6||(k._shN||0)>4)return false;const S=m.a,key=S+'|'+r+'|'+h+'|'+k.x+'|'+k.y;let c=k._sh;
+  if(!c||c.key!==key){const l=r*1.1+h*.42,cx=k.x+h*.28,cy=k.y+h*.12+2,co=Math.cos(.5),si=Math.sin(.5),hx=co*l+si*r*.72,hy=si*l+co*r*.72,
+      x0=Math.floor(Math.min(cx-hx,k.x-r*1.5))-1,y0=Math.floor(Math.min(cy-hy,k.y+2-r*.64))-1,x1=Math.ceil(Math.max(cx+hx,k.x+r*1.5))+1,y1=Math.ceil(Math.max(cy+hy,k.y+2+r*.64))+1;
+    if(!(x1>x0&&y1>y0&&(x1-x0)*S<2048&&(y1-y0)*S<2048))return false;
+    const sc=c&&c.cv||document.createElement('canvas');sc.width=Math.ceil((x1-x0)*S);sc.height=Math.ceil((y1-y0)*S);const x=sc.getContext('2d');x.setTransform(S,0,0,S,-x0*S,-y0*S);
+    x.save();x.globalAlpha=.4;x.translate(cx,cy);x.rotate(.5);x.drawImage(SHB,-l,-r*.72,l*2,r*1.44);x.restore();
+    x.globalAlpha=.55;x.drawImage(SHB,k.x-r*1.5,k.y+2-r*.64,r*3,r*1.28);x.globalAlpha=.7;x.drawImage(SHB,k.x-r*1.08,k.y+1.5-r*.4,r*2.16,r*.8);
+    c=k._sh={key,cv:sc,x0,y0};k._shN=(k._shN||0)+1}
+  ctx.setTransform(1,0,0,1,0,0);ctx.globalAlpha=1;ctx.drawImage(c.cv,Math.round(S*c.x0+m.e),Math.round(S*c.y0+m.f));ctx.setTransform(m.a,m.b,m.c,m.d,m.e,m.f);return true}
+function castShadow(k){const a=k.temp?Math.min(1,k.life/.6):1,h=kH(k),r=k.r;if(a>=1&&!k.temp&&shadowSprite(k,h,r))return;
   ctx.save();ctx.globalAlpha=a*.4;ctx.translate(k.x+h*.28,k.y+h*.12+2);ctx.rotate(.5);const l=r*1.1+h*.42;ctx.drawImage(SHB,-l,-r*.72,l*2,r*1.44);ctx.restore();
   ctx.globalAlpha=a*.55;ctx.drawImage(SHB,k.x-r*1.5,k.y+2-r*.64,r*3,r*1.28);
   ctx.globalAlpha=a*.7;ctx.drawImage(SHB,k.x-r*1.08,k.y+1.5-r*.4,r*2.16,r*.8);ctx.globalAlpha=1};
@@ -7218,9 +7344,10 @@ const ROCK_LIVE={crystal:1,brazier:1,lavarock:1,cauldron:1,mudmound:1,reeds:1,la
     let g=o.createLinearGradient(0,k.y+r*.5,0,k.y-Math.min(30,Math.max(10,H*.55)));g.addColorStop(0,'rgba(12,8,6,.6)');g.addColorStop(1,'rgba(12,8,6,0)');o.fillStyle=g;o.fillRect(x0,y0,w,h);
     g=o.createLinearGradient(0,k.y-H-r*1.2,0,k.y-H*.35);g.addColorStop(0,'rgba(255,236,200,.2)');g.addColorStop(1,'rgba(255,236,200,0)');o.fillStyle=g;o.fillRect(x0,y0,w,h);
     o.fillStyle=`rgba(${(G.env&&G.env.light)||'255,200,140'},.05)`;o.fillRect(x0,y0,w,h);o.globalCompositeOperation='source-over';
-    return k._sp={key,c,x0,y0,w,h}}
+    return k._sp={key,c,x0,y0,w,h,ss:SS}}
   drawRock=function(k){if(k._raw||k.temp||ROCK_LIVE[k.kind]||ctx!==MAINCTX){_dr(k);return}
-    const sp=rockSprite(k),dx=k.hit>0?Math.sin(G.t*90)*k.hit*14:0;ctx.drawImage(sp.c,sp.x0+dx,sp.y0,sp.w,sp.h);groundFront(k)}}
+    // on whole pixels and at its own size: with the canvas at 2 (or 1,5) pixels a point the picture is copied one to one, not resampled
+    const sp=rockSprite(k),dx=k.hit>0?Math.sin(G.t*90)*k.hit*14:0,S=sp.ss;ctx.drawImage(sp.c,Math.round((sp.x0+dx)*S)/S,Math.round(sp.y0*S)/S,sp.c.width/S,sp.c.height/S);groundFront(k)}}
 
 // =====================================================================
 // MENU BACKDROP (the pages behind the boards: Eroi, Armeria, Compagni, Bottega…). Since the 13 October preview (punto 42 del piano: no
@@ -17040,6 +17167,8 @@ const W={dbg:{},w:10*T,h:10*T,ground:null,hero:null,Z:[],FX:[],crows:[],flock:[]
 let BARM=0;
 let DPRCUT=false;let VIEWR=1e9;/* (anteprima 48, punto 54) il mezzo lato del quadrato del mondo che può stare sullo schermo (anche girando): quello che è fuori non si aggiorna a vista, non si ordina e non si disegna (zombie, fiamme libere, corvi posati, luci, fumi) */
 const farV=(x,y,r)=>Math.abs(x-CAM.x)>VIEWR+r||Math.abs(y-CAM.y)>VIEWR+r;
+/* (FASE 9) un punto a terra entro m punti dallo schermo (a vista dritta e girata: S fa la rotazione); prima del primo disegno sempre sì */
+const nearScr=(x,y,m)=>{if(!ORD.HW)return true;const q=S(x,y,0);return Math.abs(q[0]-CAM.x)<ORD.HW+m&&Math.abs(q[1]-CAM.y+CAM.oy)<ORD.HH+m};
 let LV=0;/* il piano dei solidi che contano (anteprima 48, punto 15): 0 a terra, 1 il piano di sopra di un edificio (i suoi solidi hanno lv:1) */
 /* (difetti 48) la griglia dei solidi: hit() guarda solo i solidi delle caselle di 64 px intorno (prima tutti, centinaia nella mappa grande: era un
    terzo del tempo degli zombie); tra quelli toccati vince il primo creato, come prima. Si rifà quando nascono solidi nuovi o la Bara si sposta (SGV) */
@@ -17297,22 +17426,27 @@ const zoneOk=(x,y,tag)=>(tag==null||W.zoneOpen[tag])&&(!W.zoneIdAt||W.zoneOpen[W
 // zona aperta, a 170-420 px di strada dall'eroe, mai in una casa né accanto a una zona chiusa (groundSpot)
 const farOpen=(x,y,r)=>{if(!W.zoneIdAt)return true;if(W.zoneOpen[W.zoneIdAt(x,y)]===false)return false;for(let k=0;k<8;k++){const a=k*Math.PI/4;if(W.zoneOpen[W.zoneIdAt(x+Math.cos(a)*r,y+Math.sin(a)*r)]===false)return false}return true};
 const inHouse=(x,y)=>houses.some(hs=>x>hs.x-6&&x<hs.x+hs.w+6&&y>hs.y-6&&y<hs.y+hs.d+10);
+/* (FASE 9, Denis, 20 ottobre: «non far spawnare i zombie […] troppo lontani a noi») una buca sullo schermo (0) o fuori (1); prima del primo
+   disegno (ORD.HW) tutte fuori */
+function holeScr(p){if(!ORD.HW)return 1;const q=S(p[0],p[1],0);return Math.abs(q[0]-CAM.x)<ORD.HW-24&&Math.abs(q[1]-CAM.y+CAM.oy)<ORD.HH-24?0:1}
+// un punto di terra libero a lo-hi px di strada dall'eroe; tra i sei più vicini prima quelli fuori dallo schermo
 function groundSpot(lo,hi){const N=NAV;if(!N)return null;const h=W.hero,c=[];
   for(let k=0;k<220&&c.length<10;k++){const a=Math.random()*TAU,r=lo+Math.random()*(hi-lo+60),x=h.x+Math.cos(a)*r,y=h.y+Math.sin(a)*r,ci=cellOf(x,y);
     if(N.bl[ci]||N.bar[ci])continue;const d=N.dist[ci];if(!(d>=lo&&d<=hi))continue;if(!farOpen(x,y,130)||shutNear(x,y,200)||inHouse(x,y)||hit(x,y,14))continue;
-    if(W.Z.some(z=>Math.hypot(z.x-x,z.y-y)<34))continue;c.push([d,[x,y,W.zoneIdAt?W.zoneIdAt(x,y):null,null]])}
-  if(!c.length)return null;c.sort((a,b)=>a[0]-b[0]);const k=c.slice(0,6);return k[Math.floor(Math.random()*k.length)][1]}
-function pickHole(o){const h=W.hero,free=p=>!W.Z.some(z=>Math.hypot(z.x-p[0],z.y-p[1])<30),open=holes.filter(p=>zoneOk(p[0],p[1],p[2])&&!shutNear(p[0],p[1],110)&&free(p));
-  if(NAV){const good=[],c=[],far=[];for(const p of open){if(Math.hypot(p[0]-h.x,p[1]-h.y)<110)continue;const d=holeDist(p);if(d==null||d>=1e9||d<130)continue;
-      if(d<=440&&farOpen(p[0],p[1],130)&&!shutNear(p[0],p[1],200))good.push([d,p]);(d>700?far:c).push([d,p])}
-    // le buche buone vicine, un po' di volte su due anche un punto di terra; senza buche buone il punto di terra
-    good.sort((a,b)=>a[0]-b[0]);const gk=good.slice(0,4).filter(a=>a[1]!==W.lastHole);
+    if(W.Z.some(z=>Math.hypot(z.x-x,z.y-y)<34))continue;const p=[x,y,W.zoneIdAt?W.zoneIdAt(x,y):null,null];c.push([d,p,holeScr(p)])}
+  if(!c.length)return null;c.sort((a,b)=>a[0]-b[0]);let k=c.slice(0,6);const off=k.filter(a=>a[2]>0);if(off.length)k=off;return k[Math.floor(Math.random()*k.length)][1]}
+// le buche buone: raggiungibili, entro 440 di strada, con tutto intorno aperto; tra queste prima quelle fuori dallo schermo (non si vedono nascere
+// a metà schermo), mai la stessa di prima; un po' di volte su due (sempre se ce ne sono tre o più) una buca, le altre un punto di terra;
+// senza buche buone il punto di terra; solo se manca anche quello le buche raggiungibili più vicine, come prima (entro 700, poi le tre più vicine)
+function pickHole(o){const h=W.hero,open=holes.filter(p=>zoneOk(p[0],p[1],p[2])&&!shutNear(p[0],p[1],110)&&!W.Z.some(z=>Math.hypot(z.x-p[0],z.y-p[1])<30));
+  if(NAV){const c=[],good=[];for(const p of open){if(Math.hypot(p[0]-h.x,p[1]-h.y)<110)continue;const d=holeDist(p);if(d==null||d>=1e9||d<130)continue;const q=[d,p,holeScr(p)];c.push(q);
+      if(d<=440&&farOpen(p[0],p[1],130)&&!shutNear(p[0],p[1],200))good.push(q)}
+    good.sort((a,b)=>a[0]-b[0]);let gk=good.slice(0,4).filter(a=>a[1]!==W.lastHole);{const off=gk.filter(a=>a[2]>0);if(off.length)gk=off}
     if(gk.length&&(Math.random()<.45||gk.length>=3)){const p=gk[Math.floor(Math.random()*gk.length)][1];W.lastHole=p;return p}
     const g=groundSpot(170,420)||groundSpot(140,600);if(g){W.lastHole=null;return g}
-    // (difetti 48) senza buche a giusta distanza le più vicine tra quelle raggiungibili, mai una buca a caso che magari sta dietro una barriera chiusa
-    if(!c.length&&far.length){far.sort((a,b)=>a[0]-b[0]);c.push(...far.slice(0,3))}
-    if(c.length){c.sort((a,b)=>a[0]-b[0]);let k=c.slice(0,6);if(k.length>1)k=k.filter(a=>a[1]!==W.lastHole);const p=k[Math.floor(Math.random()*k.length)][1];W.lastHole=p;return p}
-    return null}
+    if(!c.length)return null;
+    c.sort((a,b)=>a[0]-b[0]);let k=c.filter(a=>a[0]<=700).slice(0,3);if(!k.length)k=c.slice(0,3);
+    if(k.length>1)k=k.filter(a=>a[1]!==W.lastHole);const p=k[Math.floor(Math.random()*k.length)][1];W.lastHole=p;return p}
   const c=open.filter(p=>{const e=Math.hypot(p[0]-h.x,p[1]-h.y);return e>110&&e<460});return c.length?c[Math.floor(Math.random()*c.length)]:null}
 // (difetti 48) uno zombie della partita che non si avvicina più all'eroe (chiuso di là da una barriera, incastrato) e non si vede sullo schermo
 // rinasce da una buca raggiungibile, come in CoD; se nessuna buca va bene riprova dopo
@@ -17460,7 +17594,7 @@ function updateBeings(dt,inp){const h=W.hero,DI=W.director,MD=W.mods||{};if(h.de
   // scarto sullo schermo (la bocca dell'arma, l'altezza del petto, il volo delle gocce): girando la telecamera restano dove sono successe
   if(DI)DI.update(dt,zOn);else{spawnT-=dt;if(zOn&&spawnT<=0&&W.Z.filter(z=>!z.idle&&!z.die).length<(W.maxZ||5)){spawn();spawnT=rr(2,3.5)}}navUpdate(dt);
   for(const z of W.Z){if(z.flash>0)z.flash-=dt;if(z.fin>0)z.fin-=dt;if(z.die){z.die+=dt;continue}LV=z.lv||0;if(!z.cl)z.zh=z.lv?z.lvH:(z.zh||0)+(heightAt(z.x,z.y)-(z.zh||0))*Math.min(1,dt*14);if(z.rise<1){z.rise=Math.min(1,z.rise+dt/1.3);z.face=Math.atan2(h.y-z.y,h.x-z.x);continue}
-    if(z.idle){if(W.zoneOpen[z.idle.zone])z.idle=null;else{idleStep(z,dt);sep(z);continue}}
+    if(z.idle){if(W.zoneOpen[z.idle.zone])z.idle=null;else{if(!ORD.HW||nearScr(z.x,z.y,260)||lureOf(z)){idleStep(z,dt);sep(z)}continue}}// lontani dallo schermo restano fermi, se non li chiama una barriera (FASE 9)
     if(z.ai){z.ai(z,dt);sep(z);continue}// un boss della partita: si muove e colpisce da solo
     if(z.stun>0){z.stun-=dt;if(z.anim!=='idle'){z.anim='idle';z.p=0}z.p=(z.p+dt/2.4)%1;sep(z);continue}// respinto dall'anima che rialza l'eroe
     if(!z.bx&&BARS.length&&!z.lv&&!z.cl&&(z.bxT=(z.bxT||0)-dt)<=0){z.bxT=.15;z.bx=barCheck(z)}// una finestra o un varco da passare (barriere.js)
@@ -17747,10 +17881,12 @@ function projInto(x,y,z){if(CAM.rot){const dx=x-CAM.x,dy=y-CAM.y,u=dx*CAM.c-dy*C
 // (se la telecamera non si è mossa dall'ultima volta, il riquadro è ancora quello: CST è il numero della posizione della telecamera)
 let CST=0,CSK='';function camStamp(){const k=CAM.x+','+CAM.y+','+CAM.oy+','+CAM.yaw+','+CAM.el;if(k!==CSK){CSK=k;CST++}}
 function layerSB(L){if(L.cst===CST)return;L.cst=CST;const p=L.prop,lk=p.lk==null?1:p.lk;LEANK=lk;setRef(p.ref);let x0=1e9,y0=1e9,x1=-1e9,y1=-1e9;const xy=L.xy,z0=L.z0,z1=L.z1,rot=CAM.rot,c=CAM.c,s=CAM.s,SP=CAM.SP,CP=CAM.CP;
+  // (L.pp: gli spigoli proiettati, in basso e in alto, per le copie degli strati fermi: lcPrep misura lì quanto si è mossa la piega)
+  const pp=L.pp&&L.pp.length===xy.length*4?L.pp:(L.pp=new Float64Array(xy.length*4));
   for(let k=0;k<xy.length;k++){const X=xy[k][0],Y=xy[k][1];let bx,by,lu,lv,kz;// la base del vertice e la sua piega (come in S), poi le due quote
     if(rot){const dx=X-CAM.x,dy=Y-CAM.y,u=dx*c-dy*s,v=dx*s+dy*c;if(REF){lu=REF[0]+REF[1]*u;lv=REF[2]+REF[3]*v}else{lu=soft(u*CAM.lx);lv=softV((-CAM.oy/SP-v)*CAM.ly)}bx=CAM.x+u;by=CAM.y+v*SP;kz=CP}
     else{if(REF){lu=REF[0]+REF[1]*X;lv=REF[2]+REF[3]*Y}else{lu=soft((X-CAM.x)*CAM.lx);lv=softV((CAM.cy-Y)*CAM.ly)}bx=X;by=Y;kz=1}
-    for(let m=0;m<2;m++){const z=m?z1:z0,px=bx+lu*z*lk,py=by-z*kz+lv*z*lk;if(px<x0)x0=px;if(px>x1)x1=px;if(py<y0)y0=py;if(py>y1)y1=py}}
+    for(let m=0;m<2;m++){const z=m?z1:z0,px=bx+lu*z*lk,py=by-z*kz+lv*z*lk;if(px<x0)x0=px;if(px>x1)x1=px;if(py<y0)y0=py;if(py>y1)y1=py;const i=(k*2+m)*2;pp[i]=px;pp[i+1]=py}}
   projInto(L.cx,L.cy,z1);const lt=PX;projInto(L.cx,L.cy,0);L.lean=lt-PX;L.sh=null;LEANK=1;setRef(null);const b=L.sb;b[0]=x0-2;b[1]=y0-2;b[2]=x1+2;b[3]=y1+2}
 // un essere: cartellone nel punto (x, y), largo ±hw, da zh a zh+H; il riquadro a schermo con l'altezza vera della figura (zk)
 function beingE(e,x,y,zh,H,hw,zk,rf){const U=x*PC-y*PSN,V=x*PSN+y*PC;e.cU=e.U0=e.U1=U;e.cV=e.V0=e.V1=V;e.z0=zh;e.z1=zh+H;e.hw=hw;e.H=[[U,V]];e.x=x;e.y=y;e.zh=zh;e.Hh=H;e.zk=zk;
@@ -17868,13 +18004,85 @@ function intraAt(L,sec){const G=L.groups;if(G.length<2)return G;let o=L.memo.get
 function warmIntra(){if(W.dbg.noWarm){setTimeout(warmIntra,500);return}const t0=performance.now(),s0=secNow();let todo=false;
   for(let d=0;d<=90&&performance.now()-t0<4;d++)for(const sg of d?[1,-1]:[1]){const sec=((s0+sg*d+90)%180+180)%180-90;for(const L of LAYERS){if(L.groups.length<2||L.memo.has(sec))continue;todo=true;intraAt(L,sec);if(performance.now()-t0>=4)break}}
   if(todo)setTimeout(warmIntra,30)}
+// ------------------------------------------------------------------ FASE 9: gli strati fermi copiati (Denis, 20 ottobre: «Mappa zombie più
+// fluida»). Prima ogni casa, muro, albero e oggetto si ridisegnava in 3D a ogni fotogramma, perché la piega delle cose alte cambia mentre
+// la telecamera segue l'eroe. Ora i pezzi fermi di uno strato (facce, pannelli, palle, linee, contorni) si dipingono una volta in una tela
+// loro e si copiano 1:1 (a vista dritta la telecamera sta su pixel interi della tela). Si ridipingono quando la piega dello strato,
+// misurata sugli spigoli della sua impronta in basso e in alto (L.pp), si è mossa di più di mezzo pixel della tela (LCB.tol) o di meno ma
+// con lo zoom diverso, quando cambia un suo pezzo (le ante del cancello e la porta della latrina che si aprono, le assi delle barriere, le
+// trasparenze delle case con l'eroe dentro); a telecamera ferma tornano esatte (si ridipingono anche le copie spostate di due centesimi di
+// pixel, poche per fotogramma). Tutti gli strati di un prop si ridipingono insieme (i muri di una casa restano attaccati). I disegni a mano
+// (fn: lanterne, insegne, macchine, il corvo sul palo…) restano dal vivo al loro posto nell'ordine, tra una copia e l'altra, così quello
+// che si muove si muove come prima; anche le fiamme figlie. Uno strato che cambia a ogni fotogramma (la piega che corre vicino al centro
+// mentre l'eroe va di lato, una porta che si apre) si disegna dal vivo come prima finché non rallenta. Le tele stanno in LCB.max byte
+// (fuori le meno usate di recente) e si liberano uscendo dalla mappa. Girando la visuale (CAM.rot), per la sagoma dell'eroe, per un prop
+// che sfuma (fade) e con W.dbg.noLC: tutto dal vivo, come prima. Prova: anteprime/zombie/copie_prova.js
+const LCB={max:48e6,mem:0,all:new Set(),f:0,tol:.5,cam:null,still:0,rest:false,rN:0,n:{copia:0,dipinto:0,vivo:0}};// (una vista della mappa ne usa 20–45 MB a 2 pixel per punto)
+let LCF=null;// il fotogramma con le copie: {ctx, k: la scala, e, f: lo spostamento intero}; null: tutto dal vivo
+const lcSum=a=>{let s=0;if(!a)return 0;if(typeof a[0]==='number'){for(let i=0;i<a.length;i++)s=s*1.0001+a[i]*(i+1.7);return s}
+  for(let i=0;i<a.length;i++){const q=a[i];s=s*1.0001+q[0]*1.3+q[1]*2.9+(q[2]||0)*4.1}return s};
+// un pezzo fermo è cambiato dall'ultima occhiata? (punti nuovi, materiale, colore, raggio, trasparenza, spessore; si ricorda com'è adesso)
+function lcTouch(t){const g=t.c||t.pts||t.p,m=t.mat||t.texId||t.col,n=(t.r||0)+(t.alpha==null?1:t.alpha)*7+(t.w||0)*13+(t.sq||0)*17;let ch=!t._lc;t._lc=1;
+  if(g!==t._g){const v=lcSum(g);if(v!==t._gs)ch=true;t._g=g;t._gs=v}
+  if(t.a!==t._ga||t.b!==t._gb){const v=lcSum(t.a)+3*lcSum(t.b);if(v!==t._gab)ch=true;t._ga=t.a;t._gb=t.b;t._gab=v}
+  if(m!==t._m||n!==t._n){ch=true;t._m=m;t._n=n}return ch}
+// i pezzi dello strato nel loro ordine, a corse: una corsa di pezzi fermi si copia, un disegno a mano si fa dal vivo
+function lcBuild(L,G){const runs=[];let cur=null,ri=0;
+  for(const t of L.loose.concat(...G.map(g=>g.parts))){if(t.k==='fn'){runs.push({fn:t});cur=null;continue}
+    if(!cur){cur={sid:L.sid+'#'+(ri++),parts:[],cv:null,w:0,h:0,ox:0,oy:0,used:0,heavy:0};runs.push(cur)}cur.parts.push(t);if(t.k!=='line'&&t.k!=='hull'&&t.k!=='outline'&&t.k!=='poly')cur.heavy++}
+  // (una corsa di uno o due tratti leggeri si disegna com'è: una tela costerebbe più di quello che fa risparmiare)
+  for(const r of runs)if(r.parts&&!r.heavy&&r.parts.length<3)r.dir=true;
+  if(!runs.some(r=>r.parts&&!r.dir))return null;return{G,runs,pp:null,lp:null,k:0,st:true,hot:0,ha:-1,hb:-1,hu:-1}}
+function lcFreeRun(r){if(r.cv){LCB.mem-=r.cv.width*r.cv.height*4;r.cv.width=r.cv.height=0;r.cv=null}LCB.all.delete(r)}
+function lcDrop(C){for(const r of C.runs)if(r.parts)lcFreeRun(r)}
+function lcFree(){for(const L of LAYERS){if(L.lc)lcDrop(L.lc);L.lc=null;L.lcNo=null}LCB.mem=0;LCB.all.clear()}
+// fa posto: via le tele meno usate di recente (mai quelle già copiate in questo fotogramma)
+function lcTrim(need){const old=[...LCB.all].filter(r=>r.used<LCB.f).sort((a,b)=>a.used-b.used);for(const r of old){if(LCB.mem+need<=LCB.max)break;lcFreeRun(r)}return LCB.mem+need<=LCB.max}
+// lo stato del fotogramma per ogni strato da disegnare (L.lcA: 1 copia, 2 ridipingi e copia, 3 dal vivo; 0 com'era)
+function lcPrep(list){const f=LCB.f,tol=LCB.tol/LCF.k,again=[],fine=[];
+  for(const L of list){if(L.kind!=='L')continue;L.lcA=0;L.lcF=f;const p=L.prop;if(p.fade!=null&&p.fade<1)continue;const G=intraOrder(L);if(L.lcNo===G)continue;
+    let C=L.lc;if(!C||C.G!==G){if(C)lcDrop(C);C=L.lc=lcBuild(L,G);if(!C){L.lcNo=G;continue}}for(const r of C.runs)if(r.parts)r.used=f;
+    const pp=L.pp;let dc=1e9,df=1e9;if(C.pp&&C.pp.length===pp.length){dc=0;for(let i=0;i<pp.length;i++){const d=Math.abs(pp[i]-C.pp[i]);if(d>dc)dc=d}}
+    if(C.lp&&C.lp.length===pp.length){df=0;for(let i=0;i<pp.length;i++){const d=Math.abs(pp[i]-C.lp[i]);if(d>df)df=d}}else C.lp=new Float64Array(pp.length);C.lp.set(pp);
+    let ch=false;const why=W.dbg.lcWhy;for(const r of C.runs){if(!r.parts)continue;for(const t of r.parts){if(lcTouch(t)){ch=true;if(why)why[L.sid+' '+t.k]=(why[L.sid+' '+t.k]||0)+1}if(t.vis){const v=!!t.vis();if(v!==t._v){ch=true;t._v=v;if(why)why[L.sid+' vis']=(why[L.sid+' vis']||0)+1}}}}
+    // (le trasparenze delle case si avvicinano al loro valore senza fermarsi mai del tutto: contano solo i 256 passi che si vedono)
+    const hs=p.house;if(hs){const a=Math.round(hs.a*256),b=Math.round((hs.b==null?1:hs.b)*256),u=Math.round((hs.up||0)*256);if(a!==C.ha||b!==C.hb||u!==C.hu){ch=true;C.ha=a;C.hb=b;C.hu=u;if(why)why[L.sid+' casa']=(why[L.sid+' casa']||0)+1}}
+    if(why&&df>tol*.5)why[L.sid+' piega']=(why[L.sid+' piega']||0)+1;
+    if(ch)C.st=true;C.hot=ch||df>tol*.5?C.hot+1:0;
+    // (la copia sta dove la mette la scala: con lo zoom che si assesta, lontano dall'angolo della mappa la differenza di scala sposta la copia)
+    if(C.k!==LCF.k){const b=L.sb;dc+=Math.abs(C.k-LCF.k)/LCF.k*Math.max(Math.abs(b[0]),Math.abs(b[1]),Math.abs(b[2]),Math.abs(b[3]))}
+    if(C.st||dc>tol){if(C.hot>=2){L.lcA=3;C.st=true}else{L.lcA=2;p._lcf=f}}else{L.lcA=1;again.push(L);if(LCB.rest&&dc>.02/LCF.k)fine.push([dc,L])}}
+  // a telecamera ferma le copie tornano esatte: quelle fatte con la piega di poco diversa si ridipingono, poche per fotogramma (le più lontane prima)
+  if(fine.length){fine.sort((a,b)=>b[0]-a[0]);for(const[,L] of fine){if(LCB.rN<=0)break;if(L.prop._lcf!==f){L.prop._lcf=f;LCB.rN--}}}
+  for(const L of again)if(L.prop._lcf===f)L.lcA=2}
+// dipinge una corsa nella sua tela (false: niente posto in memoria o troppo grande, si disegna dal vivo)
+function lcPaint(r,hs){const k=LCF.k,pts=[];for(const t of r.parts)partPts(t,pts);let x0=1e9,y0=1e9,x1=-1e9,y1=-1e9;
+  for(const q of pts){const s2=S(q[0],q[1],q[2]);if(s2[0]<x0)x0=s2[0];if(s2[0]>x1)x1=s2[0];if(s2[1]<y0)y0=s2[1];if(s2[1]>y1)y1=s2[1]}
+  const M=4,X0=Math.floor(k*(x0-M)+LCF.e),Y0=Math.floor(k*(y0-M)+LCF.f),w=Math.ceil(k*(x1+M)+LCF.e)-X0,h=Math.ceil(k*(y1+M)+LCF.f)-Y0;if(!(w>0&&h>0)||w>2048||h>2048)return false;
+  let cv=r.cv;if(!cv||cv.width<w||cv.height<h){const W2=w+8,H2=h+8,need=W2*H2*4-(cv?cv.width*cv.height*4:0);if(LCB.mem+need>LCB.max&&!lcTrim(need))return false;
+    if(!cv)cv=r.cv=document.createElement('canvas');cv.width=W2;cv.height=H2;LCB.mem+=need;LCB.all.add(r)}
+  const g=cv.getContext('2d');g.setTransform(1,0,0,1,0,0);g.globalAlpha=1;g.globalCompositeOperation='source-over';g.clearRect(0,0,Math.max(w,r.w),Math.max(h,r.h));
+  g.setTransform(k,0,0,k,LCF.e-X0,LCF.f-Y0);const sv=ctx;ctx=g;try{for(const t of r.parts)drawPartA(t,hs)}finally{ctx=sv}
+  r.w=w;r.h=h;r.ox=X0-LCF.e;r.oy=Y0-LCF.f;return true}
+// uno strato con le copie: le corse dipinte (ridipinte se serve) copiate 1:1, i disegni a mano dal vivo tra l'una e l'altra
+function lcDraw(L){const C=L.lc,p=L.prop,hs=p.house,redo=L.lcA===2,k=LCF.k,N=LCB.n;LEANK=p.lk==null?1:p.lk;setRef(p.ref);ROTP=p.rot||null;
+  try{for(const r of C.runs){if(r.fn){drawPartA(r.fn,hs);continue}if(r.dir){for(const t of r.parts)drawPartA(t,hs);continue}
+      if(redo||!r.cv){if(!lcPaint(r,hs)){lcFreeRun(r);for(const t of r.parts)drawPartA(t,hs);N.vivo++;continue}N.dipinto++}else N.copia++;
+      ctx.setTransform(1,0,0,1,0,0);ctx.drawImage(r.cv,0,0,r.w,r.h,r.ox+LCF.e,r.oy+LCF.f,r.w,r.h);ctx.setTransform(k,0,0,k,LCF.e,LCF.f)}}
+  finally{ROTP=null}
+  if(redo){if(!C.pp||C.pp.length!==L.pp.length)C.pp=new Float64Array(L.pp.length);C.pp.set(L.pp);C.k=k;C.st=false}
+  LEANK=1;setRef(null);if(!W.dbg.noFlames)for(const f of L.flames)drawFlame(f);return true}
 // disegna uno strato: i contorni sciolti per primi, poi i gruppi nel loro ordine, poi le fiamme figlie
 function drawPartA(t,hs){if(t.vis&&!t.vis())return;if(hs&&t.part){const a=alphaOf(hs,t.part);if(a<=0)return;if(a<1){ctx.save();ctx.globalAlpha*=a;drawPart(t);ctx.restore();return}}drawPart(t)}
-function drawLayer(L){const p=L.prop,hs=p.house,fd=p.fade!=null&&p.fade<1;if(fd){if(p.fade<=0)return;ctx.save();ctx.globalAlpha*=p.fade}LEANK=p.lk==null?1:p.lk;setRef(p.ref);ROTP=p.rot||null;try{for(const t of L.loose)drawPartA(t,hs);const G=intraOrder(L);for(const g of G)for(const t of g.parts)drawPartA(t,hs)}finally{ROTP=null}
+function drawLayer(L){if(LCF&&L.lcA&&L.lcA<3&&ctx===LCF.ctx&&L.lc)return lcDraw(L);if(LCF&&L.lcA===3)LCB.n.vivo++;const p=L.prop,hs=p.house,fd=p.fade!=null&&p.fade<1;if(fd){if(p.fade<=0)return;ctx.save();ctx.globalAlpha*=p.fade}LEANK=p.lk==null?1:p.lk;setRef(p.ref);ROTP=p.rot||null;try{for(const t of L.loose)drawPartA(t,hs);const G=intraOrder(L);for(const g of G)for(const t of g.parts)drawPartA(t,hs)}finally{ROTP=null}
   LEANK=1;setRef(null);if(!W.dbg.noFlames)for(const f of L.flames)drawFlame(f);if(fd)ctx.restore()}// (p.fade: un prop che sparisce piano, le barriere a pagamento che si aprono)
 // il riquadro a schermo del segugio: lungo ±12 nel verso in cui guarda
 function houndSB(e,z){const c=Math.cos(z.face)*12,s=Math.sin(z.face)*12;for(const k of[-1,1]){const q=S(z.x+c*k,z.y+s*k,z.zh||0);e.sb[0]=Math.min(e.sb[0],q[0]-e.hw);e.sb[2]=Math.max(e.sb[2],q[0]+e.hw);e.sb[3]=Math.max(e.sb[3],q[1]+5)}}
 // le voci di questo fotogramma, in ordine: [pavimenti, tutto il resto]
+/* (FASE 9) un essere alto H in (x, y, z0) tocca lo schermo? la sua figura (piedi e testa con la piega) allargata di r; senza disegni di prova
+   (ORD.HW) sempre sì */
+function visB(x,y,z0,H,r){if(!ORD.HW||W.dbg.visAll)return true;const a=S(x,y,z0),b=S(x,y,z0+H);r+=LK*H;
+  return Math.max(a[0],b[0])+r>CAM.x-ORD.HW&&Math.min(a[0],b[0])-r<CAM.x+ORD.HW&&Math.max(a[1],b[1])+r>CAM.y-CAM.oy-ORD.HH&&Math.min(a[1],b[1])-r<CAM.y-CAM.oy+ORD.HH}
 function buildOrder(vis){const D=W.dbg,fl=[],li=[];psiUpdate();camStamp();UCAM=CAM.x*PC-CAM.y*PSN;
   if(D.ord==='ky'){// l'ordine di prima: prop interi per ky (kyFn), esseri per y, fiamme e corvi come voci; girando la V del punto (centro, ky)
     const h=W.hero,hx=h?h.x:0,K=(x,y)=>x*PSN+y*PC,kp=p=>CAM.rot?K((p.bx[0]+p.bx[2])/2,p.ky):(p.kyFn?p.kyFn(hx):p.ky),L2=[];
@@ -17888,11 +18096,11 @@ function buildOrder(vis){const D=W.dbg,fl=[],li=[];psiUpdate();camStamp();UCAM=C
     L2.sort((a,b)=>a.k-b.k);return[fl,L2.map(o=>o.e)]}
   for(const p of props){if(p.hide||!vis(p))continue;for(const L of p.layers){layerSB(L);(L.floor?fl:li).push(L)}}
   const h=W.hero,rA=(x,y,z)=>STAIRS.length&&z>0?refAt(x,y):null;if(h&&!D.noHero&&!D.heroLast)li.push(beingE(HE,h.x,h.y,h.zh||0,56,10,RIGK.hzk,rA(h.x,h.y,h.zh||0)));
-  for(const z of W.Z){if(z.id==null)z.id=++ZID;if(farV(z.x,z.y,90))continue;const e=z.E||(z.E={kind:'B',z,sid:'Z'+z.id,sk:900000+(z.id%99999)}),hd=z.kind==='hound';beingE(e,z.x,z.y,z.zh||0,(hd?30:46)*z.sc,(hd?16:10)*z.sc,RIGK.mzk,rA(z.x,z.y,z.zh||0));if(hd)houndSB(e,z);li.push(e)}
-  for(const c of perches){if(!c.away&&!farV(c.x,c.y,60))li.push(beingE(c.E,c.x,c.y,c.z,14,6,CAM.CP))}
+  for(const z of W.Z){if(z.id==null)z.id=++ZID;if(farV(z.x,z.y,90)||!visB(z.x,z.y,z.zh||0,(z.kind==='hound'?30:46)*z.sc,40))continue;const e=z.E||(z.E={kind:'B',z,sid:'Z'+z.id,sk:900000+(z.id%99999)}),hd=z.kind==='hound';beingE(e,z.x,z.y,z.zh||0,(hd?30:46)*z.sc,(hd?16:10)*z.sc,RIGK.mzk,rA(z.x,z.y,z.zh||0));if(hd)houndSB(e,z);li.push(e)}
+  for(const c of perches){if(!c.away&&!farV(c.x,c.y,60)&&visB(c.x,c.y,c.z,14,30))li.push(beingE(c.E,c.x,c.y,c.z,14,6,CAM.CP))}
   // i compagni dell'eroe (compagni.js): esseri come gli zombie
-  for(const pt of W.pets||[]){if(farV(pt.x,pt.y,60))continue;const e=pt.E||(pt.E={kind:'B',pet:pt,sid:'P'+pt.i,sk:600000+pt.i});li.push(beingE(e,pt.x,pt.y,pt.zh||0,30,8,RIGK.mzk,rA(pt.x,pt.y,pt.zh||0)))}
-  if(!D.noFlames)for(const f of FREEF)if(!farV(f.x,f.y,40))li.push(beingE(f.E,f.x,f.y,f.z-4,10,4,CAM.CP,f.lvl!=null?f.ref:null));
+  for(const pt of W.pets||[]){if(farV(pt.x,pt.y,60)||!visB(pt.x,pt.y,pt.zh||0,30,40))continue;const e=pt.E||(pt.E={kind:'B',pet:pt,sid:'P'+pt.i,sk:600000+pt.i});li.push(beingE(e,pt.x,pt.y,pt.zh||0,30,8,RIGK.mzk,rA(pt.x,pt.y,pt.zh||0)))}
+  if(!D.noFlames)for(const f of FREEF)if(!farV(f.x,f.y,40)&&visB(f.x,f.y,f.z-4,14,30))li.push(beingE(f.E,f.x,f.y,f.z-4,10,4,CAM.CP,f.lvl!=null?f.ref:null));
   if(BOX)li.push(boxEntry());
   // con la zona chiusa velata e la telecamera che guarda verso di lei: prima tutto quello che sta di là dalla linea del confine, poi il velo, poi
   // il resto (il confine è una retta: chi sta tutto di là non può coprire chi sta di qua, come in un albero BSP)
@@ -17937,13 +18145,14 @@ function drawWorld(dt,view){const h0=houses[0],h0a=h0?h0.a:1,D=W.dbg;ZS.f++;ZS.n
   if(PH)PH('terreno');if(tk)tk('terreno');if(W.split)drawVeil(W.split.k-veilK());// il velo sul terreno quando non copre anche le cose (guardando di lato o all'indietro)
   // chi si vede: l'impronta del prop girata intorno al perno (u, v), allargata della piega più grande che può avere (LK·altezza di lato,
   // LKV in verticale) e di un margine; a vista dritta vale come prima (senza più il riquadro del mondo, che girando nasconderebbe cose)
-  const HW=view.Wp/2/CAM.z+24,HH=view.Hp/2/CAM.z+24,c=CAM.c,s=CAM.s,SP=CAM.SP,CP=CAM.CP,oy=CAM.oy;VIEWR=Math.hypot(view.Wp,view.Hp/SP)/2/CAM.z+64+Math.abs(oy)/SP;
+  const HW=view.Wp/2/CAM.z+24,HH=view.Hp/2/CAM.z+24,c=CAM.c,s=CAM.s,SP=CAM.SP,CP=CAM.CP,oy=CAM.oy;ORD.HW=HW;ORD.HH=HH;VIEWR=Math.hypot(view.Wp,view.Hp/SP)/2/CAM.z+64+Math.abs(oy)/SP;
   const vis=D.visAll?()=>true:p=>{const f=fpOf(p),z1=f[4],ex=LK*z1*(p.lk==null?1:p.lk);let u0=1e9,u1=-1e9,v0=1e9,v1=-1e9;
     for(const X of[f[0],f[2]])for(const Y of[f[1],f[3]]){const dx=X-CAM.x,dy=Y-CAM.y,u=dx*c-dy*s,v=dx*s+dy*c;if(u<u0)u0=u;if(u>u1)u1=u;if(v<v0)v0=v;if(v>v1)v1=v}
     return u0-ex<HW&&u1+ex>-HW&&v1*SP+oy>-HH&&v0*SP-z1*CP-LKV*z1+oy<HH};
   // l'ordine (fase 3): i pavimenti (cumuli, pedane, gradini, tappeti) sotto i piedi di tutti, poi tutto ciò che sta in piedi, dal fondo verso
   // davanti, con gli esseri e i corvi posati in mezzo; le fiamme vengono subito dopo lo strato che le contiene
   const t0=D.prof?performance.now():0;ORD.fr++;ORD.cyc=0;ORD.tIntra=0;ORD.vis=vis;const[floors,order]=buildOrder(vis),t1=D.prof?performance.now():0;if(tk)tk('ordine');
+  {const m=ctx.getTransform();LCF=!D.noLC&&!D.lcLive&&!CAM.rot&&m.b===0&&m.c===0&&m.a===m.d&&m.e===Math.round(m.e)&&m.f===Math.round(m.f)?{ctx,k:m.a,e:m.e,f:m.f}:null;LCB.T=[m.a,m.e,m.f];if(LCF){LCB.f++;const c=LCB.cam,mv=c?Math.max(Math.abs(CAM.x-c[0]),Math.abs(CAM.y-c[1]),Math.abs(CAM.oy-c[2])):1;LCB.cam=[CAM.x,CAM.y,CAM.oy];LCB.still=mv<.004?LCB.still+1:0;LCB.rest=LCB.still>=2;LCB.rN=8;lcPrep(floors.concat(order))}if(tk)tk('copie')}
   for(const L of floors)drawEntry(L,h0a);if(tk)tk('pavimenti');
   if(PH)PH('pavimenti');inGround(()=>drawClouds(dt));drawCrowShadows();drawLights(h0a);if(W.director&&W.director.drawGround)W.director.drawGround(dt);if(PH)PH('nuvole_luci');if(tk)tk('nuvole_luci');
   let hi=-1;const CO=D.costs;// W.dbg.costs: il costo vero di ogni voce (con la scheda grafica aspettata dopo ognuna), in D.costs
@@ -17952,7 +18161,7 @@ function drawWorld(dt,view){const h0=houses[0],h0a=h0?h0.a:1,D=W.dbg;ZS.f++;ZS.n
   if(PH)PH('voci');const t2=D.prof?performance.now():0;LASTOCC=occluders(order,hi);silhouette(LASTOCC,h0a);if(PH)PH('sagoma');if(tk)tk('sagoma');ORD.last=order;ORD.lastF=floors;LASTLIST=order;
   if(D.prof){const a=.1;ORD.tOrd=t1-t0+ORD.tIntra;ORD.tSil=performance.now()-t2;ORD.pOrd+=(ORD.tOrd-ORD.pOrd)*a;ORD.pSil+=(ORD.tSil-ORD.pSil)*a}
   if(!LOWFX){for(const p of W.puffs){if(farV(p.x,p.y,40+p.z))continue;setRef(p.ref);const q=S(p.x,p.y,p.z);setRef(null);ctx.fillStyle=`rgba(150,150,165,${.28*(1-p.t/3.2)})`;ball(q,p.r);ctx.fill()}
-    for(const l of W.leaves){const q=S(l.x,l.y,l.z);ctx.save();ctx.translate(q[0],q[1]);ctx.rotate(l.t*4+l.ph);ctx.fillStyle=l.c;ctx.beginPath();ctx.ellipse(0,0,2.6,1.2,0,0,TAU);ctx.fill();ctx.restore()}
+    for(const l of W.leaves){if(farV(l.x,l.y,40))continue;const q=S(l.x,l.y,l.z);ctx.save();ctx.translate(q[0],q[1]);ctx.rotate(l.t*4+l.ph);ctx.fillStyle=l.c;ctx.beginPath();ctx.ellipse(0,0,2.6,1.2,0,0,TAU);ctx.fill();ctx.restore()}
     ctx.save();ctx.globalCompositeOperation='lighter';for(const f of W.flies){const q=S(f.x,f.y,f.z),b=.5+.5*Math.sin(W.t*3+f.ph);glow('170,255,120',q[0],q[1],9,.5*b);ctx.fillStyle=`rgba(230,255,190,${.9*b})`;ctx.fillRect(q[0]-.8,q[1]-.8,1.6,1.6)}ctx.restore()}
   for(const f of W.FX){if(f.k==='coin'){const t=SB(f.tw),k=1-f.t/f.t0,y=t[1]-k*26;ctx.save();ctx.globalAlpha=Math.min(1,f.t/.35);ctx.font='800 14px "Baloo 2",system-ui';ctx.textAlign='center';ctx.lineJoin='round';ctx.lineWidth=3.6;ctx.strokeStyle=INK;ctx.strokeText('+'+f.n,t[0],y);ctx.fillStyle='#ffd65a';ctx.fillText('+'+f.n,t[0],y);ctx.restore();continue}
     if(f.k==='boom'){const t=SB(f.tw),k=1-f.t/f.t0;ctx.save();ctx.globalCompositeOperation='lighter';glow('255,170,70',t[0],t[1]-10,f.r*(.6+k),.9*(1-k));ctx.restore();ctx.strokeStyle=`rgba(255,220,160,${.7*(1-k)})`;ctx.lineWidth=3;ctx.beginPath();ctx.ellipse(t[0],t[1],f.r*(.4+k),f.r*(.4+k)*.6*CAM.SP,0,0,TAU);ctx.stroke();continue}
@@ -17961,14 +18170,14 @@ function drawWorld(dt,view){const h0=houses[0],h0a=h0?h0.a:1,D=W.dbg;ZS.f++;ZS.n
       const r=26+((f.t0-f.t)*30)%40;ctx.strokeStyle=`rgba(150,255,180,${.5*al*(1-((f.t0-f.t)*30%40)/40)})`;ctx.lineWidth=2;ctx.beginPath();ctx.ellipse(q[0],q[1],r,r*.5*CAM.SP,0,0,TAU);ctx.stroke();ctx.restore();continue}
     if(f.k==='shot'){const g=SB(f.hw),t=SB(f.tw),a=[g[0]+f.ao[0],g[1]+f.ao[1]],pc=f.pap>=2?'212,139,255':f.pap?'143,230,255':null;ctx.strokeStyle=pc?`rgba(${pc},.95)`:'rgba(255,230,160,.9)';ctx.lineWidth=f.w||2;seg(a,[t[0]+f.bo[0],t[1]+f.bo[1]]);ctx.stroke();if(!LOWFX){ctx.save();ctx.globalCompositeOperation='lighter';glow(pc||'255,210,120',a[0],a[1],14,.8);if(pc)glow(pc,t[0]+f.bo[0],t[1]+f.bo[1],10,.6);ctx.restore()}}
     else{const t=SB(f.tw);ctx.fillStyle='#3a5a1e';ball([t[0]+f.x,t[1]+f.y],1.8);ctx.fill()}}
-  if(W.director&&W.director.drawTop)W.director.drawTop(dt);if(liveDraw)liveDraw(dt);drawMist(dt);drawFlock();if(PH)PH('effetti_nebbia');if(tk)tk('effetti')}
+  if(W.director&&W.director.drawTop)W.director.drawTop(dt);if(liveDraw)liveDraw(dt);drawMist(dt);drawFlock();if(PH)PH('effetti_nebbia');if(tk)tk('effetti');LCF=null}
 function updateAmbient(dt){W.t+=dt;updateCrows(dt);
   if(W.split){const sp=W.split;if(sp.fade){sp.k-=dt/2.5;if(sp.k<=0){W.split=null}}if(sp.wisps)for(const m of sp.wisps){m.x+=m.v*dt;if(m.x>W.w+m.r)m.x=-m.r}}
   if(LOWFX)return;
   for(const f of W.flies){f.a+=dt*(Math.sin(W.t*.7+f.ph)*1.6);f.x+=Math.cos(f.a)*14*dt;f.y+=Math.sin(f.a)*14*dt;f.z=cl(f.z+Math.sin(W.t*2+f.ph)*8*dt,4,50);if(f.x<0)f.x=W.w;if(f.x>W.w)f.x=0;if(f.y<0)f.y=W.h;if(f.y>W.h)f.y=0}
-  for(const s of smokes){s.t-=dt;if(s.t<=0){s.t=.22;W.puffs.push({x:s.x+rr(-3,3),y:s.y+rr(-3,3),z:s.z,t:0,r:rr(4,6),ref:s.ref})}}
+  for(const s of smokes){s.t-=dt;if(s.t<=0){s.t=.22;if(!nearScr(s.x,s.y,200))continue;W.puffs.push({x:s.x+rr(-3,3),y:s.y+rr(-3,3),z:s.z,t:0,r:rr(4,6),ref:s.ref})}}
   for(const p of W.puffs){p.t+=dt;p.z+=16*dt;p.x+=10*dt;p.r+=5*dt}for(let i=W.puffs.length-1;i>=0;i--)if(W.puffs[i].t>3.2)W.puffs.splice(i,1);
-  for(const tr of W.leafTrees||[])if(Math.random()<dt*.8)W.leaves.push({x:tr[0]+rr(-40,40),y:tr[1]+rr(-40,40),z:rr(70,90),t:0,ph:rr(0,6),c:['#a8562a','#c87a2a','#d0a040'][Math.floor(Math.random()*3)]});
+  for(const tr of W.leafTrees||[])if(Math.random()<dt*.8&&nearScr(tr[0],tr[1],160))W.leaves.push({x:tr[0]+rr(-40,40),y:tr[1]+rr(-40,40),z:rr(70,90),t:0,ph:rr(0,6),c:['#a8562a','#c87a2a','#d0a040'][Math.floor(Math.random()*3)]});
   for(const l of W.leaves){l.t+=dt;l.z-=14*dt;l.x+=Math.sin(l.t*3+l.ph)*20*dt+6*dt}for(let i=W.leaves.length-1;i>=0;i--)if(W.leaves[i].z<0)W.leaves.splice(i,1)}
 // ------------------------------------------------------------------ le aree (area_mappa.js) si registrano in AREE; anteprima(id) costruisce e accende
 // quella della pagina di prova (anteprime/zombie/mk.py), il gioco vero la costruisce col menu (src/js/63-zombie.js)
@@ -17996,7 +18205,7 @@ function bootAsync(area,o){o=o||{};const keep=[window.CR&&CR.cam?Object.assign({
     const tb=performance.now(),ctl=boot(area,Object.assign({},o,{built:true}));W.dbg.tboot=performance.now()-tb;if(o.passo)o.passo(1);return ctl})}
 // la memoria (src/js/65-caricamento.js): con la mappa spenta e il gioco in secondo piano si butta la foto del terreno (30 MB, la cosa più
 // grande della mappa); ricuoci(o) la rifà a pezzi prima di riaccendere la mappa: gli stessi passi e lo stesso seme, viene uguale
-function libera(){if(!JOBS||!W.ground)return false;if(W.ground.tiles)for(const t of W.ground.tiles)t.c.width=t.c.height=0;else W.ground.width=W.ground.height=0;W.ground=null;return true}
+function libera(){if(!JOBS||!W.ground)return false;lcFree();if(W.ground.tiles)for(const t of W.ground.tiles)t.c.width=t.c.height=0;else W.ground.width=W.ground.height=0;W.ground=null;return true}
 function ricuoci(o){o=o||{};if(W.ground||!JOBS)return Promise.resolve(0);const sd=seed;
   return inPezzi((function*(){for(const[w,h,p] of JOBS)yield* bakeSteps(w,h,p)})(),o,JOBS.passi||40).then(n=>{JOBS.passi=n;seed=sd;if(o.passo)o.passo(1);return n})}
 function boot(area,o){o=o||{};const GAME=!!o.game;let ACT=!GAME,RUN=false,PAUSE=false;W.gioco=GAME?o:null;W.zoneAt=(x,y)=>area.zoneName?area.zoneName({x,y}):'';W.zoneIdAt=(x,y)=>area.zoneId?area.zoneId({x,y}):null;
@@ -18175,7 +18384,7 @@ function boot(area,o){o=o||{};const GAME=!!o.game;let ACT=!GAME,RUN=false,PAUSE=
     for(const[x,y] of[[0,0],[W.w,0],[W.w,W.h],[0,W.h]]){const dx=x-cx,dy=y-cy,u=dx*c-dy*s,v=dx*s+dy*c;for(const z of[0,90]){const Y=v*SP-z*CP;X0=Math.min(X0,u);X1=Math.max(X1,u);Y0=Math.min(Y0,Y);Y1=Math.max(Y1,Y)}}
     return[Math.min(Wp/(X1-X0+60),(Hp-150)/(Y1-Y0+30)),-(Y0+Y1)/2-10]}
   function render(dt,ix,iy){const Wp=ov.clientWidth,Hp=ov.clientHeight;if(cv.width!==Math.round(Wp*dpr)||cv.height!==Math.round(Hp*dpr)){cv.width=Math.round(Wp*dpr);cv.height=Math.round(Hp*dpr)}
-    const saved=ctx,lf=LOWFX;ctx=cv.getContext('2d');LOWFX=GAME?lf:low;const t0=performance.now();
+    const saved=ctx,lf=LOWFX;ctx=cv.getContext('2d');LOWFX=GAME?lf:low;const t0=performance.now();if(typeof glowTick==='function')glowTick();
     try{/* W.dbg.tm={}: i tempi delle parti del fotogramma (tempi_grande.js e le misure del punto 54) */const TM=W.dbg.tm,tk=TM?(k=>{const t=performance.now();TM[k]=(TM[k]||0)+t-TM._;TM._=t}):null;if(TM)TM._=performance.now();updateBeings(dt,{x:ix,y:iy});if(tk)tk('beings');updateAmbient(dt);if(tk)tk('ambient');if(area.update)area.update(dt);if(tk)tk('area');
       const h=W.hero;let tx,ty,z,oyT;
       if(camOv){tx=camOv[0];ty=camOv[1];z=zoomOv||Wp/330;oyT=0}
@@ -18183,13 +18392,24 @@ function boot(area,o){o=o||{};const GAME=!!o.game;let ACT=!GAME,RUN=false,PAUSE=
       else{const lk=(h.lvz||0)*CAM.CP/CAM.SP;tx=h.x-CAM.s*lk;ty=h.y-CAM.c*lk;z=zoomOv||Wp/330;oyT=24*CAM.CP}// l'eroe è il perno: girando resta fermo sullo schermo; sta 24 px (più alto se inclinato) sotto il centro
       const k6=Math.min(1,dt*6);CAM.z+=(z-CAM.z)*Math.min(1,dt*8);CAM.x+=(tx-CAM.x)*k6;CAM.y+=(ty-CAM.y)*k6;CAM.oy+=(oyT-CAM.oy)*k6;camDerive();
       ctx.setTransform(dpr,0,0,dpr,0,0);ctx.fillStyle='#0b0c12';ctx.fillRect(0,0,Wp,Hp);if(area.backdrop)area.backdrop(Wp,Hp);
-      ctx.setTransform(dpr*CAM.z,0,0,dpr*CAM.z,dpr*(Wp/2-CAM.x*CAM.z),dpr*(Hp/2+(CAM.oy-CAM.y)*CAM.z));
+      // (FASE 9) a vista dritta la telecamera sta su pixel interi della tela: le copie degli strati fermi (lcDraw) cadono 1:1
+      {const k=dpr*CAM.z,ex=dpr*(Wp/2-CAM.x*CAM.z),ey=dpr*(Hp/2+(CAM.oy-CAM.y)*CAM.z),pin=!CAM.rot&&!W.dbg.noLC;ctx.setTransform(k,0,0,k,pin?Math.round(ex):ex,pin?Math.round(ey):ey)}
       if(tk){ctx.getImageData(0,0,1,1);tk('backdrop')}drawWorld(dt,{Wp,Hp});if(tk){ctx.getImageData(0,0,1,1);tk('world')}
       drawDark(cv.width,cv.height,(x,y,r)=>{const p=scr(x,y);return[p[0],p[1],r*CAM.z*dpr]},houses[0]?houses[0].a:1);if(tk){ctx.getImageData(0,0,1,1);tk('dark')}
       ctx.setTransform(dpr,0,0,dpr,0,0);if(!W.dbg.noSticks&&!whole){drawStick(stick,64,Hp-196);drawLook(Wp-64,Hp-196)}
-      const vg=ctx.createRadialGradient(Wp/2,Hp/2,Math.min(Wp,Hp)*.4,Wp/2,Hp/2,Math.max(Wp,Hp)*.75);vg.addColorStop(0,'rgba(0,0,0,0)');vg.addColorStop(1,'rgba(0,0,0,.45)');ctx.fillStyle=vg;ctx.fillRect(0,0,Wp,Hp);
+      zVig(Wp,Hp);
       const show=hudOn&&!W.dbg.noSticks;if(nordEl.hidden===show)nordEl.hidden=!show;if(show)drawNord();if(tk){ctx.getImageData(0,0,1,1);tk('hud')}
     }catch(e){console.error(e)}finally{ms=ms*.93+(performance.now()-t0)*.07;ctx=saved;LOWFX=lf}}
+  /* la vignetta (FASE 9 del gioco, «più fluido sul telefono»): la sfumatura su tutto lo schermo si prepara una volta alla misura della tela e
+     poi si copia 1:1 a bande, saltando il centro trasparente (il cerchio di raggio min(Wp,Hp)·0,4); identica a prima */
+  let ZV=null;
+  function zVig(Wp,Hp){const W0=cv.width,H0=cv.height,key=W0+'x'+H0+'@'+dpr;
+    if(!ZV||ZV.key!==key){if(ZV)ZV.c.width=ZV.c.height=0;const c=document.createElement('canvas');c.width=W0;c.height=H0;const g=c.getContext('2d');g.setTransform(dpr,0,0,dpr,0,0);
+      const vg=g.createRadialGradient(Wp/2,Hp/2,Math.min(Wp,Hp)*.4,Wp/2,Hp/2,Math.max(Wp,Hp)*.75);vg.addColorStop(0,'rgba(0,0,0,0)');vg.addColorStop(1,'rgba(0,0,0,.45)');g.fillStyle=vg;g.fillRect(0,0,Wp,Hp);
+      const cx=dpr*Wp/2,cy=dpr*Hp/2,R=dpr*Math.min(Wp,Hp)*.4-1,B=[];
+      for(let y0=0;y0<H0;y0+=32){const y1=Math.min(H0,y0+32),dy=Math.max(Math.abs(y0-cy),Math.abs(y1-cy)),hw=dy<R?Math.sqrt(R*R-dy*dy):0,a=Math.max(0,Math.ceil(cx-hw)),b=Math.min(W0,Math.floor(cx+hw));B.push(hw>1&&b>a?[y0,y1-y0,a,b]:[y0,y1-y0,W0,W0])}
+      ZV={key,c,B}}
+    ctx.save();ctx.setTransform(1,0,0,1,0,0);for(const[y0,bh,a,b] of ZV.B){if(a>0)ctx.drawImage(ZV.c,0,y0,a,bh,0,y0,a,bh);if(b<W0)ctx.drawImage(ZV.c,b,y0,W0-b,bh,b,y0,W0-b,bh)}ctx.restore()}
   let fEma=.016,slowZ=0,slowR=0;/* DPRCUT: abbassata una volta, resta così per le partite dopo (niente 2 s di scatti a ogni partita) */
   function frame(now){if(!ACT){RUN=false;return}// la pagina spenta (nel gioco vero, col menu) non disegna niente
     if(W.dbg.halt){last=now;requestAnimationFrame(frame);return}// W.dbg.halt: le prove ferme il ciclo dei fotogrammi (misure senza disturbi)
@@ -18216,7 +18436,8 @@ function boot(area,o){o=o||{};const GAME=!!o.game;let ACT=!GAME,RUN=false,PAUSE=
       else if(a==='no')pzScr.querySelector('.mzsure').hidden=true;
       else if(a==='si'){setPause(false);if(W.director&&W.director.abbandona)W.director.abbandona()}})}
   function start(){if(ACT)return;keepCam();ACT=true;PAUSE=false;if(pzScr)pzScr.hidden=true;ov.hidden=false;dpr=DPRCUT?Math.min(1.5,DPR()):DPR();camRig();last=performance.now();if(!RUN){RUN=true;requestAnimationFrame(frame)}}
-  function stop(){if(!ACT)return;ACT=false;PAUSE=false;ov.hidden=true;reset();buyHold=false;if(crKeep)Object.assign(CR.cam,crKeep);if(rgKeep)Object.assign(RIGCAM,rgKeep);crKeep=rgKeep=null;cv.style.transform=''}
+  function stop(){if(!ACT)return;ACT=false;PAUSE=false;ov.hidden=true;reset();lcFree();// (le copie degli strati fermi: fuori dalla mappa non servono, si rifanno da sole)
+    buyHold=false;if(crKeep)Object.assign(CR.cam,crKeep);if(rgKeep)Object.assign(RIGCAM,rgKeep);crKeep=rgKeep=null;cv.style.transform=''}
   // una partita nuova: zombie, effetti, monete, arma, uccisioni; l'area rimette le sue cose (cancello chiuso, velo, zombie dell'aia, Bara al primo
   // posto, eroe alla partenza); il round da capo; la telecamera a nord sull'eroe
   function nuova(){if(!ACT)keepCam();W.Z.length=0;W.FX.length=0;W.puffs.length=0;W.toast=null;W.kills=0;for(const B of BARS)if(B.reset)B.reset();W.hero.busy=null;if(area.reset)area.reset();for(const hs of houses)hs.up=0;
@@ -18265,6 +18486,12 @@ function boot(area,o){o=o||{};const GAME=!!o.game;let ACT=!GAME,RUN=false,PAUSE=
     adj:()=>ORD.mm.adj,rel:(a,b)=>{const f=id=>ORD.last.concat(ORD.lastF).find(e=>e.sid===id),A=f(a),B=f(b);return A&&B?rel(A,B):null},// rel(id,id): il verdetto tra due voci dell'ultimo fotogramma
 orderReset:()=>{ORD.mm.m=new Map();ORD.fm.m=new Map();ORD.fr+=5},
     intra:id=>{const L=ORD.byId.get(id);return L?intraOrder(L).map(g=>({gi:g.gi,k:g.parts.map(t=>t.k).join(','),z0:g.z0,z1:g.z1})):null},
+    lc:()=>LCB,// le copie degli strati fermi (FASE 9): memoria, quante copie / dipinti / dal vivo (LCB.n)
+    lcReset:()=>{for(const L of LAYERS)if(L.lc)L.lc.st=true},// tutte le copie da ridipingere (prove)
+    // (prove) la copia di uno strato contro la stessa ridipinta adesso, con la telecamera di adesso: quanti pixel diversi
+    // (prove) gli strati con le copie: lcA (1 copia, 2 ridipinto, 3 dal vivo) e di quanto la copia è lontana dal disegno vero (dc, in px del mondo)
+    lcLayers:()=>LAYERS.filter(L=>L.lc&&L.lc.pp).map(L=>{const C=L.lc,a=C.pp,b=L.pp,k=LCB.T?LCB.T[0]:1,sb=L.sb;let d=0;if(b&&a.length===b.length)for(let i=0;i<a.length;i++)d=Math.max(d,Math.abs(a[i]-b[i]));
+      if(C.k&&C.k!==k)d+=Math.abs(C.k-k)/k*Math.max(Math.abs(sb[0]),Math.abs(sb[1]),Math.abs(sb[2]),Math.abs(sb[3]));return{id:L.sid,name:L.prop.name,A:L.lcA,f:L.lcF,dc:d,st:C.st,hot:C.hot,runs:C.runs.length}}),
     render:dt=>render(dt||0,0,0),navField:()=>navField(),vis:visAt,hit:(x,y,r)=>!!hit(x,y,r),heightAt,
     nav:()=>NAV&&{cw:NAV.cw,ch:NAV.ch,free:NAV.bl.reduce((s,v)=>s+(v?0:1),0)},navAt:(x,y)=>{if(!NAV)return null;const c=cellOf(x,y);return{bl:NAV.bl[c],bar:NAV.bar[c],bs:NAV.bs[c],D:NAV.dist[c]}},lureF:(L,x,y)=>{const F=lureField(L);return F[cellOf(x,y)]},/* la casella della griglia in (x, y): bloccata, barriera, lato, distanza dall'eroe; lureF: il campo verso una barriera chiusa */navRebuild:()=>{navBuild();NAV.hc=-1},
     zdraw:(g,k,x,y,fc,an,ph,sc)=>{const sv=ctx;ctx=g;try{CR[k](x,y,fc,an,ph,sc)}finally{ctx=sv}},/* un mostro disegnato in una tela qualunque (prove) */
@@ -20633,9 +20860,10 @@ ZM.macchine={PERK,PK,EL,FG,ELI,FORGE,VALVES,power:()=>POWER,setPower:v=>{if(v&&!
 // (il cancello di ferro, 750). La pianta è in pianta_grande.py.
 (()=>{const{T,P,G,prop,solid,holes,perches,bakeGround,boot,W,rr,srand,box,shade,prismY,line3,TAU}=ZM;
 const X=v=>v*T,Y=v=>(v+2)*T,AX=v=>(v+2)*T,AY=v=>(v+16)*T;
-// le cose che una partita cambia e che una partita nuova rimette com'erano: l'eroe alla partenza, gli zombie fermi nell'aia, il velo sulla fattoria
+// le cose che una partita cambia e che una partita nuova rimette com'erano: l'eroe alla partenza, il velo sulla fattoria (gli zombie fermi nelle zone chiuse solo per le prove: fermi())
 const HERO0=()=>({x:AX(4.4),y:AY(8.4),face:-Math.PI/2,walk:0,moving:false,aim:0,fireCd:0}),IDLE=[['zombie',6.0,8.6,2],['lanterna',9.3,5.3,2],['strisciante',8.9,8.7,2],['zombie',19.4,18.6,3],['minatore',23.4,16.7,3],['strisciante',27.2,19.0,3],['zombie',22.6,9.4,4],['hound',19.0,9.8,4],['lanterna',27.9,7.7,4]],
   veil=()=>({y:Y(12.3),k:1,wisps:Array.from({length:8},(_,i)=>({x:rr(0,16*T),y:rr(Y(1),Y(11.4)),r:rr(110,190),v:rr(5,11)}))});
+const fermi=()=>{if(W.dbg&&W.dbg.fermi)for(const[k,x,y,z] of IDLE)ZM.idleZombie(k,X(x),Y(y),z)};
 // ---------- le ZONE NUOVE (anteprima 48): il Borgo dei Lumi (3) e la Segheria del Fiume (4), coi confini, le barriere a pagamento, le uscite
 // degli zombie e il terreno. Coordinate in caselle della pianta (pianta_grande.py). Regole: niente corridoi tra 18 e 34 px; davanti a porte,
 // finestre e barriere resta posto; le buche delle zone nuove hanno la loro zona (da una zona chiusa non esce nessuno)
@@ -20719,9 +20947,12 @@ function buildEast(w,h){const E={};const hole=(x,y,z,k)=>holes.push([x,y,z,k||nu
 function SG_FACE(x,y,key){for(const p of ZM.props){for(const t of p.parts)if(t.k==='face'&&t.key===key&&t.part==='wS'&&Math.abs(t.c[0][1]-y)<1.5&&Math.min(t.c[0][0],t.c[1][0])<x&&Math.max(t.c[0][0],t.c[1][0])>x)return t}return null}
 function FU_FACE(F){for(const p of ZM.props){if(p.name!=='fucina')continue;for(const t of p.parts)if(t.k==='face'&&t.key==='n'&&Math.abs(t.c[0][1]-F.wallY)<1.5)return t}return null}
 const AREA={title:'Camposanto',zoneName:h=>h.y<Y(12.3)?(h.x<X(16)?'Fattoria dei Corvi':'Segheria del Fiume'):(h.x<X(14)?'Camposanto':'Borgo dei Lumi'),
+  // (Denis, 20 ottobre: «dammi l'anteprima giusta coi zombie che non spawnano nelle aree chiuse») niente più zombie fermi nelle zone ancora
+  // chiuse (tre nell'aia, tre nel Borgo, tre nella Segheria, che dall'altra parte del cancello e delle assi sembravano nati lì): restano solo
+  // per le prove che li cercano apposta (W.dbg.fermi)
   zoneId:h=>h.y<Y(12.3)?(h.x<X(16)?2:4):(h.x<X(14)?1:3),
   // una partita nuova (ZM.ctl.nuova): 500 monete, la fattoria chiusa col cancello e il velo, gli zombie dell'aia, la Bara al cimitero, l'eroe alla partenza
-  reset(){W.coins=500;W.zoneOpen={1:true,2:false,3:false,4:false};W.gate.open=false;if(AREA.gate)AREA.gate.close();for(const b of AREA.bars||[])b.close();W.split=veil();for(const[k,x,y,z] of IDLE)ZM.idleZombie(k,X(x),Y(y),z);ZM.boxReset();W.hero=HERO0()},
+  reset(){W.coins=500;W.zoneOpen={1:true,2:false,3:false,4:false};W.gate.open=false;if(AREA.gate)AREA.gate.close();for(const b of AREA.bars||[])b.close();W.split=veil();fermi();ZM.boxReset();W.hero=HERO0()},
   build(){const w=30*T,h=29*T;srand(11);W.coins=500;W.maxZ=6;W.zoneOpen={1:true,2:false,3:false,4:false};// sotto l'area di partenza tre caselle di nebbia (non ci si va)
     // ================================================================ AREA 1: Camposanto e Casa (l'anteprima di prima, spostata)
     P.wall(AX(0),AY(.35),AX(3.7)+6,AY(.35),true);P.wall(AX(0),AY(7.3),AX(3.7)+6,AY(7.3),true);P.wall(AX(3.7),AY(.35)+7.5,AX(3.7),AY(4.95)-15,true);P.wall(AX(3.7),AY(6.05)+15,AX(3.7),AY(7.3)-7.5,true);
@@ -20775,7 +21006,7 @@ const AREA={title:'Camposanto',zoneName:h=>h.y<Y(12.3)?(h.x<X(16)?'Fattoria dei 
     {const cx=X(2.32),cy=Y(5.95),wl=X(7.6)-X(4.3),dl=X(4.0)-X(.5);ZM.turn(cx,cy,1,()=>P.house(cx-wl/2,cy-dl/2,wl,dl,{wall:'stoneW',roof:'tile',boards:[0,1,2]}))}
     P.pump(X(5.15),Y(7.5));P.trough(X(5.15)+13,Y(7.36),44,18);P.well(X(7.8),Y(6.6));
     P.hay(X(10.0)-17,Y(4.6)-11);P.hay(X(10.0)-17,Y(7.7)-11);P.barrel(X(4.95),Y(4.65));P.barrel(X(5.25),Y(4.5),.85);P.crate(X(10.05),Y(5.35));
-    for(const[k,x,y,z] of IDLE)ZM.idleZombie(k,X(x),Y(y),z);
+    fermi();
     // il fienile rosso col portone sull'aia; la Pompa da caccia col gesso sul muro ovest, a sud del portone
     const barn=P.barn(X(11.0),Y(4.12),X(15.4)-X(11.0),Y(8.32)-Y(4.12));// (36 px dalla staccionata: niente corridoi tra 18 e 34 px)
     const wWall=face('barn','wW','w',t=>Math.min(...t.c.map(q=>q[1]))>Y(6.5));ZM.group([X(11.0),Y(4.12),X(15.4),Y(8.32)],()=>P.wallGun(X(11.0)-.6,Y(7.45),22,'y','pompa',1500,wWall));
@@ -21191,6 +21422,14 @@ function zfZombies(dt){const Z=FALO.Z;if(!FALO.zInit){FALO.zInit=1;Z.push(zfWalk
     // where it faces: along the path; at the look it turns to us (or to the hero by the fire) in a moment, back slowly
     const tgt=z.st==='look'?(z.look===1?Math.PI/2:Math.atan2(40,(FALO.hx||156)-z.x)):z.dir>0?0:Math.PI,k=z.st==='look'?Math.min(1,dt*14):Math.min(1,dt*3);
     let d=tgt-z.face;d=Math.atan2(Math.sin(d),Math.cos(d));z.face+=d*k}}
+// (FASE 9) a zombie on the path: painted in a little canvas of its own and copied where it is; each one is painted again every other frame,
+// in turn (they are small and far; when it changes what it does, at once). With the view turned or tilted (never here) drawn as before
+function zfZDraw(z,f,an,sc){const m=ctx.getTransform();if(m.b||m.c||!(m.a>0)){f(z.x,z.y,z.face,an,z.p,sc);return}
+  const k=m.a,W=Math.ceil(96*sc*k),H=Math.ceil(110*sc*k),fx=W/2,fy=Math.round(H*.8);let c=z.cv;if(!c)c=z.cv=document.createElement('canvas');
+  const i=FALO.Z.indexOf(z),key=[W,H,an].join('|');FALO.zc=(FALO.zc||0);
+  if(c.width!==W||c.height!==H||z.ck!==key||((FALO.zc+i)&1)===0){if(c.width!==W||c.height!==H){c.width=W;c.height=H}z.ck=key;
+    const g=c.getContext('2d'),sv=ctx;g.setTransform(1,0,0,1,0,0);g.clearRect(0,0,W,H);g.setTransform(k,0,0,k,fx,fy);ctx=g;try{f(0,0,z.face,an,z.p,sc)}finally{ctx=sv}}
+  ctx.save();ctx.setTransform(1,0,0,1,0,0);ctx.drawImage(c,m.a*z.x+m.e-fx,m.d*z.y+m.f-fy);ctx.restore()}
 // a far groan, panned where the zombie stands (the audio may not be open yet: then nothing)
 function sndZGroan(z){try{if(!AU.ctx||!AU.on.sfx||$('menu').hidden)return;const c=AU.ctx,t=c.currentTime,pan=c.createStereoPanner?c.createStereoPanner():null,g=c.createGain(),o=c.createOscillator(),f=c.createBiquadFilter();
   o.type='sawtooth';const f0=70+Math.random()*30;o.frequency.setValueAtTime(f0,t);o.frequency.linearRampToValueAtTime(f0*.78,t+1.1);f.type='lowpass';f.frequency.value=420;f.Q.value=6;
@@ -21277,9 +21516,9 @@ drawFalo=function(A){const t=A.t,dt=A.dt,hs=A.hs,hx=A.hx,hy=A.hy;FALO.hx=hx;FALO
       ctx.strokeStyle='rgba(12,20,18,.92)';seg([ax+Math.cos(a+1.57)*2.4,ay+Math.sin(a+1.57)*2.4],[ex+Math.cos(a+1.57)*2.4,ey+Math.sin(a+1.57)*2.4]);ctx.stroke()}
     ctx.fillStyle='#0a1210';circ(mx,my,2.4);ctx.fill()}
   // the zombies on the path (far away: small and dim, eyes still glowing), behind the fence
-  zfZombies(dt);
+  zfZombies(dt);FALO.zc=(FALO.zc||0)+1;
   for(const z of FALO.Z.slice().sort((a,b)=>a.y-b.y)){const an=z.st==='walk'?'walk':'idle',f=CR[z.kind];if(!f)continue;ctx.save();ctx.globalAlpha=.9;
-    try{f(z.x,z.y,z.face,an,z.p,hs*.3)}catch(e){}ctx.restore()}
+    try{zfZDraw(z,f,an,hs*.3)}catch(e){}ctx.restore()}
   ctx.drawImage(zfFence(),ZFX0,ZFY0,ZFW,ZFH);
   // fog over the field
   if(!LOWFX){const im=glowSprite('150,175,160');ctx.save();for(let k=0;k<5;k++){const w=150+k*30,fx=((k*137+t*(4+k*1.6))%(360+w*2))-w,fy=132+k*9;ctx.globalAlpha=.1+.03*Math.sin(t*.3+k);ctx.drawImage(im,fx,fy-12,w*2,26)}ctx.restore();ctx.globalAlpha=1}
@@ -21297,6 +21536,10 @@ drawFalo=function(A){const t=A.t,dt=A.dt,hs=A.hs,hx=A.hx,hy=A.hy;FALO.hx=hx;FALO
   // the camp's things on a layer of their own (same transform), lit by the fire afterwards: only where there is something
   const M=ctx.getTransform(),L=FALO.lay||(FALO.lay=document.createElement('canvas')),bx0=-60,by0=-64,bw=98,bh=76,
     d0=[M.a*bx0+M.e,M.d*by0+M.f],W1=Math.ceil(bw*M.a)+2,H1=Math.ceil(bh*M.d)+2;if(L.width<W1)L.width=W1;if(L.height<H1)L.height=H1;
+  // (FASE 9) while the hero sits still by the fire the layer is painted every other frame (his breath takes 9 s, the fire's light on him
+  // flickers slower than 30 times a second): the frame in between copies the last one. Standing up, walking off, any change: every frame
+  const lk=[M.a,M.d,M.e,M.f,W1,H1].join('|'),still=!(A.walk>0)&&(A.k==null||A.k>=.999),reuse=still&&FALO.lk===lk&&((FALO.lf=(FALO.lf||0)+1)&1)===1;
+  if(!reuse){FALO.lk=lk;
   const lg=L.getContext('2d'),sv=ctx;lg.setTransform(1,0,0,1,0,0);lg.clearRect(0,0,L.width,L.height);lg.setTransform(M.a,0,0,M.d,M.e-Math.floor(d0[0]),M.f-Math.floor(d0[1]));ctx=lg;
   try{
     // the log runs almost across the screen (people sit a little turned), the hero on it, facing the fire. Behind it the shovel stuck in
@@ -21321,7 +21564,7 @@ drawFalo=function(A){const t=A.t,dt=A.dt,hs=A.hs,hx=A.hx,hy=A.hy;FALO.hx=hx;FALO
       const g=tg.createRadialGradient(fq[0],fq[1]-6,2,fq[0],fq[1]-6,56);g.addColorStop(0,`rgba(255,160,70,${(.95*fl).toFixed(3)})`);g.addColorStop(.5,`rgba(255,130,50,${(.55*fl).toFixed(3)})`);g.addColorStop(1,'rgba(255,110,40,0)');
       tg.fillStyle=g;tg.fillRect(bx0,by0,bw,bh);tg.setTransform(1,0,0,1,0,0);tg.globalCompositeOperation='destination-in';tg.drawImage(L,0,0);
       lg.save();lg.setTransform(1,0,0,1,0,0);lg.globalCompositeOperation='soft-light';lg.drawImage(Tm,0,0);lg.globalCompositeOperation='lighter';lg.globalAlpha=.16;lg.drawImage(Tm,0,0);lg.restore()}
-  }finally{ctx=sv}
+  }finally{ctx=sv}}
   ctx.save();ctx.setTransform(1,0,0,1,0,0);ctx.drawImage(L,0,0,W1,H1,Math.floor(d0[0]),Math.floor(d0[1]),W1,H1);ctx.restore();
   // the fire: scorched ground, the ring of stones, the logs, the flames
   {const q=V0.P(F3);ctx.fillStyle='#16110d';ctx.beginPath();ctx.ellipse(q[0],q[1],9.5,9.5*.55,0,0,TAU);ctx.fill();ctx.fillStyle='rgba(120,110,100,.35)';for(let i=0;i<9;i++){const a=i*2.3;ctx.fillRect(q[0]+Math.cos(a)*5,q[1]+Math.sin(a)*2.4,1.2,.8)}
@@ -21344,13 +21587,13 @@ drawFalo=function(A){const t=A.t,dt=A.dt,hs=A.hs,hx=A.hx,hy=A.hy;FALO.hx=hx;FALO
   const q=[hx+fc[0]*s,cy0+fc[1]*.55*s],lx=campLx,LOF=300,LH2=SH+600;lx.globalCompositeOperation='source-over';lx.clearRect(0,0,SW,LH2);lx.fillStyle='rgba(2,6,8,.42)';lx.fillRect(0,0,SW,LH2);
   lx.globalCompositeOperation='destination-out';const spr=glowSprite('0,0,0'),Lt=(x,y,r,a)=>{lx.globalAlpha=Math.min(1,a);lx.drawImage(spr,x-r,y+LOF-r,r*2,r*2)};
   Lt(q[0],q[1]-6*s,(30+16*s)*fl,1);Lt(q[0],q[1]-4*s,(14+9*s)*fl,1);Lt(hx,cy0-14*s,(16+10*s)*fl,.7);Lt(268,-108,52,.7);Lt(111,103,14,.6);
-  lx.globalAlpha=1;ctx.drawImage(campL,0,-LOF,SW,LH2);
+  lx.globalAlpha=1;campLightBlit();
   // the eyes of the zombies on the path: two small glows that breathe, above the dark
   if(!LOWFX){ctx.save();ctx.globalCompositeOperation='lighter';for(const z of FALO.Z){const k=.6+.4*Math.sin(t*2.2+z.x*.1),sc=hs*.3,e=CR._rig.V(z.face).P(4.6,0,0),hxz=z.x+e[0]*sc,hyz=z.y-34*sc+e[1]*sc;
       if(Math.cos(z.face-Math.PI/2)>-.3){glow('200,255,120',hxz,hyz,3.2*sc,.5*k);glow('220,255,160',hxz,hyz,1.1*sc,.9*k)}}ctx.restore()}
   // the fire's warm light on everything near (it flickers)
   if(!LOWFX){ctx.save();ctx.globalCompositeOperation='lighter';glow('255,130,50',q[0],q[1]-8*s,(26+12*s)*fl,.17*fl);glow('255,170,90',q[0],q[1]-5*s,(10+6*s)*fl,.14);ctx.restore()}
-  const v=ctx.createRadialGradient(SW/2,SH*.6,SH*.4,SW/2,SH*.6,SH*1.35);v.addColorStop(0,'rgba(0,0,0,0)');v.addColorStop(1,'rgba(0,0,0,.5)');ctx.fillStyle=v;ctx.fillRect(-400,-LOF,SW+800,LH2)}}
+  campVigDraw(1.35)}}
 // =====================================================================
 // TWO MENUS (punti 42-44 del piano di Denis): the Classic menu and the Zombie menu are two different places. On the home a swipe sideways
 // in the middle of the screen, or a tap on the little zombie hand peeking at the top right (on the Zombie side: the moss sprout at the top
@@ -21474,7 +21717,7 @@ document.addEventListener('click',e=>{if(MM.eatNext){MM.eatNext=false;e.stopProp
 // the home canvas' frame: the same as drawCamp's (the hero's feet just above the «Cambia» pill, his scale hs)
 function campFrame(){campResize();const cr=campCv.getBoundingClientRect(),dpr=campCv.width/Math.max(1,cr.width),hp=$('heroPill').getBoundingClientRect(),tb=$('topbar').getBoundingClientRect();
   const u=campCv.width/SW,top=(tb.bottom-cr.top)*dpr,feet0=(hp.top-cr.top)*dpr,room=Math.max(80*dpr,feet0-top),hs=clamp(Math.min(room*.56,215*dpr)/(46*u),1.4,3.6),feet=feet0-13*hs*u,
-    oy=feet-HOME_Y*u,ox=campCv.width/2-180*u;return{u,ox,oy,dpr,hs}}
+    oy=Math.round(feet-HOME_Y*u),ox=Math.round(campCv.width/2-180*u);return{u,ox,oy,dpr,hs}}
 // the Zombie home: the campfire (k: how much the hero is sitting); while walking off to play, he stands up and the night swallows the screen
 function drawCampZ(dt,k){const F=campFrame(),saved=ctx;ctx=campX;const t=CAMP.t;try{
   ctx.setTransform(1,0,0,1,0,0);ctx.fillStyle='#020407';ctx.fillRect(0,0,campCv.width,campCv.height);ctx.setTransform(F.u,0,0,F.u,F.ox,F.oy);
@@ -21519,6 +21762,8 @@ AMBEV.zmenu=[[.08,.35,t=>fNoise(t,.01,'highpass',VR(2600,.35),.7,.04)],[1.2,3.2,
 // (the ambience follows the mode by itself: src/js/57-suoni2-atmosfera.js picks 'zmenu' in the Zombie menu)
 // the menu's music follows the mode too (showMenu plays 'menu')
 {const _pm=playMusic;playMusic=function(name){if(name==='menu'&&zMode()&&!MM.tr)name='zmenu';return _pm.call(this,name)}}
+// the frames of the menu count for the soft lights copied one to one (phase 9, glowFast)
+{const _dc=drawCamp;drawCamp=function(){glowTick();return _dc.apply(this,arguments)}}
 applyModeUI();
 // =====================================================================
 // THE ECONOMY OF THE TWO MODES (punti 25-34 del piano di Denis, anteprima 47). Five systems kept apart in the code, the inventories and
@@ -22019,7 +22264,10 @@ const PK={on:false,kind:'',rar:'',t:0,last:0,cv:null,buf:null,lo:null,hi:null,do
 .zlk.fifth{box-shadow:0 0 0 2px #ffd84a inset}
 small.zlk{display:block;background:none;border:0;opacity:.7}
 @media (prefers-reduced-motion:reduce){.chestWrap.pack.idle{animation:none}}`;document.head.appendChild(st)}
-function pkResize(){const c=PK.cv;if(!c)return;const r=c.getBoundingClientRect(),d=Math.min(2,window.devicePixelRatio||1);const w=Math.max(10,Math.round(r.width*d)),h=Math.max(10,Math.round(r.height*d));
+// the pack's canvas as big as it is on the screen; made again only when it gets bigger than the canvas or much smaller (phase 9: its box
+// changed a little at every frame while it floats and tilts, and the canvas and its buffer were made again each time)
+function pkResize(){const c=PK.cv;if(!c)return;const r=c.getBoundingClientRect(),d=Math.min(2,window.devicePixelRatio||1);let w=Math.max(10,Math.round(r.width*d)),h=Math.max(10,Math.round(r.height*d));
+  if(w<=c.width&&h<=c.height&&w>=c.width*.8&&h>=c.height*.8)return;w=Math.round(w*1.06);h=Math.round(h*1.06);
   if(c.width!==w||c.height!==h){c.width=w;c.height=h;PK.buf.width=w;PK.buf.height=h}}
 // one frame of the pack: the cover drawn again (its animations), then cut along the tear: the body, the slit with light coming out, the strip
 // lifted where it is torn; once torn the strip flies away
@@ -22801,10 +23049,11 @@ function airDecor(a){if(LOWFX)return;const t=AW_(),[k,n,c]=a,W=R-L,H=BOT-TOP+40,
     else if(k==='wind'){const y=TOP+20+r2*(BOT-TOP-40),ph2=(t*.5+r1)%1,x=L-60+ph2*(W+120);ctx.strokeStyle=`rgba(255,255,255,${.22*Math.sin(ph2*Math.PI)})`;ctx.lineWidth=1.2;ctx.beginPath();ctx.moveTo(x,y);ctx.quadraticCurveTo(x+20,y-4,x+44,y);ctx.stroke()}}}
 // ------------------------------------------------------------------ the light of the arena (over the room, soft)
 function arsLight(lt){if(LOWFX||!lt)return;const t=AW_();ctx.save();ctx.globalCompositeOperation='lighter';
-  if(lt.shafts||lt.sun){const rgb=lt.shafts||lt.sun;for(let k=0;k<3;k++){const x=L+40+k*(R-L-80)/2+Math.sin(t*.2+k)*10,a=.05+.025*Math.sin(t*.6+k*2),g=ctx.createLinearGradient(0,TOP,0,BOT);g.addColorStop(0,`rgba(${rgb},${a*1.6})`);g.addColorStop(1,`rgba(${rgb},0)`);ctx.fillStyle=g;
+  if(lt.shafts||lt.sun){const rgb=lt.shafts||lt.sun;for(let k=0;k<3;k++){const x=L+40+k*(R-L-80)/2+Math.sin(t*.2+k)*10,a=.05+.025*Math.sin(t*.6+k*2);
+    if(stripFast('as|'+rgb+'|'+(lt.sun?1:0)+'|'+TOP+'|'+BOT,[[x,TOP-10],[x+30,TOP-10],[x+(lt.sun?140:90),BOT],[x+(lt.sun?80:50),BOT]],rgb,TOP,BOT,a*1.6,'lighter'))continue;const g=ctx.createLinearGradient(0,TOP,0,BOT);g.addColorStop(0,`rgba(${rgb},${a*1.6})`);g.addColorStop(1,`rgba(${rgb},0)`);ctx.fillStyle=g;
     ctx.beginPath();ctx.moveTo(x,TOP-10);ctx.lineTo(x+30,TOP-10);ctx.lineTo(x+(lt.sun?140:90),BOT);ctx.lineTo(x+(lt.sun?80:50),BOT);ctx.closePath();ctx.fill()}}
   if(lt.pulse){const b=.5+.5*Math.sin(t*1.1);for(const[x,y] of[[L,BOT],[R,BOT],[L,TOP+30],[R,TOP+30]])glow(lt.pulse,x,y,120,.06+.05*b)}
-  if(lt.cold){const g=ctx.createLinearGradient(0,TOP-20,0,TOP+120);g.addColorStop(0,`rgba(${lt.cold},.12)`);g.addColorStop(1,`rgba(${lt.cold},0)`);ctx.fillStyle=g;ctx.fillRect(0,TOP-20,AW,140)}
+  if(lt.cold&&!stripFast('ac|'+lt.cold+'|'+AW+'|'+TOP,[[0,TOP-20],[AW,TOP-20],[AW,TOP+120],[0,TOP+120]],lt.cold,TOP-20,TOP+120,.12,'lighter')){const g=ctx.createLinearGradient(0,TOP-20,0,TOP+120);g.addColorStop(0,`rgba(${lt.cold},.12)`);g.addColorStop(1,`rgba(${lt.cold},0)`);ctx.fillStyle=g;ctx.fillRect(0,TOP-20,AW,140)}
   ctx.restore()}
 // ------------------------------------------------------------------ hooked to the room and to the drawing
 {const _be=buildEnv;buildEnv=function(){_be.apply(this,arguments);try{arsBuild()}catch(e){console.error(e);G.ars=null}}}
@@ -44010,6 +44259,129 @@ function cuPlay(k,x,arg){if(typeof AU==='undefined'||!AU.ctx||!AU.on.sfx||!CUSND
 {const _s=sfx;sfx=function(k,arg,x){if(k==='eshot'&&CUSND[arg]&&arg.startsWith('cu')){cuPlay(arg,x);return}
   if(CU.on&&k==='eshot'&&arg){const e=CU.cur,nb=cuNewBoss(e),b=(nb&&CUBS2[e.type]&&CUBS2[e.type][arg])||((nb||!e&&arg!=='crystal')&&CUBS[arg]);if(b){cuPlay(b,x);return}}
   return _s.apply(this,arguments)}}
+// ===================================================================== THE METER (FASE 9, Denis, 20 October: «non è cambiato un cazzo»,
+// then «vai»): the measurements so far came from a computer without a graphics card that imitates a phone; this shows what really happens on
+// Denis's iPhone. Every requestAnimationFrame callback is timed (the frames are grouped by the timestamp the browser gives them), and inside
+// the main loop the big pieces too (update, render, the camp, the menu background…). A small chip shows the frames per second; a tap opens
+// the panel: now (fps, frame time, our code, the rest = the phone drawing and showing the page, hitches), one row per screen since the page
+// opened (zombie map, Zombie menu, chests, packs, battle…), the device (iOS, screen, canvases, inside another page or not) and «Copia», which
+// copies everything as text to send in the chat. «Parti della mappa» times the parts of the zombie map for 5 s (with a flush after every
+// part: it shows what the graphics card does, and slows the map a little while it runs).
+// On in the preview (window.MB_CONTATORE, set by the preview's page) and from Impostazioni → Contatore (SAVE.set.perf); off in the game.
+// It costs two performance.now() per callback when on, nothing when off (the requestAnimationFrame wrapper is installed only when on), and
+// the chip's text changes twice a second. It draws nothing on the canvases, so the game looks the same.
+const CNT={on:false,inst:false,ts:-1,js:0,tj:0,parts:null,scene:'',ring:[],sc:{},order:[],open:false,tm:null,tmT:0,tmN:0,tmRes:null,last:0,pos:0,el:null,pn:null};
+const CNT_NAMES={loop:'gioco',frame:'mappa zombie',fxFrame:'casse (effetti)',pkFrame:'bustine',proLoop:'prologo',sceLoop:'creazione',wardLoop:'guardaroba',
+  step:'animazioni del menu',whLoop:'ruota',update:'· aggiornamento',render:'· disegno della stanza',hud:'· scritte',drawCamp:'· cripta e falò',drawMenuBg:'· sfondo dei menu',
+  drawHeroPreview:'· eroe nel menu'};
+const CNT_TM={beings:'aggiornamento zombie ed eroe',ambient:'nebbia, foglie, fumo',area:'aggiornamento della mappa',backdrop:'fondo',world:'mondo (terreno, case, oggetti, zombie)',dark:'buio e luci',hud:'scritte'};
+function cntWanted(){const s=SAVE&&SAVE.set||{};return s.perf===true||(s.perf!==false&&!!window.MB_CONTATORE)}
+function cntScene(){try{
+  if(typeof LOAD!=='undefined'&&LOAD.on)return'Caricamento';if(PRO.on)return'Prologo';if(SCE.on)return'Creazione dell\'eroe';if(INTRO.on)return'Filmato';if(ZG.on)return'Mappa zombie';
+  if(PK.on)return'Bustine';if(!$('chestScr').hidden)return'Casse';
+  if(!$('menu').hidden){const z=SAVE.modo==='zombie';return(z?'Menu Zombie':'Menu Classica')+($('tabPlay').hidden?' (pagine)':'')}
+  return'Battaglia'}catch(e){return'Altro'}}
+// one frame is over: its length (from the previous frame's timestamp) and what our code took in it
+function cntEnd(dt){if(document.hidden||dt>1000||dt<=0)return;const s=CNT.scene,R=CNT.ring,tj=CNT.tj;CNT.tj=0;R.push({i:dt,j:CNT.js,t:tj,s,p:CNT.parts});if(R.length>720)R.shift();
+  let S=CNT.sc[s];if(!S){S=CNT.sc[s]={n:0,i:0,j:0,t:0,b34:0,b50:0,worst:0,win:0,wn:0,minF:1e9,p:{}};CNT.order.push(s)}
+  S.n++;S.i+=dt;S.j+=CNT.js;S.t+=tj;if(dt>34)S.b34++;if(dt>50)S.b50++;if(dt>S.worst)S.worst=dt;S.win+=dt;S.wn++;
+  if(S.win>=1000){const f=S.wn*1000/S.win;if(f<S.minF)S.minF=f;S.win=0;S.wn=0}
+  for(const k in CNT.parts)S.p[k]=(S.p[k]||0)+CNT.parts[k];
+  if(CNT.tm){CNT.tmN+=CNT.parts['mappa zombie']?1:0;if(performance.now()-CNT.tmT>5000)cntTmEnd()}}
+function cntFrame(ts){if(ts===CNT.ts)return;if(CNT.ts>=0)cntEnd(ts-CNT.ts);CNT.ts=ts;CNT.js=0;CNT.parts={};CNT.scene=cntScene()}
+const CNT_RAF=window.requestAnimationFrame.bind(window),CNT_SI=window.setInterval.bind(window);
+function cntInstall(){if(CNT.inst)return;CNT.inst=true;
+  window.requestAnimationFrame=function(cb){return CNT_RAF(function(ts){if(!CNT.on)return cb(ts);cntFrame(ts);const t0=performance.now();
+    try{return cb(ts)}finally{const d=performance.now()-t0,k=CNT_NAMES[cb.name]||cb.name||'altro';CNT.js+=d;CNT.parts[k]=(CNT.parts[k]||0)+d}})};
+  // the code that runs between frames in timers (the music scheduler, the menus): «altro codice»
+  const tw=f=>function(fn){if(typeof fn!=='function')return f.apply(window,arguments);const a=Array.prototype.slice.call(arguments);
+    a[0]=function(){if(!CNT.on)return fn.apply(this,arguments);const t0=performance.now();try{return fn.apply(this,arguments)}finally{CNT.tj+=performance.now()-t0}};return f.apply(window,a)};
+  window.setTimeout=tw(window.setTimeout);window.setInterval=tw(window.setInterval);
+  // the big pieces of the main loop (inside «gioco»: they are not added to the frame's code time a second time)
+  const wrap=(f,name)=>function(){if(!CNT.on||!CNT.parts)return f.apply(this,arguments);const t0=performance.now();try{return f.apply(this,arguments)}finally{const k=CNT_NAMES[name];CNT.parts[k]=(CNT.parts[k]||0)+performance.now()-t0}};
+  update=wrap(update,'update');render=wrap(render,'render');hud=wrap(hud,'hud');drawCamp=wrap(drawCamp,'drawCamp');drawMenuBg=wrap(drawMenuBg,'drawMenuBg');drawHeroPreview=wrap(drawHeroPreview,'drawHeroPreview')}
+// «Parti della mappa»: the zombie map's own timers (motore.js, W.dbg.tm) for 5 s
+function cntTmStart(){const W=ZM&&ZM.W;if(!W||!ZG.on){toast('Apri la mappa zombie e poi tocca qui');return}W.dbg.tm={};CNT.tm=W.dbg.tm;CNT.tmT=performance.now();CNT.tmN=0;CNT.tmRes=null;cntDraw(true)}
+function cntTmEnd(){const W=ZM&&ZM.W,tm=CNT.tm;CNT.tm=null;if(W)W.dbg.tm=null;if(!tm||!CNT.tmN)return;const out=[];for(const k in CNT_TM)if(tm[k]!=null)out.push([CNT_TM[k],tm[k]/CNT.tmN]);
+  out.sort((a,b)=>b[1]-a[1]);CNT.tmRes={n:CNT.tmN,rows:out};cntDraw(true)}
+const cntF=(v,d)=>(v==null||!isFinite(v)?'–':v.toFixed(d==null?1:d)).replace('.',',');
+function cntMed(a){if(!a.length)return 0;const b=a.slice().sort((x,y)=>x-y);return b[b.length>>1]}
+function cntNow(){const R=CNT.ring;let i=R.length-1,sum=0,n=0,js=0,tj=0,worst=0,b50=0,parts={};const r1=[],j1=[];
+  for(let k=R.length-1,acc=0;k>=0&&acc<10000;k--){const f=R[k];acc+=f.i;if(f.i>50)b50++}
+  let c30=0;for(;i>=0&&sum<2000;i--){const f=R[i];if(f.i>31&&f.i<36)c30++;sum+=f.i;n++;js+=f.j;tj+=f.t||0;if(f.i>worst)worst=f.i;r1.push(f.i);j1.push(f.j);for(const k in f.p)parts[k]=(parts[k]||0)+f.p[k]}
+  return{c30:n?c30/n:0,fps:n?n*1000/sum:0,ms:n?sum/n:0,js:n?js/n:0,tj:n?tj/n:0,worst,b50,parts,n,medI:cntMed(r1),medJ:cntMed(j1),scene:R.length?R[R.length-1].s:CNT.scene}}
+function cntDevice(){const u=navigator.userAgent||'',io=u.match(/OS (\d+)_(\d+)/),cv=$('cv'),mz=document.getElementById('mzCv'),cc=$('campCv');
+  const sz=c=>c&&c.width?c.width+'×'+c.height:'–';
+  return{tel:/iPhone/.test(u)?'iPhone'+(io?' iOS '+io[1]+'.'+io[2]:''):/iPad/.test(u)?'iPad':/Android/.test(u)?'Android':'computer',
+    scr:innerWidth+'×'+innerHeight+' ×'+(window.devicePixelRatio||1),dentro:window.self!==window.top,app:!!navigator.standalone||matchMedia('(display-mode: standalone)').matches,
+    tele:'stanza '+sz(cv)+(mz?' · mappa '+sz(mz):'')+' · menu '+sz(cc),
+    graf:(SAVE.set.q||'auto')+(typeof RESCUT!=='undefined'&&RESCUT?', risoluzione ridotta':'')+(LOWFX?', effetti ridotti':'')}}
+function cntText(){const N=cntNow(),D=cntDevice(),L=[];
+  L.push('Contatore Mossbound · '+new Date().toLocaleString('it-IT'));
+  L.push('Telefono: '+D.tel+' · schermo '+D.scr+(D.app?' · app dalla schermata Home':'')+(D.dentro?' · dentro un\'altra pagina':''));
+  L.push('Tele: '+D.tele+' · grafica '+D.graf);
+  L.push('Adesso ('+N.scene+'): '+cntF(N.fps,0)+' fps · fotogramma '+cntF(N.ms)+' ms (peggiore '+cntF(N.worst,0)+') · codice '+cntF(N.js)+' ms · altro codice '+cntF(N.tj)+' ms · resto '+cntF(Math.max(0,N.ms-N.js-N.tj))+' ms · scatti 10 s: '+N.b50);
+  for(const s of CNT.order){const S=CNT.sc[s];if(!S.n)continue;const top=Object.entries(S.p).sort((a,b)=>b[1]-a[1]).slice(0,6).map(([k,v])=>k+' '+cntF(v/S.n)).join(', ');
+    L.push(s+': '+cntF(S.n*1000/S.i,0)+' fps · peggior secondo '+(S.minF<1e9?cntF(S.minF,0):'–')+' · fotogramma '+cntF(S.i/S.n)+' ms (peggiore '+cntF(S.worst,0)+') · persi '+cntF(100*S.b34/S.n,0)+'% · scatti '+S.b50+' in '+cntF(S.i/1000,0)+' s · codice '+cntF(S.j/S.n)+' ms · altro codice '+cntF(S.t/S.n)+' ms ['+top+']')}
+  if(CNT.tmRes)L.push('Parti della mappa ('+CNT.tmRes.n+' fotogrammi): '+CNT.tmRes.rows.map(([k,v])=>k+' '+cntF(v)).join(', '));
+  return L.join('\n')}
+function cntHint(N){if(N.n<60)return'';if(N.c30>.8&&N.medJ<15)return'Il telefono tiene la pagina a 30 fotogrammi anche se il codice ci starebbe in 60: Risparmio energetico acceso, oppure la pagina aperta dentro un\'altra (l\'app di Claude)? Prova ad aprirla in Safari.';
+  if(N.ms>20&&N.js+N.tj<N.ms*.45)return'Il codice è veloce: il tempo va al telefono che disegna e mostra la pagina (scheda grafica).';
+  if(N.ms>20)return'Il tempo va soprattutto al codice del gioco.';return''}
+const CNT_POS=['top:calc(env(safe-area-inset-top,0px) + 2px);left:50%;transform:translateX(-50%)','top:46%;left:calc(env(safe-area-inset-left,0px) + 2px)','bottom:calc(env(safe-area-inset-bottom,0px) + 70px);left:50%;transform:translateX(-50%)'];
+function cntBuild(){if(CNT.el)return;const st=document.createElement('style');st.textContent=`
+#cntChip{position:fixed;z-index:2147483000;padding:3px 8px;border-radius:9px;background:rgba(10,12,16,.78);border:1px solid rgba(255,255,255,.18);color:#eef3e6;
+  font:700 11px/1.25 ui-monospace,Menlo,Consolas,monospace;letter-spacing:.02em;white-space:nowrap;pointer-events:auto;-webkit-tap-highlight-color:transparent;user-select:none;-webkit-user-select:none}
+#cntChip i{display:inline-block;width:7px;height:7px;border-radius:50%;margin-right:5px;vertical-align:1px}
+#cntPanel{position:fixed;z-index:2147483001;left:calc(env(safe-area-inset-left,0px) + 6px);right:calc(env(safe-area-inset-right,0px) + 6px);top:calc(env(safe-area-inset-top,0px) + 30px);max-height:72vh;overflow:auto;
+  padding:10px 11px 11px;border-radius:12px;background:rgba(10,12,16,.93);border:1px solid rgba(255,255,255,.2);color:#e8eee0;font:500 11px/1.4 ui-monospace,Menlo,Consolas,monospace;-webkit-user-select:text;user-select:text}
+#cntPanel b{color:#fff}#cntPanel h4{margin:8px 0 3px;font:700 11px/1.3 ui-monospace,Menlo,monospace;color:#ffd84a;letter-spacing:.04em;text-transform:uppercase}
+#cntPanel .r{display:flex;justify-content:space-between;gap:8px}#cntPanel .r span:last-child{text-align:right;white-space:nowrap}
+#cntPanel .sc{margin:4px 0;padding:5px 7px;border-radius:7px;background:rgba(255,255,255,.06)}#cntPanel .hint{margin-top:6px;color:#ffd84a}
+#cntPanel .bt{display:flex;flex-wrap:wrap;gap:6px;margin-top:9px}#cntPanel button{font:700 12px/1 ui-monospace,Menlo,monospace;padding:8px 10px;border-radius:8px;border:1px solid rgba(255,255,255,.25);background:#2a3140;color:#fff}
+#cntPanel button.go{background:#3d6b2a}#cntPanel textarea{width:100%;height:120px;margin-top:6px;font:500 10px/1.3 ui-monospace,Menlo,monospace;background:#11141a;color:#e8eee0;border:1px solid #444;border-radius:6px}`;
+  document.head.appendChild(st);
+  const c=document.createElement('div');c.id='cntChip';c.setAttribute('role','button');c.setAttribute('aria-label','Contatore dei fotogrammi');c.innerHTML='<i></i><span>– fps</span>';document.body.appendChild(c);
+  const p=document.createElement('div');p.id='cntPanel';p.hidden=true;p.innerHTML='<div class="cb"></div><div class="bt"><button class="go" data-a="copia">Copia</button><button data-a="parti" hidden>Parti della mappa · 5 s</button><button data-a="azzera">Azzera</button><button data-a="sposta">Sposta</button><button data-a="chiudi">Chiudi</button></div><textarea hidden readonly></textarea>';document.body.appendChild(p);CNT.el=c;CNT.pn=p;CNT.cb=p.firstChild;
+  const stop=e=>e.stopPropagation();for(const ev of['touchstart','touchmove','touchend','pointerdown','pointermove','pointerup','mousedown','click','wheel'])p.addEventListener(ev,stop);
+  for(const ev of['touchstart','pointerdown','mousedown'])c.addEventListener(ev,stop);
+  c.addEventListener('click',e=>{e.stopPropagation();CNT.open=!CNT.open;p.hidden=!CNT.open;cntDraw(true)});
+  p.addEventListener('click',e=>{const b=e.target.closest('button');if(!b)return;const a=b.dataset.a;
+    if(a==='copia'){const tx=cntText(),box=p.querySelector('textarea');box.hidden=false;box.value=tx;
+      const sel=()=>{box.focus();box.select();toast('Selezionato: copialo a mano')};try{navigator.clipboard.writeText(tx).then(()=>toast('Copiato: incollalo nella chat'),sel)}catch(err){sel()}return}
+    if(a==='azzera'){CNT.ring=[];CNT.sc={};CNT.order=[];CNT.tmRes=null;toast('Azzerato');cntDraw(true);return}
+    if(a==='parti'){cntTmStart();return}
+    if(a==='sposta'){CNT.pos=(CNT.pos+1)%CNT_POS.length;try{SAVE.set.perfPos=CNT.pos;save()}catch(err){}cntPlace();return}
+    if(a==='chiudi'){CNT.open=false;p.hidden=true;return}});
+  CNT.pos=(SAVE.set.perfPos|0)%CNT_POS.length;cntPlace()}
+function cntPlace(){if(CNT.el)CNT.el.style.cssText=CNT_POS[CNT.pos]}
+function cntDraw(full){if(!CNT.el)return;const N=cntNow(),col=N.fps>=50?'#7bd65a':N.fps>=30?'#ffd84a':'#ff6b5a';
+  CNT.el.firstChild.style.background=col;CNT.el.lastChild.textContent=(N.n?cntF(N.fps,0):'–')+' fps · '+(N.n?cntF(N.ms,0):'–')+' ms';
+  if(!CNT.open||!full)return;const D=cntDevice(),pr=Object.entries(N.parts).sort((a,b)=>b[1]-a[1]).slice(0,7),h=cntHint(N);
+  let H=`<div class="r"><b>Adesso · ${N.scene}</b><span>${cntF(N.fps,0)} fps</span></div>
+  <div class="r"><span>fotogramma (media · peggiore)</span><span>${cntF(N.ms)} · ${cntF(N.worst,0)} ms</span></div>
+  <div class="r"><span>codice del gioco</span><span>${cntF(N.js)} ms</span></div>
+  <div class="r"><span>altro codice (musica, menu)</span><span>${cntF(N.tj)} ms</span></div>
+  <div class="r"><span>resto (il telefono disegna e mostra)</span><span>${cntF(Math.max(0,N.ms-N.js-N.tj))} ms</span></div>
+  <div class="r"><span>scatti oltre 50 ms (ultimi 10 s)</span><span>${N.b50}</span></div>`;
+  for(const[k,v] of pr)H+=`<div class="r"><span>&nbsp;&nbsp;${k}</span><span>${cntF(v/Math.max(1,N.n))} ms</span></div>`;
+  if(h)H+=`<div class="hint">${h}</div>`;
+  if(CNT.tm)H+=`<div class="hint">Misuro le parti della mappa… (${Math.max(0,5-Math.floor((performance.now()-CNT.tmT)/1000))} s)</div>`;
+  if(CNT.tmRes){H+=`<h4>Parti della mappa</h4>`;for(const[k,v] of CNT.tmRes.rows)H+=`<div class="r"><span>${k}</span><span>${cntF(v)} ms</span></div>`}
+  H+=`<h4>Per schermata</h4>`;
+  for(const s of CNT.order){const S=CNT.sc[s];if(!S.n)continue;H+=`<div class="sc"><div class="r"><b>${s}</b><span>${cntF(S.n*1000/S.i,0)} fps</span></div>
+    <div class="r"><span>peggior secondo · scatti</span><span>${S.minF<1e9?cntF(S.minF,0):'–'} fps · ${S.b50} in ${cntF(S.i/1000,0)} s</span></div>
+    <div class="r"><span>codice · resto</span><span>${cntF((S.j+S.t)/S.n)} · ${cntF(Math.max(0,(S.i-S.j-S.t)/S.n))} ms</span></div></div>`}
+  H+=`<h4>Telefono</h4><div>${D.tel} · ${D.scr}${D.app?' · app dalla Home':''}${D.dentro?' · dentro un\'altra pagina':''}</div><div>${D.tele}</div><div>grafica ${D.graf}</div>
+`;
+  CNT.cb.innerHTML=H;CNT.pn.querySelector('[data-a="parti"]').hidden=!ZG.on}
+function cntSet(on){CNT.on=on;if(on){cntInstall();cntBuild();CNT.el.hidden=false;CNT.ts=-1}else if(CNT.el){CNT.el.hidden=true;CNT.pn.hidden=true;CNT.open=false;if(CNT.tm)cntTmEnd()}}
+CNT_SI(()=>{if(CNT.on&&!document.hidden){const ae=document.activeElement,busy=CNT.open&&ae&&ae.tagName==='TEXTAREA'&&CNT.pn.contains(ae);cntDraw(!busy)}},500);
+cntSet(cntWanted());
+// Impostazioni → Contatore
+{const _fs=fillSettings;fillSettings=function(){_fs.apply(this,arguments);const p=$('sheet').querySelector('p.lead');if(!p)return;const on=CNT.on;
+  p.insertAdjacentHTML('beforebegin',`<div class="srow"><span>Contatore</span><div class="seg"><button class="${on?'on':''}" data-perf="1">Acceso</button><button class="${on?'':'on'}" data-perf="0">Spento</button></div></div>`)}}
+$('sheet').addEventListener('click',e=>{const b=e.target.closest('[data-perf]');if(!b)return;e.stopPropagation();SAVE.set.perf=b.dataset.perf==='1';save();cntSet(SAVE.set.perf);sfx('ui');fillSettings()},true);
 })();
 };
 </script>
