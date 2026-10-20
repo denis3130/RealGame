@@ -7,8 +7,9 @@
 // Nemesi che cresce, il custode che tiene l'oro); la Torre fino al piano 20 e la Corsa dei boss; la scalata a giro: la torre che sale
 // (piani, nemici dai bordi, la salita, i buchi, i Campioni, il premio, il custode, la torre da 20 col campione) e le trappole (percorso coi
 // traguardi, trappole e nemici, la fuga dal crollo, il custode tra le trappole), la modalità sulla scheda e sulla mappa; le isole; tutto in 3D
-// (gli ostacoli di 95 dipinti una volta, il disegno di prima che torna, le cose della stanza, le isole).
-// Foto tests/cn_<n>.png. Uso: python3 anteprime/mk_classica.py --test --build && node tests/classica.js [menu|stanze|furia|rarita|evo|nemesi|torre|corsa|ondate|trappole|3d]
+// (gli ostacoli di 95 dipinti una volta, il disegno di prima che torna, le cose della stanza, le isole); il ponte di pietre tra le isole, la Prova
+// dell'Incubo e le isole chiuse al buio.
+// Foto tests/cn_<n>.png. Uso: python3 anteprime/mk_classica.py --test --build && node tests/classica.js [menu|stanze|furia|rarita|evo|nemesi|torre|corsa|ondate|trappole|3d|ponte]
 const {chromium}=require('playwright');const path=require('path');
 const SOLO=process.argv[2]||'';
 (async()=>{const b=await chromium.launch({args:['--autoplay-policy=no-user-gesture-required']});const p=await b.newPage({viewport:{width:390,height:844},deviceScaleFactor:2});const errs=[];
@@ -55,7 +56,7 @@ const SOLO=process.argv[2]||'';
       await p.mouse.move(q.x,q.y);await p.mouse.down();for(let i=1;i<=8;i++){await p.mouse.move(q.x-i*22,q.y);await W(16)}await p.mouse.up();await W(1200)}
     const is1=await J(`({cur:ISL.cur,view:ISL.view,zm:zMode()})`);await snap('isole_chiusa');
     await E(`(()=>{goPlay('arena');return 0})()`);await W(300);const is2=await J(`({started,toast:($('toast')||{}).textContent||''})`);
-    ok('scorrendo si vede l\'isola chiusa, l\'eroe resta e «Gioca» dice come aprirla',is1.view===1&&is1.cur===0&&!is1.zm&&!is2.started&&/Vinci/.test(is2.toast),JSON.stringify({is1,is2}));
+    ok('scorrendo si vede l\'isola chiusa, l\'eroe resta e «Gioca» dice come aprirla',is1.view===1&&is1.cur===0&&!is1.zm&&!is2.started&&/Finisci il ponte/.test(is2.toast),JSON.stringify({is1,is2}));
     await E(`(()=>{ISL.view=ISL.cur;return 0})()`);
     await p.click('#cnPremiBtn');await W(450);const pr=await J(`({open:!$('cnPremi').hidden,rows:document.querySelectorAll('#cnPremi .cnPrR').length})`);await snap('menu_premi');
     ok('«Premi» apre Missioni, Accesso, Ruota e Traguardi',pr.open&&pr.rows===4,JSON.stringify(pr));
@@ -82,10 +83,11 @@ const SOLO=process.argv[2]||'';
     const s2=await J(`({room:G.room,lvl:P.lvl,sk:Object.keys(P.skills).length,boss:(G.enemies.find(e=>isBoss(e.type))||{}).type})`);await snap('custode');
     ok('il custode alla stanza 10',!!s2r&&s2.room===10&&s2.boss==='golem'&&s2.lvl>=4&&s2.sk>=3,JSON.stringify(s2));
     await E(`__A.every=3;0`);const end=await run(90);await W(1200);
-    const s5=await J(`({ends:__A.ends,won:SAVE.cn.stars[0],best:SAVE.cn.best[0],bestA:bestRoom(0),pick:SAVE.cn.pick,etr:$('eTr').textContent.replace(/\\s+/g,' ').slice(0,160),room:$('eRoom').textContent})`);await snap('vittoria');
-    ok('la vittoria: braciere acceso, record, l\'arena dopo proposta',end&&s5.ends[0]&&s5.ends[0].title==='VITTORIA'&&(s5.won&1)===1&&s5.best&&s5.best.win&&s5.bestA===10&&s5.pick===1&&/braciere/.test(s5.etr)&&/Furia massima/.test(s5.etr),JSON.stringify(s5));
-    await toMenu();const c=await J(`({t:$('chapCard').textContent,n:$('chapCard').querySelectorAll('.rn').length,on:$('chapCard').querySelectorAll('.rn.on').length})`);
-    ok('la scheda dopo la vittoria propone l\'arena 2, con le sue 10 stanze',/Arena 2/.test(c.t)&&c.n===10&&c.on===0,JSON.stringify(c));
+    const s5=await J(`({ends:__A.ends,won:SAVE.cn.stars[0],best:SAVE.cn.best[0],bestA:bestRoom(0),pick:SAVE.cn.pick||0,br:SAVE.cn.br[0],etr:$('eTr').textContent.replace(/\\s+/g,' ').slice(0,160),
+      brL:(document.querySelector('#eTr .cnBridge')||{}).textContent||'',room:$('eRoom').textContent})`);await snap('vittoria');
+    ok('la vittoria: braciere acceso, record, 55 pietre del ponte (30 delle stanze e 25 del custode), l\'isola dopo ancora chiusa',end&&s5.ends[0]&&s5.ends[0].title==='VITTORIA'&&(s5.won&1)===1&&s5.best&&s5.best.win&&s5.bestA===10&&s5.pick===0&&s5.br===55&&/braciere/.test(s5.etr)&&/Furia massima/.test(s5.etr)&&/Ponte verso.*\+55 pietre.*55\/100/.test(s5.brL),JSON.stringify(s5));
+    await toMenu();const c=await J(`({t:$('chapCard').textContent,n:$('chapCard').querySelectorAll('.rn').length,cur:ISL.cur,op:cnOpen(1)})`);
+    ok('dopo la vittoria si resta sull\'arena 1: il ponte è a metà',/Arena 1/.test(c.t)&&c.n===10&&c.cur===0&&!c.op,JSON.stringify(c));
   }
   // ---------------------------------------------------------------- the Furia
   if(!SOLO||SOLO==='furia'){
@@ -271,5 +273,63 @@ const SOLO=process.argv[2]||'';
     ok('monete, cristalli, sfere, cuori, fontana, altare, tesoro, massi in volo e spine in 3D (le liste tornano intere)',o2.coins===6&&o2.hearts===1&&!o2.hold,JSON.stringify(o2));
     await toMenu();const i0=await J(`(()=>{SAVE.cn.all=1;ISL.cache.clear();const t0=performance.now();for(let i=0;i<12;i++){ISL.view=i;cnIslImg(i,ISL.lay)}const t=performance.now()-t0;SAVE.cn.all=0;ISL.cache.clear();ISL.view=ISL.cur;return{ms:+(t/12).toFixed(1)}})()`);
     ok('le isole coi dettagli in 3D: le dodici dipinte senza errori',i0.ms>0,JSON.stringify(i0));
+  }
+  // ---------------------------------------------------------------- the stone bridge, the Incubo, the dark islands
+  if(!SOLO||SOLO==='ponte'){
+    await toMenu();
+    const mg=await J(`(()=>{const keep=SAVE.cn;SAVE.cn={stars:{0:1,1:1},best:{}};const r={b0:cnBrHave(0),b1:cnBrHave(1),o1:cnOpen(1),o2:cnOpen(2),o3:cnOpen(3),brv:SAVE.cn.brv};SAVE.cn=keep;return r})()`);
+    ok('un salvataggio di prima: le isole già aperte restano aperte (il loro ponte è finito)',mg.b0===100&&mg.b1===100&&mg.o1&&mg.o2&&!mg.o3&&mg.brv===1,JSON.stringify(mg));
+    const fresh=`(()=>{const S=cnS();S.all=0;S.stars={};S.br={};S.inc={};S.best={};S.pick=0;S.nem=[];S.nemOut=[];S.bossGold={};ISL.inc=false;ISL.cache.clear();save();return 0})()`;
+    await E(fresh);
+    // a retreat at room 7: 18 stones (3 for each room passed)
+    await arena(0);await E(`(()=>{__A.on=false;return 0})()`);await E(jump(7));await W(300);await E(`(()=>{endRun(false,true);return 0})()`);await W(700);
+    const b1=await J(`({br:SAVE.cn.br[0],l:(document.querySelector('#eTr .cnBridge')||{}).textContent||'',anim:CN.brAnim})`);await snap('ponte_fine');
+    ok('ogni stanza superata porta 3 pietre al ponte (ritirata alla stanza 7: 18 pietre)',b1.br===18&&/\+18 pietre/.test(b1.l)&&/18\/100/.test(b1.l)&&b1.anim&&b1.anim.i===0&&b1.anim.from===0&&b1.anim.to===1&&!b1.anim.done,JSON.stringify(b1));
+    await toMenu();await W(900);const b2=await J(`({brA:ISL.brA,hold:!!ISL.hold,cur:ISL.cur,anim:CN.brAnim})`);await snap('ponte_pietre');
+    ok('nel menu la telecamera va al ponte e la pietra nuova cade al suo posto',b2.brA&&b2.brA.i===0&&b2.brA.to===1&&b2.hold&&b2.cur===0&&!b2.anim,JSON.stringify(b2));
+    await W(2600);
+    // two victories finish the bridge (18+55+55 → 100): the next island opens and the hero jumps there
+    await E(`(()=>{SAVE.trophies=ARENAS[1].t-5;delete SAVE.arenaUp;return 0})()`);
+    for(let k=0;k<2;k++){await arena(0);await E(`(()=>{__A.on=false;endRun(true);return 0})()`);await W(700)}
+    const b3=await J(`({br:SAVE.cn.br[0],pick:SAVE.cn.pick,up:SAVE.arenaUp==null,tr:SAVE.trophies>=ARENAS[1].t,l:(document.querySelector('#eTr .cnBridge')||{}).textContent||'',done:!!document.querySelector('#eTr .cnBridge.done'),op:cnOpen(1),op2:cnOpen(2)})`);await snap('ponte_finito_fine');
+    ok('due vittorie dopo: il ponte è finito, l\'isola dopo è aperta e diventa quella da giocare (le coppe non aprono più le arene)',b3.br===100&&b3.pick===1&&b3.done&&/Il ponte è finito/.test(b3.l)&&b3.op&&!b3.op2&&b3.up&&b3.tr,JSON.stringify(b3));
+    await toMenu();await W(1300);await snap('ponte_finito');await W(2600);const b4=await J(`({cur:ISL.cur,view:+ISL.view.toFixed(2)})`);
+    ok('nel menu, finito il ponte, l\'eroe salta sull\'isola nuova',b4.cur===1,JSON.stringify(b4));
+    // the locked islands are dark and their guardian is not drawn
+    const dk=await J(`(()=>{const lum=i=>{const c=cnIslImg(i,ISL.lay).cv,d=c.getContext('2d').getImageData(0,0,c.width,c.height).data;let s=0,n=0;for(let j=0;j<d.length;j+=16)if(d[j+3]>200){s+=d[j]*.3+d[j+1]*.59+d[j+2]*.11;n++}return n?s/n:0};
+      const seen=new Set(),keep=cnIslBoss;cnIslBoss=function(i){seen.add(i);return keep.apply(this,arguments)};window.__bossSeen=seen;window.__bossKeep=keep;return{open:Math.round(lum(1)),lock:Math.round(lum(2))}})()`);
+    await E(`(()=>{ISL.go=2;return 0})()`);await W(900);await snap('isola_chiusa_buia');
+    const bs=await J(`(()=>{const r=[...__bossSeen];cnIslBoss=__bossKeep;ISL.go=null;ISL.view=ISL.cur;return r})()`);
+    ok('le isole chiuse sono al buio e il loro custode non si vede',dk.lock<dk.open*.4&&bs.includes(1)&&!bs.includes(2)&&!bs.includes(3),JSON.stringify({dk,bs}));
+    await openMap();const mp=await J(`(()=>{const n=document.querySelector('#cnMap .cnN.lock .cnPic img');return{lock:document.querySelectorAll('#cnMap .cnN.lock').length,f:n?getComputedStyle(n).filter:''}})()`);
+    await p.click('#cnMap .cnN[data-a="2"]');await W(300);const ms=await J(`({t:(document.querySelector('#cnMap .cnSel')||{}).textContent||'',lk:!!document.querySelector('#cnMap .cnSel.lock'),f:getComputedStyle(document.querySelector('#cnMap .cnSel .cnSh img')).filter})`);await snap('mappa_buia');
+    await p.click('#cnMap .cnX');await W(300);
+    ok('sulla mappa le arene chiuse sono al buio, il custode è «???» e dice il ponte da finire',mp.lock===10&&/brightness\(0\.1/.test(mp.f)&&ms.lk&&/brightness\(0\.1/.test(ms.f)&&/Custode: \?\?\?/.test(ms.t)&&/Finisci il ponte da «.*»: 0\/100 pietre/.test(ms.t),JSON.stringify({mp,ms:Object.assign(ms,{t:ms.t.replace(/\s+/g,' ').slice(0,160)})}));
+    // the Incubo on a won island
+    await E(`(()=>{ISL.go=0;return 0})()`);await W(900);const ib=await J(`(()=>{const b=ISL.incBtn,L=ISL.lay,r=campCv.getBoundingClientRect();return b?{x:r.left+(b[0]+b[2])/2/L.dpr,y:r.top+(b[1]+b[3])/2/L.dpr}:null})()`);
+    if(ib){await p.mouse.click(ib.x,ib.y);await W(900)}
+    const i1=await J(`({btn:${!!ib},inc:!!ISL.inc,cls:$('playBtn').classList.contains('cnInc'),txt:$('playBtn').textContent.trim(),view:Math.round(ISL.view)})`);await snap('incubo_isola');
+    ok('sull\'isola vinta c\'è «Incubo»: un tocco lo accende e «Gioca» diventa «Incubo»',i1.btn&&i1.inc&&i1.cls&&/Incubo/.test(i1.txt)&&i1.view===0,JSON.stringify(i1));
+    await E(`(()=>{ISL.go=1;return 0})()`);await W(700);const i1b=await J(`({cls:$('playBtn').classList.contains('cnInc'),txt:$('playBtn').textContent.trim()})`);
+    ok('sull\'isola non ancora vinta «Gioca» resta «Gioca»',!i1b.cls&&/Gioca/.test(i1b.txt),JSON.stringify(i1b));
+    await E(`(()=>{ISL.go=0;return 0})()`);await W(700);
+    const d0=await J(`({...DIFF})`);
+    await E(`(()=>{__A.endSeen=0;__A.ends=[];__A.log=[];__A.god=true;goPlay('arena');return 0})()`);await W(2600);
+    await E(`(()=>{for(let i=0;i<70;i++){if(G.hitstop>0)G.hitstop=0;P.hp=P.maxhp;update(1/30)}return 0})()`);await W(100);
+    const i2=await J(`({inc:!!G.cnInc,a:G.cnA,eb:DIFF.eliteBase,ef:DIFF.eliteFrom,fh:DIFF.firstHp,diff:+G.diff.toFixed(2),ban:$('banner').textContent})`);await snap('incubo_stanza');
+    ok('la Prova dell\'Incubo: nemici più forti, élite da subito, la scritta all\'inizio',i2.inc&&i2.a===0&&i2.eb===.3&&i2.ef===1&&i2.fh===1&&i2.diff===1.6&&/Incubo/.test(i2.ban),JSON.stringify(i2));
+    await E(jump(10));await E(`(()=>{for(let i=0;i<150;i++){if(G.hitstop>0)G.hitstop=0;P.hp=P.maxhp;update(1/30)}return 0})()`);
+    const i3=await J(`(()=>{const b=G.enemies.find(e=>isBoss(e.type));return b?{type:b.type,rage:!!(b.p2||b.reborn||b.tkRage||b.raged),a:b.cnIncA,full:b.hp>=b.max*.9}:null})()`);await snap('incubo_custode');
+    ok('il custode dell\'Incubo è già arrabbiato (fase 2 da subito) con la vita intera',i3&&i3.rage&&i3.a===2&&i3.full,JSON.stringify(i3));
+    const g0=await J(`({gold:SAVE.gold,gems:SAVE.gems,br:SAVE.cn.br[0]})`);
+    await E(`(()=>{G.gold=100;P.goldMul=1;G.gemsRun=0;G.gems=[];endRun(true);return 0})()`);await W(700);
+    const i4=await J(`({dg:+$('eGold').textContent,dgem:SAVE.gems-${g0.gems},br:SAVE.cn.br[0],inc:SAVE.cn.inc[0],tag:$('endTag').textContent,l:(document.querySelector('#eTr .cnIncL')||{}).textContent||'',bridge:!!document.querySelector('#eTr .cnBridge'),eb:DIFF.eliteBase,same:JSON.stringify({...DIFF})===JSON.stringify(${JSON.stringify(d0)})})`);await snap('incubo_vinto');
+    ok('vinto l\'Incubo: oro doppio, 3 cristalli, la luna rossa, niente pietre, le manopole di prima',i4.dg===200&&i4.dgem>=3&&i4.br===g0.br&&i4.inc&&i4.inc.win&&i4.tag==='Prova dell\'Incubo'&&/Incubo vinto per la prima volta/.test(i4.l)&&!i4.bridge&&i4.same,JSON.stringify(i4));
+    await p.click('#againBtn');await W(2400);const i5=await J(`({inc:!!G.cnInc,eb:DIFF.eliteBase,a:G.cnA})`);await toMenu();const i6=await J(`({same:JSON.stringify({...DIFF})===JSON.stringify(${JSON.stringify(d0)})})`);
+    ok('«Gioca ancora» rifà l\'Incubo; uscendo a metà tornano le manopole di prima',i5.inc&&i5.eb===.3&&i5.a===0&&i6.same,JSON.stringify({i5,i6}));
+    await W(1200);await snap('incubo_luna');
+    await E(`(()=>{SAVE.cn.all=1;ISL.inc=false;ISL.go=5;return 0})()`);await W(900);const i7=await J(`({pill:!!ISL.incBtn,won:cnWon(5)})`);await E(`(()=>{SAVE.cn.all=0;ISL.go=null;ISL.view=ISL.cur;return 0})()`);
+    ok('nell\'anteprima, con «apri tutte le arene», l\'Incubo si prova su ogni isola',i7.pill&&!i7.won,JSON.stringify(i7));
+    await E(`(()=>{ISL.inc=false;cnPlayLbl();return 0})()`);
   }
   console.log('\n'+R.join('\n'));console.log(errs.length?'ERRORI:\n'+[...new Set(errs)].slice(0,20).join('\n'):'nessun errore');await b.close()})();

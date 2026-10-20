@@ -309,8 +309,19 @@ function oFoot(K,k,r,sd,th,side){const{V0}=K,M=footMat(th),S=stonePal(),n=r>=20?
     C3.vol(V0,C3.ellPts(c,[w*.62,w,w*.5],{u,v,w:[0,0,1]},3,12,0),M[1],{lw:1.6,kl:.4,kd:.4,rim:.2});
     if(moss)for(let b=0;b<3;b++)C3.leaf(V0,[c[0]+v[0]*(1-b)*w*.45,c[1]+v[1]*(1-b)*w*.45,w*.38],[0,0,1],v,3+b%2*2.5,1.1,b%2?'#5a8a32':'#86c050',{lw:.9});
     else if(LAVAZ.includes(th)){const q=V0.P([c[0]+u[0]*w*.2,c[1]+u[1]*w*.2,w*.42]);ctx.fillStyle='rgba(255,170,60,.95)';ctx.beginPath();ctx.arc(q[0],q[1],1.3,0,TAU);ctx.fill()}
-    else if(isSwamp(th))C3.leaf(V0,[c[0],c[1],w*.4],[0,0,1],v,8,1.4,'#7a8a3a',{lw:1,bend:.3});
-    else if(th==='cristalli')oPrism(K,[c[0],c[1],w*.3],4,1.6,4,'#aaf0ff',{tip:2.5,lw:1,cf:n=>n[1]>0?'#e0fbff':'#7fd0ec'})}}
+    else if(isSwamp(th))C3.leaf(V0,[c[0],c[1],w*.4],[0,0,1],v,8,1.4,'#7a8a3a',{lw:1,bend:.3});}}
+
+// the floor round an obstacle of the crystal caves without the little glowing crystals (Denis: «togliere quei microcristalli attorno agli
+// ostacoli»); the rest as in 47: the floor darker near it, cracks under the weight, chipped flakes, the bed of the world's stuff
+{const _gp=groundPatch;groundPatch=function(c,k,th){if(!OB3.on||th!=='cristalli')return _gp.apply(this,arguments);const x=k.x,y=k.y,r=k.r,M=footMat(th);
+  c.save();c.translate(x,y+2);c.scale(1,.5);const g=c.createRadialGradient(0,0,r*.3,0,0,r*2.2);g.addColorStop(0,'rgba(14,9,6,.62)');g.addColorStop(.5,'rgba(14,9,6,.24)');g.addColorStop(1,'rgba(14,9,6,0)');c.fillStyle=g;c.beginPath();c.arc(0,0,r*2.2,0,TAU);c.fill();c.restore();
+  for(let i=0;i<3;i++){const a=rand(0,TAU);let px=x+Math.cos(a)*r*1.02,py=y+Math.sin(a)*r*.46;const pts=[[px,py]];for(let j=0;j<2;j++){px+=Math.cos(a+rand(-.5,.5))*rand(3,6);py+=Math.sin(a+rand(-.5,.5))*rand(1.5,3.5);pts.push([px,py])}
+    c.strokeStyle='rgba(0,0,0,.36)';c.lineWidth=1.1;c.beginPath();pts.forEach((p,j)=>j?c.lineTo(p[0],p[1]):c.moveTo(p[0],p[1]));c.stroke();
+    c.strokeStyle='rgba(255,255,255,.08)';c.lineWidth=1;c.beginPath();pts.forEach((p,j)=>j?c.lineTo(p[0]+.8,p[1]+.8):c.moveTo(p[0]+.8,p[1]+.8));c.stroke()}
+  for(let i=0;i<5;i++){const a=rand(0,TAU),d=rand(1.15,1.7),px=x+Math.cos(a)*r*d,py=y+Math.sin(a)*r*.5*d,s=rand(1.6,3.2),rot=rand(0,TAU);
+    c.save();c.translate(px,py);c.rotate(rot);c.beginPath();c.moveTo(-s,0);c.lineTo(-s*.2,-s*.7);c.lineTo(s,-s*.2);c.lineTo(s*.4,s*.6);c.closePath();c.fillStyle='rgba(0,0,0,.35)';c.save();c.translate(.8,1);c.fill();c.restore();
+    c.fillStyle=pk(ENV[th]?ENV[th].floor:G.env.floor);c.fill();c.strokeStyle='rgba(255,255,255,.14)';c.lineWidth=.9;c.beginPath();c.moveTo(-s,0);c.lineTo(-s*.2,-s*.7);c.lineTo(s,-s*.2);c.stroke();c.restore()}
+  for(let i=0;i<9;i++){const a=i/9*TAU+rand(-.2,.2),px=x+Math.cos(a)*r*rand(.9,1.2),py=y+Math.sin(a)*r*.46,w=r*rand(.3,.5);c.fillStyle=M[0];c.globalAlpha=.55;c.beginPath();c.ellipse(px,py+1,w,w*.42,0,0,TAU);c.fill();c.globalAlpha=1}}}
 
 // ------------------------------------------------------------------ painting an obstacle, the picture, the wear
 // the camera of an obstacle at (x, y): the monsters' camera, a pixel a unit (squared obstacles turn by their own seed inside the model)
@@ -352,7 +363,7 @@ function ob3Sprite(k){const th=themeOf(G.room),fl=ob3Fl(k,th),SS=Math.min(3,Math
 // what the bosses of the arena do to an obstacle (as 52 and the Phoenix do over the old drawing): the burning, the heat
 function ob3Over(k){if(ctx!==MAINCTX)return;const h=kH(k);
   if(typeof BOSS2!=='undefined'&&BOSS2&&k.burn>0){const t=G.t||0,f=Math.min(1,k.burn/1.2);ctx.save();ctx.globalCompositeOperation='lighter';glow('255,120,40',k.x,k.y-h*.6,k.r*2.2,.45*f);ctx.restore();
-    for(let i=-1;i<=1;i++)b2fl(k.x+i*k.r*.45,k.y-h*(.55+.25*(i===0)),k.r*.32*f*(1+.2*Math.sin(t*12+i*2)),Math.sin(t*9+i)*2.4)}
+    for(let i=-1;i<=1;i++)flame(k.x+i*k.r*.45,k.y-h*(.42+.25*(i===0)),k.r*.034*f*(1+.15*Math.sin(t*12+i*2)),O3FIRE,k.x*.1+i*2)}
   if(typeof PXON!=='undefined'&&PXON&&k.pxHot>(G.t||0)){const f=Math.min(1,(k.pxHot-G.t)/1.2),rgb=k.pxB?'120,190,255':'255,90,40';
     ctx.save();ctx.globalCompositeOperation='lighter';glow(rgb,k.x,k.y-h*.5,k.r*2.4,(.45+.1*Math.sin(G.t*14))*f);ctx.fillStyle=`rgba(${rgb},${.35*f})`;ell(k.x,k.y-h*.75,k.r*.9,k.r*.35);ctx.fill();ctx.restore()}}
 {const _d=drawRock;
@@ -426,8 +437,13 @@ OB3.P={
     else{const K=o3K(x,gy-h+8,OB3.face+p*9);oRock(K,[0,0,-6],11,10,14,'#857b6c',b.sx*.1,{lw:2.2})}ctx.restore()}
     G.boulders=[];_b.apply(this,arguments)}finally{G.boulders=keep}}}
 // the bands of thorns that come out of the floor: cones of thorn and root, each lit on one side
-{const _h=drawHazardsGround;drawHazardsGround=function(){if(!OB3.on||!G||!G.bands.length)return _h.apply(this,arguments);const keep=G.bands,act=keep.filter(b=>b.style!=='ice'&&!(b.warn>0));
-  if(!act.length)return _h.apply(this,arguments);G.bands=keep.filter(b=>!act.includes(b));try{_h.apply(this,arguments)}finally{G.bands=keep}
+{const _h=drawHazardsGround;drawHazardsGround=function(){if(!OB3.on||!G)return _h.apply(this,arguments);const keep=G.bands,kz=G.zones,act=keep.filter(b=>b.style!=='ice'&&!(b.warn>0)),fz=kz.filter(z=>z.kind==='fire'&&!z.pxb);
+  if(!act.length&&!fz.length)return _h.apply(this,arguments);G.bands=keep.filter(b=>!act.includes(b));G.zones=kz.filter(z=>!fz.includes(z));try{_h.apply(this,arguments)}finally{G.bands=keep;G.zones=kz}
+  // the fire on the floor: the scorched round, its dashed edge, then little flames of the new fire dancing on it
+  for(const z of fz){const a=Math.min(1,z.t/.4)*Math.min(1,(z.max-z.t)/.3+.2),b=Math.min(1,z.t/.4);ctx.fillStyle=`rgba(255,90,20,${.28*a})`;circ(z.x,z.y,z.r);ctx.fill();
+    ctx.strokeStyle=`rgba(255,170,70,${.5*a})`;ctx.lineWidth=2;ctx.setLineDash([4,5]);circ(z.x,z.y,z.r);ctx.stroke();ctx.setLineDash([]);
+    ctx.fillStyle=`rgba(60,20,8,${.3*a})`;ctx.beginPath();ctx.ellipse(z.x,z.y+2,z.r*.7,z.r*.36,0,0,TAU);ctx.fill();
+    const n=LOWFX?2:4;for(let i=0;i<n;i++){const an=i*1.7+z.x*.1,rr=z.r*.5*((i%2)+.4);flame(z.x+Math.cos(an)*rr,z.y+Math.sin(an)*rr*.6+4,.42*b*(.85+.15*Math.sin(G.t*3+i)),O3FIRE,z.x*.07+i*1.9)}}
   for(const b of act){const rect=b.h?[L,b.pos-b.w/2,R-L,b.w]:[b.pos-b.w/2,TOP,b.w,BOT-TOP];ctx.fillStyle='rgba(60,40,25,.45)';ctx.fillRect(...rect);const len=b.h?R-L:BOT-TOP,sc=Math.min(1,(.45-b.act)/.08+.3);
     for(let s=8;s<len;s+=13){const cx=b.h?L+s:b.pos+((s*7)%9-4),cy=b.h?b.pos+((s*7)%9-4):TOP+s,hh=16*sc,col=s%26<13?'#5f9e3c':'#7a5a3a';
       ctx.beginPath();ctx.moveTo(cx-5,cy+6);ctx.lineTo(cx,cy+6-hh);ctx.lineTo(cx+5,cy+6);ctx.quadraticCurveTo(cx,cy+8.5,cx-5,cy+6);ctx.closePath();ctx.fillStyle=C3.dk(col,.3);ctx.fill();ctx.strokeStyle=INK;ctx.lineWidth=2;ctx.lineJoin='round';ctx.stroke();
@@ -450,3 +466,26 @@ OB3.P={
     if(open<.1)oBox(K,[D/2+.6,0,H-4],1.6,7,7,band,{lw:1.4})}catch(err){console.error(err)}finally{ctx.restore()}
   if(c.st==='idle'&&G.state==='cleared'&&!G.ccChosen){const b=Math.sin(G.t*5)*3;glow('255,215,90',c.x,c.y-10,34,.25+.1*Math.sin(G.t*4));ctx.fillStyle='#ffc93c';ink(2.5);ctx.beginPath();ctx.moveTo(c.x,c.y-34+b);ctx.lineTo(c.x-7,c.y-44+b);ctx.lineTo(c.x+7,c.y-44+b);ctx.closePath();ctx.fill();ctx.stroke();
     ctx.font='13px "Lilita One", sans-serif';ctx.textAlign='center';ctx.lineWidth=3;ctx.strokeStyle=INK;ctx.strokeText('?',c.x,c.y-48+b);ctx.fillStyle='#fff';ctx.fillText('?',c.x,c.y-48+b)}}}
+
+// ------------------------------------------------------------------ the fire, a little better everywhere (Denis: «migliorare leggermente l'effetto del fuoco in generale»):
+// the game's flame (torches, braziers, the altar) with two side tongues that lick up on their own, a white-hot heart at the base, a lick
+// of flame that breaks off the tip and rises, and sparks that drift up and fade (one on a slow phone); the same colours and size as before.
+// Made of it: the fire on the floor, the burning obstacles, the burning enemies (two little flames on their shoulders)
+const O3FIRE=['#ff6a1a','#ffb030','#fff0a0'];
+{const _fl=flame;flame=function(x,y,s,cols,ph){if(!OB3.on||!cols||cols.length<3||cols.some(c=>typeof c!=='string'||c.length!==7))return _fl.apply(this,arguments);ph=ph||0;   // hexA (09): #rrggbb + alpha
+  const t=G.t||0,n=k=>Math.sin(t*11+k+ph)*.5+Math.sin(t*17.3+k*2+ph)*.3+Math.sin(t*5.1+k*3)*.2;
+  ctx.save();ctx.globalCompositeOperation='lighter';
+  glow(hexRgb(cols[1]),x,y-8*s,30*s*(1+.08*n(9)),.5);if(!LOWFX)glow(hexRgb(cols[2]),x,y-3*s,11*s,.3);
+  const tongue=(dx,w,h,col,k)=>{const bx=x+dx*s,tip=n(k)*3.2*s+dx*s*.6,hh=h*s*(1+.2*n(k+1));ctx.fillStyle=col;ctx.beginPath();ctx.moveTo(bx-w*s,y);
+    ctx.bezierCurveTo(bx-w*s*1.15,y-hh*.42,bx+tip-w*s*.32,y-hh*.74,bx+tip,y-hh);ctx.bezierCurveTo(bx+tip+w*s*.32,y-hh*.74,bx+w*s*1.15,y-hh*.42,bx+w*s,y);ctx.closePath();ctx.fill()};
+  const sl=.5+.5*Math.max(0,Math.sin(t*7.3+ph)),sr=.5+.5*Math.max(0,Math.sin(t*6.1+ph+2.1));
+  tongue(-4.2,3.6,15*sl,hexA(cols[0],.7),11);tongue(4.2,3.6,14*sr,hexA(cols[0],.7),13);
+  tongue(0,7,25,hexA(cols[0],.87),1);tongue(0,5.2,18,hexA(cols[1],.93),4);tongue(0,2.8,10.5,cols[2],7);
+  ctx.fillStyle='rgba(255,252,236,.45)';ctx.beginPath();ctx.ellipse(x,y-4.2*s,2.2*s,3.4*s,0,0,TAU);ctx.fill();
+  {const u=(t*1.7+ph*.37)%1,lx=x+n(5)*2*s,ly=y-(20+u*16)*s,lw=(2.4-u*1.8)*s,lh=(6-u*3)*s;ctx.fillStyle=hexA(cols[1],(1-u)*.8);ctx.beginPath();ctx.moveTo(lx-lw,ly);
+    ctx.quadraticCurveTo(lx-lw*.6,ly-lh*.6,lx,ly-lh);ctx.quadraticCurveTo(lx+lw*.6,ly-lh*.6,lx+lw,ly);ctx.quadraticCurveTo(lx,ly+lw*.8,lx-lw,ly);ctx.fill()}
+  const N=LOWFX?1:3;for(let i=0;i<N;i++){const u=(t*(.9+i*.23)+i*.31+ph*.17)%1,ex=x+(Math.sin(t*2.7+i*2.3+ph)*3+(i%2?1:-1)*u*5)*s,ey=y-(14+u*30)*s,sz=(1.7-u)*s;if(sz<=.25)continue;
+    ctx.fillStyle=u<.45?hexA(cols[2],1-u):hexA(cols[1],(1-u)*.9);ctx.fillRect(ex-sz/2,ey-sz/2,sz,sz)}
+  ctx.restore()}}
+{const _de=drawEnemy;drawEnemy=function(e){const r=_de.apply(this,arguments);try{if(OB3.on&&e&&e.burn>0&&!e.dead&&!(e.spawn>0)&&ctx===MAINCTX){const k=Math.min(1,e.burn/.6),h=e.r*1.15+(e.z||0);
+    for(const sd of[-1,1])flame(e.x+sd*e.r*.42,e.y-h*(sd>0?1:.85),.3*k*(e.r/14),O3FIRE,(e.x+sd)*.13)}}catch(err){}return r}}

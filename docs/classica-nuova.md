@@ -5,7 +5,39 @@ delle coppe con le arene», poi «ok creami le cose che mi hai elencato su una c
 `classica-nuova` (da `piano-maestro`); il gioco vero non cambia: `src/js/94-classica-nuova.js` **non** è in `src/ordine.txt`. Pagina:
 `python3 anteprime/mk_classica.py [--build]` → `anteprime/classica.html` (parte con un salvataggio suo, già dopo la creazione dell'eroe),
 pubblicata su https://claude.ai/artifact/K6E5QMv5pxKkt61MCFJsba («Mossbound · Classica nuova»: si aggiorna ripubblicando
-`anteprime/classica.html`). Prova: `python3 anteprime/mk_classica.py --test --build && node tests/classica.js [menu|stanze|furia|rarita|evo|nemesi|torre|corsa|ondate|trappole]`.
+`anteprime/classica.html`). Prova: `python3 anteprime/mk_classica.py --test --build && node tests/classica.js [menu|stanze|furia|rarita|evo|nemesi|torre|corsa|ondate|trappole|3d|ponte]`.
+
+## Il ponte di pietre, la Prova dell'Incubo, le isole chiuse al buio (20 ottobre notte)
+
+Denis: «secondo me dovresti togliere quei microcristalli attorno a gli ostacoli, migliorare leggermente l'effetto del fuoco in generale. ed
+non fare in modo che si possa passare da un'isola all'altra solo vincendo una partita da 10 round. oscura tutte le arene non accessibili
+cosicchè non si vedono i boss». Alla domanda su come aprire l'isola dopo: «Più difficile»; tra le idee proposte: «aggiungi ponte di pietra e
+prova dell'incubo a parte perchè la voglio provare».
+- **Via i microcristalli** intorno agli ostacoli (95): niente più cristallini ai piedi degli ostacoli né schegge luccicanti a terra nel
+  mondo dei cristalli (resta il pavimento scurito e crepato sotto, `groundPatch` avvolto).
+- **Fuoco un po' più bello** dappertutto (`flame` avvolto in 95, `O3FIRE`): lingue in più ai lati, cuore chiaro, una lingua che si stacca e
+  sale, scintille (una con `LOWFX`); bracieri, torce, ostacoli che bruciano, chiazze di fuoco a terra (bruciato col bordo tratteggiato),
+  nemici che bruciano (due fiammelle), fuochi della Classica nuova. Costo di una fiamma 0,045 ms qui.
+- **Il ponte di pietre** (`CN_BRN`, `cnBrNeed`, `cnStones`, `cnBridgeAdd`, `cnIslBridge`): l'isola dopo si apre solo quando il ponte è
+  finito, non più alla prima vittoria. Ogni partita porta pietre: 3 per ogni stanza (o piano) superata e 25 per il custode, cioè 55 per
+  una vittoria (ritirarsi o cadere porta quelle delle stanze superate). Un ponte vuole 100 pietre per le isole 2–4, 130 per le 5–8, 160 per
+  le 9–12: due vittorie per le prime, tre per le altre. Sulla schermata di fine «Ponte verso … · +N pietre» con la barra, o «Il ponte è
+  finito! … è aperta»; tornando al menu la telecamera va al ponte e le pietre nuove cadono una a una al loro posto (otto pietre 3D
+  disegnate per ponte, quelle che mancano tratteggiate, la targhetta «N/100» solo sul ponte che parte da un'isola aperta); finito il ponte
+  l'eroe ci salta sopra e passa all'isola nuova. Isola chiusa: «Finisci il ponte: N/100 pietre» sotto l'isola, sulla mappa e su «Gioca».
+  Le coppe non aprono più le arene (niente schermata «nuova arena» dalle coppe). I salvataggi dell'anteprima di prima tengono aperte le
+  isole già vinte (`S.brv`).
+- **La Prova dell'Incubo** (a parte, da provare): sulle isole già vinte c'è la pillola rossa «Incubo» sotto il nome; un tocco la accende,
+  il cielo diventa rosso, il custode si sveglia e ringhia, «Gioca» diventa «Incubo» (rosso) e la riga sotto dice «Incubo: nemici più forti
+  · oro doppio». La partita: le manopole di `DIFF` più dure (élite fin dalla prima stanza e molto più spesso, niente sconti della prima
+  arena, vita e danno come un'arena ×1,5 + 0,1), la scritta «Prova dell'Incubo» dopo quella della stanza, tutto un po' più rosso, e il
+  custode **già arrabbiato** (la sua fase 2 da subito, con la vita intera, `cnIncTick`). Vinta: **oro doppio** e **3 cristalli**, la luna
+  rossa sopra il cancello dell'isola; niente pietre, niente braciere. Le manopole tornano come prima alla fine, uscendo dalla partita o
+  tornando al menu (`cnIncRestore`); «Gioca ancora» rifà l'Incubo. Record in `SAVE.cn.inc`. Per provarlo subito, nell'anteprima con
+  «Solo nell'anteprima: apri tutte le arene» (sulla mappa) la pillola c'è su ogni isola.
+- **Le isole chiuse al buio**: nel cammino un'isola chiusa è quasi nera (si intravedono la forma, il lucchetto e qualche luce del suo
+  mondo) e il suo custode non c'è; sulla mappa del mondo le arene chiuse sono nere e il custode è «???».
+Prova `node tests/classica.js ponte` (14 controlli).
 
 ## Tutto in 3D (20 ottobre notte)
 
@@ -41,7 +73,7 @@ Reliquie e Ricercati in una fila sopra Gioca**. Nella Classica la schermata prin
 loro posto il cammino (`src/js/94-classica-nuova.js`, sezione 7, `ISL`): ogni arena un pezzo di terra del suo mondo (muschio, vulcano,
 palude, ghiaccio, coi colori dell'arena) col sentiero, l'arco del cancello, il braciere e le cose del mondo, il custode che dorme in fondo;
 le isole chiuse hanno le catene col lucchetto. Scorrendo si guardano le altre (chiuse comprese, l'eroe resta dov'è); su un'isola aperta
-l'eroe ci salta e «Gioca» gioca quella; dopo la prima vittoria salta da solo sull'isola dopo. In alto «ARENA N», il nome e la modalità
+l'eroe ci salta e «Gioca» gioca quella; quando il ponte verso l'isola dopo è finito ci salta da solo (sopra, «Il ponte di pietre»). In alto «ARENA N», il nome e la modalità
 (un tocco apre la mappa del mondo), sotto il braciere con «Completata» e il record. La Zombie resta com'era (lo scorrimento tra le modalità
 funziona come prima fuori dalle isole). Ogni isola è dipinta una volta in una tela sua (al massimo 6), un fotogramma costa circa 7 ms qui
 (la cripta 21). Prova `node tests/classica.js menu`.
