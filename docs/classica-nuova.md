@@ -4,7 +4,8 @@ Denis: «ascolta ora pensiamo a migliorare la modalità classica […] per rende
 delle coppe con le arene», poi, dopo la lista delle proposte: «ok creami le cose che mi hai elencato su una cosa a parte senza intaccare il
 progetto principale». Ramo `classica-nuova` (da `piano-maestro`); il gioco vero non cambia: `src/js/94-classica-nuova.js` **non** è in
 `src/ordine.txt`. Pagina: `python3 anteprime/mk_classica.py` → `anteprime/classica.html` (parte con un salvataggio suo, già dopo la creazione
-dell'eroe). Prova: `python3 anteprime/mk_classica.py --test && node tests/classica.js [menu|obj|elite|fusioni|partita|torre|corsa]`.
+dell'eroe), pubblicata su https://claude.ai/artifact/K6E5QMv5pxKkt61MCFJsba («Mossbound · Classica nuova»: si aggiorna ripubblicando
+`anteprime/classica.html`). Prova: `python3 anteprime/mk_classica.py --test && node tests/classica.js [menu|obj|elite|fusioni|partita|torre|corsa]`.
 
 ## Le otto novità
 

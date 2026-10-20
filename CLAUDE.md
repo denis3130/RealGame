@@ -193,6 +193,15 @@ cammina e non tira, «Fase 2»). Prove: `node tests/colpi.js`, `tests/colpi_moto
 di oggi restano come sono), `tests/colpi_foglio.js` (foglio ingrandito); `mk_boss2.py <tipo> --test --colpi` per `boss2gioco.js` coi
 colpi nuovi. Nel gioco dal 20 ottobre con i boss rifatti (sopra).
 
+## Classica nuova (20 ottobre, anteprima nel ramo `classica-nuova`)
+
+Denis: «pensiamo a migliorare la modalità classica […] non pallosa come la scalata delle coppe», poi «creami le cose che mi hai elencato su
+una cosa a parte senza intaccare il progetto principale». `src/js/94-classica-nuova.js` (**non** in `src/ordine.txt`): bivi tra le stanze,
+stanze con un obiettivo, famiglie di abilità che si fondono, 12 reliquie, mappa del mondo con le stelle al posto della scalata delle coppe,
+bracieri della fiamma, Torre della settimana, Corsa dei boss. Pagina `python3 anteprime/mk_classica.py`, pubblicata su
+https://claude.ai/artifact/K6E5QMv5pxKkt61MCFJsba; prova `node tests/classica.js`; dettagli in `docs/classica-nuova.md`. Nel gioco solo dopo
+il sì di Denis.
+
 ## FASE 9: più fluido sul telefono (19 ottobre, in corso)
 
 Denis: «vai, lascia perdere l'intro ecc» (la FASE 9 subito; intro, prologo e filmati non si toccano). Il gioco più fluido sul suo iPhone
