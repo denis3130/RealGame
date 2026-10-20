@@ -1,4 +1,4 @@
-# I boss della Classica rifatti (15 ottobre, in corso)
+# I boss della Classica rifatti (15–20 ottobre; nel gioco dal 20 ottobre)
 
 Richiesta di Denis (15 ottobre): «non mi piacciono, rivisita tutti i boss, rendili più creepy e fatti meglio sia da fermi che nelle
 animazioni. Dagli un bel character design appropriato per ogni boss della modalità classica, dal Golem all'ultimo». Risposte alle domande:
@@ -72,6 +72,32 @@ sono **finiti e collaudati ma non sono nel gioco**: ce li mette l'altra sessione
 - `anteprime/mk_boss2.py` con un boss che è già nel gioco usa quello del gioco (lo dice: «cervello e modello sono già nel gioco»).
 - La prova delle anteprime (`tests/anteprime.js`) ora ha un salvataggio con gli oggetti e l'eroe (senza, il gioco lo prendeva per un
   giocatore nuovo e il prologo copriva tutto) e aspetta che le porte dello sblocco si aprano.
+
+## Nel gioco (20 ottobre)
+
+Denis, dopo i colpi unici: «ok perfetto ora che si fa?», poi «Tutto nel gioco». In `src/ordine.txt`, dopo `js/92-eroi-nuovi.js`:
+`../sprite/nemici3d/boss2kit.js`, i 13 modelli (`golem2.js`, `salamander2.js`, `toad2.js`, `yeti2.js`, `witch2.js`, `smith2.js`,
+`hydra2.js`, `icequeen2.js`, `mimic2.js`, `puppeteer2.js`, `phoenix2.js`, `octopus2.js`, `stag2.js`), i 13 cervelli (`js/89-*.js`, nello
+stesso ordine) e `js/93-colpi-unici.js` (`docs/colpi-unici.md`). Ogni modello prende il posto del vecchio dappertutto: arene 1–12, Abisso
+(un boss ogni 5 stanze), sfida del giorno, Mimic delle casse gemelle, guida, prologo, anteprime e sblocco delle arene. Ritocchi fatti
+entrando:
+
+- Anteprime e sblocco delle arene (`src/js/61-anteprime-arene.js`): i modelli nuovi sono quasi il doppio di quelli di prima (nella
+  miniatura il Golem è alto 173 px contro 92) e Re Rospo, Strega, Fabbro, Regina toccavano il bordo alto, Idra e Piovra quello basso; ora
+  sono a ×0,88 e Piovra e Idra stanno 12 e 7 px più in alto (`tests/anteprime.js`: tutti dentro il riquadro).
+- Righe di vittoria (`VINTO`, 06-ui.js): nelle arene 9–12 dicevano il custode di una volta del mondo della stanza («La Regina dei Ghiacci
+  è caduta» dopo il Cervo; difetto vecchio, dal 15 ottobre): ora prima la riga del boss vero (`ARENAS[i].bt`, righe in 81-boss3-base.js).
+  E dicono come cadono adesso: il Golem torna pietra, lo Yeti torna neve, la Strega diventa un albero spoglio, la fornace del Fabbro si
+  spegne, l'Idra si addormenta, la Regina si scioglie nella neve (Salamandra e Re Rospo le avevano già).
+- In cima ai cervelli la riga «ANTEPRIMA» ora dice «NEL GIOCO dal 20 ottobre».
+
+Collaudo nel gioco vero (20 ottobre): `boss2gioco.js` dei 13 (130 controlli, nessun errore: entrata, mosse delle due fasi, voci,
+sconfitta, stanza ripulita); una partita automatica per arena (`run.js arena`, coppe 0–10.000: 12 vittorie, ogni stanza 10 col boss
+rifatto, `tests/int/`); Abisso fino alla stanza 175 (Regina, Golem, Strega, Salamandra… ogni 5 stanze); sfida del giorno; il Mimic dalle
+casse gemelle (`tests/gemelle.js`, nuovo: cassa cattiva, entrata, lotta, fase 2, sconfitta, porta aperta; cassa buona: monete);
+`meta2.js`, `menu2.js`, `menu3.js`; prove dei colpi. Il trailer di 38 (da parte) ha già due inquadrature vecchie che non funzionano
+più dal 14 ottobre (l'Idra: la stanza 10 ha il boss dell'arena 1, quindi il Golem; lo Yeti: la stanza 5 è quella dei Campioni): da
+rifare se il trailer torna nel gioco.
 
 ## Stato dei boss (19 ottobre sera)
 

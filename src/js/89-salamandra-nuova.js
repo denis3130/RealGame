@@ -1,8 +1,8 @@
 // =====================================================================
 // LA SALAMANDRA DI LAVA RIFATTA: «la Regina del Vulcano» (Denis, 15 ottobre: «rivisita tutti i boss … possenti, belli, fighi, che diano
-// timore nello sfidarli», «migliora anche le loro abilità speciali»; 16 ottobre, dopo il Golem: «sì, fai gli altri 12»). ANTEPRIMA: questo
-// file e il modello sprite/nemici3d/salamander2.js entrano solo nella copia del gioco fatta da anteprime/mk_boss2.py; nel gioco vero dopo
-// il sì di Denis (il modello prende il posto di 'salamander' e questo file va in src/ordine.txt). Design, mosse e numeri:
+// timore nello sfidarli», «migliora anche le loro abilità speciali»; 16 ottobre, dopo il Golem: «sì, fai gli altri 12»). NEL GIOCO dal 20
+// ottobre (Denis: «Tutto nel gioco»): questo file e il modello sprite/nemici3d/salamander2.js sono in src/ordine.txt e il modello prende il
+// posto di 'salamander' (prima stavano solo nella copia del gioco di anteprime/mk_boss2.py). Design, mosse e numeri:
 // docs/boss-classici-design/salamander.md (il metodo comune: docs/boss-classici.md). Modello finto per le prove: anteprime/boss2/salamander_stub.js.
 // Una salamandra pezzata enorme, carminio e oro, ritta come su un trono, con una corona d'ossidiana, una gorgiera di petali di magma (il
 // suo cuore: prima di ogni colpo si apre come un sole e la sua luce corre nella parte che colpirà) e lo scettro in punta alla coda.

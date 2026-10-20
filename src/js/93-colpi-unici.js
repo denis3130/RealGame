@@ -35,8 +35,8 @@
 //   nei muri, le bolle con la lucciola, le lance e i pilastri, le monete); suono proprio a Salamandra e Fenice. Il Fabbro non spara colpi
 //   (il maglio sulla catena è già suo).
 // Danni, velocità e quante volte tirano restano quelli di oggi (le braci del diavoletto fanno 0,7 del colpo). Con LOWFX niente bagliori,
-// scie, occhietti né scintille. CU.on spegne tutto (Prima / Dopo nella pagina). Solo anteprima: non è in src/ordine.txt; la pagina
-// python3 anteprime/mk_colpi.py lo mette nella copia del gioco.
+// scie, occhietti né scintille. CU.on spegne tutto (Prima / Dopo nella pagina). Nel gioco dal 20 ottobre (Denis: «Tutto nel gioco»),
+// in fondo a src/ordine.txt; la pagina python3 anteprime/mk_colpi.py lo fa provare un nemico alla volta.
 const CU={on:true,cur:null,n:0,first:null,raw:false,fx:[],stuck:[],last:{}};
 const CUL=[-.6,-.8];// where the light comes from (top left of the screen)
 // the light side of a piece turned by a (its local y): >0 when the light falls on its +y side

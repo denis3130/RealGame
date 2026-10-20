@@ -1,8 +1,8 @@
 // =====================================================================
-// LA PIOVRA DELLA PALUDE RIFATTA: «la Signora dello Stagno» (Denis, 15 ottobre: «rivisita tutti i boss … possenti, belli, fighi, che
-// diano timore nello sfidarli», «migliora anche le loro abilità speciali»; 16 ottobre, visto il Golem: «sì, fai gli altri 12»). ANTEPRIMA:
-// questo file e il modello sprite/nemici3d/octopus2.js entrano solo nella copia del gioco fatta da anteprime/mk_boss2.py; nel gioco vero
-// dopo il sì di Denis (il modello prende il posto di 'octopus' e questo file va in src/ordine.txt). Design e numeri:
+// LA PIOVRA DELLA PALUDE RIFATTA: «la Signora dello Stagno» (Denis, 15 ottobre: «rivisita tutti i boss … possenti, belli, fighi, che diano
+// timore nello sfidarli», «migliora anche le loro abilità speciali»; 16 ottobre, visto il Golem: «sì, fai gli altri 12»). NEL GIOCO dal 20
+// ottobre (Denis: «Tutto nel gioco»): questo file e il modello sprite/nemici3d/octopus2.js sono in src/ordine.txt e il modello prende il
+// posto di 'octopus' (prima stavano solo nella copia del gioco di anteprime/mk_boss2.py). Design e numeri:
 // docs/boss-classici-design/octopus.md.
 // Una piovra antica color petrolio, seduta nella sua pozza come su un trono, con la corona dello stagno (giunco, chiocciole di palude, la
 // cozza con la Perla). Il suo avviso è la Perla: lampeggia prima di ogni mossa e la sua luce corre dove sta per colpire (nelle ventose del

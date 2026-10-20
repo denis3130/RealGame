@@ -1,8 +1,8 @@
 // =====================================================================
 // LO YETI DELLE VETTE RIFATTO: «la Montagna che Respira» (Denis, 15 ottobre: «rivisita tutti i boss … possenti, belli, fighi, che diano
-// timore nello sfidarli», «migliora anche le loro abilità speciali»; 16 ottobre, dopo il Golem: «sì, fai gli altri 12»). ANTEPRIMA: questo
-// file e il modello sprite/nemici3d/yeti2.js entrano solo nella copia del gioco fatta da anteprime/mk_boss2.py; nel gioco vero dopo il sì
-// di Denis (il modello prende il posto di 'yeti' e questo file va in src/ordine.txt). Design e numeri: docs/boss-classici-design/yeti.md.
+// timore nello sfidarli», «migliora anche le loro abilità speciali»; 16 ottobre, dopo il Golem: «sì, fai gli altri 12»). NEL GIOCO dal 20
+// ottobre (Denis: «Tutto nel gioco»): questo file e il modello sprite/nemici3d/yeti2.js sono in src/ordine.txt e il modello prende il posto
+// di 'yeti' (prima stavano solo nella copia del gioco di anteprime/mk_boss2.py). Design e numeri: docs/boss-classici-design/yeti.md.
 // Un gigante antichissimo delle vette, curvo, col mantello di neve sulla gobba e le corna da montone. Il suo avviso è IL RESPIRO: prima di
 // ogni colpo prende fiato (il pelo si gonfia, la neve della stanza gli corre in bocca, si sente il fiato che sale con tre note di vetro) e
 // il colpo parte con lo sbuffo; dopo il Soffio e il Ruggito resta senza fiato e si colpisce forte. «Prende fiato: scappa. Ha il fiatone:
@@ -19,6 +19,8 @@
 // avviso a terra di almeno 0,6 s veri (anche nella fase 2), un po' di camminata tra una mossa e l'altra.
 // =====================================================================
 const Y2ON=typeof N3!=='undefined'&&!!N3.yeti2;
+// (the line of the victory, 06-ui.js: the way it falls now)
+if(Y2ON)VINTO.yeti='Lo Yeti delle Vette è tornato neve. La vetta è tua.';
 const Y2={seq1:['leap','pound','snowball','breath'],seq2:['roar','bounds','claws','pound','breath','snowball'],red:'229,72,77',ice:'150,215,255',deep:'90,160,255',
   air:{leap:[.22,.8],bound:[.25,.8]},snow:['#ffffff','#eef5fc','#cfdeee']};
 if(Y2ON){

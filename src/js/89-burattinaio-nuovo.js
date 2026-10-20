@@ -1,8 +1,8 @@
 // =====================================================================
 // IL BURATTINAIO D'OMBRA RIFATTO: «la Marionetta del Teatro delle Ombre» (Denis, 15 ottobre: «rivisita tutti i boss … possenti, belli,
-// fighi, che diano timore nello sfidarli», «migliora anche le loro abilità speciali»; poi, visto il Golem, «sì, fai gli altri 12»).
-// ANTEPRIMA: questo file e il modello sprite/nemici3d/puppeteer2.js entrano solo nella copia del gioco fatta da anteprime/mk_boss2.py; nel
-// gioco vero dopo il sì di Denis (il modello prende il posto di 'puppeteer' e questo file va in src/ordine.txt). Design e numeri:
+// fighi, che diano timore nello sfidarli», «migliora anche le loro abilità speciali»; poi, visto il Golem, «sì, fai gli altri 12»). NEL
+// GIOCO dal 20 ottobre (Denis: «Tutto nel gioco»): questo file e il modello sprite/nemici3d/puppeteer2.js sono in src/ordine.txt e il
+// modello prende il posto di 'puppeteer' (prima stavano solo nella copia del gioco di anteprime/mk_boss2.py). Design e numeri:
 // docs/boss-classici-design/puppeteer.md («Le abilità nel gioco»).
 // Il custode della Cripta delle Ombre (arena 9): un giullare di legno, avorio e velluto alto tre volte e mezzo l'eroe, appeso a cinque fili
 // d'oro che salgono a una croce che dondola da sola nel buio. Il suo avviso: prima di ogni colpo si accendono e si tendono i fili dell'arto

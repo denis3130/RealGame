@@ -1,8 +1,8 @@
 // =====================================================================
-// IL RE ROSPO RIFATTO: «il Tiranno delle Lucciole» (Denis, 15 ottobre: «rivisita tutti i boss … possenti, belli, fighi, che diano
-// timore nello sfidarli», «migliora anche le loro abilità speciali»; 16 ottobre, dopo il Golem: «sì, fai gli altri 12»). ANTEPRIMA: questo
-// file e il modello sprite/nemici3d/toad2.js entrano solo nella copia del gioco fatta da anteprime/mk_boss2.py; nel gioco vero dopo il sì
-// di Denis (il modello prende il posto di 'toad' e questo file va in src/ordine.txt). Design e numeri: docs/boss-classici-design/toad.md.
+// IL RE ROSPO RIFATTO: «il Tiranno delle Lucciole» (Denis, 15 ottobre: «rivisita tutti i boss … possenti, belli, fighi, che diano timore
+// nello sfidarli», «migliora anche le loro abilità speciali»; 16 ottobre, dopo il Golem: «sì, fai gli altri 12»). NEL GIOCO dal 20 ottobre
+// (Denis: «Tutto nel gioco»): questo file e il modello sprite/nemici3d/toad2.js sono in src/ordine.txt e il modello prende il posto di
+// 'toad' (prima stavano solo nella copia del gioco di anteprime/mk_boss2.py). Design e numeri: docs/boss-classici-design/toad.md.
 // Il rospo più grosso e prepotente della Palude delle Lucciole: per diventare re si è ingozzato delle lucciole della sua palude e la loro
 // luce gli vive dentro. Prima di ogni colpo la luce gli corre sotto la pelle fino al punto da cui partirà (il suo avviso, come il cuore del
 // Golem) e si sente un tintinnio di vetro. Ogni stato ha il nome di una mossa del modello; il colpo vero parte nel suo fotogramma (b3at,

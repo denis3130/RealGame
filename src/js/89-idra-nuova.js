@@ -1,8 +1,9 @@
 // =====================================================================
-// L'IDRA DELLA PALUDE RIFATTA: «l'Antica della Pozza Nera» (Denis, 15 ottobre: «rivisita tutti i boss … possenti, belli, fighi, che
-// diano timore nello sfidarli», «migliora anche le loro abilità speciali»; 16 ottobre, dopo il Golem: «sì, fai gli altri 12»). ANTEPRIMA:
-// questo file e il modello sprite/nemici3d/hydra2.js entrano solo nella copia del gioco fatta da anteprime/mk_boss2.py; nel gioco vero dopo
-// il sì di Denis (il modello prende il posto di 'hydra' e questo file va in src/ordine.txt). Design e numeri: docs/boss-classici-design/hydra.md.
+// L'IDRA DELLA PALUDE RIFATTA: «l'Antica della Pozza Nera» (Denis, 15 ottobre: «rivisita tutti i boss … possenti, belli, fighi, che diano
+// timore nello sfidarli», «migliora anche le loro abilità speciali»; 16 ottobre, dopo il Golem: «sì, fai gli altri 12»). NEL GIOCO dal 20
+// ottobre (Denis: «Tutto nel gioco»): questo file e il modello sprite/nemici3d/hydra2.js sono in src/ordine.txt e il modello prende il
+// posto di 'hydra' (prima stavano solo nella copia del gioco di anteprime/mk_boss2.py). Design e numeri:
+// docs/boss-classici-design/hydra.md.
 // Tre teste e una sola mente nella sua pozza nera: prima di ogni colpo il veleno sale luminoso nel collo della testa che colpirà. Non si
 // sposta finché non apre il terzo occhio (a metà vita); poi nuota verso di te. Ogni stato ha il nome di una mossa del modello; il colpo vero
 // parte nel suo fotogramma (b3at, 81-boss3-base.js). Mosse:
@@ -20,6 +21,8 @@
 // È il boss dell'arena 7: mai due attacchi insieme, ogni danno ha un avviso di almeno 0,6 s veri; gli avvisi tondi sono ellissi 1 : 0,6.
 // =====================================================================
 const HY2ON=typeof N3!=='undefined'&&!!N3.hydra2;
+// (the line of the victory, 06-ui.js: the way it falls now)
+if(HY2ON)VINTO.idra="L'Idra della Palude si è addormentata. La palude guarisce.";
 const HY2={seq1:['A','breath','ambush','decree','A','dive'],seq2:['gaze','A','spit','breath','ambush','decree','dive'],red:'229,72,77',K:.6,lime:'150,230,90',vio:'199,125,255'};
 if(HY2ON){
   // the new model in place of the old one (its drawing of today stays as N3.meta.hydra.old for the pages)

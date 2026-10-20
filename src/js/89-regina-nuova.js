@@ -1,8 +1,9 @@
 // =====================================================================
 // LA REGINA DEI GHIACCI RIFATTA: «l'Imperatrice di Cristallo» (Denis, 15 ottobre: «rivisita tutti i boss … possenti, belli, fighi, che
-// diano timore nello sfidarli», «migliora anche le loro abilità speciali»; 16 ottobre, dopo il Golem: «sì, fai gli altri 12»). ANTEPRIMA:
-// questo file e il modello sprite/nemici3d/icequeen2.js entrano solo nella copia del gioco fatta da anteprime/mk_boss2.py; nel gioco vero
-// dopo il sì di Denis (il modello prende il posto di 'icequeen' e questo file va in src/ordine.txt). Design e numeri: docs/boss-classici.md.
+// diano timore nello sfidarli», «migliora anche le loro abilità speciali»; 16 ottobre, dopo il Golem: «sì, fai gli altri 12»). NEL GIOCO
+// dal 20 ottobre (Denis: «Tutto nel gioco»): questo file e il modello sprite/nemici3d/icequeen2.js sono in src/ordine.txt e il modello
+// prende il posto di 'icequeen' (prima stavano solo nella copia del gioco di anteprime/mk_boss2.py). Design e numeri:
+// docs/boss-classici.md.
 // Un'imperatrice altissima e immobile, piantata a terra come un monumento: scivola sul ghiaccio senza muovere un piede, sempre girata
 // verso di te. Il suo avviso è la corona-orologio: prima di ogni incantesimo le stalattiti della corona si accendono a coppie (tin… tin…
 // tin… TIN) e quando si accende quella di mezzo il colpo parte. Ogni stato ha il nome di una mossa del modello; il colpo vero parte nel
@@ -27,6 +28,8 @@
 // un vortice di neve e restano la corona e lo scettro sul cumulo. Ogni danno ha un avviso a terra di almeno 0,6 s veri, anche nella fase 2.
 // =====================================================================
 const QON=typeof N3!=='undefined'&&!!N3.icequeen2;
+// (the line of the victory, 06-ui.js: the way it falls now)
+if(QON)VINTO.regina='La Regina dei Ghiacci si è sciolta nella neve. Il ghiacciaio è tuo.';
 const QN={seq1:['lances','crown','nova','mirror'],
   // the second phase (the design: crown, gaze, lances ×2, mirror, waltz, nova): the Waltz comes right after the Gaze, so the first round of
   // the Polar Night shows all three new moves; the Gaze always right after the Crown (its pillars are the cover)

@@ -1,8 +1,9 @@
 // =====================================================================
 // IL FABBRO INFERNALE RIFATTO: «il Gigante della Forgia» (Denis, 15 ottobre: «rivisita tutti i boss … possenti, belli, fighi, che diano
-// timore nello sfidarli», «migliora anche le loro abilità speciali»; 16 ottobre, dopo il Golem: «sì, fai gli altri 12»). ANTEPRIMA: questo
-// file e il modello sprite/nemici3d/smith2.js entrano solo nella copia del gioco fatta da anteprime/mk_boss2.py; nel gioco vero dopo il sì
-// di Denis (il modello prende il posto di 'smith' e questo file va in src/ordine.txt). Design e numeri: docs/boss-classici-design/smith.md.
+// timore nello sfidarli», «migliora anche le loro abilità speciali»; 16 ottobre, dopo il Golem: «sì, fai gli altri 12»). NEL GIOCO dal 20
+// ottobre (Denis: «Tutto nel gioco»): questo file e il modello sprite/nemici3d/smith2.js sono in src/ordine.txt e il modello prende il
+// posto di 'smith' (prima stavano solo nella copia del gioco di anteprime/mk_boss2.py). Design e numeri:
+// docs/boss-classici-design/smith.md.
 // Un gigante di bronzo con la fornace nel petto: prima di ogni colpo il metallo che colpirà si arroventa (bianco vuol dire adesso), ogni
 // mossa carica la pressione (le feritoie accese, e.press) e con tre file accese sfiata e la fornace resta aperta: è lì che si colpisce.
 // Ogni stato ha il nome di una mossa del modello; il colpo vero parte nel suo fotogramma (b3at, 81-boss3-base.js). Mosse:
@@ -23,6 +24,8 @@
 // Gli avvisi tondi sul pavimento sono ellissi 1 : 0,6 e colpiscono esattamente dove si vedono.
 // =====================================================================
 const F2ON=typeof N3!=='undefined'&&!!N3.smith2;
+// (the line of the victory, 06-ui.js: the way it falls now)
+if(F2ON)VINTO.fabbro='La fornace del Fabbro Infernale si è spenta. Il vulcano tace.';
 const F2={seq1:['slam','anvil','throw','vent'],seq2:['spin','slam','anvil','throw','vent2'],red:'229,72,77',hot:'255,170,60',K:.6};
 if(F2ON){
   // the new model in place of the old one (its drawing of today stays as N3.meta.smith.old for the pages)

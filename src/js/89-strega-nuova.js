@@ -1,8 +1,8 @@
 // =====================================================================
-// LA STREGA DELLE RADICI RIFATTA: «la Signora delle Radici» (Denis, 15 ottobre: «rivisita tutti i boss … possenti, belli, fighi, che
-// diano timore nello sfidarli», «migliora anche le loro abilità speciali»; 16 ottobre, visto il Golem: «sì, fai gli altri 12»). ANTEPRIMA:
-// questo file e il modello sprite/nemici3d/witch2.js entrano solo nella copia del gioco fatta da anteprime/mk_boss2.py; nel gioco vero dopo
-// il sì di Denis (il modello prende il posto di 'witch' e questo file va in src/ordine.txt). Design e numeri: docs/boss-classici.md.
+// LA STREGA DELLE RADICI RIFATTA: «la Signora delle Radici» (Denis, 15 ottobre: «rivisita tutti i boss … possenti, belli, fighi, che diano
+// timore nello sfidarli», «migliora anche le loro abilità speciali»; 16 ottobre, visto il Golem: «sì, fai gli altri 12»). NEL GIOCO dal 20
+// ottobre (Denis: «Tutto nel gioco»): questo file e il modello sprite/nemici3d/witch2.js sono in src/ordine.txt e il modello prende il
+// posto di 'witch' (prima stavano solo nella copia del gioco di anteprime/mk_boss2.py). Design e numeri: docs/boss-classici.md.
 // Una strega altissima che non cammina ma scivola sulle sue radici, nel suo santuario (54-strega-santuario.js, che resta). Sul petto il
 // Seme del Bosco: prima di ogni incantesimo la sua luce corre nelle vene fino alla parte che colpirà, e le dita scrocchiano (il suo
 // avviso, come il cuore del Golem). Ogni stato ha il nome di una mossa del modello; il colpo vero parte nel suo fotogramma (b3at,
@@ -22,6 +22,8 @@
 // insieme, ogni danno con un avviso a terra di almeno 0,6 s veri anche nella fase 2, un po' di cammino tra una mossa e l'altra.
 // =====================================================================
 const W2ON=typeof N3!=='undefined'&&!!N3.witch2;
+// (the line of the victory, 06-ui.js: the way it falls now)
+if(W2ON)VINTO.radici='La Strega delle Radici è diventata un albero spoglio. La cripta è tua.';
 const W2={seq1:['hand','spiral','sink','roots','sow'],seq2:['rite','hand','spiral','sink','roots','sow'],red:'229,72,77',chalk:'255,235,210',
   mint:'123,240,192',violet:'190,120,255',amber:'255,138,60',FY:8,
   // the moment of each move's voice (the light has reached the part that strikes): B3CUE.witch says which clip

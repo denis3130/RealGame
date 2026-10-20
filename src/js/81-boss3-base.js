@@ -28,6 +28,9 @@ ARENAS[8].bt='puppeteer';ARENAS[8].d="Il Burattinaio d'Ombra tira i fili nel bui
 ARENAS[9].bt='phoenix';ARENAS[9].d='La Fenice rinasce nel fuoco degli dei. Oro +108%.';
 ARENAS[10].bt='octopus';ARENAS[10].d="La Piovra regna sull'acqua maledetta. Oro +120%.";
 ARENAS[11].bt='stag';ARENAS[11].d="Il Cervo d'Aurora veglia sulla cima del mondo. Oro +132%.";
+// the line of the victory (06-ui.js): theirs, not the one of the old custodian of the room's world
+Object.assign(VINTO,{puppeteer:"I fili del Burattinaio d'Ombra si sono spezzati. Cala il sipario.",phoenix:'La Fenice della Forgia è tornata cenere. La forgia degli dei è tua.',
+  octopus:'La Piovra della Palude è affondata. Resta solo la sua corona.',stag:"Il Cervo d'Aurora ti ha lasciato la sua corona. La vetta è tua."});
 // the boss of room n in this run, when it is one of the new ones (arena mode only: the Abyss and the daily challenge keep theirs)
 function boss3At(n){if(!G||G.mode==='inf'||G.daily)return null;if((n==null?G.room:n)<ROOMS)return null;const A=ARENAS[G.arena||0];return A&&A.bt||null}
 {const _cf=compositionFor;compositionFor=function(n){const bt=boss3At(n);if(bt&&!G.event)return[bt];return _cf.apply(this,arguments)}}

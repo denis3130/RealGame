@@ -1,4 +1,4 @@
-# Colpi unici (20 ottobre, anteprima)
+# Colpi unici (20 ottobre; nel gioco dal 20 ottobre)
 
 Denis: «voglio che gli attacchi tipo che sparano qualcosa siano unici per tutti e adatti al proprio stile e design. chiedimi se non hai
 capito». Le sue risposte alle domande: **tutti i nemici e i boss della Classica**; **entrambe** le cose, cioè l'aspetto e il suono del colpo
@@ -81,7 +81,7 @@ tutto intorno: Golem, Yeti, Strega, Idra, Burattinaio, Piovra, Fenice, Salamandr
 
 ## Pagina e prove
 
-- Pagina: `python3 anteprime/mk_colpi.py` → `anteprime/colpi.html` (una copia del gioco coi 13 boss rifatti e il file dei colpi; il
+- Pagina: `python3 anteprime/mk_colpi.py` → `anteprime/colpi.html` (una copia del gioco, che dal 20 ottobre ha già i 13 boss rifatti e il file dei colpi; il
   pannello «Colpi»: scegli un nemico o un boss, «Colpi nuovi» / «Colpi di oggi», «Élite», «L'eroe cammina avanti e indietro», «L'eroe non
   tira», «Fase 2» per i boss). Pubblicata su https://claude.ai/artifact/7RuqpJPGVgabvySyuYfXNZ (si aggiorna ripubblicando `anteprime/colpi.html`).
 - `node tests/colpi.js [tipo ...]`: ogni nemico (anche l'élite) spara il suo colpo, foto `tests/cu_<tipo>.png`, i colpi di oggi con «Colpi
@@ -90,15 +90,18 @@ tutto intorno: Golem, Yeti, Strega, Idra, Burattinaio, Piovra, Fenice, Salamandr
   rallentano, fiammelle che danzano, teschietto che segue, sputo che fa male solo a terra, spirale, schegge che partono e ricrescono,
   petali che si chiudono, palla che si spacca, zig zag, raggio, meteore, bombe) e un suono per ogni colpo.
 - `node tests/colpi_boss.js [tipo ...]`: i modi nuovi dei boss, i loro suoni, 12 s di lotta per ognuno dei 13 senza errori.
-- `node tests/colpi_oggi.js` (pagina `python3 anteprime/mk_colpi.py --test --senza-boss`): coi boss di oggi delle arene 9–12, che
-  usano gli stessi tipi di colpo dei rifatti, non cambia niente (i loro burattini tirano lo spillo come tutti i burattini).
+- `node tests/colpi_oggi.js` (pagina `python3 anteprime/mk_colpi.py --test --senza-boss`): coi boss di prima delle arene 9–12, che
+  usavano gli stessi tipi di colpo dei rifatti, non cambiava niente. Valeva finché i boss rifatti non erano nel gioco: dal 20 ottobre i
+  boss di prima non ci sono più e `--senza-boss` non li toglie (i cervelli sono in `src/ordine.txt`).
 - `node tests/colpi_foglio.js [scala]`: il foglio `tests/cu_foglio.png`, ogni colpo in cinque direzioni ingrandito, accanto a quello di oggi
   (anche i boss).
-- `python3 anteprime/mk_boss2.py <tipo> --test --colpi` mette il file dei colpi anche nella pagina di prova di un boss, così
+- `python3 anteprime/mk_boss2.py <tipo> --test` (dal 20 ottobre i colpi ci sono già: `--colpi` non serve più) e
   `node tests/boss2gioco.js <tipo>` controlla tutte le sue mosse coi colpi nuovi.
 
-## Per metterlo nel gioco (dopo il sì di Denis)
+## Nel gioco (20 ottobre)
 
-Aggiungere `js/93-colpi-unici.js` in fondo a `src/ordine.txt`. I boss rifatti prendono i loro modi solo quando i loro cervelli entrano
-nel gioco (fino ad allora `CUB` non trova i loro tipi nuovi: i boss di oggi restano come sono, tranne il suono di 'crystal' del Cervo di
-oggi, che prende quello d'aurora).
+Denis, visti i colpi sulla pagina: «ok perfetto ora che si fa?», poi «Tutto nel gioco». `js/93-colpi-unici.js` è in fondo a
+`src/ordine.txt`, dopo i 13 cervelli dei boss rifatti (entrati nel gioco insieme: `docs/boss-classici.md`), così `CUB` trova tutti i loro
+tipi. La pagina `python3 anteprime/mk_colpi.py` ora usa il gioco così com'è (cervelli e colpi ci sono già) e resta per provarli un nemico
+alla volta, con «Colpi di oggi» (`CU.on=false`) per il confronto. Collaudo nel gioco vero: `colpi.js`, `colpi_moto.js`, `colpi_boss.js`
+sulla pagina; `boss2gioco.js` dei 13 boss; una partita automatica per arena, Abisso e sfida del giorno; nessun errore.

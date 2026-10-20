@@ -44,7 +44,10 @@ function arenaScene(cv,i,t){const A=ARENAS[i],z=A.boss||'radici',E=ENV[z]||ENV.m
   if(typeof arsPreview==='function')arsPreview(i,W,H,wh,t);
   const g=c.createRadialGradient(W/2,H*.55,H*.3,W/2,H*.55,H*.95);g.addColorStop(0,'rgba(0,0,0,0)');g.addColorStop(1,`rgba(0,0,0,${.35+.3*(E.dark||.4)})`);c.fillStyle=g;c.fillRect(0,0,W,H);
   // the boss: it breathes, and every 3.5 s it shows its blow (the 3D move 'attack', from the time of a shot)
-  const e=fakeBoss(A.bt||BOSSZ[z]||'witch');e.t=1.2+t;if(G)G.t=t;{const ph=t%3.5;if(t>0&&ph>=1)e.a3=t-ph+1}const sc=1.3*W/360;c.setTransform(sc,0,0,sc,W/2,H*.76);noShadow=false;try{shadowFor(e);drawEnemy(e)}catch(err){}
+  // (a boss remade in 89 is a bigger model: a little smaller here, so that crowns, hats, pools and arms stay inside the picture; the
+  // pools of the Hydra and the arms of the Octopus spread low, so those two stand a little higher)
+  const bt=A.bt||BOSSZ[z]||'witch',e=fakeBoss(bt);e.t=1.2+t;if(G)G.t=t;{const ph=t%3.5;if(t>0&&ph>=1)e.a3=t-ph+1}
+  const nw=N3[bt+'2']&&N3[bt]===N3[bt+'2'],sc=1.3*W/360*(nw?.88:1),up=nw?({octopus:12,hydra:7}[bt]||0):0;c.setTransform(sc,0,0,sc,W/2,H*.76-up);noShadow=false;try{shadowFor(e);drawEnemy(e)}catch(err){}
   c.setTransform(1,0,0,1,0,0);noShadow=ns;if(G)G.t=gt;ctx=saved}
 // the still picture used by the trophy road, the pass and the arena card (cached; the arena's tint on top)
 // (its own key: the menu asks for the thumbnail once before this file is loaded, and that old picture must not be kept)

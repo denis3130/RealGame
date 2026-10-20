@@ -1,8 +1,8 @@
 // =====================================================================
-// IL CERVO D'AURORA RIFATTO: «il Re della Vetta» (Denis, 15 ottobre: «rivisita tutti i boss … possenti, belli, fighi, che diano
-// timore nello sfidarli», «migliora anche le loro abilità speciali»; poi, visto il Golem, «sì, fai gli altri 12»). ANTEPRIMA: questo file
-// e il modello sprite/nemici3d/stag2.js entrano solo nella copia del gioco fatta da anteprime/mk_boss2.py; nel gioco vero dopo il sì di
-// Denis (il modello prende il posto di 'stag' e questo file va in src/ordine.txt). Design e numeri: docs/boss-classici-design/stag.md.
+// IL CERVO D'AURORA RIFATTO: «il Re della Vetta» (Denis, 15 ottobre: «rivisita tutti i boss … possenti, belli, fighi, che diano timore
+// nello sfidarli», «migliora anche le loro abilità speciali»; poi, visto il Golem, «sì, fai gli altri 12»). NEL GIOCO dal 20 ottobre
+// (Denis: «Tutto nel gioco»): questo file e il modello sprite/nemici3d/stag2.js sono in src/ordine.txt e il modello prende il posto di
+// 'stag' (prima stavano solo nella copia del gioco di anteprime/mk_boss2.py). Design e numeri: docs/boss-classici-design/stag.md.
 // L'ultimo boss (arena 12, la Vetta di Mossbound): un cervo del nord immenso, blu notte, con la corona di cristallo vivo. Prima di ogni
 // colpo l'aurora nasce dalle rosette d'oro e corre una punta alla volta nel pezzo che colpirà (il suo avviso, come il cuore del Golem).
 // Ogni stato ha il nome di una mossa del modello; il colpo vero parte nel suo fotogramma. Mosse:

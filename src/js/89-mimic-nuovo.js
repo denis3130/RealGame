@@ -1,8 +1,9 @@
 // =====================================================================
 // IL MIMIC RIFATTO: «la cassa sbagliata», il Forziere Affamato (Denis, 15 ottobre: «rivisita tutti i boss … possenti, belli, fighi, che
-// diano timore nello sfidarli», «migliora anche le loro abilità speciali»; 16 ottobre, dopo il Golem: «sì, fai gli altri 12»). ANTEPRIMA:
-// questo file e il modello sprite/nemici3d/mimic2.js entrano solo nella copia del gioco fatta da anteprime/mk_boss2.py; nel gioco vero dopo
-// il sì di Denis (il modello prende il posto di 'mimic' e questo file va in src/ordine.txt). Design e numeri: docs/boss-classici-design/mimic.md.
+// diano timore nello sfidarli», «migliora anche le loro abilità speciali»; 16 ottobre, dopo il Golem: «sì, fai gli altri 12»). NEL GIOCO
+// dal 20 ottobre (Denis: «Tutto nel gioco»): questo file e il modello sprite/nemici3d/mimic2.js sono in src/ordine.txt e il modello prende
+// il posto di 'mimic' (prima stavano solo nella copia del gioco di anteprime/mk_boss2.py). Design e numeri:
+// docs/boss-classici-design/mimic.md.
 // Il vecchio forziere della cripta su lunghe zampe pallide: prima di ogni colpo il tesoro si sveglia (tin-tin) e la sua luce corre
 // nell'ottone fino alla parte che colpirà. Esce da una delle due casse gemelle (42), come prima. Ogni stato ha il nome di una mossa del
 // modello; il colpo vero parte nel suo fotogramma (b3at, 81-boss3-base.js). Mosse:

@@ -1,8 +1,8 @@
 // =====================================================================
 // LA FENICE DELLA FORGIA RIFATTA: «la Fenice Imperiale» (Denis, 15 ottobre: «rivisita tutti i boss … possenti, belli, fighi, che diano
-// timore nello sfidarli», «migliora anche le loro abilità speciali»; poi, visto il Golem, «sì, fai gli altri 12»). ANTEPRIMA: questo file
-// e il modello sprite/nemici3d/phoenix2.js entrano solo nella copia del gioco fatta da anteprime/mk_boss2.py; nel gioco vero dopo il sì di
-// Denis (il modello prende il posto di 'phoenix' e questo file va in src/ordine.txt). Design e numeri: docs/boss-classici.md.
+// timore nello sfidarli», «migliora anche le loro abilità speciali»; poi, visto il Golem, «sì, fai gli altri 12»). NEL GIOCO dal 20 ottobre
+// (Denis: «Tutto nel gioco»): questo file e il modello sprite/nemici3d/phoenix2.js sono in src/ordine.txt e il modello prende il posto di
+// 'phoenix' (prima stavano solo nella copia del gioco di anteprime/mk_boss2.py). Design e numeri: docs/boss-classici.md.
 // L'imperatrice di fuoco della Forgia degli Dei (arena 10). Nel petto il Cuore di Forgia batte due volte prima di ogni colpo e manda il
 // fuoco lungo le penne fino al pezzo che colpirà (il suo avviso, come il cuore del Golem); man mano che perde vita le punte delle piume
 // diventano cenere. Ogni stato ha il nome di una mossa del modello; il colpo vero parte nel suo fotogramma (b3at, 81-boss3-base.js). Mosse:

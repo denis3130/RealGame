@@ -1,8 +1,8 @@
 // =====================================================================
 // IL GOLEM DI MUSCHIO RIFATTO: «Il Colosso della Cripta» (Denis, 15 ottobre: «rivisita tutti i boss … possenti, belli, fighi, che diano
-// timore nello sfidarli», «migliora anche le loro abilità speciali»; si parte dal Golem, poi gli altri). ANTEPRIMA: questo file e il
-// modello sprite/nemici3d/golem2.js entrano solo nella copia del gioco fatta da anteprime/mk_golem2.py; nel gioco vero dopo il sì di
-// Denis (il modello prende il posto di 'golem' e questo file va in src/ordine.txt). Design e numeri: docs/boss-classici.md.
+// timore nello sfidarli», «migliora anche le loro abilità speciali»; si parte dal Golem, poi gli altri). NEL GIOCO dal 20 ottobre (Denis:
+// «Tutto nel gioco»): questo file e il modello sprite/nemici3d/golem2.js sono in src/ordine.txt e il modello prende il posto di 'golem'
+// (prima stavano solo nella copia del gioco di anteprime/mk_golem2.py). Design e numeri: docs/boss-classici.md.
 // Il Golem è un colosso di ardesia coperto di muschio: il cuore di runa nel petto manda la luce lungo le vene di pietra fino al braccio
 // o alle gambe che stanno per colpire (il suo avviso). Ogni stato ha il nome di una mossa del modello; il colpo vero parte nel suo
 // fotogramma (b3at, 81-boss3-base.js). Mosse:
@@ -20,6 +20,8 @@
 // danno ha un avviso a terra di almeno 0,6 s, dopo ogni mossa almeno 1,1 s di camminata.
 // =====================================================================
 const G2ON=typeof N3!=='undefined'&&!!N3.golem2;
+// (the line of the victory, 06-ui.js: the way it falls now)
+if(G2ON)VINTO.golem='Il Golem di Muschio è tornato pietra. La cripta è tua.';
 const G2={seq1:['leap','throw','fault','curl'],seq2:['leap','throw','beam','fault','curl'],red:'229,72,77',mint:'110,255,190',lava:'255,122,46'};
 if(G2ON){
   // the new model in place of the old one (its drawing of today stays as N3.meta.golem.old for the pages)
