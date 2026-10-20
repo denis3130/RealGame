@@ -281,9 +281,9 @@ const SOLO=process.argv[2]||'';
     const o1=await J(`(()=>{render();const n0=OB3.n;for(let i=0;i<5;i++)render();const n1=OB3.n;const k=G.rocks[0];k.dmg=8;render();const n2=OB3.n;OB3.on=false;G.rocks.forEach(q=>{q._sp=null});render();const old=!!k._sp;OB3.on=true;k.dmg=0;render();
       return{still:n1-n0,worn:n2-n1,old,kinds:G.rocks.map(q=>q.kind).join()}})()`);
     ok('ogni ostacolo è dipinto una volta (si rifà solo con l\'usura); spento torna il disegno di prima',o1.still===0&&o1.worn>=1&&o1.old,JSON.stringify(o1));
-    const o2=await J(`(()=>{const c0=G.coins.length,cx=AW/2,cy=BOT-200;for(let i=0;i<6;i++)G.coins.push({x:cx-60+i*24,y:cy,vx:0,vy:0,t:9});G.gems.push({x:cx,y:cy+40,z:0,ph:0,vx:0,vy:0});G.orbs.push({x:cx,y:cy+70,ph:0,vx:0,vy:0});G.hearts.push({x:cx+60,y:cy+70});
+    const o2=await J(`(()=>{const c0=G.coins.length,h0=G.hearts.length,cx=AW/2,cy=BOT-200;for(let i=0;i<6;i++)G.coins.push({x:cx-60+i*24,y:cy,vx:0,vy:0,t:9});G.gems.push({x:cx,y:cy+40,z:0,ph:0,vx:0,vy:0});G.orbs.push({x:cx,y:cy+70,ph:0,vx:0,vy:0});G.hearts.push({x:cx+60,y:cy+70});
       G.boulders.push({sx:cx-100,sy:cy-200,tx:cx-50,ty:cy-120,t:.5,dur:1,kind:'rock'},{sx:cx+100,sy:cy-200,tx:cx+50,ty:cy-120,t:.5,dur:1,kind:'anvil'});G.bands.push({h:true,pos:TOP+60,w:26,warn:0,act:.2,style:''});
-      render();const r={coins:G.coins.length-c0,hearts:G.hearts.length,hold:!!OB3.hold};for(const k of['fontana','altare','tesoro']){G.prop={kind:k,x:cx,y:TOP+200,used:false};render();G.prop.used=true;render()}
+      render();const r={coins:G.coins.length-c0,hearts:G.hearts.length-h0,hold:!!OB3.hold};for(const k of['fontana','altare','tesoro']){G.prop={kind:k,x:cx,y:TOP+200,used:false};render();G.prop.used=true;render()}
       G.prop=null;G.boulders=[];G.bands=[];G.coins.length=c0;G.gems=[];G.orbs=[];G.hearts=[];return r})()`);
     await snap('3d_cose');
     ok('monete, cristalli, sfere, cuori, fontana, altare, tesoro, massi in volo e spine in 3D (le liste tornano intere)',o2.coins===6&&o2.hearts===1&&!o2.hold,JSON.stringify(o2));
