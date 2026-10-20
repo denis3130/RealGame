@@ -904,7 +904,8 @@ agenti). La prima versione (la cupola verde coi ventagli d'avorio e viola e le m
 
 La Madre delle Vipere: tre teste di **vipera cornuta**, grandi, piatte e larghe dietro le mascelle (due corna di osso piegate all'indietro e
 due corte sopra gli occhi), ognuna col suo **cappuccio da cobra** (mezzo aperto a riposo, spalancato quando minaccia: davanti la gola chiara
-con tre fasce scure, dietro due grandi **occhi finti** chiari che ti fissano anche quando ti dà le spalle), su tre colli lunghi e muscolosi
+con tre fasce scure, dietro lo zigzag scuro: i due grandi occhi finti chiari che c'erano li ha fatti togliere Denis, «toglili quei
+cerchi bianchi dietro la testa»), su tre colli lunghi e muscolosi
 col ventre color osso vecchio, lo **zigzag scuro delle vipere** lungo la schiena con i puntini acidi e una fila di spine. Sotto, nella
 **pozza nera come la pece** (schiuma sporca sul bordo, una macchia d'olio, ninfee morte, una con un fiore pallido, nebbia bassa), un corpo
 di serpente enorme che affiora a **spire** (due davanti, che fanno quello che prima facevano le mani: battono l'acqua, sbattono sul
@@ -914,10 +915,10 @@ loro bagliore respira; la **terza palpebra** trasparente passa di traverso, a tu
 spalanca (fauci viola scuro, la gola che si accende) le **due zanne** si aprono in avanti e gocciolano veleno; la lingua biforcuta scatta
 due volte. A riposo **una testa alla volta piega la testa di lato**, piano, mentre le altre due restano ferme a fissarti; quella di mezzo
 ogni tanto scatta avanti un attimo. **Il suo avviso**: il veleno sale luminoso lungo il ventre e i puntini del collo che colpirà, e il
-cappuccio si apre. **Fase 2**: la fessura sulla fronte si apre (il terzo occhio magenta, ritto, con la pupilla di traverso), si aprono gli
-occhi finti dei cappucci (magenta, col taglio), le scaglie diventano fredde, il veleno e l'acqua viola. Resta della Classica: forme
+cappuccio si apre. **Fase 2**: la fessura sulla fronte si apre (il terzo occhio magenta, ritto, con la pupilla di traverso), le costole dei
+cappucci si accendono di viola, le scaglie diventano fredde, il veleno e l'acqua viola. Resta della Classica: forme
 robuste, contorni scuri spessi, colori pieni, occhi grandi con la lucina, due sole zanne per testa, niente sangue, ferite o cuciture (i
-puntini sulla schiena del corpo sono stati tolti perché in fila sembravano punti di cucitura; gli occhi finti erano uniti da una curva che
+puntini sulla schiena del corpo sono stati tolti perché in fila sembravano punti di cucitura; gli occhi finti, prima di toglierli, erano uniti da una curva che
 li faceva sembrare una faccina che sorride: tolta).
 
 ### Mosse e abilità
@@ -932,8 +933,17 @@ li faceva sembrare una faccina che sorride: tolta).
 | **Tuffo** (`dive`, `under`, `rise`) | le sue luci nuotano sotto il pavimento, si apre l'acqua nera dove riemerge, poi l'onda | fuori dal cerchio, poi saltare l'onda |
 | **Sguardo del Terzo Occhio** (`gaze`, fase 2) | un cono; al lampo chi ci sta dentro senza riparo resta incantato (lento) finché non scatta | fuori dal cono o dietro un ostacolo |
 
-**Fase 2** (`rage`): le gemme erano occhi, poi tutto 1,15 volte più svelto. **Entrata** (`enter`, 4,2 s): l'acqua nera gira, sei occhi
-d'oro si aprono sotto, escono i ventagli e le teste. **Sconfitta** (`die`, 4 s): si addormenta e la palude guarisce.
+**Fase 2** (`rage`): le gemme erano occhi, poi tutto 1,15 volte più svelto.
+
+**Entrata** (`enter`, 5,4 s; rifatta il 20 ottobre, Denis: «per l'entrata fai vedere gli [occhi] di una testa alla volta e poi tutte
+insieme con introduzione spaventosa»): la pozza nera si ferma e si fa buia, sotto batte un cuore (0,1 s, 1 s, 2,4 s); sott'acqua si aprono
+gli occhi **di una testa alla volta**, ognuno col suo respiro: la testa di sinistra (0,5 s; si guarda a destra e a sinistra e poi trova te),
+quella di destra (1,3 s), quella di mezzo, più grande e più profonda (2 s), con le fessure delle fronti; poi **tutti e sei insieme**
+sbattono le palpebre (2,75 s) e si accendono di colpo (2,95 s) con un soffio a tre voci, e lì entra la musica del boss (`BMAT.hydra` in
+76: il momento in cui entra la musica si può dare per ogni boss); le teste salgono piano tutte insieme coi cappucci chiusi e l'acqua che
+cola (3,2–4 s), il corpo si alza con le spire e l'onda (4–4,35 s), i cappucci si aprono di colpo tutti insieme (4,35 s) e il ruggito a tre
+voci (4,42 s); alla fine le tre teste piegano la testa di lato insieme, piano, e tornano ferme. Versi nuovi nel cervello: `e_beat`,
+`e_eye`, `e_all`. **Sconfitta** (`die` 4 s): si addormenta e la palude guarisce.
 
 ### Misure
 

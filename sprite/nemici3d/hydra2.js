@@ -2,16 +2,18 @@
 // l'idra rendilo più spaventoso e cambia design fallo fatto meglio e creepy»; prima, 15 ottobre: «rivisita tutti i boss, rendili più
 // creepy e fatti meglio sia da fermi che nelle animazioni», «un po' più cupi», «falli possenti, belli, fighi, che diano timore nello
 // sfidarli»). La prima versione (la cupola verde coi ventagli e le mani palmate) è da parte in anteprime/boss2/hydra_a/hydra2.js.
-// Tre teste di vipera cornuta, grandi, piatte e larghe dietro le mascelle, ognuna col suo cappuccio da cobra, su tre colli lunghi e
+// Tre teste di vipera cornuta, grandi, piatte e larghe dietro le mascelle, ognuna col suo cappuccio da cobra (dietro solo lo zigzag: niente
+// occhi finti, Denis: «toglili quei cerchi bianchi dietro la testa»), su tre colli lunghi e
 // muscolosi che salgono da una pozza nera come la pece; sotto l'acqua un corpo di serpente enorme che affiora a spire (due davanti, la
 // coda dietro) con le alghe marce sulla schiena. Scaglie verde bottiglia quasi nere, il ventre color osso vecchio, lo zigzag scuro delle
 // vipere lungo la schiena con i puntini acidi nelle pieghe; occhi gialli acidi col taglio nero in orbite scure sotto le corna sopra gli
 // occhi, la terza palpebra trasparente che passa di traverso, la lingua biforcuta; quando la bocca si spalanca le due zanne si aprono in
-// avanti e gocciolano veleno. Dietro ogni cappuccio due occhi finti: anche di spalle ti guarda. Tre teste e una sola mente: respirano
+// avanti e gocciolano veleno. Tre teste e una sola mente: respirano
 // insieme, ti fissano insieme, sbattono la terza palpebra insieme; ogni tanto una piega la testa di lato, piano, mentre le altre due non si
 // muovono. Il suo avviso: il veleno sale luminoso lungo il ventre e i puntini del collo che colpirà, dall'acqua alla gola, e il cappuccio
-// si apre. A metà vita la fessura sulla fronte si apre (il terzo occhio, magenta), si aprono gli occhi finti dei cappucci, le scaglie
-// diventano fredde e il veleno viola.
+// si apre. A metà vita la fessura sulla fronte si apre (il terzo occhio, magenta), le costole dei cappucci si accendono, le scaglie
+// diventano fredde e il veleno viola. L'entrata (5,4 s): sott'acqua si aprono gli occhi di una testa alla volta, poi tutti e sei
+// sbattono insieme e si accendono, le teste salgono piano, i cappucci si aprono tutti insieme e il ruggito a tre voci.
 // Resta della Classica: forme grosse e robuste, contorni scuri spessi, colori pieni, occhi grandi con la lucina, due sole zanne per testa,
 // niente sangue, ferite o cuciture.
 // Metodo dello spaventapasseri: scheletro 3D proiettato con V(face), ogni testa con la sua telecamera, l'ordine di disegno dalla posa di
@@ -194,12 +196,23 @@ function hPose(anim,p,o,face){const p2=!!o.p2&&anim!=='rage',ph=p*TAU;
     H.forEach((h,i)=>{h.off=[0,6*dn*sw,0];h.roll=.1*dn*sw;h.tongue=pls(p,[.52,.58,.64][i],.06)});
     M0.roll+=.35*end;M0.squint=.5*end;M0.open=.12*end;M0.smirk=end;for(const h of sides){h.off[2]+=1.5*end*Math.sin(p*TAU*7*1.1);h.squint=.45*end;h.open=.15*end}
     if(o.call){A.beck=rise(p,.72,.8,.96,1);A.beckW=Math.sin(Math.max(0,p-.8)*TAU/.1)}}
-  else if(anim==='enter'){const dark=sstep(0,.15,p)*(1-sstep(.67,.85,p)),body=-40*(1-sstep(.67,.81,p)),openF=sstep(.67,.81,p),roar=rise(p,.81,.84,.92,.95),tilt=sstep(.95,.975,p);
-    A.dark=dark;A.swirl=sstep(0,.19,p)*(1-sstep(.5,.7,p));A.B[2]+=body;A.eyesU=sstep(.185,.2,p)*(1-sstep(.47,.52,p));A.gemsU=A.eyesU;A.finUp=sstep(.67,.81,p);
-    H.forEach(h=>{h.under=1-sstep(.48,.67,p);h.uz=lerp(-40,-15,sstep(.29,.48,p));h.fan=p<.48?.9:lerp(.4,1,openF)*(1-.4*sstep(.95,1,p))+.0;h.ft=p<.48?1:openF*(1-sstep(.95,1,p));
-      h.yaw=h.s*.18*rise(p,.67,.72,.78,.81);h.open=roar;h.pitch=-.12+.2*roar;h.wing=roar;h.roll=.3*tilt;h.drip=p>.48&&p<.7?((p-.48)/.22*3)%1:-1});
-    A.hands.forEach((hd,i)=>{const t=i?.655:.62,k=sstep(t-.06,t,p);hd.p=[lerp(40,52,k),(i?1:-1)*50,lerp(-16,1,k)];if(p>=t&&p<t+.06)A.fx.push({k:'splash',at:HAND[i].slice(),t:(p-t)/.06,n:5,r:12})});
-    if(p>=.67&&p<.81)A.fx.push({k:'wave',t:(p-.67)/.14});if(p>=.29&&p<.36)for(let i=0;i<3;i++)A.fx.push({k:'splash',head:i,t:(p-.29)/.07,n:5,r:10})}
+  else if(anim==='enter'){// ENTRATA (5.4 s; the times below in seconds): the black water goes still and dark, a heartbeat under it; the eyes
+    // open under the water one head at a time (the left one at 0.5 s: it looks to one side, to the other, and finds you; the right one at
+    // 1.3; the middle one, bigger, at 2.0, with the slits of the foreheads); all six blink together (2.75) and flare (2.95); the heads come
+    // up slowly together with their hoods shut, the water running off them (3.2-4.0); the body heaves up with the coils and a wave
+    // (4.0-4.35); the hoods snap open all together (4.35) and the roar in three voices (4.42-4.95); the three heads tilt together, slowly,
+    // and come to rest as in idle at p 0
+    const S=x=>x/5.4,gone=1-sstep(S(3.15),S(3.5),p),OP=[[.5,1.1],[2,2.6],[1.3,1.7]];
+    A.dark=sstep(0,S(.6),p)*(1-sstep(S(3.3),S(4.3),p));A.swirl=sstep(S(.2),S(1.4),p)*(1-sstep(S(3),S(3.8),p));A.B[2]+=-40*(1-sstep(S(4),S(4.35),p));A.finUp=sstep(S(4),S(4.4),p);
+    A.eyes=OP.map(([a,b])=>sstep(S(a),S(b),p)*gone);A.eyeBl=rise(p,S(2.75),S(2.81),S(2.87),S(2.95));A.eyeFl=rise(p,S(2.95),S(3.02),S(3.1),S(3.35));
+    A.eyeLk=[keys([[0,0],[S(1.15),0],[S(1.3),-1],[S(1.5),-1],[S(1.65),1],[S(1.85),1],[S(2),0],[1,0]],p),0,0];A.gemsU=sstep(S(2.3),S(2.6),p)*gone;
+    for(const t of[.1,1,2.4])if(p>=S(t)&&p<S(t+1.2))A.rings.push({t:(p-S(t))/S(1.2),r0:10});
+    const up=sstep(S(3.2),S(4),p),flare=sstep(S(4.35),S(4.48),p),roar=rise(p,S(4.42),S(4.52),S(4.85),S(4.95)),tilt=rise(p,S(4.98),S(5.08),S(5.2),S(5.36)),rest=sstep(S(5),S(5.4),p);
+    H.forEach((h,i)=>{h.under=1-up;h.uz=lerp(-40,-15,sstep(S(2.9),S(3.2),p));h.fan=lerp(lerp(.3,1,flare),.61,rest);h.ft=flare*(1-rest);h.wing=Math.max(roar,flare*(1-sstep(S(4.6),S(5),p)));
+      h.open=roar;h.pitch=-.12+.22*roar;h.yaw=h.s*.12*rise(p,S(4),S(4.2),S(4.35),S(4.45));h.roll=.32*tilt;h.drip=up>.05&&p<S(4.4)?((p-S(3.2))/S(.45)+i*.33)%1:-1;h.tongue=pls(p,S(5.22+i*.06),S(.1))});
+    A.hands.forEach((hd,i)=>{const t=S(i?4.15:4.05),k=sstep(t-S(.18),t,p);hd.p=[lerp(40,52,k),(i?1:-1)*50,lerp(-16,1,k)];if(p>=t&&p<t+S(.3))A.fx.push({k:'splash',at:HAND[i].slice(),t:(p-t)/S(.3),n:5,r:12})});
+    if(p>=S(4)&&p<S(4.35))A.fx.push({k:'wave',t:(p-S(4))/S(.35)});
+    for(let i=0;i<3;i++){const t=S(3.2+.08*[0,2,1][i]);if(p>=t&&p<t+S(.35))A.fx.push({k:'splash',head:i,t:(p-t)/S(.35),n:6,r:12})}}
   else if(anim==='die'){A.flashW=flash(p,0,.125);const daze=rise(p,.125,.15,.28,.32),clear=sstep(.6,.825,p);A.B[2]+=-50*sstep(.45,.65,p);A.clr=clear;
     A.flies=p>=.6?(p-.6)/.4:-1;A.tips=rise(p,.83,.87,.93,.97);
     const lp=[[.30,.40],[.50,.60],[.38,.475]];
@@ -314,20 +327,17 @@ function hoodDraw(V0,S,g,K,wl,A){const{P,F}=V0,k=g.k,h=g.h,fl=hoodK(h),W=lerp(10
   const pts=P3.map(q=>P([q[0],q[1],Math.max(q[2],wl)])),pa=smoothP(pts),bb=bbox(pts),mid=C[Math.round((C.length-1)*.62)],fv=F(mid.q.f),front=fv>=0,thin=Math.abs(fv)<.22;
   ctx.lineJoin='round';ctx.fillStyle=grad3(bb,K.hoodB);ctx.fill(pa);
   // the ribs under the skin, from the neck out to the edge
-  ctx.strokeStyle=front?'rgba(90,72,40,.35)':'rgba(0,0,0,.3)';ctx.lineWidth=.9;ctx.beginPath();for(const f of[.2,.42,.64,.84]){const i=Math.round((C.length-1)*f),c=P(C[i].q.c),a=P(L3[i]),b=P(R3[i]);ctx.moveTo(c[0],c[1]);ctx.lineTo(a[0],a[1]);ctx.moveTo(c[0],c[1]);ctx.lineTo(b[0],b[1])}ctx.stroke();
-  const surf=(c,sd,d)=>{const q=c.q;return add(add(q.c,mul(q.v,sd*d)),mul(q.f,.3*d*d/(W+q.r)))};
+  const rib=new Path2D();for(const f of[.2,.42,.64,.84]){const i=Math.round((C.length-1)*f),c=P(C[i].q.c),a=P(L3[i]),b=P(R3[i]);rib.moveTo(c[0],c[1]);rib.lineTo(a[0],a[1]);rib.moveTo(c[0],c[1]);rib.lineTo(b[0],b[1])}
+  ctx.strokeStyle=front?'rgba(90,72,40,.35)':'rgba(0,0,0,.3)';ctx.lineWidth=.9;ctx.stroke(rib);
   if(thin){}
   else if(front){// the pale throat down the middle, with three dark bands across it
     const th=[],tw=k*4.6;for(const c of C){const q=c.q,hw2=Math.min(tw+q.r*.4,c.w*.85);th.push([P(add(add(q.c,mul(q.v,hw2)),mul(q.f,q.r*.7))),P(add(add(q.c,mul(q.v,-hw2)),mul(q.f,q.r*.7)))])}
     ctx.beginPath();for(const a of th)ctx.lineTo(a[0][0],a[0][1]);for(let i=th.length-1;i>=0;i--)ctx.lineTo(th[i][1][0],th[i][1][1]);ctx.closePath();ctx.fillStyle=grad3(bb,K.hoodF);ctx.fill();
     ctx.strokeStyle=K.band;ctx.lineWidth=2.4*k;ctx.lineCap='butt';ctx.beginPath();for(const f of[.3,.46,.62]){const i=Math.round((th.length-1)*f);ctx.moveTo(th[i][0][0],th[i][0][1]);ctx.lineTo(th[i][1][0],th[i][1][1])}ctx.stroke()}
-  else{// the false eyes: two big pale rings that stare, a dark middle in each (nothing else: no brow, no mouth); in the second phase they
-    // open, magenta, with a slit
-    const e=C[Math.round((C.length-1)*.68)],nB=mul(e.q.f,-1),open=A.memLit||0,u0=e.q.t;
-    for(const sd of[-1,1]){const c=add(surf(e,sd,e.w*.5),mul(nB,.6)),q=P(c),R=5*k;if(!LOWFX&&open>.05)shine(K.spotG,q[0],q[1],R*2.8,.6*open);
-      ctx.beginPath();discP(V0,c,nB,R,R*.86,u0);ctx.fillStyle=K.spot;ctx.fill();ctx.strokeStyle=INK;ctx.lineWidth=1.1;ctx.stroke();
-      ctx.beginPath();discP(V0,c,nB,R*.6,R*.52,u0);ctx.fillStyle=open>.5?K.ti:K.spotC;ctx.fill();
-      if(open>.5){ctx.fillStyle='#14060f';ctx.beginPath();discP(V0,c,nB,R*.12,R*.5,u0);ctx.fill()}else{ctx.fillStyle=`rgba(${rgbS(K.spot)},.5)`;ctx.beginPath();discP(V0,add(c,mul(u0,R*.18)),nB,R*.14,R*.12,u0);ctx.fill()}}}
+  else{// behind: the zigzag of the vipers goes on up the middle of the hood
+    const zz=C.map((c,i)=>P(add(add(c.q.c,mul(c.q.f,-c.q.r*.9)),mul(c.q.v,(i%2?1:-1)*c.q.r*.5))));ctx.lineJoin='round';ctx.lineCap='round';ctx.strokeStyle=K.zig;ctx.lineWidth=C[0].q.r*.55;line(zz);ctx.stroke()}
+  // in the second phase the ribs glow
+  if(!LOWFX&&!thin&&(A.memLit||0)>.05){ctx.save();ctx.globalCompositeOperation='lighter';ctx.strokeStyle=`rgba(${K.dotG},${.34*A.memLit})`;ctx.lineWidth=1.4;ctx.stroke(rib);ctx.restore()}
   ctx.strokeStyle=INK;ctx.lineWidth=2.2;ctx.stroke(pa);if(!thin)rimK(pts,rimA(K)*.8,K.rim);return pts}
 // a horn of bone: from b (on the skull) along d, curving up by up, L long, r wide at the root; dark where it grows and at the tip
 function hornDraw(V0,b,d,up,L,r,K,flat){const{P}=V0,t=add(add(b,mul(d,L)),up),m=add(b,add(mul(d,L*.52),mul(up,.12))),B=P(b),M=P(m),T=P(t);
@@ -511,12 +521,14 @@ function waterDraw(V0,A,K,G,fx,o){const{P}=V0,wl=A.wz,c=P([0,0,wl]),rx=A.wr,ry=A
     if(fl){const f=[q[0]+r*.15,qy-1.4];ctx.fillStyle=K.flower;ctx.strokeStyle=INK;ctx.lineWidth=.7;for(let j=0;j<5;j++){const an=j/5*TAU+.3;ctx.beginPath();ctx.ellipse(f[0]+Math.cos(an)*1.9,f[1]+Math.sin(an)*1.1,1.6,.95,an,0,TAU);ctx.fill();ctx.stroke()}
       ctx.fillStyle='#b3a46a';ball(f,1);ctx.fill()}}
   // the eyes under the water (the entrance, the Agguato): six gold eyes and the three slits, and the reflections of the eyes that are up
-  for(const gg of G){const hp=P([gg.hc[0],gg.hc[1],wl]);
-    if(A.eyesU>0){for(const sd of[-1,1]){const q=[hp[0]+sd*5*gg.k,hp[1]-2];if(!LOWFX)shine(K.eyeG,q[0],q[1],10,.6*A.eyesU);ctx.fillStyle=`rgba(${K.eyeG},${.9*A.eyesU})`;ctx.beginPath();ctx.ellipse(q[0],q[1],2.8*gg.k,1.3*gg.k,0,0,TAU);ctx.fill();
-      ctx.fillStyle=`rgba(12,8,4,${.85*A.eyesU})`;ctx.fillRect(q[0]-.45,q[1]-1.2,.9,2.4)}}
+  for(let gi=0;gi<G.length;gi++){const gg=G[gi],hp=P([gg.hc[0],gg.hc[1],wl]),eo=A.eyes?A.eyes[gi]:A.eyesU||0;
+    if(eo>0){const bl=1-.9*(A.eyeBl||0),fl=A.eyeFl||0,lk=(A.eyeLk&&A.eyeLk[gi])||0,kk=gg.k*(gi===1?1.12:1);
+      for(const sd of[-1,1]){const q=[hp[0]+sd*6.6*kk,hp[1]-2],ry=Math.max(.15,lerp(.2,2,eo)*kk*bl),rx=3.8*kk;if(!LOWFX)shine(K.eyeG,q[0],q[1],(15+6*fl)*kk,Math.min(.9,(.7+.35*fl)*eo));
+        ctx.fillStyle=`rgba(${K.eyeG},${Math.min(1,eo*1.6)})`;ctx.beginPath();ctx.ellipse(q[0],q[1],rx,ry,0,0,TAU);ctx.fill();
+        if(ry>.55){ctx.fillStyle='rgba(12,8,4,.9)';ctx.beginPath();ctx.ellipse(q[0]+lk*rx*.45,q[1],Math.max(.4,.6*kk*(1-.4*fl)),ry*.86,0,0,TAU);ctx.fill();ctx.fillStyle='rgba(255,255,255,.8)';ball([q[0]-rx*.4,q[1]-ry*.35],Math.max(.35,ry*.25));ctx.fill()}}}
     if(A.gemsU>0){const q=[hp[0],hp[1]-7*gg.k];if(!LOWFX)shine(K.gemG,q[0],q[1],8,.4*A.gemsU);ctx.fillStyle=`rgba(${K.gemG},${.7*A.gemsU})`;ctx.beginPath();ctx.ellipse(q[0],q[1],.9,2.4,0,0,TAU);ctx.fill()}
     else if(!LOWFX&&gg.hc[2]>wl+10)shine(K.eyeG,hp[0],hp[1],13*gg.k,.14)}
-  if(A.tips>0){const q=P([28,0,wl]);ctx.fillStyle=`rgba(${rgbS(K.spot)},${.45*A.tips})`;for(const dx of[-7,7]){ctx.beginPath();ctx.ellipse(q[0]+dx,q[1]-1,2,1.2,0,0,TAU);ctx.fill()}}
+  // (A.tips, two pale spots left on the water in the defeat: gone, they read as two white eyes)
   ctx.restore()}
 // the effects that sit over everything: splashes, chips of stone, bubbles, the wave, the fireflies of the defeat
 function fxDraw(V0,A,K,G,wl){const{P}=V0;
@@ -547,7 +559,7 @@ function hydra2(x,y,face,anim,p,sc,o){sc=sc||1;o=o||{};const V0=V(face),{P,D}=V0
   ctx.restore()}
 
 const MV=['idle','walk','hit','bite','stuck','spit','breath','ambush','decree','dive','rise','gaze','rage','taunt','enter','die'];
-const DUR={idle:3.2,walk:1.6,hit:.7,bite:2,stuck:1,spit:1.4,breath:2.4,ambush:2.8,decree:2.2,dive:1.2,rise:1,gaze:2,rage:2.8,taunt:1.1,enter:4.2,die:4};
+const DUR={idle:3.2,walk:1.6,hit:.7,bite:2,stuck:1,spit:1.4,breath:2.4,ambush:2.8,decree:2.2,dive:1.2,rise:1,gaze:2,rage:2.8,taunt:1.1,enter:5.4,die:4};
 const LAB={idle:'Ferma',walk:'Nuota',hit:'Colpita',bite:'Morso a Tenaglia',stuck:'Zanne piantate',spit:'Salva di Veleno',breath:'Soffio Velenoso',ambush:'Agguato dal Profondo',
   decree:'Il Giudizio della Palude',dive:'Si tuffa',rise:'Riemerge',gaze:'Sguardo del Terzo Occhio',rage:'Apre il terzo occhio',taunt:'Presa in giro',enter:'Entrata',die:'Sconfitta'};
 reg('hydra2',{n:'Idra della Palude',g:'boss',sc:1,p2:true,an:MV,dur:DUR,lab:LAB},hydra2);

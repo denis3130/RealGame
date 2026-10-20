@@ -24,7 +24,7 @@ const HY2={seq1:['A','breath','ambush','decree','A','dive'],seq2:['gaze','A','sp
 if(HY2ON){
   // the new model in place of the old one (its drawing of today stays as N3.meta.hydra.old for the pages)
   const old=N3.hydra,oldM=N3.meta.hydra;N3.hydra=N3.hydra2;N3.meta.hydra=Object.assign({},N3.meta.hydra2,{old:(x,y,f,a,p)=>old(x,y,f,oldM.an.includes(a)?a:'idle',p,oldM.sc||1,{})});
-  ET.hydra.r=34;ET.hydra.cdmg=24;BOSS_INTRO.hydra=4.2;Object.assign(BDEATH,{hydra:{dur:4,clou:2.4,snd:'bubble'}});
+  ET.hydra.r=34;ET.hydra.cdmg=24;BOSS_INTRO.hydra=5.4;if(typeof BMAT!=='undefined')BMAT.hydra=.51;Object.assign(BDEATH,{hydra:{dur:4,clou:2.4,snd:'bubble'}});
   // the bar, the halo, the runes; the 2D glows, crests, drips and eyes under the water of the old hydra go (the model draws all of it),
   // and the pink ring of spheres of the arenas 5-8 (B3S: body, voice and mocking like the new bosses)
   B2H.hydra=112;B2T.hydra=[['110,220,120',HY2.vio],'200,255,150'];if(typeof B2!=='undefined'&&B2.hydra){B2.hydra.back=()=>{};B2.hydra.front=()=>{};B2.hydra.pre=null;B2.hydra.post=null}
@@ -238,16 +238,23 @@ function hyAir(){const B=G.hy;if(!B)return;const t=G.t||0,Gl=N3.hydra2Glob,Gy=N3
       ctx.fillStyle=`rgba(${Ls.p2?HY2.vio:HY2.lime},${.32*(1-w*.5)})`;circ(l.x+Math.cos(l.a)*s-Math.sin(l.a)*j,l.y+Math.sin(l.a)*s+Math.cos(l.a)*j-6,7+w*9);ctx.fill()}}}}
 {const _g2=drawHazards2Ground;drawHazards2Ground=function(){_g2.apply(this,arguments);try{if(HY2ON)hyGround()}catch(err){}}}
 {const _a2=drawHazards2Air;drawHazards2Air=function(){_a2.apply(this,arguments);try{if(HY2ON)hyAir()}catch(err){}}}
-// ---- the entrance (4.2 s, the model's 'enter'): its black water turns, six gold eyes open under it, the fans come up, then the heads, the
-// hands on the rim, the back with a wave, the roar in three voices, the heads tilt together
+// ---- the entrance (5.4 s, the model's 'enter'; Denis, 20 ottobre: «per l'entrata fai vedere gli [occhi] di una testa alla volta e poi
+// tutte insieme con introduzione spaventosa»): the black water goes still, a heartbeat under it; the eyes open one head at a time, each
+// with its breath (the left one, the right one, then the middle one, deeper); all six blink together and flare with a hiss in three voices
+// (the music of the boss comes in there); the heads rise slowly; the body heaves up with the coils and a wave; the hoods snap open, the roar
+const hyVo=(e,k,rate,vol)=>{try{if(!AU.ctx||!AU.on.sfx||AU.ctx.state!=='running'||!B3VO.has('hydra',k))return;B3VO.play('hydra',k,AU.ctx.currentTime+.01,(vol||.6)*Math.max(.55,enemyAt(e)),rate||1,.25)}catch(err){}AU.pan=0};
 if(HY2ON){const _bi=bossIntro;bossIntro=function(e,dt,a){if(e.type!=='hydra')return _bi.apply(this,arguments);
   const T=BOSS_INTRO.hydra;if(e.iT==null){e.iT=0;if(G.swampPool){e.x=G.swampPool.x;e.y=G.swampPool.y-8}e.heads=null}const t0=e.iT;e.iT+=dt;const t=e.iT,at=s=>t0<s&&t>=s;
-  e.intro=Math.max(0,T-t);e.face=a;e.st='enter';e.z=0;e.em=null;e.hole=0;e.hidden=t<2.8;e.alpha=1;
-  if(at(.02))sfx('creep',1,e.x);if(at(.8))sfx('shimmer',0,e.x);if(at(1.3)){sfx('splash',0,e.x);if(BOSS2)ENV2.splash(e.x,e.y-20,8,'#cfe9d8')}
-  for(const s of[2.6,2.75])if(at(s)){shake(2);sfx('splash',0,e.x);if(BOSS2)ENV2.splash(e.x+(s<2.7?-50:50),e.y+18,8,'#cfe9d8')}
-  if(at(2.8)){shake(7);sfx('splash',2,e.x);vfxBlast(e.x,e.y,'120,200,140',90,{sparks:10,dust:0,n:12,debris:['#3f7a4a','#2a5a34','#8fd0a8']});hyRipples();if(BOSS2)ENV2.splash(e.x,e.y,20,'#cfe9d8')}
-  if(at(3.4)){if(!b3say(e,'cry'))sfx('roar');shake(6);vib([60,40,120]);for(let i=0;i<3;i++)setTimeout(()=>{if(G&&G.fx)fxPush({k:'ring2',x:e.x,y:e.y,rgb:'200,240,210',r0:30,r1:110,t:.5,max:.5,w:5-i*1.2})},i*160)}
-  if(at(4))sfx('click',0,e.x);
+  e.intro=Math.max(0,T-t);e.face=a;e.st='enter';e.z=0;e.em=null;e.hole=0;e.hidden=t<4;e.alpha=1;
+  if(at(.02))sfx('creep',1,e.x);for(const s of[.1,1,2.4])if(at(s))hyVo(e,'e_beat',1,.75);
+  if(at(.5))hyVo(e,'e_eye',.86,.85);if(at(1.3))hyVo(e,'e_eye',1.04,.85);if(at(2))hyVo(e,'e_eye',.72,1);
+  if(at(2.75)){b3say(e,'e_all',true);shake(2);vib(40)}
+  if(at(3.2)){sfx('splash',0,e.x);if(BOSS2)ENV2.splash(e.x,e.y-20,10,'#cfe9d8')}
+  if(at(4)){shake(7);sfx('splash',2,e.x);vfxBlast(e.x,e.y,'120,200,140',90,{sparks:10,dust:0,n:12,debris:['#3f7a4a','#2a5a34','#8fd0a8']});hyRipples();if(BOSS2)ENV2.splash(e.x,e.y,20,'#cfe9d8')}
+  for(const s of[4.05,4.15])if(at(s)){shake(2);sfx('splash',0,e.x);if(BOSS2)ENV2.splash(e.x+(s<4.1?-50:50),e.y+18,8,'#cfe9d8')}
+  if(at(4.35)){shake(3);sfx('shimmer',0,e.x)}
+  if(at(4.42)){if(!b3say(e,'cry'))sfx('roar');shake(6);vib([60,40,120]);for(let i=0;i<3;i++)setTimeout(()=>{if(G&&G.fx)fxPush({k:'ring2',x:e.x,y:e.y,rgb:'200,240,210',r0:30,r1:110,t:.5,max:.5,w:5-i*1.2})},i*160)}
+  if(at(5))sfx('click',0,e.x);
   if(e.intro<=0){e.z=0;e.si=-1;e.hidden=false;hyWalk(e);e.stT=.9}}}
 // what the model plays: the entrance over its whole length; every move on the brain's clock; the Agguato as its brain turns it
 if(HY2ON){const _nm=n3Move;n3Move=function(e){if(e.type==='hydra'){if(e.intro>0)return['enter',Math.min(.999,Math.max(0,(e.iT||0)/BOSS_INTRO.hydra))];
@@ -277,7 +284,11 @@ if(HY2ON){
     c_dive:[[.6,[{t:0,d:.55,f:[150,90],v:'u',gu:1}],.46]],
     c_gaze:[[1.6,[{t:0,d:.36,f:[262,262],v:'m'},{t:.38,d:.36,f:[311,311],v:'m'},{t:.76,d:.36,f:[294,294],v:'m'},{t:1.14,d:.42,f:[247,247],v:'m',rel:.5}],.46]],
     die:[[2.2,[{t:0,d:1.7,f:[190,150,80],v:['a','o','u'],vib:[.05,3],rel:.6,br:.6},{t:1.6,d:.5,f:[90,70],v:'u',gu:1}],.56]],
-    win:[[1.2,[...ss(4,0,.24,.2,210,190,'i',{hs:.7}),{t:.98,d:.2,noise:1,v:'h',hs:.9,a:.5}],.5]]}};
+    win:[[1.2,[...ss(4,0,.24,.2,210,190,'i',{hs:.7}),{t:.98,d:.2,noise:1,v:'h',hs:.9,a:.5}],.5]],
+    // the entrance: a heartbeat under the water, the slow wet breath of a pair of eyes opening, the hiss of all of them together
+    e_beat:[[.55,[{t:0,d:.11,f:[62,48],v:'u',gu:.6,a:1,rel:.5},{t:.24,d:.13,f:[58,44],v:'u',gu:.6,a:.8,rel:.5}],.55]],
+    e_eye:[[1.25,[{t:0,d:1,noise:1,v:['h','o'],hs:.7,a:.55,rel:.45},{t:.15,d:.95,f:[78,66],v:'u',gu:.75,ro:.4,a:.4,rel:.35}],.5]],
+    e_all:[[1.05,[{t:0,d:.07,noise:1,v:'h',hs:.95,a:1},{t:.08,d:.85,noise:1,v:['h','h'],hs:.95,a:.8,rel:.55}],.62]]}};
   B3CUE.hydra={bite:'c_bite',spit:'c_spit',breath:'c_breath',ambush:'c_ambush',decree:'c_decree',dive:'c_dive',gaze:'c_gaze'};
   // the other two voices of the choir, a third above and a third below
   {const _m=b3sayMore;b3sayMore=function(e,k,t){if(e.type!=='hydra')return _m.apply(this,arguments);try{const v=Math.max(.55,enemyAt(e))*(B3VX[k]||.75)*.55;B3VO.play('hydra',k,t+.015,v,1.19,.18);B3VO.play('hydra',k,t+.03,v,.84,.18)}catch(err){}

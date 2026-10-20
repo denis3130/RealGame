@@ -23207,9 +23207,11 @@ Object.assign(TRACKS,{
 {const _mf=musicFor;musicFor=function(room){const m=_mf(room);
   if(G&&room===G.room&&!G.event&&BMTRACK[m]&&m!=='mimic'){BM.pend=m;BM.t0=performance.now();BM.type='';const cur=AU.cur&&AU.cur.name;duckMusic(.42);return cur&&cur!=='menu'&&cur!=='zmenu'&&cur!=='vittoria'&&!BMTRACK[cur]?cur:'attesa'}
   BM.pend=null;bmOpen();if(AU.duck!==1)duckMusic(1);return m}}
-// the boss shows up: half way through its entrance (or at once when it has none), at most 5 s after the room started
+// the boss shows up: half way through its entrance (or at once when it has none; BMAT: another moment for a boss, as a part of its
+// entrance), at most 5 s after the room started
+const BMAT={};
 {const _u=update;update=function(dt){_u(dt);if(!BM.pend||!G||!started||paused)return;const b=G.enemies&&G.enemies.find(e=>isBoss(e.type)&&!e.dead);
-  const T=b?(BOSS_INTRO[b.type]||1.6):0;if(b&&(b.intro<=0||(b.iT!=null&&b.iT>=T*.42))||performance.now()-BM.t0>5000)bmIn(b?b.type:null)}}
+  const T=b?(BOSS_INTRO[b.type]||1.6):0;if(b&&(b.intro<=0||(b.iT!=null&&b.iT>=T*(BMAT[b.type]||.42)))||performance.now()-BM.t0>5000)bmIn(b?b.type:null)}}
 // the finishing blow and the clou of the death
 {const _bd=bossDie;bossDie=function(e){const n0=(G.corpses||[]).length;_bd.apply(this,arguments);try{bmDie(e.type);if((G.corpses||[]).length===n0)setTimeout(()=>bmWin(e.type),500)}catch(err){}}}
 {const _tc=tickCorpses;tickCorpses=function(dt){const wait=(G.corpses||[]).filter(c=>!c.clou);_tc.apply(this,arguments);
