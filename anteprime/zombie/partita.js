@@ -113,7 +113,7 @@ D.reset=()=>{Object.assign(D,{R:0,st:'inizio',t:0,left:0,sp:1,boss:null,bossT:0,
   if(D.lant)D.lant.set(true);const U=D.ui;if(U){U.fine.classList.remove('on');U.fine.hidden=true;U.fine.innerHTML='';U.boss.hidden=true;U.ban.classList.remove('on');U.banT=0;U.flash=0;U.rk='';U.sangue.style.opacity=0;drawRound(U)}
   const cv=document.getElementById('mzCv');if(cv)cv.style.transform=''};
 // ------------------------------------------------------------------ i boss: escono da terra lontano dall'eroe (una buca di una zona aperta)
-function spawnBoss(k){const h=W.hero,H=ZM.holes.filter(p=>(p[2]==null||W.zoneOpen[p[2]])&&p[3]!=='porta'&&Math.hypot(p[0]-h.x,p[1]-h.y)>150);let p=H.length?H[Math.floor(Math.random()*H.length)]:null;
+function spawnBoss(k){const h=W.hero,H=ZM.holes.filter(p=>ZM.zoneOk(p[0],p[1],p[2])&&(!ZM.farOpen||ZM.farOpen(p[0],p[1],130))&&p[3]!=='porta'&&Math.hypot(p[0]-h.x,p[1]-h.y)>150&&Math.hypot(p[0]-h.x,p[1]-h.y)<520);let p=H.length?H[Math.floor(Math.random()*H.length)]:ZM.groundSpot?ZM.groundSpot(200,460):null;   // (20 ottobre) mai accanto a una zona chiusa né in fondo alla mappa
   if(!p){for(let i=0;i<40&&!p;i++){const a=rr(0,TAU),r=rr(170,260),x=h.x+Math.cos(a)*r,y=h.y+Math.sin(a)*r;if(!hit(x,y,16))p=[x,y]}}if(!p)p=[h.x+150,h.y];
   const n=D.R/(k==='becchino'?5:10),B=k==='becchino'?PZ.becchino:PZ.spaventa,hp=B.vita*Math.pow(Math.max(1,n),1.3);
   const z={kind:k,sc:k==='becchino'?2:1.4,spd:B.passo*Math.min(1.5,1+.06*(D.R/5-1)),spd0:0,hp,hp0:hp,x:p[0],y:p[1],face:Math.atan2(h.y-p[1],h.x-p[0]),p:0,anim:'idle',rise:0,die:0,flash:0,q:1,boss:1,

@@ -61,7 +61,7 @@ let fails=0;const ok=(c,m)=>{console.log((c?'  ok  ':'  NO  ')+m);if(!c)fails++}
     hero:[Math.round(W.hero.x),Math.round(W.hero.y)],dead:!!W.hero.dead,fine:document.querySelector('#mzPartita .fine').hidden,gun:W.gunId,solid:M.hit(W.gate.x,W.gate.y,4)}});
   ok(s7.coins===500&&s7.R===0&&s7.st==='inizio'&&!s7.dead&&s7.fine&&s7.gun==='pistola',`Rigioca: 500 monete, round da capo, eroe in piedi con la pistola`);
   ok(!s7.gate&&!s7.z2&&s7.veil&&s7.solid,'Rigioca: cancello di nuovo chiuso (col suo solido), fattoria chiusa col velo');
-  ok(s7.bara==='ferma'&&s7.anime===0&&s7.comprate===0&&s7.idle===9,'Rigioca: Bara chiusa, nessuna anima, nove zombie fermi nelle zone chiuse (tre per zona: aia, Borgo, Segheria)');
+  ok(s7.bara==='ferma'&&s7.anime===0&&s7.comprate===0&&s7.idle===0,'Rigioca: Bara chiusa, nessuna anima, nessuno zombie nelle zone chiuse (Denis, 20 ottobre)');
   ok(await E("SAVE.gold")===g1,"l'oro della partita di prima non viene dato due volte");
   await p.waitForTimeout(3600);await shot('6_rigioca');
   // 7. si cade al round 2 senza anime: «Sei caduto», poi Menu: il menu torna con la sua musica, l'inclinazione dei personaggi come prima

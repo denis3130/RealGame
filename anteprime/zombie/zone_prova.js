@@ -18,6 +18,12 @@ const PAGE=path.resolve(process.argv[2]||path.join(__dirname,'..','zombie.html')
   ok(a.n>300&&Object.keys(a.born).length===1&&a.born[1]===a.n,`solo la partenza aperta: ${a.n} zombie, nati tutti nel Camposanto (${JSON.stringify(a.born)})`);
   ok(a.near===0,`nessuno nasce accanto a una barriera o al cancello chiusi (${a.near})`);
   ok(a.per.length>0&&a.per.every(q=>q.bad===0),'con l\'eroe vicino alle barriere chiuse: '+a.per.map(q=>`(${q.x},${q.y}) ${q.k} nati, ${q.bad} fuori posto`).join(' · '));
+  // 1b. (20 ottobre, Denis: «i zombie continuano a spawnare nelle aree ancora chiuse e quindi troppo lontani dal player») con l'eroe in 60 punti
+  // della partenza: nessuno nasce a meno di 120 px da una zona chiusa e la distanza tipica è vicina (mediana delle mediane sotto i 300 px)
+  const v=await p.evaluate(()=>{const M=__MZ,W=M.W,Z=M.ZM;const pos=[];for(let x=150;x<890;x+=70)for(let y=1040;y<1790;y+=70)if(W.zoneIdAt(x,y)===1&&!Z.hit?.(x,y,14))pos.push([x,y]);
+    let border=0,tot=0;const meds=[];for(const[x,y] of pos){W.hero.x=x;W.hero.y=y;M.sim(2,1/30);const ds=[];for(let i=0;i<20;i++){W.Z.length=0;const z=Z.spawn({kind:'zombie',q:1});if(!z)continue;tot++;ds.push(Math.hypot(z.x-x,z.y-y));if(!Z.farOpen(z.x,z.y,120))border++}
+      ds.sort((a,b)=>a-b);if(ds.length)meds.push(ds[ds.length>>1])}meds.sort((a,b)=>a-b);return{n:pos.length,tot,border,med:Math.round(meds[meds.length>>1]),p90:Math.round(meds[Math.floor(meds.length*.9)])}});
+  ok(v.tot>v.n*15&&v.border===0&&v.med<300&&v.p90<420,`l'eroe in ${v.n} punti della partenza: ${v.tot} zombie, ${v.border} accanto a una zona chiusa, distanza tipica ${v.med} px (9 volte su 10 sotto i ${v.p90})`);
   // 2. the gravedigger's dead, with the hero leaning on the Borgo's barrier
   const e=await p.evaluate(()=>{const M=__MZ,W=M.W,D=W.director,L=(W.lures||[]).find(L=>L.zone===3&&!L.isOpen());if(!L)return{none:1};
     // the hero on the start's side of it

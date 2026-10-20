@@ -11,9 +11,10 @@
 // (il cancello di ferro, 750). La pianta è in pianta_grande.py.
 (()=>{const{T,P,G,prop,solid,holes,perches,bakeGround,boot,W,rr,srand,box,shade,prismY,line3,TAU}=ZM;
 const X=v=>v*T,Y=v=>(v+2)*T,AX=v=>(v+2)*T,AY=v=>(v+16)*T;
-// le cose che una partita cambia e che una partita nuova rimette com'erano: l'eroe alla partenza, gli zombie fermi nell'aia, il velo sulla fattoria
+// le cose che una partita cambia e che una partita nuova rimette com'erano: l'eroe alla partenza, il velo sulla fattoria (gli zombie fermi nelle zone chiuse solo per le prove: fermi())
 const HERO0=()=>({x:AX(4.4),y:AY(8.4),face:-Math.PI/2,walk:0,moving:false,aim:0,fireCd:0}),IDLE=[['zombie',6.0,8.6,2],['lanterna',9.3,5.3,2],['strisciante',8.9,8.7,2],['zombie',19.4,18.6,3],['minatore',23.4,16.7,3],['strisciante',27.2,19.0,3],['zombie',22.6,9.4,4],['hound',19.0,9.8,4],['lanterna',27.9,7.7,4]],
   veil=()=>({y:Y(12.3),k:1,wisps:Array.from({length:8},(_,i)=>({x:rr(0,16*T),y:rr(Y(1),Y(11.4)),r:rr(110,190),v:rr(5,11)}))});
+const fermi=()=>{if(W.dbg&&W.dbg.fermi)for(const[k,x,y,z] of IDLE)ZM.idleZombie(k,X(x),Y(y),z)};
 // ---------- le ZONE NUOVE (anteprima 48): il Borgo dei Lumi (3) e la Segheria del Fiume (4), coi confini, le barriere a pagamento, le uscite
 // degli zombie e il terreno. Coordinate in caselle della pianta (pianta_grande.py). Regole: niente corridoi tra 18 e 34 px; davanti a porte,
 // finestre e barriere resta posto; le buche delle zone nuove hanno la loro zona (da una zona chiusa non esce nessuno)
@@ -97,9 +98,12 @@ function buildEast(w,h){const E={};const hole=(x,y,z,k)=>holes.push([x,y,z,k||nu
 function SG_FACE(x,y,key){for(const p of ZM.props){for(const t of p.parts)if(t.k==='face'&&t.key===key&&t.part==='wS'&&Math.abs(t.c[0][1]-y)<1.5&&Math.min(t.c[0][0],t.c[1][0])<x&&Math.max(t.c[0][0],t.c[1][0])>x)return t}return null}
 function FU_FACE(F){for(const p of ZM.props){if(p.name!=='fucina')continue;for(const t of p.parts)if(t.k==='face'&&t.key==='n'&&Math.abs(t.c[0][1]-F.wallY)<1.5)return t}return null}
 const AREA={title:'Camposanto',zoneName:h=>h.y<Y(12.3)?(h.x<X(16)?'Fattoria dei Corvi':'Segheria del Fiume'):(h.x<X(14)?'Camposanto':'Borgo dei Lumi'),
+  // (Denis, 20 ottobre: «dammi l'anteprima giusta coi zombie che non spawnano nelle aree chiuse») niente più zombie fermi nelle zone ancora
+  // chiuse (tre nell'aia, tre nel Borgo, tre nella Segheria, che dall'altra parte del cancello e delle assi sembravano nati lì): restano solo
+  // per le prove che li cercano apposta (W.dbg.fermi)
   zoneId:h=>h.y<Y(12.3)?(h.x<X(16)?2:4):(h.x<X(14)?1:3),
   // una partita nuova (ZM.ctl.nuova): 500 monete, la fattoria chiusa col cancello e il velo, gli zombie dell'aia, la Bara al cimitero, l'eroe alla partenza
-  reset(){W.coins=500;W.zoneOpen={1:true,2:false,3:false,4:false};W.gate.open=false;if(AREA.gate)AREA.gate.close();for(const b of AREA.bars||[])b.close();W.split=veil();for(const[k,x,y,z] of IDLE)ZM.idleZombie(k,X(x),Y(y),z);ZM.boxReset();W.hero=HERO0()},
+  reset(){W.coins=500;W.zoneOpen={1:true,2:false,3:false,4:false};W.gate.open=false;if(AREA.gate)AREA.gate.close();for(const b of AREA.bars||[])b.close();W.split=veil();fermi();ZM.boxReset();W.hero=HERO0()},
   build(){const w=30*T,h=29*T;srand(11);W.coins=500;W.maxZ=6;W.zoneOpen={1:true,2:false,3:false,4:false};// sotto l'area di partenza tre caselle di nebbia (non ci si va)
     // ================================================================ AREA 1: Camposanto e Casa (l'anteprima di prima, spostata)
     P.wall(AX(0),AY(.35),AX(3.7)+6,AY(.35),true);P.wall(AX(0),AY(7.3),AX(3.7)+6,AY(7.3),true);P.wall(AX(3.7),AY(.35)+7.5,AX(3.7),AY(4.95)-15,true);P.wall(AX(3.7),AY(6.05)+15,AX(3.7),AY(7.3)-7.5,true);
@@ -153,7 +157,7 @@ const AREA={title:'Camposanto',zoneName:h=>h.y<Y(12.3)?(h.x<X(16)?'Fattoria dei 
     {const cx=X(2.32),cy=Y(5.95),wl=X(7.6)-X(4.3),dl=X(4.0)-X(.5);ZM.turn(cx,cy,1,()=>P.house(cx-wl/2,cy-dl/2,wl,dl,{wall:'stoneW',roof:'tile',boards:[0,1,2]}))}
     P.pump(X(5.15),Y(7.5));P.trough(X(5.15)+13,Y(7.36),44,18);P.well(X(7.8),Y(6.6));
     P.hay(X(10.0)-17,Y(4.6)-11);P.hay(X(10.0)-17,Y(7.7)-11);P.barrel(X(4.95),Y(4.65));P.barrel(X(5.25),Y(4.5),.85);P.crate(X(10.05),Y(5.35));
-    for(const[k,x,y,z] of IDLE)ZM.idleZombie(k,X(x),Y(y),z);
+    fermi();
     // il fienile rosso col portone sull'aia; la Pompa da caccia col gesso sul muro ovest, a sud del portone
     const barn=P.barn(X(11.0),Y(4.12),X(15.4)-X(11.0),Y(8.32)-Y(4.12));// (36 px dalla staccionata: niente corridoi tra 18 e 34 px)
     const wWall=face('barn','wW','w',t=>Math.min(...t.c.map(q=>q[1]))>Y(6.5));ZM.group([X(11.0),Y(4.12),X(15.4),Y(8.32)],()=>P.wallGun(X(11.0)-.6,Y(7.45),22,'y','pompa',1500,wWall));

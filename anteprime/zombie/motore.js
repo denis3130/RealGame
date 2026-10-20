@@ -316,6 +316,8 @@ const W={dbg:{},w:10*T,h:10*T,ground:null,hero:null,Z:[],FX:[],crows:[],flock:[]
 let BARM=0;
 let DPRCUT=false;let VIEWR=1e9;/* (anteprima 48, punto 54) il mezzo lato del quadrato del mondo che può stare sullo schermo (anche girando): quello che è fuori non si aggiorna a vista, non si ordina e non si disegna (zombie, fiamme libere, corvi posati, luci, fumi) */
 const farV=(x,y,r)=>Math.abs(x-CAM.x)>VIEWR+r||Math.abs(y-CAM.y)>VIEWR+r;
+/* (FASE 9) un punto a terra entro m punti dallo schermo (a vista dritta e girata: S fa la rotazione); prima del primo disegno sempre sì */
+const nearScr=(x,y,m)=>{if(!ORD.HW)return true;const q=S(x,y,0);return Math.abs(q[0]-CAM.x)<ORD.HW+m&&Math.abs(q[1]-CAM.y+CAM.oy)<ORD.HH+m};
 let LV=0;/* il piano dei solidi che contano (anteprima 48, punto 15): 0 a terra, 1 il piano di sopra di un edificio (i suoi solidi hanno lv:1) */
 /* (difetti 48) la griglia dei solidi: hit() guarda solo i solidi delle caselle di 64 px intorno (prima tutti, centinaia nella mappa grande: era un
    terzo del tempo degli zombie); tra quelli toccati vince il primo creato, come prima. Si rifà quando nascono solidi nuovi o la Bara si sposta (SGV) */
@@ -566,12 +568,34 @@ function holeDist(p){const N=NAV;if(!N)return null;const cw=N.cw,ch=N.ch,D=N.dis
 // chi esce lì accanto sembrava venire dalla zona chiusa
 function shutNear(x,y,r){const G=W.gate;if(G&&!G.open&&Math.hypot(x-G.x,y-G.y)<r)return true;for(const L of W.lures||[])if(!L.isOpen()&&Math.hypot(x-L.x,y-L.y)<r)return true;return false}
 const zoneOk=(x,y,tag)=>(tag==null||W.zoneOpen[tag])&&(!W.zoneIdAt||W.zoneOpen[W.zoneIdAt(x,y)]!==false);
+// (Denis, 20 ottobre: «i zombie continuano a spawnare nelle aree ancora chiuse e quindi troppo lontani dal player») la partenza aveva 7 buche
+// sole, tre sul bordo di una zona chiusa (la fossa sotto il muro della fattoria, la latrina e la buca accanto al Borgo: chi usciva lì sembrava
+// venire di là) e le altre lontane: gli zombie arrivavano tutti da due o tre punti a 400-600 px. Ora: una buca va bene solo se tutto
+// intorno, fino a 130 px, è zona aperta (farOpen); e accanto alle buche, come in CoD, si sbuca da terra in un punto libero qualsiasi della
+// zona aperta, a 170-420 px di strada dall'eroe, mai in una casa né accanto a una zona chiusa (groundSpot)
+const farOpen=(x,y,r)=>{if(!W.zoneIdAt)return true;if(W.zoneOpen[W.zoneIdAt(x,y)]===false)return false;for(let k=0;k<8;k++){const a=k*Math.PI/4;if(W.zoneOpen[W.zoneIdAt(x+Math.cos(a)*r,y+Math.sin(a)*r)]===false)return false}return true};
+const inHouse=(x,y)=>houses.some(hs=>x>hs.x-6&&x<hs.x+hs.w+6&&y>hs.y-6&&y<hs.y+hs.d+10);
+/* (FASE 9, Denis, 20 ottobre: «non far spawnare i zombie […] troppo lontani a noi») una buca sullo schermo (0) o fuori (1); prima del primo
+   disegno (ORD.HW) tutte fuori */
+function holeScr(p){if(!ORD.HW)return 1;const q=S(p[0],p[1],0);return Math.abs(q[0]-CAM.x)<ORD.HW-24&&Math.abs(q[1]-CAM.y+CAM.oy)<ORD.HH-24?0:1}
+// un punto di terra libero a lo-hi px di strada dall'eroe; tra i sei più vicini prima quelli fuori dallo schermo
+function groundSpot(lo,hi){const N=NAV;if(!N)return null;const h=W.hero,c=[];
+  for(let k=0;k<220&&c.length<10;k++){const a=Math.random()*TAU,r=lo+Math.random()*(hi-lo+60),x=h.x+Math.cos(a)*r,y=h.y+Math.sin(a)*r,ci=cellOf(x,y);
+    if(N.bl[ci]||N.bar[ci])continue;const d=N.dist[ci];if(!(d>=lo&&d<=hi))continue;if(!farOpen(x,y,130)||shutNear(x,y,200)||inHouse(x,y)||hit(x,y,14))continue;
+    if(W.Z.some(z=>Math.hypot(z.x-x,z.y-y)<34))continue;const p=[x,y,W.zoneIdAt?W.zoneIdAt(x,y):null,null];c.push([d,p,holeScr(p)])}
+  if(!c.length)return null;c.sort((a,b)=>a[0]-b[0]);let k=c.slice(0,6);const off=k.filter(a=>a[2]>0);if(off.length)k=off;return k[Math.floor(Math.random()*k.length)][1]}
+// le buche buone: raggiungibili, entro 440 di strada, con tutto intorno aperto; tra queste prima quelle fuori dallo schermo (non si vedono nascere
+// a metà schermo), mai la stessa di prima; un po' di volte su due (sempre se ce ne sono tre o più) una buca, le altre un punto di terra;
+// senza buche buone il punto di terra; solo se manca anche quello le buche raggiungibili più vicine, come prima (entro 700, poi le tre più vicine)
 function pickHole(o){const h=W.hero,open=holes.filter(p=>zoneOk(p[0],p[1],p[2])&&!shutNear(p[0],p[1],110)&&!W.Z.some(z=>Math.hypot(z.x-p[0],z.y-p[1])<30));
-  if(NAV){const c=[],far=[];for(const p of open){if(Math.hypot(p[0]-h.x,p[1]-h.y)<110)continue;const d=holeDist(p);if(d==null||d>=1e9||d<130)continue;(d>700?far:c).push([d,p])}
-    // (difetti 48) senza buche a giusta distanza le più vicine tra quelle raggiungibili, mai una buca a caso che magari sta dietro una barriera chiusa
-    if(!c.length&&far.length){far.sort((a,b)=>a[0]-b[0]);c.push(...far.slice(0,3))}
-    if(c.length){c.sort((a,b)=>a[0]-b[0]);let k=c.slice(0,6);if(k.length>1)k=k.filter(a=>a[1]!==W.lastHole);const p=k[Math.floor(Math.random()*k.length)][1];W.lastHole=p;return p}
-    return null}
+  if(NAV){const c=[],good=[];for(const p of open){if(Math.hypot(p[0]-h.x,p[1]-h.y)<110)continue;const d=holeDist(p);if(d==null||d>=1e9||d<130)continue;const q=[d,p,holeScr(p)];c.push(q);
+      if(d<=440&&farOpen(p[0],p[1],130)&&!shutNear(p[0],p[1],200))good.push(q)}
+    good.sort((a,b)=>a[0]-b[0]);let gk=good.slice(0,4).filter(a=>a[1]!==W.lastHole);{const off=gk.filter(a=>a[2]>0);if(off.length)gk=off}
+    if(gk.length&&(Math.random()<.45||gk.length>=3)){const p=gk[Math.floor(Math.random()*gk.length)][1];W.lastHole=p;return p}
+    const g=groundSpot(170,420)||groundSpot(140,600);if(g){W.lastHole=null;return g}
+    if(!c.length)return null;
+    c.sort((a,b)=>a[0]-b[0]);let k=c.filter(a=>a[0]<=700).slice(0,3);if(!k.length)k=c.slice(0,3);
+    if(k.length>1)k=k.filter(a=>a[1]!==W.lastHole);const p=k[Math.floor(Math.random()*k.length)][1];W.lastHole=p;return p}
   const c=open.filter(p=>{const e=Math.hypot(p[0]-h.x,p[1]-h.y);return e>110&&e<460});return c.length?c[Math.floor(Math.random()*c.length)]:null}
 // (difetti 48) uno zombie della partita che non si avvicina più all'eroe (chiuso di là da una barriera, incastrato) e non si vede sullo schermo
 // rinasce da una buca raggiungibile, come in CoD; se nessuna buca va bene riprova dopo
@@ -719,7 +743,7 @@ function updateBeings(dt,inp){const h=W.hero,DI=W.director,MD=W.mods||{};if(h.de
   // scarto sullo schermo (la bocca dell'arma, l'altezza del petto, il volo delle gocce): girando la telecamera restano dove sono successe
   if(DI)DI.update(dt,zOn);else{spawnT-=dt;if(zOn&&spawnT<=0&&W.Z.filter(z=>!z.idle&&!z.die).length<(W.maxZ||5)){spawn();spawnT=rr(2,3.5)}}navUpdate(dt);
   for(const z of W.Z){if(z.flash>0)z.flash-=dt;if(z.fin>0)z.fin-=dt;if(z.die){z.die+=dt;continue}LV=z.lv||0;if(!z.cl)z.zh=z.lv?z.lvH:(z.zh||0)+(heightAt(z.x,z.y)-(z.zh||0))*Math.min(1,dt*14);if(z.rise<1){z.rise=Math.min(1,z.rise+dt/1.3);z.face=Math.atan2(h.y-z.y,h.x-z.x);continue}
-    if(z.idle){if(W.zoneOpen[z.idle.zone])z.idle=null;else{idleStep(z,dt);sep(z);continue}}
+    if(z.idle){if(W.zoneOpen[z.idle.zone])z.idle=null;else{if(!ORD.HW||nearScr(z.x,z.y,260)||lureOf(z)){idleStep(z,dt);sep(z)}continue}}// lontani dallo schermo restano fermi, se non li chiama una barriera (FASE 9)
     if(z.ai){z.ai(z,dt);sep(z);continue}// un boss della partita: si muove e colpisce da solo
     if(z.stun>0){z.stun-=dt;if(z.anim!=='idle'){z.anim='idle';z.p=0}z.p=(z.p+dt/2.4)%1;sep(z);continue}// respinto dall'anima che rialza l'eroe
     if(!z.bx&&BARS.length&&!z.lv&&!z.cl&&(z.bxT=(z.bxT||0)-dt)<=0){z.bxT=.15;z.bx=barCheck(z)}// una finestra o un varco da passare (barriere.js)
@@ -1204,6 +1228,10 @@ function drawLayer(L){if(LCF&&L.lcA&&L.lcA<3&&ctx===LCF.ctx&&L.lc)return lcDraw(
 // il riquadro a schermo del segugio: lungo ±12 nel verso in cui guarda
 function houndSB(e,z){const c=Math.cos(z.face)*12,s=Math.sin(z.face)*12;for(const k of[-1,1]){const q=S(z.x+c*k,z.y+s*k,z.zh||0);e.sb[0]=Math.min(e.sb[0],q[0]-e.hw);e.sb[2]=Math.max(e.sb[2],q[0]+e.hw);e.sb[3]=Math.max(e.sb[3],q[1]+5)}}
 // le voci di questo fotogramma, in ordine: [pavimenti, tutto il resto]
+/* (FASE 9) un essere alto H in (x, y, z0) tocca lo schermo? la sua figura (piedi e testa con la piega) allargata di r; senza disegni di prova
+   (ORD.HW) sempre sì */
+function visB(x,y,z0,H,r){if(!ORD.HW||W.dbg.visAll)return true;const a=S(x,y,z0),b=S(x,y,z0+H);r+=LK*H;
+  return Math.max(a[0],b[0])+r>CAM.x-ORD.HW&&Math.min(a[0],b[0])-r<CAM.x+ORD.HW&&Math.max(a[1],b[1])+r>CAM.y-CAM.oy-ORD.HH&&Math.min(a[1],b[1])-r<CAM.y-CAM.oy+ORD.HH}
 function buildOrder(vis){const D=W.dbg,fl=[],li=[];psiUpdate();camStamp();UCAM=CAM.x*PC-CAM.y*PSN;
   if(D.ord==='ky'){// l'ordine di prima: prop interi per ky (kyFn), esseri per y, fiamme e corvi come voci; girando la V del punto (centro, ky)
     const h=W.hero,hx=h?h.x:0,K=(x,y)=>x*PSN+y*PC,kp=p=>CAM.rot?K((p.bx[0]+p.bx[2])/2,p.ky):(p.kyFn?p.kyFn(hx):p.ky),L2=[];
@@ -1217,11 +1245,11 @@ function buildOrder(vis){const D=W.dbg,fl=[],li=[];psiUpdate();camStamp();UCAM=C
     L2.sort((a,b)=>a.k-b.k);return[fl,L2.map(o=>o.e)]}
   for(const p of props){if(p.hide||!vis(p))continue;for(const L of p.layers){layerSB(L);(L.floor?fl:li).push(L)}}
   const h=W.hero,rA=(x,y,z)=>STAIRS.length&&z>0?refAt(x,y):null;if(h&&!D.noHero&&!D.heroLast)li.push(beingE(HE,h.x,h.y,h.zh||0,56,10,RIGK.hzk,rA(h.x,h.y,h.zh||0)));
-  for(const z of W.Z){if(z.id==null)z.id=++ZID;if(farV(z.x,z.y,90))continue;const e=z.E||(z.E={kind:'B',z,sid:'Z'+z.id,sk:900000+(z.id%99999)}),hd=z.kind==='hound';beingE(e,z.x,z.y,z.zh||0,(hd?30:46)*z.sc,(hd?16:10)*z.sc,RIGK.mzk,rA(z.x,z.y,z.zh||0));if(hd)houndSB(e,z);li.push(e)}
-  for(const c of perches){if(!c.away&&!farV(c.x,c.y,60))li.push(beingE(c.E,c.x,c.y,c.z,14,6,CAM.CP))}
+  for(const z of W.Z){if(z.id==null)z.id=++ZID;if(farV(z.x,z.y,90)||!visB(z.x,z.y,z.zh||0,(z.kind==='hound'?30:46)*z.sc,40))continue;const e=z.E||(z.E={kind:'B',z,sid:'Z'+z.id,sk:900000+(z.id%99999)}),hd=z.kind==='hound';beingE(e,z.x,z.y,z.zh||0,(hd?30:46)*z.sc,(hd?16:10)*z.sc,RIGK.mzk,rA(z.x,z.y,z.zh||0));if(hd)houndSB(e,z);li.push(e)}
+  for(const c of perches){if(!c.away&&!farV(c.x,c.y,60)&&visB(c.x,c.y,c.z,14,30))li.push(beingE(c.E,c.x,c.y,c.z,14,6,CAM.CP))}
   // i compagni dell'eroe (compagni.js): esseri come gli zombie
-  for(const pt of W.pets||[]){if(farV(pt.x,pt.y,60))continue;const e=pt.E||(pt.E={kind:'B',pet:pt,sid:'P'+pt.i,sk:600000+pt.i});li.push(beingE(e,pt.x,pt.y,pt.zh||0,30,8,RIGK.mzk,rA(pt.x,pt.y,pt.zh||0)))}
-  if(!D.noFlames)for(const f of FREEF)if(!farV(f.x,f.y,40))li.push(beingE(f.E,f.x,f.y,f.z-4,10,4,CAM.CP,f.lvl!=null?f.ref:null));
+  for(const pt of W.pets||[]){if(farV(pt.x,pt.y,60)||!visB(pt.x,pt.y,pt.zh||0,30,40))continue;const e=pt.E||(pt.E={kind:'B',pet:pt,sid:'P'+pt.i,sk:600000+pt.i});li.push(beingE(e,pt.x,pt.y,pt.zh||0,30,8,RIGK.mzk,rA(pt.x,pt.y,pt.zh||0)))}
+  if(!D.noFlames)for(const f of FREEF)if(!farV(f.x,f.y,40)&&visB(f.x,f.y,f.z-4,14,30))li.push(beingE(f.E,f.x,f.y,f.z-4,10,4,CAM.CP,f.lvl!=null?f.ref:null));
   if(BOX)li.push(boxEntry());
   // con la zona chiusa velata e la telecamera che guarda verso di lei: prima tutto quello che sta di là dalla linea del confine, poi il velo, poi
   // il resto (il confine è una retta: chi sta tutto di là non può coprire chi sta di qua, come in un albero BSP)
@@ -1266,7 +1294,7 @@ function drawWorld(dt,view){const h0=houses[0],h0a=h0?h0.a:1,D=W.dbg;ZS.f++;ZS.n
   if(PH)PH('terreno');if(tk)tk('terreno');if(W.split)drawVeil(W.split.k-veilK());// il velo sul terreno quando non copre anche le cose (guardando di lato o all'indietro)
   // chi si vede: l'impronta del prop girata intorno al perno (u, v), allargata della piega più grande che può avere (LK·altezza di lato,
   // LKV in verticale) e di un margine; a vista dritta vale come prima (senza più il riquadro del mondo, che girando nasconderebbe cose)
-  const HW=view.Wp/2/CAM.z+24,HH=view.Hp/2/CAM.z+24,c=CAM.c,s=CAM.s,SP=CAM.SP,CP=CAM.CP,oy=CAM.oy;VIEWR=Math.hypot(view.Wp,view.Hp/SP)/2/CAM.z+64+Math.abs(oy)/SP;
+  const HW=view.Wp/2/CAM.z+24,HH=view.Hp/2/CAM.z+24,c=CAM.c,s=CAM.s,SP=CAM.SP,CP=CAM.CP,oy=CAM.oy;ORD.HW=HW;ORD.HH=HH;VIEWR=Math.hypot(view.Wp,view.Hp/SP)/2/CAM.z+64+Math.abs(oy)/SP;
   const vis=D.visAll?()=>true:p=>{const f=fpOf(p),z1=f[4],ex=LK*z1*(p.lk==null?1:p.lk);let u0=1e9,u1=-1e9,v0=1e9,v1=-1e9;
     for(const X of[f[0],f[2]])for(const Y of[f[1],f[3]]){const dx=X-CAM.x,dy=Y-CAM.y,u=dx*c-dy*s,v=dx*s+dy*c;if(u<u0)u0=u;if(u>u1)u1=u;if(v<v0)v0=v;if(v>v1)v1=v}
     return u0-ex<HW&&u1+ex>-HW&&v1*SP+oy>-HH&&v0*SP-z1*CP-LKV*z1+oy<HH};
@@ -1282,7 +1310,7 @@ function drawWorld(dt,view){const h0=houses[0],h0a=h0?h0.a:1,D=W.dbg;ZS.f++;ZS.n
   if(PH)PH('voci');const t2=D.prof?performance.now():0;LASTOCC=occluders(order,hi);silhouette(LASTOCC,h0a);if(PH)PH('sagoma');if(tk)tk('sagoma');ORD.last=order;ORD.lastF=floors;LASTLIST=order;
   if(D.prof){const a=.1;ORD.tOrd=t1-t0+ORD.tIntra;ORD.tSil=performance.now()-t2;ORD.pOrd+=(ORD.tOrd-ORD.pOrd)*a;ORD.pSil+=(ORD.tSil-ORD.pSil)*a}
   if(!LOWFX){for(const p of W.puffs){if(farV(p.x,p.y,40+p.z))continue;setRef(p.ref);const q=S(p.x,p.y,p.z);setRef(null);ctx.fillStyle=`rgba(150,150,165,${.28*(1-p.t/3.2)})`;ball(q,p.r);ctx.fill()}
-    for(const l of W.leaves){const q=S(l.x,l.y,l.z);ctx.save();ctx.translate(q[0],q[1]);ctx.rotate(l.t*4+l.ph);ctx.fillStyle=l.c;ctx.beginPath();ctx.ellipse(0,0,2.6,1.2,0,0,TAU);ctx.fill();ctx.restore()}
+    for(const l of W.leaves){if(farV(l.x,l.y,40))continue;const q=S(l.x,l.y,l.z);ctx.save();ctx.translate(q[0],q[1]);ctx.rotate(l.t*4+l.ph);ctx.fillStyle=l.c;ctx.beginPath();ctx.ellipse(0,0,2.6,1.2,0,0,TAU);ctx.fill();ctx.restore()}
     ctx.save();ctx.globalCompositeOperation='lighter';for(const f of W.flies){const q=S(f.x,f.y,f.z),b=.5+.5*Math.sin(W.t*3+f.ph);glow('170,255,120',q[0],q[1],9,.5*b);ctx.fillStyle=`rgba(230,255,190,${.9*b})`;ctx.fillRect(q[0]-.8,q[1]-.8,1.6,1.6)}ctx.restore()}
   for(const f of W.FX){if(f.k==='coin'){const t=SB(f.tw),k=1-f.t/f.t0,y=t[1]-k*26;ctx.save();ctx.globalAlpha=Math.min(1,f.t/.35);ctx.font='800 14px "Baloo 2",system-ui';ctx.textAlign='center';ctx.lineJoin='round';ctx.lineWidth=3.6;ctx.strokeStyle=INK;ctx.strokeText('+'+f.n,t[0],y);ctx.fillStyle='#ffd65a';ctx.fillText('+'+f.n,t[0],y);ctx.restore();continue}
     if(f.k==='boom'){const t=SB(f.tw),k=1-f.t/f.t0;ctx.save();ctx.globalCompositeOperation='lighter';glow('255,170,70',t[0],t[1]-10,f.r*(.6+k),.9*(1-k));ctx.restore();ctx.strokeStyle=`rgba(255,220,160,${.7*(1-k)})`;ctx.lineWidth=3;ctx.beginPath();ctx.ellipse(t[0],t[1],f.r*(.4+k),f.r*(.4+k)*.6*CAM.SP,0,0,TAU);ctx.stroke();continue}
@@ -1296,9 +1324,9 @@ function updateAmbient(dt){W.t+=dt;updateCrows(dt);
   if(W.split){const sp=W.split;if(sp.fade){sp.k-=dt/2.5;if(sp.k<=0){W.split=null}}if(sp.wisps)for(const m of sp.wisps){m.x+=m.v*dt;if(m.x>W.w+m.r)m.x=-m.r}}
   if(LOWFX)return;
   for(const f of W.flies){f.a+=dt*(Math.sin(W.t*.7+f.ph)*1.6);f.x+=Math.cos(f.a)*14*dt;f.y+=Math.sin(f.a)*14*dt;f.z=cl(f.z+Math.sin(W.t*2+f.ph)*8*dt,4,50);if(f.x<0)f.x=W.w;if(f.x>W.w)f.x=0;if(f.y<0)f.y=W.h;if(f.y>W.h)f.y=0}
-  for(const s of smokes){s.t-=dt;if(s.t<=0){s.t=.22;W.puffs.push({x:s.x+rr(-3,3),y:s.y+rr(-3,3),z:s.z,t:0,r:rr(4,6),ref:s.ref})}}
+  for(const s of smokes){s.t-=dt;if(s.t<=0){s.t=.22;if(!nearScr(s.x,s.y,200))continue;W.puffs.push({x:s.x+rr(-3,3),y:s.y+rr(-3,3),z:s.z,t:0,r:rr(4,6),ref:s.ref})}}
   for(const p of W.puffs){p.t+=dt;p.z+=16*dt;p.x+=10*dt;p.r+=5*dt}for(let i=W.puffs.length-1;i>=0;i--)if(W.puffs[i].t>3.2)W.puffs.splice(i,1);
-  for(const tr of W.leafTrees||[])if(Math.random()<dt*.8)W.leaves.push({x:tr[0]+rr(-40,40),y:tr[1]+rr(-40,40),z:rr(70,90),t:0,ph:rr(0,6),c:['#a8562a','#c87a2a','#d0a040'][Math.floor(Math.random()*3)]});
+  for(const tr of W.leafTrees||[])if(Math.random()<dt*.8&&nearScr(tr[0],tr[1],160))W.leaves.push({x:tr[0]+rr(-40,40),y:tr[1]+rr(-40,40),z:rr(70,90),t:0,ph:rr(0,6),c:['#a8562a','#c87a2a','#d0a040'][Math.floor(Math.random()*3)]});
   for(const l of W.leaves){l.t+=dt;l.z-=14*dt;l.x+=Math.sin(l.t*3+l.ph)*20*dt+6*dt}for(let i=W.leaves.length-1;i>=0;i--)if(W.leaves[i].z<0)W.leaves.splice(i,1)}
 // ------------------------------------------------------------------ le aree (area_mappa.js) si registrano in AREE; anteprima(id) costruisce e accende
 // quella della pagina di prova (anteprime/zombie/mk.py), il gioco vero la costruisce col menu (src/js/63-zombie.js)
@@ -1623,4 +1651,4 @@ orderReset:()=>{ORD.mm.m=new Map();ORD.fm.m=new Map();ORD.fr+=5},
     texStats:()=>{let n=0,px=0,np=0,pp=0;for(const k in TEX){n++;px+=TEX[k].width*TEX[k].height}for(const k in PLANES){np++;pp+=PLANES[k].width*PLANES[k].height}return{n,mpx:+(px/1e6).toFixed(2),np,mpp:+(pp/1e6).toFixed(2)}},
     buys,equip,buyNow:id=>{const o=buys.find(b=>b.id===id);return o?o.act():null},box:()=>BOX,boxTo:i=>{const q=BOX.spots[i];boxPlace(q[0],q[1],q[3]||0);navBuild();if(NAV)NAV.hc=-1;return[q[0],q[1]]},coins:v=>{if(v!=null)W.coins=v;return W.coins},gun:()=>gunState,nuova:()=>CTL.nuova()};
   return CTL}
-return{scala,STAIRS,sameLv,heroLv,climbStart,SB,pickHole,holeDist,zoneOk,shutNear,riposiziona,toWorld:(x,y)=>TURN?tP(TURN,x,y):[x,y],dirWorld:(x,y)=>TURN?tV(TURN,x,y):[x,y],AREE,anteprima,boxReset,stile,idleZombie,buyable,buys,barrier,BARS,barCheck,sorpresa,equip,hurt,spawn,KINDS,move,zWalk,sep,physClear,gun:()=>gunState,navRebuild:()=>{navBuild();if(NAV)NAV.hc=-1},softImg,turn,group,grp,finalize,facing,across,onGround,onPlane,onRound,ringNear,T,CAM,W,S,LS,MOON,inGround,scrAng,decals,fades,NAMES,stand,stands,heightAt,add3,sub3,len3,rnd,rr,srand,ink,path,hull,material,MAT,MARKS,texture,tone,face,hullOf,ballAt,line3,poly3,fn3,box,prismX,prismY,plane,cyl,prop,solid,shade,shadeR,props,solids,shadows,lights,flames,holes,houses,smokes,perches,hit,bakeGround,edgeSnap,boot,bootAsync,libera,ricuoci,setLive:f=>{liveDraw=f},wa,mix,cl,ez,lerp,TAU,ball,seg}})();
+return{scala,STAIRS,sameLv,heroLv,climbStart,SB,pickHole,holeDist,zoneOk,shutNear,farOpen,groundSpot,riposiziona,toWorld:(x,y)=>TURN?tP(TURN,x,y):[x,y],dirWorld:(x,y)=>TURN?tV(TURN,x,y):[x,y],AREE,anteprima,boxReset,stile,idleZombie,buyable,buys,barrier,BARS,barCheck,sorpresa,equip,hurt,spawn,KINDS,move,zWalk,sep,physClear,gun:()=>gunState,navRebuild:()=>{navBuild();if(NAV)NAV.hc=-1},softImg,turn,group,grp,finalize,facing,across,onGround,onPlane,onRound,ringNear,T,CAM,W,S,LS,MOON,inGround,scrAng,decals,fades,NAMES,stand,stands,heightAt,add3,sub3,len3,rnd,rr,srand,ink,path,hull,material,MAT,MARKS,texture,tone,face,hullOf,ballAt,line3,poly3,fn3,box,prismX,prismY,plane,cyl,prop,solid,shade,shadeR,props,solids,shadows,lights,flames,holes,houses,smokes,perches,hit,bakeGround,edgeSnap,boot,bootAsync,libera,ricuoci,setLive:f=>{liveDraw=f},wa,mix,cl,ez,lerp,TAU,ball,seg}})();
