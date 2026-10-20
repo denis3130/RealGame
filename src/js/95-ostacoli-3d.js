@@ -1,0 +1,364 @@
+// ===================================================================== OSTACOLI IN 3D (anteprima della Classica nuova, 20 ottobre)
+// Denis: «trasforma ogni cosa/ostacolo che è in 2d in 3d anche in game». Ogni ostacolo delle stanze (i 28 tipi dei quattro mondi) rifatto
+// come volumi 3D visti dalla telecamera dei mostri (C3.V: lo schermo è x, y·0,55 − z) e dipinto come loro: tre toni su ogni pezzo, bordo
+// illuminato, contorno scuro spesso, la luce dall'alto a sinistra. Stesse forme, stessi colori e stessa grandezza di prima, così la stanza
+// si legge come sempre; i pezzi squadrati sono girati un poco a caso, così si vedono due facce. Ogni ostacolo fermo è dipinto una volta in
+// un'immagine (come rockSprite in 47) insieme ai mucchietti 3D davanti alla base; le parti vive (fiamme, bagliori, bolle, canne che
+// ondeggiano, il braccio del pupazzo, le liane) si disegnano sopra a ogni fotogramma. L'usura taglia il disegno 3D e i pezzi che cadono sono
+// sassi 3D. Gli ostacoli dei boss rifatti (rocce del Golem, incudini del Fabbro, gabbia della Piovra…) restano i loro, già in 3D.
+// Questo file NON è in src/ordine.txt: lo mette python3 anteprime/mk_classica.py dopo 94. OB3.on = false rimette il disegno di prima.
+const OB3={on:true,face:Math.PI/2,M:{},B:{},L:{},bad:{},n:0,ms:0};
+const OQ=(sx,sd,z)=>[sd||0,-(sx||0),z||0];        // a point by screen right, toward us and up (before the obstacle's own turn)
+const oH=(i,s)=>{const v=Math.sin(i*127.1+s*311.7)*43758.5453;return v-Math.floor(v)};   // 0..1, fixed for an obstacle
+const oL3=(a,b,t)=>[a[0]+(b[0]-a[0])*t,a[1]+(b[1]-a[1])*t,a[2]+(b[2]-a[2])*t];
+
+// ------------------------------------------------------------------ the painting tools (on top of the prologue's: proCam, pRound, pShade)
+// flat faces ([normal, [3D corners]]): every outline first, thick, then the faces we see in their own light over it, with thin edges, so a
+// hollow shape (the anvil's horn, an arch) keeps its outline; o.cf(n) gives a face its own colour, o.face(n, q, pts) paints on it
+function oFaces(K,F,col,o){o=o||{};const{V0}=K,vis=[];
+  for(const f of F){const v=V0.F(f[0]);if(v>.01){let cx=0,cy=0,cz=0;for(const q of f[1]){cx+=q[0];cy+=q[1];cz+=q[2]}const m=f[1].length;vis.push({n:f[0],q:f[1],p:f[1].map(q=>V0.P(q)),d:V0.D(cx/m,cy/m,cz/m)})}}
+  vis.sort((a,b)=>a.d-b.d);ctx.lineJoin='round';ctx.lineCap='round';
+  if(!o.noInk){ctx.strokeStyle=INK;ctx.lineWidth=(o.lw||2.4)*2;for(const f of vis){C3.poly(f.p);ctx.stroke()}}
+  for(const f of vis){const c0=o.cf?o.cf(f.n,f.q):col,sh=pShade(K,f.n,c0),b=C3.bbox(f.p);C3.poly(f.p);
+    const g=ctx.createLinearGradient(b[0],b[1],b[2],b[3]);g.addColorStop(0,C3.lt(sh,.1));g.addColorStop(1,C3.dk(sh,.18));ctx.fillStyle=g;ctx.fill();
+    ctx.strokeStyle=C3.dk(c0,.62);ctx.lineWidth=o.ew||.7;ctx.stroke();if(o.face)o.face(f.n,f.q,f.p)}
+  return vis}
+// a box: base centre c, w deep (toward us), d wide, h high, turned by o.a
+function oBox(K,c,w,d,h,col,o){o=o||{};const a=o.a||0,ca=Math.cos(a),sa=Math.sin(a),hw=w/2,hd=d/2,T=(x,y,z)=>[c[0]+x*ca-y*sa,c[1]+x*sa+y*ca,c[2]+z];
+  return oFaces(K,[[[0,0,1],[T(-hw,-hd,h),T(hw,-hd,h),T(hw,hd,h),T(-hw,hd,h)]],[[ca,sa,0],[T(hw,hd,0),T(hw,-hd,0),T(hw,-hd,h),T(hw,hd,h)]],[[-ca,-sa,0],[T(-hw,-hd,0),T(-hw,hd,0),T(-hw,hd,h),T(-hw,-hd,h)]],
+    [[-sa,ca,0],[T(-hw,hd,0),T(hw,hd,0),T(hw,hd,h),T(-hw,hd,h)]],[[sa,-ca,0],[T(hw,-hd,0),T(-hw,-hd,0),T(-hw,-hd,h),T(hw,-hd,h)]]],col,o)}
+// a slab cut to a profile [[u (right), z (up)], ...] (counterclockwise as we look at it), d thick, turned by o.a
+function oExtrude(K,c,prof,d,col,o){o=o||{};const a=o.a||0,ca=Math.cos(a),sa=Math.sin(a),T=(x,u,z)=>{const y=-u;return[c[0]+x*ca-y*sa,c[1]+x*sa+y*ca,c[2]+z]},R=v=>[v[0]*ca-v[1]*sa,v[0]*sa+v[1]*ca,v[2]];
+  const n=prof.length,F=[[R([1,0,0]),prof.map(p=>T(d/2,p[0],p[1]))],[R([-1,0,0]),prof.slice().reverse().map(p=>T(-d/2,p[0],p[1]))]];
+  for(let i=0;i<n;i++){const p=prof[i],q=prof[(i+1)%n],du=q[0]-p[0],dz=q[1]-p[1],l=Math.hypot(du,dz)||1;F.push([R([0,-dz/l,-du/l]),[T(d/2,p[0],p[1]),T(d/2,q[0],q[1]),T(-d/2,q[0],q[1]),T(-d/2,p[0],p[1])]])}
+  return oFaces(K,F,col,o)}
+// an upright prism of n sides (radius r, top radius o.rt, height h, turned by o.a) with a pointed tip (o.tip) or a flat top; o.lean [x, y]
+// tilts it from its base
+function oPrism(K,c,n,r,h,col,o){o=o||{};const a0=o.a||0,tip=o.tip||0,lx=o.lean?o.lean[0]:0,ly=o.lean?o.lean[1]:0,rt=o.rt==null?r:o.rt,
+    T=(x,y,z)=>[c[0]+x+lx*z,c[1]+y+ly*z,c[2]+z],ring=(rr,z)=>{const q=[];for(let i=0;i<n;i++){const t=a0+i/n*TAU;q.push(T(Math.cos(t)*rr,Math.sin(t)*rr,z))}return q};
+  const B=ring(r,0),U=ring(rt,h),F=[];
+  for(let i=0;i<n;i++){const j=(i+1)%n,tm=a0+(i+.5)/n*TAU;F.push([C3.nrm([Math.cos(tm),Math.sin(tm),(r-rt)/Math.max(1,h)]),[B[i],B[j],U[j],U[i]]])}
+  if(tip>0){const A=T(0,0,h+tip);for(let i=0;i<n;i++){const j=(i+1)%n,tm=a0+(i+.5)/n*TAU;F.push([C3.nrm([Math.cos(tm)*tip,Math.sin(tm)*tip,rt*.9]),[U[i],U[j],A]])}}
+  else F.push([[0,0,1],U]);
+  return oFaces(K,F,col,o)}
+// a point on a dome (centre c, radii across R, deep Ry, high H) toward the azimuth az (0 = toward us before the turn) and elevation el
+const oDome=(c,R,Ry,H,az,el)=>[c[0]+Math.cos(az)*Ry*Math.cos(el),c[1]+Math.sin(az)*R*Math.cos(el),c[2]+H*Math.sin(el)];
+// the azimuth that faces the camera
+const oFront=V0=>Math.atan2(V0.c,V0.s);
+// a line on a surface: 3D points projected, a dark groove and a lit lip under it
+function oGroove(V0,pts,al,lw){const p=pts.map(q=>V0.P(q));ctx.lineCap='round';ctx.lineJoin='round';ctx.strokeStyle=`rgba(0,0,0,${al||.3})`;ctx.lineWidth=lw||1.5;C3.line(p);ctx.stroke();
+  ctx.strokeStyle=`rgba(255,255,255,${(al||.3)*.35})`;ctx.lineWidth=(lw||1.5)*.7;C3.line(p.map(q=>[q[0]+.7,q[1]+.8]));ctx.stroke()}
+// a rock: a lumpy dome, soft and round like the monsters, with two or three cuts on the side we see, a lit top; o.moss / o.snow: a cap
+function oRock(K,c,R,Ry,H,col,sd,o){o=o||{};const{V0}=K,pts=[],az0=oFront(V0);
+  for(let j=0;j<=5;j++){const el=j/5*Math.PI/2,ce=Math.cos(el),se=Math.sin(el);for(let i=0;i<14;i++){if(j===5&&i)break;const az=i/14*TAU,
+    w=1+.13*Math.sin(az*3+sd*2.3+j)+.07*Math.sin(az*5+sd*1.1)-.04*j/5;pts.push([c[0]+Math.cos(az)*Ry*ce*w,c[1]+Math.sin(az)*R*ce*w,c[2]+H*se*(j===5?1:.97+.06*Math.sin(az*2+sd))])}}
+  const hull=C3.vol(V0,pts,col,{lw:o.lw||2.4,kl:.26,kd:.5,rim:.32});
+  ctx.save();C3.poly(hull);ctx.clip();
+  if(!o.small){const D=(a,e)=>oDome(c,R*1.02,Ry*1.02,H,az0+a,e);oGroove(V0,[D(.25,1.05),D(-.05,.62),D(-.42,.32)],.3,1.7);oGroove(V0,[D(-.05,.62),D(.3,.18)],.26,1.4)}
+  if(o.moss){for(let i=0;i<5;i++){const a=az0+(oH(i,sd)-.5)*2.4,e=.95+oH(i+5,sd)*.5,p=oDome(c,R,Ry,H,a,Math.min(1.45,e)),n=C3.nrm([p[0]-c[0],p[1]-c[1],(p[2]-c[2])*R/Math.max(1,H)]);
+      C3.spot(V0,p,n,R*(.18+oH(i+9,sd)*.16),C3.dk(o.moss,.2));C3.spot(V0,[p[0],p[1],p[2]+.6],n,R*(.12+oH(i+9,sd)*.12),o.moss)}
+    C3.spot(V0,[c[0],c[1],c[2]+H],[0,0,1],R*.42,C3.dk(o.moss,.15));C3.spot(V0,[c[0],c[1]+R*.08,c[2]+H+.5],[0,0,1],R*.3,C3.lt(o.moss,.12))}
+  const q=V0.P(oDome(c,R,Ry,H,az0+.75,.85));ctx.fillStyle='rgba(255,255,255,.2)';ctx.beginPath();ctx.ellipse(q[0],q[1],R*.3,R*.14,-.3,0,TAU);ctx.fill();ctx.restore();
+  if(o.snow){const sp=[];for(let j=0;j<=3;j++){const el=j/3*Math.PI/2;for(let i=0;i<14;i++){if(j===3&&i)break;const az=i/14*TAU,w=.9+.07*Math.sin(az*4+sd*3);
+      sp.push([c[0]+Math.cos(az)*Ry*.86*w*Math.cos(el),c[1]+Math.sin(az)*R*.9*w*Math.cos(el),c[2]+H*.5+H*.56*Math.sin(el)])}}
+    C3.vol(V0,sp,'#f4f8ff',{lw:1.8,kl:.1,kd:.28,rim:.2})}
+  return hull}
+// the visible half of a band round an upright cylinder (radius R, from z0 to z1): scarves, belts, painted rings
+function oBand(K,c,R,z0,z1,col,o){o=o||{};const{V0}=K,a0=oFront(V0),top=[],bot=[];for(let i=0;i<=16;i++){const a=a0-Math.PI/2+i/16*Math.PI,x=c[0]+Math.cos(a)*R,y=c[1]+Math.sin(a)*R;top.push(V0.P([x,y,c[2]+z1]));bot.push(V0.P([x,y,c[2]+z0]))}
+  const p=top.concat(bot.reverse());C3.poly(p);const b=C3.bbox(p),g=ctx.createLinearGradient(b[0],0,b[2],0);g.addColorStop(0,C3.lt(col,.18));g.addColorStop(.5,col);g.addColorStop(1,C3.dk(col,.35));
+  ctx.fillStyle=g;ctx.fill();if(o.lw!==0){ctx.strokeStyle=INK;ctx.lineWidth=o.lw||1.4;ctx.lineJoin='round';ctx.stroke()}return p}
+// a thin stem: a 3D curve (quadratic: a, control b, end e) as the game draws its stems, the ink under the colour
+function oStem(V0,a,b,e,col,w){const p=[];for(let i=0;i<=8;i++){const t=i/8,u=1-t;p.push(V0.P([u*u*a[0]+2*u*t*b[0]+t*t*e[0],u*u*a[1]+2*u*t*b[1]+t*t*e[1],u*u*a[2]+2*u*t*b[2]+t*t*e[2]]))}
+  ctx.lineCap='round';ctx.lineJoin='round';ctx.strokeStyle=INK;ctx.lineWidth=w+2;C3.line(p);ctx.stroke();ctx.strokeStyle=col;ctx.lineWidth=w;C3.line(p);ctx.stroke();return p}
+// a picture on a flat face: corners a (bottom left), b (bottom right), c (top right), d (top left) → (u, v) in 0..1 to the screen
+const oMap=(V0,a,b,c,d)=>(u,v)=>V0.P([a[0]+(b[0]-a[0])*u+(d[0]-a[0])*v+(a[0]-b[0]+c[0]-d[0])*u*v,a[1]+(b[1]-a[1])*u+(d[1]-a[1])*v+(a[1]-b[1]+c[1]-d[1])*u*v,a[2]+(b[2]-a[2])*u+(d[2]-a[2])*v+(a[2]-b[2]+c[2]-d[2])*u*v]);
+// the corners of a box face as oMap wants them (bottom left, bottom right, top right, top left as we see it)
+function oCorners(V0,q){const s=q.map(p=>V0.P(p)),lo=[0,1,2,3].sort((i,j)=>s[j][1]-s[i][1]).slice(0,2).sort((i,j)=>s[i][0]-s[j][0]),hi=[0,1,2,3].filter(i=>!lo.includes(i)).sort((i,j)=>s[i][0]-s[j][0]);
+  return[q[lo[0]],q[lo[1]],q[hi[1]],q[hi[0]]]}
+const oEll=(M,cu,cv,ru,rv,n)=>{const p=[];for(let i=0;i<(n||14);i++){const t=i/(n||14)*TAU;p.push(M(cu+Math.cos(t)*ru,cv+Math.sin(t)*rv))}return p};
+const oFill=(p,col,lw)=>{C3.poly(p);ctx.fillStyle=col;ctx.fill();if(lw){ctx.strokeStyle=INK;ctx.lineWidth=lw;ctx.lineJoin='round';ctx.stroke()}};
+
+// ------------------------------------------------------------------ the models: (camera, obstacle, r, height, seed, stone palette, theme, flag)
+const OM=OB3.M;
+// a boulder: the big rock, moss on top in the moss world, two pebbles at its foot
+OM.boulder=(K,k,r,h,sd,S,th)=>{const mo=th==='muschio'||th==='radici'?S.moss:null;oRock(K,[0,0,0],r*1.02,r*.92,Math.max(h,r*.95),S.mid,sd,{moss:mo});
+  oRock(K,OQ(-r*.86,r*.62,0),r*.17,r*.15,r*.16,S.lo,sd+5,{small:1,lw:1.8})};
+// a pillar: plinth, fluted shaft, a capital or a broken top; a band of crystal in the crystal caves, a crack of lava when the Golem rages
+OM.pillar=(K,k,r,h,sd,S,th,fl)=>{const{V0}=K,w=r*.65,br=sd%2>1,a0=oFront(V0),H=h+7;
+  pRound(K,[0,0,0],[[0,r*1.15],[7,r*1.12]],S.mid,{m:20,lw:2.4,kl:.24,kd:.45});
+  pRound(K,[0,0,7],[[0,w],[h-(br?4:0),w*.95]],S.mid,{m:18,lw:2.4,kl:.3,kd:.5,rim:.3});
+  for(const f of[-.9,-.45,0,.45,.9]){const a=a0+f;oGroove(V0,[[Math.cos(a)*w*1.01,Math.sin(a)*w*1.01,10],[Math.cos(a)*w*.97,Math.sin(a)*w*.97,H-(br?6:3)]],.2,1.3)}
+  if(br){const R=[],T=[];for(let i=0;i<12;i++){const t=i/12*TAU;R.push([Math.cos(t)*w*.95,Math.sin(t)*w*.95,H-4]);T.push([Math.cos(t)*w*.95,Math.sin(t)*w*.95,H+(i%2?-3:3)+Math.sin(sd*7+i)*2.5])}
+    const F=[];for(let i=0;i<12;i++){const j=(i+1)%12,t=(i+.5)/12*TAU;F.push([[Math.cos(t),Math.sin(t),0],[R[i],R[j],T[j],T[i]]])}F.push([[0,0,1],T]);oFaces(K,F,S.mid,{cf:n=>n[2]>.5?S.hi:S.mid,lw:2.2})}
+  else{pRound(K,[0,0,H],[[0,w*.98],[3,w*1.28]],S.mid,{m:18,lw:2.2});pRound(K,[0,0,H+3],[[0,w*1.36],[6,w*1.36]],S.hi,{m:18,lw:2.3,kl:.3,kd:.4})}
+  oGroove(V0,[[Math.cos(a0+.2)*w,Math.sin(a0+.2)*w,H-12],[Math.cos(a0-.05)*w,Math.sin(a0-.05)*w,H-22],[Math.cos(a0+.12)*w,Math.sin(a0+.12)*w,H-30]],.4,1.6);
+  if(th==='cristalli'){const z=7+h*.45;oBand(K,[0,0,0],w*1.03,z,z+7,'#78c8e6',{lw:1.2});ctx.save();ctx.globalCompositeOperation='lighter';oBand(K,[0,0,0],w*1.04,z+2,z+4.5,'#a0ebff',{lw:0});ctx.restore()}
+  if(fl){ctx.save();ctx.strokeStyle='rgba(255,122,46,.85)';ctx.lineWidth=2;ctx.lineCap='round';C3.line([[a0-.2,12],[a0,26],[a0-.15,38]].map(([a,z])=>V0.P([Math.cos(a)*w*1.02,Math.sin(a)*w*1.02,z])));ctx.stroke();ctx.restore()}};
+// a sarcophagus: the stone chest, a lid with a low ridge, the round seal with a little skull on the front, cracks
+OM.tomb=(K,k,r,h,sd,S)=>{const{V0}=K,D=r*1.1,W=r*2,a=(oH(1,sd)-.5)*.5;
+  oBox(K,[0,0,0],D,W,h,S.mid,{a,face:(n,q)=>{if(Math.abs(n[2])>.5)return;const M=oMap(V0,...oCorners(V0,q));
+    if(V0.F(n)>.35&&Math.abs(n[0]*Math.cos(a)+n[1]*Math.sin(a))>.9){oFill(oEll(M,.5,.5,.13,.2,16),S.hi,2);ctx.fillStyle=INK;oFill(oEll(M,.46,.53,.03,.045,8),INK);oFill(oEll(M,.54,.53,.03,.045,8),INK)}
+    ctx.strokeStyle='rgba(0,0,0,.33)';ctx.lineWidth=1.4;C3.line([M(.78,1),M(.72,.8),M(.76,.62)]);ctx.stroke();C3.line([M(.12,0),M(.18,.25),M(.14,.45)]);ctx.stroke()}});
+  oBox(K,[0,0,h],D*1.12,W*1.08,3.5,S.mid,{a,cf:n=>n[2]>.5?S.hi:S.mid,lw:2.2});
+  const ca=Math.cos(a),sa=Math.sin(a),T=(x,y,z)=>[x*ca-y*sa,x*sa+y*ca,z],hw=D*.56,hd=W*.54,z0=h+3.5,z1=z0+5;
+  oFaces(K,[[C3.nrm([ca*.6,sa*.6,1]),[T(hw,-hd,z0),T(hw,hd,z0),T(0,hd,z1),T(0,-hd,z1)]],[C3.nrm([-ca*.6,-sa*.6,1]),[T(-hw,hd,z0),T(-hw,-hd,z0),T(0,-hd,z1),T(0,hd,z1)]],
+    [[-sa,ca,0],[T(hw,hd,z0),T(-hw,hd,z0),T(0,hd,z1)]],[[sa,-ca,0],[T(-hw,-hd,z0),T(hw,-hd,z0),T(0,-hd,z1)]]],S.hi,{lw:2.2})};
+// urns: one or two pots of terracotta with a light zigzag round the belly, the dark mouth
+OM.urn=(K,k,r,h,sd,S)=>{const{V0}=K,a0=oFront(V0);
+  const pot=(c,s)=>{const H=s*1.5;pRound(K,c,[[0,s*.42],[H*.18,s*.76],[H*.45,s*.86],[H*.72,s*.62],[H*.8,s*.4]],'#a8623a',{m:18,lw:2.2,kl:.32,kd:.45,rim:.3});
+    pRound(K,[c[0],c[1],c[2]+H*.78],[[0,s*.36],[H*.17,s*.36]],'#9a5634',{m:14,lw:2});pRound(K,[c[0],c[1],c[2]+H*.93],[[0,s*.5],[H*.07,s*.52]],'#c07a4a',{m:16,lw:2});
+    C3.disc3(V0,[c[0],c[1],c[2]+H*1.005],[0,0,1],s*.38,{N:16});ctx.fillStyle='#3a2216';ctx.fill();
+    const z=[];for(let i=0;i<=8;i++){const a=a0-1.15+i*.2875;z.push(V0.P([c[0]+Math.cos(a)*s*.87,c[1]+Math.sin(a)*s*.87,c[2]+H*(.46+(i%2?.06:-.02))]))}ctx.strokeStyle='#f0c48a';ctx.lineWidth=1.6;ctx.lineJoin='round';C3.line(z);ctx.stroke()};
+  pot(OQ(-r*.25,0,0),r*.72);if(r>14)pot(OQ(r*.55,r*.35,0),r*.45)};
+// a gravestone: an arch-topped slab on its mound of earth, three lines carved in it, tufts of grass at its foot
+OM.gravestone=(K,k,r,h,sd,S)=>{const{V0}=K,w=r*1.25,d=r*.42,a=(oH(2,sd)-.5)*.5;
+  C3.vol(V0,C3.ellPts([0,0,0],[r*.7,r*1.05,r*.24],null,3,14,0),'#4a3b2c',{lw:2.2,kl:.2,kd:.4,rim:.15});
+  const prof=[[-w/2,0],[w/2,0],[w/2,h-w/2]];for(let i=1;i<12;i++){const t=i/12*Math.PI;prof.push([Math.cos(t)*w/2,h-w/2+Math.sin(t)*w/2])}prof.push([-w/2,h-w/2]);
+  oExtrude(K,[0,0,1],prof,d,S.mid,{a,face:(n,q)=>{if(V0.F(n)<.3||Math.abs(n[2])>.3||q.length<6)return;const s=q.map(p=>V0.P(p)),cx=s.reduce((m,p)=>m+p[0],0)/s.length;ctx.strokeStyle='rgba(0,0,0,.36)';ctx.lineWidth=1.5;
+    for(const ly of[.45,.62,.76]){const z=h*ly,A=V0.P([q[0][0],q[0][1],1+z]),B=V0.P([q[1][0],q[1][1],1+z]),m=[(A[0]+B[0])/2,(A[1]+B[1])/2],dx=(B[0]-A[0])*.28,dy=(B[1]-A[1])*.28;ctx.beginPath();ctx.moveTo(m[0]-dx,m[1]-dy);ctx.lineTo(m[0]+dx,m[1]+dy);ctx.stroke()}}});
+  for(const[sx,sdp] of[[-w*.62,r*.25],[w*.58,r*.3],[-w*.28,r*.42]]){const b=OQ(sx,sdp,0);for(const s of[-1,1])C3.leaf(V0,b,[0,s*.4,1],[0,1,0],6,1.6,'#5f8a34',{lw:1.1})}};
+// a stump: roots running over the floor, the trunk with its bark, the cut face with its rings, a little red mushroom
+OM.stump=(K,k,r,h,sd,S)=>{const{V0}=K,H=h+8,w=r*.95,a0=oFront(V0),roots=[-2.4,-1.1,.3,1.7].map((t,i)=>{const a=t+sd*.3;return{a:[Math.cos(a)*w*.8,Math.sin(a)*w*.8,5],b:[Math.cos(a)*r*1.3,Math.sin(a)*r*1.3,0],d:V0.D(Math.cos(a),Math.sin(a),0)}});
+  const root=R=>{C3.caps(V0,R.a,4,oL3(R.a,R.b,.55),2.6,'#6b4a2a',{lw:2.2,kl:.3,kd:.5});C3.caps(V0,oL3(R.a,R.b,.5),2.7,R.b,1.2,'#6b4a2a',{lw:2.2,kl:.3,kd:.5})};
+  for(const R of roots)if(R.d<0)root(R);
+  pRound(K,[0,0,0],[[0,w*1.04],[H*.5,w*.98],[H,w*.95]],'#6b4a2a',{m:18,lw:2.4,kl:.3,kd:.55,rim:.28});
+  for(const f of[-1,-.35,.3,.95]){const a=a0+f;oGroove(V0,[[Math.cos(a)*w,Math.sin(a)*w,2],[Math.cos(a+.06)*w*.97,Math.sin(a+.06)*w*.97,H*.55],[Math.cos(a)*w*.96,Math.sin(a)*w*.96,H-3]],.3,1.4)}
+  C3.disc3(V0,[0,0,H],[0,0,1],w*.95,{N:24});ctx.fillStyle='#c9a26a';ctx.fill();ctx.strokeStyle=INK;ctx.lineWidth=2.2;ctx.stroke();
+  ctx.strokeStyle='rgba(110,70,40,.55)';ctx.lineWidth=1.3;for(const rr of[.65,.35]){C3.disc3(V0,[0,0,H],[0,0,1],w*rr,{N:20});ctx.stroke()}
+  for(const R of roots)if(R.d>=0)root(R);
+  const m=OQ(w*.78,w*.55,0);pRound(K,m,[[0,1.2],[4,1.1]],'#ece0c6',{m:10,lw:1.4});pRound(K,[m[0],m[1],3.6],[[0,4],[1.6,3.6],[3.4,.2]],'#d65b5b',{m:12,lw:1.6,kl:.35});
+  ctx.fillStyle='#fff3e0';for(const[dy,dz] of[[-1.4,5.3],[1.2,4.8]]){const q=V0.P([m[0]+1.8,m[1]+dy,dz]);ctx.beginPath();ctx.arc(q[0],q[1],.7,0,TAU);ctx.fill()}};
+// a crystal cluster: hexagonal shards with pointed tips, pale on the side of the light and violet in the shade (the glow lives on top)
+OM.crystal=(K,k,r,h,sd,S)=>{const{V0}=K;C3.vol(V0,C3.ellPts([0,0,0],[r*.6,r*.95,2.5],null,2,14,0),S.lo,{lw:2,kl:.15,kd:.3,rim:.1});
+  const sh=[[0,0,1,0],[-.55,.15,.7,-.35],[.55,.2,.75,.3],[.15,.3,.55,.05]].map(([ox,oy,sz,tl],i)=>({c:OQ(ox*r,oy*r*1.1,0),sz,tl,i})).sort((a,b)=>V0.D(a.c)-V0.D(b.c));
+  for(const s of sh){const H=h*s.sz,R=r*.36*s.sz;oPrism(K,s.c,6,R,H*.72,'#6fc9e8',{tip:H*.28,a:sd+s.i,lean:[0,-s.tl*.6],lw:2,cf:n=>n[1]>.35?'#c9f3ff':n[1]<-.35?'#6a4fc4':'#7fd0ec'});
+    const a=V0.P([s.c[0]+R*.3,s.c[1],H*.1]),b=V0.P([s.c[0]+R*.3-s.tl*0,s.c[1]-s.tl*.6*H*.85,H*.92]);ctx.strokeStyle='rgba(255,255,255,.6)';ctx.lineWidth=1.2;ctx.beginPath();ctx.moveTo(a[0],a[1]);ctx.lineTo(b[0],b[1]);ctx.stroke()}};
+// a brazier: three iron legs, the round bowl, the coals (the flame lives on top)
+OM.brazier=(K,k,r,h,sd,S)=>{const{V0}=K;
+  for(let i=0;i<3;i++){const t=-Math.PI/2+i*TAU/3+.3;C3.caps(V0,[Math.cos(t)*r*.72,Math.sin(t)*r*.72,0],1.9,[Math.cos(t)*r*.3,Math.sin(t)*r*.3,15],1.6,'#5a5f68',{lw:2.2,kl:.35,kd:.4})}
+  pRound(K,[0,0,13],[[0,r*.32],[3.5,r*.72],[7,r*.95]],'#4a4f58',{m:20,lw:2.4,kl:.35,kd:.5,rim:.3});
+  C3.disc3(V0,[0,0,20],[0,0,1],r*.9,{N:22});ctx.fillStyle='#2a1a14';ctx.fill();ctx.strokeStyle=INK;ctx.lineWidth=2;ctx.stroke();
+  for(let i=0;i<6;i++){const t=i/6*TAU+sd,q=[Math.cos(t)*r*.48,Math.sin(t)*r*.55,20.5];C3.sball(V0,q,2.3,i%2?'#ff6a2a':'#c8401a',{lw:1.2,kl:.5,kd:.3,rim:.1})}};
+// a pile of skulls on crossed bones
+OM.skulls=(K,k,r,h,sd,S)=>{const{V0}=K;C3.vol(V0,C3.ellPts([0,0,0],[r*.6,r,2.4],null,2,14,0),'#3e352b',{lw:2,kl:.15,kd:.3,rim:.1});
+  for(const[a,b] of[[OQ(-r*.9,-r*.1,2.5),OQ(r*.8,r*.25,2.5)],[OQ(-r*.6,r*.35,2.5),OQ(r*.9,-r*.2,2.5)]]){C3.caps(V0,a,2.4,b,2.4,'#e8e2d0',{lw:2,kl:.3,kd:.35});C3.sball(V0,a,2.8,'#e8e2d0',{lw:1.6});C3.sball(V0,b,2.8,'#e8e2d0',{lw:1.6})}
+  const af=oFront(V0);for(const[sx,sdp,z,s] of[[0,-r*.2,11,6],[-r*.4,r*.15,5.5,5.5],[r*.45,r*.25,5,5]]){const c=OQ(sx,sdp,z),f=[Math.cos(af),Math.sin(af),0],sd2=[-Math.sin(af),Math.cos(af),0];
+    C3.sball(V0,c,s,'#e8e2d0',{lw:2,kl:.35,kd:.35});for(const e of[-1,1]){const p=[c[0]+f[0]*s*.82+sd2[0]*e*s*.36,c[1]+f[1]*s*.82+sd2[1]*e*s*.36,c[2]+s*.1];C3.spot(V0,p,C3.nrm([f[0]*.9+sd2[0]*e*.3,f[1]*.9+sd2[1]*e*.3,.15]),s*.27,'#1b1612')}
+    const m=V0.P([c[0]+f[0]*s*.86,c[1]+f[1]*s*.86,c[2]-s*.52]);ctx.fillStyle=INK;ctx.fillRect(m[0]-s*.3,m[1]-s*.08,s*.6,s*.18);ctx.fillStyle='#e8e2d0';for(let j=-1;j<=1;j++)ctx.fillRect(m[0]+j*s*.2-.5,m[1]-s*.06,1,s*.12)}};
+// a thorn bush: round clumps bristling with thorns, violet berries
+OM.thorns=(K,k,r,h,sd,S,th,fl)=>{const{V0}=K,col=fl?'#4a5a2a':'#3f6a2a',bl=[[-.5,0,.72],[.5,.05,.66],[0,-.4,.74],[-.15,.18,.6]].map(([ox,oy,s],i)=>({c:OQ(ox*r,oy*r*1.4,8+s*r*.25),rr:r*s*.8,i})).sort((a,b)=>V0.D(a.c)-V0.D(b.c));
+  for(const b of bl){const sp=[];for(let j=0;j<9;j++){const az=j/9*TAU+sd+b.i,el=(j%3-1)*.5;sp.push({n:[Math.cos(az)*Math.cos(el),Math.sin(az)*Math.cos(el),Math.sin(el)]})}
+    const spike=s=>{const p=[b.c[0]+s.n[0]*b.rr*.9,b.c[1]+s.n[1]*b.rr*.9,b.c[2]+s.n[2]*b.rr*.9],e=[b.c[0]+s.n[0]*b.rr*1.45,b.c[1]+s.n[1]*b.rr*1.45,b.c[2]+s.n[2]*b.rr*1.45];C3.caps(V0,p,2.2,e,.3,C3.dk(col,.25),{lw:1.4,noRim:1})};
+    for(const s of sp)if(V0.F(s.n)<0)spike(s);C3.sball(V0,b.c,b.rr,col,{lw:2.4,kl:.3,kd:.5});for(const s of sp)if(V0.F(s.n)>=0)spike(s)}
+  for(const[bx,by,bz] of[[-.3,.1,1.25],[.35,.2,1.05],[0,.45,.75]])C3.sball(V0,OQ(bx*r,by*r,8+bz*r*.4),2.4,'#b06ad8',{lw:1.2,kl:.5,kd:.3})};
+// basalt: three hexagonal columns, a crack of lava in the floor before them
+OM.basalt=(K,k,r,h,sd,S)=>{const{V0}=K;ctx.save();ctx.strokeStyle='#ff7a2e';ctx.lineWidth=1.6;ctx.lineCap='round';C3.line([OQ(-r*.8,r*.3,0),OQ(-r*.3,r*.8,0),OQ(r*.2,r*.55,0)].map(q=>V0.P(q)));ctx.stroke();ctx.restore();
+  const cl=[[-r*.45,-r*.15,.75,r*.5],[r*.4,-r*.1,1,r*.5],[0,r*.4,.55,r*.55]].map(([sx,sdp,hm,w],i)=>({c:OQ(sx,sdp,0),hm,w,i})).sort((a,b)=>V0.D(a.c)-V0.D(b.c));
+  for(const c of cl)oPrism(K,c.c,6,c.w*.9,h*c.hm,'#3d3430',{a:.3+c.i*.5+sd,lw:2.4,cf:n=>n[2]>.5?'#6a5c54':'#3d3430',face:(n,q,p)=>{if(n[2]>.5){ctx.strokeStyle='rgba(0,0,0,.25)';ctx.lineWidth=1;const m=p.reduce((s,v)=>[s[0]+v[0]/p.length,s[1]+v[1]/p.length],[0,0]);ctx.beginPath();ctx.moveTo(p[0][0]*.6+m[0]*.4,p[0][1]*.6+m[1]*.4);ctx.lineTo(m[0],m[1]);ctx.lineTo(p[3][0]*.6+m[0]*.4,p[3][1]*.6+m[1]*.4);ctx.stroke()}}})};
+// a lava rock: a dark rock split by grooves (the glow in them lives on top)
+OM.lavarock=(K,k,r,h,sd,S)=>{oRock(K,[0,0,0],r*1.02,r*.92,Math.max(h,r*.95),'#3a302b',sd,{small:1});const{V0}=K,a0=oFront(V0),D=(a,e)=>V0.P(oDome([0,0,0],r*1.03,r*.93,Math.max(h,r*.95),a0+a,e));
+  ctx.strokeStyle='#160f0c';ctx.lineWidth=3;ctx.lineCap='round';ctx.lineJoin='round';C3.line([D(.5,1.05),D(.1,.6),D(-.45,.82)]);ctx.stroke();C3.line([D(.1,.6),D(.2,.12)]);ctx.stroke()};
+OB3.lavaCr=(K,r,h)=>{const{V0}=K,a0=oFront(V0),D=(a,e)=>V0.P(oDome([0,0,0],r*1.03,r*.93,Math.max(h,r*.95),a0+a,e));return[[D(.5,1.05),D(.1,.6),D(-.45,.82)],[D(.1,.6),D(.2,.12)]]};
+// obsidian: three black glass shards with an orange glint
+OM.obsidian=(K,k,r,h,sd,S)=>{const{V0}=K;C3.vol(V0,C3.ellPts([0,0,0],[r*.55,r*.95,2],null,2,14,0),'#1e1a1c',{lw:2,kl:.1,kd:.3,rim:.1});
+  const sh=[[0,0,1,0],[-.55,.15,.7,-.35],[.55,.2,.75,.3]].map(([ox,oy,sz,tl],i)=>({c:OQ(ox*r,oy*r*1.1,0),sz,tl,i})).sort((a,b)=>V0.D(a.c)-V0.D(b.c));
+  for(const s of sh){const H=h*s.sz,R=r*.4*s.sz;oPrism(K,s.c,5,R,H*.7,'#1b1820',{tip:H*.3,rt:R*.75,a:sd*2+s.i,lean:[0,-s.tl*.6],lw:2,cf:n=>n[1]>.3?'#5a4a66':n[1]<-.3?'#0e0c10':'#221d28'});
+    const a=V0.P([s.c[0]+R*.5,s.c[1]+R*.1,H*.15]),b=V0.P([s.c[0]+R*.3,s.c[1]-s.tl*.6*H*.8,H*.88]);ctx.strokeStyle='rgba(255,140,80,.6)';ctx.lineWidth=1.2;ctx.beginPath();ctx.moveTo(a[0],a[1]);ctx.lineTo(b[0],b[1]);ctx.stroke()}};
+// an anvil on its wooden block
+OM.anvil=(K,k,r,h,sd,S)=>{const{V0}=K,a=(oH(3,sd)-.5)*.6;
+  oBox(K,[0,0,0],r*.95,r*1.3,r*.72,'#6b4a2a',{a,cf:n=>n[2]>.5?'#a87a4a':'#6b4a2a',face:(n,q)=>{if(Math.abs(n[2])>.5)return;const M=oMap(V0,...oCorners(V0,q));ctx.strokeStyle='rgba(40,24,12,.35)';ctx.lineWidth=1;for(const u of[.3,.62]){ctx.beginPath();const p0=M(u,.05),p1=M(u+.04,.95);ctx.moveTo(p0[0],p0[1]);ctx.lineTo(p1[0],p1[1]);ctx.stroke()}}});
+  const P=[[-.45,0],[.35,0],[.45,.25],[1.2,.3],[1.24,.42],[.7,.55],[-1.05,.55],[-.95,.32],[-.5,.25]].map(([u,z])=>[u*r,z*r]);
+  oExtrude(K,[0,0,r*.72],P,r*.52,'#5a5f68',{a,lw:2.4,cf:n=>n[2]>.5?'#8a929c':'#5a5f68'});
+  const ca=Math.cos(a),sa=Math.sin(a),T=(x,u,z)=>{const y=-u;return V0.P([x*ca-y*sa,x*sa+y*ca,z])},A=T(r*.26,-r*.95,r*1.26),B=T(r*.26,r*.6,r*1.26);ctx.strokeStyle='rgba(255,255,255,.4)';ctx.lineWidth=1.6;ctx.beginPath();ctx.moveTo(A[0],A[1]);ctx.lineTo(B[0],B[1]);ctx.stroke()};
+// a cauldron: three stubby legs, the black pot, its rim (the boiling lives on top)
+OM.cauldron=(K,k,r,h,sd,S)=>{const{V0}=K;for(let i=0;i<3;i++){const t=-Math.PI/2+i*TAU/3+.3;C3.caps(V0,[Math.cos(t)*r*.62,Math.sin(t)*r*.62,0],2.2,[Math.cos(t)*r*.45,Math.sin(t)*r*.45,9],2.4,'#24242a',{lw:2,kl:.3,kd:.3})}
+  pRound(K,[0,0,6],[[0,r*.45],[5,r*.86],[11,r*.96],[17,r*.86]],'#2a2a30',{m:20,lw:2.4,kl:.35,kd:.3,rim:.35});
+  pRound(K,[0,0,22],[[0,r*.9],[2.6,r*.9]],'#3a3a40',{m:20,lw:2.2,kl:.35,kd:.3});C3.disc3(V0,[0,0,24.6],[0,0,1],r*.74,{N:22});ctx.fillStyle='#1a1214';ctx.fill()};
+// a crate: planks, a diagonal brace, two iron bands
+OM.crate=(K,k,r,h,sd,S)=>{const{V0}=K,a=(oH(4,sd)-.5)*.7;
+  oBox(K,[0,0,0],r*1.7,r*1.9,h,'#8a6038',{a,cf:n=>n[2]>.5?'#b8884e':'#8a6038',face:(n,q)=>{const M=oMap(V0,...oCorners(V0,q));ctx.strokeStyle='rgba(50,30,14,.4)';ctx.lineWidth=1.1;
+    if(n[2]>.5){for(const v of[.33,.66]){const p0=M(.03,v),p1=M(.97,v);ctx.beginPath();ctx.moveTo(p0[0],p0[1]);ctx.lineTo(p1[0],p1[1]);ctx.stroke()}return}
+    for(const v of[.5]){const p0=M(.02,v),p1=M(.98,v);ctx.beginPath();ctx.moveTo(p0[0],p0[1]);ctx.lineTo(p1[0],p1[1]);ctx.stroke()}
+    ctx.strokeStyle='rgba(30,18,8,.5)';ctx.lineWidth=2.2;let p0=M(.08,.08),p1=M(.92,.92);ctx.beginPath();ctx.moveTo(p0[0],p0[1]);ctx.lineTo(p1[0],p1[1]);ctx.stroke();ctx.strokeStyle='rgba(220,170,110,.4)';ctx.lineWidth=1;ctx.stroke();
+    for(const[v0,v1] of[[.2,.3],[.72,.82]])oFill([M(0,v0),M(1,v0),M(1,v1),M(0,v1)],'#5a5f68',1.1);ctx.fillStyle='#c9cfd6';for(const[u,v] of[[.12,.25],[.88,.25],[.12,.77],[.88,.77]]){const p=M(u,v);ctx.fillRect(p[0]-.7,p[1]-.7,1.4,1.4)}}})};
+// a dead tree: roots, the leaning trunk with a broken crown, two snapped branches, a hollow knot (the vines live on top)
+OM.deadtree=(K,k,r,h,sd,S)=>{const{V0}=K,w=r*.55,ln=Math.sin(sd*5)*r*.18,col='#4a3c30',sp=z=>OQ(ln*(z/h),0,z),roots=[-2.5,-1.2,.2,1.5].map(t=>{const a=t+sd*.2;return{a:[Math.cos(a)*w*.9,Math.sin(a)*w*.9,4],b:[Math.cos(a)*r*1.25,Math.sin(a)*r*1.25,0],d:V0.D(Math.cos(a),Math.sin(a),0)}});
+  const root=R=>{C3.caps(V0,R.a,3.6,oL3(R.a,R.b,.55),2.2,col,{lw:2.2,kl:.25,kd:.5});C3.caps(V0,oL3(R.a,R.b,.5),2.3,R.b,1,col,{lw:2.2,kl:.25,kd:.5})};
+  for(const R of roots)if(R.d<0)root(R);
+  const br=[[-1,.62,r*.9],[1,.78,r*.7]].map(([s,hy,len])=>{const b=sp(h*hy),e=OQ(ln*hy+s*(w*.7+len),r*.1*s,h*hy+len*.5);return{b,e,m:oL3(b,e,.55),s,len,d:V0.D(e)}});
+  for(const B of br)if(B.d<V0.D(sp(h*.7)))C3.caps(V0,B.b,3,B.e,1.2,col,{lw:2.2});
+  {const pts=[];for(const[f,rr] of[[0,1.45],[.06,1.18],[.18,1],[.45,.9],[.75,.8],[1,.72]]){const c=sp(h*f);for(let i=0;i<14;i++){const a=i/14*TAU,j=1+.06*Math.sin(a*3+sd*4+f*5);pts.push([c[0]+Math.cos(a)*w*rr*j,c[1]+Math.sin(a)*w*rr*j,c[2]])}}
+    C3.vol(V0,pts,col,{lw:2.4,kl:.25,kd:.5,rim:.25})}
+  for(const[dx,dz] of[[-.7,2],[-.25,9],[.15,4],[.45,11],[.75,5]]){const b=sp(h-2),e=[b[0]+(oH(dz,sd)-.5)*3,b[1]-dx*w*1.05,h+dz];C3.caps(V0,[b[0],b[1]-dx*w*.75,h-4],3,e,.35,col,{lw:1.8})}
+  for(const B of br)if(B.d>=V0.D(sp(h*.7))){C3.caps(V0,B.b,3,B.e,1.2,col,{lw:2.2});C3.caps(V0,B.m,1.6,[B.m[0]+r*.1,B.m[1]-B.s*B.len*.12,B.m[2]-B.len*.3],.5,col,{lw:1.6})}
+  const af=oFront(V0),kn=sp(h*.42);C3.spot(V0,[kn[0]+Math.cos(af)*w*.92,kn[1]+Math.sin(af)*w*.92,kn[2]],[Math.cos(af),Math.sin(af),0],w*.32,'#1a140e',{lw:1.6});
+  for(const f of[-.6,.1,.55]){const a=af+f;oGroove(V0,[[sp(4)[0]+Math.cos(a)*w*1.1,sp(4)[1]+Math.sin(a)*w*1.1,4],[sp(h*.5)[0]+Math.cos(a)*w*.9,sp(h*.5)[1]+Math.sin(a)*w*.9,h*.5],[sp(h-6)[0]+Math.cos(a)*w*.7,sp(h-6)[1]+Math.sin(a)*w*.7,h-6]],.32,1.3)}};
+OB3.L.deadtree=(K,k,r,h,sd,t)=>{const{V0}=K,w=r*.55,ln=Math.sin(sd*5)*r*.18;ctx.strokeStyle='rgba(60,70,40,.85)';ctx.lineWidth=1.2;ctx.lineCap='round';
+  for(const vx of[-.5,.4]){const s=V0.P(OQ(vx*w+ln*.85,w*.6,h*.85)),q=Math.sin(t*1.3+vx*5)*2,e=Math.sin(t*1.1+vx)*3;ctx.beginPath();ctx.moveTo(s[0],s[1]);ctx.quadraticCurveTo(s[0]+q,s[1]+r*.5,s[0]+e,s[1]+r*.9);ctx.stroke()}};
+// a totem: a carved pole with two faces (red and yellow eyes, bared teeth), a red band, a frog's head on top
+OM.totem=(K,k,r,h,sd,S)=>{const{V0}=K,w=r*.62,a=(oH(5,sd)-.5)*.5;C3.vol(V0,C3.ellPts([0,0,0],[r*.55,r*.9,2.4],null,2,14,0),'#3a2a1d',{lw:2,kl:.15,kd:.3,rim:.1});
+  oBox(K,[0,0,0],w*2,w*2,h,'#8a6038',{a,cf:n=>n[2]>.5?'#a8784a':'#8a6038',face:(n,q)=>{if(Math.abs(n[2])>.5)return;const M=oMap(V0,...oCorners(V0,q)),fr=V0.F(n)>.45;
+    ctx.strokeStyle='rgba(0,0,0,.4)';ctx.lineWidth=1.4;for(const v of[.2,.62]){const p0=M(0,v),p1=M(1,v);ctx.beginPath();ctx.moveTo(p0[0],p0[1]);ctx.lineTo(p1[0],p1[1]);ctx.stroke()}
+    oFill([M(0,.47),M(1,.47),M(1,.52),M(0,.52)],'#e5484d',1);if(!fr)return;
+    for(const[v,col] of[[.32,'#e5484d'],[.76,'#ffd86b']]){for(const u of[.29,.71]){oFill(oEll(M,u,v,.12,.045,12),col,1.6);oFill(oEll(M,u,v,.045,.02,8),INK)}
+      oFill([M(.25,v-.11),M(.75,v-.11),M(.68,v-.15),M(.32,v-.15)],'#2a1a10',1.2);ctx.fillStyle='#f6ead2';for(let i=0;i<5;i++){const u=.3+i*.1;C3.poly([M(u-.035,v-.11),M(u,v-.135),M(u+.035,v-.11)]);ctx.fill()}}}});
+  C3.vol(V0,C3.ellPts([0,0,h],[w*1.15,w*1.3,w*.62],null,4,16,0),'#5f9e3c',{lw:2.4,kl:.3,kd:.45});
+  const af=oFront(V0);for(const s of[-1,1]){const c=[Math.cos(af)*w*.25-Math.sin(af)*s*w*.7,Math.sin(af)*w*.25+Math.cos(af)*s*w*.7,h+w*.55];C3.sball(V0,c,w*.34,'#7bbf4a',{lw:2,kl:.35,kd:.4});
+    C3.spot(V0,[c[0]+Math.cos(af)*w*.3,c[1]+Math.sin(af)*w*.3,c[2]+w*.04],[Math.cos(af),Math.sin(af),.3],w*.14,'#1b1612')}};
+// a mound of mud (the bubbles live on top)
+OM.mudmound=(K,k,r,h,sd,S)=>{const{V0}=K,H=h+4,pts=[];for(let j=0;j<=4;j++){const el=j/4*Math.PI/2;for(let i=0;i<16;i++){if(j===4&&i)break;const az=i/16*TAU,w=1+.06*Math.sin(az*3+sd);pts.push([Math.cos(az)*r*.8*w*Math.cos(el),Math.sin(az)*r*1.1*w*Math.cos(el),H*Math.pow(Math.sin(el),.8)])}}
+  const hull=C3.vol(V0,pts,'#5a4a30',{lw:2.4,kl:.3,kd:.5,rim:.25});ctx.save();C3.poly(hull);ctx.clip();const a0=oFront(V0);
+  oGroove(V0,[-.9,-.3,.3,.9].map(f=>oDome([0,0,0],r*1.1,r*.8,H,a0+f,.55+.08*Math.sin(f*3))),.3,1.3);const q=V0.P(oDome([0,0,0],r*1.1,r*.8,H,a0+.6,.8));ctx.fillStyle='rgba(255,240,200,.2)';ctx.beginPath();ctx.ellipse(q[0],q[1],r*.35,r*.14,-.2,0,TAU);ctx.fill();ctx.restore()};
+OB3.L.mudmound=(K,k,r,h,sd,t)=>{const{V0}=K,H=h+4,a0=oFront(V0);for(let i=0;i<(LOWFX?2:3);i++){const q=(t*.55+i*.37+sd)%1,p=oDome([0,0,0],r*1.1,r*.8,H,a0+Math.sin(i*2.4+sd)*.9,.45+.2*Math.cos(i*1.7)),br=q<.85?1+q*4:0;
+  if(br>0)C3.sball(V0,p,br,'#6a5a3a',{lw:1.2,kl:.6,kd:.3,rim:.2});else{const s=V0.P(p);ctx.strokeStyle='rgba(120,100,70,.8)';ctx.lineWidth=1;ctx.beginPath();ctx.ellipse(s[0],s[1],5,2.6,0,0,TAU);ctx.stroke()}}};
+// reeds: a patch of wet mud; the stems, leaves and cattails live on top (they sway)
+OM.reeds=(K,k,r,h,sd,S)=>{const{V0}=K;C3.vol(V0,C3.ellPts([0,0,0],[r*.55,r*.85,2.2],null,2,14,0),'#3e3a24',{lw:2,kl:.2,kd:.3,rim:.1})};
+OB3.L.reeds=(K,k,r,h,sd,t)=>{const{V0}=K,st=[-.7,-.35,0,.3,.6,-.15,.45].map((o,i)=>({o,i,c:OQ(o*r,((i*53)%7/7-.5)*r*.6,0)})).sort((a,b)=>V0.D(a.c)-V0.D(b.c));
+  for(const s of st){const sw=LOWFX?0:Math.sin(t*1.4+s.i*1.3+sd)*2.2,top=[s.c[0],s.c[1]-s.o*4-sw,h*(.75+((s.i*37)%10)/40)],mid=[s.c[0],s.c[1]-sw*.3,h*.5];
+    if(s.i%2)C3.leaf(V0,[s.c[0],s.c[1],h*.15],[0,-(Math.sign(s.o)||1)*.8,.6],[1,0,0],h*.42,2.2,'#7a8a3a',{lw:1.2,bend:.25});
+    oStem(V0,s.c,mid,top,s.i%2?'#6a7a32':'#8a9a44',2);
+    if(s.i%2===0){C3.caps(V0,[top[0],top[1],top[2]-2],2.4,[top[0],top[1]-sw*.05,top[2]-11],2.4,'#6b3f22',{lw:1.6,kl:.35,kd:.4});oStem(V0,top,[top[0],top[1],top[2]+2],[top[0],top[1]-sw*.2,top[2]+4],'#3a3020',1)}}};
+// a stone lantern: post, ledge, the lamp box with its panes, a pyramid roof (the light lives on top)
+OM.lantern=(K,k,r,h,sd,S)=>{const{V0}=K,w=r*.5,a=(oH(6,sd)-.5)*.5;C3.vol(V0,C3.ellPts([0,0,0],[r*.5,r*.8,2],null,2,14,0),S.lo,{lw:2,kl:.15,kd:.3,rim:.1});
+  oBox(K,[0,0,0],w*1.1,w*1.1,h*.55,S.mid,{a,cf:n=>n[2]>.5?S.hi:S.mid});oBox(K,[0,0,h*.55],w*1.9,w*1.9,h*.07,S.mid,{a,cf:n=>n[2]>.5?S.hi:S.mid,lw:2.2});
+  oBox(K,[0,0,h*.62],w*1.5,w*1.5,h*.24,'#2a2a20',{a,lw:2.2,face:(n,q)=>{if(Math.abs(n[2])>.5)return;const M=oMap(V0,...oCorners(V0,q));oFill([M(.16,.12),M(.84,.12),M(.84,.88),M(.16,.88)],'rgba(200,255,140,.35)')}});
+  oPrism(K,[0,0,h*.86],4,w*1.45,h*.03,S.mid,{a:a+Math.PI/4,tip:h*.2,lw:2.2,cf:n=>n[2]>.5?S.hi:S.mid});C3.sball(V0,[0,0,h*1.1],2.2,S.hi,{lw:1.4})};
+OB3.L.lantern=(K,k,r,h,sd,t)=>{const{V0}=K,w=r*.5,a=(oH(6,sd)-.5)*.5,p=.75+.25*Math.sin(t*3+sd),c=V0.P([0,0,h*.74]);ctx.save();ctx.globalCompositeOperation='lighter';glow('200,255,110',c[0],c[1],26,.55*p);
+  const ca=Math.cos(a),sa=Math.sin(a),hw=w*.75;for(const[nx,ny] of[[1,0],[0,1],[0,-1],[-1,0]]){const n=[nx*ca-ny*sa,nx*sa+ny*ca,0];if(V0.F(n)<.05)continue;const e=[-n[1],n[0],0],o=[n[0]*hw*1.01,n[1]*hw*1.01];
+    const M=(u,v)=>V0.P([o[0]+e[0]*hw*(u*2-1)*.68,o[1]+e[1]*hw*(u*2-1)*.68,h*.62+h*.24*(.12+v*.76)]);C3.poly([M(0,0),M(1,0),M(1,1),M(0,1)]);ctx.fillStyle=`rgba(220,255,140,${(.55*p*V0.F(n)+.15).toFixed(3)})`;ctx.fill()}
+  ctx.restore();if(!LOWFX)for(let i=0;i<3;i++){const an=t*2.2+i*2.1,q=V0.P([Math.cos(an)*w*.9,Math.sin(an)*w*.9,h*.74+Math.sin(an*1.3)*h*.08]);ctx.fillStyle='#fbffd8';ctx.beginPath();ctx.arc(q[0],q[1],1.2,0,TAU);ctx.fill()}};
+// a swamp rock: wet and dark where the water reached, shiny spots
+OM.swamprock=(K,k,r,h,sd,S)=>{const{V0}=K,H=Math.max(h,r*.95),hull=oRock(K,[0,0,0],r*1.02,r*.92,H,S.mid,sd,{moss:S.moss});ctx.save();C3.poly(hull);ctx.clip();
+  const a0=oFront(V0),ln=[];for(let i=0;i<=16;i++){const a=a0-Math.PI/2+i/16*Math.PI;ln.push(V0.P(oDome([0,0,0],r*1.05,r*.95,H,a,.32+.05*Math.sin(i*1.7+sd))))}const b=C3.bbox(hull);ln.push([b[2]+4,b[3]+6],[b[0]-4,b[3]+6]);
+  C3.poly(ln);ctx.fillStyle='rgba(20,30,20,.38)';ctx.fill();ctx.fillStyle='rgba(255,255,255,.3)';for(const[a,e,s] of[[.5,.7,1],[-.35,.5,.45]]){const q=V0.P(oDome([0,0,0],r,r*.9,H,a0+a,e));ctx.beginPath();ctx.ellipse(q[0],q[1],r*.22*s,r*.09*s,-.3,0,TAU);ctx.fill()}ctx.restore()};
+// a block of ice with something frozen inside, snow on top
+OM.iceblock=(K,k,r,h,sd,S)=>{const{V0}=K,w=r*.95,a=(oH(7,sd)-.5)*.6,what=Math.floor(sd*3)%3;
+  ctx.save();ctx.globalAlpha*=.8;
+  if(what===0){C3.vol(V0,C3.ellPts([0,0,h*.5],[w*.25,w*.55,h*.17],null,4,12),'#4a6a8a',{lw:1.6,kl:.3,kd:.4});oFaces(K,[[[1,0,0],[[0,-w*.45,h*.5],[0,-w*.8,h*.68],[0,-w*.8,h*.32]]],[[-1,0,0],[[0,-w*.45,h*.5],[0,-w*.8,h*.32],[0,-w*.8,h*.68]]]],'#4a6a8a',{lw:1.4})}
+  else if(what===1){C3.sball(V0,[0,0,h*.5],w*.32,'#c9c2b0',{lw:1.6});const af=oFront(V0);for(const s of[-1,1])C3.spot(V0,[Math.cos(af)*w*.28-Math.sin(af)*s*w*.12,Math.sin(af)*w*.28+Math.cos(af)*s*w*.12,h*.52],[Math.cos(af),Math.sin(af),0],w*.08,INK)}
+  else{C3.caps(V0,OQ(-w*.5,0,h*.22),1.8,OQ(w*.4,0,h*.75),1.2,'#c9cfd6',{lw:1.6});C3.caps(V0,OQ(-w*.3,0,h*.28),.9,OQ(-w*.62,0,h*.4),.9,'#8a6a44',{lw:1.4})}
+  ctx.restore();
+  ctx.save();ctx.globalAlpha*=.62;oBox(K,[0,0,0],w*1.6,w*2,h,'#a0d7f0',{a,lw:2.3,cf:n=>n[2]>.5?'#e8f8ff':n[1]>.3?'#c4ecff':'#7fb6dc',face:(n,q)=>{if(Math.abs(n[2])>.5||V0.F(n)<.4)return;const M=oMap(V0,...oCorners(V0,q));
+    oFill([M(.06,.92),M(.45,.92),M(.06,.4)],'rgba(255,255,255,.55)');ctx.strokeStyle='rgba(60,100,140,.5)';ctx.lineWidth=1;C3.line([M(.78,.85),M(.86,.55),M(.8,.22)]);ctx.stroke()}});ctx.restore();
+  const sp=[];for(let j=0;j<=2;j++){const el=j/2*Math.PI/2;for(let i=0;i<16;i++){if(j===2&&i)break;const az=i/16*TAU,ww=.92+.08*Math.sin(az*5+sd*3);const x=-w*.15+Math.cos(az)*w*.5*ww*Math.cos(el),y=w*.2+Math.sin(az)*w*.62*ww*Math.cos(el);sp.push([x*Math.cos(a)-y*Math.sin(a),x*Math.sin(a)+y*Math.cos(a),h-1+3.2*Math.sin(el)])}}
+  C3.vol(V0,sp,'#f4f8ff',{lw:1.8,kl:.1,kd:.22,rim:.2})};
+// a snowy pine: four tiers of dark needles, snow on each, a snowball on the tip
+OM.snowpine=(K,k,r,h,sd,S)=>{const{V0}=K;C3.caps(V0,[0,0,0],3.6,[0,0,10],3.2,'#4a3524',{lw:2,kl:.3,kd:.4});
+  for(let i=0;i<4;i++){const z=8+i*h*.21,tw=r*(1.18-i*.23),th=h*.33,col=i%2?'#26443f':'#2c4e48',N=14,B=[],A=[0,0,z+th],F=[];
+    for(let j=0;j<N;j++){const a=j/N*TAU+i*.4+sd,rr=tw*(j%2?.8:1);B.push([Math.cos(a)*rr,Math.sin(a)*rr,z+(j%2?th*.1:0)])}
+    for(let j=0;j<N;j++){const p=B[j],q=B[(j+1)%N],m=[(p[0]+q[0])/2,(p[1]+q[1])/2];F.push([C3.nrm([m[0]*th*.9,m[1]*th*.9,tw*tw*.7]),[p,q,A]])}
+    oFaces(K,F,col,{lw:2.1,ew:.5,face:(n,q,P)=>{if(n[2]<.2||Math.sin(Math.atan2(n[1],n[0])*7+i)<-.2)return;const L=(a,b,t)=>[a[0]+(b[0]-a[0])*t,a[1]+(b[1]-a[1])*t];C3.poly([P[0],P[1],L(P[1],P[2],.2),L(P[0],P[2],.16)]);
+      ctx.fillStyle=n[1]>-.2?'#f4f9ff':'#cfdcec';ctx.fill();ctx.strokeStyle='rgba(70,100,130,.5)';ctx.lineWidth=.6;ctx.stroke()}});
+    const SN=[],As=[0,0,z+th+.4];for(let j=0;j<N;j++){const a=j/N*TAU+i*.4+sd+.2,rr=tw*.5*(j%2?.82:1);SN.push([Math.cos(a)*rr,Math.sin(a)*rr,z+th*.5+(j%2?th*.06:0)])}
+    const FS=[];for(let j=0;j<N;j++){const p=SN[j],q=SN[(j+1)%N],m=[(p[0]+q[0])/2,(p[1]+q[1])/2];FS.push([C3.nrm([m[0]*th*.5,m[1]*th*.5,tw*tw*.25]),[p,q,As]])}
+    oFaces(K,FS,'#f4f8ff',{lw:1.2,ew:.3,cf:()=>'#eef6ff'})}
+  C3.sball(V0,[0,0,8+h*.88+h*.06],3,'#ffffff',{lw:1.6,kl:.2,kd:.2})};
+// a frozen warrior: a stone hero with a hammer on a round plinth, inside a shell of ice
+OM.frozenstatue=(K,k,r,h,sd,S)=>{const{V0}=K;pRound(K,[0,0,0],[[0,r*.95],[7,r*.88]],'#8a96a2',{m:20,lw:2.4,kl:.3,kd:.45});
+  const st={body:'#8a96a2',hood:'#6e7a86',skin:'#a8b4c0',foot:'#5e6a76',held:null,helm:true,belt:'#5e6a76',eyeCol:'#5e6a76',hoodTip:false},f=Math.PI*.62+((sd*10|0)%3-1)*.4,q=V0.P([0,0,7]);
+  if(typeof EROE!=='undefined'&&EROE.arciere)oStatue(()=>EROE.arciere(q[0],q[1]+8*1.15,f,'idle',.25,1.15,{style:st,noFx:true}),-30,-78,60,92);
+  const sh=[],H=h+6;for(let i=0;i<10;i++){const az=i/10*TAU,j=.85+oH(i,sd)*.3;sh.push([Math.cos(az)*r*.95*j,Math.sin(az)*r*1.05*j,3],[Math.cos(az+.3)*r*.85*j,Math.sin(az+.3)*r*.95*j,H*(.55+oH(i+20,sd)*.25)])}
+  sh.push([r*.1,-r*.2,H+4],[-r*.2,r*.25,H]);const hull=C3.chull(sh.map(p=>V0.P(p)));C3.poly(hull);ctx.fillStyle='rgba(170,220,250,.36)';ctx.fill();ctx.strokeStyle='rgba(60,110,150,.75)';ctx.lineWidth=1.6;ctx.lineJoin='round';ctx.stroke();
+  const b=C3.bbox(hull);ctx.fillStyle='rgba(255,255,255,.5)';ctx.beginPath();ctx.moveTo(b[0]+(b[2]-b[0])*.12,b[1]+(b[3]-b[1])*.38);ctx.lineTo(b[0]+(b[2]-b[0])*.3,b[1]+(b[3]-b[1])*.08);ctx.lineTo(b[0]+(b[2]-b[0])*.36,b[1]+(b[3]-b[1])*.24);ctx.closePath();ctx.fill()};
+// something drawn in colour (fn, in the box x0, y0, w, h of the current units) made all of grey stone, tinted cold: drawn on a canvas of its
+// own, a grey copy with the same outline put back
+function oStatue(fn,x0,y0,w,h){const m=ctx.getTransform(),S=Math.max(1,Math.hypot(m.a,m.b)),W=Math.ceil(w*S),H=Math.ceil(h*S);if(W<2||H<2||W>1600||H>1600)return;
+  const A=document.createElement('canvas'),B=document.createElement('canvas');A.width=B.width=W;A.height=B.height=H;const a=A.getContext('2d'),b=B.getContext('2d'),keep=ctx;
+  ctx=a;try{a.setTransform(S,0,0,S,-x0*S,-y0*S);fn()}catch(e){}finally{ctx=keep}
+  b.drawImage(A,0,0);b.globalCompositeOperation='saturation';b.fillStyle='#808080';b.fillRect(0,0,W,H);b.globalCompositeOperation='destination-in';b.drawImage(A,0,0);
+  b.globalCompositeOperation='source-atop';b.fillStyle='rgba(120,150,185,.28)';b.fillRect(0,0,W,H);
+  ctx.save();ctx.translate(x0,y0);ctx.scale(1/S,1/S);ctx.drawImage(B,0,0);ctx.restore()}
+// a snowman: three balls of snow, a stick arm (the other waves on top), coal buttons and eyes, a carrot, a red scarf, a black hat
+const oSnowM=r=>{const r1=r*.78,r2=r*.58,r3=r*.42,z1=r1*.9,z2=z1+r1*.75+r2*.6,z3=z2+r2*.75+r3*.6;return{r1,r2,r3,z1,z2,z3}};
+const oSnowArm=(V0,r2,z2,s,wave)=>{const a=[0,s*r2*.8,z2],b=[0,s*r2*1.7,z2+r2*(.5+wave)],c=[0,s*r2*2,z2+r2*.95];C3.caps(V0,a,1.4,b,1.2,'#5a3f2a',{lw:1.6,noRim:1});C3.caps(V0,b,1.2,c,.8,'#5a3f2a',{lw:1.6,noRim:1})};
+OM.snowman=(K,k,r,h,sd,S)=>{const{V0}=K,{r1,r2,r3,z1,z2,z3}=oSnowM(r),af=oFront(V0),f=[Math.cos(af),Math.sin(af),0],sv=[-Math.sin(af),Math.cos(af),0],on=(c,R,u,v)=>{const n=C3.nrm([f[0]+sv[0]*u,f[1]+sv[1]*u,v]);return{p:[c[0]+n[0]*R,c[1]+n[1]*R,c[2]+n[2]*R],n}};
+  const snow={lw:2.2,kl:.6,kd:.28,rim:.2};C3.sball(V0,[0,0,z1],r1,'#e4eef8',snow);C3.sball(V0,[0,0,z2],r2,'#e4eef8',snow);oSnowArm(V0,r2,z2,1,0);
+  for(const v of[-.25,.2]){const s=on([0,0,z2],r2,0,v);C3.spot(V0,s.p,s.n,1.6,'#1b1612')}
+  C3.sball(V0,[0,0,z3],r3,'#e4eef8',snow);oBand(K,[0,0,0],r3*.98,z3-r3*.86,z3-r3*.5,'#e5484d',{lw:1.4});
+  const tl=on([0,0,z3-r3*.68],r3,-.55,0);C3.caps(V0,tl.p,1.8,[tl.p[0]+f[0]*1.5,tl.p[1]+f[1]*1.5,tl.p[2]-r3*.95],1.6,'#e5484d',{lw:1.4,noRim:1});
+  for(const u of[-.38,.38]){const s=on([0,0,z3+r3*.18],r3,u,.12);C3.spot(V0,s.p,s.n,1.5,'#1b1612')}
+  for(let i=0;i<5;i++){const u=-.32+i*.16,s=on([0,0,z3-r3*.32],r3,u,-.3+Math.abs(u)*.5);C3.spot(V0,s.p,s.n,.8,'#1b1612')}
+  const n0=on([0,0,z3-r3*.02],r3,0,0);C3.caps(V0,n0.p,1.9,[n0.p[0]+f[0]*r3*1.15+sv[0]*r3*.2,n0.p[1]+f[1]*r3*1.15+sv[1]*r3*.2,n0.p[2]-r3*.15],.3,'#ff8a3c',{lw:1.2,noRim:1});
+  pRound(K,[0,0,z3+r3*.72],[[0,r3*1.05],[r3*.2,r3*1.05]],'#2a2a30',{m:16,lw:1.8,kl:.25,kd:.3});pRound(K,[0,0,z3+r3*.9],[[0,r3*.7],[r3*.72,r3*.68]],'#2a2a30',{m:16,lw:1.8,kl:.3,kd:.35});
+  oBand(K,[0,0,0],r3*.71,z3+r3*.92,z3+r3*1.1,'#7a2a2a',{lw:1})};
+OB3.L.snowman=(K,k,r,h,sd,t)=>{const{r2,z2}=oSnowM(r);oSnowArm(K.V0,r2,z2,-1,LOWFX?0:Math.sin(t*2+sd)*.12)};
+// a snowy rock: the rock with a cap of snow
+OM.snowrock=(K,k,r,h,sd,S)=>{oRock(K,[0,0,0],r*1.02,r*.92,Math.max(h,r*.95),S.mid,sd,{snow:1})};
+
+// ------------------------------------------------------------------ the live parts (every frame, over the picture)
+OB3.L.crystal=(K,k,r,h,sd,t)=>{const{V0}=K,gl=.5+.5*Math.sin(t*2+sd),c=V0.P([0,0,h*.5]);ctx.save();ctx.globalCompositeOperation='lighter';glow('127,224,240',c[0],c[1],r*1.8,.18+gl*.16);ctx.restore();
+  if(k.chmax&&k.chp<k.chmax){const dm=1-k.chp/k.chmax,n=Math.ceil(dm*5);ctx.lineCap='round';ctx.lineJoin='round';
+    for(let i=0;i<n;i++){const ox=Math.sin(sd*3+i*2.1)*r*.45,oy=-h*(.25+((i*.37+sd)%1)*.5),Lc=r*(.35+dm*.4),x=c[0]+ox,y=oy;
+      ctx.beginPath();ctx.moveTo(x,y);ctx.lineTo(x+Lc*.35,y+Lc*.3);ctx.lineTo(x+Lc*.1,y+Lc*.65);ctx.lineTo(x+Lc*.45,y+Lc);ctx.strokeStyle=INK;ctx.lineWidth=2.4;ctx.stroke();ctx.strokeStyle='rgba(235,252,255,.95)';ctx.lineWidth=1.1;ctx.stroke()}
+    if(dm>.5){ctx.save();ctx.globalCompositeOperation='lighter';glowAt(ctx,c[0],-h*.5,r*1.4,'170,240,255',.12+.2*dm*(.6+.4*Math.sin(t*9)));ctx.restore()}}};
+OB3.L.brazier=(K,k,r,h,sd,t)=>{const q=K.V0.P([0,0,20]);flame(q[0],q[1],1.45,themeOf(G.room)==='radici'?ENV.radici.torch:ENV.muschio.torch,sd)};
+OB3.L.lavarock=(K,k,r,h,sd,t)=>{const p=.7+.3*Math.sin(t*2+sd),cr=OB3.lavaCr(K,r,h);ctx.save();ctx.lineCap='round';ctx.lineJoin='round';ctx.strokeStyle=`rgba(255,${120+60*p|0},40,.95)`;ctx.lineWidth=1.8;for(const l of cr){C3.line(l);ctx.stroke()}
+  ctx.globalCompositeOperation='lighter';ctx.strokeStyle=`rgba(255,220,140,${(.35*p).toFixed(3)})`;ctx.lineWidth=.8;for(const l of cr){C3.line(l);ctx.stroke()}const c=K.V0.P([0,0,r*.5]);glow('255,120,40',c[0],c[1],r*1.2,.25*p);ctx.restore()};
+OB3.L.cauldron=(K,k,r,h,sd,t)=>{const{V0}=K,p=.7+.3*Math.sin(t*3+sd);C3.disc3(V0,[0,0,24.4],[0,0,1],r*.7,{N:22});ctx.fillStyle=`rgb(255,${110+50*p|0},40)`;ctx.fill();
+  ctx.save();ctx.globalCompositeOperation='lighter';const c=V0.P([0,0,25]);glow('255,150,60',c[0],c[1],r*.9,.3*p);ctx.restore();
+  for(let i=0;i<(LOWFX?1:2);i++){const q=(t*.8+i*.5+sd)%1,b=[Math.sin(i*3+t)*r*.3,Math.cos(i*2+t*.7)*r*.4,25+q*6];C3.sball(V0,b,2*(1-q)+.5,'#ffd86b',{lw:.8,kl:.5,kd:.2,rim:.1})}};
+
+// ------------------------------------------------------------------ the foot: little mounds of the world's stuff and a few stones before the base
+function oFoot(K,k,r,sd,th,side){const{V0}=K,M=footMat(th),S=stonePal(),n=r>=20?6:5,list=[],moss=!LAVAZ.includes(th)&&!isIce(th)&&!isSwamp(th)&&th!=='cristalli';
+  for(let i=0;i<n;i++){const a=(i+.5)/n*TAU+(oH(i,sd)-.5)*.5+sd,w=r*(.3+oH(i+9,sd)*.18);list.push({m:1,c:[Math.cos(a)*r*(.92+oH(i+3,sd)*.12),Math.sin(a)*r*(.92+oH(i+3,sd)*.12),0],w,i})}
+  for(let i=0;i<4;i++){const a=oH(i+20,sd)*TAU;list.push({m:0,c:[Math.cos(a)*r*(1.12+oH(i+23,sd)*.25),Math.sin(a)*r*(1.12+oH(i+23,sd)*.25),0],w:1.6+oH(i+26,sd)*1.7,i})}
+  const d0=V0.D(0,0,0);list.sort((a,b)=>V0.D(a.c)-V0.D(b.c));
+  for(const f of list){const d=V0.D(f.c)-d0;if(side<0&&d>=0||side>0&&d<0)continue;
+    if(!f.m){oRock(K,f.c,f.w,f.w*.9,f.w*.75,S.mid,sd+f.i*3,{small:1,lw:1.3});continue}
+    const w=f.w,c=f.c,a=Math.atan2(c[1],c[0]),u=[Math.cos(a),Math.sin(a),0],v=[-Math.sin(a),Math.cos(a),0];
+    C3.vol(V0,C3.ellPts(c,[w*.62,w,w*.5],{u,v,w:[0,0,1]},3,12,0),M[1],{lw:1.6,kl:.4,kd:.4,rim:.2});
+    if(moss)for(let b=0;b<3;b++)C3.leaf(V0,[c[0]+v[0]*(1-b)*w*.45,c[1]+v[1]*(1-b)*w*.45,w*.38],[0,0,1],v,3+b%2*2.5,1.1,b%2?'#5a8a32':'#86c050',{lw:.9});
+    else if(LAVAZ.includes(th)){const q=V0.P([c[0]+u[0]*w*.2,c[1]+u[1]*w*.2,w*.42]);ctx.fillStyle='rgba(255,170,60,.95)';ctx.beginPath();ctx.arc(q[0],q[1],1.3,0,TAU);ctx.fill()}
+    else if(isSwamp(th))C3.leaf(V0,[c[0],c[1],w*.4],[0,0,1],v,8,1.4,'#7a8a3a',{lw:1,bend:.3});
+    else if(th==='cristalli')oPrism(K,[c[0],c[1],w*.3],4,1.6,4,'#aaf0ff',{tip:2.5,lw:1,cf:n=>n[1]>0?'#e0fbff':'#7fd0ec'})}}
+
+// ------------------------------------------------------------------ painting an obstacle, the picture, the wear
+// the camera of an obstacle at (x, y): the monsters' camera, a pixel a unit (squared obstacles turn by their own seed inside the model)
+function ob3Cam(x,y){return proCam(OB3.face,x,y,1)}
+const ob3Fl=(k,th)=>(th==='golem'||th==='radici')&&G.enemies&&G.enemies.some(e=>e.p2)?1:0;
+function ob3Use(k){return OB3.on&&!!OM[k.kind]&&!OB3.bad[k.kind]&&!k.g2&&!k.f2&&!k.oc&&!k.qk&&!k.sl2husk&&!k._no3d}
+// the model alone (o.foot: with the mounds before it; o.live: with its living parts at time t)
+function ob3Model(k,dx,o){o=o||{};const th=themeOf(G.room),S=stonePal(),r=k.r,h=kH(k),sd=k.seed||1,t0=performance.now();ctx.save();
+  try{const K=ob3Cam(k.x+(dx||0),k.y);if(o.foot)oFoot(K,k,r,sd,th,-1);OM[k.kind](K,k,r,h,sd,S,th,ob3Fl(k,th));if(o.foot)oFoot(K,k,r,sd,th,1);if(o.live&&OB3.L[k.kind])OB3.L[k.kind](K,k,r,h,sd,G.t||0)}
+  catch(err){OB3.bad[k.kind]=1;console.error('ostacolo 3D '+k.kind,err)}finally{ctx.restore();OB3.n++;OB3.ms+=performance.now()-t0}}
+// the living parts only, at the obstacle's place
+function ob3Live(k,dx){const f=OB3.L[k.kind];if(!f)return;ctx.save();try{const K=ob3Cam(k.x+(dx||0),k.y);f(K,k,k.r,kH(k),k.seed||1,G.t||0)}catch(err){OB3.bad[k.kind]=1;console.error(err)}finally{ctx.restore()}}
+// a worn obstacle: the pieces knocked off lie at its foot as stones, the bites cut out of the picture with a dark broken edge (as in 19)
+function ob3Worn(k,st){const bites=wearBites(k,st);if(!bites.length){ob3Model(k,0,{foot:1});return}
+  const S=stonePal(),wood=k.kind==='stump'||k.kind==='thorns'||k.kind==='crate'||k.kind==='totem'||k.kind==='deadtree',metal=k.kind==='anvil'||k.kind==='cauldron'||k.kind==='brazier',
+    pal=k.kind==='thorns'?'#4f8a34':wood?'#6b4a2a':metal?'#5f5f68':S.mid;
+  ctx.save();try{const K=ob3Cam(k.x,k.y);for(const bt of bites.slice().sort((a,b)=>a.gy-b.gy)){const s=Math.max(2.4,k.r*.3);oRock(K,OQ(bt.gx,bt.gy/.55,0),s,s*.85,s*.7,pal,k.seed+bt.rot,{small:1,lw:1.8})}}finally{ctx.restore()}
+  ctx.save();try{oFoot(ob3Cam(k.x,k.y),k,k.r,k.seed||1,themeOf(G.room),-1)}finally{ctx.restore()}
+  const b=wearBox(k),T=ctx.getTransform(),dx0=Math.floor(T.a*b.x0+T.c*b.y0+T.e),dy0=Math.floor(T.b*b.x0+T.d*b.y0+T.f),w=Math.ceil(b.w*Math.abs(T.a))+2,h=Math.ceil(b.h*Math.abs(T.d))+2;
+  if(w<4||h<4||w>2400||h>2400){ob3Model(k,0,{foot:1});return}
+  const c=WEAR.c;if(c.width<w)c.width=w;if(c.height<h)c.height=h;const o=c.getContext('2d');o.setTransform(1,0,0,1,0,0);o.globalCompositeOperation='source-over';o.globalAlpha=1;o.clearRect(0,0,w,h);
+  o.setTransform(T.a,T.b,T.c,T.d,T.e-dx0,T.f-dy0);const keep=ctx;ctx=o;try{ob3Model(k,0)}finally{ctx=keep}
+  const path=()=>{o.beginPath();for(const bt of bites){bt.p.forEach((p,i)=>i?o.lineTo(k.x+p[0],k.y+p[1]):o.moveTo(k.x+p[0],k.y+p[1]));o.closePath()}};
+  o.globalAlpha=1;o.globalCompositeOperation='destination-out';path();o.fillStyle='#000';o.fill();
+  o.globalCompositeOperation='source-atop';o.lineJoin='round';path();o.strokeStyle=wood?'rgba(235,195,135,.45)':'rgba(0,0,0,.16)';o.lineWidth=9;o.stroke();o.strokeStyle=INK;o.lineWidth=5;o.stroke();
+  o.globalCompositeOperation='source-over';ctx.save();ctx.setTransform(1,0,0,1,0,0);ctx.globalAlpha=1;ctx.drawImage(c,0,0,w,h,dx0,dy0,w,h);ctx.restore();
+  ctx.save();try{oFoot(ob3Cam(k.x,k.y),k,k.r,k.seed||1,themeOf(G.room),1)}finally{ctx.restore()}}
+// the picture of a still obstacle (model, wear and foot), as big as it is on the canvas, shaded darker at the base and lit from above like the
+// others (47), made again only when the wear, the world, the Golem's rage or the canvas changes
+function ob3Sprite(k){const th=themeOf(G.room),fl=ob3Fl(k,th),SS=Math.min(3,Math.max(1.5,Math.round(cv.width/VW*2)/2)),st=wearSt(k),key=k.kind+'|'+th+'|'+st+'|'+fl+'|'+SS;
+  if(k._s3&&k._s3.key===key)return k._s3;
+  const r=k.r,H=kH(k)+(k.kind==='frozenstatue'?r*1.2:0),x0=k.x-r*2.8-6,y0=k.y-H-r*2.6-14,w=r*5.6+12,h=H+r*3.9+20,c=k._s3&&k._s3.c||document.createElement('canvas');c.width=Math.ceil(w*SS);c.height=Math.ceil(h*SS);
+  const o=c.getContext('2d');o.setTransform(SS,0,0,SS,-x0*SS,-y0*SS);const keep=ctx,hit=k.hit;ctx=o;k.hit=0;try{if(st)ob3Worn(k,st);else ob3Model(k,0,{foot:1})}finally{ctx=keep;k.hit=hit}
+  o.setTransform(SS,0,0,SS,-x0*SS,-y0*SS);o.globalCompositeOperation='source-atop';
+  let g=o.createLinearGradient(0,k.y+r*.5,0,k.y-Math.min(30,Math.max(10,kH(k)*.55)));g.addColorStop(0,'rgba(12,8,6,.42)');g.addColorStop(1,'rgba(12,8,6,0)');o.fillStyle=g;o.fillRect(x0,y0,w,h);
+  g=o.createLinearGradient(0,k.y-kH(k)-r*1.2,0,k.y-kH(k)*.35);g.addColorStop(0,'rgba(255,236,200,.14)');g.addColorStop(1,'rgba(255,236,200,0)');o.fillStyle=g;o.fillRect(x0,y0,w,h);
+  o.fillStyle=`rgba(${(G.env&&G.env.light)||'255,200,140'},.05)`;o.fillRect(x0,y0,w,h);o.globalCompositeOperation='source-over';
+  return k._s3={key,c,x0,y0,ss:SS}}
+// what the bosses of the arena do to an obstacle (as 52 and the Phoenix do over the old drawing): the burning, the heat
+function ob3Over(k){if(ctx!==MAINCTX)return;const h=kH(k);
+  if(typeof BOSS2!=='undefined'&&BOSS2&&k.burn>0){const t=G.t||0,f=Math.min(1,k.burn/1.2);ctx.save();ctx.globalCompositeOperation='lighter';glow('255,120,40',k.x,k.y-h*.6,k.r*2.2,.45*f);ctx.restore();
+    for(let i=-1;i<=1;i++)b2fl(k.x+i*k.r*.45,k.y-h*(.55+.25*(i===0)),k.r*.32*f*(1+.2*Math.sin(t*12+i*2)),Math.sin(t*9+i)*2.4)}
+  if(typeof PXON!=='undefined'&&PXON&&k.pxHot>(G.t||0)){const f=Math.min(1,(k.pxHot-G.t)/1.2),rgb=k.pxB?'120,190,255':'255,90,40';
+    ctx.save();ctx.globalCompositeOperation='lighter';glow(rgb,k.x,k.y-h*.5,k.r*2.4,(.45+.1*Math.sin(G.t*14))*f);ctx.fillStyle=`rgba(${rgb},${.35*f})`;ell(k.x,k.y-h*.75,k.r*.9,k.r*.35);ctx.fill();ctx.restore()}}
+{const _d=drawRock;
+  drawRock=function(k){if(!ob3Use(k))return _d.apply(this,arguments);
+    const dx=k.hit>0?Math.sin(G.t*90)*k.hit*14:0;
+    if(k._raw){ob3Model(k,0);return}                                    // the bare model: the wear finds its outline in it
+    if(k.temp||ctx!==MAINCTX){const f=k.temp?Math.min(1,k.life/.6):1;ctx.save();ctx.globalAlpha*=f;try{const st=wearSt(k);if(st)ob3Worn(k,st);else ob3Model(k,dx,{foot:!k.temp,live:1})}finally{ctx.restore()}ob3Over(k);return}
+    const sp=ob3Sprite(k),S=sp.ss;ctx.drawImage(sp.c,Math.round((sp.x0+dx)*S)/S,Math.round(sp.y0*S)/S,sp.c.width/S,sp.c.height/S);
+    ob3Live(k,dx);ob3Over(k)}}
