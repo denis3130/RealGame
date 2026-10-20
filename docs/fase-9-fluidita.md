@@ -124,7 +124,6 @@ Copiare un'immagine 1:1 su pixel interi costa 5–7 volte meno che copiarla scal
     - **Gli zombie fermi delle zone chiuse non ci sono più** (tre nell'aia, tre nel Borgo, tre nella Segheria: dall'altra parte del
       cancello e delle assi sembravano nati lì). Restano nel codice per le prove che li cercano apposta (`W.dbg.fermi`, `fermi()` in
       `area_mappa.js`; `chiusi_prova.js` li accende per le assi e il cancello; `tests/zombie.js`: Rigioca senza zombie nelle zone chiuse).
-      Il gioco pubblicato (ramo `gioco`) li ha ancora.
     - **Le nascite**: nello stesso momento l'altra sessione ha fatto la stessa richiesta (`farOpen`, `groundSpot`: buche solo con tutto
       intorno aperto, punti di terra liberi a 170–420 px di strada, i boss uguali; nel gioco pubblicato dal 20 ottobre). La mia versione
       (`dynSpots`) è stata lasciata nell'unione: resta la sua. Misura con `anteprime/zombie/nascite_misura.js` (l'eroe in 65–278 punti di
@@ -163,6 +162,14 @@ Circa il 35–45% in meno. `update()` costa meno di 1 ms: tutto il resto è dise
 - I **modelli 3D** (nemici ~1–2,5 ms l'uno qui, l'eroe ~3,5): tanti tratti sottili (contorni, pieghe) e riempimenti; non si alleggeriscono
   senza cambiarne l'aspetto. Gli ostacoli animati (`ROCK_LIVE`: canne, bracieri, cumuli di fango…) ~0,5 ms l'uno.
 - Da provare sul telefono vero di Denis: fluidità in battaglia, nel menu, nei passaggi di stanza e sulla mappa zombie.
+
+## Nel gioco
+
+Dal 20 ottobre sera (Denis: «vorrei che mettessi tutto quello che hai fatto nel gioco mossbound») tutta la FASE 9 è nel gioco
+pubblicato su claude.ai e nell'app (ramo `gioco` = `piano-maestro`, commit feffd0e), col contatore spento (Impostazioni → Contatore).
+Collaudo: una partita automatica per capitolo e l'arena 9 fino al boss senza errori, `meta2.js`, `menu2.js`, `menu3.js`, `fluido.js`,
+`zombie.js`, `contatore.js`, le prove della mappa, `app/prova.js`. `avvio.js` sta sul limite (il secondo blocco più lungo entrando nella
+mappa zombie, dietro la schermata di caricamento, 180–215 ms contro i 200 ammessi; prima della FASE 9 circa 175).
 
 ## Anteprima sul telefono
 
