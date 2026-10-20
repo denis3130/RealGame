@@ -8,7 +8,7 @@
 // (piani, nemici dai bordi, la salita, i buchi, i Campioni, il premio, il custode, la torre da 20 col campione) e le trappole (percorso coi
 // traguardi, trappole e nemici, la fuga dal crollo, il custode tra le trappole), la modalità sulla scheda e sulla mappa; le isole; tutto in 3D
 // (gli ostacoli di 95 dipinti una volta, il disegno di prima che torna, le cose della stanza, le isole); il ponte di pietre tra le isole, la Prova
-// dell'Incubo e le isole chiuse al buio.
+// dell'Incubo e le isole chiuse al buio; le isole verso nord col ponte che sale dritto e l'eroe che lo attraversa.
 // Foto tests/cn_<n>.png. Uso: python3 anteprime/mk_classica.py --test --build && node tests/classica.js [menu|stanze|furia|rarita|evo|nemesi|torre|corsa|ondate|trappole|3d|ponte]
 const {chromium}=require('playwright');const path=require('path');
 const SOLO=process.argv[2]||'';
@@ -284,9 +284,9 @@ const SOLO=process.argv[2]||'';
     // a retreat at room 7: 18 stones (3 for each room passed)
     await arena(0);await E(`(()=>{__A.on=false;return 0})()`);await E(jump(7));await W(300);await E(`(()=>{endRun(false,true);return 0})()`);await W(700);
     const b1=await J(`({br:SAVE.cn.br[0],l:(document.querySelector('#eTr .cnBridge')||{}).textContent||'',anim:CN.brAnim,lab:$('eRoom').nextElementSibling.textContent})`);await snap('ponte_fine');
-    ok('ogni stanza superata porta 3 pietre al ponte (ritirata alla stanza 7: 18 pietre)',b1.br===18&&/\+18 pietre/.test(b1.l)&&/18\/100/.test(b1.l)&&b1.anim&&b1.anim.i===0&&b1.anim.from===0&&b1.anim.to===1&&!b1.anim.done&&b1.lab==='Stanza',JSON.stringify(b1));
+    ok('ogni stanza superata porta 3 pietre al ponte (ritirata alla stanza 7: 18 pietre)',b1.br===18&&/\+18 pietre/.test(b1.l)&&/18\/100/.test(b1.l)&&b1.anim&&b1.anim.i===0&&b1.anim.from===0&&b1.anim.to===2&&!b1.anim.done&&b1.lab==='Stanza',JSON.stringify(b1));
     await toMenu();await W(900);const b2=await J(`({brA:ISL.brA,hold:!!ISL.hold,cur:ISL.cur,anim:CN.brAnim})`);await snap('ponte_pietre');
-    ok('nel menu la telecamera va al ponte e la pietra nuova cade al suo posto',b2.brA&&b2.brA.i===0&&b2.brA.to===1&&b2.hold&&b2.cur===0&&!b2.anim,JSON.stringify(b2));
+    ok('nel menu la telecamera va al ponte e le pietre nuove cadono al loro posto',b2.brA&&b2.brA.i===0&&b2.brA.to===2&&b2.hold&&b2.cur===0&&!b2.anim,JSON.stringify(b2));
     await W(2600);
     // two victories finish the bridge (18+55+55 → 100): the next island opens and the hero jumps there
     await E(`(()=>{SAVE.trophies=ARENAS[1].t-5;delete SAVE.arenaUp;return 0})()`);
@@ -294,7 +294,16 @@ const SOLO=process.argv[2]||'';
     const b3=await J(`({br:SAVE.cn.br[0],pick:SAVE.cn.pick,up:SAVE.arenaUp==null,tr:SAVE.trophies>=ARENAS[1].t,l:(document.querySelector('#eTr .cnBridge')||{}).textContent||'',done:!!document.querySelector('#eTr .cnBridge.done'),op:cnOpen(1),op2:cnOpen(2)})`);await snap('ponte_finito_fine');
     ok('due vittorie dopo: il ponte è finito, l\'isola dopo è aperta e diventa quella da giocare (le coppe non aprono più le arene)',b3.br===100&&b3.pick===1&&b3.done&&/Il ponte è finito/.test(b3.l)&&b3.op&&!b3.op2&&b3.up&&b3.tr,JSON.stringify(b3));
     await toMenu();await W(1300);await snap('ponte_finito');await W(2600);const b4=await J(`({cur:ISL.cur,view:+ISL.view.toFixed(2)})`);
-    ok('nel menu, finito il ponte, l\'eroe salta sull\'isola nuova',b4.cur===1,JSON.stringify(b4));
+    ok('nel menu, finito il ponte, l\'eroe passa sull\'isola nuova',b4.cur===1,JSON.stringify(b4));
+    const nb=await J(`(()=>{const L=ISL.lay,M=cnBrMap(0,L,CAMP.t),f=M.S(M.G.a0,0,0),n=M.S(M.G.a1,0,0),A0=cnIslAt(0,L,CAMP.t),A1=cnIslAt(1,L,CAMP.t);return{dx:Math.round(n[0]-f[0]),up:Math.round(f[1]-n[1]),north:A1.y<A0.y,small:A1.f<A0.f,x:Math.round(A1.x-A0.x)}})()`);
+    ok('le isole vanno verso nord: l\'isola dopo è sopra e più piccola, il ponte sale dritto',nb.dx===0&&nb.up>40&&nb.north&&nb.small&&nb.x===0,JSON.stringify(nb));
+    await E(`(()=>{ISL.go=null;ISL.view=1;ISL.cur=1;ISL.jump=null;cnIslMove(1,0);return 0})()`);await W(300);const wk=await J(`({way:!!(ISL.jump&&ISL.jump.way),over:ISL.jump&&ISL.jump.way.pts.some(p=>p[2]>10),dur:ISL.jump&&+ISL.jump.dur.toFixed(2),cur:ISL.cur})`);await snap('ponte_cammina');
+    await W(2600);const wk2=await J(`({jump:!!ISL.jump,cur:ISL.cur,view:+ISL.view.toFixed(2)})`);
+    ok('l\'eroe attraversa il ponte a piedi (su e giù per la gobba) e arriva sull\'altra isola',wk.way&&wk.over&&wk.dur>=1&&wk.cur===0&&!wk2.jump&&wk2.cur===0&&wk2.view===0,JSON.stringify({wk,wk2}));
+    {const q=await J(`(()=>{const r=$('homeStage').getBoundingClientRect(),L=ISL.lay;return{x:r.left+r.width*.5,y:campCv.getBoundingClientRect().top+(L.titleB/L.dpr)+20}})()`);
+      await p.mouse.move(q.x,q.y);await p.mouse.down();for(let i=1;i<=8;i++){await p.mouse.move(q.x,q.y+i*16);await W(16)}await p.mouse.up();await W(2800)}
+    const vd=await J(`({view:+ISL.view.toFixed(2),cur:ISL.cur,pick:SAVE.cn.pick})`);
+    ok('col dito in giù si va all\'isola dopo (verso nord) e l\'eroe ci passa',vd.view===1&&vd.cur===1&&vd.pick===1,JSON.stringify(vd));
     // the locked islands are dark and their guardian is not drawn
     const dk=await J(`(()=>{const lum=i=>{const c=cnIslImg(i,ISL.lay).cv,d=c.getContext('2d').getImageData(0,0,c.width,c.height).data;let s=0,n=0;for(let j=0;j<d.length;j+=16)if(d[j+3]>200){s+=d[j]*.3+d[j+1]*.59+d[j+2]*.11;n++}return n?s/n:0};
       const seen=new Set(),keep=cnIslBoss;cnIslBoss=function(i){seen.add(i);return keep.apply(this,arguments)};window.__bossSeen=seen;window.__bossKeep=keep;return{open:Math.round(lum(1)),lock:Math.round(lum(2))}})()`);

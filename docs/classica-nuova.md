@@ -7,6 +7,36 @@ delle coppe con le arene», poi «ok creami le cose che mi hai elencato su una c
 pubblicata su https://claude.ai/artifact/K6E5QMv5pxKkt61MCFJsba («Mossbound · Classica nuova»: si aggiorna ripubblicando
 `anteprime/classica.html`). Prova: `python3 anteprime/mk_classica.py --test --build && node tests/classica.js [menu|stanze|furia|rarita|evo|nemesi|torre|corsa|ondate|trappole|3d|ponte]`.
 
+## Le isole verso nord e il ponte di pietra in 3D (20 ottobre notte)
+
+Denis, con la foto del telefono: «vorrei che ingrandissi l'isola e ci mettessi più dettagli per arricchirla. sopratutto il ponte lo voglio
+fatto decisamente molto meglio rispetto ad com'è ora. sembra troppo piatto», poi «anziché far le isole alla destra facciamole da nord, così il
+ponte si vede per dritto e viene molto meglio».
+- **Verso nord** (`CNI_GAP`, `CNI_PD`, `cnIslAt`): le isole stanno una dietro l'altra; quella su cui sei in basso, il suo ponte che sale dritto
+  nel mezzo dello schermo, quella dopo più in alto e più piccola (più è lontana più è piccola), quella dopo ancora dietro le scritte. Il dito
+  le muove su e giù (in giù porta l'isola dopo; anche di lato come prima); un tocco sul ponte o sull'isola dopo ci va (se è chiusa dice
+  quante pietre mancano). L'isola alle spalle se ne va mentre la lasci; sotto la riga dell'isola la scena torna cielo (le caselle vuote
+  delle casse restano pulite).
+- **L'isola più grande** (larga fino al 62% dello schermo, sul telefono di Denis circa il doppio di prima): scritte compatte in alto
+  («ARENA N» e il nome su una riga, sotto la modalità e l'Incubo affiancati, sempre tra i bottoni e la manina zombie), la riga di stato in
+  basso. **Più dettagli**: sotto ogni isola un grande sasso che pende nel buio a strati, con i sassi (il ghiaccio: i ghiaccioli) appesi;
+  l'acqua del mondo che corre da una pozza al bordo e cade giù dal fianco (acqua nel muschio, lava nel vulcano, l'acqua scura della palude,
+  una cascata gelata), viva con i riflessi che scorrono; il sentiero da un ponte all'altro col ramo per il cancello; muschio: tombe intorno
+  al custode, un vecchio albero carico di muschio, due lanterne di pietra accese lungo il sentiero, colonne, funghi, felci, ciuffi, fiori;
+  vulcano: il vulcano che fuma, colonne di basalto, ossidiana, l'albero bruciato, rocce di lava; palude: l'albero morto, lo stagno con le
+  ninfee, canne, funghi, il totem della rana, ceppi, lanterne; ghiaccio: punte di ghiaccio, pini innevati, il pupazzo di neve, cumuli,
+  cristalli (le cose delle stanze, 95, riusate sulle isole).
+- **Il ponte di pietra in 3D** (`cnIslBridge`, `cnBrMap`, `CNB`): a schiena d'asino, lastricato (quattro file di lastre, due spostate di
+  mezza lastra) e illuminato secondo la pendenza; un cordolo lungo i due lati, la balaustra di colonnine con il corrimano sopra (muschio o
+  neve sul corrimano), l'ombra della balaustra sulle lastre; quattro pilastri con le lanterne ai due capi (accese a ponte finito), sui
+  pilastri in fondo lo stendardo dell'arena dove porta; dai bordi pendono liane, muschio, ghiaccioli o braci secondo il mondo. Dodici file
+  di pietre: dove le pietre non ci sono ancora c'è una passerella di assi su due travi con i paletti e la corda, e le pietre pronte dove
+  finisce il lavoro; le pietre di una partita cadono una fila alla volta. Il ponte da un'isola chiusa è al buio come lei. A telecamera
+  ferma il ponte è dipinto una volta e copiato (`cnBrBake`): un fotogramma costa quanto prima.
+- **L'eroe attraversa il ponte a piedi** (`cnIslWay`, `cnIslMove`): dal suo posto al sentiero, su e giù per la gobba, fino al suo posto
+  sull'isola dopo, di spalle mentre va a nord; la telecamera lo segue, i compagni gli vanno dietro. Più lontano salta come prima.
+Prove: `node tests/classica.js ponte` (17 controlli: anche le isole verso nord, il ponte che sale dritto, la camminata, il dito in giù).
+
 ## Il ponte di pietre, la Prova dell'Incubo, le isole chiuse al buio (20 ottobre notte)
 
 Denis: «secondo me dovresti togliere quei microcristalli attorno a gli ostacoli, migliorare leggermente l'effetto del fuoco in generale. ed
@@ -22,9 +52,9 @@ prova dell'incubo a parte perchè la voglio provare».
   finito, non più alla prima vittoria. Ogni partita porta pietre: 3 per ogni stanza (o piano) superata e 25 per il custode, cioè 55 per
   una vittoria (ritirarsi o cadere porta quelle delle stanze superate). Un ponte vuole 100 pietre per le isole 2–4, 130 per le 5–8, 160 per
   le 9–12: due vittorie per le prime, tre per le altre. Sulla schermata di fine «Ponte verso … · +N pietre» con la barra, o «Il ponte è
-  finito! … è aperta»; tornando al menu la telecamera va al ponte e le pietre nuove cadono una a una al loro posto (otto pietre 3D
-  disegnate per ponte, quelle che mancano tratteggiate, la targhetta «N/100» solo sul ponte che parte da un'isola aperta); finito il ponte
-  l'eroe ci salta sopra e passa all'isola nuova. Isola chiusa: «Finisci il ponte: N/100 pietre» sotto l'isola, sulla mappa e su «Gioca».
+  finito! … è aperta»; tornando al menu la telecamera va al ponte e le pietre nuove cadono al loro posto (dodici file di pietre, sotto:
+  «Le isole verso nord»; la targhetta «N/100» solo sul ponte che parte da un'isola aperta); finito il ponte l'eroe lo attraversa e passa
+  all'isola nuova. Isola chiusa: «Finisci il ponte: N/100 pietre» sotto l'isola, sulla mappa e su «Gioca».
   Le coppe non aprono più le arene (niente schermata «nuova arena» dalle coppe). I salvataggi dell'anteprima di prima tengono aperte le
   isole già vinte (`S.brv`).
 - **La Prova dell'Incubo** (a parte, da provare): sulle isole già vinte c'è la pillola rossa «Incubo» sotto il nome; un tocco la accende,
@@ -37,7 +67,7 @@ prova dell'incubo a parte perchè la voglio provare».
   «Solo nell'anteprima: apri tutte le arene» (sulla mappa) la pillola c'è su ogni isola.
 - **Le isole chiuse al buio**: nel cammino un'isola chiusa è quasi nera (si intravedono la forma, il lucchetto e qualche luce del suo
   mondo) e il suo custode non c'è; sulla mappa del mondo le arene chiuse sono nere e il custode è «???».
-Prova `node tests/classica.js ponte` (14 controlli).
+Prova `node tests/classica.js ponte`.
 
 ## Tutto in 3D (20 ottobre notte)
 
