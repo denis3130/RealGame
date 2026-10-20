@@ -1,24 +1,31 @@
-// L'IDRA DELLA PALUDE rifatta: «l'Antica della Pozza Nera» (Denis, 15 ottobre: «rivisita tutti i boss, rendili più creepy e fatti meglio
-// sia da fermi che nelle animazioni», «un po' più cupi», «falli possenti, belli, fighi, che diano timore nello sfidarli»; 16 ottobre, dopo
-// il Golem: «sì, fai gli altri 12»). Design: docs/boss-classici-design/hydra.md. Un'idra antichissima vive nella Pozza Nera, sommersa fino
-// alle spalle, con due grandi mani palmate aggrappate al bordo della sua acqua; dall'acqua salgono tre colli lunghissimi con la striscia
-// d'avorio delle placche davanti e, su ogni testa, un ventaglio d'avorio e viola sulla nuca. Tre teste e una sola mente: respirano insieme,
-// ti guardano insieme, sbattono gli occhi nello stesso istante. Prima di ogni colpo il veleno sale luminoso lungo la striscia del collo che
-// colpirà, dall'acqua alla gola (come il cuore del Golem). A metà vita le gemme sulle fronti si aprono: erano occhi (il terzo occhio).
-// Resta della Classica: forme grosse e tonde da giocattolo, contorni scuri spessi, colori pieni, occhi con la lucina, due sole zannette
-// per testa, niente sangue, ferite o cuciture.
-// Metodo dello spaventapasseri: scheletro 3D proiettato con V(face), mani a due ossa (ik), ogni testa con la sua telecamera, l'ordine di
-// disegno dalla posa di riposo (acqua, coda, mano lontana, gobba, i tre colli con le teste, mano vicina); dipinto come la lanterna (tre
-// toni, bordo caldo, bagliori morbidi). Ogni mossa dipende solo da p.
+// L'IDRA DELLA PALUDE rifatta, seconda versione: «l'Antica della Pozza Nera», la Madre delle Vipere (Denis, 20 ottobre: «ok migliora
+// l'idra rendilo più spaventoso e cambia design fallo fatto meglio e creepy»; prima, 15 ottobre: «rivisita tutti i boss, rendili più
+// creepy e fatti meglio sia da fermi che nelle animazioni», «un po' più cupi», «falli possenti, belli, fighi, che diano timore nello
+// sfidarli»). La prima versione (la cupola verde coi ventagli e le mani palmate) è da parte in anteprime/boss2/hydra_a/hydra2.js.
+// Tre teste di vipera cornuta, grandi, piatte e larghe dietro le mascelle, ognuna col suo cappuccio da cobra, su tre colli lunghi e
+// muscolosi che salgono da una pozza nera come la pece; sotto l'acqua un corpo di serpente enorme che affiora a spire (due davanti, la
+// coda dietro) con le alghe marce sulla schiena. Scaglie verde bottiglia quasi nere, il ventre color osso vecchio, lo zigzag scuro delle
+// vipere lungo la schiena con i puntini acidi nelle pieghe; occhi gialli acidi col taglio nero in orbite scure sotto le corna sopra gli
+// occhi, la terza palpebra trasparente che passa di traverso, la lingua biforcuta; quando la bocca si spalanca le due zanne si aprono in
+// avanti e gocciolano veleno. Dietro ogni cappuccio due occhi finti: anche di spalle ti guarda. Tre teste e una sola mente: respirano
+// insieme, ti fissano insieme, sbattono la terza palpebra insieme; ogni tanto una piega la testa di lato, piano, mentre le altre due non si
+// muovono. Il suo avviso: il veleno sale luminoso lungo il ventre e i puntini del collo che colpirà, dall'acqua alla gola, e il cappuccio
+// si apre. A metà vita la fessura sulla fronte si apre (il terzo occhio, magenta), si aprono gli occhi finti dei cappucci, le scaglie
+// diventano fredde e il veleno viola.
+// Resta della Classica: forme grosse e robuste, contorni scuri spessi, colori pieni, occhi grandi con la lucina, due sole zanne per testa,
+// niente sangue, ferite o cuciture.
+// Metodo dello spaventapasseri: scheletro 3D proiettato con V(face), ogni testa con la sua telecamera, l'ordine di disegno dalla posa di
+// riposo (acqua, coda, spire, schiena, i tre colli coi cappucci e le teste); dipinto come la lanterna (tre toni, bordo caldo, bagliori
+// morbidi). Ogni mossa dipende solo da p; tempi e mosse sono quelli della prima versione (il cervello non cambia).
 // Mosse: idle, walk, hit, bite (Morso a Tenaglia), stuck (Zanne piantate), spit (Salva di Veleno), breath (Soffio Velenoso), ambush
 // (Agguato dal Profondo: il tratto .35-.65 si ripete), decree (Il Giudizio della Palude), dive (Si tuffa), rise (Riemerge), gaze (Sguardo
 // del Terzo Occhio, fase 2), rage (Apre il terzo occhio), taunt (Presa in giro), enter (Entrata), die (Sconfitta).
 // Opzioni: o.p2, o.tg (i tre bersagli del morso [dx, dy] in px dello schermo dal punto di disegno), o.tg2 (i due del secondo morso della
-// fase 2), o.sweep (il giro delle teste nel Soffio), o.td (la distanza dell'eroe, per far convergere gli occhi), o.call (la chiamata),
-// o.noGlob (niente palla di veleno nella Salva), o.noFx (niente spruzzi, gocce, schegge, nebbia).
-// Con LOWFX niente bagliori, gocce, schiuma che si muove, nebbia né bolle; l'acqua è piatta; la luce del veleno è una striscia piatta.
+// fase 2), o.sweep (il giro delle teste nel Soffio), o.td (la distanza dell'eroe, per far convergere gli occhi), o.call (la chiamata: la
+// coda si alza e ti fa cenno), o.noGlob (niente palla di veleno nella Salva), o.noFx (niente spruzzi, gocce, schegge, nebbia).
+// Con LOWFX niente bagliori, gocce, riflessi dell'acqua, luce della pozza sui colli, nebbia né bolle; la luce del veleno è una striscia piatta.
 // Disegni per il gioco con lo stesso aspetto: N3.hydra2Mouths (le bocche, i punti sotto le bocche, gli occhi e i terzi occhi sullo schermo),
-// N3.hydra2Head (la testa che sbuca da una macchia d'acqua nera), N3.hydra2Under (le luci sotto il pavimento nel Tuffo), N3.hydra2Stain
+// N3.hydra2Head (la testa che sbuca da una macchia d'acqua nera), N3.hydra2Under (gli occhi sotto il pavimento nel Tuffo), N3.hydra2Stain
 // (l'acqua nera dove riemerge), N3.hydra2Glob (la palla di veleno), N3.hydra2Pool (la pozza), N3.hydra2Geyser (la colonna di veleno).
 // Nel gioco prende il nome 'hydra' (src/js/89-idra-nuova.js).
 (()=>{const C=C3,{TAU,cl,ez,lerp,add,sub,mul,len,nrm,dot,cross,lerp3,V,ball,seg,run,cmix,rgbOf,poly,line,bbox,
@@ -26,13 +33,19 @@
 const{trem,fxOn,pls,rise,flash,ga,grad3,hullE,smoothP,svol3,T3,mixT,mixRgb,limbGrad}=C3K;
 
 // ------------------------------------------------------------------ colours (three tones: light / base / shadow)
-const K1={sc:T3('#66b86e','#33784a','#173d29'),rim:'255,226,170',loz:'rgba(43,31,66,.45)',plate:T3('#fff6d8','#efe0b4','#b39a64'),pline:'rgba(126,106,62,.45)',
-  ivory:T3('#fffbea','#f1e4c0','#b8a272'),tip:'#8a6a38',mem:T3('#b06ad8','#7a40b0','#3c1a5e'),memG:'176,106,216',
-  gem:'#a8f060',gemG:'150,255,90',gemLid:'#2a4a14',gemRim:'#173d29',eye:'#ffc93a',eyeG:'255,200,60',mouth:'#4a1a2e',tongue:'#d9709a',fang:'#f6ead2',
-  ven:'#9be05a',venG:'150,230,90',w0:'#142420',w1:'#22362f',w2:'#3e5a50',wG:'170,255,120',foam:'#cfe9d8',bub:'#d8ffb0',pool:'#6fbf3a',poolE:'#2f5a1a',
-  tw:'#f6eaff',ti:'#c77dff',tr:'#7a2ec0',tG:'199,125,255'};
-const K2=Object.assign({},K1,{sc:T3('#4f9a62','#285e3e','#10301f'),rim:'199,125,255',mem:T3('#e2aaff','#9a52d8','#4a2270'),memG:'199,125,255',eye:'#ffb02e',
-  eyeG:'255,170,50',ven:'#c77dff',venG:'199,125,255',w0:'#1a1226',w1:'#2c1f3e',w2:'#5a3f7e',wG:'199,125,255',bub:'#f0d8ff',pool:'#9a52d8',poolE:'#3c1a5e'});
+// bottle green almost black, the belly of old bone, the dark zigzag and the acid dots, horns of bone, the eyes acid gold in dark sockets
+const K1={sc:T3('#4f8f6e','#295646','#0f251c'),belly:T3('#c9c29a','#958c66','#4f4a32'),pline:'rgba(70,56,28,.5)',zig:'rgba(6,16,12,.66)',
+  dot:'#c8ff4c',dotG:'190,255,80',spine:T3('#4a7a62','#203c30','#0b1711'),horn:T3('#f3e9ca','#c2b082','#6e5e3c'),hornT:'#3a2e20',
+  hoodF:T3('#ece2b4','#b9ab7a','#6a6040'),band:'rgba(46,32,18,.55)',hoodB:T3('#41735c','#1e3d30','#0a1610'),spot:'#efe8c4',spotC:'#13201a',spotG:'190,255,80',
+  sock:'#06100b',eye:'#ffd23c',eyeG:'255,206,60',eyeD:'#a85a06',nict:'rgba(206,236,196,.8)',mouth:'#3a0e2c',tongue:'#a42e66',fang:'#f7efd9',
+  ven:'#b6f04a',venG:'182,240,74',rim:'255,214,150',gem:'#a8f060',gemG:'160,255,90',tw:'#fff0fb',ti:'#ff5fd0',tr:'#7a1666',tG:'255,95,208',
+  w0:'#03070a',w1:'#0a1512',w2:'#1f382d',wG:'170,255,90',foam:'#a9bd78',bub:'#cfe8a8',pool:'#7cc43a',poolE:'#2f5a1a',
+  weed:T3('#5a6a2e','#33401a','#161d0c'),lily:T3('#668644','#3b5728','#1a2a12'),flower:'#e3d6e0'};
+// the second phase: cold scales, violet venom, magenta eyes, the false eyes of the hoods awake
+const K2=Object.assign({},K1,{sc:T3('#527b7c','#244244','#0c1b1d'),hoodB:T3('#45676f','#1d3539','#0a1416'),spine:T3('#4c7074','#1f3a3d','#0a1617'),
+  dot:'#ea94ff',dotG:'229,140,255',spot:'#f8dcff',spotC:'#2a0f2a',spotG:'229,140,255',eye:'#ff7ade',eyeG:'255,116,220',eyeD:'#8a1474',
+  ven:'#d58bff',venG:'213,139,255',rim:'226,160,255',gem:'#ea94ff',gemG:'229,140,255',
+  w0:'#07040c',w1:'#140d1e',w2:'#36284a',wG:'199,125,255',foam:'#b9a2d8',bub:'#f0d8ff',pool:'#9a52d8',poolE:'#3c1a5e'});
 // the defeat: the water clears
 const KW={w0:'#24524a',w1:'#3a7a6c',w2:'#6fae9a'};
 const PALC={};
@@ -42,14 +55,13 @@ function pal(k2,clr){k2=Math.round(cl(k2,0,1)*12)/12;clr=Math.round(cl(clr||0,0,
 const rgbS=c=>rgbOf(c).join(',');
 
 // ------------------------------------------------------------------ the body at rest (model units: x forward, y its right, z up)
-const HB={c:[-8,0,0],r:[42,56,36]};                  // the hump, cut at the water
-// the three necks: where each comes out of the hump, where its head rests, its size, the rays of its fan (degrees) and their lengths
-const HN=[{s:-1,root:[20,-22,20],head:[18,-50,70],k:1,fa:[-35,0,35],fl:[11,15,11]},
-  {s:0,root:[24,0,24],head:[24,0,92],k:1.12,fa:[-50,-25,0,25,50],fl:[10,14,19,14,10]},
-  {s:1,root:[20,22,20],head:[18,50,70],k:1,fa:[-35,0,35],fl:[11,15,11]}];
-const HE=[{c:[-4,0,1],r:[11,10.5,9]},{c:[9,0,-1.5],r:[12.5,7.5,6]}];   // a head: the skull and the long snout (head axes, ×k)
-const FINS=[[2.04,11],[2.64,14],[3.14,18],[3.64,14],[4.24,11]];        // the fins round its back: azimuth (π = behind), height
-const SHO=[[6,-42,-14],[6,42,-14]],HAND=[[52,-50,1],[52,50,1]];         // the shoulders under the water, the hands on the rim
+const HB={c:[-14,0,-8],r:[40,46,25]};                // the back of the body, low in the water (only its top shows)
+// the three necks: where each comes out of the body (inside it), where its head rests, its size
+const HN=[{s:-1,root:[6,-20,4],head:[22,-58,80],k:1.08},{s:0,root:[10,0,6],head:[30,0,102],k:1.24},{s:1,root:[6,20,4],head:[22,58,80],k:1.08}];
+// a head: the wide skull (the muscles of the jaws) and the flat snout of a viper (head axes, ×k)
+const HE=[{c:[-4,0,1.2],r:[14,14,8.8]},{c:[12,0,-1.4],r:[15,9,5.8]}];
+const MZ=-2.4,JA=1.05;                                                   // the cut of the mouth (head units ×k), how far the jaw drops
+const HAND=[[52,-50,1],[52,50,1]];                                       // the tops of the two coils in front (the moves move them)
 const DEG=Math.PI/180;
 const yawC=(s,o)=>-s*Math.atan(50/((o.td||180)/.55));                   // the side heads turn in, the eyes converge on you
 
@@ -93,7 +105,7 @@ function foam(q,r,K,a){ctx.save();ctx.globalAlpha*=a==null?1:a;ctx.strokeStyle=`
   ctx.strokeStyle='rgba(10,20,16,.35)';ctx.lineWidth=1.2;ctx.beginPath();ctx.ellipse(q[0],q[1]+.6,r*1.05,r*.55*1.05*KR(),0,.15,Math.PI-.15);ctx.stroke();ctx.restore()}
 
 // ------------------------------------------------------------------ the pose: every move depends only on p
-function hd0(n,p2){return{s:n.s,off:[0,0,0],yaw:0,pitch:-.12,roll:0,open:0,fan:p2?1:.6,ft:p2?1:0,wing:0,tongue:0,sac:0,vl:null,gem:.3,third:p2?1:0,wide:0,spiral:0,spA:0,
+function hd0(n,p2){return{s:n.s,off:[0,0,0],yaw:0,pitch:-.12,roll:0,hb:0,open:0,fan:p2?1:.6,ft:p2?1:0,wing:0,tongue:0,sac:0,vl:null,gem:.3,third:p2?1:0,wide:0,spiral:0,spA:0,
   blink:1,squint:0,shut:0,reach:0,tgt:null,slide:1,tug:0,sq:0,under:0,uz:-34,arch:0,archPh:0,stars:0,drip:-1,glob:-1,mist:-1,cough:0,throat:0,smirk:0}}
 function hand0(i){return{p:HAND[i].slice(),tap:[0,0,0],palm:0,curl:0}}
 // the bite targets: the game's screen offsets brought to the floor of the model (the inverse of V(face)); the side ones by the sign of y
@@ -181,7 +193,7 @@ function hPose(anim,p,o,face){const p2=!!o.p2&&anim!=='rage',ph=p*TAU;
   else if(anim==='taunt'){const dn=rise(p,0,.05,.45,.5),sw=Math.sin(TAU*1.5*cl(p/.5,0,1)),end=sstep(.8,.86,p);
     H.forEach((h,i)=>{h.off=[0,6*dn*sw,0];h.roll=.1*dn*sw;h.tongue=pls(p,[.52,.58,.64][i],.06)});
     M0.roll+=.35*end;M0.squint=.5*end;M0.open=.12*end;M0.smirk=end;for(const h of sides){h.off[2]+=1.5*end*Math.sin(p*TAU*7*1.1);h.squint=.45*end;h.open=.15*end}
-    if(o.call){const k=rise(p,.72,.8,.96,1),hd=A.hands[1];hd.p=[52,50,1+20*k];hd.palm=k;hd.curl=k*(.5+.5*Math.sin(Math.max(0,p-.8)*TAU/.1))}}
+    if(o.call){A.beck=rise(p,.72,.8,.96,1);A.beckW=Math.sin(Math.max(0,p-.8)*TAU/.1)}}
   else if(anim==='enter'){const dark=sstep(0,.15,p)*(1-sstep(.67,.85,p)),body=-40*(1-sstep(.67,.81,p)),openF=sstep(.67,.81,p),roar=rise(p,.81,.84,.92,.95),tilt=sstep(.95,.975,p);
     A.dark=dark;A.swirl=sstep(0,.19,p)*(1-sstep(.5,.7,p));A.B[2]+=body;A.eyesU=sstep(.185,.2,p)*(1-sstep(.47,.52,p));A.gemsU=A.eyesU;A.finUp=sstep(.67,.81,p);
     H.forEach(h=>{h.under=1-sstep(.48,.67,p);h.uz=lerp(-40,-15,sstep(.29,.48,p));h.fan=p<.48?.9:lerp(.4,1,openF)*(1-.4*sstep(.95,1,p))+.0;h.ft=p<.48?1:openF*(1-sstep(.95,1,p));
@@ -197,12 +209,15 @@ function hPose(anim,p,o,face){const p2=!!o.p2&&anim!=='rage',ph=p*TAU;
     M0.shut=p<.15?1:p>.475&&p<.6?0:p>=.3&&p<.475?.0:M0.shut;M0.open=.4*rise(p,.48,.5,.56,.6);
     A.hands.forEach((hd,i)=>{const k=sstep(.6,.75,p);hd.p=[lerp(52,42,k),(i?1:-1)*lerp(50,46,k),lerp(1,-16,k)]});
     if(p>=.94&&p<1)A.fx.push({k:'bubble',at:[18,0,0],t:(p-.94)/.06})}
-  else{// idle (also the portrait of the arena at p 0): the hump and the water breathe, the heads breathe as a fan, all look at you together
+  else{// idle (also the portrait of the arena at p 0): the body and the water breathe, the heads breathe together, all look at you together
     const nb=p2?2:1,br=q=>.5-.5*Math.cos(TAU*nb*q),k=br(p);A.br=.02*k;A.wz=k-.5;
     for(const st of[.10,.60]){const t=((p-st)%1+1)%1/.5;if(t<1)A.rings.push({t,r0:56})}
     A.tail=.2*Math.sin(ph);A.fin=.05*k;
     H.forEach((h,i)=>{const kh=br(p-.06),kf=br(p-.10);h.off=[0,h.s*3*kh,(h.s?3:4)*kh];h.yaw=h.s*.05*kh;if(!p2)h.fan=.6+.12*kf;
-      h.blink=blink(p,.62,.07);if(p2)h.blink=Math.min(h.blink,blink(p,.12,.07));h.tongue=pls(p,.35+.03*i,.06);h.gem=.25+.2*k});
+      h.blink=blink(p,.62,.07);if(p2)h.blink=Math.min(h.blink,blink(p,.12,.07));h.tongue=Math.max(pls(p,.35+.03*i,.05),pls(p,.43+.03*i,.05));h.gem=.25+.2*k;h.hb=.1*kf});
+    // one head at a time tilts its head to the side, slowly, while the others keep still and keep looking at you; the middle one snaps
+    // forward a moment, as if to bite, and stops
+    for(const[i,a,b,r] of[[0,.06,.3,.5],[2,.34,.58,-.5],[1,.66,.88,.42]])H[i].roll+=r*rise(p,a,a+.08,b-.08,b);M0.off[0]+=5*pls(p,.47,.035);
     M0.open=.18*rise(p,.45,.48,.52,.55);M0.throat=rise(p,.44,.48,.52,.56);M0.drip=p>=.8&&p<.9?(p-.8)/.1:-1;if(p>=.9)A.fx.push({k:'ring',head:1,t:(p-.9)/.1});
     A.hands[0].tap=[.15,.20,.25].map(t=>2.5*pls(p,t,.05));A.hands[1].tap=[.65,.70,.75].map(t=>2.5*pls(p,t,.05))}
   return A}
@@ -220,8 +235,8 @@ function rigOf(A,X,face,o){const wl=A.wz,G=[];
     G.push({i,s:n.s,k,hc,HF:{u:hu,v:hv,w:hw},root,h,n})}
   return G}
 // the neck: a curve from the root to the nape of the head (a question mark at rest, stretched low on the floor in the bite, the arches of a
-// sea serpent in the Agguato), one ring every 10 of length (at least 8), radius from 11 at the root to 7.5 under the head
-function spineOf(g,X,wl){const{hc,HF,k,root,h,s}=g,hu=HF.u,hw=HF.w,e=add(add(hc,mul(hu,-7*k)),mul(hw,-3.5*k)),L=len(sub(e,root));
+// sea serpent in the Agguato), one ring every 10 of length (at least 8), radius from 13.5 at the root to 8.4 under the head
+function spineOf(g,X,wl){const{hc,HF,k,root,h,s}=g,hu=HF.u,hw=HF.w,e=add(add(hc,mul(hu,-8*k)),mul(hw,-3.5*k)),L=len(sub(e,root));
   let c1=add(root,X.Rd([-10,s*6,L*.5])),c2=sub(e,mul(add(mul(hw,.8),mul(hu,.55)),L*.36));
   if(h.reach>0){const d=nrm([e[0]-root[0],e[1]-root[1],0]),c1s=add(root,add(mul(d,L*.28),[0,0,13])),c2s=add(e,add(mul(hu,-L*.26),[0,0,6]));c1=lerp3(c1,c1s,h.reach);c2=lerp3(c2,c2s,h.reach)}
   const NS=18,pts=[];for(let j=0;j<=NS;j++){const t=j/NS,u=1-t;pts.push(add(add(mul(root,u*u*u),mul(c1,3*u*u*t)),add(mul(c2,3*u*t*t),mul(e,t*t*t))))}
@@ -235,217 +250,279 @@ function spineOf(g,X,wl){const{hc,HF,k,root,h,s}=g,hu=HF.u,hw=HF.w,e=add(add(hc,
   let j=0;for(let i=0;i<=N;i++){const sl=Lt*i/N;while(j<pts.length-2&&cum[j+1]<sl)j++;const u=(sl-cum[j])/Math.max(1e-6,cum[j+1]-cum[j]);S.push({c:lerp3(pts[j],pts[j+1],cl(u,0,1)),s:i/N})}
   const fw=X.Rd([1,0,0]);
   for(let i=0;i<=N;i++){const q=S[i],t=nrm(sub(S[Math.min(N,i+1)].c,S[Math.max(0,i-1)].c)),ref=nrm(lerp3(fw,hu,q.s));let f=sub(ref,mul(t,dot(ref,t)));
-    if(len(f)<.15)f=sub([0,0,-1],mul(t,-t[2]));f=nrm(f);q.t=t;q.f=f;q.v=cross(t,f);q.r=lerp(11,7.5,q.s);q.hide=h.arch>.6&&q.s<.22}
+    if(len(f)<.15)f=sub([0,0,-1],mul(t,-t[2]));f=nrm(f);q.t=t;q.f=f;q.v=cross(t,f);q.r=lerp(12,7,q.s)*(k>1.15?1.06:1);q.hide=h.arch>.6&&q.s<.22}
   return S}
 
 // ------------------------------------------------------------------ the pieces
-// a fan of rays with a membrane between them: root b, up axis a, side axis sd; angles and lengths; o.mem (tones), o.lit (the membrane
-// glows), o.cut (the water), o.rw (ray width), o.bend (the middle ray's tip bent toward o.back), o.mk (how far the membrane goes)
-function fanDraw(V0,b,a,sd,angs,lens,K,o){const{P,F}=V0,wl=o.cut==null?-1e9:o.cut,n=nrm(cross(a,sd)),fv=F(n),T=o.mem||K.mem,mk=o.mk||.8,mid=angs.length>>1;
-  const R=angs.map((an,i)=>{const d=nrm(add(mul(a,Math.cos(an)),mul(sd,Math.sin(an))));let tip=add(b,mul(d,lens[i]));
-    if(o.bend&&i===mid&&angs.length>3)tip=add(add(b,mul(d,lens[i]*.6)),mul(nrm(add(mul(d,Math.cos(o.bend)),mul(o.back,Math.sin(o.bend)))),lens[i]*.42));return{d,tip,m:lerp3(b,tip,mk)}});
-  if(b[2]<wl-2&&R.every(r=>r.tip[2]<wl))return;
-  const B=P(b),Pm=R.map(r=>P(r.m)),Pt=R.map(r=>P(r.tip)),rw=o.rw||1.2,mem=()=>{ctx.beginPath();for(let i=0;i<R.length-1;i++){const m1=Pm[i],m2=Pm[i+1],cx=lerp((m1[0]+m2[0])/2,B[0],.16),cy=lerp((m1[1]+m2[1])/2,B[1],.16);
-    ctx.moveTo(B[0],B[1]);ctx.lineTo(m1[0],m1[1]);ctx.quadraticCurveTo(cx,cy,m2[0],m2[1]);ctx.closePath()}},rays=()=>{ctx.beginPath();for(const t of Pt){ctx.moveTo(B[0],B[1]);ctx.lineTo(t[0],t[1])}};
-  // the ink first (the outline of the membrane and of the rays), then the membrane over it: inside the membrane the rays lose their ink
-  ctx.lineJoin='round';ctx.lineCap='round';ctx.strokeStyle=INK;mem();ctx.lineWidth=(o.lw||1.4)*1.7;ctx.stroke();rays();ctx.lineWidth=rw+1.8;ctx.stroke();
-  const lit=o.lit||0;mem();ctx.fillStyle=fv>=0?(lit>.5?T.l:T.b):cmix(T.b,T.d,lit>.5?.1:.4);ctx.fill();
-  if(lit>0&&!LOWFX){ctx.save();ctx.globalCompositeOperation='lighter';ctx.fillStyle=`rgba(${K.memG},${.22*lit})`;ctx.fill();ctx.restore()}
-  // two folds in every piece of membrane (not on the small fans)
-  if(!o.small){ctx.strokeStyle=fv>=0?T.d:'rgba(20,8,30,.5)';ctx.lineWidth=.8;ctx.beginPath();for(let i=0;i<R.length-1;i++)for(const f of[.35,.68]){const q=lerp3(R[i].m,R[i+1].m,f),qq=P(lerp3(b,q,.9)),q0=P(lerp3(b,q,.3));ctx.moveTo(q0[0],q0[1]);ctx.lineTo(qq[0],qq[1])}ctx.stroke()}
-  // the ivory rays with their bronze tips
-  rays();ctx.strokeStyle=K.ivory.b;ctx.lineWidth=rw;ctx.stroke();ctx.fillStyle=K.tip;for(const t of Pt){ball(t,rw*.7);ctx.fill()}}
-// a neck with its plates, its lozenges and the venom light; returns its outline pieces
-function neckDraw(V0,S,K,wl,h,fx){const{P,F}=V0,N=S.length;if(N<2)return null;
-  const RG=S.map(q=>{const r=[];for(let j=0;j<8;j++){const t=j/8*TAU;r.push(add(q.c,add(mul(q.f,Math.cos(t)*q.r),mul(q.v,Math.sin(t)*q.r))))}return r});
+// a tube along samples S ({c centre, t along, f its belly side, v across, r radius}): the hull of every two rings, cut at the water
+function tubeHull(V0,S,wl){const{P}=V0,N=S.length,RG=S.map(q=>{const r=[];for(let j=0;j<8;j++){const t=j/8*TAU;r.push(add(q.c,add(mul(q.f,Math.cos(t)*q.r),mul(q.v,Math.sin(t)*q.r))))}return r});
   const Hs=[];for(let i=0;i<N-1;i++){if(S[i].hide||S[i+1].hide)continue;const pts=below([RG[i],RG[i+1]],wl)?cutRows([RG[i],RG[i+1]],wl):RG[i].concat(RG[i+1]);if(pts.length<3)continue;const hh=chull(pts.map(q=>P(q)));if(hh.length>2)Hs.push(hh)}
-  if(!Hs.length)return null;
-  polys(Hs.map(hh=>grow(hh,1.3)));ctx.fillStyle=INK;ctx.fill();let all=[];for(const hh of Hs)all=all.concat(hh);polys(Hs);ctx.fillStyle=grad3(bbox(all),K.sc);ctx.fill();
-  ctx.save();polys(Hs);ctx.clip();
-  // the ivory strip of the plates where the belly faces us (above the water), with a thin line every 7 of length
-  const ca=Math.cos(.66),sa=Math.sin(.66),edge=(q,sg)=>P(add(q.c,mul(add(mul(q.f,ca),mul(q.v,sg*sa)),q.r*1.02))),vis=S.map(q=>F(q.f)>-.05&&q.c[2]>wl-1&&!q.hide);
+  return Hs}
+// the frames along a curve: the belly side toward ref (down for the coils and the tail), the radius from R(s)
+function frames(pts,R,ref){const N=pts.length-1,S=[];for(let i=0;i<=N;i++){const t=nrm(sub(pts[Math.min(N,i+1)],pts[Math.max(0,i-1)]));let f=sub(ref,mul(t,dot(ref,t)));if(len(f)<.15)f=sub([1,0,0],mul(t,t[0]));f=nrm(f);
+  S.push({c:pts[i],t,f,v:cross(t,f),r:R(i/N),s:i/N})}return S}
+// a piece of the serpent painted: one ink round all of it, three tones; clipped: the belly of old bone where it faces us (o.belly), the
+// dark zigzag of the vipers down its back with the acid dots in its bends, the venom light that climbs (o.vl [from, to] along it), the
+// light of the pool from below, the dark side; then the warm rim, the spines down its back (o.sp: one every o.sp rings), the foam
+function tubeDraw(V0,S,K,wl,o){const{P,F}=V0,N=S.length;if(N<2)return null;const Hs=tubeHull(V0,S,wl);if(!Hs.length)return null;
+  polys(Hs.map(hh=>grow(hh,1.3)));ctx.fillStyle=INK;ctx.fill();let all=[];for(const hh of Hs)all=all.concat(hh);const bb=bbox(all);polys(Hs);ctx.fillStyle=grad3(bb,K.sc);ctx.fill();
+  const up=S.map(q=>q.c[2]>wl-1&&!q.hide),vl=o.vl&&o.vl[1]>o.vl[0]+.01?o.vl:null;
+  if(o.simple){const runs=[];let r=[];for(let i=0;i<N;i++){const q=S[i];if(!up[i]||q.c[2]<wl+q.r*.6||F(mul(q.f,-1))<.3){if(r.length>1)runs.push(r);r=[];continue}r.push(P(add(q.c,add(mul(q.f,-q.r*.9),mul(q.v,(i%2?1:-1)*q.r*.3)))))}if(r.length>1)runs.push(r);
+    ctx.lineJoin='round';ctx.lineCap='round';ctx.strokeStyle=K.zig;ctx.lineWidth=S[0].r*(o.zw||.5)*.7;for(const rr of runs){line(rr);ctx.stroke()}}
+  else{ctx.save();polys(Hs);ctx.clip();
+  // the belly: plates of old bone where it faces us, a thin seam on every ring
+  const ca=Math.cos(.46),sa=Math.sin(.46),edge=(q,sg)=>P(add(q.c,mul(add(mul(q.f,ca),mul(q.v,sg*sa)),q.r*1.02))),vis=S.map((q,i)=>up[i]&&F(q.f)>-.05);
   const strip=(a,b,fill)=>{let run=[];const flush=()=>{if(run.length>1){ctx.beginPath();for(const q of run){const e=edge(q,1);ctx.lineTo(e[0],e[1])}for(let i=run.length-1;i>=0;i--){const e=edge(run[i],-1);ctx.lineTo(e[0],e[1])}ctx.closePath();ctx.fillStyle=fill;ctx.fill()}run=[]};
     for(let i=0;i<N;i++){const q=S[i];if(vis[i]&&q.s>=a-1e-6&&q.s<=b+1e-6)run.push(q);else flush()}flush()};
-  strip(0,1,grad3(bbox(all),K.plate));
-  {const Lt=N-1;ctx.strokeStyle=K.pline;ctx.lineWidth=.9;ctx.beginPath();for(let i=1;i<N-1;i++){if(!vis[i]||i%1)continue;const a=edge(S[i],1),b=edge(S[i],-1);ctx.moveTo(a[0],a[1]);ctx.lineTo(b[0],b[1])}if(Lt)ctx.stroke()}
-  // the purple lozenges down its back
-  ctx.beginPath();for(let i=1;i<N-1;i+=2){const q=S[i],n=mul(q.f,-1);if(F(n)<.12||q.c[2]<wl+1||q.hide)continue;const c=add(q.c,mul(n,q.r*.97)),a=P(add(c,mul(q.t,3.4))),b=P(add(c,mul(q.v,2.4))),cc=P(add(c,mul(q.t,-3.4))),d=P(add(c,mul(q.v,-2.4)));
-    ctx.moveTo(a[0],a[1]);ctx.lineTo(b[0],b[1]);ctx.lineTo(cc[0],cc[1]);ctx.lineTo(d[0],d[1]);ctx.closePath()}ctx.fillStyle='rgba(43,31,66,.5)';ctx.fill();
-  // the venom that climbs the strip: lime (violet in the second phase), brightest at its head
-  if(h&&h.vl&&h.vl[1]>h.vl[0]+.01){const[a,b]=h.vl;strip(a,b,`rgba(${K.venG},${LOWFX?.85:.7})`);
-    if(!LOWFX){ctx.save();ctx.globalCompositeOperation='lighter';strip(Math.max(a,b-.22),b,`rgba(${K.venG},.55)`);ctx.restore();
+  if(o.belly){strip(0,1,grad3(bb,K.belly));ctx.strokeStyle=K.pline;ctx.lineWidth=.9;ctx.beginPath();for(let i=1;i<N-1;i++){if(!vis[i])continue;const a=edge(S[i],1),b=edge(S[i],-1);ctx.moveTo(a[0],a[1]);ctx.lineTo(b[0],b[1])}ctx.stroke()}
+  // the zigzag down its back and the acid dots in its bends (lit by the venom as it climbs)
+  const DT=[];{const runs=[];let r=[];for(let i=0;i<N;i++){const q=S[i];if(!up[i]||F(mul(q.f,-1))<.04){if(r.length>1)runs.push(r);r=[];continue}
+      const sg=i%2?1:-1,s=P(add(q.c,add(mul(q.f,-q.r*.97),mul(q.v,sg*q.r*.42))));r.push(s);if(i%4===1)DT.push({s,q})}if(r.length>1)runs.push(r);
+    ctx.lineJoin='round';ctx.lineCap='round';ctx.strokeStyle=K.zig;ctx.lineWidth=S[0].r*(o.zw||.5);for(const rr of runs){line(rr);ctx.stroke()}
+    for(const d of DT){const lt=vl&&d.q.s>=vl[0]&&d.q.s<=vl[1]?1:o.glowAll||0,r=d.q.r*.13;ball(d.s,r);ctx.fillStyle=lt>.05?cmix(K.dot,'#ffffff',.5*lt):`rgba(${K.dotG},.55)`;ctx.fill()}}
+  // the venom that climbs: up the belly, brightest at its head
+  if(vl){const[a,b]=vl;if(o.belly)strip(a,b,`rgba(${K.venG},${LOWFX?.85:.7})`);
+    if(!LOWFX){ctx.save();ctx.globalCompositeOperation='lighter';if(o.belly)strip(Math.max(a,b-.22),b,`rgba(${K.venG},.55)`);for(const d of DT)if(d.q.s>=a&&d.q.s<=b){ball(d.s,d.q.r*.42);ctx.fillStyle=`rgba(${K.dotG},.35)`;ctx.fill()}ctx.restore();
       let bi=0;for(let i=0;i<N;i++)if(S[i].s<=b)bi=i;if(vis[bi]){const q=edge(S[bi],0);shine(K.venG,q[0],q[1],16,.5)}}}
-  if(h&&h.glowAll>0)ga(.5*h.glowAll,()=>{if(!LOWFX){ctx.save();ctx.globalCompositeOperation='lighter';strip(0,1,`rgba(${K.venG},.5)`);ctx.restore()}});
-  // the shade: the dark side of the neck, a light line on the lit side
-  const Q=S.map(q=>P(q.c));let dk=[],lt=[];for(let i=0;i<N;i++){const a=Q[Math.max(0,i-1)],b=Q[Math.min(N-1,i+1)];let nx=-(b[1]-a[1]),ny=b[0]-a[0];const l=Math.hypot(nx,ny)||1;nx/=l;ny/=l;if(nx*-.55+ny*-.83<0){nx=-nx;ny=-ny}
-    const r=S[i].r,up=S[i].c[2]>wl+r*.3&&!S[i].hide;dk.push([Q[i][0]-nx*r*.72,Q[i][1]-ny*r*.72,r]);lt.push(up?[Q[i][0]+nx*(r-1.8),Q[i][1]+ny*(r-1.8)]:null)}
-  ctx.lineCap='round';ctx.lineJoin='round';ctx.strokeStyle=`rgba(${rgbS(K.sc.d)},.42)`;ctx.lineWidth=S[0].r*.75;ctx.beginPath();for(const q of dk)ctx.lineTo(q[0],q[1]);ctx.stroke();
+  if(o.glowAll>0&&o.belly)ga(.5*o.glowAll,()=>{if(!LOWFX){ctx.save();ctx.globalCompositeOperation='lighter';strip(0,1,`rgba(${K.venG},.5)`);ctx.restore()}});
+  // the light of the pool on its lower part
+  if(!LOWFX&&o.under!==false&&S[0].c[2]<wl+2){const lo=S[0].c,a=P([lo[0],lo[1],wl]),b=P([lo[0],lo[1],wl+30]),g=ctx.createLinearGradient(a[0],a[1],b[0],b[1]);g.addColorStop(0,`rgba(${K.wG},.26)`);g.addColorStop(1,`rgba(${K.wG},0)`);
+    const y0=Math.max(bb[1]-2,Math.min(a[1],b[1])-2),y1=Math.min(bb[3]+2,Math.max(a[1],b[1])+4);if(y1>y0){ctx.globalCompositeOperation='lighter';ctx.fillStyle=g;ctx.fillRect(bb[0]-2,y0,bb[2]-bb[0]+4,y1-y0);ctx.globalCompositeOperation='source-over'}}
+  // the shade: the dark side, a light line on the lit side
+  const Q=S.map(q=>P(q.c)),lt=[];ctx.lineCap='round';ctx.lineJoin='round';ctx.beginPath();
+  for(let i=0;i<N;i++){const a=Q[Math.max(0,i-1)],b=Q[Math.min(N-1,i+1)];let nx=-(b[1]-a[1]),ny=b[0]-a[0];const l=Math.hypot(nx,ny)||1;nx/=l;ny/=l;if(nx*-.55+ny*-.83<0){nx=-nx;ny=-ny}
+    const r=S[i].r;ctx.lineTo(Q[i][0]-nx*r*.72,Q[i][1]-ny*r*.72);lt.push(up[i]&&S[i].c[2]>wl+r*.3?[Q[i][0]+nx*(r-1.8),Q[i][1]+ny*(r-1.8)]:null)}
+  ctx.strokeStyle=`rgba(${rgbS(K.sc.d)},.45)`;ctx.lineWidth=S[0].r*.75;ctx.stroke();
   ctx.restore();
-  ctx.strokeStyle=`rgba(${K.rim},${rimA(K)})`;ctx.lineWidth=1.3;ctx.beginPath();let pen=false;for(const q of lt){if(!q){pen=false;continue}if(pen)ctx.lineTo(q[0],q[1]);else{ctx.moveTo(q[0],q[1]);pen=true}}ctx.stroke();
+  ctx.strokeStyle=`rgba(${K.rim},${rimA(K)})`;ctx.lineWidth=1.3;ctx.beginPath();let pen=false;for(const q of lt){if(!q){pen=false;continue}if(pen)ctx.lineTo(q[0],q[1]);else{ctx.moveTo(q[0],q[1]);pen=true}}ctx.stroke()}
+  // the spines down its back, raked back toward its tail (only the ones on the side we see)
+  if(o.sp){const pa=new Path2D();let n=0;for(let i=o.sp0||1;i<N-1;i+=o.sp){const q=S[i];if(!up[i])continue;const nn=mul(q.f,-1);if(F(nn)<-.22)continue;const hh=(o.spH||3.2)*(o.spK==null?1:o.spK);if(hh<.3)continue;
+      const b=add(q.c,mul(nn,q.r*.9)),T=P(add(add(b,mul(nn,hh)),mul(q.t,-hh*.85))),B1=P(add(b,mul(q.t,hh*.5))),B2=P(add(b,mul(q.t,-hh*.45)));pa.moveTo(B1[0],B1[1]);pa.lineTo(T[0],T[1]);pa.lineTo(B2[0],B2[1]);pa.closePath();n++}
+    if(n){ctx.lineJoin='round';ctx.fillStyle=K.spine.d;ctx.fill(pa);ctx.strokeStyle=INK;ctx.lineWidth=1;ctx.stroke(pa)}}
   // foam where it comes out of the water
-  if(fx)for(let i=0;i<N-1;i++){const a=S[i].c,b=S[i+1].c;if(!S[i].hide&&(a[2]-wl)*(b[2]-wl)<0){const u=(wl-a[2])/(b[2]-a[2]),c=lerp3(a,b,u);foam(P([c[0],c[1],wl]),S[i].r*.8,K,.55)}}
+  if(o.fx)for(let i=0;i<N-1;i++){const a=S[i].c,b=S[i+1].c;if(!S[i].hide&&(a[2]-wl)*(b[2]-wl)<0){const u=(wl-a[2])/(b[2]-a[2]),c=lerp3(a,b,u);foam(P([c[0],c[1],wl]),S[i].r*.8,K,.55)}}
   return Hs}
-// the gold eye with its slit, the brow, the third eye on the forehead
-function eyeG(q,rx,ry,K,h,ang){const sq=(h.blink==null?1:h.blink)*(1-.4*(h.squint||0)),sy=ry*Math.max(.12,sq);
-  if(h.shut>.5){ctx.strokeStyle=INK;ctx.lineWidth=1.4;ctx.lineCap='round';ctx.beginPath();ctx.ellipse(q[0],q[1]+ry*.2,rx,ry*.5,ang,.15,Math.PI-.15);ctx.stroke();return}
-  ctx.beginPath();ctx.ellipse(q[0],q[1],rx,sy,ang,0,TAU);ctx.fillStyle=K.eye;ctx.fill();ctx.strokeStyle=INK;ctx.lineWidth=1.25;ctx.stroke();
-  if(sq>.25){ctx.fillStyle='#1b1612';ctx.beginPath();ctx.ellipse(q[0],q[1],Math.max(.45,rx*.2),sy*.76,ang,0,TAU);ctx.fill();ctx.fillStyle='#fff';ball([q[0]-rx*.3,q[1]-sy*.34],Math.max(.4,Math.min(rx,sy)*.26));ctx.fill()}}
-function thirdEye(V0,c,n,hv,rx,ry,K,h){const{P,F}=V0,f=F(n);if(f<.08)return;const q=P(c),a=P(add(c,mul(hv,rx))),ang=Math.atan2(a[1]-q[1],a[0]-q[0]),fr=cl((f-.08)*3,0,1),RX=rx*Math.pow(f,.3),RY=ry*Math.pow(f,.7)*(1+.25*(h.wide||0));
+// how open the hood is: half open at rest, wide when it threatens (the old fan, the fins, a breath)
+const hoodK=h=>cl(.3+.7*Math.max(h.wing||0,(h.fan-.6)/.4*.8,0)+(h.hb||0),0,1.15);
+// the hood of the cobra: the neck under the head opened on both sides, a little cupped forward; the front pale with three dark bands
+// across the throat, the back dark with two pale false eyes joined by a curve (in the second phase they open: magenta, with a slit)
+const HOODW=[[0,.1],[.28,.55],[.6,.94],[.8,1],[.93,.86],[1,.6]];
+function hoodDraw(V0,S,g,K,wl,A){const{P,F}=V0,k=g.k,h=g.h,fl=hoodK(h),W=lerp(10,27,cl(fl,0,1.15))*k,s0=.4,s1=.88,L3=[],R3=[],C=[];
+  for(const q of S){if(q.s<s0-1e-6||q.s>s1+1e-6||q.hide||q.c[2]<wl+3)continue;const u=(q.s-s0)/(s1-s0),w=W*keys(HOODW,u)+q.r*.55,fw=mul(q.f,.3*w*w/(W+q.r));
+    L3.push(add(add(q.c,mul(q.v,w)),fw));R3.push(add(add(q.c,mul(q.v,-w)),fw));C.push({q,w,u})}
+  if(C.length<3||C[C.length-1].u<.7)return null;const qt=C[C.length-1].q,top=add(qt.c,add(mul(qt.t,W*.18+2*k),mul(qt.f,-.1*W))),P3=L3.concat([top],R3.slice().reverse());if(P3.every(q=>q[2]<wl))return null;
+  const pts=P3.map(q=>P([q[0],q[1],Math.max(q[2],wl)])),pa=smoothP(pts),bb=bbox(pts),mid=C[Math.round((C.length-1)*.62)],fv=F(mid.q.f),front=fv>=0,thin=Math.abs(fv)<.22;
+  ctx.lineJoin='round';ctx.fillStyle=grad3(bb,K.hoodB);ctx.fill(pa);
+  // the ribs under the skin, from the neck out to the edge
+  ctx.strokeStyle=front?'rgba(90,72,40,.35)':'rgba(0,0,0,.3)';ctx.lineWidth=.9;ctx.beginPath();for(const f of[.2,.42,.64,.84]){const i=Math.round((C.length-1)*f),c=P(C[i].q.c),a=P(L3[i]),b=P(R3[i]);ctx.moveTo(c[0],c[1]);ctx.lineTo(a[0],a[1]);ctx.moveTo(c[0],c[1]);ctx.lineTo(b[0],b[1])}ctx.stroke();
+  const surf=(c,sd,d)=>{const q=c.q;return add(add(q.c,mul(q.v,sd*d)),mul(q.f,.3*d*d/(W+q.r)))};
+  if(thin){}
+  else if(front){// the pale throat down the middle, with three dark bands across it
+    const th=[],tw=k*4.6;for(const c of C){const q=c.q,hw2=Math.min(tw+q.r*.4,c.w*.85);th.push([P(add(add(q.c,mul(q.v,hw2)),mul(q.f,q.r*.7))),P(add(add(q.c,mul(q.v,-hw2)),mul(q.f,q.r*.7)))])}
+    ctx.beginPath();for(const a of th)ctx.lineTo(a[0][0],a[0][1]);for(let i=th.length-1;i>=0;i--)ctx.lineTo(th[i][1][0],th[i][1][1]);ctx.closePath();ctx.fillStyle=grad3(bb,K.hoodF);ctx.fill();
+    ctx.strokeStyle=K.band;ctx.lineWidth=2.4*k;ctx.lineCap='butt';ctx.beginPath();for(const f of[.3,.46,.62]){const i=Math.round((th.length-1)*f);ctx.moveTo(th[i][0][0],th[i][0][1]);ctx.lineTo(th[i][1][0],th[i][1][1])}ctx.stroke()}
+  else{// the false eyes: two big pale rings that stare, a dark middle in each (nothing else: no brow, no mouth); in the second phase they
+    // open, magenta, with a slit
+    const e=C[Math.round((C.length-1)*.68)],nB=mul(e.q.f,-1),open=A.memLit||0,u0=e.q.t;
+    for(const sd of[-1,1]){const c=add(surf(e,sd,e.w*.5),mul(nB,.6)),q=P(c),R=5*k;if(!LOWFX&&open>.05)shine(K.spotG,q[0],q[1],R*2.8,.6*open);
+      ctx.beginPath();discP(V0,c,nB,R,R*.86,u0);ctx.fillStyle=K.spot;ctx.fill();ctx.strokeStyle=INK;ctx.lineWidth=1.1;ctx.stroke();
+      ctx.beginPath();discP(V0,c,nB,R*.6,R*.52,u0);ctx.fillStyle=open>.5?K.ti:K.spotC;ctx.fill();
+      if(open>.5){ctx.fillStyle='#14060f';ctx.beginPath();discP(V0,c,nB,R*.12,R*.5,u0);ctx.fill()}else{ctx.fillStyle=`rgba(${rgbS(K.spot)},.5)`;ctx.beginPath();discP(V0,add(c,mul(u0,R*.18)),nB,R*.14,R*.12,u0);ctx.fill()}}}
+  ctx.strokeStyle=INK;ctx.lineWidth=2.2;ctx.stroke(pa);if(!thin)rimK(pts,rimA(K)*.8,K.rim);return pts}
+// a horn of bone: from b (on the skull) along d, curving up by up, L long, r wide at the root; dark where it grows and at the tip
+function hornDraw(V0,b,d,up,L,r,K,flat){const{P}=V0,t=add(add(b,mul(d,L)),up),m=add(b,add(mul(d,L*.52),mul(up,.12))),B=P(b),M=P(m),T=P(t);
+  const dx=T[0]-B[0],dy=T[1]-B[1],l=Math.hypot(dx,dy)||1,nx=-dy/l*r,ny=dx/l*r;
+  ctx.beginPath();ctx.moveTo(B[0]+nx,B[1]+ny);ctx.quadraticCurveTo(M[0]+nx*.6,M[1]+ny*.6,T[0],T[1]);ctx.quadraticCurveTo(M[0]-nx*.6,M[1]-ny*.6,B[0]-nx,B[1]-ny);ctx.closePath();
+  if(flat)ctx.fillStyle=K.horn.b;else{const g=ctx.createLinearGradient(B[0],B[1],T[0],T[1]);g.addColorStop(0,K.horn.d);g.addColorStop(.25,K.horn.b);g.addColorStop(.65,K.horn.l);g.addColorStop(1,K.hornT);ctx.fillStyle=g}ctx.fill();
+  ctx.lineJoin='round';ctx.strokeStyle=INK;ctx.lineWidth=1.3;ctx.stroke();
+  if(L>4){ctx.strokeStyle='rgba(70,52,30,.55)';ctx.lineWidth=.8;ctx.beginPath();for(const f of[.3,.55]){const c=[lerp(B[0],T[0],f),lerp(B[1],T[1],f)],w=(1-f*.85)*.85;ctx.moveTo(c[0]+nx*w,c[1]+ny*w);ctx.lineTo(c[0]-nx*w,c[1]-ny*w)}ctx.stroke()}}
+// the eye: acid gold with a black slit, a point of light; the third lid (a pale film) sweeps across it from the snout side (h.blink); over it
+// the heavy upper lid slanting down to the snout (an angry eye: lower still when it squints), its edge in ink, the brow ridge along it
+function eyeG(q,rx,ry,K,h,ang,dir){const sy=ry;
+  if(h.shut>.5){ctx.strokeStyle=INK;ctx.lineWidth=1.6;ctx.lineCap='round';ctx.beginPath();ctx.ellipse(q[0],q[1]+ry*.2,rx,ry*.5,ang,.15,Math.PI-.15);ctx.stroke();return}
+  const eyeP=()=>{ctx.beginPath();ctx.ellipse(q[0],q[1],rx,sy,ang,0,TAU)};
+  eyeP();const g=ctx.createRadialGradient(q[0]-rx*.2,q[1]+sy*.1,rx*.1,q[0],q[1],rx*1.05);g.addColorStop(0,cmix(K.eye,'#ffffff',.5));g.addColorStop(.5,K.eye);g.addColorStop(1,K.eyeD);
+  ctx.fillStyle=g;ctx.fill();
+  const pw=Math.max(.5,rx*(.13+.25*(h.wide||0)));ctx.fillStyle='#0b0604';ctx.beginPath();ctx.ellipse(q[0]+dir*rx*.08,q[1]+sy*.08,pw,sy*.86,ang,0,TAU);ctx.fill();
+  ctx.fillStyle='#fff';ball([q[0]-dir*rx*.3,q[1]+sy*.05],Math.max(.45,Math.min(rx,sy)*.22));ctx.fill();
+  const b=h.blink==null?1:h.blink;
+  ctx.save();eyeP();ctx.clip();
+  if(b<.98){const c=1-b,ex=q[0]+dir*rx*(1-2.1*c);ctx.beginPath();ctx.moveTo(ex,q[1]-sy-2);ctx.quadraticCurveTo(ex-dir*rx*.3,q[1],ex,q[1]+sy+2);ctx.lineTo(q[0]+dir*(rx+3),q[1]+sy+2);ctx.lineTo(q[0]+dir*(rx+3),q[1]-sy-2);ctx.closePath();
+    ctx.fillStyle=K.nict;ctx.fill();ctx.strokeStyle='rgba(255,255,255,.55)';ctx.lineWidth=.7;ctx.stroke()}
+  const sq=h.squint||0,A0=[q[0]-dir*rx*1.15,q[1]-sy*(.9-.45*sq)],B0=[q[0]+dir*rx*1.15,q[1]-sy*(.02-.5*sq)];
+  ctx.beginPath();ctx.moveTo(A0[0],A0[1]);ctx.lineTo(B0[0],B0[1]);ctx.lineTo(B0[0],B0[1]-sy*3);ctx.lineTo(A0[0],A0[1]-sy*3);ctx.closePath();ctx.fillStyle=K.sc.b;ctx.fill();ctx.restore();
+  eyeP();ctx.strokeStyle=INK;ctx.lineWidth=1.35;ctx.stroke();
+  const A1=[A0[0]-dir*rx*.35,A0[1]-sy*.25],B1=[B0[0]+dir*rx*.2,B0[1]+sy*.08];ctx.lineCap='round';
+  ctx.strokeStyle=K.sc.d;ctx.lineWidth=Math.max(2,ry*.75);ctx.beginPath();ctx.moveTo(A1[0],A1[1]-ry*.4);ctx.lineTo(B1[0],B1[1]-ry*.4);ctx.stroke();
+  ctx.strokeStyle=INK;ctx.lineWidth=1.7;ctx.beginPath();ctx.moveTo(A1[0],A1[1]);ctx.lineTo(B1[0],B1[1]);ctx.stroke();
+  ctx.strokeStyle=K.sc.l;ctx.lineWidth=.8;ctx.beginPath();ctx.moveTo(A1[0],A1[1]-ry*.75);ctx.lineTo(B1[0],B1[1]-ry*.75);ctx.stroke()}
+// the slit on the forehead (closed: a seam that glows with the venom, h.gem; open in the second phase: a magenta eye standing upright,
+// the pupil across it; h.spiral turns two lines in it in the Sguardo)
+function thirdEye(V0,c,n,hu,K,h,k){const{P,F}=V0,f=F(n);if(f<.1)return;const q=P(c),a=P(add(c,mul(hu,4.8*k))),ang=Math.atan2(a[1]-q[1],a[0]-q[0]),fr=cl((f-.1)*3,0,1),RL=Math.hypot(a[0]-q[0],a[1]-q[1]),
+    op=cl(h.third||0,0,1),RW=lerp(.7,2.9*(1+.3*(h.wide||0)),op)*k*Math.pow(f,.5);
   ctx.save();ctx.globalAlpha*=fr;
-  if(!LOWFX&&(h.gem>.38||h.third>.5)){const gl=h.third>.5?K.tG:K.gemG;shine(gl,q[0],q[1],RX*3,.2+.45*cl(h.gem||0,0,1.5)+(h.third>.5?.2:0))}
-  ctx.beginPath();ctx.ellipse(q[0],q[1],RX,RY,ang,0,TAU);
-  if(h.third>.02){ctx.fillStyle=K.tw;ctx.fill();ctx.save();ctx.clip();const ir=RY*.95;ctx.fillStyle=K.ti;ball(q,ir);ctx.fill();ctx.strokeStyle=K.tr;ctx.lineWidth=1;ball(q,ir*.92);ctx.stroke();
-    if(h.spiral>0){ctx.strokeStyle=`rgba(74,20,120,${.8*h.spiral})`;ctx.lineWidth=.9;for(const s0 of[0,Math.PI]){ctx.beginPath();for(let t=0;t<=1;t+=.1){const an=s0+(h.spA||0)+t*4.2,rr=ir*.95*t;ctx.lineTo(q[0]+Math.cos(an)*rr,q[1]+Math.sin(an)*rr)}ctx.stroke()}}
-    ctx.fillStyle='#1b1612';ctx.beginPath();ctx.ellipse(q[0],q[1],Math.max(.4,RX*.14),RY*.78,ang,0,TAU);ctx.fill();ctx.fillStyle='#fff';ball([q[0]-RX*.25,q[1]-RY*.3],Math.max(.4,RY*.26));ctx.fill();
-    // the lid slides away (what is left of the gem)
-    if(h.third<1){ctx.fillStyle=K.gem;ctx.beginPath();ctx.ellipse(q[0],q[1]-RY*2*h.third,RX*1.05,RY*1.05,ang,0,TAU);ctx.fill()}
-    ctx.restore()}
-  else{ctx.fillStyle=softBall(q,RX,K.gem,.45,.2);ctx.fill();ctx.strokeStyle=K.gemLid;ctx.lineWidth=.8;ctx.beginPath();ctx.moveTo(q[0]-Math.cos(ang)*RX*.8,q[1]-Math.sin(ang)*RX*.8);ctx.lineTo(q[0]+Math.cos(ang)*RX*.8,q[1]+Math.sin(ang)*RX*.8);ctx.stroke();
-    ctx.fillStyle='rgba(255,255,255,.85)';ball([q[0]-RX*.35,q[1]-RY*.4],Math.max(.4,RY*.3));ctx.fill()}
-  ctx.beginPath();ctx.ellipse(q[0],q[1],RX,RY,ang,0,TAU);ctx.strokeStyle=K.gemRim;ctx.lineWidth=1.3;ctx.stroke();ctx.restore()}
-// a head: the skull and the snout split at the mouth, the fan on its nape, the little fins behind the jaw, the throat sac, the gold eyes
-// under heavy brows, the gem (the third eye), the nostrils, the mouth with the smirk and two little fangs, the forked tongue
-function headDraw(V0,g,K,wl,fx,A){const{P,F}=V0,{hc,HF,k,h,n}=g,hu=HF.u,hv=HF.v,hw=HF.w,ja=h.open*.8;if(hc[2]+24*k<wl)return;
-  const sq=h.sq||0,E=HE.map(e=>({c:mul(e.c,k),r:[e.r[0]*k*(1+.1*sq),e.r[1]*k*(1+.05*sq),e.r[2]*k*(1-.15*sq)]})),Hd=splitHead(hc,HF,E,-2.2*k,ja,2,10);
+  if(!LOWFX){const gl=op>.5?K.tG:K.gemG,al=op>.5?.5:.12+.45*cl(h.gem||0,0,1.5);if(al>.13)shine(gl,q[0],q[1],RL*2.2,al)}
+  ctx.beginPath();ctx.ellipse(q[0],q[1],RL,RW,ang,0,TAU);
+  if(op>.04){ctx.fillStyle=K.tw;ctx.fill();ctx.save();ctx.clip();ctx.fillStyle=K.ti;ctx.beginPath();ctx.ellipse(q[0],q[1],RL*.62,RW*.95,ang,0,TAU);ctx.fill();
+    if(h.spiral>0){ctx.strokeStyle=`rgba(74,10,70,${.8*h.spiral})`;ctx.lineWidth=.9;for(const s0 of[0,Math.PI]){ctx.beginPath();for(let t=0;t<=1;t+=.1){const an=s0+(h.spA||0)+t*4.2,rr=RW*.9*t;ctx.lineTo(q[0]+Math.cos(an)*rr*RL/RW*.55,q[1]+Math.sin(an)*rr)}ctx.stroke()}}
+    ctx.fillStyle='#14060f';ctx.beginPath();ctx.ellipse(q[0],q[1],RL*.5,Math.max(.4,RW*.16),ang,0,TAU);ctx.fill();ctx.fillStyle='#fff';ball([q[0]-RL*.2,q[1]-RW*.35],Math.max(.4,RW*.24));ctx.fill();ctx.restore();
+    ctx.strokeStyle=INK;ctx.lineWidth=1.2;ctx.stroke()}
+  else{ctx.fillStyle=`rgba(${K.gemG},${.25+.5*cl(h.gem||0,0,1)})`;ctx.fill();ctx.strokeStyle=INK;ctx.lineWidth=1.1;ctx.stroke()}
+  ctx.restore()}
+// a head: the skull and the snout split at the mouth; two big horns swept back and two short ones over the eyes; the dark arrow of the
+// vipers on top; the deep sockets with the acid eyes under heavy brows; the slit on the forehead; the nostrils and the pits; the long line
+// of the mouth bending down at the back (up in the smirk); the jaw paler under; inside the mouth the dark throat and its light; the two
+// fangs that fold back when it closes and swing forward when it opens wide; the forked tongue
+function headDraw(V0,g,K,wl,fx,A){const{P,F}=V0,{hc,HF,k,h,n}=g,hu=HF.u,hv=HF.v,hw=HF.w,ja=h.open*JA;if(hc[2]+28*k<wl)return;
+  const sq=h.sq||0,E=HE.map(e=>({c:mul(e.c,k),r:[e.r[0]*k*(1+.1*sq),e.r[1]*k*(1+.05*sq),e.r[2]*k*(1-.15*sq)]})),Hd=splitHead(hc,HF,E,MZ*k,ja,2,10);
   const toW=d=>add(hc,add(add(mul(hu,d[0]),mul(hv,d[1])),mul(hw,d[2]))),toD=d=>nrm(add(add(mul(hu,d[0]),mul(hv,d[1])),mul(hw,d[2])));
-  const skC=E[0].c,skR=E[0].r,onSk=m=>toW(ellAt(skC,skR,null,nrm(m))),nSk=m=>{const q=ellN(skR,null,nrm(m));return toD(q)};
-  // the fan: on the nape, its rays in the plane across the head, leaning back (35° at rest, 15° open)
-  const fanB=onSk([-.75,0,.66]),tilt=lerp(35,15,cl(h.ft,0,1))*DEG,fa=toD([-Math.sin(tilt),0,Math.cos(tilt)]),spread=.42+.58*cl(h.fan,0,1.2),fanFront=F(nSk([-.75,0,.66]))>.1;
-  const fan=()=>fanDraw(V0,add(fanB,mul(fa,-1.5*k)),fa,hv,n.fa.map(d=>d*DEG*spread*(n.fa.length>3?1:1.15)),n.fl.map(l=>l*k*1.28*(.85+.15*cl(h.fan,0,1))),K,{cut:wl,rw:1.25*k,mk:.84,bend:n.fa.length>3?20*DEG:0,back:mul(hu,-1),lit:Math.max(A.memLit,h.wide||0)});
-  // the little fins behind the jaw (open when it hisses)
-  const wing=sd=>{const b=toW([-8*k,sd*7.5*k,-3.2*k]),op=cl(h.wing,0,1),a=toD([-.9+.5*op,sd*(.25+.75*op),.2]),side=toD([.15,0,1]);
-    fanDraw(V0,b,nrm(a),nrm(side),[-30*DEG,0,30*DEG].map(x=>x*(.5+.5*op)),[6*k,7.5*k,6*k],K,{cut:wl,rw:1.1,lw:1.2,lit:A.memLit,small:1})};
-  const wFar=F(hv)>0?-1:1,wOn=h.wing>.12;
-  if(!fanFront)fan();
-  if(wOn)wing(wFar);
-  // the throat sac (ivory, it swells and lights up when the venom comes)
-  if(h.sac>.02||h.throat>.02){const r=(4+4*cl(h.sac,0,1))*k,c=toW([-1*k,0,-6.5*k-r*.4]);if(c[2]>wl){const q=P(c);ctx.lineWidth=1.6;ctx.strokeStyle=INK;ball(q,r);ctx.fillStyle=softBall(q,r,K.plate.b,.3,.3);ctx.fill();ctx.stroke();
-    if(h.sac>.3){ctx.save();ctx.globalAlpha*=sstep(.3,.8,h.sac);ball(q,r*.75);ctx.fillStyle=`rgba(${K.venG},.55)`;ctx.fill();ctx.restore();if(!LOWFX)shine(K.venG,q[0],q[1],r*2.4,.4*h.sac)}}}
+  const skC=E[0].c,skR=E[0].r,onSk=m=>toW(ellAt(skC,skR,null,nrm(m))),nSk=m=>toD(ellN(skR,null,nrm(m)));
+  // the horns (the ones on the far side behind the head)
+  const HR=[];for(const sd of[-1,1])HR.push({m:[-.5,sd*.62,.56],d:[-.9,sd*.48,.36],L:12.5,r:2.9,u:4.6},{m:[.42,sd*.56,.72],d:[-.42,sd*.34,1],L:6,r:2.15,u:.6});
+  for(const hr of HR){hr.b=add(onSk(hr.m),mul(nSk(hr.m),-.6*k));hr.far=F(nSk(hr.m))<(hr.L>8?.02:-.3)}
+  const horn=hr=>{if(hr.b[2]>wl)hornDraw(V0,hr.b,toD(hr.d),mul(hw,hr.u*k),hr.L*k,hr.r*k,K,hr.L<8)};
+  for(const hr of HR)if(hr.far)horn(hr);
   // the jaw, the inside of the mouth with the tongue, the light in the throat
-  svc(V0,Hd.bowl,mixT(K.sc,K.plate,.18),wl,{lw:2});
+  svc(V0,Hd.bowl,mixT(K.sc,K.belly,.42),wl,{lw:2});
   const mouthOpen=ja>.04&&F(Hd.wJ)>.02,mT=lerp3(Hd.lip(0,0),Hd.lip(0,1),.5);
   if(mouthOpen){const fl=Hd.floor.filter(q=>q[2]>wl).map(q=>P(q));if(fl.length>2){const gm=chull(fl);poly(gm);ctx.fillStyle=K.mouth;ctx.fill();ctx.strokeStyle=INK;ctx.lineWidth=1.2;ctx.stroke();
-    ctx.save();poly(gm);ctx.clip();ctx.beginPath();discP(V0,Hd.jaw([3*k,0,Hd.hz+.3]),Hd.wJ,3.4*k,2.2*k,hu);ctx.fillStyle=K.tongue;ctx.fill();
-    const th=h.throat||(h.vl&&h.vl[1]>.95?1:0)||(h.mist>0?1:0);if(th>0){const q=P(Hd.jaw([-6*k,0,Hd.hz+.6]));ctx.fillStyle=`rgba(${K.venG},${.8*th})`;ball(q,2.6*k);ctx.fill();if(!LOWFX)shine(K.venG,q[0],q[1],9*k,.5*th)}ctx.restore()}}
+    ctx.save();poly(gm);ctx.clip();ctx.beginPath();discP(V0,Hd.jaw([4*k,0,Hd.hz+.3]),Hd.wJ,3.6*k,2.2*k,hu);ctx.fillStyle=K.tongue;ctx.fill();
+    const th=h.throat||(h.vl&&h.vl[1]>.95?1:0)||(h.mist>0?1:0)||.35*cl(h.open*1.5-.6,0,1);if(th>0){const q=P(Hd.jaw([-7*k,0,Hd.hz+.6]));ctx.fillStyle=`rgba(${K.venG},${.8*cl(th,0,1)})`;ball(q,2.8*k);ctx.fill();if(!LOWFX)shine(K.venG,q[0],q[1],10*k,.5*cl(th,0,1))}ctx.restore()}}
   const hp=svc(V0,Hd.dome,K.sc,wl,{lw:2.4});
+  const sn=P(toW([24*k,0,-1*k])),EY=[];
   if(hp){rimK(hp,rimA(K),K.rim);
     if(mouthOpen&&F(mul(hw,-1))>.02){const pl=Hd.palate.filter(q=>q[2]>wl).map(q=>P(q));if(pl.length>2){poly(chull(pl));ctx.fillStyle=C.dk(K.mouth,.25);ctx.fill()}}
+    for(const sd of[-1,1]){const m=nrm([.6,sd*.64,.4]),nn=nSk(m),f=F(nn);if(f<.1)continue;const q=P(onSk(m)),rx=(n.s?4.5:4.9)*k*Math.pow(f,.45),ry=(n.s?3.3:3.6)*k*Math.pow(f,.7);EY.push({q,rx,ry,f,sd})}
     ctx.save();ctx.clip(hp.path);
+    // the dark arrow of the vipers on the top of the head, pointing at the snout
+    if(F(hw)>.05){const a=P(onSk([-.62,-.55,.6])),b=P(onSk([-.62,.55,.6])),c=P(toW([14*k,0,4.4*k])),d=P(onSk([-.2,0,1])),m1=P(onSk([.25,-.3,.92])),m2=P(onSk([.25,.3,.92]));
+      ctx.beginPath();ctx.moveTo(a[0],a[1]);ctx.quadraticCurveTo(m1[0],m1[1],c[0],c[1]);ctx.quadraticCurveTo(m2[0],m2[1],b[0],b[1]);ctx.lineTo(d[0],d[1]);ctx.closePath();ctx.fillStyle=K.zig;ctx.fill()}
     // a soft light on the top of the head, the darker snout below
-    const tq=P(onSk([.2,0,1]));ctx.fillStyle=wa(.14);ctx.beginPath();ctx.ellipse(tq[0],tq[1],5*k,3*k,0,0,TAU);ctx.fill();
-    // the mouth: the rim of the cut, rising at the back into a smirk
-    {let r=[];const run2=[];ctx.lineCap='round';for(let i=0;i<=9;i++){const t=-1.55+i/9*3.1,q0=Hd.lip(t,0),up=Math.max(0,Math.abs(t)-1)*(2.6+2*(h.smirk||0))*k,q=add(q0,mul(hw,up));
-        if(F(Hd.lipN(t))>.02&&q[2]>wl)r.push(P(q));else if(r.length){run2.push(r);r=[]}}if(r.length)run2.push(r);ctx.strokeStyle=INK;ctx.lineWidth=1.4;for(const rr of run2)if(rr.length>1){line(rr);ctx.stroke()}}
-    // the nostrils at the tip of the snout
-    for(const sd of[-1,1]){const m=nrm([.95,sd*.22,.32]);if(F(toD(ellN(E[1].r,null,m)))<.1)continue;const q=P(toW(ellAt(E[1].c,E[1].r,null,m)));
-      ctx.fillStyle='rgba(8,24,14,.75)';ctx.beginPath();ctx.ellipse(q[0],q[1],1.1*k,.6*k,0,0,TAU);ctx.fill()}
+    const tq=P(onSk([.2,0,1]));ctx.fillStyle=wa(.12);ctx.beginPath();ctx.ellipse(tq[0],tq[1],5.5*k,3.2*k,0,0,TAU);ctx.fill();
+    // the deep sockets
+    for(const e of EY){ctx.fillStyle=K.sock;ctx.beginPath();ctx.ellipse(e.q[0],e.q[1]-e.ry*.15,e.rx*1.5,e.ry*1.55,0,0,TAU);ctx.fill()}
+    // the mouth: the long line of the lips, bending down at the back (up in the smirk)
+    {let r=[];const run2=[];ctx.lineCap='round';const sm=h.smirk||0;for(let i=0;i<=11;i++){const t=-1.6+i/11*3.2,q0=Hd.lip(t,0),bend=Math.max(0,Math.abs(t)-.95)*k*(sm>0?2.6+2*sm:-1.8),q=add(q0,mul(hw,bend));
+        if(F(Hd.lipN(t))>.02&&q[2]>wl)r.push(P(q));else if(r.length){run2.push(r);r=[]}}if(r.length)run2.push(r);ctx.strokeStyle=INK;ctx.lineWidth=1.5;for(const rr of run2)if(rr.length>1){line(rr);ctx.stroke()}}
+    // the nostrils at the tip of the snout, the pits under the eyes
+    for(const sd of[-1,1]){for(const[m,rx,ry] of[[[.95,sd*.24,.34],1.15,.65],[[.5,sd*.86,.1],.9,.6]]){const mm=nrm(m);if(F(toD(ellN(E[1].r,null,mm)))<.1)continue;const q=P(toW(ellAt(E[1].c,E[1].r,null,mm)));
+      ctx.fillStyle='rgba(4,14,8,.8)';ctx.beginPath();ctx.ellipse(q[0],q[1],rx*k,ry*k,0,0,TAU);ctx.fill()}}
     ctx.restore();
-    // the brows and the eyes (gold, a slit, the point of light), on the skull where the snout begins
-    const sn=P(toW([20*k,0,-1*k])),EY=[];for(const sd of[-1,1]){const m=nrm([.55,sd*.6,.55]),nn=nSk(m),f=F(nn);if(f<.12)continue;const q=P(onSk(m)),rx=(n.s?3.6:4)*Math.pow(f,.45),ry=(n.s?3:3.3)*Math.pow(f,.7);EY.push({q,rx,ry,f,sd})}
-    EY.sort((a,b)=>a.f-b.f);if(!LOWFX&&!h.shut&&EY.length){let x=0,y=0;for(const e of EY){x+=e.q[0];y+=e.q[1]}shine(K.eyeG,x/EY.length,y/EY.length,(EY.length>1?11:8)*k,.3)}
-    for(const e of EY){const dir=sn[0]>=e.q[0]?1:-1,ang=Math.atan2(sn[1]-e.q[1],sn[0]-e.q[0])*.18*dir;eyeG(e.q,e.rx,e.ry,K,h,ang);
-      if(!(h.shut>.5)){const sqz=h.squint||0,o0=[e.q[0]-dir*e.rx*1.15,e.q[1]-e.ry*1.25],o1=[e.q[0]+dir*e.rx*1.05,e.q[1]-e.ry*(.75-.45*sqz)],cc=[e.q[0],e.q[1]-e.ry*1.55];
-        ctx.lineCap='round';ctx.strokeStyle=K.sc.d;ctx.lineWidth=2.6*k;ctx.beginPath();ctx.moveTo(o0[0],o0[1]);ctx.quadraticCurveTo(cc[0],cc[1],o1[0],o1[1]);ctx.stroke();
-        ctx.strokeStyle=K.sc.l;ctx.lineWidth=.8;ctx.beginPath();ctx.moveTo(o0[0],o0[1]-1);ctx.quadraticCurveTo(cc[0],cc[1]-1.1,o1[0],o1[1]-1);ctx.stroke()}}
-    // the gem on the forehead, in front of the fan (an eye that opens in the second phase)
-    {const m=nrm([.3,0,.95]);thirdEye(V0,add(onSk(m),mul(nSk(m),.3)),nSk(m),hv,(n.s?3.7:4.4)*k,(n.s?2.5:3)*k,K,h)}
-    // two little fangs on the upper lip
-    if(ja>.06||F(hu)>-.2)for(const sd of[-1,1]){const t=sd*.34;if(F(Hd.lipN(t))<.08)continue;const b=Hd.lip(t,0);if(b[2]<wl)continue;const q=P(b),e=P(add(b,mul(hw,-(2.2+1.8*cl(h.open/.6,0,1))*k)));
-      ctx.fillStyle=K.fang;ctx.strokeStyle=INK;ctx.lineWidth=.9;ctx.lineJoin='round';const dx=e[0]-q[0],dy=e[1]-q[1],l=Math.hypot(dx,dy)||1,w=1.15*k;ctx.beginPath();ctx.moveTo(q[0]-dy/l*w,q[1]+dx/l*w);ctx.lineTo(e[0],e[1]);ctx.lineTo(q[0]+dy/l*w,q[1]-dx/l*w);ctx.closePath();ctx.fill();ctx.stroke()}}
+    // the eyes in their sockets (each with its glow), under the heavy brows that slope down to the snout
+    EY.sort((a,b)=>a.f-b.f);
+    if(!LOWFX&&!(h.shut>.5)&&EY.length){let x=0,y=0;for(const e of EY){x+=e.q[0];y+=e.q[1]}shine(K.eyeG,x/EY.length,y/EY.length,(EY.length>1?13:9)*k,.32+6*(A.br||0))}
+    for(const e of EY){const dir=sn[0]>=e.q[0]?1:-1,ang=Math.atan2(sn[1]-e.q[1],sn[0]-e.q[0])*.18*dir;eyeG(e.q,e.rx,e.ry,K,h,ang,dir);
+}
+    // the slit on the forehead, between the short horns
+    {const m=nrm([.3,0,.95]);thirdEye(V0,add(onSk(m),mul(nSk(m),.3)),nSk(m),hu,K,h,k)}}
+  for(const hr of HR)if(!hr.far)horn(hr);
+  // the two fangs: folded back along the palate when the mouth is shut (only the tips show), swinging forward as it opens
+  const op=sstep(.08,.55,h.open||0),FT=[];
+  for(const sd of[-1,1]){const t=sd*.3,b=Hd.lip(t,0);if(b[2]<wl||(F(Hd.lipN(t))<-.12&&op<.3))continue;
+    const fold=nrm(add(mul(hu,-.5),mul(hw,-.86))),out=nrm(add(mul(hu,.3),mul(hw,-.95))),d=nrm(lerp3(fold,out,op)),Lf=lerp(3.2,9.5,op)*k,tip=add(b,mul(d,Lf));FT.push(tip);
+    const B=P(b),T=P(tip),M=P(add(add(b,mul(d,Lf*.55)),mul(hu,.9*k*op))),dx=T[0]-B[0],dy=T[1]-B[1],l=Math.hypot(dx,dy)||1,w=1.4*k,nx=-dy/l*w,ny=dx/l*w;
+    ctx.beginPath();ctx.moveTo(B[0]+nx,B[1]+ny);ctx.quadraticCurveTo(M[0]+nx*.45,M[1]+ny*.45,T[0],T[1]);ctx.quadraticCurveTo(M[0]-nx*.45,M[1]-ny*.45,B[0]-nx,B[1]-ny);ctx.closePath();
+    ctx.fillStyle=K.fang;ctx.fill();ctx.strokeStyle=INK;ctx.lineWidth=1;ctx.stroke();
+    if(op>.45&&fx){if(!LOWFX)shine(K.venG,T[0],T[1]+1,4*k,.5*op);ctx.fillStyle=K.ven;ctx.strokeStyle=INK;ctx.lineWidth=.7;ball([T[0],T[1]+1.1*k],.9*k);ctx.fill();ctx.stroke()}}
   // the forked tongue that flicks out
-  if(h.tongue>.03){const tl=(6+4*h.tongue)*k*h.tongue,b=add(mT,mul(hu,1*k)),e=add(b,add(mul(hu,tl),mul(hw,-1.2*k))),q0=P(b),q1=P(e);if(b[2]>wl){ctx.lineCap='round';ctx.strokeStyle=INK;ctx.lineWidth=2.6;seg(q0,q1);ctx.stroke();ctx.strokeStyle=K.tongue;ctx.lineWidth=1.3;seg(q0,q1);ctx.stroke();
-    for(const sd of[-1,1]){const f2=P(add(e,add(mul(hu,2*k),mul(hv,sd*1.6*k))));ctx.strokeStyle=K.tongue;ctx.lineWidth=1.1;seg(q1,f2);ctx.stroke()}}}
-  if(wOn)wing(-wFar);
-  if(fanFront)fan();
-  // the effects at the mouth: the venom ball leaving, the mist of the breath, a drip, the cough from the nostrils
-  if(fx){const mq=P(add(mT,mul(hu,2*k)));
-    if(h.glob>=0){const u=h.glob,m=add(mT,add(mul(hu,(3+u*18)*k),[0,0,10*u])),q=P(m),r=(3+u*4)*k;if(!LOWFX)shine(K.venG,q[0],q[1],r*3,.4);ctx.lineWidth=1.4;ctx.strokeStyle=INK;ball(q,r);ctx.fillStyle=softBall(q,r,K.ven,.45,.25);ctx.fill();ctx.stroke()}
+  if(h.tongue>.03){const tl=(8+6*h.tongue)*k*h.tongue,b=add(mT,mul(hu,1*k)),e=add(b,add(mul(hu,tl),mul(hw,-1.4*k))),q0=P(b),q1=P(e);if(b[2]>wl){ctx.lineCap='round';ctx.strokeStyle=INK;ctx.lineWidth=2.8;seg(q0,q1);ctx.stroke();ctx.strokeStyle=K.tongue;ctx.lineWidth=1.4;seg(q0,q1);ctx.stroke();
+    for(const sd of[-1,1]){const f2=P(add(e,add(mul(hu,2.6*k),mul(hv,sd*2*k))));ctx.strokeStyle=INK;ctx.lineWidth=2.2;seg(q1,f2);ctx.stroke();ctx.strokeStyle=K.tongue;ctx.lineWidth=1;seg(q1,f2);ctx.stroke()}}}
+  // the effects at the mouth: the venom ball leaving, the mist of the breath, a drop from a fang, the cough from the nostrils
+  if(fx){if(h.glob>=0){const u=h.glob,m=add(mT,add(mul(hu,(3+u*18)*k),[0,0,10*u])),q=P(m),r=(3+u*4)*k;if(!LOWFX)shine(K.venG,q[0],q[1],r*3,.4);ctx.lineWidth=1.4;ctx.strokeStyle=INK;ball(q,r);ctx.fillStyle=softBall(q,r,K.ven,.45,.25);ctx.fill();ctx.stroke()}
     if(h.mist>0&&!LOWFX)for(let j=0;j<5;j++){const u=((A.t||0)*3+j/5)%1,m=add(mT,add(mul(hu,(4+u*22)*k),[0,0,u*4])),q=P(m);ctx.fillStyle=`rgba(${K.venG},${.4*(1-u)*h.mist})`;ball(q,(2.5+u*8)*k);ctx.fill()}
-    if(h.drip>=0&&h.drip<1){const m=add(mT,mul(hw,-2*k)),z=lerp(m[2],wl,h.drip*h.drip),q=P([m[0],m[1],z]);ctx.fillStyle=K.ven;ctx.strokeStyle=INK;ctx.lineWidth=.8;ball(q,1.4*k);ctx.fill();ctx.stroke()}
-    if(h.cough>0&&!LOWFX)for(const sd of[-1,1]){const m=toW([22*k,sd*2*k,1*k]),q=P(add(m,mul(hu,4*k*h.cough)));ctx.fillStyle=`rgba(${K.venG},${.45*h.cough})`;ball(q,3*k*(1+h.cough));ctx.fill()}}
-  if(h.stars>0){const q=P(add(hc,mul(hw,16*k)));for(let i=0;i<3;i++){const an=(A.t||0)*5+i*TAU/3;starS(q[0]+Math.cos(an)*10*k,q[1]+Math.sin(an)*3.4*k,2.6,h.stars)}}}
-// the hump, cut at the water: smooth scales, two rows of lozenges (its cloak), the ivory gorget, the five fins round its back
-function moundDraw(V0,X,A,K,wl,fx){const{P,F}=V0,br=1+(A.br||0),Rd=[HB.r[0]*br,HB.r[1]*br,HB.r[2]*(1+(A.br||0)*1.3)];
-  const fin=near=>{for(let i=0;i<FINS.length;i++){const[az,hg]=FINS[i],el=.8,m=[Math.cos(az)*Math.cos(el),Math.sin(az)*Math.cos(el),Math.sin(el)],nm=X.Rd(ellN(Rd,null,m));if((F(nm)>0)!==near)continue;
-    const b=X.T(add(ellAt(HB.c,Rd,null,m),[0,0,-1.5]));if(b[2]<wl-4)continue;const wv=A.finW*.28*Math.sin((A.t||0)*TAU/1.6*1-i*1.1)+(A.fin||0),out=X.Rd([Math.cos(az),Math.sin(az),0]);
-    const a=nrm(add(add(mul(nm,.45),X.Rd([0,0,.9])),mul(out,.42+wv))),sd=X.Rd([-Math.sin(az),Math.cos(az),0]),H0=hg*(.45+.55*A.finUp);
-    fanDraw(V0,b,a,sd,[-28*DEG,0,28*DEG],[H0*.78,H0,H0*.78],K,{cut:wl,rw:1.7,lit:A.memLit})}};
-  fin(false);
-  const rows=ellRows(HB.c,Rd,AXES,6,18,-.8,Math.PI/2).map(r=>r.map(X.T)),H=svc(V0,rows,K.sc,wl,{lw:2.8});if(!H)return;
+    if(h.drip>=0&&h.drip<1){const m=FT.length?FT[0]:add(mT,mul(hw,-2*k)),z=lerp(m[2],wl,h.drip*h.drip),q=P([m[0],m[1],z]);ctx.fillStyle=K.ven;ctx.strokeStyle=INK;ctx.lineWidth=.8;ball(q,1.5*k);ctx.fill();ctx.stroke()}
+    if(h.cough>0&&!LOWFX)for(const sd of[-1,1]){const m=toW([24*k,sd*2*k,1*k]),q=P(add(m,mul(hu,4*k*h.cough)));ctx.fillStyle=`rgba(${K.venG},${.45*h.cough})`;ball(q,3*k*(1+h.cough));ctx.fill()}}
+  if(h.stars>0){const q=P(add(hc,mul(hw,18*k)));for(let i=0;i<3;i++){const an=(A.t||0)*5+i*TAU/3;starS(q[0]+Math.cos(an)*10*k,q[1]+Math.sin(an)*3.4*k,2.6,h.stars)}}}
+// a neck with its hood and its head, in the order the hood faces us: hood, neck, head (from the front); head, neck, hood (from behind)
+function neckGroup(V0,g,X,K,wl,fx,A){const S=spineOf(g,X,wl),fm=S[Math.round(S.length*.8)]||S[S.length-1],front=V0.F(fm.f)>=0,h=g.h;
+  const neck=()=>tubeDraw(V0,S,K,wl,{belly:1,vl:h.vl,glowAll:h.glowAll,sp:2,sp0:2,spH:3,fx,zw:.46});
+  if(front){hoodDraw(V0,S,g,K,wl,A);neck();headDraw(V0,g,K,wl,fx,A)}else{headDraw(V0,g,K,wl,fx,A);neck();hoodDraw(V0,S,g,K,wl,A)}}
+// the back of the body: a long low hump in the black water (only its top shows), dark blotches, the zigzag down its spine with the acid
+// dots, a row of spines (they rise in the entrance), the weed draped over it, the foam at the water line
+const BLOT=[[.6,.5,7],[2.3,.45,8],[3.5,.6,7],[4.6,.4,8],[5.6,.55,6],[1.4,.25,6]];
+const BWEED=[[2.2,.7,0],[2.75,1.15,1.7],[3.3,.55,3.1],[3.7,1.0,4.4],[4.25,.62,2.2]];
+function bodyDraw(V0,X,A,K,wl,fx){const{P,F}=V0,br=1+(A.br||0),Rd=[HB.r[0]*br,HB.r[1]*br,HB.r[2]*(1+(A.br||0)*1.3)],at=m=>X.T(ellAt(HB.c,Rd,null,m)),nAt=m=>X.Rd(ellN(Rd,null,m)),sph=(az,el)=>[Math.cos(az)*Math.cos(el),Math.sin(az)*Math.cos(el),Math.sin(el)];
+  const rows=ellRows(HB.c,Rd,AXES,5,18,-.8,Math.PI/2).map(r=>r.map(X.T)),H=svc(V0,rows,K.sc,wl,{lw:2.8});if(!H)return;
   ctx.save();ctx.clip(H.path);
-  // the cloak: two rows of big lozenges
-  ctx.beginPath();for(const[el,nn,r] of[[.25,12,6],[.6,8,5]])for(let j=0;j<nn;j++){const az=j/nn*TAU+el*2,m=[Math.cos(az)*Math.cos(el),Math.sin(az)*Math.cos(el),Math.sin(el)],c=X.T(ellAt(HB.c,Rd,null,m)),nm=X.Rd(ellN(Rd,null,m));
-    if(F(nm)<.22||c[2]<wl+1)continue;const e1=nrm(cross(nm,[0,0,1])),e2=nrm(cross(e1,nm)),a=P(add(c,mul(e1,r))),b=P(add(c,mul(e2,r*.8))),cc=P(add(c,mul(e1,-r))),d=P(add(c,mul(e2,-r*.8)));
-    ctx.moveTo(a[0],a[1]);ctx.lineTo(b[0],b[1]);ctx.lineTo(cc[0],cc[1]);ctx.lineTo(d[0],d[1]);ctx.closePath()}ctx.fillStyle=K.loz;ctx.fill();
-  // the gorget: a light collar of ivory plates on its front, under the roots of the necks (three rows, staggered seams)
-  {const S0=(az,z)=>{const zz=cl(z/Rd[2],-.99,.99),rr=Math.sqrt(1-zz*zz),m=[Math.cos(az)*rr,Math.sin(az)*rr,zz];return{c:X.T(ellAt(HB.c,Rd,null,m)),n:X.Rd(ellN(Rd,null,m))}};
-    const AZ=.5,Z0=1,Z1=18,edge=[];for(let j=0;j<=8;j++)edge.push(S0(-AZ+2*AZ*j/8,Z1+2*Math.cos((j/8-.5)*Math.PI)));for(let j=8;j>=0;j--)edge.push(S0(-AZ+2*AZ*j/8,Z0));
-    if(F(S0(0,11).n)>.05){const pe=edge.map(q=>P(q.c));ctx.beginPath();pe.forEach(q=>ctx.lineTo(q[0],q[1]));ctx.closePath();ctx.fillStyle=grad3(bbox(pe),mixT(K.plate,K.sc,.12));ctx.fill();
-      ctx.strokeStyle=K.pline;ctx.lineWidth=1.1;ctx.beginPath();for(const z of[6.5,12]){for(let j=0;j<=10;j++){const q=P(S0(-AZ+2*AZ*j/10,z).c);j?ctx.lineTo(q[0],q[1]):ctx.moveTo(q[0],q[1])}}
-      [[Z0,6.5,5],[6.5,12,4],[12,Z1,3]].forEach(([za,zb,nn],r)=>{for(let j=1;j<nn;j++){const az=-AZ+2*AZ*j/nn,a=P(S0(az,za+.4).c),b=P(S0(az,zb-.4).c);ctx.moveTo(a[0],a[1]);ctx.lineTo(b[0],b[1])}});ctx.stroke();
-      ctx.strokeStyle=K.plate.d;ctx.lineWidth=1.3;ctx.beginPath();pe.forEach(q=>ctx.lineTo(q[0],q[1]));ctx.closePath();ctx.stroke()}}
-  // deep shadow at the water line
-  const bb=bbox(H),g=ctx.createLinearGradient(0,bb[1],0,bb[3]);g.addColorStop(0,'rgba(10,20,14,0)');g.addColorStop(.62,'rgba(10,20,14,0)');g.addColorStop(1,'rgba(6,14,10,.55)');ctx.fillStyle=g;ctx.fillRect(bb[0]-2,bb[1],bb[2]-bb[0]+4,bb[3]-bb[1]+2);
+  ctx.fillStyle=`rgba(${rgbS(K.sc.d)},.38)`;for(const[az,el,r] of BLOT){const m=sph(az,el);if(F(nAt(m))<.15||at(m)[2]<wl)continue;ctx.beginPath();discP(V0,at(m),nAt(m),r,r*.7);ctx.fill()}
+  {const runs=[],dots=[];let r=[];for(let i=0;i<=14;i++){const el=lerp(.5,2.8,i/14),sg=i%2?1:-1,m=nrm([Math.cos(el),sg*.15,Math.sin(el)]);if(F(nAt(m))<.05||at(m)[2]<wl+1){if(r.length>1)runs.push(r);r=[];continue}const s=P(at(m));r.push(s);if(i%2)dots.push(s)}
+    if(r.length>1)runs.push(r);ctx.lineJoin='round';ctx.lineCap='round';ctx.strokeStyle=K.zig;ctx.lineWidth=7;for(const rr of runs){line(rr);ctx.stroke()}}
+  const bb=bbox(H),g=ctx.createLinearGradient(0,bb[1],0,bb[3]);g.addColorStop(0,'rgba(4,10,8,0)');g.addColorStop(.55,'rgba(4,10,8,0)');g.addColorStop(1,'rgba(2,8,6,.6)');ctx.fillStyle=g;ctx.fillRect(bb[0]-2,bb[1],bb[2]-bb[0]+4,bb[3]-bb[1]+2);
   ctx.restore();rimK(H,rimA(K)*1.1,K.rim);
-  fin(true);
+  // the spines down its spine
+  {const pa=new Path2D();let n=0;const up=A.finUp==null?1:A.finUp;for(let i=0;i<7;i++){const el=lerp(.8,2.55,i/6),m=[Math.cos(el),0,Math.sin(el)],nn=nAt(m);if(F(nn)<-.3)continue;const b=at(m);if(b[2]<wl)continue;
+      const hh=(6.2-1.6*Math.abs(i-3)/3)*up+(A.fin||0)*8;if(hh<.4)continue;const bk=X.Rd([-Math.sin(el),0,Math.cos(el)]),T=P(add(add(b,mul(nn,hh)),mul(bk,hh*.65))),B1=P(add(b,mul(bk,-hh*.45))),B2=P(add(b,mul(bk,hh*.55)));
+      pa.moveTo(B1[0],B1[1]);pa.lineTo(T[0],T[1]);pa.lineTo(B2[0],B2[1]);pa.closePath();n++}
+    if(n){ctx.lineJoin='round';ctx.fillStyle=K.spine.d;ctx.fill(pa);ctx.strokeStyle=INK;ctx.lineWidth=1.2;ctx.stroke(pa)}}
+  // the weed draped over its back, down to the water (it sways a little)
+  {const t=A.t||0;for(const[az,el0,ph] of BWEED){const mm=sph(az,el0*.6);if(F(nAt(mm))<-.05)continue;const pts=[];for(let j=0;j<=6;j++){const el=lerp(el0,-.2,j/6),sw=Math.sin(t*1.3+ph+j*.9)*.05*j/6,m=sph(az+sw+.04*Math.sin(j*1.7+ph),el),q=add(at(m),mul(nAt(m),1.2));if(q[2]<wl){pts.push([q[0],q[1],wl]);break}pts.push(q)}
+      if(pts.length<2)continue;const sp=pts.map(q=>P(q));ctx.lineCap='round';ctx.lineJoin='round';ctx.strokeStyle=INK;ctx.lineWidth=3.6;line(sp);ctx.stroke();ctx.strokeStyle=K.weed.b;ctx.lineWidth=2;line(sp);ctx.stroke();
+      ctx.strokeStyle=K.weed.l;ctx.lineWidth=.9;line(sp.map(q=>[q[0]-.6,q[1]-.7]));ctx.stroke()}}
   // the foam along the water line, the part toward us
   if(fx){const zz=(wl-(HB.c[2]+A.B[2]))/Rd[2];if(Math.abs(zz)<.95){const rr=Math.sqrt(1-zz*zz),run2=[];let r=[];for(let j=0;j<=24;j++){const t=j/24*TAU,m=[Math.cos(t)*rr,Math.sin(t)*rr,zz],nm=X.Rd(ellN(Rd,null,m));
       if(F(nm)>.05){const c=X.T(ellAt(HB.c,Rd,null,m));r.push(P([c[0],c[1],wl]))}else if(r.length){run2.push(r);r=[]}}if(r.length)run2.push(r);
     ctx.strokeStyle=`rgba(${rgbS(K.foam)},.55)`;ctx.lineWidth=1.8;ctx.lineCap='round';for(const q of run2)if(q.length>1){line(q.map((s,j)=>[s[0],s[1]+.8*Math.sin(j*1.7+(A.t||0)*4)]));ctx.stroke()}}}}
-// an arm: the shoulder under the water, the elbow at the water line, the webbed hand on the rim with three fingers and ivory claws
-function armDraw(V0,X,A,i,K,wl,fx){const{P,F}=V0,sd=i?1:-1,hd=A.hands[i],S=X.T(SHO[i]),W=hd.p,pole=X.Rd([.25,sd,.9]),[E,Wr]=ik(S,W,26,26,pole);
-  const T=K.sc,limb=(a,ra,b,rb)=>{if(a[2]<wl&&b[2]<wl)return;let c=a;if(a[2]<wl){c=lerp3(a,b,(wl-a[2])/(b[2]-a[2]))}else if(b[2]<wl){b=lerp3(a,b,(wl-a[2])/(b[2]-a[2]))}
-    const qa=P(c),qb=P(b);C.caps(V0,c,ra,b,rb,T.b,{fill:limbGrad(qa,qb,Math.max(ra,rb),T),lw:2.4,rim:.2});if(fx&&c!==a)foam(P([c[0],c[1],wl]),ra,K)};
-  limb(S,9,E,8.2);limb(E,8.2,Wr,7);if(Wr[2]<wl-4)return;
-  // the hand
-  const fw=nrm([Wr[0]-E[0],Wr[1]-E[1],0]),sw=[-fw[1],fw[0],0],pc=add(Wr,add(mul(fw,3.5),[0,0,1.5+(hd.palm||0)*2])),up=hd.palm>.3;
-  const fing=[-1,0,1].map(j=>{const an=j*.55,d=nrm(add(mul(fw,Math.cos(an)),mul(sw,Math.sin(an)))),b=add(pc,mul(d,4.5)),lift=(hd.tap?hd.tap[j+1]:0)+(hd.curl||0)*3*(j===0?1:.4),
-    m=add(b,add(mul(d,4),[0,0,.5+lift])),t=add(m,add(mul(d,2.2),[0,0,-2.6+lift*.6-(hd.curl||0)*2]));return{b,m,t,d}});
-  // the webbing between the fingers
-  ctx.beginPath();for(let j=0;j<2;j++){const a=fing[j],b=fing[j+1],q=[P(a.b),P(lerp3(a.b,a.m,.85)),P(lerp3(b.b,b.m,.85)),P(b.b)];ctx.moveTo(q[0][0],q[0][1]);for(const s of q.slice(1))ctx.lineTo(s[0],s[1]);ctx.closePath()}
-  ctx.fillStyle=K.mem.b;ctx.fill();ctx.strokeStyle=INK;ctx.lineWidth=1;ctx.stroke();
-  // the palm: green on top (ivory under when it lifts), then the fingers and the claws
-  const q=P(pc);ctx.lineWidth=2.2;ctx.strokeStyle=INK;ctx.beginPath();ctx.ellipse(q[0],q[1],7.6,5.6,0,0,TAU);ctx.fillStyle=softBall(q,7.6,up?K.plate.b:T.b,.3,.3);ctx.fill();ctx.stroke();
-  ctx.lineCap='round';ctx.lineJoin='round';const FP=fing.map(f=>[P(f.b),P(f.m),P(f.t)]);ctx.strokeStyle=INK;ctx.lineWidth=7.4;ctx.beginPath();for(const q3 of FP){ctx.moveTo(q3[0][0],q3[0][1]);ctx.lineTo(q3[1][0],q3[1][1]);ctx.lineTo(q3[2][0],q3[2][1])}ctx.stroke();
-  ctx.strokeStyle=T.b;ctx.lineWidth=4.6;ctx.stroke();ctx.strokeStyle=T.l;ctx.lineWidth=1.2;ctx.beginPath();for(const q3 of FP){ctx.moveTo(q3[0][0]-1,q3[0][1]-1.2);ctx.lineTo(q3[1][0]-1,q3[1][1]-1.2)}ctx.stroke();
-  for(const f of fing){const tq=P(f.t),cq=P(add(f.t,add(mul(f.d,1.6),[0,0,-2.4])));ctx.fillStyle=K.ivory.b;ctx.strokeStyle=INK;ctx.lineWidth=1;
-    const dx=cq[0]-tq[0],dy=cq[1]-tq[1],l=Math.hypot(dx,dy)||1,w=1.45;ctx.beginPath();ctx.moveTo(tq[0]-dy/l*w,tq[1]+dx/l*w);ctx.quadraticCurveTo(cq[0]+dx*.2,cq[1]+dy*.2,tq[0]+dy/l*w,tq[1]-dx/l*w);ctx.closePath();ctx.fill();ctx.stroke()}}
-// the tip of the tail behind, curling up out of the water with a small fan
-function tailDraw(V0,X,A,K,wl,fx){const{P}=V0,cu=A.tail||0,b=X.T([-62,16,-3]),m=X.T([-68,21+4*cu,6]),t=X.T([-72+3*cu,24+8*cu,14-2*Math.abs(cu)]);if(t[2]<wl)return;
-  let c=b;if(b[2]<wl)c=lerp3(b,m,(wl-b[2])/(m[2]-b[2]));C.chain(V0,[c,m,t],[6,4.6,3.2],K.sc.b,{lw:2.2,rim:.18});if(fx)foam(P([c[0],c[1],wl]),5,K);
-  const d=nrm(sub(t,m));fanDraw(V0,t,nrm(add(d,[0,0,.4])),nrm(cross(d,[0,0,1])),[-50,-25,0,25,50].map(x=>x*DEG),[5,6,7,6,5],K,{cut:wl,rw:1.1,lw:1.2,lit:A.memLit,small:1})}
-// the water: its own pool (also its shadow), lighter at the back and dark in front, the rings of its breath, the reflections of the eyes
-function waterDraw(V0,A,K,G,fx,o){const{P}=V0,wl=A.wz,c=P([0,0,wl]),rx=A.wr,ry=A.wr*.55*KR();
-  ctx.fillStyle='rgba(8,14,12,.5)';ctx.beginPath();ctx.ellipse(c[0],c[1]+2,rx+4,ry+3,0,0,TAU);ctx.fill();
+const KCC={};function KC(K){const id=K.k2+'|'+(K.sc.b);return KCC[id]||(KCC[id]=Object.assign({},K,{sc:mixT(K.sc,T3(K.sc.b,K.sc.d,'#050c09'),.42)}))}
+// a coil of the body that arches out of the water in front (A.hands[i].p: its top, as the moves move it; tap: it twitches; curl: tighter),
+// with its zigzag, its spines and a strand of weed
+function coilDraw(V0,X,A,i,K,wl,fx){const{P}=V0,sd=i?1:-1,hd=A.hands[i],tp=hd.tap?Math.max(hd.tap[0],hd.tap[1],hd.tap[2]):0,cu=hd.curl||0;
+  const S0=X.T([12+8*cu,sd*26,-20]),E0=X.T([84-8*cu,sd*(66-8*cu),-20]),ap=X.T(add(hd.p,[-4,sd*3,13+tp+6*cu])),Cc=sub(mul(ap,2),mul(add(S0,E0),.5)),N=11,pts=[];
+  for(let j=0;j<=N;j++){const t=j/N,u=1-t;pts.push(add(add(mul(S0,u*u),mul(Cc,2*u*t)),mul(E0,t*t)))}
+  const S=frames(pts,s=>lerp(9,7.6,s),[0,0,-1]);tubeDraw(V0,S,KC(K),wl,{sp:2,sp0:1,spH:3.4,fx,zw:.55,simple:1});
+  // a strand of weed hanging from its top
+  const q=S[N>>1];if(q.c[2]>wl+4&&V0.F(mul(q.f,-1))>-.2){const t=A.t||0,a=add(q.c,add(mul(q.f,-q.r*.6),mul(q.v,sd*q.r*.5))),sw=Math.sin(t*1.6+i*2)*1.6,b=add(a,add(mul(q.v,sd*(5+sw)),[0,0,-6])),c=[b[0]+sw,b[1],Math.max(wl,a[2]-16)],sp=[a,b,c].map(x=>P(x));
+    ctx.lineCap='round';ctx.lineJoin='round';ctx.strokeStyle=INK;ctx.lineWidth=4;line(sp);ctx.stroke();ctx.strokeStyle=K.weed.b;ctx.lineWidth=2.3;line(sp);ctx.stroke()}}
+// the tail behind: it curls out of the water, spines down its back and a bone spike at its tip; in the call it rises and beckons to you
+function tailDraw(V0,X,A,K,wl,fx){const cu=A.tail||0,bk=A.beck||0,bw=A.beckW||0;
+  const p0=X.T([-50,14,-16]),p1=X.T([-62,20,-4]),p2=X.T([-70+2*cu,24+5*cu,8+16*bk]),p3=X.T([-74+4*cu-8*bk,28+9*cu,15-2*Math.abs(cu)+30*bk]),N=8,pts=[];
+  for(let j=0;j<=N;j++){const t=j/N,u=1-t;pts.push(add(add(mul(p0,u*u*u),mul(p1,3*u*u*t)),add(mul(p2,3*u*t*t),mul(p3,t*t*t))))}
+  if(bk>0)for(let j=5;j<=N;j++){const f=(j-5)/(N-5),c=bk*(.55+.45*bw)*f*f;pts[j]=add(pts[j],X.Rd([12*c,0,-9*c]))}
+  const S=frames(pts,s=>lerp(8.4,2.4,s),[0,0,-1]);if(S[N].c[2]<wl)return;
+  tubeDraw(V0,S,K,wl,{sp:2,sp0:2,spH:2.6,fx,zw:.5,simple:1});
+  const a=S[N].c,d=S[N].t;hornDraw(V0,add(a,mul(d,-1.2)),d,[0,0,1.2],7.5,2.5,K)}
+// the water: its own pool (also its shadow), black as pitch, an oily sheen on the far side, the scum at its rim, the rings of its breath,
+// dead lilies bobbing (one with a pale flower), the reflections of the eyes, the eyes under the water
+const LILY=[[-46,50,7.5,1],[54,-44,6.5,0],[-64,-20,6,0],[30,62,5.5,0]],SCUM=[[3.4,3.56,.94],[4.2,4.42,.95],[4.95,5.05,.93],[5.6,5.82,.95]];
+function waterDraw(V0,A,K,G,fx,o){const{P}=V0,wl=A.wz,c=P([0,0,wl]),rx=A.wr,ry=A.wr*.55*KR(),t0=A.t||0;
+  ctx.fillStyle='rgba(4,8,8,.55)';ctx.beginPath();ctx.ellipse(c[0],c[1]+2,rx+4,ry+3,0,0,TAU);ctx.fill();
   const g=ctx.createRadialGradient(c[0],c[1]-ry*.3,2,c[0],c[1],rx);g.addColorStop(0,K.w0);g.addColorStop(.62,K.w1);g.addColorStop(1,K.w2);
   ctx.beginPath();ctx.ellipse(c[0],c[1],rx,ry,0,0,TAU);ctx.fillStyle=g;ctx.fill();
-  {const g2=ctx.createLinearGradient(0,c[1]-ry,0,c[1]+ry);g2.addColorStop(0,'rgba(255,255,255,.05)');g2.addColorStop(.55,'rgba(0,0,0,0)');g2.addColorStop(1,'rgba(0,0,0,.28)');ctx.fillStyle=g2;ctx.fill()}
+  {const g2=ctx.createLinearGradient(0,c[1]-ry,0,c[1]+ry);g2.addColorStop(0,'rgba(255,255,255,.04)');g2.addColorStop(.55,'rgba(0,0,0,0)');g2.addColorStop(1,'rgba(0,0,0,.3)');ctx.fillStyle=g2;ctx.fill()}
   if(A.dark>0){ctx.fillStyle=`rgba(2,4,4,${.6*A.dark})`;ctx.fill()}
   ctx.strokeStyle=INK;ctx.lineWidth=2;ctx.stroke();
   ctx.save();ctx.beginPath();ctx.ellipse(c[0],c[1],rx,ry,0,0,TAU);ctx.clip();
-  ctx.strokeStyle=`rgba(${rgbS(K.w2)},.9)`;ctx.lineWidth=1.4;ctx.beginPath();ctx.ellipse(c[0],c[1]-1,rx*.93,ry*.88,0,Math.PI*1.08,Math.PI*1.92);ctx.stroke();
-  // the rings of its breath, the drops, the swirl, the wake
-  for(const r of A.rings){const R=r.r0+(rx+4-r.r0)*r.t;ctx.strokeStyle=`rgba(${rgbS(K.foam)},${.32*(1-r.t)})`;ctx.lineWidth=1.3;ctx.beginPath();ctx.ellipse(c[0],c[1],R,R*.55*KR(),0,0,TAU);ctx.stroke()}
-  if(A.swirl>0)for(let i=0;i<4;i++){const a0=(A.t||0)*1.4+i*Math.PI/2,R=rx*(.35+.13*i);ctx.strokeStyle=`rgba(${rgbS(K.foam)},${.28*A.swirl})`;ctx.lineWidth=1.6;ctx.beginPath();ctx.ellipse(c[0],c[1],R,R*.55*KR(),0,a0,a0+1.6);ctx.stroke()}
+  // the scum along the rim, the oily sheen
+  ctx.strokeStyle=`rgba(${rgbS(K.foam)},.42)`;ctx.lineWidth=1.2;ctx.beginPath();ctx.ellipse(c[0],c[1]-.6,rx*.95,ry*.92,0,Math.PI*1.04,Math.PI*1.96);ctx.stroke();
+  ctx.fillStyle=`rgba(${rgbS(K.foam)},.55)`;for(const[a0,a1,k0] of SCUM){const a=(a0+a1)/2,w=(a1-a0)*rx*.5;ctx.beginPath();ctx.ellipse(c[0]+Math.cos(a)*rx*k0,c[1]-.6+Math.sin(a)*ry*k0,w,1.4+w*.12,0,0,TAU);ctx.fill()}
+  if(!LOWFX){ctx.lineWidth=4;ctx.strokeStyle='rgba(160,110,210,.1)';ctx.beginPath();ctx.ellipse(c[0]-rx*.08,c[1],rx*.6,ry*.58,0,Math.PI*1.12,Math.PI*1.62);ctx.stroke();
+    ctx.strokeStyle='rgba(110,210,160,.09)';ctx.beginPath();ctx.ellipse(c[0]+rx*.05,c[1],rx*.76,ry*.74,0,Math.PI*1.3,Math.PI*1.86);ctx.stroke()}
+  // the rings of its breath, the swirl, the wake, the glow, the bubbles
+  for(const r of A.rings){const R=r.r0+(rx+4-r.r0)*r.t;ctx.strokeStyle=`rgba(${rgbS(K.foam)},${.3*(1-r.t)})`;ctx.lineWidth=1.3;ctx.beginPath();ctx.ellipse(c[0],c[1],R,R*.55*KR(),0,0,TAU);ctx.stroke()}
+  if(A.swirl>0)for(let i=0;i<4;i++){const a0=t0*1.4+i*Math.PI/2,R=rx*(.35+.13*i);ctx.strokeStyle=`rgba(${rgbS(K.foam)},${.28*A.swirl})`;ctx.lineWidth=1.6;ctx.beginPath();ctx.ellipse(c[0],c[1],R,R*.55*KR(),0,a0,a0+1.6);ctx.stroke()}
   if(A.wake>0){ctx.strokeStyle=`rgba(${rgbS(K.foam)},.3)`;ctx.lineWidth=1.4;for(const sd of[-1,1]){const a=P([62,0,wl]),b=P([30,sd*44,wl]);ctx.beginPath();ctx.moveTo(a[0],a[1]);ctx.lineTo(b[0],b[1]);ctx.stroke()}}
-  if(A.wglow>0&&!LOWFX){ctx.globalCompositeOperation='lighter';ctx.fillStyle=`rgba(${K.wG},${.3*Math.min(1,A.wglow)})`;ctx.fillRect(c[0]-rx,c[1]-ry,rx*2,ry*2);ctx.globalCompositeOperation='source-over'}
-  else if(A.wglow>0){ctx.fillStyle=`rgba(${K.wG},${.2*Math.min(1,A.wglow)})`;ctx.fillRect(c[0]-rx,c[1]-ry,rx*2,ry*2)}
-  // the bubbles when it boils
-  if(A.boil>0&&fx)for(let i=0;i<9;i++){const t=((A.t||0)*1.7+i*.37)%1,a=i*2.4,rr=rx*(.2+.65*((i*.618)%1)),q=[c[0]+Math.cos(a)*rr,c[1]+Math.sin(a)*rr*.55];ctx.strokeStyle=`rgba(${rgbS(K.bub)},${.6*A.boil*(1-t)})`;ctx.lineWidth=1;ball(q,1+t*3.5);ctx.stroke()}
-  // the eyes and the gems under the water (the entrance, the Agguato)
+  if(A.wglow>0){if(!LOWFX)ctx.globalCompositeOperation='lighter';ctx.fillStyle=`rgba(${K.wG},${(LOWFX?.2:.3)*Math.min(1,A.wglow)})`;ctx.fillRect(c[0]-rx,c[1]-ry,rx*2,ry*2);ctx.globalCompositeOperation='source-over'}
+  if(A.boil>0&&fx)for(let i=0;i<9;i++){const t=(t0*1.7+i*.37)%1,a=i*2.4,rr=rx*(.2+.65*((i*.618)%1)),q=[c[0]+Math.cos(a)*rr,c[1]+Math.sin(a)*rr*.55];ctx.strokeStyle=`rgba(${rgbS(K.bub)},${.6*A.boil*(1-t)})`;ctx.lineWidth=1;ball(q,1+t*3.5);ctx.stroke()}
+  // a low fog drifting on the water
+  if(!LOWFX&&fx){ctx.fillStyle=`rgba(${rgbS(K.foam)},.07)`;for(let i=0;i<4;i++){const a=t0*.25+i*1.6,q=[c[0]+Math.cos(a)*rx*.55,c[1]+Math.sin(a*1.3)*ry*.45];ctx.beginPath();ctx.ellipse(q[0],q[1],20+4*Math.sin(t0+i),7,0,0,TAU);ctx.fill()}}
+  // the dead lilies
+  for(let i=0;i<LILY.length;i++){const[lx,ly,r,fl]=LILY[i];if(Math.hypot(lx,ly)>rx-r-3)continue;const q=P([lx,ly,wl]),bob=LOWFX?0:.7*Math.sin(t0*2.1+i*1.9),a0=i*1.7+.4,sy=.55*KR(),qy=q[1]+bob;
+    ctx.beginPath();ctx.moveTo(q[0],qy);ctx.ellipse(q[0],qy,r,r*sy,0,a0+.5,a0+TAU-.1);ctx.closePath();ctx.fillStyle=grad3([q[0]-r,qy-r*sy,q[0]+r,qy+r*sy],K.lily);ctx.fill();ctx.strokeStyle=INK;ctx.lineWidth=1.2;ctx.stroke();
+    ctx.strokeStyle=`rgba(${rgbS(K.lily.d)},.6)`;ctx.lineWidth=.7;ctx.beginPath();for(const da of[1.4,2.6,3.8,5]){ctx.moveTo(q[0],qy);ctx.lineTo(q[0]+Math.cos(a0+da)*r*.85,qy+Math.sin(a0+da)*r*sy*.85)}ctx.stroke();
+    if(fl){const f=[q[0]+r*.15,qy-1.4];ctx.fillStyle=K.flower;ctx.strokeStyle=INK;ctx.lineWidth=.7;for(let j=0;j<5;j++){const an=j/5*TAU+.3;ctx.beginPath();ctx.ellipse(f[0]+Math.cos(an)*1.9,f[1]+Math.sin(an)*1.1,1.6,.95,an,0,TAU);ctx.fill();ctx.stroke()}
+      ctx.fillStyle='#b3a46a';ball(f,1);ctx.fill()}}
+  // the eyes under the water (the entrance, the Agguato): six gold eyes and the three slits, and the reflections of the eyes that are up
   for(const gg of G){const hp=P([gg.hc[0],gg.hc[1],wl]);
-    if(A.eyesU>0){for(const sd of[-1,1]){const q=[hp[0]+sd*4.5*gg.k,hp[1]-2];if(!LOWFX)shine(K.eyeG,q[0],q[1],9,.55*A.eyesU);ctx.fillStyle=`rgba(255,201,58,${.85*A.eyesU})`;ctx.beginPath();ctx.ellipse(q[0],q[1],2.6*gg.k,1.2*gg.k,0,0,TAU);ctx.fill();
-      ctx.fillStyle=`rgba(20,16,10,${.8*A.eyesU})`;ctx.fillRect(q[0]-.4,q[1]-1.1,.8,2.2)}}
-    if(A.gemsU>0){const q=[hp[0],hp[1]-7*gg.k];if(!LOWFX)shine(K.gemG,q[0],q[1],10,.5*A.gemsU);ctx.fillStyle=`rgba(168,240,96,${.8*A.gemsU})`;ctx.beginPath();ctx.ellipse(q[0],q[1],2.4,1.4,0,0,TAU);ctx.fill()}
-    // the reflections of the eyes (gold) and of the gem (lime) on the water under every head that is up
-    else if(!LOWFX&&gg.hc[2]>wl+10)shine(K.eyeG,hp[0],hp[1],13*gg.k,.12)}
-  if(A.tips>0){const q=P([28,0,wl]);ctx.fillStyle=`rgba(176,106,216,${.45*A.tips})`;for(const dx of[-6,0,6]){ctx.beginPath();ctx.ellipse(q[0]+dx,q[1]-1,1.6,1,0,0,TAU);ctx.fill()}}
+    if(A.eyesU>0){for(const sd of[-1,1]){const q=[hp[0]+sd*5*gg.k,hp[1]-2];if(!LOWFX)shine(K.eyeG,q[0],q[1],10,.6*A.eyesU);ctx.fillStyle=`rgba(${K.eyeG},${.9*A.eyesU})`;ctx.beginPath();ctx.ellipse(q[0],q[1],2.8*gg.k,1.3*gg.k,0,0,TAU);ctx.fill();
+      ctx.fillStyle=`rgba(12,8,4,${.85*A.eyesU})`;ctx.fillRect(q[0]-.45,q[1]-1.2,.9,2.4)}}
+    if(A.gemsU>0){const q=[hp[0],hp[1]-7*gg.k];if(!LOWFX)shine(K.gemG,q[0],q[1],8,.4*A.gemsU);ctx.fillStyle=`rgba(${K.gemG},${.7*A.gemsU})`;ctx.beginPath();ctx.ellipse(q[0],q[1],.9,2.4,0,0,TAU);ctx.fill()}
+    else if(!LOWFX&&gg.hc[2]>wl+10)shine(K.eyeG,hp[0],hp[1],13*gg.k,.14)}
+  if(A.tips>0){const q=P([28,0,wl]);ctx.fillStyle=`rgba(${rgbS(K.spot)},${.45*A.tips})`;for(const dx of[-7,7]){ctx.beginPath();ctx.ellipse(q[0]+dx,q[1]-1,2,1.2,0,0,TAU);ctx.fill()}}
   ctx.restore()}
 // the effects that sit over everything: splashes, chips of stone, bubbles, the wave, the fireflies of the defeat
 function fxDraw(V0,A,K,G,wl){const{P}=V0;
   for(const f of A.fx){const t=cl(f.t,0,1);let at=f.at;if(f.head!=null){const gg=G[f.head];at=[gg.hc[0],gg.hc[1],0]}if(!at)continue;const base=[at[0],at[1],wl];
-    if(f.k==='splash'){const q=P(base),r=f.r||12,n=f.n||6;ctx.strokeStyle=`rgba(${rgbS(K.foam)},${.6*(1-t)})`;ctx.lineWidth=1.6;ctx.beginPath();ctx.ellipse(q[0],q[1],r*(.4+t),r*(.4+t)*.55,0,0,TAU);ctx.stroke();
-      if(!LOWFX)for(let i=0;i<n;i++){const a=i/n*TAU+.3,d=r*.5*t+2,z=Math.sin(t*Math.PI)*(14+r*.5)*(.7+.3*((i*.37)%1)),s=P([base[0]+Math.cos(a)*d,base[1]+Math.sin(a)*d,wl+z]);ctx.fillStyle=`rgba(${rgbS(K.foam)},${.8*(1-t*t)})`;ball(s,1.5+(1-t));ctx.fill()}}
+    if(f.k==='splash'){const q=P(base),r=f.r||12,n=f.n||6,wc=rgbS(cmix(K.foam,'#ffffff',.45));ctx.strokeStyle=`rgba(${wc},${.6*(1-t)})`;ctx.lineWidth=1.6;ctx.beginPath();ctx.ellipse(q[0],q[1],r*(.4+t),r*(.4+t)*.55,0,0,TAU);ctx.stroke();
+      if(!LOWFX)for(let i=0;i<n;i++){const a=i/n*TAU+.3,d=r*.5*t+2,z=Math.sin(t*Math.PI)*(14+r*.5)*(.7+.3*((i*.37)%1)),s=P([base[0]+Math.cos(a)*d,base[1]+Math.sin(a)*d,wl+z]);ctx.fillStyle=`rgba(${wc},${.8*(1-t*t)})`;ball(s,1.5+(1-t));ctx.fill()}}
     else if(f.k==='ring'){const q=P(base);ctx.strokeStyle=`rgba(${K.venG},${.6*(1-t)})`;ctx.lineWidth=1.2;ctx.beginPath();ctx.ellipse(q[0],q[1],3+8*t,(3+8*t)*.55,0,0,TAU);ctx.stroke()}
     else if(f.k==='chips'){const q=P([at[0],at[1],0]),n=f.big?9:6;C3K.dust(V0,[at[0],at[1],0],t,LOWFX?3:6,f.big?14:10,'196,184,160',.5);
       ctx.fillStyle='#8a8478';ctx.strokeStyle=INK;ctx.lineWidth=.8;for(let i=0;i<n;i++){const a=i/n*TAU+.7,d=(f.big?22:16)*t,z=Math.sin(Math.min(1,t*1.3)*Math.PI)*(f.big?18:12),s=P([at[0]+Math.cos(a)*d,at[1]+Math.sin(a)*d,z]);ctx.beginPath();ctx.rect(s[0]-1.3,s[1]-1.3,2.6,2.6);ctx.fill();ctx.stroke()}}
@@ -455,20 +532,20 @@ function fxDraw(V0,A,K,G,wl){const{P}=V0;
     if(!LOWFX)shine('200,255,150',q[0],q[1],8,.6*al);ctx.fillStyle=`rgba(230,255,190,${al})`;ball(q,1.5);ctx.fill()}}}
 
 // ------------------------------------------------------------------ the model
-function hydra2(x,y,face,anim,p,sc,o){sc=sc||1;o=o||{};const V0=V(face),{P,D,F}=V0,A=hPose(anim,p,o,face),K=pal(A.k2,A.clr),X=frame(A,0),fx=fxOn(o),wl=A.wz;
+function hydra2(x,y,face,anim,p,sc,o){sc=sc||1;o=o||{};const V0=V(face),{P,D}=V0,A=hPose(anim,p,o,face),K=pal(A.k2,A.clr),X=frame(A,0),fx=fxOn(o),wl=A.wz;
   A.t=p*(N3.meta.hydra2.dur[anim]||1);const G=rigOf(A,X,face,o);G.forEach(g=>{g.h.glowAll=A.glowAll});
   ctx.save();ctx.translate(x,y);ctx.scale(sc,sc);const L=parts();
   L.add(-1e9,()=>waterDraw(V0,A,K,G,fx,o));
-  L.add(D(X.T([-66,20,4])),()=>tailDraw(V0,X,A,K,wl,fx));
-  for(const i of[0,1])L.add(D(X.T(HAND[i])),()=>armDraw(V0,X,A,i,K,wl,fx));
-  L.add(D(X.T([-8,0,14])),()=>moundDraw(V0,X,A,K,wl,fx));
-  const nf=F(X.Rd([1,0,0]))>-.2;
-  G.forEach(g=>L.add(D(X.T(g.n.root))+.01*D(X.T(g.n.head)),()=>{const S=spineOf(g,X,wl);if(nf)neckDraw(V0,S,K,wl,g.h,fx);headDraw(V0,g,K,wl,fx,A);if(!nf)neckDraw(V0,S,K,wl,g.h,fx)}));
+  L.add(D(X.T([-64,22,2])),()=>tailDraw(V0,X,A,K,wl,fx));
+  for(const i of[0,1])L.add(D(X.T(HAND[i])),()=>coilDraw(V0,X,A,i,K,wl,fx));
+  L.add(D(X.T([-14,0,10])),()=>bodyDraw(V0,X,A,K,wl,fx));
+  G.forEach(g=>L.add(D(X.T(g.n.root))+.01*D(X.T(g.n.head)),()=>neckGroup(V0,g,X,K,wl,fx,A)));
   run(L);fxDraw(V0,A,K,G,wl);
   if(A.flashW>0&&!LOWFX){const q=P([10,0,50]);shine('255,255,250',q[0],q[1],90,.5*A.flashW)}
-  if(A.flashV>0&&!LOWFX)for(const g of G){const q=P(add(g.hc,mul(g.HF.w,8*g.k)));shine('199,125,255',q[0],q[1],40,.8*A.flashV)}
-  if(A.fanRings>=0&&!LOWFX)for(const g of G){const q=P(add(g.hc,add(mul(g.HF.u,-12*g.k),mul(g.HF.w,12*g.k)))),r=6+30*A.fanRings;ctx.strokeStyle=`rgba(199,125,255,${.55*(1-A.fanRings)})`;ctx.lineWidth=2;ctx.beginPath();ctx.ellipse(q[0],q[1],r,r*.7,0,0,TAU);ctx.stroke()}
+  if(A.flashV>0&&!LOWFX)for(const g of G){const q=P(add(g.hc,mul(g.HF.w,9*g.k)));shine(K.tG,q[0],q[1],40,.8*A.flashV)}
+  if(A.fanRings>=0&&!LOWFX)for(const g of G){const q=P(add(g.hc,add(mul(g.HF.u,-10*g.k),mul(g.HF.w,6*g.k)))),r=8+32*A.fanRings;ctx.strokeStyle=`rgba(${K.tG},${.55*(1-A.fanRings)})`;ctx.lineWidth=2;ctx.beginPath();ctx.ellipse(q[0],q[1],r,r*.7,0,0,TAU);ctx.stroke()}
   ctx.restore()}
+
 const MV=['idle','walk','hit','bite','stuck','spit','breath','ambush','decree','dive','rise','gaze','rage','taunt','enter','die'];
 const DUR={idle:3.2,walk:1.6,hit:.7,bite:2,stuck:1,spit:1.4,breath:2.4,ambush:2.8,decree:2.2,dive:1.2,rise:1,gaze:2,rage:2.8,taunt:1.1,enter:4.2,die:4};
 const LAB={idle:'Ferma',walk:'Nuota',hit:'Colpita',bite:'Morso a Tenaglia',stuck:'Zanne piantate',spit:'Salva di Veleno',breath:'Soffio Velenoso',ambush:'Agguato dal Profondo',
@@ -481,39 +558,41 @@ if(N3.hydra){const old=N3.hydra,oM=N3.meta.hydra;N3.meta.hydra2.old=(x,y,f,a,p)=
 // where the mouths are: for the heads s -1, 0, +1 {m mouth, f the floor under it, e between the eyes, g the third eye, up}, screen px from the
 // drawing point at sc 1 (the same pose as the drawing, nothing drawn)
 N3.hydra2Mouths=function(face,anim,p,o){o=o||{};const V0=V(face),A=hPose(anim,p,o,face),X=frame(A,0),G=rigOf(A,X,face,o),wl=A.wz;
-  return G.map(g=>{const{hc,HF,k,h}=g,E=HE.map(e=>({c:mul(e.c,k),r:mul(e.r,k)})),Hd=splitHead(hc,HF,E,-2.2*k,h.open*.8,1,6),m=add(lerp3(Hd.lip(0,0),Hd.lip(0,1),.5),mul(HF.u,2*k)),
-    toW=d=>add(hc,add(add(mul(HF.u,d[0]),mul(HF.v,d[1])),mul(HF.w,d[2]))),e=toW([4*k,0,5*k]),gg=toW([-1*k,0,9*k]);
+  return G.map(g=>{const{hc,HF,k,h}=g,E=HE.map(e=>({c:mul(e.c,k),r:mul(e.r,k)})),Hd=splitHead(hc,HF,E,MZ*k,h.open*JA,1,6),m=add(lerp3(Hd.lip(0,0),Hd.lip(0,1),.5),mul(HF.u,2*k)),
+    toW=d=>add(hc,add(add(mul(HF.u,d[0]),mul(HF.v,d[1])),mul(HF.w,d[2]))),e=toW([5*k,0,5.5*k]),gg=toW([1*k,0,9.6*k]);
     return{m:V0.P(m),f:V0.P([m[0],m[1],0]),e:V0.P(e),g:V0.P(gg),up:hc[2]>wl-4,z:m[2]}})};
 // a head that bursts out of a stain of black water ('burst', 1.6 s): the stain opens, two eyes under it, the head shoots up with its mouth
-// wide, the jaws snap (.60), it sways and looks at you, then it sinks back with a gulp. o.who (-1, 0, 1), o.p2; o.part 'stain' (only the
-// water on the floor, under the hero) or 'head' (only what comes out of it, over him)
+// wide and its hood open, the jaws snap (.60), it sways and looks at you, then it sinks back with a gulp. o.who (-1, 0, 1), o.p2; o.part
+// 'stain' (only the water on the floor, under the hero) or 'head' (only what comes out of it, over him)
 N3.hydra2Head=function(x,y,face,anim,p,sc,o){sc=sc||1;o=o||{};const V0=V(face),{P}=V0,K=pal(o.p2?1:0,0),who=o.who==null?0:o.who,n=HN[who+1],k=n.k,fx=fxOn(o);
   const rS=24*sstep(0,.2,p)*(1-sstep(.9,1,p)),out=sstep(.55,.6,p)*(1-sstep(.875,.96,p)),snap=sstep(.59,.61,p),sway=rise(p,.6,.66,.84,.875);
   ctx.save();ctx.translate(x,y);ctx.scale(sc,sc);
-  if(rS>.5&&o.part!=='head'){const g=ctx.createRadialGradient(0,-rS*.15,1,0,0,rS);g.addColorStop(0,'#05090a');g.addColorStop(.75,K.w0);g.addColorStop(1,K.w2);ctx.beginPath();ctx.ellipse(0,0,rS,rS*.55,0,0,TAU);ctx.fillStyle=g;ctx.fill();
-    ctx.strokeStyle=INK;ctx.lineWidth=1.8;ctx.stroke();ctx.strokeStyle=`rgba(${rgbS(K.foam)},.5)`;ctx.lineWidth=1.2;ctx.beginPath();ctx.ellipse(0,-.6,rS*.9,rS*.48,0,Math.PI*1.1,Math.PI*1.9);ctx.stroke();
-    if(out<.2){const eo=sstep(.06,.1,p)*(1-sstep(.55,.57,p))*blink(p,.12,.05);for(const sd of[-1,1]){const q=[sd*4.5*k,-2];if(!LOWFX)shine(K.eyeG,q[0],q[1],8,.5*eo);ctx.fillStyle=`rgba(255,201,58,${.9*eo})`;ctx.beginPath();ctx.ellipse(q[0],q[1],2.5*k,1.2*k,0,0,TAU);ctx.fill()}}
+  if(rS>.5&&o.part!=='head'){const g=ctx.createRadialGradient(0,-rS*.15,1,0,0,rS);g.addColorStop(0,'#030608');g.addColorStop(.75,K.w0);g.addColorStop(1,K.w2);ctx.beginPath();ctx.ellipse(0,0,rS,rS*.55,0,0,TAU);ctx.fillStyle=g;ctx.fill();
+    ctx.strokeStyle=INK;ctx.lineWidth=1.8;ctx.stroke();ctx.strokeStyle=`rgba(${rgbS(K.foam)},.55)`;ctx.lineWidth=1.2;ctx.beginPath();ctx.ellipse(0,-.6,rS*.9,rS*.48,0,Math.PI*1.1,Math.PI*1.9);ctx.stroke();
+    if(out<.2){const eo=sstep(.06,.1,p)*(1-sstep(.55,.57,p))*blink(p,.12,.05);for(const sd of[-1,1]){const q=[sd*5*k,-2];if(!LOWFX)shine(K.eyeG,q[0],q[1],8,.55*eo);ctx.fillStyle=`rgba(${K.eyeG},${.9*eo})`;ctx.beginPath();ctx.ellipse(q[0],q[1],2.6*k,1.2*k,0,0,TAU);ctx.fill();
+      ctx.fillStyle=`rgba(12,8,4,${.85*eo})`;ctx.fillRect(q[0]-.45,q[1]-1.1,.9,2.2)}}
     if(fx)for(let i=0;i<5;i++){const t=(p*4+i*.29)%1,a=i*2.3,q=[Math.cos(a)*rS*.55,Math.sin(a)*rS*.3];ctx.strokeStyle=`rgba(${rgbS(K.bub)},${.6*(1-t)*sstep(.15,.3,p)})`;ctx.lineWidth=1;ball(q,.8+t*2.4);ctx.stroke()}}
-  if(out>.01&&o.part!=='stain'){const z=lerp(-30,40,out),hc=[6*sway*Math.sin(p*TAU*3)*0,4*sway*Math.sin(p*TAU*2.5),z+8],pi=lerp(.9,-.25,snap)+.1*sway*Math.sin(p*TAU*3),yw=.25*sway*Math.sin(p*TAU*2);
+  if(out>.01&&o.part!=='stain'){const z=lerp(-30,44,out),hc=[0,4*sway*Math.sin(p*TAU*2.5),z+8],pi=lerp(.9,-.25,snap)+.1*sway*Math.sin(p*TAU*3),yw=.25*sway*Math.sin(p*TAU*2);
     const hu=[Math.cos(pi)*Math.cos(yw),Math.cos(pi)*Math.sin(yw),Math.sin(pi)],hv=nrm(cross([0,0,1],hu)),hw=cross(hu,hv),h=Object.assign(hd0(n,!!o.p2),{open:p<.6?.95:.15+.35*rise(p,.66,.7,.76,.8),fan:1,ft:1,wing:p<.6?1:rise(p,.66,.7,.76,.8),gem:.5,drip:sway>0?((p-.6)/.2)%1:-1});
     const g={i:0,s:n.s,k,hc,HF:{u:hu,v:hv,w:hw},root:[0,0,-14],h,n},X=frame({},0);
-    ctx.save();ctx.beginPath();ctx.rect(-60,-200,120,200+.5);ctx.clip();
-    const S=spineOf(g,X,0);neckDraw(V0,S,K,0,h,fx);headDraw(V0,g,K,0,fx,{memLit:o.p2?1:0,t:p*1.6});ctx.restore();
+    ctx.save();ctx.beginPath();ctx.rect(-70,-220,140,220+.5);ctx.clip();neckGroup(V0,g,X,K,0,fx,{memLit:o.p2?1:0,t:p*1.6});ctx.restore();
     if(fx&&p>=.55&&p<.75){const t=(p-.55)/.2;ctx.fillStyle=`rgba(${rgbS(K.foam)},${.5*(1-t)})`;for(let i=0;i<8;i++){const a=i/8*TAU,q=P([Math.cos(a)*(6+10*t),Math.sin(a)*(6+10*t),Math.sin(t*Math.PI)*30*(.6+.4*(i%2))]);ball(q,1.8);ctx.fill()}}}
   ctx.restore()};
-// under the floor in the Tuffo: a dark ripple with the three gems lit in a triangle, the six gold eyes barely seen, a V wake back along a
+// under the floor in the Tuffo: a dark ripple with six gold eyes in three pairs barely seen and the three slits, a V wake back along a
 N3.hydra2Under=function(x,y,a,p,sc,o){sc=sc||1;o=o||{};const K=pal(o.p2?1:0,0),ca=Math.cos(a),sa=Math.sin(a);ctx.save();ctx.translate(x,y);ctx.scale(sc,sc);
-  const w=1+.08*Math.sin(p*TAU);ctx.fillStyle='rgba(6,12,10,.55)';ctx.beginPath();ctx.ellipse(0,0,30*w,14*w,0,0,TAU);ctx.fill();ctx.strokeStyle=`rgba(${rgbS(K.foam)},.35)`;ctx.lineWidth=1.3;ctx.stroke();
+  const w=1+.08*Math.sin(p*TAU);ctx.fillStyle='rgba(4,8,8,.6)';ctx.beginPath();ctx.ellipse(0,0,30*w,14*w,0,0,TAU);ctx.fill();ctx.strokeStyle=`rgba(${rgbS(K.foam)},.35)`;ctx.lineWidth=1.3;ctx.stroke();
   ctx.strokeStyle=`rgba(${rgbS(K.foam)},.3)`;ctx.lineWidth=1.4;for(const sd of[-1,1]){ctx.beginPath();ctx.moveTo(-ca*24-sa*sd*4,-sa*24*.55+ca*sd*4*.55);ctx.lineTo(-ca*60-sa*sd*20,(-sa*60+ca*sd*20)*.55);ctx.stroke()}
-  for(const[gx,gy] of[[0,-6],[-9,3],[9,3]]){if(!LOWFX)shine(K.gemG,gx,gy,8,.5);ctx.fillStyle=K.gem;ctx.beginPath();ctx.ellipse(gx,gy,2,1.2,0,0,TAU);ctx.fill();
-    ctx.fillStyle='rgba(255,201,58,.45)';for(const sd of[-1,1]){ctx.beginPath();ctx.ellipse(gx+sd*3,gy+2.4,1.4,.7,0,0,TAU);ctx.fill()}}
+  for(const[gx,gy] of[[0,-6],[-10,3],[10,3]]){for(const sd of[-1,1]){const q=[gx+sd*2.6,gy];if(!LOWFX)shine(K.eyeG,q[0],q[1],6,.45);ctx.fillStyle=`rgba(${K.eyeG},.8)`;ctx.beginPath();ctx.ellipse(q[0],q[1],1.6,.8,0,0,TAU);ctx.fill();
+      ctx.fillStyle='rgba(10,6,2,.85)';ctx.fillRect(q[0]-.3,q[1]-.7,.6,1.4)}
+    ctx.fillStyle=`rgba(${K.gemG},.5)`;ctx.beginPath();ctx.ellipse(gx,gy-3,.6,1.6,0,0,TAU);ctx.fill()}
   if(!LOWFX)for(let i=0;i<4;i++){const t=(p+i*.25)%1,q=[Math.cos(i*1.7)*16-ca*t*20,Math.sin(i*1.7)*7-sa*t*11];ctx.strokeStyle=`rgba(${rgbS(K.bub)},${.6*(1-t)})`;ctx.lineWidth=1;ball(q,1+t*2);ctx.stroke()}
   ctx.restore()};
-// the black water that opens on the floor where it comes up: k 0..1, the radius up to o.r (74), a light rim, the three gems lighting up
+// the black water that opens on the floor where it comes up: k 0..1, the radius up to o.r (74), a scum rim, three pairs of eyes opening
 N3.hydra2Stain=function(x,y,k,sc,o){sc=sc||1;o=o||{};const K=pal(o.p2?1:0,0),R=(o.r||74)*ez(cl(k,0,1));if(R<1)return;ctx.save();ctx.translate(x,y);ctx.scale(sc,sc);
-  const g=ctx.createRadialGradient(0,-R*.15,1,0,0,R);g.addColorStop(0,'#04080a');g.addColorStop(.7,K.w0);g.addColorStop(1,K.w2);ctx.beginPath();ctx.ellipse(0,0,R,R*.55,0,0,TAU);ctx.fillStyle=g;ctx.fill();ctx.strokeStyle=INK;ctx.lineWidth=2;ctx.stroke();
-  ctx.strokeStyle=`rgba(${rgbS(K.foam)},.45)`;ctx.lineWidth=1.3;ctx.beginPath();ctx.ellipse(0,-1,R*.92,R*.5,0,Math.PI*1.08,Math.PI*1.92);ctx.stroke();
-  const gk=sstep(.3,.8,k);for(const[gx,gy] of[[0,-10],[-16,6],[16,6]]){if(!LOWFX)shine(K.gemG,gx*R/74,gy*R/74,10,.6*gk);ctx.fillStyle=`rgba(168,240,96,${gk})`;ctx.beginPath();ctx.ellipse(gx*R/74,gy*R/74,2.6,1.5,0,0,TAU);ctx.fill()}
+  const g=ctx.createRadialGradient(0,-R*.15,1,0,0,R);g.addColorStop(0,'#020507');g.addColorStop(.7,K.w0);g.addColorStop(1,K.w2);ctx.beginPath();ctx.ellipse(0,0,R,R*.55,0,0,TAU);ctx.fillStyle=g;ctx.fill();ctx.strokeStyle=INK;ctx.lineWidth=2;ctx.stroke();
+  ctx.strokeStyle=`rgba(${rgbS(K.foam)},.5)`;ctx.lineWidth=1.3;ctx.setLineDash([7,4,2,4]);ctx.beginPath();ctx.ellipse(0,-1,R*.92,R*.5,0,Math.PI*1.08,Math.PI*1.92);ctx.stroke();ctx.setLineDash([]);
+  const gk=sstep(.3,.8,k);for(const[gx,gy] of[[0,-10],[-16,6],[16,6]]){for(const sd of[-1,1]){const q=[gx*R/74+sd*3.4,gy*R/74];if(!LOWFX)shine(K.eyeG,q[0],q[1],8,.55*gk);ctx.fillStyle=`rgba(${K.eyeG},${.9*gk})`;
+      ctx.beginPath();ctx.ellipse(q[0],q[1],2.2,.2+.9*gk,0,0,TAU);ctx.fill();ctx.fillStyle=`rgba(10,6,2,${.85*gk})`;ctx.fillRect(q[0]-.35,q[1]-1,.7,2)}}
   if(!LOWFX){const t0=(o.t!=null?o.t:(typeof G!=='undefined'&&G&&G.t)||0);for(let i=0;i<6;i++){const t=(t0*1.8+i*.31)%1,a=i*2.2,q=[Math.cos(a)*R*.6,Math.sin(a)*R*.3];ctx.strokeStyle=`rgba(${rgbS(K.bub)},${.55*(1-t)*k})`;ctx.lineWidth=1;ball(q,1+t*3);ctx.stroke()}}
   ctx.restore()};
 // the venom ball in flight (r 7): three tones, lime or violet, a point of light, two drops trailing behind (o.vx, o.vy)

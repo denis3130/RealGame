@@ -153,7 +153,10 @@ gli agenti, i tre li ha finiti questa sessione da sola (Cervo: corna all'indietr
 «Tira!»; collaudo di tutti e tre, guida, schede nelle note). **Al 19 ottobre notte i 13 boss sono finiti e collaudati**, nessuno nel
 gioco. Pagine per Denis (19 ottobre notte): tutti i 13 in 3D, quattro direzioni con quello di oggi sotto, «prima e dopo», tutte le
 mosse: https://claude.ai/artifact/QZ3eLCWFHcYVHBU2XCaAbp (`python3 anteprime/mk_nemici3d.py --classici`); sfidarli dal telefono:
-https://claude.ai/artifact/5M8qo4U6iHFKYkQFdeG7ps (`python3 anteprime/mk_boss2.py --tutti`). Nel gioco dopo il sì di Denis. I
+https://claude.ai/artifact/5M8qo4U6iHFKYkQFdeG7ps (`python3 anteprime/mk_boss2.py --tutti`). Nel gioco dopo il sì di Denis. Il 20
+ottobre Denis: «ok migliora l'idra rendilo più spaventoso e cambia design fallo fatto meglio e creepy»: l'Idra ridisegnata da capo
+(vipere cornute coi cappucci da cobra e gli occhi finti dietro, colli con lo zigzag, pozza nera, spire e coda; stesse mosse e stesso
+cervello; la prima versione da parte in `anteprime/boss2/hydra_a/`), pagine ripubblicate agli stessi indirizzi. I
 testi nuovi della guida stanno in `src/js/44-guida.js` (`BEST2`), non nei cervelli, e valgono solo quando il modello nuovo ha preso il
 posto del vecchio (nel gioco di oggi restano le righe dei boss di oggi). Stato di ogni boss, metodo, design, numeri, misure e prove in
 `docs/boss-classici.md` («Stato dei boss»).

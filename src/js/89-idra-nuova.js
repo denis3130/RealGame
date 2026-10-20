@@ -27,7 +27,7 @@ if(HY2ON){
   ET.hydra.r=34;ET.hydra.cdmg=24;BOSS_INTRO.hydra=4.2;Object.assign(BDEATH,{hydra:{dur:4,clou:2.4,snd:'bubble'}});
   // the bar, the halo, the runes; the 2D glows, crests, drips and eyes under the water of the old hydra go (the model draws all of it),
   // and the pink ring of spheres of the arenas 5-8 (B3S: body, voice and mocking like the new bosses)
-  B2H.hydra=100;B2T.hydra=[['110,220,120',HY2.vio],'200,255,150'];if(typeof B2!=='undefined'&&B2.hydra){B2.hydra.back=()=>{};B2.hydra.front=()=>{};B2.hydra.pre=null;B2.hydra.post=null}
+  B2H.hydra=112;B2T.hydra=[['110,220,120',HY2.vio],'200,255,150'];if(typeof B2!=='undefined'&&B2.hydra){B2.hydra.back=()=>{};B2.hydra.front=()=>{};B2.hydra.pre=null;B2.hydra.post=null}
   BBFX.hydra={c:'#33784a',f:'#e2aaff',k:'burst',s:'bubble'};if(typeof RUNEC!=='undefined')RUNEC.idra=['150,255,90',HY2.vio];B3S.add('hydra');
   if(typeof ETELE!=='undefined')delete ETELE.hydra;
   // the light of its three mouths (and of its pools)

@@ -897,10 +897,28 @@ ginocchio sul maglio, la fornace si spegne in un sospiro di vapore.
 
 ## L'Idra della Palude: «l'Antica della Pozza Nera»
 
-Nome e titolo restano. Tre teste e una sola mente nella sua pozza nera: colli a squame verde palude con la striscia chiara sul davanti,
-ventagli d'avorio e viola sulla nuca, due zannette per testa; respirano insieme, ti guardano insieme, sbattono gli occhi nello stesso
-istante. **Il suo avviso**: il veleno sale luminoso lungo la striscia del collo che colpirà, dall'acqua alla gola. Non si sposta finché non
-apre il terzo occhio (a metà vita le gemme sulle fronti si aprono: erano occhi); poi nuota verso di te.
+**Seconda versione (20 ottobre)**, Denis: «ok migliora l'idra rendilo più spaventoso e cambia design fallo fatto meglio e creepy». Nome,
+titolo, mosse, tempi e cervello restano; cambia tutto il disegno (`sprite/nemici3d/hydra2.js`, rifatto da questa sessione da sola, senza
+agenti). La prima versione (la cupola verde coi ventagli d'avorio e viola e le mani palmate sul bordo) è da parte in
+`anteprime/boss2/hydra_a/hydra2.js` (per vederla: `python3 anteprime/mk_boss2.py hydra --modello anteprime/boss2/hydra_a/hydra2.js`).
+
+La Madre delle Vipere: tre teste di **vipera cornuta**, grandi, piatte e larghe dietro le mascelle (due corna di osso piegate all'indietro e
+due corte sopra gli occhi), ognuna col suo **cappuccio da cobra** (mezzo aperto a riposo, spalancato quando minaccia: davanti la gola chiara
+con tre fasce scure, dietro due grandi **occhi finti** chiari che ti fissano anche quando ti dà le spalle), su tre colli lunghi e muscolosi
+col ventre color osso vecchio, lo **zigzag scuro delle vipere** lungo la schiena con i puntini acidi e una fila di spine. Sotto, nella
+**pozza nera come la pece** (schiuma sporca sul bordo, una macchia d'olio, ninfee morte, una con un fiore pallido, nebbia bassa), un corpo
+di serpente enorme che affiora a **spire** (due davanti, che fanno quello che prima facevano le mani: battono l'acqua, sbattono sul
+pavimento nella furia) e la **coda** dietro con lo spunzone d'osso, che nella chiamata si alza e ti fa cenno; alghe marce sulla schiena.
+Gli **occhi** gialli acidi col taglio nero stanno in orbite scure sotto una palpebra pesante inclinata verso il muso (occhi cattivi) e il
+loro bagliore respira; la **terza palpebra** trasparente passa di traverso, a tutte e tre le teste nello stesso momento; quando la bocca si
+spalanca (fauci viola scuro, la gola che si accende) le **due zanne** si aprono in avanti e gocciolano veleno; la lingua biforcuta scatta
+due volte. A riposo **una testa alla volta piega la testa di lato**, piano, mentre le altre due restano ferme a fissarti; quella di mezzo
+ogni tanto scatta avanti un attimo. **Il suo avviso**: il veleno sale luminoso lungo il ventre e i puntini del collo che colpirà, e il
+cappuccio si apre. **Fase 2**: la fessura sulla fronte si apre (il terzo occhio magenta, ritto, con la pupilla di traverso), si aprono gli
+occhi finti dei cappucci (magenta, col taglio), le scaglie diventano fredde, il veleno e l'acqua viola. Resta della Classica: forme
+robuste, contorni scuri spessi, colori pieni, occhi grandi con la lucina, due sole zanne per testa, niente sangue, ferite o cuciture (i
+puntini sulla schiena del corpo sono stati tolti perché in fila sembravano punti di cucitura; gli occhi finti erano uniti da una curva che
+li faceva sembrare una faccina che sorride: tolta).
 
 ### Mosse e abilità
 
@@ -919,9 +937,12 @@ d'oro si aprono sotto, escono i ventagli e le teste. **Sconfitta** (`die`, 4 s):
 
 ### Misure
 
-- Foglio: mediano 1,5 ms; la stanza intera 4 ms.
+- Disegno (seconda versione): 1,4–1,5 ms a fotogramma (mediano; 90% sotto 2,1–2,6), golem2 1,2 nella stessa prova, la prima versione 1,2;
+  con LOWFX 1,1. Per restarci: spire e coda senza ritaglio, cappucci senza ritaglio (ogni segno sta dentro per costruzione), un bagliore
+  per le due pupille, le corna corte senza sfumatura, la luce della pozza solo sulla parte bassa dei colli. La stanza intera 3,3–3,8 ms.
+- 13.056 disegni (tutte le mosse in 24 momenti, 8 direzioni, le due fasi, normale e LOWFX, più tutti i disegni per il gioco) senza errori.
 - Difficoltà (arena 7, eroe fermo che tira, caso peggiore): oggi 9,2 vite al minuto, nuova 6,7 (tanti colpi piccoli delle pozze: da fermo è
-  la pozza che fa più male, come vuole il design).
+  la pozza che fa più male, come vuole il design). Il cervello non è cambiato (solo `B2H.hydra` 112, l'alone per la testa più alta).
 
 ### File e prove
 
