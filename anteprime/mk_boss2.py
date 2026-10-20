@@ -15,6 +15,7 @@
 #   --cervello (con un solo tipo) un altro file di cervello, di solito insieme a --modello: il Mimic B (fatto in parallelo il 19 ottobre e
 #              tenuto da parte) è  python3 anteprime/mk_boss2.py mimic --modello anteprime/boss2/mimic_b/mimic2.js
 #              --cervello anteprime/boss2/mimic_b/89-mimic-nuovo.js
+#   --colpi    anche i colpi unici (src/js/93-colpi-unici.js: il suono e il modo di sparare propri di ogni boss), per provarli coi cervelli
 # Uscita: anteprime/<tipo>2.html (un boss) o anteprime/boss_classici_sfida.html (--tutti o più boss); con --test in tests/.
 import os,subprocess,sys,re
 here=os.path.dirname(os.path.abspath(__file__));root=os.path.join(here,'..')
@@ -89,7 +90,9 @@ panel=r"""
 i=s.rfind('})();')
 kit=os.path.join(root,'sprite','nemici3d','boss2kit.js')   # the toolkit of the bosses made after the Golem (once, before their models)
 if os.path.exists(kit)and'window.C3K='not in s:models.insert(0,open(kit,encoding='utf-8').read())
-s=s[:i]+'\n'+'\n'.join(models)+'\n'+'\n'.join(brains)+'\n'+('window.__E=s=>eval(s);' if test else panel)+s[i:]
+cu=open(os.path.join(root,'src','js','93-colpi-unici.js'),encoding='utf-8').read() if '--colpi' in A else ''
+if cu and cu[:400] in s:cu=''
+s=s[:i]+'\n'+'\n'.join(models)+'\n'+'\n'.join(brains)+'\n'+cu+'\n'+('window.__E=s=>eval(s);' if test else panel)+s[i:]
 name=('boss2' if multi else used[0][0]+'2')+'_test.html' if test else ('boss_classici_sfida.html' if multi else used[0][0]+'2.html')
 out=os.path.join(root,'tests',name) if test else os.path.join(here,name)
 open(out,'w',encoding='utf-8').write(s)

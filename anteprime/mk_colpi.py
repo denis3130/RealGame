@@ -6,6 +6,7 @@
 # Uso: python3 anteprime/mk_colpi.py [--test] [--build]
 #   --test   la pagina per le prove (tests/colpi_test.html, con window.__E come tests/test.html; il pannello c'è lo stesso)
 #   --build  prima ricostruisce index.html (python3 build.py)
+#   --senza-boss  senza i boss rifatti (tests/colpi_oggi_test.html, con --test): i boss di oggi devono restare come sono
 # Uscita: anteprime/colpi.html (con --test tests/colpi_test.html).
 import os,subprocess,sys
 here=os.path.dirname(os.path.abspath(__file__));root=os.path.join(here,'..')
@@ -19,7 +20,7 @@ parts=[]
 kit=os.path.join(root,'sprite','nemici3d','boss2kit.js')
 if os.path.exists(kit)and'window.C3K='not in s:parts.append(open(kit,encoding='utf-8').read())
 brains=[]
-for t,f in B.items():
+for t,f in ([] if '--senza-boss' in A else B.items()):
     bf=os.path.join(root,'src','js',f);mp=os.path.join(root,'sprite','nemici3d',t+'2.js')
     if not os.path.exists(bf)or not os.path.exists(mp):print('manca',t);continue
     src=open(bf,encoding='utf-8').read()
@@ -70,7 +71,14 @@ panel=r"""
   document.head.appendChild(css);
   const BN={golem:'Golem di Muschio',salamander:'Salamandra di Lava',toad:'Re Rospo',yeti:'Yeti delle Vette',witch:'Strega delle Radici',smith:'Il Fabbro Infernale',hydra:"L'Idra della Palude",
     icequeen:'Regina dei Ghiacci',mimic:'Il Mimic',puppeteer:"Il Burattinaio d'Ombra",phoenix:'La Fenice della Forgia',octopus:'La Piovra della Palude',stag:"Il Cervo d'Aurora"};
-  const BD=window.CPBD||{};
+  const BD={golem:"Schegge roventi pesanti: rallentano e cadono a terra dopo pochi passi (fase 2). Suono di pietra.",
+    salamander:"I ventagli sfalsati di palle di magma restano i suoi; ora sfrigolano come lava.",toad:"Le bolle con la lucciola restano le sue.",
+    yeti:"Schegge di ghiaccio che pattinano e rimbalzano una volta sui muri e sui blocchi.",
+    witch:"La spirale di spine resta; i semi dell'anello partono piano e accelerano, come se germogliassero.",smith:"Non spara colpi: il maglio sulla catena è già suo.",
+    hydra:"Nella fase 2 l'anello di gocce esce in tre ondate, una per testa. Sputo velenoso.",icequeen:"Lance e schegge di cristallo restano le sue, coi suoi suoni di vetro.",
+    mimic:"Le monete restano le sue.",puppeteer:"Quando cade dall'alto: rombi d'Arlecchino appesi ai fili d'oro, vanno, si fermano e tornano da lui. Campanellini.",
+    phoenix:"Piume nelle corsie che si piantano nei muri; ora col suo fruscio di fuoco.",octopus:"Bolle d'inchiostro che danzano.",
+    stag:"Schegge di cristallo d'aurora anche nell'anello della seconda Zoccolata; campanelle d'aurora."};
   const BL=Object.keys(BN).filter(t=>window.BCL&&BCL[t]);
   const btn=document.createElement('button');btn.id='cpBtn';btn.textContent='Colpi';document.body.appendChild(btn);
   const lab=document.createElement('div');lab.id='cpLab';lab.hidden=true;document.body.appendChild(lab);
@@ -106,8 +114,9 @@ panel=r"""
   pan.querySelectorAll('.b').forEach(b=>b.onclick=e=>{e.stopPropagation();hide();modal=false;paused=false;if(b.dataset.e!=null)goEnemy(EN[+b.dataset.e]);else goBoss(b.dataset.b)});
   p2.onclick=e=>{e.stopPropagation();try{const c=CP.cur;if(!c||c.k!=='b')return;const q=(BCL[c.t].find&&BCL[c.t].find())||G.enemies.find(o=>o.type===c.t);if(q&&!q.p2)q.hp=Math.min(q.hp,q.max*.48)}catch(err){}};
   {const _v=volley;volley=function(){if(CP.noShoot&&CP.cur)return;return _v.apply(this,arguments)}}
-  setInterval(()=>{try{if(!started||!G||!P)return;const inMenu=!$('menu').hidden&&$('endScr').hidden;
-      if(inMenu){if(CP.first||CP.cur){CP.first=false;CP.cur=null;label();keys.KeyA=keys.KeyD=false;show()}return}
+  setInterval(()=>{try{const inMenu=!$('menu').hidden&&$('endScr').hidden;
+      if(inMenu){if(CP.first||CP.cur){CP.first=false;CP.cur=null;label();keys.KeyA=keys.KeyD=false;document.querySelectorAll('#sheetScr').forEach(q=>q.hidden=true);show()}return}
+      if(!started||!G||!P)return;
       if(CP.cur){P.hp=P.maxhp;P.inv=Math.max(P.inv,0)}
       if(CP.cur&&CP.cur.k==='e'){const e=G.enemies.find(q=>q.cuDemo);if(!e&&G.state!=='trans')goEnemy(CP.cur.it);else if(e){e.hp=e.max}}
       if(CP.walk&&CP.cur&&!paused&&!CP.open){const ph=(performance.now()/1000)%4.4,h=CP.home||(L+R)/2;keys.KeyA=ph<1.3&&P.x>h-110;keys.KeyD=ph>=2.2&&ph<3.5&&P.x<h+110}
@@ -117,6 +126,6 @@ panel=r"""
 """
 i=s.rfind('})();')
 s=s[:i]+'\n'+'\n'.join(parts)+'\n'+'\n'.join(brains)+'\n'+cu+'\n'+panel+('window.__E=s=>eval(s);' if test else '')+s[i:]
-out=os.path.join(root,'tests','colpi_test.html') if test else os.path.join(here,'colpi.html')
+out=os.path.join(root,'tests','colpi_oggi_test.html' if '--senza-boss' in A else 'colpi_test.html') if test else os.path.join(here,'colpi.html')
 open(out,'w',encoding='utf-8').write(s)
 print(os.path.relpath(out,root),len(s)//1024,'KB ·',len(brains),'boss')

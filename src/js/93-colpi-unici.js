@@ -21,6 +21,19 @@
 // - Fiore occhio: petali taglienti che girano; quelli di lato curvano e si chiudono tutti dove eri tu, come un fiore che si chiude.
 // - Occhio d'ombra: lo sguardo ha il suo raggio (bordi viola scuro, cuore bianco, pupille a fessura che corrono); nell'avviso occhietti.
 // - Burattino d'ombra: lo spillo d'oro col filo, che vola a zig zag come un punto da cucito.
+// I 13 boss rifatti (src/js/89-*.js, anche loro non ancora nel gioco) avevano già quasi tutti un colpo disegnato apposta; qui ognuno
+// prende il suo suono (prima molti usavano quello del fuoco, del ghiaccio, del veleno o della palla rossa) e, dove due boss sparavano
+// nello stesso modo (l'anello tutto intorno), il suo modo:
+// - Golem: le schegge roventi sono pesanti, rallentano e cadono a terra dopo 130 px (stai lontano quando atterra).
+// - Yeti: le schegge di ghiaccio pattinano e rimbalzano una volta sui muri e sui blocchi.
+// - Strega: i semi dell'anello partono piano e accelerano, come se germogliassero.
+// - Idra: l'anello di gocce della fase 2 esce in tre ondate, una per testa (sinistra, centro, destra).
+// - Burattinaio: le sfere d'ombra diventano rombi d'Arlecchino del suo costume, appesi ai fili d'oro: vanno, si fermano e tornano da lui.
+// - Piovra: le bolle diventano bolle d'inchiostro (la loro danza resta).
+// - Cervo: l'anello di schegge della seconda Zoccolata usa le sue schegge di cristallo d'aurora (prima il ghiaccio di tutti).
+// - Salamandra, Fenice, Re Rospo, Regina, Mimic: il modo resta il loro (i ventagli sfalsati di magma, le piume nelle corsie che si piantano
+//   nei muri, le bolle con la lucciola, le lance e i pilastri, le monete); suono proprio a Salamandra e Fenice. Il Fabbro non spara colpi
+//   (il maglio sulla catena è già suo).
 // Danni, velocità e quante volte tirano restano quelli di oggi (le braci del diavoletto fanno 0,7 del colpo). Con LOWFX niente bagliori,
 // scie, occhietti né scintille. CU.on spegne tutto (Prima / Dopo nella pagina). Solo anteprima: non è in src/ordine.txt; la pagina
 // python3 anteprime/mk_colpi.py lo mette nella copia del gioco.
@@ -169,6 +182,28 @@ function cuBombArt(x,y,spin,k){const t=G.t||0;ctx.save();ctx.translate(x,y);ctx.
   const fl=.6+.4*Math.sin(t*40);if(!LOWFX){cuGlow('255,200,90',x+ex,y+ey,7+fl*2,.9);ctx.fillStyle='#fff6c8';for(let i=0;i<3;i++){const an=t*9+i*2.1,d=2+((t*14+i*.37)%1)*4;ctx.beginPath();ctx.arc(x+ex+Math.cos(an)*d,y+ey+Math.sin(an)*d,.6,0,TAU);ctx.fill()}}
   ctx.fillStyle='#ffe27a';ctx.beginPath();for(let i=0;i<8;i++){const r=i%2?1:2.6*fl;ctx.lineTo(x+ex+Math.cos(i*Math.PI/4+t*6)*r,y+ey+Math.sin(i*Math.PI/4+t*6)*r)}ctx.closePath();ctx.fill()}
 
+// the Puppeteer's harlequin lozenge: velvet in four facets (violet and crimson, magenta in the second phase), a gold edge, turning on itself
+const CUROM=[['#b98cf0','#6a40b0','#2e1758'],['#ff8aa0','#c0304e','#5c0f24']],CUROM2=[['#ff9ae8','#c03aa8','#540f48'],['#ffb0c0','#d8405e','#64102a']];
+function cuRomboArt(spin,p2){const C=p2?CUROM2:CUROM,w=4.6*Math.max(.25,Math.abs(Math.cos(spin))),h=7.4,sd=Math.cos(spin)>=0;ctx.lineJoin='round';
+  const T=[0,-h],Rt=[w,0],B=[0,h],Lf=[-w,0],O=[0,0];
+  const face=(a,b,c)=>{ctx.beginPath();ctx.moveTo(a[0],a[1]);ctx.lineTo(b[0],b[1]);ctx.lineTo(c[0],c[1]);ctx.closePath()};
+  // four facets: lit at the top left, the colours swap as it turns
+  face(T,Lf,O);ctx.fillStyle=(sd?C[0]:C[1])[0];ctx.fill();face(T,Rt,O);ctx.fillStyle=(sd?C[1]:C[0])[1];ctx.fill();
+  face(B,Lf,O);ctx.fillStyle=(sd?C[1]:C[0])[1];ctx.fill();face(B,Rt,O);ctx.fillStyle=(sd?C[0]:C[1])[2];ctx.fill();
+  cuPoly([T,Rt,B,Lf]);ctx.strokeStyle='#ffd84a';ctx.lineWidth=2.6;ctx.stroke();ctx.strokeStyle=INK;ctx.lineWidth=1.2;ctx.stroke();
+  ctx.fillStyle='#fff6c8';ctx.beginPath();ctx.arc(0,-h-1.2,1.3,0,TAU);ctx.fill();ctx.strokeStyle=INK;ctx.lineWidth=.8;ctx.stroke()}
+// the Octopus's ink bubble: dark glossy ink, a petrol and magenta sheen round the edge, the swirl inside, the big light
+function cuInkArt(r,ph,p2){let g=CUG.get('ink|'+r+'|'+(p2?1:0));if(!g){g=ctx.createRadialGradient(-r*.3,-r*.35,r*.1,0,0,r);g.addColorStop(0,p2?'#5a2a6a':'#2f4a5a');g.addColorStop(.7,p2?'#2a1036':'#14222c');g.addColorStop(1,'#08080e');CUG.set('ink|'+r+'|'+(p2?1:0),g)}
+  ctx.beginPath();ctx.arc(0,0,r,0,TAU);ctx.fillStyle=g;ctx.fill();ctx.strokeStyle=INK;ctx.lineWidth=1.8;ctx.stroke();
+  ctx.lineWidth=1.3;ctx.strokeStyle=p2?'rgba(255,120,220,.85)':'rgba(90,220,210,.85)';ctx.beginPath();ctx.arc(0,0,r*.82,.4+ph,1.9+ph);ctx.stroke();
+  ctx.strokeStyle='rgba(230,120,200,.75)';ctx.beginPath();ctx.arc(0,0,r*.82,2.6+ph,3.7+ph);ctx.stroke();
+  ctx.strokeStyle='rgba(160,200,230,.45)';ctx.lineWidth=1;ctx.beginPath();for(let i=0;i<14;i++){const a=ph*1.5+i*.45,d=r*.08+i*r*.04;ctx.lineTo(Math.cos(a)*d,Math.sin(a)*d)}ctx.stroke();
+  ctx.fillStyle='rgba(255,255,255,.9)';ctx.beginPath();ctx.ellipse(-r*.38,-r*.42,r*.26,r*.16,-.7,0,TAU);ctx.fill();ctx.fillStyle='rgba(255,255,255,.6)';ctx.beginPath();ctx.arc(r*.4,r*.32,r*.09,0,TAU);ctx.fill()}
+const CULOOK={
+  rombo:p=>{cuGlow(p.p2?'255,110,230':'170,110,255',p.x,p.y,14,.45);const b=cuB((p.ph||0)+(p.age||0)*9,16);cuBlit(cuSprite('ro'+b+(p.p2?'b':'a'),10,()=>cuRomboArt(b*TAU/16,p.p2)),p.x,p.y)},
+  inkb:p=>{cuGlow('120,90,170',p.x,p.y,p.r*2.2,.3);const w=1+Math.sin((G.t||0)*9+(p.ph||0))*.08;ctx.save();ctx.translate(p.x,p.y);ctx.scale(w,2-w);cuInkArt(p.r||7,(p.ph||0)+(G.t||0)*.8,p.p2);ctx.restore()},
+  stag:p=>{if(EPDRAW.crystal){const k=p.kind;p.kind='crystal';try{EPDRAW.crystal(p)}finally{p.kind=k}}}};
+
 // ------------------------------------------------------------------ the shots in flight
 const CUD={
   cuArrow:p=>{if(!LOWFX){cuGlow('255,110,90',p.x,p.y,11,.22);drawTrail(p,'255,210,180',2)}const b=cuB(p.a,32);cuBlit(cuSprite('ar'+b,15,()=>cuArrowArt(0,0,b*TAU/32)),p.x,p.y)},
@@ -186,13 +221,16 @@ const CUD={
   cuPin:p=>{if(!LOWFX&&p.tr&&p.tr.length>=4){const t=p.tr,n=t.length;ctx.lineCap='round';ctx.lineJoin='round';ctx.beginPath();ctx.moveTo(t[0],t[1]);for(let i=2;i<n;i+=2)ctx.lineTo(t[i],t[i+1]);
       const ma=p.ma==null?p.a:p.ma;ctx.lineTo(p.x-Math.cos(ma)*7,p.y-Math.sin(ma)*7);ctx.strokeStyle='rgba(40,22,6,.5)';ctx.lineWidth=2.2;ctx.stroke();ctx.strokeStyle='rgba(255,226,140,.95)';ctx.lineWidth=1.1;ctx.stroke()}
     cuGlow('255,220,140',p.x,p.y,11,.4);const b=cuB(p.ma==null?p.a:p.ma,32);cuBlit(cuSprite('pn'+b,12,()=>cuPinArt(0,0,b*TAU/32)),p.x,p.y)}};
-{const _d=drawEproj;drawEproj=function(p){const f=CUD[p.kind];if(f){try{f(p)}catch(err){_d(p)}return}return _d(p)}}
+{const _d=drawEproj;drawEproj=function(p){const f=CUD[p.kind]||(p.cuLook&&CULOOK[p.cuLook]);if(f){try{f(p)}catch(err){_d(p)}return}return _d(p)}}
 
 // ------------------------------------------------------------------ who shoots what: the enemy being updated turns its shots into its own
 {const _s=shootE;
   CU.shoot=(x,y,a,sp,r,dmg,kind,o)=>{const A=G.eproj,n0=A.length;CU.raw=true;try{_s(x,y,a,sp,r,dmg,kind)}finally{CU.raw=false}
     const p=A.length>n0?A[A.length-1]:null;if(p){p.cuK=kind;p.age=0;p.ph=Math.random()*TAU;if(o)Object.assign(p,o)}return p};
   shootE=function(x,y,a,sp,r,dmg,kind){const e=CU.cur;if(CU.on&&!CU.raw&&e&&G&&CUS[e.type]){CU.n++;try{CUS[e.type](e,x,y,a,sp,r,dmg,kind,CU.n);return}catch(err){console.error(err)}}
+    // a boss made again: its shot stays its own (the brain may look at it after), with its way of flying added
+    if(CU.on&&!CU.raw&&e&&G&&CUB[e.type]&&cuNewBoss(e)){CU.n++;if(CUX[e.type]&&CUX[e.type](e,x,y,a,sp,r,dmg,kind,CU.n))return;const A=G.eproj,n0=A.length,res=_s.apply(this,arguments);
+      if(A.length>n0){const p=A[A.length-1];try{CUB[e.type](e,p,x,y)}catch(err){console.error(err)}}return res}
     return _s.apply(this,arguments)}}
 // a shot for later (a burst), fired while the enemy is updated
 const cuLater=(e,t,f)=>{(e.cuQ||(e.cuQ=[])).push({t,f})};
@@ -218,6 +256,22 @@ const CUS={
   eyeflower(e,x,y,a,sp,r,dmg,kind,n){const Ac=Math.atan2(P.y-e.y,P.x-e.x),off=angDiff(Ac,a),D=clamp(Math.hypot(P.x-x,P.y-6-y),110,260),p=CU.shoot(x,y,a,sp,r,dmg,'cuPetal');
     if(p&&Math.abs(off)>.02){const v=Math.hypot(p.vx,p.vy),w=-Math.sign(off)*2*Math.sin(Math.abs(off))*v/D;p.cuCurve={w,t:2*Math.abs(off)/Math.abs(w)}}},
   puppet(e,x,y,a,sp,r,dmg,kind,n){CU.shoot(x,y,a,Math.max(sp,145),Math.max(4,r-1),dmg,'cuPin',{cuZig:{A:8,per:.36}})}};
+// the bosses made again: what each adds to its own shots (p is already in the room, its kind untouched). Only a boss whose new brain is
+// here (it put itself in BCL): the bosses of today share some kinds ('shadow', 'bubble', 'ice', 'crystal') and stay as they are
+const cuNewBoss=e=>!!(e&&window.BCL&&BCL[e.type]);
+const cuBoss=p=>{p.cuK=p.cuK||'boss';p.age=0;p.cuX0=p.x;p.cuY0=p.y};
+const CUB={
+  golem(e,p){if(p.kind==='stone'){cuBoss(p);p.cuHeavy={r:130}}},
+  yeti(e,p){if(p.kind==='yice'){cuBoss(p);p.cuBounce=1}},
+  witch(e,p){if(p.kind==='wseed'||p.kind==='wseed2'){cuBoss(p);p.cuAcc={k:.38,t:1}}},
+  hydra(e,p){},
+  puppeteer(e,p){if(p.kind==='shadow'){cuBoss(p);p.cuLook='rombo';p.p2=!!e.p2;p.ph=Math.random()*TAU;p.cuYo={out:1.15,hold:.32,x:e.x,y:e.y-16}}},
+  octopus(e,p){if(p.kind==='bubble'){cuBoss(p);p.cuLook='inkb';p.p2=!!e.p2}},
+  stag(e,p){if(p.kind==='ice'){p.cuLook='stag';p.sp2=1}},
+  salamander(){},phoenix(){}};
+// the Hydra's ring of drops in the second phase: in three waves, one for each head (left, middle, right of the screen)
+const CUX={hydra(e,x,y,a,sp,r,dmg,kind,n){if(kind!=='hyglob')return false;const c=Math.cos(a),k=c<-.38?0:c>.38?2:1,ox=(k-1)*26,oy=k===1?-8:0;
+    const go=()=>CU.shoot(e.x+ox,e.y-14+oy,a,sp,r,dmg,'hyglob');if(k===0)go();else cuLater(e,k*.13,go);return true}};
 // the meteors of the pyromancer and the bombs of the dwarf are theirs too
 {const _m=meteor;meteor=function(){const A=G.meteors,n0=A.length,r=_m.apply(this,arguments);if(CU.on&&CU.cur&&CU.cur.type==='pyro')for(let i=n0;i<A.length;i++)A[i].cu='pyro';return r}}
 {const _l=lob;lob=function(sx,sy,tx,ty,o){const A=G.lobs,n0=A.length,r=_l.apply(this,arguments);if(CU.on&&CU.cur&&CU.cur.type==='bomber')for(let i=n0;i<A.length;i++)if(A[i].kind==='bomb')A[i].cu='bomber';return r}}
@@ -230,7 +284,7 @@ const CUS={
 {const _b=drawBeamLine;drawBeamLine=function(l){if(l.col==='cuEye'){try{cuBeam(l);return}catch(err){l.col='purple'}}return _b.apply(this,arguments)}}
 
 // ------------------------------------------------------------------ how they fly (before the game moves them) and what is left after
-function cuPre(dt){const A=G.eproj,split=[];
+function cuPre(dt){const A=G.eproj,split=[],drop=[];
   for(const p of A){if(!p.cuK)continue;p.age=(p.age||0)+dt;
     if(p.cuDec){const v0=p.cuV0||(p.cuV0=Math.hypot(p.vx,p.vy)),k=1-(1-p.cuDec.k)*Math.min(1,p.age/p.cuDec.t)*(2-Math.min(1,p.age/p.cuDec.t)),m=Math.hypot(p.vx,p.vy)||1;p.vx*=v0*k/m;p.vy*=v0*k/m}
     let w=0;if(p.cuTurn)w=p.cuTurn.w;if(p.cuCurve&&p.age<=p.cuCurve.t)w=p.cuCurve.w;
@@ -239,10 +293,26 @@ function cuPre(dt){const A=G.eproj,split=[];
     let ls=0;const W=p.cuWob||p.cuZig;if(W){const f=t=>p.cuWob?W.A*Math.sin(TAU*W.f*t+W.ph):W.A*cuTri(t/W.per),d=f(p.age)-f(p.age-dt),m=Math.hypot(p.vx,p.vy)||1;p.x+=-p.vy/m*d;p.y+=p.vx/m*d;ls=d/Math.max(dt,1e-3)}
     if(W||w||p.cuDec){const m=Math.hypot(p.vx,p.vy)||1;p.ma=Math.atan2(p.vy+p.vx/m*ls,p.vx-p.vy/m*ls);if(w)p.a=Math.atan2(p.vy,p.vx)}
     if(p.cuHop){const per=p.cuHop.per,ph=(p.age%per)/per,k=Math.floor(p.age/per);p.z=p.cuHop.h*Math.sin(Math.PI*ph);p.r=p.z<6?p.r0:-40;if(k!==p.cuHk){if(p.cuHk!=null)cuSplat(p,false);p.cuHk=k}}
-    if(p.cuSplit&&!p.cuDone&&p.age>=p.cuSplit.t)split.push(p)}
+    if(p.cuSplit&&!p.cuDone&&p.age>=p.cuSplit.t)split.push(p);
+    // the Golem's heavy shards: slower and slower, they drop after 130 px
+    if(p.cuHeavy){const d=Math.hypot(p.x-p.cuX0,p.y-p.cuY0),v0=p.cuV0||(p.cuV0=Math.hypot(p.vx,p.vy)),k=Math.max(.35,1-.65*(d/p.cuHeavy.r)**1.5),m=Math.hypot(p.vx,p.vy)||1;p.vx*=v0*k/m;p.vy*=v0*k/m;
+      if(d>=p.cuHeavy.r)drop.push(p)}
+    // the Yeti's shards skate: once off a wall or an ice block
+    if(p.cuBounce>0){const nx=p.x+p.vx*dt,ny=p.y+p.vy*dt;let hit=false;if(nx<L+2||nx>R-2){p.vx=-p.vx;hit=true}if(ny<TOP+2||ny>BOT-2){p.vy=-p.vy;hit=true}
+      if(!hit)for(const k2 of G.rocks){const ex=nx-k2.x,ey=ny-k2.y,dd=Math.hypot(ex,ey);if(dd<k2.r+p.r*.5+1&&dd>.01){const ux=ex/dd,uy=ey/dd,dt2=p.vx*ux+p.vy*uy;if(dt2<0){p.vx-=2*dt2*ux;p.vy-=2*dt2*uy;hit=true}break}}
+      if(hit){p.cuBounce--;p.a=Math.atan2(p.vy,p.vx);CU.fx.push({k:'tink',x:p.x,y:p.y,t:0,max:.22});cuPlay('bTink',p.x)}}
+    // the Witch's seeds sprout: slow at first, then faster
+    if(p.cuAcc){const v0=p.cuV0||(p.cuV0=Math.hypot(p.vx,p.vy)),u=Math.min(1,p.age/p.cuAcc.t),k=p.cuAcc.k+(1-p.cuAcc.k)*u*u,m=Math.hypot(p.vx,p.vy)||1;p.vx*=v0*k/m;p.vy*=v0*k/m}
+    // the Puppeteer's lozenges on their strings: out, a stop, pulled back to him
+    if(p.cuYo){const Y=p.cuYo,v0=p.cuV0||(p.cuV0=Math.hypot(p.vx,p.vy));
+      if(p.age<Y.out){const u=p.age/Y.out,k=1-u*u,m=Math.hypot(p.vx,p.vy)||1;p.vx*=v0*Math.max(.04,k)/m;p.vy*=v0*Math.max(.04,k)/m;if(!p.cuDir)p.cuDir=Math.atan2(p.vy,p.vx)}
+      else if(p.age<Y.out+Y.hold){p.vx=Math.cos(p.cuDir)*.01;p.vy=Math.sin(p.cuDir)*.01;if(!p.cuTug){p.cuTug=1;cuPlay('bTug',p.x)}}
+      else{const dx=Y.x-p.x,dy=Y.y-p.y,d=Math.hypot(dx,dy)||1,u=Math.min(1,(p.age-Y.out-Y.hold)/.22),v=v0*1.3*(.25+.75*u);p.vx=dx/d*v;p.vy=dy/d*v;if(d<12)drop.push(p)}}}
   for(const p of split){const i=A.indexOf(p);if(i<0)continue;A.splice(i,1);p.cuDone=1;const S=p.cuSplit,v=Math.hypot(p.vx,p.vy),a=Math.atan2(p.vy,p.vx),dm=Math.max(1,Math.round(p.dmg*.7));
     for(let k=0;k<S.n;k++){const an=a+(k-(S.n-1)/2)*S.sp;A.push({x:p.x,y:p.y,vx:Math.cos(an)*v,vy:Math.sin(an)*v,a:an,r:Math.max(3.5,p.r-2.5),dmg:dm,kind:'cuEmber',cuK:'cuEmber',life:4,age:0,ph:Math.random()*TAU})}
-    CU.fx.push({k:'pop',x:p.x,y:p.y,t:0,max:.28});cuPlay('pop',p.x)}}
+    CU.fx.push({k:'pop',x:p.x,y:p.y,t:0,max:.28});cuPlay('pop',p.x)}
+  for(const p of drop){const i=A.indexOf(p);if(i<0)continue;A.splice(i,1);p.cuDone=1;
+    if(p.cuHeavy){CU.fx.push({k:'chip',x:p.x,y:p.y,t:0,max:.5});cuPlay('bClack',p.x)}else CU.fx.push({k:'yo',x:p.x,y:p.y,t:0,max:.25,p2:p.p2})}}
 function cuStick(p){const x=clamp(p.x,L+1,R-1),y=clamp(p.y,TOP+1,BOT-1);if(CU.stuck.length>=(LOWFX?6:14))CU.stuck.shift();CU.stuck.push({x,y,a:Math.atan2(p.vy,p.vx),t:0,max:1.4});cuPlay('tock',x)}
 function cuSplat(p,end){const x=p.x,y=p.y;CU.fx.push({k:'splat',x,y,t:0,max:end?.45:.3,big:!!end});if(end)cuPlay('splat',x);else if((p.cuHk||0)<2)cuPlay('blip',x)}
 function cuPost(dt,pre,arr){
@@ -281,9 +351,16 @@ function cuGround(){if(!G||!CU.on&&!G.eproj.some(p=>p.cuK)&&!G.meteors.some(m=>m
 function cuAir(){if(!G)return;const t=G.t||0;
   for(const s of CU.stuck){const vib=.16*Math.exp(-s.t*9)*Math.sin(s.t*70),al=Math.min(1,(s.max-s.t)/.35);ctx.globalAlpha=al;const a=s.a+vib;
     ctx.fillStyle='rgba(20,14,10,.5)';ctx.beginPath();ctx.ellipse(s.x,s.y,2.6,1.5,s.a,0,TAU);ctx.fill();cuBoltArt(s.x-Math.cos(a)*8,s.y-Math.sin(a)*8,a,{sunk:true});ctx.globalAlpha=1}
+  // the Puppeteer's golden strings while the lozenges hang and come back
+  if(!LOWFX&&G.eproj.some(p=>p.cuYo&&p.age>=p.cuYo.out-.15)){ctx.lineCap='round';for(const p of G.eproj){if(!p.cuYo||p.age<p.cuYo.out-.15)continue;const Y=p.cuYo,k=Math.min(1,(p.age-Y.out+.15)/.15);
+      ctx.strokeStyle=`rgba(255,226,140,${.55*k})`;ctx.lineWidth=1;ctx.beginPath();ctx.moveTo(Y.x,Y.y-30);ctx.quadraticCurveTo((Y.x+p.x)/2,(Y.y-30+p.y)/2-8*(1-k),p.x,p.y-7);ctx.stroke()}}
   for(const f of CU.fx){const k=f.t/f.max;
     if(f.k==='pop'){cuGlow('255,160,60',f.x,f.y,20*(1-k)+6,.7*(1-k));ctx.strokeStyle=`rgba(255,214,120,${1-k})`;ctx.lineWidth=2.4*(1-k)+.4;ctx.beginPath();ctx.arc(f.x,f.y,4+k*14,0,TAU);ctx.stroke();
       if(!LOWFX){ctx.fillStyle=`rgba(255,240,190,${1-k})`;for(let i=0;i<6;i++){const an=i/6*TAU+f.x,d=4+k*18;ctx.beginPath();ctx.arc(f.x+Math.cos(an)*d,f.y+Math.sin(an)*d,1.1*(1-k)+.3,0,TAU);ctx.fill()}}}
+    else if(f.k==='chip'){ctx.fillStyle=`rgba(210,190,160,${.6*(1-k)})`;ctx.beginPath();ctx.ellipse(f.x,f.y+2,6+k*10,(6+k*10)*.42,0,0,TAU);ctx.fill();
+      ctx.fillStyle=`rgba(255,140,60,${1-k})`;for(let i=0;i<4;i++){const an=i*1.7+f.x,d=3+k*9;ctx.beginPath();ctx.arc(f.x+Math.cos(an)*d,f.y+Math.sin(an)*d*.5-Math.sin(k*Math.PI)*6,1.3,0,TAU);ctx.fill()}}
+    else if(f.k==='tink'){cuGlow('190,235,255',f.x,f.y,12*(1-k)+4,.8*(1-k));ctx.strokeStyle=`rgba(235,250,255,${1-k})`;ctx.lineWidth=1.4;for(let i=0;i<4;i++){const an=i*Math.PI/2+.4;ctx.beginPath();ctx.moveTo(f.x+Math.cos(an)*3,f.y+Math.sin(an)*3);ctx.lineTo(f.x+Math.cos(an)*(5+k*7),f.y+Math.sin(an)*(5+k*7));ctx.stroke()}}
+    else if(f.k==='yo'){ctx.strokeStyle=`rgba(${f.p2?'255,140,230':'200,160,255'},${1-k})`;ctx.lineWidth=2;ctx.beginPath();ctx.arc(f.x,f.y,3+k*9,0,TAU);ctx.stroke()}
     else if(f.k==='splat'){const R=(f.big?13:8)*(.4+.6*k);ctx.strokeStyle=`rgba(150,230,90,${.75*(1-k)})`;ctx.lineWidth=1.8;ctx.beginPath();ctx.ellipse(f.x,f.y+2,R,R*.42,0,0,TAU);ctx.stroke();
       if(!LOWFX){ctx.fillStyle=`rgba(200,250,140,${.9*(1-k)})`;const n=f.big?5:3;for(let i=0;i<n;i++){const an=i/n*TAU+f.x*.3,d=R*.9,z=Math.sin(k*Math.PI)*(f.big?9:5);ctx.beginPath();ctx.arc(f.x+Math.cos(an)*d,f.y+2+Math.sin(an)*d*.42-z,1.2,0,TAU);ctx.fill()}}}}}
 {const _a=drawHazards2Air;drawHazards2Air=function(){_a.apply(this,arguments);try{cuAir()}catch(err){}}}
@@ -323,9 +400,28 @@ const CUSND={
   eyeZap:t=>{fThump(t,VR(240,.05),55,.28,.18);fNoise(t,.3,'bandpass',1300,2,.11,{f2:380})},
   cuPin:t=>{fNoise(t,.05,'highpass',5200,1,.05,{att:.001});whoosh(t,.13,5600,2800,.035);fModal(t,VR(3100,.05),[1,2.7],[.07,.035],.035,.12)},
   tock:t=>{M.wood(t,.5,VR(420,.1))},
+  bStone:t=>{M.stone(t,.4);whoosh(t,.16,2400,800,.05)},
+  bClack:t=>{M.stone(t+.005,.22);fNoise(t,.05,'highpass',3200,.8,.05)},
+  bMagma:t=>{fThump(t,VR(180,.1),70,.12,.2);fNoise(t,.25,'bandpass',VR(900,.1),1.2,.08,{brown:true,f2:400});fNoise(t+.05,.2,'highpass',5200,.7,.035)},
+  bYice:t=>{M.ice(t,.7);fNoise(t,.18,'bandpass',VR(3000,.05),3,.04,{f2:1800})},
+  bTink:t=>{M.glass(t,.35,VR(3600,.08))},
+  bThorn:t=>{fNoise(t,.08,'bandpass',VR(1500,.1),1.2,.08,{f2:3000});M.wood(t,.25,VR(700,.1))},
+  bSeed:t=>{fThump(t,VR(300,.1),700,.05,.1);M.plant(t,.3)},
+  bVenom:t=>{fNoise(t,.12,'bandpass',VR(1100,.1),1.5,.1,{f2:500});fNoise(t,.3,'highpass',3800,.8,.045,{att:.04})},
+  bBell:t=>{vBell(null,t,96,.4,.03);vBell(null,t+.03,103,.3,.018);M.wood(t+.01,.3,VR(900,.1))},
+  bTug:t=>{whoosh(t,.14,1400,4200,.04);M.wood(t+.02,.2,VR(1300,.1))},
+  bBlub:t=>{fThump(t,VR(200,.15),VR(520,.15),.09,.12);fThump(t+.06,VR(300,.15),VR(800,.15),.06,.07);fNoise(t,.1,'lowpass',700,1,.05,{brown:true})},
+  bFeather:t=>{whoosh(t,.18,1800,4200,.06);fNoise(t,.2,'bandpass',VR(800,.1),.9,.08,{brown:true,f2:400,att:.03});cuTone(t,VR(2400,.05),VR(3600,.05),.06,.012,'sine',.1)},
+  bPshard:t=>{M.glass(t,.4,VR(2500,.05));fNoise(t,.2,'bandpass',600,.9,.08,{brown:true})},
+  bAurora:t=>{const N=[84,86,89,91,93];vBell(null,t,N[Math.floor(Math.random()*5)],.6,.025);whoosh(t,.15,3000,1600,.035)},
   fuse:(t,d)=>{fNoise(t,Math.max(.2,d||.6),'highpass',6500,.8,.035,{att:.03})}};
 CUSND.cuEmber=CUSND.cuFire;
-const CUGAP={pop:60,blip:90,tock:70,splat:80};
+const CUGAP={pop:60,blip:90,tock:70,splat:80,bTink:70,bClack:80,bTug:120};
+// the boss kinds whose shot sound becomes their own (a shared kind only for its boss)
+const CUBS={stone:'bStone',magma:'bMagma',yice:'bYice',wthorn:'bThorn',wthorn2:'bThorn',wseed:'bSeed',wseed2:'bSeed',hyglob:'bVenom',pfeather:'bFeather',pfeatherb:'bFeather',pshard:'bPshard',crystal:'bAurora'},
+  CUBS2={puppeteer:{shadow:'bBell'},octopus:{bubble:'bBlub'},stag:{ice:'bAurora'}};
 function cuPlay(k,x,arg){if(typeof AU==='undefined'||!AU.ctx||!AU.on.sfx||!CUSND[k])return;const now=performance.now();if(now-(CU.last[k]||0)<(CUGAP[k]||90))return;CU.last[k]=now;
   const pan=AU.pan;AU.pan=x==null?0:Math.max(-.7,Math.min(.7,(x-180)/200));try{CUSND[k](AU.ctx.currentTime+.005,arg)}catch(err){}AU.pan=pan}
-{const _s=sfx;sfx=function(k,arg,x){if(k==='eshot'&&CUSND[arg]&&arg.startsWith('cu')){cuPlay(arg,x);return}return _s.apply(this,arguments)}}
+{const _s=sfx;sfx=function(k,arg,x){if(k==='eshot'&&CUSND[arg]&&arg.startsWith('cu')){cuPlay(arg,x);return}
+  if(CU.on&&k==='eshot'&&arg){const e=CU.cur,nb=cuNewBoss(e),b=(nb&&CUBS2[e.type]&&CUBS2[e.type][arg])||((nb||!e&&arg!=='crystal')&&CUBS[arg]);if(b){cuPlay(b,x);return}}
+  return _s.apply(this,arguments)}}

@@ -45,3 +45,4 @@ anteprime/boss_classici_sfida.html
 # pages built by anteprime/mk_colpi.py
 anteprime/colpi.html
 tests/colpi_test.html
+tests/colpi_oggi_test.html

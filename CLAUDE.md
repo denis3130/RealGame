@@ -163,6 +163,26 @@ testi nuovi della guida stanno in `src/js/44-guida.js` (`BEST2`), non nei cervel
 posto del vecchio (nel gioco di oggi restano le righe dei boss di oggi). Stato di ogni boss, metodo, design, numeri, misure e prove in
 `docs/boss-classici.md` («Stato dei boss»).
 
+## Colpi unici (20 ottobre, anteprima, non ancora nel gioco)
+
+Denis: «voglio che gli attacchi tipo che sparano qualcosa siano unici per tutti e adatti al proprio stile e design»; risposte: tutti i
+nemici e i boss della Classica, aspetto e suono **e** modo di sparare, i 13 boss rifatti, prima una pagina da vedere sul telefono.
+`src/js/93-colpi-unici.js` (**non** in `src/ordine.txt`; `CU.on` lo spegne): ogni nemico che spara ha il suo colpo dipinto come la
+lanterna, il suo suono e il suo modo (goblin: riga di mira e, l'élite, tre frecce in fila; scheletro: dardi che si piantano nei muri,
+tre paralleli l'élite; pipistrello élite: due strilli; pianta: semi di girasole che rallentano; fuoco fatuo: fiammelle con gli occhietti
+che danzano; diavoletto: palla di fuoco che si spacca in braci; piromante: meteora di basalto con le rune a terra; negromante:
+teschietto che segue piano; nano: bomba con la miccia; rana: sputo che saltella e fa male solo a terra; spirito della neve: fiocchi a
+spirale; sentinella: lancia le sue schegge e resta scoperta 1,4 s; fiore occhio: petali che si chiudono dove eri; occhio d'ombra: raggio
+con le pupille; burattino: spillo d'oro col filo a zig zag). Boss rifatti (solo quando c'è il loro cervello, `BCL`): suono proprio a
+tutti, Burattinaio coi rombi d'Arlecchino sui fili d'oro che vanno e tornano, Piovra con le bolle d'inchiostro, Golem con le schegge
+pesanti che cadono a 130 px, Yeti con le schegge che rimbalzano una volta, Strega coi semi che accelerano, Idra con l'anello in tre ondate
+(una per testa), Cervo con le sue schegge anche nell'anello. Danni e cadenze uguali. I pezzi fermi si copiano da piccole tele (FASE 9):
+ogni colpo costa 2–40 µs (la palla rossa di oggi 15–27). Dettagli, tabelle e misure in `docs/colpi-unici.md`. Pagina:
+`python3 anteprime/mk_colpi.py` (pannello «Colpi»: un nemico o un boss alla volta, «Colpi nuovi» / «Colpi di oggi», élite, eroe che
+cammina e non tira, «Fase 2»). Prove: `node tests/colpi.js`, `tests/colpi_moto.js`, `tests/colpi_boss.js`, `tests/colpi_oggi.js` (i boss
+di oggi restano come sono), `tests/colpi_foglio.js` (foglio ingrandito); `mk_boss2.py <tipo> --test --colpi` per `boss2gioco.js` coi
+colpi nuovi. Nel gioco dopo il sì di Denis: `js/93-colpi-unici.js` in fondo a `src/ordine.txt`.
+
 ## FASE 9: più fluido sul telefono (19 ottobre, in corso)
 
 Denis: «vai, lascia perdere l'intro ecc» (la FASE 9 subito; intro, prologo e filmati non si toccano). Il gioco più fluido sul suo iPhone
