@@ -119,5 +119,5 @@ dal prologo, oppure si porta il proprio col codice di salvataggio (Impostazioni 
   tutto dal vivo (`W.dbg.lcLive`: la telecamera resta sui pixel interi) in otto posti, fermo, dopo una corsa di lato e in diagonale e di
   nuovo fermo, col cancello che si apre, la barriera rotta e riparata, la casa con l'eroe dentro, il piano di sopra della Locanda, gli
   effetti bassi. Fermo: al massimo lo 0,02% dei pixel con Δ>30 e nessun gruppo più spesso di 4 px (sono arrotondamenti dei bordi: di
-  solito 0–0,007%, pixel sparsi); mentre la telecamera scivola ancora: ogni copia entro mezzo pixel dal disegno vero (righe sottili lungo i
-  bordi). Poi i tempi con e senza copie e la memoria.
+  solito 0–0,007%, pixel sparsi); mentre la telecamera scivola ancora: ogni copia entro mezzo pixel della tela dal disegno vero (righe
+  sottili lungo i bordi, al massimo lo 0,6% dei pixel). Poi i tempi con e senza copie e la memoria.

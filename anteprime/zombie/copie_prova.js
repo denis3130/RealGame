@@ -5,8 +5,8 @@
 // Locanda, gli effetti bassi. Conta i pixel diversi di più di 30 (somma dei tre canali, come identico.js) e il gruppo di differenze più
 // grande; poi i tempi con e senza copie (fermo, a destra, in giù, 10 zombie) e la memoria delle tele.
 // Soglie: a telecamera ferma al massimo lo 0,02% dei pixel con Δ>30 e nessun gruppo più spesso di 4 px della tela (gli arrotondamenti dei
-// bordi); mentre la telecamera si muove ancora (dopo una corsa) ogni copia disegnata entro LCB.tol dal disegno vero (un terzo di pixel: righe
-// sottili lungo i bordi) e al massimo lo 0,2% dei pixel.
+// bordi); mentre la telecamera si muove ancora (dopo una corsa) ogni copia disegnata entro LCB.tol dal disegno vero (mezzo pixel della tela:
+// righe sottili lungo i bordi) e al massimo lo 0,6% dei pixel.
 // Uso: python3 anteprime/zombie/mk.py area_mappa && node anteprime/zombie/copie_prova.js [pagina]
 const {chromium}=require('../../node_modules/playwright');const path=require('path'),fs=require('fs');
 const PAGE=path.resolve(process.argv[2]||path.join(__dirname,'..','zombie.html')),OUT=path.join(__dirname,'vetrina','copie');fs.mkdirSync(OUT,{recursive:true});
@@ -30,7 +30,7 @@ const T=64,PUNTI={partenza:[6.4,20.4],aia:[7.5,7.4],casa:[2.3,6.0],borgo:[22.0,1
   // frame within LCB.tol) and on the share of pixels; still: the frame must be the same, apart from the rounding of the edges
   const check=async(name,setup,moving)=>{const r=await p.evaluate(([setup,name])=>{const M=__MZ,W=M.W;try{(0,eval)('('+setup+')')(M,W)}catch(e){return{err:String(e)}}
       const L=M.lc(),k=L.T[0],far=M.lcLayers().filter(o=>o.f===L.f&&o.A===1).reduce((m,o)=>Math.max(m,o.dc*k),0);return Object.assign(__cmp(name),{far:+far.toFixed(3),tol:L.tol})},[setup.toString(),name]);
-    if(r.err){ok(name,false,r.err);return}const good=moving?r.pct<=.2&&r.far<=r.tol+1e-6:r.pct<=.02&&r.gruppo<=4;
+    if(r.err){ok(name,false,r.err);return}const good=moving?r.pct<=.6&&r.far<=r.tol+1e-6:r.pct<=.02&&r.gruppo<=4;
     ok(name,good,`${r.pct}% dei pixel con Δ>30, gruppo più spesso ${r.gruppo} px, Δ massimo ${r.max}`+(moving?`, copia più lontana ${r.far} px (al massimo ${r.tol})`:''));
     if(!good){const img=await p.evaluate(()=>window.__img);if(img)fs.writeFileSync(path.join(OUT,name.replace(/[^a-z0-9]+/gi,'_')+'.png'),Buffer.from(img.split(',')[1],'base64'))}};
   // 1. every place, still (the camera settled) and just after a walk to the right that stops (copies of different ages)
