@@ -119,6 +119,33 @@ Copiare un'immagine 1:1 su pixel interi costa 5–7 volte meno che copiarla scal
     foglie solo vicino allo schermo, le foglie lontane non si disegnano. Prove: `comparse_prova.js` (tutte le buche entro 700 a piedi,
     più d'una, mai la stessa di fila), `zone_prova.js`, `chiusi_prova.js`, `ondate.js`, `gioco.js`. `ordine_mappa.js` dà gli stessi
     numeri di prima (sopra le sue soglie anche senza queste modifiche: da guardare a parte).
+17. **Mappa zombie: niente zombie nelle zone chiuse** (20 ottobre; Denis, dopo l'anteprima: «non è cambiato un cazzo», poi «dammi
+    l'anteprima giusta coi zombie che non spawnano nelle aree chiuse e troppo lontani»).
+    - **Gli zombie fermi delle zone chiuse non ci sono più** (tre nell'aia, tre nel Borgo, tre nella Segheria: dall'altra parte del
+      cancello e delle assi sembravano nati lì). Restano nel codice per le prove che li cercano apposta (`W.dbg.fermi`, `fermi()` in
+      `area_mappa.js`; `chiusi_prova.js` li accende per le assi e il cancello; `tests/zombie.js`: Rigioca senza zombie nelle zone chiuse).
+      Il gioco pubblicato (ramo `gioco`) li ha ancora.
+    - **Le nascite**: nello stesso momento l'altra sessione ha fatto la stessa richiesta (`farOpen`, `groundSpot`: buche solo con tutto
+      intorno aperto, punti di terra liberi a 170–420 px di strada, i boss uguali; nel gioco pubblicato dal 20 ottobre). La mia versione
+      (`dynSpots`) è stata lasciata nell'unione: resta la sua. Misura con `anteprime/zombie/nascite_misura.js` (l'eroe in 65–278 punti di
+      ogni zona aperta, 30 nascite a punto, quattro mappe dalla sola partenza a tutto aperto): prima del 20 ottobre mediana 372–415 px a
+      piedi, il 36–49% oltre 420, fino a 950; ora mediana 285–295, il 90% entro 405, oltre 420 il 3–5% (quasi tutte tra 420 e 440), sullo
+      schermo il 13–20%.
+18. **Il contatore** (`src/js/101-contatore.js`; Denis: «non è cambiato un cazzo», poi «vai»): le misure fin qui vengono da un computer
+    senza scheda grafica che imita un telefono, sull'iPhone il tempo può andare altrove. Il contatore misura sul telefono vero: ogni
+    `requestAnimationFrame` (i fotogrammi raggruppati per il tempo che dà il browser), dentro il ciclo del gioco aggiornamento, disegno,
+    scritte, cripta e falò, sfondo dei menu, eroe nel menu, e il codice dei timer (musica, menu) come «altro codice»; il «resto» è il
+    telefono che disegna e mostra la pagina. Un chip coi fotogrammi al secondo (verde, giallo, rosso); un tocco apre il pannello: adesso
+    (fps, fotogramma medio e peggiore, codice, altro codice, resto, scatti oltre 50 ms negli ultimi 10 s, le parti), una riga per
+    schermata da quando la pagina è aperta (Mappa zombie, Menu Zombie, Casse, Bustine, Battaglia, Menu Classica, Caricamento…: fps,
+    peggior secondo, scatti, codice e resto), il telefono (iOS, schermo, misure delle tele, grafica, app dalla Home o dentro un'altra
+    pagina); «Parti della mappa · 5 s» (i tempi di `W.dbg.tm` della mappa, con lo svuotamento dopo ogni parte: mostra il lavoro della
+    scheda grafica e rallenta un poco mentre misura), «Copia» (tutto in testo da incollare nella chat), «Azzera», «Sposta», «Chiudi».
+    Un avviso se la pagina sta ferma a 30 fotogrammi col codice che ci starebbe in 60 (Risparmio energetico, o forse la pagina dentro
+    l'app di Claude, che sta dentro un'altra pagina) e se il tempo va al telefono più che al codice. Acceso nell'anteprima
+    (`window.MB_CONTATORE`, messo dalla pagina dell'anteprima), spento nel gioco; Impostazioni → Contatore. Spento non c'è niente (la
+    misura dei fotogrammi si installa solo quando si accende); acceso costa due `performance.now()` a richiamo e il testo del chip due
+    volte al secondo; non disegna sulle tele. Prova `tests/contatore.js`.
 
 ## Risultati (questo computer, un fotogramma con il disegno)
 
@@ -142,7 +169,8 @@ Circa il 35–45% in meno. `update()` costa meno di 1 ms: tutto il resto è dise
 https://claude.ai/artifact/N8yfkjf53iaBG8PLeYkaHx («Mossbound Fase 9», 20 ottobre; ripubblicata lo stesso giorno con gli strati fermi della
 mappa zombie, commit efe05c4, e poi con le aperture, il falò e gli zombie vicini, commit 24ae4a2): il gioco di `piano-maestro` diviso in tre pezzi come
 quello pubblicato (`python3 app/mk_claude.py index.html <cartella>`, titolo cambiato). Ha il suo salvataggio (un'altra pagina): si parte
-dal prologo, oppure si porta il proprio col codice di salvataggio (Impostazioni → Salvataggio).
+dal prologo, oppure si porta il proprio col codice di salvataggio (Impostazioni → Salvataggio). Dal 20 ottobre sera ha il contatore
+acceso (punto 18: la pagina mette `window.MB_CONTATORE=1` prima di `gioco.js`) e niente zombie nelle zone chiuse (punto 17).
 
 ## Prove
 
@@ -150,6 +178,8 @@ dal prologo, oppure si porta il proprio col codice di salvataggio (Impostazioni 
   pixel oltre 8 ≤ 0,2%; fogli `tests/fl_<scena>.png` con le due immagini e la differenza ×16), la qualità «auto» e «alta», il nero dei
   tre fotogrammi, i tempi con e senza (solo per confronto).
 - Una partita automatica per capitolo (`run.js`), `meta2.js`, `menu2.js`, `menu3.js`: senza errori.
+- `node tests/contatore.js`: il contatore acceso come nell'anteprima (chip, pannello, una cassa, la mappa con le parti, «Copia»,
+  Impostazioni), spento nel gioco vero (nessuna misura installata).
 - `python3 anteprime/zombie/mk.py area_mappa && node anteprime/zombie/copie_prova.js`: la mappa zombie, lo stesso fotogramma con le copie e
   tutto dal vivo (`W.dbg.lcLive`: la telecamera resta sui pixel interi) in otto posti, fermo, dopo una corsa di lato e in diagonale e di
   nuovo fermo, col cancello che si apre, la barriera rotta e riparata, la casa con l'eroe dentro, il piano di sopra della Locanda, gli
