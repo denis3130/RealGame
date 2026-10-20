@@ -247,10 +247,10 @@ drawFalo=function(A){const t=A.t,dt=A.dt,hs=A.hs,hx=A.hx,hy=A.hy;FALO.hx=hx;FALO
   const q=[hx+fc[0]*s,cy0+fc[1]*.55*s],lx=campLx,LOF=300,LH2=SH+600;lx.globalCompositeOperation='source-over';lx.clearRect(0,0,SW,LH2);lx.fillStyle='rgba(2,6,8,.42)';lx.fillRect(0,0,SW,LH2);
   lx.globalCompositeOperation='destination-out';const spr=glowSprite('0,0,0'),Lt=(x,y,r,a)=>{lx.globalAlpha=Math.min(1,a);lx.drawImage(spr,x-r,y+LOF-r,r*2,r*2)};
   Lt(q[0],q[1]-6*s,(30+16*s)*fl,1);Lt(q[0],q[1]-4*s,(14+9*s)*fl,1);Lt(hx,cy0-14*s,(16+10*s)*fl,.7);Lt(268,-108,52,.7);Lt(111,103,14,.6);
-  lx.globalAlpha=1;campLightBlit();
+  lx.globalAlpha=1;ctx.drawImage(campL,0,-LOF,SW,LH2);
   // the eyes of the zombies on the path: two small glows that breathe, above the dark
   if(!LOWFX){ctx.save();ctx.globalCompositeOperation='lighter';for(const z of FALO.Z){const k=.6+.4*Math.sin(t*2.2+z.x*.1),sc=hs*.3,e=CR._rig.V(z.face).P(4.6,0,0),hxz=z.x+e[0]*sc,hyz=z.y-34*sc+e[1]*sc;
       if(Math.cos(z.face-Math.PI/2)>-.3){glow('200,255,120',hxz,hyz,3.2*sc,.5*k);glow('220,255,160',hxz,hyz,1.1*sc,.9*k)}}ctx.restore()}
   // the fire's warm light on everything near (it flickers)
   if(!LOWFX){ctx.save();ctx.globalCompositeOperation='lighter';glow('255,130,50',q[0],q[1]-8*s,(26+12*s)*fl,.17*fl);glow('255,170,90',q[0],q[1]-5*s,(10+6*s)*fl,.14);ctx.restore()}
-  campVigDraw(1.35)}}
+  const v=ctx.createRadialGradient(SW/2,SH*.6,SH*.4,SW/2,SH*.6,SH*1.35);v.addColorStop(0,'rgba(0,0,0,0)');v.addColorStop(1,'rgba(0,0,0,.5)');ctx.fillStyle=v;ctx.fillRect(-400,-LOF,SW+800,LH2)}}

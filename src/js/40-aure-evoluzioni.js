@@ -294,14 +294,12 @@ function drawSeated(x,y,S,t){const sc=2.05,br=Math.sin(t*1.6)*.025;
   ctx.restore();
   ink(2);ctx.fillStyle='#7a5a3a';ctx.beginPath();ctx.ellipse(52,4,11,9,0,0,TAU);ctx.fill();ctx.stroke();ctx.fillStyle='#5a3f2a';ctx.beginPath();ctx.ellipse(52,-3,9,4,0,0,TAU);ctx.fill();ctx.stroke();ctx.strokeStyle='#3a2a1d';ctx.lineWidth=2;ctx.beginPath();ctx.moveTo(45,2);ctx.lineTo(59,2);ctx.stroke();
   ctx.restore()}
-// on a phone (phase 9) exactly 2 pixels a point of the scene, as in battle: the background baked at 2x is copied one to one
-function campResize(){const dpr=Math.min(2,window.devicePixelRatio||1),cw=campCv.clientWidth,ch=campCv.clientHeight;let w=Math.max(1,Math.round(cw*dpr)),h=Math.max(1,Math.round(ch*dpr));
-  if(cw>0&&w/SW>=1.75&&w/SW<=2.75){w=SW*2;h=Math.max(1,Math.round(ch*w/cw))}if(campCv.width!==w||campCv.height!==h){campCv.width=w;campCv.height=h}}
+function campResize(){const dpr=Math.min(2,window.devicePixelRatio||1),w=Math.max(1,Math.round(campCv.clientWidth*dpr)),h=Math.max(1,Math.round(campCv.clientHeight*dpr));if(campCv.width!==w||campCv.height!==h){campCv.width=w;campCv.height=h}}
 const LO=300,LH=SH+600;const campL=document.createElement('canvas');campL.width=SW/3;campL.height=LH/3;const campLx=campL.getContext('2d');campLx.scale(1/3,1/3);
 function drawCamp(dt){campResize();const m=homeMode(),open=true,Z=SCENE[m.id],saved=ctx;ctx=campX;CAMP.t+=dt;const t=CAMP.t;G.t=t;
   // the hero's feet stand just above the «change hero» pill, the crypt fills the space behind him
   const cr=campCv.getBoundingClientRect(),dpr=campCv.width/Math.max(1,cr.width),hp=$('heroPill').getBoundingClientRect(),tb=$('topbar').getBoundingClientRect();
-  const u=campCv.width/SW,top=(tb.bottom-cr.top)*dpr,feet0=(hp.top-cr.top)*dpr,room=Math.max(80*dpr,feet0-top),hs=clamp(Math.min(room*.56,215*dpr)/(46*u),1.4,3.6),feet=feet0-13*hs*u,oy=Math.round(feet-HOME_Y*u),ox=Math.round(campCv.width/2-180*u);
+  const u=campCv.width/SW,top=(tb.bottom-cr.top)*dpr,feet0=(hp.top-cr.top)*dpr,room=Math.max(80*dpr,feet0-top),hs=clamp(Math.min(room*.56,215*dpr)/(46*u),1.4,3.6),feet=feet0-13*hs*u,oy=feet-HOME_Y*u,ox=campCv.width/2-180*u;
   CAMP.tf={u,ox,oy,dpr,hs};ctx.setTransform(1,0,0,1,0,0);ctx.fillStyle=Z.sky[0];ctx.fillRect(0,0,campCv.width,campCv.height);ctx.setTransform(u,0,0,u,ox,oy);
   ctx.fillStyle=Z.ground[2];ctx.fillRect(-400,SH-2,SW+800,900);
   ctx.drawImage(tintBg(m),0,-CBG_UP,SW,SH+CBG_UP);
@@ -357,34 +355,12 @@ function drawCamp(dt){campResize();const m=homeMode(),open=true,Z=SCENE[m.id],sa
   const fl=1+.04*Math.sin(t*2.1);Lt(hx,hy-18*hs,(44+18*hs)*fl,1);Lt(hx,hy-6*hs,(18+10*hs)*fl,1);
   for(const[tx,ty,r] of [[131,100,34],[229,100,34],[120,154,52],[240,154,52]])Lt(tx,ty,r*(1+.04*Math.sin(t*5+tx)),.9);
   Lt(gx,gb-14,open?50:24,open?.9:.5);if(m.id!=='c2')Lt(246,-70,60,.7);else Lt(277,58,60,.7);
-  lx.globalAlpha=1;campLightBlit();
+  lx.globalAlpha=1;ctx.drawImage(campL,0,-LO,SW,LH);
   ctx.save();ctx.globalCompositeOperation='lighter';glow(m.glow,hx,hy-6,16*hs,.14+.04*Math.sin(t*2.1));glow(m.glow,gx,gb-12,30,open?.22*pul:.04);ctx.restore();
-  campVigDraw();
+  const v=ctx.createRadialGradient(SW/2,SH*.6,SH*.4,SW/2,SH*.6,SH*1.3);v.addColorStop(0,'rgba(0,0,0,0)');v.addColorStop(1,'rgba(0,0,0,.5)');ctx.fillStyle=v;ctx.fillRect(-400,-LO,SW+800,LH);
   if(CAMP.swap>0){CAMP.swap=Math.max(0,CAMP.swap-dt*3);ctx.fillStyle=`rgba(6,4,10,${CAMP.swap})`;ctx.fillRect(-400,-LO,SW+800,LH)}
   if(CAMP.walk>0&&t-CAMP.walk>1.25){ctx.fillStyle=`rgba(6,4,10,${Math.min(1,(t-CAMP.walk-1.25)/.4)})`;ctx.fillRect(-400,-LO,SW+800,LH)}
   ctx.setTransform(1,0,0,1,0,0);ctx=saved}
-// the camp's light map at one pixel a point (phase 9), as in battle (lwFill): only the part on the screen is smoothed, then copied with
-// every pixel doubled
-const campLw=document.createElement('canvas'),campLwx=campLw.getContext('2d');
-function campLightBlit(){const m=ctx.getTransform();if(!lwFit(m)){ctx.drawImage(campL,0,-LO,SW,LH);return}if(campLw.width!==SW||campLw.height!==LH){campLw.width=SW;campLw.height=LH}
-  const x0=Math.max(0,Math.floor(-m.e/m.a)-4),y0=Math.max(0,Math.floor(-m.f/m.d)+LO-4),x1=Math.min(SW,Math.ceil((campCv.width-m.e)/m.a)+4),y1=Math.min(LH,Math.ceil((campCv.height-m.f)/m.d)+LO+4);if(x1<=x0||y1<=y0)return;
-  campLwx.save();campLwx.beginPath();campLwx.rect(x0,y0,x1-x0,y1-y0);campLwx.clip();campLwx.clearRect(x0,y0,x1-x0,y1-y0);campLwx.drawImage(campL,0,0,SW,LH);campLwx.restore();
-  const sm=ctx.imageSmoothingEnabled;ctx.imageSmoothingEnabled=false;ctx.drawImage(campLw,0,-LO);ctx.imageSmoothingEnabled=sm}
-// the camp's vignette (phase 9): drawn once as big as the canvas and copied in bands, without its see-through middle (the circle of radius
-// SH*.4 around its centre); made only once the canvas and the scene's place have stayed the same for three frames (while the menu comes in
-// they move), till then drawn as before
-let CVIG=null;
-function campVigDraw(k1){k1=k1||1.3;const m=ctx.getTransform(),W=campCv.width,H=campCv.height,key=[W,H,m.a,m.d,m.e,m.f,k1].join('|'),old=()=>{const v=ctx.createRadialGradient(SW/2,SH*.6,SH*.4,SW/2,SH*.6,SH*k1);v.addColorStop(0,'rgba(0,0,0,0)');v.addColorStop(1,'rgba(0,0,0,.5)');ctx.fillStyle=v;ctx.fillRect(-400,-LO,SW+800,LH)};
-  if(m.b!==0||m.c!==0||Math.abs(m.a-m.d)>1e-6||W>4096||H>4096){old();return}
-  if(!CVIG||CVIG.key!==key){if(!CVIG||CVIG.want!==key){if(CVIG&&CVIG.c){CVIG.c.width=CVIG.c.height=0}CVIG={want:key,n:0}}if(++CVIG.n<3){old();return}
-    const c=document.createElement('canvas');c.width=W;c.height=H;const x=c.getContext('2d');x.setTransform(m.a,0,0,m.d,m.e,m.f);
-    const v=x.createRadialGradient(SW/2,SH*.6,SH*.4,SW/2,SH*.6,SH*k1);v.addColorStop(0,'rgba(0,0,0,0)');v.addColorStop(1,'rgba(0,0,0,.5)');x.fillStyle=v;x.fillRect(-400,-LO,SW+800,LH);
-    // the clear circle in pixels of the canvas (a pixel less, to be safe), and for each band of 32 rows the stretch inside it on every row
-    const cx=m.a*SW/2+m.e,cy=m.d*SH*.6+m.f,R=m.a*SH*.4-1,B=[];
-    for(let y0=0;y0<H;y0+=32){const y1=Math.min(H,y0+32),dy=Math.max(Math.abs(y0-cy),Math.abs(y1-cy)),hw=dy<R?Math.sqrt(R*R-dy*dy):0,a=Math.max(0,Math.ceil(cx-hw)),b=Math.min(W,Math.floor(cx+hw));
-      B.push(hw>1&&b>a?[y0,y1-y0,a,b]:[y0,y1-y0,W,W])}
-    CVIG={key,want:key,c,B}}
-  ctx.setTransform(1,0,0,1,0,0);for(const[y0,bh,a,b] of CVIG.B){if(a>0)ctx.drawImage(CVIG.c,0,y0,a,bh,0,y0,a,bh);if(b<W)ctx.drawImage(CVIG.c,b,y0,W-b,bh,b,y0,W-b,bh)}ctx.setTransform(m.a,m.b,m.c,m.d,m.e,m.f)}
 $('playBtn').onclick=()=>goPlay('arena');
 
 // --- hero tab ---

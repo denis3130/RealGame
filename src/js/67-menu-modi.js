@@ -121,7 +121,7 @@ document.addEventListener('click',e=>{if(MM.eatNext){MM.eatNext=false;e.stopProp
 // the home canvas' frame: the same as drawCamp's (the hero's feet just above the «Cambia» pill, his scale hs)
 function campFrame(){campResize();const cr=campCv.getBoundingClientRect(),dpr=campCv.width/Math.max(1,cr.width),hp=$('heroPill').getBoundingClientRect(),tb=$('topbar').getBoundingClientRect();
   const u=campCv.width/SW,top=(tb.bottom-cr.top)*dpr,feet0=(hp.top-cr.top)*dpr,room=Math.max(80*dpr,feet0-top),hs=clamp(Math.min(room*.56,215*dpr)/(46*u),1.4,3.6),feet=feet0-13*hs*u,
-    oy=Math.round(feet-HOME_Y*u),ox=Math.round(campCv.width/2-180*u);return{u,ox,oy,dpr,hs}}
+    oy=feet-HOME_Y*u,ox=campCv.width/2-180*u;return{u,ox,oy,dpr,hs}}
 // the Zombie home: the campfire (k: how much the hero is sitting); while walking off to play, he stands up and the night swallows the screen
 function drawCampZ(dt,k){const F=campFrame(),saved=ctx;ctx=campX;const t=CAMP.t;try{
   ctx.setTransform(1,0,0,1,0,0);ctx.fillStyle='#020407';ctx.fillRect(0,0,campCv.width,campCv.height);ctx.setTransform(F.u,0,0,F.u,F.ox,F.oy);
@@ -166,6 +166,4 @@ AMBEV.zmenu=[[.08,.35,t=>fNoise(t,.01,'highpass',VR(2600,.35),.7,.04)],[1.2,3.2,
 // (the ambience follows the mode by itself: src/js/57-suoni2-atmosfera.js picks 'zmenu' in the Zombie menu)
 // the menu's music follows the mode too (showMenu plays 'menu')
 {const _pm=playMusic;playMusic=function(name){if(name==='menu'&&zMode()&&!MM.tr)name='zmenu';return _pm.call(this,name)}}
-// the frames of the menu count for the soft lights copied one to one (phase 9, glowFast)
-{const _dc=drawCamp;drawCamp=function(){glowTick();return _dc.apply(this,arguments)}}
 applyModeUI();

@@ -4,18 +4,7 @@
 // darker at the bottom and lit from above (drawn once into a sprite, then reused every frame)
 // =====================================================================
 const MAINCTX=ctx;const SHB=(()=>{const c=document.createElement('canvas');c.width=c.height=64;const x=c.getContext('2d'),g=x.createRadialGradient(32,32,0,32,32,32);g.addColorStop(0,'rgba(0,0,0,1)');g.addColorStop(.45,'rgba(0,0,0,.62)');g.addColorStop(1,'rgba(0,0,0,0)');x.fillStyle=g;x.fillRect(0,0,64,64);return c})();
-// the three shadows of an obstacle that stays put, in one picture as big as they are on the canvas, copied one to one (phase 9): black over
-// black, the floor under them gets just as dark; an obstacle that fades away, or one that keeps moving, as before
-function shadowSprite(k,h,r){const m=ctx.getTransform();if(m.b!==0||m.c!==0||!(m.a>=1)||Math.abs(m.a-m.d)>1e-6||(k._shN||0)>4)return false;const S=m.a,key=S+'|'+r+'|'+h+'|'+k.x+'|'+k.y;let c=k._sh;
-  if(!c||c.key!==key){const l=r*1.1+h*.42,cx=k.x+h*.28,cy=k.y+h*.12+2,co=Math.cos(.5),si=Math.sin(.5),hx=co*l+si*r*.72,hy=si*l+co*r*.72,
-      x0=Math.floor(Math.min(cx-hx,k.x-r*1.5))-1,y0=Math.floor(Math.min(cy-hy,k.y+2-r*.64))-1,x1=Math.ceil(Math.max(cx+hx,k.x+r*1.5))+1,y1=Math.ceil(Math.max(cy+hy,k.y+2+r*.64))+1;
-    if(!(x1>x0&&y1>y0&&(x1-x0)*S<2048&&(y1-y0)*S<2048))return false;
-    const sc=c&&c.cv||document.createElement('canvas');sc.width=Math.ceil((x1-x0)*S);sc.height=Math.ceil((y1-y0)*S);const x=sc.getContext('2d');x.setTransform(S,0,0,S,-x0*S,-y0*S);
-    x.save();x.globalAlpha=.4;x.translate(cx,cy);x.rotate(.5);x.drawImage(SHB,-l,-r*.72,l*2,r*1.44);x.restore();
-    x.globalAlpha=.55;x.drawImage(SHB,k.x-r*1.5,k.y+2-r*.64,r*3,r*1.28);x.globalAlpha=.7;x.drawImage(SHB,k.x-r*1.08,k.y+1.5-r*.4,r*2.16,r*.8);
-    c=k._sh={key,cv:sc,x0,y0};k._shN=(k._shN||0)+1}
-  ctx.setTransform(1,0,0,1,0,0);ctx.globalAlpha=1;ctx.drawImage(c.cv,Math.round(S*c.x0+m.e),Math.round(S*c.y0+m.f));ctx.setTransform(m.a,m.b,m.c,m.d,m.e,m.f);return true}
-function castShadow(k){const a=k.temp?Math.min(1,k.life/.6):1,h=kH(k),r=k.r;if(a>=1&&!k.temp&&shadowSprite(k,h,r))return;
+function castShadow(k){const a=k.temp?Math.min(1,k.life/.6):1,h=kH(k),r=k.r;
   ctx.save();ctx.globalAlpha=a*.4;ctx.translate(k.x+h*.28,k.y+h*.12+2);ctx.rotate(.5);const l=r*1.1+h*.42;ctx.drawImage(SHB,-l,-r*.72,l*2,r*1.44);ctx.restore();
   ctx.globalAlpha=a*.55;ctx.drawImage(SHB,k.x-r*1.5,k.y+2-r*.64,r*3,r*1.28);
   ctx.globalAlpha=a*.7;ctx.drawImage(SHB,k.x-r*1.08,k.y+1.5-r*.4,r*2.16,r*.8);ctx.globalAlpha=1};
@@ -70,8 +59,7 @@ const ROCK_LIVE={crystal:1,brazier:1,lavarock:1,cauldron:1,mudmound:1,reeds:1,la
     let g=o.createLinearGradient(0,k.y+r*.5,0,k.y-Math.min(30,Math.max(10,H*.55)));g.addColorStop(0,'rgba(12,8,6,.6)');g.addColorStop(1,'rgba(12,8,6,0)');o.fillStyle=g;o.fillRect(x0,y0,w,h);
     g=o.createLinearGradient(0,k.y-H-r*1.2,0,k.y-H*.35);g.addColorStop(0,'rgba(255,236,200,.2)');g.addColorStop(1,'rgba(255,236,200,0)');o.fillStyle=g;o.fillRect(x0,y0,w,h);
     o.fillStyle=`rgba(${(G.env&&G.env.light)||'255,200,140'},.05)`;o.fillRect(x0,y0,w,h);o.globalCompositeOperation='source-over';
-    return k._sp={key,c,x0,y0,w,h,ss:SS}}
+    return k._sp={key,c,x0,y0,w,h}}
   drawRock=function(k){if(k._raw||k.temp||ROCK_LIVE[k.kind]||ctx!==MAINCTX){_dr(k);return}
-    // on whole pixels and at its own size: with the canvas at 2 (or 1,5) pixels a point the picture is copied one to one, not resampled
-    const sp=rockSprite(k),dx=k.hit>0?Math.sin(G.t*90)*k.hit*14:0,S=sp.ss;ctx.drawImage(sp.c,Math.round((sp.x0+dx)*S)/S,Math.round(sp.y0*S)/S,sp.c.width/S,sp.c.height/S);groundFront(k)}}
+    const sp=rockSprite(k),dx=k.hit>0?Math.sin(G.t*90)*k.hit*14:0;ctx.drawImage(sp.c,sp.x0+dx,sp.y0,sp.w,sp.h);groundFront(k)}}
 
