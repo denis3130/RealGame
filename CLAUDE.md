@@ -201,7 +201,11 @@ una cosa a parte senza intaccare il progetto principale». `src/js/94-classica-n
 stanze con un obiettivo, famiglie di abilità che si fondono, 12 reliquie, mappa del mondo con le stelle al posto della scalata delle coppe,
 bracieri della fiamma, Torre della settimana, Corsa dei boss. Pagina `python3 anteprime/mk_classica.py`, pubblicata su
 https://claude.ai/artifact/K6E5QMv5pxKkt61MCFJsba; prova `node tests/classica.js`; dettagli in `docs/classica-nuova.md`. Nel gioco solo dopo
-il sì di Denis.
+il sì di Denis. Poi (Denis: «fammela vedere la classica nuova e le modifiche che mi avevi proposto») nella stessa pagina anche le modifiche
+proposte: crescita automatica al posto delle carte che erano solo numeri (`CN_GROW`), élite con un potere scritto sopra la testa e vita che
+cresce meno (`CN_AFX`, `hpMul` +14% a stanza), il Capobanda alla stanza 3, porta aperta subito e passaggi più veloci, frammenti di fiamma e
+l'Altare nella mappa (`CN_ALT`), il menu della Classica con un solo bottone «Premi» al posto di quattro (via Cammino e Offerte). Unire oro
+e cristalli è rimasto una proposta.
 
 ## FASE 9: più fluido sul telefono (19 ottobre, in corso)
 

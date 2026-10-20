@@ -2,6 +2,7 @@
 // Corsa e le reliquie nel menu; ogni stanza con un obiettivo (resisti, totem, pavimento che sale, scrigno a tempo, lanterna) con il suo premio;
 // la stanza élite con la reliquia; le quattro fusioni e gli effetti delle reliquie senza errori; una partita intera di un giocatore automatico
 // (i bivi scelti a giro) fino alla vittoria con le stelle; la Torre fino al piano 20; la Corsa dei boss da un custode all'altro.
+// «nuovo»: le modifiche proposte (menu con «Premi», crescita automatica, poteri delle élite, Capobanda, porta subito aperta, frammenti, Altare).
 // Foto tests/cn_<n>.png. Uso: python3 anteprime/mk_classica.py --test && node tests/classica.js [solo]
 const {chromium}=require('playwright');const path=require('path');
 const SOLO=process.argv[2]||'';
@@ -83,11 +84,12 @@ const SOLO=process.argv[2]||'';
   }
   // ---------------------------------------------------------------- a whole run, the route chosen in turn, up to the win and its stars
   if(!SOLO||SOLO==='partita'){
-    await toMenu();await E(`(()=>{SAVE.cn.pick=0;__A.door=0;__A.endSeen=0;__A.ends=[];__A.log=[];startRun();__A.on=true;__A.kill=true;return 0})()`);
+    await toMenu();const shP=await J(`SAVE.cn.shards`);await E(`(()=>{SAVE.cn.pick=0;__A.door=0;__A.endSeen=0;__A.ends=[];__A.log=[];startRun();__A.on=true;__A.kill=true;return 0})()`);
     const end=await run(240);await W(1500);const a=await J(`({ends:__A.ends,log:__A.log.slice(0,60),stars:SAVE.cn.stars,etr:$('eTr').textContent.replace(/\\s+/g,' ').slice(0,200),lit:!!document.querySelector('#eTr .cnLitL')})`);
     await snap('vittoria');
     ok('una partita intera con i bivi fino alla vittoria',end&&end.end&&a.ends.length&&a.ends[0].title==='VITTORIA',JSON.stringify(a.ends[0]||end));
     ok('le stelle dell\'arena 1 e il braciere acceso',(a.stars[0]&1)===1&&a.lit,JSON.stringify({stars:a.stars,etr:a.etr}));
+    const shA=await J(`SAVE.cn.shards`);ok('la vittoria dà 16 frammenti di fiamma',shA-shP===16,JSON.stringify({prima:shP,dopo:shA}));
     console.log('     strade e reliquie: '+a.log.filter(l=>/strada|reliquia/.test(l)).join(' | '));
     await toMenu();await W(700);const card=await J(`$('chapCard').textContent`);ok('la scheda dopo la vittoria propone l\'arena 2',/Arena 2/.test(card),card.slice(0,60));
   }
@@ -113,5 +115,61 @@ const SOLO=process.argv[2]||'';
     const r1=await J(`({i:G.rush.i,beat:G.rush.beat})`);await snap('corsa_4');ok('da un custode all\'altro (4 custodi di fila)',r1.i>=3&&seen.size>=3,JSON.stringify(Object.assign({visti:[...seen]},r1)));
     await E(`(()=>{__A.on=false;endRun(false);return 0})()`);await W(500);const r2=await J(`({tag:$('endTag').textContent,text:$('endText').textContent,best:SAVE.cn.rush.best,t:SAVE.trophies,b:SAVE.bestA})`);await snap('corsa_fine');
     ok('la fine della Corsa: record e niente coppe o record d\'arena cambiati',r2.tag==='Corsa dei boss'&&r2.best>=3&&r2.t===tr0.t&&JSON.stringify(r2.b)===JSON.stringify(tr0.b),JSON.stringify(r2));
+  }
+  // ---------------------------------------------------------------- the proposed changes: menu, growth, elite powers, Capobanda, faster rooms, shards and the Altar
+  if(!SOLO||SOLO==='nuovo'){
+    await toMenu();await W(600);await E(`(()=>{if(!$('sheetScr').hidden)closeSheet();modal=false;return 0})()`);await W(300);
+    const vis=id=>`(!!$('${id}')&&$('${id}').offsetParent!==null)`;
+    const mn=await J(`({premi:${vis('cnPremiBtn')},mis:${vis('misBtn')},login:${vis('loginBtn')},road:${vis('roadSide')},offer:${vis('offerBtn')},pass:${vis('passBtn')},chest:${vis('chestBtn')}})`);
+    ok('menu: a sinistra solo «Premi», a destra Pass e Casse',mn.premi&&!mn.mis&&!mn.login&&!mn.road&&!mn.offer&&mn.pass&&mn.chest,JSON.stringify(mn));
+    await snap('menu_nuovo');await p.click('#cnPremiBtn');await W(450);
+    const pr=await J(`({open:!$('cnPremi').hidden,rows:document.querySelectorAll('#cnPremi .cnPrR').length,svg:document.querySelectorAll('#cnPremi .cnPrI svg').length})`);await snap('menu_premi');
+    ok('«Premi» apre Missioni, Accesso, Ruota e Traguardi',pr.open&&pr.rows===4&&pr.svg===4,JSON.stringify(pr));
+    await p.click('#cnPremi .cnPrR[data-id="misBtn"]');await W(600);const ms=await J(`({sheet:SHEET,vis:!$('sheetScr').hidden,pan:$('cnPremi').hidden})`);
+    ok('dal pannello si aprono le Missioni',ms.vis&&ms.sheet==='mis'&&ms.pan,JSON.stringify(ms));await E(`(()=>{closeSheet();modal=false;return 0})()`);
+    const zm=await J(`(()=>{const m=$('menu');m.classList.add('zmode');const r={premi:${vis('cnPremiBtn')},mis:${vis('misBtn')}};m.classList.remove('zmode');return r})()`);
+    ok('nella Zombie il menu resta com\'era',!zm.premi,JSON.stringify(zm));
+    // growth: no more number-only cards, they come by themselves at each level
+    await E(`(()=>{SAVE.cn.pick=0;__A.on=false;startRun();return 0})()`);await W(1500);
+    const g=await J(`(()=>{const a0=P.atk;gainXp(P.need+1);return{a0,a1:P.atk,lvl:P.lvl,sk:P.skills.atk||0}})()`);
+    ok('salendo di livello l\'attacco cresce da solo (+10%)',g.lvl===2&&Math.abs(g.a1/g.a0-1.1)<.001&&g.sk===1,JSON.stringify(g));
+    const off=await J(`(()=>{const seen=new Set();for(let i=0;i<40;i++){openSkills('level',true);offer.forEach(s=>seen.add(s.id));closeSkills()}P.pendingLv=0;return[...seen]})()`);
+    ok('nelle carte non escono più attacco, salute, cadenza e critico',!off.some(id=>['atk','hp','aspd','crit'].includes(id))&&off.length>=8,off.join(' '));
+    // the six elite powers on test elites
+    const af=await J(`(()=>{document.querySelectorAll('#skScr').forEach(q=>q.hidden=true);modal=false;paused=false;G.room=4;G.event=null;buildRoom();G.state='play';G.enemies.length=0;let i=0;
+      const mk=k=>{const e=makeE('goblin',L+50+(i++%3)*((R-L-100)/2),TOP+170+Math.floor((i-1)/3)*110,0,true);cnGiveAfx(e,1,[k]);G.enemies.push(e);return e};const out={};
+      let e=mk('scudo');const h=e.hp;hurtE(e,e.cnShM*.5);out.scudo=[e.hp===h,e.cnSh>0];hurtE(e,e.cnShM);out.scudo.push(e.cnSh===0&&e.hp<h);e.cnShT=0;cnAfxTick(.5);out.scudo.push(e.cnSh>0);
+      e=mk('divide');hurtE(e,e.hp+1);out.divide=G.enemies.filter(o=>o.cnSplit&&!o.dead).length;
+      e=mk('bomba');hurtE(e,e.hp+1);const b=CN.fx.find(f=>f.k==='bomb');out.bomba=!!b;
+      if(b){P.x=b.x;P.y=b.y;P.inv=0;const hp=P.hp;for(let k=0;k<45;k++)cnPost(.033,P.ult);out.boom=P.hp<hp}
+      e=mk('furia');out.furia=!!e.cnFur;e=mk('gelo');P.x=e.x;P.y=e.y+24;P.mire=0;cnAfxTick(.03);out.gelo=P.mire>0;e=mk('rigenera');e.hp=e.max*.5;e.cnCalm=2;cnAfxTick(1);out.rigenera=e.hp>e.max*.5;
+      e=mk('scudo');cnGiveAfx(e,2,['scudo','furia']);P.x=AW/2;P.y=BOT-60;P.hp=P.maxhp;return out})()`);
+    await W(500);await snap('elite_poteri');
+    ok('i poteri delle élite: scudo che para e torna, si divide, bomba che scoppia, furia, gelo che rallenta, rigenera',af.scudo.every(Boolean)&&af.divide===2&&af.bomba&&af.boom&&af.furia&&af.gelo&&af.rigenera,JSON.stringify(af));
+    // the Capobanda in room 3, then the relic
+    const cp=await J(`(()=>{G.enemies.length=0;CN.fx=[];G.room=2;G.event=null;G.cnRoute={det:9,lastEv:null,lastObj:null,path:[]};return cnRouteOpts().map(q=>q.k)})()`);
+    ok('dopo la stanza 2 la strada porta al Capobanda',cp.length===1&&cp[0]==='capo',cp.join(','));
+    await E(`(()=>{cnRouteApply({k:'capo',room:3});G.state='play';return 0})()`);await W(1600);
+    const cb=await J(`(()=>{const c=G.enemies.find(e=>e.cnCapo);return{n:G.enemies.filter(e=>e.cnCapo).length,afx:c&&c.cnAfx,elite:c&&c.elite,ban:$('banner').textContent}})()`);await snap('capobanda');
+    ok('la stanza 3: un Capobanda con due poteri',cb.n===1&&cb.afx&&cb.afx.length===2&&cb.elite,JSON.stringify(cb));
+    await E(`__A.on=true;__A.kill=true;__A.stopOnClear=true;0`);for(let i=0;i<60&&!(await E(`G.state==='cleared'`));i++)await W(300);
+    const ct=await J(`({st:G.state,clearT:G.clearT})`);ok('la porta si apre subito dopo l\'ultimo nemico',ct.st==='cleared'&&ct.clearT<=.45,JSON.stringify(ct));
+    await E(`__A.on=false;__A.stopOnClear=false;0`);for(let i=0;i<30&&!(await E(`!$('cnRel').hidden`));i++){await E(`(()=>{if(!$('skScr').hidden)pick(0);G.clearT=Math.max(G.clearT,.1);return 0})()`);await W(250)}
+    const rl=await J(`({rel:!$('cnRel').hidden,tag:($('cnRelIn').querySelector('.tag')||{}).textContent})`);ok('il Capobanda dà una reliquia',rl.rel&&/Capobanda/.test(rl.tag||''),JSON.stringify(rl));
+    await E(`(()=>{const c=document.querySelector('#cnRel .cnRelC');if(c)c.click();return 0})()`);await W(300);
+    // shards at the end, the Altar, the upgrade in the next run
+    const sh0=await J(`SAVE.cn.shards`);await E(`(()=>{endRun(false);return 0})()`);await W(1200);
+    const sh=await J(`({n:SAVE.cn.shards,line:($('eTr').querySelector('.cnShL')||{}).textContent||''})`);await snap('frammenti');
+    ok('a fine partita i frammenti di fiamma (uno per stanza)',sh.n===sh0+3&&/frammenti/.test(sh.line),JSON.stringify(Object.assign({prima:sh0},sh)));
+    await toMenu();await E(`(()=>{SAVE.cn.pick=0;startRun();return 0})()`);await W(1200);const hp0=await J(`P.maxhp`);await toMenu();
+    await E(`(()=>{SAVE.cn.shards=Math.max(SAVE.cn.shards,60);save();return 0})()`);
+    await p.click('#chapCard');await W(500);await p.click('#cnMap .cnMode[data-sub="alt"]');await W(400);
+    const al=await J(`({rows:document.querySelectorAll('#cnMap .cnAltL li').length,can:document.querySelectorAll('#cnMap .cnUp:not(:disabled)').length})`);
+    await p.click('#cnMap .cnUp[data-u="cuore"]');await W(400);await snap('altare');
+    const al2=await J(`({lv:SAVE.cn.alt.cuore,n:SAVE.cn.shards})`);ok('l\'Altare: cinque migliorie, «Cuore di brace» comprato',al.rows===5&&al.can>0&&al2.lv===1,JSON.stringify(Object.assign(al,al2)));
+    await p.click('#cnMap .cnX');await W(200);await p.click('#cnMap .cnX');await W(300);
+    await E(`(()=>{SAVE.cn.pick=0;startRun();return 0})()`);await W(1200);const hp1=await J(`P.maxhp`);
+    ok('la miglioria vale nella partita dopo (+6% salute)',Math.abs(hp1/hp0-1.06)<.01,JSON.stringify({hp0,hp1}));
+    await toMenu();await E(`(()=>{SAVE.cn.alt={};save();return 0})()`);
   }
   console.log('\n'+R.join('\n'));console.log(errs.length?'ERRORI:\n'+[...new Set(errs)].slice(0,20).join('\n'):'nessun errore');await b.close()})();

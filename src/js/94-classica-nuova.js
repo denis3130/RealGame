@@ -4,8 +4,11 @@
 // 1 bivi tra le stanze (cnRoute*), 2 stanze con un obiettivo (CN_OBJ), 3 famiglie di abilità che si fondono (CN_FAM), 4 reliquie (CN_REL),
 // 5 mappa del mondo con le stelle al posto della scalata delle coppe (cnMap*), 6 bracieri della fiamma, 7 Torre della settimana (cnTower*),
 // 8 Corsa dei boss (cnRush*). Tutto avvolge funzioni del gioco; il salvataggio nuovo sta in SAVE.cn (stelle, reliquie trovate, record).
+// Poi le modifiche proposte a Denis («fammela vedere la classica nuova e le modifiche che mi avevi proposto»): 9 crescita automatica al
+// posto delle carte che erano solo numeri (CN_GROW), 10 élite con un potere e meno vita che cresce (CN_AFX, hpMul), 11 il Capobanda alla
+// stanza 3 e passaggi più veloci, 12 frammenti di fiamma e l'Altare (CN_ALT), 13 un menu con meno bottoni (i premi in uno: cnPremi*).
 const CN={on:true,next:null,last:null,fx:[],swap:null,dash:false,err:0,sel:0,sub:null,pool:null};
-function cnS(){const S=SAVE.cn||(SAVE.cn={});S.stars=S.stars||{};S.relics=S.relics||{};S.tower=S.tower||{};S.rush=S.rush||{};S.rew=S.rew||0;return S}
+function cnS(){const S=SAVE.cn||(SAVE.cn={});S.stars=S.stars||{};S.relics=S.relics||{};S.tower=S.tower||{};S.rush=S.rush||{};S.rew=S.rew||0;S.alt=S.alt||{};if(S.shards==null)S.shards=20;return S}
 const cnErr=err=>{if(CN.err++<6)console.error('classica nuova:',err)};
 const cnBoss=i=>ARENAS[i].bt||BOSSZ[ARENAS[i].boss]||'golem';
 const cnBits=i=>cnS().stars[i]||0;
@@ -37,7 +40,9 @@ const CNI={
   bag:`<path d="M14 9h12l-3 5h-6z" fill="#8a5a20" ${S2}/><path d="M17 14h6c8 4 11 10 11 15 0 4-3 7-7 7H13c-4 0-7-3-7-7 0-5 3-11 11-15z" fill="#c07a34" ${S2}/><circle cx="20" cy="26" r="5" fill="#ffc93c" ${S2}/>`,
   flame:`<path d="M20 3c4 7 12 11 12 21a12 12 0 0 1-24 0c0-6 4-9 6-13 1 4 3 6 5 6 0-6 0-9 1-14z" fill="#c48ae8" ${S2}/><path d="M20 22c3 3 5 5 5 8a5 5 0 0 1-10 0c0-3 3-5 5-8z" fill="#f4e6ff"/>`,
   coin:`<circle cx="20" cy="20" r="14" fill="#ffc93c" ${S2}/><circle cx="20" cy="20" r="9" fill="none" stroke="#c08a10" stroke-width="2.5"/><path d="M20 14v12" stroke="#c08a10" stroke-width="3" stroke-linecap="round"/>`,
-  medal:`<path d="M12 3h6l4 11h-6zM28 3h-6l-4 11h6z" fill="#e5484d" ${S2}/><circle cx="20" cy="25" r="11" fill="#c9cfd6" ${S2}/><path d="M20 19l2 4 4 .5-3 3 1 4-4-2-4 2 1-4-3-3 4-.5z" fill="#ffc93c" stroke="#1b1612" stroke-width="1.4" stroke-linejoin="round"/>`};
+  medal:`<path d="M12 3h6l4 11h-6zM28 3h-6l-4 11h6z" fill="#e5484d" ${S2}/><circle cx="20" cy="25" r="11" fill="#c9cfd6" ${S2}/><path d="M20 19l2 4 4 .5-3 3 1 4-4-2-4 2 1-4-3-3 4-.5z" fill="#ffc93c" stroke="#1b1612" stroke-width="1.4" stroke-linejoin="round"/>`,
+  fiamma:`<path d="M20 3c4 7 12 11 12 21a12 12 0 0 1-24 0c0-6 4-9 6-13 1 4 3 6 5 6 0-6 0-9 1-14z" fill="#ff8a3c" ${S2}/><path d="M20 21c3 3 5 5 5 8a5 5 0 0 1-10 0c0-3 3-5 5-8z" fill="#ffe27a"/>`,
+  gift:`<path d="M6 17h28v18H6z" fill="#e5484d" ${S2}/><path d="M4 11h32v7H4z" fill="#ff6a5a" ${S2}/><path d="M17 11h6v24h-6z" fill="#ffc93c" ${S2}/><path d="M20 11c-3-7-11-8-11-3 0 3 6 3 11 3zM20 11c3-7 11-8 11-3 0 3-6 3-11 3z" fill="#ffc93c" ${S2}/>`};
 const CN_EVI={fontana:'drop',mercante:'bag',altare:'flame',tesoro:'chest',oro:'coin',sfida:'medal'},CN_EVC={fontana:'#7fd3f0',mercante:'#ffc93c',altare:'#c48ae8',tesoro:'#ffd84a',oro:'#ffc93c',sfida:'#c9cfd6'};
 const CN_STAR='<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2l3 6.5 7 .8-5.2 4.8 1.5 7L12 17.6 5.7 21.1l1.5-7L2 9.3l7-.8z" fill="currentColor" stroke="#191714" stroke-width="2" stroke-linejoin="round"/></svg>';
 const CN_BRAZ='<svg viewBox="0 0 24 32" aria-hidden="true"><path class="fl" d="M12 1c3 5 7 7 7 12a7 7 0 0 1-14 0c0-4 3-6 4-9 1 3 2 4 3 4 0-3 0-5 0-7z"/><path d="M2.5 15h19l-3.5 6H6z" fill="#5a4636" stroke="#191714" stroke-width="2" stroke-linejoin="round"/><path d="M10 21h4v6h-4z" fill="#3b332b" stroke="#191714" stroke-width="2"/><path d="M6 29h12" stroke="#191714" stroke-width="3" stroke-linecap="round"/></svg>';
@@ -115,8 +120,8 @@ const CN_REL=[
     i:`<path d="M33 3L19 17" stroke="#ffe27a" stroke-width="4" stroke-linecap="round" opacity=".6"/><path d="M17 12l3 7 7 1-5 5 1 7-6-3-6 3 1-7-5-5 7-1z" fill="#ffe27a" ${S2}/>`}];
 const CN_RB=Object.fromEntries(CN_REL.map(r=>[r.id,r]));
 const cnRelIco=id=>{const r=CN_RB[id];return r?`<svg viewBox="0 0 40 40" aria-hidden="true">${r.i}</svg>`:''};
-function cnRelicOffer(){if(!G||G.ended)return;const own=new Set(G.relics||[]),pool=CN_REL.filter(r=>!own.has(r.id));if(!pool.length)return;const opts=shuffle(pool.slice()).slice(0,2),S=cnS();cnEnsure();
-  $('cnRelIn').innerHTML=`<span class="tag">Premio dell'élite</span><h2>Scegli una reliquia</h2><p class="hint">Resta con te fino alla fine della partita. Quelle che trovi entrano nella tua collezione.</p>
+function cnRelicOffer(tag){if(!G||G.ended)return;const own=new Set(G.relics||[]),pool=CN_REL.filter(r=>!own.has(r.id));if(!pool.length)return;const opts=shuffle(pool.slice()).slice(0,G.cnRelN||2),S=cnS();cnEnsure();
+  $('cnRelIn').innerHTML=`<span class="tag">${tag||"Premio dell'élite"}</span><h2>Scegli una reliquia</h2><p class="hint">Resta con te fino alla fine della partita. Quelle che trovi entrano nella tua collezione.</p>
     <div class="cnRels">${opts.map((r,k)=>`<button class="cnRelC" data-k="${k}" style="--rc:${r.c};animation-delay:${k*.12}s"><span class="cnRelI">${cnRelIco(r.id)}</span>${S.relics[r.id]?'':'<em class="cnNew">Nuova!</em>'}<b>${r.n}</b><span>${r.d}</span></button>`).join('')}</div>`;
   $('cnRelIn').querySelectorAll('.cnRelC').forEach(b=>b.onclick=()=>{const r=opts[+b.dataset.k];$('cnRel').hidden=true;modal=false;paused=false;r.f();(G.relics=G.relics||[]).push(r.id);S.relics[r.id]=(S.relics[r.id]||0)+1;save();
     sfx('levelup');banner('Reliquia!',r.n,1.6);vfxBlast(P.x,P.y-12,cnRgb(r.c),80,{sparks:16})});
@@ -217,7 +222,7 @@ function cnDrawGround(){const O=G.cnObj;if(O&&O.k==='lava')cnDrawLiquid(O);
 function cnDrawAir(){for(const f of CN.fx)if(f.k==='star'){const p=1-f.t/f.max,e=f.e,x=e?e.x:f.x,y=(e?e.y-e.r:f.y)-4,sx=x+90*(1-p),sy=y-280*(1-p);
   ctx.save();ctx.globalCompositeOperation='lighter';ctx.strokeStyle='rgba(255,230,140,.45)';ctx.lineWidth=5;ctx.beginPath();ctx.moveTo(sx+46,sy-140);ctx.lineTo(sx,sy);ctx.stroke();glow('255,230,140',sx,sy,24,.8);ctx.restore();
   ink(2);ctx.beginPath();for(let k=0;k<10;k++){const r=k%2?3.4:8,a=k*Math.PI/5-Math.PI/2+G.t*6;ctx.lineTo(sx+Math.cos(a)*r,sy+Math.sin(a)*r)}ctx.closePath();fs('#fff1a8')}}
-{const _do=drawOrbs;drawOrbs=function(){if(CN.on&&G)try{cnDrawGround()}catch(err){cnErr(err)}return _do.apply(this,arguments)}}
+{const _do=drawOrbs;drawOrbs=function(){if(CN.on&&G)try{cnDrawGround();cnDrawAfxGround()}catch(err){cnErr(err)}return _do.apply(this,arguments)}}
 {const _db=drawBoulders;drawBoulders=function(){const r=_db.apply(this,arguments);if(CN.on&&G)try{cnDrawAir()}catch(err){cnErr(err)}return r}}
 
 // ---------------------------------------------------------------- avvolgimenti dei nemici, dei danni e delle uccisioni
@@ -229,7 +234,10 @@ function cnDrawAir(){for(const f of CN.fx)if(f.k==='star'){const p=1-f.t/f.max,e
 {const _hp=hurtP;hurtP=function(d){if(CN.on&&G&&P){if(CN.swap){const O=G.cnObj;if(O&&!O.lost){O.hp-=Math.max(4,d*.5);O.hit=.15}return}
     if(P.cnPiuma&&!G.cnBlocked&&!(P.inv>0)&&!(P.dashT>0)&&G.state==='play'&&d>0&&!INTRO.on){G.cnBlocked=true;P.inv=.7;text(P.x,P.y-42,'Parato!','#f6ead2',15);sfx('block');return}}
   return _hp.apply(this,arguments)}}
-{const _he=hurtE;hurtE=function(e,dmg,crit,dot){if(CN.on&&P&&e&&!e.dead&&!(e.intro>0)&&!e.hidden){if(P.cnEye&&!dot&&!e.cnEyed){e.cnEyed=1;dmg*=2}if(P.cnFury&&P.hp<P.maxhp/3)dmg*=1.5}return _he.call(this,e,dmg,crit,dot)}}
+{const _he=hurtE;hurtE=function(e,dmg,crit,dot){if(CN.on&&P&&e&&!e.dead&&!(e.intro>0)&&!e.hidden){if(P.cnEye&&!dot&&!e.cnEyed){e.cnEyed=1;dmg*=2}if(P.cnFury&&P.hp<P.maxhp/3)dmg*=1.5;
+    // l'élite con lo scudo: lo scudo prende il colpo per primo e torna dopo 4 secondi senza colpi
+    if(e.cnAfx){e.cnCalm=0;if(e.cnSh>0&&dmg>0){const a=Math.min(e.cnSh,dmg);e.cnSh-=a;e.cnShT=4;e.cnShF=.12;dmg-=a;if(e.cnSh<=0)cnShBreak(e);if(dmg<=.01){G.fx.push({k:'spark',x:e.x+rand(-9,9),y:e.y-e.r-e.z,t:.15});return}}}}
+  return _he.call(this,e,dmg,crit,dot)}}
 {const _ke=killE;killE=function(e,noLoot){const was=e.dead,burn=e.burn>0,psn=e.poisonT>0,boss=isBoss(e.type);const r=_ke.apply(this,arguments);
   try{if(CN.on&&G&&!was&&!boss){
     if(!noLoot&&P.cnCalice&&++G.cnKills%10===0){const v=Math.round(P.maxhp*.12);P.hp=Math.min(P.maxhp,P.hp+v);text(P.x,P.y-40,'+'+v,'#e5484d',16);sfx('heal')}
@@ -243,7 +251,7 @@ function cnDrawAir(){for(const f of CN.fx)if(f.k==='star'){const p=1-f.t/f.max,e
 function cnRushSet(i){const a=G.rush.list[i];G.arena=a;G.chapter=ARENAS[a].ch;G.diff=ARENAS[a].diff;G.bossLvl=null;G.room=ROOMS;G.event=null}
 const cnRushList=()=>ARENAS.map((_,i)=>i).filter(i=>cnS().all||cnBits(i)&1);
 {const _ms=makeSeqFor;makeSeqFor=function(){const nx=CN.next;CN.next=null;if(!CN.on||!G)return _ms.apply(this,arguments);
-  try{G.cnA=null;G.tower=null;G.rush=null;G.relics=[];G.cnKills=0;CN.fx=[];CN.last=null;
+  try{G.cnA=null;G.tower=null;G.rush=null;G.relics=[];G.cnKills=0;CN.fx=[];CN.last=null;if(!G.daily)cnAltApply();
     if(nx==='tower'&&G.mode==='inf'){CN.last='tower';G.tower={wk:cnWeek(),mods:cnTowerMods()};for(const m of G.tower.mods)m.f();const s=_ms.apply(this,arguments),k=s.findIndex(q=>q.c===20);return s.slice(0,k+1)}
     if(nx==='rush'){const list=cnRushList();if(list.length){CN.last='rush';G.rush={list,i:0,beat:0};cnRushSet(0);return[{c:ROOMS}]}}
     if(G.mode==='camp'&&!G.daily){const a=cnPick();G.cnA=a;G.arena=a;G.chapter=ARENAS[a].ch;G.diff=ARENAS[a].diff;G.bossLvl=null;G.cnRoute={det:0,lastEv:null,lastObj:null,path:[]};
@@ -254,24 +262,31 @@ function cnRoomSetup(){G.cnObj=null;G.cnBlocked=false;G.cnRT=0;CN.pool=null;cnHu
   if(G.tower&&!G.event&&!isBossRoom(G.room))banner('Torre · Piano '+G.room,G.tower.mods.map(m=>m.n).join(' · '),2.2);
   if(G.rush&&!G.event)$('banner').querySelector('small')&&($('banner').querySelector('small').textContent=`Corsa dei boss · ${G.rush.i+1} di ${G.rush.list.length}`);
   if(G.event||!v)return;
-  if(v==='elite'){let n=0;for(const e of G.enemies)if(!isBoss(e.type)&&!e.elite&&n<2){e.elite=true;e.hp*=2.6;e.max=e.hp;e.r=Math.round(e.r*1.2);e.gold*=3;e.cdmg=Math.round(e.cdmg*1.3);n++}
+  if(v==='elite'){let n=0;for(const e of G.enemies)if(!isBoss(e.type)&&!e.elite&&n<2){cnMakeElite(e);cnGiveAfx(e,cnAfxN());n++}
     G.cnRelic=true;banner('Stanza '+G.room+' · Élite','Premio: una reliquia',2.4)}
+  if(v==='capo')cnCapoSetup();
   if(v==='obj'&&ok)cnObjStart(ok)}
 {const _rc=onRoomClear;onRoomClear=function(){const r=_rc.apply(this,arguments);try{if(CN.on&&G){
     if(G.cnObj&&G.cnObj.k==='totem')G.cnObj.win=true;   // la stanza si chiude quando tutti, totem compresi, sono caduti
     if(G.cnObj&&G.cnObj.win&&!G.cnObj.paid){G.cnObj.paid=true;cnObjReward()}
-    if(G.cnRelic){G.cnRelic=false;cnLater(cnRelicOffer,900)}
-    if(G.tower&&!G.event&&isBossRoom(G.room)&&G.room<20)cnLater(cnRelicOffer,1400)}}catch(err){cnErr(err)}return r}}
+    if(G.cnRelic){G.cnRelic=false;const tg=G.cnRelTag;G.cnRelTag=null;cnLater(()=>cnRelicOffer(tg),900)}
+    if(G.tower&&!G.event&&isBossRoom(G.room)&&G.room<20)cnLater(()=>cnRelicOffer('Premio del custode'),1400);
+    // passaggi più veloci: la porta si apre appena la stanza è vuota (le morti dei boss si aspettano come prima)
+    if(G.state==='cleared'&&!(G.mode!=='inf'&&G.room===ROOMS&&!G.event))G.clearT=Math.min(G.clearT,Math.max(.4,corpseLeft()+.35))}}catch(err){cnErr(err)}return r}}
 {const _ns=nextStep;nextStep=function(){if(!CN.on||!G)return _ns.apply(this,arguments);
   try{if(G.rush){cnRushSet(G.rush.i);P.queue=[];buildRoom();return}
     if(G.tower&&!G.seq[G.si+1]){endRun(true);return}
     if(G.cnA!=null){const o=cnRouteOpts();if(o&&o.length>1){cnRouteShow(o);return}if(o&&o.length===1){cnRouteApply(o[0]);return}}}catch(err){cnErr(err)}
   return _ns.apply(this,arguments)}}
 {const _up=update;update=function(dt){if(!CN.on||!G||!P)return _up.apply(this,arguments);const u0=P.ult||0;
-  try{cnPre()}catch(err){cnErr(err)}const r=_up.apply(this,arguments);try{cnPost(dt,u0)}catch(err){cnErr(err)}return r}}
+  try{cnPre()}catch(err){cnErr(err)}
+  // passaggi più veloci: il nero dura meno e, con la porta aperta, l'eroe corre verso l'uscita
+  if(G.state==='trans'&&!(G.fadeHold>0))G.fade+=dt*G.fadeDir*1.6;
+  const run=G.state==='cleared'&&G.door&&!modal,s0=P.spd;if(run)P.spd=(s0||150)*1.45;
+  let r;try{r=_up.apply(this,arguments)}finally{if(run)P.spd=s0}try{cnPost(dt,u0)}catch(err){cnErr(err)}return r}}
 // «Resisti»: finché il tempo non finisce c'è sempre qualcuno che sta arrivando, così la stanza non si chiude prima
 function cnPre(){const O=G.cnObj;if(O&&O.k==='resisti'&&!O.done&&G.state==='play'&&!G.enemies.some(e=>e.spawn>0)&&G.enemies.filter(e=>!e.dead).length<=3)cnSpawn(2)}
-function cnPost(dt,u0){if(G.state==='trans'||G.state==='dead')return;cnObjTick(dt);
+function cnPost(dt,u0){if(G.state==='trans'||G.state==='dead')return;cnObjTick(dt);cnAfxTick(dt);cnSparkTick();
   const dash=P.dashT>0;if(dash&&!CN.dash&&P.cnStat)cnStatic();CN.dash=dash;
   if(dash&&P.cnBraci){CN.braT=(CN.braT||0)-dt;if(CN.braT<=0){CN.braT=.045;CN.fx.push({k:'fire',x:P.x,y:P.y+4,t:2.2,max:2.2,r:15,tk:0})}}
   if(P.cnBrina)for(const e of G.enemies)if(!e.dead&&Math.hypot(e.x-P.x,e.y-P.y)<95)e.slow=Math.max(e.slow||0,.25);
@@ -288,6 +303,7 @@ function cnPost(dt,u0){if(G.state==='trans'||G.state==='dead')return;cnObjTick(d
   for(const f of CN.fx){f.t-=dt;
     if((f.k==='fire'||f.k==='cloud')&&(f.tk-=dt)<=0){f.tk=.4;for(const e of G.enemies){if(!canHit(e)||Math.hypot(e.x-f.x,(e.y-f.y)*1.4)>f.r+e.r*.6)continue;
       if(f.k==='fire'){e.burn=Math.max(e.burn||0,1.6);if(!(e.burnTick>0))e.burnTick=.2}else{e.poisonS=Math.min(4,(e.poisonS||0)+1);e.poisonT=3}}}
+    if(f.k==='bomb'&&f.t<=0&&!f.hit){f.hit=1;G.fx.push({k:'boom',x:f.x,y:f.y,r:f.r,t:.35});sfx('boom',0,f.x);shake(3);if(G.state==='play'&&!(P.dashT>0)&&Math.hypot(P.x-f.x,(P.y-f.y)*1.15)<f.r)hurtP(f.dmg)}
     if(f.k==='star'&&f.t<=0&&!f.hit){f.hit=1;const e=f.e;if(e&&!e.dead){fxPush({k:'flash',x:e.x,y:e.y-e.r,rgb:'255,230,140',r:46,t:.2,max:.2});hurtE(e,P.atk*1.6,true);for(const o of G.enemies)if(o!==e&&canHit(o)&&Math.hypot(o.x-e.x,o.y-e.y)<46)hurtE(o,P.atk*.5,false,true);sfx('magic',0,e.x)}}}
   CN.fx=CN.fx.filter(f=>f.t>0)}
 
@@ -296,17 +312,19 @@ function cnObjPick(){const R=G.cnRoute,ks=Object.keys(CN_OBJ).filter(k=>k!==R.la
 function cnRouteOpts(){const R=G.cnRoute;if(!R)return null;const fromEv=!!G.event,next=G.room+1;if(!fromEv&&G.room>=ROOMS)return null;
   if(next>=ROOMS){const o=[{k:'boss',room:ROOMS}];if(!fromEv&&R.lastEv!=='fontana')o.push({k:'ev',ev:'fontana'});return o}
   const o=[{k:'normal',room:next,champ:next===5}],okObj=next!==G.ccRoom;
-  if(next===5){if(okObj)o.push({k:'obj',room:next,obj:cnObjPick()})}
+  if(next===3)o[0]={k:'capo',room:3};   // la stanza 3 è sempre del Capobanda
+  else if(next===5){if(okObj)o.push({k:'obj',room:next,obj:cnObjPick()})}
   else o.push(okObj&&Math.random()<.55?{k:'obj',room:next,obj:cnObjPick()}:{k:'elite',room:next});
   if(!fromEv&&next>=3&&R.det<4&&Math.random()<.8){const evs=Object.keys(EVENTS).filter(k=>k!==R.lastEv&&(k!=='sfida'||next>=4));if(evs.length)o.push({k:'ev',ev:pk(evs)})}
   return o}
 function cnRouteApply(o){G.si++;if(P.roomHeal&&!G.event)P.hp=Math.min(P.maxhp,P.hp+Math.round(P.maxhp*P.roomHeal));const R=G.cnRoute;
   if(o.k==='ev'){R.det++;R.lastEv=o.ev;G.event=o.ev;R.path.push({r:G.room,k:'ev',ev:o.ev})}
-  else{G.event=null;G.room=o.room;G.cnVar=o.k==='obj'||o.k==='elite'?o.k:null;G.cnObjK=o.obj||null;if(o.obj)R.lastObj=o.obj;R.path.push({r:o.room,k:o.k})}
+  else{G.event=null;G.room=o.room;G.cnVar=o.k==='obj'||o.k==='elite'||o.k==='capo'?o.k:null;G.cnObjK=o.obj||null;if(o.obj)R.lastObj=o.obj;R.path.push({r:o.room,k:o.k})}
   buildRoom()}
 function cnCard(o){
   if(o.k==='normal')return o.champ?{c:'#ffc93c',i:'skull',n:'Campioni',d:'Due élite ti sbarrano la strada',r:'Premio: tante monete'}:{c:'#c9cfd6',i:'sword',n:'Battaglia',d:'Una stanza come sempre',r:'Premio: monete ed esperienza'};
-  if(o.k==='elite')return{c:'#ff6a5a',i:'skull',n:'Élite',d:'Due nemici élite, più forti e più ricchi',r:'Premio: una reliquia'};
+  if(o.k==='elite')return{c:'#ff6a5a',i:'skull',n:'Élite',d:'Due nemici élite, ognuno con un potere',r:'Premio: una reliquia'};
+  if(o.k==='capo')return{c:'#ff9f1c',i:'crown',n:'Capobanda',d:'Il più grosso della banda, con due poteri',r:'Premio: una reliquia'};
   if(o.k==='obj')return{c:'#ffc93c',i:CN_OBJ[o.obj].ic,n:cnObjName(o.obj),d:CN_OBJ[o.obj].d,r:"Premio: un'abilità in più"};
   if(o.k==='boss'){const t=cnBoss(G.arena||0);return{c:'#e5484d',i:'crown',n:ET[t].name,d:"Il custode dell'arena",r:'Premio: la vittoria'}}
   const E=EVENTS[o.ev]||{n:o.ev,sub:''};return{c:CN_EVC[o.ev]||'#7fd3f0',i:CN_EVI[o.ev]||'drop',n:E.n,d:E.sub,r:'Una sosta, poi la strada continua'}}
@@ -357,6 +375,9 @@ function cnRushNext(){const R=G.rush;R.beat++;R.i++;const nxt=cnBoss(R.list[R.i]
       $('endTag').textContent='Corsa dei boss';$('endTitle').textContent=all?'VITTORIA':quit?'RITIRATA':'SEI CADUTO';
       $('endText').textContent=all?`Hai battuto tutti i ${n} custodi in ${cnMS(tm)}.`:`Hai battuto ${n} ${n===1?'custode':'custodi'} su ${G.rush.list.length}.`;$('eRoom').textContent=n;
       $('eTr').innerHTML=`<div class="trline">Record: ${R.best||0} di fila${R.time?' · tutti e 12 in '+cnMS(R.time):''}</div>`}
+    // i frammenti di fiamma: uno per stanza (sei in più se vinci), metà dei piani della Torre, tre a custode nella Corsa
+    const fr=mode==='arena'?G.room+(win?6:0):mode==='tower'?Math.ceil((win?20:G.room)/2):mode==='rush'?G.rush.beat*3:0;
+    if(fr>0){S.shards=(S.shards||0)+fr;$('eTr').insertAdjacentHTML('beforeend',`<div class="cnShL">${cnIco('fiamma')}+${fr} frammenti di fiamma <small>per l'Altare</small></div>`)}
     save()}catch(err){cnErr(err)}
   return r}}
 $('againBtn').onclick=()=>{if(CN.on)CN.next=CN.last;startRun()};
@@ -372,7 +393,7 @@ function cnChap(){const i=cnPick(),A=ARENAS[i],b=bestRoom(i),n=cnStarN(i),tot=cn
 const cnStarsH=i=>{const n=cnStarN(i);return[0,1,2].map(k=>`<b class="${k<n?'on':''}">${CN_STAR}</b>`).join('')};
 function cnMapOpen(){cnEnsure();CN.sel=cnPick();CN.sub=null;cnMapRender();$('cnMap').hidden=false;const sc=$('cnMapIn').querySelector('.cnPath'),n=$('cnMapIn').querySelector('.cnN.sel');if(sc&&n)sc.scrollTop=n.offsetTop-sc.clientHeight/2+40}
 function cnMapClose(){$('cnMap').hidden=true;renderChap()}
-function cnMapRender(){const el=$('cnMapIn'),S=cnS();if(CN.sub==='tower')return cnTowerRender(el);if(CN.sub==='rush')return cnRushRender(el);if(CN.sub==='rel')return cnRelRender(el);
+function cnMapRender(){const el=$('cnMapIn'),S=cnS();if(CN.sub==='tower')return cnTowerRender(el);if(CN.sub==='rush')return cnRushRender(el);if(CN.sub==='rel')return cnRelRender(el);if(CN.sub==='alt')return cnAltRender(el);
   const N=ARENAS.length,tot=cnTot(),lit=cnLit(),nextAt=(Math.floor(tot/CN_REW)+1)*CN_REW,H=N*100+46,cur=cnPick(),sc=el.querySelector('.cnPath'),top=sc?sc.scrollTop:null;
   let fire='';for(let i=0;i<N;i++)fire+=`<i class="cnBr ${cnBits(i)&1?'on':''}" style="--ac:${ARENAS[i].col}">${CN_BRAZ}</i>`;
   const pts=[];let nodes='';for(let i=0;i<N;i++){const y=H-58-i*100,x=50+Math.sin(i*1.3)*27;pts.push([x,y]);const op=cnOpen(i);
@@ -387,7 +408,8 @@ function cnMapRender(){const el=$('cnMapIn'),S=cnS();if(CN.sub==='tower')return 
       ${op?`<button class="btn cnPlay">Gioca</button>`:`<p class="cnLockP">${CN_LOCK} Vinci «${ARENAS[a-1].n}» per aprirla</p>`}</div>
     <div class="cnModes"><button class="cnMode" data-sub="tower" style="--mc:#c48ae8">${cnIco('totem')}<b>Torre</b><small>${T.wk===cnWeek()&&T.best?'Piano '+T.best:'Della settimana'}</small></button>
       <button class="cnMode" data-sub="rush" style="--mc:#e5484d">${cnIco('crown')}<b>Corsa dei boss</b><small>${RL?RL+' custodi':'Chiusa'}</small></button>
-      <button class="cnMode" data-sub="rel" style="--mc:#ffc93c">${cnRelIco('stella')}<b>Reliquie</b><small>${found} di ${CN_REL.length}</small></button></div>
+      <button class="cnMode" data-sub="rel" style="--mc:#ffc93c">${cnRelIco('stella')}<b>Reliquie</b><small>${found} di ${CN_REL.length}</small></button>
+      <button class="cnMode" data-sub="alt" style="--mc:#ff8a3c">${cnIco('fiamma')}<b>Altare</b><small>${S.shards||0} frammenti</small></button></div>
     <label class="cnAll"><input type="checkbox" ${S.all?'checked':''}> Solo nell'anteprima: apri tutte le arene</label>`;
   if(top!=null)el.querySelector('.cnPath').scrollTop=top;
   el.querySelector('.cnX').onclick=()=>{sfx('ui');cnMapClose()};
@@ -413,10 +435,146 @@ function cnRelRender(el){const S=cnS();
     <div class="cnRelG">${CN_REL.map(r=>S.relics[r.id]?`<div class="cnRelB" style="--rc:${r.c}"><span class="cnRelI">${cnRelIco(r.id)}</span><b>${r.n}</b><span>${r.d}</span><small>Trovata ${S.relics[r.id]} ${S.relics[r.id]===1?'volta':'volte'}</small></div>`
       :`<div class="cnRelB no"><span class="cnRelI">?</span><b>???</b><span>Ancora da trovare</span></div>`).join('')}</div></div>`;cnSubWire(el)}
 
+// ---------------------------------------------------------------- 9 crescita automatica
+// le carte che erano solo numeri (attacco, salute, cadenza, critico) non escono più: arrivano da sole, una a ogni livello, a giro;
+// nelle scelte restano le abilità che cambiano il modo di giocare
+const CN_GROW=[{id:'atk',t:'+10% attacco',c:'#ff9a8a',f:()=>{P.atk*=1.1}},{id:'hp',t:'+10% salute',c:'#9df07a',f:()=>{const a=Math.round(P.maxhp*.1);P.maxhp+=a;P.hp+=a}},
+  {id:'aspd',t:'+10% cadenza',c:'#ffe27a',f:()=>{P.aspd*=1.1}},{id:'crit',t:'+5% critico',c:'#ffc93c',f:()=>{P.crit+=.05}}];
+for(const s of SK){if(CN_GROW.some(g=>g.id===s.id)){const c0=s.cond;s.cond=()=>!CN.on&&(!c0||c0())}
+  // Colpo letale chiede due crescite di attacco e due di critico (dal livello 9), non le carte che non escono più
+  if(s.id==='evo_lethal'){const c0=s.cond;s.cond=()=>CN.on?(P.skills.crit||0)>=2&&(P.skills.atk||0)>=2:c0()}}
+{const _gx=gainXp;gainXp=function(v){const l0=P?P.lvl:0;const r=_gx.apply(this,arguments);try{if(CN.on&&G&&P&&P.lvl>l0)for(let l=l0+1;l<=P.lvl;l++)cnGrow(l)}catch(err){cnErr(err)}return r}}
+function cnGrow(l){const g=CN_GROW[(l-2)%CN_GROW.length];g.f();P.skills[g.id]=(P.skills[g.id]||0)+1;if(G.state==='dead')return;
+  text(P.x,P.y-64,g.t,g.c,16);banner('Livello '+l+'!',g.t+' · e una nuova abilità',1.4)}
+
+// ---------------------------------------------------------------- 10 élite con un potere
+// ogni élite ha un potere scritto sopra la testa (due dall'arena 4 o dalla stanza 8); in cambio ha meno vita (×2,2 invece di ×2,6)
+// e la vita dei nemici cresce meno da una stanza all'altra (+14% invece di +20%): meno spugne di vita, più cose da capire
+const CN_AFX={scudo:{n:'Scudo',c:'#8fdcff'},divide:{n:'Si divide',c:'#9df07a'},bomba:{n:'Esplosivo',c:'#ff9a4a'},furia:{n:'Furioso',c:'#ff6a5a'},gelo:{n:'Gelido',c:'#cfefff'},rigenera:{n:'Rigenera',c:'#d9a8ff'}};
+const CN_HPROOM=.14;
+const cnAfxN=()=>(G.arena||0)>=3||G.room>=8?2:1;
+const cnAfxOk=()=>CN.on&&G&&!G.daily&&(G.mode==='camp'||!!G.tower);
+function cnMakeElite(e){if(e.elite)return;e.elite=true;e.hp*=2.2;e.max=e.hp;e.r=Math.round(e.r*1.2);e.gold*=3;e.cdmg=Math.round(e.cdmg*1.3)}
+function cnGiveAfx(e,n,ks){if(!e||isBoss(e.type)||e.type==='cntotem')return;ks=ks||shuffle(Object.keys(CN_AFX)).slice(0,n);e.cnAfx=ks;e.cnCalm=0;e.cnSh=e.cnShM=0;
+  e.cnFur=ks.includes('furia');e.cnGel=ks.includes('gelo');e.cnReg=ks.includes('rigenera');e.cnDiv=ks.includes('divide');e.cnBo=ks.includes('bomba');
+  if(ks.includes('scudo')){e.cnSh=e.cnShM=Math.round(e.max*.35);e.cnShT=0}}
+{const _mk=makeE;makeE=function(t,x,y,sp,el){const e=_mk.apply(this,arguments);try{if(el&&e&&e.elite&&!e.cnAfx&&!isBoss(t)&&cnAfxOk()){e.hp*=2.2/2.6;e.max=e.hp;cnGiveAfx(e,cnAfxN())}}catch(err){cnErr(err)}return e}}
+{const _hm=hpMul;hpMul=function(){if(CN.on&&G&&G.mode==='camp'&&!G.daily)return(1+(effRoom()-1)*CN_HPROOM)*(G.diff||1)*firstK('firstHp');return _hm.apply(this,arguments)}}
+{const _ue2=updEnemy;updEnemy=function(e,dt){return _ue2.call(this,e,CN.on&&e&&e.cnFur&&!(e.spawn>0)&&!(e.frozen>0)?dt*1.4:dt)}}
+function cnShBreak(e){sfx('glass',0,e.x);vfxBlast(e.x,e.y-e.r-e.z,'150,220,255',46,{sparks:10});text(e.x,e.y-e.r*2-e.z-26,'Scudo rotto!','#bfe9ff',12)}
+function cnSplit(e){sfx('summon',0,e.x);for(const s of[-1,1]){const x=clamp(e.x+s*(e.r+6),L+22,R-22),y=clamp(e.y+rand(-8,8),TOP+30,BOT-50),o=makeE(e.type,x,y,.25,false);
+    o.cnSplit=1;o.hp=o.max=Math.max(5,o.max*.5);o.r=Math.max(8,Math.round(o.r*.85));o.gold=Math.max(1,Math.ceil((o.gold||1)/2));G.enemies.push(o)}
+  for(let q=0;q<10;q++)G.fx.push({k:'puff',x:e.x+rand(-12,12),y:e.y-14,vx:rand(-60,60),vy:rand(-60,-10),t:rand(.3,.5),r:rand(4,7)})}
+{const _ke2=killE;killE=function(e,noLoot){const was=e.dead;const r=_ke2.apply(this,arguments);
+  try{if(CN.on&&G&&!was&&e.cnAfx){if(e.cnCapo){shake(4);text(e.x,e.y-70,'Capobanda sconfitto!','#ffc93c',18);vfxBlast(e.x,e.y-24,'255,200,80',96,{sparks:22})}
+    if(!noLoot&&G.state==='play'&&!(G.cnObj&&G.cnObj.done)){if(e.cnDiv)cnSplit(e);if(e.cnBo){CN.fx.push({k:'bomb',x:e.x,y:e.y,t:1.2,max:1.2,r:64,dmg:Math.max(6,Math.round((e.cdmg||12)*1.1))});sfx('rock',0,e.x)}}}}catch(err){cnErr(err)}
+  return r}}
+// scudo che torna, cura di chi rigenera, il gelo che rallenta l'eroe vicino
+function cnAfxTick(dt){for(const e of G.enemies){if(!e.cnAfx||e.dead||e.spawn>0)continue;e.cnShF=Math.max(0,(e.cnShF||0)-dt);
+    if(e.cnShM&&e.cnSh<e.cnShM){e.cnShT-=dt;if(e.cnShT<=0)e.cnSh=Math.min(e.cnShM,e.cnSh+e.cnShM*dt)}
+    if(e.cnReg){e.cnCalm+=dt;e.cnRegOn=e.cnCalm>1.6&&e.hp<e.max;if(e.cnRegOn)e.hp=Math.min(e.max,e.hp+e.max*.05*dt)}
+    if(e.cnGel&&G.state==='play'&&!(P.dashT>0)&&Math.hypot(e.x-P.x,(e.y-P.y)*1.2)<64)P.mire=Math.max(P.mire||0,.12)}}
+// il Capobanda: il nemico più grosso della stanza 3 diventa un'élite più grande con due poteri e una corona
+function cnCapoSetup(){const c=G.enemies.filter(e=>!isBoss(e.type)&&e.type!=='cntotem').sort((a,b)=>(ET[b.type].hp||0)-(ET[a.type].hp||0))[0];
+  if(c){cnMakeElite(c);c.hp*=1.8;c.max=c.hp;c.r=Math.round(c.r*1.12);c.gold*=2;c.cnCapo=1;cnGiveAfx(c,2)}
+  G.cnRelic=true;G.cnRelTag='Premio del Capobanda';banner('Stanza 3 · Capobanda',(c?cnEName(c.type):'Il più grosso')+' con due poteri',2.6)}
+const cnEName=t=>{const b=BEST.find(q=>q[0]===t);return b?b[1]:(ET[t]&&ET[t].name)||'Il Capobanda'};
+{const _de2=drawEnemy;drawEnemy=function(e){if(e&&e.cnCapo&&CN.on){ctx.save();ctx.translate(e.x,e.y);ctx.scale(1.18,1.18);ctx.translate(-e.x,-e.y);try{return _de2.apply(this,arguments)}finally{ctx.restore()}}return _de2.apply(this,arguments)}}
+{const _sf2=shadowFor;shadowFor=function(e){if(e&&e.cnCapo&&CN.on){ctx.save();ctx.translate(e.x,e.y);ctx.scale(1.18,1.18);ctx.translate(-e.x,-e.y);try{return _sf2.apply(this,arguments)}finally{ctx.restore()}}return _sf2.apply(this,arguments)}}
+{const _dbr=drawBars;drawBars=function(){const r=_dbr.apply(this,arguments);if(CN.on&&G)try{cnDrawAfx()}catch(err){cnErr(err)}return r}}
+// a terra: la bomba che sta per scoppiare, l'anello del gelo, la luce del furioso, l'anello d'oro del Capobanda
+function cnDrawAfxGround(){for(const f of CN.fx)if(f.k==='bomb'){const p=1-f.t/f.max,bl=Math.sin(G.t*(10+p*22))>0;
+    ctx.save();ctx.fillStyle=`rgba(255,70,40,${.08+.2*p})`;ell(f.x,f.y,f.r,f.r*.55);ctx.fill();ctx.strokeStyle=`rgba(255,${bl?220:90},70,.85)`;ctx.lineWidth=2.5;ctx.setLineDash([6,5]);ell(f.x,f.y,f.r,f.r*.55);ctx.stroke();ctx.setLineDash([]);ctx.restore();
+    ink(2.4);circ(f.x,f.y-7,8);fs('#3b332b');ctx.strokeStyle='#8a5a20';ctx.lineWidth=2.4;ctx.beginPath();ctx.moveTo(f.x+5,f.y-13);ctx.quadraticCurveTo(f.x+9,f.y-19,f.x+12,f.y-17);ctx.stroke();
+    if(bl&&!LOWFX)glow('255,220,120',f.x+12,f.y-17,8,.9);ctx.fillStyle='#ffe27a';circ(f.x+12,f.y-17,2.2);ctx.fill()}
+  for(const e of G.enemies){if(!e.cnAfx||e.dead||e.spawn>0||e.hidden)continue;
+    if(e.cnCapo){ctx.strokeStyle='rgba(255,201,60,.6)';ctx.lineWidth=3;ell(e.x,e.y+4,e.r*1.7,e.r*.7);ctx.stroke()}
+    if(e.cnGel){ctx.save();ctx.fillStyle='rgba(200,240,255,.07)';ell(e.x,e.y+4,64,53);ctx.fill();ctx.strokeStyle='rgba(200,240,255,.5)';ctx.lineWidth=2;ctx.setLineDash([3,6]);ctx.lineDashOffset=G.t*10;ell(e.x,e.y+4,64,53);ctx.stroke();ctx.setLineDash([]);ctx.restore()}
+    if(e.cnFur&&!LOWFX){ctx.save();ctx.globalCompositeOperation='lighter';glow('255,80,50',e.x,e.y,e.r*1.8,.22+.08*Math.sin(G.t*9));ctx.restore()}}}
+// sopra: la bolla dello scudo, i nomi dei poteri sopra la barra, i «+» di chi rigenera, la corona del Capobanda
+function cnDrawAfx(){ctx.save();ctx.textAlign='center';ctx.textBaseline='alphabetic';ctx.lineJoin='round';ctx.font='11px "Lilita One", sans-serif';
+  for(const e of G.enemies){if(!e.cnAfx||e.dead||e.hidden||e.spawn>0||e.intro>0)continue;const fly=e.type==='bat'||e.type==='wisp'||e.type==='mosquito'||e.type==='snowspirit',w=Math.max(22,e.r*2)*1.3,hy=e.y-e.r*2-e.z-14-(fly?12:0);
+    if(e.cnSh>0){const k=e.cnSh/e.cnShM,cy=e.y-e.r*.95-e.z;ctx.save();ctx.globalAlpha=.14+.16*k+(e.cnShF>0?.3:0);ctx.fillStyle='#8fdcff';ell(e.x,cy,e.r*1.5,e.r*1.7);ctx.fill();
+      ctx.globalAlpha=.45+.35*k;ctx.strokeStyle='#e4f6ff';ctx.lineWidth=2;ell(e.x,cy,e.r*1.5,e.r*1.7);ctx.stroke();ctx.restore();ctx.fillStyle='#8fdcff';ctx.fillRect(e.x-w/2,hy-3,w*k,2.5)}
+    if(e.cnRegOn){ctx.fillStyle='#b8f08a';ctx.fillText('+',e.x+e.r*.9,hy-2-((G.t*30+e.x)%14))}
+    const A=e.cnAfx.map(k=>CN_AFX[k]),ws=A.map(a=>ctx.measureText(a.n).width),gap=9,tw=ws.reduce((s,v)=>s+v,0)+gap*(A.length-1),ty=hy-6;let x=e.x-tw/2;
+    for(let i=0;i<A.length;i++){const cx=x+ws[i]/2;ctx.lineWidth=3.2;ctx.strokeStyle=INK;ctx.strokeText(A[i].n,cx,ty);ctx.fillStyle=A[i].c;ctx.fillText(A[i].n,cx,ty);x+=ws[i]+gap;
+      if(i<A.length-1){ctx.fillStyle='#e6dcc0';ctx.beginPath();ctx.arc(x-gap/2,ty-4,1.6,0,TAU);ctx.fill()}}
+    if(e.cnCapo){const cx=e.x,cy=ty-17;ink(2);ctx.beginPath();ctx.moveTo(cx-10,cy+5);ctx.lineTo(cx-11,cy-5);ctx.lineTo(cx-5,cy);ctx.lineTo(cx,cy-8);ctx.lineTo(cx+5,cy);ctx.lineTo(cx+11,cy-5);ctx.lineTo(cx+10,cy+5);ctx.closePath();fs('#ffc93c')}}
+  ctx.restore()}
+
+// ---------------------------------------------------------------- 12 frammenti di fiamma e l'Altare
+// ogni partita lascia frammenti (vedi endRun); sull'Altare della mappa diventano migliorie che valgono per sempre
+const CN_ALT=[
+  {id:'cuore',n:'Cuore di brace',d:'Più salute in ogni partita',v:l=>`+${6*l}% salute`,max:5,c:[8,14,22,32,45],i:ICON.hp,f:l=>{const a=Math.round(P.maxhp*.06*l);P.maxhp+=a;P.hp+=a}},
+  {id:'lama',n:'Lama ardente',d:'Più attacco in ogni partita',v:l=>`+${5*l}% attacco`,max:5,c:[8,14,22,32,45],i:ICON.atk,f:l=>{P.atk*=1+.05*l}},
+  {id:'passo',n:'Passo di cenere',d:'Lo scatto si ricarica prima',v:l=>`−${8*l}% di attesa`,max:3,c:[10,20,34],i:ICON.dash,f:l=>{P.dashMax*=1-.08*l}},
+  {id:'scintilla',n:'Ultima scintilla',d:'Una volta a partita, sotto un quinto della salute, ne recuperi un terzo',max:1,c:[30],i:CNI.fiamma,f:()=>{P.cnSpark=1}},
+  {id:'destino',n:'Occhio del destino',d:'Le reliquie: scegli tra tre invece che tra due',max:1,c:[40],i:CN_RB.occhio.i,f:()=>{G.cnRelN=3}}];
+function cnAltApply(){const A=cnS().alt;for(const u of CN_ALT){const l=Math.min(u.max,A[u.id]||0);if(l)u.f(l)}}
+function cnSparkTick(){if(P.cnSpark&&!G.cnSparkU&&G.state==='play'&&P.hp>0&&P.hp<P.maxhp*.2){G.cnSparkU=1;const v=Math.round(P.maxhp/3);P.hp=Math.min(P.maxhp,P.hp+v);
+  text(P.x,P.y-46,'Ultima scintilla! +'+v,'#ffb35a',16);sfx('heal');vfxBlast(P.x,P.y-12,'255,150,60',80,{sparks:16})}}
+function cnAltRender(el){const S=cnS();
+  el.innerHTML=cnSubHead('Altare della fiamma')+`<div class="cnSub"><div class="cnBig" style="--mc:#ff8a3c">${cnIco('fiamma')}</div>
+    <p class="cnLead">Ogni partita ti lascia frammenti di fiamma: uno per stanza e sei in più se vinci l'arena; ne danno anche la Torre e la Corsa. Qui diventano forza che resta per sempre.</p>
+    <p class="cnShN">${cnIco('fiamma')}<b>${S.shards||0}</b> frammenti</p>
+    <ul class="cnAltL">${CN_ALT.map(u=>{const l=Math.min(u.max,S.alt[u.id]||0),top=l>=u.max,c=top?0:u.c[l],can=!top&&(S.shards||0)>=c;
+      return`<li><span class="cnAltI"><svg viewBox="0 0 40 40" aria-hidden="true">${u.i}</svg></span><div><b>${u.n}</b><span>${u.d}</span>${u.v?`<small>${l?u.v(l):'Non ancora'}${top?'':' → '+u.v(l+1)}</small>`:''}<i class="cnPips">${Array.from({length:u.max},(_,k)=>`<em class="${k<l?'on':''}"></em>`).join('')}</i></div>
+        <button class="cnUp" data-u="${u.id}" ${can?'':'disabled'}>${top?'Fatto':`${c}${cnIco('fiamma')}`}</button></li>`}).join('')}</ul></div>`;
+  cnSubWire(el);
+  el.querySelectorAll('.cnUp').forEach(b=>b.onclick=()=>{const u=CN_ALT.find(q=>q.id===b.dataset.u),l=S.alt[u.id]||0;if(l>=u.max)return;const c=u.c[l];if((S.shards||0)<c)return;
+    S.shards-=c;S.alt[u.id]=l+1;save();sfx('upgrade');cnMapRender()})}
+
+// ---------------------------------------------------------------- 13 il menu con meno bottoni
+// nella Classica a sinistra resta un solo bottone, «Premi», che apre Missioni, Accesso, Ruota e Traguardi; a destra restano Pass e Casse
+// (il Cammino delle coppe non serve più con le stelle, le Offerte stanno nella Bottega). La Zombie resta com'è.
+const CN_PREMI=[['misBtn','Missioni','Del giorno e della settimana'],['loginBtn','Accesso','Un premio ogni giorno'],['wheelBtn','Ruota','Un giro gratis al giorno'],['achBtn','Traguardi','Si riscattano in cristalli']];
+function cnPremiReady(id){const b=$(id);if(!b)return false;if(id==='achBtn'){const p=$('achPip');return!!p&&!p.hidden}return b.classList.contains('hot')}
+function cnPremiInit(){const col=document.querySelector('#tabPlay .sideBtns.l');if(!col||$('cnPremiBtn'))return;
+  const b=document.createElement('button');b.className='qbtn cnSide';b.id='cnPremiBtn';b.setAttribute('aria-label','Premi');
+  b.innerHTML=`<svg viewBox="0 0 40 40" aria-hidden="true">${CNI.gift}</svg><small>Premi</small><em class="pip" id="cnPremiN" hidden></em>`;col.insertBefore(b,col.firstChild);
+  const pan=document.createElement('div');pan.id='cnPremi';pan.hidden=true;col.parentElement.appendChild(pan);
+  b.onclick=ev=>{ev.stopPropagation();sfx('ui');if(pan.hidden){cnPremiFill();pan.hidden=false}else pan.hidden=true};
+  document.addEventListener('pointerdown',ev=>{if(!pan.hidden&&!pan.contains(ev.target)&&!b.contains(ev.target))pan.hidden=true},true);
+  // il bottone si accende quando uno dei quattro è pronto (si guardano i bottoni nascosti, che il gioco tiene aggiornati come sempre)
+  const mo=new MutationObserver(()=>cnPremiSync());for(const[id] of CN_PREMI){const q=$(id);if(q)mo.observe(q,{attributes:true,attributeFilter:['class']})}
+  const ap=$('achPip');if(ap)mo.observe(ap,{attributes:true,attributeFilter:['hidden'],childList:true,characterData:true,subtree:true});cnPremiSync()}
+function cnPremiSync(){const b=$('cnPremiBtn');if(!b)return;const n=CN_PREMI.filter(q=>cnPremiReady(q[0])).length,p=$('cnPremiN');b.classList.toggle('hot',n>0);
+  if(p.hidden!==!n)p.hidden=!n;if(p.textContent!==String(n))p.textContent=n;if(!$('cnPremi').hidden)cnPremiFill()}
+function cnPremiFill(){const pan=$('cnPremi');
+  pan.innerHTML=`<b class="cnPrT">Premi</b>`+CN_PREMI.map(([id,n,d])=>{const q=$(id),sv=q&&q.querySelector('svg'),hot=cnPremiReady(id);
+    return`<button class="cnPrR ${hot?'hot':''}" data-id="${id}"><span class="cnPrI">${sv?sv.outerHTML:''}</span><span class="cnPrX"><b>${n}</b><small>${hot?'Da ritirare!':d}</small></span></button>`}).join('');
+  pan.querySelectorAll('.cnPrR').forEach(r=>r.onclick=()=>{pan.hidden=true;sfx('ui');$(r.dataset.id).click()})}
+const CN_CSS2=`
+.cnShL{margin-top:4px;display:flex;align-items:center;justify-content:center;gap:5px;font-family:var(--display);font-size:15px;color:#ffb35a;text-shadow:var(--tol)}
+.cnShL svg{width:22px;height:22px}.cnShL small{font-family:var(--body);font-size:11.5px;color:#dbd0b0;text-shadow:none}
+.cnShN{margin:0;display:flex;align-items:center;justify-content:center;gap:6px;font-size:14px;color:#dbd0b0}.cnShN svg{width:26px;height:26px}.cnShN b{font-family:var(--display);font-weight:400;font-size:26px;color:#ffb35a;text-shadow:var(--tol)}
+.cnAltL{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:7px}
+.cnAltL li{display:flex;align-items:center;gap:9px;padding:8px 9px;border:2px solid #191714;border-radius:13px;background:linear-gradient(#3b332b,#2a231d)}
+.cnAltI{width:44px;height:44px;flex:0 0 auto;border-radius:50%;background:radial-gradient(circle,#5a3a1e,#120e0b 72%);border:2px solid #191714;display:flex;align-items:center;justify-content:center}.cnAltI svg{width:32px;height:32px}
+.cnAltL li>div{flex:1;min-width:0;display:flex;flex-direction:column;gap:1px}.cnAltL b{font-family:var(--display);font-weight:400;font-size:15.5px;text-shadow:var(--tol);line-height:1.05}
+.cnAltL div>span{font-size:12px;color:#dbd0b0;line-height:1.2}.cnAltL small{font-size:12px;font-weight:800;color:#ffb35a}
+.cnPips{display:flex;gap:3px;margin-top:2px}.cnPips em{width:12px;height:5px;border-radius:3px;background:#211b17;border:1px solid #191714}.cnPips em.on{background:#ff8a3c;box-shadow:0 0 5px #ff8a3c}
+.cnUp{flex:0 0 auto;min-width:64px;display:flex;align-items:center;justify-content:center;gap:2px;padding:7px 9px;border:3px solid #191714;border-radius:12px;background:linear-gradient(#ffb35a,#d9641c);box-shadow:0 3px 0 #191714;color:#fff;font-family:var(--display);font-size:16px;text-shadow:var(--tol);cursor:pointer}
+.cnUp svg{width:18px;height:18px}.cnUp:disabled{background:#4d4237;color:#8f846e;cursor:default;font-size:14px}.cnUp:disabled svg{filter:grayscale(1) brightness(.6)}
+.cnUp:not(:disabled):active{transform:translateY(2px);box-shadow:0 1px 0 #191714}
+#menu:not(.zmode) #tabPlay .sideBtns.l>.qbtn:not(.cnSide){display:none!important}
+#menu:not(.zmode) #roadSide,#menu:not(.zmode) #offerBtn{display:none!important}
+#menu.zmode .cnSide,#menu.zmode #cnPremi{display:none!important}
+#cnPremi{position:absolute;left:74px;top:106px;z-index:8;width:min(236px,calc(100% - 92px));display:flex;flex-direction:column;gap:6px;padding:9px;border:3px solid #191714;border-radius:16px;
+  background:linear-gradient(#3b332b,#211b17);box-shadow:0 6px 0 #191714,0 10px 30px rgba(0,0,0,.5);animation:cnIn .28s cubic-bezier(.2,1.4,.4,1) both}
+#cnPremi[hidden]{display:none}
+.cnPrT{font-family:var(--display);font-weight:400;font-size:17px;color:var(--gold);text-shadow:var(--tol);text-align:center}
+.cnPrR{display:flex;align-items:center;gap:9px;padding:6px 8px;border:2px solid #191714;border-radius:12px;background:#2e2620;color:#fff;cursor:pointer;font-family:var(--body);text-align:left}
+.cnPrR.hot{background:linear-gradient(90deg,rgba(255,201,60,.32),#2e2620);box-shadow:inset 0 0 0 2px rgba(255,201,60,.6)}
+.cnPrI{width:38px;height:38px;flex:0 0 auto;display:flex;align-items:center;justify-content:center}.cnPrI svg{width:34px;height:34px}
+.cnPrX{display:flex;flex-direction:column;min-width:0}.cnPrX b{font-family:var(--display);font-weight:400;font-size:15.5px;text-shadow:var(--tol)}.cnPrX small{font-size:11.5px;color:#dbd0b0}.cnPrR.hot small{color:var(--gold);font-weight:800}
+@media (prefers-reduced-motion:reduce){#cnPremi{animation:none}}`;
+
 // ---------------------------------------------------------------- schermate e stile
 function cnEnsure(){if($('cnMap'))return;const w=$('wrap'),mk=(id,inner)=>{const d=document.createElement('div');d.className='screen cnScr';d.id=id;d.hidden=true;d.innerHTML=`<div class="${inner}" id="${id}In"></div>`;w.appendChild(d);return d};
   mk('cnRoute','cnRouteBox');mk('cnRel','cnRelBox');mk('cnMap','cnMapBox');
-  const st=document.createElement('style');st.textContent=CN_CSS;document.head.appendChild(st)}
+  const st=document.createElement('style');st.textContent=CN_CSS+CN_CSS2;document.head.appendChild(st)}
 const CN_CSS=`
 #cnHud{position:absolute;left:50%;top:calc(104px + env(safe-area-inset-top,0px));transform:translateX(-50%);z-index:6;pointer-events:none;font-family:var(--display);font-size:17px;color:#fff;text-shadow:var(--tol);
   background:rgba(20,14,10,.66);border:2px solid #191714;border-radius:14px;padding:3px 12px 4px;white-space:nowrap;display:flex;gap:8px;align-items:baseline}
@@ -426,7 +584,7 @@ const CN_CSS=`
 .cnRouteBox h2,.cnRelBox h2{font-family:var(--display);font-weight:400;font-size:30px;margin:0;color:#fff;text-shadow:var(--tol)}
 .cnRelBox .hint{margin:0;color:#dbd0b0;font-size:14px;max-width:340px}
 .cnTrack{display:flex;align-items:center;justify-content:center;padding:8px 10px;background:rgba(0,0,0,.4);border:2px solid #191714;border-radius:14px;max-width:100%}
-.cnd{width:13px;height:13px;border-radius:50%;background:#3b332b;border:2px solid #191714;flex:0 0 auto}.cnd.on{background:#b8a990}.cnd.on.k-elite{background:#ff6a5a}.cnd.on.k-obj{background:#ffc93c}
+.cnd{width:13px;height:13px;border-radius:50%;background:#3b332b;border:2px solid #191714;flex:0 0 auto}.cnd.on{background:#b8a990}.cnd.on.k-elite{background:#ff6a5a}.cnd.on.k-obj{background:#ffc93c}.cnd.on.k-capo{background:#ff9f1c}
 .cnd.nx{background:#fff;box-shadow:0 0 0 3px rgba(255,201,60,.5),0 0 12px #ffc93c;animation:cnPulse 1s ease-in-out infinite alternate}.cnd.boss{width:18px;height:18px;background:#7a2a24}.cnd.boss.nx{background:#e5484d}
 .cnl{width:10px;height:3px;background:#3b332b;flex:0 0 auto}.cnl.on{background:#b8a990}.cnev{width:8px;height:8px;transform:rotate(45deg);background:#7fd3f0;border:1.5px solid #191714;margin:0 -1px;flex:0 0 auto}
 .cnDoors{display:flex;gap:9px;width:100%;justify-content:center;align-items:stretch}
@@ -505,4 +663,4 @@ const CN_CSS=`
 @keyframes cnStar{to{transform:scale(1);opacity:1}}
 @media (prefers-reduced-motion:reduce){.cnDoor,.cnRelC,.cnArch svg,.cnN.sel .cnPic,.cnBr.on .fl,.cnd.nx{animation:none}.cnEnd .s{animation:none;transform:none;opacity:1}}`;
 
-cnEnsure();
+cnEnsure();cnPremiInit();

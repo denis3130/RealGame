@@ -37,9 +37,35 @@ dell'eroe), pubblicata su https://claude.ai/artifact/K6E5QMv5pxKkt61MCFJsba («M
 8. **Corsa dei boss** (`cnRushNext`): i custodi già battuti uno dopo l'altro; tra uno e l'altro il 35% di salute e un'abilità; record di
    custodi di fila e tempo di tutti e 12. Non tocca coppe né record delle arene.
 
-## Prove (`tests/classica.js`, 24 controlli, nessun errore)
+## Le modifiche proposte (20 ottobre, nella stessa pagina)
+
+Denis: «fammela vedere la classica nuova e le modifiche che mi avevi proposto».
+
+9. **Crescita automatica** (`CN_GROW`, `cnGrow`): le carte che erano solo numeri (Punte affilate, Cuore di quercia, Corda tesa, Occhio di
+   falco) non escono più; a ogni livello arriva da sola, a giro, +10% attacco, +10% salute, +10% cadenza, +5% critico (scritta sopra
+   l'eroe e nell'avviso del livello). Nelle scelte restano le abilità che cambiano il modo di giocare. Colpo letale chiede due crescite
+   di attacco e due di critico (dal livello 9).
+10. **Élite con un potere** (`CN_AFX`, `cnGiveAfx`): ogni élite (anche i Campioni e la Torre) ha un potere scritto sopra la barra, due
+    dall'arena 4 o dalla stanza 8: Scudo (para il 35% della vita e torna dopo 4 s senza colpi, bolla azzurra), Si divide (cadendo diventa
+    due più piccoli), Esplosivo (lascia una bomba che scoppia dopo 1,2 s, cerchio rosso), Furioso (tutto più veloce, ×1,4), Gelido
+    (vicino a lui cammini piano, anello di brina), Rigenera (se non lo colpisci per 1,6 s si cura del 5% al secondo). In cambio le élite
+    hanno ×2,2 di vita invece di ×2,6 e la vita dei nemici cresce del 14% a stanza invece del 20%.
+11. **Capobanda e passaggi più veloci**: la stanza 3 è sempre del Capobanda (il nemico più grosso della stanza diventa un'élite più grande
+    con due poteri e la corona, premio una reliquia); la porta si apre 0,4 s dopo l'ultimo nemico (prima 0,9; le morti dei boss si
+    aspettano come prima), il nero tra le stanze dura meno e con la porta aperta l'eroe corre verso l'uscita (×1,45).
+12. **Frammenti di fiamma e Altare** (`CN_ALT`): a fine partita un frammento per stanza (sei in più se vinci), metà dei piani nella Torre,
+    tre a custode nella Corsa; nell'Altare (quarto bottone della mappa) Cuore di brace (+6% salute a livello, 5 livelli), Lama ardente
+    (+5% attacco, 5), Passo di cenere (−8% di attesa dello scatto, 3), Ultima scintilla (una volta a partita, sotto un quinto della
+    salute, ne recuperi un terzo), Occhio del destino (reliquie tra tre). Prezzi 8–45 frammenti. Nell'anteprima si parte con 20.
+13. **Menu con meno bottoni** (`cnPremi*`): nella Classica a sinistra un solo bottone «Premi» (si accende e conta quando qualcosa è pronto)
+    che apre Missioni, Accesso, Ruota e Traguardi; a destra restano Pass e Casse (il Cammino delle coppe non serve con le stelle, le
+    Offerte stanno nella Bottega). La Zombie resta com'è. Unire oro e cristalli in una moneta sola è rimasto una proposta: non è fatto.
+
+## Prove (`tests/classica.js`, 39 controlli, nessun errore)
 
 Menu e mappa (scheda, 12 arene, chiuse, «apri tutte», Torre, Corsa, Reliquie); i cinque obiettivi con il premio; «Resisti» che non si chiude
 prima; élite con la reliquia e la collezione; fusione Inferno; fusioni e reliquie tutte insieme senza errori; una partita intera del
 giocatore automatico con i bivi fino alla vittoria con le 3 stelle e il braciere; la scheda che propone l'arena 2; la Torre dal piano 19 al
-20 («Torre conquistata», Abisso intatto); la Corsa per 4 custodi di fila e la fine senza coppe cambiate.
+20 («Torre conquistata», Abisso intatto); la Corsa per 4 custodi di fila e la fine senza coppe cambiate. Con `nuovo`: il menu con «Premi»
+(e la Zombie com'era), la crescita automatica e le carte senza numeri, i sei poteri delle élite, il Capobanda con la sua reliquia, la porta
+subito aperta, i frammenti a fine partita (16 con la vittoria), l'Altare e la miglioria nella partita dopo.
