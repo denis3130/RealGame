@@ -7,6 +7,13 @@ delle coppe con le arene», poi «ok creami le cose che mi hai elencato su una c
 pubblicata su https://claude.ai/artifact/K6E5QMv5pxKkt61MCFJsba («Mossbound · Classica nuova»: si aggiorna ripubblicando
 `anteprime/classica.html`). Prova: `python3 anteprime/mk_classica.py --test --build && node tests/classica.js [menu|stanze|furia|rarita|evo|nemesi|torre|corsa|ondate|trappole|3d|ponte]`.
 
+## Annotato: le abilità che si livellano nel menu (20 ottobre notte)
+
+Denis, con la foto della scelta «Livello 5 · Scegli un'abilità»: «fai in modo che nella modalità classica ci sia una nuova funzione di
+progressione: tutte le abilità che si possono prendere giocando appunto alla modalità classica, per averle potenziate devi livellarle nel
+menu apposito. deve essere bello e pulito con una non so che di magico». Solo annotato (anche in «Da fare» del CLAUDE.md, punto 7): non
+ancora fatto, prima le domande.
+
 ## Le isole verso nord e il ponte di pietra in 3D (20 ottobre notte)
 
 Denis, con la foto del telefono: «vorrei che ingrandissi l'isola e ci mettessi più dettagli per arricchirla. sopratutto il ponte lo voglio
