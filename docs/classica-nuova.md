@@ -7,6 +7,31 @@ delle coppe con le arene», poi «ok creami le cose che mi hai elencato su una c
 pubblicata su https://claude.ai/artifact/K6E5QMv5pxKkt61MCFJsba («Mossbound · Classica nuova»: si aggiorna ripubblicando
 `anteprime/classica.html`). Prova: `python3 anteprime/mk_classica.py --test --build && node tests/classica.js [menu|stanze|furia|rarita|evo|nemesi|torre|corsa|ondate|trappole]`.
 
+## Tutto in 3D (20 ottobre notte)
+
+Denis: «vorrei che facessi i dettagli in 3d per le isole fluttuanti non in 2d ce, trasforma ogni cosa/ostacolo che è in 2d in 3d anche in
+game». Quello che nell'anteprima era disegnato piatto adesso è fatto di volumi 3D visti dalla telecamera dei mostri (lo schermo è x,
+y·0,55 − z) e dipinto come loro (tre toni, bordo illuminato, contorno scuro spesso, luce dall'alto a sinistra):
+- **Ostacoli delle stanze** (`src/js/95-ostacoli-3d.js`, fuori dal gioco come 94: lo mette `mk_classica.py` dopo 94; `OB3.on=false`
+  rimette il disegno di prima): i 27 tipi dei quattro mondi (masso, colonna, sarcofago, urne, lapide, ceppo, cristalli, braciere, teschi,
+  rovi; basalto, roccia di lava, ossidiana, incudine, calderone, cassa; albero morto, totem, fango, canne, lanterna, roccia della palude;
+  ghiaccio, pino, pupazzo di neve, roccia innevata, statua congelata) con le stesse forme, colori e grandezze di prima; i pezzi squadrati
+  girati un poco a caso, così si vedono due facce; mucchietti 3D del mondo tutto intorno alla base (quelli dietro prima dell'ostacolo,
+  quelli davanti dopo); l'usura taglia il disegno 3D e i pezzi caduti sono sassi 3D; fiamme, bagliori, bolle, canne e il braccio del
+  pupazzo restano vivi. Ogni ostacolo fermo è dipinto una volta in un'immagine (come `rockSprite` in 47) e rifatto solo quando cambia
+  l'usura: una stanza costa quanto prima (14–25 ms a fotogramma contro 13–21 sul computer di prova), un ostacolo si dipinge in 0,5–3 ms una
+  volta sola. Gli ostacoli dei boss rifatti (rocce del Golem, incudini del Fabbro, gabbia della Piovra…) restano i loro, già in 3D.
+  Foglio nelle quattro direzioni: `anteprime/ostacoli3d_foglio.jpg` (prima, davanti, lato, dietro, altro lato).
+- **Le cose della stanza**: monete che girano sul bordo, cristalli, sfere dell'esperienza, cuori, la fontana, l'altare e il tesoro delle
+  stanze speciali, massi e incudini lanciati dai boss, le strisce di spine; le casse gemelle restano quelle 3D del Mimic (89).
+- **Le isole**: lastre del sentiero, ciuffi d'erba, fiori, cuscini di muschio, lo stagno con le ninfee e i sassi intorno, le canne, la
+  colata del vulcano, la lastra di ghiaccio, le catene e il lucchetto, gli stendardi, il braciere (anche quello piccolo sotto l'isola).
+- **Trappole e torre**: seghe e binari, lame di pietra con le rune, spuntoni, sfiati, la fonte e l'altare del piano del premio, le macerie
+  dei buchi, i pezzi del pavimento che crolla, le mani che si arrampicano, le monete del percorso; la bomba, la meteora, la stella e il
+  drago di fuoco.
+- Restano piatti, perché lo sono anche in 3D: pavimento, crepe, pozzanghere, segni a terra; e scritte, icone, fiamme, getti e scie.
+Prova `node tests/classica.js 3d`.
+
 ## Il cammino delle isole (20 ottobre notte)
 
 Denis, con le foto della campagna di Archero 2: «faremo in modo che si avanzi così come vedi nelle immagini». Risposte: le isole **al
@@ -132,7 +157,7 @@ Hades II, Megabonk, Balatro, Vampire Survivors; sul telefono Brawl Stars e Arche
 Sul computer di prova (lento, senza scheda grafica) a 3 pixel a punto: il disegno di un fotogramma è circa 1,7–2,6 ms per nemico 3D (con 13
 nemici 21 ms, con 21 43 ms); le evoluzioni aggiungono poco. Per questo nelle ondate al massimo 12 nemici insieme (16 con le ondate grandi).
 
-### Prove (`tests/classica.js`, 57 controlli, nessun errore; in qualità alta, perché sul computer di prova la qualità automatica passerebbe agli effetti ridotti)
+### Prove (`tests/classica.js`, 61 controlli, nessun errore; in qualità alta, perché sul computer di prova la qualità automatica passerebbe agli effetti ridotti)
 
 Menu (scheda coi bracieri, «Premi» e le Missioni, la Zombie com'era, mappa senza stelle, arena chiusa, Torre, Corsa chiusa, Ricercati vuoti);
 la partita d'arena (le 10 stanze di sempre senza ondate, esperienza, Furia e oro stanza dopo stanza, il custode alla stanza 10, la vittoria

@@ -362,3 +362,91 @@ function ob3Over(k){if(ctx!==MAINCTX)return;const h=kH(k);
     if(k.temp||ctx!==MAINCTX){const f=k.temp?Math.min(1,k.life/.6):1;ctx.save();ctx.globalAlpha*=f;try{const st=wearSt(k);if(st)ob3Worn(k,st);else ob3Model(k,dx,{foot:!k.temp,live:1})}finally{ctx.restore()}ob3Over(k);return}
     const sp=ob3Sprite(k),S=sp.ss;ctx.drawImage(sp.c,Math.round((sp.x0+dx)*S)/S,Math.round(sp.y0*S)/S,sp.c.width/S,sp.c.height/S);
     ob3Live(k,dx);ob3Over(k)}}
+
+// ------------------------------------------------------------------ the other things of the room in 3D: what you pick up (coins, crystals, the
+// green orbs, hearts), the fountain, the altar and the treasure chest of the event rooms, the rocks and anvils the bosses throw, the bands of
+// thorns. Each at its own foot with the same camera; on a slow phone (LOWFX) the coins, crystals and orbs keep their pictures
+const o3K=(x,y,f)=>proCam(f==null?OB3.face:f,x,y,1);
+// a coin of gold spinning on its edge: two faces, the rim between them, a star of light on the face we see (also the course's coins in 94)
+function o3Coin(x,y,sp,s,z){ctx.save();const K=o3K(x,y),{V0}=K,n=[Math.cos(sp),Math.sin(sp),0],c=[0,0,(z||6.5)*s],r=5.8*s,th=1.1*s,f=V0.F(n)>=0?1:-1;
+  const A=C3.disc3(V0,[c[0]-n[0]*th,c[1]-n[1]*th,c[2]],n,r,{N:16}),B=C3.disc3(V0,[c[0]+n[0]*th,c[1]+n[1]*th,c[2]],n,r,{N:16}),H=C3.chull(A.concat(B));
+  C3.poly(H);ctx.fillStyle='#b07a1a';ctx.fill();ctx.strokeStyle=INK;ctx.lineWidth=1.6;ctx.lineJoin='round';ctx.stroke();
+  const F=f>0?B:A;C3.poly(F);const b=C3.bbox(F),g=ctx.createLinearGradient(b[0],b[1],b[2],b[3]);g.addColorStop(0,'#fff0a0');g.addColorStop(.5,'#ffd84a');g.addColorStop(1,'#d89a20');ctx.fillStyle=g;ctx.fill();
+  const q=[c[0]+n[0]*th*f*1.05,c[1]+n[1]*th*f*1.05,c[2]];C3.spot(V0,q,[n[0]*f,n[1]*f,0],r*.55,'rgba(176,122,26,.55)');C3.spot(V0,[q[0],q[1],q[2]+.4],[n[0]*f,n[1]*f,0],r*.3,'rgba(255,248,210,.85)');ctx.restore()}
+// a crystal: a blue bipyramid turning slowly (its glow and twinkle stay the game's)
+function o3Gem(x,y,s,a,sp){ctx.save();if(a!=null)ctx.globalAlpha*=a;const K=o3K(x,y+6*s),{V0}=K,cf=n=>n[1]>.3?'#d8f6ff':n[1]<-.3?'#3a6ad8':n[2]>0?'#7fd0ff':'#4f8ae8';
+  oPrism(K,[0,0,1.5*s],6,4.6*s,.1,'#6fb8f0',{a:sp,tip:-1,lw:1.4,ew:.4,cf,rt:4.6*s});oPrism(K,[0,0,1.5*s],6,4.6*s,.1,'#6fb8f0',{a:sp,tip:7*s,lw:1.4,ew:.4,cf});
+  const p=V0.P([0,0,1.5*s]);ctx.strokeStyle='rgba(255,255,255,.7)';ctx.lineWidth=1;ctx.beginPath();ctx.moveTo(p[0]-2*s,p[1]-1*s);ctx.lineTo(p[0]-.6*s,p[1]-6*s);ctx.stroke();ctx.restore()}
+// a green orb of experience: a little octahedron spinning in its glow
+function o3Orb(x,y,sp){ctx.save();const K=o3K(x,y+4),{V0}=K,cf=n=>n[1]>.3?'#c8ffe0':n[1]<-.3?'#2fa868':'#6ff0a8';
+  const A=[0,0,7.5],B=[0,0,.5],R=[];for(let i=0;i<4;i++){const t=sp+i*Math.PI/2;R.push([Math.cos(t)*3.3,Math.sin(t)*3.3,4])}const F=[];
+  for(let i=0;i<4;i++){const j=(i+1)%4,t=sp+(i+.5)*Math.PI/2;F.push([C3.nrm([Math.cos(t),Math.sin(t),.8]),[R[i],R[j],A]],[C3.nrm([Math.cos(t),Math.sin(t),-.8]),[R[j],R[i],B]])}
+  oFaces(K,F,'#6ff0a8',{lw:1.2,ew:.3,cf});ctx.restore()}
+// a heart: a thick heart of red turning slowly
+const O3HEART=(()=>{const p=[];for(let i=0;i<=24;i++){const t=i/24*TAU,x=16*Math.pow(Math.sin(t),3),y=13*Math.cos(t)-5*Math.cos(2*t)-2*Math.cos(3*t)-Math.cos(4*t);p.push([x*.42,y*.42+7])}return p.reverse()})();
+function o3Heart(x,y,sp){ctx.save();const K=o3K(x,y,OB3.face+sp),{V0}=K;oExtrude(K,[0,0,3],O3HEART,3.4,'#e5484d',{lw:1.6,ew:.4,cf:n=>Math.abs(n[0])>.9?'#f06a6a':'#b02a30'});ctx.restore()}
+{const _o=drawOrbs;
+  drawOrbs=function(){if(!OB3.on||LOWFX||ctx!==MAINCTX||!G)return _o.apply(this,arguments);
+    try{if(OB3.hold){G.coins=OB3.hold[0];G.hearts=OB3.hold[1];OB3.hold=null}
+      // what the others draw on the floor at this moment (the Classica nuova's traps and marks) without the old orbs
+      const ko=G.orbs;G.orbs=[];try{_o.apply(this,arguments)}finally{G.orbs=ko}
+      for(const o of G.orbs){const b=Math.sin(G.t*5+o.ph)*1.5;glow('120,255,170',o.x,o.y-3+b,9,.5);o3Orb(o.x,o.y+b,G.t*2+o.ph)}
+      for(const c of G.coins){ctx.fillStyle='rgba(0,0,0,.25)';ell(c.x,c.y+5,4.5,1.6);ctx.fill();o3Coin(c.x,c.y+4,G.t*3.2+c.x*.37+c.y*.11,1)}
+      for(const h of G.hearts){ctx.fillStyle='rgba(0,0,0,.25)';ell(h.x,h.y+5,6,2);ctx.fill();o3Heart(h.x,h.y+4+Math.sin(G.t*4+h.x)*2,G.t*1.6+h.x)}
+      // the render draws the coins and hearts again right after: it gets empty lists, given back at the wall (or at the next frame)
+      OB3.hold=[G.coins,G.hearts];G.coins=[];G.hearts=[]}catch(err){if(OB3.hold){G.coins=OB3.hold[0];G.hearts=OB3.hold[1];OB3.hold=null}console.error(err);return _o.apply(this,arguments)}}}
+{const _w=drawWallBack;drawWallBack=function(){if(OB3.hold){G.coins=OB3.hold[0];G.hearts=OB3.hold[1];OB3.hold=null}return _w.apply(this,arguments)}}
+{const _g=drawGem;drawGem=function(x,y,s,a){if(!OB3.on||LOWFX||ctx!==MAINCTX)return _g.apply(this,arguments);try{o3Gem(x,y,s||1,a,(G.t||0)*1.4+x*.05)}catch(err){_g.apply(this,arguments)}}}
+// the fountain, the altar and the treasure of the event rooms (the merchant is the 3D one of 64)
+OB3.P={
+  fontana:(K,p,t)=>{const{V0}=K;pRound(K,[0,0,0],[[0,33],[3,31],[9,30],[11.5,32]],'#6f7a7a',{m:28,lw:2.4,kl:.3,kd:.45});C3.disc3(V0,[0,0,11.6],[0,0,1],32,{N:28});ctx.fillStyle='#8f9a9a';ctx.fill();ctx.strokeStyle=INK;ctx.lineWidth=1.6;ctx.stroke();
+    C3.disc3(V0,[0,0,11.8],[0,0,1],27,{N:28});ctx.fillStyle=p.used?'#2a4450':'#3a8fb0';ctx.fill();ctx.strokeStyle='rgba(220,245,255,.5)';ctx.lineWidth=1.3;for(let k=0;k<3;k++){const r=((t*12+k*8)%24)+1;C3.disc3(V0,[0,0,11.9],[0,0,1],r,{N:20});ctx.stroke()}
+    pRound(K,[0,0,11],[[0,5.5],[20,4.6],[22,7.5],[24.5,9.5],[26,9]],'#7d8888',{m:16,lw:2,kl:.35,kd:.45});C3.disc3(V0,[0,0,26.1],[0,0,1],8,{N:16});ctx.fillStyle=p.used?'#2a4450':'#5ab0d8';ctx.fill();
+    if(!p.used){ctx.strokeStyle='rgba(170,225,255,.85)';ctx.lineWidth=2;ctx.lineCap='round';for(let s=0;s<4;s++){const a=s*Math.PI/2+.4,pts=[];for(let j=0;j<=10;j++){const u=j/10;pts.push(V0.P([Math.cos(a)*(8+u*17),Math.sin(a)*(8+u*17),27+u*8-u*u*23]))}C3.line(pts);ctx.stroke()}
+      ctx.fillStyle='#d8f4ff';for(let k=0;k<4;k++){const q=(t*1.6+k*.25)%1,a=k*Math.PI/2+.4,pp=V0.P([Math.cos(a)*(8+q*17),Math.sin(a)*(8+q*17),27+q*8-q*q*23]);ctx.beginPath();ctx.arc(pp[0],pp[1],1.4,0,TAU);ctx.fill()}}},
+  altare:(K,p,t)=>{const{V0}=K;oBox(K,[0,0,0],22,52,24,'#3a3440',{lw:2.4,cf:n=>n[2]>.5?'#4a4252':'#3a3440',face:(n,q)=>{if(n[0]<.5)return;const M=oMap(V0,...oCorners(V0,q));ctx.strokeStyle=p.used?'rgba(140,90,180,.3)':'rgba(190,120,255,.85)';ctx.lineWidth=2;ctx.lineCap='round';
+      for(const u of[.23,.5,.77]){C3.line([M(u-.08,.75),M(u,.33),M(u+.08,.75)]);ctx.stroke()}}});
+    oBox(K,[0,0,24],26,60,6,'#4a4252',{lw:2.2,cf:n=>n[2]>.5?'#5a5266':'#4a4252'});
+    for(const s of[-1,1]){const c=OQ(s*34,2,5);C3.sball(V0,c,5,'#e0d9c4',{lw:1.5,kl:.35,kd:.35});const af=oFront(V0);for(const e of[-1,1])C3.spot(V0,[c[0]+Math.cos(af)*4.3-Math.sin(af)*e*1.8,c[1]+Math.sin(af)*4.3+Math.cos(af)*e*1.8,c[2]+.6],[Math.cos(af),Math.sin(af),.1],1.2,INK)}
+    if(!p.used){const q=V0.P([0,0,30]);flame(q[0],q[1],1.3,['#7a2fd0','#c07aff','#f4e6ff'],1)}},
+  tesoro:(K,p,t)=>{const{V0}=K,open=p.used,face=(n,q)=>{if(Math.abs(n[2])>.5)return;const M=oMap(V0,...oCorners(V0,q));for(const u of[.25,.75])oFill([M(u-.05,0),M(u+.05,0),M(u+.05,1),M(u-.05,1)],'#ffe08a',1)};
+    oBox(K,[0,0,0],28,48,22,'#b0791c',{lw:2.4,cf:n=>n[2]>.5?'#c88a24':'#b0791c',face});
+    if(open){C3.disc3(V0,[0,0,22.2],[0,0,1],13,{N:18});ctx.fillStyle='#ffd84a';ctx.fill();const lid=[];for(let i=0;i<=8;i++){const a=i/8*Math.PI;lid.push([Math.cos(a)*14,Math.sin(a)*12])}
+      oExtrude(K,[-14-6,0,22],lid.map(([u,z])=>[u*.5,z+6]),48,'#8a5a10',{a:Math.PI/2,lw:2.2,cf:n=>'#8a5a10'})}
+    else{const lid=[[-14,0],[14,0]];for(let i=1;i<8;i++){const a=i/8*Math.PI;lid.push([Math.cos(a)*14,Math.sin(a)*10])}
+      oExtrude(K,[0,0,22],lid,48,'#8a5a10',{a:Math.PI/2,lw:2.4,cf:n=>n[2]>.3?'#a06a14':'#8a5a10'});oBox(K,[14.5,0,15],2,10,10,'#e5484d',{lw:1.4});
+      const q=V0.P([0,0,20]);glow('255,210,90',q[0],q[1],40,.25+.1*Math.sin(t*3))}}};
+{const _p=drawProp;drawProp=function(p){const f=OB3.on&&OB3.P[p.kind];if(!f)return _p.apply(this,arguments);
+  ctx.save();try{f(o3K(p.x,p.y),p,G.t||0)}catch(err){ctx.restore();OB3.P[p.kind]=null;console.error(err);return _p.apply(this,arguments)}ctx.restore();
+  if(!p.used){ctx.font='13px "Lilita One", sans-serif';ctx.textAlign='center';ctx.lineWidth=3;ctx.strokeStyle=INK;const t=EVENTS[p.kind].n;ctx.strokeText(t,p.x,p.y+30);ctx.fillStyle='#f6ead2';ctx.fillText(t,p.x,p.y+30)}}}
+// the rocks and anvils the bosses throw: the rock tumbling in 3D, the anvil turning, their shadow growing as they come down
+{const _b=drawBoulders;drawBoulders=function(){if(!OB3.on||!G||!G.boulders.length)return _b.apply(this,arguments);const keep=G.boulders;
+  try{for(const b of keep){if(b.t<0)continue;const p=clamp(b.t/b.dur,0,1),x=b.sx+(b.tx-b.sx)*p,gy=b.sy+(b.ty-b.sy)*p,h=Math.sin(p*Math.PI)*90;shadow(x,gy+6,10*(.6+p*.4),4);
+    ctx.save();if(b.kind==='anvil'){const K=o3K(x,gy-h+6,OB3.face+p*7);OM.anvil(K,{},15,14,3,stonePal(),'forgia');glow('255,140,60',x,gy-h,16,.35)}
+    else{const K=o3K(x,gy-h+8,OB3.face+p*9);oRock(K,[0,0,-6],11,10,14,'#857b6c',b.sx*.1,{lw:2.2})}ctx.restore()}
+    G.boulders=[];_b.apply(this,arguments)}finally{G.boulders=keep}}}
+// the bands of thorns that come out of the floor: cones of thorn and root, each lit on one side
+{const _h=drawHazardsGround;drawHazardsGround=function(){if(!OB3.on||!G||!G.bands.length)return _h.apply(this,arguments);const keep=G.bands,act=keep.filter(b=>b.style!=='ice'&&!(b.warn>0));
+  if(!act.length)return _h.apply(this,arguments);G.bands=keep.filter(b=>!act.includes(b));try{_h.apply(this,arguments)}finally{G.bands=keep}
+  for(const b of act){const rect=b.h?[L,b.pos-b.w/2,R-L,b.w]:[b.pos-b.w/2,TOP,b.w,BOT-TOP];ctx.fillStyle='rgba(60,40,25,.45)';ctx.fillRect(...rect);const len=b.h?R-L:BOT-TOP,sc=Math.min(1,(.45-b.act)/.08+.3);
+    for(let s=8;s<len;s+=13){const cx=b.h?L+s:b.pos+((s*7)%9-4),cy=b.h?b.pos+((s*7)%9-4):TOP+s,hh=16*sc,col=s%26<13?'#5f9e3c':'#7a5a3a';
+      ctx.beginPath();ctx.moveTo(cx-5,cy+6);ctx.lineTo(cx,cy+6-hh);ctx.lineTo(cx+5,cy+6);ctx.quadraticCurveTo(cx,cy+8.5,cx-5,cy+6);ctx.closePath();ctx.fillStyle=C3.dk(col,.3);ctx.fill();ctx.strokeStyle=INK;ctx.lineWidth=2;ctx.lineJoin='round';ctx.stroke();
+      ctx.beginPath();ctx.moveTo(cx-5,cy+6);ctx.lineTo(cx,cy+6-hh);ctx.lineTo(cx+.6,cy+7.6);ctx.quadraticCurveTo(cx-3,cy+7.4,cx-5,cy+6);ctx.closePath();ctx.fillStyle=C3.lt(col,.12);ctx.fill()}}}}
+// the twin chests (one is a Mimic), when the new Mimic's 3D chest is not there: a chest of wood with two bands of brass, a round lid that opens backward on its hinge, the lock; the
+// Mimic shows red eyes and teeth in the slit as it shakes. The "?" over them stays the game's
+{const _t=drawTwinChest;drawTwinChest=function(c){if(!OB3.on||typeof MM2ON!=='undefined'&&MM2ON&&N3.mimicChest)return _t.apply(this,arguments);   // the Mimic's own 3D chest (89) firstconst drop=c.st==='drop'?Math.max(0,1-c.t/.55):0,h=drop*drop*260;if(c.t<0)return;
+  const sh=c.st==='shake'?Math.sin(c.k*(30+c.k*30))*(1+c.k*3):0,sq=c.st==='poof'?Math.max(0,1-c.k/.5):1,open=c.st==='open'?Math.min(1,c.k/.35):0,grow=c.st==='shake'?1+c.k*.12:1,k=c.st==='shake'?Math.min(1,c.k/.8):0;
+  if(drop<1)shadow(c.x,c.y+6,22*(1-drop*.6),7,.35);if(sq<=.01)return _t.call(this,{...c,t:-1});
+  ctx.save();try{const K=proCam(OB3.face,c.x+sh,c.y-h+4,sq*grow*1.35),{V0}=K,wood='#7a4e2a',band='#d9a640',D=15,W=36,H=16,
+      bands=(n,q)=>{if(Math.abs(n[2])>.5)return;const M=oMap(V0,...oCorners(V0,q));for(const u of[.16,.84])oFill([M(u-.05,0),M(u+.05,0),M(u+.05,1),M(u-.05,1)],band,1)};
+    oBox(K,[0,0,0],D,W,H,wood,{lw:2.2,cf:n=>n[2]>.5?'#8a5e36':wood,face:bands});
+    if(open>0){C3.disc3(V0,[0,0,H+.2],[0,0,1],D*.42,{N:16});ctx.fillStyle='#ffe08a';ctx.fill();const q=V0.P([0,0,H+4]);ctx.save();ctx.globalCompositeOperation='lighter';glow('255,215,90',q[0],q[1],40,.6*open);ctx.restore()}
+    if(k>0){const fr=V0.P([D/2,0,H]);ctx.fillStyle=`rgba(229,48,26,${k})`;for(const e of[-6,6]){ctx.beginPath();ctx.ellipse(fr[0]+e,fr[1]-.5,2.4,1.4*k+.2,0,0,TAU);ctx.fill()}
+      ctx.fillStyle='#f4ecd8';for(let i=0;i<5;i++){const a=V0.P([D/2+.3,-14+i*7,H]),b=V0.P([D/2+.3,-11.5+i*7,H-3*k]),e=V0.P([D/2+.3,-9+i*7,H]);ctx.beginPath();ctx.moveTo(a[0],a[1]);ctx.lineTo(b[0],b[1]);ctx.lineTo(e[0],e[1]);ctx.fill()}}
+    // the lid: a half round of wood across the chest, turned back on its hinge as it opens
+    const ang=-open*1.9,hu=-D/2,lid=[[-D/2,0],[D/2,0]];for(let i=1;i<8;i++){const a=i/8*Math.PI;lid.push([Math.cos(a)*D/2,Math.sin(a)*D*.48])}
+    const rl=lid.map(([u,z])=>{const du=u-hu,ca=Math.cos(ang),sa=Math.sin(ang);return[hu+du*ca-z*sa,du*sa+z*ca]});
+    oExtrude(K,[0,0,H],rl,W,wood,{a:Math.PI/2,lw:2.2,cf:n=>n[2]>.3?'#8a5e36':wood,face:bands});
+    if(open<.1)oBox(K,[D/2+.6,0,H-4],1.6,7,7,band,{lw:1.4})}catch(err){console.error(err)}finally{ctx.restore()}
+  if(c.st==='idle'&&G.state==='cleared'&&!G.ccChosen){const b=Math.sin(G.t*5)*3;glow('255,215,90',c.x,c.y-10,34,.25+.1*Math.sin(G.t*4));ctx.fillStyle='#ffc93c';ink(2.5);ctx.beginPath();ctx.moveTo(c.x,c.y-34+b);ctx.lineTo(c.x-7,c.y-44+b);ctx.lineTo(c.x+7,c.y-44+b);ctx.closePath();ctx.fill();ctx.stroke();
+    ctx.font='13px "Lilita One", sans-serif';ctx.textAlign='center';ctx.lineWidth=3;ctx.strokeStyle=INK;ctx.strokeText('?',c.x,c.y-48+b);ctx.fillStyle='#fff';ctx.fillText('?',c.x,c.y-48+b)}}}

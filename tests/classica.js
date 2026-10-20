@@ -6,8 +6,9 @@
 // errori); la Nemesi (chi ti uccide si prende l'oro, il manifesto, l'invasione in una stanza a caso col sacco, le frasi, la taglia, la
 // Nemesi che cresce, il custode che tiene l'oro); la Torre fino al piano 20 e la Corsa dei boss; la scalata a giro: la torre che sale
 // (piani, nemici dai bordi, la salita, i buchi, i Campioni, il premio, il custode, la torre da 20 col campione) e le trappole (percorso coi
-// traguardi, trappole e nemici, la fuga dal crollo, il custode tra le trappole), la modalità sulla scheda e sulla mappa.
-// Foto tests/cn_<n>.png. Uso: python3 anteprime/mk_classica.py --test --build && node tests/classica.js [menu|stanze|furia|rarita|evo|nemesi|torre|corsa|ondate|trappole]
+// traguardi, trappole e nemici, la fuga dal crollo, il custode tra le trappole), la modalità sulla scheda e sulla mappa; le isole; tutto in 3D
+// (gli ostacoli di 95 dipinti una volta, il disegno di prima che torna, le cose della stanza, le isole).
+// Foto tests/cn_<n>.png. Uso: python3 anteprime/mk_classica.py --test --build && node tests/classica.js [menu|stanze|furia|rarita|evo|nemesi|torre|corsa|ondate|trappole|3d]
 const {chromium}=require('playwright');const path=require('path');
 const SOLO=process.argv[2]||'';
 (async()=>{const b=await chromium.launch({args:['--autoplay-policy=no-user-gesture-required']});const p=await b.newPage({viewport:{width:390,height:844},deviceScaleFactor:2});const errs=[];
@@ -233,7 +234,8 @@ const SOLO=process.argv[2]||'';
     ok('le trappole fanno male: la lama e lo sfiato (e il traguardo «nessun colpo» salta)',c1.saw>0&&c1.vent>0&&c1.hit,JSON.stringify(c1));
     const c2=await J(`(()=>{for(const c of G.cnTr.coins){P.x=c.x;P.y=c.y;cnTrTick(.016)}const g0=G.gold,k0=G.gemsRun||0;P.x=AW/2;P.y=TOP+4;cnTrTick(.016);return{res:G.cnTr.res,gold:G.gold-g0,gems:(G.gemsRun||0)-k0,ban:$('banner').textContent}})()`);
     ok('all\'uscita i traguardi diventano oro e cristalli',c2.res&&c2.res[0]&&!c2.res[1]&&c2.res[2]&&c2.gold===30&&c2.gems===2&&/★★☆/.test(c2.ban),JSON.stringify(c2));
-    await E(`(()=>{const k=G.seq.findIndex(q=>q.c===2);G.si=k-1;G.enemies=[];nextStep();__step(2.5);return 0})()`);
+    // a room with at least one enemy on foot (the enemies are drawn at random: bats and wisps fly over the traps)
+    for(let tr=0;tr<4;tr++){await E(`(()=>{const k=G.seq.findIndex(q=>q.c===2);G.si=k-1;G.enemies=[];nextStep();__step(2.5);return 0})()`);if(await E(`G.enemies.some(e=>canHit(e)&&!cnFlies(e)&&!isBoss(e.type))`))break}
     const m0=await J(`(()=>{const o=G.cnTr.list.find(o=>o.k==='saw'),e=G.enemies.find(e=>canHit(e)&&!cnFlies(e)&&!isBoss(e.type));let d=0;if(o&&e){const h=e.hp;e.x=o.x;e.y=o.y;e.cnTrT=0;cnTrTick(.016);d=Math.round(h-e.hp)}return{kind:G.cnTr.kind,n:G.cnTr.list.length,en:G.enemies.length,d}})()`);await snap('trappole_misto');
     ok('trappole e nemici: le trappole colpiscono anche loro',m0.kind==='misto'&&m0.n>=3&&m0.en>=2&&m0.d>0,JSON.stringify(m0));
     await E(`(()=>{const k=G.seq.findIndex(q=>q.c===3);G.si=k-1;G.enemies=[];nextStep();__step(3.6);return 0})()`);
@@ -249,5 +251,25 @@ const SOLO=process.argv[2]||'';
     await openMap();const mp=await J(`({badges:document.querySelectorAll('#cnMap .cnMoN').length,line:(document.querySelector('#cnMap .cnMoL')||{}).textContent})`);await snap('mappa_modi');
     await p.click('#cnMap .cnX');await W(300);
     ok('scheda e mappa dicono la modalità di ogni arena',/La torre che sale/.test(k0.t)&&k0.n===10&&mp.badges===12&&/torre che sale/.test(mp.line||''),JSON.stringify({k0:k0.t.slice(0,80),n:k0.n,mp}));
+  }
+  // ---------------------------------------------------------------- everything in 3D (95 and the islands, traps and effects of 94)
+  if(!SOLO||SOLO==='3d'){
+    await arena(0);await E(`(()=>{__A.on=false;G.enemies=[];G.eproj=[];paused=true;return 0})()`);
+    const o0=await J(`(()=>{const T={muschio:['boulder','pillar','tomb','urn','gravestone','stump'],cristalli:['crystal','brazier','skulls','pillar'],radici:['thorns','stump','brazier'],cenere:['basalt','lavarock','obsidian'],forgia:['anvil','cauldron','crate'],
+        palude:['deadtree','totem','mudmound','reeds','lantern'],canneto:['swamprock'],brina:['iceblock','snowpine','snowman','snowrock'],ghiacciaio:['frozenstatue','crystal']},keep=themeOf,rk=G.rocks;let n=0;
+      try{for(const th in T){themeOf=()=>th;G.rocks=T[th].map((kind,i)=>({x:L+40+i*60,y:TOP+120+(i%2)*90,r:20,seed:1+i,kind}));render();n+=G.rocks.filter(k=>k._s3||OB3.L[k.kind]).length}}finally{themeOf=keep;G.rocks=rk}
+      return{n,bad:Object.keys(OB3.bad)}})()`);
+    ok('i 27 tipi di ostacolo dei quattro mondi in 3D, senza errori',o0.n===31&&!o0.bad.length,JSON.stringify(o0));
+    const o1=await J(`(()=>{render();const n0=OB3.n;for(let i=0;i<5;i++)render();const n1=OB3.n;const k=G.rocks[0];k.dmg=8;render();const n2=OB3.n;OB3.on=false;G.rocks.forEach(q=>{q._sp=null});render();const old=!!k._sp;OB3.on=true;k.dmg=0;render();
+      return{still:n1-n0,worn:n2-n1,old,kinds:G.rocks.map(q=>q.kind).join()}})()`);
+    ok('ogni ostacolo è dipinto una volta (si rifà solo con l\'usura); spento torna il disegno di prima',o1.still===0&&o1.worn>=1&&o1.old,JSON.stringify(o1));
+    const o2=await J(`(()=>{const c0=G.coins.length,cx=AW/2,cy=BOT-200;for(let i=0;i<6;i++)G.coins.push({x:cx-60+i*24,y:cy,vx:0,vy:0,t:9});G.gems.push({x:cx,y:cy+40,z:0,ph:0,vx:0,vy:0});G.orbs.push({x:cx,y:cy+70,ph:0,vx:0,vy:0});G.hearts.push({x:cx+60,y:cy+70});
+      G.boulders.push({sx:cx-100,sy:cy-200,tx:cx-50,ty:cy-120,t:.5,dur:1,kind:'rock'},{sx:cx+100,sy:cy-200,tx:cx+50,ty:cy-120,t:.5,dur:1,kind:'anvil'});G.bands.push({h:true,pos:TOP+60,w:26,warn:0,act:.2,style:''});
+      render();const r={coins:G.coins.length-c0,hearts:G.hearts.length,hold:!!OB3.hold};for(const k of['fontana','altare','tesoro']){G.prop={kind:k,x:cx,y:TOP+200,used:false};render();G.prop.used=true;render()}
+      G.prop=null;G.boulders=[];G.bands=[];G.coins.length=c0;G.gems=[];G.orbs=[];G.hearts=[];return r})()`);
+    await snap('3d_cose');
+    ok('monete, cristalli, sfere, cuori, fontana, altare, tesoro, massi in volo e spine in 3D (le liste tornano intere)',o2.coins===6&&o2.hearts===1&&!o2.hold,JSON.stringify(o2));
+    await toMenu();const i0=await J(`(()=>{SAVE.cn.all=1;ISL.cache.clear();const t0=performance.now();for(let i=0;i<12;i++){ISL.view=i;cnIslImg(i,ISL.lay)}const t=performance.now()-t0;SAVE.cn.all=0;ISL.cache.clear();ISL.view=ISL.cur;return{ms:+(t/12).toFixed(1)}})()`);
+    ok('le isole coi dettagli in 3D: le dodici dipinte senza errori',i0.ms>0,JSON.stringify(i0));
   }
   console.log('\n'+R.join('\n'));console.log(errs.length?'ERRORI:\n'+[...new Set(errs)].slice(0,20).join('\n'):'nessun errore');await b.close()})();
