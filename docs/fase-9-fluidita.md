@@ -169,8 +169,8 @@ Circa il 35–45% in meno. `update()` costa meno di 1 ms: tutto il resto è dise
 https://claude.ai/artifact/N8yfkjf53iaBG8PLeYkaHx («Mossbound Fase 9», 20 ottobre; ripubblicata lo stesso giorno con gli strati fermi della
 mappa zombie, commit efe05c4, e poi con le aperture, il falò e gli zombie vicini, commit 24ae4a2): il gioco di `piano-maestro` diviso in tre pezzi come
 quello pubblicato (`python3 app/mk_claude.py index.html <cartella>`, titolo cambiato). Ha il suo salvataggio (un'altra pagina): si parte
-dal prologo, oppure si porta il proprio col codice di salvataggio (Impostazioni → Salvataggio). Dal 20 ottobre sera ha il contatore
-acceso (punto 18: la pagina mette `window.MB_CONTATORE=1` prima di `gioco.js`) e niente zombie nelle zone chiuse (punto 17).
+dal prologo, oppure si porta il proprio col codice di salvataggio (Impostazioni → Salvataggio). Dal 20 ottobre sera (commit 00f53ea) ha il
+contatore acceso (punto 18: la pagina mette `window.MB_CONTATORE=1` prima di `gioco.js`) e niente zombie nelle zone chiuse (punto 17).
 
 ## Prove
 
