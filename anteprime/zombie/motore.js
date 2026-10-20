@@ -566,8 +566,25 @@ function holeDist(p){const N=NAV;if(!N)return null;const cw=N.cw,ch=N.ch,D=N.dis
 // chi esce lì accanto sembrava venire dalla zona chiusa
 function shutNear(x,y,r){const G=W.gate;if(G&&!G.open&&Math.hypot(x-G.x,y-G.y)<r)return true;for(const L of W.lures||[])if(!L.isOpen()&&Math.hypot(x-L.x,y-L.y)<r)return true;return false}
 const zoneOk=(x,y,tag)=>(tag==null||W.zoneOpen[tag])&&(!W.zoneIdAt||W.zoneOpen[W.zoneIdAt(x,y)]!==false);
-function pickHole(o){const h=W.hero,open=holes.filter(p=>zoneOk(p[0],p[1],p[2])&&!shutNear(p[0],p[1],110)&&!W.Z.some(z=>Math.hypot(z.x-p[0],z.y-p[1])<30));
-  if(NAV){const c=[],far=[];for(const p of open){if(Math.hypot(p[0]-h.x,p[1]-h.y)<110)continue;const d=holeDist(p);if(d==null||d>=1e9||d<130)continue;(d>700?far:c).push([d,p])}
+// (Denis, 20 ottobre: «i zombie continuano a spawnare nelle aree ancora chiuse e quindi troppo lontani dal player») la partenza aveva 7 buche
+// sole, tre sul bordo di una zona chiusa (la fossa sotto il muro della fattoria, la latrina e la buca accanto al Borgo: chi usciva lì sembrava
+// venire di là) e le altre lontane: gli zombie arrivavano tutti da due o tre punti a 400-600 px. Ora: una buca va bene solo se tutto
+// intorno, fino a 130 px, è zona aperta (farOpen); e accanto alle buche, come in CoD, si sbuca da terra in un punto libero qualsiasi della
+// zona aperta, a 170-420 px di strada dall'eroe, mai in una casa né accanto a una zona chiusa (groundSpot)
+const farOpen=(x,y,r)=>{if(!W.zoneIdAt)return true;if(W.zoneOpen[W.zoneIdAt(x,y)]===false)return false;for(let k=0;k<8;k++){const a=k*Math.PI/4;if(W.zoneOpen[W.zoneIdAt(x+Math.cos(a)*r,y+Math.sin(a)*r)]===false)return false}return true};
+const inHouse=(x,y)=>houses.some(hs=>x>hs.x-6&&x<hs.x+hs.w+6&&y>hs.y-6&&y<hs.y+hs.d+10);
+function groundSpot(lo,hi){const N=NAV;if(!N)return null;const h=W.hero,c=[];
+  for(let k=0;k<220&&c.length<10;k++){const a=Math.random()*TAU,r=lo+Math.random()*(hi-lo+60),x=h.x+Math.cos(a)*r,y=h.y+Math.sin(a)*r,ci=cellOf(x,y);
+    if(N.bl[ci]||N.bar[ci])continue;const d=N.dist[ci];if(!(d>=lo&&d<=hi))continue;if(!farOpen(x,y,130)||shutNear(x,y,200)||inHouse(x,y)||hit(x,y,14))continue;
+    if(W.Z.some(z=>Math.hypot(z.x-x,z.y-y)<34))continue;c.push([d,[x,y,W.zoneIdAt?W.zoneIdAt(x,y):null,null]])}
+  if(!c.length)return null;c.sort((a,b)=>a[0]-b[0]);const k=c.slice(0,6);return k[Math.floor(Math.random()*k.length)][1]}
+function pickHole(o){const h=W.hero,free=p=>!W.Z.some(z=>Math.hypot(z.x-p[0],z.y-p[1])<30),open=holes.filter(p=>zoneOk(p[0],p[1],p[2])&&!shutNear(p[0],p[1],110)&&free(p));
+  if(NAV){const good=[],c=[],far=[];for(const p of open){if(Math.hypot(p[0]-h.x,p[1]-h.y)<110)continue;const d=holeDist(p);if(d==null||d>=1e9||d<130)continue;
+      if(d<=440&&farOpen(p[0],p[1],130)&&!shutNear(p[0],p[1],200))good.push([d,p]);(d>700?far:c).push([d,p])}
+    // le buche buone vicine, un po' di volte su due anche un punto di terra; senza buche buone il punto di terra
+    good.sort((a,b)=>a[0]-b[0]);const gk=good.slice(0,4).filter(a=>a[1]!==W.lastHole);
+    if(gk.length&&(Math.random()<.45||gk.length>=3)){const p=gk[Math.floor(Math.random()*gk.length)][1];W.lastHole=p;return p}
+    const g=groundSpot(170,420)||groundSpot(140,600);if(g){W.lastHole=null;return g}
     // (difetti 48) senza buche a giusta distanza le più vicine tra quelle raggiungibili, mai una buca a caso che magari sta dietro una barriera chiusa
     if(!c.length&&far.length){far.sort((a,b)=>a[0]-b[0]);c.push(...far.slice(0,3))}
     if(c.length){c.sort((a,b)=>a[0]-b[0]);let k=c.slice(0,6);if(k.length>1)k=k.filter(a=>a[1]!==W.lastHole);const p=k[Math.floor(Math.random()*k.length)][1];W.lastHole=p;return p}
@@ -1534,4 +1551,4 @@ orderReset:()=>{ORD.mm.m=new Map();ORD.fm.m=new Map();ORD.fr+=5},
     texStats:()=>{let n=0,px=0,np=0,pp=0;for(const k in TEX){n++;px+=TEX[k].width*TEX[k].height}for(const k in PLANES){np++;pp+=PLANES[k].width*PLANES[k].height}return{n,mpx:+(px/1e6).toFixed(2),np,mpp:+(pp/1e6).toFixed(2)}},
     buys,equip,buyNow:id=>{const o=buys.find(b=>b.id===id);return o?o.act():null},box:()=>BOX,boxTo:i=>{const q=BOX.spots[i];boxPlace(q[0],q[1],q[3]||0);navBuild();if(NAV)NAV.hc=-1;return[q[0],q[1]]},coins:v=>{if(v!=null)W.coins=v;return W.coins},gun:()=>gunState,nuova:()=>CTL.nuova()};
   return CTL}
-return{scala,STAIRS,sameLv,heroLv,climbStart,SB,pickHole,holeDist,zoneOk,shutNear,riposiziona,toWorld:(x,y)=>TURN?tP(TURN,x,y):[x,y],dirWorld:(x,y)=>TURN?tV(TURN,x,y):[x,y],AREE,anteprima,boxReset,stile,idleZombie,buyable,buys,barrier,BARS,barCheck,sorpresa,equip,hurt,spawn,KINDS,move,zWalk,sep,physClear,gun:()=>gunState,navRebuild:()=>{navBuild();if(NAV)NAV.hc=-1},softImg,turn,group,grp,finalize,facing,across,onGround,onPlane,onRound,ringNear,T,CAM,W,S,LS,MOON,inGround,scrAng,decals,fades,NAMES,stand,stands,heightAt,add3,sub3,len3,rnd,rr,srand,ink,path,hull,material,MAT,MARKS,texture,tone,face,hullOf,ballAt,line3,poly3,fn3,box,prismX,prismY,plane,cyl,prop,solid,shade,shadeR,props,solids,shadows,lights,flames,holes,houses,smokes,perches,hit,bakeGround,edgeSnap,boot,bootAsync,libera,ricuoci,setLive:f=>{liveDraw=f},wa,mix,cl,ez,lerp,TAU,ball,seg}})();
+return{scala,STAIRS,sameLv,heroLv,climbStart,SB,pickHole,holeDist,zoneOk,shutNear,farOpen,groundSpot,riposiziona,toWorld:(x,y)=>TURN?tP(TURN,x,y):[x,y],dirWorld:(x,y)=>TURN?tV(TURN,x,y):[x,y],AREE,anteprima,boxReset,stile,idleZombie,buyable,buys,barrier,BARS,barCheck,sorpresa,equip,hurt,spawn,KINDS,move,zWalk,sep,physClear,gun:()=>gunState,navRebuild:()=>{navBuild();if(NAV)NAV.hc=-1},softImg,turn,group,grp,finalize,facing,across,onGround,onPlane,onRound,ringNear,T,CAM,W,S,LS,MOON,inGround,scrAng,decals,fades,NAMES,stand,stands,heightAt,add3,sub3,len3,rnd,rr,srand,ink,path,hull,material,MAT,MARKS,texture,tone,face,hullOf,ballAt,line3,poly3,fn3,box,prismX,prismY,plane,cyl,prop,solid,shade,shadeR,props,solids,shadows,lights,flames,holes,houses,smokes,perches,hit,bakeGround,edgeSnap,boot,bootAsync,libera,ricuoci,setLive:f=>{liveDraw=f},wa,mix,cl,ez,lerp,TAU,ball,seg}})();
