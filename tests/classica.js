@@ -12,8 +12,10 @@
 // largo 430 (testi su righe loro, la Furia che non copre la rarità); il cristallo che si rompe senza crepe (luce, schegge, spuntoni che si
 // staccano, l'esplosione in pezzi 3D, la brina, gli effetti ridotti, la cassa che lo schiaccia); la fontana della vita nuova (anche la Fonte
 // della torre), il sorso e l'acqua che si svuota; la camminata sul ponte che non vibra; le pietre nuove (2 a stanza, 20 al custode, ponti da
-// 100 a 200).
-// Foto tests/cn_<n>.png. Uso: python3 anteprime/mk_classica.py --test --build && node tests/classica.js [menu|stanze|furia|rarita|evo|nemesi|torre|corsa|ondate|trappole|3d|ponte|fontana|cristallo]
+// 100 a 200); l'albero delle abilità (src/js/96-albero-abilita.js: il bottone, il menu che sta nello schermo, i passi comprati in ordine, i
+// bivi che si cambiano gratis, le carte coi rombi, i passi che valgono a ogni presa, i danni delle frecce, ogni mossa leggendaria e i bivi
+// in una scena sua, la sfida del giorno senza alberi, gli effetti ridotti, una partita con tutti gli alberi senza errori).
+// Foto tests/cn_<n>.png. Uso: python3 anteprime/mk_classica.py --test --build && node tests/classica.js [menu|stanze|furia|rarita|evo|nemesi|torre|corsa|ondate|trappole|3d|ponte|fontana|cristallo|albero]
 const {chromium}=require('playwright');const path=require('path');
 const SOLO=process.argv[2]||'';
 (async()=>{const b=await chromium.launch({args:['--autoplay-policy=no-user-gesture-required']});const p=await b.newPage({viewport:{width:390,height:844},deviceScaleFactor:2});const errs=[];
@@ -325,6 +327,191 @@ const SOLO=process.argv[2]||'';
     ok('l\'ultimo colpo lo fa esplodere: pezzi in 3D, lampo, anello di luce, luce nella stanza, +1 o +2 cristalli, poi tutto pulito',
       a.gone&&b.gone&&a.gems>=1&&a.gems<=2&&b.gems>=1&&a.pieces>=4&&['cry3','flash','ring2','cryT','cryc'].every(k=>a.fx.includes(k))&&a.lights===1&&a.left===0&&b.left===0,JSON.stringify({a,b}));
     ok('effetti ridotti: meno pezzi; schiacciato da una cassa esplode uguale ma senza cristalli',cr.low.gone&&cr.low.gems===0&&cr.low.pieces>0&&cr.low.pieces<a.pieces+4,JSON.stringify(cr.low));
+  }
+  // ---------------------------------------------------------------- the tree of the abilities (96)
+  if(!SOLO||SOLO==='albero'){
+    await toMenu();await E(`(()=>{SAVE.gold=20000;const S=trS();for(const k of Object.keys(S))delete S[k];SAVE.runs=9;save();renderPlay();return 0})()`);await W(300);
+    const bt=await J(`(()=>{const b=$('cnTrBtn'),pr=$('cnPremiBtn');return{vis:${vis('cnTrBtn')},under:!!b&&!!pr&&b.previousElementSibling===pr,hot:b.classList.contains('hot'),lbl:b.textContent.trim()}})()`);
+    ok('il bottone «Albero» sotto «Premi», acceso quando c\'è un passo da comprare',bt.vis&&bt.under&&bt.hot&&/Albero/.test(bt.lbl),JSON.stringify(bt));
+    await p.click('#cnTrBtn');await W(900);
+    const m0=await J(`(()=>{const el=$('trScr'),t=el.querySelector('.trTree');return{open:!el.hidden,strip:el.querySelectorAll('.trA').length,nodes:el.querySelectorAll('.trN').length,caps:el.querySelectorAll('.trN.cap').length,
+      root:el.querySelector('.trRoot b').textContent,btn:el.querySelector('.trBtn').textContent.trim(),scroll:t.scrollHeight-t.clientHeight,hot:$('cnTrBtn').classList.contains('hot'),
+      out:[...el.querySelectorAll('.trL,.trN')].filter(n=>{const r=n.getBoundingClientRect();return r.left<0||r.right>innerWidth+.5}).length}})()`);await snap('albero_menu');
+    ok('il menu: 23 abilità, 7 passi (2 mosse leggendarie), il passo I da sbloccare a 100, niente fuori dallo schermo, il bottone si spegne',m0.open&&m0.strip===23&&m0.nodes===7&&m0.caps===2&&/Sblocca · 100/.test(m0.btn)&&m0.out===0&&!m0.hot,JSON.stringify(m0));
+    // buy in order: I, then III is still closed; II; III on the right; the left side for free; IV and V
+    const g0=await J(`SAVE.gold`);await p.click('#trScr .trBtn[data-act="buy"]');await W(1100);
+    const b1=await J(`({lv:trLv(TRM.id),gold:SAVE.gold,on:document.querySelectorAll('#trScr .trN.on').length,sel:TRM.s})`);
+    await p.click('#trScr .trN[data-s="3"][data-b="0"]');await W(200);const lock=await J(`$('trScr').querySelector('.trBtn').textContent.trim()`);
+    await p.click('#trScr .trN[data-s="2"]');await W(150);await p.click('#trScr .trBtn[data-act="buy"]');await W(1100);
+    await p.click('#trScr .trN[data-s="3"][data-b="1"]');await W(150);await p.click('#trScr .trBtn[data-act="buy"]');await W(1100);
+    const b3=await J(`({lv:trLv(TRM.id),f3:trSide(TRM.id,3),gold:SAVE.gold,alt:!!$('trScr').querySelector('.trN.alt[data-s="3"][data-b="0"]')})`);
+    await p.click('#trScr .trN[data-s="3"][data-b="0"]');await W(150);const sw=await J(`$('trScr').querySelector('.trBtn').textContent.trim()`);await p.click('#trScr .trBtn[data-act="side"]');await W(300);
+    const b4=await J(`({f3:trSide(TRM.id,3),gold:SAVE.gold})`);
+    await E(`(()=>{TRM.s=4;trPanel();return 0})()`);await p.click('#trScr .trBtn[data-act="buy"]');await W(1100);await E(`(()=>{TRM.s=5;TRM.b=1;trPaint();trPanel();return 0})()`);await p.click('#trScr .trBtn[data-act="buy"]');await W(500);
+    const b5=await J(`({lv:trLv(TRM.id),f5:trSide(TRM.id,5),gold:SAVE.gold,bursts:TRM.bursts.length,pips:$('trScr').querySelectorAll('.trA.sel i b.on').length,btn:$('trScr').querySelector('.trBtn').textContent.trim()})`);await snap('albero_pieno');
+    ok('si compra in ordine: I (−100), III chiuso prima del II, II, III a destra, IV, V (in tutto 3.850)',b1.lv===1&&b1.gold===g0-100&&b1.on===1&&/Prima sblocca il passo II/.test(lock)&&b3.lv===3&&b3.f3===1&&b5.lv===5&&b5.f5===1&&b5.gold===g0-3850,JSON.stringify({b1,lock,b3,b5}));
+    ok('il bivio si cambia gratis: l\'altro lato acceso a metà, «Scegli questo ramo · gratis»',b3.alt&&/gratis/.test(sw)&&b4.f3===0&&b4.gold===b3.gold,JSON.stringify({sw,b4}));
+    ok('la mossa leggendaria: lo scoppio di luce, i cinque rombi accesi nella striscia, «Sbloccato»',b5.bursts>0&&b5.pips===5&&/Sbloccato/.test(b5.btn),JSON.stringify(b5));
+    await E(`(()=>{SAVE.gold=40;trSel('fire',false);return 0})()`);await W(300);const poor=await J(`$('trScr').querySelector('.trBtn').textContent.trim()`);
+    ok('senza oro abbastanza: «Ti mancano …»',/Ti mancano 60/.test(poor),poor);
+    // the menu on the other phones: everything inside, the tree whole on 430×932
+    for(const [w,h] of [[430,932],[390,844],[360,640]]){await p.setViewportSize({width:w,height:h});await W(400);
+      const L=await J(`(()=>{const el=$('trScr'),t=el.querySelector('.trTree'),pr=el.querySelector('.trP').getBoundingClientRect();return{scroll:t.scrollHeight-t.clientHeight,panel:pr.bottom<=innerHeight+.5,
+        out:[...el.querySelectorAll('.trL,.trN,.trRoot,.trP,.trHd')].filter(n=>{const r=n.getBoundingClientRect();return r.left<-.5||r.right>innerWidth+.5}).length}})()`);
+      ok(`il menu su ${w}×${h}: niente fuori dallo schermo${w>=390?', l\'albero intero senza scorrere':''}`,L.out===0&&L.panel&&(w<390||L.scroll<=1),JSON.stringify(L));if(w===360)await snap('albero_360')}
+    await p.setViewportSize({width:390,height:844});await W(300);await p.click('#trScr .trX');await W(400);
+    const cl=await J(`({hidden:$('trScr').hidden,menu:${vis('cnTrBtn')}})`);ok('«‹» torna alle isole',cl.hidden&&cl.menu,JSON.stringify(cl));
+    // the cards in the run: the diamonds of the tree under the ability
+    await arena(0);await E(`(()=>{__A.on=false;const S=trS();S.front={lv:3,f3:0,f5:0};S.multi={lv:5,f3:0,f5:1};return 0})()`);
+    const cd=await J(`(()=>{G.enemies=[];offer=[];CN.forceRar=0;openSkills('level');const front=SK.find(s=>s.id==='front'),multi=SK.find(s=>s.id==='multi');offer=[front,multi,SK.find(s=>s.id==='atk')];
+      $('skList').innerHTML=offer.map((s,i)=>'<button class="sk" data-i="'+i+'"><div><b>'+s.n+'</b><span>'+s.d+'</span></div></button>').join('');trCards();
+      const q=[...document.querySelectorAll('#skList .trPip')].map(e=>({on:e.querySelectorAll('b.on').length,t:e.textContent}));closeSkills();CN.forceRar=null;return q})()`);
+    ok('le carte: sotto l\'abilità i rombi dei passi e la mossa leggendaria',cd.length===2&&cd[0].on===3&&/Albero III/.test(cd[0].t)&&cd[1].on===5&&/Eco di luce/.test(cd[1].t),JSON.stringify(cd));
+    // the scenes: one tree at a time, a dummy enemy, the game running
+    await E(`(()=>{window.__T={};const T=__T;
+      T.set=(trees,skills)=>{const S=trS();for(const k of Object.keys(S))delete S[k];for(const id in trees){const v=trees[id];S[id]={lv:v[0],f3:v[1]||0,f5:v[2]||0}}
+        G.enemies=[];G.eproj=[];G.arrows=[];G.fx=[];G.hearts=[];G.coins=[];G.rocks=[];fields={};G.state='play';G.daily=null;P=makeP();P.crit=0;P.x=AW/2;P.y=BOT-70;trReset();for(const id of skills||[]){const s=SK.find(q=>q.id===id);s.f();P.skills[id]=(P.skills[id]||0)+1}trSync()};
+      T.foe=(x,y,hp,type)=>{const e=makeE(type||'plant',x,y,0);e.spawn=0;e.intro=0;e.hp=e.max=hp||1e6;e.cd=99;e.fireT=99;G.enemies.push(e);return e};
+      T.step=(n,dt)=>{for(let i=0;i<n;i++){G.hitstop=0;if(G.state!=='play')G.state='play';update(dt||1/60)}};
+      T.fly=(e,a,m,grp)=>{const n0=G.arrows.length;TR.aim=a;try{TR.grp=grp||null;arrow(P.x,P.y-6,a,m||1)}finally{TR.grp=null;TR.aim=null}return G.arrows[n0]};
+      T.ang=e=>Math.atan2(e.y-P.y,e.x-P.x);return 0})()`);
+    const sc=await J(`(()=>{const T=__T,o={};LOWFX=false;
+      // damage of the arrows: front I+IV (×1,38) and nothing without the tree
+      T.set({front:[4,1]},['front']);let e=T.foe(AW/2,BOT-190);let h0=e.hp;P.fireCd=99;volley(T.ang(e));T.step(40);o.frontK=+((h0-e.hp)/P.atk/2).toFixed(3);
+      T.set({},['front']);e=T.foe(AW/2,BOT-190);h0=e.hp;P.fireCd=99;volley(T.ang(e));T.step(40);o.frontK0=+((h0-e.hp)/P.atk/2).toFixed(3);
+      // what comes with every pick: Punte affilate +15 points (×1,35/1,2), the first Freccia frontale with Fila in più (two arrows more)
+      T.set({atk:[4,0]},[]);let a0=P.atk;SK.find(s=>s.id==='atk').f();P.skills.atk=1;trSync();o.atkK=+(P.atk/a0).toFixed(3);
+      T.set({front:[3,0]},[]);a0=P.front;SK.find(s=>s.id==='front').f();P.skills.front=1;trSync();o.frontN=P.front-a0;
+      // Lance di luce: the fourth attack
+      T.set({front:[5,0,0]},['front']);e=T.foe(AW/2,BOT-300);let ls=[];for(let i=0;i<4;i++){P.queue=[];volley(T.ang(e));ls.push(G.arrows.filter(a=>a.trK==='lance').length)}o.lance=ls;
+      // Salva del capitano: nine arrows in three rows
+      T.set({front:[5,0,1]},['front']);e=T.foe(AW/2,TOP+60);TR.t.salvo=.01;P.fireCd=99;T.step(30);o.salvo=G.arrows.filter(a=>a.trG==='front').length;
+      // Frecce gemelle: an enemy beaten by a straight arrow
+      T.set({front:[3,1]},['front']);e=T.foe(AW/2,BOT-190,5);T.foe(AW/2-90,TOP+80);T.foe(AW/2+90,TOP+80);P.fireCd=99;volley(T.ang(e));T.step(30);o.twin=TR.n.twin||0;
+      // Raffica a ventaglio and Tempesta di frecce: the extra volleys open; every fifth attack twice the volleys
+      T.set({multi:[5,1,0]},['multi']);e=T.foe(AW/2,TOP+60);for(let i=0;i<10;i++){P.fireCd=0;T.step(1);P.fireCd=99;T.step(30)}o.storm=[TR.att,TR.n.storm5||0];
+      // Eco di luce: the first volley again, half strength, as light
+      T.set({multi:[5,0,1]},['multi']);e=T.foe(AW/2,TOP+60);P.fireCd=0;T.step(1);P.fireCd=99;T.step(30);o.echo=G.arrows.filter(a=>a.trK==='echo').length;
+      // Boomerang and Pioggia obliqua
+      T.set({diag:[5,0,0]},['diag']);e=T.foe(AW/2,TOP+80);P.fireCd=99;volley(T.ang(e));const bm=G.arrows.filter(a=>a.trBoom);T.step(36);o.boomRet=bm.filter(a=>a.trRet).length;T.step(80);o.boomGone=bm.filter(a=>G.arrows.includes(a)).length;o.boomN=bm.length;
+      T.set({diag:[5,0,1]},['diag']);e=T.foe(AW/2+60,BOT-160);P.fireCd=99;volley(T.ang(e)-.42);T.step(20);o.sky=TR.fx.filter(f=>f.k==='sky').length;
+      // Stella a otto punte, Guardiani di luce, Spine
+      T.set({side:[5,0,0]},['side']);e=T.foe(AW/2,TOP+60);P.fireCd=99;for(let i=0;i<4;i++){P.queue=[];volley(T.ang(e))}o.star8=G.arrows.filter(a=>a.trK==='star8').length;
+      T.set({side:[5,0,1]},['side']);e=T.foe(AW/2,TOP+60);P.fireCd=99;T.step(2);P.queue=[];volley(T.ang(e));o.wisp=G.arrows.filter(a=>a.trK==='wisp').length;
+      T.set({side:[3,1]},['side']);e=T.foe(AW/2,TOP+60);P.fireCd=99;volley(T.ang(e));T.step(90);o.thorn=TR.z.filter(z=>z.k==='thorn').length;
+      // Contrattacco and Coda di cometa
+      T.set({rear:[5,0,1]},['rear']);e=T.foe(AW/2,TOP+60);P.inv=0;P.dashT=0;hurtP(5);o.counter=G.arrows.filter(a=>a.trK==='counter').length;
+      T.set({rear:[5,0,0]},['rear']);e=T.foe(AW/2,TOP+60);P.fireCd=99;P.y=TOP+400;volley(T.ang(e));T.step(30);o.comet=TR.z.filter(z=>z.k==='fire').length;
+      // Freccia del titano: one in three giant arrows; Gigante che si apre
+      T.set({giant:[5,0,0]},['giant']);e=T.foe(AW/2,TOP+60);P.fireCd=99;let ti=0;for(let i=0;i<9;i++){P.queue=[];volley(T.ang(e));ti+=G.arrows.filter(a=>a.trK==='titan'&&!a.__c?(a.__c=1):0).length}o.titan=ti;
+      T.set({giant:[5,0,1]},['giant']);e=T.foe(AW/2,BOT-200);P.fireCd=99;for(let i=0;i<2;i++){P.queue=[];volley(T.ang(e))}T.step(30);o.split=TR.n.split||0;
+      // Rimbalzo infinito and Scoppio finale: a line of enemies
+      const line=()=>{for(let i=0;i<9;i++)T.foe(L+30+i*44,TOP+120+(i%2)*30)};
+      T.set({ric:[5,0,0]},['ric']);line();P.fireCd=99;P.x=L+30;P.y=TOP+260;let ar=T.fly(G.enemies[0],T.ang(G.enemies[0]));T.step(120);o.ricN=ar.trN;
+      // Trapassa tutto and Stella di schegge
+      T.set({pierce:[5,0,0]},['pierce']);for(let i=0;i<5;i++)T.foe(AW/2,BOT-140-i*40);P.fireCd=99;ar=T.fly(G.enemies[0],-Math.PI/2);T.step(60);o.pierceN=ar.trN;
+      T.set({pierce:[5,0,1]},['pierce']);for(let i=0;i<4;i++)T.foe(AW/2,BOT-140-i*40);P.fireCd=99;ar=T.fly(G.enemies[0],-Math.PI/2);T.step(40);o.shards=TR.n.shards||0;
+      // Biliardo and Muri che tirano
+      T.set({wallb:[5,0,0]},['wallb']);e=T.foe(AW/2,TOP+60);P.fireCd=99;P.x=L+60;P.y=TOP+300;ar=T.fly(e,Math.PI);T.step(30);o.bill=G.arrows.filter(a=>a.trSplitW).length;
+      T.set({wallb:[5,0,1]},['wallb']);e=T.foe(AW/2,TOP+160);P.fireCd=99;TR.t.walls=.01;T.step(3);o.walls=G.arrows.filter(a=>a.trK==='wall').length;
+      return o})()`);
+    ok('frecce dritte: +38% di danno coi passi I e IV, uguali a prima senza',Math.abs(sc.frontK-1.38)<.02&&Math.abs(sc.frontK0-1)<.02,JSON.stringify({k:sc.frontK,k0:sc.frontK0}));
+    ok('a ogni presa: Punte affilate +35% invece di +20%; Fila in più: due frecce dritte alla prima presa',Math.abs(sc.atkK-1.35)<.005&&sc.frontN===2,JSON.stringify({atk:sc.atkK,front:sc.frontN}));
+    ok('Lance di luce al quarto attacco; Salva del capitano: nove frecce; Frecce gemelle',sc.lance[0]===0&&sc.lance[2]===0&&sc.lance[3]>0&&sc.salvo>=9&&sc.twin>=1,JSON.stringify({l:sc.lance,s:sc.salvo,t:sc.twin}));
+    ok('Tempesta di frecce ogni cinque attacchi (il doppio delle raffiche); Eco di luce',sc.storm[0]===10&&sc.storm[1]===2&&sc.echo>0,JSON.stringify({q:sc.storm,e:sc.echo}));
+    ok('Boomerang: le frecce tornano da te e spariscono; Pioggia obliqua',sc.boomN>0&&sc.boomRet===sc.boomN&&sc.boomGone===0&&sc.sky===3,JSON.stringify({n:sc.boomN,r:sc.boomRet,g:sc.boomGone,sky:sc.sky}));
+    ok('Stella a otto punte; Guardiani di luce; Spine a terra',sc.star8===8&&sc.wisp===2&&sc.thorn>=1,JSON.stringify({s:sc.star8,w:sc.wisp,t:sc.thorn}));
+    ok('Contrattacco: cinque frecce; Coda di cometa: fuoco a terra',sc.counter===5&&sc.comet>=3,JSON.stringify({c:sc.counter,f:sc.comet}));
+    ok('Freccia del titano: una ogni tre giganti; Gigante che si apre in cinque',sc.titan===1&&sc.split===1,JSON.stringify({t:sc.titan,s:sc.split}));
+    ok('Rimbalzo infinito: più di quattro salti; Trapassa tutto: cinque nemici; Stella di schegge',sc.ricN>5&&sc.pierceN>=5&&sc.shards>=1,JSON.stringify({r:sc.ricN,p:sc.pierceN,s:sc.shards}));
+    ok('Biliardo: la freccia si divide sul muro; Muri che tirano: sei frecce',sc.bill>=1&&sc.walls===6,JSON.stringify({b:sc.bill,w:sc.walls}));
+    const s2=await J(`(()=>{const T=__T,o={};LOWFX=false;let a,b,h0;
+      // il fuoco: Vampata, Terra in fiamme, Fuoco lungo
+      T.set({fire:[5,0,1]},['fire']);a=T.foe(AW/2,TOP+200,50);b=T.foe(AW/2+30,TOP+200);a.burn=2;h0=b.hp;killE(a);o.vamp=TR.n.vamp_fire||0;o.vampD=Math.round(h0-b.hp);
+      T.set({fire:[5,0,0]},['fire']);a=T.foe(AW/2,TOP+200);a.burn=3;a.burnTick=.5;T.step(50);o.flames=TR.z.filter(z=>z.k==='fire').length;
+      T.set({fire:[2]},['fire']);a=T.foe(AW/2,TOP+200);hurtE(a,1,false);o.burn=a.burn;
+      // il ghiaccio: Tormenta, Statue di ghiaccio, Ghiaccio che si spacca
+      T.set({ice:[5,0,0]},['ice']);for(let i=0;i<4;i++)T.foe(L+40+i*80,TOP+100+i*30);TR.t.bliz=.01;T.step(2);o.bliz=G.enemies.filter(e=>e.slow>=2.5).length;
+      T.set({ice:[5,0,1]},['ice']);a=T.foe(AW/2,TOP+200,10,'goblin');b=T.foe(AW/2+30,TOP+200,1e6,'goblin');a.slow=1;killE(a);o.statue=(TR.n.statue||0)>0&&b.frozen>0;
+      T.set({ice:[3,1]},['ice']);a=T.foe(AW/2,TOP+200,1e6,'goblin');a.slow=2;for(let i=0;i<4;i++)hurtE(a,1,false);o.frozen=a.frozen>0;
+      // il veleno: Contagio, Veleno che scoppia, Veleno denso
+      T.set({poison:[5,0,0]},['poison']);a=T.foe(AW/2,TOP+200);b=T.foe(AW/2+40,TOP+200);a.poisonS=2;a.poisonT=3;T.step(70);o.cont=b.poisonT>0;
+      T.set({poison:[5,0,1]},['poison']);a=T.foe(AW/2,TOP+200);b=T.foe(AW/2+36,TOP+200);h0=b.hp;for(let i=0;i<6;i++)hurtE(a,1,false);o.pburst=TR.n.pburst||0;o.pburstD=Math.round(h0-b.hp);
+      T.set({poison:[3,0]},['poison']);a=T.foe(AW/2,TOP+200);for(let i=0;i<8;i++)hurtE(a,1,false);o.pmax=a.poisonS;
+      // il fulmine: Temporale, Nuvola amica, Scossa
+      T.set({light:[5,0,0]},['light']);for(let i=0;i<6;i++)T.foe(L+30+i*60,TOP+120);TR.t.storm=.01;T.step(40);o.storm=TR.n.bolt||0;
+      T.set({light:[5,0,1]},['light']);a=T.foe(AW/2,BOT-200);T.step(100);o.cloud=!!TR.cloud&&(TR.n.bolt||0)>0;
+      T.set({light:[3,1]},['light']);a=T.foe(AW/2,TOP+200,1e6,'goblin');lightning(a);o.stun=a.trStun>0;
+      // le lame: Corona di lame (vanno e tornano), Scudo di lame
+      T.set({orbit:[5,0,0]},['orbit']);a=T.foe(AW/2,TOP+150);TR.t.crown=.01;T.step(2);o.crownOut=P.orbit===0&&TR.orbOut===2;T.step(200);o.crownBack=P.orbit===2&&!TR.orbOut;
+      T.set({orbit:[5,0,1]},['orbit']);a=T.foe(AW/2,TOP+150);T.step(1);{const an=G.t*3.6,bx=P.x+Math.cos(an)*44,by=P.y-6+Math.sin(an)*44;G.eproj.push({x:bx,y:by,vx:0,vy:0,a:0,r:5,dmg:5,kind:'',life:5})}T.step(1);o.bshield=TR.n.bshield||0;
+      // lo scatto: Doppio passo, Ombra che scoppia
+      T.set({dash:[5,0,0]},['dash']);a=T.foe(AW/2,TOP+150);P.dashCd=0;dash();T.step(12);const c1=P.dashCd;dash();o.dash2=(TR.n.dash2||0)===1&&P.dashT>0&&c1>0;
+      T.set({dash:[5,0,1]},['dash']);a=T.foe(AW/2,BOT-110);P.dashCd=0;P.x=AW/2;P.y=BOT-80;dash();T.step(40);o.shadow=TR.n.shadow||0;
+      // gli stivali, correndo: Corsa del vento, Passi di tuono
+      const _in=input;input=()=>({x:1,y:0,m:1});try{T.set({boots:[5,0,0]},['boots']);a=T.foe(AW/2,TOP+80);const s0=P.spd;for(let i=0;i<150;i++){P.x=AW/2;T.step(1)}o.runK=+(P.spd/s0).toFixed(2);
+        T.set({boots:[5,0,1]},['boots']);a=T.foe(AW/2,BOT-80,1e6,'goblin');for(let i=0;i<200;i++){P.x=AW/2;P.y=BOT-80;T.step(1)}o.thsteps=TR.n.thsteps||0}finally{input=_in}
+      // la forza: Colpo del gigante, Colpo di grazia, Frenesia, Raffica d'oro, Colpo perfetto, Stella cadente
+      T.set({atk:[5,0,0]},['atk']);a=T.foe(AW/2,BOT-190);h0=a.hp;P.fireCd=99;volley(T.ang(a));T.step(40);o.giantK=+((h0-a.hp)/P.atk).toFixed(2);
+      T.set({atk:[5,0,1]},['atk']);a=T.foe(AW/2,TOP+150,100,'goblin');hurtE(a,a.hp*.88,false,true);o.grace=!!a.dead&&(TR.n.grace||0)>0;
+      T.set({aspd:[5,0,0]},['aspd']);a=T.foe(AW/2,TOP+150);T.step(1);const as0=P.aspd;P.hp=P.maxhp*.4;T.step(2);o.fren=+(P.aspd/as0).toFixed(2);P.hp=P.maxhp;T.step(2);o.frenOff=+(P.aspd/as0).toFixed(2);
+      T.set({aspd:[5,0,1]},['aspd']);a=T.foe(AW/2,TOP+150);T.step(1);const as1=P.aspd;TR.t.gold=.01;T.step(3);o.gold=+(P.aspd/as1).toFixed(2);
+      T.set({crit:[5,0,0]},['crit']);a=T.foe(AW/2,BOT-190);TR.t.perf=.01;P.fireCd=99;T.step(2);h0=a.hp;P.crit=0;volley(T.ang(a));T.step(40);o.perf=TR.n.perf||0;o.perfK=+((h0-a.hp)/P.atk).toFixed(2);
+      T.set({crit:[5,0,1]},['crit']);a=T.foe(AW/2,BOT-190);P.crit=1;for(let i=0;i<20;i++){P.queue=[];volley(T.ang(a));T.step(3)}T.step(40);o.star=TR.n.star||0;
+      // la vita: Cuore del bosco, Corteccia di pietra (con Corteccia e Radici profonde), Cerchio della vita, Pozione esplosiva, Doppio scudo, Scudo di spine, Festa, Patto della luna
+      T.set({hp:[5,0,0]},['hp']);a=T.foe(AW/2,TOP+150);P.hp=P.maxhp*.2;T.step(1);o.heart=+(P.hp/P.maxhp).toFixed(2);
+      T.set({hp:[5,0,1]},['hp']);a=T.foe(AW/2,TOP+150);T.step(2);P.inv=0;P.dashT=0;h0=P.hp;hurtP(40);o.bark=h0-P.hp;
+      T.set({heal:[5,0,0]},[]);a=T.foe(AW/2,TOP+150);P.hp=P.maxhp*.3;SK.find(s=>s.id==='heal').f();P.skills.heal=1;trSync();o.life=TR.z.filter(z=>z.k==='life').length;h0=P.hp;T.step(60);o.lifeH=P.hp>h0;
+      T.set({heal:[5,0,1]},[]);a=T.foe(AW/2,P.y-40);h0=a.hp;P.hp=P.maxhp*.3;SK.find(s=>s.id==='heal').f();P.skills.heal=1;trSync();o.pboom=Math.round(h0-a.hp);
+      T.set({shield:[5,0,0]},['shield']);a=T.foe(AW/2,TOP+150);P.shCd=0;P.inv=0;h0=P.hp;hurtP(20);P.inv=0;hurtP(20);o.par2=(TR.n.parry||0)===2&&P.hp===h0;P.inv=0;hurtP(20);o.par3=P.hp<h0;
+      T.set({shield:[5,0,1]},['shield']);a=T.foe(AW/2,TOP+150);P.shCd=0;P.inv=0;hurtP(20);o.spines=G.arrows.filter(a=>a.trK==='thorn8').length;
+      T.set({vamp:[5,0,0]},['vamp']);P.hp=P.maxhp*.5;for(let i=0;i<10;i++){a=T.foe(AW/2,TOP+150,5,'goblin');killE(a)}o.feast=TR.n.feast||0;
+      T.set({vamp:[5,0,1]},['vamp']);P.hp=P.maxhp*.2;h0=P.hp;a=T.foe(AW/2,TOP+150,5,'goblin');killE(a);o.moon=+(P.hp-h0).toFixed(1);P.hp=P.maxhp*.6;h0=P.hp;a=T.foe(AW/2,TOP+150,5,'goblin');killE(a);o.moon0=+(P.hp-h0).toFixed(1);
+      // la sfida del giorno: niente alberi
+      T.set({front:[4,1]},['front']);G.daily={mods:[]};a=T.foe(AW/2,BOT-190);h0=a.hp;P.fireCd=99;volley(T.ang(a));T.step(40);o.daily=+((h0-a.hp)/P.atk/2).toFixed(3);G.daily=null;
+      // gli effetti ridotti: meno zone e meno luci
+      T.set({fire:[5,0,0]},['fire']);LOWFX=true;for(let i=0;i<40;i++){trZone('fire',AW/2,TOP+100,15,2);trPush({k:'ice',x:0,y:0,vx:0,vy:0,t:1,max:1})}o.low=[TR.z.length,TR.fx.length];LOWFX=false;
+      G.enemies=[];G.arrows=[];return o})()`);
+    ok('fuoco: Vampata (il vicino si brucia), Terra in fiamme, Fuoco lungo 3,5 s',s2.vamp>=1&&s2.vampD>0&&s2.flames>=1&&s2.burn===3.5,JSON.stringify({v:s2.vamp,d:s2.vampD,f:s2.flames,b:s2.burn}));
+    ok('ghiaccio: Tormenta su tutti, Statue di ghiaccio, Ghiaccio che si spacca',s2.bliz===4&&s2.statue&&s2.frozen,JSON.stringify({b:s2.bliz,s:s2.statue,f:s2.frozen}));
+    ok('veleno: Contagio, Veleno che scoppia, Veleno denso fino a 6',s2.cont&&s2.pburst>=1&&s2.pburstD>0&&s2.pmax===6,JSON.stringify({c:s2.cont,b:s2.pburst,d:s2.pburstD,m:s2.pmax}));
+    ok('fulmine: Temporale (cinque fulmini), Nuvola amica, Scossa',s2.storm>=5&&s2.cloud&&s2.stun,JSON.stringify({s:s2.storm,c:s2.cloud,st:s2.stun}));
+    ok('lame: Corona di lame (volano e tornano), Scudo di lame (ferma un colpo)',s2.crownOut&&s2.crownBack&&s2.bshield>=1,JSON.stringify({o:s2.crownOut,b:s2.crownBack,s:s2.bshield}));
+    ok('scatto: Doppio passo, Ombra che scoppia',s2.dash2&&s2.shadow>=1,JSON.stringify({d:s2.dash2,s:s2.shadow}));
+    ok('stivali: Corsa del vento ×1,3, Passi di tuono',Math.abs(s2.runK-1.3)<.02&&s2.thsteps>=1,JSON.stringify({k:s2.runK,t:s2.thsteps}));
+    ok('forza: Colpo del gigante +40%, Colpo di grazia, Frenesia ×1,5 (e si spegne), Raffica d\'oro ×2, Colpo perfetto ×4, Stella cadente',Math.abs(s2.giantK-1.4)<.03&&s2.grace&&Math.abs(s2.fren-1.5)<.02&&Math.abs(s2.frenOff-1)<.02&&Math.abs(s2.gold-2)<.02&&s2.perf===1&&Math.abs(s2.perfK-4)<.05&&s2.star>=1,
+      JSON.stringify({g:s2.giantK,gr:s2.grace,f:s2.fren,fo:s2.frenOff,go:s2.gold,p:s2.perf,pk:s2.perfK,s:s2.star}));
+    ok('vita: Cuore del bosco (+40%), Corteccia di pietra (metà, con −10%), Cerchio della vita, Pozione esplosiva',Math.abs(s2.heart-.6)<.02&&s2.bark===18&&s2.life===1&&s2.lifeH&&s2.pboom>0,JSON.stringify({h:s2.heart,b:s2.bark,l:s2.life,lh:s2.lifeH,p:s2.pboom}));
+    ok('scudo e sete: Doppio scudo (due parate, la terza fa male), Scudo di spine (otto), Festa, Patto della luna (×3)',s2.par2&&s2.par3&&s2.spines===8&&s2.feast>=1&&Math.abs(s2.moon-3*s2.moon0)<.2&&s2.moon0>0,
+      JSON.stringify({p2:s2.par2,p3:s2.par3,sp:s2.spines,f:s2.feast,m:s2.moon,m0:s2.moon0}));
+    ok('nella sfida del giorno gli alberi non valgono; con gli effetti ridotti al massimo 10 zone e 70 luci',Math.abs(s2.daily-1)<.02&&s2.low[0]<=10&&s2.low[1]<=70,JSON.stringify({d:s2.daily,l:s2.low}));
+    // i numeri dei passi dritti: fuoco, veleno, lame, fulmine, gelo, corteccia, muschio
+    const s3=await J(`(()=>{const T=__T,o={};let a,h0;
+      const tick=(trees,sk,f)=>{T.set(trees,sk);a=T.foe(AW/2,TOP+200);h0=a.hp;f(a);return h0-a.hp};
+      const burn=tr=>tick(tr,['fire'],e=>hurtE(e,P.atk*.18*(P.burnMul||1),false,true));o.fire=+(burn({fire:[4,0]})/burn({})).toFixed(2);
+      const pois=tr=>tick(tr,['poison'],e=>{e.poisonS=2;hurtE(e,P.atk*.07*e.poisonS*(P.poison||1),false,true)});o.pois=+(pois({poison:[4,1]})/pois({})).toFixed(2);
+      const orb=tr=>tick(tr,['orbit'],e=>{e.orbCd=.35;hurtE(e,P.atk*.6,false)});o.orb=+(orb({orbit:[4,1]})/orb({})).toFixed(2);T.set({orbit:[2]},['orbit']);a=T.foe(AW/2,TOP+200);a.orbCd=.35;hurtE(a,P.atk*.6,false);o.orbCd=a.orbCd;
+      const lit=tr=>tick(tr,['light'],e=>lightning(e));o.light=+(lit({light:[4,1]})/lit({})).toFixed(2);
+      const cold=tr=>tick(tr,['ice'],e=>{e.slow=1;hurtE(e,100,false,true)});o.ice=+(cold({ice:[3,0]})/cold({})).toFixed(2);
+      T.set({hp:[4,1]},['hp']);a=T.foe(AW/2,TOP+150);P.inv=0;P.dashT=0;h0=P.hp;hurtP(100);o.hp=h0-P.hp;
+      T.set({shield:[3,0]},['shield']);a=T.foe(AW/2,TOP+150);P.shCd=0;P.inv=0;hurtP(10);o.shCd=P.shCd;
+      return o})()`);
+    ok('i passi dritti: fuoco ×1,7, veleno ×1,5, lame ×1,5 e più spesso, fulmine ×1,5, gelo ×1,25, corteccia −10%, muschio 6,5 s',
+      s3.fire===1.7&&s3.pois===1.5&&s3.orb===1.5&&s3.orbCd===.24&&s3.light===1.5&&s3.ice===1.25&&s3.hp===90&&s3.shCd===6.5,JSON.stringify(s3));
+    // ogni passo da solo, ogni lato: mezzo secondo di battaglia con tiri, uno scatto e un colpo preso, senza errori
+    const swp=await J(`(()=>{const T=__T,bad=[];let n=0;const types=['goblin','slime','bat','plant'];TR.err=0;
+      for(const id of TR_IDS)for(let lv=1;lv<=5;lv++)for(const b of (lv===3||lv===5?[0,1]:[0])){n++;try{
+        T.set({[id]:[lv,lv>=3?(lv===3?b:0):0,lv===5?b:0]},[id]);P.hp=P.maxhp*.5;for(let i=0;i<4;i++)T.foe(L+40+i*90,TOP+120+i*25,60+i*20,types[i]).cd=99;
+        for(let f=0;f<30;f++){if(f===5){P.dashCd=0;dash()}if(f===12){P.inv=0;P.dashT=0;hurtP(5)}T.step(1)}
+        if(TR.err)bad.push(id+lv+b)}catch(err){bad.push(id+lv+b+' '+err.message)}}
+      G.enemies=[];G.arrows=[];return{n,bad,err:TR.err}})()`);
+    ok('ogni passo e ogni lato dei 23 alberi, da solo, in battaglia: nessun errore',swp.n===161&&!swp.bad.length&&swp.err===0,JSON.stringify(swp));
+    // a whole run with every tree at the last step (side A, then side B): no errors, the cost of drawing
+    for(const side of [0,1]){await arena(0);await E(`(()=>{const S=trS();for(const id of TR_IDS)S[id]={lv:5,f3:${side},f5:${side}};TR.err=0;__A.every=10;__A.on=true;return 0})()`);
+      await run(60,`G.room>=4`);const fr=await J(`(()=>{const out={room:G.room,err:TR.err,skills:Object.keys(P.skills).length};let n=0,t0=performance.now();for(let i=0;i<30;i++){render();n++}out.ms=+((performance.now()-t0)/n).toFixed(1);return out})()`);
+      await snap('albero_partita_'+(side?'B':'A'));await E(`(()=>{__A.on=false;__A.every=6;return 0})()`);
+      ok(`una partita con tutti gli alberi al passo V (lato ${side?'B':'A'}): nessun errore`,fr.err===0&&fr.room>=3,JSON.stringify(fr))}
+    await E(`(()=>{const S=trS();for(const k of Object.keys(S))delete S[k];save();return 0})()`);
   }
   // ---------------------------------------------------------------- the stone bridge, the Incubo, the dark islands
   if(!SOLO||SOLO==='ponte'){
