@@ -80,8 +80,10 @@ le carte a 430 punti.
 
 Denis, con la foto della scelta «Livello 5 · Scegli un'abilità»: «fai in modo che nella modalità classica ci sia una nuova funzione di
 progressione: tutte le abilità che si possono prendere giocando appunto alla modalità classica, per averle potenziate devi livellarle nel
-menu apposito. deve essere bello e pulito con una non so che di magico». Solo annotato (anche in «Da fare» del CLAUDE.md, punto 7): non
-ancora fatto, prima le domande.
+menu apposito. deve essere bello e pulito con una non so che di magico». Poi, la stessa notte: «il menu dei potenziamenti in battaglia nella
+modalità classica dovrà essere tipo uno di quei menu che per ogni abilità si va sempre più giù per migliorarla o aggiungerci altre cose più
+op». Cioè un albero per ogni abilità: si scende un passo alla volta, e ogni passo più giù la migliora o le aggiunge qualcosa di più forte.
+Solo annotato (anche in «Da fare» del CLAUDE.md, punto 7): non ancora fatto, prima le domande.
 
 ## Le isole verso nord e il ponte di pietra in 3D (20 ottobre notte)
 
