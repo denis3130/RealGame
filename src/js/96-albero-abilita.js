@@ -636,7 +636,7 @@ function trOpen(){if(!TR.on)return;trCss();if(typeof sceFonts==='function')sceFo
   el.hidden=false;el.querySelector('.trX').onclick=trClose;
   const tree=el.querySelector('.trTree');tree.addEventListener('pointerdown',e=>{TRM.dragX=e.clientX;TRM.dragY=e.clientY},{passive:true});
   tree.addEventListener('pointerup',e=>{if(TRM.dragX==null)return;const dx=e.clientX-TRM.dragX,dy=e.clientY-TRM.dragY;TRM.dragX=null;if(Math.abs(dx)>60&&Math.abs(dx)>Math.abs(dy)*1.6){const i=TR_IDS.indexOf(TRM.id),j=(i+(dx<0?1:-1)+TR_IDS.length)%TR_IDS.length;trSel(TR_IDS[j],true)}},{passive:true});
-  addEventListener('resize',trLayout);
+  removeEventListener('resize',trLayout);addEventListener('resize',trLayout);
   trStrip();trSel(TRM.id,false);sfx('ui');trChime([523,659,784],.05);
   cancelAnimationFrame(TRM.raf);TRM.t0=performance.now();const loop=()=>{if(el.hidden)return;TRM.raf=requestAnimationFrame(loop);try{trDraw()}catch(err){trErr(err)}};TRM.raf=requestAnimationFrame(loop)}
 function trClose(){const el=$('trScr');if(el)el.hidden=true;cancelAnimationFrame(TRM.raf);removeEventListener('resize',trLayout);sfx('ui');try{renderGold();renderPlay()}catch(err){trErr(err)}}
