@@ -208,8 +208,9 @@ const SOLO=process.argv[2]||'';
     await E(`(()=>{SAVE.cn.all=true;CN.next='rush';__A.endSeen=0;__A.ends=[];__A.log=[];__A.god=true;goPlay('arena');return 0})()`);await W(2600);
     const r0=await J(`({list:G.rush&&G.rush.list.length,room:G.room,boss:G.enemies.filter(e=>isBoss(e.type)).map(e=>e.type)})`);await snap('corsa_1');
     ok('la Corsa parte dal primo custode',r0.list===12&&r0.room===10&&r0.boss[0]==='golem',JSON.stringify(r0));
-    await E(`__A.on=true;__A.kill=true;__A.every=3;0`);
-    const t0=Date.now();let seen=new Set();while(Date.now()-t0<150000){await W(500);const s=await J(`({i:G.rush?G.rush.i:-1,b:G.enemies.filter(e=>isBoss(e.type)).map(e=>e.type)[0]||'',end:!$('endScr').hidden})`);if(s.b)seen.add(s.b);if(s.i>=3||s.end)break}
+    // the custodians are counted as the rush sets them (looking every half second missed the ones beaten in less than that)
+    await E(`(()=>{window.__rushSeen=[cnBoss(G.rush.list[G.rush.i])];if(!window.__rushW){window.__rushW=1;const _rs=cnRushSet;cnRushSet=function(i){const r=_rs.apply(this,arguments);try{__rushSeen.push(cnBoss(G.rush.list[i]))}catch(e){}return r}}__A.on=true;__A.kill=true;__A.every=3;return 0})()`);
+    const t0=Date.now();let seen=new Set();while(Date.now()-t0<150000){await W(500);const s=await J(`({i:G.rush?G.rush.i:-1,b:G.enemies.filter(e=>isBoss(e.type)).map(e=>e.type)[0]||'',end:!$('endScr').hidden,set:__rushSeen})`);if(s.b)seen.add(s.b);for(const q of s.set)seen.add(q);if(s.i>=3||s.end)break}
     const r1=await J(`({i:G.rush.i,beat:G.rush.beat})`);await snap('corsa_4');ok('da un custode all\'altro (4 custodi di fila)',r1.i>=3&&seen.size>=3,JSON.stringify(Object.assign({visti:[...seen]},r1)));
     await E(`(()=>{__A.on=false;endRun(false,true);return 0})()`);await W(500);const r2=await J(`({tag:$('endTag').textContent,best:SAVE.cn.rush.best,t:SAVE.trophies,b:SAVE.bestA})`);await snap('corsa_fine');
     ok('la fine della Corsa: record e niente coppe o record d\'arena cambiati',r2.tag==='Corsa dei boss'&&r2.best>=3&&r2.t===tr0.t&&JSON.stringify(r2.b)===JSON.stringify(tr0.b),JSON.stringify(r2));

@@ -327,7 +327,7 @@ function trOnKill(e,st){const deep=TR.dep<3;
     if(dg&&Math.random()<dg){trN('dodge');P.inv=.35;text(P.x,P.y-42,'SCHIVATO','#e8f4ff',14);trLight('230,245,255',P.x,P.y-10,30,.15);tone(900,1500,.08,'triangle',.03);return}
     let k=(trOn('hp',2)?.95:1)*(trOn('hp',4)?.95:1);
     if(TR.bark&&trOn('hp',5,1)){TR.bark=0;trN('bark');TR.t.bark=8;k*=.5;for(let i=0;i<(LOWFX?3:7);i++){const a=rand(0,TAU),s=rand(60,140);trPush({k:'bark',x:P.x,y:P.y-12,vx:Math.cos(a)*s,vy:Math.sin(a)*s-50,t:.5,max:.5,rot:rand(0,6)})}sfx('rock');text(P.x,P.y-56,'CORTECCIA','#d8b48a',13)}
-    d=Math.max(1,Math.round(d*k));
+    if(k!==1)d=Math.max(1,Math.round(d*k));
     if(TR.soul>=1){const a=Math.min(TR.soul,d);TR.soul-=a;d-=Math.round(a);if(d<=0){P.inv=.35;text(P.x,P.y-42,'PARATO','#d9a0ff',14);trLight('200,140,255',P.x,P.y-10,34,.16);tone(500,800,.1,'triangle',.03);return}}}
   const hp0=P.hp,cd0=P.shCd;const r=_hp.call(this,d);
   try{if(parry&&cd0<=0&&P.shCd>0)trParry();
@@ -561,7 +561,7 @@ function trCss(){if($('trCss'))return;const st=document.createElement('style');s
 #trScr .trRoot .trRI{display:grid;place-items:center;width:60px;height:60px;border-radius:50%;border:3px solid var(--ink);background:radial-gradient(circle at 50% 30%,#4b4078,#1d1934 75%);box-shadow:0 0 0 2px var(--c),0 0 22px var(--c),0 4px 0 rgba(0,0,0,.5)}
 #trScr .trRoot .trRI svg{width:42px;height:42px}
 #trScr .trRoot b{margin-top:6px;font:21px/1.05 var(--display);color:#fff;text-shadow:0 2px 0 #1b1612,0 0 12px rgba(0,0,0,.6)}
-#trScr .trRoot small{margin-top:2px;font-size:13px;line-height:1.2;color:#cfc4ef}
+#trScr .trRoot small{margin-top:2px;max-width:100%;font-size:13px;line-height:1.2;color:#cfc4ef;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 #trScr .trN{position:absolute;width:52px;height:52px;margin:-26px 0 0 -26px;padding:0;border-radius:50%;border:2.5px solid var(--ink);cursor:pointer;display:grid;place-items:center;
   background:radial-gradient(circle at 50% 32%,#3a3456,#191629 72%);box-shadow:0 0 0 2px #514a6c,0 4px 0 rgba(0,0,0,.5);transition:transform .15s,box-shadow .2s}
 #trScr .trN svg{width:25px;height:25px;fill:none;stroke:#7f789a;stroke-width:2.2;stroke-linecap:round;stroke-linejoin:round}
@@ -651,7 +651,7 @@ function trSel(id,snd){TRM.id=id;const el=$('trScr');if(!el)return;const D=TRD[i
   el.querySelectorAll('.trA').forEach(b=>b.classList.toggle('sel',b.dataset.id===id));const sb=el.querySelector(`.trA[data-id="${id}"]`);if(sb&&sb.scrollIntoView)sb.scrollIntoView({block:'nearest',inline:'center',behavior:snd?'smooth':'auto'});
   const lv=trLv(id),nx=trNext(id);TRM.s=nx||5;TRM.b=TRM.s===3||TRM.s===5?trSide(id,TRM.s):0;
   const inn=el.querySelector('.trIn'),cv=inn.querySelector('canvas');inn.innerHTML='';inn.appendChild(cv);TRM.cv=cv;
-  inn.insertAdjacentHTML('beforeend',`<div class="trRoot" style="--d:0"><span class="trRI"><svg viewBox="0 0 40 40">${ICON[id]||''}</svg></span><b>${s?s.n:id}</b><small>${s?s.d:''}${s&&s.max>1&&s.max<99?` · fino a ${s.max} volte`:''}</small></div>`);
+  inn.insertAdjacentHTML('beforeend',`<div class="trRoot" style="--d:0"><span class="trRI"><svg viewBox="0 0 40 40">${ICON[id]||''}</svg></span><b>${s?s.n:id}</b><small>${s?s.d:''}</small></div>`);
   let d=1;for(let k=1;k<=5;k++){const st=D.s[k-1],fork=Array.isArray(st);(fork?[0,1]:[null]).forEach(b=>{const q=fork?st[b]:st,cap=k===5;
     inn.insertAdjacentHTML('beforeend',`<button class="trN${cap?' cap':''}" data-s="${k}" data-b="${b==null?'':b}" style="--d:${d*70}" aria-label="${TR_ROM[k-1]} ${q.n}"><svg viewBox="0 0 24 24">${TR_GLY[q.g]||TR_GLY.fx}</svg></button><div class="trL" data-s="${k}" data-b="${b==null?'':b}" style="--d:${d*70}"><i>${TR_ROM[k-1]}</i>${q.n}</div>`)});d++}
   inn.querySelectorAll('.trN').forEach(n=>n.onclick=()=>{TRM.s=+n.dataset.s;TRM.b=n.dataset.b===''?0:+n.dataset.b;trPaint();trPanel();sfx('ui');tone(660+TRM.s*80,660+TRM.s*80,.06,'triangle',.025)});
