@@ -607,6 +607,7 @@ function trCss(){if($('trCss'))return;const st=document.createElement('style');s
 @keyframes trGrow{0%{opacity:0;transform:translateY(-22px) scale(.6)}100%{opacity:1}}
 @keyframes trGrowC{0%{opacity:0;transform:translateY(-22px) rotate(45deg) scale(.6)}100%{opacity:1;transform:rotate(45deg)}}
 #trScr .trRoot{animation-name:trGrowR}@keyframes trGrowR{0%{opacity:0;transform:translateX(-50%) scale(.6)}100%{opacity:1;transform:translateX(-50%)}}
+@media (max-width:410px){#trScr h2{font-size:15.5px;line-height:1.08;white-space:normal;letter-spacing:.04em}#trScr .trGold{font-size:14.5px;padding:2px 8px 2px 5px}}
 @media (prefers-reduced-motion:reduce){#trScr .trN.av,#trScr .trN.sel::after,#trScr.in .trRoot,#trScr.in .trN,#trScr.in .trL{animation:none}}
 #cnTrBtn svg{width:36px;height:36px}
 .sk .trPip{display:flex;align-items:center;justify-content:center;gap:3px;font:11px/1.2 var(--display);font-style:normal;color:#6a5a90}

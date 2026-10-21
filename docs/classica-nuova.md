@@ -76,14 +76,51 @@ Prova: `node tests/classica.js cristallo` (spuntoni che si staccano ai colpi giu
 con pezzi, lampo, anelli e luce, +1 o +2 cristalli, tutto pulito dopo, gli effetti ridotti, la cassa); `node tests/classica.js rarita` ha
 le carte a 430 punti.
 
-## Annotato: le abilità che si livellano nel menu (20 ottobre notte)
+## L'albero delle abilità (21 ottobre)
 
 Denis, con la foto della scelta «Livello 5 · Scegli un'abilità»: «fai in modo che nella modalità classica ci sia una nuova funzione di
 progressione: tutte le abilità che si possono prendere giocando appunto alla modalità classica, per averle potenziate devi livellarle nel
-menu apposito. deve essere bello e pulito con una non so che di magico». Poi, la stessa notte: «il menu dei potenziamenti in battaglia nella
-modalità classica dovrà essere tipo uno di quei menu che per ogni abilità si va sempre più giù per migliorarla o aggiungerci altre cose più
-op». Cioè un albero per ogni abilità: si scende un passo alla volta, e ogni passo più giù la migliora o le aggiunge qualcosa di più forte.
-Solo annotato (anche in «Da fare» del CLAUDE.md, punto 7): non ancora fatto, prima le domande.
+menu apposito. deve essere bello e pulito con una non so che di magico», poi «il menu dei potenziamenti in battaglia nella modalità classica
+dovrà essere tipo uno di quei menu che per ogni abilità si va sempre più giù per migliorarla o aggiungerci altre cose più op». Le sue
+risposte: l'albero sta **fuori dalla partita** (in partita le tre carte restano); i passi si pagano in **oro**; l'albero scende **a bivi**;
+**subito nell'anteprima**. Il codice è in `src/js/96-albero-abilita.js`, fuori da `src/ordine.txt` come 94 e 95 (lo mette
+`anteprime/mk_classica.py`; `TR.on` lo spegne).
+
+- **Gli alberi** (`TRD`): uno per ognuna delle 23 abilità di `SK`, in sei gruppi (Frecce, Traiettorie, Elementi, Lame e passi, Forza,
+  Vita). Cinque passi: I e II dritti, III un bivio (di solito «più forte» a sinistra e «una cosa nuova» a destra), IV dritto, V il bivio
+  tra due **mosse leggendarie**. Le mosse leggendarie, a sinistra | a destra: Freccia frontale Lance di luce | Salva del capitano;
+  Raffica Tempesta di frecce | Eco di luce; Frecce diagonali Boomerang | Pioggia obliqua; Frecce laterali Stella a otto punte | Guardiani
+  di luce; Freccia posteriore Coda di cometa | Contrattacco; Freccia gigante Freccia del titano | Gigante che si apre; Rimbalzo Rimbalzo
+  infinito | Scoppio finale; Perforazione Trapassa tutto | Stella di schegge; Frecce di sponda Biliardo | Muri che tirano; Frecce
+  infuocate Terra in fiamme | Vampata; Frecce di ghiaccio Tormenta | Statue di ghiaccio; Frecce velenose Contagio | Veleno che scoppia;
+  Fulmine Temporale | Nuvola amica; Lame rotanti Corona di lame | Scudo di lame; Passo d'ombra Doppio passo | Ombra che scoppia; Stivali
+  leggeri Corsa del vento | Passi di tuono; Punte affilate Colpo del gigante | Colpo di grazia; Corda tesa Frenesia | Raffica d'oro;
+  Occhio di falco Colpo perfetto | Stella cadente; Cuore di quercia Cuore del bosco | Corteccia di pietra; Pozione Cerchio della vita |
+  Pozione esplosiva; Scudo di muschio Doppio scudo | Scudo di spine; Sete di sangue Festa | Patto della luna. I testi di tutti i passi
+  stanno in `TRD` (nome e una riga), i numeri nel codice degli effetti.
+- **I costi**: 100, 250, 500, 1.000, 2.000 oro per i passi I … V (`TR_COST`; un albero intero 3.850, tutti e 23 circa 88.500). Si
+  comprano in ordine; nel bivio vale un lato solo e **si cambia quando vuoi, gratis**. Salvataggio `SAVE.cn.tr[id] = {lv, f3, f5}`.
+- **In partita**: le carte sono quelle di sempre; l'abilità presa (carta, mercante, altare, ruota, l'abilità con cui parte l'eroe) arriva
+  coi passi sbloccati (`trSync`, `trTook`: i passi delle carte dei numeri valgono a ogni presa, per esempio Punte affilate +23% invece di
+  +20% col passo I; quelli «in più» alla prima presa). Sotto la carta i cinque rombi dei passi e la mossa leggendaria scelta. Valgono
+  nelle partite della Classica (arena, Torre, Corsa) e nell'Abisso, **non nella sfida del giorno** (è uguale per tutti) né nel trailer.
+  Come funziona dentro: ogni freccia sa da che parte della raffica viene (dritta, diagonale, laterale, alle spalle, gigante) e ogni colpo
+  si riconosce (freccia, lama, fuoco, veleno, fulmine), così i passi cambiano solo le cose loro; colpi ad area «di contorno» che non fanno
+  partire altri effetti, catene fermate a tre livelli. Effetti a terra (fuoco, spine, nubi velenose, vento, il cerchio della vita) e in
+  aria (lucciole guardiane, nuvola amica, frecce dal cielo, stelle cadenti, l'ombra che scoppia, la tormenta), frecce speciali (lance di
+  luce, boomerang, cometa, freccia del titano, eco, schegge, spine, sassi dei muri).
+- **Il menu** (bottone «Albero» sotto «Premi», acceso quando c'è un passo da comprare dopo l'ultima partita): titolo in Cinzel, cielo di
+  notte; in alto la striscia delle 23 abilità a gruppi coi rombi dei passi; sotto l'albero dell'abilità scelta che scende dalla radice
+  (l'abilità nel suo cerchio di rune che gira), legato da fili di luce del suo colore con le gocce di luce che scendono; i passi comprati
+  accesi, il prossimo che respira, il lato non scelto del bivio a metà; in basso il riquadro del passo toccato («Sblocca · 250», «Scegli
+  questo ramo · gratis», «Ti mancano …»). Comprando, la luce corre lungo il filo e il passo scoppia di luce con un suono magico (più grande
+  per le mosse leggendarie). Il dito di lato passa all'abilità dopo. Su 430×932 (il telefono di Denis) e 390×844 l'albero sta tutto senza
+  scorrere; sui telefoni piccoli scorre. Con gli effetti ridotti o «riduci movimento» niente lucciole né rune che girano.
+- **Misure**: disegnare tutti gli effetti dei passi in una scena piena (22 zone, 60 effetti) costa 0,3–0,4 ms a fotogramma sul computer di
+  prova; con gli effetti ridotti al massimo 10 zone e 70 effetti.
+- **Prova** `node tests/classica.js albero` (36 controlli): il bottone, il menu su tre telefoni, gli acquisti in ordine, il bivio gratis,
+  le carte coi rombi, i danni delle frecce coi passi, ogni mossa leggendaria in una scena sua, i numeri dei passi dritti, ognuno dei 161
+  passi e lati da solo in battaglia, la sfida del giorno senza alberi, gli effetti ridotti, due partite con tutti gli alberi al passo V.
 
 ## Le isole verso nord e il ponte di pietra in 3D (20 ottobre notte)
 
