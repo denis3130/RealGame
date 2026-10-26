@@ -13,6 +13,7 @@
 const TR={on:true,err:0,cnt:{},hA:null,hE:null,cur:null,aim:null,grp:null,z:[],fx:[],t:{},sel:null,node:null};
 const trErr=err=>{if(TR.err++<6)console.error('albero delle abilità:',err)};
 const TR_COST=[100,250,500,1000,2000];                // oro per i passi I … V
+const TR_RF=5;                                        // cristalli a passo per il rimborso di un albero (tutto l'oro torna)
 const TR_ROM=['I','II','III','IV','V'];
 // i gruppi nella striscia del menu, da sinistra a destra
 const TR_GRP=[['Frecce',['front','multi','diag','side','rear','giant']],['Traiettorie',['ric','pierce','wallb']],['Elementi',['fire','ice','poison','light']],
@@ -598,6 +599,19 @@ function trCss(){if($('trCss'))return;const st=document.createElement('style');s
 #trScr .trBtn.no{background:linear-gradient(#5a5470,#3e3a52);color:#d8d2ea;text-shadow:none}
 #trScr .trBtn .coin{width:17px;height:17px;margin:0 0 0 4px}
 #trScr .trNote{display:block;margin-top:6px;text-align:center;font-size:12.5px;line-height:1.2;color:#a99fd0}
+#trScr .trRf{position:absolute;z-index:2;top:8px;right:10px;display:flex;align-items:center;gap:4px;height:30px;padding:0 10px 0 7px;border-radius:999px;border:2px solid var(--ink);cursor:pointer;
+  background:linear-gradient(#433a6e,#2a2350);color:#eadfff;font:13.5px/1 var(--display);box-shadow:0 0 0 1px rgba(255,214,110,.35),0 2px 0 rgba(0,0,0,.45)}
+#trScr .trRf svg{width:16px;height:16px;fill:none;stroke:#ffd86e;stroke-width:2.5;stroke-linecap:round;stroke-linejoin:round}
+#trScr .trRf:active{transform:translateY(2px)}#trScr.in .trRf{animation:trGrow .5s cubic-bezier(.2,1.3,.4,1) both;animation-delay:.4s}
+#trScr .trPh>span.rf{background:radial-gradient(circle at 50% 30%,#fff6c8 0,#ffd24a 42%,#9a6a0a 100%)}
+#trScr .trPd b{color:#fff3c4;font-weight:700}#trScr .trPd .coin{margin:0 1px 0 3px}
+#trScr .trRow{display:flex;gap:8px}#trScr .trRow .trBtn{flex:1;min-width:0;font-size:17px;padding:10px 6px 11px}
+#trScr .trBtn.rf{background:linear-gradient(#a8ecff,#3f8fe2);color:#fff;text-shadow:0 2px 0 #1b1612}
+#trScr .trBtn.rf.dim{filter:saturate(.45) brightness(.85)}
+#trScr .trBtn .gemS{margin:0 2px 0 7px}
+#trScr .trBtn.shake{animation:trShk .42s}
+@keyframes trShk{20%,60%{transform:translateX(-6px)}40%,80%{transform:translateX(6px)}}
+@media (max-width:359px){#trScr .trRf span{display:none}#trScr .trRf{padding:0 7px}}
 #trScr.in .trRoot,#trScr.in .trN,#trScr.in .trL{animation:trGrow .5s cubic-bezier(.2,1.3,.4,1) both;animation-delay:calc(var(--d,0)*1ms)}
 #trScr.in .trN.cap{animation-name:trGrowC}
 @keyframes trBr{50%{box-shadow:0 0 0 2px var(--c),0 0 24px var(--c),0 4px 0 rgba(0,0,0,.5)}}
@@ -608,7 +622,7 @@ function trCss(){if($('trCss'))return;const st=document.createElement('style');s
 @keyframes trGrowC{0%{opacity:0;transform:translateY(-22px) rotate(45deg) scale(.6)}100%{opacity:1;transform:rotate(45deg)}}
 #trScr .trRoot{animation-name:trGrowR}@keyframes trGrowR{0%{opacity:0;transform:translateX(-50%) scale(.6)}100%{opacity:1;transform:translateX(-50%)}}
 @media (max-width:410px){#trScr h2{font-size:15.5px;line-height:1.08;white-space:normal;letter-spacing:.04em}#trScr .trGold{font-size:14.5px;padding:2px 8px 2px 5px}}
-@media (prefers-reduced-motion:reduce){#trScr .trN.av,#trScr .trN.sel::after,#trScr.in .trRoot,#trScr.in .trN,#trScr.in .trL{animation:none}}
+@media (prefers-reduced-motion:reduce){#trScr .trN.av,#trScr .trN.sel::after,#trScr.in .trRoot,#trScr.in .trN,#trScr.in .trL,#trScr .trBtn.shake,#trScr.in .trRf{animation:none}}
 #cnTrBtn svg{width:36px;height:36px}
 .sk .trPip{display:flex;align-items:center;justify-content:center;gap:3px;font:11px/1.2 var(--display);font-style:normal;color:#6a5a90}
 .sk .trPip b{width:6px;height:6px;transform:rotate(45deg);border:1px solid rgba(27,22,18,.6);background:rgba(120,110,150,.25)}
@@ -616,10 +630,16 @@ function trCss(){if($('trCss'))return;const st=document.createElement('style');s
 .sk .trPip u{text-decoration:none;margin-left:3px}
 `;document.head.appendChild(st)}
 // lo stato del menu: l'abilità scelta, il passo toccato, le posizioni dei passi (in px dentro l'albero), le luci che corrono e scoppiano
-const TRM={id:null,s:1,b:0,pos:null,cv:null,raf:0,t0:0,fl:[],bursts:[],pulses:[],dpr:1,W:0,H:0,dragX:null};
+const TRM={id:null,s:1,b:0,pos:null,cv:null,raf:0,t0:0,fl:[],bursts:[],pulses:[],dpr:1,W:0,H:0,dragX:null,rf:false,rfO:null,rfT:[]};
 function trNext(id){const lv=trLv(id);return lv>=5?null:lv+1}
 function trCan(id){const n=trNext(id);return n!=null&&(SAVE.gold||0)>=TR_COST[n-1]}
 function trAnyCan(){return TR_IDS.some(trCan)}
+// il rimborso: tutto l'oro dei passi comprati, per 5 cristalli a passo
+const trRfGold=id=>TR_COST.slice(0,trLv(id)).reduce((a,b)=>a+b,0),trRfCost=id=>TR_RF*trLv(id);
+// mentre il rimborso spegne i passi uno alla volta, l'albero mostra TRM.rfO e non il salvataggio (già a zero)
+const trView=id=>TRM.rfO&&TRM.rfO.id===id?TRM.rfO:{lv:trLv(id),f3:trSide(id,3),f5:trSide(id,5)};
+function trRfStop(){TRM.rfT.forEach(clearTimeout);TRM.rfT=[];TRM.rfO=null;TRM.rf=false}
+const TR_RFG='<path d="M4.5 12a7.5 7.5 0 1 0 2.3-5.4M4.5 4.6V9h4.4"/><circle cx="12" cy="12" r="2.9"/>';
 // il bottone «Abilità» sotto «Premi»: viola quando c'è un passo che puoi pagare e non hai ancora guardato dopo l'ultima partita
 function trBtnInit(){const col=document.querySelector('#tabPlay .sideBtns.l');if(!col||$('cnTrBtn'))return;
   const b=document.createElement('button');b.className='qbtn cnSide';b.id='cnTrBtn';b.setAttribute('aria-label','Albero delle Abilità');
@@ -639,22 +659,23 @@ function trOpen(){if(!TR.on)return;trCss();if(typeof sceFonts==='function')sceFo
   removeEventListener('resize',trLayout);addEventListener('resize',trLayout);
   trStrip();trSel(TRM.id,false);sfx('ui');trChime([523,659,784],.05);
   cancelAnimationFrame(TRM.raf);TRM.t0=performance.now();const loop=()=>{if(el.hidden)return;TRM.raf=requestAnimationFrame(loop);try{trDraw()}catch(err){trErr(err)}};TRM.raf=requestAnimationFrame(loop)}
-function trClose(){const el=$('trScr');if(el)el.hidden=true;cancelAnimationFrame(TRM.raf);removeEventListener('resize',trLayout);sfx('ui');try{renderGold();renderPlay()}catch(err){trErr(err)}}
+function trClose(){const el=$('trScr');if(el)el.hidden=true;cancelAnimationFrame(TRM.raf);trRfStop();removeEventListener('resize',trLayout);sfx('ui');try{renderGold();renderPlay()}catch(err){trErr(err)}}
 // la striscia delle abilità, a gruppi
 function trStrip(){const el=$('trScr');if(!el)return;const st=el.querySelector('.trStrip');
   st.innerHTML=TR_GRP.map(([g,ids],gi)=>(gi?'<span class="trSep"></span>':'')+ids.map(id=>{const lv=trLv(id),s=SK.find(q=>q.id===id);
     return`<button class="trA${id===TRM.id?' sel':''}" data-id="${id}" style="--ar:${trRgb(TRD[id].c)}" aria-label="${s?s.n:id}"><span><svg viewBox="0 0 40 40">${ICON[id]||''}</svg></span><i>${[1,2,3,4,5].map(k=>`<b class="${k<=lv?'on':''}"></b>`).join('')}</i></button>`}).join('')).join('');
   st.querySelectorAll('.trA').forEach(b=>b.onclick=()=>trSel(b.dataset.id,true))}
 // scegli un'abilità: l'albero cresce dall'alto verso il basso
-function trSel(id,snd){TRM.id=id;const el=$('trScr');if(!el)return;const D=TRD[id],s=SK.find(q=>q.id===id);
+function trSel(id,snd){trRfStop();TRM.id=id;const el=$('trScr');if(!el)return;const D=TRD[id],s=SK.find(q=>q.id===id);
   el.style.setProperty('--c',D.c);el.style.setProperty('--cd',trDark(D.c,.45));el.style.setProperty('--ar',trRgb(D.c));
   el.querySelectorAll('.trA').forEach(b=>b.classList.toggle('sel',b.dataset.id===id));const sb=el.querySelector(`.trA[data-id="${id}"]`);if(sb&&sb.scrollIntoView)sb.scrollIntoView({block:'nearest',inline:'center',behavior:snd?'smooth':'auto'});
   const lv=trLv(id),nx=trNext(id);TRM.s=nx||5;TRM.b=TRM.s===3||TRM.s===5?trSide(id,TRM.s):0;
   const inn=el.querySelector('.trIn'),cv=inn.querySelector('canvas');inn.innerHTML='';inn.appendChild(cv);TRM.cv=cv;
-  inn.insertAdjacentHTML('beforeend',`<div class="trRoot" style="--d:0"><span class="trRI"><svg viewBox="0 0 40 40">${ICON[id]||''}</svg></span><b>${s?s.n:id}</b><small>${s?s.d:''}</small></div>`);
+  inn.insertAdjacentHTML('beforeend',`<button class="trRf" aria-label="Rimborsa l'albero" hidden><svg viewBox="0 0 24 24">${TR_RFG}</svg><span>Rimborsa</span></button><div class="trRoot" style="--d:0"><span class="trRI"><svg viewBox="0 0 40 40">${ICON[id]||''}</svg></span><b>${s?s.n:id}</b><small>${s?s.d:''}</small></div>`);
   let d=1;for(let k=1;k<=5;k++){const st=D.s[k-1],fork=Array.isArray(st);(fork?[0,1]:[null]).forEach(b=>{const q=fork?st[b]:st,cap=k===5;
     inn.insertAdjacentHTML('beforeend',`<button class="trN${cap?' cap':''}" data-s="${k}" data-b="${b==null?'':b}" style="--d:${d*70}" aria-label="${TR_ROM[k-1]} ${q.n}"><svg viewBox="0 0 24 24">${TR_GLY[q.g]||TR_GLY.fx}</svg></button><div class="trL" data-s="${k}" data-b="${b==null?'':b}" style="--d:${d*70}"><i>${TR_ROM[k-1]}</i>${q.n}</div>`)});d++}
-  inn.querySelectorAll('.trN').forEach(n=>n.onclick=()=>{TRM.s=+n.dataset.s;TRM.b=n.dataset.b===''?0:+n.dataset.b;trPaint();trPanel();sfx('ui');tone(660+TRM.s*80,660+TRM.s*80,.06,'triangle',.025)});
+  inn.querySelector('.trRf').onclick=()=>trAct('refund');
+  inn.querySelectorAll('.trN').forEach(n=>n.onclick=()=>{if(TRM.rfO)return;TRM.rf=false;TRM.s=+n.dataset.s;TRM.b=n.dataset.b===''?0:+n.dataset.b;trPaint();trPanel();sfx('ui');tone(660+TRM.s*80,660+TRM.s*80,.06,'triangle',.025)});
   el.classList.remove('in');void el.offsetWidth;if(!(LOWFX||RM))el.classList.add('in');
   TRM.fl=[];TRM.bursts=[];TRM.pulses=[];trLayout();trPaint();trPanel();inn.parentElement.scrollTop=0;
   if(snd){sfx('ui');trChime([392+TR_IDS.indexOf(id)*12,523+TR_IDS.indexOf(id)*12],.03)}}
@@ -669,14 +690,16 @@ function trLayout(){const el=$('trScr');if(!el||el.hidden||!TRM.cv)return;const 
   inn.querySelectorAll('.trN,.trL').forEach(n=>{const k=+n.dataset.s,b=n.dataset.b,p=pos[k+(b===''?'':b==='0'?'a':'b')];n.style.left=p[0]+'px';n.style.top=(n.classList.contains('trL')?p[1]+(k===5?44:28):p[1])+'px'});
   const dpr=TRM.dpr=Math.min(2,devicePixelRatio||1),cv=TRM.cv;cv.width=Math.round(W*dpr);cv.height=Math.round(H*dpr);cv.style.width=W+'px';cv.style.height=H+'px'}
 // lo stato di ogni passo: comprato e scelto (on), comprato ma dall'altro lato del bivio (alt), il prossimo da comprare (av)
-function trState(id,k,b){const lv=trLv(id);if(k<=lv){if(b==null||b===''||trSide(id,k)===+b)return'on';return'alt'}if(k===lv+1)return'av';return'lock'}
+function trState(id,k,b){const V=trView(id),lv=V.lv;if(k<=lv){if(b==null||b===''||(k===3?V.f3:V.f5)===+b)return'on';return'alt'}if(k===lv+1)return'av';return'lock'}
 function trPaint(){const el=$('trScr');if(!el)return;const id=TRM.id;
   el.querySelectorAll('.trN').forEach(n=>{const k=+n.dataset.s,b=n.dataset.b,s=trState(id,k,b);n.classList.toggle('on',s==='on');n.classList.toggle('alt',s==='alt');n.classList.toggle('av',s==='av');
     n.classList.toggle('sel',k===TRM.s&&(b===''||+b===TRM.b))});
   el.querySelectorAll('.trL').forEach(n=>{const k=+n.dataset.s,b=n.dataset.b,s=trState(id,k,b);n.classList.toggle('on',s==='on');n.classList.toggle('dim',s==='lock')});
-  const g=$('trGoldN');if(g)g.textContent=trFmt(SAVE.gold||0)}
+  const rb=el.querySelector('.trRf');if(rb)rb.hidden=!(trLv(id)>0)||!!TRM.rfO;
+  const g=$('trGoldN');if(g&&!TRM.rfO)g.textContent=trFmt(SAVE.gold||0)}
 // il riquadro sotto: il passo toccato e cosa si può fare
 function trPanel(){const el=$('trScr');if(!el)return;const id=TRM.id,k=TRM.s,D=TRD[id],st=D.s[k-1],fork=Array.isArray(st),b=fork?TRM.b:null,q=fork?st[b]:st,s=SK.find(x=>x.id===id),lv=trLv(id),state=trState(id,k,fork?b:'');
+  if(TRM.rf&&lv>0&&!TRM.rfO)return trPanelRf(el,id,s,lv);TRM.rf=false;
   const cost=TR_COST[k-1],gold=SAVE.gold||0;let btn;
   if(state==='on')btn=`<button class="trBtn done" disabled>✓ Sbloccato</button>`;
   else if(state==='alt')btn=`<button class="trBtn alt" data-act="side">Scegli questo ramo · gratis</button>`;
@@ -685,8 +708,21 @@ function trPanel(){const el=$('trScr');if(!el)return;const id=TRM.id,k=TRM.s,D=T
   const tag=`Passo ${TR_ROM[k-1]}${fork?(k===5?' · mossa leggendaria '+(b?'B':'A'):' · bivio '+(b?'B':'A')):''}`;
   const note=fork&&state!=='lock'?(k===5?'Nel bivio vale un lato solo: lo cambi quando vuoi, gratis.':'Nel bivio vale un lato solo: lo cambi quando vuoi, gratis.'):`Vale quando prendi «${s?s.n:id}» in partita.`;
   el.querySelector('.trP').innerHTML=`<div class="trPh"><span><svg viewBox="0 0 24 24">${TR_GLY[q.g]||TR_GLY.fx}</svg></span><div><small>${tag}</small><b>${q.n}</b></div></div><p class="trPd">${q.d}</p>${btn}<small class="trNote">${note}</small>`;
-  const B=el.querySelector('.trBtn[data-act]');if(B)B.onclick=()=>trAct(B.dataset.act)}
-function trAct(act){const id=TRM.id,k=TRM.s,b=TRM.b,S=trS(),o=S[id]||(S[id]={lv:0,f3:0,f5:0});
+  trPanelOn(el)}
+const trPanelOn=el=>el.querySelectorAll('.trP [data-act]').forEach(B=>B.onclick=()=>trAct(B.dataset.act));
+// il rimborso chiesto dentro la pagina: quanto oro torna, quanto costa in cristalli, «Annulla» e «Rimborsa»
+function trPanelRf(el,id,s,lv){const g=trRfGold(id),c=trRfCost(id),gems=SAVE.gems||0,ok=gems>=c;
+  el.querySelector('.trP').innerHTML=`<div class="trPh"><span class="rf"><svg viewBox="0 0 24 24">${TR_RFG}</svg></span><div><small>Rimborso dell'albero</small><b>${s?s.n:id}</b></div></div>
+    <p class="trPd">Ti ridà tutto l'oro, <b>${trFmt(g)}</b><i class="coin"></i>: ${lv>1?`i ${lv} passi tornano chiusi`:'il passo torna chiuso'} e l'oro lo spendi dove vuoi.</p>
+    <div class="trRow"><button class="trBtn no" data-act="rfNo">Annulla</button><button class="trBtn rf${ok?'':' dim'}" data-act="${ok?'rfYes':'rfPoor'}">Rimborsa<i class="gemS"></i>${c}</button></div>
+    <small class="trNote">${ok?`${TR_RF} cristalli a passo · ne hai ${gems}`:`Ti mancano ${c-gems} cristalli: li trovi nelle partite e nelle missioni`}</small>`;
+  trPanelOn(el)}
+function trAct(act){if(TRM.rfO)return;const id=TRM.id,k=TRM.s,b=TRM.b,S=trS();
+  if(act==='refund'){TRM.rf=true;trPanel();sfx('ui');tone(520,390,.12,'triangle',.03);return}
+  if(act==='rfNo'){TRM.rf=false;trPanel();sfx('ui');return}
+  if(act==='rfPoor'){const B=$('trScr').querySelector('.trBtn.rf');if(B){B.classList.remove('shake');void B.offsetWidth;B.classList.add('shake')}sfx('ui');tone(220,160,.2,'square',.02);vib(30);return}
+  if(act==='rfYes')return trRefund(id);
+  const o=S[id]||(S[id]={lv:0,f3:0,f5:0});
   if(act==='buy'){const cost=TR_COST[k-1];if((SAVE.gold||0)<cost||o.lv!==k-1)return;SAVE.gold-=cost;o.lv=k;if(k===3)o.f3=b;if(k===5)o.f5=b;save();
     trBuyFx(k,b);trPaint();trPanel();trStrip();trBtnSync();vib([20,30,40]);
     if(trNext(id)){setTimeout(()=>{if(TRM.id!==id)return;TRM.s=trNext(id);TRM.b=0;trPaint();trPanel()},900)}}
@@ -700,6 +736,22 @@ function trBuyFx(k,b){const P0=TRM.pos,to=P0[k+(k===3||k===5?(b?'b':'a'):'')],fr
     if(cap){sfx('levelup');trChime([523,659,784,1046,1318],.05)}else trChime([523+k*40,659+k*40,784+k*40],.045)},420);
   sfx('upgrade');tone(330,990,.4,'sine',.03)}
 function trChime(fs,v){fs.forEach((f,i)=>{tone(f,f,.35,'triangle',v,i*.07);tone(f*2,f*2,.25,'sine',v*.35,i*.07+.02)})}
+// il rimborso: i passi si spengono dal più basso al primo, la luce risale il filo, l'oro di ogni passo vola al contatore; poi l'albero è di nuovo da comprare
+function trRefund(id){const S=trS(),o=S[id],c=trRfCost(id),g=trRfGold(id),lv=trLv(id);if(!o||!lv||(SAVE.gems||0)<c)return;
+  const g0=SAVE.gold||0,V={id,lv,f3:o.f3|0,f5:o.f5|0},el=$('trScr'),gn=$('trGoldN'),s=SK.find(x=>x.id===id),slow=LOWFX||RM,step=slow?70:160;let got=g0;
+  SAVE.gems-=c;SAVE.gold=g0+g;delete S[id];save();TRM.rf=false;TRM.rfO=V;
+  el.querySelector('.trP').innerHTML=`<div class="trPh"><span class="rf"><svg viewBox="0 0 24 24">${TR_RFG}</svg></span><div><small>Rimborso dell'albero</small><b>${s?s.n:id}</b></div></div>
+    <p class="trPd">L'oro torna a te: <b>+${trFmt(g)}</b><i class="coin"></i>. I passi si richiudono uno alla volta…</p><button class="trBtn done" disabled>−${c}<i class="gemS"></i></button><small class="trNote">Ricompri i passi quando vuoi, anche su altri rami.</small>`;
+  sfx('ui');tone(784,392,.55,'sine',.03);vib([20,30,20]);
+  for(let k=lv;k>=1;k--)TRM.rfT.push(setTimeout(()=>{if(TRM.rfO!==V)return;const sd=k===3?V.f3:k===5?V.f5:'',key=k+(sd===''?'':sd?'b':'a'),p=TRM.pos&&TRM.pos[key];V.lv=k-1;trPaint();
+    const n=el.querySelector(`.trN[data-s="${k}"][data-b="${sd}"]`);if(n){n.classList.remove('pop');void n.offsetWidth;n.classList.add('pop')}
+    if(p){TRM.bursts.push({x:p[0],y:p[1],t:0,big:k===5,out:1});const up=k===1?TRM.pos.root:k===4?TRM.pos['3'+(V.f3?'b':'a')]:k===3||k===2?TRM.pos[(k-1)+'']:TRM.pos['4'];if(up)TRM.pulses.push({a:up,b:p,t:0,k,up:1})}
+    const f=300+k*70;tone(f*1.5,f,.24,'triangle',.034);tone(f*3,f*2,.14,'sine',.012,.03);
+    // le monete di questo passo volano al contatore, che sale quando arrivano
+    const r=n&&n.getBoundingClientRect(),add=TR_COST[k-1],land=()=>{got+=add;if(gn&&TRM.rfO===V){gn.textContent=trFmt(got);bump(gn)}sfx('coin')};
+    if(r&&r.width&&!slow){const m=k>=4?3:2;let left=m;for(let j=0;j<m;j++)TRM.rfT.push(setTimeout(()=>flyCoin(r.left+r.width/2+(j-1)*9,r.top+r.height/2,gn,()=>{if(--left===0)land()}),j*70))}else land()
+  },(lv-k)*step));
+  TRM.rfT.push(setTimeout(()=>{if(TRM.rfO!==V)return;TRM.rfO=null;TRM.rfT=[];if(gn)gn.textContent=trFmt(SAVE.gold||0);TRM.s=1;TRM.b=0;trPaint();trPanel();trStrip();trBtnSync();trChime([392,330,262],.035)},(lv-1)*step+(slow?150:950)))}
 // la tela dietro i passi: i fili di luce, il cerchio di rune della radice, le lucciole, le luci che corrono e gli scoppi
 function trDraw(){const cv=TRM.cv,P0=TRM.pos;if(!cv||!P0)return;const c=cv.getContext('2d'),dpr=TRM.dpr,t=(performance.now()-TRM.t0)/1000,id=TRM.id,D=TRD[id],rgb=trRgb(D.c),slow=LOWFX||RM;
   c.setTransform(dpr,0,0,dpr,0,0);c.clearRect(0,0,TRM.W,TRM.H);
@@ -708,7 +760,7 @@ function trDraw(){const cv=TRM.cv,P0=TRM.pos;if(!cv||!P0)return;const c=cv.getCo
   for(const[rr,dir,n] of[[42,1,16],[49,-1,24]]){c.save();c.rotate((slow?0:t)*.25*dir);c.strokeStyle=`rgba(${rgb},.55)`;c.lineWidth=1.2;c.beginPath();c.arc(0,0,rr,0,TAU);c.stroke();
     for(let i=0;i<n;i++){c.rotate(TAU/n);c.beginPath();if(i%4===0){c.moveTo(rr-4,0);c.lineTo(rr+4,0);c.moveTo(rr,-3);c.lineTo(rr,3)}else{c.moveTo(rr-2.5,0);c.lineTo(rr+2.5,0)}c.stroke()}c.restore()}c.restore();
   // i fili: dalla radice al passo I, poi giù fino al bivio finale
-  const lv=trLv(id),f3=trSide(id,3),f5=trSide(id,5),L=[['root','1',1],['1','2',2],['2','3a',3,0],['2','3b',3,1],['3a','4',4,0],['3b','4',4,1],['4','5a',5,0],['4','5b',5,1]];
+  const V=trView(id),lv=V.lv,f3=V.f3,f5=V.f5,L=[['root','1',1],['1','2',2],['2','3a',3,0],['2','3b',3,1],['3a','4',4,0],['3b','4',4,1],['4','5a',5,0],['4','5b',5,1]];
   for(const[a,b,k,side] of L){const A=P0[a==='root'?'root':a],B=P0[b];if(!A||!B)continue;const y0=a==='root'?A[1]+74:A[1]+26,y1=B[1]-(k===5?41:26);
     // a ogni filo il suo stato: acceso (comprato e sul ramo scelto), il prossimo, spento
     const viaSide=k===4?side===f3:true,lit=k<=lv&&(side==null||(k===3?side===f3:k===5?side===f5:viaSide)),next=k===lv+1&&(k!==4||side===f3),alt=k<=lv&&!lit&&(k===3||k===5);
@@ -725,10 +777,10 @@ function trDraw(){const cv=TRM.cv,P0=TRM.pos;if(!cv||!P0)return;const c=cv.getCo
   if(!slow){if(TRM.fl.length<26&&Math.random()<.3)TRM.fl.push({x:Math.random()*TRM.W,y:TRM.H+6,v:12+Math.random()*22,s:Math.random()*6,r:1+Math.random()*1.6});
     for(let i=TRM.fl.length-1;i>=0;i--){const f=TRM.fl[i];f.y-=f.v/60;f.x+=Math.sin(t*1.3+f.s)*.3;if(f.y<-6){TRM.fl.splice(i,1);continue}const a=.35+.35*Math.sin(t*3+f.s);c.fillStyle=`rgba(${rgb},${a})`;c.beginPath();c.arc(f.x,f.y,f.r,0,TAU);c.fill()}}
   // la luce che corre al passo nuovo e gli scoppi
-  for(let i=TRM.pulses.length-1;i>=0;i--){const q=TRM.pulses[i];q.t+=1/60;const u=Math.min(1,q.t/.42),y0=q.a[1]+(q.k===1?74:26),y1=q.b[1]-26,p=trBez(q.a[0],y0,q.b[0],y1,u),g=c.createRadialGradient(p[0],p[1],0,p[0],p[1],16);
-    g.addColorStop(0,'rgba(255,255,255,1)');g.addColorStop(.35,`rgba(${rgb},.8)`);g.addColorStop(1,`rgba(${rgb},0)`);c.fillStyle=g;c.fillRect(p[0]-16,p[1]-16,32,32);if(u>=1)TRM.pulses.splice(i,1)}
+  for(let i=TRM.pulses.length-1;i>=0;i--){const q=TRM.pulses[i];q.t+=1/60;const u=Math.min(1,q.t/.42),y0=q.a[1]+(q.k===1?74:26),y1=q.b[1]-26,p=trBez(q.a[0],y0,q.b[0],y1,q.up?1-u:u),g=c.createRadialGradient(p[0],p[1],0,p[0],p[1],16),pc=q.up?'255,214,110':rgb;
+    g.addColorStop(0,'rgba(255,255,255,1)');g.addColorStop(.35,`rgba(${pc},.8)`);g.addColorStop(1,`rgba(${pc},0)`);c.fillStyle=g;c.fillRect(p[0]-16,p[1]-16,32,32);if(u>=1)TRM.pulses.splice(i,1)}
   for(let i=TRM.bursts.length-1;i>=0;i--){const q=TRM.bursts[i];q.t+=1/60;const d=q.big?1.1:.7,u=q.t/d;if(u>=1){TRM.bursts.splice(i,1);continue}
-    const R0=(q.big?110:70)*Math.sqrt(u);c.strokeStyle=`rgba(255,255,255,${.9*(1-u)})`;c.lineWidth=3*(1-u)+1;c.beginPath();c.arc(q.x,q.y,R0,0,TAU);c.stroke();c.strokeStyle=`rgba(${rgb},${.8*(1-u)})`;c.lineWidth=6*(1-u);c.beginPath();c.arc(q.x,q.y,R0*.72,0,TAU);c.stroke();
+    const R0=(q.big?110:70)*(q.out?.15+.85*(1-Math.sqrt(u)):Math.sqrt(u)),bc=q.out?'255,214,110':rgb;c.strokeStyle=`rgba(255,255,255,${.9*(1-u)})`;c.lineWidth=3*(1-u)+1;c.beginPath();c.arc(q.x,q.y,R0,0,TAU);c.stroke();c.strokeStyle=`rgba(${bc},${.8*(1-u)})`;c.lineWidth=6*(1-u);c.beginPath();c.arc(q.x,q.y,R0*.72,0,TAU);c.stroke();
     const n=q.big?18:10;for(let j=0;j<n;j++){const an=j/n*TAU+q.x,rr=R0*(.6+.5*((j*7)%5)/5);c.fillStyle=`rgba(255,${240-j*4},${180},${1-u})`;c.save();c.translate(q.x+Math.cos(an)*rr,q.y+Math.sin(an)*rr);c.rotate(an+u*4);const s=(q.big?4:3)*(1-u*.5);
       c.beginPath();for(let m=0;m<8;m++){const r2=m%2?s*.35:s,a2=m*Math.PI/4;c.lineTo(Math.cos(a2)*r2,Math.sin(a2)*r2)}c.closePath();c.fill();c.restore()}}}
 function trBez(x0,y0,x1,y1,u){const my=(y0+y1)/2,v=1-u;return[v*v*v*x0+3*v*v*u*x0+3*v*u*u*x1+u*u*u*x1,v*v*v*y0+3*v*v*u*my+3*v*u*u*my+u*u*u*y1]}
