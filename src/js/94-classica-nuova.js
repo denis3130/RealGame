@@ -1,6 +1,6 @@
-// ===================================================================== CLASSICA NUOVA (anteprima, 20 ottobre)
-// Denis: «ok creami le cose che mi hai elencato su una cosa a parte senza intaccare il progetto principale». Questo file NON è in
-// src/ordine.txt: lo mette python3 anteprime/mk_classica.py in una copia del gioco (ramo classica-nuova). CN.on lo spegne.
+// ===================================================================== CLASSICA NUOVA (anteprima dal 20 ottobre, nel gioco dal 27 ottobre)
+// Denis: «ok creami le cose che mi hai elencato su una cosa a parte senza intaccare il progetto principale», poi, dopo l'anteprima (ramo
+// classica-nuova, pagina python3 anteprime/mk_classica.py): «Tutto nel gioco». In src/ordine.txt dopo 101, prima di 95 e 96. CN.on lo spegne.
 // Seconda versione (Denis: «mi piace la grafica delle cose che hai aggiunto ma non la meccanica […] ispirandoti ai giochi più in foga»,
 // poi le sue risposte alle domande): la Furia a catena (CN_FU); le
 // carte con la rarità a sorpresa (CN_RAR); le evoluzioni spettacolari (CN_EVO); la Nemesi, il nemico che ti uccide, si prende l'oro della

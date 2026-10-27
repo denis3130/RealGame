@@ -1,4 +1,4 @@
-// ===================================================================== ALBERO DELLE ABILITÀ (anteprima della Classica nuova, 21 ottobre)
+// ===================================================================== ALBERO DELLE ABILITÀ (Classica nuova: anteprima dal 21 ottobre, nel gioco dal 27 ottobre)
 // Denis: «fai in modo che nella modalità classica ci sia una nuova funzione di progressione: tutte le abilità che si possono prendere
 // giocando appunto alla modalità classica, per averle potenziate devi livellarle nel menu apposito. deve essere bello e pulito con una non
 // so che di magico», poi «il menu dei potenziamenti in battaglia nella modalità classica dovrà essere tipo uno di quei menu che per ogni
@@ -7,7 +7,7 @@
 // bivi e in fondo c'è la mossa più forte del ramo scelto; il ramo si cambia quando vuoi; subito nell'anteprima.
 // Ogni abilità (SK) ha cinque passi: I e II dritti, III un bivio (più forte oppure una cosa nuova), IV dritto, V il bivio finale tra due
 // mosse leggendarie. Valgono nelle partite della Classica (arena, Torre, Corsa, Abisso), non nella sfida del giorno, che è uguale per tutti.
-// Questo file NON è in src/ordine.txt: lo mette python3 anteprime/mk_classica.py dopo 94 e 95. TR.on lo spegne.
+// In src/ordine.txt dopo 94 e 95. TR.on lo spegne.
 
 // ---------------------------------------------------------------- 1 gli alberi, i costi, il salvataggio
 const TR={on:true,err:0,cnt:{},hA:null,hE:null,cur:null,aim:null,grp:null,z:[],fx:[],t:{},sel:null,node:null};

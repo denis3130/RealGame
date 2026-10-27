@@ -1,4 +1,4 @@
-// ===================================================================== OSTACOLI IN 3D (anteprima della Classica nuova, 20 ottobre)
+// ===================================================================== OSTACOLI IN 3D (Classica nuova: anteprima dal 20 ottobre, nel gioco dal 27 ottobre)
 // Denis: «trasforma ogni cosa/ostacolo che è in 2d in 3d anche in game». Ogni ostacolo delle stanze (i 28 tipi dei quattro mondi) rifatto
 // come volumi 3D visti dalla telecamera dei mostri (C3.V: lo schermo è x, y·0,55 − z) e dipinto come loro: tre toni su ogni pezzo, bordo
 // illuminato, contorno scuro spesso, la luce dall'alto a sinistra. Stesse forme, stessi colori e stessa grandezza di prima, così la stanza
@@ -6,7 +6,7 @@
 // un'immagine (come rockSprite in 47) insieme ai mucchietti 3D davanti alla base; le parti vive (fiamme, bagliori, bolle, canne che
 // ondeggiano, il braccio del pupazzo, le liane) si disegnano sopra a ogni fotogramma. L'usura taglia il disegno 3D e i pezzi che cadono sono
 // sassi 3D. Gli ostacoli dei boss rifatti (rocce del Golem, incudini del Fabbro, gabbia della Piovra…) restano i loro, già in 3D.
-// Questo file NON è in src/ordine.txt: lo mette python3 anteprime/mk_classica.py dopo 94. OB3.on = false rimette il disegno di prima.
+// In src/ordine.txt dopo 94. OB3.on = false rimette il disegno di prima.
 const OB3={on:true,face:Math.PI/2,M:{},B:{},L:{},bad:{},n:0,ms:0};
 const OQ=(sx,sd,z)=>[sd||0,-(sx||0),z||0];        // a point by screen right, toward us and up (before the obstacle's own turn)
 const oH=(i,s)=>{const v=Math.sin(i*127.1+s*311.7)*43758.5453;return v-Math.floor(v)};   // 0..1, fixed for an obstacle

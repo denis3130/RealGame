@@ -4,8 +4,8 @@ p.on('pageerror',e=>errs.push(e.message+' @'+((e.stack||'').split('\n')[1]||'').
 const today=new Date();const ds=today.getFullYear()+'-'+(today.getMonth()+1)+'-'+today.getDate();
 await p.addInitScript(([ds])=>{if(localStorage.getItem('qa_once'))return;localStorage.setItem('qa_once',1);localStorage.setItem('cripta_save_v1',JSON.stringify({gold:30000,gems:3000,trophies:1300,trBest:1300,runs:12,introSeen:1,login:{last:'',n:3},items:{arco_frassino:{lvl:3,cards:40},giubba:{lvl:3,cards:40},balestra:{lvl:1,cards:5}},eq:{arma:'arco_frassino',armatura:'giubba',anello:null,amuleto:null},slots:[{type:'legno',state:'ready'},{type:'argento',state:'ready'},{type:'oro',state:'locked'},null],best:{room:10,gold:100},best2:{room:10,gold:100},inf:{best:12,top:[{room:12,hero:'arciere',kills:80,d:Date.now()}]},tutDone:1,road:{}}))},[ds]);
 await p.goto('file://'+__dirname+'/test.html');await p.waitForTimeout(1500);
-const ov=()=>p.evaluate(()=>__E(`[...document.querySelectorAll('#sheetScr,#itemScr,#chestScr,#arenaUpScr,#endScr,#whScr')].filter(e=>!e.hidden).map(e=>e.id).join(',')`));
-const reset=async(st)=>p.evaluate((st)=>__E(`(()=>{$('chestScr').hidden=true;CHbusy=false;document.querySelectorAll('#sheetScr,#itemScr,#arenaUpScr,#whScr').forEach(e=>e.hidden=true);SHEET=null;$('menu').hidden=false;
+const ov=()=>p.evaluate(()=>__E(`[...document.querySelectorAll('#sheetScr,#itemScr,#chestScr,#arenaUpScr,#endScr,#whScr,#trScr,#cnMap,#cnPremi')].filter(e=>!e.hidden).map(e=>e.id).join(',')`));
+const reset=async(st)=>p.evaluate((st)=>__E(`(()=>{$('chestScr').hidden=true;CHbusy=false;document.querySelectorAll('#sheetScr,#itemScr,#arenaUpScr,#whScr,#trScr,#cnMap,#cnPremi').forEach(e=>e.hidden=true);SHEET=null;$('menu').hidden=false;
   setTab('${st.tab}');${st.ps?`profSeg='${st.ps}';renderProfile();`:''}})()`),st);
 const states=[{tab:'tabPlay'},{tab:'tabHero'},{tab:'tabGear'},{tab:'tabPets'},{tab:'tabShop'},{tab:'tabRoad'},{tab:'tabProfile',ps:'ach'},{tab:'tabProfile',ps:'lb'},{tab:'tabProfile',ps:'look'}];
 let n=0;const log=[];

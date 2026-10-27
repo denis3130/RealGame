@@ -16,12 +16,14 @@ let fails=0;const ok=(c,m)=>{console.log((c?'  ok  ':'  NO  ')+m);if(!c)fails++}
   const E=c=>p.evaluate(c=>__E(c),c),shot=n=>p.screenshot({path:path.join(OUT,n+'.png')});
   const open=async()=>{await p.goto('http://127.0.0.1:'+srv.address().port+'/test.html');await p.waitForTimeout(1800);try{await p.click('#sheet .close',{timeout:1200});await p.waitForTimeout(500)}catch(e){}};
   await open();
-  // 1. il passaggio tra i due menu (punto 44): nella Classica la manina zombie in alto a destra con «Nuovo!»; uno scorrimento in mezzo alla
-  // schermata porta al menu Zombie (il falò), la scelta resta riaprendo il gioco
+  // 1. il passaggio tra i due menu (punto 44): nella Classica la manina zombie in alto a destra con «Nuovo!», che porta al menu Zombie (il
+  // falò); la scelta resta riaprendo il gioco. Dalla Classica nuova (27 ottobre) lo scorrimento di lato nella Classica muove le isole e non
+  // cambia modalità (dalla Zombie lo scorrimento riporta ancora alla Classica)
   ok(await p.evaluate(()=>{const h=document.getElementById('zHand');return!!h&&!h.hidden&&!!h.querySelector('.nw')&&document.getElementById('cSprout').hidden&&!document.getElementById('menu').classList.contains('zmode')}),'nella Classica la manina zombie in alto a destra, con «Nuovo!»');
-  await p.mouse.move(300,330);await p.mouse.down();for(let i=1;i<=8;i++)await p.mouse.move(300-i*20,332);await p.mouse.up();
-  await p.waitForFunction(()=>__E('!MM.tr'),null,{timeout:10000});await p.waitForTimeout(400);await shot('1_zombie');
-  ok(await E("SAVE.modo")==='zombie'&&/Camposanto dei Corvi/.test(await p.textContent('#chapCard'))&&await E("$('menu').classList.contains('zmode')&&!$('tabPlay').hidden"),'scorrendo si passa al menu Zombie: il falò, la scheda del Camposanto dei Corvi (resta la pagina Gioca)');
+  await p.mouse.move(300,330);await p.mouse.down();for(let i=1;i<=8;i++)await p.mouse.move(300-i*20,332);await p.mouse.up();await p.waitForTimeout(700);
+  ok(await E("SAVE.modo!=='zombie'&&!MM.tr&&!$('menu').classList.contains('zmode')"),'nella Classica lo scorrimento di lato muove le isole e non cambia modalità');
+  await p.click('#zHand',{force:true});await p.waitForFunction(()=>__E('!MM.tr'),null,{timeout:10000});await p.waitForTimeout(400);await shot('1_zombie');
+  ok(await E("SAVE.modo")==='zombie'&&/Camposanto dei Corvi/.test(await p.textContent('#chapCard'))&&await E("$('menu').classList.contains('zmode')&&!$('tabPlay').hidden"),'la manina porta al menu Zombie: il falò, la scheda del Camposanto dei Corvi (resta la pagina Gioca)');
   await open();ok(await E("SAVE.modo")==='zombie'&&await p.evaluate(()=>!document.getElementById('cSprout').hidden&&document.getElementById('zHand').hidden),'riaprendo il gioco la Zombie resta scelta (col germoglio per tornare alla Classica)');
   // 2. la scheda apre il foglio con le regole e il bottone per entrare
   await p.click('#chapCard');await p.waitForTimeout(700);ok(/Modalità Zombie/.test(await p.textContent('#sheet'))&&!!(await p.$('#sheet [data-zplay]')),'la scheda apre il foglio del camposanto');await shot('2_foglio');
