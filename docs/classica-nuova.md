@@ -19,30 +19,40 @@ nell'app), «Assi e premi sul ponte», «Ponte sospeso di assi», «Volano e si 
 niente; ponti da 100 a 200 (+10 a isola, `cnBrNeed`); i salvataggi tengono le pietre come assi (`cnPlanks`, `cnBridgeAdd` in 94).
 
 **I premi del cammino** (come le coppe di Clash Royale): a ogni quarto del ponte un premio, preso quando le assi ci arrivano
-(`cnBrTh`, `cnBrPrize`): sulla prima roccia un sacco d'oro (120 + 40 a isola), sulla seconda cristalli (6 + 2 a isola) o Essenza di muschio
-(10 + 4 a isola) un ponte sì e uno no, sulla terza una cassa (legno, poi argento, poi oro), dove il ponte finisce una cassa migliore (argento,
+(`cnBrTh`, `cnBrPrize`): sul primo balcone un sacco d'oro (120 + 40 a isola), sul secondo cristalli (6 + 2 a isola) o Essenza di muschio
+(10 + 4 a isola) un ponte sì e uno no, sul terzo una cassa (legno, poi argento, poi oro), dove il ponte finisce una cassa migliore (argento,
 oro, poi cristallo). I premi vanno nel salvataggio alla fine della partita (la cassa in un posto libero, nel quinto o in oro se sono pieni:
 `earnChest(tipo,true)`); la fine della partita li elenca sotto il ponte («Premio del ponte: …», «Premio di fine ponte: …»). Fino a quando lo
 spettacolo non li apre, i contatori di oro e cristalli e i posti delle casse li tengono indietro (`cnPend`, `renderGold` e `renderGearRow`
 avvolti).
 
-**Il ponte sospeso** (sezione 8 di 94, `CNB`): le isole sono lontane 1000 invece di 380 (`CNI_GAP`), con la prospettiva vera e la nebbia
-del cielo in lontananza (`cnIslHaze`); il ponte parte da un portale di tronchi con due lanterne sull'isola (`cnBrPortal`), passa su tre rocce
-che galleggiano nell'abisso (ognuna col suo palo e la lanterna, il premio sopra: sacco, cristalli, vasetto d'essenza, cassa che apre il
-coperchio) e arriva ai due tronchi dell'isola dopo (`cnBrStumps`); quattro campate uguali di 10 assi disegnate ciascuna (ogni asse disegnata vale un quarantesimo del ponte) appese alle
-funi con la pancia (`cnBrGeo`, `cnBrSpan`, `cnRope`), le assi in 3D con le venature, i chiodi e il bordo illuminato (`cnPlankDraw`), quelle che mancano
-appena accennate (`cnPlankGhost`). Dipinto una volta a telecamera ferma (`cnBrBake`), dal vivo mentre il dito trascina o durante lo
-spettacolo. L'eroe ci cammina sopra seguendo la pancia delle funi (`cnRoute`, `cnDeckZ`).
+**Il ponte grande** (sezione 8 di 94, `CNB`; 27 ottobre, Denis: «nel ponte non fare le piccole isolette di mezzo ma un ponte più grande ed
+quindi anche isola ecc più grandi. le ricompense saranno a sinistra»): le isole sono lontane 1000 invece di 380 (`CNI_GAP`), con la
+prospettiva vera e la nebbia del cielo in lontananza (`cnIslHaze`). Niente più rocce in mezzo: un ponte solo, largo 84 (prima 68), dalle due
+torri di tronchi sull'isola (`cnBrPortal`: ognuna due tronchi legati con la corda, alta 106, col tettuccio, lo stendardo dell'arena dopo, una
+lanterna sul braccio, il cavo che scende sul davanti fino al picchetto; due travi in mezzo, quella bassa sopra le teste) fino ai due pali
+dell'isola dopo (`cnBrStumps`); 64 assi (16 a quarto: ogni asse disegnata vale un sessantaquattresimo del ponte) che pendono con una pancia sola
+(`cnBrGeo`, `cnDeckZ`), le funi del parapetto con i fili verticali, i due **cavi grandi** che scendono dalle cime delle torri e raggiungono il
+parapetto verso la fine, coi tiranti (`cnRailZ`, `cnCableZ`, `cnRopeP`: le funi lunghe più grosse vicino e più sottili lontano). **I premi a
+sinistra**: a un quarto, a metà e a tre quarti un **balcone** attaccato al lato sinistro (`cnBalcony`: il pavimento di quattro assi su due
+travi che vengono da sotto il ponte, il parapetto sui tre lati di fuori, il palo con la lanterna accesa quando le assi ci arrivano, due funi su
+fino al cavo), col premio sopra un terzo più grande (sacco, cristalli, vasetto d'essenza, cassa che apre il coperchio); il premio di fine
+ponte a sinistra sull'isola dopo; il conto delle assi a destra, dove il lavoro si ferma. Le assi in 3D con le venature, i chiodi e il bordo
+illuminato (`cnPlankDraw`), quelle che mancano appena accennate (`cnPlankGhost`). Dipinto una volta a telecamera ferma (`cnBrBake`), dal vivo
+mentre il dito trascina o durante lo spettacolo. L'eroe ci cammina sopra seguendo la pancia del ponte (`cnRoute`, `cnDeckZ`). **Isole più
+grandi**: la telecamera più vicina (`CNI_WIDE` 86% della larghezza invece del 62%, `CNI_UPN` 420 invece di 720: a riposo si vede meno ponte,
+il resto col dito), così isola, eroe, custode e ponte sono un terzo più grandi (390×844: k da 1,62 a 2,24; 390×763: da 1,34 a 1,74; 360×640:
+da 0,85 a 1,10); l'immagine dell'isola più alta per le torri (`cnIslImg`).
 
 **Lo spettacolo** (`cnBrShow*`): tornato dalla partita, l'eroe col sacco delle assi sulle spalle (`cnSackBack`) va fin dove arriva il ponte;
 ogni asse vola dal sacco al suo posto e lui la inchioda (`CN_SHOW`: volo 0,2 s, posa, chiodo 0,22 s; più svelto quando le assi sono tante);
-quando le assi raggiungono un premio la telecamera ci si ferma, il premio salta fuori (`cnPrizeOut`; la cassa vola al suo posto sotto l'eroe,
+quando le assi raggiungono un premio lui si gira verso il balcone a sinistra, il premio salta fuori (`cnPrizeOut`; la cassa vola al suo posto sotto l'eroe,
 `cnChestFly`) e i contatori si muovono; finito il ponte, l'isola dopo esce dal buio e si accende e lui ci passa. Un tocco finisce subito lo
 spettacolo (tutto al suo posto), e lo finiscono anche «Gioca», il cambio di modalità e una partita nuova.
 
-**La telecamera e il dito**: si ferma su ogni roccia (`cnIslStops`: l'isola, le tre rocce, l'isola dopo), dove la scritta dice la roccia,
-il premio e quante assi mancano (`cnRockText`); trascinando piano si ferma sulla fermata più vicina, un colpo di dito va all'isola dopo
-(`cnIslSettle`, la velocità degli ultimi 100 ms); dalle rocce «Gioca» gioca l'isola dell'eroe. Un tocco su un premio dice cos'è.
+**La telecamera e il dito**: si ferma su ogni balcone (`cnIslStops`: l'isola, i tre balconi, l'isola dopo), dove la scritta dice «Premio N»,
+il premio e quante assi mancano (`cnStopNear`, `cnStopText`); trascinando piano si ferma sulla fermata più vicina, un colpo di dito va
+all'isola dopo (`cnIslSettle`, la velocità degli ultimi 100 ms); dai balconi «Gioca» gioca l'isola dell'eroe. Un tocco su un premio dice cos'è.
 
 **Il rimborso dell'albero** (96): nell'angolo in alto a destra dell'albero, quando l'abilità ha dei passi, «↺ Rimborsa»; la domanda sta nel
 riquadro sotto (niente finestre del telefono): «Ti ridà tutto l'oro, 3.850: i 5 passi tornano chiusi e l'oro lo spendi dove vuoi», «Annulla»
@@ -81,7 +91,7 @@ La pagina delle mosse usa la stessa stanza senza fine.
 (`window.MB_ANTEPRIMA`, messo da `mk_classica.py`); i salvataggi del gioco di prima tengono le arene che le coppe avevano aperto: i loro
 ponti costruiti, i bracieri accesi, l'eroe sull'ultima (`S.mig` in `cnS`).
 
-Prove: `node tests/classica.js ponte` (assi, premi, spettacolo, contatori che aspettano, tocco che lo finisce, rocce, colpo di dito),
+Prove: `node tests/classica.js ponte` (assi, premi, ponte grande senza rocce coi premi a sinistra, isole larghe più di 4/5 dello schermo, spettacolo, contatori che aspettano, tocco che lo finisce, balconi, colpo di dito),
 `node tests/classica.js albero` (anche il rimborso), `node tests/mosse.js`.
 
 ## La fontana della vita, il ponte che non vibra, le pietre (20 ottobre notte)

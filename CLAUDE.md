@@ -222,6 +222,16 @@ scorrimento di lato muove le isole (com'era nell'anteprima) e alla Zombie si pas
 ancora alla Classica): `tests/zombie.js` passa dalla manina. Collaudo: `classica.js` (264 controlli), una partita automatica per capitolo
 (Golem, Yeti, Idra, Fenice: quattro vittorie), `meta2.js`, `menu2.js`, `menu3.js`, `zombie.js`, `mig.js`, `fresh.js`, `mosse.js`, nessun errore.
 
+**Il ponte grande** (27 ottobre, Denis: «nel ponte non fare le piccole isolette di mezzo ma un ponte più grande ed quindi anche isola ecc più
+grandi. le ricompense saranno a sinistra ecc»): via le tre rocce di mezzo; un ponte sospeso solo, largo 84 invece di 68, da due torri di
+tronchi sull'isola (alte 106, il tettuccio, lo stendardo dell'arena dopo, la lanterna sul braccio, due travi in mezzo) ai pali dell'isola dopo,
+64 assi con una pancia sola, il parapetto di funi e due cavi grandi che scendono dalle cime delle torri; i premi del cammino su **balconi a
+sinistra** del ponte (a un quarto, a metà, a tre quarti: pavimento di assi, parapetto, lanterna, il premio un terzo più grande), quello di
+fine ponte a sinistra sull'isola dopo, il conto delle assi a destra; la telecamera si ferma sui balconi («Premio N»). **Isole più grandi**: la
+telecamera più vicina (l'isola fino all'86% della larghezza invece del 62%, meno ponte visto a riposo), così isola, eroe e custode sono circa
+un terzo più grandi. Codice in 94, sezione 8 (`CNB`, `cnBrDeck`, `cnBalcony`, `cnBrPortal`, `cnStopNear`), note in `docs/classica-nuova.md`
+(«Il ponte grande»), prova `node tests/classica.js ponte`. Nell'anteprima della Classica; nel gioco dopo il sì di Denis.
+
 ## FASE 9: più fluido sul telefono (19 ottobre, in corso)
 
 Denis: «vai, lascia perdere l'intro ecc» (la FASE 9 subito; intro, prologo e filmati non si toccano). Il gioco più fluido sul suo iPhone

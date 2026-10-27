@@ -12,8 +12,9 @@
 // largo 430 (testi su righe loro, la Furia che non copre la rarità); il cristallo che si rompe senza crepe (luce, schegge, spuntoni che si
 // staccano, l'esplosione in pezzi 3D, la brina, gli effetti ridotti, la cassa che lo schiaccia); la fontana della vita nuova (anche la Fonte
 // della torre), il sorso e l'acqua che si svuota; la camminata sul ponte che non vibra; il ponte sospeso di assi (2 a stanza, 20 al custode,
-// ponti da 100 a 200; isole lontane, tre rocce coi premi del cammino, le assi che volano dal sacco e lui le inchioda, l'isola che esce dal buio,
-// i contatori che aspettano i premi, un tocco che finisce lo spettacolo, la telecamera sulle rocce, il colpo di dito all'isola dopo); l'albero delle abilità (src/js/96-albero-abilita.js: il bottone, il menu che sta nello schermo, i passi comprati in ordine, i
+// ponti da 100 a 200; isole lontane e più grandi, un ponte solo senza rocce di mezzo coi premi del cammino sui balconi a sinistra, le assi che volano
+// dal sacco e lui le inchioda, l'isola che esce dal buio, i contatori che aspettano i premi, un tocco che finisce lo spettacolo, la telecamera sui
+// balconi, il colpo di dito all'isola dopo); l'albero delle abilità (src/js/96-albero-abilita.js: il bottone, il menu che sta nello schermo, i passi comprati in ordine, i
 // bivi che si cambiano gratis, il rimborso in cristalli, le carte coi rombi, i passi che valgono a ogni presa, i danni delle frecce, ogni mossa leggendaria e i bivi
 // in una scena sua, la sfida del giorno senza alberi, gli effetti ridotti, una partita con tutti gli alberi senza errori).
 // Foto tests/cn_<n>.png. Uso: python3 anteprime/mk_classica.py --test --build && node tests/classica.js [menu|stanze|furia|rarita|evo|nemesi|torre|corsa|ondate|trappole|3d|ponte|fontana|cristallo|albero]
@@ -558,23 +559,24 @@ const SOLO=process.argv[2]||'';
       mg.b0===100&&mg.b1===110&&mg.o1&&mg.o2&&!mg.o3&&mg.brv===2&&mg.old==='100/100 110/110 120/120 130/130 90/140'&&mg.need==='100,110,200',JSON.stringify(mg));
     const fresh=`(()=>{const S=cnS();S.all=0;S.stars={};S.br={};S.inc={};S.best={};S.pick=0;S.nem=[];S.nemOut=[];S.bossGold={};ISL.inc=false;ISL.cache.clear();ISL.bc={};save();return 0})()`;
     await E(fresh);
-    // the hanging bridge (Denis: «Ponte sospeso di assi», «Assi e premi sul ponte»): the islands far apart, three rocks, four spans of ten planks,
-    // the prizes at a quarter, a half, three quarters and at the end
-    const geo=await J(`(()=>{const G0=cnBrGeo(0);return{gap:CNI_GAP,rocks:G0.P.length,spans:[...new Set(G0.spans.map(s=>Math.round(s[1]-s[0])))],laid:cnBrLaidNow(0),
+    // the big bridge (Denis: «Ponte sospeso di assi», «Assi e premi sul ponte», then «nel ponte non fare le piccole isolette di mezzo ma un ponte
+    // più grande ed quindi anche isola ecc più grandi. le ricompense saranno a sinistra»): the islands far apart and bigger, one bridge of 64
+    // planks without rocks, the prizes on balconies on its left at a quarter, a half, three quarters, and at the end
+    const geo=await J(`(()=>{const G0=cnBrGeo(0),L=cnIslLay();return{gap:CNI_GAP,rocks:G0.P?G0.P.length:0,N:G0.N,q:G0.Z.map(z=>+((z-G0.a0)/G0.len).toFixed(3)).join(),left:CNB.bal-CNB.bw>=CNB.hw,wide:+(L.k*2*CNI_R*CNI_SY/L.W).toFixed(2),laid:cnBrLaidNow(0),
       pr:[1,2,3,4].map(j=>cnPrizeTxt(cnBrPrize(0,j))+'@'+cnBrTh(0,j)),pr1:cnPrizeTxt(cnBrPrize(1,2)),pr10:cnPrizeTxt(cnBrPrize(10,4)),stops:cnIslStops().filter(s=>s.i===0).length,lay:[12,25,52,92,100].map(h=>cnBrLaid(0,h)).join()}})()`);
-    ok('il ponte sospeso: isole lontane 1000, tre rocce, quattro campate uguali di dieci assi, i premi a un quarto, metà, tre quarti e alla fine',
-      geo.gap===1000&&geo.rocks===3&&geo.spans.length===1&&geo.laid===0&&geo.pr.join()==="120 oro@25,6 cristalli@50,Cassa di legno@75,Cassa d'argento@100"&&/Essenza/.test(geo.pr1)&&/cristallo/.test(geo.pr10)&&geo.stops===4&&geo.lay==='4,10,20,36,40',JSON.stringify(geo));
+    ok('il ponte grande: isole lontane 1000 e larghe più di 4/5 dello schermo, un ponte solo di 64 assi senza rocce, i premi a sinistra a un quarto, metà, tre quarti e alla fine',
+      geo.gap===1000&&geo.rocks===0&&geo.N===64&&geo.q==='0.25,0.5,0.75'&&geo.left&&geo.wide>=.8&&geo.laid===0&&geo.pr.join()==="120 oro@25,6 cristalli@50,Cassa di legno@75,Cassa d'argento@100"&&/Essenza/.test(geo.pr1)&&/cristallo/.test(geo.pr10)&&geo.stops===4&&geo.lay==='7,16,33,58,64',JSON.stringify(geo));
     // a retreat at room 7: 12 planks (2 for each room passed): four planks of the first span, no prize
     await arena(0);await E(`(()=>{__A.on=false;return 0})()`);await E(jump(7));await W(300);await E(`(()=>{endRun(false,true);return 0})()`);await W(700);
     const b1=await J(`({br:SAVE.cn.br[0],l:(document.querySelector('#eTr .cnBridge')||{}).textContent||'',pz:document.querySelectorAll('#eTr .cnPrizeL').length,anim:CN.brAnim&&{i:CN.brAnim.i,from:CN.brAnim.from,to:CN.brAnim.to,done:CN.brAnim.done,got:CN.brAnim.got.length},lab:$('eRoom').nextElementSibling.textContent})`);await snap('ponte_fine');
-    ok('ogni stanza superata porta 2 assi al ponte (ritirata alla stanza 7: 12 assi, quattro assi da posare, nessun premio)',b1.br===12&&/\+12 assi/.test(b1.l)&&/12\/100/.test(b1.l)&&!b1.pz&&b1.anim&&b1.anim.i===0&&b1.anim.from===0&&b1.anim.to===4&&!b1.anim.done&&!b1.anim.got&&b1.lab==='Stanza',JSON.stringify(b1));
+    ok('ogni stanza superata porta 2 assi al ponte (ritirata alla stanza 7: 12 assi, sette assi da posare, nessun premio)',b1.br===12&&/\+12 assi/.test(b1.l)&&/12\/100/.test(b1.l)&&!b1.pz&&b1.anim&&b1.anim.i===0&&b1.anim.from===0&&b1.anim.to===7&&!b1.anim.done&&!b1.anim.got&&b1.lab==='Stanza',JSON.stringify(b1));
     // the show (Denis: «Volano e si inchiodano»): the hero takes the sack to the bridge, the planks fly to their places, he nails them, he goes back
     await toMenu();await W(700);const b2=await J(`(()=>{const A=ISL.brA;return{show:!!A,i:A&&A.i,to:A&&A.to,cur:ISL.cur,anim:CN.brAnim,sack:!!A&&A.sack>0}})()`);await snap('ponte_sacco');
-    ok('nel menu l\'eroe prende il sacco delle assi e va sul ponte',b2.show&&b2.i===0&&b2.to===4&&b2.cur===0&&!b2.anim&&b2.sack,JSON.stringify(b2));
+    ok('nel menu l\'eroe prende il sacco delle assi e va sul ponte',b2.show&&b2.i===0&&b2.to===7&&b2.cur===0&&!b2.anim&&b2.sack,JSON.stringify(b2));
     const seen=new Set();for(let k=0;k<30;k++){const s=await J(`(()=>{const A=ISL.brA;return A?A.ph+(A.sub?':'+A.sub:''):'fine'})()`);seen.add(s);if(s==='lay:nail'&&!seen.has('foto')){seen.add('foto');await snap('ponte_inchioda')}if(s==='fine')break;await W(150)}
     const b2c=await J(`({show:!!ISL.brA,cur:ISL.cur,view:+ISL.view.toFixed(2),laid:cnBrLaidNow(0)})`);
-    ok('le assi volano dal sacco al loro posto, lui le inchioda una a una e torna sulla sua isola',seen.has('lay:fly')&&seen.has('lay:nail')&&seen.has('back')&&!b2c.show&&b2c.cur===0&&b2c.view===0&&b2c.laid===4,JSON.stringify({seen:[...seen],b2c}));
-    // three victories: the prizes of the rocks and of the end of the bridge (12+40+40+40 → 100); the bridge finished
+    ok('le assi volano dal sacco al loro posto, lui le inchioda una a una e torna sulla sua isola',seen.has('lay:fly')&&seen.has('lay:nail')&&seen.has('back')&&!b2c.show&&b2c.cur===0&&b2c.view===0&&b2c.laid===7,JSON.stringify({seen:[...seen],b2c}));
+    // three victories: the prizes of the balconies and of the end of the bridge (12+40+40+40 → 100); the bridge finished
     await E(`(()=>{SAVE.trophies=ARENAS[1].t-5;delete SAVE.arenaUp;return 0})()`);
     const gb=await J(`({gold:SAVE.gold,gems:SAVE.gems})`),ends=[];
     for(let k=0;k<3;k++){await arena(0);await E(`(()=>{__A.on=false;endRun(true);return 0})()`);await W(700);
@@ -587,25 +589,25 @@ const SOLO=process.argv[2]||'';
     await toMenu();await W(500);const b4a=await J(`(()=>{const A=ISL.brA;return{show:!!A,done:A&&A.done,from:A&&A.from,cur:ISL.cur,dark:!cnOpenShown(1),hidden:A?A.pend.slots.length:-1}})()`);
     let lit=false;for(let k=0;k<70;k++){const s=await J(`(()=>{const A=ISL.brA;return A?{ph:A.ph,lit:A.lit}:null})()`);if(s&&s.lit&&!lit){lit=true;await W(500);await snap('ponte_finito_isola')}if(!s)break;await W(150)}
     const b4=await J(`({show:!!ISL.brA,cur:ISL.cur,view:+ISL.view.toFixed(2),hid:[...document.querySelectorAll('#homeGear [data-ps]')].filter(e=>e.style.visibility==='hidden').length})`);await snap('ponte_finito');
-    ok('a ponte finito l\'eroe posa le ultime assi, l\'isola dopo esce dal buio, la cassa vola al suo posto e lui ci passa',b4a.show&&b4a.done&&b4a.from===36&&b4a.cur===0&&b4a.dark&&lit&&!b4.show&&b4.cur===1&&b4.view===1&&b4.hid===0,JSON.stringify({b4a,lit,b4}));
+    ok('a ponte finito l\'eroe posa le ultime assi, l\'isola dopo esce dal buio, la cassa vola al suo posto e lui ci passa',b4a.show&&b4a.done&&b4a.from===58&&b4a.cur===0&&b4a.dark&&lit&&!b4.show&&b4.cur===1&&b4.view===1&&b4.hid===0,JSON.stringify({b4a,lit,b4}));
     // the counters wait for the prizes until they open; a tap ends the show at once
     await E(`(()=>{const S=cnS();S.br[1]=20;G.cnInc=false;G.cnTw=null;G.room=10;cnBridgeAdd(1,true);showMenu();return 0})()`);await W(300);
     const c1=await J(`({show:!!ISL.brA,i:ISL.brA&&ISL.brA.i,held:+$('mGold').dataset.v,gold:SAVE.gold,pend:ISL.brA&&ISL.brA.pend.gold})`);
     {const q=await J(`(()=>{const r=campCv.getBoundingClientRect();return{x:r.left+r.width*.5,y:r.top+r.height*.42}})()`);await p.mouse.click(q.x,q.y);await W(600)}
     const c2=await J(`({show:!!ISL.brA,cur:ISL.cur,view:+ISL.view.toFixed(2),gold:+$('mGold').dataset.v,save:SAVE.gold})`);
     ok('l\'oro dei premi arriva sul contatore quando il premio si apre; un tocco finisce subito lo spettacolo',c1.show&&c1.i===1&&c1.pend===160&&c1.held===c1.gold-160&&!c2.show&&c2.cur===1&&c2.view===1&&c2.gold===c2.save,JSON.stringify({c1,c2}));
-    // the camera rests on a rock: its words; a tap on a prize says what it is and when it is yours
+    // the camera rests on a balcony: its words; a tap on a prize says what it is and when it is yours
     await E(`(()=>{const s=cnIslStops().find(s=>s.i===1&&s.r===2);ISL.rest=s.v;ISL.go=null;return 0})()`);await W(1400);
-    const rk=await J(`(()=>{const r=cnRockNear(ISL.view),q=(ISL.prz||[])[0],c=campCv.getBoundingClientRect(),L=ISL.lay;return{r:r&&{i:r.i,r:r.r},prz:(ISL.prz||[]).length,q:q?{x:c.left+q.x/L.dpr,y:c.top+q.y/L.dpr}:null}})()`);await snap('ponte_roccia');
+    const rk=await J(`(()=>{const r=cnStopNear(ISL.view),q=(ISL.prz||[])[0],c=campCv.getBoundingClientRect(),L=ISL.lay;return{r:r&&{i:r.i,r:r.r},prz:(ISL.prz||[]).length,q:q?{x:c.left+q.x/L.dpr,y:c.top+q.y/L.dpr}:null}})()`);await snap('ponte_balcone');
     if(rk.q){await p.mouse.click(rk.q.x,rk.q.y);await W(300)}
     const tt=await J(`(($('toast')||{}).textContent||'')`);
-    ok('la telecamera si ferma su una roccia e dice il suo premio; un tocco su un premio dice cos\'è e quando è tuo',rk.r&&rk.r.i===1&&rk.r.r===2&&rk.prz>0&&/Premio del ponte: .* · tuo a \d+ assi/.test(tt),JSON.stringify({rk,tt}));
+    ok('la telecamera si ferma su un balcone e dice il suo premio; un tocco su un premio dice cos\'è e quando è tuo',rk.r&&rk.r.i===1&&rk.r.r===2&&rk.prz>0&&/Premio del ponte: .* · tuo a \d+ assi/.test(tt),JSON.stringify({rk,tt}));
     await E(`(()=>{ISL.rest=null;ISL.go=1;return 0})()`);await W(900);
-    const nb=await J(`(()=>{const L=ISL.lay,M=cnBrMap(1,L,CAMP.t),f=M.S(M.G.a0,0,0),n=M.S(M.G.a1,0,0),A0=cnIslAt(1,L,CAMP.t),A1=cnIslAt(2,L,CAMP.t),r0=M.S(M.G.P[0].c,0,0),r2=M.S(M.G.P[2].c,0,0);return{dx:Math.round(n[0]-f[0]),up:Math.round(f[1]-n[1]),north:A1.y<A0.y,small:A1.f<A0.f,x:Math.round(A1.x-A0.x),near:Math.round(f[1]-r0[1]),far:Math.round(r2[1]-n[1])}})()`);
-    ok('le isole vanno verso nord: l\'isola dopo è lontana, sopra e più piccola, il ponte sale dritto e i suoi pezzi lontani sono più stretti',nb.dx===0&&nb.up>200&&nb.north&&nb.small&&nb.x===0&&nb.near>nb.far,JSON.stringify(nb));
+    const nb=await J(`(()=>{const L=ISL.lay,M=cnBrMap(1,L,CAMP.t),f=M.S(M.G.a0,0,0),n=M.S(M.G.a1,0,0),A0=cnIslAt(1,L,CAMP.t),A1=cnIslAt(2,L,CAMP.t),r0=M.S(M.G.Z[0],0,0),r2=M.S(M.G.Z[2],0,0),lf=M.S(M.G.Z[0],-CNB.bal,0);return{left:lf[0]<r0[0]-30,dx:Math.round(n[0]-f[0]),up:Math.round(f[1]-n[1]),north:A1.y<A0.y,small:A1.f<A0.f,x:Math.round(A1.x-A0.x),near:Math.round(f[1]-r0[1]),far:Math.round(r2[1]-n[1])}})()`);
+    ok('le isole vanno verso nord: l\'isola dopo è lontana, sopra e più piccola, il ponte sale dritto, i suoi pezzi lontani sono più stretti e i premi stanno a sinistra',nb.dx===0&&nb.up>200&&nb.north&&nb.small&&nb.x===0&&nb.near>nb.far&&nb.left,JSON.stringify(nb));
     await E(`(()=>{ISL.go=null;ISL.view=1;ISL.cur=1;ISL.jump=null;cnIslMove(1,0);return 0})()`);await W(300);const wk=await J(`({way:!!(ISL.jump&&ISL.jump.way),sag:ISL.jump&&ISL.jump.way.pts.some(p=>p[2]<-4),dur:ISL.jump&&+ISL.jump.dur.toFixed(2),cur:ISL.cur})`);await snap('ponte_cammina');
     await W(3000);const wk2=await J(`({jump:!!ISL.jump,cur:ISL.cur,view:+ISL.view.toFixed(2)})`);
-    ok('l\'eroe attraversa il ponte di corsa (le campate che pendono, le rocce) e arriva sull\'altra isola',wk.way&&wk.sag&&wk.dur>=1.2&&wk.dur<=2.6&&wk.cur===0&&!wk2.jump&&wk2.cur===0&&wk2.view===0,JSON.stringify({wk,wk2}));
+    ok('l\'eroe attraversa il ponte di corsa (il ponte che pende) e arriva sull\'altra isola',wk.way&&wk.sag&&wk.dur>=1.2&&wk.dur<=2.6&&wk.cur===0&&!wk2.jump&&wk2.cur===0&&wk2.view===0,JSON.stringify({wk,wk2}));
     // the walk does not shake (Denis: «l'animazione di quando passa dal ponte vibra troppo»): the camera follows him, his size stays the
     // same, he turns softly, his steps at the pace of the battle
     await E(`(()=>{window.__R=[];if(!window.__rw){window.__rw=1;const _d=drawRig;drawRig=function(x,y,face,ph,mv,st,o){const J=ISL.jump;if(window.__R&&J&&J.way&&ctx===campX){const m=ctx.getTransform();__R.push({t:performance.now(),y:m.f,s:m.a,face,ph})}return _d.apply(this,arguments)}}
@@ -614,11 +616,11 @@ const SOLO=process.argv[2]||'';
       rate=mid.length>2?(mid[mid.length-1].ph-mid[0].ph)/((mid[mid.length-1].t-mid[0].t)/1000):0;const out={n:R.length,fj:+fj.toFixed(2),sd:+((Math.max(...ss)-Math.min(...ss))/ss[0]).toFixed(3),rate:+rate.toFixed(1),cur:ISL.cur};
       ISL.jump=null;ISL.go=null;ISL.cur=0;ISL.view=0;return out})()`);
     ok('sul ponte non vibra: la telecamera lo segue, la grandezza resta la stessa, si gira piano, i passi al ritmo della battaglia',sm.n>10&&sm.fj<.8&&sm.sd<.01&&sm.rate>6&&sm.rate<16&&sm.cur===1,JSON.stringify(sm));
-    // the finger: dragged slowly the camera rests on the rock it reaches (the hero stays); a flick goes on to the next island (the hero goes too)
+    // the finger: dragged slowly the camera rests on the balcony it reaches (the hero stays); a flick goes on to the next island (the hero goes too)
     {const q=await J(`(()=>{const r=$('homeStage').getBoundingClientRect(),L=ISL.lay;return{x:r.left+r.width*.5,y:campCv.getBoundingClientRect().top+(L.titleB/L.dpr)+20,px:L.pairPx/L.dpr}})()`);
       await p.mouse.move(q.x,q.y);await p.mouse.down();const n=Math.round(q.px*.28/6);for(let i=1;i<=n;i++){await p.mouse.move(q.x,q.y+i*6);await W(45)}await W(120);await p.mouse.up();await W(1600)}
-    const sl=await J(`({view:+ISL.view.toFixed(2),rest:ISL.rest!=null,cur:ISL.cur,rock:!!cnRockNear(ISL.view)})`);
-    ok('trascinando piano la telecamera si ferma sulla roccia vicina e l\'eroe resta sulla sua isola',sl.rest&&sl.rock&&sl.cur===0&&Math.abs(sl.view-.28)<.06,JSON.stringify(sl));
+    const sl=await J(`({view:+ISL.view.toFixed(2),rest:ISL.rest!=null,cur:ISL.cur,rock:!!cnStopNear(ISL.view)})`);
+    ok('trascinando piano la telecamera si ferma sul balcone vicino e l\'eroe resta sulla sua isola',sl.rest&&sl.rock&&sl.cur===0&&Math.abs(sl.view-.28)<.06,JSON.stringify(sl));
     // (the browser of the tests draws a frame in a tenth of a second: while the finger flicks the home is not drawn, as fast as a phone)
     {const q=await J(`(()=>{const r=$('homeStage').getBoundingClientRect(),L=ISL.lay;window.__dc=drawCamp;drawCamp=function(){};return{x:r.left+r.width*.5,y:campCv.getBoundingClientRect().top+(L.titleB/L.dpr)+20}})()`);
       await p.mouse.move(q.x,q.y);await p.mouse.down();await p.mouse.move(q.x,q.y+110,{steps:5});await p.mouse.up();await E(`(()=>{drawCamp=window.__dc;return 0})()`);await W(3400)}

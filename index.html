@@ -45342,8 +45342,10 @@ const CNI_R=100,CNI_SY=1.38,CNI_DEP=40,CNI_FACE=Math.PI/2+.16,CNI_HERO=1.55,CNI_
 // the path goes north (Denis, 20 ottobre notte: «anziché far le isole alla destra facciamole da nord, così il ponte si vede per dritto»):
 // island i stands CNI_GAP units north of island i-1 and the ones further north are drawn smaller (CNI_PD), as things far away; since the
 // hanging bridge (26 ottobre, «allontana le isole di tanto l'una dall'altra») 1000 instead of 380. CNI_LOW: how far under the island's middle
-// its line goes (the island stays at the bottom, the bridge goes up the screen), CNI_UPN: how much of the bridge is seen above it
-const CNI_GAP=1000,CNI_PD=1500,CNI_LOW=96,CNI_UPN=720;
+// its line goes (the island stays at the bottom, the bridge goes up the screen), CNI_UPN: how much of the bridge is seen above it (since the
+// big bridge, 27 ottobre, «isola ecc più grandi»: 420 instead of 720, the camera closer and the islands bigger; the rest of the bridge comes
+// with the finger), CNI_WIDE: how much of the screen's width an island takes at most
+const CNI_GAP=1000,CNI_PD=1500,CNI_LOW=96,CNI_UPN=420,CNI_WIDE=.86;
 const IP=(sx,sy,z)=>[sy,-sx,z||0];   // a point of an island by screen directions: sx to the right, sy toward you, z up
 // north and east of the path in the islands' own coordinates (the islands are turned a little for the camera, the path is not): north is
 // straight up the screen, east straight to the right
@@ -45378,14 +45380,14 @@ function cnIslSync(anim){const p=cnPick(),B=CN.brAnim;
 function cnIslMove(a,b){ISL.cur=b;ISL.go=b;ISL.rest=null;const w=Math.abs(b-a)===1?cnIslWay(a,b):null;ISL.jump=w?{a,b,t:0,way:w,dur:clamp(w.len/430,1.2,2.6)}:{a,b,t:0,dur:.75}}
 // ------------------------------------------------ the place of everything on the canvas (canvas pixels)
 // the name on top, the line under the island at the bottom; between them, from the bottom up: the island you are on and its long bridge going
-// north with its three rocks (the next island far away, under the name); the island as wide as 62% of the screen at most
+// north (its balconies of the prizes on the left, the next island far away); the island as wide as 86% of the screen at most
 function cnIslLay(){const W=campCv.width,H=campCv.height,cr=campCv.getBoundingClientRect(),dpr=W/Math.max(1,cr.width),r=el=>el.getBoundingClientRect();
   const top=(r($('topbar')).bottom-cr.top)*dpr,pill=(r($('heroPill')).top-cr.top)*dpr,lab=top+6*dpr,titleB=lab+40*dpr,info=pill-13*dpr,low=info-15*dpr;
   // the names stay between the buttons on the left and on the right (and the zombie hand that hangs on the right, src/js/67-menu-modi.js)
   const sl=document.querySelector('#homeStage .sideBtns.l'),sr=document.querySelector('#homeStage .sideBtns.r'),zh=$('zHand'),zq=zh&&zh.offsetParent?r(zh):null;
   let tl=sl?(r(sl).right-cr.left)*dpr+6*dpr:W*.17,tr=sr?(r(sr).left-cr.left)*dpr-6*dpr:W*.83;if(zq&&(zq.top-cr.top)*dpr<titleB)tr=Math.min(tr,(zq.left-cr.left)*dpr-4*dpr);
   const f1=CNI_PD/(CNI_PD+CNI_GAP),fu=CNI_PD/(CNI_PD+CNI_UPN),up=.55*CNI_UPN*fu+20,dn=CNI_LOW,
-    k=Math.max(.2*dpr,Math.min(W*.62/(2*CNI_R*CNI_SY),(low-titleB)/(up+dn))),cy=low-dn*k;
+    k=Math.max(.2*dpr,Math.min(W*CNI_WIDE/(2*CNI_R*CNI_SY),(low-titleB)/(up+dn))),cy=low-dn*k;
   return{W,H,dpr,top,pill,k,cx:W/2,cy,info,lab,titleB,tl,tr,hs:CNI_HERO,pairPx:.55*k*CNI_GAP*f1}}
 // where a point of the path is on the screen now (n units north of island i's middle): the camera's real perspective, the further north the
 // smaller and the closer together, the gentle bob of everything together; an island is drawn whole at the place and the size of its middle
@@ -45397,7 +45399,7 @@ function cnIslRim(j,north){const sd=j*1.7+.4,dx=north?CNI_NV[0]:-CNI_NV[0],dy=no
   r=CNI_R*(1+.07*Math.sin(a*3+sd)+.045*Math.sin(a*7+sd*2.1)+.025*Math.sin(a*13+sd*.7));return r*Math.hypot(Math.cos(a),Math.sin(a)*CNI_SY)}
 // ------------------------------------------------ the still pieces of an island, painted once
 function cnIslImg(i,L,opv){const won=cnWon(i),op=opv==null?cnOpen(i):!!opv,key=i+'|'+L.k.toFixed(3)+'|'+(won?1:0)+(op?1:0)+(LOWFX?1:0)+'|n';let c=ISL.cache.get(key);if(c){ISL.cache.delete(key);ISL.cache.set(key,c);return c}
-  const k=L.k,w=Math.ceil(2*(CNI_R*CNI_SY+26)*k),h=Math.ceil(300*k),ox=w/2,oy=Math.ceil(152*k),cv=document.createElement('canvas');cv.width=w;cv.height=h;
+  const k=L.k,w=Math.ceil(2*(CNI_R*CNI_SY+26)*k),h=Math.ceil(330*k),ox=w/2,oy=Math.ceil(182*k),cv=document.createElement('canvas');cv.width=w;cv.height=h;
   const saved=ctx;ctx=cv.getContext('2d');try{ctx.save();const K=proCam(CNI_FACE,ox,oy,k);cnIslPaint(i,K,won,op);ctx.restore();
     ctx.globalCompositeOperation='source-atop';const lg=ctx.createLinearGradient(w*.15,0,w*.85,h);lg.addColorStop(0,'rgba(255,248,225,.13)');lg.addColorStop(.55,'rgba(0,0,0,0)');lg.addColorStop(1,'rgba(10,8,30,.28)');ctx.fillStyle=lg;ctx.fillRect(0,0,w,h);
     // a locked island (Denis: «oscura tutte le arene non accessibili»): almost black, only its outline, the lock on it
@@ -45611,7 +45613,7 @@ function cnIslStep(dt,L){if(ISL.brA){try{cnBrShowStep(dt,L)}catch(err){cnErr(err
   if(J&&J.way&&J.ft!=null)J.fs=(J.fs==null?J.ft:J.fs)+cnAd(J.ft-(J.fs==null?J.ft:J.fs))*Math.min(1,dt*9);
   // over a bridge the camera follows him exactly: he stays where he always stands on the screen while the islands go by
   if(ISL.drag)return;if(J&&J.way){const p=cnWayAt(J.way,cnWayDD(J));ISL.view=J.way.lo+clamp((p[0]-cnIslNE(CI_HERO)[0])/CNI_GAP,0,1);return}
-  // the camera settles on an island, or on a rock of a bridge where the finger left it (ISL.rest)
+  // the camera settles on an island, or on a balcony of a bridge where the finger left it (ISL.rest)
   const target=ISL.go!=null?ISL.go:ISL.rest!=null?ISL.rest:Math.round(ISL.view);ISL.view+=(target-ISL.view)*Math.min(1,dt*(ISL.jump?5:9));if(Math.abs(target-ISL.view)<.002){ISL.view=target;if(ISL.go===target&&!ISL.jump)ISL.go=null}}
 function cnIslLand(i){tone(150,80,.14,'triangle',.05);ISL.dust={i,t:0};vib([12])}
 // far rocks floating in the abyss, slower than the islands (they give the depth)
@@ -45690,7 +45692,7 @@ function cnIslHero(L,t){if(ISL.brA){cnBrShowHero(L,t);CAMP.hero=null;return}cons
   if(!J&&!CAMP.walk&&SAVE.pets)petEq().forEach((id,i)=>{const px=x+(i?-1:1)*22*s,py=y+3*s,ps=s*.5;ctx.save();ctx.translate(px,py);ctx.scale(ps,ps);ctx.fillStyle='rgba(0,0,0,.3)';ell(0,2,9,3);ctx.fill();drawPetSprite(id,0,0,{t:t+i*.7,face:i?0:Math.PI,moving:false,att:0,happy:0,hop:0});ctx.restore()});
   CAMP.hero=J||CAMP.walk?null:{x,y,w:18*s,h:50*s,dpr:L.dpr}}
 // on top the island's number and name, under them its mode (and the switch of the Incubo); under the island, the brazier and the record
-function cnIslText(L,t){ISL.incBtn=null;const v=ISL.view,rk=ISL.brA?null:cnRockNear(v);if(rk)cnRockText(L,t,rk);
+function cnIslText(L,t){ISL.incBtn=null;const v=ISL.view,rk=ISL.brA?null:cnStopNear(v);if(rk)cnStopText(L,t,rk);
   const i=Math.max(0,Math.min(ARENAS.length-1,Math.round(v))),a=(1-Math.min(1,Math.abs(v-i)*2.2))*(rk?1-rk.a:1),A=ARENAS[i],mo=cnModeOf(i),op=cnOpenShown(i),won=cnWon(i),d=L.dpr,SH=ISL.brA;if(a<=.02)return;
   ctx.save();ctx.globalAlpha=a;ctx.textAlign='left';ctx.lineJoin='round';const font=n=>`${Math.round(n*d)}px "Lilita One", sans-serif`,out=(s,x,y,c,w)=>{ctx.lineWidth=w*d;ctx.strokeStyle=INK;ctx.strokeText(s,x,y);ctx.fillStyle=c;ctx.fillText(s,x,y)};
   const tag=`ARENA ${i+1}`,room=L.tr-L.tl,mid=w=>clamp(L.cx,L.tl+w/2,L.tr-w/2);ctx.font=font(12);const tw=ctx.measureText(tag).width,gap=7*d;let ns=21;ctx.font=font(ns);let nw=ctx.measureText(A.n).width;
@@ -45752,7 +45754,7 @@ function cnIslTap(e){const L=ISL.lay;if(!L)return;const r=campCv.getBoundingClie
   // a tap on the bridge or on the island beyond it goes there (an island still closed says how to open it)
   const v=Math.round(ISL.view),A=cnIslAt(v,L,CAMP.t);if(y>L.titleB&&y<A.y-CNI_R*.5*A.k&&Math.abs(x-L.cx)<L.W*.42&&v<ARENAS.length-1){if(cnOpen(v+1))cnIslGo(v+1);else{toast(`Finisci il ponte da «${ARENAS[v].n}»: ${cnBrHave(v)}/${cnBrNeed(v)} assi`);sfx('ui')}}}
 // «Gioca» plays the island you see; a locked one tells you how to open it
-// the island «Gioca» plays: the one the show takes the hero to, his own from a rock of a bridge, or the one you look at
+// the island «Gioca» plays: the one the show takes the hero to, his own from a balcony of a bridge, or the one you look at
 const cnPlayIsl=()=>ISL.brA?(ISL.brA.done?ISL.brA.i+1:ISL.brA.i):ISL.rest!=null?ISL.cur:ISL.go!=null?ISL.go:Math.round(ISL.view);
 {const _gp=goPlay;goPlay=function(mode){if(CN.on&&mode==='arena'&&!zMode()&&ISL.cur!=null&&!CN.next){if(ISL.brA)cnBrShowEnd();
     const v=cnPlayIsl();if(ISL.rest!=null){ISL.rest=null;ISL.go=v}
@@ -45783,9 +45785,11 @@ function cnModeRow(){if(!CN.on)return;cnEnsure();let el=$('cnModeRow');if(!el){e
 // dall'altra, migliorando la posizione del ponte e l'animazione di quando si mettono nel loro apposito posto», e alle domande: «Assi e premi sul
 // ponte», «Ponte sospeso di assi», «Volano e si inchiodano».
 // Il ponte: ogni partita porta assi (2 per ogni stanza o piano superato, il custode 20 in più: una vittoria 40, i ponti da 100 a 200). Le isole
-// sono lontane (1000 invece di 380) e il ponte è sospeso a funi, da un portale di tronchi sull'isola a tre rocce che galleggiano nell'abisso e
-// fino all'isola dopo; su ogni roccia un premio del cammino (oro, cristalli o essenza, una cassa) e dove il ponte finisce una cassa migliore, presi
-// quando le assi ci arrivano. Tornato dalla partita, l'eroe porta il sacco delle assi fin dove arriva il ponte, ogni asse vola dal sacco al suo
+// sono lontane (1000 invece di 380) e il ponte è sospeso (27 ottobre, Denis: «nel ponte non fare le piccole isolette di mezzo ma un ponte più
+// grande ed quindi anche isola ecc più grandi. le ricompense saranno a sinistra»): uno solo, dalle due torri di tronchi sull'isola fino
+// all'isola dopo, largo, appeso a due cavi grandi che scendono dalle cime delle torri, 64 assi; a un quarto, a metà e a tre quarti, a sinistra,
+// un balcone col premio del cammino (oro, cristalli o essenza, una cassa) e la sua lanterna, e dove il ponte finisce una cassa migliore, presi
+// quando le assi ci arrivano. Le isole più grandi: la telecamera più vicina. Tornato dalla partita, l'eroe porta il sacco delle assi fin dove arriva il ponte, ogni asse vola dal sacco al suo
 // posto e lui la inchioda; finito il ponte l'isola dopo si accende e lui ci passa. L'Incubo, a parte: sulle isole vinte un interruttore «Incubo»
 // sotto il nome; nemici più forti, più élite, il custode già arrabbiato, la stanza rossa; oro doppio e 3 cristalli se vinci, una luna rossa
 // sull'isola; niente assi.
@@ -45817,24 +45821,30 @@ function cnBridgeAdd(a,win){const S=cnS(),nx=ARENAS[a+1];if(!nx||S.all)return'';
   return`<div class="cnBridge${done?' done':''}">${CN_PLANK}<span>${done?`Il ponte è finito! <b>${nx.n}</b> è aperta`:`Ponte verso <b>${nx.n}</b> · +${st} assi`}</span><i><em style="width:${Math.round(now/need*100)}%"></em></i><small>${now}/${need}</small></div>`+
     got.map(p=>`<div class="cnPrizeL">${cnPrizeIco(p)}<span>${p.j<4?'Premio del ponte':'Premio di fine ponte'}: <b>${cnPrizeTxt(p)}</b>${p.res&&p.res.full?` · i posti sono pieni: ${p.res.gold} oro`:p.res&&p.res.fifth?' · nella quinta':''}</span></div>`).join('')}
 // ------------------------------------------------ the bridge's shape along the path (n from island i's middle, e across, z up)
-// hw half the deck, pd a plank along the path, pt its thickness, sag how much the deck hangs in the middle of a span and rope how much more the
-// hand ropes do, tie / tieR / tieS where the hand ropes are tied (the gate, the rocks' posts, the stumps on the next island), gate and stump
-// their heights, pe where the posts stand across, pr the rocks' half length along the path and psy how much wider they are, Ns the planks of
-// a span (four spans: to the first rock, the second, the third, the next island)
-const CNB={hw:34,pd:9.4,pt:2.4,sag:9,rope:7,tie:31,tieR:27,tieS:18,gate:66,stump:21,pe:39,pr:44,psy:1.62,Ns:10};
+// Denis, 27 ottobre: «nel ponte non fare le piccole isolette di mezzo ma un ponte più grande ed quindi anche isola ecc più grandi. le
+// ricompense saranno a sinistra»: one bridge from the gate to the next island, no rocks in the middle, wider, hung from two big cables.
+// hw half the deck, pd a plank along the path, pt its thickness, sag how much the deck hangs in the middle, Ns the planks of a quarter (the
+// prizes are a quarter apart), pe where the hand ropes, the cables and the towers stand across, gate the towers' height (the cables leave
+// from their tops), stump the anchors on the next island, rail0 / rail1 the hand ropes' height at the two ends and rdip how much more they
+// hang; bal how far left the middle of a prize's balcony is, bw / bd its half width across and half depth along the path
+const CNB={hw:42,pd:11.8,pt:2,sag:16,Ns:16,pe:48,gate:106,stump:24,rail0:30,rail1:22,rdip:6,bal:70,bw:26,bd:21};
 const CN_WOOD=['#a87a48','#97693b','#b88c58','#8d6238'];
+const CN_NA=Math.atan2(CNI_NV[1],CNI_NV[0]);   // the north of the path in the islands' own coordinates (a box laid along the path)
 function cnBrGeo(i){const C=ISL.geo||(ISL.geo={});if(C[i])return C[i];
-  const a0=cnIslRim(i,true)-3,a1=CNI_GAP-cnIslRim(i+1,false)+3,len=a1-a0,Dp=2*CNB.pr-6,S=(len-3*Dp)/4,P=[];
-  for(let k=1;k<=3;k++){const s=a0+k*S+(k-1)*Dp;P.push({s,n:s+Dp,c:s+Dp/2})}
-  return C[i]={a0,a1,len,P,S,pitch:S/CNB.Ns,spans:[[a0,P[0].s],[P[0].n,P[1].s],[P[1].n,P[2].s],[P[2].n,a1]]}}
-// the deck's height: hanging between its posts, flat on the rocks and the islands
-function cnDeckZ(G0,n){for(const[s0,s1] of G0.spans)if(n>s0&&n<s1)return-CNB.sag*Math.sin(Math.PI*(n-s0)/(s1-s0));return 0}
-const cnPlankN=(G0,g)=>G0.spans[Math.floor(g/CNB.Ns)][0]+(g%CNB.Ns+.5)*G0.pitch;
-// the planks in place with `have` of the bridge's: ten for each quarter
+  const a0=cnIslRim(i,true)-3,a1=CNI_GAP-cnIslRim(i+1,false)+3,len=a1-a0,N=4*CNB.Ns;
+  return C[i]={a0,a1,len,N,pitch:len/N,Z:[1,2,3].map(j=>a0+len*j/4)}}
+// the deck's height: one long hang from the gate to the next island, flat on the islands
+function cnDeckZ(G0,n){return n>G0.a0&&n<G0.a1?-CNB.sag*Math.sin(Math.PI*(n-G0.a0)/G0.len):0}
+function cnPlankN(G0,g){return G0.a0+(g+.5)*G0.pitch}
+// the hand ropes: tied to the towers and to the anchors, hanging a little more than the deck; the cables: from the towers' tops down to
+// the hand ropes, which they reach toward the far end
+function cnRailZ(G0,n){const u=clamp((n-G0.a0)/G0.len,0,1);return cnDeckZ(G0,n)+plerp(CNB.rail0,CNB.rail1,u)-CNB.rdip*Math.sin(Math.PI*u)}
+function cnCableZ(G0,n){const u=clamp((n-G0.a0)/G0.len,0,1);return cnRailZ(G0,n)+2+(CNB.gate-CNB.rail0-2)*Math.pow(1-u,2.2)}
+// the planks in place with `have` of the bridge's: Ns for each quarter
 function cnBrLaid(i,have){let n=0;for(let j=0;j<4;j++){const a=cnBrTh(i,j),b=cnBrTh(i,j+1);n+=Math.floor(CNB.Ns*clamp((have-a)/(b-a),0,1)+1e-9)}return n}
 // the planks the bridge shows now: all of them with the preview's «all the arenas» open, the show's while it runs
 function cnBrLaidNow(i){const A=ISL.brA;if(A&&A.i===i)return A.k;if(cnS().all||cnBrDone(i))return 4*CNB.Ns;return cnBrLaid(i,cnBrHave(i))}
-// the j-th prize of bridge i taken (gone from its rock)? not before the show has opened it
+// the j-th prize of bridge i taken (gone from its balcony)? not before the show has opened it
 function cnPrizeTaken(i,j){const A=ISL.brA;if(A&&A.i===i){const g=A.got.find(p=>p.j===j);if(g)return!!g.shown}return!!cnS().all||cnBrHave(i)>=cnBrTh(i,j)}
 // what an island looks like during the show: the next one stays dark until the last plank is in
 const cnOpenShown=i=>{const A=ISL.brA;if(A&&A.done&&i===A.i+1&&!A.lit)return false;return cnOpen(i)};
@@ -45846,8 +45856,8 @@ function cnBrMap(i,L,t,nob){const G0=cnBrGeo(i),A=cnPathAt(i,0,L,t,nob),B=cnPath
   const at=n=>{if(n<=G0.a0)return{x:A.x,y:A.y-.55*n*A.k,k:A.k};if(n>=G0.a1)return{x:B.x,y:B.y-.55*(n-CNI_GAP)*B.k,k:B.k};
     const u=(n-G0.a0)/G0.len,p=cnPathAt(i,n,L,t,nob);return{x:p.x,y:p.y+dA+(dB-dA)*u,k:p.k*(1+rA+(rB-rA)*u)}};
   return{G:G0,A,B,at,S:(n,e,z)=>{const p=at(n);return[p.x+e*p.k,p.y-(z||0)*p.k]},K:n=>at(n).k}}
-// a rock of the bridge drawn in the bridge's own perspective (its far half a little smaller and squeezed, as the planks): the islands' camera
-// (cnV) with its points carried through the bridge's map, in units of the rock's middle
+// a thing on the bridge (a balcony, a prize) drawn in the bridge's own perspective (its far half a little smaller and squeezed, as the
+// planks): the islands' camera (cnV) with its points carried through the bridge's map, in units of the place c along the path
 function cnPlatView(M,c){const V=cnV(),o=M.S(c,0,0),k=M.K(c);
   return{k,o,L:cnLt(),V0:{c:V.c,s:V.s,D:V.D,F:V.F,P:(x,y,z)=>{if(Array.isArray(x)){z=x[2];y=x[1];x=x[0]}const q=M.S(c-(x*V.s+y*V.c),x*V.c-y*V.s,z||0);return[(q[0]-o[0])/k,(q[1]-o[1])/k]}}}}
 // a face of the bridge turned to [north, east, up] in the light (as pShade)
@@ -45861,31 +45871,43 @@ function cnIslBridge(i,L,t){if(!ARENAS[i+1])return;const M=cnBrMap(i,L,t),d=L.dp
   if(!an&&!ISL.drag&&!(C&&C.key===key)&&ISL.pv===ISL.view)cnBrBake(i,L,t,key);
   const B=ISL.bc[i];if(!an&&!ISL.drag&&B&&B.key===key)ctx.drawImage(B.cv,B.x,B.y+Math.sin(t*.9)*2.2*d*(M.A.f+M.B.f)/2);else cnBrPaint(i,L,t,M);
   cnBrLive(i,L,t,M)}
-function cnBrBake(i,L,t,key){const M=cnBrMap(i,L,t,true),G0=M.G,d=L.dpr,w=CNB.pr*CNB.psy+24,pts=[M.S(G0.a0,-w,-8),M.S(G0.a0,w,-8),M.S(G0.a1,-w,40),M.S(G0.a1,w,40)];
-  for(const p of G0.P)pts.push(M.S(p.c,-w,-70),M.S(p.c,w,-70),M.S(p.c,-w,70),M.S(p.c,w,70));
+function cnBrBake(i,L,t,key){const M=cnBrMap(i,L,t,true),G0=M.G,d=L.dpr,pts=[],wl=CNB.bal+CNB.bw+12,wr=CNB.pe+12;
+  for(let q=0;q<=10;q++){const n=plerp(G0.a0-6,G0.a1+6,q/10),z=cnDeckZ(G0,n),hz=cnCableZ(G0,n)+10;pts.push(M.S(n,-wl,z-36),M.S(n,wr,z-36),M.S(n,-wl,z+50),M.S(n,-wr,hz),M.S(n,wr,hz))}
   const x0=Math.max(0,Math.floor(Math.min(...pts.map(p=>p[0])))),x1=Math.min(L.W,Math.ceil(Math.max(...pts.map(p=>p[0])))),y0=Math.max(-20*d,Math.floor(Math.min(...pts.map(p=>p[1]))-8*d)),y1=Math.min(L.H+20*d,Math.ceil(Math.max(...pts.map(p=>p[1]))+14*d));
   if(x1-x0<4||y1-y0<4)return;const old=ISL.bc[i],cv=old&&old.cv.width===x1-x0&&old.cv.height===y1-y0?old.cv:document.createElement('canvas');cv.width=x1-x0;cv.height=y1-y0;
   const keep=ctx;ctx=cv.getContext('2d');try{ctx.setTransform(1,0,0,1,-x0,-y0);cnBrPaint(i,L,t,M)}catch(err){cnErr(err)}finally{ctx=keep}ISL.bc[i]={cv,x:x0,y:y0,key}}
-// far to near: each span of planks and the rock before it (the gate on the island and the stumps on the next one are in their pictures)
-function cnBrPaint(i,L,t,M){const S=cnS(),Ns=CNB.Ns,laid=cnBrLaidNow(i),dim=!cnOpenShown(i)&&!S.all,dk=c=>dim?cnMixC(c,'#06070c',.82):c;
+// far to near: the deck with the balconies of the prizes beside it, its ropes, the cables (the towers on the island and the anchors on the
+// next one are in their pictures)
+function cnBrPaint(i,L,t,M){const S=cnS(),laid=cnBrLaidNow(i),dim=!cnOpenShown(i)&&!S.all,dk=c=>dim?cnMixC(c,'#06070c',.82):c;
   ctx.save();ctx.lineJoin='round';ctx.lineCap='round';
-  try{for(let j=3;j>=0;j--){cnBrSpan(i,M,j,laid,dk,dim);if(j>0)cnBrRock(i,M,j-1,laid>=j*Ns,dk,dim)}}catch(err){cnErr(err)}finally{ctx.restore()}}
+  try{cnBrDeck(i,M,laid,dk,dim)}catch(err){cnErr(err)}finally{ctx.restore()}}
 // a rope: its dark outline, its colour, a thin light along its top
 function cnRope(p,k,w,col){C3.line(p);ctx.strokeStyle=INK;ctx.lineWidth=(w+1.5)*k;ctx.stroke();ctx.strokeStyle=col;ctx.lineWidth=w*k;ctx.stroke();
   if(w>2){ctx.save();ctx.translate(-.3*k,-.45*k);C3.line(p);ctx.strokeStyle='rgba(255,246,220,.3)';ctx.lineWidth=.55*k;ctx.stroke();ctx.restore()}}
-// a span: the foot ropes under the ends of the planks, the planks laid (far to near; the one the show is nailing without its nails yet), the
-// places of those to come, the hangers, the hand ropes from post to post hanging lower in the middle
-function cnBrSpan(i,M,j,laid,dk,dim){const G0=M.G,[s0,s1]=G0.spans[j],Ns=CNB.Ns,hw=CNB.hw,pe=CNB.pe,A=ISL.brA&&ISL.brA.i===i?ISL.brA:null,k0=M.K((s0+s1)/2);
-  const ra=j===0?G0.a0-3:G0.P[j-1].n-4,rb=j===3?G0.a1+3:G0.P[j].s+4,ha=j===0?CNB.tie:CNB.tieR,hb=j===3?CNB.tieS:CNB.tieR,
-    rz=n=>{const u=clamp((n-ra)/(rb-ra),0,1);return plerp(ha,hb,u)+cnDeckZ(G0,n)-CNB.rope*Math.sin(Math.PI*u)};
-  for(const s of[-1,1]){const p=[];for(let q=0;q<=14;q++){const n=plerp(Math.max(ra,s0-2),Math.min(rb,s1+2),q/14);p.push(M.S(n,s*(hw-4),cnDeckZ(G0,n)-CNB.pt-.5))}cnRope(p,k0,1.5,dk('#5e4a2e'))}
-  for(let q=Ns-1;q>=0;q--){const g=j*Ns+q,cur=A&&g===A.k&&(A.sub==='land'||A.sub==='nail');
+// a long rope in the bridge's perspective, thicker near and thinner far: its points [n, e, z] in pieces of four, the outline of all of them
+// first, then the colour, then the light (so the joints do not show)
+function cnRopeP(M,P,w,col,hl){const q=P.map(p=>M.S(p[0],p[1],p[2])),k=P.map(p=>M.K(p[0])),C=4;
+  for(const pass of[0,1,2]){if(pass===2&&(!hl||w<=2))break;ctx.strokeStyle=pass===0?INK:pass===1?col:'rgba(255,246,220,.3)';
+    for(let j=0;j<q.length-1;j+=C){const e=Math.min(q.length-1,j+C),kk=(k[j]+k[e])/2,dx=pass===2?-.3*kk:0,dy=pass===2?-.45*kk:0;
+      ctx.lineWidth=pass===0?(w+1.5)*kk:pass===1?w*kk:.55*kk;ctx.beginPath();ctx.moveTo(q[j][0]+dx,q[j][1]+dy);for(let m=j+1;m<=e;m++)ctx.lineTo(q[m][0]+dx,q[m][1]+dy);ctx.stroke()}}}
+// the deck: the foot ropes under the ends of the planks; the planks laid (far to near; the one the show is nailing without its nails yet)
+// and the places of those to come, each balcony of a prize before the planks beside it; the balusters, the hangers, the hand ropes and the
+// cables over them
+function cnBrDeck(i,M,laid,dk,dim){const G0=M.G,N=G0.N,Ns=CNB.Ns,hw=CNB.hw,pe=CNB.pe,a0=G0.a0,a1=G0.a1,A=ISL.brA&&ISL.brA.i===i?ISL.brA:null,
+    line=(f,m)=>{const P=[];for(let q=0;q<=m;q++)P.push(f(plerp(a0-3,a1+3,q/m)));return P};
+  for(const s of[-1,1])cnRopeP(M,line(n=>[n,s*(hw-4),cnDeckZ(G0,n)-CNB.pt-.5],40),1.7,dk('#5e4a2e'));
+  let b=2;
+  for(let g=N-1;g>=0;g--){const nc=cnPlankN(G0,g);while(b>=0&&nc<G0.Z[b]+CNB.bd){cnBalcony(i,M,b,laid>=(b+1)*Ns,dk,dim);b--}
+    const cur=A&&g===A.k&&(A.sub==='land'||A.sub==='nail');
     if(g<laid||cur){const P=cnPlankAt(G0,g,cur&&A.sub==='land'?1.6*(1-A.st/Math.max(.01,CN_SHOW.land*A.sp)):0);cnPlankDraw(M,P,dk(CN_WOOD[Math.floor(prH(g,i+2)*4)%4]),!cur||A.hit,1)}
     else if(!dim)cnPlankGhost(M,cnPlankAt(G0,g,0))}
-  ctx.lineWidth=.9*k0;ctx.strokeStyle=dk('#7a6040');ctx.beginPath();
-  for(const s of[-1,1])for(let q=1;q<Ns;q+=2){const n=s0+q*G0.pitch,top=M.S(n,s*pe,rz(n)),bot=M.S(n,s*(hw-4),cnDeckZ(G0,n)-CNB.pt);ctx.moveTo(top[0],top[1]);ctx.lineTo(bot[0],bot[1])}
-  ctx.stroke();
-  for(const s of[-1,1]){const p=[];for(let q=0;q<=16;q++){const n=plerp(ra,rb,q/16);p.push(M.S(n,s*pe,rz(n)))}cnRope(p,k0,2.3,dk('#c9a46a'))}}
+  while(b>=0){cnBalcony(i,M,b,laid>=(b+1)*Ns,dk,dim);b--}
+  for(const s of[-1,1]){ctx.strokeStyle=dk('#7a6040');
+    for(let g=2;g<N;g+=2){const n=a0+g*G0.pitch,k=M.K(n),top=M.S(n,s*pe,cnRailZ(G0,n)),bot=M.S(n,s*(hw-4),cnDeckZ(G0,n)-CNB.pt);ctx.lineWidth=.9*k;ctx.beginPath();ctx.moveTo(top[0],top[1]);ctx.lineTo(bot[0],bot[1]);ctx.stroke()}
+    ctx.strokeStyle=dk('#4e3e28');
+    for(let g=4;g<N;g+=4){const n=a0+g*G0.pitch,hz=cnCableZ(G0,n),rz=cnRailZ(G0,n);if(hz-rz<4)continue;const k=M.K(n),top=M.S(n,s*pe,hz),bot=M.S(n,s*pe,rz);ctx.lineWidth=1.1*k;ctx.beginPath();ctx.moveTo(top[0],top[1]);ctx.lineTo(bot[0],bot[1]);ctx.stroke()}}
+  for(const s of[-1,1])cnRopeP(M,line(n=>[n,s*pe,cnRailZ(G0,n)],40),2.4,dk('#c9a46a'),true);
+  for(const s of[-1,1])cnRopeP(M,line(n=>[n,s*pe,cnCableZ(G0,n)],48),3.4,dk('#b38a52'),true)}
 // a plank: its eight corners [n, e, z] (top 0-3, bottom 4-7: south-west, south-east, north-east, north-west) with its own little differences
 // (a seed g), lying on the deck (lift: a little higher, the bounce of the one just landed) or in flight (o: middle, spin, roll)
 function cnPlankAt(G0,g,lift,o){const nc=o?o.n:cnPlankN(G0,g),z0=o?o.z:cnDeckZ(G0,nc)+(prH(g,7)-.5)*.6+(lift||0),sl=o?0:(cnDeckZ(G0,nc+1)-cnDeckZ(G0,nc-1))/2;
@@ -45905,34 +45927,22 @@ function cnPlankDraw(M,P,col,nails,a){const q=P.map(p=>M.S(p[0],p[1],p[2])),k=M.
   ctx.restore()}
 // the place of a plank to come: its top drawn faint
 function cnPlankGhost(M,P){const q=[P[0],P[1],P[2],P[3]].map(p=>M.S(p[0],p[1],p[2])),k=M.K(P[0][0]);C3.poly(q);ctx.fillStyle='rgba(255,236,200,.05)';ctx.fill();ctx.strokeStyle='rgba(255,236,200,.15)';ctx.lineWidth=.7*k;ctx.stroke()}
-// ------------------------------------------------ a rock of the bridge: a little island of the worlds the bridge joins (its colours slide from
-// one to the other), the rock hanging under it, the world on it, its four posts for the ropes, the pedestal of the prize on the left, a pole with
-// a lantern on the right (lit when the planks have come)
-function cnBrRock(i,M,r,reached,dk,dim){const G0=M.G,P0=G0.P[r],q=(P0.c-G0.a0)/G0.len,K=cnPlatView(M,P0.c),{V0}=K,Wa=cnIslW(i),Wb=cnIslW(i+1),
-    ch=(q<.5?ARENAS[i].ch:ARENAS[i+1].ch)||1,W=q<.5?Wa:Wb,sd=i*3.7+r*1.9+.5,top=dk(cnMixC(Wa.top,Wb.top,q)),side=dk(cnMixC(Wa.side,Wb.side,q)),
-    stone=dk(cnMixC(cnMixC(Wa.stone,Wb.stone,q),'#c8bca4',.25)),wood=dk('#7a5634'),pr=CNB.pr,pe=CNB.pe;
+// ------------------------------------------------ a balcony of a prize, on the left of the bridge (Denis: «le ricompense saranno a sinistra»):
+// a floor of four planks on two beams that come out from under the deck, a railing round its three outer sides, a pole with a lantern (lit
+// when the planks have come), two ropes up to the cable while it is high enough; the prize on it is alive (cnPrizeLive)
+function cnBalcony(i,M,b,reached,dk,dim){const G0=M.G,c=G0.Z[b],dz=cnDeckZ(G0,c),K=cnPlatView(M,c),{V0}=K,E=-CNB.bal,bw=CNB.bw,bd=CNB.bd,rh=15,wood=dk('#7a5634'),at=(n,e,z)=>cnChain(n,e,z);
+  const C=[[bd-2.5,E+bw-3],[bd-2.5,E-bw+2.5],[-(bd-2.5),E-bw+2.5],[-(bd-2.5),E+bw-3]];
   ctx.save();ctx.translate(K.o[0],K.o[1]);ctx.scale(K.k,K.k);
-  try{cnRockUnder(K,pr,sd,side,ch);
-    pSlab(K,pr,14,top,side,sd,{sy:CNB.psy,edge:dim?null:W.edge,lw:1.8});
-    const parts=[],R=(n,e,f)=>parts.push({d:V0.D(cnChain(n,e)),f}),at=(n,e,z)=>cnChain(n,e,z);
-    // the world on it: only away from the walk across it, the posts, the pedestal and the pole
-    if(!dim){const spots=[[-22,-60],[24,-58],[-20,60],[24,62],[-30,46],[30,-44],[-4,68],[4,-68]];
-      spots.forEach(([n,e],j)=>{const c=at(n,e),h=prH(j,sd);
-        if(ch===1)R(n,e,()=>{if(j%3===0)cnIslMoss(K,c,4+h*4,'#82b850',sd+j);else{cnIslTuft(K,c,j%2?'#9ad86a':'#7cc050',3,sd+j);if(j%2)cnIslFlower(K,at(n+2,e+2),W.deco[j%W.deco.length])}});
-        else if(ch===2)R(n,e,()=>j%2?cnIslRock(K,c,4+h*2.5,'#2e2628','#ff7a30'):oRock(K,c,2+h*1.5,2,1.8,'#2a2224',sd+j,{small:1,lw:1}));
-        else if(ch===3)R(n,e,()=>{if(j===2)cnIslReeds(K,c,sd);else if(j===5)cnIslShroom(K,c,'#d070ff');else cnIslTuft(K,c,j%2?'#7aa04a':'#5f8a3a',3,sd+j)});
-        else R(n,e,()=>j%2?pRound(K,c,[[0,6+h*3],[2.4+h,4.6+h*2],[4+h*1.4,1.8],[4.4+h*1.4,.1]],'#f6fbff',{m:12,lw:1.2}):oPrism(K,c,5,1.8+h,3+h*3,'#c6ecff',{tip:2,a:n,lw:1,cf:nn=>nn[1]>0?'#eefaff':'#8ccff8'}))})}
-    for(const s of[-1,1])for(const ns of[-1,1]){const n=ns*(pr-7);R(n,s*pe,()=>cnLogPost(K,at(n,s*pe),CNB.tieR+5,wood,dim))}
-    R(0,-50,()=>pRound(K,at(0,-50),[[0,12],[2.2,11],[3,9],[8,8],[9,10.4],[11,10.4]],stone,{m:16,lw:1.5}));
-    R(4,52,()=>cnLampPole(K,at(4,52),wood,reached&&!dim));
+  try{for(const dn of[bd-5,-(bd-5)])C3.caps(V0,at(dn,-CNB.hw+12,dz-5.5),2.6,at(dn,E-bw-2,dz-5.5),2.6,wood,{lw:1.4,kl:.3,kd:.5,noRim:1});
+    for(let j=3;j>=0;j--){const n=-bd+(j+.5)*bd/2;pBox(K,at(n,E,dz-3),bd/2-1.4,2*bw,3,dk(CN_WOOD[(j+b+1)%4]),{a:CN_NA,lw:1.1,ew:.4})}
+    const parts=[],R=(n,e,f)=>parts.push({d:V0.D(at(n,e,0)),f});
+    for(const[n,e] of C)R(n,e,()=>C3.caps(V0,at(n,e,dz),1.8,at(n,e,dz+rh+1.6),1.6,wood,{lw:1.2,kl:.3,kd:.5,noRim:1}));
+    for(let j=0;j<3;j++){const p=C[j],q=C[j+1];R((p[0]+q[0])/2,(p[1]+q[1])/2,()=>C3.caps(V0,at(p[0],p[1],dz+rh),1.3,at(q[0],q[1],dz+rh),1.3,wood,{lw:1.1,noRim:1}))}
+    R(bd-6,E-bw+6,()=>cnLampPole(K,at(bd-6,E-bw+6,dz),wood,reached&&!dim,1));
     pRun(parts)}
-  catch(err){cnErr(err)}finally{ctx.restore()}}
-// the rock hanging under a rock of the bridge: rings narrowing to a tip, swallowed by the dark (icicles in the ice)
-function cnRockUnder(K,pr,sd,side,ch){const{V0}=K,col=C3.dk(side,.12),pts=[],sy=CNB.psy;
-  for(const[z,rk] of[[-6,.74],[-16,.52],[-30,.3],[-42,.12]])for(let j=0;j<12;j++){const a=j/12*TAU+sd,w=1+.14*Math.sin(a*3+sd*2+z*.1);pts.push([Math.cos(a)*pr*rk*w,Math.sin(a)*pr*rk*w*sy,z])}
-  pts.push([2,-3,-54]);const hull=C3.vol(V0,pts,col,{lw:1.8,kl:.22,kd:.55,rim:.12});
-  ctx.save();C3.poly(hull);ctx.clip();const b=C3.bbox(hull),g=ctx.createLinearGradient(0,b[1],0,b[3]);g.addColorStop(0,'rgba(0,0,0,0)');g.addColorStop(.45,'rgba(4,6,10,.3)');g.addColorStop(1,'rgba(4,6,10,.95)');ctx.fillStyle=g;ctx.fillRect(b[0]-2,b[1]-2,b[2]-b[0]+4,b[3]-b[1]+4);ctx.restore();
-  if(ch===4)for(let j=0;j<4;j++){const a=oFront(V0)+(prH(j,sd)-.5)*2;pCone(K,[Math.cos(a)*pr*.5,Math.sin(a)*pr*.5*sy,-10],2.2,-(6+prH(j,sd+1)*8),'#bcd8ec',{m:6,lw:1})}}
+  catch(err){cnErr(err)}finally{ctx.restore()}
+  for(const sn of[1,-1]){const n=c+sn*(bd-2.5),m=c+sn*(bd+8),hz=cnCableZ(G0,m);if(hz-(dz+rh)<8)continue;
+    cnRopeP(M,[[n,E-bw+2.5,dz+rh+1.4],[plerp(n,m,.5),plerp(E-bw+2.5,-CNB.pe,.5),plerp(dz+rh+1.4,hz,.5)-2],[m,-CNB.pe,hz]],1.1,dk('#a8844e'))}}
 // a post of logs: a round log, its top cut (the wood's rings), the rope wound round it twice
 function cnLogPost(K,b,h,wood,dim){const{V0}=K,tp=[b[0],b[1],b[2]+h];C3.caps(V0,b,3.6,tp,3.2,wood,{lw:1.6,kl:.3,kd:.5,rim:.2});
   const q=V0.P(tp);ctx.fillStyle=dim?'#3a2c20':'#c49a68';ctx.beginPath();ctx.ellipse(q[0],q[1],3.1,1.45,0,0,TAU);ctx.fill();ctx.strokeStyle=INK;ctx.lineWidth=1;ctx.stroke();
@@ -45941,26 +45951,31 @@ function cnLogPost(K,b,h,wood,dim){const{V0}=K,tp=[b[0],b[1],b[2]+h];C3.caps(V0,
 // an iron lantern: its cage with the little windows (lit or not), a roof (its light is drawn alive)
 function cnLantern(K,c,lit){pBox(K,c,6,6,8,'#2e2a2a',{lw:1.3,face:(n,q,pts)=>{if(Math.abs(n[2])>.5)return;const m=pts.reduce((a,p)=>[a[0]+p[0]/4,a[1]+p[1]/4],[0,0]);ctx.fillStyle=lit?'#ffd27a':'#4a4038';ctx.fillRect(m[0]-1.5,m[1]-2,3,4)}});
   pRound(K,[c[0],c[1],c[2]+8],[[0,4.6],[3,.5]],'#3a3434',{m:6,lw:1.2})}
-// a pole with an arm toward the bridge and the lantern hanging from it
-function cnLampPole(K,b,wood,lit){const{V0}=K,h=40,E=CNI_EV,top=[b[0],b[1],b[2]+h],ae=[b[0]-8*E[0],b[1]-8*E[1],b[2]+h-3];
+// a pole with an arm (dir: toward the east, or the west) and the lantern hanging from it
+function cnLampPole(K,b,wood,lit,dir){const{V0}=K,h=40,E=CNI_EV,sg=dir||-1,top=[b[0],b[1],b[2]+h],ae=[b[0]+sg*8*E[0],b[1]+sg*8*E[1],b[2]+h-3];
   C3.caps(V0,b,2.4,top,2,wood,{lw:1.4,kl:.3,kd:.5});C3.caps(V0,[b[0],b[1],b[2]+h-3],1.3,ae,1.1,wood,{lw:1.2,noRim:1});
   const c0=V0.P(ae),c1=V0.P([ae[0],ae[1],ae[2]-4]);ctx.strokeStyle=INK;ctx.lineWidth=1;ctx.beginPath();ctx.moveTo(c0[0],c0[1]);ctx.lineTo(c1[0],c1[1]);ctx.stroke();
   cnLantern(K,[ae[0],ae[1],ae[2]-14],lit)}
-// where a rock's lantern shines (for the live light): [n, e, z] from the rock's middle
-const CN_ROCKLAMP=[4,44,27];
-// the gate of the bridge at the back of an island: two posts of logs and a beam, the rope wound round them, the banners of the arena it
-// leads to, two lanterns on arms (their light is alive); in the island's picture, in its order
+// where a balcony's lantern shines (for the live light): [n, e, z] from the balcony's middle at the deck's height
+const CN_BALAMP=[CNB.bd-6,-CNB.bal-CNB.bw+14,27];
+// the gate of the bridge at the back of an island: two towers (each two logs bound with rope, a little roof, the cable over its top and
+// down its front to a stake), the banner of the arena it leads to on each, a lantern on an arm outward, two beams across (the lower one
+// over the heads); in the island's picture, in its order
 function cnBrPortal(K,i,op){const{V0}=K,n=cnIslRim(i,true)-6,h=CNB.gate,pe=CNB.pe,wood='#7a5634',ac=ARENAS[i+1]?ARENAS[i+1].col:'#c0392b',N=CNI_NV,at=(e,z,dn)=>cnChain(n+(dn||0),e,z);
-  for(const s of[-1,1]){cnLogPost(K,at(s*pe,0),h,wood,false);
-    C3.caps(V0,at(s*(pe+2),h-20),1.4,at(s*(pe+11),h-20),1.2,wood,{lw:1.2,noRim:1});cnLantern(K,at(s*(pe+11),h-33),op);
-    const b=[at(s*pe-4.6,h-12,-4.2),at(s*pe+4.6,h-12,-4.2),at(s*pe+4.6,h-34,-4.2),at(s*pe,h-29,-4.2),at(s*pe-4.6,h-34,-4.2)];
-    oFaces(K,[[[-N[0],-N[1],0],b],[[N[0],N[1],0],b.slice().reverse()]],ac,{lw:1.2,ew:.4});C3.spot(V0,at(s*pe,h-21,-4.5),[-N[0],-N[1],0],2.2,C3.lt(ac,.35))}
-  C3.caps(V0,at(-pe-8,h-4),3.4,at(pe+8,h-4),3.4,wood,{lw:1.8,kl:.3,kd:.5,rim:.2});
-  for(const s of[-1,1]){const q=V0.P(at(s*pe,h-4));ctx.strokeStyle=INK;ctx.lineWidth=2.4;ctx.beginPath();ctx.moveTo(q[0]-2.6,q[1]-4);ctx.lineTo(q[0]+2.6,q[1]+4);ctx.moveTo(q[0]+2.6,q[1]-4);ctx.lineTo(q[0]-2.6,q[1]+4);ctx.stroke();
+  for(const s of[-1,1]){const e=s*pe;
+    for(const de of[s*3.6,-s*3.6])C3.caps(V0,at(e+de,0),4.2,at(e+de,h),3.6,wood,{lw:1.7,kl:.3,kd:.5,rim:.2});
+    for(const z of[18,50,h-14]){const c=V0.P(at(e,z));ctx.strokeStyle=INK;ctx.lineWidth=2.8;ctx.beginPath();ctx.ellipse(c[0],c[1],8.4,2.4,0,0,Math.PI);ctx.stroke();ctx.strokeStyle='#d8b878';ctx.lineWidth=1.4;ctx.stroke()}
+    pRound(K,at(e,h-1),[[0,9.6],[2.2,9.6],[2.4,8.6],[10,.6]],'#5a3e28',{m:8,lw:1.4,kl:.3,kd:.5});
+    C3.caps(V0,at(e+s*7,h-24),1.4,at(e+s*17,h-24),1.2,wood,{lw:1.2,noRim:1});cnLantern(K,at(e+s*17,h-37),op);
+    const bn=[at(e-5.5,h-34,-4.8),at(e+5.5,h-34,-4.8),at(e+5.5,h-70,-4.8),at(e,h-62,-4.8),at(e-5.5,h-70,-4.8)];
+    oFaces(K,[[[-N[0],-N[1],0],bn],[[N[0],N[1],0],bn.slice().reverse()]],ac,{lw:1.2,ew:.4});C3.spot(V0,at(e,h-48,-5.2),[-N[0],-N[1],0],2.4,C3.lt(ac,.35));
+    const st=at(e+s*4,0,-26);C3.caps(V0,st,2.2,[st[0],st[1],st[2]+7],1.8,wood,{lw:1.2,noRim:1});cnRope([V0.P(at(e,h+1,-2)),V0.P(at(e+s*2,h*.5,-14)),V0.P([st[0],st[1],st[2]+6])],1,2.8,'#b38a52')}
+  for(const[z,r,w] of[[h-4,3.8,10],[h-30,3,7]])C3.caps(V0,at(-pe-w,z),r,at(pe+w,z),r,wood,{lw:1.8,kl:.3,kd:.5,rim:.2});
+  for(const s of[-1,1])for(const z of[h-4,h-30]){const q=V0.P(at(s*pe,z,-4));ctx.strokeStyle=INK;ctx.lineWidth=2.4;ctx.beginPath();ctx.moveTo(q[0]-2.6,q[1]-4);ctx.lineTo(q[0]+2.6,q[1]+4);ctx.moveTo(q[0]+2.6,q[1]-4);ctx.lineTo(q[0]-2.6,q[1]+4);ctx.stroke();
     ctx.strokeStyle='#d8b878';ctx.lineWidth=1.1;ctx.stroke()}}
-// where the gate's lanterns shine: [n, e, z] from the island's middle
-const cnPortalLamp=(i,s)=>[cnIslRim(i,true)-6,s*(CNB.pe+11),CNB.gate-29];
-// the two stumps at the front of an island where the bridge from the island before lands
+// where the towers' lanterns shine: [n, e, z] from the island's middle
+const cnPortalLamp=(i,s)=>[cnIslRim(i,true)-6,s*(CNB.pe+17),CNB.gate-33];
+// the two anchors at the front of an island where the bridge from the island before lands (its hand ropes and cables are tied to them)
 function cnBrStumps(K,i){const n=-cnIslRim(i,false)+6;for(const s of[-1,1])cnLogPost(K,cnChain(n,s*CNB.pe,0),CNB.stump,'#7a5634',false)}
 // ------------------------------------------------ the prizes in 3D, drawn alive (they bob and shine; the show opens them): a chest with its
 // iron bands and its lid (that opens), a sack of gold with the coins at its mouth, crystals, a jar of essence of moss
@@ -45997,16 +46012,17 @@ function cnJar3(K,c){const{V0}=K,at=(n,e,z)=>{const q=cnChain(n,e,z);return[c[0]
   pRound(K,at(0,0,11.2),[[0,2.6],[2.4,2.4],[3,1.6]],'#a07a4a',{m:10,lw:1.1})}
 // one prize alive on its place (p: the prize, c: the base in the view's own units): it bobs, a soft light under it; while the show opens it,
 // it swells and goes; then its label above it (what it is) and where a tap finds it
-function cnPrizeLive(i,j,K,c,L,t,a){const p=cnBrPrize(i,j),A=ISL.brA,pop=A&&A.i===i&&A.pop&&A.pop.p.j===j?A.pop:null,d=L.dpr;
-  const bob=LOWFX?0:Math.sin(t*2.2+j*1.7)*1.3,sw=pop?1+.35*Math.sin(Math.min(1,pop.t/.32)*Math.PI*.5):1,base=K.V0.P(c),bx=K.o[0]+base[0]*K.k,by=K.o[1]+base[1]*K.k,top=[bx,by-(30+bob)*K.k];
-  (ISL.przAt||(ISL.przAt={}))[i+'_'+j]=[bx,by-14*K.k,K.k];
+// (ps: its size; on the balconies of the big bridge a third bigger)
+function cnPrizeLive(i,j,K,c,L,t,a,ps){ps=ps||1;const p=cnBrPrize(i,j),A=ISL.brA,pop=A&&A.i===i&&A.pop&&A.pop.p.j===j?A.pop:null,d=L.dpr,kp=K.k*ps;
+  const bob=LOWFX?0:Math.sin(t*2.2+j*1.7)*1.3,sw=pop?1+.35*Math.sin(Math.min(1,pop.t/.32)*Math.PI*.5):1,base=K.V0.P(c),bx=K.o[0]+base[0]*K.k,by=K.o[1]+base[1]*K.k,top=[bx,by-(30+bob)*kp];
+  (ISL.przAt||(ISL.przAt={}))[i+'_'+j]=[bx,by-14*kp,kp];
   ctx.save();if(a<1)ctx.globalAlpha*=a;
-  if(!LOWFX){ctx.save();ctx.globalCompositeOperation='lighter';glow(cnRgb(cnPrizeCol(p)),bx,by-10*K.k,(pop?34:22)*K.k,pop?.55:.22+.06*Math.sin(t*3+j));ctx.restore()}
-  ctx.translate(K.o[0],K.o[1]);ctx.scale(K.k,K.k);ctx.translate(base[0],base[1]);ctx.scale(sw,sw);ctx.translate(-base[0],-base[1]-bob);
+  if(!LOWFX){ctx.save();ctx.globalCompositeOperation='lighter';glow(cnRgb(cnPrizeCol(p)),bx,by-10*kp,(pop?34:22)*kp,pop?.55:.22+.06*Math.sin(t*3+j));ctx.restore()}
+  ctx.translate(K.o[0],K.o[1]);ctx.scale(K.k,K.k);ctx.translate(base[0],base[1]);ctx.scale(sw*ps,sw*ps);ctx.translate(-base[0],-base[1]-bob);
   try{const cc=[c[0],c[1],c[2]];if(p.k==='cassa')cnChest3(K,cc,p.t,pop?Math.min(1,pop.t/.3):0);else if(p.k==='oro')cnSack3(K,cc);else if(p.k==='gem')cnGems3(K,cc);else cnJar3(K,cc)}catch(err){cnErr(err)}
   ctx.restore();
   // (the labels go under the name of the arena: they fade before it)
-  const la=a*clamp((top[1]-L.titleB-18*d)/(26*d),0,1);if(!pop&&la>.02){cnPrizeLabel(top[0],top[1],p,d,la);(ISL.prz||(ISL.prz=[])).push({x:bx,y:by-18*K.k,r:Math.max(26*d,26*K.k),txt:`Premio del ponte: ${cnPrizeTxt(p)} · tuo a ${cnBrTh(i,j)} assi (ne hai ${cnBrHave(i)})`})}}
+  const la=a*clamp((top[1]-L.titleB-18*d)/(26*d),0,1);if(!pop&&la>.02){cnPrizeLabel(top[0],top[1],p,d,la);(ISL.prz||(ISL.prz=[])).push({x:bx,y:by-18*kp,r:Math.max(26*d,26*kp),txt:`Premio del ponte: ${cnPrizeTxt(p)} · tuo a ${cnBrTh(i,j)} assi (ne hai ${cnBrHave(i)})`})}}
 function cnPrizeLabel(x,y,p,d,a){const txt=p.k==='cassa'?CHEST_RAR[p.t]:'+'+p.n,col=cnPrizeCol(p);ctx.save();if(a<1)ctx.globalAlpha*=a;ctx.font=`${Math.round(11*d)}px "Lilita One", sans-serif`;
   const w=ctx.measureText(txt).width+22*d,h=16*d,x0=x-w/2,y0=y-h;cnRR(x0,y0,w,h,8*d);ctx.fillStyle='rgba(10,8,6,.66)';ctx.fill();ctx.lineWidth=1.4*d;ctx.strokeStyle=col;ctx.stroke();
   cnPrizeGlyph(p,x0+9.5*d,y0+h/2,d);ctx.textAlign='left';ctx.lineJoin='round';ctx.lineWidth=2.6*d;ctx.strokeStyle=INK;ctx.strokeText(txt,x0+17*d,y0+h*.74);ctx.fillStyle=col;ctx.fillText(txt,x0+17*d,y0+h*.74);ctx.restore()}
@@ -46016,17 +46032,17 @@ function cnPrizeGlyph(p,x,y,d){ctx.save();ctx.translate(x,y);ctx.scale(d,d);ctx.
   else if(p.k==='ess'){ctx.fillStyle='#9fe06a';ctx.beginPath();ctx.moveTo(0,-5);ctx.lineTo(3.3,.4);ctx.arc(0,1.5,3.5,-.32,Math.PI+.32);ctx.closePath();ctx.fill();ctx.stroke()}
   else{const C=CHC[p.t]||CHC.legno;ctx.fillStyle=C.body;ctx.fillRect(-4.8,-1.2,9.6,5.4);ctx.strokeRect(-4.8,-1.2,9.6,5.4);ctx.fillStyle=C.dark;ctx.beginPath();ctx.moveTo(-4.8,-1.2);ctx.quadraticCurveTo(0,-6,4.8,-1.2);ctx.closePath();ctx.fill();ctx.stroke();ctx.fillStyle=C.lock;ctx.fillRect(-1,-.2,2,2.4)}
   ctx.restore()}
-// the live parts of a bridge: the lanterns of the rocks reached, the prizes waiting (not on a bridge still in the dark), how many planks it has
-// where the work stops, the show
+// the live parts of a bridge: the lanterns of the balconies reached, the prizes waiting (not on a bridge still in the dark), how many planks it
+// has where the work stops, the show
 function cnBrLive(i,L,t,M){const G0=M.G,S=cnS(),d=L.dpr,dim=!cnOpenShown(i)&&!S.all,laid=cnBrLaidNow(i),Ns=CNB.Ns;if(dim)return;
-  for(let r=2;r>=0;r--){const P0=G0.P[r],k=M.K(P0.c),y=M.S(P0.c,0,0)[1];if(y<-60*d||y>L.H+60*d)continue;
-    if(laid>=(r+1)*Ns){const q=M.S(P0.c+CN_ROCKLAMP[0],CN_ROCKLAMP[1],CN_ROCKLAMP[2]),fl=LOWFX?1:.84+.16*Math.sin(t*8+r*2+i);pLight(q[0],q[1],20*k,'255,196,100',.5*fl,16*k);if(!LOWFX)pFlame(q[0],q[1]+1.4*k,4.4*k,2.1*k,1,t+r,false)}
-    if(!cnPrizeTaken(i,r+1))cnPrizeLive(i,r+1,cnPlatView(M,P0.c),cnChain(0,-50,11),L,t,1)}
-  // the last prize, on the next island where the bridge ends
-  if(!cnPrizeTaken(i,4)){const B=M.B,y=B.y;if(y>-60*d&&y<L.H+60*d)cnPrizeLive(i,4,{V0:cnV(),L:cnLt(),k:B.k,o:[B.x,B.y]},cnChain(G0.a1+14-CNI_GAP,-50,0),L,t,1)}
-  // the planks so far, where the work stops
+  for(let b=2;b>=0;b--){const c=G0.Z[b],k=M.K(c),y=M.S(c,0,0)[1],dz=cnDeckZ(G0,c);if(y<-60*d||y>L.H+60*d)continue;
+    if(laid>=(b+1)*Ns){const q=M.S(c+CN_BALAMP[0],CN_BALAMP[1],dz+CN_BALAMP[2]),fl=LOWFX?1:.84+.16*Math.sin(t*8+b*2+i);pLight(q[0],q[1],20*k,'255,196,100',.5*fl,16*k);if(!LOWFX)pFlame(q[0],q[1]+1.4*k,4.4*k,2.1*k,1,t+b,false)}
+    if(!cnPrizeTaken(i,b+1))cnPrizeLive(i,b+1,cnPlatView(M,c),cnChain(0,-CNB.bal,dz),L,t,1,1.3)}
+  // the last prize, on the next island where the bridge ends (on the left too)
+  if(!cnPrizeTaken(i,4)){const B=M.B,y=B.y;if(y>-60*d&&y<L.H+60*d)cnPrizeLive(i,4,{V0:cnV(),L:cnLt(),k:B.k,o:[B.x,B.y]},cnChain(G0.a1+18-CNI_GAP,-CNB.bal+6,0),L,t,1,1.3)}
+  // the planks so far, where the work stops (on the right: the prizes are on the left)
   const A=ISL.brA&&ISL.brA.i===i?ISL.brA:null;
-  if(!A&&laid<4*Ns&&!S.all){const n=laid<4*Ns?cnPlankN(G0,laid):G0.a1,q=M.S(n,CNB.hw+30,cnDeckZ(G0,n)+4);if(q[1]>L.titleB&&q[1]<L.info-24*d){const txt=`${cnBrHave(i)}/${cnBrNeed(i)}`;
+  if(!A&&laid<4*Ns&&!S.all){const n=cnPlankN(G0,laid),q=M.S(n,CNB.pe+28,cnDeckZ(G0,n)+4);if(q[1]>L.titleB+30*d&&q[1]<L.info-24*d){const txt=`${cnBrHave(i)}/${cnBrNeed(i)}`;
     ctx.save();ctx.font=`${Math.round(11.5*d)}px "Lilita One", sans-serif`;const w=ctx.measureText(txt).width+28*d;cnRR(q[0]-w/2,q[1]-10*d,w,17*d,8*d);ctx.fillStyle='rgba(0,0,0,.62)';ctx.fill();
       cnPlankGlyph(q[0]-w/2+10*d,q[1]-1.5*d,d);ctx.textAlign='left';ctx.lineWidth=2.6*d;ctx.strokeStyle=INK;ctx.strokeText(txt,q[0]-w/2+19*d,q[1]+3*d);ctx.fillStyle='#ecd2a2';ctx.fillText(txt,q[0]-w/2+19*d,q[1]+3*d);ctx.restore()}}
   if(A)cnBrShowLive(i,L,t,M)}
@@ -46035,16 +46051,16 @@ function cnPlankGlyph(x,y,d){ctx.save();ctx.translate(x,y);ctx.scale(d,d);ctx.ro
   ctx.fillStyle=INK;ctx.fillRect(-4.6,-.6,1.2,1.2);ctx.fillRect(3.4,-.6,1.2,1.2);ctx.restore()}
 // ------------------------------------------------ the show of the planks (Denis: «Volano e si inchiodano»): back from a run the hero takes the
 // sack of planks to where the bridge stops; every plank flies out of the sack to its place and he nails it (the hammer comes down, dust, the
-// sound of the wood); on a rock its prize opens and flies to you (the gold and the crystals to their counters, a chest to its post); with the
+// sound of the wood); at a balcony its prize opens and flies to you (the gold and the crystals to their counters, a chest to its post); with the
 // bridge finished the next island lights up and he goes there, otherwise he walks back to his island. A tap ends it at once.
 const CN_SHOW={fly:.2,land:.05,nail:.22,step:.13};   // the seconds of one plank (A.sp shortens them when they are many)
 function cnBrShowStart(B){if(B.from>=B.to&&!B.got.length)return;const i=B.i,[hn,he]=cnIslNE(CI_HERO),n=Math.max(1,B.to-B.from);
   ISL.cur=i;ISL.view=i;ISL.jump=null;ISL.go=null;ISL.rest=null;ISL.drag=null;
   ISL.brA={i,from:B.from,to:B.to,done:B.done,got:B.got,pend:B.pend||{gold:0,gems:0,slots:[]},k:B.from,ph:'in',t:0,n:hn,e:he,z:0,face:Math.PI/2-.2,fT:null,way:null,d:0,v:300,
-    sub:null,st:0,hit:0,sack:0,walk:0,lit:false,litT:0,pop:null,fx:[],spark:0,sp:clamp(3.6/(n*.6),.4,1)};
+    sub:null,st:0,hit:0,sack:0,walk:0,lit:false,litT:0,pop:null,fx:[],spark:0,sp:clamp(3.6/(n*.6),.28,1)};
   cnBrSnd('sacco')}
-// where he stands to lay plank g: on the plank before it, at the edge of the rock or of his island
-function cnBrStand(G0,g){const Ns=CNB.Ns;return g%Ns===0?(g===0?G0.a0-12:G0.P[g/Ns-1].n-8):cnPlankN(G0,g-1)+1.5}
+// where he stands to lay plank g: on the plank before it (the first one from the edge of his island)
+function cnBrStand(G0,g){return g===0?G0.a0-12:cnPlankN(G0,g-1)+1.5}
 function cnBrGo(A,ph,n1,e1,v){A.ph=ph;A.t=0;A.way=cnRoute(A.i,A.n,A.e,n1,e1);A.d=0;A.v=v}
 function cnBrShowStep(dt,L){const A=ISL.brA,G0=cnBrGeo(A.i),Ns=CNB.Ns,[hn]=cnIslNE(CI_HERO),T=k=>CN_SHOW[k]*A.sp;A.t+=dt;
   if(A.ph==='in'){A.sack=Math.min(1,A.t/.3);if(A.t>.5)cnBrNext(A,G0)}
@@ -46064,16 +46080,14 @@ function cnBrShowStep(dt,L){const A=ISL.brA,G0=cnBrGeo(A.i),Ns=CNB.Ns,[hn]=cnIsl
   if(A.spark>0)A.spark-=dt;for(const f of A.fx)f.t+=dt;A.fx=A.fx.filter(f=>f.t<f.T);
   const fT=A.ph==='lay'?-Math.PI/2+.35:A.fT!=null?A.fT:-Math.PI/2;A.face+=cnAd(fT-A.face)*Math.min(1,dt*10);
   ISL.view=A.i+clamp((A.n-hn)/CNI_GAP,-.05,1.05)}
-// what the show does next: onto the rock just reached (its prize opens), on with the planks, to the next island or back home
+// what the show does next: a prize reached opens on its balcony (he turns to it), on with the planks, to the next island or back home
 function cnBrNext(A,G0){const Ns=CNB.Ns,[hn,he]=cnIslNE(CI_HERO);
-  if(A.ph==='lay'&&A.k%Ns===0&&A.k>0&&A.k<4*Ns)return cnBrGo(A,'cross',G0.P[A.k/Ns-1].c-4,0,300);
-  if(A.ph==='cross'){const p=A.got.find(q=>q.j===A.k/Ns);if(p&&!p.shown){A.ph='pop';A.t=0;A.pop={p,t:0};A.fT=Math.atan2(-4,-50);cnBrSnd('premio');return}}
+  if(A.ph==='lay'&&A.k%Ns===0&&A.k>0&&A.k<4*Ns){const p=A.got.find(q=>q.j===A.k/Ns);if(p&&!p.shown){A.ph='pop';A.t=0;A.pop={p,t:0};A.fT=Math.atan2(-8,-CNB.bal);cnBrSnd('premio');return}}
   if(A.k<A.to)return cnBrGo(A,'go',cnBrStand(G0,A.k),0,380);
-  if(A.k>=4*Ns&&A.done){if(A.ph==='lay')return cnBrGo(A,'land',G0.a1+18,0,300);if(A.ph==='open')return cnBrGo(A,'over',CNI_GAP+hn,he,320)}
+  if(A.k>=4*Ns&&A.done){if(A.ph==='lay'||A.ph==='pop')return cnBrGo(A,'land',G0.a1+18,0,300);if(A.ph==='open')return cnBrGo(A,'over',CNI_GAP+hn,he,320)}
   cnBrGo(A,'back',hn,he,400)}
 function cnBrArrive(A,G0){if(A.ph==='go'){A.ph='lay';A.t=0;A.sub=null;A.st=0}
-  else if(A.ph==='cross')cnBrNext(A,G0);
-  else if(A.ph==='land'){A.ph='open';A.t=0;A.lit=true;A.litT=0;cnBrSnd('isola');const p=A.got.find(q=>q.j===4);if(p&&!p.shown){A.pop={p,t:0};A.fT=Math.atan2(4,-50);setTimeout(()=>cnBrSnd('premio'),250)}}
+  else if(A.ph==='land'){A.ph='open';A.t=0;A.lit=true;A.litT=0;cnBrSnd('isola');const p=A.got.find(q=>q.j===4);if(p&&!p.shown){A.pop={p,t:0};A.fT=Math.atan2(2,-CNB.bal);setTimeout(()=>cnBrSnd('premio'),250)}}
   else cnBrShowEnd()}
 // the moment a prize opens: it goes from its place, the gold and the crystals fly to their counters, a chest to its post, the essence rises
 function cnPrizeOut(A,p){p.shown=true;const q=ISL.przAt&&ISL.przAt[A.i+'_'+p.j],L=ISL.lay,r=campCv.getBoundingClientRect(),X=q&&L?r.left+q[0]/L.dpr:innerWidth/2,Y=q&&L?r.top+q[1]/L.dpr:innerHeight/2;
@@ -46149,20 +46163,20 @@ const cnPend=()=>ISL.brA?ISL.brA.pend:CN.brAnim?CN.brAnim.pend:null;
 // changing to the Zombie or starting a run ends the show
 {const _sr=startRun;startRun=function(){if(ISL.brA)cnBrShowEnd();return _sr.apply(this,arguments)}}
 {const _ms=modeSwitch;modeSwitch=function(){if(ISL.brA)cnBrShowEnd();return _ms.apply(this,arguments)}}
-// ------------------------------------------------ the stops of the path: the islands and the rocks of the bridges from the open islands; where
-// the finger leaves it the camera settles on the nearest (a rock just rests there, an island takes the hero along); a flick goes on to the
-// next island
-function cnIslStops(){const s=[],S=cnS();for(let i=0;i<ARENAS.length;i++){s.push({v:i,i});if(ARENAS[i+1]&&(cnOpen(i)||S.all)){const G0=cnBrGeo(i);G0.P.forEach((p,r)=>s.push({v:i+p.c/CNI_GAP,i,r}))}}return s}
+// ------------------------------------------------ the stops of the path: the islands and the balconies of the prizes of the bridges from the
+// open islands; where the finger leaves it the camera settles on the nearest (a balcony just rests there, an island takes the hero along); a
+// flick goes on to the next island
+function cnIslStops(){const s=[],S=cnS();for(let i=0;i<ARENAS.length;i++){s.push({v:i,i});if(ARENAS[i+1]&&(cnOpen(i)||S.all))cnBrGeo(i).Z.forEach((c,r)=>s.push({v:i+c/CNI_GAP,i,r}))}return s}
 function cnIslSettle(v,vel){if(Math.abs(vel||0)>.002){const j=clamp(vel>0?Math.ceil(ISL.view+.04):Math.floor(ISL.view-.04),0,ARENAS.length-1);ISL.rest=null;cnIslGo(j);return}   // a flick: on to the next island
   const st=cnIslStops();let b=st[0];for(const s of st)if(Math.abs(s.v-v)<Math.abs(b.v-v))b=s;
   if(b.r==null){ISL.rest=null;cnIslGo(b.i)}else{ISL.rest=b.v;ISL.go=null;sfx('ui')}}
-// the rock the camera is on (or near): which bridge, which rock, how near
-function cnRockNear(v){let b=null;const S=cnS(),i0=Math.floor(v);for(const i of[i0-1,i0,i0+1]){if(!ARENAS[i]||!ARENAS[i+1]||!(cnOpen(i)||S.all))continue;
-  cnBrGeo(i).P.forEach((p,r)=>{const dd=Math.abs(v-(i+p.c/CNI_GAP));if(!b||dd<b.dd)b={i,r,dd}})}return b&&b.dd<.11?Object.assign(b,{a:1-Math.min(1,b.dd*9)}):null}
-// the words of a rock: the bridge it is on, its prize and when it is yours (or taken), the planks of the bridge
-function cnRockText(L,t,rk){const d=L.dpr,i=rk.i,j=rk.r+1,p=cnBrPrize(i,j),th=cnBrTh(i,j),took=cnPrizeTaken(i,j),nx=ARENAS[i+1],a=rk.a;if(a<=.02)return;
+// the balcony the camera is on (or near): which bridge, which prize, how near
+function cnStopNear(v){let b=null;const S=cnS(),i0=Math.floor(v);for(const i of[i0-1,i0,i0+1]){if(!ARENAS[i]||!ARENAS[i+1]||!(cnOpen(i)||S.all))continue;
+  cnBrGeo(i).Z.forEach((c,r)=>{const dd=Math.abs(v-(i+c/CNI_GAP));if(!b||dd<b.dd)b={i,r,dd}})}return b&&b.dd<.11?Object.assign(b,{a:1-Math.min(1,b.dd*9)}):null}
+// the words of a balcony: the bridge it is on, its prize and when it is yours (or taken), the planks of the bridge
+function cnStopText(L,t,rk){const d=L.dpr,i=rk.i,j=rk.r+1,p=cnBrPrize(i,j),th=cnBrTh(i,j),took=cnPrizeTaken(i,j),nx=ARENAS[i+1],a=rk.a;if(a<=.02)return;
   ctx.save();ctx.globalAlpha=a;ctx.textAlign='center';ctx.lineJoin='round';const font=n=>`${Math.round(n*d)}px "Lilita One", sans-serif`,out=(s,x,y,c,w)=>{ctx.lineWidth=w*d;ctx.strokeStyle=INK;ctx.strokeText(s,x,y);ctx.fillStyle=c;ctx.fillText(s,x,y)};
-  let y=L.lab+20*d;ctx.font=font(12);const tag=`ROCCIA ${j}`,ttl=`Verso ${nx.n}`,tw=ctx.measureText(tag).width,gap=7*d;let ns=21;ctx.font=font(ns);let nw=ctx.measureText(ttl).width;const room=L.tr-L.tl;
+  let y=L.lab+20*d;ctx.font=font(12);const tag=`PREMIO ${j}`,ttl=`Verso ${nx.n}`,tw=ctx.measureText(tag).width,gap=7*d;let ns=21;ctx.font=font(ns);let nw=ctx.measureText(ttl).width;const room=L.tr-L.tl;
   while(ns>13&&tw+gap+nw>room){ns-=1;ctx.font=font(ns);nw=ctx.measureText(ttl).width}const mid=w=>clamp(L.cx,L.tl+w/2,L.tr-w/2),x0=mid(tw+gap+nw)-(tw+gap+nw)/2;
   ctx.textAlign='left';ctx.font=font(12);out(tag,x0,y-1.5*d,'#d8b878',3.2);ctx.font=font(ns);out(ttl,x0+tw+gap,y,'#fff7e6',4.6);
   y+=20*d;ctx.textAlign='center';ctx.font=font(12);const pl=took?`Premio preso: ${cnPrizeTxt(p)}`:`Premio a ${th} assi: ${cnPrizeTxt(p)}`,pw=ctx.measureText(pl).width+30*d,px=mid(pw)-pw/2;
