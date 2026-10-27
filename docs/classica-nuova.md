@@ -44,6 +44,28 @@ grandi**: la telecamera più vicina (`CNI_WIDE` 86% della larghezza invece del 6
 il resto col dito), così isola, eroe, custode e ponte sono un terzo più grandi (390×844: k da 1,62 a 2,24; 390×763: da 1,34 a 1,74; 360×640:
 da 0,85 a 1,10); l'immagine dell'isola più alta per le torri (`cnIslImg`).
 
+**Il ponte più bello** (27 ottobre, Denis: «fallo ancora meglio il ponte»; sezione 8 di 94). Con questa telecamera (che guarda a nord dall'alto)
+tutto quello che sta sul bordo del ponte finisce nella stessa colonna dello schermo: le funi e i cavi vicini, alti e larghi in prospettiva,
+passano sopra le cose lontane dello stesso bordo. Per questo le cose nuove stanno un po' fuori dal ponte. **La struttura**: sotto le assi una
+crociera di travi a zigzag, scura, che si vede solo dove le assi mancano (il telaio che aspetta le assi sopra l'abisso); i traversi ogni quattro
+assi escono oltre le assi (fino a 51 dal mezzo, `CNB.je`) e i pali del parapetto ci stanno sopra, appena fuori dalle assi (47 invece di 44,
+`CNB.pp`), più grossi; le funi un po' più grosse. **Le lanterne** (`cnLamp2`): appese a un braccio di ferro col suo puntone, fuori dal parapetto
+(`CNB.lo`), più grandi (gabbia con la finestrella a croce, tetto, gancio, fondo), accese quando le assi ci arrivano, con la fiamma e la luce
+dal vivo (`cnBrLamps`); solo a destra, ogni due pali: a sinistra fanno luce i balconi (i loro archi coprirebbero le lanterne). **Il vestito
+del mondo**: dalle teste dei traversi pende quello del mondo dell'isola (`cnBrHang`, `cnBrHangAt`): muschio (1), una catena col carbone
+acceso (2), una liana con le foglie e a volte un fiore (3), ghiaccioli (4); le stesse cose sotto il davanti dei balconi; sulle teste di
+alcune assi un cuscino di muschio, la cenere con la brace, un ciuffo d'erba o un mucchietto di neve (`cnBrTuft`); sulla cima di ogni palo il
+muschio, la brace, la liana col fiore o il cappuccio di neve (`cnBrDressPost`). Quello che pende dal lato destro e le lanterne si disegnano
+dopo i cavi (`late` in `cnBrDeck`): da questa telecamera la parte vicina dei cavi ci passerebbe sopra pur non essendo davanti; a sinistra solo
+dove nessun balcone sta davanti. **Le torri vestite dal loro mondo** (`cnPortalBase`, `cnPortalVine`, `cnPortalRoof`, `cnPortalBeams`, nell'immagine
+dell'isola): muschio sulla pietra, sul tetto e che pende dalla trave bassa (1); la pietra crepata dal calore col fuoco dentro e la punta del
+tetto nera di fuliggine (2); la liana che sale a spirale sui tronchi col suo fiore e pende dal tetto e dalla trave (3); neve sulla pietra, sui
+tetti e sulle travi, ghiaccioli sotto i tetti e sotto la trave (4). **I balconi**: la pedana del premio più piccola e scura (raggio 10,5
+invece di 13,5) con un anello del colore del premio. Il conto delle assi un po' più a destra (non copre le lanterne). Tempi: a telecamera ferma
+niente cambia (il ponte è un'immagine copiata); dal vivo (col dito, nello spettacolo, mentre l'eroe cammina) un ponte costa circa 1 ms in più nel browser delle prove (da 1,8–2,4 a 2,6–3,4 ms; la crociera senza contorno, i ghiaccioli, le foglie e gli anelli delle catene in un tracciato solo), un fotogramma intero col dito il 10–18% in più (60 fotogrammi trascinando, tre giri; tolte le pozze di luce sulle assi, che costavano quasi quanto il resto). Le prove della camminata, del
+colpo di dito, dello spettacolo e della pillola «Incubo» nell'anteprima ora aspettano che la cosa finisca invece di un tempo fisso: il browser
+delle prove disegna un fotogramma in 40–100 ms e il tempo del gioco avanza al massimo di 1/30 di secondo a fotogramma.
+
 **Lo spettacolo** (`cnBrShow*`): tornato dalla partita, l'eroe col sacco delle assi sulle spalle (`cnSackBack`) va fin dove arriva il ponte;
 ogni asse vola dal sacco al suo posto e lui la inchioda (`CN_SHOW`: volo 0,2 s, posa, chiodo 0,22 s; più svelto quando le assi sono tante);
 quando le assi raggiungono un premio lui si gira verso il balcone a sinistra, il premio salta fuori (`cnPrizeOut`; la cassa vola al suo posto sotto l'eroe,

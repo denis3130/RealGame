@@ -232,6 +232,15 @@ telecamera più vicina (l'isola fino all'86% della larghezza invece del 62%, men
 un terzo più grandi. Codice in 94, sezione 8 (`CNB`, `cnBrDeck`, `cnBalcony`, `cnBrPortal`, `cnStopNear`), note in `docs/classica-nuova.md`
 («Il ponte grande»), prova `node tests/classica.js ponte`. Nell'anteprima della Classica; nel gioco dopo il sì di Denis.
 
+**Il ponte più bello** (27 ottobre, Denis: «fallo ancora meglio il ponte»): sotto le assi la crociera a zigzag che si vede dove le assi mancano;
+i traversi che escono oltre le assi coi pali del parapetto sopra, appena fuori; **lanterne** più grandi appese a bracci di ferro fuori dal
+parapetto (a destra; a sinistra fanno luce i balconi); il **vestito del mondo** appeso alle teste dei traversi e sotto i balconi (muschio,
+catene col carbone acceso, liane coi fiori, ghiaccioli), sulle teste delle assi (muschio, cenere, erba, neve) e sui pali; le **torri vestite**
+dal loro mondo (muschio, pietra crepata col fuoco e fuliggine, liana a spirale, neve e ghiaccioli); la pedana dei premi più piccola con
+l'anello del colore del premio. Con questa telecamera le funi e i cavi vicini passano sopra le cose lontane dello stesso bordo: per questo le
+cose nuove stanno un po' fuori dal ponte e il lato destro si disegna dopo i cavi. Note in `docs/classica-nuova.md` («Il ponte più bello»).
+Nell'anteprima della Classica; nel gioco dopo il sì di Denis.
+
 ## FASE 9: più fluido sul telefono (19 ottobre, in corso)
 
 Denis: «vai, lascia perdere l'intro ecc» (la FASE 9 subito; intro, prologo e filmati non si toccano). Il gioco più fluido sul suo iPhone
