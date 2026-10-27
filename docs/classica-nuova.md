@@ -69,6 +69,18 @@ tornano sempre (fermi, tranne per lo Scudo di lame che vuole i loro colpi); l'er
 scattare, correre, bere la pozione o stare con poca salute; «↺ Rifai» la fa ripartire. Prova `node tests/mosse.js` (ogni mossa parte nella sua
 stanza, nessun errore; foto `tests/mv_<abilità><lato>.png`).
 
+**«Prova» nell'albero** (27 ottobre, Denis: «Sì, nell'albero»; sezione 6 di 96): sul passo V, accanto al bottone, «▶ Prova» porta in
+una stanzetta della propria isola per 12 secondi con la mossa leggendaria accesa senza comprarla (l'albero di quell'abilità al passo V sul
+lato scelto, il proprio lato del bivio III), cinque nemici fermi che tornano sempre e quello che la mossa chiede (poca salute, colpi presi,
+scatti, corsa, la pozione: `TR_NEED`); in alto «Prova · abilità», la mossa, la barra del tempo e «Fine»; alla fine si torna all'albero sul
+passo V. Il salvataggio non cambia: fotografato prima e rimesso com'era dopo dentro gli stessi oggetti (`trRestore`); mentre si prova non si
+scrive e non contano missioni, traguardi, livelli; uscire dalla pausa chiude la prova senza premi (`trTryStart`, `trTryTick`, `trTryEnd`).
+La pagina delle mosse usa la stessa stanza senza fine.
+
+**Nel gioco** (27 ottobre, Denis: «Tutto nel gioco»): «Solo nell'anteprima: apri tutte le arene» c'è solo nelle pagine di prova
+(`window.MB_ANTEPRIMA`, messo da `mk_classica.py`); i salvataggi del gioco di prima tengono le arene che le coppe avevano aperto: i loro
+ponti costruiti, i bracieri accesi, l'eroe sull'ultima (`S.mig` in `cnS`).
+
 Prove: `node tests/classica.js ponte` (assi, premi, spettacolo, contatori che aspettano, tocco che lo finisce, rocce, colpo di dito),
 `node tests/classica.js albero` (anche il rimborso), `node tests/mosse.js`.
 

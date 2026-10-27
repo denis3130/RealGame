@@ -776,6 +776,16 @@ function trCss(){if($('trCss'))return;const st=document.createElement('style');s
 #trScr .trBtn.rf.dim{filter:saturate(.45) brightness(.85)}
 #trScr .trBtn .gemS{margin:0 2px 0 7px}
 #trScr .trBtn.shake{animation:trShk .42s}
+#trScr .trRowT .trBtn{font-size:17px}#trScr .trRowT .trBtn.try{flex:none;width:auto;padding:10px 14px 11px;background:linear-gradient(#c9b8ff,#7d5fe0);color:#fff;text-shadow:0 2px 0 #1b1612}
+#trScr .trBtn.try svg{width:15px;height:15px;fill:currentColor;stroke:#1b1612;stroke-width:1.6;stroke-linejoin:round}
+#trTry{position:absolute;left:50%;transform:translateX(-50%);top:calc(env(safe-area-inset-top,0px) + 62px);z-index:7;display:flex;align-items:center;gap:10px;width:max-content;max-width:calc(100% - 24px);
+  padding:6px 6px 6px 12px;border-radius:14px;background:rgba(14,11,30,.84);border:2px solid var(--ink);box-shadow:0 0 0 1.5px rgba(var(--ar),.6),0 4px 0 rgba(0,0,0,.4);color:#fff6d8;pointer-events:none}
+#trTry .trTyL{display:flex;flex-direction:column;min-width:0}
+#trTry small{font:700 10.5px/1.2 "Cinzel",Georgia,serif;letter-spacing:.1em;color:rgb(var(--ar));white-space:nowrap}
+#trTry b{font:17px/1.15 var(--display);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;text-shadow:0 2px 0 #1b1612}
+#trTry i{display:block;height:4px;margin-top:4px;border-radius:2px;background:rgba(255,255,255,.15);overflow:hidden}
+#trTry u{display:block;height:100%;background:rgb(var(--ar));transform-origin:0 50%}
+#trTry .trTyX{pointer-events:auto;flex:none;padding:8px 12px 9px;border-radius:11px;border:2px solid var(--ink);background:linear-gradient(#ffe27a,#f0a812);color:#1b1612;font:16px/1 var(--display);cursor:pointer;box-shadow:0 3px 0 #1b1612}
 @keyframes trShk{20%,60%{transform:translateX(-6px)}40%,80%{transform:translateX(6px)}}
 @media (max-width:359px){#trScr .trRf span{display:none}#trScr .trRf{padding:0 7px}}
 #trScr.in .trRoot,#trScr.in .trN,#trScr.in .trL{animation:trGrow .5s cubic-bezier(.2,1.3,.4,1) both;animation-delay:calc(var(--d,0)*1ms)}
@@ -866,11 +876,13 @@ function trPaint(){const el=$('trScr');if(!el)return;const id=TRM.id;
 // il riquadro sotto: il passo toccato e cosa si può fare
 function trPanel(){const el=$('trScr');if(!el)return;const id=TRM.id,k=TRM.s,D=TRD[id],st=D.s[k-1],fork=Array.isArray(st),b=fork?TRM.b:null,q=fork?st[b]:st,s=SK.find(x=>x.id===id),lv=trLv(id),state=trState(id,k,fork?b:'');
   if(TRM.rf&&lv>0&&!TRM.rfO)return trPanelRf(el,id,s,lv);TRM.rf=false;
-  const cost=TR_COST[k-1],gold=SAVE.gold||0;let btn;
+  const cost=TR_COST[k-1],gold=SAVE.gold||0,sh=k===5;let btn;
   if(state==='on')btn=`<button class="trBtn done" disabled>✓ Sbloccato</button>`;
-  else if(state==='alt')btn=`<button class="trBtn alt" data-act="side">Scegli questo ramo · gratis</button>`;
-  else if(state==='av')btn=gold>=cost?`<button class="trBtn" data-act="buy">Sblocca · ${trFmt(cost)}<i class="coin"></i></button>`:`<button class="trBtn no" data-act="poor">Ti mancano ${trFmt(cost-gold)}<i class="coin"></i></button>`;
-  else btn=`<button class="trBtn no" data-act="lock">Prima sblocca il passo ${TR_ROM[lv]}</button>`;
+  else if(state==='alt')btn=`<button class="trBtn alt" data-act="side">${sh?'Scegli · gratis':'Scegli questo ramo · gratis'}</button>`;
+  else if(state==='av')btn=gold>=cost?`<button class="trBtn" data-act="buy">Sblocca · ${trFmt(cost)}<i class="coin"></i></button>`:`<button class="trBtn no" data-act="poor">${sh?'Mancano':'Ti mancano'} ${trFmt(cost-gold)}<i class="coin"></i></button>`;
+  else btn=`<button class="trBtn no" data-act="lock">${sh?'Prima il passo':'Prima sblocca il passo'} ${TR_ROM[lv]}</button>`;
+  // la mossa leggendaria si prova prima di comprarla: una stanzetta di qualche secondo (sezione 6)
+  if(sh)btn=`<div class="trRow trRowT">${btn}<button class="trBtn try" data-act="try" aria-label="Prova la mossa"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 5.5v13l10.5-6.5z"/></svg>Prova</button></div>`;
   const tag=`Passo ${TR_ROM[k-1]}${fork?(k===5?' · mossa leggendaria '+(b?'B':'A'):' · bivio '+(b?'B':'A')):''}`;
   const note=fork&&state!=='lock'?(k===5?'Nel bivio vale un lato solo: lo cambi quando vuoi, gratis.':'Nel bivio vale un lato solo: lo cambi quando vuoi, gratis.'):`Vale quando prendi «${s?s.n:id}» in partita.`;
   el.querySelector('.trP').innerHTML=`<div class="trPh"><span><svg viewBox="0 0 24 24">${TR_GLY[q.g]||TR_GLY.fx}</svg></span><div><small>${tag}</small><b>${q.n}</b></div></div><p class="trPd">${q.d}</p>${btn}<small class="trNote">${note}</small>`;
@@ -888,6 +900,7 @@ function trAct(act){if(TRM.rfO)return;const id=TRM.id,k=TRM.s,b=TRM.b,S=trS();
   if(act==='rfNo'){TRM.rf=false;trPanel();sfx('ui');return}
   if(act==='rfPoor'){const B=$('trScr').querySelector('.trBtn.rf');if(B){B.classList.remove('shake');void B.offsetWidth;B.classList.add('shake')}sfx('ui');tone(220,160,.2,'square',.02);vib(30);return}
   if(act==='rfYes')return trRefund(id);
+  if(act==='try'){sfx('ui');trChime([523,784],.04);trTryStart(id,b);return}
   const o=S[id]||(S[id]={lv:0,f3:0,f5:0});
   if(act==='buy'){const cost=TR_COST[k-1];if((SAVE.gold||0)<cost||o.lv!==k-1)return;SAVE.gold-=cost;o.lv=k;if(k===3)o.f3=b;if(k===5)o.f5=b;save();
     trBuyFx(k,b);trPaint();trPanel();trStrip();trBtnSync();vib([20,30,40]);
@@ -955,3 +968,90 @@ function trBez(x0,y0,x1,y1,u){const my=(y0+y1)/2,v=1-u;return[v*v*v*x0+3*v*v*u*x
 function trCards(){document.querySelectorAll('#skList .sk').forEach(b=>{const s=offer[+b.dataset.i];if(!s||!TRD[s.id])return;const lv=trLv(s.id);if(!lv)return;const div=b.querySelector('div');if(!div||div.querySelector('.trPip'))return;
   const cap=lv>=5?TRD[s.id].s[4][trSide(s.id,5)].n:'';const em=document.createElement('em');em.className='trPip';em.style.setProperty('--tc',TRD[s.id].c);
   em.innerHTML=[1,2,3,4,5].map(k=>`<b class="${k<=lv?'on':''}"></b>`).join('')+`<u>${cap?'★ '+cap:'Albero '+TR_ROM[lv-1]}</u>`;div.appendChild(em)})}
+
+// ---------------------------------------------------------------- 6 «Prova»: la mossa leggendaria in una stanzetta, senza comprarla
+// Sul passo V dell'albero (Denis, 27 ottobre: «Sì, nell'albero») il bottone «Prova»: l'eroe in una stanza della sua isola per 12 secondi,
+// cinque nemici fermi che tornano sempre, l'albero di quell'abilità al passo V sul lato scelto e quello che la mossa chiede (poca salute,
+// colpi presi, scatti, corsa, la pozione); «Fine» o il tempo che scade riportano all'albero. Il salvataggio non cambia: è fotografato prima
+// e rimesso com'era dopo, e mentre si prova non si scrive (né missioni né traguardi). La pagina delle mosse (anteprime/mk_mosse.py) usa
+// la stessa stanza, senza fine (loop).
+// cosa serve a ogni abilità: le abilità da prendere oltre alla sua (sk), i nemici in fila (line) o stretti (group), la loro vita (hpk, ×5 se
+// manca, perché si vedano fuochi e veleni), e per ogni lato: poca salute (low), colpi presi (hit), scatti (dash), corsa (run), la pozione
+// (pot), più critici (crit), nemici che tirano (shots: lo Scudo di lame vuole i loro colpi; gli altri stanno fermi), eroe intoccabile (safe)
+const TR_NEED={front:{},multi:{},diag:{},side:{},rear:{b:[{},{hit:1}]},giant:{},ric:{},pierce:{line:1},wallb:{sk:['pierce']},fire:{},ice:{},poison:{group:1},light:{},
+  orbit:{b:[{},{shots:1,safe:1}]},dash:{all:{dash:1}},boots:{all:{run:1}},atk:{},aspd:{b:[{low:1},{}]},crit:{b:[{},{crit:1}]},hp:{b:[{low:1},{hit:1}]},heal:{all:{pot:1}},
+  shield:{all:{hit:1}},vamp:{hpk:1,b:[{safe:1},{low:1}]}};
+const TRY={on:false,id:null,b:0,t:0,dur:12,loop:false,snap:null,next:{},t0:0,ti:0,dash2:0};
+const trTryNeed=()=>{const N=TR_NEED[TRY.id]||{};return Object.assign({},N.all||{},N.b?N.b[TRY.b]:{})};
+const TR_TYPES=['goblin','slime','bat','goblin','slime'];
+// i posti: a ventaglio davanti all'eroe (le frecce dritte e le diagonali, che il Ventaglio largo apre a mezzo radiante, trovano tutte
+// qualcuno), in fila per Trapassa tutto, stretti per il Contagio (il veleno passa a chi sta vicino)
+function trTrySlots(){const cx=Math.round((L+R)/2),hy=BOT-110,N=TR_NEED[TRY.id]||{};if(N.line)return[0,1,2,3,4].map(k=>[cx+(k%2?5:-5),hy-150-k*46]);
+  if(N.group)return[[0,0],[-40,-16],[40,-16],[-22,30],[22,30]].map(([dx,dy])=>[cx+dx,hy-230+dy]);
+  return[[0,200],[-.5,236],[.5,236],[-.95,222],[.95,222]].map(([a,r])=>[Math.round(cx+Math.sin(a)*r),Math.round(hy-Math.cos(a)*r)])}
+function trTryAdd(){const S=trTrySlots(),free=S.filter(q=>!G.enemies.some(e=>!e.dead&&e.hp>0&&Math.hypot(e.x-q[0],e.y-q[1])<30)),q=free.length?free[0]:pk(S),
+  e=makeE(TR_TYPES[TRY.ti++%TR_TYPES.length],q[0],q[1],0,false);e.max=e.hp=Math.round(e.max*((TR_NEED[TRY.id]||{}).hpk||5));if(!trTryNeed().shots)e.trStun=1e6;G.enemies.push(e);return e}
+// i nemici tornano appena uno cade: la stanza non si svuota mai, niente porte
+function trTryRefill(){if(!TRY.on||!started||!G||G.state==='dead')return;const alive=G.enemies.filter(e=>!e.dead&&e.hp>0).length;for(let k=alive;k<5;k++)trTryAdd();
+  if(G.state!=='play'){G.state='play';G.door=false}}
+// comincia (dal menu: una partita sua, senza la strada della cripta) o cambia mossa se la stanza c'è già
+function trTryStart(id,b,o){o=o||{};if(!TR.on||!TRD[id])return;const fresh=!TRY.on;
+  if(fresh){try{TRY.snap=JSON.stringify(SAVE)}catch(err){TRY.snap=null}}
+  Object.assign(TRY,{on:true,id,b:b|0,t:0,dur:o.dur||12,loop:!!o.loop,next:{},ti:0,dash2:0});keys.KeyA=keys.KeyD=keys.KeyW=keys.KeyS=false;
+  const run=started&&G&&!G.ended&&$('menu').hidden;
+  if(!run){const el=$('trScr');if(el&&!el.hidden){el.hidden=true;cancelAnimationFrame(TRM.raf);removeEventListener('resize',trLayout)}
+    document.querySelectorAll('#sheetScr,#arenaUpScr,#endScr,#skScr,#cnMap,#cnPremi').forEach(q=>{if(q)q.hidden=true});modal=false;SAVE.sel='arena';
+    // l'Incubo acceso o la Torre scelta restano per la partita vera dopo la prova
+    const keep=typeof CN!=='undefined'?[CN.incRun,CN.next]:null;if(keep){CN.incRun=false;CN.next=null}
+    try{startRun()}catch(err){trErr(err)}finally{if(keep){CN.incRun=keep[0];CN.next=keep[1]}}}
+  trTryHud();setTimeout(trTrySetup,run?0:60)}
+function trTrySetup(){if(!TRY.on||!G||!P)return;try{
+  document.querySelectorAll('#skScr,#cnRel,#revScr').forEach(q=>{if(q)q.hidden=true});modal=false;paused=false;
+  const S=trS(),own=S[TRY.id];S[TRY.id]={lv:5,f3:own?own.f3|0:0,f5:TRY.b};
+  if(G.cnInc&&typeof cnIncRestore==='function')cnIncRestore();Object.assign(G,{cnInc:false,cnA:null,cnMode:null,cnTw:null,cnTr:null,cnNem:null,tower:null,rush:null,daily:null,event:null});
+  G.room=3;buildRoom();G.enemies=[];G.eproj=[];G.arrows=[];G.zones=[];G.state='play';G.door=false;
+  const cx=Math.round((L+R)/2),hy=BOT-110,SL=trTrySlots();G.rocks=G.rocks.filter(k=>(Math.abs(k.x-cx)>k.r+60||k.y<TOP+60)&&!SL.some(q=>Math.hypot(k.x-q[0],k.y-q[1])<k.r+40));fields={};
+  P=makeP();P.x=cx;P.y=hy;P.hp=P.maxhp;P.inv=0;trReset();   // un eroe nuovo a ogni mossa: niente frecce rimaste dalle mosse di prima
+  for(const sid of[TRY.id,...((TR_NEED[TRY.id]||{}).sk||[])]){const s=SK.find(q=>q.id===sid);if(!s)continue;s.f();P.skills[sid]=(P.skills[sid]||0)+1}
+  const n=trTryNeed();if(n.crit)P.crit=Math.max(P.crit,.6);if(n.pot)P.skills.heal=P.skills.heal||1;trSync();
+  TR.t={salvo:.6,bliz:.8,storm:.8,walls:.6,crown:.8,perf:.2,gold:.8,bark:0,cloud:.8};TRY.t0=G.t;TRY.t=0;TRY.next={};
+  for(let k=0;k<5;k++)trTryAdd();G.bannerT=0;try{bannerEl.classList.remove('show')}catch(err){}trTryHud()}catch(err){trErr(err)}}
+// «Rifai» della pagina delle mosse: le mosse a tempo partono subito, il nome torna
+function trTryAgain(){if(!TRY.on||!started)return;Object.assign(TR.t,{salvo:.05,bliz:.05,storm:.05,walls:.05,crown:.05,perf:.05,gold:.05,bark:0,cloud:.05});TR.legSeen={};TR.hpRoom=-1;
+  TR.feast=Math.max(TR.feast,8);TRY.next={};if(TR.orbOut){P.orbit+=TR.orbOut;TR.orbOut=0}}
+// a ogni passo: quello che la mossa chiede, i nemici che tornano, il tempo
+function trTryTick(dt){if(!TRY.on||!started||!G||!P||paused)return;TRY.t+=dt;const n=trTryNeed(),t=G.t,due=(k,per)=>{if(TRY.next[k]==null)TRY.next[k]=t+.6;if(t>=TRY.next[k]){TRY.next[k]=t+per;return true}return false};
+  if(!$('skScr').hidden){$('skScr').hidden=true;modal=false;paused=false}
+  if(n.low){P.hp=Math.min(P.hp,P.maxhp*.25);if(due('heart',4))TR.hpRoom=-1}else if(!n.hit)P.hp=P.maxhp;
+  if(n.hit&&due('hit',2.2)){P.inv=0;P.dashT=0;hurtP(4);if(P.hp<P.maxhp*.5)P.hp=P.maxhp}
+  if(n.dash&&due('dash',1.6)){P.dashCd=0;dash();if(TRY.id==='dash'&&TRY.b===0)TRY.dash2=t+.26}
+  if(TRY.dash2&&t>=TRY.dash2){TRY.dash2=0;dash()}
+  if(n.pot&&due('pot',3.4))trPotion();
+  // la corsa: un ottagono intorno al punto di partenza, sempre in movimento
+  if(n.run){const an=Math.floor((t-TRY.t0)/.45)%8*Math.PI/4,c=Math.cos(an),sn=Math.sin(an);keys.KeyD=c>.3;keys.KeyA=c<-.3;keys.KeyS=sn>.3;keys.KeyW=sn<-.3}
+  trTryRefill();const u=TRY.loop?null:document.querySelector('#trTry u');if(u)u.style.transform=`scaleX(${Math.max(0,1-TRY.t/TRY.dur).toFixed(3)})`;
+  if(!TRY.loop&&TRY.t>=TRY.dur)trTryEnd()}
+// la fine: il salvataggio com'era (rimesso dentro gli stessi oggetti, così chi li tiene in mano non resta indietro), il menu, l'albero
+function trRestore(d,s){for(const k of Object.keys(d))if(!(k in s))delete d[k];
+  for(const k in s){const a=d[k],b=s[k];if(a&&b&&typeof a==='object'&&typeof b==='object'&&Array.isArray(a)===Array.isArray(b)){if(Array.isArray(a)){a.length=0;for(const x of b)a.push(x)}else trRestore(a,b)}else d[k]=b}}
+function trTryEnd(){if(!TRY.on)return;const id=TRY.id,b=TRY.b,loop=TRY.loop;TRY.on=false;TRY.dash2=0;keys.KeyA=keys.KeyD=keys.KeyW=keys.KeyS=false;
+  if(TRY.snap){try{trRestore(SAVE,JSON.parse(TRY.snap))}catch(err){trErr(err)}TRY.snap=null}
+  trTryHud();try{if(G){G.ended=true;G.enemies=[];G.eproj=[];G.arrows=[]}document.querySelectorAll('#skScr,#cnRel,#revScr,#endScr,#pauseScr').forEach(q=>{if(q)q.hidden=true});modal=false;showMenu();save()}catch(err){trErr(err)}
+  if(!loop)setTimeout(()=>{try{trOpen();trSel(id,false);TRM.s=5;TRM.b=b;trPaint();trPanel()}catch(err){trErr(err)}},60)}
+// l'etichetta in alto: «Prova · abilità», la mossa, il tempo che resta, «Fine»
+function trTryHud(){let el=$('trTry');if(!TRY.on||TRY.loop){if(el)el.hidden=true;return}trCss();
+  if(!el){el=document.createElement('div');el.id='trTry';$('wrap').appendChild(el)}const D=TRD[TRY.id],q=D.s[4][TRY.b],s=SK.find(x=>x.id===TRY.id);
+  el.style.setProperty('--ar',trRgb(D.c));el.innerHTML=`<div class="trTyL"><small>Prova · ${s?s.n:TRY.id}</small><b>★ ${q.n}</b><i><u></u></i></div><button class="trTyX">Fine</button>`;el.hidden=false;
+  el.querySelector('.trTyX').onclick=e=>{e.stopPropagation();sfx('ui');trTryEnd()}}
+{const _u=update;update=function(dt){const r=_u.apply(this,arguments);if(TRY.on)try{trTryTick(dt)}catch(err){trErr(err)}return r}}
+// mentre si prova: niente livelli nuovi, l'eroe che non cade, i nemici che tornano, niente scritture, missioni e traguardi; uscire dalla
+// partita (pausa) chiude la prova senza premi
+{const _g=gainXp;gainXp=function(){if(TRY.on)return;return _g.apply(this,arguments)}}
+{const _k=killE;killE=function(){const r=_k.apply(this,arguments);if(TRY.on)try{trTryRefill()}catch(err){trErr(err)}return r}}
+{const _h=hurtP;hurtP=function(d){if(TRY.on&&P){const n=trTryNeed();if(n.low||n.safe)return;if(P.hp-(d||0)<=1)P.hp=P.maxhp}return _h.apply(this,arguments)}}
+{const _d=die;die=function(){if(TRY.on&&P){P.hp=P.maxhp;return}return _d.apply(this,arguments)}}
+{const _s=save;save=function(){if(TRY.on)return;return _s.apply(this,arguments)}}
+{const _m=mprog;mprog=function(){if(TRY.on)return;return _m.apply(this,arguments)}}
+{const _c=checkAch;checkAch=function(){if(TRY.on)return;return _c.apply(this,arguments)}}
+{const _e=endRun;endRun=function(){if(TRY.on){trTryEnd();return}return _e.apply(this,arguments)}}
+

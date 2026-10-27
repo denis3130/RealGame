@@ -370,6 +370,25 @@ const SOLO=process.argv[2]||'';
       pips:$('trScr').querySelectorAll('.trA.sel i b.on').length,btn:$('trScr').querySelector('.trBtn').textContent.trim(),pill:!$('trScr').querySelector('.trRf').hidden,busy:!!TRM.rfO})`);
     ok('rimborsato: i passi si spengono uno alla volta, tutto l\'oro torna (40 + 3.850), 25 cristalli in meno, l\'albero di nuovo da comprare',
       rf4.save===0&&rf4.shown>0&&rf4.shown<5&&rf4.on>0&&rf4.on<5&&rf4.gold===3890&&rf4.gems===35&&rf5.lv===0&&!rf5.has&&rf5.gold===3890&&rf5.gems===35&&rf5.txt==='3.890'&&rf5.on===0&&rf5.pips===0&&/Sblocca · 100/.test(rf5.btn)&&!rf5.pill&&!rf5.busy,JSON.stringify({rf4,rf5}));
+    // «Prova»: the legendary move in a little room without buying it; «Fine» and the time running out bring back to the tree; the save as it was
+    await E(`(()=>{window.__dif=(a,b,p,o)=>{o=o||[];if(o.length>8)return o;if(a===b)return o;if(typeof a!=='object'||typeof b!=='object'||!a||!b){o.push(p);return o}
+      for(const k of new Set([...Object.keys(a),...Object.keys(b)]))if(k!=='_seen')__dif(a[k],b[k],p+'.'+k,o);return o};
+      trSel('ice',false);TRM.s=5;TRM.b=0;trPaint();trPanel();window.__sv=JSON.parse(JSON.stringify(SAVE));window.__n0=TR_LEGN.ice0||0;return 0})()`);await W(200);
+    const tb=await J(`({btn:!!$('trScr').querySelector('.trBtn.try'),row:!!$('trScr').querySelector('.trRowT'),lv:trLv('ice'),
+      out:[...$('trScr').querySelectorAll('.trRowT .trBtn')].filter(b=>b.scrollWidth>b.clientWidth+1).length})`);
+    await p.click('#trScr .trBtn.try');await W(2500);
+    const ty1=await J(`({on:TRY.on,started,menu:!$('menu').hidden,tree:!$('trScr').hidden,hud:!$('trTry').hidden,name:$('trTry').textContent,lv:trLv('ice'),
+      skills:Object.keys(P.skills),foes:G.enemies.filter(e=>!e.dead).length,still:G.enemies.every(e=>e.trStun>1e5),cnA:G.cnA,inc:!!G.cnInc,n:(TR_LEGN.ice0||0)-__n0})`);await snap('albero_prova');
+    await p.click('#trTry .trTyX');await W(900);
+    const ty2=await J(`({on:TRY.on,started,menu:!$('menu').hidden,tree:!$('trScr').hidden,sel:TRM.id,s:TRM.s,b:TRM.b,hud:!!$('trTry')&&!$('trTry').hidden,lv:trLv('ice'),dif:__dif(__sv,JSON.parse(JSON.stringify(SAVE)),'SAVE')})`);
+    ok('«Prova» sul passo V: la stanzetta con la mossa senza comprarla (Tormenta), nemici fermi, «Fine» torna all\'albero sul passo V, il salvataggio com\'era',
+      tb.btn&&tb.row&&tb.out===0&&tb.lv===0&&ty1.on&&ty1.started&&!ty1.menu&&!ty1.tree&&ty1.hud&&/Tormenta/.test(ty1.name)&&ty1.lv===5&&ty1.skills.includes('ice')&&ty1.foes===5&&ty1.still&&ty1.cnA==null&&!ty1.inc&&ty1.n>0&&
+      !ty2.on&&!ty2.started&&ty2.menu&&ty2.tree&&ty2.sel==='ice'&&ty2.s===5&&ty2.b===0&&!ty2.hud&&ty2.lv===0&&!ty2.dif.length,JSON.stringify({tb,ty1,ty2}));
+    // the time runs out by itself; a hit-type move (Contrattacco) gets its hits; the save written during the practice is not touched
+    await E(`(()=>{trSel('rear',false);TRM.s=5;TRM.b=1;trPaint();trPanel();window.__n1=TR_LEGN.rear1||0;window.__ls=localStorage.getItem(SAVE_KEY);return 0})()`);await p.click('#trScr .trBtn.try');await W(3500);
+    const ty3=await J(`({on:TRY.on,n:(TR_LEGN.rear1||0)-__n1,ls:localStorage.getItem(SAVE_KEY)===__ls})`);await E(`(()=>{TRY.t=TRY.dur-.05;return 0})()`);await W(1200);
+    const ty4=await J(`({on:TRY.on,tree:!$('trScr').hidden,sel:TRM.id,b:TRM.b,lv:trLv('rear'),dif:__dif(__sv,JSON.parse(JSON.stringify(SAVE)),'SAVE')})`);
+    ok('la prova finisce da sola dopo 12 secondi; il Contrattacco coi suoi colpi presi; mentre si prova non si scrive il salvataggio',ty3.on&&ty3.n>0&&ty3.ls&&!ty4.on&&ty4.tree&&ty4.sel==='rear'&&ty4.b===1&&ty4.lv===0&&!ty4.dif.length,JSON.stringify({ty3,ty4}));
     // the menu on the other phones: everything inside, the tree whole on 430×932
     for(const [w,h] of [[430,932],[390,844],[360,640]]){await p.setViewportSize({width:w,height:h});await W(400);
       const L=await J(`(()=>{const el=$('trScr'),t=el.querySelector('.trTree'),pr=el.querySelector('.trP').getBoundingClientRect();return{scroll:t.scrollHeight-t.clientHeight,panel:pr.bottom<=innerHeight+.5,

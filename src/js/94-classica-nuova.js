@@ -15,6 +15,10 @@ const CN={on:true,next:null,last:null,fx:[],err:0,sel:0,sub:null,bub:[],lances:[
 function cnS(){const S=SAVE.cn||(SAVE.cn={});S.stars=S.stars||{};S.relics=S.relics||{};S.tower=S.tower||{};S.rush=S.rush||{};S.best=S.best||{};S.nem=S.nem||[];S.nemOut=S.nemOut||[];S.bossGold=S.bossGold||{};S.br=S.br||{};S.inc=S.inc||{};
   if(!S.brv){S.brv=1;for(const k in S.stars)if(S.stars[k]&1)S.br[k]=cnBrNeed(+k)}   // the islands an older preview had opened stay open (their bridge is built)
   if(S.brv<2){S.brv=2;for(const k in S.br)if(S.br[k]>=CN_BRN0[Math.min(2,Math.floor((+k+1)/4))])S.br[k]=Math.max(S.br[k],cnBrNeed(+k))}   // a bridge finished with the old lengths stays finished
+  // the saves of the game before the islands: the arenas the trophies had opened stay open (their bridges built, their braziers lit) and
+  // the hero stands on the last one; «apri tutte le arene» is only in the preview (anteprime/mk_classica.py sets MB_ANTEPRIMA)
+  if(!S.mig){S.mig=1;const top=arenaIdx(Math.max(SAVE.trBest||0,SAVE.trophies||0));for(let k=0;k<top;k++){S.br[k]=Math.max(S.br[k]||0,cnBrNeed(k));S.stars[k]=(S.stars[k]|0)|1}if(top&&S.pick==null)S.pick=top}
+  if(S.all&&!window.MB_ANTEPRIMA)S.all=0;
   return S}
 const cnErr=err=>{if(CN.err++<6)console.error('classica nuova:',err)};
 const cnBoss=i=>ARENAS[i].bt||BOSSZ[ARENAS[i].boss]||'golem';
@@ -543,13 +547,13 @@ function cnMapRender(){const el=$('cnMapIn'),S=cnS();if(CN.sub==='tower')return 
       <button class="cnMode" data-sub="rush" style="--mc:#e5484d">${cnIco('crown')}<b>Corsa dei boss</b><small>${RL?RL+' custodi':'Chiusa'}</small></button>
       <button class="cnMode" data-sub="rel" style="--mc:#ffc93c">${cnRelIco('stella')}<b>Reliquie</b><small>${found} di ${CN_REL.length}</small></button>
       <button class="cnMode" data-sub="nem" style="--mc:#c0392b">${cnIco('poster')}<b>Ricercati</b><small>${S.nem.length?S.nem.length+' ti cercano':'Nessuno'}</small>${S.nem.length?`<i class="cnBadge">${S.nem.length}</i>`:''}</button></div>
-    <label class="cnAll"><input type="checkbox" ${S.all?'checked':''}> Solo nell'anteprima: apri tutte le arene</label>`;
+    ${window.MB_ANTEPRIMA?`<label class="cnAll"><input type="checkbox" ${S.all?'checked':''}> Solo nell'anteprima: apri tutte le arene</label>`:''}`;
   if(top!=null)el.querySelector('.cnPath').scrollTop=top;
   el.querySelector('.cnX').onclick=()=>{sfx('ui');cnMapClose()};
   el.querySelectorAll('.cnN').forEach(n=>n.onclick=()=>{CN.sel=+n.dataset.a;sfx('ui');cnMapRender()});
   const pl=el.querySelector('.cnPlay');if(pl)pl.onclick=()=>{S.pick=a;save();$('cnMap').hidden=true;renderChap();goPlay('arena')};
   el.querySelectorAll('.cnMode').forEach(m=>m.onclick=()=>{CN.sub=m.dataset.sub;sfx('ui');cnMapRender();el.scrollTop=0});
-  el.querySelector('.cnAll input').onchange=e=>{S.all=e.target.checked;save();cnMapRender()}}
+  const ca=el.querySelector('.cnAll input');if(ca)ca.onchange=e=>{S.all=e.target.checked;save();cnMapRender()}}
 function cnSubHead(t){return`<header class="cnHd"><button class="cnX" aria-label="Indietro">‹</button><h2>${t}</h2><span></span></header>`}
 function cnSubWire(el){el.querySelector('.cnX').onclick=()=>{sfx('ui');CN.sub=null;cnMapRender()};const g=el.querySelector('.cnGo');if(g)g.onclick=()=>{CN.next=g.dataset.go;$('cnMap').hidden=true;goPlay('arena')}}
 function cnTowerRender(el){const wk=cnWeek(),mods=cnTowerMods(),T=cnS().tower,best=T.wk===wk?T.best||0:0,ms=((wk+1)*7-3)*864e5-Date.now();
