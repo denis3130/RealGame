@@ -366,7 +366,9 @@ se lontani (salvo le barriere che li chiamano), fumo e foglie solo vicino allo s
   `tests/fluido.js` come in `piano-maestro`. Per ripubblicare: unire `piano-maestro` in `gioco` (merge, mai rebase), `python3 build.py`, le
   prove, poi `python3 app/mk_claude.py index.html <cartella>` e `python3 app/mk_app.py --pubblica` dal ramo `gioco` (lo script accetta
   `piano-maestro` e `gioco`). Il lavoro sulla mappa zombie più fluida (sotto, FASE 9) sta solo in `piano-maestro`: va tolto anche quello
-  finché Denis non dice sì. Quando la approva, si torna a pubblicare da `piano-maestro`.
+  finché Denis non dice sì. Quando la approva, si torna a pubblicare da `piano-maestro`. **Dal 27 ottobre `piano-maestro` ha in più il ponte grande** (commit
+  b3dc40e, «Il ponte grande» nella sezione della Classica nuova), non ancora approvato da Denis: il gioco pubblicato e l'app sono fermi a
+  026beb1 del ramo `gioco`; quando Denis dice sì, si unisce `piano-maestro` in `gioco` e si ripubblica come sempre.
 - **Ramo `classica-nuova`** (20–27 ottobre): l'anteprima della Classica nuova; il 27 ottobre (Denis: «Tutto nel gioco») unito a
   `piano-maestro` (merge 9b47c47) e da lì nel gioco e nell'app. La pagina https://claude.ai/artifact/K6E5QMv5pxKkt61MCFJsba resta per
   provare le cose nuove (`mk_classica.py` ora le aggiunge solo se il gioco non le ha già: col gioco di oggi è il gioco com'è, più la
