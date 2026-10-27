@@ -5,7 +5,72 @@ delle coppe con le arene», poi «ok creami le cose che mi hai elencato su una c
 `classica-nuova` (da `piano-maestro`); il gioco vero non cambia: `src/js/94-classica-nuova.js` **non** è in `src/ordine.txt`. Pagina:
 `python3 anteprime/mk_classica.py [--build]` → `anteprime/classica.html` (parte con un salvataggio suo, già dopo la creazione dell'eroe),
 pubblicata su https://claude.ai/artifact/K6E5QMv5pxKkt61MCFJsba («Mossbound · Classica nuova»: si aggiorna ripubblicando
-`anteprime/classica.html`). Prova: `python3 anteprime/mk_classica.py --test --build && node tests/classica.js [menu|stanze|furia|rarita|evo|nemesi|torre|corsa|ondate|trappole|3d|ponte]`.
+`anteprime/classica.html`). Prova: `python3 anteprime/mk_classica.py --test --build && node tests/classica.js [menu|stanze|furia|rarita|evo|nemesi|torre|corsa|ondate|trappole|3d|ponte|fontana|cristallo|albero]`.
+
+## Il ponte sospeso di assi, il rimborso, le mosse leggendarie (26–27 ottobre)
+
+Denis, sui progressi: «…aggiungi una specie di cosa che ha clash royale come proseguimento con le coppe, ma in questo caso saranno con le
+assi di legno che servono per costruire il ponte, il ponte deve essere fatto meglio rendilo più grande e allontana le isole di tanto l'una
+dall'altra, migliorando la posizione del ponte e l'animazione di quando si mettono nel loro apposito posto ma ancora da sbloccare»; alle
+domande: «Modifiche, poi nel gioco» (prima tutte le modifiche nell'anteprima, poi, se gli piace, tutta la Classica nuova nel gioco e
+nell'app), «Assi e premi sul ponte», «Ponte sospeso di assi», «Volano e si inchiodano»; sull'albero: «Rimborso» e «Mosse più spettacolari».
+
+**Le assi** (al posto delle pietre, stessi numeri): 2 per ogni stanza o piano superato, 20 per il custode (una vittoria 40), l'Incubo
+niente; ponti da 100 a 200 (+10 a isola, `cnBrNeed`); i salvataggi tengono le pietre come assi (`cnPlanks`, `cnBridgeAdd` in 94).
+
+**I premi del cammino** (come le coppe di Clash Royale): a ogni quarto del ponte un premio, preso quando le assi ci arrivano
+(`cnBrTh`, `cnBrPrize`): sulla prima roccia un sacco d'oro (120 + 40 a isola), sulla seconda cristalli (6 + 2 a isola) o Essenza di muschio
+(10 + 4 a isola) un ponte sì e uno no, sulla terza una cassa (legno, poi argento, poi oro), dove il ponte finisce una cassa migliore (argento,
+oro, poi cristallo). I premi vanno nel salvataggio alla fine della partita (la cassa in un posto libero, nel quinto o in oro se sono pieni:
+`earnChest(tipo,true)`); la fine della partita li elenca sotto il ponte («Premio del ponte: …», «Premio di fine ponte: …»). Fino a quando lo
+spettacolo non li apre, i contatori di oro e cristalli e i posti delle casse li tengono indietro (`cnPend`, `renderGold` e `renderGearRow`
+avvolti).
+
+**Il ponte sospeso** (sezione 8 di 94, `CNB`): le isole sono lontane 1000 invece di 380 (`CNI_GAP`), con la prospettiva vera e la nebbia
+del cielo in lontananza (`cnIslHaze`); il ponte parte da un portale di tronchi con due lanterne sull'isola (`cnBrPortal`), passa su tre rocce
+che galleggiano nell'abisso (ognuna col suo palo e la lanterna, il premio sopra: sacco, cristalli, vasetto d'essenza, cassa che apre il
+coperchio) e arriva ai due tronchi dell'isola dopo (`cnBrStumps`); quattro campate uguali di 10 assi disegnate ciascuna (ogni asse disegnata vale un quarantesimo del ponte) appese alle
+funi con la pancia (`cnBrGeo`, `cnBrSpan`, `cnRope`), le assi in 3D con le venature, i chiodi e il bordo illuminato (`cnPlankDraw`), quelle che mancano
+appena accennate (`cnPlankGhost`). Dipinto una volta a telecamera ferma (`cnBrBake`), dal vivo mentre il dito trascina o durante lo
+spettacolo. L'eroe ci cammina sopra seguendo la pancia delle funi (`cnRoute`, `cnDeckZ`).
+
+**Lo spettacolo** (`cnBrShow*`): tornato dalla partita, l'eroe col sacco delle assi sulle spalle (`cnSackBack`) va fin dove arriva il ponte;
+ogni asse vola dal sacco al suo posto e lui la inchioda (`CN_SHOW`: volo 0,2 s, posa, chiodo 0,22 s; più svelto quando le assi sono tante);
+quando le assi raggiungono un premio la telecamera ci si ferma, il premio salta fuori (`cnPrizeOut`; la cassa vola al suo posto sotto l'eroe,
+`cnChestFly`) e i contatori si muovono; finito il ponte, l'isola dopo esce dal buio e si accende e lui ci passa. Un tocco finisce subito lo
+spettacolo (tutto al suo posto), e lo finiscono anche «Gioca», il cambio di modalità e una partita nuova.
+
+**La telecamera e il dito**: si ferma su ogni roccia (`cnIslStops`: l'isola, le tre rocce, l'isola dopo), dove la scritta dice la roccia,
+il premio e quante assi mancano (`cnRockText`); trascinando piano si ferma sulla fermata più vicina, un colpo di dito va all'isola dopo
+(`cnIslSettle`, la velocità degli ultimi 100 ms); dalle rocce «Gioca» gioca l'isola dell'eroe. Un tocco su un premio dice cos'è.
+
+**Il rimborso dell'albero** (96): nell'angolo in alto a destra dell'albero, quando l'abilità ha dei passi, «↺ Rimborsa»; la domanda sta nel
+riquadro sotto (niente finestre del telefono): «Ti ridà tutto l'oro, 3.850: i 5 passi tornano chiusi e l'oro lo spendi dove vuoi», «Annulla»
+e «Rimborsa · 25 cristalli» (5 cristalli a passo, `TR_RF`); senza cristalli il bottone trema e la riga sotto dice quanti ne mancano, e non
+cambia niente. Rimborsando i passi si spengono uno alla volta dal V al I (`trView`: l'albero mostra lo stato che si spegne, il salvataggio è
+già a zero), la luce risale i fili, le monete di ogni passo volano al contatore che sale quando arrivano, un accordo che scende; poi l'albero è
+di nuovo da comprare dal passo I (`trRefund`).
+
+**Le mosse leggendarie più spettacolari** (sezione 5 di 96): ognuna delle 46 ha il **suo suono** fatto col codice (`TRSN`, mai troppo spesso:
+la squilla della Salva del capitano, la campana della Stella a otto punte, il boato del Titano, le note che salgono a ogni salto del Rimbalzo
+infinito, il tac sempre più acuto di Trapassa tutto, il vento che ulula della Tormenta, il cuore che batte della Frenesia, l'accordo cupo del
+Patto della luna…), **le sue luci** più grandi (anelli di luce a terra, raggi, colonne di luce, segni a stella sul pavimento, crepe che
+brillano dietro la Freccia del titano e intorno ai Passi di tuono, la X del Colpo di grazia, la statua di ghiaccio, i cuori della Festa, la
+corteccia, gli esagoni dello Scudo di lame, le rune sui muri, il velo azzurro della Tormenta e il buio del Temporale con i lampi) e le frecce
+delle mosse più grandi con la loro scia (lance, boomerang con gli archi d'oro, comete, salve, frecce che crescono, schegge). La prima volta che
+una mossa parte in una partita il suo nome sale sopra l'eroe con la stella, del colore dell'abilità (`trLeg`). Le mosse che durano si vedono
+sull'eroe: la Frenesia batte rossa, la Corsa del vento lascia le righe del vento, sopra il Patto della luna c'è la falce di luna. Con gli
+effetti ridotti niente raggi, colonne, segni, spirali e brina (`TR_HI`); il velo è più leggero. Costo sul computer di prova: 80 luci di
+mosse insieme +9 ms a fotogramma (in partita ce ne sono poche alla volta).
+
+**La pagina delle mosse** (per vederle dal telefono senza comprare gli alberi): `python3 anteprime/mk_mosse.py` → `anteprime/mosse.html`, una
+copia del gioco con 94, 95 e 96 e un pannello «Mosse»: scegli un'abilità e una delle due mosse e la vedi in una stanza vera, coi nemici che
+tornano sempre (fermi, tranne per lo Scudo di lame che vuole i loro colpi); l'eroe non muore e, se la mossa lo chiede, la stanza lo fa colpire,
+scattare, correre, bere la pozione o stare con poca salute; «↺ Rifai» la fa ripartire. Prova `node tests/mosse.js` (ogni mossa parte nella sua
+stanza, nessun errore; foto `tests/mv_<abilità><lato>.png`).
+
+Prove: `node tests/classica.js ponte` (assi, premi, spettacolo, contatori che aspettano, tocco che lo finisce, rocce, colpo di dito),
+`node tests/classica.js albero` (anche il rimborso), `node tests/mosse.js`.
 
 ## La fontana della vita, il ponte che non vibra, le pietre (20 ottobre notte)
 
