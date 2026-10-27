@@ -64,7 +64,7 @@ effetti ridotti niente raggi, colonne, segni, spirali e brina (`TR_HI`); il velo
 mosse insieme +9 ms a fotogramma (in partita ce ne sono poche alla volta).
 
 **La pagina delle mosse** (per vederle dal telefono senza comprare gli alberi): `python3 anteprime/mk_mosse.py` → `anteprime/mosse.html`, una
-copia del gioco con 94, 95 e 96 e un pannello «Mosse»: scegli un'abilità e una delle due mosse e la vedi in una stanza vera, coi nemici che
+copia del gioco con 94, 95 e 96 (pubblicata su https://claude.ai/artifact/4nyo34y7gxJFAUuH1sb7Nz, «Mosse leggendarie») e un pannello «Mosse»: scegli un'abilità e una delle due mosse e la vedi in una stanza vera, coi nemici che
 tornano sempre (fermi, tranne per lo Scudo di lame che vuole i loro colpi); l'eroe non muore e, se la mossa lo chiede, la stanza lo fa colpire,
 scattare, correre, bere la pozione o stare con poca salute; «↺ Rifai» la fa ripartire. Prova `node tests/mosse.js` (ogni mossa parte nella sua
 stanza, nessun errore; foto `tests/mv_<abilità><lato>.png`).
