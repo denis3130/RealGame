@@ -19,6 +19,8 @@ await p.evaluate(([god,spd])=>__E(`(()=>{
  B.iv=setInterval(()=>{try{
   if(!$('endScr').hidden&&!B.done){B.done=true;B.end={title:$('endTitle').textContent,text:$('endText').textContent,room:G.room,lvl:P.lvl,kills:G.kills,gold:G.gold,mode:G.mode,ch:G.chapter};return}
   if(B.done)return;
+  if($('cnRel')&&!$('cnRel').hidden){const c=document.querySelector('#cnRel .cnRelC');if(c){B.log.push('reliquia');c.click()}return}
+  if(!$('skScr').hidden&&typeof CN!=='undefined'&&CN.revEnd&&performance.now()<CN.revEnd)return;
   if(!$('skScr').hidden){if(skMode==='shop'){const k=offer.findIndex((s,i)=>!G.shopSold[s.id]&&G.gold>=G.shopOffer[i].price);if(k>=0&&Math.random()<.5)pick(k);else closeSkills()}else pick(randi(0,offer.length-1));B.log.push('skill '+P.lvl);return}
   if(!$('whScr').hidden){if(!WH.spin)$('whGo').click();return}
   if(!$('revScr').hidden){B.log.push('revive screen');(Math.random()<.5&&SAVE.gems>=REV_COST?$('rvYes'):$('rvNo')).click();return}

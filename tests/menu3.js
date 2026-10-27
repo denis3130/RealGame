@@ -28,6 +28,6 @@ for(const [w,h] of [[390,844],[360,640]]){
  await E(`document.querySelectorAll('#whScr,#chestScr').forEach(e=>e.hidden=true);CHbusy=false;setTab('tabPlay')`);
  // tap every button of the home and of the side columns
  const n=await E(`[...document.querySelectorAll('#tabPlay button,#tabPlay [role=button],#topbar button')].filter(b=>b.offsetWidth&&b.id!=='playBtn').length`);
- for(let i=0;i<n;i++){await E(`(()=>{document.querySelectorAll('#sheetScr,#itemScr,#whScr,#chestScr').forEach(e=>e.hidden=true);SHEET=null;CHbusy=false;setTab('tabPlay');const L=[...document.querySelectorAll('#tabPlay button,#tabPlay [role=button],#topbar button')].filter(b=>b.offsetWidth&&b.id!=='playBtn');if(L[${i}])L[${i}].click()})()`);await p.waitForTimeout(250)}
+ for(let i=0;i<n;i++){await E(`(()=>{document.querySelectorAll('#sheetScr,#itemScr,#whScr,#chestScr,#trScr,#cnMap,#cnPremi').forEach(e=>e&&(e.hidden=true));SHEET=null;CHbusy=false;setTab('tabPlay');const L=[...document.querySelectorAll('#tabPlay button,#tabPlay [role=button],#topbar button')].filter(b=>b.offsetWidth&&b.id!=='playBtn');if(L[${i}])L[${i}].click()})()`);await p.waitForTimeout(250)}
  await p.close()}
 console.log('ERRORS',JSON.stringify(errs,null,1));await b.close()})();

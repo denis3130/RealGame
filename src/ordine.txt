@@ -150,4 +150,7 @@ js/89-piovra-nuova.js
 js/89-cervo-nuovo.js
 js/93-colpi-unici.js
 js/101-contatore.js
+js/94-classica-nuova.js
+js/95-ostacoli-3d.js
+js/96-albero-abilita.js
 coda.html
