@@ -241,6 +241,14 @@ l'anello del colore del premio. Con questa telecamera le funi e i cavi vicini pa
 cose nuove stanno un po' fuori dal ponte e il lato destro si disegna dopo i cavi. Note in `docs/classica-nuova.md` («Il ponte più bello»).
 Nell'anteprima della Classica; nel gioco dopo il sì di Denis.
 
+**Isole ancora più grandi e assi che si infilano da sole** (27 ottobre, Denis: «il ponte e l'isola li voglio ancora più grandi, e fai in modo
+che il pg non costruisca il ponte ma le assi si infilano da sole»): la telecamera più vicina (`CNI_WIDE` 1, `CNI_UPN` 260, l'isola un poco più
+in basso: sul 390×763 di Denis isola e ponte +25%, sul 390×844 +16%); nello **spettacolo** l'eroe aspetta sulla sua isola e le assi arrivano
+volando da sole una dopo l'altra e si infilano al loro posto (chiodi da soli, il colpo del legno che sale di nota), la telecamera segue il
+fronte, si ferma sui balconi coi premi, a ponte finito va sull'isola dopo che si accende e l'eroe ci corre, altrimenti torna da lui
+(`cnBrShowStep`, `cnBrFlyLive`, `cnBrShowCam`, `cnBrShowEnd(true)`). Note in `docs/classica-nuova.md` («Lo spettacolo», «Isole ancora più
+grandi»). Nell'anteprima della Classica; nel gioco dopo il sì di Denis.
+
 ## FASE 9: più fluido sul telefono (19 ottobre, in corso)
 
 Denis: «vai, lascia perdere l'intro ecc» (la FASE 9 subito; intro, prologo e filmati non si toccano). Il gioco più fluido sul suo iPhone

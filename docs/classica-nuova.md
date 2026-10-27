@@ -66,11 +66,23 @@ niente cambia (il ponte è un'immagine copiata); dal vivo (col dito, nello spett
 colpo di dito, dello spettacolo e della pillola «Incubo» nell'anteprima ora aspettano che la cosa finisca invece di un tempo fisso: il browser
 delle prove disegna un fotogramma in 40–100 ms e il tempo del gioco avanza al massimo di 1/30 di secondo a fotogramma.
 
-**Lo spettacolo** (`cnBrShow*`): tornato dalla partita, l'eroe col sacco delle assi sulle spalle (`cnSackBack`) va fin dove arriva il ponte;
-ogni asse vola dal sacco al suo posto e lui la inchioda (`CN_SHOW`: volo 0,2 s, posa, chiodo 0,22 s; più svelto quando le assi sono tante);
-quando le assi raggiungono un premio lui si gira verso il balcone a sinistra, il premio salta fuori (`cnPrizeOut`; la cassa vola al suo posto sotto l'eroe,
-`cnChestFly`) e i contatori si muovono; finito il ponte, l'isola dopo esce dal buio e si accende e lui ci passa. Un tocco finisce subito lo
-spettacolo (tutto al suo posto), e lo finiscono anche «Gioca», il cambio di modalità e una partita nuova.
+**Lo spettacolo** (`cnBrShow*`; dal 27 ottobre, Denis: «fai in modo che il pg non costruisca il ponte ma le assi si infilano da sole»; prima
+l'eroe portava il sacco sul ponte e inchiodava ogni asse): tornato dalla partita, l'eroe aspetta sulla sua isola e le assi vanno al ponte da
+sole, una dopo l'altra (`CN_SHOW`: volo 0,42 s, una ogni 0,11 s, assestamento 0,3 s; fino alla metà più svelte quando le assi sono tante):
+ognuna arriva volando bassa dalla sua isola sopra quelle già posate, girandosi, con una lucina che la segue, e si infila al suo posto
+(`cnBrFlyLive`); si assesta, polvere, i chiodi entrano da soli con una scintilla, il colpo del legno sale di nota a ogni asse fino al balcone
+dopo. La telecamera segue il fronte del lavoro (`cnBrShowCam`). Quando le assi arrivano a un balcone si fermano, la telecamera lo inquadra e
+il premio salta fuori (`cnPrizeOut`; la cassa vola al suo posto sotto l'eroe, `cnChestFly`) e i contatori si muovono, poi le assi riprendono;
+finito il ponte la telecamera va sull'isola dopo, che esce dal buio e si accende (col premio di fine ponte), e l'eroe ci corre: entra nella
+scena dove sta la telecamera e lei lo segue (`cnBrShowEnd(true)`); se il ponte non è finito la telecamera torna da lui. Un tocco finisce
+subito lo spettacolo (tutto al suo posto), e lo finiscono anche «Gioca», il cambio di modalità e una partita nuova.
+
+**Isole ancora più grandi** (27 ottobre, Denis: «il ponte e l'isola li voglio ancora più grandi»): la telecamera ancora più vicina, così
+isola, ponte, eroe e custode sono più grandi insieme. L'isola può arrivare a tutta la larghezza dello schermo (`CNI_WIDE` 1 invece di 0,86)
+e a riposo sopra l'isola si vede meno ponte (`CNI_UPN` 260 invece di 420: il resto col dito); l'isola sta un poco più in basso del suo posto
+(il sasso sotto va un poco dietro la scritta «Da conquistare»), così le torri e il cartello col numero restano sotto il nome dell'arena.
+Grandezza (k): 390×763, il telefono di Denis, da 1,74 a 2,16 (+25%); 390×844 da 2,24 a 2,61 (+16%); 360×640 da 1,10 a 1,38; 430×932 da 2,24
+a 2,61.
 
 **La telecamera e il dito**: si ferma su ogni balcone (`cnIslStops`: l'isola, i tre balconi, l'isola dopo), dove la scritta dice «Premio N»,
 il premio e quante assi mancano (`cnStopNear`, `cnStopText`); trascinando piano si ferma sulla fermata più vicina, un colpo di dito va

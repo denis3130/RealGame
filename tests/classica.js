@@ -570,12 +570,15 @@ const SOLO=process.argv[2]||'';
     await arena(0);await E(`(()=>{__A.on=false;return 0})()`);await E(jump(7));await W(300);await E(`(()=>{endRun(false,true);return 0})()`);await W(700);
     const b1=await J(`({br:SAVE.cn.br[0],l:(document.querySelector('#eTr .cnBridge')||{}).textContent||'',pz:document.querySelectorAll('#eTr .cnPrizeL').length,anim:CN.brAnim&&{i:CN.brAnim.i,from:CN.brAnim.from,to:CN.brAnim.to,done:CN.brAnim.done,got:CN.brAnim.got.length},lab:$('eRoom').nextElementSibling.textContent})`);await snap('ponte_fine');
     ok('ogni stanza superata porta 2 assi al ponte (ritirata alla stanza 7: 12 assi, sette assi da posare, nessun premio)',b1.br===12&&/\+12 assi/.test(b1.l)&&/12\/100/.test(b1.l)&&!b1.pz&&b1.anim&&b1.anim.i===0&&b1.anim.from===0&&b1.anim.to===7&&!b1.anim.done&&!b1.anim.got&&b1.lab==='Stanza',JSON.stringify(b1));
-    // the show (Denis: «Volano e si inchiodano»): the hero takes the sack to the bridge, the planks fly to their places, he nails them, he goes back
-    await toMenu();await W(700);const b2=await J(`(()=>{const A=ISL.brA;return{show:!!A,i:A&&A.i,to:A&&A.to,cur:ISL.cur,anim:CN.brAnim,sack:!!A&&A.sack>0}})()`);await snap('ponte_sacco');
-    ok('nel menu l\'eroe prende il sacco delle assi e va sul ponte',b2.show&&b2.i===0&&b2.to===7&&b2.cur===0&&!b2.anim&&b2.sack,JSON.stringify(b2));
-    const seen=new Set();for(let k=0;k<70;k++){const s=await J(`(()=>{const A=ISL.brA;return A?A.ph+(A.sub?':'+A.sub:''):'fine'})()`);seen.add(s);if(s==='lay:nail'&&!seen.has('foto')){seen.add('foto');await snap('ponte_inchioda')}if(s==='fine')break;await W(150)}
-    const b2c=await J(`({show:!!ISL.brA,cur:ISL.cur,view:+ISL.view.toFixed(2),laid:cnBrLaidNow(0)})`);
-    ok('le assi volano dal sacco al loro posto, lui le inchioda una a una e torna sulla sua isola',seen.has('lay:fly')&&seen.has('lay:nail')&&seen.has('back')&&!b2c.show&&b2c.cur===0&&b2c.view===0&&b2c.laid===7,JSON.stringify({seen:[...seen],b2c}));
+    // the show (Denis: «Volano e si inchiodano», then «fai in modo che il pg non costruisca il ponte ma le assi si infilano da sole»): the planks
+    // go to the bridge by themselves, one after another, and slip into their places; the hero waits on his island, the camera comes back to him
+    await toMenu();await W(300);const b2=await J(`(()=>{const A=ISL.brA;return{show:!!A,i:A&&A.i,to:A&&A.to,cur:ISL.cur,anim:CN.brAnim,home:!!CAMP.hero&&!ISL.jump}})()`);await snap('ponte_assi');
+    ok('nel menu le assi partono da sole verso il ponte e l\'eroe resta sulla sua isola',b2.show&&b2.i===0&&b2.to===7&&b2.cur===0&&!b2.anim&&b2.home,JSON.stringify(b2));
+    const seen=new Set(),ord=[];let maxFl=0,home=true;for(let k=0;k<70;k++){const s=await J(`(()=>{const A=ISL.brA;return A?{ph:A.ph,k:A.k,fl:A.fl.length,home:!ISL.jump&&ISL.cur===A.i}:{ph:'fine'}})()`);seen.add(s.ph);
+      if(s.ph!=='fine'){ord.push(s.k);maxFl=Math.max(maxFl,s.fl);home=home&&s.home;if(s.fl&&!seen.has('foto')){seen.add('foto');await snap('ponte_volano')}}if(s.ph==='fine')break;await W(120)}
+    for(let w=0;w<20&&await J(`Math.abs(ISL.view)>.002`);w++)await W(150);
+    const b2c=await J(`({show:!!ISL.brA,cur:ISL.cur,view:+ISL.view.toFixed(2),laid:cnBrLaidNow(0),jump:!!ISL.jump})`);
+    ok('le assi volano una dopo l\'altra e si infilano al loro posto da sole (l\'eroe resta sulla sua isola), poi la telecamera torna da lui',seen.has('lay')&&maxFl>0&&home&&ord.every((v,j)=>!j||v>=ord[j-1])&&!b2c.show&&b2c.cur===0&&b2c.view===0&&b2c.laid===7&&!b2c.jump,JSON.stringify({seen:[...seen],maxFl,ord,home,b2c}));
     // three victories: the prizes of the balconies and of the end of the bridge (12+40+40+40 → 100); the bridge finished
     await E(`(()=>{SAVE.trophies=ARENAS[1].t-5;delete SAVE.arenaUp;return 0})()`);
     const gb=await J(`({gold:SAVE.gold,gems:SAVE.gems})`),ends=[];
@@ -586,10 +589,11 @@ const SOLO=process.argv[2]||'';
       ends[1].br===92&&ends[1].pz.length===1&&/^Premio del ponte: Cassa di legno/.test(ends[1].pz[0])&&ends[2].br===100&&ends[2].pz.length===1&&/^Premio di fine ponte: Cassa d'argento/.test(ends[2].pz[0]),JSON.stringify({gb,ends}));
     const b3=await J(`({br:SAVE.cn.br[0],pick:SAVE.cn.pick,up:SAVE.arenaUp==null,tr:SAVE.trophies>=ARENAS[1].t,l:(document.querySelector('#eTr .cnBridge')||{}).textContent||'',done:!!document.querySelector('#eTr .cnBridge.done'),op:cnOpen(1),op2:cnOpen(2)})`);await snap('ponte_finito_fine');
     ok('tre vittorie dopo: il ponte è finito, l\'isola dopo è aperta e diventa quella da giocare (le coppe non aprono più le arene)',b3.br===100&&b3.pick===1&&b3.done&&/Il ponte è finito/.test(b3.l)&&b3.op&&!b3.op2&&b3.up&&b3.tr,JSON.stringify(b3));
-    await toMenu();await W(500);const b4a=await J(`(()=>{const A=ISL.brA;return{show:!!A,done:A&&A.done,from:A&&A.from,cur:ISL.cur,dark:!cnOpenShown(1),hidden:A?A.pend.slots.length:-1}})()`);
+    await toMenu();await W(500);const b4a=await J(`(()=>{const A=ISL.brA;ISL.dust=null;return{show:!!A,done:A&&A.done,from:A&&A.from,cur:ISL.cur,dark:!cnOpenShown(1),hidden:A?A.pend.slots.length:-1}})()`);
     let lit=false;for(let k=0;k<70;k++){const s=await J(`(()=>{const A=ISL.brA;return A?{ph:A.ph,lit:A.lit}:null})()`);if(s&&s.lit&&!lit){lit=true;await W(500);await snap('ponte_finito_isola')}if(!s)break;await W(150)}
-    const b4=await J(`({show:!!ISL.brA,cur:ISL.cur,view:+ISL.view.toFixed(2),hid:[...document.querySelectorAll('#homeGear [data-ps]')].filter(e=>e.style.visibility==='hidden').length})`);await snap('ponte_finito');
-    ok('a ponte finito l\'eroe posa le ultime assi, l\'isola dopo esce dal buio, la cassa vola al suo posto e lui ci passa',b4a.show&&b4a.done&&b4a.from===58&&b4a.cur===0&&b4a.dark&&lit&&!b4.show&&b4.cur===1&&b4.view===1&&b4.hid===0,JSON.stringify({b4a,lit,b4}));
+    for(let w=0;w<30&&await J(`!!ISL.jump||Math.abs(ISL.view-1)>.002`);w++)await W(150);const run=await J(`!!ISL.dust&&ISL.dust.i===1`);   // (he landed there running)
+    const b4=await J(`({show:!!ISL.brA,cur:ISL.cur,view:+ISL.view.toFixed(2),hid:[...document.querySelectorAll('#homeGear [data-ps]')].filter(e=>e.style.visibility==='hidden').length})`);await snap('ponte_finito');b4.run=run;
+    ok('a ponte finito le ultime assi si infilano da sole, l\'isola dopo esce dal buio, la cassa vola al suo posto e l\'eroe ci corre',run&&b4a.show&&b4a.done&&b4a.from===58&&b4a.cur===0&&b4a.dark&&lit&&!b4.show&&b4.cur===1&&b4.view===1&&b4.hid===0,JSON.stringify({b4a,lit,b4}));
     // the counters wait for the prizes until they open; a tap ends the show at once
     await E(`(()=>{const S=cnS();S.br[1]=20;G.cnInc=false;G.cnTw=null;G.room=10;cnBridgeAdd(1,true);showMenu();return 0})()`);await W(300);
     const c1=await J(`({show:!!ISL.brA,i:ISL.brA&&ISL.brA.i,held:+$('mGold').dataset.v,gold:SAVE.gold,pend:ISL.brA&&ISL.brA.pend.gold})`);
