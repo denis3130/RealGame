@@ -1054,7 +1054,7 @@ function cnIslPaint(i,K,won,op){const{V0}=K,Wd=cnIslW(i),ch=ARENAS[i].ch||1,g=cn
   // the gate of the arena: an arch of stone on two pillars, its dark mouth (the light of the arena lives in it)
   parts.push({d:D(CI_GATE),f:()=>cnIslGate(K,gx,gy,stone,ac,g,op)});
   // the gate of the bridge to the next island at the back, the stumps of the bridge from the island before at the front
-  if(ARENAS[i+1])parts.push({d:D(cnChain(cnIslRim(i,true)-6,0)),f:()=>cnBrPortal(K,i,op)});
+  if(ARENAS[i+1])parts.push({d:D(cnChain(cnIslRim(i,true)-6,0)),f:()=>cnBrPortal(K,i,op,op&&!LOWFX)});
   if(i>0)parts.push({d:D(cnChain(-cnIslRim(i,false)+6,0)),f:()=>cnBrStumps(K,i)});
   // the brazier of the fire: lit once the arena is won (the flame is alive, drawn on top); cold ash and stones before
   parts.push({d:D(CI_BRAZ),f:()=>{const B=CI_BRAZ;pRound(K,B,[[0,8.5],[3,7.5],[4,5],[12,3.8]],stone,{m:16,lw:1.6});
@@ -1201,17 +1201,23 @@ function cnIsles(dt){campResize();CAMP.t+=dt;const t=CAMP.t;if(G)G.t=t;const L=I
     const sh=L.H*.62;for(let j=0;j<70;j++){const x=(j*97.3)%L.W,y=L.top+((j*53.7+v*L.pairPx*.1)%sh+sh)%sh,tw=.35+.65*Math.abs(Math.sin(t*1.1+j*1.7));ctx.fillStyle=`rgba(255,250,230,${(tw*.55).toFixed(2)})`;ctx.fillRect(x,y,1.5*L.dpr,1.5*L.dpr)}
     if(!LOWFX){const gl=i=>cnIslW(i).light;pLight(L.cx,L.cy+CNI_R*.55*L.k*2.6,L.W*.8,f<.5?gl(i0):gl(i1),.3,L.W*.36)}
     cnIslFar(L,t,v);
+    cnFlockStep(dt,L);
+    const ice=(ARENAS[i0].ch===4?1-f:0)+(ARENAS[i1].ch===4?f:0);
+    if(!LOWFX)cnIslClouds(L,t,v);
+    cnSnow(L,t,ice,v,false);
     // the islands from the furthest to the nearest; each bridge after the island it leads to (it lies on its ground) and before the one it
     // leaves from (its foot goes under that island's edge)
     const vr=Math.round(v);
     // (the island behind you goes away as you leave it: only its bridge still comes up to yours)
-    for(let i=Math.min(ARENAS.length-1,vr+2);i>=Math.max(0,vr-1);i--){const Ai=cnIslAt(i,L,t),al=clamp(1-(v-i-.55)/.4,0,1);if(al>0&&Ai.y-160*Ai.k<L.H&&Ai.y+150*Ai.k>0){ctx.save();ctx.globalAlpha=al;cnIslDraw(i,Ai,L,t);ctx.restore()}if(i>0)cnIslBridge(i-1,L,t)}
+    for(let i=Math.min(ARENAS.length-1,vr+2);i>=Math.max(0,vr-1);i--){const Ai=cnIslAt(i,L,t),al=clamp(1-(v-i-.55)/.4,0,1);if(al>0&&Ai.y-160*Ai.k<L.H&&Ai.y+150*Ai.k>0){ctx.save();ctx.globalAlpha=al;cnIslDraw(i,Ai,L,t);ctx.restore()}cnFlockDraw(i,L,t);if(i>0)cnIslBridge(i-1,L,t)}
     cnIslHaze(L,A,B,f);
     cnIslFadeLow(L,A,B,f);
     if(cnIncView())cnIncSky(L,t,1-Math.min(1,Math.abs(v-Math.round(v))*2.2));   // fades while scrolling to an island without it
     ISL.pv=ISL.view;
+    {const gp=Math.floor((t+3)/11);if(ISL.gp!==gp){if(ISL.gp!=null&&!LOWFX&&prH(gp,5)<.66)cnBrSnd('vento');ISL.gp=gp}}
     cnIslHero(L,t);cnPlayLbl();
     if(!LOWFX)pFog(L.W,L.cy+CNI_R*.4*L.k,L.info,t,f<.5?A.fog:B.fog,.1,4,13);
+    cnSnow(L,t,ice,v,true);
     cnIslText(L,t);
     cnIslVig(L)}
   finally{ctx.setTransform(1,0,0,1,0,0);ctx=saved}}
@@ -1226,6 +1232,7 @@ function cnIslFadeLow(L,A,B,f){const y0=L.info+4*L.dpr,y1=Math.min(L.H,L.pill+30
 // the camera follows the finger, then settles on an island; while the hero walks over a bridge it goes with him
 function cnIslStep(dt,L){if(ISL.brA){try{cnBrShowStep(dt,L)}catch(err){cnErr(err);cnBrShowEnd()}return}
   const J=ISL.jump;if(J){J.t+=dt;if(J.t>=J.dur){ISL.jump=null;cnIslLand(J.b)}}
+  try{cnSwayStep(dt)}catch(err){cnErr(err);ISL.sw=null}
   if(J&&J.way&&J.ft!=null)J.fs=(J.fs==null?J.ft:J.fs)+cnAd(J.ft-(J.fs==null?J.ft:J.fs))*Math.min(1,dt*9);
   // over a bridge the camera follows him exactly: he stays where he always stands on the screen while the islands go by
   if(ISL.drag)return;if(J&&J.way){const p=cnWayAt(J.way,cnWayDD(J));ISL.view=J.way.lo+clamp((p[0]-cnIslNE(CI_HERO)[0])/CNI_GAP,0,1);return}
@@ -1235,21 +1242,206 @@ function cnIslLand(i){tone(150,80,.14,'triangle',.05);ISL.dust={i,t:0};vib([12])
 // far rocks floating in the abyss, slower than the islands (they give the depth)
 function cnIslFar(L,t,v){ctx.save();for(let j=0;j<7;j++){const s=.25+prH(j,3)*.35,x=((prH(j,1)*L.W*2.2+t*3*s)%(L.W*1.6)+L.W*1.6)%(L.W*1.6)-L.W*.3,hh=L.H*.5,y=L.top+(((prH(j,2)*hh+v*L.pairPx*s*.35)%hh)+hh)%hh,r=(18+prH(j,4)*30)*L.dpr*s;
     ctx.fillStyle=`rgba(4,6,10,${(.35+s*.5).toFixed(2)})`;ctx.beginPath();ctx.ellipse(x,y,r,r*.32,0,Math.PI,0);ctx.lineTo(x+r*.5,y+r*.5);ctx.lineTo(x,y+r*.95);ctx.lineTo(x-r*.45,y+r*.45);ctx.closePath();ctx.fill()}ctx.restore()}
+// ------------------------------------------------ the life round the islands (Denis, 27 ottobre: «manca qualcosa a parer mio», then «Vita
+// intorno»): each world alive on its island (fireflies and butterflies over the moss; embers rising, smoke and bubbles of lava in the volcano;
+// frogs on the lily pads, dragonflies and fireflies in the swamp; glints on the snow and snow falling on the ice), flocks that go by now and
+// then (swallows, little fire birds, bats, white birds), clouds drifting in the abyss under the islands and fog over the far end of the
+// bridge. All of it alive, a little of it with the effects down (LOWFX), nothing on an island still in the dark
+// a soft light that keeps the island's own fade (glow sets the alpha)
+const cnGl=(rgb,x,y,r,a,ry)=>{const a0=ctx.globalAlpha;glow(rgb,x,y,r,a*a0,ry);ctx.globalAlpha=a0};
+// is this point (island units, screen directions) on the island's top, away from its edge?
+const cnOnIsl=(sx,sy,m)=>{const a=sx/(CNI_R*CNI_SY),b=sy/CNI_R;return a*a+b*b<(m||.8)};
+function cnIslLife(i,A,L,t,ch,won){const sd=i*3.7+1.1,low=LOWFX,E=cnIslFallPt(i),S0=[E[0]*.56,E[1]*.56,0];
+  if(ch===1){cnFireflies(A,t,low?5:10,sd,'190,255,120',[12,44]);if(!low)cnButterflies(A,t,4,sd,CN_ISW[1].deco)}
+  else if(ch===2){cnLavaBubbles(A,t,S0,low?1:3,sd);cnSmoke(A,t,IP(64,-66,38),low?3:6,sd);cnEmbers(A,t,low?7:16,sd,S0,IP(64,-66,38))}
+  else if(ch===3){cnFrogs(i,A,t,S0,sd);cnFireflies(A,t,low?6:12,sd+5,'235,255,110',[8,34]);if(!low)cnDragonflies(A,t,S0,2,sd)}
+  else{cnGlints(A,t,low?4:10,sd)}}
+// fireflies wandering over the island, each lighting up and going out by itself (zr: how high they fly)
+function cnFireflies(A,t,n,sd,rgb,zr){const k=A.k;ctx.save();ctx.globalCompositeOperation='lighter';
+  for(let j=0;j<n;j++){const h=q=>prH(j,sd+q),sx=(h(1)-.5)*210+Math.sin(t*(.21+h(2)*.2)+h(3)*6)*26+Math.sin(t*.53+j)*8,sy=(h(4)-.5)*130+Math.cos(t*(.17+h(5)*.18)+h(6)*6)*18;
+    if(!cnOnIsl(sx,sy,.95))continue;const z=zr[0]+h(7)*(zr[1]-zr[0])+Math.sin(t*(.8+h(8))+j)*5,b=Math.max(0,Math.sin(t*(.9+h(9)*.8)+h(10)*9)),a=b*b;if(a<.03)continue;
+    const q=cnIslS(A,IP(sx,sy,z));if(!LOWFX)cnGl(rgb,q[0],q[1],15*k,.7*a);ctx.fillStyle=`rgba(${rgb},${(.9*a).toFixed(2)})`;ctx.beginPath();ctx.arc(q[0],q[1],2.3*k,0,TAU);ctx.fill();
+    ctx.fillStyle=`rgba(255,255,225,${a.toFixed(2)})`;ctx.beginPath();ctx.arc(q[0],q[1],1.3*k,0,TAU);ctx.fill()}
+  ctx.restore()}
+// butterflies over the flowers: two pairs of wings that beat (now and then held up, gliding), a little body, drifting along a wandering path
+// and turning where it goes; in the island's own 3D (the monsters' camera)
+function cnButterflies(A,t,n,sd,cols){const V0=cnV();ctx.save();ctx.translate(A.x,A.y);ctx.scale(A.k,A.k);
+  for(let j=0;j<n;j++){const h=q=>prH(j,sd+20+q),f1=.23+h(1)*.15,f2=.19+h(2)*.12,
+      P=u=>[(h(3)-.5)*150+Math.sin(u*f1+h(4)*6)*34,(h(5)-.5)*90+Math.sin(u*f2*1.3+h(6)*6)*24,22+h(7)*14+Math.sin(u*1.7+j)*4],p=P(t),p2=P(t+.12);
+    if(!cnOnIsl(p[0],p[1],1))continue;
+    const c=IP(p[0],p[1],p[2]),c2=IP(p2[0],p2[1],p2[2]),dir=C3.nrm([c2[0]-c[0]+1e-4,c2[1]-c[1],0]),sdv=[-dir[1],dir[0],0],
+      glide=Math.sin(t*.6+j*2.3)>.55,beat=glide?.75:.5+.5*Math.sin(t*(14+h(8)*5)+j*2),ang=-.2+beat*1.3,col=cols[j%cols.length],back=C3.dk(col,.3),
+      W=sg=>C3.nrm([sdv[0]*sg*Math.cos(ang),sdv[1]*sg*Math.cos(ang),Math.sin(ang)]),
+      wing=(sg,fw)=>{const w=W(sg),b=[c[0]+dir[0]*(fw?.8:-1),c[1]+dir[1]*(fw?.8:-1),c[2]],d=[w[0]+dir[0]*(fw?.4:-.5),w[1]+dir[1]*(fw?.4:-.5),w[2]];C3.leaf(V0,b,d,dir,fw?8.4:6,fw?4:3,fw?col:C3.lt(col,.08),{lw:1.1,ell:1,back,flat:1})};
+    // the far wings, the body, the near wings (by how they face the camera)
+    const near=V0.F(sdv)>0?1:-1;wing(-near,false);wing(-near,true);
+    C3.caps(V0,[c[0]-dir[0]*3,c[1]-dir[1]*3,c[2]],1,[c[0]+dir[0]*2.8,c[1]+dir[1]*2.8,c[2]+.6],.95,'#3a2a22',{lw:1,noRim:1});
+    wing(near,false);wing(near,true)}
+  ctx.restore()}
+// embers rising from the lava (its pool, the crater and the cracks), drifting east with the wind, white hot, then orange, then red, gone
+function cnEmbers(A,t,n,sd,S0,cr){const k=A.k,E=CNI_EV;ctx.save();ctx.globalCompositeOperation='lighter';
+  for(let j=0;j<n;j++){const h=q=>prH(j,sd+40+q),T=2+h(1)*1.8,u=(t/T+h(2))%1,cyc=Math.floor(t/T+h(2)),r=q=>prH(cyc,j*13+q+sd);
+    let b;const s=h(3);if(s<.4)b=[S0[0]+(r(1)-.5)*16,S0[1]+(r(2)-.5)*30,1];else if(s<.75)b=[cr[0]+(r(1)-.5)*7,cr[1]+(r(2)-.5)*7,cr[2]-2];else b=IP((r(1)-.5)*200,(r(2)-.5)*120,2);
+    const dr=u*(16+r(3)*18)+Math.sin(t*1.7+j)*3.5*u,z=b[2]+u*(56+r(4)*44),q=cnIslS(A,[b[0]+E[0]*dr,b[1]+E[1]*dr,z]),a=Math.min(1,u*6)*(1-u),sz=(2.6-u*1.3)*k;
+    ctx.fillStyle=u<.3?`rgba(255,240,190,${a.toFixed(2)})`:u<.65?`rgba(255,170,70,${a.toFixed(2)})`:`rgba(230,80,40,${(a*.9).toFixed(2)})`;ctx.beginPath();ctx.arc(q[0],q[1],sz*.6,0,TAU);ctx.fill();
+    if(!LOWFX&&j%2===0)cnGl('255,140,60',q[0],q[1],8*k,.4*a)}
+  ctx.restore()}
+// smoke from the crater: soft puffs that grow as they rise, leaning east with the wind
+function cnSmoke(A,t,cr,n,sd){const k=A.k,E=CNI_EV,img=cnSmokeImg(),a0=ctx.globalAlpha;ctx.save();
+  for(let j=0;j<n;j++){const u=(t*.09+j/n)%1,dr=u*u*40+Math.sin(t*.5+j)*4,z=cr[2]+u*80,q=cnIslS(A,[cr[0]+E[0]*dr,cr[1]+E[1]*dr,z]),r=(7+u*22)*k,al=.55*Math.min(1,u*5)*(1-u);
+    if(al<.01)continue;ctx.globalAlpha=a0*al;ctx.drawImage(img,q[0]-r,q[1]-r*.85,r*2,r*1.7)}
+  ctx.restore()}
+function cnSmokeImg(){if(ISL.smk)return ISL.smk;const c=document.createElement('canvas');c.width=c.height=48;const x=c.getContext('2d'),g=x.createRadialGradient(20,20,2,24,24,24);
+  g.addColorStop(0,'rgba(96,78,74,1)');g.addColorStop(.55,'rgba(70,56,54,.7)');g.addColorStop(1,'rgba(50,40,40,0)');x.fillStyle=g;x.fillRect(0,0,48,48);return ISL.smk=c}
+// bubbles of lava in its pool: one swells, glows and bursts, a ring and a few drops, another somewhere else
+function cnLavaBubbles(A,t,S0,n,sd){const k=A.k;ctx.save();
+  for(let j=0;j<n;j++){const T=1.7+prH(j,sd+60)*1.1,u=(t/T+prH(j,sd+61))%1,cyc=Math.floor(t/T+prH(j,sd+61)),r=q=>prH(cyc,j*7+q+sd),p=[S0[0]+(r(1)-.5)*13,S0[1]+(r(2)-.5)*24,.6],q=cnIslS(A,p);
+    if(u<.72){const s=(1+u/.72*3.4)*k;ctx.fillStyle='#ffb040';ctx.strokeStyle='#7a2a10';ctx.lineWidth=.7*k;ctx.beginPath();ctx.ellipse(q[0],q[1]-s*.35,s,s*.7,0,Math.PI,0);ctx.closePath();ctx.fill();ctx.stroke();
+      ctx.fillStyle='rgba(255,240,180,.85)';ctx.beginPath();ctx.ellipse(q[0]-s*.35,q[1]-s*.6,s*.28,s*.16,0,0,TAU);ctx.fill()}
+    else{const v=(u-.72)/.28;ctx.strokeStyle=`rgba(255,200,110,${(1-v).toFixed(2)})`;ctx.lineWidth=1.4*k;ctx.beginPath();ctx.ellipse(q[0],q[1],(3+v*10)*k,(1.5+v*4.5)*k,0,0,TAU);ctx.stroke();
+      ctx.fillStyle=`rgba(255,170,60,${(1-v).toFixed(2)})`;ctx.beginPath();for(let m=0;m<3;m++){const a=-Math.PI/2+(m-1)*.8,dd=v*10*k,x=q[0]+Math.cos(a)*dd,y=q[1]+Math.sin(a)*dd-v*(1-v)*18*k;ctx.moveTo(x+k,y);ctx.arc(x,y,k,0,TAU)}ctx.fill()}
+    if(!LOWFX)pLight(q[0],q[1],9*k,'255,150,60',u<.72?.25*u:.4*(1-(u-.72)/.28))}
+  ctx.restore()}
+// glints on the snow: little stars that shine for a moment here and there on the island
+function cnGlints(A,t,n,sd){const k=A.k;ctx.save();ctx.globalCompositeOperation='lighter';
+  for(let j=0;j<n;j++){const T=2.2+prH(j,sd+70)*1.8,w=t/T+prH(j,sd+71),u=w%1;if(u>.3)continue;const cyc=Math.floor(w),sx=(prH(cyc,j*5+sd)-.5)*230,sy=(prH(cyc,j*5+sd+1)-.5)*150;if(!cnOnIsl(sx,sy,.8))continue;
+    const a=Math.sin(u/.3*Math.PI),q=cnIslS(A,IP(sx,sy,1.5)),r=(3+a*6)*k;ctx.fillStyle=`rgba(255,255,255,${(.9*a).toFixed(2)})`;ctx.beginPath();
+    ctx.moveTo(q[0],q[1]-r);ctx.quadraticCurveTo(q[0],q[1],q[0]+r*.7,q[1]);ctx.quadraticCurveTo(q[0],q[1],q[0],q[1]+r);ctx.quadraticCurveTo(q[0],q[1],q[0]-r*.7,q[1]);ctx.quadraticCurveTo(q[0],q[1],q[0],q[1]-r);ctx.fill();
+    if(!LOWFX)cnGl('200,235,255',q[0],q[1],11*k,.45*a)}
+  ctx.restore()}
+// the frogs of the swamp, on the lily pads of its pool and on its shore: they breathe, now and then puff their throat and croak, now and then
+// leap to another place and back; in the island's own 3D
+const CN_FROG=[[[2,12],[-5,-9]],[[6,-15],[24,-6]],[[-9,4],[-20,16]]];   // [the two places of each frog: from the pool's middle, [x, y] of the island]
+function cnFrogs(i,A,t,S0,sd){const V0=cnV(),parts=[];
+  CN_FROG.forEach(([pa,pb],j)=>{const T=5.5+prH(j,sd+80)*3,w=t/T+prH(j,sd+81),u=w%1,cyc=Math.floor(w),from=cyc%2?pb:pa,to=cyc%2?pa:pb,hp=.42/T;
+    let x,y,z=0,face,leap=0;const P=q=>[S0[0]+q[0],S0[1]+q[1]];
+    if(u<hp){const v=u/hp,a=P(from),b=P(to);x=plerp(a[0],b[0],v);y=plerp(a[1],b[1],v);z=Math.sin(Math.PI*v)*12;face=Math.atan2(b[1]-a[1],b[0]-a[0]);leap=Math.sin(Math.PI*v)}
+    else{[x,y]=P(to);face=.25*Math.sin(t*.3+j)+(j%2?.5:-.4)}
+    const cw=u>.45&&u<.62?Math.max(0,Math.sin((u-.45)/.17*Math.PI*3)):0,br=1+.04*Math.sin(t*2.4+j*2);
+    if(cw>.2&&u-.45<.02&&(ISL.frogT||0)<t-1){ISL.frogT=t;if(Math.abs(ISL.view-i)<.3)cnLifeSnd('rana')}
+    parts.push({d:V0.D([x,y,z]),f:()=>cnFrog(V0,[x,y,z+.4],face,cw,leap,br)})});
+  ctx.save();ctx.translate(A.x,A.y);ctx.scale(A.k,A.k);try{pRun(parts)}catch(err){cnErr(err)}finally{ctx.restore()}}
+function cnFrog(V0,c,face,cw,leap,br){const f=[Math.cos(face),Math.sin(face),0],s=[-f[1],f[0],0],F=2.1,at=(a,b,z)=>[c[0]+(f[0]*a+s[0]*b)*F,c[1]+(f[1]*a+s[1]*b)*F,c[2]+z*F],G='#62b048',D='#4a9036',P=[],
+    bl=(p,r,col,o)=>C3.sball(V0,p,r*F,col,o),cp=(a,ra,b,rb,col,o)=>C3.caps(V0,a,ra*F,b,rb*F,col,o);
+  // (far to near: what faces away first)
+  const R=(p,fn)=>P.push({d:V0.D(p),f:fn});
+  for(const sg of[-1,1]){if(leap>.15){const k0=at(-1.4,sg*1.7,1.2),k1=at(-3.4-leap*2.4,sg*1.9,.8-leap*.6);R(k0,()=>cp(k0,.9,k1,.7,D,{lw:.8,noRim:1}))}
+    else{const k0=at(-1.1,sg*2,1);R(k0,()=>bl(k0,1.25,D,{lw:.85,kl:.3,kd:.3,rim:.1}))}
+    const hd=at(1.7,sg*1.3,.5);R(hd,()=>cp(at(1.2,sg*1.1,1.4),.5,hd,.45,D,{lw:.7,noRim:1}))}
+  R(at(0,0,1.6),()=>C3.vol(V0,C3.ellPts(at(0,0,1.9),[2.6*br*F,2.3*br*F,1.75*br*F],C3.axes(f),5,12),G,{lw:1,kl:.35,kd:.3,rim:.25}));
+  if(cw>0){const p=at(1.9,0,1.1);R(p,()=>bl(p,.9+cw*1.2,'#f4eaa4',{lw:.75,kl:.45,kd:.2,rim:.2}))}
+  const look=V0.F(f)>-.25;
+  for(const sg of[-1,1]){const e=at(1,sg*1.15,3.4);R(e,()=>{bl(e,1,'#74c45a',{lw:.8,kl:.35,kd:.25,rim:.15});if(!look)return;const q=V0.P(at(1.5,sg*1.2,3.55));
+    ctx.fillStyle=INK;ctx.beginPath();ctx.arc(q[0],q[1],.55*F,0,TAU);ctx.fill();ctx.fillStyle='#fff';ctx.beginPath();ctx.arc(q[0]-.18*F,q[1]-.22*F,.2*F,0,TAU);ctx.fill()})}
+  pRun(P)}
+// dragonflies over the pool: a long blue body, four wings that blur, darting from one place to the next and stopping in the air
+function cnDragonflies(A,t,S0,n,sd){const V0=cnV();ctx.save();ctx.translate(A.x,A.y);ctx.scale(A.k,A.k);
+  for(let j=0;j<n;j++){const T=1.5+prH(j,sd+90)*.8,w=t/T+prH(j,sd+91),u=w%1,cyc=Math.floor(w),wp=c=>[S0[0]+(prH(c,j*9+sd)-.5)*50,S0[1]+(prH(c,j*9+sd+1)-.5)*80,9+prH(c,j*9+sd+2)*9],
+      a=wp(cyc),b=wp(cyc+1),e=u<.28?(1-Math.cos(u/.28*Math.PI))/2:1,c=[plerp(a[0],b[0],e),plerp(a[1],b[1],e),plerp(a[2],b[2],e)+8+Math.sin(t*5+j)],
+      dir=C3.nrm([b[0]-a[0]+1e-4,b[1]-a[1],0]),sv=[-dir[1],dir[0],0],col=j%2?'#4fb8e8':'#6ad08a';
+    C3.caps(V0,[c[0]-dir[0]*8,c[1]-dir[1]*8,c[2]],.8,[c[0]+dir[0]*2,c[1]+dir[1]*2,c[2]],1.3,col,{lw:.9,noRim:1});
+    C3.sball(V0,[c[0]+dir[0]*3,c[1]+dir[1]*3,c[2]],1.6,col,{lw:.9,kl:.4,kd:.25,rim:.15});
+    ctx.save();ctx.globalAlpha*=.6;const fl=Math.sin(t*40+j*3)*.35;
+    for(const sg of[-1,1])for(const off of[1,-.8]){const d=C3.nrm([sv[0]*sg,sv[1]*sg,.25+fl]);C3.leaf(V0,[c[0]+dir[0]*off,c[1]+dir[1]*off,c[2]+.6],d,dir,8,1.7,'#e8f8ff',{lw:.7,flat:1})}
+    ctx.restore()}
+  ctx.restore()}
+// clouds in the abyss, below the islands: soft banks of the world's colours, lit from under by its light (the lava's red in the volcano),
+// drifting east; they sit in the path's own space (n along it, e across, z under the islands), so they go by with the perspective as you go
+// north. Each world's cloud painted once (three shapes), copied
+function cnCloudImg(ch,v){const key=ch+'_'+v,C=ISL.cld||(ISL.cld={});if(C[key])return C[key];const W=CN_ISW[Math.max(1,Math.min(4,ch))],c=document.createElement('canvas');c.width=256;c.height=112;
+  const x=c.getContext('2d'),j=q=>(prH(q,v*13+ch)-.5),
+    // a heap of puffs on a flat bottom: the big one in the middle, smaller ones going down to the sides, a row along the bottom
+    P=[[40,78,19],[72,64,28],[112,52,38+j(1)*6],[156,58,33+j(2)*6],[194,70,25],[224,80,16],[46,86,16],[78,86,22],[114,86,26],[152,86,26],[188,86,22],[218,86,15]].map(([px,py,r],q)=>[px+j(q+3)*10,py+j(q+5)*6,r*(1+j(q+7)*.15)]);
+  for(const[px,py,r] of P){const g=x.createRadialGradient(px,py,r*.3,px,py,r);g.addColorStop(0,'rgba(255,255,255,1)');g.addColorStop(.8,'rgba(255,255,255,1)');g.addColorStop(1,'rgba(255,255,255,0)');x.fillStyle=g;x.beginPath();x.arc(px,py,r,0,TAU);x.fill()}
+  x.globalCompositeOperation='destination-out';{const g=x.createLinearGradient(0,90,0,100);g.addColorStop(0,'rgba(0,0,0,0)');g.addColorStop(1,'rgba(0,0,0,1)');x.fillStyle=g;x.fillRect(0,90,256,22)}
+  // its colours: the moonlit top, the fog of the world, the dark underside lit by the world's light
+  x.globalCompositeOperation='source-atop';const hx=n=>'#'+n.map(q=>Math.round(clamp(q,0,255)).toString(16).padStart(2,'0')).join(''),fog=hx(W.fog.split(',').map(Number)),li=hx(W.light.split(',').map(Number)),
+    g=x.createLinearGradient(0,14,0,104);g.addColorStop(0,cnMixC(fog,'#ffffff',.42));g.addColorStop(.45,cnMixC(fog,'#ffffff',.08));g.addColorStop(.75,cnMixC(fog,W.sky[0],.3));g.addColorStop(1,cnMixC(cnMixC(fog,W.sky[0],.45),li,ch===2?.6:.32));x.fillStyle=g;x.fillRect(0,0,256,112);
+  // each upper puff a little lighter on its top, a little darker under it (so the heap reads as puffs)
+  for(const[px,py,r] of P.slice(0,6)){const g1=x.createRadialGradient(px-r*.3,py-r*.45,r*.1,px-r*.2,py-r*.3,r*.9);g1.addColorStop(0,'rgba(255,255,255,.3)');g1.addColorStop(1,'rgba(255,255,255,0)');x.fillStyle=g1;x.beginPath();x.arc(px,py,r,0,TAU);x.fill();
+    if(py+r*.6<88){x.strokeStyle='rgba(0,0,0,.08)';x.lineWidth=2.2;x.beginPath();x.arc(px,py+1,r-1.5,.2*Math.PI,.8*Math.PI);x.stroke()}}
+  return C[key]=c}
+function cnIslClouds(L,t,v){const P=[],vn=v*CNI_GAP,i0=Math.floor(v);
+  for(let j=Math.max(0,i0-1);j<=Math.min(ARENAS.length-1,i0+2);j++){const ch=ARENAS[j].ch||1;
+    for(let q=0;q<4;q++){const h=r=>prH(q,j*7+r+3),n=j*CNI_GAP+60+h(1)*900,d=n-vn;if(d<-320||d>2400)continue;
+      const z=-(105+h(2)*180),e0=(h(3)-.5)*1500+t*(3+h(4)*5),e=((e0+750)%1500+1500)%1500-750,f=CNI_PD/(CNI_PD+Math.max(-CNI_PD*.55,d)),k=L.k*f,w=(170+h(5)*150)*k,
+        x=L.cx+e*k,y=L.cy-.55*L.k*d*f-z*k+Math.sin(t*.9)*2.2*L.dpr*f;
+      if(x+w*.5<0||x-w*.5>L.W||y+w*.2<0||y-w*.25>L.info)continue;   // (under the line below the island the picture goes into the sky: nothing to see there)
+      const a=(.5-.22*clamp(d/2400,0,1))*clamp((750-Math.abs(e))/140,0,1);if(a<.02)continue;P.push({d,f:()=>{ctx.globalAlpha=a;ctx.drawImage(cnCloudImg(ch,q%3),x-w/2,y-w*.25,w,w*.4375)}})}}
+  P.sort((a,b)=>b.d-a.d);ctx.save();for(const p of P)p.f();ctx.restore()}
+// fog going over the far end of the bridge (between its deck and its live parts): two long soft banks of the world's fog, drifting east
+function cnBrWisps(i,L,t,M){if(LOWFX)return;const G0=M.G,W=cnIslW(i);ctx.save();
+  for(let q=0;q<2;q++){const h=r=>prH(q,i*5+r+40),n=G0.a0+G0.len*(.56+h(1)*.3),e=((h(2)*1200+t*(9+h(3)*6))%1200)-600,p=M.S(n,e,cnDeckZ(G0,n)+8+h(4)*16),k=M.K(n);
+    if(p[1]<-60*L.dpr||p[1]>L.H)continue;cnGl(W.fog,p[0],p[1],(150+h(5)*80)*k,.16*clamp((600-Math.abs(e))/160,0,1),(16+h(6)*8)*k)}
+  ctx.restore()}
+// the snow falling over the ice (a: how much of it: the ice world on the screen), far flakes small and slow, near ones bigger and faster
+// in front of everything; they go by as you go north
+function cnSnow(L,t,a,v,near){if(a<=.02)return;const d=L.dpr,n=Math.round((near?40:80)*(LOWFX?.5:1)),sz=near?2.6:1.5,sp=near?62:30,Hh=L.H,Ww=L.W*1.3;ctx.save();ctx.fillStyle=`rgba(248,252,255,${((near?.85:.55)*a).toFixed(2)})`;ctx.beginPath();
+  for(let j=0;j<n;j++){const h=q=>prH(j,(near?90:70)+q),x=((h(1)*Ww+t*(10+h(2)*9)*d+Math.sin(t*(.7+h(3))+j)*12*d)%Ww+Ww)%Ww-L.W*.15,
+      y=(((h(4)*Hh+t*sp*d*(.7+h(5)*.6)+v*L.pairPx*(near?.5:.25))%Hh)+Hh)%Hh,r=sz*d*(.75+h(6)*.5);
+    ctx.moveTo(x+r,y);ctx.arc(x,y,r,0,TAU)}ctx.fill();ctx.restore()}
+// flocks: every seven to thirteen seconds a few of the world's birds go by over the island you look at (swallows over the moss, little fire
+// birds over the volcano, bats over the swamp, white birds over the ice), flapping and gliding: one time across, from one side of the abyss
+// to the other high in front of the towers of its bridge, the next time from behind you up along the bridge toward the next island,
+// smaller and smaller in the distance
+const CN_FLK=[null,{k:'bird',a:'#2c3e72',b:'#f4efe2',c:'#d8503a'},{k:'fire',a:'#ff7a2a',b:'#ffd070',c:'#fff0a0'},{k:'bat',a:'#4a3a5e',b:'#6e5a82',c:'#ffd84a'},{k:'bird',a:'#f2f7ff',b:'#ffffff',c:'#6a9ac8'}];
+function cnFlockStep(dt,L){const t=CAMP.t;if(LOWFX||ISL.brA){ISL.fk=null;return}
+  if(ISL.fk&&t-ISL.fk.t0>ISL.fk.D)ISL.fk=null;
+  if(!ISL.fk){if(ISL.fkN==null)ISL.fkN=t+4+Math.random()*4;if(t<ISL.fkN)return;ISL.fkN=t+7+Math.random()*6;
+    const g=clamp(Math.round(ISL.view),0,ARENAS.length-2);if(!ARENAS[g+1]||!cnOpenShown(g))return;const ch=ARENAS[g].ch||1,sp=ch===3?150:ch===2?190:170,m=3+Math.floor(Math.random()*3),way=ISL.fkW=ISL.fkW==='x'?'n':'x';
+    ISL.fk={g,ch,t0:t,way,D:way==='x'?840/sp:1500/sp,dir:Math.random()<.5?1:-1,n:-20+Math.random()*150,e:(Math.random()-.5)*140,z:60+Math.random()*40,
+      m:Array.from({length:m},(_,r)=>({dn:(r?((r%2)*2-1)*Math.ceil(r/2)*13:0)+(Math.random()-.5)*5,de:-Math.ceil(r/2)*15-Math.random()*5,dz:(Math.random()-.5)*10,ph:Math.random()*TAU}))};
+    if(Math.abs(ISL.view-g)<.6)cnLifeSnd(CN_FLK[ch].k)}}
+// (drawn after the island they go over; across: dn, de are the place of each in the flock across and behind; along the bridge the other way)
+function cnFlockDraw(g,L,t){const F=ISL.fk;if(!F||F.g!==g)return;const M=cnBrMap(g,L,t),C=CN_FLK[F.ch],u=(t-F.t0)/F.D,X=F.way==='x',
+    fd=X?cnChain(0,F.dir,0):cnChain(1,0,0),sn=X?cnChain(1,0,0):cnChain(0,1,0),fa=clamp(Math.min(u,1-u)*(X?12:7),0,1);if(fa<=0)return;
+  const e0=F.dir*(-420+840*u),n0=-380+1480*u,B=F.m.map(b=>({b,n:X?F.n+b.dn:n0+b.de,e:X?e0+b.de*F.dir:F.e+b.dn})).sort((p,q)=>q.n-p.n);
+  ctx.save();ctx.globalAlpha*=fa;
+  try{for(const{b,n,e} of B){const bat=C.k==='bat',z=F.z+b.dz+Math.sin(t*(bat?5:1.3)+b.ph)*(bat?3:1.5)+(X?0:30*u),K=cnPlatView(M,n),V0=K.V0,c=cnChain(0,e,z),
+        fl=bat?Math.sin(t*17+b.ph):C.k==='fire'?Math.sin(t*12+b.ph):(Math.sin(t*.8+b.ph)>.3?.15:Math.sin(t*11+b.ph));
+      ctx.save();ctx.translate(K.o[0],K.o[1]);ctx.scale(K.k,K.k);const q=V0.P(c);ctx.translate(q[0],q[1]);ctx.scale(1.6,1.6);ctx.translate(-q[0],-q[1]);cnBird(V0,c,fd,sn,fl,C,t+b.ph);ctx.restore()}}
+  catch(err){cnErr(err)}finally{ctx.restore()}}
+// one of them, in the path's 3D (c its middle, fd where it flies, sn across: its wings' way): a body, its two wings beating (fl: -1 down, 1 up),
+// a tail; the bat with its ears and its yellow eyes, the fire bird with a little flame for a tail and its light
+function cnBird(V0,c,fd,sn,fl,C,t){const at=(a,b,z)=>[c[0]+fd[0]*a+sn[0]*b,c[1]+fd[1]*a+sn[1]*b,c[2]+z],ang=fl*.75,bat=C.k==='bat',fire=C.k==='fire',
+    wing=sg=>{const d=C3.nrm([sn[0]*sg*Math.cos(ang)-fd[0]*.25,sn[1]*sg*Math.cos(ang)-fd[1]*.25,Math.sin(ang)]),bk=C3.dk(C.a,.25);
+      // (a bat's wing in two lobes: the membrane between its fingers)
+      if(bat){C3.leaf(V0,at(.3,sg*.6,.2),d,fd,7.2,2.6,C.a,{lw:.8,back:bk,tip:.55,bend:-.25});C3.leaf(V0,at(-.5,sg*.6,.1),C3.nrm([d[0]-fd[0]*.6,d[1]-fd[1]*.6,d[2]-.1]),fd,5.4,2,C3.dk(C.a,.1),{lw:.8,back:bk,tip:.5})}
+      else C3.leaf(V0,at(.3,sg*.6,.2),d,fd,7,1.7,C.a,{lw:.8,back:bk,tip:.15,bend:.15})};
+  if(fire&&!LOWFX){const q=V0.P(c);ctx.save();ctx.globalCompositeOperation='lighter';cnGl('255,150,60',q[0],q[1],9,.5);ctx.restore()}
+  const near=V0.F(sn)>0?1:-1;wing(-near);
+  // the tail: a fork (birds), a little flame (fire), none (bats)
+  if(!bat){for(const sg of[-1,1])C3.leaf(V0,at(-2,0,0),C3.nrm([-fd[0]+sn[0]*sg*.35,-fd[1]+sn[1]*sg*.35,-.05]),sn,fire?3.4:3.8,.7,fire?C.b:C.a,{lw:.7})}
+  C3.caps(V0,at(-1.9,0,0),bat?1:.85,at(1.4,0,.15),bat?1.25:1.05,bat?C.a:C.b,{lw:.8,kl:.35,kd:.3,rim:.15});
+  C3.sball(V0,at(2,0,.4),bat?1.15:1,C.a,{lw:.8,kl:.35,kd:.3,rim:.15});
+  if(bat){for(const sg of[-1,1])C3.leaf(V0,at(2.1,sg*.6,1.2),[0,0,1],fd,1.4,.6,C.a,{lw:.6});const q=V0.P(at(2.8,0,.5));ctx.fillStyle=C.c;for(const sg of[-1,1]){ctx.beginPath();ctx.arc(q[0]+sg*.55,q[1],.32,0,TAU);ctx.fill()}}
+  else{const b0=V0.P(at(2.7,0,.4)),b1=V0.P(at(3.6,0,.2));ctx.strokeStyle=C.c;ctx.lineWidth=.8;ctx.lineCap='round';ctx.beginPath();ctx.moveTo(b0[0],b0[1]);ctx.lineTo(b1[0],b1[1]);ctx.stroke()}
+  wing(near)}
+// the voices of the life round the islands, made by the code, quiet and rare: a frog croaking, swallows twittering, the fire birds' chirp
+// and the bats' squeaks as a flock goes by
+function cnLifeSnd(w){try{if(typeof AU==='undefined'||!AU.ctx||!AU.on.sfx||AU.ctx.state!=='running'||document.hidden)return;const t=AU.ctx.currentTime+.02;
+  if(w==='rana'){for(const d of[0,.13]){const c=AU.ctx,o=osc('square',VR(150,.05),t+d,t+d+.12),b=filt('lowpass',900,4),g=c.createGain();o.frequency.exponentialRampToValueAtTime(95,t+d+.1);
+      g.gain.setValueAtTime(.0001,t+d);g.gain.linearRampToValueAtTime(.022,t+d+.015);g.gain.exponentialRampToValueAtTime(.0005,t+d+.11);o.connect(b);b.connect(g);route(g,null,.15)}}
+  else if(w==='bird')for(let j=0;j<4;j++){const d=j*.11+Math.random()*.05,f=VR(3200,.12);tone(f,f*1.35,.06,'sine',.008,d);tone(f*1.2,f*.9,.05,'sine',.006,d+.06)}
+  else if(w==='fire'){for(let j=0;j<3;j++)tone(VR(2400,.1),VR(3400,.1),.08,'triangle',.007,j*.14);fNoise(t,.5,'bandpass',1400,1.2,.012,{f2:2600,att:.15})}
+  else if(w==='bat')for(let j=0;j<4;j++){const d=j*.09+Math.random()*.04;tone(VR(5200,.08),VR(4300,.08),.035,'sine',.006,d)}}catch(err){}}
 function cnIslDraw(i,A,L,t){const won=cnWon(i),op=cnOpenShown(i),W=cnIslW(i),ac=cnRgb(ARENAS[i].col),k=A.k,ch=ARENAS[i].ch||1,S=p=>cnIslS(A,p),SH=ISL.brA,lt=SH&&SH.done&&SH.i+1===i&&SH.lit?SH.litT:1;
   ctx.save();
   if(!LOWFX)pLight(A.x,A.y+CNI_R*.55*k*1.6,CNI_R*1.5*k,W.light,op?.16:.04,CNI_R*.6*k);
   // the island the last plank opens comes out of the dark into its colours (and its live parts with it)
   const pic=c=>{if(Math.abs(A.f-1)<.002)ctx.drawImage(c.cv,Math.round(A.x-c.ox),Math.round(A.y-c.oy));else ctx.drawImage(c.cv,A.x-c.ox*A.f,A.y-c.oy*A.f,c.cv.width*A.f,c.cv.height*A.f)};
   if(lt<1){pic(cnIslImg(i,L,false));ctx.save();ctx.globalAlpha*=lt;pic(cnIslImg(i,L,true));ctx.restore();ctx.globalAlpha*=lt}else pic(cnIslImg(i,L,op));
-  // the lanterns of the gate of the bridge to the next island
-  if(op&&ARENAS[i+1])for(const s of[-1,1]){const q=S(cnPortalLamp(i,s)),fl=LOWFX?1:.84+.16*Math.sin(t*8+s+i);pLight(q[0],q[1],18*k,'255,196,100',.48*fl,15*k);if(!LOWFX)pFlame(q[0],q[1]+1.4*k,4.6*k,2.2*k,1,t+s,false)}
+  // the towers of the bridge to the next island: what moves in the wind, the lanterns' lights (where the swing has the lanterns)
+  if(op&&ARENAS[i+1]){const th=LOWFX?[0,0]:cnPortalLive(i,A,t,op);
+    for(const s of[-1,1]){const a=th[(s+1)/2]||0,hk=S(cnChain(cnPortalLamp(i,s)[0],cnPortalLamp(i,s)[1],CNB.gate-24.6)),d0=8.4*k,q=[hk[0]-Math.sin(a)*d0,hk[1]+Math.cos(a)*d0],fl=LOWFX?1:.84+.16*Math.sin(t*8+s+i);
+      pLight(q[0],q[1],18*k,'255,196,100',.48*fl,15*k);if(!LOWFX)pFlame(q[0],q[1]+1.4*k,4.6*k,2.2*k,1,t+s,false)}}
   // the live parts: the arena's glow in the gate, the brazier's flame, the lanterns, the fall, the world (lava, fireflies, snow), the guardian
   if(op){const g=S([CI_GATE[0],CI_GATE[1],16]),pul=.7+.3*Math.sin(t*1.8+i);pLight(g[0],g[1],22*k,ac,.5*pul,26*k);for(let j=0;j<5;j++){const q=(t*.3+j/5)%1;ctx.fillStyle=`rgba(${ac},${(1-q)*.8})`;ctx.fillRect(g[0]+Math.sin(j*2.1+t)*8*k,g[1]+20*k-q*30*k,1.4*L.dpr,1.4*L.dpr)}}
   if(won){const b=S([CI_BRAZ[0],CI_BRAZ[1],17]);pLight(b[0],b[1],26*k,'255,170,70',.55);pFlame(b[0],b[1],16*k,9*k,1,t+i,LOWFX);if(!LOWFX)cnSparks(b[0],b[1]-10*k,k,t+i)}
   if(op&&(ch===1||ch===3))for(const[n,e] of CNI_LAMPS){const q=S(cnChain(n,e,19.5)),fl=LOWFX?1:.85+.15*Math.sin(t*9+n);pLight(q[0],q[1],16*k,'255,200,110',.42*fl,14*k)}
   if(op&&!LOWFX&&CNI_FALL[ch])cnIslFallFx(i,S,k,t,ch);
-  if(ch===2&&!LOWFX&&op){const q=S(IP(64,-66,38));pLight(q[0],q[1],20*k,'255,110,40',.5+.2*Math.sin(t*2));for(let j=0;j<4;j++){const u=(t*.12+j/4)%1;ctx.fillStyle=`rgba(70,50,46,${(.35*(1-u)).toFixed(2)})`;ctx.beginPath();ctx.arc(q[0]-u*14*k+Math.sin(u*6+j)*3*k,q[1]-u*40*k,(3+u*9)*k,0,TAU);ctx.fill()}}
-  if(!LOWFX&&op){const cc=S([0,0,0]);if(ch===3)pMotes(t,cc[0],cc[1]-30*k,200*k,80*k,12,'210,255,120',.9,.6,40+i);else if(ch===4)pMotes(t,cc[0],cc[1]-20*k,250*k,150*k,16,'240,248,255',.7,-1.2,50+i);else if(ch===1)pMotes(t,cc[0],cc[1]-24*k,210*k,90*k,10,'190,255,150',.7,.5,60+i);else pMotes(t,cc[0],cc[1]-30*k,190*k,100*k,12,'255,160,80',.8,1.4,70+i)}
+  if(ch===2&&!LOWFX&&op){const q=S(IP(64,-66,38));pLight(q[0],q[1],20*k,'255,110,40',.5+.2*Math.sin(t*2))}
+  if(op&&A.y-60*k<L.H&&A.y+60*k>0)try{cnIslLife(i,A,L,t,ch,won)}catch(err){cnErr(err)}
   if(op&&(!won||cnIncOn(i)))cnIslBoss(i,A,t,op,L,cnIncOn(i));
   if(op&&(cnS().inc[i]||{}).win)cnIncMoon(S([CI_GATE[0],CI_GATE[1],60]),k,t);
   if(ISL.dust&&ISL.dust.i===i){ISL.dust.t+=1/60;const d=ISL.dust.t,h=S(CI_HERO);if(d<.5){ctx.fillStyle=`rgba(220,210,190,${(.5*(1-d/.5)).toFixed(2)})`;for(let j=0;j<6;j++){const a=j/6*TAU;ctx.beginPath();ctx.arc(h[0]+Math.cos(a)*d*60*k,h[1]+Math.sin(a)*d*14*k,(4-d*5)*k,0,TAU);ctx.fill()}}else ISL.dust=null}
@@ -1491,7 +1683,29 @@ function cnBrMap(i,L,t,nob){const G0=cnBrGeo(i),A=cnPathAt(i,0,L,t,nob),B=cnPath
     dA=A.y-.55*G0.a0*A.k-pa.y,dB=B.y-.55*(G0.a1-CNI_GAP)*B.k-pb.y,rA=A.k/pa.k-1,rB=B.k/pb.k-1;
   const at=n=>{if(n<=G0.a0)return{x:A.x,y:A.y-.55*n*A.k,k:A.k};if(n>=G0.a1)return{x:B.x,y:B.y-.55*(n-CNI_GAP)*B.k,k:B.k};
     const u=(n-G0.a0)/G0.len,p=cnPathAt(i,n,L,t,nob);return{x:p.x,y:p.y+dA+(dB-dA)*u,k:p.k*(1+rA+(rB-rA)*u)}};
-  return{G:G0,A,B,at,S:(n,e,z)=>{const p=at(n);return[p.x+e*p.k,p.y-(z||0)*p.k]},K:n=>at(n).k}}
+  const W=nob?null:cnSwayFn(i,G0,t);
+  return{G:G0,A,B,at,sw:!!W,S:W?(n,e,z)=>{const p=at(n),o=W(n);return[p.x+(e+o[0])*p.k,p.y-((z||0)+o[1])*p.k]}:(n,e,z)=>{const p=at(n);return[p.x+e*p.k,p.y-(z||0)*p.k]},K:n=>at(n).k}}
+// the bridge under the hero (Denis: «il ponte che oscilla e scricchiola quando l'eroe ci corre sopra»): while he runs over it the planks
+// give under his feet and the whole bridge swings sideways and a little up and down, most in its middle and not at all where it is tied;
+// after him it settles in a few seconds. ISL.sw: which bridge, how much it swings (a), how much it gives under him (b), where he is (h).
+// While it moves the bridge is painted alive (it does not go into its picture)
+const Z2=[0,0];
+function cnSwayFn(i,G0,t){const S=ISL.sw;if(!S||S.i!==i)return null;const se=S.a*4.2*Math.sin(t*3.3),sz=S.a*1.3*Math.sin(t*4.1+1),dip=S.b*6,h=S.h;
+  return n=>{const u=(n-G0.a0)/G0.len;if(u<=0||u>=1)return Z2;const env=Math.sin(Math.PI*u),q=(n-h)/80;return[se*env,(sz-dip*Math.exp(-q*q))*env]}}
+function cnSwayStep(dt){const J=ISL.jump;let on=null;
+  if(J&&J.way){const W=J.way,dd=cnWayDD(J),p=cnWayAt(W,dd),G0=cnBrGeo(W.lo);
+    if(p[0]>G0.a0+4&&p[0]<G0.a1-4){on={i:W.lo,h:p[0]};
+      // his feet on the planks (two to a turn of his run, as cnIslHero moves his legs), and now and then the wood creaking under him
+      const st=Math.floor(dd*.046*Math.min(1,300/Math.max(1,W.len/J.dur))/Math.PI);if(J.st!==st){if(J.st!=null)cnBrSnd('passo');J.st=st}
+      J.cr=(J.cr==null?.2:J.cr)-dt;if(J.cr<=0){J.cr=.45+Math.random()*.6;cnBrSnd('scricchiola')}}}
+  let S=ISL.sw;if(!on&&!S)return;
+  if(on&&(!S||on.i!==S.i))S=ISL.sw={i:on.i,a:0,b:0,h:on.h};
+  if(on)S.h=on.h;
+  S.a+=((on?1:0)-S.a)*Math.min(1,dt*(on?2.2:1.1));S.b+=((on?1:0)-S.b)*Math.min(1,dt*(on?7:5));
+  if(!on&&S.a<.03&&S.b<.01)ISL.sw=null}
+// the wind over the abyss (Denis: «Ponte vivo»): a breeze all the time and, every eleven seconds or so, a gust that comes and goes (0..1);
+// none with the effects down (LOWFX)
+function cnWind(t){if(LOWFX)return 0;const ph=(t+3)/11,u=ph-Math.floor(ph);return .42+.58*(u<.3?Math.pow(Math.sin(u/.3*Math.PI),2):0)}
 // a thing on the bridge (a balcony, a prize) drawn in the bridge's own perspective (its far half a little smaller and squeezed, as the
 // planks): the islands' camera (cnV) with its points carried through the bridge's map, in units of the place c along the path
 function cnPlatView(M,c){const V=cnV(),o=M.S(c,0,0),k=M.K(c);
@@ -1500,38 +1714,48 @@ function cnPlatView(M,c){const V=cnV(),o=M.S(c,0,0),k=M.K(c);
 const cnBrSh=(nn,ne,nz,col)=>{const L=cnLt(),n=C3.nrm([nn*CNI_NV[0]+ne*CNI_EV[0],nn*CNI_NV[1]+ne*CNI_EV[1],nz]),l=C3.dot(n,L);return l>=0?C3.lt(col,.3*l):C3.dk(col,-.5*l)};
 const cnQ=(p,fill,lw,ink)=>{C3.poly(p);ctx.fillStyle=fill;ctx.fill();if(lw>0){ctx.strokeStyle=ink||INK;ctx.lineWidth=lw;ctx.stroke()}};
 // ------------------------------------------------ the bridge painted: with the camera still once in a picture of its own and copied; the
-// lanterns' lights, the prizes and the show alive on top
+// lanterns' lights, the prizes and the show alive on top. Since «Ponte vivo» (27 ottobre) the picture of a bridge that is alive (not in the
+// dark, effects not down) holds its deck only: its ropes, its cables with their flags, the banners of the balconies, what hangs from its
+// sides and its lanterns move in the wind and are drawn over it every frame (cnBrRopes, with the picture's own camera: no bob of their own,
+// they sit exactly on its posts); while the bridge swings under the hero all of it is drawn alive
 function cnIslBridge(i,L,t){if(!ARENAS[i+1])return;const M=cnBrMap(i,L,t),d=L.dpr;
   const foot=M.S(M.G.a0,0,0),far=M.S(M.G.a1,0,80);if(far[1]>L.H+30*d||foot[1]<-60*d)return;
-  const S=cnS(),an=ISL.brA&&ISL.brA.i===i,key=ISL.view.toFixed(4)+'|'+L.k.toFixed(3)+'|'+L.W+'x'+L.H+'|'+[cnBrLaidNow(i),cnOpenShown(i),!!S.all,LOWFX].join(),C=(ISL.bc||(ISL.bc={}))[i];
-  if(!an&&!ISL.drag&&!(C&&C.key===key)&&ISL.pv===ISL.view)cnBrBake(i,L,t,key);
-  const B=ISL.bc[i];if(!an&&!ISL.drag&&B&&B.key===key)ctx.drawImage(B.cv,B.x,B.y+Math.sin(t*.9)*2.2*d*(M.A.f+M.B.f)/2);else cnBrPaint(i,L,t,M);
+  const S=cnS(),an=ISL.brA&&ISL.brA.i===i,alive=cnOpenShown(i)||!!S.all,still=!an&&!ISL.drag&&!M.sw,
+    key=ISL.view.toFixed(4)+'|'+L.k.toFixed(3)+'|'+L.W+'x'+L.H+'|'+[cnBrLaidNow(i),cnOpenShown(i),!!S.all,LOWFX].join(),C=(ISL.bc||(ISL.bc={}))[i];
+  if(still&&!(C&&C.key===key)&&ISL.pv===ISL.view)cnBrBake(i,L,t,key,alive&&!LOWFX);
+  const B=ISL.bc[i];
+  if(still&&B&&B.key===key){const bob=Math.sin(t*.9)*2.2*d*(M.A.f+M.B.f)/2;ctx.drawImage(B.cv,B.x,B.y+bob);
+    if(B.deck){ctx.save();ctx.translate(0,bob);cnBrPaint(i,L,t,cnBrMap(i,L,t,true),'ropes');ctx.restore()}}
+  else cnBrPaint(i,L,t,M);
+  if(alive)cnBrWisps(i,L,t,M);
   cnBrLive(i,L,t,M)}
-function cnBrBake(i,L,t,key){const M=cnBrMap(i,L,t,true),G0=M.G,d=L.dpr,pts=[],wl=CNB.bal+CNB.bw+12,wr=CNB.pe+12;
+function cnBrBake(i,L,t,key,deck){const M=cnBrMap(i,L,t,true),G0=M.G,d=L.dpr,pts=[],wl=CNB.bal+CNB.bw+12,wr=CNB.pe+12;
   for(let q=0;q<=10;q++){const n=plerp(G0.a0-6,G0.a1+6,q/10),z=cnDeckZ(G0,n),hz=cnCableZ(G0,n)+10;pts.push(M.S(n,-wl,z-36),M.S(n,wr,z-36),M.S(n,-wl,z+50),M.S(n,-wr,hz),M.S(n,wr,hz))}
   const x0=Math.max(0,Math.floor(Math.min(...pts.map(p=>p[0])))),x1=Math.min(L.W,Math.ceil(Math.max(...pts.map(p=>p[0])))),y0=Math.max(-20*d,Math.floor(Math.min(...pts.map(p=>p[1]))-8*d)),y1=Math.min(L.H+20*d,Math.ceil(Math.max(...pts.map(p=>p[1]))+14*d));
   if(x1-x0<4||y1-y0<4)return;const old=ISL.bc[i],cv=old&&old.cv.width===x1-x0&&old.cv.height===y1-y0?old.cv:document.createElement('canvas');cv.width=x1-x0;cv.height=y1-y0;
-  const keep=ctx;ctx=cv.getContext('2d');try{ctx.setTransform(1,0,0,1,-x0,-y0);cnBrPaint(i,L,t,M)}catch(err){cnErr(err)}finally{ctx=keep}ISL.bc[i]={cv,x:x0,y:y0,key}}
+  const keep=ctx;ctx=cv.getContext('2d');try{ctx.setTransform(1,0,0,1,-x0,-y0);cnBrPaint(i,L,t,M,deck?'deck':'all')}catch(err){cnErr(err)}finally{ctx=keep}ISL.bc[i]={cv,x:x0,y:y0,key,deck}}
 // far to near: the deck with the balconies of the prizes beside it, its ropes, the cables (the towers on the island and the anchors on the
-// next one are in their pictures)
-function cnBrPaint(i,L,t,M){const S=cnS(),laid=cnBrLaidNow(i),dim=!cnOpenShown(i)&&!S.all,dk=c=>dim?cnMixC(c,'#06070c',.82):c;
+// next one are in their pictures); part: 'deck' the deck only (the picture of a bridge alive), 'ropes' what moves in the wind, all of it
+// without (in the wind only when it is alive)
+function cnBrPaint(i,L,t,M,part){const S=cnS(),laid=cnBrLaidNow(i),dim=!cnOpenShown(i)&&!S.all,dk=c=>dim?cnMixC(c,'#06070c',.82):c;
   ctx.save();ctx.lineJoin='round';ctx.lineCap='round';
-  try{cnBrDeck(i,M,laid,dk,dim)}catch(err){cnErr(err)}finally{ctx.restore()}}
+  try{if(part!=='ropes')cnBrDeck(i,M,laid,dk,dim);if(part!=='deck')cnBrRopes(i,M,laid,dk,dim,dim||LOWFX?null:t)}catch(err){cnErr(err)}finally{ctx.restore()}}
 // a rope: its dark outline, its colour, a thin light along its top
 function cnRope(p,k,w,col){C3.line(p);ctx.strokeStyle=INK;ctx.lineWidth=(w+1.5)*k;ctx.stroke();ctx.strokeStyle=col;ctx.lineWidth=w*k;ctx.stroke();
   if(w>2){ctx.save();ctx.translate(-.3*k,-.45*k);C3.line(p);ctx.strokeStyle='rgba(255,246,220,.3)';ctx.lineWidth=.55*k;ctx.stroke();ctx.restore()}}
 // a long rope in the bridge's perspective, thicker near and thinner far: its points [n, e, z] in pieces of four, the outline of all of them
 // first, then the colour, then the light (so the joints do not show)
-function cnRopeP(M,P,w,col,hl){const q=P.map(p=>M.S(p[0],p[1],p[2])),k=P.map(p=>M.K(p[0])),C=4;
+function cnRopeP(M,P,w,col,hl){const q=P.map(p=>M.S(p[0],p[1],p[2])),k=P.map(p=>M.K(p[0])),C=4,H=ISL.lay?ISL.lay.H:1e9,mg=20*(ISL.lay?ISL.lay.dpr:1),
+    off=j=>{const e=Math.min(q.length-1,j+C);let lo=1e9,hi=-1e9;for(let m=j;m<=e;m++){lo=Math.min(lo,q[m][1]);hi=Math.max(hi,q[m][1])}return hi<-mg||lo>H+mg};
   for(const pass of[0,1,2]){if(pass===2&&(!hl||w<=2))break;ctx.strokeStyle=pass===0?INK:pass===1?col:'rgba(255,246,220,.3)';
-    for(let j=0;j<q.length-1;j+=C){const e=Math.min(q.length-1,j+C),kk=(k[j]+k[e])/2,dx=pass===2?-.3*kk:0,dy=pass===2?-.45*kk:0;
+    for(let j=0;j<q.length-1;j+=C){if(off(j))continue;const e=Math.min(q.length-1,j+C),kk=(k[j]+k[e])/2,dx=pass===2?-.3*kk:0,dy=pass===2?-.45*kk:0;
       ctx.lineWidth=pass===0?(w+1.5)*kk:pass===1?w*kk:.55*kk;ctx.beginPath();ctx.moveTo(q[j][0]+dx,q[j][1]+dy);for(let m=j+1;m<=e;m++)ctx.lineTo(q[m][0]+dx,q[m][1]+dy);ctx.stroke()}}}
 // the deck, far to near: under it the cross bracing of the frame (where planks are missing it shows over the abyss), the cross beams (one
 // every four planks, their ends out beyond the planks: the posts stand on them, the world hangs things from them) and the two long beams;
 // then, far to near, the planks laid (the one the show is nailing without its nails yet) with what lies on their ends and the places of
-// those to come, each balcony of a prize before the planks beside it, and at each cross beam what hangs from its ends, its posts with their
-// dress and the lanterns hanging out from them on iron arms (out of the railing: its ropes do not cross them); the railing's ropes hanging
-// between the posts; the cables over them with their hangers and the little flags of the next arena
+// those to come, each balcony of a prize before the planks beside it, and at each cross beam what hangs from its left end and its posts with
+// their dress; the railing's ropes hanging between the posts (the rest, which moves in the wind, is cnBrRopes). What is off the screen is not
+// drawn
 function cnBrDeck(i,M,laid,dk,dim){const G0=M.G,N=G0.N,Ns=CNB.Ns,hw=CNB.hw,pp=CNB.pp,ph=CNB.ph,je=CNB.je,a0=G0.a0,a1=G0.a1,A=ISL.brA&&ISL.brA.i===i?ISL.brA:null,
     W=cnBrW(i),ch=(ARENAS[i]&&ARENAS[i].ch)||1,wood=dk(W.wood),sd=i*5.3+1.7,dz=n=>cnDeckZ(G0,n),nj=j=>j<=0?a0:j>=16?a1:a0+4*j*G0.pitch,
     line=(f,m)=>{const P=[];for(let q=0;q<=m;q++)P.push(f(plerp(a0-3,a1+3,q/m)));return P};
@@ -1540,37 +1764,52 @@ function cnBrDeck(i,M,laid,dk,dim){const G0=M.G,N=G0.N,Ns=CNB.Ns,hw=CNB.hw,pp=CN
     ctx.lineWidth=2.6*(M.K(na)+M.K(nb))/2;ctx.beginPath();ctx.moveTo(a[0],a[1]);ctx.lineTo(c[0],c[1]);ctx.stroke()}
   for(let j=15;j>=1;j--){const n=nj(j),z=dz(n)-CNB.pt-2.6;cnLogS(M,[n,-je,z],[n,je,z],3.4,dk(C3.dk(W.wood,.1)),false)}
   for(const s of[-1,1])cnLogP(M,line(n=>[n,s*(hw-3),dz(n)-CNB.pt-2.8],40),5.6,wood);
-  // (what hangs out of the right side, its lanterns and what the world hangs there, waits for the cables: from this camera the near part of
-  // the cables, high and wide, passes over them though it is not in front of them; on the left the balconies are in their way, so there it
-  // goes in its place, far to near)
-  const PO=[],late=[];for(const p of cnBrPosts(G0))(PO[p.j]||(PO[p.j]=[])).push(p);
-  const side=j=>{const n=nj(j),z0=dz(n),k=M.K(n);
-    if(!dim){if(j%4===3)late.push(()=>cnBrHang(M,n,-1,z0,ch,sd+j*1.7,dk));else if(j%4)cnBrHang(M,n,-1,z0,ch,sd+j*1.7,dk);late.push(()=>cnBrHang(M,n,1,z0,ch,sd+j*1.7+.5,dk))}
+  // (on the left what hangs from the cross beams goes in its place, far to near: the balconies are in its way; the rest of the sides waits for
+  // the cables, cnBrRopes)
+  const PO=[];for(const p of cnBrPosts(G0))(PO[p.j]||(PO[p.j]=[])).push(p);
+  const side=j=>{const n=nj(j),z0=dz(n),k=M.K(n);if(cnOff(M,n,-30,ph+8))return;
+    if(!dim&&j%4&&j%4!==3)cnBrHang(M,n,-1,z0,ch,sd+j*1.7,dk);
     for(const p of PO[j]||[]){const s=Math.sign(p.e),top=z0+ph;cnLogS(M,[n,p.e,z0-CNB.pt-2.6],[n,p.e,top],3.6,wood,true);
       const q=M.S(n,p.e,top);ctx.fillStyle=dk(C3.lt(W.wood,.35));ctx.strokeStyle=INK;ctx.lineWidth=.8*k;ctx.beginPath();ctx.ellipse(q[0],q[1],2.1*k,1*k,0,0,TAU);ctx.fill();ctx.stroke();
-      if(!dim)cnBrDressPost(q[0],q[1],k,ch,sd+p.j*1.3+(s>0?.5:0),dk,M.S(n,p.e,z0+ph*.45));
-      if(p.lamp)late.push(()=>cnLamp2(M,n,s,z0,!dim&&laid>=4*p.j,dk))}};
+      if(!dim)cnBrDressPost(q[0],q[1],k,ch,sd+p.j*1.3+(s>0?.5:0),dk,M.S(n,p.e,z0+ph*.45))}};
   let b=2,jj=15;
-  for(let g=N-1;g>=0;g--){const nc=cnPlankN(G0,g);while(b>=0&&nc<G0.Z[b]+CNB.bd){cnBalcony(i,M,b,laid>=(b+1)*Ns,dk,dim);b--}
+  for(let g=N-1;g>=0;g--){const nc=cnPlankN(G0,g);while(b>=0&&nc<G0.Z[b]+CNB.bd){if(!cnOff(M,G0.Z[b],-30,60))cnBalcony(i,M,b,laid>=(b+1)*Ns,dk,dim);b--}
     while(jj>=1&&nc<nj(jj)){side(jj);jj--}
+    if(cnOff(M,nc,-8,6))continue;
     const bn=A&&A.bn[g];
     if(g<laid){const P=cnPlankAt(G0,g,bn?2.2*Math.max(0,1-bn.t/(CN_SHOW.bnc*A.sp*.45)):0);cnPlankDraw(M,P,dk(W.plank[Math.floor(prH(g,i+2)*4)%4]),!bn||bn.nail,1);
       if(!dim&&!bn)cnBrTuft(M,G0,g,ch,sd,dk)}
     else if(!dim)cnPlankGhost(M,cnPlankAt(G0,g,0))}
-  while(b>=0){cnBalcony(i,M,b,laid>=(b+1)*Ns,dk,dim);b--}
+  while(b>=0){if(!cnOff(M,G0.Z[b],-30,60))cnBalcony(i,M,b,laid>=(b+1)*Ns,dk,dim);b--}
   while(jj>=1){side(jj);jj--}
   // the ropes of the railing: from the tower down to each post's top and on to the anchors, hanging between them; a thinner one halfway
   for(const s of[-1,1])for(const[f,w,sg] of[[1,2.7,2.8],[.5,1.5,1.8]]){const T=[[a0-3,s*CNB.pe,CNB.rail0*f]];
     for(const p of cnBrPosts(G0))if(p.e*s>0)T.push([p.n,s*pp,dz(p.n)+ph*f]);T.push([a1+3,s*CNB.pe,CNB.rail1*f]);
     const R=[T[0]];for(let j=1;j<T.length;j++){const a=T[j-1],c=T[j],sag=sg*Math.min(2.2,(c[0]-a[0])/(4*G0.pitch));for(const u of[.25,.5,.75])R.push([plerp(a[0],c[0],u),plerp(a[1],c[1],u),plerp(a[2],c[2],u)-sag*Math.sin(Math.PI*u)]);R.push(c)}
     cnRopeP(M,R,w,dk(W.rope),w>2);
-    if(!dim&&ch===4&&f===1)cnBrSnowRope(M,R,sd+s)}
-  // the hangers from the cables down to the posts' tops, the cables, their little flags
+    if(!dim&&ch===4&&f===1)cnBrSnowRope(M,R,sd+s)}}
+// a piece of the bridge at n (from z0 to z1 high) all off the screen? (with a margin)
+function cnOff(M,n,z0,z1){const H=ISL.lay?ISL.lay.H:1e9,m=30*(ISL.lay?ISL.lay.dpr:1);return M.S(n,0,z0)[1]<-m||M.S(n,0,z1)[1]>H+m}
+// what moves in the wind (Denis: «Bandierine e stendardi che sventolano, lanterne che dondolano piano, […] il vento sulle funi»), over the
+// deck: the banners of the balconies and their ropes up to the cable; the hangers from the cables down to the posts' tops, the cables, heavy,
+// swinging slowly, and their little flags flapping; what hangs out of the sides (on the right all of it, on the left where the balconies
+// leave room) swaying, and the lanterns on their iron arms (out of the railing: its ropes do not cross them) swinging gently. (The railing's
+// ropes, tied to their posts every few planks, stay with the deck: from this camera they would move too little to be seen.) (From this camera the near part of the cables, high and wide, passes over what hangs from the far sides though it is
+// not in front of it: that is why the sides come after the cables.) t: the time of the wind (null: still)
+function cnBrRopes(i,M,laid,dk,dim,t){const G0=M.G,pp=CNB.pp,ph=CNB.ph,a0=G0.a0,a1=G0.a1,W=cnBrW(i),ch=(ARENAS[i]&&ARENAS[i].ch)||1,sd=i*5.3+1.7,dz=n=>cnDeckZ(G0,n),
+    wv=t==null?0:cnWind(t),
+    cab=(n,s)=>{const u=clamp((n-a0)/G0.len,0,1),e0=s*cnCableE(G0,n),z0=cnCableZ(G0,n);if(!wv)return[n,e0,z0];const e=Math.sin(Math.PI*u);
+      return[n,e0+wv*2.6*e*Math.sin(t*.9+s*1.3+u*1.6),z0+wv*1.2*e*Math.sin(t*.75+s+u*2.2)]};
+  for(let b=2;b>=0;b--)if(!cnOff(M,G0.Z[b],0,90))cnBalCloth(i,M,b,dk,t,wv,cab);
   for(const s of[-1,1]){ctx.strokeStyle=dk('#4e3e28');
-    for(const p of cnBrPosts(G0)){if(p.e*s<0)continue;const hz=cnCableZ(G0,p.n),tz=dz(p.n)+ph;if(hz-tz<5)continue;const k=M.K(p.n),a=M.S(p.n,s*cnCableE(G0,p.n),hz),c=M.S(p.n,s*pp,tz);ctx.lineWidth=1.1*k;ctx.beginPath();ctx.moveTo(a[0],a[1]);ctx.lineTo(c[0],c[1]);ctx.stroke()}
-    const C=line(n=>[n,s*cnCableE(G0,n),cnCableZ(G0,n)],48);cnRopeP(M,C,3.6,dk(W.cable),true);
-    if(!dim)cnBrFlags(M,G0,s,i,dk)}
-  for(const f of late)f()}
+    for(const p of cnBrPosts(G0)){if(p.e*s<0)continue;const tz=dz(p.n)+ph,q=cab(p.n,s);if(q[2]-tz<5||cnOff(M,p.n,tz,q[2]))continue;const k=M.K(p.n),a=M.S(q[0],q[1],q[2]),c=M.S(p.n,s*pp,tz);ctx.lineWidth=1.1*k;ctx.beginPath();ctx.moveTo(a[0],a[1]);ctx.lineTo(c[0],c[1]);ctx.stroke()}
+    const C=[];for(let q=0;q<=48;q++)C.push(cab(plerp(a0-3,a1+3,q/48),s));cnRopeP(M,C,3.6,dk(W.cable),true);
+    if(!dim)cnBrFlags(M,G0,s,i,dk,t,wv,cab)}
+  for(let j=15;j>=1;j--){const n=a0+4*j*G0.pitch,z0=dz(n);if(cnOff(M,n,-34,ph+6))continue;
+    if(!dim){if(j%4===3)cnBrHang(M,n,-1,z0,ch,sd+j*1.7,dk,t,wv);cnBrHang(M,n,1,z0,ch,sd+j*1.7+.5,dk,t,wv)}
+    if(j%2===0)cnLamp2(M,n,1,z0,!dim&&laid>=4*j,dk,cnLampTh(i,n,1,t,wv))}}
+// how far a lantern on its arm swings (radians): gently in the wind, more when the bridge swings under the hero
+function cnLampTh(i,n,s,t,wv){if(t==null)return 0;const S=ISL.sw;return(wv||0)*.2*Math.sin(t*1.7+n*.045+s)+(S&&S.i===i?S.a*.22*Math.sin(t*3.3-.9):0)}
 // a log seen from the bridge's camera between two of its points (both about as far): its dark outline, the wood, a light along its top
 // (along its left, standing)
 function cnLogS(M,p,q,w,col,up){const a=M.S(p[0],p[1],p[2]),b=M.S(q[0],q[1],q[2]),k=(M.K(p[0])+M.K(q[0]))/2;ctx.lineCap='round';
@@ -1583,9 +1822,10 @@ function cnLogP(M,P,w,col){const q=P.map(p=>M.S(p[0],p[1],p[2])),k=P.map(p=>M.K(
       ctx.beginPath();ctx.moveTo(q[j][0],q[j][1]+dy);for(let m=j+1;m<=e;m++)ctx.lineTo(q[m][0],q[m][1]+dy);ctx.stroke()}}}
 // a lantern hanging from an iron arm out of a post (the arm with its strut, the hook, the roof, the cage with its little window lit or not, the
 // cap under it; its light and its flame are drawn alive): out of the railing, so that its ropes do not cross it
-function cnLamp2(M,n,s,z0,lit,dk){const k=M.K(n),ph=CNB.ph,pp=CNB.pp,a=M.S(n,s*pp,z0+ph-3),b=M.S(n,s*(pp+CNB.lo),z0+ph-1),c=M.S(n,s*pp,z0+ph-9),m=M.S(n,s*(pp+CNB.lo*.55),z0+ph-1.9);
+function cnLamp2(M,n,s,z0,lit,dk,th){const k=M.K(n),ph=CNB.ph,pp=CNB.pp,a=M.S(n,s*pp,z0+ph-3),b=M.S(n,s*(pp+CNB.lo),z0+ph-1),c=M.S(n,s*pp,z0+ph-9),m=M.S(n,s*(pp+CNB.lo*.55),z0+ph-1.9);
   ctx.save();ctx.lineCap='round';ctx.lineJoin='round';
   for(const[w,col] of[[2.1,INK],[1.1,dk('#4a4444')]]){ctx.strokeStyle=col;ctx.lineWidth=w*k;ctx.beginPath();ctx.moveTo(a[0],a[1]);ctx.lineTo(b[0],b[1]);ctx.moveTo(c[0],c[1]);ctx.lineTo(m[0],m[1]);ctx.stroke()}
+  if(th){ctx.translate(b[0],b[1]);ctx.rotate(th);ctx.translate(-b[0],-b[1])}
   const x=b[0],y=b[1]+1.4*k,w=7.2*k,h=9*k,top=y+2.6*k;ctx.strokeStyle=INK;ctx.lineWidth=.9*k;ctx.beginPath();ctx.moveTo(b[0],b[1]);ctx.lineTo(x,y);ctx.stroke();
   ctx.lineWidth=1.1*k;ctx.beginPath();ctx.moveTo(x-w*.62,top);ctx.lineTo(x,y);ctx.lineTo(x+w*.62,top);ctx.closePath();ctx.fillStyle=dk('#3a3434');ctx.fill();ctx.stroke();
   ctx.fillStyle=dk('#2e2a2a');cnRR(x-w/2,top,w,h,1.3*k);ctx.fill();ctx.stroke();
@@ -1593,13 +1833,21 @@ function cnLamp2(M,n,s,z0,lit,dk){const k=M.K(n),ph=CNB.ph,pp=CNB.pp,a=M.S(n,s*p
   ctx.lineWidth=.7*k;ctx.beginPath();ctx.moveTo(x,top+h*.14);ctx.lineTo(x,top+h*.8);ctx.moveTo(x-w*.3,top+h*.47);ctx.lineTo(x+w*.3,top+h*.47);ctx.stroke();
   ctx.lineWidth=1*k;ctx.beginPath();ctx.moveTo(x-w*.42,top+h);ctx.lineTo(x+w*.42,top+h);ctx.lineTo(x+w*.2,top+h+1.4*k);ctx.lineTo(x-w*.2,top+h+1.4*k);ctx.closePath();ctx.fillStyle=dk('#3a3434');ctx.fill();ctx.stroke();
   ctx.restore()}
-// the little flags of the arena the bridge leads to, hanging from the high part of the cables
-function cnBrFlags(M,G0,s,i,dk){const ac=dk((ARENAS[i+1]||ARENAS[i]).col),cr=dk('#fff2d6'),n0=G0.a0+8,n1=G0.a0+G0.len*.42;let j=0;
-  for(let n=n0;n<n1;n+=15,j++){const m=n+10,a=M.S(n,s*cnCableE(G0,n),cnCableZ(G0,n)-.5),b=M.S(m,s*cnCableE(G0,m),cnCableZ(G0,m)-.5),k=M.K(n),tip=[(a[0]+b[0])/2,(a[1]+b[1])/2+8*k];
-    ctx.beginPath();ctx.moveTo(a[0],a[1]);ctx.lineTo(b[0],b[1]);ctx.lineTo(tip[0],tip[1]);ctx.closePath();ctx.fillStyle=j%2?cr:ac;ctx.fill();ctx.strokeStyle=INK;ctx.lineWidth=.8*k;ctx.lineJoin='round';ctx.stroke()}}
+// the little flags of the arena the bridge leads to, hanging from the high part of the cables (cab: where the cable is, the wind's): in the
+// wind they are pushed east (where it blows) and lifted, flapping, their edges bowing
+function cnBrFlags(M,G0,s,i,dk,t,wv,cab){const ac=dk((ARENAS[i+1]||ARENAS[i]).col),cr=dk('#fff2d6'),n0=G0.a0+8,n1=G0.a0+G0.len*.42,F=[[],[]],H=ISL.lay?ISL.lay.H:1e9;let j=0;
+  for(let n=n0;n<n1;n+=15,j++){const m=n+10,ca=cab(n,s),cb=cab(m,s),a=M.S(ca[0],ca[1],ca[2]-.5),b=M.S(cb[0],cb[1],cb[2]-.5),k=M.K(n);if(a[1]>H||b[1]<-12*k)continue;
+    const fl=wv?Math.sin(t*7.3+j*1.9+s*2):0,push=wv*(4.6+1.6*fl),lift=wv*(2.4+1.1*fl),bow=wv*1.4*Math.sin(t*9.1+j*2.3),
+      tip=[(a[0]+b[0])/2+push*k,(a[1]+b[1])/2+(8-lift)*k];
+    F[j%2].push([a,b,tip,bow*k])}
+  ctx.lineJoin='round';
+  const path=L=>{ctx.beginPath();for(const[a,b,tip,bw] of L){ctx.moveTo(a[0],a[1]);ctx.lineTo(b[0],b[1]);ctx.quadraticCurveTo((b[0]+tip[0])/2+bw,(b[1]+tip[1])/2,tip[0],tip[1]);ctx.quadraticCurveTo((a[0]+tip[0])/2-bw,(a[1]+tip[1])/2,a[0],a[1]);ctx.closePath()}};
+  const k=M.K(n0);for(const c of[0,1]){if(!F[c].length)continue;path(F[c]);ctx.fillStyle=c?cr:ac;ctx.fill();ctx.strokeStyle=INK;ctx.lineWidth=.8*k;ctx.stroke()}}
 // what the world hangs from the ends of the cross beams, out beyond the planks where the ropes do not hide it: moss (1), a chain with a
 // glowing coal (2), a vine with its leaves and a flower (3), icicles (4)
-function cnBrHang(M,n,s,z0,ch,sd,dk){const h=prH(3,sd);if(h<.2)return;cnBrHangAt(M.S(n,s*(CNB.je-.8),z0-CNB.pt-3.6),M.K(n),h,ch,sd,dk,s)}
+function cnBrHang(M,n,s,z0,ch,sd,dk,t,wv){const h=prH(3,sd);if(h<.2)return;const p=M.S(n,s*(CNB.je-.8),z0-CNB.pt-3.6),th=t!=null&&ch!==4?(wv||0)*.16*Math.sin(t*1.5+sd*2.1)+(ISL.sw?ISL.sw.a*.12*Math.sin(t*3.3-1.2):0):0;
+  if(th){ctx.save();ctx.translate(p[0],p[1]);ctx.rotate(th);ctx.translate(-p[0],-p[1])}
+  cnBrHangAt(p,M.K(n),h,ch,sd,dk,s);if(th)ctx.restore()}
 function cnBrHangAt(p,k,h,ch,sd,dk,s){
   if(ch===1){cnHang(p[0],p[1],(8+h*14)*k,k,dk('#4f8a34'),dk('#82b850'),sd);if(h>.7)cnHang(p[0]-s*1.8*k,p[1]-.3*k,(4+h*7)*k,k,dk('#5f9a3c'),dk('#9ad86a'),sd+2)}
   else if(ch===3)cnVine(p[0],p[1],(12+h*20)*k,k,sd,dk);
@@ -1677,16 +1925,31 @@ function cnBalcony(i,M,b,reached,dk,dim){const G0=M.G,c=G0.Z[b],dz=cnDeckZ(G0,c)
     {const r=[];for(let q=0;q<20;q++){const a=q/20*TAU;r.push(V0.P(at(Math.cos(a)*7.2,E+Math.sin(a)*7.2,dz+3.25)))}C3.poly(r);ctx.strokeStyle=C3.lt(pc,.15);ctx.lineWidth=.9;ctx.stroke()}
     const parts=[],R=(n,e,f,o)=>parts.push({d:V0.D(at(n,e,0))+(o||0),f});
     for(const q of[0,1]){const[n,e]=C[q];R(n,e,()=>{C3.caps(V0,at(n,e,dz),2,at(n,e,dz+ah),1.8,wood,{lw:1.3,kl:.3,kd:.5,noRim:1});cnLantern(K,at(n,e,dz+ah+.5),lit)})}
-    R(bd-4,E,()=>{const n=bd-2.5,N=CNI_NV;C3.caps(V0,at(n,C[0][1],dz+ah-3),1.6,at(n,E,dz+ah+1.5),1.6,wood,{lw:1.2,noRim:1});C3.caps(V0,at(n,E,dz+ah+1.5),1.6,at(n,C[1][1],dz+ah-3),1.6,wood,{lw:1.2,noRim:1});
-      const bn=[at(n-1.8,E-9,dz+ah-1.5),at(n-1.8,E+9,dz+ah-1.5),at(n-1.8,E+9,dz+16),at(n-1.8,E,dz+10),at(n-1.8,E-9,dz+16)];
-      oFaces(K,[[[-N[0],-N[1],0],bn],[[N[0],N[1],0],bn.slice().reverse()]],pc,{lw:1.2,ew:.4});C3.spot(V0,at(n-2.2,E,dz+ah-13),[-N[0],-N[1],0],3,C3.lt(pc,.42))},1);
+    R(bd-4,E,()=>{const n=bd-2.5;C3.caps(V0,at(n,C[0][1],dz+ah-3),1.6,at(n,E,dz+ah+1.5),1.6,wood,{lw:1.2,noRim:1});C3.caps(V0,at(n,E,dz+ah+1.5),1.6,at(n,C[1][1],dz+ah-3),1.6,wood,{lw:1.2,noRim:1})},1);
     for(const q of[2,3]){const[n,e]=C[q];R(n,e,()=>C3.caps(V0,at(n,e,dz),1.8,at(n,e,dz+rh+1.6),1.6,wood,{lw:1.2,kl:.3,kd:.5,noRim:1}))}
     for(const[a,q] of[[1,2],[2,3]]){const p=C[a],r=C[q];R((p[0]+r[0])/2,(p[1]+r[1])/2,()=>C3.caps(V0,at(p[0],p[1],dz+rh),1.3,at(r[0],r[1],dz+rh),1.3,wood,{lw:1.1,noRim:1}))}
     pRun(parts)}
   catch(err){cnErr(err)}finally{ctx.restore()}
-  if(!dim){const ch=(ARENAS[i]&&ARENAS[i].ch)||1,k=M.K(c-bd);for(const[e,j] of[[E-bw+5,0],[E-3,1],[E+bw-9,2]]){const h=prH(j+b*3,i*7.1+3);if(h<.3)continue;cnBrHangAt(M.S(c-bd+.4,e,dz-3.3),k,h*.8,ch,i*7.1+j+b*3,dk,-1)}}
-  for(const q of[0,1]){const n=c+C[q][0],e=C[q][1],m=c+bd+10,hz=cnCableZ(G0,m);if(hz-(dz+ah)<6)continue;
-    cnRopeP(M,[[n,e,dz+ah-2],[plerp(n,m,.5),plerp(e,-cnCableE(G0,m),.5),plerp(dz+ah-2,hz,.5)-1.5],[m,-cnCableE(G0,m),hz]],1.1,dk(W.cable))}}
+  if(!dim){const ch=(ARENAS[i]&&ARENAS[i].ch)||1,k=M.K(c-bd);for(const[e,j] of[[E-bw+5,0],[E-3,1],[E+bw-9,2]]){const h=prH(j+b*3,i*7.1+3);if(h<.3)continue;cnBrHangAt(M.S(c-bd+.4,e,dz-3.3),k,h*.8,ch,i*7.1+j+b*3,dk,-1)}}}
+// the banner of a balcony's prize under its arch, and its two ropes from the arch up to the cable (cab: where the cable is in the wind)
+function cnBalCloth(i,M,b,dk,t,wv,cab){const G0=M.G,c=G0.Z[b],dz=cnDeckZ(G0,c),K=cnPlatView(M,c),W=cnBrW(i),E=-CNB.bal,bw=CNB.bw,bd=CNB.bd,ah=40,n=bd-2.5,pc=dk(cnPrizeCol(cnBrPrize(i,b+1)));
+  ctx.save();ctx.translate(K.o[0],K.o[1]);ctx.scale(K.k,K.k);
+  try{cnCloth(K,(e,z,dn)=>cnChain(n-1.8-(dn||0),e,z),E,9,dz+ah-1.5,dz+16,dz+10,pc,t,wv,b*1.7+i,dz+ah-13,3)}catch(err){cnErr(err)}finally{ctx.restore()}
+  for(const e of[E+bw-4,E-bw+2.5]){const nn=c+n,m=c+bd+10,top=cab(m,-1);if(top[2]-(dz+ah)<6)continue;
+    cnRopeP(M,[[nn,e,dz+ah-2],[plerp(nn,m,.5),plerp(e,top[1],.5),plerp(dz+ah-2,top[2],.5)-1.5],top],1.1,dk(W.cable))}}
+// a banner hanging from its top edge (in the view K, which the canvas is already in: at(e, z, dn) its points, dn toward you; e0 its middle,
+// hw half its width, zt its top, zb its bottom at the sides, zn the notch of its swallowtail, its emblem a disc zs high and rs wide): in the
+// wind its cloth is pushed east (where the wind blows) and ripples, a wave running down it (each band in its light as it turns); still
+// without (t null)
+function cnCloth(K,at,e0,hw,zt,zb,zn,col,t,wv,ph,zs,rs){const{V0}=K,R=4,off=[],rows=[];
+  for(let r=0;r<=R;r++){const u=r/R;off.push(t!=null&&wv?wv*(2.4*u+1.7*Math.pow(u,1.3)*Math.sin(t*2.6-r*.95+ph)):0)}
+  for(let r=0;r<=R;r++){const z=plerp(zt,zb,r/R);rows.push([V0.P(at(e0-hw+off[r],z)),V0.P(at(e0+hw+off[r],z))])}
+  const notch=V0.P(at(e0+off[R],zn)),out=[];for(let r=0;r<=R;r++)out.push(rows[r][0]);out.push(notch);for(let r=R;r>=0;r--)out.push(rows[r][1]);
+  const sh=pShade(K,[-CNI_NV[0],-CNI_NV[1],0],col);ctx.lineJoin='round';C3.poly(out);ctx.strokeStyle=INK;ctx.lineWidth=2.4;ctx.stroke();
+  for(let r=0;r<R;r++){const sl=off[r+1]-off[r],base=plerp(.1,-.16,(r+.5)/R),k=base-clamp(sl*.08,-.22,.22),c=k>=0?C3.lt(sh,k):C3.dk(sh,-k),q=r<R-1?[rows[r][0],rows[r][1],rows[r+1][1],rows[r+1][0]]:[rows[r][0],rows[r][1],rows[r+1][1],notch,rows[r+1][0]];
+    C3.poly(q);ctx.fillStyle=c;ctx.fill();ctx.strokeStyle=c;ctx.lineWidth=.5;ctx.stroke()}
+  C3.poly(out);ctx.strokeStyle=C3.dk(col,.6);ctx.lineWidth=.4;ctx.stroke();
+  if(zs!=null){const u=clamp((zt-zs)/(zt-zb),0,1)*R,r0=Math.floor(u),o=plerp(off[r0],off[Math.min(R,r0+1)],u-r0);C3.spot(V0,at(e0+o,zs,.4),[-CNI_NV[0],-CNI_NV[1],0],rs,C3.lt(col,.42))}}
 // a post of logs: a round log, its top cut (the wood's rings), the rope wound round it twice
 function cnLogPost(K,b,h,wood,dim){const{V0}=K,tp=[b[0],b[1],b[2]+h];C3.caps(V0,b,3.6,tp,3.2,wood,{lw:1.6,kl:.3,kd:.5,rim:.2});
   const q=V0.P(tp);ctx.fillStyle=dim?'#3a2c20':'#c49a68';ctx.beginPath();ctx.ellipse(q[0],q[1],3.1,1.45,0,0,TAU);ctx.fill();ctx.strokeStyle=INK;ctx.lineWidth=1;ctx.stroke();
@@ -1704,8 +1967,8 @@ function cnLampPole(K,b,wood,lit,dir){const{V0}=K,h=40,E=CNI_EV,sg=dir||-1,top=[
 // the gate of the bridge at the back of an island: two towers, each two logs bound with rope on a block of stone, a little roof with the flag
 // of the arena it leads to, the banner of that arena on its front, a lantern on an arm outward, the cable over its top and down its front
 // to a stake; two beams across (the lower one over the heads) and between them the board with the number of the next arena; in the
-// island's picture, in its order
-function cnBrPortal(K,i,op){const{V0}=K,n=cnIslRim(i,true)-6,h=CNB.gate,pe=CNB.pe,W=cnBrW(i),ch=(ARENAS[i]&&ARENAS[i].ch)||1,wood=W.wood,stone=cnMixC(W.stone,'#8a8070',.15),A1=ARENAS[i+1],ac=A1?A1.col:'#c0392b',N=CNI_NV,at=(e,z,dn)=>cnChain(n+(dn||0),e,z);
+// island's picture, in its order (live: what moves in the wind is left out, cnPortalLive draws it)
+function cnBrPortal(K,i,op,live){const{V0}=K,n=cnIslRim(i,true)-6,h=CNB.gate,pe=CNB.pe,W=cnBrW(i),ch=(ARENAS[i]&&ARENAS[i].ch)||1,wood=W.wood,stone=cnMixC(W.stone,'#8a8070',.15),A1=ARENAS[i+1],ac=A1?A1.col:'#c0392b',N=CNI_NV,at=(e,z,dn)=>cnChain(n+(dn||0),e,z);
   for(const s of[-1,1]){const e=s*pe;
     pBox(K,at(e,0),20,24,10,stone,{a:CN_NA,lw:1.6});cnPortalBase(K,ch,e,at,i);
     for(const de of[s*3.6,-s*3.6])C3.caps(V0,at(e+de,9),4.2,at(e+de,h),3.6,wood,{lw:1.7,kl:.3,kd:.5,rim:.2});
@@ -1713,12 +1976,12 @@ function cnBrPortal(K,i,op){const{V0}=K,n=cnIslRim(i,true)-6,h=CNB.gate,pe=CNB.p
     for(const z of[22,54,h-14]){const c=V0.P(at(e,z));ctx.strokeStyle=INK;ctx.lineWidth=2.8;ctx.beginPath();ctx.ellipse(c[0],c[1],8.4,2.4,0,0,Math.PI);ctx.stroke();ctx.strokeStyle='#d8b878';ctx.lineWidth=1.4;ctx.stroke()}
     pRound(K,at(e,h-1),[[0,9.6],[2.2,9.6],[2.4,8.6],[10,.6]],'#5a3e28',{m:8,lw:1.4,kl:.3,kd:.5});cnPortalRoof(K,ch,e,h,at,i+s);
     C3.caps(V0,at(e,h+8),.9,at(e,h+27),.8,'#3a2c20',{lw:1,noRim:1});
-    {const f=[V0.P(at(e,h+27)),V0.P(at(e+s*15,h+22.5)),V0.P(at(e,h+18))];ctx.beginPath();ctx.moveTo(f[0][0],f[0][1]);ctx.quadraticCurveTo((f[0][0]+f[1][0])/2,f[0][1]+1.5,f[1][0],f[1][1]);ctx.quadraticCurveTo((f[1][0]+f[2][0])/2,f[2][1]-1,f[2][0],f[2][1]);ctx.closePath();
+    if(!live){const f=[V0.P(at(e,h+27)),V0.P(at(e+s*15,h+22.5)),V0.P(at(e,h+18))];ctx.beginPath();ctx.moveTo(f[0][0],f[0][1]);ctx.quadraticCurveTo((f[0][0]+f[1][0])/2,f[0][1]+1.5,f[1][0],f[1][1]);ctx.quadraticCurveTo((f[1][0]+f[2][0])/2,f[2][1]-1,f[2][0],f[2][1]);ctx.closePath();
       ctx.fillStyle=ac;ctx.fill();ctx.strokeStyle=INK;ctx.lineWidth=1.2;ctx.lineJoin='round';ctx.stroke()}
-    C3.caps(V0,at(e+s*7,h-24),1.4,at(e+s*17,h-24),1.2,wood,{lw:1.2,noRim:1});cnLantern(K,at(e+s*17,h-37),op);
-    const bn=[at(e-5.5,h-34,-4.8),at(e+5.5,h-34,-4.8),at(e+5.5,h-70,-4.8),at(e,h-62,-4.8),at(e-5.5,h-70,-4.8)];
-    oFaces(K,[[[-N[0],-N[1],0],bn],[[N[0],N[1],0],bn.slice().reverse()]],ac,{lw:1.2,ew:.4});C3.spot(V0,at(e,h-48,-5.2),[-N[0],-N[1],0],2.4,C3.lt(ac,.35));
-    const st=at(e+s*4,0,-26);C3.caps(V0,st,2.2,[st[0],st[1],st[2]+7],1.8,wood,{lw:1.2,noRim:1});cnRope([V0.P(at(e,h+1,-2)),V0.P(at(e+s*2,h*.5,-14)),V0.P([st[0],st[1],st[2]+6])],1,2.8,W.cable)}
+    C3.caps(V0,at(e+s*7,h-24),1.4,at(e+s*17,h-24),1.2,wood,{lw:1.2,noRim:1});if(!live)cnLantern(K,at(e+s*17,h-37),op);
+    if(!live){const bn=[at(e-5.5,h-34,-4.8),at(e+5.5,h-34,-4.8),at(e+5.5,h-70,-4.8),at(e,h-62,-4.8),at(e-5.5,h-70,-4.8)];
+      oFaces(K,[[[-N[0],-N[1],0],bn],[[N[0],N[1],0],bn.slice().reverse()]],ac,{lw:1.2,ew:.4});C3.spot(V0,at(e,h-48,-5.2),[-N[0],-N[1],0],2.4,C3.lt(ac,.35))}
+    const st=at(e+s*4,0,-26);C3.caps(V0,st,2.2,[st[0],st[1],st[2]+7],1.8,wood,{lw:1.2,noRim:1});if(!live)cnRope([V0.P(at(e,h+1,-2)),V0.P(at(e+s*2,h*.5,-14)),V0.P([st[0],st[1],st[2]+6])],1,2.8,W.cable)}
   for(const[z,r,w] of[[h-4,3.8,10],[h-30,3,7]])C3.caps(V0,at(-pe-w,z),r,at(pe+w,z),r,wood,{lw:1.8,kl:.3,kd:.5,rim:.2});cnPortalBeams(K,ch,pe,h,at,i);
   for(const s of[-1,1])for(const z of[h-4,h-30]){const q=V0.P(at(s*pe,z,-4));ctx.strokeStyle=INK;ctx.lineWidth=2.4;ctx.beginPath();ctx.moveTo(q[0]-2.6,q[1]-4);ctx.lineTo(q[0]+2.6,q[1]+4);ctx.moveTo(q[0]+2.6,q[1]-4);ctx.lineTo(q[0]-2.6,q[1]+4);ctx.stroke();
     ctx.strokeStyle='#d8b878';ctx.lineWidth=1.1;ctx.stroke()}
@@ -1756,6 +2019,28 @@ function cnPortalBeams(K,ch,pe,h,at,sd){const{V0}=K;
   else if(ch===1||ch===3)for(const de of[-37,-24,23,36]){const p=V0.P(at(de,h-33,-2.6)),l=5+prH(de,sd)*7;if(ch===1)cnHang(p[0],p[1],l,1,'#4f8a34','#82b850',sd+de);else cnVine(p[0],p[1],l+3,1,sd+de,c=>c)}}
 // where the towers' lanterns shine: [n, e, z] from the island's middle
 const cnPortalLamp=(i,s)=>[cnIslRim(i,true)-6,s*(CNB.pe+17),CNB.gate-33];
+// the towers' parts that live in the wind, drawn over the island's picture (A: where it is): the flag on each roof flapping (both toward the
+// east, where the wind blows), the banner of the next arena rippling, the rope in front of it from the top down to its stake, the lantern
+// swinging gently on its arm (its hook at the arm's end); th: how far each lantern swings
+function cnPortalLive(i,A,t,op){const n=cnIslRim(i,true)-6,h=CNB.gate,pe=CNB.pe,W=cnBrW(i),A1=ARENAS[i+1],ac=A1?A1.col:'#c0392b',at=(e,z,dn)=>cnChain(n+(dn||0),e,z),wv=cnWind(t),
+    V0=cnV(),K={V0,k:A.k,L:cnLt()},th=[];
+  ctx.save();ctx.translate(A.x,A.y);ctx.scale(A.k,A.k);
+  try{for(const s of[-1,1]){const e=s*pe;
+    // the flag: its edge on the pole, four points along it waving (a wave running to its tip), the tip lifted by the wind
+    {const T=[],B=[];for(let q=0;q<=4;q++){const u=q/4,wa=(1.2+wv*1.6)*u*Math.sin(t*(4.5+wv*3)-u*3.6+s+i),dz=-u*(1-wv)*3;
+        T.push(V0.P(at(e+u*15,h+27-u*4.5+dz+wa))),B.push(V0.P(at(e+u*15,h+18+u*4.5+dz+wa*.8)))}
+      ctx.beginPath();ctx.moveTo(T[0][0],T[0][1]);for(let q=1;q<=4;q++)ctx.lineTo(T[q][0],T[q][1]);for(let q=4;q>=0;q--)ctx.lineTo(B[q][0],B[q][1]);ctx.closePath();
+      ctx.fillStyle=ac;ctx.fill();ctx.strokeStyle=INK;ctx.lineWidth=1.2;ctx.lineJoin='round';ctx.stroke();
+      ctx.beginPath();ctx.moveTo(T[1][0],(T[1][1]+B[1][1])/2);ctx.lineTo(T[3][0],(T[3][1]+B[3][1])/2);ctx.strokeStyle='rgba(255,255,255,.28)';ctx.lineWidth=1;ctx.stroke()}
+    cnCloth(K,(ee,z,dn)=>at(ee,z,-4.8-(dn||0)),e,5.5,h-34,h-70,h-62,ac,t,wv,s*1.3+i,h-48,2.4);
+    const st=at(e+s*4,0,-26);cnRope([V0.P(at(e,h+1,-2)),V0.P(at(e+s*2,h*.5,-14)),V0.P([st[0],st[1],st[2]+6])],1,2.8,W.cable);
+    // the lantern, hanging from the end of its arm by a short hook
+    const hk=V0.P(at(e+s*17,h-24.6)),a=wv*.17*Math.sin(t*1.6+s*1.9+i);th.push(a);
+    ctx.save();ctx.translate(hk[0],hk[1]);ctx.rotate(a);ctx.translate(-hk[0],-hk[1]);
+    const r0=V0.P(at(e+s*17,h-27.2));ctx.strokeStyle=INK;ctx.lineWidth=1.1;ctx.beginPath();ctx.moveTo(hk[0],hk[1]);ctx.lineTo(r0[0],r0[1]);ctx.stroke();
+    cnLantern(K,at(e+s*17,h-37),op);ctx.restore()}}
+  catch(err){cnErr(err)}finally{ctx.restore()}
+  return th}
 // the two anchors at the front of an island where the bridge from the island before lands (its ropes and cables are tied to them), on stones
 function cnBrStumps(K,i){const n=-cnIslRim(i,false)+6,W=cnBrW(Math.max(0,i-1));for(const s of[-1,1]){const b=cnChain(n,s*CNB.pe,0);pBox(K,b,12,13,5,cnMixC(W.stone,'#8a8070',.15),{a:CN_NA,lw:1.3});cnLogPost(K,[b[0],b[1],4],CNB.stump-4,W.wood,false)}}
 // ------------------------------------------------ the prizes in 3D, drawn alive (they bob and shine; the show opens them): a chest with its
@@ -1817,7 +2102,11 @@ function cnPrizeGlyph(p,x,y,d){ctx.save();ctx.translate(x,y);ctx.scale(d,d);ctx.
 // has where the work stops, the show
 function cnBrLive(i,L,t,M){const G0=M.G,S=cnS(),d=L.dpr,dim=!cnOpenShown(i)&&!S.all,laid=cnBrLaidNow(i),Ns=CNB.Ns;if(dim)return;
   // the lanterns lit (on the posts and on the balconies' arches), each with its light and its little flame
-  for(const l of cnBrLamps(G0)){if(laid<l.g)continue;const q=M.S(l.n,l.e,cnDeckZ(G0,l.n)+l.z),k=M.K(l.n);if(q[1]<-40*d||q[1]>L.H+40*d)continue;const fl=LOWFX?1:.84+.16*Math.sin(t*8+l.n*.07+i);
+  // (a lantern on a post's arm swings: its light goes with it, round its hook)
+  const wt=LOWFX?null:t,wv=wt==null?0:cnWind(t);
+  for(const l of cnBrLamps(G0)){if(laid<l.g)continue;const k=M.K(l.n);let q;
+    if(l.post){const a=cnLampTh(i,l.n,1,wt,wv),b=M.S(l.n,l.e,cnDeckZ(G0,l.n)+CNB.ph-1),r=(CNB.ph-1-l.z)*k;q=[b[0]-Math.sin(a)*r,b[1]+Math.cos(a)*r]}else q=M.S(l.n,l.e,cnDeckZ(G0,l.n)+l.z);
+    if(q[1]<-40*d||q[1]>L.H+40*d)continue;const fl=LOWFX?1:.84+.16*Math.sin(t*8+l.n*.07+i);
     pLight(q[0],q[1],17*k,'255,196,100',.46*fl,13*k);if(!LOWFX)pFlame(q[0],q[1]+1.2*k,3.6*k,1.8*k,1,t+l.n*.01,false)}
   for(let b=2;b>=0;b--){const c=G0.Z[b],y=M.S(c,0,0)[1],dz=cnDeckZ(G0,c);if(y<-60*d||y>L.H+60*d)continue;
     if(!cnPrizeTaken(i,b+1))cnPrizeLive(i,b+1,cnPlatView(M,c),cnChain(0,-CNB.bal,dz+3.4),L,t,1,1.3)}
@@ -1923,7 +2212,16 @@ function cnBrSnd(w,g){try{if(typeof AU==='undefined'||!AU.ctx||!AU.on.sfx||AU.ct
   else if(w==='premio'){[0,4,7,12].forEach((s,j)=>tone(523*st(s),523*st(s),.24,'triangle',.032,j*.07));coinClink(t+.3,1)}
   else if(w==='cassa'){M.wood(t,1,VR(180,.06));fThump(t,120,60,.12,.2)}
   else if(w==='isola'){[0,7,12,16,19].forEach((s,j)=>tone(330*st(s),330*st(s)*1.003,.9,'sine',.03,j*.09));fNoise(t,1.1,'bandpass',1800,.8,.05,{f2:500})}
-  else if(w==='sacco')fNoise(t,.16,'lowpass',900,.7,.08)}catch(err){}}
+  else if(w==='sacco')fNoise(t,.16,'lowpass',900,.7,.08)
+  // the hero's feet on the planks, the wood creaking under him, the wind in the ropes (a gust: a breath of air and a thin whistle)
+  else if(w==='passo'){M.wood(t,.2,VR(165,.08));fThump(t,105,60,.05,.045)}
+  else if(w==='scricchiola')cnCreak(t,1,VR(150,.15));
+  else if(w==='vento'){fNoise(t,2.8,'bandpass',VR(380,.1),.8,.03,{f2:VR(850,.1),att:1,sw:.55,brown:true});fNoise(t+.4,2.2,'bandpass',VR(1500,.08),7,.008,{f2:VR(1850,.08),att:.9,sw:.6});cnCreak(t+.9,.55,VR(120,.15))}}catch(err){}}
+// a creak of wood or of a rope pulled tight: a slow rough buzz (the fibres sticking and slipping) through the body of the wood, rising a
+// little and falling back
+function cnCreak(t,v,f){const c=AU.ctx,d=.34+Math.random()*.24,o=osc('sawtooth',f*.25,t,t+d+.05),b=filt('bandpass',VR(f*7,.12),4.5),g=c.createGain();
+  o.frequency.linearRampToValueAtTime(f*.25*VR(1.6,.15),t+d*.7);o.frequency.linearRampToValueAtTime(f*.25*VR(1.1,.1),t+d);
+  g.gain.setValueAtTime(.0001,t);g.gain.linearRampToValueAtTime(.05*v,t+d*.2);g.gain.linearRampToValueAtTime(.035*v,t+d*.75);g.gain.exponentialRampToValueAtTime(.0005,t+d);o.connect(b);b.connect(g);route(g,null,.15)}
 // until the show opens them, the prizes' gold and crystals are not on the counters yet, nor their chests in the posts
 const cnPend=()=>ISL.brA?ISL.brA.pend:CN.brAnim?CN.brAnim.pend:null;
 {const _rg=renderGold;renderGold=function(){const P=CN.on&&!zMode()?cnPend():null;if(!P)return _rg.apply(this,arguments);

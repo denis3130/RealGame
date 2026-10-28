@@ -249,6 +249,16 @@ fronte, si ferma sui balconi coi premi, a ponte finito va sull'isola dopo che si
 (`cnBrShowStep`, `cnBrFlyLive`, `cnBrShowCam`, `cnBrShowEnd(true)`). Note in `docs/classica-nuova.md` («Lo spettacolo», «Isole ancora più
 grandi»). Nell'anteprima della Classica; nel gioco dopo il sì di Denis.
 
+**La vita intorno e il ponte vivo** (27–28 ottobre, Denis: «manca qualcosa a parer mio», poi «Vita intorno, Ponte vivo»): il vento (`cnWind`:
+brezza e raffiche ogni 11 s, che si sentono piano) muove sopra l'immagine del ponte i cavi, le bandierine, gli stendardi dei balconi, gli
+appesi dei lati e le lanterne (`cnBrRopes`: l'immagine tiene l'impalcato e le funi del parapetto) e sulle torri bandiera, stendardo e
+lanterna (`cnPortalLive`); il ponte cede e ondeggia sotto l'eroe che corre, con i passi e gli scricchiolii, e si ferma dopo (`ISL.sw`,
+`cnSwayFn` dentro `cnBrMap`); ogni mondo vivo sulla sua isola (lucciole e farfalle; braci, fumo e bolle di lava; rane, libellule e lucciole;
+luccichii e neve: `cnIslLife`); stormi del mondo (rondini, uccellini di fuoco, pipistrelli, uccelli bianchi) di traverso davanti alle torri
+o lungo il ponte verso l'isola dopo (`cnFlock*`); nuvole a cumulo nell'abisso e nebbia sul ponte lontano (`cnIslClouds`, `cnBrWisps`); con
+`LOWFX` niente vento, stormi e nuvole. Note in `docs/classica-nuova.md` («La vita intorno e il ponte vivo»), prova `node tests/classica.js
+vita`. Nell'anteprima della Classica; nel gioco dopo il sì di Denis.
+
 ## FASE 9: più fluido sul telefono (19 ottobre, in corso)
 
 Denis: «vai, lascia perdere l'intro ecc» (la FASE 9 subito; intro, prologo e filmati non si toccano). Il gioco più fluido sul suo iPhone

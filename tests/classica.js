@@ -16,8 +16,10 @@
 // dal sacco e lui le inchioda, l'isola che esce dal buio, i contatori che aspettano i premi, un tocco che finisce lo spettacolo, la telecamera sui
 // balconi, il colpo di dito all'isola dopo); l'albero delle abilità (src/js/96-albero-abilita.js: il bottone, il menu che sta nello schermo, i passi comprati in ordine, i
 // bivi che si cambiano gratis, il rimborso in cristalli, le carte coi rombi, i passi che valgono a ogni presa, i danni delle frecce, ogni mossa leggendaria e i bivi
-// in una scena sua, la sfida del giorno senza alberi, gli effetti ridotti, una partita con tutti gli alberi senza errori).
-// Foto tests/cn_<n>.png. Uso: python3 anteprime/mk_classica.py --test --build && node tests/classica.js [menu|stanze|furia|rarita|evo|nemesi|torre|corsa|ondate|trappole|3d|ponte|fontana|cristallo|albero]
+// in una scena sua, la sfida del giorno senza alberi, gli effetti ridotti, una partita con tutti gli alberi senza errori); la vita intorno alle
+// isole e il ponte vivo (il vento su bandierine, stendardi, lanterne e cavi sopra l'immagine del ponte, il ponte che si piega e ondeggia sotto
+// l'eroe coi passi e gli scricchiolii, la vita di ogni mondo, gli stormi nei due modi, le nuvole, i suoni, gli effetti ridotti).
+// Foto tests/cn_<n>.png. Uso: python3 anteprime/mk_classica.py --test --build && node tests/classica.js [menu|stanze|furia|rarita|evo|nemesi|torre|corsa|ondate|trappole|3d|ponte|fontana|cristallo|albero|vita]
 const {chromium}=require('playwright');const path=require('path');
 const SOLO=process.argv[2]||'';
 (async()=>{const b=await chromium.launch({args:['--autoplay-policy=no-user-gesture-required']});const p=await b.newPage({viewport:{width:390,height:844},deviceScaleFactor:2});const errs=[];
@@ -668,5 +670,43 @@ const SOLO=process.argv[2]||'';
     await E(`(()=>{SAVE.cn.all=1;ISL.inc=false;ISL.go=5;return 0})()`);await W(900);for(let w=0;w<20&&!await J(`!!ISL.incBtn`);w++)await W(200);const i7=await J(`({pill:!!ISL.incBtn,won:cnWon(5)})`);await E(`(()=>{SAVE.cn.all=0;ISL.go=null;ISL.view=ISL.cur;return 0})()`);
     ok('nell\'anteprima, con «apri tutte le arene», l\'Incubo si prova su ogni isola',i7.pill&&!i7.won,JSON.stringify(i7));
     await E(`(()=>{ISL.inc=false;cnPlayLbl();return 0})()`);
+  }
+  // ---------------------------------------------------------------- the life round the islands and the live bridge (Denis: «manca qualcosa a
+  // parer mio», then «Vita intorno, Ponte vivo»)
+  if(!SOLO||SOLO==='vita'){
+    await toMenu();await E(`(()=>{LOWFX=false;const S=cnS();S.br[0]=cnBrNeed(0);S.all=0;ISL.bc={};ISL.cur=0;ISL.view=0;ISL.go=null;ISL.rest=null;ISL.jump=null;ISL.sw=null;ISL.fkN=1e9;ISL.fk=null;return 0})()`);
+    for(let w=0;w<25&&!await J(`!!(ISL.bc&&ISL.bc[0]&&ISL.bc[0].deck)`);w++)await W(200);
+    // at rest: the bridge's deck in its picture, what moves in the wind over it; two moments differ round the towers and the cables
+    const grab=`(()=>{const L=ISL.lay,M=cnBrMap(0,L,CAMP.t),a=M.S(M.G.a0,0,0),y0=Math.max(0,Math.round(a[1]-170*L.k)),h=Math.round(150*L.k),x0=Math.round(L.cx-90*L.k),w=Math.round(180*L.k);return Array.from(campX.getImageData(x0,y0,w,h).data.filter((v,i)=>i%16===0))})()`;
+    const g1=await J(grab);await W(700);const g2=await J(grab);let dif=0;for(let i=0;i<g1.length;i++)if(Math.abs(g1[i]-g2[i])>12)dif++;
+    const wd=await J(`({deck:!!(ISL.bc[0]&&ISL.bc[0].deck),w:+cnWind(CAMP.t).toFixed(2),th:+cnLampTh(0,300,1,CAMP.t,cnWind(CAMP.t)).toFixed(3)})`);await snap('ponte_vento');
+    ok('a riposo il ponte sta nella sua immagine e quello che il vento muove (bandierine, stendardi, lanterne, cavi) si muove sopra',wd.deck&&wd.w>=.42&&wd.w<=1&&dif>40,JSON.stringify({wd,dif,n:g1.length}));
+    // the hero runs over the bridge: it gives under him and swings, the planks knock and creak; then it settles and goes back into its picture
+    await E(`(()=>{window.__SN={};if(!window.__snw){window.__snw=1;const k=cnBrSnd;cnBrSnd=function(w){__SN[w]=(__SN[w]||0)+1;return k.apply(this,arguments)}}window.__SW={a:0,b:0,live:0,n:0};
+      if(!window.__sww){window.__sww=1;const k=cnIslBridge;cnIslBridge=function(i,L,t){const S=ISL.sw;if(S&&S.i===0&&i===0){__SW.a=Math.max(__SW.a,S.a);__SW.b=Math.max(__SW.b,S.b);__SW.n++;if(cnBrMap(0,L,t).sw)__SW.live++}return k.apply(this,arguments)}}
+      cnIslMove(0,1);return 0})()`);
+    for(let w=0;w<40&&await J(`!!ISL.jump`);w++)await W(200);const sw1=await J(`({...__SW,sn:{...__SN},cur:ISL.cur,sw:!!ISL.sw})`);
+    for(let w=0;w<60&&await J(`!!ISL.sw`);w++)await W(200);await W(1200);const sw2=await J(`({sw:!!ISL.sw,bake:!!(ISL.bc[0]&&ISL.bc[0].key)})`);
+    ok('il ponte si piega sotto l\'eroe che corre e ondeggia (le assi bussano, il legno scricchiola), poi si ferma e torna nella sua immagine',sw1.a>.6&&sw1.b>.8&&sw1.live>0&&sw1.sn.passo>=3&&sw1.sn.scricchiola>=1&&sw1.cur===1&&!sw2.sw,JSON.stringify({sw1,sw2}));
+    // every world alive on its island
+    await E(`(()=>{window.__LV={};for(const n of['cnFireflies','cnButterflies','cnEmbers','cnSmoke','cnLavaBubbles','cnFrogs','cnDragonflies','cnGlints','cnSnow','cnIslClouds','cnBird']){const k=eval(n);eval(n+'=function(){const w=Math.round(ISL.view);__LV[w]=__LV[w]||{};if(n!=="cnSnow"||arguments[2]>.02)__LV[w][n]=(__LV[w][n]||0)+1;return k.apply(this,arguments)}')}
+      cnS().all=1;ISL.bc={};return 0})()`);
+    const names=['muschio','vulcano','palude','ghiaccio'];
+    for(const a of[0,1,2,3]){await E(`(()=>{ISL.jump=null;ISL.sw=null;ISL.cur=${a};ISL.go=${a};ISL.rest=null;ISL.fk=null;ISL.fkW='n';ISL.fkN=CAMP.t;return 0})()`);await W(1600);await snap('vita_'+names[a])}
+    const lv=await J(`__LV`);
+    ok('ogni mondo vivo sulla sua isola: lucciole e farfalle, braci, fumo e bolle di lava, rane, libellule e lucciole, luccichii e neve; le nuvole sotto le isole',
+      lv[0]&&lv[0].cnFireflies&&lv[0].cnButterflies&&lv[1]&&lv[1].cnEmbers&&lv[1].cnSmoke&&lv[1].cnLavaBubbles&&lv[2]&&lv[2].cnFrogs&&lv[2].cnDragonflies&&lv[2].cnFireflies&&lv[3]&&lv[3].cnGlints&&lv[3].cnSnow&&[0,1,2,3].every(a=>lv[a]&&lv[a].cnIslClouds),JSON.stringify(lv));
+    // the flocks: one across in front of the towers, the next up along the bridge
+    await E(`(()=>{ISL.go=null;ISL.view=0;ISL.cur=0;ISL.rest=null;ISL.fk=null;ISL.fkW='n';ISL.fkN=CAMP.t;return 0})()`);await W(300);const f1=await J(`(()=>{const F=ISL.fk;return F?{way:F.way,g:F.g,m:F.m.length}:null})()`);
+    await W(900);await snap('stormo');await E(`(()=>{ISL.fk.t0-=99;ISL.fkN=CAMP.t;return 0})()`);await W(400);const f2=await J(`(()=>{const F=ISL.fk;return F?{way:F.way,g:F.g}:null})()`);
+    ok('gli stormi del mondo passano sull\'isola: una volta di traverso davanti alle torri, la volta dopo lungo il ponte verso l\'isola dopo',f1&&f1.way==='x'&&f1.g===0&&f1.m>=3&&f2&&f2.way==='n'&&(lv[0].cnBird||lv[1].cnBird||lv[2].cnBird||lv[3].cnBird),JSON.stringify({f1,f2}));
+    // the sounds of the life and of the wind do not break anything
+    const sn=await J(`(()=>{let e='';try{cnBrSnd('vento');cnBrSnd('passo');cnBrSnd('scricchiola');for(const w of['rana','bird','fire','bat'])cnLifeSnd(w)}catch(x){e=x.message}return e})()`);
+    ok('i suoni nuovi (vento, passi, scricchiolii, rane, rondini, uccelli di fuoco, pipistrelli) non danno errori',sn==='',sn);
+    // with the effects down: no wind, no flocks, no clouds, the whole bridge in its picture
+    await E(`(()=>{LOWFX=true;ISL.bc={};ISL.cache.clear();ISL.fk=null;ISL.fkN=CAMP.t;ISL.go=0;window.__LV={};return 0})()`);await W(2400);
+    const lo=await J(`({w:cnWind(CAMP.t),fk:!!ISL.fk,cl:Object.values(__LV).some(v=>v.cnIslClouds),deck:ISL.bc[0]?ISL.bc[0].deck:'none'})`);
+    await E(`(()=>{LOWFX=false;cnS().all=0;ISL.bc={};ISL.cache.clear();return 0})()`);
+    ok('con gli effetti ridotti: niente vento, niente stormi, niente nuvole, il ponte tutto nella sua immagine',lo.w===0&&!lo.fk&&!lo.cl&&lo.deck===false,JSON.stringify(lo));
   }
   console.log('\n'+R.join('\n'));console.log(errs.length?'ERRORI:\n'+[...new Set(errs)].slice(0,20).join('\n'):'nessun errore');await b.close()})();

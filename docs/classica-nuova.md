@@ -84,6 +84,49 @@ e a riposo sopra l'isola si vede meno ponte (`CNI_UPN` 260 invece di 420: il res
 Grandezza (k): 390×763, il telefono di Denis, da 1,74 a 2,16 (+25%); 390×844 da 2,24 a 2,61 (+16%); 360×640 da 1,10 a 1,38; 430×932 da 2,24
 a 2,61.
 
+**La vita intorno e il ponte vivo** (27–28 ottobre, Denis: «manca qualcosa a parer mio», poi alla domanda «Cosa ti manca sulle isole e sul
+ponte?»: «Vita intorno, Ponte vivo»; sezioni 7 e 8 di 94).
+- **Il vento** (`cnWind`): una brezza sempre (0,42) e ogni 11 secondi circa una raffica che viene e va (fino a 1); due raffiche su tre si
+  sentono piano (un soffio basso, un fischio sottile nelle funi e uno scricchiolio: `cnBrSnd('vento')`). Soffia verso est: bandiere e
+  stendardi vanno tutti da quella parte (prima le bandiere delle torri guardavano una a destra e una a sinistra).
+- **Il ponte nel vento**: l'immagine del ponte fermo (`cnBrBake`) tiene solo l'impalcato (assi, travi, pali, balconi) e le funi del
+  parapetto; sopra, a ogni fotogramma, quello che il vento muove (`cnBrRopes`): i cavi grandi che ondeggiano piano (di più in mezzo, niente
+  dove sono legati) coi tiranti, le bandierine che sbattono spinte a est e si alzano coi bordi che si gonfiano, gli stendardi dei balconi
+  con un'onda che scende (`cnCloth`: ogni banda nella sua luce mentre si gira) e le loro funi fino al cavo, il muschio, le liane e le catene
+  col carbone appesi ai lati che dondolano (i ghiaccioli no), le lanterne sui bracci che dondolano piano attorno al gancio, con la loro luce
+  (`cnLampTh`). Le funi del parapetto restano nell'immagine: legate ai pali ogni quattro assi, da questa telecamera si muoverebbero troppo
+  poco per vedersi. Sulle torri, fuori dall'immagine dell'isola (`cnPortalLive`): la bandiera del tettuccio che sventola, lo stendardo
+  dell'arena dopo, la corda davanti, la lanterna sul braccio che dondola. La luce delle lanterne delle torri ora sta sulle lanterne (prima
+  era disegnata in un punto sbagliato dell'isola). Quello che è fuori dallo schermo non si disegna (`cnOff`, i pezzi delle funi in
+  `cnRopeP`): il ponte dal vivo, col dito che trascina, costa meno di prima.
+- **Il ponte sotto l'eroe** (`ISL.sw`, `cnSwayStep`, `cnSwayFn` dentro `cnBrMap`: sposta ogni punto del ponte): mentre l'eroe corre sul ponte
+  le assi cedono sotto i suoi piedi (fino a 6 dove sta lui) e tutto il ponte ondeggia di lato (4,2) e un poco su e giù, di più in mezzo,
+  niente alle estremità; le assi bussano a ogni passo della corsa e ogni mezzo secondo circa il legno scricchiola (`cnCreak`); arrivato, il
+  ponte si ferma in circa tre secondi e torna nella sua immagine. L'eroe e i compagni vanno col ponte; le lanterne dondolano di più.
+- **La vita di ogni mondo** (`cnIslLife`): nel muschio lucciole che si accendono e si spengono e farfalle dei colori dei fiori che svolazzano
+  e ogni tanto planano (`cnFireflies`, `cnButterflies`); nel vulcano braci che salgono dalla lava, dal cratere e dalle crepe e vanno col
+  vento (bianche, poi arancio, poi rosse), il fumo del cratere, bolle di lava che si gonfiano, brillano e scoppiano nella pozza (`cnEmbers`,
+  `cnSmoke`, `cnLavaBubbles`); nella palude tre rane sulle foglie di ninfea e sulla riva che respirano, gonfiano la gola e gracidano (si
+  sente, piano) e saltano da un posto all'altro, libellule che sfrecciano e si fermano nell'aria sopra la pozza, lucciole (`cnFrogs`,
+  `cnDragonflies`); sul ghiaccio luccichii sulla neve e la neve che cade, quella lontana piccola e lenta, quella vicina più grande davanti a
+  tutto (`cnGlints`, `cnSnow`). Rane, farfalle, libellule e uccelli in 3D con la telecamera dei mostri. Su un'isola ancora al buio niente.
+- **Gli stormi** (`cnFlockStep`, `cnFlockDraw`, `cnBird`): ogni 7–13 secondi 3–5 animali del mondo sull'isola che guardi: rondini blu col
+  petto bianco e la gola rossa (muschio), uccellini di fuoco con la loro luce (vulcano), pipistrelli con le ali a due lobi e gli occhi gialli
+  (palude), uccelli bianchi (ghiaccio); una volta passano di traverso, alti davanti alle torri del ponte, la volta dopo arrivano da dietro e
+  vanno lungo il ponte verso l'isola dopo, sempre più piccoli. Un verso piano quando passano (`cnLifeSnd`).
+- **Le nuvole e la nebbia**: nell'abisso, sotto le isole, banchi di nuvole a cumulo dei colori del mondo (la cima chiara di luna, la pancia
+  scura illuminata dal mondo, rossa nel vulcano: `cnCloudImg`, tre forme per mondo dipinte una volta) che vanno piano verso est e passano
+  con la prospettiva quando si sale verso nord (`cnIslClouds`, solo quelle sopra la riga sotto l'isola); due banchi di nebbia sottile
+  sopra la parte lontana del ponte (`cnBrWisps`).
+- **Effetti ridotti** (`LOWFX`): niente vento (il ponte tutto nella sua immagine), niente stormi, nuvole e nebbia sul ponte, meno lucciole e
+  braci e senza luci, niente farfalle e libellule, metà neve.
+- **Misure** (computer di prova senza scheda grafica, 390×844 a 2 pixel a punto, fotogramma fermo col disegno forzato a finire): da circa 27
+  a circa 31 ms, quasi tutto nel disegno dei pixel (le nuvole la parte più grande: circa 220 mila pixel copiati a fotogramma); la vita, le
+  cose nel vento e le torri meno di mezzo millisecondo ciascuna.
+- **Prove**: `node tests/classica.js vita` (6 controlli: il vento sopra l'immagine del ponte, il ponte che cede e ondeggia coi passi e gli
+  scricchiolii e poi torna nella sua immagine, la vita di ogni mondo, gli stormi nei due modi, i suoni nuovi, gli effetti ridotti);
+  `node tests/classica.js ponte` come prima (48).
+
 **La telecamera e il dito**: si ferma su ogni balcone (`cnIslStops`: l'isola, i tre balconi, l'isola dopo), dove la scritta dice «Premio N»,
 il premio e quante assi mancano (`cnStopNear`, `cnStopText`); trascinando piano si ferma sulla fermata più vicina, un colpo di dito va
 all'isola dopo (`cnIslSettle`, la velocità degli ultimi 100 ms); dai balconi «Gioca» gioca l'isola dell'eroe. Un tocco su un premio dice cos'è.
