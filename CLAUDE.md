@@ -259,6 +259,18 @@ o lungo il ponte verso l'isola dopo (`cnFlock*`); nuvole a cumulo nell'abisso e 
 `LOWFX` niente vento, stormi e nuvole. Note in `docs/classica-nuova.md` («La vita intorno e il ponte vivo»), prova `node tests/classica.js
 vita`. Nell'anteprima della Classica; nel gioco dopo il sì di Denis.
 
+**La mini isola del traguardo** (28 ottobre, Denis: «vedi dove c'è l'isola successiva? vorrei la spingessi più in su ed al suo posto creassi
+una mini isola dove il pg si dirigerà come checkpoint e come cosa introduttiva, troverà qualcosa di più bello rispetto alle altre ricompense»):
+l'isola dopo a 1400 invece di 1000 (`CNI_GAP`), al suo posto la **mini isola** (`CNI_MN`, `CNI_MR`) dove finisce il ponte di assi, un pezzo
+del mondo dopo (il suo assaggio) con l'**altare delle rune** e il **tesoro del traguardo** in un raggio di luce (il premio di fine ponte: la
+cassa di prima più 8+2·arena cristalli e 150+50·arena oro, `k:'tesoro'`, `cnTreasure3`), il **palo del traguardo** con lo stendardo dell'arena
+dopo arrotolato e due bracieri; da lì **cinque pietre sospese** fino all'isola dopo, che salgono dal buio al traguardo. Lo spettacolo a ponte
+finito: l'eroe va alla mini isola, il tesoro si apre per lui (monete e cristalli che saltano, oro e cristalli ai contatori, la cassa al suo
+posto), lo stendardo si srotola, le pietre salgono una a una, l'isola dopo si accende e lui ci arriva saltando di pietra in pietra (fasi
+`walk`, `pop4`, `rise`, `open` di `cnBrShowStep`). La mini isola è anche una fermata della telecamera (`cnMiniView`, `cnMiniText`). Codice in
+94, sezione 8 («the little island of the checkpoint»), note in `docs/classica-nuova.md` («La mini isola del traguardo»), prova `node
+tests/classica.js traguardo`. Nell'anteprima della Classica; nel gioco dopo il sì di Denis.
+
 ## FASE 9: più fluido sul telefono (19 ottobre, in corso)
 
 Denis: «vai, lascia perdere l'intro ecc» (la FASE 9 subito; intro, prologo e filmati non si toccano). Il gioco più fluido sul suo iPhone
@@ -396,7 +408,8 @@ se lontani (salvo le barriere che li chiamano), fumo e foglie solo vicino allo s
   finché Denis non dice sì. Quando la approva, si torna a pubblicare da `piano-maestro`. **Dal 27 ottobre `piano-maestro` ha in più il ponte grande, il ponte più bello, le isole
   ancora più grandi con le assi che si infilano da sole e (28 ottobre) la vita intorno col ponte vivo** (commit b3dc40e, 63e78af, 5cba9c5 e
   58a4ba0, «Il ponte grande», «Il ponte più bello», «Isole ancora più grandi e assi che si infilano da sole» e «La vita intorno e il ponte
-  vivo» nella sezione della Classica nuova; l'anteprima della Classica li ha, versione 16), non ancora approvati da Denis: il gioco pubblicato e l'app sono fermi a 026beb1 del ramo `gioco`; quando Denis dice sì, si unisce
+  vivo» nella sezione della Classica nuova) e (28 ottobre) la mini isola del traguardo («La mini isola del traguardo»; l'anteprima della
+  Classica li ha, versione 17), non ancora approvati da Denis: il gioco pubblicato e l'app sono fermi a 026beb1 del ramo `gioco`; quando Denis dice sì, si unisce
   `piano-maestro` in `gioco` e si ripubblica come sempre.
 - **Ramo `classica-nuova`** (20–27 ottobre): l'anteprima della Classica nuova; il 27 ottobre (Denis: «Tutto nel gioco») unito a
   `piano-maestro` (merge 9b47c47) e da lì nel gioco e nell'app. La pagina https://claude.ai/artifact/K6E5QMv5pxKkt61MCFJsba resta per

@@ -123,6 +123,44 @@ ponte?»: «Vita intorno, Ponte vivo»; sezioni 7 e 8 di 94).
 - **Misure** (computer di prova senza scheda grafica, 390×844 a 2 pixel a punto, fotogramma fermo col disegno forzato a finire): da circa 27
   a circa 31 ms, quasi tutto nel disegno dei pixel (le nuvole la parte più grande: circa 220 mila pixel copiati a fotogramma); la vita, le
   cose nel vento e le torri meno di mezzo millisecondo ciascuna.
+
+**La mini isola del traguardo** (28 ottobre, Denis: «vedi dove c'è l'isola successiva? vorrei la spingessi più in su ed al suo posto creassi
+una mini isola dove il pg si dirigerà come checkpoint e come cosa introduttiva, troverà qualcosa di più bello rispetto alle altre ricompense,
+una volta finito fammi vedere un'anteprima veloce»; sezioni 7 e 8 di 94).
+- **Dove sta**: l'isola dopo è più su, a 1400 invece di 1000 (`CNI_GAP`); al suo posto, a 1000 (`CNI_MN`), la mini isola (`CNI_MR` 60,
+  larga una volta e mezza quanto è profonda: due terzi di un'isola, più larga delle isole perché il ponte grande ci atterra sopra). Il ponte
+  di assi finisce lì (`cnBrGeo`: `a1` sul suo bordo, `ae` gli ancoraggi un poco più dentro, dove è larga abbastanza); da lì cinque pietre
+  sospese (`st`) vanno fino all'isola dopo. Le pietre hanno la loro prospettiva aggiustata come il ponte (`cnSegAt`, `cnStMap`); `cnChainScr`
+  sa dove sta ogni punto del cammino (isola, ponte, mini isola, pietre, isola dopo).
+- **Com'è** (`cnMiniImg`, `cnMiniPaint`, dipinta una volta come le isole): un pezzo del mondo dopo, i suoi colori e le sue cose, per far
+  vedere cosa arriva (dopo il muschio il vulcano con l'ossidiana, il basalto e le crepe di fuoco; poi la palude con le canne, i ceppi e i
+  funghi; poi il ghiaccio con le punte, la neve e un pino; poi il muschio del secondo giro col colore dell'arena). Davanti gli ancoraggi del
+  ponte, in mezzo il sentiero, a sinistra l'**altare delle rune** (tre gradini di pietra, le rune del colore dell'arena dopo che brillano),
+  a destra il **palo del traguardo** con lo stendardo dell'arena dopo arrotolato sotto la traversa e il pomo d'oro, dietro due **bracieri** dove
+  cominciano le pietre. Sotto il sasso che pende, sul bordo i ghiaccioli o le radici.
+- **Il tesoro del traguardo** (il premio di fine ponte, `cnBrPrize(i,4)`: `k:'tesoro'`): la cassa di fine ponte di prima (argento, poi oro,
+  poi cristallo) **più cristalli e oro** (8+2·arena cristalli, 150+50·arena oro: sul primo ponte cassa d'argento, 8 cristalli e 150 oro).
+  Sull'altare in un **raggio di luce** che scende con i granelli che salgono (`cnMiniBeam`): un forziere grande col coperchio a cupola, bande e
+  angoli d'oro, la gemma sulla serratura e una sulla cima, monete e cristalli intorno (`cnTreasure3`). Un tocco dice cos'è e quando è tuo;
+  sulla fermata della telecamera «TRAGUARDO · Verso …», «Tesoro a 100 assi: cassa, cristalli e oro» e le assi che mancano. Preso, il forziere
+  resta aperto e vuoto sull'altare, con un po' di luce d'oro.
+- **Lo spettacolo a ponte finito** (`cnBrShowStep`, fasi nuove dopo le assi): l'eroe entra dove è la telecamera e va **alla mini isola**
+  (`cnShowWalk`, l'ultimo tratto di corsa leggera), si ferma al suo posto lì (`CNM_HERO`); il **tesoro si apre** per lui (il coperchio che si
+  alza, il lampo, monete e cristalli che saltano fuori e ricadono, «Tesoro del traguardo!»; oro e cristalli volano ai contatori, la cassa al suo
+  posto) mentre lo **stendardo si srotola** dalla traversa e i bracieri si accendono (`cnMiniUp`, `cnMiniBanner`); poi le **pietre salgono dal
+  buio** una dopo l'altra, un poco oltre il loro posto e indietro, con la luce del mondo dopo sotto (`cnStoneUp`, `cnStonesDraw`); l'isola dopo
+  esce dal buio e lui ci arriva **saltando di pietra in pietra** (la telecamera con lui dall'inizio). Suoni nuovi: il traguardo (un richiamo
+  chiaro e una campana), il tesoro (il coperchio, un accordo che sale, le monete che cadono, un luccichio), ogni pietra che sale (un soffio
+  basso e il colpo quando si ferma, una nota più su ogni volta), i piedi sulle pietre (`cnBrSnd('traguardo'|'tesoro'|'pietra'|'salto')`). Un
+  tocco finisce subito tutto, come prima.
+- **Il cammino** (`cnRoute`): da un'isola all'altra l'eroe passa sul ponte, sulla mini isola e salta di pietra in pietra (ogni salto conta di
+  più nel tempo, `CNI_HOPW`: lì va più piano), fino a 3,6 secondi (`cnWalkDur`; prima 2,6). La telecamera si ferma anche sulla mini isola
+  (`cnIslStops`, `cnStopNear`, `cnMiniView`: l'eroe lì dove sta sempre sullo schermo); mentre l'eroe cammina le scritte delle fermate non
+  si accavallano più con quelle delle isole.
+- **Misure** (computer di prova, 390×844 a 2 pixel a punto, la pagina prima e dopo a turno): a riposo sull'isola 31,3 ms contro 30,5; sulla
+  mini isola 24–26 contro 24–26 e, a traguardo raggiunto con le pietre e lo stendardo vivi, 32,1 contro 32,0: quasi niente in più.
+- **Prova** `node tests/classica.js traguardo` (dove sta, prima del traguardo, il tocco sul tesoro, lo spettacolo intero, il tesoro nel
+  salvataggio, dopo il traguardo, il cammino coi salti, gli effetti ridotti); `ponte` aggiornata (1400, il tesoro, la quinta fermata).
 - **Prove**: `node tests/classica.js vita` (6 controlli: il vento sopra l'immagine del ponte, il ponte che cede e ondeggia coi passi e gli
   scricchiolii e poi torna nella sua immagine, la vita di ogni mondo, gli stormi nei due modi, i suoni nuovi, gli effetti ridotti);
   `node tests/classica.js ponte` come prima (48).
