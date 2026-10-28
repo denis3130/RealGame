@@ -45414,7 +45414,7 @@ function cnIslImg(i,L,opv){const won=cnWon(i),op=opv==null?cnOpen(i):!!opv,key=i
     // a locked island (Denis: «oscura tutte le arene non accessibili»): almost black, only its outline, the lock on it
     if(!op){ctx.fillStyle='rgba(5,6,12,.84)';ctx.fillRect(0,0,w,h)}ctx.globalCompositeOperation='source-over';
     if(!op){ctx.save();cnIslLock(proCam(CNI_FACE,ox,oy,k),-CI_GATE[1],CI_GATE[0]);ctx.restore()}}catch(err){cnErr(err)}finally{ctx=saved}
-  c={cv,ox,oy};ISL.cache.set(key,c);while(ISL.cache.size>12)ISL.cache.delete(ISL.cache.keys().next().value);return c}
+  c={cv,ox,oy};ISL.cache.set(key,c);while(ISL.cache.size>10)ISL.cache.delete(ISL.cache.keys().next().value);return c}
 // where the water (the lava, the ice) leaves the island: its edge in front, on the right
 function cnIslFallPt(i){const sd=i*1.7+.4,d=IP(.75,.66),a=Math.atan2(d[1]/CNI_SY,d[0]),r=CNI_R*(1+.07*Math.sin(a*3+sd)+.045*Math.sin(a*7+sd*2.1)+.025*Math.sin(a*13+sd*.7));return[Math.cos(a)*r*.985,Math.sin(a)*r*CNI_SY*.985,0]}
 // the pool, the stream and the fall of each world: [water, its light, the pool's rim]
@@ -46576,7 +46576,7 @@ function cnMiniImg(i,L,lit,took,up){const key='m'+i+'|'+L.k.toFixed(3)+'|'+(lit?
   const saved=ctx;ctx=cv.getContext('2d');try{ctx.save();const K=proCam(CNI_FACE,ox,oy,k);cnMiniPaint(i,K,took,up);ctx.restore();
     ctx.globalCompositeOperation='source-atop';const lg=ctx.createLinearGradient(w*.15,0,w*.85,h);lg.addColorStop(0,'rgba(255,248,225,.13)');lg.addColorStop(.55,'rgba(0,0,0,0)');lg.addColorStop(1,'rgba(10,8,30,.28)');ctx.fillStyle=lg;ctx.fillRect(0,0,w,h);
     if(!lit){ctx.fillStyle='rgba(5,6,12,.84)';ctx.fillRect(0,0,w,h)}ctx.globalCompositeOperation='source-over'}catch(err){cnErr(err)}finally{ctx=saved}
-  c={cv,ox,oy};ISL.cache.set(key,c);while(ISL.cache.size>12)ISL.cache.delete(ISL.cache.keys().next().value);return c}
+  c={cv,ox,oy};ISL.cache.set(key,c);while(ISL.cache.size>10)ISL.cache.delete(ISL.cache.keys().next().value);return c}
 function cnMiniPaint(i,K,took,up){const{V0}=K,j=i+1,Wd=cnIslW(j),ch=ARENAS[j].ch||1,g=cnIslG(j),ac=ARENAS[j].col,P=p=>V0.P(p),D=p=>V0.D(p),G0=cnBrGeo(i),Wb=cnBrW(i),
     mix=(c,q)=>g?cnMixC(c,ac,q*g):c,top=mix(Wd.top,.14),stone=mix(Wd.stone,.12),side=mix(Wd.side,.1),sd=cnMiniSd(i),SP=cnIslPal(ch),TH=cnIslTh(ch),R=CNI_MR,SY=CNI_MSY,
     rS=cnMiniRim(i,false),rN=cnMiniRim(i,true);
