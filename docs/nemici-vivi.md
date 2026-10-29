@@ -56,6 +56,17 @@ un'ombra piena (lo `shadow` del gioco prende 0 per «quella di sempre»).
 - Misure (`picco` / `volume`, accanto alle voci di prima: goblin 0,053 / 0,0068, lupo 0,141 / 0,0095, colpo 0,359 / 0,0204): versi di
   preparazione da 0,013 a 0,14 di picco, voci nuove da 0,03 a 0,23, morti fino a 0,24 dopo il ritocco; nessun errore dentro i suoni.
 
+## Gli effetti di prima, rimessi (29 ottobre, Denis: «ci sta ma rimetti quei effetti che avevano ma che hai tolto»)
+
+- **Le morti**: sopra la mossa «Muore» in 3D tornano gli effetti delle morti di prima (`src/js/77-morti-nemici.js`), dal momento in cui il
+  corpo del modello tocca terra (`NVL`, una frazione della mossa) e con le stesse misure e gli stessi colori (`nvDieFx` in 97): la polvere
+  e le stelline che salgono di chi cade (goblin, negromante, piromante, nano, diavoletto) e delle bestie (lupo, rana, coccodrillo, lumaca),
+  le bollicine nella pozza delle gelatine e del girino, le scintille intorno ai volanti, i petali e le foglie di piante e funghi, la
+  polvere di pietra e di ghiaccio, la polvere d'ossa.
+- **La pagina**: il modello era disegnato da solo, senza gli effetti che il gioco gli mette intorno; ora (come a sinistra in «Prima e dopo»)
+  ognuno ha la sua vita del gioco (`ELIFE` in 56: le particelle del suo materiale, la polvere dei passi, le scintille della miccia) e la
+  stellina sopra la testa quando comincia a prepararsi. Nel gioco questi effetti c'erano già e restano.
+
 ## Nel gioco (quando Denis dice sì: `js/97-nemici-vivi.js` in fondo a `src/ordine.txt`)
 
 - **«Si prepara»** quando il gioco dice già che il nemico sta per colpire (`NVP`): il goblin che mira (`e.aim`), lo scheletro fermo che mira

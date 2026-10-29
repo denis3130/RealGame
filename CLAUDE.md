@@ -298,6 +298,9 @@ voci proprie per i dieci che le prendevano in prestito (`VOX`), un verso di «Si
 nel loro momento (`NVD`); nel gioco la mossa «Si prepara» quando il gioco dice già che il nemico sta per colpire (`NVP`: mira, miccia,
 carica, sacca della rana, lancio…; il negromante che evoca fa «Evoca») e il corpo che recita «Muore» dal vivo (al massimo 5, `NV.live`,
 gli altri con la foto di prima). Prova nella cartella di lavoro: nessun errore, 28,2 ms invece di 26,6 con cinque corpi dal vivo.
+Poi (Denis: «ci sta ma rimetti quei effetti che avevano ma che hai tolto») sopra «Muore» tornano gli effetti delle morti di prima (77: polvere e
+stelline che salgono, bollicine, scintille, petali, polvere di pietra, ghiaccio e ossa) dal momento in cui il corpo tocca terra (`nvDieFx`,
+`NVL`), e nella pagina ogni nemico ha intorno gli effetti che il gioco gli mette (`ELIFE` di 56) e la stellina quando comincia a prepararsi.
 Dettagli, tabella delle mosse e misure dei suoni in `docs/nemici-vivi.md`. Pagina per il telefono: `python3 anteprime/mk_nemici3d.py
 --vivi` (solo i 26, «Tutte le mosse» in fila, «🔊 Suoni»; non ricopia i modelli che il gioco ha già), divisa come il gioco con
 `python3 app/mk_claude.py anteprime/vivi.html <cartella>` e pubblicata su https://claude.ai/artifact/LmWUzGPfCc5VqMGSwqfZLJ (si aggiorna

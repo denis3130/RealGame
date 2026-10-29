@@ -94,6 +94,25 @@ const NVD={
   bonelet:[[.14,t=>rattle(t,3,.3,1500)],[.3,t=>rattle(t,6,.45,1300)],[.52,t=>rattle(t,4,.35,1600)],[.62,t=>M.bone(t,.5,900)]]};
 // plays a sound of a type (k: 'a', 'h', 'd', 's', 'p', or a function) at the volume v, now
 function nvSay(type,k,v){if(!AU.ctx||!AU.on.sfx)return;const f=typeof k==='function'?k:VOX[type]&&VOX[type][k];if(!f)return;try{withVol(v==null?1:v,()=>f(AU.ctx.currentTime+.01))}catch(er){}}
+// ------------------------------------------------------------------ 5. the effects of the deaths of before (77), on the 3D move «Muore»
+// (Denis, 29 ottobre: «rimetti quei effetti che avevano»): the dust where the body lands, the little stars that rise from it, the bubbles of
+// the goo, the sparkles round the ones that fly, the petals and leaves of the plants, the dust of stone and ice; each from the moment its
+// model's body reaches the floor (NVL, a fraction of the move). k: the scale of the body (the elites are bigger)
+const NVL={slime:.22,bigslime:.22,magmaslime:.22,tadpole:.4,mushroom:.7,plant:.72,eyeflower:.75,bat:.7,mosquito:.65,wisp:.2,snowspirit:.58,shadoweye:.2,
+  beetle:.5,obsidian:.45,icesentinel:.53,imp:.6,goblin:.55,necro:.55,pyro:.55,bomber:.55,skeleton:.3,bonelet:.3,wolf:.5,frog:.55,croc:.6,snail:.75};
+function nvDieFx(type,x,y,p,face,k,seed){const fam=EDF[type],L=NVL[type];if(!fam||L==null||LOWFX)return;
+  const r=(ET[type]&&ET[type].r)||10,h=Math.max(16,r*2.6),dir=Math.cos(face)>=0?-1:1,col=ECOL[type]||'#c9c0b0',u=(p-L)/(1-L);
+  ctx.save();ctx.translate(x,y);ctx.scale(k,k);
+  try{if(fam==='fall'||fam==='beast'){const cx=fam==='fall'?dir*h*.45:0;ePuffs(cx,-4,u/.8,7,h*.55,'235,228,215',.6);eStars(cx,-4-h*.3,u,3)}
+    else if(fam==='bones')ePuffs(0,-2,u,6,h*.5,'235,228,215',.45);
+    else if(fam==='crumble')ePuffs(0,-3,u,7,h*.6,'210,205,200',.5);
+    else if(fam==='goo'){for(let i=0;i<4;i++){const t0=L+.08+erand(seed,i)*.45,v=(p-t0)/.18;if(v<=0||v>=1)continue;const bx=(erand(seed,i+4)-.5)*r*2.2,by=-2-v*5;
+        ctx.save();ctx.globalAlpha*=1-v;ctx.strokeStyle='rgba(255,255,255,.8)';ctx.lineWidth=1.1;ctx.beginPath();ctx.arc(bx,by,1.4+v*2.4,0,TAU);ctx.stroke();ctx.restore()}}
+    else if(fam==='fly'){const a0=ESS(.25,.4,p)*(1-ESS(.75,1,p));if(a0>0)for(let i=0;i<7;i++){const a=i/7*TAU+p*3,d=6+p*20,q=[Math.cos(a)*d,-h*.4+Math.sin(a)*d*.6];
+        ctx.save();ctx.globalAlpha*=a0;ctx.fillStyle=i%2?'#fff6c8':col;ctx.beginPath();ctx.arc(q[0],q[1],1.6,0,TAU);ctx.fill();ctx.restore()}}
+    else if(fam==='wilt'){for(let i=0;i<6;i++){const v=(p-.3-i*.04)/.6;if(v<=0||v>=1)continue;const a=(erand(seed,i)-.5)*2.2-Math.PI/2,d=4+v*22,q=[Math.cos(a)*d+dir*v*6,-h*.45+Math.sin(a)*d*.6-v*8];
+        ctx.save();ctx.globalAlpha*=1-v;ctx.translate(q[0],q[1]);ctx.rotate(v*4+i);ctx.fillStyle=col;ctx.beginPath();ctx.ellipse(0,0,2.6,1.3,0,0,TAU);ctx.fill();ctx.restore()}}}
+  finally{ctx.restore()}}
 // ------------------------------------------------------------------ 4. in the game
 // the game's own signal that each one is about to strike (the ones that have one): aiming, the cast, the fuse, the charge, the swelling sac.
 // The skeleton aims while it walks: only standing still is it getting ready (or before its dash)
@@ -122,4 +141,4 @@ const NVA={mushroom:1,bomber:1,pyro:1,shadoweye:1};
 {const _d=drawECorpse;drawECorpse=function(c){if(!c.live)return _d.apply(this,arguments);const M=N3.meta[c.type],p=Math.min(.999,c.t/c.dd),al=1-Math.min(1,Math.max(0,(c.t-c.dd)/.35));
   if(al<=.01)return;ctx.save();ctx.globalAlpha*=al;
   // one that died up in the air (a slime mid-jump) comes down to the floor in the first quarter of the move
-  try{N3[c.type](c.x,c.y+8-(c.z||0)*(1-Math.min(1,p/.25)),c.f,'die',p,(M.sc||1)*c.big,{noFx:LOWFX})}catch(er){c.live=false;c.dur=c.t+.3}finally{ctx.restore()}}}
+  try{N3[c.type](c.x,c.y+8-(c.z||0)*(1-Math.min(1,p/.25)),c.f,'die',p,(M.sc||1)*c.big,{noFx:LOWFX});nvDieFx(c.type,c.x,c.y+8,p,c.f,c.big,c.seed)}catch(er){c.live=false;c.dur=c.t+.3}finally{ctx.restore()}}}

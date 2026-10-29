@@ -75,8 +75,20 @@ function oldDraw(id,x,y,f,sc){const M=N3.meta[id];if(M.old){ctx.save();ctx.trans
   if(!e){e=OE[id]=makeE0(t,0,-8,0);e.spawn=0;e.intro=0;e.em=1;e.fa=1;e.z=0;e.hp=e.max;e.ph='show';e.hidden=false;e.alpha=1;e.st='walk';if(t==='hydra'){const g=G.enemies;G.enemies=[e];try{updEnemy(e,.001)}catch(er){}G.enemies=g}}
   e.x=0;e.y=-8;e.face=f;e.t=G.t;e.moving=anim==='walk';e.walk=G.t*9;e.flash=anim==='hit'&&p<.15?.1:0;
   ctx.save();ctx.translate(x,y);ctx.scale(sc,sc);try{shadowFor(e);drawEnemy(e)}catch(er){try{drawEnemy0(e)}catch(e2){}}ctx.restore();ctx.globalAlpha=1}
-function newDraw(id,x,y,f,sc,pp){const M=N3.meta[id],fl=anim==='hit'&&(pp==null?p:pp)<.14&&HASF;if(fl){ctx.save();ctx.filter='brightness(1.85) saturate(.6)'}
-  try{N3[id](x,y,f,anim,pp==null?p:pp,sc*(M.sc||1),{p2:p2&&isBoss(id)})}finally{if(fl)ctx.restore()}}
+// the game's own life round each normal enemy (src/js/56-nemici-vivi.js, ELIFE: the particles of its material, the dust of its steps,
+// the little star when it starts getting ready), on a pretend enemy of its own for each place it is drawn in (key)
+const LIFE={};
+function lifeFx(key,id,x,y,f,sc,a){if(typeof ELIFE==='undefined'||typeof b2tick!=='function'||isBoss(id))return;const Lf=ELIFE[id];if(!Lf)return;
+  let e=LIFE[key];if(!e||e.type!==id){e=LIFE[key]={type:id,x:0,y:-8,r:(ET[id]&&ET[id].r)||10,_b2p:[],_pa:''}}
+  e.face=f;e.moving=a==='walk';e.arm=id==='beetle'&&a==='prep'?.5:0;e.t=G.t;e.hidden=false;
+  ctx.save();ctx.translate(x,y);ctx.scale(sc,sc);
+  try{const dt=b2tick(e);if(a!=='die'){if(Lf.fx)Lf.fx(e,dt);if(Lf.walk&&e.moving&&b2every(e,'st',.32,dt))b2emit(e,{k:'dust',x:e.x+rand(-4,4),y:e.y+e.r*.5,vx:rand(-10,10),vy:-rand(4,10),drag:3,life:.45,r:2.4});
+      if(a==='prep'&&e._pa!=='prep')b2emit(e,{k:'glint',x:e.x,y:e.y-e.r*1.6-14,life:.4,r:7,col:'255,240,180'})}e._pa=a;b2draw(e)}catch(er){}finally{ctx.restore()}}
+function newDraw(id,x,y,f,sc,pp,key){const M=N3.meta[id],q=pp==null?p:pp,fl=anim==='hit'&&q<.14&&HASF;if(fl){ctx.save();ctx.filter='brightness(1.85) saturate(.6)'}
+  try{N3[id](x,y,f,anim,q,sc*(M.sc||1),{p2:p2&&isBoss(id)})}finally{if(fl)ctx.restore()}
+  // the effects of the deaths of before, on «Muore» (src/js/97-nemici-vivi.js), and the life round it
+  if(anim==='die'&&typeof nvDieFx==='function'&&!isBoss(id))try{nvDieFx(id,x,y,q,f,sc,id.length*1.7)}catch(er){}
+  lifeFx(key||id,id,x,y,f,sc,anim)}
 function boot(){try{INTRO.on=false;paused=true}catch(e){}try{AU.on.music=false;AU.on.sfx=false}catch(e){}
   const ov=document.createElement('div');ov.id='n3';ov.innerHTML=`<style>
   #n3{position:fixed;inset:0;z-index:99999;background:#1d1a16;font-family:"Baloo 2",system-ui,sans-serif;color:#f6ead2;touch-action:none;user-select:none;-webkit-user-select:none}
@@ -138,8 +150,8 @@ function boot(){try{INTRO.on=false;paused=true}catch(e){}try{AU.on.music=false;A
     const top=74,bot=(ov.querySelector('.n3bar').offsetHeight||170),room=H-top-bot;
     try{
       if(view==='gira'){const F=fit(cur,W*.92,room*.9,anim),b0=F.b,s0=Math.min(F.s,6),sc=s0*zoom,gy=top+(room-(b0.t+b0.bt+8)*s0)/2+(b0.t+4)*s0;
-        t1=performance.now();newDraw(cur,W/2,gy,face,sc);cost=performance.now()-t1}
-      else if(view==='prima'){const F=fit(cur,W*.46,room*.8,anim),sc=Math.min(F.s,5)*zoom,gy=top+room*.1+F.gy;oldDraw(cur,W*.27,gy,face,sc);t1=performance.now();newDraw(cur,W*.73,gy,face,sc);cost=performance.now()-t1;
+        t1=performance.now();newDraw(cur,W/2,gy,face,sc,null,'gira');cost=performance.now()-t1}
+      else if(view==='prima'){const F=fit(cur,W*.46,room*.8,anim),sc=Math.min(F.s,5)*zoom,gy=top+room*.1+F.gy;oldDraw(cur,W*.27,gy,face,sc);t1=performance.now();newDraw(cur,W*.73,gy,face,sc,null,'prima');cost=performance.now()-t1;
         label(c,'Oggi',W*.27,top+room*.98);label(c,'In 3D',W*.73,top+room*.98)}
       else if(view==='tutti'){const L=ids().filter(id=>N3.meta[id].g===M.g),n=L.length;let best=null;
         for(let cols=1;cols<=5;cols++){const rows=Math.ceil(n/cols),cw=W/cols,ch=room/rows,sz=Math.min(cw,ch);if(!best||sz>best.sz)best={cols,rows,cw,ch,sz}}
@@ -148,7 +160,7 @@ function boot(){try{INTRO.on=false;paused=true}catch(e){}try{AU.on.music=false;A
           const a0=anim,M2=N3.meta[id];if(!M2.an.includes(anim))anim='idle';t1=performance.now();try{newDraw(id,cx,cy+ch*.06+F.gy,face,sc,anim==='die'?Math.min(.999,(tAnim%(dur(id,anim)+HOLD))/dur(id,anim)):(tAnim/dur(id,anim))%1)}finally{anim=a0}cost+=(performance.now()-t1)/n;
           label(c,M2.n,cx,cy+ch*.97,11)}}
       else{const D4=[[Math.PI/2,'Davanti'],[0,'Lato'],[-Math.PI/2,'Dietro'],[Math.PI,'Altro lato']],cw=W/4,F=fit(cur,cw*.95,(room-34)/2*.9,anim),sc=F.s*zoom,y1=top+22,h2=(room-34)/2;
-        const nb=M.g==='boss3';for(let i=0;i<4;i++){const x=cw*(i+.5);t1=performance.now();const sp2=p2;if(nb)p2=false;newDraw(cur,x,y1+F.gy,D4[i][0],sc);cost+=(performance.now()-t1)/4;if(nb){p2=true;newDraw(cur,x,y1+h2+12+F.gy,D4[i][0],sc);p2=sp2}else oldDraw(cur,x,y1+h2+12+F.gy,D4[i][0],sc);label(c,D4[i][1],x,y1-4)}
+        const nb=M.g==='boss3';for(let i=0;i<4;i++){const x=cw*(i+.5);t1=performance.now();const sp2=p2;if(nb)p2=false;newDraw(cur,x,y1+F.gy,D4[i][0],sc,null,'q'+i);cost+=(performance.now()-t1)/4;if(nb){p2=true;newDraw(cur,x,y1+h2+12+F.gy,D4[i][0],sc);p2=sp2}else oldDraw(cur,x,y1+h2+12+F.gy,D4[i][0],sc);label(c,D4[i][1],x,y1-4)}
         label(c,nb?'Fase 1':'In 3D',W/2,y1+h2+2);label(c,nb?'Fase 2':'Oggi',W/2,y1+2*h2+20)}
     }catch(e){console.error(e)}
     ctx=saved;LOWFX=lf;ms=ms*.93+cost*.07;$('n3Ms').innerHTML=ms.toFixed(2)+' ms<br>'+moveName(cur,anim);
