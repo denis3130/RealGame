@@ -36,7 +36,7 @@ Object.assign(VOX,{
     s:t=>{fThump(t,VR(240,.15),130,.05,.05);if(Math.random()<.5)nvSizzle(t,.08,.025)},px:34},
   tadpole:{a:t=>{nvBub(t,VR(620,.1),1400,.07,.07);fNoise(t+.02,.06,'lowpass',1600,1,.04,{brown:true})},h:t=>nvBub(t,950,560,.08,.07),d:t=>{nvBub(t,700,1600,.05,.06);nvBub(t+.07,900,2000,.04,.05)},px:0},
   snail:{a:t=>{M.shell(t,.5);fNoise(t,.45,'lowpass',VR(320,.1),.8,.08,{brown:true,att:.1})},h:t=>{M.shell(t,.5);squeak(t+.02,1250,900,.09,.04)},d:t=>{M.shell(t,.8);squeak(t+.05,1100,520,.32,.035)},
-    s:t=>fNoise(t,.08,'lowpass',VR(700,.15),1.2,.035,{brown:true}),px:30},
+    s:t=>fNoise(t,.08,'lowpass',VR(700,.15),1.2,.06,{brown:true}),px:30},
   bonelet:{a:t=>{rattle(t,3,.3,1600);ev(t+.04,VR(620,.08),700,.07,.06,[950,2200])},h:t=>rattle(t,3,.35,1750),d:null,s:t=>M.bone(t,.12,VR(1700,.15)),px:18},
   pyro:{a:t=>{whoosh(t,.35,700,2200,.06);ev(t+.05,VR(260,.08),230,.1,.09,[650,1500])},h:t=>ev(t,330,240,.13,.11,[700,1500]),d:t=>{ev(t,300,150,.45,.12,[650,1400]);fNoise(t+.12,.3,'highpass',3200,.8,.05)},
     s:t=>fThump(t,VR(220,.1),120,.03,.05),px:28},
@@ -54,13 +54,13 @@ const NVPS={
   bat:t=>squeak(t,VR(1800,.08),2700,.22,.045),
   goblin:t=>{nvCreak(t,.42,900,2200,.05);ev(t+.3,VR(380,.08),420,.06,.06,[800,1800])},
   plant:t=>{rustle(t,.08,.35);nvBub(t+.15,500,700,.12,.03)},
-  skeleton:t=>{for(let i=0;i<3;i++)M.metal(t+i*.1,.25,VR(1500,.08),.3)},
+  skeleton:t=>{for(let i=0;i<3;i++)M.metal(t+i*.1,.15,VR(1500,.08),.3)},
   mushroom:t=>{nvBub(t,220,330,.28,.05);fNoise(t,.3,'lowpass',900,.8,.04,{att:.2})},
   wisp:t=>{vBell(null,t,VR(96,.01),.6,.025);fNoise(t,.35,'highpass',4500,.8,.025,{att:.25})},
   beetle:t=>{for(let i=0;i<6;i++)fNoise(t+i*(.09-i*.01),.012,'bandpass',VR(3400,.12),3,.1)},
   eyeflower:t=>nvWob(t,330,.5,.04),
   shadoweye:t=>nvHum(t,90,.6,.05,150),
-  necro:t=>fNoise(t,.55,'bandpass',VR(2400,.1),4,.05,{att:.4,rev:.6}),
+  necro:t=>fNoise(t,.55,'bandpass',VR(2400,.1),4,.09,{att:.4,rev:.6}),
   bonelet:t=>{rattle(t,2,.25,1700);ev(t+.08,700,760,.05,.05,[1000,2300]);ev(t+.16,720,780,.05,.05,[1000,2300])},
   imp:t=>{for(let i=0;i<3;i++)ev(t+i*.1,VR(600,.05),650,.06,.06,[1100,2500])},
   obsidian:t=>{fNoise(t,.5,'lowpass',VR(260,.1),.7,.14,{brown:true,att:.3});M.stone(t+.35,.35)},
@@ -81,14 +81,14 @@ const NVD={
   mushroom:[[.7,t=>nvThud(t,.35)],[.74,t=>fNoise(t,.4,'lowpass',1400,.9,.05,{att:.05})]],
   bat:[[.7,t=>nvThud(t,.25)]],plant:[[.3,t=>rustle(t,.06,.25)],[.72,t=>nvThud(t,.25)]],wisp:[[.2,t=>M.spirit(t,.5)]],
   beetle:[[.5,t=>{M.shell(t,.6);nvThud(t,.3)}],[.6,t=>fNoise(t,.25,'highpass',3000,.8,.04)]],
-  eyeflower:[[.3,t=>rustle(t,.06,.3)],[.75,t=>nvThud(t,.3)]],shadoweye:[[.2,t=>whoosh(t,.45,2500,500,.04,.4)]],
+  eyeflower:[[.3,t=>rustle(t,.06,.3)],[.75,t=>nvThud(t,.3)]],shadoweye:[[.2,t=>whoosh(t,.45,2500,500,.07,.4)]],
   imp:[[.6,t=>nvThud(t,.35)],[.7,t=>nvThud(t,.15)]],
   obsidian:[[.2,t=>M.glass(t,.6,1300)],[.45,t=>M.stone(t,.6)],[.62,t=>nvThud(t,.5)]],
   frog:[[.55,t=>{nvThud(t,.4);M.goo(t,.25)}]],mosquito:[[.65,t=>fThump(t,VR(500,.1),300,.03,.05)]],
   croc:[[.6,t=>nvThud(t,.8)]],snail:[[.45,t=>M.shell(t,.5)],[.75,t=>{M.shell(t,.7);nvThud(t,.3)}]],tadpole:[[.4,t=>nvBub(t,500,1200,.06,.05)]],
   wolf:[[.5,t=>nvThud(t,.6)],[.62,t=>nvThud(t,.2)]],
   snowspirit:[[.58,t=>fNoise(t,.2,'lowpass',VR(1200,.1),.7,.09,{brown:true})],[.62,t=>M.ice(t,.25)]],
-  icesentinel:[[.12,t=>M.ice(t,.8)],[.3,t=>M.ice(t,.4)],[.53,t=>{M.ice(t,.7);nvThud(t,.6)}]],
+  icesentinel:[[.12,t=>M.ice(t,.8)],[.3,t=>M.ice(t,.4)],[.53,t=>{M.ice(t,.5);nvThud(t,.45)}]],
   goblin:[[.55,t=>nvThud(t,.45)]],necro:[[.55,t=>nvThud(t,.4)]],pyro:[[.55,t=>nvThud(t,.45)]],bomber:[[.55,t=>{nvThud(t,.55);M.metal(t+.02,.25,700,.4)}]],
   skeleton:[[.14,t=>rattle(t,4,.35,1200)],[.3,t=>rattle(t,8,.5,1000)],[.52,t=>rattle(t,5,.4,1300)],[.62,t=>M.bone(t,.6,700)]],
   bonelet:[[.14,t=>rattle(t,3,.3,1500)],[.3,t=>rattle(t,6,.45,1300)],[.52,t=>rattle(t,4,.35,1600)],[.62,t=>M.bone(t,.5,900)]]};
@@ -101,11 +101,13 @@ const NVP={slime:e=>!(e.jump>0)&&e.cd<.28,bigslime:e=>!(e.jump>0)&&e.cd<.28,magm
   goblin:e=>e.aim>0,plant:e=>e.cd<.45,skeleton:e=>(e.aim>0&&!e.moving)||e.wind>0,mushroom:e=>e.puff>0,beetle:e=>e.arm>0,eyeflower:e=>e.wind>0,shadoweye:e=>e.stare>0,
   imp:e=>e.cd<.4,obsidian:e=>e.wind>0,pyro:e=>e.cast>0,bomber:e=>e.throwT>0,frog:e=>e.spit>0,icesentinel:e=>e.cast>0};
 const nvReady=e=>{const f=NVP[e.type];return!!(f&&!e.dead&&!(e.spawn>0)&&f(e))};
+// the ones whose blow is not a shot of the game (the spores, the bomb, the meteor, the beam): when getting ready ends, the attack's blow
+const NVA={mushroom:1,bomber:1,pyro:1,shadoweye:1};
 // the move: while it gets ready, the held «prep» of its model (the knock back of a hit still wins); the attack that follows starts from its
 // blow. The necromancer's summoning plays his own move «Evoca» as long as it lasts
 {const _m=n3Move;n3Move=function(e){const r=_m(e);if(!NV.on||isBoss(e.type))return r;const M=N3.meta[e.type],t=G.t||0;
   if(e.type==='necro'&&e.cast>0&&M.an.includes('summon')&&r[0]!=='hit')return['summon',Math.min(.999,1-e.cast)];
-  if(!M.an.includes('prep')||!nvReady(e)){e.nvP=null;return r}
+  if(!M.an.includes('prep')||!nvReady(e)){if(e.nvP!=null&&NVA[e.type]&&M.an.includes('attack')&&!(e.a3>=e.nvP)){e.a3=t;e.aim3=1}e.nvP=null;return r}
   if(e.nvP==null)e.nvP=t;e.aim3=Math.max(e.aim3||0,1);if(r[0]==='hit')return r;
   return['prep',((t-e.nvP)/((M.dur&&M.dur.prep)||.8))%1]}}
 // the call when it starts getting ready, and the sounds of the bodies as their move goes on

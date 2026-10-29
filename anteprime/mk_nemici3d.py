@@ -22,7 +22,8 @@ files=[f for f in order if os.path.exists(os.path.join(d3,f))]+sorted(os.path.ba
 src='\n'.join(open(os.path.join(d3,f),encoding='utf-8').read() for f in files)
 # the voices, the calls of «Si prepara» and the sounds of «Muore» (src/js/97-nemici-vivi.js), while the game does not have them yet
 vivi=os.path.join(root,'src','js','97-nemici-vivi.js')
-if 'const NV={' not in game and os.path.exists(vivi):src+='\n'+open(vivi,encoding='utf-8').read()
+v97=open(vivi,encoding='utf-8').read() if 'const NV={' not in game and os.path.exists(vivi) else ''
+src+='\n'+v97
 nuovi='--nuovi' in sys.argv
 vivi_='--vivi' in sys.argv
 classici='--classici' in sys.argv
@@ -156,7 +157,8 @@ function boot(){try{INTRO.on=false;paused=true}catch(e){}try{AU.on.music=false;A
 if(document.readyState==='complete')setTimeout(boot,300);else window.addEventListener('load',()=>setTimeout(boot,300))})();
 '''.replace('__START__',start).replace('__VIEW__','gira' if start and not nuovi and not vivi_ else 'tutti').replace('__SOLO__',"'boss3'" if nuovi else "'classici'" if classici else 'null').replace('__VIVI__','true' if vivi_ else 'false')
 i=game.rfind('})();')
-page=game[:i]+'\n'+ne+'\n'+src+'\n'+ctrl+'\n'+game[i:]
+# «Nemici più vivi»: the game already has all the models of the normal enemies (src/ordine.txt), so only 97 goes in (the page stays light)
+page=game[:i]+'\n'+(v97 if vivi_ else ne+'\n'+src)+'\n'+ctrl+'\n'+game[i:]
 page=page.replace('<title>Mossbound</title>','<title>'+('Boss nuovi 3D' if nuovi else 'Boss Classici nuovi' if classici else 'Nemici più vivi' if vivi_ else 'Nemici e boss 3D')+'</title>',1)
 out='boss3.html' if nuovi else 'boss_classici.html' if classici else 'vivi.html' if vivi_ else 'nemici3d.html'
 open(os.path.join(here,out),'w',encoding='utf-8').write(page)
