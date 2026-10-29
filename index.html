@@ -45893,10 +45893,31 @@ function cnIslFallFx(i,S,k,t,ch){const E=cnIslFallPt(i),q=S(E),C=CNI_FALL[ch],dn
   ctx.save();ctx.globalCompositeOperation='lighter';ctx.strokeStyle=ch===2?'rgba(255,220,140,.5)':'rgba(230,248,255,.42)';ctx.lineCap='round';
   for(let j=0;j<4;j++){const u=(t*(ch===3?.35:.6)+j/4)%1,x=q[0]+(j/3-.5)*hw*1.4*(1+u*.3),y=q[1]+u*dn*.75;ctx.lineWidth=(1.4-u*.8)*k;ctx.beginPath();ctx.moveTo(x,y);ctx.lineTo(x,y+7*k);ctx.stroke()}ctx.restore()}
 // the guardian of the arena asleep on its island (it breathes slowly, «z» float up); awake and red in the Incubo
+// the custodian asleep (FASE 9, Denis: «Più fluido sul telefono»: on the islands it was the dearest thing, 6 to 14 ms a frame on the computer
+// of the tests): with the camera still it is drawn into a picture of its own every other frame (and at least 15 times a second) and copied on
+// whole pixels in the frame between (it breathes slowly: nothing changes from one frame to the next); awake (the Nightmare), while the camera
+// moves or the island fades it is drawn live as before. CNB_BOX: the box of each one's breath in its own units, found once (drawn small at
+// five moments of it)
+const CNB_BOX={};
+function cnBossBox(bt,sc){const kk=bt+'|'+sc.toFixed(3);if(CNB_BOX[kk])return CNB_BOX[kk];const W=420,H=420,ox=210,oy=320,f=.5,c=document.createElement('canvas');c.width=W;c.height=H;
+  const g=c.getContext('2d'),keep=ctx;let x0=W,y0=H,x1=-1,y1=-1;ctx=g;
+  try{for(const p of[0,.2,.4,.6,.8]){g.setTransform(1,0,0,1,0,0);g.clearRect(0,0,W,H);g.setTransform(f,0,0,f,ox,oy);N3[bt](0,0,Math.PI/2+.75,'idle',p,sc,{noFx:true});
+    const d=g.getImageData(0,0,W,H).data;for(let y=0;y<H;y+=2)for(let x=0;x<W;x+=2)if(d[(y*W+x)*4+3]){if(x<x0)x0=x;if(x>x1)x1=x;if(y<y0)y0=y;if(y>y1)y1=y}}}
+  catch(err){}finally{ctx=keep;c.width=c.height=0}
+  return CNB_BOX[kk]=x1>=x0?{x0:(x0-ox)/f-10,y0:(y0-oy)/f-10,x1:(x1-ox)/f+10,y1:(y1-oy)/f+10}:{x0:-160,y0:-300,x1:160,y1:60}}
 function cnIslBoss(i,A,t,op,L,awake){const bt=cnBoss(i),M=N3.meta&&N3.meta[bt];if(!N3[bt])return;const k=A.k,q=cnIslS(A,CI_BOSS),sc=(M&&M.sc||1)*CNI_BOSS,p=(t*(awake?.42:.18)+i*.13)%1;
+  const mO=ctx.getTransform(),still=!awake&&ISL.bossPic!==false&&ctx.globalAlpha>=.999&&ISL.pv===ISL.view&&!ISL.drag&&!ISL.jump&&mO.a===1&&mO.d===1&&mO.b===0&&mO.c===0;
   ctx.save();ctx.translate(q[0],q[1]);ctx.scale(k,k);ctx.fillStyle='rgba(0,0,0,.3)';ctx.beginPath();ctx.ellipse(0,2,22*sc,6*sc,0,0,TAU);ctx.fill();
   if(awake&&!LOWFX){ctx.save();ctx.globalCompositeOperation='lighter';glow('255,40,30',0,-30*sc,60*sc,.35+.1*Math.sin(t*3));ctx.restore()}
-  try{N3[bt](0,0,Math.PI/2+.75,'idle',p,sc,{noFx:true})}catch(err){}ctx.restore();
+  if(still){ctx.restore();const ax=mO.e+q[0],ay=mO.f+q[1],bb=cnBossBox(bt,sc),w=Math.ceil((bb.x1-bb.x0)*k)+2,h=Math.ceil((bb.y1-bb.y0)*k)+2,key=[i,bt,k.toFixed(5),w,h,LOWFX].join();let C=ISL.bossC;
+    // (the island floats: between two drawings the picture follows it on whole pixels, as the island's own picture does)
+    if(C&&C.key===key&&t>=C.t)C.n++;
+    if(!C||C.key!==key||C.n>=2||t-C.t>=1/15||t<C.t){const ix=Math.floor(ax+bb.x0*k),iy=Math.floor(ay+bb.y0*k);
+      if(!C||C.cv.width<w||C.cv.height<h){if(C)C.cv.width=C.cv.height=0;const cv=document.createElement('canvas');cv.width=w;cv.height=h;C=ISL.bossC={cv}}
+      const g=C.cv.getContext('2d'),keep=ctx;g.setTransform(1,0,0,1,0,0);g.clearRect(0,0,C.cv.width,C.cv.height);g.lineJoin=keep.lineJoin;g.lineCap=keep.lineCap;g.miterLimit=keep.miterLimit;
+      g.setTransform(k,0,0,k,ax-ix,ay-iy);ctx=g;try{N3[bt](0,0,Math.PI/2+.75,'idle',p,sc,{noFx:true})}catch(err){}finally{ctx=keep}C.key=key;C.t=t;C.n=0;C.w=w;C.h=h;C.ox=ax-ix;C.oy=ay-iy}
+    ctx.save();ctx.setTransform(1,0,0,1,0,0);ctx.drawImage(C.cv,0,0,C.w,C.h,Math.round(ax-C.ox),Math.round(ay-C.oy),C.w,C.h);ctx.restore()}
+  else{try{N3[bt](0,0,Math.PI/2+.75,'idle',p,sc,{noFx:true})}catch(err){}ctx.restore()}
   if(op&&!awake)for(let j=0;j<3;j++){const u=((t*.35+j/3)%1),zx=q[0]-8*k+u*16*k+Math.sin(u*5+j)*4*k,zy=q[1]-(70*sc+u*40)*k;ctx.save();ctx.globalAlpha=Math.sin(u*Math.PI)*.85;ctx.font=`${Math.round((8+u*6)*k)}px "Lilita One", sans-serif`;ctx.textAlign='center';ctx.lineWidth=2*L.dpr;ctx.strokeStyle=INK;ctx.strokeText('z',zx,zy);ctx.fillStyle='#e8f0ff';ctx.fillText('z',zx,zy);ctx.restore()}}
 // ------------------------------------------------ the hero's ways along the path (n from the middle of island lo, e across, z up): chain points
 // [north, east, high]; off the path a soft curve onto it, along it (on a bridge with its sag, over the little island of the checkpoint), from
@@ -45985,7 +46006,16 @@ function cnIslBraz(x,y,d,on,t){ctx.save();const K=proCam(CNI_FACE,x,y+d*2,d*.62)
 function cnSparks(x,y,k,t){ctx.save();ctx.globalCompositeOperation='lighter';for(let i=0;i<5;i++){const u=(t*(.5+i*.11)+i*.23)%1,sx=x+(Math.sin(t*2+i*2.4)*4+(i%2?1:-1)*u*9)*k,sy=y-u*38*k,sz=(2.2-u*1.6)*k;
   ctx.fillStyle=u<.4?`rgba(255,240,180,${(1-u).toFixed(2)})`:`rgba(255,150,60,${((1-u)*.9).toFixed(2)})`;ctx.fillRect(sx-sz/2,sy-sz/2,sz,sz)}ctx.restore()}
 // the edges of the screen a little darker (painted once for each size)
-function cnIslVig(L){const key=L.W+'x'+L.H;let c=ISL.vig;if(!c||c.key!==key){c=ISL.vig=document.createElement('canvas');c.key=key;c.width=Math.max(1,L.W>>2);c.height=Math.max(1,L.H>>2);const x=c.getContext('2d'),g=x.createRadialGradient(c.width/2,c.height*.5,c.height*.25,c.width/2,c.height*.5,c.height*.75);g.addColorStop(0,'rgba(0,0,0,0)');g.addColorStop(1,'rgba(0,0,0,.55)');x.fillStyle=g;x.fillRect(0,0,c.width,c.height)}
+// the vignette (FASE 9, like the battle's drawVig): the small picture scaled once to the canvas, then copied one to one band by band, leaving
+// out the see-through middle of every band of 32 rows (on a phone a third or more of the screen)
+function cnIslVig(L){const key=L.W+'x'+L.H;let c=ISL.vig;if(!c||c.key!==key){if(c&&c.F)c.F.width=c.F.height=0;c=ISL.vig=document.createElement('canvas');c.key=key;c.width=Math.max(1,L.W>>2);c.height=Math.max(1,L.H>>2);const x=c.getContext('2d'),g=x.createRadialGradient(c.width/2,c.height*.5,c.height*.25,c.width/2,c.height*.5,c.height*.75);g.addColorStop(0,'rgba(0,0,0,0)');g.addColorStop(1,'rgba(0,0,0,.55)');x.fillStyle=g;x.fillRect(0,0,c.width,c.height);
+    const W=L.W,H=L.H;if(W>0&&H>0&&W<=4096&&H<=4096&&ISL.vigBands!==false){const F=document.createElement('canvas');F.width=W;F.height=H;const fx=F.getContext('2d');fx.drawImage(c,0,0,W,H);
+      const d=fx.getImageData(0,0,W,H).data,B=[],mid=W>>1,clear=(y,i)=>!d[(y*W+i)*4+3];
+      for(let y0=0;y0<H;y0+=32){const y1=Math.min(H,y0+32);let a=0,b=W;
+        for(let y=y0;y<y1&&a<b;y++){if(!clear(y,mid)){a=b=W;break}let l=mid,r=mid;while(l>0&&clear(y,l-1))l--;while(r<W-1&&clear(y,r+1))r++;a=Math.max(a,l);b=Math.min(b,r+1)}
+        B.push(a<b?[y0,y1-y0,a,b]:[y0,y1-y0,W,W])}
+      c.F=F;c.B=B}}
+  const m=ctx.getTransform();if(c.F&&m.a===1&&m.d===1&&m.b===0&&m.c===0&&m.e===0&&m.f===0){const W=L.W;for(const[y0,bh,a,b] of c.B){if(a>0)ctx.drawImage(c.F,0,y0,a,bh,0,y0,a,bh);if(b<W)ctx.drawImage(c.F,b,y0,W-b,bh,b,y0,W-b,bh)}return}
   ctx.drawImage(c,0,0,L.W,L.H)}
 // ------------------------------------------------ the home's canvas: the islands instead of the crypt (the Zombie keeps its fire)
 {const _dc=drawCamp;drawCamp=function(dt){if(!CN.on||(!MM.tr&&zMode()))return _dc.apply(this,arguments);glowTick();const T=MM.tr;
@@ -46813,7 +46843,18 @@ function cnStonesDraw(i,L,t){if(!ARENAS[i+1])return;const S=cnS(),alive=cnOpenSh
       z=plerp(zs,0,e)+(LOWFX?0:Math.sin(t*1.2+q*1.9)*1.2*u),p=M.S(s.n,s.e,z);
     if(p[1]<-80*d||p[1]>L.H+80*d)continue;const k=M.K(s.n),mix=(c,w)=>{const c1=g?cnMixC(c,ac,w*g):c;return dk?cnMixC(c1,sky,dk):c1};
     if(!LOWFX){const lp=M.S(s.n,s.e,z-16);pLight(lp[0],lp[1],24*k,W1.light,u?.12+.4*(1-u):.1+.05*Math.sin(t*1.3+q),9*k)}
-    const K=cnPlatView(M,s.n);ctx.save();ctx.globalAlpha*=plerp(.72,1,Math.min(1,u*1.6));ctx.translate(K.o[0],K.o[1]);ctx.scale(K.k,K.k);
+    const K=cnPlatView(M,s.n),al=plerp(.72,1,Math.min(1,u*1.6)),m0=ctx.getTransform();
+    // (FASE 9: sunk or in its place, with the camera still, each stone is painted once into a picture of its own and copied on whole pixels
+    // where its bobbing takes it: it only goes up and down)
+    if((u===0||u===1)&&ISL.stonePic!==false&&ISL.pv===ISL.view&&!ISL.drag&&!ISL.jump&&ctx.globalAlpha>=.999&&m0.a===1&&m0.d===1&&m0.b===0&&m0.c===0&&m0.e===0&&m0.f===0){
+      const zr=u?0:-36-q*4,key=[i,q,u,ch,ISL.view.toFixed(5),K.k.toFixed(5),L.W,L.H,LOWFX].join(),SC=ISL.stC||(ISL.stC={});let C=SC[i+'_'+q];
+      if(!C||C.key!==key){const c0=cnChain(0,s.e,zr),R=s.r*1.3+7,P=K.V0.P,xs=[],ys=[];for(const dx of[-R,R])for(const dy of[-R,R])for(const dz of[-(s.r*1.6+14),16]){const v=P(c0[0]+dx,c0[1]+dy,c0[2]+dz);xs.push(K.o[0]+v[0]*K.k);ys.push(K.o[1]+v[1]*K.k)}
+        const ix=Math.floor(Math.min(...xs))-3,iy=Math.floor(Math.min(...ys))-3,w=Math.ceil(Math.max(...xs))+3-ix,h=Math.ceil(Math.max(...ys))+3-iy,a0=M.S(s.n,s.e,zr);
+        if(w>0&&h>0&&w<1024&&h<1024){if(!C){C=SC[i+'_'+q]={cv:document.createElement('canvas')}}C.cv.width=w;C.cv.height=h;const g=C.cv.getContext('2d'),keep=ctx;
+          g.setTransform(K.k,0,0,K.k,K.o[0]-ix,K.o[1]-iy);g.globalAlpha=al;g.lineJoin=keep.lineJoin;g.lineCap=keep.lineCap;ctx=g;
+          try{cnStone3(K,c0,s.r,ch,W1,mix,i*3.7+q*1.3,dk)}catch(err){cnErr(err)}finally{ctx=keep}C.key=key;C.ax=a0[0]-ix;C.ay=a0[1]-iy}else C=null}
+      if(C){ctx.drawImage(C.cv,Math.round(p[0]-C.ax),Math.round(p[1]-C.ay));continue}}
+    ctx.save();ctx.globalAlpha*=al;ctx.translate(K.o[0],K.o[1]);ctx.scale(K.k,K.k);
     try{cnStone3(K,cnChain(0,s.e,z),s.r,ch,W1,mix,i*3.7+q*1.3,dk)}catch(err){cnErr(err)}finally{ctx.restore()}}}
 function cnStone3(K,c,r,ch,W,mix,sd,dk){const{V0}=K,ry=r*1.22,ice=ch===4,dim=c0=>dk?cnMixC(c0,W.sky[0],dk):c0,top=ice?dim('#eef8ff'):mix(W.top,.14),side=ice?dim('#9cc6e6'):mix(W.side,.1),T=[],B=[],N=ch===2?6:9;
   for(let j=0;j<N;j++){const a=j/N*TAU+sd,w=ch===2?1:.86+prH(j,sd*3)*.22,q=cnChain(Math.cos(a)*r*w,Math.sin(a)*ry*w,0);T.push([c[0]+q[0],c[1]+q[1],c[2]]);B.push([c[0]+q[0]*.84,c[1]+q[1]*.84,c[2]-(ch===2?7:4.5)])}
