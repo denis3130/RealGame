@@ -21,7 +21,7 @@
 // l'eroe coi passi e gli scricchiolii, la vita di ogni mondo, gli stormi nei due modi, le nuvole, i suoni, gli effetti ridotti); la mini isola
 // del traguardo (l'isola dopo più su, la mini isola al suo posto col ponte che ci arriva, il tesoro nel raggio di luce, lo stendardo, le pietre
 // che salgono, l'eroe che ci va e salta di pietra in pietra, il tesoro nel salvataggio, gli effetti ridotti).
-// Foto tests/cn_<n>.png. Uso: python3 anteprime/mk_classica.py --test --build && node tests/classica.js [menu|stanze|furia|rarita|evo|nemesi|torre|corsa|ondate|trappole|3d|ponte|fontana|cristallo|albero|vita|traguardo]
+// Foto tests/cn_<n>.png. Uso: python3 anteprime/mk_classica.py --test --build && node tests/classica.js [menu|stanze|furia|rarita|evo|nemesi|torre|corsa|ondate|trappole|3d|ponte|fontana|cristallo|albero|vita|traguardo|fluido]
 const {chromium}=require('playwright');const path=require('path');
 const SOLO=process.argv[2]||'';
 (async()=>{const b=await chromium.launch({args:['--autoplay-policy=no-user-gesture-required']});const p=await b.newPage({viewport:{width:390,height:844},deviceScaleFactor:2});const errs=[];
@@ -777,5 +777,25 @@ const SOLO=process.argv[2]||'';
     await E(`(()=>{LOWFX=true;ISL.cache.clear();ISL.bc={};ISL.cur=0;ISL.view=cnMiniView(0);ISL.rest=ISL.view;Object.assign(__MT,{pz4:0,beam:0,stones:0,ban:0});return 0})()`);await W(1400);
     const lw=await J(`({...__MT})`);await E(`(()=>{LOWFX=false;ISL.cache.clear();ISL.bc={};ISL.rest=null;ISL.go=0;return 0})()`);await W(600);
     ok('con gli effetti ridotti la mini isola, le pietre e lo stendardo ci sono lo stesso',lw.stones>=5&&lw.ban>0,JSON.stringify(lw));
+  }
+  if(!SOLO||SOLO==='fluido'){
+    // FASE 9 on the islands (Denis: «Più fluido sul telefono»): with the camera still the sleeping custodian is drawn into its own picture every
+    // other frame, every stone once, the vignette copied band by band; the same frame with and without these shortcuts looks the same
+    await toMenu();
+    const set=isl=>`(()=>{LOWFX=false;if(!$("sheetScr").hidden)closeSheet();modal=false;CN.brAnim=null;ISL.brA=null;ISL.jump=null;ISL.go=null;ISL.drag=null;ISL.fkN=1e9;ISL.fk=null;const S=cnS();S.all=0;S.br={};S.stars={};S.inc={};
+      for(let j=0;j<${isl};j++){S.br[j]=cnBrNeed(j);S.stars[j]=1}ISL.cache.clear();ISL.bc={};ISL.cur=${isl};ISL.view=${isl};ISL.rest=${isl};return 0})()`;
+    const same=[];for(const isl of[3,9]){await E(set(isl));await W(400);
+      same.push(await J(`(()=>{const T=CAMP.t+5,fr=on=>{ISL.bossPic=ISL.vigBands=ISL.stonePic=on?undefined:false;ISL.vig=null;ISL.bossC=null;ISL.stC=null;for(let k=0;k<3;k++){CAMP.t=T;cnIsles(0)}return campX.getImageData(0,0,campCv.width,campCv.height).data};
+        const A=fr(false).slice(),B=fr(true);let n=0,big=0,mx=0;for(let i=0;i<A.length;i+=4){const d=Math.max(Math.abs(A[i]-B[i]),Math.abs(A[i+1]-B[i+1]),Math.abs(A[i+2]-B[i+2]));if(d){n++;if(d>mx)mx=d;if(d>8)big++}}
+        return{isl:${isl},boss:cnBoss(${isl}),pic:!!ISL.bossC,stones:Object.keys(ISL.stC||{}).length,bands:ISL.vig&&ISL.vig.B?ISL.vig.B.filter(b=>b[2]<b[3]).length:0,big:+(big/(A.length/4)*100).toFixed(3),max:mx}})()`))}
+    // (what differs: the rounding of the copies and, where a stone or the custodian sits between two pixels, its edge half a pixel over)
+    ok('lo stesso fotogramma con le scorciatoie e senza: uguale a parte gli arrotondamenti e il mezzo pixel dei bordi (custode, pietre, vignetta)',same.every(r=>r.pic&&r.stones>=3&&r.bands>5&&r.big<.3),JSON.stringify(same));
+    // at rest: the custodian painted every other frame, the stones not at all after the first; while the camera moves all of it live
+    await E(set(3));await W(500);
+    const cnt=await J(`(()=>{let nb=0,ns=0;const bt=cnBoss(3),f=N3[bt],g=cnStone3;N3[bt]=function(){nb++;return f.apply(this,arguments)};cnStone3=function(){ns++;return g.apply(this,arguments)};
+      try{for(let k=0;k<20;k++)cnIsles(1/60)}finally{N3[bt]=f;cnStone3=g}const r={nb,ns};nb=0;ns=0;N3[bt]=function(){nb++;return f.apply(this,arguments)};cnStone3=function(){ns++;return g.apply(this,arguments)};
+      try{for(let k=0;k<20;k++){ISL.view=3+k*.002;cnIsles(1/60)}}finally{N3[bt]=f;cnStone3=g;ISL.view=3}r.mnb=nb;r.mns=ns;return r})()`);
+    ok('a telecamera ferma il custode si ridisegna un fotogramma sì e uno no e le pietre si copiano; mentre si muove tutto dal vivo',cnt.nb>=9&&cnt.nb<=12&&cnt.ns===0&&cnt.mnb>=19&&cnt.mns>=20,JSON.stringify(cnt));
+    await snap('fluido_isole');
   }
   console.log('\n'+R.join('\n'));console.log(errs.length?'ERRORI:\n'+[...new Set(errs)].slice(0,20).join('\n'):'nessun errore');await b.close()})();
