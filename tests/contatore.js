@@ -1,6 +1,7 @@
 // Prova del contatore (FASE 9, src/js/101-contatore.js): acceso come nell'anteprima (window.MB_CONTATORE), il chip coi fotogrammi al
-// secondo, il pannello (adesso, per schermata, telefono), una cassa, la mappa zombie con «Parti della mappa», «Copia»; poi Impostazioni →
-// Contatore spento e acceso; senza MB_CONTATORE non c'è. Foto tests/cnt_menu.png, cnt_cassa.png, cnt_mappa.png.
+// secondo, il pannello (adesso, per schermata, telefono), le isole della Classica con «Parti delle isole», una cassa, la mappa zombie con
+// «Parti della mappa», «Copia»; poi Impostazioni → Contatore spento e acceso; senza MB_CONTATORE non c'è. Foto tests/cnt_menu.png,
+// cnt_isole.png, cnt_cassa.png, cnt_mappa.png.
 // Uso: python3 tests/mk.py && node tests/contatore.js
 const {chromium}=require('playwright');const path=require('path');let fails=0;const ok=(c,m)=>{console.log((c?'  ok  ':'  NO  ')+m);if(!c)fails++};
 const SAVE0={gold:5000,gems:500,trophies:900,runs:12,introSeen:1,tutDone:1,handSeen:1,starter:'arciere',login:{last:'2099-1-1',n:1},zN:2,
@@ -19,6 +20,19 @@ const SAVE0={gold:5000,gems:500,trophies:900,runs:12,introSeen:1,tutDone:1,handS
   await p.screenshot({path:path.join(__dirname,'cnt_menu.png')});
   await p.click('#cntPanel button[data-a="chiudi"]');await p.waitForTimeout(200);
   ok(await p.evaluate(()=>document.getElementById('cntPanel').hidden),'«Chiudi» lo chiude');
+  // 1b. le isole della Classica e le loro parti (cnIsles, ISL.tm); sotto un foglio (qui l'accesso del giorno) non si disegnano e il bottone non c'è
+  await p.click('#cntChip');await p.waitForTimeout(700);
+  const und=await p.evaluate(()=>{const b=document.querySelector('#cntPanel button[data-a="parti"]');return{sheet:!document.getElementById('sheetScr').hidden,hid:!b||b.hidden}});
+  if(und.sheet)ok(und.hid,'sotto un foglio aperto niente «Parti delle isole»');
+  await p.click('#cntPanel button[data-a="chiudi"]');await E(`(()=>{if(!$('sheetScr').hidden)closeSheet();return 0})()`);await p.waitForTimeout(600);
+  await p.click('#cntChip');await p.waitForTimeout(700);
+  ok(await p.evaluate(()=>{const b=document.querySelector('#cntPanel button[data-a="parti"]');return!!b&&!b.hidden&&/isole/.test(b.textContent)}),'sulle isole c\'è «Parti delle isole»');
+  await p.click('#cntPanel button[data-a="parti"]');await p.waitForTimeout(6500);
+  const ti=await E('cntText()');const pi=ti.split('\n').find(l=>/^Parti delle isole/.test(l))||'';
+  ok(/isole \d/.test(pi)&&/ponti \d/.test(pi)&&/eroe \d/.test(pi)&&/cielo e stelle \d/.test(pi),'parti delle isole misurate: '+pi.slice(0,220));
+  ok(await E('ISL.tm==null'),'finita la misura i tempi delle isole sono spenti');
+  await p.screenshot({path:path.join(__dirname,'cnt_isole.png')});
+  await p.click('#cntPanel button[data-a="chiudi"]');await p.waitForTimeout(200);
   // 2. una cassa
   await E(`openChest('oro',{slot:true});0`);await p.waitForTimeout(500);for(let i=0;i<4;i++){await p.mouse.click(195,520);await p.waitForTimeout(700)}
   await p.click('#cntChip');await p.waitForTimeout(700);await p.screenshot({path:path.join(__dirname,'cnt_cassa.png')});

@@ -222,6 +222,65 @@ scorrimento di lato muove le isole (com'era nell'anteprima) e alla Zombie si pas
 ancora alla Classica): `tests/zombie.js` passa dalla manina. Collaudo: `classica.js` (264 controlli), una partita automatica per capitolo
 (Golem, Yeti, Idra, Fenice: quattro vittorie), `meta2.js`, `menu2.js`, `menu3.js`, `zombie.js`, `mig.js`, `fresh.js`, `mosse.js`, nessun errore.
 
+**Il ponte grande** (27 ottobre, Denis: «nel ponte non fare le piccole isolette di mezzo ma un ponte più grande ed quindi anche isola ecc più
+grandi. le ricompense saranno a sinistra ecc»): via le tre rocce di mezzo; un ponte sospeso solo, largo 84 invece di 68, da due torri di
+tronchi sull'isola (alte 106, il tettuccio, lo stendardo dell'arena dopo, la lanterna sul braccio, due travi in mezzo) ai pali dell'isola dopo,
+64 assi con una pancia sola, il parapetto di funi e due cavi grandi che scendono dalle cime delle torri; i premi del cammino su **balconi a
+sinistra** del ponte (a un quarto, a metà, a tre quarti: pavimento di assi, parapetto, lanterna, il premio un terzo più grande), quello di
+fine ponte a sinistra sull'isola dopo, il conto delle assi a destra; la telecamera si ferma sui balconi («Premio N»). **Isole più grandi**: la
+telecamera più vicina (l'isola fino all'86% della larghezza invece del 62%, meno ponte visto a riposo), così isola, eroe e custode sono circa
+un terzo più grandi. Codice in 94, sezione 8 (`CNB`, `cnBrDeck`, `cnBalcony`, `cnBrPortal`, `cnStopNear`), note in `docs/classica-nuova.md`
+(«Il ponte grande»), prova `node tests/classica.js ponte`. Nell'anteprima della Classica; nel gioco dopo il sì di Denis.
+
+**Il ponte più bello** (27 ottobre, Denis: «fallo ancora meglio il ponte»): sotto le assi la crociera a zigzag che si vede dove le assi mancano;
+i traversi che escono oltre le assi coi pali del parapetto sopra, appena fuori; **lanterne** più grandi appese a bracci di ferro fuori dal
+parapetto (a destra; a sinistra fanno luce i balconi); il **vestito del mondo** appeso alle teste dei traversi e sotto i balconi (muschio,
+catene col carbone acceso, liane coi fiori, ghiaccioli), sulle teste delle assi (muschio, cenere, erba, neve) e sui pali; le **torri vestite**
+dal loro mondo (muschio, pietra crepata col fuoco e fuliggine, liana a spirale, neve e ghiaccioli); la pedana dei premi più piccola con
+l'anello del colore del premio. Con questa telecamera le funi e i cavi vicini passano sopra le cose lontane dello stesso bordo: per questo le
+cose nuove stanno un po' fuori dal ponte e il lato destro si disegna dopo i cavi. Note in `docs/classica-nuova.md` («Il ponte più bello»).
+Nell'anteprima della Classica; nel gioco dopo il sì di Denis.
+
+**Isole ancora più grandi e assi che si infilano da sole** (27 ottobre, Denis: «il ponte e l'isola li voglio ancora più grandi, e fai in modo
+che il pg non costruisca il ponte ma le assi si infilano da sole»): la telecamera più vicina (`CNI_WIDE` 1, `CNI_UPN` 260, l'isola un poco più
+in basso: sul 390×763 di Denis isola e ponte +25%, sul 390×844 +16%); nello **spettacolo** l'eroe aspetta sulla sua isola e le assi arrivano
+volando da sole una dopo l'altra e si infilano al loro posto (chiodi da soli, il colpo del legno che sale di nota), la telecamera segue il
+fronte, si ferma sui balconi coi premi, a ponte finito va sull'isola dopo che si accende e l'eroe ci corre, altrimenti torna da lui
+(`cnBrShowStep`, `cnBrFlyLive`, `cnBrShowCam`, `cnBrShowEnd(true)`). Note in `docs/classica-nuova.md` («Lo spettacolo», «Isole ancora più
+grandi»). Nell'anteprima della Classica; nel gioco dopo il sì di Denis.
+
+**La vita intorno e il ponte vivo** (27–28 ottobre, Denis: «manca qualcosa a parer mio», poi «Vita intorno, Ponte vivo»): il vento (`cnWind`:
+brezza e raffiche ogni 11 s, che si sentono piano) muove sopra l'immagine del ponte i cavi, le bandierine, gli stendardi dei balconi, gli
+appesi dei lati e le lanterne (`cnBrRopes`: l'immagine tiene l'impalcato e le funi del parapetto) e sulle torri bandiera, stendardo e
+lanterna (`cnPortalLive`); il ponte cede e ondeggia sotto l'eroe che corre, con i passi e gli scricchiolii, e si ferma dopo (`ISL.sw`,
+`cnSwayFn` dentro `cnBrMap`); ogni mondo vivo sulla sua isola (lucciole e farfalle; braci, fumo e bolle di lava; rane, libellule e lucciole;
+luccichii e neve: `cnIslLife`); stormi del mondo (rondini, uccellini di fuoco, pipistrelli, uccelli bianchi) di traverso davanti alle torri
+o lungo il ponte verso l'isola dopo (`cnFlock*`); nuvole a cumulo nell'abisso e nebbia sul ponte lontano (`cnIslClouds`, `cnBrWisps`); con
+`LOWFX` niente vento, stormi e nuvole. Note in `docs/classica-nuova.md` («La vita intorno e il ponte vivo»), prova `node tests/classica.js
+vita`. Nell'anteprima della Classica; nel gioco dopo il sì di Denis.
+
+**La mini isola del traguardo** (28 ottobre, Denis: «vedi dove c'è l'isola successiva? vorrei la spingessi più in su ed al suo posto creassi
+una mini isola dove il pg si dirigerà come checkpoint e come cosa introduttiva, troverà qualcosa di più bello rispetto alle altre ricompense»):
+l'isola dopo a 1400 invece di 1000 (`CNI_GAP`), al suo posto la **mini isola** (`CNI_MN`, `CNI_MR`) dove finisce il ponte di assi, un pezzo
+del mondo dopo (il suo assaggio) con l'**altare delle rune** e il **tesoro del traguardo** in un raggio di luce (il premio di fine ponte: la
+cassa di prima più 8+2·arena cristalli e 150+50·arena oro, `k:'tesoro'`, `cnTreasure3`), il **palo del traguardo** con lo stendardo dell'arena
+dopo arrotolato e due bracieri; da lì **cinque pietre sospese** fino all'isola dopo, che salgono dal buio al traguardo. Lo spettacolo a ponte
+finito: l'eroe va alla mini isola, il tesoro si apre per lui (monete e cristalli che saltano, oro e cristalli ai contatori, la cassa al suo
+posto), lo stendardo si srotola, le pietre salgono una a una, l'isola dopo si accende e lui ci arriva saltando di pietra in pietra (fasi
+`walk`, `pop4`, `rise`, `open` di `cnBrShowStep`). La mini isola è anche una fermata della telecamera (`cnMiniView`, `cnMiniText`). Codice in
+94, sezione 8 («the little island of the checkpoint»), note in `docs/classica-nuova.md` («La mini isola del traguardo»), prova `node
+tests/classica.js traguardo`. Nell'anteprima della Classica; nel gioco dopo il sì di Denis.
+
+**Il traguardo più bello** (29 ottobre, Denis alla domanda «cosa possiamo migliorare?»: «Arrivo più bello», «Tesoro più speciale», «Mini
+isola più ricca», e sul tesoro «Lo stendardo per il menu»): a ponte finito la telecamera torna dall'eroe e lo segue mentre corre fino alla
+mini isola (fase `back`), poi la scritta grande «Traguardo raggiunto!» coi raggi e «+ lo stendardo di …», con la sua musichetta
+(`cnShowTitle`, `cnBrSnd('fanfara')`); il tesoro dà anche **lo stendardo dell'arena dopo**: i tuoi stendardi (col colore e lo stemma della
+loro arena, `floorEmblem`) sventolano da un pennone piantato sull'isola dove sta l'eroe, che va con lui e si pianta dove arriva; quello nuovo
+sale per ultimo («Lo stendardo di … è nella tua collezione!»), un tocco dice quanti ne hai (`CI_STDS`, `cnStdList`, `cnStdPlant`,
+`cnStdDraw`: sono i ponti finiti, niente di nuovo nel salvataggio); la mini isola più grande (`CNI_MR` 68), lo stemma dell'arena sullo
+stendardo del palo, le pietre che si intravedono sommerse sotto prima del traguardo, il forziere aperto col velluto e qualche moneta rimasta.
+Note in `docs/classica-nuova.md` («Il traguardo più bello»), prova `node tests/classica.js traguardo`.
+
 ## FASE 9: più fluido sul telefono (19 ottobre, in corso)
 
 Denis: «vai, lascia perdere l'intro ecc» (la FASE 9 subito; intro, prologo e filmati non si toccano). Il gioco più fluido sul suo iPhone
@@ -356,7 +415,12 @@ se lontani (salvo le barriere che li chiamano), fumo e foglie solo vicino allo s
   `tests/fluido.js` come in `piano-maestro`. Per ripubblicare: unire `piano-maestro` in `gioco` (merge, mai rebase), `python3 build.py`, le
   prove, poi `python3 app/mk_claude.py index.html <cartella>` e `python3 app/mk_app.py --pubblica` dal ramo `gioco` (lo script accetta
   `piano-maestro` e `gioco`). Il lavoro sulla mappa zombie più fluida (sotto, FASE 9) sta solo in `piano-maestro`: va tolto anche quello
-  finché Denis non dice sì. Quando la approva, si torna a pubblicare da `piano-maestro`.
+  finché Denis non dice sì. Quando la approva, si torna a pubblicare da `piano-maestro`. **Dal 27 ottobre `piano-maestro` ha in più il ponte grande, il ponte più bello, le isole
+  ancora più grandi con le assi che si infilano da sole e (28 ottobre) la vita intorno col ponte vivo** (commit b3dc40e, 63e78af, 5cba9c5 e
+  58a4ba0, «Il ponte grande», «Il ponte più bello», «Isole ancora più grandi e assi che si infilano da sole» e «La vita intorno e il ponte
+  vivo» nella sezione della Classica nuova), (28 ottobre) la mini isola del traguardo («La mini isola del traguardo») e (29 ottobre) il
+  traguardo più bello («Il traguardo più bello»; l'anteprima della Classica li ha, versione 18), non ancora approvati da Denis: il gioco pubblicato e l'app sono fermi a 026beb1 del ramo `gioco`; quando Denis dice sì, si unisce
+  `piano-maestro` in `gioco` e si ripubblica come sempre.
 - **Ramo `classica-nuova`** (20–27 ottobre): l'anteprima della Classica nuova; il 27 ottobre (Denis: «Tutto nel gioco») unito a
   `piano-maestro` (merge 9b47c47) e da lì nel gioco e nell'app. La pagina https://claude.ai/artifact/K6E5QMv5pxKkt61MCFJsba resta per
   provare le cose nuove (`mk_classica.py` ora le aggiunge solo se il gioco non le ha già: col gioco di oggi è il gioco com'è, più la
