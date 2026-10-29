@@ -145,6 +145,28 @@ Copiare un'immagine 1:1 su pixel interi costa 5–7 volte meno che copiarla scal
     (`window.MB_CONTATORE`, messo dalla pagina dell'anteprima), spento nel gioco; Impostazioni → Contatore. Spento non c'è niente (la
     misura dei fotogrammi si installa solo quando si accende); acceso costa due `performance.now()` a richiamo e il testo del chip due
     volte al secondo; non disegna sulle tele. Prova `tests/contatore.js`.
+19. **Le isole della Classica** (29 ottobre; Denis, alla domanda «cosa possiamo migliorare?»: «Più fluido sul telefono»). Prima il
+    contatore: **«Parti delle isole · 5 s»** (sulle isole, quando non c'è un foglio sopra), come «Parti della mappa»: `cnIsles` misura
+    ogni parte del fotogramma con lo svuotamento prima e dopo (`ISL.tm`): cielo e stelle, nuvole, neve, isole, uccelli, mini isole e
+    pietre, ponti, foschia e vignetta, eroe, nebbia, scritte. Poi le misure qui (390×844 a 3 pixel a punto, la tela a 2, con lo
+    svuotamento dopo ogni parte): a riposo 36 ms a fotogramma; il pezzo più caro
+    era il **custode che dorme** sull'isola da giocare (un modello 3D dal vivo: da 6 a 14 ms, lo Yeti il peggiore), poi il ponte (le
+    funi al vento 4 ms), la **vignetta** (4,2 ms: l'immagine piccola ingrandita su tutto lo schermo), le **cinque pietre** sospese (5 ms,
+    in 3D dal vivo), l'eroe (4 ms). Fatto, senza cambiare l'aspetto:
+    - il custode che dorme, a telecamera ferma, si disegna in un'immagine sua un fotogramma sì e uno no (e almeno 15 volte al secondo)
+      e nell'altro si copia; l'immagine segue l'isola che galleggia sui pixel interi, come l'immagine dell'isola; la scatola del suo
+      respiro si trova una volta per custode (`cnBossBox`, disegnato piccolo in cinque momenti); sveglio (l'Incubo), con la telecamera
+      che si muove o l'isola che sfuma, dal vivo come prima: da 6–14 a 3–6 ms;
+    - la vignetta ingrandita una volta alla misura della tela e copiata 1:1 a bande di 32 righe senza il centro trasparente (23 bande
+      su 49 col centro vuoto), come `drawVig` in battaglia: da 4,2 a 1,1 ms;
+    - le pietre, sommerse o al loro posto, a telecamera ferma dipinte una volta ciascuna in un'immagine e copiate sui pixel interi dove
+      le porta l'ondeggiare (vanno solo su e giù): da 5 a 0,4–0,6 ms.
+    A riposo da 36 a 27 ms, sulla mini isola da 31 a 23, sull'isola di ghiaccio col custode da 44 a 31; mentre l'eroe cammina sul ponte
+    resta ~46 ms (il ponte che ondeggia si ridipinge tutto, 17 ms). Lo stesso fotogramma con e senza le scorciatoie: diverso meno dello
+    0,13% dei pixel di più di 8 (arrotondamenti e il mezzo pixel dei bordi delle pietre e del custode). Prova `node tests/classica.js
+    fluido` (lo stesso fotogramma con e senza, il custode ridisegnato un fotogramma sì e uno no, le pietre copiate, tutto dal vivo
+    mentre la telecamera si muove). Da fare con le misure del telefono di Denis («Parti delle isole»): il ponte mentre l'eroe cammina,
+    le funi al vento, l'eroe.
 
 ## Risultati (questo computer, un fotogramma con il disegno)
 
