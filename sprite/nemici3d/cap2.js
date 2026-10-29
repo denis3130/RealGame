@@ -61,6 +61,13 @@ function imp(x,y,face,anim,p,sc,o){sc=sc||1;o=o||{};const V0=V(face),{P,D,F}=V0,
     A.sw=.42+.2*bump(cl((p-.25)/.3,0,1));A.tw=.4*Math.sin(ph*2);A.tc=-.6*v[0]}
   else if(anim==='hit'){const kb=hitK(p);A.lean=-.34*kb;A.B=[-3*kb,0,1.2*kb];A.roll=.12*kb;A.s=-.08*kb;A.shut=p<.5?1:0;A.stars=p<.75?1-p/.75:0;
     A.fl=.12+.3*Math.sin(ph*3)*(1-.5*kb);A.tw=.8*kb*Math.sin(ph*4);A.tc=.5*kb}
+  else if(anim==='prep'){// gets ready to spit (held): reared back and swollen, the fire glowing through it, eyes narrowed, the wings beating hard, a shiver
+    const b=Math.sin(ph*2);A.lean=-.3;A.B=[-2.2+.25*Math.sin(ph*5),0,1.8+.4*b];A.s=.05+.015*b;A.big=.065;A.fire=.82+.15*(.5+.5*b);A.squint=.9;
+    A.fl=.45+.3*Math.sin(ph*4);A.sw=.55;A.tw=.4*Math.sin(ph*2);A.tc=.18}
+  else if(anim==='die'){// .0-.15 the blow, .15-.6 it tumbles down backwards, the wings flailing, .6 it lands and bounces, then lies with its wings limp, dizzy
+    const k1=ez(cl(p/.15,0,1)),k2=cl((p-.15)/.45,0,1),fall=k2*k2,land=p>.6?(p-.6)/.4:0;
+    A.B=[-3*k1-3*k2,0,1.2*k1*(1-fall)+(-IZ+IR*.95)*fall+(land>0?2.2*Math.sin(land*Math.PI*2)*Math.exp(-land*5):0)];A.lean=-.34*k1-1.15*ez(k2);A.roll=.3*k2;A.s=-.08*k1;
+    A.shut=1;A.fl=p<.6?.12+.5*Math.sin(ph*5)*(1-k2):-.32;A.tw=.3*(1-land);A.tc=.4;A.stars=land>0?.85-.3*land:0}
   else{// hovering: quick beats, a slow bob, it looks round slowly, the tail swings
     A.fl=.12+.26*Math.sin(ph*6);A.B=[0,0,1.5*Math.sin(ph*2)+.35*Math.sin(ph*6-1.2)];A.yaw=look(p,.42);A.tw=Math.sin(ph*2+.6);A.s=.025*Math.sin(ph*6+.4);
     A.blink=blink(p,.7,.07);A.roll=.04*Math.sin(ph*2)}
@@ -100,7 +107,7 @@ function imp(x,y,face,anim,p,sc,o){sc=sc||1;o=o||{};const V0=V(face),{P,D,F}=V0,
   run(L);
   if(A.stars>0)stars(P(X.T([0,0,IZ+IR+8])),9,A.stars);
   ctx.restore()}
-reg('imp',{n:'Diavoletto',g:2,dur:{idle:2.4,walk:.8,attack:1.2,hit:.6}},imp);
+reg('imp',{n:'Diavoletto',g:2,an:['idle','walk','prep','attack','hit','die'],dur:{idle:2.4,walk:.8,prep:.8,attack:1.2,hit:.6,die:.9}},imp);
 
 // ------------------------------------------------------------------ GOLEM D'OSSIDIANA (drawObsidian): a round block of black glass
 const OC={hi:'#4f4a5c',mid:'#2a2530',lo:'#16131a',fist:'#2c2733',foot:'#24202a',foot2:'#1b1820',lava:'#ff7a2e',core:'#ffd27a',eye:'#ffb020',eyeL:'#fff1b0'};
@@ -121,7 +128,7 @@ function crack(V0,X,C,Rd,pts,glow){const{P,F}=V0,N=[];for(let i=0;i<pts.length-1
     ctx.strokeStyle='rgba(12,6,8,.7)';ctx.lineWidth=3.4;line(r);ctx.stroke();ctx.strokeStyle=OC.lava;ctx.lineWidth=1.9;ctx.stroke();ctx.strokeStyle=rgba(OC.core,.35+.55*glow);ctx.lineWidth=.8;ctx.stroke()}}
 function obsidian(x,y,face,anim,p,sc,o){sc=sc||1;o=o||{};const V0=V(face),{P,D,F}=V0,ph=p*TAU;
   // A: the body (B, lean, roll, s, yaw), the fists in the body's frame (hL, hR), the feet on the floor (fL, fR), the face, the heat of the lava
-  const A={B:[0,0,0],lean:0,roll:0,s:0,yaw:0,hL:[4,-OFY,17.5],hR:[4,OFY,17.5],fL:[1,-8,0],fR:[1,8,0],blink:1,shut:0,squint:0,heat:.5,dust:-1,stars:0,flare:0};
+  const A={B:[0,0,0],lean:0,roll:0,s:0,yaw:0,hL:[4,-OFY,17.5],hR:[4,OFY,17.5],fL:[1,-8,0],fR:[1,8,0],blink:1,shut:0,squint:0,heat:.5,dust:-1,stars:0,flare:0,shard:-1};
   if(anim==='walk'){// heavy steps: the body rocks from foot to foot, the fists swing against the feet
     const st=C.stepper(p,.55),a=st(0,3.2,2.6),b=st(.5,3.2,2.6),up=Math.abs(Math.sin(ph));A.fL=[1+a.x,-8,a.z];A.fR=[1+b.x,8,b.z];
     A.B=[0,-.7*Math.sin(ph),.9*up];A.roll=-.07*Math.sin(ph);A.lean=.06;A.s=-.03+.04*up;A.hL=[4-3.4*Math.cos(ph),-OFY,17.5+.8*up];A.hR=[4+3.4*Math.cos(ph),OFY,17.5+.8*up];A.heat=.5+.15*up}
@@ -136,6 +143,14 @@ function obsidian(x,y,face,anim,p,sc,o){sc=sc||1;o=o||{};const V0=V(face),{P,D,F
     A.dust=p>.8&&p<1?(p-.8)/.2:-1}
   else if(anim==='hit'){const kb=hitK(p);A.lean=-.24*kb;A.B=[-2.4*kb,0,.3*kb];A.s=-.07*kb;A.roll=.06*kb;A.shut=p<.5?1:0;A.stars=p<.75?1-p/.75:0;
     A.hL=[4-3*kb,-OFY-1.5*kb,17.5+3*kb];A.hR=[4-3*kb,OFY+1.5*kb,17.5+3*kb];A.heat=.5+.4*kb}
+  else if(anim==='prep'){// gets ready to charge (held): crouched, heating up, the fists drawn back, scraping the floor with a foot like a bull
+    const b=Math.sin(ph*2),q=(p*2)%1;A.lean=-.06;A.B=[-1.5,0,0];A.s=-.1;A.heat=.78+.15*(.5+.5*b);A.flare=.62+.2*(.5+.5*b);A.squint=.9;
+    A.fL=[1,-8,0];A.fR=[1-2.4+2.8*Math.cos(q*TAU),8,Math.max(0,Math.sin(q*TAU))*1.6];A.hL=[-4,-OFY+1,18.5+.4*b];A.hR=[-4,OFY-1,18.5+.4*b]}
+  else if(anim==='die'){// cracks up: .0-.2 the blow, the cracks blazing, .2-.62 the fists drop and the body slumps and splits, chips of glass flying,
+    // then the lava cools and goes dark
+    const k1=ez(cl(p/.2,0,1)),k2=ez(cl((p-.2)/.42,0,1)),cool=cl((p-.5)/.45,0,1);A.lean=-.24*k1*(1-k2)+.16*k2;A.B=[-2*k1,0,0];A.s=-.07*k1-.3*k2;A.roll=.06*k1+.1*k2;
+    A.shut=1;A.heat=lerp(.5+.6*k1,0,cool);A.flare=(1-cool)*(.5+.5*k1);const zf=OFR*.95/(1+A.s);A.hL=[4+2*k2,-OFY-3*k2,lerp(17.5+2*k1,zf,k2)];A.hR=[4+3*k2,OFY+2.5*k2,lerp(17.5+2*k1,zf,cl(k2*1.15,0,1))];
+    A.shard=p>.18&&p<.95?(p-.18)/.77:-1;A.dust=p>.55&&p<.95?(p-.55)/.4:-1}
   else{// standing: it breathes slowly, the fists float up and down, the lava pulses, it looks round
     const b=Math.sin(ph);A.s=.022*b;A.yaw=look(p,.3);A.blink=blink(p,.58,.07);A.hL=[4,-OFY,17.5+.9*Math.sin(ph+.6)];A.hR=[4,OFY,17.5+.9*Math.sin(ph+1.4)];A.heat=.45+.25*(.5+.5*Math.sin(ph*2))}
   const dv=Math.atan2(Math.sin(Math.PI/2-face),Math.cos(Math.PI/2-face)),cheat=.45*Math.sin(dv)*cl((Math.PI-Math.abs(dv))/(Math.PI/2),0,1);
@@ -158,10 +173,13 @@ function obsidian(x,y,face,anim,p,sc,o){sc=sc||1;o=o||{};const V0=V(face),{P,D,F
   for(const[sd,h] of[[-1,A.hL],[1,A.hR]]){const r0=X.T([4,sd*OFY,17.5]);L.add(D(r0)+.02,()=>{const c=X.T(h),E=ovol(V0,C.IDF,c,[OFR,OFR,OFR*.877],OC.fist,{rim:.45});E.path();ctx.fillStyle=glass(E,OC.hi,OC.fist,OC.lo);ctx.fill();ink(2.4);ctx.stroke();
     ctx.save();E.path(1);ctx.clip();crack(V0,C.IDF,c,[OFR,OFR,OFR*.877],[[.6,sd*.2,.75],[.9,sd*.35,.1]],A.heat);gloss(E,.9);ctx.restore()})}
   // the stamp at the end of the charge: dust round the feet and a few sparks
+  // (dying: chips of the black glass fly off the body and fall)
+  if(A.shard>=0&&!o.noFx)L.add(dT+30,()=>{const k=A.shard;for(let i=0;i<6;i++){const a=i/6*TAU+.3,u=cl(k*1.3-i*.05,0,1),r=OR[0]*.8+u*12,z=OZ+6+u*14-u*u*30,q=P([A.B[0]+Math.cos(a)*r,Math.sin(a)*r,Math.max(1,z)]),s0=2.6-u*.8,rt=u*5+i;
+      ctx.save();ctx.translate(q[0],q[1]);ctx.rotate(rt);ctx.beginPath();ctx.moveTo(-s0,-s0*.4);ctx.lineTo(0,-s0);ctx.lineTo(s0*.9,s0*.2);ctx.lineTo(-s0*.2,s0*.8);ctx.closePath();ctx.fillStyle=i%2?OC.mid:OC.lo;ctx.fill();ink(1);ctx.stroke();ctx.restore()}});
   if(A.dust>=0&&!o.noFx)L.add(dT+40,()=>{const k=A.dust;for(let i=0;i<7;i++){const a=i/7*TAU+.4,r=10+k*14,q=P([A.B[0]+Math.cos(a)*r,Math.sin(a)*r*1.1,1+k*3]);ctx.fillStyle=`rgba(80,70,80,${.42*(1-k)})`;ball(q,2+k*3.5);ctx.fill()}
     if(!LOWFX)for(let i=0;i<5;i++){const a=i/5*TAU+1.1,q=P([A.B[0]+Math.cos(a)*(6+k*16),Math.sin(a)*(6+k*16),4+k*14-k*k*10]);ctx.fillStyle=`rgba(255,${150+i*18},60,${1-k})`;ball(q,1.1);ctx.fill()}});
   run(L);
   if(A.stars>0)stars(P(X.T([0,0,OZ+OR[2]+8])),11,A.stars);
   ctx.restore()}
-reg('obsidian',{n:"Golem d'ossidiana",g:2,an:['idle','walk','attack','hit'],dur:{idle:2.8,walk:1.05,attack:1.6,hit:.6},lab:{attack:'Carica'}},obsidian);
+reg('obsidian',{n:"Golem d'ossidiana",g:2,an:['idle','walk','prep','attack','hit','die'],dur:{idle:2.8,walk:1.05,prep:.9,attack:1.6,hit:.6,die:1},lab:{attack:'Carica'}},obsidian);
 })();

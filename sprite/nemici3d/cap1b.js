@@ -32,20 +32,25 @@ const BC={shell:'#e0662a',flash:'#fff2d0',spot:'#3a2a24',head:'#3a2a24',leg:'#3a
 // the shell (an ellipsoid dome over the ground), the head, the spots seen from above as in the game ([x, y, radius] on a 24×18 shell)
 const BS=1.08,BCs=[-1.1,0,3.6],BRs=[12.4*BS,9.6*BS,8.6*BS],BHc=[11.9,0,3.7],BRh=5.1,BSPOT=[[-5,4.5,2],[1,5,2],[-5,-4.5,2],[1,-5,2]];
 function beetle(x,y,face,anim,p,sc,o){sc=sc||1;o=o||{};const V0=V(face),{P,D,F}=V0,ph=p*TAU;
-  const A={B:[0,0,0],lean:0,roll:0,s:0,yaw:0,blink:1,shut:0,stars:0,sway:0,trail:0,flail:0,tapL:0,tapR:0};
-  // arming: o.arm (0..1, how far the arming has gone) from the game; 'attack' arms along p and lets go at the very end, so it loops
-  const k=o.arm>0?cl(o.arm,0,1):anim==='attack'?(p<.9?p/.9:1-ez((p-.9)/.1)):0;
+  const A={B:[0,0,0],lean:0,roll:0,s:0,yaw:0,blink:1,shut:0,stars:0,sway:0,trail:0,flail:0,tapL:0,tapR:0,flip:0,out:0};
+  // arming: o.arm (0..1, how far the arming has gone) from the game; 'attack' arms along p and lets go at the very end, so it loops; 'prep'
+  // holds the start of it (braced, a shiver, the fuse a little brighter, no blinking yet)
+  const k=o.arm>0?cl(o.arm,0,1):anim==='attack'?(p<.9?p/.9:1-ez((p-.9)/.1)):anim==='prep'?.2+.06*Math.sin(ph*2):0;
   let st=null;
   if(anim==='walk'){// a fast scurry: two tripods of legs take turns, the body bobs on each and rocks from side to side
     st=stepper(p,.5);const up=Math.abs(Math.sin(ph));A.B=[0,0,.6*up];A.roll=.06*Math.sin(ph);A.lean=.05;A.trail=1;A.sway=.5*Math.sin(ph)}
   else if(anim==='hit'){const kb=hitK(p);A.lean=-.32*kb;A.B=[-3*kb,0,.8*kb];A.roll=.08*kb;A.shut=p<.55?1:0;A.stars=p<.75?1-p/.75:0;A.flail=kb}
+  else if(anim==='die'){// .0-.14 the blow, .14-.5 a hop that flips it on its back, then the legs wave in the air and curl up, the fuse goes out in a puff
+    const k1=ez(cl(p/.14,0,1)),fl=ez(cl((p-.14)/.36,0,1)),hop=Math.sin(cl((p-.14)/.36,0,1)*Math.PI);A.flip=fl;A.roll=Math.PI*fl;A.lean=-.25*k1*(1-fl);
+    A.B=[-2.4*k1,0,.8*k1*(1-fl)+7*hop+9.6*fl];A.shut=1;A.flail=p>.4?Math.max(0,1-(p-.4)/.5):0;A.out=cl((p-.3)/.25,0,1);A.stars=p>.55?.8:0}
+  else if(anim==='prep'){A.s=.02*Math.sin(ph);A.sway=.3*Math.sin(ph)}
   else{// breathing, looking round slowly, tapping a front foot now and then
     A.s=.03*Math.sin(ph);A.yaw=look(p,.3);A.blink=blink(p,.62,.08);A.sway=.6*Math.sin(ph+.6);A.tapL=bump(cl((p-.12)/.16,0,1));A.tapR=bump(cl((p-.68)/.16,0,1))}
   // arming: it braces on spread legs, trembles and swells
   const brace=sstep(0,.14,k),sw=sstep(.06,1,k)*.2;
   if(k>0){A.s-=.05*brace;A.B=add(A.B,[Math.sin(p*97)*.35*k,Math.cos(p*83)*.35*k,0])}
   // the blink of the armed shell: on and off, faster toward the end
-  const fl=k>0&&((1.6*k+4.4*k*k)%1)<.5?1:0;
+  const fl=k>0&&anim!=='prep'&&((1.6*k+4.4*k*k)%1)<.5?1:0;
   const X=frame(A,3);
   floor(V0,x,y,sc,A.B,16,6.8,.3,A.B[2]);
   ctx.save();ctx.translate(x,y);ctx.scale(sc,sc);const L=parts();
@@ -53,13 +58,17 @@ function beetle(x,y,face,anim,p,sc,o){sc=sc||1;o=o||{};const V0=V(face),{P,D,F}=
   // the legs: from under the rim of the shell, a knee a little up and out, the foot on the ground (the far ones first)
   for(const sd of[-1,1])for(const i of[-1,0,1]){const ph0=(i===0)===(sd>0)?0:.5,rt=[i*5.4,sd*7.5,2.4],ft=[i*9.3+1.1,sd*(13+brace*1.3)-Math.abs(i)*sd*.6,0];
     const s=st?st(ph0,2.8,2.4):{x:0,z:0},fw=A.flail?Math.sin(p*TAU*4+i*2+sd)*2.4*A.flail:0,tap=i===1?(sd<0?A.tapL:A.tapR)*1.8:0;
-    const foot=[ft[0]+s.x+A.B[0]+fw,ft[1]+A.B[1],s.z+Math.max(0,fw)*.6+tap];
+    // (on its back the feet go with the body, up in the air, and curl in toward it)
+    const cu=A.flip?cl((p-.62)/.3,0,1):0,foot=A.flip?X.T([ft[0]*(1-.35*cu)+fw,ft[1]*(1-.3*cu),s.z-1.5*cu+Math.max(0,fw)*.5]):[ft[0]+s.x+A.B[0]+fw,ft[1]+A.B[1],s.z+Math.max(0,fw)*.6+tap];
     L.add(D(X.T(rt))-(F(0,sd,0)<0?.5:0),()=>{const h=X.T(rt),[kn]=ik(h,foot,4.5,5,X.Rd([0,sd*.7,1]));tube(V0,[h,kn,foot],1.05,BC.leg,{lw:1.5})})}
   // the fuse: out of the back of the shell, up and over to the left; the spark at its end
   const fr=ellAt(Cs,Rs,null,[-Math.cos(.9),0,Math.sin(.9)]),fT=[-A.trail*1.5,-.4+A.sway*.4,0];
   const fpts=[fr,add(fr,[-1.1,-.2,3.1]),add(fr,add([-2.1,-1.1,5.6],mul(fT,.5))),add(fr,add([-2.6,-3,7],fT))];
   L.add(D(X.T(fr)),()=>{const q=fpts.map(X.T);tube(V0,q,1.3,BC.fuse,{lw:1.8,shade:true});
-    const e=P(q[3]),r=2.4*(1+k*.5);shine('255,190,90',e[0],e[1],r*(3+k*2),.5+.3*k);
+    const e=P(q[3]),r=2.4*(1+k*.5)*(1-A.out);
+    // (dying, the spark goes out in a little puff of grey smoke)
+    if(A.out>0&&!o.noFx){for(let j=0;j<3;j++){const u=cl(A.out*1.2-j*.12,0,1);if(u<=0||u>=1)continue;ctx.fillStyle=`rgba(150,140,130,${(.55*(1-u)).toFixed(3)})`;ball([e[0]+(j-1)*2.4*u,e[1]-u*10-j*2],1.6+u*4);ctx.fill()}}
+    if(r<.2)return;shine('255,190,90',e[0],e[1],r*(3+k*2),.5+.3*k);
     ctx.fillStyle=Math.sin(G.t*30)>0?BC.spk:BC.spk2;ball(e,r);ctx.fill();ctx.fillStyle='#fffbe8';ball([e[0]-r*.2,e[1]-r*.2],r*.45);ctx.fill();
     // the sparkle: four short rays that turn and flicker, longer when it is armed
     if(!o.noFx&&!LOWFX){ctx.strokeStyle=rgba('#ffd86b',.85);ctx.lineWidth=1;ctx.lineCap='round';for(let j=0;j<4;j++){const a=j*TAU/4+p*TAU*3+Math.sin(G.t*20)*.3,l=r*(1.5+.6*Math.sin(G.t*25+j*2)+k);seg([e[0]+Math.cos(a)*r*1.1,e[1]+Math.sin(a)*r*1.1],[e[0]+Math.cos(a)*l,e[1]+Math.sin(a)*l]);ctx.stroke()}}});
@@ -78,7 +87,7 @@ function beetle(x,y,face,anim,p,sc,o){sc=sc||1;o=o||{};const V0=V(face),{P,D,F}=
   run(L);
   if(A.stars>0)stars(P(X.T([0,0,18])),9,A.stars);
   ctx.restore()}
-reg('beetle',{n:'Scarabeo bomba',g:1,dur:{idle:2.4,walk:.36,attack:.8,hit:.6},lab:{idle:'fermo',walk:'corre',attack:'si arma',hit:'colpito'}},beetle);
+reg('beetle',{n:'Scarabeo bomba',g:1,an:['idle','walk','prep','attack','hit','die'],dur:{idle:2.4,walk:.36,prep:.8,attack:.8,hit:.6,die:1},lab:{idle:'fermo',walk:'corre',prep:'si prepara',attack:'si arma',hit:'colpito',die:'muore'}},beetle);
 
 // ------------------------------------------------------------------ FIORE OCCHIO: a pink flower whose heart is a big eye (drawEyeflower), on a thorny
 // green stem; two thorny vines with pink buds curl up at its sides, four leaves lie on the ground. It is rooted: the stem sways and the head
@@ -142,6 +151,11 @@ function eyeflower(x,y,face,anim,p,sc,o){sc=sc||1;o=o||{};const V0=V(face),V1=o.
     const K=keys([[0,[0,0,.22,0]],[.55,[-2.6,1.4,.34,.4]],[.6,[2.8,-.4,.12,.3]],[.76,[-3.2,-.8,.32,-.08]],[.9,[.6,0,.18,0]],[1,[0,0,.22,0]]],p);
     A.hx=K[0];A.hz=K[1];A.tilt=K[2];A.open=K[3];A.wind=p<.55?ez(p/.55):1-sstep(.55,.82,p);A.flash=p>=.55&&p<.8?1-(p-.55)/.25:0;A.sway=.5*Math.sin(ph)}
   else if(anim==='hit'){const kb=hitK(p);A.hx=-5*kb;A.hz=-1.6*kb;A.tilt=.22+.45*kb;A.open=-.25*kb;A.shut=p<.55?1:0;A.stars=p<.75?1-p/.75:0;A.sway=1.4*Math.sin(p*TAU*2)*(1-p)}
+  else if(anim==='prep'){// gets ready: drawn back as at the middle of its wind-up, the petals open, the eye reddening and glowing, a shiver
+    const b=Math.sin(ph*2);A.hx=-1.8+.25*Math.sin(ph*5);A.hz=1+.3*b;A.tilt=.3;A.open=.3+.08*b;A.wind=.6+.2*(.5+.5*b);A.sway=.4*Math.sin(ph)}
+  else if(anim==='die'){// wilts: .0-.18 the blow, .18-.75 the stem bends over until the flower lies on the ground, the eye closing, the petals folding
+    const k1=ez(cl(p/.18,0,1)),k2=ez(cl((p-.18)/.57,0,1));A.hx=-4*k1*(1-k2)+9*k2;A.hz=-1.4*k1*(1-k2)-27*k2;A.tilt=.22+.4*k1*(1-k2)-.95*k2;A.open=-.25*k1-.35*k2;
+    A.shut=1;A.sway=1.2*Math.sin(p*TAU*2)*(1-k2)-.8*k2}
   else{// at rest it sways on its stem, breathes with its petals, looks round and blinks
     A.hy=1.3*Math.sin(ph);A.hx=.6*Math.sin(ph*2+.4);A.hz=.5*Math.sin(ph*2);A.turn=look(p,.28);A.open=.07*Math.sin(ph*2+1);A.blink=blink(p,.58,.09);A.sway=Math.sin(ph+.8);
     A.gx=.3*Math.sin(ph*2+2);A.gy=look(p+.12,.5)}
@@ -181,7 +195,7 @@ function eyeflower(x,y,face,anim,p,sc,o){sc=sc||1;o=o||{};const V0=V(face),V1=o.
   run(L);
   if(A.stars>0)stars(P(add(H,[0,0,21])),10,A.stars);
   ctx.restore()}
-reg('eyeflower',{n:'Fiore occhio',g:1,an:['idle','attack','hit'],dur:{idle:2.6,attack:1.1,hit:.6},lab:{idle:'fermo',attack:'spine',hit:'colpito'}},eyeflower);
+reg('eyeflower',{n:'Fiore occhio',g:1,an:['idle','prep','attack','hit','die'],dur:{idle:2.6,prep:.8,attack:1.1,hit:.6,die:.9},lab:{idle:'fermo',prep:'si prepara',attack:'spine',hit:'colpito',die:'muore'}},eyeflower);
 
 // ------------------------------------------------------------------ OCCHIO D'OMBRA: a floating dark purple ball with one big pale almond eye (a slit
 // for a pupil, a purple glow), a crown of dark spiky tendrils on its top and back, six small dark orbs circling round it (drawShadoweye).
@@ -194,7 +208,7 @@ const SPK=[[0,1.45,17.5],[.6,1.02,13.5],[-.6,1.02,13.5],[1.6,.98,14.5],[-1.6,.98
 function shadoweye(x,y,face,anim,p,sc,o){sc=sc||1;o=o||{};const V0=V(face),{P,D,F}=V0,ph=p*TAU;
   // bob (z), lean, roll; open (the eye 0..1 wider), glow, blink (1 open), shut, gaze (gx up, gy right), the tendrils' sway, stream (blown
   // back) and bristle (stand up), the orbs' turn (spin), pull (closer in), flash (the beam goes)
-  const A={z:0,lean:0,roll:0,B:[0,0,0],s:0,open:0,glow:0,blink:1,shut:0,gx:0,gy:0,sway:1,stream:0,bristle:0,spin:p*TAU/2,pull:0,flash:0,stars:0,trem:0};
+  const A={z:0,lean:0,roll:0,B:[0,0,0],s:0,open:0,glow:0,blink:1,shut:0,gx:0,gy:0,sway:1,stream:0,bristle:0,spin:p*TAU/2,pull:0,flash:0,stars:0,trem:0,fade:1,smoke:-1};
   if(anim==='walk'){// drifting: leaning into it, the tendrils blown back, a quicker bob
     A.z=1.6*Math.sin(ph*2);A.lean=.3;A.roll=.06*Math.sin(ph);A.stream=1;A.sway=.8;A.spin=p*TAU*2/6*3;A.gy=.15*Math.sin(ph);A.trail=3.5}
   else if(anim==='attack'){// .0-.7 the stare: the eye opens wide and glows, the tendrils bristle, the orbs draw in and spin faster;
@@ -203,12 +217,21 @@ function shadoweye(x,y,face,anim,p,sc,o){sc=sc||1;o=o||{};const V0=V(face),{P,D,
     A.open=p<.7?k:1-sstep(.7,.95,p);A.glow=p<.7?k:1-sstep(.7,1,p);A.bristle=p<.7?k:1-sstep(.7,1,p);A.pull=A.bristle*.1;A.spin=p*TAU*4/6*1.5;A.trem=k*(1-sstep(.64,.72,p));
     A.flash=p>=.7&&p<.9?1-(p-.7)/.2:0;A.B=[-3.5*r,0,0];A.lean=-.2*r;A.z=1.2*Math.sin(ph)}
   else if(anim==='hit'){const kb=hitK(p);A.B=[-4*kb,0,1*kb];A.lean=-.35*kb;A.roll=.1*kb;A.shut=p<.55?1:0;A.stars=p<.75?1-p/.75:0;A.sway=1.6;A.spin=p*TAU/6}
+  else if(anim==='prep'){// gets ready to stare: the eye opening and filling with light, the tendrils bristling, the orbs drawing in, a tremble
+    const b=Math.sin(ph*2);A.open=.55+.12*b;A.glow=.5+.2*(.5+.5*b);A.bristle=.55;A.pull=.06;A.spin=p*TAU*2;A.trem=.45;A.z=1.2*Math.sin(ph)}
+  else if(anim==='die'){// .0-.15 the blow, then it spins, sinks and comes apart into purple smoke, the eye closing
+    const k1=ez(cl(p/.15,0,1)),k2=cl((p-.15)/.7,0,1);A.B=[-4*k1,0,1*k1];A.lean=-.3*k1*(1-k2);A.roll=.5*k2;A.shut=1;A.spin=p*TAU*3;A.sway=1.6;A.z=-14*k2*k2;
+    A.s=-.25*k2;A.fade=1-ez(cl((p-.35)/.55,0,1));A.smoke=p>.2?(p-.2)/.8:-1}
   else{A.z=2.4*Math.sin(ph);A.gy=look(p,.6);A.gx=.25*Math.sin(ph*2+1);A.blink=blink(p,.7,.08)}
   // the tremble of the stare: 8 and 6 Hz (faster shakes turn into a random jitter on the frames of a phone)
   if(A.trem)A.B=add(A.B,[Math.sin(p*TAU*9.6)*.4*A.trem,Math.sin(p*TAU*7.2)*.4*A.trem,0]);
   const Cz=26+A.z,X=frame(A,Cz),C0=[0,0,Cz],R0=12.5;
-  floor(V0,x,y,sc,A.B,11.5,4.2,.24,8+A.z*3);
-  ctx.save();ctx.translate(x,y);ctx.scale(sc,sc);const L=parts(),Cb=X.T(C0),dB=D(Cb);let eyeAt=null;
+  floor(V0,x,y,sc,A.B,11.5,4.2,.24*A.fade,8+A.z*3);
+  // (dying: puffs of its smoke going up and out)
+  if(A.smoke>=0&&!o.noFx){const k=A.smoke;ctx.save();for(let j=0;j<6;j++){const a=j/6*TAU+.5,u=cl(k*1.3-j*.06,0,1),r=(4+u*16),q=P(Math.cos(a)*r,Math.sin(a)*r,Cz*.6+u*18+Math.sin(j*1.9)*4);
+      ctx.fillStyle=`rgba(60,30,90,${(.5*Math.sin(u*Math.PI)).toFixed(3)})`;ctx.beginPath();ctx.arc(x+q[0]*sc,y+q[1]*sc,(3+u*5)*sc,0,TAU);ctx.fill()}ctx.restore()}
+  if(A.fade<=.02)return;
+  ctx.save();ctx.translate(x,y);ctx.scale(sc,sc);ctx.globalAlpha*=A.fade;const L=parts(),Cb=X.T(C0),dB=D(Cb);let eyeAt=null;
   // the body: a dark purple ball, lit from the upper left as the game paints it, a faint swirl of smoke turning inside, and the eye
   L.add(dB,()=>{const q=P(Cb);ink(2.5);ball(q,R0);const g=ctx.createRadialGradient(q[0]-R0*.34,q[1]-R0*.42,R0*.1,q[0]-R0*.05,q[1]+R0*.05,R0*1.12);
     g.addColorStop(0,SC.light);g.addColorStop(.42,SC.body);g.addColorStop(1,SC.dark);ctx.fillStyle=g;ctx.fill();ctx.stroke();
@@ -258,5 +281,5 @@ function shadowEye(V0,X,q,R0,face,A){const{F}=V0;
   // the two strokes out of the corners
   ctx.strokeStyle='rgba(190,110,255,.7)';ctx.lineWidth=1.2;ctx.lineCap='round';for(const sd of[-1,1]){seg(at(sd*(ew+2.6),0),at(sd*(ew+5.2),-.9));ctx.stroke()}
   ctx.restore();return ec}
-reg('shadoweye',{n:"Occhio d'ombra",g:1,dur:{idle:2.6,walk:1.2,attack:1.2,hit:.6},lab:{idle:'fermo',walk:'fluttua',attack:'fissa',hit:'colpito'}},shadoweye);
+reg('shadoweye',{n:"Occhio d'ombra",g:1,an:['idle','walk','prep','attack','hit','die'],dur:{idle:2.6,walk:1.2,prep:.8,attack:1.2,hit:.6,die:.9},lab:{idle:'fermo',walk:'fluttua',prep:'si prepara',attack:'fissa',hit:'colpito',die:'muore'}},shadoweye);
 })();
