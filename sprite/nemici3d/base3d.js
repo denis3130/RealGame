@@ -204,8 +204,9 @@ function cheeks(Vh,h,Rh,nod,o){o=o||{};nod=nod||(v=>v);const d=o.dir||[1,.54,.04
 function ellFace(V0,X,C,Rd,F){return{h:V0.P(X.T(C)),at:m=>({q:V0.P(X.T(ellAt(C,Rd,F,m))),v:V0.F(X.Rd(ellN(Rd,F,m)))})}}
 
 // ------------------------------------------------------------------ odds and ends
-// the shadow on the floor under the 3D point c of the body (smaller and lighter when it is up in the air: lift = height)
-function floor(V0,x,y,sc,c,rx,ry,al,lift){const q=V0.P(c[0],c[1],0),k=1-.35*cl((lift||0)/30,0,1);shadow(x+q[0]*sc,y+q[1]*sc,rx*sc*k,ry*sc*KR()*k,(al==null?.3:al)*k)}
+// the shadow on the floor under the 3D point c of the body (smaller and lighter when it is up in the air: lift = height); none at all when
+// its alpha is 0 (the game's shadow() takes 0 for «the usual one»)
+function floor(V0,x,y,sc,c,rx,ry,al,lift){const q=V0.P(c[0],c[1],0),k=1-.35*cl((lift||0)/30,0,1),a=(al==null?.3:al)*k;if(a<.004)return;shadow(x+q[0]*sc,y+q[1]*sc,rx*sc*k,ry*sc*KR()*k,a)}
 // dizzy stars over the head
 function stars(c0,r,a){if(a<=0)return;for(let i=0;i<3;i++){const an=G.t*5+i*TAU/3;starS(c0[0]+Math.cos(an)*r,c0[1]+Math.sin(an)*r*.33*KR(),1.9,a)}}
 // a glowing orb (staff tops, wisps' bolts, magic): a halo, the coloured ball, a white core
