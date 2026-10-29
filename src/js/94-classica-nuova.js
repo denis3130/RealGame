@@ -1201,36 +1201,40 @@ function cnIslMarks(i,K,ch,Wd,mix){const{V0}=K,P=p=>V0.P(p),seed=i*3.1;
   else if(ch===3)blob(10,'rgba(70,60,36,.4)',2,6,9);
   else blob(14,'rgba(120,170,220,.22)',2,8,10)}
 // ------------------------------------------------ one frame of the home: the abyss, the islands and their bridges, the hero, the names
+// «Parti delle isole» of the meter (src/js/101-contatore.js): with ISL.tm set, each part of the frame is timed with the drawing forced to
+// finish before and after it (so it shows what the graphics card does too; the screen is a little slower while it runs)
+const cnTmNow=()=>{campX.getImageData(0,0,1,1);return performance.now()};
 function cnIsles(dt){campResize();CAMP.t+=dt;const t=CAMP.t;if(G)G.t=t;const L=ISL.lay=cnIslLay(),saved=ctx;ctx=campX;ISL.prz=[];
   if(ISL.cur==null)cnIslSync(false);
+  const TMO=ISL.tm;let tq=TMO?cnTmNow():0;const TM=TMO?k=>{const t1=cnTmNow();TMO[k]=(TMO[k]||0)+t1-tq;tq=t1}:()=>{};if(TMO)ISL.tmN=(ISL.tmN||0)+1;
   try{cnIslStep(dt,L);ctx.setTransform(1,0,0,1,0,0);
     const v=ISL.view,i0=Math.max(0,Math.floor(v)),i1=Math.min(ARENAS.length-1,i0+1),f=v-i0,A=cnIslW(i0),B=cnIslW(i1);
     // the abyss: the sky of the world you look at, its light from below, far rocks and stars that go down as you go north, fog
     const sky=ctx.createLinearGradient(0,0,0,L.H);sky.addColorStop(0,cnMixC(A.sky[0],B.sky[0],f));sky.addColorStop(1,cnMixC(A.sky[1],B.sky[1],f));ctx.fillStyle=sky;ctx.fillRect(0,0,L.W,L.H);
     const sh=L.H*.62;for(let j=0;j<70;j++){const x=(j*97.3)%L.W,y=L.top+((j*53.7+v*L.pairPx*.1)%sh+sh)%sh,tw=.35+.65*Math.abs(Math.sin(t*1.1+j*1.7));ctx.fillStyle=`rgba(255,250,230,${(tw*.55).toFixed(2)})`;ctx.fillRect(x,y,1.5*L.dpr,1.5*L.dpr)}
     if(!LOWFX){const gl=i=>cnIslW(i).light;pLight(L.cx,L.cy+CNI_R*.55*L.k*2.6,L.W*.8,f<.5?gl(i0):gl(i1),.3,L.W*.36)}
-    cnIslFar(L,t,v);
+    cnIslFar(L,t,v);TM('cielo e stelle');
     cnFlockStep(dt,L);
     const ice=(ARENAS[i0].ch===4?1-f:0)+(ARENAS[i1].ch===4?f:0);
-    if(!LOWFX)cnIslClouds(L,t,v);
-    cnSnow(L,t,ice,v,false);
+    if(!LOWFX)cnIslClouds(L,t,v);TM('nuvole');
+    cnSnow(L,t,ice,v,false);TM('neve');
     // the islands from the furthest to the nearest; between two of them, far to near, the stepping stones to the far one, the little island
     // of the checkpoint and the bridge to it (it lies on its ground, its foot goes under the near island's edge)
     const vr=Math.round(v);
     // (the island behind you goes away as you leave it: only its bridge still comes up to yours)
-    for(let i=Math.min(ARENAS.length-1,vr+2);i>=Math.max(0,vr-1);i--){const Ai=cnIslAt(i,L,t),al=clamp(1-(v-i-.55)/.4,0,1);if(al>0&&Ai.y-160*Ai.k<L.H&&Ai.y+150*Ai.k>0){ctx.save();ctx.globalAlpha=al;cnIslDraw(i,Ai,L,t);ctx.restore()}cnFlockDraw(i,L,t);
-      if(i>0){cnStonesDraw(i-1,L,t);cnMiniDraw(i-1,L,t);cnIslBridge(i-1,L,t)}}
+    for(let i=Math.min(ARENAS.length-1,vr+2);i>=Math.max(0,vr-1);i--){const Ai=cnIslAt(i,L,t),al=clamp(1-(v-i-.55)/.4,0,1);if(al>0&&Ai.y-160*Ai.k<L.H&&Ai.y+150*Ai.k>0){ctx.save();ctx.globalAlpha=al;cnIslDraw(i,Ai,L,t);ctx.restore()}TM('isole');cnFlockDraw(i,L,t);TM('uccelli');
+      if(i>0){cnStonesDraw(i-1,L,t);cnMiniDraw(i-1,L,t);TM('mini isole e pietre');cnIslBridge(i-1,L,t);TM('ponti')}}
     cnIslHaze(L,A,B,f);
-    cnIslFadeLow(L,A,B,f);
+    cnIslFadeLow(L,A,B,f);TM('foschia e vignetta');
     if(cnIncView())cnIncSky(L,t,1-Math.min(1,Math.abs(v-Math.round(v))*2.2));   // fades while scrolling to an island without it
     ISL.pv=ISL.view;
     {const gp=Math.floor((t+3)/11);if(ISL.gp!==gp){if(ISL.gp!=null&&!LOWFX&&prH(gp,5)<.66)cnBrSnd('vento');ISL.gp=gp}}
-    cnIslHero(L,t);cnPlayLbl();
-    if(!LOWFX)pFog(L.W,L.cy+CNI_R*.4*L.k,L.info,t,f<.5?A.fog:B.fog,.1,4,13);
-    cnSnow(L,t,ice,v,true);
+    cnIslHero(L,t);cnPlayLbl();TM('eroe');
+    if(!LOWFX)pFog(L.W,L.cy+CNI_R*.4*L.k,L.info,t,f<.5?A.fog:B.fog,.1,4,13);TM('nebbia');
+    cnSnow(L,t,ice,v,true);TM('neve');
     cnIslText(L,t);
-    if(ISL.brA&&ISL.brA.ttl)cnShowTitle(L,t,ISL.brA);
-    cnIslVig(L)}
+    if(ISL.brA&&ISL.brA.ttl)cnShowTitle(L,t,ISL.brA);TM('scritte');
+    cnIslVig(L);TM('foschia e vignetta')}
   finally{ctx.setTransform(1,0,0,1,0,0);ctx=saved}}
 // far away the abyss swallows things: the top of the picture goes into the sky's colour (the far end of the bridge, the next island)
 function cnIslHaze(L,A,B,f){const c=cnRgb(cnMixC(A.sky[0],B.sky[0],f)),y0=Math.max(0,L.top),y1=L.cy-210*L.k;if(y1<=y0+4)return;const g=ctx.createLinearGradient(0,y0,0,y1);
