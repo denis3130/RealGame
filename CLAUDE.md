@@ -271,6 +271,16 @@ posto), lo stendardo si srotola, le pietre salgono una a una, l'isola dopo si ac
 94, sezione 8 («the little island of the checkpoint»), note in `docs/classica-nuova.md` («La mini isola del traguardo»), prova `node
 tests/classica.js traguardo`. Nell'anteprima della Classica; nel gioco dopo il sì di Denis.
 
+**Il traguardo più bello** (29 ottobre, Denis alla domanda «cosa possiamo migliorare?»: «Arrivo più bello», «Tesoro più speciale», «Mini
+isola più ricca», e sul tesoro «Lo stendardo per il menu»): a ponte finito la telecamera torna dall'eroe e lo segue mentre corre fino alla
+mini isola (fase `back`), poi la scritta grande «Traguardo raggiunto!» coi raggi e «+ lo stendardo di …», con la sua musichetta
+(`cnShowTitle`, `cnBrSnd('fanfara')`); il tesoro dà anche **lo stendardo dell'arena dopo**: i tuoi stendardi (col colore e lo stemma della
+loro arena, `floorEmblem`) sventolano da un pennone piantato sull'isola dove sta l'eroe, che va con lui e si pianta dove arriva; quello nuovo
+sale per ultimo («Lo stendardo di … è nella tua collezione!»), un tocco dice quanti ne hai (`CI_STDS`, `cnStdList`, `cnStdPlant`,
+`cnStdDraw`: sono i ponti finiti, niente di nuovo nel salvataggio); la mini isola più grande (`CNI_MR` 68), lo stemma dell'arena sullo
+stendardo del palo, le pietre che si intravedono sommerse sotto prima del traguardo, il forziere aperto col velluto e qualche moneta rimasta.
+Note in `docs/classica-nuova.md` («Il traguardo più bello»), prova `node tests/classica.js traguardo`.
+
 ## FASE 9: più fluido sul telefono (19 ottobre, in corso)
 
 Denis: «vai, lascia perdere l'intro ecc» (la FASE 9 subito; intro, prologo e filmati non si toccano). Il gioco più fluido sul suo iPhone
@@ -408,8 +418,8 @@ se lontani (salvo le barriere che li chiamano), fumo e foglie solo vicino allo s
   finché Denis non dice sì. Quando la approva, si torna a pubblicare da `piano-maestro`. **Dal 27 ottobre `piano-maestro` ha in più il ponte grande, il ponte più bello, le isole
   ancora più grandi con le assi che si infilano da sole e (28 ottobre) la vita intorno col ponte vivo** (commit b3dc40e, 63e78af, 5cba9c5 e
   58a4ba0, «Il ponte grande», «Il ponte più bello», «Isole ancora più grandi e assi che si infilano da sole» e «La vita intorno e il ponte
-  vivo» nella sezione della Classica nuova) e (28 ottobre) la mini isola del traguardo («La mini isola del traguardo»; l'anteprima della
-  Classica li ha, versione 17), non ancora approvati da Denis: il gioco pubblicato e l'app sono fermi a 026beb1 del ramo `gioco`; quando Denis dice sì, si unisce
+  vivo» nella sezione della Classica nuova), (28 ottobre) la mini isola del traguardo («La mini isola del traguardo») e (29 ottobre) il
+  traguardo più bello («Il traguardo più bello»; l'anteprima della Classica li ha, versione 18), non ancora approvati da Denis: il gioco pubblicato e l'app sono fermi a 026beb1 del ramo `gioco`; quando Denis dice sì, si unisce
   `piano-maestro` in `gioco` e si ripubblica come sempre.
 - **Ramo `classica-nuova`** (20–27 ottobre): l'anteprima della Classica nuova; il 27 ottobre (Denis: «Tutto nel gioco») unito a
   `piano-maestro` (merge 9b47c47) e da lì nel gioco e nell'app. La pagina https://claude.ai/artifact/K6E5QMv5pxKkt61MCFJsba resta per

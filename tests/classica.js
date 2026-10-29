@@ -570,7 +570,7 @@ const SOLO=process.argv[2]||'';
     const geo=await J(`(()=>{const G0=cnBrGeo(0),L=cnIslLay();return{gap:CNI_GAP,rocks:G0.P?G0.P.length:0,N:G0.N,q:G0.Z.map(z=>+((z-G0.a0)/G0.len).toFixed(3)).join(),left:CNB.bal-CNB.bw>=CNB.hw,wide:+(L.k*2*CNI_R*CNI_SY/L.W).toFixed(2),laid:cnBrLaidNow(0),
       pr:[1,2,3,4].map(j=>cnPrizeTxt(cnBrPrize(0,j))+'@'+cnBrTh(0,j)),pr1:cnPrizeTxt(cnBrPrize(1,2)),pr10:cnPrizeTxt(cnBrPrize(10,4)),stops:cnIslStops().filter(s=>s.i===0).length,lay:[12,25,52,92,100].map(h=>cnBrLaid(0,h)).join()}})()`);
     ok('il ponte grande: isole lontane 1400 e larghe più di 4/5 dello schermo, un ponte solo di 64 assi senza rocce, i premi a sinistra a un quarto, metà, tre quarti e alla fine il tesoro del traguardo',
-      geo.gap===1400&&geo.rocks===0&&geo.N===64&&geo.q==='0.25,0.5,0.75'&&geo.left&&geo.wide>=.8&&geo.laid===0&&geo.pr.join()==="120 oro@25,6 cristalli@50,Cassa di legno@75,Cassa d'argento, 8 cristalli e 150 oro@100"&&/Essenza/.test(geo.pr1)&&/cristallo/.test(geo.pr10)&&geo.stops===5&&geo.lay==='7,16,33,58,64',JSON.stringify(geo));
+      geo.gap===1400&&geo.rocks===0&&geo.N===64&&geo.q==='0.25,0.5,0.75'&&geo.left&&geo.wide>=.8&&geo.laid===0&&geo.pr.join()==="120 oro@25,6 cristalli@50,Cassa di legno@75,Cassa d'argento, 8 cristalli, 150 oro e lo stendardo di Cuore del Vulcano@100"&&/Essenza/.test(geo.pr1)&&/cristallo/.test(geo.pr10)&&geo.stops===5&&geo.lay==='7,16,33,58,64',JSON.stringify(geo));
     // a retreat at room 7: 12 planks (2 for each room passed): four planks of the first span, no prize
     await arena(0);await E(`(()=>{__A.on=false;return 0})()`);await E(jump(7));await W(300);await E(`(()=>{endRun(false,true);return 0})()`);await W(700);
     const b1=await J(`({br:SAVE.cn.br[0],l:(document.querySelector('#eTr .cnBridge')||{}).textContent||'',pz:document.querySelectorAll('#eTr .cnPrizeL').length,anim:CN.brAnim&&{i:CN.brAnim.i,from:CN.brAnim.from,to:CN.brAnim.to,done:CN.brAnim.done,got:CN.brAnim.got.length},lab:$('eRoom').nextElementSibling.textContent})`);await snap('ponte_fine');
@@ -589,9 +589,9 @@ const SOLO=process.argv[2]||'';
     const gb=await J(`({gold:SAVE.gold,gems:SAVE.gems})`),ends=[];
     for(let k=0;k<3;k++){await arena(0);await E(`(()=>{__A.on=false;endRun(true);return 0})()`);await W(700);
       ends.push(await J(`({br:SAVE.cn.br[0],pz:[...document.querySelectorAll('#eTr .cnPrizeL')].map(e=>e.textContent.replace(/\\s+/g,' ').trim()),gold:SAVE.gold,gems:SAVE.gems})`));if(k===0)await snap('ponte_premi_fine')}
-    ok('i premi del ponte: 120 oro e 6 cristalli alla prima vittoria, una cassa di legno alla seconda, a ponte finito il tesoro del traguardo (cassa d\'argento, 8 cristalli e 150 oro)',
+    ok('i premi del ponte: 120 oro e 6 cristalli alla prima vittoria, una cassa di legno alla seconda, a ponte finito il tesoro del traguardo (cassa d\'argento, 8 cristalli, 150 oro e lo stendardo)',
       ends[0].br===52&&ends[0].pz.join('|')==='Premio del ponte: 120 oro|Premio del ponte: 6 cristalli'&&ends[0].gold-gb.gold>=120&&ends[0].gems-gb.gems>=6&&
-      ends[1].br===92&&ends[1].pz.length===1&&/^Premio del ponte: Cassa di legno/.test(ends[1].pz[0])&&ends[2].br===100&&ends[2].pz.length===1&&/^Tesoro del traguardo: Cassa d'argento, 8 cristalli e 150 oro/.test(ends[2].pz[0])&&
+      ends[1].br===92&&ends[1].pz.length===1&&/^Premio del ponte: Cassa di legno/.test(ends[1].pz[0])&&ends[2].br===100&&ends[2].pz.length===1&&/^Tesoro del traguardo: Cassa d'argento, 8 cristalli, 150 oro e lo stendardo di Cuore del Vulcano/.test(ends[2].pz[0])&&
       ends[2].gold-ends[1].gold>=150&&ends[2].gems-ends[1].gems>=8,JSON.stringify({gb,ends}));
     const b3=await J(`({br:SAVE.cn.br[0],pick:SAVE.cn.pick,up:SAVE.arenaUp==null,tr:SAVE.trophies>=ARENAS[1].t,l:(document.querySelector('#eTr .cnBridge')||{}).textContent||'',done:!!document.querySelector('#eTr .cnBridge.done'),op:cnOpen(1),op2:cnOpen(2)})`);await snap('ponte_finito_fine');
     ok('tre vittorie dopo: il ponte è finito, l\'isola dopo è aperta e diventa quella da giocare (le coppe non aprono più le arene)',b3.br===100&&b3.pick===1&&b3.done&&/Il ponte è finito/.test(b3.l)&&b3.op&&!b3.op2&&b3.up&&b3.tr,JSON.stringify(b3));
@@ -726,38 +726,53 @@ const SOLO=process.argv[2]||'';
         s0:+(G0.s0-CNI_MN).toFixed(1),s1:+(CNI_GAP-G0.s1).toFixed(1),stop:cnIslStops().some(s=>s.i===0&&s.r===3&&Math.abs(s.v-cnMiniView(0))<1e-9)}})()`);
     ok('l\'isola dopo è più su (1400) e al suo posto (1000) c\'è la mini isola: il ponte finisce lì coi suoi ancoraggi, cinque pietre in fila fino all\'isola dopo, una fermata della telecamera',
       g.gap===1400&&g.mn===1000&&g.a1<-40&&g.anc>g.pe&&g.n===5&&g.ord&&g.in&&g.s0>40&&g.s1>90&&g.stop,JSON.stringify(g));
-    // before the checkpoint: the little island lit, its treasure alive in its beam of light, the banner rolled up, no stones, the next island dark
+    // before the checkpoint: the little island lit, its treasure alive in its beam of light, the banner rolled up, the stones only glimpsed sunk
+    // in the dark under it (Denis: «le pietre che si intravedono sotto prima del traguardo»), the next island dark
     await E(`(()=>{window.__MT={pz4:0,beam:0,stones:0,ban:0};if(!window.__mtw){window.__mtw=1;const a=cnPrizeLive;cnPrizeLive=function(i,j){if(j===4)__MT.pz4++;return a.apply(this,arguments)};
       const b=cnMiniBeam;cnMiniBeam=function(){__MT.beam++;return b.apply(this,arguments)};const c=cnStone3;cnStone3=function(){__MT.stones++;return c.apply(this,arguments)};const d=cnMiniBanner;cnMiniBanner=function(){__MT.ban++;return d.apply(this,arguments)}}
       ISL.view=cnMiniView(0);ISL.rest=ISL.view;return 0})()`);await W(1500);
     const b1=await J(`({...__MT,up:cnMiniUp(0),st:cnStoneUp(0,0),dark:!cnOpenShown(1),rk:(cnStopNear(ISL.view)||{}).mini||false})`);await snap('traguardo_prima');
-    ok('prima del traguardo: la mini isola col mondo dopo, il tesoro nel suo raggio di luce, lo stendardo arrotolato, niente pietre, l\'isola dopo al buio',
-      b1.pz4>0&&b1.beam>0&&b1.stones===0&&b1.ban===0&&b1.up===0&&b1.st===0&&b1.dark&&b1.rk,JSON.stringify(b1));
+    ok('prima del traguardo: la mini isola col mondo dopo, il tesoro nel suo raggio di luce, lo stendardo arrotolato, le pietre che si intravedono sommerse sotto, l\'isola dopo al buio',
+      b1.pz4>0&&b1.beam>0&&b1.stones>=5&&b1.ban===0&&b1.up===0&&b1.st===0&&b1.dark&&b1.rk,JSON.stringify(b1));
     const tq=await J(`(()=>{const q=(ISL.prz||[]).find(q=>/Tesoro/.test(q.txt)),c=campCv.getBoundingClientRect(),L=ISL.lay;return q?{x:c.left+q.x/L.dpr,y:c.top+q.y/L.dpr}:null})()`);
     if(tq){await p.mouse.click(tq.x,tq.y);await W(300)}const tt=await J(`(($('toast')||{}).textContent||'')`);
-    ok('un tocco sul tesoro dice cos\'è e quando è tuo',/Tesoro del traguardo: Cassa d'argento, 8 cristalli e 150 oro · tuo a 100 assi/.test(tt),tt);
+    ok('un tocco sul tesoro dice cos\'è e quando è tuo',/Tesoro del traguardo: Cassa d'argento, 8 cristalli, 150 oro e lo stendardo di Cuore del Vulcano · tuo a 100 assi/.test(tt),tt);
     // the show at the bridge's end: the hero walks to the checkpoint, the treasure opens for him, the banner unrolls, the stones rise one after
     // the other, the next island lights up, he hops over the stones to it
-    await E(`(()=>{ISL.rest=null;ISL.view=0;ISL.cur=0;const S=cnS();S.br[0]=70;G.cnInc=false;G.cnTw=null;G.room=10;window.__G0={gold:SAVE.gold,gems:SAVE.gems};cnBridgeAdd(0,true);showMenu();return 0})()`);await W(200);
-    const seen=[],ups=[],rise=[],sh={};let atMini=false,drops=0;
-    for(let k=0;k<600;k++){const s=await J(`(()=>{const A=ISL.brA,J=ISL.jump;return A?{ph:A.ph,at:A.at||'',up:cnMiniUp(0),st:[0,1,2,3,4].map(j=>+cnStoneUp(0,j).toFixed(3)),dr:A.fx.filter(f=>f.k==='drop').length}:{ph:'fine',j:!!(J&&J.way),air:!!(J&&J.way&&cnWayAt(J.way,cnWayDD(J))[2]>3),cur:ISL.cur}})()`);
-      if(seen[seen.length-1]!==s.ph)seen.push(s.ph);if(s.at==='mini')atMini=true;drops=Math.max(drops,s.dr||0);if(s.ph==='pop4')ups.push(s.up);if(s.ph==='rise')rise.push(s.st);
+    await E(`(()=>{window.__SN={};if(!window.__snw){window.__snw=1;const k=cnBrSnd;cnBrSnd=function(w){__SN[w]=(__SN[w]||0)+1;return k.apply(this,arguments)}}
+      window.__TT={n:0,max:0,std:0,emb:0};if(!window.__ttw){window.__ttw=1;const a=cnShowTitle;cnShowTitle=function(L,t,A){__TT.n++;__TT.max=Math.max(__TT.max,A.ttl.t);return a.apply(this,arguments)};
+        const b=cnStdDraw;cnStdDraw=function(){__TT.std++;return b.apply(this,arguments)};const c=floorEmblem;floorEmblem=function(){__TT.emb++;return c.apply(this,arguments)}}
+      ISL.rest=null;ISL.view=0;ISL.cur=0;ISL.stdI=0;const S=cnS();S.br[0]=70;G.cnInc=false;G.cnTw=null;G.room=10;window.__G0={gold:SAVE.gold,gems:SAVE.gems};cnBridgeAdd(0,true);showMenu();return 0})()`);await W(200);
+    const seen=[],ups=[],rise=[],sh={},bk=[];let atMini=false,drops=0,walk0=null,lowL=null,fx4=0;
+    for(let k=0;k<600;k++){const s=await J(`(()=>{const A=ISL.brA,J=ISL.jump;return A?{ph:A.ph,at:A.at||'',up:cnMiniUp(0),st:[0,1,2,3,4].map(j=>+cnStoneUp(0,j).toFixed(3)),dr:A.fx.filter(f=>f.k==='drop').length,tx:A.fx.filter(f=>f.k==='txt').length,v:+ISL.view.toFixed(3),hv:J&&J.way?+cnWayAt(J.way,cnWayDD(J))[0].toFixed(1):null}:{ph:'fine',j:!!(J&&J.way),air:!!(J&&J.way&&cnWayAt(J.way,cnWayDD(J))[2]>3),cur:ISL.cur}})()`);
+      if(seen[seen.length-1]!==s.ph)seen.push(s.ph);if(s.at==='mini')atMini=true;drops=Math.max(drops,s.dr||0);if(s.ph==='pop4'){ups.push(s.up);fx4=Math.max(fx4,s.tx)}if(s.ph==='rise')rise.push(s.st);
+      if(s.ph==='back')bk.push(s.v);if(s.ph==='walk'&&walk0==null)walk0={v:s.v,hv:s.hv};
       if(s.ph==='pop4'&&!sh.a&&s.dr){sh.a=1;await snap('traguardo_tesoro')}if(s.ph==='rise'&&!sh.b&&s.st[2]>.5){sh.b=1;await snap('traguardo_pietre')}if(s.ph==='fine'&&s.air&&!sh.c){sh.c=1;await snap('traguardo_salti')}
       if(s.ph==='fine'&&!s.j)break;await W(50)}
+    const tt2=await J(`(()=>{const T=Object.assign({},__TT),S=Object.assign({},__SN);return{T,S}})()`);
+    ok('a ponte finito la telecamera torna dall\'eroe e lo segue mentre corre al traguardo, poi la scritta grande «Traguardo raggiunto!» con la sua musichetta (le parole del tesoro non le vanno sopra)',
+      bk.length>1&&bk.every((v,j)=>!j||v<=bk[j-1]+1e-9)&&bk[0]>.3&&walk0&&Math.abs(walk0.v)<.15&&walk0.hv!=null&&walk0.hv<200&&tt2.T.n>10&&tt2.T.max>2&&tt2.S.fanfara===1&&tt2.S.traguardo>=1&&fx4===0,JSON.stringify({bk:[bk[0],bk[bk.length-1],bk.length],walk0,tt2,fx4}));
     const af=await J(`({cur:ISL.cur,gold:SAVE.gold-__G0.gold,gems:SAVE.gems-__G0.gems,shown:+$('mGold').dataset.v===SAVE.gold,up:cnMiniUp(0),st:cnStoneUp(0,4),took:cnPrizeTaken(0,4)})`);
     const ordered=rise.length>2&&rise.every(r=>r.every((v,j)=>j===0||v<=r[j-1]+1e-9))&&rise.some(r=>r[0]>r[4]);
     ok('a ponte finito l\'eroe va alla mini isola, lì il tesoro si apre (monete e cristalli che saltano), lo stendardo si srotola, le pietre salgono una dopo l\'altra, l\'isola dopo si accende e lui ci arriva saltando sulle pietre',
-      /lay,walk,pop4,rise,open,fine$/.test(seen.join())&&atMini&&drops>5&&ups.length>2&&ups[0]<1&&ups[ups.length-1]>=1&&ordered&&sh.c&&af.cur===1&&af.took&&af.up===1&&af.st===1,JSON.stringify({seen,atMini,drops,ups:[ups[0],ups[ups.length-1]],ordered,sh,af}));
+      /lay,back,walk,pop4,rise,open,fine$/.test(seen.join())&&atMini&&drops>5&&ups.length>2&&ups[0]<1&&ups[ups.length-1]>=1&&ordered&&sh.c&&af.cur===1&&af.took&&af.up===1&&af.st===1,JSON.stringify({seen,atMini,drops,ups:[ups[0],ups[ups.length-1]],ordered,sh,af}));
     ok('il tesoro va davvero nel salvataggio: 150 oro e 8 cristalli in più (e la cassa), i contatori arrivati in fondo',af.gold>=150&&af.gems>=8&&af.shown,JSON.stringify(af));
+    // the banner of the treasure (Denis: «Lo stendardo per il menu»): a mast planted where the hero lands, the new banner running up it with the
+    // emblem of its arena, its sound and its words; a tap on the mast says your banners
+    await W(700);const sd=await J(`(()=>({stdI:ISL.stdI,list:cnStdList().join(),nw:!!ISL.stdNew||!!(__SN.stendardo),toast:(($('toast')||{}).textContent||''),std:__TT.std,emb:__TT.emb,snd:__SN.stendardo||0}))()`);await W(1600);await snap('traguardo_stendardo');
+    const sq=await J(`(()=>{const q=(ISL.prz||[]).find(q=>/I tuoi stendardi/.test(q.txt)),c=campCv.getBoundingClientRect(),L=ISL.lay;return q?{x:c.left+q.x/L.dpr,y:c.top+q.y/L.dpr}:null})()`);
+    if(sq){await p.mouse.click(sq.x,sq.y);await W(300)}const st2=await J(`(($('toast')||{}).textContent||'')`);
+    ok('lo stendardo del tesoro: piantato sull\'isola dove arriva l\'eroe, sale sul pennone con lo stemma della sua arena, il suo suono e le sue parole; un tocco dice i tuoi stendardi',
+      sd.stdI===1&&sd.list==='1'&&sd.nw&&/Lo stendardo di Cuore del Vulcano è nella tua collezione/.test(sd.toast)&&sd.std>0&&sd.emb>0&&sd.snd===1&&/I tuoi stendardi: 1 di 11 · Cuore del Vulcano/.test(st2),JSON.stringify({sd,st2}));
     // after: the banner in the wind, the braziers lit, the stones in their places, the chest open on the altar (no treasure alive any more)
     await E(`(()=>{Object.assign(__MT,{pz4:0,beam:0,stones:0,ban:0});ISL.view=cnMiniView(0);ISL.rest=ISL.view;ISL.go=null;return 0})()`);await W(1500);await snap('traguardo_dopo');
     const b4=await J(`({...__MT,line:(cnStopNear(ISL.view)||{}).mini||false})`);
     ok('dopo il traguardo: lo stendardo al vento, le pietre al loro posto, il forziere aperto sull\'altare',b4.ban>0&&b4.stones>=5&&b4.pz4===0&&b4.beam===0&&b4.line,JSON.stringify(b4));
     // from island to island: over the bridge, the little island and the stones, hopping (the knock of his feet on the stones)
-    await E(`(()=>{window.__SN={};if(!window.__snw){window.__snw=1;const k=cnBrSnd;cnBrSnd=function(w){__SN[w]=(__SN[w]||0)+1;return k.apply(this,arguments)}}ISL.rest=null;ISL.go=null;ISL.cur=1;ISL.view=1;ISL.jump=null;cnIslMove(1,0);return 0})()`);
+    await E(`(()=>{window.__SN={};ISL.rest=null;ISL.go=null;ISL.cur=1;ISL.view=1;ISL.jump=null;cnIslMove(1,0);return 0})()`);
     const w5=await J(`(()=>{const J=ISL.jump,W=J.way;return{hops:W.H.filter(Boolean).length,maxz:+Math.max(...W.pts.map(p=>p[2])).toFixed(1),onMini:W.pts.some(p=>Math.abs(p[0]-CNI_MN)<20&&p[2]===0),dur:+J.dur.toFixed(2)}})()`);
-    for(let w=0;w<40&&await J(`!!ISL.jump`);w++)await W(200);await W(300);const w6=await J(`({cur:ISL.cur,view:+ISL.view.toFixed(2),salto:__SN.salto||0})`);
-    ok('da un\'isola all\'altra l\'eroe passa sul ponte e sulla mini isola e salta di pietra in pietra (il colpo dei piedi sulle pietre)',w5.hops>20&&w5.maxz>=11&&w5.onMini&&w5.dur<=3.6&&w6.cur===0&&w6.view===0&&w6.salto>=4,JSON.stringify({w5,w6}));
+    for(let w=0;w<40&&await J(`!!ISL.jump`);w++)await W(200);await W(300);const w6=await J(`({cur:ISL.cur,view:+ISL.view.toFixed(2),salto:__SN.salto||0,stdI:ISL.stdI,pen:__SN.pennone||0})`);
+    ok('da un\'isola all\'altra l\'eroe passa sul ponte e sulla mini isola e salta di pietra in pietra (il colpo dei piedi sulle pietre); il pennone dei suoi stendardi va con lui',w5.hops>20&&w5.maxz>=11&&w5.onMini&&w5.dur<=3.6&&w6.cur===0&&w6.view===0&&w6.salto>=4&&w6.stdI===0&&w6.pen===1,JSON.stringify({w5,w6}));
     // with the effects down: all of it still there
     await E(`(()=>{LOWFX=true;ISL.cache.clear();ISL.bc={};ISL.cur=0;ISL.view=cnMiniView(0);ISL.rest=ISL.view;Object.assign(__MT,{pz4:0,beam:0,stones:0,ban:0});return 0})()`);await W(1400);
     const lw=await J(`({...__MT})`);await E(`(()=>{LOWFX=false;ISL.cache.clear();ISL.bc={};ISL.rest=null;ISL.go=0;return 0})()`);await W(600);

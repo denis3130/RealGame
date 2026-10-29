@@ -165,6 +165,31 @@ una volta finito fammi vedere un'anteprima veloce»; sezioni 7 e 8 di 94).
   scricchiolii e poi torna nella sua immagine, la vita di ogni mondo, gli stormi nei due modi, i suoni nuovi, gli effetti ridotti);
   `node tests/classica.js ponte` come prima (48).
 
+**Il traguardo più bello** (29 ottobre, Denis alla domanda «cosa possiamo migliorare?»: «Arrivo più bello», «Tesoro più speciale» e
+«Mini isola più ricca»; sul tesoro: «Lo stendardo per il menu»; sezioni 7 e 8 di 94).
+- **L'arrivo** (`cnBrShowStep`, fase nuova `back`): finite le assi la telecamera torna morbida dall'eroe sulla sua isola (da 0,5 a 1,1 s,
+  `A.bk`) e lo segue mentre corre per tutto il ponte fino alla mini isola (prima compariva di colpo a metà ponte); lì la scritta grande
+  **«Traguardo raggiunto!»** che rimbalza fuori, coi raggi che girano nel colore dell'arena dopo (`cnShowTitle`), e sotto, quando il tesoro
+  si apre, «+ lo stendardo di …»; una **musichetta** sua (`cnBrSnd('fanfara')`: uno squillo di sette note che sale fino al do alto) con la
+  campana del traguardo. Le parole del tesoro e la riga in basso non vanno più sopra la scritta (la scritta le dice lei).
+- **Il tesoro più speciale: lo stendardo**: il tesoro di ogni traguardo dà anche lo stendardo dell'arena dopo, che le casse non danno. I tuoi
+  stendardi sventolano da un **pennone** piantato sull'isola dove sta l'eroe (a sinistra davanti a lui, `CI_STDS`), uno sotto l'altro
+  nell'ordine in cui li hai vinti (sul pennone gli ultimi cinque, `CI_STDN`; un anello d'oro per ognuno), spinti a est dal vento, ognuno col
+  colore della sua arena e lo **stemma** della sua arena (quello del pavimento, `floorEmblem` di 74) su un disco chiaro; il pennone cresce con
+  loro. Va con l'eroe: quando arriva su un'altra isola si pianta lì, uscendo da terra con un po' di polvere e un colpo di legno (`pennone`);
+  quello appena vinto sale per ultimo dalla base con un lampo, il suo suono (`stendardo`: un fruscio di stoffa e un accordo) e «Lo stendardo
+  di … è nella tua collezione!». Un tocco sul pennone dice «I tuoi stendardi: 1 di 11 · …». Niente di nuovo nel salvataggio: sono i ponti
+  finiti (`cnStdList`). La scritta del tesoro e il riepilogo della partita dicono «Cassa d'argento, 8 cristalli, 150 oro e lo stendardo di
+  Cuore del Vulcano»; la fermata «Tesoro a 100 assi: cassa, cristalli, oro e stendardo».
+- **La mini isola più ricca**: più grande (`CNI_MR` da 60 a 68, più profonda), l'altare e il tesoro più grandi (il tesoro ×1,45), così sulla
+  fermata della telecamera si vede meglio; sullo stendardo del palo lo **stemma vero dell'arena dopo** su un medaglione chiaro; prima del
+  traguardo le **pietre si intravedono sotto**, sommerse nel buio, scure, che ondeggiano piano con un filo di luce del mondo dopo (poi salgono
+  da lì, `cnStonesDraw`); il **forziere aperto** è foderato di velluto rosso (anche dentro il coperchio), con le pieghe, quattro monete e un
+  cristallino rimasti e la luce d'oro.
+- **Prova** `node tests/classica.js traguardo` (10 controlli; nuovi: la telecamera che torna dall'eroe e lo segue, la scritta con la
+  musichetta senza parole sopra, lo stendardo piantato col suo stemma, il suo suono e le sue parole, il tocco che dice i tuoi stendardi, il
+  pennone che va con l'eroe, le pietre sommerse prima del traguardo); `ponte` con le parole nuove del tesoro.
+
 **La telecamera e il dito**: si ferma su ogni balcone (`cnIslStops`: l'isola, i tre balconi, l'isola dopo), dove la scritta dice «Premio N»,
 il premio e quante assi mancano (`cnStopNear`, `cnStopText`); trascinando piano si ferma sulla fermata più vicina, un colpo di dito va
 all'isola dopo (`cnIslSettle`, la velocità degli ultimi 100 ms); dai balconi «Gioca» gioca l'isola dell'eroe. Un tocco su un premio dice cos'è.
