@@ -1,7 +1,8 @@
 # Nemici più vivi (29 ottobre)
 
 Denis, alla domanda «cosa possiamo migliorare?»: «Nemici più vivi» («il pezzo che manca della FASE 2: i nemici normali con tutte le mosse
-(fermi, camminano, si preparano, attaccano, colpiti, muoiono) e i loro suoni»). Prima nell'anteprima; nel gioco solo dopo il suo sì.
+(fermi, camminano, si preparano, attaccano, colpiti, muoiono) e i loro suoni»). Prima nell'anteprima; nel gioco dal 31 ottobre (Denis,
+alla domanda «cosa possiamo migliorare?»: «Nemici più vivi nel gioco»).
 
 ## Le mosse (nei modelli, `sprite/nemici3d/`)
 
@@ -67,7 +68,7 @@ un'ombra piena (lo `shadow` del gioco prende 0 per «quella di sempre»).
   ognuno ha la sua vita del gioco (`ELIFE` in 56: le particelle del suo materiale, la polvere dei passi, le scintille della miccia) e la
   stellina sopra la testa quando comincia a prepararsi. Nel gioco questi effetti c'erano già e restano.
 
-## Nel gioco (quando Denis dice sì: `js/97-nemici-vivi.js` in fondo a `src/ordine.txt`)
+## Nel gioco (dal 31 ottobre: `js/97-nemici-vivi.js` in fondo a `src/ordine.txt`, dopo 96)
 
 - **«Si prepara»** quando il gioco dice già che il nemico sta per colpire (`NVP`): il goblin che mira (`e.aim`), lo scheletro fermo che mira
   o prima dello scatto, il fungo che si gonfia (`e.puff`), lo scarabeo con la miccia (`e.arm`), il fiore occhio e il golem d'ossidiana che
@@ -81,6 +82,10 @@ un'ombra piena (lo `shadow` del gioco prende 0 per «quella di sempre»).
   quarto. Con `LOWFX` niente corpi, come prima.
 - Prova nella cartella di lavoro: con cinque corpi dal vivo e uno in foto il disegno della stanza costa 28,2 ms invece di 26,6 (computer di
   prova); nessun errore.
+- Collaudo nel gioco vero (31 ottobre): `menu2.js`, `menu3.js`, `meta2.js`, `zombie.js`, `mig.js`, `fresh.js`, `contatore.js`, `enemies.js`,
+  `colpi.js`, `classica.js` (tutti i controlli OK) e una partita automatica per capitolo (Golem, Yeti, Idra, Fenice: quattro vittorie),
+  nessun errore; il disegno della stanza con cinque corpi dal vivo e uno in foto 26,0 ms invece di 23,3. Con loro arrivano nel gioco
+  pubblicato anche gli slime senza i fili di bava.
 
 ## La pagina per Denis
 
