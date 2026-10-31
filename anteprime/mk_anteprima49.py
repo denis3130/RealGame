@@ -1,7 +1,7 @@
 # L'Anteprima 49 (Denis, 31 ottobre, alla domanda «cosa possiamo fare per migliorare il gioco?»): il gioco di oggi più i pezzi nuovi
 # che non sono ancora nel gioco (i file di src/js elencati in NUOVI, messi prima della chiusura), così Denis li prova dal telefono prima
 # di dire sì. Alla prima apertura c'è già un eroe (l'Arciere) e niente prologo né creazione, per arrivare subito alle cose nuove.
-# Uso: python3 anteprime/mk_anteprima49.py [cartella]
+# Uso: python3 anteprime/mk_anteprima49.py [cartella]   (--prova: senza salvataggio pronto né spinta → anteprima49_prova.html, per le prove)
 #      → anteprime/anteprima49.html; con la cartella anche la stessa pagina divisa in tre pezzi come il gioco pubblicato (pagina piccola,
 #        stile.css, gioco.js: app/mk_claude.py), da pubblicare con «files».
 # La pagina costruita non si salva su git.
@@ -17,8 +17,9 @@ spinta='''
 // (solo nell'Anteprima 49) una volta sola: oro, Rottami e il record 15 della Zombie, per sbloccare e provare subito le abilità
 try{if(!SAVE.__a49){SAVE.__a49=1;SAVE.gold=(SAVE.gold||0)+10000;SAVE.mat.rot=(SAVE.mat.rot||0)+600;SAVE.zRec=Math.max(SAVE.zRec||0,15);save()}}catch(e){}
 '''
-page=''.join(open(os.path.join(src,f),encoding='utf-8',newline='').read()+(spinta if f==extra[-1] else '') for f in order) if extra else \
-  ''.join(open(os.path.join(src,f),encoding='utf-8',newline='').read() for f in order)
+# --prova: the game with the new pieces and nothing else (no ready save, no top-up), for the tests (tests/test.html is made from it)
+prova='--prova' in sys.argv;args=[x for x in sys.argv[1:] if not x.startswith('--')]
+page=''.join(open(os.path.join(src,f),encoding='utf-8',newline='').read()+(spinta if extra and f==extra[-1] and not prova else '') for f in order)
 page=page.replace('<title>Mossbound</title>','<title>Mossbound Anteprima 49</title>',1)
 # a ready player on the first opening (the save of a player who has already made the hero and played once)
 # (at the top of the game's own script, which runs before the game reads its save: the page keeps one script, as app/mk_claude.py wants)
@@ -27,8 +28,8 @@ pronto='''try{if(!localStorage.getItem('cripta_save_v1'))localStorage.setItem('c
 runs:1,introSeen:1,handSeen:1,starter:'arciere',heroes:{arciere:1},hero:'arciere',items:{arco_frassino:{lvl:1,cards:0},giubba:{lvl:1,cards:0}},
 eq:{arma:'arco_frassino',armatura:'giubba',anello:null,amuleto:null},slots:[null,null,null,null]}))}catch(e){}
 '''
-page=page.replace('<script>','<script>'+pronto,1)
-out=os.path.join(here,'anteprima49.html')
+if not prova:page=page.replace('<script>','<script>'+pronto,1)
+out=os.path.join(here,'anteprima49_prova.html' if prova else 'anteprima49.html')
 open(out,'w',encoding='utf-8',newline='').write(page)
-print('anteprime/anteprima49.html pronto (%s)'%(', '.join(extra) or 'niente di nuovo: è il gioco di oggi'))
-if len(sys.argv)>1:subprocess.run([sys.executable,os.path.join(root,'app','mk_claude.py'),out,sys.argv[1]],check=True)
+print('anteprime/%s pronto (%s)'%(os.path.basename(out),', '.join(extra) or 'niente di nuovo: è il gioco di oggi'))
+if args:subprocess.run([sys.executable,os.path.join(root,'app','mk_claude.py'),out,args[0]],check=True)
