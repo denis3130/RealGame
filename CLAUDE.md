@@ -325,6 +325,18 @@ creazione): `python3 anteprime/mk_anteprima49.py <cartella>` (divisa come il gio
   la campana stonata e il coro, col Becchino e lo Spaventapasseri i tamburi su ogni battito e gli ottoni; con poca vita il cuore più forte e il
   resto lontano; quando cadi un accordo con la campana e poi silenzio. Parte quando la musica del menu si è spenta (`zMusicOff` avvolto).
   Misure (volume medio): pausa 0,0075, round alto con 6 zombie 0,0225, boss 0,027, poca vita 0,022, caduto 0,013; nessun errore.
+- **Abilità zombie** (`src/js/99-abilita-zombie.js`, `ZAB`, `ZABS`; la tua idea del 12 ottobre: scegliere e sbloccare, al massimo 3): sei
+  abilità, lo **Scatto** da subito (un balzo dove vai, da fermo via dallo zombie più vicino; per un attimo non ti toccano; 5 s), poi da
+  sbloccare nell'Arsenale (sezione «Abilità» in cima: tre posti e le sei carte, un tocco apre il foglio con «Sblocca» o «Portala in
+  partita»; il terzo che porti prende il posto del primo) con oro, Rottami e un record di round: **Bomba incendiaria** (record 3, 900 oro
+  e 40 Rottami: una bottiglia sul gruppo più vicino, la terra brucia 4 s; 16 s), **Rintocco** (6, 1.300 e 70: la campana spinge via e
+  stordisce, i boss no; 14 s), **Tagliola** (9, 1.800 e 100: il primo zombie che la pesta resta preso 5 s e si fa male, al massimo due;
+  9 s), **Adrenalina** (12, 2.500 e 140: 7 s più veloce ×1,3 e ricarica ×2, passando da `ZM.modsHook` perché le Lucky Cards rifanno
+  `W.mods` a ogni fotogramma; 28 s), **Benda** (15, 3.400 e 190: torna il 60% della vita in un secondo; 32 s). In partita tre bottoni
+  rotondi in fila in basso a destra, sotto il cerchio della telecamera (il tocco non la gira), col tempo di ricarica che gira come un
+  orologio; tastiera 1, 2, 3. Si attacca avvolgendo `ZM.partita` (update, reset, drawGround, drawTop del direttore); salvataggio
+  `SAVE.z.ab` = {own, eq}. Prova nella cartella di lavoro: ogni abilità usata in una partita vera, sblocco, record, ricarica, telecamera
+  ferma, nessun errore. Numeri da regolare giocando.
 - **Zombie nuovi su carta** (`sprite/mostri/zombie_nuovi.js`, non ancora nella mappa): il Gonfio, lo Sputatore e il Bruto, quattro direzioni
   in `sprite/mostri/zombie_nuovi_4dir.jpg`, pagina https://claude.ai/artifact/MhfnMzYQg7UjU6vcPzNe3G (`python3 anteprime/mk_mostro.py --nuovi`);
   dettagli in `sprite/mostri/LEGGIMI.md` («Gli zombie nuovi»). Il Gonfio ha la stessa idea dello «Zombie gonfio» scartato il 9 ottobre:
