@@ -21,7 +21,7 @@ const {chromium}=require('playwright');const D=__dirname+'/';
   for(let i=0;i<120;i++){await p.waitForTimeout(500);if(await E(`!!(ZG.on&&ZM.W.director&&ZM.W.director.st)`))break}
   await p.waitForTimeout(2500);
   const ui=JSON.parse(await E(`JSON.stringify({n:document.querySelectorAll('#mzAb .ab').length,ready:document.querySelectorAll('#mzAb .ab.ready').length})`));ok('in partita tre bottoni, pronti',ui.n===3&&ui.ready===3,ui);
-  await E(`ZM.W.dbg.noSpawn=true;ZM.W.dbg.god=true;0`);
+  await E(`ZM.W.dbg.noSpawn=true;ZM.W.dbg.god=true;window.__home=[ZM.W.hero.x,ZM.W.hero.y];0`);
   // zombies round the hero
   const put=async n=>E(`(()=>{const h=ZM.W.hero;for(const z of ZM.W.Z.slice())ZM.W.Z.splice(ZM.W.Z.indexOf(z),1);const out=[];for(let i=0;i<${n};i++){const a=i/${n}*6.283,x=h.x+Math.cos(a)*55,y=h.y+Math.sin(a)*55;const k=window.__MZ.addZombie('zombie',x,y,30);const z=ZM.W.Z[k];z.hp=400;z.q=1;z.lv=h.lv||0;out.push(z)}return out.length})()`);
   await put(5);await p.waitForTimeout(300);
@@ -37,8 +37,11 @@ const {chromium}=require('playwright');const D=__dirname+'/';
   const r1=JSON.parse(await E(`JSON.stringify({d:ZM.W.Z.map(z=>Math.hypot(z.x-ZM.W.hero.x,z.y-ZM.W.hero.y)).reduce((a,b)=>a+b,0)/ZM.W.Z.length,stun:ZM.W.Z.filter(z=>z.stun>0).length})`));ok('il rintocco li spinge via e li stordisce',r1.d>r0+25&&r1.stun>=4,{prima:Math.round(r0),dopo:Math.round(r1.d),storditi:r1.stun});
   // 4-6 the others, put in the slots
   await E(`SAVE.z.ab.eq=['tagliola','adrenalina','benda'];ZM.W.director.reset&&0;zabReset();0`);await p.waitForTimeout(200);
-  await E(`for(const z of ZM.W.Z.slice())ZM.W.Z.splice(ZM.W.Z.indexOf(z),1);zabUse(0);0`);await p.waitForTimeout(500);
-  await E(`(()=>{const h=ZM.W.hero,T=ZABS.traps[0];h.x=T.x+70;h.y=T.y;const k=window.__MZ.addZombie('zombie',T.x-45,T.y,30);const z=ZM.W.Z[k];z.hp=400;z.q=1;z.lv=h.lv||0;return 1})()`);
+  // (the trap where the ground is free: a line through the hero with nothing in the way, the zombie on one side, the hero on the other;
+  //  near a fence the zombie would walk round it and miss the trap, which is right)
+  await E(`(()=>{for(const z of ZM.W.Z.slice())ZM.W.Z.splice(ZM.W.Z.indexOf(z),1);const h=ZM.W.hero;h.x=window.__home[0];h.y=window.__home[1];h.moving=false;for(let i=0;i<16;i++){const a=i/16*6.283,c=Math.cos(a),s=Math.sin(a);
+    if(ZM.physClear(h.x-c*60,h.y-s*60,h.x+c*80,h.y+s*80,12)){window.__dir=[c,s];break}}h.face=Math.atan2((window.__dir||[1,0])[1],(window.__dir||[1,0])[0]);zabUse(0);return 1})()`);await p.waitForTimeout(500);
+  await E(`(()=>{const h=ZM.W.hero,T=ZABS.traps[0],d=window.__dir||[1,0];h.x=T.x+d[0]*70;h.y=T.y+d[1]*70;const k=window.__MZ.addZombie('zombie',T.x-d[0]*45,T.y-d[1]*45,30);const z=ZM.W.Z[k];z.hp=400;z.q=1;z.lv=h.lv||0;return 1})()`);
   for(let i=0;i<30;i++){await p.waitForTimeout(150);if(await E(`!!(ZABS.traps[0]&&ZABS.traps[0].z)`))break}
   await p.waitForTimeout(400);await p.screenshot({path:D+'ab_tagliola.png'});const tg=JSON.parse(await E(`JSON.stringify({preso:!!(ZABS.traps[0]&&ZABS.traps[0].z),stun:ZM.W.Z[0]&&ZM.W.Z[0].stun})`));ok('la tagliola prende il primo zombie che ci passa',tg.preso,tg);
   await E(`zabUse(1);0`);await p.waitForTimeout(200);const ad=JSON.parse(await E(`JSON.stringify({spd:ZM.W.mods.spd,relK:ZM.W.mods.relK,adr:ZABS.adr})`));await p.screenshot({path:D+'ab_adrenalina.png'});ok('l\'adrenalina: più veloce e ricarica doppia',ad.spd>1.2&&ad.relK>=2,ad);

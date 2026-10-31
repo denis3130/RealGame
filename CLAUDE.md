@@ -364,6 +364,11 @@ creazione): `python3 anteprime/mk_anteprima49.py <cartella>` (divisa come il gio
   (oro, bustine, cristalli, l'ultimo con una cornice del Profilo nuova: Zucca, Teschio d'oro, Orda, Fiera); bottone «Evento» in fondo alla
   colonna di destra della schermata principale nelle due modalità, col «!» quando c'è un premio; a fine partita «+N zucche». Prova nella
   cartella di lavoro: niente missioni zombie a chi non ha giocato, missioni che avanzano, zucche, bottone, premi una volta sola, cornice.
+- **Collaudo** (31 ottobre) col gioco più i cinque file (`python3 anteprime/mk_anteprima49.py --prova`, da cui `tests/test.html`): `menu2`,
+  `menu3`, `meta2`, `zombie`, `mig`, `fresh`, `contatore`, `enemies`, `colpi`, `classica` e una partita automatica per capitolo (quattro
+  vittorie), nessun errore; in `tests/zombie.js` il controllo «Gioca porta sulla mappa» accetta ora anche la musica della partita
+  (`zpartita`). Prove dell'anteprima in `tests/a49/` (`python3 tests/a49/mk.py`, poi `node tests/a49/<prova>.js`): musica, abilità,
+  sfida, abisso, eventi, tutto passa. Dettagli in `docs/anteprima-49.md`.
 - **Zombie nuovi su carta** (`sprite/mostri/zombie_nuovi.js`, non ancora nella mappa): il Gonfio, lo Sputatore e il Bruto, quattro direzioni
   in `sprite/mostri/zombie_nuovi_4dir.jpg`, pagina https://claude.ai/artifact/MhfnMzYQg7UjU6vcPzNe3G (`python3 anteprime/mk_mostro.py --nuovi`);
   dettagli in `sprite/mostri/LEGGIMI.md` («Gli zombie nuovi»). Il Gonfio ha la stessa idea dello «Zombie gonfio» scartato il 9 ottobre:

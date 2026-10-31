@@ -14,7 +14,7 @@ const {chromium}=require('playwright');const D=__dirname+'/';
   await E(`ZM.W.dbg.noSpawn=true;ZM.W.dbg.god=true;0`);
   const R=[];
   await E(`const D=ZM.W.director;D.st='pausa';D.t=-999;D.boss=null;D.hp=100;0`);R.push(['pausa',await meas(9000)]);
-  await E(`const D=ZM.W.director;D.st='round';D.R=2;D.left=0;D.bossT=0;D.t=0;0`);R.push(['round 2',await meas(9000)]);
+  await E(`const D=ZM.W.director,h=ZM.W.hero;D.st='round';D.R=2;D.left=0;D.bossT=0;D.t=0;for(let i=0;i<2;i++)ZM.W.Z.push({kind:'zombie',sc:1.1,x:h.x+600+i*30,y:h.y,face:0,p:0,anim:'idle',rise:1,die:0,flash:0,q:1,spd:0,spd0:0,hp:1e6,idle:0});0`);R.push(['round 2',await meas(9000)]);
   await E(`const D=ZM.W.director;D.R=14;for(let i=0;i<6;i++)ZM.W.Z.push({kind:'zombie',x:0,y:0,die:0,idle:0,rise:1});0`);R.push(['round 14, 6 zombie',await meas(9000)]);
   await E(`const D=ZM.W.director;D.boss={kind:'becchino',die:0,hp:1,hp0:1};0`);R.push(['boss',await meas(9000)]);
   await E(`const D=ZM.W.director;D.boss=null;D.hp=20;0`);R.push(['poca vita',await meas(7000)]);

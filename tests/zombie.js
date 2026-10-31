@@ -35,7 +35,8 @@ let fails=0;const ok=(c,m)=>{console.log((c?'  ok  ':'  NO  ')+m);if(!c)fails++}
   // on a slow machine the game runs slower than the clock: wait for the first round (3 s of the game's own time) instead of a fixed time
   await p.waitForFunction(()=>__MZ.W.director.R>=1,null,{timeout:20000}).catch(()=>{});await shot('3_mappa');
   const s3=await p.evaluate(()=>({menu:document.getElementById('menu').hidden,on:__E('ZG.on'),music:__E('AU.cur?AU.cur.name:null'),R:__MZ.W.director.R,st:__MZ.W.director.st,coins:__MZ.W.coins,muzzle:!!__MZ.W.muzzle,bar:getComputedStyle(document.getElementById('mzBar')).display,pz:!!document.getElementById('mzPz')}));
-  ok(s3.menu&&s3.on&&s3.music===null,'Gioca porta sulla mappa: menu nascosto, musica del menu spenta');
+  // (on the map nothing plays, or, with the match music of the Anteprima 49 (src/js/98-musica-zombie.js), the match's own track)
+  ok(s3.menu&&s3.on&&(s3.music===null||s3.music==='zpartita'),'Gioca porta sulla mappa: menu nascosto, musica del menu spenta',s3.music);
   ok(s3.R===1&&s3.st==='round'&&s3.coins===500,`la partita parte: round ${s3.R}, ${s3.coins} monete`);
   ok(s3.muzzle&&s3.bar==='none'&&s3.pz,"l'Arciere 3D con l'arma (bocca dell'arma nota), niente bottoni di prova, il bottone della pausa");
   // 4. la pausa: il mondo si ferma, Esc la chiude, gli effetti si spengono e si riaccendono

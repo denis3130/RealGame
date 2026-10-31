@@ -104,6 +104,10 @@ Prova `tests/a49/abisso.js`.
 
 ## 7. Collaudo
 
-Le prove del gioco (`menu2`, `menu3`, `meta2`, `zombie`, `mig`, `fresh`, `contatore`, `enemies`, `colpi`, `classica` e una partita
-automatica per capitolo) fatte girare con `tests/test.html` costruito dalla pagina di prova 49: risultati nel CLAUDE.md, sezione
-«Anteprima 49».
+Le prove del gioco fatte girare con `tests/test.html` costruito dalla pagina di prova 49 (il gioco più i cinque file, senza salvataggio
+pronto né spinta): `menu2`, `menu3`, `meta2`, `mig`, `fresh`, `contatore`, `enemies`, `colpi`, `classica` (tutti i controlli OK) e una
+partita automatica per capitolo (Golem, Yeti, Idra, Fenice: quattro vittorie), nessun errore. `zombie.js` aveva un solo «no»: si aspettava
+che sulla mappa non suonasse niente, e adesso suona la musica della partita; il controllo accetta tutte e due le cose (rifatto sul gioco di
+oggi e sull'anteprima: tutto passa). Poi le prove di `tests/a49`: musica (volume medio: pausa 0,0073, round 2 0,0172, round 14 con 6 zombie
+0,0224, boss 0,0277, poca vita 0,0214, caduto 0,013), abilità (13 controlli; la tagliola provata in un punto libero, perché vicino a un
+recinto lo zombie gira intorno e non ci passa, com'è giusto), sfida (10), abisso (6), eventi (6): tutto passa, nessun errore.
