@@ -355,6 +355,15 @@ creazione): `python3 anteprime/mk_anteprima49.py <cartella>` (divisa come il gio
   stanza 20 due cristalli ogni 5 stanze oltre la 15, una bustina Classica Rara dalla 30, Epica dalla 45, Leggendaria dalla 60, scritti sotto
   il testo della fine con i patti stretti; il foglio dell'Abisso lo dice. Prova nella cartella di lavoro: boss alle stanze giuste, patto
   che ferma il gioco e cambia le statistiche, niente doppioni, boss più forti, tesori; nessun errore.
+- **Missioni ed eventi nuovi** (`src/js/103-missioni-eventi.js`, `ZMIS_D`, `ZMIS_W`, `EVL`, `SAVE.evt`): missioni della Zombie del giorno
+  (round 5, 60 zombie, un boss del camposanto, 6 abilità, una medaglia della Sfida della notte) e della settimana (500 zombie, round 12), in
+  fondo a `MPOOL` e `WPOOL` (gli indici di prima non cambiano) e date solo a chi ha giocato almeno una partita nel camposanto (si tolgono un
+  attimo mentre il gioco pesca: `ensureDaily`, `ensureWeekly` avvolti); l'**evento della settimana**: uno diverso ogni lunedì (Caccia ai
+  boss, La grande orda, Fiera del muschio) e dal 25 ottobre al 7 novembre la **Notte delle zucche**, con la sua moneta che arriva dagli
+  stessi momenti delle missioni (`mprog` avvolto: stanze, boss, vittorie, nemici, oro, round e zombie del camposanto) e cinque premi
+  (oro, bustine, cristalli, l'ultimo con una cornice del Profilo nuova: Zucca, Teschio d'oro, Orda, Fiera); bottone «Evento» in fondo alla
+  colonna di destra della schermata principale nelle due modalità, col «!» quando c'è un premio; a fine partita «+N zucche». Prova nella
+  cartella di lavoro: niente missioni zombie a chi non ha giocato, missioni che avanzano, zucche, bottone, premi una volta sola, cornice.
 - **Zombie nuovi su carta** (`sprite/mostri/zombie_nuovi.js`, non ancora nella mappa): il Gonfio, lo Sputatore e il Bruto, quattro direzioni
   in `sprite/mostri/zombie_nuovi_4dir.jpg`, pagina https://claude.ai/artifact/MhfnMzYQg7UjU6vcPzNe3G (`python3 anteprime/mk_mostro.py --nuovi`);
   dettagli in `sprite/mostri/LEGGIMI.md` («Gli zombie nuovi»). Il Gonfio ha la stessa idea dello «Zombie gonfio» scartato il 9 ottobre:
