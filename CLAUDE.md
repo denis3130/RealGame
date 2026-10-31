@@ -338,6 +338,15 @@ creazione): `python3 anteprime/mk_anteprima49.py <cartella>` (divisa come il gio
   orologio; tastiera 1, 2, 3. Si attacca avvolgendo `ZM.partita` (update, reset, drawGround, drawTop del direttore); salvataggio
   `SAVE.z.ab` = {own, eq}. Prova nella cartella di lavoro: ogni abilità usata in una partita vera, sblocco, record, ricarica, telecamera
   ferma, nessun errore. Numeri da regolare giocando.
+- **Sfida della notte** (`src/js/100-sfida-zombie.js`, `ZCH`, `ZCH_R`, `ZCH_M`; la modalità sfida dentro la Zombie, idea del 12 ottobre):
+  nella Zombie il bottone «Sfida» apre la Sfida della notte (nella Classica resta la sfida del giorno); ogni notte una regola diversa, a giro
+  di sette (Solo pistola, Orda famelica, Sangue freddo, Notte dei becchini, Mani di pietra, Ricchi e dannati, Cuore fragile), la mappa e le
+  ondate di sempre; medaglie al round 5 (400 oro e 10 Rottami), 10 (Bustina Zombie Rara) e 15 (25 cristalli e 30 Rottami), ognuna una volta
+  per notte (`SAVE.zchal`); la scritta della sfida sotto la barra in alto, la medaglia sulla schermata di fine; «Rigioca» rifà la sfida,
+  «Menu» la chiude (`zExit` avvolto). Si apre dopo la prima partita nel camposanto. Le regole passano da `ZM.modsHook` (monete, danno,
+  ricarica, critici), da `D.PZ` (vita, rigenerazione), dai prompt di armi a muro e Bara (`ZM.buys`) e dai round del direttore. Prova
+  nella cartella di lavoro: bottone, foglio, quattro regole in una partita vera, medaglie e premi una volta sola, uscita, partita normale
+  dopo; nessun errore.
 - **Zombie nuovi su carta** (`sprite/mostri/zombie_nuovi.js`, non ancora nella mappa): il Gonfio, lo Sputatore e il Bruto, quattro direzioni
   in `sprite/mostri/zombie_nuovi_4dir.jpg`, pagina https://claude.ai/artifact/MhfnMzYQg7UjU6vcPzNe3G (`python3 anteprime/mk_mostro.py --nuovi`);
   dettagli in `sprite/mostri/LEGGIMI.md` («Gli zombie nuovi»). Il Gonfio ha la stessa idea dello «Zombie gonfio» scartato il 9 ottobre:
