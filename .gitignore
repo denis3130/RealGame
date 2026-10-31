@@ -56,3 +56,5 @@ tests/classica_test.html
 anteprime/mosse.html
 tests/mosse_test.html
 anteprime/anteprima49_prova.html
+tests/a49/test_a49.html
+tests/a49/*.png
