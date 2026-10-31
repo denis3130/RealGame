@@ -318,7 +318,8 @@ telefono, Abisso più ricco; Zombie: Musica della partita, Abilità zombie, Moda
 Missioni ed eventi nuovi. Le cose nuove stanno in file loro fuori da `src/ordine.txt` e vanno nell'**Anteprima 49** (il gioco di oggi più i
 file di `NUOVI` in `anteprime/mk_anteprima49.py`, messi prima della chiusura; alla prima apertura c'è già un eroe, niente prologo né
 creazione): `python3 anteprime/mk_anteprima49.py <cartella>` (divisa come il gioco), pubblicata su https://claude.ai/artifact/9NHUpsQR6kxzTyz8JthZKN
-(si aggiorna ripubblicando la stessa cartella). Entrano nel gioco dopo il sì di Denis.
+(si aggiorna ripubblicando la stessa cartella). Solo nell'anteprima, una volta: 10.000 oro, 600 Rottami e il record 15 della Zombie
+(`SAVE.__a49`), per sbloccare e provare subito le abilità. Entrano nel gioco dopo il sì di Denis.
 - **Musica della partita zombie** (`src/js/98-musica-zombie.js`, `TRACKS.zpartita`, `ZMU`): prima sulla mappa c'era solo l'atmosfera. Re
   minore lento che non si risolve (re minore, mi bemolle, si bemolle minore, la); calma all'inizio e nella pausa (bordone, campana lontana,
   carillon stonato), nel round il cuore e il violoncello che striscia, più fitti coi round e con gli zombie vivi, poi i tamburi di guerra,

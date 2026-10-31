@@ -12,7 +12,13 @@ order=[l.strip() for l in open(os.path.join(src,'ordine.txt'),encoding='utf-8') 
 extra=[f for f in NUOVI if f not in order]
 i=order.index('coda.html')
 order=order[:i]+extra+order[i:]
-page=''.join(open(os.path.join(src,f),encoding='utf-8',newline='').read() for f in order)
+# (only in the preview) once: gold, Rottami and a round record, so the zombie abilities can all be unlocked and tried at once
+spinta='''
+// (solo nell'Anteprima 49) una volta sola: oro, Rottami e il record 15 della Zombie, per sbloccare e provare subito le abilità
+try{if(!SAVE.__a49){SAVE.__a49=1;SAVE.gold=(SAVE.gold||0)+10000;SAVE.mat.rot=(SAVE.mat.rot||0)+600;SAVE.zRec=Math.max(SAVE.zRec||0,15);save()}}catch(e){}
+'''
+page=''.join(open(os.path.join(src,f),encoding='utf-8',newline='').read()+(spinta if f==extra[-1] else '') for f in order) if extra else \
+  ''.join(open(os.path.join(src,f),encoding='utf-8',newline='').read() for f in order)
 page=page.replace('<title>Mossbound</title>','<title>Mossbound Anteprima 49</title>',1)
 # a ready player on the first opening (the save of a player who has already made the hero and played once)
 # (at the top of the game's own script, which runs before the game reads its save: the page keeps one script, as app/mk_claude.py wants)
