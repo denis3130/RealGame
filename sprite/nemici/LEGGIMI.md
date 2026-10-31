@@ -21,7 +21,8 @@ intorno piano (`look`), senza scatti. Lo scheletro ha due lucine rosse ferme nel
   `idle` piega la testa incuriosito e batte la mandibola; `walk` passi rigidi a scatti; `attack` alza la balestra all'occhio, tira (rinculo e
   lampo), riabbassa e ricarica.
 - **Slime** (`slime`, grandezza 1, `o.gel`/`o.gelD` per i colori): **la prima versione fatta col metodo, voluta da Denis** (11 ottobre:
-  «quello che hai fatto prima di cambiarlo»): gelatina verde con un teschio dentro che galleggia, bolle, fili di bava alla base, occhi
+  «quello che hai fatto prima di cambiarlo»): gelatina verde con un teschio dentro che galleggia, bolle, (fino al 31 ottobre fili di bava alla base, tolti perché sembravano zampette: Denis, «togli quella specie di zampettine a tutti gli
+  slime»), occhi
   gialli che brillano e una bocca larga con i denti. Ha i suoi aiutanti (`sEye`, `sTeeth`). `idle` respira e sussulta in avanti; `walk`
   salta (si schiaccia, si allunga in aria, si spiaccica); `attack` si tira indietro a bocca spalancata e si lancia in avanti.
 - **Pipistrello** (`bat`, grandezza 1, rifatto da zero l'11 ottobre su richiesta di Denis): sta in aria dritto, con una testa grande
