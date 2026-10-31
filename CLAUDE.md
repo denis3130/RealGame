@@ -311,6 +311,25 @@ ripubblicando la stessa cartella).
 `meta2`, `zombie`, `mig`, `fresh`, `contatore`, `enemies`, `colpi`, `classica.js` tutto OK, una partita automatica per capitolo: quattro
 vittorie, nessun errore; la stanza con cinque corpi dal vivo 26,0 ms invece di 23,3).
 
+## Anteprima 49 (31 ottobre, da approvare)
+
+Denis, alla domanda «cosa possiamo migliorare?» (31 ottobre), ha scelto: Classica: Nemici più vivi nel gioco (fatto, sopra), Più fluido sul
+telefono, Abisso più ricco; Zombie: Musica della partita, Abilità zombie, Modalità sfida, Zombie nuovi; Tutto: Collaudo finale (FASE 10),
+Missioni ed eventi nuovi. Le cose nuove stanno in file loro fuori da `src/ordine.txt` e vanno nell'**Anteprima 49** (il gioco di oggi più i
+file di `NUOVI` in `anteprime/mk_anteprima49.py`, messi prima della chiusura; alla prima apertura c'è già un eroe, niente prologo né
+creazione): `python3 anteprime/mk_anteprima49.py <cartella>` (divisa come il gioco), pubblicata su https://claude.ai/artifact/9NHUpsQR6kxzTyz8JthZKN
+(si aggiorna ripubblicando la stessa cartella). Entrano nel gioco dopo il sì di Denis.
+- **Musica della partita zombie** (`src/js/98-musica-zombie.js`, `TRACKS.zpartita`, `ZMU`): prima sulla mappa c'era solo l'atmosfera. Re
+  minore lento che non si risolve (re minore, mi bemolle, si bemolle minore, la); calma all'inizio e nella pausa (bordone, campana lontana,
+  carillon stonato), nel round il cuore e il violoncello che striscia, più fitti coi round e con gli zombie vivi, poi i tamburi di guerra,
+  la campana stonata e il coro, col Becchino e lo Spaventapasseri i tamburi su ogni battito e gli ottoni; con poca vita il cuore più forte e il
+  resto lontano; quando cadi un accordo con la campana e poi silenzio. Parte quando la musica del menu si è spenta (`zMusicOff` avvolto).
+  Misure (volume medio): pausa 0,0075, round alto con 6 zombie 0,0225, boss 0,027, poca vita 0,022, caduto 0,013; nessun errore.
+- **Zombie nuovi su carta** (`sprite/mostri/zombie_nuovi.js`, non ancora nella mappa): il Gonfio, lo Sputatore e il Bruto, quattro direzioni
+  in `sprite/mostri/zombie_nuovi_4dir.jpg`, pagina https://claude.ai/artifact/MhfnMzYQg7UjU6vcPzNe3G (`python3 anteprime/mk_mostro.py --nuovi`);
+  dettagli in `sprite/mostri/LEGGIMI.md` («Gli zombie nuovi»). Il Gonfio ha la stessa idea dello «Zombie gonfio» scartato il 9 ottobre:
+  detto a Denis, che decide.
+
 ## FASE 9: più fluido sul telefono (19 ottobre, in corso)
 
 Denis: «vai, lascia perdere l'intro ecc» (la FASE 9 subito; intro, prologo e filmati non si toccano). Il gioco più fluido sul suo iPhone
