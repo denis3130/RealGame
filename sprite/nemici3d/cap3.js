@@ -100,6 +100,12 @@ function frogPose(anim,p){const ph=p*TAU,A={B:[0,0,0],lean:0,roll:0,s:0,yaw:0,k:
     A.lean=keys([[0,0],[.5,-.14],[.6,.2],[.72,.08],[1,0]],p);A.B=[keys([[0,0],[.5,-.8],[.6,1.2],[.75,.4],[1,0]],p),0,0];
     A.open=keys([[0,0],[.54,0],[.6,1],[.68,.9],[.78,0],[1,0]],p);A.squint=keys([[0,0],[.5,.6],[.6,.2],[.78,0],[1,0]],p);A.puff=p>=.58&&p<.95?(p-.58)/.37:-1;A.arm=keys([[0,0],[.5,.15],[.6,-.2],[1,0]],p)}
   else if(anim==='hit'){const kb=hitK(p);A.lean=-.32*kb;A.B=[-2.6*kb,0,.5*kb];A.s=-.1*kb;A.roll=.07*kb;A.shut=p<.55?1:0;A.stars=p<.75?1-p/.75:0;A.k=.25*Math.max(0,kb);A.arm=-.4*kb;A.open=.35*(1-sstep(.34,.46,p));A.sac=0}
+  else if(anim==='prep'){// gets ready to spit (held): the throat sac swelling and swelling, drawn back, eyes narrowed, a shiver
+    const b=Math.sin(ph*2);A.sac=.72+.2*(.5+.5*b);A.s=-.06+.015*b;A.lean=-.12;A.B=[-.7+.15*Math.sin(ph*5),0,0];A.squint=.55;A.arm=.12}
+  else if(anim==='die'){// .0-.15 the blow, .15-.55 a startled hop up, .55 it lands flat on its belly with the legs splayed out behind, then still, dizzy
+    const k1=ez(cl(p/.15,0,1)),h=cl((p-.15)/.4,0,1),hop=Math.sin(h*Math.PI)*12,fl=p>.55?ez(cl((p-.55)/.12,0,1)):0;A.B=[-2*k1-2*h,0,hop];A.lean=-.3*k1*(1-h)+.18*fl;
+    A.s=p<.55?-.1*k1+.12*Math.sin(h*Math.PI):-.24*fl+.04*Math.sin(cl((p-.55)/.3,0,1)*Math.PI*2)*(1-cl((p-.55)/.3,0,1));A.roll=.08*k1;A.k=p<.55?.4*h:1;A.fold=0;
+    A.arm=p<.55?-.5*h:.7;A.shut=1;A.open=p>.5?.45:0;A.sac=0;A.stars=p>.65?.8:0}
   else{const b=Math.sin(ph);A.s=.02*b;A.yaw=look(p,.35);A.blink=blink(p,.42,.07);A.lean=-.02*b}
   return A}
 function frog(x,y,face,anim,p,sc,o){sc=sc||1;o=o||{};const V0=V(face),{P,D,F}=V0,A=frogPose(anim,p),X=frame(A,0),body=o.slow?FC.slow:FC.body,legC=o.slow?dk(FC.slow,.25):cmix(FC.body,FC.dark,.8);
@@ -148,7 +154,7 @@ function frog(x,y,face,anim,p,sc,o){sc=sc||1;o=o||{};const V0=V(face),{P,D,F}=V0
   run(L);
   if(A.stars>0)stars(P(X.T([2,0,30])),9,A.stars);
   ctx.restore()}
-reg('frog',{n:'Rana',g:3,sc:1,an:['idle','walk','attack','hit'],dur:{idle:2.6,walk:1,attack:.9,hit:.6},lab:{walk:'Saltella',attack:'Sputa'}},frog);
+reg('frog',{n:'Rana',g:3,sc:1,an:['idle','walk','prep','attack','hit','die'],dur:{idle:2.6,walk:1,prep:.8,attack:.9,hit:.6,die:1},lab:{walk:'Saltella',attack:'Sputa'}},frog);
 
 // ------------------------------------------------------------------ ZANZARA: a brown mosquito hovering in the air (EDRAW.mosquito): a round
 // head with two big red eyes and the long proboscis, the dark thorax, the striped abdomen hanging back and down, two transparent wings
@@ -166,6 +172,11 @@ function mozPose(anim,p){const ph=p*TAU,A={B:[0,0,0],lean:0,roll:0,s:0,yaw:0,bob
     A.lean=keys([[0,0],[.42,-.3],[.52,.62],[.72,.55],[.86,-.1],[1,0]],p);A.B=[keys([[0,0],[.44,-2.4],[.56,5],[.72,6],[.9,0],[1,0]],p),0,keys([[0,0],[.44,1.5],[.6,-2.5],[.74,-3],[.9,.5],[1,0]],p)];
     A.sweep=A.dive;A.legT=Math.max(A.dive,.2);A.shake=A.aim*(1-sstep(.4,.47,p));A.bob*=1-A.aim;A.flap=36;A.trail=p>.48&&p<.8?(p-.48)/.32:-1}
   else if(anim==='hit'){const kb=hitK(p);A.lean=-.45*kb;A.roll=.4*kb;A.B=[-3*kb,0,1.5*kb];A.shut=p<.55?1:0;A.stars=p<.75?1-p/.75:0;A.legT=-.5*kb;A.flap=12}
+  else if(anim==='prep'){// takes aim (held): reared back, trembling, the abdomen glowing red
+    A.aim=.85+.1*(.5+.5*Math.sin(ph*2));A.lean=-.28;A.B=[-2.2,0,1.4];A.shake=.8;A.flap=36;A.bob*=.2;A.legT=.2}
+  else if(anim==='die'){// .0-.15 the blow, then it spins down with the wings stopping, lands on its back, the legs curled up, dizzy
+    const k1=ez(cl(p/.15,0,1)),k2=cl((p-.15)/.5,0,1),fall=k2*k2;A.lean=-.45*k1*(1-k2)-.3*k2;A.roll=.4*k1+2.6*ez(k2);A.yaw=k2*TAU;A.B=[-3*k1,0,1.5*k1*(1-fall)-(MT[2]-3)*fall];
+    A.bob=0;A.flap=24*(1-k2);A.shut=1;A.legT=-.5-.6*k2;A.stars=p>.68?.8:0}
   else{A.yaw=look(p,.4);A.blink=blink(p,.62,.07)}
   return A}
 // a buzzing wing: an almond from the root along the span, flat in the plane of the span and the chord; transparent, a thin dark edge
@@ -217,7 +228,7 @@ function mosquito(x,y,face,anim,p,sc,o){sc=sc||1;o=o||{};const V0=V(face),{P,D,F
   run(L);
   if(A.stars>0)stars(P(X.T(add(MH,[0,0,6]))),7,A.stars);
   ctx.restore()}
-reg('mosquito',{n:'Zanzara',g:3,sc:1,an:['idle','walk','attack','hit'],dur:{idle:2.4,walk:1.2,attack:1.4,hit:.6},lab:{walk:'Vola',attack:'Mira e picchia'}},mosquito);
+reg('mosquito',{n:'Zanzara',g:3,sc:1,an:['idle','walk','prep','attack','hit','die'],dur:{idle:2.4,walk:1.2,prep:.8,attack:1.4,hit:.6,die:.9},lab:{walk:'Vola',attack:'Mira e picchia'}},mosquito);
 
 // ------------------------------------------------------------------ COCCODRILLO: a green crocodile (EDRAW.croc), a long animal seen from every
 // side: the body is a chain of ellipsoids along a spine that bends as it crawls (seamless: every outline first, then every fill), two rows
@@ -245,6 +256,11 @@ function crocPose(anim,p){const ph=p*TAU,A={B:[0,0,0],lean:0,roll:0,s:0,yaw:0,be
     // water; the part under it is cut away at o.water, the floor if not given)
     A.sink=keys([[0,0],[.3,1],[.7,1],[1,0]],p);A.lean=-.14*A.sink;A.tail=Math.sin(ph*2)*1.6;A.hy=Math.sin(ph)*.14;A.blink=blink(p,.9,.06)}
   else if(anim==='hit'){const kb=hitK(p);A.B=[-2.6*kb,0,.4*kb];A.lean=-.1*kb;A.roll=.06*kb;A.hp=-.25*kb;A.open=p<.4?.5:.04;A.shut=p<.55?1:0;A.stars=p<.75?1-p/.75:0;A.tail=3*kb;A.bend=-.8*kb}
+  else if(anim==='prep'){// gets ready to snap (held): the head reared up, the jaws open wide, the body drawn back, the tail lashing
+    const b=Math.sin(ph*2);A.open=.85+.12*(.5+.5*b);A.hp=-.2;A.hy=0;A.B=[-1.8+.2*Math.sin(ph*5),0,0];A.lean=-.05;A.tail=-1.4+.7*Math.sin(ph*3);A.blink=1}
+  else if(anim==='die'){// .0-.16 the blow, .16-.6 it rolls over onto its side, the belly showing, the jaws hanging open, the tail going limp, dizzy
+    const k1=ez(cl(p/.16,0,1)),k2=ez(cl((p-.16)/.44,0,1));A.B=[-2.6*k1,0,.4*k1+5.5*k2];A.lean=-.1*k1*(1-k2);A.roll=.06*k1+1.3*k2;A.hp=-.25*k1*(1-k2)+.1*k2;
+    A.open=.4*k2+(p<.3?.5*(1-k2):0);A.shut=1;A.tail=3*k1*(1-k2)+.6*k2;A.bend=-.8*k1*(1-k2)+.3*k2;A.hy=0;A.breath=0;A.blink=1;A.stars=p>.62?.8:0}
   return A}
 // where a point of the spine at x (rest) moves sideways, and the turn of the chain there
 function spineY(A,x){let y=0;if(A.wave)y+=.9*A.bend*Math.sin(x*.16+.6);else y+=.5*A.bend*Math.sin(x*.12);
@@ -317,7 +333,7 @@ function croc(x,y,face,anim,p,sc,o){sc=sc||1;o=o||{};const V0=V(face),{P,D,F}=V0
   run(L);
   if(A.stars>0)stars(P(Xh.T([10,0,16])),9,A.stars);
   ctx.restore()}
-reg('croc',{n:'Coccodrillo',g:3,sc:1,an:['idle','walk','attack','dive','hit'],dur:{idle:2.6,walk:.9,attack:.8,dive:2,hit:.6},lab:{walk:'Striscia',attack:'Morso',dive:'Si immerge'}},croc);
+reg('croc',{n:'Coccodrillo',g:3,sc:1,an:['idle','walk','prep','attack','dive','hit','die'],dur:{idle:2.6,walk:.9,prep:.8,attack:.8,dive:2,hit:.6,die:1},lab:{walk:'Striscia',attack:'Morso',dive:'Si immerge'}},croc);
 
 // ------------------------------------------------------------------ LUMACA: a yellow snail (EDRAW.snail) with a big purple shell coiled in a
 // spiral, a soft body that glides along the floor with ripples running down its foot, two eye stalks with round white eyes that bob about.
@@ -333,6 +349,11 @@ function snailPose(anim,p,o){const ph=p*TAU,A={B:[0,0,0],lean:0,roll:0,s:0,yaw:0
   else if(anim==='attack'){// the shell charge: .0-.14 it pulls into the shell, .14-.86 the shell rolls forward (two turns), .86-1 it comes out
     A.ins=keys([[0,0],[.12,1],[.88,1],[1,0]],p);const r=cl((p-.12)/.76,0,1);A.spin=ez(r)*TAU*2;A.bounce=Math.abs(Math.sin(r*Math.PI*4))*2.2*bump(r);A.arcs=r>0&&r<1?r:-1;A.shellB=0}
   else if(anim==='hit'){const kb=hitK(p);A.B=[-2.2*kb,0,.3*kb];A.lean=-.12*kb;A.ins=.65*Math.max(0,kb);A.shut=p<.55?1:0;A.stars=p<.75?1-p/.75:0;A.hp=-.1*kb}
+  else if(anim==='prep'){// gets ready to roll (held): pulled half into the shell, the shell rocking on its foot, the stalks low
+    A.ins=.72+.08*Math.sin(ph*2);A.spin=.22*Math.sin(ph*3);A.shellB=0;A.lean=-.04;A.st=[-.25,-.25]}
+  else if(anim==='die'){// .0-.15 the blow, .15-.45 it pulls into the shell, .45-.75 the shell tips over onto its side, then still, dizzy
+    const k1=ez(cl(p/.15,0,1)),k2=ez(cl((p-.15)/.3,0,1)),k3=ez(cl((p-.45)/.3,0,1));A.B=[-2.2*k1,0,.3*k1*(1-k2)+3*k3];A.lean=-.12*k1*(1-k2);A.ins=Math.max(.65*k1,k2);
+    A.roll=1.15*k3;A.spin=.2*k3;A.shut=1;A.shellB=0;A.stars=p>.72?.8:0}
   if(o.shell!=null)A.ins=cl(o.shell,0,1);if(o.spin!=null)A.spin=o.spin;
   return A}
 // the spiral of the shell on one side (sd), as runs of screen points where it faces us; the roll turns it round the shell's axle
@@ -379,7 +400,7 @@ function snail(x,y,face,anim,p,sc,o){sc=sc||1;o=o||{};const V0=V(face),{P,D,F}=V
   run(L);
   if(A.stars>0)stars(P(X.T([2,0,32])),10,A.stars);
   ctx.restore()}
-reg('snail',{n:'Lumaca',g:3,sc:1,an:['idle','walk','attack','hit'],dur:{idle:2.8,walk:1.6,attack:2.2,hit:.6},lab:{walk:'Striscia',attack:'Guscio rotante'}},snail);
+reg('snail',{n:'Lumaca',g:3,sc:1,an:['idle','walk','prep','attack','hit','die'],dur:{idle:2.8,walk:1.6,prep:.9,attack:2.2,hit:.6,die:1},lab:{walk:'Striscia',attack:'Guscio rotante'}},snail);
 
 // ------------------------------------------------------------------ GIRINO: a little dark green tadpole (EDRAW.tadpole) swimming just over the
 // floor in swarms: a round head-body with two yellow eyes on the sides and a light on its back, the long tail wiggling from side to side
@@ -392,6 +413,11 @@ function tadPose(anim,p){const ph=p*TAU,A={B:[0,0,Math.sin(ph)*.5],lean:0,roll:0
     A.curl=keys([[0,0],[.28,1],[.34,-.4],[.5,0],[1,0]],p);A.dart=keys([[0,0],[.28,-1],[.4,1],[.6,.3],[1,0]],p);A.B=[A.dart*3,0,.3];A.s=-.1*Math.max(0,-A.dart);A.amp=p<.3?.4:p<.6?1.4:.7;A.freq=p<.3?1:5;
     A.lean=.08*A.dart}
   else if(anim==='hit'){const kb=hitK(p);A.B=[-3*kb,0,.6*kb];A.roll=.4*kb;A.lean=-.2*kb;A.shut=p<.55?1:0;A.stars=p<.75?1-p/.75:0;A.amp=1.2;A.freq=3}
+  else if(anim==='prep'){// gets ready to dart (held): the tail curled, drawn back, quivering
+    A.curl=.85+.12*Math.sin(ph*2);A.dart=-.85;A.B=[-2.5+.2*Math.sin(ph*5),0,.3];A.s=.06;A.amp=.4;A.freq=3}
+  else if(anim==='die'){// .0-.15 the blow, then it rolls belly up and floats, the tail going still
+    const k1=ez(cl(p/.15,0,1)),k2=ez(cl((p-.15)/.45,0,1));A.B=[-3*k1,0,.6*k1+1.2*k2];A.roll=.4*k1+(Math.PI-.4)*k2;A.lean=-.2*k1*(1-k2);A.shut=1;A.amp=1.2*(1-k2)+.15;A.freq=3*(1-k2)+.5;
+    A.stars=p>.65?.75:0}
   return A}
 function tadpole(x,y,face,anim,p,sc,o){sc=sc||1;o=o||{};const V0=V(face),{P,D,F}=V0,A=tadPose(anim,p),X=frame(A,6),body=o.slow?TD.slow:TD.body,tailC=o.slow?lt(TD.slow,.1):TD.tail;
   floor(V0,x,y,sc,[A.B[0],0,0],8,3,.25,A.B[2]+4);
@@ -411,5 +437,5 @@ function tadpole(x,y,face,anim,p,sc,o){sc=sc||1;o=o||{};const V0=V(face),{P,D,F}
   run(L);
   if(A.stars>0)stars(P(X.T([1,0,13])),6,A.stars);
   ctx.restore()}
-reg('tadpole',{n:'Girino',g:3,sc:1,an:['idle','walk','attack','hit'],dur:{idle:2,walk:.8,attack:.8,hit:.6},lab:{walk:'Nuota',attack:'Scatto'}},tadpole);
+reg('tadpole',{n:'Girino',g:3,sc:1,an:['idle','walk','prep','attack','hit','die'],dur:{idle:2,walk:.8,prep:.7,attack:.8,hit:.6,die:.9},lab:{walk:'Nuota',attack:'Scatto'}},tadpole);
 })();

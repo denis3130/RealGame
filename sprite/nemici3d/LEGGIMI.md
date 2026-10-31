@@ -41,3 +41,19 @@ https://claude.ai/artifact/KJAoPYt98bEeiiwmYpPTYG.
 Nel gioco: `src/js/64-nemici-3d.js` (lo stato di ogni nemico diventa la mossa e `p`). Per misurare il tempo di disegno di un modello
 pulire la tela a ogni fotogramma come fa il gioco: senza, il browser accumula i comandi e a tratti rallenta (la Piovra sembrava costare
 5 ms invece di 0,9).
+
+## «Si prepara» e «Muore» (29 ottobre, Denis: «Nemici più vivi»)
+
+I 26 nemici normali (gruppi 1–4) hanno due mosse in più, `prep` («Si prepara») e `die` («Muore»), nello spirito della Classica (niente
+sangue, toni da giocattolo, stelline). `prep` si ripete finché il gioco la tiene (0,7–0,9 s a giro): la preparazione del loro colpo, chiara
+da lontano (si abbassano, tremano piano, la parte che colpirà si tira indietro o si illumina, gli occhi si stringono). `die` va una volta
+sola (0,9–1 s) e l'ultima posa resta ferma, per famiglia come le morti del gioco (`src/js/77-morti-nemici.js`) ma in 3D coi pezzi del
+modello: le gelatine si sciolgono in una pozza, i volanti girano e cadono, le piante appassiscono, le bestie si rovesciano su un fianco, la
+pietra e il ghiaccio si spaccano (la sentinella perde la testa, che le cade accanto), il fuoco fatuo e l'occhio d'ombra si spengono.
+Per i nemici col corpo dell'Arciere (`umanoidi.js`) le due mosse si fanno da fuori, con le mosse che il corpo ha già (`aim`, `dash`, `hit`)
+e `o.tweak`: l'Arciere non cambia di un pixel. Chi ha i vestiti cede sulle ginocchia e cade di lato tutto intero, lontano da dove guarda;
+gli scheletri si sfasciano in una nuvola di polvere d'ossa e restano un mucchietto d'ossa con lo scudo e il teschio accanto, che guarda
+verso di noi con gli occhi spenti (`EROE.testa`). Nella cassetta, `floor` con trasparenza 0 non disegna più niente (prima `shadow` la
+prendeva per quella di sempre). Fogli: `node tests/nemici_mosse.js <png> <nemici> [mosse] [direzione]` (una riga per nemico, `Z=2` più grande); tempi di disegno uguali alle altre
+mosse. Suoni e collegamento col gioco in `src/js/97-nemici-vivi.js`; pagina `python3 anteprime/mk_nemici3d.py --vivi` (solo i 26, con
+«🔊 Suoni» e «Tutte le mosse» in fila).

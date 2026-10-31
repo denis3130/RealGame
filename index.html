@@ -13326,8 +13326,8 @@ function slime(x,y,face,anim,p,sc,o){sc=sc||1;o=o||{};const V0=V(face),{P,D,F,c,
   ctx.save();ctx.translate(x,y);ctx.scale(sc,sc);
   // the body: a wobbling blob (bumps round the outline), lit from the upper left, darker and dirtier at the base
   const path=(k)=>{ctx.beginPath();for(let i=0;i<=28;i++){const a=i/28*TAU,wob=1+.045*Math.sin(a*3+ph*2+1)+.03*Math.sin(a*5-ph);const px=q[0]+Math.cos(a)*(w+k)*wob,py=q[1]+Math.sin(a)*(h+k)*wob*(Math.sin(a)>0?1.12:.9);ctx.lineTo(px,py)}ctx.closePath()};
-  // goo strings and drops hanging from the base (behind the body)
-  ctx.lineCap='round';for(let i=0;i<4;i++){const a=.3+i*.7,bx=q[0]+Math.cos(a)*w*.8,by=q[1]+h*.8,l=3+2*Math.sin(ph+i*1.7)+(hop>0?hop*.5:0);ctx.strokeStyle=INK;ctx.lineWidth=2.4;seg([bx,by],[bx,by+l]);ctx.stroke();ctx.strokeStyle=colD;ctx.lineWidth=1.1;seg([bx,by],[bx,by+l]);ctx.stroke();ctx.fillStyle=col;ink(1);ball([bx,by+l],1.1);ctx.fill();ctx.stroke()}
+  // (the goo strings with a drop at the end that hung from the base are gone: they looked like little legs. Denis, 31 ottobre: «togli quella
+  // specie di zampettine a tutti gli slime»)
   ink(2.4);path(0);ctx.fillStyle=col;ctx.fill();ctx.stroke();
   ctx.save();path(-1.2);ctx.clip();ctx.fillStyle=colD;ell(q[0]+w*.35,q[1]+h*.6,w*1.1,h*.7);ctx.fill();ctx.fillStyle=o.gelF||LC2.gelF;ell(q[0]+w*.8,q[1]+h*.15,w*.4,h*.8);ctx.fill();
   // something inside: a skull swallowed long ago, drifting
@@ -13606,8 +13606,9 @@ function cheeks(Vh,h,Rh,nod,o){o=o||{};nod=nod||(v=>v);const d=o.dir||[1,.54,.04
 function ellFace(V0,X,C,Rd,F){return{h:V0.P(X.T(C)),at:m=>({q:V0.P(X.T(ellAt(C,Rd,F,m))),v:V0.F(X.Rd(ellN(Rd,F,m)))})}}
 
 // ------------------------------------------------------------------ odds and ends
-// the shadow on the floor under the 3D point c of the body (smaller and lighter when it is up in the air: lift = height)
-function floor(V0,x,y,sc,c,rx,ry,al,lift){const q=V0.P(c[0],c[1],0),k=1-.35*cl((lift||0)/30,0,1);shadow(x+q[0]*sc,y+q[1]*sc,rx*sc*k,ry*sc*KR()*k,(al==null?.3:al)*k)}
+// the shadow on the floor under the 3D point c of the body (smaller and lighter when it is up in the air: lift = height); none at all when
+// its alpha is 0 (the game's shadow() takes 0 for «the usual one»)
+function floor(V0,x,y,sc,c,rx,ry,al,lift){const q=V0.P(c[0],c[1],0),k=1-.35*cl((lift||0)/30,0,1),a=(al==null?.3:al)*k;if(a<.004)return;shadow(x+q[0]*sc,y+q[1]*sc,rx*sc*k,ry*sc*KR()*k,a)}
 // dizzy stars over the head
 function stars(c0,r,a){if(a<=0)return;for(let i=0;i<3;i++){const an=G.t*5+i*TAU/3;starS(c0[0]+Math.cos(an)*r,c0[1]+Math.sin(an)*r*.33*KR(),1.9,a)}}
 // a glowing orb (staff tops, wisps' bolts, magic): a halo, the coloured ball, a white core
@@ -13639,12 +13640,17 @@ function mushroom(x,y,face,anim,p,sc,o){sc=sc||1;o=o||{};const V0=V(face),{P,D,F
     A.s=p<.35?-.14*k1:p<.5?-.14+.32*k2:.18*(1-k3)-.05*Math.sin(k3*Math.PI*3)*(1-k3);
     A.cap=p<.35?.04*k1:p<.5?.04+.2*k2:.24*(1-k3);A.squint=p<.5?k1:1-k3;A.mouth=p>.42&&p<.72?1:0;A.puff=p>=.48?(p-.48)/.52:-1;A.lean=-.05*k1*(1-k3)}
   else if(anim==='hit'){const kb=hitK(p);A.lean=-.3*kb;A.B=[-2.4*kb,0,.4*kb];A.s=-.1*kb;A.roll=.06*kb;A.shut=p<.5?1:0;A.stars=p<.75?1-p/.75:0;A.capY=-1*kb}
+  else if(anim==='prep'){// gets ready (held as long as the game wants): crouched, breathing the cap full, eyes narrowed, a shiver, a purple glow under the cap
+    const b=Math.sin(ph*2);A.s=-.12+.025*b;A.cap=.07+.035*(.5+.5*b);A.capY=-.5+.3*b;A.squint=.85;A.lean=-.06;A.B=[.22*Math.sin(ph*5),0,0];A.glow=.55+.35*(.5+.5*b)}
+  else if(anim==='die'){// wilts (.0-.18 the blow, .18-.72 it bends and falls on its side, the cap drooping, then still) and lets out its spores
+    const k1=ez(cl(p/.18,0,1)),k2=ez(cl((p-.18)/.54,0,1)),wob=p>.72?.05*Math.sin((p-.72)*30)*Math.exp(-(p-.72)*9):0;A.lean=-.28*k1*(1-k2)+.12*k2;A.roll=1.32*k2+wob;
+    A.B=[-1.4*k1,0,.5*k1*(1-k2)+5.2*k2];A.s=-.1*k1-.12*k2;A.capY=-2.4*k2;A.cap=-.04*k2;A.shut=1;A.mouth=p<.4?1:0;A.puff=p>=.6?(p-.6)/.4:-1}
   else{const b=Math.sin(ph);A.s=.025*b;A.cap=.04*Math.sin(ph+.5);A.capY=.4*Math.sin(ph-.4);A.yaw=look(p,.35);A.blink=blink(p,.62,.08)}
   const X=frame(A,0);
   floor(V0,x,y,sc,A.B,14,5.6,.3,A.B[2]);
   ctx.save();ctx.translate(x,y);ctx.scale(sc,sc);const L=parts(),Cb=[0,0,15],dT=D(Cb);
   // the feet: two round stumps under the stem, the far one darker
-  for(const[sd,f] of[[-1,A.fL],[1,A.fR]]){const fk=sstep(0,-.12,F(0,sd,0)),c=add(f,[0,0,3.4]);L.add(dT-100+D([0,sd*5,3.4])*.01,()=>sball(V0,add(c,[A.B[0],A.B[1],0]),3.4,C.cmix(MC.foot,MC.foot2,fk),{rim:.2}))}
+  for(const[sd,f] of[[-1,A.fL],[1,A.fR]]){const fk=sstep(0,-.12,F(0,sd,0)),c=add(f,[0,0,3.4]);L.add(dT-100+D([0,sd*5,3.4])*.01,()=>sball(V0,anim==='die'?X.T(c):add(c,[A.B[0],A.B[1],0]),3.4,C.cmix(MC.foot,MC.foot2,fk),{rim:.2}))}
   // the stem: a round cream body with the face
   const Rb=[7.2,9,13];L.add(dT,()=>{const hp=vol(V0,ellPts(Cb,Rb,null,6,18).map(X.T),MC.stem,{kl:.14,kd:.2});
     ctx.save();poly(hp);ctx.clip();
@@ -13656,35 +13662,56 @@ function mushroom(x,y,face,anim,p,sc,o){sc=sc||1;o=o||{};const V0=V(face),{P,D,F
     ctx.restore()});
   // the cap: a purple dome with white spots, bobbing on the stem
   const capC=[0,0,26.6+A.capY],cs=1+A.cap,Rc=[17*cs,17*cs,10.8*(1+A.cap*.6)];
-  L.add(dT+.5,()=>{const hp=vol(V0,ellPts(capC,Rc,null,7,24,-.12).map(X.T),MC.cap,{kl:.18,kd:.3});
+  // (fallen on its side with the cap away from us, the stem is in front: the cap goes first, and its underside with the gills shows)
+  const capBack=anim==='die'&&F(X.Rd([0,0,1]))<0;
+  L.add(capBack?dT-.5:dT+.5,()=>{const hp=vol(V0,ellPts(capC,Rc,null,7,24,-.12).map(X.T),MC.cap,{kl:.18,kd:.3});
     ctx.save();poly(hp);ctx.clip();
     for(const[t,e,r] of SPOTS){const m=[Math.cos(t)*Math.cos(e),Math.sin(t)*Math.cos(e),Math.sin(e)];spot(V0,X.T(ellAt(capC,Rc,null,m)),X.Rd(ellN(Rc,null,m)),r*cs,MC.spot,{v0:.02})}
     // a darker band along the edge, where the cap curls under toward the gills
     {ctx.strokeStyle=rgba(dk(MC.cap,.45),.55);ctx.lineWidth=2.2;ctx.lineCap='round';ctx.beginPath();let pen=false;
       for(let i=0;i<=32;i++){const t=i/32*TAU,q=P(X.T(ellAt(capC,Rc,null,[Math.cos(t)*.993,Math.sin(t)*.993,-.12]))),v=F(X.Rd([Math.cos(t),Math.sin(t),-.5]));
         if(v>-.1){if(!pen){ctx.moveTo(q[0],q[1]);pen=true}else ctx.lineTo(q[0],q[1])}else pen=false}ctx.stroke()}
-    ctx.restore()});
+    ctx.restore();
+    // the underside, only when it turns toward us (never standing up): the pale disc of the gills, lines from the middle out
+    const dn=anim==='die'?F(X.Rd([0,0,-1])):0;if(dn>.05){const g=[];for(let i=0;i<28;i++){const t=i/28*TAU;g.push(P(X.T(ellAt(capC,Rc,null,[Math.cos(t)*.993,Math.sin(t)*.993,-.12]))))}
+      ctx.save();ctx.globalAlpha*=cl(dn*4,0,1);ctx.fillStyle='#e9dcc4';poly(g);ctx.fill();ink(1.6);ctx.stroke();const c0=P(X.T([0,0,capC[2]-.12*Rc[2]]));
+      ctx.strokeStyle='rgba(150,110,90,.55)';ctx.lineWidth=.8;ctx.beginPath();for(let i=0;i<28;i+=2){ctx.moveTo(c0[0],c0[1]);ctx.lineTo(g[i][0],g[i][1])}ctx.stroke();ctx.restore()}});
   // the puff of spores: a ring of purple specks bursting out from under the cap and drifting up
+  if(A.glow>0&&!o.noFx&&!LOWFX)L.add(dT-200,()=>{const q=P(X.T([0,0,22]));shine('176,106,216',q[0],q[1],22,.3*A.glow)});
   if(A.puff>=0&&!o.noFx)L.add(dT+50,()=>{const k=A.puff;for(let i=0;i<14;i++){const a=i/14*TAU+.3,r=14+k*26*(.7+.3*Math.sin(i*2.3)),q=P([Math.cos(a)*r,Math.sin(a)*r,16+k*10+Math.sin(i*1.7)*4*k]);
       ctx.fillStyle=`rgba(${i%3?'190,130,240':'226,196,255'},${(1-k)*.85*Math.min(1,k*8)})`;ball(q,1.4+k*2.2);ctx.fill()}
     if(!LOWFX){const q=P([0,0,14]);shine('176,106,216',q[0],q[1],20+k*26,.35*(1-k)*Math.min(1,k*8))}});
   run(L);
   if(A.stars>0)stars(P(X.T([0,0,43])),9,A.stars);
   ctx.restore()}
-reg('mushroom',{n:'Fungo',g:1,dur:{idle:2.6,walk:.9,attack:1.3,hit:.6}},mushroom);
+reg('mushroom',{n:'Fungo',g:1,an:['idle','walk','prep','attack','hit','die'],dur:{idle:2.6,walk:.9,prep:.8,attack:1.3,hit:.6,die:.9}},mushroom);
 
 // ------------------------------------------------------------------ SLIME: the version Denis chose (NE.slime, sprite/nemici/disegno_nemici.js: a teschio
 // inside, yellow eyes, a mouth with teeth), unchanged; the big one and the lava one only change size and colour. 'hit' (the original has no
 // such move): knocked back and squashed, with the dizzy stars
 const SLV={slime:{sc:1.15},bigslime:{sc:1.7,gel:'#4f8a30',gelD:'#335a22',gelF:'#26401a'},magmaslime:{sc:1.05,gel:'#ff7a2e',gelD:'#b8401a',gelF:'#7a2a10',glow:'255,120,40'}};
+// 'prep': reared back open-mouthed as at the start of its lunge (the model's own attack held at that moment), quivering and swelling;
+// 'die': it melts into a puddle that spreads and simmers, a last bubble or two (the model itself is Denis's and does not change)
 const slimeOf=id=>(x,y,face,anim,p,sc,o)=>{o=o||{};const S=SLV[id],k=(sc||1)*S.sc,op={gel:S.gel,gelD:S.gelD,gelF:S.gelF};
-  if(S.glow&&!LOWFX)shine(S.glow,x,y-9*k,26*k,.28+.06*Math.sin(p*TAU));
+  if(S.glow&&!LOWFX)shine(S.glow,x,y-9*k*(anim==='die'?1-.7*ez(cl(p/.6,0,1)):1),26*k*(anim==='die'?1-.5*p:1),(.28+.06*Math.sin(p*TAU))*(anim==='die'?1-p:1));
+  if(anim==='prep'){const ph=p*TAU,b=Math.sin(ph*2),sv=Math.sin(ph*5)*.55;ctx.save();ctx.translate(x+sv*k,y);ctx.scale(1+.04*b,1-.03*b);NE.slime(0,0,face,'attack',.24+.03*b,k,op);ctx.restore();return}
+  if(anim==='die'){const m=ez(cl(p/.62,0,1)),sp=ez(cl((p-.15)/.7,0,1)),gc=S.gelD||'#3f6a2a',gf=S.gel||'#5f9a3a';
+    // the puddle: under the body, wider and wider, its rim darker, a shine on it
+    {const rx=(9+16*sp)*k,ry=rx*.42*C.KR(),pa=cl(p/.2,0,1);ctx.save();ctx.globalAlpha*=pa;ctx.fillStyle=C.rgba(gc,.85*(1-.35*cl((p-.75)/.25,0,1)));ctx.beginPath();ctx.ellipse(x,y+1*k,rx,ry,0,0,TAU);ctx.fill();
+      ctx.strokeStyle=INK;ctx.lineWidth=1.6*k;ctx.stroke();ctx.fillStyle=C.rgba(gf,.75);ctx.beginPath();ctx.ellipse(x-rx*.12,y,rx*.78,ry*.62,0,0,TAU);ctx.fill();
+      ctx.fillStyle='rgba(255,255,255,.35)';ctx.beginPath();ctx.ellipse(x-rx*.35,y-ry*.25,rx*.22,ry*.18,0,0,TAU);ctx.fill();ctx.restore()}
+    // the body sinking into it, flatter and wider
+    if(m<.98){ctx.save();ctx.globalAlpha*=1-m*.85;ctx.translate(x,y);ctx.scale(1+.7*m,1-.86*m);NE.slime(0,0,face,'idle',.1+.3*p,k,op);ctx.restore()}
+    // bubbles that rise and pop on the puddle
+    if(!o.noFx)for(let j=0;j<3;j++){const u=(p*2.2+j*.37)%1,on=p>.35&&p<.95;if(!on)continue;const bx=x+(j-1)*7*k+Math.sin(j*2.1)*3*k,by=y-u*4*k,r=(1.2+1.8*Math.sin(u*Math.PI))*k;
+      ctx.save();ctx.globalAlpha*=Math.sin(u*Math.PI);ctx.strokeStyle=INK;ctx.lineWidth=.9*k;ctx.fillStyle=C.rgba(gf,.9);ctx.beginPath();ctx.arc(bx,by,r,0,TAU);ctx.fill();ctx.stroke();ctx.restore()}
+    return}
   if(anim!=='hit')return NE.slime(x,y,face,anim,p,k,op);
   const kb=hitK(p),V0=V(face),b=V0.P([-4*kb,0,0]);ctx.save();ctx.translate(x+b[0]*k,y+b[1]*k);ctx.scale(1+.14*kb,1-.16*kb);NE.slime(0,0,face,'idle',p,k,op);ctx.restore();
   if(p<.75)stars([x+b[0]*k,y-24*k],8*k,1-p/.75)};
-reg('slime',{n:'Slime',g:1,an:['idle','walk','attack','hit'],dur:{idle:2.4,walk:.9,attack:1.2,hit:.6},lab:{walk:'Salta'}},slimeOf('slime'));
-reg('bigslime',{n:'Slime grande',g:1,an:['idle','walk','attack','hit'],dur:{idle:2.6,walk:1.05,attack:1.3,hit:.6},lab:{walk:'Salta'}},slimeOf('bigslime'));
-reg('magmaslime',{n:'Slime di lava',g:2,an:['idle','walk','attack','hit'],dur:{idle:2.4,walk:.9,attack:1.2,hit:.6},lab:{walk:'Salta'}},slimeOf('magmaslime'));
+reg('slime',{n:'Slime',g:1,an:['idle','walk','prep','attack','hit','die'],dur:{idle:2.4,walk:.9,attack:1.2,hit:.6,prep:.8,die:.9},lab:{walk:'Salta'}},slimeOf('slime'));
+reg('bigslime',{n:'Slime grande',g:1,an:['idle','walk','prep','attack','hit','die'],dur:{idle:2.6,walk:1.05,attack:1.3,hit:.6,prep:.8,die:.9},lab:{walk:'Salta'}},slimeOf('bigslime'));
+reg('magmaslime',{n:'Slime di lava',g:2,an:['idle','walk','prep','attack','hit','die'],dur:{idle:2.4,walk:.9,attack:1.2,hit:.6,prep:.8,die:.9},lab:{walk:'Salta'}},slimeOf('magmaslime'));
 
 // ------------------------------------------------------------------ PIPISTRELLO: a big purple ball that is head and body at once (drawBat), two
 // pointed ears pink inside, yellow eyes, two little fangs; wings of membrane spread to the sides with a scalloped edge, the membrane facing
@@ -13699,6 +13726,12 @@ function bat(x,y,face,anim,p,sc,o){sc=sc||1;o=o||{};const V0=V(face),{P,D,F}=V0,
     const v=keys([[0,[0,0,0]],[.35,[-3,4.5,-.4]],[.5,[11,-5,.7]],[.62,[8,-3,.45]],[1,[0,0,0]]],p);A.B=[v[0],0,v[1]];A.lean=v[2];
     {const w1=1-sstep(.3,.38,p),w3=sstep(.58,.66,p);A.flap=Math.sin(ph*4.5)*w1+Math.sin(ph*3)*w3-.25*(1-w1-w3)}A.fold=p>.36&&p<.64?Math.sin((p-.36)/.28*Math.PI):0;A.open=p>.18&&p<.66?1:0;A.squint=.8*sstep(.27,.33,p)*(1-sstep(.57,.63,p))}
   else if(anim==='hit'){const kb=hitK(p);A.B=[-3.5*kb,0,1.5*kb];A.lean=-.35*kb;A.roll=.16*kb;A.shut=p<.5?1:0;A.stars=p<.75?1-p/.75:0;A.flap=Math.sin(ph*2)*.4;A.fold=.5*Math.max(0,kb)}
+  else if(anim==='prep'){// gets ready to dive: reared up and back, mouth wide, the wings fluttering high, eyes narrowed (held as long as the game wants)
+    A.B=[-3+.25*Math.sin(ph*5),0,4.2+.6*Math.sin(ph*2)];A.lean=-.38;A.flap=.55+.3*Math.sin(ph*5);A.open=1;A.squint=.75}
+  else if(anim==='die'){// .0-.16 the blow, .16-.72 it spins down with the wings folding, then lies on the ground, the wings flat, dizzy
+    const k1=ez(cl(p/.16,0,1)),k2=cl((p-.16)/.56,0,1),fall=k2*k2,land=p>.72?(p-.72)/.28:0;
+    A.B=[-3*k1,0,1.2*k1*(1-fall)+(-Z0+r*.85)*fall+(land>0?1.6*Math.sin(land*Math.PI)*Math.exp(-land*3):0)];A.yaw=k2*TAU*1.25;A.lean=-.3*k1*(1-k2)-.15*k2;A.roll=.45*k2;
+    A.fold=k2<1?.8*Math.sin(k2*Math.PI):0;A.flap=p<.72?Math.sin(ph*5)*(1-k2)-.6*k2:-.6;A.shut=1;A.open=p<.3?1:0;A.stars=land>0?.85-.35*land:0}
   else{A.flap=Math.sin(ph*2);A.B=[0,0,1.6*Math.sin(ph)];A.yaw=look(p,.4);A.blink=blink(p,.55,.07)}
   const X=frame(A,Z0),Cb=[0,0,Z0],dT=D(Cb);
   floor(V0,x,y,sc,A.B,10.5,4.2,.25,Z0+A.B[2]);
@@ -13718,18 +13751,23 @@ function bat(x,y,face,anim,p,sc,o){sc=sc||1;o=o||{};const V0=V(face),{P,D,F}=V0,
     eyes(null,q,r,{at,dir:[1,.38,.14],kind:'dark',col:BTC.eye,rx:2.25,ry:2.5,blink:A.blink,squint:A.squint,shut:A.shut,lr:.55,glow:'255,201,60'});
     if(A.open)mouth(null,q,r,[1,0,-.34],{at,kind:'open',w:2.6,h:1.9,open:1,fang:BTC.fang,fh:1.8});else mouth(null,q,r,[1,0,-.3],{at,kind:'fangs',w:2,bow:.8,fang:BTC.fang,fh:1.9})});
   run(L);if(A.stars>0)stars(P(X.T([0,0,Z0+r+4])),8,A.stars);ctx.restore()}
-reg('bat',{n:'Pipistrello',g:1,an:['idle','walk','attack','hit'],dur:{idle:2.2,walk:.7,attack:1.2,hit:.6},lab:{walk:'Vola',attack:'Picchiata'}},bat);
+reg('bat',{n:'Pipistrello',g:1,an:['idle','walk','prep','attack','hit','die'],dur:{idle:2.2,walk:.7,prep:.7,attack:1.2,hit:.6,die:.9},lab:{walk:'Vola',attack:'Picchiata'}},bat);
 
 // ------------------------------------------------------------------ PIANTA: a pink flower on a green stem with two leaves on the floor (drawPlant): seven
 // petals round a yellow face with a mouth and three white teeth, the back of the flower green. Rooted: it turns to look at you, sways, the
 // petals turn slowly; the attack swells the flower, opens the mouth wide and spits (the ring of seeds is the game's)
 const PLC={leaf:'#4f8a34',stem:'#5f9e3c',petal:'#d65ba8',petalB:'#a8467f',disc:'#f2d36b',back:'#4f8a34',mouth:'#5a1f2e',tooth:'#fff6e0'};
 function plant(x,y,face,anim,p,sc,o){sc=sc||1;o=o||{};const V0=V(face),{P,D,F}=V0,ph=p*TAU;
-  const A={sway:0,head:1,open:.3,spin:0,lean:0,stars:0,flare:0,yaw:0};
+  const A={sway:0,head:1,open:.3,spin:0,lean:0,stars:0,flare:0,yaw:0,droop:0,fall:-1};
   if(anim==='attack'){// .0-.42 the flower swells and leans back, the mouth opens wide; .42-.5 it spits (snaps forward); .5-1 settles
     const k1=ez(cl(p/.42,0,1)),k2=cl((p-.42)/.08,0,1),k3=ez(cl((p-.5)/.5,0,1));A.head=1+.18*k1*(1-k3);A.open=p<.42?.3+.7*k1:1-.7*k3;A.lean=p<.42?-.18*k1:p<.5?lerp(-.18,.2,k2):.2*(1-k3);
     A.flare=p<.5?k1:1-k3;A.spin=p*.5;A.sway=.04*Math.sin(ph)}
   else if(anim==='hit'){const kb=hitK(p);A.lean=-.32*kb;A.sway=.12*kb;A.stars=p<.75?1-p/.75:0;A.open=lerp(.8,.3,sstep(.34,.46,p));A.head=1-.06*kb}
+  else if(anim==='prep'){// gets ready to spit: the flower swollen and leaning back, the mouth wide open, the petals flared, a shiver
+    const b=Math.sin(ph*2);A.head=1.14+.04*b;A.open=.85+.12*b;A.lean=-.16+.02*Math.sin(ph*5);A.flare=.85;A.spin=p*.3;A.sway=.025*Math.sin(ph*5)}
+  else if(anim==='die'){// wilts: .0-.18 the blow, .18-.73 the stem bends over until the flower rests on the ground, the petals closing, two of them falling
+    const k1=ez(cl(p/.18,0,1)),k2=ez(cl((p-.18)/.55,0,1));A.lean=-.3*k1*(1-k2)+1.15*k2;A.droop=k2;A.head=1-.06*k1-.14*k2;A.open=lerp(.8,.05,k2);A.flare=-.9*k2;
+    A.sway=.05*Math.sin(ph*3)*(1-k2);A.fall=p>.4?(p-.4)/.6:-1}
   else{A.sway=.07*Math.sin(ph);A.lean=.03*Math.sin(ph*2);A.spin=p;A.open=.3+.12*Math.sin(ph*2);A.yaw=look(p,.25)}
   floor(V0,x,y,sc,[0,0,0],16,5.6,.3);
   ctx.save();ctx.translate(x,y);ctx.scale(sc,sc);const L=parts();
@@ -13737,7 +13775,7 @@ function plant(x,y,face,anim,p,sc,o){sc=sc||1;o=o||{};const V0=V(face),{P,D,F}=V
   for(const[a,len0] of[[Math.PI/2+.12,20],[-Math.PI/2-.12,20],[Math.PI*.98,12]]){const d=[Math.cos(a)*.97,Math.sin(a)*.97,.16],sv=[-Math.sin(a),Math.cos(a),0],b=[Math.cos(a)*1.2,Math.sin(a)*1.2,1];
     L.add(D(add(b,mul(d,6)))-30,()=>leaf(V0,b,d,sv,len0,len0*.4,PLC.leaf,{bend:-.45,vein:'rgba(20,50,10,.45)',round:.7,kl:.2,kd:.25}))}
   // the stem: a green curve from the floor to the flower, bending with the sway
-  const top=[1.2+A.lean*6,A.sway*10,20.5],stem=[0,.25,.5,.75,1].map(k=>[Math.sin(k*Math.PI)*-1.6+top[0]*k*k,top[1]*k*k,k*top[2]]);
+  const top=[1.2+A.lean*6+A.droop*4,A.sway*10,20.5-A.droop*13],stem=[0,.25,.5,.75,1].map(k=>[Math.sin(k*Math.PI)*-1.6+top[0]*k*k,top[1]*k*k,k*top[2]]);
   L.add(D([0,0,8])-1,()=>chain(V0,stem,[1.9,1.8,1.7,1.6,1.5],PLC.stem,{rim:.2}));
   // the flower head: it looks along its own direction (the face, turned up toward the camera a little), petals round a disc
   const yaw=A.yaw,fwd=nrm(C.rotZ(C.rotY([1,0,.56],-A.lean),yaw)),Hc=add(top,mul(fwd,2.2)),hk=A.head;let u=cross([0,0,1],fwd);u=nrm(u);const w=cross(fwd,u);
@@ -13759,21 +13797,31 @@ function plant(x,y,face,anim,p,sc,o){sc=sc||1;o=o||{};const V0=V(face),{P,D,F}=V
         ctx.beginPath();ctx.moveTo(a[0],a[1]);ctx.lineTo(b[0],b[1]);ctx.lineTo(c[0],c[1]);ctx.closePath();ctx.fill();ctx.stroke()}
       ctx.fillStyle='rgba(255,255,255,.4)';const hl=P(dq(-3.6,3.8,1.45));ball(hl,1.3);ctx.fill();ctx.restore()}
     rimPoly(H,.25)});
+  // (wilting: two petals come off and float down, turning)
+  if(A.fall>=0&&!o.noFx)L.add(D(Hc)+5,()=>{for(let j=0;j<2;j++){const u=cl(A.fall*1.25-j*.25,0,1);if(u<=0)continue;const q=P(add(Hc,[(j?-4:5)+Math.sin(u*5+j)*3,(j?5:-3)*u,8-u*Math.max(4,Hc[2]+6)])),a=u*4+j;
+      ctx.save();ctx.globalAlpha*=1-cl((u-.8)/.2,0,1);ctx.translate(q[0],q[1]);ctx.rotate(a);ctx.fillStyle=PLC.petal;ctx.strokeStyle=INK;ctx.lineWidth=1.1;ctx.beginPath();ctx.ellipse(0,0,4.6,2,0,0,TAU);ctx.fill();ctx.stroke();ctx.restore()}});
   run(L);if(A.stars>0)stars(P(add(Hc,[0,0,12])),9,A.stars);ctx.restore()}
-reg('plant',{n:'Pianta',g:1,an:['idle','attack','hit'],dur:{idle:2.8,attack:1.3,hit:.6},lab:{attack:'Sputa semi'}},plant);
+reg('plant',{n:'Pianta',g:1,an:['idle','prep','attack','hit','die'],dur:{idle:2.8,prep:.8,attack:1.3,hit:.6,die:.9},lab:{attack:'Sputa semi'}},plant);
 
 // ------------------------------------------------------------------ FUOCO FATUO: a floating drop of light, round below and pointed above, lilac at the tip
 // and sky blue at the bottom (drawWisp), two dark eyes; the tip sways like a flame. It drifts, charges and lets go a pulse (its bolts are the
 // game's), and vanishes to appear elsewhere ('tele')
 const WSC={top:'#c7b3f2',bot:'#7fd3f0',eye:'#2a1f4a'},WPR=[[0,0],[1.4,6.6],[3.6,9.4],[6.4,10.4],[9.4,9.8],[12.4,8],[15.6,5.4],[19,3],[22.6,1.3],[26.8,0]];
 function wisp(x,y,face,anim,p,sc,o){sc=sc||1;o=o||{};const V0=V(face),{P,D,F}=V0,ph=p*TAU,Z0=10;
-  const A={B:[0,0,0],lean:0,roll:0,s:0,yaw:0,sway:0,blink:1,squint:0,shut:0,stars:0,fade:1,pulse:-1,ring:0};
+  const A={B:[0,0,0],lean:0,roll:0,s:0,yaw:0,sway:0,blink:1,squint:0,shut:0,stars:0,fade:1,pulse:-1,ring:0,charge:0,spark:-1};
   if(anim==='walk'){A.B=[0,0,1.6*Math.sin(ph*2)];A.lean=.22;A.sway=-.9+.5*Math.sin(ph*2);A.yaw=.1*Math.sin(ph)}
   else if(anim==='attack'){const k1=ez(cl(p/.4,0,1)),k3=ez(cl((p-.5)/.5,0,1));A.s=p<.4?.14*k1:p<.5?.14-.3*(p-.4)/.1:-.16*(1-k3);A.squint=p<.5?k1:1-k3;A.pulse=p>=.46?(p-.46)/.54:-1;A.sway=Math.sin(ph*3)*.4;A.B=[0,0,1.2*Math.sin(ph)]}
   else if(anim==='tele'){// fades and shrinks away (.0-.38), gone (.38-.6), comes back where the ring is (.6-1)
     const k=p<.38?1-ez(p/.38):p<.6?0:ez((p-.6)/.4);A.fade=k;A.s=-.5*(1-k);A.ring=p>.3&&p<.75?Math.sin((p-.3)/.45*Math.PI):0;A.sway=Math.sin(ph*2)*.6}
   else if(anim==='hit'){const kb=hitK(p);A.B=[-3*kb,0,1.2*kb];A.lean=-.35*kb;A.roll=.1*kb;A.s=-.1*kb;A.shut=p<.5?1:0;A.stars=p<.75?1-p/.75:0}
+  else if(anim==='prep'){// gathers its light: swelling and brightening, the flame swaying faster, eyes narrowed
+    const b=Math.sin(ph*2);A.s=.12+.03*b;A.squint=.8;A.sway=Math.sin(ph*4)*.55;A.B=[0,0,1.5+.8*b];A.charge=.6+.4*(.5+.5*b)}
+  else if(anim==='die'){// .0-.15 the blow, then it flickers, shrinks and turns as it goes out, scattering little sparks
+    const k1=ez(cl(p/.15,0,1)),k2=cl((p-.15)/.7,0,1);A.fade=(1-k2)*(.78+.22*Math.sin(ph*6));A.s=-.15*k1-.5*k2;A.yaw=k2*TAU;A.B=[-2*k1,0,-4*k2];A.shut=1;A.sway=Math.sin(ph*3)*.6;A.spark=p>.25?(p-.25)/.75:-1}
   else{A.B=[0,0,2*Math.sin(ph)];A.sway=.7*Math.sin(ph*2);A.yaw=look(p,.3);A.blink=blink(p,.4,.07)}
+  if(A.spark>=0&&!o.noFx){const k=A.spark;ctx.save();for(let j=0;j<7;j++){const a=j/7*TAU+.4,r=(6+k*22)*(.7+.3*Math.sin(j*2.3)),q=P(Math.cos(a)*r,Math.sin(a)*r,Z0+6+k*10*Math.sin(j*1.7+1));
+      ctx.globalAlpha=(1-k)*Math.min(1,k*6);ctx.fillStyle=j%2?WSC.top:WSC.bot;ctx.beginPath();ctx.arc(x+q[0]*sc,y+q[1]*sc,(1.6-k)*sc+.4,0,TAU);ctx.fill()}ctx.restore()}
+  if(A.charge>0&&!o.noFx&&!LOWFX){const q=P(0,0,Z0+8);shine('199,179,242',x+q[0]*sc,y+q[1]*sc,(18+8*A.charge)*sc,.38*A.charge)}
   if(A.ring>0&&!LOWFX){const q=P(0,0,0);ctx.save();ctx.strokeStyle=`rgba(138,91,196,${(.75*A.ring).toFixed(3)})`;ctx.lineWidth=2.5*sc;ctx.beginPath();ctx.ellipse(x+q[0]*sc,y+q[1]*sc,(16-6*A.ring)*sc,(16-6*A.ring)*.45*sc*C.KR(),0,0,TAU);ctx.stroke();ctx.restore()}
   if(A.fade<=.02)return;
   const X=frame(A,Z0);floor(V0,x,y,sc,A.B,9,3.6,.22*A.fade,Z0);
@@ -13787,7 +13835,7 @@ function wisp(x,y,face,anim,p,sc,o){sc=sc||1;o=o||{};const V0=V(face),{P,D,F}=V0
   ctx.restore();rimPoly(H,.35);
   if(A.pulse>=0&&!o.noFx){const k=A.pulse,fi=Math.min(1,k*8),q=P(X.T([0,0,Z0+7]));ctx.strokeStyle=`rgba(199,179,242,${(.8*(1-k)*fi).toFixed(3)})`;ctx.lineWidth=2.4*(1-k)+.5;ball(q,8+k*20);ctx.stroke();shine('160,140,240',q[0],q[1],14+k*10,.4*(1-k)*fi)}
   ctx.restore();if(A.stars>0)stars(P(X.T([0,0,Z0+27])).map((v,i)=>i?y+v*sc:x+v*sc),7*sc,A.stars)}
-reg('wisp',{n:'Fuoco fatuo',g:1,an:['idle','walk','attack','tele','hit'],dur:{idle:2.4,walk:1,attack:1.2,tele:1.4,hit:.6},lab:{walk:'Fluttua',attack:'Lampo',tele:'Sparisce'}},wisp);
+reg('wisp',{n:'Fuoco fatuo',g:1,an:['idle','walk','prep','attack','tele','hit','die'],dur:{idle:2.4,walk:1,prep:.8,attack:1.2,tele:1.4,hit:.6,die:.9},lab:{walk:'Fluttua',attack:'Lampo',tele:'Sparisce'}},wisp);
 })();
 // Nemici del primo capitolo, seconda parte, rifatti in 3D come l'Arciere: stesse forme e stessi colori di oggi nel gioco (ECOL e i disegni di
 // src/js), dipinti con la cassetta C3 (base3d.js). Ogni mossa dipende solo da p (0..1).
@@ -13823,20 +13871,25 @@ const BC={shell:'#e0662a',flash:'#fff2d0',spot:'#3a2a24',head:'#3a2a24',leg:'#3a
 // the shell (an ellipsoid dome over the ground), the head, the spots seen from above as in the game ([x, y, radius] on a 24×18 shell)
 const BS=1.08,BCs=[-1.1,0,3.6],BRs=[12.4*BS,9.6*BS,8.6*BS],BHc=[11.9,0,3.7],BRh=5.1,BSPOT=[[-5,4.5,2],[1,5,2],[-5,-4.5,2],[1,-5,2]];
 function beetle(x,y,face,anim,p,sc,o){sc=sc||1;o=o||{};const V0=V(face),{P,D,F}=V0,ph=p*TAU;
-  const A={B:[0,0,0],lean:0,roll:0,s:0,yaw:0,blink:1,shut:0,stars:0,sway:0,trail:0,flail:0,tapL:0,tapR:0};
-  // arming: o.arm (0..1, how far the arming has gone) from the game; 'attack' arms along p and lets go at the very end, so it loops
-  const k=o.arm>0?cl(o.arm,0,1):anim==='attack'?(p<.9?p/.9:1-ez((p-.9)/.1)):0;
+  const A={B:[0,0,0],lean:0,roll:0,s:0,yaw:0,blink:1,shut:0,stars:0,sway:0,trail:0,flail:0,tapL:0,tapR:0,flip:0,out:0};
+  // arming: o.arm (0..1, how far the arming has gone) from the game; 'attack' arms along p and lets go at the very end, so it loops; 'prep'
+  // holds the start of it (braced, a shiver, the fuse a little brighter, no blinking yet)
+  const k=o.arm>0?cl(o.arm,0,1):anim==='attack'?(p<.9?p/.9:1-ez((p-.9)/.1)):anim==='prep'?.2+.06*Math.sin(ph*2):0;
   let st=null;
   if(anim==='walk'){// a fast scurry: two tripods of legs take turns, the body bobs on each and rocks from side to side
     st=stepper(p,.5);const up=Math.abs(Math.sin(ph));A.B=[0,0,.6*up];A.roll=.06*Math.sin(ph);A.lean=.05;A.trail=1;A.sway=.5*Math.sin(ph)}
   else if(anim==='hit'){const kb=hitK(p);A.lean=-.32*kb;A.B=[-3*kb,0,.8*kb];A.roll=.08*kb;A.shut=p<.55?1:0;A.stars=p<.75?1-p/.75:0;A.flail=kb}
+  else if(anim==='die'){// .0-.14 the blow, .14-.5 a hop that flips it on its back, then the legs wave in the air and curl up, the fuse goes out in a puff
+    const k1=ez(cl(p/.14,0,1)),fl=ez(cl((p-.14)/.36,0,1)),hop=Math.sin(cl((p-.14)/.36,0,1)*Math.PI);A.flip=fl;A.roll=Math.PI*fl;A.lean=-.25*k1*(1-fl);
+    A.B=[-2.4*k1,0,.8*k1*(1-fl)+7*hop+9.6*fl];A.shut=1;A.flail=p>.4?Math.max(0,1-(p-.4)/.5):0;A.out=cl((p-.3)/.25,0,1);A.stars=p>.55?.8:0}
+  else if(anim==='prep'){A.s=.02*Math.sin(ph);A.sway=.3*Math.sin(ph)}
   else{// breathing, looking round slowly, tapping a front foot now and then
     A.s=.03*Math.sin(ph);A.yaw=look(p,.3);A.blink=blink(p,.62,.08);A.sway=.6*Math.sin(ph+.6);A.tapL=bump(cl((p-.12)/.16,0,1));A.tapR=bump(cl((p-.68)/.16,0,1))}
   // arming: it braces on spread legs, trembles and swells
   const brace=sstep(0,.14,k),sw=sstep(.06,1,k)*.2;
   if(k>0){A.s-=.05*brace;A.B=add(A.B,[Math.sin(p*97)*.35*k,Math.cos(p*83)*.35*k,0])}
   // the blink of the armed shell: on and off, faster toward the end
-  const fl=k>0&&((1.6*k+4.4*k*k)%1)<.5?1:0;
+  const fl=k>0&&anim!=='prep'&&((1.6*k+4.4*k*k)%1)<.5?1:0;
   const X=frame(A,3);
   floor(V0,x,y,sc,A.B,16,6.8,.3,A.B[2]);
   ctx.save();ctx.translate(x,y);ctx.scale(sc,sc);const L=parts();
@@ -13844,13 +13897,17 @@ function beetle(x,y,face,anim,p,sc,o){sc=sc||1;o=o||{};const V0=V(face),{P,D,F}=
   // the legs: from under the rim of the shell, a knee a little up and out, the foot on the ground (the far ones first)
   for(const sd of[-1,1])for(const i of[-1,0,1]){const ph0=(i===0)===(sd>0)?0:.5,rt=[i*5.4,sd*7.5,2.4],ft=[i*9.3+1.1,sd*(13+brace*1.3)-Math.abs(i)*sd*.6,0];
     const s=st?st(ph0,2.8,2.4):{x:0,z:0},fw=A.flail?Math.sin(p*TAU*4+i*2+sd)*2.4*A.flail:0,tap=i===1?(sd<0?A.tapL:A.tapR)*1.8:0;
-    const foot=[ft[0]+s.x+A.B[0]+fw,ft[1]+A.B[1],s.z+Math.max(0,fw)*.6+tap];
+    // (on its back the feet go with the body, up in the air, and curl in toward it)
+    const cu=A.flip?cl((p-.62)/.3,0,1):0,foot=A.flip?X.T([ft[0]*(1-.35*cu)+fw,ft[1]*(1-.3*cu),s.z-1.5*cu+Math.max(0,fw)*.5]):[ft[0]+s.x+A.B[0]+fw,ft[1]+A.B[1],s.z+Math.max(0,fw)*.6+tap];
     L.add(D(X.T(rt))-(F(0,sd,0)<0?.5:0),()=>{const h=X.T(rt),[kn]=ik(h,foot,4.5,5,X.Rd([0,sd*.7,1]));tube(V0,[h,kn,foot],1.05,BC.leg,{lw:1.5})})}
   // the fuse: out of the back of the shell, up and over to the left; the spark at its end
   const fr=ellAt(Cs,Rs,null,[-Math.cos(.9),0,Math.sin(.9)]),fT=[-A.trail*1.5,-.4+A.sway*.4,0];
   const fpts=[fr,add(fr,[-1.1,-.2,3.1]),add(fr,add([-2.1,-1.1,5.6],mul(fT,.5))),add(fr,add([-2.6,-3,7],fT))];
   L.add(D(X.T(fr)),()=>{const q=fpts.map(X.T);tube(V0,q,1.3,BC.fuse,{lw:1.8,shade:true});
-    const e=P(q[3]),r=2.4*(1+k*.5);shine('255,190,90',e[0],e[1],r*(3+k*2),.5+.3*k);
+    const e=P(q[3]),r=2.4*(1+k*.5)*(1-A.out);
+    // (dying, the spark goes out in a little puff of grey smoke)
+    if(A.out>0&&!o.noFx){for(let j=0;j<3;j++){const u=cl(A.out*1.2-j*.12,0,1);if(u<=0||u>=1)continue;ctx.fillStyle=`rgba(150,140,130,${(.55*(1-u)).toFixed(3)})`;ball([e[0]+(j-1)*2.4*u,e[1]-u*10-j*2],1.6+u*4);ctx.fill()}}
+    if(r<.2)return;shine('255,190,90',e[0],e[1],r*(3+k*2),.5+.3*k);
     ctx.fillStyle=Math.sin(G.t*30)>0?BC.spk:BC.spk2;ball(e,r);ctx.fill();ctx.fillStyle='#fffbe8';ball([e[0]-r*.2,e[1]-r*.2],r*.45);ctx.fill();
     // the sparkle: four short rays that turn and flicker, longer when it is armed
     if(!o.noFx&&!LOWFX){ctx.strokeStyle=rgba('#ffd86b',.85);ctx.lineWidth=1;ctx.lineCap='round';for(let j=0;j<4;j++){const a=j*TAU/4+p*TAU*3+Math.sin(G.t*20)*.3,l=r*(1.5+.6*Math.sin(G.t*25+j*2)+k);seg([e[0]+Math.cos(a)*r*1.1,e[1]+Math.sin(a)*r*1.1],[e[0]+Math.cos(a)*l,e[1]+Math.sin(a)*l]);ctx.stroke()}}});
@@ -13869,7 +13926,7 @@ function beetle(x,y,face,anim,p,sc,o){sc=sc||1;o=o||{};const V0=V(face),{P,D,F}=
   run(L);
   if(A.stars>0)stars(P(X.T([0,0,18])),9,A.stars);
   ctx.restore()}
-reg('beetle',{n:'Scarabeo bomba',g:1,dur:{idle:2.4,walk:.36,attack:.8,hit:.6},lab:{idle:'fermo',walk:'corre',attack:'si arma',hit:'colpito'}},beetle);
+reg('beetle',{n:'Scarabeo bomba',g:1,an:['idle','walk','prep','attack','hit','die'],dur:{idle:2.4,walk:.36,prep:.8,attack:.8,hit:.6,die:1},lab:{idle:'fermo',walk:'corre',prep:'si prepara',attack:'si arma',hit:'colpito',die:'muore'}},beetle);
 
 // ------------------------------------------------------------------ FIORE OCCHIO: a pink flower whose heart is a big eye (drawEyeflower), on a thorny
 // green stem; two thorny vines with pink buds curl up at its sides, four leaves lie on the ground. It is rooted: the stem sways and the head
@@ -13933,6 +13990,11 @@ function eyeflower(x,y,face,anim,p,sc,o){sc=sc||1;o=o||{};const V0=V(face),V1=o.
     const K=keys([[0,[0,0,.22,0]],[.55,[-2.6,1.4,.34,.4]],[.6,[2.8,-.4,.12,.3]],[.76,[-3.2,-.8,.32,-.08]],[.9,[.6,0,.18,0]],[1,[0,0,.22,0]]],p);
     A.hx=K[0];A.hz=K[1];A.tilt=K[2];A.open=K[3];A.wind=p<.55?ez(p/.55):1-sstep(.55,.82,p);A.flash=p>=.55&&p<.8?1-(p-.55)/.25:0;A.sway=.5*Math.sin(ph)}
   else if(anim==='hit'){const kb=hitK(p);A.hx=-5*kb;A.hz=-1.6*kb;A.tilt=.22+.45*kb;A.open=-.25*kb;A.shut=p<.55?1:0;A.stars=p<.75?1-p/.75:0;A.sway=1.4*Math.sin(p*TAU*2)*(1-p)}
+  else if(anim==='prep'){// gets ready: drawn back as at the middle of its wind-up, the petals open, the eye reddening and glowing, a shiver
+    const b=Math.sin(ph*2);A.hx=-1.8+.25*Math.sin(ph*5);A.hz=1+.3*b;A.tilt=.3;A.open=.3+.08*b;A.wind=.6+.2*(.5+.5*b);A.sway=.4*Math.sin(ph)}
+  else if(anim==='die'){// wilts: .0-.18 the blow, .18-.75 the stem bends over until the flower lies on the ground, the eye closing, the petals folding
+    const k1=ez(cl(p/.18,0,1)),k2=ez(cl((p-.18)/.57,0,1));A.hx=-4*k1*(1-k2)+9*k2;A.hz=-1.4*k1*(1-k2)-27*k2;A.tilt=.22+.4*k1*(1-k2)-.95*k2;A.open=-.25*k1-.35*k2;
+    A.shut=1;A.sway=1.2*Math.sin(p*TAU*2)*(1-k2)-.8*k2}
   else{// at rest it sways on its stem, breathes with its petals, looks round and blinks
     A.hy=1.3*Math.sin(ph);A.hx=.6*Math.sin(ph*2+.4);A.hz=.5*Math.sin(ph*2);A.turn=look(p,.28);A.open=.07*Math.sin(ph*2+1);A.blink=blink(p,.58,.09);A.sway=Math.sin(ph+.8);
     A.gx=.3*Math.sin(ph*2+2);A.gy=look(p+.12,.5)}
@@ -13972,7 +14034,7 @@ function eyeflower(x,y,face,anim,p,sc,o){sc=sc||1;o=o||{};const V0=V(face),V1=o.
   run(L);
   if(A.stars>0)stars(P(add(H,[0,0,21])),10,A.stars);
   ctx.restore()}
-reg('eyeflower',{n:'Fiore occhio',g:1,an:['idle','attack','hit'],dur:{idle:2.6,attack:1.1,hit:.6},lab:{idle:'fermo',attack:'spine',hit:'colpito'}},eyeflower);
+reg('eyeflower',{n:'Fiore occhio',g:1,an:['idle','prep','attack','hit','die'],dur:{idle:2.6,prep:.8,attack:1.1,hit:.6,die:.9},lab:{idle:'fermo',prep:'si prepara',attack:'spine',hit:'colpito',die:'muore'}},eyeflower);
 
 // ------------------------------------------------------------------ OCCHIO D'OMBRA: a floating dark purple ball with one big pale almond eye (a slit
 // for a pupil, a purple glow), a crown of dark spiky tendrils on its top and back, six small dark orbs circling round it (drawShadoweye).
@@ -13985,7 +14047,7 @@ const SPK=[[0,1.45,17.5],[.6,1.02,13.5],[-.6,1.02,13.5],[1.6,.98,14.5],[-1.6,.98
 function shadoweye(x,y,face,anim,p,sc,o){sc=sc||1;o=o||{};const V0=V(face),{P,D,F}=V0,ph=p*TAU;
   // bob (z), lean, roll; open (the eye 0..1 wider), glow, blink (1 open), shut, gaze (gx up, gy right), the tendrils' sway, stream (blown
   // back) and bristle (stand up), the orbs' turn (spin), pull (closer in), flash (the beam goes)
-  const A={z:0,lean:0,roll:0,B:[0,0,0],s:0,open:0,glow:0,blink:1,shut:0,gx:0,gy:0,sway:1,stream:0,bristle:0,spin:p*TAU/2,pull:0,flash:0,stars:0,trem:0};
+  const A={z:0,lean:0,roll:0,B:[0,0,0],s:0,open:0,glow:0,blink:1,shut:0,gx:0,gy:0,sway:1,stream:0,bristle:0,spin:p*TAU/2,pull:0,flash:0,stars:0,trem:0,fade:1,smoke:-1};
   if(anim==='walk'){// drifting: leaning into it, the tendrils blown back, a quicker bob
     A.z=1.6*Math.sin(ph*2);A.lean=.3;A.roll=.06*Math.sin(ph);A.stream=1;A.sway=.8;A.spin=p*TAU*2/6*3;A.gy=.15*Math.sin(ph);A.trail=3.5}
   else if(anim==='attack'){// .0-.7 the stare: the eye opens wide and glows, the tendrils bristle, the orbs draw in and spin faster;
@@ -13994,12 +14056,21 @@ function shadoweye(x,y,face,anim,p,sc,o){sc=sc||1;o=o||{};const V0=V(face),{P,D,
     A.open=p<.7?k:1-sstep(.7,.95,p);A.glow=p<.7?k:1-sstep(.7,1,p);A.bristle=p<.7?k:1-sstep(.7,1,p);A.pull=A.bristle*.1;A.spin=p*TAU*4/6*1.5;A.trem=k*(1-sstep(.64,.72,p));
     A.flash=p>=.7&&p<.9?1-(p-.7)/.2:0;A.B=[-3.5*r,0,0];A.lean=-.2*r;A.z=1.2*Math.sin(ph)}
   else if(anim==='hit'){const kb=hitK(p);A.B=[-4*kb,0,1*kb];A.lean=-.35*kb;A.roll=.1*kb;A.shut=p<.55?1:0;A.stars=p<.75?1-p/.75:0;A.sway=1.6;A.spin=p*TAU/6}
+  else if(anim==='prep'){// gets ready to stare: the eye opening and filling with light, the tendrils bristling, the orbs drawing in, a tremble
+    const b=Math.sin(ph*2);A.open=.55+.12*b;A.glow=.5+.2*(.5+.5*b);A.bristle=.55;A.pull=.06;A.spin=p*TAU*2;A.trem=.45;A.z=1.2*Math.sin(ph)}
+  else if(anim==='die'){// .0-.15 the blow, then it spins, sinks and comes apart into purple smoke, the eye closing
+    const k1=ez(cl(p/.15,0,1)),k2=cl((p-.15)/.7,0,1);A.B=[-4*k1,0,1*k1];A.lean=-.3*k1*(1-k2);A.roll=.5*k2;A.shut=1;A.spin=p*TAU*3;A.sway=1.6;A.z=-14*k2*k2;
+    A.s=-.25*k2;A.fade=1-ez(cl((p-.35)/.55,0,1));A.smoke=p>.2?(p-.2)/.8:-1}
   else{A.z=2.4*Math.sin(ph);A.gy=look(p,.6);A.gx=.25*Math.sin(ph*2+1);A.blink=blink(p,.7,.08)}
   // the tremble of the stare: 8 and 6 Hz (faster shakes turn into a random jitter on the frames of a phone)
   if(A.trem)A.B=add(A.B,[Math.sin(p*TAU*9.6)*.4*A.trem,Math.sin(p*TAU*7.2)*.4*A.trem,0]);
   const Cz=26+A.z,X=frame(A,Cz),C0=[0,0,Cz],R0=12.5;
-  floor(V0,x,y,sc,A.B,11.5,4.2,.24,8+A.z*3);
-  ctx.save();ctx.translate(x,y);ctx.scale(sc,sc);const L=parts(),Cb=X.T(C0),dB=D(Cb);let eyeAt=null;
+  floor(V0,x,y,sc,A.B,11.5,4.2,.24*A.fade,8+A.z*3);
+  // (dying: puffs of its smoke going up and out)
+  if(A.smoke>=0&&!o.noFx){const k=A.smoke;ctx.save();for(let j=0;j<6;j++){const a=j/6*TAU+.5,u=cl(k*1.3-j*.06,0,1),r=(4+u*16),q=P(Math.cos(a)*r,Math.sin(a)*r,Cz*.6+u*18+Math.sin(j*1.9)*4);
+      ctx.fillStyle=`rgba(60,30,90,${(.5*Math.sin(u*Math.PI)).toFixed(3)})`;ctx.beginPath();ctx.arc(x+q[0]*sc,y+q[1]*sc,(3+u*5)*sc,0,TAU);ctx.fill()}ctx.restore()}
+  if(A.fade<=.02)return;
+  ctx.save();ctx.translate(x,y);ctx.scale(sc,sc);ctx.globalAlpha*=A.fade;const L=parts(),Cb=X.T(C0),dB=D(Cb);let eyeAt=null;
   // the body: a dark purple ball, lit from the upper left as the game paints it, a faint swirl of smoke turning inside, and the eye
   L.add(dB,()=>{const q=P(Cb);ink(2.5);ball(q,R0);const g=ctx.createRadialGradient(q[0]-R0*.34,q[1]-R0*.42,R0*.1,q[0]-R0*.05,q[1]+R0*.05,R0*1.12);
     g.addColorStop(0,SC.light);g.addColorStop(.42,SC.body);g.addColorStop(1,SC.dark);ctx.fillStyle=g;ctx.fill();ctx.stroke();
@@ -14049,7 +14120,7 @@ function shadowEye(V0,X,q,R0,face,A){const{F}=V0;
   // the two strokes out of the corners
   ctx.strokeStyle='rgba(190,110,255,.7)';ctx.lineWidth=1.2;ctx.lineCap='round';for(const sd of[-1,1]){seg(at(sd*(ew+2.6),0),at(sd*(ew+5.2),-.9));ctx.stroke()}
   ctx.restore();return ec}
-reg('shadoweye',{n:"Occhio d'ombra",g:1,dur:{idle:2.6,walk:1.2,attack:1.2,hit:.6},lab:{idle:'fermo',walk:'fluttua',attack:'fissa',hit:'colpito'}},shadoweye);
+reg('shadoweye',{n:"Occhio d'ombra",g:1,an:['idle','walk','prep','attack','hit','die'],dur:{idle:2.6,walk:1.2,prep:.8,attack:1.2,hit:.6,die:.9},lab:{idle:'fermo',walk:'fluttua',prep:'si prepara',attack:'fissa',hit:'colpito',die:'muore'}},shadoweye);
 })();
 // Nemici del secondo capitolo (Cenere e Forgia) rifatti in 3D come l'Arciere: stesse forme e colori di oggi nel gioco (drawImp e
 // drawObsidian), dipinti con la cassetta C3 (base3d.js). Ogni mossa dipende solo da p (0..1).
@@ -14114,6 +14185,13 @@ function imp(x,y,face,anim,p,sc,o){sc=sc||1;o=o||{};const V0=V(face),{P,D,F}=V0,
     A.sw=.42+.2*bump(cl((p-.25)/.3,0,1));A.tw=.4*Math.sin(ph*2);A.tc=-.6*v[0]}
   else if(anim==='hit'){const kb=hitK(p);A.lean=-.34*kb;A.B=[-3*kb,0,1.2*kb];A.roll=.12*kb;A.s=-.08*kb;A.shut=p<.5?1:0;A.stars=p<.75?1-p/.75:0;
     A.fl=.12+.3*Math.sin(ph*3)*(1-.5*kb);A.tw=.8*kb*Math.sin(ph*4);A.tc=.5*kb}
+  else if(anim==='prep'){// gets ready to spit (held): reared back and swollen, the fire glowing through it, eyes narrowed, the wings beating hard, a shiver
+    const b=Math.sin(ph*2);A.lean=-.3;A.B=[-2.2+.25*Math.sin(ph*5),0,1.8+.4*b];A.s=.05+.015*b;A.big=.065;A.fire=.82+.15*(.5+.5*b);A.squint=.9;
+    A.fl=.45+.3*Math.sin(ph*4);A.sw=.55;A.tw=.4*Math.sin(ph*2);A.tc=.18}
+  else if(anim==='die'){// .0-.15 the blow, .15-.6 it tumbles down backwards, the wings flailing, .6 it lands and bounces, then lies with its wings limp, dizzy
+    const k1=ez(cl(p/.15,0,1)),k2=cl((p-.15)/.45,0,1),fall=k2*k2,land=p>.6?(p-.6)/.4:0;
+    A.B=[-3*k1-3*k2,0,1.2*k1*(1-fall)+(-IZ+IR*.95)*fall+(land>0?2.2*Math.sin(land*Math.PI*2)*Math.exp(-land*5):0)];A.lean=-.34*k1-1.15*ez(k2);A.roll=.3*k2;A.s=-.08*k1;
+    A.shut=1;A.fl=p<.6?.12+.5*Math.sin(ph*5)*(1-k2):-.32;A.tw=.3*(1-land);A.tc=.4;A.stars=land>0?.85-.3*land:0}
   else{// hovering: quick beats, a slow bob, it looks round slowly, the tail swings
     A.fl=.12+.26*Math.sin(ph*6);A.B=[0,0,1.5*Math.sin(ph*2)+.35*Math.sin(ph*6-1.2)];A.yaw=look(p,.42);A.tw=Math.sin(ph*2+.6);A.s=.025*Math.sin(ph*6+.4);
     A.blink=blink(p,.7,.07);A.roll=.04*Math.sin(ph*2)}
@@ -14153,7 +14231,7 @@ function imp(x,y,face,anim,p,sc,o){sc=sc||1;o=o||{};const V0=V(face),{P,D,F}=V0,
   run(L);
   if(A.stars>0)stars(P(X.T([0,0,IZ+IR+8])),9,A.stars);
   ctx.restore()}
-reg('imp',{n:'Diavoletto',g:2,dur:{idle:2.4,walk:.8,attack:1.2,hit:.6}},imp);
+reg('imp',{n:'Diavoletto',g:2,an:['idle','walk','prep','attack','hit','die'],dur:{idle:2.4,walk:.8,prep:.8,attack:1.2,hit:.6,die:.9}},imp);
 
 // ------------------------------------------------------------------ GOLEM D'OSSIDIANA (drawObsidian): a round block of black glass
 const OC={hi:'#4f4a5c',mid:'#2a2530',lo:'#16131a',fist:'#2c2733',foot:'#24202a',foot2:'#1b1820',lava:'#ff7a2e',core:'#ffd27a',eye:'#ffb020',eyeL:'#fff1b0'};
@@ -14174,7 +14252,7 @@ function crack(V0,X,C,Rd,pts,glow){const{P,F}=V0,N=[];for(let i=0;i<pts.length-1
     ctx.strokeStyle='rgba(12,6,8,.7)';ctx.lineWidth=3.4;line(r);ctx.stroke();ctx.strokeStyle=OC.lava;ctx.lineWidth=1.9;ctx.stroke();ctx.strokeStyle=rgba(OC.core,.35+.55*glow);ctx.lineWidth=.8;ctx.stroke()}}
 function obsidian(x,y,face,anim,p,sc,o){sc=sc||1;o=o||{};const V0=V(face),{P,D,F}=V0,ph=p*TAU;
   // A: the body (B, lean, roll, s, yaw), the fists in the body's frame (hL, hR), the feet on the floor (fL, fR), the face, the heat of the lava
-  const A={B:[0,0,0],lean:0,roll:0,s:0,yaw:0,hL:[4,-OFY,17.5],hR:[4,OFY,17.5],fL:[1,-8,0],fR:[1,8,0],blink:1,shut:0,squint:0,heat:.5,dust:-1,stars:0,flare:0};
+  const A={B:[0,0,0],lean:0,roll:0,s:0,yaw:0,hL:[4,-OFY,17.5],hR:[4,OFY,17.5],fL:[1,-8,0],fR:[1,8,0],blink:1,shut:0,squint:0,heat:.5,dust:-1,stars:0,flare:0,shard:-1};
   if(anim==='walk'){// heavy steps: the body rocks from foot to foot, the fists swing against the feet
     const st=C.stepper(p,.55),a=st(0,3.2,2.6),b=st(.5,3.2,2.6),up=Math.abs(Math.sin(ph));A.fL=[1+a.x,-8,a.z];A.fR=[1+b.x,8,b.z];
     A.B=[0,-.7*Math.sin(ph),.9*up];A.roll=-.07*Math.sin(ph);A.lean=.06;A.s=-.03+.04*up;A.hL=[4-3.4*Math.cos(ph),-OFY,17.5+.8*up];A.hR=[4+3.4*Math.cos(ph),OFY,17.5+.8*up];A.heat=.5+.15*up}
@@ -14189,6 +14267,14 @@ function obsidian(x,y,face,anim,p,sc,o){sc=sc||1;o=o||{};const V0=V(face),{P,D,F
     A.dust=p>.8&&p<1?(p-.8)/.2:-1}
   else if(anim==='hit'){const kb=hitK(p);A.lean=-.24*kb;A.B=[-2.4*kb,0,.3*kb];A.s=-.07*kb;A.roll=.06*kb;A.shut=p<.5?1:0;A.stars=p<.75?1-p/.75:0;
     A.hL=[4-3*kb,-OFY-1.5*kb,17.5+3*kb];A.hR=[4-3*kb,OFY+1.5*kb,17.5+3*kb];A.heat=.5+.4*kb}
+  else if(anim==='prep'){// gets ready to charge (held): crouched, heating up, the fists drawn back, scraping the floor with a foot like a bull
+    const b=Math.sin(ph*2),q=(p*2)%1;A.lean=-.06;A.B=[-1.5,0,0];A.s=-.1;A.heat=.78+.15*(.5+.5*b);A.flare=.62+.2*(.5+.5*b);A.squint=.9;
+    A.fL=[1,-8,0];A.fR=[1-2.4+2.8*Math.cos(q*TAU),8,Math.max(0,Math.sin(q*TAU))*1.6];A.hL=[-4,-OFY+1,18.5+.4*b];A.hR=[-4,OFY-1,18.5+.4*b]}
+  else if(anim==='die'){// cracks up: .0-.2 the blow, the cracks blazing, .2-.62 the fists drop and the body slumps and splits, chips of glass flying,
+    // then the lava cools and goes dark
+    const k1=ez(cl(p/.2,0,1)),k2=ez(cl((p-.2)/.42,0,1)),cool=cl((p-.5)/.45,0,1);A.lean=-.24*k1*(1-k2)+.16*k2;A.B=[-2*k1,0,0];A.s=-.07*k1-.3*k2;A.roll=.06*k1+.1*k2;
+    A.shut=1;A.heat=lerp(.5+.6*k1,0,cool);A.flare=(1-cool)*(.5+.5*k1);const zf=OFR*.95/(1+A.s);A.hL=[4+2*k2,-OFY-3*k2,lerp(17.5+2*k1,zf,k2)];A.hR=[4+3*k2,OFY+2.5*k2,lerp(17.5+2*k1,zf,cl(k2*1.15,0,1))];
+    A.shard=p>.18&&p<.95?(p-.18)/.77:-1;A.dust=p>.55&&p<.95?(p-.55)/.4:-1}
   else{// standing: it breathes slowly, the fists float up and down, the lava pulses, it looks round
     const b=Math.sin(ph);A.s=.022*b;A.yaw=look(p,.3);A.blink=blink(p,.58,.07);A.hL=[4,-OFY,17.5+.9*Math.sin(ph+.6)];A.hR=[4,OFY,17.5+.9*Math.sin(ph+1.4)];A.heat=.45+.25*(.5+.5*Math.sin(ph*2))}
   const dv=Math.atan2(Math.sin(Math.PI/2-face),Math.cos(Math.PI/2-face)),cheat=.45*Math.sin(dv)*cl((Math.PI-Math.abs(dv))/(Math.PI/2),0,1);
@@ -14211,12 +14297,15 @@ function obsidian(x,y,face,anim,p,sc,o){sc=sc||1;o=o||{};const V0=V(face),{P,D,F
   for(const[sd,h] of[[-1,A.hL],[1,A.hR]]){const r0=X.T([4,sd*OFY,17.5]);L.add(D(r0)+.02,()=>{const c=X.T(h),E=ovol(V0,C.IDF,c,[OFR,OFR,OFR*.877],OC.fist,{rim:.45});E.path();ctx.fillStyle=glass(E,OC.hi,OC.fist,OC.lo);ctx.fill();ink(2.4);ctx.stroke();
     ctx.save();E.path(1);ctx.clip();crack(V0,C.IDF,c,[OFR,OFR,OFR*.877],[[.6,sd*.2,.75],[.9,sd*.35,.1]],A.heat);gloss(E,.9);ctx.restore()})}
   // the stamp at the end of the charge: dust round the feet and a few sparks
+  // (dying: chips of the black glass fly off the body and fall)
+  if(A.shard>=0&&!o.noFx)L.add(dT+30,()=>{const k=A.shard;for(let i=0;i<6;i++){const a=i/6*TAU+.3,u=cl(k*1.3-i*.05,0,1),r=OR[0]*.8+u*12,z=OZ+6+u*14-u*u*30,q=P([A.B[0]+Math.cos(a)*r,Math.sin(a)*r,Math.max(1,z)]),s0=2.6-u*.8,rt=u*5+i;
+      ctx.save();ctx.translate(q[0],q[1]);ctx.rotate(rt);ctx.beginPath();ctx.moveTo(-s0,-s0*.4);ctx.lineTo(0,-s0);ctx.lineTo(s0*.9,s0*.2);ctx.lineTo(-s0*.2,s0*.8);ctx.closePath();ctx.fillStyle=i%2?OC.mid:OC.lo;ctx.fill();ink(1);ctx.stroke();ctx.restore()}});
   if(A.dust>=0&&!o.noFx)L.add(dT+40,()=>{const k=A.dust;for(let i=0;i<7;i++){const a=i/7*TAU+.4,r=10+k*14,q=P([A.B[0]+Math.cos(a)*r,Math.sin(a)*r*1.1,1+k*3]);ctx.fillStyle=`rgba(80,70,80,${.42*(1-k)})`;ball(q,2+k*3.5);ctx.fill()}
     if(!LOWFX)for(let i=0;i<5;i++){const a=i/5*TAU+1.1,q=P([A.B[0]+Math.cos(a)*(6+k*16),Math.sin(a)*(6+k*16),4+k*14-k*k*10]);ctx.fillStyle=`rgba(255,${150+i*18},60,${1-k})`;ball(q,1.1);ctx.fill()}});
   run(L);
   if(A.stars>0)stars(P(X.T([0,0,OZ+OR[2]+8])),11,A.stars);
   ctx.restore()}
-reg('obsidian',{n:"Golem d'ossidiana",g:2,an:['idle','walk','attack','hit'],dur:{idle:2.8,walk:1.05,attack:1.6,hit:.6},lab:{attack:'Carica'}},obsidian);
+reg('obsidian',{n:"Golem d'ossidiana",g:2,an:['idle','walk','prep','attack','hit','die'],dur:{idle:2.8,walk:1.05,prep:.9,attack:1.6,hit:.6,die:1},lab:{attack:'Carica'}},obsidian);
 })();
 // Nemici del terzo capitolo (Palude e Canneto) rifatti in 3D come l'Arciere: stesse forme e colori di oggi nel gioco, dipinti con la
 // cassetta C3 (base3d.js). Ogni mossa dipende solo da p (0..1).
@@ -14320,6 +14409,12 @@ function frogPose(anim,p){const ph=p*TAU,A={B:[0,0,0],lean:0,roll:0,s:0,yaw:0,k:
     A.lean=keys([[0,0],[.5,-.14],[.6,.2],[.72,.08],[1,0]],p);A.B=[keys([[0,0],[.5,-.8],[.6,1.2],[.75,.4],[1,0]],p),0,0];
     A.open=keys([[0,0],[.54,0],[.6,1],[.68,.9],[.78,0],[1,0]],p);A.squint=keys([[0,0],[.5,.6],[.6,.2],[.78,0],[1,0]],p);A.puff=p>=.58&&p<.95?(p-.58)/.37:-1;A.arm=keys([[0,0],[.5,.15],[.6,-.2],[1,0]],p)}
   else if(anim==='hit'){const kb=hitK(p);A.lean=-.32*kb;A.B=[-2.6*kb,0,.5*kb];A.s=-.1*kb;A.roll=.07*kb;A.shut=p<.55?1:0;A.stars=p<.75?1-p/.75:0;A.k=.25*Math.max(0,kb);A.arm=-.4*kb;A.open=.35*(1-sstep(.34,.46,p));A.sac=0}
+  else if(anim==='prep'){// gets ready to spit (held): the throat sac swelling and swelling, drawn back, eyes narrowed, a shiver
+    const b=Math.sin(ph*2);A.sac=.72+.2*(.5+.5*b);A.s=-.06+.015*b;A.lean=-.12;A.B=[-.7+.15*Math.sin(ph*5),0,0];A.squint=.55;A.arm=.12}
+  else if(anim==='die'){// .0-.15 the blow, .15-.55 a startled hop up, .55 it lands flat on its belly with the legs splayed out behind, then still, dizzy
+    const k1=ez(cl(p/.15,0,1)),h=cl((p-.15)/.4,0,1),hop=Math.sin(h*Math.PI)*12,fl=p>.55?ez(cl((p-.55)/.12,0,1)):0;A.B=[-2*k1-2*h,0,hop];A.lean=-.3*k1*(1-h)+.18*fl;
+    A.s=p<.55?-.1*k1+.12*Math.sin(h*Math.PI):-.24*fl+.04*Math.sin(cl((p-.55)/.3,0,1)*Math.PI*2)*(1-cl((p-.55)/.3,0,1));A.roll=.08*k1;A.k=p<.55?.4*h:1;A.fold=0;
+    A.arm=p<.55?-.5*h:.7;A.shut=1;A.open=p>.5?.45:0;A.sac=0;A.stars=p>.65?.8:0}
   else{const b=Math.sin(ph);A.s=.02*b;A.yaw=look(p,.35);A.blink=blink(p,.42,.07);A.lean=-.02*b}
   return A}
 function frog(x,y,face,anim,p,sc,o){sc=sc||1;o=o||{};const V0=V(face),{P,D,F}=V0,A=frogPose(anim,p),X=frame(A,0),body=o.slow?FC.slow:FC.body,legC=o.slow?dk(FC.slow,.25):cmix(FC.body,FC.dark,.8);
@@ -14368,7 +14463,7 @@ function frog(x,y,face,anim,p,sc,o){sc=sc||1;o=o||{};const V0=V(face),{P,D,F}=V0
   run(L);
   if(A.stars>0)stars(P(X.T([2,0,30])),9,A.stars);
   ctx.restore()}
-reg('frog',{n:'Rana',g:3,sc:1,an:['idle','walk','attack','hit'],dur:{idle:2.6,walk:1,attack:.9,hit:.6},lab:{walk:'Saltella',attack:'Sputa'}},frog);
+reg('frog',{n:'Rana',g:3,sc:1,an:['idle','walk','prep','attack','hit','die'],dur:{idle:2.6,walk:1,prep:.8,attack:.9,hit:.6,die:1},lab:{walk:'Saltella',attack:'Sputa'}},frog);
 
 // ------------------------------------------------------------------ ZANZARA: a brown mosquito hovering in the air (EDRAW.mosquito): a round
 // head with two big red eyes and the long proboscis, the dark thorax, the striped abdomen hanging back and down, two transparent wings
@@ -14386,6 +14481,11 @@ function mozPose(anim,p){const ph=p*TAU,A={B:[0,0,0],lean:0,roll:0,s:0,yaw:0,bob
     A.lean=keys([[0,0],[.42,-.3],[.52,.62],[.72,.55],[.86,-.1],[1,0]],p);A.B=[keys([[0,0],[.44,-2.4],[.56,5],[.72,6],[.9,0],[1,0]],p),0,keys([[0,0],[.44,1.5],[.6,-2.5],[.74,-3],[.9,.5],[1,0]],p)];
     A.sweep=A.dive;A.legT=Math.max(A.dive,.2);A.shake=A.aim*(1-sstep(.4,.47,p));A.bob*=1-A.aim;A.flap=36;A.trail=p>.48&&p<.8?(p-.48)/.32:-1}
   else if(anim==='hit'){const kb=hitK(p);A.lean=-.45*kb;A.roll=.4*kb;A.B=[-3*kb,0,1.5*kb];A.shut=p<.55?1:0;A.stars=p<.75?1-p/.75:0;A.legT=-.5*kb;A.flap=12}
+  else if(anim==='prep'){// takes aim (held): reared back, trembling, the abdomen glowing red
+    A.aim=.85+.1*(.5+.5*Math.sin(ph*2));A.lean=-.28;A.B=[-2.2,0,1.4];A.shake=.8;A.flap=36;A.bob*=.2;A.legT=.2}
+  else if(anim==='die'){// .0-.15 the blow, then it spins down with the wings stopping, lands on its back, the legs curled up, dizzy
+    const k1=ez(cl(p/.15,0,1)),k2=cl((p-.15)/.5,0,1),fall=k2*k2;A.lean=-.45*k1*(1-k2)-.3*k2;A.roll=.4*k1+2.6*ez(k2);A.yaw=k2*TAU;A.B=[-3*k1,0,1.5*k1*(1-fall)-(MT[2]-3)*fall];
+    A.bob=0;A.flap=24*(1-k2);A.shut=1;A.legT=-.5-.6*k2;A.stars=p>.68?.8:0}
   else{A.yaw=look(p,.4);A.blink=blink(p,.62,.07)}
   return A}
 // a buzzing wing: an almond from the root along the span, flat in the plane of the span and the chord; transparent, a thin dark edge
@@ -14437,7 +14537,7 @@ function mosquito(x,y,face,anim,p,sc,o){sc=sc||1;o=o||{};const V0=V(face),{P,D,F
   run(L);
   if(A.stars>0)stars(P(X.T(add(MH,[0,0,6]))),7,A.stars);
   ctx.restore()}
-reg('mosquito',{n:'Zanzara',g:3,sc:1,an:['idle','walk','attack','hit'],dur:{idle:2.4,walk:1.2,attack:1.4,hit:.6},lab:{walk:'Vola',attack:'Mira e picchia'}},mosquito);
+reg('mosquito',{n:'Zanzara',g:3,sc:1,an:['idle','walk','prep','attack','hit','die'],dur:{idle:2.4,walk:1.2,prep:.8,attack:1.4,hit:.6,die:.9},lab:{walk:'Vola',attack:'Mira e picchia'}},mosquito);
 
 // ------------------------------------------------------------------ COCCODRILLO: a green crocodile (EDRAW.croc), a long animal seen from every
 // side: the body is a chain of ellipsoids along a spine that bends as it crawls (seamless: every outline first, then every fill), two rows
@@ -14465,6 +14565,11 @@ function crocPose(anim,p){const ph=p*TAU,A={B:[0,0,0],lean:0,roll:0,s:0,yaw:0,be
     // water; the part under it is cut away at o.water, the floor if not given)
     A.sink=keys([[0,0],[.3,1],[.7,1],[1,0]],p);A.lean=-.14*A.sink;A.tail=Math.sin(ph*2)*1.6;A.hy=Math.sin(ph)*.14;A.blink=blink(p,.9,.06)}
   else if(anim==='hit'){const kb=hitK(p);A.B=[-2.6*kb,0,.4*kb];A.lean=-.1*kb;A.roll=.06*kb;A.hp=-.25*kb;A.open=p<.4?.5:.04;A.shut=p<.55?1:0;A.stars=p<.75?1-p/.75:0;A.tail=3*kb;A.bend=-.8*kb}
+  else if(anim==='prep'){// gets ready to snap (held): the head reared up, the jaws open wide, the body drawn back, the tail lashing
+    const b=Math.sin(ph*2);A.open=.85+.12*(.5+.5*b);A.hp=-.2;A.hy=0;A.B=[-1.8+.2*Math.sin(ph*5),0,0];A.lean=-.05;A.tail=-1.4+.7*Math.sin(ph*3);A.blink=1}
+  else if(anim==='die'){// .0-.16 the blow, .16-.6 it rolls over onto its side, the belly showing, the jaws hanging open, the tail going limp, dizzy
+    const k1=ez(cl(p/.16,0,1)),k2=ez(cl((p-.16)/.44,0,1));A.B=[-2.6*k1,0,.4*k1+5.5*k2];A.lean=-.1*k1*(1-k2);A.roll=.06*k1+1.3*k2;A.hp=-.25*k1*(1-k2)+.1*k2;
+    A.open=.4*k2+(p<.3?.5*(1-k2):0);A.shut=1;A.tail=3*k1*(1-k2)+.6*k2;A.bend=-.8*k1*(1-k2)+.3*k2;A.hy=0;A.breath=0;A.blink=1;A.stars=p>.62?.8:0}
   return A}
 // where a point of the spine at x (rest) moves sideways, and the turn of the chain there
 function spineY(A,x){let y=0;if(A.wave)y+=.9*A.bend*Math.sin(x*.16+.6);else y+=.5*A.bend*Math.sin(x*.12);
@@ -14537,7 +14642,7 @@ function croc(x,y,face,anim,p,sc,o){sc=sc||1;o=o||{};const V0=V(face),{P,D,F}=V0
   run(L);
   if(A.stars>0)stars(P(Xh.T([10,0,16])),9,A.stars);
   ctx.restore()}
-reg('croc',{n:'Coccodrillo',g:3,sc:1,an:['idle','walk','attack','dive','hit'],dur:{idle:2.6,walk:.9,attack:.8,dive:2,hit:.6},lab:{walk:'Striscia',attack:'Morso',dive:'Si immerge'}},croc);
+reg('croc',{n:'Coccodrillo',g:3,sc:1,an:['idle','walk','prep','attack','dive','hit','die'],dur:{idle:2.6,walk:.9,prep:.8,attack:.8,dive:2,hit:.6,die:1},lab:{walk:'Striscia',attack:'Morso',dive:'Si immerge'}},croc);
 
 // ------------------------------------------------------------------ LUMACA: a yellow snail (EDRAW.snail) with a big purple shell coiled in a
 // spiral, a soft body that glides along the floor with ripples running down its foot, two eye stalks with round white eyes that bob about.
@@ -14553,6 +14658,11 @@ function snailPose(anim,p,o){const ph=p*TAU,A={B:[0,0,0],lean:0,roll:0,s:0,yaw:0
   else if(anim==='attack'){// the shell charge: .0-.14 it pulls into the shell, .14-.86 the shell rolls forward (two turns), .86-1 it comes out
     A.ins=keys([[0,0],[.12,1],[.88,1],[1,0]],p);const r=cl((p-.12)/.76,0,1);A.spin=ez(r)*TAU*2;A.bounce=Math.abs(Math.sin(r*Math.PI*4))*2.2*bump(r);A.arcs=r>0&&r<1?r:-1;A.shellB=0}
   else if(anim==='hit'){const kb=hitK(p);A.B=[-2.2*kb,0,.3*kb];A.lean=-.12*kb;A.ins=.65*Math.max(0,kb);A.shut=p<.55?1:0;A.stars=p<.75?1-p/.75:0;A.hp=-.1*kb}
+  else if(anim==='prep'){// gets ready to roll (held): pulled half into the shell, the shell rocking on its foot, the stalks low
+    A.ins=.72+.08*Math.sin(ph*2);A.spin=.22*Math.sin(ph*3);A.shellB=0;A.lean=-.04;A.st=[-.25,-.25]}
+  else if(anim==='die'){// .0-.15 the blow, .15-.45 it pulls into the shell, .45-.75 the shell tips over onto its side, then still, dizzy
+    const k1=ez(cl(p/.15,0,1)),k2=ez(cl((p-.15)/.3,0,1)),k3=ez(cl((p-.45)/.3,0,1));A.B=[-2.2*k1,0,.3*k1*(1-k2)+3*k3];A.lean=-.12*k1*(1-k2);A.ins=Math.max(.65*k1,k2);
+    A.roll=1.15*k3;A.spin=.2*k3;A.shut=1;A.shellB=0;A.stars=p>.72?.8:0}
   if(o.shell!=null)A.ins=cl(o.shell,0,1);if(o.spin!=null)A.spin=o.spin;
   return A}
 // the spiral of the shell on one side (sd), as runs of screen points where it faces us; the roll turns it round the shell's axle
@@ -14599,7 +14709,7 @@ function snail(x,y,face,anim,p,sc,o){sc=sc||1;o=o||{};const V0=V(face),{P,D,F}=V
   run(L);
   if(A.stars>0)stars(P(X.T([2,0,32])),10,A.stars);
   ctx.restore()}
-reg('snail',{n:'Lumaca',g:3,sc:1,an:['idle','walk','attack','hit'],dur:{idle:2.8,walk:1.6,attack:2.2,hit:.6},lab:{walk:'Striscia',attack:'Guscio rotante'}},snail);
+reg('snail',{n:'Lumaca',g:3,sc:1,an:['idle','walk','prep','attack','hit','die'],dur:{idle:2.8,walk:1.6,prep:.9,attack:2.2,hit:.6,die:1},lab:{walk:'Striscia',attack:'Guscio rotante'}},snail);
 
 // ------------------------------------------------------------------ GIRINO: a little dark green tadpole (EDRAW.tadpole) swimming just over the
 // floor in swarms: a round head-body with two yellow eyes on the sides and a light on its back, the long tail wiggling from side to side
@@ -14612,6 +14722,11 @@ function tadPose(anim,p){const ph=p*TAU,A={B:[0,0,Math.sin(ph)*.5],lean:0,roll:0
     A.curl=keys([[0,0],[.28,1],[.34,-.4],[.5,0],[1,0]],p);A.dart=keys([[0,0],[.28,-1],[.4,1],[.6,.3],[1,0]],p);A.B=[A.dart*3,0,.3];A.s=-.1*Math.max(0,-A.dart);A.amp=p<.3?.4:p<.6?1.4:.7;A.freq=p<.3?1:5;
     A.lean=.08*A.dart}
   else if(anim==='hit'){const kb=hitK(p);A.B=[-3*kb,0,.6*kb];A.roll=.4*kb;A.lean=-.2*kb;A.shut=p<.55?1:0;A.stars=p<.75?1-p/.75:0;A.amp=1.2;A.freq=3}
+  else if(anim==='prep'){// gets ready to dart (held): the tail curled, drawn back, quivering
+    A.curl=.85+.12*Math.sin(ph*2);A.dart=-.85;A.B=[-2.5+.2*Math.sin(ph*5),0,.3];A.s=.06;A.amp=.4;A.freq=3}
+  else if(anim==='die'){// .0-.15 the blow, then it rolls belly up and floats, the tail going still
+    const k1=ez(cl(p/.15,0,1)),k2=ez(cl((p-.15)/.45,0,1));A.B=[-3*k1,0,.6*k1+1.2*k2];A.roll=.4*k1+(Math.PI-.4)*k2;A.lean=-.2*k1*(1-k2);A.shut=1;A.amp=1.2*(1-k2)+.15;A.freq=3*(1-k2)+.5;
+    A.stars=p>.65?.75:0}
   return A}
 function tadpole(x,y,face,anim,p,sc,o){sc=sc||1;o=o||{};const V0=V(face),{P,D,F}=V0,A=tadPose(anim,p),X=frame(A,6),body=o.slow?TD.slow:TD.body,tailC=o.slow?lt(TD.slow,.1):TD.tail;
   floor(V0,x,y,sc,[A.B[0],0,0],8,3,.25,A.B[2]+4);
@@ -14631,7 +14746,7 @@ function tadpole(x,y,face,anim,p,sc,o){sc=sc||1;o=o||{};const V0=V(face),{P,D,F}
   run(L);
   if(A.stars>0)stars(P(X.T([1,0,13])),6,A.stars);
   ctx.restore()}
-reg('tadpole',{n:'Girino',g:3,sc:1,an:['idle','walk','attack','hit'],dur:{idle:2,walk:.8,attack:.8,hit:.6},lab:{walk:'Nuota',attack:'Scatto'}},tadpole);
+reg('tadpole',{n:'Girino',g:3,sc:1,an:['idle','walk','prep','attack','hit','die'],dur:{idle:2,walk:.8,prep:.7,attack:.8,hit:.6,die:.9},lab:{walk:'Nuota',attack:'Scatto'}},tadpole);
 })();
 // Nemici del quarto capitolo (Brina e Ghiacciaio) rifatti in 3D come l'Arciere: stesse forme e colori di oggi nel gioco (EDRAW.wolf,
 // EDRAW.snowspirit, EDRAW.icesentinel), dipinti con la cassetta C3 (base3d.js). Ogni mossa dipende solo da p (0..1).
@@ -14699,19 +14814,31 @@ function wolf(x,y,face,anim,p,sc,o){sc=sc||1;o=o||{};const V0=V(face),{P,D,F}=V0
   else if(anim==='howl'){// the nose goes up to the sky, the mouth opens, the howl shakes the head and fogs the air, then it comes down
     const k=sstep(0,.2,p)*(1-sstep(.8,1,p)),sh=Math.sin(p*TAU*7)*.03*sstep(.22,.3,p)*(1-sstep(.72,.8,p));A.hp=.95*k+sh;A.H=[13.4-1.6*k,0,23.2+4.4*k];A.lean=-.1*k;A.B=[-1*k,0,0];
     A.jaw=sstep(.15,.28,p)*(1-sstep(.74,.86,p));A.ears=.6*k;A.tl=-.25*k;A.tw=.2*k*Math.sin(ph*3);A.squint=k;A.puff=p>.25&&p<.95?(p-.25)/.7:-1}
+  else if(anim==='prep'){// gets ready to spring (held): crouched low as at the start of the lunge, the head down, the ears flat, a snarl
+    // showing the fangs, the eyes narrowed, the haunches shivering, the tail low and twitching
+    const b=Math.sin(ph*2),sh=Math.sin(ph*9)*.12;A.B=[-1.4+sh*.6,0,-2.1+.15*b];A.lean=.07;A.s=-.11+.012*b;A.H=[14,0,21];A.hp=-.18+.02*b;A.jaw=.3+.06*(.5+.5*b);
+    A.ears=1;A.squint=.75;A.tl=-.35;A.tw=.12*Math.sin(ph*3);A.puff=(p*2)%1;WL.forEach((l,i)=>{A.pw[i]=[l.fr>0?.6:-.5,0,0]})}
   else if(anim==='hit'){const kb=hitK(p);A.lean=-.18*kb;A.B=[-2.6*kb,0,.4*kb];A.roll=.08*kb;A.s=-.06*kb;A.hp=.25*kb;A.H=[13.4,0,23.2+1.2*kb];A.ears=kb;A.tl=-.5*kb;
     A.shut=p<.5?1:0;A.stars=p<.75?1-p/.75:0}
+  else if(anim==='die'){// .0-.15 the blow, .15-.5 the legs give way and it tips over onto its side, .5-.62 it bounces once on the snow,
+    // then it lies still, the legs stiff, the jaw hanging open, the tail limp, dizzy stars
+    const k1=ez(cl(p/.15,0,1)),f=cl((p-.15)/.35,0,1),bo=p>.5?Math.sin(cl((p-.5)/.12,0,1)*Math.PI)*.1:0,r=1.4*f*f-bo,cr=Math.cos(r),sr=Math.sin(r);
+    A.roll=r;A.lean=-.18*k1*(1-f)+.04*f;A.s=-.06*k1*(1-f);A.B=[-2.6*k1-.8*f,-9*sr,Math.max(.4*k1*(1-f),Math.sqrt(73.96*sr*sr+54.76*cr*cr)-17.4*cr+.4)];
+    A.hp=.25*k1*(1-f)-.15*f;A.H=[13.6,0,23.2+1.2*k1*(1-f)];A.jaw=.38*sstep(.4,.6,p);A.ears=k1*(1-f)+.4*f;A.tl=-.5*k1*(1-f)-.15*f;A.tw=0;A.shut=1;A.stars=p>.64?.8:0;
+    // the legs follow the body as it falls: stiff, a little apart, the paws drawn in (their ankle in the body frame)
+    const XF=frame(A,0),kl=sstep(.15,.45,p);WL.forEach((l,i)=>{const a=XF.T([l.f[0]+l.fr*2.2,l.f[1]*1.3,2.8]);A.pw[i]=mul(sub(a,[l.f[0]+A.B[0],l.f[1]+A.B[1],1.7]),kl)})}
   else{// standing: it breathes, looks round slowly, flicks an ear, the tail sways
     const b=Math.sin(ph);A.s=.018*b;A.H=[13.8,0,23.2+.3*b];A.hy=look(p,.45);A.hp=.04*Math.sin(ph*2+1);A.blink=blink(p,.32,.07);A.tw=.3*Math.sin(ph*2);A.tl=.1*b;
     A.ears=.25*bump(cl((p-.6)/.08,0,1))}
-  const X=frame(A,0),dT=D(X.T([-3,0,17]));
-  floor(V0,x,y,sc,[A.B[0]-1.5,A.B[1],0],19,6.2,.3,A.B[2]);
+  const X=frame(A,0),dT=D(X.T([-3,0,17])),fc0=anim==='die'?X.T([-3,0,12]):[A.B[0]-1.5,A.B[1],0];
+  floor(V0,x,y,sc,[fc0[0],fc0[1],0],19,6.2,.3,anim==='die'?0:A.B[2]);
   ctx.save();ctx.translate(x,y);ctx.scale(sc,sc);const L=parts();
   // the head's frame: rings and points of the head (nose up hp, look hy) placed at H in the body frame
   const hT=q=>X.T(add(A.H,rotZ(rotY(mul(q,1.1),-A.hp),A.hy))),hR=v=>X.Rd(rotZ(rotY(v,-A.hp),A.hy)),XH={T:hT,Rd:hR},hD=D(hT([0,0,0]));
   // the legs: two bones with ik, always under the body (the far ones darker), a round paw at the end
+  const bel=anim==='die'&&F(X.Rd([0,0,-1]))>.3;
   WL.forEach((l,i)=>{const hip=X.T(l.h),pw=add(add(l.f,A.pw[i]),[A.B[0],A.B[1],0]),fk=sstep(0,-.12,F(0,l.h[1],0)),col=cmix(WC.fur,WC.dark,.6*fk);
-    L.add(dT-100+D(add(l.f,[0,0,6]))*.01,()=>{const an=add(pw,[0,0,1.7]),IK=ik(hip,an,5.8,5.6,X.Rd([l.fr,0,.1])),kn=IK[0],end=IK[1];
+    L.add((bel?dT+3:dT-100)+D(add(l.f,[0,0,6]))*.01,()=>{const an=add(pw,[0,0,1.7]),IK=ik(hip,an,5.8,5.6,X.Rd([l.fr,0,.1])),kn=IK[0],end=IK[1];
       chain(V0,[hip,kn,end],[2.5,2.2,1.9],col,{lw:1.7,kl:.12,kd:.3,rim:.15});ovol(V0,IDF,add(end,[.9,0,-.5]),[2.5,2,1.5],cmix(cmix(WC.lite,WC.fur,.3),cmix(WC.lite,WC.dark,.45),fk),{lw:1.7,noRim:true})})});
   // the bushy tail with its white tip, from under the rump
   {const T=[[-16,0,18],[-21.4,0,17],[-26,0,13.8],[-28.6,0,10]],sw=[0,.6,1.4,2.2],pts=T.map((q,i)=>X.T(add(q,[0,A.tw*sw[i]*4,A.tl*i*2.4-(A.tl<0?A.tl*i*.6:0)]))),rs=[2.6,3.7,3.4,2.4];
@@ -14755,7 +14882,7 @@ function wolf(x,y,face,anim,p,sc,o){sc=sc||1;o=o||{};const V0=V(face),{P,D,F}=V0
   run(L);
   if(A.stars>0)stars(P(hT([0,0,9])),9,A.stars);
   ctx.restore()}
-reg('wolf',{n:'Lupo delle nevi',g:4,an:['idle','walk','attack','howl','hit'],dur:{idle:2.6,walk:.5,attack:1,howl:.9,hit:.6},lab:{attack:'Scatto',howl:'Ululato'}},wolf);
+reg('wolf',{n:'Lupo delle nevi',g:4,an:['idle','walk','prep','attack','howl','hit','die'],dur:{idle:2.6,walk:.5,prep:.8,attack:1,howl:.9,hit:.6,die:1},lab:{attack:'Scatto',howl:'Ululato'}},wolf);
 
 // ------------------------------------------------------------------ SPIRITO DELLA NEVE (EDRAW.snowspirit): a floating drop of snow
 const SC={top:'#ffffff',mid:'#d8f0ff',bot:'#a8d8f8',deep:'#86b6e0',arm:'#e8f6ff',eye:'#1e3a6a',flake:'#ffffff'};
@@ -14780,7 +14907,16 @@ function snowspirit(x,y,face,anim,p,sc,o){sc=sc||1;o=o||{};const V0=V(face),{P,D
     // out of it with a bounce (.62-1). The game moves it while it is gone
     const out=sstep(0,.36,p),inn=sstep(.62,.9,p),k=p<.5?1-out:inn;A.k=k<.01?0:lerp(.15,1,k)*(p>.62?1+.12*Math.sin(cl((p-.62)/.38,0,1)*Math.PI*2)*(1-cl((p-.85)/.15,0,1)):1);
     A.al=k;A.yaw=p<.5?out*out*TAU*1.5:-(1-inn)*(1-inn)*TAU*1.5;A.swirl=p;A.sr=16*(1-.5*(p<.5?out:1-inn));A.B=[0,0,p<.5?4*out:4*(1-inn)];A.glow=.35+.4*(p<.5?out:1-inn)}
+  else if(anim==='prep'){// gathers its snow (held): squeezed down, the mittens together in front, brighter and brighter, the snowflake
+    // spinning fast, the specks drawn in close, the eyes narrowed
+    const b=.5+.5*Math.sin(ph*2);A.s=-.1-.03*b;A.af=.85;A.ar=-.6;A.aw=.15*Math.sin(ph*6);A.glow=.6+.3*b;A.squint=.8;A.B=[0,0,-1.2+.5*Math.sin(ph*2)];A.fa=p*TAU;A.sa=p*TAU*2/3;A.sr=11+1.5*b}
   else if(anim==='hit'){const kb=hitK(p);A.lean=-.3*kb;A.B=[-3*kb,0,.8*kb];A.roll=.1*kb;A.s=-.1*kb;A.shut=p<.5?1:0;A.o=p<.5?1:0;A.stars=p<.75?1-p/.75:0;A.ar=.5*kb;A.af=-.4*kb}
+  else if(anim==='die'){// .0-.15 the blow, .15-.55 it spins down to the floor while its snowflake slips off and falls beside it, .55-.62 it
+    // lands and squashes into a little heap of snow with a wobble, then it lies there, the eyes shut, a little frown, dizzy stars
+    const k1=ez(cl(p/.15,0,1)),f=cl((p-.15)/.4,0,1),dn=f*f,l=sstep(.53,.62,p),w=cl((p-.55)/.25,0,1),wob=p>.55?Math.sin(w*Math.PI*2)*.07*(1-w):0;
+    A.s=-.1*k1*(1-f)-.38*l+wob;A.lean=-.3*k1*(1-f);A.roll=.1*k1*(1-f)+.12*l;A.yaw=ez(f)*TAU;A.B=[-3*k1*(1-f)-1.5*f,0,lerp(.8*k1,.4-(SFC[2]-11*(1+A.s)),dn)];
+    A.shut=1;A.o=p<.45?1:0;A.frown=p>=.45;A.ar=.5*k1*(1-f)-.3*l;A.af=-.4*k1*(1-f);A.glow=.35*(1-f)+.06;A.sr=16-5*f;A.sa=f*.8;A.fa=f*TAU*.6;
+    A.flu=cl((p-.18)/.42,0,1);A.flm=sstep(.15,.3,p);A.stars=p>.66?.75:0}
   else{// floating: a slow bob, the hands wave, it looks round, the snowflake turns
     A.B=[0,0,2.6*Math.sin(ph)];A.aw=Math.sin(ph*2);A.yaw=look(p,.4);A.blink=blink(p,.48,.07);A.s=.03*Math.sin(ph*2+1)}
   const X=frame(Object.assign({},A,{s:A.s}),SFC[2]),K=A.k,T=q=>{const r=X.T(q);return K===1?r:add(mul(sub(r,X.T(SFC)),K),X.T(SFC))},dT=D(T(SFC));
@@ -14803,10 +14939,11 @@ function snowspirit(x,y,face,anim,p,sc,o){sc=sc||1;o=o||{};const V0=V(face),{P,D
       ctx.save();C.smooth(pts);ctx.clip();ctx.fillStyle='rgba(255,255,255,.6)';ctx.save();ctx.translate(cx-w*.17,cy-h*.12);ctx.rotate(.25);ell(0,0,w*.1,h*.17);ctx.fill();ctx.restore();
       if(K>.5){const fc=ellFace(V0,{T,Rd:X.Rd},SFC,SFR);
         eyes(null,fc.h,13*K,{at:fc.at,dir:[.86,.29,.42],kind:'dark',col:SC.eye,rx:1.9*K,ry:2.9*K,fall:.55,blink:A.blink,squint:A.squint,shut:A.shut,shutCol:SC.eye,a:.42,b:.58});
-        if(A.o)mouth(null,fc.h,13*K,[.96,0,.06],{at:fc.at,kind:'o',w:2.2,h:1.6,dark:'#2a4a7a'});else mouth(null,fc.h,13*K,[.96,0,.06],{at:fc.at,kind:'smile',w:1.9*K,bow:2.2*K,col:SC.eye,lw:1.2})}
+        if(A.o)mouth(null,fc.h,13*K,[.96,0,.06],{at:fc.at,kind:'o',w:2.2,h:1.6,dark:'#2a4a7a'});else mouth(null,fc.h,13*K,[.96,0,.06],{at:fc.at,kind:'smile',w:1.9*K,bow:(A.frown?-1.2:2.2)*K,col:SC.eye,lw:1.2})}
       ctx.restore();C.rimPoly(pts,.25);ctx.restore()});
-    // the snowflake turning over its head
-    L.add(dT+60,()=>{const q=P(T([0,0,SZ+28]));flake(q,5.6*K,A.fa,ga);if(!LOWFX)shine('220,240,255',q[0],q[1],8*K,.3*ga)})}
+    // the snowflake turning over its head (dying, it slips off and falls to the floor beside it, on the side we see)
+    const tq=T([0,0,SZ+28]),u=A.flu||0,fl=[23*V0.c+5*V0.s,-23*V0.s+5*V0.c],fq=A.flm>0?lerp3(tq,[lerp(-3,fl[0],u),lerp(0,fl[1],u),40.6+6*u-45.4*u*u],A.flm):tq;
+    L.add(A.flm>0?D(fq):dT+60,()=>{const q=P(fq);flake(q,5.6*K,A.fa,ga);if(!LOWFX)shine('220,240,255',q[0],q[1],8*K,.3*ga*(1-.7*u))})}
   // the burst of snow: a ring of puffs flying out round it (the snowballs themselves are the game's)
   if(A.burst>=0&&!o.noFx)L.add(dT+80,()=>{const k=A.burst,r=8+k*22;for(let i=0;i<10;i++){const a=i/10*TAU+.3,q=P([Math.cos(a)*r,Math.sin(a)*r,SFC[2]+A.B[2]-2+k*3]);
       ctx.fillStyle=`rgba(240,250,255,${.8*(1-k)*Math.min(1,k*8)})`;ball(q,1.6+k*2.6);ctx.fill()}if(!LOWFX){const q=P(T(SFC));shine('210,240,255',q[0],q[1],18+k*20,.5*(1-k)*Math.min(1,k*8))}});
@@ -14816,7 +14953,7 @@ function snowspirit(x,y,face,anim,p,sc,o){sc=sc||1;o=o||{};const V0=V(face),{P,D
   run(L);
   if(A.stars>0)stars(P(X.T([0,0,SZ+29])),9,A.stars);
   ctx.restore()}
-reg('snowspirit',{n:'Spirito della neve',g:4,an:['idle','walk','attack','tele','hit'],dur:{idle:2.4,walk:1.2,attack:1,tele:1.3,hit:.6},lab:{attack:'Raffica di neve',tele:'Teletrasporto'}},snowspirit);
+reg('snowspirit',{n:'Spirito della neve',g:4,an:['idle','walk','prep','attack','tele','hit','die'],dur:{idle:2.4,walk:1.2,prep:.8,attack:1,tele:1.3,hit:.6,die:1},lab:{attack:'Raffica di neve',tele:'Teletrasporto'}},snowspirit);
 
 // ------------------------------------------------------------------ SENTINELLA DI GHIACCIO (EDRAW.icesentinel): a faceted block of ice
 const IC4={hi:'#eef8ff',light:'#d2ecfc',mid:'#9ccaec',dark:'#6a9ac8',deep:'#4f7fb0',fist:'#8ab8e0',foot:'#6a8aa8',eye:'#1e3a6a',rune:'#bff0ff',shard:'#6fb8e8'};
@@ -14849,31 +14986,57 @@ function icesentinel(x,y,face,anim,p,sc,o){sc=sc||1;o=o||{};const V0=V(face),{P,
     const v=keys([[0,[0,0,0,0]],[.5,[1,0,-.06,1]],[.58,[0,1,.1,1]],[.7,[0,.5,.04,.4]],[1,[0,0,0,0]]],p);
     A.hL=[2+3*v[0]+9*v[1],-18.5+3*v[1],20+9*v[0]+1*v[1]];A.hR=[2+3*v[0]+9*v[1],18.5-3*v[1],20+9*v[0]+1*v[1]];A.lean=v[2];A.s=.04*v[0]-.05*v[1];A.B=[-1*v[0]+1.2*v[1],0,0];
     A.gl=.3+.7*v[3];A.squint=v[3];A.rot=keys([[0,0],[.55,TAU*.9],[1,TAU]],p)*1/3*3;A.sr=24-4*v[3];A.flash=p>.54&&p<.66?1-(p-.54)/.12:0;A.cast=p>.55&&p<.85?(p-.55)/.3:-1;A.rot=keys([[0,0],[.55,2.6],[1,TAU/3]],p)}
+  else if(anim==='prep'){// charges the cast (held): the fists raised and trembling, the rune glowing brighter and brighter, the eyes
+    // narrowed, the shards spinning fast and drawn in
+    const b=.5+.5*Math.sin(ph*2),tr=.35*Math.sin(ph*11);A.hL=[5,-18.5,29+tr];A.hR=[5,18.5,29-tr];A.lean=-.06;A.s=.04;A.B=[-1,0,0];A.gl=.8+.2*b;A.squint=1;A.rot=p*TAU*2/3;A.sr=20+b}
   else if(anim==='hit'){const kb=hitK(p);A.lean=-.2*kb;A.B=[-2.6*kb,0,.3*kb];A.roll=.07*kb;A.s=-.06*kb;A.shut=p<.5?1:0;A.stars=p<.75?1-p/.75:0;A.flash=p<.12?.7*(1-p/.12):0;
     A.hL=[2-2.5*kb,-18.5-1.5*kb,20+3*kb];A.hR=[2-2.5*kb,18.5+1.5*kb,20+3*kb];A.sr=24+3*kb;A.rot=p*TAU/3+.4*kb}
+  else if(anim==='die'){// .0-.12 the blow, .12 it cracks across with a white seam, the rune flickers out, .2-.53 the top of the block (the
+    // head with the eyes) slides off and drops beside it, landing upright with a bump; the fists fall, the shards drop and stick in the
+    // snow; then the head sits there with its eyes shut, dizzy stars over it
+    const kb=hitK(Math.min(p,.3)/.3*.5),u=cl((p-.2)/.33,0,1),w=cl((p-.53)/.15,0,1),g=cl((p-.15)/.27,0,1),gs=cl((p-.15)/.3,0,1);
+    A.lean=-.2*kb*(1-sstep(.2,.45,p))-.05*sstep(.2,.45,p);A.B=[-2.6*kb,0,.3*kb];A.s=-.06*kb-.08*sstep(.2,.45,p);A.shut=p>.12?1:p<.06?1:0;A.flash=p<.12?.7*(1-p/.12):0;
+    A.cut=p>=.12;A.seam=p>=.12&&p<.32?1-(p-.12)/.2:0;A.ch=20*u;A.cz=6*u-30.7*u*u+(p>.53?1.4*Math.sin(w*Math.PI)*(1-w):0)+A.s*25;A.ct=.55*Math.sin(Math.PI*u)+(p>.53?.12*Math.sin(w*Math.PI*2)*(1-w):0);
+    A.gl=p<.12?.6:p<.4?(.45+.45*Math.sin(p*90))*(1-(p-.12)/.28):0;A.dead=sstep(.15,.45,p);
+    const zf=(6.2-A.B[2])/(1+A.s),fz=lerp(20+3*kb,zf,g*g)+(p>.42?2*Math.sin(cl((p-.42)/.1,0,1)*Math.PI):0);A.hL=[2-2.5*kb,-18.5-1.5*kb-2*g,fz];A.hR=[2-2.5*kb,18.5+1.5*kb+2*g,fz];
+    A.sr=24+3*kb+3*gs;A.sz=lerp(22,7.7,gs*gs);A.bob=1-gs;A.sp=.4*Math.min(1,p/.15)*(1-gs)+p*TAU*(1-gs)*.3;A.rot=.4*kb;A.stars=p>.62?.8:0;A.chip=p>.12&&p<.75?(p-.12)/.63:-1;A.dust=p>.52&&p<.9?(p-.52)/.38:-1}
   else{// standing guard: it breathes, the rune pulses, the fists float, it turns its gaze slowly
     A.s=.015*Math.sin(ph);A.yaw=look(p,.22);A.blink=blink(p,.66,.07);A.hL=[2,-18.5,20+.8*Math.sin(ph+.5)];A.hR=[2,18.5,20+.8*Math.sin(ph+1.6)]}
-  const X=frame(A,0),dT=D(X.T([0,0,22]));
+  const X=frame(A,0),dT=D(X.T([0,0,22])),dd=A.dead||0;
+  // dying, the top of the block (the head) comes off: CT moves its points (turned by ct round the axis across its fall, from the middle of
+  // the cut, then carried ch along the fall and cz up), CR its directions. It falls to the right of the screen and a little toward us
+  let CT=null,CR=null,cc=null;if(A.cut){const dr=nrm([.85*V0.c+.5*V0.s,-.85*V0.s+.5*V0.c,0]),k=nrm(cross([0,0,1],dr)),c0=X.T([0,0,25]),co=Math.cos(A.ct),si=Math.sin(A.ct);
+    CR=v=>add(add(mul(v,co),mul(cross(k,v),si)),mul(k,dot(k,v)*(1-co)));CT=q=>add(add(c0,add(mul(dr,A.ch),[0,0,A.cz])),CR(sub(q,c0)));cc=CT(X.T([0,0,29.5]))}
   floor(V0,x,y,sc,A.B,16,6,.32);
+  if(cc)floor(V0,x,y,sc,[cc[0],cc[1],0],10,4,.28,Math.max(0,cc[2]-4.5));
   ctx.save();ctx.translate(x,y);ctx.scale(sc,sc);const L=parts();
   // the glow of the rune behind the ice (it shows through), stronger when it casts
-  if(!LOWFX)L.add(dT-200,()=>{const q=P(X.T([8,0,22]));shine('120,210,255',q[0],q[1],16+12*A.gl,.25+.35*A.gl)});
+  if(!LOWFX&&dd<1)L.add(dT-200,()=>{const q=P(X.T([8,0,22]));shine('120,210,255',q[0],q[1],16+12*A.gl,(.25+.35*A.gl)*(1-dd))});
   // the feet: two blue stumps under the block, the far one darker
   for(const[sd,f] of[[-1,A.fL],[1,A.fR]]){const far=F(0,sd,0)<0,c=add(f,[A.B[0],A.B[1],4]);L.add(dT-100+D(c)*.01,()=>ovol(V0,IDF,c,[5.6,4.6,3.8],far?cmix(IC4.foot,IC4.deep,.4):IC4.foot,{kl:.2,kd:.3,lw:2.3,rim:.3}))}
   // the block of ice: its faces, the rune glowing on the front, the little eyes on the upper front face
-  L.add(dT,()=>{const R=IRG.map(([z,r])=>IAN.map(a=>X.T([Math.cos(a)*r*IAX,Math.sin(a)*r,z]))),faces=[];
+  const rune=()=>{const nF=X.Rd(nrm([16,0,-1.4])),vF=F(nF);if(vF>0){const fk=cl(vF*3,0,1),c=X.T([10.4,0,20.5]),u=X.Rd([0,1,0]),w=X.Rd(nrm([.09,0,1])),Q=(a,b)=>P(add(c,add(mul(u,a),mul(w,b))));
+      if(!LOWFX&&dd<1){const q=Q(0,0),g=ctx.createRadialGradient(q[0],q[1],1,q[0],q[1],9+5*A.gl);g.addColorStop(0,`rgba(190,245,255,${(.55+.4*A.gl)*fk*(1-dd)})`);g.addColorStop(1,'rgba(190,245,255,0)');ctx.fillStyle=g;ctx.fillRect(q[0]-15,q[1]-15,30,30)}
+      ctx.save();ctx.globalAlpha*=fk;const d=[Q(0,5.2),Q(4.2,0),Q(0,-5.2),Q(-4.2,0)];ctx.fillStyle=cmix(cmix(IC4.rune,'#ffffff',A.gl*.6),IC4.dark,.55*dd);poly(d);ctx.fill();ink(1.6);ctx.stroke();
+      ctx.fillStyle=`rgba(255,255,255,${(.5+.4*A.gl)*(1-.7*dd)})`;poly([Q(0,3.4),Q(1.4,.6),Q(0,-.4),Q(-1.2,.8)]);ctx.fill();ctx.restore()}},
+    eyesOn=(TT,RR)=>{const nE=RR(X.Rd(nrm([9,0,5.6]))),vE=F(nE);if(vE>.05){const ek=cl((vE-.05)*4,0,1),c=TT(X.T([8.5,0,29.2])),u=RR(X.Rd([0,1,0])),w=RR(X.Rd(nrm([-.53,0,.85]))),Q=(a,b)=>P(add(c,add(mul(u,a),mul(w,b))));
+      ctx.save();ctx.globalAlpha*=ek;for(const sd of[-1,1]){const q=Q(sd*3.2,0),e=Q(sd*3.2+1.9,0),rx=Math.max(.4,Math.hypot(e[0]-q[0],e[1]-q[1])),sq=A.blink*(1-.4*A.squint);
+        if(A.shut){ctx.strokeStyle=IC4.eye;ctx.lineWidth=1.2;ctx.lineCap='round';ctx.beginPath();ctx.moveTo(q[0]-rx,q[1]-1);ctx.lineTo(q[0]+rx*.8,q[1]);ctx.lineTo(q[0]-rx,q[1]+1);ctx.stroke();continue}
+        ctx.fillStyle=IC4.eye;ctx.beginPath();ctx.ellipse(q[0],q[1],rx,1.45*Math.max(.15,sq),0,0,TAU);ctx.fill();if(sq>.5&&rx>.9){ctx.fillStyle='#ffffff';ball([q[0]-rx*.35,q[1]-.5],.45);ctx.fill()}}ctx.restore()}},
+    rings=()=>IRG.map(([z,r])=>IAN.map(a=>X.T([Math.cos(a)*r*IAX,Math.sin(a)*r,z])));
+  if(!CT)L.add(dT,()=>{const R=rings(),faces=[];
     for(let k=0;k<6;k++){const k1=(k+1)%6;faces.push([R[0][k],R[0][k1],R[1][k1],R[1][k]]);faces.push([R[1][k],R[1][k1],R[2][k1],R[2][k]])}faces.push(R[2].slice());
     const hp=facets(V0,ax,faces,{flash:A.flash});ctx.save();poly(hp);ctx.clip();
     // the front faces: the rune (a diamond) on the lower one, the eyes on the upper one; both only where that face turns toward us
-    const nF=X.Rd(nrm([16,0,-1.4])),vF=F(nF);if(vF>0){const fk=cl(vF*3,0,1),c=X.T([10.4,0,20.5]),u=X.Rd([0,1,0]),w=X.Rd(nrm([.09,0,1])),Q=(a,b)=>P(add(c,add(mul(u,a),mul(w,b))));
-      if(!LOWFX){const q=Q(0,0),g=ctx.createRadialGradient(q[0],q[1],1,q[0],q[1],9+5*A.gl);g.addColorStop(0,`rgba(190,245,255,${(.55+.4*A.gl)*fk})`);g.addColorStop(1,'rgba(190,245,255,0)');ctx.fillStyle=g;ctx.fillRect(q[0]-15,q[1]-15,30,30)}
-      ctx.save();ctx.globalAlpha*=fk;const d=[Q(0,5.2),Q(4.2,0),Q(0,-5.2),Q(-4.2,0)];ctx.fillStyle=cmix(IC4.rune,'#ffffff',A.gl*.6);poly(d);ctx.fill();ink(1.6);ctx.stroke();
-      ctx.fillStyle=`rgba(255,255,255,${.5+.4*A.gl})`;poly([Q(0,3.4),Q(1.4,.6),Q(0,-.4),Q(-1.2,.8)]);ctx.fill();ctx.restore()}
-    const nE=X.Rd(nrm([9,0,5.6])),vE=F(nE);if(vE>.05){const ek=cl((vE-.05)*4,0,1),c=X.T([8.5,0,29.2]),u=X.Rd([0,1,0]),w=X.Rd(nrm([-.53,0,.85])),Q=(a,b)=>P(add(c,add(mul(u,a),mul(w,b))));
-      ctx.save();ctx.globalAlpha*=ek;for(const sd of[-1,1]){const q=Q(sd*3.2,0),e=Q(sd*3.2+1.9,0),rx=Math.max(.4,Math.hypot(e[0]-q[0],e[1]-q[1])),sq=A.blink*(1-.4*A.squint);
-        if(A.shut){ctx.strokeStyle=IC4.eye;ctx.lineWidth=1.2;ctx.lineCap='round';ctx.beginPath();ctx.moveTo(q[0]-rx,q[1]-1);ctx.lineTo(q[0]+rx*.8,q[1]);ctx.lineTo(q[0]-rx,q[1]+1);ctx.stroke();continue}
-        ctx.fillStyle=IC4.eye;ctx.beginPath();ctx.ellipse(q[0],q[1],rx,1.45*Math.max(.15,sq),0,0,TAU);ctx.fill();if(sq>.5&&rx>.9){ctx.fillStyle='#ffffff';ball([q[0]-rx*.35,q[1]-.5],.45);ctx.fill()}}ctx.restore()}
+    rune();eyesOn(q=>q,v=>v);
     ctx.restore()});
+  else{// broken in two: the lower block with the cut on top (and the white seam as it cracks), the head that falls off
+    const R=rings();
+    L.add(dT,()=>{const faces=[];for(let k=0;k<6;k++){const k1=(k+1)%6;faces.push([R[0][k],R[0][k1],R[1][k1],R[1][k]])}faces.push(R[1].slice());
+      const hp=facets(V0,ax,faces,{flash:A.flash});ctx.save();poly(hp);ctx.clip();rune();ctx.restore();
+      if(A.seam>0){ctx.save();ctx.strokeStyle=`rgba(235,252,255,${.9*A.seam})`;ctx.lineWidth=1.8;ctx.lineJoin='round';poly(R[1].map(q=>P(q)));ctx.stroke();ctx.restore()}});
+    L.add(D(cc)+2,()=>{const T1=R[1].map(CT),T2=R[2].map(CT),faces=[];for(let k=0;k<6;k++){const k1=(k+1)%6;faces.push([T1[k],T1[k1],T2[k1],T2[k]])}faces.push(T2.slice(),T1.slice());
+      const hp=facets(V0,ax,faces,{flash:A.flash});ctx.save();poly(hp);ctx.clip();eyesOn(CT,CR);ctx.restore()})}
   // the fists: blue lumps of ice floating at the sides; their place in the draw order is where they are at rest
   for(const[sd,h] of[[-1,A.hL],[1,A.hR]]){const r0=X.T([2,sd*18.5,20]);L.add(D(r0)+.02,()=>{const c=X.T(h),fs=[];const E=ovol(V0,IDF,c,[4.6,4.6,6.2],IC4.fist,{kl:.3,kd:.32,lw:2.3,rim:.35});
     ctx.save();E.path(1);ctx.clip();ctx.fillStyle='rgba(255,255,255,.45)';ctx.beginPath();ctx.ellipse(E.c[0]-E.rx*.3,E.c[1]-E.ry*.35,E.rx*.28,E.ry*.18,-.5,0,TAU);ctx.fill();
@@ -14881,15 +15044,19 @@ function icesentinel(x,y,face,anim,p,sc,o){sc=sc||1;o=o||{};const V0=V(face),{P,
   // the shards going round it (o.shards: [{a: angle round it on the floor, as e.rot + s.a in the game, hp: 0 = broken, re, hit}]),
   // each in the draw order of where it is now
   const SH=o.shards||[0,1,2].map(i=>({a:A.rot+i*TAU/3+face,hp:2,re:0,hit:0}));
-  for(const s of SH){if(s.hp<=0&&(s.re||0)>4.5)continue;const an=s.a-face,grow=s.hp>0?1:Math.max(.15,1-(s.re||0)/5)*.5,c=add([Math.cos(an)*A.sr,Math.sin(an)*A.sr,A.sz+1.2*Math.sin(ph*2+an)],[A.B[0],A.B[1],0]);
-    L.add(D(c),()=>{ctx.save();if(s.hp<=0)ctx.globalAlpha*=.5;const fa=shardFaces(c,5*grow,9*grow,an+ph);facets(V0,ax,fa,{lw:1.6,flash:s.hit>0?1:0,lift:.08});ctx.restore()})}
+  for(const s of SH){if(s.hp<=0&&(s.re||0)>4.5)continue;const an=s.a-face,grow=s.hp>0?1:Math.max(.15,1-(s.re||0)/5)*.5,c=add([Math.cos(an)*A.sr,Math.sin(an)*A.sr,A.sz+1.2*(A.bob==null?1:A.bob)*Math.sin(ph*2+an)],[A.B[0],A.B[1],0]);
+    L.add(D(c),()=>{ctx.save();if(s.hp<=0)ctx.globalAlpha*=.5;const fa=shardFaces(c,5*grow,9*grow,an+(A.sp==null?ph:A.sp));facets(V0,ax,fa,{lw:1.6,flash:s.hit>0?1:0,lift:.08});ctx.restore()})}
   // the cast: a flash on the rune and a ring of frost going out from the fists (the ice bolts themselves are the game's)
   if(A.cast>=0&&!o.noFx)L.add(dT+60,()=>{const k=A.cast,c=X.T([14+k*10,0,22]),q=P(c);shine('180,235,255',q[0],q[1],10+k*16,.7*(1-k));
     for(let i=0;i<8;i++){const a=i/8*TAU,e=P(add(c,mul(X.Rd([0,Math.cos(a),Math.sin(a)]),3+k*9)));ctx.fillStyle=`rgba(235,250,255,${.9*(1-k)})`;ball(e,1.3*(1-k)+.4);ctx.fill()}});
+  // dying: chips of ice flying out of the crack, a puff of snow where the head lands
+  if(A.chip>=0&&!o.noFx)L.add(dT+30,()=>{const k=A.chip;for(let i=0;i<7;i++){const a=i/7*TAU+.5,v=cl(k*1.25-i*.04,0,1),r=13+v*14,z=25+v*12-v*v*36,q=P([A.B[0]+Math.cos(a)*r,Math.sin(a)*r,Math.max(1,z)]),s0=2.2-v*.5,rt=v*6+i;
+      ctx.save();ctx.globalAlpha*=cl((1-k)*4,0,1);ctx.translate(q[0],q[1]);ctx.rotate(rt);ctx.fillStyle=i%2?IC4.light:IC4.mid;ctx.beginPath();ctx.moveTo(0,-s0*1.3);ctx.lineTo(s0*.8,0);ctx.lineTo(0,s0*1.3);ctx.lineTo(-s0*.8,0);ctx.closePath();ctx.fill();ink(.9);ctx.stroke();ctx.restore()}});
+  if(A.dust>=0&&cc&&!o.noFx)L.add(D(cc)+3,()=>{const k=A.dust;for(let i=0;i<7;i++){const a=i/7*TAU+.4,r=9+k*12,q=P([cc[0]+Math.cos(a)*r,cc[1]+Math.sin(a)*r*1.1,1+k*3]);ctx.fillStyle=`rgba(240,250,255,${.55*(1-k)})`;ball(q,2+k*3.2);ctx.fill()}});
   run(L);
-  if(A.stars>0)stars(P(X.T([0,0,42])),11,A.stars);
+  if(A.stars>0)stars(P(cc?CT(X.T([0,0,38])):X.T([0,0,42])),11,A.stars);
   ctx.restore()}
-reg('icesentinel',{n:'Sentinella di ghiaccio',g:4,dur:{idle:2.4,walk:1.26,attack:1.1,hit:.6},lab:{attack:'Lancio di ghiaccio'}},icesentinel);
+reg('icesentinel',{n:'Sentinella di ghiaccio',g:4,an:['idle','walk','prep','attack','hit','die'],dur:{idle:2.4,walk:1.26,prep:.8,attack:1.1,hit:.6,die:1},lab:{attack:'Lancio di ghiaccio'}},icesentinel);
 })();
 // I nemici e i boss che nel gioco usano il rig dell'eroe (drawRig con GOBLIN, SKEL, NECRO, BONELET, PYRO, DWARF, WITCH, SMITH, QUEEN),
 // rifatti in 3D sullo stesso corpo dell'Arciere 3D (EROE.arciere, sprite/eroe3d/disegno_eroe.js) con i loro colori e i loro pezzi:
@@ -14899,7 +15066,7 @@ reg('icesentinel',{n:'Sentinella di ghiaccio',g:4,dur:{idle:2.4,walk:1.26,attack
 // (faccia di lava, crepe, martello) e la Regina dei Ghiacci (sospesa, corona di ghiaccio, ali nella seconda fase, schegge che le girano
 // intorno), più il suo riflesso. Le mosse sono quelle dell'eroe (fermo, cammina, colpito, scatto) con i loro attacchi: tira con l'arco o
 // la balestra, lancia la sfera, evoca, lancia la bomba, martellata, fucina. o.p2: la seconda fase dei boss.
-(()=>{const C=C3,{TAU,cl,ez,lerp,add,V,ball,reg,shine,floor}=C;
+(()=>{const C=C3,{TAU,cl,ez,lerp,lerp3,add,V,ball,reg,shine,floor,sstep}=C;
 // the 3D styles: the game's colours (src/js/15-rig-umanoide.js and the files of each enemy) with the options of the 3D body
 const B0={armor:'none',quiver:false,strap:false,blush:false};
 const ST={
@@ -14916,21 +15083,75 @@ ST.qmirror={...ST.icequeen,body:'#b8d8f8'};
 // one enemy: its style, how its moves map onto the body's moves ({a: the body's move, staff / hammer: the variant of the weapon's move}),
 // and what it has round it (an aura, wings, shards) behind and in front of the body
 function rig(id,map,extra){const S=ST[id];return(x,y,face,anim,p,sc,o)=>{o=o||{};const m=map[anim]||{a:anim},st={...S,...(o.p2?{p2:true}:{}),...(o.style||{})},k=(sc||1)*S.sc;
-  const go=(yy,an,pp)=>EROE.arciere(x,yy==null?y:yy,face,an||m.a,pp==null?p:pp,k,{style:st,noFx:o.noFx,staffMove:m.staff,hammerMove:m.hammer,hot:st.p2?.8:0});
+  const go=(yy,an,pp,ex)=>EROE.arciere(x,yy==null?y:yy,face,an||m.a,pp==null?p:pp,k,{style:st,noFx:o.noFx,staffMove:m.staff,hammerMove:m.hammer,hot:st.p2?.8:0,...(ex||{})});
+  if(anim==='die'&&DIE[id])return DIE[id](x,y,face,p,k,o,st,go);
+  if(anim==='prep'&&PREP[id])return PREP[id](x,y,face,p,k,o,st,go);
   if(extra&&extra.draw)return extra.draw(x,y,face,anim,p,k,o,st,go,m);
   if(extra&&extra.back)extra.back(x,y,face,anim,p,k,o,st);go();if(extra&&extra.front)extra.front(x,y,face,anim,p,k,o,st)}}
 const D4={idle:2.4,walk:.56,hit:.6};
+// ------------------------------------------------------------------ getting ready and dying (the body's moves stay the Arciere's: these
+// only use its 'aim' and 'hit' and touch the pose from outside with o.tweak, so the hero is not changed by a pixel)
+// getting ready (held, p loops): the weapon raised and aimed, the string drawn and trembling; the little skeleton crouched to pounce
+const tr=(p,n,a)=>a*Math.sin(p*TAU*n);
+const PREP={
+  goblin:(x,y,face,p,k,o,st,go)=>go(y,'aim',p,{pull:.9+.07*Math.sin(p*TAU*2),tweak:A=>{A.squint=.9;A.B=add(A.B,[tr(p,9,.18),0,0])}}),
+  skeleton:(x,y,face,p,k,o,st,go)=>go(y,'aim',p,{pull:1,tweak:A=>{A.squint=.7;A.lean=-.05;A.B=add(A.B,[tr(p,9,.15),0,0])}}),
+  necro:(x,y,face,p,k,o,st,go)=>go(y,'aim',p,{tweak:A=>{A.squint=.8;A.lean=-.08;A.hp=0}}),
+  pyro:(x,y,face,p,k,o,st,go)=>go(y,'aim',p,{tweak:A=>{A.squint=.8;A.lean=-.08;A.hp=0}}),
+  bomber:(x,y,face,p,k,o,st,go)=>go(y,'aim',p,{tweak:A=>{A.squint=.6;A.lean=-.1;A.B=add(A.B,[-.6,0,0])}}),
+  bonelet:(x,y,face,p,k,o,st,go)=>go(y,'dash',.16,{tweak:A=>{A.B=add(A.B,[tr(p,8,.35),0,.2*Math.sin(p*TAU*2)]);A.squint=.8;A.dust=-1;A.speed=0}})};
+// dying in clothes: .0-.15 the blow (the knock back), .12-.3 the knees give way and the arms fly up, .3-.55 it tips over sideways, away
+// from where it looks, all of one piece like a toy, .55-.65 a bump on the floor, then it lies still, the eyes shut, the mouth open, dizzy stars
+function dieFall(x,y,face,p,k,o,st,go){const dir=Math.cos(face)>=0?-1:1,kb=ez(cl(p/.15,0,1)),bk=sstep(.12,.3,p),f=cl((p-.3)/.25,0,1),fe=f*f,
+    w=cl((p-.55)/.1,0,1),b=p>.55?Math.sin(w*Math.PI)*(1-w*.3):0,rot=dir*(Math.PI/2*fe-.07*b),H=31*k;
+  // the shadow goes from under the feet to under the lying body (the body's own one is off: it would turn with it)
+  shadow(lerp(x,x+dir*H*.5,fe),y,lerp(13.5,18,fe)*k,lerp(5.4,6.4,fe)*k*C.KR(),.3);
+  const keep=noShadow;noShadow=true;ctx.save();ctx.translate(x,y-1.4*b*k);ctx.rotate(rot);ctx.translate(-x,-y);
+  try{go(y,'hit',.3,{tweak:A=>{const up=bk*(1-.6*fe);A.lean=-.3*kb*(1-bk)+.1*bk;A.roll=.05*kb*(1-bk);A.s=-.08*kb*(1-bk)-.1*bk;A.B=[-2.6*kb*(1-bk)-.6*bk,0,.4*kb*(1-bk)-2.6*bk];
+      A.hd=[-.6*kb*(1-bk)+.4*bk,0,.4*kb*(1-bk)-.6*bk];A.hp=.06-.1*kb*(1-bk)+.12*bk;A.hy=.3*sstep(.6,.8,p)*dir;
+      A.grip=add(A.grip,[-1.5*up,-2.5*up,5*up]);A.hR=add(A.hR,[-1.5*up,2.5*up,5*up]);A.shut=p>.04?1:0;A.mouth=1;A.flash=p<.12?1-p/.12:0;A.stars=p>.64?.8:0;
+      A.blink=1;A.squint=0;A.jig=0;A.sway=0;A.inhale=0;A.exhale=0}})}finally{ctx.restore();noShadow=keep}}
+// the skeletons fall apart: .0-.15 the blow, .12-.3 they rattle, .3 a puff of bone dust and they come apart, the bones dropping into a little
+// heap with a bounce, the shield flat on the floor, the skull last, rolling onto the top of the heap, its lights gone out, dizzy stars
+const BONES=[[[-15,-6,1.8],[-2,-10,1.8],[8,-10,12],.32],[[-12,8,1.8],[1,4,1.8],[8,10,12],.34],[[-16,1,3.6],[-4,9,3.8],[0,-5,5],.37],[[-7,-3,5],[4,-8,2.2],[0,5,5],.4],[[-13,-1,6.4],[-2,1,6.6],[0,0,14],.43]];
+function dieBones(x,y,face,p,k,o,st,go){const V0=V(face),{P,D}=V0,kb=ez(cl(p/.15,0,1)),brk=.3,sh=p>.12&&p<brk?Math.sin(p*95)*.06*(1-(p-.12)/(brk-.12)):0,dir=Math.cos(face)>=0?-1:1,small=!st.shield,sc0=small?.8:1;
+  // the bones come out of the body at the break and fall: drawn first, so the body (fading out over them) hides the swap
+  let sk=null;if(p>=brk){
+    // how a piece falls from where it was in the body (a, at the break) to the floor (b) after its delay: gravity, one bounce
+    const drop=(a,b,t0)=>{const u=cl((p-t0)/.2,0,1),uu=u*u,bo=p>t0+.2?Math.sin(cl((p-t0-.2)/.1,0,1)*Math.PI)*2.4*(1-cl((p-t0-.2)/.1,0,1)):0;return[lerp(a[0],b[0],u),lerp(a[1],b[1],u),lerp(a[2],b[2],uu)+bo]};
+    const L=C.parts();ctx.save();ctx.translate(x,y);ctx.scale(k,k);
+    {const q=P(-3*sc0,0,0);shadow(q[0],q[1]+1,19*sc0,6.4*C.KR()*sc0,.28*sstep(.3,.5,p))}
+    for(const[e0,e1,c0,t0] of BONES){const a=drop(add(c0,[-3,0,0]),e0.map(v=>v*sc0),t0),b=drop(add(c0,[3,0,0]),e1.map(v=>v*sc0),t0+.02);
+      L.add(D(lerp3(a,b,.5)),()=>{C.caps(V0,a,1.6,b,1.6,st.skin,{lw:1.6,kl:.15,kd:.3,rim:.25});for(const q of[a,b])C.sball(V0,q,2.3,st.skin,{lw:1.5,kl:.1,kd:.28,rim:.2})})}
+    if(!small){const c=drop([7,-9.6,10.4],[-5,-15,.9],.36);L.add(D(c)-3,()=>{const q=P(c),r=8.5;ctx.save();ink(2);ctx.fillStyle='#6b4a2a';ctx.beginPath();ctx.ellipse(q[0],q[1],r,r*C.KR()*.9,0,0,TAU);ctx.fill();ctx.stroke();
+      ctx.strokeStyle='#9aa3ad';ctx.lineWidth=1.6;ctx.beginPath();ctx.ellipse(q[0],q[1],r-1.6,(r-1.6)*C.KR()*.9,0,0,TAU);ctx.stroke();ctx.fillStyle='#9aa3ad';ctx.beginPath();ctx.ellipse(q[0],q[1],2.4,2.4*C.KR(),0,0,TAU);ctx.fill();ink(1);ctx.stroke();ctx.restore()})}
+    // the skull: drops last and rolls off the heap, to its side on the screen, and comes to rest looking at us, tilted
+    const rgt=[V0.c,-V0.s],tow=[V0.s,V0.c],end=[-5*sc0+(13*rgt[0]-2*tow[0])*sc0,(13*rgt[1]-2*tow[1])*sc0,9.6*sc0],rl=sstep(.42,.75,p);sk=drop([0,0,27],end,.42);
+    let fa=Math.PI/2+.45*dir-face;fa=Math.atan2(Math.sin(fa),Math.cos(fa));const skf=face+fa*ez(rl);
+    L.add(D(sk)+4,()=>{const q=P(sk);ctx.save();ctx.translate(q[0],q[1]);ctx.rotate(dir*(.9*(1-rl)*Math.sin(rl*Math.PI*1.5)+.32*rl));
+      EROE.testa(0,0,skf,1,{style:{...st,eyes:'#2a2420',glowEyes:false}});ctx.restore()});
+    C.run(L);ctx.restore()}
+  if(p<brk+.07){ctx.save();if(p>brk)ctx.globalAlpha*=1-(p-brk)/.07;
+    go(y,'hit',.3,{tweak:A=>{A.lean=-.3*kb*(1-sstep(.15,.3,p))+sh;A.roll=sh*1.6;A.s=-.08*kb;A.B=[-2.6*kb*(1-sstep(.15,.3,p)),0,.4*kb];A.hd=[sh*8,0,0];A.shut=0;A.mouth=1;
+      A.flash=p<.12?1-p/.12:0;A.stars=0;A.jig=0;A.sway=0}});ctx.restore()}
+  if(p<brk)return;
+  ctx.save();ctx.translate(x,y);ctx.scale(k,k);
+  // the puff of bone dust as they come apart
+  if(!o.noFx&&!LOWFX){const u=cl((p-brk)/.35,0,1);if(u>0&&u<1)for(let i=0;i<8;i++){const an=i/8*TAU+.4,r=6+u*16,q=P([Math.cos(an)*r,Math.sin(an)*r,10+u*6-i%3*3]);ctx.fillStyle=`rgba(236,230,214,${(.6*(1-u)).toFixed(3)})`;ball(q,2.4+u*4);ctx.fill()}}
+  if(p>.72)C.stars(P(add(sk,[0,0,13])),9,.8);
+  ctx.restore()}
+const DIE={goblin:dieFall,necro:dieFall,pyro:dieFall,bomber:dieFall,skeleton:dieBones,bonelet:dieBones};
 
 // ------------------------------------------------------------------ chapter 1
-reg('goblin',{n:'Goblin',g:1,an:['idle','walk','attack','hit'],dur:{...D4,attack:1.15},lab:{attack:'Tira'}},rig('goblin',{attack:{a:'shoot'}}));
-reg('skeleton',{n:'Scheletro',g:1,an:['idle','walk','attack','dash','hit'],dur:{...D4,attack:1.8,dash:.75},lab:{attack:'Balestra',dash:'Scatto'}},rig('skeleton',{attack:{a:'shoot'}}));
-reg('necro',{n:'Negromante',g:1,an:['idle','walk','attack','summon','hit'],dur:{...D4,attack:1.5,summon:1.9},lab:{attack:'Sfera',summon:'Evoca'}},
+reg('goblin',{n:'Goblin',g:1,an:['idle','walk','prep','attack','hit','die'],dur:{...D4,prep:.8,attack:1.15,die:1},lab:{attack:'Tira'}},rig('goblin',{attack:{a:'shoot'}}));
+reg('skeleton',{n:'Scheletro',g:1,an:['idle','walk','prep','attack','dash','hit','die'],dur:{...D4,prep:.8,attack:1.8,dash:.75,die:1},lab:{attack:'Balestra',dash:'Scatto'}},rig('skeleton',{attack:{a:'shoot'}}));
+reg('necro',{n:'Negromante',g:1,an:['idle','walk','prep','attack','summon','hit','die'],dur:{...D4,prep:.8,attack:1.5,summon:1.9,die:1},lab:{attack:'Sfera',summon:'Evoca'}},
   rig('necro',{attack:{a:'shoot'},summon:{a:'shoot',staff:'summon'}},{back:(x,y,face,anim,p,k,o)=>{if(anim!=='summon'||LOWFX)return;
     // a ring of green light on the floor while he calls the dead
     const s=p>.15&&p<.85?Math.sin((p-.15)/.7*Math.PI):0;if(s<=0)return;ctx.save();ctx.strokeStyle=`rgba(159,255,122,${(.55*s).toFixed(3)})`;ctx.lineWidth=2;ctx.setLineDash([5,4]);ctx.lineDashOffset=-G.t*20;
     ctx.beginPath();ctx.ellipse(x,y,26*k*s,26*k*s*.45*C.KR(),0,0,TAU);ctx.stroke();ctx.setLineDash([]);shine('140,255,120',x,y,30*k*s,.25*s,12*k*s);ctx.restore()}}));
 // the little skeleton the necromancer raises: it climbs out of the ground (rise), runs at the hero (walk) and lunges (attack)
-reg('bonelet',{n:'Scheletrino',g:1,an:['idle','walk','attack','rise','hit'],dur:{...D4,walk:.42,attack:.7,rise:1.4},lab:{attack:'Assalto',rise:'Esce da terra'}},
+reg('bonelet',{n:'Scheletrino',g:1,an:['idle','walk','prep','attack','rise','hit','die'],dur:{...D4,walk:.42,prep:.7,attack:.7,rise:1.4,die:1},lab:{attack:'Assalto',rise:'Esce da terra'}},
   rig('bonelet',{attack:{a:'dash'}},{draw:(x,y,face,anim,p,k,o,st,go)=>{if(anim!=='rise')return go();
     const u=ez(cl(p/.72,0,1)),dy=(1-u)*28*k,hw=13*k*Math.min(1,p*4)*(p>.86?1-(p-.86)/.14:1);
     // the hole of dirt it climbs out of, and a few clods thrown up
@@ -14939,8 +15160,8 @@ reg('bonelet',{n:'Scheletrino',g:1,an:['idle','walk','attack','rise','hit'],dur:
     if(!o.noFx&&!LOWFX&&p<.75)for(let i=0;i<5;i++){const q=((p*2.2+i*.2)%1),a=i*1.3;ctx.fillStyle=`rgba(90,64,40,${(1-q).toFixed(3)})`;ball([x+Math.cos(a)*(5+q*12)*k,y-q*(16-q*10)*k],1.6*k);ctx.fill()}}}));
 
 // ------------------------------------------------------------------ chapter 2
-reg('pyro',{n:'Piromante',g:2,an:['idle','walk','attack','hit'],dur:{...D4,attack:1.5},lab:{attack:'Fuoco'}},rig('pyro',{attack:{a:'shoot'}}));
-reg('bomber',{n:'Nano bombarolo',g:2,an:['idle','walk','attack','hit'],dur:{...D4,attack:1.3},lab:{attack:'Lancia la bomba'}},rig('bomber',{attack:{a:'shoot'}}));
+reg('pyro',{n:'Piromante',g:2,an:['idle','walk','prep','attack','hit','die'],dur:{...D4,prep:.8,attack:1.5,die:1},lab:{attack:'Fuoco'}},rig('pyro',{attack:{a:'shoot'}}));
+reg('bomber',{n:'Nano bombarolo',g:2,an:['idle','walk','prep','attack','hit','die'],dur:{...D4,prep:.8,attack:1.3,die:1},lab:{attack:'Lancia la bomba'}},rig('bomber',{attack:{a:'shoot'}}));
 
 // ------------------------------------------------------------------ the bosses
 // a soft aura round a floating mage (the game paints it under them)
@@ -49013,6 +49234,150 @@ function trTryHud(){let el=$('trTry');if(!TRY.on||TRY.loop){if(el)el.hidden=true
 {const _c=checkAch;checkAch=function(){if(TRY.on)return;return _c.apply(this,arguments)}}
 {const _e=endRun;endRun=function(){if(TRY.on){trTryEnd();return}return _e.apply(this,arguments)}}
 
+// =====================================================================
+// 97. NEMICI PIÙ VIVI (Denis, 29 ottobre: «Nemici più vivi»: il pezzo che mancava della FASE 2, i nemici normali con tutte le mosse,
+// fermi, camminano, si preparano, attaccano, colpiti, muoiono, e i loro suoni). Le mosse stanno nei modelli (sprite/nemici3d: «prep» e
+// «die» per i 26 nemici normali); qui:
+// 1. le voci proprie dei dieci che prendevano in prestito quelle di un altro (VOX in 75: bigslime, magmaslime, tadpole, snail, bonelet,
+//    pyro, mushroom, eyeflower, shadoweye, obsidian);
+// 2. un verso di preparazione per ognuno (VOX[tipo].p), quando si prepara a colpire;
+// 3. i suoni della mossa «muore» nel suo momento (NVD: [frazione della mossa, suono]);
+// 4. nel gioco: la mossa «si prepara» quando il nemico prende la mira, accende la miccia, carica, gonfia la sacca… (NVP: per ogni tipo il
+//    segnale che il gioco ha già, gli stessi della stellina di 56), e il corpo che recita la mossa «muore» del suo modello (77: dal vivo,
+//    al massimo NV.live insieme; gli altri tengono la foto di prima, che resta anche la riserva se un modello dà errore).
+// NV.on spegne tutto.
+// =====================================================================
+const NV={on:true,live:5};
+// ------------------------------------------------------------------ the little sounds they are made of
+// a bubble: a sine that slides (up for a pop, down for a sag)
+const nvBub=(t,f0,f1,dur,vol)=>{const c=AU.ctx,o=osc('sine',f0,t,t+dur+.03),g=c.createGain();o.frequency.exponentialRampToValueAtTime(f1,t+dur);
+  g.gain.setValueAtTime(.0001,t);g.gain.linearRampToValueAtTime(vol,t+.006);g.gain.exponentialRampToValueAtTime(.0005,t+dur);o.connect(g);route(g,null,.15)};
+const nvSizzle=(t,dur,vol)=>fNoise(t,dur,'highpass',VR(4200,.1),.8,vol,{att:dur*.3});
+// a hum that swells and fades (two voices a fifth apart), sliding to f2
+const nvHum=(t,f,dur,vol,f2)=>{const c=AU.ctx,o=osc('sine',f,t,t+dur+.05),o2=osc('triangle',f*1.5,t,t+dur+.05),g=c.createGain();
+  if(f2){o.frequency.exponentialRampToValueAtTime(f2,t+dur);o2.frequency.exponentialRampToValueAtTime(f2*1.5,t+dur)}
+  g.gain.setValueAtTime(.0001,t);g.gain.linearRampToValueAtTime(vol,t+dur*.35);g.gain.exponentialRampToValueAtTime(.0005,t+dur);o.connect(g);o2.connect(g);route(g,null,.3)};
+// a creak (a bow being drawn): a narrow band of noise that rises
+const nvCreak=(t,dur,f0,f1,vol)=>fNoise(t,dur,'bandpass',f0,9,vol,{f2:f1,att:dur*.6});
+// a body landing on the floor
+const nvThud=(t,v)=>{fThump(t,VR(150,.1),62,.12,.22*v);fNoise(t,.08,'lowpass',VR(900,.15),.8,.12*v,{brown:true})};
+// a note wobbling (the eye flower staring)
+const nvWob=(t,f,dur,vol)=>{const c=AU.ctx,o=osc('sine',f,t,t+dur),v=osc('sine',7,t,t+dur),vg=c.createGain(),g=c.createGain();vg.gain.value=f*.04;v.connect(vg);vg.connect(o.frequency);
+  g.gain.setValueAtTime(.0001,t);g.gain.linearRampToValueAtTime(vol,t+dur*.3);g.gain.exponentialRampToValueAtTime(.0005,t+dur*.96);o.connect(g);route(g,null,.3)};
+// ------------------------------------------------------------------ 1. their own voices: [attack, hurt, death, step (and every how many px)]
+Object.assign(VOX,{
+  bigslime:{a:t=>{M.goo(t,.8);fThump(t+.06,VR(200,.1),VR(460,.1),.12,.1)},h:t=>{fThump(t,VR(260,.1),110,.1,.14);fNoise(t,.08,'lowpass',700,1.4,.1,{brown:true})},d:null,
+    s:t=>fThump(t,VR(170,.15),95,.07,.07),px:42},
+  magmaslime:{a:t=>{M.goo(t,.5);nvSizzle(t+.02,.28,.05);fThump(t+.05,VR(300,.1),VR(640,.1),.08,.07)},h:t=>{fThump(t,VR(340,.1),170,.07,.11);nvSizzle(t,.18,.05)},d:null,
+    s:t=>{fThump(t,VR(240,.15),130,.05,.05);if(Math.random()<.5)nvSizzle(t,.08,.025)},px:34},
+  tadpole:{a:t=>{nvBub(t,VR(620,.1),1400,.07,.07);fNoise(t+.02,.06,'lowpass',1600,1,.04,{brown:true})},h:t=>nvBub(t,950,560,.08,.07),d:t=>{nvBub(t,700,1600,.05,.06);nvBub(t+.07,900,2000,.04,.05)},px:0},
+  snail:{a:t=>{M.shell(t,.5);fNoise(t,.45,'lowpass',VR(320,.1),.8,.08,{brown:true,att:.1})},h:t=>{M.shell(t,.5);squeak(t+.02,1250,900,.09,.04)},d:t=>{M.shell(t,.8);squeak(t+.05,1100,520,.32,.035)},
+    s:t=>fNoise(t,.08,'lowpass',VR(700,.15),1.2,.06,{brown:true}),px:30},
+  bonelet:{a:t=>{rattle(t,3,.3,1600);ev(t+.04,VR(620,.08),700,.07,.06,[950,2200])},h:t=>rattle(t,3,.35,1750),d:null,s:t=>M.bone(t,.12,VR(1700,.15)),px:18},
+  pyro:{a:t=>{whoosh(t,.35,700,2200,.06);ev(t+.05,VR(260,.08),230,.1,.09,[650,1500])},h:t=>ev(t,330,240,.13,.11,[700,1500]),d:t=>{ev(t,300,150,.45,.12,[650,1400]);fNoise(t+.12,.3,'highpass',3200,.8,.05)},
+    s:t=>fThump(t,VR(220,.1),120,.03,.05),px:28},
+  mushroom:{a:t=>{fNoise(t,.22,'lowpass',VR(1500,.1),.9,.08,{att:.03});nvBub(t+.03,300,520,.1,.05)},h:t=>{fThump(t,VR(420,.1),250,.06,.1);rustle(t,.05,.08)},d:t=>fNoise(t,.5,'lowpass',1500,.9,.07,{f2:300,att:.05}),
+    s:t=>fThump(t,VR(300,.15),180,.03,.04),px:22},
+  eyeflower:{a:t=>{rustle(t,.08,.16);fNoise(t+.06,.02,'bandpass',2000,3,.05);nvBub(t+.06,1200,800,.05,.04)},h:t=>squeak(t,1800,1300,.12,.04),d:t=>{nvBub(t,900,300,.5,.035);rustle(t+.1,.06,.3)},px:0},
+  shadoweye:{a:t=>{nvHum(t,110,.5,.05);M.glass(t+.1,.3,VR(1800,.1))},h:t=>{M.glass(t,.4,VR(1600,.1));ev(t,150,120,.15,.06,[400,900],{rasp:.3})},d:t=>{whoosh(t,.5,3000,600,.05,.4);nvHum(t,120,.6,.035,70)},px:0},
+  obsidian:{a:t=>{fThump(t,VR(80,.1),42,.4,.22,.15);nvSizzle(t+.05,.3,.05);M.glass(t+.08,.3,VR(1400,.1))},h:t=>{M.glass(t,.6,VR(1400,.1));M.stone(t,.4)},d:null,
+    s:t=>{fThump(t,VR(90,.1),45,.16,.18);M.glass(t,.12,VR(2400,.1))},px:36}});
+// ------------------------------------------------------------------ 2. getting ready: one call each, when it starts
+const NVPS={
+  slime:t=>{nvBub(t,VR(260,.1),520,.12,.06);nvBub(t+.12,VR(330,.1),700,.1,.05)},
+  bigslime:t=>{nvBub(t,VR(170,.1),340,.16,.07);nvBub(t+.16,VR(220,.1),460,.13,.06)},
+  magmaslime:t=>{nvBub(t,VR(240,.1),500,.12,.05);nvSizzle(t,.35,.04)},
+  bat:t=>squeak(t,VR(1800,.08),2700,.22,.045),
+  goblin:t=>{nvCreak(t,.42,900,2200,.05);ev(t+.3,VR(380,.08),420,.06,.06,[800,1800])},
+  plant:t=>{rustle(t,.08,.35);nvBub(t+.15,500,700,.12,.03)},
+  skeleton:t=>{for(let i=0;i<3;i++)M.metal(t+i*.1,.15,VR(1500,.08),.3)},
+  mushroom:t=>{nvBub(t,220,330,.28,.05);fNoise(t,.3,'lowpass',900,.8,.04,{att:.2})},
+  wisp:t=>{vBell(null,t,VR(96,.01),.6,.025);fNoise(t,.35,'highpass',4500,.8,.025,{att:.25})},
+  beetle:t=>{for(let i=0;i<6;i++)fNoise(t+i*(.09-i*.01),.012,'bandpass',VR(3400,.12),3,.1)},
+  eyeflower:t=>nvWob(t,330,.5,.04),
+  shadoweye:t=>nvHum(t,90,.6,.05,150),
+  necro:t=>fNoise(t,.55,'bandpass',VR(2400,.1),4,.09,{att:.4,rev:.6}),
+  bonelet:t=>{rattle(t,2,.25,1700);ev(t+.08,700,760,.05,.05,[1000,2300]);ev(t+.16,720,780,.05,.05,[1000,2300])},
+  imp:t=>{for(let i=0;i<3;i++)ev(t+i*.1,VR(600,.05),650,.06,.06,[1100,2500])},
+  obsidian:t=>{fNoise(t,.5,'lowpass',VR(260,.1),.7,.14,{brown:true,att:.3});M.stone(t+.35,.35)},
+  pyro:t=>fNoise(t,.55,'bandpass',400,1.4,.07,{f2:1500,att:.4}),
+  bomber:t=>{nvSizzle(t,.5,.05);ev(t+.15,VR(250,.06),230,.08,.07,[650,1500]);ev(t+.26,240,220,.08,.06,[650,1500])},
+  frog:t=>ev(t,160,230,.4,.08,[480,1100],{trem:30}),
+  mosquito:t=>squeak(t,VR(700,.1),1500,.45,.025),
+  croc:t=>ev(t,VR(105,.06),92,.5,.09,[380,850],{rasp:.9}),
+  snail:t=>{M.shell(t,.35);fNoise(t+.05,.35,'lowpass',300,.8,.06,{brown:true,att:.2})},
+  tadpole:t=>{nvBub(t,600,1300,.05,.05);nvBub(t+.08,700,1500,.05,.04)},
+  wolf:t=>ev(t,VR(140,.06),150,.55,.11,[650,1400],{rasp:1,trem:38}),
+  snowspirit:t=>{for(let i=0;i<3;i++)vBell(null,t+i*.11,98+i*3,.4,.02)},
+  icesentinel:t=>{for(let i=0;i<3;i++)M.ice(t+i*.12,.25+i*.08);nvHum(t,200,.5,.03,400)}};
+for(const k in NVPS)if(VOX[k])VOX[k].p=NVPS[k];
+// ------------------------------------------------------------------ 3. dying: the sounds of the move «muore», at their moment of it
+const NVD={
+  slime:[[.22,t=>M.goo(t,.5)]],bigslime:[[.22,t=>M.goo(t,.8)]],magmaslime:[[.22,t=>{M.goo(t,.5);nvSizzle(t,.4,.04)}]],
+  mushroom:[[.7,t=>nvThud(t,.35)],[.74,t=>fNoise(t,.4,'lowpass',1400,.9,.05,{att:.05})]],
+  bat:[[.7,t=>nvThud(t,.25)]],plant:[[.3,t=>rustle(t,.06,.25)],[.72,t=>nvThud(t,.25)]],wisp:[[.2,t=>M.spirit(t,.5)]],
+  beetle:[[.5,t=>{M.shell(t,.6);nvThud(t,.3)}],[.6,t=>fNoise(t,.25,'highpass',3000,.8,.04)]],
+  eyeflower:[[.3,t=>rustle(t,.06,.3)],[.75,t=>nvThud(t,.3)]],shadoweye:[[.2,t=>whoosh(t,.45,2500,500,.07,.4)]],
+  imp:[[.6,t=>nvThud(t,.35)],[.7,t=>nvThud(t,.15)]],
+  obsidian:[[.2,t=>M.glass(t,.6,1300)],[.45,t=>M.stone(t,.6)],[.62,t=>nvThud(t,.5)]],
+  frog:[[.55,t=>{nvThud(t,.4);M.goo(t,.25)}]],mosquito:[[.65,t=>fThump(t,VR(500,.1),300,.03,.05)]],
+  croc:[[.6,t=>nvThud(t,.8)]],snail:[[.45,t=>M.shell(t,.5)],[.75,t=>{M.shell(t,.7);nvThud(t,.3)}]],tadpole:[[.4,t=>nvBub(t,500,1200,.06,.05)]],
+  wolf:[[.5,t=>nvThud(t,.6)],[.62,t=>nvThud(t,.2)]],
+  snowspirit:[[.58,t=>fNoise(t,.2,'lowpass',VR(1200,.1),.7,.09,{brown:true})],[.62,t=>M.ice(t,.25)]],
+  icesentinel:[[.12,t=>M.ice(t,.8)],[.3,t=>M.ice(t,.4)],[.53,t=>{M.ice(t,.5);nvThud(t,.45)}]],
+  goblin:[[.55,t=>nvThud(t,.45)]],necro:[[.55,t=>nvThud(t,.4)]],pyro:[[.55,t=>nvThud(t,.45)]],bomber:[[.55,t=>{nvThud(t,.55);M.metal(t+.02,.25,700,.4)}]],
+  skeleton:[[.14,t=>rattle(t,4,.35,1200)],[.3,t=>rattle(t,8,.5,1000)],[.52,t=>rattle(t,5,.4,1300)],[.62,t=>M.bone(t,.6,700)]],
+  bonelet:[[.14,t=>rattle(t,3,.3,1500)],[.3,t=>rattle(t,6,.45,1300)],[.52,t=>rattle(t,4,.35,1600)],[.62,t=>M.bone(t,.5,900)]]};
+// plays a sound of a type (k: 'a', 'h', 'd', 's', 'p', or a function) at the volume v, now
+function nvSay(type,k,v){if(!AU.ctx||!AU.on.sfx)return;const f=typeof k==='function'?k:VOX[type]&&VOX[type][k];if(!f)return;try{withVol(v==null?1:v,()=>f(AU.ctx.currentTime+.01))}catch(er){}}
+// ------------------------------------------------------------------ 5. the effects of the deaths of before (77), on the 3D move «Muore»
+// (Denis, 29 ottobre: «rimetti quei effetti che avevano»): the dust where the body lands, the little stars that rise from it, the bubbles of
+// the goo, the sparkles round the ones that fly, the petals and leaves of the plants, the dust of stone and ice; each from the moment its
+// model's body reaches the floor (NVL, a fraction of the move). k: the scale of the body (the elites are bigger)
+const NVL={slime:.22,bigslime:.22,magmaslime:.22,tadpole:.4,mushroom:.7,plant:.72,eyeflower:.75,bat:.7,mosquito:.65,wisp:.2,snowspirit:.58,shadoweye:.2,
+  beetle:.5,obsidian:.45,icesentinel:.53,imp:.6,goblin:.55,necro:.55,pyro:.55,bomber:.55,skeleton:.3,bonelet:.3,wolf:.5,frog:.55,croc:.6,snail:.75};
+function nvDieFx(type,x,y,p,face,k,seed){const fam=EDF[type],L=NVL[type];if(!fam||L==null||LOWFX)return;
+  const r=(ET[type]&&ET[type].r)||10,h=Math.max(16,r*2.6),dir=Math.cos(face)>=0?-1:1,col=ECOL[type]||'#c9c0b0',u=(p-L)/(1-L);
+  ctx.save();ctx.translate(x,y);ctx.scale(k,k);
+  try{if(fam==='fall'||fam==='beast'){const cx=fam==='fall'?dir*h*.45:0;ePuffs(cx,-4,u/.8,7,h*.55,'235,228,215',.6);eStars(cx,-4-h*.3,u,3)}
+    else if(fam==='bones')ePuffs(0,-2,u,6,h*.5,'235,228,215',.45);
+    else if(fam==='crumble')ePuffs(0,-3,u,7,h*.6,'210,205,200',.5);
+    else if(fam==='goo'){for(let i=0;i<4;i++){const t0=L+.08+erand(seed,i)*.45,v=(p-t0)/.18;if(v<=0||v>=1)continue;const bx=(erand(seed,i+4)-.5)*r*2.2,by=-2-v*5;
+        ctx.save();ctx.globalAlpha*=1-v;ctx.strokeStyle='rgba(255,255,255,.8)';ctx.lineWidth=1.1;ctx.beginPath();ctx.arc(bx,by,1.4+v*2.4,0,TAU);ctx.stroke();ctx.restore()}}
+    else if(fam==='fly'){const a0=ESS(.25,.4,p)*(1-ESS(.75,1,p));if(a0>0)for(let i=0;i<7;i++){const a=i/7*TAU+p*3,d=6+p*20,q=[Math.cos(a)*d,-h*.4+Math.sin(a)*d*.6];
+        ctx.save();ctx.globalAlpha*=a0;ctx.fillStyle=i%2?'#fff6c8':col;ctx.beginPath();ctx.arc(q[0],q[1],1.6,0,TAU);ctx.fill();ctx.restore()}}
+    else if(fam==='wilt'){for(let i=0;i<6;i++){const v=(p-.3-i*.04)/.6;if(v<=0||v>=1)continue;const a=(erand(seed,i)-.5)*2.2-Math.PI/2,d=4+v*22,q=[Math.cos(a)*d+dir*v*6,-h*.45+Math.sin(a)*d*.6-v*8];
+        ctx.save();ctx.globalAlpha*=1-v;ctx.translate(q[0],q[1]);ctx.rotate(v*4+i);ctx.fillStyle=col;ctx.beginPath();ctx.ellipse(0,0,2.6,1.3,0,0,TAU);ctx.fill();ctx.restore()}}}
+  finally{ctx.restore()}}
+// ------------------------------------------------------------------ 4. in the game
+// the game's own signal that each one is about to strike (the ones that have one): aiming, the cast, the fuse, the charge, the swelling sac.
+// The skeleton aims while it walks: only standing still is it getting ready (or before its dash)
+const NVP={slime:e=>!(e.jump>0)&&e.cd<.28,bigslime:e=>!(e.jump>0)&&e.cd<.28,magmaslime:e=>!(e.jump>0)&&e.cd<.28,bat:e=>e.elite&&e.cd<.4,
+  goblin:e=>e.aim>0,plant:e=>e.cd<.45,skeleton:e=>(e.aim>0&&!e.moving)||e.wind>0,mushroom:e=>e.puff>0,beetle:e=>e.arm>0,eyeflower:e=>e.wind>0,shadoweye:e=>e.stare>0,
+  imp:e=>e.cd<.4,obsidian:e=>e.wind>0,pyro:e=>e.cast>0,bomber:e=>e.throwT>0,frog:e=>e.spit>0,icesentinel:e=>e.cast>0};
+const nvReady=e=>{const f=NVP[e.type];return!!(f&&!e.dead&&!(e.spawn>0)&&f(e))};
+// the ones whose blow is not a shot of the game (the spores, the bomb, the meteor, the beam): when getting ready ends, the attack's blow
+const NVA={mushroom:1,bomber:1,pyro:1,shadoweye:1};
+// the move: while it gets ready, the held «prep» of its model (the knock back of a hit still wins); the attack that follows starts from its
+// blow. The necromancer's summoning plays his own move «Evoca» as long as it lasts
+{const _m=n3Move;n3Move=function(e){const r=_m(e);if(!NV.on||isBoss(e.type))return r;const M=N3.meta[e.type],t=G.t||0;
+  if(e.type==='necro'&&e.cast>0&&M.an.includes('summon')&&r[0]!=='hit')return['summon',Math.min(.999,1-e.cast)];
+  if(!M.an.includes('prep')||!nvReady(e)){if(e.nvP!=null&&NVA[e.type]&&M.an.includes('attack')&&!(e.a3>=e.nvP)){e.a3=t;e.aim3=1}e.nvP=null;return r}
+  if(e.nvP==null)e.nvP=t;e.aim3=Math.max(e.aim3||0,1);if(r[0]==='hit')return r;
+  return['prep',((t-e.nvP)/((M.dur&&M.dur.prep)||.8))%1]}}
+// the call when it starts getting ready, and the sounds of the bodies as their move goes on
+{const _u=update;update=function(dt){_u(dt);if(!NV.on||!G||G.state!=='play'||!AU.ctx||!AU.on.sfx)return;try{
+  for(const e of G.enemies){if(isBoss(e.type))continue;const on=nvReady(e);if(on&&!e.nvO&&VOX[e.type]&&VOX[e.type].p)voxPlay(e,'p');e.nvO=on}
+  const L=G.ecorpses;if(L)for(const c of L){const S=c.live&&NVD[c.type];if(!S)continue;const p=c.t/c.dd;while(c.ns<S.length&&p>=S[c.ns][0]){const f=S[c.ns][1];c.ns++;
+    const d=P?Math.hypot(c.x-P.x,c.y-P.y):0;AU.pan=Math.max(-.7,Math.min(.7,(c.x-(G.vx||0)-VW/2)/200));nvSay(c.type,f,.8*Math.max(.3,1-d/520))}}}catch(er){}}}
+// the body plays the model's «muore» (at most NV.live at once: the others keep the photo of before), then fades in .35 s
+{const _a=addECorpse;addECorpse=function(e){_a.apply(this,arguments);try{if(!NV.on||LOWFX)return;const L=G.ecorpses,c=L&&L[L.length-1],M=N3.meta[e.type];
+  if(!c||c.type!==e.type||!M||!M.an.includes('die')||L.filter(o=>o.live).length>=NV.live)return;
+  c.live=true;c.f=e.f3!=null?e.f3:(typeof e.face==='number'?e.face:Math.PI/2);c.big=(e.elite||G.giant)&&!e.type.includes('slime')?1.22:1;c.dd=(M.dur&&M.dur.die)||1;c.dur=c.dd+.35;c.ns=0}catch(er){}}}
+{const _d=drawECorpse;drawECorpse=function(c){if(!c.live)return _d.apply(this,arguments);const M=N3.meta[c.type],p=Math.min(.999,c.t/c.dd),al=1-Math.min(1,Math.max(0,(c.t-c.dd)/.35));
+  if(al<=.01)return;ctx.save();ctx.globalAlpha*=al;
+  // one that died up in the air (a slime mid-jump) comes down to the floor in the first quarter of the move
+  try{N3[c.type](c.x,c.y+8-(c.z||0)*(1-Math.min(1,p/.25)),c.f,'die',p,(M.sc||1)*c.big,{noFx:LOWFX});nvDieFx(c.type,c.x,c.y+8,p,c.f,c.big,c.seed)}catch(er){c.live=false;c.dur=c.t+.3}finally{ctx.restore()}}}
 })();
 };
 </script>

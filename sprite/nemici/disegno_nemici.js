@@ -201,8 +201,8 @@ function slime(x,y,face,anim,p,sc,o){sc=sc||1;o=o||{};const V0=V(face),{P,D,F,c,
   ctx.save();ctx.translate(x,y);ctx.scale(sc,sc);
   // the body: a wobbling blob (bumps round the outline), lit from the upper left, darker and dirtier at the base
   const path=(k)=>{ctx.beginPath();for(let i=0;i<=28;i++){const a=i/28*TAU,wob=1+.045*Math.sin(a*3+ph*2+1)+.03*Math.sin(a*5-ph);const px=q[0]+Math.cos(a)*(w+k)*wob,py=q[1]+Math.sin(a)*(h+k)*wob*(Math.sin(a)>0?1.12:.9);ctx.lineTo(px,py)}ctx.closePath()};
-  // goo strings and drops hanging from the base (behind the body)
-  ctx.lineCap='round';for(let i=0;i<4;i++){const a=.3+i*.7,bx=q[0]+Math.cos(a)*w*.8,by=q[1]+h*.8,l=3+2*Math.sin(ph+i*1.7)+(hop>0?hop*.5:0);ctx.strokeStyle=INK;ctx.lineWidth=2.4;seg([bx,by],[bx,by+l]);ctx.stroke();ctx.strokeStyle=colD;ctx.lineWidth=1.1;seg([bx,by],[bx,by+l]);ctx.stroke();ctx.fillStyle=col;ink(1);ball([bx,by+l],1.1);ctx.fill();ctx.stroke()}
+  // (the goo strings with a drop at the end that hung from the base are gone: they looked like little legs. Denis, 31 ottobre: «togli quella
+  // specie di zampettine a tutti gli slime»)
   ink(2.4);path(0);ctx.fillStyle=col;ctx.fill();ctx.stroke();
   ctx.save();path(-1.2);ctx.clip();ctx.fillStyle=colD;ell(q[0]+w*.35,q[1]+h*.6,w*1.1,h*.7);ctx.fill();ctx.fillStyle=o.gelF||LC2.gelF;ell(q[0]+w*.8,q[1]+h*.15,w*.4,h*.8);ctx.fill();
   // something inside: a skull swallowed long ago, drifting

@@ -5,6 +5,8 @@
 # La pagina costruita non si salva su git.
 # Uso: python3 anteprime/mk_nemici3d.py [nome]   (nome del mostro da cui parte; senza nome il primo)
 #      python3 anteprime/mk_nemici3d.py --nuovi   solo i 4 boss nuovi del terzo giro (sprite/nemici3d/boss3.js) → anteprime/boss3.html
+#      python3 anteprime/mk_nemici3d.py --vivi   «Nemici più vivi» (Denis, 29 ottobre): solo i 26 nemici normali dei quattro capitoli, con
+#        le mosse nuove «Si prepara» e «Muore», i suoni (🔊) e «Tutte le mosse» in fila; parte da tutto il primo capitolo → anteprime/vivi.html
 #      python3 anteprime/mk_nemici3d.py --classici  i boss della Classica rifatti (Denis, 15 ottobre: «possenti, belli, fighi, che diano
 #        timore»): ogni modello «<boss>2» (es. golem2 in sprite/nemici3d/golem2.js) con sotto quello di oggi → anteprime/boss_classici.html
 # I file di lavoro dei costruttori (…2a.js, …2b.js) non entrano mai nelle pagine.
@@ -18,18 +20,23 @@ order=['base3d.js','boss2kit.js','cap1.js','cap1b.js','cap2.js','cap3.js','cap4.
 import re
 files=[f for f in order if os.path.exists(os.path.join(d3,f))]+sorted(os.path.basename(f) for f in glob.glob(os.path.join(d3,'*.js')) if os.path.basename(f) not in order and not re.search(r'2[ab]\.js$',os.path.basename(f)))
 src='\n'.join(open(os.path.join(d3,f),encoding='utf-8').read() for f in files)
+# the voices, the calls of «Si prepara» and the sounds of «Muore» (src/js/97-nemici-vivi.js), while the game does not have them yet
+vivi=os.path.join(root,'src','js','97-nemici-vivi.js')
+v97=open(vivi,encoding='utf-8').read() if 'const NV={' not in game and os.path.exists(vivi) else ''
+src+='\n'+v97
 nuovi='--nuovi' in sys.argv
+vivi_='--vivi' in sys.argv
 classici='--classici' in sys.argv
 args=[a for a in sys.argv[1:] if not a.startswith('--')]
-start=args[0] if args else ('puppeteer' if nuovi else 'golem2' if classici else '')
+start=args[0] if args else ('puppeteer' if nuovi else 'golem2' if classici else 'slime' if vivi_ else '')
 ctrl=r'''
 // ---------- anteprima: nemici e boss della Classica in 3D, dal vivo ----------
 (()=>{const GROUPS=[['eroi','Eroi e compagni'],[1,'Capitolo 1 · Muschio'],[2,'Capitolo 2 · Cenere'],[3,'Capitolo 3 · Palude'],[4,'Capitolo 4 · Ghiaccio'],['boss','Boss'],['boss3','Boss nuovi · terzo giro'],['classici','Boss classici rifatti']];
-const SOLO=__SOLO__;
+const SOLO=__SOLO__,VIVI=__VIVI__;
 // the Classic bosses redone: <boss>2 next to the <boss> of today («Prima e dopo», and under it in «4 direzioni»)
 if(SOLO==='classici')for(const id of N3.order){const o=id.replace(/2$/,'');if(id===o||!N3[o]||!/^boss/.test(N3.meta[o].g))continue;const M=N3.meta[id];M.g='classici';
   M.old=(x,y,f,a,pp)=>{const M0=N3.meta[o];N3[o](x,y,f,M0.an.includes(a)?a:'idle',pp,M0.sc||1,{})}}
-const MOVE={idle:'Fermo',walk:'Cammina',attack:'Attacco',hit:'Colpito'};
+const MOVE={idle:'Fermo',walk:'Cammina',prep:'Si prepara',attack:'Attacco',hit:'Colpito',die:'Muore'};
 const cap=s=>s?s[0].toUpperCase()+s.slice(1):s,moveName=(id,a)=>{const M=N3.meta[id];return cap(M.lab&&M.lab[a]||MOVE[a]||a)};
 // the game's type for the drawing of today (when it is not the same name)
 const OLD={};
@@ -39,9 +46,21 @@ const ORDER=['arciere','cacciatrice','balestriere','druida','muschietto','luccio
 // the Classic bosses redone in the order of the arenas (the puppet right after its master)
 const ORD2=['golem2','salamander2','toad2','yeti2','witch2','smith2','hydra2','icequeen2','mimic2','puppeteer2','puppet2','phoenix2','octopus2','stag2'];
 const rank=id=>{const j=ORD2.indexOf(id);if(j>=0)return 2000+j;const i=ORDER.indexOf(id);return i<0?999:i};
-const ids=()=>{const out=[];for(const[g] of GROUPS)for(const id of N3.order.slice().sort((a,b)=>rank(a)-rank(b)))if(N3.meta[id].g===g)out.push(id);for(const id of N3.order)if(!out.includes(id))out.push(id);return SOLO?out.filter(id=>N3.meta[id].g===SOLO):out};
+const ids=()=>{const out=[];for(const[g] of GROUPS)for(const id of N3.order.slice().sort((a,b)=>rank(a)-rank(b)))if(N3.meta[id].g===g)out.push(id);for(const id of N3.order)if(!out.includes(id))out.push(id);return SOLO?out.filter(id=>N3.meta[id].g===SOLO):VIVI?out.filter(id=>[1,2,3,4].includes(N3.meta[id].g)):out};
 const isBoss=id=>/^boss|classici/.test(N3.meta[id].g);
-let view='__VIEW__',cur='__START__',anim='idle',face=Math.PI/2-.5,spin=true,low=false,p2=false,zoom=1,p=0,ms=0,last=performance.now(),tAnim=0;
+let view='__VIEW__',cur='__START__',anim='idle',face=Math.PI/2-.5,spin=true,low=false,p2=false,zoom=1,p=0,ms=0,last=performance.now(),tAnim=0,snd=false,seq=VIVI,lastP=0,lastA='',sayT=0;
+// «Tutte le mosse»: fermo, cammina, si prepara, attacca, colpito, muore, one after the other (each for so many of its loops), then again
+const SEQ=[['idle',1],['walk',2],['prep',2],['attack',1],['hit',1],['die',1]],HOLD=1.2;
+const seqOf=id=>SEQ.filter(([a])=>N3.meta[id].an.includes(a));
+// the sounds of a move at their moments (the page plays them for the monster in the middle, with «Suoni»)
+function moveSounds(id,a,p0,p1,first){if(!snd||typeof VOX==='undefined'||!AU.ctx)return;const V=VOX[id]||{},say=(k,v)=>{try{if(typeof nvSay==='function')nvSay(id,k,v);else if(V[k])withVol(v||1,()=>V[k](AU.ctx.currentTime+.01))}catch(e){}};
+  const at=q=>p0<=q&&p1>q||first&&q===0;AU.pan=0;
+  if(a==='walk'){if(V.s&&V.px&&(at(0)||at(.5)))say('s',.8)}
+  else if(a==='prep'){if(first||G.t-sayT>2.3){sayT=G.t;say('p')}}
+  else if(a==='attack'){if(at(.42))say('a')}
+  else if(a==='hit'){if(at(0))say('h')}
+  else if(a==='die'){if(at(0)){try{sfx('death',id)}catch(e){}}if(typeof NVD!=='undefined'&&NVD[id])for(const[q,fn] of NVD[id])if(at(q))say(fn,.9)}
+  else if(a!=='idle'&&at(.3))say('a')}
 if(!N3[cur])cur=ids()[0];
 // how big each monster is (screen box round its ground point at scale 1, over four directions and all its moves), measured once
 const BOX={};
@@ -56,8 +75,20 @@ function oldDraw(id,x,y,f,sc){const M=N3.meta[id];if(M.old){ctx.save();ctx.trans
   if(!e){e=OE[id]=makeE0(t,0,-8,0);e.spawn=0;e.intro=0;e.em=1;e.fa=1;e.z=0;e.hp=e.max;e.ph='show';e.hidden=false;e.alpha=1;e.st='walk';if(t==='hydra'){const g=G.enemies;G.enemies=[e];try{updEnemy(e,.001)}catch(er){}G.enemies=g}}
   e.x=0;e.y=-8;e.face=f;e.t=G.t;e.moving=anim==='walk';e.walk=G.t*9;e.flash=anim==='hit'&&p<.15?.1:0;
   ctx.save();ctx.translate(x,y);ctx.scale(sc,sc);try{shadowFor(e);drawEnemy(e)}catch(er){try{drawEnemy0(e)}catch(e2){}}ctx.restore();ctx.globalAlpha=1}
-function newDraw(id,x,y,f,sc,pp){const M=N3.meta[id],fl=anim==='hit'&&(pp==null?p:pp)<.14&&HASF;if(fl){ctx.save();ctx.filter='brightness(1.85) saturate(.6)'}
-  try{N3[id](x,y,f,anim,pp==null?p:pp,sc*(M.sc||1),{p2:p2&&isBoss(id)})}finally{if(fl)ctx.restore()}}
+// the game's own life round each normal enemy (src/js/56-nemici-vivi.js, ELIFE: the particles of its material, the dust of its steps,
+// the little star when it starts getting ready), on a pretend enemy of its own for each place it is drawn in (key)
+const LIFE={};
+function lifeFx(key,id,x,y,f,sc,a){if(typeof ELIFE==='undefined'||typeof b2tick!=='function'||isBoss(id))return;const Lf=ELIFE[id];if(!Lf)return;
+  let e=LIFE[key];if(!e||e.type!==id){e=LIFE[key]={type:id,x:0,y:-8,r:(ET[id]&&ET[id].r)||10,_b2p:[],_pa:''}}
+  e.face=f;e.moving=a==='walk';e.arm=id==='beetle'&&a==='prep'?.5:0;e.t=G.t;e.hidden=false;
+  ctx.save();ctx.translate(x,y);ctx.scale(sc,sc);
+  try{const dt=b2tick(e);if(a!=='die'){if(Lf.fx)Lf.fx(e,dt);if(Lf.walk&&e.moving&&b2every(e,'st',.32,dt))b2emit(e,{k:'dust',x:e.x+rand(-4,4),y:e.y+e.r*.5,vx:rand(-10,10),vy:-rand(4,10),drag:3,life:.45,r:2.4});
+      if(a==='prep'&&e._pa!=='prep')b2emit(e,{k:'glint',x:e.x,y:e.y-e.r*1.6-14,life:.4,r:7,col:'255,240,180'})}e._pa=a;b2draw(e)}catch(er){}finally{ctx.restore()}}
+function newDraw(id,x,y,f,sc,pp,key){const M=N3.meta[id],q=pp==null?p:pp,fl=anim==='hit'&&q<.14&&HASF;if(fl){ctx.save();ctx.filter='brightness(1.85) saturate(.6)'}
+  try{N3[id](x,y,f,anim,q,sc*(M.sc||1),{p2:p2&&isBoss(id)})}finally{if(fl)ctx.restore()}
+  // the effects of the deaths of before, on «Muore» (src/js/97-nemici-vivi.js), and the life round it
+  if(anim==='die'&&typeof nvDieFx==='function'&&!isBoss(id))try{nvDieFx(id,x,y,q,f,sc,id.length*1.7)}catch(er){}
+  lifeFx(key||id,id,x,y,f,sc,anim)}
 function boot(){try{INTRO.on=false;paused=true}catch(e){}try{AU.on.music=false;AU.on.sfx=false}catch(e){}
   const ov=document.createElement('div');ov.id='n3';ov.innerHTML=`<style>
   #n3{position:fixed;inset:0;z-index:99999;background:#1d1a16;font-family:"Baloo 2",system-ui,sans-serif;color:#f6ead2;touch-action:none;user-select:none;-webkit-user-select:none}
@@ -85,8 +116,10 @@ function boot(){try{INTRO.on=false;paused=true}catch(e){}try{AU.on.music=false;A
     $('n3Pick').innerHTML='';$('n3Pick').appendChild(btn('◀',false,()=>pick(L[(i-1+L.length)%L.length])));
     const s=document.createElement('select');for(const[g,gn] of GROUPS){const og=document.createElement('optgroup');og.label=gn;for(const id of L)if(N3.meta[id].g===g){const o=document.createElement('option');o.value=id;o.textContent=N3.meta[id].n;if(id===cur)o.selected=true;og.appendChild(o)}if(og.children.length)s.appendChild(og)}
     s.onchange=()=>{pick(s.value);build()};$('n3Pick').appendChild(s);$('n3Pick').appendChild(btn('▶',false,()=>pick(L[(i+1)%L.length])));
-    $('n3Anim').innerHTML='';for(const a of M.an)$('n3Anim').appendChild(btn(moveName(cur,a),anim===a,()=>{anim=a;tAnim=0}));
-    $('n3Opt').innerHTML='';$('n3Opt').appendChild(btn('Gira da solo',spin,()=>spin=!spin));if(isBoss(cur))$('n3Opt').appendChild(btn('Fase 2',p2,()=>p2=!p2));$('n3Opt').appendChild(btn('Effetti bassi',low,()=>low=!low));
+    $('n3Anim').innerHTML='';for(const a of M.an)$('n3Anim').appendChild(btn(moveName(cur,a),anim===a,()=>{anim=a;tAnim=0;seq=false}));
+    $('n3Opt').innerHTML='';$('n3Opt').appendChild(btn('Tutte le mosse',seq,()=>{seq=!seq;if(seq){anim=seqOf(cur)[0][0];tAnim=0}}));
+    $('n3Opt').appendChild(btn('🔊 Suoni',snd,()=>{snd=!snd;if(snd){try{initAudio();AU.on.sfx=true}catch(e){}}else{try{AU.on.sfx=false}catch(e){}}}));
+    $('n3Opt').appendChild(btn('Gira da solo',spin,()=>spin=!spin));if(isBoss(cur))$('n3Opt').appendChild(btn('Fase 2',p2,()=>p2=!p2));$('n3Opt').appendChild(btn('Effetti bassi',low,()=>low=!low));
     $('n3Opt').appendChild(btn('−',false,()=>zoom=Math.max(.5,zoom/1.2)));$('n3Opt').appendChild(btn('+',false,()=>zoom=Math.min(3,zoom*1.2)));
     $('n3Name').innerHTML=(view==='tutti'?(grp?grp[1]:'Tutti'):M.n)+'<small>'+(view==='gira'?(grp?grp[1]+' · ':'')+'trascina per girarlo':view==='quattro'?(M.g==='boss3'?'sopra la prima fase, sotto la seconda':M.g==='classici'?'sopra il nuovo, sotto quello di oggi':'sopra in 3D, sotto come è oggi'):view==='prima'?(M.g==='classici'?'a sinistra oggi, a destra il nuovo':'a sinistra oggi, a destra in 3D'):'tocca un mostro per vederlo da vicino')+'</small>'}
   pick(cur);build();
@@ -108,33 +141,37 @@ function boot(){try{INTRO.on=false;paused=true}catch(e){}try{AU.on.music=false;A
   // the scale that fits a monster in a w × h box, and where its ground point goes
   const fit=(id,w,h,a)=>{const b=box(id,a),s=Math.min(w/(2*Math.max(b.l,b.r)+8),h/(b.t+b.bt+8));return{s,gy:(b.t+4)*s,b}};
   function frame(now){const dt=Math.min(.05,(now-last)/1000);last=now;const W=ov.clientWidth,H=ov.clientHeight;if(cvp.width!==Math.round(W*dpr)||cvp.height!==Math.round(H*dpr)){cvp.width=Math.round(W*dpr);cvp.height=Math.round(H*dpr)}
-    const M=N3.meta[cur],dur=(id,a)=>(N3.meta[id].dur&&N3.meta[id].dur[a])||1.4;tAnim+=dt;p=(tAnim/dur(cur,anim))%1;if(spin)face-=dt*.55;
+    const M=N3.meta[cur],dur=(id,a)=>(N3.meta[id].dur&&N3.meta[id].dur[a])||1.4;tAnim+=dt;
+    if(seq){const S=seqOf(cur),i=S.findIndex(q=>q[0]===anim),d=dur(cur,anim)*(i<0?1:S[i][1])+(anim==='die'?HOLD:0);if(i<0||tAnim>=d){anim=S[i<0?0:(i+1)%S.length][0];tAnim=0;build()}}
+    p=anim==='die'?Math.min(.999,(tAnim%(dur(cur,anim)+HOLD))/dur(cur,anim)):(tAnim/dur(cur,anim))%1;if(spin)face-=dt*.55;
+    {const first=anim!==lastA||p<lastP-.5&&anim==='die';moveSounds(cur,anim,first?0:lastP,p<lastP&&!first?p+1:p,first);if(p<lastP&&!first)moveSounds(cur,anim,0,p,false);lastA=anim;lastP=p}
     const c=cvp.getContext('2d');c.setTransform(dpr,0,0,dpr,0,0);floor(c,W,H);
     const saved=ctx,lf=LOWFX;ctx=c;LOWFX=low;G.t=now/1000;let t1=0,cost=0;
     const top=74,bot=(ov.querySelector('.n3bar').offsetHeight||170),room=H-top-bot;
     try{
       if(view==='gira'){const F=fit(cur,W*.92,room*.9,anim),b0=F.b,s0=Math.min(F.s,6),sc=s0*zoom,gy=top+(room-(b0.t+b0.bt+8)*s0)/2+(b0.t+4)*s0;
-        t1=performance.now();newDraw(cur,W/2,gy,face,sc);cost=performance.now()-t1}
-      else if(view==='prima'){const F=fit(cur,W*.46,room*.8,anim),sc=Math.min(F.s,5)*zoom,gy=top+room*.1+F.gy;oldDraw(cur,W*.27,gy,face,sc);t1=performance.now();newDraw(cur,W*.73,gy,face,sc);cost=performance.now()-t1;
+        t1=performance.now();newDraw(cur,W/2,gy,face,sc,null,'gira');cost=performance.now()-t1}
+      else if(view==='prima'){const F=fit(cur,W*.46,room*.8,anim),sc=Math.min(F.s,5)*zoom,gy=top+room*.1+F.gy;oldDraw(cur,W*.27,gy,face,sc);t1=performance.now();newDraw(cur,W*.73,gy,face,sc,null,'prima');cost=performance.now()-t1;
         label(c,'Oggi',W*.27,top+room*.98);label(c,'In 3D',W*.73,top+room*.98)}
       else if(view==='tutti'){const L=ids().filter(id=>N3.meta[id].g===M.g),n=L.length;let best=null;
         for(let cols=1;cols<=5;cols++){const rows=Math.ceil(n/cols),cw=W/cols,ch=room/rows,sz=Math.min(cw,ch);if(!best||sz>best.sz)best={cols,rows,cw,ch,sz}}
         const{cols,cw,ch}=best;cells=[];
         for(let i=0;i<n;i++){const id=L[i],cx=cw*(i%cols+.5),cy=top+ch*Math.floor(i/cols),F=fit(id,cw*.9,ch*.78,N3.meta[id].an.includes(anim)?anim:'idle'),sc=F.s*zoom;cells.push({id,x0:cx-cw/2,x1:cx+cw/2,y0:cy,y1:cy+ch});
-          const a0=anim,M2=N3.meta[id];if(!M2.an.includes(anim))anim='idle';t1=performance.now();try{newDraw(id,cx,cy+ch*.06+F.gy,face,sc,(tAnim/dur(id,anim))%1)}finally{anim=a0}cost+=(performance.now()-t1)/n;
+          const a0=anim,M2=N3.meta[id];if(!M2.an.includes(anim))anim='idle';t1=performance.now();try{newDraw(id,cx,cy+ch*.06+F.gy,face,sc,anim==='die'?Math.min(.999,(tAnim%(dur(id,anim)+HOLD))/dur(id,anim)):(tAnim/dur(id,anim))%1)}finally{anim=a0}cost+=(performance.now()-t1)/n;
           label(c,M2.n,cx,cy+ch*.97,11)}}
       else{const D4=[[Math.PI/2,'Davanti'],[0,'Lato'],[-Math.PI/2,'Dietro'],[Math.PI,'Altro lato']],cw=W/4,F=fit(cur,cw*.95,(room-34)/2*.9,anim),sc=F.s*zoom,y1=top+22,h2=(room-34)/2;
-        const nb=M.g==='boss3';for(let i=0;i<4;i++){const x=cw*(i+.5);t1=performance.now();const sp2=p2;if(nb)p2=false;newDraw(cur,x,y1+F.gy,D4[i][0],sc);cost+=(performance.now()-t1)/4;if(nb){p2=true;newDraw(cur,x,y1+h2+12+F.gy,D4[i][0],sc);p2=sp2}else oldDraw(cur,x,y1+h2+12+F.gy,D4[i][0],sc);label(c,D4[i][1],x,y1-4)}
+        const nb=M.g==='boss3';for(let i=0;i<4;i++){const x=cw*(i+.5);t1=performance.now();const sp2=p2;if(nb)p2=false;newDraw(cur,x,y1+F.gy,D4[i][0],sc,null,'q'+i);cost+=(performance.now()-t1)/4;if(nb){p2=true;newDraw(cur,x,y1+h2+12+F.gy,D4[i][0],sc);p2=sp2}else oldDraw(cur,x,y1+h2+12+F.gy,D4[i][0],sc);label(c,D4[i][1],x,y1-4)}
         label(c,nb?'Fase 1':'In 3D',W/2,y1+h2+2);label(c,nb?'Fase 2':'Oggi',W/2,y1+2*h2+20)}
     }catch(e){console.error(e)}
     ctx=saved;LOWFX=lf;ms=ms*.93+cost*.07;$('n3Ms').innerHTML=ms.toFixed(2)+' ms<br>'+moveName(cur,anim);
     requestAnimationFrame(frame)}
   requestAnimationFrame(frame)}
 if(document.readyState==='complete')setTimeout(boot,300);else window.addEventListener('load',()=>setTimeout(boot,300))})();
-'''.replace('__START__',start).replace('__VIEW__','gira' if start and not nuovi else 'tutti').replace('__SOLO__',"'boss3'" if nuovi else "'classici'" if classici else 'null')
+'''.replace('__START__',start).replace('__VIEW__','gira' if start and not nuovi and not vivi_ else 'tutti').replace('__SOLO__',"'boss3'" if nuovi else "'classici'" if classici else 'null').replace('__VIVI__','true' if vivi_ else 'false')
 i=game.rfind('})();')
-page=game[:i]+'\n'+ne+'\n'+src+'\n'+ctrl+'\n'+game[i:]
-page=page.replace('<title>Mossbound</title>','<title>'+('Boss nuovi 3D' if nuovi else 'Boss Classici nuovi' if classici else 'Nemici e boss 3D')+'</title>',1)
-out='boss3.html' if nuovi else 'boss_classici.html' if classici else 'nemici3d.html'
+# «Nemici più vivi»: the game already has all the models of the normal enemies (src/ordine.txt), so only 97 goes in (the page stays light)
+page=game[:i]+'\n'+(v97 if vivi_ else ne+'\n'+src)+'\n'+ctrl+'\n'+game[i:]
+page=page.replace('<title>Mossbound</title>','<title>'+('Boss nuovi 3D' if nuovi else 'Boss Classici nuovi' if classici else 'Nemici più vivi' if vivi_ else 'Nemici e boss 3D')+'</title>',1)
+out='boss3.html' if nuovi else 'boss_classici.html' if classici else 'vivi.html' if vivi_ else 'nemici3d.html'
 open(os.path.join(here,out),'w',encoding='utf-8').write(page)
 print('anteprime/%s pronto (%d file di mostri)'%(out,len(files)))

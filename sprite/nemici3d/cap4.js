@@ -64,19 +64,31 @@ function wolf(x,y,face,anim,p,sc,o){sc=sc||1;o=o||{};const V0=V(face),{P,D,F}=V0
   else if(anim==='howl'){// the nose goes up to the sky, the mouth opens, the howl shakes the head and fogs the air, then it comes down
     const k=sstep(0,.2,p)*(1-sstep(.8,1,p)),sh=Math.sin(p*TAU*7)*.03*sstep(.22,.3,p)*(1-sstep(.72,.8,p));A.hp=.95*k+sh;A.H=[13.4-1.6*k,0,23.2+4.4*k];A.lean=-.1*k;A.B=[-1*k,0,0];
     A.jaw=sstep(.15,.28,p)*(1-sstep(.74,.86,p));A.ears=.6*k;A.tl=-.25*k;A.tw=.2*k*Math.sin(ph*3);A.squint=k;A.puff=p>.25&&p<.95?(p-.25)/.7:-1}
+  else if(anim==='prep'){// gets ready to spring (held): crouched low as at the start of the lunge, the head down, the ears flat, a snarl
+    // showing the fangs, the eyes narrowed, the haunches shivering, the tail low and twitching
+    const b=Math.sin(ph*2),sh=Math.sin(ph*9)*.12;A.B=[-1.4+sh*.6,0,-2.1+.15*b];A.lean=.07;A.s=-.11+.012*b;A.H=[14,0,21];A.hp=-.18+.02*b;A.jaw=.3+.06*(.5+.5*b);
+    A.ears=1;A.squint=.75;A.tl=-.35;A.tw=.12*Math.sin(ph*3);A.puff=(p*2)%1;WL.forEach((l,i)=>{A.pw[i]=[l.fr>0?.6:-.5,0,0]})}
   else if(anim==='hit'){const kb=hitK(p);A.lean=-.18*kb;A.B=[-2.6*kb,0,.4*kb];A.roll=.08*kb;A.s=-.06*kb;A.hp=.25*kb;A.H=[13.4,0,23.2+1.2*kb];A.ears=kb;A.tl=-.5*kb;
     A.shut=p<.5?1:0;A.stars=p<.75?1-p/.75:0}
+  else if(anim==='die'){// .0-.15 the blow, .15-.5 the legs give way and it tips over onto its side, .5-.62 it bounces once on the snow,
+    // then it lies still, the legs stiff, the jaw hanging open, the tail limp, dizzy stars
+    const k1=ez(cl(p/.15,0,1)),f=cl((p-.15)/.35,0,1),bo=p>.5?Math.sin(cl((p-.5)/.12,0,1)*Math.PI)*.1:0,r=1.4*f*f-bo,cr=Math.cos(r),sr=Math.sin(r);
+    A.roll=r;A.lean=-.18*k1*(1-f)+.04*f;A.s=-.06*k1*(1-f);A.B=[-2.6*k1-.8*f,-9*sr,Math.max(.4*k1*(1-f),Math.sqrt(73.96*sr*sr+54.76*cr*cr)-17.4*cr+.4)];
+    A.hp=.25*k1*(1-f)-.15*f;A.H=[13.6,0,23.2+1.2*k1*(1-f)];A.jaw=.38*sstep(.4,.6,p);A.ears=k1*(1-f)+.4*f;A.tl=-.5*k1*(1-f)-.15*f;A.tw=0;A.shut=1;A.stars=p>.64?.8:0;
+    // the legs follow the body as it falls: stiff, a little apart, the paws drawn in (their ankle in the body frame)
+    const XF=frame(A,0),kl=sstep(.15,.45,p);WL.forEach((l,i)=>{const a=XF.T([l.f[0]+l.fr*2.2,l.f[1]*1.3,2.8]);A.pw[i]=mul(sub(a,[l.f[0]+A.B[0],l.f[1]+A.B[1],1.7]),kl)})}
   else{// standing: it breathes, looks round slowly, flicks an ear, the tail sways
     const b=Math.sin(ph);A.s=.018*b;A.H=[13.8,0,23.2+.3*b];A.hy=look(p,.45);A.hp=.04*Math.sin(ph*2+1);A.blink=blink(p,.32,.07);A.tw=.3*Math.sin(ph*2);A.tl=.1*b;
     A.ears=.25*bump(cl((p-.6)/.08,0,1))}
-  const X=frame(A,0),dT=D(X.T([-3,0,17]));
-  floor(V0,x,y,sc,[A.B[0]-1.5,A.B[1],0],19,6.2,.3,A.B[2]);
+  const X=frame(A,0),dT=D(X.T([-3,0,17])),fc0=anim==='die'?X.T([-3,0,12]):[A.B[0]-1.5,A.B[1],0];
+  floor(V0,x,y,sc,[fc0[0],fc0[1],0],19,6.2,.3,anim==='die'?0:A.B[2]);
   ctx.save();ctx.translate(x,y);ctx.scale(sc,sc);const L=parts();
   // the head's frame: rings and points of the head (nose up hp, look hy) placed at H in the body frame
   const hT=q=>X.T(add(A.H,rotZ(rotY(mul(q,1.1),-A.hp),A.hy))),hR=v=>X.Rd(rotZ(rotY(v,-A.hp),A.hy)),XH={T:hT,Rd:hR},hD=D(hT([0,0,0]));
   // the legs: two bones with ik, always under the body (the far ones darker), a round paw at the end
+  const bel=anim==='die'&&F(X.Rd([0,0,-1]))>.3;
   WL.forEach((l,i)=>{const hip=X.T(l.h),pw=add(add(l.f,A.pw[i]),[A.B[0],A.B[1],0]),fk=sstep(0,-.12,F(0,l.h[1],0)),col=cmix(WC.fur,WC.dark,.6*fk);
-    L.add(dT-100+D(add(l.f,[0,0,6]))*.01,()=>{const an=add(pw,[0,0,1.7]),IK=ik(hip,an,5.8,5.6,X.Rd([l.fr,0,.1])),kn=IK[0],end=IK[1];
+    L.add((bel?dT+3:dT-100)+D(add(l.f,[0,0,6]))*.01,()=>{const an=add(pw,[0,0,1.7]),IK=ik(hip,an,5.8,5.6,X.Rd([l.fr,0,.1])),kn=IK[0],end=IK[1];
       chain(V0,[hip,kn,end],[2.5,2.2,1.9],col,{lw:1.7,kl:.12,kd:.3,rim:.15});ovol(V0,IDF,add(end,[.9,0,-.5]),[2.5,2,1.5],cmix(cmix(WC.lite,WC.fur,.3),cmix(WC.lite,WC.dark,.45),fk),{lw:1.7,noRim:true})})});
   // the bushy tail with its white tip, from under the rump
   {const T=[[-16,0,18],[-21.4,0,17],[-26,0,13.8],[-28.6,0,10]],sw=[0,.6,1.4,2.2],pts=T.map((q,i)=>X.T(add(q,[0,A.tw*sw[i]*4,A.tl*i*2.4-(A.tl<0?A.tl*i*.6:0)]))),rs=[2.6,3.7,3.4,2.4];
@@ -120,7 +132,7 @@ function wolf(x,y,face,anim,p,sc,o){sc=sc||1;o=o||{};const V0=V(face),{P,D,F}=V0
   run(L);
   if(A.stars>0)stars(P(hT([0,0,9])),9,A.stars);
   ctx.restore()}
-reg('wolf',{n:'Lupo delle nevi',g:4,an:['idle','walk','attack','howl','hit'],dur:{idle:2.6,walk:.5,attack:1,howl:.9,hit:.6},lab:{attack:'Scatto',howl:'Ululato'}},wolf);
+reg('wolf',{n:'Lupo delle nevi',g:4,an:['idle','walk','prep','attack','howl','hit','die'],dur:{idle:2.6,walk:.5,prep:.8,attack:1,howl:.9,hit:.6,die:1},lab:{attack:'Scatto',howl:'Ululato'}},wolf);
 
 // ------------------------------------------------------------------ SPIRITO DELLA NEVE (EDRAW.snowspirit): a floating drop of snow
 const SC={top:'#ffffff',mid:'#d8f0ff',bot:'#a8d8f8',deep:'#86b6e0',arm:'#e8f6ff',eye:'#1e3a6a',flake:'#ffffff'};
@@ -145,7 +157,16 @@ function snowspirit(x,y,face,anim,p,sc,o){sc=sc||1;o=o||{};const V0=V(face),{P,D
     // out of it with a bounce (.62-1). The game moves it while it is gone
     const out=sstep(0,.36,p),inn=sstep(.62,.9,p),k=p<.5?1-out:inn;A.k=k<.01?0:lerp(.15,1,k)*(p>.62?1+.12*Math.sin(cl((p-.62)/.38,0,1)*Math.PI*2)*(1-cl((p-.85)/.15,0,1)):1);
     A.al=k;A.yaw=p<.5?out*out*TAU*1.5:-(1-inn)*(1-inn)*TAU*1.5;A.swirl=p;A.sr=16*(1-.5*(p<.5?out:1-inn));A.B=[0,0,p<.5?4*out:4*(1-inn)];A.glow=.35+.4*(p<.5?out:1-inn)}
+  else if(anim==='prep'){// gathers its snow (held): squeezed down, the mittens together in front, brighter and brighter, the snowflake
+    // spinning fast, the specks drawn in close, the eyes narrowed
+    const b=.5+.5*Math.sin(ph*2);A.s=-.1-.03*b;A.af=.85;A.ar=-.6;A.aw=.15*Math.sin(ph*6);A.glow=.6+.3*b;A.squint=.8;A.B=[0,0,-1.2+.5*Math.sin(ph*2)];A.fa=p*TAU;A.sa=p*TAU*2/3;A.sr=11+1.5*b}
   else if(anim==='hit'){const kb=hitK(p);A.lean=-.3*kb;A.B=[-3*kb,0,.8*kb];A.roll=.1*kb;A.s=-.1*kb;A.shut=p<.5?1:0;A.o=p<.5?1:0;A.stars=p<.75?1-p/.75:0;A.ar=.5*kb;A.af=-.4*kb}
+  else if(anim==='die'){// .0-.15 the blow, .15-.55 it spins down to the floor while its snowflake slips off and falls beside it, .55-.62 it
+    // lands and squashes into a little heap of snow with a wobble, then it lies there, the eyes shut, a little frown, dizzy stars
+    const k1=ez(cl(p/.15,0,1)),f=cl((p-.15)/.4,0,1),dn=f*f,l=sstep(.53,.62,p),w=cl((p-.55)/.25,0,1),wob=p>.55?Math.sin(w*Math.PI*2)*.07*(1-w):0;
+    A.s=-.1*k1*(1-f)-.38*l+wob;A.lean=-.3*k1*(1-f);A.roll=.1*k1*(1-f)+.12*l;A.yaw=ez(f)*TAU;A.B=[-3*k1*(1-f)-1.5*f,0,lerp(.8*k1,.4-(SFC[2]-11*(1+A.s)),dn)];
+    A.shut=1;A.o=p<.45?1:0;A.frown=p>=.45;A.ar=.5*k1*(1-f)-.3*l;A.af=-.4*k1*(1-f);A.glow=.35*(1-f)+.06;A.sr=16-5*f;A.sa=f*.8;A.fa=f*TAU*.6;
+    A.flu=cl((p-.18)/.42,0,1);A.flm=sstep(.15,.3,p);A.stars=p>.66?.75:0}
   else{// floating: a slow bob, the hands wave, it looks round, the snowflake turns
     A.B=[0,0,2.6*Math.sin(ph)];A.aw=Math.sin(ph*2);A.yaw=look(p,.4);A.blink=blink(p,.48,.07);A.s=.03*Math.sin(ph*2+1)}
   const X=frame(Object.assign({},A,{s:A.s}),SFC[2]),K=A.k,T=q=>{const r=X.T(q);return K===1?r:add(mul(sub(r,X.T(SFC)),K),X.T(SFC))},dT=D(T(SFC));
@@ -168,10 +189,11 @@ function snowspirit(x,y,face,anim,p,sc,o){sc=sc||1;o=o||{};const V0=V(face),{P,D
       ctx.save();C.smooth(pts);ctx.clip();ctx.fillStyle='rgba(255,255,255,.6)';ctx.save();ctx.translate(cx-w*.17,cy-h*.12);ctx.rotate(.25);ell(0,0,w*.1,h*.17);ctx.fill();ctx.restore();
       if(K>.5){const fc=ellFace(V0,{T,Rd:X.Rd},SFC,SFR);
         eyes(null,fc.h,13*K,{at:fc.at,dir:[.86,.29,.42],kind:'dark',col:SC.eye,rx:1.9*K,ry:2.9*K,fall:.55,blink:A.blink,squint:A.squint,shut:A.shut,shutCol:SC.eye,a:.42,b:.58});
-        if(A.o)mouth(null,fc.h,13*K,[.96,0,.06],{at:fc.at,kind:'o',w:2.2,h:1.6,dark:'#2a4a7a'});else mouth(null,fc.h,13*K,[.96,0,.06],{at:fc.at,kind:'smile',w:1.9*K,bow:2.2*K,col:SC.eye,lw:1.2})}
+        if(A.o)mouth(null,fc.h,13*K,[.96,0,.06],{at:fc.at,kind:'o',w:2.2,h:1.6,dark:'#2a4a7a'});else mouth(null,fc.h,13*K,[.96,0,.06],{at:fc.at,kind:'smile',w:1.9*K,bow:(A.frown?-1.2:2.2)*K,col:SC.eye,lw:1.2})}
       ctx.restore();C.rimPoly(pts,.25);ctx.restore()});
-    // the snowflake turning over its head
-    L.add(dT+60,()=>{const q=P(T([0,0,SZ+28]));flake(q,5.6*K,A.fa,ga);if(!LOWFX)shine('220,240,255',q[0],q[1],8*K,.3*ga)})}
+    // the snowflake turning over its head (dying, it slips off and falls to the floor beside it, on the side we see)
+    const tq=T([0,0,SZ+28]),u=A.flu||0,fl=[23*V0.c+5*V0.s,-23*V0.s+5*V0.c],fq=A.flm>0?lerp3(tq,[lerp(-3,fl[0],u),lerp(0,fl[1],u),40.6+6*u-45.4*u*u],A.flm):tq;
+    L.add(A.flm>0?D(fq):dT+60,()=>{const q=P(fq);flake(q,5.6*K,A.fa,ga);if(!LOWFX)shine('220,240,255',q[0],q[1],8*K,.3*ga*(1-.7*u))})}
   // the burst of snow: a ring of puffs flying out round it (the snowballs themselves are the game's)
   if(A.burst>=0&&!o.noFx)L.add(dT+80,()=>{const k=A.burst,r=8+k*22;for(let i=0;i<10;i++){const a=i/10*TAU+.3,q=P([Math.cos(a)*r,Math.sin(a)*r,SFC[2]+A.B[2]-2+k*3]);
       ctx.fillStyle=`rgba(240,250,255,${.8*(1-k)*Math.min(1,k*8)})`;ball(q,1.6+k*2.6);ctx.fill()}if(!LOWFX){const q=P(T(SFC));shine('210,240,255',q[0],q[1],18+k*20,.5*(1-k)*Math.min(1,k*8))}});
@@ -181,7 +203,7 @@ function snowspirit(x,y,face,anim,p,sc,o){sc=sc||1;o=o||{};const V0=V(face),{P,D
   run(L);
   if(A.stars>0)stars(P(X.T([0,0,SZ+29])),9,A.stars);
   ctx.restore()}
-reg('snowspirit',{n:'Spirito della neve',g:4,an:['idle','walk','attack','tele','hit'],dur:{idle:2.4,walk:1.2,attack:1,tele:1.3,hit:.6},lab:{attack:'Raffica di neve',tele:'Teletrasporto'}},snowspirit);
+reg('snowspirit',{n:'Spirito della neve',g:4,an:['idle','walk','prep','attack','tele','hit','die'],dur:{idle:2.4,walk:1.2,prep:.8,attack:1,tele:1.3,hit:.6,die:1},lab:{attack:'Raffica di neve',tele:'Teletrasporto'}},snowspirit);
 
 // ------------------------------------------------------------------ SENTINELLA DI GHIACCIO (EDRAW.icesentinel): a faceted block of ice
 const IC4={hi:'#eef8ff',light:'#d2ecfc',mid:'#9ccaec',dark:'#6a9ac8',deep:'#4f7fb0',fist:'#8ab8e0',foot:'#6a8aa8',eye:'#1e3a6a',rune:'#bff0ff',shard:'#6fb8e8'};
@@ -214,31 +236,57 @@ function icesentinel(x,y,face,anim,p,sc,o){sc=sc||1;o=o||{};const V0=V(face),{P,
     const v=keys([[0,[0,0,0,0]],[.5,[1,0,-.06,1]],[.58,[0,1,.1,1]],[.7,[0,.5,.04,.4]],[1,[0,0,0,0]]],p);
     A.hL=[2+3*v[0]+9*v[1],-18.5+3*v[1],20+9*v[0]+1*v[1]];A.hR=[2+3*v[0]+9*v[1],18.5-3*v[1],20+9*v[0]+1*v[1]];A.lean=v[2];A.s=.04*v[0]-.05*v[1];A.B=[-1*v[0]+1.2*v[1],0,0];
     A.gl=.3+.7*v[3];A.squint=v[3];A.rot=keys([[0,0],[.55,TAU*.9],[1,TAU]],p)*1/3*3;A.sr=24-4*v[3];A.flash=p>.54&&p<.66?1-(p-.54)/.12:0;A.cast=p>.55&&p<.85?(p-.55)/.3:-1;A.rot=keys([[0,0],[.55,2.6],[1,TAU/3]],p)}
+  else if(anim==='prep'){// charges the cast (held): the fists raised and trembling, the rune glowing brighter and brighter, the eyes
+    // narrowed, the shards spinning fast and drawn in
+    const b=.5+.5*Math.sin(ph*2),tr=.35*Math.sin(ph*11);A.hL=[5,-18.5,29+tr];A.hR=[5,18.5,29-tr];A.lean=-.06;A.s=.04;A.B=[-1,0,0];A.gl=.8+.2*b;A.squint=1;A.rot=p*TAU*2/3;A.sr=20+b}
   else if(anim==='hit'){const kb=hitK(p);A.lean=-.2*kb;A.B=[-2.6*kb,0,.3*kb];A.roll=.07*kb;A.s=-.06*kb;A.shut=p<.5?1:0;A.stars=p<.75?1-p/.75:0;A.flash=p<.12?.7*(1-p/.12):0;
     A.hL=[2-2.5*kb,-18.5-1.5*kb,20+3*kb];A.hR=[2-2.5*kb,18.5+1.5*kb,20+3*kb];A.sr=24+3*kb;A.rot=p*TAU/3+.4*kb}
+  else if(anim==='die'){// .0-.12 the blow, .12 it cracks across with a white seam, the rune flickers out, .2-.53 the top of the block (the
+    // head with the eyes) slides off and drops beside it, landing upright with a bump; the fists fall, the shards drop and stick in the
+    // snow; then the head sits there with its eyes shut, dizzy stars over it
+    const kb=hitK(Math.min(p,.3)/.3*.5),u=cl((p-.2)/.33,0,1),w=cl((p-.53)/.15,0,1),g=cl((p-.15)/.27,0,1),gs=cl((p-.15)/.3,0,1);
+    A.lean=-.2*kb*(1-sstep(.2,.45,p))-.05*sstep(.2,.45,p);A.B=[-2.6*kb,0,.3*kb];A.s=-.06*kb-.08*sstep(.2,.45,p);A.shut=p>.12?1:p<.06?1:0;A.flash=p<.12?.7*(1-p/.12):0;
+    A.cut=p>=.12;A.seam=p>=.12&&p<.32?1-(p-.12)/.2:0;A.ch=20*u;A.cz=6*u-30.7*u*u+(p>.53?1.4*Math.sin(w*Math.PI)*(1-w):0)+A.s*25;A.ct=.55*Math.sin(Math.PI*u)+(p>.53?.12*Math.sin(w*Math.PI*2)*(1-w):0);
+    A.gl=p<.12?.6:p<.4?(.45+.45*Math.sin(p*90))*(1-(p-.12)/.28):0;A.dead=sstep(.15,.45,p);
+    const zf=(6.2-A.B[2])/(1+A.s),fz=lerp(20+3*kb,zf,g*g)+(p>.42?2*Math.sin(cl((p-.42)/.1,0,1)*Math.PI):0);A.hL=[2-2.5*kb,-18.5-1.5*kb-2*g,fz];A.hR=[2-2.5*kb,18.5+1.5*kb+2*g,fz];
+    A.sr=24+3*kb+3*gs;A.sz=lerp(22,7.7,gs*gs);A.bob=1-gs;A.sp=.4*Math.min(1,p/.15)*(1-gs)+p*TAU*(1-gs)*.3;A.rot=.4*kb;A.stars=p>.62?.8:0;A.chip=p>.12&&p<.75?(p-.12)/.63:-1;A.dust=p>.52&&p<.9?(p-.52)/.38:-1}
   else{// standing guard: it breathes, the rune pulses, the fists float, it turns its gaze slowly
     A.s=.015*Math.sin(ph);A.yaw=look(p,.22);A.blink=blink(p,.66,.07);A.hL=[2,-18.5,20+.8*Math.sin(ph+.5)];A.hR=[2,18.5,20+.8*Math.sin(ph+1.6)]}
-  const X=frame(A,0),dT=D(X.T([0,0,22]));
+  const X=frame(A,0),dT=D(X.T([0,0,22])),dd=A.dead||0;
+  // dying, the top of the block (the head) comes off: CT moves its points (turned by ct round the axis across its fall, from the middle of
+  // the cut, then carried ch along the fall and cz up), CR its directions. It falls to the right of the screen and a little toward us
+  let CT=null,CR=null,cc=null;if(A.cut){const dr=nrm([.85*V0.c+.5*V0.s,-.85*V0.s+.5*V0.c,0]),k=nrm(cross([0,0,1],dr)),c0=X.T([0,0,25]),co=Math.cos(A.ct),si=Math.sin(A.ct);
+    CR=v=>add(add(mul(v,co),mul(cross(k,v),si)),mul(k,dot(k,v)*(1-co)));CT=q=>add(add(c0,add(mul(dr,A.ch),[0,0,A.cz])),CR(sub(q,c0)));cc=CT(X.T([0,0,29.5]))}
   floor(V0,x,y,sc,A.B,16,6,.32);
+  if(cc)floor(V0,x,y,sc,[cc[0],cc[1],0],10,4,.28,Math.max(0,cc[2]-4.5));
   ctx.save();ctx.translate(x,y);ctx.scale(sc,sc);const L=parts();
   // the glow of the rune behind the ice (it shows through), stronger when it casts
-  if(!LOWFX)L.add(dT-200,()=>{const q=P(X.T([8,0,22]));shine('120,210,255',q[0],q[1],16+12*A.gl,.25+.35*A.gl)});
+  if(!LOWFX&&dd<1)L.add(dT-200,()=>{const q=P(X.T([8,0,22]));shine('120,210,255',q[0],q[1],16+12*A.gl,(.25+.35*A.gl)*(1-dd))});
   // the feet: two blue stumps under the block, the far one darker
   for(const[sd,f] of[[-1,A.fL],[1,A.fR]]){const far=F(0,sd,0)<0,c=add(f,[A.B[0],A.B[1],4]);L.add(dT-100+D(c)*.01,()=>ovol(V0,IDF,c,[5.6,4.6,3.8],far?cmix(IC4.foot,IC4.deep,.4):IC4.foot,{kl:.2,kd:.3,lw:2.3,rim:.3}))}
   // the block of ice: its faces, the rune glowing on the front, the little eyes on the upper front face
-  L.add(dT,()=>{const R=IRG.map(([z,r])=>IAN.map(a=>X.T([Math.cos(a)*r*IAX,Math.sin(a)*r,z]))),faces=[];
+  const rune=()=>{const nF=X.Rd(nrm([16,0,-1.4])),vF=F(nF);if(vF>0){const fk=cl(vF*3,0,1),c=X.T([10.4,0,20.5]),u=X.Rd([0,1,0]),w=X.Rd(nrm([.09,0,1])),Q=(a,b)=>P(add(c,add(mul(u,a),mul(w,b))));
+      if(!LOWFX&&dd<1){const q=Q(0,0),g=ctx.createRadialGradient(q[0],q[1],1,q[0],q[1],9+5*A.gl);g.addColorStop(0,`rgba(190,245,255,${(.55+.4*A.gl)*fk*(1-dd)})`);g.addColorStop(1,'rgba(190,245,255,0)');ctx.fillStyle=g;ctx.fillRect(q[0]-15,q[1]-15,30,30)}
+      ctx.save();ctx.globalAlpha*=fk;const d=[Q(0,5.2),Q(4.2,0),Q(0,-5.2),Q(-4.2,0)];ctx.fillStyle=cmix(cmix(IC4.rune,'#ffffff',A.gl*.6),IC4.dark,.55*dd);poly(d);ctx.fill();ink(1.6);ctx.stroke();
+      ctx.fillStyle=`rgba(255,255,255,${(.5+.4*A.gl)*(1-.7*dd)})`;poly([Q(0,3.4),Q(1.4,.6),Q(0,-.4),Q(-1.2,.8)]);ctx.fill();ctx.restore()}},
+    eyesOn=(TT,RR)=>{const nE=RR(X.Rd(nrm([9,0,5.6]))),vE=F(nE);if(vE>.05){const ek=cl((vE-.05)*4,0,1),c=TT(X.T([8.5,0,29.2])),u=RR(X.Rd([0,1,0])),w=RR(X.Rd(nrm([-.53,0,.85]))),Q=(a,b)=>P(add(c,add(mul(u,a),mul(w,b))));
+      ctx.save();ctx.globalAlpha*=ek;for(const sd of[-1,1]){const q=Q(sd*3.2,0),e=Q(sd*3.2+1.9,0),rx=Math.max(.4,Math.hypot(e[0]-q[0],e[1]-q[1])),sq=A.blink*(1-.4*A.squint);
+        if(A.shut){ctx.strokeStyle=IC4.eye;ctx.lineWidth=1.2;ctx.lineCap='round';ctx.beginPath();ctx.moveTo(q[0]-rx,q[1]-1);ctx.lineTo(q[0]+rx*.8,q[1]);ctx.lineTo(q[0]-rx,q[1]+1);ctx.stroke();continue}
+        ctx.fillStyle=IC4.eye;ctx.beginPath();ctx.ellipse(q[0],q[1],rx,1.45*Math.max(.15,sq),0,0,TAU);ctx.fill();if(sq>.5&&rx>.9){ctx.fillStyle='#ffffff';ball([q[0]-rx*.35,q[1]-.5],.45);ctx.fill()}}ctx.restore()}},
+    rings=()=>IRG.map(([z,r])=>IAN.map(a=>X.T([Math.cos(a)*r*IAX,Math.sin(a)*r,z])));
+  if(!CT)L.add(dT,()=>{const R=rings(),faces=[];
     for(let k=0;k<6;k++){const k1=(k+1)%6;faces.push([R[0][k],R[0][k1],R[1][k1],R[1][k]]);faces.push([R[1][k],R[1][k1],R[2][k1],R[2][k]])}faces.push(R[2].slice());
     const hp=facets(V0,ax,faces,{flash:A.flash});ctx.save();poly(hp);ctx.clip();
     // the front faces: the rune (a diamond) on the lower one, the eyes on the upper one; both only where that face turns toward us
-    const nF=X.Rd(nrm([16,0,-1.4])),vF=F(nF);if(vF>0){const fk=cl(vF*3,0,1),c=X.T([10.4,0,20.5]),u=X.Rd([0,1,0]),w=X.Rd(nrm([.09,0,1])),Q=(a,b)=>P(add(c,add(mul(u,a),mul(w,b))));
-      if(!LOWFX){const q=Q(0,0),g=ctx.createRadialGradient(q[0],q[1],1,q[0],q[1],9+5*A.gl);g.addColorStop(0,`rgba(190,245,255,${(.55+.4*A.gl)*fk})`);g.addColorStop(1,'rgba(190,245,255,0)');ctx.fillStyle=g;ctx.fillRect(q[0]-15,q[1]-15,30,30)}
-      ctx.save();ctx.globalAlpha*=fk;const d=[Q(0,5.2),Q(4.2,0),Q(0,-5.2),Q(-4.2,0)];ctx.fillStyle=cmix(IC4.rune,'#ffffff',A.gl*.6);poly(d);ctx.fill();ink(1.6);ctx.stroke();
-      ctx.fillStyle=`rgba(255,255,255,${.5+.4*A.gl})`;poly([Q(0,3.4),Q(1.4,.6),Q(0,-.4),Q(-1.2,.8)]);ctx.fill();ctx.restore()}
-    const nE=X.Rd(nrm([9,0,5.6])),vE=F(nE);if(vE>.05){const ek=cl((vE-.05)*4,0,1),c=X.T([8.5,0,29.2]),u=X.Rd([0,1,0]),w=X.Rd(nrm([-.53,0,.85])),Q=(a,b)=>P(add(c,add(mul(u,a),mul(w,b))));
-      ctx.save();ctx.globalAlpha*=ek;for(const sd of[-1,1]){const q=Q(sd*3.2,0),e=Q(sd*3.2+1.9,0),rx=Math.max(.4,Math.hypot(e[0]-q[0],e[1]-q[1])),sq=A.blink*(1-.4*A.squint);
-        if(A.shut){ctx.strokeStyle=IC4.eye;ctx.lineWidth=1.2;ctx.lineCap='round';ctx.beginPath();ctx.moveTo(q[0]-rx,q[1]-1);ctx.lineTo(q[0]+rx*.8,q[1]);ctx.lineTo(q[0]-rx,q[1]+1);ctx.stroke();continue}
-        ctx.fillStyle=IC4.eye;ctx.beginPath();ctx.ellipse(q[0],q[1],rx,1.45*Math.max(.15,sq),0,0,TAU);ctx.fill();if(sq>.5&&rx>.9){ctx.fillStyle='#ffffff';ball([q[0]-rx*.35,q[1]-.5],.45);ctx.fill()}}ctx.restore()}
+    rune();eyesOn(q=>q,v=>v);
     ctx.restore()});
+  else{// broken in two: the lower block with the cut on top (and the white seam as it cracks), the head that falls off
+    const R=rings();
+    L.add(dT,()=>{const faces=[];for(let k=0;k<6;k++){const k1=(k+1)%6;faces.push([R[0][k],R[0][k1],R[1][k1],R[1][k]])}faces.push(R[1].slice());
+      const hp=facets(V0,ax,faces,{flash:A.flash});ctx.save();poly(hp);ctx.clip();rune();ctx.restore();
+      if(A.seam>0){ctx.save();ctx.strokeStyle=`rgba(235,252,255,${.9*A.seam})`;ctx.lineWidth=1.8;ctx.lineJoin='round';poly(R[1].map(q=>P(q)));ctx.stroke();ctx.restore()}});
+    L.add(D(cc)+2,()=>{const T1=R[1].map(CT),T2=R[2].map(CT),faces=[];for(let k=0;k<6;k++){const k1=(k+1)%6;faces.push([T1[k],T1[k1],T2[k1],T2[k]])}faces.push(T2.slice(),T1.slice());
+      const hp=facets(V0,ax,faces,{flash:A.flash});ctx.save();poly(hp);ctx.clip();eyesOn(CT,CR);ctx.restore()})}
   // the fists: blue lumps of ice floating at the sides; their place in the draw order is where they are at rest
   for(const[sd,h] of[[-1,A.hL],[1,A.hR]]){const r0=X.T([2,sd*18.5,20]);L.add(D(r0)+.02,()=>{const c=X.T(h),fs=[];const E=ovol(V0,IDF,c,[4.6,4.6,6.2],IC4.fist,{kl:.3,kd:.32,lw:2.3,rim:.35});
     ctx.save();E.path(1);ctx.clip();ctx.fillStyle='rgba(255,255,255,.45)';ctx.beginPath();ctx.ellipse(E.c[0]-E.rx*.3,E.c[1]-E.ry*.35,E.rx*.28,E.ry*.18,-.5,0,TAU);ctx.fill();
@@ -246,13 +294,17 @@ function icesentinel(x,y,face,anim,p,sc,o){sc=sc||1;o=o||{};const V0=V(face),{P,
   // the shards going round it (o.shards: [{a: angle round it on the floor, as e.rot + s.a in the game, hp: 0 = broken, re, hit}]),
   // each in the draw order of where it is now
   const SH=o.shards||[0,1,2].map(i=>({a:A.rot+i*TAU/3+face,hp:2,re:0,hit:0}));
-  for(const s of SH){if(s.hp<=0&&(s.re||0)>4.5)continue;const an=s.a-face,grow=s.hp>0?1:Math.max(.15,1-(s.re||0)/5)*.5,c=add([Math.cos(an)*A.sr,Math.sin(an)*A.sr,A.sz+1.2*Math.sin(ph*2+an)],[A.B[0],A.B[1],0]);
-    L.add(D(c),()=>{ctx.save();if(s.hp<=0)ctx.globalAlpha*=.5;const fa=shardFaces(c,5*grow,9*grow,an+ph);facets(V0,ax,fa,{lw:1.6,flash:s.hit>0?1:0,lift:.08});ctx.restore()})}
+  for(const s of SH){if(s.hp<=0&&(s.re||0)>4.5)continue;const an=s.a-face,grow=s.hp>0?1:Math.max(.15,1-(s.re||0)/5)*.5,c=add([Math.cos(an)*A.sr,Math.sin(an)*A.sr,A.sz+1.2*(A.bob==null?1:A.bob)*Math.sin(ph*2+an)],[A.B[0],A.B[1],0]);
+    L.add(D(c),()=>{ctx.save();if(s.hp<=0)ctx.globalAlpha*=.5;const fa=shardFaces(c,5*grow,9*grow,an+(A.sp==null?ph:A.sp));facets(V0,ax,fa,{lw:1.6,flash:s.hit>0?1:0,lift:.08});ctx.restore()})}
   // the cast: a flash on the rune and a ring of frost going out from the fists (the ice bolts themselves are the game's)
   if(A.cast>=0&&!o.noFx)L.add(dT+60,()=>{const k=A.cast,c=X.T([14+k*10,0,22]),q=P(c);shine('180,235,255',q[0],q[1],10+k*16,.7*(1-k));
     for(let i=0;i<8;i++){const a=i/8*TAU,e=P(add(c,mul(X.Rd([0,Math.cos(a),Math.sin(a)]),3+k*9)));ctx.fillStyle=`rgba(235,250,255,${.9*(1-k)})`;ball(e,1.3*(1-k)+.4);ctx.fill()}});
+  // dying: chips of ice flying out of the crack, a puff of snow where the head lands
+  if(A.chip>=0&&!o.noFx)L.add(dT+30,()=>{const k=A.chip;for(let i=0;i<7;i++){const a=i/7*TAU+.5,v=cl(k*1.25-i*.04,0,1),r=13+v*14,z=25+v*12-v*v*36,q=P([A.B[0]+Math.cos(a)*r,Math.sin(a)*r,Math.max(1,z)]),s0=2.2-v*.5,rt=v*6+i;
+      ctx.save();ctx.globalAlpha*=cl((1-k)*4,0,1);ctx.translate(q[0],q[1]);ctx.rotate(rt);ctx.fillStyle=i%2?IC4.light:IC4.mid;ctx.beginPath();ctx.moveTo(0,-s0*1.3);ctx.lineTo(s0*.8,0);ctx.lineTo(0,s0*1.3);ctx.lineTo(-s0*.8,0);ctx.closePath();ctx.fill();ink(.9);ctx.stroke();ctx.restore()}});
+  if(A.dust>=0&&cc&&!o.noFx)L.add(D(cc)+3,()=>{const k=A.dust;for(let i=0;i<7;i++){const a=i/7*TAU+.4,r=9+k*12,q=P([cc[0]+Math.cos(a)*r,cc[1]+Math.sin(a)*r*1.1,1+k*3]);ctx.fillStyle=`rgba(240,250,255,${.55*(1-k)})`;ball(q,2+k*3.2);ctx.fill()}});
   run(L);
-  if(A.stars>0)stars(P(X.T([0,0,42])),11,A.stars);
+  if(A.stars>0)stars(P(cc?CT(X.T([0,0,38])):X.T([0,0,42])),11,A.stars);
   ctx.restore()}
-reg('icesentinel',{n:'Sentinella di ghiaccio',g:4,dur:{idle:2.4,walk:1.26,attack:1.1,hit:.6},lab:{attack:'Lancio di ghiaccio'}},icesentinel);
+reg('icesentinel',{n:'Sentinella di ghiaccio',g:4,an:['idle','walk','prep','attack','hit','die'],dur:{idle:2.4,walk:1.26,prep:.8,attack:1.1,hit:.6,die:1},lab:{attack:'Lancio di ghiaccio'}},icesentinel);
 })();
