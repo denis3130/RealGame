@@ -7,7 +7,7 @@
 # La pagina costruita non si salva su git.
 import os,sys,subprocess
 here=os.path.dirname(os.path.abspath(__file__));root=os.path.dirname(here);src=os.path.join(root,'src')
-NUOVI=['js/98-musica-zombie.js','js/99-abilita-zombie.js','js/100-sfida-zombie.js']
+NUOVI=['js/98-musica-zombie.js','js/99-abilita-zombie.js','js/100-sfida-zombie.js','js/102-abisso-ricco.js']
 order=[l.strip() for l in open(os.path.join(src,'ordine.txt'),encoding='utf-8') if l.strip()]
 extra=[f for f in NUOVI if f not in order]
 i=order.index('coda.html')

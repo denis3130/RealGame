@@ -347,6 +347,14 @@ creazione): `python3 anteprime/mk_anteprima49.py <cartella>` (divisa come il gio
   ricarica, critici), da `D.PZ` (vita, rigenerazione), dai prompt di armi a muro e Bara (`ZM.buys`) e dai round del direttore. Prova
   nella cartella di lavoro: bottone, foglio, quattro regole in una partita vera, medaglie e premi una volta sola, uscita, partita normale
   dopo; nessun errore.
+- **Abisso più ricco** (`src/js/102-abisso-ricco.js`, `PATTI`, `PACT`): i 4 boss del terzo giro anche nell'Abisso (Burattinaio 45, Fenice
+  50, Piovra 55, Cervo 60, poi ogni 60 stanze; `boss3At` avvolto: la stanza del mondo del giro col loro cerchio di rune, musica, entrata,
+  voci); i **Patti dell'Abisso**: battuto un boss dell'Abisso, quando il corpo ha finito e nessun'altra scelta è aperta, tre sigilli tra nove
+  patti (un dono e un prezzo: sangue, oro, furia, brace, gelo, veggente, lama, linfa, tesoro), mai lo stesso due volte nella discesa
+  (`G.pacts`; i boss più forti del veggente con `makeE` avvolto); i **tesori della discesa** (`endRun` avvolto, non se ti ritiri): dalla
+  stanza 20 due cristalli ogni 5 stanze oltre la 15, una bustina Classica Rara dalla 30, Epica dalla 45, Leggendaria dalla 60, scritti sotto
+  il testo della fine con i patti stretti; il foglio dell'Abisso lo dice. Prova nella cartella di lavoro: boss alle stanze giuste, patto
+  che ferma il gioco e cambia le statistiche, niente doppioni, boss più forti, tesori; nessun errore.
 - **Zombie nuovi su carta** (`sprite/mostri/zombie_nuovi.js`, non ancora nella mappa): il Gonfio, lo Sputatore e il Bruto, quattro direzioni
   in `sprite/mostri/zombie_nuovi_4dir.jpg`, pagina https://claude.ai/artifact/MhfnMzYQg7UjU6vcPzNe3G (`python3 anteprime/mk_mostro.py --nuovi`);
   dettagli in `sprite/mostri/LEGGIMI.md` («Gli zombie nuovi»). Il Gonfio ha la stessa idea dello «Zombie gonfio» scartato il 9 ottobre:
