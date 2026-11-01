@@ -394,8 +394,10 @@ creazione): `python3 anteprime/mk_anteprima49.py <cartella>` (divisa come il gio
   Zombie al posto del fascio largo l'area del colpo dell'arma in mano (la striscia larga quanto il proiettile col cuneo appena accennato di
   quanto può deviare, un raggio per ogni pallino delle pompe, la fiamma, l'onda, il cerchio del razzo; `mzView`, `MZHW`, `mzDrawShot`) e
   si spara quando lo zombie ci entra (col suo corpo, più 5° d'aiuto: la pistola chiede di mirare più giusto, la pompa meno); nella Classica
-  una striscia per ogni proiettile della raffica, larga quanto il colpo (`MCHW`). Prova `node tests/a49/mira.js` (36 controlli, foto
-  `tests/a49/mi_*.png`). Dettagli in `docs/anteprima-49.md` (8, 8b e 8c).
+  una striscia per ogni proiettile della raffica, larga quanto il colpo (`MCHW`). Poi (Denis: «si ma lascia il fascio largo») nella
+  Zombie tornano il fascio largo e la sua regola (si spara a chi entra nel fascio, ±22°, ±30° per le armi corte), con dentro l'area grande
+  quanto il proiettile. Prova `node tests/a49/mira.js` (36 controlli, foto `tests/a49/mi_*.png`). Dettagli in `docs/anteprima-49.md` (8,
+  8b, 8c e 8d).
 
 ## FASE 9: più fluido sul telefono (19 ottobre, in corso)
 

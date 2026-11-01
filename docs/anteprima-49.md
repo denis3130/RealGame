@@ -208,3 +208,12 @@ Denis: «ok mi piace ma fai la cosa trasparente tipo alla grandezza per ogni pro
 - Prova `node tests/a49/mira.js` (36 controlli, nuovi: pistola a 7° sì e a 20° no, pompa a 19° sì, il costo dell'area di pompa, pistola e
   razzo, meno di 0,5 ms). Foto `tests/a49/mi_z_*.png` (anche `mi_z_pompa_lato.png`), `mi_c_*.png`.
 
+### 8d. Il fascio largo resta (1° novembre)
+
+Denis: «si ma lascia il fascio largo». Nella Zombie tornano il **fascio largo della visuale** (±22°, ±30° per le armi corte e il
+Risonatore; lungo quanto arriva l'arma, al massimo 380; fermato dai muri) e la sua regola: l'eroe spara al primo zombie che ci entra e si
+vede, anche camminando; senza l'aiuto di 5° della versione di prima. **Dentro il fascio resta l'area grande quanto il proiettile** (8c):
+dritta davanti e leggera quando non c'è nessuno, girata verso lo zombie preso, più chiara, col mirino rosso ai suoi piedi. Nella Classica non
+cambia niente (una striscia per ogni proiettile). Prova `node tests/a49/mira.js` (36 controlli: pistola a 17° sì e a 34° no, pompa a 26° sì,
+il costo di fascio e area insieme sotto 0,5 ms).
+

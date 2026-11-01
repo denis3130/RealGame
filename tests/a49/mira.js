@@ -1,7 +1,7 @@
 // la mira alla Brawl Stars (104-mira.js): Classica (levetta, area, tiro camminando, tocco, annullato, raffiche, fiala, rimbalzo, le Super
-// trascinate di ogni eroe, mancini, effetti bassi) e Zombie (si spara dove guarda la visuale, nell'area grande quanto il proiettile: davanti
-// sì, dietro no, pistola 7° sì e 20° no, pompa 19° sì, il dito che gira la visuale, camminando, dietro un muro no, la ricarica da sola, l'area
-// di ogni arma; abilità trascinate); foto tests/a49/mi_*.png
+// trascinate di ogni eroe, mancini, effetti bassi) e Zombie (si spara dove guarda la visuale, nel fascio largo con dentro l'area grande quanto
+// il proiettile: davanti sì, dietro no, pistola 17° sì e 34° no, pompa 26° sì, il dito che gira la visuale, camminando, dietro un muro no, la
+// ricarica da sola, l'area di ogni arma; abilità trascinate); foto tests/a49/mi_*.png
 const {chromium}=require('playwright');const D=__dirname+'/';
 (async()=>{const b=await chromium.launch();const p=await b.newPage({viewport:{width:390,height:844}});const errs=[];p.on('pageerror',e=>errs.push(e.message));p.on('console',m=>{if(m.type()==='error')errs.push(m.text())});
   await p.addInitScript(()=>{if(localStorage.getItem('cripta_save_v1'))return;localStorage.setItem('cripta_save_v1',JSON.stringify({gold:9000,gems:10,trophies:0,runs:5,introSeen:1,handSeen:1,starter:'arciere',
@@ -95,13 +95,12 @@ const {chromium}=require('playwright');const D=__dirname+'/';
   await E(`window.__MZ.view(180);0`);await p.waitForTimeout(400);const n1=await shots(1200);const l1=await J(`JSON.stringify({last:MIRA.last,face:ZM.W.hero.face,f:-Math.PI/2-ZM.CAM.yaw})`);await p.screenshot({path:D+'mi_z_dietro.png'});
   ok('girata la visuale dall\'altra parte (lo zombie ora è dietro): non spara, e l\'eroe guarda dove guarda la visuale',n1===0&&l1.last&&l1.last.k==='vista'&&dA(l1.face,l1.f)<.1,{n1,l1});
   await goHome();await p.waitForTimeout(300);
-  // the pistol's area is as big as its bullet (±3° of stray, the zombie's body, 5° of help): at 7° yes, at 20° no
-  const z2=await put(.12,140);await p.waitForTimeout(250);const n2=await shots(1000);
-  const z3=await put(.35,140);await p.waitForTimeout(250);const n3=await shots(1000);
-  ok('con la pistola a 7° dalla visuale le spara, a 20° no (l\'area è grande quanto il proiettile)',z2.clear&&z3.clear&&n2>=1&&n3===0,{n7:n2,n20:n3});
-  // the shotgun's area is wider (its pellets): at 20° yes
-  await E(`ZM.equip('pompa');0`);await p.waitForTimeout(1100);const z3b=await put(.33,120);await p.waitForTimeout(250);const n3b=await shots(1200);await p.screenshot({path:D+'mi_z_pompa_lato.png'});
-  ok('con la pompa (i pallini si allargano) a 19° le spara',n3b>=1,{n19:n3b});await E(`ZM.equip('pistola');for(const z of ZM.W.Z.slice())ZM.W.Z.splice(ZM.W.Z.indexOf(z),1);0`);await p.waitForTimeout(1100);
+  // the wide beam (Denis: «lascia il fascio largo»): ±22° with the pistol, ±30° with the short guns; inside it the area of the projectile
+  const z2=await put(.3,140);await p.waitForTimeout(250);const n2=await shots(1000);
+  const z3=await put(.6,140);await p.waitForTimeout(250);const n3=await shots(1000);
+  ok('con la pistola a 17° dalla visuale (dentro il fascio largo) le spara, a 34° no',z2.clear&&z3.clear&&n2>=1&&n3===0,{n17:n2,n34:n3});
+  await E(`ZM.equip('pompa');0`);await p.waitForTimeout(1100);const z3b=await put(.45,120);await p.waitForTimeout(250);const n3b=await shots(1200);await p.screenshot({path:D+'mi_z_pompa_lato.png'});
+  ok('con la pompa (arma corta: fascio di ±30°) a 26° le spara',n3b>=1,{n26:n3b});await E(`ZM.equip('pistola');for(const z of ZM.W.Z.slice())ZM.W.Z.splice(ZM.W.Z.indexOf(z),1);0`);await p.waitForTimeout(1100);
   const z3c=await put(.6,140);await p.waitForTimeout(250);const n3c=await shots(800);
   // the finger on the right half turns the view onto it: then it shoots
   const before=n3c+await shots(300);const ctr=[300,430];await p.mouse.move(ctr[0],ctr[1]);await p.mouse.down();await p.mouse.move(ctr[0]+64,ctr[1],{steps:10});await p.mouse.up();await p.waitForTimeout(400);
@@ -144,7 +143,7 @@ const {chromium}=require('playwright');const D=__dirname+'/';
   // a dragged ability doesn't turn the camera either
   const yw=await E(`ZM.CAM.yaw`);await drag(abBtn(2),-80,-10,{hold:100});await p.waitForTimeout(200);ok('trascinare le abilità non gira la telecamera',Math.abs(await E(`ZM.CAM.yaw`)-yw)<1e-6);
   // times: a frame with the area (with the stick held) against one without
-  const tm=await J(`(()=>{const f=-Math.PI/2,o={};for(const id of ['pompa','pistola','lanciarazzi']){ZM.equip(id);const g=ZM.gun(),t0=performance.now();for(let i=0;i<200;i++)mzOnFloor(()=>mzDrawShot(g,f,1,120,true,MZC.tiro));o[id]=+((performance.now()-t0)/200).toFixed(3)}ZM.equip('pistola');return JSON.stringify(o)})()`);
-  ok('l\'area del colpo costa poco a disegnare (meno di 0,5 ms per la pompa, la pistola e il razzo)',Object.values(tm).every(v=>v<.5),tm);
+  const tm=await J(`(()=>{const f=-Math.PI/2,h=ZM.W.hero,o={};for(const id of ['pompa','pistola','lanciarazzi']){ZM.equip(id);const g=ZM.gun(),V=mzView(g),t0=performance.now();for(let i=0;i<200;i++)mzOnFloor(()=>{mzDrawBeam(h,f,V,1);mzDrawShot(g,f,1,120,true,MZC.tiro)});o[id]=+((performance.now()-t0)/200).toFixed(3)}ZM.equip('pistola');return JSON.stringify(o)})()`);
+  ok('il fascio e l\'area del colpo costano poco a disegnare (meno di 0,5 ms per la pompa, la pistola e il razzo)',Object.values(tm).every(v=>v<.5),tm);
   await E(`LOWFX=true;0`);await put(0,140);await p.waitForTimeout(700);await p.screenshot({path:D+'mi_z_lowfx.png'});await E(`LOWFX=false;0`);
   console.log(errs.slice(0,6).join('\n')||'nessun errore');await b.close()})();
