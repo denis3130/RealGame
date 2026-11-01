@@ -16,9 +16,9 @@ creazione) e, una volta sola, 10.000 oro, 600 Rottami e il record 15 della Zombi
 - Prove: `python3 tests/a49/mk.py` (la pagina senza salvataggio pronto né spinta, con `window.__E`), poi
   `node tests/a49/musica.js`, `abilita.js`, `sfida.js`, `abisso.js`, `eventi.js` (foto in `tests/a49/`).
 - Per metterle nel gioco dopo il sì: aggiungere in fondo a `src/ordine.txt`, prima di `coda.html`, nell'ordine
-  `js/98-musica-zombie.js`, `js/99-abilita-zombie.js`, `js/100-sfida-zombie.js`, `js/102-abisso-ricco.js`, `js/103-missioni-eventi.js`
-  (103 aggiunge le missioni delle abilità e della Sfida solo se ci sono 99 e 100: metterli insieme, perché le missioni del giorno sono
-  salvate col loro numero nell'elenco).
+  `js/98-musica-zombie.js`, `js/99-abilita-zombie.js`, `js/100-sfida-zombie.js`, `js/102-abisso-ricco.js`, `js/103-missioni-eventi.js`,
+  `js/104-mira.js` (103 aggiunge le missioni delle abilità e della Sfida solo se ci sono 99 e 100: metterli insieme, perché le missioni del
+  giorno sono salvate col loro numero nell'elenco; 104 lavora anche da solo, e con 99 rende trascinabili le abilità).
 
 ## 1. La musica della partita zombie (`src/js/98-musica-zombie.js`)
 
@@ -111,3 +111,50 @@ che sulla mappa non suonasse niente, e adesso suona la musica della partita; il 
 oggi e sull'anteprima: tutto passa). Poi le prove di `tests/a49`: musica (volume medio: pausa 0,0073, round 2 0,0172, round 14 con 6 zombie
 0,0224, boss 0,0277, poca vita 0,0214, caduto 0,013), abilità (13 controlli; la tagliola provata in un punto libero, perché vicino a un
 recinto lo zombie gira intorno e non ci passa, com'è giusto), sfida (10), abisso (6), eventi (6): tutto passa, nessun errore.
+
+## 8. La mira alla Brawl Stars (`src/js/104-mira.js`, 1° novembre)
+
+Denis: «vorrei che aggiungessi al gioco una cosa tipo lo sparo alla brawl star che vede una piccola area che ti precede la gittata del
+tiro di quell'arma ecc.». Alle domande ha risposto: **in tutte e due le modalità**, **«Automatica + levetta»**, **anche la Super e le
+abilità zombie**, **nell'Anteprima 49**.
+
+- **L'area del tiro**, a terra davanti all'eroe, con la forma e la gittata vere del colpo (colore crema come in Brawl Stars; i bordi chiari
+  con un alone scuro, così si legge sul pavimento chiaro e su quello buio; le frecce che corrono verso la fine e la sbarra dove il colpo si
+  ferma).
+  - Classica: la freccia o il dardo fino al bordo della stanza o al primo ostacolo che lo ferma (calcolati come nel gioco: le frecce
+    spariscono fuori da `L`–`R`, `TOP`–`BOT` e sugli ostacoli di `G.rocks`); più larga con le frecce in più davanti; le righe delle
+    diagonali, dei lati, di dietro e del ventaglio; il rimbalzo sul muro (`P.wb`); le tre stelline del Ninja; la fiala dell'Alchimista
+    a pallonetto (i puntini dell'ombra a terra e quelli in aria) col cerchio dove scoppia.
+  - Zombie: ogni arma la sua (`ARMI.DATI`): striscia per pistola, revolver, mitra, fucile a vapore; cono per le pompe e per i mitra che
+    spargono (mitraglietta, a tamburo, mitragliatrice), fatto di raggi che si fermano ognuno al suo muro (come `fireShot`: finestre e
+    varchi si passano); il lanciarazzi col cerchio dell'esplosione; lo spicchio corto del lanciafiamme; il cerchio del Risonatore. Disegnata
+    a terra con la telecamera della mappa (`inGround`), sotto le case e i lampioni; al piano di sopra della Locanda sale con l'eroe.
+- **Da fermo** si spara da soli come prima e l'area, leggera, segue il bersaglio.
+- **La levetta del tiro**: Classica in basso a destra accanto allo Scatto (68 px, «MIRA»; per i mancini a sinistra), Zombie sopra le
+  abilità (76 px; il cerchio della telecamera sale a 300 px dal fondo, `W.lookY`, e le scritte d'aiuto sopra la levetta). La trascini e vedi
+  l'area dove va il colpo (l'eroe si gira lì, da fermo con l'arco teso o l'arma alzata), lasci e spara lì, **anche camminando**; un tocco
+  spara al più vicino; riportata al centro prima di lasciare non spara (come in Brawl Stars). Nella Classica il tiro aspetta l'arco pronto
+  (al massimo 0,6 s) e passa dalla coda delle raffiche come quello automatico (il Multicolpo e l'albero delle abilità lo contano), con
+  l'angolo segnato; la fiala cade alla distanza scelta (da 60 px alla sua gittata). Nella Zombie le armi a un colpo sparano un colpo
+  (aspettano fino a 0,9 s che l'arma sia pronta), le automatiche una raffica: mitraglietta 5, a tamburo 6, mitra 4, mitragliatrice 10
+  (dopo che le canne girano), lanciafiamme 6. La telecamera non si muove.
+- **La Super trascinata** (Classica: il bottone della Super diventa una levetta d'oro quando è carica): la Pioggia di frecce cade nel
+  cerchio che scegli (raggio 92, fino a 300 px; prima sui nemici dentro), il Calderone dove scegli (raggio 105, fino a 320 px), il Dardo
+  d'assedio dove punti (la striscia larga fino al muro e l'esplosione); Ballata e Radici mostrano gli anelli d'oro sotto tutti i nemici
+  che prendono, la Danza delle lame il suo giro (e parte girata dove punti), le Ombre del Ninja il loro giro. Un tocco la usa come prima,
+  riportata al centro non parte.
+- **Le abilità zombie trascinate**: lo Scatto dove punti (la striscia di 96 px fino al muro), la Bomba dove scegli (da 30 a 230 px, il
+  cerchio del fuoco e la bottiglia che vola a puntini), la Tagliola dove scegli (fino a 80 px, non oltre un muro), il Rintocco mostra il
+  suo raggio (125 px); Adrenalina e Benda si usano lasciando. Un tocco le usa come prima.
+- Agganci: nel motore della mappa tre cose che senza questo file non fanno niente (`W.aimHook` in `updateBeings`: dove punta l'eroe e il
+  grilletto, anche camminando; `h.aimP`: l'arma alzata da fermo; `W.lookY`: l'altezza del cerchio della telecamera); in 99 il bottone delle
+  abilità chiede ad `aimAbDown` se il dito è suo e `zabUse(i, aim)` prende la mira. Nella Classica 104 avvolge `update`, `input`,
+  `nearest` (mentre la levetta mira, il tiro automatico di quel fotogramma resta senza bersaglio), `volley` (la raffica segnata va
+  dov'è segnata), `drawTelegraphs` (le aree a terra, insieme ai segni dei nemici) e `hudUlt`; il dito sul bottone della Super lo prende
+  prima, in cattura. `MIRA.on = false` spegne tutto; `MIRA.last` dice cosa è stato disegnato (per le prove).
+- Costo: l'area più cara (il cono della pompa, 5 raggi) 0,03–0,05 ms a fotogramma.
+- Prova `node tests/a49/mira.js` (36 controlli: levetta nascosta nel menu e al suo posto in battaglia, area e eroe girato, tiro camminando,
+  tocco, annullato, tiro automatico con l'area leggera, Multicolpo, la Super di ognuno dei sette eroi, la fiala alla distanza scelta,
+  mancini, effetti bassi; sulla mappa: posti dei bottoni, area e telecamera ferma, telecamera girata, tiro camminando, raffica del mitra,
+  pompa, tocco, annullato, l'area di ogni arma, Bomba, Tagliola, Scatto, Rintocco e Benda trascinati, il costo), foto `tests/a49/mi_*.png`.
+

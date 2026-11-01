@@ -364,7 +364,7 @@ creazione): `python3 anteprime/mk_anteprima49.py <cartella>` (divisa come il gio
   (oro, bustine, cristalli, l'ultimo con una cornice del Profilo nuova: Zucca, Teschio d'oro, Orda, Fiera); bottone «Evento» in fondo alla
   colonna di destra della schermata principale nelle due modalità, col «!» quando c'è un premio; a fine partita «+N zucche». Prova nella
   cartella di lavoro: niente missioni zombie a chi non ha giocato, missioni che avanzano, zucche, bottone, premi una volta sola, cornice.
-- **Collaudo** (31 ottobre) col gioco più i cinque file (`python3 anteprime/mk_anteprima49.py --prova`, da cui `tests/test.html`): `menu2`,
+- **Collaudo** (31 ottobre) col gioco più i cinque file (dal 1° novembre sei, con la mira) (`python3 anteprime/mk_anteprima49.py --prova`, da cui `tests/test.html`): `menu2`,
   `menu3`, `meta2`, `zombie`, `mig`, `fresh`, `contatore`, `enemies`, `colpi`, `classica` e una partita automatica per capitolo (quattro
   vittorie), nessun errore; in `tests/zombie.js` il controllo «Gioca porta sulla mappa» accetta ora anche la musica della partita
   (`zpartita`). Prove dell'anteprima in `tests/a49/` (`python3 tests/a49/mk.py`, poi `node tests/a49/<prova>.js`): musica, abilità,
@@ -373,6 +373,18 @@ creazione): `python3 anteprime/mk_anteprima49.py <cartella>` (divisa come il gio
   in `sprite/mostri/zombie_nuovi_4dir.jpg`, pagina https://claude.ai/artifact/MhfnMzYQg7UjU6vcPzNe3G (`python3 anteprime/mk_mostro.py --nuovi`);
   dettagli in `sprite/mostri/LEGGIMI.md` («Gli zombie nuovi»). Il Gonfio ha la stessa idea dello «Zombie gonfio» scartato il 9 ottobre:
   detto a Denis, che decide.
+- **La mira alla Brawl Stars** (1° novembre, `src/js/104-mira.js`, `MIRA`, `MC`, `MZ`; Denis: «vorrei che aggiungessi al gioco una cosa
+  tipo lo sparo alla brawl star che vede una piccola area che ti precede la gittata del tiro di quell'arma»; risposte: tutte e due le
+  modalità, «Automatica + levetta», anche la Super e le abilità zombie, nell'Anteprima 49): l'area del tiro a terra con la forma e la
+  gittata vere (Classica: fino al muro o all'ostacolo, più larga con le frecce in più, diagonali, lati, dietro, ventaglio, rimbalzo, le
+  stelline del Ninja, la fiala a pallonetto col cerchio; Zombie: striscia o cono di ogni arma fino al primo muro, l'esplosione del razzo,
+  la fiamma, il Risonatore); da fermo si spara da soli come prima con l'area leggera sul bersaglio; la **levetta del tiro** (Classica
+  accanto allo Scatto, «MIRA»; Zombie sopra le abilità, il cerchio della telecamera più in alto con `W.lookY`): trascini, vedi, lasci e
+  spara lì anche camminando, un tocco al più vicino, al centro annulla; le automatiche zombie sparano una raffica; la **Super** e le
+  **abilità zombie** si trascinano allo stesso modo (Pioggia e Calderone nel cerchio scelto, Dardo d'assedio dove punti; Scatto, Bomba e
+  Tagliola dove scegli, il raggio del Rintocco). Agganci senza effetto se manca il file: `W.aimHook`, `h.aimP`, `W.lookY` nel motore della
+  mappa, `aimAbDown` e `zabUse(i, aim)` in 99. Prova `node tests/a49/mira.js` (36 controlli, foto `tests/a49/mi_*.png`). Dettagli in
+  `docs/anteprima-49.md` (8).
 
 ## FASE 9: più fluido sul telefono (19 ottobre, in corso)
 

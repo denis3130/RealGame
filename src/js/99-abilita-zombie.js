@@ -87,9 +87,13 @@ function zabAdrEnd(){const was=ZABS.adr>0;ZABS.adr=0;if(was)zabMods()}
 const zabHp=()=>{const D=zabD();return 80*(D&&D.hpMul?D.hpMul(Math.max(1,D.R||1)):1)};
 const zabFoe=z=>!z.die&&!z.idle&&z.rise>=1;
 function zabCan(){const D=zabD(),h=ZM.W.hero;return!!D&&!h.dead&&!h.cl&&!['fine','giu','su'].includes(D.st)}
-function zabUse(i){const id=ZABS.eq[i];if(!id)return;const a=ZAB_BY[id];if(ZABS.cd[i]>0||!zabCan()){zabSnd('no');zabPulse(i,true);return}
+// aim (104-mira.js, il bottone trascinato): {a} la direzione dello Scatto, {x, y} dove cade la Bomba o dove si mette la Tagliola
+function zabUse(i,aim){const id=ZABS.eq[i];if(!id)return;const a=ZAB_BY[id];if(ZABS.cd[i]>0||!zabCan()){zabSnd('no');zabPulse(i,true);return}
   const W=ZM.W,h=W.hero,D=zabD();let ok=true;
-  if(id==='scatto'){let dx=Math.cos(h.face||0),dy=Math.sin(h.face||0);if(!h.moving){let best=null,bd=1e9;for(const z of W.Z)if(zabFoe(z)&&ZM.sameLv(z)){const d=Math.hypot(z.x-h.x,z.y-h.y);if(d<bd){bd=d;best=z}}
+  if(id==='scatto'&&aim&&aim.a!=null){ZABS.dash={t:0,T:.2,dx:Math.cos(aim.a),dy:Math.sin(aim.a),dist:96};D.inv=Math.max(D.inv,.45);zabSnd('scatto')}
+  else if(id==='bomba'&&aim&&aim.x!=null){ZABS.bottles.push({x0:h.x,y0:h.y,z0:(h.zh||0)+30,x:aim.x,y:aim.y,lv:h.lv||0,t:0,T:.55});zabSnd('lancio')}
+  else if(id==='tagliola'&&aim&&aim.x!=null){if(ZABS.traps.length>=2)ZABS.traps.shift();ZABS.traps.push({x:aim.x,y:aim.y,lv:h.lv||0,t:0,z:null,hold:0,shut:0,a:Math.random()*TAU});zabSnd('posa')}
+  else if(id==='scatto'){let dx=Math.cos(h.face||0),dy=Math.sin(h.face||0);if(!h.moving){let best=null,bd=1e9;for(const z of W.Z)if(zabFoe(z)&&ZM.sameLv(z)){const d=Math.hypot(z.x-h.x,z.y-h.y);if(d<bd){bd=d;best=z}}
       if(best&&bd<220){dx=h.x-best.x;dy=h.y-best.y;const l=Math.hypot(dx,dy)||1;dx/=l;dy/=l}}
     ZABS.dash={t:0,T:.2,dx,dy,dist:96};D.inv=Math.max(D.inv,.45);zabSnd('scatto')}
   else if(id==='bomba'){// the thickest group of zombies within reach that the hero can see, or ahead
@@ -181,7 +185,8 @@ function zabBuildUI(){const ov=document.getElementById('mz');if(!ov)return;let e
     @keyframes zabpop{40%{transform:scale(1.16)}}@keyframes zabno{25%{transform:translateX(-4px)}75%{transform:translateX(4px)}}
     #mzAb .ab.empty{opacity:.35}
     @media (hover:none){#mzAb .ab .k{display:none}}`;el.appendChild(st);
-    el.addEventListener('pointerdown',e=>{e.stopPropagation();const b=e.target.closest('.ab');if(!b)return;e.preventDefault();zabUse(+b.dataset.i)});
+    // (104-mira.js) con la mira alla Brawl Stars il bottone si trascina per mirare (aimAbDown prende il dito); senza, un tocco e parte
+    el.addEventListener('pointerdown',e=>{e.stopPropagation();const b=e.target.closest('.ab');if(!b)return;e.preventDefault();if(typeof aimAbDown==='function'&&aimAbDown(+b.dataset.i,e,b))return;zabUse(+b.dataset.i)});
     for(const t of['pointerup','pointermove','click'])el.addEventListener(t,e=>e.stopPropagation())}
   // a row in the bottom right corner, under the camera's pad (drawn 196 px up): the first at the corner, next to the thumb
   ov.classList.add('zab');el.querySelectorAll('.ab').forEach(b=>b.remove());ZABS.btn=[];

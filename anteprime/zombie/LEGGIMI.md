@@ -383,3 +383,12 @@ Tutto quello che c'è, con numeri e prove, sta in `docs/anteprima-48.md`; qui co
   zona chiusa, i morti del Becchino (`partita.js evoca`) solo in una zona aperta e raggiungibile. Prova `zone_prova.js`.
 - **Attacchi** (`motore.js ATKT`, `ATKH`): un attacco dura 1 s (strisciante 1,05, minatore e lanterna 1,1, cane 0,8), il colpo a metà;
   danni in `partita.js PZ.danno`.
+
+## La mira a mano (1° novembre, solo nell'Anteprima 49: `src/js/104-mira.js`)
+
+Tre agganci in `motore.js` che senza quel file non fanno niente: in `updateBeings` `W.aimHook(h, tgt, g, dt)` (se c'è e l'eroe può
+sparare) dà null (il tiro di sempre: da fermo, sul bersaglio) o `{a, fire, pose}`: `a` l'angolo nel mondo dove punta (l'eroe si gira lì
+anche camminando), `fire` il grilletto (spara anche camminando; mentre si mira e basta è false, e il tiro automatico aspetta), `pose`
+l'arma alzata da fermo (`h.aimP`, che `drawHero` usa come il bersaglio per la mossa «aim»; mentre si mira non ricarica da solo); in
+`render` il cerchio della telecamera a `W.lookY` px dal fondo (196 senza). Il file conta i colpi avvolgendo `W.shotHook` e disegna le
+aree col direttore (`drawGround`, `drawTop`), come le abilità.
