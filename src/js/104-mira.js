@@ -6,19 +6,23 @@
 //   all'ostacolo che lo ferma (più larga con le frecce in più davanti; le righe delle diagonali, dei lati, di dietro e del ventaglio; il
 //   rimbalzo sul muro), le tre stelline del Ninja, la fiala dell'Alchimista che vola a pallonetto col cerchio dove scoppia. Zombie: la
 //   striscia o il cono di ogni arma fino al primo muro (le pompe e i mitra a cono, il lanciarazzi col cerchio dell'esplosione, il
-//   lanciafiamme corto, il Risonatore tutto intorno).
-// - Da fermo si spara da soli come prima: l'area, leggera, segue il bersaglio.
-// - La levetta del tiro (Classica: in basso a destra accanto allo Scatto; Zombie: sopra le abilità): la trascini, vedi l'area dove va il
-//   colpo, lasci e spara lì, anche camminando; un tocco spara al più vicino; riportata al centro prima di lasciare non spara.
+//   lanciafiamme corto, il Risonatore tutto intorno), verso il bersaglio nel fascio della visuale.
+// - Classica, da fermo: si spara da soli come prima; l'area, leggera, segue il bersaglio.
+// - La levetta del tiro (Classica, in basso a destra accanto allo Scatto): la trascini, vedi l'area dove va il colpo, lasci e spara lì,
+//   anche camminando; un tocco spara al più vicino; riportata al centro prima di lasciare non spara.
+// - Zombie (Denis, 1° novembre: «la visuale e lo sparo siano insieme»): si spara dove guarda la visuale; davanti all'eroe il fascio
+//   della visuale, l'eroe spara da solo (anche camminando) agli zombie che ci entrano, gli altri no; la levetta del tiro qui non c'è.
 // - La Super della Classica e le abilità della Zombie si trascinano allo stesso modo e mostrano dove colpiscono (il cerchio della Pioggia
 //   di frecce e del Calderone, la striscia del Dardo d'assedio, i nemici presi da Ballata e Radici, il giro della Danza e delle Ombre; la
 //   direzione dello Scatto, dove cade la Bomba, il raggio del Rintocco, dove si mette la Tagliola); un tocco le usa come prima.
-// Fuori da src/ordine.txt: va nell'Anteprima 49 (anteprime/mk_anteprima49.py). Nel motore della mappa zombie ci sono tre agganci che senza
-// questo file non fanno niente (W.aimHook, h.aimP, W.lookY); in 99 il bottone delle abilità chiede ad aimAbDown se il dito è suo.
+// - Le mire (1° novembre, Denis: «fai più trasparenti e più belle le mire»): come vetro di luce (sotto, «i disegni a terra»).
+// Fuori da src/ordine.txt: va nell'Anteprima 49 (anteprime/mk_anteprima49.py). Nel motore della mappa zombie ci sono agganci che senza
+// questo file non fanno niente (W.aimHook con {a, fire, pose, face, idle}, h.aimP, W.lookY); in 99 il bottone delle abilità chiede ad
+// aimAbDown se il dito è suo.
 // Tutto rispetta LOWFX. MIRA.on = false lo spegne.
 // =====================================================================
 const MIRA={on:true,err:0};
-const MRGB={tiro:'255,244,214',sup:'255,204,84'};
+const MRGB={tiro:'255,248,232',sup:'255,214,120'};
 const MDZ=12,MMAX=44;// la zona morta e la corsa della levetta (px dello schermo)
 function mErr(e){if(MIRA.err++<3)console.error(e)}
 const mT=()=>performance.now()/1000;
@@ -43,52 +47,69 @@ function mKnob(k,st){if(!k)return;if(!st||!st.len){k.style.transform='';return}c
 const MSVG='<svg viewBox="0 0 34 34" aria-hidden="true"><circle cx="17" cy="17" r="8.2" fill="none" stroke="#1b1612" stroke-width="2.6"/><path d="M17 4.6v6.2M17 23.2v6.2M4.6 17h6.2M23.2 17h6.2" stroke="#1b1612" stroke-width="2.6" stroke-linecap="round"/><circle cx="17" cy="17" r="2.3" fill="#c8323c"/></svg>';
 
 // ------------------------------------------------------------------ i disegni a terra (nelle coordinate del mondo di chi chiama: la stanza
-// della Classica, il terreno della mappa zombie dentro inGround, che li stende con la telecamera). Il colore pieno vicino all'eroe che
-// sfuma lontano, i bordi chiari con un alone scuro (si leggono sul pavimento chiaro della neve e su quello buio della cripta)
-// una striscia: da (x, y) verso a, lunga len, mezza larghezza hw; le frecce che corrono verso la fine (o.chev, non con LOWFX); la sbarra dove si ferma
-function mLane(x,y,a,len,hw,rgb,al,o){if(len<3||al<=0)return;o=o||{};ctx.save();ctx.translate(x,y);ctx.rotate(a);
-  const g=ctx.createLinearGradient(0,0,len,0);g.addColorStop(0,`rgba(${rgb},${mA(.4*al)})`);g.addColorStop(Math.min(.9,150/len),`rgba(${rgb},${mA(.3*al)})`);g.addColorStop(1,`rgba(${rgb},${mA(.15*al)})`);
-  ctx.beginPath();ctx.moveTo(0,-hw);ctx.lineTo(len,-hw);ctx.lineTo(len,hw);ctx.lineTo(0,hw);ctx.arc(0,0,hw,Math.PI/2,Math.PI*1.5);ctx.closePath();ctx.fillStyle=g;ctx.fill();
-  const e=ctx.createLinearGradient(0,0,len,0);e.addColorStop(0,`rgba(${rgb},${mA(.95*al)})`);e.addColorStop(1,`rgba(${rgb},${mA(.5*al)})`);
-  ctx.lineCap='round';ctx.beginPath();ctx.moveTo(0,-hw);ctx.lineTo(len,-hw);ctx.moveTo(0,hw);ctx.lineTo(len,hw);
-  ctx.strokeStyle=`rgba(16,10,6,${mA(.24*al)})`;ctx.lineWidth=3.2;ctx.stroke();ctx.strokeStyle=e;ctx.lineWidth=1.5;ctx.stroke();
-  if(!o.open){ctx.beginPath();ctx.moveTo(len,-hw-2.5);ctx.lineTo(len,hw+2.5);ctx.strokeStyle=`rgba(16,10,6,${mA(.3*al)})`;ctx.lineWidth=4.2;ctx.stroke();ctx.strokeStyle=`rgba(${rgb},${mA(.9*al)})`;ctx.lineWidth=2.1;ctx.stroke()}
-  if(o.chev&&!LOWFX&&len>40){const sp=30,off=(mT()*72)%sp,w=Math.min(hw*.62,6);ctx.lineWidth=1.9;
-    for(let d=16+off;d<len-10;d+=sp){ctx.strokeStyle=`rgba(${rgb},${mA(.6*al*(.3+.7*(1-d/len)))})`;ctx.beginPath();ctx.moveTo(d-4.5,-w);ctx.lineTo(d,0);ctx.lineTo(d-4.5,w);ctx.stroke()}}
-  ctx.restore()}
+// della Classica, il terreno della mappa zombie dentro inGround, che li stende con la telecamera). Dal 1° novembre (Denis: «fai più trasparenti
+// e più belle le mire») come vetro di luce: il pieno appena accennato che sfuma verso la fine, i bordi sottili e chiari che si spengono con
+// la distanza, le punte tonde con un bagliore morbido, una luce che corre lungo la mira (non con LOWFX); niente più bordo scuro né frecce
+// la luce morbida (sommata: sul buio sembra luce, sul chiaro quasi non si vede e non sporca)
+function mGlow(x,y,r,rgb,a){if(a<=0||r<1)return;ctx.save();ctx.globalCompositeOperation='lighter';const g=ctx.createRadialGradient(x,y,0,x,y,r);
+  g.addColorStop(0,`rgba(${rgb},${mA(a)})`);g.addColorStop(1,`rgba(${rgb},0)`);ctx.fillStyle=g;ctx.beginPath();ctx.arc(x,y,r,0,Math.PI*2);ctx.fill();ctx.restore()}
+// una striscia: da (x, y) verso a, lunga len, mezza larghezza hw; parte un poco lontano dai piedi (o.s0), finisce tonda; o.run la luce che
+// corre, o.wall la punta più chiara (si ferma su un muro o un ostacolo)
+function mLane(x,y,a,len,hw,rgb,al,o){if(len<4||al<=0)return;o=o||{};const s0=Math.min(o.s0==null?10:o.s0,len*.4),L=Math.max(s0+2,len-hw*.35),cap=hw*.9;
+  ctx.save();ctx.translate(x,y);ctx.rotate(a);
+  const shape=()=>{ctx.beginPath();ctx.moveTo(s0,-hw);ctx.lineTo(L,-hw);ctx.bezierCurveTo(L+cap*.55,-hw,L+cap,-hw*.55,L+cap,0);ctx.bezierCurveTo(L+cap,hw*.55,L+cap*.55,hw,L,hw);
+    ctx.lineTo(s0,hw);ctx.bezierCurveTo(s0-cap*.55,hw,s0-cap,hw*.55,s0-cap,0);ctx.bezierCurveTo(s0-cap,-hw*.55,s0-cap*.55,-hw,s0,-hw);ctx.closePath()};
+  const g=ctx.createLinearGradient(s0,0,L+cap,0);g.addColorStop(0,`rgba(${rgb},${mA(.17*al)})`);g.addColorStop(.6,`rgba(${rgb},${mA(.1*al)})`);g.addColorStop(1,`rgba(${rgb},${mA(.05*al)})`);
+  shape();ctx.fillStyle=g;ctx.fill();
+  const e=ctx.createLinearGradient(s0,0,L+cap,0);e.addColorStop(0,`rgba(${rgb},${mA(.62*al)})`);e.addColorStop(1,`rgba(${rgb},${mA(.2*al)})`);
+  ctx.strokeStyle=e;ctx.lineWidth=1.15;ctx.stroke();
+  // the line down the middle, very faint: a sight
+  if(hw>5){const c=ctx.createLinearGradient(s0,0,L,0);c.addColorStop(0,`rgba(${rgb},${mA(.32*al)})`);c.addColorStop(1,`rgba(${rgb},0)`);ctx.strokeStyle=c;ctx.lineWidth=.9;ctx.beginPath();ctx.moveTo(s0+2,0);ctx.lineTo(L,0);ctx.stroke()}
+  // the running light (clipped to the strip)
+  if(o.run&&!LOWFX&&L-s0>30){const k=(mT()*.95+(o.ph||0))%1,px=s0+(L+cap-s0)*k,w=Math.min(54,(L-s0)*.4),r=ctx.createLinearGradient(px-w,0,px,0);
+    r.addColorStop(0,`rgba(${rgb},0)`);r.addColorStop(1,`rgba(${rgb},${mA(.3*al*(1-.55*k))})`);ctx.save();shape();ctx.clip();ctx.fillStyle=r;ctx.fillRect(px-w,-hw,w,hw*2);ctx.restore()}
+  ctx.restore();
+  // the tip: a soft light where it ends, a little brighter on a wall
+  const tx=x+Math.cos(a)*(L+cap*.3),ty=y+Math.sin(a)*(L+cap*.3);mGlow(tx,ty,hw*2.2,rgb,(o.wall?.3:.16)*al)}
 // un cono fatto di raggi (ogni raggio fino al suo muro): dall'eroe, largo hw0 alla partenza, fino ai punti ends (dal lato a−sp al lato a+sp)
-function mFan(x,y,a,hw0,ends,rgb,al,o){if(!ends.length||al<=0)return;o=o||{};const px=-Math.sin(a)*hw0,py=Math.cos(a)*hw0,len=o.len||200;ctx.save();
-  const g=ctx.createLinearGradient(x,y,x+Math.cos(a)*len,y+Math.sin(a)*len);g.addColorStop(0,`rgba(${rgb},${mA(.4*al)})`);g.addColorStop(.55,`rgba(${rgb},${mA(.28*al)})`);g.addColorStop(1,`rgba(${rgb},${mA(.15*al)})`);
-  const path=()=>{ctx.beginPath();ctx.moveTo(x-px,y-py);for(const p of ends)ctx.lineTo(p[0],p[1]);ctx.lineTo(x+px,y+py)};
-  path();ctx.closePath();ctx.fillStyle=g;ctx.fill();ctx.lineJoin='round';ctx.lineCap='round';path();
-  ctx.strokeStyle=`rgba(16,10,6,${mA(.24*al)})`;ctx.lineWidth=3.2;ctx.stroke();ctx.strokeStyle=`rgba(${rgb},${mA(.72*al)})`;ctx.lineWidth=1.5;ctx.stroke();
-  // the far edge brighter: where the shot stops
-  ctx.beginPath();ends.forEach((p,i)=>i?ctx.lineTo(p[0],p[1]):ctx.moveTo(p[0],p[1]));ctx.strokeStyle=`rgba(${rgb},${mA(.9*al)})`;ctx.lineWidth=2;ctx.stroke();
-  if(o.chev&&!LOWFX){const m=ends[ends.length>>1],l=Math.hypot(m[0]-x,m[1]-y),sp=28,off=(mT()*64)%sp,c=Math.cos(a),s=Math.sin(a);ctx.lineWidth=1.8;
-    for(let d=16+off;d<l-10;d+=sp){const w=hw0*.6+d*Math.tan(Math.min(.5,Math.atan2(Math.hypot(ends[0][0]-m[0],ends[0][1]-m[1]),l)))*.55,cx=x+c*d,cy=y+s*d;
-      ctx.strokeStyle=`rgba(${rgb},${mA(.55*al*(.3+.7*(1-d/l)))})`;ctx.beginPath();ctx.moveTo(cx-c*4.5-s*w,cy-s*4.5+c*w);ctx.lineTo(cx,cy);ctx.lineTo(cx-c*4.5+s*w,cy-s*4.5-c*w);ctx.stroke()}}
+function mFan(x,y,a,hw0,ends,rgb,al,o){if(!ends.length||al<=0)return;o=o||{};const len=o.len||200,s0=10,c=Math.cos(a),s=Math.sin(a),px=-s*hw0,py=c*hw0,bx=x+c*s0,by=y+s*s0;ctx.save();
+  const path=()=>{ctx.beginPath();ctx.moveTo(bx-px,by-py);for(const p of ends)ctx.lineTo(p[0],p[1]);ctx.lineTo(bx+px,by+py);ctx.closePath()};
+  const g=ctx.createRadialGradient(x,y,s0,x,y,len);g.addColorStop(0,`rgba(${rgb},${mA(.16*al)})`);g.addColorStop(.6,`rgba(${rgb},${mA(.09*al)})`);g.addColorStop(1,`rgba(${rgb},${mA(.04*al)})`);
+  path();ctx.fillStyle=g;ctx.fill();
+  // the two sides, fading with the distance
+  ctx.lineCap='round';for(const p of[ends[0],ends[ends.length-1]]){const e=ctx.createLinearGradient(x,y,p[0],p[1]);e.addColorStop(0,`rgba(${rgb},${mA(.55*al)})`);e.addColorStop(1,`rgba(${rgb},${mA(.14*al)})`);
+    ctx.strokeStyle=e;ctx.lineWidth=1.1;ctx.beginPath();ctx.moveTo(bx+(p===ends[0]?-px:px),by+(p===ends[0]?-py:py));ctx.lineTo(p[0],p[1]);ctx.stroke()}
+  // the far edge, where the shot stops
+  ctx.beginPath();ends.forEach((p,i)=>i?ctx.lineTo(p[0],p[1]):ctx.moveTo(p[0],p[1]));ctx.strokeStyle=`rgba(${rgb},${mA(.42*al)})`;ctx.lineWidth=1.3;ctx.lineJoin='round';ctx.stroke();
+  // the running light: an arc going out
+  if(o.run&&!LOWFX){const k=(mT()*.9)%1,rr=s0+(len-s0)*k;ctx.save();path();ctx.clip();ctx.beginPath();ctx.arc(x,y,rr,a-1.2,a+1.2);ctx.strokeStyle=`rgba(${rgb},${mA(.26*al*(1-.6*k))})`;ctx.lineWidth=7;ctx.stroke();ctx.restore()}
   ctx.restore()}
 // uno spicchio (il lanciafiamme): raggio r, mezza apertura half
-function mSector(x,y,a,r,half,rgb,al){if(r<4||al<=0)return;ctx.save();ctx.beginPath();ctx.moveTo(x,y);ctx.arc(x,y,r,a-half,a+half);ctx.closePath();
-  const g=ctx.createRadialGradient(x,y,2,x,y,r);g.addColorStop(0,`rgba(${rgb},${mA(.42*al)})`);g.addColorStop(1,`rgba(${rgb},${mA(.18*al)})`);ctx.fillStyle=g;ctx.fill();
-  ctx.lineJoin='round';ctx.strokeStyle=`rgba(16,10,6,${mA(.24*al)})`;ctx.lineWidth=3.2;ctx.stroke();ctx.strokeStyle=`rgba(${rgb},${mA(.8*al)})`;ctx.lineWidth=1.6;ctx.stroke();ctx.restore()}
-// un cerchio: il pieno leggero, l'orlo chiaro con l'alone scuro, un anello tratteggiato che gira dentro e (o.pulse) un'onda che si allarga
-function mCirc(x,y,r,rgb,al,o){if(r<2||al<=0)return;o=o||{};const t=mT();ctx.save();ctx.beginPath();ctx.arc(x,y,r,0,Math.PI*2);ctx.fillStyle=`rgba(${rgb},${mA((o.fill||.17)*al)})`;ctx.fill();
-  ctx.strokeStyle=`rgba(16,10,6,${mA(.26*al)})`;ctx.lineWidth=3.6;ctx.stroke();ctx.strokeStyle=`rgba(${rgb},${mA(.88*al)})`;ctx.lineWidth=1.9;ctx.stroke();
-  if(!LOWFX&&r>14){ctx.setLineDash([6,7]);ctx.lineDashOffset=-t*16;ctx.beginPath();ctx.arc(x,y,r*.7,0,Math.PI*2);ctx.strokeStyle=`rgba(${rgb},${mA(.45*al)})`;ctx.lineWidth=1.3;ctx.stroke();ctx.setLineDash([])}
-  if(o.pulse&&!LOWFX){const k=(t*1.5)%1;ctx.beginPath();ctx.arc(x,y,r*(.3+.7*k),0,Math.PI*2);ctx.strokeStyle=`rgba(${rgb},${mA(.55*al*(1-k))})`;ctx.lineWidth=2;ctx.stroke()}
+function mSector(x,y,a,r,half,rgb,al,o){if(r<4||al<=0)return;o=o||{};ctx.save();const shape=()=>{ctx.beginPath();ctx.moveTo(x+Math.cos(a)*8,y+Math.sin(a)*8);ctx.arc(x,y,r,a-half,a+half);ctx.closePath()};
+  const g=ctx.createRadialGradient(x,y,6,x,y,r);g.addColorStop(0,`rgba(${rgb},${mA(.2*al)})`);g.addColorStop(1,`rgba(${rgb},${mA(.06*al)})`);shape();ctx.fillStyle=g;ctx.fill();
+  ctx.lineJoin='round';ctx.strokeStyle=`rgba(${rgb},${mA(.42*al)})`;ctx.lineWidth=1.1;ctx.stroke();
+  if(o.run&&!LOWFX){const k=(mT()*1.3)%1;ctx.save();shape();ctx.clip();ctx.beginPath();ctx.arc(x,y,8+(r-8)*k,a-half,a+half);ctx.strokeStyle=`rgba(${rgb},${mA(.3*al*(1-.6*k))})`;ctx.lineWidth=6;ctx.stroke();ctx.restore()}
   ctx.restore()}
-// un anello sotto un nemico (preso dalla Super)
-function mRing(x,y,r,rgb,al){ctx.save();ctx.beginPath();ctx.arc(x,y,r,0,Math.PI*2);ctx.strokeStyle=`rgba(16,10,6,${mA(.3*al)})`;ctx.lineWidth=4;ctx.stroke();ctx.strokeStyle=`rgba(${rgb},${mA(.95*al)})`;ctx.lineWidth=2.2;ctx.stroke();
-  ctx.fillStyle=`rgba(${rgb},${mA(.14*al)})`;ctx.fill();ctx.restore()}
+// un cerchio: il pieno che si fa più chiaro verso l'orlo (come una lente), l'orlo sottile, un anello tratteggiato che gira piano e (o.pulse) un'onda
+function mCirc(x,y,r,rgb,al,o){if(r<2||al<=0)return;o=o||{};const t=mT(),f=o.fill||.14;ctx.save();
+  const g=ctx.createRadialGradient(x,y,0,x,y,r);g.addColorStop(0,`rgba(${rgb},${mA(f*.25*al)})`);g.addColorStop(.75,`rgba(${rgb},${mA(f*.6*al)})`);g.addColorStop(1,`rgba(${rgb},${mA(f*al)})`);
+  ctx.beginPath();ctx.arc(x,y,r,0,Math.PI*2);ctx.fillStyle=g;ctx.fill();ctx.strokeStyle=`rgba(${rgb},${mA(.66*al)})`;ctx.lineWidth=1.3;ctx.stroke();
+  if(!LOWFX&&r>14){ctx.setLineDash([5,8]);ctx.lineDashOffset=-t*9;ctx.beginPath();ctx.arc(x,y,r*.78,0,Math.PI*2);ctx.strokeStyle=`rgba(${rgb},${mA(.24*al)})`;ctx.lineWidth=1;ctx.stroke();ctx.setLineDash([])}
+  if(o.pulse&&!LOWFX){const k=(t*1.2)%1;ctx.beginPath();ctx.arc(x,y,r*(.25+.75*k),0,Math.PI*2);ctx.strokeStyle=`rgba(${rgb},${mA(.3*al*(1-k))})`;ctx.lineWidth=1.6;ctx.stroke()}
+  ctx.restore();if(o.glow)mGlow(x,y,r*.5,rgb,.12*al)}
+// il mirino su un bersaglio: un anello sottile con quattro tacche che girano piano e si stringono un poco a tempo (dentro un pieno appena)
+function mRing(x,y,r,rgb,al,o){o=o||{};const t=mT(),sp=o.spin==null?.9:o.spin,rr=r*(1+(LOWFX?0:.06*Math.sin(t*5)));ctx.save();
+  ctx.beginPath();ctx.arc(x,y,rr,0,Math.PI*2);ctx.fillStyle=`rgba(${rgb},${mA(.08*al)})`;ctx.fill();ctx.strokeStyle=`rgba(${rgb},${mA(.75*al)})`;ctx.lineWidth=1.3;ctx.stroke();
+  ctx.lineCap='round';ctx.lineWidth=1.8;ctx.strokeStyle=`rgba(${rgb},${mA(.9*al)})`;for(let i=0;i<4;i++){const an=t*sp+i*Math.PI/2,c=Math.cos(an),s=Math.sin(an);ctx.beginPath();ctx.moveTo(x+c*(rr+2),y+s*(rr+2));ctx.lineTo(x+c*(rr+6),y+s*(rr+6));ctx.stroke()}
+  ctx.restore()}
 // i puntini a terra da (x0, y0) a (x1, y1)
-function mDots(x0,y0,x1,y1,rgb,al){const d=Math.hypot(x1-x0,y1-y0),n=Math.floor(d/14);if(n<2)return;ctx.save();ctx.fillStyle=`rgba(${rgb},${mA(.7*al)})`;ctx.strokeStyle=`rgba(16,10,6,${mA(.25*al)})`;ctx.lineWidth=1;
-  for(let i=1;i<n;i++){const k=i/n;ctx.beginPath();ctx.arc(x0+(x1-x0)*k,y0+(y1-y0)*k,1.7,0,Math.PI*2);ctx.fill();ctx.stroke()}ctx.restore()}
+function mDots(x0,y0,x1,y1,rgb,al){const d=Math.hypot(x1-x0,y1-y0),n=Math.floor(d/13);if(n<2)return;ctx.save();
+  for(let i=1;i<n;i++){const k=i/n;ctx.fillStyle=`rgba(${rgb},${mA(.5*al*(.45+.55*k))})`;ctx.beginPath();ctx.arc(x0+(x1-x0)*k,y0+(y1-y0)*k,1.4,0,Math.PI*2);ctx.fill()}ctx.restore()}
 // il pallonetto nella Classica (vista dall'alto): l'ombra a terra a puntini e la fiala in aria, più alta a metà
-function mLob(x0,y0,x1,y1,h,rgb,al){const d=Math.hypot(x1-x0,y1-y0),n=Math.max(4,Math.round(d/15));ctx.save();
+function mLob(x0,y0,x1,y1,h,rgb,al){const d=Math.hypot(x1-x0,y1-y0),n=Math.max(4,Math.round(d/14));ctx.save();
   for(let i=1;i<n;i++){const k=i/n,x=x0+(x1-x0)*k,y=y0+(y1-y0)*k,z=4*h*k*(1-k);
-    ctx.fillStyle=`rgba(16,10,6,${mA(.2*al)})`;ctx.beginPath();ctx.arc(x,y,1.4,0,Math.PI*2);ctx.fill();
-    ctx.beginPath();ctx.arc(x,y-z,2.4,0,Math.PI*2);ctx.fillStyle=`rgba(${rgb},${mA(.85*al)})`;ctx.fill();ctx.strokeStyle=`rgba(16,10,6,${mA(.35*al)})`;ctx.lineWidth=1;ctx.stroke()}
+    ctx.fillStyle=`rgba(16,10,6,${mA(.1*al)})`;ctx.beginPath();ctx.arc(x,y,1.2,0,Math.PI*2);ctx.fill();
+    ctx.fillStyle=`rgba(${rgb},${mA(.62*al*(.5+.5*Math.sin(k*Math.PI)))})`;ctx.beginPath();ctx.arc(x,y-z,1.9,0,Math.PI*2);ctx.fill()}
   ctx.restore()}
 
 // ================================================================== LA CLASSICA
@@ -115,12 +136,12 @@ const mcFlaskD=f=>60+f*(mcRange()-60);
 // l'area del tiro: al di là della levetta (al 1) o del bersaglio da fermo (al leggero)
 function mcDrawShot(a,f,al,tg){const x=P.x,y=P.y,rg=mcRange(),c=MRGB.tiro,live=al>.9;
   if(P.proj==='flask'){let d=f==null?(tg?Math.hypot(tg.x-x,tg.y-y):rg):mcFlaskD(f);d=Math.min(d,mcRay(x,y-6,a,d).t);const ex=x+Math.cos(a)*d,ey=y+Math.sin(a)*d;
-    mLob(x,y-12,ex,ey,Math.min(54,16+d*.12),c,al);mCirc(ex,ey,44,c,al,{pulse:live});
+    mLob(x,y-12,ex,ey,Math.min(54,16+d*.12),c,al);mCirc(ex,ey,44,c,al,{pulse:live,glow:live});
     for(const l of mcLanes(a))if(!l.main)mLane(x,y,l.a,mcRay(x,y-6,l.a,rg).t,l.hw,c,al*.55);return}
-  for(const l of mcLanes(a)){const r=mcRay(x,y-6,l.a,rg);mLane(x,y,l.a,r.t,l.hw,c,al*(l.main?1:.58),{chev:live&&l.main});
+  for(const l of mcLanes(a)){const r=mcRay(x,y-6,l.a,rg);mLane(x,y,l.a,r.t,l.hw,c,al*(l.main?1:.58),{run:live&&l.main,wall:r.t<rg-1});
     // the bounce off the wall (P.wb): the arrow comes back with at least 0,8 s of life
     if(l.main&&P.wb>0&&r.w&&r.t<rg-1){const bx=x+Math.cos(l.a)*r.t,by=y-6+Math.sin(l.a)*r.t,b=r.w==='x'?Math.PI-l.a:-l.a,left=Math.max(rg-r.t,.8*(P.pspd||560)),r2=mcRay(bx+Math.cos(b)*.5,by+Math.sin(b)*.5,b,left);
-      mLane(bx,by+6,b,r2.t,l.hw*.8,c,al*.45,{chev:live})}}}
+      mLane(bx,by+6,b,r2.t,l.hw*.8,c,al*.45,{run:live,s0:0})}}}
 // ------------------------------------------------------------------ la Super trascinata: il bottone diventa una levetta d'oro
 // pt: un punto da scegliere (distanza d al massimo, cerchio r); dir: una direzione (striscia larga hw, esplosione boom sul muro); all: ogni
 // nemico; self: un giro intorno all'eroe; shadows: le tre ombre del Ninja
@@ -139,15 +160,15 @@ function mcUltGo(a,f){const id=P.hero||'arciere',U=MUL[id]||{k:'self'};
   if(id==='cacciatrice'){useUlt();if(P.spin>0)P.spinA=a;return}
   useUlt()}
 function mcDrawUlt(a,f){const id=P.hero||'arciere',U=MUL[id]||{k:'self',r:80},c=MRGB.sup,x=P.x,y=P.y;
-  if(U.k==='pt'){const p=mcUltPt(id,a,f);if(!LOWFX){ctx.save();ctx.globalCompositeOperation='lighter';glow(c,p.x,p.y,U.r*1.1,.22);ctx.restore()}
+  if(U.k==='pt'){const p=mcUltPt(id,a,f);if(!LOWFX)mGlow(p.x,p.y,U.r*1.05,c,.14);
     if(id==='alchimista')mLob(x,y-14,p.x,p.y,Math.min(96,34+Math.hypot(p.x-x,p.y-y)*.2),c,.95);else mDots(x,y,p.x,p.y,c,.85);
-    mCirc(p.x,p.y,U.r,c,1,{pulse:1,fill:.2});
+    mCirc(p.x,p.y,U.r,c,1,{pulse:1,fill:.16});
     // the rain: little arrows standing in the circle
-    if(id==='arciere'){ctx.save();ctx.strokeStyle=`rgba(${c},.8)`;ctx.lineWidth=2;ctx.lineCap='round';for(let i=0;i<7;i++){const an=i*2.4+.5,q=U.r*(.2+.6*((i*.37)%1)),ax=p.x+Math.cos(an)*q,ay=p.y+Math.sin(an)*q;ctx.beginPath();ctx.moveTo(ax,ay-9);ctx.lineTo(ax,ay);ctx.moveTo(ax-2.6,ay-3);ctx.lineTo(ax,ay);ctx.lineTo(ax+2.6,ay-3);ctx.stroke()}ctx.restore()}}
-  else if(U.k==='dir'){const r=mcRay(x,y-8,a,2000);mLane(x,y,a,r.t,U.hw,c,1,{chev:1});mCirc(x+Math.cos(a)*r.t,y+Math.sin(a)*r.t,U.boom,c,.85,{pulse:1})}
-  else if(U.k==='all'){for(const e of G.enemies)if(canHit(e))mRing(e.x,e.y,e.r+7,c,1);mCirc(x,y,30,c,.6)}
+    if(id==='arciere'){ctx.save();ctx.strokeStyle=`rgba(${c},.55)`;ctx.lineWidth=1.5;ctx.lineCap='round';for(let i=0;i<7;i++){const an=i*2.4+.5,q=U.r*(.2+.6*((i*.37)%1)),ax=p.x+Math.cos(an)*q,ay=p.y+Math.sin(an)*q;ctx.beginPath();ctx.moveTo(ax,ay-9);ctx.lineTo(ax,ay);ctx.moveTo(ax-2.6,ay-3);ctx.lineTo(ax,ay);ctx.lineTo(ax+2.6,ay-3);ctx.stroke()}ctx.restore()}}
+  else if(U.k==='dir'){const r=mcRay(x,y-8,a,2000);mLane(x,y,a,r.t,U.hw,c,1,{run:1,wall:1});mCirc(x+Math.cos(a)*r.t,y+Math.sin(a)*r.t,U.boom,c,.85,{pulse:1,glow:1})}
+  else if(U.k==='all'){for(const e of G.enemies)if(canHit(e))mRing(e.x,e.y,e.r+6,c,1);mCirc(x,y,30,c,.6,{glow:1})}
   else if(U.k==='shadows'){ctx.save();ctx.translate(x,y);ctx.scale(1,26/42);mCirc(0,0,42,c,1,{fill:.12});ctx.restore();
-    for(let i=0;i<3;i++){const s=P.face+Math.PI/2+i/3*Math.PI*2;mRing(x+Math.cos(s)*42,y+Math.sin(s)*26,7,c,.9)}}
+    for(let i=0;i<3;i++){const s=P.face+Math.PI/2+i/3*Math.PI*2;mRing(x+Math.cos(s)*42,y+Math.sin(s)*26,7,c,.9,{spin:0})}}
   else mCirc(x,y,U.r||80,c,1,{pulse:1})}
 // ------------------------------------------------------------------ la levetta del tiro (accanto allo Scatto)
 function mcUI(){if(MC.btn||typeof $!=='function'||!$('ultBtn'))return;const b=document.createElement('button');b.id='aimBtn';b.setAttribute('aria-label','Mira e tira');
@@ -209,12 +230,20 @@ function mcDraw(){MIRA.last=null;if(!MIRA.on||!G||!P||(INTRO&&INTRO.on)||G.state
 // the stick goes away with the Super's button when the hero falls
 {const _hu=hudUlt;hudUlt=function(){_hu.apply(this,arguments);const b=MC.btn;if(b){const hide=!MIRA.on||!G||G.state==='dead';if(b.hidden!==hide)b.hidden=hide;if(hide&&MC.drag)b.classList.remove('on')}}}
 
-// ================================================================== LA ZOMBIE
-const MZ={drag:null,ab:null,fire:null,shots:0,faceA:0,faceT:0,btn:null,kn:null};
+// ================================================================== LA ZOMBIE: si spara dove guarda la visuale
+// (Denis, 1° novembre: «sulla modalità zombie voglio che la visuale e lo sparo siano insieme cioè, se non guardo da quella direzione
+// muovendo la visuale il pg non spara»). Davanti all'eroe, verso la cima dello schermo (la direzione della visuale: −π/2 − ψ nel mondo),
+// c'è il fascio della visuale, una luce fredda e leggera che si ferma ai muri: l'eroe spara da solo, anche camminando, al primo zombie
+// che ci entra (aperto ±22°, ±30° per le armi corte e il Risonatore; lungo quanto arriva l'arma, al massimo 300), e un aiuto di mira lo
+// segue finché resta nel fascio e si vede (niente muri in mezzo); quelli fuori dal fascio non li colpisce: per sparargli si gira la
+// visuale col dito a destra. Col bersaglio: l'area dell'arma verso di lui e il mirino ai suoi piedi. Senza nessuno nel fascio l'eroe
+// guarda dove guarda la visuale (camminando, dove cammina) e ricarica da solo. La levetta del tiro della Zombie non c'è più (il cerchio
+// della telecamera torna al suo posto); le abilità si trascinano come prima.
+const MZ={ab:null,shots:0,tg:null,pt:0,lk:0,fwd:0,V:null,ray:null};
+const MZV={half:22*Math.PI/180,wide:30*Math.PI/180,rmax:300};
+const MZC={vista:'188,218,255',tiro:'230,240,255',bers:'255,132,108'};
 // le abilità che si mirano: dir una direzione, pt un punto, self intorno all'eroe; null nessuna mira (un tocco o un trascinamento le usano)
 const MZAB={scatto:'dir',bomba:'pt',rintocco:'self',tagliola:'pt',adrenalina:null,benda:null};
-// i colpi di una raffica delle armi automatiche quando si lascia la levetta (come un attacco di Brawl Stars)
-const MZBURST={mitraglietta:5,tamburo:6,mitra:4,mitragliatrice:10,lanciafiamme:6};
 const mzRgb=h=>{const n=parseInt(h.slice(1),16);return((n>>16)&255)+','+((n>>8)&255)+','+(n&255)};
 // lo spostamento del dito sullo schermo → la direzione nel mondo con la telecamera di adesso (come la levetta del movimento: stickToWorld)
 function mzS2W(dx,dy){const C=ZM.CAM,u=dx,v=dy/(C.SP||1);return Math.atan2(v*C.c-u*C.s,u*C.c+v*C.s)}
@@ -222,36 +251,30 @@ function mzS2W(dx,dy){const C=ZM.CAM,u=dx,v=dy/(C.SP||1);return Math.atan2(v*C.c
 function mzRay(x,y,a,max,s0){const dx=Math.cos(a),dy=Math.sin(a);for(let s=s0==null?12:s0;s<max;s+=5){const q=ZM.hit(x+dx*s,y+dy*s,1.5);if(q&&q.bar)continue;if(q&&q.tag!=='hole')return s}return max}
 const mzDir=()=>ZM.W.director;
 const mzLive=()=>{const D=mzDir(),h=ZM.W.hero;return!!(MIRA.on&&D&&D.st!=='fine'&&h&&!h.dead)};
-// l'aggancio nel motore (motore.js, updateBeings): dove punta l'eroe e il grilletto, o null per il tiro di sempre
-function mzHook(h,tgt,g,dt){if(!mzLive())return null;
-  const F=MZ.fire;if(F){if(F.a==null)F.a=tgt?Math.atan2(tgt.y-h.y,tgt.x-h.x):(h.face||0);return{a:F.a,fire:true,pose:true}}
-  const d=MZ.drag&&MZ.drag.live?MZ.drag:null;if(d)return{a:mzS2W(d.dx,d.dy),fire:false,pose:true};
-  if(MZ.faceT>0&&h.moving)return{a:MZ.faceA,fire:false,pose:false};// a moment turned toward the shot while walking
-  return null}
+// la direzione della visuale nel mondo (la cima dello schermo) e quanto è aperto e lungo il fascio per l'arma in mano
+const mzFwd=()=>-Math.PI/2-ZM.CAM.yaw;
+const mzDA=(a,b)=>Math.abs(Math.atan2(Math.sin(a-b),Math.cos(a-b)));
+function mzView(g){const D=g.D;return{r:Math.min(D.range,MZV.rmax),half:D.range<200||D.wave?MZV.wide:MZV.half}}
+// dentro il fascio (conti veloci: distanza e angolo; lo zombie conta col suo corpo, un poco più del suo centro)
+function mzIn(h,z,f,V){if(!z||z.die||z.idle||!(z.rise>=1)||!ZM.sameLv(z)||!ZM.W.Z.includes(z))return false;const dx=z.x-h.x,dy=z.y-h.y,d=Math.hypot(dx,dy),b=10*(z.sc||1);
+  if(d>V.r+b)return false;return mzDA(Math.atan2(dy,dx),f)<=V.half+Math.atan2(b,Math.max(d,1))}
+// si vede: niente muri, recinti, lapidi o casse in mezzo (come il bersaglio del motore)
+const mzSeen=(h,z)=>ZM.physClear(h.x,h.y,z.x,z.y,1.5,ZM.hit(z.x,z.y,2),1);
+function mzPick(h,f,V){const c=[];for(const z of ZM.W.Z)if(mzIn(h,z,f,V))c.push([Math.hypot(z.x-h.x,z.y-h.y),z]);c.sort((p,q)=>p[0]-q[0]);for(const[,z] of c)if(mzSeen(h,z))return z;return null}
+// l'aggancio nel motore (motore.js, updateBeings): il bersaglio nel fascio (lo stesso finché ci resta e si vede, altrimenti il più vicino;
+// controllato ogni 0,1 s come il bersaglio del motore) e il grilletto; senza bersaglio l'arma guarda la visuale
+function mzHook(h,tgt,g,dt){if(!mzLive()||!g)return null;const f=mzFwd(),V=mzView(g);MZ.fwd=f;MZ.V=V;
+  MZ.pt-=dt;let z=MZ.tg;if(!mzIn(h,z,f,V))z=null;
+  if(MZ.pt<=0){MZ.pt=.1;z=z&&mzSeen(h,z)?z:mzPick(h,f,V)}
+  MZ.tg=z;
+  if(z){MZ.lk=Math.min(1,MZ.lk+dt*7);return{a:Math.atan2(z.y-h.y,z.x-h.x),fire:true,pose:true,idle:false}}
+  MZ.lk=Math.max(0,MZ.lk-dt*4);return{a:f,fire:false,pose:false,face:!h.moving,idle:true}}
 if(typeof ZM!=='undefined'&&ZM.W){const W=ZM.W;W.aimHook=mzHook;const _sh=W.shotHook;W.shotHook=function(){MZ.shots++;return _sh?_sh.apply(this,arguments):false}}
-function mzShoot(s){const g=ZM.gun&&ZM.gun();if(!g)return;const D=g.D,n=D.auto?(MZBURST[g.id]||4):1,T=D.auto?(D.spin||0)+n/D.rate+.45:.9;
-  MZ.fire={a:s.tap?null:mzS2W(s.dx,s.dy),t:0,T,n,s0:MZ.shots}}
-function mzTick(dt){const F=MZ.fire;if(F){F.t+=dt;const n=MZ.shots-F.s0;if(n>=F.n||F.t>F.T){if(F.a!=null)MZ.faceA=F.a;MZ.faceT=n>0?.3:0;MZ.fire=null}}else if(MZ.faceT>0)MZ.faceT-=dt}
-// ------------------------------------------------------------------ la levetta del tiro (sopra le abilità; il cerchio della telecamera va più in alto)
-function mzUI(){const ov=document.getElementById('mz');if(!ov)return;let b=document.getElementById('mzAim');
-  if(!b){b=document.createElement('button');b.id='mzAim';b.setAttribute('aria-label','Mira e spara');b.innerHTML=`<i class="kn">${MSVG}</i>`;ov.appendChild(b);
-    const st=document.createElement('style');st.textContent=`
-    #mz #mzAim{position:absolute;right:calc(16px + env(safe-area-inset-right,0px));bottom:calc(104px + env(safe-area-inset-bottom,0px));width:76px;height:76px;padding:0;border-radius:50%;
-      background:radial-gradient(circle at 50% 36%,#4c443c,#1d1815 70%);border:3px solid #000;box-shadow:0 4px 0 #000,inset 0 0 0 2px rgba(255,240,210,.16);z-index:3;touch-action:none;cursor:pointer;opacity:.86;transition:opacity .3s,box-shadow .2s;-webkit-tap-highlight-color:transparent}
-    #mz #mzAim:active{transform:none;box-shadow:0 4px 0 #000,inset 0 0 0 2px rgba(255,240,210,.3)}
-    #mz #mzAim .kn{position:absolute;left:50%;top:50%;width:36px;height:36px;margin:-18px 0 0 -18px;border-radius:50%;background:radial-gradient(circle at 38% 32%,#fffaf0,#d9c9a2);border:2.5px solid #000;box-shadow:0 2px 0 #000;pointer-events:none}
-    #mz #mzAim .kn svg{display:block;width:100%;height:100%}
-    #mz #mzAim.on{opacity:1;box-shadow:0 4px 0 #000,inset 0 0 0 2px rgba(255,240,210,.5),0 0 16px 2px rgba(255,236,190,.5)}
-    #mz #mzAim.off{opacity:0;pointer-events:none}
-    #mz.game.mzaim .hint,#mz.game.mzaim.zab .hint{bottom:calc(214px + env(safe-area-inset-bottom,0px))}
-    #mzAb .ab.aim{box-shadow:0 4px 0 #000,inset 0 0 0 2px var(--c),0 0 16px 3px var(--c)}`;document.head.appendChild(st);
-    b.addEventListener('pointerdown',e=>{e.stopPropagation();e.preventDefault();try{initAudio()}catch(_){}if(!mzLive()||MZ.drag)return;
-      MZ.drag=mTrack(e,b,{move:s=>{mKnob(MZ.kn,s);b.classList.toggle('on',s.live)},end:s=>{MZ.drag=null;mKnob(MZ.kn,null);b.classList.remove('on');if(!s.cancel&&mzLive())mzShoot(s)}})});
-    for(const t of['pointerup','pointermove','click'])b.addEventListener(t,e=>e.stopPropagation())}
-  MZ.btn=b;MZ.kn=b.querySelector('.kn');ov.classList.add('mzaim');ZM.W.lookY=300;
+// ------------------------------------------------------------------ la partita: niente levetta del tiro, la riga d'aiuto nuova
+function mzUI(){const ov=document.getElementById('mz');if(!ov)return;const old=document.getElementById('mzAim');if(old)old.remove();ov.classList.remove('mzaim');delete ZM.W.lookY;
+  if(!document.getElementById('mzAimCss')){const st=document.createElement('style');st.id='mzAimCss';st.textContent=`#mzAb .ab.aim{box-shadow:0 4px 0 #000,inset 0 0 0 2px var(--c),0 0 16px 3px var(--c)}`;document.head.appendChild(st)}
   const hint=document.getElementById('mzHint');if(hint&&!hint.dataset.mira){hint.dataset.mira='1';const fine=!!(window.matchMedia&&matchMedia('(hover:hover) and (pointer:fine)').matches);
-    hint.innerHTML=fine?'WASD: cammina · Q/E o trascina: gira · R/F: inclina<br>Il cerchio del tiro: trascinalo, mira e lascia':'Sinistra: cammina · Destra: trascina per girare la visuale<br>Il cerchio del tiro: trascinalo, mira e lascia'}}
-function mzUIUpdate(D){const b=MZ.btn;if(!b)return;const h=ZM.W.hero,off=!MIRA.on||D.st==='fine'||!!h.dead;if(b.classList.contains('off')!==off){b.classList.toggle('off',off);if(off){MZ.fire=null;b.classList.remove('on')}}}
+    hint.innerHTML=fine?'WASD: cammina · Q/E o trascina: gira la visuale · R/F: inclina<br>Spari dove guardi: gira la visuale verso gli zombie':'Sinistra: cammina · Destra: gira la visuale<br>Spari dove guardi: gira la visuale verso gli zombie'}}
 // ------------------------------------------------------------------ le abilità trascinate (99 chiede qui se il dito è nostro)
 function mzAbAim(id,s){const W=ZM.W,h=W.hero,a=mzS2W(s.dx,s.dy);
   if(id==='scatto')return{a};
@@ -264,36 +287,53 @@ function aimAbDown(i,e,b){if(!MIRA.on||typeof ZABS==='undefined'||!mzLive())retu
       if(k&&s.cancel)return;if(s.tap||!k||k==='self')zabUse(i);else zabUse(i,mzAbAim(id,s))}});
   MZ.ab.id=id;MZ.ab.i=i;return true}
 // ------------------------------------------------------------------ i disegni della mappa: a terra col direttore (dopo il fuoco e le tagliole)
-function mzDrawGun(g,a,al){const h=ZM.W.hero,D=g.D,x=h.x,y=h.y,c=MRGB.tiro,live=al>.9;
+// il fascio della visuale: i raggi dall'eroe verso la visuale (ognuno fino al suo muro), rifatti solo quando l'eroe o la visuale si muovono
+function mzBeam(h,f,V){const n=LOWFX?7:11,R=MZ.ray,k=Math.round(h.x)+','+Math.round(h.y)+','+f.toFixed(3)+','+V.r+','+V.half.toFixed(3)+','+n+','+(h.lv||0);
+  if(R&&R.k===k&&mT()-R.t<.3)return R.e;
+  const e=[];for(let i=0;i<n;i++){const b=f-V.half+2*V.half*i/(n-1),l=mzRay(h.x,h.y,b,V.r,8);e.push([h.x+Math.cos(b)*l,h.y+Math.sin(b)*l])}MZ.ray={k,e,t:mT()};return e}
+function mzDrawBeam(h,f,V,lk){const e=mzBeam(h,f,V),x=h.x,y=h.y,c=MZC.vista,a=.8+.2*lk,s0=12,n=e.length,bx=x+Math.cos(f)*s0,by=y+Math.sin(f)*s0;
+  ctx.save();ctx.globalCompositeOperation='lighter';
+  const fill=(pts,al)=>{const g=ctx.createRadialGradient(x,y,s0,x,y,V.r);g.addColorStop(0,`rgba(${c},${mA(al*a)})`);g.addColorStop(.5,`rgba(${c},${mA(al*.45*a)})`);g.addColorStop(1,`rgba(${c},0)`);
+    ctx.beginPath();ctx.moveTo(bx,by);for(const p of pts)ctx.lineTo(p[0],p[1]);ctx.closePath();ctx.fillStyle=g;ctx.fill()};
+  fill(e,.1);fill(e.slice(Math.floor(n/4),n-Math.floor(n/4)),.07);// the middle a little brighter: soft sides
+  // the two sides, a faint line that goes out into the dark
+  ctx.lineCap='round';for(const p of[e[0],e[n-1]]){const g=ctx.createLinearGradient(bx,by,p[0],p[1]);g.addColorStop(0,`rgba(${c},${mA(.4*a)})`);g.addColorStop(1,`rgba(${c},${mA(.05*a)})`);
+    ctx.strokeStyle=g;ctx.lineWidth=1.1;ctx.beginPath();ctx.moveTo(bx,by);ctx.lineTo(p[0],p[1]);ctx.stroke()}
+  // the far edge, dotted: how far the gun reaches (or the wall)
+  if(!LOWFX){ctx.setLineDash([2,7]);ctx.lineDashOffset=-mT()*6;ctx.beginPath();e.forEach((p,i)=>i?ctx.lineTo(p[0],p[1]):ctx.moveTo(p[0],p[1]));ctx.strokeStyle=`rgba(${c},${mA(.22*a)})`;ctx.lineWidth=1.2;ctx.stroke();ctx.setLineDash([])}
+  ctx.restore()}
+// l'area dell'arma verso il bersaglio (d: dove sta il bersaglio, per l'esplosione del razzo)
+function mzDrawGun(g,a,al,d){const h=ZM.W.hero,D=g.D,x=h.x,y=h.y,c=MZC.tiro,live=al>.75,V=mzView(g);
   if(D.wave){mCirc(x,y,D.range,c,al*.9,{pulse:live});return}// the Resonator: all round
   if(D.flame){let reach=D.range;for(let s=10;s<D.range;s+=6){const q=ZM.hit(x+Math.cos(a)*s,y+Math.sin(a)*s,1.5);if(q&&q.tag!=='hole'){reach=s;break}}// as armi_speciali.js: the centre's wall
-    mSector(x,y,a,reach,(D.spread/2+8)*Math.PI/180,c,al);return}
-  const sp=(D.pel>1?D.spread/2:D.spread)*Math.PI/180;
-  if(sp<.075){const len=mzRay(x,y,a,D.range);mLane(x,y,a,len,5.5,c,al,{chev:live});if(D.splash)mCirc(x+Math.cos(a)*len,y+Math.sin(a)*len,D.splash+8,c,al,{pulse:live});return}
-  const n=sp>.17?9:5,ends=[];for(let i=0;i<n;i++){const b=a-sp+2*sp*i/(n-1),l=mzRay(x,y,b,D.range);ends.push([x+Math.cos(b)*l,y+Math.sin(b)*l])}
-  mFan(x,y,a,4.5,ends,c,al,{chev:live,len:D.range})}
+    mSector(x,y,a,reach,(D.spread/2+8)*Math.PI/180,c,al,{run:live});return}
+  const sp=(D.pel>1?D.spread/2:D.spread)*Math.PI/180,rg=V.r;
+  if(sp<.075){const len=mzRay(x,y,a,rg);mLane(x,y,a,len,5,c,al,{run:live,wall:len<rg-1});if(D.splash){const k=Math.min(len,d||len);mCirc(x+Math.cos(a)*k,y+Math.sin(a)*k,D.splash+8,c,al,{pulse:live})}return}
+  const n=sp>.17?9:5,ends=[];for(let i=0;i<n;i++){const b=a-sp+2*sp*i/(n-1),l=mzRay(x,y,b,rg);ends.push([x+Math.cos(b)*l,y+Math.sin(b)*l])}
+  mFan(x,y,a,4,ends,c,al,{run:live,len:rg})}
 function mzDrawAb(dr){const h=ZM.W.hero,id=dr.id,a=mzS2W(dr.dx,dr.dy),A=ZAB_BY[id],c=mzRgb(A.col),x=h.x,y=h.y;
-  if(id==='scatto'){const len=mzRay(x,y,a,96,6);mLane(x,y,a,len,8,c,1,{chev:1})}
-  else if(id==='bomba'){const p=mzAbAim(id,dr);mDots(x,y,p.x,p.y,c,.6);mCirc(p.x,p.y,58,c,1,{pulse:1,fill:.2})}
-  else if(id==='rintocco')mCirc(x,y,125,c,1,{pulse:1});
-  else if(id==='tagliola'){const p=mzAbAim(id,dr);mDots(x,y,p.x,p.y,c,.6);mCirc(p.x,p.y,15,c,1,{fill:.3})}
+  if(id==='scatto'){const len=mzRay(x,y,a,96,6);mLane(x,y,a,len,8,c,1,{run:1,wall:len<95})}
+  else if(id==='bomba'){const p=mzAbAim(id,dr);mDots(x,y,p.x,p.y,c,.7);mCirc(p.x,p.y,58,c,1,{pulse:1,fill:.16,glow:1})}
+  else if(id==='rintocco')mCirc(x,y,125,c,1,{pulse:1,glow:1});
+  else if(id==='tagliola'){const p=mzAbAim(id,dr);mDots(x,y,p.x,p.y,c,.7);mCirc(p.x,p.y,15,c,1,{fill:.24,glow:1})}
   else mCirc(x,y,26,c,.8)}
 // upstairs (the Locanda) the area goes up with the hero: the ground drawing moved on the screen by the height of his floor
 function mzOnFloor(fn){const h=ZM.W.hero,z=h.lvz||0;if(z>0){const q0=ZM.SB(h.x,h.y,0),q1=ZM.SB(h.x,h.y,z);ctx.save();ctx.translate(q1[0]-q0[0],q1[1]-q0[1]);try{ZM.inGround(fn)}finally{ctx.restore()}}else ZM.inGround(fn)}
-function mzGround(){MIRA.last=null;if(!mzLive())return;const h=ZM.W.hero,ab=MZ.ab&&MZ.ab.live?MZ.ab:null,dr=MZ.drag&&MZ.drag.live?MZ.drag:null;
+// (MIRA.last: cosa è stato disegnato in questo fotogramma, per le prove)
+function mzGround(){MIRA.last=null;if(!mzLive())return;const h=ZM.W.hero,ab=MZ.ab&&MZ.ab.live?MZ.ab:null;
   if(ab&&MZAB[ab.id]){mzOnFloor(()=>mzDrawAb(ab));MIRA.last={k:'abilita',id:ab.id};return}// an ability being aimed: only its area
-  const g=ZM.gun&&ZM.gun();if(!g||h.cl||h.busy||h.unarmed)return;let a=null,al=0;
-  if(dr){a=mzS2W(dr.dx,dr.dy);al=1}else if(MZ.fire&&MZ.fire.a!=null){a=MZ.fire.a;al=.8}else if(h.tgZ&&!h.moving&&h.aim!=null){a=h.aim;al=.42}
-  if(a!=null){mzOnFloor(()=>mzDrawGun(g,a,al));MIRA.last={k:'tiro',a,al,gun:g.id}}}
+  const g=ZM.gun&&ZM.gun();if(!g||h.cl||h.busy||h.unarmed)return;const f=MZ.fwd,V=MZ.V||mzView(g),z=MZ.tg&&mzIn(h,MZ.tg,f,V)?MZ.tg:null;
+  mzOnFloor(()=>{mzDrawBeam(h,f,V,MZ.lk);
+    if(z){const a=Math.atan2(z.y-h.y,z.x-h.x),d=Math.hypot(z.x-h.x,z.y-h.y);mzDrawGun(g,a,.5+.5*MZ.lk,d);mRing(z.x,z.y,13*(z.sc||1),MZC.bers,.55+.45*MZ.lk)}});
+  MIRA.last=z?{k:'tiro',a:Math.atan2(z.y-h.y,z.x-h.x),gun:g.id,lock:true}:{k:'vista',a:f,gun:g.id,lock:false}}
 // the bomb's flight seen standing (over everything): dots in the air, as the bottle will go
 function mzTop(){if(!mzLive()||LOWFX)return;const dr=MZ.ab&&MZ.ab.live?MZ.ab:null;if(!dr||dr.id!=='bomba')return;
   const h=ZM.W.hero,p=mzAbAim('bomba',dr),c=mzRgb(ZAB_BY.bomba.col),z0=(h.zh||0)+30,n=12;ctx.save();
-  for(let i=1;i<n;i++){const k=i/n,q=ZM.S(h.x+(p.x-h.x)*k,h.y+(p.y-h.y)*k,z0*(1-k)+Math.sin(k*Math.PI)*46);ctx.beginPath();ctx.arc(q[0],q[1],2.3,0,Math.PI*2);ctx.fillStyle=`rgba(${c},.85)`;ctx.fill();ctx.strokeStyle='rgba(16,10,6,.4)';ctx.lineWidth=1;ctx.stroke()}
+  for(let i=1;i<n;i++){const k=i/n,q=ZM.S(h.x+(p.x-h.x)*k,h.y+(p.y-h.y)*k,z0*(1-k)+Math.sin(k*Math.PI)*46);ctx.beginPath();ctx.arc(q[0],q[1],1.9,0,Math.PI*2);ctx.fillStyle=`rgba(${c},${mA(.4+.4*Math.sin(k*Math.PI))})`;ctx.fill()}
   ctx.restore()}
 // ------------------------------------------------------------------ l'aggancio alla partita (partita.js): come le abilità, avvolge il direttore
 function mzInstall(D){if(!D||D.__mira)return;D.__mira=1;
-  const _u=D.update;D.update=function(dt,on){_u.apply(this,arguments);try{mzTick(dt);mzUIUpdate(D)}catch(e){mErr(e)}};
-  const _r=D.reset;D.reset=function(){_r.apply(this,arguments);MZ.fire=null;MZ.faceT=0;try{mzUI()}catch(e){mErr(e)}};
+  const _r=D.reset;D.reset=function(){_r.apply(this,arguments);MZ.tg=null;MZ.lk=0;MZ.ray=null;try{mzUI()}catch(e){mErr(e)}};
   const _g=D.drawGround;D.drawGround=function(){_g.apply(this,arguments);try{mzGround()}catch(e){mErr(e)}};
   const _t=D.drawTop;D.drawTop=function(){_t.apply(this,arguments);try{mzTop()}catch(e){mErr(e)}};
   try{mzUI()}catch(e){mErr(e)}}

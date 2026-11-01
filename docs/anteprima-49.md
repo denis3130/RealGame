@@ -158,3 +158,29 @@ abilità zombie**, **nell'Anteprima 49**.
   mancini, effetti bassi; sulla mappa: posti dei bottoni, area e telecamera ferma, telecamera girata, tiro camminando, raffica del mitra,
   pompa, tocco, annullato, l'area di ogni arma, Bomba, Tagliola, Scatto, Rintocco e Benda trascinati, il costo), foto `tests/a49/mi_*.png`.
 
+### 8b. Nella Zombie si spara dove guarda la visuale; mire più trasparenti e più belle (1° novembre)
+
+Denis, dopo averla provata: «sulla modalità zombie voglio che la visuale e lo sparo siano insieme cioè, se non guardo da quella direzione
+muovendo la visuale il pg non spara, e fai più trasparenti e più belle le mire».
+
+- **La visuale è la mira** (solo nella Zombie): la direzione della visuale è la cima dello schermo (nel mondo −π/2 − ψ). Davanti all'eroe
+  c'è il **fascio della visuale**, una luce fredda e leggera (sommata, così sul buio sembra luce) che si ferma ai muri, coi due lati
+  sottili e il bordo lontano a puntini: l'eroe spara da solo, **anche camminando**, al primo zombie che ci entra (aperto ±22°, ±30° per le
+  armi corte e il Risonatore; lungo quanto arriva l'arma, al massimo 300 px); un aiuto di mira lo segue finché resta nel fascio e si vede
+  (niente muri in mezzo; controllato ogni 0,1 s come il bersaglio del motore). Gli zombie fuori dal fascio non li colpisce: per sparargli si
+  gira la visuale col dito a destra (o Q/E). Col bersaglio: l'area dell'arma verso di lui e un **mirino** rosso ai suoi piedi (un anello
+  con quattro tacche che girano). Senza nessuno nel fascio l'eroe guarda dove guarda la visuale (camminando, dove cammina) e ricarica da
+  solo. La riga d'aiuto lo dice: «Spari dove guardi: gira la visuale verso gli zombie».
+- **Via la levetta del tiro nella Zombie** (il cerchio della telecamera torna al suo posto). Nella Classica la levetta resta.
+- Le abilità si trascinano come prima.
+- **Mire nuove** in tutte e due le modalità, come vetro di luce: il pieno appena accennato che sfuma verso la fine, i bordi sottili e chiari
+  che si spengono con la distanza, niente più bordo scuro né frecce; le strisce tonde in fondo con un bagliore morbido (più chiaro su un muro)
+  e una riga di mira al centro; una luce che corre lungo la mira (al posto delle frecce); i cerchi come lenti (più chiari verso l'orlo) con
+  un anello tratteggiato che gira piano; i puntini più piccoli. Colori: Classica bianco caldo, Super oro, Zombie bianco freddo col fascio
+  azzurrino e il mirino rosso. Con `LOWFX` niente luce che corre, anelli e onde.
+- Motore della mappa: l'aggancio `W.aimHook` dà ora anche `face` (false: l'eroe resta girato dove cammina) e `idle` (niente da colpire: può
+  ricaricare da solo); `h.aimP` vale null senza l'aggancio, e allora l'eroe alza l'arma come prima (col bersaglio del motore).
+- Costo: fascio e area della pompa insieme 0,07 ms a fotogramma (i raggi del fascio si rifanno solo quando l'eroe o la visuale si muovono).
+- Prova `node tests/a49/mira.js` (35 controlli): nella Zombie zombie davanti → spara e il mirino è su di lui; visuale girata → non spara e
+  l'eroe guarda la visuale; a 17° sì, a 34° no; il dito che gira la visuale lo fa sparare; camminando spara girato verso di lui; dietro un
+  muro no; ricarica da solo; ogni arma col suo bersaglio; le abilità trascinate; il costo. Foto `tests/a49/mi_z_*.png`, `mi_c_*.png`.

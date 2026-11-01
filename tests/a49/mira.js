@@ -1,6 +1,6 @@
 // la mira alla Brawl Stars (104-mira.js): Classica (levetta, area, tiro camminando, tocco, annullato, raffiche, fiala, rimbalzo, le Super
-// trascinate di ogni eroe, mancini, effetti bassi) e Zombie (levetta, area di ogni arma, telecamera ferma, tiro camminando, raffiche delle
-// automatiche, tocco, annullato, abilità trascinate); foto tests/a49/mi_*.png
+// trascinate di ogni eroe, mancini, effetti bassi) e Zombie (si spara dove guarda la visuale: davanti sì, dietro no, 17° sì e 34° no, il
+// dito che gira la visuale, camminando, dietro un muro no, la ricarica da sola, l'area di ogni arma; abilità trascinate); foto tests/a49/mi_*.png
 const {chromium}=require('playwright');const D=__dirname+'/';
 (async()=>{const b=await chromium.launch();const p=await b.newPage({viewport:{width:390,height:844}});const errs=[];p.on('pageerror',e=>errs.push(e.message));p.on('console',m=>{if(m.type()==='error')errs.push(m.text())});
   await p.addInitScript(()=>{if(localStorage.getItem('cripta_save_v1'))return;localStorage.setItem('cripta_save_v1',JSON.stringify({gold:9000,gems:10,trophies:0,runs:5,introSeen:1,handSeen:1,starter:'arciere',
@@ -31,15 +31,16 @@ const {chromium}=require('playwright');const D=__dirname+'/';
   const a1=Math.atan2(-30,24);ok('trascinando: l\'area del tiro verso il dito, l\'eroe girato lì con l\'arco teso',m1.live&&m1.last&&m1.last.k==='tiro'&&dA(m1.last.a,a1)<.05&&dA(m1.face,a1)<.05&&m1.aiming,m1);
   await p.waitForTimeout(700);
   // release while walking: the arrow goes the stick's way
-  const shotWalk=async(dx,dy)=>{await E(`window.__n0=__AL.length;0`);await p.keyboard.down('KeyD');await p.waitForTimeout(150);await drag('#aimBtn',dx,dy,{hold:120});await p.waitForTimeout(700);
+  // (the count starts once the hero walks: before, standing, he may shoot by himself)
+  const shotWalk=async(dx,dy)=>{await p.keyboard.down('KeyD');await p.waitForTimeout(150);await E(`window.__n0=__AL.length;0`);await drag('#aimBtn',dx,dy,{hold:120});await p.waitForTimeout(700);
     const r=await J(`JSON.stringify({mov:P.moving,a:__AL.slice(__n0).map(a=>a.a)})`);await p.keyboard.up('KeyD');return r};
   const w1=await shotWalk(-30,-20);ok('lasciata camminando: la freccia parte dove punta la levetta',w1.mov&&w1.a.length>=1&&w1.a.every(a=>dA(a,Math.atan2(-20,-30))<.06),w1);
   // a tap shoots at the nearest
-  await E(`window.__n0=__AL.length;0`);await p.keyboard.down('KeyD');await p.waitForTimeout(150);const tp=await drag('#aimBtn',0,0,{before:()=>J(`(()=>{const t=nearest(P.x,P.y);return JSON.stringify(t?Math.atan2(t.y-P.y,t.x-P.x):null)})()`)});
+  await p.keyboard.down('KeyD');await p.waitForTimeout(150);await E(`window.__n0=__AL.length;0`);const tp=await drag('#aimBtn',0,0,{before:()=>J(`(()=>{const t=nearest(P.x,P.y);return JSON.stringify(t?Math.atan2(t.y-P.y,t.x-P.x):null)})()`)});
   await p.waitForTimeout(700);const tp2=await J(`JSON.stringify(__AL.slice(__n0).map(a=>a.a))`);await p.keyboard.up('KeyD');
   ok('un tocco: tira da solo al nemico più vicino, anche camminando',tp!=null&&tp2.length>=1&&dA(tp2[0],tp)<.25,{verso:tp,frecce:tp2});
   // back to the middle: nothing
-  await E(`window.__n0=__AL.length;0`);await p.keyboard.down('KeyD');await p.waitForTimeout(150);await drag('#aimBtn',30,-10,{hold:150,back:1});await p.waitForTimeout(700);
+  await p.keyboard.down('KeyD');await p.waitForTimeout(150);await E(`window.__n0=__AL.length;0`);await drag('#aimBtn',30,-10,{hold:150,back:1});await p.waitForTimeout(700);
   const cn=await J(`JSON.stringify(__AL.length-__n0)`);await p.keyboard.up('KeyD');ok('riportata al centro prima di lasciare: non tira',cn===0,cn);
   // standing still: the automatic shot as before, with its light area on the target
   await p.waitForTimeout(900);const au=await J(`JSON.stringify({aim:P.aiming,last:MIRA.last,t:(()=>{const t=nearest(P.x,P.y);return t?Math.atan2(t.y-P.y,t.x-P.x):null})()})`);await p.screenshot({path:D+'mi_c_auto.png'});
@@ -51,7 +52,7 @@ const {chromium}=require('playwright');const D=__dirname+'/';
   await E(`P.ult=100;ultGain(0);0`);await p.waitForTimeout(150);
   const s1=await drag('#ultBtn',-26,-34,{hold:300,shot:'mi_c_super_arciere.png',before:()=>J(`JSON.stringify({live:MC.ult&&MC.ult.live,a:MC.ult&&Math.atan2(MC.ult.dy,MC.ult.dx),f:MC.ult&&MC.ult.f,last:MIRA.last})`)});
   await p.waitForTimeout(80);const s1b=await J(`(()=>{const c=mcUltPt('arciere',${s1.a},${s1.f});return JSON.stringify({ult:P.ult,n:G.ultRain.length,far:Math.max(...G.ultRain.map(r=>Math.hypot(r.x-c.x,r.y-c.y))),c})})()`);
-  ok('la Super trascinata: la Pioggia di frecce cade nel cerchio scelto',s1.live&&s1.last&&s1.last.k==='super'&&s1b.ult===0&&s1b.n>=18&&s1b.far<92+24,{s1,s1b});
+  ok('la Super trascinata: la Pioggia di frecce cade nel cerchio scelto',s1.live&&s1.last&&s1.last.k==='super'&&s1b.ult<50&&s1b.n>=18&&s1b.far<92+24,{s1,s1b});
   // back to the middle: the Super stays; a tap: as before
   await p.waitForTimeout(1500);await E(`P.ult=100;ultGain(0);0`);await drag('#ultBtn',30,0,{hold:150,back:1});await p.waitForTimeout(100);const sc=await E(`P.ult`);ok('la Super riportata al centro non parte',sc===100,sc);
   await drag('#ultBtn',0,0);await p.waitForTimeout(100);const st=await E(`P.ult`);ok('la Super con un tocco parte come prima',st<50,st);// (a hit just after gives back a little)
@@ -64,10 +65,10 @@ const {chromium}=require('playwright');const D=__dirname+'/';
     const good=h==='alchimista'?r.cauld&&Math.hypot(r.cauld.x-r.pt.x,r.cauld.y-r.pt.y)<1:h==='balestriere'?r.siege!=null&&dA(r.siege,u.a)<.05:h==='cacciatrice'?r.spin:h==='bardo'?r.ballad:h==='ninja'?r.sh:r.ult===0;
     ok(`${h}: l'area del tiro e la Super trascinata (${h==='alchimista'?'il Calderone dove si è scelto':h==='balestriere'?'il Dardo d\'assedio dove punta':h==='cacciatrice'?'la Danza':h==='bardo'?'la Ballata su tutti':h==='ninja'?'le Ombre':'le Radici su tutti'})`,u.last&&u.last.k==='super'&&r.ult<100&&good,{u,r});
     if(h==='alchimista'){// the flask lands where the stick says
-      await p.waitForTimeout(1200);await E(`window.__n0=__AL.length;0`);await p.keyboard.down('KeyD');await p.waitForTimeout(120);
+      await p.waitForTimeout(1200);await p.keyboard.down('KeyD');await p.waitForTimeout(120);await E(`window.__n0=__AL.length;0`);
       const f=await drag('#aimBtn',0,-26,{hold:120,before:()=>J(`JSON.stringify(MC.drag.f)`)});await p.waitForTimeout(650);
       const fl=await J(`JSON.stringify(__AL.slice(__n0).filter(a=>a.flask).map(a=>({l0:a.l0,v:Math.hypot(a.vx,a.vy)})))`);await p.keyboard.up('KeyD');
-      const md=await E(`mcFlaskD(${f})`);ok('la fiala trascinata cade alla distanza scelta (il suo volo dura quanto quella distanza)',fl.length>=1&&Math.abs(fl[0].l0*fl[0].v-Math.min(md,fl[0].v*1.05))<3,{f,md,fl})}
+      const md=await E(`mcFlaskD(${f})`);ok('la fiala trascinata cade alla distanza scelta (il suo volo dura quanto quella distanza)',fl.some(q=>Math.abs(q.l0*q.v-Math.min(md,q.v*1.05))<3),{f,md,fl})}
     await p.waitForTimeout(600)}
   // left-handed: the stick on the left; low effects: no errors
   await E(`SAVE.set.left=true;applySettings();0`);await p.waitForTimeout(200);const lf=await J(`(()=>{const q=document.getElementById('aimBtn').getBoundingClientRect(),d=document.getElementById('dashBtn').getBoundingClientRect();return JSON.stringify({aim:q.left,dash:d.left,w:innerWidth})})()`);
@@ -78,32 +79,47 @@ const {chromium}=require('playwright');const D=__dirname+'/';
   await E(`try{closeSheet()}catch(e){};$('endScr').hidden=true;SAVE.modo='zombie';SAVE.hero='arciere';zGo();0`);
   for(let i=0;i<120;i++){await p.waitForTimeout(500);if(await E(`!!(ZG.on&&ZM.W.director&&ZM.W.director.st)`))break}
   await p.waitForTimeout(2500);await E(`ZM.W.dbg.noSpawn=true;ZM.W.dbg.god=true;for(const z of ZM.W.Z.slice())ZM.W.Z.splice(ZM.W.Z.indexOf(z),1);0`);
-  const ZL=await J(`(()=>{const r=e=>{const q=e.getBoundingClientRect();return{l:q.left,r:q.right,t:q.top,b:q.bottom}};return JSON.stringify({aim:r(document.getElementById('mzAim')),ab:[...document.querySelectorAll('#mzAb .ab')].map(r),lookY:ZM.W.lookY,H:innerHeight,W:innerWidth,hint:r(document.getElementById('mzHint'))})})()`);
-  ok('sulla mappa la levetta del tiro sopra le abilità, senza toccarle; il cerchio della telecamera più in alto; le scritte sopra la levetta',ZL.ab.every(a=>!over(ZL.aim,a))&&ZL.lookY===300&&ZL.hint.b<=ZL.aim.t+2,ZL);
+  // no stick for the shot on the map (Denis, 1 November: «la visuale e lo sparo siano insieme»): the camera pad back in its place
+  const ZL=await J(`JSON.stringify({lever:!!document.getElementById('mzAim'),lookY:ZM.W.lookY==null?null:ZM.W.lookY,hint:document.getElementById('mzHint').textContent})`);
+  ok('sulla mappa niente levetta del tiro: il cerchio della telecamera al suo posto, la riga d\'aiuto dice «Spari dove guardi»',!ZL.lever&&ZL.lookY==null&&/Spari dove guardi/.test(ZL.hint),ZL);
   await p.screenshot({path:D+'mi_z_mappa.png'});
-  const yaw0=await E(`ZM.CAM.yaw`);
-  const zm=await drag('#mzAim',-30,-24,{hold:350,shot:'mi_z_trascina.png',before:()=>J(`JSON.stringify({last:MIRA.last,aim:ZM.W.hero.aim,want:mzS2W(-30,-24),aimP:ZM.W.hero.aimP})`)});
-  await p.waitForTimeout(600);const yaw1=await E(`ZM.CAM.yaw`);
-  ok('trascinando: l\'area dell\'arma dove punta il dito, l\'eroe che mira lì, la telecamera ferma',zm.last&&zm.last.k==='tiro'&&dA(zm.aim,zm.want)<.02&&zm.aimP&&Math.abs(yaw1-yaw0)<1e-6,{zm,yaw0,yaw1});
-  // the camera turned: the stick still points where the thumb says on the screen
-  await E(`ZM.CAM.yaw=1.1;0`);await p.waitForTimeout(300);const zr=await drag('#mzAim',30,0,{hold:200,before:()=>J(`JSON.stringify({aim:ZM.W.hero.aim,want:mzS2W(30,0),scr:ZM.scrAng(ZM.W.hero.aim)})`)});await p.waitForTimeout(400);
-  ok('con la telecamera girata la mira segue lo schermo (a destra è a destra)',dA(zr.aim,zr.want)<.02&&Math.abs(zr.scr)<.05,zr);await E(`ZM.CAM.yaw=0;0`);await p.waitForTimeout(300);
-  // walking and shooting
-  const zShot=async(dx,dy,gun)=>{if(gun){await E(`ZM.equip('${gun}');0`);await p.waitForTimeout(1300)}const s0=await E(`MZ.shots`);await p.keyboard.down('KeyD');await p.waitForTimeout(150);
-    await drag('#mzAim',dx,dy,{hold:100});await p.waitForTimeout(gun==='mitragliatrice'?1700:1100);const r=await J(`JSON.stringify({n:MZ.shots-${s0},mov:ZM.W.hero.moving})`);await p.keyboard.up('KeyD');return r};
-  const zw=await zShot(-20,-30);ok('lasciata camminando: la pistola spara un colpo, l\'eroe intanto cammina',zw.n===1&&zw.mov,zw);
-  const zb=await zShot(-24,-26,'mitra');ok('il mitra lasciato: una raffica (4 colpi)',zb.n>=3&&zb.n<=5,zb);
-  const zp=await zShot(-24,-26,'pompa');ok('la pompa lasciata: un colpo',zp.n===1,zp);
-  // a zombie: the tap shoots at it; back to the middle: nothing
-  await E(`ZM.equip('pistola');0`);await p.waitForTimeout(1300);
-  await E(`(()=>{const h=ZM.W.hero;for(let i=0;i<16;i++){const a=i/16*6.283,x=h.x+Math.cos(a)*120,y=h.y+Math.sin(a)*120;if(ZM.physClear(h.x,h.y,x,y,2)){const k=window.__MZ.addZombie('zombie',x,y,0);const z=ZM.W.Z[k];z.hp=9999;z.q=1;z.stun=99;z.lv=h.lv||0;window.__za=a;break}}return 1})()`);await p.waitForTimeout(900);
-  const s0=await E(`MZ.shots`);await drag('#mzAim',0,0);await p.waitForTimeout(500);const zt=await J(`JSON.stringify({n:MZ.shots-${s0},aim:ZM.W.hero.aim,za:window.__za})`);
-  ok('un tocco: spara da solo allo zombie più vicino',zt.n>=1&&dA(zt.aim,zt.za)<.15,zt);
-  await E(`ZM.W.Z.length=0;0`);await p.waitForTimeout(400);const s2=await E(`MZ.shots`);await drag('#mzAim',30,-30,{hold:150,back:1});await p.waitForTimeout(600);const zc=await E(`MZ.shots-${s2}`);ok('riportata al centro prima di lasciare: non spara',zc===0,zc);
-  // every gun's area, a photo each
+  // put(off, dist): one zombie at off radians from the view (the top of the screen), dist px away (stunned: it stays there)
+  const put=async(off,dist)=>J(`(()=>{const h=ZM.W.hero;for(const z of ZM.W.Z.slice())ZM.W.Z.splice(ZM.W.Z.indexOf(z),1);const f=-Math.PI/2-ZM.CAM.yaw+(${off});const x=h.x+Math.cos(f)*${dist},y=h.y+Math.sin(f)*${dist};
+    const k=window.__MZ.addZombie('zombie',x,y,0);const z=ZM.W.Z[k];z.hp=99999;z.q=1;z.stun=999;z.lv=h.lv||0;window.__zt=z;return JSON.stringify({clear:ZM.physClear(h.x,h.y,x,y,2),a:Math.atan2(y-h.y,x-h.x)})})()`);
+  const shots=async ms=>{const s0=await E(`MZ.shots`);await p.waitForTimeout(ms);return (await E(`MZ.shots`))-s0};
+  const home=await J(`JSON.stringify([ZM.W.hero.x,ZM.W.hero.y])`);const goHome=()=>E(`ZM.W.hero.x=${home[0]};ZM.W.hero.y=${home[1]};ZM.W.hero.moving=false;window.__MZ.view(0);0`);
+  await goHome();await p.waitForTimeout(300);
+  const z0=await put(0,140);await p.waitForTimeout(250);const n0=await shots(1200);const l0=await J(`JSON.stringify({last:MIRA.last,aim:ZM.W.hero.aim,face:ZM.W.hero.face})`);await p.screenshot({path:D+'mi_z_davanti.png'});
+  ok('uno zombie davanti (dove guarda la visuale): l\'eroe gli spara da solo, il mirino ai suoi piedi',z0.clear&&n0>=2&&l0.last&&l0.last.k==='tiro'&&l0.last.lock&&dA(l0.aim,z0.a)<.05&&dA(l0.face,z0.a)<.05,{z0,n0,l0});
+  await E(`window.__MZ.view(180);0`);await p.waitForTimeout(400);const n1=await shots(1200);const l1=await J(`JSON.stringify({last:MIRA.last,face:ZM.W.hero.face,f:-Math.PI/2-ZM.CAM.yaw})`);await p.screenshot({path:D+'mi_z_dietro.png'});
+  ok('girata la visuale dall\'altra parte (lo zombie ora è dietro): non spara, e l\'eroe guarda dove guarda la visuale',n1===0&&l1.last&&l1.last.k==='vista'&&dA(l1.face,l1.f)<.1,{n1,l1});
+  await goHome();await p.waitForTimeout(300);
+  const z2=await put(.3,140);await p.waitForTimeout(250);const n2=await shots(1000);
+  const z3=await put(.6,140);await p.waitForTimeout(250);const n3=await shots(1000);
+  ok('a 17° dalla visuale le spara (l\'aiuto di mira), a 34° no',z2.clear&&z3.clear&&n2>=1&&n3===0,{n17:n2,n34:n3});
+  // the finger on the right half turns the view onto it: then it shoots
+  const before=await shots(300);const ctr=[300,430];await p.mouse.move(ctr[0],ctr[1]);await p.mouse.down();await p.mouse.move(ctr[0]+64,ctr[1],{steps:10});await p.mouse.up();await p.waitForTimeout(400);
+  const n4=await shots(1000);const yawD=await E(`ZM.CAM.yaw`);ok('trascinando il dito a destra la visuale gira verso lo zombie e l\'eroe comincia a sparare',before===0&&n4>=1,{prima:before,dopo:n4,yaw:+yawD.toFixed(2)});
+  // walking: it shoots while it walks (the hero turned to it), and stops when the zombie leaves the view
+  await goHome();await p.waitForTimeout(300);await put(0,250);await p.waitForTimeout(300);
+  const s5=await E(`MZ.shots`),x5=await E(`ZM.W.hero.x`);await p.keyboard.down('KeyD');await p.waitForTimeout(420);
+  const w5=await J(`JSON.stringify({mov:ZM.W.hero.moving,face:ZM.W.hero.face,a:Math.atan2(window.__zt.y-ZM.W.hero.y,window.__zt.x-ZM.W.hero.x)})`);await p.keyboard.up('KeyD');
+  const n5=(await E(`MZ.shots`))-s5,dx5=(await E(`ZM.W.hero.x`))-x5;ok('camminando spara lo stesso allo zombie nella visuale, girato verso di lui',n5>=1&&w5.mov&&dx5>20&&dA(w5.face,w5.a)<.1,{colpi:n5,passi:Math.round(dx5),w5});
+  // behind a wall: in the view but not seen, no shots
+  await goHome();await p.waitForTimeout(300);
+  const wl=await J(`(()=>{const h=ZM.W.hero;for(let i=0;i<126;i++){const a=i*.05;let s=12,hit=0;for(;s<200;s+=5){const q=ZM.hit(h.x+Math.cos(a)*s,h.y+Math.sin(a)*s,1.5);if(q&&!q.bar&&q.tag!=='hole'){hit=1;break}}if(hit&&s>=50&&s<=120){return JSON.stringify({a,s})}}return 'null'})()`);
+  if(wl){await E(`window.__MZ.view(${(-90-wl.a*180/Math.PI).toFixed(3)});0`);await p.waitForTimeout(400);const zw=await put(0,wl.s+45);await p.waitForTimeout(300);const n6=await shots(1200);await p.screenshot({path:D+'mi_z_muro.png'});
+    ok('uno zombie nella visuale ma dietro un muro: non gli spara (il fascio si ferma al muro)',!zw.clear&&n6===0,{muro:wl,clear:zw.clear,colpi:n6})}else console.log('(nessun muro vicino per la prova del muro: saltata)');
+  // reloading by itself when nothing is in the view
+  await goHome();await E(`for(const z of ZM.W.Z.slice())ZM.W.Z.splice(ZM.W.Z.indexOf(z),1);const g=ZM.gun();g.mag=3;0`);await p.waitForTimeout(1900);
+  const rl=await J(`JSON.stringify({st:ZM.gun().st,mag:ZM.gun().mag})`);ok('senza zombie nella visuale ricarica da solo',rl.st==='ricarica'||rl.mag===12,rl);
+  // every gun's area toward the zombie in the view, a photo each
   const guns=['revolver','mitraglietta','mitragliatrice','tattica','lanciarazzi','lanciafiamme','vapore','risonatore','tamburo'];const seen={};
-  for(const g of guns){await E(`ZM.equip('${g}');0`);await p.waitForTimeout(900);const r=await drag('#mzAim',-32,-22,{hold:250,shot:'mi_z_'+g+'.png',before:()=>J(`JSON.stringify(MIRA.last)`)});seen[g]=!!(r&&r.k==='tiro'&&r.gun===g);await p.waitForTimeout(1300)}
-  ok('ogni arma ha la sua area (strisce, coni, esplosione, fiamma, onda)',Object.values(seen).every(Boolean),seen);
+  // (the Resonator's wave pushes the zombie away: for it the shot is enough)
+  for(const g of guns){await E(`for(const z of ZM.W.Z.slice())ZM.W.Z.splice(ZM.W.Z.indexOf(z),1);ZM.equip('${g}');0`);await p.waitForTimeout(1000);const s0=await E(`MZ.shots`);await put(.12,g==='lanciafiamme'?90:g==='risonatore'?110:150);await p.waitForTimeout(g==='mitragliatrice'?900:600);
+    await p.screenshot({path:D+'mi_z_'+g+'.png'});const r=await J(`JSON.stringify(MIRA.last)`),n=(await E(`MZ.shots`))-s0;seen[g]=n>0&&(g==='risonatore'||!!(r&&r.k==='tiro'&&r.lock&&r.gun===g))}
+  ok('ogni arma spara al bersaglio nella visuale con la sua area (strisce, coni, esplosione, fiamma, onda)',Object.values(seen).every(Boolean),seen);
+  await E(`for(const z of ZM.W.Z.slice())ZM.W.Z.splice(ZM.W.Z.indexOf(z),1);0`);
   // the abilities dragged: the bomb where you choose, the trap where you choose, the dash the way you choose
   await E(`ZM.equip('pistola');ZABS.cd=[0,0,0];0`);await p.waitForTimeout(600);
   const abBtn=i=>`#mzAb .ab[data-i="${i}"]`;
@@ -122,6 +138,8 @@ const {chromium}=require('playwright');const D=__dirname+'/';
   // a dragged ability doesn't turn the camera either
   const yw=await E(`ZM.CAM.yaw`);await drag(abBtn(2),-80,-10,{hold:100});await p.waitForTimeout(200);ok('trascinare le abilità non gira la telecamera',Math.abs(await E(`ZM.CAM.yaw`)-yw)<1e-6);
   // times: a frame with the area (with the stick held) against one without
-  const tm=await J(`(()=>{const h=ZM.W.hero,g=ZM.gun();ZM.equip('pompa');const t0=performance.now();for(let i=0;i<200;i++)mzOnFloor(()=>mzDrawGun(ZM.gun(),-1,1));const t1=performance.now();return JSON.stringify({ms:(t1-t0)/200})})()`);
-  ok('l\'area della pompa costa poco a disegnare (meno di 0,5 ms)',tm.ms<.5,tm);
+  const tm=await J(`(()=>{const h=ZM.W.hero;ZM.equip('pompa');const g=ZM.gun(),V=mzView(g),f=-Math.PI/2;const t0=performance.now();for(let i=0;i<200;i++){MZ.ray=null;mzOnFloor(()=>{mzDrawBeam(h,f,V,1);mzDrawGun(g,f,1,120)})}const t1=performance.now();
+    for(let i=0;i<200;i++)mzOnFloor(()=>{mzDrawBeam(h,f,V,1);mzDrawGun(g,f,1,120)});const t2=performance.now();return JSON.stringify({nuovo:+((t1-t0)/200).toFixed(3),fermo:+((t2-t1)/200).toFixed(3)})})()`);
+  ok('il fascio e l\'area della pompa costano poco a disegnare (meno di 0,5 ms, i raggi del fascio rifatti solo quando serve)',tm.nuovo<.5&&tm.fermo<.5,tm);
+  await E(`LOWFX=true;0`);await put(0,140);await p.waitForTimeout(700);await p.screenshot({path:D+'mi_z_lowfx.png'});await E(`LOWFX=false;0`);
   console.log(errs.slice(0,6).join('\n')||'nessun errore');await b.close()})();

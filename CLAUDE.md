@@ -383,8 +383,14 @@ creazione): `python3 anteprime/mk_anteprima49.py <cartella>` (divisa come il gio
   spara lì anche camminando, un tocco al più vicino, al centro annulla; le automatiche zombie sparano una raffica; la **Super** e le
   **abilità zombie** si trascinano allo stesso modo (Pioggia e Calderone nel cerchio scelto, Dardo d'assedio dove punti; Scatto, Bomba e
   Tagliola dove scegli, il raggio del Rintocco). Agganci senza effetto se manca il file: `W.aimHook`, `h.aimP`, `W.lookY` nel motore della
-  mappa, `aimAbDown` e `zabUse(i, aim)` in 99. Prova `node tests/a49/mira.js` (36 controlli, foto `tests/a49/mi_*.png`). Dettagli in
-  `docs/anteprima-49.md` (8).
+  mappa, `aimAbDown` e `zabUse(i, aim)` in 99. Poi (1° novembre, Denis: «sulla modalità zombie voglio che la visuale e lo sparo siano insieme
+  cioè, se non guardo da quella direzione muovendo la visuale il pg non spara, e fai più trasparenti e più belle le mire»): **nella Zombie
+  si spara dove guarda la visuale** (la cima dello schermo): il fascio della visuale davanti all'eroe (luce fredda che si ferma ai muri,
+  ±22°, ±30° per le armi corte, fino a 300 px), l'eroe spara da solo anche camminando al primo zombie che ci entra, con l'aiuto di mira e
+  il mirino rosso ai suoi piedi; fuori dal fascio non spara (si gira la visuale col dito); senza nessuno guarda dove guarda la visuale e
+  ricarica da solo; **via la levetta del tiro nella Zombie** (`W.aimHook` dà anche `face` e `idle`); **mire nuove** in tutte e due le
+  modalità, come vetro di luce (pieno appena accennato, bordi sottili che sfumano, punte tonde col bagliore, una luce che corre, cerchi come
+  lenti). Prova `node tests/a49/mira.js` (35 controlli, foto `tests/a49/mi_*.png`). Dettagli in `docs/anteprima-49.md` (8 e 8b).
 
 ## FASE 9: più fluido sul telefono (19 ottobre, in corso)
 

@@ -386,9 +386,11 @@ Tutto quello che c'è, con numeri e prove, sta in `docs/anteprima-48.md`; qui co
 
 ## La mira a mano (1° novembre, solo nell'Anteprima 49: `src/js/104-mira.js`)
 
-Tre agganci in `motore.js` che senza quel file non fanno niente: in `updateBeings` `W.aimHook(h, tgt, g, dt)` (se c'è e l'eroe può
-sparare) dà null (il tiro di sempre: da fermo, sul bersaglio) o `{a, fire, pose}`: `a` l'angolo nel mondo dove punta (l'eroe si gira lì
-anche camminando), `fire` il grilletto (spara anche camminando; mentre si mira e basta è false, e il tiro automatico aspetta), `pose`
-l'arma alzata da fermo (`h.aimP`, che `drawHero` usa come il bersaglio per la mossa «aim»; mentre si mira non ricarica da solo); in
-`render` il cerchio della telecamera a `W.lookY` px dal fondo (196 senza). Il file conta i colpi avvolgendo `W.shotHook` e disegna le
-aree col direttore (`drawGround`, `drawTop`), come le abilità.
+Agganci in `motore.js` che senza quel file non fanno niente: in `updateBeings` `W.aimHook(h, tgt, g, dt)` (se c'è e l'eroe può sparare)
+dà null (il tiro di sempre: da fermo, sul bersaglio) o `{a, fire, pose, face, idle}`: `a` l'angolo nel mondo dove punta l'arma (l'eroe si
+gira lì, anche camminando, se `face` non è false), `fire` il grilletto (anche camminando), `pose` l'arma alzata da fermo (`h.aimP`, che
+`drawHero` usa al posto del bersaglio del motore per la mossa «aim»; null senza l'aggancio), `idle` niente da colpire (ricarica da solo dopo
+1,2 s, anche camminando); in `render` il cerchio della telecamera a `W.lookY` px dal fondo (196 senza). Dal 1° novembre il file fa sparare
+dove guarda la visuale (la cima dello schermo, −π/2 − ψ nel mondo: Denis, «la visuale e lo sparo siano insieme»), col fascio della visuale
+e l'aiuto di mira; conta i colpi avvolgendo `W.shotHook` e disegna fascio, aree e mirino col direttore (`drawGround`, `drawTop`), come le
+abilità.
