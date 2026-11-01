@@ -10,8 +10,9 @@
 // - Classica, da fermo: si spara da soli come prima; l'area, leggera, segue il bersaglio.
 // - La levetta del tiro (Classica, in basso a destra accanto allo Scatto): la trascini, vedi l'area dove va il colpo, lasci e spara lì,
 //   anche camminando; un tocco spara al più vicino; riportata al centro prima di lasciare non spara.
-// - Zombie (Denis, 1° novembre: «la visuale e lo sparo siano insieme»): si spara dove guarda la visuale; davanti all'eroe il fascio
-//   della visuale, l'eroe spara da solo (anche camminando) agli zombie che ci entrano, gli altri no; la levetta del tiro qui non c'è.
+// - Zombie (Denis, 1° novembre: «la visuale e lo sparo siano insieme», poi «alla grandezza per ogni proiettile»): si spara dove guarda
+//   la visuale; davanti all'eroe l'area del colpo, grande quanto i proiettili dell'arma, l'eroe spara da solo (anche camminando) agli
+//   zombie che ci entrano, gli altri no; la levetta del tiro qui non c'è.
 // - La Super della Classica e le abilità della Zombie si trascinano allo stesso modo e mostrano dove colpiscono (il cerchio della Pioggia
 //   di frecce e del Calderone, la striscia del Dardo d'assedio, i nemici presi da Ballata e Radici, il giro della Danza e delle Ombre; la
 //   direzione dello Scatto, dove cade la Bomba, il raggio del Rintocco, dove si mette la Tagliola); un tocco le usa come prima.
@@ -84,6 +85,22 @@ function mFan(x,y,a,hw0,ends,rgb,al,o){if(!ends.length||al<=0)return;o=o||{};con
   // the running light: an arc going out
   if(o.run&&!LOWFX){const k=(mT()*.9)%1,rr=s0+(len-s0)*k;ctx.save();path();ctx.clip();ctx.beginPath();ctx.arc(x,y,rr,a-1.2,a+1.2);ctx.strokeStyle=`rgba(${rgb},${mA(.26*al*(1-.6*k))})`;ctx.lineWidth=7;ctx.stroke();ctx.restore()}
   ctx.restore()}
+// quanto può deviare un proiettile: un cuneo appena accennato intorno alla sua striscia, dalla larghezza del colpo a quella che ha in fondo
+function mSpread(x,y,a,len,hw,sp,rgb,al){if(len<8||al<=0||sp<=0)return;const s0=10,w1=hw+Math.tan(sp)*len;ctx.save();ctx.translate(x,y);ctx.rotate(a);
+  const g=ctx.createLinearGradient(s0,0,len,0);g.addColorStop(0,`rgba(${rgb},${mA(.08*al)})`);g.addColorStop(1,`rgba(${rgb},${mA(.03*al)})`);
+  ctx.beginPath();ctx.moveTo(s0,-hw);ctx.lineTo(len,-w1);ctx.lineTo(len,w1);ctx.lineTo(s0,hw);ctx.closePath();ctx.fillStyle=g;ctx.fill();
+  if(!LOWFX){ctx.setLineDash([3,6]);ctx.strokeStyle=`rgba(${rgb},${mA(.16*al)})`;ctx.lineWidth=.9;ctx.beginPath();ctx.moveTo(s0,-hw);ctx.lineTo(len,-w1);ctx.moveTo(s0,hw);ctx.lineTo(len,w1);ctx.stroke();ctx.setLineDash([])}
+  ctx.restore()}
+// i pallini di un fucile a pompa: il cono appena accennato dove volano e un raggio sottile per ogni pallino (fino al suo muro), con la sua
+// testina di luce; o.run un arco di luce che va avanti
+function mPellets(x,y,a,ends,rgb,al,o){if(!ends.length||al<=0)return;o=o||{};const s0=10,len=o.len||200,bx=x+Math.cos(a)*s0,by=y+Math.sin(a)*s0;ctx.save();
+  const path=()=>{ctx.beginPath();ctx.moveTo(bx,by);for(const p of ends)ctx.lineTo(p[0],p[1]);ctx.closePath()};
+  const g=ctx.createRadialGradient(x,y,s0,x,y,len);g.addColorStop(0,`rgba(${rgb},${mA(.1*al)})`);g.addColorStop(1,`rgba(${rgb},${mA(.025*al)})`);path();ctx.fillStyle=g;ctx.fill();
+  ctx.lineCap='round';for(const p of ends){const b=Math.atan2(p[1]-y,p[0]-x),q0=[x+Math.cos(b)*s0,y+Math.sin(b)*s0],r=ctx.createLinearGradient(q0[0],q0[1],p[0],p[1]);
+    r.addColorStop(0,`rgba(${rgb},${mA(.5*al)})`);r.addColorStop(1,`rgba(${rgb},${mA(.14*al)})`);ctx.strokeStyle=r;ctx.lineWidth=1.3;ctx.beginPath();ctx.moveTo(q0[0],q0[1]);ctx.lineTo(p[0],p[1]);ctx.stroke();
+    ctx.fillStyle=`rgba(${rgb},${mA(.5*al)})`;ctx.beginPath();ctx.arc(p[0],p[1],1.7,0,Math.PI*2);ctx.fill()}
+  if(o.run&&!LOWFX){const k=(mT()*.9)%1,rr=s0+(len-s0)*k;ctx.save();path();ctx.clip();ctx.beginPath();ctx.arc(x,y,rr,a-1.2,a+1.2);ctx.strokeStyle=`rgba(${rgb},${mA(.24*al*(1-.6*k))})`;ctx.lineWidth=6;ctx.stroke();ctx.restore()}
+  ctx.restore()}
 // uno spicchio (il lanciafiamme): raggio r, mezza apertura half
 function mSector(x,y,a,r,half,rgb,al,o){if(r<4||al<=0)return;o=o||{};ctx.save();const shape=()=>{ctx.beginPath();ctx.moveTo(x+Math.cos(a)*8,y+Math.sin(a)*8);ctx.arc(x,y,r,a-half,a+half);ctx.closePath()};
   const g=ctx.createRadialGradient(x,y,6,x,y,r);g.addColorStop(0,`rgba(${rgb},${mA(.2*al)})`);g.addColorStop(1,`rgba(${rgb},${mA(.06*al)})`);shape();ctx.fillStyle=g;ctx.fill();
@@ -125,23 +142,29 @@ function mcRay(x,y,a,max){const dx=Math.cos(a),dy=Math.sin(a);let t=max,w=null;
   return{t:Math.max(0,t),w}}
 // le righe di una raffica (volley in 11 e i suoi aggiunti): davanti più larga con le frecce in più, le diagonali, i lati, dietro, il ventaglio,
 // le due stelline del Ninja
-function mcLanes(a){const n=Math.max(1,P.front||1),L2=[{a,hw:Math.max(8,(n-1)*4.5+7),main:true}];
-  for(let d=1;d<=(P.diag||0);d++)L2.push({a:a+.42*d,hw:3.6},{a:a-.42*d,hw:3.6});
-  if(P.side)L2.push({a:a+Math.PI/2,hw:3.6},{a:a-Math.PI/2,hw:3.6});
-  if(P.rear)L2.push({a:a+Math.PI,hw:3.6});
-  if(P.fan)L2.push({a:a+.8,hw:4.2},{a:a-.8,hw:4.2});
-  if(P.proj==='star')L2.push({a:a+.22,hw:3.4},{a:a-.22,hw:3.4});
+// una striscia per ogni colpo della raffica, larga quanto il colpo (Denis, 1° novembre: «fai la cosa trasparente tipo alla grandezza per ogni
+// proiettile»): le frecce toccano un nemico fino a 5 px dal loro centro; le note, le stelline e i dardi un poco più grossi. Le frecce in
+// più davanti partono affiancate a 9 px (volley in 11): ognuna la sua striscia
+const MCHW={arrow:4,bolt:4.6,note:5.4,star:5,leaf:4.6,flame:5.2,flask:5};
+function mcLanes(a){const n=Math.max(1,P.front||1),hw=MCHW[P.proj]||4.5,mid=(n-1)>>1,L2=[];
+  for(let i=0;i<n;i++)L2.push({a,off:(i-(n-1)/2)*9,hw,front:true,main:i===mid});
+  for(let d=1;d<=(P.diag||0);d++)L2.push({a:a+.42*d,off:0,hw},{a:a-.42*d,off:0,hw});
+  if(P.side)L2.push({a:a+Math.PI/2,off:0,hw},{a:a-Math.PI/2,off:0,hw});
+  if(P.rear)L2.push({a:a+Math.PI,off:0,hw});
+  if(P.fan)L2.push({a:a+.8,off:0,hw},{a:a-.8,off:0,hw});
+  if(P.proj==='star')L2.push({a:a+.22,off:0,hw},{a:a-.22,off:0,hw});
   return L2}
 const mcFlaskD=f=>60+f*(mcRange()-60);
 // l'area del tiro: al di là della levetta (al 1) o del bersaglio da fermo (al leggero)
 function mcDrawShot(a,f,al,tg){const x=P.x,y=P.y,rg=mcRange(),c=MRGB.tiro,live=al>.9;
   if(P.proj==='flask'){let d=f==null?(tg?Math.hypot(tg.x-x,tg.y-y):rg):mcFlaskD(f);d=Math.min(d,mcRay(x,y-6,a,d).t);const ex=x+Math.cos(a)*d,ey=y+Math.sin(a)*d;
     mLob(x,y-12,ex,ey,Math.min(54,16+d*.12),c,al);mCirc(ex,ey,44,c,al,{pulse:live,glow:live});
-    for(const l of mcLanes(a))if(!l.main)mLane(x,y,l.a,mcRay(x,y-6,l.a,rg).t,l.hw,c,al*.55);return}
-  for(const l of mcLanes(a)){const r=mcRay(x,y-6,l.a,rg);mLane(x,y,l.a,r.t,l.hw,c,al*(l.main?1:.58),{run:live&&l.main,wall:r.t<rg-1});
+    for(const l of mcLanes(a))if(!l.front)mLane(x,y,l.a,mcRay(x,y-6,l.a,rg).t,l.hw,c,al*.55);return}
+  for(const l of mcLanes(a)){const ox=-Math.sin(l.a)*l.off,oy=Math.cos(l.a)*l.off,r=mcRay(x+ox,y-6+oy,l.a,rg);
+    mLane(x+ox,y+oy,l.a,r.t,l.hw,c,al*(l.front?1:.6),{run:live&&l.main,wall:r.t<rg-1});
     // the bounce off the wall (P.wb): the arrow comes back with at least 0,8 s of life
-    if(l.main&&P.wb>0&&r.w&&r.t<rg-1){const bx=x+Math.cos(l.a)*r.t,by=y-6+Math.sin(l.a)*r.t,b=r.w==='x'?Math.PI-l.a:-l.a,left=Math.max(rg-r.t,.8*(P.pspd||560)),r2=mcRay(bx+Math.cos(b)*.5,by+Math.sin(b)*.5,b,left);
-      mLane(bx,by+6,b,r2.t,l.hw*.8,c,al*.45,{run:live,s0:0})}}}
+    if(l.main&&P.wb>0&&r.w&&r.t<rg-1){const bx=x+ox+Math.cos(l.a)*r.t,by=y-6+oy+Math.sin(l.a)*r.t,b=r.w==='x'?Math.PI-l.a:-l.a,left=Math.max(rg-r.t,.8*(P.pspd||560)),r2=mcRay(bx+Math.cos(b)*.5,by+Math.sin(b)*.5,b,left);
+      mLane(bx,by+6,b,r2.t,l.hw,c,al*.45,{run:live,s0:0})}}}
 // ------------------------------------------------------------------ la Super trascinata: il bottone diventa una levetta d'oro
 // pt: un punto da scegliere (distanza d al massimo, cerchio r); dir: una direzione (striscia larga hw, esplosione boom sul muro); all: ogni
 // nemico; self: un giro intorno all'eroe; shadows: le tre ombre del Ninja
@@ -232,16 +255,19 @@ function mcDraw(){MIRA.last=null;if(!MIRA.on||!G||!P||(INTRO&&INTRO.on)||G.state
 
 // ================================================================== LA ZOMBIE: si spara dove guarda la visuale
 // (Denis, 1° novembre: «sulla modalità zombie voglio che la visuale e lo sparo siano insieme cioè, se non guardo da quella direzione
-// muovendo la visuale il pg non spara»). Davanti all'eroe, verso la cima dello schermo (la direzione della visuale: −π/2 − ψ nel mondo),
-// c'è il fascio della visuale, una luce fredda e leggera che si ferma ai muri: l'eroe spara da solo, anche camminando, al primo zombie
-// che ci entra (aperto ±22°, ±30° per le armi corte e il Risonatore; lungo quanto arriva l'arma, al massimo 300), e un aiuto di mira lo
-// segue finché resta nel fascio e si vede (niente muri in mezzo); quelli fuori dal fascio non li colpisce: per sparargli si gira la
-// visuale col dito a destra. Col bersaglio: l'area dell'arma verso di lui e il mirino ai suoi piedi. Senza nessuno nel fascio l'eroe
-// guarda dove guarda la visuale (camminando, dove cammina) e ricarica da solo. La levetta del tiro della Zombie non c'è più (il cerchio
-// della telecamera torna al suo posto); le abilità si trascinano come prima.
-const MZ={ab:null,shots:0,tg:null,pt:0,lk:0,fwd:0,V:null,ray:null};
-const MZV={half:22*Math.PI/180,wide:30*Math.PI/180,rmax:300};
-const MZC={vista:'188,218,255',tiro:'230,240,255',bers:'255,132,108'};
+// muovendo la visuale il pg non spara»; poi: «fai la cosa trasparente tipo alla grandezza per ogni proiettile»). Davanti all'eroe, verso la
+// cima dello schermo (la direzione della visuale: −π/2 − ψ nel mondo), c'è l'area del colpo dell'arma in mano, grande quanto i suoi
+// proiettili: la striscia del proiettile (sottile per la pistola, più grossa per il revolver, il chiodo e il razzo) col cuneo appena accennato
+// di quanto può deviare (la mitraglietta di più, il revolver quasi niente), un raggio per ogni pallino delle pompe, la fiamma del
+// lanciafiamme, l'onda del Risonatore tutto intorno; si ferma ai muri. L'eroe spara da solo, anche camminando, al primo zombie che entra
+// nell'area (col suo corpo, più 5° d'aiuto; il Risonatore a chiunque sia nel suo cerchio) e si vede (niente muri in mezzo), e lo segue
+// finché ci resta: l'area si gira verso di lui e il mirino rosso va ai suoi piedi. Quelli fuori dall'area non li colpisce: per sparargli si
+// gira la visuale col dito a destra (o Q/E). Senza nessuno nell'area l'eroe guarda dove guarda la visuale (camminando, dove cammina) e
+// ricarica da solo. La levetta del tiro della Zombie non c'è più (il cerchio della telecamera torna al suo posto); le abilità si
+// trascinano come prima.
+const MZ={ab:null,shots:0,tg:null,pt:0,lk:0,fwd:0,V:null,doff:null};
+const MZV={rmax:380,assist:5*Math.PI/180};
+const MZC={vista:'196,222,255',tiro:'236,243,255',bers:'255,132,108'};
 // le abilità che si mirano: dir una direzione, pt un punto, self intorno all'eroe; null nessuna mira (un tocco o un trascinamento le usano)
 const MZAB={scatto:'dir',bomba:'pt',rintocco:'self',tagliola:'pt',adrenalina:null,benda:null};
 const mzRgb=h=>{const n=parseInt(h.slice(1),16);return((n>>16)&255)+','+((n>>8)&255)+','+(n&255)};
@@ -251,13 +277,19 @@ function mzS2W(dx,dy){const C=ZM.CAM,u=dx,v=dy/(C.SP||1);return Math.atan2(v*C.c
 function mzRay(x,y,a,max,s0){const dx=Math.cos(a),dy=Math.sin(a);for(let s=s0==null?12:s0;s<max;s+=5){const q=ZM.hit(x+dx*s,y+dy*s,1.5);if(q&&q.bar)continue;if(q&&q.tag!=='hole')return s}return max}
 const mzDir=()=>ZM.W.director;
 const mzLive=()=>{const D=mzDir(),h=ZM.W.hero;return!!(MIRA.on&&D&&D.st!=='fine'&&h&&!h.dead)};
-// la direzione della visuale nel mondo (la cima dello schermo) e quanto è aperto e lungo il fascio per l'arma in mano
+// la direzione della visuale nel mondo (la cima dello schermo)
 const mzFwd=()=>-Math.PI/2-ZM.CAM.yaw;
-const mzDA=(a,b)=>Math.abs(Math.atan2(Math.sin(a-b),Math.cos(a-b)));
-function mzView(g){const D=g.D;return{r:Math.min(D.range,MZV.rmax),half:D.range<200||D.wave?MZV.wide:MZV.half}}
-// dentro il fascio (conti veloci: distanza e angolo; lo zombie conta col suo corpo, un poco più del suo centro)
+const mzWr=a=>Math.atan2(Math.sin(a),Math.cos(a));
+const mzDA=(a,b)=>Math.abs(mzWr(a-b));
+// il proiettile dell'arma in mano: che area fa (lane la striscia di un proiettile, fan i pallini, flame la fiamma, wave l'onda tutto
+// intorno), quanto è grosso (hw, mezza larghezza in px, dal suo colpo: ARMI.DATI.colpo) e quanto può deviare (sp, radianti: per un colpo
+// solo fino a spread°, per i pallini ±spread/2 come in disegno_armi.js), fin dove arriva (al massimo 380, lo schermo), l'esplosione del razzo
+const MZHW={p9:2.6,p44:3.4,smg:2.4,rif:2.8,lmg:3.2,pal:1.8,razzo:5,chiodo:3.2};
+function mzView(g){const D=g.D,kind=D.wave?'wave':D.flame?'flame':D.pel>1?'fan':'lane',deg=kind==='flame'?D.spread/2+8:D.pel>1?D.spread/2:D.spread;
+  return{kind,r:Math.min(D.range,MZV.rmax),sp:deg*Math.PI/180,hw:MZHW[D.colpo]||2.8,pel:D.pel||1,splash:D.splash||0}}
+// dentro l'area del colpo (conti veloci: distanza e angolo; lo zombie conta col suo corpo e la grossezza del proiettile, più 5° d'aiuto)
 function mzIn(h,z,f,V){if(!z||z.die||z.idle||!(z.rise>=1)||!ZM.sameLv(z)||!ZM.W.Z.includes(z))return false;const dx=z.x-h.x,dy=z.y-h.y,d=Math.hypot(dx,dy),b=10*(z.sc||1);
-  if(d>V.r+b)return false;return mzDA(Math.atan2(dy,dx),f)<=V.half+Math.atan2(b,Math.max(d,1))}
+  if(d>V.r+b)return false;if(V.kind==='wave')return true;return mzDA(Math.atan2(dy,dx),f)<=V.sp+Math.atan2(b+V.hw,Math.max(d,1))+MZV.assist}
 // si vede: niente muri, recinti, lapidi o casse in mezzo (come il bersaglio del motore)
 const mzSeen=(h,z)=>ZM.physClear(h.x,h.y,z.x,z.y,1.5,ZM.hit(z.x,z.y,2),1);
 function mzPick(h,f,V){const c=[];for(const z of ZM.W.Z)if(mzIn(h,z,f,V))c.push([Math.hypot(z.x-h.x,z.y-h.y),z]);c.sort((p,q)=>p[0]-q[0]);for(const[,z] of c)if(mzSeen(h,z))return z;return null}
@@ -267,6 +299,8 @@ function mzHook(h,tgt,g,dt){if(!mzLive()||!g)return null;const f=mzFwd(),V=mzVie
   MZ.pt-=dt;let z=MZ.tg;if(!mzIn(h,z,f,V))z=null;
   if(MZ.pt<=0){MZ.pt=.1;z=z&&mzSeen(h,z)?z:mzPick(h,f,V)}
   MZ.tg=z;
+  // the area drawn turns toward the target smoothly (its angle from the view, so turning the view never makes it lag)
+  const off=z?mzWr(Math.atan2(z.y-h.y,z.x-h.x)-f):0;MZ.doff=MZ.doff==null?off:MZ.doff+mzWr(off-MZ.doff)*Math.min(1,dt*22);
   if(z){MZ.lk=Math.min(1,MZ.lk+dt*7);return{a:Math.atan2(z.y-h.y,z.x-h.x),fire:true,pose:true,idle:false}}
   MZ.lk=Math.max(0,MZ.lk-dt*4);return{a:f,fire:false,pose:false,face:!h.moving,idle:true}}
 if(typeof ZM!=='undefined'&&ZM.W){const W=ZM.W;W.aimHook=mzHook;const _sh=W.shotHook;W.shotHook=function(){MZ.shots++;return _sh?_sh.apply(this,arguments):false}}
@@ -287,30 +321,16 @@ function aimAbDown(i,e,b){if(!MIRA.on||typeof ZABS==='undefined'||!mzLive())retu
       if(k&&s.cancel)return;if(s.tap||!k||k==='self')zabUse(i);else zabUse(i,mzAbAim(id,s))}});
   MZ.ab.id=id;MZ.ab.i=i;return true}
 // ------------------------------------------------------------------ i disegni della mappa: a terra col direttore (dopo il fuoco e le tagliole)
-// il fascio della visuale: i raggi dall'eroe verso la visuale (ognuno fino al suo muro), rifatti solo quando l'eroe o la visuale si muovono
-function mzBeam(h,f,V){const n=LOWFX?7:11,R=MZ.ray,k=Math.round(h.x)+','+Math.round(h.y)+','+f.toFixed(3)+','+V.r+','+V.half.toFixed(3)+','+n+','+(h.lv||0);
-  if(R&&R.k===k&&mT()-R.t<.3)return R.e;
-  const e=[];for(let i=0;i<n;i++){const b=f-V.half+2*V.half*i/(n-1),l=mzRay(h.x,h.y,b,V.r,8);e.push([h.x+Math.cos(b)*l,h.y+Math.sin(b)*l])}MZ.ray={k,e,t:mT()};return e}
-function mzDrawBeam(h,f,V,lk){const e=mzBeam(h,f,V),x=h.x,y=h.y,c=MZC.vista,a=.8+.2*lk,s0=12,n=e.length,bx=x+Math.cos(f)*s0,by=y+Math.sin(f)*s0;
-  ctx.save();ctx.globalCompositeOperation='lighter';
-  const fill=(pts,al)=>{const g=ctx.createRadialGradient(x,y,s0,x,y,V.r);g.addColorStop(0,`rgba(${c},${mA(al*a)})`);g.addColorStop(.5,`rgba(${c},${mA(al*.45*a)})`);g.addColorStop(1,`rgba(${c},0)`);
-    ctx.beginPath();ctx.moveTo(bx,by);for(const p of pts)ctx.lineTo(p[0],p[1]);ctx.closePath();ctx.fillStyle=g;ctx.fill()};
-  fill(e,.1);fill(e.slice(Math.floor(n/4),n-Math.floor(n/4)),.07);// the middle a little brighter: soft sides
-  // the two sides, a faint line that goes out into the dark
-  ctx.lineCap='round';for(const p of[e[0],e[n-1]]){const g=ctx.createLinearGradient(bx,by,p[0],p[1]);g.addColorStop(0,`rgba(${c},${mA(.4*a)})`);g.addColorStop(1,`rgba(${c},${mA(.05*a)})`);
-    ctx.strokeStyle=g;ctx.lineWidth=1.1;ctx.beginPath();ctx.moveTo(bx,by);ctx.lineTo(p[0],p[1]);ctx.stroke()}
-  // the far edge, dotted: how far the gun reaches (or the wall)
-  if(!LOWFX){ctx.setLineDash([2,7]);ctx.lineDashOffset=-mT()*6;ctx.beginPath();e.forEach((p,i)=>i?ctx.lineTo(p[0],p[1]):ctx.moveTo(p[0],p[1]));ctx.strokeStyle=`rgba(${c},${mA(.22*a)})`;ctx.lineWidth=1.2;ctx.stroke();ctx.setLineDash([])}
-  ctx.restore()}
-// l'area dell'arma verso il bersaglio (d: dove sta il bersaglio, per l'esplosione del razzo)
-function mzDrawGun(g,a,al,d){const h=ZM.W.hero,D=g.D,x=h.x,y=h.y,c=MZC.tiro,live=al>.75,V=mzView(g);
-  if(D.wave){mCirc(x,y,D.range,c,al*.9,{pulse:live});return}// the Resonator: all round
-  if(D.flame){let reach=D.range;for(let s=10;s<D.range;s+=6){const q=ZM.hit(x+Math.cos(a)*s,y+Math.sin(a)*s,1.5);if(q&&q.tag!=='hole'){reach=s;break}}// as armi_speciali.js: the centre's wall
-    mSector(x,y,a,reach,(D.spread/2+8)*Math.PI/180,c,al,{run:live});return}
-  const sp=(D.pel>1?D.spread/2:D.spread)*Math.PI/180,rg=V.r;
-  if(sp<.075){const len=mzRay(x,y,a,rg);mLane(x,y,a,len,5,c,al,{run:live,wall:len<rg-1});if(D.splash){const k=Math.min(len,d||len);mCirc(x+Math.cos(a)*k,y+Math.sin(a)*k,D.splash+8,c,al,{pulse:live})}return}
-  const n=sp>.17?9:5,ends=[];for(let i=0;i<n;i++){const b=a-sp+2*sp*i/(n-1),l=mzRay(x,y,b,rg);ends.push([x+Math.cos(b)*l,y+Math.sin(b)*l])}
-  mFan(x,y,a,4,ends,c,al,{run:live,len:rg})}
+// l'area del colpo verso a (al la trasparenza, d dove sta il bersaglio per l'esplosione del razzo, lock col bersaglio: la luce che corre)
+function mzDrawShot(g,a,al,d,lock,c){const h=ZM.W.hero,D=g.D,V=mzView(g),x=h.x,y=h.y;
+  if(V.kind==='wave'){mCirc(x,y,D.range,c,al*.8,{pulse:lock});return}// the Resonator: all round
+  if(V.kind==='flame'){let reach=D.range;for(let s=10;s<D.range;s+=6){const q=ZM.hit(x+Math.cos(a)*s,y+Math.sin(a)*s,1.5);if(q&&q.tag!=='hole'){reach=s;break}}// as armi_speciali.js: the centre's wall
+    mSector(x,y,a,reach,V.sp,c,al,{run:lock});return}
+  if(V.kind==='fan'){const n=V.pel,ends=[];for(let i=0;i<n;i++){const b=a-V.sp+2*V.sp*i/(n-1),l=mzRay(x,y,b,V.r);ends.push([x+Math.cos(b)*l,y+Math.sin(b)*l])}
+    mPellets(x,y,a,ends,c,al,{run:lock,len:V.r});return}
+  // one projectile: its strip as wide as it is, and around it, barely there, how far it may stray
+  const len=mzRay(x,y,a,V.r);mSpread(x,y,a,len,V.hw,V.sp,c,al);mLane(x,y,a,len,V.hw,c,al,{run:lock,wall:len<V.r-1,s0:12});
+  if(V.splash){const k=Math.min(len,d||len);mCirc(x+Math.cos(a)*k,y+Math.sin(a)*k,V.splash+8,c,al,{pulse:lock})}}
 function mzDrawAb(dr){const h=ZM.W.hero,id=dr.id,a=mzS2W(dr.dx,dr.dy),A=ZAB_BY[id],c=mzRgb(A.col),x=h.x,y=h.y;
   if(id==='scatto'){const len=mzRay(x,y,a,96,6);mLane(x,y,a,len,8,c,1,{run:1,wall:len<95})}
   else if(id==='bomba'){const p=mzAbAim(id,dr);mDots(x,y,p.x,p.y,c,.7);mCirc(p.x,p.y,58,c,1,{pulse:1,fill:.16,glow:1})}
@@ -322,9 +342,10 @@ function mzOnFloor(fn){const h=ZM.W.hero,z=h.lvz||0;if(z>0){const q0=ZM.SB(h.x,h
 // (MIRA.last: cosa è stato disegnato in questo fotogramma, per le prove)
 function mzGround(){MIRA.last=null;if(!mzLive())return;const h=ZM.W.hero,ab=MZ.ab&&MZ.ab.live?MZ.ab:null;
   if(ab&&MZAB[ab.id]){mzOnFloor(()=>mzDrawAb(ab));MIRA.last={k:'abilita',id:ab.id};return}// an ability being aimed: only its area
-  const g=ZM.gun&&ZM.gun();if(!g||h.cl||h.busy||h.unarmed)return;const f=MZ.fwd,V=MZ.V||mzView(g),z=MZ.tg&&mzIn(h,MZ.tg,f,V)?MZ.tg:null;
-  mzOnFloor(()=>{mzDrawBeam(h,f,V,MZ.lk);
-    if(z){const a=Math.atan2(z.y-h.y,z.x-h.x),d=Math.hypot(z.x-h.x,z.y-h.y);mzDrawGun(g,a,.5+.5*MZ.lk,d);mRing(z.x,z.y,13*(z.sc||1),MZC.bers,.55+.45*MZ.lk)}});
+  const g=ZM.gun&&ZM.gun();if(!g||h.cl||h.busy||h.unarmed)return;const f=MZ.fwd,V=MZ.V||mzView(g),z=MZ.tg&&mzIn(h,MZ.tg,f,V)?MZ.tg:null,a=f+(MZ.doff||0);
+  // without a target the area of the shot ahead, lighter; with one, brighter toward him and the sight at his feet
+  mzOnFloor(()=>{mzDrawShot(g,a,.45+.55*MZ.lk,z?Math.hypot(z.x-h.x,z.y-h.y):null,!!z,z?MZC.tiro:MZC.vista);
+    if(z)mRing(z.x,z.y,13*(z.sc||1),MZC.bers,.55+.45*MZ.lk)});
   MIRA.last=z?{k:'tiro',a:Math.atan2(z.y-h.y,z.x-h.x),gun:g.id,lock:true}:{k:'vista',a:f,gun:g.id,lock:false}}
 // the bomb's flight seen standing (over everything): dots in the air, as the bottle will go
 function mzTop(){if(!mzLive()||LOWFX)return;const dr=MZ.ab&&MZ.ab.live?MZ.ab:null;if(!dr||dr.id!=='bomba')return;
@@ -333,7 +354,7 @@ function mzTop(){if(!mzLive()||LOWFX)return;const dr=MZ.ab&&MZ.ab.live?MZ.ab:nul
   ctx.restore()}
 // ------------------------------------------------------------------ l'aggancio alla partita (partita.js): come le abilità, avvolge il direttore
 function mzInstall(D){if(!D||D.__mira)return;D.__mira=1;
-  const _r=D.reset;D.reset=function(){_r.apply(this,arguments);MZ.tg=null;MZ.lk=0;MZ.ray=null;try{mzUI()}catch(e){mErr(e)}};
+  const _r=D.reset;D.reset=function(){_r.apply(this,arguments);MZ.tg=null;MZ.lk=0;MZ.doff=null;try{mzUI()}catch(e){mErr(e)}};
   const _g=D.drawGround;D.drawGround=function(){_g.apply(this,arguments);try{mzGround()}catch(e){mErr(e)}};
   const _t=D.drawTop;D.drawTop=function(){_t.apply(this,arguments);try{mzTop()}catch(e){mErr(e)}};
   try{mzUI()}catch(e){mErr(e)}}

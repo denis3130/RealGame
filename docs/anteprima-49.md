@@ -184,3 +184,27 @@ muovendo la visuale il pg non spara, e fai più trasparenti e più belle le mire
 - Prova `node tests/a49/mira.js` (35 controlli): nella Zombie zombie davanti → spara e il mirino è su di lui; visuale girata → non spara e
   l'eroe guarda la visuale; a 17° sì, a 34° no; il dito che gira la visuale lo fa sparare; camminando spara girato verso di lui; dietro un
   muro no; ricarica da solo; ogni arma col suo bersaglio; le abilità trascinate; il costo. Foto `tests/a49/mi_z_*.png`, `mi_c_*.png`.
+
+### 8c. L'area grande quanto il proiettile (1° novembre)
+
+Denis: «ok mi piace ma fai la cosa trasparente tipo alla grandezza per ogni proiettile».
+
+- **Zombie**: al posto del fascio largo uguale per tutte le armi (±22°), davanti all'eroe c'è l'**area del colpo dell'arma in mano, grande
+  quanto i suoi proiettili** (`mzView`, `MZHW`, `mzDrawShot`): la striscia del proiettile, larga quanto il colpo (pistola 2,6 px di mezza
+  larghezza, revolver 3,4, mitraglietta e a tamburo 2,4, mitra 2,8, mitragliatrice e chiodo del fucile a vapore 3,2, razzo 5) con intorno,
+  appena accennato, il cuneo di quanto il proiettile può deviare (come in `disegno_armi.js`: un colpo solo fino a `spread`°, quindi la
+  mitraglietta ±8°, il revolver ±1,5°, il vapore ±1°, il razzo niente); per le pompe un raggio sottile per ogni pallino con la sua testina
+  di luce (8 la Pompa da caccia su ±8°, 7 la tattica su ±11°); la fiamma del lanciafiamme; l'onda del Risonatore tutto intorno; il razzo
+  col cerchio dell'esplosione sul bersaglio. Lunga quanto arriva l'arma (al massimo 380), si ferma ai muri. Senza bersaglio è più leggera
+  e d'un bianco più freddo; col bersaglio più chiara, girata verso di lui (dolcemente: l'angolo segue in circa 50 ms), con la luce che corre e
+  il mirino rosso.
+- **Si spara quando lo zombie entra in quell'area**: lo zombie conta col suo corpo e con la grossezza del proiettile, più 5° d'aiuto
+  (`MZV.assist`); il Risonatore spara a chiunque sia nel suo cerchio. Così la pistola chiede di mirare più giusto (a 140 px: sì a 7°, no a
+  20°), la pompa e la mitraglietta meno (la pompa a 19° sì).
+- **Classica**: una striscia per ogni proiettile della raffica, larga quanto il colpo (`MCHW`: freccia 4, dardo e foglia 4,6, stellina 5,
+  nota 5,4, freccia di fuoco 5,2; le frecce toccano un nemico fino a 5 px dal loro centro): le frecce in più davanti hanno ognuna la sua
+  striscia, affiancate a 9 px come partono; le diagonali, i lati, dietro e il ventaglio con la stessa grossezza; le tre stelline del Ninja
+  tre strisce.
+- Prova `node tests/a49/mira.js` (36 controlli, nuovi: pistola a 7° sì e a 20° no, pompa a 19° sì, il costo dell'area di pompa, pistola e
+  razzo, meno di 0,5 ms). Foto `tests/a49/mi_z_*.png` (anche `mi_z_pompa_lato.png`), `mi_c_*.png`.
+

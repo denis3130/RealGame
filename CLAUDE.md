@@ -390,7 +390,12 @@ creazione): `python3 anteprime/mk_anteprima49.py <cartella>` (divisa come il gio
   il mirino rosso ai suoi piedi; fuori dal fascio non spara (si gira la visuale col dito); senza nessuno guarda dove guarda la visuale e
   ricarica da solo; **via la levetta del tiro nella Zombie** (`W.aimHook` dà anche `face` e `idle`); **mire nuove** in tutte e due le
   modalità, come vetro di luce (pieno appena accennato, bordi sottili che sfumano, punte tonde col bagliore, una luce che corre, cerchi come
-  lenti). Prova `node tests/a49/mira.js` (35 controlli, foto `tests/a49/mi_*.png`). Dettagli in `docs/anteprima-49.md` (8 e 8b).
+  lenti). Poi (Denis: «fai la cosa trasparente tipo alla grandezza per ogni proiettile») **l'area grande quanto il proiettile**: nella
+  Zombie al posto del fascio largo l'area del colpo dell'arma in mano (la striscia larga quanto il proiettile col cuneo appena accennato di
+  quanto può deviare, un raggio per ogni pallino delle pompe, la fiamma, l'onda, il cerchio del razzo; `mzView`, `MZHW`, `mzDrawShot`) e
+  si spara quando lo zombie ci entra (col suo corpo, più 5° d'aiuto: la pistola chiede di mirare più giusto, la pompa meno); nella Classica
+  una striscia per ogni proiettile della raffica, larga quanto il colpo (`MCHW`). Prova `node tests/a49/mira.js` (36 controlli, foto
+  `tests/a49/mi_*.png`). Dettagli in `docs/anteprima-49.md` (8, 8b e 8c).
 
 ## FASE 9: più fluido sul telefono (19 ottobre, in corso)
 
