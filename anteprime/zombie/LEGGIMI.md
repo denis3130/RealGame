@@ -392,5 +392,5 @@ gira lì, anche camminando, se `face` non è false), `fire` il grilletto (anche 
 `drawHero` usa al posto del bersaglio del motore per la mossa «aim»; null senza l'aggancio), `idle` niente da colpire (ricarica da solo dopo
 1,2 s, anche camminando); in `render` il cerchio della telecamera a `W.lookY` px dal fondo (196 senza). Dal 1° novembre il file fa sparare
 dove guarda la visuale (la cima dello schermo, −π/2 − ψ nel mondo: Denis, «la visuale e lo sparo siano insieme»), col fascio della visuale
-e l'aiuto di mira; conta i colpi avvolgendo `W.shotHook` e disegna fascio, aree e mirino col direttore (`drawGround`, `drawTop`), come le
-abilità.
+e l'aiuto di mira; conta i colpi avvolgendo `W.shotHook` e disegna col direttore (`drawGround`, `drawTop`), come le abilità, solo il fascio
+largo e il mirino sullo zombie preso (Denis: «togli tutti i fasci tranne quello largo») e le aree delle abilità trascinate.

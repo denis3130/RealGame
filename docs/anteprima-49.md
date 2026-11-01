@@ -217,3 +217,16 @@ dritta davanti e leggera quando non c'è nessuno, girata verso lo zombie preso, 
 cambia niente (una striscia per ogni proiettile). Prova `node tests/a49/mira.js` (36 controlli: pistola a 17° sì e a 34° no, pompa a 26° sì,
 il costo di fascio e area insieme sotto 0,5 ms).
 
+
+### 8e. Solo il fascio largo (1° novembre)
+
+Denis: «sai cos'è togli tutti i fasci tranne quello largo». Nella Zombie davanti all'eroe resta **solo il fascio largo della visuale**
+(come in 8d: ±22°, ±30° per le armi corte e il Risonatore; lungo quanto arriva l'arma, al massimo 380; fermato dai muri) con la sua regola
+(l'eroe spara da solo, anche camminando, al primo zombie che ci entra e si vede). Via tutto quello che c'era dentro: la striscia del
+proiettile col cuneo, i raggi dei pallini delle pompe, la fiamma, l'onda del Risonatore e il cerchio dell'esplosione del razzo (tolti
+`mzDrawShot`, `MZHW`, `mSpread`, `mPellets`, `mSector`, e `mFan` che non usava più nessuno; `mzView` dice solo quanto è lungo e aperto il
+fascio). Restano il fascio che si fa un poco più chiaro quando c'è un bersaglio e il **mirino rosso** ai piedi dello zombie preso; le
+abilità trascinate mostrano la loro area come prima. Nella Classica non cambia niente (una striscia per ogni proiettile, la levetta, la
+Super). Costo: fascio e mirino 0,02–0,05 ms a fotogramma anche rifacendo i raggi ogni volta. Prova `node tests/a49/mira.js` (37 controlli;
+nuovo: in un fotogramma della mappa col bersaglio si disegnano solo il fascio e il mirino, senza nessuno solo il fascio, e le funzioni
+delle aree tolte non ci sono più). Foto `tests/a49/mi_z_*.png` (anche `mi_z_solo_fascio.png`).

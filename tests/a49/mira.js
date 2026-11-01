@@ -95,7 +95,7 @@ const {chromium}=require('playwright');const D=__dirname+'/';
   await E(`window.__MZ.view(180);0`);await p.waitForTimeout(400);const n1=await shots(1200);const l1=await J(`JSON.stringify({last:MIRA.last,face:ZM.W.hero.face,f:-Math.PI/2-ZM.CAM.yaw})`);await p.screenshot({path:D+'mi_z_dietro.png'});
   ok('girata la visuale dall\'altra parte (lo zombie ora è dietro): non spara, e l\'eroe guarda dove guarda la visuale',n1===0&&l1.last&&l1.last.k==='vista'&&dA(l1.face,l1.f)<.1,{n1,l1});
   await goHome();await p.waitForTimeout(300);
-  // the wide beam (Denis: «lascia il fascio largo»): ±22° with the pistol, ±30° with the short guns; inside it the area of the projectile
+  // the wide beam (Denis: «lascia il fascio largo», «togli tutti i fasci tranne quello largo»): ±22° with the pistol, ±30° with the short guns
   const z2=await put(.3,140);await p.waitForTimeout(250);const n2=await shots(1000);
   const z3=await put(.6,140);await p.waitForTimeout(250);const n3=await shots(1000);
   ok('con la pistola a 17° dalla visuale (dentro il fascio largo) le spara, a 34° no',z2.clear&&z3.clear&&n2>=1&&n3===0,{n17:n2,n34:n3});
@@ -123,7 +123,7 @@ const {chromium}=require('playwright');const D=__dirname+'/';
   // (the Resonator's wave pushes the zombie away: for it the shot is enough)
   for(const g of guns){await E(`for(const z of ZM.W.Z.slice())ZM.W.Z.splice(ZM.W.Z.indexOf(z),1);ZM.equip('${g}');0`);await p.waitForTimeout(1000);const s0=await E(`MZ.shots`);await put(.12,g==='lanciafiamme'?90:g==='risonatore'?110:150);await p.waitForTimeout(g==='mitragliatrice'?900:600);
     await p.screenshot({path:D+'mi_z_'+g+'.png'});const r=await J(`JSON.stringify(MIRA.last)`),n=(await E(`MZ.shots`))-s0;seen[g]=n>0&&(g==='risonatore'||!!(r&&r.k==='tiro'&&r.lock&&r.gun===g))}
-  ok('ogni arma spara al bersaglio nella visuale con la sua area (strisce, coni, esplosione, fiamma, onda)',Object.values(seen).every(Boolean),seen);
+  ok('ogni arma spara al bersaglio nel fascio largo, col mirino rosso',Object.values(seen).every(Boolean),seen);
   await E(`for(const z of ZM.W.Z.slice())ZM.W.Z.splice(ZM.W.Z.indexOf(z),1);0`);
   // the abilities dragged: the bomb where you choose, the trap where you choose, the dash the way you choose
   await E(`ZM.equip('pistola');ZABS.cd=[0,0,0];0`);await p.waitForTimeout(600);
@@ -142,8 +142,23 @@ const {chromium}=require('playwright');const D=__dirname+'/';
   await E(`ZM.W.director.hp=30;0`);await drag(abBtn(1),-20,-30,{hold:150});await p.waitForTimeout(1300);const bh=await E(`ZM.W.director.hp`);ok('la Benda trascinata si usa lo stesso',bh>80,Math.round(bh));
   // a dragged ability doesn't turn the camera either
   const yw=await E(`ZM.CAM.yaw`);await drag(abBtn(2),-80,-10,{hold:100});await p.waitForTimeout(200);ok('trascinare le abilità non gira la telecamera',Math.abs(await E(`ZM.CAM.yaw`)-yw)<1e-6);
-  // times: a frame with the area (with the stick held) against one without
-  const tm=await J(`(()=>{const f=-Math.PI/2,h=ZM.W.hero,o={};for(const id of ['pompa','pistola','lanciarazzi']){ZM.equip(id);const g=ZM.gun(),V=mzView(g),t0=performance.now();for(let i=0;i<200;i++)mzOnFloor(()=>{mzDrawBeam(h,f,V,1);mzDrawShot(g,f,1,120,true,MZC.tiro)});o[id]=+((performance.now()-t0)/200).toFixed(3)}ZM.equip('pistola');return JSON.stringify(o)})()`);
-  ok('il fascio e l\'area del colpo costano poco a disegnare (meno di 0,5 ms per la pompa, la pistola e il razzo)',Object.values(tm).every(v=>v<.5),tm);
+  // only the wide beam (Denis: «togli tutti i fasci tranne quello largo»): with a zombie in the view the frame draws the beam and the red
+  // sight, nothing else (no strip, cone, flame or circle of the shot); with no one, only the beam
+  await goHome();await E(`for(const z of ZM.W.Z.slice())ZM.W.Z.splice(ZM.W.Z.indexOf(z),1);ZM.equip('pompa');0`);await p.waitForTimeout(1100);const zo=await put(.1,120);await p.waitForTimeout(500);
+  const only=await J(`(()=>{const o={},keep={};for(const n of ['mLane','mCirc','mGlow','mDots','mLob','mRing','mzDrawBeam'])o[n]=0;
+    const w=(n,f)=>function(){o[n]++;return f.apply(this,arguments)};keep.L=mLane;keep.C=mCirc;keep.G=mGlow;keep.D=mDots;keep.B=mLob;keep.R=mRing;keep.Z=mzDrawBeam;
+    mLane=w('mLane',mLane);mCirc=w('mCirc',mCirc);mGlow=w('mGlow',mGlow);mDots=w('mDots',mDots);mLob=w('mLob',mLob);mRing=w('mRing',mRing);mzDrawBeam=w('mzDrawBeam',mzDrawBeam);
+    let a,b;try{mzGround();a=Object.assign({},o,{last:MIRA.last&&MIRA.last.k});for(const n in o)o[n]=0;const t=MZ.tg;MZ.tg=null;mzGround();MZ.tg=t;b=Object.assign({},o,{last:MIRA.last&&MIRA.last.k})}
+    finally{mLane=keep.L;mCirc=keep.C;mGlow=keep.G;mDots=keep.D;mLob=keep.B;mRing=keep.R;mzDrawBeam=keep.Z}
+    return JSON.stringify({conBersaglio:a,senza:b,vecchie:[typeof mzDrawShot,typeof mSpread,typeof mPellets,typeof mSector,typeof mFan]})})()`);
+  await p.screenshot({path:D+'mi_z_solo_fascio.png'});
+  const sa=only.conBersaglio,sb=only.senza;
+  ok('solo il fascio largo: col bersaglio il fascio e il mirino rosso, senza nessuno il fascio, nient\'altro (niente strisce, coni, fiamme o cerchi)',
+    sa.last==='tiro'&&sa.mzDrawBeam===1&&sa.mRing===1&&!sa.mLane&&!sa.mCirc&&!sa.mGlow&&!sa.mDots&&!sa.mLob&&sb.last==='vista'&&sb.mzDrawBeam===1&&!sb.mRing&&!sb.mLane&&!sb.mCirc&&!sb.mGlow&&
+    only.vecchie.every(t=>t==='undefined'),Object.assign({clear:zo.clear},only));
+  await E(`ZM.equip('pistola');0`);
+  // times: the beam and the sight
+  const tm=await J(`(()=>{const f=-Math.PI/2,h=ZM.W.hero,o={};for(const id of ['pompa','pistola','lanciarazzi']){ZM.equip(id);const g=ZM.gun(),V=mzView(g),t0=performance.now();for(let i=0;i<200;i++){MZ.ray=null;mzOnFloor(()=>{mzDrawBeam(h,f,V,1);mRing(h.x,h.y-120,13,MZC.bers,1)})}o[id]=+((performance.now()-t0)/200).toFixed(3)}ZM.equip('pistola');return JSON.stringify(o)})()`);
+  ok('il fascio e il mirino costano poco a disegnare (meno di 0,5 ms per la pompa, la pistola e il razzo, rifacendo i raggi ogni volta)',Object.values(tm).every(v=>v<.5),tm);
   await E(`LOWFX=true;0`);await put(0,140);await p.waitForTimeout(700);await p.screenshot({path:D+'mi_z_lowfx.png'});await E(`LOWFX=false;0`);
   console.log(errs.slice(0,6).join('\n')||'nessun errore');await b.close()})();
