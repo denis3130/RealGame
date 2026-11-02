@@ -415,6 +415,15 @@ scuro dove la profondità salta; zombie, eroe e Bara sono i loro disegni dipinti
 avvisi del Becchino e le abilità. Aggancio nel motore della mappa che senza il file non fa niente: `W.v3` in `render()`; in `ZM` anche
 `HSTYLE` e `bara()`. Pagina: `python3 anteprime/mk_visuale.py <cartella>` (l'Anteprima 49 più 105; si apre col menu sulla Zombie), pubblicata
 a parte su https://claude.ai/artifact/EsX3514z5xM6WsFLEAGFhW («Mossbound Visuale zombie»; si aggiorna ripubblicando la stessa cartella). Prova `python3 tests/v3/mk.py` e `node tests/v3/visuale.js` (13 controlli, foto `tests/v3/vi_*.png`).
+Poi (2 novembre, Denis: «migliora tutto, e metti il pg in 3d scusa non può essere in 2d, ce l'abbiamo già il modello in 3d usiamo quello»):
+**l'eroe in terza persona in 3D vero**, fatto di triangoli dai pezzi del suo modello (`EROE.rig3d` in `sprite/eroe3d/disegno_eroe.js` dà la
+posa senza disegnare; il disegno dell'eroe resta identico al pixel, 800 disegni confrontati): corpo a goccia con la texture della giubba,
+cappuccio col viso fatto punto per punto sulla palla della testa (occhi grandi con la luce, guance, bocca quando lo colpiscono), piedi, mani,
+l'arma vera di ARMI3D (un kit che fa triangoli coi modelli delle armi, parti che si muovono comprese), dipinto a tre toni con la luce dall'alto
+a sinistra, il bordo chiaro e il contorno scuro spesso; le teste con pezzi propri (coda, piuma, occhiali, maschera, elmo, corna, aspetto) sono
+la testa dipinta del gioco al suo posto. **L'arma in prima persona in 3D** (lo stesso modello, mani e maniche, girata per vederne il fianco,
+ricarica con la mano libera). In più: il cielo dalla nebbia al blu della notte con le stelle, la vampa che illumina intorno, le ombre morbide
+sotto i personaggi. Foglio delle quattro direzioni `tests/v3/vi_eroe4.png`; `node tests/v3/visuale.js` 16 controlli.
 Dettagli, cosa non si vede ancora in 3D e misure in `docs/visuale-3d.md`. Solo da vedere: niente entra nel gioco senza il sì di Denis.
 
 ## FASE 9: più fluido sul telefono (19 ottobre, in corso)

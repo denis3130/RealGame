@@ -1,4 +1,5 @@
 // La visuale in terza e prima persona della modalità zombie (src/js/105-visuale-3d.js, anteprime/mk_visuale.py): prima python3 tests/v3/mk.py.
+// L'eroe in 3D vero in terza persona e l'arma in 3D in prima persona; il foglio delle quattro direzioni dell'eroe (tests/v3/vi_eroe4.png).
 // La partita parte in terza persona; il terreno e la mappa in 3D; camminare va dove guarda la telecamera, girare la visuale la gira; si spara
 // allo zombie davanti; in prima persona l'arma in mano e il colpo dalla canna; in casa il tetto sparisce; la telecamera non entra nei muri;
 // la Bara; dall'alto torna come prima; effetti bassi; i tempi. Foto in tests/v3/vi_*.png.
@@ -11,12 +12,13 @@ const {chromium}=require('playwright');const path=require('path');const D=path.j
   await E(`try{closeSheet()}catch(e){};SAVE.modo='zombie';SAVE.hero='arciere';SAVE.runs=Math.max(1,SAVE.runs||0);zGo();0`);
   for(let i=0;i<120;i++){await p.waitForTimeout(500);if(await E(`!!(ZG.on&&ZM.W.director&&ZM.W.director.st)`))break}
   for(let i=0;i<90;i++){await p.waitForTimeout(300);if(await E(`!!(window.__V3&&__V3.built&&__V3.on)`))break}
-  await E(`ZM.W.dbg.noSpawn=true;ZM.W.dbg.god=true;__V3.noLow=1;__V3.low=false;for(const z of ZM.W.Z.slice())ZM.W.Z.splice(ZM.W.Z.indexOf(z),1);0`);await p.waitForTimeout(800);
+  await E(`ZM.W.dbg.noSpawn=true;ZM.W.dbg.god=true;__V3.noLow=1;__V3.low=false;SAVE.set.q='alta';LOWFX=false;for(const z of ZM.W.Z.slice())ZM.W.Z.splice(ZM.W.Z.indexOf(z),1);0`);await p.waitForTimeout(800);
   const s0=await J(`JSON.stringify({mode:__V3.mode,on:ZM.W.v3.on,btn:(document.getElementById('v3btn')||{}).textContent||'',ground:G3.ground.length,pages:V3A.pages.length,gl:__V3.gl.getError(),tb:Math.round(__V3.tBuild)})`);
   ok('la partita parte da sola in terza persona, col bottone «Visuale» e il mondo in 3D (terreno, fogli delle texture)',s0.mode==='terza'&&s0.on&&/Terza persona/.test(s0.btn)&&s0.ground>0&&s0.pages>0&&s0.gl===0,s0);
   await p.screenshot({path:D+'vi_terza.png'});
   // walking: forward goes where the camera looks; after turning the view, the new way
-  const walk=async(key,ms)=>{const a=await J(`JSON.stringify([ZM.W.hero.x,ZM.W.hero.y,__V3.th])`);await p.keyboard.down(key);await p.waitForTimeout(ms);await p.keyboard.up(key);await p.waitForTimeout(150);
+  const home=await J(`JSON.stringify([ZM.W.hero.x,ZM.W.hero.y])`);// (each walk starts from the start of the match, in the open)
+  const walk=async(key,ms)=>{await E(`ZM.W.hero.x=${home[0]};ZM.W.hero.y=${home[1]};0`);await p.waitForTimeout(200);const a=await J(`JSON.stringify([ZM.W.hero.x,ZM.W.hero.y,__V3.th])`);await p.keyboard.down(key);await p.waitForTimeout(ms);await p.keyboard.up(key);await p.waitForTimeout(150);
     const c=await J(`JSON.stringify([ZM.W.hero.x,ZM.W.hero.y])`);return{d:Math.hypot(c[0]-a[0],c[1]-a[1]),a:Math.atan2(c[1]-a[1],c[0]-a[0]),th:a[2]}};
   const dA=(a,b)=>Math.abs(Math.atan2(Math.sin(a-b),Math.cos(a-b)));
   const w1=await walk('KeyW',2200);ok('in terza persona la levetta in su (W) porta l\'eroe dove guarda la telecamera',w1.d>25&&dA(w1.a,w1.th)<.3,w1);
@@ -25,18 +27,33 @@ const {chromium}=require('playwright');const path=require('path');const D=path.j
   const w3=await walk('KeyD',2200);ok('a destra (D) va alla destra della telecamera',w3.d>20&&dA(w3.a,th1+Math.PI/2)<.35,w3);
   // a zombie ahead: the hero shoots it
   const put=(off,dist)=>E(`(()=>{const h=ZM.W.hero,f=__V3.th+(${off});for(const z of ZM.W.Z.slice())ZM.W.Z.splice(ZM.W.Z.indexOf(z),1);const k=window.__MZ.addZombie('zombie',h.x+Math.cos(f)*${dist},h.y+Math.sin(f)*${dist},0);const z=ZM.W.Z[k];z.hp=99999;z.q=1;z.stun=999;return 1})()`);
-  await put(0,150);await p.waitForTimeout(600);const n0=await E(`MZ.shots`);await p.waitForTimeout(4000);const n1=await E(`MZ.shots`),f1=await E(`__V3.figs`);await p.screenshot({path:D+'vi_terza_spara.png'});
+  await E(`ZM.W.hero.x=${home[0]};ZM.W.hero.y=${home[1]};window.__MZ.view(0);0`);await p.waitForTimeout(500);// (from the start, looking north along the path)
+  await put(0,130);await p.waitForTimeout(600);const n0=await E(`MZ.shots`);await p.waitForTimeout(4000);const n1=await E(`MZ.shots`),f1=await E(`__V3.figs`);await p.screenshot({path:D+'vi_terza_spara.png'});
   ok('uno zombie davanti: in terza persona l\'eroe gli spara, zombie ed eroe disegnati',n1-n0>=1&&/z/.test(f1)&&/h/.test(f1),{colpi:n1-n0,figure:f1});
+  // the hero in 3D: his pieces made of triangles (body, head, feet, hands, the weapon), the shot from the muzzle of the 3D weapon
+  const h3=await J(`JSON.stringify({ok:__V3.h3ok,n:__V3.h3,muz:!!__V3.muz,no:!!__V3.no3h,gm:V3GM.size})`);
+  ok('in terza persona l\'eroe è in 3D vero (corpo, testa, piedi, mani e arma fatti di triangoli) e il colpo parte dalla bocca dell\'arma 3D',h3.ok&&h3.n>=7&&h3.muz&&!h3.no&&h3.gm>0,h3);
+  // the four sides of the 3D hero, close (for Denis): front, his right, back, his left
+  await E(`for(const z of ZM.W.Z.slice())ZM.W.Z.splice(ZM.W.Z.indexOf(z),1);__V3.dbgCam=92;0`);const sides=[];
+  for(const y of [Math.PI,-Math.PI/2,0,Math.PI/2]){await E(`__V3.dbgYaw=${y};0`);await p.waitForTimeout(900);sides.push(await p.screenshot({clip:{x:65,y:225,width:260,height:290}}))}
+  await E(`__V3.dbgYaw=0;__V3.dbgCam=0;0`);
+  {const html=`<body style="margin:0;background:#111;display:flex">${sides.map(b=>`<img src="data:image/png;base64,${b.toString('base64')}">`).join('')}</body>`;const q=await b.newPage({viewport:{width:1040,height:290}});await q.setContent(html);await q.waitForTimeout(300);await q.screenshot({path:D+'vi_eroe4.png'});await q.close()}
+  // the other heroes: the head painted as in the game (coda, piuma, occhiali, maschera, elmo, corna), the rest in 3D
+  const oh=await J(`(()=>{const r=[];for(const id of ['cacciatrice','ninja','druida']){SAVE.heroes[id]=1;SAVE.hero=id;ZM.stile(zHeroStyle());ZM.equip(ZM.W.gunId||'pistola');r.push(id)}SAVE.hero='arciere';ZM.stile(zHeroStyle());ZM.equip('pistola');return JSON.stringify(r)})()`);
+  await p.waitForTimeout(900);const oh2=await J(`JSON.stringify({ok:__V3.h3ok,err:__V3.err})`);ok('gli altri eroi (anche con la testa dipinta del gioco) senza errori',oh2.ok&&oh2.err===0,{oh,oh2});
   // first person
   await E(`v3Set('prima');0`);await p.waitForTimeout(1500);await put(.05,140);await p.waitForTimeout(600);const m0=await E(`MZ.shots`);await p.waitForTimeout(4000);
   const fp=await J(`JSON.stringify({mode:__V3.mode,shots:MZ.shots-${m0},vm:__V3.vmMuz,figs:__V3.figs,btn:document.getElementById('v3btn').textContent})`);await p.screenshot({path:D+'vi_prima.png'});
   ok('in prima persona: l\'arma in mano (la bocca dell\'arma sullo schermo), niente eroe, lo zombie davanti preso',fp.mode==='prima'&&/Prima persona/.test(fp.btn)&&fp.shots>=1&&Array.isArray(fp.vm)&&!/h/.test(fp.figs)&&/z/.test(fp.figs),fp);
+  ok('in prima persona l\'arma è in 3D vero (lo stesso modello, con le mani e le maniche)',await E(`__V3.vm3===true`));
   await E(`for(const z of ZM.W.Z.slice())ZM.W.Z.splice(ZM.W.Z.indexOf(z),1);0`);
   // in the house: no roof
   await E(`v3Set('terza');0`);await p.waitForTimeout(400);
   const hs=await J(`(()=>{const H=ZM.houses[0],h=ZM.W.hero;h.x=H.x+H.w*.5;h.y=H.y+H.d*.55;return JSON.stringify([H.x,H.y,H.w,H.d])})()`);await p.waitForTimeout(3500);
-  const inH=await J(`JSON.stringify({a:ZM.houses[0].a,roof:v3TagVis(ZM.houses[0],'roof'),k:__V3.camK})`);await p.screenshot({path:D+'vi_casa.png'});
-  ok('in casa il tetto sparisce e la telecamera resta dentro i muri',inH.a<.5&&!inH.roof&&inH.k<1,{hs,inH});
+  // (the camera never inside a wall: between it and the hero's head nothing tall; with the camera high it may look over the walls)
+  const inH=await J(`(()=>{const h=ZM.W.hero,e=__V3.eye,hd=[h.x,h.y,(h.zh||0)+42];let blk=0;for(let i=1;i<20;i++){const t=i/20,x=e[0]+(hd[0]-e[0])*t,y=e[1]+(hd[1]-e[1])*t,z=e[2]+(hd[2]-e[2])*t;if(v3HAt(x,y)>z+2)blk++}
+    return JSON.stringify({a:ZM.houses[0].a,roof:v3TagVis(ZM.houses[0],'roof'),k:+__V3.camK.toFixed(2),blk})})()`);await p.screenshot({path:D+'vi_casa.png'});
+  ok('in casa il tetto sparisce e tra la telecamera e l\'eroe non c\'è nessun muro',inH.a<.5&&!inH.roof&&inH.blk===0,{hs,inH});
   await E(`v3Set('prima');0`);await p.waitForTimeout(1500);await p.screenshot({path:D+'vi_casa_prima.png'});
   // the ground drawings of the match (the Bomb's fire, the Trap): laid on the ground
   await E(`v3Set('terza');(()=>{const h=ZM.W.hero,f=__V3.th;for(const z of ZM.W.Z.slice())ZM.W.Z.splice(ZM.W.Z.indexOf(z),1);ZABS.fires.push({x:h.x+Math.cos(f)*90,y:h.y+Math.sin(f)*90,r:58,t:.5,T:30});ZABS.traps.push({x:h.x+Math.cos(f)*45+12,y:h.y+Math.sin(f)*45,a:0,t:1,shut:0})})();0`);
