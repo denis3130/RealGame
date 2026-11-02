@@ -755,7 +755,7 @@ function v3Statics(){if(V3.hm)return V3.hm;const W=[255,255,255,255],M={};
 // the tunic as a picture that goes round the body: x the angle (the front in the middle), y the height (the hem at the bottom); the hem,
 // the collar and the seam with the buttons of the leather jacket, the strap of the quiver, the belt with its golden buckle (as in arciere0)
 const V3TT={};
-function v3Tunic(R){const S=R.S,S0=R.S0,OF=R.OF,top=R.prof[R.prof.length-1][0],key=[S.body,S.belt,R.arm,S0.strap,OF&&OF.strap,OF&&OF.buckle,OF&&OF.noGiubba,top].join('|');if(V3TT[key])return V3TT[key];
+function v3Tunic(R){const S=R.S,S0=R.S0,OF=R.OF,top=R.prof[R.prof.length-1][0],key=[S.body,S.belt,R.arm,S0.strap,OF&&OF.strap,OF&&OF.buckle,OF&&OF.noGiubba,top,S0.ribs?'r':'',S0.robe?'o':''].join('|');if(V3TT[key])return V3TT[key];
   const Wc=512,Hc=128,c=document.createElement('canvas');c.width=Wc;c.height=Hc;const g=c.getContext('2d'),X=t=>(t/(Math.PI*2)+.5)*Wc,Y=dz=>(1-dz/top)*Hc,pu=Hc/top,mx=(a,b,k)=>RG.mix(a,b,k);
   g.fillStyle=S.body;g.fillRect(0,0,Wc,Hc);g.lineCap='round';g.lineJoin='round';
   const band=(dz,w,col)=>{g.fillStyle=col;g.fillRect(0,Y(dz)-w*pu/2,Wc,w*pu)},path=(f,n,w,col,dash)=>{g.strokeStyle=col;g.lineWidth=w*pu;if(dash)g.setLineDash(dash.map(v=>v*pu));g.beginPath();for(let i=0;i<=n;i++){const q=f(i/n);g.lineTo(X(q[0]),Y(q[1]))}g.stroke();g.setLineDash([])};
@@ -763,6 +763,9 @@ function v3Tunic(R){const S=R.S,S0=R.S0,OF=R.OF,top=R.prof[R.prof.length-1][0],k
   if(R.arm==='giubba'&&!(OF&&OF.noGiubba)){for(const sd of[-1,1])path(k=>[sd*(.62+(.04-.62)*k),13.2+(10.8-13.2)*k],8,1.3,'rgba(27,22,18,.5)');path(k=>[.04,10.8+(6.8-10.8)*k],8,1,'rgba(27,22,18,.42)',[1.6,1.6]);
     for(const dz of[9.9,8]){g.fillStyle=INK;g.beginPath();g.ellipse(X(.17),Y(dz),(.95+.35)*pu*.8,(.95+.35)*pu,0,0,Math.PI*2);g.fill();g.fillStyle='#d9b27a';g.beginPath();g.ellipse(X(.17),Y(dz),.95*pu*.8,.95*pu,0,0,Math.PI*2);g.fill()}}
   if(S0.strap!==false)path(k=>{const t=-Math.PI+k*Math.PI*2;return[t,8.4-4.6*Math.sin(t)]},64,1.4,OF&&OF.strap||'#4a321e');
+  // (the marks the drawing paints on some bodies: the skeletons' ribs in front and the spine behind, the green hem of the robes)
+  if(S0.ribs){for(const dz of[10.6,7.6,4.6])path(k=>[-1.05+2.1*k,dz],12,1.6,'rgba(27,22,18,.55)');for(const t of[Math.PI-.03,-Math.PI+.03])path(k=>[t,12.8-10.2*k],8,2,'rgba(27,22,18,.5)')}
+  if(S0.robe)band(2.2,2,'rgba(123,191,74,.55)');
   if(S.belt){band(5.6,4.5,INK);band(5.6,2.7,S.belt);const bw=3.4*pu*.75,bh=4*pu,bx=X(0),by=Y(5.6);g.fillStyle=INK;g.fillRect(bx-bw/2-pu*.5,by-bh/2-pu*.5,bw+pu,bh+pu);
     g.fillStyle=OF&&OF.buckle||'#ffc93c';g.fillRect(bx-bw/2,by-bh/2,bw,bh);g.fillStyle='#fff3c0';g.fillRect(bx-bw*.32,by-bh*.35,bw*.3,bh*.25);g.fillStyle='#8a5a20';g.fillRect(bx-bw*.15,by-bh*.1,bw*.3,bh*.4)}
   return V3TT[key]=v3Tex(V3.gl,c,true)}

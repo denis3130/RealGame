@@ -61,3 +61,6 @@ tests/a49/*.png
 anteprime/visuale.html
 anteprime/visuale_prova.html
 tests/v3/test_v3.html
+anteprime/tripla.html
+anteprime/tripla_prova.html
+tests/t3/test_t3.html

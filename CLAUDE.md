@@ -448,6 +448,24 @@ dell'eroe al pozzo sale sopra o non disegna la cosa in cui è finita. Effetti ba
 24 controlli; prima e dopo in `tests/v3/vi_tripla_a.jpg`.
 Dettagli, cosa non si vede ancora in 3D e misure in `docs/visuale-3d.md`. Solo da vedere: niente entra nel gioco senza il sì di Denis.
 
+## Mossbound tripla A (2 novembre, anteprima a parte)
+
+Denis: «ok rendi tripla A il gioco in sé mossbound». Risposte alle domande: tutto il gioco, **3D vero come la visuale** ma prima
+un'anteprima; **due luci da confrontare** («Chiara» e «Da film»); anche animazioni e colpi, audio, menu, filmati («senza scene come nei
+film ma entrate e mosse fatte meglio»); **fluido prima di tutto**; visuale zombie: «decido dopo»; mappa zombie dall'alto: resta com'è;
+prima anteprima: **una stanza completa** del primo mondo; agenti: no. File fuori da `src/ordine.txt`, solo nell'anteprima:
+`src/js/110-t3-motore.js` (`T3`: tela WebGL sotto quella del gioco nelle stanze del primo mondo, muschio, grotte di cristallo e Golem;
+telecamera dall'alto a 50°; stanza, le due luci `T3LUCI` col bottone «Luce» o il tasto L; quello che non è in 3D resta una cartolina),
+`111-t3-eroe.js` (eroe in 3D da `EROE.rig3d`; i personaggi si piegano un po' indietro, `T3.lean`, per mostrare il davanti come nei
+disegni), `112-t3-nemici.js` (`T3N`: slime, pipistrello, fungo, pianta, fuoco fatuo in 3D, umanoidi col corpo dell'eroe; pose fatte una
+volta), `113-t3-golem.js` (`T3GL`: il Golem a pezzi mossi dalle pose del suo modello; `golem2.js` esporta solo i conti in
+`N3.meta.golem2.k3`, una riga che non disegna niente), `114-t3-stanza.js` (`T3S`: ostacoli del primo mondo in 3D), `115-t3-effetti.js`
+(`T3FX`: luci dei colpi, lampi, telecamera che si stringe, tonfi). Usa gli attrezzi di `105-visuale-3d.js` (spenta come visuale; nel
+vestito le costole degli scheletri). Pagina: `python3 anteprime/mk_tripla.py <cartella>` (contatore dei fotogrammi acceso); prova
+`python3 tests/t3/mk.py`, poi `node tests/t3/tripla.js` (26 controlli), foto `tests/t3/tr_lotta.jpg` e `tr_golem.jpg`. Dettagli, tempi e cosa manca (scarabeo,
+occhio d'ombra e fiore occhio ancora cartoline; raccolte e colpi disegni 2D con la loro luce) in `docs/tripla-a.md`. Niente entra nel
+gioco senza il sì di Denis.
+
 ## FASE 9: più fluido sul telefono (19 ottobre, in corso)
 
 Denis: «vai, lascia perdere l'intro ecc» (la FASE 9 subito; intro, prologo e filmati non si toccano). Il gioco più fluido sul suo iPhone

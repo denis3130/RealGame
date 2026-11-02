@@ -973,4 +973,6 @@ reg('golem2',{n:'Golem di Muschio',g:'boss',sc:1,an:MV.slice(),dur:Object.assign
 // «Prima e dopo»: the Golem of today
 // (the drawing of today is kept now: once the game puts this model in place of N3.golem, N3.golem is the new one)
 {const OLD=N3.golem,M0=N3.meta.golem;if(OLD&&M0)N3.meta.golem2.old=(x,y,f,a,pp)=>OLD(x,y,f,M0.an.includes(a)?a:'idle',pp,M0.sc||1,{})}
+// (for the room in true 3D of the «tripla A» preview: the pose of a moment and the measures of the body, read without drawing anything)
+N3.meta.golem2.k3={gPose:(an,p,o)=>gPose(MV.includes(an)?an:'idle',p,o||{}),MV,TC,TR,BC,BR,BRZ,BRR,HC,HRD,SHC,SHR,SHPAD,SHJ,LUA,LFA,FR,HIP,LTH,LSH,FOOTR,HM,SG,MOUND,VEINS,CRACKS,H0L,H0R,K1,K2,pal,cooled};
 })();
