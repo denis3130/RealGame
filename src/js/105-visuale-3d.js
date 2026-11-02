@@ -43,52 +43,97 @@ function v3rgb(c){if(!c)return[128,128,128,255];if(V3COL[c])return V3COL[c];let 
 const V3KROT={s:'e',e:'n',n:'w',w:'s',r:'re',re:'rn',rn:'rw',rw:'r'},v3KeyR=(k,q)=>{for(let i=0;i<q;i++)k=V3KROT[k]||k;return k};
 const v3Hash=s=>{let h=2166136261;for(let i=0;i<s.length;i++){h^=s.charCodeAt(i);h=Math.imul(h,16777619)}return(h>>>1)%2147483646+1};// come hashS del motore
 // ------------------------------------------------------------------ i programmi
-// la notte, le luci e la nebbia: la stessa ricetta della vista dall'alto (drawDark, drawLights) fatta per ogni punto del mondo
+// la notte, le luci e la nebbia: la stessa ricetta della vista dall'alto (drawDark, drawLights) fatta per ogni punto del mondo. Dalla «tripla
+// A» (Denis, 2 novembre: «rendilo tripla A») in più: le luci illuminano dal lato giusto (la normale della faccia: un muro girato dall'altra
+// parte resta al buio), le pietre bagnate riflettono le lanterne e la luna, la luce delle lanterne si vede nella nebbia tra l'occhio e le
+// cose, la nebbia bassa scorre a chiazze col vento
 const V3SHADE=`uniform vec3 uEye;uniform vec4 uL[12];uniform vec4 uLC[12];uniform vec3 uFog;uniform vec3 uDark;uniform float uDarkA;uniform vec3 uFogP;
-uniform sampler2D uZone;uniform vec3 uMap;
-vec3 shade(vec3 col,vec3 P,float glowK){float lit=0.;vec3 add=vec3(0.);
- for(int i=0;i<12;i++){vec4 L=uL[i];if(L.w<=0.)continue;vec3 d=P-L.xyz;d.z*=.7;float q=length(d)/L.w;float kh=clamp(1.-q,0.,1.);lit=max(lit,kh*(i==0?.6:.85));
-  float kg=clamp(1.-q*1.2,0.,1.);add+=uLC[i].rgb*(kg*kg*(3.-2.*kg)*uLC[i].a);}
- col=mix(col,uDark,uDarkA*(1.-clamp(lit,0.,1.)));col+=add*.8*glowK;
- float d=distance(P,uEye);float f=clamp((d-uFogP.x)/uFogP.y,0.,1.);f=f*f*(3.-2.*f)*uFogP.z;
+uniform sampler2D uZone;uniform vec3 uMap;uniform sampler2D uNoi;uniform float uT;uniform vec3 uMoon;uniform float uHF;uniform float uSc;
+vec3 shade(vec3 col,vec3 P,vec3 N,float glowK,float wet){float lit=0.;vec3 add=vec3(0.),sp=vec3(0.),sc=vec3(0.);
+ vec3 E=uEye-P;float dE=length(E);vec3 V=E/max(dE,.001);float ns=min(length(N),1.);vec3 n=N/max(ns,.0001);
+ for(int i=0;i<12;i++){vec4 L=uL[i];if(L.w<=0.)continue;vec3 d=P-L.xyz;d.z*=.7;float q=length(d)/L.w;
+  vec3 ld=normalize(L.xyz-P);float wr=i==0?1.:mix(1.,clamp(dot(n,ld)*.72+.28,0.,1.),ns);
+  float kh=clamp(1.-q,0.,1.);lit=max(lit,kh*(i==0?.6:.85*wr));
+  float kg=clamp(1.-q*1.2,0.,1.);kg=kg*kg*(3.-2.*kg)*uLC[i].a;add+=uLC[i].rgb*(kg*wr);
+  if(wet>0.){vec3 h=normalize(ld+V);sp+=uLC[i].rgb*(pow(max(dot(n,h),0.),42.)*kg*wet);}
+  if(i<6&&uSc>0.){vec3 lo=L.xyz-uEye;float tq=clamp(dot(lo,-V),0.,dE);float dd=distance(uEye-V*tq,L.xyz)/(L.w*.5);sc+=uLC[i].rgb*(uLC[i].a*exp(-dd*dd)*min(1.,tq/70.));}}
+ // (the lights' colour added like a screen: on the dark things almost all of it, as from above, on the bright ones only what is missing, so
+ // nothing near a lantern burns white)
+ col=mix(col,uDark,uDarkA*(1.-clamp(lit,0.,1.)));col=1.-(1.-col)*(1.-clamp(add*.8*glowK,0.,1.));col+=sp*1.4;
+ if(wet>0.){vec3 h=normalize(uMoon+V);col+=vec3(.5,.62,.95)*(pow(max(dot(n,h),0.),64.)*wet*.3);}
+ float f=clamp((dE-uFogP.x)/uFogP.y,0.,1.);f=f*f*(3.-2.*f)*uFogP.z;
+ if(uHF>0.){float nz=texture2D(uNoi,P.xy/250.+vec2(uT*.007,uT*.003)).r*.6+texture2D(uNoi,P.xy/90.-vec2(uT*.012,uT*.004)).r*.4;
+  f=max(f,clamp(uHF*exp(-max(P.z,0.)/20.)*smoothstep(25.,240.,dE)*(nz*1.5-.15),0.,.8));}
  float zc=texture2D(uZone,clamp(P.xy/uMap.xy,0.,1.)).r;vec2 e=min(P.xy,uMap.xy-P.xy);float ed=1.-clamp(min(e.x,e.y)/uMap.z,0.,1.);
- f=max(f,max(zc*.8,ed*.92));return mix(col,uFog,f);}`;
-const V3VS_GEO=`attribute vec3 aP;attribute vec2 aT;attribute vec4 aC;uniform mat4 uVP;varying vec2 vT;varying vec4 vC;varying vec3 vW;
-void main(){vT=aT;vC=aC;vW=aP;gl_Position=uVP*vec4(aP,1.);}`;
+ f=max(f,max(zc*.8,ed*.92));sc*=uSc;return mix(col,uFog+sc*.45,f)+sc*.12*(1.-f);}`;
+// the map's pieces: each face with its normal (aN: the direction times how much it counts) and the direction of its picture's x (aG, w: which
+// way its y goes), for the light from the right side and the relief near the camera
+const V3VS_GEO=`attribute vec3 aP;attribute vec2 aT;attribute vec4 aC;attribute vec4 aN;attribute vec4 aG;uniform mat4 uVP;varying vec2 vT;varying vec4 vC;varying vec3 vW;varying vec3 vN;varying vec4 vG;
+void main(){vT=aT;vC=aC;vW=aP;vN=aN.xyz;vG=aG;gl_Position=uVP*vec4(aP,1.);}`;
 // (the ground has a fine detail near the camera: its photo is 1.5 pixels a unit, seen from a few steps away each pixel would be a big soft
 // spot; three grains in one picture, grass blades, stone grain, pebbles, chosen by the ground's own colour, at two sizes so they never repeat)
 // (the walls' pictures are about one pixel a unit: near the camera they are sharpened a little, the picture's own steps made crisper; uShp is
-// how much, the sheets are 2048 wide)
-const V3FS_GEO=`precision highp float;uniform sampler2D uTex;uniform float uCut;uniform sampler2D uDetT;uniform float uDet;uniform float uShp;varying vec2 vT;varying vec4 vC;varying vec3 vW;${V3SHADE}
-void main(){vec4 t=texture2D(uTex,vT)*vC;if(t.a<uCut)discard;vec3 c=t.rgb;
- if(uShp>0.){float k=uShp*(1.-smoothstep(50.,150.,distance(vW,uEye)));if(k>0.){const float o=1./2048.;vec3 n=(texture2D(uTex,vT+vec2(o,0.)).rgb+texture2D(uTex,vT-vec2(o,0.)).rgb+texture2D(uTex,vT+vec2(0.,o)).rgb+texture2D(uTex,vT-vec2(0.,o)).rgb)*.25*vC.rgb;
-  c=clamp(c+(c-n)*k,0.,1.);}}
- if(uDet>0.){float s=uDet*(1.-smoothstep(60.,200.,distance(vW,uEye)));if(s>0.){vec3 dd=(texture2D(uDetT,vW.xy/23.).rgb+texture2D(uDetT,vW.xy/37.+.31).rgb)*.5-.5;
-  float wg=smoothstep(.012,.07,c.g-max(c.r,c.b)),wd=(1.-wg)*smoothstep(.02,.1,c.r-c.b),ws=clamp(1.-wg-wd,0.,1.);c*=1.+(dd.r*wg+dd.b*wd+dd.g*ws)*s;}}
- gl_FragColor=vec4(shade(c,vW,1.),1.);}`;
-// i cartelli che guardano la telecamera: il punto d'appoggio + lo scarto lungo la destra (uR) e il su (uU) della telecamera
-const V3VS_BB=`attribute vec3 aP;attribute vec2 aQ;attribute vec2 aT;attribute vec4 aC;uniform mat4 uVP;uniform vec3 uR;uniform vec3 uU;varying vec2 vT;varying vec4 vC;varying vec3 vW;
-void main(){vec3 p=aP+uR*aQ.x+uU*aQ.y;vT=aT;vC=aC;vW=p;gl_Position=uVP*vec4(p,1.);}`;
-const V3FS_BB=`precision highp float;uniform sampler2D uTex;uniform float uCut;uniform float uGlow;varying vec2 vT;varying vec4 vC;varying vec3 vW;${V3SHADE}
-void main(){vec4 t=texture2D(uTex,vT);if(t.a<uCut)discard;t*=vC;gl_FragColor=vec4(shade(t.rgb,vW,uGlow),t.a);}`;
+// how much. The same four looks give the relief: what is lighter in the picture stands out, uBump how much; uTx one texel of the picture)
+// (the ground's stones are wet: the street and the gravel shine with the lanterns and the moon, the grass does not)
+const V3FS_GEO=`precision highp float;uniform sampler2D uTex;uniform float uCut;uniform sampler2D uDetT;uniform float uDet;uniform float uShp;uniform vec2 uTx;uniform float uBump;uniform float uWet;
+varying vec2 vT;varying vec4 vC;varying vec3 vW;varying vec3 vN;varying vec4 vG;${V3SHADE}
+void main(){vec4 t=texture2D(uTex,vT)*vC;if(t.a<uCut)discard;vec3 c=t.rgb,N=vN;float dW=distance(vW,uEye),nr=1.-smoothstep(50.,150.,dW);
+ if(nr>0.&&(uShp>0.||uBump>0.)){vec3 a=texture2D(uTex,vT+vec2(uTx.x,0.)).rgb,b=texture2D(uTex,vT-vec2(uTx.x,0.)).rgb,u=texture2D(uTex,vT+vec2(0.,uTx.y)).rgb,w=texture2D(uTex,vT-vec2(0.,uTx.y)).rgb;
+  if(uShp>0.)c=clamp(c+(c-(a+b+u+w)*.25*vC.rgb)*uShp*nr,0.,1.);
+  if(uBump>0.&&dot(vG.xyz,vG.xyz)>.1){const vec3 W3=vec3(.3,.59,.11);float ns=length(vN);vec3 n0=vN/max(ns,.0001),T=normalize(vG.xyz),B=cross(n0,T)*(vG.w<0.?-1.:1.);
+   N=normalize(n0-(T*dot(a-b,W3)+B*dot(u-w,W3))*uBump*nr)*ns;}}
+ float wet=0.;
+ if(uDet>0.){float s=uDet*(1.-smoothstep(60.,200.,dW)),wg=smoothstep(.012,.07,c.g-max(c.r,c.b)),wd=(1.-wg)*smoothstep(.02,.1,c.r-c.b),ws=clamp(1.-wg-wd,0.,1.);
+  if(s>0.){vec3 dd=(texture2D(uDetT,vW.xy/23.).rgb+texture2D(uDetT,vW.xy/37.+.31).rgb)*.5-.5;c*=1.+(dd.r*wg+dd.b*wd+dd.g*ws)*s;}
+  wet=uWet*(ws*.9+wd*.3)*(.5+.5*smoothstep(.42,.14,dot(c,vec3(.3,.59,.11))));}
+ gl_FragColor=vec4(shade(c,vW,N,1.,wet),1.);}`;
+// i cartelli che guardano la telecamera: il punto d'appoggio + lo scarto lungo la destra (uR) e il su (uU) della telecamera; aS l'angolo del
+// quadratino (da -1 a 1), per le cose tonde: uSph 1 una palla (le chiome, le zucche), 2 un cilindro in piedi (i personaggi dipinti), così le
+// lanterne le illuminano dal lato giusto
+const V3VS_BB=`attribute vec3 aP;attribute vec2 aQ;attribute vec2 aT;attribute vec4 aC;attribute vec2 aS;uniform mat4 uVP;uniform vec3 uR;uniform vec3 uU;varying vec2 vT;varying vec4 vC;varying vec3 vW;varying vec2 vS;
+void main(){vec3 p=aP+uR*aQ.x+uU*aQ.y;vT=aT;vC=aC;vW=p;vS=aS;gl_Position=uVP*vec4(p,1.);}`;
+const V3FS_BB=`precision highp float;uniform sampler2D uTex;uniform float uCut;uniform float uGlow;uniform float uSph;uniform vec3 uR;uniform vec3 uU;uniform vec3 uBk;varying vec2 vT;varying vec4 vC;varying vec3 vW;varying vec2 vS;${V3SHADE}
+void main(){vec4 t=texture2D(uTex,vT);if(t.a<uCut)discard;t*=vC;vec3 N=vec3(0.);
+ if(uSph>.5){vec2 s=vS;if(uSph>1.5)s.y=0.;N=normalize(uR*s.x+uU*s.y+uBk*sqrt(max(0.,1.-dot(s,s))))*.8;}
+ gl_FragColor=vec4(shade(t.rgb,vW,N,uGlow,0.),t.a);}`;
 // le luci sommate (fiamme, aloni): niente notte, solo la nebbia che le spegne in lontananza
 const V3FS_ADD=`precision highp float;uniform sampler2D uTex;uniform vec3 uEye;uniform vec3 uFogP;varying vec2 vT;varying vec4 vC;varying vec3 vW;
 void main(){vec4 t=texture2D(uTex,vT)*vC;float d=distance(vW,uEye);float f=clamp((d-uFogP.x)/uFogP.y,0.,1.)*uFogP.z;gl_FragColor=vec4(t.rgb*t.a*(1.-f*.85),1.);}`;
-// il passaggio finale: il contorno scuro dove la profondità salta (sulla cosa davanti) e la vignetta
+// il passaggio finale: il contorno scuro dove la profondità salta (sulla cosa davanti), il bagliore delle cose luminose, i colori da film, la
+// vignetta, la grana
 const V3VS_POST=`attribute vec2 aP;varying vec2 vU;void main(){vU=aP*.5+.5;gl_Position=vec4(aP,0.,1.);}`;
 // the sky behind everything: the fog's colour at the horizon (uHy: where it is on the screen, 0 at the bottom), the night's blue up high
 const V3FS_SKY=`precision mediump float;uniform vec3 uFog;uniform vec3 uTop;uniform float uHy;varying vec2 vU;
 void main(){float t=smoothstep(uHy-.03,uHy+.55,vU.y);gl_FragColor=vec4(mix(uFog,uTop,t*t*(3.-2.*t)),1.);}`;
-const V3FS_POST=`precision highp float;uniform sampler2D uC;uniform sampler2D uD;uniform vec2 uPx;uniform vec2 uNF;uniform float uInk;uniform vec3 uFogP;varying vec2 vU;
+// the glow of the bright things (bloom): the bright parts of the picture at a quarter of its size (uThr: from how bright; -1 copies all), then
+// blurred across and down (uDir: one step of the blur), and again at an eighth for the wide soft halo
+const V3FS_BRIGHT=`precision mediump float;uniform sampler2D uC;uniform vec2 uPx;uniform float uThr;varying vec2 vU;
+void main(){vec3 c=(texture2D(uC,vU+uPx*vec2(-.75,-.75)).rgb+texture2D(uC,vU+uPx*vec2(.75,-.75)).rgb+texture2D(uC,vU+uPx*vec2(-.75,.75)).rgb+texture2D(uC,vU+uPx*vec2(.75,.75)).rgb)*.25;
+ float l=max(c.r,max(c.g,c.b));gl_FragColor=vec4(c*smoothstep(uThr,uThr+.3,l),1.);}`;
+const V3FS_BLUR=`precision mediump float;uniform sampler2D uC;uniform vec2 uDir;varying vec2 vU;
+void main(){vec3 c=texture2D(uC,vU).rgb*.227;c+=(texture2D(uC,vU+uDir*1.385).rgb+texture2D(uC,vU-uDir*1.385).rgb)*.316;c+=(texture2D(uC,vU+uDir*3.231).rgb+texture2D(uC,vU-uDir*3.231).rgb)*.07;gl_FragColor=vec4(c,1.);}`;
+// uFx: x the bloom, y the grain, z a hit just taken (a flash that shakes the colours), w little life left (the colours drain, the edges beat
+// with the heart); uCA the colours parting a hair at the edges (the lens)
+const V3FS_POST=`precision highp float;uniform sampler2D uC;uniform sampler2D uD;uniform sampler2D uB1;uniform sampler2D uB2;uniform vec2 uPx;uniform vec2 uNF;uniform float uInk;uniform vec3 uFogP;
+uniform float uT;uniform vec4 uFx;uniform float uCA;varying vec2 vU;
 float lin(float d){float z=d*2.-1.;return 2.*uNF.x*uNF.y/(uNF.y+uNF.x-z*(uNF.y-uNF.x));}
 float far4(vec2 o){return max(max(lin(texture2D(uD,vU+vec2(o.x,0.)).r),lin(texture2D(uD,vU-vec2(o.x,0.)).r)),max(lin(texture2D(uD,vU+vec2(0.,o.y)).r),lin(texture2D(uD,vU-vec2(0.,o.y)).r)));}
-void main(){vec3 c=texture2D(uC,vU).rgb;float d0=lin(texture2D(uD,vU).r);
+float hash(vec2 p){vec3 q=fract(vec3(p.xyx)*.1031);q+=dot(q,q.yzx+33.33);return fract((q.x+q.y)*q.z);}
+void main(){vec2 q=vU-.5;vec3 c=texture2D(uC,vU).rgb;float ca=uCA+uFx.z*.02;
+ if(ca>0.){vec2 o=q*dot(q,q)*ca;c.r=texture2D(uC,vU+o).r;c.b=texture2D(uC,vU-o).b;}
  // (the dark contour as thick as the map's from above: the depth looked at one and two steps away; on a slow phone one step)
- float m=far4(uPx);if(uInk>.8)m=max(m,far4(uPx*2.));
+ float d0=lin(texture2D(uD,vU).r);float m=far4(uPx);if(uInk>.8)m=max(m,far4(uPx*2.));
  float fg=clamp((d0-uFogP.x)/uFogP.y,0.,1.);float e=smoothstep(.035*d0+2.,.07*d0+6.,m-d0)*min(uInk,1.)*(1.-fg*fg*(3.-2.*fg))*step(d0,uNF.y*.97);c=mix(c,vec3(.055,.045,.04),e*.9);
- // (colours a little fuller, like the map's)
- float l=dot(c,vec3(.299,.587,.114));c=max(vec3(0.),mix(vec3(l),c,1.1));
- vec2 q=vU-.5;float v=smoothstep(.36,.9,length(q*vec2(1.,1.15)));c*=1.-.5*v;gl_FragColor=vec4(c,1.);}`;
+ if(uFx.x>0.)c+=(texture2D(uB1,vU).rgb*.6+texture2D(uB2,vU).rgb*.85)*uFx.x;
+ // a soft shoulder for the brightest (the glow does not burn), colours a little fuller like the map's, cold shadows and warm lights, a
+ // gentle S for the contrast
+ c=c/(1.+c*.16)*1.1;float l=dot(c,vec3(.299,.587,.114));c=max(vec3(0.),mix(vec3(l),c,1.1-uFx.w*.55));
+ c+=vec3(-.006,.008,.03)*(1.-smoothstep(0.,.42,l))+vec3(.028,.01,-.016)*smoothstep(.42,1.,l);c=clamp(c,0.,1.);c=mix(c,c*c*(3.-2.*c),.12)+.012*(1.-c);
+ float v=smoothstep(.36,.95,length(q*vec2(1.,1.15)));c*=1.-.42*v;
+ c=mix(c,vec3(.45,.03,.04),uFx.w*(.5+.5*sin(uT*7.))*smoothstep(.2,.9,length(q*vec2(1.,1.3)))*.5);
+ c+=vec3(1.,.85,.8)*uFx.z*.12*(1.-v);
+ if(uFx.y>0.)c+=(hash(vU*vec2(1913.,1577.)+fract(uT*7.3)*vec2(91.,37.))-.5)*uFx.y;
+ gl_FragColor=vec4(c,1.);}`;
 function v3Sh(gl,t,src){const s=gl.createShader(t);gl.shaderSource(s,src);gl.compileShader(s);if(!gl.getShaderParameter(s,gl.COMPILE_STATUS))throw new Error(gl.getShaderInfoLog(s)+'\n'+src.slice(0,200));return s}
 function v3Prog(gl,vs,fs,attrs){const p=gl.createProgram();gl.attachShader(p,v3Sh(gl,gl.VERTEX_SHADER,vs));gl.attachShader(p,v3Sh(gl,gl.FRAGMENT_SHADER,fs));attrs.forEach((a,i)=>gl.bindAttribLocation(p,i,a));
   gl.linkProgram(p);if(!gl.getProgramParameter(p,gl.LINK_STATUS))throw new Error(gl.getProgramInfoLog(p));const u={},n=gl.getProgramParameter(p,gl.ACTIVE_UNIFORMS);
@@ -98,6 +143,13 @@ function v3Tex(gl,src,mip,w,h){const t=gl.createTexture();gl.bindTexture(gl.TEXT
   const W0=src?src.width:w,H0=src?src.height:h,pot=v=>(v&(v-1))===0,ok=mip&&(V3.gl2||(pot(W0)&&pot(H0)));if(ok)gl.generateMipmap(gl.TEXTURE_2D);
   gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_MIN_FILTER,ok?gl.LINEAR_MIPMAP_LINEAR:gl.LINEAR);gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_MAG_FILTER,gl.LINEAR);if(ok)v3Aniso(gl);
   gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_WRAP_S,gl.CLAMP_TO_EDGE);gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_WRAP_T,gl.CLAMP_TO_EDGE);return t}
+// the soft noise that moves the low mist (128 × 128, it repeats with no seam): two sizes of smooth bumps
+function v3NoiseTex(gl){const S=128,d=new Uint8Array(S*S*4);let sd=4242;const r=()=>(sd=(sd*16807)%2147483647)/2147483647;
+  const oct=(n)=>{const g=[];for(let i=0;i<n*n;i++)g.push(r());return(x,y)=>{const fx=x*n/S,fy=y*n/S,ix=Math.floor(fx),iy=Math.floor(fy),tx=fx-ix,ty=fy-iy,sx=tx*tx*(3-2*tx),sy=ty*ty*(3-2*ty),
+    at=(i,j)=>g[((j%n+n)%n)*n+((i%n+n)%n)];return(at(ix,iy)*(1-sx)+at(ix+1,iy)*sx)*(1-sy)+(at(ix,iy+1)*(1-sx)+at(ix+1,iy+1)*sx)*sy}};
+  const a=oct(8),b=oct(16),c=oct(32);for(let y=0;y<S;y++)for(let x=0;x<S;x++){const v=a(x,y)*.55+b(x,y)*.3+c(x,y)*.15,k=(y*S+x)*4;d[k]=d[k+1]=d[k+2]=Math.round(v*255);d[k+3]=255}
+  const t=gl.createTexture();gl.bindTexture(gl.TEXTURE_2D,t);gl.pixelStorei(gl.UNPACK_ALIGNMENT,1);gl.texImage2D(gl.TEXTURE_2D,0,gl.RGBA,S,S,0,gl.RGBA,gl.UNSIGNED_BYTE,d);gl.generateMipmap(gl.TEXTURE_2D);
+  gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_MIN_FILTER,gl.LINEAR_MIPMAP_LINEAR);gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_MAG_FILTER,gl.LINEAR);gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_WRAP_S,gl.REPEAT);gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_WRAP_T,gl.REPEAT);return t}
 // the textures seen slantwise (the ground, the walls along the street) stay sharp: anisotropic filtering, where the phone has it
 function v3Aniso(gl){if(V3.anE===undefined){V3.anE=gl.getExtension('EXT_texture_filter_anisotropic')||gl.getExtension('WEBKIT_EXT_texture_filter_anisotropic')||null;V3.anM=V3.anE?Math.min(8,gl.getParameter(V3.anE.MAX_TEXTURE_MAX_ANISOTROPY_EXT)||1):0}
   if(V3.anE&&V3.anM>1)gl.texParameterf(gl.TEXTURE_2D,V3.anE.TEXTURE_MAX_ANISOTROPY_EXT,V3.low?Math.min(4,V3.anM):V3.anM)}
@@ -105,10 +157,10 @@ function v3Init(){if(V3.ok!==null)return V3.ok;V3.ok=false;
   const c=document.createElement('canvas');c.id='v3cv';c.style.pointerEvents='none';let gl=null;const o={antialias:false,alpha:false,depth:true,stencil:false,premultipliedAlpha:false,powerPreference:'high-performance'};
   try{gl=c.getContext('webgl2',o)}catch(e){}V3.gl2=!!gl;if(!gl)try{gl=c.getContext('webgl',o)||c.getContext('experimental-webgl',o)}catch(e){}if(!gl)return false;
   V3.cv=c;V3.gl=gl;V3.dext=V3.gl2?null:gl.getExtension('WEBGL_depth_texture');V3.post=V3.gl2||!!V3.dext;
-  try{V3.pG=v3Prog(gl,V3VS_GEO,V3FS_GEO,['aP','aT','aC']);V3.pB=v3Prog(gl,V3VS_BB,V3FS_BB,['aP','aQ','aT','aC']);V3.pA=v3Prog(gl,V3VS_BB,V3FS_ADD,['aP','aQ','aT','aC']);
-    if(V3.post)V3.pP=v3Prog(gl,V3VS_POST,V3FS_POST,['aP']);V3.pS=v3Prog(gl,V3VS_POST,V3FS_SKY,['aP'])}catch(e){v3Err(e);return false}
+  try{V3.pG=v3Prog(gl,V3VS_GEO,V3FS_GEO,['aP','aT','aC','aN','aG']);V3.pB=v3Prog(gl,V3VS_BB,V3FS_BB,['aP','aQ','aT','aC','aS']);V3.pA=v3Prog(gl,V3VS_BB,V3FS_ADD,['aP','aQ','aT','aC','aS']);
+    if(V3.post){V3.pP=v3Prog(gl,V3VS_POST,V3FS_POST,['aP']);V3.pBr=v3Prog(gl,V3VS_POST,V3FS_BRIGHT,['aP']);V3.pBl=v3Prog(gl,V3VS_POST,V3FS_BLUR,['aP'])}V3.pS=v3Prog(gl,V3VS_POST,V3FS_SKY,['aP'])}catch(e){v3Err(e);return false}
   V3.qb=gl.createBuffer();gl.bindBuffer(gl.ARRAY_BUFFER,V3.qb);gl.bufferData(gl.ARRAY_BUFFER,new Float32Array([-1,-1,3,-1,-1,3]),gl.STATIC_DRAW);
-  V3.db=gl.createBuffer();V3.dyn=new Float32Array(11*6*1200);
+  V3.db=gl.createBuffer();V3.dyn=new Float32Array(V3Q*6*1200);V3.noiT=v3NoiseTex(gl);
   c.addEventListener('webglcontextlost',e=>{e.preventDefault();V3.lost=true});
   V3.ok=true;return true}
 // ------------------------------------------------------------------ i fogli delle texture (2048×2048): facce, pannelli, chiome, fiamme, il bianco
@@ -124,9 +176,17 @@ function v3Put(src,dw,dh,sx,sy,sw,sh){const S=V3A.S,pad=4;dw=Math.max(2,Math.rou
 // G.pg[i]: i triangoli del foglio i (P posizioni, T coordinate nella texture, C colori) in pezzi {prop, tag, vis, s, n}; i pezzi dello stesso
 // prop con la stessa parte della casa stanno di fila, così si accendono e si spengono insieme (prop nascosti, assi, ante, tetti)
 const G3={pg:[],balls:[],fns:[],planes:[],plc:new Map(),ground:[],props:[],hg:null};
-function v3Buf(pi){return G3.pg[pi]||(G3.pg[pi]={P:[],T:[],C:[],ch:[],cur:null,n:0})}
+function v3Buf(pi){return G3.pg[pi]||(G3.pg[pi]={P:[],T:[],C:[],N:[],ch:[],cur:null,n:0})}
+// (the tripla A: each triangle also has its normal, outward as the engine's faces turn (v3Nrm), times how much it counts (V3.triNs), and the
+// direction of its picture's x with the way its y goes, for the light from the right side and the relief)
+function v3TriN(a,b,c,ta,tb,tc){const ux=b[0]-a[0],uy=b[1]-a[1],uz=b[2]-a[2],vx=c[0]-a[0],vy=c[1]-a[1],vz=c[2]-a[2];let nx=-(uy*vz-uz*vy),ny=-(uz*vx-ux*vz),nz=-(ux*vy-uy*vx);const nl=Math.hypot(nx,ny,nz)||1;nx/=nl;ny/=nl;nz/=nl;
+  const du1=tb[0]-ta[0],dv1=tb[1]-ta[1],du2=tc[0]-ta[0],dv2=tc[1]-ta[1],det=du1*dv2-du2*dv1;let tx=0,ty=0,tz=0,w=1;
+  if(Math.abs(det)>1e-12){const r=1/det;tx=(ux*dv2-vx*dv1)*r;ty=(uy*dv2-vy*dv1)*r;tz=(uz*dv2-vz*dv1)*r;const bx=(vx*du1-ux*du2)*r,by=(vy*du1-uy*du2)*r,bz=(vz*du1-uz*du2)*r,d=tx*nx+ty*ny+tz*nz;
+    tx-=nx*d;ty-=ny*d;tz-=nz*d;const tl=Math.hypot(tx,ty,tz);if(tl>1e-9){tx/=tl;ty/=tl;tz/=tl;w=((ny*tz-nz*ty)*bx+(nz*tx-nx*tz)*by+(nx*ty-ny*tx)*bz)<0?-1:1}else tx=ty=tz=0}
+  const s=(V3.triNs==null?1:V3.triNs)*127;return[Math.round(nx*s),Math.round(ny*s),Math.round(nz*s),127,Math.round(tx*127),Math.round(ty*127),Math.round(tz*127),w*127]}
 function v3Tri(pi,prop,tag,vis,a,b,c,ta,tb,tc,col){const B=v3Buf(pi),f=V3.triF||0;let ch=B.cur;if(!ch||ch.prop!==prop||ch.tag!==tag||ch.vis!==vis||ch.f!==f){ch={prop,tag,vis,f,s:B.n,n:0};B.ch.push(ch);B.cur=ch}
   B.P.push(a[0],a[1],a[2],b[0],b[1],b[2],c[0],c[1],c[2]);B.T.push(ta[0],ta[1],tb[0],tb[1],tc[0],tc[1]);for(let i=0;i<3;i++)B.C.push(col[0],col[1],col[2],col[3]);B.n+=3;ch.n+=3;
+  const nn=v3TriN(a,b,c,ta,tb,tc);for(let i=0;i<3;i++)B.N.push(...nn);
   const bb=prop._v3b;for(const q of[a,b,c]){if(q[0]<bb[0])bb[0]=q[0];if(q[1]<bb[1])bb[1]=q[1];if(q[2]<bb[2])bb[2]=q[2];if(q[0]>bb[3])bb[3]=q[0];if(q[1]>bb[4])bb[4]=q[1];if(q[2]>bb[5])bb[5]=q[2]}}
 // la normale verso fuori di una faccia del motore (i suoi angoli girano al contrario della regola della mano destra)
 function v3Nrm(c){const a=c[0],b=c[1],d=c[c.length-1],u=[b[0]-a[0],b[1]-a[1],b[2]-a[2]],v=[d[0]-a[0],d[1]-a[1],d[2]-a[2]],n=[-(u[1]*v[2]-u[2]*v[1]),-(u[2]*v[0]-u[0]*v[2]),-(u[0]*v[1]-u[1]*v[0])],l=Math.hypot(n[0],n[1],n[2])||1;return[n[0]/l,n[1]/l,n[2]/l]}
@@ -162,7 +222,7 @@ function v3Build(){const W=ZM.W,K=V3.low?.75:.95,t0=performance.now();V3.tb={};
         case'facepoly':{const c=t.c.map(X),m=ZM.MAT[t.mat]||ZM.MAT.stone,key=R?v3KeyR(t.key,R.q):t.key,col=v3rgb(t.col||ZM.tone(m,key));
           if(t.tex){const B=v3BakePoly(t,c,col);if(B){const tr=v3Ears(c);for(const[a,b,d] of tr)v3Tri(B.A.p,p,tag,vis,c[a],c[b],c[d],B.uv[a],B.uv[b],B.uv[d],[255,255,255,255]);if(tall&&tag!=='roof')hq.push(c);break}}
           for(const[a,b,d] of v3Ears(c))v3Tri(V3.whiteP,p,tag,vis,c[a],c[b],c[d],...WT,col);if(tall&&tag!=='roof')hq.push(c);break}
-        case'poly':{const c=t.pts.map(X).map(q=>[q[0],q[1],q[2]<.6?q[2]+.25:q[2]]),col=v3rgb(t.col);for(const[a,b,d] of v3Ears(c)){v3Tri(V3.whiteP,p,tag,vis,c[a],c[b],c[d],...WT,col);v3Tri(V3.whiteP,p,tag,vis,c[a],c[d],c[b],...WT,col)}break}
+        case'poly':{const c=t.pts.map(X).map(q=>[q[0],q[1],q[2]<.6?q[2]+.25:q[2]]),col=v3rgb(t.col);V3.triNs=.55;for(const[a,b,d] of v3Ears(c)){v3Tri(V3.whiteP,p,tag,vis,c[a],c[b],c[d],...WT,col);v3Tri(V3.whiteP,p,tag,vis,c[a],c[d],c[b],...WT,col)}V3.triNs=1;break}
         case'plane':{let c=t.c.map(X);if(t.host){const n=v3Nrm(t.host.c.map(X));c=c.map(q=>[q[0]+n[0]*.6,q[1]+n[1]*.6,q[2]+n[2]*.6])}
           // (the same picture once, except the windows, whose picture changes on its own with their planks)
           const dyn=/^win/.test(t.texId||''),pk=t.texId+'|'+Math.round(t.w)+'x'+Math.round(t.h),old=!dyn&&G3.plc.get(pk),pc=old?old.cv:v3PlaneCv(t),A=old?old.A:v3Put(pc,t.w*K,t.h*K);if(!dyn&&!old)G3.plc.set(pk,{cv:pc,A});
@@ -187,7 +247,8 @@ function v3Build(){const W=ZM.W,K=V3.low?.75:.95,t0=performance.now();V3.tb={};
   const gl=V3.gl;for(const P of V3A.pages){P.tex=v3Tex(gl,P.c,true);P.c.width=P.c.height=0;P.g=null}V3.tb.pages=performance.now()-t0;
   for(const B of G3.pg){if(!B)continue;B.bp=gl.createBuffer();gl.bindBuffer(gl.ARRAY_BUFFER,B.bp);gl.bufferData(gl.ARRAY_BUFFER,new Float32Array(B.P),gl.STATIC_DRAW);
     B.bt=gl.createBuffer();gl.bindBuffer(gl.ARRAY_BUFFER,B.bt);gl.bufferData(gl.ARRAY_BUFFER,new Float32Array(B.T),gl.STATIC_DRAW);
-    B.bc=gl.createBuffer();gl.bindBuffer(gl.ARRAY_BUFFER,B.bc);gl.bufferData(gl.ARRAY_BUFFER,new Uint8Array(B.C),gl.STATIC_DRAW);B.P=B.T=B.C=null}
+    B.bc=gl.createBuffer();gl.bindBuffer(gl.ARRAY_BUFFER,B.bc);gl.bufferData(gl.ARRAY_BUFFER,new Uint8Array(B.C),gl.STATIC_DRAW);
+    B.bn=gl.createBuffer();gl.bindBuffer(gl.ARRAY_BUFFER,B.bn);gl.bufferData(gl.ARRAY_BUFFER,new Int8Array(B.N),gl.STATIC_DRAW);B.P=B.T=B.C=B.N=null}
   // il terreno: i suoi pezzi cotti (foto da 1026 px per 684 unità), uno per texture
   v3Ground();
   // il velo delle zone chiuse: una casella ogni 16 unità, 1 dove la zona è chiusa
@@ -201,7 +262,7 @@ function v3Ground(){const W=ZM.W,gl=V3.gl,GR=W.ground;if(G3.ground.length||!GR)r
   // two for the mipmaps)
   const half=V3.low,P2=v=>1<<Math.max(6,Math.round(Math.log2(v)));
   for(const t of tl){let src=t.c,w=t.c.width,h=t.c.height;if(half){w=Math.ceil(w/2);h=Math.ceil(h/2)}if(!V3.gl2){w=P2(w);h=P2(h)}
-    if(w!==t.c.width||h!==t.c.height){hc.width=w;hc.height=h;hg.drawImage(t.c,0,0,w,h);src=hc}G3.ground.push({x:t.x,y:t.y,w:t.w,h:t.h,pw:src.width,tex:v3Tex(gl,src,true)})}hc.width=hc.height=0;
+    if(w!==t.c.width||h!==t.c.height){hc.width=w;hc.height=h;hg.drawImage(t.c,0,0,w,h);src=hc}G3.ground.push({x:t.x,y:t.y,w:t.w,h:t.h,pw:src.width,ph:src.height,tex:v3Tex(gl,src,true)})}hc.width=hc.height=0;
   G3.detT=v3DetailTex(gl);
   const gb=[];for(const t of G3.ground){gb.push(t.x,t.y,0,0,0, t.x+t.w,t.y,0,1,0, t.x+t.w,t.y+t.h,0,1,1, t.x,t.y,0,0,0, t.x+t.w,t.y+t.h,0,1,1, t.x,t.y+t.h,0,0,1)}
   G3.gbuf=gl.createBuffer();gl.bindBuffer(gl.ARRAY_BUFFER,G3.gbuf);gl.bufferData(gl.ARRAY_BUFFER,new Float32Array(gb),gl.STATIC_DRAW)}
@@ -309,17 +370,27 @@ function v3Sprite(id,box,k,paint,key){const w=Math.max(2,Math.ceil((box[2]-box[0
   g.setTransform(k,0,0,k,-box[0]*k,-box[1]*k);const sv=ctx;ctx=g;try{paint(g)}catch(e){v3Err(e)}finally{ctx=sv}
   const gl=V3.gl;gl.bindTexture(gl.TEXTURE_2D,I.tex);gl.pixelStorei(gl.UNPACK_PREMULTIPLY_ALPHA_WEBGL,false);gl.texSubImage2D(gl.TEXTURE_2D,0,sl.x,sl.y,gl.RGBA,gl.UNSIGNED_BYTE,cv);V3.nPaint=(V3.nPaint||0)+1;return sl.uv}
 // ------------------------------------------------------------------ i quadratini dei cartelli (posizione, scarto, texture, colore)
-let V3N=0;
-function v3Q(x,y,z,qx0,qy0,qx1,qy1,u0,v0,u1,v1,r,g,b,a){const D=V3.dyn;if(V3N+66>D.length)return;const V=[[qx0,qy0,u0,v1],[qx1,qy0,u1,v1],[qx1,qy1,u1,v0],[qx0,qy0,u0,v1],[qx1,qy1,u1,v0],[qx0,qy1,u0,v0]];
-  for(const v of V){D[V3N++]=x;D[V3N++]=y;D[V3N++]=z;D[V3N++]=v[0];D[V3N++]=v[1];D[V3N++]=v[2];D[V3N++]=v[3];D[V3N++]=r;D[V3N++]=g;D[V3N++]=b;D[V3N++]=a}}
-function v3QFlush(prog,tex,uU,cut,add){const n=V3N/11;if(!n)return;const gl=V3.gl,P=prog;gl.useProgram(P.p);v3Uni(P);gl.uniform3fv(P.u.uU,uU);gl.uniform3fv(P.u.uR,V3.R3);if(P.u.uCut)gl.uniform1f(P.u.uCut,cut);if(P.u.uGlow)gl.uniform1f(P.u.uGlow,.6);
+// (13 numbers a corner: the place, the offset along the camera's right and up, the texture point, the colour, the corner of the quad from -1
+// to 1 for the round things)
+let V3N=0;const V3Q=13;
+function v3Q(x,y,z,qx0,qy0,qx1,qy1,u0,v0,u1,v1,r,g,b,a){const D=V3.dyn;if(V3N+V3Q*6>D.length)return;const V=[[qx0,qy0,u0,v1,-1,-1],[qx1,qy0,u1,v1,1,-1],[qx1,qy1,u1,v0,1,1],[qx0,qy0,u0,v1,-1,-1],[qx1,qy1,u1,v0,1,1],[qx0,qy1,u0,v0,-1,1]];
+  for(const v of V){D[V3N++]=x;D[V3N++]=y;D[V3N++]=z;D[V3N++]=v[0];D[V3N++]=v[1];D[V3N++]=v[2];D[V3N++]=v[3];D[V3N++]=r;D[V3N++]=g;D[V3N++]=b;D[V3N++]=a;D[V3N++]=v[4];D[V3N++]=v[5]}}
+// a quad with its four corners in the world (lying on the ground, along a direction): the camera's right and up are not used (aQ is 0)
+function v3QW(c,u0,v0,u1,v1,r,g,b,a){const D=V3.dyn;if(V3N+V3Q*6>D.length)return;const T=[[c[0],u0,v1],[c[1],u1,v1],[c[2],u1,v0],[c[0],u0,v1],[c[2],u1,v0],[c[3],u0,v0]];
+  for(const[p,u,v] of T){D[V3N++]=p[0];D[V3N++]=p[1];D[V3N++]=p[2];D[V3N++]=0;D[V3N++]=0;D[V3N++]=u;D[V3N++]=v;D[V3N++]=r;D[V3N++]=g;D[V3N++]=b;D[V3N++]=a;D[V3N++]=0;D[V3N++]=0}}
+function v3QFlush(prog,tex,uU,cut,add){const n=V3N/V3Q;if(!n)return;const gl=V3.gl,P=prog;gl.useProgram(P.p);v3Uni(P);gl.uniform3fv(P.u.uU,uU);gl.uniform3fv(P.u.uR,V3.R3);if(P.u.uCut)gl.uniform1f(P.u.uCut,cut);if(P.u.uGlow)gl.uniform1f(P.u.uGlow,.6);
+  if(P.u.uSph)gl.uniform1f(P.u.uSph,V3.qSph||0);
   gl.activeTexture(gl.TEXTURE0);gl.bindTexture(gl.TEXTURE_2D,tex);gl.uniform1i(P.u.uTex,0);gl.bindBuffer(gl.ARRAY_BUFFER,V3.db);gl.bufferData(gl.ARRAY_BUFFER,V3.dyn.subarray(0,V3N),gl.DYNAMIC_DRAW);
-  const st=44;gl.enableVertexAttribArray(0);gl.vertexAttribPointer(0,3,gl.FLOAT,false,st,0);gl.enableVertexAttribArray(1);gl.vertexAttribPointer(1,2,gl.FLOAT,false,st,12);gl.enableVertexAttribArray(2);gl.vertexAttribPointer(2,2,gl.FLOAT,false,st,20);
-  gl.enableVertexAttribArray(3);gl.vertexAttribPointer(3,4,gl.FLOAT,false,st,28);gl.drawArrays(gl.TRIANGLES,0,n);gl.disableVertexAttribArray(3);gl.disableVertexAttribArray(2);V3N=0}
+  const st=V3Q*4;for(let i=0;i<5;i++)gl.enableVertexAttribArray(i);gl.vertexAttribPointer(0,3,gl.FLOAT,false,st,0);gl.vertexAttribPointer(1,2,gl.FLOAT,false,st,12);gl.vertexAttribPointer(2,2,gl.FLOAT,false,st,20);
+  gl.vertexAttribPointer(3,4,gl.FLOAT,false,st,28);gl.vertexAttribPointer(4,2,gl.FLOAT,false,st,44);gl.drawArrays(gl.TRIANGLES,0,n);for(let i=1;i<5;i++)gl.disableVertexAttribArray(i);V3N=0}
 // le cose comuni a tutti i programmi: telecamera, luci, nebbia, notte, zone
 function v3Uni(P){const gl=V3.gl,u=P.u;gl.uniformMatrix4fv(u.uVP,false,V3.vp);if(u.uEye)gl.uniform3fv(u.uEye,V3.eye);if(u.uL){gl.uniform4fv(u.uL,V3.uL);gl.uniform4fv(u.uLC,V3.uLC)}
   if(u.uFog)gl.uniform3fv(u.uFog,V3.fogC);if(u.uDark){gl.uniform3fv(u.uDark,[10/255,14/255,34/255]);gl.uniform1f(u.uDarkA,.42)}if(u.uDet)gl.uniform1f(u.uDet,0);if(u.uShp)gl.uniform1f(u.uShp,0);if(u.uFogP)gl.uniform3fv(u.uFogP,V3.fogP);
-  if(u.uZone){gl.activeTexture(gl.TEXTURE1);gl.bindTexture(gl.TEXTURE_2D,G3.ztex);gl.uniform1i(u.uZone,1);gl.uniform3fv(u.uMap,[ZM.W.w,ZM.W.h,46]);gl.activeTexture(gl.TEXTURE0)}}
+  if(u.uZone){gl.activeTexture(gl.TEXTURE1);gl.bindTexture(gl.TEXTURE_2D,G3.ztex);gl.uniform1i(u.uZone,1);gl.uniform3fv(u.uMap,[ZM.W.w,ZM.W.h,46]);gl.activeTexture(gl.TEXTURE0)}
+  // the tripla A: the mist's noise and its strength, the time, the moon's direction, the light in the mist, what faces the camera
+  if(u.uNoi){gl.activeTexture(gl.TEXTURE3);gl.bindTexture(gl.TEXTURE_2D,V3.noiT);gl.uniform1i(u.uNoi,3);gl.activeTexture(gl.TEXTURE0)}if(u.uT)gl.uniform1f(u.uT,(ZM.W.t||0)%1000);
+  if(u.uMoon)gl.uniform3fv(u.uMoon,V3.moon3||[0,0,1]);if(u.uHF)gl.uniform1f(u.uHF,LOWFX?0:V3.low?.32:.48);if(u.uSc)gl.uniform1f(u.uSc,LOWFX?0:V3.low?.55:1);
+  if(u.uBk){const F=V3.F3||[0,1,0];gl.uniform3f(u.uBk,-F[0],-F[1],-F[2])}if(u.uSph)gl.uniform1f(u.uSph,0);if(u.uTx)gl.uniform2f(u.uTx,1/2048,1/2048);if(u.uBump)gl.uniform1f(u.uBump,0);if(u.uWet)gl.uniform1f(u.uWet,0)}
 // ------------------------------------------------------------------ la telecamera
 function v3Camera(dt,Wp,Hp){const W=ZM.W,h=W.hero,C=ZM.CAM,th=-Math.PI/2-C.yaw,fx=Math.cos(th),fy=Math.sin(th),rx=-fy,ry=fx,el=C.el*180/Math.PI,hz=(h.zh||0);
   V3.th=th;V3.R3=[rx,ry,0];const asp=Wp/Hp;let eye,at,up=[0,0,1];
@@ -344,7 +415,8 @@ function v3Camera(dt,Wp,Hp){const W=ZM.W,h=W.hero,C=ZM.CAM,th=-Math.PI/2-C.yaw,f
   const f=[at[0]-eye[0],at[1]-eye[1],at[2]-eye[2]],fl=Math.hypot(f[0],f[1],f[2]);V3.F3=[f[0]/fl,f[1]/fl,f[2]/fl];
   // the camera's own up (for the round things that face it all round)
   const R=V3.R3,F=V3.F3;V3.U3=[R[1]*F[2]-R[2]*F[1],R[2]*F[0]-R[0]*F[2],R[0]*F[1]-R[1]*F[0]];if(V3.U3[2]<0)V3.U3=V3.U3.map(v=>-v);
-  V3.fogP=V3.mode==='prima'?[150,560,.97]:[230,640,.95];V3.fogC=[16/255,19/255,31/255]}
+  V3.fogP=V3.mode==='prima'?[150,560,.97]:[230,640,.95];V3.fogC=[16/255,19/255,31/255];
+  if(!V3.moon3){const M=ZM.MOON||[-.96,.27],l=Math.hypot(M[0],M[1],.6);V3.moon3=[M[0]/l,M[1]/l,.6/l]}}
 // in vista (approssimato): davanti alla telecamera, dentro il cono del campo visivo allargato, entro la nebbia
 function v3Seen(x,y,z,r){const e=V3.eye,dx=x-e[0],dy=y-e[1],dz=z-e[2],F=V3.F3,d=dx*F[0]+dy*F[1]+dz*F[2];if(d<-r)return false;const D=Math.hypot(dx,dy,dz);if(D-r>V3.fogP[0]+V3.fogP[1]*1.05)return false;
   const half=Math.max(V3.fovy,V3.fovy*V3.W/V3.H)*.5+.35;return D<r||d>=Math.cos(half)*D-r}
@@ -356,9 +428,11 @@ function v3Lights(){const W=ZM.W,h=W.hero,e=V3.eye,L=[];for(const l of ZM.lights
   // the hero: as in drawDark, a hole in the night round him (120 wide, .6 deep), no light of its own colour
   put(h.x,h.y,(h.zh||0)+16,120,'0,0,0',0);
   // the flash of each shot lights up what is round the muzzle for a moment
-  if(V3.muzF>.05&&V3.muz&&!LOWFX)put(V3.muz[0],V3.muz[1],V3.muz[2],60+110*V3.muzF,'255,196,110',Math.min(1,.7*V3.muzF));
+  V3.muzSlot=-1;if(V3.muzF>.05&&V3.muz&&!LOWFX){V3.muzSlot=n;put(V3.muz[0],V3.muz[1],V3.muz[2],60+110*V3.muzF,'255,196,110',Math.min(1,.7*V3.muzF))}
   // the lights as drawDark and drawLights make them: the hole in the night 1.2·r wide, the pool of light r wide and a·.8 bright (less as the
   // house round it fades)
+  // (tripla A: the miners' lamps light the street too, as near lights among the others)
+  if(V3.z3&&V3.z3.lamps&&!LOWFX){for(const l of V3.z3.lamps()){const d=Math.hypot(l.x-e[0],l.y-e[1]);if(d<V3.fogP[0]+V3.fogP[1])L.push([d,l])}L.sort((a,b)=>a[0]-b[0])}
   for(const[,l] of L){if(n>max)break;const fl=l.fl?(.9+.1*Math.sin(t*(l.fl===2?2:9)+l.x)*Math.sin(t*5.3+l.y)):1;put(l.x,l.y,(l.z||10)*.6,l.r*1.2*fl,l.rgb||'255,200,120',(l.a||.6)*.8*(l.house?1-l.house.a:1)*fl)}}
 // ------------------------------------------------------------------ il fotogramma
 function v3Size(Wp,Hp,dpr){const gl=V3.gl,sc=Math.min(dpr,2)*(V3.low?.66:1),cw=Math.max(2,Math.round(Wp*sc)),ch=Math.max(2,Math.round(Hp*sc));V3.W=Wp;V3.H=Hp;
@@ -368,8 +442,19 @@ function v3Size(Wp,Hp,dpr){const gl=V3.gl,sc=Math.min(dpr,2)*(V3.low?.66:1),cw=M
     if(V3.gl2)gl.texImage2D(gl.TEXTURE_2D,0,gl.DEPTH_COMPONENT24,cw,ch,0,gl.DEPTH_COMPONENT,gl.UNSIGNED_INT,null);else gl.texImage2D(gl.TEXTURE_2D,0,gl.DEPTH_COMPONENT,cw,ch,0,gl.DEPTH_COMPONENT,gl.UNSIGNED_INT,null);
     for(const[p,v] of[[gl.TEXTURE_MIN_FILTER,gl.NEAREST],[gl.TEXTURE_MAG_FILTER,gl.NEAREST],[gl.TEXTURE_WRAP_S,gl.CLAMP_TO_EDGE],[gl.TEXTURE_WRAP_T,gl.CLAMP_TO_EDGE]])gl.texParameteri(gl.TEXTURE_2D,p,v);
     gl.bindFramebuffer(gl.FRAMEBUFFER,V3.fbo);gl.framebufferTexture2D(gl.FRAMEBUFFER,gl.COLOR_ATTACHMENT0,gl.TEXTURE_2D,V3.fc,0);gl.framebufferTexture2D(gl.FRAMEBUFFER,gl.DEPTH_ATTACHMENT,gl.TEXTURE_2D,V3.fd,0);
-    if(gl.checkFramebufferStatus(gl.FRAMEBUFFER)!==gl.FRAMEBUFFER_COMPLETE){V3.post=false}gl.bindFramebuffer(gl.FRAMEBUFFER,null);V3.fboOk=true}}
-function v3Frame(dt,Wp,Hp,dpr){const gl=V3.gl,W=ZM.W,h=W.hero,t0=performance.now();if(!V3.built||V3.lost)return;const PF=V3.prof,pk=PF?(k=>{gl.finish();const t=performance.now();PF[k]=(PF[k]||0)+t-PF._;PF._=t}):null;if(PF)PF._=t0;
+    if(gl.checkFramebufferStatus(gl.FRAMEBUFFER)!==gl.FRAMEBUFFER_COMPLETE){V3.post=false}gl.bindFramebuffer(gl.FRAMEBUFFER,null);V3.fboOk=true;
+    // the glow's pictures: two at a quarter of the size, two at an eighth (one to blur into, one back)
+    if(V3.bl)for(const r of V3.bl){gl.deleteFramebuffer(r.fb);gl.deleteTexture(r.tex)}V3.bl=null;
+    if(V3.pBr){const w1=Math.max(2,Math.round(cw/4)),h1=Math.max(2,Math.round(ch/4)),w2=Math.max(2,Math.round(cw/8)),h2=Math.max(2,Math.round(ch/8));
+      try{V3.bl=[v3RT(w1,h1),v3RT(w1,h1),v3RT(w2,h2),v3RT(w2,h2)];if(V3.bl.some(r=>!r.ok))V3.bl=null}catch(e){v3Err(e);V3.bl=null}}}}
+// a picture to draw into (the glow's): its framebuffer and its texture, soft when read
+function v3RT(w,h){const gl=V3.gl,tex=v3Tex(gl,null,false,w,h),fb=gl.createFramebuffer();gl.bindFramebuffer(gl.FRAMEBUFFER,fb);gl.framebufferTexture2D(gl.FRAMEBUFFER,gl.COLOR_ATTACHMENT0,gl.TEXTURE_2D,tex,0);
+  const ok=gl.checkFramebufferStatus(gl.FRAMEBUFFER)===gl.FRAMEBUFFER_COMPLETE;gl.bindFramebuffer(gl.FRAMEBUFFER,null);return{fb,tex,w,h,ok}}
+// one full-screen pass of program Q into r (null: the screen), reading the texture src on unit 0
+function v3Pass(Q,r,src,set){const gl=V3.gl;gl.bindFramebuffer(gl.FRAMEBUFFER,r?r.fb:null);gl.viewport(0,0,r?r.w:V3.cw,r?r.h:V3.ch);gl.useProgram(Q.p);gl.activeTexture(gl.TEXTURE0);gl.bindTexture(gl.TEXTURE_2D,src);gl.uniform1i(Q.u.uC,0);
+  if(set)set(Q.u);gl.bindBuffer(gl.ARRAY_BUFFER,V3.qb);gl.enableVertexAttribArray(0);gl.vertexAttribPointer(0,2,gl.FLOAT,false,0,0);for(let i=1;i<5;i++)gl.disableVertexAttribArray(i);gl.drawArrays(gl.TRIANGLES,0,3)}
+function v3Frame(dt,Wp,Hp,dpr){const gl=V3.gl,W=ZM.W,h=W.hero,t0=performance.now();if(!V3.built||V3.lost)return;const PF=V3.prof,pk=PF?(k=>{gl.finish();const t=performance.now();PF[k]=(PF[k]||0)+t-PF._;PF._=t;
+    if(V3.dbgErr){const e=gl.getError();if(e)V3.errAt=(V3.errAt||'')+k+':'+e+' '}}):null;if(PF)PF._=t0;
   // the WebGL canvas sits right under the map's canvas (which keeps the sticks, the vignette and our overlay)
   if(V3.cv.parentNode!==ctx.canvas.parentNode)ctx.canvas.parentNode.insertBefore(V3.cv,ctx.canvas);
   v3Ground();v3Size(Wp,Hp,dpr);v3Camera(dt,Wp,Hp);V3.frame++;v3Zones(false);v3Lights();v3PlaneTick();
@@ -380,7 +465,7 @@ function v3Frame(dt,Wp,Hp,dpr){const gl=V3.gl,W=ZM.W,h=W.hero,t0=performance.now
   // little south, up high) and its halo, very far
   if(V3.pS){const S=V3.pS,e=V3.eye,F=V3.F3,l=Math.hypot(F[0],F[1])||1,hz=v3P(e[0]+F[0]/l*1000,e[1]+F[1]/l*1000,e[2]),hy=hz?1-hz[1]/V3.H:(V3.F3[2]>0?-1:2);gl.disable(gl.DEPTH_TEST);gl.depthMask(false);
     gl.useProgram(S.p);gl.uniform3fv(S.u.uFog,V3.fogC);gl.uniform3f(S.u.uTop,.022,.03,.075);gl.uniform1f(S.u.uHy,hy);gl.bindBuffer(gl.ARRAY_BUFFER,V3.qb);gl.enableVertexAttribArray(0);gl.vertexAttribPointer(0,2,gl.FLOAT,false,0,0);
-    for(let i=1;i<4;i++)gl.disableVertexAttribArray(i);gl.drawArrays(gl.TRIANGLES,0,3);gl.enable(gl.DEPTH_TEST);gl.depthMask(true)}
+    for(let i=1;i<5;i++)gl.disableVertexAttribArray(i);gl.drawArrays(gl.TRIANGLES,0,3);gl.enable(gl.DEPTH_TEST);gl.depthMask(true)}
   {const M=ZM.MOON,e=V3.eye,D=1250,mz=.55,x=e[0]+M[0]*D,y=e[1]+M[1]*D,z=e[2]+D*mz;gl.depthMask(false);gl.enable(gl.BLEND);gl.blendFunc(gl.ONE,gl.ONE);
     const A=V3.moonA,G=V3.glowA,fp=V3.fogP;V3.fogP=[1e5,1,0];
     if(!LOWFX){const ST=V3.stars||(V3.stars=(()=>{let sd=7;const r=()=>(sd=(sd*16807)%2147483647)/2147483647,o=[];for(let i=0;i<240;i++){const az=r()*Math.PI*2,el=Math.asin(.12+r()*.86);o.push([Math.cos(az)*Math.cos(el),Math.sin(az)*Math.cos(el),Math.sin(el),9+r()*r()*16,.45+r()*.55,r()*9])}return o})()),t=W.t||0;
@@ -392,16 +477,21 @@ function v3Frame(dt,Wp,Hp,dpr){const gl=V3.gl,W=ZM.W,h=W.hero,t0=performance.now
   const P=V3.pG;gl.useProgram(P.p);v3Uni(P);gl.uniform1f(P.u.uCut,.02);gl.enable(gl.POLYGON_OFFSET_FILL);gl.polygonOffset(2,4);gl.disable(gl.CULL_FACE);
   if(G3.gbuf){gl.bindBuffer(gl.ARRAY_BUFFER,G3.gbuf);gl.enableVertexAttribArray(0);gl.vertexAttribPointer(0,3,gl.FLOAT,false,20,0);gl.enableVertexAttribArray(1);gl.vertexAttribPointer(1,2,gl.FLOAT,false,20,12);
   gl.disableVertexAttribArray(2);gl.vertexAttrib4f(2,1,1,1,1);gl.activeTexture(gl.TEXTURE0);gl.uniform1i(P.u.uTex,0);
+  // (the ground: its normal up, counting a little more than half, its picture's x along the world's x; the relief of its stones and the wet
+  // shine of the street near the camera)
+  for(const i of[3,4])gl.disableVertexAttribArray(i);gl.vertexAttrib4f(3,0,0,.55,1);gl.vertexAttrib4f(4,1,0,0,1);if(!LOWFX){gl.uniform1f(P.u.uBump,V3.low?1.2:2.4);gl.uniform1f(P.u.uWet,V3.low?.6:.9)}
   if(G3.detT&&!LOWFX){gl.activeTexture(gl.TEXTURE2);gl.bindTexture(gl.TEXTURE_2D,G3.detT);gl.uniform1i(P.u.uDetT,2);gl.activeTexture(gl.TEXTURE0);gl.uniform1f(P.u.uDet,V3.low?.35:.5)}
-  G3.ground.forEach((t,i)=>{if(!v3Seen(t.x+t.w/2,t.y+t.h/2,0,Math.hypot(t.w,t.h)/2))return;gl.bindTexture(gl.TEXTURE_2D,t.tex);gl.drawArrays(gl.TRIANGLES,i*6,6)});gl.uniform1f(P.u.uDet,0)}gl.disable(gl.POLYGON_OFFSET_FILL);
+  G3.ground.forEach((t,i)=>{if(!v3Seen(t.x+t.w/2,t.y+t.h/2,0,Math.hypot(t.w,t.h)/2))return;gl.uniform2f(P.u.uTx,1/t.pw,1/t.ph);gl.bindTexture(gl.TEXTURE_2D,t.tex);gl.drawArrays(gl.TRIANGLES,i*6,6)});
+  gl.uniform1f(P.u.uDet,0);gl.uniform1f(P.u.uWet,0);gl.uniform2f(P.u.uTx,1/2048,1/2048)}gl.disable(gl.POLYGON_OFFSET_FILL);
   if(pk)pk('terreno');
   // the props: one sheet at a time, the visible pieces in runs
-  gl.enable(gl.CULL_FACE);gl.cullFace(gl.BACK);gl.frontFace(gl.CCW);gl.uniform1f(P.u.uCut,.5);if(!LOWFX&&!V3.low)gl.uniform1f(P.u.uShp,.9);
+  gl.enable(gl.CULL_FACE);gl.cullFace(gl.BACK);gl.frontFace(gl.CCW);gl.uniform1f(P.u.uCut,.5);if(!LOWFX&&!V3.low){gl.uniform1f(P.u.uShp,.9);gl.uniform1f(P.u.uBump,1.5)}else gl.uniform1f(P.u.uBump,0);
+  for(const i of[2,3,4])gl.enableVertexAttribArray(i);
   G3.pg.forEach((B,pi)=>{if(!B)return;gl.bindTexture(gl.TEXTURE_2D,V3A.pages[pi].tex);gl.bindBuffer(gl.ARRAY_BUFFER,B.bp);gl.vertexAttribPointer(0,3,gl.FLOAT,false,0,0);gl.bindBuffer(gl.ARRAY_BUFFER,B.bt);gl.vertexAttribPointer(1,2,gl.FLOAT,false,0,0);
-    gl.bindBuffer(gl.ARRAY_BUFFER,B.bc);gl.enableVertexAttribArray(2);gl.vertexAttribPointer(2,4,gl.UNSIGNED_BYTE,true,0,0);let s=-1,n=0;
+    gl.bindBuffer(gl.ARRAY_BUFFER,B.bc);gl.vertexAttribPointer(2,4,gl.UNSIGNED_BYTE,true,0,0);gl.bindBuffer(gl.ARRAY_BUFFER,B.bn);gl.vertexAttribPointer(3,4,gl.BYTE,true,8,0);gl.vertexAttribPointer(4,4,gl.BYTE,true,8,4);let s=-1,n=0;
     for(const c of B.ch){const ok=c.prop._v3c&&(!c.vis||c.vis())&&(!c.tag||!c.prop.house||v3TagVis(c.prop.house,c.tag))&&!(c.f&&v3NearOk(c.prop));if(ok){if(s>=0&&s+n===c.s)n+=c.n;else{if(n)gl.drawArrays(gl.TRIANGLES,s,n);s=c.s;n=c.n}}}if(n)gl.drawArrays(gl.TRIANGLES,s,n)});
   try{v3NearDraw()}catch(e){v3Err(e)}
-  gl.uniform1f(P.u.uShp,0);gl.disable(gl.CULL_FACE);gl.disableVertexAttribArray(2);if(pk)pk('prop');
+  gl.uniform1f(P.u.uShp,0);gl.uniform1f(P.u.uBump,0);gl.disable(gl.CULL_FACE);for(const i of[1,2,3,4])gl.disableVertexAttribArray(i);if(pk)pk('prop');
   // the round things (crowns, pumpkins) facing the camera
   v3Balls();if(pk)pk('chiome');
   // the hand drawings as postcards (from the side they're seen), the flat ones lying on the ground
@@ -423,10 +513,19 @@ function v3Frame(dt,Wp,Hp,dpr){const gl=V3.gl,W=ZM.W,h=W.hero,t0=performance.now
   V3.vm3=false;if(V3.mode==='prima'){try{v3View3(dt)}catch(e){v3Err(e);V3.no3h=true}}if(pk)pk('arma 3D');
   gl.disable(gl.BLEND);gl.depthMask(true);
   // the last pass: the dark outline where the depth jumps, and the vignette
-  if(V3.post){gl.bindFramebuffer(gl.FRAMEBUFFER,null);gl.viewport(0,0,V3.cw,V3.ch);gl.disable(gl.DEPTH_TEST);const Q=V3.pP;gl.useProgram(Q.p);
-    gl.activeTexture(gl.TEXTURE0);gl.bindTexture(gl.TEXTURE_2D,V3.fc);gl.uniform1i(Q.u.uC,0);gl.activeTexture(gl.TEXTURE1);gl.bindTexture(gl.TEXTURE_2D,V3.fd);gl.uniform1i(Q.u.uD,1);gl.activeTexture(gl.TEXTURE0);
-    const ik=Math.max(1,Math.round(V3.cw/Wp*1.1));gl.uniform2f(Q.u.uPx,ik/V3.cw,ik/V3.ch);gl.uniform2f(Q.u.uNF,V3.near,V3.far);gl.uniform1f(Q.u.uInk,LOWFX||V3.low?.6:1);gl.uniform3fv(Q.u.uFogP,V3.fogP);// (uInk 1: the contour two steps thick; .6: one step, lighter)
-    gl.bindBuffer(gl.ARRAY_BUFFER,V3.qb);gl.enableVertexAttribArray(0);gl.vertexAttribPointer(0,2,gl.FLOAT,false,0,0);for(let i=1;i<4;i++)gl.disableVertexAttribArray(i);gl.drawArrays(gl.TRIANGLES,0,3);gl.enable(gl.DEPTH_TEST)}
+  if(V3.post){gl.disable(gl.DEPTH_TEST);const BL=!LOWFX&&V3.bl?V3.bl:null;
+    // the glow (tripla A): the bright parts at a quarter, blurred across (a little wider: the lens's long glints) and down, then at an eighth
+    if(BL){const[a,b,c,d]=BL;v3Pass(V3.pBr,a,V3.fc,u=>{gl.uniform2f(u.uPx,1/V3.cw,1/V3.ch);gl.uniform1f(u.uThr,.72)});
+      v3Pass(V3.pBl,b,a.tex,u=>gl.uniform2f(u.uDir,1.35/a.w,0));v3Pass(V3.pBl,a,b.tex,u=>gl.uniform2f(u.uDir,0,1/a.h));
+      v3Pass(V3.pBr,c,a.tex,u=>{gl.uniform2f(u.uPx,1/a.w,1/a.h);gl.uniform1f(u.uThr,-1)});v3Pass(V3.pBl,d,c.tex,u=>gl.uniform2f(u.uDir,1.4/c.w,0));v3Pass(V3.pBl,c,d.tex,u=>gl.uniform2f(u.uDir,0,1/c.h))}
+    const DI=W.director,hp=DI&&DI.hp!=null?DI.hp/((DI.PZ&&DI.PZ.vita)||100):1,ht=DI&&DI.hurtT!=null?DI.hurtT:9,low=h.dead?0:v3cl((.42-hp)/.3,0,1),hit=v3cl(1-ht/.4,0,1);
+    v3Pass(V3.pP,null,V3.fc,u=>{gl.activeTexture(gl.TEXTURE1);gl.bindTexture(gl.TEXTURE_2D,V3.fd);gl.uniform1i(u.uD,1);gl.activeTexture(gl.TEXTURE2);gl.bindTexture(gl.TEXTURE_2D,BL?BL[0].tex:V3.fc);gl.uniform1i(u.uB1,2);
+      gl.activeTexture(gl.TEXTURE3);gl.bindTexture(gl.TEXTURE_2D,BL?BL[2].tex:V3.fc);gl.uniform1i(u.uB2,3);gl.activeTexture(gl.TEXTURE0);
+      // (uInk 1: the contour two steps thick; .6: one step, lighter)
+      const ik=Math.max(1,Math.round(V3.cw/Wp*1.1));gl.uniform2f(u.uPx,ik/V3.cw,ik/V3.ch);gl.uniform2f(u.uNF,V3.near,V3.far);gl.uniform1f(u.uInk,LOWFX||V3.low?.6:1);gl.uniform3fv(u.uFogP,V3.fogP);
+      gl.uniform1f(u.uT,(W.t||0)%1000);gl.uniform4f(u.uFx,BL?(V3.low?.75:1):0,LOWFX?0:V3.low?.022:.032,LOWFX?0:hit,low);gl.uniform1f(u.uCA,LOWFX||V3.low?0:.016)});gl.enable(gl.DEPTH_TEST);
+    // (the picture's own textures off every unit: the next frame draws into them, and a sampler still pointing at one is a loop)
+    for(let i=3;i>=0;i--){gl.activeTexture(gl.TEXTURE0+i);gl.bindTexture(gl.TEXTURE_2D,null)}}
   if(pk)pk('contorno');
   // over it, in 2D: shots, blood, coins, the sight, the gun in first person
   v3Overlay(dt,Wp,Hp);if(pk)pk('sopra');
@@ -435,7 +534,7 @@ function v3Frame(dt,Wp,Hp,dpr){const gl=V3.gl,W=ZM.W,h=W.hero,t0=performance.now
 // the house parts with the hero inside: no roof (and on the ground floor nothing of the upper floor); outside everything
 function v3TagVis(hs,tag){const inside=(hs.a==null?1:hs.a)<.5,up=(hs.up||0)>.5;if(tag==='roof')return !inside;if(tag==='slab'||tag==='inU'||(tag[0]==='u'&&tag.length===2))return !inside||up;return true}
 function v3Balls(){const by={};for(const b of G3.balls){const p=b.prop;if(!p._v3c||(b.vis&&!b.vis())||(b.tag&&p.house&&!v3TagVis(p.house,b.tag)))continue;(by[b.A.p]=by[b.A.p]||[]).push(b)}
-  for(const k in by){for(const b of by[k]){const A=b.A,r=b.r+4;v3Q(b.x,b.y,b.z,-r,-r*b.sq,r,r*b.sq,A.u0,A.v0,A.u1,A.v1,1,1,1,1)}v3QFlush(V3.pB,V3A.pages[k].tex,V3.U3,.5)}}
+  V3.qSph=1;for(const k in by){for(const b of by[k]){const A=b.A,r=b.r+4;v3Q(b.x,b.y,b.z,-r,-r*b.sq,r,r*b.sq,A.u0,A.v0,A.u1,A.v1,1,1,1,1)}v3QFlush(V3.pB,V3A.pages[k].tex,V3.U3,.5)}V3.qSph=0}
 // the windows' panels change when the planks come and go: their picture is painted again in the same place
 let V3PT=0;function v3PlaneTick(){if(++V3PT%8)return;const gl=V3.gl;for(const e of G3.planes){if(e.t.texId===e.id)continue;e.id=e.t.texId;const c=v3PlaneCv(e.t),A=e.A,k=document.createElement('canvas');k.width=A.w;k.height=A.h;
   k.getContext('2d').drawImage(c,0,0,A.w,A.h);gl.bindTexture(gl.TEXTURE_2D,V3A.pages[A.p].tex);gl.texSubImage2D(gl.TEXTURE_2D,0,A.x,A.y,gl.RGBA,gl.UNSIGNED_BYTE,k)}}
@@ -453,23 +552,25 @@ function v3Fns(){const e=V3.eye,dirNow=((Math.round(V3.th/(Math.PI/8))%16)+16)%1
     const q=C.q;v3Q(f.cx,f.cy,0,q[0],-q[3]/V3CP,q[2],-q[1]/V3CP,C.u0,C.v0,C.u1,C.v1,1,1,1,1)}
   if(V3N)v3QFlush(V3.pB,V3.imp.tex,[0,0,1],.4)}
 // a flat postcard: four corners on the ground (not facing the camera), through the same buffer with a zero right/up and the corners in aP
-function v3QFlat(cx,cy,z,q,C){const D=V3.dyn;if(V3N+66>D.length)return;const P=[[cx+q[0],cy+q[3],C.u0,C.v1],[cx+q[2],cy+q[3],C.u1,C.v1],[cx+q[2],cy+q[1],C.u1,C.v0],[cx+q[0],cy+q[3],C.u0,C.v1],[cx+q[2],cy+q[1],C.u1,C.v0],[cx+q[0],cy+q[1],C.u0,C.v0]];
-  V3.flat=V3.flat||[];for(const v of P)V3.flat.push(v[0],v[1],z,0,0,v[2],v[3],1,1,1,1)}
+function v3QFlat(cx,cy,z,q,C){const D=V3.dyn;if(V3N+V3Q*6>D.length)return;const P=[[cx+q[0],cy+q[3],C.u0,C.v1],[cx+q[2],cy+q[3],C.u1,C.v1],[cx+q[2],cy+q[1],C.u1,C.v0],[cx+q[0],cy+q[3],C.u0,C.v1],[cx+q[2],cy+q[1],C.u1,C.v0],[cx+q[0],cy+q[1],C.u0,C.v0]];
+  V3.flat=V3.flat||[];for(const v of P)V3.flat.push(v[0],v[1],z,0,0,v[2],v[3],1,1,1,1,0,0)}
 function v3Figures(){const W=ZM.W,h=W.hero,e=V3.eye,gl=V3.gl,R0=CR._rig,crk=Object.assign({},R0.cam),rgk=Object.assign({},RIGCAM),list=[];
   // the flat postcards collected by v3Fns go first (they lie on the ground under everyone)
   if(V3.flat&&V3.flat.length){const D=V3.dyn;D.set(V3.flat.slice(0,D.length));V3N=Math.min(V3.flat.length,D.length);V3.flat.length=0;gl.enable(gl.POLYGON_OFFSET_FILL);gl.polygonOffset(-1,-2);
     const R3=V3.R3;V3.R3=[0,0,0];v3QFlush(V3.pB,V3.imp.tex,[0,0,0],.4);V3.R3=R3;gl.disable(gl.POLYGON_OFFSET_FILL)}
-  for(const z of W.Z){const zz=z.zh||0,d=Math.hypot(z.x-e[0],z.y-e[1],zz+30-e[2]);if(d>V3.fogP[0]+V3.fogP[1]||!v3Seen(z.x,z.y,zz+30,60*z.sc))continue;list.push([d,'z',z])}
+  // (tripla A: the zombies in 3D (106) first, solid; those whose pose is not ready yet stay painted this frame)
+  const z3l=[];for(const z of W.Z){const zz=z.zh||0,d=Math.hypot(z.x-e[0],z.y-e[1],zz+30-e[2]);if(d>V3.fogP[0]+V3.fogP[1]||!v3Seen(z.x,z.y,zz+30,60*z.sc))continue;if(V3.z3&&V3.z3.ok(z))z3l.push(z);else list.push([d,'z',z])}
+  if(z3l.length){try{V3.z3.draw(z3l)}catch(er){v3Err(er);V3.z3.on=false}for(const z of z3l)if(!z.__z3)list.push([Math.hypot(z.x-e[0],z.y-e[1],(z.zh||0)+30-e[2]),'z',z])}
   if(V3.mode==='terza'&&!V3.h3ok)list.push([Math.hypot(h.x-e[0],h.y-e[1],(h.zh||0)+30-e[2]),'h',h]);
   const B=ZM.bara&&ZM.bara();if(B&&B.b&&B.E&&!(B.b.posa&&(B.b.posa().sink||0)>=1)){const d=Math.hypot(B.x-e[0],B.y-e[1],20-e[2]);if(d<V3.fogP[0]+V3.fogP[1]&&v3Seen(B.x,B.y,20,70))list.push([d,'b',B])}
-  list.sort((a,b)=>b[0]-a[0]);V3.figs=list.map(q=>q[1]).join('')+(V3.h3ok?'h':'');const dpr=Math.min(2,V3.cw/V3.W);
+  list.sort((a,b)=>b[0]-a[0]);V3.figs=list.map(q=>q[1]).join('')+(V3.h3ok?'h':'')+(V3.z3?'z'.repeat(V3.z3.n||0):'');const dpr=Math.min(2,V3.cw/V3.W);
   try{for(const[d,k,o] of list){const zz=k==='b'?0:(o.zh||0),el=Math.round(Math.atan2(e[2]-(zz+28),Math.max(1,Math.hypot(o.x-e[0],o.y-e[1])))/.052)*.052,tl=v3Tilt(el);
       Object.assign(R0.cam,{k:tl.k,zk:tl.zk});RIGCAM.kr=tl.kr;RIGCAM.zk=tl.zk;
       const ang=Math.atan2(o.y-e[1],o.x-e[0]),psi=-Math.PI/2-ang,kpx=Math.round(v3cl(v3K(d)*dpr*(V3.low?.75:.92),.5,4.2)*4)/4;let S=null,box=null,anchor=[o.x,o.y,zz];
       if(k==='z')({S,box}=v3Zombie(o,psi,kpx,el));else if(k==='h')({S,box}=v3Hero(o,psi,kpx));else({S,box}=v3Box(o,ang,kpx));if(!S)continue;
       v3Q(anchor[0],anchor[1],anchor[2],box[0],-box[3],box[2],-box[1],S.u0,S.v0,S.u1,S.v1,1,1,1,1)}}
   finally{Object.assign(R0.cam,crk);Object.assign(RIGCAM,rgk)}
-  if(V3N){gl.enable(gl.BLEND);gl.blendFunc(gl.SRC_ALPHA,gl.ONE_MINUS_SRC_ALPHA);v3QFlush(V3.pB,V3.spr.tex,[0,0,1],.3);gl.disable(gl.BLEND)}}
+  if(V3N){gl.enable(gl.BLEND);gl.blendFunc(gl.SRC_ALPHA,gl.ONE_MINUS_SRC_ALPHA);V3.qSph=2;v3QFlush(V3.pB,V3.spr.tex,[0,0,1],.3);V3.qSph=0;gl.disable(gl.BLEND)}}
 function v3Zombie(z,psi,k,el){const kind=z.kind,box0=v3BoxOf('z|'+kind,(fc,an,p)=>CR[kind](0,0,fc,an,p,1)),sc=z.sc||1,box=[box0[0]*sc,box0[1]*sc-(z.rise<1?0:0),box0[2]*sc,box0[3]*sc],fc=z.face+psi;
   const pq=Math.floor(((z.p||0)%1)*12)/12,ph=z.rise<1?'r'+Math.round(z.rise*20):z.die?'d'+Math.round(z.die*18):z.fin>0?'f'+Math.round(z.fin*10):'',
     key=kind+'|'+z.anim+'|'+pq+'|'+Math.round(fc/.07)+'|'+k+'|'+el+'|'+ph+'|'+(z.flash>0?1:0);
@@ -505,15 +606,17 @@ function v3Box(B,ang,k){const F=B.F,kk=F.BS,c=Math.cos(B.a),s=Math.sin(B.a),X=B.
 // sinistra, il bordo chiaro, il contorno scuro spesso (lo stesso corpo un poco più grande, girato al rovescio), poi la notte, le luci e la
 // nebbia come tutto il resto. Le teste con pezzi propri (capelli dell'aspetto, cappelli, coda, corna, elmo, piuma, maschera, occhiali) sono
 // la testa dipinta del gioco, vista dalla parte giusta come una palla
-const V3VS_TOON=`attribute vec3 aP;attribute vec3 aN;attribute vec3 aO;attribute vec2 aT;attribute vec4 aC;uniform mat4 uVP;uniform mat4 uM;uniform mat3 uNM;uniform float uOut;
+// (tripla A: the zombies in 3D are poses made once and kept; between two of them the drawing slides from one to the next (aP2, aN2, aO2: the
+// next pose, uKF how far), so they move as smoothly as the screen)
+const V3VS_TOON=`attribute vec3 aP;attribute vec3 aN;attribute vec3 aO;attribute vec2 aT;attribute vec4 aC;attribute vec3 aP2;attribute vec3 aN2;attribute vec3 aO2;uniform mat4 uVP;uniform mat4 uM;uniform mat3 uNM;uniform float uOut;uniform float uKF;
 varying vec3 vN;varying vec4 vC;varying vec3 vW;varying vec2 vT;
-void main(){vec3 n=normalize(uNM*aN);vec3 p=(uM*vec4(aP,1.)).xyz+normalize(uNM*aO)*uOut;vN=n;vC=aC;vT=aT;vW=p;gl_Position=uVP*vec4(p,1.);}`;
+void main(){vec3 P0=mix(aP,aP2,uKF),N0=mix(aN,aN2,uKF),O0=mix(aO,aO2,uKF);vec3 n=normalize(uNM*N0);vec3 p=(uM*vec4(P0,1.)).xyz+(uNM*O0)*uOut;vN=n;vC=aC;vT=aT;vW=p;gl_Position=uVP*vec4(p,1.);}`;
 const V3FS_TOON=`precision highp float;uniform sampler2D uTex;uniform vec4 uTint;uniform vec3 uLd;uniform float uInk;uniform float uFlash;uniform float uAlpha;
 uniform float uHead;uniform vec3 uHc;uniform vec3 uFd;uniform vec3 uHf;uniform vec3 uHu;uniform vec3 uHr;uniform vec3 uE1;uniform vec3 uE2;uniform vec3 uG1;uniform vec3 uG2;
-uniform vec3 uC1;uniform vec3 uC2;uniform vec3 uMo;uniform vec3 uHood;uniform vec3 uSkin;uniform vec3 uEyeC;uniform vec4 uHE;
+uniform vec3 uC1;uniform vec3 uC2;uniform vec3 uMo;uniform vec3 uHood;uniform vec3 uSkin;uniform vec3 uEyeC;uniform vec4 uHE;uniform float uVM;uniform float uEm;
 varying vec3 vN;varying vec4 vC;varying vec3 vW;varying vec2 vT;${V3SHADE}
 float el(vec3 d,vec3 c,float rx,float ry){vec3 q=d-c;float x=dot(q,uHr)/rx,y=dot(q,uHu)/ry;return x*x+y*y;}
-void main(){vec3 ink=vec3(.106,.086,.071);if(uInk>.5){gl_FragColor=vec4(shade(ink,vW,0.),uAlpha);return;}
+void main(){vec3 ink=vec3(.106,.086,.071);if(uInk>.5){gl_FragColor=vec4(shade(ink,vW,vec3(0.),0.,0.),uAlpha);return;}
  vec3 n=normalize(vN);vec3 base=(texture2D(uTex,vT)*vC*uTint).rgb;float flat0=0.;
  if(uHead>.5){vec3 d=normalize(vW-uHc);n=d;base=uHood;
   float sa=atan(dot(d,uHu),dot(d,uHf));if(abs(dot(d,uHr))<.045&&sa>.9&&sa<3.)base=mix(uHood,vec3(.051,.078,.094),.22);
@@ -529,7 +632,12 @@ void main(){vec3 ink=vec3(.106,.086,.071);if(uInk>.5){gl_FragColor=vec4(shade(in
  float l=dot(n,uLd),k=smoothstep(-.6,.9,l);vec3 dk=mix(base,vec3(.051,.078,.094),.34),lt=mix(base,vec3(1.),.22);
  vec3 c=k<.5?mix(dk,base,k*2.):mix(base,lt,k*2.-1.);c=mix(c,base,flat0*.75);
  float fr=1.-clamp(dot(n,normalize(uEye-vW)),0.,1.);c+=vec3(1.,.85,.6)*pow(fr,2.6)*.32*clamp(l+.35,0.,1.)*(1.-flat0);
- c=mix(c,vec3(1.),uFlash*.32);gl_FragColor=vec4(shade(c,vW,.6),uAlpha);}`;
+ // (tripla A: the cold rim of the moon on the side that faces it, so the characters stand out of the night; the lanterns light them from
+ // their side: the normal goes to shade)
+ c+=vec3(.36,.46,.78)*pow(fr,3.)*clamp(dot(n,uMoon)*.8+.25,0.,1.)*.5*(1.-flat0*.6)*(1.-uVM*.8);
+ // (what glows by itself, the zombies' eyes, the lamps, the embers: the colour's alpha below 1, not darkened by the night)
+ // (uEm: how much they glow now; the zombies' eyes breathe)
+ c=mix(c,vec3(1.),uFlash*.32);float em=(1.-vC.a)*(.55+.45*uEm);gl_FragColor=vec4(mix(shade(c,vW,n*.9,.6-uVM*.3,0.),base*(1.+.35*uEm)+vec3(.05),em),uAlpha);}`;
 const RG=CR._rig;
 // a mesh being built: places, normals, texture points, colours, triangles (always turned outward: the same side as the faces of the map)
 function v3MB(){return{P:[],N:[],T:[],C:[],I:[]}}
@@ -552,7 +660,8 @@ function v3Tube(m,P,rad,col,N){const n=P.length;if(n<2)return;const{sub,nrm,cros
 // corners), texture points and colours, 48 bytes each
 function v3Up(mb){const gl=V3.gl,n=mb.P.length/3,buf=new ArrayBuffer(n*48),F=new Float32Array(buf),U=new Uint8Array(buf),acc=new Map();
   for(let i=0;i<n;i++){const k=Math.round(mb.P[i*3]*40)+','+Math.round(mb.P[i*3+1]*40)+','+Math.round(mb.P[i*3+2]*40);let a=acc.get(k);if(!a)acc.set(k,a=[0,0,0,[]]);a[0]+=mb.N[i*3];a[1]+=mb.N[i*3+1];a[2]+=mb.N[i*3+2];a[3].push(i)}
-  for(const a of acc.values()){let l=Math.hypot(a[0],a[1],a[2]);if(l<1e-5){a[0]=mb.N[a[3][0]*3];a[1]=mb.N[a[3][0]*3+1];a[2]=mb.N[a[3][0]*3+2];l=1}for(const i of a[3]){F[i*12+6]=a[0]/l;F[i*12+7]=a[1]/l;F[i*12+8]=a[2]/l}}
+  // (mb.W: how thick each corner's outline is, 1 if not said: the zombies' teeth, eyes and hair have none)
+  for(const a of acc.values()){let l=Math.hypot(a[0],a[1],a[2]);if(l<1e-5){a[0]=mb.N[a[3][0]*3];a[1]=mb.N[a[3][0]*3+1];a[2]=mb.N[a[3][0]*3+2];l=1}for(const i of a[3]){const w=mb.W&&mb.W[i]!=null?mb.W[i]:1;F[i*12+6]=a[0]/l*w;F[i*12+7]=a[1]/l*w;F[i*12+8]=a[2]/l*w}}
   for(let i=0;i<n;i++){const o=i*12;F[o]=mb.P[i*3];F[o+1]=mb.P[i*3+1];F[o+2]=mb.P[i*3+2];F[o+3]=mb.N[i*3];F[o+4]=mb.N[i*3+1];F[o+5]=mb.N[i*3+2];F[o+9]=mb.T[i*2];F[o+10]=mb.T[i*2+1];
     U[o*4+44]=mb.C[i*4];U[o*4+45]=mb.C[i*4+1];U[o*4+46]=mb.C[i*4+2];U[o*4+47]=mb.C[i*4+3]}
   const vb=gl.createBuffer();gl.bindBuffer(gl.ARRAY_BUFFER,vb);gl.bufferData(gl.ARRAY_BUFFER,buf,gl.STATIC_DRAW);
@@ -624,7 +733,7 @@ function v3Statics(){if(V3.hm)return V3.hm;const W=[255,255,255,255],M={};
     for(let j=0;j<rows.length-1;j++)for(let i=0;i<N;i++){v3T(mb,rows[j][i],rows[j][i+1],rows[j+1][i+1]);v3T(mb,rows[j][i],rows[j+1][i+1],rows[j+1][i])}M.foot=v3Up(mb)}
   {const mb=v3MB();v3Tube(mb,[[0,0,0],[1,0,0]],[1,1],W,8);M.stick=v3Up(mb)}
   const gl=V3.gl,wc=document.createElement('canvas');wc.width=wc.height=4;const g=wc.getContext('2d');g.fillStyle='#fff';g.fillRect(0,0,4,4);M.white=v3Tex(gl,wc,false);
-  V3.pT=v3Prog(gl,V3VS_TOON,V3FS_TOON,['aP','aN','aO','aT','aC']);return V3.hm=M}
+  V3.pT=v3Prog(gl,V3VS_TOON,V3FS_TOON,['aP','aN','aO','aT','aC','aP2','aN2','aO2']);return V3.hm=M}
 // the tunic as a picture that goes round the body: x the angle (the front in the middle), y the height (the hem at the bottom); the hem,
 // the collar and the seam with the buttons of the leather jacket, the strap of the quiver, the belt with its golden buckle (as in arciere0)
 const V3TT={};
@@ -677,8 +786,8 @@ function v3SegItem(A0,B0,r,col,out){const{sub,cross,nrm,len,mul}=RG,d=sub(B0,A0)
   return{m:V3.hm.stick,M:v3M4(d,mul(v,r),mul(w,r),A0),tint:v3Tint(col),out}}
 // the pieces through the toon painting: first the outline (the same pieces a little bigger, seen from inside), then the pieces. H: the head
 // (its directions in the room: face, eyes, cheeks, mouth), al: see-through (the invisibility), fl: the white flash of a hit
-function v3Draw3(items,H,al,fl,near){const gl=V3.gl,P=V3.pT,M0=V3.hm,{add,mul,nrm}=RG;gl.useProgram(P.p);v3Uni(P);const u=P.u;
-  const Ld=nrm(add(add(mul(V3.R3,-.5),[0,0,.85]),mul(V3.F3,-.42)));gl.uniform3fv(u.uLd,Ld);gl.uniform1f(u.uFlash,fl||0);gl.uniform1f(u.uAlpha,al);gl.uniform1i(u.uTex,0);gl.activeTexture(gl.TEXTURE0);
+function v3Draw3(items,H,al,fl,near){const gl=V3.gl,P=V3.pT,M0=V3.hm,{add,mul,nrm}=RG;gl.useProgram(P.p);v3Uni(P);const u=P.u;if(u.uKF)gl.uniform1f(u.uKF,0);for(let i=5;i<8;i++)gl.disableVertexAttribArray(i);
+  const Ld=nrm(add(add(mul(V3.R3,-.5),[0,0,.85]),mul(V3.F3,-.42)));gl.uniform3fv(u.uLd,Ld);gl.uniform1f(u.uFlash,fl||0);gl.uniform1f(u.uAlpha,al);if(u.uVM)gl.uniform1f(u.uVM,near?1:0);if(u.uEm)gl.uniform1f(u.uEm,1);gl.uniform1i(u.uTex,0);gl.activeTexture(gl.TEXTURE0);
   for(let i=0;i<5;i++)gl.enableVertexAttribArray(i);gl.enable(gl.CULL_FACE);gl.frontFace(gl.CCW);if(near)gl.depthRange(0,.03);
   if(H&&H.R){const R=H.R,S=R.S,HH=R.head,yr=HH.yaw-H.a,cy=Math.cos(yr),sy=Math.sin(yr),cn=Math.cos(HH.nod),sn=Math.sin(HH.nod),MF=H.MF,
       hl=v=>{v=nrm(v);const x=v[0]*cn+v[2]*sn,y=v[1],z=-v[0]*sn+v[2]*cn;return v3Dir(MF,[x*cy-y*sy,x*sy+y*cy,z])},op=Math.max(.12,HH.blink*(1-.3*HH.squint));
@@ -739,7 +848,13 @@ function v3HeadImp(R,Hw,a){const e=V3.eye,R0=CR._rig,crk=Object.assign({},R0.cam
   v3QFlush(V3.pB,V3.spr.tex,V3.U3,.3);gl.disable(gl.BLEND)}
 // a soft round shadow on the floor under someone
 function v3Blob(x,y,z,r){const S=V3.shadowA;if(!S)return;(V3.blobs=V3.blobs||[]).push([x,y,z,r])}
-function v3Blobs(){const B=V3.blobs,S=V3.shadowA;if(!B||!B.length||!S)return;const gl=V3.gl,R3=V3.R3;V3.R3=[1,0,0];for(const[x,y,z,r] of B)v3Q(x,y,z+.45,-r,-r,r,r,S.u0,S.v0,S.u1,S.v1,1,1,1,1);B.length=0;
+// (tripla A: and a long soft shadow away from the strongest lantern near it, longer the farther it stands from the light)
+function v3Blobs(){const B=V3.blobs,S=V3.shadowA;if(!B||!B.length||!S)return;const gl=V3.gl,R3=V3.R3,uL=V3.uL,uC=V3.uLC;V3.R3=[1,0,0];
+  for(const[x,y,z,r] of B){v3Q(x,y,z+.45,-r,-r,r,r,S.u0,S.v0,S.u1,S.v1,1,1,1,1);
+    if(!LOWFX&&uL){let best=0,bi=-1,bd=0;for(let i=1;i<12;i++){if(i===V3.muzSlot)continue;const lr=uL[i*4+3];if(lr<=0)continue;const d=Math.hypot(x-uL[i*4],y-uL[i*4+1]);if(d>lr*.95||d<2)continue;const w=uC[i*4+3]*(1-d/(lr*.95));if(w>best){best=w;bi=i;bd=d}}
+      if(bi>0&&best>.04){const dx=(x-uL[bi*4])/bd,dy=(y-uL[bi*4+1])/bd,L=r*(1.3+1.7*Math.min(1.6,bd/45)),px=-dy*r*.85,py=dx*r*.85,x0=x-dx*r*.4,y0=y-dy*r*.4,x1=x+dx*L,y1=y+dy*L,zz=z+.5,a=Math.min(.75,best*1.4);
+        v3QW([[x0+px,y0+py,zz],[x1+px,y1+py,zz],[x1-px,y1-py,zz],[x0-px,y0-py,zz]],S.u0,S.v0,S.u1,S.v1,1,1,1,a)}}}
+  B.length=0;
   gl.enable(gl.BLEND);gl.blendFunc(gl.SRC_ALPHA,gl.ONE_MINUS_SRC_ALPHA);gl.depthMask(false);gl.enable(gl.POLYGON_OFFSET_FILL);gl.polygonOffset(-1,-3);
   v3QFlush(V3.pB,V3A.pages[S.p].tex,[0,1,0],.01);V3.R3=R3;gl.disable(gl.POLYGON_OFFSET_FILL);gl.depthMask(true);gl.disable(gl.BLEND)}
 // ------------------------------------------------------------------ la vita della mappa, come dall'alto (il motore la muove in updateAmbient,
@@ -758,7 +873,7 @@ function v3Life(dt){if(LOWFX)return;const W=ZM.W,gl=V3.gl,e=V3.eye,G=V3.glowA,t=
     // the leaves and the moths (little flat things of one colour)
     const wt=V3.white;for(const l of W.leaves||[]){if(!ok(l.x,l.y,l.z,4))continue;const c=v3rgb(l.c),s2=1.4+.6*Math.abs(Math.sin(l.t*4+l.ph));v3Q(l.x,l.y,l.z,-s2,-.7,s2,.7,wt[0],wt[1],wt[0],wt[1],c[0]/255,c[1]/255,c[2]/255,1)}
     for(const f of ZM.flames){if(!f.glass||f.off||!ok(f.x,f.y,f.z||10,30))continue;if(f.house&&f.lvl!=null&&(f.lvl?(f.house.up||0)<.5:(f.house.up||0)>.5))continue;
-      for(let i=0;i<3;i++){const a=t*(1.6+i*.5)+i*2.1+f.x*.01,r=9+4*Math.sin(t*1.3+i),fl=Math.abs(Math.sin(t*28+i*3));v3Q(f.x+Math.cos(a)*r,f.y+Math.sin(a)*r*.6,(f.z||10)-2+Math.sin(a*1.7)*r*.45,-1.6,-.4-fl*.8,1.6,.4+fl*.8,wt[0],wt[1],wt[0],wt[1],.92,.88,.78,.85)}}
+      for(let i=0;i<3;i++){const a=t*(1.6+i*.5)+i*2.1+f.x*.01,r=9+4*Math.sin(t*1.3+i),fl=Math.abs(Math.sin(t*28+i*3));v3Q(f.x+Math.cos(a)*r,f.y+Math.sin(a)*r*.6,(f.z||10)-2+Math.sin(a*1.7)*r*.45,-1.1,-.3-fl*.6,1.1,.3+fl*.6,wt[0],wt[1],wt[0],wt[1],.62,.58,.5,.8)}}
     if(V3N)v3QFlush(V3.pB,V3A.pages[V3.whiteP].tex,V3.U3,.002);
     // the crows: the flock in the sky (the wings beat, they face where they fly) and the perched ones
     const CF=V3.crowF,PF=V3.perchF;if(CF){const byP={},put=(A,x,y,z,x0,y0,x1,y1,flip)=>{(byP[A.p]=byP[A.p]||[]).push([A,x,y,z,x0,y0,x1,y1,flip])};
@@ -806,14 +921,16 @@ function v3Near(){if(LOWFX||V3.low||V3.mode==='alto')return;const gl=V3.gl,e=V3.
       const cv=v3TexHi(f.t,f.ky,K);gl.bindTexture(gl.TEXTURE_2D,V3NA.tex);gl.pixelStorei(gl.UNPACK_PREMULTIPLY_ALPHA_WEBGL,false);gl.texSubImage2D(gl.TEXTURE_2D,0,sl.x,sl.y,gl.RGBA,gl.UNSIGNED_BYTE,cv);
       N.uv.push([sl.x/S,sl.y/S,(sl.x+cv.width)/S,(sl.y+cv.height)/S]);N.i++;V3.nNear=(V3.nNear||0)+1}
     if(N.i>=p._v3f.length){// all its faces painted: their triangles with the new places in the sheet
-      const n=p._v3f.length,buf=new ArrayBuffer(n*6*24),F=new Float32Array(buf),U=new Uint8Array(buf);let o=0;N.runs=[];
-      p._v3f.forEach((f,i)=>{const[u0,v0,u1,v1]=N.uv[i],c=f.c,V=[[c[0],u0,v1],[c[1],u1,v1],[c[2],u1,v0],[c[0],u0,v1],[c[2],u1,v0],[c[3],u0,v0]];N.runs.push({s:i*6,tag:f.tag,vis:f.vis});
-        for(const[q,u,v] of V){F[o*6]=q[0];F[o*6+1]=q[1];F[o*6+2]=q[2];F[o*6+3]=u;F[o*6+4]=v;U[o*24+20]=255;U[o*24+21]=255;U[o*24+22]=255;U[o*24+23]=f.al;o++}});
+      // (32 bytes a corner: place, texture point, colour, and the normal with the picture's direction for the tripla A's light)
+      const n=p._v3f.length,buf=new ArrayBuffer(n*6*32),F=new Float32Array(buf),U=new Uint8Array(buf),I8=new Int8Array(buf);let o=0;N.runs=[];
+      p._v3f.forEach((f,i)=>{const[u0,v0,u1,v1]=N.uv[i],c=f.c,V=[[c[0],u0,v1],[c[1],u1,v1],[c[2],u1,v0],[c[0],u0,v1],[c[2],u1,v0],[c[3],u0,v0]],nn=v3TriN(c[0],c[1],c[2],[u0,v1],[u1,v1],[u1,v0]);N.runs.push({s:i*6,tag:f.tag,vis:f.vis});
+        for(const[q,u,v] of V){F[o*8]=q[0];F[o*8+1]=q[1];F[o*8+2]=q[2];F[o*8+3]=u;F[o*8+4]=v;U[o*32+20]=255;U[o*32+21]=255;U[o*32+22]=255;U[o*32+23]=f.al;for(let k=0;k<8;k++)I8[o*32+24+k]=nn[k];o++}});
       N.vb=gl.createBuffer();gl.bindBuffer(gl.ARRAY_BUFFER,N.vb);gl.bufferData(gl.ARRAY_BUFFER,buf,gl.STATIC_DRAW);N.ready=true}}}
 function v3NearDraw(){if(LOWFX||V3.low||!V3NA.tex)return;const gl=V3.gl;let bound=false;
   for(const p of G3.props){if(!p._v3c||!v3NearOk(p))continue;const N=p._v3n;
     if(!bound){gl.bindTexture(gl.TEXTURE_2D,V3NA.tex);gl.enableVertexAttribArray(2);bound=true}
-    gl.bindBuffer(gl.ARRAY_BUFFER,N.vb);gl.vertexAttribPointer(0,3,gl.FLOAT,false,24,0);gl.vertexAttribPointer(1,2,gl.FLOAT,false,24,12);gl.vertexAttribPointer(2,4,gl.UNSIGNED_BYTE,true,24,20);
+    gl.bindBuffer(gl.ARRAY_BUFFER,N.vb);gl.vertexAttribPointer(0,3,gl.FLOAT,false,32,0);gl.vertexAttribPointer(1,2,gl.FLOAT,false,32,12);gl.vertexAttribPointer(2,4,gl.UNSIGNED_BYTE,true,32,20);
+    gl.vertexAttribPointer(3,4,gl.BYTE,true,32,24);gl.vertexAttribPointer(4,4,gl.BYTE,true,32,28);
     let s=-1,n=0;for(const r of N.runs){const ok=(!r.vis||r.vis())&&(!r.tag||!p.house||v3TagVis(p.house,r.tag));if(ok){if(s>=0&&s+n===r.s)n+=6;else{if(n)gl.drawArrays(gl.TRIANGLES,s,n);s=r.s;n=6}}}if(n)gl.drawArrays(gl.TRIANGLES,s,n)}}
 // i disegni a terra della partita (gli avvisi del Becchino, il fuoco della Bomba, la Tagliola, l'onda del Rintocco, le crepe): quelli del
 // direttore (drawGround), fatti in una tela vista dall'alto intorno all'eroe (600 unità) e stesa a terra; non c'è nessun disegno, niente tela
@@ -824,7 +941,7 @@ function v3Decals(){const W=ZM.W,D=W.director;if(!D||!D.drawGround)return;const 
   const C=ZM.CAM,keep={rot:C.rot,c:C.c,s:C.s,SP:C.SP,CP:C.CP},sv=ctx,mo=typeof MIRA!=='undefined'?MIRA.on:null;C.rot=false;C.c=1;C.s=0;C.SP=1;C.CP=1;ctx=g;if(mo!=null)MIRA.on=false;
   try{D.drawGround(0)}catch(e){v3Err(e)}finally{ctx=sv;Object.assign(C,keep);if(mo!=null)MIRA.on=mo}
   gl.bindTexture(gl.TEXTURE_2D,V3.decTex);gl.pixelStorei(gl.UNPACK_PREMULTIPLY_ALPHA_WEBGL,false);gl.texSubImage2D(gl.TEXTURE_2D,0,0,0,gl.RGBA,gl.UNSIGNED_BYTE,cv);
-  const D3=V3.dyn,x1=x0+2*R,y1=y0+2*R,z=.7,P=[[x0,y1,0,1],[x1,y1,1,1],[x1,y0,1,0],[x0,y1,0,1],[x1,y0,1,0],[x0,y0,0,0]];V3N=0;for(const v of P){D3[V3N++]=v[0];D3[V3N++]=v[1];D3[V3N++]=z;D3[V3N++]=0;D3[V3N++]=0;D3[V3N++]=v[2];D3[V3N++]=v[3];D3[V3N++]=1;D3[V3N++]=1;D3[V3N++]=1;D3[V3N++]=1}
+  const D3=V3.dyn,x1=x0+2*R,y1=y0+2*R,z=.7,P=[[x0,y1,0,1],[x1,y1,1,1],[x1,y0,1,0],[x0,y1,0,1],[x1,y0,1,0],[x0,y0,0,0]];V3N=0;for(const v of P){D3[V3N++]=v[0];D3[V3N++]=v[1];D3[V3N++]=z;D3[V3N++]=0;D3[V3N++]=0;D3[V3N++]=v[2];D3[V3N++]=v[3];D3[V3N++]=1;D3[V3N++]=1;D3[V3N++]=1;D3[V3N++]=1;D3[V3N++]=0;D3[V3N++]=0}
   const R3=V3.R3;V3.R3=[0,0,0];gl.enable(gl.BLEND);gl.blendFunc(gl.SRC_ALPHA,gl.ONE_MINUS_SRC_ALPHA);gl.depthMask(false);gl.enable(gl.POLYGON_OFFSET_FILL);gl.polygonOffset(-2,-4);
   v3QFlush(V3.pB,V3.decTex,[0,0,0],.01);V3.R3=R3;gl.disable(gl.POLYGON_OFFSET_FILL);gl.depthMask(true);gl.disable(gl.BLEND)}
 // ------------------------------------------------------------------ sopra, in 2D: colpi, sangue, monete, il mirino, l'arma in prima persona
