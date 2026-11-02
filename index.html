@@ -18617,11 +18617,13 @@ function boot(area,o){o=o||{};const GAME=!!o.game;let ACT=!GAME,RUN=false,PAUSE=
       else if(whole){if(!wholeFit||look.id==null)wholeFit=fitWhole(Wp,Hp);tx=W.w/2;ty=W.h/2;z=zoomOv||wholeFit[0];oyT=wholeFit[1]}
       else{const lk=(h.lvz||0)*CAM.CP/CAM.SP;tx=h.x-CAM.s*lk;ty=h.y-CAM.c*lk;z=zoomOv||Wp/330;oyT=24*CAM.CP}// l'eroe è il perno: girando resta fermo sullo schermo; sta 24 px (più alto se inclinato) sotto il centro
       const k6=Math.min(1,dt*6);CAM.z+=(z-CAM.z)*Math.min(1,dt*8);CAM.x+=(tx-CAM.x)*k6;CAM.y+=(ty-CAM.y)*k6;CAM.oy+=(oyT-CAM.oy)*k6;camDerive();
-      ctx.setTransform(dpr,0,0,dpr,0,0);ctx.fillStyle='#0b0c12';ctx.fillRect(0,0,Wp,Hp);if(area.backdrop)area.backdrop(Wp,Hp);
+      // (W.v3: la visuale in terza e prima persona, src/js/105-visuale-3d.js, solo nella sua anteprima: disegna lei il mondo, qui restano levette e vignetta)
+      const V3=W.v3&&W.v3.on?W.v3:null;ctx.setTransform(dpr,0,0,dpr,0,0);if(V3){ctx.clearRect(0,0,Wp,Hp);try{V3.draw(dt,Wp,Hp,dpr)}catch(e){console.error(e)}}else{
+      ctx.fillStyle='#0b0c12';ctx.fillRect(0,0,Wp,Hp);if(area.backdrop)area.backdrop(Wp,Hp);
       // (FASE 9) a vista dritta la telecamera sta su pixel interi della tela: le copie degli strati fermi (lcDraw) cadono 1:1
       {const k=dpr*CAM.z,ex=dpr*(Wp/2-CAM.x*CAM.z),ey=dpr*(Hp/2+(CAM.oy-CAM.y)*CAM.z),pin=!CAM.rot&&!W.dbg.noLC;ctx.setTransform(k,0,0,k,pin?Math.round(ex):ex,pin?Math.round(ey):ey)}
       if(tk){ctx.getImageData(0,0,1,1);tk('backdrop')}drawWorld(dt,{Wp,Hp});if(tk){ctx.getImageData(0,0,1,1);tk('world')}
-      drawDark(cv.width,cv.height,(x,y,r)=>{const p=scr(x,y);return[p[0],p[1],r*CAM.z*dpr]},houses[0]?houses[0].a:1);if(tk){ctx.getImageData(0,0,1,1);tk('dark')}
+      drawDark(cv.width,cv.height,(x,y,r)=>{const p=scr(x,y);return[p[0],p[1],r*CAM.z*dpr]},houses[0]?houses[0].a:1);if(tk){ctx.getImageData(0,0,1,1);tk('dark')}}
       ctx.setTransform(dpr,0,0,dpr,0,0);if(!W.dbg.noSticks&&!whole){drawStick(stick,64,Hp-196);drawLook(Wp-64,Hp-(W.lookY||196))}
       zVig(Wp,Hp);
       const show=hudOn&&!W.dbg.noSticks;if(nordEl.hidden===show)nordEl.hidden=!show;if(show)drawNord();if(tk){ctx.getImageData(0,0,1,1);tk('hud')}
@@ -18728,7 +18730,7 @@ orderReset:()=>{ORD.mm.m=new Map();ORD.fm.m=new Map();ORD.fr+=5},
     texStats:()=>{let n=0,px=0,np=0,pp=0;for(const k in TEX){n++;px+=TEX[k].width*TEX[k].height}for(const k in PLANES){np++;pp+=PLANES[k].width*PLANES[k].height}return{n,mpx:+(px/1e6).toFixed(2),np,mpp:+(pp/1e6).toFixed(2)}},
     buys,equip,buyNow:id=>{const o=buys.find(b=>b.id===id);return o?o.act():null},box:()=>BOX,boxTo:i=>{const q=BOX.spots[i];boxPlace(q[0],q[1],q[3]||0);navBuild();if(NAV)NAV.hc=-1;return[q[0],q[1]]},coins:v=>{if(v!=null)W.coins=v;return W.coins},gun:()=>gunState,nuova:()=>CTL.nuova()};
   return CTL}
-return{scala,STAIRS,sameLv,heroLv,climbStart,SB,pickHole,holeDist,zoneOk,shutNear,farOpen,groundSpot,riposiziona,toWorld:(x,y)=>TURN?tP(TURN,x,y):[x,y],dirWorld:(x,y)=>TURN?tV(TURN,x,y):[x,y],AREE,anteprima,boxReset,stile,idleZombie,buyable,buys,barrier,BARS,barCheck,sorpresa,equip,hurt,spawn,KINDS,move,zWalk,sep,physClear,gun:()=>gunState,navRebuild:()=>{navBuild();if(NAV)NAV.hc=-1},softImg,turn,group,grp,finalize,facing,across,onGround,onPlane,onRound,ringNear,T,CAM,W,S,LS,MOON,inGround,scrAng,decals,fades,NAMES,stand,stands,heightAt,add3,sub3,len3,rnd,rr,srand,ink,path,hull,material,MAT,MARKS,texture,tone,face,hullOf,ballAt,line3,poly3,fn3,box,prismX,prismY,plane,cyl,prop,solid,shade,shadeR,props,solids,shadows,lights,flames,holes,houses,smokes,perches,hit,bakeGround,edgeSnap,boot,bootAsync,libera,ricuoci,setLive:f=>{liveDraw=f},wa,mix,cl,ez,lerp,TAU,ball,seg}})();
+return{HSTYLE,bara:()=>BOX,scala,STAIRS,sameLv,heroLv,climbStart,SB,pickHole,holeDist,zoneOk,shutNear,farOpen,groundSpot,riposiziona,toWorld:(x,y)=>TURN?tP(TURN,x,y):[x,y],dirWorld:(x,y)=>TURN?tV(TURN,x,y):[x,y],AREE,anteprima,boxReset,stile,idleZombie,buyable,buys,barrier,BARS,barCheck,sorpresa,equip,hurt,spawn,KINDS,move,zWalk,sep,physClear,gun:()=>gunState,navRebuild:()=>{navBuild();if(NAV)NAV.hc=-1},softImg,turn,group,grp,finalize,facing,across,onGround,onPlane,onRound,ringNear,T,CAM,W,S,LS,MOON,inGround,scrAng,decals,fades,NAMES,stand,stands,heightAt,add3,sub3,len3,rnd,rr,srand,ink,path,hull,material,MAT,MARKS,texture,tone,face,hullOf,ballAt,line3,poly3,fn3,box,prismX,prismY,plane,cyl,prop,solid,shade,shadeR,props,solids,shadows,lights,flames,holes,houses,smokes,perches,hit,bakeGround,edgeSnap,boot,bootAsync,libera,ricuoci,setLive:f=>{liveDraw=f},wa,mix,cl,ez,lerp,TAU,ball,seg}})();
 // ---------- PROP della mappa zombie: tutto ciò che sta in piedi sul terreno, costruito sul motore (ZM) con volumi 3D che si piegano
 // via dall'eroe. Ogni prop registra i suoi pezzi (facce con texture, sfere, linee), i solidi per le collisioni, le ombre da cuocere nel
 // terreno, le luci e le fiamme. Misure in pixel del gioco (una casella = 64; l'eroe è alto circa 30).

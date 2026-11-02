@@ -401,6 +401,22 @@ creazione): `python3 anteprime/mk_anteprima49.py <cartella>` (divisa come il gio
   la Classica e le abilità trascinate come prima. Prova `node tests/a49/mira.js` (37 controlli, foto `tests/a49/mi_*.png`). Dettagli in
   `docs/anteprima-49.md` (8, 8b, 8c, 8d e 8e).
 
+## Visuale in terza e prima persona (2 novembre, anteprima a parte)
+
+Denis: «fai un'anteprima a parte facendo vedere come sarebbe la modalità zombie se la telecamera fosse tipo in terza persona e prima
+persona». `src/js/105-visuale-3d.js` (`V3`, `G3`; fuori da `src/ordine.txt` e fuori dall'Anteprima 49): nella partita zombie il bottone
+**«Visuale»** in alto a destra sotto la bussola (o il tasto C) passa tra **Dall'alto** (oggi), **Terza persona** (la telecamera dietro le
+spalle, che non entra nei muri) e **Prima persona** (gli occhi dell'eroe, il mirino, l'arma 3D in mano con rinculo, vampa e ricarica); la prima
+partita parte da sola in terza persona. Stessa partita e stessi comandi (la levetta cammina rispetto a dove si guarda, il dito a destra gira e
+guarda su e giù, si spara da soli dove si guarda, 104). Il mondo lo disegna WebGL: la mappa vera, gli stessi pezzi 3D del motore con le loro
+texture dipinte (in fogli da 2048), pannelli coi buchi, aste, chiome come dischi, i disegni a mano del motore dipinti dalla parte da cui li si
+guarda e messi in piedi come cartoline, il terreno cotto; la notte, le luci e la nebbia come dall'alto, più fitta nelle zone chiuse; il contorno
+scuro dove la profondità salta; zombie, eroe e Bara sono i loro disegni dipinti girati e inclinati come li vede la telecamera; a terra gli
+avvisi del Becchino e le abilità. Aggancio nel motore della mappa che senza il file non fa niente: `W.v3` in `render()`; in `ZM` anche
+`HSTYLE` e `bara()`. Pagina: `python3 anteprime/mk_visuale.py <cartella>` (l'Anteprima 49 più 105; si apre col menu sulla Zombie), pubblicata
+a parte (sotto, «Dove sta il lavoro»). Prova `python3 tests/v3/mk.py` e `node tests/v3/visuale.js` (13 controlli, foto `tests/v3/vi_*.png`).
+Dettagli, cosa non si vede ancora in 3D e misure in `docs/visuale-3d.md`. Solo da vedere: niente entra nel gioco senza il sì di Denis.
+
 ## FASE 9: più fluido sul telefono (19 ottobre, in corso)
 
 Denis: «vai, lascia perdere l'intro ecc» (la FASE 9 subito; intro, prologo e filmati non si toccano). Il gioco più fluido sul suo iPhone
