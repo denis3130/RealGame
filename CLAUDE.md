@@ -461,7 +461,8 @@ disegni), `112-t3-nemici.js` (`T3N`: slime, pipistrello, fungo, pianta, fuoco fa
 volta), `113-t3-golem.js` (`T3GL`: il Golem a pezzi mossi dalle pose del suo modello; `golem2.js` esporta solo i conti in
 `N3.meta.golem2.k3`, una riga che non disegna niente), `114-t3-stanza.js` (`T3S`: ostacoli del primo mondo in 3D), `115-t3-effetti.js`
 (`T3FX`: luci dei colpi, lampi, telecamera che si stringe, tonfi). Usa gli attrezzi di `105-visuale-3d.js` (spenta come visuale; nel
-vestito le costole degli scheletri). Pagina: `python3 anteprime/mk_tripla.py <cartella>` (contatore dei fotogrammi acceso); prova
+vestito le costole degli scheletri). Pagina: `python3 anteprime/mk_tripla.py <cartella>` (contatore dei fotogrammi acceso), pubblicata a parte su
+https://claude.ai/artifact/8UveByoEu5gWa7cXm6aUEw («Mossbound tripla A»; si aggiorna ripubblicando la stessa cartella); prova
 `python3 tests/t3/mk.py`, poi `node tests/t3/tripla.js` (26 controlli), foto `tests/t3/tr_lotta.jpg` e `tr_golem.jpg`. Dettagli, tempi e cosa manca (scarabeo,
 occhio d'ombra e fiore occhio ancora cartoline; raccolte e colpi disegni 2D con la loro luce) in `docs/tripla-a.md`. Niente entra nel
 gioco senza il sì di Denis.

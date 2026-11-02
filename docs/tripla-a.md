@@ -56,7 +56,7 @@ Con gli effetti ridotti (`LOWFX`): meno luci, niente luci dei colpi in volo.
 
 - `python3 anteprime/mk_tripla.py <cartella>` → `anteprime/tripla.html` e la stessa pagina divisa in tre pezzi nella cartella; alla
   prima apertura c'è già un eroe, il menu è sulla Classica e il contatore dei fotogrammi è acceso.
-- Pubblicata a parte: https://claude.ai/artifact/… (vedi CLAUDE.md, «Mossbound tripla A»); si aggiorna ripubblicando la stessa cartella.
+- Pubblicata a parte su https://claude.ai/artifact/8UveByoEu5gWa7cXm6aUEw («Mossbound tripla A»); si aggiorna ripubblicando la stessa cartella.
 - Prove: `python3 tests/t3/mk.py`, poi `node tests/t3/tripla.js` (26 controlli: stanza in 3D, eroe, ogni nemico del primo mondo in tutte
   le mosse, il Golem in tutte le 15 mosse nelle due fasi, ostacoli, le due luci, lampi e telecamera, effetti ridotti, il disegno di sempre
   fuori dal primo mondo, nessun errore). Foto in `tests/t3/`: `tr_lotta.jpg` (la stessa stanza col disegno di oggi, con la luce
