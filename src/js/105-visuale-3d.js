@@ -47,15 +47,25 @@ const v3Hash=s=>{let h=2166136261;for(let i=0;i<s.length;i++){h^=s.charCodeAt(i)
 const V3SHADE=`uniform vec3 uEye;uniform vec4 uL[12];uniform vec4 uLC[12];uniform vec3 uFog;uniform vec3 uDark;uniform float uDarkA;uniform vec3 uFogP;
 uniform sampler2D uZone;uniform vec3 uMap;
 vec3 shade(vec3 col,vec3 P,float glowK){float lit=0.;vec3 add=vec3(0.);
- for(int i=0;i<12;i++){vec4 L=uL[i];if(L.w<=0.)continue;vec3 d=P-L.xyz;d.z*=.7;float k=clamp(1.-length(d)/L.w,0.,1.);k=k*k*(3.-2.*k);lit=max(lit,k*uLC[i].a);add+=uLC[i].rgb*(k*k*uLC[i].a);}
- col=mix(col,uDark,uDarkA*(1.-clamp(lit,0.,1.)));col+=add*.42*glowK;
+ for(int i=0;i<12;i++){vec4 L=uL[i];if(L.w<=0.)continue;vec3 d=P-L.xyz;d.z*=.7;float q=length(d)/L.w;float kh=clamp(1.-q,0.,1.);lit=max(lit,kh*(i==0?.6:.85));
+  float kg=clamp(1.-q*1.2,0.,1.);add+=uLC[i].rgb*(kg*kg*(3.-2.*kg)*uLC[i].a);}
+ col=mix(col,uDark,uDarkA*(1.-clamp(lit,0.,1.)));col+=add*.8*glowK;
  float d=distance(P,uEye);float f=clamp((d-uFogP.x)/uFogP.y,0.,1.);f=f*f*(3.-2.*f)*uFogP.z;
  float zc=texture2D(uZone,clamp(P.xy/uMap.xy,0.,1.)).r;vec2 e=min(P.xy,uMap.xy-P.xy);float ed=1.-clamp(min(e.x,e.y)/uMap.z,0.,1.);
  f=max(f,max(zc*.8,ed*.92));return mix(col,uFog,f);}`;
 const V3VS_GEO=`attribute vec3 aP;attribute vec2 aT;attribute vec4 aC;uniform mat4 uVP;varying vec2 vT;varying vec4 vC;varying vec3 vW;
 void main(){vT=aT;vC=aC;vW=aP;gl_Position=uVP*vec4(aP,1.);}`;
-const V3FS_GEO=`precision highp float;uniform sampler2D uTex;uniform float uCut;varying vec2 vT;varying vec4 vC;varying vec3 vW;${V3SHADE}
-void main(){vec4 t=texture2D(uTex,vT)*vC;if(t.a<uCut)discard;gl_FragColor=vec4(shade(t.rgb,vW,1.),1.);}`;
+// (the ground has a fine detail near the camera: its photo is 1.5 pixels a unit, seen from a few steps away each pixel would be a big soft
+// spot; three grains in one picture, grass blades, stone grain, pebbles, chosen by the ground's own colour, at two sizes so they never repeat)
+// (the walls' pictures are about one pixel a unit: near the camera they are sharpened a little, the picture's own steps made crisper; uShp is
+// how much, the sheets are 2048 wide)
+const V3FS_GEO=`precision highp float;uniform sampler2D uTex;uniform float uCut;uniform sampler2D uDetT;uniform float uDet;uniform float uShp;varying vec2 vT;varying vec4 vC;varying vec3 vW;${V3SHADE}
+void main(){vec4 t=texture2D(uTex,vT)*vC;if(t.a<uCut)discard;vec3 c=t.rgb;
+ if(uShp>0.){float k=uShp*(1.-smoothstep(50.,150.,distance(vW,uEye)));if(k>0.){const float o=1./2048.;vec3 n=(texture2D(uTex,vT+vec2(o,0.)).rgb+texture2D(uTex,vT-vec2(o,0.)).rgb+texture2D(uTex,vT+vec2(0.,o)).rgb+texture2D(uTex,vT-vec2(0.,o)).rgb)*.25*vC.rgb;
+  c=clamp(c+(c-n)*k,0.,1.);}}
+ if(uDet>0.){float s=uDet*(1.-smoothstep(60.,200.,distance(vW,uEye)));if(s>0.){vec3 dd=(texture2D(uDetT,vW.xy/23.).rgb+texture2D(uDetT,vW.xy/37.+.31).rgb)*.5-.5;
+  float wg=smoothstep(.012,.07,c.g-max(c.r,c.b)),wd=(1.-wg)*smoothstep(.02,.1,c.r-c.b),ws=clamp(1.-wg-wd,0.,1.);c*=1.+(dd.r*wg+dd.b*wd+dd.g*ws)*s;}}
+ gl_FragColor=vec4(shade(c,vW,1.),1.);}`;
 // i cartelli che guardano la telecamera: il punto d'appoggio + lo scarto lungo la destra (uR) e il su (uU) della telecamera
 const V3VS_BB=`attribute vec3 aP;attribute vec2 aQ;attribute vec2 aT;attribute vec4 aC;uniform mat4 uVP;uniform vec3 uR;uniform vec3 uU;varying vec2 vT;varying vec4 vC;varying vec3 vW;
 void main(){vec3 p=aP+uR*aQ.x+uU*aQ.y;vT=aT;vC=aC;vW=p;gl_Position=uVP*vec4(p,1.);}`;
@@ -71,9 +81,13 @@ const V3FS_SKY=`precision mediump float;uniform vec3 uFog;uniform vec3 uTop;unif
 void main(){float t=smoothstep(uHy-.03,uHy+.55,vU.y);gl_FragColor=vec4(mix(uFog,uTop,t*t*(3.-2.*t)),1.);}`;
 const V3FS_POST=`precision highp float;uniform sampler2D uC;uniform sampler2D uD;uniform vec2 uPx;uniform vec2 uNF;uniform float uInk;uniform vec3 uFogP;varying vec2 vU;
 float lin(float d){float z=d*2.-1.;return 2.*uNF.x*uNF.y/(uNF.y+uNF.x-z*(uNF.y-uNF.x));}
+float far4(vec2 o){return max(max(lin(texture2D(uD,vU+vec2(o.x,0.)).r),lin(texture2D(uD,vU-vec2(o.x,0.)).r)),max(lin(texture2D(uD,vU+vec2(0.,o.y)).r),lin(texture2D(uD,vU-vec2(0.,o.y)).r)));}
 void main(){vec3 c=texture2D(uC,vU).rgb;float d0=lin(texture2D(uD,vU).r);
- float m=max(max(lin(texture2D(uD,vU+vec2(uPx.x,0.)).r),lin(texture2D(uD,vU-vec2(uPx.x,0.)).r)),max(lin(texture2D(uD,vU+vec2(0.,uPx.y)).r),lin(texture2D(uD,vU-vec2(0.,uPx.y)).r)));
- float fg=clamp((d0-uFogP.x)/uFogP.y,0.,1.);float e=smoothstep(.035*d0+2.,.07*d0+6.,m-d0)*uInk*(1.-fg*fg*(3.-2.*fg))*step(d0,uNF.y*.97);c=mix(c,vec3(.055,.045,.04),e*.9);
+ // (the dark contour as thick as the map's from above: the depth looked at one and two steps away; on a slow phone one step)
+ float m=far4(uPx);if(uInk>.8)m=max(m,far4(uPx*2.));
+ float fg=clamp((d0-uFogP.x)/uFogP.y,0.,1.);float e=smoothstep(.035*d0+2.,.07*d0+6.,m-d0)*min(uInk,1.)*(1.-fg*fg*(3.-2.*fg))*step(d0,uNF.y*.97);c=mix(c,vec3(.055,.045,.04),e*.9);
+ // (colours a little fuller, like the map's)
+ float l=dot(c,vec3(.299,.587,.114));c=max(vec3(0.),mix(vec3(l),c,1.1));
  vec2 q=vU-.5;float v=smoothstep(.36,.9,length(q*vec2(1.,1.15)));c*=1.-.5*v;gl_FragColor=vec4(c,1.);}`;
 function v3Sh(gl,t,src){const s=gl.createShader(t);gl.shaderSource(s,src);gl.compileShader(s);if(!gl.getShaderParameter(s,gl.COMPILE_STATUS))throw new Error(gl.getShaderInfoLog(s)+'\n'+src.slice(0,200));return s}
 function v3Prog(gl,vs,fs,attrs){const p=gl.createProgram();gl.attachShader(p,v3Sh(gl,gl.VERTEX_SHADER,vs));gl.attachShader(p,v3Sh(gl,gl.FRAGMENT_SHADER,fs));attrs.forEach((a,i)=>gl.bindAttribLocation(p,i,a));
@@ -82,8 +96,11 @@ function v3Prog(gl,vs,fs,attrs){const p=gl.createProgram();gl.attachShader(p,v3S
 function v3Tex(gl,src,mip,w,h){const t=gl.createTexture();gl.bindTexture(gl.TEXTURE_2D,t);gl.pixelStorei(gl.UNPACK_PREMULTIPLY_ALPHA_WEBGL,false);
   if(src)gl.texImage2D(gl.TEXTURE_2D,0,gl.RGBA,gl.RGBA,gl.UNSIGNED_BYTE,src);else gl.texImage2D(gl.TEXTURE_2D,0,gl.RGBA,w,h,0,gl.RGBA,gl.UNSIGNED_BYTE,null);
   const W0=src?src.width:w,H0=src?src.height:h,pot=v=>(v&(v-1))===0,ok=mip&&(V3.gl2||(pot(W0)&&pot(H0)));if(ok)gl.generateMipmap(gl.TEXTURE_2D);
-  gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_MIN_FILTER,ok?gl.LINEAR_MIPMAP_LINEAR:gl.LINEAR);gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_MAG_FILTER,gl.LINEAR);
+  gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_MIN_FILTER,ok?gl.LINEAR_MIPMAP_LINEAR:gl.LINEAR);gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_MAG_FILTER,gl.LINEAR);if(ok)v3Aniso(gl);
   gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_WRAP_S,gl.CLAMP_TO_EDGE);gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_WRAP_T,gl.CLAMP_TO_EDGE);return t}
+// the textures seen slantwise (the ground, the walls along the street) stay sharp: anisotropic filtering, where the phone has it
+function v3Aniso(gl){if(V3.anE===undefined){V3.anE=gl.getExtension('EXT_texture_filter_anisotropic')||gl.getExtension('WEBKIT_EXT_texture_filter_anisotropic')||null;V3.anM=V3.anE?Math.min(8,gl.getParameter(V3.anE.MAX_TEXTURE_MAX_ANISOTROPY_EXT)||1):0}
+  if(V3.anE&&V3.anM>1)gl.texParameterf(gl.TEXTURE_2D,V3.anE.TEXTURE_MAX_ANISOTROPY_EXT,V3.low?Math.min(4,V3.anM):V3.anM)}
 function v3Init(){if(V3.ok!==null)return V3.ok;V3.ok=false;
   const c=document.createElement('canvas');c.id='v3cv';c.style.pointerEvents='none';let gl=null;const o={antialias:false,alpha:false,depth:true,stencil:false,premultipliedAlpha:false,powerPreference:'high-performance'};
   try{gl=c.getContext('webgl2',o)}catch(e){}V3.gl2=!!gl;if(!gl)try{gl=c.getContext('webgl',o)||c.getContext('experimental-webgl',o)}catch(e){}if(!gl)return false;
@@ -108,7 +125,7 @@ function v3Put(src,dw,dh,sx,sy,sw,sh){const S=V3A.S,pad=4;dw=Math.max(2,Math.rou
 // prop con la stessa parte della casa stanno di fila, così si accendono e si spengono insieme (prop nascosti, assi, ante, tetti)
 const G3={pg:[],balls:[],fns:[],planes:[],plc:new Map(),ground:[],props:[],hg:null};
 function v3Buf(pi){return G3.pg[pi]||(G3.pg[pi]={P:[],T:[],C:[],ch:[],cur:null,n:0})}
-function v3Tri(pi,prop,tag,vis,a,b,c,ta,tb,tc,col){const B=v3Buf(pi);let ch=B.cur;if(!ch||ch.prop!==prop||ch.tag!==tag||ch.vis!==vis){ch={prop,tag,vis,s:B.n,n:0};B.ch.push(ch);B.cur=ch}
+function v3Tri(pi,prop,tag,vis,a,b,c,ta,tb,tc,col){const B=v3Buf(pi),f=V3.triF||0;let ch=B.cur;if(!ch||ch.prop!==prop||ch.tag!==tag||ch.vis!==vis||ch.f!==f){ch={prop,tag,vis,f,s:B.n,n:0};B.ch.push(ch);B.cur=ch}
   B.P.push(a[0],a[1],a[2],b[0],b[1],b[2],c[0],c[1],c[2]);B.T.push(ta[0],ta[1],tb[0],tb[1],tc[0],tc[1]);for(let i=0;i<3;i++)B.C.push(col[0],col[1],col[2],col[3]);B.n+=3;ch.n+=3;
   const bb=prop._v3b;for(const q of[a,b,c]){if(q[0]<bb[0])bb[0]=q[0];if(q[1]<bb[1])bb[1]=q[1];if(q[2]<bb[2])bb[2]=q[2];if(q[0]>bb[3])bb[3]=q[0];if(q[1]>bb[4])bb[4]=q[1];if(q[2]>bb[5])bb[5]=q[2]}}
 // la normale verso fuori di una faccia del motore (i suoi angoli girano al contrario della regola della mano destra)
@@ -133,17 +150,18 @@ function v3Build(){const W=ZM.W,K=V3.low?.75:.95,t0=performance.now();V3.tb={};
   const wc=document.createElement('canvas');wc.width=wc.height=8;const wg=wc.getContext('2d');wg.fillStyle='#fff';wg.fillRect(0,0,8,8);const WH=v3Put(wc,8,8);V3.white=[(WH.u0+WH.u1)/2,(WH.v0+WH.v1)/2];V3.whiteP=WH.p;
   const WT=[V3.white,V3.white,V3.white];
   for(const p of ZM.props){const R=p.rot,X=R?(q=>{const dx=q[0]-R.cx,dy=q[1]-R.cy;return[R.cx+dx*R.c-dy*R.s,R.cy+dx*R.s+dy*R.c,q[2]||0]}):(q=>[q[0],q[1],q[2]||0]);
-    p._v3b=[1e9,1e9,1e9,-1e9,-1e9,-1e9];G3.props.push(p);const tall=!/^(tree|bush|cornRow|hay|grass)/.test(p.name||'');
+    p._v3b=[1e9,1e9,1e9,-1e9,-1e9,-1e9];G3.props.push(p);const tall=!/^(tree|bush|cornRow|hay|grass)/.test(p.name||''),hq=[];
     for(const t of p.parts){const tag=t.part||'',vis=t.vis||null,tq=performance.now();
       try{switch(t.k){
         case'face':{const c=t.c.map(X),al=Math.round(255*(t.alpha==null?1:t.alpha));
           if(t.col){const col=v3rgb(t.col);v3Tri(V3.whiteP,p,tag,vis,c[0],c[1],c[2],...WT,[col[0],col[1],col[2],al]);v3Tri(V3.whiteP,p,tag,vis,c[0],c[2],c[3],...WT,[col[0],col[1],col[2],al])}
-          else{const tx=v3FaceTex(t,R?v3KeyR(t.key,R.q):t.key),A=v3Region(tx,K/2),C=[255,255,255,al];
-            v3Tri(A.p,p,tag,vis,c[0],c[1],c[2],[A.u0,A.v1],[A.u1,A.v1],[A.u1,A.v0],C);v3Tri(A.p,p,tag,vis,c[0],c[2],c[3],[A.u0,A.v1],[A.u1,A.v0],[A.u0,A.v0],C)}
-          if(tall&&tag!=='roof')v3HG(c);break}
+          else{const ky=R?v3KeyR(t.key,R.q):t.key,tx=v3FaceTex(t,ky),A=v3Region(tx,K/2),C=[255,255,255,al];V3.triF=1;
+            v3Tri(A.p,p,tag,vis,c[0],c[1],c[2],[A.u0,A.v1],[A.u1,A.v1],[A.u1,A.v0],C);v3Tri(A.p,p,tag,vis,c[0],c[2],c[3],[A.u0,A.v1],[A.u1,A.v0],[A.u0,A.v0],C);V3.triF=0;
+            (p._v3f=p._v3f||[]).push({c,ky,t,tag,vis,al})}
+          if(tall&&tag!=='roof')hq.push(c);break}
         case'facepoly':{const c=t.c.map(X),m=ZM.MAT[t.mat]||ZM.MAT.stone,key=R?v3KeyR(t.key,R.q):t.key,col=v3rgb(t.col||ZM.tone(m,key));
-          if(t.tex){const B=v3BakePoly(t,c,col);if(B){const tr=v3Ears(c);for(const[a,b,d] of tr)v3Tri(B.A.p,p,tag,vis,c[a],c[b],c[d],B.uv[a],B.uv[b],B.uv[d],[255,255,255,255]);if(tall&&tag!=='roof')v3HG(c);break}}
-          for(const[a,b,d] of v3Ears(c))v3Tri(V3.whiteP,p,tag,vis,c[a],c[b],c[d],...WT,col);if(tall&&tag!=='roof')v3HG(c);break}
+          if(t.tex){const B=v3BakePoly(t,c,col);if(B){const tr=v3Ears(c);for(const[a,b,d] of tr)v3Tri(B.A.p,p,tag,vis,c[a],c[b],c[d],B.uv[a],B.uv[b],B.uv[d],[255,255,255,255]);if(tall&&tag!=='roof')hq.push(c);break}}
+          for(const[a,b,d] of v3Ears(c))v3Tri(V3.whiteP,p,tag,vis,c[a],c[b],c[d],...WT,col);if(tall&&tag!=='roof')hq.push(c);break}
         case'poly':{const c=t.pts.map(X).map(q=>[q[0],q[1],q[2]<.6?q[2]+.25:q[2]]),col=v3rgb(t.col);for(const[a,b,d] of v3Ears(c)){v3Tri(V3.whiteP,p,tag,vis,c[a],c[b],c[d],...WT,col);v3Tri(V3.whiteP,p,tag,vis,c[a],c[d],c[b],...WT,col)}break}
         case'plane':{let c=t.c.map(X);if(t.host){const n=v3Nrm(t.host.c.map(X));c=c.map(q=>[q[0]+n[0]*.6,q[1]+n[1]*.6,q[2]+n[2]*.6])}
           // (the same picture once, except the windows, whose picture changes on its own with their planks)
@@ -161,6 +179,9 @@ function v3Build(){const W=ZM.W,K=V3.low?.75:.95,t0=performance.now();V3.tb={};
           if(x1-x0>900||y1-y0>900)break;const flat=z1-z0<5&&z1<14;G3.fns.push({t,prop:p,tag,vis,R,b:[x0,y0,z0,x1,y1,z1],flat,cx:(x0+x1)/2,cy:(y0+y1)/2,cap:{},dc:null});
           const bb=p._v3b;bb[0]=Math.min(bb[0],x0);bb[1]=Math.min(bb[1],y0);bb[2]=Math.min(bb[2],z0);bb[3]=Math.max(bb[3],x1);bb[4]=Math.max(bb[4],y1);bb[5]=Math.max(bb[5],z1);break}
       }}catch(e){v3Err(e)}V3.tb[t.k]=(V3.tb[t.k]||0)+performance.now()-tq}
+    // (the camera keeps out of the big things only: a building, a long wall; a lamp, a pillar, a gravestone do not push it against the hero)
+    if(hq.length){let x0=1e9,y0=1e9,x1=-1e9,y1=-1e9;for(const c of hq){if(Math.max(c[0][2],c[1][2],c[2][2],c[c.length-1][2])<34)continue;for(const q of c){x0=Math.min(x0,q[0]);y0=Math.min(y0,q[1]);x1=Math.max(x1,q[0]);y1=Math.max(y1,q[1])}}
+      if(Math.max(x1-x0,y1-y0)>=34)for(const c of hq)v3HG(c)}
     const bb=p._v3b;if(bb[0]>bb[3]){p._v3s=null;continue}p._v3s=[(bb[0]+bb[3])/2,(bb[1]+bb[4])/2,(bb[2]+bb[5])/2,Math.hypot(bb[3]-bb[0],bb[4]-bb[1],bb[5]-bb[2])/2+4]}
   V3.tb.props=performance.now()-t0;v3FlameSprites();
   const gl=V3.gl;for(const P of V3A.pages){P.tex=v3Tex(gl,P.c,true);P.c.width=P.c.height=0;P.g=null}V3.tb.pages=performance.now()-t0;
@@ -175,10 +196,30 @@ function v3Build(){const W=ZM.W,K=V3.low?.75:.95,t0=performance.now();V3.tb={};
   V3.imp={tex:v3Tex(gl,null,false,2048,1024),x:2,y:2,h:0,gen:1};V3.spr={tex:v3Tex(gl,null,false,2048,1024),x:2,y:2,h:0,gen:1,slots:new Map()};
   V3.built=true;V3.tBuild=performance.now()-t0;V3.tb.all=V3.tBuild}
 // il terreno: i suoi pezzi cotti (foto da 1026 px per 684 unità), uno per texture; se la mappa non l'ha ancora cotto, si riprova dopo
-function v3Ground(){const W=ZM.W,gl=V3.gl,GR=W.ground;if(G3.ground.length||!GR)return;const tl=GR.tiles||[{c:GR,x:0,y:0,w:W.w,h:W.h}],hc=document.createElement('canvas'),hg=hc.getContext('2d');// (at half size: seen in perspective it is plenty)
-  for(const t of tl){hc.width=Math.ceil(t.c.width/2);hc.height=Math.ceil(t.c.height/2);hg.drawImage(t.c,0,0,hc.width,hc.height);G3.ground.push({x:t.x,y:t.y,w:t.w,h:t.h,tex:v3Tex(gl,hc,true)})}hc.width=hc.height=0;
+function v3Ground(){const W=ZM.W,gl=V3.gl,GR=W.ground;if(G3.ground.length||!GR)return;const tl=GR.tiles||[{c:GR,x:0,y:0,w:W.w,h:W.h}],hc=document.createElement('canvas'),hg=hc.getContext('2d');
+  // (the whole photo, 1.5 pixels a unit: at half size the stones of the street were a blur; half only on a slow phone. WebGL 1 wants a power of
+  // two for the mipmaps)
+  const half=V3.low,P2=v=>1<<Math.max(6,Math.round(Math.log2(v)));
+  for(const t of tl){let src=t.c,w=t.c.width,h=t.c.height;if(half){w=Math.ceil(w/2);h=Math.ceil(h/2)}if(!V3.gl2){w=P2(w);h=P2(h)}
+    if(w!==t.c.width||h!==t.c.height){hc.width=w;hc.height=h;hg.drawImage(t.c,0,0,w,h);src=hc}G3.ground.push({x:t.x,y:t.y,w:t.w,h:t.h,pw:src.width,tex:v3Tex(gl,src,true)})}hc.width=hc.height=0;
+  G3.detT=v3DetailTex(gl);
   const gb=[];for(const t of G3.ground){gb.push(t.x,t.y,0,0,0, t.x+t.w,t.y,0,1,0, t.x+t.w,t.y+t.h,0,1,1, t.x,t.y,0,0,0, t.x+t.w,t.y+t.h,0,1,1, t.x,t.y+t.h,0,0,1)}
   G3.gbuf=gl.createBuffer();gl.bindBuffer(gl.ARRAY_BUFFER,G3.gbuf);gl.bufferData(gl.ARRAY_BUFFER,new Float32Array(gb),gl.STATIC_DRAW)}
+// the fine detail of the ground, a picture that repeats with no seam: in red the grass (short blades, dark and light), in green the grain of the
+// stone and of the gravel, in blue the pebbles of the dirt (lit on top, dark below); 128 changes nothing
+function v3DetailTex(gl){const S=256,lay=(n,draw)=>{const c=document.createElement('canvas');c.width=c.height=S;const g=c.getContext('2d');g.fillStyle='rgb(128,128,128)';g.fillRect(0,0,S,S);let sd=n*7919+17;
+    const r=()=>(sd=(sd*16807)%2147483647)/2147483647;draw(g,r,f=>{for(const ox of[-S,0,S])for(const oy of[-S,0,S]){g.save();g.translate(ox,oy);f();g.restore()}});return g.getImageData(0,0,S,S).data};
+  const gr=lay(1,(g,r,wrap)=>{g.lineCap='round';for(let i=0;i<1700;i++){const x=r()*S,y=r()*S,a=-Math.PI/2+(r()-.5)*1.6,l=3+r()*8,v=r()<.55?62+r()*40:168+r()*52,w=.7+r()*.9;
+      wrap(()=>{g.strokeStyle=`rgb(${v|0},${v|0},${v|0})`;g.lineWidth=w;g.beginPath();g.moveTo(x,y);g.quadraticCurveTo(x+Math.cos(a)*l*.5+1.5,y+Math.sin(a)*l*.5,x+Math.cos(a)*l,y+Math.sin(a)*l);g.stroke()})}}),
+    st=lay(2,(g,r,wrap)=>{for(let i=0;i<5200;i++){const x=r()*S,y=r()*S,s2=.6+r()*1.6,v=r()<.5?80+r()*30:160+r()*45;wrap(()=>{g.fillStyle=`rgb(${v|0},${v|0},${v|0})`;g.fillRect(x,y,s2,s2)})}
+      g.lineCap='round';for(let i=0;i<26;i++){const x=r()*S,y=r()*S,a=r()*Math.PI*2,pts=[[x,y]];for(let k=0;k<4;k++){const q=pts[pts.length-1];pts.push([q[0]+Math.cos(a+(r()-.5)*1.4)*(4+r()*6),q[1]+Math.sin(a+(r()-.5)*1.4)*(4+r()*6)])}
+        wrap(()=>{g.strokeStyle='rgb(70,70,70)';g.lineWidth=.9;g.beginPath();pts.forEach((q,k)=>k?g.lineTo(q[0],q[1]):g.moveTo(q[0],q[1]));g.stroke()})}}),
+    di=lay(3,(g,r,wrap)=>{for(let i=0;i<640;i++){const x=r()*S,y=r()*S,rx=1.4+r()*2.6,ry=rx*(.55+r()*.35),a=r()*3;wrap(()=>{g.fillStyle='rgb(78,78,78)';g.beginPath();g.ellipse(x+.6,y+.9,rx,ry,a,0,Math.PI*2);g.fill();
+        g.fillStyle='rgb(150,150,150)';g.beginPath();g.ellipse(x,y,rx,ry,a,0,Math.PI*2);g.fill();g.fillStyle='rgb(196,196,196)';g.beginPath();g.ellipse(x-rx*.25,y-ry*.35,rx*.45,ry*.35,a,0,Math.PI*2);g.fill()})}
+      for(let i=0;i<2600;i++){const x=r()*S,y=r()*S,v=r()<.5?96:166;wrap(()=>{g.fillStyle=`rgb(${v},${v},${v})`;g.fillRect(x,y,1,1)})}});
+  const c=document.createElement('canvas');c.width=c.height=S;const g=c.getContext('2d'),im=g.createImageData(S,S),d=im.data;for(let i=0;i<S*S*4;i+=4){d[i]=gr[i];d[i+1]=st[i];d[i+2]=di[i];d[i+3]=255}g.putImageData(im,0,0);
+  const t=gl.createTexture();gl.bindTexture(gl.TEXTURE_2D,t);gl.pixelStorei(gl.UNPACK_PREMULTIPLY_ALPHA_WEBGL,false);gl.texImage2D(gl.TEXTURE_2D,0,gl.RGBA,gl.RGBA,gl.UNSIGNED_BYTE,c);gl.generateMipmap(gl.TEXTURE_2D);
+  gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_MIN_FILTER,gl.LINEAR_MIPMAP_LINEAR);gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_MAG_FILTER,gl.LINEAR);gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_WRAP_S,gl.REPEAT);gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_WRAP_T,gl.REPEAT);v3Aniso(gl);return t}
 // le texture dei pannelli (recinti, finestre, cancellate): come PLANES del motore, il disegno draw(w, h) a 2 pixel per unità
 function v3PlaneCv(t){const c=document.createElement('canvas');c.width=Math.max(2,Math.ceil(t.w*2));c.height=Math.max(2,Math.ceil(t.h*2));const g=c.getContext('2d'),sv=ctx;ctx=g;ctx.scale(2,2);
   ZM.srand(v3Hash('P|'+t.texId));try{t.draw(t.w,t.h)}catch(e){v3Err(e)}finally{ctx=sv}return c}
@@ -204,6 +245,13 @@ function v3FlameSprites(){const fr=[];for(let i=0;i<6;i++){const c=document.crea
     g.fillStyle=gr;g.beginPath();g.moveTo(0,-54*h);g.quadraticCurveTo(15+sw,-22,11,-4);g.quadraticCurveTo(0,6,-11,-4);g.quadraticCurveTo(-15+sw,-22,sw*.5,-54*h);g.fill();fr.push(v3Put(c,48,72))}
   const c=document.createElement('canvas');c.width=c.height=64;const g=c.getContext('2d'),gr=g.createRadialGradient(32,32,0,32,32,32);gr.addColorStop(0,'rgba(255,255,255,1)');gr.addColorStop(.25,'rgba(255,255,255,.55)');gr.addColorStop(1,'rgba(255,255,255,0)');
   g.fillStyle=gr;g.fillRect(0,0,64,64);V3.flameFr=fr;V3.glowA=v3Put(c,64,64);
+  // the crows (as drawCrow and drawPerch of the engine): six beats of the wings in flight, two of the one perched (the head one way, the other)
+  {const S2=4,fr2=[];for(let i=0;i<6;i++){const c=document.createElement('canvas');c.width=40*S2;c.height=22*S2;const g=c.getContext('2d'),wing=Math.sin(i/6*Math.PI*2);g.scale(S2,S2);g.translate(20,15);g.fillStyle='#0d0c12';
+      g.beginPath();g.ellipse(0,0,6,2.6,0,0,Math.PI*2);g.fill();g.beginPath();g.moveTo(-5,0);g.lineTo(-11,-1);g.lineTo(-11,2);g.closePath();g.fill();g.beginPath();g.moveTo(5,-.5);g.lineTo(9.5,-.2);g.lineTo(5,1.2);g.closePath();g.fill();
+      for(const sd of[-1,1]){g.beginPath();g.moveTo(-1,0);g.quadraticCurveTo(sd*9,-2-wing*7,sd*17,-wing*12+1);g.quadraticCurveTo(sd*9,2-wing*4,1,2);g.closePath();g.fill()}fr2.push(v3Put(c,40*S2/2,22*S2/2))}V3.crowF=fr2;
+    const pf=[];for(const f of[0,1]){const c=document.createElement('canvas');c.width=26*S2;c.height=18*S2;const g=c.getContext('2d'),d=f?-1:1;g.scale(S2,S2);g.translate(13,16);g.lineWidth=1.6;g.strokeStyle='#1b1612';g.lineJoin='round';g.fillStyle='#16151c';
+      g.beginPath();g.ellipse(0,-5,5,4,0,0,Math.PI*2);g.fill();g.stroke();g.beginPath();g.moveTo(-3*d,-3);g.lineTo(-10*d,1);g.lineTo(-8*d,-3);g.closePath();g.fill();g.stroke();const hx=3*d,hy=-10;g.beginPath();g.arc(hx,hy,3.2,0,Math.PI*2);g.fill();g.stroke();
+      g.fillStyle='#d8b040';g.beginPath();g.moveTo(hx+2.6*d,hy-1);g.lineTo(hx+7*d,hy+.5);g.lineTo(hx+2.6*d,hy+1);g.closePath();g.fill();g.fillStyle='#ff5040';g.beginPath();g.arc(hx+1.2*d,hy-.8,.8,0,Math.PI*2);g.fill();pf.push(v3Put(c,26*S2/2,18*S2/2))}V3.perchF=pf}
   // the soft shadow under the characters
   {const c2=document.createElement('canvas');c2.width=c2.height=64;const g2=c2.getContext('2d'),r2=g2.createRadialGradient(32,32,0,32,32,31);r2.addColorStop(0,'rgba(4,6,12,.62)');r2.addColorStop(.55,'rgba(4,6,12,.42)');r2.addColorStop(1,'rgba(4,6,12,0)');
     g2.fillStyle=r2;g2.fillRect(0,0,64,64);V3.shadowA=v3Put(c2,64,64)}
@@ -212,7 +260,10 @@ function v3FlameSprites(){const fr=[];for(let i=0;i<6;i++){const c=document.crea
   mg.fillStyle=mr;mg.fillRect(0,0,96,96);mg.fillStyle='rgba(150,160,190,.5)';for(const[x,y,r] of[[40,42,5],[55,52,3.5],[46,58,2.4]]){mg.beginPath();mg.arc(x,y,r,0,Math.PI*2);mg.fill()}V3.moonA=v3Put(m,96,96)}
 // la griglia delle altezze (per la telecamera in terza persona: non entra nei muri) e le zone chiuse
 function v3HG(c){const W=ZM.W,C=8;if(!G3.hg){G3.hgw=Math.ceil(W.w/C)+1;G3.hgh=Math.ceil(W.h/C)+1;G3.hg=new Float32Array(G3.hgw*G3.hgh)}let x0=1e9,y0=1e9,x1=-1e9,y1=-1e9,z1=0;
-  for(const q of c){x0=Math.min(x0,q[0]);y0=Math.min(y0,q[1]);x1=Math.max(x1,q[0]);y1=Math.max(y1,q[1]);z1=Math.max(z1,q[2])}if(z1<34)return;
+  let z0=1e9;for(const q of c){x0=Math.min(x0,q[0]);y0=Math.min(y0,q[1]);x1=Math.max(x1,q[0]);y1=Math.max(y1,q[1]);z1=Math.max(z1,q[2]);z0=Math.min(z0,q[2])}
+  // (only what is really a wall or a broad top: a face at least 18 long and 12 high, or 16 × 24 flat; a lamp post, its arm, a lantern, a pillar
+  // do not push the camera against the hero)
+  const L=Math.max(x1-x0,y1-y0),Mn=Math.min(x1-x0,y1-y0);if(z1<34||!((z1-z0>=12&&L>=18)||(Mn>=16&&L>=24)))return;
   for(let j=Math.max(0,Math.floor(y0/C));j<=Math.min(G3.hgh-1,Math.floor(y1/C));j++)for(let i=Math.max(0,Math.floor(x0/C));i<=Math.min(G3.hgw-1,Math.floor(x1/C));i++){const k=j*G3.hgw+i;if(G3.hg[k]<z1)G3.hg[k]=z1}}
 const v3HAt=(x,y)=>{if(!G3.hg)return 0;const i=Math.floor(x/8),j=Math.floor(y/8);if(i<0||j<0||i>=G3.hgw||j>=G3.hgh)return 0;return G3.hg[j*G3.hgw+i]};
 function v3Zones(force){const W=ZM.W;if(!W.zoneIdAt||!W.zoneOpen){if(force){G3.zbuf.fill(0);v3ZUp()}return}const key=JSON.stringify(W.zoneOpen);if(!force&&key===G3.zkey)return;G3.zkey=key;
@@ -267,17 +318,23 @@ function v3QFlush(prog,tex,uU,cut,add){const n=V3N/11;if(!n)return;const gl=V3.g
   gl.enableVertexAttribArray(3);gl.vertexAttribPointer(3,4,gl.FLOAT,false,st,28);gl.drawArrays(gl.TRIANGLES,0,n);gl.disableVertexAttribArray(3);gl.disableVertexAttribArray(2);V3N=0}
 // le cose comuni a tutti i programmi: telecamera, luci, nebbia, notte, zone
 function v3Uni(P){const gl=V3.gl,u=P.u;gl.uniformMatrix4fv(u.uVP,false,V3.vp);if(u.uEye)gl.uniform3fv(u.uEye,V3.eye);if(u.uL){gl.uniform4fv(u.uL,V3.uL);gl.uniform4fv(u.uLC,V3.uLC)}
-  if(u.uFog)gl.uniform3fv(u.uFog,V3.fogC);if(u.uDark){gl.uniform3fv(u.uDark,[10/255,14/255,34/255]);gl.uniform1f(u.uDarkA,.46)}if(u.uFogP)gl.uniform3fv(u.uFogP,V3.fogP);
+  if(u.uFog)gl.uniform3fv(u.uFog,V3.fogC);if(u.uDark){gl.uniform3fv(u.uDark,[10/255,14/255,34/255]);gl.uniform1f(u.uDarkA,.42)}if(u.uDet)gl.uniform1f(u.uDet,0);if(u.uShp)gl.uniform1f(u.uShp,0);if(u.uFogP)gl.uniform3fv(u.uFogP,V3.fogP);
   if(u.uZone){gl.activeTexture(gl.TEXTURE1);gl.bindTexture(gl.TEXTURE_2D,G3.ztex);gl.uniform1i(u.uZone,1);gl.uniform3fv(u.uMap,[ZM.W.w,ZM.W.h,46]);gl.activeTexture(gl.TEXTURE0)}}
 // ------------------------------------------------------------------ la telecamera
 function v3Camera(dt,Wp,Hp){const W=ZM.W,h=W.hero,C=ZM.CAM,th=-Math.PI/2-C.yaw,fx=Math.cos(th),fy=Math.sin(th),rx=-fy,ry=fx,el=C.el*180/Math.PI,hz=(h.zh||0);
   V3.th=th;V3.R3=[rx,ry,0];const asp=Wp/Hp;let eye,at,up=[0,0,1];
   if(V3.mode==='prima'){const pit=(12-(el-35)*47/27)*Math.PI/180,bob=h.moving&&!h.dead?Math.sin((h.walk||0)*1)*1.4:0,dead=h.dead||h.fall>0?Math.min(1,(h.fall||1)):0;
     V3.pitch=pit;eye=[h.x-fx*2,h.y-fy*2,hz+47+bob-dead*30];at=[eye[0]+fx*Math.cos(pit)*100,eye[1]+fy*Math.cos(pit)*100,eye[2]+Math.sin(pit)*100];V3.fovy=Math.min(80,2*Math.atan(Math.tan(95/2*Math.PI/180)/asp)*180/Math.PI)*Math.PI/180;V3.near=2.5}
-  else{const phi=v3cl(13+(el-35)*1.25,8,50)*Math.PI/180,D=V3.dbgD||150,head=[h.x,h.y,hz+42],sh=17;
-    let want=[head[0]-fx*D*Math.cos(phi)+rx*sh,head[1]-fy*D*Math.cos(phi)+ry*sh,head[2]+D*Math.sin(phi)];
-    // the camera doesn't go into walls or through roofs: it comes forward to just before the first tall thing in between
-    let kk=1;for(let i=1;i<=18;i++){const t=i/18,x=head[0]+(want[0]-head[0])*t,y=head[1]+(want[1]-head[1])*t,z=head[2]+(want[2]-head[2])*t;if(v3HAt(x,y)>z-4){kk=Math.max(.16,(i-1.5)/18);break}}
+  else{const phi0=v3cl(13+(el-35)*1.25,8,50)*Math.PI/180,D=V3.dbgD||150,head=[h.x,h.y,hz+42];
+    // the camera doesn't go into walls or through roofs. Behind the right shoulder if it is free; if a wall or a house is in the way, first the
+    // other shoulder or the middle, then a little higher (over the fence, the wall), and only then it comes forward to just before the first
+    // tall thing in between (so it does not end up against the back of his head when there is room round him)
+    const free=(sh,ph)=>{const want=[head[0]-fx*D*Math.cos(ph)+rx*sh,head[1]-fy*D*Math.cos(ph)+ry*sh,head[2]+D*Math.sin(ph)];let kk=1;
+      // (from 14 units behind the head: the grid's cells are 8 wide, a wall the hero is touching would stop it at once)
+      for(let i=1;i<=24;i++){const t=i/24;if(t*D<14)continue;const x=head[0]+(want[0]-head[0])*t,y=head[1]+(want[1]-head[1])*t,z=head[2]+(want[2]-head[2])*t;if(v3HAt(x,y)>z-4){kk=Math.max(.16,(i-1.5)/24);break}}return{kk,want}};
+    let best=null;for(const[sh,dp,pen] of[[17,0,0],[0,0,.05],[-17,0,.08],[17,.24,.12],[0,.24,.15],[-17,.24,.18],[0,.48,.26]]){const c=free(sh,phi0+dp),sc=c.kk-pen;if(!best||sc>best.sc)best={sh,dp,sc,kk:c.kk};if(c.kk>=1&&!pen)break}
+    const fk=Math.min(1,dt*3.5);V3.camSh=V3.camSh==null?best.sh:V3.camSh+(best.sh-V3.camSh)*fk;V3.camDp=V3.camDp==null?best.dp:V3.camDp+(best.dp-V3.camDp)*fk;
+    const sh=V3.camSh,phi=phi0+V3.camDp,{kk,want}=free(sh,phi);
     V3.camK=V3.camK==null?kk:kk<V3.camK?kk:V3.camK+(kk-V3.camK)*Math.min(1,dt*3);const k=V3.camK;
     eye=[head[0]+(want[0]-head[0])*k,head[1]+(want[1]-head[1])*k,head[2]+(want[2]-head[2])*k];at=[h.x+fx*80+rx*sh*.55,h.y+fy*80+ry*sh*.55,hz+30];
     // (for the photos of the tests: the camera round the hero, looking at him)
@@ -296,10 +353,13 @@ function v3Lights(){const W=ZM.W,h=W.hero,e=V3.eye,L=[];for(const l of ZM.lights
     const d=Math.hypot(l.x-e[0],l.y-e[1]);if(d>V3.fogP[0]+V3.fogP[1]+l.r)continue;L.push([d,l])}L.sort((a,b)=>a[0]-b[0]);
   const uL=V3.uL||(V3.uL=new Float32Array(48)),uC=V3.uLC||(V3.uLC=new Float32Array(48));uL.fill(0);uC.fill(0);let n=0;const t=W.t||0,max=V3.low?6:11;
   const put=(x,y,z,r,rgb,a)=>{const c=v3rgb('rgb('+rgb+')');uL[n*4]=x;uL[n*4+1]=y;uL[n*4+2]=z;uL[n*4+3]=r;uC[n*4]=c[0]/255;uC[n*4+1]=c[1]/255;uC[n*4+2]=c[2]/255;uC[n*4+3]=a;n++};
-  put(h.x,h.y,(h.zh||0)+16,V3.mode==='prima'?175:160,'255,232,190',.62);
+  // the hero: as in drawDark, a hole in the night round him (120 wide, .6 deep), no light of its own colour
+  put(h.x,h.y,(h.zh||0)+16,120,'0,0,0',0);
   // the flash of each shot lights up what is round the muzzle for a moment
   if(V3.muzF>.05&&V3.muz&&!LOWFX)put(V3.muz[0],V3.muz[1],V3.muz[2],60+110*V3.muzF,'255,196,110',Math.min(1,.7*V3.muzF));
-  for(const[,l] of L){if(n>max)break;const fl=l.fl?(.9+.1*Math.sin(t*(l.fl===2?2:9)+l.x)*Math.sin(t*5.3+l.y)):1;put(l.x,l.y,(l.z||10)*.6,l.r*1.25*fl,l.rgb||'255,200,120',Math.min(1,(l.a||.6)*1.1)*fl)}}
+  // the lights as drawDark and drawLights make them: the hole in the night 1.2·r wide, the pool of light r wide and a·.8 bright (less as the
+  // house round it fades)
+  for(const[,l] of L){if(n>max)break;const fl=l.fl?(.9+.1*Math.sin(t*(l.fl===2?2:9)+l.x)*Math.sin(t*5.3+l.y)):1;put(l.x,l.y,(l.z||10)*.6,l.r*1.2*fl,l.rgb||'255,200,120',(l.a||.6)*.8*(l.house?1-l.house.a:1)*fl)}}
 // ------------------------------------------------------------------ il fotogramma
 function v3Size(Wp,Hp,dpr){const gl=V3.gl,sc=Math.min(dpr,2)*(V3.low?.66:1),cw=Math.max(2,Math.round(Wp*sc)),ch=Math.max(2,Math.round(Hp*sc));V3.W=Wp;V3.H=Hp;
   if(V3.cv.width!==cw||V3.cv.height!==ch){V3.cv.width=cw;V3.cv.height=ch;V3.fboOk=false}V3.cw=cw;V3.ch=ch;
@@ -332,14 +392,16 @@ function v3Frame(dt,Wp,Hp,dpr){const gl=V3.gl,W=ZM.W,h=W.hero,t0=performance.now
   const P=V3.pG;gl.useProgram(P.p);v3Uni(P);gl.uniform1f(P.u.uCut,.02);gl.enable(gl.POLYGON_OFFSET_FILL);gl.polygonOffset(2,4);gl.disable(gl.CULL_FACE);
   if(G3.gbuf){gl.bindBuffer(gl.ARRAY_BUFFER,G3.gbuf);gl.enableVertexAttribArray(0);gl.vertexAttribPointer(0,3,gl.FLOAT,false,20,0);gl.enableVertexAttribArray(1);gl.vertexAttribPointer(1,2,gl.FLOAT,false,20,12);
   gl.disableVertexAttribArray(2);gl.vertexAttrib4f(2,1,1,1,1);gl.activeTexture(gl.TEXTURE0);gl.uniform1i(P.u.uTex,0);
-  G3.ground.forEach((t,i)=>{if(!v3Seen(t.x+t.w/2,t.y+t.h/2,0,Math.hypot(t.w,t.h)/2))return;gl.bindTexture(gl.TEXTURE_2D,t.tex);gl.drawArrays(gl.TRIANGLES,i*6,6)})}gl.disable(gl.POLYGON_OFFSET_FILL);
+  if(G3.detT&&!LOWFX){gl.activeTexture(gl.TEXTURE2);gl.bindTexture(gl.TEXTURE_2D,G3.detT);gl.uniform1i(P.u.uDetT,2);gl.activeTexture(gl.TEXTURE0);gl.uniform1f(P.u.uDet,V3.low?.35:.5)}
+  G3.ground.forEach((t,i)=>{if(!v3Seen(t.x+t.w/2,t.y+t.h/2,0,Math.hypot(t.w,t.h)/2))return;gl.bindTexture(gl.TEXTURE_2D,t.tex);gl.drawArrays(gl.TRIANGLES,i*6,6)});gl.uniform1f(P.u.uDet,0)}gl.disable(gl.POLYGON_OFFSET_FILL);
   if(pk)pk('terreno');
   // the props: one sheet at a time, the visible pieces in runs
-  gl.enable(gl.CULL_FACE);gl.cullFace(gl.BACK);gl.frontFace(gl.CCW);gl.uniform1f(P.u.uCut,.5);
+  gl.enable(gl.CULL_FACE);gl.cullFace(gl.BACK);gl.frontFace(gl.CCW);gl.uniform1f(P.u.uCut,.5);if(!LOWFX&&!V3.low)gl.uniform1f(P.u.uShp,.9);
   G3.pg.forEach((B,pi)=>{if(!B)return;gl.bindTexture(gl.TEXTURE_2D,V3A.pages[pi].tex);gl.bindBuffer(gl.ARRAY_BUFFER,B.bp);gl.vertexAttribPointer(0,3,gl.FLOAT,false,0,0);gl.bindBuffer(gl.ARRAY_BUFFER,B.bt);gl.vertexAttribPointer(1,2,gl.FLOAT,false,0,0);
     gl.bindBuffer(gl.ARRAY_BUFFER,B.bc);gl.enableVertexAttribArray(2);gl.vertexAttribPointer(2,4,gl.UNSIGNED_BYTE,true,0,0);let s=-1,n=0;
-    for(const c of B.ch){const ok=c.prop._v3c&&(!c.vis||c.vis())&&(!c.tag||!c.prop.house||v3TagVis(c.prop.house,c.tag));if(ok){if(s>=0&&s+n===c.s)n+=c.n;else{if(n)gl.drawArrays(gl.TRIANGLES,s,n);s=c.s;n=c.n}}}if(n)gl.drawArrays(gl.TRIANGLES,s,n)});
-  gl.disable(gl.CULL_FACE);gl.disableVertexAttribArray(2);if(pk)pk('prop');
+    for(const c of B.ch){const ok=c.prop._v3c&&(!c.vis||c.vis())&&(!c.tag||!c.prop.house||v3TagVis(c.prop.house,c.tag))&&!(c.f&&v3NearOk(c.prop));if(ok){if(s>=0&&s+n===c.s)n+=c.n;else{if(n)gl.drawArrays(gl.TRIANGLES,s,n);s=c.s;n=c.n}}}if(n)gl.drawArrays(gl.TRIANGLES,s,n)});
+  try{v3NearDraw()}catch(e){v3Err(e)}
+  gl.uniform1f(P.u.uShp,0);gl.disable(gl.CULL_FACE);gl.disableVertexAttribArray(2);if(pk)pk('prop');
   // the round things (crowns, pumpkins) facing the camera
   v3Balls();if(pk)pk('chiome');
   // the hand drawings as postcards (from the side they're seen), the flat ones lying on the ground
@@ -351,15 +413,19 @@ function v3Frame(dt,Wp,Hp,dpr){const gl=V3.gl,W=ZM.W,h=W.hero,t0=performance.now
   // the hero in 3D (in third person), then the characters still painted: zombies and the Bara (and the hero if the 3D one cannot be made)
   V3.h3ok=false;try{V3.h3ok=v3Hero3()}catch(e){v3Err(e);V3.no3h=true}if(pk)pk('eroe 3D');
   v3Figures();if(pk)pk('figure');
+  // the life of the map, as from above: smoke, leaves, fireflies, the low mist, the crows, the moths round the lit glass
+  try{v3Life(dt)}catch(e){v3Err(e)}if(pk)pk('vita');
   // the flames and their halos, added on top
   v3Flames();if(pk)pk('fiamme');
+  // the walls near the camera painted sharp, a few faces at a time
+  try{v3Near()}catch(e){v3Err(e)}
   // the weapon in first person, in 3D, in front of everything
   V3.vm3=false;if(V3.mode==='prima'){try{v3View3(dt)}catch(e){v3Err(e);V3.no3h=true}}if(pk)pk('arma 3D');
   gl.disable(gl.BLEND);gl.depthMask(true);
   // the last pass: the dark outline where the depth jumps, and the vignette
   if(V3.post){gl.bindFramebuffer(gl.FRAMEBUFFER,null);gl.viewport(0,0,V3.cw,V3.ch);gl.disable(gl.DEPTH_TEST);const Q=V3.pP;gl.useProgram(Q.p);
     gl.activeTexture(gl.TEXTURE0);gl.bindTexture(gl.TEXTURE_2D,V3.fc);gl.uniform1i(Q.u.uC,0);gl.activeTexture(gl.TEXTURE1);gl.bindTexture(gl.TEXTURE_2D,V3.fd);gl.uniform1i(Q.u.uD,1);gl.activeTexture(gl.TEXTURE0);
-    const ik=Math.max(1,Math.round(V3.cw/Wp*1.1));gl.uniform2f(Q.u.uPx,ik/V3.cw,ik/V3.ch);gl.uniform2f(Q.u.uNF,V3.near,V3.far);gl.uniform1f(Q.u.uInk,LOWFX||V3.low?.6:1);gl.uniform3fv(Q.u.uFogP,V3.fogP);
+    const ik=Math.max(1,Math.round(V3.cw/Wp*1.1));gl.uniform2f(Q.u.uPx,ik/V3.cw,ik/V3.ch);gl.uniform2f(Q.u.uNF,V3.near,V3.far);gl.uniform1f(Q.u.uInk,LOWFX||V3.low?.6:1);gl.uniform3fv(Q.u.uFogP,V3.fogP);// (uInk 1: the contour two steps thick; .6: one step, lighter)
     gl.bindBuffer(gl.ARRAY_BUFFER,V3.qb);gl.enableVertexAttribArray(0);gl.vertexAttribPointer(0,2,gl.FLOAT,false,0,0);for(let i=1;i<4;i++)gl.disableVertexAttribArray(i);gl.drawArrays(gl.TRIANGLES,0,3);gl.enable(gl.DEPTH_TEST)}
   if(pk)pk('contorno');
   // over it, in 2D: shots, blood, coins, the sight, the gun in first person
@@ -603,7 +669,7 @@ function v3Hero3(){const W=ZM.W,h=W.hero,gl=V3.gl;if(V3.mode!=='terza'||typeof E
   if(R.gun){const G0=R.gun,fr=G0.fr,gm=v3GunMesh(G0.id,G0.st);if(gm){const MG=v3Mul(MF,v3M4(mul(fr.X,fr.s),mul(fr.Y,fr.s),mul(fr.Z,fr.s),fr.O));items.push({m:gm.mesh,M:MG,out:.3});
       const hd=G0.hands(gm.kp);if(hd.rh)ball(v3Pt(MG,hd.rh),2.8,S.hand);if(hd.lh)ball(v3Pt(MG,hd.lh),2.7,S.hand);
       if(gm.kp.muzzle){V3.muz=v3Pt(MG,gm.kp.muzzle);V3.muzF=G0.flash||0}}}
-  const inv=W.mods&&W.mods.invis>0;v3Draw3(items,{R,MF,a,Hw},inv?.42:1,R.flash||0);
+  const inv=W.mods&&W.mods.invis>0,near=V3.camK!=null&&V3.camK<.42&&!V3.dbgCam;v3Draw3(items,{R,MF,a,Hw},inv?.42:near?.55:1,R.flash||0);
   if(imp)v3HeadImp(R,Hw,a);
   V3.h3=items.length;return true}
 // a stick from p0 to p1 (radius r): the hammer's handle and head, the sleeves in first person
@@ -626,9 +692,11 @@ function v3Draw3(items,H,al,fl,near){const gl=V3.gl,P=V3.pT,M0=V3.hm,{add,mul,nr
       const M=it.M,det=M[0]*(M[5]*M[10]-M[6]*M[9])-M[4]*(M[1]*M[10]-M[2]*M[9])+M[8]*(M[1]*M[6]-M[2]*M[5]);gl.frontFace(det<0?gl.CW:gl.CCW);
       gl.uniformMatrix4fv(u.uM,false,M);gl.uniformMatrix3fv(u.uNM,false,v3NM(M));gl.uniform1f(u.uOut,ink?it.out*(V3.low?.8:1):0);gl.uniform1f(u.uHead,!ink&&it.head?1:0);
       gl.bindTexture(gl.TEXTURE_2D,it.tex||M0.white);gl.uniform4fv(u.uTint,it.tint||[1,1,1,1]);gl.drawElements(gl.TRIANGLES,m.n,gl.UNSIGNED_SHORT,0)}};
-  if(al<1){gl.enable(gl.BLEND);gl.blendFunc(gl.SRC_ALPHA,gl.ONE_MINUS_SRC_ALPHA)}
+  // see-through (invisible, or the camera right behind him): first only the depth, then the colour of the nearest surface alone, so his
+  // pieces never show through one another
+  if(al<1){gl.cullFace(gl.BACK);gl.uniform1f(u.uInk,0);gl.colorMask(false,false,false,false);draw(false);gl.colorMask(true,true,true,true);gl.enable(gl.BLEND);gl.blendFunc(gl.SRC_ALPHA,gl.ONE_MINUS_SRC_ALPHA);gl.depthMask(false)}
   else{gl.cullFace(gl.FRONT);gl.uniform1f(u.uInk,1);draw(true)}
-  gl.cullFace(gl.BACK);gl.uniform1f(u.uInk,0);draw(false);
+  gl.cullFace(gl.BACK);gl.uniform1f(u.uInk,0);draw(false);gl.depthMask(true);
   gl.frontFace(gl.CCW);gl.disable(gl.CULL_FACE);gl.disable(gl.BLEND);if(near)gl.depthRange(0,1);for(let i=1;i<5;i++)gl.disableVertexAttribArray(i);gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER,null)}
 // the weapon in first person in 3D: the same weapon (the same mesh, its moving parts, the reload of the free hand) held low on the right,
 // pointing at the middle of the screen, with the two hands and the sleeves of the tunic; it bobs with the steps, kicks with every shot,
@@ -674,6 +742,33 @@ function v3Blob(x,y,z,r){const S=V3.shadowA;if(!S)return;(V3.blobs=V3.blobs||[])
 function v3Blobs(){const B=V3.blobs,S=V3.shadowA;if(!B||!B.length||!S)return;const gl=V3.gl,R3=V3.R3;V3.R3=[1,0,0];for(const[x,y,z,r] of B)v3Q(x,y,z+.45,-r,-r,r,r,S.u0,S.v0,S.u1,S.v1,1,1,1,1);B.length=0;
   gl.enable(gl.BLEND);gl.blendFunc(gl.SRC_ALPHA,gl.ONE_MINUS_SRC_ALPHA);gl.depthMask(false);gl.enable(gl.POLYGON_OFFSET_FILL);gl.polygonOffset(-1,-3);
   v3QFlush(V3.pB,V3A.pages[S.p].tex,[0,1,0],.01);V3.R3=R3;gl.disable(gl.POLYGON_OFFSET_FILL);gl.depthMask(true);gl.disable(gl.BLEND)}
+// ------------------------------------------------------------------ la vita della mappa, come dall'alto (il motore la muove in updateAmbient,
+// qui si disegna in 3D): il fumo dei camini (palle morbide che salgono e si allargano), le foglie che cadono dagli alberi, le lucciole verdi,
+// la nebbia bassa che scorre verso est (stesa a terra), lo stormo di corvi che passa in alto battendo le ali e quelli posati sui tetti e
+// sulle croci, che volano via quando ci si avvicina, le falene intorno ai vetri accesi dei lampioni. Niente con LOWFX
+function v3Life(dt){if(LOWFX)return;const W=ZM.W,gl=V3.gl,e=V3.eye,G=V3.glowA,t=W.t||0,far=V3.fogP[0]+V3.fogP[1],ok=(x,y,z,r)=>{const v=Math.hypot(x-e[0],y-e[1])<far&&v3Seen(x,y,z,r);if(v)V3.nLife++;return v};if(!G)return;V3.nLife=0;
+  gl.enable(gl.BLEND);gl.blendFunc(gl.SRC_ALPHA,gl.ONE_MINUS_SRC_ALPHA);gl.depthMask(false);
+  try{// the low mist: the engine moves it while drawing from above, so here too; flat on the ground, very faint
+    if(W.mists&&W.mists.length){for(const m of W.mists){m.x+=m.v*dt;if(m.x>W.w+180)m.x=-180}const R3=V3.R3;V3.R3=[1,0,0];
+      for(const m of W.mists)if(Math.hypot(m.x-e[0],m.y-e[1])<far+m.r)v3Q(m.x,m.y,7,-m.r,-m.r*.42,m.r,m.r*.42,G.u0,G.v0,G.u1,G.v1,.86,.9,1,.11);
+      v3QFlush(V3.pB,V3A.pages[G.p].tex,[0,1,0],.002);V3.R3=R3}
+    // the smoke of the chimneys and of the burnt carriage
+    for(const p of W.puffs||[]){if(!ok(p.x,p.y,p.z,p.r+4))continue;const r=p.r*1.25;v3Q(p.x,p.y,p.z,-r,-r,r,r,G.u0,G.v0,G.u1,G.v1,150/255,150/255,165/255,.3*(1-p.t/3.2))}
+    if(V3N)v3QFlush(V3.pB,V3A.pages[G.p].tex,V3.U3,.002);
+    // the leaves and the moths (little flat things of one colour)
+    const wt=V3.white;for(const l of W.leaves||[]){if(!ok(l.x,l.y,l.z,4))continue;const c=v3rgb(l.c),s2=1.4+.6*Math.abs(Math.sin(l.t*4+l.ph));v3Q(l.x,l.y,l.z,-s2,-.7,s2,.7,wt[0],wt[1],wt[0],wt[1],c[0]/255,c[1]/255,c[2]/255,1)}
+    for(const f of ZM.flames){if(!f.glass||f.off||!ok(f.x,f.y,f.z||10,30))continue;if(f.house&&f.lvl!=null&&(f.lvl?(f.house.up||0)<.5:(f.house.up||0)>.5))continue;
+      for(let i=0;i<3;i++){const a=t*(1.6+i*.5)+i*2.1+f.x*.01,r=9+4*Math.sin(t*1.3+i),fl=Math.abs(Math.sin(t*28+i*3));v3Q(f.x+Math.cos(a)*r,f.y+Math.sin(a)*r*.6,(f.z||10)-2+Math.sin(a*1.7)*r*.45,-1.6,-.4-fl*.8,1.6,.4+fl*.8,wt[0],wt[1],wt[0],wt[1],.92,.88,.78,.85)}}
+    if(V3N)v3QFlush(V3.pB,V3A.pages[V3.whiteP].tex,V3.U3,.002);
+    // the crows: the flock in the sky (the wings beat, they face where they fly) and the perched ones
+    const CF=V3.crowF,PF=V3.perchF;if(CF){const byP={},put=(A,x,y,z,x0,y0,x1,y1,flip)=>{(byP[A.p]=byP[A.p]||[]).push([A,x,y,z,x0,y0,x1,y1,flip])};
+      for(const c of W.flock||[]){if(!ok(c.x,c.y,c.z,20))continue;const A=CF[((Math.floor((c.ph%(Math.PI*2)+Math.PI*2)%(Math.PI*2)/(Math.PI*2)*6))%6+6)%6],q0=v3P(c.x,c.y,c.z),q1=v3P(c.x+c.dir*5,c.y,c.z),flip=q0&&q1&&q1[0]<q0[0];put(A,c.x,c.y,c.z,-20,-7,20,15,flip)}
+      for(const p of ZM.perches){if(p.away||!ok(p.x,p.y,p.z,14))continue;const A=PF[Math.sin((p.t||0)*.7)>0?0:1];put(A,p.x,p.y,p.z,-13,-2,13,16,false)}
+      for(const k in byP){for(const[A,x,y,z,x0,y0,x1,y1,fl] of byP[k])v3Q(x,y,z,x0,y0,x1,y1,fl?A.u1:A.u0,A.v0,fl?A.u0:A.u1,A.v1,1,1,1,1);v3QFlush(V3.pB,V3A.pages[k].tex,V3.U3,.35)}}
+    // the fireflies: a green light that comes and goes
+    gl.blendFunc(gl.ONE,gl.ONE);for(const f of W.flies||[]){if(!ok(f.x,f.y,f.z,10))continue;const b=.5+.5*Math.sin(t*3+f.ph);v3Q(f.x,f.y,f.z,-9,-9,9,9,G.u0,G.v0,G.u1,G.v1,.67*b*.5,b*.5,.47*b*.5,1);v3Q(f.x,f.y,f.z,-1.6,-1.6,1.6,1.6,G.u0,G.v0,G.u1,G.v1,.9*b,b,.75*b,1)}
+    if(V3N)v3QFlush(V3.pA,V3A.pages[G.p].tex,V3.U3,0,true)}
+  finally{V3N=0;gl.depthMask(true);gl.disable(gl.BLEND)}}
 function v3Flames(){const W=ZM.W,gl=V3.gl,e=V3.eye,t=W.t||0,fr=V3.flameFr,G=V3.glowA;if(!fr)return;gl.enable(gl.BLEND);gl.blendFunc(gl.ONE,gl.ONE);gl.depthMask(false);
   for(const f of ZM.flames){if(f.off)continue;if(f.house&&f.lvl!=null&&(f.lvl?(f.house.up||0)<.5:(f.house.up||0)>.5))continue;const z=f.z||10,d=Math.hypot(f.x-e[0],f.y-e[1],z-e[2]);
     if(d>V3.fogP[0]+V3.fogP[1]||!v3Seen(f.x,f.y,z,30))continue;const fl=.85+.15*Math.sin(t*11+f.x)*Math.sin(t*7.3+f.y),s=(f.s||1);
@@ -683,6 +778,43 @@ function v3Flames(){const W=ZM.W,gl=V3.gl,e=V3.eye,t=W.t||0,fr=V3.flameFr,G=V3.g
   if(V3.fl2&&V3.fl2.length){const by={};for(const[f,z,fl,s] of V3.fl2){const A=fr[Math.floor(t*10+f.x*.13)%fr.length];(by[A.p]=by[A.p]||[]).push([f,z,fl,s,A])}V3.fl2.length=0;
     for(const k in by){for(const[f,z,fl,s,A] of by[k])v3Q(f.x,f.y,z-1,-3.4*s,-1,3.4*s,9.5*s*fl,A.u0,A.v0,A.u1,A.v1,1,.95,.8,1);v3QFlush(V3.pA,V3A.pages[k].tex,[0,0,1],0,true)}}
   gl.depthMask(true);gl.disable(gl.BLEND)}
+// ------------------------------------------------------------------ i muri vicini nitidi (Denis: «la mappa fatta bene come la modalità
+// zombie esistente»): le texture delle facce sono a circa un pixel per unità (tutta la mappa sta in tre fogli); per le cose vicine alla
+// telecamera (130 unità, 110 in prima persona) le facce si ridipingono come le dipinge il motore (texture(): lo stesso seme, gli stessi segni
+// dei materiali, la stessa luce, il disegno in più) a 4 pixel per unità in un foglio loro, e si disegnano al posto di quelle sfocate. Poche
+// facce per fotogramma, le più vicine prima; pieno il foglio, si ricomincia. Niente con LOWFX o sul telefono lento
+const V3NA={S:2048,tex:null,x:2,y:2,h:0,gen:1};
+const v3NearOk=p=>!!(p._v3n&&p._v3n.ready&&p._v3n.gen===V3NA.gen&&!LOWFX&&!V3.low);
+function v3TexHi(t,key,K){const w=Math.max(1,Math.round(t.w)),h=Math.max(1,Math.round(t.h)),id=t.mat+'|'+key+'|'+w+'|'+h+'|'+(t.foot?1:0)+'|'+(t.texId||''),m=ZM.MAT[t.mat]||ZM.MAT.stone,
+    c=V3.hiCv||(V3.hiCv=document.createElement('canvas'));c.width=Math.max(2,Math.ceil(w*K));c.height=Math.max(2,Math.ceil(h*K));const g=c.getContext('2d'),sv=ctx;ctx=g;ctx.setTransform(K,0,0,K,0,0);ZM.srand(v3Hash(id));
+  try{ctx.fillStyle=ZM.tone(m,key);ctx.fillRect(0,0,w,h);const mk=ZM.MARKS[m.marks];if(mk)mk(w,h,key,m);if(m.after)m.after(w,h,key);
+    if(key==='t'||key==='r'||key==='rn'||key==='rw'||key==='re'){const gr=ctx.createLinearGradient(0,0,w*.7,h*.7);gr.addColorStop(0,ZM.wa(key==='t'?.26:.16));gr.addColorStop(1,'rgba(0,0,0,0)');ctx.fillStyle=gr;ctx.fillRect(0,0,w,h)}
+    else{const gr=ctx.createLinearGradient(0,h,0,Math.max(0,h-Math.min(28,h)));gr.addColorStop(0,`rgba(0,0,0,${t.foot?.38:.14})`);gr.addColorStop(1,'rgba(0,0,0,0)');ctx.fillStyle=gr;ctx.fillRect(0,0,w,h);
+      ctx.fillStyle='rgba(200,215,255,.22)';ctx.fillRect(0,0,w,1.5);if(key==='s'||key==='w'){const gw=ctx.createLinearGradient(0,0,2.5,0);gw.addColorStop(0,'rgba(200,215,255,.16)');gw.addColorStop(1,'rgba(200,215,255,0)');ctx.fillStyle=gw;ctx.fillRect(0,0,2.5,h)}}
+    if(t.tex){ZM.srand(v3Hash(id+'|x'));ctx.setTransform(K,0,0,K,0,0);t.tex(t.w,t.h,t.key)}}catch(er){v3Err(er)}finally{ctx=sv}return c}
+function v3NearSlot(w,h){const A=V3NA,S=A.S,pad=2;if(w>S-8||h>S-8)return null;if(A.x+w+pad>S){A.x=pad;A.y+=A.h+pad;A.h=0}if(A.y+h+pad>S)return null;const x=A.x,y=A.y;A.x+=w+pad;A.h=Math.max(A.h,h);return{x,y}}
+function v3Near(){if(LOWFX||V3.low||V3.mode==='alto')return;const gl=V3.gl,e=V3.eye,RN=V3.mode==='prima'?110:130,S=V3NA.S;
+  if(!V3NA.tex){V3NA.tex=v3Tex(gl,null,false,S,S)}
+  const cand=[];for(const p of G3.props){if(!p._v3f||!p._v3s||!p._v3c)continue;const s=p._v3s,d=Math.hypot(s[0]-e[0],s[1]-e[1],s[2]-e[2])-s[3];if(d<RN)cand.push([d,p])}cand.sort((a,b)=>a[0]-b[0]);
+  const t0=performance.now();
+  for(const[,p] of cand.slice(0,10)){if(performance.now()-t0>5)break;let N=p._v3n;if(N&&N.gen===V3NA.gen&&N.ready)continue;
+    if(!N||N.gen!==V3NA.gen){if(N&&N.vb)gl.deleteBuffer(N.vb);N=p._v3n={gen:V3NA.gen,i:0,uv:[],ready:false,vb:null}}
+    while(N.i<p._v3f.length&&performance.now()-t0<5){const f=p._v3f[N.i],w=Math.max(1,Math.round(f.t.w)),h=Math.max(1,Math.round(f.t.h)),K=Math.min(4,1000/Math.max(w,h));
+      const sl=v3NearSlot(Math.ceil(w*K),Math.ceil(h*K));
+      if(!sl){// the sheet is full: start again with the nearest
+        V3NA.gen++;V3NA.x=V3NA.y=2;V3NA.h=0;return}
+      const cv=v3TexHi(f.t,f.ky,K);gl.bindTexture(gl.TEXTURE_2D,V3NA.tex);gl.pixelStorei(gl.UNPACK_PREMULTIPLY_ALPHA_WEBGL,false);gl.texSubImage2D(gl.TEXTURE_2D,0,sl.x,sl.y,gl.RGBA,gl.UNSIGNED_BYTE,cv);
+      N.uv.push([sl.x/S,sl.y/S,(sl.x+cv.width)/S,(sl.y+cv.height)/S]);N.i++;V3.nNear=(V3.nNear||0)+1}
+    if(N.i>=p._v3f.length){// all its faces painted: their triangles with the new places in the sheet
+      const n=p._v3f.length,buf=new ArrayBuffer(n*6*24),F=new Float32Array(buf),U=new Uint8Array(buf);let o=0;N.runs=[];
+      p._v3f.forEach((f,i)=>{const[u0,v0,u1,v1]=N.uv[i],c=f.c,V=[[c[0],u0,v1],[c[1],u1,v1],[c[2],u1,v0],[c[0],u0,v1],[c[2],u1,v0],[c[3],u0,v0]];N.runs.push({s:i*6,tag:f.tag,vis:f.vis});
+        for(const[q,u,v] of V){F[o*6]=q[0];F[o*6+1]=q[1];F[o*6+2]=q[2];F[o*6+3]=u;F[o*6+4]=v;U[o*24+20]=255;U[o*24+21]=255;U[o*24+22]=255;U[o*24+23]=f.al;o++}});
+      N.vb=gl.createBuffer();gl.bindBuffer(gl.ARRAY_BUFFER,N.vb);gl.bufferData(gl.ARRAY_BUFFER,buf,gl.STATIC_DRAW);N.ready=true}}}
+function v3NearDraw(){if(LOWFX||V3.low||!V3NA.tex)return;const gl=V3.gl;let bound=false;
+  for(const p of G3.props){if(!p._v3c||!v3NearOk(p))continue;const N=p._v3n;
+    if(!bound){gl.bindTexture(gl.TEXTURE_2D,V3NA.tex);gl.enableVertexAttribArray(2);bound=true}
+    gl.bindBuffer(gl.ARRAY_BUFFER,N.vb);gl.vertexAttribPointer(0,3,gl.FLOAT,false,24,0);gl.vertexAttribPointer(1,2,gl.FLOAT,false,24,12);gl.vertexAttribPointer(2,4,gl.UNSIGNED_BYTE,true,24,20);
+    let s=-1,n=0;for(const r of N.runs){const ok=(!r.vis||r.vis())&&(!r.tag||!p.house||v3TagVis(p.house,r.tag));if(ok){if(s>=0&&s+n===r.s)n+=6;else{if(n)gl.drawArrays(gl.TRIANGLES,s,n);s=r.s;n=6}}}if(n)gl.drawArrays(gl.TRIANGLES,s,n)}}
 // i disegni a terra della partita (gli avvisi del Becchino, il fuoco della Bomba, la Tagliola, l'onda del Rintocco, le crepe): quelli del
 // direttore (drawGround), fatti in una tela vista dall'alto intorno all'eroe (600 unità) e stesa a terra; non c'è nessun disegno, niente tela
 function v3Decals(){const W=ZM.W,D=W.director;if(!D||!D.drawGround)return;const A=typeof ZABS!=='undefined'?ZABS:null;
@@ -751,7 +883,7 @@ function v3Set(m){if(!m||m===V3.mode)return;const W=ZM.W;
   if(!V3.built){if(V3.busy)return;V3.busy=true;v3Toast('Preparo la visuale 3D…',8);setTimeout(()=>{try{v3Build()}catch(e){v3Err(e)}V3.busy=false;if(V3.built){V3.mode=m;V3.on=true;V3.cv.style.display='';v3UI();v3Toast(V3NAME[m])}else v3Toast('Non riesco a preparare la visuale 3D',2.6)},60);return}
   V3.mode=m;V3.on=true;V3.cv.style.display='';V3.camK=null;v3UI();v3Toast(V3NAME[m])}
 // ------------------------------------------------------------------ l'aggancio: il motore chiede a W.v3 se disegnare lui
-if(typeof ZM!=='undefined'&&ZM.W){const W=ZM.W;W.v3={get on(){if(!V3.auto&&W.ground&&W.director&&W.director.st){V3.auto=1;setTimeout(()=>{if(V3.mode==='alto')v3Set('terza')},500)}return V3.on&&V3.built&&V3.mode!=='alto'},draw:(dt,Wp,Hp,dpr)=>{try{v3Frame(dt,Wp,Hp,dpr)}catch(e){v3Err(e)}}};
+if(typeof ZM!=='undefined'&&ZM.W){const W=ZM.W;W.v3={get on(){if(!V3.auto&&W.ground&&W.director&&W.director.st){V3.auto=1;setTimeout(()=>{if(V3.mode==='alto')v3Set('terza')},500)}if(V3.lost&&V3.mode!=='alto'){v3Set('alto');v3Toast('La visuale 3D si è fermata: torno dall\'alto',2.6)}return V3.on&&V3.built&&!V3.lost&&V3.mode!=='alto'},draw:(dt,Wp,Hp,dpr)=>{try{v3Frame(dt,Wp,Hp,dpr)}catch(e){v3Err(e)}}};
   addEventListener('keydown',e=>{if((e.code==='KeyC')&&!e.repeat&&document.getElementById('mz')&&!document.getElementById('mz').hidden&&ZM.W.director&&ZM.W.director.st!=='fine'){v3Set(V3NEXT[V3.mode])}},true);
   if(ZM.partita){const _p=ZM.partita;ZM.partita=function(){const D=_p.apply(this,arguments);if(D&&!D.__v3){D.__v3=1;const _r=D.reset;D.reset=function(){_r.apply(this,arguments);try{v3UI()}catch(e){}}}try{v3UI()}catch(e){}return D};if(W.director)try{v3UI()}catch(e){}}
   window.__V3=V3}

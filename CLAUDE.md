@@ -423,7 +423,17 @@ l'arma vera di ARMI3D (un kit che fa triangoli coi modelli delle armi, parti che
 a sinistra, il bordo chiaro e il contorno scuro spesso; le teste con pezzi propri (coda, piuma, occhiali, maschera, elmo, corna, aspetto) sono
 la testa dipinta del gioco al suo posto. **L'arma in prima persona in 3D** (lo stesso modello, mani e maniche, girata per vederne il fianco,
 ricarica con la mano libera). In più: il cielo dalla nebbia al blu della notte con le stelle, la vampa che illumina intorno, le ombre morbide
-sotto i personaggi. Foglio delle quattro direzioni `tests/v3/vi_eroe4.png`; `node tests/v3/visuale.js` 16 controlli.
+sotto i personaggi. Foglio delle quattro direzioni `tests/v3/vi_eroe4.png`.
+Poi (2 novembre, Denis: «della visuale in prima e terza persona non riesci a fare la mappa fatta bene come la modalità zombie esistente nel
+gioco?») **la mappa come dall'alto**: il terreno intero (1,5 pixel per unità invece di metà) col filtro anisotropo e un dettaglio fine vicino
+alla telecamera (fili d'erba, grana della pietra, ciottoli, scelti dal colore del terreno: `v3DetailTex`); **i muri vicini ridipinti nitidi**
+con la ricetta del motore (`texture()`) a 4 pixel per unità in un foglio loro (`V3NA`, `v3Near`, 130 unità, 110 in prima persona, al massimo
+5 ms a fotogramma) e gli altri un poco più nitidi; la notte uguale a `drawDark`/`drawLights` (l'eroe senza luce calda sua); il contorno
+spesso come dall'alto e i colori più pieni; la telecamera in terza persona che non finisce più sulla nuca dell'eroe accanto a lampioni e
+pilastri (la griglia delle altezze solo dalle cose grandi, sette posti da provare: spalle, mezzo, più in alto; l'eroe mezzo trasparente
+quando è proprio addosso); **la vita della mappa** in 3D (nebbia bassa, fumo dei camini, foglie, lucciole, stormo di corvi e corvi posati
+che volano via, falene ai lampioni: `v3Life`); perso il disegno 3D, torna da sola alla vista dall'alto. Memoria grafica circa +50 MB.
+`node tests/v3/visuale.js` 18 controlli.
 Dettagli, cosa non si vede ancora in 3D e misure in `docs/visuale-3d.md`. Solo da vedere: niente entra nel gioco senza il sì di Denis.
 
 ## FASE 9: più fluido sul telefono (19 ottobre, in corso)

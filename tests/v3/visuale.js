@@ -13,8 +13,16 @@ const {chromium}=require('playwright');const path=require('path');const D=path.j
   for(let i=0;i<120;i++){await p.waitForTimeout(500);if(await E(`!!(ZG.on&&ZM.W.director&&ZM.W.director.st)`))break}
   for(let i=0;i<90;i++){await p.waitForTimeout(300);if(await E(`!!(window.__V3&&__V3.built&&__V3.on)`))break}
   await E(`ZM.W.dbg.noSpawn=true;ZM.W.dbg.god=true;__V3.noLow=1;__V3.low=false;SAVE.set.q='alta';LOWFX=false;for(const z of ZM.W.Z.slice())ZM.W.Z.splice(ZM.W.Z.indexOf(z),1);0`);await p.waitForTimeout(800);
+  const s0x=await J(`JSON.stringify([ZM.W.hero.x,ZM.W.hero.y])`);
   const s0=await J(`JSON.stringify({mode:__V3.mode,on:ZM.W.v3.on,btn:(document.getElementById('v3btn')||{}).textContent||'',ground:G3.ground.length,pages:V3A.pages.length,gl:__V3.gl.getError(),tb:Math.round(__V3.tBuild)})`);
   ok('la partita parte da sola in terza persona, col bottone «Visuale» e il mondo in 3D (terreno, fogli delle texture)',s0.mode==='terza'&&s0.on&&/Terza persona/.test(s0.btn)&&s0.ground>0&&s0.pages>0&&s0.gl===0,s0);
+  // the map as well made as from above: the ground's photo whole (1.5 pixels a unit) with its fine detail, the near walls painted sharp
+  // (4 pixels a unit, the engine's own recipe), the camera free next to the lamp post, the life of the map (fireflies, mist, crows, smoke)
+  await p.waitForTimeout(1500);
+  const mp=await J(`JSON.stringify({gk:+(G3.ground[0].pw/G3.ground[0].w).toFixed(2),det:!!G3.detT,near:__V3.nNear||0,ready:G3.props.filter(p=>v3NearOk(p)).length,life:__V3.nLife||0})`);
+  ok('la mappa fatta come dall\'alto: il terreno intero col dettaglio, i muri vicini ridipinti nitidi, la vita della mappa',mp.gk>=1.4&&mp.det&&mp.near>0&&mp.ready>0&&mp.life>0,mp);
+  {const r=await J(`(()=>{const h=ZM.W.hero;h.x=409.6;h.y=1301.6;window.__MZ.view(0);return JSON.stringify(1)})()`);await p.waitForTimeout(2500);
+    const k=await E(`+__V3.camK.toFixed(2)`);ok('accanto al lampione la telecamera resta dietro l\'eroe (non gli finisce addosso)',k>=.6,{k});await E(`ZM.W.hero.x=${s0x[0]};ZM.W.hero.y=${s0x[1]};0`);await p.waitForTimeout(400)}
   await p.screenshot({path:D+'vi_terza.png'});
   // walking: forward goes where the camera looks; after turning the view, the new way
   const home=await J(`JSON.stringify([ZM.W.hero.x,ZM.W.hero.y])`);// (each walk starts from the start of the match, in the open)

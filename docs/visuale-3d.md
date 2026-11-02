@@ -10,7 +10,9 @@ persona». Non è nel gioco e non è nell'Anteprima 49: è una pagina sua, per v
   prima partita parte da sola in terza persona (mezzo secondo dopo che la mappa è pronta); la scelta resta per le partite dopo.
 - **Terza persona**: la telecamera dietro le spalle dell'eroe, un po' a destra (150 unità indietro, 13° sopra l'orizzonte all'inclinazione
   di partenza), che guarda 80 unità davanti a lui; l'eroe in basso. Non entra nei muri: se tra l'eroe e la telecamera c'è qualcosa di alto
-  (muri, case, la cripta: una griglia delle altezze fatta dai pezzi dei prop, senza tetti né alberi) viene avanti fino a poco prima.
+  (una griglia delle altezze fatta solo dalle cose grandi: case, muri lunghi, la cripta; senza tetti né alberi, e senza lampioni, pilastri,
+  lapidi) prova prima l'altra spalla o il mezzo, poi un poco più in alto (sopra il recinto, sopra il muretto), e solo allora viene avanti
+  fino a poco prima; passa da un posto all'altro piano. Quando è proprio addosso all'eroe lui diventa mezzo trasparente.
 - **Prima persona**: gli occhi dell'eroe (47 unità da terra, un poco di dondolio camminando), il mirino al centro, l'arma in mano in basso a
   destra (il modello 3D dell'arma, ARMI3D, visto da dietro, con le mani e le maniche): rinculo, vampa, carrello, pompa, tamburo; in ricarica
   si abbassa e si piega, presa un'arma nuova sale dal basso. Morendo la vista cade a terra.
@@ -33,7 +35,8 @@ persona». Non è nel gioco e non è nell'Anteprima 49: è una pagina sua, per v
   - I disegni a mano (`fn3`: tronchi e rami, il mais, buche, dettagli): dipinti dal motore stesso «dalla parte da cui li si guarda» (16
     direzioni, a 25° di inclinazione) e messi in piedi come cartoline che guardano la telecamera; quelli piatti (buche, botole) una volta
     dall'alto e stesi a terra. Si fanno quando servono (al massimo 12 a fotogramma, i più vicini prima) in un atlante loro; pieno, si ricomincia.
-  - Il terreno: la foto cotta dal motore (a metà grandezza), stesa a terra.
+  - Il terreno: la foto cotta dal motore, intera (1,5 pixel per unità), stesa a terra, con il filtro che la tiene nitida anche vista di
+    sbieco e il dettaglio fine vicino alla telecamera (sotto, «La mappa come dall'alto»).
   - Quello che cambia nella partita resta giusto: i prop nascosti (`hide`, il cancello aperto), i pezzi con `vis()` (assi delle barricate,
     ante della botola), le parti delle case (con l'eroe dentro niente tetto; al pianterreno niente piano di sopra).
 - **L'eroe in 3D vero** (2 novembre, Denis: «metti il pg in 3d, non può essere in 2d, ce l'abbiamo già il modello in 3d usiamo quello»): in
@@ -65,20 +68,66 @@ persona». Non è nel gioco e non è nell'Anteprima 49: è una pagina sua, per v
   ridipinge solo quando cambia quello che mostra (la posa a dodicesimi, il verso, l'inclinazione, la grandezza), in un posto suo dell'atlante.
   L'uscita da terra, la morte che affonda, il lampo bianco quando lo si colpisce come dall'alto. Sotto l'eroe, gli zombie e la Bara un'ombra
   morbida a terra.
-- **La notte**: la stessa ricetta della vista dall'alto per ogni punto del mondo: tutto più scuro e blu (il velo `rgba(10,14,34,.42)`) tranne
-  vicino alle luci (le 11 più vicine più quella dell'eroe, che tremolano come le loro) e all'eroe, con la luce calda che si somma; la nebbia
+- **La notte**: la stessa ricetta della vista dall'alto per ogni punto del mondo (`drawDark` e `drawLights` del motore): tutto più scuro e
+  blu (il velo `rgba(10,14,34,.42)`) tranne nei buchi intorno alle luci (le 11 più vicine, larghi 1,2 volte il loro raggio, che tremolano come
+  le loro) e intorno all'eroe (120 unità, senza luce sua), con la pozza di luce calda delle luci che si somma; la nebbia
   con la distanza (in terza persona da 230 unità, in prima da 150), più fitta nelle zone chiuse (il velo) e ai bordi del mondo; la luna a
   ovest; le fiamme (lanterne, candele, torce, zucche) come fiammelle e aloni sommati. Il **cielo** va dal colore della nebbia all'orizzonte al
   blu profondo della notte in alto, con 240 **stelle** che tremolano (non con `LOWFX`). La **vampa** di ogni colpo accende per un attimo una
   luce calda alla bocca dell'arma, che illumina l'eroe, gli zombie e quello che c'è intorno.
-- **Il contorno scuro**: l'ultimo passaggio guarda dove la profondità salta e scurisce il bordo della cosa davanti (come i contorni spessi
-  dei disegni), sfumato con la nebbia; poi la vignetta.
+- **Il contorno scuro**: l'ultimo passaggio guarda dove la profondità salta (a uno e a due pixel di distanza, così è spesso come quello
+  della mappa dall'alto; sul telefono lento a uno) e scurisce il bordo della cosa davanti, sfumato con la nebbia; i colori un poco più pieni
+  (+10%), come quelli della mappa; poi la vignetta.
 - **A terra** i disegni della partita (gli avvisi del Becchino, il fuoco della Bomba, la Tagliola, l'onda del Rintocco, le crepe): quelli del
   direttore (`drawGround`) dipinti in una tela vista dall'alto intorno all'eroe e stesa a terra, solo quando c'è qualcosa.
 - **Sopra, in 2D**: le strisce dei colpi (dalla bocca dell'arma), le esplosioni, le monete che saltano, il sangue, il mirino, l'arma in prima
   persona. Le levette, la vignetta e la bussola le disegna il motore come oggi.
-- **Telefoni lenti**: oltre 34 ms a fotogramma per 1,6 s la qualità scende da sola (immagine a 2/3, 6 luci, contorno più leggero); `LOWFX`
-  rispettato. Memoria: 3 fogli da 2048 (48 MB) più due atlanti da 2048×1024, il terreno a metà, i fogli 2D buttati dopo averli mandati.
+- **Telefoni lenti**: oltre 34 ms a fotogramma per 1,6 s la qualità scende da sola (immagine a 2/3, 6 luci, contorno più leggero, niente
+  muri ridipinti né nitidezza in più, dettaglio del terreno più leggero); `LOWFX` rispettato (niente vita della mappa, niente stelle, niente
+  dettaglio). Memoria: 3 fogli da 2048 (48 MB) più due atlanti da 2048×1024 (16 MB), il terreno intero (circa 43 MB con le mipmap; a metà se
+  il telefono è già lento quando si prepara), il foglio dei muri vicini (16 MB), i fogli 2D buttati dopo averli mandati. Se il telefono
+  perde il disegno 3D (memoria finita), torna da solo alla vista dall'alto e lo dice («La visuale 3D si è fermata: torno dall'alto»).
+
+## La mappa come dall'alto (2 novembre, seconda richiesta)
+
+Denis: «della visuale in prima e terza persona non riesci a fare la mappa fatta bene come la modalità zombie esistente nel gioco?». Le cause,
+guardate mettendo una accanto all'altra la stessa scena dall'alto, in terza e in prima persona: il terreno era a metà grandezza (da pochi
+passi i ciottoli erano una macchia), le texture dei muri a circa un pixel per unità (vicine, sfocate), la notte diversa da quella dall'alto
+(una luce calda grande intorno all'eroe, pozze più chiare), il contorno più sottile e i colori più spenti, la telecamera in terza persona che
+accanto a un lampione finiva sulla nuca dell'eroe, e niente della vita della mappa. Fatto:
+
+- **Il terreno nitido**: la foto intera del motore (1,5 pixel per unità; a metà solo su un telefono già lento), il filtro anisotropo su tutte
+  le texture con le mipmap (8, 4 sul telefono lento: il terreno e i muri visti di sbieco restano nitidi) e un **dettaglio fine** vicino alla
+  telecamera (pieno fino a 60 unità, sparisce a 200): un'immagine di 256 pixel che si ripete senza giunture, con tre grane in una, scelte dal
+  colore del terreno stesso: fili d'erba dove è verde, ciottoli dove è terra, grana e crepette dove è pietra o ghiaia; a due grandezze (23 e 37
+  unità) così non si vede ripetere (`v3DetailTex`, `uDet` nel disegno delle facce).
+- **I muri vicini nitidi**: le facce dipinte delle cose entro 130 unità dalla telecamera (110 in prima persona) si **ridipingono con la
+  ricetta del motore** (`texture()`: lo stesso seme, gli stessi segni dei materiali, la stessa luce, il disegno in più) fino a 4 pixel per
+  unità in un foglio loro da 2048 (`V3NA`, `v3TexHi`, `v3Near`), al massimo 5 ms a fotogramma, le più vicine prima; quando una cosa ha tutte
+  le facce pronte si disegna con quelle al posto delle sfocate (`v3NearDraw`); pieno il foglio, si ricomincia dalle più vicine. Le altre facce
+  tra 50 e 150 unità un poco più nitide (`uShp`). Niente con `LOWFX` o sul telefono lento.
+- **La notte come dall'alto**: vedi sopra («La notte»): l'eroe senza luce calda sua, solo il buco nella notte (120 unità, profondo 0,6, come
+  `drawDark`); ogni luce il buco largo 1,2 volte il raggio e la pozza calda larga il raggio, forte 0,8 della sua luce, meno quando la sua casa
+  sfuma (come `drawLights`); il velo 0,42.
+- **Il contorno spesso e i colori pieni**: vedi sopra («Il contorno scuro»).
+- **La telecamera in terza persona libera**: la griglia delle altezze prende solo le cose grandi (una cosa conta se la sua parte alta, dai 34
+  in su, è larga almeno 34; di lei solo le facce lunghe almeno 18 e alte almeno 12, o piatte di almeno 16×24), così un lampione, la sua
+  lanterna, un pilastro, una lapide non la spingono addosso all'eroe; guarda dai 14 unità dietro la testa in poi (un muro che l'eroe tocca
+  non la ferma subito); sette posti in ordine (spalla destra, mezzo, spalla sinistra, poi gli stessi un poco più in alto, poi più in alto
+  ancora) e prende il primo libero o quello che arriva più lontano; passa da uno all'altro in circa un terzo di secondo. Quando è proprio
+  addosso (meno del 42% della distanza) l'eroe è mezzo trasparente (0,55), disegnato prima solo nella profondità così i suoi pezzi non si
+  vedono uno attraverso l'altro.
+- **La vita della mappa** (`v3Life`): quella che il motore muove anche dall'alto (`updateAmbient`), disegnata in 3D: la **nebbia bassa** che
+  scorre verso est stesa a terra (il motore la muove solo quando disegna dall'alto, qui la muove la visuale), il **fumo** dei camini e della
+  carrozza bruciata, le **foglie** che cadono dagli alberi, le **lucciole** verdi che si accendono e si spengono, lo **stormo di corvi** che
+  passa in alto battendo le ali (sei pose, girati dove volano) e i **corvi posati** su tetti e croci (due pose, la testa da una parte e
+  dall'altra) che volano via quando ci si avvicina, le **falene** intorno ai vetri accesi dei lampioni. Niente con `LOWFX`.
+- **Se il telefono perde il disegno 3D** (la memoria della scheda grafica finita): torna da solo alla vista dall'alto, con la scritta.
+
+Il costo: la memoria grafica sale di circa 50 MB (il terreno intero, circa 43 MB invece di 11, e il foglio dei muri vicini, 16 MB); a
+fotogramma la vita della mappa sono pochi disegni (le cose vicine, quelle fuori dalla nebbia no), i muri vicini al massimo 5 ms solo mentre
+se ne ridipingono di nuovi (camminando verso cose nuove), poi niente. Foto di confronto (dall'alto, terza, prima persona negli stessi tre
+posti) fatte con uno script della cartella di lavoro.
 
 ## L'aggancio nel motore (anteprime/zombie/motore.js)
 
@@ -94,8 +143,9 @@ https://claude.ai/artifact/EsX3514z5xM6WsFLEAGFhW («Mossbound Visuale zombie»;
 
 ## Prove
 
-`python3 tests/v3/mk.py`, poi `node tests/v3/visuale.js` (16 controlli: la partita parte in terza persona col bottone e il mondo in 3D;
-avanti va dove guarda la telecamera, girando la visuale cammina nella direzione nuova, a destra alla sua destra (ogni passo dal punto di
+`python3 tests/v3/mk.py`, poi `node tests/v3/visuale.js` (18 controlli: la partita parte in terza persona col bottone e il mondo in 3D;
+la mappa come dall'alto (il terreno intero col dettaglio, i muri vicini ridipinti, la vita della mappa); accanto al lampione la telecamera
+resta dietro l'eroe; avanti va dove guarda la telecamera, girando la visuale cammina nella direzione nuova, a destra alla sua destra (ogni passo dal punto di
 partenza, all'aperto); spara allo zombie davanti, zombie ed eroe disegnati; l'eroe in 3D vero (corpo, testa, piedi, mani e arma) col colpo
 dalla bocca dell'arma 3D; gli altri eroi senza errori; in prima persona l'arma in mano, niente eroe, lo zombie preso, e l'arma in 3D vero; in
 casa niente tetto e niente muri tra la telecamera e l'eroe (alta, la telecamera può guardare sopra i muri); il fuoco della Bomba e la Tagliola
@@ -108,8 +158,8 @@ secondo): le prove aspettano di più, vanno a 1× e tengono la qualità alta (al
 
 - La preparazione la prima volta che si passa al 3D: qualche secondo sul telefono (qui 6–7 s senza scheda grafica, di cui 3 la prima
   pittura delle armi appese ai muri, che si farebbe comunque la prima volta che compaiono), con la scritta «Preparo la visuale 3D…».
-- Non si vedono ancora in 3D: i compagni sulla mappa, i corvi, il fumo, le foglie e le lucciole, i bossoli e i caricatori che cadono, la
-  fiamma del lanciafiamme (resta il danno), le cose che il direttore disegna sopra a tutto (l'anima che vola, la colonna di luce).
+- Non si vedono ancora in 3D: i compagni sulla mappa, i bossoli e i caricatori che cadono, la fiamma del lanciafiamme (resta il danno), le
+  cose che il direttore disegna sopra a tutto (l'anima che vola, la colonna di luce).
 - Gli zombie, i boss e la Bara sono ancora cartoline dipinte (non modelli 3D veri): da molto in basso si vedono un po' «dall'alto». Il
   prossimo passo possibile: anche loro in 3D vero, come l'eroe (i loro modelli in `sprite/mostri/disegno_mostri.js` hanno scheletro e arti
   a due ossa).
