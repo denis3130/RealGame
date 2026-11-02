@@ -33,7 +33,7 @@ void main(){float side=aB.x,h=aB.y,ph=aB.z,H=aB.w,a=ph*6.2832;vec2 wd=vec2(cos(a
 // dark at the root, light at the tip (the tall dry stems straw-coloured at the top), darker at the feet of who stands in it; the night, the
 // lanterns and the mist as on everything else
 const MWFS_GRASS=`precision highp float;varying vec3 vW;varying vec4 vC;varying float vH;varying float vSh;${V3SHADE}
-void main(){vec3 c=vC.rgb*mix(.5,1.38,vH)+vec3(.03,.045,.01)*vH*vH+vec3(.035,.05,.085)*smoothstep(.55,1.,vH);
+void main(){vec3 c=vC.rgb*mix(.5,1.38,vH)+vec3(.03,.045,.01)*vH*vH;c=max(vec3(0.),mix(vec3(dot(c,vec3(.3,.59,.11))),c,1.18))+vec3(.02,.035,.05)*smoothstep(.55,1.,vH);
  if(vC.a>.5)c=mix(c,vec3(.6,.54,.33)*(.55+max(max(vC.r,vC.g),vC.b)),smoothstep(.5,1.,vH)*.7);
  c*=1.-.42*vSh*(1.-vH*.6);gl_FragColor=vec4(shade(c,vW,vec3(0.),1.,0.),1.);}`;
 // the ground's photo, small (a pixel every two units): how much grass there is (from its colour, as the ground's shader decides it) and the

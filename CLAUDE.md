@@ -433,7 +433,19 @@ spesso come dall'alto e i colori più pieni; la telecamera in terza persona che 
 pilastri (la griglia delle altezze solo dalle cose grandi, sette posti da provare: spalle, mezzo, più in alto; l'eroe mezzo trasparente
 quando è proprio addosso); **la vita della mappa** in 3D (nebbia bassa, fumo dei camini, foglie, lucciole, stormo di corvi e corvi posati
 che volano via, falene ai lampioni: `v3Life`); perso il disegno 3D, torna da sola alla vista dall'alto. Memoria grafica circa +50 MB.
-`node tests/v3/visuale.js` 18 controlli.
+Poi (2 novembre, Denis: «rendilo tripla A») quattro pezzi, tre in file loro che si agganciano a 105 (senza di loro 105 disegna come prima;
+nella pagina con `mk_visuale.py`, fuori da `src/ordine.txt`): **luci da film** in 105 (le lanterne dal lato giusto, pietre bagnate che
+luccicano, la luce nella nebbia, nebbia bassa che si muove, ombre lunghe; bagliore, curva morbida, ombre fredde e luci calde, vignetta, grana,
+il lampo quando ti colpiscono, i colori che si spengono con poca vita); **zombie e boss in 3D vero** (`src/js/106-zombie-3d.js`, `Z3`: i
+sette tipi fatti di triangoli dalle pose dei loro disegni, conti copiati da `disegno_mostri.js` che non cambia, pose fatte una volta e
+passate dalla scheda grafica, occhi che pulsano, la lampada del minatore e la lanterna che illuminano, il Becchino col cilindro, lo
+Spaventapasseri col corvo); **effetti della battaglia in 3D** (`src/js/107-effetti-3d.js`, `FX3`: scie dei colpi, vampa, scintille,
+sangue con le macchie, bossoli, esplosioni che illuminano, zolle, la telecamera che trema e rincula, segni sul mirino, l'arco rosso del
+colpo preso); **il mondo più ricco** (`src/js/108-mondo-3d.js`, `MW`: l'erba vera a fili 3D dove il terreno è erba, mossa dal vento a
+ondate e piegata da eroe e zombie, a pezzi di 48 unità intorno a dove si guarda, senza profondità e dopo i personaggi; i coni di luce sotto
+i lampioni col pulviscolo; le nuvole che passano sulla luna col bordo d'argento). In più la telecamera in terza persona che con le spalle
+dell'eroe al pozzo sale sopra o non disegna la cosa in cui è finita. Effetti bassi: niente erba, coni e pulviscolo. `node tests/v3/visuale.js`
+24 controlli; prima e dopo in `tests/v3/vi_tripla_a.jpg`.
 Dettagli, cosa non si vede ancora in 3D e misure in `docs/visuale-3d.md`. Solo da vedere: niente entra nel gioco senza il sì di Denis.
 
 ## FASE 9: più fluido sul telefono (19 ottobre, in corso)

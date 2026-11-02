@@ -129,6 +129,55 @@ fotogramma la vita della mappa sono pochi disegni (le cose vicine, quelle fuori 
 se ne ridipingono di nuovi (camminando verso cose nuove), poi niente. Foto di confronto (dall'alto, terza, prima persona negli stessi tre
 posti) fatte con uno script della cartella di lavoro.
 
+## Tripla A (2 novembre, terza richiesta)
+
+Denis: «rendilo tripla A». Quattro pezzi, ognuno in un file suo (106, 107, 108 si agganciano a 105 e senza di loro 105 disegna come prima):
+
+- **Luci da film** (in 105): le lanterne illuminano dal lato giusto (la faccia girata verso la luce più di quella girata dall'altra parte), le
+  strade di pietra e la ghiaia bagnate che luccicano sotto le lanterne e la luna (l'erba no), la luce che si vede nella nebbia intorno alle
+  sei lanterne più vicine, la nebbia bassa che si muove (un rumore morbido che scorre, più fitta in basso), l'ombra lunga e morbida dei
+  personaggi dalla luce più forte; poi il passaggio finale: il bagliore delle cose luminose (bloom, a un quarto e a un ottavo), una curva
+  morbida per le luci forti (niente bianco bruciato), ombre fredde e luci calde, un poco di contrasto, la vignetta, i colori che si separano
+  appena ai bordi, la grana; colpito, un lampo che scuote i colori; con poca vita i colori si spengono e i bordi battono rossi col cuore.
+  L'arma e le mani in prima persona prendono meno luce (niente bianco).
+- **Zombie e boss in 3D vero** (`src/js/106-zombie-3d.js`, `Z3`): tutti e sette (zombie della cripta, strisciante, minatore, cane, zombie
+  della lanterna, Becchino, Spaventapasseri) fatti di triangoli dalle stesse pose dei loro disegni (i conti delle pose copiati da
+  `sprite/mostri/disegno_mostri.js`, che non cambia: i fogli della lanterna restano identici), dipinti a tre toni col contorno scuro come
+  l'eroe: il minatore con la lampada sul casco che illumina la strada davanti, la lanterna con la sua luce, il Becchino col cilindro, la pala
+  e la gabbia toracica che brilla, lo Spaventapasseri che gira come una trottola col corvo che vola. Ogni mossa è una serie di pose fatte una
+  volta (16 da fermo, 24 le altre) e la scheda grafica passa da una all'altra; gli occhi brillano e pulsano; muoiono cadendo e affondando,
+  escono da terra. Al massimo 5 ms a fotogramma per le pose nuove (3 sul telefono lento); finché una posa non è pronta resta la cartolina
+  dipinta di prima.
+- **Effetti della battaglia in 3D** (`src/js/107-effetti-3d.js`, `FX3`): la scia di ogni colpo come un fascio di luce dalla bocca dell'arma
+  (più fine e lunga per i fucili, a ventaglio per le pompe) e la vampa a stella; scintille e polvere dove il colpo prende il muro; il sangue
+  scuro dello zombie colpito che cade e lascia le macchie a terra; i bossoli d'ottone che saltano e tintinnano; le esplosioni (palla di fuoco,
+  il lampo che illumina tutto intorno, l'anello a terra, il fumo, i detriti, la bruciatura); le zolle quando gli zombie escono da terra; la
+  telecamera che trema con le esplosioni, i colpi grossi e quando ti colpiscono, in prima persona lo sguardo che rincula a ogni colpo; i segni
+  sul mirino quando colpisci (rossi quando uccidi) e un arco rosso sul bordo dalla parte da cui ti hanno colpito.
+- **Il mondo più ricco** (`src/js/108-mondo-3d.js`, `MW`):
+  - **L'erba vera**: fili 3D dove il terreno è erba (letto dalla foto del terreno a un pixel ogni due unità, dal suo colore come decide il
+    terreno stesso; mai sui solidi, nelle case, sui portici, sulle pedane), col colore del terreno sotto, scuri alla radice e chiari in punta,
+    qualche stelo alto e secco color paglia. Il vento li muove a ondate che corrono sul prato, con le raffiche; l'eroe e i sette zombie più
+    vicini li piegano e li schiacciano dove passano, e ai loro piedi sono più scuri. A pezzi di 48 unità intorno a dove si guarda (210 unità
+    in terza persona, 150 in prima; ×0,72 e metà fili sul telefono lento), fatti pochi millisecondi a fotogramma, i più vicini prima; verso il
+    bordo si abbassano fino a sparire. Non scrive la profondità (così il contorno scuro non ripassa ogni filo): si disegna dopo i personaggi,
+    i fili davanti ai loro piedi li coprono, i pezzi dal più lontano al più vicino.
+  - **I coni di luce** sotto i lampioni e le lanterne appese fuori (non quelle dentro le case): la luce che si vede nella nebbia, più forte
+    vicino al vetro, che trema con la fiamma e respira con la nebbia che ci passa, e il **pulviscolo** che ci galleggia dentro e brilla (15
+    granelli a lampione, 7 sul telefono lento, solo vicino alla telecamera).
+  - **Le nuvole che passano sulla luna**: 27 banchi scuri tutto intorno al cielo che scorrono piano; tre all'altezza della luna, a un terzo di
+    cielo l'uno dall'altro, così ogni tanto uno la copre; coprono le stelle e la luna, il bordo diventa d'argento quando le passano davanti
+    (di più dalla parte della luna).
+- La telecamera in terza persona: se l'eroe ha le spalle contro una cosa grande e alta (il pozzo, una tettoia) prova anche più in alto,
+  guardandolo dall'alto, e se finisce comunque dentro quella cosa non la disegna (mai una casa, mai una cosa grande), invece di riempire lo
+  schermo col suo interno.
+- Effetti bassi: niente erba, coni, pulviscolo e grana, meno nuvole e particelle, niente tremolio della telecamera.
+- Tempi qui (senza scheda grafica, i passi del disegno misurati uno per uno): l'erba 3,8–4,8 ms con 9.000–10.000 fili nel prato, i coni
+  0,05–0,1 ms, il cielo con le nuvole 1,3–1,8 ms; il disegno di un fotogramma (la parte nel programma) 3,3–4,1 ms nelle prove. Memoria: i pezzi
+  d'erba al massimo 150 (circa 90 KB l'uno), la foto piccola del terreno 4,5 MB, le nuvole 256 KB.
+- Foto: `tests/v3/vi_tripla_a.jpg` (gli stessi quattro posti prima e dopo: il prato col pozzo, il lampione in prima persona, gli zombie e i due
+  boss, la luna).
+
 ## L'aggancio nel motore (anteprime/zombie/motore.js)
 
 Senza questo file non fa niente: in `render()` se `W.v3.on` il mondo lo disegna `W.v3.draw(dt, Wp, Hp, dpr)` (al posto di sfondo,
@@ -137,19 +186,22 @@ dell'eroe della mappa) e `bara()` (la Bara delle Sorprese).
 
 ## La pagina
 
-`python3 anteprime/mk_visuale.py <cartella>`: l'Anteprima 49 (il gioco di oggi più 98–104) più 105, divisa come il gioco pubblicato
+`python3 anteprime/mk_visuale.py <cartella>`: l'Anteprima 49 (il gioco di oggi più 98–104) più 105–108, divisa come il gioco pubblicato
 (`app/mk_claude.py`); alla prima apertura c'è già un eroe e il menu è sulla Zombie: si tocca Gioca. Pubblicata a parte su
 https://claude.ai/artifact/EsX3514z5xM6WsFLEAGFhW («Mossbound Visuale zombie»; si aggiorna ripubblicando la stessa cartella).
 
 ## Prove
 
-`python3 tests/v3/mk.py`, poi `node tests/v3/visuale.js` (18 controlli: la partita parte in terza persona col bottone e il mondo in 3D;
+`python3 tests/v3/mk.py`, poi `node tests/v3/visuale.js` (24 controlli: la partita parte in terza persona col bottone e il mondo in 3D;
 la mappa come dall'alto (il terreno intero col dettaglio, i muri vicini ridipinti, la vita della mappa); accanto al lampione la telecamera
 resta dietro l'eroe; avanti va dove guarda la telecamera, girando la visuale cammina nella direzione nuova, a destra alla sua destra (ogni passo dal punto di
 partenza, all'aperto); spara allo zombie davanti, zombie ed eroe disegnati; l'eroe in 3D vero (corpo, testa, piedi, mani e arma) col colpo
 dalla bocca dell'arma 3D; gli altri eroi senza errori; in prima persona l'arma in mano, niente eroe, lo zombie preso, e l'arma in 3D vero; in
 casa niente tetto e niente muri tra la telecamera e l'eroe (alta, la telecamera può guardare sopra i muri); il fuoco della Bomba e la Tagliola
-a terra; la Bara; «Dall'alto» torna com'era e si torna in terza; effetti bassi; nessun errore di disegno; al massimo tre fogli). Il foglio
+a terra; la Bara; il tripla A: i sei zombie e i due boss in 3D vero, sangue e macchie, l'esplosione che illumina e fa tremare la
+telecamera, l'erba nel prato coi coni dei lampioni lontani e le nuvole, la telecamera col pozzo alle spalle, il cono col pulviscolo in prima
+persona sotto il lampione, gli effetti bassi senza erba né coni; «Dall'alto» torna com'era e si torna in terza; nessun errore di disegno; al
+massimo tre fogli). Il foglio
 delle quattro direzioni dell'eroe 3D: `tests/v3/vi_eroe4.png`. Il browser delle prove disegna il 3D senza scheda grafica (4–7 fotogrammi al
 secondo): le prove aspettano di più, vanno a 1× e tengono la qualità alta (altrimenti il gioco abbassa da solo gli effetti). Foto
 `tests/v3/vi_*.png`.
@@ -158,11 +210,9 @@ secondo): le prove aspettano di più, vanno a 1× e tengono la qualità alta (al
 
 - La preparazione la prima volta che si passa al 3D: qualche secondo sul telefono (qui 6–7 s senza scheda grafica, di cui 3 la prima
   pittura delle armi appese ai muri, che si farebbe comunque la prima volta che compaiono), con la scritta «Preparo la visuale 3D…».
-- Non si vedono ancora in 3D: i compagni sulla mappa, i bossoli e i caricatori che cadono, la fiamma del lanciafiamme (resta il danno), le
-  cose che il direttore disegna sopra a tutto (l'anima che vola, la colonna di luce).
-- Gli zombie, i boss e la Bara sono ancora cartoline dipinte (non modelli 3D veri): da molto in basso si vedono un po' «dall'alto». Il
-  prossimo passo possibile: anche loro in 3D vero, come l'eroe (i loro modelli in `sprite/mostri/disegno_mostri.js` hanno scheletro e arti
-  a due ossa).
+- Non si vedono ancora in 3D: i compagni sulla mappa, i caricatori che cadono, la fiamma del lanciafiamme (resta il danno), le cose che il
+  direttore disegna sopra a tutto (l'anima che vola, la colonna di luce). La Bara è ancora una cartolina dipinta (gli zombie e i boss dal
+  tripla A sono in 3D vero).
 - Dentro le case la telecamera in terza persona sta vicina all'eroe, o guarda da sopra i muri quando è alta.
 - L'eroe 3D costa poco: una decina di disegni per fotogramma; un'arma nuova si costruisce in 0,5–2,3 ms la prima volta che si vede in quella
   posa (qui), poi si riusa.
