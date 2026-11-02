@@ -403,9 +403,11 @@ function v3Camera(dt,Wp,Hp){const W=ZM.W,h=W.hero,C=ZM.CAM,th=-Math.PI/2-C.yaw,f
     const free=(sh,ph)=>{const want=[head[0]-fx*D*Math.cos(ph)+rx*sh,head[1]-fy*D*Math.cos(ph)+ry*sh,head[2]+D*Math.sin(ph)];let kk=1;
       // (from 14 units behind the head: the grid's cells are 8 wide, a wall the hero is touching would stop it at once)
       for(let i=1;i<=24;i++){const t=i/24;if(t*D<14)continue;const x=head[0]+(want[0]-head[0])*t,y=head[1]+(want[1]-head[1])*t,z=head[2]+(want[2]-head[2])*t;if(v3HAt(x,y)>z-4){kk=Math.max(.16,(i-1.5)/24);break}}return{kk,want}};
-    let best=null;for(const[sh,dp,pen] of[[17,0,0],[0,0,.05],[-17,0,.08],[17,.24,.12],[0,.24,.15],[-17,.24,.18],[0,.48,.26]]){const c=free(sh,phi0+dp),sc=c.kk-pen;if(!best||sc>best.sc)best={sh,dp,sc,kk:c.kk};if(c.kk>=1&&!pen)break}
+    // (tripla A: with his back against something big and tall, a well, a shed, the last tries go high over it, looking down on him, rather
+    // than ending up inside it)
+    let best=null;for(const[sh,dp,pen] of[[17,0,0],[0,0,.05],[-17,0,.08],[17,.24,.12],[0,.24,.15],[-17,.24,.18],[0,.48,.26],[0,.8,.34],[0,1.1,.42]]){const c=free(sh,Math.min(1.35,phi0+dp)),sc=c.kk-pen;if(!best||sc>best.sc)best={sh,dp,sc,kk:c.kk};if(c.kk>=1&&!pen)break}
     const fk=Math.min(1,dt*3.5);V3.camSh=V3.camSh==null?best.sh:V3.camSh+(best.sh-V3.camSh)*fk;V3.camDp=V3.camDp==null?best.dp:V3.camDp+(best.dp-V3.camDp)*fk;
-    const sh=V3.camSh,phi=phi0+V3.camDp,{kk,want}=free(sh,phi);
+    const sh=V3.camSh,phi=Math.min(1.35,phi0+V3.camDp),{kk,want}=free(sh,phi);
     V3.camK=V3.camK==null?kk:kk<V3.camK?kk:V3.camK+(kk-V3.camK)*Math.min(1,dt*3);const k=V3.camK;
     eye=[head[0]+(want[0]-head[0])*k,head[1]+(want[1]-head[1])*k,head[2]+(want[2]-head[2])*k];at=[h.x+fx*80+rx*sh*.55,h.y+fy*80+ry*sh*.55,hz+30];
     // (for the photos of the tests: the camera round the hero, looking at him)
@@ -463,6 +465,10 @@ function v3Frame(dt,Wp,Hp,dpr){const gl=V3.gl,W=ZM.W,h=W.hero,t0=performance.now
   if(V3.cv.parentNode!==ctx.canvas.parentNode)ctx.canvas.parentNode.insertBefore(V3.cv,ctx.canvas);
   v3Ground();v3Size(Wp,Hp,dpr);v3Camera(dt,Wp,Hp);V3.frame++;v3Zones(false);v3Lights();v3PlaneTick();
   for(const p of G3.props){const s=p._v3s;p._v3c=!!s&&!p.hide&&v3Seen(s[0],s[1],s[2],s[3])}
+  // (tripla A: in third person, the thing the camera has ended up inside, a well or a shed with the hero's back against it, is not drawn,
+  // rather than filling the picture with its inside; never a house, never something big)
+  if(V3.mode==='terza'&&V3.camK!=null&&V3.camK<.9){const e=V3.eye;for(const p of G3.props){const b=p._v3b;if(!p._v3c||!b||p.house||b[3]-b[0]>140||b[4]-b[1]>140)continue;
+    if(e[0]>b[0]-3&&e[0]<b[3]+3&&e[1]>b[1]-3&&e[1]<b[4]+3&&e[2]>b[2]-3&&e[2]<b[5]+3)p._v3c=false}}
   gl.bindFramebuffer(gl.FRAMEBUFFER,V3.post?V3.fbo:null);gl.viewport(0,0,V3.cw,V3.ch);const fc=V3.fogC;gl.clearColor(fc[0],fc[1],fc[2],1);gl.clear(gl.COLOR_BUFFER_BIT|gl.DEPTH_BUFFER_BIT);
   gl.enable(gl.DEPTH_TEST);gl.depthFunc(gl.LEQUAL);gl.depthMask(true);gl.disable(gl.BLEND);
   // the sky: from the misty horizon (the colour of the fog) up to the deep blue of the night, the stars that twinkle, the moon (west, a
@@ -476,6 +482,8 @@ function v3Frame(dt,Wp,Hp,dpr){const gl=V3.gl,W=ZM.W,h=W.hero,t0=performance.now
       for(const[dx,dy,dz,sz,br,ph] of ST){const k=br*(.72+.28*Math.sin(t*(1.3+ph*.2)+ph))*v3cl((dz-.1)/.25,0,1);if(k<.03)continue;v3Q(e[0]+dx*1300,e[1]+dy*1300,e[2]+dz*1300,-sz,-sz,sz,sz,G.u0,G.v0,G.u1,G.v1,1.05*k,1.1*k,1.25*k,1)}}
     v3Q(x,y,z,-170,-170,170,170,G.u0,G.v0,G.u1,G.v1,.16,.19,.32,1);v3QFlush(V3.pA,V3A.pages[G.p].tex,V3.U3,0,true);
     v3Q(x,y,z,-46,-46,46,46,A.u0,A.v0,A.u1,A.v1,1,1,1,1);v3QFlush(V3.pA,V3A.pages[A.p].tex,V3.U3,0,true);V3.fogP=fp;gl.disable(gl.BLEND);gl.depthMask(true)}
+  // (tripla A, 108: the clouds that drift over the stars and the moon)
+  if(V3.mw&&V3.mw.on)try{V3.mw.sky()}catch(e){v3Err(e)}
   if(pk)pk('cielo');
   // the ground (pushed back a little: what lies on it wins)
   const P=V3.pG;gl.useProgram(P.p);v3Uni(P);gl.uniform1f(P.u.uCut,.02);gl.enable(gl.POLYGON_OFFSET_FILL);gl.polygonOffset(2,4);gl.disable(gl.CULL_FACE);
@@ -507,10 +515,14 @@ function v3Frame(dt,Wp,Hp,dpr){const gl=V3.gl,W=ZM.W,h=W.hero,t0=performance.now
   // the hero in 3D (in third person), then the characters still painted: zombies and the Bara (and the hero if the 3D one cannot be made)
   V3.h3ok=false;try{V3.h3ok=v3Hero3()}catch(e){v3Err(e);V3.no3h=true}if(pk)pk('eroe 3D');
   v3Figures();if(pk)pk('figure');
+  // (tripla A, 108: the grass, blade by blade, after the characters: it writes no depth, the blades in front of their feet cover them)
+  if(V3.mw&&V3.mw.on)try{V3.mw.grass(dt)}catch(e){v3Err(e)}if(pk)pk('erba');
   // the life of the map, as from above: smoke, leaves, fireflies, the low mist, the crows, the moths round the lit glass
   try{v3Life(dt)}catch(e){v3Err(e)}if(pk)pk('vita');
   // the flames and their halos, added on top
   v3Flames();if(pk)pk('fiamme');
+  // (tripla A, 108: the cones of light under the lamps and the dust in them)
+  if(V3.mw&&V3.mw.on)try{V3.mw.shafts()}catch(e){v3Err(e)}if(pk)pk('coni');
   // the battle's effects in 3D (107): beams, sparks, blood, smoke, fire, casings
   if(V3.fx&&V3.fx.on)try{V3.fx.draw()}catch(e){v3Err(e)}if(pk)pk('effetti');
   // the walls near the camera painted sharp, a few faces at a time

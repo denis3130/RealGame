@@ -2,7 +2,8 @@
 // L'eroe in 3D vero in terza persona e l'arma in 3D in prima persona; il foglio delle quattro direzioni dell'eroe (tests/v3/vi_eroe4.png).
 // La partita parte in terza persona; il terreno e la mappa in 3D; camminare va dove guarda la telecamera, girare la visuale la gira; si spara
 // allo zombie davanti; in prima persona l'arma in mano e il colpo dalla canna; in casa il tetto sparisce; la telecamera non entra nei muri;
-// la Bara; dall'alto torna come prima; effetti bassi; i tempi. Foto in tests/v3/vi_*.png.
+// la Bara; dall'alto torna come prima; effetti bassi; i tempi. Il tripla A: zombie e boss in 3D (106), gli effetti della battaglia (107), l'erba,
+// i coni di luce col pulviscolo e le nuvole sulla luna (108). Foto in tests/v3/vi_*.png.
 const {chromium}=require('playwright');const path=require('path');const D=path.join(__dirname,'/');
 (async()=>{const b=await chromium.launch({args:['--use-gl=angle','--use-angle=swiftshader','--enable-unsafe-swiftshader']});// (the test browser draws 3D without a graphics card: slow, so 1×)
   const p=await b.newPage({viewport:{width:390,height:763},deviceScaleFactor:1});const errs=[];
@@ -71,6 +72,36 @@ const {chromium}=require('playwright');const path=require('path');const D=path.j
   await E(`v3Set('terza');0`);
   const bx=await J(`(()=>{const B=ZM.bara();if(!B)return 'null';const h=ZM.W.hero;h.x=B.x;h.y=B.y+95;window.__MZ.view(0);return JSON.stringify([B.x,B.y])})()`);await p.waitForTimeout(3000);
   const bf=await E(`__V3.figs`);await p.screenshot({path:D+'vi_bara.png'});ok('la Bara delle Sorprese si vede',bx&&/b/.test(bf),{bx,bf});
+  // tripla A (106): the zombies and the two bosses in 3D, made of triangles from the same poses as their drawings
+  await E(`(()=>{const h=ZM.W.hero;h.x=${home[0]};h.y=${home[1]};window.__MZ.view(0);for(const z of ZM.W.Z.slice())ZM.W.Z.splice(ZM.W.Z.indexOf(z),1);const f=-Math.PI/2;
+    ['zombie','strisciante','minatore','hound','zombie','zombie'].forEach((k,i)=>{const a=f+(i-2.5)*.2,j=window.__MZ.addZombie(k,h.x+Math.cos(a)*125,h.y+Math.sin(a)*125,0),z=ZM.W.Z[j];z.hp=1e9;z.q=1;z.stun=1e9;z.rise=1});
+    const Z=ZM.W.Z;Z[4].kind='becchino';Z[4].sc=1.6;Z[5].kind='spaventapasseri';Z[5].sc=1.3;ZM.W.dbg.noShoot=true})();0`);
+  for(let i=0;i<40;i++){await p.waitForTimeout(400);if(await E(`__V3.z3.n>=6&&!__V3.z3.left`))break}await p.waitForTimeout(600);
+  const z3=await J(`JSON.stringify({n:__V3.z3.n,left:__V3.z3.left,all:ZM.W.Z.every(z=>z.__z3),kinds:ZM.W.Z.map(z=>z.kind),meshes:__V3.z3.M.size})`);await p.screenshot({path:D+'vi_zombie3d.png'});
+  ok('zombie, strisciante, minatore, cane, Becchino e Spaventapasseri in 3D vero (fatti di triangoli, con le loro mosse)',z3.n>=6&&z3.all&&z3.meshes>0,z3);
+  // (107) the battle in 3D: the beam of the shot, the blood of the zombie hit and its stains, the explosion that lights all round and shakes the camera
+  await E(`ZM.W.dbg.noShoot=false;for(const z of ZM.W.Z.slice(1))ZM.W.Z.splice(ZM.W.Z.indexOf(z),1);0`);await p.waitForTimeout(3500);
+  const fx1=await J(`JSON.stringify({p:FX3.P.length,tr:(FX3.tracers||[]).length,d:FX3.D.length,blood:FX3.P.filter(q=>q.k==='blood'||q.k==='mist').length+FX3.D.length})`);
+  await E(`(()=>{const h=ZM.W.hero;FX3.mk.boom(h.x,h.y-110,0,46);return 1})()`);await p.waitForTimeout(120);
+  const fx2=await J(`JSON.stringify({fire:FX3.P.filter(q=>q.k==='fire').length,light:FX3.lights().length,shk:+FX3.shk.toFixed(2)})`);await p.screenshot({path:D+'vi_esplosione.png'});
+  ok('gli effetti della battaglia in 3D: scie, sangue con le macchie a terra, l\'esplosione che illumina e fa tremare la telecamera',fx1.blood>0&&fx2.fire>0&&fx2.light>0&&fx2.shk>0,{fx1,fx2});
+  await E(`for(const z of ZM.W.Z.slice())ZM.W.Z.splice(ZM.W.Z.indexOf(z),1);0`);await p.waitForTimeout(1500);
+  // (108) the world: the grass blade by blade where the ground is grass (the field east of the start), the cones of light under the lamps and the
+  // dust in them, the clouds over the moon (and the camera does not end up inside the well when the hero has his back to it)
+  await E(`(()=>{const h=ZM.W.hero;h.x=790;h.y=1430;window.__MZ.view(90,45);__V3.camK=null;return 1})()`);for(let i=0;i<40;i++){await p.waitForTimeout(400);if(await E(`__V3.mw.nB>2000&&!__V3.mw.miss`))break}await p.waitForTimeout(1200);
+  const g1=await J(`JSON.stringify({erba:__V3.mw.nB,pezzi:__V3.mw.nC,coni:__V3.mw.nL,nuvole:__V3.mw.nCl})`);await p.screenshot({path:D+'vi_erba.png'});
+  ok('l\'erba vera nel prato (fili 3D a pezzi intorno a dove si guarda), i coni di luce dei lampioni lontani, le nuvole',g1.erba>2000&&g1.pezzi>4&&g1.coni>0&&g1.nuvole>0,g1);
+  await E(`(()=>{const h=ZM.W.hero;h.x=700;h.y=1420;window.__MZ.view(-90,45);return 1})()`);await p.waitForTimeout(2500);
+  const wl=await J(`(()=>{const e=__V3.eye,w=G3.props.find(p=>p.name==='well');const b=w&&w._v3b,inW=!!b&&e[0]>b[0]&&e[0]<b[3]&&e[1]>b[1]&&e[1]<b[4]&&e[2]<b[5];return JSON.stringify({k:+__V3.camK.toFixed(2),inW,drawn:!!(w&&w._v3c)})})()`);
+  ok('con le spalle al pozzo la telecamera non mostra l\'interno del pozzo (se ci finisce dentro, il pozzo non si disegna)',!wl.inW||!wl.drawn,wl);
+  // (then in first person under the lamp post, and towards the moon with a cloud passing over it)
+  await E(`v3Set('prima');(()=>{const h=ZM.W.hero;h.x=398;h.y=1400;window.__MZ.view(0,35);return 1})()`);await p.waitForTimeout(2600);
+  const l1=await J(`JSON.stringify({coni:__V3.mw.nL,polvere:__V3.mw.nM,nuvole:__V3.mw.nCl})`);await p.screenshot({path:D+'vi_lampione.png'});
+  ok('in prima persona sotto il lampione: il cono di luce col pulviscolo dentro',l1.coni>0&&l1.polvere>0,l1);
+  await E(`(()=>{const h=ZM.W.hero;h.x=${home[0]};h.y=${home[1]};window.__MZ.view(105.7,35);return 1})()`);await p.waitForTimeout(1500);await E(`ZM.W.t=28;0`);await p.waitForTimeout(1500);await p.screenshot({path:D+'vi_luna.png'});
+  await E(`v3Set('terza');LOWFX=true;0`);await p.waitForTimeout(1200);const lw=await J(`JSON.stringify({erba:__V3.mw.nB,coni:__V3.mw.nL,nuvole:__V3.mw.nCl,err:__V3.err,gl:__V3.gl.getError()})`);await E(`LOWFX=false;0`);
+  ok('con gli effetti bassi niente erba, coni e pulviscolo (le nuvole sì, meno), nessun errore',lw.erba===0&&lw.coni===0&&lw.nuvole>0&&lw.err===0&&lw.gl===0,lw);
+  await E(`(()=>{const h=ZM.W.hero;h.x=${home[0]};h.y=${home[1]};window.__MZ.view(0);return 1})()`);await p.waitForTimeout(600);
   // back from above, and again
   await E(`v3Set('alto');0`);await p.waitForTimeout(900);const al=await J(`JSON.stringify({on:ZM.W.v3.on,disp:__V3.cv.style.display})`);await p.screenshot({path:D+'vi_alto.png'});
   ok('«Dall\'alto» torna la visuale di oggi (il 3D spento)',!al.on&&al.disp==='none',al);
