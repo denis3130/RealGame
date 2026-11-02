@@ -423,8 +423,9 @@ Z3.draw=function(list){if(!list.length)return;const gl=V3.gl,P=V3.pT||(v3Statics
     if(z.die){die=Math.min(1,z.die/1.1);al=1-die*die}else if(z.fin>0)al=v3cl(1-z.fin/.9,0,1);if(al<=.02)continue;
     const an=z.rise<1||z.die?'idle':anim,pp=z.rise<1?((W.t*.6)%1):z.die?0:p,NF2=Z3.NF[an],f=pp*NF2,i0=Math.floor(f)%NF2,i1=(i0+1)%NF2;
     let A=z3Get(z.kind,an,i0,can),B=A&&z3Get(z.kind,an,i1,can);if(!A){left++;z.__z3=0;continue}if(!B||B.nv0!==A.nv0)B=A;
-    const sc=z.sc||1,a=z.face||0,c=Math.cos(a),s=Math.sin(a),zz=(z.zh||0)-(1-rise)*52*sc-(die?(die<.5?2*die*die:1-Math.pow(-2*die+2,2)/2)*44*sc:0),
-      fl=z.flash>0?Math.min(1,z.flash/.12):0,jolt=fl*.16+(die?die*.5:0),cj=Math.cos(jolt),sj=Math.sin(jolt);
+    // (dying: it falls backward in the first half, then sinks into the ground)
+    const sc=z.sc||1,a=z.face||0,c=Math.cos(a),s=Math.sin(a),dk=die>.45?(die-.45)/.55:0,zz=(z.zh||0)-(1-rise)*52*sc-(dk?(dk<.5?2*dk*dk:1-Math.pow(-2*dk+2,2)/2)*30*sc:0),
+      fl=z.flash>0?Math.min(1,z.flash/.12):0,fall=die?z3ex(Math.min(1,die/.45))*(z.kind==='hound'?.9:1.3):0,jolt=fl*.16+fall,cj=Math.cos(jolt),sj=Math.sin(jolt);
     // turned, tilted back a hair by the hit (or forward as it sinks), scaled
     let M=v3M4([c*sc,s*sc,0],[-s*sc,c*sc,0],[0,0,sc],[z.x,z.y,zz]);if(jolt)M=v3Mul(M,v3M4([cj,0,(die?1:-1)*sj],[0,1,0],[(die?-1:1)*sj,0,cj],[0,0,0]));
     items.push({A,B,k:f-Math.floor(f),M,al,fl,out:.62,em:.5+.5*Math.sin((W.t||0)*2.2+(z.id||0)*1.7)})}

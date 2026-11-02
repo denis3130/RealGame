@@ -411,6 +411,8 @@ function v3Camera(dt,Wp,Hp){const W=ZM.W,h=W.hero,C=ZM.CAM,th=-Math.PI/2-C.yaw,f
     // (for the photos of the tests: the camera round the hero, looking at him)
     if(V3.dbgCam){const dd=V3.dbgCam;at=[h.x,h.y,hz+20];eye=[h.x-fx*dd*Math.cos(phi),h.y-fy*dd*Math.cos(phi),hz+20+dd*Math.sin(phi)]}
     V3.fovy=Math.min(68,2*Math.atan(Math.tan(88/2*Math.PI/180)/asp)*180/Math.PI)*Math.PI/180;V3.near=3}
+  // (tripla A, 107: the camera shakes with the explosions and the big shots, in first person the look kicks up with each shot)
+  if(V3.fx&&V3.fx.on)try{V3.fx.cam(eye,at,dt)}catch(e){v3Err(e)}
   V3.eye=eye;V3.far=V3.mode==='prima'?1500:1700;const view=v3Look(eye,at,up);V3.vp=v3Mul(v3Persp(V3.fovy,asp,V3.near,V3.far),view);
   const f=[at[0]-eye[0],at[1]-eye[1],at[2]-eye[2]],fl=Math.hypot(f[0],f[1],f[2]);V3.F3=[f[0]/fl,f[1]/fl,f[2]/fl];
   // the camera's own up (for the round things that face it all round)
@@ -433,6 +435,8 @@ function v3Lights(){const W=ZM.W,h=W.hero,e=V3.eye,L=[];for(const l of ZM.lights
   // house round it fades)
   // (tripla A: the miners' lamps light the street too, as near lights among the others)
   if(V3.z3&&V3.z3.lamps&&!LOWFX){for(const l of V3.z3.lamps()){const d=Math.hypot(l.x-e[0],l.y-e[1]);if(d<V3.fogP[0]+V3.fogP[1])L.push([d,l])}L.sort((a,b)=>a[0]-b[0])}
+  // (and the explosions' flash, first of all)
+  if(V3.fx&&V3.fx.on)for(const l of V3.fx.lights())L.unshift([0,l]);
   for(const[,l] of L){if(n>max)break;const fl=l.fl?(.9+.1*Math.sin(t*(l.fl===2?2:9)+l.x)*Math.sin(t*5.3+l.y)):1;put(l.x,l.y,(l.z||10)*.6,l.r*1.2*fl,l.rgb||'255,200,120',(l.a||.6)*.8*(l.house?1-l.house.a:1)*fl)}}
 // ------------------------------------------------------------------ il fotogramma
 function v3Size(Wp,Hp,dpr){const gl=V3.gl,sc=Math.min(dpr,2)*(V3.low?.66:1),cw=Math.max(2,Math.round(Wp*sc)),ch=Math.max(2,Math.round(Hp*sc));V3.W=Wp;V3.H=Hp;
@@ -496,7 +500,7 @@ function v3Frame(dt,Wp,Hp,dpr){const gl=V3.gl,W=ZM.W,h=W.hero,t0=performance.now
   v3Balls();if(pk)pk('chiome');
   // the hand drawings as postcards (from the side they're seen), the flat ones lying on the ground
   v3Fns();if(pk)pk('cartoline');
-  v3Decals();if(pk)pk('a terra');
+  v3Decals();if(V3.fx&&V3.fx.on)try{V3.fx.decals()}catch(e){v3Err(e)}if(pk)pk('a terra');
   // the soft shadows under the hero, the zombies and the Bara
   {const h0=W.hero;if(V3.mode==='terza'&&!h0.dead)v3Blob(h0.x,h0.y,h0.zh||0,14);for(const z of W.Z){if(z.rise<1||z.die)continue;const zz=z.zh||0;if(Math.hypot(z.x-V3.eye[0],z.y-V3.eye[1])>V3.fogP[0]+V3.fogP[1]||!v3Seen(z.x,z.y,zz,30))continue;v3Blob(z.x,z.y,zz,12*(z.sc||1))}
     v3Blobs()}if(pk)pk('ombre');
@@ -507,6 +511,8 @@ function v3Frame(dt,Wp,Hp,dpr){const gl=V3.gl,W=ZM.W,h=W.hero,t0=performance.now
   try{v3Life(dt)}catch(e){v3Err(e)}if(pk)pk('vita');
   // the flames and their halos, added on top
   v3Flames();if(pk)pk('fiamme');
+  // the battle's effects in 3D (107): beams, sparks, blood, smoke, fire, casings
+  if(V3.fx&&V3.fx.on)try{V3.fx.draw()}catch(e){v3Err(e)}if(pk)pk('effetti');
   // the walls near the camera painted sharp, a few faces at a time
   try{v3Near()}catch(e){v3Err(e)}
   // the weapon in first person, in 3D, in front of everything
@@ -946,7 +952,7 @@ function v3Decals(){const W=ZM.W,D=W.director;if(!D||!D.drawGround)return;const 
   v3QFlush(V3.pB,V3.decTex,[0,0,0],.01);V3.R3=R3;gl.disable(gl.POLYGON_OFFSET_FILL);gl.depthMask(true);gl.disable(gl.BLEND)}
 // ------------------------------------------------------------------ sopra, in 2D: colpi, sangue, monete, il mirino, l'arma in prima persona
 function v3Overlay(dt,Wp,Hp){const W=ZM.W,h=W.hero,g=ctx;g.save();
-  try{for(const f of W.FX){if(f.k==='shot'){const t=f.tw,b=v3P(t[0],t[1],(t[2]||0)+26);let a=null;
+  try{const F3=V3.fx&&V3.fx.on;for(const f of W.FX){if(F3&&(f.k==='shot'||f.k==='boom'||f.k==='drop'))continue;if(f.k==='shot'){const t=f.tw,b=v3P(t[0],t[1],(t[2]||0)+26);let a=null;
         if(V3.mode==='prima'&&V3.vmMuz)a=V3.vmMuz;else if(V3.muz)a=v3P(V3.muz[0],V3.muz[1],V3.muz[2]);else a=v3P(h.x+Math.cos(h.aim||0)*14,h.y+Math.sin(h.aim||0)*14,(h.zh||0)+30);
         if(!a||!b)continue;const pc=f.pap>=2?'212,139,255':f.pap?'143,230,255':null,w=(f.w||2)*Math.max(.8,Math.min(2.4,v3K(b[2])*1.4));
         g.lineCap='round';g.strokeStyle=pc?`rgba(${pc},.95)`:'rgba(255,230,160,.9)';g.lineWidth=w;g.beginPath();g.moveTo(a[0],a[1]);g.lineTo(b[0],b[1]);g.stroke();
@@ -963,7 +969,7 @@ function v3Overlay(dt,Wp,Hp){const W=ZM.W,h=W.hero,g=ctx;g.save();
     if(!h.dead&&!V3.dbgCam){const cx=Wp/2,cy=V3.mode==='prima'?Hp/2:Hp*.45,lk=!!tg;g.strokeStyle=lk?'rgba(255,150,130,.95)':'rgba(240,244,255,.8)';g.lineWidth=1.6;g.lineCap='round';
       if(V3.mode==='prima'){for(const[a,b] of[[0,1],[1,0],[0,-1],[-1,0]]){g.beginPath();g.moveTo(cx+a*5,cy+b*5);g.lineTo(cx+a*11,cy+b*11);g.stroke()}}
       g.fillStyle=g.strokeStyle;g.beginPath();g.arc(cx,cy,1.6,0,Math.PI*2);g.fill()}
-    if(V3.mode==='prima'&&!V3.vm3)v3Viewmodel(dt,Wp,Hp);}catch(e){v3Err(e)}finally{g.restore()}}
+    if(V3.mode==='prima'&&!V3.vm3)v3Viewmodel(dt,Wp,Hp);if(F3&&!V3.dbgCam)V3.fx.ui(g,Wp,Hp)}catch(e){v3Err(e)}finally{g.restore()}}
 // l'arma in prima persona: il modello 3D dell'arma (ARMI3D) visto da dietro, in basso a destra, con le mani; rinculo, vampa, ricarica
 function v3Viewmodel(dt,Wp,Hp){const W=ZM.W,h=W.hero,g0=ZM.gun();V3.vmMuz=null;if(!g0||h.dead||typeof ARMI3D==='undefined'||h.unarmed)return;const id=W.gunId||'pistola';if(ARMI3D.ZOMBIE&&!ARMI3D.ZOMBIE.includes(id))return;
   const R0=CR._rig,keep=Object.assign({},R0.cam),gp=g0.pose(),st={};
