@@ -62,7 +62,8 @@ dell'eroe della mappa) e `bara()` (la Bara delle Sorprese).
 ## La pagina
 
 `python3 anteprime/mk_visuale.py <cartella>`: l'Anteprima 49 (il gioco di oggi più 98–104) più 105, divisa come il gioco pubblicato
-(`app/mk_claude.py`); alla prima apertura c'è già un eroe e il menu è sulla Zombie: si tocca Gioca. Pubblicata a parte (vedi CLAUDE.md).
+(`app/mk_claude.py`); alla prima apertura c'è già un eroe e il menu è sulla Zombie: si tocca Gioca. Pubblicata a parte su
+https://claude.ai/artifact/EsX3514z5xM6WsFLEAGFhW («Mossbound Visuale zombie»; si aggiorna ripubblicando la stessa cartella).
 
 ## Prove
 

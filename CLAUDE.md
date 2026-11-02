@@ -414,7 +414,7 @@ guarda e messi in piedi come cartoline, il terreno cotto; la notte, le luci e la
 scuro dove la profondità salta; zombie, eroe e Bara sono i loro disegni dipinti girati e inclinati come li vede la telecamera; a terra gli
 avvisi del Becchino e le abilità. Aggancio nel motore della mappa che senza il file non fa niente: `W.v3` in `render()`; in `ZM` anche
 `HSTYLE` e `bara()`. Pagina: `python3 anteprime/mk_visuale.py <cartella>` (l'Anteprima 49 più 105; si apre col menu sulla Zombie), pubblicata
-a parte (sotto, «Dove sta il lavoro»). Prova `python3 tests/v3/mk.py` e `node tests/v3/visuale.js` (13 controlli, foto `tests/v3/vi_*.png`).
+a parte su https://claude.ai/artifact/EsX3514z5xM6WsFLEAGFhW («Mossbound Visuale zombie»; si aggiorna ripubblicando la stessa cartella). Prova `python3 tests/v3/mk.py` e `node tests/v3/visuale.js` (13 controlli, foto `tests/v3/vi_*.png`).
 Dettagli, cosa non si vede ancora in 3D e misure in `docs/visuale-3d.md`. Solo da vedere: niente entra nel gioco senza il sì di Denis.
 
 ## FASE 9: più fluido sul telefono (19 ottobre, in corso)
