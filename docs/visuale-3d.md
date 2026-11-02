@@ -175,7 +175,7 @@ Denis: «rendilo tripla A». Quattro pezzi, ognuno in un file suo (106, 107, 108
 - Tempi qui (senza scheda grafica, i passi del disegno misurati uno per uno): l'erba 3,8–4,8 ms con 9.000–10.000 fili nel prato, i coni
   0,05–0,1 ms, il cielo con le nuvole 1,3–1,8 ms; il disegno di un fotogramma (la parte nel programma) 3,3–4,1 ms nelle prove. Memoria: i pezzi
   d'erba al massimo 150 (circa 90 KB l'uno), la foto piccola del terreno 4,5 MB, le nuvole 256 KB.
-- Foto: `tests/v3/vi_tripla_a.jpg` (gli stessi quattro posti prima e dopo: il prato col pozzo, il lampione in prima persona, gli zombie e i due
+- Foto: `tests/v3/vi_zombie4.jpg` (i sei zombie e i due boss in 3D nelle quattro direzioni) e `tests/v3/vi_tripla_a.jpg` (gli stessi quattro posti prima e dopo: il prato col pozzo, il lampione in prima persona, gli zombie e i due
   boss, la luna).
 
 ## L'aggancio nel motore (anteprime/zombie/motore.js)
