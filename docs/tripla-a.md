@@ -153,15 +153,16 @@ nell'anteprima tripla A (il gioco e l'app non cambiano).
   - La prima volta la scena si prepara **a pezzetti** (15 disegni, 41.000 triangoli in 42 pezzi): già nei momenti liberi del menu Classica
     (l'`IDLE` di 65, 4 ms alla volta, mai in battaglia né sulla mappa zombie), poi nel menu Zombie 8 ms a fotogramma, mai durante lo
     scorrimento tra le modalità; intanto resta il disegno di 66, e quando il 3D è pronto il disegno di prima gli sfuma sopra in mezzo
-    secondo (niente salto). Le pose degli zombie dopo, 3–4 ms alla volta (un tipo cammina sul sentiero appena le sue pose sono pronte). Andando a giocare l'eroe si alza e se ne va nel buio, come prima. LOWFX: niente nebbia, fumo, corvi in
+    secondo (niente salto). Le pose degli zombie dopo, 3–4 ms alla volta (un tipo cammina sul sentiero appena le sue pose sono pronte): una su due di 106,
+    80 invece di 160 (il disegno scivola tra loro lo stesso), metà della memoria. Andando a giocare l'eroe si alza e se ne va nel buio, come prima. LOWFX: niente nebbia, fumo, corvi in
     volo e nuvole che si muovono, meno scintille.
 - Mentre il menu passa da una modalità all'altra (lo scorrimento) c'è per quel secondo il disegno di sempre; se il 3D non c'è torna da solo.
 - Prove: `node tests/t3/menu.js` (25 controlli: isole in 3D, tocchi dell'eroe e dei premi, pezzi sotto i 65.000 punti, spettacolo, interfaccia
   e interruttori, falò in 3D con tutta la scena, il cielo sotto la barra, gli zombie in 3D, lo spaventapasseri e uno zombie che si girano,
   gli zombie che escono dal sentiero, ritorno al disegno di sempre, nessun errore). Foto: `tests/t3/tr_isole.jpg` (prima e dopo: l'isola e il ponte col
   disegno di oggi e in 3D), `tr_falo.jpg` (il falò: il primo 3D, quello nuovo con la luce «Chiara» e con la luce «Da film»), `tr_spettacolo.jpg` (lo spettacolo, il traguardo, due fogli).
-- Tempi sul computer di prova (senza scheda grafica): isole circa 18–30 ms a fotogramma; falò circa 3,5 ms di lavoro (2,6 con LOWFX) più il
-  passaggio finale.
+- Tempi sul computer di prova (senza scheda grafica): isole circa 17–30 ms a fotogramma; falò circa 13 ms in media nella prova del menu
+  (3,5 ms di lavoro del programma, 2,6 con LOWFX, più il disegno e il passaggio finale).
   Sul telefono lo dice il contatore.
 - Cosa manca: degli animali intorno alle isole ci sono solo lucciole, braci e luccichii (niente stormi, farfalle, rane); il ponte non
   ondeggia ancora sotto l'eroe e le funi non sentono il vento; gli stendardi delle torri sono fermi.
