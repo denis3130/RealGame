@@ -178,6 +178,12 @@ Denis: «rendilo tripla A». Quattro pezzi, ognuno in un file suo (106, 107, 108
 - Foto: `tests/v3/vi_zombie4.jpg` (zombie, strisciante, minatore, cane, Becchino e Spaventapasseri in 3D nelle quattro direzioni) e `tests/v3/vi_tripla_a.jpg` (gli stessi quattro posti prima e dopo: il prato col pozzo, il lampione in prima persona, gli zombie e i due
   boss, la luna).
 
+## Nella pagina tripla A (3 novembre)
+
+Denis: «fammi giocare in prima persona e l'altra visuale in 3d»: la stessa visuale è anche nella pagina «Mossbound tripla A», dove si parte in
+prima persona e il bottone va alla terza persona e poi dall'alto; lì disegna col contesto 3D della tripla A (uno solo). Dettagli in
+`docs/tripla-a.md` («La Zombie in prima persona»). In questa pagina non cambia niente (si parte ancora in terza persona).
+
 ## L'aggancio nel motore (anteprime/zombie/motore.js)
 
 Senza questo file non fa niente: in `render()` se `W.v3.on` il mondo lo disegna `W.v3.draw(dt, Wp, Hp, dpr)` (al posto di sfondo,

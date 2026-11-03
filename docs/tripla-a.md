@@ -224,3 +224,28 @@ Denis: «miglioralo ancora senza farmi domande, intendo incluso anche il menu ec
   la manina, verso la Classica col germoglio). Il computer delle prove di oggi è molto più lento di quello di
   ieri (anche il menu senza 3D va a 5 fotogrammi al secondo, sia col codice nuovo sia con quello di prima), per questo le attese della prova
   sono più lunghe; il lavoro vero di un fotogramma delle isole, misurato pezzo per pezzo, è circa 12 ms. Foto: `tests/t3/tr_ancora.jpg`.
+
+## La Zombie in prima persona (3 novembre)
+
+Denis: «fammi giocare in prima persona e l'altra visuale in 3d». Risposte alle domande: **la Zombie**, **nell'anteprima tripla A** (questa
+pagina), **la vista dall'alto resta** come terza scelta. Prima la visuale 3D della Zombie stava solo nella sua pagina a parte
+(«Mossbound Visuale zombie», `docs/visuale-3d.md`); qui era spenta perché la tripla A usa i suoi attrezzi con lo stesso disegno 3D.
+
+- **Si parte in prima persona**: la partita zombie apre da sola la visuale 3D in prima persona (gli occhi dell'eroe, il mirino, l'arma 3D in
+  mano con le mani e le maniche, rinculo, vampa e ricarica; si spara da soli allo zombie che si guarda). Il bottone **«Visuale»** in alto a
+  destra (o il tasto C) passa alla **terza persona** (l'eroe in 3D vero dietro le spalle), poi alla **vista dall'alto** di sempre, poi di
+  nuovo alla prima (`V3.start`, `V3NEXT` in `src/js/110-t3-motore.js`). Comandi come nella pagina della visuale: la levetta a sinistra cammina
+  rispetto a dove si guarda, il dito a destra gira la visuale e guarda su e giù.
+- **Un solo disegno 3D**: la visuale (105, con gli effetti della battaglia di 107 e il mondo di 108: erba, coni di luce, nuvole) disegna con
+  lo stesso contesto WebGL e la stessa tela della tripla A (`v3Init` di 110 su `v3InitGL` di 105). Durante la partita il menu e le stanze
+  non si disegnano (il ciclo di 63), quindi la tela va sotto la mappa (`T3I.host='zombie'`) e dopo torna dove la vuole il menu (`t3Place`
+  di 116): l'assedio e le isole tornano in 3D da soli. Un solo contesto vuol dire meno memoria sul telefono e nessun pezzo costruito due
+  volte (gli zombie in 3D di 106 sono gli stessi dell'assedio).
+- **La mira** (104, dall'Anteprima 49) solo per la Zombie (`MIRA.cl=false`): si spara dove si guarda; nella Classica la stanza è in 3D e
+  resta com'era, senza levetta del tiro.
+- In 105 due ritocchi che nella pagina della visuale non cambiano niente: la preparazione divisa in `v3Init` (la tela e il contesto) e
+  `v3InitGL` (programmi, buffer, rumore), il programma dei pezzi 3D preparato anche quando la cassetta dei pezzi dell'eroe l'ha già
+  riempita la tripla A (`v3Statics`), la visuale di partenza in `V3.start` (di solito la terza persona).
+- Prova: `node tests/t3/prima.js` (9 controlli: lo stesso disegno 3D, la partenza in prima persona col bottone, l'arma 3D in mano e lo
+  zombie davanti colpito, terza persona con l'eroe in 3D, dall'alto, di nuovo la prima, l'assedio in 3D dopo la partita, le isole col
+  germoglio, nessun errore); foto `tests/t3/tr_prima.jpg` (prima persona mentre spara, terza persona, dall'alto).

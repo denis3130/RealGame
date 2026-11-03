@@ -17,9 +17,18 @@ const T3={on:true,ok:null,bad:false,err:0,gl:null,gl2:false,cv:null,cw:2,ch:2,W:
   fovy:32*Math.PI/180,pitch:50*Math.PI/180,near:100,far:5000,dist:1000,kpx:1,luce:'chiara',floorV:0,floorTV:-1,arenaK:'',frame:0,ms:0,low:false,slow:0,
   nCard:0,nMesh:0,lights:[],items:[],adds:[],flames:[],dbg:{}};
 const t3Err=e=>{if(T3.err++<8)console.error('T3',e)};
-// the visuale of the zombie mode is not part of this preview: its helpers are used, its hooks are switched off
-if(typeof ZM!=='undefined'&&ZM.W)ZM.W.v3=null;
-if(typeof v3Set==='function')v3Set=function(){};
+// the visuale of the zombie mode (105, with 107's effects and 108's world) is in this preview too (Denis, 3 November: «fammi giocare in prima
+// persona e l'altra visuale in 3d»; answers: the Zombie, in this page, the view from above stays): the match starts in first person and the
+// «Visuale» button goes on to third person and then from above. It draws with this same WebGL context and canvas (one context only: its
+// helpers already build the room's meshes with it): while the match is on, the canvas sits under the map's one (the menu and the rooms
+// are not drawn then, 63's loop), and after it goes back where the menu or the room wants it (116's t3Place). 104's aim: only the Zombie's
+// (it shoots where you look), not the Classic's, whose room here is in 3D
+if(typeof V3!=='undefined'&&typeof v3InitGL==='function'){V3.start='prima';Object.assign(V3NEXT,{prima:'terza',terza:'alto',alto:'prima'});
+  v3Init=function(){if(V3.ok!==null)return V3.ok;V3.ok=false;if(!t3Init())return false;V3.cv=T3.cv;V3.gl2=T3.gl2;if(!v3InitGL(T3.gl))return false;
+    T3.cv.addEventListener('webglcontextlost',()=>{V3.lost=true});V3.ok=true;return true};
+  {const _f=v3Frame;v3Frame=function(){const c=T3.cv;if(c&&typeof T3I!=='undefined'&&T3I.host!=='zombie'){T3I.host='zombie';T3I.live=false;
+      c.style.cssText='position:absolute;inset:0;width:100%;height:100%;pointer-events:none';T3.rk=null;T3.fboOk=false}return _f.apply(this,arguments)}}}
+if(typeof MIRA!=='undefined')MIRA.cl=false;
 // ------------------------------------------------------------------ the two lights (Denis: «fai separatamente le prime due per decidere qual è
 // meglio»): «Chiara» bright and colourful as today, only richer (the sky light from above, a warm key from the top left, soft shadows, full
 // colours, a light glow); «Da film» deeper shadows and strong lights (the torches, the magic) that stand out, cooler night light, more glow,

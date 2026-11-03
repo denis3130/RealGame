@@ -19,9 +19,9 @@
 // Fuori da src/ordine.txt: va nell'Anteprima 49 (anteprime/mk_anteprima49.py). Nel motore della mappa zombie ci sono agganci che senza
 // questo file non fanno niente (W.aimHook con {a, fire, pose, face, idle}, h.aimP, W.lookY); in 99 il bottone delle abilità chiede ad
 // aimAbDown se il dito è suo.
-// Tutto rispetta LOWFX. MIRA.on = false lo spegne.
+// Tutto rispetta LOWFX. MIRA.on = false lo spegne; MIRA.cl = false spegne solo la Classica (la pagina tripla A, dove la stanza è in 3D).
 // =====================================================================
-const MIRA={on:true,err:0};
+const MIRA={on:true,cl:true,err:0};const mcOn=()=>MIRA.on&&MIRA.cl!==false;
 const MRGB={tiro:'255,248,232',sup:'255,214,120'};
 const MDZ=12,MMAX=44;// la zona morta e la corsa della levetta (px dello schermo)
 function mErr(e){if(MIRA.err++<3)console.error(e)}
@@ -95,7 +95,7 @@ function mLob(x0,y0,x1,y1,h,rgb,al){const d=Math.hypot(x1-x0,y1-y0),n=Math.max(4
 
 // ================================================================== LA CLASSICA
 const MC={drag:null,pend:null,faceA:0,faceT:0,ult:null,nb:false,arm:false,inU:false,blk:false,btn:null,kn:null};
-const mcOk=()=>!!(MIRA.on&&started&&!paused&&!modal&&P&&G&&G.state!=='dead'&&G.state!=='trans'&&!(INTRO&&INTRO.on));
+const mcOk=()=>!!(mcOn()&&started&&!paused&&!modal&&P&&G&&G.state!=='dead'&&G.state!=='trans'&&!(INTRO&&INTRO.on));
 const mcRange=()=>(P.pspd||560)*(P.proj==='flask'?1.05:1.4);
 // fin dove arriva un colpo partito da (x, y) verso a: il bordo della stanza (dove la freccia sparisce) o il primo ostacolo che lo ferma.
 // w: 'x' o 'y' se si ferma su un muro (per il rimbalzo), null su un ostacolo o in fondo alla gittata
@@ -174,7 +174,7 @@ function mcUI(){if(MC.btn||typeof $!=='function'||!$('ultBtn'))return;const b=do
     MC.drag=mTrack(e,b,{move:s=>{mKnob(MC.kn,s);b.classList.toggle('on',s.live)},end:s=>{MC.drag=null;mKnob(MC.kn,null);b.classList.remove('on');if(!s.cancel&&mcOk())MC.pend={a:s.tap?null:Math.atan2(s.dy,s.dx),f:s.f,t:0,auto:s.tap}}})})}
 mcUI();
 // the Super's button: its own listener (04) would use it at the touch; here, in capture, the finger is taken first when the Super is ready
-addEventListener('pointerdown',e=>{if(!MIRA.on)return;const b=e.target&&e.target.closest?e.target.closest('#ultBtn'):null;if(!b||!mcUltOk())return;
+addEventListener('pointerdown',e=>{if(!mcOn())return;const b=e.target&&e.target.closest?e.target.closest('#ultBtn'):null;if(!b||!mcUltOk())return;
   e.stopPropagation();e.preventDefault();try{initAudio()}catch(_){}if(MC.ult)return;const kn=b.querySelector('svg');
   MC.ult=mTrack(e,b,{move:s=>{mKnob(kn,s);b.classList.toggle('aim',s.live)},end:s=>{MC.ult=null;mKnob(kn,null);b.classList.remove('aim');if(s.cancel||!mcUltOk())return;if(s.tap)useUlt();else mcUltGo(Math.atan2(s.dy,s.dx),s.f)}})},true);
 // ------------------------------------------------------------------ nel gioco: il tiro della levetta e il tiro da solo fermo mentre si mira
@@ -183,7 +183,7 @@ addEventListener('pointerdown',e=>{if(!MIRA.on)return;const b=e.target&&e.target
 // the first nearest(P.x, P.y) after input() in update is the automatic shot's target, and for that one call there is none.
 {const _in=input;input=function(){const r=_in.apply(this,arguments);if(MC.arm){MC.arm=false;MC.nb=true}return r}}
 {const _ne=nearest;nearest=function(x,y,skip,maxD){if(MC.nb&&skip==null&&maxD==null&&P&&x===P.x&&y===P.y){MC.nb=false;return null}return _ne.apply(this,arguments)}}
-{const _vo=volley;volley=function(a){const Q=P&&P.queue;if(!MIRA.on||!Q)return _vo.apply(this,arguments);let q=null;for(let i=Q.length-1;i>=0;i--)if(Q[i].t<=0){q=Q[i];break}
+{const _vo=volley;volley=function(a){const Q=P&&P.queue;if(!mcOn()||!Q)return _vo.apply(this,arguments);let q=null;for(let i=Q.length-1;i>=0;i--)if(Q[i].t<=0){q=Q[i];break}
   if(!q||q.ma==null)return _vo.apply(this,arguments);
   const n0=G.arrows.length,before=new Set(Q),r=_vo.call(this,q.ma);
   // the Alchemist's flask lands where the stick said: its flight lasts as long as that distance; what the volley put in the queue
@@ -195,7 +195,7 @@ function mcFire(p,dt){let a=p.a;if(a==null){const t=nearest(P.x,P.y);a=t?Math.at
   const md=P.proj==='flask'&&!p.auto?mcFlaskD(p.f):null;P.fireCd=1/P.aspd+dt;// (update takes dt off at once)
   for(let k=0;k<(P.multi||1);k++)P.queue.push({t:k*.12,ma:a,md});MC.faceA=a;MC.faceT=.32;MC.pend=null}
 {const _u=update;update=function(dt){
-  if(!MIRA.on||!G||!P||G.state==='trans'||G.state==='dead'||(INTRO&&INTRO.on)){if(G&&G.state==='dead')MC.pend=null;return _u.apply(this,arguments)}
+  if(!mcOn()||!G||!P||G.state==='trans'||G.state==='dead'||(INTRO&&INTRO.on)){if(G&&G.state==='dead')MC.pend=null;return _u.apply(this,arguments)}
   const drag=MC.drag&&MC.drag.live?MC.drag:null;
   // the stick's shot, as soon as the bow is ready (at most 0,6 s late; never in the middle of a dash or of the Danza)
   if(MC.pend){const p=MC.pend;p.t+=dt;if(p.t>.6)MC.pend=null;else if(P.dashT<=0&&!(P.spin>0)&&P.fireCd-dt<=0)mcFire(p,dt)}
@@ -207,7 +207,7 @@ function mcFire(p,dt){let a=p.a;if(a==null){const t=nearest(P.x,P.y);a=t?Math.at
         if(a!=null){P.face=a;if(!P.moving)P.aiming=true}}}catch(err){mErr(err)}}}}
 // ------------------------------------------------------------------ i disegni della Classica: a terra, insieme ai segni dei nemici
 // (MIRA.last: what was drawn in the last frame, for the tests)
-function mcDraw(){MIRA.last=null;if(!MIRA.on||!G||!P||(INTRO&&INTRO.on)||G.state==='dead'||G.state==='trans')return;
+function mcDraw(){MIRA.last=null;if(!mcOn()||!G||!P||(INTRO&&INTRO.on)||G.state==='dead'||G.state==='trans')return;
   const U=MC.ult&&MC.ult.live?MC.ult:null;if(U){const a=Math.atan2(U.dy,U.dx);mcDrawUlt(a,U.f);MIRA.last={k:'super',a,f:U.f};return}
   const D=MC.drag&&MC.drag.live?MC.drag:null;
   if(D){const a=Math.atan2(D.dy,D.dx);mcDrawShot(a,D.f,1);MIRA.last={k:'tiro',a,f:D.f,al:1};return}
@@ -215,7 +215,7 @@ function mcDraw(){MIRA.last=null;if(!MIRA.on||!G||!P||(INTRO&&INTRO.on)||G.state
   if(P.aiming&&!P.moving&&P.dashT<=0&&!(MC.faceT>0)){const t=nearest(P.x,P.y);if(t){const a=Math.atan2(t.y-P.y,t.x-P.x);mcDrawShot(a,null,.55,t);MIRA.last={k:'tiro',a,al:.55}}}}
 {const _t=drawTelegraphs;drawTelegraphs=function(){_t.apply(this,arguments);try{mcDraw()}catch(err){mErr(err)}}}
 // the stick goes away with the Super's button when the hero falls
-{const _hu=hudUlt;hudUlt=function(){_hu.apply(this,arguments);const b=MC.btn;if(b){const hide=!MIRA.on||!G||G.state==='dead';if(b.hidden!==hide)b.hidden=hide;if(hide&&MC.drag)b.classList.remove('on')}}}
+{const _hu=hudUlt;hudUlt=function(){_hu.apply(this,arguments);const b=MC.btn;if(b){const hide=!mcOn()||!G||G.state==='dead';if(b.hidden!==hide)b.hidden=hide;if(hide&&MC.drag)b.classList.remove('on')}}}
 
 // ================================================================== LA ZOMBIE: si spara dove guarda la visuale
 // (Denis, 1° novembre: «sulla modalità zombie voglio che la visuale e lo sparo siano insieme cioè, se non guardo da quella direzione

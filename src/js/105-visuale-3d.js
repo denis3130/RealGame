@@ -156,13 +156,15 @@ function v3Aniso(gl){if(V3.anE===undefined){V3.anE=gl.getExtension('EXT_texture_
 function v3Init(){if(V3.ok!==null)return V3.ok;V3.ok=false;
   const c=document.createElement('canvas');c.id='v3cv';c.style.pointerEvents='none';let gl=null;const o={antialias:false,alpha:false,depth:true,stencil:false,premultipliedAlpha:false,powerPreference:'high-performance'};
   try{gl=c.getContext('webgl2',o)}catch(e){}V3.gl2=!!gl;if(!gl)try{gl=c.getContext('webgl',o)||c.getContext('experimental-webgl',o)}catch(e){}if(!gl)return false;
-  V3.cv=c;V3.gl=gl;V3.dext=V3.gl2?null:gl.getExtension('WEBGL_depth_texture');V3.post=V3.gl2||!!V3.dext;
+  V3.cv=c;if(!v3InitGL(gl))return false;
+  c.addEventListener('webglcontextlost',e=>{e.preventDefault();V3.lost=true});
+  V3.ok=true;return true}
+// the visuale's programs, buffers and noise in the context gl (the tripla A preview gives it its own one: one context for everything)
+function v3InitGL(gl){V3.gl=gl;V3.dext=V3.gl2?null:gl.getExtension('WEBGL_depth_texture');V3.post=V3.gl2||!!V3.dext;
   try{V3.pG=v3Prog(gl,V3VS_GEO,V3FS_GEO,['aP','aT','aC','aN','aG']);V3.pB=v3Prog(gl,V3VS_BB,V3FS_BB,['aP','aQ','aT','aC','aS']);V3.pA=v3Prog(gl,V3VS_BB,V3FS_ADD,['aP','aQ','aT','aC','aS']);
     if(V3.post){V3.pP=v3Prog(gl,V3VS_POST,V3FS_POST,['aP']);V3.pBr=v3Prog(gl,V3VS_POST,V3FS_BRIGHT,['aP']);V3.pBl=v3Prog(gl,V3VS_POST,V3FS_BLUR,['aP'])}V3.pS=v3Prog(gl,V3VS_POST,V3FS_SKY,['aP'])}catch(e){v3Err(e);return false}
   V3.qb=gl.createBuffer();gl.bindBuffer(gl.ARRAY_BUFFER,V3.qb);gl.bufferData(gl.ARRAY_BUFFER,new Float32Array([-1,-1,3,-1,-1,3]),gl.STATIC_DRAW);
-  V3.db=gl.createBuffer();V3.dyn=new Float32Array(V3Q*6*1200);V3.noiT=v3NoiseTex(gl);
-  c.addEventListener('webglcontextlost',e=>{e.preventDefault();V3.lost=true});
-  V3.ok=true;return true}
+  V3.db=gl.createBuffer();V3.dyn=new Float32Array(V3Q*6*1200);V3.noiT=v3NoiseTex(gl);return true}
 // ------------------------------------------------------------------ i fogli delle texture (2048×2048): facce, pannelli, chiome, fiamme, il bianco
 const V3A={S:2048,pages:[],byCv:new Map()};
 function v3Page(){const c=document.createElement('canvas');c.width=c.height=V3A.S;V3A.pages.push({c,g:c.getContext('2d'),x:3,y:3,h:0,tex:null});return V3A.pages.length-1}
@@ -743,7 +745,7 @@ function v3BodyMesh(prof,bz,ax){const mb=v3MB(),top=prof[prof.length-1][0],rad=d
   for(const[j,sg] of[[0,-1],[rows.length-1,1]]){const dz=zs[j],r=rad(dz),c0=v3V(mb,[0,0,bz+dz],[0,0,sg],[255,255,255,255],[.5,sg<0?.985:.02]),ring=[];
     for(let i=0;i<NS;i++){const t=-Math.PI+i/NS*Math.PI*2;ring.push(v3V(mb,[Math.cos(t)*r*ax,Math.sin(t)*r,bz+dz],[0,0,sg],[255,255,255,255],[.5,sg<0?.985:.02]))}for(let i=0;i<NS;i++)v3T(mb,c0,ring[i],ring[(i+1)%NS])}
   return v3Up(mb)}
-function v3Statics(){if(V3.hm)return V3.hm;const W=[255,255,255,255],M={};
+function v3Statics(){if(V3.hm){if(!V3.pT)V3.pT=v3Prog(V3.gl,V3VS_TOON,V3FS_TOON,['aP','aN','aO','aT','aC','aP2','aN2','aO2']);return V3.hm}const W=[255,255,255,255],M={};
   {const mb=v3MB();v3Sphere(mb,[0,0,0],1,W,26,18);M.ball=v3Up(mb)}{const mb=v3MB();v3Sphere(mb,[0,0,0],1,W,12,8);M.ball2=v3Up(mb)}
   {const mb=v3MB(),a=[-1,0,3],b=[1.7,0,2.85],ra=3.05,rb=3.15,{add,mul,nrm,sub,cross}=RG,u=nrm(sub(b,a)),v=nrm(cross(u,[0,0,1])),w=cross(u,v),N=14,rows=[];
     for(let k=0;k<=10;k++){const front=k>5,ph=front?(k-5)/5*Math.PI/2:(k/5-1)*Math.PI/2,C=front?b:a,r=front?rb:ra,row=[];
@@ -1021,7 +1023,7 @@ function v3Set(m){if(!m||m===V3.mode)return;const W=ZM.W;
   if(!V3.built){if(V3.busy)return;V3.busy=true;v3Toast('Preparo la visuale 3D…',8);setTimeout(()=>{try{v3Build()}catch(e){v3Err(e)}V3.busy=false;if(V3.built){V3.mode=m;V3.on=true;V3.cv.style.display='';v3UI();v3Toast(V3NAME[m])}else v3Toast('Non riesco a preparare la visuale 3D',2.6)},60);return}
   V3.mode=m;V3.on=true;V3.cv.style.display='';V3.camK=null;v3UI();v3Toast(V3NAME[m])}
 // ------------------------------------------------------------------ l'aggancio: il motore chiede a W.v3 se disegnare lui
-if(typeof ZM!=='undefined'&&ZM.W){const W=ZM.W;W.v3={get on(){if(!V3.auto&&W.ground&&W.director&&W.director.st){V3.auto=1;setTimeout(()=>{if(V3.mode==='alto')v3Set('terza')},500)}if(V3.lost&&V3.mode!=='alto'){v3Set('alto');v3Toast('La visuale 3D si è fermata: torno dall\'alto',2.6)}return V3.on&&V3.built&&!V3.lost&&V3.mode!=='alto'},draw:(dt,Wp,Hp,dpr)=>{try{v3Frame(dt,Wp,Hp,dpr)}catch(e){v3Err(e)}}};
+if(typeof ZM!=='undefined'&&ZM.W){const W=ZM.W;W.v3={get on(){if(!V3.auto&&W.ground&&W.director&&W.director.st){V3.auto=1;setTimeout(()=>{if(V3.mode==='alto')v3Set(V3.start||'terza')},500)}if(V3.lost&&V3.mode!=='alto'){v3Set('alto');v3Toast('La visuale 3D si è fermata: torno dall\'alto',2.6)}return V3.on&&V3.built&&!V3.lost&&V3.mode!=='alto'},draw:(dt,Wp,Hp,dpr)=>{try{v3Frame(dt,Wp,Hp,dpr)}catch(e){v3Err(e)}}};
   addEventListener('keydown',e=>{if((e.code==='KeyC')&&!e.repeat&&document.getElementById('mz')&&!document.getElementById('mz').hidden&&ZM.W.director&&ZM.W.director.st!=='fine'){v3Set(V3NEXT[V3.mode])}},true);
   if(ZM.partita){const _p=ZM.partita;ZM.partita=function(){const D=_p.apply(this,arguments);if(D&&!D.__v3){D.__v3=1;const _r=D.reset;D.reset=function(){_r.apply(this,arguments);try{v3UI()}catch(e){}}}try{v3UI()}catch(e){}return D};if(W.director)try{v3UI()}catch(e){}}
   window.__V3=V3}

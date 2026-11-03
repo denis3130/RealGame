@@ -1,14 +1,16 @@
 # Mossbound tripla A (Denis, 2 novembre: «rendi tripla A il gioco in sé mossbound»): il gioco di oggi con la stanza della Classica in 3D vero
-# (src/js/110-t3-motore.js e i pezzi che vengono dopo), come la visuale zombie (di cui usa gli attrezzi: src/js/105-visuale-3d.js, spenta come
-# visuale). Prima anteprima: le stanze del primo mondo (muschio, grotte di cristallo e il Golem); le due luci «Chiara» e «Da film» col bottone in
-# alto o col tasto L.
+# (src/js/110-t3-motore.js e i pezzi che vengono dopo), come la visuale zombie (di cui usa gli attrezzi: src/js/105-visuale-3d.js, con lo stesso
+# disegno 3D). Prima anteprima: le stanze del primo mondo (muschio, grotte di cristallo e il Golem); le due luci «Chiara» e «Da film» col bottone in
+# alto o col tasto L. Dal 3 novembre anche la partita zombie in prima persona (Denis: «fammi giocare in prima persona e l'altra visuale in 3d»):
+# la visuale 3D (105, con gli effetti di 107, il mondo di 108 e la mira di 104 solo per la Zombie) con lo stesso disegno 3D della pagina;
+# si parte in prima persona, il bottone «Visuale» passa alla terza persona e alla vista dall'alto.
 # Alla prima apertura c'è già un eroe e il menu è sulla Classica: si tocca Gioca. Il contatore dei fotogrammi è acceso (101).
 # Uso: python3 anteprime/mk_tripla.py [cartella]   (--prova: senza salvataggio pronto → tripla_prova.html, per le prove)
 #      → anteprime/tripla.html; con la cartella anche la stessa pagina divisa in tre pezzi come il gioco pubblicato (app/mk_claude.py).
 # La pagina costruita non si salva su git.
 import os,sys,subprocess
 here=os.path.dirname(os.path.abspath(__file__));root=os.path.dirname(here);src=os.path.join(root,'src')
-NUOVI=['js/105-visuale-3d.js','js/106-zombie-3d.js','js/110-t3-motore.js','js/111-t3-eroe.js','js/112-t3-nemici.js','js/113-t3-golem.js','js/114-t3-stanza.js','js/115-t3-effetti.js','js/116-t3-isole.js','js/117-t3-interfaccia.js','js/118-t3-falo.js']
+NUOVI=['js/104-mira.js','js/105-visuale-3d.js','js/106-zombie-3d.js','js/107-effetti-3d.js','js/108-mondo-3d.js','js/110-t3-motore.js','js/111-t3-eroe.js','js/112-t3-nemici.js','js/113-t3-golem.js','js/114-t3-stanza.js','js/115-t3-effetti.js','js/116-t3-isole.js','js/117-t3-interfaccia.js','js/118-t3-falo.js']
 NUOVI=[f for f in NUOVI if os.path.exists(os.path.join(src,f))]
 order=[l.strip() for l in open(os.path.join(src,'ordine.txt'),encoding='utf-8') if l.strip()]
 extra=[f for f in NUOVI if f not in order]

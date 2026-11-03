@@ -460,8 +460,8 @@ telecamera dall'alto a 50°; stanza, le due luci `T3LUCI` col bottone «Luce» o
 disegni), `112-t3-nemici.js` (`T3N`: slime, pipistrello, fungo, pianta, fuoco fatuo in 3D, umanoidi col corpo dell'eroe; pose fatte una
 volta), `113-t3-golem.js` (`T3GL`: il Golem a pezzi mossi dalle pose del suo modello; `golem2.js` esporta solo i conti in
 `N3.meta.golem2.k3`, una riga che non disegna niente), `114-t3-stanza.js` (`T3S`: ostacoli del primo mondo in 3D), `115-t3-effetti.js`
-(`T3FX`: luci dei colpi, lampi, telecamera che si stringe, tonfi). Usa gli attrezzi di `105-visuale-3d.js` (spenta come visuale; nel
-vestito le costole degli scheletri). Pagina: `python3 anteprime/mk_tripla.py <cartella>` (contatore dei fotogrammi acceso), pubblicata a parte su
+(`T3FX`: luci dei colpi, lampi, telecamera che si stringe, tonfi). Usa gli attrezzi di `105-visuale-3d.js` (dal 3 novembre anche la
+visuale stessa nella partita zombie, sotto; nel vestito le costole degli scheletri). Pagina: `python3 anteprime/mk_tripla.py <cartella>` (contatore dei fotogrammi acceso), pubblicata a parte su
 https://claude.ai/artifact/8UveByoEu5gWa7cXm6aUEw («Mossbound tripla A»; si aggiorna ripubblicando la stessa cartella); prova
 `python3 tests/t3/mk.py`, poi `node tests/t3/tripla.js` (26 controlli), foto `tests/t3/tr_lotta.jpg` e `tr_golem.jpg`. Dettagli, tempi e cosa manca (scarabeo,
 occhio d'ombra e fiore occhio ancora cartoline; raccolte e colpi disegni 2D con la loro luce) in `docs/tripla-a.md`. Niente entra nel
@@ -498,6 +498,12 @@ vento (`t3IBanner`, `B.wind`, `T3I.wu`), il ponte che ondeggia sotto l'eroe nell
 il fumo del vulcano e la neve (`t3ILife`); lo scorrimento tra le modalità con le due scene in 3D, copiate una volta quando parte
 (`t3SnapPair`). Prova `node tests/t3/menu.js` (37 controlli), foto `tests/t3/tr_isole.jpg`, `tr_falo.jpg`, `tr_assedio.jpg`,
 `tr_spettacolo.jpg`, `tr_ancora.jpg`; dettagli in `docs/tripla-a.md` («Il menu in tripla A», «Ancora meglio»).
+Poi (3 novembre, Denis: «fammi giocare in prima persona e l'altra visuale in 3d»; risposte: la Zombie, in questa anteprima, la vista
+dall'alto resta) **la Zombie in prima persona** nella stessa pagina: la visuale 3D della Zombie (105, con 107 e 108, e la mira di 104 solo
+per la Zombie, `MIRA.cl=false`) disegna col contesto 3D della tripla A (uno solo: `v3Init` di 110 su `v3InitGL` di 105; durante la partita
+la tela va sotto la mappa, `T3I.host='zombie'`, e dopo torna al menu); la partita parte da sola in prima persona (`V3.start`), il bottone
+«Visuale» va alla terza persona e poi dall'alto (`V3NEXT`). Prova `node tests/t3/prima.js` (9 controlli), foto `tests/t3/tr_prima.jpg`;
+dettagli in `docs/tripla-a.md` («La Zombie in prima persona»).
 
 ## FASE 9: più fluido sul telefono (19 ottobre, in corso)
 
