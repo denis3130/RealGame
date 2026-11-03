@@ -46,7 +46,9 @@ const SAVE={gold:5000,gems:500,trophies:900,runs:12,introSeen:1,handSeen:1,start
   await E(`openSheet('mis');0`);await p.waitForTimeout(600);await p.screenshot({path:D+'me_missioni.png'});await E(`$('sheetScr').hidden=true;0`);
   // 4. the Zombie menu: the siege in 3D
   console.log('L\'assedio');
-  await p.click('#zHand',{force:true});await E(`if(MM.tr)MM.tr.t0=CAMP.t-1.45;0`);await p.waitForFunction(()=>__E('!MM.tr'),null,{timeout:240000});
+  // (the sweep must reach its end by itself: the menu's clock runs on even while the pictures slide)
+  await p.click('#zHand',{force:true});const sw0=await E(`!!MM.tr`);await p.waitForFunction(()=>__E('!MM.tr'),null,{timeout:240000}).catch(()=>{});
+  ck(sw0&&await E(`!MM.tr&&zMode()`),'lo scorrimento verso la Zombie arriva in fondo da solo');
   // (the first time the scene is made a little each frame: meanwhile the drawing of always)
   await p.waitForFunction(()=>__E('T3F.ready&&!!T3F.hd'),null,{timeout:90000}).catch(()=>{});await p.waitForTimeout(1500);
   s=JSON.parse(await E(`JSON.stringify({z:zMode(),ready:T3F.ready,bad:T3F.bad,live:T3I.live,err:__T3.err,hero:!!CAMP.hero,ms:+T3F.ms.toFixed(1),S:T3F.S.length,mats:Object.keys(T3F.X).length,
@@ -75,7 +77,7 @@ const SAVE={gold:5000,gems:500,trophies:900,runs:12,introSeen:1,handSeen:1,start
   console.log('I tempi');
   const zt=+await E(`T3F.ms.toFixed(1)`);await p.click('#zHand',{force:true}).catch(()=>{});
   s=JSON.parse(await E(`JSON.stringify({tr:!!MM.tr,i:!!T3I.snapOk,f:!!T3F.snapOk})`));ck(s.tr&&s.i&&s.f,'lo scorrimento tra le modalità mostra le due scene in 3D '+JSON.stringify(s));
-  await E(`if(MM.tr)MM.tr.t0=CAMP.t-1.45;0`);await p.waitForFunction(()=>__E('!MM.tr'),null,{timeout:240000}).catch(()=>{});await E(`if(zMode()){SAVE.modo='classica';applyModeUI()}0`);await p.waitForTimeout(2500);const it=+await E(`T3I.ms.toFixed(1)`);
+  await p.waitForFunction(()=>__E('!MM.tr'),null,{timeout:240000}).catch(()=>{});ck(await E(`!MM.tr&&!zMode()`),'e quello verso la Classica pure');await E(`if(zMode()){SAVE.modo='classica';applyModeUI()}0`);await p.waitForTimeout(2500);const it=+await E(`T3I.ms.toFixed(1)`);
   console.log('  tempi medi a fotogramma (ms, computer di prova senza scheda grafica): isole',it,'· assedio',zt);ck(it>0&&zt>0,'il disegno 3D del menu gira');
   // 6. no 3D: the drawing of always
   console.log('Senza 3D');

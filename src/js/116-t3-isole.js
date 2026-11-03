@@ -740,5 +740,6 @@ function t3IslOver(L,t,A,B,f,v){const d=L.dpr;
 // 94's frame of the islands: in 3D when the 3D can, else as always
 {const _ci=cnIsles;cnIsles=function(dt){if(!t3IslOk()){if(T3I.live){T3I.live=false;if(T3.cv)T3.cv.style.display='none'}
     // (between the two modes: the last picture of the islands in 3D, not the drawing of always)
-    if(typeof MM!=='undefined'&&MM.tr&&T3I.on&&!T3I.bad&&t3SnapDraw(T3I))return;return _ci.apply(this,arguments)}
+    // (the menu's clock goes on as 94's frame would make it: the sweep itself runs on it)
+    if(typeof MM!=='undefined'&&MM.tr&&T3I.on&&!T3I.bad&&T3I.snap&&T3I.snapOk){campResize();CAMP.t+=dt||0;if(G)G.t=CAMP.t;t3SnapDraw(T3I);return}return _ci.apply(this,arguments)}
   try{t3IslFrame(dt)}catch(e){t3Err(e);T3I.bad=true;T3I.live=false;if(T3.cv)T3.cv.style.display='none';const s=ctx;ctx=campX;try{ctx.setTransform(1,0,0,1,0,0)}finally{ctx=s}return _ci.call(this,0)}}}
