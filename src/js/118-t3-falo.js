@@ -356,7 +356,8 @@ function t3FJobs(){const J=[],X=T3F.X,S=T3F.S;
   J.push(()=>{T3F.G.crow=[0,1,2,3,4,5].map(i=>t3FCrow(i/6,false));T3F.G.crowSit=t3FCrow(0,true)});
   J.push(()=>{const p=T3F.posts||[];T3F.perch=[{p:[T3FL.scare[0]+15,T3FL.scare[1],35.6],yaw:2.6,t:0}].concat([p[Math.floor(p.length*.36)],p[Math.floor(p.length*.62)]].filter(Boolean).map((q,i)=>({p:[q[0]+Math.sin(q[2])*q[3],q[1],Math.cos(q[2])*q[3]+3.4],yaw:i?.6:2.2,t:i*3})))});
   J.push(()=>{T3F.ready=true});return J}
-function t3FZJobs(){const J=[];for(const k of['zombie','lanterna','strisciante','minatore']){for(const an of['walk','idle'])for(let i=0;i<Z3.NF[an];i++)J.push(()=>z3Get(k,an,i,()=>true));J.push(()=>{T3F.zok[k]=1})}return J}
+// (one pose in two of 106's: the drawing slides between them all the same, and the phone keeps half the memory)
+function t3FZJobs(){const J=[];for(const k of['zombie','lanterna','strisciante','minatore']){for(const an of['walk','idle'])for(let i=0;i<Z3.NF[an];i+=2)J.push(()=>z3Get(k,an,i,()=>true));J.push(()=>{T3F.zok[k]=1})}return J}
 function t3FBuild(ms){if(!T3F.q){T3F.q=t3FJobs();T3F.qi=0}const t0=performance.now();
   while(T3F.qi<T3F.q.length&&performance.now()-t0<ms){try{T3F.q[T3F.qi++]()}catch(e){t3Err(e);T3F.bad=true;return}}}
 function t3FZBuild(ms){if(!T3F.zq){T3F.zq=t3FZJobs();T3F.zi=0}const t0=performance.now();while(T3F.zi<T3F.zq.length&&performance.now()-t0<ms){try{T3F.zq[T3F.zi++]()}catch(e){t3Err(e);T3F.zi=T3F.zq.length}}}
@@ -410,7 +411,7 @@ function t3FZombies(dt){const Z=T3F.Z,W=T3F.zW;if(!T3F.zInit&&T3F.zok.zombie){T3
     else if(z.st==='back'){z.p=(z.p+dt/2.4)%1;if(z.t>.6){z.st='walk';z.t=0;z.next=5+Math.random()*7}}
     const tgt=z.st==='look'?(z.look===1?Math.atan2(T3.eye[1]-z.y,T3.eye[0]-z.x):Math.atan2(-z.y,-z.x)):z.dir>0?0:Math.PI,k=z.st==='look'?Math.min(1,dt*16):Math.min(1,dt*2.6);
     let d=tgt-z.face;d=Math.atan2(Math.sin(d),Math.cos(d));z.face+=d*k}}
-function t3FZItems(t){const items=[];for(const z of T3F.Z){const an=z.st==='walk'?'walk':'idle',NF=Z3.NF[an],f=(z.p%1)*NF,i0=Math.floor(f)%NF,i1=(i0+1)%NF,A=Z3.M.get(z3Key(z.kind,an,i0)),B=Z3.M.get(z3Key(z.kind,an,i1));if(!A){z.M=null;continue}
+function t3FZItems(t){const items=[];for(const z of T3F.Z){const an=z.st==='walk'?'walk':'idle',NF=Z3.NF[an],f=(z.p%1)*NF/2,i0=(Math.floor(f)*2)%NF,i1=(i0+2)%NF,A=Z3.M.get(z3Key(z.kind,an,i0)),B=Z3.M.get(z3Key(z.kind,an,i1));if(!A){z.M=null;continue}
     const sc=z.sc,a=z.face,c=Math.cos(a),s=Math.sin(a);z.M=v3M4([c*sc,s*sc,0],[-s*sc,c*sc,0],[0,0,sc],[z.x,z.y,0]);z.em=(z.st==='look'?.85:.5)+.45*Math.sin(t*2.2+z.id*1.7);
     items.push({m:A,m2:B&&B.nv0===A.nv0?B:A,kf:f-Math.floor(f),M:z.M,out:.62,em:z.em})}return items}
 // the scarecrow: now and then it turns its head to you all at once and bends it too far to the side, its eyes light up; then slowly back
