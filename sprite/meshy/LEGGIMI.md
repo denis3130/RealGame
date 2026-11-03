@@ -1,5 +1,9 @@
 # Modelli fatti con Meshy
 
+**Ferma: Meshy non si usa** (3 novembre, Denis: «fa niente non usare meshy»). La prova si è fermata prima di generare qualcosa: in
+questa sessione c'erano le istruzioni di Meshy ma non l'accesso all'account (nessun accesso salvato né chiave), i tre codici da approvare
+su meshy.ai sono scaduti e nessun credito è stato speso. Quello che segue resta come era pronto, fuori dal gioco.
+
 Prova del 3 novembre (Denis: «vorrei rifacessi per ora 1 zombie quello base rifatto su meshy con dettagli cartoon così ma fatti
 meglio. fai una piccola prova creando appunto questo zombie base fatto meglio con animazioni adatte sempre su meshy, penso si dovrebbe
 chiamare zombie walk attack ecc non lo so vedi tu altrimenti se non ci sono creiamo noi»). Solo una prova: niente entra nel gioco senza
