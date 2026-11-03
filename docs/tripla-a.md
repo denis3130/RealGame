@@ -174,8 +174,9 @@ nell'anteprima tripla A (il gioco e l'app non cambiano).
     zombie dopo, 3–4 ms alla volta (l'orda arriva appena le pose del primo tipo sono pronte): l'attacco e la camminata, una posa su due di 106
     (84 pose; lo strisciante solo cammina). Suoni solo nel menu Zombie e con gli effetti accesi (`t3FSnd`). LOWFX: metà orda, niente nebbia,
     fumo e corvi in volo, meno scintille, braci e polvere.
-- Mentre il menu passa da una modalità all'altra (lo scorrimento) c'è per quel secondo il disegno di sempre; se il 3D non c'è torna da solo.
-- Prove: `node tests/t3/menu.js` (30 controlli: isole in 3D, tocchi dell'eroe e dei premi, pezzi sotto i 65.000 punti, spettacolo, interfaccia
+- Mentre il menu passa da una modalità all'altra (lo scorrimento) scorrono le due scene in 3D (sotto, «Ancora meglio»); se il 3D non c'è
+  torna da solo il disegno di sempre.
+- Prove: `node tests/t3/menu.js` (35 controlli dopo «Ancora meglio»; i primi 30: isole in 3D, tocchi dell'eroe e dei premi, pezzi sotto i 65.000 punti, spettacolo, interfaccia
   e interruttori, l'assedio in 3D con tutta la scena, la barricata, la ruota e le torce, la fattoria che brucia, il cielo sotto la barra,
   l'orda in 3D, lo zombie che scavalca e l'eroe che si gira, mira e spara, l'eroe che torna a guardia e l'orda che torna al suo numero, la
   spinta, il lampo, lo spaventapasseri che si gira, ritorno al disegno di sempre, nessun errore). Foto: `tests/t3/tr_isole.jpg` (prima e dopo: l'isola e il ponte col
@@ -184,5 +185,40 @@ nell'anteprima tripla A (il gioco e l'app non cambiano).
   fotogramma con 28 zombie (5,0 con LOWFX e 14 zombie; il falò di prima 3,5), più il disegno (49.000 triangoli fermi e circa 117.000
   dell'orda) e il passaggio finale.
   Sul telefono lo dice il contatore.
-- Cosa manca: degli animali intorno alle isole ci sono solo lucciole, braci e luccichii (niente stormi, farfalle, rane); il ponte non
-  ondeggia ancora sotto l'eroe e le funi non sentono il vento; gli stendardi delle torri sono fermi.
+
+### Ancora meglio (3 novembre)
+
+Denis: «miglioralo ancora senza farmi domande, intendo incluso anche il menu ecc». Senza domande, tre pezzi:
+
+- **L'assedio più vivo** (118):
+  - **La telecamera** respira piano (si sposta di poco avanti e indietro), si avvicina un poco quando uno scavalca e trema col tuono, con le
+    spinte sulla barricata e col rinculo dei colpi (`T3F.cam`; con «riduci movimento» del telefono ferma).
+  - **L'arma vera dell'Arsenale** (`t3FGunObj`: lo stesso oggetto di `ARMI.nuova` che spara sulla mappa zombie): i colpi al suo ritmo (le
+    automatiche a raffica finché lo zombie non cade, la pompa coi suoi pallini, ognuno la sua scia), i suoi suoni dal banco
+    (`ARMI.suonaBanco`), **i bossoli** che volano a destra e rimbalzano a terra, **il caricatore vuoto** che cade ai suoi piedi, e dopo, girato
+    di nuovo verso il fuoco, **la ricarica** vera dell'arma 3D con la mano libera (quattro volte su cinque).
+  - **Il sangue** dello zombie colpito schizza e resta a terra come macchie scure; **le schegge** di legno saltano dalla barricata quando
+    l'orda spinge.
+  - **L'orda innaturale**: ogni tanto uno piega di scatto la testa e il corpo da un lato e torna piano, un tremito lo attraversa, oppure si
+    ferma immobile e poi recupera tutto d'un colpo (`z.tw`, `z.trm`, `z.frz`).
+  - **Cenere e braci** che il vento porta dalla fattoria su tutta la scena, anche davanti all'eroe (`t3FAsh`: 40 fiocchi di cenere e 14
+    braci; con LOWFX niente cenere e 4 braci).
+  - **L'aria della notte** (`t3FAmbOn`): il vento che sale e scende, il brusio dell'orda, il sibilo degli incendi, piano (sotto restano il
+    crepitio e le raffiche del menu Zombie di 67), solo con la scena sullo schermo e gli effetti accesi.
+- **Le isole più vive** (116):
+  - **Il vento**: gli stendardi delle torri e dei balconi (`t3IBanner`), le funi, i cavi, gli appesi e le bandierine si muovono col vento a
+    raffiche di 94 (`cnWind`): tre pose del vento fatte una volta (`B.wind`) e passate dall'una all'altra dalla scheda grafica (`T3I.wu`).
+  - **Il ponte che ondeggia** sotto l'eroe che corre (`ISL.sw` di 94, `cnSwayFn`): l'impalcato e le funi si piegano nella scheda grafica
+    (`t3IBrProg`, `uSw`), le lanterne dondolano con lui, l'eroe va su e giù col ponte.
+  - **La vita** (`t3ILife`): ogni 10–18 s uno stormo del mondo che guardi passa di traverso sopra il ponte tra le torri (rondini sul muschio,
+    uccellini di fuoco sul vulcano, pipistrelli sulla palude, uccelli bianchi sul ghiaccio); farfalle sull'isola del muschio, libellule
+    sulla palude, il fumo del vulcano (grigio cenere, acceso dal basso, con le braci) e la neve sul ghiaccio. Con LOWFX niente.
+- **Lo scorrimento tra Classica e Zombie in 3D**: quando parte (67, `modeSwitch` avvolto in 118) ognuna delle due scene si disegna una volta
+  in 3D e si copia (`t3SnapPair`: prima quella nuova, poi la vecchia, così lo schermo resta com'è fino al primo passo); durante lo
+  scorrimento scorrono le due copie (`t3Snap`, `t3SnapDraw`), non più il disegno di sempre. Una copia sola a scorrimento: copiare il 3D a
+  ogni fotogramma costerebbe uno scatto sul telefono. Se una scena non è ancora pronta (l'assedio la prima volta), per lei resta il
+  disegno di sempre.
+- Prove: `node tests/t3/menu.js` ora ha anche il vento e il ponte che ondeggia, lo stormo, i bossoli dell'arma vera, la cenere, l'eroe che
+  torna a guardia anche ricaricando, lo scorrimento con le due scene in 3D. Il computer delle prove di oggi è molto più lento di quello di
+  ieri (anche il menu senza 3D va a 5 fotogrammi al secondo, sia col codice nuovo sia con quello di prima), per questo le attese della prova
+  sono più lunghe; il lavoro vero di un fotogramma delle isole, misurato pezzo per pezzo, è circa 12 ms. Foto: `tests/t3/tr_ancora.jpg`.

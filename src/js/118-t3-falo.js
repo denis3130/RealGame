@@ -16,7 +16,7 @@
 // di 66). LOWFX: metà orda, niente nebbia, fumo e corvi in volo, meno scintille e braci.
 // =====================================================================
 const T3F={on:true,bad:false,ready:false,q:null,zq:null,zok:{},X:{},cv:{},S:[],G:{},hd:null,cr:[],crT:6,perch:[],sp:[],sm:[],fx:[],em:[],ms:0,hy:0,top:0,t:0,
-  sc:{st:'idle',t:0,next:7,yaw:0,tilt:0,glow:0},bladeA:0,wheelA:0,sh:0,shN:[0,1,0],lt:{next:4,t:-1,b:null,f:0},gun:'pistola',n:{climb:0,shot:0,push:0,bolt:0},
+  sc:{st:'idle',t:0,next:7,yaw:0,tilt:0,glow:0},bladeA:0,wheelA:0,sh:0,shN:[0,1,0],lt:{next:4,t:-1,b:null,f:0},gun:'pistola',n:{climb:0,shot:0,push:0,bolt:0},cam:{sh:0,push:0},go:null,ash:null,amb:null,
   h:{st:'idle',t:0,face:1.05,lk:0,lkOn:0,lkT:5,rec:0,flash:0,slide:0,mf:0,i:0,tgt:null,muz:null},prof:null};
 function t3FaloOk(){return T3F.on&&!T3F.bad&&T3F.ready&&t3IslOk()}
 // the places (the hero stands at 0,0; x east, y toward us, z up; the hero is ~44 tall)
@@ -434,10 +434,11 @@ function t3FZBuild(ms){if(!T3F.zq){T3F.zq=t3FZJobs();T3F.zi=0}const t0=performan
 // camp where 66 has it (the hero a little above the «Cambia» pill), the horizon under the top bar so the sky shows between
 function t3FaloCam(F){const cw=campCv.width,ch=campCv.height,asp=cw/ch,C=T3FC,fovy=C.fovy*Math.PI/180,th=Math.tan(fovy/2),fpx=(ch/2)/th,spx=F.hs*F.u*C.k,
     S0=[F.ox+156*F.u,F.oy+(HOME_Y-C.up*F.hs)*F.u],cr=campCv.getBoundingClientRect(),top=Math.max(0,($('topbar').getBoundingClientRect().bottom-cr.top)*F.dpr),
-    want=top+(S0[1]-top)*C.hor,pit=Math.max(C.p0,Math.min(C.p1,Math.atan2(S0[1]-want,fpx)*180/Math.PI))*Math.PI/180,D=fpx/spx,tg=[0,0,C.tz],eye=[tg[0],tg[1]+D*Math.cos(pit),tg[2]+D*Math.sin(pit)];
+    want=top+(S0[1]-top)*C.hor,pit=Math.max(C.p0,Math.min(C.p1,Math.atan2(S0[1]-want,fpx)*180/Math.PI))*Math.PI/180,cm=T3F.cam,tt=T3F.t||0,dr=RM?0:1,
+    D=fpx/spx*(1-.06*cm.push),tg=[0,0,C.tz],eye=[tg[0]+dr*Math.sin(tt*.21)*D*.016,tg[1]+D*Math.cos(pit),tg[2]+D*Math.sin(pit)+dr*Math.sin(tt*.29+1)*D*.007];
   T3.eye=eye;T3.tg=tg;T3.dist=D;T3.near=Math.max(6,D*.2);T3.far=D+5400;const q=v3Mul(v3Persp(fovy,asp,T3.near,T3.far),v3Look(eye,tg,[0,0,1]));
   const P=tg,cx=q[0]*P[0]+q[4]*P[1]+q[8]*P[2]+q[12],cy=q[1]*P[0]+q[5]*P[1]+q[9]*P[2]+q[13],cwv=q[3]*P[0]+q[7]*P[1]+q[11]*P[2]+q[15],dx=(2*S0[0]/cw-1)-cx/cwv,dy=(1-2*S0[1]/ch)-cy/cwv;
-  T3.vp=v3Mul(new Float32Array([1,0,0,0,0,1,0,0,0,0,1,0,dx,dy,0,1]),q);
+  const sk=RM?0:cm.sh*cm.sh;T3.vp=v3Mul(new Float32Array([1,0,0,0,0,1,0,0,0,0,1,0,dx+sk*.022*(Math.sin(tt*41)*.6+Math.sin(tt*67)*.4),dy+sk*.022*(Math.sin(tt*53+1)*.6+Math.sin(tt*29)*.4),0,1]),q);
   const f=[tg[0]-eye[0],tg[1]-eye[1],tg[2]-eye[2]],fl=Math.hypot(...f);T3.F3=[f[0]/fl,f[1]/fl,f[2]/fl];T3.R3=[1,0,0];const R=T3.R3,Fv=T3.F3;T3.U3=[R[1]*Fv[2]-R[2]*Fv[1],R[2]*Fv[0]-R[0]*Fv[2],R[0]*Fv[1]-R[1]*Fv[0]];if(T3.U3[2]<0)T3.U3=T3.U3.map(x=>-x);
   T3.kpx=cw/(2*D*th*asp);const hz=t3IProj([eye[0],eye[1]-1e5,eye[2]]);T3F.hy=hz?hz[1]:ch*.2;T3F.top=top}
 // ------------------------------------------------------------------ the sky of the siege: from the red haze on the horizon to the deep
@@ -492,7 +493,7 @@ function t3FLight(dt){const L=T3F.lt;if(L.t<0){L.f=0;if((L.next-=dt)>0)return;L.
 // the sounds of the scene (only in the Zombie menu, with the effects on)
 function t3FSnd(){return typeof AU!=='undefined'&&!!AU.ctx&&!!AU.on&&!!AU.on.sfx&&AU.ctx.state==='running'&&!$('menu').hidden&&zMode()}
 function t3FThunder(d){if(!t3FSnd())return;try{const t=AU.ctx.currentTime+d;fNoise(t,.45,'highpass',900,.7,.05,{att:.004});fNoise(t+.03,1.9,'lowpass',260,.8,.14,{brown:1,att:.22,f2:90,rev:.4});
-  fNoise(t+.55,2.6,'lowpass',150,.7,.11,{brown:1,att:.45,f2:55,rev:.5});fThump(t+.06,55,30,1.2,.12,.3)}catch(e){}}
+  fNoise(t+.55,2.6,'lowpass',150,.7,.11,{brown:1,att:.45,f2:55,rev:.5});fThump(t+.06,55,30,1.2,.12,.3);if(!RM)setTimeout(()=>{T3F.cam.sh=Math.min(1,T3F.cam.sh+.45)},d*1000)}catch(e){}}
 // ------------------------------------------------------------------ the horde (106's zombies in 3D): the first row against the barricade
 // with the arms reaching over it, the second that pushes behind, the crowd, the others that come out of the mist across the field. Now and
 // then one climbs up on the barricade: the hero turns and shoots, and it falls back. The barricade shakes under the pushes; the horde groans
@@ -538,31 +539,39 @@ function t3FHorde(dt){if(!T3F.hd){if(!T3F.zok.zombie)return;t3FHordeInit()}const
       if(C.length){const z=C[Math.floor(Math.random()*C.length)];H.s1[z.slot]=null;z.role='climb';z.ct=0;z.cx=z.x;z.cy=z.y;z.N=t3FBf(z.x).N;T3F.n.climb++;t3FGroan(z)}}}
   // a push: one of the first row throws itself on the barricade (it shakes, the dust, the wood creaks)
   if((H.uT-=dt)<=0){H.uT=2.2+Math.random()*3;const P=Z.filter(z=>z.role==='press'&&Math.hypot(z.tx-z.x,z.ty-z.y)<3);if(P.length){const z=P[Math.floor(Math.random()*P.length)],f=t3FBf(z.x);
-      T3F.sh=1;T3F.shN=f.N;z.bo=.6;T3F.n.push++;for(let k=0;k<3;k++){const u=(Math.random()-.5)*16;t3FDust(f.O[0]+f.U[0]*u+f.N[0]*2,f.O[1]+f.U[1]*u+f.N[1]*2,4+Math.random()*12,3)}t3FPushSnd()}}
+      T3F.sh=1;T3F.shN=f.N;z.bo=.6;T3F.n.push++;for(let k=0;k<3;k++){const u=(Math.random()-.5)*16;t3FDust(f.O[0]+f.U[0]*u+f.N[0]*2,f.O[1]+f.U[1]*u+f.N[1]*2,4+Math.random()*12,3)}t3FPushSnd();
+      for(let k=0;k<(LOWFX?2:6);k++){const u=(Math.random()-.5)*14,v=8+Math.random()*14;T3F.fx.push({k:'wd',p:[f.O[0]+f.U[0]*u+f.N[0]*3,f.O[1]+f.U[1]*u+f.N[1]*3,8+Math.random()*16],v:[f.N[0]*v+(Math.random()-.5)*10,f.N[1]*v+(Math.random()-.5)*10,10+Math.random()*16],l:2.6,b:0,s:.45+Math.random()*.5})}
+      if(!RM)T3F.cam.sh=Math.min(1,T3F.cam.sh+.18)}}
   if((H.gT-=dt)<=0){H.gT=2.2+Math.random()*2.4;const z=Z[Math.floor(Math.random()*Z.length)];if(z&&z.role!=='dead')t3FGroan(z)}
   for(let i=Z.length-1;i>=0;i--){const z=Z[i];z.hit*=Math.exp(-dt*9);
     // shot: it falls back off the barricade and is gone behind it
-    if(z.role==='dead'){z.dt+=dt;const k=Math.min(1,z.dt/.85);z.fall=1.5*k*k;z.z=Math.max(0,z.z0*(1-k*k)-1.5*k);z.x=z.x0-z.N[0]*12*k;z.y=z.y0-z.N[1]*12*k;z.p=(z.p+dt/1.4)%1;
+    if(z.role==='dead'){z.roll=0;z.dt+=dt;const k=Math.min(1,z.dt/.85);z.fall=1.5*k*k;z.z=Math.max(0,z.z0*(1-k*k)-1.5*k);z.x=z.x0-z.N[0]*12*k;z.y=z.y0-z.N[1]*12*k;z.p=(z.p+dt/1.4)%1;
       if(k>=1&&!z.thud){z.thud=1;t3FDust(z.x,z.y,1,3);t3FDust(z.x+3,z.y-2,1,3);t3FThud()}if(z.dt>1.25)Z.splice(i,1);continue}
     // the climb: up on the barricade in a second, then on top leaning over the camp, the arms reaching
-    if(z.role==='climb'){z.ct+=dt;const k=Math.min(1,z.ct/1.15),e=k*k*(3-2*k);z.z=21*e+Math.sin(k*Math.PI)*5;z.x=z.cx+z.N[0]*14*e;z.y=z.cy+z.N[1]*14*e;z.lean=-.4*e+z.hit*.5;z.an='attack';
+    if(z.role==='climb'){z.roll=0;z.ct+=dt;const k=Math.min(1,z.ct/1.15),e=k*k*(3-2*k);z.z=21*e+Math.sin(k*Math.PI)*5;z.x=z.cx+z.N[0]*14*e;z.y=z.cy+z.N[1]*14*e;z.lean=-.4*e+z.hit*.5;z.an='attack';
       z.p=(z.p+dt/1.1)%1;z.face=t3FAng(z.face,Math.atan2(-z.y,-z.x),dt*4);if(k<1&&Math.random()<dt*6)t3FDust(z.x,z.y,z.z+2,3);if(z.ct>3.4)t3FKill(z);continue}
+    // unnatural: now and then the head (and the body with it) snaps to one side and comes back slowly, a tremor runs through it, or it
+    // freezes still and then catches up all at once
+    if((z.tw=(z.tw==null?1+Math.random()*6:z.tw)-dt)<=0){z.tw=2.5+Math.random()*6;const r=Math.random();if(r<.45){z.tl=(Math.random()<.5?-1:1)*(.12+Math.random()*.12);z.tk=0}else if(r<.75)z.trm=.8;else z.frz=.5+Math.random()*.8}
+    z.tk=(z.tk||0)+dt;if(z.tk>1.3)z.tl=0;z.rl=(z.rl||0)+((z.tl||0)-(z.rl||0))*Math.min(1,dt*(z.tl&&z.tk<.15?16:1.4));if(z.trm>0)z.trm-=dt;
+    z.roll=z.rl+(z.trm>0?Math.sin(t*44+z.ph)*.045*Math.min(1,z.trm*3):0);const fz=z.frz>0;if(fz){z.frz-=dt;if(z.frz<=0)z.bo=.45}
     const dx=z.tx-z.x,dy=z.ty-z.y,d=Math.hypot(dx,dy);z.bo=Math.max(0,z.bo-dt);
-    if(d>2.5){const v=z.spd*(z.role==='walk'?1:1.3),s=Math.min(d,v*dt);z.x+=dx/d*s;z.y+=dy/d*s;z.an='walk';z.p=(z.p+dt/(z.kind==='strisciante'?2.2:1.7))%1;z.face=t3FAng(z.face,Math.atan2(dy,dx),dt*3);z.lean=0}
+    if(d>2.5){const v=fz?0:z.spd*(z.role==='walk'?1:1.3),s=Math.min(d,v*dt);z.x+=dx/d*s;z.y+=dy/d*s;z.an='walk';if(!fz)z.p=(z.p+dt/(z.kind==='strisciante'?2.2:1.7))%1;z.face=t3FAng(z.face,Math.atan2(dy,dx),dt*3);z.lean=0}
     else{if(z.role==='walk')z.role='crowd';
       // at its place: the arms over the barricade, clawing and pushing (the first row quicker), the face toward the hero
-      z.an=z.kind==='strisciante'?'walk':'attack';const per=(z.kind==='strisciante'?4:z.role==='press'?1.5:z.role==='row2'?2.1:3.2)*z.rate/(z.bo>0?2.6:1);z.p=(z.p+dt/per)%1;
+      z.an=z.kind==='strisciante'?'walk':'attack';const per=(z.kind==='strisciante'?4:z.role==='press'?1.5:z.role==='row2'?2.1:3.2)*z.rate/(z.bo>0?2.6:1);if(!fz)z.p=(z.p+dt/per)%1;
       z.face=t3FAng(z.face,Math.atan2(-z.y,-z.x)+Math.sin(t*.7+z.ph)*.14,dt*2);z.lean=z.role==='press'?-.1:0}}}
 function t3FZItems(t){const items=[],H=T3F.hd;if(!H)return items;
   for(const z of H.Z){const an=z.an,NF=Z3.NF[an],f=(z.p%1)*NF/2,i0=(Math.floor(f)*2)%NF,i1=(i0+2)%NF,A=Z3.M.get(z3Key(z.kind,an,i0)),B=Z3.M.get(z3Key(z.kind,an,i1));if(!A){z.M=null;continue}
     const sc=z.sc,a=z.face,c=Math.cos(a),s=Math.sin(a),j=z.role==='dead'?z.fall:z.lean;let M=v3M4([c*sc,s*sc,0],[-s*sc,c*sc,0],[0,0,sc],[z.x,z.y,z.z]);
-    if(j){const cj=Math.cos(j),sj=Math.sin(j);M=v3Mul(M,v3M4([cj,0,sj],[0,1,0],[-sj,0,cj],[0,0,0]))}z.M=M;z.em=(z.role==='climb'?.95:.55)+.4*Math.sin(t*2.2+z.id*1.7);
+    if(j){const cj=Math.cos(j),sj=Math.sin(j);M=v3Mul(M,v3M4([cj,0,sj],[0,1,0],[-sj,0,cj],[0,0,0]))}
+    if(z.roll){const cr=Math.cos(z.roll),sr=Math.sin(z.roll);M=v3Mul(M,v3M4([1,0,0],[0,cr,sr],[0,-sr,cr],[0,0,0]))}z.M=M;z.em=(z.role==='climb'?.95:.55)+.4*Math.sin(t*2.2+z.id*1.7);
     items.push({m:A,m2:B&&B.nv0===A.nv0?B:A,kf:f-Math.floor(f),M,out:z.y<-260?.3:z.role==='crowd'||z.role==='walk'?.45:.62,em:z.em})}return items}
 // the dust (puffs that rise and spread), the groans, the push, the body that lands
 function t3FDust(x,y,z,s){if(LOWFX&&Math.random()<.5)return;T3F.sm.push({x,y,z,l:0,s,vx:(Math.random()-.5)*6,r0:2+Math.random()*2})}
 function t3FGroan(z){if(!t3FSnd())return;try{sndZGroan({x:180+z.x*.9})}catch(e){}}
 function t3FPushSnd(){if(!t3FSnd())return;try{const t=AU.ctx.currentTime;fThump(t,68,36,.32,.2,.2);fNoise(t,.24,'bandpass',420,1.2,.06,{f2:200});if(Math.random()<.6&&typeof SND2!=='undefined'&&SND2.creak)SND2.creak(t+.06)}catch(e){}}
-function t3FThud(){if(!t3FSnd())return;try{const t=AU.ctx.currentTime;fThump(t,90,40,.22,.14,.15);fNoise(t,.18,'lowpass',500,.8,.05,{brown:1})}catch(e){}}
+function t3FThud(){if(!RM)T3F.cam.sh=Math.min(1,T3F.cam.sh+.1);if(!t3FSnd())return;try{const t=AU.ctx.currentTime;fThump(t,90,40,.22,.14,.15);fNoise(t,.18,'lowpass',500,.8,.05,{brown:1})}catch(e){}}
 // the scarecrow: now and then it turns its head to you all at once and bends it too far to the side, its eyes light up; then slowly back
 function t3FScare(dt){const S=T3F.sc;S.t+=dt;if(S.st==='idle'&&S.t>S.next){S.st='turn';S.t=0;try{sndZGroan({x:180+T3FL.scare[0]*.9})}catch(e){}}
   else if(S.st==='turn'&&S.t>2.6){S.st='back';S.t=0}else if(S.st==='back'&&S.t>2.2){S.st='idle';S.t=0;S.next=8+Math.random()*7}
@@ -577,34 +586,66 @@ function t3FCrows(dt,t){if(!LOWFX&&(T3F.crT-=dt)<=0){T3F.crT=13+Math.random()*13
 function t3FCrowItems(){const items=[],G=T3F.G;if(!G.crow)return items;
   for(const c of T3F.cr){const f=c.ph*6,i0=Math.floor(f)%6,a=c.dir>0?0:Math.PI,cs=Math.cos(a),sn=Math.sin(a),s=.9;items.push({m:G.crow[i0],m2:G.crow[(i0+1)%6],kf:f-Math.floor(f),M:v3M4([cs*s,sn*s,0],[-sn*s,cs*s,0],[0,0,s],[c.x,c.y,c.z]),out:.4})}
   for(const p of T3F.perch){const a=p.yaw,cs=Math.cos(a),sn=Math.sin(a),s=.82;items.push({m:G.crowSit,M:v3M4([cs*s,sn*s,0],[-sn*s,cs*s,0],[0,0,s],p.p),out:.4})}return items}
-// ------------------------------------------------------------------ the hero: on his feet before the log with his zombie gun (the one of
-// the Arsenal), looking now toward us and the fire, now over his shoulder at the barricade; when one climbs he turns at once, aims and
-// shoots (the gun's own recoil, flash and slide, its sound; the muzzle's flash lights all round), then lowers the gun and turns back
+// ------------------------------------------------------------------ the hero: on his feet before the log with his zombie gun, the one of
+// the Arsenal and the very gun of the zombie map (ARMI.nuova): its rate, its recoil, flash and slide, the cases that fly out, its sounds,
+// its reload with the magazine that falls. He looks now toward us and the fire, now over his shoulder at the barricade; when one climbs he
+// turns at once, aims and shoots (a burst for the automatics, two shots or one for the others) and that one falls back; then he lowers the
+// gun, turns back and often reloads, facing us
 const T3F_GUNS=['pistola','revolver','mitraglietta','mitra','tamburo','mitragliatrice','pompa','tattica'];
-const T3F_SHOTS={pistola:[0,.3],revolver:[0,.38],mitraglietta:[0,.07,.14,.21,.28],mitra:[0,.09,.18,.27],tamburo:[0,.07,.14,.21,.28,.35],mitragliatrice:[0,.06,.12,.18,.24,.3],pompa:[0],tattica:[0,.42]};
+const T3F_NSHOT={pistola:2,revolver:2,pompa:1,tattica:2,mitraglietta:6,mitra:5,tamburo:7,mitragliatrice:9};
 const T3F_IDLE=1.05;
 function t3FGun(){const g=typeof SAVE!=='undefined'&&SAVE.z&&SAVE.z.gun;return T3F_GUNS.includes(g)?g:'pistola'}
 // (the gun's own sound from its bank, a little softer in the menu; the old sound if the bank is not ready)
 function t3FGunSnd(what){if(!t3FSnd())return;try{if(!(ARMI.suonaBanco&&ARMI.suonaBanco(T3F.gun,what,180,0,.6)))ARMI.suono(T3F.gun,what,180)}catch(e){}}
-function t3FHeroUp(dt){const h=T3F.h,H=T3F.hd,cz=H?H.Z.find(z=>z.role==='climb'):null;h.t+=dt;
-  h.rec*=Math.exp(-dt/.09);h.flash*=Math.exp(-dt/.04);h.slide*=Math.exp(-dt/.07);h.mf*=Math.exp(-dt/.05);
+function t3FGunObj(){const id=T3F.gun;if(!T3F.go||T3F.go.id!==id){T3F.go=null;try{if(typeof ARMI!=='undefined'&&ARMI.nuova){T3F.go=ARMI.nuova(id);T3F.go.res=9999}}catch(e){}}return T3F.go}
+// the trigger: the automatics held through their burst (the machine gun spins up first), the others pressed once for each shot
+function t3FTrig(g,s){const D=g.D,n=T3F_NSHOT[g.id]||2;if(D.auto)return s>=0&&s<(n-.5)/D.rate+(D.spin||0);const T=1/D.rate+.08;for(let i=0;i<n;i++)if(s>=i*T&&s<i*T+.07)return true;return false}
+function t3FTrigEnd(g){const D=g.D,n=T3F_NSHOT[g.id]||2;return D.auto?(n-.5)/D.rate+(D.spin||0)+.12:(n-1)*(1/D.rate+.08)+.16}
+function t3FHeroUp(dt){const h=T3F.h,H=T3F.hd,cz=H?H.Z.find(z=>z.role==='climb'):null,g=t3FGunObj();h.t+=dt;h.mf*=Math.exp(-dt/.05);let fire=false;
   if(h.st==='idle'){h.face=t3FAng(h.face,T3F_IDLE,dt*3);if((h.lkT-=dt)<=0){h.lkOn=!h.lkOn;h.lkT=h.lkOn?1.6:5+Math.random()*4}
-    if(cz&&cz.ct>.35){h.st='turn';h.t=0;h.tgt=cz;h.i=0;h.lkOn=false;h.lkT=6}}
+    if(cz&&cz.ct>.35){h.st='turn';h.t=0;h.tgt=cz;h.f0=null;h.lkOn=false;h.lkT=6;if(g&&g.st==='ricarica')g.annulla()}}
   else if(h.st==='turn'||h.st==='aim'){const z=h.tgt;if(z&&z.role!=='dead')h.face=t3FAng(h.face,Math.atan2(z.y,z.x),dt*(h.st==='turn'?9:14));
     if(h.st==='turn'&&h.t>.32){h.st='aim';h.t=0}
-    if(h.st==='aim'){const S=T3F_SHOTS[T3F.gun]||[0];if(z&&z.role==='climb'){while(h.i<S.length&&z.ct-1.1>=S[h.i]){t3FShot(z,h.i===S.length-1);h.i++}}else{h.st='hold';h.t=0}}}
-  else if(h.st==='hold'){if(h.t>.6){h.st='back';h.t=0;if(T3F.gun==='pompa'||T3F.gun==='tattica')t3FGunSnd('pompa')}}
-  else if(h.st==='back'){h.face=t3FAng(h.face,T3F_IDLE,dt*3.5);if(h.t>.8){h.st='idle';h.t=0}}
-  h.lk+=((h.st==='idle'&&h.lkOn?-1.15:0)-h.lk)*Math.min(1,dt*(h.st==='idle'?3:9))}
-// a shot: the recoil and the flash, the tracer to the chest, the dark blood out of its back, the gun's own sound; the last one drops it
-function t3FShot(z,last){const h=T3F.h;h.rec=1;h.flash=1;h.slide=1;h.mf=1;z.hit=1;const tg=[z.x,z.y,z.z+(z.kind==='minatore'?23:26)*z.sc],m=h.muz||[0,0,30],d=RG.nrm([tg[0]-m[0],tg[1]-m[1],0]);
-  T3F.fx.push({k:'tr',a:m.slice(),b:tg,l:.08,l0:.08});
-  for(let i=0;i<(LOWFX?4:9);i++){const v=14+Math.random()*26;T3F.fx.push({k:'bl',p:tg.slice(),v:[d[0]*v+(Math.random()-.5)*16,d[1]*v+(Math.random()-.5)*16,8+Math.random()*24],l:.45+Math.random()*.4,s:.6+Math.random()*.9})}
-  T3F.n.shot++;t3FGunSnd('sparo');if(last)t3FKill(z)}
-function t3FHero(t,F){const h=T3F.h,st=Object.assign({},zHeroStyle(),{gun:T3F.gun,held:null,quiver:false});let c,al=1;
-  const wk=CAMP.walk>0?clamp((Math.min(1,(t-CAMP.walk)/1.5)-.3)/.7,0,1):0,an=h.st==='aim'||h.st==='hold'?'aim':'idle';
-  if(wk>0){c={x:-26*wk,y:-44*wk,lz:0,face:Math.atan2(-44,-26),anim:'walk',p:(t*1.4)%1,sc:1/T3CHK,o:{style:st}};al=1-wk*wk}
-  else c={x:0,y:0,lz:0,face:h.face,anim:an,p:(t/2.4)%1,sc:1/T3CHK,o:{style:st,gp:{rec:h.rec,flash:h.flash,slide:h.slide,n:9,st:'pronta'},look:h.lk}};
+    if(h.st==='aim'){if(z&&z.role==='climb'){if(h.f0==null&&z.ct>=1.1)h.f0=h.t;
+        if(h.f0!=null){const s=h.t-h.f0;if(g)fire=t3FTrig(g,s);if(s>(g?t3FTrigEnd(g):.2)){if(!g)t3FShot(z,null);t3FKill(z)}}}
+      else{h.st='hold';h.t=0}}}
+  else if(h.st==='hold'){if(h.t>.45){h.st='back';h.t=0}}
+  else if(h.st==='back'){h.face=t3FAng(h.face,T3F_IDLE,dt*3.5);if(h.t>.8){h.st=g&&Math.random()<.8&&g.ricarica()?'reload':'idle';h.t=0}}
+  else if(h.st==='reload'){h.face=t3FAng(h.face,T3F_IDLE,dt*3);if(!g||g.st!=='ricarica'||h.t>6){h.st='idle';h.t=0}}
+  h.lk+=((h.st==='idle'&&h.lkOn?-1.15:0)-h.lk)*Math.min(1,dt*(h.st==='idle'?3:9));
+  // the gun itself: its shots, its cases, its sounds, the magazine that falls
+  if(g){let ev=[];try{ev=g.update(dt,fire)||[]}catch(e){}
+    for(const e of ev){if(e.k==='sparo'){const z=h.tgt;if(z&&z.role==='climb')t3FShot(z,e)}else if(e.k==='suono')t3FGunSnd(e.w);else if(e.k==='bossolo')t3FCase(e.n||1);else if(e.k==='caricatore')t3FMag()}}}
+// a shot: the flash that lights all round, the tracers (one for each pellet), the dark blood out of its back, the camera's kick
+function t3FShot(z,e){const h=T3F.h,g=T3F.go;h.mf=1;z.hit=1;T3F.n.shot++;const tg=[z.x,z.y,z.z+(z.kind==='minatore'?23:26)*z.sc],m=h.muz||[0,0,30],d=RG.nrm([tg[0]-m[0],tg[1]-m[1],0]),L=Math.hypot(tg[0]-m[0],tg[1]-m[1]);
+  for(const a of(e&&e.ang&&e.ang.length?e.ang:[0])){const o=Math.tan(a)*L;T3F.fx.push({k:'tr',a:m.slice(),b:[tg[0]-d[1]*o,tg[1]+d[0]*o,tg[2]+(Math.random()-.5)*3],l:.08,l0:.08})}
+  const nb=LOWFX?3:g&&g.D.auto?4:8;for(let i=0;i<nb;i++){const v=14+Math.random()*26,fw=Math.random()<.3?-.6:1;T3F.fx.push({k:'bl',p:tg.slice(),v:[d[0]*v*fw+(Math.random()-.5)*16,d[1]*v*fw+(Math.random()-.5)*16,8+Math.random()*24],l:1.8,b:0,s:.6+Math.random()*.9})}
+  if(!e)t3FGunSnd('sparo');if(!RM)T3F.cam.sh=Math.min(1,T3F.cam.sh+(g?g.D.kick:1.4)*.08)}
+// the cases that fly out on his right and bounce, the empty magazine that falls by his feet
+function t3FCase(n){const h=T3F.h,m=h.muz;if(!m)return;const f=h.face,fw=[Math.cos(f),Math.sin(f)],rt=[Math.sin(f),-Math.cos(f)];
+  for(let i=0;i<n;i++){const v=14+Math.random()*10;T3F.fx.push({k:'cs',p:[m[0]-fw[0]*7,m[1]-fw[1]*7,m[2]+1],v:[rt[0]*v-fw[0]*4,rt[1]*v-fw[1]*4,16+Math.random()*10],l:6,b:0,s:.45})}}
+function t3FMag(){const h=T3F.h,m=h.muz;if(!m)return;const f=h.face,fw=[Math.cos(f),Math.sin(f)];T3F.fx.push({k:'mg',p:[m[0]-fw[0]*9,m[1]-fw[1]*9,Math.max(4,m[2]-4)],v:[(Math.random()-.5)*4,(Math.random()-.5)*4,-4],l:8,b:0,s:1})}
+// ------------------------------------------------------------------ the ash and the embers that the wind carries from the burning farm
+// across everything, even in front of the hero
+function t3FAshNew(e,init){const x=init?-210+Math.random()*420:-215-Math.random()*30,y=-180+Math.random()*300,z=e?3+Math.random()*55:8+Math.random()*80;
+  return{e,x,y,z,vx:9+Math.random()*10,vy:(Math.random()-.5)*3,vz:e?1.5+Math.random()*4:-1.5-Math.random()*2.5,l:9+Math.random()*9,s:e?.45+Math.random()*.45:.5+Math.random()*.55,ph:Math.random()*TAU}}
+function t3FAsh(dt,t){const nA=LOWFX?0:40,nE=LOWFX?4:14;let A=T3F.ash;if(!A||A.nA!==nA){A=T3F.ash=[];A.nA=nA;for(let i=0;i<nA;i++)A.push(t3FAshNew(false,true));for(let i=0;i<nE;i++)A.push(t3FAshNew(true,true))}
+  for(let i=0;i<A.length;i++){const a=A[i];a.x+=(a.vx+Math.sin(t*.7+a.ph)*3)*dt;a.y+=a.vy*dt;a.z+=(a.vz+Math.sin(t*1.3+a.ph)*1.6)*dt;a.l-=dt;if(a.l<=0||a.z<0||a.x>215)A[i]=t3FAshNew(a.e,false)}}
+// ------------------------------------------------------------------ the sound under the night of the siege (only while the scene is on the
+// screen, with the effects on): the wind that rises and falls, the murmur of the horde, the hiss of the fires (the crackle of the fire and
+// the gusts are the Zombie menu's own, 67's AMBEV.zmenu)
+function t3FAmbOn(on){if(typeof AU==='undefined'||!AU.ctx)return;const A=T3F.amb||(T3F.amb={}),c=AU.ctx;A.last=performance.now();
+  if(!A.g&&on&&t3FSnd()&&AU.brown&&AU.white){try{const mk=(br,type,f,q,v)=>{const s=c.createBufferSource();s.buffer=br?AU.brown:AU.white;s.loop=true;s.start();const b=filt(type,f,q),g=c.createGain();g.gain.value=v;s.connect(b);b.connect(g);return{s,b,g}};
+      const m=c.createGain();m.gain.value=.0001;A.v=[mk(true,'bandpass',360,.6,.9),mk(true,'bandpass',230,1.4,.7),mk(false,'highpass',3400,.5,.05)];for(const v of A.v)v.g.connect(m);route(m,null,.25);A.g=m;A.ut=-9;
+      if(!A.iv)A.iv=setInterval(()=>{if(performance.now()-A.last>450)t3FAmbOff()},500)}catch(e){}}
+  const T=T3F.t||0;if(!A.g||T-A.ut<.25)return;A.ut=T;const t=c.currentTime,set=(q,v,k)=>{q.cancelScheduledValues(t);q.setTargetAtTime(v,t,k)};
+  set(A.g.gain,on&&t3FSnd()?.07:.0001,.4);set(A.v[0].g.gain,.6+.35*Math.sin(T*.23)+.2*Math.sin(T*.71),.5);set(A.v[0].b.frequency,300+110*Math.sin(T*.17),.5);set(A.v[1].g.gain,.5+.25*Math.sin(T*.31+1),.5)}
+function t3FAmbOff(){const A=T3F.amb;if(!A)return;if(A.iv){clearInterval(A.iv);A.iv=null}if(!A.g)return;const g=A.g,v=A.v;A.g=null;A.v=null;
+  try{g.gain.cancelScheduledValues(AU.ctx.currentTime);g.gain.setTargetAtTime(.0001,AU.ctx.currentTime,.25);setTimeout(()=>{try{for(const q of v)q.s.stop();g.disconnect()}catch(e){}},1600)}catch(e){}}
+function t3FHero(t,F){const h=T3F.h,g=T3F.go,st=Object.assign({},zHeroStyle(),{gun:T3F.gun,held:null,quiver:false});let c,al=1;
+  const wk=CAMP.walk>0?clamp((Math.min(1,(t-CAMP.walk)/1.5)-.3)/.7,0,1):0,an=h.st==='aim'||h.st==='hold'?'aim':'idle',gp=g?g.pose():{rec:0,flash:0,slide:0,n:9};
+  if(wk>0){c={x:-26*wk,y:-44*wk,lz:0,face:Math.atan2(-44,-26),anim:'walk',p:(t*1.4)%1,sc:1/T3CHK,o:{style:st,gp}};al=1-wk*wk}
+  else c={x:0,y:0,lz:0,face:h.face,anim:an,p:(t/2.4)%1,sc:1/T3CHK,o:{style:st,gp,look:h.lk}};
   T3E.muz=null;const dS=G.deathT;G.deathT=null;let H=null;try{H=t3HeroItems(c)}catch(e){t3Err(e)}finally{G.deathT=dS}if(T3E.muz)h.muz=T3E.muz;
   if(H&&al>.02){t3Draw3(H.items,{H:H.imp?null:{R:H.R,MF:H.MF,a:H.a,Hw:H.Hw},al:al<.99?Math.max(.3,al):1});if(H.imp){t3CardsBegin();t3HeadCard(H.R,H.Hw,H.a);t3CardsEnd()}}
   const q=t3IProj([0,0,0]);if(q){const s=t3IKpx(q[2]);CAMP.hero={x:q[0],y:q[1]-9*s,w:20*s,h:48*s,dpr:F.dpr}}}
@@ -616,7 +657,8 @@ function t3FaloFrame(dt,k){const t0=performance.now(),F=campFrame(),t=CAMP.t,PF=
   const lf=T3F.lt.f,Lx=Object.assign({},keep,L0);if(lf>0){const ad=(a,b,q)=>a.map((v,i)=>v+b[i]*q);Lx.sky=ad(L0.sky,[.06,.07,.11],lf);Lx.key=ad(L0.key,[.32,.36,.52],lf);Lx.fog=ad(L0.fog,[.03,.035,.05],lf)}
   T3LUCI[key]=Lx;T3.lean=0;
   try{t3FaloCam(F);T3.fogP=[T3.dist+240,3000,.9];const Lc=t3L(),fl=.86+.08*Math.sin(t*13.1)+.05*Math.sin(t*7.7+1)+.04*Math.sin(t*23.3),F3=[T3FL.fire[0],T3FL.fire[1],0],h=T3F.h;T3.frame++;T3.nMesh=0;T3.nCard=0;
-    t3FZBuild(LOWFX?2:3);t3FHorde(dt);t3FHeroUp(dt);t3FCrows(dt,t);t3FScare(dt);T3F.bladeA-=dt*.32;T3F.wheelA-=dt*2.4;T3F.sh*=Math.exp(-dt*7);
+    t3FZBuild(LOWFX?2:3);t3FHorde(dt);t3FHeroUp(dt);t3FCrows(dt,t);t3FScare(dt);t3FAsh(dt,t);T3F.bladeA-=dt*.32;T3F.wheelA-=dt*2.4;T3F.sh*=Math.exp(-dt*7);
+    {const cm=T3F.cam,hs=h.st;cm.sh*=Math.exp(-dt*5);cm.push+=((hs==='turn'||hs==='aim'||hs==='hold'?1:0)-cm.push)*Math.min(1,dt*2.2)}if(!T3F.quiet)t3FAmbOn(true);
     // the lights: the fire (it flickers and breathes) and its glow low on the ground, the torches, the burning farm, the muzzle's flash, the
     // lamps the zombies carry
     T3I.Lt=[];t3IL([F3[0],F3[1],12],170*fl,[1,.54,.22],L0.fire*fl);t3IL([F3[0]-2,F3[1]+2,3],80,[1,.42,.16],.9*fl);
@@ -687,6 +729,7 @@ function t3FAir(dt,t,fl,F3){const gl=T3.gl,X=t3ITx(),h=T3F.h,{add,sub,mul,nrm,cr
     if(T3F.ff&&T3F.ff.length){if(Math.random()<dt*(LOWFX?3:12)){const q=T3F.ff[Math.floor(Math.random()*T3F.ff.length)];T3F.em.push({x:q.p[0]+(Math.random()-.5)*16*q.s,y:q.p[1]+(Math.random()-.5)*8,z:q.p[2]+10*q.s,vx:6+Math.random()*12,vy:(Math.random()-.5)*6,vz:16+Math.random()*24,l:1.8+Math.random()*1.6})}
       for(let i=T3F.em.length-1;i>=0;i--){const e=T3F.em[i];e.l-=dt;if(e.l<=0){T3F.em.splice(i,1);continue}e.vx+=Math.sin(t*1.3+i)*6*dt;e.x+=e.vx*dt;e.y+=e.vy*dt;e.z+=e.vz*dt;e.vz*=1-dt*.3;
         const a=Math.min(1,e.l*.8)*(.6+.4*Math.sin(t*9+i*3));t3Q(e.x,e.y,e.z,-2.6,-2.6,2.6,2.6,0,0,1,1,a,.48*a,.14*a,1)}}}
+  if(T3F.ash)for(const a of T3F.ash)if(a.e){const q=(.6+.4*Math.sin(t*9+a.ph*5))*Math.min(1,a.l*.5),s=a.s;t3Q(a.x,a.y,a.z,-s,-s,s,s,0,0,1,1,q,.45*q,.12*q,1)}
   t3QFlush(T3.pA,T3.glow);
   // the smoke of the fire, the steam of the pot, the great plume of the burning farm (lit from below), the dust of the barricade
   gl.blendFunc(gl.SRC_ALPHA,gl.ONE_MINUS_SRC_ALPHA);
@@ -698,9 +741,19 @@ function t3FAir(dt,t,fl,F3){const gl=T3.gl,X=t3ITx(),h=T3F.h,{add,sub,mul,nrm,cr
     if(m.s===3){m.l+=dt/1.6;if(m.l>=1){T3F.sm.splice(i,1);continue}m.z+=dt*5;m.x+=(m.vx||0)*dt;const r=(m.r0||2)+m.l*9;t3Q(m.x,m.y,m.z,-r,-r*.8,r,r*.8,0,0,1,1,.42,.34,.26,.42*Math.sin(m.l*Math.PI));continue}
     m.l+=dt/(m.s?2.2:4.2);if(m.l>=1){T3F.sm.splice(i,1);continue}m.z+=dt*(m.s?5:8);m.x+=dt*(m.s?1.5:3+m.l*6);const r=m.s?1.5+m.l*4:3.5+m.l*13,a=(m.s?.2:.3)*Math.sin(m.l*Math.PI),w=Math.max(0,1-m.l*2.2);
     t3Q(m.x,m.y,m.z,-r,-r*.8,r,r*.8,0,0,1,1,m.s?.8:.2+w*.3,m.s?.82:.2+w*.14,m.s?.82:.22,a)}
-  // the blood: dark drops that fly out of its back and fall
-  for(let i=T3F.fx.length-1;i>=0;i--){const e=T3F.fx[i];if(e.k!=='bl')continue;e.l-=dt;if(e.l<=0||e.p[2]<0){T3F.fx.splice(i,1);continue}e.v[2]-=90*dt;for(let j=0;j<3;j++)e.p[j]+=e.v[j]*dt;const s=e.s;
-    t3Q(e.p[0],e.p[1],e.p[2],-s,-s,s,s,0,0,1,1,.3,.02,.03,.9)}
+  // the blood (dark drops that fly out and fall, the splashes that stay a while on the ground), the cases and the magazine that bounce,
+  // the splinters of the barricade, the ash in the wind
+  for(let i=T3F.fx.length-1;i>=0;i--){const e=T3F.fx[i];if(e.k==='tr')continue;e.l-=dt;if(e.l<=0){T3F.fx.splice(i,1);continue}
+    if(e.k==='sp'){const a=Math.min(1,e.l/4)*.75,s=e.s;t3QW([[e.p[0]-s,e.p[1]-s*.8,.3],[e.p[0]+s,e.p[1]-s*.8,.3],[e.p[0]+s,e.p[1]+s*.8,.3],[e.p[0]-s,e.p[1]+s*.8,.3]],0,0,1,1,.22,.015,.02,a);continue}
+    if(e.p[2]>0||e.v[2]>0){e.v[2]-=(e.k==='bl'?90:120)*dt;for(let j=0;j<3;j++)e.p[j]+=e.v[j]*dt}
+    if(e.p[2]<=0&&e.v[2]<0){e.p[2]=0;if(e.k==='bl'){T3F.fx.splice(i,1);if(T3F.fx.filter(q=>q.k==='sp').length<(LOWFX?15:40))T3F.fx.push({k:'sp',p:e.p.slice(),s:.8+Math.random()*1.6,l:26});continue}
+      if(e.b<2){e.b++;e.v=[e.v[0]*.5,e.v[1]*.5,-e.v[2]*.35]}else e.v=[0,0,0]}
+    const s=e.s,k=Math.min(1,e.l*1.5);
+    if(e.k==='bl')t3Q(e.p[0],e.p[1],e.p[2],-s,-s,s,s,0,0,1,1,.3,.02,.03,.9);
+    else if(e.k==='cs')t3Q(e.p[0],e.p[1],e.p[2]+.3,-s,-s*.6,s,s*.6,0,0,1,1,.95,.72,.3,k);
+    else if(e.k==='mg')t3Q(e.p[0],e.p[1],e.p[2]+.6,-s*.6,-s,s*.6,s,0,0,1,1,.16,.16,.18,k);
+    else if(e.k==='wd')t3Q(e.p[0],e.p[1],e.p[2]+.2,-s,-s*.5,s,s*.5,0,0,1,1,.5,.38,.24,k)}
+  if(T3F.ash)for(const a of T3F.ash)if(!a.e){const s=a.s;t3Q(a.x,a.y,a.z,-s,-s,s,s,0,0,1,1,.42,.39,.37,.75*Math.min(1,a.l*.5))}
   t3QFlush(T3I.pCl,X.cloud);
   gl.depthMask(true);gl.disable(gl.BLEND)}
 // ------------------------------------------------------------------ the hook: 66's Zombie home asks first; while the scene is being made the
@@ -709,8 +762,10 @@ function t3FAir(dt,t,fl,F3){const gl=T3.gl,X=t3ITx(),h=T3F.h,{add,sub,mul,nrm,cr
 // stays a moment over the 3D and fades away (the menu's canvas goes see-through), so there is no jump
 {const _z=drawCampZ,op=v=>{const c=campCv.style;if(c.opacity!==v)c.opacity=v};drawCampZ=function(dt,k){
   if(!MM.tr&&T3F.on&&!T3F.bad&&!T3F.ready&&T3.ok!==false&&T3I.on&&!T3I.bad&&t3Init()&&T3.post)try{t3FBuild(8)}catch(e){t3Err(e);T3F.bad=true}
-  if(!t3FaloOk()){T3F.shown=false;op('');return _z.apply(this,arguments)}
-  if(!T3F.shown){T3F.shown=true;T3F.fi=0}
+  if(!t3FaloOk()){T3F.shown=false;op('');
+    // (between the two modes: the last picture of the siege in 3D, not the drawing of always; then no fading in after it)
+    if(MM.tr&&T3F.on&&!T3F.bad&&T3F.ready&&t3SnapDraw(T3F)){T3F.snapUsed=true;return}return _z.apply(this,arguments)}
+  if(!T3F.shown){T3F.shown=true;T3F.fi=T3F.snapUsed?1:0;T3F.snapUsed=false}
   try{t3FaloFrame(dt,k)}catch(e){t3Err(e);T3F.bad=true;op('');return _z.apply(this,arguments)}
   if(T3F.fi<1){T3F.fi=Math.min(1,T3F.fi+dt/.55);if(T3F.fi<1){const h=CAMP.hero;try{_z.apply(this,arguments)}finally{CAMP.hero=h}op(String(1-T3F.fi*T3F.fi*(3-2*T3F.fi)))}else op('')}}}
 // The work of the first time is done earlier too, in the spare moments of the Classic's menu (65's IDLE: never in a battle or on the zombie
@@ -718,5 +773,13 @@ function t3FAir(dt,t,fl,F3){const gl=T3.gl,X=t3ITx(),h=T3F.h,{add,sub,mul,nrm,cr
 function t3FPump(){if(T3F.bad||!T3F.on||MM.tr){if(!T3F.bad&&T3F.on)setTimeout(()=>IDLE.add(t3FPump),800);return}
   if(!T3F.ready)t3FBuild(4);else if(!T3F.zq||T3F.zi<T3F.zq.length)t3FZBuild(4);else return;IDLE.add(t3FPump)}
 {const _ci=cnIsles;cnIsles=function(){const r=_ci.apply(this,arguments);if(T3I.live&&!T3F.pre&&T3F.on&&!T3F.bad){T3F.pre=true;setTimeout(()=>IDLE.add(t3FPump),2500)}return r}}
+// The pictures for the sweep between the two modes (67's modeSwitch): when it starts, each place in 3D is drawn once more and copied, the
+// new one first and the old one last, so the screen stays as it is until the sweep's first frame; during the sweep the copies slide, not
+// the drawing of always. A place that cannot be in 3D (not ready yet) keeps the drawing of always
+{const _ms=modeSwitch;modeSwitch=function(to,dir){
+  if(!MM.tr&&!ZG.wait&&!(CAMP.walk>0)&&(to==='zombie')!==zMode()&&!$('tabPlay').hidden&&!$('menu').hidden)try{t3SnapPair(to==='zombie')}catch(e){t3Err(e)}
+  return _ms.apply(this,arguments)}}
+function t3SnapPair(toZ){const isl=()=>{T3I.snapOk=false;if(!t3IslOk())return;t3IslFrame(0);t3Snap(T3I)},fal=()=>{T3F.snapOk=false;if(!t3FaloOk())return;T3F.quiet=true;try{t3FaloFrame(0,1)}finally{T3F.quiet=false}t3Snap(T3F,true)};
+  if(toZ){fal();isl()}else{isl();fal()}}
 // (back in the Classic the menu's canvas is whole again)
 {const _dc=drawCamp;drawCamp=function(){if(!zMode()&&campCv.style.opacity)campCv.style.opacity='';return _dc.apply(this,arguments)}}

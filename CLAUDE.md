@@ -490,8 +490,14 @@ dalla nebbia fra le tombe aperte, gli occhi accesi anche quando la testa scatta,
 dell'eroe, che si gira di tre quarti, mira e spara col modo della sua arma (`T3F_SHOTS`: rinculo, vampa, carrello, il suono di
 `ARMI.suono`, la scia, il sangue scuro) e quello cade all'indietro; la fattoria in fiamme (finestre, tetto, fumo, braci, luce rossa sul
 campo e sull'orizzonte), la luna rossa, i lampi col tuono che arriva dopo (`t3FLight`, `t3FThunder`), i versi dell'orda, lo
-spaventapasseri, il mulino, i corvi. Prova `node tests/t3/menu.js` (30 controlli), foto `tests/t3/tr_isole.jpg`, `tr_falo.jpg`,
-`tr_assedio.jpg`, `tr_spettacolo.jpg`; dettagli in `docs/tripla-a.md` («Il menu in tripla A»).
+spaventapasseri, il mulino, i corvi. Poi (3 novembre, Denis: «miglioralo ancora senza farmi domande, intendo incluso anche il menu ecc»)
+**ancora meglio**: nell'assedio l'arma vera dell'Arsenale (`t3FGunObj` su `ARMI.nuova`: i colpi al suo ritmo, i bossoli, il caricatore che
+cade, la ricarica), il sangue a terra, le schegge della barricata, l'orda innaturale (scatti della testa, tremiti, fermi e scatti), cenere
+e braci nel vento (`t3FAsh`), la telecamera che respira e trema, l'aria della notte (`t3FAmbOn`); sulle isole gli stendardi e le funi al
+vento (`t3IBanner`, `B.wind`, `T3I.wu`), il ponte che ondeggia sotto l'eroe nella scheda grafica (`t3IBrProg`), stormi, farfalle, libellule,
+il fumo del vulcano e la neve (`t3ILife`); lo scorrimento tra le modalità con le due scene in 3D, copiate una volta quando parte
+(`t3SnapPair`). Prova `node tests/t3/menu.js` (35 controlli), foto `tests/t3/tr_isole.jpg`, `tr_falo.jpg`, `tr_assedio.jpg`,
+`tr_spettacolo.jpg`, `tr_ancora.jpg`; dettagli in `docs/tripla-a.md` («Il menu in tripla A», «Ancora meglio»).
 
 ## FASE 9: più fluido sul telefono (19 ottobre, in corso)
 

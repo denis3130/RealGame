@@ -293,6 +293,18 @@ function t3IKeep(key,m){T3I.M.set(key,m);T3I.built=(T3I.built||0)+1;while(T3I.M.
 // the lanterns; 4. the ropes of the railing between the posts, the two big cables from the towers' tops with their hangers, the little flags;
 // 5. the towers of logs with their roofs, the beams between them, the banner of the arena it leads to; 6. the balconies of the prizes, on the
 // left; 7. the anchors on the little island
+// a banner of cloth hanging from its bar (its plane at n0 facing you, e across, z down to its point), in the wind's pose ph: it billows
+// toward you and away and swings, more toward its point; both faces, and on the towers' ones the two bands and the round sign
+function t3IBanner(mb,n0,ec,w,z0,z1,pd,col,ph,amp,deco){const{sub,cross,nrm,add,mul}=RG,NE=4,NZ=6,zb=z1+pd,
+    D=(e,z)=>{const f=Math.max(0,Math.min(1,(z0-z)/(z0-z1))),b=amp*f*Math.sin(ph+(z0-z)*.11+e*.2),l=amp*.6*f*f*Math.sin(ph+.6);return[ec+e+l,-n0+b,z]},
+    Nf=(e,z)=>nrm(cross(sub(D(e,z+.5),D(e,z-.5)),sub(D(e+.5,z),D(e-.5,z)))),V=(e,z,o,sd,cl)=>{const q=mul(Nf(e,z),sd);return v3V(mb,add(D(e,z),mul(q,o)),q,cl)};
+  for(const sd of[1,-1]){const g=[];for(let r=0;r<=NZ;r++){const z=z0+(zb-z0)*r/NZ,row=[];for(let c=0;c<=NE;c++)row.push(V(-w+2*w*c/NE,z,.25,sd,col));g.push(row)}
+    for(let r=0;r<NZ;r++)for(let c=0;c<NE;c++){v3T(mb,g[r][c],g[r][c+1],g[r+1][c+1]);v3T(mb,g[r][c],g[r+1][c+1],g[r+1][c])}
+    const tip=V(0,z1,.25,sd,col);for(let c=0;c<NE;c++)v3T(mb,g[NZ][c],g[NZ][c+1],tip);
+    if(deco){const band=t3Ik(col,1.35),sign=t3Ic('#f6e7c4');
+      for(const zt of[z0-4,zb+5]){const top=[],bot=[];for(let c=0;c<=NE;c++){const e=-w+2*w*c/NE;top.push(V(e,zt,.5,sd,band));bot.push(V(e,zt-2.6,.5,sd,band))}for(let c=0;c<NE;c++){v3T(mb,top[c],top[c+1],bot[c+1]);v3T(mb,top[c],bot[c+1],bot[c])}}
+      const zs=z0-17,c0=V(0,zs,.62,sd,sign),R=[];for(let k=0;k<14;k++){const a=k/14*TAU;R.push(V(Math.cos(a)*4.6,zs+Math.sin(a)*4.6,.62,sd,sign))}for(let k=0;k<14;k++)v3T(mb,c0,R[k],R[(k+1)%14]);
+      const c1=V(0,zs,.78,sd,col),R2=[];for(let k=0;k<4;k++){const a=k/4*TAU+Math.PI/4;R2.push(V(Math.cos(a)*2.6,zs+Math.sin(a)*2.6,.78,sd,col))}for(let k=0;k<4;k++)v3T(mb,c1,R2[k],R2[(k+1)%4])}}}
 function t3IBridgeMesh(i){const key='b'+i+'|'+(LOWFX?1:0);let B=T3I.M.get(key);if(B){T3I.M.delete(key);T3I.M.set(key,B);return B}
   const G0=cnBrGeo(i),W=cnBrW(i),ch=ARENAS[i].ch||1,N=G0.N,pitch=G0.pitch,a0=G0.a0,a1=G0.a1,sd=i*3.1+.7,P=t3IPP,DZ=n=>cnDeckZ(G0,n),{nrm,cross,mul}=RG,
     wood=t3Ic(W.wood),wdk=t3Ik(wood,.78),rope=t3Ic(W.rope),cab=t3Ic(W.cable),stone=t3Ic(cnMixC(W.stone,'#8a8070',.15)),A1=ARENAS[i+1],acH=A1?A1.col:'#c0392b',ac=t3Ic(acH),
@@ -322,20 +334,26 @@ function t3IBridgeMesh(i){const key='b'+i+'|'+(LOWFX?1:0);let B=T3I.M.get(key);i
   for(const q of posts){const z0=DZ(q.n)-th-3.2,z1=DZ(q.n)+CNB.ph;t3IBox(mpo,P(q.n,q.e,(z0+z1)/2),E,[0,-1,0],UP,1.8,1.8,(z1-z0)/2,wood,{uv:24});t3IBox(mpo,P(q.n,q.e,z1+.8),E,[0,-1,0],UP,2.5,2.5,.8,wdk);
     t3Sph(mpo,P(q.n,q.e,z1+2.4),1.4,wdk,{nl:7,nb:5,w:.4});if(ch===4)t3Ell(mpo,P(q.n,q.e,z1+3.2),[2.6,2.6,1.1],t3Ic('#f6fbff'),{nl:8,nb:5,w:.3});
     if(q.lamp){const s=Math.sign(q.e);t3IBox(mpo,P(q.n,q.e+s*CNB.lo*.55,z1-2.6),E,[0,-1,0],UP,CNB.lo*.55+1,.7,.7,wdk)}}
-  // 4. the ropes: the railing on both sides (along the posts; on the left it opens where the balconies are), the cables and their hangers
-  const mr=v3MB(),rail=(pts,dip)=>{const out=[];for(let k=0;k<pts.length-1;k++){const a=pts[k],b=pts[k+1],L=Math.hypot(b[0]-a[0],b[1]-a[1]),dp=dip+L*.018,S=Math.max(3,Math.ceil(L/12));
-      for(let s=k?1:0;s<=S;s++){const u=s/S;out.push([a[0]+(b[0]-a[0])*u,a[1]+(b[1]-a[1])*u,a[2]+(b[2]-a[2])*u-dp*4*u*(1-u)])}}return out};
+  // 4. the ropes: the railing on both sides (along the posts; on the left it opens where the balconies are), the cables and their hangers,
+  // the little flags on the cables and (below) the banners: all that the wind moves, made in three of its poses (MW: the wind a third of a
+  // turn apart; drawn sliding from one pose to the next they sway, billow and swing, faster in the gusts)
+  const MW=[v3MB(),v3MB(),v3MB()],WPH=[0,TAU/3,TAU*2/3];
+  const rail=(pts,dip,ph)=>{const out=[];for(let k=0;k<pts.length-1;k++){const a=pts[k],b=pts[k+1],L=Math.hypot(b[0]-a[0],b[1]-a[1]),dp=dip+L*.018,S=Math.max(3,Math.ceil(L/12));
+      for(let s=k?1:0;s<=S;s++){const u=s/S,bell=4*u*(1-u),sw=ph==null?0:(.5+dp*.3)*bell*Math.sin(ph+(a[1]+(b[1]-a[1])*u)*.013);out.push([a[0]+(b[0]-a[0])*u+sw,a[1]+(b[1]-a[1])*u,a[2]+(b[2]-a[2])*u-dp*bell+sw*.25])}}return out};
   const tie=(e,hz)=>{const L=[];L.push({n:nT+5.5,e:Math.sign(e)*(CNB.pe-3),z:hz*1.15});for(const q of posts)if(Math.sign(q.e)===Math.sign(e))L.push({n:q.n,e:q.e,z:DZ(q.n)+hz});
     if(e<0)G0.Z.forEach(c=>{L.push({n:c-(CNB.bd-2.5),e:-CNB.bal+CNB.bw-4,z:DZ(c)+hz*.62,gapA:1});L.push({n:c+(CNB.bd-2.5),e:-CNB.bal+CNB.bw-4,z:DZ(c)+hz*.62,gapB:1})});
     L.push({n:G0.ae,e:Math.sign(e)*CNB.pe,z:CNB.stump-1-(hz<20?8:0)});L.sort((a,b)=>a.n-b.n);return L};
-  for(const s of[-1,1])for(const[hz,r,dip] of[[CNB.ph-1,.8,1.6],[CNB.ph*.5,.6,1.2]]){const L=tie(s*CNB.pp,hz);let seg=[];
-    for(const q of L){seg.push(t3IPP(q.n,q.e,q.z));if(q.gapA){if(seg.length>1)t3Line(mr,rail(seg,dip),r,rope,{N:5,w:.3});seg=[]}}if(seg.length>1)t3Line(mr,rail(seg,dip),r,rope,{N:5,w:.3})}
-  const CAB=[];for(const s of[-1,1]){const pts=[P(nT,s*CNB.pe,CNB.gate-4)];for(let k=0;k<=44;k++){const n=a0+(a1-a0)*k/44;pts.push(P(n,s*cnCableE(G0,n),cnCableZ(G0,n)))}pts.push(P(G0.ae,s*CNB.pe,CNB.stump-1));
-    t3Line(mr,pts,1.6,cab,{N:6,w:.45});CAB.push(pts)}
-  for(const q of posts){const cz=cnCableZ(G0,q.n),pz=DZ(q.n)+CNB.ph;if(cz-pz>3)t3Line(mr,[P(q.n,Math.sign(q.e)*cnCableE(G0,q.n),cz),P(q.n,q.e,pz+1)],.45,rope,{N:4})}
-  // (little flags of the arena it leads to, hanging from the cables, facing you)
-  if(!LOWFX)for(const s of[-1,1])for(let k=1;k<12;k++){const n=a0+(a1-a0)*k/12,c=P(n,s*cnCableE(G0,n),cnCableZ(G0,n)-1.2),col=k%2?ac:t3Ik(t3Ic(W.rope),1.15),A=[c[0]-3.6,c[1],c[2]],B2=[c[0]+3.6,c[1],c[2]],T=[c[0]+(t3IH(k,sd)-.5)*1.5,c[1],c[2]-9];
-    for(const nn of[[0,1,0],[0,-1,0]]){const a=v3V(mr,A,nn,col),b=v3V(mr,B2,nn,col),t=v3V(mr,T,nn,col);v3T(mr,a,b,t)}}
+  // (a cable's sideways swing at n: none at its ends)
+  const cabW=(s,n,ph)=>{const u=(n-a0)/(a1-a0);return u<=0||u>=1?0:2.4*Math.sin(Math.PI*u)*Math.sin(ph+u*5+s)};
+  MW.forEach((mr,j)=>{const ph=WPH[j];
+    for(const s of[-1,1])for(const[hz,r,dip] of[[CNB.ph-1,.8,1.6],[CNB.ph*.5,.6,1.2]]){const L=tie(s*CNB.pp,hz);let seg=[];
+      for(const q of L){seg.push(t3IPP(q.n,q.e,q.z));if(q.gapA){if(seg.length>1)t3Line(mr,rail(seg,dip,ph),r,rope,{N:5,w:.3});seg=[]}}if(seg.length>1)t3Line(mr,rail(seg,dip,ph),r,rope,{N:5,w:.3})}
+    for(const s of[-1,1]){const pts=[P(nT,s*CNB.pe,CNB.gate-4)];for(let k=0;k<=44;k++){const n=a0+(a1-a0)*k/44;pts.push(P(n,s*cnCableE(G0,n)+cabW(s,n,ph),cnCableZ(G0,n)))}pts.push(P(G0.ae,s*CNB.pe,CNB.stump-1));t3Line(mr,pts,1.6,cab,{N:6,w:.45})}
+    for(const q of posts){const cz=cnCableZ(G0,q.n),pz=DZ(q.n)+CNB.ph,s=Math.sign(q.e);if(cz-pz>3)t3Line(mr,[P(q.n,s*cnCableE(G0,q.n)+cabW(s,q.n,ph),cz),P(q.n,q.e,pz+1)],.45,rope,{N:4})}
+    // (little flags of the arena it leads to, hanging from the cables, facing you: they swing)
+    if(!LOWFX)for(const s of[-1,1])for(let k=1;k<12;k++){const n=a0+(a1-a0)*k/12,c=P(n,s*cnCableE(G0,n)+cabW(s,n,ph),cnCableZ(G0,n)-1.2),col=k%2?ac:t3Ik(t3Ic(W.rope),1.15),A=[c[0]-3.6,c[1],c[2]],B2=[c[0]+3.6,c[1],c[2]],
+        T=[c[0]+(t3IH(k,sd)-.5)*1.5+2.2*Math.sin(ph+k*1.1),c[1]+2.4*Math.cos(ph+k*.7),c[2]-9+.6*Math.sin(ph*2+k)];
+      for(const nn of[[0,1,0],[0,-1,0]]){const a=v3V(mr,A,nn,col),b=v3V(mr,B2,nn,col),t=v3V(mr,T,nn,col);v3T(mr,a,b,t)}}});
   // 5. the towers: four logs each, the rings and the crosses, the platform and the roof; between them two beams and the banner
   const mt=v3MB(),bark=t3Ic(W.wood),roof=t3Ic(ch===4?'#c4d4e4':ch===2?'#4a2a24':ch===3?'#4a5a2e':'#7a3a2a'),roof2=t3Ik(roof,1.25);
   for(const s of[-1,1]){const ce=s*CNB.pe,L4=[[-5.5,-5.5],[-5.5,5.5],[5.5,-5.5],[5.5,5.5]];
@@ -354,11 +372,7 @@ function t3IBridgeMesh(i){const key='b'+i+'|'+(LOWFX?1:0);let B=T3I.M.get(key);i
   for(const z of[84,94])t3IBox(mt,P(nT+5.5,0,z),E,[0,-1,0],UP,CNB.pe-4,2.2,2.2,wood,{uv:40});
   // the banners: one long banner of the arena it leads to down the front of each tower (the view along the bridge stays open between them):
   // the arena's colour, a lighter band, its round sign, cut in a point at the bottom, both sides
-  for(const s of[-1,1]){const n=nT-7.6,ec=s*CNB.pe,w=6.6,z0=90,z1=36,band=t3Ik(ac,1.35),sign=t3Ic('#f6e7c4'),Q=(e,z)=>P(n,ec+e,z),pts=[[-w,z0],[w,z0],[w,z1+7],[0,z1],[-w,z1+7]];
-    for(const[nn,dn] of[[[0,1,0],.25],[[0,-1,0],-.25]]){const c0=v3V(mt,RG.add(Q(0,(z0+z1)/2+3),[0,dn,0]),nn,ac),vs=pts.map(([e,z])=>v3V(mt,RG.add(Q(e,z),[0,dn,0]),nn,ac));for(let k=0;k<vs.length;k++)v3T(mt,c0,vs[k],vs[(k+1)%vs.length]);
-      for(const zb of[z0-4,z1+12])t3IQ(mt,RG.add(Q(-w,zb),[0,dn*1.6,0]),RG.add(Q(w,zb),[0,dn*1.6,0]),RG.add(Q(w,zb-2.6),[0,dn*1.6,0]),RG.add(Q(-w,zb-2.6),[0,dn*1.6,0]),nn,band);
-      const cc=RG.add(Q(0,z0-17),[0,dn*1.8,0]),cv0=v3V(mt,cc,nn,sign),R=[];for(let k=0;k<14;k++){const a=k/14*TAU;R.push(v3V(mt,RG.add(cc,[Math.cos(a)*4.6,0,Math.sin(a)*4.6]),nn,sign))}for(let k=0;k<14;k++)v3T(mt,cv0,R[k],R[(k+1)%14]);
-      const cr=RG.add(Q(0,z0-17),[0,dn*2.1,0]),cv1=v3V(mt,cr,nn,ac),R2=[];for(let k=0;k<4;k++){const a=k/4*TAU+Math.PI/4;R2.push(v3V(mt,RG.add(cr,[Math.cos(a)*2.6,0,Math.sin(a)*2.6]),nn,ac))}for(let k=0;k<4;k++)v3T(mt,cv1,R2[k],R2[(k+1)%4])}
+  for(const s of[-1,1]){const n=nT-7.6,ec=s*CNB.pe,w=6.6,z0=90,z1=36,Q=(e,z)=>P(n,ec+e,z);MW.forEach((mw,j)=>t3IBanner(mw,n,ec,w,z0,z1,7,ac,WPH[j]+s*.9,2.6,true));
     t3Line(mt,[Q(-w-1.2,z0+1.4),Q(w+1.2,z0+1.4)],1,wdk,{N:5});for(const e of[-w-1.2,w+1.2])t3Sph(mt,Q(e,z0+1.4),1.3,t3Ic('#e8c070'),{nl:6,nb:4,w:.4})}
   // 7. the anchors on the little island: a block of stone, a log post
   for(const s of[-1,1]){const n=G0.ae,e=s*CNB.pe;t3IBox(mt,P(n,e,2.2),E,[0,-1,0],UP,6.5,6,3,stone,{uv:16});v3Tube(mt,[P(n,e,4),P(n,e,CNB.stump)],[3,2.6],bark,8);t3Sph(mt,P(n,e,CNB.stump+1),2.2,wdk,{nl:7,nb:5})}
@@ -372,11 +386,11 @@ function t3IBridgeMesh(i){const key='b'+i+'|'+(LOWFX?1:0);let B=T3I.M.get(key);i
     const C4=[[bd-2.5,Ebal+bw-4],[bd-2.5,Ebal-bw+2.5],[-(bd-2.5),Ebal-bw+2.5],[-(bd-2.5),Ebal+bw-4]];
     for(let k=0;k<4;k++){const[dn,e]=C4[k],h=k<2?ah:rh;t3IBox(mb2,P(c+dn,e,dz+h/2-1),E,[0,-1,0],UP,1.9,1.9,h/2+1,wood,{uv:24});t3IBox(mb2,P(c+dn,e,dz+h+.6),E,[0,-1,0],UP,2.5,2.5,.7,wdk)}
     {const n=c+bd-2.5;t3Line(mb2,[P(n,C4[0][1],dz+ah-3),P(n,Ebal,dz+ah+3),P(n,C4[1][1],dz+ah-3)],1.6,wdk,{N:6,w:.5});
-      // the little banner hanging from the arch
-      const bn=n-.4,w=7,z0=dz+ah+1,z1=dz+ah-17,pts=[[-w,z0],[w,z0],[w,z1+5],[0,z1],[-w,z1+5]].map(([e,z])=>[Ebal+e,z]);for(const[nn,dd] of[[[0,1,0],.2],[[0,-1,0],-.2]]){const c0=v3V(mb2,P(bn-dd,Ebal,(z0+z1)/2),nn,ac),vs=pts.map(([e,z])=>v3V(mb2,P(bn-dd,e,z),nn,ac));for(let k=0;k<vs.length;k++)v3T(mb2,c0,vs[k],vs[(k+1)%vs.length])}}
+      // the little banner hanging from the arch (it moves with the wind: in the three poses)
+      const bn=n-.4;MW.forEach((mw,j)=>t3IBanner(mw,bn,Ebal,7,dz+ah+1,dz+ah-17,5,ac,WPH[j]+b*1.7,1.5,false))}
     for(const[hz,r] of[[rh-1,.75],[rh*.5,.6]]){const pts=[C4[3],C4[2],C4[1],C4[0]].map(([dn,e],k)=>P(c+dn,e,dz+hz+(k>1?0:0)));t3Line(mb2,rail(pts,1.2),r,rope,{N:5,w:.3})}});
-  B={planks:v3Up(mp),per,frame:v3Up(mf),posts:v3Up(mpo),ropes:v3Up(mr),towers:v3Up(mt),balc:v3Up(mb2),G0,nT,free(){for(const k of['planks','frame','posts','ropes','towers','balc'])v3Free(this[k])}};
-  T3I.nV=Math.max(T3I.nV,mp.P.length/3,mf.P.length/3,mr.P.length/3,mt.P.length/3,mb2.P.length/3);t3IKeep(key,B);return B}
+  B={planks:v3Up(mp),per,frame:v3Up(mf),posts:v3Up(mpo),wind:MW.map(m=>v3Up(m)),towers:v3Up(mt),balc:v3Up(mb2),G0,nT,free(){for(const k of['planks','frame','posts','towers','balc'])v3Free(this[k]);for(const m of this.wind)v3Free(m)}};
+  T3I.nV=Math.max(T3I.nV,mp.P.length/3,mf.P.length/3,MW[0].P.length/3,mt.P.length/3,mb2.P.length/3);t3IKeep(key,B);return B}
 // the lanterns: hanging from their hook (the origin) or standing on a post; lit (the glass glows) or not
 function t3ILampMesh(on){const k=on?'lampOn':'lampOff';if(T3I[k])return T3I[k];const mb=v3MB(),iron=t3Ic('#3a3430'),glass=on?t3Ic('#ffd27a',90):t3Ic('#6a5a48');
   t3Lathe(mb,[0,0,-1.6],[[0,.7],[1.6,.7]],6,iron);t3Lathe(mb,[0,0,-4],[[0,3],[2.4,.6]],8,iron);t3Lathe(mb,[0,0,-10.6],[[0,2.4],[6.6,2.4]],10,glass,{top:glass});
@@ -519,7 +533,8 @@ function t3IStds(i,t,L){const all=cnStdList();if(!all.length||!cnOpenShown(i))re
   t3Draw3(items,{});const q=t3IProj([base[0],base[1],base[2]+h*.55]);if(q)(ISL.prz||(ISL.prz=[])).push({x:q[0],y:q[1],r:Math.max(24*L.dpr,h*.42*t3IKpx(q[2])),txt:cnStdTxt(all)})}
 // the bridge after island i: its pieces, the planks laid, the lanterns lit as the planks reach them, the prizes on the balconies
 function t3IBridge(i,t,L){if(!ARENAS[i+1])return;const B=t3IBridgeMesh(i),G0=B.G0,M=t3PathM(i),X=t3ITx(),laid=cnBrLaidNow(i),A=ISL.brA&&ISL.brA.i===i?ISL.brA:null,DZ=n=>cnDeckZ(G0,n),Lc=t3L();
-  const items=[{m:B.frame,M,out:.4,tex:X.wood},{m:B.posts,M,out:.38,tex:X.wood},{m:B.ropes,M,out:.26},{m:B.towers,M,out:.44,tex:X.bark},{m:B.balc,M,out:.4,tex:X.wood}];
+  const wu=T3I.wu||0,w0=Math.floor(wu)%3,SW=cnSwayFn(i,G0,t),swo=n=>SW&&!LOWFX?SW(n):[0,0];
+  const items=[{m:B.frame,M,out:.4,tex:X.wood},{m:B.posts,M,out:.38,tex:X.wood},{m:B.wind[w0],m2:B.wind[(w0+1)%3],kf:wu-Math.floor(wu),M,out:.28},{m:B.towers,M,out:.44,tex:X.bark},{m:B.balc,M,out:.4,tex:X.wood}];
   // (the planks landed a moment ago settle with a little dip: drawn on their own until they are still)
   let still=Math.min(G0.N,laid);const bn=A&&A.bn?Object.keys(A.bn).map(Number).filter(g=>g<laid):[];if(bn.length)still=Math.min(still,Math.min(...bn));
   if(still>0)items.push({m:B.planks,M,out:.36,tex:X.wood,count:still*B.per});
@@ -536,7 +551,7 @@ function t3IBridge(i,t,L){if(!ARENAS[i+1])return;const B=t3IBridgeMesh(i),G0=B.G
   // the lanterns: on the posts (hanging from their arms), on the balconies' arches (standing), on the towers' arms
   const fl=k=>.88+.12*Math.sin(t*8+k*1.7)*Math.sin(t*5.1+k);
   for(const[k,q] of cnBrLamps(G0).entries()){const lit=laid>=q.g,dz=DZ(q.n),w=q.post?t3IW(i,q.n,q.e,dz+CNB.ph-2.6):t3IW(i,q.n,q.e,dz+51.6);items.push({m:t3ILampMesh(lit),M:t3ITr(w[0],w[1],w[2]),out:.3});
-    if(lit){t3IGlow([w[0],w[1],w[2]-7],8*fl(k),[1,.8,.45],.55)}}
+    if(lit){const o=swo(q.n);t3IGlow([w[0]+o[0],w[1],w[2]-7+o[1]],8*fl(k),[1,.8,.45],.55)}}
   for(const s of[-1,1]){const w=t3IW(i,B.nT,s*(CNB.pe+20),90.4);items.push({m:t3ILampMesh(true),M:t3ITr(w[0],w[1],w[2]),out:.3});t3IGlow([w[0],w[1],w[2]-7],9*fl(s+5),[1,.8,.45],.6)}
   // the prizes on the balconies (a third bigger), bobbing; their labels and where a tap finds them
   for(let b=0;b<3;b++){const j=b+1;if(cnPrizeTaken(i,j)&&!(A&&A.pop&&A.pop.p.j===j))continue;const c=G0.Z[b],p=cnBrPrize(i,j),dz=DZ(c),ps=4/3,pop=A&&A.pop&&A.pop.p.j===j?A.pop:null,
@@ -544,7 +559,13 @@ function t3IBridge(i,t,L){if(!ARENAS[i+1])return;const B=t3IBridgeMesh(i),G0=B.G
     items.push({m:t3IPrizeMesh(p,false),M:v3M4([ca,sa,0],[-sa,ca,0],[0,0,ps*sw],w),out:.4});
     const pc=cnRgb(cnPrizeCol(p)).split(',').map(v=>+v/255);if(!LOWFX)t3IGlow([w[0],w[1],w[2]+8],16,pc,.18+.06*Math.sin(t*3+j));
     t3IPrizeTap(i,j,p,w,30*ps,L)}
-  t3Draw3(items,{})}
+  // (while the hero runs over it the bridge swings and gives under his feet: 94's own sway, done by the vertices of this bridge only)
+  const S=ISL.sw,P2=S&&S.i===i&&!LOWFX?t3IBrProg():null;
+  if(P2){const gl=T3.gl,p0=T3.pT;gl.useProgram(P2.p);gl.uniform4f(P2.u.uSw,S.a*4.2*Math.sin(t*3.3),S.a*1.3*Math.sin(t*4.1+1),S.b*6,1);gl.uniform4f(P2.u.uSw2,-(i*CNI_GAP+G0.a0),G0.len,-(i*CNI_GAP+S.h),0);
+    T3.pT=P2;try{t3Draw3(items,{})}finally{T3.pT=p0}}else t3Draw3(items,{})}
+function t3IBrProg(){if(T3I.pBr!==undefined)return T3I.pBr;T3I.pBr=null;try{const vs=T3VS_TOON.replace('uniform float uKF;','uniform float uKF;uniform vec4 uSw;uniform vec4 uSw2;')
+    .replace('vN=n;vC=aC;','if(uSw.w>0.){float u=(uSw2.x-p.y)/uSw2.y;if(u>0.&&u<1.){float env=sin(3.14159*u),q=(p.y-uSw2.z)/80.;p.x+=uSw.x*env;p.z+=(uSw.y-uSw.z*exp(-q*q))*env;}}vN=n;vC=aC;');
+    if(vs!==T3VS_TOON)T3I.pBr=t3Prog(vs,T3FS_TOON,['aP','aN','aO','aT','aC','aP2','aN2','aO2'])}catch(e){t3Err(e)}return T3I.pBr}
 // a prize's place on the screen: its label above it (fading under the name of the arena), the tap, where the show makes it burst
 function t3IPrizeTap(i,j,p,w,top,L){const q=t3IProj(w),qt=t3IProj([w[0],w[1],w[2]+top]);if(!q||!qt)return;const k=t3IKpx(q[2]),d=L.dpr,T4=p.k==='tesoro';
   (ISL.przAt||(ISL.przAt={}))[i+'_'+j]=[q[0],q[1]-14*k,k];const la=clamp((qt[1]-L.titleB-18*d)/(26*d),0,1)*clamp((L.info-qt[1])/(30*d),0,1);
@@ -575,7 +596,8 @@ function t3IGzPath(lo,n,e){let i=lo,nn=n;while(nn>CNI_GAP*.5&&ARENAS[i+1]){nn-=C
 function t3IStick(){if(T3I.stick)return T3I.stick;const mb=v3MB();v3Tube(mb,[[0,0,0],[.7,0,0],[1,0,0]],[1,1,.9],t3Ic('#5fae3a'),6);t3Sph(mb,[1,0,0],1.05,t3Ic('#b8ff7a',120),{nl:6,nb:4,w:0});return T3I.stick=v3Up(mb)}
 function t3IHero(L,t){const J=ISL.jump,SH=ISL.brA;let w,face=Math.PI/2-.2,ph=0,mv=false,al=1,sc=CNI_HERO*.86,idle=false;CAMP.hero=null;
   const homeW=i=>{const p=CI_HERO,z=t3IGz(CNI_R,CNI_SY,i*1.7+.4,p);return t3IMP(t3IslM(i),[p[0],p[1],z])};
-  if(J&&J.way){const W=J.way,u=Math.min(1,J.t/J.dur),dd=cnWayDD(J),p=cnWayAt(W,dd);w=t3IW(W.lo,p[0],p[1],p[2]+(p[2]>.5?0:t3IGzPath(W.lo,p[0],p[1])));face=J.fs!=null?J.fs:face;ph=dd*.046*Math.min(1,300/Math.max(1,W.len/J.dur));mv=u<.985}
+  if(J&&J.way){const W=J.way,u=Math.min(1,J.t/J.dur),dd=cnWayDD(J),p=cnWayAt(W,dd);w=t3IW(W.lo,p[0],p[1],p[2]+(p[2]>.5?0:t3IGzPath(W.lo,p[0],p[1])));face=J.fs!=null?J.fs:face;ph=dd*.046*Math.min(1,300/Math.max(1,W.len/J.dur));mv=u<.985;
+    if(!LOWFX){const SW=cnSwayFn(W.lo,cnBrGeo(W.lo),t);if(SW){const o=SW(p[0]);w[0]+=o[0];w[2]+=o[1]}}}
   else if(J){const u=Math.min(1,J.t/J.dur),e=u<.5?2*u*u:1-Math.pow(-2*u+2,2)/2,a=homeW(J.a),b=homeW(J.b);w=[plerp(a[0],b[0],e),plerp(a[1],b[1],e),plerp(a[2],b[2],e)+Math.sin(u*Math.PI)*260];mv=true;ph=u*6}
   else if(SH&&SH.at==='mini'){const n=CNM_HERO[0],e=CNM_HERO[1],p=cnChain(n,e);w=t3IMP(t3IslM(SH.i,CNI_MN),[p[0],p[1],t3IGz(CNI_MR,CNI_SY,cnMiniSd(SH.i),p)]);idle=true}
   else{w=homeW(ISL.cur);idle=true}
@@ -596,9 +618,58 @@ function t3IHero(L,t){const J=ISL.jump,SH=ISL.brA;let w,face=Math.PI/2-.2,ph=0,m
   // his companions beside him (cards: their own drawings)
   if(SAVE.pets&&!J)petEq().forEach((id,k)=>{const s=k?-1:1,pw=[w[0]+s*24,w[1]+4,w[2]],ps=sc*.5;t3IShadow(pw,9*ps,4*ps,.3);t3Card(pw[0],pw[1],pw[2],[-26*ps,-40*ps,26*ps,14*ps],()=>{ctx.save();ctx.translate(pw[0],pw[1]);ctx.scale(ps,ps);drawPetSprite(id,0,0,{t:t+k*.7,face:k?0:Math.PI,moving:false,att:0,happy:0,hop:0});ctx.restore()},{lit:1})});
   if(idle&&al>.99){const q=t3IProj(w);if(q){const s=t3IKpx(q[2])*sc;CAMP.hero={x:q[0],y:q[1],w:18*s,h:50*s,dpr:L.dpr}}}}
+// ------------------------------------------------------------------ the life around the islands (Denis: «Vita intorno», as 94 has it): the
+// flocks of each world crossing the sky over the bridge (swallows over the moss, little birds of fire over the volcano, bats over the
+// swamp, white birds over the ice), the butterflies on the moss, the dragonflies on the swamp, the smoke of the volcano, the snow falling on
+// the ice. Each creature in two poses (wings up, wings down) that it slides between. None with the effects down (LOWFX)
+function t3IBirdMesh(ch,up){const mb=v3MB(),C=[null,['#2a3448','#f0ece0','#1c2433'],['#d8502a','#ffcf6a','#7a2a1a'],['#3a2a3e','#5a4060','#241828'],['#eef4fa','#c8d4e0','#6a7a8a']][ch]||['#2a3448','#f0ece0','#1c2433'],
+    body=t3Ic(C[0],ch===2?150:255),belly=t3Ic(C[1],ch===2?110:255),dk=t3Ic(C[2]),bat=ch===3,a=up?.85:-.55;
+  t3Ell(mb,[0,0,0],[3.4,1.5,1.5],body,{nl:10,nb:7,w:.4});t3Ell(mb,[.4,0,-.6],[2.4,1.1,.8],belly,{nl:8,nb:5,w:.3});t3Sph(mb,[3.1,0,.6],1.25,body,{nl:8,nb:6,w:.3});
+  if(bat){for(const s of[-1,1])t3Cone(mb,[3,s*.7,1.6],[3.2,s*1.1,3],.5,dk,{N:3,w:.2})}else t3Cone(mb,[4.1,0,.5],[5.6,0,.3],.45,t3Ic('#e8b040'),{N:4,w:.2});
+  if(!bat)for(const s of[-1,1]){t3Strip(mb,[[-2.6,s*.5,.2],[-2.6,s*.1,.2]],[[-6.2,s*2.2,0],[-5,s*.2,.1]],[0,0,1],dk,{w:.3});t3Strip(mb,[[-6.2,s*2.2,0],[-5,s*.2,.1]],[[-2.6,s*.5,.2],[-2.6,s*.1,.2]],[0,0,-1],dk,{w:.3})}
+  for(const s of[-1,1]){const r=k=>[k[0],s*k[1],k[2]],sp=bat?8.6:7.6,w0=[[1.6,1.2,.4],[.2,1.2+sp*.5*Math.cos(a),.4+sp*.5*Math.sin(a)],[-1.2,1.2+sp*Math.cos(a*1.1),.4+sp*Math.sin(a*1.1)]],
+      w1=bat?[[-1.6,1.2,.2],[-2.2,1.2+sp*.45*Math.cos(a),sp*.45*Math.sin(a)-.8],[-1.8,1.2+sp*.95*Math.cos(a*1.1),sp*.95*Math.sin(a*1.1)-.4]]:[[-1.2,1.2,.3],[-2.4,1.2+sp*.45*Math.cos(a),.3+sp*.45*Math.sin(a)],[-3.6,1.2+sp*.8*Math.cos(a*1.1),.3+sp*.8*Math.sin(a*1.1)]];
+    t3Strip(mb,w0.map(r),w1.map(r),[0,0,1],dk,{w:.3});t3Strip(mb,w1.map(r),w0.map(r),[0,0,-1],dk,{w:.3})}
+  return v3Up(mb)}
+function t3IFlyMesh(col,up){const mb=v3MB(),w=t3Ic(col),w2=t3Ik(w,.82),dk=t3Ic('#2a2018'),a=up?.85:-.05;t3Ell(mb,[0,0,0],[1.4,.35,.35],dk,{nl:6,nb:4,w:0});
+  for(const s of[-1,1]){const R=(x,y)=>[x,s*y*Math.cos(a),y*Math.sin(a)];
+    for(const[A,B,c] of[[[R(.9,.3),R(-.1,.3)],[R(1.9,2.6),R(-.6,2.4)],w],[[R(-.1,.3),R(-.9,.3)],[R(-.6,2.4),R(-1.7,1.6)],w2]]){t3Strip(mb,A,B,[0,0,1],c,{w:.2});t3Strip(mb,B,A,[0,0,-1],c,{w:.2})}}
+  return v3Up(mb)}
+function t3IDragonMesh(up){const mb=v3MB(),b=t3Ic('#1e9ab4'),b2=t3Ic('#5ae0d0'),wg=t3Ic('#eefcff',200),a=up?.28:-.16;
+  v3Tube(mb,[[2.2,0,0],[0,0,0],[-4.6,0,0]],[.6,.45,.22],b,6);t3Sph(mb,[2.6,0,0],.75,b2,{nl:6,nb:4,w:0});
+  for(const s of[-1,1])for(const[x,L] of[[.9,4.4],[-.2,4]]){const R=(xx,y)=>[xx,s*y*Math.cos(a),y*Math.sin(a)],A=[R(x+.5,.3),R(x-.5,.3)],B=[R(x+.3,L),R(x-.4,L)];t3Strip(mb,A,B,[0,0,1],wg,{w:.1});t3Strip(mb,B,A,[0,0,-1],wg,{w:.1})}
+  return v3Up(mb)}
+function t3ILifeMeshes(){if(T3I.lm)return T3I.lm;const F=['#ffd84a','#f4f0ff','#7ab8ff','#ff9a3a'];
+  return T3I.lm={bird:[1,2,3,4].map(ch=>[t3IBirdMesh(ch,true),t3IBirdMesh(ch,false)]),fly:F.map(c=>[t3IFlyMesh(c,true),t3IFlyMesh(c,false)]),dragon:[t3IDragonMesh(true),t3IDragonMesh(false)]}}
+const t3IYaw=(a,s,p)=>{const c=Math.cos(a)*s,n=Math.sin(a)*s;return v3M4([c,n,0],[-n,c,0],[0,0,s],p)};
+function t3ILife(v,t,dt){if(LOWFX)return;const vi=Math.max(0,Math.min(ARENAS.length-1,Math.round(v))),ch=ARENAS[vi].ch||1,L=T3I.life||(T3I.life={fl:[],fT:3,sm:[],sn:null,df:[]}),Ms=t3ILifeMeshes(),items=[],dd=Math.min(dt,.1);
+  // the flocks: one every 10–18 s, of the world you look at, crossing over the bridge in a loose V
+  if((L.fT-=dd)<=0){L.fT=10+Math.random()*8;const dir=Math.random()<.5?1:-1,n=90+Math.random()*240,W=170+n*.3;L.fl.push({ch,i:vi,dir,n,z:28+Math.random()*34,x:-dir*W,W,v:(ch===3?44:58)+Math.random()*14,k:5+Math.floor(Math.random()*4),ph:Math.random()*TAU})}
+  for(let j=L.fl.length-1;j>=0;j--){const f=L.fl[j];f.x+=f.dir*f.v*dd;if(Math.abs(f.x)>f.W+60&&Math.sign(f.x)===f.dir){L.fl.splice(j,1);continue}const bat=f.ch===3,ms=Ms.bird[f.ch-1]||Ms.bird[0];
+    for(let b=0;b<f.k;b++){const bx=f.x-f.dir*Math.ceil(b/2)*17,bn=f.n+(b%2?1:-1)*Math.ceil(b/2)*13,bz=f.z+b*1.8+Math.sin(t*1.3+b+f.ph)*4+(bat?Math.sin(t*4.6+b*2)*3:0),
+        kf=.5+.5*Math.sin(t*(bat?10:7+b*.3)+b*1.7+f.ph);items.push({m:ms[0],m2:ms[1],kf,M:t3IYaw(f.dir>0?0:Math.PI,bat?1.6:1.4,[bx,-(f.i*CNI_GAP+bn),bz]),out:.35})}}
+  const M=t3IslM(vi),sd=vi*1.7+.4,gz=p=>t3IGz(CNI_R,CNI_SY,sd,p);
+  // the butterflies over the moss: lazy loops over the island, the wings beating
+  if(ch===1)for(let k=0;k<5;k++){const h=q=>t3IH(k,vi*5.1+q),r=34+h(1)*52,sg=h(3)<.5?1:-1,a=t*(.16+h(2)*.14)*sg+h(4)*TAU,lp=[Math.cos(a)*r,Math.sin(a)*r*.62],w=t3IMP(M,[lp[0],lp[1],gz(lp)+12+h(5)*14+Math.sin(t*1.9+k*2)*4]),
+      fa=Math.atan2(Math.cos(a)*sg*.62,-Math.sin(a)*sg)+Math.atan2(M[1],M[0]),ms=Ms.fly[k%4];items.push({m:ms[0],m2:ms[1],kf:.5+.5*Math.sin(t*21+k*2.3),M:t3IYaw(fa,2.7,w),out:.22})}
+  // the dragonflies over the swamp: they hover, then dart to another spot
+  if(ch===3){if(L.df.length!==3||L.dfI!==vi){L.dfI=vi;L.df=[0,1,2].map(k=>({p:[0,0],q:[(Math.random()-.5)*110,(Math.random()-.5)*70],w:0,a:0,z:12+k*3}))}
+    for(const d of L.df){d.w-=dd;const dx=d.q[0]-d.p[0],dy=d.q[1]-d.p[1];if(Math.hypot(dx,dy)>2){d.p[0]+=dx*Math.min(1,dd*4.5);d.p[1]+=dy*Math.min(1,dd*4.5);d.a=Math.atan2(dy,dx)}
+      else if(d.w<=0){d.w=1.2+Math.random()*2.2;d.q=[(Math.random()-.5)*110,(Math.random()-.5)*70]}
+      const w=t3IMP(M,[d.p[0],d.p[1],gz(d.p)+d.z+Math.sin(t*3+d.z)*1.2]);items.push({m:Ms.dragon[0],m2:Ms.dragon[1],kf:.5+.5*Math.sin(t*40+d.z),M:t3IYaw(d.a+Math.atan2(M[1],M[0]),2.3,w),out:.22})}}
+  if(items.length)t3Draw3(items,{});
+  // the smoke of the volcano, the snow on the ice (soft puffs, flakes)
+  const gl=T3.gl,X=t3ITx();let q=0;
+  if(ch===2){const c=IP(64,-66),vw=t3IMP(M,[c[0],c[1],gz(c)+26]);if(Math.random()<dd*1.8)L.sm.push({x:vw[0],y:vw[1],z:vw[2],l:0,e:0});if(Math.random()<dd*5)L.sm.push({x:vw[0]+(Math.random()-.5)*6,y:vw[1]+(Math.random()-.5)*6,z:vw[2],l:0,e:1,v:9+Math.random()*12,ph:Math.random()*TAU});
+    for(let j=L.sm.length-1;j>=0;j--){const m=L.sm[j];if(m.e){m.l+=dd/1.6;if(m.l>=1){L.sm.splice(j,1);continue}m.z+=dd*m.v;m.x+=dd*(Math.sin(t*3+m.ph)*6-3);const r=.9+.5*Math.sin(t*17+m.ph);t3Q(m.x,m.y,m.z,-r,-r,r,r,0,0,1,1,1,.62+.2*(1-m.l),.25,.95*(1-m.l));q++;continue}
+      m.l+=dd/7;if(m.l>=1){L.sm.splice(j,1);continue}m.z+=dd*(11-m.l*4);m.x-=dd*(3+m.l*11);m.y-=dd*(2+m.l*6);const r=7+m.l*32,a=.74*Math.pow(Math.sin(m.l*Math.PI),.7),w=Math.max(0,1-m.l*2.2);t3Q(m.x,m.y,m.z,-r,-r*.8,r,r*.8,0,0,1,1,.6+.36*w,.54+.06*w,.52-.16*w,a);q++}}
+  else L.sm.length=0;
+  if(ch===4){const c=t3IMP(M,[0,0,0]);if(!L.sn||L.snI!==vi){L.snI=vi;L.sn=[];for(let k=0;k<54;k++)L.sn.push([(Math.random()-.5)*520,(Math.random()-.5)*480,Math.random()*220,.6+Math.random()*.8,Math.random()*TAU])}
+    for(const f of L.sn){f[2]-=dd*(9+f[3]*5);f[0]+=dd*(4+Math.sin(t*.8+f[4])*6);if(f[2]<-10){f[2]=220;f[0]=(Math.random()-.5)*520}if(f[0]>260)f[0]-=520;const r=f[3];t3Q(c[0]+f[0],c[1]+f[1],c[2]+f[2],-r,-r,r,r,0,0,1,1,.95,.97,1,.8);q++}}
+  if(q){if(!T3I.pCl)T3I.pCl=t3Prog(T3VS_BB,T3FS_ICL,['aP','aQ','aT','aC']);gl.enable(gl.BLEND);gl.blendFunc(gl.SRC_ALPHA,gl.ONE_MINUS_SRC_ALPHA);gl.depthMask(false);t3QFlush(T3I.pCl,X.cloud);gl.depthMask(true);gl.disable(gl.BLEND)}}
 // ------------------------------------------------------------------ the frame of the islands in 3D: 94's own steps (the finger, the camera,
 // the jumps, the show), then the picture, then 94's words over it
-function t3IslFrame(dt){const t0=performance.now();campResize();CAMP.t+=dt;const t=CAMP.t;if(G)G.t=t;const L=ISL.lay=cnIslLay();ISL.prz=[];
+function t3IslFrame(dt){const t0=performance.now();campResize();CAMP.t+=dt;const t=CAMP.t;if(G)G.t=t;T3I.dt=dt;T3I.wu=((T3I.wu||0)+dt*(1.1+2*cnWind(t)))%3e4;const L=ISL.lay=cnIslLay();ISL.prz=[];
   if(ISL.cur==null)cnIslSync(false);
   cnIslStep(dt,L);
   {const gp=Math.floor((t+3)/11);if(ISL.gp!==gp){if(ISL.gp!=null&&!LOWFX&&prH(gp,5)<.66)cnBrSnd('vento');ISL.gp=gp}}
@@ -613,6 +684,14 @@ function t3IslFrame(dt){const t0=performance.now();campResize();CAMP.t+=dt;const
   // over it, on the menu's canvas: the labels of the prizes, the guardian's z, 94's words
   const saved=ctx;ctx=campX;try{ctx.setTransform(1,0,0,1,0,0);ctx.clearRect(0,0,L.W,L.H);t3IslOver(L,t,A,B,f,v)}finally{ctx.setTransform(1,0,0,1,0,0);ctx=saved}
   ISL.pv=ISL.view;T3I.ms=T3I.ms?T3I.ms*.9+(performance.now()-t0)*.1:performance.now()-t0}
+// a picture of the last frame (the 3D and the words over it), taken now and then right after drawing: the sweep between the two modes
+// shows it in place of the drawing of always, so the change stays in 3D (the canvas of the 3D does not keep its picture after the frame)
+// the picture of a place in 3D for the sweep between the two modes (the menu's canvas over it, unless only3d), copied right after it is drawn
+// (the 3D's canvas keeps its picture only until the screen shows it). Made only when the sweep starts (118's modeSwitch): copying the 3D
+// every few frames would cost a little hitch on the phone each time
+function t3Snap(o,only3d){const W=campCv.width,H=campCv.height;let c=o.snap;
+  if(!c||c.width!==W||c.height!==H){c=o.snap=document.createElement('canvas');c.width=W;c.height=H}try{const g=c.getContext('2d');g.clearRect(0,0,W,H);g.drawImage(T3.cv,0,0,W,H);if(!only3d)g.drawImage(campCv,0,0);o.snapOk=true}catch(e){o.snap=null;o.snapOk=false}}
+function t3SnapDraw(o){if(!o.snap||!o.snapOk)return false;campX.save();campX.setTransform(1,0,0,1,0,0);campX.drawImage(o.snap,0,0,campCv.width,campCv.height);campX.restore();return true}
 function t3IslDraw(L,t,v,sk0,sk1,glw,fog){const gl=T3.gl;T3.frame++;T3.nMesh=0;T3.nCard=0;T3I.lab=[];T3I.zz=[];T3I.Lt=[];T3I.gw.length=0;T3I.sh.length=0;
   gl.bindFramebuffer(gl.FRAMEBUFFER,T3.fbo);gl.viewport(0,0,T3.cw,T3.ch);gl.clearColor(fog[0],fog[1],fog[2],1);gl.clear(gl.COLOR_BUFFER_BIT|gl.DEPTH_BUFFER_BIT);
   t3ISky(sk0,sk1,glw,t,v);
@@ -624,6 +703,7 @@ function t3IslDraw(L,t,v,sk0,sk1,glw,fog){const gl=T3.gl;T3.frame++;T3.nMesh=0;T
   if(!LOWFX)t3IFar(v,t);
   for(const i of list){t3IIsland(i,t,L);if(i===(ISL.stdI==null?ISL.cur:ISL.stdI))try{t3IStds(i,t,L)}catch(e){t3Err(e)}if(ARENAS[i+1]){t3IBridge(i,t,L);t3IMini(i,t,L)}}
   t3IHero(L,t);
+  try{t3ILife(v,t,T3I.dt||0)}catch(e){t3Err(e)}
   t3IShadows();t3CardsEnd();
   t3IClouds(v,t,fog);t3IDust();t3IGlows();
   gl.disable(gl.BLEND);gl.depthMask(true);
@@ -658,5 +738,7 @@ function t3IslOver(L,t,A,B,f,v){const d=L.dpr;
   const i0=Math.max(0,Math.floor(v)),i1=Math.min(ARENAS.length-1,i0+1),ice=(ARENAS[i0].ch===4?1-f:0)+(ARENAS[i1].ch===4?f:0);cnSnow(L,t,ice,v,true);
   cnIslText(L,t);if(ISL.brA&&ISL.brA.ttl)cnShowTitle(L,t,ISL.brA);cnPlayLbl()}
 // 94's frame of the islands: in 3D when the 3D can, else as always
-{const _ci=cnIsles;cnIsles=function(dt){if(!t3IslOk()){if(T3I.live){T3I.live=false;if(T3.cv)T3.cv.style.display='none'}return _ci.apply(this,arguments)}
+{const _ci=cnIsles;cnIsles=function(dt){if(!t3IslOk()){if(T3I.live){T3I.live=false;if(T3.cv)T3.cv.style.display='none'}
+    // (between the two modes: the last picture of the islands in 3D, not the drawing of always)
+    if(typeof MM!=='undefined'&&MM.tr&&T3I.on&&!T3I.bad&&t3SnapDraw(T3I))return;return _ci.apply(this,arguments)}
   try{t3IslFrame(dt)}catch(e){t3Err(e);T3I.bad=true;T3I.live=false;if(T3.cv)T3.cv.style.display='none';const s=ctx;ctx=campX;try{ctx.setTransform(1,0,0,1,0,0)}finally{ctx=s}return _ci.call(this,0)}}}
