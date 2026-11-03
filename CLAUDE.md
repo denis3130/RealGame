@@ -466,6 +466,15 @@ https://claude.ai/artifact/8UveByoEu5gWa7cXm6aUEw («Mossbound tripla A»; si ag
 `python3 tests/t3/mk.py`, poi `node tests/t3/tripla.js` (26 controlli), foto `tests/t3/tr_lotta.jpg` e `tr_golem.jpg`. Dettagli, tempi e cosa manca (scarabeo,
 occhio d'ombra e fiore occhio ancora cartoline; raccolte e colpi disegni 2D con la loro luce) in `docs/tripla-a.md`. Niente entra nel
 gioco senza il sì di Denis.
+Poi (2–3 novembre, Denis: «migliora il ponte ed il menu ora»; risposte: «3D vero come la stanza», del ponte «sembra piatto», «poco
+spettacolare», «troppo piccolo o lontano», le parti schermata principale, interfaccia, fogli e finestre, menu Zombie, nell'anteprima)
+**il menu in tripla A**, tre file in più nella stessa pagina: `src/js/116-t3-isole.js` (`T3I`: il cammino delle isole in WebGL, isole col
+loro mondo, ponte sospeso di assi in volumi veri con torri, stendardi, travi, funi, cavi, balconi e premi in 3D, mini isola, pietre, eroe
+3D col bastoncino di muschio, custode, pennone degli stendardi, lo spettacolo delle assi; telecamera bassa e vicina lungo il ponte, `T3IC`;
+la logica e le scritte restano quelle di 94), `117-t3-interfaccia.js` (`T3UI`: materiali più ricchi per bottoni, barre, posti delle
+casse e fogli; nelle Impostazioni gli interruttori «Luce chiara / da film» e «Interfaccia nuova / di prima»), `118-t3-falo.js` (`T3F`:
+il falò del menu Zombie col campo in 3D davanti al dipinto di oggi). Prova `node tests/t3/menu.js` (19 controlli), foto
+`tests/t3/tr_isole.jpg`, `tr_falo.jpg`, `tr_spettacolo.jpg`; dettagli in `docs/tripla-a.md` («Il menu in tripla A»).
 
 ## FASE 9: più fluido sul telefono (19 ottobre, in corso)
 

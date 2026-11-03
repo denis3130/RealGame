@@ -22,7 +22,8 @@ const t3IPP=(n,e,z)=>[e,-n,z||0];
 const t3IMP=(M,p)=>[M[0]*p[0]+M[4]*p[1]+M[8]*p[2]+M[12],M[1]*p[0]+M[5]*p[1]+M[9]*p[2]+M[13],M[2]*p[0]+M[6]*p[1]+M[10]*p[2]+M[14]];
 const t3IMD=(M,n)=>[M[0]*n[0]+M[4]*n[1]+M[8]*n[2],M[1]*n[0]+M[5]*n[1]+M[9]*n[2],M[2]*n[0]+M[6]*n[1]+M[10]*n[2]];
 const t3ITr=(x,y,z)=>v3M4([1,0,0],[0,1,0],[0,0,1],[x,y,z]);
-function t3IslOk(){return T3I.on&&!T3I.bad&&T3.on&&!T3.bad&&!T3.lost&&t3Init()&&!!T3.post}
+// (while the menu sweeps from one mode to the other both scenes are on the screen at once: the drawing of always, for that second)
+function t3IslOk(){return T3I.on&&!T3I.bad&&T3.on&&!T3.bad&&!T3.lost&&!(typeof MM!=='undefined'&&MM.tr)&&t3Init()&&!!T3.post}
 // the canvas of the 3D goes where it is needed: under the menu's picture (campCv) or under the game's (cv)
 function t3Place(host){const c=T3.cv;if(!c||T3I.host===host)return;T3I.host=host;
   if(host==='menu'){campCv.parentNode.insertBefore(c,campCv);c.style.cssText='position:absolute;inset:0;width:100%;height:100%;z-index:0;pointer-events:none;display:block'}
@@ -30,10 +31,9 @@ function t3Place(host){const c=T3.cv;if(!c||T3I.host===host)return;T3I.host=host
   T3.rk=null;T3.fboOk=false}
 {const _r=t3Render;t3Render=function(){t3Place('game');return _r.apply(this,arguments)}}
 {const _h=t3Hide;t3Hide=function(){if(T3I.host==='menu'&&T3I.live)return;return _h.apply(this,arguments)}}
-// when the islands are not drawn any more (another page of the menu, the Zombie), their picture goes
-// (counted in frames: a slow frame of the islands is not a missing one)
-(function t3IWatch(){try{if(T3I.host==='menu'&&T3.cv&&T3.cv.style.display!=='none'){if(T3I.seen!==T3I.wSeen){T3I.wSeen=T3I.seen;T3I.wN=0}else T3I.wN=(T3I.wN||0)+1;
-  if(T3I.wN>3||campCv.offsetParent===null){T3.cv.style.display='none';T3I.live=false}}}catch(e){}requestAnimationFrame(t3IWatch)})();
+// when the home is not on the screen any more (another page of the menu, the game), its picture goes; with a sheet open over it the menu does
+// not draw the home, its last picture stays behind the sheet (as the drawing of always does)
+(function t3IWatch(){try{if(T3I.host==='menu'&&T3.cv&&T3.cv.style.display!=='none'&&(campCv.offsetParent===null||$('menu').hidden||$('tabPlay').hidden)){T3.cv.style.display='none';T3I.live=false}}catch(e){}requestAnimationFrame(t3IWatch)})();
 // the size of the picture: the menu's canvas pixel for pixel (the words of 94 over it fall where the 3D puts things)
 function t3IslSize(){const cw=campCv.width,ch=campCv.height,sc=T3.low?.75:1,w=Math.max(2,Math.round(cw*sc)),h=Math.max(2,Math.round(ch*sc));
   T3.W=campCv.clientWidth||cw;T3.H=campCv.clientHeight||ch;T3.pxK=cw/(T3.W||cw);
@@ -76,16 +76,16 @@ const t3I01=c=>[c[0]/255,c[1]/255,c[2]/255];
 // ------------------------------------------------------------------ the pictures painted once (light, so the colour of the world tints them)
 function t3ICv(S){const c=document.createElement('canvas');c.width=c.height=S;return c}
 function t3IRnd(s){let sd=(Math.abs(s|0)%2147483646)+1;return()=>(sd=(sd*16807)%2147483647)/2147483647}
-const t3IWrap=(S,f)=>{for(const ox of[-S,0,S])for(const oy of[-S,0,S])f(ox,oy)};
-function t3IBlot(g,S,x,y,r,rgb,a){t3IWrap(S,(ox,oy)=>{const gr=g.createRadialGradient(x+ox,y+oy,0,x+ox,y+oy,r);gr.addColorStop(0,`rgba(${rgb},${a})`);gr.addColorStop(1,`rgba(${rgb},0)`);g.fillStyle=gr;g.fillRect(x+ox-r,y+oy-r,2*r,2*r)})}
+const t3IWrap=(S,f,x,y,r)=>{const X=[0],Y=[0];if(x==null||x<r)X.push(S);if(x==null||x>S-r)X.push(-S);if(y==null||y<r)Y.push(S);if(y==null||y>S-r)Y.push(-S);for(const ox of X)for(const oy of Y)f(ox,oy)};
+function t3IBlot(g,S,x,y,r,rgb,a){t3IWrap(S,(ox,oy)=>{const gr=g.createRadialGradient(x+ox,y+oy,0,x+ox,y+oy,r);gr.addColorStop(0,`rgba(${rgb},${a})`);gr.addColorStop(1,`rgba(${rgb},0)`);g.fillStyle=gr;g.fillRect(x+ox-r,y+oy-r,2*r,2*r)},x,y,r)}
 // the top of an island: grass and moss (1), ash and cracks (2), wet moss of the swamp (3), snow with its blue shadows and glints (4)
 function t3ITopCv(ch){const S=512,c=t3ICv(S),g=c.getContext('2d'),r=t3IRnd(ch*977+13);g.fillStyle=ch===4?'rgb(246,248,252)':'rgb(226,226,222)';g.fillRect(0,0,S,S);
   const blots=(n,r0,r1,list)=>{for(let k=0;k<n;k++){const[rgb,a]=list[k%list.length];t3IBlot(g,S,r()*S,r()*S,r0+r()*(r1-r0),rgb,a)}};
   const strokes=(n,l0,list,w,ang,spr)=>{g.lineCap='round';for(let k=0;k<n;k++){const x=r()*S,y=r()*S,a=ang+(r()-.5)*spr,l=l0*(.5+r()),bx=(r()-.5)*2,[rgb,al]=list[k%list.length];g.strokeStyle=`rgba(${rgb},${al})`;g.lineWidth=w*(.6+r()*.8);
-    t3IWrap(S,(ox,oy)=>{g.beginPath();g.moveTo(x+ox,y+oy);g.quadraticCurveTo(x+ox+Math.cos(a)*l*.5+bx,y+oy+Math.sin(a)*l*.5,x+ox+Math.cos(a)*l,y+oy+Math.sin(a)*l);g.stroke()})}};
-  const dots=(n,rad,list)=>{for(let k=0;k<n;k++){const x=r()*S,y=r()*S,rr=rad*(.5+r()),[rgb,a]=list[k%list.length];g.fillStyle=`rgba(${rgb},${a})`;t3IWrap(S,(ox,oy)=>{g.beginPath();g.arc(x+ox,y+oy,rr,0,TAU);g.fill()})}};
+    t3IWrap(S,(ox,oy)=>{g.beginPath();g.moveTo(x+ox,y+oy);g.quadraticCurveTo(x+ox+Math.cos(a)*l*.5+bx,y+oy+Math.sin(a)*l*.5,x+ox+Math.cos(a)*l,y+oy+Math.sin(a)*l);g.stroke()},x,y,l+4)}};
+  const dots=(n,rad,list)=>{for(let k=0;k<n;k++){const x=r()*S,y=r()*S,rr=rad*(.5+r()),[rgb,a]=list[k%list.length];g.fillStyle=`rgba(${rgb},${a})`;t3IWrap(S,(ox,oy)=>{g.beginPath();g.arc(x+ox,y+oy,rr,0,TAU);g.fill()},x,y,rr+1)}};
   const cracks=(n,list)=>{g.lineJoin='round';g.lineCap='round';for(let k=0;k<n;k++){let x=r()*S,y=r()*S,a=r()*TAU;const pts=[[x,y]];for(let q=0;q<7;q++){a+=(r()-.5)*1.3;x+=Math.cos(a)*(8+r()*14);y+=Math.sin(a)*(8+r()*14);pts.push([x,y])}
-    const[rgb,al]=list[k%list.length];g.strokeStyle=`rgba(${rgb},${al})`;g.lineWidth=.8+r()*1.6;t3IWrap(S,(ox,oy)=>{g.beginPath();pts.forEach((p,q)=>q?g.lineTo(p[0]+ox,p[1]+oy):g.moveTo(p[0]+ox,p[1]+oy));g.stroke()})}};
+    const[rgb,al]=list[k%list.length];g.strokeStyle=`rgba(${rgb},${al})`;g.lineWidth=.8+r()*1.6;t3IWrap(S,(ox,oy)=>{g.beginPath();pts.forEach((p,q)=>q?g.lineTo(p[0]+ox,p[1]+oy):g.moveTo(p[0]+ox,p[1]+oy));g.stroke()},pts[0][0],pts[0][1],160)}};
   if(ch===1){blots(34,26,80,[['255,255,236',.5],['160,176,140',.42],['200,214,180',.4]]);strokes(1700,7,[['120,140,96',.5],['255,255,240',.55],['150,170,120',.45]],1.5,-Math.PI/2,1.4);dots(140,1.4,[['255,255,250',.4],['90,110,70',.35]])}
   else if(ch===2){blots(26,30,90,[['255,240,230',.32],['120,100,96',.4]]);cracks(70,[['60,44,40',.65],['90,70,64',.5]]);dots(500,1.2,[['250,240,235',.4],['70,56,52',.45]]);dots(30,2.6,[['40,30,28',.4]])}
   else if(ch===3){blots(30,30,90,[['120,140,110',.5],['250,255,230',.4],['170,190,150',.4]]);strokes(1200,6,[['110,130,90',.5],['240,250,220',.45]],1.4,-Math.PI/2,1.4);dots(160,1.6,[['90,110,80',.4],['255,255,240',.3]])}
@@ -111,7 +111,7 @@ function t3IBarkCv(){const S=128,c=t3ICv(S),g=c.getContext('2d'),r=t3IRnd(91);g.
 // a soft cloud (some round puffs together)
 function t3ICloudCv(){const S=128,c=t3ICv(S),g=c.getContext('2d');for(const[x,y,r,a] of[[64,70,40,.9],[40,74,28,.8],[88,76,30,.8],[54,56,26,.7],[78,58,24,.7],[64,84,34,.6]]){const gr=g.createRadialGradient(x,y,0,x,y,r);
     gr.addColorStop(0,`rgba(255,255,255,${a})`);gr.addColorStop(.6,`rgba(255,255,255,${a*.5})`);gr.addColorStop(1,'rgba(255,255,255,0)');g.fillStyle=gr;g.fillRect(0,0,S,S)}return c}
-function t3ITx(){const X=T3I.tx;if(X.ok)return X;X.top=[];for(let ch=1;ch<=4;ch++)X.top[ch]=t3Tex(t3ITopCv(ch),true,0,0,true);X.rock=t3Tex(t3IRockCv(),true,0,0,true);
+function t3ITx(){const X=T3I.tx;if(X.ok)return X;const T=[];X.top=new Proxy(T,{get:(o,k)=>{const ch=+k;if(ch>=1&&ch<=4){if(!o[ch])o[ch]=t3Tex(t3ITopCv(ch),true,0,0,true);return o[ch]}return o[k]}});X.rock=t3Tex(t3IRockCv(),true,0,0,true);
   X.wood=t3Tex(t3IWoodCv(),true,0,0,true);X.bark=t3Tex(t3IBarkCv(),true,0,0,true);X.cloud=t3Tex(t3ICloudCv(),true);X.ok=true;return X}
 // ------------------------------------------------------------------ the ground of an island: the top (a gentle dome, little bumps toward the
 // edge), the lip of grass (or ash, or snow) that bulges over the edge, the cliff with its layers, and the rock that hangs under it to a point

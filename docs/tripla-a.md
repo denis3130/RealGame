@@ -74,3 +74,63 @@ contatore dei fotogrammi acceso nell'anteprima. Telefono lento: `LOWFX` e le sco
 - Le raccolte (monete, cristalli, sfere, cuori) e i colpi sono ancora disegni 2D messi al posto giusto (con la loro luce 3D).
 - Gli altri mondi, i menu, le entrate e le mosse più belle, l'audio più ricco oltre ai tonfi: dopo la scelta della luce.
 - Niente entra nel gioco senza il sì di Denis.
+
+## Il menu in tripla A (3 novembre)
+
+Denis, 2 novembre: «migliora il ponte ed il menu ora». Alle domande: «3D vero come la stanza»; del ponte «sembra piatto», «poco
+spettacolare», «troppo piccolo o lontano»; le parti del menu: schermata principale, interfaccia, fogli e finestre, menu Zombie; tutto
+nell'anteprima tripla A (il gioco e l'app non cambiano).
+
+- **`src/js/116-t3-isole.js`** (`T3I`): la schermata principale della Classica disegnata con WebGL come la stanza. La logica resta quella
+  di 94 (dove guardi, l'eroe, i salti, le assi, i premi, lo spettacolo, i tocchi); cambia solo il disegno, le scritte di 94 restano sopra.
+  - **Le isole**: il terreno a cupola con la sua tessitura del mondo (prato e muschio, cenere con le crepe, palude bagnata, neve coi suoi
+    riflessi), il bordo che sporge, la rupe a strati e il sasso che pende sotto fino a una punta, nella nebbia dell'abisso; sopra le cose
+    del mondo in volumi veri dove le metteva 94: il sentiero di lastre, la pozza con la cascata giù dalla rupe (acqua, lava, ghiaccio), il
+    cancello ad arco con la gemma dell'arena e la bocca buia con la sua luce, il braciere che arde quando l'arena è vinta, le lanterne di
+    pietra, radici e ghiaccioli dal bordo; muschio (la quercia, le colonne, le lapidi, i funghi, felci, ciuffi e fiori), vulcano (il cono
+    col cratere e le colate, il basalto, l'ossidiana, l'albero morto con le punte di brace, l'incudine), palude (l'albero storto con le
+    barbe di muschio, canne, ninfee, il totem, i ceppi), ghiaccio (i pini con la neve, i cristalli, il pupazzo di neve, i cumuli). Il
+    custode dorme al suo posto: il Golem in 3D vero (113), gli altri dipinti dal gioco su una cartolina; le «z» del sonno sopra. Le isole
+    chiuse sono nere col lucchetto e le catene sul cancello.
+  - **Il ponte**: le due torri di tronchi con la base di pietra, gli anelli, le croci, la piattaforma, il tetto a quattro falde (col suo
+    colore del mondo) e lo stendardo lungo dell'arena dopo sul davanti di ognuna (la vista lungo il ponte resta aperta); le 64 assi con la
+    pancia del ponte, ognuna un po' diversa (lunghezza, posto, giro, colore, venature del legno) coi chiodi; sotto le due travi, i traversi
+    ogni quattro assi e la crociera (dove le assi mancano si vede l'impalcatura che le aspetta); i pali coi cappelli, le funi del
+    parapetto a festoni (a sinistra si aprono dove ci sono i balconi), i due cavi grandi dalle cime delle torri coi tiranti e le
+    bandierine dell'arena dopo; il vestito del mondo sulle teste dei traversi (muschio e barbe, catene col carbone acceso, liane coi fiori,
+    ghiaccioli e neve); i tre balconi a sinistra (pavimento di assi, puntelli, la pietra tonda con l'anello del colore del premio, i pali
+    alti con l'arco e lo stendardino, le lanterne in cima, le funi intorno) col premio in 3D che galleggia (la cassa col coperchio sul
+    suo cardine, il sacco d'oro con le monete, i cristalli, il vasetto dell'essenza che brilla); le lanterne che si accendono quando le
+    assi le raggiungono; gli ancoraggi sulla mini isola.
+  - **La mini isola del traguardo**, nel mondo dopo: il sentiero, l'altare con le rune, il tesoro (chiuso o aperto e vuoto), il palo con
+    lo stendardo arrotolato che si srotola, i due bracieri che si accendono; **le cinque pietre** che salgono dal buio; **l'isola dopo**
+    lontana nella nebbia.
+  - **La telecamera** bassa (14°) e vicina, che guarda lungo il ponte (`T3IC`): le assi vicine grandi, il ponte che corre lontano fino alla
+    mini isola; l'isola larga quanto il telefono permette, al posto dove 94 la vuole (le scritte stanno intorno).
+  - **L'eroe** in 3D (il suo modello, come nella stanza) col bastoncino di muschio acceso in bocca sulla sua isola, che respira, si guarda
+    intorno e ogni tanto fa un saltello; cammina sui ponti e salta sulle pietre; i compagni accanto (cartoline). **Il pennone degli
+    stendardi** sull'isola dove sta l'eroe, coi suoi stendardi che sventolano e quello nuovo che sale.
+  - **Lo spettacolo delle assi** in 3D: le assi volano basse dall'isola, girando, e si posano al loro posto con un piccolo assestamento;
+    polvere, scintille dei chiodi, i premi che si aprono (lo scoppio e le monete che volano di 94 dove il 3D mette il premio), l'eroe che
+    corre sul ponte fino al traguardo, «Traguardo raggiunto!», le pietre che salgono, l'isola dopo che si accende con un grande bagliore.
+  - **Intorno**: il cielo del mondo con le stelle e la sua luce dal basso, le nuvole nell'abisso, le rocce lontane che galleggiano, le
+    luci delle lanterne e dei bracieri sulle cose vicine, lucciole, braci e luccichii; le due luci («Chiara» e «Da film»).
+- **`src/js/117-t3-interfaccia.js`** (`T3UI`): le stesse forme e misure di oggi (i tocchi restano dove sono), materiali più ricchi:
+  rilievi più profondi e un filo del colore della modalità intorno ai bottoni (oro nella Classica, verde malato nella Zombie), la luce che
+  scorre sui bottoni laterali (più spesso su quelli pronti), monete e cristalli in tasche incassate, i cinque posti delle casse come
+  incastri di pietra con le borchie, Gioca d'oro più ricco, la barra in basso con la scheda scelta che si accende; i fogli più scuri e caldi
+  col titolo su un nastro, le schede con la loro cornice, le scelte dorate. Nelle **Impostazioni** due interruttori dell'anteprima: la
+  luce del 3D («Chiara» o «Da film») e l'interfaccia («Nuova» o «Di prima», per confrontarle).
+- **`src/js/118-t3-falo.js`** (`T3F`): il falò del menu Zombie. La scena lontana resta il dipinto di oggi (cielo, luna, mulino, fattoria,
+  gli zombie sul sentiero con gli occhi accesi, la staccionata, la nebbia), dipinta a metà grandezza e messa come fondale; davanti il
+  campo in 3D vero: il tronco con la corteccia e il taglio, l'eroe seduto (la mossa «seduto» del suo modello), la pistola appoggiata, lo
+  zaino, la pala, la cassa delle munizioni, il pentolino, l'anello di pietre, i ceppi con le punte di brace, le fiamme del gioco, le
+  scintille e il fumo; la notte fredda della luna e la luce calda del fuoco che trema. Andando a giocare l'eroe si alza e se ne va nel buio.
+- Mentre il menu passa da una modalità all'altra (lo scorrimento) c'è per quel secondo il disegno di sempre; se il 3D non c'è torna da solo.
+- Prove: `node tests/t3/menu.js` (19 controlli: isole in 3D, tocchi dell'eroe e dei premi, pezzi sotto i 65.000 punti, spettacolo, interfaccia
+  e interruttori, falò, ritorno al disegno di sempre, nessun errore). Foto: `tests/t3/tr_isole.jpg` (prima e dopo: l'isola e il ponte col
+  disegno di oggi e in 3D), `tr_falo.jpg` (il falò prima e dopo), `tr_spettacolo.jpg` (lo spettacolo, il traguardo, due fogli).
+- Tempi sul computer di prova (senza scheda grafica): isole circa 18–24 ms a fotogramma; falò circa 2 ms di lavoro più il passaggio finale.
+  Sul telefono lo dice il contatore.
+- Cosa manca: degli animali intorno alle isole ci sono solo lucciole, braci e luccichii (niente stormi, farfalle, rane); il ponte non
+  ondeggia ancora sotto l'eroe e le funi non sentono il vento; gli stendardi delle torri sono fermi.
