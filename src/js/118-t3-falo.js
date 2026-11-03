@@ -1,39 +1,42 @@
 // =====================================================================
-// 118. MOSSBOUND TRIPLA A · IL FALÒ DEL MENU ZOMBIE IN 3D (anteprima a parte, con 105, 106, 110–117).
-// Denis (2 novembre), fra le parti del menu: «Menu Zombie»; poi (3 novembre): «miglioralo non mi piace», «Falò del menu Zombie, rifai tutto
-// meglio», «Sembra di plastica, Inquadratura», «Rifinisco il 3D». Rifatto da capo: tutta la scena è in 3D vero (non più il dipinto di 66 come
-// fondale) e dipinta come il gioco, non di plastica: ogni pezzo ha il disegno del suo materiale (corteccia, assi, pietra, intonaco, tegole,
-// tela, ferro, terra, erba, legno bruciato) preso dal posto dove sta (triplanare, tre toni chiari che il colore del pezzo tinge), la luce della
-// luna in due toni con l'orlo sfrangiato come una pennellata, la luce del fuoco a fasce morbide, l'orlo freddo della luna sui bordi, le cime
-// più chiare, il buio alla base delle cose, il contorno scuro spesso. La telecamera è più lontana e più bassa: l'eroe seduto sul tronco un po'
-// più piccolo, il fuoco alla sua destra, e dietro di loro la notte intera: il prato con l'erba alta, la staccionata rotta, le tombe, il
-// sentiero dove passano gli zombie in 3D (106: camminano, si fermano, si girano di scatto verso di te col verso, ripartono; gli occhi che
-// brillano), lo spaventapasseri che ogni tanto gira la testa e la piega troppo di lato, la fattoria in rovina col tetto sfondato e una
-// finestra accesa, il mulino con le pale che girano (una è rotta), l'albero morto, le colline con la cappella in rovina, la luna con l'alone,
-// le nuvole che le passano davanti, le stelle, i corvi in volo e sui pali, la nebbia bassa sul prato. Il campo: il tronco col taglio e gli
-// anelli, il muschio e i funghetti, la tenda di tela, lo zaino con la coperta, la pala piantata, il ceppo con l'ascia, la catasta, la cassa
-// delle munizioni coi bossoli, la lanterna spenta, il pentolino col vapore, la pistola appoggiata al tronco (ARMI3D); il fuoco: le pietre, la
-// cenere, i ceppi a capanna con le crepe di brace, le fiamme a lingue (rosse, arancio, gialle, il cuore bianco), le scintille, il fumo, la
-// luce che trema su tutto quello che ha vicino. La prima volta la scena si prepara a pezzetti (anche durante il passaggio tra le modalità):
-// intanto resta il disegno di 66. LOWFX: niente nebbia, fumo, corvi in volo, meno scintille.
+// 118. MOSSBOUND TRIPLA A · L'ASSEDIO, LA SCENA DEL MENU ZOMBIE IN 3D (anteprima a parte, con 105, 106, 110–117).
+// Denis (2 novembre), fra le parti del menu: «Menu Zombie»; (3 novembre) «miglioralo non mi piace»: il falò rifatto tutto in 3D dipinto;
+// poi «non mi ispira» («Statico, poca azione», «Manca un'idea forte») e fra le idee ha scelto «Assedio»: la notte dell'assedio. L'eroe in
+// piedi davanti al tronco con l'arma zombie in mano (quella scelta nell'Arsenale), il fuoco alla sua destra; dietro di lui la barricata di
+// fortuna a mezzaluna intorno al campo (il carro ribaltato con una ruota che gira ancora, casse, botti e sacchi, la palizzata di pali
+// appuntiti legati con le funi, una porta e un tavolo rovesciati, assi inchiodate di traverso, i cavalli di frisia ai lati, due pali con le
+// torce); fuori l'orda in 3D (106) che preme: la prima fila con le braccia tese oltre la barricata, la seconda che spinge, la folla dietro,
+// altri che escono dalla nebbia e vengono avanti fra le tombe aperte. Ogni tanto uno scavalca: sale in cima alla barricata, l'eroe si gira
+// di scatto, mira e spara (la vampa, la scia, il sangue scuro, il suono della sua arma) e quello cade all'indietro; la barricata trema
+// sotto le spinte (polvere, scricchiolii), l'orda geme. Lontano la fattoria brucia (fiamme dalle finestre e dal tetto sfondato, il fumo, le
+// braci, la luce rossa sul campo e all'orizzonte), il mulino gira, lo spaventapasseri si gira a guardarti, la luna è rossa, i lampi
+// illuminano tutto per un attimo e il tuono arriva dopo. Restano dal falò i disegni dei materiali e la pittura (non di plastica), le
+// colline con la cappella, il mulino, lo spaventapasseri, i corvi e il campo (il tronco, la tenda, lo zaino, la pala, il ceppo con l'ascia,
+// la catasta, la cassa delle munizioni, il pentolino, il fuoco). La prima volta la scena si prepara a pezzetti (intanto resta il disegno
+// di 66). LOWFX: metà orda, niente nebbia, fumo e corvi in volo, meno scintille e braci.
 // =====================================================================
-const T3F={on:true,bad:false,ready:false,q:null,zq:null,zok:{},X:{},cv:{},S:[],G:{},Z:[],zT:0,zInit:0,cr:[],crT:6,perch:[],sp:[],sm:[],ms:0,hy:0,top:0,zW:160,
-  sc:{st:'idle',t:0,next:7,yaw:0,tilt:0,glow:0},bladeA:0,prof:null};
+const T3F={on:true,bad:false,ready:false,q:null,zq:null,zok:{},X:{},cv:{},S:[],G:{},hd:null,cr:[],crT:6,perch:[],sp:[],sm:[],fx:[],em:[],ms:0,hy:0,top:0,t:0,
+  sc:{st:'idle',t:0,next:7,yaw:0,tilt:0,glow:0},bladeA:0,wheelA:0,sh:0,shN:[0,1,0],lt:{next:4,t:-1,b:null,f:0},gun:'pistola',n:{climb:0,shot:0,push:0,bolt:0},
+  h:{st:'idle',t:0,face:1.05,lk:0,lkOn:0,lkT:5,rec:0,flash:0,slide:0,mf:0,i:0,tgt:null,muz:null},prof:null};
 function t3FaloOk(){return T3F.on&&!T3F.bad&&T3F.ready&&t3IslOk()}
-// the places (the hero sits at 0,0; x east, y toward us, z up; the hero is ~40 tall sitting)
-const T3FL={fire:[21,13],seat:7.4,fence:-200,path:-244,lamp:[46,-268],farm:[-58,-600],mill:[136,-740],scare:[88,-318],tree:[-76,-96]};
+// the places (the hero stands at 0,0; x east, y toward us, z up; the hero is ~44 tall)
+const T3FL={fire:[20,10],farm:[-36,-480],mill:[150,-760],scare:[112,-560],tree:[-118,-136]};
+// the barricade: a half moon round the camp, open toward us (its line, and the slope of the line)
+const T3FB=x=>-66+44*(x/112)*(x/112),T3FBd=x=>88*x/(112*112);
+// (an angle turned toward another by a share k, the short way round)
+const t3FAng=(a,b,k)=>{let d=b-a;d=Math.atan2(Math.sin(d),Math.cos(d));return a+d*Math.min(1,k)};
 // the camera: the hero's size against 66's drawing (k), how far above HOME_Y the camp sits (up, in hs), the horizon's place between the top
 // bar and the hero (hor), the bounds of the tilt
 const T3FC={fovy:50,k:.7,up:4,hor:.24,p0:9,p1:22,tz:6};
-// the two lights: the night of the camp (the sky and the earth dark and cool, the moon behind on the right, the fire does the rest)
-const T3F_LUCE={chiara:{sky:[.15,.19,.27],gnd:[.06,.055,.05],key:[.3,.37,.46],keyD:[.42,-.8,.32],fog:[.085,.11,.14],mist:.5,torch:1.25,bloom:.7,thr:.7,sat:1.14,con:.08,warm:.035,vig:.32,grain:.012,ink:1,
-    top:'#060a16',mid:'#122038',hor:'#2e4a4c',fire:1.45},
-  film:{sky:[.09,.11,.17],gnd:[.03,.03,.035],key:[.27,.35,.5],keyD:[.45,-.8,.3],fog:[.05,.065,.088],mist:.6,torch:1.6,bloom:1,thr:.6,sat:1.06,con:.18,warm:.06,vig:.46,grain:.024,ink:1,
-    top:'#03050c',mid:'#0a1324',hor:'#223a3a',fire:1.75}};
+// the two lights of the siege: a red night (the blood moon behind on the right, the burning farm far on the left, the fire and the
+// torches near; the lightning does the rest)
+const T3F_LUCE={chiara:{sky:[.19,.13,.17],gnd:[.07,.05,.05],key:[.46,.26,.22],keyD:[.38,-.82,.42],fog:[.14,.075,.075],mist:.42,torch:1.25,bloom:.9,thr:.6,sat:1.12,con:.1,warm:.04,vig:.34,grain:.014,ink:1,
+    top:'#07040c',mid:'#1c0a12',hor:'#4e1d16',moon:[1,.5,.38],halo:[.8,.2,.12],fire:1.5},
+  film:{sky:[.11,.07,.1],gnd:[.035,.025,.03],key:[.4,.2,.18],keyD:[.4,-.82,.4],fog:[.085,.04,.045],mist:.5,torch:1.6,bloom:1.15,thr:.52,sat:1.05,con:.2,warm:.06,vig:.48,grain:.026,ink:1,
+    top:'#040208',mid:'#13060c',hor:'#3c140f',moon:[1,.44,.3],halo:[.75,.16,.08],fire:1.8}};
 const t3Fss=(a,b,x)=>{const t=Math.max(0,Math.min(1,(x-a)/(b-a)));return t*t*(3-2*t)};
 function t3FN(x,y){const xi=Math.floor(x),yi=Math.floor(y),xf=x-xi,yf=y-yi,h=(a,b)=>t3IH(a*57+b*131,1.7),u=xf*xf*(3-2*xf),v=yf*yf*(3-2*yf);
   return h(xi,yi)*(1-u)*(1-v)+h(xi+1,yi)*u*(1-v)+h(xi,yi+1)*(1-u)*v+h(xi+1,yi+1)*u*v}
-const t3FPathY=x=>T3FL.path+5*Math.sin(x/97)+3*Math.sin(x/41+1);
 // ------------------------------------------------------------------ the pictures of the materials, painted once (light, so the colour of the
 // piece tints them; seamless: what goes over an edge comes back on the other side)
 function t3FCv(S){const c=document.createElement('canvas');c.width=c.height=S;return c}
@@ -161,17 +164,19 @@ function t3FTree(mb,base,h,sd,col){const R=t3IRnd(sd*977+5),{add,mul,nrm}=RG;
 function t3FTuft(mb,c,h,sd,cols){for(let k=0;k<6;k++){const a=t3IH(k,sd)*TAU,r=.6+t3IH(k,sd+1)*1.6,l=h*(.6+t3IH(k,sd+2)*.6),lean=.25+t3IH(k,sd+3)*.45,b=[c[0]+Math.cos(a)*r,c[1]+Math.sin(a)*r,c[2]-.2];
   t3Cone(mb,b,[b[0]+Math.cos(a)*l*lean,b[1]+Math.sin(a)*l*lean,c[2]+l],.5+h*.03,cols[k%cols.length],{N:3,w:.25})}}
 // ------------------------------------------------------------------ the ground: one sheet from the camp to the hills, the grass and the
-// earth mixed by the corners (the trampled clearing round the camp, the path, bare patches), the ring burnt round the fire
+// earth mixed by the corners (the trampled clearing of the camp, the band trodden by the horde along the barricade, the yard of the farm,
+// bare patches), the ring burnt round the fire, the field scorched round the burning farm
 function t3FGround(){const b=v3MB(),NX=84,NY=72,xs=[],ys=[];for(let i=0;i<NX;i++){const u=i/(NX-1)*2-1;xs.push(Math.sign(u)*Math.pow(Math.abs(u),2.1)*2100)}
   for(let j=0;j<NY;j++){const v=j/(NY-1);ys.push(130-Math.pow(v,1.85)*3400)}
-  const F=T3FL.fire,cc=[F[0]*.4-2,F[1]*.3-6],idx=[];
+  const F=T3FL.fire,cc=[F[0]*.4-2,F[1]*.3-14],[fx,fy]=T3FL.farm,idx=[];
   for(let j=0;j<NY;j++){const row=[];for(let i=0;i<NX;i++){const x=xs[i],y=ys[j];
-      const ang=Math.atan2(y-cc[1],x-cc[0]),rr=50*(1+.16*Math.sin(ang*3+1)+.09*Math.sin(ang*7)),dc=Math.hypot((x-cc[0])/1.3,y-cc[1]),clear=1-t3Fss(rr*.62,rr,dc);
-      const pd=Math.abs(y-t3FPathY(x)),path=(1-t3Fss(8,17,pd))*(1-t3Fss(900,1400,Math.abs(x))),patch=t3Fss(.7,.9,t3FN(x/140+3,y/110))*.75,
-        farm=1-t3Fss(40,90,Math.hypot(x-T3FL.farm[0],(y-T3FL.farm[1])*1.4)),mill=1-t3Fss(30,60,Math.hypot(x-T3FL.mill[0],y-T3FL.mill[1]));
-      const dirt=Math.max(clear,path*.95,patch,farm*.8,mill*.7),z=(t3FN(x/300,y/260)-.5)*18*t3Fss(900,1500,Math.abs(y));
-      const g0=t3FN(x/90+5,y/70),g1=t3FN(x/31,y/27),gk=.72+.4*t3FN(x/64+9,y/48),gc=[(58+g0*30-g1*12)*gk,(72+g0*26-g1*10)*gk,(44+g0*12)*gk],dc0=[112+g1*16,90+g1*12,68+g1*8],burn=1-t3Fss(5,13,Math.hypot(x-F[0],y-F[1]));
-      let c=t3Im(gc,dc0,dirt);c=t3Ik(c,1-burn*.72);row.push(v3V(b,[x,y,z],[0,0,1],[c[0],c[1],c[2],255],[dirt,0]))}idx.push(row)}
+      const ang=Math.atan2(y-cc[1],x-cc[0]),rr=56*(1+.16*Math.sin(ang*3+1)+.09*Math.sin(ang*7)),dc=Math.hypot((x-cc[0])/1.4,y-cc[1]),clear=1-t3Fss(rr*.62,rr,dc);
+      const band=(1-t3Fss(12,34,Math.abs(y-(T3FB(x)-10))))*(1-t3Fss(150,220,Math.abs(x))),patch=t3Fss(.7,.9,t3FN(x/140+3,y/110))*.75,
+        fd=Math.hypot(x-fx,(y-fy)*1.25),farm=1-t3Fss(60,140,fd),mill=1-t3Fss(30,60,Math.hypot(x-T3FL.mill[0],y-T3FL.mill[1]));
+      const dirt=Math.max(clear,band*.9,patch,farm*.85,mill*.7),z=(t3FN(x/300,y/260)-.5)*18*t3Fss(900,1500,Math.abs(y));
+      const g0=t3FN(x/90+5,y/70),g1=t3FN(x/31,y/27),gk=.72+.4*t3FN(x/64+9,y/48),gc=[(58+g0*30-g1*12)*gk,(70+g0*24-g1*10)*gk,(44+g0*12)*gk],dc0=[112+g1*16,88+g1*12,68+g1*8],
+        burn=1-t3Fss(5,13,Math.hypot(x-F[0],y-F[1])),sc=(1-t3Fss(30,110,fd))*.62;
+      let c=t3Im(gc,dc0,dirt);c=t3Ik(c,(1-burn*.72)*(1-sc));row.push(v3V(b,[x,y,z],[0,0,1],[c[0],c[1],c[2],255],[dirt,0]))}idx.push(row)}
   for(let j=0;j<NY-1;j++)for(let i=0;i<NX-1;i++){v3T(b,idx[j][i],idx[j][i+1],idx[j+1][i+1]);v3T(b,idx[j][i],idx[j+1][i+1],idx[j+1][i])}
   return[{m:v3Up(b),mat:'grass',mat2:'dirt',mode:2,ao:0,out:0}]}
 // ------------------------------------------------------------------ the hills far away: three ridges one behind the other, dead trees on the
@@ -185,38 +190,42 @@ function t3FHills(){const get=t3FGet(),ridges=[[-1350,70,'#2a3a32',4],[-1850,120
     t3IBox(mb,F(0,0,14),[1,0,0],[0,1,0],[0,0,1],20,13,14,st);t3FPrism(mb,F,D,[[-21,28],[21,28],[0,44]],-13,13,st);t3IBox(mb,F(-14,0,30),[1,0,0],[0,1,0],[0,0,1],5,5,30,st);
     t3Lathe(mb,F(-14,0,60),[[0,6],[22,.5]],4,st);t3IBox(mb,F(6,13.5,16),[1,0,0],[0,1,0],[0,0,1],4,.6,8,t3Ic('#0c0c10'))}
   return t3FUp(get,{out:0,ao:0})}
-// ------------------------------------------------------------------ the farmhouse in ruins: the stone foundation, plastered walls with
-// their timbers, the gable toward us, the roof of shingles fallen in on one side (the rafters show), the chimney, the door boarded up, a
-// broken shutter, one window lit inside, a rain barrel, shingles fallen on the ground
+// ------------------------------------------------------------------ the farmhouse burning: the stone foundation, plastered walls with
+// their timbers, the gable toward us, the roof of shingles fallen in on the right (the charred rafters show, the fire comes out), the
+// chimney, the door boarded up, the windows all lit by the fire inside with the soot above them, a rain barrel, shingles fallen on the ground
 function t3FFarm(){const get=t3FGet(),[cx,cy]=T3FL.farm,a=.32,ca=Math.cos(a),sa=Math.sin(a),F=(x,y,z)=>[cx+x*ca-y*sa,cy+x*sa+y*ca,z],D=(x,y,z)=>[x*ca-y*sa,x*sa+y*ca,z],U=D(1,0,0),V=D(0,1,0),Wz=[0,0,1],
     hw=34,hd=26,Hw=36,rh=26,box=(mat,x,y,z,hx,hy,hz,col,o)=>t3IBox(get(mat),F(x,y,z),U,V,Wz,hx,hy,hz,col,Object.assign({uv:1},o||{})),
-    pl=t3Ic('#bcb29a'),st=t3Ic('#8e8e86'),tim=t3Ic('#5c4a3a'),rf=t3Ic('#857466'),dk=t3Ic('#100c0e'),lit=t3Ic('#ffb45a',36);
+    pl=t3Ic('#bcb29a'),st=t3Ic('#8e8e86'),tim=t3Ic('#5c4a3a'),rf=t3Ic('#857466'),dk=t3Ic('#100c0e'),lit=t3Ic('#ff9a3c',26),soot=t3Ic('#231b18'),chr=t3Ic('#2a2220');
   box('stone',0,0,3,hw+1.6,hd+1.6,3,st);box('plaster',0,0,(6+Hw)/2,hw,hd,(Hw-6)/2,pl);
   t3FPrism(get('plaster'),F,D,[[-hw,Hw],[hw,Hw],[0,Hw+rh]],-hd,hd,pl);
   // the timbers: corners, the beam round the top, braces on the front
   for(const sx of[-1,1])for(const sy of[-1,1])box('woodV',sx*(hw-.2),sy*(hd-.2),(6+Hw)/2,1.6,1.6,(Hw-6)/2+.6,tim);
   for(const sy of[-1,1])box('woodH',0,sy*(hd+.4),Hw-.6,hw+1,1.1,1.4,tim);for(const sx of[-1,1])box('woodH',sx*(hw+.4),0,Hw-.6,1.1,hd+1,1.4,tim);
   for(const sx of[-1,1])t3FBeam(get('woodV'),F(sx*(hw-2),hd+.5,8),F(sx*(hw-14),hd+.5,Hw-2),2.4,1.6,tim,D(0,1,0));
-  // the roof: the left side whole, the right one with a hole (the rafters), the ridge beam
+  // the roof: the left side whole, the right one burnt open (the charred rafters), the ridge beam
   const sl=Math.hypot(hw+5,rh+3),ang=Math.atan2(rh+3,hw+5);
   for(const s of[-1,1]){const cxr=s*(hw+5)/2,czr=Hw-3+(rh+3)/2+1.2,UU=[-s*Math.cos(ang)*U[0],-s*Math.cos(ang)*U[1],Math.sin(ang)],Wn=[s*Math.sin(ang)*U[0],s*Math.sin(ang)*U[1],Math.cos(ang)];
     const seg=(y0,y1)=>t3IBox(get('shingle'),F(cxr,(y0+y1)/2,czr),UU,V,Wn,sl/2+1,(y1-y0)/2,1.3,rf,{uv:1});
-    if(s<0)seg(-hd-5,hd+5);else{seg(-hd-5,-8);seg(12,hd+5);for(const ry of[-4,4,10])t3FBeam(get('woodV'),F(2,ry,Hw+rh-1),F(hw+3,ry,Hw-1),1.8,1.8,tim);
-      t3IBox(get('shingle'),F(cxr+4,-1,czr-9),UU,V,Wn,sl/3,5,1.2,t3Ik(rf,.9),{uv:1})}}
+    if(s<0)seg(-hd-5,hd+5);else{seg(-hd-5,-14);seg(18,hd+5);for(const ry of[-10,-3,4,11])t3FBeam(get('char'),F(2,ry,Hw+rh-1),F(hw+3,ry,Hw-1),1.8,1.8,chr);
+      t3IBox(get('shingle'),F(cxr+4,-1,czr-9),UU,V,Wn,sl/3,5,1.2,t3Ik(rf,.6),{uv:1})}}
   t3FBeam(get('woodH'),F(0,-hd-6,Hw+rh+.8),F(0,hd+6,Hw+rh+.8),2.2,2.2,tim);
   box('stone',-hw+9,-8,(Hw+rh+10)/2+6,4.2,4.2,(Hw+rh+10)/2-6,st);box('stone',-hw+9,-8,Hw+rh+11,5.2,5.2,1.2,t3Ik(st,.85));T3F.chim=F(-hw+9,-8,Hw+rh+13);
   // the door boarded up, its frame, the steps
   box('plain',0,hd+.2,15,6.5,.4,10,dk);for(const sx of[-1,1])box('woodV',sx*7.6,hd+.8,15.5,1.2,.9,10.5,tim);box('woodH',0,hd+.8,26.6,8.8,.9,1.2,tim);
   for(const[z,r] of[[12,.35],[20,-.28]]){const Ub=D(Math.cos(r),0,0),Wb=D(-Math.sin(r),0,0);t3IBox(get('planks'),F(0,hd+1.3,z),[Ub[0],Ub[1],Math.sin(r)],V,[Wb[0],Wb[1],Math.cos(r)],9.5,.5,1.8,t3Ic('#8a7458'),{uv:1})}
   box('stone',0,hd+3,1.6,8,3,1.6,st);box('stone',0,hd+6,.6,8,2,.6,t3Ik(st,.9));
-  // the windows: the lit one on the left (warm, it trembles), the broken one on the right with its shutter hanging, one on the side
-  box('plain',-20,hd+.25,19,5,.3,5.5,lit);box('plain',20,hd+.25,19,5,.3,5.5,dk);box('plain',hw+.25,-4,19,.3,5,5.5,dk);
-  for(const sx of[-20,20]){box('woodV',sx,hd+.7,19,.6,.5,5.6,tim);box('woodH',sx,hd+.7,19,5.2,.5,.6,tim);box('woodH',sx,hd+1,12.8,6.4,1.2,.8,tim);for(const ex of[-1,1])box('woodV',sx+ex*5.4,hd+.7,19,.7,.6,6.2,tim)}
+  // the windows: all lit by the fire inside, the soot licking up the wall above them, the shutter hanging on the right one
+  box('plain',-20,hd+.25,19,5,.3,5.5,lit);box('plain',20,hd+.25,19,5,.3,5.5,lit);box('plain',hw+.25,-4,19,.3,5,5.5,lit);
+  for(const sx of[-20,20]){box('woodV',sx,hd+.7,19,.6,.5,5.6,tim);box('woodH',sx,hd+.7,19,5.2,.5,.6,tim);box('woodH',sx,hd+1,12.8,6.4,1.2,.8,tim);for(const ex of[-1,1])box('woodV',sx+ex*5.4,hd+.7,19,.7,.6,6.2,tim);
+    box('plain',sx,hd+.32,28.6,4.4,.2,3.6,soot);box('plain',sx+1,hd+.34,33,2.6,.2,1.8,soot)}
+  box('plain',hw+.32,-4,28.6,.2,4.4,3.6,soot);
   {const Us=D(Math.cos(.5),Math.sin(.5)*.6,0),Vs=D(-Math.sin(.5),Math.cos(.5),0);t3IBox(get('planks'),F(28.2,hd+2.4,15.5),RG.nrm(Us),RG.nrm(Vs),[0,0,1],2.8,.5,6,t3Ic('#7a6450'),{uv:1})}
-  T3F.win={p:F(-20,hd+2,19),l:F(-20,hd+8,18)};
+  // where it burns (the windows, the hole in the roof, the corner and the eaves that caught) and the heart of its light
+  T3F.ff=[{p:F(-20,hd+1.6,15.5),s:1.15},{p:F(20,hd+1.6,15.5),s:1.25},{p:F(hw+1.6,-4,15.5),s:1},{p:F(12,-3,Hw+rh-12),s:2.6},{p:F(hw-2,10,Hw+3),s:1.8},{p:F(-4,12,Hw+rh-3),s:1.6}];
+  T3F.fl=F(6,8,Hw+18);
   // the rain barrel, shingles fallen
   t3Lathe(get('woodV'),F(hw+5,hd-4,0),[[0,4.2],[5,4.8],[10,4.2]],10,t3Ic('#7a6248'),{top:t3Ic('#2a3236')});for(const z of[2,8])t3Lathe(get('metal'),F(hw+5,hd-4,z),[[0,4.5],[.8,4.6]],10,t3Ic('#5a5c60'));
-  for(let k=0;k<5;k++){const p=F(hw+8+t3IH(k,2)*12,-10+t3IH(k,3)*24,.6);t3BoxA(get('shingle'),p,t3IH(k,4)*3,[3.4,2,.5],rf)}
+  for(let k=0;k<7;k++){const p=F(hw+8+t3IH(k,2)*14,-12+t3IH(k,3)*28,.6);t3BoxA(get('shingle'),p,t3IH(k,4)*3,[3.4,2,.5],k%2?rf:chr)}
   return t3FUp(get,{out:.9})}
 // ------------------------------------------------------------------ the windmill: the stone base, the tapering plastered tower, the cap of
 // shingles, the door, the dark windows, the shaft toward us (the blades turn: their own mesh)
@@ -239,30 +248,89 @@ function t3FBlades(){const get=t3FGet(),tim=t3Ic('#6a5640'),sail=t3Ic('#b8ae96')
       v3V(mb,O(r,s0,y),n,sail,[r,s0]);v3V(mb,O(r1,s0,y),n,sail,[r1,s0]);v3V(mb,O(r1,s1,y),n,sail,[r1,s1]);v3V(mb,O(r,s1,y),n,sail,[r,s1]);const i=mb.P.length/3-4;v3T(mb,i,i+1,i+2);v3T(mb,i,i+2,i+3)}}
     if(k===2){t3FBeam(get('woodV'),O(L+2,0,1.5),O(L+7,2.5,1.5),2,2.4,tim);for(const sy of[1,-1]){const y=1.5+sy*.35,n=[0,sy,0],i=mb.P.length/3;v3V(mb,O(L-4,4,y),n,sail,[0,0]);v3V(mb,O(L-4,12,y),n,sail,[8,0]);v3V(mb,O(L-14,16,y),n,sail,[12,8]);v3T(mb,i,i+1,i+2)}}}
   return t3FUp(get,{out:.7,mode:1,ts:14})}
-// ------------------------------------------------------------------ the field: the fence broken, the graves, tall grass, the big dead tree
-function t3FField(){const get=t3FGet(),R=t3IRnd(611),wd=t3Ic('#8a7a66'),wd2=t3Ic('#776654'),st=t3Ic('#90928c'),ms=t3Ic('#5c6c40'),posts=[];
-  for(let x=-560;x<=560;){if(R()>.1){const h=17+R()*6,lean=(R()-.5)*.32,y=T3FL.fence+(R()-.5)*4;posts.push([x,y,lean,h]);const top=[x+Math.sin(lean)*h,y,Math.cos(lean)*h];
-      t3FBeam(get('woodV'),[x,y,-1],top,2.8,2.8,wd,[0,1,0]);t3Cone(get('woodV'),top,[top[0]+Math.sin(lean)*2.4,y,top[2]+2.4],1.9,wd,{N:4})}else posts.push(null);x+=22+R()*9}
-  for(let i=0;i<posts.length-1;i++){const a=posts[i],b=posts[i+1];if(!a||!b||R()<.16)continue;for(const h of[6,13]){if(R()<.14)continue;const pa=[a[0]+Math.sin(a[2])*h,a[1]+1.6,h],pb=[b[0]+Math.sin(b[2])*h,b[1]+1.6,h];
-      if(R()<.22){const m=[pa[0]+(pb[0]-pa[0])*.55,pa[1]+1,Math.max(1.2,h-5-R()*4)];t3FBeam(get('woodH'),pa,m,1.2,3,wd2)}else t3FBeam(get('woodH'),pa,pb,1.2,3,R()<.5?wd2:wd)}}
-  T3F.posts=posts.filter(Boolean);
-  // the graves: three stones and crosses on the right, one on the left; the mounds
-  for(const[x,y,yaw,w,h,tilt] of[[64,-124,.1,9,13,.12],[86,-140,-.15,8,11,-.1],[104,-118,.25,10,15,.05],[-60,-138,-.2,8,10,-.16]]){t3FStone(get('stone'),[x,y,0],yaw,w,h,2.6,tilt,st,ms);
-    t3Ell(get('dirt'),[x,y+8,0],[w*.55,8,2.4],t3Ic('#6a5440'),{nl:12,nb:6,floor:0,w:.4})}
-  for(const[x,y,lean,h] of[[76,-112,.18,14],[118,-150,-.22,12],[-42,-128,.12,13]]){const b=[x,y,-1],tp=[x+Math.sin(lean)*h,y,h];t3FBeam(get('woodV'),b,tp,2,2,wd2,[0,1,0]);
+// ------------------------------------------------------------------ the field outside the barricade: the graves of the old cemetery
+// (three dug open from below: the earth thrown out, the lid broken in two), the crosses, tall grass, the big dead tree
+function t3FField(){const get=t3FGet(),R=t3IRnd(611),wd2=t3Ic('#776654'),st=t3Ic('#90928c'),ms=t3Ic('#5c6c40'),dkE=t3Ic('#0e0a0a'),ea=t3Ic('#5e4a3a');
+  for(const[x,y,yaw,w,h,tilt] of[[-82,-150,.1,9,13,.18],[-30,-176,-.15,8,11,-.12],[44,-162,.25,10,14,.1],[96,-186,-.2,8,10,.22],[-134,-214,.3,9,12,-.15],[136,-236,-.1,8,11,.2],[-60,-262,.2,9,12,.1],[24,-290,-.3,8,10,-.2]]){
+    t3FStone(get('stone'),[x,y,0],yaw,w,h,2.6,tilt,st,ms);t3Ell(get('dirt'),[x,y+8,0],[w*.55,8,2.4],t3Ic('#6a5440'),{nl:12,nb:6,floor:0,w:.4})}
+  for(const[x,y,lean,h] of[[-58,-200,.3,13],[72,-214,-.25,12],[8,-236,.15,14],[-104,-250,-.2,12]]){const b=[x,y,-1],tp=[x+Math.sin(lean)*h,y,h];t3FBeam(get('woodV'),b,tp,2,2,wd2,[0,1,0]);
     const m=[x+Math.sin(lean)*h*.72,y+.4,h*.72];t3FBeam(get('woodH'),[m[0]-4.5,m[1],m[2]+lean*4],[m[0]+4.5,m[1],m[2]-lean*4],1.6,1.6,wd2)}
-  // tall grass: thicker by the fence and the graves, none on the camp; a few big tufts close to us
+  // the graves dug open from below: the dark pit, the earth thrown out on both sides, the lid of the coffin broken in two beside it
+  for(const[x,y,a] of[[-8,-196,.2],[62,-150,-.3],[-112,-176,.5]]){const ca=Math.cos(a),sa=Math.sin(a),Ua=[[ca,sa,0],[-sa,ca,0],[0,0,1]];
+    t3EllA(get('plain'),[x,y,.15],Ua,[5.2,9.5,.2],dkE,{nl:14,nb:4});
+    for(const s of[-1,1])t3EllA(get('dirt'),[x+ca*s*9.5,y+sa*s*9.5,0],Ua,[4.2,10,3.2],ea,{nl:10,nb:6});
+    for(const s of[-1,1])t3BoxA(get('woodV'),[x-sa*(13+s*5)+ca*7,y+ca*(13+s*5)+sa*7,.5],a+s*.35+.2,[3.2,4.6,.6],t3Ic('#5a4836'))}
+  // tall grass all over the field, a few big tufts close to us inside the camp
   const gc=[t3Ic('#5e7040'),t3Ic('#6e7c48'),t3Ic('#7c7c4c'),t3Ic('#4e6236')];
-  for(let i=0;i<150;i++){const x=(R()-.5)*620,y=R()<.5?T3FL.fence+6+R()*10:40-R()*R()*300;if(Math.hypot((x-6)/1.3,y+4)<60||Math.abs(y-t3FPathY(x))<12)continue;t3FTuft(get('grass'),[x,y,0],5+R()*7,i*1.7,gc)}
+  for(let i=0;i<150;i++){const x=(R()-.5)*680,y=Math.min(T3FB(x),-30)-40-R()*R()*380;t3FTuft(get('grass'),[x,y,0],5+R()*7,i*1.7,gc)}
   for(let i=0;i<20;i++){const x=(R()-.5)*240,y=26+R()*90;if(Math.hypot((x-6)/1.3,y+4)<58)continue;t3FTuft(get('grass'),[x,y,0],5+R()*6,i*3.1+40,gc.map(c=>t3Ik(c,1.25)))}
   t3FTree(get('barkV'),[T3FL.tree[0],T3FL.tree[1],0],104,7,t3Ic('#5a4a3e'));
-  for(const[x,y,yaw,w,h,tilt] of[[-30,-152,.2,7,9,.2],[-6,-166,-.1,8,11,-.08]]){t3FStone(get('stone'),[x,y,0],yaw,w,h,2.4,tilt,st,ms);t3Ell(get('dirt'),[x,y+7,0],[w*.55,7,2],t3Ic('#5e4a3a'),{nl:10,nb:5,floor:0,w:.3})}
-  // the lantern on its post by the path: the post, the arm, the iron lantern with its flame (it lights who passes under it)
-  {const[lx,ly]=T3FL.lamp,wd3=t3Ic('#5e4c3c'),ir=t3Ic('#2e3034'),top=[lx,ly,34];t3FBeam(get('woodV'),[lx,ly,-1],top,2.6,2.6,wd3,[0,1,0]);t3FBeam(get('woodH'),[lx-1,ly,31],[lx+9,ly,31],1.6,1.6,wd3);
-    t3FBeam(get('woodV'),[lx+.5,ly,24],[lx+6,ly,31],1.2,1.2,wd3);const L=[lx+8,ly,24.5];T3F.lamp=[L[0],L[1],L[2]+1];t3Line(get('metal'),[[L[0],ly,31],[L[0],ly,28.6]],.25,ir,{w:.1});
-    t3IBox(get('metal'),[L[0],ly,28.2],[1,0,0],[0,1,0],[0,0,1],1.9,1.9,.4,ir,{uv:1});t3IBox(get('plain'),[L[0],ly,25.4],[1,0,0],[0,1,0],[0,0,1],1.4,1.4,2.4,t3Ic('#ffc070',40),{uv:1});
-    t3IBox(get('metal'),[L[0],ly,22.8],[1,0,0],[0,1,0],[0,0,1],1.8,1.8,.35,ir,{uv:1});for(const sx of[-1,1])for(const sy of[-1,1])t3IBox(get('metal'),[L[0]+sx*1.5,ly+sy*1.5,25.4],[1,0,0],[0,1,0],[0,0,1],.25,.25,2.6,ir,{uv:1})}
   return t3FUp(get,{out:.55})}
+// ------------------------------------------------------------------ the barricade: a half moon of what was at hand round the camp (the
+// cart overturned with its wheels up, one still turning; crates, barrels and sacks of earth; the palisade of sharpened stakes lashed with
+// rope and propped from inside; a door and a table on their side; planks nailed across the gaps; the chevaux de frise at the ends; two
+// posts with their torches). t3FBf(x): its frame at x (U along it, N toward the camp, P(u, n, z) a point)
+function t3FBf(x){const d=T3FBd(x),l=Math.hypot(1,d),U=[1/l,d/l,0],N=[-d/l,1/l,0],O=[x,T3FB(x),0];return{U,N,O,P:(u,n,z)=>[O[0]+U[0]*u+N[0]*n,O[1]+U[1]*u+N[1]*n,z]}}
+// a cart wheel round its axle A (the tyre of iron, the felloes, eight spokes, the hub)
+function t3FWheel(get,c,A,U,r,wd,ir){const{add,mul,cross}=RG,W=cross(A,U),N=12;
+  for(let k=0;k<N;k++){const q=(k+.5)/N*TAU,Rd=add(mul(U,Math.cos(q)),mul(W,Math.sin(q))),T=add(mul(U,-Math.sin(q)),mul(W,Math.cos(q))),hl=r*Math.sin(Math.PI/N)+.2;
+    t3IBox(get('woodV'),add(c,mul(Rd,r-.9)),T,Rd,A,hl,.95,1.25,wd,{uv:1});t3IBox(get('metal'),add(c,mul(Rd,r+.3)),T,Rd,A,hl+.08,.35,1.4,ir,{uv:1})}
+  for(let k=0;k<8;k++){const q=k/8*TAU,Rd=add(mul(U,Math.cos(q)),mul(W,Math.sin(q))),T=add(mul(U,-Math.sin(q)),mul(W,Math.cos(q)));t3IBox(get('woodV'),add(c,mul(Rd,r*.48)),Rd,T,A,r*.48-.4,.55,.5,wd,{uv:1})}
+  v3Tube(get('woodH'),[add(c,mul(A,-2.2)),add(c,mul(A,2.2))],[1.9,1.9],t3Ik(wd,.85),9);v3Tube(get('metal'),[add(c,mul(A,2.1)),add(c,mul(A,2.8))],[1.15,.7],ir,8)}
+function t3FWheelMesh(){const get=t3FGet();t3FWheel(get,[0,0,0],[0,1,0],[1,0,0],9,t3Ic('#8e7656'),t3Ic('#3e4044'));return t3FUp(get,{out:.6})}
+function t3FBarricade(){const get=t3FGet(),{add,mul,nrm,cross}=RG,Z=[0,0,1],wd=t3Ic('#7a6450'),wdD=t3Ic('#5e4c3c'),wdL=t3Ic('#8e7656'),ir=t3Ic('#3e4044'),bark=t3Ic('#6a5644'),rope=t3Ic('#8a7650'),
+    sack=t3Ic('#9a8a68'),bar=t3Ic('#7a6248'),cut=t3Ic('#a08460');T3F.torch=[];T3F.perchPts=[];
+  const barrel=(c,h)=>{t3Lathe(get('woodV'),c,[[0,4.3],[h/2,4.9],[h,4.3]],12,bar,{top:t3Ic('#4a3a2c')});for(const z of[h*.18,h*.8])t3Lathe(get('metal'),add(c,[0,0,z]),[[0,4.75],[.9,4.85]],12,ir)};
+  // the cart overturned, wheels up: the bed upside down on the ground, the frame and the axles on top, the shafts down to the earth,
+  // three wheels still, the fourth turning (its own mesh)
+  {const{U,N,P}=t3FBf(-44);t3IBox(get('planks'),P(0,0,6.5),U,N,Z,22,8,6.5,wd,{uv:1,top:t3Ik(wd,.92)});
+    for(const u of[-14,0,14])t3IBox(get('metal'),P(u,0,6.5),U,N,Z,.5,8.15,6.65,ir,{uv:1});
+    for(const s of[-1,1])t3IBox(get('woodH'),P(0,s*5,13.9),U,N,Z,23,1.2,1,wdD,{uv:1});
+    for(const s of[-1,1])t3IBox(get('woodH'),P(s*14,0,15.6),N,U,Z,11,1,1,wdD,{uv:1});
+    for(const s of[-1,1])t3FBeam(get('woodV'),P(-21,s*4,11),P(-38,s*5.5,.5),1.6,1.6,wdD);t3FBeam(get('woodV'),P(-36.5,-5.5,1.6),P(-36.5,5.5,1.6),1.2,1.2,wdD);
+    for(const[su,sn] of[[-1,-1],[-1,1],[1,-1]])t3FWheel(get,P(su*14,sn*10.4,15.6),N,U,9,wdL,ir);
+    T3F.wheel={c:P(14,10.4,15.6),A:N,U};T3F.perchPts.push({p:P(-14,-10.4,25.6),yaw:1.2});
+    t3EllA(get('canvas'),P(10,10.4,2.6),[U,N,Z],[5.2,3.4,2.6],sack,{nl:12,nb:8})}
+  // crates, barrels and the sacks of earth (between the cart and the palisade, and a pile on the far left)
+  {const{U,N,P}=t3FBf(-84),cr=t3Ic('#7e6a50');t3IBox(get('planks'),P(-6,0,5.5),U,N,Z,5.4,5.4,5.5,cr,{uv:1,top:t3Ik(cr,1.08)});barrel(P(6,-1,0),12);
+    for(const[u,n,z] of[[-8,6,2.4],[1,6.4,2.4],[-4,5.6,6.6],[10,5,2.4]])t3EllA(get('canvas'),P(u,n,z),[U,N,Z],[4.8,3.3,2.4],t3Ik(sack,.9+t3IH(u*5,4)*.2),{nl:12,nb:8})}
+  {const{U,N,P}=t3FBf(-2),cr=t3Ic('#8a7456');t3IBox(get('planks'),P(-12,0,5.5),U,N,Z,5.6,5.6,5.5,cr,{uv:1,top:t3Ik(cr,1.08)});
+    for(const s of[-1,1])t3IBox(get('woodV'),P(-12+s*5.7,0,5.5),U,N,Z,.6,5.8,5.6,t3Ik(cr,.8),{uv:1});
+    {const a=.22,Uc=add(mul(U,Math.cos(a)),mul(N,Math.sin(a))),Nc=add(mul(N,Math.cos(a)),mul(U,-Math.sin(a)));t3IBox(get('planks'),P(-10.5,.5,15.4),Uc,Nc,Z,4.4,4.4,4.4,t3Ik(cr,.94),{uv:1,top:t3Ik(cr,1.04)})}
+    barrel(P(0,-1.5,0),12);v3Tube(get('woodH'),[P(6,1.5,4.3),P(17,1.5,4.3)],[4.2,4.2],bar,12);for(const u of[7.8,14.6])v3Tube(get('metal'),[P(u,1.5,4.3),P(u+.8,1.5,4.3)],[4.45,4.45],ir,12);
+    for(const u of[6,17])t3EllA(get('woodV'),P(u,1.5,4.3),[U,N,Z],[.3,4.05,4.05],t3Ik(bar,.75),{nl:12,nb:6});
+    for(const[u,n,z,rx,ry,rz] of[[-3,4.6,2.4,5,3.4,2.4],[4,5.4,2.4,5.2,3.4,2.4],[.5,5,6.6,4.8,3.2,2.2],[11,1.5,10.4,4.6,3.2,2.2],[-14,6.6,2.2,4.4,3,2.2]])t3EllA(get('canvas'),P(u,n,z),[U,N,Z],[rx,ry,rz],t3Ik(sack,.9+t3IH(u*7,3)*.2),{nl:12,nb:8})}
+  // the palisade: sharpened stakes leaning out, lashed with two ropes, propped from inside
+  {const R=t3IRnd(733),st=[];for(let x=15;x<=58;x+=4.3){const{N,P}=t3FBf(x),h=24+R()*8,lean=.24+R()*.12,r=2+R()*.5,base=P(0,-1+R()*1.2,-1),
+      top=add(base,add(mul(N,-Math.sin(lean)*h),[0,0,Math.cos(lean)*h])),dir=nrm(add(top,mul(base,-1)));
+      v3Tube(get('barkV'),[base,add(base,mul(add(top,mul(base,-1)),.5)),top],[r,r*.95,r*.9],t3Ik(bark,.9+R()*.2),7);t3Cone(get('woodV'),top,add(top,mul(dir,4.5)),r*.9,cut,{N:7});st.push({x,base,top,r,N})}
+    const at=(s,z)=>add(add(s.base,mul(add(s.top,mul(s.base,-1)),(z+1)/(s.top[2]+1))),mul(s.N,s.r*.9));
+    for(const z of[9,18])t3Line(get('canvas'),st.map(s=>at(s,z)),.34,rope,{N:5});
+    for(let i=1;i<st.length;i+=3){const s=st[i];t3FBeam(get('woodV'),add(s.base,mul(s.N,12)),at(s,15),1.6,1.6,wdD)}
+    let pk=st[0];for(const s of st)if(Math.abs(s.x-30)<Math.abs(pk.x-30))pk=s;T3F.perchPts.push({p:add(pk.top,[0,0,2.4]),yaw:2.4})}
+  // the door and the table on their side, a barrel
+  {const{U,N,P}=t3FBf(84),dr=t3Ic('#6e5a44'),tb=t3Ic('#8a7050');
+    {const a=-.12,W=nrm(add(mul(Z,Math.cos(a)),mul(N,Math.sin(a)))),Nn=nrm(cross(W,U)),c=add(P(-7,0,0),mul(W,12.5));t3IBox(get('planks'),c,U,Nn,W,7.2,.9,12.5,dr,{uv:1});
+      for(const s of[-1,1])t3IBox(get('woodH'),add(c,add(mul(Nn,1.3),mul(W,s*6.5))),U,Nn,W,6.6,.5,1.1,t3Ik(dr,.78),{uv:1});
+      t3FBeam(get('woodV'),add(c,add(mul(Nn,1.4),add(mul(U,-5.4),mul(W,-5.6)))),add(c,add(mul(Nn,1.4),add(mul(U,5.4),mul(W,5.6)))),2,1,t3Ik(dr,.78),Nn);
+      for(const s of[-1,1])t3IBox(get('metal'),add(c,add(mul(Nn,-1),add(mul(U,-5.8),mul(W,s*7.5)))),U,Nn,W,2.6,.2,.7,ir,{uv:1})}
+    t3IBox(get('woodH'),P(10,0,8),U,N,Z,9.5,.9,7.5,tb,{uv:1});for(const su of[-1,1])for(const sz of[-1,1])t3FBeam(get('woodV'),P(10+su*8,.8,8+sz*6),P(10+su*8,12,8+sz*6),1.6,1.6,t3Ik(tb,.85),Z);
+    barrel(P(22,1.5,0),11)}
+  // planks nailed across the gaps, on the inside
+  for(const[x,z,a] of[[-68,9,.3],[-21,10,.35],[-19,19,-.3],[14,12,.25],[62,10,-.3],[66,19,.2]]){const{U,N,P}=t3FBf(x),d=nrm(add(mul(U,Math.cos(a)),mul(Z,Math.sin(a)))),W=cross(d,N),c=P(0,2.4,z);
+    t3IBox(get('planks'),c,d,N,W,11,.55,1.9,t3Ic('#8a7458'),{uv:1});for(const s of[-1,1])t3IBox(get('metal'),add(c,add(mul(d,s*8.5),mul(N,.6))),d,N,W,.4,.2,.4,ir,{uv:1})}
+  // the chevaux de frise at the two ends: a log with the stakes crossed through it
+  for(const[x0,x1] of[[-170,-92],[106,176]]){const a=[x0,T3FB(x0)-4,6.5],b=[x1,T3FB(x1)-4,6.5];v3Tube(get('barkH'),[a,b],[1.9,1.9],bark,8);
+    const L=Math.hypot(b[0]-a[0],b[1]-a[1]),n=Math.round(L/9),Ud=nrm([b[0]-a[0],b[1]-a[1],0]),Nd=[-Ud[1],Ud[0],0];
+    for(let k=0;k<=n;k++){const c=add(a,mul(add(b,mul(a,-1)),k/n));for(const s of[-1,1]){const d=nrm(add(mul(Nd,s*.75),[0,0,.66])),p0=add(c,mul(d,-10)),p1=add(c,mul(d,10));
+      v3Tube(get('barkV'),[p0,p1],[1.1,1],bark,6);t3Cone(get('woodV'),p1,add(p1,mul(d,3.4)),1,cut,{N:6})}}}
+  // two posts with their torches (the pitch-wrapped heads; the flames and their light are in the air and among the lights)
+  for(const x of[-12,66]){const{P}=t3FBf(x);t3FBeam(get('woodV'),P(0,8,-1),P(0,8,30),2.6,2.6,wdD,[0,1,0]);
+    v3Tube(get('woodV'),[P(0,8,29),P(0,8,33.6)],[1.3,1.8],t3Ic('#4a3a2a'),7);v3Tube(get('char'),[P(0,8,31),P(0,8,34.4)],[2,2.2],t3Ic('#2a201a'),8);
+    for(const z of[30.4,32.2])v3Tube(get('canvas'),[P(0,8,z),P(0,8,z+.7)],[2.25,2.25],rope,8);
+    for(let k=0;k<3;k++){const a=k/3*TAU+.4;t3Rock(get('stone'),add(P(0,8,0),[Math.cos(a)*3.2,Math.sin(a)*3.2,-.3]),[1.6,1.4,1.4],k+11+x,t3Ic('#7a7a74'),{nl:7,nb:4})}
+    T3F.torch.push(P(0,8,34.6))}
+  return t3FUp(get,{out:.6})}
 // the scarecrow in the field: the pole, the arms, the ragged coat with straw coming out; the head is its own (it turns)
 function t3FScareBody(){const get=t3FGet(),[cx,cy]=T3FL.scare,wd=t3Ic('#6e5c48'),coat=t3Ic('#4a4438'),coat2=t3Ic('#3a3630'),straw=[t3Ic('#d8b45a'),t3Ic('#b8943e'),t3Ic('#e8cc78')],rope=t3Ic('#8a7650'),P=(x,y,z)=>[cx+x,cy+y,z];
   t3FBeam(get('woodV'),P(0,0,-1),P(0,0,44),3,3,wd,[0,1,0]);t3FBeam(get('woodH'),P(-17,0,34),P(17,0,34),2.4,2.4,wd);
@@ -279,10 +347,11 @@ function t3FScareHead(){const get=t3FGet(),sack=t3Ic('#b49c74'),dk=t3Ic('#1a1012
   t3Lathe(get('grass'),[0,0,9.6],[[0,8.4],[.9,8.6]],14,hat,{top:hat});t3Lathe(get('grass'),[0,0,10.4],[[0,4.6],[1.6,4.7],[6.4,3.4],[6.8,0]],12,hat);t3Lathe(get('canvas'),[0,0,10.6],[[0,4.75],[1.4,4.75]],12,band);
   for(let k=0;k<7;k++){const a=k/7*TAU+.4;t3Cone(get('grass'),[Math.cos(a)*4.2,Math.sin(a)*4.2,9],[Math.cos(a)*7,Math.sin(a)*7,6.4],.5,straw,{N:3,w:.15})}
   return t3FUp(get,{out:.45})}
-// ------------------------------------------------------------------ the camp: the log the hero sits on (the bark, the sawn ends with their
-// rings, moss, little mushrooms), the tent of canvas, the backpack with the red blanket, the shovel stuck in the earth, the stump with the
-// axe, the woodpile, the crate of ammunition with its rounds, the lantern out, the pot by the fire; the stones of the fire, the ash
-function t3FLog(){const{add,mul,nrm}=RG,f=T3F.face,fwd=[Math.cos(f),Math.sin(f),0],la=nrm([1,-.18,0]),C=[-1.6*fwd[0],-1.6*fwd[1],3.9];return{la,C,LC:add(C,mul(la,-5)),fwd}}
+// ------------------------------------------------------------------ the camp inside the barricade: the log behind the hero (the bark, the
+// sawn ends with their rings, moss, little mushrooms), the tent of canvas, the backpack with the red blanket, the shovel stuck in the earth,
+// the stump with the axe, the woodpile, the crate of ammunition with its rounds, the lantern, the pot by the fire; the stones of the fire,
+// the ash
+function t3FLog(){const{add,mul,nrm}=RG,la=nrm([1,-.18,0]),C=[-3,-12,3.9];return{la,C,LC:add(C,mul(la,-5))}}
 function t3FCamp(){const get=t3FGet(),{add,mul,nrm,cross}=RG,{la,LC}=t3FLog(),F3=[T3FL.fire[0],T3FL.fire[1],0],bark=t3Ic('#6e5846'),cut=t3Ic('#d2aa72'),ring=t3Ic('#a07a4c'),
     moss=t3Ic('#6a8a3c'),wood=t3Ic('#9a7a52'),canv=t3Ic('#7a7652'),iron=t3Ic('#7e848c'),st=t3Ic('#8a8a84'),R=t3IRnd(73);
   // the log
@@ -294,7 +363,7 @@ function t3FCamp(){const get=t3FGet(),{add,mul,nrm,cross}=RG,{la,LC}=t3FLog(),F3
     for(const[k,s] of[[-9,1],[-19,1.3],[4,.8]]){const p=add(LC,add(mul(la,k),[0,4.6,-3.9]));t3Lathe(get('plain'),p,[[0,.5*s],[2.2*s,.45*s]],6,t3Ic('#e6dcc4'));t3Ell(get('plain'),add(p,[0,0,2.4*s]),[1.6*s,1.6*s,1*s],t3Ic('#a8c27a',200),{nl:8,nb:5,low:.2,w:.25})}}
   // the tent behind on the left: an A of canvas, its front toward us (one flap closed, the other tied back on the dark inside), the poles,
   // the ridge, the ropes and pegs, the red blanket peeping out
-  {const cx=-33,y0=-32,y1=-62,z=22,hw=14,wd=t3Ic('#6a5640'),dkc=t3Ic('#2a2620'),mb=get('canvas'),N=6;for(const y of[y0,y1])t3FBeam(get('woodV'),[cx,y,-1],[cx,y,z+2],1.5,1.5,wd,[1,0,0]);
+  {const cx=-46,y0=-22,y1=-50,z=22,hw=13,wd=t3Ic('#6a5640'),dkc=t3Ic('#2a2620'),mb=get('canvas'),N=6;for(const y of[y0,y1])t3FBeam(get('woodV'),[cx,y,-1],[cx,y,z+2],1.5,1.5,wd,[1,0,0]);
     t3FBeam(get('woodH'),[cx,y0+3,z+.6],[cx,y1-3,z+.6],1.3,1.3,wd,[1,0,0]);
     for(const s of[-1,1])for(const sd of[1,-1]){const rows=[];for(let k=0;k<=N;k++){const f=k/N,row=[];for(let i=0;i<=6;i++){const g=i/6,sag=Math.sin(f*Math.PI)*Math.sin(g*Math.PI)*1.2;row.push([cx+s*(hw*f+.2)-s*sag*.5,y0+(y1-y0)*g,z*(1-f)+.3-sag])}rows.push(row)}
       const n=nrm([s*sd*.84,0,sd*.55]),idx=rows.map(r=>r.map(p=>v3V(mb,add(p,mul(n,.22)),n,sd>0?canv:dkc)));for(let k=0;k<N;k++)for(let i=0;i<6;i++){v3T(mb,idx[k][i],idx[k][i+1],idx[k+1][i+1]);v3T(mb,idx[k][i],idx[k+1][i+1],idx[k+1][i])}}
@@ -308,8 +377,8 @@ function t3FCamp(){const get=t3FGet(),{add,mul,nrm,cross}=RG,{la,LC}=t3FLog(),F3
   {const p=add(LC,add(mul(la,-27),[0,-6,-3.9])),pk=t3Ic('#5e6640');t3Ell(get('canvas'),add(p,[0,0,4.6]),[4.8,3.6,5],pk,{nl:12,nb:8,w:.6});t3Ell(get('canvas'),add(p,[0,1.8,6.6]),[3.8,1.8,2.6],t3Ik(pk,1.12),{nl:10,nb:6,w:.4});
     t3IBox(get('canvas'),add(p,[0,3.3,3]),[1,0,0],[0,1,0],[0,0,1],2.4,.5,1.5,t3Ik(pk,.8),{uv:1});for(const s of[-1,1])v3Tube(get('canvas'),[add(p,[s*2.3,-3.2,8.4]),add(p,[s*2.5,-3.8,3]),add(p,[s*2.3,-2.6,.8])],[.5,.5,.5],t3Ic('#3a3a28'),5);
     v3Tube(get('canvas'),[add(p,[-5,0,10.6]),add(p,[5,0,10.6])],[2.4,2.4],t3Ic('#a8443a'),10);for(const x of[-2.4,2.4])v3Tube(get('canvas'),[add(p,[x-.3,0,10.6]),add(p,[x+.3,0,10.6])],[2.55,2.55],t3Ic('#4a3a2a'),10)}
-  // the shovel stuck behind on the left, the stump with the axe further back
-  {const g0=[-14,-17,0],top=[-12,-18.5,27];t3FBeam(get('woodV'),add(g0,[0,0,3]),top,1.5,1.5,t3Ic('#7a5a36'),[0,1,0]);t3FBeam(get('woodH'),add(top,[-2.4,0,-.4]),add(top,[2.4,0,.4]),1.2,1.2,t3Ic('#7a5a36'));
+  // the shovel stuck behind on the left, the stump with the axe on the right
+  {const g0=[-16,-25,0],top=[-14,-26.5,27];t3FBeam(get('woodV'),add(g0,[0,0,3]),top,1.5,1.5,t3Ic('#7a5a36'),[0,1,0]);t3FBeam(get('woodH'),add(top,[-2.4,0,-.4]),add(top,[2.4,0,.4]),1.2,1.2,t3Ic('#7a5a36'));
     t3IBox(get('metal'),add(g0,[.2,-.1,1.4]),[1,0,0],[0,1,0],[0,0,1],2.8,.4,4.4,iron,{uv:1});t3Ell(get('dirt'),[g0[0],g0[1]+1,0],[5,3.6,1.2],t3Ic('#6a5440'),{nl:10,nb:5,floor:0,w:.3})}
   {const s=[56,-20,0];t3Lathe(get('barkV'),s,[[0,7],[2,6],[9,5.8]],14,bark,{top:f=>f<.3?cut:f<.55?ring:f<.8?cut:ring,rings:[0,.3,.55,.8,1],wob:a=>1+.05*Math.sin(a*4)});
     t3FBeam(get('woodV'),add(s,[1,0,9.4]),add(s,[7,5,19]),1.3,1.3,t3Ic('#8a6a40'));t3IBox(get('metal'),add(s,[.6,-.5,10.6]),RG.nrm([.8,.6,0]),[0,0,1],RG.nrm([-.6,.8,0]),3.4,1.6,.5,iron,{uv:1})}
@@ -346,18 +415,18 @@ function t3FCrow(f,sit){const mb=v3MB(),blk=t3Ic('#1e1c26'),blk2=t3Ic('#2c2a38')
   if(sit)for(const s of[-1,1])t3Line(mb,[[.6,s*.8,-1.6],[.8,s*.8,-3.4]],.3,bk,{w:.1});else for(const s of[-1,1])t3Line(mb,[[-1.4,s*.6,-1.4],[-3,s*.5,-1.8]],.28,bk,{w:.1});
   return v3Up(mb)}
 // ------------------------------------------------------------------ the work of the first time, a little each frame (the drawing of 66 in
-// the meantime), then the poses of the zombies (their kinds walk on the path as soon as their poses are ready)
+// the meantime), then the poses of the zombies (their kinds join the horde as soon as their poses are ready)
 function t3FJobs(){const J=[],X=T3F.X,S=T3F.S;
   for(const k of Object.keys(T3FTX))J.push(()=>{X[k]=t3Tex(t3FPaint(k),true,0,0,true)});
   J.push(()=>{X.barkH=t3Tex(t3FRot(T3F.cv.barkV),true,0,0,true);X.woodH=t3Tex(t3FRot(T3F.cv.woodV),true,0,0,true);X.moon=t3Tex(t3FMoonCv(),true);T3F.cv={}});
-  J.push(()=>{T3F.face=Math.atan2(T3FL.fire[1],T3FL.fire[0]);S.push(...t3FGround())});
-  J.push(()=>S.push(...t3FHills()));J.push(()=>S.push(...t3FFarm()));J.push(()=>S.push(...t3FMill()));J.push(()=>{T3F.G.blades=t3FBlades()});
-  J.push(()=>S.push(...t3FField()));J.push(()=>{S.push(...t3FScareBody());T3F.G.head=t3FScareHead()});J.push(()=>S.push(...t3FCamp()));J.push(()=>{T3F.G.logs=t3FFireLogs()});
+  J.push(()=>S.push(...t3FGround()));J.push(()=>S.push(...t3FHills()));J.push(()=>S.push(...t3FFarm()));J.push(()=>S.push(...t3FMill()));J.push(()=>{T3F.G.blades=t3FBlades()});
+  J.push(()=>S.push(...t3FField()));J.push(()=>{T3F.G.bar=t3FBarricade()});J.push(()=>{T3F.G.wheel=t3FWheelMesh()});
+  J.push(()=>{S.push(...t3FScareBody());T3F.G.head=t3FScareHead()});J.push(()=>S.push(...t3FCamp()));J.push(()=>{T3F.G.logs=t3FFireLogs()});
   J.push(()=>{T3F.G.crow=[0,1,2,3,4,5].map(i=>t3FCrow(i/6,false));T3F.G.crowSit=t3FCrow(0,true)});
-  J.push(()=>{const p=T3F.posts||[];T3F.perch=[{p:[T3FL.scare[0]+15,T3FL.scare[1],35.6],yaw:2.6,t:0}].concat([p[Math.floor(p.length*.36)],p[Math.floor(p.length*.62)]].filter(Boolean).map((q,i)=>({p:[q[0]+Math.sin(q[2])*q[3],q[1],Math.cos(q[2])*q[3]+3.4],yaw:i?.6:2.2,t:i*3})))});
+  J.push(()=>{T3F.perch=[{p:[T3FL.scare[0]+15,T3FL.scare[1],35.6],yaw:2.6,t:0}].concat((T3F.perchPts||[]).map((q,i)=>({p:q.p,yaw:q.yaw,t:i*3+1})))});
   J.push(()=>{T3F.ready=true});return J}
-// (one pose in two of 106's: the drawing slides between them all the same, and the phone keeps half the memory)
-function t3FZJobs(){const J=[];for(const k of['zombie','lanterna','strisciante','minatore']){for(const an of['walk','idle'])for(let i=0;i<Z3.NF[an];i+=2)J.push(()=>z3Get(k,an,i,()=>true));J.push(()=>{T3F.zok[k]=1})}return J}
+// (one pose in two of 106's: the drawing slides between them all the same, and the phone keeps half the memory; the crawler only crawls)
+function t3FZJobs(){const J=[];for(const k of['zombie','minatore','lanterna','strisciante']){for(const an of(k==='strisciante'?['walk']:['attack','walk']))for(let i=0;i<Z3.NF[an];i+=2)J.push(()=>z3Get(k,an,i,()=>true));J.push(()=>{T3F.zok[k]=1})}return J}
 function t3FBuild(ms){if(!T3F.q){T3F.q=t3FJobs();T3F.qi=0}const t0=performance.now();
   while(T3F.qi<T3F.q.length&&performance.now()-t0<ms){try{T3F.q[T3F.qi++]()}catch(e){t3Err(e);T3F.bad=true;return}}}
 function t3FZBuild(ms){if(!T3F.zq){T3F.zq=t3FZJobs();T3F.zi=0}const t0=performance.now();while(T3F.zi<T3F.zq.length&&performance.now()-t0<ms){try{T3F.zq[T3F.zi++]()}catch(e){t3Err(e);T3F.zi=T3F.zq.length}}}
@@ -370,50 +439,130 @@ function t3FaloCam(F){const cw=campCv.width,ch=campCv.height,asp=cw/ch,C=T3FC,fo
   const P=tg,cx=q[0]*P[0]+q[4]*P[1]+q[8]*P[2]+q[12],cy=q[1]*P[0]+q[5]*P[1]+q[9]*P[2]+q[13],cwv=q[3]*P[0]+q[7]*P[1]+q[11]*P[2]+q[15],dx=(2*S0[0]/cw-1)-cx/cwv,dy=(1-2*S0[1]/ch)-cy/cwv;
   T3.vp=v3Mul(new Float32Array([1,0,0,0,0,1,0,0,0,0,1,0,dx,dy,0,1]),q);
   const f=[tg[0]-eye[0],tg[1]-eye[1],tg[2]-eye[2]],fl=Math.hypot(...f);T3.F3=[f[0]/fl,f[1]/fl,f[2]/fl];T3.R3=[1,0,0];const R=T3.R3,Fv=T3.F3;T3.U3=[R[1]*Fv[2]-R[2]*Fv[1],R[2]*Fv[0]-R[0]*Fv[2],R[0]*Fv[1]-R[1]*Fv[0]];if(T3.U3[2]<0)T3.U3=T3.U3.map(x=>-x);
-  T3.kpx=cw/(2*D*th*asp);const hz=t3IProj([eye[0],eye[1]-1e5,eye[2]]);T3F.hy=hz?hz[1]:ch*.2;T3F.top=top;T3F.zW=(eye[1]-T3FL.path)*th*asp*1.1+30}
-// ------------------------------------------------------------------ the sky: from the sick green haze on the horizon to the deep blue, the
-// stars that twinkle, the moon's light round it; then the moon, the clouds that pass (lit on their edge near the moon)
-const T3FS_FSKY=`precision mediump float;uniform vec3 uTop;uniform vec3 uMid;uniform vec3 uHor;uniform float uHy;uniform float uT;uniform vec2 uRes;uniform vec3 uMoon;varying vec2 vU;
+  T3.kpx=cw/(2*D*th*asp);const hz=t3IProj([eye[0],eye[1]-1e5,eye[2]]);T3F.hy=hz?hz[1]:ch*.2;T3F.top=top}
+// ------------------------------------------------------------------ the sky of the siege: from the red haze on the horizon to the deep
+// purple, a few stars, the blood moon's light round it, the glow of the burning farm on the horizon, the lightning that lights it all; then
+// the moon, the clouds that pass (red near the moon, white in the lightning), the bolt with its branches
+const T3FS_FSKY=`precision mediump float;uniform vec3 uTop;uniform vec3 uMid;uniform vec3 uHor;uniform float uHy;uniform float uT;uniform vec2 uRes;uniform vec3 uMoon;uniform vec3 uMoonC;uniform vec3 uFire;uniform float uFl;varying vec2 vU;
 float h1(vec2 p){return fract(sin(dot(p,vec2(127.1,311.7)))*43758.5453);}
 void main(){float y=gl_FragCoord.y/uRes.y,e=y-uHy;vec3 c=mix(uHor,uMid,smoothstep(-.01,.16,e));c=mix(c,uTop,smoothstep(.12,.5,e));
  vec2 fc=gl_FragCoord.xy/uRes.y*75.;vec2 g=floor(fc),l=fract(fc)-.5;float h=h1(g);
- if(h>.86){vec2 o=vec2(h1(g+3.1),h1(g+7.7))-.5;float d=length(l-o*.55);float tw=.55+.45*sin(uT*(.8+h*2.5)+h*70.);c+=vec3(.86,.92,1.)*smoothstep(.13,0.,d)*tw*(h>.97?1.:.55)*smoothstep(.03,.25,e);}
- vec2 mp=(gl_FragCoord.xy-uMoon.xy)/uRes.y;float md=length(mp);c+=vec3(.5,.62,.6)*(exp(-md*md*90.)*.5+exp(-md*9.)*.12)*uMoon.z;gl_FragColor=vec4(c,1.);}`;
+ if(h>.9){vec2 o=vec2(h1(g+3.1),h1(g+7.7))-.5;float d=length(l-o*.55);float tw=.55+.45*sin(uT*(.8+h*2.5)+h*70.);c+=vec3(1.,.86,.8)*smoothstep(.13,0.,d)*tw*(h>.975?.8:.4)*smoothstep(.06,.3,e);}
+ vec2 mp=(gl_FragCoord.xy-uMoon.xy)/uRes.y;float md=length(mp);c+=uMoonC*(exp(-md*md*90.)*.55+exp(-md*8.)*.16)*uMoon.z;
+ vec2 fp=(gl_FragCoord.xy-uFire.xy)/uRes.y;c+=vec3(1.,.36,.1)*exp(-length(fp*vec2(1.,2.6))*5.)*uFire.z;
+ c+=vec3(.16,.17,.24)*uFl*(.25+.75*smoothstep(-.05,.45,e));gl_FragColor=vec4(c,1.);}`;
 const T3VS_SCR=`attribute vec2 aP;attribute vec2 aT;attribute vec4 aC;varying vec2 vT;varying vec4 vC;void main(){vT=aT;vC=aC;gl_Position=vec4(aP,0.,1.);}`;
 const T3FS_SCR=`precision mediump float;uniform sampler2D uTex;varying vec2 vT;varying vec4 vC;void main(){vec4 t=texture2D(uTex,vT);float a=t.a*vC.a;if(a<.003)discard;gl_FragColor=vec4(vC.rgb*t.rgb,a);}`;
-// quads on the screen (in the menu canvas' pixels): [x, y, w, h, r, g, b, a]
-function t3FScr(list,tex,add){if(!list.length)return;const gl=T3.gl;if(!T3F.pScr)T3F.pScr=t3Prog(T3VS_SCR,T3FS_SCR,['aP','aT','aC']);const P=T3F.pScr,D=[],W=campCv.width,H=campCv.height;
-  for(const[x,y,w,h,r,g,b,a] of list){const X0=x/W*2-1,X1=(x+w)/W*2-1,Y0=1-y/H*2,Y1=1-(y+h)/H*2;for(const[px,py,u,v] of[[X0,Y0,0,0],[X1,Y0,1,0],[X1,Y1,1,1],[X0,Y0,0,0],[X1,Y1,1,1],[X0,Y1,0,1]])D.push(px,py,u,v,r,g,b,a)}
+// triangles on the screen (clip space: x, y, u, v, r, g, b, a for each corner)
+function t3FScrV(D,tex,add){if(!D.length)return;const gl=T3.gl;if(!T3F.pScr)T3F.pScr=t3Prog(T3VS_SCR,T3FS_SCR,['aP','aT','aC']);const P=T3F.pScr;
   gl.useProgram(P.p);gl.activeTexture(gl.TEXTURE0);gl.bindTexture(gl.TEXTURE_2D,tex);gl.uniform1i(P.u.uTex,0);gl.bindBuffer(gl.ARRAY_BUFFER,T3.db);gl.bufferData(gl.ARRAY_BUFFER,new Float32Array(D),gl.DYNAMIC_DRAW);
   for(let i=0;i<3;i++)gl.enableVertexAttribArray(i);for(let i=3;i<8;i++)gl.disableVertexAttribArray(i);gl.vertexAttribPointer(0,2,gl.FLOAT,false,32,0);gl.vertexAttribPointer(1,2,gl.FLOAT,false,32,8);gl.vertexAttribPointer(2,4,gl.FLOAT,false,32,16);
   gl.enable(gl.BLEND);gl.blendFunc(gl.SRC_ALPHA,add?gl.ONE:gl.ONE_MINUS_SRC_ALPHA);gl.drawArrays(gl.TRIANGLES,0,D.length/8);gl.disable(gl.BLEND)}
+// quads on the screen (in the menu canvas' pixels): [x, y, w, h, r, g, b, a]
+function t3FScr(list,tex,add){const D=[],W=campCv.width,H=campCv.height;
+  for(const[x,y,w,h,r,g,b,a] of list){const X0=x/W*2-1,X1=(x+w)/W*2-1,Y0=1-y/H*2,Y1=1-(y+h)/H*2;for(const[px,py,u,v] of[[X0,Y0,0,0],[X1,Y0,1,0],[X1,Y1,1,1],[X0,Y0,0,0],[X1,Y1,1,1],[X0,Y1,0,1]])D.push(px,py,u,v,r,g,b,a)}
+  t3FScrV(D,tex,add)}
+// strokes on the screen (the lightning): [x0, y0, x1, y1, half width, r, g, b, a], soft across (the glow's middle row)
+function t3FSeg(list,tex){const D=[],W=campCv.width,H=campCv.height;for(const[x0,y0,x1,y1,w,r,g,b,a] of list){const dx=x1-x0,dy=y1-y0,l=Math.hypot(dx,dy)||1,nx=-dy/l*w,ny=dx/l*w,
+    q=(x,y,u)=>[x/W*2-1,1-y/H*2,u,.5],A0=q(x0-nx,y0-ny,0),A1=q(x0+nx,y0+ny,1),B1=q(x1+nx,y1+ny,1),B0=q(x1-nx,y1-ny,0);for(const v of[A0,A1,B1,A0,B1,B0])D.push(v[0],v[1],v[2],v[3],r,g,b,a)}
+  t3FScrV(D,tex,true)}
 const T3F_CL=[[.05,.3,.62,.11,4,.72],[.48,.12,.5,.09,6.5,.66],[.8,.55,.55,.1,3,.7],[.3,.72,.7,.12,5,.62],[.66,.86,.48,.09,7.5,.6],[.15,.95,.6,.1,4.4,.55]];
-function t3FSky(t){const gl=T3.gl,L=T3F_LUCE[T3.luce]||T3F_LUCE.chiara;if(!T3F.pSky)T3F.pSky=t3Prog(V3VS_POST,T3FS_FSKY,['aP']);const Q=T3F.pSky,ch=campCv.height,cw=campCv.width,hy=T3F.hy,tp=T3F.top,
-    mx=cw*.6,my=hy-(hy-tp)*.58,R=ch*.028;
+function t3FSky(t,L){const gl=T3.gl;if(!T3F.pSky)T3F.pSky=t3Prog(V3VS_POST,T3FS_FSKY,['aP']);const Q=T3F.pSky,ch=campCv.height,cw=campCv.width,hy=T3F.hy,tp=T3F.top,
+    mx=cw*.62,my=hy-(hy-tp)*.6,R=ch*.032,f=T3F.lt.f,fp=T3F.fl?t3IProj(T3F.fl):null,ff=.85+.1*Math.sin(t*5.1)+.06*Math.sin(t*11.7+2);
   gl.useProgram(Q.p);gl.disable(gl.DEPTH_TEST);gl.depthMask(false);gl.uniform3fv(Q.u.uTop,t3I01(t3Ic(L.top)));gl.uniform3fv(Q.u.uMid,t3I01(t3Ic(L.mid)));gl.uniform3fv(Q.u.uHor,t3I01(t3Ic(L.hor)));
-  gl.uniform1f(Q.u.uHy,1-hy/ch);gl.uniform1f(Q.u.uT,t%1000);gl.uniform2f(Q.u.uRes,T3.cw,T3.ch);gl.uniform3f(Q.u.uMoon,mx/cw*T3.cw,(1-my/ch)*T3.ch,1);
+  gl.uniform1f(Q.u.uHy,1-hy/ch);gl.uniform1f(Q.u.uT,t%1000);gl.uniform2f(Q.u.uRes,T3.cw,T3.ch);gl.uniform3f(Q.u.uMoon,mx/cw*T3.cw,(1-my/ch)*T3.ch,1);gl.uniform3fv(Q.u.uMoonC,L.halo);
+  gl.uniform3f(Q.u.uFire,fp?fp[0]/cw*T3.cw:-9999,fp?(1-Math.min(fp[1],hy)/ch)*T3.ch:-9999,.5*ff);gl.uniform1f(Q.u.uFl,f);
   gl.bindBuffer(gl.ARRAY_BUFFER,T3.qb);gl.enableVertexAttribArray(0);gl.vertexAttribPointer(0,2,gl.FLOAT,false,0,0);for(let k=1;k<8;k++)gl.disableVertexAttribArray(k);gl.drawArrays(gl.TRIANGLES,0,3);
-  t3FScr([[mx-R*4.2,my-R*4.2,R*8.4,R*8.4,.45,.6,.52,.55]],T3.glow,true);t3FScr([[mx-R,my-R,R*2,R*2,1,1,1,1]],T3F.X.moon,false);
+  const hl=L.halo,mc=L.moon;t3FScr([[mx-R*4.4,my-R*4.4,R*8.8,R*8.8,hl[0],hl[1],hl[2],.6]],T3.glow,true);t3FScr([[mx-R,my-R,R*2,R*2,mc[0],mc[1],mc[2],1]],T3F.X.moon,false);
   const X=t3ITx(),cl=[];for(const[x0,yk,wk,hk,sp,a] of T3F_CL){const w=cw*wk,h=ch*hk,x=((x0*(cw+w*2)+t*sp*(LOWFX?0:1)*cw/390)%(cw+w*2))-w,y=tp+(hy-tp)*yk-h*.5,cx=x+w/2,cy=y+h/2,k=Math.exp(-((cx-mx)**2+(cy-my)**2)/(R*R*60));
-    cl.push([x,y,w,h,.1+k*.34,.13+k*.4,.17+k*.38,a*(.75+k*.25)])}t3FScr(cl,X.cloud,false);gl.enable(gl.DEPTH_TEST);gl.depthMask(true)}
-// ------------------------------------------------------------------ the zombies on the path: they walk, stop, snap round to look at you (or
-// at the hero by the fire) with a groan, and walk on; the scarecrow's head; the crows
-const T3F_ZK=['zombie','lanterna','strisciante','zombie','minatore'];
+    cl.push([x,y,w,h,.11+k*.5+f*.3,.06+k*.2+f*.32,.08+k*.14+f*.42,a*(.75+k*.25)])}t3FScr(cl,X.cloud,false);
+  // the bolt: its glow, then the white core
+  const B=T3F.lt.b;if(B&&f>.15){const s=ch/800,P=q=>[q[0]*cw,tp+q[1]*(hy-tp)],seg=[];for(const[L2,w] of[[B.m,1]].concat(B.br.map(b=>[b,.55])))for(let i=0;i<L2.length-1;i++){const a=P(L2[i]),b=P(L2[i+1]);
+      seg.push([a[0],a[1],b[0],b[1],12*s*w,.5*f,.56*f,f,1],[a[0],a[1],b[0],b[1],3*s*w,f,f,f,1])}t3FSeg(seg,T3.glow)}
+  gl.enable(gl.DEPTH_TEST);gl.depthMask(true)}
+// the lightning: now and then (6–15 s) a bolt with two branches from the clouds down behind the hills, the sky and everything lit two or
+// three times in a flicker; the thunder comes after (the farther, the later)
+function t3FBolt(){const R=Math.random,m=[];let x=.12+R()*.76;if(Math.abs(x-.62)<.12)x=x<.62?x-.14:x+.14;m.push([x,-.02]);
+  for(let k=1;k<=12;k++){x+=(R()-.5)*.075;m.push([x,k/12*1.04])}
+  const br=[];for(let b=0;b<2;b++){const i=3+Math.floor(R()*5),s=R()<.5?-1:1;let[bx,by]=m[i];const L=[[bx,by]];for(let k=0;k<5;k++){bx+=s*(.02+R()*.035);by+=.04+R()*.05;L.push([bx,by])}br.push(L)}
+  return{m,br}}
+function t3FLight(dt){const L=T3F.lt;if(L.t<0){L.f=0;if((L.next-=dt)>0)return;L.t=0;L.b=t3FBolt();L.next=6+Math.random()*9;T3F.n.bolt++;t3FThunder(.35+Math.random()*.8)}
+  // (with «reduce motion» on the phone: one soft glow, no flicker)
+  L.t+=dt;const t=L.t;L.f=RM?(t<.12?t/.12*.4:Math.max(0,.4-(t-.12)*.75)):t<.07?1:t<.13?.2:t<.22?.85:Math.max(0,.85-(t-.22)/.4);if(t>.66){L.t=-1;L.f=0;L.b=null}}
+// the sounds of the scene (only in the Zombie menu, with the effects on)
+function t3FSnd(){return typeof AU!=='undefined'&&!!AU.ctx&&!!AU.on&&!!AU.on.sfx&&AU.ctx.state==='running'&&!$('menu').hidden&&zMode()}
+function t3FThunder(d){if(!t3FSnd())return;try{const t=AU.ctx.currentTime+d;fNoise(t,.45,'highpass',900,.7,.05,{att:.004});fNoise(t+.03,1.9,'lowpass',260,.8,.14,{brown:1,att:.22,f2:90,rev:.4});
+  fNoise(t+.55,2.6,'lowpass',150,.7,.11,{brown:1,att:.45,f2:55,rev:.5});fThump(t+.06,55,30,1.2,.12,.3)}catch(e){}}
+// ------------------------------------------------------------------ the horde (106's zombies in 3D): the first row against the barricade
+// with the arms reaching over it, the second that pushes behind, the crowd, the others that come out of the mist across the field. Now and
+// then one climbs up on the barricade: the hero turns and shoots, and it falls back. The barricade shakes under the pushes; the horde groans
+const T3F_P1=[-86,-62,-38,-14,10,34,58,82],T3F_P2=[-74,-50,-26,-2,22,46,70];
+// where the eyes are in each kind's walk (106's numbers), and how far the head goes in its 'attack' (so their glow stays on the eyes)
 const T3F_EYE={zombie:[[13.9,-1.6,34.8],[13.9,3,34.8]],strisciante:[[13.3,-2.2,12.5],[13.3,2.2,12.5]],minatore:[[12.2,3.3,32.5]],lanterna:[[21.9,-2.6,23.3],[21.9,3,23.3]]};
-function t3FZNew(mid){const ks=T3F_ZK.filter(k=>T3F.zok[k]);if(!ks.length)return null;const kind=ks[Math.floor(Math.random()*ks.length)],dir=Math.random()<.5?1:-1,W=T3F.zW,x=mid?(Math.random()-.5)*W:dir>0?-W-20-Math.random()*30:W+20+Math.random()*30;
-  return{id:Math.floor(Math.random()*97),kind,x,y:t3FPathY(x)+(Math.random()-.5)*8,dir,face:dir>0?0:Math.PI,st:'walk',t:0,next:3+Math.random()*5,p:Math.random(),spd:(kind==='strisciante'?4.5:6.5)+Math.random()*3,look:0,sc:kind==='lanterna'?1.05:.96+Math.random()*.08}}
-function t3FZombies(dt){const Z=T3F.Z,W=T3F.zW;if(!T3F.zInit&&T3F.zok.zombie){T3F.zInit=1;const z=t3FZNew(1);if(z)Z.push(z)}
-  if(Z.length<3&&(T3F.zT-=dt)<=0){const z=t3FZNew(0);if(z)Z.push(z);T3F.zT=5+Math.random()*7}
-  for(let i=Z.length-1;i>=0;i--){const z=Z[i];z.t+=dt;if(z.x<-W-90||z.x>W+90){Z.splice(i,1);continue}
-    if(z.st==='walk'){z.x+=z.dir*z.spd*dt;z.y+=(t3FPathY(z.x)-z.y)*Math.min(1,dt*.5);z.p=(z.p+dt/(z.kind==='strisciante'?2.2:1.7))%1;if(z.t>z.next&&Math.abs(z.x)<W*.7){z.st='stop';z.t=0;z.next=.7+Math.random()*1.2}}
-    else if(z.st==='stop'){z.p=(z.p+dt/2.4)%1;if(z.t>z.next){z.st='look';z.t=0;z.next=1.8+Math.random()*2.2;z.look=Math.random()<.55?1:2;try{sndZGroan({x:180+z.x*.9})}catch(e){}}}
-    else if(z.st==='look'){z.p=(z.p+dt/2.4)%1;if(z.t>z.next){z.st='back';z.t=0}}
-    else if(z.st==='back'){z.p=(z.p+dt/2.4)%1;if(z.t>.6){z.st='walk';z.t=0;z.next=5+Math.random()*7}}
-    const tgt=z.st==='look'?(z.look===1?Math.atan2(T3.eye[1]-z.y,T3.eye[0]-z.x):Math.atan2(-z.y,-z.x)):z.dir>0?0:Math.PI,k=z.st==='look'?Math.min(1,dt*16):Math.min(1,dt*2.6);
-    let d=tgt-z.face;d=Math.atan2(Math.sin(d),Math.cos(d));z.face+=d*k}}
-function t3FZItems(t){const items=[];for(const z of T3F.Z){const an=z.st==='walk'?'walk':'idle',NF=Z3.NF[an],f=(z.p%1)*NF/2,i0=(Math.floor(f)*2)%NF,i1=(i0+2)%NF,A=Z3.M.get(z3Key(z.kind,an,i0)),B=Z3.M.get(z3Key(z.kind,an,i1));if(!A){z.M=null;continue}
-    const sc=z.sc,a=z.face,c=Math.cos(a),s=Math.sin(a);z.M=v3M4([c*sc,s*sc,0],[-s*sc,c*sc,0],[0,0,sc],[z.x,z.y,0]);z.em=(z.st==='look'?.85:.5)+.45*Math.sin(t*2.2+z.id*1.7);
-    items.push({m:A,m2:B&&B.nv0===A.nv0?B:A,kf:f-Math.floor(f),M:z.M,out:.62,em:z.em})}return items}
+function t3FHeadOff(k,p){const ez=z3ex;
+  if(k==='zombie'){let up=0,reach=0,lunge=0;if(p<.35){up=ez(p/.35);lunge=-up*2}else if(p<.6){const q=ez((p-.35)/.25);up=1-q*1.3;reach=q;lunge=-2+q*7}else{const q=ez((p-.6)/.4);up=-.3*(1-q);reach=1-q;lunge=5*(1-q)}
+    const u=Math.max(0,up);return[lunge*.6-u*4.2+reach*2,u*1.2]}
+  if(k==='minatore'){let crouch=0,lunge=0,jolt=0;if(p<.18)crouch=ez(p/.18)*1.6;else if(p<.42)crouch=1.6*(1-(p-.18)/.24);else if(p<.5)lunge=(p-.42)/.08*3;else if(p<.68){lunge=3;jolt=1-(p-.5)/.18}
+    else if(p<.84)lunge=3-(p-.68)/.16*1.5;else lunge=1.5*(1-ez((p-.84)/.16));return[lunge*.9,-crouch*1.3-jolt*.8]}
+  if(k==='lanterna'){let lean=0,lunge=0;if(p<.24)lean=ez(p/.24);else if(p<.38)lean=1;else if(p<.48){const q=(p-.38)/.1;lean=1-q*1.6;lunge=q*4}else if(p<.7){lean=-.6;lunge=4}else{const q=ez((p-.7)/.3);lean=-.6*(1-q);lunge=4*(1-q)}
+    return[lunge*.6-lean*5.6,lean*3]}
+  return[0,0]}
+// a new one (the crawler only comes across the field and stays behind; at most two with the lantern)
+function t3FKind(role){const H=T3F.hd,nl=H?H.Z.filter(z=>z.kind==='lanterna'&&z.role!=='dead').length:0,
+    ks=['zombie','zombie','zombie','minatore','minatore','lanterna','strisciante'].filter(k=>T3F.zok[k]&&(k!=='strisciante'||role==='walk')&&(k!=='lanterna'||nl<2));
+  return ks.length?ks[Math.floor(Math.random()*ks.length)]:null}
+function t3FZMk(role,x,y){const kind=t3FKind(role);if(!kind)return null;
+  return{id:Math.floor(Math.random()*997),kind,role,x,y,z:0,tx:x,ty:y,face:Math.atan2(-y,-x),an:role==='walk'?'walk':'attack',p:Math.random(),bo:0,
+    spd:(kind==='strisciante'?4.5:6.5)+Math.random()*3,rate:.85+Math.random()*.3,sc:kind==='lanterna'?1.05:.94+Math.random()*.1,lean:0,hit:0,ph:Math.random()*TAU,em:.5}}
+function t3FSlot(i,two){const x=(two?T3F_P2:T3F_P1)[i]+(Math.random()-.5)*4;return[x,T3FB(x)-(two?30+Math.random()*5:14+Math.random()*3)]}
+function t3FCrowdAt(){const x=(Math.random()-.5)*210;return[x,T3FB(x)-46-Math.random()*30]}
+function t3FWalker(far){const x=(Math.random()-.5)*(far?420:360),y=far?-860-Math.random()*120:T3FB(x)-110-Math.random()*520,z=t3FZMk('walk',x,y);if(z){const[cx,cy]=t3FCrowdAt();z.tx=cx;z.ty=cy}return z}
+function t3FHordeInit(){const lo=LOWFX,H=T3F.hd={Z:[],s1:[],s2:[],pT:0,cT:4,uT:2.5,gT:1.5,n:lo?14:28,P1:lo?[1,2,3,4,5,6]:[0,1,2,3,4,5,6,7],P2:lo?[1,3,5]:[0,1,2,3,4,5,6]};
+  for(const i of H.P1){const[x,y]=t3FSlot(i,0),z=t3FZMk('press',x,y);if(z){z.slot=i;H.s1[i]=z;H.Z.push(z)}}
+  for(const i of H.P2){const[x,y]=t3FSlot(i,1),z=t3FZMk('row2',x,y);if(z){z.slot=i;H.s2[i]=z;H.Z.push(z)}}
+  const nW=lo?2:6;while(H.Z.length<H.n-nW){const[x,y]=t3FCrowdAt(),z=t3FZMk('crowd',x,y);if(!z)break;H.Z.push(z)}
+  for(let k=0;k<nW;k++){const z=t3FWalker(false);if(z)H.Z.push(z)}}
+function t3FKill(z){if(z.role==='dead')return;const H=T3F.hd;if(H&&z.slot!=null){if(H.s1[z.slot]===z)H.s1[z.slot]=null;if(H.s2[z.slot]===z)H.s2[z.slot]=null}
+  z.role='dead';z.dt=0;z.x0=z.x;z.y0=z.y;z.z0=z.z;if(!z.N)z.N=t3FBf(z.x).N}
+function t3FHorde(dt){if(!T3F.hd){if(!T3F.zok.zombie)return;t3FHordeInit()}const H=T3F.hd,Z=H.Z,t=T3F.t;
+  // the places freed in the rows are taken from behind; the horde never thins (new ones come out of the mist far away)
+  if((H.pT-=dt)<=0){H.pT=.4;
+    for(const i of H.P1){if(H.s1[i])continue;let b=null,bd=1e9;for(const z of Z)if(z.role==='row2'){const d=Math.abs(z.x-T3F_P1[i]);if(d<bd){bd=d;b=z}}
+      if(b){H.s2[b.slot]=null;b.role='press';b.slot=i;[b.tx,b.ty]=t3FSlot(i,0);H.s1[i]=b}break}
+    for(const i of H.P2){if(H.s2[i])continue;let b=null,bd=1e9;for(const z of Z)if(z.role==='crowd'&&z.kind!=='strisciante'){const d=Math.hypot(z.x-T3F_P2[i],z.y-T3FB(T3F_P2[i])+30);if(d<bd){bd=d;b=z}}
+      if(b){b.role='row2';b.slot=i;[b.tx,b.ty]=t3FSlot(i,1);H.s2[i]=b}break}
+    if(Z.filter(z=>z.role!=='dead').length<H.n){const z=t3FWalker(true);if(z)Z.push(z)}}
+  // one climbs, now and then: one of the middle of the first row, when nobody else is up and the hero is free
+  if((H.cT-=dt)<=0){H.cT=7+Math.random()*5;if(T3F.h.st==='idle'&&!Z.some(z=>z.role==='climb'||z.role==='dead')){
+      const C=Z.filter(z=>z.role==='press'&&z.x>8&&z.x<72&&z.kind!=='lanterna'&&Math.hypot(z.tx-z.x,z.ty-z.y)<3);
+      if(C.length){const z=C[Math.floor(Math.random()*C.length)];H.s1[z.slot]=null;z.role='climb';z.ct=0;z.cx=z.x;z.cy=z.y;z.N=t3FBf(z.x).N;T3F.n.climb++;t3FGroan(z)}}}
+  // a push: one of the first row throws itself on the barricade (it shakes, the dust, the wood creaks)
+  if((H.uT-=dt)<=0){H.uT=2.2+Math.random()*3;const P=Z.filter(z=>z.role==='press'&&Math.hypot(z.tx-z.x,z.ty-z.y)<3);if(P.length){const z=P[Math.floor(Math.random()*P.length)],f=t3FBf(z.x);
+      T3F.sh=1;T3F.shN=f.N;z.bo=.6;T3F.n.push++;for(let k=0;k<3;k++){const u=(Math.random()-.5)*16;t3FDust(f.O[0]+f.U[0]*u+f.N[0]*2,f.O[1]+f.U[1]*u+f.N[1]*2,4+Math.random()*12,3)}t3FPushSnd()}}
+  if((H.gT-=dt)<=0){H.gT=2.2+Math.random()*2.4;const z=Z[Math.floor(Math.random()*Z.length)];if(z&&z.role!=='dead')t3FGroan(z)}
+  for(let i=Z.length-1;i>=0;i--){const z=Z[i];z.hit*=Math.exp(-dt*9);
+    // shot: it falls back off the barricade and is gone behind it
+    if(z.role==='dead'){z.dt+=dt;const k=Math.min(1,z.dt/.85);z.fall=1.5*k*k;z.z=Math.max(0,z.z0*(1-k*k)-1.5*k);z.x=z.x0-z.N[0]*12*k;z.y=z.y0-z.N[1]*12*k;z.p=(z.p+dt/1.4)%1;
+      if(k>=1&&!z.thud){z.thud=1;t3FDust(z.x,z.y,1,3);t3FDust(z.x+3,z.y-2,1,3);t3FThud()}if(z.dt>1.25)Z.splice(i,1);continue}
+    // the climb: up on the barricade in a second, then on top leaning over the camp, the arms reaching
+    if(z.role==='climb'){z.ct+=dt;const k=Math.min(1,z.ct/1.15),e=k*k*(3-2*k);z.z=21*e+Math.sin(k*Math.PI)*5;z.x=z.cx+z.N[0]*14*e;z.y=z.cy+z.N[1]*14*e;z.lean=-.4*e+z.hit*.5;z.an='attack';
+      z.p=(z.p+dt/1.1)%1;z.face=t3FAng(z.face,Math.atan2(-z.y,-z.x),dt*4);if(k<1&&Math.random()<dt*6)t3FDust(z.x,z.y,z.z+2,3);if(z.ct>3.4)t3FKill(z);continue}
+    const dx=z.tx-z.x,dy=z.ty-z.y,d=Math.hypot(dx,dy);z.bo=Math.max(0,z.bo-dt);
+    if(d>2.5){const v=z.spd*(z.role==='walk'?1:1.3),s=Math.min(d,v*dt);z.x+=dx/d*s;z.y+=dy/d*s;z.an='walk';z.p=(z.p+dt/(z.kind==='strisciante'?2.2:1.7))%1;z.face=t3FAng(z.face,Math.atan2(dy,dx),dt*3);z.lean=0}
+    else{if(z.role==='walk')z.role='crowd';
+      // at its place: the arms over the barricade, clawing and pushing (the first row quicker), the face toward the hero
+      z.an=z.kind==='strisciante'?'walk':'attack';const per=(z.kind==='strisciante'?4:z.role==='press'?1.5:z.role==='row2'?2.1:3.2)*z.rate/(z.bo>0?2.6:1);z.p=(z.p+dt/per)%1;
+      z.face=t3FAng(z.face,Math.atan2(-z.y,-z.x)+Math.sin(t*.7+z.ph)*.14,dt*2);z.lean=z.role==='press'?-.1:0}}}
+function t3FZItems(t){const items=[],H=T3F.hd;if(!H)return items;
+  for(const z of H.Z){const an=z.an,NF=Z3.NF[an],f=(z.p%1)*NF/2,i0=(Math.floor(f)*2)%NF,i1=(i0+2)%NF,A=Z3.M.get(z3Key(z.kind,an,i0)),B=Z3.M.get(z3Key(z.kind,an,i1));if(!A){z.M=null;continue}
+    const sc=z.sc,a=z.face,c=Math.cos(a),s=Math.sin(a),j=z.role==='dead'?z.fall:z.lean;let M=v3M4([c*sc,s*sc,0],[-s*sc,c*sc,0],[0,0,sc],[z.x,z.y,z.z]);
+    if(j){const cj=Math.cos(j),sj=Math.sin(j);M=v3Mul(M,v3M4([cj,0,sj],[0,1,0],[-sj,0,cj],[0,0,0]))}z.M=M;z.em=(z.role==='climb'?.95:.55)+.4*Math.sin(t*2.2+z.id*1.7);
+    items.push({m:A,m2:B&&B.nv0===A.nv0?B:A,kf:f-Math.floor(f),M,out:z.y<-260?.3:z.role==='crowd'||z.role==='walk'?.45:.62,em:z.em})}return items}
+// the dust (puffs that rise and spread), the groans, the push, the body that lands
+function t3FDust(x,y,z,s){if(LOWFX&&Math.random()<.5)return;T3F.sm.push({x,y,z,l:0,s,vx:(Math.random()-.5)*6,r0:2+Math.random()*2})}
+function t3FGroan(z){if(!t3FSnd())return;try{sndZGroan({x:180+z.x*.9})}catch(e){}}
+function t3FPushSnd(){if(!t3FSnd())return;try{const t=AU.ctx.currentTime;fThump(t,68,36,.32,.2,.2);fNoise(t,.24,'bandpass',420,1.2,.06,{f2:200});if(Math.random()<.6&&typeof SND2!=='undefined'&&SND2.creak)SND2.creak(t+.06)}catch(e){}}
+function t3FThud(){if(!t3FSnd())return;try{const t=AU.ctx.currentTime;fThump(t,90,40,.22,.14,.15);fNoise(t,.18,'lowpass',500,.8,.05,{brown:1})}catch(e){}}
 // the scarecrow: now and then it turns its head to you all at once and bends it too far to the side, its eyes light up; then slowly back
 function t3FScare(dt){const S=T3F.sc;S.t+=dt;if(S.st==='idle'&&S.t>S.next){S.st='turn';S.t=0;try{sndZGroan({x:180+T3FL.scare[0]*.9})}catch(e){}}
   else if(S.st==='turn'&&S.t>2.6){S.st='back';S.t=0}else if(S.st==='back'&&S.t>2.2){S.st='idle';S.t=0;S.next=8+Math.random()*7}
@@ -428,83 +577,131 @@ function t3FCrows(dt,t){if(!LOWFX&&(T3F.crT-=dt)<=0){T3F.crT=13+Math.random()*13
 function t3FCrowItems(){const items=[],G=T3F.G;if(!G.crow)return items;
   for(const c of T3F.cr){const f=c.ph*6,i0=Math.floor(f)%6,a=c.dir>0?0:Math.PI,cs=Math.cos(a),sn=Math.sin(a),s=.9;items.push({m:G.crow[i0],m2:G.crow[(i0+1)%6],kf:f-Math.floor(f),M:v3M4([cs*s,sn*s,0],[-sn*s,cs*s,0],[0,0,s],[c.x,c.y,c.z]),out:.4})}
   for(const p of T3F.perch){const a=p.yaw,cs=Math.cos(a),sn=Math.sin(a),s=.82;items.push({m:G.crowSit,M:v3M4([cs*s,sn*s,0],[-sn*s,cs*s,0],[0,0,s],p.p),out:.4})}return items}
+// ------------------------------------------------------------------ the hero: on his feet before the log with his zombie gun (the one of
+// the Arsenal), looking now toward us and the fire, now over his shoulder at the barricade; when one climbs he turns at once, aims and
+// shoots (the gun's own recoil, flash and slide, its sound; the muzzle's flash lights all round), then lowers the gun and turns back
+const T3F_GUNS=['pistola','revolver','mitraglietta','mitra','tamburo','mitragliatrice','pompa','tattica'];
+const T3F_SHOTS={pistola:[0,.3],revolver:[0,.38],mitraglietta:[0,.07,.14,.21,.28],mitra:[0,.09,.18,.27],tamburo:[0,.07,.14,.21,.28,.35],mitragliatrice:[0,.06,.12,.18,.24,.3],pompa:[0],tattica:[0,.42]};
+const T3F_IDLE=1.05;
+function t3FGun(){const g=typeof SAVE!=='undefined'&&SAVE.z&&SAVE.z.gun;return T3F_GUNS.includes(g)?g:'pistola'}
+// (the gun's own sound from its bank, a little softer in the menu; the old sound if the bank is not ready)
+function t3FGunSnd(what){if(!t3FSnd())return;try{if(!(ARMI.suonaBanco&&ARMI.suonaBanco(T3F.gun,what,180,0,.6)))ARMI.suono(T3F.gun,what,180)}catch(e){}}
+function t3FHeroUp(dt){const h=T3F.h,H=T3F.hd,cz=H?H.Z.find(z=>z.role==='climb'):null;h.t+=dt;
+  h.rec*=Math.exp(-dt/.09);h.flash*=Math.exp(-dt/.04);h.slide*=Math.exp(-dt/.07);h.mf*=Math.exp(-dt/.05);
+  if(h.st==='idle'){h.face=t3FAng(h.face,T3F_IDLE,dt*3);if((h.lkT-=dt)<=0){h.lkOn=!h.lkOn;h.lkT=h.lkOn?1.6:5+Math.random()*4}
+    if(cz&&cz.ct>.35){h.st='turn';h.t=0;h.tgt=cz;h.i=0;h.lkOn=false;h.lkT=6}}
+  else if(h.st==='turn'||h.st==='aim'){const z=h.tgt;if(z&&z.role!=='dead')h.face=t3FAng(h.face,Math.atan2(z.y,z.x),dt*(h.st==='turn'?9:14));
+    if(h.st==='turn'&&h.t>.32){h.st='aim';h.t=0}
+    if(h.st==='aim'){const S=T3F_SHOTS[T3F.gun]||[0];if(z&&z.role==='climb'){while(h.i<S.length&&z.ct-1.1>=S[h.i]){t3FShot(z,h.i===S.length-1);h.i++}}else{h.st='hold';h.t=0}}}
+  else if(h.st==='hold'){if(h.t>.6){h.st='back';h.t=0;if(T3F.gun==='pompa'||T3F.gun==='tattica')t3FGunSnd('pompa')}}
+  else if(h.st==='back'){h.face=t3FAng(h.face,T3F_IDLE,dt*3.5);if(h.t>.8){h.st='idle';h.t=0}}
+  h.lk+=((h.st==='idle'&&h.lkOn?-1.15:0)-h.lk)*Math.min(1,dt*(h.st==='idle'?3:9))}
+// a shot: the recoil and the flash, the tracer to the chest, the dark blood out of its back, the gun's own sound; the last one drops it
+function t3FShot(z,last){const h=T3F.h;h.rec=1;h.flash=1;h.slide=1;h.mf=1;z.hit=1;const tg=[z.x,z.y,z.z+(z.kind==='minatore'?23:26)*z.sc],m=h.muz||[0,0,30],d=RG.nrm([tg[0]-m[0],tg[1]-m[1],0]);
+  T3F.fx.push({k:'tr',a:m.slice(),b:tg,l:.08,l0:.08});
+  for(let i=0;i<(LOWFX?4:9);i++){const v=14+Math.random()*26;T3F.fx.push({k:'bl',p:tg.slice(),v:[d[0]*v+(Math.random()-.5)*16,d[1]*v+(Math.random()-.5)*16,8+Math.random()*24],l:.45+Math.random()*.4,s:.6+Math.random()*.9})}
+  T3F.n.shot++;t3FGunSnd('sparo');if(last)t3FKill(z)}
+function t3FHero(t,F){const h=T3F.h,st=Object.assign({},zHeroStyle(),{gun:T3F.gun,held:null,quiver:false});let c,al=1;
+  const wk=CAMP.walk>0?clamp((Math.min(1,(t-CAMP.walk)/1.5)-.3)/.7,0,1):0,an=h.st==='aim'||h.st==='hold'?'aim':'idle';
+  if(wk>0){c={x:-26*wk,y:-44*wk,lz:0,face:Math.atan2(-44,-26),anim:'walk',p:(t*1.4)%1,sc:1/T3CHK,o:{style:st}};al=1-wk*wk}
+  else c={x:0,y:0,lz:0,face:h.face,anim:an,p:(t/2.4)%1,sc:1/T3CHK,o:{style:st,gp:{rec:h.rec,flash:h.flash,slide:h.slide,n:9,st:'pronta'},look:h.lk}};
+  T3E.muz=null;const dS=G.deathT;G.deathT=null;let H=null;try{H=t3HeroItems(c)}catch(e){t3Err(e)}finally{G.deathT=dS}if(T3E.muz)h.muz=T3E.muz;
+  if(H&&al>.02){t3Draw3(H.items,{H:H.imp?null:{R:H.R,MF:H.MF,a:H.a,Hw:H.Hw},al:al<.99?Math.max(.3,al):1});if(H.imp){t3CardsBegin();t3HeadCard(H.R,H.Hw,H.a);t3CardsEnd()}}
+  const q=t3IProj([0,0,0]);if(q){const s=t3IKpx(q[2]);CAMP.hero={x:q[0],y:q[1]-9*s,w:20*s,h:48*s,dpr:F.dpr}}}
 // ------------------------------------------------------------------ the frame
 function t3FaloFrame(dt,k){const t0=performance.now(),F=campFrame(),t=CAMP.t,PF=T3F.prof,pk=PF?(q=>{T3.gl.finish();const n=performance.now();PF[q]=(PF[q]||0)+n-PF._;PF._=n}):()=>{};if(PF){PF._=t0;PF.n=(PF.n||0)+1}FALO.t+=dt;
   t3Place('menu');T3I.seen++;T3I.live=true;if(T3.cv.style.display==='none')T3.cv.style.display='block';t3IslSize();
-  const gl=T3.gl,key=T3.luce,keep=T3LUCI[key],L0=T3F_LUCE[key]||T3F_LUCE.chiara,lean=T3.lean;T3LUCI[key]=Object.assign({},keep,L0);T3.lean=0;
-  try{t3FaloCam(F);T3.fogP=[T3.dist+240,3000,.9];const Lc=t3L(),fl=.86+.08*Math.sin(t*13.1)+.05*Math.sin(t*7.7+1)+.04*Math.sin(t*23.3),F3=[T3FL.fire[0],T3FL.fire[1],0];T3.frame++;T3.nMesh=0;T3.nCard=0;
-    t3FZBuild(LOWFX?2:3);t3FZombies(dt);t3FCrows(dt,t);t3FScare(dt);T3F.bladeA-=dt*.32;
-    // the lights: the fire (it flickers and breathes), its glow low on the ground, the lit window of the farm, the lamps the zombies carry
-    T3I.Lt=[];t3IL([F3[0],F3[1],12],175*fl,[1,.54,.22],L0.fire*fl);t3IL([F3[0]-2,F3[1]+2,3],80,[1,.42,.16],.9*fl);
-    if(T3F.win){const f2=.8+.2*Math.sin(t*3.1)*Math.sin(t*1.7+.5);t3IL(T3F.win.l,70,[1,.6,.28],.95*f2)}
-    if(T3F.lamp){const f3=.85+.15*Math.sin(t*7.3)*Math.sin(t*3.1+1);t3IL(T3F.lamp,68,[1,.7,.36],1.05*f3)}
-    for(const z of T3F.Z){const a=z.face,c=Math.cos(a),s=Math.sin(a),P=q=>[z.x+(c*q[0]-s*q[1])*z.sc,z.y+(s*q[0]+c*q[1])*z.sc,q[2]*z.sc];
-      if(z.kind==='lanterna')t3IL(P([24.5,11.5,9]),75,[.85,1,.5],.75);else if(z.kind==='minatore')t3IL(P([30,0,20]),70,[1,.9,.6],.55)}
+  const gl=T3.gl,key=T3.luce,keep=T3LUCI[key],L0=T3F_LUCE[key]||T3F_LUCE.chiara,lean=T3.lean;T3F.t=t;T3F.gun=t3FGun();t3FLight(dt);
+  // the lightning lights it all for a moment (the sky, the side of things toward the moon, the ground, the mist)
+  const lf=T3F.lt.f,Lx=Object.assign({},keep,L0);if(lf>0){const ad=(a,b,q)=>a.map((v,i)=>v+b[i]*q);Lx.sky=ad(L0.sky,[.06,.07,.11],lf);Lx.key=ad(L0.key,[.32,.36,.52],lf);Lx.fog=ad(L0.fog,[.03,.035,.05],lf)}
+  T3LUCI[key]=Lx;T3.lean=0;
+  try{t3FaloCam(F);T3.fogP=[T3.dist+240,3000,.9];const Lc=t3L(),fl=.86+.08*Math.sin(t*13.1)+.05*Math.sin(t*7.7+1)+.04*Math.sin(t*23.3),F3=[T3FL.fire[0],T3FL.fire[1],0],h=T3F.h;T3.frame++;T3.nMesh=0;T3.nCard=0;
+    t3FZBuild(LOWFX?2:3);t3FHorde(dt);t3FHeroUp(dt);t3FCrows(dt,t);t3FScare(dt);T3F.bladeA-=dt*.32;T3F.wheelA-=dt*2.4;T3F.sh*=Math.exp(-dt*7);
+    // the lights: the fire (it flickers and breathes) and its glow low on the ground, the torches, the burning farm, the muzzle's flash, the
+    // lamps the zombies carry
+    T3I.Lt=[];t3IL([F3[0],F3[1],12],170*fl,[1,.54,.22],L0.fire*fl);t3IL([F3[0]-2,F3[1]+2,3],80,[1,.42,.16],.9*fl);
+    if(T3F.fl){const ff=.85+.1*Math.sin(t*5.1)+.06*Math.sin(t*11.7+2);t3IL(T3F.fl,330,[1,.46,.16],1.5*ff)}
+    (T3F.torch||[]).forEach((p,i)=>{const q=.85+.1*Math.sin(t*9.3+i*2)+.06*Math.sin(t*17+i);t3IL([p[0],p[1],p[2]+3],125,[1,.52,.22],1.15*q)});
+    if(h.mf>.03&&h.muz)t3IL(h.muz,95,[1,.8,.5],1.6*h.mf);
+    for(const z of(T3F.hd?T3F.hd.Z:[])){if(z.role==='dead')continue;const a=z.face,c=Math.cos(a),s=Math.sin(a),P=q=>[z.x+(c*q[0]-s*q[1])*z.sc,z.y+(s*q[0]+c*q[1])*z.sc,z.z+q[2]*z.sc];
+      if(z.kind==='lanterna')t3IL(P([24.5,11.5,9]),75,[.85,1,.5],.75);else if(z.kind==='minatore')t3IL(P([30,0,20]),70,[1,.9,.6],.5)}
     t3ILights();
     gl.bindFramebuffer(gl.FRAMEBUFFER,T3.fbo);gl.viewport(0,0,T3.cw,T3.ch);const fc=Lc.fog;gl.clearColor(fc[0],fc[1],fc[2],1);gl.clear(gl.COLOR_BUFFER_BIT|gl.DEPTH_BUFFER_BIT);
-    t3FSky(t);pk('sky');
+    t3FSky(t,Lc);pk('sky');
     gl.enable(gl.DEPTH_TEST);gl.depthFunc(gl.LEQUAL);gl.depthMask(true);gl.disable(gl.BLEND);
-    // the world: the ground, the hills, the farm, the windmill and its blades, the field, the camp, the burning logs, the scarecrow's head
-    {const H=T3F.hub,a=T3F.bladeA,ca=Math.cos(a),sa=Math.sin(a),MH=t3FScareM(),list=T3F.S.concat(T3F.G.blades.map(it=>Object.assign({},it,{M:v3M4([ca,0,-sa],[0,1,0],[sa,0,ca],H)})),
-        T3F.G.logs.map(it=>Object.assign({},it,{em:.55+.45*fl})),T3F.G.head.map(it=>Object.assign({},it,{M:MH})));t3FDraw(list)}
+    // the world: the ground, the hills, the farm, the windmill and its blades, the field, the barricade (it shakes under the pushes) with its
+    // turning wheel, the camp, the burning logs, the scarecrow's head
+    {const H0=T3F.hub,a=T3F.bladeA,ca=Math.cos(a),sa=Math.sin(a),MH=t3FScareM(),sh=T3F.sh*.55*Math.sin(t*46),N=T3F.shN,MB=v3M4([1,0,0],[0,1,0],[0,0,1],[N[0]*sh,N[1]*sh,0]),W=T3F.wheel,
+        list=T3F.S.concat(T3F.G.blades.map(it=>Object.assign({},it,{M:v3M4([ca,0,-sa],[0,1,0],[sa,0,ca],H0)})),T3F.G.bar.map(it=>Object.assign({},it,{M:MB})),
+        T3F.G.logs.map(it=>Object.assign({},it,{em:.55+.45*fl})),T3F.G.head.map(it=>Object.assign({},it,{M:MH})));
+      if(W&&T3F.G.wheel){const th=T3F.wheelA,c=Math.cos(th),s=Math.sin(th),U=W.U,MW=v3M4([U[0]*c,U[1]*c,s],W.A,[-U[0]*s,-U[1]*s,c],[W.c[0]+N[0]*sh,W.c[1]+N[1]*sh,W.c[2]]);
+        for(const it of T3F.G.wheel)list.push(Object.assign({},it,{M:MW}))}
+      t3FDraw(list)}
     pk('world');
-    // the zombies and the crows (in the mist), then the hero by the fire and his gun (no mist on the camp)
+    // the horde and the crows (in the mist), then the hero and his gun (no mist on the camp)
     {const zi=t3FZItems(t).concat(t3FCrowItems());if(zi.length)t3Draw3(zi,{})}pk('zombies');
-    {const L=T3LUCI[key],m0=L.mist;L.mist=0;try{t3FHero(t,k,F)}finally{L.mist=m0}}pk('hero');
+    {const L=T3LUCI[key],m0=L.mist;L.mist=0;try{t3FHero(t,F)}finally{L.mist=m0}}pk('hero');
     t3FAir(dt,t,fl,F3);pk('fx');
     t3Post({hit:0,low:0,fade:CAMP.walk>0&&t-CAMP.walk>.9?Math.min(1,(t-CAMP.walk-.9)/.6):0})}
   finally{T3LUCI[key]=keep;T3.lean=lean}
   campX.setTransform(1,0,0,1,0,0);campX.clearRect(0,0,campCv.width,campCv.height);
   T3F.ms=T3F.ms?T3F.ms*.9+(performance.now()-t0)*.1:performance.now()-t0}
-// the hero on the log (k: 0 standing, 1 sitting): his clothes are the ones he wears, no weapon in his hands; the gun on the log at his left.
-// Going to play he stands up and walks off into the dark, the gun in his hand
-function t3FHero(t,k,F){const{add,mul,nrm}=RG,{la,C,fwd}=t3FLog(),f=T3F.face,st=Object.assign({},heroStyle(),{gun:null,held:null,quiver:false}),P9=(t%9)/9,kk=k==null?1:k,items=[];
-  if(!(CAMP.walk>0)&&typeof ARMI3D!=='undefined'&&typeof v3GunMesh==='function'){const gm=v3GunMesh(FALO.gun,{});if(gm){const at=add(C,add(mul(la,-12),[0,0,4.4])),fr=ARMI3D.frame(add(at,[0,0,.9]),nrm(add(mul(la,-1),mul(fwd,.3))),nrm(add(fwd,[0,0,.25])),.92);
-    items.push({m:gm.mesh,M:v3M4(mul(fr.X,fr.s),mul(fr.Y,fr.s),mul(fr.Z,fr.s),fr.O),out:.25})}}
-  if(items.length)t3Draw3(items,{});
-  let c,al=1;const wk=CAMP.walk>0?clamp((Math.min(1,(t-CAMP.walk)/1.5)-.3)/.7,0,1):0,ks=CAMP.walk>0?Math.min(kk,1-Math.min(1,Math.min(1,(t-CAMP.walk)/1.5)/.3)):kk;
-  if(wk>0){c={x:-30*wk,y:-46*wk,lz:0,face:Math.atan2(-46,-30),anim:'walk',p:(t*1.4)%1,sc:1/T3CHK,o:{style:Object.assign({},st,{gun:FALO.gun})}};al=1-wk*wk}
-  else if(ks>=.999)c={x:0,y:0,lz:0,face:f,anim:'sit',p:P9,sc:1/T3CHK,o:{style:st,seat:T3FL.seat}};
-  else c={x:0,y:0,lz:0,face:f,anim:'idle',p:(t/2.4)%1,sc:1/T3CHK,o:{style:st,seat:T3FL.seat,mix:['sit',P9,ks]}};
-  const dS=G.deathT;G.deathT=null;let H=null;try{H=t3HeroItems(c)}catch(e){t3Err(e)}finally{G.deathT=dS}
-  if(H&&al>.02){t3Draw3(H.items,{H:H.imp?null:{R:H.R,MF:H.MF,a:H.a,Hw:H.Hw},al:al<.99?Math.max(.3,al):1});if(H.imp){t3CardsBegin();t3HeadCard(H.R,H.Hw,H.a);t3CardsEnd()}}
-  const q=t3IProj([0,0,0]);if(q){const s=t3IKpx(q[2]);CAMP.hero={x:q[0],y:q[1]-7*s,w:20*s,h:44*s,dpr:F.dpr}}}
-// ------------------------------------------------------------------ in the air: the mist low on the field, the flames, the glows, the sparks,
-// the smoke, the steam of the pot, the eyes of the zombies and of the scarecrow, the lit window
+// ------------------------------------------------------------------ in the air: the mist low on the field, the flames (the farm's, the
+// torches', the fire's), the glows, the muzzle's flash and the tracer, the eyes of the horde and of the scarecrow, the sparks and the embers,
+// the smoke and the dust, the blood
 const T3FS_FLAME=`precision highp float;uniform float uT;varying vec2 vT;varying vec4 vC;varying vec3 vW;varying vec2 vS;
 void main(){float v=vT.y,u=vT.x,sw=vC.a*2.-1.;float cx=sw*v*v*.65+sin(v*6.5-uT*11.+sw*7.)*.07*v;float b=clamp(v/.26,0.,1.);
  float w=sqrt(b*(2.-b))*pow(max(0.,1.-v),.72)*1.12;float d=abs(u-cx)-w;float a=1.-smoothstep(-.1,0.,d);if(a<.02)discard;gl_FragColor=vec4(vC.rgb,a);}`;
 const T3F_TONG=[[-3.2,10,1.3,0],[3,11,1.1,1.7],[-.6,15,1.5,3.1],[1.6,12.5,1.2,4.6],[-2,8,1,5.9]],T3F_FLAY=[[[.78,.14,.05],1.18,0],[[1,.42,.08],.92,.6],[[1,.72,.2],.66,1.2],[[1,.96,.74],.34,1.7]];
-function t3FAir(dt,t,fl,F3){const gl=T3.gl,X=t3ITx(),R3=T3.R3;if(!T3I.pCl)T3I.pCl=t3Prog(T3VS_BB,T3FS_ICL,['aP','aQ','aT','aC']);if(!T3F.pFl)T3F.pFl=t3Prog(T3VS_BB,T3FS_FLAME,['aP','aQ','aT','aC']);
+// a fire's tongues in four colours, the red behind, the white heart in front (b its foot, S its size, ph0 its own flicker)
+function t3FFlames(b,S,t,fl,ph0){const R3=T3.R3;for(const[col,kk,dz] of T3F_FLAY)for(const[ox,h,w,ph] of T3F_TONG){const p=ph+ph0,H=h*kk*(.82+.18*Math.sin(t*9+p)+.08*Math.sin(t*23+p*2))*fl*S,W=w*2.1*kk*S,sw=Math.sin(t*5.3+p)*.5+Math.sin(t*11+p)*.2;
+  t3Q(b[0]+R3[0]*ox*kk*S,b[1]+R3[1]*ox*kk*S,b[2]+dz*.6*S,-W,0,W,H,-1,1,1,0,col[0],col[1],col[2],.5+.5*Math.max(-1,Math.min(1,sw))*.7)}}
+function t3FAir(dt,t,fl,F3){const gl=T3.gl,X=t3ITx(),h=T3F.h,{add,sub,mul,nrm,cross}=RG,ff=.85+.1*Math.sin(t*5.1)+.06*Math.sin(t*11.7+2);
+  if(!T3I.pCl)T3I.pCl=t3Prog(T3VS_BB,T3FS_ICL,['aP','aQ','aT','aC']);if(!T3F.pFl)T3F.pFl=t3Prog(T3VS_BB,T3FS_FLAME,['aP','aQ','aT','aC']);
   gl.enable(gl.BLEND);gl.depthMask(false);
-  // the mist: sheets lying low on the field, drifting
-  if(!LOWFX){gl.blendFunc(gl.SRC_ALPHA,gl.ONE_MINUS_SRC_ALPHA);for(let i=0;i<12;i++){const h=q=>t3IH(i*7+q,5.3),w=150+h(1)*120,d=60+h(2)*50,y=-90-h(3)*420,x=((h(4)*900+t*(3+h(5)*4))%900)-450,z=3+h(6)*9,a=.16+.12*Math.sin(t*.3+i);
-      t3QW([[x-w,y+d,z],[x+w,y+d,z],[x+w,y-d,z],[x-w,y-d,z]],0,0,1,1,.5,.62,.62,a)}t3QFlush(T3I.pCl,X.cloud)}
-  // the flames: tongues in four colours, the red behind, the white heart in front
-  {const S=1.45,b=[F3[0],F3[1],3.5];for(const[col,kk,dz] of T3F_FLAY)for(const[ox,h,w,ph] of T3F_TONG){const H=h*kk*(.82+.18*Math.sin(t*9+ph)+.08*Math.sin(t*23+ph*2))*fl*S,W=w*2.1*kk*S,sw=Math.sin(t*5.3+ph)*.5+Math.sin(t*11+ph)*.2;
-      t3Q(b[0]+R3[0]*ox*kk*S,b[1]+R3[1]*ox*kk*S,b[2]+dz*.6,-W,0,W,H,-1,1,1,0,col[0],col[1],col[2],.5+.5*Math.max(-1,Math.min(1,sw))*.7)}
+  // the mist: sheets lying low on the field beyond the barricade, drifting (the far ones come out of it)
+  if(!LOWFX){gl.blendFunc(gl.SRC_ALPHA,gl.ONE_MINUS_SRC_ALPHA);for(let i=0;i<12;i++){const q=k=>t3IH(i*7+k,5.3),w=150+q(1)*120,d=60+q(2)*50,y=-160-q(3)*440,x=((q(4)*900+t*(3+q(5)*4))%900)-450,z=3+q(6)*9,a=.13+.1*Math.sin(t*.3+i);
+      t3QW([[x-w,y+d,z],[x+w,y+d,z],[x+w,y-d,z],[x-w,y-d,z]],0,0,1,1,.44,.34,.36,a)}t3QFlush(T3I.pCl,X.cloud)}
+  // the flames: the farm's (far, first), the torches', the fire's
+  {(T3F.ff||[]).forEach((q,i)=>t3FFlames(q.p,q.s*1.5,t*(.8+i*.07),ff,i*1.3));(T3F.torch||[]).forEach((p,i)=>t3FFlames(p,.5,t*1.15,.9+.1*Math.sin(t*9.3+i*2),i*2.1+.5));t3FFlames([F3[0],F3[1],3.5],1.45,t,fl,0);
     gl.blendFunc(gl.SRC_ALPHA,gl.ONE_MINUS_SRC_ALPHA);t3QFlush(T3F.pFl,T3.white)}
-  // the glows: round the fire, the lit window, the eyes that glow in the dark
+  // the glows: round the fire, the torches, the burning farm (the big glow over it, its windows), the muzzle's flash, the tracer
   gl.blendFunc(gl.ONE,gl.ONE);
   t3Q(F3[0],F3[1],10,-50*fl,-38*fl,50*fl,44*fl,0,0,1,1,.3*fl,.13*fl,.04*fl,1);t3Q(F3[0],F3[1],9,-13*fl,-10*fl,13*fl,16*fl,0,0,1,1,.36*fl,.2*fl,.07*fl,1);
   t3QW([[F3[0]-46,F3[1]+34,.5],[F3[0]+46,F3[1]+34,.5],[F3[0]+46,F3[1]-34,.5],[F3[0]-46,F3[1]-34,.5]],0,0,1,1,.16*fl,.07*fl,.02*fl,1);
-  if(T3F.win){const w=T3F.win.p,f2=.8+.2*Math.sin(t*3.1)*Math.sin(t*1.7+.5);t3Q(w[0],w[1],w[2],-14,-12,14,12,0,0,1,1,.5*f2,.3*f2,.1*f2,1);t3Q(w[0],w[1],w[2],-5,-6,5,6,0,0,1,1,.6*f2,.42*f2,.2*f2,1)}
-  if(T3F.lamp){const w=T3F.lamp,f3=.85+.15*Math.sin(t*7.3)*Math.sin(t*3.1+1);t3Q(w[0],w[1],w[2],-16,-14,16,16,0,0,1,1,.42*f3,.27*f3,.1*f3,1);t3Q(w[0],w[1],w[2],-4,-4,4,5,0,0,1,1,.7*f3,.52*f3,.26*f3,1)}
+  (T3F.torch||[]).forEach((p,i)=>{const q=.85+.1*Math.sin(t*9.3+i*2);t3Q(p[0],p[1],p[2]+4,-16*q,-14*q,16*q,18*q,0,0,1,1,.32*q,.15*q,.05*q,1);t3Q(p[0],p[1],p[2]+2,-5,-4,5,6,0,0,1,1,.45*q,.28*q,.1*q,1)});
+  if(T3F.fl){const p=T3F.fl;t3Q(p[0],p[1],p[2],-150*ff,-90*ff,150*ff,120*ff,0,0,1,1,.24*ff,.09*ff,.03*ff,1);for(const q of T3F.ff||[]){const s=q.s;t3Q(q.p[0],q.p[1],q.p[2]+4*s,-16*s,-12*s,16*s,16*s,0,0,1,1,.4*ff,.18*ff,.05*ff,1)}}
+  if(h.mf>.03&&h.muz){const m=h.muz,k=h.mf;t3Q(m[0],m[1],m[2],-17*k,-17*k,17*k,17*k,0,0,1,1,.9*k,.6*k,.3*k,1);t3Q(m[0],m[1],m[2],-5*k,-5*k,5*k,5*k,0,0,1,1,k,k,.85*k,1)}
+  for(let i=T3F.fx.length-1;i>=0;i--){const e=T3F.fx[i];if(e.k!=='tr')continue;e.l-=dt;if(e.l<=0){T3F.fx.splice(i,1);continue}const k=e.l/e.l0,d=sub(e.b,e.a),sd=mul(nrm(cross(d,sub(T3.eye,e.a))),1.5),p0=add(e.a,mul(d,.2*(1-k)));
+    t3QW([add(p0,sd),add(e.b,sd),sub(e.b,sd),sub(p0,sd)],0,0,1,1,1.2*k,k,.6*k,1)}
+  // the eyes that glow in the dark (on the eyes even when the head lunges), the lantern's light, the scarecrow's eyes
   const MP=(M,q)=>[M[0]*q[0]+M[4]*q[1]+M[8]*q[2]+M[12],M[1]*q[0]+M[5]*q[1]+M[9]*q[2]+M[13],M[2]*q[0]+M[6]*q[1]+M[10]*q[2]+M[14]];
-  for(const z of T3F.Z){if(!z.M||Math.cos(z.face-Math.atan2(T3.eye[1]-z.y,T3.eye[0]-z.x))<-.2)continue;const k=.5+.5*z.em;
-    for(const q of T3F_EYE[z.kind]||[]){const p=MP(z.M,q);t3Q(p[0],p[1],p[2],-4.5,-4.5,4.5,4.5,0,0,1,1,.32*k,.5*k,.16*k,1);t3Q(p[0],p[1],p[2],-1.6,-1.6,1.6,1.6,0,0,1,1,.6*k,.8*k,.4*k,1)}
+  for(const z of(T3F.hd?T3F.hd.Z:[])){if(!z.M||z.role==='dead'||Math.cos(z.face-Math.atan2(T3.eye[1]-z.y,T3.eye[0]-z.x))<-.2)continue;const k=.5+.5*z.em,o=z.an==='attack'?t3FHeadOff(z.kind,z.p%1):[0,0];
+    for(const q of T3F_EYE[z.kind]||[]){const p=MP(z.M,[q[0]+o[0],q[1],q[2]+o[1]]);t3Q(p[0],p[1],p[2],-4.5,-4.5,4.5,4.5,0,0,1,1,.32*k,.5*k,.16*k,1);t3Q(p[0],p[1],p[2],-1.6,-1.6,1.6,1.6,0,0,1,1,.6*k,.8*k,.4*k,1)}
     if(z.kind==='lanterna'){const p=MP(z.M,[24.5,11.5,8]);t3Q(p[0],p[1],p[2],-16,-16,16,16,0,0,1,1,.3,.42,.14,1)}}
   {const S=T3F.sc;if(S.glow>.02){const M=t3FScareM();for(const s of[-1,1]){const p=MP(M,[4.9,s*1.9,6.6]);t3Q(p[0],p[1],p[2],-4,-4,4,4,0,0,1,1,.6*S.glow,.18*S.glow,.06*S.glow,1)}}}
-  // the sparks that shoot up and swirl
+  // the sparks of the fire that shoot up and swirl; the embers that rise from the burning farm and drift with the wind
   {const nS=LOWFX?2:8;if(Math.random()<dt*nS*2)T3F.sp.push({x:F3[0]+(Math.random()-.5)*5,y:F3[1]+(Math.random()-.5)*5,z:10,vx:(Math.random()-.5)*10,vy:(Math.random()-.5)*6,vz:24+Math.random()*26,l:.7+Math.random()});
     for(let i=T3F.sp.length-1;i>=0;i--){const e=T3F.sp[i];e.l-=dt;if(e.l<=0){T3F.sp.splice(i,1);continue}e.vx+=Math.sin(t*3+i)*9*dt;e.x+=e.vx*dt;e.y+=e.vy*dt;e.z+=e.vz*dt;e.vz*=1-dt*.6;const a=Math.min(1,e.l*1.6);
-      t3Q(e.x,e.y,e.z,-.6,-.6,.6,.6+Math.min(2,e.vz*.05),0,0,1,1,1*a,(.66+(i%3)*.1)*a,.3*a,1)}}
+      t3Q(e.x,e.y,e.z,-.6,-.6,.6,.6+Math.min(2,e.vz*.05),0,0,1,1,a,(.66+(i%3)*.1)*a,.3*a,1)}
+    if(T3F.ff&&T3F.ff.length){if(Math.random()<dt*(LOWFX?3:12)){const q=T3F.ff[Math.floor(Math.random()*T3F.ff.length)];T3F.em.push({x:q.p[0]+(Math.random()-.5)*16*q.s,y:q.p[1]+(Math.random()-.5)*8,z:q.p[2]+10*q.s,vx:6+Math.random()*12,vy:(Math.random()-.5)*6,vz:16+Math.random()*24,l:1.8+Math.random()*1.6})}
+      for(let i=T3F.em.length-1;i>=0;i--){const e=T3F.em[i];e.l-=dt;if(e.l<=0){T3F.em.splice(i,1);continue}e.vx+=Math.sin(t*1.3+i)*6*dt;e.x+=e.vx*dt;e.y+=e.vy*dt;e.z+=e.vz*dt;e.vz*=1-dt*.3;
+        const a=Math.min(1,e.l*.8)*(.6+.4*Math.sin(t*9+i*3));t3Q(e.x,e.y,e.z,-2.6,-2.6,2.6,2.6,0,0,1,1,a,.48*a,.14*a,1)}}}
   t3QFlush(T3.pA,T3.glow);
-  // the smoke rising and drifting away, the steam of the pot
-  if(!LOWFX){gl.blendFunc(gl.SRC_ALPHA,gl.ONE_MINUS_SRC_ALPHA);if(Math.random()<dt*1.6)T3F.sm.push({x:F3[0]+(Math.random()-.5)*4,y:F3[1],z:18,l:0,s:0});if(Math.random()<dt*.9)T3F.sm.push({x:F3[0]-10.5,y:F3[1]+8.5,z:7,l:0,s:1});if(T3F.chim&&Math.random()<dt*.7){const c=T3F.chim;T3F.sm.push({x:c[0],y:c[1],z:c[2],l:0,s:2})}
-    for(let i=T3F.sm.length-1;i>=0;i--){const m=T3F.sm[i];if(m.s===2){m.l+=dt/7;if(m.l>=1){T3F.sm.splice(i,1);continue}m.z+=dt*6;m.x+=dt*(4+m.l*8);const r=4+m.l*16;t3Q(m.x,m.y,m.z,-r,-r*.8,r,r*.8,0,0,1,1,.16,.18,.2,.32*Math.sin(m.l*Math.PI));continue}
-      m.l+=dt/(m.s?2.2:4.2);if(m.l>=1){T3F.sm.splice(i,1);continue}m.z+=dt*(m.s?5:8);m.x+=dt*(m.s?1.5:3+m.l*6);const r=m.s?1.5+m.l*4:3.5+m.l*13,a=(m.s?.2:.3)*Math.sin(m.l*Math.PI),w=Math.max(0,1-m.l*2.2);
-      t3Q(m.x,m.y,m.z,-r,-r*.8,r,r*.8,0,0,1,1,m.s?.8:.2+w*.3,m.s?.82:.2+w*.14,m.s?.82:.22,a)}t3QFlush(T3I.pCl,X.cloud)}
+  // the smoke of the fire, the steam of the pot, the great plume of the burning farm (lit from below), the dust of the barricade
+  gl.blendFunc(gl.SRC_ALPHA,gl.ONE_MINUS_SRC_ALPHA);
+  if(!LOWFX){if(Math.random()<dt*1.6)T3F.sm.push({x:F3[0]+(Math.random()-.5)*4,y:F3[1],z:18,l:0,s:0});if(Math.random()<dt*.9)T3F.sm.push({x:F3[0]-10.5,y:F3[1]+8.5,z:7,l:0,s:1});
+    if(T3F.ff&&T3F.ff.length&&Math.random()<dt*2.2){const q=T3F.ff[Math.floor(Math.random()*T3F.ff.length)];T3F.sm.push({x:q.p[0],y:q.p[1],z:q.p[2]+20*q.s,l:0,s:2,r0:8+q.s*6})}}
+  for(let i=T3F.sm.length-1;i>=0;i--){const m=T3F.sm[i];
+    if(m.s===2){m.l+=dt/8;if(m.l>=1){T3F.sm.splice(i,1);continue}m.z+=dt*(16-m.l*6);m.x+=dt*(6+m.l*16);const r=m.r0+m.l*60,w=Math.max(0,1-m.l*3);
+      t3Q(m.x,m.y,m.z,-r,-r*.8,r,r*.8,0,0,1,1,.1+w*.36,.07+w*.12,.07+w*.03,.5*Math.sin(m.l*Math.PI));continue}
+    if(m.s===3){m.l+=dt/1.6;if(m.l>=1){T3F.sm.splice(i,1);continue}m.z+=dt*5;m.x+=(m.vx||0)*dt;const r=(m.r0||2)+m.l*9;t3Q(m.x,m.y,m.z,-r,-r*.8,r,r*.8,0,0,1,1,.42,.34,.26,.42*Math.sin(m.l*Math.PI));continue}
+    m.l+=dt/(m.s?2.2:4.2);if(m.l>=1){T3F.sm.splice(i,1);continue}m.z+=dt*(m.s?5:8);m.x+=dt*(m.s?1.5:3+m.l*6);const r=m.s?1.5+m.l*4:3.5+m.l*13,a=(m.s?.2:.3)*Math.sin(m.l*Math.PI),w=Math.max(0,1-m.l*2.2);
+    t3Q(m.x,m.y,m.z,-r,-r*.8,r,r*.8,0,0,1,1,m.s?.8:.2+w*.3,m.s?.82:.2+w*.14,m.s?.82:.22,a)}
+  // the blood: dark drops that fly out of its back and fall
+  for(let i=T3F.fx.length-1;i>=0;i--){const e=T3F.fx[i];if(e.k!=='bl')continue;e.l-=dt;if(e.l<=0||e.p[2]<0){T3F.fx.splice(i,1);continue}e.v[2]-=90*dt;for(let j=0;j<3;j++)e.p[j]+=e.v[j]*dt;const s=e.s;
+    t3Q(e.p[0],e.p[1],e.p[2],-s,-s,s,s,0,0,1,1,.3,.02,.03,.9)}
+  t3QFlush(T3I.pCl,X.cloud);
   gl.depthMask(true);gl.disable(gl.BLEND)}
 // ------------------------------------------------------------------ the hook: 66's Zombie home asks first; while the scene is being made the
 // drawing of always (and a little of the work each frame, even during the sweep between the modes)

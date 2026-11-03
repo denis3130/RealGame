@@ -1,6 +1,6 @@
 // Prove del menu della Mossbound tripla A (anteprima a parte): python3 tests/t3/mk.py, poi node tests/t3/menu.js
 // Il cammino delle isole in 3D vero (isole, ponte, mini isola, eroe, custode, premi e tocchi), lo spettacolo delle assi, l'interfaccia nuova
-// (e quella di prima con l'interruttore), il falò del menu Zombie in 3D, il ritorno al disegno di sempre se il 3D non c'è, i tempi.
+// (e quella di prima con l'interruttore), l'assedio del menu Zombie in 3D (barricata, orda, lo zombie che scavalca e l'eroe che spara, lampo, spinta), il ritorno al disegno di sempre se il 3D non c'è, i tempi.
 // Foto in tests/t3/me_*.png
 const {chromium}=require('playwright');const D=__dirname+'/';
 let ok=0,ko=0;const ck=(c,m)=>{if(c){ok++;console.log('  sì  '+m)}else{ko++;console.log('  NO  '+m)}};
@@ -36,28 +36,37 @@ const SAVE={gold:5000,gems:500,trophies:900,runs:12,introSeen:1,handSeen:1,start
   await E(`document.querySelector('#sheet .t3set [data-u="1"]').click();document.querySelector('#sheet .t3set [data-l="film"]').click();0`);ck(await E(`document.documentElement.classList.contains('t3ui')&&__T3.luce==='film'`),'«Interfaccia nuova» e «Luce da film» dalle Impostazioni');
   await E(`document.querySelector('#sheet .t3set [data-l="chiara"]').click();$('sheetScr').hidden=true;0`);
   await E(`openSheet('mis');0`);await p.waitForTimeout(600);await p.screenshot({path:D+'me_missioni.png'});await E(`$('sheetScr').hidden=true;0`);
-  // 4. the Zombie menu: the campfire in 3D
-  console.log('Il falò');
+  // 4. the Zombie menu: the siege in 3D
+  console.log('L\'assedio');
   await p.click('#zHand',{force:true});await p.waitForFunction(()=>__E('!MM.tr'),null,{timeout:40000});
   // (the first time the scene is made a little each frame: meanwhile the drawing of always)
-  await p.waitForFunction(()=>__E('T3F.ready&&T3F.zok.zombie'),null,{timeout:90000}).catch(()=>{});await p.waitForTimeout(1500);
-  s=JSON.parse(await E(`JSON.stringify({z:zMode(),ready:T3F.ready,bad:T3F.bad,live:T3I.live,err:__T3.err,hero:!!CAMP.hero,ms:+T3F.ms.toFixed(1),S:T3F.S.length,mats:Object.keys(T3F.X).length,tris:T3F.S.reduce((a,it)=>a+it.m.n/3,0),
-    big:T3F.S.every(it=>it.m.nv<65000),Z:T3F.Z.length,z3:T3F.Z.some(z=>z.M&&Z3.M.get(z3Key(z.kind,z.st==='walk'?'walk':'idle',0))),hy:T3F.hy,top:T3F.top})`));
-  ck(s.z&&s.ready&&!s.bad&&s.live,'il falò del menu Zombie è in 3D');ck(s.hero,'l\'eroe seduto si tocca');ck(!s.err,'nessun errore del motore');
-  ck(s.S>=15&&s.mats>=15,'tutta la scena in 3D, dipinta coi materiali ('+s.S+' pezzi, '+s.mats+' disegni dei materiali, '+s.tris+' triangoli)');ck(s.big,'nessun pezzo oltre i 65.000 punti');
-  ck(s.hy>s.top,'l\'orizzonte sotto la barra in alto: il cielo si vede');ck(s.Z>0&&s.z3,'gli zombie in 3D camminano sul sentiero');await p.screenshot({path:D+'me_falo.png'});
+  await p.waitForFunction(()=>__E('T3F.ready&&!!T3F.hd'),null,{timeout:90000}).catch(()=>{});await p.waitForTimeout(1500);
+  s=JSON.parse(await E(`JSON.stringify({z:zMode(),ready:T3F.ready,bad:T3F.bad,live:T3I.live,err:__T3.err,hero:!!CAMP.hero,ms:+T3F.ms.toFixed(1),S:T3F.S.length,mats:Object.keys(T3F.X).length,
+    tris:T3F.S.concat(T3F.G.bar||[]).reduce((a,it)=>a+it.m.n/3,0),big:T3F.S.concat(T3F.G.bar||[],T3F.G.wheel||[]).every(it=>it.m.nv<65000),bar:(T3F.G.bar||[]).length,wheel:!!(T3F.G.wheel&&T3F.wheel),
+    torch:(T3F.torch||[]).length,ff:(T3F.ff||[]).length,Z:T3F.hd?T3F.hd.Z.length:0,roles:T3F.hd?[...new Set(T3F.hd.Z.map(z=>z.role))].sort().join(','):'',z3:!!T3F.hd&&T3F.hd.Z.some(z=>z.M),hy:T3F.hy,top:T3F.top})`));
+  ck(s.z&&s.ready&&!s.bad&&s.live,'l\'assedio del menu Zombie è in 3D');ck(s.hero,'l\'eroe si tocca');ck(!s.err,'nessun errore del motore');
+  ck(s.S>=12&&s.mats>=15,'tutta la scena in 3D, dipinta coi materiali ('+s.S+' pezzi, '+s.mats+' disegni dei materiali, '+s.tris+' triangoli)');ck(s.big,'nessun pezzo oltre i 65.000 punti');
+  ck(s.bar>=8&&s.wheel&&s.torch===2,'la barricata col carro ribaltato, la ruota che gira e le due torce');ck(s.ff>=5,'la fattoria brucia ('+s.ff+' fuochi)');
+  ck(s.hy>s.top,'l\'orizzonte sotto la barra in alto: il cielo si vede');ck(s.Z>=14&&s.z3&&/press/.test(s.roles)&&/row2/.test(s.roles),'l\'orda in 3D alla barricata ('+s.Z+': '+s.roles+')');
+  await p.screenshot({path:D+'me_assedio.png'});
   // (on this computer a frame can take a second: wait for the next ones, not for a fixed time)
-  await E(`(()=>{T3F.sc.st='idle';T3F.sc.t=99;T3F.sc.next=0;T3F.zT=99;const z=T3F.Z[0];if(z){z.st='stop';z.t=99;z.next=0}return 1})()`);
-  await p.waitForFunction(()=>__E(`T3F.sc.st==='turn'&&T3F.Z[0]&&T3F.Z[0].st==='look'`),null,{timeout:20000}).catch(()=>{});
-  s=JSON.parse(await E(`JSON.stringify({sc:T3F.sc.st,z:T3F.Z[0]&&T3F.Z[0].st})`));ck(s.sc==='turn'&&s.z==='look','lo spaventapasseri e uno zombie si girano a guardarti '+JSON.stringify(s));
-  await E(`T3F.zT=99;T3F.Z.forEach(z=>z.x=1e4);0`);await p.waitForFunction(()=>__E('T3F.Z.length===0'),null,{timeout:20000}).catch(()=>{});
-  s=JSON.parse(await E(`JSON.stringify({n:T3F.Z.length})`));ck(s.n===0,'gli zombie che escono dal sentiero spariscono');
+  // one climbs the barricade: the hero turns, aims and shoots, it falls back; the horde comes back to its number
+  await E(`(()=>{T3F.seen={};const _u=t3FHeroUp;t3FHeroUp=function(dt){_u(dt);T3F.seen[T3F.h.st]=1};const H=T3F.hd;for(const z of H.Z)if(z.role!=='walk'){z.x=z.tx;z.y=z.ty}T3F.h.st='idle';H.cT=0;return 1})()`);
+  await p.waitForFunction(()=>__E(`T3F.n.shot>0&&!T3F.hd.Z.some(z=>z.role==='climb')`),null,{timeout:60000}).catch(()=>{});
+  s=JSON.parse(await E(`JSON.stringify({n:T3F.n,seen:T3F.seen,fx:T3F.fx.length})`));
+  ck(s.n.climb>0&&s.seen.turn&&s.seen.aim&&s.n.shot>0,'uno scavalca, l\'eroe si gira, mira e spara '+JSON.stringify(s.n));
+  await p.waitForFunction(()=>__E(`T3F.h.st==='idle'&&T3F.hd.Z.filter(z=>z.role!=='dead').length>=T3F.hd.n`),null,{timeout:120000}).catch(()=>{});
+  s=JSON.parse(await E(`JSON.stringify({st:T3F.h.st,alive:T3F.hd.Z.filter(z=>z.role!=='dead').length,n:T3F.hd.n})`));ck(s.st==='idle'&&s.alive>=s.n,'l\'eroe torna a guardia e l\'orda torna al suo numero '+JSON.stringify(s));
+  // the barricade shakes under a push, the lightning, the scarecrow that looks at you
+  await E(`(()=>{T3F.hd.uT=0;T3F.lt.next=0;T3F.sc.st='idle';T3F.sc.t=99;T3F.sc.next=0;return 1})()`);
+  await p.waitForFunction(()=>__E(`T3F.n.push>0&&T3F.n.bolt>0&&T3F.sc.st==='turn'`),null,{timeout:20000}).catch(()=>{});
+  s=JSON.parse(await E(`JSON.stringify({n:T3F.n,sc:T3F.sc.st})`));ck(s.n.push>0,'la barricata trema sotto una spinta');ck(s.n.bolt>0,'il lampo');ck(s.sc==='turn','lo spaventapasseri si gira a guardarti');
   // 5. the times (the computer of the tests has no graphics card: on the phone the counter says it)
   console.log('I tempi');
   const zt=+await E(`T3F.ms.toFixed(1)`);await p.click('#zHand',{force:true}).catch(()=>{});await p.waitForFunction(()=>__E('!MM.tr'),null,{timeout:15000}).catch(()=>{});await E(`if(zMode()){SAVE.modo='classica';applyModeUI()}0`);await p.waitForTimeout(2500);const it=+await E(`T3I.ms.toFixed(1)`);
-  console.log('  tempi medi a fotogramma (ms, computer di prova senza scheda grafica): isole',it,'· falò',zt);ck(it>0&&zt>0,'il disegno 3D del menu gira');
+  console.log('  tempi medi a fotogramma (ms, computer di prova senza scheda grafica): isole',it,'· assedio',zt);ck(it>0&&zt>0,'il disegno 3D del menu gira');
   // 6. no 3D: the drawing of always
   console.log('Senza 3D');
-  await E(`T3I.on=false;T3F.on=false;0`);await p.waitForTimeout(1200);s=JSON.parse(await E(`JSON.stringify({live:T3I.live,cv:getComputedStyle(__T3.cv).display,z:zMode(),tr:!!MM.tr,seen:T3I.seen,wN:T3I.wN,host:T3I.host})`));ck(!s.live&&s.cv==='none','senza il 3D torna il disegno di sempre '+JSON.stringify(s));await E(`T3I.on=true;T3F.on=true;0`);
+  await E(`T3I.on=false;T3F.on=false;0`);await p.waitForFunction(()=>__E(`!T3I.live&&getComputedStyle(__T3.cv).display==='none'`),null,{timeout:30000}).catch(()=>{});s=JSON.parse(await E(`JSON.stringify({live:T3I.live,cv:getComputedStyle(__T3.cv).display,z:zMode(),tr:!!MM.tr,seen:T3I.seen,wN:T3I.wN,host:T3I.host})`));ck(!s.live&&s.cv==='none','senza il 3D torna il disegno di sempre '+JSON.stringify(s));await E(`T3I.on=true;T3F.on=true;0`);
   ck(!errs.length,'nessun errore nella pagina'+(errs.length?': '+errs.slice(0,3).join(' | '):''));
   console.log(`\n${ok} sì, ${ko} no`);await b.close();process.exit(ko?1:0)})();

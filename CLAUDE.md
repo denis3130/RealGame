@@ -480,8 +480,18 @@ sfrangiato, fuoco a fasce, orlo freddo, contorno spesso), la telecamera più lon
 (tronco, tenda, zaino, pala, ceppo con l'ascia, catasta, cassa, pentolino, pistola), il fuoco a lingue (`T3FS_FLAME`), le tombe, la
 staccionata, il lampione, lo spaventapasseri che gira la testa, la fattoria con la finestra accesa e il comignolo che fuma, il mulino con le
 pale, le colline con la cappella, luna, nuvole, stelle, corvi, nebbia; gli zombie in 3D di 106 sul sentiero (ora 106 è nella pagina). Si
-prepara a pezzetti la prima volta (intanto il disegno di 66). Prova `node tests/t3/menu.js` (25 controlli), foto
-`tests/t3/tr_isole.jpg`, `tr_falo.jpg`, `tr_spettacolo.jpg`; dettagli in `docs/tripla-a.md` («Il menu in tripla A»).
+prepara a pezzetti la prima volta (intanto il disegno di 66). Poi (3 novembre, Denis: «non mi ispira»; risposte «Statico, poca azione»,
+«Manca un'idea forte» e, fra le idee, «Assedio») **l'Assedio** al posto del falò tranquillo (il falò rifatto è nel commit 7f490df), sempre in
+`118-t3-falo.js`: l'eroe in piedi davanti al tronco con l'arma zombie dell'Arsenale (`SAVE.z.gun`); la barricata a mezzaluna intorno al
+campo (`T3FB`, `t3FBarricade`: il carro ribaltato con le ruote in alto, una che gira, casse, botti, sacchi, la palizzata di pali appuntiti
+con le funi, porta e tavolo rovesciati, assi di traverso, cavalli di frisia, due torce), che trema sotto le spinte; l'orda in 3D di 106
+(`t3FHorde`, 28 zombie, 14 con LOWFX: la prima fila con le braccia oltre la barricata, la seconda che spinge, la folla, altri che escono
+dalla nebbia fra le tombe aperte, gli occhi accesi anche quando la testa scatta, `t3FHeadOff`); ogni 7–12 s uno scavalca alla destra
+dell'eroe, che si gira di tre quarti, mira e spara col modo della sua arma (`T3F_SHOTS`: rinculo, vampa, carrello, il suono di
+`ARMI.suono`, la scia, il sangue scuro) e quello cade all'indietro; la fattoria in fiamme (finestre, tetto, fumo, braci, luce rossa sul
+campo e sull'orizzonte), la luna rossa, i lampi col tuono che arriva dopo (`t3FLight`, `t3FThunder`), i versi dell'orda, lo
+spaventapasseri, il mulino, i corvi. Prova `node tests/t3/menu.js` (30 controlli), foto `tests/t3/tr_isole.jpg`, `tr_falo.jpg`,
+`tr_assedio.jpg`, `tr_spettacolo.jpg`; dettagli in `docs/tripla-a.md` («Il menu in tripla A»).
 
 ## FASE 9: più fluido sul telefono (19 ottobre, in corso)
 

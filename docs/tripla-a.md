@@ -121,48 +121,68 @@ nell'anteprima tripla A (il gioco e l'app non cambiano).
   incastri di pietra con le borchie, Gioca d'oro più ricco, la barra in basso con la scheda scelta che si accende; i fogli più scuri e caldi
   col titolo su un nastro, le schede con la loro cornice, le scelte dorate. Nelle **Impostazioni** due interruttori dell'anteprima: la
   luce del 3D («Chiara» o «Da film») e l'interfaccia («Nuova» o «Di prima», per confrontarle).
-- **`src/js/118-t3-falo.js`** (`T3F`): il falò del menu Zombie. **Rifatto il 3 novembre** (Denis: «miglioralo non mi piace»; risposte:
-  «Falò del menu Zombie, rifai tutto meglio», «Sembra di plastica, Inquadratura», «Rifinisco il 3D»; la prima versione, col dipinto di 66
-  come fondale e il campo in 3D davanti, è nel commit 561bd0e). Ora **tutta la scena è in 3D vero**, niente più fondale dipinto:
+- **`src/js/118-t3-falo.js`** (`T3F`): la scena del menu Zombie. Prima il falò in 3D (2 novembre, col dipinto di 66 come fondale: commit
+  561bd0e), poi **il falò rifatto da capo** (3 novembre, Denis: «miglioralo non mi piace»; risposte «Falò del menu Zombie, rifai tutto
+  meglio», «Sembra di plastica, Inquadratura», «Rifinisco il 3D»: tutta la scena in 3D vero e dipinta; l'ultima versione è nel commit
+  7f490df), poi, stesso giorno, Denis: «non mi ispira»; alle domande: «Statico, poca azione», «Manca un'idea forte», e fra le idee proposte
+  ha scelto **l'Assedio** («una barricata di assi e carri intorno al fuoco, l'orda che preme da fuori con le braccia tese, la fattoria che
+  brucia, luna rossa e lampi»). Della scena di prima restano la pittura e l'inquadratura:
   - **Dipinta, non di plastica**: un programma suo (`T3FS_FP`) mette su ogni pezzo il disegno del suo materiale, preso dal posto dove sta
     (triplanare: niente coordinate da preparare, si vede uguale da ogni lato): erba, terra, pietra, corteccia (in piedi e coricata), legno
     (in piedi e coricato), assi, intonaco, tegole, tela, ferro, legno bruciato e uno neutro, quindici disegni di 256 punti fatti una volta
     (`T3FTX`, chiari: il colore del pezzo li tinge). Sopra: la luna in due toni con l'orlo sfrangiato come una pennellata, il fuoco a fasce
     morbide, l'orlo freddo della luna sui bordi, le cime più chiare, il buio alla base delle cose, il contorno scuro spesso (`t3FDraw`), la
-    nebbia bassa che si muove sul prato ma non sul campo.
-  - **L'inquadratura**: la telecamera più lontana e più bassa (`T3FC`, 50° di campo, l'eroe al 70% del disegno di oggi, l'inclinazione
-    calcolata perché l'orizzonte cada sotto la barra in alto e il cielo si veda), il campo dove 66 lo ha (l'eroe appena sopra «Cambia»).
-  - **La scena**, dal vicino al lontano: il terreno intero fino alle colline (l'erba e la terra mescolate punto per punto: la radura
-    calpestata intorno al campo, il sentiero, le chiazze spoglie, la terra bruciata intorno al fuoco); il campo (il tronco con la corteccia,
-    i tagli con gli anelli, il muschio e tre funghetti che brillano appena; la tenda a capanna con un lembo chiuso e il buio dentro, i pali,
-    le corde e i picchetti, la coperta rossa; lo zaino con la coperta arrotolata; la pala piantata; il ceppo con l'ascia; la catasta; la cassa
-    delle munizioni coi bossoli e la lanterna spenta; il pentolino col vapore; la pistola appoggiata al tronco, ARMI3D; sassi e rametti); il
-    fuoco (l'anello di pietre, la cenere, cinque ceppi a capanna con le crepe di brace che respirano col fuoco, le fiamme a lingue in quattro
-    colori fatte da un programma loro, `T3FS_FLAME`, il bagliore, le scintille, il fumo); le tombe e le croci col muschio, l'erba alta, la
-    staccionata rotta (pali storti, traverse spezzate o penzolanti, pali mancanti), il lampione sul sentiero con la sua lanterna che fa luce a
-    chi passa, l'albero morto, lo spaventapasseri (cappotto stracciato, paglia, cappello; la testa ogni tanto si gira di colpo verso di te e
-    si piega troppo di lato, gli occhi rossi si accendono, poi torna piano); la fattoria in rovina (fondamenta di pietra, intonaco coi
-    travi, il tetto di tegole sfondato a destra coi travetti scoperti, il comignolo che fuma, la porta sbarrata con le assi, una finestra
-    accesa che trema, una con l'imposta rotta, la botte, tegole cadute); il mulino (base di pietra, torre d'intonaco, cappello di tegole, le
-    pale che girano, una rotta, con la tela strappata); tre file di colline con gli alberi morti e la cappella in rovina; il cielo (dal verde
-    malato all'orizzonte al blu profondo, le stelle che brillano), la luna con l'alone, le nuvole che le passano davanti.
-  - **Gli zombie in 3D** (106, i modelli della visuale) sul sentiero dietro la staccionata: zombie, zombie con la lanterna, strisciante e
-    minatore camminano, si fermano, si girano di scatto verso di te o verso l'eroe col verso lontano, ripartono; gli occhi che brillano e
-    pulsano, la lanterna e la lampada che fanno luce. I **corvi** in 3D (sei pose d'ala sfumate): stormi che passano e corvi posati sui
-    pali e sul braccio dello spaventapasseri che girano la testa.
-  - La prima volta la scena si prepara **a pezzetti** (15 disegni, 41.000 triangoli in 42 pezzi): già nei momenti liberi del menu Classica
-    (l'`IDLE` di 65, 4 ms alla volta, mai in battaglia né sulla mappa zombie), poi nel menu Zombie 8 ms a fotogramma, mai durante lo
-    scorrimento tra le modalità; intanto resta il disegno di 66, e quando il 3D è pronto il disegno di prima gli sfuma sopra in mezzo
-    secondo (niente salto). Le pose degli zombie dopo, 3–4 ms alla volta (un tipo cammina sul sentiero appena le sue pose sono pronte): una su due di 106,
-    80 invece di 160 (il disegno scivola tra loro lo stesso), metà della memoria. Andando a giocare l'eroe si alza e se ne va nel buio, come prima. LOWFX: niente nebbia, fumo, corvi in
-    volo e nuvole che si muovono, meno scintille.
+    nebbia bassa che si muove sul campo fuori dalla barricata ma non dentro.
+  - **L'inquadratura**: la telecamera lontana e bassa (`T3FC`, 50° di campo, l'eroe al 70% del disegno di oggi, l'inclinazione calcolata
+    perché l'orizzonte cada sotto la barra in alto e il cielo si veda), il campo dove 66 lo ha (l'eroe appena sopra «Cambia»).
+  - **L'eroe** in piedi davanti al tronco con l'arma zombie scelta nell'Arsenale (`SAVE.z.gun`; pistola, revolver, mitraglietta, mitra,
+    tamburo, mitragliatrice, pompa e pompa tattica; le altre fanno vedere la pistola), il fuoco alla sua destra; guarda verso di noi e ogni
+    tanto si volta a guardare la barricata da sopra la spalla. Quando uno zombie scavalca si gira di scatto (di tre quarti: lo zombie sale
+    sempre alla sua destra, così l'arma, la vampa e la scia si vedono), mira e spara con il modo della sua arma (`T3F_SHOTS`: un colpo, due,
+    raffiche da quattro a sei; il rinculo, la vampa e il carrello veri dell'arma 3D, `o.gp`; il suono dell'arma, `ARMI.suono`; la luce della
+    vampa intorno, la scia fino al petto dello zombie, il sangue scuro che gli esce dalla schiena), poi abbassa l'arma e torna a guardia (la
+    pompa si ricarica). Andando a giocare si incammina verso la barricata e sparisce nel buio.
+  - **La barricata** (`T3FB`: una mezzaluna intorno al campo, aperta verso di noi; `t3FBf` il suo verso in ogni punto; `t3FBarricade`): il
+    carro ribaltato con le ruote in alto (cerchioni di ferro, razze, mozzi; tre ferme e una che gira ancora, un pezzo suo), le stanghe a
+    terra; casse, una botte in piedi e una coricata, i sacchi di terra; la palizzata di pali appuntiti piegati in fuori, legati da due funi e
+    puntellati da dentro; una porta con le traverse e un tavolo rovesciati, un'altra botte; assi inchiodate di traverso dove ci sono i buchi;
+    i cavalli di frisia ai due lati; due pali con le torce (le fiamme vere e la loro luce). Trema quando l'orda spinge (polvere, il tonfo, il
+    legno che scricchiola).
+  - **L'orda** (106, gli zombie della visuale, `t3FHorde`): 28 zombie, 14 con LOWFX. La prima fila contro la barricata con le braccia oltre
+    (la mossa dell'attacco), la seconda che spinge, la folla dietro, e altri che vengono avanti dalla nebbia fra le tombe aperte; i posti
+    liberi della prima fila li prende chi sta dietro, e quando uno cade un altro esce dalla nebbia (l'orda non cala mai). Tutti guardano
+    l'eroe. Gli occhi brillano e pulsano, e restano sugli occhi anche quando la testa scatta in avanti (`t3FHeadOff`, i conti delle mosse di
+    106); la lanterna e la lampada del minatore fanno luce. Ogni 2–5 s uno della prima fila si butta sulla barricata; ogni 7–12 s uno
+    scavalca: sale in cima in un secondo, si sporge verso il campo con le braccia tese e, colpito, cade all'indietro e sparisce dietro la
+    barricata. Gemono ogni 2–5 s (`sndZGroan`).
+  - **Il campo fuori**: le tombe del vecchio cimitero con le croci, tre aperte da sotto (la fossa nera, la terra buttata fuori, il coperchio
+    spezzato), l'erba alta, l'albero morto, lo spaventapasseri che ogni tanto gira la testa verso di te; **la fattoria in fiamme** (il fuoco
+    dalle tre finestre, dal tetto sfondato coi travetti bruciati, dall'angolo e dalla gronda; la fuliggine sui muri, il campo bruciato
+    intorno; il fumo grande acceso dal basso, le braci che salgono e vanno col vento, la sua luce rossa sul campo e il bagliore sull'orizzonte);
+    il mulino con le pale che girano; le colline con la cappella.
+  - **Il cielo**: notte rossa, la luna rossa con l'alone, le nuvole rosse vicino alla luna; **i lampi** (`t3FLight`, ogni 6–15 s): il fulmine
+    coi rami dalle nuvole a dietro le colline, la luce fredda che viene da dietro e disegna i contorni, due o tre sfarfallii (con «riduci
+    movimento» del telefono un solo bagliore morbido), e **il tuono**
+    che arriva dopo (`t3FThunder`, prima lo schiocco, poi il rotolare, più tardi se è più lontano).
+  - **Il campo dentro**: il tronco (ora dietro l'eroe), la tenda, lo zaino con la coperta, la pala, il ceppo con l'ascia, la catasta, la
+    cassa delle munizioni coi bossoli e la lanterna, il pentolino col vapore, il fuoco (le pietre, la cenere, i ceppi con le crepe di brace,
+    le fiamme a lingue in quattro colori, `T3FS_FLAME`, le scintille, il fumo); i corvi in volo e posati sullo spaventapasseri, su una ruota
+    del carro e su un palo della palizzata.
+  - La prima volta la scena si prepara **a pezzetti** (15 disegni, 49.000 triangoli): già nei momenti liberi del menu Classica (l'`IDLE` di
+    65, 4 ms alla volta, mai in battaglia né sulla mappa zombie), poi nel menu Zombie 8 ms a fotogramma, mai durante lo scorrimento tra le
+    modalità; intanto resta il disegno di 66, e quando il 3D è pronto il disegno di prima gli sfuma sopra in mezzo secondo. Le pose degli
+    zombie dopo, 3–4 ms alla volta (l'orda arriva appena le pose del primo tipo sono pronte): l'attacco e la camminata, una posa su due di 106
+    (84 pose; lo strisciante solo cammina). Suoni solo nel menu Zombie e con gli effetti accesi (`t3FSnd`). LOWFX: metà orda, niente nebbia,
+    fumo e corvi in volo, meno scintille, braci e polvere.
 - Mentre il menu passa da una modalità all'altra (lo scorrimento) c'è per quel secondo il disegno di sempre; se il 3D non c'è torna da solo.
-- Prove: `node tests/t3/menu.js` (25 controlli: isole in 3D, tocchi dell'eroe e dei premi, pezzi sotto i 65.000 punti, spettacolo, interfaccia
-  e interruttori, falò in 3D con tutta la scena, il cielo sotto la barra, gli zombie in 3D, lo spaventapasseri e uno zombie che si girano,
-  gli zombie che escono dal sentiero, ritorno al disegno di sempre, nessun errore). Foto: `tests/t3/tr_isole.jpg` (prima e dopo: l'isola e il ponte col
-  disegno di oggi e in 3D), `tr_falo.jpg` (il falò: il primo 3D, quello nuovo con la luce «Chiara» e con la luce «Da film»), `tr_spettacolo.jpg` (lo spettacolo, il traguardo, due fogli).
-- Tempi sul computer di prova (senza scheda grafica): isole circa 17–30 ms a fotogramma; falò circa 13 ms in media nella prova del menu
-  (3,5 ms di lavoro del programma, 2,6 con LOWFX, più il disegno e il passaggio finale).
+- Prove: `node tests/t3/menu.js` (30 controlli: isole in 3D, tocchi dell'eroe e dei premi, pezzi sotto i 65.000 punti, spettacolo, interfaccia
+  e interruttori, l'assedio in 3D con tutta la scena, la barricata, la ruota e le torce, la fattoria che brucia, il cielo sotto la barra,
+  l'orda in 3D, lo zombie che scavalca e l'eroe che si gira, mira e spara, l'eroe che torna a guardia e l'orda che torna al suo numero, la
+  spinta, il lampo, lo spaventapasseri che si gira, ritorno al disegno di sempre, nessun errore). Foto: `tests/t3/tr_isole.jpg` (prima e dopo: l'isola e il ponte col
+  disegno di oggi e in 3D), `tr_falo.jpg` (il falò: il primo 3D, quello rifatto con la luce «Chiara» e con la luce «Da film»), `tr_assedio.jpg` (l'assedio con la luce «Chiara» e «Da film», lo sparo, il lampo), `tr_spettacolo.jpg` (lo spettacolo, il traguardo, due fogli).
+- Tempi sul computer di prova (senza scheda grafica): isole circa 17–30 ms a fotogramma; l'assedio 6,6 ms di lavoro del programma a
+  fotogramma con 28 zombie (5,0 con LOWFX e 14 zombie; il falò di prima 3,5), più il disegno (49.000 triangoli fermi e circa 117.000
+  dell'orda) e il passaggio finale.
   Sul telefono lo dice il contatore.
 - Cosa manca: degli animali intorno alle isole ci sono solo lucciole, braci e luccichii (niente stormi, farfalle, rane); il ponte non
   ondeggia ancora sotto l'eroe e le funi non sentono il vento; gli stendardi delle torri sono fermi.
