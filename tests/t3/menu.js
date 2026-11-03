@@ -75,7 +75,7 @@ const SAVE={gold:5000,gems:500,trophies:900,runs:12,introSeen:1,handSeen:1,start
   s=JSON.parse(await E(`JSON.stringify({n:T3F.n,sc:T3F.sc.st})`));ck(s.n.push>0,'la barricata trema sotto una spinta');ck(s.n.bolt>0,'il lampo');ck(s.sc==='turn','lo spaventapasseri si gira a guardarti');
   // 5. the times (the computer of the tests has no graphics card: on the phone the counter says it)
   console.log('I tempi');
-  const zt=+await E(`T3F.ms.toFixed(1)`);await p.click('#zHand',{force:true}).catch(()=>{});
+  const zt=+await E(`T3F.ms.toFixed(1)`);await p.click('#cSprout',{force:true}).catch(()=>{});
   s=JSON.parse(await E(`JSON.stringify({tr:!!MM.tr,i:!!T3I.snapOk,f:!!T3F.snapOk})`));ck(s.tr&&s.i&&s.f,'lo scorrimento tra le modalità mostra le due scene in 3D '+JSON.stringify(s));
   await p.waitForFunction(()=>__E('!MM.tr'),null,{timeout:240000}).catch(()=>{});ck(await E(`!MM.tr&&!zMode()`),'e quello verso la Classica pure');await E(`if(zMode()){SAVE.modo='classica';applyModeUI()}0`);await p.waitForTimeout(2500);const it=+await E(`T3I.ms.toFixed(1)`);
   console.log('  tempi medi a fotogramma (ms, computer di prova senza scheda grafica): isole',it,'· assedio',zt);ck(it>0&&zt>0,'il disegno 3D del menu gira');

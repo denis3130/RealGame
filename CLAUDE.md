@@ -496,7 +496,7 @@ cade, la ricarica), il sangue a terra, le schegge della barricata, l'orda innatu
 e braci nel vento (`t3FAsh`), la telecamera che respira e trema, l'aria della notte (`t3FAmbOn`); sulle isole gli stendardi e le funi al
 vento (`t3IBanner`, `B.wind`, `T3I.wu`), il ponte che ondeggia sotto l'eroe nella scheda grafica (`t3IBrProg`), stormi, farfalle, libellule,
 il fumo del vulcano e la neve (`t3ILife`); lo scorrimento tra le modalità con le due scene in 3D, copiate una volta quando parte
-(`t3SnapPair`). Prova `node tests/t3/menu.js` (35 controlli), foto `tests/t3/tr_isole.jpg`, `tr_falo.jpg`, `tr_assedio.jpg`,
+(`t3SnapPair`). Prova `node tests/t3/menu.js` (37 controlli), foto `tests/t3/tr_isole.jpg`, `tr_falo.jpg`, `tr_assedio.jpg`,
 `tr_spettacolo.jpg`, `tr_ancora.jpg`; dettagli in `docs/tripla-a.md` («Il menu in tripla A», «Ancora meglio»).
 
 ## FASE 9: più fluido sul telefono (19 ottobre, in corso)

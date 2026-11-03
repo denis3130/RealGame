@@ -176,7 +176,7 @@ nell'anteprima tripla A (il gioco e l'app non cambiano).
     fumo e corvi in volo, meno scintille, braci e polvere.
 - Mentre il menu passa da una modalità all'altra (lo scorrimento) scorrono le due scene in 3D (sotto, «Ancora meglio»); se il 3D non c'è
   torna da solo il disegno di sempre.
-- Prove: `node tests/t3/menu.js` (35 controlli dopo «Ancora meglio»; i primi 30: isole in 3D, tocchi dell'eroe e dei premi, pezzi sotto i 65.000 punti, spettacolo, interfaccia
+- Prove: `node tests/t3/menu.js` (37 controlli dopo «Ancora meglio»; i primi 30: isole in 3D, tocchi dell'eroe e dei premi, pezzi sotto i 65.000 punti, spettacolo, interfaccia
   e interruttori, l'assedio in 3D con tutta la scena, la barricata, la ruota e le torce, la fattoria che brucia, il cielo sotto la barra,
   l'orda in 3D, lo zombie che scavalca e l'eroe che si gira, mira e spara, l'eroe che torna a guardia e l'orda che torna al suo numero, la
   spinta, il lampo, lo spaventapasseri che si gira, ritorno al disegno di sempre, nessun errore). Foto: `tests/t3/tr_isole.jpg` (prima e dopo: l'isola e il ponte col
@@ -217,8 +217,10 @@ Denis: «miglioralo ancora senza farmi domande, intendo incluso anche il menu ec
   in 3D e si copia (`t3SnapPair`: prima quella nuova, poi la vecchia, così lo schermo resta com'è fino al primo passo); durante lo
   scorrimento scorrono le due copie (`t3Snap`, `t3SnapDraw`), non più il disegno di sempre. Una copia sola a scorrimento: copiare il 3D a
   ogni fotogramma costerebbe uno scatto sul telefono. Se una scena non è ancora pronta (l'assedio la prima volta), per lei resta il
-  disegno di sempre.
+  disegno di sempre. Mentre scorre la copia delle isole l'orologio del menu va avanti come col disegno di 94 (senza, partendo dalla
+  Classica lo scorrimento restava a metà finché non si toccava lo schermo: trovato dalla prova).
 - Prove: `node tests/t3/menu.js` ora ha anche il vento e il ponte che ondeggia, lo stormo, i bossoli dell'arma vera, la cenere, l'eroe che
-  torna a guardia anche ricaricando, lo scorrimento con le due scene in 3D. Il computer delle prove di oggi è molto più lento di quello di
+  torna a guardia anche ricaricando, lo scorrimento con le due scene in 3D che arriva in fondo da solo nei due sensi (verso la Zombie con
+  la manina, verso la Classica col germoglio). Il computer delle prove di oggi è molto più lento di quello di
   ieri (anche il menu senza 3D va a 5 fotogrammi al secondo, sia col codice nuovo sia con quello di prima), per questo le attese della prova
   sono più lunghe; il lavoro vero di un fotogramma delle isole, misurato pezzo per pezzo, è circa 12 ms. Foto: `tests/t3/tr_ancora.jpg`.
