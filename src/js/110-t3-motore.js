@@ -434,16 +434,17 @@ function t3Flames(){const gl=T3.gl,t=G.t||0;gl.enable(gl.BLEND);gl.blendFunc(gl.
   t3QFlush(T3.pA,T3.glow);gl.depthMask(true);gl.disable(gl.BLEND)}
 // ------------------------------------------------------------------ the last pass: glow, outline, colours of the chosen light, vignette, grain;
 // the game's fade to black between rooms
-function t3Post(){const gl=T3.gl;if(!T3.post)return;gl.disable(gl.DEPTH_TEST);const Lc=t3L(),BL=!LOWFX&&T3.bl?T3.bl:null;
+function t3Post(o){o=o||{};const gl=T3.gl;if(!T3.post)return;gl.disable(gl.DEPTH_TEST);const Lc=t3L(),BL=!LOWFX&&T3.bl?T3.bl:null;
   if(BL){const[a,b,c,d]=BL;t3Pass(T3.pBr,a,T3.fc,u=>{gl.uniform2f(u.uPx,1/T3.cw,1/T3.ch);gl.uniform1f(u.uThr,Lc.thr)});
     t3Pass(T3.pBl,b,a.tex,u=>gl.uniform2f(u.uDir,1.3/a.w,0));t3Pass(T3.pBl,a,b.tex,u=>gl.uniform2f(u.uDir,0,1/a.h));
     t3Pass(T3.pBr,c,a.tex,u=>{gl.uniform2f(u.uPx,1/a.w,1/a.h);gl.uniform1f(u.uThr,-1)});t3Pass(T3.pBl,d,c.tex,u=>gl.uniform2f(u.uDir,1.4/c.w,0));t3Pass(T3.pBl,c,d.tex,u=>gl.uniform2f(u.uDir,0,1/c.h))}
-  const hp=P.hp/P.maxhp,low=G.state==='dead'?0:Math.max(0,Math.min(1,(.32-hp)/.22)),hit=P.hurtT!=null?Math.max(0,1-(G.t-P.hurtT)/.35):0;
+  // (o: the menu's islands say themselves: no hit, no little life, no fade of the rooms)
+  const hp=P.hp/P.maxhp,low=o.low!=null?o.low:G.state==='dead'?0:Math.max(0,Math.min(1,(.32-hp)/.22)),hit=o.hit!=null?o.hit:P.hurtT!=null?Math.max(0,1-(G.t-P.hurtT)/.35):0;
   t3Pass(T3.pP,null,T3.fc,u=>{gl.activeTexture(gl.TEXTURE1);gl.bindTexture(gl.TEXTURE_2D,T3.fd);gl.uniform1i(u.uD,1);gl.activeTexture(gl.TEXTURE2);gl.bindTexture(gl.TEXTURE_2D,BL?BL[0].tex:T3.fc);gl.uniform1i(u.uB1,2);
     gl.activeTexture(gl.TEXTURE3);gl.bindTexture(gl.TEXTURE_2D,BL?BL[2].tex:T3.fc);gl.uniform1i(u.uB2,3);gl.activeTexture(gl.TEXTURE0);
     const ik=Math.max(1,Math.round(T3.cw/(T3.W||T3.cw)*1.05));gl.uniform2f(u.uPx,ik/T3.cw,ik/T3.ch);gl.uniform2f(u.uNF,T3.near,T3.far);gl.uniform1f(u.uInk,LOWFX||T3.low?.6:Lc.ink);
     gl.uniform1f(u.uT,(G.t||0)%1000);gl.uniform4f(u.uFx,BL?Lc.bloom*(T3.low?.75:1):0,LOWFX?0:Lc.grain,LOWFX?0:hit,low);gl.uniform4f(u.uGr,Lc.sat,Lc.con,Lc.warm,Lc.vig);
-    gl.uniform1f(u.uFade,Math.max(0,Math.min(1,G.fade||0)));gl.uniform3f(u.uFadeC,12/255,9/255,7/255)});
+    gl.uniform1f(u.uFade,o.fade!=null?o.fade:Math.max(0,Math.min(1,G.fade||0)));gl.uniform3f(u.uFadeC,12/255,9/255,7/255)});
   for(let i=3;i>=0;i--){gl.activeTexture(gl.TEXTURE0+i);gl.bindTexture(gl.TEXTURE_2D,null)}gl.enable(gl.DEPTH_TEST)}
 // ------------------------------------------------------------------ the ground's drawings of the game (the warnings of the attacks, the auras
 // of the champions, the zones, the meteors' rings, the slime's trails, the shadows of what falls, the waves) painted as today on a picture
