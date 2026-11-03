@@ -3,8 +3,9 @@
 //  - le mosse prese per nome d'osso, ricampionate a 30 al secondo; nelle camminate e nelle corse il bacino resta sul posto (si cammina
 //    davanti alla telecamera; la velocità del passo resta scritta nella mossa, extras.passo, in unità del modello al secondo);
 //  - le texture rifatte più leggere (colore JPEG, rilievo JPEG, luce degli occhi PNG); via quella metallo/ruvidità, che non usiamo.
-// Uso: node sprite/meshy/prepara.js <cartella con rigged.glb e le mosse> <uscita.glb> [nome=file.glb[:fermo]] …
-//   «:fermo» = la mossa non si ripete (sbucare, morire…): il bacino resta dove la mossa lo porta.
+// Uso: node sprite/meshy/prepara.js <cartella con rigged.glb e le mosse> <uscita.glb> [nome=file.glb[#mossa][:fermo]] …
+//   «#mossa» = quale mossa del file (se ne ha più d'una; senza, la prima); «:fermo» = la mossa non si ripete (sbucare, morire…): il bacino
+//   resta dove la mossa lo porta.
 // Le texture si rifanno con il Chromium delle prove (canvas). Note in sprite/meshy/LEGGIMI.md.
 const fs=require('fs'),path=require('path'),MB3=require('./mb3.js');
 const [,,DIR,OUT,...ARGS]=process.argv;if(!DIR||!OUT){console.error('uso: node prepara.js <cartella> <uscita.glb> nome=file.glb[:fermo] …');process.exit(2)}
@@ -17,9 +18,9 @@ const hips=joints.find(j=>/hips|pelvis/i.test(M.nodes[j].name))??joints.find(j=>
 console.log('modello:',M.prims.length,'pezzi,',M.prims.reduce((s,q)=>s+q.idx.length/3,0),'triangoli,',M.prims.reduce((s,q)=>s+q.pos.length/3,0),'vertici,',joints.length,'ossa; bacino:',hips!==undefined?M.nodes[hips].name:'?');
 // ---- the moves ----
 const clips=[];
-for(const a of ARGS){const m=/^([^=]+)=([^:]+)(?::(\w+))?$/.exec(a);if(!m){console.error('mossa non capita: '+a);process.exit(2)}
-  const [,name,file,flag]=m,h=rd(path.join(DIR,file)),C=MB3.model(h);if(!C.clips.length){console.error('nessuna mossa in '+file);process.exit(1)}
-  const src=C.clips[0],map={};let miss=0;C.nodes.forEach(n=>{if(M.byName[n.name]!==undefined)map[n.i]=M.byName[n.name];else miss++});
+for(const a of ARGS){const m=/^([^=]+)=([^:#]+)(?:#([^:]+))?(?::(\w+))?$/.exec(a);if(!m){console.error('mossa non capita: '+a);process.exit(2)}
+  const [,name,file,which,flag]=m,h=rd(path.join(DIR,file)),C=MB3.model(h);if(!C.clips.length){console.error('nessuna mossa in '+file);process.exit(1)}
+  const src=which?C.clips.find(c=>c.name===which):C.clips[0],map={};if(!src){console.error('in '+file+' non c\'è la mossa '+which);process.exit(1)}let miss=0;C.nodes.forEach(n=>{if(M.byName[n.name]!==undefined)map[n.i]=M.byName[n.name];else miss++});
   const n=Math.max(2,Math.round(src.dur*FPS)+1),ch=[];
   for(const c of src.ch){const to=map[c.node];if(to===undefined)continue;const k=c.n,v=new Float32Array(n*k),o=k===4?[0,0,0,1]:[0,0,0];
     for(let f=0;f<n;f++){MB3.sample(c,Math.min(src.dur,f/FPS),o);v.set(o,f*k)}

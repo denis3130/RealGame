@@ -44,7 +44,7 @@ const MOVES=[
 const SEQ=['sbuca','fermo','cammina','barcolla','urla','colpo','morso','colpito','scatto','muore'],SEQT={fermo:3.5,cammina:4,barcolla:4,scatto:3};
 let cur=null,prev=null,blend=1,all=false,seqI=0,flash=0,rise=0,sink=0,dirt=[];
 const now=()=>performance.now()/1000-T0;
-function play(id,keepAll){const m=MOVES.find(x=>x.id===id);if(!m)return;if(!keepAll)all=false;
+function play(id,keepAll){const m=MOVES.find(x=>x.id===id)||MOVES.find(x=>x.id==='fermo')||MOVES[0];if(!m)return;if(!keepAll)all=false;
   prev=cur?{...cur,clip:cur.clip}:null;blend=prev?0:1;cur={m,clip:clip[m.clip],t0:now(),t:0,done:false};
   if(m.flash)flash=1;if(m.id==='sbuca'){rise=1;sink=0;spray(14)}if(m.id!=='muore')sink=0;ui()}
 function movT(c,t){const m=c.m,d=m.dur||c.clip.dur/(m.sp||1);if(m.loop)return((t*(m.sp||1))%c.clip.dur+c.clip.dur)%c.clip.dur;return Math.min(c.clip.dur,t*(m.sp||1)*(m.dur?c.clip.dur/m.dur/(m.sp||1):1))}
@@ -116,13 +116,13 @@ function paintBack(W,Hh,dpr){back.width=W*dpr;back.height=Hh*dpr;const c=bx;c.se
     tr(x2,y2,l*.72,a-.45-d*.05,w*.65,d+1);tr(x2,y2,l*.66,a+.5,w*.6,d+1)};tr(W*.93,hz+14,Hh*.09,-1.62,5,0);
   const v=c.createRadialGradient(W/2,Hh*.55,Math.min(W,Hh)*.3,W/2,Hh*.55,Math.max(W,Hh)*.8);v.addColorStop(0,'rgba(0,0,0,0)');v.addColorStop(1,'rgba(0,0,0,.6)');c.fillStyle=v;c.fillRect(0,0,W,Hh)}
 // ---------- one frame ----------
-let W0=0,H0=0,DPR=1,SHIFT=.2;const VP=new Float32Array(16),PR=new Float32Array(16),VW=new Float32Array(16),Mx=new Float32Array(16);
+let W0=0,H0=0,DPR=1,SHIFT=.17;const VP=new Float32Array(16),PR=new Float32Array(16),VW=new Float32Array(16),Mx=new Float32Array(16);
 function resize(){const W=innerWidth,Hh=innerHeight,dpr=Math.min(low?1:2,devicePixelRatio||1);if(W===W0&&Hh===H0&&dpr===DPR)return;W0=W;H0=Hh;DPR=dpr;
   for(const c of[cv,fr]){c.width=Math.round(W*dpr);c.height=Math.round(Hh*dpr)}paintBack(W,Hh,dpr);fbo=[]}
-function camAt(yw,pt,d,ax,ay,aw,ah){const ch=.86,dd=4.3*d,e=[Math.sin(yw)*Math.cos(pt)*dd,ch+Math.sin(pt)*dd,Math.cos(yw)*Math.cos(pt)*dd];
+function camAt(yw,pt,d,ax,ay,aw,ah){const ch=.86,dd=4.8*d,e=[Math.sin(yw)*Math.cos(pt)*dd,ch+Math.sin(pt)*dd,Math.cos(yw)*Math.cos(pt)*dd];
   MB3.persp(PR,.62,aw/ah,.1,40);MB3.look(VW,e,[0,ch-.04,0],[0,1,0]);MB3.mul(VP,PR,VW);const sy=ah<cv.height*.9?0:SHIFT;if(sy)for(const i of[1,5,9,13])VP[i]+=sy*VP[i+2];
   return{VP:Float32Array.from(VP),eye:e,px:[2/aw,2/ah],vp:[ax,ay,aw,ah]}}
-function frame(){requestAnimationFrame(frame);if(!R)return;resize();const t0=performance.now(),tt=now(),dt=Math.min(.05,tt-(frame.l||tt));frame.l=tt;
+function frame(){requestAnimationFrame(frame);if(!R||!cur)return;resize();const t0=performance.now(),tt=now(),dt=Math.min(.05,tt-(frame.l||tt));frame.l=tt;
   if(auto&&!drag&&!four)yaw+=dt*.32;
   // which move, at what moment (the sequence of «Tutte»)
   let c=cur;c.t=tt-c.t0;const m=c.m,len=m.loop?(SEQT[m.id]||1e9):(m.dur||c.clip.dur/(m.sp||1))+(m.hold||0);
