@@ -473,7 +473,14 @@ loro mondo, ponte sospeso di assi in volumi veri con torri, stendardi, travi, fu
 3D col bastoncino di muschio, custode, pennone degli stendardi, lo spettacolo delle assi; telecamera bassa e vicina lungo il ponte, `T3IC`;
 la logica e le scritte restano quelle di 94), `117-t3-interfaccia.js` (`T3UI`: materiali più ricchi per bottoni, barre, posti delle
 casse e fogli; nelle Impostazioni gli interruttori «Luce chiara / da film» e «Interfaccia nuova / di prima»), `118-t3-falo.js` (`T3F`:
-il falò del menu Zombie col campo in 3D davanti al dipinto di oggi). Prova `node tests/t3/menu.js` (19 controlli), foto
+il falò del menu Zombie). Poi (3 novembre, Denis: «miglioralo non mi piace»; risposte «Falò del menu Zombie, rifai tutto meglio», «Sembra di
+plastica, Inquadratura», «Rifinisco il 3D») **il falò rifatto da capo, tutta la scena in 3D vero** (prima il campo in 3D davanti al dipinto
+di 66, commit 561bd0e): dipinto coi disegni dei materiali presi dal posto (triplanare, `T3FTX`, `T3FS_FP`: luna in due toni con l'orlo
+sfrangiato, fuoco a fasce, orlo freddo, contorno spesso), la telecamera più lontana e più bassa col cielo sotto la barra (`T3FC`); il campo
+(tronco, tenda, zaino, pala, ceppo con l'ascia, catasta, cassa, pentolino, pistola), il fuoco a lingue (`T3FS_FLAME`), le tombe, la
+staccionata, il lampione, lo spaventapasseri che gira la testa, la fattoria con la finestra accesa e il comignolo che fuma, il mulino con le
+pale, le colline con la cappella, luna, nuvole, stelle, corvi, nebbia; gli zombie in 3D di 106 sul sentiero (ora 106 è nella pagina). Si
+prepara a pezzetti la prima volta (intanto il disegno di 66). Prova `node tests/t3/menu.js` (25 controlli), foto
 `tests/t3/tr_isole.jpg`, `tr_falo.jpg`, `tr_spettacolo.jpg`; dettagli in `docs/tripla-a.md` («Il menu in tripla A»).
 
 ## FASE 9: più fluido sul telefono (19 ottobre, in corso)

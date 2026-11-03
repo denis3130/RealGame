@@ -38,9 +38,17 @@ const SAVE={gold:5000,gems:500,trophies:900,runs:12,introSeen:1,handSeen:1,start
   await E(`openSheet('mis');0`);await p.waitForTimeout(600);await p.screenshot({path:D+'me_missioni.png'});await E(`$('sheetScr').hidden=true;0`);
   // 4. the Zombie menu: the campfire in 3D
   console.log('Il falò');
-  await p.click('#zHand',{force:true});await p.waitForFunction(()=>__E('!MM.tr'),null,{timeout:15000});await p.waitForTimeout(1500);
-  s=JSON.parse(await E(`JSON.stringify({z:zMode(),bad:T3F.bad,live:T3I.live,err:__T3.err,hero:!!CAMP.hero,ms:+T3F.ms.toFixed(1)})`));
-  ck(s.z&&!s.bad&&s.live,'il falò del menu Zombie è in 3D');ck(s.hero,'l\'eroe seduto si tocca');ck(!s.err,'nessun errore del motore');await p.screenshot({path:D+'me_falo.png'});
+  await p.click('#zHand',{force:true});await p.waitForFunction(()=>__E('!MM.tr'),null,{timeout:15000});
+  // (the first time the scene is made a little each frame: meanwhile the drawing of always)
+  await p.waitForFunction(()=>__E('T3F.ready&&T3F.zok.zombie'),null,{timeout:90000}).catch(()=>{});await p.waitForTimeout(1500);
+  s=JSON.parse(await E(`JSON.stringify({z:zMode(),ready:T3F.ready,bad:T3F.bad,live:T3I.live,err:__T3.err,hero:!!CAMP.hero,ms:+T3F.ms.toFixed(1),S:T3F.S.length,mats:Object.keys(T3F.X).length,tris:T3F.S.reduce((a,it)=>a+it.m.n/3,0),
+    big:T3F.S.every(it=>it.m.nv<65000),Z:T3F.Z.length,z3:T3F.Z.some(z=>z.M&&Z3.M.get(z3Key(z.kind,z.st==='walk'?'walk':'idle',0))),hy:T3F.hy,top:T3F.top})`));
+  ck(s.z&&s.ready&&!s.bad&&s.live,'il falò del menu Zombie è in 3D');ck(s.hero,'l\'eroe seduto si tocca');ck(!s.err,'nessun errore del motore');
+  ck(s.S>=15&&s.mats>=15,'tutta la scena in 3D, dipinta coi materiali ('+s.S+' pezzi, '+s.mats+' disegni dei materiali, '+s.tris+' triangoli)');ck(s.big,'nessun pezzo oltre i 65.000 punti');
+  ck(s.hy>s.top,'l\'orizzonte sotto la barra in alto: il cielo si vede');ck(s.Z>0&&s.z3,'gli zombie in 3D camminano sul sentiero');await p.screenshot({path:D+'me_falo.png'});
+  s=JSON.parse(await E(`(()=>{T3F.sc.st='idle';T3F.sc.t=99;T3F.sc.next=0;const z=T3F.Z[0];if(z){z.st='stop';z.t=99;z.next=0}return JSON.stringify({})})()`));await p.waitForTimeout(1200);
+  s=JSON.parse(await E(`JSON.stringify({sc:T3F.sc.st,z:T3F.Z[0]&&T3F.Z[0].st})`));ck(s.sc==='turn'&&s.z==='look','lo spaventapasseri e uno zombie si girano a guardarti');
+  await E(`T3F.zT=99;T3F.Z.forEach(z=>z.x=1e4);0`);await p.waitForTimeout(800);s=JSON.parse(await E(`JSON.stringify({n:T3F.Z.length})`));ck(s.n===0,'gli zombie che escono dal sentiero spariscono');
   // 5. the times (the computer of the tests has no graphics card: on the phone the counter says it)
   console.log('I tempi');
   const zt=+await E(`T3F.ms.toFixed(1)`);await p.click('#zHand',{force:true}).catch(()=>{});await p.waitForFunction(()=>__E('!MM.tr'),null,{timeout:15000}).catch(()=>{});await E(`if(zMode()){SAVE.modo='classica';applyModeUI()}0`);await p.waitForTimeout(2500);const it=+await E(`T3I.ms.toFixed(1)`);

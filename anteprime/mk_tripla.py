@@ -8,7 +8,7 @@
 # La pagina costruita non si salva su git.
 import os,sys,subprocess
 here=os.path.dirname(os.path.abspath(__file__));root=os.path.dirname(here);src=os.path.join(root,'src')
-NUOVI=['js/105-visuale-3d.js','js/110-t3-motore.js','js/111-t3-eroe.js','js/112-t3-nemici.js','js/113-t3-golem.js','js/114-t3-stanza.js','js/115-t3-effetti.js','js/116-t3-isole.js','js/117-t3-interfaccia.js','js/118-t3-falo.js']
+NUOVI=['js/105-visuale-3d.js','js/106-zombie-3d.js','js/110-t3-motore.js','js/111-t3-eroe.js','js/112-t3-nemici.js','js/113-t3-golem.js','js/114-t3-stanza.js','js/115-t3-effetti.js','js/116-t3-isole.js','js/117-t3-interfaccia.js','js/118-t3-falo.js']
 NUOVI=[f for f in NUOVI if os.path.exists(os.path.join(src,f))]
 order=[l.strip() for l in open(os.path.join(src,'ordine.txt'),encoding='utf-8') if l.strip()]
 extra=[f for f in NUOVI if f not in order]
