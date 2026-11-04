@@ -94,7 +94,8 @@ cotte, le mosse, la posa).
   controllo non teneva conto della schiena piegata. Con lo strisciante: la pagina troppo vicina (di lato la spina usciva dalla foto), i dischi della
   spina che si toccavano (sembrava una pannocchia), gli stracci troppo scuri che sparivano sul prato, la maglia che si chiudeva a stella sotto
   la testa.
-- Pubblicare la pagina e mandarla a Denis con le foto: niente nel gioco senza il suo sì. Il collegamento col gioco non c'è ancora (la tela 3D
+- Pubblicare la pagina e dare sempre a Denis il link dell'anteprima, con le foto (Denis: «e dammi sempre l'anteprima per vederli»): niente
+  nel gioco senza il suo sì. Il collegamento col gioco non c'è ancora (la tela 3D
   di `src/js/110-t3-motore.js` o una tela a parte copiata nel disegno 2D): si sceglie e si scrive qui la prima volta che Denis dice sì.
 
 **Errori già fatti, da non rifare.**
