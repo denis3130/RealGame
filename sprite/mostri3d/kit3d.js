@@ -142,7 +142,8 @@ function pack(S,meshes,mats,o){o=o||{};const B=S.bind,BN=S.BN,BI=S.BI,PAR=S.PAR;
 // zHead(m, o): a big round head with hollow sockets, eyes that glow deep inside with a white spark, a mouth too wide dug into the face, four
 // crooked teeth above (one longer) and three below on the jaw, the lower face that goes with the jaw, a dark back of the mouth, a few hairs, the
 // stitched crack on the back and (o.scar !== false) the stitched scar on his right. o: c (centre), R, bi (bone name → index), head/jaw (the
-// names of the bones), eyeK (size of the eyes: 1 for R 8.2, they grow with the head like in the 2D drawing), group (for the baked shadow)
+// names of the bones), eyeK (size of the eyes: 1 for R 8.2, they grow with the head like in the 2D drawing), group (for the baked shadow);
+// under a helmet (the miner) rot: false and hair: false (no rotten patch, no hairs); deadEye: 'S' or 'D', the socket of that eye is empty
 function zHead(m,o){const Z=o.Z||ZC,HCc=o.c,R=o.R,bi=o.bi,hb=o.head||'testa',jb=o.jaw||'mascella',ek=o.eyeK===undefined?1:o.eyeK;
   const eyes=[{d:nrm([-.4,.16,.8]),big:1.15},{d:nrm([.4,.16,.8]),big:.9}],MO=nrm([0,-.5,.8]);
   const ell=(d,c,ax,ay)=>{const f=frameOf(c),q=sub(d,mul(c,dot(d,c))),x=dot(q,f.ex),y=dot(q,f.ey);return{e:(x/ax)*(x/ax)+(y/ay)*(y/ay),x,y,front:dot(d,c)}};
@@ -155,7 +156,7 @@ function zHead(m,o){const Z=o.Z||ZC,HCc=o.c,R=o.R,bi=o.bi,hb=o.head||'testa',jb=
   m.group(o.group===undefined?1:o.group);
   ball(m,HCc,[R,R*.97,R],44,30,(p,d)=>{let c=Z.skin.slice(),kind=1,blood=0;
       for(const[s,sz] of spots){const a=dot(d,s);c=mixc(c,Z.skinD,sm((a-Math.cos(sz*1.25))/(Math.cos(sz*.8)-Math.cos(sz*1.25)))*.9)}
-      {const a=dot(d,ROT);c=mixc(c,Z.rot,sm((a-Math.cos(.36))/(Math.cos(.22)-Math.cos(.36)))*.95)}
+      if(o.rot!==false){const a=dot(d,ROT);c=mixc(c,Z.rot,sm((a-Math.cos(.36))/(Math.cos(.22)-Math.cos(.36)))*.95)}
       for(const{E,q} of sock(d)){if(q.front<=0)continue;c=mixc(c,mixc(Z.skinD,Z.rot,.5),sm((1.6-q.e)/.5)*.8);if(q.e<1)c=mixc(c,Z.socket,sm((1-q.e)/.35));if(q.e<1)kind=6}
       const mq=mouthAt(d);if(mq.front>0){c=mixc(c,mixc(Z.skinD,Z.rot,.4),sm((1.5-mq.e)/.4)*.7);if(mq.e<1){c=mixc(Z.gum,Z.mouth,sm((.55-mq.y/Math.sin(.27))/.4));kind=6}
         if(mq.y<0&&mq.e>.9&&mq.e<2.6)blood=.7*sm((mq.e-.9)/.3)*(1-sm((mq.e-1.8)/.8))}
@@ -163,7 +164,7 @@ function zHead(m,o){const Z=o.Z||ZC,HCc=o.c,R=o.R,bi=o.bi,hb=o.head||'testa',jb=
   // the back of the mouth: a dark ball inside the head, so an open mouth is never a hole
   ball(m,add(HCc,mul(MO,R*.45)),[R*.42,R*.3,R*.32],12,8,()=>({c:Z.mouth,k:K(6,0,0),w:[[bi(hb),.55],[bi(jb),.45]]}));
   // eyes: little lights deep in the sockets, with a white spark
-  for(const E of eyes){const er=1.02*E.big*ek,cen=add(HCc,mul(E.d,R-R*.2*.82+er*.35));
+  for(const E of eyes){if(o.deadEye&&o.deadEye===(E.d[0]>0?'S':'D'))continue;const er=1.02*E.big*ek,cen=add(HCc,mul(E.d,R-R*.2*.82+er*.35));
     ball(m,cen,[er,er,er*.8],12,8,()=>({c:Z.eye,k:K(9,0,0),w:[[bi(hb),1]]}),{ax:[frameOf(E.d).ex,frameOf(E.d).ey,E.d]});
     const f=frameOf(E.d),sp=add(add(cen,mul(E.d,er*.72)),add(mul(f.ex,-er*.42),mul(f.ey,er*.42)));ball(m,sp,[er*.3,er*.3,er*.2],8,6,()=>({c:[1,1,1],k:K(9,0,0),w:[[bi(hb),1]]}))}
   // teeth: four crooked ones above (one longer), three below on the jaw
@@ -173,7 +174,7 @@ function zHead(m,o){const Z=o.Z||ZC,HCc=o.c,R=o.R,bi=o.bi,hb=o.head||'testa',jb=
   {const f=frameOf(MO),ay=Math.sin(.27);for(let i=0;i<4;i++){const x=(-.75+i*.5)*Math.sin(.52)*.98;tooth(onFace(x,ay*.62,.25),mul(f.ey,-1),i===1?2.5:1.6+hash(i+3)*.5,.6,hb,i)}
     for(let i=0;i<3;i++){const x=(-.5+i*.5)*Math.sin(.52)*.98;tooth(onFace(x,-ay*.7,.25),f.ey,1.3+hash(i+9)*.5,.55,jb,i+20)}}
   // a few hairs on top, a stitched crack on the back, a scar on his right
-  for(let i=-1.5;i<=1.5;i++){const d=nrm([-.5*i,1,-.25+.1*Math.abs(i)]),r0=add(HCc,mul(d,R*.96)),mid=add(r0,[-i*.55,2.1,-.35]),tip=add(r0,[-i*1.45,3.1-.3*Math.abs(i),-1.1]);
+  if(o.hair!==false)for(let i=-1.5;i<=1.5;i++){const d=nrm([-.5*i,1,-.25+.1*Math.abs(i)]),r0=add(HCc,mul(d,R*.96)),mid=add(r0,[-i*.55,2.1,-.35]),tip=add(r0,[-i*1.45,3.1-.3*Math.abs(i),-1.1]);
     tube(m,[r0,mid,tip],[.36,.26,.12],6,()=>({c:Z.hair,k:K(0,0,.45),w:[[bi(hb),1]]}),{cap0:'open',cap1:'point',tip:.6})}
   const line=(cdir,pts,r)=>{const f=frameOf(cdir),P=[];for(const[x,y] of pts){const dd=nrm(add(add(cdir,mul(f.ex,x/R)),mul(f.ey,y/R)));P.push(add(HCc,mul(dd,R*.995+r*.4)))}
     tube(m,P,P.map(()=>r),5,()=>({c:Z.ink,k:K(0,0,0),w:[[bi(hb),1]]}),{cap0:'ball',cap1:'ball'})};
@@ -185,7 +186,9 @@ function zHead(m,o){const Z=o.Z||ZC,HCc=o.c,R=o.R,bi=o.bi,hb=o.head||'testa',jb=
 // o: s (1 his left, -1 his right), sd ('S' | 'D'), sh, el, wr (shoulder, elbow, wrist in the rest pose, in a straight line along d), L1, L2,
 // bi, knob (where the elbow knob sits), sleeveK (how far down the upper arm the sleeve goes), sleeveR (size of the sleeve), g and hg (groups of
 // the arm and of the hand), hand {dir (where the fingers point), fw (across the palm), pd (the back of the hand: the fingers hook the other
-// way)}: by default along the arm; hs: size of the hand; fs: length of the fingers. The bones: braccio, avambraccio, mano, dita, punte, spalla + sd
+// way)}: by default along the arm; hs: size of the hand; fs: length of the fingers; cloth, clothD: the colours of the sleeve (the shirt's);
+// fist {axis}: a fist closed round a handle along axis (the miner's pick) instead of the open hand. The bones: braccio, avambraccio, mano, dita,
+// punte, spalla + sd
 function zArm(m,shirt,o){const Z=o.Z||ZC,s=o.s,sd=o.sd,sh=o.sh,el=o.el,wr=o.wr,d=o.d,bi=o.bi,ib=bi('braccio'+sd),ie=bi('avambraccio'+sd),ih=bi('mano'+sd);
   const hs=o.hs===undefined?1:o.hs,fs=o.fs===undefined?1:o.fs,sr=o.sleeveR===undefined?1:o.sleeveR;
   m.group(o.g);
@@ -196,11 +199,18 @@ function zArm(m,shirt,o){const Z=o.Z||ZC,s=o.s,sd=o.sd,sh=o.sh,el=o.el,wr=o.wr,d
   // the elbow knob, on the outside of the bend
   {const kc=add(el,mul(o.knob,.55));ball(m,kc,[1.5,1.5,1.5],12,8,(p)=>({c:Z.skin,k:K(1),w:[[ib,.5],[ie,.5]]}))}
   // the sleeve: tight, torn, three teeth hanging down the arm
-  const sl0=sub(sh,mul(d,1.6)),sl1=add(sh,mul(d,o.L1*o.sleeveK));shirt.group(o.g);
-  tube(shirt,[sl0,sh,lerp3(sh,sl1,.5),sl1],[2.35*sr,2.4*sr,2.3*sr,2.15*sr],16,(p,t)=>({c:mixc(Z.cloth,Z.clothD,.15),k:K(2,0,cl(t*2,0,1)),w:t<.35?[[bi('spalla'+sd),1-sm(t/.35)],[ib,sm(t/.35)]]:[[ib,1]]}),
+  const sl0=sub(sh,mul(d,1.6)),sl1=add(sh,mul(d,o.L1*o.sleeveK)),clo=o.cloth||Z.cloth,cloD=o.clothD||Z.clothD;shirt.group(o.g);
+  tube(shirt,[sl0,sh,lerp3(sh,sl1,.5),sl1],[2.35*sr,2.4*sr,2.3*sr,2.15*sr],16,(p,t)=>({c:mixc(clo,cloD,.15),k:K(2,0,cl(t*2,0,1)),w:t<.35?[[bi('spalla'+sd),1-sm(t/.35)],[ib,sm(t/.35)]]:[[ib,1]]}),
     {cap0:'open',cap1:'open',rag1:an=>({len:Math.max(0,Math.sin(an*1.5+(s>0?.4:2.2)))*1.6*(1+.4*hash(an*3+s)),out:.05})});
-  // the hand and its fingers
+  // the hand and its fingers (or a fist round a handle)
   m.group(o.hg);
+  if(o.fist){const A=nrm(o.fist.axis),fc=add(wr,mul(d,1.5*hs)),kn=mul(nrm(cross(d,A)),-s),up=nrm(cross(A,kn));
+    // the fist: long along the handle, the four knuckles in a row on the outside, the thumb across them, the black claws peeping under them
+    ball(m,fc,[2.05*hs,2.0*hs,2.45*hs],14,10,()=>({c:mixc(Z.skin,Z.skinD,.2),k:K(1),w:[[ih,1]]}),{ax:[kn,up,A]});
+    for(let i=0;i<4;i++){const q=add(add(fc,mul(kn,1.55*hs)),mul(A,(i-1.5)*1.08*hs));ball(m,q,[.78*hs,.72*hs,.62*hs],10,7,()=>({c:Z.skin,k:K(1,0,.6),w:[[ih,1]]}),{ax:[kn,up,A]});
+      if(i<3){const c0=add(add(add(fc,mul(kn,1.1*hs)),mul(up,-1.5*hs)),mul(A,(i-1)*1.08*hs));tube(m,[c0,add(c0,mul(up,-.55*hs)),add(add(c0,mul(up,-.95*hs)),mul(kn,-.35*hs))],[.36*hs,.26*hs,.05],6,()=>({c:Z.nail,k:K(4,.4,.5),w:[[ih,1]]}),{cap0:'ball',cap1:'point',tip:.3})}}
+    {const t0=add(add(fc,mul(kn,.6*hs)),mul(A,-1.9*hs)),t1=add(add(add(fc,mul(kn,1.9*hs)),mul(up,.9*hs)),mul(A,-.2*hs));tube(m,[t0,lerp3(t0,t1,.5),t1],[.62*hs,.58*hs,.5*hs],8,()=>({c:mixc(Z.skin,Z.skinD,.15),k:K(1,0,.7),w:[[ih,1]]}),{cap0:'ball',cap1:'ball'})}
+    return{fc,A,kn,up}}
   const H=o.hand,hd=H?H.dir:d,fw=H?H.fw:nrm(cross(d,[0,0,1]))/* across the palm */,pd=H?H.pd:nrm(cross(fw,d))/* the back of the hand */,palm=add(wr,mul(hd,1.15*hs));
   ball(m,palm,[1.55*hs,1.85*hs,1.05*hs],14,10,(p)=>({c:Z.skin,k:K(1),w:[[ih,1]]}),{ax:[fw,mul(hd,1),pd]});
   for(let k=-1;k<=1;k++){const dir=nrm(add(hd,mul(fw,k*.38))),b0=add(add(palm,mul(dir,1.3*hs)),mul(fw,k*.65*hs)),kn=add(b0,mul(dir,2.4*fs)),tp=add(add(kn,mul(dir,2.2*fs)),mul(pd,-.9*fs)),cw=add(add(tp,mul(dir,.9*fs)),mul(pd,-1.3*fs));

@@ -2,15 +2,15 @@
 
 Prova del 3–4 novembre: **il nostro zombie base in 3D vero** (Denis: «mi piace come l'hai fatto il modello in 3d in questa immagine che mi
 hai mandato senza meshy», «non serve accedere a meshy continua cosi»). Dal 4 novembre il modo in cui è fatto è **la formula per ogni cosa in
-3D** (qui sotto), e con la formula c'è anche **lo Zombie strisciante** (Denis: «vai fai»). Solo anteprime: niente entra nel gioco senza il
-sì di Denis.
+3D** (qui sotto), e con la formula ci sono anche **lo Zombie strisciante** (Denis: «vai fai») e **lo Zombie minatore** (Denis: «fammene
+un'altro»). Solo anteprime: niente entra nel gioco senza il sì di Denis.
 
 ## La formula per il 3D (dal 4 novembre, per ogni cosa in 3D vero)
 
 Denis, 4 novembre: «d'ora in poi ogni cosa in 3d dovrai adoperare per farla al meglio come questa che hai fatto è chiaro? salvala su
 tutto questa tua nuova formula per la creazione in 3d è eccezionale». Personaggi, mostri, boss, oggetti e animazioni in 3D vero, nelle due
-modalità, si fanno come lo zombie base: un file come `zombie.js` o `strisciante.js` per la cosa nuova (o per quella che Denis chiede di
-rifare), coi pezzi comuni della cassetta `kit3d.js` (`K3D`), disegnato da `mb3.js`. Le cose che ci sono già restano come sono finché Denis non
+modalità, si fanno come lo zombie base: un file come `zombie.js`, `strisciante.js` o `minatore.js` per la cosa nuova (o per quella che Denis
+chiede di rifare), coi pezzi comuni della cassetta `kit3d.js` (`K3D`), disegnato da `mb3.js`. Le cose che ci sono già restano come sono finché Denis non
 chiede di rifarle. Prima di cominciare leggere questa formula, `kit3d.js` e uno dei due mostri (i pezzi cominciano con `// ·`, poi le ombre
 cotte, le mosse, la posa).
 
@@ -31,8 +31,9 @@ cotte, le mosse, la posa).
   pantaloni, capelli, cuciture: il tubo si stringe e si allarga lungo il percorso e il suo giro viaggia senza torcersi; `rag1` dà i denti a
   un orlo stracciato; `flat: [1, .16]` schiaccia la sezione (una striscia di stoffa che ha comunque il suo spessore e il suo contorno).
 - I pezzi da zombie ci sono già, presi dal disegno di oggi: `zHead` (la testa intera: orbite, occhi, bocca sulla mascella, denti, capelli,
-  crepa e, se serve, la cicatrice; più piccola o più grande con `R`) e `zArm` (il braccio ossuto con la manica e la mano a tre dita; lunghezze,
-  manica, mano e dita a misura). Un pezzo che serve a più mostri va nella cassetta, non copiato.
+  crepa e, se serve, la cicatrice; più piccola o più grande con `R`; sotto un casco senza macchia marcia e senza capelli, un occhio spento con
+  `deadEye`) e `zArm` (il braccio ossuto con la manica e la mano a tre dita; lunghezze, manica col suo colore, mano e dita a misura, o il pugno
+  chiuso su un manico con `fist`). Un pezzo che serve a più mostri va nella cassetta, non copiato.
 - I buchi sono veri: si tolgono i triangoli dentro la forma del buco (`holeIn`, con l'orlo frastagliato) e sotto c'è quello che deve vedersi
   (il petto marcio e le costole). Una bocca che si apre ha il fondo scuro dentro la testa: mai un buco sul vuoto.
 - Il `paint` di ogni pezzo decide colore, chiazze, sangue (vicino a buchi e strappi), cosa è e le ossa di ogni punto.
@@ -54,10 +55,11 @@ cotte, le mosse, la posa).
   terra o pende nel buco, gli stracci). `K3D.solve`, `mix`, `joints` valgono per tutti.
 
 **4. Dipinto come la lanterna, da `mb3.js`.**
-- `K[0]` dice cosa è: 1 pelle, 2 maglia, 3 pantaloni, 4 cuoio, 5 osso e denti, 6 buio dentro, 9 luce (occhi). Ognuno ha i suoi segni
-  nello shader (chiazze, venature e grinze sulla pelle; pieghe e trama sulla stoffa; fango sui pantaloni…), calcolati dal posto nella posa di
-  riposo, così restano attaccati al corpo quando si muove. Una materia nuova (pietra, cristallo, legno, metallo, pelo, fiamma) è un numero
-  nuovo coi suoi segni, scritto accanto agli altri.
+- `K[0]` dice cosa è: 1 pelle, 2 maglia, 3 pantaloni, 4 cuoio, 5 osso e denti, 6 buio dentro, 7 ferro (graffi, ruggine, lucido; 7.2 il
+  metallo dipinto, quasi senza ruggine: il casco), 8 legno (le venature lungo il pezzo, che nella forma di riposo va costruito lungo z), 9
+  luce (occhi, lampade). Ognuno ha i suoi segni nello shader (chiazze, venature e grinze sulla pelle; pieghe e trama sulla stoffa; fango sui
+  pantaloni…), calcolati dal posto nella posa di riposo, così restano attaccati al corpo quando si muove. Una materia nuova (pietra, cristallo,
+  pelo, fiamma) è un numero nuovo coi suoi segni, scritto accanto agli altri (ferro e legno sono venuti col minatore).
 - Lo shader fa i tre toni, la luna sui bordi (`rim`), la lucetta umida, il rilievo (`bump`), il contorno spesso a guscio rovesciato (`K[3]`:
   1 normale, più sottile su denti, capelli e bottoni, 0 su cuciture e occhi), la luce degli occhi che pulsa (`emK`) col suo bagliore, il
   lampo bianco (`flash`), la nebbia e `clipY` (niente di quello che sta sotto terra: per sbucare).
@@ -87,7 +89,9 @@ cotte, le mosse, la posa).
   direzioni, prima e dopo (anche su uno schermo grande).
 - Guardare davvero le foto e correggere prima di mandarle. Con lo zombie erano: occhi troppo bianchi, la maglia che sembrava un vestito, le
   costole come un codice a barre, le braccia da fermo troppo basse, le mani che non arrivavano a terra quando sbuca e la testa che usciva
-  lontano dal buco, il colpito troppo debole. Con lo strisciante: la pagina troppo vicina (di lato la spina usciva dalla foto), i dischi della
+  lontano dal buco, il colpito troppo debole. Col minatore: la ruggine anche sul casco (sembrava sporco: il metallo dipinto ne ha
+  pochissima), il casco che quando cade finiva dentro la terra (ora la testa si gira di lato), il piccone che passava sotto terra perché il
+  controllo non teneva conto della schiena piegata. Con lo strisciante: la pagina troppo vicina (di lato la spina usciva dalla foto), i dischi della
   spina che si toccavano (sembrava una pannocchia), gli stracci troppo scuri che sparivano sul prato, la maglia che si chiudeva a stella sotto
   la testa.
 - Pubblicare la pagina e mandarla a Denis con le foto: niente nel gioco senza il suo sì. Il collegamento col gioco non c'è ancora (la tela 3D
@@ -171,6 +175,29 @@ aperta, le mani avanti ad afferrare), **Morso** (indietro a bocca aperta, scatta
 indietro, una mano che scivola), **Muore** (le braccia cedono e scivolano di lato, petto e testa a terra, la testa sulla guancia, un ultimo
 scatto delle dita e della spina, gli occhi si spengono).
 
+## Il minatore (`minatore.js`, `ZMI3`)
+
+È il nostro Zombie minatore (`CR.minatore` di `sprite/mostri/disegno_mostri.js`, che non cambia) costruito con la formula: circa 12.100
+triangoli, lo scheletro dello zombie base (25 ossa), le misure del disegno 2D (bacino 12,4, petto 20,2 e 2,6 avanti, testa 8 a 31,2; braccia 6
+e 6,2) e i suoi colori (`MC`):
+
+- la testa degli zombie sotto il casco (niente macchia marcia, niente capelli), l'occhio sinistro spento, la crepa cucita e la cicatrice;
+- il casco giallo di metallo dipinto con la tesa, la cresta dal davanti al dietro e la lampada (l'anello scuro e il vetro che si accende:
+  nella pagina fa una macchia di luce calda a terra davanti a lui, che trema e si spegne con gli occhi quando muore);
+- la camicia grigia con le maniche corte stracciate, la salopette di jeans dalla vita in giù con la pettorina, la tasca, le cuciture, le due
+  bretelle sulle spalle e giù per la schiena, due bottoni d'ottone, la polvere di carbone; gli stivali di cuoio;
+- il braccio sinistro che pende, il pugno destro chiuso sul piccone: manico di legno lungo, testa di ferro curva con le due punte, la ruggine.
+
+Il piccone fa come nel disegno: la mano gira intorno a un punto accanto alla spalla destra (`pickRel(a)`: 0 avanti, π/2 in su, oltre π/2
+dietro la testa) e il piccone non passa mai sotto terra (l'angolo sale finché la punta più bassa sta sopra il suolo). Le mosse: **Fermo**
+(ingobbito, il piccone appoggiato avanti, la testa che scatta verso di te, la mano sinistra che trema), **Cammina** (il passo rigido di
+oggi, la testa che resta indietro a ogni passo, il piccone basso), **Corre** (piegato in avanti, il piccone di traverso), **Sbuca da terra**
+(prima la punta del piccone tenuto in alto, poi il casco con la lampada accesa, la testa, la mano che sbatte a terra, due strattoni, in
+piedi, il piccone che scende), **Urla** (il piccone alzato in alto), **Picconata** (l'attacco di oggi: si accuccia e lo tira indietro, lo
+alza sopra la testa un po' troppo, lo cala, il piccone morde la terra con le scintille e le schegge, lo strattona e lo tira fuori),
+**Morso**, **Colpito**, **Muore** (cade col piccone sotto, la testa di lato e il casco che resta su; si spengono occhi e lampada).
+`ZMI3.tip(M, posa)` e `ZMI3.lamp(M, posa)` dicono alla pagina dove sono la punta del piccone e la lampada.
+
 ## I file
 
 - `mb3.js` (`MB3`): legge un glTF binario (`.glb`) con lo scheletro e le mosse, e disegna sia quelli sia i modelli costruiti da noi, col
@@ -178,16 +205,18 @@ scatto delle dita e della spina, gli occhi si spengono).
   pulsa, lampo bianco, nebbia, `clipY` per non disegnare quello che sta sotto terra). Per i pezzi fatti da noi: colore per vertice e
   `aK` = [cosa è (1 pelle, 2 maglia, 3 pantaloni, 4 cuoio, 5 osso e denti, 6 buio dentro, 9 luce), sangue, ombra cotta, contorno].
 - `kit3d.js` (`K3D`): la cassetta della formula (conti, forme, scheletro, ombre cotte, il modello per `MB3`, testa e braccio da zombie).
-- `zombie.js`: lo zombie base (sopra). `strisciante.js`: lo strisciante (sopra).
+- `zombie.js`: lo zombie base (sopra). `strisciante.js`: lo strisciante (sopra). `minatore.js`: il minatore (sopra).
 - `oggi.js`: un nostro mostro di oggi da quattro lati (davanti, tre quarti, lato, dietro), per «Prima e dopo»: `node sprite/mostri3d/oggi.js
-  <uscita.webp>` (lo zombie, `zombie_oggi.webp`) o `node sprite/mostri3d/oggi.js strisciante strisciante_oggi.webp` (dopo `python3 tests/mk.py`).
+  <uscita.webp>` (lo zombie, `zombie_oggi.webp`) o `node sprite/mostri3d/oggi.js strisciante strisciante_oggi.webp` (e `minatore`), dopo
+  `python3 tests/mk.py`.
 - `prepara.js`: da un personaggio `.glb` con lo scheletro e dalle sue mosse in altri `.glb` fa un `.glb` solo e leggero (serviva per Meshy).
 - Pagina: `python3 anteprime/mk_zombie3d.py` → `anteprime/zombie3d.html` (codice in `anteprime/zombie3d.js`), pubblicata su
-  https://claude.ai/artifact/Weae1UsGGoEti6wccnqTRB («Zombie in 3D», si aggiorna ripubblicando lo stesso file): in alto «Zombie» o
-  «Strisciante» (l'indirizzo che finisce con `#strisciante` apre lo strisciante), le mosse, «Tutte», il dito che gira, due dita o − e + per
+  https://claude.ai/artifact/Weae1UsGGoEti6wccnqTRB («Zombie in 3D», si aggiorna ripubblicando lo stesso file): in alto «Zombie»,
+  «Strisciante» o «Minatore» (l'indirizzo che finisce con `#strisciante` o `#minatore` apre quello), le mosse, «Tutte», il dito che gira, due dita o − e + per
   avvicinare, «Quattro direzioni», «Prima e dopo», luce a tre toni o morbida, contorno, effetti ridotti.
-  Prova: `node tests/zombie3d.js [zombie|strisciante]` (gli stessi controlli per tutti e due i mostri; foto `tests/zombie3d_mosse.jpg`, `_prima_dopo.png`,
-  `_prima_dopo_grande.png`, `_quattro.png` per lo zombie base e le stesse `tests/strisciante3d_…` per lo strisciante).
+  Prova: `node tests/zombie3d.js [zombie|strisciante|minatore]` (gli stessi controlli per ogni mostro, e per il minatore le scintille e la
+  lampada; foto `tests/zombie3d_mosse.jpg`, `_prima_dopo.png`, `_prima_dopo_grande.png`, `_quattro.png` per lo zombie base e le stesse
+  `tests/strisciante3d_…` e `tests/minatore3d_…`).
 
 ## Il soldato di prova (non nostro)
 

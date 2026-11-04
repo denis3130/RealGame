@@ -1,9 +1,9 @@
 // Mossbound · un nostro mostro di oggi da quattro lati (davanti, tre quarti, lato, dietro) su fondo trasparente, per «Prima e dopo» della pagina
 // degli zombie in 3D (anteprime/mk_zombie3d.py). Uso: python3 tests/mk.py, poi node sprite/mostri3d/oggi.js [nome] <uscita.webp>
-// (nome: zombie, il mostro di sempre, o strisciante): sprite/mostri3d/zombie_oggi.webp, sprite/mostri3d/strisciante_oggi.webp
+// (nome: zombie, il mostro di sempre, strisciante o minatore): sprite/mostri3d/zombie_oggi.webp, strisciante_oggi.webp, minatore_oggi.webp
 const {chromium}=require('playwright');const fs=require('fs');const R='/home/user/RealGame/',ONE=process.argv.length<4,NAME=ONE?'zombie':process.argv[2],OUT=ONE?process.argv[2]:process.argv[3];
 // the tiles: tall for the zombie, low and wide for the crawler
-const TILE={zombie:[390,780],strisciante:[390,300]}[NAME]||[390,780];
+const TILE={zombie:[390,780],strisciante:[390,300],minatore:[390,780]}[NAME]||[390,780];
 (async()=>{const b=await chromium.launch();const p=await b.newPage({viewport:{width:390,height:844}});const errs=[];p.on('pageerror',e=>errs.push(e.message));
   await p.addInitScript(()=>{localStorage.setItem('cripta_save_v1',JSON.stringify({gold:50,introSeen:1,runs:3,starter:'arciere',items:{arco_frassino:{lvl:1,cards:0},giubba:{lvl:1,cards:0}},eq:{arma:'arco_frassino',armatura:'giubba',anello:null,amuleto:null},slots:[null,null,null,null]}))});
   await p.goto('file://'+R+'tests/test.html');await p.waitForTimeout(1500);

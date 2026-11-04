@@ -102,7 +102,8 @@ void main(){mat4 S=aW.x*uJ[int(aJ.x)]+aW.y*uJ[int(aJ.y)]+aW.z*uJ[int(aJ.z)]+aW.w
   vN=n;vT=aT;vW=w.xyz;vR=aP;vC=aC;vK=aK;gl_Position=c;}`;
 // the paint of the pieces we build ourselves (aK.x = what it is): the marks stay on the body because they come from its place in the rest
 // pose (vR): 1 skin (blotches, mottling, thin veins), 2 shirt (folds round the body, weave), 3 trousers (folds, mud at the bottom),
-// 4 leather, 5 bone and teeth, 6 dark inside (mouth, sockets), 9 light (the eyes: they glow, no shading). aK.y blood, aK.z the soft
+// 4 leather, 5 bone and teeth, 6 dark inside (mouth, sockets), 7 iron (scratches, rust, a hard shine; 7.2 painted metal, almost no rust), 8 wood (the grain
+// along the piece, built along z in the rest pose), 9 light (the eyes, the lamps: they glow, no shading). aK.y blood, aK.z the soft
 // shadow baked where pieces meet, aK.w how thick the outline is there. Models from a file (no aC, aK) are just their textures.
 const FS=`#version 300 es
 precision highp float;
@@ -127,8 +128,10 @@ void main(){if(vW.y<uClipY)discard;if(uOut>.5){o=vec4(uInk,1.);return;}
   else if(K>2.5&&K<3.5){b.rgb*=.88+.12*n3(R*12.);b.rgb*=.9+.1*sin(vR.y*2.2+fb(R)*3.);b.rgb=mix(b.rgb,b.rgb*.55+vec3(.035,.03,.02),smoothstep(5.,1.,vR.y)*.65);}
   else if(K>3.5&&K<4.5){b.rgb*=.88+.16*n3(R*5.);sp=.3;}
   else if(K>4.5&&K<5.5){b.rgb*=.88+.14*n3(R*8.);sp=.4;}
+  else if(K>6.5&&K<7.5){b.rgb*=.86+.2*n3(R*9.);float ru=smoothstep(.58,.74,fb(R*1.3+4.))*(K<7.1?1.:.12);b.rgb=mix(b.rgb,vec3(.36,.17,.08)*(.8+.4*n3(R*14.)),ru*.7);b.rgb*=1.-.18*smoothstep(.62,.7,n3(R*vec3(22.,3.,22.)));sp=.7*(1.-ru);}
+  else if(K>7.5&&K<8.5){float gr=sin((vR.x+vR.y*.7)*7.+fb(R*.6)*5.);b.rgb*=.84+.14*gr+.06*n3(R*11.);sp=.12;}
   b.rgb=mix(b.rgb,vec3(.2,.045,.035),smoothstep(.55,.68,fb(R*.75+11.))*vK.y*.9);b.rgb*=1.-.62*vK.z;
-  if(uBump>0.&&K>.5&&K<5.5)n=bump(n,R,K,uBump*(K<1.5?.045:K<2.5?.05:K<3.5?.04:.03));
+  if(uBump>0.&&((K>.5&&K<5.5)||(K>7.5&&K<8.5)))n=bump(n,R,K,uBump*(K<1.5?.045:K<2.5?.05:K<3.5?.04:.03));
   if(uHasN>.5){vec3 q=texture(uNrm,vT).xyz*2.-1.;q.y*=uNy;n=normalize(cf(n,vW,vT)*q);}
   vec3 e=uHasE>.5?texture(uEm,vT).rgb*uEmF:vec3(0.);if(K>8.5)e+=b.rgb*.5;
   if(uEmOnly>.5){o=vec4(e*uEmK,1.);return;}
