@@ -1,5 +1,8 @@
 # La visuale in terza e prima persona della modalità zombie (anteprima a parte, 2 novembre)
 
+**Per ogni cosa nuova in 3D vero** (dal 4 novembre, Denis: «d'ora in poi ogni cosa in 3d dovrai adoperare per farla al meglio come questa
+che hai fatto»): la formula dello zombie base, in `sprite/mostri3d/LEGGIMI.md` («La formula per il 3D»). Quello che è già nella pagina resta com'è finché Denis non chiede di rifarlo.
+
 Denis: «fai un'anteprima a parte facendo vedere come sarebbe la modalità zombie se la telecamera fosse tipo in terza persona e prima
 persona». Non è nel gioco e non è nell'Anteprima 49: è una pagina sua, per vedere e provare dal telefono come sarebbe.
 

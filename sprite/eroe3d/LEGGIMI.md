@@ -1,5 +1,8 @@
 # L'Arciere in 3D e le sue armi (nel gioco dal 12 ottobre)
 
+**Per ogni cosa nuova in 3D vero** (dal 4 novembre, Denis: «d'ora in poi ogni cosa in 3d dovrai adoperare per farla al meglio come questa
+che hai fatto»): la formula dello zombie base, in `sprite/mostri3d/LEGGIMI.md` («La formula per il 3D»). L'eroe e le armi di questa cartella restano come sono finché Denis non chiede di rifarli.
+
 `disegno_eroe.js` disegna l'eroe della modalità Classica (l'Arciere) con il metodo dei mostri nuovi: scheletro 3D proiettato con `V(face)` e la cassetta degli attrezzi `CR._rig` di `sprite/mostri/disegno_mostri.js`. `armi3d.js` fa tutte le armi in 3D, viste dalla stessa telecamera: i quattro archi delle carte, la balestra leggera, il bastone del Druida e le otto armi della modalità zombie. Ordine di caricamento, dentro la funzione principale di `index.html`: `disegno_mostri.js`, poi `sprite/armi/disegno_armi.js` (serve solo per vampe, colpi, bossoli, razzo e fumo delle armi zombie), poi `armi3d.js`, poi `disegno_eroe.js`. Senza `armi3d.js` l'eroe disegna ancora l'arco piatto di prima.
 
 `EROE.arciere(x, y, face, anim, p, sc, o)`:

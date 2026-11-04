@@ -1,5 +1,6 @@
-// Mossbound · i modelli fatti con Meshy: un glTF binario (.glb) con lo scheletro e le mosse, letto e disegnato col nostro WebGL,
-// senza librerie (come il resto del gioco); anche i modelli costruiti da noi nel codice (sprite/mostri3d/zombie.js). Note in sprite/mostri3d/LEGGIMI.md.
+// Mossbound · il disegno dei modelli 3D veri con lo scheletro, col nostro WebGL senza librerie (come il resto del gioco): quelli costruiti da
+// noi nel codice (sprite/mostri3d/zombie.js; la formula per ogni cosa in 3D è in sprite/mostri3d/LEGGIMI.md) e, per prova, un glTF binario
+// (.glb) con lo scheletro e le mosse (Meshy non si usa).
 // MB3.readGLB(buf) → {json, bin}; MB3.model(g) → modello (nodi, scheletro, pezzi, materiali, immagini, mosse);
 // MB3.pose(m, st, out) → le matrici delle ossa per un momento (una mossa, oppure due che sfumano, più i ritocchi fatti da noi);
 // MB3.gpu(gl, m) prepara buffer, texture e programmi; MB3.draw(gl, R, m, J, cam, o) disegna (contorno spesso, tre toni, bordo di luna,

@@ -58,7 +58,7 @@ function Mesh(){const m={P:[],N:[],C:[],K:[],J:[],W:[],I:[],G:[]};let grp=0;
 // a frame round direction d (for tubes: then carried along without twisting)
 function perp(d){const a=Math.abs(d[1])<.9?[0,1,0]:[1,0,0];return nrm(cross(d,a))}
 // a tube along points (radius at each), sides round it; o.cap0/o.cap1 'ball' | 'point' | 'open'; o.rag1: teeth on the open end;
-// paint(pt, t along 0..1, angle, ring point) → {c, k, w}; o.dbl: also seen from inside
+// paint(pt, t along 0..1, angle, ring point) → {c, k, w}; a piece seen also from inside goes in the cloth mesh (its material is dbl)
 function tube(m,pts,rads,sides,paint,o){o=o||{};const n=pts.length,rings=[];let T=nrm(sub(pts[1],pts[0])),U=o.up?nrm(sub(o.up,mul(T,dot(o.up,T)))):perp(T);
   const L=[0];for(let i=1;i<n;i++)L.push(L[i-1]+len(sub(pts[i],pts[i-1])));const LT=L[n-1]||1;
   for(let i=0;i<n;i++){const Ti=i===0?nrm(sub(pts[1],pts[0])):i===n-1?nrm(sub(pts[n-1],pts[n-2])):nrm(sub(pts[i+1],pts[i-1]));

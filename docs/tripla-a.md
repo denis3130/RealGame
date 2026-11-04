@@ -1,5 +1,8 @@
 # Mossbound tripla A (anteprima a parte, dal 2 novembre)
 
+**Per ogni cosa nuova in 3D vero** (dal 4 novembre, Denis: «d'ora in poi ogni cosa in 3d dovrai adoperare per farla al meglio come questa
+che hai fatto»): la formula dello zombie base, in `sprite/mostri3d/LEGGIMI.md` («La formula per il 3D»). Quello che è già nella pagina resta com'è finché Denis non chiede di rifarlo.
+
 Denis, 2 novembre: «ok rendi tripla A il gioco in sé mossbound. capito cosa intendo?». Chiarito con tre giri di domande:
 
 - **cosa**: tutto il gioco, ma prima un'anteprima; **grafica**: «fai 3D vero come la visuale ma prima di metterlo nel gioco fammi vedere
