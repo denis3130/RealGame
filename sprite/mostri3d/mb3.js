@@ -1,9 +1,9 @@
 // Mossbound · i modelli fatti con Meshy: un glTF binario (.glb) con lo scheletro e le mosse, letto e disegnato col nostro WebGL,
-// senza librerie (come il resto del gioco). Note in sprite/meshy/LEGGIMI.md.
+// senza librerie (come il resto del gioco); anche i modelli costruiti da noi nel codice (sprite/mostri3d/zombie.js). Note in sprite/mostri3d/LEGGIMI.md.
 // MB3.readGLB(buf) → {json, bin}; MB3.model(g) → modello (nodi, scheletro, pezzi, materiali, immagini, mosse);
 // MB3.pose(m, st, out) → le matrici delle ossa per un momento (una mossa, oppure due che sfumano, più i ritocchi fatti da noi);
 // MB3.gpu(gl, m) prepara buffer, texture e programmi; MB3.draw(gl, R, m, J, cam, o) disegna (contorno spesso, tre toni, bordo di luna,
-// occhi che brillano). Gira anche in Node (lettura e mosse, per sprite/meshy/prepara.js); il disegno solo nel browser (WebGL 2).
+// occhi che brillano). Gira anche in Node (lettura e mosse, per sprite/mostri3d/prepara.js); il disegno solo nel browser (WebGL 2).
 (function(root){
 'use strict';
 // ---------- 1. little maths (matrices by columns, as GL wants them) ----------
@@ -92,30 +92,53 @@ function locals(m,s){const r={};if(!s||!s.clip)return r;const c=s.clip,t=Math.ma
 const VS=nj=>`#version 300 es
 precision highp float;
 layout(location=0) in vec3 aP;layout(location=1) in vec3 aN;layout(location=2) in vec2 aT;layout(location=3) in vec4 aJ;layout(location=4) in vec4 aW;
+layout(location=5) in vec4 aC;layout(location=6) in vec4 aK;
 uniform mat4 uVP,uM;uniform mat4 uJ[${nj}];uniform float uOut;uniform vec2 uPx;
-out vec3 vN;out vec2 vT;out vec3 vW;
+out vec3 vN;out vec2 vT;out vec3 vW;out vec3 vR;out vec4 vC;out vec4 vK;
 void main(){mat4 S=aW.x*uJ[int(aJ.x)]+aW.y*uJ[int(aJ.y)]+aW.z*uJ[int(aJ.z)]+aW.w*uJ[int(aJ.w)];mat4 MS=uM*S;
   vec4 w=MS*vec4(aP,1.);vec3 n=normalize(mat3(MS)*aN);vec4 c=uVP*w;
-  if(uOut>0.){vec2 d=(uVP*vec4(n,0.)).xy;float l=length(d);if(l>1e-5)d/=l;c.xy+=d*uOut*uPx*c.w;}
-  vN=n;vT=aT;vW=w.xyz;gl_Position=c;}`;
+  if(uOut>0.){vec2 d=(uVP*vec4(n,0.)).xy;float l=length(d);if(l>1e-5)d/=l;c.xy+=d*uOut*aK.w*uPx*c.w;}
+  vN=n;vT=aT;vW=w.xyz;vR=aP;vC=aC;vK=aK;gl_Position=c;}`;
+// the paint of the pieces we build ourselves (aK.x = what it is): the marks stay on the body because they come from its place in the rest
+// pose (vR): 1 skin (blotches, mottling, thin veins), 2 shirt (folds round the body, weave), 3 trousers (folds, mud at the bottom),
+// 4 leather, 5 bone and teeth, 6 dark inside (mouth, sockets), 9 light (the eyes: they glow, no shading). aK.y blood, aK.z the soft
+// shadow baked where pieces meet, aK.w how thick the outline is there. Models from a file (no aC, aK) are just their textures.
 const FS=`#version 300 es
 precision highp float;
-in vec3 vN;in vec2 vT;in vec3 vW;
-uniform sampler2D uBase,uNrm,uEm;uniform vec4 uBaseF;uniform float uHasN,uHasE,uNy,uEmK,uToon,uOut,uFlash,uEmOnly,uFogN,uFogF,uClipY;
+in vec3 vN;in vec2 vT;in vec3 vW;in vec3 vR;in vec4 vC;in vec4 vK;
+uniform sampler2D uBase,uNrm,uEm;uniform vec4 uBaseF;uniform float uHasN,uHasE,uNy,uEmK,uToon,uOut,uFlash,uEmOnly,uFogN,uFogF,uClipY,uNs,uBump;
 uniform vec3 uEmF,uL,uLc,uAmb,uRim,uCam,uInk,uFogC,uTint;
 out vec4 o;
 mat3 cf(vec3 N,vec3 p,vec2 uv){vec3 a=dFdx(p),b=dFdy(p);vec2 c=dFdx(uv),d=dFdy(uv);vec3 b2=cross(b,N),a2=cross(N,a);vec3 T=b2*c.x+a2*d.x,B=b2*c.y+a2*d.y;
   float k=inversesqrt(max(max(dot(T,T),dot(B,B)),1e-20));return mat3(T*k,B*k,N);}
+float h3(vec3 p){p=fract(p*vec3(.1031,.1030,.0973));p+=dot(p,p.yxz+33.33);return fract((p.x+p.y)*p.z);}
+float n3(vec3 x){vec3 i=floor(x),f=fract(x);f=f*f*(3.-2.*f);
+  return mix(mix(mix(h3(i),h3(i+vec3(1,0,0)),f.x),mix(h3(i+vec3(0,1,0)),h3(i+vec3(1,1,0)),f.x),f.y),mix(mix(h3(i+vec3(0,0,1)),h3(i+vec3(1,0,1)),f.x),mix(h3(i+vec3(0,1,1)),h3(i+vec3(1,1,1)),f.x),f.y),f.z);}
+float fb(vec3 p){return n3(p)*.55+n3(p*2.07+3.1)*.3+n3(p*4.3+7.7)*.15;}
+float bh(vec3 p,float K){if(K<1.5)return fb(p*1.6)+.35*n3(p*7.);if(K<2.5)return .6*sin(atan(p.x,p.z)*9.+fb(p*.7)*4.)*.5+.5*n3(p*vec3(9.,2.5,9.));if(K<3.5)return .5*sin(p.y*7.+fb(p)*3.)+.5*n3(p*8.);return fb(p*2.);}
+vec3 bump(vec3 n,vec3 p,float K,float a){const float e=.06;float h=bh(p,K);vec3 g=vec3(bh(p+vec3(e,0,0),K)-h,bh(p+vec3(0,e,0),K)-h,bh(p+vec3(0,0,e),K)-h)/e;g-=n*dot(g,n);return normalize(n-g*a);}
 void main(){if(vW.y<uClipY)discard;if(uOut>.5){o=vec4(uInk,1.);return;}
   vec3 n=normalize(vN);if(!gl_FrontFacing)n=-n;
-  vec4 b=texture(uBase,vT)*uBaseF;b.rgb*=uTint;
+  vec4 b=texture(uBase,vT)*uBaseF;b.rgb*=uTint*vC.rgb;
+  float K=vK.x,sp=0.;vec3 R=vR*uNs;
+  if(K>.5&&K<1.5){b.rgb*=mix(1.,.74,smoothstep(.5,.66,fb(R*.9)));b.rgb*=.9+.18*n3(R*6.2);float vv=fb(R*2.3+5.);b.rgb*=1.-.2*smoothstep(.465,.49,vv)*(1.-smoothstep(.49,.515,vv));sp=.12;}
+  else if(K>1.5&&K<2.5){float an=atan(vR.x,vR.z),fo=sin(an*9.+fb(R*.7)*4.+vR.y*.15);b.rgb*=.8+.2*fo+.06*sin(an*23.+vR.y*.6);b.rgb*=.9+.14*n3(R*15.);}
+  else if(K>2.5&&K<3.5){b.rgb*=.88+.12*n3(R*12.);b.rgb*=.9+.1*sin(vR.y*2.2+fb(R)*3.);b.rgb=mix(b.rgb,b.rgb*.55+vec3(.035,.03,.02),smoothstep(5.,1.,vR.y)*.65);}
+  else if(K>3.5&&K<4.5){b.rgb*=.88+.16*n3(R*5.);sp=.3;}
+  else if(K>4.5&&K<5.5){b.rgb*=.88+.14*n3(R*8.);sp=.4;}
+  b.rgb=mix(b.rgb,vec3(.2,.045,.035),smoothstep(.55,.68,fb(R*.75+11.))*vK.y*.9);b.rgb*=1.-.62*vK.z;
+  if(uBump>0.&&K>.5&&K<5.5)n=bump(n,R,K,uBump*(K<1.5?.045:K<2.5?.05:K<3.5?.04:.03));
   if(uHasN>.5){vec3 q=texture(uNrm,vT).xyz*2.-1.;q.y*=uNy;n=normalize(cf(n,vW,vT)*q);}
-  vec3 e=uHasE>.5?texture(uEm,vT).rgb*uEmF:vec3(0.);
+  vec3 e=uHasE>.5?texture(uEm,vT).rgb*uEmF:vec3(0.);if(K>8.5)e+=b.rgb*.5;
   if(uEmOnly>.5){o=vec4(e*uEmK,1.);return;}
+  if(K>8.5){o=vec4(mix(b.rgb*(.82+.12*uEmK),vec3(1.),uFlash),1.);return;}
   float d=dot(n,uL),k1=smoothstep(-.14,.06,d),k2=smoothstep(.40,.58,d);
   vec3 sh=b.rgb*uAmb,li=b.rgb*uLc,mi=mix(sh,li,.55);vec3 c=mix(sh,mix(mi,li,k2),k1);
   vec3 sf=b.rgb*(uAmb+(uLc-uAmb)*clamp(d*.5+.5,0.,1.)*1.1);c=mix(sf,c,uToon);
-  vec3 v=normalize(uCam-vW);float r=pow(1.-max(dot(n,v),0.),3.);c+=uRim*r*(.3+.7*smoothstep(-.3,.3,dot(n,normalize(vec3(-uL.x,.25,-uL.z)))));
+  vec3 v=normalize(uCam-vW);float r=pow(1.-max(dot(n,v),0.),3.);
+  if(K>5.5&&K<6.5){c=b.rgb*(.55+.45*k1);r*=.2;}
+  c+=uRim*r*(.3+.7*smoothstep(-.3,.3,dot(n,normalize(vec3(-uL.x,.25,-uL.z)))));
+  if(sp>0.){float s=pow(max(dot(n,normalize(uL+v)),0.),28.);c+=uLc*sp*smoothstep(.45,.6,s)*k1;}
   c+=e*uEmK;c=mix(c,vec3(1.,.97,.92),uFlash);
   float f=smoothstep(uFogN,uFogF,length(vW-uCam));c=mix(c,uFogC,f);o=vec4(c,1.);}`;
 function sh(gl,t,s){const x=gl.createShader(t);gl.shaderSource(x,s);gl.compileShader(x);if(!gl.getShaderParameter(x,gl.COMPILE_STATUS))throw new Error('shader: '+gl.getShaderInfoLog(x));return x}
@@ -133,21 +156,22 @@ async function gpu(gl,m){const nj=m.skin?m.skin.joints.length:1,P=prog(gl,VS(nj)
   R.white=solid([255,255,255,255]);R.black=solid([0,0,0,255]);R.tex=await Promise.all(m.imgs.map(im=>im?texOf(gl,im):null));
   for(const q of m.prims){const vao=gl.createVertexArray();gl.bindVertexArray(vao);const buf=(loc,a,n)=>{if(!a){gl.disableVertexAttribArray(loc);return}const b=gl.createBuffer();
       gl.bindBuffer(gl.ARRAY_BUFFER,b);gl.bufferData(gl.ARRAY_BUFFER,a,gl.STATIC_DRAW);gl.enableVertexAttribArray(loc);gl.vertexAttribPointer(loc,n,gl.FLOAT,false,0,0)};
-    buf(0,q.pos,3);buf(1,q.nrm,3);buf(2,q.uv,2);buf(3,q.jnt,4);buf(4,q.wgt,4);const ib=gl.createBuffer();gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER,ib);
+    buf(0,q.pos,3);buf(1,q.nrm,3);buf(2,q.uv,2);buf(3,q.jnt,4);buf(4,q.wgt,4);buf(5,q.col,4);buf(6,q.knd,4);const ib=gl.createBuffer();gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER,ib);
     const ix=q.idx instanceof Uint32Array&&q.pos.length/3<65536?Uint16Array.from(q.idx):q.idx;gl.bufferData(gl.ELEMENT_ARRAY_BUFFER,ix,gl.STATIC_DRAW);gl.bindVertexArray(null);
-    R.prims.push({vao,n:ix.length,type:ix instanceof Uint32Array?gl.UNSIGNED_INT:ix instanceof Uint16Array?gl.UNSIGNED_SHORT:gl.UNSIGNED_BYTE,mat:m.mats[q.mat]||{},skinned:!!(q.jnt&&q.wgt),node:q.node})}
+    R.prims.push({vao,n:ix.length,type:ix instanceof Uint32Array?gl.UNSIGNED_INT:ix instanceof Uint16Array?gl.UNSIGNED_SHORT:gl.UNSIGNED_BYTE,mat:m.mats[q.mat]||{},skinned:!!(q.jnt&&q.wgt),col:!!q.col,knd:!!q.knd,node:q.node})}
   return R}
 // cam = {VP, eye, px:[2/w,2/h]}; o = {M (place of the model), L (towards the light), Lc, amb, rim, ink, out (outline width in pixels), toon (0..1),
-//   emK (strength of the eyes), flash, fog:[near,far], fogC, tint, emOnly, ny (sign of the green of the normal map), clipY (nothing under it is drawn)}
+//   emK (strength of the eyes), flash, fog:[near,far], fogC, tint, emOnly, ny (sign of the green of the normal map), clipY (nothing under it is drawn),
+//   bump (how much the painted relief catches the light: 0 with reduced effects)}
 const I16=m4();
 function draw(gl,R,m,Jm,cam,o){const {p,u}=R.P;gl.useProgram(p);gl.uniformMatrix4fv(u.uVP,false,cam.VP);gl.uniformMatrix4fv(u.uM,false,o.M||I16);
   if(Jm)gl.uniformMatrix4fv(u.uJ,false,Jm);gl.uniform2fv(u.uPx,cam.px);gl.uniform3fv(u.uL,o.L);gl.uniform3fv(u.uLc,o.Lc);gl.uniform3fv(u.uAmb,o.amb);gl.uniform3fv(u.uRim,o.rim);
   gl.uniform3fv(u.uCam,cam.eye);gl.uniform3fv(u.uInk,o.ink||[.07,.06,.06]);gl.uniform1f(u.uToon,o.toon===undefined?1:o.toon);gl.uniform1f(u.uEmK,o.emK===undefined?1:o.emK);
-  gl.uniform1f(u.uFlash,o.flash||0);gl.uniform1f(u.uClipY,o.clipY===undefined?-1e9:o.clipY);gl.uniform1f(u.uEmOnly,o.emOnly?1:0);gl.uniform1f(u.uNy,o.ny===undefined?1:o.ny);gl.uniform3fv(u.uTint,o.tint||[1,1,1]);
+  gl.uniform1f(u.uFlash,o.flash||0);gl.uniform1f(u.uNs,m.ns||.3);gl.uniform1f(u.uBump,o.bump===undefined?1:o.bump);gl.uniform1f(u.uClipY,o.clipY===undefined?-1e9:o.clipY);gl.uniform1f(u.uEmOnly,o.emOnly?1:0);gl.uniform1f(u.uNy,o.ny===undefined?1:o.ny);gl.uniform3fv(u.uTint,o.tint||[1,1,1]);
   const fg=o.fog||[1e5,2e5];gl.uniform1f(u.uFogN,fg[0]);gl.uniform1f(u.uFogF,fg[1]);gl.uniform3fv(u.uFogC,o.fogC||[0,0,0]);
   gl.uniform1i(u.uBase,0);gl.uniform1i(u.uNrm,1);gl.uniform1i(u.uEm,2);
   const pass=(out)=>{gl.uniform1f(u.uOut,out);for(const q of R.prims){const ma=q.mat;
-      if(!q.skinned){gl.vertexAttrib4f(3,0,0,0,0);gl.vertexAttrib4f(4,1,0,0,0)}
+      if(!q.skinned){gl.vertexAttrib4f(3,0,0,0,0);gl.vertexAttrib4f(4,1,0,0,0)}if(!q.col)gl.vertexAttrib4f(5,1,1,1,1);if(!q.knd)gl.vertexAttrib4f(6,0,0,0,1);
       gl.activeTexture(gl.TEXTURE0);gl.bindTexture(gl.TEXTURE_2D,ma.base!==undefined&&R.tex[ma.base]||R.white);
       gl.activeTexture(gl.TEXTURE1);gl.bindTexture(gl.TEXTURE_2D,ma.nrm!==undefined&&R.tex[ma.nrm]||R.white);
       gl.activeTexture(gl.TEXTURE2);gl.bindTexture(gl.TEXTURE_2D,ma.em!==undefined&&R.tex[ma.em]||R.black);

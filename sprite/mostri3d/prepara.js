@@ -3,10 +3,10 @@
 //  - le mosse prese per nome d'osso, ricampionate a 30 al secondo; nelle camminate e nelle corse il bacino resta sul posto (si cammina
 //    davanti alla telecamera; la velocità del passo resta scritta nella mossa, extras.passo, in unità del modello al secondo);
 //  - le texture rifatte più leggere (colore JPEG, rilievo JPEG, luce degli occhi PNG); via quella metallo/ruvidità, che non usiamo.
-// Uso: node sprite/meshy/prepara.js <cartella con rigged.glb e le mosse> <uscita.glb> [nome=file.glb[#mossa][:fermo]] …
+// Uso: node sprite/mostri3d/prepara.js <cartella con rigged.glb e le mosse> <uscita.glb> [nome=file.glb[#mossa][:fermo]] …
 //   «#mossa» = quale mossa del file (se ne ha più d'una; senza, la prima); «:fermo» = la mossa non si ripete (sbucare, morire…): il bacino
 //   resta dove la mossa lo porta.
-// Le texture si rifanno con il Chromium delle prove (canvas). Note in sprite/meshy/LEGGIMI.md.
+// Le texture si rifanno con il Chromium delle prove (canvas). Note in sprite/mostri3d/LEGGIMI.md.
 const fs=require('fs'),path=require('path'),MB3=require('./mb3.js');
 const [,,DIR,OUT,...ARGS]=process.argv;if(!DIR||!OUT){console.error('uso: node prepara.js <cartella> <uscita.glb> nome=file.glb[:fermo] …');process.exit(2)}
 const FPS=30,TEX={base:{max:2048,type:'image/jpeg',q:.9},nrm:{max:1024,type:'image/jpeg',q:.92},em:{max:512,type:'image/png'}};
@@ -49,7 +49,7 @@ const CTY=a=>a instanceof Float32Array?5126:a instanceof Uint32Array?5125:a inst
 const accOf=(a,type,n,o={})=>{const bv=view(a,o.target),e={bufferView:bv,componentType:CTY(a),count:a.length/n,type,...(o.norm?{normalized:true}:{})};
   if(o.mm){const mn=new Array(n).fill(Infinity),mx=new Array(n).fill(-Infinity);for(let i=0;i<a.length;i++){const c=i%n;if(a[i]<mn[c])mn[c]=a[i];if(a[i]>mx[c])mx[c]=a[i]}e.min=mn;e.max=mx}
   acc.push(e);return acc.length-1};
-const J={asset:{version:'2.0',generator:'Mossbound sprite/meshy/prepara.js'},scene:0,scenes:[{nodes:M.nodes.filter(n=>n.parent<0).map(n=>n.i)}],nodes:[],meshes:[],materials:[],textures:[],images:[],samplers:[{magFilter:9729,minFilter:9987,wrapS:10497,wrapT:10497}],accessors:acc,bufferViews:views,buffers:[{byteLength:0}]};
+const J={asset:{version:'2.0',generator:'Mossbound sprite/mostri3d/prepara.js'},scene:0,scenes:[{nodes:M.nodes.filter(n=>n.parent<0).map(n=>n.i)}],nodes:[],meshes:[],materials:[],textures:[],images:[],samplers:[{magFilter:9729,minFilter:9987,wrapS:10497,wrapT:10497}],accessors:acc,bufferViews:views,buffers:[{byteLength:0}]};
 const imgIx={};for(const i of Object.keys(imgOut)){J.images.push({bufferView:view(imgOut[i].bytes),mimeType:imgOut[i].mime});J.textures.push({sampler:0,source:J.images.length-1});imgIx[i]=J.textures.length-1}
 J.materials=M.mats.map(m=>{const e={name:m.name,pbrMetallicRoughness:{baseColorFactor:m.baseF,metallicFactor:0,roughnessFactor:1},...(m.dbl?{doubleSided:true}:{})};
   if(m.base!==undefined&&imgIx[m.base]!==undefined)e.pbrMetallicRoughness.baseColorTexture={index:imgIx[m.base]};if(m.nrm!==undefined&&imgIx[m.nrm]!==undefined)e.normalTexture={index:imgIx[m.nrm]};

@@ -1,5 +1,5 @@
 // Mossbound · il nostro zombie di oggi da quattro lati (davanti, tre quarti, lato, dietro) su fondo trasparente, per «Prima e dopo» della pagina
-// di Meshy (anteprime/mk_meshy.py). Uso: python3 tests/mk.py, poi node sprite/meshy/oggi.js sprite/meshy/zombie_oggi.webp
+// dello zombie in 3D (anteprime/mk_zombie3d.py). Uso: python3 tests/mk.py, poi node sprite/mostri3d/oggi.js sprite/mostri3d/zombie_oggi.webp
 const {chromium}=require('playwright');const fs=require('fs');const R='/home/user/RealGame/',OUT=process.argv[2];
 (async()=>{const b=await chromium.launch();const p=await b.newPage({viewport:{width:390,height:844}});const errs=[];p.on('pageerror',e=>errs.push(e.message));
   await p.addInitScript(()=>{localStorage.setItem('cripta_save_v1',JSON.stringify({gold:50,introSeen:1,runs:3,starter:'arciere',items:{arco_frassino:{lvl:1,cards:0},giubba:{lvl:1,cards:0}},eq:{arma:'arco_frassino',armatura:'giubba',anello:null,amuleto:null},slots:[null,null,null,null]}))});

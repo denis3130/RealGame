@@ -1,75 +1,34 @@
-// Pagina di prova (Denis, 3 novembre: «vorrei rifacessi per ora 1 zombie quello base rifatto su meshy con dettagli cartoon così ma fatti
-// meglio … con animazioni adatte»): lo zombie base rifatto con Meshy (sprite/meshy/zombie_base.glb, preparato da sprite/meshy/prepara.js),
-// disegnato col nostro WebGL (sprite/meshy/mb3.js): notte del camposanto, luna, contorno spesso, tre toni, occhi che brillano e pulsano.
-// Mosse di Meshy (dal suo catalogo) più i pezzi fatti da noi (la testa che scatta verso di te, la testa piegata troppo, i tremori, lo
-// sbucare da terra, il Morso). Dito: gira intorno; due dita o − e +: vicino e lontano. «Quattro direzioni» e «Prima e dopo» (il nostro
-// zombie di oggi sopra, quello di Meshy sotto, dagli stessi lati). Costruita da anteprime/mk_meshy.py.
+// Pagina di prova dello zombie base in 3D vero (Denis, 3 novembre: «mi piace come l'hai fatto il modello in 3d in questa immagine che mi hai
+// mandato senza meshy», «non serve accedere a meshy continua cosi»). Il modello lo costruisce sprite/mostri3d/zombie.js (il nostro Zombie della
+// cripta: stesse misure, pezzi e colori), lo disegna sprite/mostri3d/mb3.js col nostro WebGL: notte del camposanto, luna, contorno spesso, tre
+// toni, occhi che brillano e pulsano. Tutte le mosse sono nostre. Dito: gira intorno; due dita o − e +: vicino e lontano. «Quattro direzioni» e
+// «Prima e dopo» (il nostro zombie di oggi sopra, quello in 3D sotto, dagli stessi lati). Costruita da anteprime/mk_zombie3d.py.
 (()=>{'use strict';
-const $=s=>document.querySelector(s),GLB='__GLB__',OGGI='__OGGI__',INFO=__INFO__;
+const $=s=>document.querySelector(s),OGGI='__OGGI__';
 const back=$('#bk'),cv=$('#cv'),fr=$('#fr'),bx=back.getContext('2d'),fx=fr.getContext('2d');
 const gl=cv.getContext('webgl2',{antialias:true,alpha:true,premultipliedAlpha:true});
 if(!gl){$('#msg').hidden=false;$('#msg').textContent='Questo telefono non ha WebGL 2: lo zombie in 3D non si può disegnare.';return}
 // ---------- the look of the night (the moon from the upper left, like the zombie map) ----------
-const SKY=[.055,.07,.085],FOG=[.075,.09,.1],LIGHT=(()=>{const v=[-.55,.72,.42],l=Math.hypot(...v);return v.map(x=>x/l)})();
-const LOOK={gioco:{toon:1,Lc:[1.08,1.04,1.12],amb:[.34,.36,.5],rim:[.32,.46,.7]},meshy:{toon:0,Lc:[1.12,1.1,1.1],amb:[.42,.42,.48],rim:[.18,.24,.34]}};
-let look='gioco',low=false,ink=true,auto=true,four=false,cmp=false,yaw=.35,pitch=.2,dist=1,ms=0,fps=0,nf=0,tf=0,T0=performance.now()/1000;
+const FOG=[.075,.09,.1],LIGHT=(()=>{const v=[-.55,.72,.42],l=Math.hypot(...v);return v.map(x=>x/l)})();
+const LOOK={gioco:{toon:1,Lc:[1.1,1.06,1.12],amb:[.36,.38,.52],rim:[.34,.48,.72]},morbida:{toon:0,Lc:[1.12,1.1,1.1],amb:[.42,.42,.5],rim:[.2,.26,.36]}};
+let look='gioco',low=false,ink=true,auto=true,four=false,cmp=false,yaw=.35,pitch=.34,dist=1,ms=0,fps=0,nf=0,tf=0,T0=performance.now()/1000;
 // ---------- the model ----------
-const b64=s=>{const b=atob(s),u=new Uint8Array(b.length);for(let i=0;i<b.length;i++)u[i]=b.charCodeAt(i);return u.buffer};
-const M=MB3.model(MB3.readGLB(b64(GLB)));let R=null;
-const clip={};M.clips.forEach(c=>{clip[c.name]=c});
-// the real size of the zombie standing (the skinned vertices of the rest pose): feet on the ground, 1.7 tall, in the middle
-const rest=MB3.pose(M,{a:null,w:1});
-const box=(()=>{const mn=[1e9,1e9,1e9],mx=[-1e9,-1e9,-1e9];for(const q of M.prims){const P=q.pos,Jt=q.jnt,Wt=q.wgt,st=Math.max(1,(P.length/3/4000)|0);
-  for(let v=0;v<P.length/3;v+=st){const p=[0,0,0];for(let k=0;k<4;k++){const w=Wt?Wt[v*4+k]:k?0:1;if(!w)continue;const J=rest.J?rest.J.subarray((Jt?Jt[v*4+k]:0)*16):MB3.m4(),x=P[v*3],y=P[v*3+1],z=P[v*3+2];
-      p[0]+=w*(J[0]*x+J[4]*y+J[8]*z+J[12]);p[1]+=w*(J[1]*x+J[5]*y+J[9]*z+J[13]);p[2]+=w*(J[2]*x+J[6]*y+J[10]*z+J[14])}
-    for(let c=0;c<3;c++){if(p[c]<mn[c])mn[c]=p[c];if(p[c]>mx[c])mx[c]=p[c]}}}return{mn,mx}})();
-const H=box.mx[1]-box.mn[1]||1,SC=1.7/H,MM=MB3.m4();MM[0]=MM[5]=MM[10]=SC;MM[12]=-(box.mn[0]+box.mx[0])/2*SC;MM[13]=-box.mn[1]*SC;MM[14]=-(box.mn[2]+box.mx[2])/2*SC;
-// the bones we move ourselves (found by name: Meshy's skeleton is like Mixamo's)
-const bone=(...re)=>{for(const r of re){const n=M.nodes.find(n=>r.test(n.name)&&(!M.skin||M.skin.joints.includes(n.i)));if(n)return n.i}return -1};
-const B={hips:bone(/hips/i,/pelvis/i),sp1:bone(/^spine$/i,/spine0?1?$/i),sp2:bone(/spine0?2$/i,/spine1$/i,/chest/i),neck:bone(/neck/i),head:bone(/^head$/i,/head(?!.*(end|top))/i),
-  la:bone(/left.?arm$/i,/arm.?l$/i,/l.?upperarm/i),ra:bone(/right.?arm$/i,/arm.?r$/i,/r.?upperarm/i),lf:bone(/left.?fore/i,/forearm.?l/i,/l.?lowerarm/i),rf:bone(/right.?fore/i,/forearm.?r/i,/r.?lowerarm/i),
-  lh:bone(/left.?hand$/i,/hand.?l$/i),rh:bone(/right.?hand$/i,/hand.?r$/i)};
-// ---------- the moves: Meshy's, and ours on top ----------
-const MOVES=[
-  {id:'fermo',n:'Fermo',src:'Meshy «Alert», più vicino a noi: immobile, poi la testa scatta verso di te',clip:'fermo',loop:1,sp:.55,lay:'fermo'},
-  {id:'cammina',n:'Cammina',src:'Meshy «Slow Orc Walk», con la testa piegata troppo e gli scatti',clip:'cammina',loop:1,lay:'cammina'},
-  {id:'barcolla',n:'Barcolla',src:'Meshy «Mummy Stagger»',clip:'barcolla',loop:1,lay:'cammina'},
-  {id:'scatto',n:'Scatto',src:'Meshy (corsa dello scheletro)',clip:'corre',loop:1,sp:1.05},
-  {id:'sbuca',n:'Sbuca da terra',src:'Meshy «Arise», e sale da sotto terra (fatto da noi)',clip:'sbuca',lay:'sbuca'},
-  {id:'urla',n:'Urla',src:'Meshy «Zombie Scream»',clip:'urla'},
-  {id:'colpo',n:'Colpo',src:'Meshy «Attack»: le due mani dall\'alto',clip:'colpo'},
-  {id:'morso',n:'Morso',src:'fatto da noi: si tira indietro, scatta, morde, torna',clip:'fermo',lay:'morso',dur:1.6},
-  {id:'colpito',n:'Colpito',src:'Meshy «Hit Reaction», col lampo',clip:'colpito',flash:1},
-  {id:'muore',n:'Muore',src:'Meshy «Dead»: in ginocchio e giù di faccia, poi sprofonda',clip:'muore',lay:'muore',hold:2.2}].filter(m=>clip[m.clip]);
-const SEQ=['sbuca','fermo','cammina','barcolla','urla','colpo','morso','colpito','scatto','muore'],SEQT={fermo:3.5,cammina:4,barcolla:4,scatto:3};
-let cur=null,prev=null,blend=1,all=false,seqI=0,flash=0,rise=0,sink=0,dirt=[];
+const t0b=performance.now(),M=ZB3.build(),buildMs=performance.now()-t0b;let R=null;
+const H=43,SC=1.7/H,MM=MB3.m4();MM[0]=MM[5]=MM[10]=SC;
+// ---------- the moves ----------
+const MOVES=Object.entries(ZB3.MOSSE).map(([id,m])=>({id,...m}));
+const SEQ=['sbuca','fermo','cammina','corre','urla','colpo','morso','colpito','muore'],SEQT={fermo:6,cammina:4.5,corre:3};
+let cur=null,prev=null,blend=1,all=false,seqI=0,flash=0,sink=0,dirt=[],HOLD=null;
 const now=()=>performance.now()/1000-T0;
-function play(id,keepAll){const m=MOVES.find(x=>x.id===id)||MOVES.find(x=>x.id==='fermo')||MOVES[0];if(!m)return;if(!keepAll)all=false;
-  prev=cur?{...cur,clip:cur.clip}:null;blend=prev?0:1;cur={m,clip:clip[m.clip],t0:now(),t:0,done:false};
-  if(m.flash)flash=1;if(m.id==='sbuca'){rise=1;sink=0;spray(14)}if(m.id!=='muore')sink=0;ui()}
-function movT(c,t){const m=c.m,d=m.dur||c.clip.dur/(m.sp||1);if(m.loop)return((t*(m.sp||1))%c.clip.dur+c.clip.dur)%c.clip.dur;return Math.min(c.clip.dur,t*(m.sp||1)*(m.dur?c.clip.dur/m.dur/(m.sp||1):1))}
-// ---------- our pieces on top of Meshy's moves (all depend only on the time of the move) ----------
-const sm=x=>x<=0?0:x>=1?1:x*x*(3-2*x),hz=(t,f,s)=>Math.sin(t*f*6.283+s)*Math.sin(t*f*2.7+s*1.7);
-function layers(c,t,tw,tr){const L=c.m.lay,q=(n,ax,ay,az,a)=>{if(n<0||!a)return;const r=MB3.qaxis(ax,ay,az,a);tw[n]=tw[n]?MB3.qmul(r,tw[n]):r};
-  const toCam=Math.atan2(Math.sin(yaw),Math.cos(yaw));// where you are, seen from the zombie (it looks along +z)
-  if(L==='fermo'){// still… then the head snaps towards you, stays, and slowly comes back; now and then a tremor
-    const P=6.2,k=t%P,g=k<3.4?0:k<3.52?sm((k-3.4)/.12):k<4.9?1:1-sm((k-4.9)/1.2),a=Math.max(-1.1,Math.min(1.1,toCam));
-    q(B.neck,0,1,0,a*.45*g);q(B.head,0,1,0,a*.55*g);q(B.head,0,0,1,-.32*g);q(B.head,1,0,0,.12*g);
-    const tr1=k>1.2&&k<1.9?1:0;q(B.rh,0,0,1,tr1*.22*hz(t,9,1));q(B.head,0,0,1,tr1*.05*hz(t,13,2))}
-  if(L==='cammina'){// the head bent too far to one side, and a jerk now and then
-    const P=2.7,k=t%P,j=k<.1?sm(k/.1):k<.5?1-sm((k-.1)/.4):0;q(B.head,0,0,1,.42+.25*j);q(B.neck,0,0,1,.12);q(B.head,1,0,0,.18-.2*j);q(B.lf,1,0,0,-.08*j)}
-  if(L==='morso'){// back, back… snap! bite, and back again
-    const d=c.m.dur,p=Math.min(1,t/d),pr=sm(p/.42),st=p<.42?0:p<.52?sm((p-.42)/.1):p<.7?1:1-sm((p-.7)/.3),bk=pr*(1-st);
-    q(B.sp1,1,0,0,-.22*bk+.38*st);q(B.sp2,1,0,0,-.16*bk+.3*st);q(B.neck,1,0,0,-.35*bk+.25*st);q(B.head,1,0,0,-.3*bk+.42*st);q(B.head,0,0,1,.18*bk);
-    q(B.la,1,0,0,-1.15*Math.max(bk,st*.8));q(B.ra,1,0,0,-1.25*Math.max(bk,st*.85));q(B.la,0,0,1,-.25*bk);q(B.ra,0,0,1,.25*bk);
-    q(B.lf,1,0,0,-.5*bk+.3*st);q(B.rf,1,0,0,-.55*bk+.3*st);if(B.hips>=0){const n=M.nodes[B.hips],u=(H/1.7)*.0;tr[B.hips]=[0,-.03*bk/SC,(-.1*bk+.32*st)/SC]}}
-  if(L==='sbuca'){/* the rise is done on the whole model: see frame() */}}
-function spray(n){if(low)n=Math.ceil(n/2);for(let i=0;i<n;i++){const a=Math.random()*6.283,s=.6+Math.random()*1.4;dirt.push({x:Math.cos(a)*.25,y:.02,z:Math.sin(a)*.25,vx:Math.cos(a)*s*.8,vy:1.6+Math.random()*2.2,vz:Math.sin(a)*s*.8,r:.02+Math.random()*.04,l:1})}}
+function play(id,keepAll){const m=MOVES.find(x=>x.id===id)||MOVES[0];if(!keepAll)all=false;prev=cur?{...cur}:null;blend=prev?0:1;cur={m,t0:now()};
+  if(id==='colpito')flash=1;if(id==='sbuca'){sink=0;spray(14)}if(id!=='muore')sink=0;ui()}
+const pOf=(c,t)=>c.m.loop?((t/c.m.dur)%1+1)%1:Math.min(1,t/c.m.dur);
+function spray(n){if(low)n=Math.ceil(n/2);for(let i=0;i<n;i++){const a=Math.random()*6.283,s=.6+Math.random()*1.4;dirt.push({x:Math.cos(a)*.25,y:.02,z:Math.sin(a)*.25+.2,vx:Math.cos(a)*s*.8,vy:1.6+Math.random()*2.2,vz:Math.sin(a)*s*.8,r:.02+Math.random()*.04,l:1})}}
 // ---------- the stage: the ground of the graveyard (with the hole), the soft shadow, the glow of the eyes ----------
 const GVS=`#version 300 es
 in vec2 aP;uniform mat4 uVP;out vec3 vW;void main(){vW=vec3(aP.x,0.,aP.y);gl_Position=uVP*vec4(vW,1.);}`;
 const GFS=`#version 300 es
-precision highp float;in vec3 vW;uniform vec3 uCam,uFog,uL;uniform vec2 uSh,uHo;uniform float uShK,uShR,uHole,uT;out vec4 o;
+precision highp float;in vec3 vW;uniform vec3 uCam,uFog,uL;uniform vec2 uSh,uHo;uniform float uShK,uShR,uHole;out vec4 o;
 float h(vec2 p){return fract(sin(dot(p,vec2(127.1,311.7)))*43758.5453);}
 float n(vec2 p){vec2 i=floor(p),f=fract(p);f=f*f*(3.-2.*f);return mix(mix(h(i),h(i+vec2(1,0)),f.x),mix(h(i+vec2(0,1)),h(i+vec2(1,1)),f.x),f.y);}
 void main(){vec2 p=vW.xz;float a=n(p*1.3)*.55+n(p*4.1)*.3+n(p*11.)*.15;
@@ -78,8 +37,7 @@ void main(){vec2 p=vW.xz;float a=n(p*1.3)*.55+n(p*4.1)*.3+n(p*11.)*.15;
   float st=step(.8,n(p*9.+7.))*step(.5,n(p*31.));c=mix(c,vec3(.26,.27,.25),st*.5);
   float hd=length(p-uHo),ho=uHole*(1.-smoothstep(.26,.36,hd)),rim=uHole*smoothstep(.22,.34,hd)*(1.-smoothstep(.34,.6,hd));
   c=mix(c,vec3(.27,.2,.13)*(.8+.4*n(p*14.)),rim*.85);c=mix(c,vec3(.03,.025,.02),ho);
-  float s=uShK*(1.-smoothstep(0.,uShR,length((p-uSh)*vec2(1.,1.15))));c*=1.-.62*s;
-  c*=.9+.2*smoothstep(-.2,.9,dot(normalize(vec3(p.x,2.,p.y)),uL));
+  float s=uShK*(1.-smoothstep(0.,uShR,length((p-uSh)*vec2(1.,.85))));c*=1.-.62*s;
   float d=length(vW-uCam),f=smoothstep(3.,8.5,d);c=mix(c,uFog,f);float r=length(p),al=1.-smoothstep(2.6,4.4,r);o=vec4(c*al,al);}`;
 const QVS=`#version 300 es
 in vec2 aP;out vec2 vU;void main(){vU=aP*.5+.5;gl_Position=vec4(aP,0.,1.);}`;
@@ -116,7 +74,7 @@ function paintBack(W,Hh,dpr){back.width=W*dpr;back.height=Hh*dpr;const c=bx;c.se
     tr(x2,y2,l*.72,a-.45-d*.05,w*.65,d+1);tr(x2,y2,l*.66,a+.5,w*.6,d+1)};tr(W*.93,hz+14,Hh*.09,-1.62,5,0);
   const v=c.createRadialGradient(W/2,Hh*.55,Math.min(W,Hh)*.3,W/2,Hh*.55,Math.max(W,Hh)*.8);v.addColorStop(0,'rgba(0,0,0,0)');v.addColorStop(1,'rgba(0,0,0,.6)');c.fillStyle=v;c.fillRect(0,0,W,Hh)}
 // ---------- one frame ----------
-let W0=0,H0=0,DPR=1,SHIFT=.17;const VP=new Float32Array(16),PR=new Float32Array(16),VW=new Float32Array(16),Mx=new Float32Array(16);
+let W0=0,H0=0,DPR=1,SHIFT=.17;const VP=new Float32Array(16),PR=new Float32Array(16),VW=new Float32Array(16),Mx=new Float32Array(16),JM=new Float32Array(ZB3.BN.length*16);
 function resize(){const W=innerWidth,Hh=innerHeight,dpr=Math.min(low?1:2,devicePixelRatio||1);if(W===W0&&Hh===H0&&dpr===DPR)return;W0=W;H0=Hh;DPR=dpr;
   for(const c of[cv,fr]){c.width=Math.round(W*dpr);c.height=Math.round(Hh*dpr)}paintBack(W,Hh,dpr);fbo=[]}
 function camAt(yw,pt,d,ax,ay,aw,ah){const ch=.86,dd=4.8*d,e=[Math.sin(yw)*Math.cos(pt)*dd,ch+Math.sin(pt)*dd,Math.cos(yw)*Math.cos(pt)*dd];
@@ -125,63 +83,59 @@ function camAt(yw,pt,d,ax,ay,aw,ah){const ch=.86,dd=4.8*d,e=[Math.sin(yw)*Math.c
 function frame(){requestAnimationFrame(frame);if(!R||!cur)return;resize();const t0=performance.now(),tt=now(),dt=Math.min(.05,tt-(frame.l||tt));frame.l=tt;
   if(auto&&!drag&&!four)yaw+=dt*.32;
   // which move, at what moment (the sequence of «Tutte»)
-  let c=cur;c.t=tt-c.t0;const m=c.m,len=m.loop?(SEQT[m.id]||1e9):(m.dur||c.clip.dur/(m.sp||1))+(m.hold||0);
-  if(all&&c.t>len){seqI=(seqI+1)%SEQ.length;play(SEQ[seqI],true);c=cur}
-  else if(!m.loop&&c.t>len&&!all){if(m.id==='muore'){play('sbuca');c=cur}else{play('fermo');c=cur}}
-  blend=Math.min(1,blend+dt/.22);flash=Math.max(0,flash-dt*3.2);
-  const st={a:{clip:c.clip,t:movT(c,c.t)},b:prev&&blend<1?{clip:prev.clip,t:movT(prev,tt-prev.t0)}:null,w:blend,tw:{},tr:{}};
-  layers(c,c.t,st.tw,st.tr);if(prev&&blend<1&&prev.m.lay&&prev.m.lay!=='morso'){const tw2={},tr2={};layers(prev,tt-prev.t0,tw2,tr2);
-    for(const k in tw2){const a=tw2[k],b=st.tw[k]||[0,0,0,1];st.tw[k]=MB3.nlerp([0,0,0,1],a,b,blend)}}
-  const P=MB3.pose(M,st);
-  // rising from the ground / sinking after death: the whole model moves, what is under the ground is not drawn
-  let y=0;if(m.id==='sbuca'){const k=Math.min(1,c.t/(c.clip.dur*.55));y=-(1-sm(k))*1.05;if(c.t<c.clip.dur*.5&&Math.random()<dt*14)spray(1)}
-  if(m.id==='muore'&&c.t>c.clip.dur+.9){sink=Math.min(1,(c.t-c.clip.dur-.9)/1.2);y=-sink*.8}
+  if(HOLD){cur={m:MOVES.find(x=>x.id===HOLD.id),t0:tt-HOLD.p*MOVES.find(x=>x.id===HOLD.id).dur};prev=null;blend=1}
+  let c=cur;const tc=tt-c.t0,m=c.m,len=m.loop?(SEQT[m.id]||1e9):m.dur+(m.hold?2.2:0);
+  if(all&&tc>len){seqI=(seqI+1)%SEQ.length;play(SEQ[seqI],true);c=cur}
+  else if(!m.loop&&tc>len&&!all){play(m.id==='muore'?'sbuca':'fermo');c=cur}
+  blend=Math.min(1,blend+dt/.24);flash=Math.max(0,flash-dt*3.2);
+  // the pose: where the eye of the camera is, seen from him, so the head snaps towards you
+  const lookA=four?0:Math.atan2(Math.sin(yaw),Math.cos(yaw)),P=ZB3.solve(M,ZB3.pose(c.m.id,pOf(c,tt-c.t0),{look:lookA}));
+  const Pm=prev&&blend<1?ZB3.mix(P,ZB3.solve(M,ZB3.pose(prev.m.id,pOf(prev,tt-prev.t0),{look:lookA})),blend):P;ZB3.joints(M,Pm,JM);
+  // sinking after death: the whole model goes down, what is under the ground is not drawn
+  let y=0;const pc=pOf(c,tt-c.t0);if(m.id==='muore'&&tt-c.t0>m.dur+.9){sink=Math.min(1,(tt-c.t0-m.dur-.9)/1.2);y=-sink*.8}
+  if(m.id==='sbuca'&&pc<.5&&Math.random()<dt*14)spray(1);
   Mx.set(MM);Mx[13]+=y;
-  // the light of the moon and the shadow under the body (where the hips are)
-  const hp=B.hips>=0?P.W.subarray(B.hips*16+12,B.hips*16+15):[0,0,0],hx=(hp[0]*SC+MM[12]),hz=(hp[2]*SC+MM[14]),hy=hp[1]*SC+MM[13]+y;
+  // the soft shadow under him: where the hips are (lower and wider when he lies down)
+  const hip=Pm.wp[ZB3.BI.bacino],hx=hip[0]*SC,hz=hip[2]*SC,hy=hip[1]*SC+y;
   const W=cv.width,Hh=cv.height;gl.bindFramebuffer(gl.FRAMEBUFFER,null);gl.viewport(0,0,W,Hh);gl.clearColor(0,0,0,0);gl.clear(gl.COLOR_BUFFER_BIT|gl.DEPTH_BUFFER_BIT);
   fx.setTransform(1,0,0,1,0,0);fx.clearRect(0,0,fr.width,fr.height);
-  // (four sides: the same as the picture of our zombie of today; the 3/4 and the side look to the right like there)
   let views=[{yw:yaw,x:0,y:0,w:W,h:Hh,d:dist}];
-  if(four){const ww=W/4,hh=Math.round(ww*2),r=$('#oggi').getBoundingClientRect(),yy=cmp?Math.round((r.bottom+26)*DPR):Math.round(Math.max(96*DPR,(Hh*.74-hh)/2));
-    views=[0,-.62,-Math.PI/2,Math.PI].map((a,i)=>({yw:a+(auto?0:yaw*0),x:Math.round(i*ww),y:yy,w:Math.round(ww),h:hh,d:.74,lab:['davanti','tre quarti','lato','dietro'][i]}));
+  if(four){const r=$('#oggi').getBoundingClientRect(),SW=Math.min(W,640*DPR),x0=cmp&&r.width?Math.round(r.left*DPR):Math.round((W-SW)/2),ww=(cmp&&r.width?r.width*DPR:SW)/4,hh=Math.round(ww*2),
+      yy=cmp?Math.round((r.bottom+26)*DPR):Math.round(Math.max(96*DPR,(Hh*.74-hh)/2));
+    views=[0,-.62,-Math.PI/2,Math.PI].map((a,i)=>({yw:a,x:Math.round(x0+i*ww),y:yy,w:Math.round(ww),h:hh,d:.8,lab:['davanti','tre quarti','lato','dietro'][i]}));
     fx.fillStyle='#f1e4c6';fx.font=`400 ${15*DPR}px "Lilita One",system-ui`;fx.textAlign='left';fx.shadowColor='#1b1612';fx.shadowOffsetY=2*DPR;
-    if(cmp){fx.fillText('Oggi nel gioco',10*DPR,(r.top-6)*DPR);fx.fillText('Con Meshy',10*DPR,yy-6*DPR)}fx.shadowOffsetY=0}
-  const L=LOOK[look],out=ink?(low?1.6:2.6)*DPR*(four?.6:1):0,emK=1.25+.55*Math.sin(tt*2.1)+(m.id==='urla'?.6:0);
-  for(const v of views){const cam=camAt(v.yw,four?.12:pitch,v.d,v.x,v.y,v.w,v.h);gl.viewport(v.x,Hh-v.y-v.h,v.w,v.h);
-    // the ground
+    if(cmp){fx.fillText('Oggi nel gioco',x0+10*DPR,(r.top-6)*DPR);fx.fillText('In 3D vero',x0+10*DPR,yy-6*DPR)}fx.shadowOffsetY=0}
+  const L=LOOK[look],out=ink?(low?1.6:2.6)*DPR*(four?.6:1):0,emK=(1.25+.55*Math.sin(tt*2.1))*Pm.emK,under=(m.id==='sbuca'&&pc<.95)||m.id==='muore'?-.002:undefined;
+  for(const v of views){const cam=camAt(v.yw,four?.5:pitch,v.d,v.x,v.y,v.w,v.h);gl.viewport(v.x,Hh-v.y-v.h,v.w,v.h);
     gl.useProgram(PG.p);gl.uniformMatrix4fv(PG.u.uVP,false,cam.VP);gl.uniform3fv(PG.u.uCam,cam.eye);gl.uniform3fv(PG.u.uFog,FOG);gl.uniform3fv(PG.u.uL,LIGHT);
-    gl.uniform2f(PG.u.uSh,hx+(-LIGHT[0])*.05,hz+(-LIGHT[2])*.05);gl.uniform1f(PG.u.uShK,Math.max(0,1-Math.max(0,y+hy-.9)*.8)*(1-sink));gl.uniform1f(PG.u.uShR,.42+Math.max(0,.9-hy)*.6);
-    gl.uniform2f(PG.u.uHo,0,0);gl.uniform1f(PG.u.uHole,m.id==='sbuca'?1-sm((c.t-c.clip.dur*.6)/1.5):m.id==='muore'?sink:0);gl.uniform1f(PG.u.uT,tt);
+    gl.uniform2f(PG.u.uSh,hx+(-LIGHT[0])*.05,hz+(-LIGHT[2])*.05);gl.uniform1f(PG.u.uShK,Math.max(0,1-Math.max(0,hy-.6)*1.2)*(1-sink));gl.uniform1f(PG.u.uShR,.36+Math.max(0,.55-hy)*.9);
+    gl.uniform2f(PG.u.uHo,0,.2);gl.uniform1f(PG.u.uHole,m.id==='sbuca'?1-ZB3.sm((pc-.85)/.15):m.id==='muore'?sink:0);
     gl.disable(gl.DEPTH_TEST);gl.enable(gl.BLEND);gl.blendFunc(gl.ONE,gl.ONE_MINUS_SRC_ALPHA);gl.bindVertexArray(vGround);gl.drawArrays(gl.TRIANGLE_STRIP,0,4);gl.bindVertexArray(null);gl.disable(gl.BLEND);
-    // the zombie
     gl.enable(gl.DEPTH_TEST);
-    MB3.draw(gl,R,M,P.J,cam,{M:Mx,L:LIGHT,Lc:L.Lc,amb:L.amb,rim:L.rim,toon:L.toon,out,emK,flash,fog:[4,10],fogC:FOG,ny:NY,noNrm:low,clipY:m.id==='sbuca'||m.id==='muore'?-.002:undefined});
-    if(!low&&!four)glow(cam,P,emK,v);
+    MB3.draw(gl,R,M,JM,cam,{M:Mx,L:LIGHT,Lc:L.Lc,amb:L.amb,rim:L.rim,toon:L.toon,out,emK,flash,fog:[4,10],fogC:FOG,clipY:under,bump:low?0:1});
+    if(!low&&!four)glow(cam,emK,v,under);
     if(four&&!cmp){fx.fillStyle='rgba(241,228,198,.8)';fx.font=`700 ${12*DPR}px "Baloo 2",system-ui`;fx.textAlign='center';fx.fillText(v.lab,v.x+v.w/2,v.y+v.h+14*DPR)}}
   // flying soil
   if(dirt.length){const cam=camAt(views[0].yw,four?.12:pitch,views[0].d,0,0,W,Hh);fx.fillStyle='#3a2a1c';for(const d of dirt){d.vy-=9.8*dt;d.x+=d.vx*dt;d.y+=d.vy*dt;d.z+=d.vz*dt;if(d.y<0){d.y=0;d.vx*=.4;d.vz*=.4;d.vy=0;d.l-=dt*1.5}
       const V=cam.VP,X=V[0]*d.x+V[4]*d.y+V[8]*d.z+V[12],Y=V[1]*d.x+V[5]*d.y+V[9]*d.z+V[13],Wc=V[3]*d.x+V[7]*d.y+V[11]*d.z+V[15];if(Wc<.1||four)continue;
       fx.globalAlpha=Math.max(0,Math.min(1,d.l));fx.beginPath();fx.arc((X/Wc*.5+.5)*W,(.5-Y/Wc*.5)*Hh,d.r*Hh/Wc*1.4,0,7);fx.fill()}fx.globalAlpha=1;dirt=dirt.filter(d=>d.l>0)}
-  const e=performance.now()-t0;ms=ms?ms*.92+e*.08:e;nf++;if(tt-tf>1){fps=nf/(tt-tf);nf=0;tf=tt;$('#ms').textContent=`${ms.toFixed(1)} ms · ${fps|0} al secondo`}}
+  const e=performance.now()-t0;ms=ms?ms*.92+e*.08:e;nf++;if(tt-tf>1){fps=nf/(tt-tf);nf=0;tf=tt;$('#ms').textContent=`${ms.toFixed(1)} ms · ${fps|0} al secondo · ${M.tri} triangoli`}}
 // the glow of the eyes: only the light of the eyes, small, blurred, added on top
-function glow(cam,P,emK,v){const w=Math.max(8,v.w>>2),h=Math.max(8,v.h>>2);if(!fbo.length||fbo[0].w!==w||fbo[0].h!==h)fbo=[target(w,h,1),target(w,h),target(w,h)];
+function glow(cam,emK,v,under){const w=Math.max(8,v.w>>2),h=Math.max(8,v.h>>2);if(!fbo.length||fbo[0].w!==w||fbo[0].h!==h)fbo=[target(w,h,1),target(w,h),target(w,h)];
   gl.bindFramebuffer(gl.FRAMEBUFFER,fbo[0].f);gl.viewport(0,0,w,h);gl.clearColor(0,0,0,1);gl.clear(gl.COLOR_BUFFER_BIT|gl.DEPTH_BUFFER_BIT);
-  MB3.draw(gl,R,M,P.J,{...cam,px:[2/w,2/h]},{M:Mx,L:LIGHT,Lc:[1,1,1],amb:[1,1,1],rim:[0,0,0],out:0,emK,emOnly:1,clipY:cur&&(cur.m.id==='sbuca'||cur.m.id==='muore')?-.002:undefined});gl.disable(gl.DEPTH_TEST);
+  MB3.draw(gl,R,M,JM,{...cam,px:[2/w,2/h]},{M:Mx,L:LIGHT,Lc:[1,1,1],amb:[1,1,1],rim:[0,0,0],out:0,emK,emOnly:1,clipY:under});gl.disable(gl.DEPTH_TEST);
   gl.useProgram(PB.p);gl.bindVertexArray(vQuad);gl.activeTexture(gl.TEXTURE0);gl.uniform1i(PB.u.uT,0);
   gl.bindFramebuffer(gl.FRAMEBUFFER,fbo[1].f);gl.bindTexture(gl.TEXTURE_2D,fbo[0].t);gl.uniform2f(PB.u.uD,1.6/w,0);gl.drawArrays(gl.TRIANGLE_STRIP,0,4);
   gl.bindFramebuffer(gl.FRAMEBUFFER,fbo[2].f);gl.bindTexture(gl.TEXTURE_2D,fbo[1].t);gl.uniform2f(PB.u.uD,0,1.6/h);gl.drawArrays(gl.TRIANGLE_STRIP,0,4);
-  gl.bindFramebuffer(gl.FRAMEBUFFER,null);gl.viewport(v.x,cv.height-v.y-v.h,v.w,v.h);gl.useProgram(PA.p);gl.bindTexture(gl.TEXTURE_2D,fbo[2].t);gl.uniform1i(PA.u.uT,0);gl.uniform1f(PA.u.uK,1.7);
+  gl.bindFramebuffer(gl.FRAMEBUFFER,null);gl.viewport(v.x,cv.height-v.y-v.h,v.w,v.h);gl.useProgram(PA.p);gl.bindTexture(gl.TEXTURE_2D,fbo[2].t);gl.uniform1i(PA.u.uT,0);gl.uniform1f(PA.u.uK,1.15);
   gl.enable(gl.BLEND);gl.blendFunc(gl.ONE,gl.ONE);gl.drawArrays(gl.TRIANGLE_STRIP,0,4);gl.disable(gl.BLEND);gl.bindVertexArray(null)}
-const NY=INFO.ny||1;
 // ---------- the buttons ----------
 function ui(){const bar=$('#mv');bar.innerHTML='';for(const m of MOVES){const b=document.createElement('button');b.textContent=m.n;b.className=!all&&cur&&cur.m.id===m.id?'on':'';b.onclick=()=>{play(m.id)};bar.appendChild(b)}
   const a=document.createElement('button');a.textContent='Tutte';a.className=all?'on':'';a.onclick=()=>{all=true;seqI=0;play(SEQ[0],true);ui()};bar.appendChild(a);
-  $('#src').textContent=cur?cur.m.src:'';
   const op=$('#op');op.innerHTML='';const tg=(txt,on,f)=>{const b=document.createElement('button');b.textContent=txt;b.className=on?'on':'';b.onclick=()=>{f();ui()};op.appendChild(b)};
-  tg('Quattro direzioni',four&&!cmp,()=>{four=!(four&&!cmp);cmp=false});tg('Prima e dopo',cmp,()=>{cmp=!cmp;four=cmp});tg(look==='gioco'?'Luce: come il gioco':'Luce: come Meshy',false,()=>look=look==='gioco'?'meshy':'gioco');
+  tg('Quattro direzioni',four&&!cmp,()=>{four=!(four&&!cmp);cmp=false});tg('Prima e dopo',cmp,()=>{cmp=!cmp;four=cmp});tg(look==='gioco'?'Luce: a tre toni':'Luce: morbida',false,()=>look=look==='gioco'?'morbida':'gioco');
   tg('Contorno',ink,()=>ink=!ink);tg('Effetti ridotti',low,()=>{low=!low;W0=0});tg('Gira da solo',auto,()=>auto=!auto);
-  $('#oggi').hidden=!cmp;$('#tit').textContent=cmp?'Prima e dopo':'Zombie di Meshy'}
+  $('#oggi').hidden=!cmp;$('#tit').textContent=cmp?'Prima e dopo':'Zombie in 3D'}
 // ---------- the finger ----------
 let drag=null,pinch=null;const pts=new Map();
 cv.parentNode.addEventListener('pointerdown',e=>{if(e.target.closest('.ui'))return;pts.set(e.pointerId,[e.clientX,e.clientY]);if(pts.size===1){drag={x:e.clientX,y:e.clientY,yw:yaw,pt:pitch};auto=false;ui()}
@@ -191,11 +145,13 @@ addEventListener('pointermove',e=>{if(!pts.has(e.pointerId))return;pts.set(e.poi
   else if(drag){yaw=drag.yw-(e.clientX-drag.x)*.011;pitch=Math.max(-.05,Math.min(1.05,drag.pt+(e.clientY-drag.y)*.006))}});
 const up=e=>{pts.delete(e.pointerId);if(pts.size<2)pinch=null;if(!pts.size)drag=null};addEventListener('pointerup',up);addEventListener('pointercancel',up);
 addEventListener('wheel',e=>{dist=Math.max(.45,Math.min(1.8,dist*(1+Math.sign(e.deltaY)*.08)))},{passive:true});
-$('#zm').onclick=()=>{dist=Math.max(.45,dist/1.2)};$('#zp').onclick=()=>{dist=Math.min(1.8,dist*1.2)};
+$('#zm').onclick=()=>{dist=Math.min(1.8,dist*1.2)};$('#zp').onclick=()=>{dist=Math.max(.45,dist/1.2)};
 addEventListener('keydown',e=>{const k=e.key;if(k==='ArrowLeft')yaw+=.2;if(k==='ArrowRight')yaw-=.2;if(k==='ArrowUp')pitch=Math.min(1.05,pitch+.08);if(k==='ArrowDown')pitch=Math.max(-.05,pitch-.08);
   const i=parseInt(k,10);if(i>=1&&i<=MOVES.length)play(MOVES[i-1].id)});
 // ---------- start ----------
 $('#oggi').src=OGGI;
-(async()=>{try{R=await MB3.gpu(gl,M);stage();play('sbuca');$('#load').hidden=true;window.__MZB={M,R,B,MOVES,play,get cur(){return cur},set view(v){yaw=v},get ms(){return ms}};requestAnimationFrame(frame)}
+(async()=>{try{R=await MB3.gpu(gl,M);stage();play('sbuca');$('#load').hidden=true;
+    window.__Z3D={M,R,MOVES,play,buildMs,get cur(){return cur},set view(v){yaw=v},get view(){return yaw},set pitch(v){pitch=v},set auto(v){auto=v},get ms(){return ms},
+      set four(v){four=v;ui()},set cmp(v){cmp=v;four=v;ui()},set low(v){low=v;W0=0;ui()},set dist(v){dist=v},set hold(v){HOLD=v}};requestAnimationFrame(frame)}
   catch(e){$('#msg').hidden=false;$('#msg').textContent='Errore: '+e.message;console.error(e)}})();
 })();
