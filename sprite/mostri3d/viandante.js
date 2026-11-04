@@ -199,7 +199,7 @@ function build(o){o=o||{};const HQ=o.h||1,m=Mesh(),cloth=Mesh(),BODY=body(),CLB=
     for(let t=0;t<I.length;t+=3){const a=I[t],b=I[t+1],c=I[t+2],ce=[(P[a*3]+P[b*3]+P[c*3])/3,(P[a*3+1]+P[b*3+1]+P[c*3+1])/3,(P[a*3+2]+P[b*3+2]+P[c*3+2])/3];
       if(covers.length&&isHidden(ce,normal(D,ce)))continue;T.push(a,b,c)}
     m.group(1);for(const i of T){if(map[i]>=0)continue;const p=[P[i*3],P[i*3+1],P[i*3+2]],n=normal(D,p),pa=skinPaint(p);
-      map[i]=m.v(p,n,pa.c,K(pa.kind,0,olAt(p)),skinW(p));m.K[map[i]*4+2]=occl(D,p,n)*.85}
+      const ol=olAt(p);map[i]=m.v(p,n,pa.c,K(pa.kind,0,ol),skinW(p));m.K[map[i]*4+2]=occl(D,p,n)*(ol<.5?.45:.85)}
     for(let t=0;t<T.length;t+=3)m.t(map[T[t]],map[T[t+1]],map[T[t+2]]);NETS.push([name,T.length/3,I.length/3,Date.now()-t0])};
   // where each grid works: the head and the neck fine, the hands and the feet finer, the rest of the body wider
   const inHead=p=>p[1]>36.4||p[1]>35.35&&Math.hypot(p[0],p[2]+.3)<2.75,inFace=p=>p[2]>.95&&Math.pow(p[0]/1.3,2)+Math.pow((p[1]-38.45)/1.62,2)<1,
@@ -277,7 +277,7 @@ function build(o){o=o||{};const HQ=o.h||1,m=Mesh(),cloth=Mesh(),BODY=body(),CLB=
       if(y>34.0&&Math.hypot(x*.95,z+.3)<1.68+.18*(nz-.5)+.25*sm((y-35.2)/.8))return false;if(y>36.6)return false;
       if(z>0&&y>28.6&&ax<.14+.36*(y-28.6)+.2*(nz-.5)+.08*saw(y*3.1))return false;// the V, deep and open
       if(ax>2.6&&Math.pow((ax-4.62)/1.6,2)+Math.pow((y-31.2)/3.25,2)<1+.18*(nz-.5))return false;// the armholes
-      if(y>28.2?ax>3.55+.4*sm((32.5-y)/3.5)-.18*sm((y-32.8)/1.6)+.1*(nz-.5):ax>4.3)return false;// and nothing on the arms (the strap narrow on the shoulder)
+      if(y>28.2?ax>3.55+.4*sm((32.5-y)/3.5)+.2*sm((y-33.0)/1.4)+.1*(nz-.5):ax>4.3)return false;// and nothing on the arms (the strap narrow on the shoulder)
       let hem=19.7-1.0*saw(a*1.9+.3*nz)-.6*nz;if(a>.12&&a<1.35)hem=Math.min(hem,17.5+1.7*Math.abs((a-.62)/.6)+.4*nz);if(y<hem)return false;
       if(slit(a)&&y<24.1+.4*(nz-.5)&&z>0)return false;
       for(const[hx,hy,hz,hr] of holeC){if(Math.hypot(x-hx,y-hy,z-hz)<hr*(1+.35*(nz-.5)))return false}return true};

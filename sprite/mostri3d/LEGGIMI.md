@@ -253,6 +253,54 @@ triangoli). Nella pagina «Zombie in 3D» è «Corpo vero» (`#vero`), con «Pri
 **Le foto veloci** (solo per lavorarci, fuori dal gioco): un piccolo disegnatore a triangoli in Node nella cartella di lavoro (`rapido.js`)
 fa un foglio in 3 secondi senza browser, perché qui il browser disegna il 3D senza scheda grafica e una foto della pagina vera costa 6 s.
 
+## Il Viandante (`viandante.js`, `VI3`), il personaggio dell'immagine di Denis — in prova
+
+Denis, 4 novembre, con l'immagine di un uomo stracciato in piedi a braccia un po' aperte: «bro posso chiederti di farmi questo modello in 3d
+invece? come hai fatto per l'artefatto modello di prova?». Il soldato del modello di prova era un modello scaricato (Mixamo) disegnato col
+nostro WebGL; il Viandante invece è **fatto tutto da noi nel codice**, con la formula del corpo vero (`scultura.js`, come lo zombie col corpo
+vero) e disegnato da `mb3.js`. L'immagine sta in `viandante_rif.webp` (piccola, per la pagina). Un uomo magro e asciutto, scalzo, coi capelli
+scuri spettinati, la barba di qualche giorno e gli occhi chiari; la tunica grigia senza maniche col collo a V, strappata e bucata; la corda
+attorcigliata due volte in vita col nodo grande e i due capi sfilacciati; il borsellino di cuoio; la gonna marrone a due strati stracciata; i
+pantaloni marroni al ginocchio col buco; le fasce di stoffa incrociate su avambracci e stinchi; la fascia rossa sul braccio sinistro; il
+cordino col cerchio di ferro.
+
+**Il corpo** è una forma sola (busto, collo, testa, braccia, mani con quattro dita a tre ossa e il pollice, gambe, piedi scalzi con le cinque
+dita), fatta di triangoli con **griglie diverse per parte**: larga sul corpo (.26), fine sulla testa (.095), più fine sul **viso** (.05:
+palpebre, naso, labbra), sulle mani e sui piedi; le griglie si sovrappongono un poco dove si incontrano (la stessa pelle, non si vede). La
+pelle che i vestiti e i capelli coprono sempre non si fa. `S.fast` (in `scultura.js`) tiene per ogni cubetto solo le forme che lo toccano:
+il modello si costruisce in metà tempo.
+
+**Il viso** come quello dell'immagine: magro e lungo, gli zigomi alti, le guance un po' scavate, la mascella e il mento netti, il naso lungo
+e dritto, le labbra sottili chiuse; **gli occhi di misura vera** (un globo di 2,4 cm) dentro **le palpebre**: un guscio intorno all'occhio con
+l'apertura a mandorla tagliata da `almond` (l'arco di sopra più alto, l'angolo di fuori un po' in su), la piega sopra la palpebra, l'iride
+grigio-azzurra col bordo scuro e l'ombra della palpebra sull'occhio; le sopracciglia folte e scure; la barba di qualche giorno è un'ombra
+morbida (più sul mento e sulla mascella, meno sopra il labbro, le basette). Nella pagina «Viso da vicino» lo fa vedere.
+
+**I capelli** sono un guscio sottile su tutta la testa (più spesso in cima) e sopra **le ciocche**: strisce piatte che seguono la testa
+allontanandosi dal vortice in cima, più lunghe sopra, pettinate indietro sui lati e giù sulla nuca, e **il ciuffo** di nove ciocche che cade
+sulla fronte (oltre l'attaccatura le ciocche si posano sulla pelle), più qualche capello che sta su. Materiale proprio in `mb3.js` (4.3:
+lucido debole, venature lungo le ciocche).
+
+**I vestiti** sono la forma gonfiata e tagliata come quelli dello zombie col corpo vero: la tunica (la V profonda e aperta, gli spallacci
+stretti, gli scalfi grandi, raccolta dalla corda, l'orlo a strappi con la falda lunga e l'apertura davanti da cui si vede la gonna, i buchi),
+le due gonne a punte, i pantaloni (il buco sul ginocchio destro, il sinistro consumato), le fasce (uno strato stretto e due strisce a elica
+che si incrociano); la corda a tre capi attorcigliati (due giri, il nodo grande con due anse, i due capi col nodino e la nappa), il
+borsellino (sacca morbida, patta con le cuciture, l'alamaro, le cinghie intorno alla corda), il cordino col cerchio di ferro, la fascia rossa
+col nodo e le due code. Il contorno è più sottile sulle cose piccole (dita, dita dei piedi, viso), così non diventano inchiostro.
+
+**Le mosse** (nove, solo da `p`, IK per braccia e gambe, i piedi a terra che non scivolano mai): **Posa del disegno** (come l'immagine, respira),
+**Fermo** (il peso su una gamba, il respiro, ogni tanto gira la testa verso di te), **Cammina** (il tallone prima e la punta per ultima, il
+peso da un piede all'altro, le anche e le spalle che girano al contrario, le braccia che dondolano), **Corre**, **Si guarda intorno**,
+**Saluta**, **Pugno** (guardia, passo avanti, il destro dritto col giro delle anche), **Colpito** (la testa all'indietro, un passo indietro),
+**Muore** (la mano al petto, le ginocchia che cedono, a faccia in giù).
+
+**Numeri.** Circa 145.000 triangoli (la pelle 66.000, di cui il viso 13.500 e il resto della testa 17.000; capelli, vestiti e cose addosso il
+resto), 27 ossa, si costruisce in 4–5,5 s sul computer di prova; una posa 80 µs (`VI3.build({h})` con la griglia più larga per i telefoni lenti). Pagina: `python3 anteprime/mk_viandante3d.py` →
+`anteprime/viandante3d.html` (la stessa pagina di «Zombie in 3D», `anteprime/zombie3d.js`, in studio con la luce morbida): le mosse, «Viso da
+vicino», «Quattro direzioni», «Con l'immagine» (l'immagine di Denis accanto al 3D, nella posa del disegno), scena studio o notte, luce a tre
+toni o morbida, contorno, effetti ridotti. Prova: `node tests/zombie3d.js anteprime/viandante3d.html` (foto `tests/viandante3d_mosse.jpg`,
+`_quattro.png`, `_prima_dopo.png`, `_viso.png`, `_viso_lato.png`).
+
 ## I file
 
 - `mb3.js` (`MB3`): legge un glTF binario (`.glb`) con lo scheletro e le mosse, e disegna sia quelli sia i modelli costruiti da noi, col
@@ -261,7 +309,7 @@ fa un foglio in 3 secondi senza browser, perché qui il browser disegna il 3D se
   `aK` = [cosa è (1 pelle, 2 maglia, 3 pantaloni, 4 cuoio, 5 osso e denti, 6 buio dentro, 9 luce), sangue, ombra cotta, contorno].
 - `kit3d.js` (`K3D`): la cassetta della formula (conti, forme, scheletro, ombre cotte, il modello per `MB3`, testa e braccio da zombie).
 - `zombie.js`: lo zombie base (sopra). `strisciante.js`: lo strisciante (sopra). `minatore.js`: il minatore (sopra).
-- `scultura.js` (`SCU`): scolpire nel codice con le distanze (forme morbide saldate e scavate, la superficie, normali, ombre morbide, punto sulla pelle, pesi, rumore). `zombie_vero.js` (`ZV3`): lo zombie base col corpo vero (sopra, in prova).
+- `scultura.js` (`SCU`): scolpire nel codice con le distanze (forme morbide saldate e scavate, la superficie, normali, ombre morbide, punto sulla pelle, pesi, rumore). `zombie_vero.js` (`ZV3`): lo zombie base col corpo vero (sopra, in prova). `viandante.js` (`VI3`): il Viandante (sopra, in prova).
 - `oggi.js`: un nostro mostro di oggi da quattro lati (davanti, tre quarti, lato, dietro), per «Prima e dopo»: `node sprite/mostri3d/oggi.js
   <uscita.webp>` (lo zombie, `zombie_oggi.webp`) o `node sprite/mostri3d/oggi.js strisciante strisciante_oggi.webp` (e `minatore`), dopo
   `python3 tests/mk.py`.

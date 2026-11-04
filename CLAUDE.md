@@ -554,6 +554,15 @@ ossa; i vestiti sono la forma gonfiata e tagliata) e con **mosse naturali** (il 
 scivolano mai, il peso che passa da un piede all'altro, le spalle contro le anche, la morte sulle ginocchia e poi a faccia in giù). Note in
 `sprite/mostri3d/LEGGIMI.md` («Lo zombie col corpo vero»); prova `node tests/zombie3d.js vero`. Se a Denis piace, è il nuovo modo della
 formula per i corpi e si rifanno lo strisciante e il minatore.
+Poi (4 novembre) Denis, con l'immagine di un uomo stracciato a piedi nudi: «bro posso chiederti di farmi questo modello in 3d invece? come hai
+fatto per l'artefatto modello di prova?». **Il Viandante**, fatto tutto nel codice con la formula del corpo vero (il soldato di prova era un
+modello scaricato; questo è nostro): `sprite/mostri3d/viandante.js` (`VI3`: circa 145.000 triangoli, 27 ossa; il viso con una griglia più
+fine, gli occhi di misura vera dentro le palpebre con l'apertura a mandorla, la barba di qualche giorno, i capelli come guscio più ciocche
+piatte col ciuffo sulla fronte; la tunica a V strappata, due gonne, i pantaloni col buco, le fasce incrociate, la corda col nodo e le nappe,
+il borsellino, il cordino col cerchio di ferro, la fascia rossa; nove mosse naturali: posa del disegno, fermo, cammina, corre, si guarda
+intorno, saluta, pugno, colpito, muore), la sua immagine in `sprite/mostri3d/viandante_rif.webp`. Pagina `python3 anteprime/mk_viandante3d.py`
+(la pagina di «Zombie in 3D» resa generale: studio, luce morbida, «Con l'immagine» accanto, «Viso da vicino»); prova `node tests/zombie3d.js
+anteprime/viandante3d.html`; note in `sprite/mostri3d/LEGGIMI.md` («Il Viandante»). Non è nel gioco: Denis deve dire a cosa serve.
 
 ## FASE 9: più fluido sul telefono (19 ottobre, in corso)
 
