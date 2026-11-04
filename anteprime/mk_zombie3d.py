@@ -1,14 +1,15 @@
-# Costruisce anteprime/zombie3d.html: il nostro zombie base in 3D vero (sprite/mostri3d/zombie.js), disegnato col nostro WebGL
-# (sprite/mostri3d/mb3.js) nella pagina di anteprime/zombie3d.js: le mosse, il dito che gira, «Quattro direzioni», «Prima e dopo»
-# (sopra il nostro zombie di oggi, sprite/mostri3d/zombie_oggi.webp, fatto da sprite/mostri3d/oggi.js). Tutto dentro un file solo.
+# Costruisce anteprime/zombie3d.html: i nostri zombie in 3D vero, lo zombie base (sprite/mostri3d/zombie.js) e lo strisciante
+# (sprite/mostri3d/strisciante.js), fatti con la cassetta sprite/mostri3d/kit3d.js e disegnati col nostro WebGL (sprite/mostri3d/mb3.js) nella
+# pagina di anteprime/zombie3d.js: la scelta del mostro, le mosse, il dito che gira, «Quattro direzioni», «Prima e dopo» (sopra il nostro
+# mostro di oggi, sprite/mostri3d/zombie_oggi.webp e strisciante_oggi.webp, fatti da sprite/mostri3d/oggi.js). Tutto dentro un file solo.
 # Uso: python3 anteprime/mk_zombie3d.py [uscita.html]. La pagina costruita non si salva su git.
 import base64,json,os,sys
 here=os.path.dirname(os.path.abspath(__file__));root=os.path.join(here,'..')
 out=sys.argv[1] if len(sys.argv)>1 else os.path.join(here,'zombie3d.html')
 rd=lambda *p:open(os.path.join(root,*p),encoding='utf-8').read()
-oggi_p=os.path.join(root,'sprite','mostri3d','zombie_oggi.webp')
-oggi='data:image/webp;base64,'+base64.b64encode(open(oggi_p,'rb').read()).decode() if os.path.exists(oggi_p) else ''
-page=rd('anteprime','zombie3d.js').replace("'__OGGI__'","'"+oggi+"'")
+def img(n):
+  p=os.path.join(root,'sprite','mostri3d',n);return 'data:image/webp;base64,'+base64.b64encode(open(p,'rb').read()).decode() if os.path.exists(p) else ''
+page=rd('anteprime','zombie3d.js').replace("'__OGGI__'","'"+img('zombie_oggi.webp')+"'").replace("'__OGGI_S__'","'"+img('strisciante_oggi.webp')+"'")
 html='''<!doctype html><html lang="it"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no">
 <title>Zombie in 3D</title>
 <link rel="preconnect" href="https://fonts.googleapis.com"><link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@600;700&family=Lilita+One&display=swap" rel="stylesheet">
@@ -21,7 +22,7 @@ html,body{margin:0;height:100%;background:var(--bg);color:var(--tx);font-family:
 .top{top:0;padding:calc(10px + env(safe-area-inset-top,0px)) 14px 8px;display:flex;align-items:flex-start;justify-content:space-between;gap:8px;background:linear-gradient(rgba(8,10,12,.92),rgba(8,10,12,0));pointer-events:none}
 .top>*{pointer-events:auto}h1{margin:0;font:400 21px/1.1 "Lilita One",system-ui;letter-spacing:.02em;text-shadow:0 2px 0 var(--ink)}
 .sub{font-size:12.5px;opacity:.75;margin-top:2px;max-width:62vw;line-height:1.25}#ms{font-size:12.5px;opacity:.8;white-space:nowrap;margin-top:3px}
-.zz{display:flex;gap:6px;margin-top:6px}
+.zz{display:flex;gap:6px;margin-top:6px}.mz{display:flex;gap:6px;margin-top:7px}.mz button{font-size:13px;padding:3px 10px;border-radius:10px}
 .bot{bottom:0;padding:8px 8px calc(10px + env(safe-area-inset-bottom,0px));background:linear-gradient(rgba(8,10,12,0),rgba(8,10,12,.94) 34%)}
 .row{display:flex;flex-wrap:wrap;gap:6px;justify-content:center}.row+.row{margin-top:7px}
 #src{text-align:center;font-size:13px;opacity:.82;margin:0 6px 7px;min-height:17px;line-height:1.25}
@@ -33,13 +34,15 @@ button.on{background:var(--on);color:var(--on2)}button:active{transform:translat
 #load,#msg{position:fixed;inset:0;display:flex;align-items:center;justify-content:center;text-align:center;padding:24px;font:400 20px "Lilita One",system-ui;z-index:5;background:var(--bg)}
 </style></head><body>
 <div id="st"><canvas id="bk"></canvas><canvas id="cv"></canvas><canvas id="fr"></canvas></div>
-<img id="oggi" hidden alt="Il nostro zombie di oggi da quattro lati">
-<div class="ui top"><div><h1 id="tit">Zombie in 3D</h1><div class="sub">Il nostro zombie base in 3D vero · trascina per girare</div><div id="ms"></div></div>
+<img id="oggi" hidden alt="Il nostro mostro di oggi da quattro lati">
+<div class="ui top"><div><h1 id="tit">Zombie in 3D</h1><div class="sub">Il nostro zombie base in 3D vero · trascina per girare</div><div class="mz" id="mz"></div><div id="ms"></div></div>
 <div class="zz"><button id="zm" aria-label="Più lontano">−</button><button id="zp" aria-label="Più vicino">+</button></div></div>
 <div class="ui bot"><div id="src"></div><div class="row" id="mv"></div><div class="row" id="op"></div></div>
 <div id="load">Lo zombie si sta svegliando…</div><div id="msg" hidden></div>
 <script>'''+rd('sprite','mostri3d','mb3.js')+'''</script>
+<script>'''+rd('sprite','mostri3d','kit3d.js')+'''</script>
 <script>'''+rd('sprite','mostri3d','zombie.js')+'''</script>
+<script>'''+rd('sprite','mostri3d','strisciante.js')+'''</script>
 <script>'''+page+'''</script>
 </body></html>'''
 open(out,'w',encoding='utf-8').write(html);print(out,len(html)//1024,'KB')
