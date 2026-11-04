@@ -516,7 +516,8 @@ misure, pezzi e colori del disegno 2D; braccia e gambe a due ossa con la IK; le 
 posa di riposo, occhi che brillano e pulsano, `clipY` per sbucare da terra; legge anche i `.glb`). Nove mosse nostre, ognuna solo da `p`:
 Fermo (la testa che scatta verso di te), Cammina (zoppica come quello di oggi), Corre, Sbuca da terra, Urla, Colpo, Morso, Colpito, Muore.
 Una posa costa 16–32 µs (lo zombie 2D di oggi 0,19–0,32 ms a disegno). Pagina `python3 anteprime/mk_zombie3d.py` (mosse, «Tutte», dito che
-gira, «Quattro direzioni», «Prima e dopo» col nostro zombie di oggi sopra, `sprite/mostri3d/zombie_oggi.webp`), prova `node tests/zombie3d.js`
+gira, «Quattro direzioni», «Prima e dopo» col nostro zombie di oggi sopra, `sprite/mostri3d/zombie_oggi.webp`), pubblicata su
+https://claude.ai/artifact/Weae1UsGGoEti6wccnqTRB («Zombie in 3D»; si aggiorna ripubblicando `anteprime/zombie3d.html`), prova `node tests/zombie3d.js`
 (14 controlli). Note in `sprite/mostri3d/LEGGIMI.md`. Niente entra nel gioco senza il sì di Denis.
 
 ## FASE 9: più fluido sul telefono (19 ottobre, in corso)

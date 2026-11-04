@@ -49,7 +49,8 @@ sulla tela: il disegno 3D lo fa la scheda grafica).
 - `zombie.js`: lo zombie base (sopra).
 - `oggi.js` → `zombie_oggi.webp`: il nostro zombie di oggi da quattro lati (davanti, tre quarti, lato, dietro), per «Prima e dopo».
 - `prepara.js`: da un personaggio `.glb` con lo scheletro e dalle sue mosse in altri `.glb` fa un `.glb` solo e leggero (serviva per Meshy).
-- Pagina: `python3 anteprime/mk_zombie3d.py` → `anteprime/zombie3d.html` (codice in `anteprime/zombie3d.js`): le mosse, «Tutte», il dito che
+- Pagina: `python3 anteprime/mk_zombie3d.py` → `anteprime/zombie3d.html` (codice in `anteprime/zombie3d.js`), pubblicata su
+  https://claude.ai/artifact/Weae1UsGGoEti6wccnqTRB («Zombie in 3D», si aggiorna ripubblicando lo stesso file): le mosse, «Tutte», il dito che
   gira, due dita o − e + per avvicinare, «Quattro direzioni», «Prima e dopo», luce a tre toni o morbida, contorno, effetti ridotti.
   Prova: `node tests/zombie3d.js` (14 controlli; foto `tests/zombie3d_mosse.jpg`, `tests/zombie3d_prima_dopo.png`,
   `tests/zombie3d_prima_dopo_grande.png`, `tests/zombie3d_quattro.png`).
