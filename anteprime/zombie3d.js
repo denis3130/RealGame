@@ -17,11 +17,12 @@ const FOG=[.075,.09,.1],LIGHT=(()=>{const v=[-.55,.72,.42],l=Math.hypot(...v);re
 const LOOK={gioco:{toon:1,Lc:[1.1,1.06,1.12],amb:[.36,.38,.52],rim:[.34,.48,.72]},morbida:{toon:0,Lc:[1.12,1.1,1.1],amb:[.42,.42,.5],rim:[.2,.26,.36]}};
 let look='gioco',low=false,ink=true,auto=true,four=false,cmp=false,yaw=.35,pitch=.34,dist=1,ms=0,fps=0,nf=0,tf=0,T0=performance.now()/1000;
 // ---------- the monsters: the same night and the same size (units of the 2D drawings), each its own framing ----------
-// ch: height the camera looks at, cz: how far forward (its middle), dd: how far, pitch: from how high; fd, fk, fp: distance, height of the tile and pitch of «Quattro direzioni»;
+// ch: height the camera looks at, cz: how far forward (its middle), dd: how far, pitch: from how high; fd, fk, fp: distance, height of the tile and pitch of «Quattro direzioni»
+// (fdc, fkc: the same in «Prima e dopo», when they differ);
 // hole: where it comes out of the ground (and how big, hoR); sh: the bones of the soft shadow (two: a long shadow between them); lamp: a lamp
 // that lights the ground ahead (lib.lamp); sparks: the move and the moment the pick bites the ground (lib.tip: where)
 const MODELS={zombie:{lib:ZB3,nome:'Zombie',sub:'Il nostro zombie base in 3D vero',ch:.86,dd:4.8,pitch:.34,fd:.8,fk:2,fp:.5,hole:[0,.2],hoR:1,sh:['bacino']},
-  vero:{lib:ZV3,nome:'Corpo vero',sub:'Lo zombie base col corpo vero e le mosse naturali',ch:.86,dd:4.8,pitch:.34,fd:.8,fk:2,fp:.5,hole:[0,.2],hoR:1,sh:['bacino']},
+  vero:{lib:ZV3,nome:'Corpo vero',sub:'Lo zombie base col corpo vero e le mosse naturali',ch:.86,dd:4.8,pitch:.3,fd:.64,fk:2,fp:.2,fdc:.74,fkc:1.7,hole:[0,.2],hoR:1,sh:['bacino']},
   strisciante:{lib:ZS3,nome:'Strisciante',sub:'Lo zombie strisciante in 3D vero',ch:.3,cz:-.08,dd:5.4,pitch:.5,fd:.66,fk:1.15,fp:.62,hole:[0,-.16],hoR:1.3,sh:['petto','vita']},
   minatore:{lib:ZMI3,nome:'Minatore',sub:'Lo zombie minatore in 3D vero',ch:.84,cz:.06,dd:5,pitch:.34,fd:.8,fk:2,fp:.28,hole:[0,.2],hoR:1.05,sh:['bacino'],lamp:1,sparks:{id:'colpo',p:.5}}};
 const H=43,SC=1.7/H,MM=MB3.m4();MM[0]=MM[5]=MM[10]=SC;
@@ -123,9 +124,9 @@ function frame(){requestAnimationFrame(frame);if(!R||!cur)return;resize();const 
   let views=[{yw:yaw,x:0,y:0,w:W,h:Hh,d:dist}];
   // the photo of today starts under the top bar (its height changes with the buttons of the monsters and the width of the screen)
   if(cmp){const t=Math.round($('.top').getBoundingClientRect().bottom+22)+'px';if($('#oggi').style.top!==t)$('#oggi').style.top=t}
-  if(four){const r=$('#oggi').getBoundingClientRect(),SW=Math.min(W,640*DPR),x0=cmp&&r.width?Math.round(r.left*DPR):Math.round((W-SW)/2),ww=(cmp&&r.width?r.width*DPR:SW)/4,hh=Math.round(ww*MD.fk),
+  if(four){const r=$('#oggi').getBoundingClientRect(),SW=Math.min(W,640*DPR),x0=cmp&&r.width?Math.round(r.left*DPR):Math.round((W-SW)/2),ww=(cmp&&r.width?r.width*DPR:SW)/4,hh=Math.round(ww*(cmp&&MD.fkc||MD.fk)),
       yy=cmp?Math.round((r.bottom+26)*DPR):Math.round(Math.max(96*DPR,(Hh*.74-hh)/2));
-    views=[0,-.62,-Math.PI/2,Math.PI].map((a,i)=>({yw:a,x:Math.round(x0+i*ww),y:yy,w:Math.round(ww),h:hh,d:MD.fd,lab:['davanti','tre quarti','lato','dietro'][i]}));
+    views=[0,-.62,-Math.PI/2,Math.PI].map((a,i)=>({yw:a,x:Math.round(x0+i*ww),y:yy,w:Math.round(ww),h:hh,d:cmp&&MD.fdc||MD.fd,lab:['davanti','tre quarti','lato','dietro'][i]}));
     fx.fillStyle='#f1e4c6';fx.font=`400 ${15*DPR}px "Lilita One",system-ui`;fx.textAlign='left';fx.shadowColor='#1b1612';fx.shadowOffsetY=2*DPR;
     if(cmp){fx.fillText('Oggi nel gioco',x0+10*DPR,(r.top-6)*DPR);fx.fillText('In 3D vero',x0+10*DPR,yy-6*DPR)}fx.shadowOffsetY=0}
   const L=LOOK[look],out=ink?(low?1.6:2.6)*DPR*(four?.6:1):0,emK=(1.25+.55*Math.sin(tt*2.1))*Pm.emK,under=(m.id==='sbuca'&&pc<.95)||m.id==='muore'?-.002:undefined;
