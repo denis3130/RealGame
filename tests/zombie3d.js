@@ -9,7 +9,7 @@ let ok=0,ko=0;const ck=(c,m)=>{if(c){ok++;console.log('  sì  '+m)}else{ko++;con
 // how each one is photographed: the bones it must have, the camera of the sheet of the moves, the size of a photo
 const CFG={zombie:{file:'zombie3d',bones:25,cam:{view:.75,pitch:.32,dist:1.05},clip:{x:45,y:40,width:300,height:470},W:150,H:235},
   strisciante:{file:'strisciante3d',bones:27,cam:{view:.75,pitch:.45,dist:.92},clip:{x:0,y:120,width:390,height:380},W:180,H:175},
-  minatore:{file:'minatore3d',bones:25,cam:{view:.75,pitch:.32,dist:1.08},clip:{x:45,y:30,width:300,height:480},W:150,H:240}};
+  minatore:{file:'minatore3d',bones:25,cam:{view:.75,pitch:.3,dist:1.12},clip:{x:0,y:30,width:390,height:480},W:180,H:222}};
 (async()=>{const b=await chromium.launch({args:['--use-gl=angle','--use-angle=swiftshader','--enable-unsafe-swiftshader']});
   const p=await b.newPage({viewport:{width:390,height:763},deviceScaleFactor:1});const errs=[];p.on('pageerror',e=>errs.push('PE '+e.message));p.on('console',m=>{if(m.type()==='error')errs.push('CE '+m.text().slice(0,200))});
   await p.goto('file://'+page);await p.waitForFunction(()=>window.__Z3D&&__Z3D.ready,null,{timeout:90000}).catch(()=>{});

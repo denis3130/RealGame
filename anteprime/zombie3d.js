@@ -21,7 +21,7 @@ let look='gioco',low=false,ink=true,auto=true,four=false,cmp=false,yaw=.35,pitch
 // that lights the ground ahead (lib.lamp); sparks: the move and the moment the pick bites the ground (lib.tip: where)
 const MODELS={zombie:{lib:ZB3,nome:'Zombie',sub:'Il nostro zombie base in 3D vero',ch:.86,dd:4.8,pitch:.34,fd:.8,fk:2,fp:.5,hole:[0,.2],hoR:1,sh:['bacino']},
   strisciante:{lib:ZS3,nome:'Strisciante',sub:'Lo zombie strisciante in 3D vero',ch:.3,cz:-.08,dd:5.4,pitch:.5,fd:.66,fk:1.15,fp:.62,hole:[0,-.16],hoR:1.3,sh:['petto','vita']},
-  minatore:{lib:ZMI3,nome:'Minatore',sub:'Lo zombie minatore in 3D vero',ch:.84,cz:.06,dd:5,pitch:.34,fd:.84,fk:2,fp:.5,hole:[0,.2],hoR:1.05,sh:['bacino'],lamp:1,sparks:{id:'colpo',p:.5}}};
+  minatore:{lib:ZMI3,nome:'Minatore',sub:'Lo zombie minatore in 3D vero',ch:.84,cz:.06,dd:5,pitch:.34,fd:.8,fk:2,fp:.28,hole:[0,.2],hoR:1.05,sh:['bacino'],lamp:1,sparks:{id:'colpo',p:.5}}};
 const H=43,SC=1.7/H,MM=MB3.m4();MM[0]=MM[5]=MM[10]=SC;
 let MID=MODELS[location.hash.slice(1)]?location.hash.slice(1):'zombie',MD=MODELS[MID],M=null,R=null,buildMs=0,MOVES=[],JM=null;
 function setModel(id){MID=MODELS[id]?id:'zombie';MD=MODELS[MID];if(!MD.M){const t=performance.now();MD.M=MD.lib.build();MD.ms=performance.now()-t}
