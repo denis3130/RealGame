@@ -55,6 +55,14 @@ sulla tela: il disegno 3D lo fa la scheda grafica).
   Prova: `node tests/zombie3d.js` (14 controlli; foto `tests/zombie3d_mosse.jpg`, `tests/zombie3d_prima_dopo.png`,
   `tests/zombie3d_prima_dopo_grande.png`, `tests/zombie3d_quattro.png`).
 
+## Il soldato di prova (non nostro)
+
+Il modello della foto del 3 novembre che a Denis era piaciuto («Vanguard», un soldato di Mixamo, dagli esempi di three.js, con le sue mosse
+Idle, Walk e Run) disegnato col nostro WebGL, più il nostro «Morso» e la testa che scatta verso di te: pagina `anteprime/modello_prova.js`,
+costruita da `python3 anteprime/mk_modello_prova.py <prova.glb>` (come preparare il `.glb` è scritto in cima a quel file; il modello non sta
+su git e non va nel gioco), pubblicata su https://claude.ai/artifact/PHJdybyvCT5r1SMghLq8Tm («Modello di prova», Denis: «fammi vedere lo
+stesso modello dell'immagine in un'anteprima»).
+
 ## Meshy (non si usa)
 
 Il 3 novembre si era provato a rifare lo zombie con Meshy: la prova si è fermata prima di generare qualcosa (Denis: «fa niente non usare

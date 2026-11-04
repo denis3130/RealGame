@@ -518,7 +518,9 @@ Fermo (la testa che scatta verso di te), Cammina (zoppica come quello di oggi), 
 Una posa costa 16–32 µs (lo zombie 2D di oggi 0,19–0,32 ms a disegno). Pagina `python3 anteprime/mk_zombie3d.py` (mosse, «Tutte», dito che
 gira, «Quattro direzioni», «Prima e dopo» col nostro zombie di oggi sopra, `sprite/mostri3d/zombie_oggi.webp`), pubblicata su
 https://claude.ai/artifact/Weae1UsGGoEti6wccnqTRB («Zombie in 3D»; si aggiorna ripubblicando `anteprime/zombie3d.html`), prova `node tests/zombie3d.js`
-(14 controlli). Note in `sprite/mostri3d/LEGGIMI.md`. Niente entra nel gioco senza il sì di Denis.
+(14 controlli). Il soldato di prova della foto (Mixamo, non nostro, non va nel gioco) in una pagina sua, su richiesta di Denis («fammi
+vedere lo stesso modello dell'immagine in un'anteprima»): `python3 anteprime/mk_modello_prova.py <prova.glb>`, pubblicata su
+https://claude.ai/artifact/PHJdybyvCT5r1SMghLq8Tm. Note in `sprite/mostri3d/LEGGIMI.md`. Niente entra nel gioco senza il sì di Denis.
 
 ## FASE 9: più fluido sul telefono (19 ottobre, in corso)
 
