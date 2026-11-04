@@ -294,11 +294,12 @@ peso da un piede all'altro, le anche e le spalle che girano al contrario, le bra
 **Saluta**, **Pugno** (guardia, passo avanti, il destro dritto col giro delle anche), **Colpito** (la testa all'indietro, un passo indietro),
 **Muore** (la mano al petto, le ginocchia che cedono, a faccia in giù).
 
-**Numeri.** Circa 145.000 triangoli (la pelle 66.000, di cui il viso 13.500 e il resto della testa 17.000; capelli, vestiti e cose addosso il
+**Numeri.** Circa 148.000 triangoli (la pelle 66.000, di cui il viso 13.500 e il resto della testa 17.000; capelli, vestiti e cose addosso il
 resto), 27 ossa, si costruisce in 4–5,5 s sul computer di prova; una posa 80 µs (`VI3.build({h})` con la griglia più larga per i telefoni lenti). Pagina: `python3 anteprime/mk_viandante3d.py` →
 `anteprime/viandante3d.html` (la stessa pagina di «Zombie in 3D», `anteprime/zombie3d.js`, in studio con la luce morbida): le mosse, «Viso da
 vicino», «Quattro direzioni», «Con l'immagine» (l'immagine di Denis accanto al 3D, nella posa del disegno), scena studio o notte, luce a tre
-toni o morbida, contorno, effetti ridotti. Prova: `node tests/zombie3d.js anteprime/viandante3d.html` (foto `tests/viandante3d_mosse.jpg`,
+toni o morbida, contorno, effetti ridotti. Prova: `node tests/zombie3d.js anteprime/viandante3d.html [--senza-foglio]` (17 controlli; senza il foglio delle mosse, che qui nel browser
+senza scheda grafica costa venti minuti, in cinque; foto `tests/viandante3d_mosse.jpg`,
 `_quattro.png`, `_prima_dopo.png`, `_viso.png`, `_viso_lato.png`).
 
 ## I file

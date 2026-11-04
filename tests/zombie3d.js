@@ -6,7 +6,9 @@
 // (il nostro mostro di oggi sopra, quello in 3D sotto; <nome>_prima_dopo_grande.png lo stesso su uno schermo grande), tests/<nome>_quattro.png.
 const {chromium}=require('playwright');const path=require('path');const D=__dirname+'/';
 const page=process.argv[2]&&process.argv[2].endsWith('.html')?path.resolve(process.argv[2]):path.join(D,'..','anteprime','zombie3d.html'),ONLY=process.argv.find(a=>/^(zombie|vero|strisciante|minatore|viandante)$/.test(a));
-let ok=0,ko=0;const ck=(c,m)=>{if(c){ok++;console.log('  sì  '+m)}else{ko++;console.log('  NO  '+m)}};
+// --senza-foglio: senza il foglio delle mosse (54 foto: col Viandante, 145.000 triangoli, il browser di prova senza scheda grafica ci mette
+// venti minuti); le mosse si provano lo stesso
+const NOSHEET=process.argv.includes('--senza-foglio');let ok=0,ko=0;const ck=(c,m)=>{if(c){ok++;console.log('  sì  '+m)}else{ko++;console.log('  NO  '+m)}};
 // how each one is photographed: the bones it must have, the camera of the sheet of the moves, the size of a photo
 const CFG={zombie:{file:'zombie3d',bones:25,cam:{view:.75,pitch:.32,dist:1.05},clip:{x:45,y:40,width:300,height:470},W:150,H:235},
   vero:{file:'vero3d',bones:25,cam:{view:.75,pitch:.32,dist:1.05},clip:{x:45,y:40,width:300,height:470},W:150,H:235},
@@ -36,27 +38,27 @@ const CFG={zombie:{file:'zombie3d',bones:25,cam:{view:.75,pitch:.32,dist:1.05},c
     await E(`[...document.querySelectorAll('#mv button')].find(b=>b.textContent==='Tutte').click()`);const seen=new Set();for(let i=0;i<22;i++){seen.add(await E(`__Z3D.cur.m.id`));await p.waitForTimeout(800)}
     ck(seen.size>=3,'«Tutte» le fa in fila: '+[...seen].join(', '));
     // the moves in six moments each, seen from three quarters (frozen moments)
-    const shots=[];await E(`__Z3D.auto=false;__Z3D.view=${C.cam.view};__Z3D.pitch=${C.cam.pitch};__Z3D.dist=${C.cam.dist};document.querySelectorAll('.ui').forEach(e=>e.style.visibility='hidden')`);
-    for(const id of s.mosse||[])for(const k of[.05,.22,.4,.58,.76,.94]){await E(`__Z3D.hold={id:'${id}',p:${k}}`);await p.waitForTimeout(350);shots.push({id,k,png:await p.screenshot({clip:C.clip})})}
+    const shots=[];if(!NOSHEET){await E(`__Z3D.auto=false;__Z3D.view=${C.cam.view};__Z3D.pitch=${C.cam.pitch};__Z3D.dist=${C.cam.dist};document.querySelectorAll('.ui').forEach(e=>e.style.visibility='hidden')`);
+    for(const id of s.mosse||[])for(const k of[.05,.22,.4,.58,.76,.94]){await E(`__Z3D.hold={id:'${id}',p:${k}}`);await p.waitForTimeout(350);shots.push({id,k,png:await p.screenshot({clip:C.clip,timeout:180000})})}}
     await E(`__Z3D.hold=null;document.querySelectorAll('.ui').forEach(e=>e.style.visibility='');__Z3D.dist=1;__Z3D.play('fermo')`);
     // four sides, before and after
-    await E(`__Z3D.four=true`);await p.waitForTimeout(1500);require('fs').writeFileSync(D+C.file+'_quattro.png',await p.screenshot());
+    await E(`__Z3D.four=true`);await p.waitForTimeout(1500);require('fs').writeFileSync(D+C.file+'_quattro.png',await p.screenshot({timeout:180000}));
     await E(`__Z3D.cmp=true`);await p.waitForTimeout(1500);
     ck(await E(`!document.getElementById('oggi').hidden&&document.getElementById('oggi').naturalWidth>0`),md==='viandante'?'«Con l\'immagine»: la tua immagine accanto al 3D':'«Prima e dopo»: sopra il nostro mostro di oggi da quattro lati');
     ck(await E(`document.getElementById('oggi').getBoundingClientRect().top>=document.querySelector('.top').getBoundingClientRect().bottom`),'«Prima e dopo»: la foto di oggi sta sotto la barra in alto');
-    await p.screenshot({path:D+C.file+'_prima_dopo.png'});
+    await p.screenshot({path:D+C.file+'_prima_dopo.png',timeout:180000});
     // the same, big, to look at closely: a computer screen
-    await p.setViewportSize({width:1200,height:900});await p.waitForTimeout(1800);await p.screenshot({path:D+C.file+'_prima_dopo_grande.png'});await p.setViewportSize({width:390,height:763});
+    await p.setViewportSize({width:1200,height:900});await p.waitForTimeout(1800);await p.screenshot({path:D+C.file+'_prima_dopo_grande.png',timeout:180000});await p.setViewportSize({width:390,height:763});
     await E(`__Z3D.cmp=false;__Z3D.four=false`);
     // the face up close (the Viandante)
     if(md==='viandante'){ck(await E(`[...document.querySelectorAll('#op button')].some(b=>b.textContent==='Viso da vicino')`),'c\'è il bottone «Viso da vicino»');
-      await E(`__Z3D.face=true;__Z3D.auto=false;__Z3D.view=.3;__Z3D.hold={id:'posa',p:.2}`);await p.waitForTimeout(1500);await p.screenshot({path:D+C.file+'_viso.png'});
-      await E(`__Z3D.view=1.05`);await p.waitForTimeout(1200);await p.screenshot({path:D+C.file+'_viso_lato.png'});await E(`__Z3D.face=false;__Z3D.hold=null;__Z3D.auto=true`)}
+      await E(`__Z3D.face=true;__Z3D.auto=false;__Z3D.view=.3;__Z3D.hold={id:'posa',p:.2}`);await p.waitForTimeout(1500);await p.screenshot({path:D+C.file+'_viso.png',timeout:180000});
+      await E(`__Z3D.view=1.05`);await p.waitForTimeout(1200);await p.screenshot({path:D+C.file+'_viso_lato.png',timeout:180000});await E(`__Z3D.face=false;__Z3D.hold=null;__Z3D.auto=true`)}
     // reduced effects
     await E(`__Z3D.low=true`);await p.waitForTimeout(1500);const lowMs=await E(`__Z3D.ms`);await E(`__Z3D.low=false`);await p.waitForTimeout(1500);const ms=await E(`__Z3D.ms`);
     ck(ms>0&&lowMs>0,`tempo del fotogramma (computer di prova senza scheda grafica): ${ms.toFixed(2)} ms, effetti ridotti ${lowMs.toFixed(2)} ms`);
     // the sheet of the moves
-    {const W=C.W,Hh=C.H,rows=[...new Set(shots.map(x=>x.id))];const html=`<body style="margin:0;background:#0b1016;color:#f1e4c6;font:700 13px sans-serif">${rows.map(id=>`<div style="display:flex;align-items:center"><div style="width:84px;padding-left:6px">${id}</div>${shots.filter(x=>x.id===id).map(x=>`<img style="width:${W}px;height:${Hh}px" src="data:image/png;base64,${x.png.toString('base64')}">`).join('')}</div>`).join('')}</body>`;
+    if(shots.length){const W=C.W,Hh=C.H,rows=[...new Set(shots.map(x=>x.id))];const html=`<body style="margin:0;background:#0b1016;color:#f1e4c6;font:700 13px sans-serif">${rows.map(id=>`<div style="display:flex;align-items:center"><div style="width:84px;padding-left:6px">${id}</div>${shots.filter(x=>x.id===id).map(x=>`<img style="width:${W}px;height:${Hh}px" src="data:image/png;base64,${x.png.toString('base64')}">`).join('')}</div>`).join('')}</body>`;
       const q=await b.newPage({viewport:{width:84+6*W,height:rows.length*Hh}});await q.setContent(html);await q.waitForTimeout(300);await q.screenshot({path:D+C.file+'_mosse.jpg',type:'jpeg',quality:82});await q.close()}}
   ck(!errs.length,'nessun errore'+(errs.length?' '+errs.slice(0,3).join(' | '):''));
   console.log(`\n${ok} sì, ${ko} no`);await b.close();process.exit(ko?1:0)})();

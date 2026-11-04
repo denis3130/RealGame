@@ -210,11 +210,14 @@ function build(o){o=o||{};const HQ=o.h||1,m=Mesh(),cloth=Mesh(),BODY=body(),CLB=
   const HCt=[0,39.9,-.3],crown=[0,41.6,-1.0],hairY=a=>{const A=Math.abs(a);if(A<.45)return 40.85+.1*Math.cos(a*9);if(A<1.1)return lerp(40.85,40.1,(A-.45)/.65);
       if(A<1.45)return lerp(40.05,39.25,sm((A-1.1)/.35));if(A<1.95)return lerp(39.25,39.8,sm((A-1.45)/.25));return lerp(39.8,38.3,sm((A-1.95)/.8))},
     earD=p=>Math.min(len(sub(p,[1.78,39.0,-.12])),len(sub(p,[-1.78,39.0,-.12])));
-  const thick=(x,y,z)=>.12+.2*sm((y-40.4)/1.2)+.08*fbm(x*1.7,y*1.7,z*1.7),CAP=(x,y,z)=>D(x,y,z)-thick(x,y,z);
-  const hairKeep=p=>{const a=Math.atan2(p[0],p[2]-HCt[2]);if(earD(p)<.8&&p[1]<39.85)return false;return p[1]>hairY(a)+.3*(noise(a*5,p[1]*.8,0)-.5)};
+  // the hairline (a little ragged): the cap gets thin towards it and round the ears and goes under the skin, so it ends on a smooth line
+  // (no steps of the grid); it is made only a little below the line (capKeep), the skin is taken away only above it (hairKeep)
+  const edgeY=(x,y,z)=>{const a=Math.atan2(x,z-HCt[2]);return hairY(a)+.3*(noise(a*5,y*.8,0)-.5)};
+  const thick=(x,y,z)=>{const t=sm((y-edgeY(x,y,z)+.12)/.45)*sm((earD([x,y,z])-.72)/.35);return(.12+.2*sm((y-40.4)/1.2)+.08*fbm(x*1.7,y*1.7,z*1.7))*t-.08*(1-t)},CAP=(x,y,z)=>D(x,y,z)-thick(x,y,z);
+  const hairKeep=p=>{if(earD(p)<.8&&p[1]<39.85)return false;return p[1]>edgeY(p[0],p[1],p[2])},capKeep=p=>!(earD(p)<.5&&p[1]<39.85)&&p[1]>edgeY(p[0],p[1],p[2])-.75&&!(p[2]>1.2&&p[1]<40.3);
   covers.push({F:CAP,keep:hairKeep,off:.3});
   const hairC=(p,t,seed,an)=>mixc(mixc(C.hair,C.hairL,cl(.12+.3*hash(seed)+.3*t*hash(seed+3)+.18*Math.sin(an*2+seed),0,.8)),hex('#120e0b'),.25*noise(p[0]*7,p[1]*7,p[2]*7));
-  {const r=nets(CAP,[-2.9,37.6,-3.4,2.9,43.2,3.0],.09*HQ,{keep:hairKeep}),o0=m.P.length/3;m.group(2);
+  {const r=nets(CAP,[-2.9,37.4,-3.4,2.9,43.2,3.0],.09*HQ,{keep:capKeep}),o0=m.P.length/3;m.group(2);
     for(let i=0;i<r.P.length/3;i++){const p=[r.P[i*3],r.P[i*3+1],r.P[i*3+2]],n=normal(CAP,p),st=noise(p[0]*3,p[1]*.8,p[2]*3),c=mixc(mixc(C.hair,C.hairL,sm((st-.55)/.2)*.45),hex('#120e0b'),.3*noise(p[0]*7,p[1]*7,p[2]*7));
       const v=m.v(p,n,c,K(4.3,0,.7),[[bi('testa'),1]]);m.K[v*4+2]=occl(CAP,p,n)*.8}
     for(let t=0;t<r.I.length;t+=3)m.t(o0+r.I[t],o0+r.I[t+1],o0+r.I[t+2]);
