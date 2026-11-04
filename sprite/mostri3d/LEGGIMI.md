@@ -55,7 +55,7 @@ cotte, le mosse, la posa).
   terra o pende nel buco, gli stracci). `K3D.solve`, `mix`, `joints` valgono per tutti.
 
 **4. Dipinto come la lanterna, da `mb3.js`.**
-- `K[0]` dice cosa è: 1 pelle, 2 maglia, 3 pantaloni, 4 cuoio, 5 osso e denti, 6 buio dentro, 7 ferro (graffi, ruggine, lucido; 7.2 il
+- `K[0]` dice cosa è: 1 pelle, 2 maglia, 3 pantaloni (2.2 e 3.2: le stoffe dei corpi scolpiti, che hanno già le pieghe vere: quasi niente pieghe dipinte), 4 cuoio, 5 osso e denti, 6 buio dentro, 7 ferro (graffi, ruggine, lucido; 7.2 il
   metallo dipinto, quasi senza ruggine: il casco), 8 legno (le venature lungo il pezzo, che nella forma di riposo va costruito lungo z), 9
   luce (occhi, lampade). Ognuno ha i suoi segni nello shader (chiazze, venature e grinze sulla pelle; pieghe e trama sulla stoffa; fango sui
   pantaloni…), calcolati dal posto nella posa di riposo, così restano attaccati al corpo quando si muove. Una materia nuova (pietra, cristallo,
@@ -199,6 +199,60 @@ alza sopra la testa un po' troppo, lo cala, il piccone morde la terra con le sci
 **Morso**, **Colpito**, **Muore** (cade col piccone sotto, la testa di lato e il casco che resta su; si spengono occhi e lampada).
 `ZMI3.tip(M, posa)` e `ZMI3.lamp(M, posa)` dicono alla pagina dove sono la punta del piccone e la lampada.
 
+## Lo zombie col corpo vero (`zombie_vero.js`, `ZV3`), scolpito nel codice (`scultura.js`, `SCU`) — in prova
+
+Denis, 4 novembre: «non riesci a farmeli come ci eravamo prefissati di fare per tutti i modelli 3d come l'artefatto modello di prova?»; alla
+domanda su cosa voleva dal soldato di prova: **«Corpo più vero, Mosse più naturali»**, e come farlo: **«Solo il codice»** (niente modelli né
+mosse prese da fuori). Prima uno solo, lo zombie base, da far vedere a Denis prima di rifare lo strisciante e il minatore. È lo stesso
+Zombie della cripta (gli stessi pezzi e gli stessi colori della tavola `Z`, i pantaloni marroni, la maglia blu col buco sulle costole, la
+crepa cucita, la cicatrice, i denti storti, gli occhi gialli che brillano) ma col corpo di un uomo vero, magro e marcio, alto sempre circa
+42: la testa piccola come quella di una persona (sette teste e mezza), clavicole, scapole, la spina che si vede sotto la maglia, la pancia
+incavata sotto le costole, braccia ossute coi bicipiti e i tendini, ginocchia nodose con la rotula, caviglie ossute, mani ossute con quattro
+dita lunghe e il pollice, le unghie nere.
+
+**Come si scolpisce un corpo (`scultura.js`).** Il corpo non è fatto di palle e tubi messi uno accanto all'altro ma è **una forma sola fatta
+di distanze**: per ogni punto, quanto è lontano dalla pelle (meno di zero dentro). Le forme morbide (`ball`, gli ovali `ell` girati come
+l'arto, i coni arrotondati `cone`) si **saldano** con una saldatura morbida (`add(forma, k)`: più `k` è grande, più la giuntura è dolce,
+come i muscoli sotto la pelle) e si **scavano** (`dig`: le orbite, il naso marcito, le guance e le tempie incavate, la bocca troppo larga, il
+morso nell'orecchio, la pancia). `Sculpt().d(x, y, z)` dà la distanza; le forme lontane dal punto si saltano (è veloce). Poi:
+- `nets(D, scatola, h, {keep})`: la pelle di triangoli (surface nets su una griglia larga e poi fine solo vicino alla pelle); `keep(punto)`
+  dice dove la superficie non c'è (gli orli, gli strappi, il buco della maglia: lì resta aperta).
+- `normal(D, p)` le normali dalla forma, `onSkin(D, p)` il punto sulla pelle più vicino (per cuciture, peli, lacci, costole),
+  `occl(D, p, n)` **l'ombra morbida dalla forma stessa** (quanto spazio libero c'è appena fuori: ascelle, sotto il mento, le pieghe), che va
+  nell'ombra cotta al posto delle palle di `K3D.bake`.
+- `weights(p, ossa, solo)`: i pesi delle ossa dalla distanza dalle ossa (segmenti), misurata nello spessore di ogni osso; in `ZV3` ogni punto
+  può seguire solo l'osso della sua parte e quelle accanto (`PART`), così una coscia non segue l'altra; la mascella prende la parte bassa del
+  viso.
+- `noise`, `fbm`: rumore per orli stracciati, pieghe e chiazze, sempre uguale.
+
+**I vestiti** sono la stessa forma gonfiata di poco e tagliata dove finiscono: la maglia (pieghe intorno al corpo, l'orlo stracciato sotto la
+vita, il collo, le maniche stracciate, il buco davanti sopra le costole, lo strappo sulla schiena, il sangue vicino al buco e al collo), i
+pantaloni (la vita, gli orli stracciati sopra le scarpe, lo strappo sul ginocchio destro col sangue, sporchi in basso). La forma su cui stanno
+è il corpo **senza gli incavi e coi bozzi addolciti** (`body(true)`: la stoffa passa sopra la pancia incavata e sopra la spina, non ci
+entra), così la stoffa non lascia mai passare la pelle e non fa doppie pieghe. I vestiti seguono le stesse ossa della pelle sotto (gli
+stessi pesi). **La pelle che i vestiti coprono sempre** (ben dentro la maglia e i pantaloni, lontano da orli, strappi e buco) non si fa: non
+si vede mai e il modello pesa la metà. Le scarpe: suola spessa con la cucitura scura, la punta tonda e il tallone sbucciati, il collo intorno
+alla caviglia con l'apertura, tre incroci di lacci e un laccio che pende.
+
+**Le mosse naturali** (sempre solo da `p`, IK per braccia e gambe, la testa che scatta verso di te dove serve): il passo vero col tallone che
+tocca prima e la punta per ultima (`step`), **i due piedi a terra che vanno indietro alla stessa velocità** (5,7 unità al secondo nella
+camminata: il passo corto della gamba che trascina sta a terra meno e si trascina più a lungo, così nessun piede scivola; nel gioco lo zombie
+deve andare a quella velocità), il bacino che scende sul lato debole e si sposta sopra il piede che regge, le spalle che girano contro le
+anche, le braccia che arrivano dopo il corpo, la schiena curva, la testa che pende e ogni tanto ha uno scatto. **Fermo** (sulla gamba destra,
+il respiro, la testa che pende e poi scatta verso di te e torna piano, le dita che si contraggono), **Cammina**, **Corre**, **Sbuca da terra**
+(le mani, poi la testa, si aggrappa al bordo, due strattoni, un ginocchio a terra, in piedi, la testa che scatta), **Urla** (prende fiato e
+poi grida tremando con le braccia aperte, gli occhi più accesi), **Colpo** (si carica indietro, entra col piede destro e graffia di traverso),
+**Morso** (afferra, tira a sé, morde e scuote la testa, lascia), **Colpito**, **Muore** (le ginocchia cedono una dopo l'altra e cade
+**sulle ginocchia** coi piedi che scivolano indietro e gli stinchi a terra, ondeggia e **cade a faccia in giù facendo perno sulle
+ginocchia**, la testa girata di lato a terra, l'ultimo scatto, gli occhi che si spengono).
+
+**Numeri.** Circa 42.000 triangoli (pelle 16.000, vestiti 25.000; lo zombie di prima 10.500), 25 ossa come prima, si costruisce in circa
+1,3–1,8 s in Node; una posa 50–200 µs. `ZV3.build({h})` fa la griglia più larga per i telefoni lenti (`h` .3 di solito; con .42 circa metà
+triangoli). Nella pagina «Zombie in 3D» è «Corpo vero» (`#vero`), con «Prima e dopo» sopra lo zombie di oggi.
+
+**Le foto veloci** (solo per lavorarci, fuori dal gioco): un piccolo disegnatore a triangoli in Node nella cartella di lavoro (`rapido.js`)
+fa un foglio in 3 secondi senza browser, perché qui il browser disegna il 3D senza scheda grafica e una foto della pagina vera costa 6 s.
+
 ## I file
 
 - `mb3.js` (`MB3`): legge un glTF binario (`.glb`) con lo scheletro e le mosse, e disegna sia quelli sia i modelli costruiti da noi, col
@@ -207,17 +261,18 @@ alza sopra la testa un po' troppo, lo cala, il piccone morde la terra con le sci
   `aK` = [cosa è (1 pelle, 2 maglia, 3 pantaloni, 4 cuoio, 5 osso e denti, 6 buio dentro, 9 luce), sangue, ombra cotta, contorno].
 - `kit3d.js` (`K3D`): la cassetta della formula (conti, forme, scheletro, ombre cotte, il modello per `MB3`, testa e braccio da zombie).
 - `zombie.js`: lo zombie base (sopra). `strisciante.js`: lo strisciante (sopra). `minatore.js`: il minatore (sopra).
+- `scultura.js` (`SCU`): scolpire nel codice con le distanze (forme morbide saldate e scavate, la superficie, normali, ombre morbide, punto sulla pelle, pesi, rumore). `zombie_vero.js` (`ZV3`): lo zombie base col corpo vero (sopra, in prova).
 - `oggi.js`: un nostro mostro di oggi da quattro lati (davanti, tre quarti, lato, dietro), per «Prima e dopo»: `node sprite/mostri3d/oggi.js
   <uscita.webp>` (lo zombie, `zombie_oggi.webp`) o `node sprite/mostri3d/oggi.js strisciante strisciante_oggi.webp` (e `minatore`), dopo
   `python3 tests/mk.py`.
 - `prepara.js`: da un personaggio `.glb` con lo scheletro e dalle sue mosse in altri `.glb` fa un `.glb` solo e leggero (serviva per Meshy).
 - Pagina: `python3 anteprime/mk_zombie3d.py` → `anteprime/zombie3d.html` (codice in `anteprime/zombie3d.js`), pubblicata su
   https://claude.ai/artifact/Weae1UsGGoEti6wccnqTRB («Zombie in 3D», si aggiorna ripubblicando lo stesso file): in alto «Zombie»,
-  «Strisciante» o «Minatore» (l'indirizzo che finisce con `#strisciante` o `#minatore` apre quello), le mosse, «Tutte», il dito che gira, due dita o − e + per
+  «Corpo vero», «Strisciante» o «Minatore» (l'indirizzo che finisce con `#vero`, `#strisciante` o `#minatore` apre quello), le mosse, «Tutte», il dito che gira, due dita o − e + per
   avvicinare, «Quattro direzioni», «Prima e dopo», luce a tre toni o morbida, contorno, effetti ridotti.
-  Prova: `node tests/zombie3d.js [zombie|strisciante|minatore]` (gli stessi controlli per ogni mostro, e per il minatore le scintille e la
+  Prova: `node tests/zombie3d.js [zombie|vero|strisciante|minatore]` (gli stessi controlli per ogni mostro, e per il minatore le scintille e la
   lampada; foto `tests/zombie3d_mosse.jpg`, `_prima_dopo.png`, `_prima_dopo_grande.png`, `_quattro.png` per lo zombie base e le stesse
-  `tests/strisciante3d_…` e `tests/minatore3d_…`).
+  `tests/vero3d_…`, `tests/strisciante3d_…` e `tests/minatore3d_…`).
 
 ## Il soldato di prova (non nostro)
 

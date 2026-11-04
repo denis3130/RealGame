@@ -543,6 +543,17 @@ pagina fa luce a terra, l'occhio sinistro spento, la camicia grigia con la salop
 stivali, il piccone arrugginito nel pugno destro, che gira intorno alla spalla come nel disegno e non passa mai sotto terra). Nove mosse
 nostre come lo zombie base, con la Picconata di oggi al posto del Colpo (il piccone morde la terra con le scintille). Nella stessa pagina
 («Minatore», `#minatore`); in `mb3.js` due materie nuove: 7 ferro (7.2 metallo dipinto) e 8 legno.
+Poi (4 novembre) Denis: «non riesci a farmeli come ci eravamo prefissati di fare per tutti i modelli 3d come l'artefatto modello di prova?»;
+alle domande: **«Corpo più vero, Mosse più naturali»** e **«Solo il codice»**. Prima uno solo, poi gli altri due: **lo zombie base col corpo
+vero**, in prova nella stessa pagina («Corpo vero», `#vero`): `sprite/mostri3d/zombie_vero.js` (`ZV3`: lo stesso Zombie della cripta coi suoi
+pezzi e colori, ma con le proporzioni di un uomo vero, magro e marcio: testa piccola, clavicole, scapole, spina, pancia incavata, muscoli
+ossuti, ginocchia e caviglie, mani con quattro dita e il pollice; vestiti che seguono il corpo, strappati; scarpe con suola e lacci; circa
+42.000 triangoli, la pelle sotto i vestiti tolta perché non si vede), **scolpito nel codice** con le distanze (`sprite/mostri3d/scultura.js`,
+`SCU`: forme morbide saldate e scavate in una forma sola, la superficie a triangoli, le normali e l'ombra morbida dalla forma, i pesi dalle
+ossa; i vestiti sono la forma gonfiata e tagliata) e con **mosse naturali** (il passo col tallone e la punta, i piedi a terra che non
+scivolano mai, il peso che passa da un piede all'altro, le spalle contro le anche, la morte sulle ginocchia e poi a faccia in giù). Note in
+`sprite/mostri3d/LEGGIMI.md` («Lo zombie col corpo vero»); prova `node tests/zombie3d.js vero`. Se a Denis piace, è il nuovo modo della
+formula per i corpi e si rifanno lo strisciante e il minatore.
 
 ## FASE 9: più fluido sul telefono (19 ottobre, in corso)
 

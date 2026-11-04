@@ -1,4 +1,5 @@
-# Costruisce anteprime/zombie3d.html: i nostri zombie in 3D vero, lo zombie base (sprite/mostri3d/zombie.js), lo strisciante
+# Costruisce anteprime/zombie3d.html: i nostri zombie in 3D vero, lo zombie base (sprite/mostri3d/zombie.js), quello col corpo vero in prova
+# (sprite/mostri3d/zombie_vero.js, scolpito con sprite/mostri3d/scultura.js), lo strisciante
 # (sprite/mostri3d/strisciante.js) e il minatore (sprite/mostri3d/minatore.js), fatti con la cassetta sprite/mostri3d/kit3d.js e disegnati col nostro WebGL (sprite/mostri3d/mb3.js) nella
 # pagina di anteprime/zombie3d.js: la scelta del mostro, le mosse, il dito che gira, «Quattro direzioni», «Prima e dopo» (sopra il nostro
 # mostro di oggi, sprite/mostri3d/zombie_oggi.webp, strisciante_oggi.webp e minatore_oggi.webp, fatti da sprite/mostri3d/oggi.js). Tutto dentro un file solo.
@@ -42,6 +43,8 @@ button.on{background:var(--on);color:var(--on2)}button:active{transform:translat
 <script>'''+rd('sprite','mostri3d','mb3.js')+'''</script>
 <script>'''+rd('sprite','mostri3d','kit3d.js')+'''</script>
 <script>'''+rd('sprite','mostri3d','zombie.js')+'''</script>
+<script>'''+rd('sprite','mostri3d','scultura.js')+'''</script>
+<script>'''+rd('sprite','mostri3d','zombie_vero.js')+'''</script>
 <script>'''+rd('sprite','mostri3d','strisciante.js')+'''</script>
 <script>'''+rd('sprite','mostri3d','minatore.js')+'''</script>
 <script>'''+page+'''</script>

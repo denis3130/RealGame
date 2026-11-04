@@ -101,7 +101,8 @@ void main(){mat4 S=aW.x*uJ[int(aJ.x)]+aW.y*uJ[int(aJ.y)]+aW.z*uJ[int(aJ.z)]+aW.w
   if(uOut>0.){vec2 d=(uVP*vec4(n,0.)).xy;float l=length(d);if(l>1e-5)d/=l;c.xy+=d*uOut*aK.w*uPx*c.w;}
   vN=n;vT=aT;vW=w.xyz;vR=aP;vC=aC;vK=aK;gl_Position=c;}`;
 // the paint of the pieces we build ourselves (aK.x = what it is): the marks stay on the body because they come from its place in the rest
-// pose (vR): 1 skin (blotches, mottling, thin veins), 2 shirt (folds round the body, weave), 3 trousers (folds, mud at the bottom),
+// pose (vR): 1 skin (blotches, mottling, thin veins), 2 shirt (folds round the body, weave; 2.2 cloth that has its own true folds, the
+// bodies sculpted in the code: almost no painted folds), 3 trousers (folds, mud at the bottom; 3.2 the same with true folds),
 // 4 leather, 5 bone and teeth, 6 dark inside (mouth, sockets), 7 iron (scratches, rust, a hard shine; 7.2 painted metal, almost no rust), 8 wood (the grain
 // along the piece, built along z in the rest pose), 9 light (the eyes, the lamps: they glow, no shading). aK.y blood, aK.z the soft
 // shadow baked where pieces meet, aK.w how thick the outline is there. Models from a file (no aC, aK) are just their textures.
@@ -117,15 +118,17 @@ float h3(vec3 p){p=fract(p*vec3(.1031,.1030,.0973));p+=dot(p,p.yxz+33.33);return
 float n3(vec3 x){vec3 i=floor(x),f=fract(x);f=f*f*(3.-2.*f);
   return mix(mix(mix(h3(i),h3(i+vec3(1,0,0)),f.x),mix(h3(i+vec3(0,1,0)),h3(i+vec3(1,1,0)),f.x),f.y),mix(mix(h3(i+vec3(0,0,1)),h3(i+vec3(1,0,1)),f.x),mix(h3(i+vec3(0,1,1)),h3(i+vec3(1,1,1)),f.x),f.y),f.z);}
 float fb(vec3 p){return n3(p)*.55+n3(p*2.07+3.1)*.3+n3(p*4.3+7.7)*.15;}
-float bh(vec3 p,float K){if(K<1.5)return fb(p*1.6)+.35*n3(p*7.);if(K<2.5)return .6*sin(atan(p.x,p.z)*9.+fb(p*.7)*4.)*.5+.5*n3(p*vec3(9.,2.5,9.));if(K<3.5)return .5*sin(p.y*7.+fb(p)*3.)+.5*n3(p*8.);return fb(p*2.);}
+float bh(vec3 p,float K){if(K<1.5)return fb(p*1.6)+.35*n3(p*7.);if(K<2.1)return .6*sin(atan(p.x,p.z)*9.+fb(p*.7)*4.)*.5+.5*n3(p*vec3(9.,2.5,9.));if(K<2.5)return .12*sin(atan(p.x,p.z)*9.+fb(p*.7)*4.)+.5*n3(p*vec3(9.,6.,9.));if(K<3.1)return .5*sin(p.y*7.+fb(p)*3.)+.5*n3(p*8.);if(K<3.5)return .1*sin(p.y*7.+fb(p)*3.)+.5*n3(p*vec3(8.,5.,8.));return fb(p*2.);}
 vec3 bump(vec3 n,vec3 p,float K,float a){const float e=.06;float h=bh(p,K);vec3 g=vec3(bh(p+vec3(e,0,0),K)-h,bh(p+vec3(0,e,0),K)-h,bh(p+vec3(0,0,e),K)-h)/e;g-=n*dot(g,n);return normalize(n-g*a);}
 void main(){if(vW.y<uClipY)discard;if(uOut>.5){o=vec4(uInk,1.);return;}
   vec3 n=normalize(vN);if(!gl_FrontFacing)n=-n;
   vec4 b=texture(uBase,vT)*uBaseF;b.rgb*=uTint*vC.rgb;
   float K=vK.x,sp=0.;vec3 R=vR*uNs;
   if(K>.5&&K<1.5){b.rgb*=mix(1.,.74,smoothstep(.5,.66,fb(R*.9)));b.rgb*=.9+.18*n3(R*6.2);float vv=fb(R*2.3+5.);b.rgb*=1.-.2*smoothstep(.465,.49,vv)*(1.-smoothstep(.49,.515,vv));sp=.12;}
-  else if(K>1.5&&K<2.5){float an=atan(vR.x,vR.z),fo=sin(an*9.+fb(R*.7)*4.+vR.y*.15);b.rgb*=.8+.2*fo+.06*sin(an*23.+vR.y*.6);b.rgb*=.9+.14*n3(R*15.);}
-  else if(K>2.5&&K<3.5){b.rgb*=.88+.12*n3(R*12.);b.rgb*=.9+.1*sin(vR.y*2.2+fb(R)*3.);b.rgb=mix(b.rgb,b.rgb*.55+vec3(.035,.03,.02),smoothstep(5.,1.,vR.y)*.65);}
+  else if(K>1.5&&K<2.1){float an=atan(vR.x,vR.z),fo=sin(an*9.+fb(R*.7)*4.+vR.y*.15);b.rgb*=.8+.2*fo+.06*sin(an*23.+vR.y*.6);b.rgb*=.9+.14*n3(R*15.);}
+  else if(K>2.1&&K<2.5){b.rgb*=.94+.06*sin(atan(vR.x,vR.z)*9.+fb(R*.7)*4.);b.rgb*=.9+.14*n3(R*15.);b.rgb*=.92+.1*fb(R*2.6+2.);}
+  else if(K>2.5&&K<3.1){b.rgb*=.88+.12*n3(R*12.);b.rgb*=.9+.1*sin(vR.y*2.2+fb(R)*3.);b.rgb=mix(b.rgb,b.rgb*.55+vec3(.035,.03,.02),smoothstep(5.,1.,vR.y)*.65);}
+  else if(K>3.1&&K<3.5){b.rgb*=.88+.12*n3(R*12.);b.rgb*=.93+.1*fb(R*1.8+6.);b.rgb=mix(b.rgb,b.rgb*.55+vec3(.035,.03,.02),smoothstep(5.,1.,vR.y)*.65);}
   else if(K>3.5&&K<4.5){b.rgb*=.88+.16*n3(R*5.);sp=.3;}
   else if(K>4.5&&K<5.5){b.rgb*=.88+.14*n3(R*8.);sp=.4;}
   else if(K>6.5&&K<7.5){b.rgb*=.86+.2*n3(R*9.);float ru=smoothstep(.58,.74,fb(R*1.3+4.))*(K<7.1?1.:.12);b.rgb=mix(b.rgb,vec3(.36,.17,.08)*(.8+.4*n3(R*14.)),ru*.7);b.rgb*=1.-.18*smoothstep(.62,.7,n3(R*vec3(22.,3.,22.)));sp=.7*(1.-ru);}

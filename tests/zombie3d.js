@@ -1,13 +1,14 @@
 // Gli zombie in 3D vero nella loro pagina (python3 anteprime/mk_zombie3d.py, poi node tests/zombie3d.js [pagina.html] [mostro]): per ogni mostro
-// (lo zombie base, lo strisciante, il minatore) il modello si costruisce, ogni mossa parte e (se non si ripete) torna da sola, «Tutte» le fa in fila,
+// (lo zombie base, lo zombie base col corpo vero, lo strisciante, il minatore) il modello si costruisce, ogni mossa parte e (se non si ripete) torna da sola, «Tutte» le fa in fila,
 // «Quattro direzioni» e «Prima e dopo», «Effetti ridotti», nessun errore, i tempi; del minatore anche le scintille del piccone e la luce della
-// lampada a terra. Foto di ogni mostro (zombie3d_… per lo zombie base, strisciante3d_… per lo strisciante, minatore3d_… per il minatore): tests/<nome>_mosse.jpg (ogni mossa in sei momenti, di tre quarti), tests/<nome>_prima_dopo.png
+// lampada a terra. Foto di ogni mostro (zombie3d_… per lo zombie base, vero3d_… per quello col corpo vero, strisciante3d_… per lo strisciante, minatore3d_… per il minatore): tests/<nome>_mosse.jpg (ogni mossa in sei momenti, di tre quarti), tests/<nome>_prima_dopo.png
 // (il nostro mostro di oggi sopra, quello in 3D sotto; <nome>_prima_dopo_grande.png lo stesso su uno schermo grande), tests/<nome>_quattro.png.
 const {chromium}=require('playwright');const path=require('path');const D=__dirname+'/';
-const page=process.argv[2]&&process.argv[2].endsWith('.html')?process.argv[2]:path.join(D,'..','anteprime','zombie3d.html'),ONLY=process.argv.find(a=>/^(zombie|strisciante|minatore)$/.test(a));
+const page=process.argv[2]&&process.argv[2].endsWith('.html')?process.argv[2]:path.join(D,'..','anteprime','zombie3d.html'),ONLY=process.argv.find(a=>/^(zombie|vero|strisciante|minatore)$/.test(a));
 let ok=0,ko=0;const ck=(c,m)=>{if(c){ok++;console.log('  sì  '+m)}else{ko++;console.log('  NO  '+m)}};
 // how each one is photographed: the bones it must have, the camera of the sheet of the moves, the size of a photo
 const CFG={zombie:{file:'zombie3d',bones:25,cam:{view:.75,pitch:.32,dist:1.05},clip:{x:45,y:40,width:300,height:470},W:150,H:235},
+  vero:{file:'vero3d',bones:25,cam:{view:.75,pitch:.32,dist:1.05},clip:{x:45,y:40,width:300,height:470},W:150,H:235},
   strisciante:{file:'strisciante3d',bones:27,cam:{view:.75,pitch:.45,dist:.92},clip:{x:0,y:120,width:390,height:380},W:180,H:175},
   minatore:{file:'minatore3d',bones:25,cam:{view:.75,pitch:.3,dist:1.12},clip:{x:0,y:30,width:390,height:480},W:180,H:222}};
 (async()=>{const b=await chromium.launch({args:['--use-gl=angle','--use-angle=swiftshader','--enable-unsafe-swiftshader']});
@@ -15,7 +16,7 @@ const CFG={zombie:{file:'zombie3d',bones:25,cam:{view:.75,pitch:.32,dist:1.05},c
   await p.goto('file://'+page);await p.waitForFunction(()=>window.__Z3D&&__Z3D.ready,null,{timeout:90000}).catch(()=>{});
   const E=s=>p.evaluate(s);
   const models=JSON.parse(await E(`JSON.stringify(__Z3D.models)`).catch(()=>'[]'));
-  ck(['zombie','strisciante','minatore'].every(m=>models.includes(m)),'nella pagina ci sono i tre mostri: '+models.join(', '));
+  ck(['zombie','vero','strisciante','minatore'].every(m=>models.includes(m)),'nella pagina ci sono i quattro mostri: '+models.join(', '));
   for(const md of models.filter(m=>!ONLY||m===ONLY)){const C=CFG[md];console.log('\n— '+md);
     await E(`__Z3D.model='${md}'`);await p.waitForFunction(m=>__Z3D.ready&&__Z3D.model===m,md,{timeout:90000}).catch(()=>{});
     let s=JSON.parse(await E(`JSON.stringify({tri:__Z3D.M.tri,ossa:__Z3D.M.skin.joints.length,mosse:__Z3D.MOVES.map(m=>m.id),ms:__Z3D.buildMs})`).catch(()=>'{}'));

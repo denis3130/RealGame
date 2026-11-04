@@ -2,12 +2,13 @@
 // mandato senza meshy», «non serve accedere a meshy continua cosi»; 4 novembre, lo strisciante: «vai fai»). I modelli li costruiscono
 // sprite/mostri3d/zombie.js (il nostro Zombie della cripta), sprite/mostri3d/strisciante.js (lo Zombie strisciante) e sprite/mostri3d/minatore.js
 // (lo Zombie minatore, con la lampada che fa luce a terra e le scintille del piccone), con la formula e la cassetta sprite/mostri3d/kit3d.js:
-// stesse misure, pezzi e colori dei disegni di oggi. Li disegna sprite/mostri3d/mb3.js col nostro WebGL: notte
+// stesse misure, pezzi e colori dei disegni di oggi. In prova (Denis, 4 novembre: «Corpo più vero, Mosse più naturali», «Solo il codice»)
+// sprite/mostri3d/zombie_vero.js, lo zombie base col corpo vero scolpito nel codice (sprite/mostri3d/scultura.js) e le mosse naturali. Li disegna sprite/mostri3d/mb3.js col nostro WebGL: notte
 // del camposanto, luna, contorno spesso, tre toni, occhi che brillano e pulsano. Tutte le mosse sono nostre. In alto si sceglie il mostro (anche
-// con l'indirizzo che finisce con #strisciante o #minatore). Dito: gira intorno; due dita o − e +: vicino e lontano. «Quattro direzioni» e «Prima e dopo» (il
+// con l'indirizzo che finisce con #vero, #strisciante o #minatore). Dito: gira intorno; due dita o − e +: vicino e lontano. «Quattro direzioni» e «Prima e dopo» (il
 // nostro mostro di oggi sopra, quello in 3D sotto, dagli stessi lati). Costruita da anteprime/mk_zombie3d.py.
 (()=>{'use strict';
-const $=s=>document.querySelector(s),OGGI={zombie:'__OGGI__',strisciante:'__OGGI_S__',minatore:'__OGGI_M__'};
+const $=s=>document.querySelector(s),OGGI={zombie:'__OGGI__',vero:'__OGGI__',strisciante:'__OGGI_S__',minatore:'__OGGI_M__'};
 const back=$('#bk'),cv=$('#cv'),fr=$('#fr'),bx=back.getContext('2d'),fx=fr.getContext('2d');
 const gl=cv.getContext('webgl2',{antialias:true,alpha:true,premultipliedAlpha:true});
 if(!gl){$('#msg').hidden=false;$('#msg').textContent='Questo telefono non ha WebGL 2: lo zombie in 3D non si può disegnare.';return}
@@ -20,6 +21,7 @@ let look='gioco',low=false,ink=true,auto=true,four=false,cmp=false,yaw=.35,pitch
 // hole: where it comes out of the ground (and how big, hoR); sh: the bones of the soft shadow (two: a long shadow between them); lamp: a lamp
 // that lights the ground ahead (lib.lamp); sparks: the move and the moment the pick bites the ground (lib.tip: where)
 const MODELS={zombie:{lib:ZB3,nome:'Zombie',sub:'Il nostro zombie base in 3D vero',ch:.86,dd:4.8,pitch:.34,fd:.8,fk:2,fp:.5,hole:[0,.2],hoR:1,sh:['bacino']},
+  vero:{lib:ZV3,nome:'Corpo vero',sub:'Lo zombie base col corpo vero e le mosse naturali',ch:.86,dd:4.8,pitch:.34,fd:.8,fk:2,fp:.5,hole:[0,.2],hoR:1,sh:['bacino']},
   strisciante:{lib:ZS3,nome:'Strisciante',sub:'Lo zombie strisciante in 3D vero',ch:.3,cz:-.08,dd:5.4,pitch:.5,fd:.66,fk:1.15,fp:.62,hole:[0,-.16],hoR:1.3,sh:['petto','vita']},
   minatore:{lib:ZMI3,nome:'Minatore',sub:'Lo zombie minatore in 3D vero',ch:.84,cz:.06,dd:5,pitch:.34,fd:.8,fk:2,fp:.28,hole:[0,.2],hoR:1.05,sh:['bacino'],lamp:1,sparks:{id:'colpo',p:.5}}};
 const H=43,SC=1.7/H,MM=MB3.m4();MM[0]=MM[5]=MM[10]=SC;
