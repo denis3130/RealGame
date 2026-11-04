@@ -101,7 +101,7 @@ void main(){mat4 S=aW.x*uJ[int(aJ.x)]+aW.y*uJ[int(aJ.y)]+aW.z*uJ[int(aJ.z)]+aW.w
   if(uOut>0.){vec2 d=(uVP*vec4(n,0.)).xy;float l=length(d);if(l>1e-5)d/=l;c.xy+=d*uOut*aK.w*uPx*c.w;}
   vN=n;vT=aT;vW=w.xyz;vR=aP;vC=aC;vK=aK;gl_Position=c;}`;
 // the paint of the pieces we build ourselves (aK.x = what it is): the marks stay on the body because they come from its place in the rest
-// pose (vR): 1 skin (blotches, mottling, thin veins), 2 shirt (folds round the body, weave; 2.2 cloth that has its own true folds, the
+// pose (vR): 1 skin (blotches, mottling, thin veins; 1.2 the skin of a living man, the colour painted by the model, barely mottled), 2 shirt (folds round the body, weave; 2.2 cloth that has its own true folds, the
 // bodies sculpted in the code: almost no painted folds), 3 trousers (folds, mud at the bottom; 3.2 the same with true folds),
 // 4 leather, 5 bone and teeth, 6 dark inside (mouth, sockets), 7 iron (scratches, rust, a hard shine; 7.2 painted metal, almost no rust), 8 wood (the grain
 // along the piece, built along z in the rest pose), 9 light (the eyes, the lamps: they glow, no shading). aK.y blood, aK.z the soft
@@ -124,17 +124,19 @@ void main(){if(vW.y<uClipY)discard;if(uOut>.5){o=vec4(uInk,1.);return;}
   vec3 n=normalize(vN);if(!gl_FrontFacing)n=-n;
   vec4 b=texture(uBase,vT)*uBaseF;b.rgb*=uTint*vC.rgb;
   float K=vK.x,sp=0.;vec3 R=vR*uNs;
-  if(K>.5&&K<1.5){b.rgb*=mix(1.,.74,smoothstep(.5,.66,fb(R*.9)));b.rgb*=.9+.18*n3(R*6.2);float vv=fb(R*2.3+5.);b.rgb*=1.-.2*smoothstep(.465,.49,vv)*(1.-smoothstep(.49,.515,vv));sp=.12;}
+  if(K>.5&&K<1.1){b.rgb*=mix(1.,.74,smoothstep(.5,.66,fb(R*.9)));b.rgb*=.9+.18*n3(R*6.2);float vv=fb(R*2.3+5.);b.rgb*=1.-.2*smoothstep(.465,.49,vv)*(1.-smoothstep(.49,.515,vv));sp=.12;}
+  else if(K>1.1&&K<1.5){b.rgb*=mix(1.,.93,smoothstep(.55,.7,fb(R*.9)));b.rgb*=.96+.07*n3(R*6.2);sp=.06;}
   else if(K>1.5&&K<2.1){float an=atan(vR.x,vR.z),fo=sin(an*9.+fb(R*.7)*4.+vR.y*.15);b.rgb*=.8+.2*fo+.06*sin(an*23.+vR.y*.6);b.rgb*=.9+.14*n3(R*15.);}
   else if(K>2.1&&K<2.5){b.rgb*=.94+.06*sin(atan(vR.x,vR.z)*9.+fb(R*.7)*4.);b.rgb*=.9+.14*n3(R*15.);b.rgb*=.92+.1*fb(R*2.6+2.);}
   else if(K>2.5&&K<3.1){b.rgb*=.88+.12*n3(R*12.);b.rgb*=.9+.1*sin(vR.y*2.2+fb(R)*3.);b.rgb=mix(b.rgb,b.rgb*.55+vec3(.035,.03,.02),smoothstep(5.,1.,vR.y)*.65);}
   else if(K>3.1&&K<3.5){b.rgb*=.88+.12*n3(R*12.);b.rgb*=.93+.1*fb(R*1.8+6.);b.rgb=mix(b.rgb,b.rgb*.55+vec3(.035,.03,.02),smoothstep(5.,1.,vR.y)*.65);}
-  else if(K>3.5&&K<4.5){b.rgb*=.88+.16*n3(R*5.);sp=.3;}
+  else if(K>3.5&&K<4.1){b.rgb*=.88+.16*n3(R*5.);sp=.3;}
+  else if(K>4.1&&K<4.5){b.rgb*=.82+.3*n3(R*vec3(16.,4.,16.));sp=.08;}
   else if(K>4.5&&K<5.5){b.rgb*=.88+.14*n3(R*8.);sp=.4;}
   else if(K>6.5&&K<7.5){b.rgb*=.86+.2*n3(R*9.);float ru=smoothstep(.58,.74,fb(R*1.3+4.))*(K<7.1?1.:.12);b.rgb=mix(b.rgb,vec3(.36,.17,.08)*(.8+.4*n3(R*14.)),ru*.7);b.rgb*=1.-.18*smoothstep(.62,.7,n3(R*vec3(22.,3.,22.)));sp=.7*(1.-ru);}
   else if(K>7.5&&K<8.5){float gr=sin((vR.x+vR.y*.7)*7.+fb(R*.6)*5.);b.rgb*=.84+.14*gr+.06*n3(R*11.);sp=.12;}
   b.rgb=mix(b.rgb,vec3(.2,.045,.035),smoothstep(.55,.68,fb(R*.75+11.))*vK.y*.9);b.rgb*=1.-.62*vK.z;
-  if(uBump>0.&&((K>.5&&K<5.5)||(K>7.5&&K<8.5)))n=bump(n,R,K,uBump*(K<1.5?.045:K<2.5?.05:K<3.5?.04:.03));
+  if(uBump>0.&&((K>.5&&K<5.5)||(K>7.5&&K<8.5)))n=bump(n,R,K,uBump*(K<1.1?.045:K<1.5?.022:K<2.5?.05:K<3.5?.04:.03));
   if(uHasN>.5){vec3 q=texture(uNrm,vT).xyz*2.-1.;q.y*=uNy;n=normalize(cf(n,vW,vT)*q);}
   vec3 e=uHasE>.5?texture(uEm,vT).rgb*uEmF:vec3(0.);if(K>8.5)e+=b.rgb*.5;
   if(uEmOnly>.5){o=vec4(e*uEmK,1.);return;}
@@ -142,6 +144,7 @@ void main(){if(vW.y<uClipY)discard;if(uOut>.5){o=vec4(uInk,1.);return;}
   float d=dot(n,uL),k1=smoothstep(-.14,.06,d),k2=smoothstep(.40,.58,d);
   vec3 sh=b.rgb*uAmb,li=b.rgb*uLc,mi=mix(sh,li,.55);vec3 c=mix(sh,mix(mi,li,k2),k1);
   vec3 sf=b.rgb*(uAmb+(uLc-uAmb)*clamp(d*.5+.5,0.,1.)*1.1);c=mix(sf,c,uToon);
+  if(K>1.1&&K<1.5)c+=b.rgb*vec3(.07,.02,0.)*(1.-k1);
   vec3 v=normalize(uCam-vW);float r=pow(1.-max(dot(n,v),0.),3.);
   if(K>5.5&&K<6.5){c=b.rgb*(.55+.45*k1);r*=.2;}
   c+=uRim*r*(.3+.7*smoothstep(-.3,.3,dot(n,normalize(vec3(-uL.x,.25,-uL.z)))));

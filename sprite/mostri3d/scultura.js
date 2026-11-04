@@ -28,7 +28,17 @@ function Sculpt(){const ops=[];const S={ops,
   add(s,k){ops.push({s,k:k||0,dig:0});return S},dig(s,k){ops.push({s,k:k||0,dig:1});return S},
   d(x,y,z){let d=1e9;for(let i=0;i<ops.length;i++){const o=ops[i],s=o.s,dx=x-s.c[0],dy=y-s.c[1],dz=z-s.c[2],lb=Math.sqrt(dx*dx+dy*dy+dz*dz)-s.r;
       if(!o.dig){if(lb>d+o.k)continue;const v=s.f(x,y,z);d=o.k>0?smin(d,v,o.k):Math.min(d,v)}
-      else{if(lb>o.k-d&&lb>o.k)continue;const v=s.f(x,y,z);d=o.k>0?smax(d,-v,o.k):Math.max(d,-v)}}return d}};return S}
+      else{if(lb>o.k-d&&lb>o.k)continue;const v=s.f(x,y,z);d=o.k>0?smax(d,-v,o.k):Math.max(d,-v)}}return d},
+  // the same distances, faster: a grid of cells over box, each keeping only the shapes that can matter in it (a shape farther than margin
+  // from a cell cannot change the distance there near the skin, nor whether a point is inside); outside the box the slow way
+  fast(box,cell,margin){cell=cell||1;margin=margin||3.5;const nx=Math.max(1,Math.ceil((box[3]-box[0])/cell)),ny=Math.max(1,Math.ceil((box[4]-box[1])/cell)),nz=Math.max(1,Math.ceil((box[5]-box[2])/cell)),
+      L=new Array(nx*ny*nz),hd=cell*Math.sqrt(3)/2;
+    for(let k=0;k<nz;k++)for(let j=0;j<ny;j++)for(let i=0;i<nx;i++){const cx=box[0]+(i+.5)*cell,cy=box[1]+(j+.5)*cell,cz=box[2]+(k+.5)*cell,l=[];
+      for(const o of ops){const c=o.s.c;if(Math.hypot(cx-c[0],cy-c[1],cz-c[2])-o.s.r-hd<margin+o.k)l.push(o)}L[(k*ny+j)*nx+i]=l}
+    return(x,y,z)=>{const i=Math.floor((x-box[0])/cell),j=Math.floor((y-box[1])/cell),k=Math.floor((z-box[2])/cell);if(i<0||j<0||k<0||i>=nx||j>=ny||k>=nz)return S.d(x,y,z);
+      const l=L[(k*ny+j)*nx+i];let d=1e9;for(let q=0;q<l.length;q++){const o=l[q],s=o.s,dx=x-s.c[0],dy=y-s.c[1],dz=z-s.c[2],lb=Math.sqrt(dx*dx+dy*dy+dz*dz)-s.r;
+        if(!o.dig){if(lb>d+o.k)continue;const v=s.f(x,y,z);d=o.k>0?smin(d,v,o.k):Math.min(d,v)}
+        else{if(lb>o.k-d&&lb>o.k)continue;const v=s.f(x,y,z);d=o.k>0?smax(d,-v,o.k):Math.max(d,-v)}}return l.length?d:S.d(x,y,z)}}};return S}
 // ---------------------------------------------------------------- the skin from the distances (surface nets)
 // D(x,y,z) the distance; box [x0,y0,z0,x1,y1,z1]; h the size of a cell; o.keep(p) → false where the surface is not wanted (the end of a
 // sleeve, a hole, a hem: there the surface stays open). → {P (places), I (triangles, seen from outside)}
