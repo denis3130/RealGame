@@ -572,7 +572,8 @@ ondeggiano; nove mosse: posa del disegno, fermo, cammina, corre, felice, fiammat
 fuoco (il cuore giallo verso di te, l'orlo rosso), la sua immagine in `sprite/mostri3d/niumon_rif.webp`. Pagina `python3 anteprime/mk_niumon3d.py`
 (la pagina dei modelli in 3D con la grotta, la vista «Pixel» come l'immagine, le braci, il fuoco della fiammata e la luce a terra); prova
 `node tests/zombie3d.js anteprime/niumon3d.html [--senza-foglio]`; note in `sprite/mostri3d/LEGGIMI.md` («Il niumon di fuoco»). Pubblicata su
-https://claude.ai/artifact/FgvbCjkvxMqyi8y4Gw7ff6 («Niumon di fuoco»; si aggiorna ripubblicando `anteprime/niumon3d.html`). Non è nel gioco.
+https://claude.ai/artifact/FgvbCjkvxMqyi8y4Gw7ff6 («Niumon di fuoco»; si aggiorna ripubblicando `anteprime/niumon3d.html`). Non è nel gioco. Da chiedere a Denis (5 novembre): il nome, gli
+occhi più grandi e lucidi come nella sua immagine (ora vengono un po' più scuri), se va nel progetto «niumon» con gli altri fatti allo stesso modo.
 
 ## FASE 9: più fluido sul telefono (19 ottobre, in corso)
 
