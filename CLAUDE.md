@@ -565,6 +565,14 @@ intorno, saluta, pugno, colpito, muore), la sua immagine in `sprite/mostri3d/via
 anteprime/viandante3d.html [--senza-foglio]`; note in `sprite/mostri3d/LEGGIMI.md` («Il Viandante»). Pubblicata su
 https://claude.ai/artifact/VAGSSGMgUYkbnAdR8hNuTs («Il Viandante in 3D»; si aggiorna ripubblicando `anteprime/viandante3d.html`). Non è nel
 gioco: Denis deve dire a cosa serve.
+Poi (5 novembre) Denis, con un'immagine in pixel art di un cucciolo di fuoco: «prova a crearmi questo niumon con tanto di anteprima». **Il
+niumon di fuoco** con la formula del 3D: `sprite/mostri3d/niumon_fuoco.js` (`NF3`: circa 60.000 triangoli, 32 ossa; chibi, la testa grande
+quanto il corpo, le zampe tozze, gli occhi grandi con le palpebre, la criniera di dodici fiamme e la coda di fuoco su ossa loro che leccano e
+ondeggiano; nove mosse: posa del disegno, fermo, cammina, corre, felice, fiammata, colpito, dorme, esausto), in `mb3.js` il materiale 9.4
+fuoco (il cuore giallo verso di te, l'orlo rosso), la sua immagine in `sprite/mostri3d/niumon_rif.webp`. Pagina `python3 anteprime/mk_niumon3d.py`
+(la pagina dei modelli in 3D con la grotta, la vista «Pixel» come l'immagine, le braci, il fuoco della fiammata e la luce a terra); prova
+`node tests/zombie3d.js anteprime/niumon3d.html [--senza-foglio]`; note in `sprite/mostri3d/LEGGIMI.md` («Il niumon di fuoco»). Pubblicata su
+https://claude.ai/artifact/FgvbCjkvxMqyi8y4Gw7ff6 («Niumon di fuoco»; si aggiorna ripubblicando `anteprime/niumon3d.html`). Non è nel gioco.
 
 ## FASE 9: più fluido sul telefono (19 ottobre, in corso)
 
@@ -745,5 +753,6 @@ del ramo `gioco`). Da fare con le misure dell'iPhone di Denis: il ponte che onde
 4. Pubblicità vera per i giri della ruota (ora un segnaposto di 5 secondi), da collegare quando il gioco sarà pubblicato.
 5. Scartati o fermi: eroe nuovo da immagine (file in `anteprime/`), «La Discesa» (`anteprime/discesa.html`), la Bestia (`anteprime/beast.js`), il teschio dietro il cancello: il piano maestro li supera.
    **Meshy non si usa** (3 novembre: la prova si è fermata prima di generare qualcosa, Denis: «fa niente non usare meshy»; nessun credito speso; in questa sessione c'erano le istruzioni di Meshy ma non l'accesso al suo account). Al suo posto lo zombie base in 3D vero fatto da noi (sopra, «Zombie base in 3D vero»).
-6. **Progetto «niumon»** (Denis, 12 ottobre): anche lì si usa la tecnica 3D della mappa zombie, cioè il motore `anteprime/zombie/motore.js` con i prop di `prop.js`: volumi 3D con texture a tre toni e luce della luna, piega dei volumi stile Pokémon, telecamera che gira a 360° e si inclina col dito, ordine di disegno a strati. Note in `anteprime/zombie/LEGGIMI.md` («Visuale 3D»).
+6. **Progetto «niumon»** (Denis, 12 ottobre; dal 4 novembre i modelli in 3D vero si fanno con la formula del 3D: il primo niumon, quello di
+   fuoco, è in `sprite/mostri3d/niumon_fuoco.js`, sopra): anche lì si usa la tecnica 3D della mappa zombie, cioè il motore `anteprime/zombie/motore.js` con i prop di `prop.js`: volumi 3D con texture a tre toni e luce della luna, piega dei volumi stile Pokémon, telecamera che gira a 360° e si inclina col dito, ordine di disegno a strati. Note in `anteprime/zombie/LEGGIMI.md` («Visuale 3D»).
 7. **Progressione delle abilità della Classica**: fatta il 21 ottobre nell'anteprima della Classica nuova (l'albero delle abilità, sopra in «Classica nuova»); nel gioco dal 27 ottobre.

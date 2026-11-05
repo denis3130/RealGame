@@ -5,7 +5,7 @@
 // lampada a terra. Foto di ogni mostro (zombie3d_… per lo zombie base, vero3d_… per quello col corpo vero, strisciante3d_… per lo strisciante, minatore3d_… per il minatore): tests/<nome>_mosse.jpg (ogni mossa in sei momenti, di tre quarti), tests/<nome>_prima_dopo.png
 // (il nostro mostro di oggi sopra, quello in 3D sotto; <nome>_prima_dopo_grande.png lo stesso su uno schermo grande), tests/<nome>_quattro.png.
 const {chromium}=require('playwright');const path=require('path');const D=__dirname+'/';
-const page=process.argv[2]&&process.argv[2].endsWith('.html')?path.resolve(process.argv[2]):path.join(D,'..','anteprime','zombie3d.html'),ONLY=process.argv.find(a=>/^(zombie|vero|strisciante|minatore|viandante)$/.test(a));
+const page=process.argv[2]&&process.argv[2].endsWith('.html')?path.resolve(process.argv[2]):path.join(D,'..','anteprime','zombie3d.html'),ONLY=process.argv.find(a=>/^(zombie|vero|strisciante|minatore|viandante|niumon)$/.test(a));
 // --senza-foglio: senza il foglio delle mosse (54 foto: col Viandante, 145.000 triangoli, il browser di prova senza scheda grafica ci mette
 // venti minuti); le mosse si provano lo stesso
 const NOSHEET=process.argv.includes('--senza-foglio');let ok=0,ko=0;const ck=(c,m)=>{if(c){ok++;console.log('  sì  '+m)}else{ko++;console.log('  NO  '+m)}};
@@ -14,6 +14,7 @@ const CFG={zombie:{file:'zombie3d',bones:25,cam:{view:.75,pitch:.32,dist:1.05},c
   vero:{file:'vero3d',bones:25,cam:{view:.75,pitch:.32,dist:1.05},clip:{x:45,y:40,width:300,height:470},W:150,H:235},
   strisciante:{file:'strisciante3d',bones:27,cam:{view:.75,pitch:.45,dist:.92},clip:{x:0,y:120,width:390,height:380},W:180,H:175},
   minatore:{file:'minatore3d',bones:25,cam:{view:.75,pitch:.3,dist:1.12},clip:{x:0,y:30,width:390,height:480},W:180,H:222},
+  niumon:{file:'niumon3d',bones:32,cam:{view:.95,pitch:.2,dist:.9},clip:{x:20,y:120,width:350,height:400},W:160,H:183},
   viandante:{file:'viandante3d',bones:27,cam:{view:.75,pitch:.2,dist:1.0},clip:{x:45,y:40,width:300,height:470},W:150,H:235}};
 (async()=>{const b=await chromium.launch({args:['--use-gl=angle','--use-angle=swiftshader','--enable-unsafe-swiftshader']});
   const p=await b.newPage({viewport:{width:390,height:763},deviceScaleFactor:1});const errs=[];p.on('pageerror',e=>errs.push('PE '+e.message));p.on('console',m=>{if(m.type()==='error')errs.push('CE '+m.text().slice(0,200))});
@@ -21,6 +22,7 @@ const CFG={zombie:{file:'zombie3d',bones:25,cam:{view:.75,pitch:.32,dist:1.05},c
   const E=s=>p.evaluate(s);
   const models=JSON.parse(await E(`JSON.stringify(__Z3D.models)`).catch(()=>'[]'));
   if(models.includes('viandante'))ck(models.length===1,'nella pagina c\'è il Viandante');
+  else if(models.includes('niumon'))ck(models.length===1,'nella pagina c\'è il niumon di fuoco');
   else ck(['zombie','vero','strisciante','minatore'].every(m=>models.includes(m)),'nella pagina ci sono i quattro mostri: '+models.join(', '));
   for(const md of models.filter(m=>!ONLY||m===ONLY)){const C=CFG[md];console.log('\n— '+md);
     await E(`__Z3D.model='${md}'`);await p.waitForFunction(m=>__Z3D.ready&&__Z3D.model===m,md,{timeout:90000}).catch(()=>{});
@@ -44,14 +46,20 @@ const CFG={zombie:{file:'zombie3d',bones:25,cam:{view:.75,pitch:.32,dist:1.05},c
     // four sides, before and after
     await E(`__Z3D.four=true`);await p.waitForTimeout(1500);require('fs').writeFileSync(D+C.file+'_quattro.png',await p.screenshot({timeout:180000}));
     await E(`__Z3D.cmp=true`);await p.waitForTimeout(1500);
-    ck(await E(`!document.getElementById('oggi').hidden&&document.getElementById('oggi').naturalWidth>0`),md==='viandante'?'«Con l\'immagine»: la tua immagine accanto al 3D':'«Prima e dopo»: sopra il nostro mostro di oggi da quattro lati');
+    ck(await E(`!document.getElementById('oggi').hidden&&document.getElementById('oggi').naturalWidth>0`),md==='viandante'||md==='niumon'?'«Con l\'immagine»: la tua immagine accanto al 3D':'«Prima e dopo»: sopra il nostro mostro di oggi da quattro lati');
     ck(await E(`document.getElementById('oggi').getBoundingClientRect().top>=document.querySelector('.top').getBoundingClientRect().bottom`),'«Prima e dopo»: la foto di oggi sta sotto la barra in alto');
     await p.screenshot({path:D+C.file+'_prima_dopo.png',timeout:180000});
     // the same, big, to look at closely: a computer screen
     await p.setViewportSize({width:1200,height:900});await p.waitForTimeout(1800);await p.screenshot({path:D+C.file+'_prima_dopo_grande.png',timeout:180000});await p.setViewportSize({width:390,height:763});
     await E(`__Z3D.cmp=false;__Z3D.four=false`);
     // the face up close (the Viandante)
-    if(md==='viandante'){ck(await E(`[...document.querySelectorAll('#op button')].some(b=>b.textContent==='Viso da vicino')`),'c\'è il bottone «Viso da vicino»');
+    if(md==='niumon'){// the embers, the fire breath, the cave, the «Pixel» view
+      ck(await E(`__Z3D.scn==='grotta'`),'la scena è la grotta');await p.waitForFunction(()=>__Z3D.embers>0,null,{timeout:15000}).catch(()=>{});ck(await E(`__Z3D.embers>0`),`le braci salgono dalle fiamme (${await E('__Z3D.embers')})`);
+      await E(`__Z3D.play('fiammata')`);let fN=0;for(let i=0;i<120&&!fN&&await E(`__Z3D.cur.m.id==='fiammata'`);i++){await p.waitForTimeout(100);fN=await E(`__Z3D.fireN`)}ck(fN>0,`«Fiammata»: il fuoco esce dalla bocca (${fN})`);
+      await p.waitForFunction(()=>__Z3D.cur.m.id!=='fiammata',null,{timeout:30000}).catch(()=>{});
+      await E(`__Z3D.pix=true`);await p.waitForFunction(()=>document.getElementById('cv').width<=Math.ceil(innerWidth/3)+1,null,{timeout:15000}).catch(()=>{});await p.waitForTimeout(600);ck(await E(`__Z3D.pixOn&&document.getElementById('cv').width<=Math.ceil(innerWidth/3)+1&&getComputedStyle(document.getElementById('cv')).imageRendering.includes('pixel')`),'«Pixel»: disegnato piccolo e ingrandito a quadretti, come l\'immagine');
+      await p.screenshot({path:D+C.file+'_pixel.png',timeout:180000});await E(`__Z3D.pix=false`);await p.waitForFunction(()=>document.getElementById('cv').width>innerWidth/2,null,{timeout:15000}).catch(()=>{});ck(await E(`!__Z3D.pixOn&&document.getElementById('cv').width>innerWidth/2`),'«Pixel» si spegne e torna nitido')}
+    if(md==='viandante'||md==='niumon'){ck(await E(`[...document.querySelectorAll('#op button')].some(b=>b.textContent==='Viso da vicino')`),'c\'è il bottone «Viso da vicino»');
       await E(`__Z3D.face=true;__Z3D.auto=false;__Z3D.view=.3;__Z3D.hold={id:'posa',p:.2}`);await p.waitForTimeout(1500);await p.screenshot({path:D+C.file+'_viso.png',timeout:180000});
       await E(`__Z3D.view=1.05`);await p.waitForTimeout(1200);await p.screenshot({path:D+C.file+'_viso_lato.png',timeout:180000});await E(`__Z3D.face=false;__Z3D.hold=null;__Z3D.auto=true`)}
     // reduced effects

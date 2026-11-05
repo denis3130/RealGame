@@ -302,6 +302,54 @@ toni o morbida, contorno, effetti ridotti. Prova: `node tests/zombie3d.js antepr
 senza scheda grafica costa venti minuti, in cinque; foto `tests/viandante3d_mosse.jpg`,
 `_quattro.png`, `_prima_dopo.png`, `_viso.png`, `_viso_lato.png`).
 
+## Il niumon di fuoco (`niumon_fuoco.js`, `NF3`) — in prova
+
+Denis, 5 novembre, con un'immagine in pixel art (un cucciolo di fuoco a quattro zampe nella grotta, coi fogli dei lati, di dietro, a occhi
+chiusi, mentre cammina e felice): «prova a crearmi questo niumon con tanto di anteprima». Fatto con la formula del 3D (il niumon è del
+progetto «niumon»; per ora sta qui, fra i modelli in 3D vero): l'immagine in `niumon_rif.webp` (il riquadro grande, tagliato).
+
+**Il corpo**, una forma sola scolpita con le distanze (`scultura.js`): fatto «chibi» come l'immagine, la testa grande quanto il corpo, il
+corpo tondo a botte con la pancia e il petto più chiari, il collo corto coi ciuffi di pelo morbidi sul petto, le guance tonde coi ciuffi che
+vanno indietro come fiammelle, il nasino e la bocca piccola, le zampe corte e tozze con le giunture tonde, le zampe grandi coi tre diti, il
+ciuffo sui gomiti, il moncone della coda; giallo-arancio, più arancio sulla schiena, il rosso che sale dalle zampe, il rosa sulle guance
+(materiale 1.2, la pelle con poco lucido). La griglia è più fine sul viso.
+
+**Le fiamme** sono tubi lungo una curva, grossi in basso e a punta, un po' ondulati (`flame`), col colore dal giallo della radice al rosso
+della punta e un materiale nuovo in `mb3.js`, **9.4 fuoco**: luce senza ombre, col cuore giallo dove guarda verso di te e l'orlo rosso ai lati
+(così da ogni lato sembra fuoco), meno bagliore della luce degli occhi e un po' di nebbia. La **criniera**: dodici lingue dalla fronte e dalla
+nuca, tirate indietro, su sette ossa loro (`cresta`, `crestaS`, `crestaD`, `orecchioS`, `orecchioD`, `nuca`, `nucaS`, `nucaD`): la radice
+segue la testa, il resto il suo osso, che ogni mossa fa leccare e ondeggiare a modo suo (`fire(k, f, lean)`: k quanto, f quanto in fretta, lean
+tutte indietro quando corre o è colpito); la **coda di fuoco** sulle ossa `coda1`–`coda3`, con due linguette.
+
+**Gli occhi**: grandi palle arancio-rosse con la pupilla scura, due luci bianche (materiale 9, brillano) e l'orlo scuro dato dal contorno;
+**le palpebre** sono palle un poco più grandi tagliate a calotta (`lids`) su un osso loro (`palpS`, `palpD`): aperte stanno su e indietro
+dentro la testa, girandole in giù chiudono l'occhio (sbatte gli occhi, dorme, è colpito); la **mascella** apre la bocca sopra un dentro scuro
+con la lingua.
+
+**Lo scheletro**: 32 ossa; le quattro zampe con la IK (davanti il gomito va indietro, dietro il ginocchio in avanti), i piedi a terra dove
+la mossa li mette o col corpo (`rel 'corpo'`).
+
+**Le mosse** (nove, solo da `p`): **Posa del disegno** (com'è nell'immagine, la testa un po' verso di te), **Fermo** (respira, la coda che
+dondola, sbatte gli occhi, ti guarda e piega la testa, una fiamma-orecchio che scatta), **Cammina** (un trotto, le zampe in diagonale
+insieme), **Corre** (a balzi, la schiena che si piega e si allunga), **Felice** (si accuccia, salta, atterra, alza la zampa davanti destra e
+saluta con la bocca aperta e gli occhi stretti, le fiamme che divampano e la coda che scodinzola), **Fiammata** (si tira indietro e prende
+aria, la criniera che cresce, poi spinge avanti la testa a bocca spalancata e sputa fuoco), **Colpito** (si ritrae con gli occhi chiusi, le
+fiamme spinte indietro), **Dorme** (sdraiato con le zampe sotto il mento, la coda intorno, gli occhi chiusi, le fiamme basse e lente),
+**Esausto** (barcolla, cade sul fianco girando intorno al centro del corpo, le fiamme che si fanno piccole e fioche, poi si rialza
+scrollandosi).
+
+**La pagina** (la stessa degli zombie, `anteprime/zombie3d.js`, con le cose nuove valide per tutti): la **grotta** (roccia scura e calda,
+stalattiti, la luce del suo fuoco sul fondo e a terra, `Scena: grotta / notte / studio`), la vista **«Pixel»** (tutto disegnato a un terzo e
+ingrandito a quadretti, come l'immagine; non nelle quattro direzioni né nel confronto), le **braci** che salgono dalle punte delle fiamme
+(`NF3.fuoco`), il **fuoco della fiammata** che esce dalla bocca (`NF3.bocca`: sbuffi che crescono, rallentano, diventano rossi e fumo),
+la **luce del fuoco a terra** che trema, «Viso da vicino», «Quattro direzioni», «Con l'immagine» (girato come nell'immagine, `refYaw`).
+
+**Numeri.** Circa 60.000 triangoli (il corpo 34.300, il viso 15.700, fiamme e occhi il resto), 32 ossa, si costruisce in meno di un
+secondo; una posa circa 75 µs. Pagina: `python3 anteprime/mk_niumon3d.py` → `anteprime/niumon3d.html`. Prova: `node tests/zombie3d.js
+anteprime/niumon3d.html [--senza-foglio]` (22 controlli: le mosse, «Tutte», le braci, la fiammata, «Pixel», la grotta; foto
+`tests/niumon3d_quattro.png`, `_prima_dopo.png`, `_viso.png`, `_viso_lato.png`, `_pixel.png`). Pubblicata su
+https://claude.ai/artifact/FgvbCjkvxMqyi8y4Gw7ff6 («Niumon di fuoco»; si aggiorna ripubblicando `anteprime/niumon3d.html`).
+
 ## I file
 
 - `mb3.js` (`MB3`): legge un glTF binario (`.glb`) con lo scheletro e le mosse, e disegna sia quelli sia i modelli costruiti da noi, col
@@ -310,7 +358,7 @@ senza scheda grafica costa venti minuti, in cinque; foto `tests/viandante3d_moss
   `aK` = [cosa è (1 pelle, 2 maglia, 3 pantaloni, 4 cuoio, 5 osso e denti, 6 buio dentro, 9 luce), sangue, ombra cotta, contorno].
 - `kit3d.js` (`K3D`): la cassetta della formula (conti, forme, scheletro, ombre cotte, il modello per `MB3`, testa e braccio da zombie).
 - `zombie.js`: lo zombie base (sopra). `strisciante.js`: lo strisciante (sopra). `minatore.js`: il minatore (sopra).
-- `scultura.js` (`SCU`): scolpire nel codice con le distanze (forme morbide saldate e scavate, la superficie, normali, ombre morbide, punto sulla pelle, pesi, rumore). `zombie_vero.js` (`ZV3`): lo zombie base col corpo vero (sopra, in prova). `viandante.js` (`VI3`): il Viandante (sopra, in prova).
+- `scultura.js` (`SCU`): scolpire nel codice con le distanze (forme morbide saldate e scavate, la superficie, normali, ombre morbide, punto sulla pelle, pesi, rumore). `zombie_vero.js` (`ZV3`): lo zombie base col corpo vero (sopra, in prova). `viandante.js` (`VI3`): il Viandante (sopra, in prova). `niumon_fuoco.js` (`NF3`): il niumon di fuoco (sopra, in prova).
 - `oggi.js`: un nostro mostro di oggi da quattro lati (davanti, tre quarti, lato, dietro), per «Prima e dopo»: `node sprite/mostri3d/oggi.js
   <uscita.webp>` (lo zombie, `zombie_oggi.webp`) o `node sprite/mostri3d/oggi.js strisciante strisciante_oggi.webp` (e `minatore`), dopo
   `python3 tests/mk.py`.

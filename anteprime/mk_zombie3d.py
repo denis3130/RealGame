@@ -11,7 +11,7 @@ rd=lambda *p:open(os.path.join(root,*p),encoding='utf-8').read()
 def img(n):
   p=os.path.join(root,'sprite','mostri3d',n);return 'data:image/webp;base64,'+base64.b64encode(open(p,'rb').read()).decode() if os.path.exists(p) else ''
 def pagina(out,libs=ZOMBIE,cfg=None,titolo='Zombie in 3D',sotto='Il nostro zombie base in 3D vero',carica='Lo zombie si sta svegliando…',rif=''):
-  page=rd('anteprime','zombie3d.js').replace("'__OGGI__'","'"+img('zombie_oggi.webp')+"'").replace("'__OGGI_S__'","'"+img('strisciante_oggi.webp')+"'").replace("'__OGGI_M__'","'"+img('minatore_oggi.webp')+"'").replace("'__OGGI_V__'","'"+rif+"'")
+  page=rd('anteprime','zombie3d.js').replace("'__OGGI__'","'"+img('zombie_oggi.webp')+"'").replace("'__OGGI_S__'","'"+img('strisciante_oggi.webp')+"'").replace("'__OGGI_M__'","'"+img('minatore_oggi.webp')+"'").replace("'__OGGI_V__'","'"+rif+"'").replace("'__OGGI_N__'","'"+rif+"'")
   conf='<script>window.Z3D_PAGE='+json.dumps(cfg,ensure_ascii=False)+'</script>\n' if cfg else ''
   scripts=''.join('<script>'+rd('sprite','mostri3d',f)+'</script>\n' for f in libs)
   html='''<!doctype html><html lang="it"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no">
@@ -31,7 +31,7 @@ html,body{margin:0;height:100%;background:var(--bg);color:var(--tx);font-family:
 .row{display:flex;flex-wrap:wrap;gap:6px;justify-content:center}.row+.row{margin-top:7px}
 #src{text-align:center;font-size:13px;opacity:.82;margin:0 6px 7px;min-height:17px;line-height:1.25}
 button{font:700 14px "Baloo 2",system-ui;color:var(--tx);background:var(--bt);border:2px solid var(--ink);border-radius:12px;padding:6px 11px;box-shadow:0 3px 0 var(--ink);cursor:pointer}
-#op button{font-size:12.5px;padding:4px 9px;border-radius:10px;background:#2a241e}
+#op button{font-size:12.5px;padding:4px 9px;border-radius:10px;background:#2a241e}#op button.on{background:var(--on);color:var(--on2)}
 button.on{background:var(--on);color:var(--on2)}button:active{transform:translateY(2px);box-shadow:0 1px 0 var(--ink)}
 #oggi{position:fixed;left:50%;transform:translateX(-50%);top:calc(env(safe-area-inset-top,0px) + 100px);width:min(100%,640px);z-index:1;pointer-events:none}
 #oggi.ref{left:2%;transform:none;width:min(47%,330px);border-radius:10px}

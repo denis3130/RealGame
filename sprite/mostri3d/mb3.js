@@ -104,7 +104,7 @@ void main(){mat4 S=aW.x*uJ[int(aJ.x)]+aW.y*uJ[int(aJ.y)]+aW.z*uJ[int(aJ.z)]+aW.w
 // pose (vR): 1 skin (blotches, mottling, thin veins; 1.2 the skin of a living man, the colour painted by the model, barely mottled), 2 shirt (folds round the body, weave; 2.2 cloth that has its own true folds, the
 // bodies sculpted in the code: almost no painted folds), 3 trousers (folds, mud at the bottom; 3.2 the same with true folds),
 // 4 leather, 5 bone and teeth, 6 dark inside (mouth, sockets), 7 iron (scratches, rust, a hard shine; 7.2 painted metal, almost no rust), 8 wood (the grain
-// along the piece, built along z in the rest pose), 9 light (the eyes, the lamps: they glow, no shading). aK.y blood, aK.z the soft
+// along the piece, built along z in the rest pose), 9 light (the eyes, the lamps: they glow, no shading; 9.4 fire: the yellow core towards you, the red edges). aK.y blood, aK.z the soft
 // shadow baked where pieces meet, aK.w how thick the outline is there. Models from a file (no aC, aK) are just their textures.
 const FS=`#version 300 es
 precision highp float;
@@ -138,8 +138,10 @@ void main(){if(vW.y<uClipY)discard;if(uOut>.5){o=vec4(uInk,1.);return;}
   b.rgb=mix(b.rgb,vec3(.2,.045,.035),smoothstep(.55,.68,fb(R*.75+11.))*vK.y*.9);b.rgb*=1.-.62*vK.z;
   if(uBump>0.&&((K>.5&&K<5.5)||(K>7.5&&K<8.5)))n=bump(n,R,K,uBump*(K<1.1?.045:K<1.5?.022:K<2.5?.05:K<3.5?.04:.03));
   if(uHasN>.5){vec3 q=texture(uNrm,vT).xyz*2.-1.;q.y*=uNy;n=normalize(cf(n,vW,vT)*q);}
-  vec3 e=uHasE>.5?texture(uEm,vT).rgb*uEmF:vec3(0.);if(K>8.5)e+=b.rgb*.5;
+  vec3 e=uHasE>.5?texture(uEm,vT).rgb*uEmF:vec3(0.);if(K>8.5)e+=b.rgb*(K>9.2&&K<9.6?.26:.5);
   if(uEmOnly>.5){o=vec4(e*uEmK,1.);return;}
+  if(K>9.2&&K<9.6){vec3 vv=normalize(uCam-vW);float f=pow(max(dot(n,vv),0.),1.3);vec3 c0=mix(b.rgb*vec3(.95,.5,.34)*.86,min(vec3(1.),b.rgb*1.02+vec3(.06,.045,.0)),f);
+    float fo=smoothstep(uFogN,uFogF,length(vW-uCam));o=vec4(mix(mix(c0*(.86+.1*uEmK),vec3(1.),uFlash),uFogC,fo*.6),1.);return;}
   if(K>8.5){o=vec4(mix(b.rgb*(.82+.12*uEmK),vec3(1.),uFlash),1.);return;}
   float d=dot(n,uL),k1=smoothstep(-.14,.06,d),k2=smoothstep(.40,.58,d);
   vec3 sh=b.rgb*uAmb,li=b.rgb*uLc,mi=mix(sh,li,.55);vec3 c=mix(sh,mix(mi,li,k2),k1);
