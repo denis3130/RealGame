@@ -69,3 +69,26 @@ Gli stessi giocatori automatici con i numeri nuovi messi solo in una copia della
 quasi come l'Arciere; il Bardo diventa pari all'Arciere. Per la Cacciatrice e l'Alchimista non propongo niente: sono un po' sotto, ma per
 come sono fatti (fragile e velocissima; fiale che arrivano meno lontano ma scoppiano su tutti) chi gioca davvero li usa meglio del
 giocatore automatico.
+
+### Lo Yeti col contatto più leggero (25 → 18)
+
+Arena 4, tre eroi, due partite ciascuno (solo il contatto cambia; vita, mosse e colpi dello Yeti restano quelli):
+
+| eroe | contatto 25 (oggi) | contatto 18 |
+|---|---|---|
+| Arciere | 4,6 vite in 18 s (0,26 al secondo) | 2,0 vite in 11 s (0,18 al secondo) |
+| Druida | 3,8 vite in 16 s (0,25 al secondo) | 1,9 vite in 12 s (0,16 al secondo) |
+| Ninja | 7,0 vite in 19 s (0,37 al secondo) | 3,5 vite in 15 s (0,23 al secondo) |
+
+Col boss si perde circa la metà; resta il boss più duro al secondo, ma non più il triplo degli altri. (Le vite dell'arena intera cambiano
+molto di più, 16,3 → 7,1 per l'Arciere, ma lì conta il caso delle stanze: con due partite le stanze 1–9 ballano parecchio.)
+
+## Le proposte
+
+1. Ninja: attacco 0,76 → 0,86 e stelline di lato 0,4 → 0,5 (`HEROES` in 39, `volley` avvolto in 92).
+2. Bardo: attacco 0,92 → 1 (`HEROES` in 39).
+3. Yeti: contatto 25 → 18 (`ET.yeti` in `89-yeti-nuovo.js`).
+
+Il resto (Arciere, Cacciatrice, Balestriere, Druida, Alchimista, la curva delle arene, gli altri boss) resta com'è.
+Misure: `misura2.js`, `giro2.sh`, `giro3.sh`, `giro4.sh`, `tabella2.py`, `confronto.py`, `yeti.py` nella cartella di lavoro della sessione
+(da rifare con `tests/run.js` modificato come sopra).
