@@ -204,6 +204,7 @@ function install(D){if(D.__zsp)return;D.__zsp=1;
   const _t=D.drawTop;D.drawTop=function(){_t.apply(this,arguments);try{top()}catch(e){err(e)}}}
 {const _p=ZM.partita;ZM.partita=function(){const D=_p.apply(this,arguments);install(D);return D};if(W.director)install(W.director)}
 // per le prove: uno speciale vicino all'eroe (a d px, nella direzione a), lo stato
-ZM.speciali={ZSP,SP,convert,burst,spawn(k,d,a){const D=dir(),h=W.hero;d=d||150;a=a==null?rr(0,TP):a;const x=h.x+Math.cos(a)*d,y=h.y+Math.sin(a)*d;
+// il nome è ZM.zSpeciali: ZM.speciali è delle armi speciali (armi_speciali.js) e lo usa il fuoco del Draghetto (compagni.js)
+ZM.zSpeciali={ZSP,SP,convert,burst,spawn(k,d,a){const D=dir(),h=W.hero;d=d||150;a=a==null?rr(0,TP):a;const x=h.x+Math.cos(a)*d,y=h.y+Math.sin(a)*d;
     const z=ZM.spawn({hole:[x,y,null,null],kind:'zombie',q:1});if(!z)return null;z.rise=1;SP.last=Math.max(SP.last,z.id);if(D&&D.PZ)z.dmg=D.PZ.danno.zombie;return convert(z,k,D)}};
 })();

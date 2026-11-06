@@ -16,7 +16,7 @@ Sputatore dal round 2, il Gonfio dal 3, il Bruto dal 4). Il gioco sul telefono e
 
 ## 1. Gli zombie nuovi in partita (`anteprime/zombie/speciali.js`)
 
-`ZM.speciali`, tutti i numeri in `ZSP`. Il file avvolge `ZM.partita` (update, reset, drawGround, drawTop del direttore) come le abilità
+`ZM.zSpeciali`, tutti i numeri in `ZSP`. Il file avvolge `ZM.partita` (update, reset, drawGround, drawTop del direttore) come le abilità
 (99) e fa diventare speciale qualche zombie del round appena nato, ancora sotto terra (`FROM`: zombie, strisciante, minatore), da un
 round in su, con una probabilità che cresce coi round e mai troppi insieme. Il primo di ogni tipo in una partita esce di sicuro (il terzo
 zombie del suo primo round) e una scritta lo presenta una volta («Uno Sputatore! Sputa acido: schiva il cerchio verde», «Un Gonfio!
@@ -94,3 +94,10 @@ Royale. All'inizio ci sono Gioca, le isole, le casse sotto l'eroe, la bustina gr
   che hanno `starter` (`menu2.js`, `menu3.js`, `gems.js`, `hand.js`) non cambiano: per loro tutto resta aperto.
 - Poi le prove di sempre (`menu2`, `menu3`, `meta2`, `zombie`, `mig`, `fresh`, `classica`, una partita automatica per capitolo) e le tre
   di `tests/a50/`.
+
+## Correzioni (6 novembre, dopo la prima pubblicazione)
+
+- Il file degli zombie nuovi esportava `ZM.speciali`, che è già il nome delle armi speciali (`armi_speciali.js`): nell'anteprima il fuoco
+  del Draghetto (`compagni.js`, che scrive in `ZM.speciali.fl`) avrebbe dato errore. Ora gli zombie nuovi sono `ZM.zSpeciali`; prova nuova in
+  `tests/a50/speciali.js` (20 controlli) e una partita col Draghetto (fino a 7 fiamme, nessun errore).
+- L'anteprima ha anche i ritocchi del bilanciamento messi nel gioco (Ninja, Bardo, Yeti: `docs/bilanciamento.md`).

@@ -96,7 +96,7 @@ Firma come gli altri, `CR.<nome>(x, y, face, anim, p, sc)`; la testa ha una tele
 ### Nella partita (6 novembre, Anteprima 50, da approvare)
 
 Denis, alla domanda «cosa miglioreresti nel gioco?»: «Zombie nuovi in partita» (il Gonfio va bene anche lui). Le mosse vere stanno in
-`anteprime/zombie/speciali.js` (`ZM.speciali`, tutti i numeri in `ZSP`), fuori da `src/ordine.txt`: per ora solo nell'Anteprima 50
+`anteprime/zombie/speciali.js` (`ZM.zSpeciali`, tutti i numeri in `ZSP`), fuori da `src/ordine.txt`: per ora solo nell'Anteprima 50
 (`python3 anteprime/mk_anteprima50.py <cartella>`). Prendono il posto di qualche zombie del round appena nato, ancora sotto terra
 (da un round in su, con una probabilità che cresce, mai troppi insieme); il primo di ogni tipo in una partita esce di sicuro, terzo zombie
 del suo primo round, e una scritta lo presenta. Tengono vita, passo e danno del round in proporzione; più monete.

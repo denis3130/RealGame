@@ -18,7 +18,7 @@ prova='--prova' in sys.argv;args=[x for x in sys.argv[1:] if not x.startswith('-
 # (solo nell'anteprima) gli zombie nuovi prima: lo Sputatore dal round 2, il Gonfio dal 3, il Bruto dal 4
 presto='''
 // (solo nell'Anteprima 50) gli zombie nuovi escono prima, per vederli subito
-try{if(ZM.speciali){const Z=ZM.speciali.ZSP;Z.sputatore.dal=2;Z.gonfio.dal=3;Z.bruto.dal=4}}catch(e){}
+try{if(ZM.zSpeciali){const Z=ZM.zSpeciali.ZSP;Z.sputatore.dal=2;Z.gonfio.dal=3;Z.bruto.dal=4}}catch(e){}
 '''
 page=''.join(open(os.path.join(src,f),encoding='utf-8',newline='').read()+(presto if not prova and f==NUOVI[1] else '') for f in order)
 page=page.replace('<title>Mossbound</title>','<title>Mossbound Anteprima 50</title>',1)

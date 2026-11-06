@@ -96,5 +96,6 @@ Misure: `misura2.js`, `giro2.sh`, `giro3.sh`, `giro4.sh`, `tabella2.py`, `confro
 ## Nel gioco (6 novembre)
 
 Denis ha scelto tutti e tre i ritocchi: `src/js/39-meta2-eroi-talenti.js` (Ninja `atk:.86`, Bardo `atk:1`), `src/js/92-eroi-nuovi.js`
-(stelline di lato 0,5), `src/js/89-yeti-nuovo.js` (`cdmg:18`). Collaudo: una partita automatica per capitolo, `meta2.js`, `menu2.js`,
-`menu3.js`.
+(stelline di lato 0,5), `src/js/89-yeti-nuovo.js` (`cdmg:18`). Collaudo: una partita automatica per capitolo (Golem col Ninja, Yeti con
+l'Arciere, Idra col Bardo, Fenice col Ninja: quattro vittorie, nessun errore), `meta2.js` (25 controlli), `menu2.js`, `menu3.js` senza errori.
+Gioco su claude.ai e app ripubblicati (commit bf6f084 del ramo `gioco`).
