@@ -65,3 +65,30 @@ Lo spaventapasseri ha molti più pezzi degli altri (paglia, corvo, cappello): di
 Da fare dopo l'ok di Denis: voci in `ET`, IA, danni, capitolo in cui compaiono, ingresso del boss. Per lo spaventapasseri anche quanto è largo il colpo della trottola (oggi il palo arriva a circa 21 px dal corpo) e se il corvo fa qualcosa in battaglia.
 
 Lo Zombie gonfio è stato tolto (non piaceva a Denis); il suo ultimo codice è nella storia di git (commit `7416fcc`).
+
+## Gli zombie nuovi (31 ottobre, da approvare)
+
+Denis, alla domanda «cosa possiamo migliorare?»: «Zombie nuovi». In un file loro, `zombie_nuovi.js` (dopo `disegno_mostri.js`: usa la sua
+cassetta `CR._rig` e non cambia niente di quello che c'è; lanterna identica), col metodo dello spaventapasseri e dipinti come la lanterna.
+Firma come gli altri, `CR.<nome>(x, y, face, anim, p, sc)`; la testa ha una telecamera sua (`Vat`) per girarsi di scatto da ferma.
+- **Il Gonfio** (`gonfio`, grandezza 1,2): una pancia enorme (una palla) con la canottiera sporca che arriva a metà, le bretelle, la
+  cucitura in mezzo, le vene viola e le bolle che brillano, la testa affondata nelle spalle col collo grasso, braccia corte e gonfie.
+  `idle` (respira, a .3 un gorgoglio, a .55 la testa scatta verso di te), `walk` (dondola da una gamba all'altra), `attack` (si gonfia,
+  trema, la cucitura si accende, la canottiera sale, scoppia a .66 in una nube di gas verde con brandelli; nel gioco sarebbe la sua morte).
+  Attenzione: il 9 ottobre Denis aveva scartato uno «Zombie gonfio» con la stessa idea (commit `48d279b`); questo è nuovo nel disegno.
+- **Lo Sputatore** (`sputatore`, 1,15): magro e curvo, a torso nudo (costole, spina, lividi), pantaloni strappati al ginocchio con la
+  corda, braccia lunghe con le dita lunghe, collo lungo, sotto la mascella la gola gonfia d'acido che brilla, la mascella spaccata in due
+  metà che pendono, l'acido che cola. `idle` (un tic a .2, la testa che scatta), `walk` (passi bassi a scatti), `attack` (il collo indietro
+  e la gola che si gonfia, a .42–.5 lo scatto in avanti e lo sputo che esce dalla bocca: il gioco tirerebbe poi la sua palla d'acido).
+- **Il Bruto** (`bruto`, 1,5): volumi a uovo veri (`egg`, `ellOf`: l'ellissoide proiettato dalla telecamera dei mostri), petto largo,
+  fianchi stretti, la gobba dietro al collo, la testa bassa tra le spalle con la museruola di ferro, la fronte pesante e gli occhi
+  arancioni; il braccio destro mostruoso e lungo cucito alla spalla, col pugno, il ceppo di ferro e la catena spezzata; il grembiule da
+  macellaio con il sangue; una lunga cucitura sulla schiena. `idle`, `walk` (passi pesanti), `charge` (curvo in avanti, il braccio come un
+  ariete, la polvere ai piedi), `attack` (alza il braccio sopra la testa e lo schianta: anello di polvere e crepe a terra).
+- Attrezzi nuovi (solo in questo file): `zHead2` (la testa degli zombie con gli occhi del loro colore che respirano piano, la bocca larga
+  coi denti storti, la fronte pesante), `stitches`, `surf`/`surfE` (curve sulla superficie di una palla o di un uovo), `ringCloth` (stoffa
+  sopra o sotto un anello, come i pantaloni dello spaventapasseri), `egg`, `onE`.
+- Disegno: 0,6–2 ms a zombie sul computer di prova. Foglio nelle quattro direzioni `zombie_nuovi_4dir.jpg`; pagina dal vivo
+  `python3 anteprime/mk_mostro.py --nuovi` (anche «4 direzioni»), pubblicata su https://claude.ai/artifact/MhfnMzYQg7UjU6vcPzNe3G.
+- Dopo l'ok di Denis: i fogli PNG con `tests/mostri.js` (voci in `CRE`), `KINDS` e `ZBOX` nel motore della mappa, le mosse vere (scoppio,
+  sputo con la pozza d'acido, carica e schianto), i round in cui arrivano, i versi.

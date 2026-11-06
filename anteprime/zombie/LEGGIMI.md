@@ -383,3 +383,14 @@ Tutto quello che c'è, con numeri e prove, sta in `docs/anteprima-48.md`; qui co
   zona chiusa, i morti del Becchino (`partita.js evoca`) solo in una zona aperta e raggiungibile. Prova `zone_prova.js`.
 - **Attacchi** (`motore.js ATKT`, `ATKH`): un attacco dura 1 s (strisciante 1,05, minatore e lanterna 1,1, cane 0,8), il colpo a metà;
   danni in `partita.js PZ.danno`.
+
+## La mira a mano (1° novembre, solo nell'Anteprima 49: `src/js/104-mira.js`)
+
+Agganci in `motore.js` che senza quel file non fanno niente: in `updateBeings` `W.aimHook(h, tgt, g, dt)` (se c'è e l'eroe può sparare)
+dà null (il tiro di sempre: da fermo, sul bersaglio) o `{a, fire, pose, face, idle}`: `a` l'angolo nel mondo dove punta l'arma (l'eroe si
+gira lì, anche camminando, se `face` non è false), `fire` il grilletto (anche camminando), `pose` l'arma alzata da fermo (`h.aimP`, che
+`drawHero` usa al posto del bersaglio del motore per la mossa «aim»; null senza l'aggancio), `idle` niente da colpire (ricarica da solo dopo
+1,2 s, anche camminando); in `render` il cerchio della telecamera a `W.lookY` px dal fondo (196 senza). Dal 1° novembre il file fa sparare
+dove guarda la visuale (la cima dello schermo, −π/2 − ψ nel mondo: Denis, «la visuale e lo sparo siano insieme»), col fascio della visuale
+e l'aiuto di mira; conta i colpi avvolgendo `W.shotHook` e disegna col direttore (`drawGround`, `drawTop`), come le abilità, solo il fascio
+largo e il mirino sullo zombie preso (Denis: «togli tutti i fasci tranne quello largo») e le aree delle abilità trascinate.
