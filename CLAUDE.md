@@ -3,6 +3,11 @@
 Roguelite in stile Archero per telefono, pubblicato come un solo file HTML5 (`index.html`): canvas 2D, JavaScript dentro un'unica funzione `(()=>{ ... })();`, musica ed effetti sonori generati dal codice, nessuna libreria esterna (solo i font da Google Fonts). Autore: Denis.
 **Dalla versione 46 il sorgente sta in `src/` e `index.html` si costruisce con `python3 build.py`: non modificare `index.html` a mano, verrebbe sovrascritto.**
 
+> **Ramo `progetto-3d`** (6 novembre): qui sta il lavoro in 3D vero del 2–5 novembre (la visuale 3D della Zombie, la tripla A, i mostri in
+> 3D vero dallo zombie base al niumon di fuoco), messo da parte su richiesta di Denis («salva tutto a parte delle cose 3d che abbiamo fatto in
+> sti 3 giorni, si torna a lavorare sul progetto mossbound com'era prima»). Il gioco va avanti su `piano-maestro`, tornato com'era il
+> 1° novembre sera (commit e33789e) più le note. Per riprendere il 3D si lavora da questo ramo.
+
 ## Regole del progetto
 
 - Parla sempre in italiano con Denis. Tutti i testi del gioco sono in italiano.
