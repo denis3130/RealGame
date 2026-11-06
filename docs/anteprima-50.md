@@ -82,3 +82,15 @@ Royale. All'inizio ci sono Gioca, le isole, le casse sotto l'eroe, la bustina gr
 
 `python3 tests/a50/mk.py` (costruisce `tests/a50/test_a50.html` dall'anteprima senza salvataggio pronto né scorciatoie), poi
 `node tests/a50/speciali.js`, `node tests/a50/menu.js`, `node tests/a50/zbox.js`.
+
+## Per metterla nel gioco (quando Denis dice sì)
+
+- In `src/ordine.txt`, prima di `coda.html`: `../sprite/mostri/zombie_nuovi.js` (dopo `disegno_mostri.js` va bene anche in fondo: usa
+  solo `CR._rig`), `../anteprime/zombie/speciali.js` (dopo i file della mappa) e `js/120-menu-graduale.js` (dopo 94, 96, 99, 103 e 104,
+  che crea o tocca i bottoni). Le scorciatoie dell'anteprima (zombie nuovi dal round 2, salvataggio pronto, il bottoncino per salire di
+  livello) restano solo nella pagina dell'anteprima.
+- Le prove che partono da un giocatore nuovo che passa dalla creazione (`fresh.js`, `mig.js`, `scelta.js`) troveranno il menu chiuso:
+  vanno adattate (salire di livello come `tests/a50/menu.js`, oppure toccare solo quello che è aperto). Quelle coi salvataggi pronti
+  che hanno `starter` (`menu2.js`, `menu3.js`, `gems.js`, `hand.js`) non cambiano: per loro tutto resta aperto.
+- Poi le prove di sempre (`menu2`, `menu3`, `meta2`, `zombie`, `mig`, `fresh`, `classica`, una partita automatica per capitolo) e le tre
+  di `tests/a50/`.
