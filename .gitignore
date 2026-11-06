@@ -58,3 +58,8 @@ tests/mosse_test.html
 anteprime/anteprima49_prova.html
 tests/a49/test_a49.html
 tests/a49/*.png
+anteprime/anteprima50.html
+anteprime/anteprima50_prova.html
+tests/a50/test_a50.html
+tests/a50/*.png
+tests/a50/*.jpg

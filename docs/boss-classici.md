@@ -665,6 +665,8 @@ Ogni stato ha il nome di una mossa del modello, e il modello va con l'orologio d
   - in media −2%.
 - Con l'eroe fermo il boss gli sta addosso e quasi tutto il danno viene dal contatto (25).
 - Contando solo gli attacchi (prova a parte, col contatto tolto): oggi 7,9 vite al minuto, nuovo 5,2.
+- **6 novembre** (bilanciamento misurato, Denis: sì): il contatto da 25 a 18; col giocatore automatico che si avvicina, nell'arena 4 col
+  boss si perde circa metà delle vite di prima (`docs/bilanciamento.md`).
 - Ogni colpo ha il suo avviso, quindi chi si muove ne prende molti meno. Da regolare giocando. Se la fase 2 pesa troppo si toglie prima il secondo Balzo corto, poi gli Artigli.
 - **Giunti:** nessun salto (prova a 1/2000 di p, tutte le mosse, due fasi); polso–spalla mai sotto 20 px; le corna non entrano mai nelle spalle.
 - **Giro:** girato a passi di 0,2–0,3°, niente salta.

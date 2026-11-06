@@ -394,3 +394,11 @@ gira lì, anche camminando, se `face` non è false), `fire` il grilletto (anche 
 dove guarda la visuale (la cima dello schermo, −π/2 − ψ nel mondo: Denis, «la visuale e lo sparo siano insieme»), col fascio della visuale
 e l'aiuto di mira; conta i colpi avvolgendo `W.shotHook` e disegna col direttore (`drawGround`, `drawTop`), come le abilità, solo il fascio
 largo e il mirino sullo zombie preso (Denis: «togli tutti i fasci tranne quello largo») e le aree delle abilità trascinate.
+
+## Gli zombie speciali (6 novembre, solo nell'Anteprima 50: `speciali.js`)
+
+Denis: «Zombie nuovi in partita». Il Gonfio, lo Sputatore e il Bruto (disegni in `sprite/mostri/zombie_nuovi.js`) nella partita a ondate:
+`speciali.js` (`ZM.speciali`, numeri in `ZSP`) avvolge `ZM.partita` come le abilità (99) e fa diventare speciale qualche zombie del round
+appena nato, ancora sotto terra. Nel motore due agganci che senza il file non fanno niente: `ZM.zSpec(z, dt, d, dx, dy)` nel giro degli
+zombie, dopo barriere e stordimento (se risponde vero lo zombie fa la sua mossa e salta il passo e il morso di sempre), e `ZBOX` nel
+`return` (i riquadri dipinti dei tipi nuovi, per l'immagine pronta). Regole, numeri e prove in `sprite/mostri/LEGGIMI.md` («Nella partita»).

@@ -18,7 +18,8 @@ const NH={tune:[0,3,5,7,10,7,5,3,0,-2,0,3,7,5,3,0],ti:0,base:440,sc:null,
   else if(P.proj==='flask'){ar.flask=true;ar.life=Math.min(ar.life,1.05);ar.l0=ar.life;ar.spin=Math.random()<.5?-1:1}
   else if(P.proj==='star')ar.star=true}}
 // the Ninja's fan: two more stars at the sides of every volley
-{const _v=volley;volley=function(a){_v.apply(this,arguments);if(P&&P.proj==='star'){arrow(P.x,P.y-6,a+.22,.4);arrow(P.x,P.y-6,a-.22,.4)}}}
+// (6 novembre, bilanciamento misurato: le stelline di lato da 0,4 a 0,5 e l'attacco del Ninja da 0,76 a 0,86 in 39)
+{const _v=volley;volley=function(a){_v.apply(this,arguments);if(P&&P.proj==='star'){arrow(P.x,P.y-6,a+.22,.5);arrow(P.x,P.y-6,a-.22,.5)}}}
 // a flask that leaves the field (it hit, it fell, it met a wall or a rock) bursts there
 {const _u=update;update=function(dt){const g=G,A0=g&&g.arrows,fl=A0&&A0.length?A0.filter(a=>a.flask&&!a.blade):null;_u.apply(this,arguments);
   if(fl&&fl.length&&G===g&&G.arrows===A0){const live=new Set(A0);for(const a of fl)if(!live.has(a))flaskBurst(a)}}}
