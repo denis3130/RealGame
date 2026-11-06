@@ -1,5 +1,11 @@
 # Anteprima 49 (31 ottobre 2026)
 
+**Nel gioco dal 6 novembre** (Denis, alla domanda «cosa miglioreresti nel gioco?»: «Mettila nel gioco»): 98, 99, 100, 102, 103 e 104 in fondo a
+`src/ordine.txt` dopo 97. La spinta (10.000 oro, 600 Rottami, record 15) e il salvataggio pronto restano solo nella pagina dell'anteprima.
+Collaudo nel gioco: `contatore`, `enemies`, `colpi`, `menu2`, `menu3`, `meta2`, `mig`, `fresh`, `zombie`, `classica` (300 controlli), le sei
+prove di `tests/a49/` (musica, abilità, sfida, abisso, eventi, mira) e una partita automatica per capitolo (Golem, Yeti, Idra, Fenice: quattro
+vittorie), nessun errore.
+
 Denis, alla domanda «cosa possiamo fare per migliorare il gioco?», ha scelto:
 
 - Classica: **Nemici più vivi nel gioco** (fatto e pubblicato lo stesso giorno: vedi `docs/nemici-vivi.md`), **Più fluido sul telefono**,

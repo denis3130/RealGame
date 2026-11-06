@@ -16,7 +16,7 @@
 //   di frecce e del Calderone, la striscia del Dardo d'assedio, i nemici presi da Ballata e Radici, il giro della Danza e delle Ombre; la
 //   direzione dello Scatto, dove cade la Bomba, il raggio del Rintocco, dove si mette la Tagliola); un tocco le usa come prima.
 // - Le mire (1° novembre, Denis: «fai più trasparenti e più belle le mire»): come vetro di luce (sotto, «i disegni a terra»).
-// Fuori da src/ordine.txt: va nell'Anteprima 49 (anteprime/mk_anteprima49.py). Nel motore della mappa zombie ci sono agganci che senza
+// Nel gioco dal 6 novembre (prima nell'Anteprima 49, anteprime/mk_anteprima49.py). Nel motore della mappa zombie ci sono agganci che senza
 // questo file non fanno niente (W.aimHook con {a, fire, pose, face, idle}, h.aimP, W.lookY); in 99 il bottone delle abilità chiede ad
 // aimAbDown se il dito è suo.
 // Tutto rispetta LOWFX. MIRA.on = false lo spegne.
