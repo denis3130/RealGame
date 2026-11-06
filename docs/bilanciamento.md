@@ -53,3 +53,19 @@ stessa carta presa a caso a ogni livello, la Super usata in ogni stanza. Niente 
 - Lo **Yeti** è il boss più duro al secondo: 4,4 vite in 16 s, contro 0,8 in 8 s del Golem e 3,4 in 43 s dell'Idra. Quasi tutto è contatto
   (25 a tocco): con l'eroe fermo gli sta addosso (lo dicevano già le misure dello Yeti rifatto in `docs/boss-classici.md`).
 - Il Golem muore in 8 s: con la Super e l'equipaggiamento al livello 3 il primo boss dura poco.
+
+## I ritocchi provati (da approvare)
+
+Gli stessi giocatori automatici con i numeri nuovi messi solo in una copia della pagina di prova (il gioco non cambia):
+
+| eroe | ritocco | vite rispetto all'Arciere | tempo rispetto all'Arciere |
+|---|---|---|---|
+| Ninja | oggi | ×2,10 | ×1,36 |
+| Ninja | attacco 0,76 → 0,86, stelline di lato 0,4 → 0,5 | ×1,52 | ×1,09 |
+| Bardo | oggi | ×1,50 | ×1,18 |
+| Bardo | attacco 0,92 → 1 | ×1,12 | ×1,05 |
+
+(due partite per arena, arene 1, 4, 7, 10; tutte vinte, nessun errore.) Il Ninja resta il più fragile (vita ×0,8), ma ripulisce le stanze
+quasi come l'Arciere; il Bardo diventa pari all'Arciere. Per la Cacciatrice e l'Alchimista non propongo niente: sono un po' sotto, ma per
+come sono fatti (fragile e velocissima; fiale che arrivano meno lontano ma scoppiano su tutti) chi gioca davvero li usa meglio del
+giocatore automatico.
