@@ -92,3 +92,25 @@ Firma come gli altri, `CR.<nome>(x, y, face, anim, p, sc)`; la testa ha una tele
   `python3 anteprime/mk_mostro.py --nuovi` (anche «4 direzioni»), pubblicata su https://claude.ai/artifact/MhfnMzYQg7UjU6vcPzNe3G.
 - Dopo l'ok di Denis: i fogli PNG con `tests/mostri.js` (voci in `CRE`), `KINDS` e `ZBOX` nel motore della mappa, le mosse vere (scoppio,
   sputo con la pozza d'acido, carica e schianto), i round in cui arrivano, i versi.
+
+### Nella partita (6 novembre, Anteprima 50, da approvare)
+
+Denis, alla domanda «cosa miglioreresti nel gioco?»: «Zombie nuovi in partita» (il Gonfio va bene anche lui). Le mosse vere stanno in
+`anteprime/zombie/speciali.js` (`ZM.speciali`, tutti i numeri in `ZSP`), fuori da `src/ordine.txt`: per ora solo nell'Anteprima 50
+(`python3 anteprime/mk_anteprima50.py <cartella>`). Prendono il posto di qualche zombie del round appena nato, ancora sotto terra
+(da un round in su, con una probabilità che cresce, mai troppi insieme); il primo di ogni tipo in una partita esce di sicuro, terzo zombie
+del suo primo round, e una scritta lo presenta. Tengono vita, passo e danno del round in proporzione; più monete.
+- **Lo Sputatore** (dal round 4, al massimo 2, 3 dal 12; 70 di vita, 90 monete): resta a distanza (80–230 px), tira indietro il collo e
+  sputa una palla d'acido che vola 0,8 s e cade dove eri: il cerchio verde a terra lo dice prima; dove cade resta una pozza che brucia 4 s
+  (5 ogni mezzo secondo); da vicino graffia piano (14).
+- **Il Gonfio** (dal round 6, al massimo 2; 140 di vita, 80 monete): lento; arrivato da te si gonfia 1,25 s e scoppia a .66 della mossa
+  (30 a te, 150 agli zombie vicini: anche agli altri Gonfi, a catena), e lascia una nube verde che brucia 4,5 s. Se lo uccidi scoppia subito.
+- **Il Bruto** (dal round 8, uno alla volta, due dal 15; 480 di vita, 220 monete): da lontano (110–260 px) si curva 0,75 s e la strada
+  della carica si accende a terra, poi carica dritto a 250: se ti prende 34 e ti spinge via, se sbatte contro un muro resta stordito 1,5 s
+  con le stelline; da vicino alza il braccio e lo schianta (38, anello di polvere e crepe a terra).
+- Le abilità zombie (99) li toccano come gli altri: lo stordimento ferma la loro mossa. Voci proprie (`KV` di `audio_zombie.js`).
+- Agganci nel motore della mappa (`motore.js`), che senza il file non fanno niente: `ZM.zSpec` nel giro degli zombie (il turno di uno
+  speciale mentre fa una mossa sua) e `ZM.ZBOX` esportato (il riquadro dipinto di ogni tipo per l'immagine pronta, misurato in tutte le
+  mosse, 16 direzioni e tre inclinazioni con `node tests/a50/zbox.js`).
+- Prove: `python3 tests/a50/mk.py`, poi `node tests/a50/speciali.js` (foto `tests/a50/sp_*.png`) e `node tests/a50/zbox.js`.
+- Nell'anteprima escono prima, per vederli subito: lo Sputatore dal round 2, il Gonfio dal 3, il Bruto dal 4.

@@ -405,6 +405,28 @@ quattro vittorie), nessun errore. Pubblicato su claude.ai e nell'app lo stesso g
   la Classica e le abilità trascinate come prima. Prova `node tests/a49/mira.js` (37 controlli, foto `tests/a49/mi_*.png`). Dettagli in
   `docs/anteprima-49.md` (8, 8b, 8c, 8d e 8e).
 
+## Anteprima 50 (6 novembre, da provare)
+
+Denis, alla domanda «cosa miglioreresti nel gioco?» (6 novembre), ha scelto: Anteprima 49 «Mettila nel gioco» (fatto, sopra); Zombie:
+«Zombie nuovi in partita»; Classica: «Menu che si apre piano», «Bilanciamento misurato», «Più fluido sul tuo iPhone» (servono i numeri del
+contatore dal suo telefono: Impostazioni → Contatore, «Copia»). Le cose nuove stanno in file loro fuori da `src/ordine.txt` e vanno
+nell'**Anteprima 50** (il gioco di oggi più i file di `NUOVI` in `anteprime/mk_anteprima50.py`, prima della chiusura):
+`python3 anteprime/mk_anteprima50.py <cartella>` (divisa come il gioco), pubblicata su https://claude.ai/artifact/VWQta6wf9zkT8PLyaLdm2T (si aggiorna ripubblicando la
+stessa cartella). Nella pagina si parte da giocatore nuovo con l'eroe già fatto, «Anteprima: sali di livello ▲» fa salire di livello, e
+gli zombie nuovi escono prima (round 2, 3 e 4). Dettagli, tabelle e prove in `docs/anteprima-50.md`.
+- **Zombie nuovi in partita** (`anteprime/zombie/speciali.js`, `ZM.speciali`, numeri in `ZSP`): lo **Sputatore** (dal round 4: sputa
+  da lontano una palla d'acido dove eri, col cerchio verde prima, e lascia una pozza che brucia), il **Gonfio** (dal 6: vicino a te si
+  gonfia e scoppia, anche a catena e sugli zombie, nube che brucia; ucciso scoppia subito) e il **Bruto** (dall'8: si curva, la strada
+  della carica si accende, carica e ti spinge via o sbatte contro un muro e resta stordito; da vicino lo schianto); qualche zombie del
+  round diventa speciale appena nato, il primo di ogni tipo sicuro e presentato da una scritta. Agganci inerti nel motore: `ZM.zSpec`,
+  `ZBOX` esportato. Prove `node tests/a50/speciali.js`, `node tests/a50/zbox.js`.
+- **Il menu che si apre piano** (`src/js/120-menu-graduale.js`, `APRE`, `SAVE.apre`): per chi crea l'eroe da adesso i bottoni si aprono
+  salendo di Livello esploratore (dopo la prima partita le Missioni, poi dal livello 2 all'8 Eroi, accesso, Zombie, compagni, Ruota,
+  Bottega, Pass, Albero, Cammino e Traguardi, Sfida, Abisso, Torre/Corsa/Reliquie, Evento); prima non si vedono o hanno il lucchetto
+  col livello (un tocco dice quando si aprono); «Si è aperto!» li presenta, poi «Nuovo» finché non li tocchi; nella Classica «Premi»
+  segue i suoi quattro; i salvataggi di prima hanno tutto aperto. Prova `node tests/a50/menu.js`.
+- Prove: `python3 tests/a50/mk.py`, poi le tre di `tests/a50/`.
+
 ## Il 3D vero (2–5 novembre): messo da parte nel ramo `progetto-3d`
 
 Denis, 6 novembre: «salva tutto a parte delle cose 3d che abbiamo fatto in sti 3 giorni, si torna a lavorare sul progetto mossbound com'era
