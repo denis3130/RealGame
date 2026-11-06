@@ -1,8 +1,5 @@
 # L'Arciere in 3D e le sue armi (nel gioco dal 12 ottobre)
 
-**Per ogni cosa nuova in 3D vero** (dal 4 novembre, Denis: «d'ora in poi ogni cosa in 3d dovrai adoperare per farla al meglio come questa
-che hai fatto»): la formula dello zombie base, in `sprite/mostri3d/LEGGIMI.md` («La formula per il 3D»). L'eroe e le armi di questa cartella restano come sono finché Denis non chiede di rifarli.
-
 `disegno_eroe.js` disegna l'eroe della modalità Classica (l'Arciere) con il metodo dei mostri nuovi: scheletro 3D proiettato con `V(face)` e la cassetta degli attrezzi `CR._rig` di `sprite/mostri/disegno_mostri.js`. `armi3d.js` fa tutte le armi in 3D, viste dalla stessa telecamera: i quattro archi delle carte, la balestra leggera, il bastone del Druida e le otto armi della modalità zombie. Ordine di caricamento, dentro la funzione principale di `index.html`: `disegno_mostri.js`, poi `sprite/armi/disegno_armi.js` (serve solo per vampe, colpi, bossoli, razzo e fumo delle armi zombie), poi `armi3d.js`, poi `disegno_eroe.js`. Senza `armi3d.js` l'eroe disegna ancora l'arco piatto di prima.
 
 `EROE.arciere(x, y, face, anim, p, sc, o)`:
@@ -116,16 +113,3 @@ Dal 13 ottobre anche gli altri tre eroi sono in 3D sullo stesso corpo (`H3IDS` i
   bossoli.
 - Fogli: `node tests/ricarica4.js [armi]`, `node tests/ricarica_tutte.js`; pagina dal vivo con suoni e versi: `python3 anteprime/mk_armi3d.py`.
   L'Arciere della Classica resta identico al pixel.
-
-## I pezzi in 3D senza disegnare (2 novembre: l'eroe in 3D vero nella visuale in terza persona)
-
-Denis: «metti il pg in 3d, non può essere in 2d, ce l'abbiamo già il modello in 3d usiamo quello». `EROE.rig3d(verso, mossa, p, o)` (stessi
-argomenti di `arciere` senza x, y e grandezza) non disegna niente: fa lo stesso inizio di `arciere0` (lo stile risolto `S` coi colori del
-vestito, la posa `A` con la presa delle armi zombie, il rinculo, la ricarica, `o.mix`, `o.tweak`, i maghi sospesi) e restituisce i pezzi
-nel sistema dell'eroe (x avanti, y la sua destra, z in su, dai piedi): `X` (`frame(A)`: `T`, `Rd`), `Hc` e `Rh` (la testa), `prof`, `bz`,
-`ax`, `zb` (gli anelli del corpo), `feet` (i due piedi), `hands` (le mani libere, `[punto, raggio]`), `tool` (il martello delle riparazioni),
-`head` (giro e cenno della testa, `FACE`, `EYE`, `CHEEK`, `MOUTH`, palpebre, strizzata, occhi chiusi, bocca, colore degli occhi, guance),
-`paintHead(ang)` (la testa dipinta dal gioco vista da `ang`, per le teste con pezzi propri), `gun` (`id`, `cls`, il riferimento `fr` di
-ARMI3D, lo stato `st` già con la ricarica della mano, `s`, `flash`, `rec`, `kick`, `rl`, e `hands(kp)` che dai punti dell'arma dà le due mani
-come in `weaponParts`). La visuale (`src/js/105-visuale-3d.js`) ne fa triangoli e costruisce le armi coi modelli di `ARMI3D.M` e un kit suo.
-Il disegno dell'eroe non cambia: 800 disegni (4 eroi, 4 armi, 5 mosse, 5 lati, 2 momenti) confrontati col file di prima, identici al pixel.

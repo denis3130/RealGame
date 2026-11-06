@@ -1,8 +1,5 @@
 # Nemici e boss della Classica in 3D (nel gioco dal 13 ottobre)
 
-**Per ogni cosa nuova in 3D vero** (dal 4 novembre, Denis: «d'ora in poi ogni cosa in 3d dovrai adoperare per farla al meglio come questa
-che hai fatto»): la formula dello zombie base, in `sprite/mostri3d/LEGGIMI.md` («La formula per il 3D»). I modelli di questa cartella restano come sono finché Denis non chiede di rifarli.
-
 Richiesta di Denis del 13 ottobre: «ricreami tutti i boss ed i nemici in 3d come hai fatto col pg». Ogni mostro è quello di oggi nel
 gioco (stessi colori, stessi pezzi, stesse proporzioni, stessi occhi), rifatto con volumi 3D visti dalla telecamera dei mostri
 (`V(face)` di `CR._rig`), quindi gira a 360 gradi; è dipinto come l'Arciere 3D: tre toni che sfumano con la luce calda dall'alto a

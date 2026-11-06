@@ -1,8 +1,5 @@
 # Nemici della modalità zombie (bozza, non ancora nel gioco)
 
-**Per ogni cosa nuova in 3D vero** (dal 4 novembre, Denis: «d'ora in poi ogni cosa in 3d dovrai adoperare per farla al meglio come questa
-che hai fatto»): la formula dello zombie base, in `sprite/mostri3d/LEGGIMI.md` («La formula per il 3D»). Qui ci sono i disegni sulla tela (il metodo dello spaventapasseri), che restano come sono.
-
 `disegno_mostri.js` disegna i mostri con le funzioni del gioco (`ctx`, `ink`, `ell`, `shadow`, `glow`, `INK`, `LOWFX`, `G.t`). Va eseguito dentro la funzione principale di `index.html`; espone `CR.zombie`, `CR.strisciante`, `CR.minatore`, `CR.lanterna`, `CR.hound`, `CR.becchino`, `CR.spaventapasseri` con firma `(x, y, face, anim, p, sc)`: `x, y` è il punto dei piedi, `face` la direzione in radianti, `p` va da 0 a 1 lungo la mossa, `sc` la grandezza.
 
 - **Zombie della cripta** (`zombie`): `idle`, `walk` (zoppica trascinando la gamba sinistra, braccia tese in avanti), `attack` (alza le braccia sopra e dietro la testa, poi graffia in avanti).

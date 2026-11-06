@@ -12923,46 +12923,11 @@ function ringOn(V0,h3,id){const it=typeof ITEM!=='undefined'&&ITEM[id],r=it?[it.
   ink(1.1);ctx.fillStyle=r[0];ball([q[0]+1.2,q[1]+.6],1.7);ctx.fill();ctx.stroke();ctx.fillStyle=r[1];ball([q[0]+1.2,q[1]+.6],.8);ctx.fill();
   if(r[2]>=2)shine(id==='anello_gelo'?'160,220,255':id==='anello_vento'?'150,240,240':'120,170,255',q[0]+1.2,q[1]+.6,6,.32*(.5+.5*Math.sin(G.t*5)))}
 
-// the hero's pieces in 3D, without drawing anything (the zombie match seen in third person, src/js/105-visuale-3d.js, makes them of
-// triangles): for this move at p, the same pose, frame, head, feet, hands and weapon as arciere0, in the hero's own frame (x forward, y his
-// right, z up, from his feet; turned by `face` into the room). The drawing above is not touched: the hero stays identical to the pixel
-function rig3d(face,anim,p,o){o=o||{};const S0=o.style||{},arm=S0.armor==='none'?'none':S0.armor&&ARM[S0.armor]?S0.armor:'giubba',AR=ARM[arm]||ARM.giubba;
-  const S={...S0,body:S0.body||AR[0],hood:S0.hood||AR[1],skin:S0.skin||HC.skin,belt:S0.belt===null?null:S0.belt||HC.belt};
-  const OF=VESTITI[S0.outfit||S0.skinId]||null;S.hand=(OF&&OF.glove)||S.skin;if(OF){S.of=OF;if(OF.foot)S.foot=OF.foot;if(OF.foot2)S.foot2=OF.foot2}
-  const W3=typeof ARMI3D!=='undefined'?ARMI3D:null,wid=weaponOf(S0),gunW=W3&&wid&&wid!=='arco';let A=pose(anim,p,o),Wp=null;
-  if(o.mix&&o.mix[2]>0)A=mixPose(A,pose(o.mix[0],o.mix[1],o),cl(o.mix[2],0,1));
-  if(gunW){if(anim==='shoot'||anim==='aim'){A=pose('idle',p,o);A.fL=[2.2,-5.2,0];A.fR=[-1,5,0];A.hd=[.3,0,0];A.hp=.04;A.hy=0;A.squint=anim==='shoot'?.55:.35;A.inhale=A.exhale=0}
-    Wp=wpose(A,anim,p,wid,o);if(Wp.rl&&Wp.rl.b){const b=Wp.rl.b;A.hp+=.22*b;A.hy+=.3*b;A.squint=Math.max(A.squint||0,.25*b)}if(Wp.rec>0&&Wp.kick){const k=Wp.rec*Wp.kick[0]/3;A.lean=.02-.06*k;A.B=add(A.B,[-.7*k,0,0]);A.hd=add(A.hd,[-.4*k,0,.1*k])}
-    if(Wp.lean!=null){A.lean=Wp.lean;A.hd=add(A.hd,[Wp.lean*3,0,0]);if(Wp.body)A.B=add(A.B,Wp.body);if(Wp.sq)A.s=Wp.sq}}
-  if(S0.float){const fl=7+2.4*Math.sin(p*TAU+.4);A.B=[A.B[0],A.B[1],A.B[2]*(anim==='walk'?.2:1)+fl];A.roll*=.4}
-  if(o.tweak)o.tweak(A,p);
-  const X=frame(A),Hc=add(X.T([.5,0,ZB+15]),add(X.Rd([0,0,7.4]),A.hd)),Rh=10;
-  const R={S,S0,A,X,Hc,Rh,arm,OF,wid,prof:S0.robe?ROBE:PROF,bz:S0.robe?0:ZB,ax:AX,zb:ZB,feet:!S0.robe&&!S0.float?[A.fL,A.fR]:null,hands:[],gun:null,tool:null,
-    // the head turns on its own (A.hy: the look) and nods (A.hp), as Vat(face + A.hy) and nod() above; its face, eyes, cheeks and mouth
-    head:{yaw:face+A.hy+(o.look||0),nod:A.hp,FACE,EYE,CHEEK,MOUTH,blink:A.blink==null?1:A.blink,squint:A.squint||0,shut:A.shut||0,mouth:A.mouth||0,eyeCol:S0.eyes||HC.eye,blush:S0.blush!==false},
-    // the head as drawn by the game (every hero, look, hat and piece of it), seen from `ang` (the face as on the screen): for a picture of it
-    paintHead:ang=>head(Vat(ang,[0,0],0),Rh,S,A,{blink:A.blink,squint:A.squint,shut:A.shut,mouth:A.mouth,moss:false,inhale:A.inhale,exhale:A.exhale,eyeLight:o.eyeLight!==false,
-      eyeCol:S0.eyes,glow:S0.glowEyes&&S0.eyes?hexRgb(S0.eyes):null,blush:S0.blush,sway:A.sway}),flash:A.flash||0,stars:A.stars||0};
-  if(gunW){const cls=Wp.cls,r=Wp.rec,kk=Wp.kick||[0,0];let aimB=Wp.aim,upB=Wp.up;if(r>0&&kk[1]){const th=kk[1]*r,c=Math.cos(th),sn=Math.sin(th);[aimB,upB]=[add(mul(aimB,c),mul(upB,sn)),sub(mul(upB,c),mul(aimB,sn))]}
-    const g3=X.T(sub(Wp.grip,mul(Wp.aim,kk[0]*r*.55))),fr=W3.frame(g3,nrm(X.Rd(aimB)),nrm(X.Rd(upB)),Wp.s);
-    const st={...Wp.st};if(wid==='balestra')st.col=S.bowCol;if(wid==='fiala')st.col=S.flask;if(wid==='bastone'||wid==='scettro')st.orbCol=S.eyeCol||'#9fff7a';
-    let RH=null;if(Wp.rl&&W3.keys&&typeof ARMI!=='undefined'&&ARMI.RLT){const kp0=W3.keys(wid,st),loc=q=>{const d=sub(X.T(q),fr.O);return[dot(d,fr.X)/fr.s,dot(d,fr.Y)/fr.s,dot(d,fr.Z)/fr.s]};
-      RH=reloadHand(Wp.rl,st,kp0,loc,kp0.sup||loc(Wp.hL));R.mag=kp0.magSeat&&Wp.rl.kind==='mag'?add(kp0.magSeat,mul(kp0.magDir,kp0.magLen*.6)):null}
-    // the hands on the weapon (in its frame), from its key points for this state: the right one on the grip (or on the crossbow's string), the
-    // left one on the fore-grip or the pump, or where the reload takes it, or pushing the rocket in
-    R.gun={id:wid,cls,fr,st,s:Wp.s,flash:Wp.flash,rec:Wp.rec,kick:Wp.kick||[0,0],rl:Wp.rl&&Wp.rl.b||0,k:Wp.k||0,hands:kp=>{let rh=kp.strum||[0,0,0];const pl=Wp.pull;
-      if(pl&&kp.nut){const at=[kp.nut[0]+.2,4.3,0],far=[10.4,4.3,0];rh=pl.ph===1?lerp3([0,0,0],far,ez(pl.t)):pl.ph===2?at:lerp3([-.4,4.3,0],[0,0,0],ez(pl.t))}
-      let lh=RH||kp.sup;const ld=Wp.load;if(ld&&lh){const off=(1-ez(Wp.st.loaded||0))*9,on=[16.6+off,4.2,0];lh=ld.ph===1?lerp3(kp.sup,[25.6,4.2,0],ez(ld.t)):ld.ph===2?on:lerp3([16.6,4.2,0],kp.sup,ez(ld.t))}
-      return{rh,lh}}};
-    if((cls==='one'||cls==='staff')&&!RH)R.hands.push([X.T(Wp.hL),2.7])}
-  else if(!wid){const hR=X.T(A.hR),hL=X.T(A.hL||[A.hR[0],-A.hR[1],A.hR[2]]);R.hands.push([hR,2.7],[hL,2.7]);
-    if(o.tool==='martello'&&A.tool!=null){const a=A.tool,dir=X.Rd([Math.cos(a),0,Math.sin(a)]),crs=X.Rd([Math.sin(a),0,-Math.cos(a)]),hd=add(hR,mul(dir,6.4));R.tool={a:hR,b:hd,k0:sub(hd,mul(crs,1.6)),k1:add(hd,mul(crs,2.6))}}}
-  return R}
 // only the head, its centre at x, y (the little portraits of the making of the hero): standing still, turned to `face`
 function testa(x,y,face,sc,o){o=o||{};const S0=o.style||{},AR=ARM[S0.armor]||ARM.giubba,S={...S0,body:S0.body||AR[0],hood:S0.hood||AR[1],skin:S0.skin||HC.skin};
   const A=pose('idle',o.p==null?.25:o.p,o);A.hy=0;ctx.save();ctx.translate(x,y);ctx.scale(sc,sc);
   try{head(Vat(face,[0,0],0),10,S,A,{blink:1,squint:0,shut:0,mouth:0,moss:false,eyeLight:true,eyeCol:S0.eyes,glow:S0.glowEyes&&S0.eyes?hexRgb(S0.eyes):null,blush:S0.blush,sway:0})}finally{ctx.restore()}}
-return{arciere,testa,rig3d,pose,ARM,BOWS,HC,ROBE,VESTITI,nota:musicNote,stella:starShape,fiala:flaskShape,hatCol:HAT_COL,kit:{surf,surfLine,soft,dk,lt,line,poly,sp,capPath,rotY,keys,ZB,AX,HC}}})();
+return{arciere,testa,pose,ARM,BOWS,HC,ROBE,VESTITI,nota:musicNote,stella:starShape,fiala:flaskShape,hatCol:HAT_COL,kit:{surf,surfLine,soft,dk,lt,line,poly,sp,capPath,rotY,keys,ZB,AX,HC}}})();
 // I vestiti nuovi dell'eroe (punti 39 e 40 del piano di Denis, anteprima 47): non variazioni di colore ma vestiti con una personalità, fatti
 // di pezzi veri sul corpo 3D dell'Arciere (sprite/eroe3d/disegno_eroe.js): toppe cucite, strappi con i fili, cuciture, cappucci con i
 // lacci, mantelli che ondeggiano, code del frac, fusciacche, catene, stampe che brillano. Cinque scuri e strappati (più adatti alla modalità
@@ -18652,13 +18617,11 @@ function boot(area,o){o=o||{};const GAME=!!o.game;let ACT=!GAME,RUN=false,PAUSE=
       else if(whole){if(!wholeFit||look.id==null)wholeFit=fitWhole(Wp,Hp);tx=W.w/2;ty=W.h/2;z=zoomOv||wholeFit[0];oyT=wholeFit[1]}
       else{const lk=(h.lvz||0)*CAM.CP/CAM.SP;tx=h.x-CAM.s*lk;ty=h.y-CAM.c*lk;z=zoomOv||Wp/330;oyT=24*CAM.CP}// l'eroe è il perno: girando resta fermo sullo schermo; sta 24 px (più alto se inclinato) sotto il centro
       const k6=Math.min(1,dt*6);CAM.z+=(z-CAM.z)*Math.min(1,dt*8);CAM.x+=(tx-CAM.x)*k6;CAM.y+=(ty-CAM.y)*k6;CAM.oy+=(oyT-CAM.oy)*k6;camDerive();
-      // (W.v3: la visuale in terza e prima persona, src/js/105-visuale-3d.js, solo nella sua anteprima: disegna lei il mondo, qui restano levette e vignetta)
-      const V3=W.v3&&W.v3.on?W.v3:null;ctx.setTransform(dpr,0,0,dpr,0,0);if(V3){ctx.clearRect(0,0,Wp,Hp);try{V3.draw(dt,Wp,Hp,dpr)}catch(e){console.error(e)}}else{
-      ctx.fillStyle='#0b0c12';ctx.fillRect(0,0,Wp,Hp);if(area.backdrop)area.backdrop(Wp,Hp);
+      ctx.setTransform(dpr,0,0,dpr,0,0);ctx.fillStyle='#0b0c12';ctx.fillRect(0,0,Wp,Hp);if(area.backdrop)area.backdrop(Wp,Hp);
       // (FASE 9) a vista dritta la telecamera sta su pixel interi della tela: le copie degli strati fermi (lcDraw) cadono 1:1
       {const k=dpr*CAM.z,ex=dpr*(Wp/2-CAM.x*CAM.z),ey=dpr*(Hp/2+(CAM.oy-CAM.y)*CAM.z),pin=!CAM.rot&&!W.dbg.noLC;ctx.setTransform(k,0,0,k,pin?Math.round(ex):ex,pin?Math.round(ey):ey)}
       if(tk){ctx.getImageData(0,0,1,1);tk('backdrop')}drawWorld(dt,{Wp,Hp});if(tk){ctx.getImageData(0,0,1,1);tk('world')}
-      drawDark(cv.width,cv.height,(x,y,r)=>{const p=scr(x,y);return[p[0],p[1],r*CAM.z*dpr]},houses[0]?houses[0].a:1);if(tk){ctx.getImageData(0,0,1,1);tk('dark')}}
+      drawDark(cv.width,cv.height,(x,y,r)=>{const p=scr(x,y);return[p[0],p[1],r*CAM.z*dpr]},houses[0]?houses[0].a:1);if(tk){ctx.getImageData(0,0,1,1);tk('dark')}
       ctx.setTransform(dpr,0,0,dpr,0,0);if(!W.dbg.noSticks&&!whole){drawStick(stick,64,Hp-196);drawLook(Wp-64,Hp-(W.lookY||196))}
       zVig(Wp,Hp);
       const show=hudOn&&!W.dbg.noSticks;if(nordEl.hidden===show)nordEl.hidden=!show;if(show)drawNord();if(tk){ctx.getImageData(0,0,1,1);tk('hud')}
@@ -18765,7 +18728,7 @@ orderReset:()=>{ORD.mm.m=new Map();ORD.fm.m=new Map();ORD.fr+=5},
     texStats:()=>{let n=0,px=0,np=0,pp=0;for(const k in TEX){n++;px+=TEX[k].width*TEX[k].height}for(const k in PLANES){np++;pp+=PLANES[k].width*PLANES[k].height}return{n,mpx:+(px/1e6).toFixed(2),np,mpp:+(pp/1e6).toFixed(2)}},
     buys,equip,buyNow:id=>{const o=buys.find(b=>b.id===id);return o?o.act():null},box:()=>BOX,boxTo:i=>{const q=BOX.spots[i];boxPlace(q[0],q[1],q[3]||0);navBuild();if(NAV)NAV.hc=-1;return[q[0],q[1]]},coins:v=>{if(v!=null)W.coins=v;return W.coins},gun:()=>gunState,nuova:()=>CTL.nuova()};
   return CTL}
-return{HSTYLE,bara:()=>BOX,scala,STAIRS,sameLv,heroLv,climbStart,SB,pickHole,holeDist,zoneOk,shutNear,farOpen,groundSpot,riposiziona,toWorld:(x,y)=>TURN?tP(TURN,x,y):[x,y],dirWorld:(x,y)=>TURN?tV(TURN,x,y):[x,y],AREE,anteprima,boxReset,stile,idleZombie,buyable,buys,barrier,BARS,barCheck,sorpresa,equip,hurt,spawn,KINDS,move,zWalk,sep,physClear,gun:()=>gunState,navRebuild:()=>{navBuild();if(NAV)NAV.hc=-1},softImg,turn,group,grp,finalize,facing,across,onGround,onPlane,onRound,ringNear,T,CAM,W,S,LS,MOON,inGround,scrAng,decals,fades,NAMES,stand,stands,heightAt,add3,sub3,len3,rnd,rr,srand,ink,path,hull,material,MAT,MARKS,texture,tone,face,hullOf,ballAt,line3,poly3,fn3,box,prismX,prismY,plane,cyl,prop,solid,shade,shadeR,props,solids,shadows,lights,flames,holes,houses,smokes,perches,hit,bakeGround,edgeSnap,boot,bootAsync,libera,ricuoci,setLive:f=>{liveDraw=f},wa,mix,cl,ez,lerp,TAU,ball,seg}})();
+return{scala,STAIRS,sameLv,heroLv,climbStart,SB,pickHole,holeDist,zoneOk,shutNear,farOpen,groundSpot,riposiziona,toWorld:(x,y)=>TURN?tP(TURN,x,y):[x,y],dirWorld:(x,y)=>TURN?tV(TURN,x,y):[x,y],AREE,anteprima,boxReset,stile,idleZombie,buyable,buys,barrier,BARS,barCheck,sorpresa,equip,hurt,spawn,KINDS,move,zWalk,sep,physClear,gun:()=>gunState,navRebuild:()=>{navBuild();if(NAV)NAV.hc=-1},softImg,turn,group,grp,finalize,facing,across,onGround,onPlane,onRound,ringNear,T,CAM,W,S,LS,MOON,inGround,scrAng,decals,fades,NAMES,stand,stands,heightAt,add3,sub3,len3,rnd,rr,srand,ink,path,hull,material,MAT,MARKS,texture,tone,face,hullOf,ballAt,line3,poly3,fn3,box,prismX,prismY,plane,cyl,prop,solid,shade,shadeR,props,solids,shadows,lights,flames,holes,houses,smokes,perches,hit,bakeGround,edgeSnap,boot,bootAsync,libera,ricuoci,setLive:f=>{liveDraw=f},wa,mix,cl,ez,lerp,TAU,ball,seg}})();
 // ---------- PROP della mappa zombie: tutto ciò che sta in piedi sul terreno, costruito sul motore (ZM) con volumi 3D che si piegano
 // via dall'eroe. Ogni prop registra i suoi pezzi (facce con texture, sfere, linee), i solidi per le collisioni, le ombre da cuocere nel
 // terreno, le luci e le fiamme. Misure in pixel del gioco (una casella = 64; l'eroe è alto circa 30).
@@ -27525,8 +27488,6 @@ reg('golem2',{n:'Golem di Muschio',g:'boss',sc:1,an:MV.slice(),dur:Object.assign
 // «Prima e dopo»: the Golem of today
 // (the drawing of today is kept now: once the game puts this model in place of N3.golem, N3.golem is the new one)
 {const OLD=N3.golem,M0=N3.meta.golem;if(OLD&&M0)N3.meta.golem2.old=(x,y,f,a,pp)=>OLD(x,y,f,M0.an.includes(a)?a:'idle',pp,M0.sc||1,{})}
-// (for the room in true 3D of the «tripla A» preview: the pose of a moment and the measures of the body, read without drawing anything)
-N3.meta.golem2.k3={gPose:(an,p,o)=>gPose(MV.includes(an)?an:'idle',p,o||{}),MV,TC,TR,BC,BR,BRZ,BRR,HC,HRD,SHC,SHR,SHPAD,SHJ,LUA,LFA,FR,HIP,LTH,LSH,FOOTR,HM,SG,MOUND,VEINS,CRACKS,H0L,H0R,K1,K2,pal,cooled};
 })();
 // LA SALAMANDRA DI LAVA rifatta: «la Regina del Vulcano» (Denis, 15 ottobre: «rivisita tutti i boss, rendili più creepy e fatti meglio sia
 // da fermi che nelle animazioni», «un po' più cupi», «falli possenti, belli, fighi, che diano timore nello sfidarli»; approvato il Golem,

@@ -394,12 +394,3 @@ gira lì, anche camminando, se `face` non è false), `fire` il grilletto (anche 
 dove guarda la visuale (la cima dello schermo, −π/2 − ψ nel mondo: Denis, «la visuale e lo sparo siano insieme»), col fascio della visuale
 e l'aiuto di mira; conta i colpi avvolgendo `W.shotHook` e disegna col direttore (`drawGround`, `drawTop`), come le abilità, solo il fascio
 largo e il mirino sullo zombie preso (Denis: «togli tutti i fasci tranne quello largo») e le aree delle abilità trascinate.
-
-## La visuale in terza e prima persona (2 novembre, anteprima a parte: `src/js/105-visuale-3d.js`)
-
-Aggancio in `motore.js` che senza quel file non fa niente: in `render()`, dopo la telecamera, se `W.v3.on` il mondo lo disegna
-`W.v3.draw(dt, Wp, Hp, dpr)` invece di sfondo, `drawWorld` e `drawDark` (la tela del motore resta trasparente sopra la tela WebGL e ci
-disegna levette, vignetta e bussola come sempre); in `ZM` anche `HSTYLE` (lo stile dell'eroe della mappa) e `bara()` (la Bara delle
-Sorprese, `BOX`). Il file rifà in WebGL i pezzi dei prop (`face`, `facepoly`, `plane`, `poly`, `line`, `ball`, `fn` come cartoline), il
-terreno cotto, le luci e la nebbia, e disegna zombie, eroe e Bara coi loro disegni dipinti; la telecamera è quella della mappa (`CAM.yaw`
-dove si guarda, `CAM.el` quanto in alto o in basso), così levetta, visuale e mira (104) restano le stesse. Note in `docs/visuale-3d.md`.

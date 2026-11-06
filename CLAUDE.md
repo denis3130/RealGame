@@ -10,19 +10,12 @@ Roguelite in stile Archero per telefono, pubblicato come un solo file HTML5 (`in
 - Stile grafico deciso: un mix tra Clash Royale (forme robuste, contorni scuri spessi, colori pieni, materiali "da giocattolo") e Archero 2 (leggibilità in battaglia, luci cinematografiche, effetti spettacolari). Il pavimento resta più spento; personaggi, pericoli e premi devono risaltare.
 - I personaggi devono essere coerenti in tutte le direzioni (davanti, lato, dietro): ogni parte resta attaccata al punto giusto del corpo. Prima di inserire un personaggio nuovo, mostrare a Denis le quattro direzioni affiancate.
 - **Modello per l'aspetto di tutto quello che si disegna: lo Zombie della lanterna** (`sprite/mostri/disegno_mostri.js`). Si copia solo come è dipinto (tre toni su ogni pezzo, bordo illuminato con `rim`, `shadeLimb`, `glowTop`, pieghe e segni leggeri, bagliori morbidi, colori ricchi), mai i suoi pezzi: niente muschio, strappi o oggetti in più sui personaggi che esistono, che restano identici. La lanterna non si modifica e i suoi fogli PNG devono restare identici al pixel.
-- **Metodo per ogni personaggio, mostro o animazione nuova disegnata sulla tela: quello dello Zombie spaventapasseri** (funzione `spaventapasseri` in `sprite/mostri/disegno_mostri.js`; prima leggere `sprite/mostri/LEGGIMI.md`; per il 3D vero vale la formula della regola dopo).
+- **Metodo per ogni personaggio, mostro o animazione nuova: quello dello Zombie spaventapasseri** (funzione `spaventapasseri` in `sprite/mostri/disegno_mostri.js`; prima leggere `sprite/mostri/LEGGIMI.md`).
   - Scheletro 3D proiettato con `V(face)`: ogni pezzo è attaccato a un punto del corpo, così il personaggio gira a 360 gradi senza che niente si stacchi.
   - Braccia e gambe a due ossa con la cinematica inversa (`ik`). L'ordine di disegno lo decide la posa di riposo (`parts` + `run`), mai la mano o il piede che si muove.
   - I pezzi che girano per conto loro, come il cappello e il corvo, hanno una telecamera loro (`Vat`).
   - Ogni mossa dipende solo da `p` (da 0 a 1), così l'ultimo fotogramma si collega al primo. Mosse chiare: preparazione, colpo, ritorno.
   - Controlli: rispettare `LOWFX` e confrontare i tempi di disegno con gli altri mostri. Prima di metterlo nel gioco mostrare a Denis le quattro direzioni affiancate e una pagina dove lo vede muovere e girare dal telefono. Poi i fogli con `node tests/mostri.js <nome>`, controllando che i fogli della lanterna non cambino (`git status` pulito su `lanterna_*.png`).
-- **La formula per ogni cosa in 3D** (Denis, 4 novembre: «d'ora in poi ogni cosa in 3d dovrai adoperare per farla al meglio come questa che hai fatto è chiaro? salvala su tutto questa tua nuova formula per la creazione in 3d è eccezionale»): personaggi, mostri, boss, oggetti e animazioni in 3D vero si fanno come lo zombie base in 3D (`sprite/mostri3d/zombie.js`, coi pezzi comuni della cassetta `sprite/mostri3d/kit3d.js`, disegnato da `sprite/mostri3d/mb3.js`; fatti così anche lo strisciante, `strisciante.js`, e il minatore, `minatore.js`; la formula passo per passo in `sprite/mostri3d/LEGGIMI.md`, «La formula per il 3D»; prima leggerla).
-  1. Le misure, i pezzi e i colori di quello che esiste già (il disegno di oggi), presi così come sono.
-  2. Il corpo costruito nel codice con forme vere fatte di triangoli (palle con le cose scavate dentro, tubi che si stringono lungo un percorso, orli stracciati, buchi veri, coni, tubicini): niente programmi esterni né modelli scaricati (Meshy non si usa).
-  3. Uno scheletro con le ossa e i pesi: ogni punto attaccato a una o due ossa, giunture condivise che si piegano morbide, la mascella per la bocca che si apre.
-  4. Dipinto come la lanterna dal nostro `mb3.js`: tre toni, luna sui bordi, contorno spesso, segni e rilievo calcolati dalla posa di riposo (restano attaccati al corpo), ombre cotte dove i pezzi si toccano, luci che pulsano; con `LOWFX` più leggero.
-  5. Le mosse scritte da noi, ognuna solo da `p`, con preparazione, colpo e ritorno, braccia e gambe con la IK, nel design della sua modalità (innaturali nella Zombie, vivaci nella Classica).
-  6. Il controllo con le foto (ogni mossa in sei momenti, le quattro direzioni accanto a quello di oggi), correggendo quello che non va, poi una prova automatica e una pagina per il telefono, pubblicata, e a Denis sempre il link dell'anteprima per vederli (Denis, 4 novembre: «e dammi sempre l'anteprima per vederli»); niente nel gioco senza il sì di Denis.
 - **Tutto si adegua allo stile dei nemici nuovi in 3D** (Denis, 11 ottobre): anche la mappa zombie, i menu e ogni cosa nuova si costruiscono come volumi 3D visti dalla stessa telecamera dei mostri (lo schermo è x, y·0,55 − z) e si dipingono come la lanterna. Prova attuale: un angolo di 10×10 caselle come plastico sospeso, con la telecamera girata di lato (`PSI`) così si vedono tetto, lato sud e lato est di ogni volume, facce illuminate dalla luna, segni dei materiali in 3D (la mappa 25×25 piatta della prima prova è nel commit a916cae): `anteprime/mappa3d.js` (`python3 anteprime/mk_mappa3d.py`, pubblicata su https://claude.ai/artifact/Sw43VFJjGvrtkUs2t18fek).
 - Segno distintivo dell'eroe: un bastoncino di muschio verde acceso in bocca, solo nella schermata iniziale e nella intro, mai in battaglia.
 - Prima di cambiare qualcosa di grosso, chiedere a Denis. Quando dice «annota», si annota e basta. Il piano maestro (sotto) è approvato: dentro il piano si procede un pezzo alla volta senza richiedere, ma i disegni nuovi passano sempre dalle quattro direzioni.
@@ -32,7 +25,7 @@ Roguelite in stile Archero per telefono, pubblicato come un solo file HTML5 (`in
 
 - `src/pagina.html` (HTML e CSS fino all'apertura dello script, con la schermata d'avvio `#boot`), `src/js/NN-nome.js` (il gioco a pezzi, nell'ordine di `src/ordine.txt`), `src/coda.html` (chiusura). Tutto il gioco sta dentro `window.__mbGo`, che la coda avvia dopo il primo disegno della schermata d'avvio (nel browser delle prove, `navigator.webdriver`, subito come prima). `python3 build.py` li riunisce in `index.html`; `tests/mk.py` costruisce prima e poi crea `tests/test.html` (il gioco con `window.__E(codice)`, che esegue codice dentro il gioco).
 - Pezzi di `src/js/`: 01 costanti (canvas, `INK`, misure) · 02 definizioni (nemici `ET`, layout, abilità `SK`) · 03 partita (`newRun`, `buildRoom`, difficoltà `DIFF`, stanza dei campioni, composizioni del capitolo 1) · 04 input · 05 audio (motore, `TRACKS`, `sfx`) · 06 UI · 07 meta (oggetti, carte, casse, salvataggio `SAVE` con chiave `cripta_save_v1`, `ARENAS`) · 08 menu · 09 apertura casse · 10 esperienza, eventi, élite · 11 navigazione, danni, uccisioni, barra del boss (`BBFX`) · 12 IA nemici · 13 entrate dei boss · 14 `update(dt)` · 15 rig umanoide · 16 creature · 17–18 ambiente, vestizione, luci · 19 ostacoli (`themeOf`) · 20 capitoli e zone (`zoneOf`, `BOSSZ`, `effRoom`), Abisso · 21 sequenze e composizioni dei capitoli 2–4 · 22 pericoli · 23 nemici nuovi · 24 disegno · 25 capitoli 3–4 ambiente · 26 pericoli condivisi · 27 negromante · 28–31 palude e ghiaccio (nemici e boss) · 32 entrate dei boss nuovi · 33 stanze speciali · 34 compagni (`PETS`) · 35 abilità speciale (`ULT`) · 36 pass · 37 momenti chiave (morte al rallentatore, codice di salvataggio) · 38 trailer/intro · 39 meta 2 (eroi, talenti, set, evoluzioni, missioni, traguardi, impostazioni) · 40 aure · 41 fiore occhio, occhio d'ombra, Mimic · 42 casse gemelle · 43 kit effetti · 44 guida · 45 `render()` · 46 micro animazioni · 47 ostacoli piantati · 48 sfondo dei menu · 49 arene grandi e telecamera · 50–52 BOSSES 2 · 53 Mimic · 54 santuario della Strega · 55 Idra · 56 nemici vivi · 57 suoni 2 e atmosfera · 58 MENU 2 · 59 SOUND 2, ANIMATIONS 2, uscita dalla stanza · 60 morti dei boss · 61 anteprime delle arene · 62 eroe 3D · 63 modalità zombie nel menu (linguette Classica | Zombie, scheda, foglio, ingresso, fine partita: `ZG`) · 64 nemici, boss, compagni in 3D (`N3G`) · 65 caricamento (schermata d'avvio e di caricamento `LOAD`, «Tocca per iniziare» `BOOTS`, lavori nei momenti liberi `IDLE`, memoria) · 66 falò del menu Zombie · 67 passaggio tra le modalità (scorrimento, manina zombie) · 68 economia delle due modalità (materiali, bustine, Lucky Cards, accessori zombie: tutti i numeri) · 69 bustine (copertine, apertura a strappo) · 70 casse e Bottega · 71 menu Zombie (Arsenale, Lucky Cards, Pass Zombie) · 72 vestiti e Guardaroba (`SKINS`) · 73 disegni degli oggetti (`ITART`, `ZART`) · 74 arene con personalità (`ARST`, `floorEmblem`) · 75 audio nuovo (musiche dei menu, `VOX`) · 76 musiche dei boss (`BM`) · 77 morti dei nemici (`EDF`) · 78 scia del gelo · 79 controllo del salvataggio (`saveCheck`) · 80 i 5 posti sotto l'eroe (casse e Lucky Cards, riquadro), nomi e testi interi nei menu · 81 i 4 boss del terzo giro: collegamenti, stanza, entrate e sconfitte dei modelli, pericoli nuovi (filo, tende d'aurora, inchiostro), burattino d'ombra (`B3T`, `boss3At`, `b3go`/`b3at`) · 82 Burattinaio d'Ombra · 83 Fenice della Forgia · 84 Piovra della Palude · 85 Cervo d'Aurora · 86 musiche dei boss nuovi · 87 l'arena che reagisce ai boss nuovi (`b3fx`, segni nuovi a terra) · 88 voci e personalità dei boss nuovi (`B3VO`, prese in giro, `b3say`). · 89 i 13 boss della Classica rifatti, un cervello per boss (`89-golem-nuovo.js` … `89-cervo-nuovo.js`: `BCL`, modelli `sprite/nemici3d/<tipo>2.js` con la cassetta `boss2kit.js`; nel gioco dal 20 ottobre) · 90 creazione dell'eroe al primo avvio, in stile Dark Souls: avviso, classe, aspetto, dono, nome (`SCE`, `SAVE.starter`, `SAVE.look`, `SAVE.dono`, `SAVE.piuma`, `SAVE.pname`) · 91 prologo alla Dark Souls al primo avvio (`PRO`, `TRACKS.prologo`; il trailer di 38 resta da parte) · 92 i tre eroi nuovi in battaglia (Bardo, Alchimista, Ninja: colpi, pozze di veleno, ombre, le loro Super, suoni). · 93 colpi unici dei nemici e dei boss rifatti (`CU`, `CUS`, `CUB`; nel gioco dal 20 ottobre). · 97 nemici più vivi (voci, versi di «Si prepara», suoni di «Muore», la mossa «Si prepara» e i corpi dal vivo nel gioco: `NV`, `NVP`, `NVD`; nel gioco dal 31 ottobre) · 101 contatore dei fotogrammi (FASE 9: acceso nell'anteprima con `window.MB_CONTATORE`, nel gioco da Impostazioni → Contatore, `SAVE.set.perf`; `CNT`; «Parti della mappa» sulla mappa zombie e, dal 29 ottobre, «Parti delle isole» sulle isole della Classica, `ISL.tm` in 94) · 94 Classica nuova (`CN`: Furia, carte a sorpresa, evoluzioni, Nemesi, scalata a giro con stanze, torre e trappole, cammino delle isole verso nord col ponte sospeso di assi e i premi del cammino, Prova dell'Incubo, fontana, cristalli) · 95 ostacoli e cose della stanza in 3D (`OB3`) · 96 albero delle abilità (`TR`: alberi a cinque passi in oro, rimborso, le 46 mosse leggendarie, «Prova»); 94–96 vengono dal ramo `classica-nuova`, unito a `piano-maestro` il 27 ottobre. 90–92 vengono dal ramo `filmato-intro` (14–15 ottobre), unito a `piano-maestro` il 16 ottobre. Dal 65 in poi vengono dalle anteprime 47 e 48, nel gioco dal 14 ottobre (Denis: «ok perfetto riporta tutto sul gioco»). Dopo 61 `src/ordine.txt` mette anche quattro file di `sprite/` (con il percorso `../sprite/...`): `mostri/disegno_mostri.js` (per la cassetta `CR._rig` e gli zombie), `armi/disegno_armi.js` (armi zombie e Bara; dopo di lui `armi/suoni_armi.js`, i suoni delle armi), `eroe3d/armi3d.js`, `eroe3d/disegno_eroe.js`; dopo 62 i file della mappa zombie, che stanno in `anteprime/zombie/` ma sono **parte del gioco** (`../anteprime/zombie/motore.js`, `prop.js`, `prop_fattoria.js`, `prop_borgo.js`, `partita.js`, `fortuna.js`, `armi_speciali.js`, `compagni.js`, `audio_zombie.js`, `barriere.js`, `macchine.js`, `area_mappa.js`), poi 63. Dopo `disegno_eroe.js` c'è `vestiti3d.js` e dopo `nemici3d/eroi.js` `nemici3d/creature.js`. Dopo `js/92-eroi-nuovi.js` (dal 20 ottobre): `../sprite/nemici3d/boss2kit.js`, i 13 modelli `../sprite/nemici3d/<tipo>2.js`, i 13 cervelli `js/89-*.js` e `js/93-colpi-unici.js`; poi `js/101-contatore.js` e (dal 27 ottobre) `js/94-classica-nuova.js`, `js/95-ostacoli-3d.js`, `js/96-albero-abilita.js` e (dal 31 ottobre) `js/97-nemici-vivi.js`, poi `coda.html`.
-- `sprite/eroe3d/` l'Arciere in 3D e tutte le armi in 3D (`disegno_eroe.js`, `armi3d.js`, `LEGGIMI.md`), nel gioco dal 12 ottobre; `sprite/mostri/` nemici della modalità zombie (codice `disegno_mostri.js`, fogli PNG, `LEGGIMI.md`); `sprite/armi/` armi zombie (`disegno_armi.js`, poligono di prova, `LEGGIMI.md`); `sprite/mostri3d/` mostri in 3D vero con lo scheletro (`mb3.js`, `kit3d.js`, `zombie.js`, `strisciante.js`, `minatore.js`, `LEGGIMI.md`; anteprima); `docs/` bozze e analisi; `anteprime/` pagine di prova (gli `.html` costruiti non si salvano su git); `tests/` test automatici. `app/` l'app per il telefono (sotto, «Dove sta il lavoro»).
+- `sprite/eroe3d/` l'Arciere in 3D e tutte le armi in 3D (`disegno_eroe.js`, `armi3d.js`, `LEGGIMI.md`), nel gioco dal 12 ottobre; `sprite/mostri/` nemici della modalità zombie (codice `disegno_mostri.js`, fogli PNG, `LEGGIMI.md`); `sprite/armi/` armi zombie (`disegno_armi.js`, poligono di prova, `LEGGIMI.md`); `docs/` bozze e analisi; `anteprime/` pagine di prova (gli `.html` costruiti non si salvano su git); `tests/` test automatici. `app/` l'app per il telefono (sotto, «Dove sta il lavoro»).
 
 Dettagli utili:
 - Difficoltà: tutte le manopole in `DIFF` (`src/js/03-partita.js`): `hpMul()` vita, `DMG()` danno, `FR()` cadenza di tiro, `eliteRoll()`, `bossMul()`; tutto moltiplicato per `ARENAS[i].diff` (da 1 a 2,5 dall'arena 1 alla 12). Si misura con i giocatori automatici (`tests/run.js`).
@@ -408,172 +401,25 @@ creazione): `python3 anteprime/mk_anteprima49.py <cartella>` (divisa come il gio
   la Classica e le abilità trascinate come prima. Prova `node tests/a49/mira.js` (37 controlli, foto `tests/a49/mi_*.png`). Dettagli in
   `docs/anteprima-49.md` (8, 8b, 8c, 8d e 8e).
 
-## Visuale in terza e prima persona (2 novembre, anteprima a parte)
+## Il 3D vero (2–5 novembre): messo da parte nel ramo `progetto-3d`
 
-Denis: «fai un'anteprima a parte facendo vedere come sarebbe la modalità zombie se la telecamera fosse tipo in terza persona e prima
-persona». `src/js/105-visuale-3d.js` (`V3`, `G3`; fuori da `src/ordine.txt` e fuori dall'Anteprima 49): nella partita zombie il bottone
-**«Visuale»** in alto a destra sotto la bussola (o il tasto C) passa tra **Dall'alto** (oggi), **Terza persona** (la telecamera dietro le
-spalle, che non entra nei muri) e **Prima persona** (gli occhi dell'eroe, il mirino, l'arma 3D in mano con rinculo, vampa e ricarica); la prima
-partita parte da sola in terza persona. Stessa partita e stessi comandi (la levetta cammina rispetto a dove si guarda, il dito a destra gira e
-guarda su e giù, si spara da soli dove si guarda, 104). Il mondo lo disegna WebGL: la mappa vera, gli stessi pezzi 3D del motore con le loro
-texture dipinte (in fogli da 2048), pannelli coi buchi, aste, chiome come dischi, i disegni a mano del motore dipinti dalla parte da cui li si
-guarda e messi in piedi come cartoline, il terreno cotto; la notte, le luci e la nebbia come dall'alto, più fitta nelle zone chiuse; il contorno
-scuro dove la profondità salta; zombie, eroe e Bara sono i loro disegni dipinti girati e inclinati come li vede la telecamera; a terra gli
-avvisi del Becchino e le abilità. Aggancio nel motore della mappa che senza il file non fa niente: `W.v3` in `render()`; in `ZM` anche
-`HSTYLE` e `bara()`. Pagina: `python3 anteprime/mk_visuale.py <cartella>` (l'Anteprima 49 più 105; si apre col menu sulla Zombie), pubblicata
-a parte su https://claude.ai/artifact/EsX3514z5xM6WsFLEAGFhW («Mossbound Visuale zombie»; si aggiorna ripubblicando la stessa cartella). Prova `python3 tests/v3/mk.py` e `node tests/v3/visuale.js` (13 controlli, foto `tests/v3/vi_*.png`).
-Poi (2 novembre, Denis: «migliora tutto, e metti il pg in 3d scusa non può essere in 2d, ce l'abbiamo già il modello in 3d usiamo quello»):
-**l'eroe in terza persona in 3D vero**, fatto di triangoli dai pezzi del suo modello (`EROE.rig3d` in `sprite/eroe3d/disegno_eroe.js` dà la
-posa senza disegnare; il disegno dell'eroe resta identico al pixel, 800 disegni confrontati): corpo a goccia con la texture della giubba,
-cappuccio col viso fatto punto per punto sulla palla della testa (occhi grandi con la luce, guance, bocca quando lo colpiscono), piedi, mani,
-l'arma vera di ARMI3D (un kit che fa triangoli coi modelli delle armi, parti che si muovono comprese), dipinto a tre toni con la luce dall'alto
-a sinistra, il bordo chiaro e il contorno scuro spesso; le teste con pezzi propri (coda, piuma, occhiali, maschera, elmo, corna, aspetto) sono
-la testa dipinta del gioco al suo posto. **L'arma in prima persona in 3D** (lo stesso modello, mani e maniche, girata per vederne il fianco,
-ricarica con la mano libera). In più: il cielo dalla nebbia al blu della notte con le stelle, la vampa che illumina intorno, le ombre morbide
-sotto i personaggi. Foglio delle quattro direzioni `tests/v3/vi_eroe4.png`.
-Poi (2 novembre, Denis: «della visuale in prima e terza persona non riesci a fare la mappa fatta bene come la modalità zombie esistente nel
-gioco?») **la mappa come dall'alto**: il terreno intero (1,5 pixel per unità invece di metà) col filtro anisotropo e un dettaglio fine vicino
-alla telecamera (fili d'erba, grana della pietra, ciottoli, scelti dal colore del terreno: `v3DetailTex`); **i muri vicini ridipinti nitidi**
-con la ricetta del motore (`texture()`) a 4 pixel per unità in un foglio loro (`V3NA`, `v3Near`, 130 unità, 110 in prima persona, al massimo
-5 ms a fotogramma) e gli altri un poco più nitidi; la notte uguale a `drawDark`/`drawLights` (l'eroe senza luce calda sua); il contorno
-spesso come dall'alto e i colori più pieni; la telecamera in terza persona che non finisce più sulla nuca dell'eroe accanto a lampioni e
-pilastri (la griglia delle altezze solo dalle cose grandi, sette posti da provare: spalle, mezzo, più in alto; l'eroe mezzo trasparente
-quando è proprio addosso); **la vita della mappa** in 3D (nebbia bassa, fumo dei camini, foglie, lucciole, stormo di corvi e corvi posati
-che volano via, falene ai lampioni: `v3Life`); perso il disegno 3D, torna da sola alla vista dall'alto. Memoria grafica circa +50 MB.
-Poi (2 novembre, Denis: «rendilo tripla A») quattro pezzi, tre in file loro che si agganciano a 105 (senza di loro 105 disegna come prima;
-nella pagina con `mk_visuale.py`, fuori da `src/ordine.txt`): **luci da film** in 105 (le lanterne dal lato giusto, pietre bagnate che
-luccicano, la luce nella nebbia, nebbia bassa che si muove, ombre lunghe; bagliore, curva morbida, ombre fredde e luci calde, vignetta, grana,
-il lampo quando ti colpiscono, i colori che si spengono con poca vita); **zombie e boss in 3D vero** (`src/js/106-zombie-3d.js`, `Z3`: i
-sette tipi fatti di triangoli dalle pose dei loro disegni, conti copiati da `disegno_mostri.js` che non cambia, pose fatte una volta e
-passate dalla scheda grafica, occhi che pulsano, la lampada del minatore e la lanterna che illuminano, il Becchino col cilindro, lo
-Spaventapasseri col corvo); **effetti della battaglia in 3D** (`src/js/107-effetti-3d.js`, `FX3`: scie dei colpi, vampa, scintille,
-sangue con le macchie, bossoli, esplosioni che illuminano, zolle, la telecamera che trema e rincula, segni sul mirino, l'arco rosso del
-colpo preso); **il mondo più ricco** (`src/js/108-mondo-3d.js`, `MW`: l'erba vera a fili 3D dove il terreno è erba, mossa dal vento a
-ondate e piegata da eroe e zombie, a pezzi di 48 unità intorno a dove si guarda, senza profondità e dopo i personaggi; i coni di luce sotto
-i lampioni col pulviscolo; le nuvole che passano sulla luna col bordo d'argento). In più la telecamera in terza persona che con le spalle
-dell'eroe al pozzo sale sopra o non disegna la cosa in cui è finita. Effetti bassi: niente erba, coni e pulviscolo. `node tests/v3/visuale.js`
-24 controlli; prima e dopo in `tests/v3/vi_tripla_a.jpg`.
-Dettagli, cosa non si vede ancora in 3D e misure in `docs/visuale-3d.md`. Solo da vedere: niente entra nel gioco senza il sì di Denis.
+Denis, 6 novembre: «salva tutto a parte delle cose 3d che abbiamo fatto in sti 3 giorni, si torna a lavorare sul progetto mossbound com'era
+prima». Tutto il lavoro in 3D vero (WebGL) di quei giorni sta nel ramo **`progetto-3d`** su GitHub, con le sue note complete (il suo
+`CLAUDE.md`, `docs/visuale-3d.md`, `docs/tripla-a.md`, `sprite/mostri3d/LEGGIMI.md` con «La formula per il 3D»); `piano-maestro` è tornato
+com'era il 1° novembre sera (commit e33789e), note a parte. Nel ramo ci sono:
+- la **visuale in terza e prima persona** della Zombie (`src/js/105`–`108`), pagina https://claude.ai/artifact/EsX3514z5xM6WsFLEAGFhW;
+- **Mossbound tripla A** (`src/js/110`–`118`: la stanza del primo mondo, le isole col ponte, l'interfaccia, il falò e l'Assedio del menu
+  Zombie, la Zombie in prima persona), pagina https://claude.ai/artifact/8UveByoEu5gWa7cXm6aUEw;
+- i **mostri in 3D vero** fatti nel codice con la formula del 3D (`sprite/mostri3d/`: `mb3.js`, `kit3d.js`, `scultura.js`): lo zombie
+  base, lo strisciante, il minatore e lo zombie col corpo vero (https://claude.ai/artifact/Weae1UsGGoEti6wccnqTRB), il Viandante
+  (https://claude.ai/artifact/VAGSSGMgUYkbnAdR8hNuTs), il niumon di fuoco (https://claude.ai/artifact/FgvbCjkvxMqyi8y4Gw7ff6), più il
+  soldato di prova della foto (Mixamo, non nostro: https://claude.ai/artifact/PHJdybyvCT5r1SMghLq8Tm).
 
-## Mossbound tripla A (2 novembre, anteprima a parte)
-
-Denis: «ok rendi tripla A il gioco in sé mossbound». Risposte alle domande: tutto il gioco, **3D vero come la visuale** ma prima
-un'anteprima; **due luci da confrontare** («Chiara» e «Da film»); anche animazioni e colpi, audio, menu, filmati («senza scene come nei
-film ma entrate e mosse fatte meglio»); **fluido prima di tutto**; visuale zombie: «decido dopo»; mappa zombie dall'alto: resta com'è;
-prima anteprima: **una stanza completa** del primo mondo; agenti: no. File fuori da `src/ordine.txt`, solo nell'anteprima:
-`src/js/110-t3-motore.js` (`T3`: tela WebGL sotto quella del gioco nelle stanze del primo mondo, muschio, grotte di cristallo e Golem;
-telecamera dall'alto a 50°; stanza, le due luci `T3LUCI` col bottone «Luce» o il tasto L; quello che non è in 3D resta una cartolina),
-`111-t3-eroe.js` (eroe in 3D da `EROE.rig3d`; i personaggi si piegano un po' indietro, `T3.lean`, per mostrare il davanti come nei
-disegni), `112-t3-nemici.js` (`T3N`: slime, pipistrello, fungo, pianta, fuoco fatuo in 3D, umanoidi col corpo dell'eroe; pose fatte una
-volta), `113-t3-golem.js` (`T3GL`: il Golem a pezzi mossi dalle pose del suo modello; `golem2.js` esporta solo i conti in
-`N3.meta.golem2.k3`, una riga che non disegna niente), `114-t3-stanza.js` (`T3S`: ostacoli del primo mondo in 3D), `115-t3-effetti.js`
-(`T3FX`: luci dei colpi, lampi, telecamera che si stringe, tonfi). Usa gli attrezzi di `105-visuale-3d.js` (dal 3 novembre anche la
-visuale stessa nella partita zombie, sotto; nel vestito le costole degli scheletri). Pagina: `python3 anteprime/mk_tripla.py <cartella>` (contatore dei fotogrammi acceso), pubblicata a parte su
-https://claude.ai/artifact/8UveByoEu5gWa7cXm6aUEw («Mossbound tripla A»; si aggiorna ripubblicando la stessa cartella); prova
-`python3 tests/t3/mk.py`, poi `node tests/t3/tripla.js` (26 controlli), foto `tests/t3/tr_lotta.jpg` e `tr_golem.jpg`. Dettagli, tempi e cosa manca (scarabeo,
-occhio d'ombra e fiore occhio ancora cartoline; raccolte e colpi disegni 2D con la loro luce) in `docs/tripla-a.md`. Niente entra nel
-gioco senza il sì di Denis.
-Poi (2–3 novembre, Denis: «migliora il ponte ed il menu ora»; risposte: «3D vero come la stanza», del ponte «sembra piatto», «poco
-spettacolare», «troppo piccolo o lontano», le parti schermata principale, interfaccia, fogli e finestre, menu Zombie, nell'anteprima)
-**il menu in tripla A**, tre file in più nella stessa pagina: `src/js/116-t3-isole.js` (`T3I`: il cammino delle isole in WebGL, isole col
-loro mondo, ponte sospeso di assi in volumi veri con torri, stendardi, travi, funi, cavi, balconi e premi in 3D, mini isola, pietre, eroe
-3D col bastoncino di muschio, custode, pennone degli stendardi, lo spettacolo delle assi; telecamera bassa e vicina lungo il ponte, `T3IC`;
-la logica e le scritte restano quelle di 94), `117-t3-interfaccia.js` (`T3UI`: materiali più ricchi per bottoni, barre, posti delle
-casse e fogli; nelle Impostazioni gli interruttori «Luce chiara / da film» e «Interfaccia nuova / di prima»), `118-t3-falo.js` (`T3F`:
-il falò del menu Zombie). Poi (3 novembre, Denis: «miglioralo non mi piace»; risposte «Falò del menu Zombie, rifai tutto meglio», «Sembra di
-plastica, Inquadratura», «Rifinisco il 3D») **il falò rifatto da capo, tutta la scena in 3D vero** (prima il campo in 3D davanti al dipinto
-di 66, commit 561bd0e): dipinto coi disegni dei materiali presi dal posto (triplanare, `T3FTX`, `T3FS_FP`: luna in due toni con l'orlo
-sfrangiato, fuoco a fasce, orlo freddo, contorno spesso), la telecamera più lontana e più bassa col cielo sotto la barra (`T3FC`); il campo
-(tronco, tenda, zaino, pala, ceppo con l'ascia, catasta, cassa, pentolino, pistola), il fuoco a lingue (`T3FS_FLAME`), le tombe, la
-staccionata, il lampione, lo spaventapasseri che gira la testa, la fattoria con la finestra accesa e il comignolo che fuma, il mulino con le
-pale, le colline con la cappella, luna, nuvole, stelle, corvi, nebbia; gli zombie in 3D di 106 sul sentiero (ora 106 è nella pagina). Si
-prepara a pezzetti la prima volta (intanto il disegno di 66). Poi (3 novembre, Denis: «non mi ispira»; risposte «Statico, poca azione»,
-«Manca un'idea forte» e, fra le idee, «Assedio») **l'Assedio** al posto del falò tranquillo (il falò rifatto è nel commit 7f490df), sempre in
-`118-t3-falo.js`: l'eroe in piedi davanti al tronco con l'arma zombie dell'Arsenale (`SAVE.z.gun`); la barricata a mezzaluna intorno al
-campo (`T3FB`, `t3FBarricade`: il carro ribaltato con le ruote in alto, una che gira, casse, botti, sacchi, la palizzata di pali appuntiti
-con le funi, porta e tavolo rovesciati, assi di traverso, cavalli di frisia, due torce), che trema sotto le spinte; l'orda in 3D di 106
-(`t3FHorde`, 28 zombie, 14 con LOWFX: la prima fila con le braccia oltre la barricata, la seconda che spinge, la folla, altri che escono
-dalla nebbia fra le tombe aperte, gli occhi accesi anche quando la testa scatta, `t3FHeadOff`); ogni 7–12 s uno scavalca alla destra
-dell'eroe, che si gira di tre quarti, mira e spara col modo della sua arma (`T3F_SHOTS`: rinculo, vampa, carrello, il suono di
-`ARMI.suono`, la scia, il sangue scuro) e quello cade all'indietro; la fattoria in fiamme (finestre, tetto, fumo, braci, luce rossa sul
-campo e sull'orizzonte), la luna rossa, i lampi col tuono che arriva dopo (`t3FLight`, `t3FThunder`), i versi dell'orda, lo
-spaventapasseri, il mulino, i corvi. Poi (3 novembre, Denis: «miglioralo ancora senza farmi domande, intendo incluso anche il menu ecc»)
-**ancora meglio**: nell'assedio l'arma vera dell'Arsenale (`t3FGunObj` su `ARMI.nuova`: i colpi al suo ritmo, i bossoli, il caricatore che
-cade, la ricarica), il sangue a terra, le schegge della barricata, l'orda innaturale (scatti della testa, tremiti, fermi e scatti), cenere
-e braci nel vento (`t3FAsh`), la telecamera che respira e trema, l'aria della notte (`t3FAmbOn`); sulle isole gli stendardi e le funi al
-vento (`t3IBanner`, `B.wind`, `T3I.wu`), il ponte che ondeggia sotto l'eroe nella scheda grafica (`t3IBrProg`), stormi, farfalle, libellule,
-il fumo del vulcano e la neve (`t3ILife`); lo scorrimento tra le modalità con le due scene in 3D, copiate una volta quando parte
-(`t3SnapPair`). Prova `node tests/t3/menu.js` (37 controlli), foto `tests/t3/tr_isole.jpg`, `tr_falo.jpg`, `tr_assedio.jpg`,
-`tr_spettacolo.jpg`, `tr_ancora.jpg`; dettagli in `docs/tripla-a.md` («Il menu in tripla A», «Ancora meglio»).
-Poi (3 novembre, Denis: «fammi giocare in prima persona e l'altra visuale in 3d»; risposte: la Zombie, in questa anteprima, la vista
-dall'alto resta) **la Zombie in prima persona** nella stessa pagina: la visuale 3D della Zombie (105, con 107 e 108, e la mira di 104 solo
-per la Zombie, `MIRA.cl=false`) disegna col contesto 3D della tripla A (uno solo: `v3Init` di 110 su `v3InitGL` di 105; durante la partita
-la tela va sotto la mappa, `T3I.host='zombie'`, e dopo torna al menu); la partita parte da sola in prima persona (`V3.start`), il bottone
-«Visuale» va alla terza persona e poi dall'alto (`V3NEXT`). Prova `node tests/t3/prima.js` (9 controlli), foto `tests/t3/tr_prima.jpg`;
-dettagli in `docs/tripla-a.md` («La Zombie in prima persona»).
-
-## Zombie base, strisciante e minatore in 3D vero (3–4 novembre, anteprima a parte)
-
-Denis: «vorrei rifacessi per ora 1 zombie quello base rifatto su meshy con dettagli cartoon così ma fatti meglio … con animazioni adatte»,
-poi, su una foto di prova (un soldato di Mixamo disegnato col nostro WebGL): «mi piace come l'hai fatto il modello in 3d in questa immagine
-che mi hai mandato senza meshy», «non serve accedere a meshy continua cosi». Il nostro Zombie della cripta (`CR.zombie`, che non cambia)
-costruito nel codice come un modello vero con lo scheletro: `sprite/mostri3d/zombie.js` (`ZB3`: circa 10.500 triangoli, 25 ossa, stesse
-misure, pezzi e colori del disegno 2D; braccia e gambe a due ossa con la IK; le ombre cotte dove i pezzi si toccano), disegnato da
-`sprite/mostri3d/mb3.js` (`MB3`, WebGL 2 senza librerie: tre toni, bordo di luna, contorno spesso, chiazze, pieghe e rilievo dipinti dalla
-posa di riposo, occhi che brillano e pulsano, `clipY` per sbucare da terra; legge anche i `.glb`). Nove mosse nostre, ognuna solo da `p`:
-Fermo (la testa che scatta verso di te), Cammina (zoppica come quello di oggi), Corre, Sbuca da terra, Urla, Colpo, Morso, Colpito, Muore.
-Una posa costa 16–32 µs (lo zombie 2D di oggi 0,19–0,32 ms a disegno). Pagina `python3 anteprime/mk_zombie3d.py` (mosse, «Tutte», dito che
-gira, «Quattro direzioni», «Prima e dopo» col nostro zombie di oggi sopra, `sprite/mostri3d/zombie_oggi.webp`), pubblicata su
-https://claude.ai/artifact/Weae1UsGGoEti6wccnqTRB («Zombie in 3D»; si aggiorna ripubblicando `anteprime/zombie3d.html`), prova `node tests/zombie3d.js`. Il soldato di prova della foto (Mixamo, non nostro, non va nel gioco) in una pagina sua, su richiesta di Denis («fammi
-vedere lo stesso modello dell'immagine in un'anteprima»): `python3 anteprime/mk_modello_prova.py <prova.glb>`, pubblicata su
-https://claude.ai/artifact/PHJdybyvCT5r1SMghLq8Tm. Note in `sprite/mostri3d/LEGGIMI.md`. Niente entra nel gioco senza il sì di Denis.
-Poi (4 novembre) Denis ha voluto che **la formula** valga per ogni cosa in 3D (regola sopra) e, alla proposta di provarla sullo **Zombie
-strisciante**: «vai fai». I pezzi comuni sono passati nella cassetta `sprite/mostri3d/kit3d.js` (`K3D`: forme, scheletro con le catene IK e
-quelle che passano per punti, ombre cotte, la testa e il braccio da zombie); lo zombie base la usa ed è rimasto identico (stessi numeri su
-1.108 pose). Lo strisciante: `sprite/mostri3d/strisciante.js` (`ZS3`: circa 10.750 triangoli, 27 ossa; le misure, i pezzi e i colori di
-`CR.strisciante`, che non cambia: la metà di sopra del corpo sulle braccia lunghe coi gomiti in fuori, le mani piantate a terra, la testa
-da zombie più piccola senza cicatrice, la maglia strappata sulla schiena con la spina e le costole sotto, il moncone alla vita, la spina a
-cinque vertebre e tre stracci che strisciano dietro) con nove mosse nostre: Fermo, Striscia, Striscia veloce, Sbuca da terra, Urla, Balzo,
-Morso, Colpito, Muore. Sta nella stessa pagina «Zombie in 3D» (in alto «Zombie» o «Strisciante»; l'indirizzo con `#strisciante` apre lui),
-con la sua foto di oggi da quattro lati (`node sprite/mostri3d/oggi.js strisciante sprite/mostri3d/strisciante_oggi.webp`); `node
-tests/zombie3d.js` prova tutti i mostri della pagina (foto `tests/strisciante3d_…`).
-Poi Denis: «fammene un'altro»: **lo Zombie minatore**, `sprite/mostri3d/minatore.js` (`ZMI3`: circa 12.100 triangoli, lo scheletro dello
-zombie base; le misure, i pezzi e i colori di `CR.minatore`, che non cambia: il casco giallo con la cresta e la lampada accesa, che nella
-pagina fa luce a terra, l'occhio sinistro spento, la camicia grigia con la salopette di jeans, pettorina, bretelle e bottoni d'ottone, gli
-stivali, il piccone arrugginito nel pugno destro, che gira intorno alla spalla come nel disegno e non passa mai sotto terra). Nove mosse
-nostre come lo zombie base, con la Picconata di oggi al posto del Colpo (il piccone morde la terra con le scintille). Nella stessa pagina
-(«Minatore», `#minatore`); in `mb3.js` due materie nuove: 7 ferro (7.2 metallo dipinto) e 8 legno.
-Poi (4 novembre) Denis: «non riesci a farmeli come ci eravamo prefissati di fare per tutti i modelli 3d come l'artefatto modello di prova?»;
-alle domande: **«Corpo più vero, Mosse più naturali»** e **«Solo il codice»**. Prima uno solo, poi gli altri due: **lo zombie base col corpo
-vero**, in prova nella stessa pagina («Corpo vero», `#vero`): `sprite/mostri3d/zombie_vero.js` (`ZV3`: lo stesso Zombie della cripta coi suoi
-pezzi e colori, ma con le proporzioni di un uomo vero, magro e marcio: testa piccola, clavicole, scapole, spina, pancia incavata, muscoli
-ossuti, ginocchia e caviglie, mani con quattro dita e il pollice; vestiti che seguono il corpo, strappati; scarpe con suola e lacci; circa
-42.000 triangoli, la pelle sotto i vestiti tolta perché non si vede), **scolpito nel codice** con le distanze (`sprite/mostri3d/scultura.js`,
-`SCU`: forme morbide saldate e scavate in una forma sola, la superficie a triangoli, le normali e l'ombra morbida dalla forma, i pesi dalle
-ossa; i vestiti sono la forma gonfiata e tagliata) e con **mosse naturali** (il passo col tallone e la punta, i piedi a terra che non
-scivolano mai, il peso che passa da un piede all'altro, le spalle contro le anche, la morte sulle ginocchia e poi a faccia in giù). Note in
-`sprite/mostri3d/LEGGIMI.md` («Lo zombie col corpo vero»); prova `node tests/zombie3d.js vero`. Se a Denis piace, è il nuovo modo della
-formula per i corpi e si rifanno lo strisciante e il minatore.
-Poi (4 novembre) Denis, con l'immagine di un uomo stracciato a piedi nudi: «bro posso chiederti di farmi questo modello in 3d invece? come hai
-fatto per l'artefatto modello di prova?». **Il Viandante**, fatto tutto nel codice con la formula del corpo vero (il soldato di prova era un
-modello scaricato; questo è nostro): `sprite/mostri3d/viandante.js` (`VI3`: circa 148.000 triangoli, 27 ossa; il viso con una griglia più
-fine, gli occhi di misura vera dentro le palpebre con l'apertura a mandorla, la barba di qualche giorno, i capelli come guscio più ciocche
-piatte col ciuffo sulla fronte; la tunica a V strappata, due gonne, i pantaloni col buco, le fasce incrociate, la corda col nodo e le nappe,
-il borsellino, il cordino col cerchio di ferro, la fascia rossa; nove mosse naturali: posa del disegno, fermo, cammina, corre, si guarda
-intorno, saluta, pugno, colpito, muore), la sua immagine in `sprite/mostri3d/viandante_rif.webp`. Pagina `python3 anteprime/mk_viandante3d.py`
-(la pagina di «Zombie in 3D» resa generale: studio, luce morbida, «Con l'immagine» accanto, «Viso da vicino»); prova `node tests/zombie3d.js
-anteprime/viandante3d.html [--senza-foglio]`; note in `sprite/mostri3d/LEGGIMI.md` («Il Viandante»). Pubblicata su
-https://claude.ai/artifact/VAGSSGMgUYkbnAdR8hNuTs («Il Viandante in 3D»; si aggiorna ripubblicando `anteprime/viandante3d.html`). Non è nel
-gioco: Denis deve dire a cosa serve.
-Poi (5 novembre) Denis, con un'immagine in pixel art di un cucciolo di fuoco: «prova a crearmi questo niumon con tanto di anteprima». **Il
-niumon di fuoco** con la formula del 3D: `sprite/mostri3d/niumon_fuoco.js` (`NF3`: circa 60.000 triangoli, 32 ossa; chibi, la testa grande
-quanto il corpo, le zampe tozze, gli occhi grandi con le palpebre, la criniera di dodici fiamme e la coda di fuoco su ossa loro che leccano e
-ondeggiano; nove mosse: posa del disegno, fermo, cammina, corre, felice, fiammata, colpito, dorme, esausto), in `mb3.js` il materiale 9.4
-fuoco (il cuore giallo verso di te, l'orlo rosso), la sua immagine in `sprite/mostri3d/niumon_rif.webp`. Pagina `python3 anteprime/mk_niumon3d.py`
-(la pagina dei modelli in 3D con la grotta, la vista «Pixel» come l'immagine, le braci, il fuoco della fiammata e la luce a terra); prova
-`node tests/zombie3d.js anteprime/niumon3d.html [--senza-foglio]`; note in `sprite/mostri3d/LEGGIMI.md` («Il niumon di fuoco»). Pubblicata su
-https://claude.ai/artifact/FgvbCjkvxMqyi8y4Gw7ff6 («Niumon di fuoco»; si aggiorna ripubblicando `anteprime/niumon3d.html`). Non è nel gioco. Da chiedere a Denis (5 novembre): il nome, gli
-occhi più grandi e lucidi come nella sua immagine (ora vengono un po' più scuri), se va nel progetto «niumon» con gli altri fatti allo stesso modo.
+Niente di tutto questo era nel gioco: nei file del gioco c'erano solo agganci che senza quei file non facevano niente (`EROE.rig3d` in
+`disegno_eroe.js`, `W.v3` nel motore della mappa, i conti del Golem in `golem2.js`, `MIRA.cl` in `104-mira.js`), tolti anche loro da
+`piano-maestro`. Le pagine pubblicate restano online. La formula per il 3D vale per quel ramo: se Denis chiede di riprendere il 3D vero, si
+lavora da `progetto-3d` (prima leggere le sue note). Domande rimaste aperte lì: il nome del niumon, gli occhi più grandi e lucidi, se va nel
+progetto «niumon»; a cosa serve il Viandante; se rifare strisciante e minatore col corpo vero.
 
 ## FASE 9: più fluido sul telefono (19 ottobre, in corso)
 
@@ -733,9 +579,8 @@ del ramo `gioco`). Da fare con le misure dell'iPhone di Denis: il ponte che onde
 
 ## Gusti di Denis (imparati lavorando)
 
-- Ogni cosa nuova che si può guardare (un mostro in 3D, una mossa, un pezzo nuovo) gliela si fa vedere sempre: appena è pronta si pubblica
-  la sua pagina di anteprima e gli si dà il link (Denis, 4 novembre: «e dammi sempre l'anteprima per vederli»).
-
+- Ogni cosa nuova che si può guardare (un mostro, una mossa, un pezzo nuovo) gliela si fa vedere sempre: appena è pronta si pubblica la
+  sua pagina di anteprima e gli si dà il link (Denis, 4 novembre: «e dammi sempre l'anteprima per vederli»).
 - Di solito prima un'anteprima separata da provare sul telefono; per la godibilità (versione 45: menu, economia, missioni, audio, animazioni) ha chiesto invece di lavorare direttamente nel gioco.
 - Il menu deve somigliare ai giochi più famosi sul telefono (la sua immagine di riferimento: eroe al centro su una pedana, bottoni ai lati, oggetti sotto, scheda del capitolo, Gioca grande in basso).
 - Colori sempre adatti al mondo o al boss, mai messi a caso.
@@ -753,7 +598,7 @@ del ramo `gioco`). Da fare con le misure dell'iPhone di Denis: il ponte che onde
 3. Materiale che può servire per le arene nuove (FASE 2): l'anteprima «Epico» (`anteprime/epico.js`: vita nelle fughe del pavimento, lastre con rilievo, battaglie con più impatto; a Denis piacevano lo zoom leggerissimo e il pavimento).
 4. Pubblicità vera per i giri della ruota (ora un segnaposto di 5 secondi), da collegare quando il gioco sarà pubblicato.
 5. Scartati o fermi: eroe nuovo da immagine (file in `anteprime/`), «La Discesa» (`anteprime/discesa.html`), la Bestia (`anteprime/beast.js`), il teschio dietro il cancello: il piano maestro li supera.
-   **Meshy non si usa** (3 novembre: la prova si è fermata prima di generare qualcosa, Denis: «fa niente non usare meshy»; nessun credito speso; in questa sessione c'erano le istruzioni di Meshy ma non l'accesso al suo account). Al suo posto lo zombie base in 3D vero fatto da noi (sopra, «Zombie base in 3D vero»).
-6. **Progetto «niumon»** (Denis, 12 ottobre; dal 4 novembre i modelli in 3D vero si fanno con la formula del 3D: il primo niumon, quello di
-   fuoco, è in `sprite/mostri3d/niumon_fuoco.js`, sopra): anche lì si usa la tecnica 3D della mappa zombie, cioè il motore `anteprime/zombie/motore.js` con i prop di `prop.js`: volumi 3D con texture a tre toni e luce della luna, piega dei volumi stile Pokémon, telecamera che gira a 360° e si inclina col dito, ordine di disegno a strati. Note in `anteprime/zombie/LEGGIMI.md` («Visuale 3D»).
+   **Meshy non si usa** (3 novembre: la prova si è fermata prima di generare qualcosa, Denis: «fa niente non usare meshy»; nessun credito
+   speso). Al suo posto i modelli in 3D fatti da noi nel codice (ramo `progetto-3d`, sopra).
+6. **Progetto «niumon»** (Denis, 12 ottobre; il niumon di fuoco in 3D vero del 5 novembre sta nel ramo `progetto-3d`): anche lì si usa la tecnica 3D della mappa zombie, cioè il motore `anteprime/zombie/motore.js` con i prop di `prop.js`: volumi 3D con texture a tre toni e luce della luna, piega dei volumi stile Pokémon, telecamera che gira a 360° e si inclina col dito, ordine di disegno a strati. Note in `anteprime/zombie/LEGGIMI.md` («Visuale 3D»).
 7. **Progressione delle abilità della Classica**: fatta il 21 ottobre nell'anteprima della Classica nuova (l'albero delle abilità, sopra in «Classica nuova»); nel gioco dal 27 ottobre.
