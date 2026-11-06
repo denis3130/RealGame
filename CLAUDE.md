@@ -125,9 +125,9 @@ Poi (15 ottobre, Denis: «ci sta ma secondo me gli manca qualcosa», ha scelto �
 ## I tre eroi nuovi (15 ottobre; nel gioco dal 16 ottobre)
 
 - Richiesta di Denis (sopra, nella creazione); li ha scelti lui: il **Bardo**, l'**Alchimista** e il **Ninja**. In `HEROES` (39) con stile, numeri e Super (`ULT` in 35); in 3D sullo stesso corpo dell'Arciere con opzioni nuove (`sprite/eroe3d/LEGGIMI.md`, «I tre eroi nuovi»; liuto, fiala e stellina in `armi3d.js`); in battaglia `src/js/92-eroi-nuovi.js`. Il foglio nelle quattro direzioni è stato mandato a Denis il 15 ottobre; i numeri sono da regolare giocando.
-- **Bardo** (salute ×1, attacco ×0,92, cadenza ×1,08, velocità ×1,05; inizia col Rimbalzo): tira **note** (`P.proj` 'note', 540 px/s) che saltano su un altro nemico; ogni colpo è la nota dopo di una piccola melodia sul liuto (`NH.tune`, la minore pentatonica). Super **Ballata**: colpisce tutti i nemici (1,4 × attacco), li rallenta 4,5 s, stordisce i piccoli 1,6 s (note colorate che girano sopra la testa; `e.daze`, `updEnemy` avvolto; i boss sono solo rallentati) e ti cura del 15%, con anelli d'oro e note che volano a spirale.
+- **Bardo** (salute ×1, attacco ×1 (×0,92 fino al 6 novembre, bilanciamento misurato), cadenza ×1,08, velocità ×1,05; inizia col Rimbalzo): tira **note** (`P.proj` 'note', 540 px/s) che saltano su un altro nemico; ogni colpo è la nota dopo di una piccola melodia sul liuto (`NH.tune`, la minore pentatonica). Super **Ballata**: colpisce tutti i nemici (1,4 × attacco), li rallenta 4,5 s, stordisce i piccoli 1,6 s (note colorate che girano sopra la testa; `e.daze`, `updEnemy` avvolto; i boss sono solo rallentati) e ti cura del 15%, con anelli d'oro e note che volano a spirale.
 - **Alchimista** (salute ×1,05, attacco ×1,12, cadenza ×0,85, velocità ×0,95): lancia **fiale** ('flask', 470 px/s, a pallonetto con l'ombra a terra) che scoppiano dove colpiscono o cadono, anche contro muri e rocce (`flaskBurst`; `update` avvolto guarda le fiale che spariscono): 0,45 × attacco agli altri nemici vicini, una dose di veleno a tutti e una **pozza di veleno** (`G.pz`, `pzAdd`, al massimo 7, 4 con `LOWFX`) che avvelena chi ci passa; verde chiara col bordo scuro e le bolle, diversa dall'acido dei nemici, che è tratteggiato. Super **Grande calderone**: un calderone di ferro cade dal cielo sul gruppo più fitto (ombra che cresce e cerchio d'avviso), scoppia (3 × attacco, veleno pieno) e lascia una pozza grande.
-- **Ninja** (salute ×0,8, attacco ×0,76, cadenza ×1,1, velocità ×1,3, scatto ×0,8 più il Passo d'ombra all'inizio): tira **tre stelline a ventaglio** ('star', 650 px/s; le due di lato a 0,4, `volley` avvolto); quando scatta sparisce in una nuvola di fumo viola e si vede appena. Super **Cento ombre**: tre ombre di lui escono dal fumo e gli girano intorno per 4,5 s tirando stelline al nemico più vicino (l'eroe disegnato una volta per fotogramma su un livello, tinto di viola e posato tre volte: `nhShadowImg`, `nhBlit`).
+- **Ninja** (salute ×0,8, attacco ×0,86 (×0,76 fino al 6 novembre), cadenza ×1,1, velocità ×1,3, scatto ×0,8 più il Passo d'ombra all'inizio): tira **tre stelline a ventaglio** ('star', 650 px/s; le due di lato a 0,5, a 0,4 fino al 6 novembre, `volley` avvolto); quando scatta sparisce in una nuvola di fumo viola e si vede appena. Super **Cento ombre**: tre ombre di lui escono dal fumo e gli girano intorno per 4,5 s tirando stelline al nemico più vicino (l'eroe disegnato una volta per fotogramma su un livello, tinto di viola e posato tre volte: `nhShadowImg`, `nhBlit`).
 - Suoni dal codice (`NH_SND`: pizzico del liuto, accordo, vetro, sibilo, scoppio, fumo, tonfo del calderone; `sfx` avvolto). Particelle proprie (`G.hfx`: vetro, fumo, note), pulite a ogni stanza (`buildRoom` avvolto). Tutto rispetta `LOWFX`.
 - Nel menu: scheda Eroi (sette eroi), Profilo, schermata principale, modalità Zombie (l'arma zombie vince sull'arma propria), trailer (`iCast` dà sempre quattro eroi). Collaudo: una partita automatica per eroe fino alla stanza 10 senza errori (`node tests/run.js arena 500 1 c5 6 bardo`, ecc.; `run.js` possiede anche gli eroi nuovi).
 
@@ -427,6 +427,16 @@ gli zombie nuovi escono prima (round 2, 3 e 4). Dettagli, tabelle e prove in `do
   segue i suoi quattro; i salvataggi di prima hanno tutto aperto. Prova `node tests/a50/menu.js`.
 - Prove: `python3 tests/a50/mk.py`, poi le tre di `tests/a50/`.
 
+## Bilanciamento misurato (6 novembre; nel gioco dal 6 novembre)
+
+Denis, alla domanda «cosa miglioreresti nel gioco?»: «Bilanciamento misurato». I sette eroi nelle arene a stanze 1, 4, 7 e 10, due partite
+ciascuno, stesso equipaggiamento, con un giocatore automatico che sta fermo e tira e, se per 1,5 s nessun nemico perde vita, cammina verso
+il più vicino (copia di `tests/run.js` nella cartella di lavoro: col giocatore sempre fermo l'Alchimista restava bloccato, le sue fiale
+arrivano a ~490 px). Il Ninja il più debole in tutte le arene (+36% di tempo, il doppio delle vite perse), il Druida il più forte, lo Yeti il
+boss più duro al secondo (quasi tutto contatto). Denis ha scelto i tre ritocchi provati prima: **Ninja** attacco 0,76 → 0,86 e stelline di
+lato 0,4 → 0,5 (tempo da ×1,36 a ×1,09 dell'Arciere), **Bardo** attacco 0,92 → 1 (da ×1,18 a ×1,05), **Yeti** contatto 25 → 18 (col boss
+circa metà delle vite perse). Tabelle, metodo e misure in `docs/bilanciamento.md`.
+
 ## Il 3D vero (2–5 novembre): messo da parte nel ramo `progetto-3d`
 
 Denis, 6 novembre: «salva tutto a parte delle cose 3d che abbiamo fatto in sti 3 giorni, si torna a lavorare sul progetto mossbound com'era
@@ -620,7 +630,7 @@ del ramo `gioco`). Da fare con le misure dell'iPhone di Denis: il ponte che onde
 ## Da fare (annotato con Denis, non ancora fatto)
 
 1. Le fasi 2–10 del piano maestro, nell'ordine (vedi sopra).
-2. Da regolare giocando: la curva di difficoltà nuova (`DIFF`), forza del Druida e dei tre eroi nuovi (Bardo, Alchimista, Ninja), crescita dei boss, misura delle arene grandi; fluidità e volumi sul telefono vero.
+2. Da regolare giocando: la curva di difficoltà nuova (`DIFF`), forza del Druida e dei tre eroi nuovi (Bardo, Alchimista, Ninja), crescita dei boss, misura delle arene grandi; fluidità e volumi sul telefono vero. Misurato il 6 novembre coi giocatori automatici (`docs/bilanciamento.md`): ritoccati Ninja, Bardo e lo Yeti; il resto da guardare giocando.
 3. Materiale che può servire per le arene nuove (FASE 2): l'anteprima «Epico» (`anteprime/epico.js`: vita nelle fughe del pavimento, lastre con rilievo, battaglie con più impatto; a Denis piacevano lo zoom leggerissimo e il pavimento).
 4. Pubblicità vera per i giri della ruota (ora un segnaposto di 5 secondi), da collegare quando il gioco sarà pubblicato.
 5. Scartati o fermi: eroe nuovo da immagine (file in `anteprime/`), «La Discesa» (`anteprime/discesa.html`), la Bestia (`anteprime/beast.js`), il teschio dietro il cancello: il piano maestro li supera.

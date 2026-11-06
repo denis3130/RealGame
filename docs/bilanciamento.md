@@ -1,4 +1,4 @@
-# Bilanciamento misurato (6 novembre)
+# Bilanciamento misurato (6 novembre; i tre ritocchi nel gioco dal 6 novembre)
 
 Denis, alla domanda «cosa miglioreresti nel gioco?»: «Bilanciamento misurato». Qui le misure con i giocatori automatici: i sette eroi
 nelle arene a stanze (1 Golem, 4 Yeti, 7 Idra, 10 Fenice), due partite ciascuno, stesso equipaggiamento (arco e giubba al livello 3),
@@ -92,3 +92,9 @@ molto di più, 16,3 → 7,1 per l'Arciere, ma lì conta il caso delle stanze: co
 Il resto (Arciere, Cacciatrice, Balestriere, Druida, Alchimista, la curva delle arene, gli altri boss) resta com'è.
 Misure: `misura2.js`, `giro2.sh`, `giro3.sh`, `giro4.sh`, `tabella2.py`, `confronto.py`, `yeti.py` nella cartella di lavoro della sessione
 (da rifare con `tests/run.js` modificato come sopra).
+
+## Nel gioco (6 novembre)
+
+Denis ha scelto tutti e tre i ritocchi: `src/js/39-meta2-eroi-talenti.js` (Ninja `atk:.86`, Bardo `atk:1`), `src/js/92-eroi-nuovi.js`
+(stelline di lato 0,5), `src/js/89-yeti-nuovo.js` (`cdmg:18`). Collaudo: una partita automatica per capitolo, `meta2.js`, `menu2.js`,
+`menu3.js`.

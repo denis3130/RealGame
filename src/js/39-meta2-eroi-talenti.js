@@ -18,11 +18,11 @@ const HEROES=[
   {id:'cacciatrice',n:'Cacciatrice',price:3000,d:'Rapidissima e sfuggente, ma fragile.',start:'Frecce diagonali fin da subito',sk:'diag',mods:{hp:.8,spd:1.25,dash:.75},
     style:{bighood:false,body:'#8a3a5a',hood:'#d9962e',skin:'#f0c8a8',hair:'#e0a63a',bowCol:'#c94a6a',hoodTip:false,ponytail:true,belt:'#5e2440'},proj:'arrow',pcol:'#ff8ab8'},
   // the three heroes of the making of the hero (Denis, 15 October: «crea altri 3 pg con le loro abilità»): free when picked there
-  {id:'bardo',n:'Bardo',price:3000,d:'Suona e combatte: le sue note saltano da un nemico all\'altro.',start:'Note che rimbalzano su un altro nemico',sk:'ric',mods:{atk:.92,aspd:1.08,spd:1.05},
+  {id:'bardo',n:'Bardo',price:3000,d:'Suona e combatte: le sue note saltano da un nemico all\'altro.',start:'Note che rimbalzano su un altro nemico',sk:'ric',mods:{atk:1,aspd:1.08,spd:1.05},
     style:{bighood:false,body:'#a8323e',hood:'#3a5fb8',belt:'#e0b04a',held:'liuto',quiver:false,ownBelt:true,hoodTip:false,plume:'#e5484d',cape:true},proj:'note',pcol:'#ffd84a'},
   {id:'alchimista',n:'Alchimista',price:3000,d:'Lancia fiale che scoppiano e avvelenano tutto intorno.',start:'Fiale che scoppiano e avvelenano',sk:null,mods:{hp:1.05,atk:1.12,aspd:.85,spd:.95},
     style:{bighood:false,body:'#2f7a6a',hood:'#8a5a2e',belt:'#5a3a20',held:'fiala',quiver:false,ownBelt:true,hoodTip:false,goggles:true,apron:'#c08a4a',pack:'#8a5a2e',vials:['#7bf06a','#ff7ab8','#6ac8ff'],flask:'#7bf06a',strap:false},proj:'flask',pcol:'#7bf06a'},
-  {id:'ninja',n:'Ninja',price:3000,d:'Il più veloce di tutti: tre stelline a ventaglio, poi sparisce.',start:'Tre stelline a ventaglio, scatto più rapido',sk:'dash',mods:{hp:.8,atk:.76,aspd:1.1,spd:1.3,dash:.8},
+  {id:'ninja',n:'Ninja',price:3000,d:'Il più veloce di tutti: tre stelline a ventaglio, poi sparisce.',start:'Tre stelline a ventaglio, scatto più rapido',sk:'dash',mods:{hp:.8,atk:.86,aspd:1.1,spd:1.3,dash:.8},
     style:{bighood:false,body:'#45508a',hood:'#363e66',belt:'#c8323c',held:'stellina',quiver:false,ownBelt:true,hoodTip:false,mask:'#2a2f4a',bandana:'#d23a3a',katana:true},proj:'star',pcol:'#c9d2dc'},
   {id:'balestriere',n:'Balestriere',price:7000,d:'Lento e corazzato: ogni dardo è un macigno.',start:'Perforazione fin da subito',sk:'pierce',mods:{hp:1.3,atk:1.35,aspd:.8,spd:.9},
     style:{bighood:false,body:'#6b6f78',hood:'#4a3626',skin:'#e8b890',held:'xbow',bowCol:'#6b4a2a',helm:true,hoodTip:false,sc:1.05,belt:'#3a2a1d'},proj:'bolt',pcol:'#dfe4ea'},

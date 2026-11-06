@@ -26,7 +26,8 @@ const Y2={seq1:['leap','pound','snowball','breath'],seq2:['roar','bounds','claws
 if(Y2ON){
   // the new model in place of the old one (its drawing of today stays as N3.meta.yeti.old for the pages)
   const old=N3.yeti,oldM=N3.meta.yeti;N3.yeti=N3.yeti2;N3.meta.yeti=Object.assign({},N3.meta.yeti2,{old:(x,y,f,a,p)=>old(x,y,f,oldM.an.includes(a)?a:'idle',p,oldM.sc||1,{})});
-  Object.assign(ET.yeti,{r:34,hp:4700,cdmg:25});BOSS_INTRO.yeti=3.4;Object.assign(BDEATH,{yeti:{dur:4,clou:2.2,snd:'icicles'}});
+  Object.assign(ET.yeti,{r:34,hp:4700,cdmg:18});// contatto 18 dal 6 novembre (era 25: bilanciamento misurato, docs/bilanciamento.md)
+  BOSS_INTRO.yeti=3.4;Object.assign(BDEATH,{yeti:{dur:4,clou:2.2,snd:'icicles'}});
   // the bar, the halo and the aura; the 2D spikes, breath and glints of the old yeti go (the model draws all of it)
   B2H.yeti=100;B2T.yeti=[[Y2.ice,Y2.deep],'235,245,255'];B2.yeti.back=()=>{};B2.yeti.front=()=>{};RUNEC.yeti=[Y2.ice,Y2.deep];ECOL.yeti='#6c84bd';ETELE.yeti=()=>{};
   // a dark shadow, so the body stands out on the white floor of the den; hidden while the avalanche is still bringing him in

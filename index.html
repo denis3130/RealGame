@@ -6095,11 +6095,11 @@ const HEROES=[
   {id:'cacciatrice',n:'Cacciatrice',price:3000,d:'Rapidissima e sfuggente, ma fragile.',start:'Frecce diagonali fin da subito',sk:'diag',mods:{hp:.8,spd:1.25,dash:.75},
     style:{bighood:false,body:'#8a3a5a',hood:'#d9962e',skin:'#f0c8a8',hair:'#e0a63a',bowCol:'#c94a6a',hoodTip:false,ponytail:true,belt:'#5e2440'},proj:'arrow',pcol:'#ff8ab8'},
   // the three heroes of the making of the hero (Denis, 15 October: «crea altri 3 pg con le loro abilità»): free when picked there
-  {id:'bardo',n:'Bardo',price:3000,d:'Suona e combatte: le sue note saltano da un nemico all\'altro.',start:'Note che rimbalzano su un altro nemico',sk:'ric',mods:{atk:.92,aspd:1.08,spd:1.05},
+  {id:'bardo',n:'Bardo',price:3000,d:'Suona e combatte: le sue note saltano da un nemico all\'altro.',start:'Note che rimbalzano su un altro nemico',sk:'ric',mods:{atk:1,aspd:1.08,spd:1.05},
     style:{bighood:false,body:'#a8323e',hood:'#3a5fb8',belt:'#e0b04a',held:'liuto',quiver:false,ownBelt:true,hoodTip:false,plume:'#e5484d',cape:true},proj:'note',pcol:'#ffd84a'},
   {id:'alchimista',n:'Alchimista',price:3000,d:'Lancia fiale che scoppiano e avvelenano tutto intorno.',start:'Fiale che scoppiano e avvelenano',sk:null,mods:{hp:1.05,atk:1.12,aspd:.85,spd:.95},
     style:{bighood:false,body:'#2f7a6a',hood:'#8a5a2e',belt:'#5a3a20',held:'fiala',quiver:false,ownBelt:true,hoodTip:false,goggles:true,apron:'#c08a4a',pack:'#8a5a2e',vials:['#7bf06a','#ff7ab8','#6ac8ff'],flask:'#7bf06a',strap:false},proj:'flask',pcol:'#7bf06a'},
-  {id:'ninja',n:'Ninja',price:3000,d:'Il più veloce di tutti: tre stelline a ventaglio, poi sparisce.',start:'Tre stelline a ventaglio, scatto più rapido',sk:'dash',mods:{hp:.8,atk:.76,aspd:1.1,spd:1.3,dash:.8},
+  {id:'ninja',n:'Ninja',price:3000,d:'Il più veloce di tutti: tre stelline a ventaglio, poi sparisce.',start:'Tre stelline a ventaglio, scatto più rapido',sk:'dash',mods:{hp:.8,atk:.86,aspd:1.1,spd:1.3,dash:.8},
     style:{bighood:false,body:'#45508a',hood:'#363e66',belt:'#c8323c',held:'stellina',quiver:false,ownBelt:true,hoodTip:false,mask:'#2a2f4a',bandana:'#d23a3a',katana:true},proj:'star',pcol:'#c9d2dc'},
   {id:'balestriere',n:'Balestriere',price:7000,d:'Lento e corazzato: ogni dardo è un macigno.',start:'Perforazione fin da subito',sk:'pierce',mods:{hp:1.3,atk:1.35,aspd:.8,spd:.9},
     style:{bighood:false,body:'#6b6f78',hood:'#4a3626',skin:'#e8b890',held:'xbow',bowCol:'#6b4a2a',helm:true,hoodTip:false,sc:1.05,belt:'#3a2a1d'},proj:'bolt',pcol:'#dfe4ea'},
@@ -26227,7 +26227,8 @@ const NH={tune:[0,3,5,7,10,7,5,3,0,-2,0,3,7,5,3,0],ti:0,base:440,sc:null,
   else if(P.proj==='flask'){ar.flask=true;ar.life=Math.min(ar.life,1.05);ar.l0=ar.life;ar.spin=Math.random()<.5?-1:1}
   else if(P.proj==='star')ar.star=true}}
 // the Ninja's fan: two more stars at the sides of every volley
-{const _v=volley;volley=function(a){_v.apply(this,arguments);if(P&&P.proj==='star'){arrow(P.x,P.y-6,a+.22,.4);arrow(P.x,P.y-6,a-.22,.4)}}}
+// (6 novembre, bilanciamento misurato: le stelline di lato da 0,4 a 0,5 e l'attacco del Ninja da 0,76 a 0,86 in 39)
+{const _v=volley;volley=function(a){_v.apply(this,arguments);if(P&&P.proj==='star'){arrow(P.x,P.y-6,a+.22,.5);arrow(P.x,P.y-6,a-.22,.5)}}}
 // a flask that leaves the field (it hit, it fell, it met a wall or a rock) bursts there
 {const _u=update;update=function(dt){const g=G,A0=g&&g.arrows,fl=A0&&A0.length?A0.filter(a=>a.flask&&!a.blade):null;_u.apply(this,arguments);
   if(fl&&fl.length&&G===g&&G.arrows===A0){const live=new Set(A0);for(const a of fl)if(!live.has(a))flaskBurst(a)}}}
@@ -39622,7 +39623,8 @@ const Y2={seq1:['leap','pound','snowball','breath'],seq2:['roar','bounds','claws
 if(Y2ON){
   // the new model in place of the old one (its drawing of today stays as N3.meta.yeti.old for the pages)
   const old=N3.yeti,oldM=N3.meta.yeti;N3.yeti=N3.yeti2;N3.meta.yeti=Object.assign({},N3.meta.yeti2,{old:(x,y,f,a,p)=>old(x,y,f,oldM.an.includes(a)?a:'idle',p,oldM.sc||1,{})});
-  Object.assign(ET.yeti,{r:34,hp:4700,cdmg:25});BOSS_INTRO.yeti=3.4;Object.assign(BDEATH,{yeti:{dur:4,clou:2.2,snd:'icicles'}});
+  Object.assign(ET.yeti,{r:34,hp:4700,cdmg:18});// contatto 18 dal 6 novembre (era 25: bilanciamento misurato, docs/bilanciamento.md)
+  BOSS_INTRO.yeti=3.4;Object.assign(BDEATH,{yeti:{dur:4,clou:2.2,snd:'icicles'}});
   // the bar, the halo and the aura; the 2D spikes, breath and glints of the old yeti go (the model draws all of it)
   B2H.yeti=100;B2T.yeti=[[Y2.ice,Y2.deep],'235,245,255'];B2.yeti.back=()=>{};B2.yeti.front=()=>{};RUNEC.yeti=[Y2.ice,Y2.deep];ECOL.yeti='#6c84bd';ETELE.yeti=()=>{};
   // a dark shadow, so the body stands out on the white floor of the den; hidden while the avalanche is still bringing him in
